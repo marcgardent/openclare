@@ -1,0 +1,15 @@
+[package]
+name = "retopo-cli"
+description = "Command line front-end for the retopo quad remesher"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "retopo"
+path = "src/main.rs"
+doc = false
+
+[dependencies]
+retopo = { path = "../retopo" }

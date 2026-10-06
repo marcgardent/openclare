@@ -1,0 +1,36 @@
+//! Field-aligned automatic quad retopology.
+//!
+//! The pipeline follows the "field-aligned" family of remeshers (Instant
+//! Meshes, QuadriFlow, QuadWild): a smooth 4-RoSy *orientation field* decides
+//! where edges point, a *position field* decides where they sit, and the quad
+//! mesh is read off the integer lattice that the two fields describe.
+//!
+//! ```text
+//! TriMesh ─► clean / subdivide ─► Hierarchy ─► orientation ─► position ─► extract ─► relax
+//!            (mesh)               (hierarchy)   (field)        (field)     (extract)   (relax)
+//! ```
+//!
+//! [`remesh`] runs the whole thing; every stage is also public so it can be
+//! swapped or driven on its own.
+
+// Index loops over parallel per-vertex arrays are the clearest form here.
+#![allow(clippy::needless_range_loop)]
+
+pub mod curvature;
+pub mod error;
+pub mod extract;
+pub mod field;
+pub mod geometry;
+pub mod hierarchy;
+pub mod math;
+pub mod mesh;
+pub mod metrics;
+pub mod pipeline;
+pub mod relax;
+pub mod remesher;
+pub mod spatial;
+
+pub use error::{Error, Result};
+pub use mesh::{PolyMesh, TriMesh};
+pub use pipeline::{Params, Report, Target, remesh};
+pub use remesher::{Method, Remesher, Request};

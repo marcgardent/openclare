@@ -1,0 +1,160 @@
+//! End-to-end remeshing.
+
+use std::time::{Duration, Instant};
+
+use crate::error::{Error, Result};
+use crate::extract::{LatticeGraph, extract_faces};
+use crate::field::{Constraints, orientation, position};
+use crate::geometry::{feature_edges, vertex_areas, vertex_normals};
+use crate::hierarchy::{Graph, Hierarchy, Level};
+use crate::math::Rng;
+use crate::mesh::subdivide::split_long_edges;
+use crate::mesh::{MeshStats, PolyMesh, Topology, TriMesh};
+use crate::relax::{Features, relax};
+use crate::spatial::Bvh;
+
+/// How dense the output should be.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Target {
+    /// Approximate number of quads.
+    QuadCount(usize),
+    /// Edge length, in the units of the input mesh.
+    EdgeLength(f64),
+}
+
+#[derive(Clone, Debug)]
+pub struct Params {
+    pub target: Target,
+    /// Output only quads, by solving at twice the edge length and splitting
+    /// every face around its centre. When false, the raw quad-dominant mesh
+    /// is returned (mostly quads, with triangles and pentagons where the
+    /// lattice has defects).
+    pub pure_quad: bool,
+    /// Dihedral angle in degrees above which an input edge is a hard edge the
+    /// output must follow. `None` disables crease detection.
+    pub crease_angle: Option<f64>,
+    /// Make the output follow open boundaries.
+    pub align_boundaries: bool,
+    /// Gauss-Seidel sweeps per hierarchy level for each field.
+    pub orientation_iterations: usize,
+    pub position_iterations: usize,
+    /// Smoothing passes on the final mesh (each followed by a projection onto
+    /// the input surface).
+    pub relax_iterations: usize,
+    pub seed: u64,
+}
+
+impl Default for Params {
+    fn default() -> Self {
+        Self {
+            target: Target::QuadCount(2000),
+            pure_quad: true,
+            crease_angle: None,
+            align_boundaries: true,
+            orientation_iterations: 6,
+            position_iterations: 6,
+            relax_iterations: 2,
+            seed: 1,
+        }
+    }
+}
+
+/// What happened during a [`remesh`] call.
+#[derive(Clone, Debug, Default)]
+pub struct Report {
+    /// Edge length of the output.
+    pub edge_length: f64,
+    /// Vertices of the (possibly subdivided) mesh the fields were solved on.
+    pub working_vertices: usize,
+    pub hierarchy_levels: usize,
+    pub feature_edges: usize,
+    /// Orientation-field singularities of index +1/4 and -1/4.
+    pub singularities: (usize, usize),
+    /// Loops of the extracted graph left without a face (see
+    /// [`crate::extract::FaceExtraction::open_loops`]).
+    pub open_loops: usize,
+    pub stats: MeshStats,
+    pub timings: Vec<(&'static str, Duration)>,
+}
+
+/// Remeshes `input` into a field-aligned quad mesh.
+pub fn remesh(input: &TriMesh, params: &Params) -> Result<(PolyMesh, Report)> {
+    input.validate()?;
+    let source = input.cleaned();
+    if source.triangles.is_empty() {
+        return Err(Error::InvalidMesh("mesh has no non-degenerate triangle".into()));
+    }
+
+    let edge_length = match params.target {
+        Target::EdgeLength(length) => length,
+        Target::QuadCount(0) => return Err(Error::InvalidParams("target quad count is zero".into())),
+        Target::QuadCount(count) => (source.surface_area() / count as f64).sqrt(),
+    };
+    if !(edge_length.is_finite() && edge_length > 0.0) {
+        return Err(Error::InvalidParams(format!("edge length {edge_length} is not positive")));
+    }
+    // The centre split of `pure_quad` halves every edge.
+    let scale = if params.pure_quad { 2.0 * edge_length } else { edge_length };
+
+    let mut report = Report { edge_length, ..Default::default() };
+    let mut clock = Instant::now();
+    let mut lap = |report: &mut Report, stage: &'static str| {
+        report.timings.push((stage, clock.elapsed()));
+        clock = Instant::now();
+    };
+
+    // The lattice is sampled at the vertices: a few of them per cell are
+    // needed to recover it.
+    let working = split_long_edges(&source, 0.5 * scale);
+    let topology = Topology::build(&working);
+    let normals = vertex_normals(&working);
+    let features =
+        feature_edges(&working, &topology, params.crease_angle.map(f64::to_radians), params.align_boundaries);
+    let constraints = Constraints::from_feature_edges(&working.positions, &normals, &features);
+    let guide = Features::new(&working.positions, &features, &constraints, 0.35 * edge_length);
+    report.working_vertices = working.positions.len();
+    report.feature_edges = features.len();
+    lap(&mut report, "preprocess");
+
+    let finest = Level::new(
+        working.positions.clone(),
+        normals,
+        vertex_areas(&working),
+        Graph::uniform(&topology.neighbors),
+        constraints,
+    );
+    let mut hierarchy = Hierarchy::build(finest);
+    report.hierarchy_levels = hierarchy.levels.len();
+    lap(&mut report, "hierarchy");
+
+    let mut rng = Rng::new(params.seed);
+    orientation::solve(&mut hierarchy, params.orientation_iterations, &mut rng);
+    let finest = hierarchy.finest();
+    let singular = orientation::singularities(&working, &finest.normals, &finest.orientation);
+    report.singularities =
+        (singular.iter().filter(|s| s.index > 0).count(), singular.iter().filter(|s| s.index < 0).count());
+    lap(&mut report, "orientation field");
+
+    position::solve(&mut hierarchy, scale, params.position_iterations, &mut rng);
+    lap(&mut report, "position field");
+
+    let mut graph = LatticeGraph::from_fields(hierarchy.finest(), scale);
+    graph.remove_spurious_vertices();
+    graph.remove_redundant_edges(scale);
+    graph.prune_dangling_edges();
+    graph.sort_counter_clockwise();
+    let extraction = extract_faces(&graph, 8);
+    report.open_loops = extraction.open_loops;
+    let mut mesh = extraction.mesh;
+    mesh.dissolve_valence_two();
+    if params.pure_quad {
+        mesh = mesh.split_to_quads();
+    }
+    lap(&mut report, "extraction");
+
+    relax(&mut mesh, &Bvh::build(&source), guide.as_ref(), params.relax_iterations);
+    lap(&mut report, "relaxation");
+
+    report.stats = mesh.stats();
+    Ok((mesh, report))
+}

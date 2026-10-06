@@ -1,0 +1,19 @@
+[workspace]
+members = ["crates/retopo", "crates/retopo-cli"]
+resolver = "3"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+license = "GPL-3.0-or-later"
+
+[workspace.dependencies]
+glam = "0.34"
+
+[profile.release]
+debug = 1
+
+# The solvers are tight numeric loops: unoptimised test runs are painfully slow.
+[profile.dev]
+opt-level = 2

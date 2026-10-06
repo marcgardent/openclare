@@ -1,0 +1,6 @@
+/target
+*.obj
+!assets/**/*.obj
+/bench/out
+/bench/corpus
+__pycache__
