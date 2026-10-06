@@ -2,8 +2,9 @@ use std::process::ExitCode;
 
 use retopo::mesh::{obj, primitives};
 use retopo::metrics::measure;
+use retopo::preprocess;
 use retopo::remesher::{self, Method, Request};
-use retopo::{Target, TriMesh};
+use retopo::{PolyMesh, Target, TriMesh};
 
 const USAGE: &str = "\
 retopo - field-aligned automatic quad retopology
@@ -11,6 +12,7 @@ retopo - field-aligned automatic quad retopology
 USAGE:
     retopo remesh <input.obj> <output.obj> [options]
     retopo measure <source.obj> <quads.obj> [--target <N>] [--json]
+    retopo preprocess <input.obj> <output.obj> [options]
     retopo primitive <torus|sphere|cube|plane> <output.obj>
 
 OPTIONS (remesh):
@@ -20,6 +22,11 @@ OPTIONS (remesh):
     --crease-angle <DEG>   follow input edges sharper than this dihedral angle
     --no-boundary-align    do not align the output with open boundaries
     --seed <N>             random seed (default 1)
+
+OPTIONS (preprocess):
+    --kind <NAME>          isotropic (default) or passthrough
+    --triangles <N>        size of the work mesh (default 100000)
+    --crease-angle <DEG>   keep input edges sharper than this dihedral angle
 
 OPTIONS (measure):
     --target <N>           face count that was asked for
@@ -41,6 +48,7 @@ fn run(args: &[String]) -> Result<(), String> {
     match args.first().map(String::as_str) {
         Some("remesh") => remesh(&args[1..]),
         Some("measure") => measure_command(&args[1..]),
+        Some("preprocess") => preprocess_command(&args[1..]),
         Some("primitive") => primitive(&args[1..]),
         Some("-h" | "--help") => {
             print!("{USAGE}");
@@ -169,5 +177,58 @@ fn measure_command(args: &[String]) -> Result<(), String> {
     );
     println!("fidelity     Hausdorff {:.5}, mean {:.6} (of the bounding diagonal)", m.hausdorff, m.mean_distance);
     println!("budget       {}", optional(m.budget_error.map(|e| format!("{:.1} % off target", 100.0 * e))));
+    Ok(())
+}
+
+fn preprocess_command(args: &[String]) -> Result<(), String> {
+    let mut request = preprocess::Request::default();
+    let mut kind = preprocess::Kind::Isotropic;
+    let mut paths = Vec::new();
+    let mut args = args.iter();
+    while let Some(arg) = args.next() {
+        let mut value = |name: &str| args.next().ok_or(format!("{name} expects a value"));
+        match arg.as_str() {
+            "--kind" => kind = value(arg)?.parse().map_err(|e: retopo::Error| e.to_string())?,
+            "--triangles" => request.triangles = parse(arg, value(arg)?)?,
+            "--crease-angle" => request.crease_angle = Some(parse(arg, value(arg)?)?),
+            flag if flag.starts_with("--") => return Err(format!("unknown option '{flag}'")),
+            path => paths.push(path),
+        }
+    }
+    let [input, output] = paths[..] else {
+        return Err("preprocess takes an input and an output path".into());
+    };
+
+    let source = obj::read_obj(input).map_err(|e| format!("{input}: {e}"))?;
+    let before = preprocess::quality(&source);
+    let start = std::time::Instant::now();
+    let work = preprocess::create(kind).preprocess(&source, &request).map_err(|e| e.to_string())?;
+    let seconds = start.elapsed().as_secs_f64();
+    obj::write_obj_tri(output, &work.mesh).map_err(|e| format!("{output}: {e}"))?;
+
+    let after = preprocess::quality(&work.mesh);
+    let as_polygons = PolyMesh {
+        positions: work.mesh.positions.clone(),
+        faces: work.mesh.triangles.iter().map(|t| t.to_vec()).collect(),
+    };
+    let m = measure(&source, &as_polygons, None);
+    println!("triangles    {} -> {}", source.triangles.len(), work.mesh.triangles.len());
+    println!(
+        "min angle    mean {:.1} -> {:.1} deg, 1st percentile {:.1} -> {:.1} deg",
+        before.min_angle_mean, after.min_angle_mean, before.min_angle_p01, after.min_angle_p01,
+    );
+    println!("edge ratio   {:.1} -> {:.1}", before.edge_ratio, after.edge_ratio);
+    println!(
+        "topology     {} boundary edges (source {}), {} components (source {}), {} non-manifold edges",
+        m.boundary_edges, m.source_boundary_edges, m.components, m.source_components, m.non_manifold_edges,
+    );
+    println!("fidelity     Hausdorff {:.5}, mean {:.6} (of the bounding diagonal)", m.hausdorff, m.mean_distance);
+    let confident = work.confidence.iter().filter(|&&c| c > 0.4).count();
+    println!(
+        "features     {} feature edges, curvature directions trusted on {:.0} % of the vertices",
+        work.feature_edges.len(),
+        100.0 * confident as f64 / work.confidence.len().max(1) as f64,
+    );
+    println!("seconds      {seconds:.3}");
     Ok(())
 }

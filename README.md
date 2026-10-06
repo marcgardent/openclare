@@ -65,6 +65,7 @@ let (quads, report) = remesh(&triangles, &params)?;
 | `spatial` | BVH pour la projection sur la surface source |
 | `pipeline` | enchaînement complet de la chaîne Instant Meshes |
 | `remesher` | interface commune à toutes les chaînes, et fabrique qui les crée par nom |
+| `preprocess` | étape de prétraitement : nettoyage, décimation, remaillage isotrope, courbures |
 | `curvature` | courbures et directions principales |
 | `metrics` | mesures de qualité d'un maillage quad par rapport à sa source |
 
