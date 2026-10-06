@@ -30,7 +30,8 @@ def read_obj(path, name="source"):
 def write_obj(path, mesh):
     with open(path, "w") as out:
         for v in mesh.vertices:
-            out.write(f"v {v.co.x!r} {v.co.y!r} {v.co.z!r}\n")
+            # Blender stores single precision: nine digits round-trip it exactly.
+            out.write(f"v {v.co.x:.9g} {v.co.y:.9g} {v.co.z:.9g}\n")
         for polygon in mesh.polygons:
             out.write("f " + " ".join(str(i + 1) for i in polygon.vertices) + "\n")
 

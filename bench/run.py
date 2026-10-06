@@ -33,6 +33,14 @@ MODELS = [
     # The project mascot: a real 4.7 million triangle sculpt, brought down to
     # 200 000 triangles by `retopo preprocess` (see bench/README.md).
     ("ogre", "organic", False, False),
+    # From Keenan Crane's model repository (see bench/import_crane.py).
+    ("spot", "organic", False, False),
+    ("bob", "organic", False, False),
+    ("blub", "organic", False, False),
+    ("pig", "organic", False, False),
+    ("jerry", "organic", False, True),
+    ("rose", "organic", False, False),
+    ("bridge", "organic", False, True),
     ("part", "mechanical", True, False),
     ("cube", "mechanical", True, False),
     ("sphere", "calibration", False, False),

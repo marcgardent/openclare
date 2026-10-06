@@ -125,6 +125,27 @@ Conséquence à trancher : la densité adaptative était au rang 4 des contraint
 un personnage, c'est elle qui décide si les mains existent encore. Elle mérite sans doute de
 remonter, au moins comme réglage automatique piloté par la courbure.
 
+### Sur le corpus élargi
+
+Avec l'ogre et les sept modèles de Keenan Crane, le corpus compte 13 modèles organiques. À 3000
+quads demandés, nombre de modèles où chaque outil a la meilleure médiane :
+
+| | QuadriFlow | Plancher | Quad Remesher (défaut) | Quad Remesher (uniforme) |
+|---|---|---|---|---|
+| Alignement (A) | 0 | 0 | 13 | 0 |
+| Sommets irréguliers (S) | 5 | 1 | 1 | 6 |
+| Patchs du complexe de base (C) | 1 | 1 | 2 | 9 |
+| Maillages valides (V) | 36 sur 65 | 47 sur 65 | 8 sur 13 | 10 sur 13 |
+
+- **Quad Remesher gagne l'alignement sur les 13 modèles**, sans exception : c'est bien là qu'est
+  l'écart à combler.
+- **Personne n'est valide partout.** QuadriFlow refuse purement le scan brut (Pittsburgh Bridge)
+  et replie des faces sur le cochon à chaque graine. Quad Remesher rend quelques faces non quads
+  sur le scan, sur Jerry et sur Desert Rose.
+- **Desert Rose (96 coques qui se traversent) met tout le monde en échec** ; nos métriques de
+  validité y sont elles-mêmes peu fiables. C'est un cas limite, à ne pas compter dans
+  l'acceptation.
+
 Deux réserves sur les métriques elles-mêmes :
 
 - **C sature.** Près du nombre de faces, elle ne départage plus : un maillage avec davantage de
@@ -162,14 +183,18 @@ bruité, créature à pattes, cage de genre 5, Suzanne), deux mécaniques (pièc
 étalons (sphère, tore). Elles couvrent les cas utiles, mais ce sont des formes de synthèse, pas de
 vraies sculptures.
 
-S'y ajoute un premier modèle réel, **l'ogre** (voir plus haut). Son original de 4,7 millions de
-triangles pèse 200 Mo : trop pour git, il est gardé hors versionnement dans `bench/corpus-large/`.
-Seule sa version à 200 000 triangles est versionnée.
+S'y ajoutent des modèles réels, détaillés dans [bench/corpus/README.md](bench/corpus/README.md) :
 
-Reste à choisir le corpus définitif : une dizaine de modèles réels sous licence libre (personnage,
-tête, main, animal, scan bruité), ce qui suppose de les télécharger. **C'est à décider tant que la
-licence d'essai de Quad Remesher est valide** : une fois expirée, on ne pourra plus produire de
-mires sur de nouveaux modèles.
+- **l'ogre**, mascotte du projet (voir plus haut). Son original de 4,7 millions de triangles pèse
+  200 Mo : trop pour git, il est gardé hors versionnement dans `bench/corpus-large/`. Seule sa
+  version à 200 000 triangles est versionnée ;
+- **sept modèles du dépôt de Keenan Crane**, libres de tout usage : quatre personnages (Spot, Bob,
+  Blub, le cochon), un visage ouvert (Jerry), une forme à 96 coques (Desert Rose) et un scan brut
+  (Pittsburgh Bridge).
+
+Le corpus compte ainsi 17 modèles, tous avec leurs mires Quad Remesher. Il manque encore de
+vraies sculptures denses autres que l'ogre : les scans classiques (Stanford) ont des conditions
+réservées à la recherche et ont été écartés.
 
 ---
 
@@ -294,6 +319,21 @@ la chaîne ; le logiciel ne suppose jamais qu'il n'en existe qu'une.
 **Sortie.** Maillage 100 % quads, variété, fermé ou à bords nets, avec **le moins possible de
 sommets irréguliers**. (« 100 % de quads réguliers » est impossible hors du tore : la topologie
 impose des sommets irréguliers.)
+
+**Sorties complémentaires, en fin de projet.** Avec le maillage :
+
+- les **coutures** (seams), c'est-à-dire les arêtes le long desquelles la surface est découpée
+  pour être dépliée ;
+- les **coordonnées UV** par coin de face.
+
+La chaîne organique calcule déjà une paramétrisation et un graphe de coupe pour construire le
+maillage ; les UV et les coutures en découleront. Pour la chaîne durci, les bords de patchs
+jouent le même rôle.
+
+**Forme finale du logiciel.** Une bibliothèque à interface C, chargée depuis un greffon Python
+(module `ctypes`), pour s'intégrer à Blender **sans copie de mémoire** : le greffon passe
+directement les tableaux de sommets et de faces de Blender, et relit les résultats dans des
+tableaux qu'il fournit.
 
 ---
 
@@ -504,6 +544,7 @@ Chaque jalon produit quelque chose de vérifiable et se termine par **un arrêt 
 | J7 | Carte entière et extraction (M7, M8) | **Premier résultat complet, comparé à QuadriFlow** |
 | J8 | Relaxation, puis contraintes de rang 2 à 4 | Règle d'acceptation évaluée |
 | J9 | Chaîne durci : traçage, patchs, remplissage par motifs | Pièces mécaniques comparées à QuadriFlow |
+| J10 | Export des coutures et des UV ; bibliothèque à interface C et greffon Python sans copie mémoire | Remaillage lancé depuis Blender, UV et coutures relus dans la scène |
 
 **Variante à trancher** : après J4, un arrondi glouton des translations (comme dans MIQ) suivi de
 l'extraction donnerait un premier résultat complet plus tôt, avant d'écrire M5 et M6. C'est moins
@@ -556,6 +597,22 @@ qu'elle soit dictée par un besoin réel. Son contrat, lui, est déjà fixé par
 - **Requêtes spatiales** : le BVH existant.
 - **Blender** : utilisé seulement par le banc de mesure, jamais comme dépendance.
 
+### En vue de la bibliothèque C (J10)
+
+Le passage en bibliothèque se fait à la fin, mais il coûtera peu si le cœur respecte dès
+maintenant quelques règles :
+
+- **Données en tableaux plats et contigus** (positions, indices), comme aujourd'hui : ce sont
+  exactement les tampons que `ctypes` et Blender savent partager.
+- **Entrées empruntées, jamais possédées** : les étapes lisent des tranches et n'exigent pas de
+  prendre possession des données de l'appelant.
+- **Pas d'état global** ; tout passe par les paramètres, pour qu'une session Blender puisse lancer
+  plusieurs remaillages.
+- **Erreurs rendues en valeurs**, jamais par arrêt brutal : une erreur ne doit pas faire tomber
+  Blender.
+- **Interface C mince**, dans une crate à part, posée par-dessus `Remesher` ; le cœur n'en sait
+  rien.
+
 ### Ce qui est réutilisé du code existant
 
 | Module existant | Réutilisé pour |
@@ -593,7 +650,8 @@ base fiable pour le chiffrer plus finement.
 ## 7. Décisions attendues
 
 1. **Seuils d'acceptation** proposés en section 0.
-2. **Corpus définitif** : quels modèles réels, et l'autorisation de les télécharger (section 0).
+2. **Corpus** : d'autres sculptures à toi à y ajouter, tant que la licence d'essai permet d'en
+   tirer des mires (section 0) ?
 3. **Champ par face ou par sommet** (M2) ; proposition : par face.
 4. **Variante MIQ** pour un premier résultat complet après J4 (section 4).
 5. **Rang de la densité adaptative** : la remonter, au vu de l'ogre (section 0) ?
@@ -601,4 +659,5 @@ base fiable pour le chiffrer plus finement.
 
 Déjà décidé : objectif (mieux que Blender), priorité (organique d'abord, durci ensuite), lignées
 (paramétrisation et isolignes pour l'organique, patchs pour le durci), architecture modulaire à
-fabriques, licence (GPL-3.0-or-later).
+fabriques, licence (GPL-3.0-or-later), export des coutures et des UV, forme finale en bibliothèque
+C pilotée par un greffon Python sans copie mémoire.

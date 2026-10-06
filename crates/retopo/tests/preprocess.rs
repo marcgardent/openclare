@@ -147,6 +147,23 @@ fn split_vertices_are_welded() {
 }
 
 #[test]
+fn closed_shells_that_touch_are_not_welded_together() {
+    // Two cubes sharing a whole face: their vertices coincide there, but
+    // each is a closed surface and must stay one.
+    let cube = primitives::cube(2);
+    let mut pair = cube.clone();
+    let offset = cube.positions.len() as u32;
+    pair.positions.extend(cube.positions.iter().map(|p| *p + Vec3::new(2.0, 0.0, 0.0)));
+    pair.triangles.extend(cube.triangles.iter().map(|tri| tri.map(|v| v + offset)));
+
+    let work = create(Kind::Passthrough).preprocess(&pair, &Request::default()).unwrap();
+    assert_eq!(work.mesh.positions.len(), pair.positions.len());
+    let topology = Topology::build(&work.mesh);
+    assert!(topology.is_closed());
+    assert_eq!(topology.non_manifold_edges, 0);
+}
+
+#[test]
 fn every_preprocessor_is_reachable_by_name_and_deterministic() {
     let source = primitives::torus(1.0, 0.4, 48, 24);
     let request = Request { triangles: 3000, ..Default::default() };
