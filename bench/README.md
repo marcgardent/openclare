@@ -33,10 +33,11 @@ Pour mesurer un seul maillage, quel que soit l'outil qui l'a produit :
 | `quadriflow.py` | script Blender : QuadriFlow sur un OBJ, une fois par graine |
 | `quadremesher.py` | script Blender : Quad Remesher sur un OBJ |
 | `make_references.py` | produit et range les mires Quad Remesher tant qu'une licence est disponible |
-| `corpus/` | les modèles sources, versionnés |
+| `corpus/` | les modèles sources, versionnés ([provenance](corpus/README.md)) |
 | `corpus-large/` | originaux trop lourds pour git (l'ogre à 4,7 millions de triangles), non versionnés |
 | `reference/` | les mires conservées, versionnées ([notice](reference/README.md)) |
-| `make_corpus.py` | script Blender : génère le corpus provisoire dans `corpus/` |
+| `make_corpus.py` | script Blender : génère les formes de synthèse du corpus |
+| `import_crane.py`, `subdivide.py` | convertissent les modèles téléchargés du dépôt de Keenan Crane en sources du corpus |
 | `blender_io.py` | lecture et écriture OBJ sans conversion d'axes, pour que tous les outils voient les mêmes coordonnées |
 
 Les métriques sont dans `crates/retopo/src/metrics.rs`, chacune testée sur un maillage dont le

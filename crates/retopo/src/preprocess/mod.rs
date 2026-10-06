@@ -181,24 +181,51 @@ impl Preprocessor for Passthrough {
 /// Welds coincident vertices and drops degenerate triangles: exported meshes
 /// routinely split vertices along UV seams or hard edges, which would leave
 /// the surface in disconnected pieces.
+///
+/// Only vertices on an open border are welded. Those are the ones a seam
+/// splits; inside a closed shell there is nothing to stitch, and merging
+/// two shells that merely touch would wreck both.
 fn cleaned(source: &TriMesh) -> Result<TriMesh> {
     source.validate()?;
+    let mut on_border = vec![false; source.positions.len()];
+    for h in Topology::build(source).boundary_half_edges() {
+        let tri = source.triangles[h / 3];
+        on_border[tri[h % 3] as usize] = true;
+        on_border[tri[(h + 1) % 3] as usize] = true;
+    }
+
     let (min, max) =
         source.positions.iter().fold((Vec3::INFINITY, Vec3::NEG_INFINITY), |(lo, hi), &p| (lo.min(p), hi.max(p)));
     let cell = ((max - min).length() * 1e-9).max(f64::MIN_POSITIVE);
-    let mut first_at: HashMap<[i64; 3], u32> = HashMap::with_capacity(source.positions.len());
-    let remap: Vec<u32> = source
-        .positions
-        .iter()
-        .enumerate()
-        .map(|(v, p)| *first_at.entry(((*p - min) / cell).round().to_array().map(|c| c as i64)).or_insert(v as u32))
+    let mut first_at: HashMap<[i64; 3], u32> = HashMap::new();
+    let remap: Vec<u32> = (0..source.positions.len())
+        .map(|v| {
+            if !on_border[v] {
+                return v as u32;
+            }
+            let cell_of = ((source.positions[v] - min) / cell).round().to_array().map(|c| c as i64);
+            *first_at.entry(cell_of).or_insert(v as u32)
+        })
         .collect();
-    let welded = TriMesh {
-        positions: source.positions.clone(),
-        triangles: source.triangles.iter().map(|tri| tri.map(|v| remap[v as usize])).collect(),
+    // Triangles that lost a corner to welding go; flat ones with three
+    // distinct corners stay, because removing them would open a slit in the
+    // surface (remeshing collapses them properly later).
+    let mut compact = vec![u32::MAX; source.positions.len()];
+    let mut welded = TriMesh::default();
+    for tri in &source.triangles {
+        let [a, b, c] = tri.map(|v| remap[v as usize]);
+        if a == b || b == c || c == a {
+            continue;
+        }
+        welded.triangles.push([a, b, c].map(|v| {
+            if compact[v as usize] == u32::MAX {
+                compact[v as usize] = welded.positions.len() as u32;
+                welded.positions.push(source.positions[v as usize]);
+            }
+            compact[v as usize]
+        }));
     }
-    .cleaned();
-    if welded.triangles.is_empty() {
+    if welded.surface_area() == 0.0 {
         return Err(Error::InvalidMesh("mesh has no non-degenerate triangle".into()));
     }
     Ok(welded)
