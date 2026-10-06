@@ -5,4 +5,6 @@
 !bench/corpus/*.obj
 !bench/reference/**/*.obj
 /bench/out
+# Full-resolution originals: too large for git, kept beside the repository data.
+/bench/corpus-large
 __pycache__

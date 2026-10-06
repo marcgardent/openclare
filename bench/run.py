@@ -30,12 +30,16 @@ MODELS = [
     ("creature", "organic", False, False),
     ("cage", "organic", False, False),
     ("suzanne", "organic", False, True),
+    # The project mascot: a real 4.7 million triangle sculpt, brought down to
+    # 200 000 triangles by `retopo preprocess` (see bench/README.md).
+    ("ogre", "organic", False, False),
     ("part", "mechanical", True, False),
     ("cube", "mechanical", True, False),
     ("sphere", "calibration", False, False),
     ("torus", "calibration", False, False),
 ]
 PRIMITIVES = {"cube", "sphere", "torus"}
+DEFAULT_TARGET = 3000
 CREASE_ANGLE = "30"
 
 # metric key, label, format, lower is better
@@ -241,7 +245,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--models", default=",".join(m[0] for m in MODELS))
     parser.add_argument("--tools", default=",".join(TOOLS))
-    parser.add_argument("--target", type=int, default=3000)
+    parser.add_argument("--target", type=int, default=DEFAULT_TARGET)
     parser.add_argument("--seeds", default="1,2,3,4,5")
     options = parser.parse_args()
     models = options.models.split(",")
@@ -253,29 +257,40 @@ def main():
     ensure_corpus(models)
     RESULTS.mkdir(exist_ok=True)
 
-    raw, results = {}, {}
+    # One pair of files per budget; a partial run (some models, some tools)
+    # updates them in place instead of discarding what was measured before.
+    suffix = "" if options.target == DEFAULT_TARGET else f"-{options.target}"
+    data_path, report_path = RESULTS / f"results{suffix}.json", RESULTS / f"RESULTS{suffix}.md"
+    raw = {}
+    if data_path.exists():
+        previous = json.loads(data_path.read_text())
+        if previous.get("seeds") == seeds:
+            raw = previous["runs"]
+
     for model, _, sharp, boundary in MODELS:
         if model not in models:
             continue
         directory = OUTPUT / model
         directory.mkdir(parents=True, exist_ok=True)
-        raw[model], results[model] = {}, {}
+        raw.setdefault(model, {})
         for tool in tools:
             runs = []
             for seed, (path, seconds, failure) in sorted(TOOLS[tool](model, sharp, boundary, options.target, seeds, directory).items()):
                 metrics = measure(model, path, options.target) if path else None
                 runs.append({"seed": seed, "seconds": seconds, "failure": failure, "metrics": metrics})
             raw[model][tool] = runs
-            results[model][tool] = summarize(runs)
-            summary = results[model][tool]
+            summary = summarize(runs)
             print(f"{model:10} {tool:15} valid {summary['valid']}/{summary['runs']}  "
                   f"irregular {cell(summary, 'irregular_vertices', '{:.0f}'):>5}  "
                   f"patches {cell(summary, 'base_complex_patches', '{:.0f}'):>6}  "
                   f"alignment {cell(summary, 'alignment', '{:.2f}'):>6}", flush=True)
 
-    (RESULTS / "results.json").write_text(json.dumps({"target": options.target, "seeds": seeds, "runs": raw, "summary": results}, indent=1))
-    (RESULTS / "RESULTS.md").write_text(report(results, options.target, seeds, tools))
-    print(f"\nwritten: {RESULTS / 'RESULTS.md'}")
+    # Report every tool that has results, in the order they are declared.
+    reported = [t for t in TOOLS if all(t in by_tool for by_tool in raw.values())]
+    results = {model: {t: summarize(raw[model][t]) for t in reported} for model in raw}
+    data_path.write_text(json.dumps({"target": options.target, "seeds": seeds, "runs": raw, "summary": results}, indent=1))
+    report_path.write_text(report(results, options.target, seeds, reported))
+    print(f"\nwritten: {report_path}")
 
 
 if __name__ == "__main__":
