@@ -26,6 +26,7 @@ pub mod math;
 pub mod mesh;
 pub mod metrics;
 pub mod pipeline;
+pub mod preprocess;
 pub mod relax;
 pub mod remesher;
 pub mod spatial;

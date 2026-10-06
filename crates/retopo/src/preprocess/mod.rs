@@ -1,0 +1,265 @@
+//! Preprocessing (stage M1): from the raw input to the *work mesh*, the
+//! well-shaped, moderately sized triangle mesh every later stage computes on,
+//! together with its curvature.
+//!
+//! The stage is a [`Preprocessor`]; chains get one from [`create`] and never
+//! name a concrete implementation.
+
+mod decimate;
+mod dynamic_mesh;
+mod isotropic;
+
+use std::collections::HashMap;
+use std::fmt;
+use std::str::FromStr;
+
+use crate::curvature::{Curvature, TensorField};
+use crate::error::{Error, Result};
+use crate::geometry::{feature_edges, vertex_areas, vertex_normals};
+use crate::math::Vec3;
+use crate::mesh::{Topology, TriMesh};
+use crate::spatial::Bvh;
+use dynamic_mesh::DynamicMesh;
+
+/// What the solvers work on.
+#[derive(Clone, Debug)]
+pub struct WorkMesh {
+    pub mesh: TriMesh,
+    pub normals: Vec<Vec3>,
+    pub areas: Vec<f64>,
+    /// Edges the output must follow: creases and open boundaries.
+    pub feature_edges: Vec<[u32; 2]>,
+    /// Principal curvatures per vertex, read at [`Request::curvature_scale`].
+    pub curvature: Curvature,
+    /// How much the principal directions can be trusted, per vertex: 0 where
+    /// the surface is flat or equally curved every way, towards 1 where one
+    /// direction clearly dominates.
+    pub confidence: Vec<f64>,
+}
+
+#[derive(Clone, Debug)]
+pub struct Request {
+    /// Size of the work mesh.
+    pub triangles: usize,
+    /// Dihedral angle in degrees above which an edge is a crease to keep.
+    /// Open boundaries are always kept.
+    pub crease_angle: Option<f64>,
+    /// Length over which curvature is averaged; typically the edge length of
+    /// the quads to come, since smaller detail cannot be followed anyway.
+    /// `None` reads it at the scale of the work mesh itself.
+    pub curvature_scale: Option<f64>,
+}
+
+impl Default for Request {
+    fn default() -> Self {
+        Self { triangles: 100_000, crease_angle: None, curvature_scale: None }
+    }
+}
+
+pub trait Preprocessor {
+    fn kind(&self) -> Kind;
+    fn preprocess(&self, source: &TriMesh, request: &Request) -> Result<WorkMesh>;
+}
+
+/// The preprocessors [`create`] knows how to build.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Kind {
+    /// Clean, decimate if far too dense, remesh isotropically.
+    Isotropic,
+    /// Clean only: for inputs that are already good work meshes.
+    Passthrough,
+}
+
+impl Kind {
+    pub const ALL: &[Kind] = &[Kind::Isotropic, Kind::Passthrough];
+
+    pub fn name(self) -> &'static str {
+        match self {
+            Kind::Isotropic => "isotropic",
+            Kind::Passthrough => "passthrough",
+        }
+    }
+}
+
+impl fmt::Display for Kind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl FromStr for Kind {
+    type Err = Error;
+
+    fn from_str(name: &str) -> Result<Self> {
+        Kind::ALL.iter().copied().find(|k| k.name() == name).ok_or_else(|| {
+            let known: Vec<&str> = Kind::ALL.iter().map(|k| k.name()).collect();
+            Error::InvalidParams(format!("unknown preprocessor '{name}' (known: {})", known.join(", ")))
+        })
+    }
+}
+
+/// Builds the preprocessor of that kind with its default tuning.
+pub fn create(kind: Kind) -> Box<dyn Preprocessor> {
+    match kind {
+        Kind::Isotropic => Box::new(Isotropic::default()),
+        Kind::Passthrough => Box::new(Passthrough),
+    }
+}
+
+/// Decimation by quadric error where the input is far denser than needed,
+/// then isotropic remeshing to the requested size.
+#[derive(Clone, Debug)]
+pub struct Isotropic {
+    pub iterations: usize,
+    /// Inputs with more than this many times the requested triangles are
+    /// first decimated down to that many times.
+    pub decimate_above: f64,
+}
+
+impl Default for Isotropic {
+    fn default() -> Self {
+        Self { iterations: 6, decimate_above: 2.0 }
+    }
+}
+
+impl Preprocessor for Isotropic {
+    fn kind(&self) -> Kind {
+        Kind::Isotropic
+    }
+
+    fn preprocess(&self, source: &TriMesh, request: &Request) -> Result<WorkMesh> {
+        if request.triangles == 0 {
+            return Err(Error::InvalidParams("work mesh size is zero".into()));
+        }
+        let source = cleaned(source)?;
+        let features = source_features(&source, request);
+        let surface = Bvh::build(&source);
+        let face_normals: Vec<Vec3> =
+            (0..source.triangles.len()).map(|f| source.area_vector(f).normalize_or_zero()).collect();
+        let lines = (!features.is_empty()).then(|| {
+            let segment = |&[a, b]: &[u32; 2]| {
+                let (a, b) = (source.positions[a as usize], source.positions[b as usize]);
+                [a, b, b]
+            };
+            Bvh::from_triangles(features.iter().map(segment).collect())
+        });
+
+        let mut mesh = DynamicMesh::new(&source, &features);
+        let ceiling = (self.decimate_above * request.triangles as f64) as usize;
+        if mesh.triangle_count() > ceiling {
+            decimate::decimate(&mut mesh, ceiling);
+        }
+
+        // Edge of the equilateral triangle that tiles the surface `triangles`
+        // times, stretched a little: remeshing settles on edges slightly
+        // shorter than asked (measured: about 13 % too many triangles without).
+        let edge_length = 1.06 * (4.0 * source.surface_area() / (3.0f64.sqrt() * request.triangles as f64)).sqrt();
+        let target = isotropic::Target { surface: &surface, face_normals: &face_normals, features: lines.as_ref() };
+        isotropic::remesh(&mut mesh, &target, edge_length, self.iterations);
+
+        let (mesh, features) = mesh.finish();
+        Ok(work_mesh(mesh, features, request))
+    }
+}
+
+/// Leaves the triangulation as it is.
+#[derive(Clone, Copy, Debug)]
+pub struct Passthrough;
+
+impl Preprocessor for Passthrough {
+    fn kind(&self) -> Kind {
+        Kind::Passthrough
+    }
+
+    fn preprocess(&self, source: &TriMesh, request: &Request) -> Result<WorkMesh> {
+        let mesh = cleaned(source)?;
+        let features = source_features(&mesh, request);
+        Ok(work_mesh(mesh, features, request))
+    }
+}
+
+/// Welds coincident vertices and drops degenerate triangles: exported meshes
+/// routinely split vertices along UV seams or hard edges, which would leave
+/// the surface in disconnected pieces.
+fn cleaned(source: &TriMesh) -> Result<TriMesh> {
+    source.validate()?;
+    let (min, max) =
+        source.positions.iter().fold((Vec3::INFINITY, Vec3::NEG_INFINITY), |(lo, hi), &p| (lo.min(p), hi.max(p)));
+    let cell = ((max - min).length() * 1e-9).max(f64::MIN_POSITIVE);
+    let mut first_at: HashMap<[i64; 3], u32> = HashMap::with_capacity(source.positions.len());
+    let remap: Vec<u32> = source
+        .positions
+        .iter()
+        .enumerate()
+        .map(|(v, p)| *first_at.entry(((*p - min) / cell).round().to_array().map(|c| c as i64)).or_insert(v as u32))
+        .collect();
+    let welded = TriMesh {
+        positions: source.positions.clone(),
+        triangles: source.triangles.iter().map(|tri| tri.map(|v| remap[v as usize])).collect(),
+    }
+    .cleaned();
+    if welded.triangles.is_empty() {
+        return Err(Error::InvalidMesh("mesh has no non-degenerate triangle".into()));
+    }
+    Ok(welded)
+}
+
+fn source_features(mesh: &TriMesh, request: &Request) -> Vec<[u32; 2]> {
+    feature_edges(mesh, &Topology::build(mesh), request.crease_angle.map(f64::to_radians), true)
+}
+
+fn work_mesh(mesh: TriMesh, feature_edges: Vec<[u32; 2]>, request: &Request) -> WorkMesh {
+    let normals = vertex_normals(&mesh);
+    let areas = vertex_areas(&mesh);
+    let topology = Topology::build(&mesh);
+
+    // n smoothing passes reach about sqrt(n) edges.
+    let edge = mesh.edge_length_stats().1;
+    let passes = request.curvature_scale.map_or(0, |scale| ((scale / edge).powi(2).round() as usize).min(400));
+    let curvature = TensorField::estimate(&mesh, &normals, &areas)
+        .smoothed(&topology.neighbors, &normals, &areas, passes)
+        .principal(&normals);
+
+    let (min, max) =
+        mesh.positions.iter().fold((Vec3::INFINITY, Vec3::NEG_INFINITY), |(lo, hi), &p| (lo.min(p), hi.max(p)));
+    // Curvature of a sphere a thousand times the size of the model: flat.
+    let negligible = 1e-3 / (max - min).length().max(f64::MIN_POSITIVE);
+    let confidence = (0..mesh.positions.len())
+        .map(|v| curvature.anisotropy(v) / (curvature.k1[v].abs() + curvature.k2[v].abs() + negligible))
+        .collect();
+
+    WorkMesh { mesh, normals, areas, feature_edges, curvature, confidence }
+}
+
+/// Shape statistics of a triangle mesh.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Quality {
+    /// Mean over the triangles of their smallest angle, in degrees (60 for
+    /// equilateral triangles).
+    pub min_angle_mean: f64,
+    /// The smallest angle that 99 % of the triangles exceed.
+    pub min_angle_p01: f64,
+    /// Longest edge over shortest edge.
+    pub edge_ratio: f64,
+}
+
+pub fn quality(mesh: &TriMesh) -> Quality {
+    let mut min_angles: Vec<f64> = (0..mesh.triangles.len())
+        .map(|f| {
+            let p = mesh.corners(f);
+            (0..3)
+                .map(|k| {
+                    let (a, b) = (p[(k + 1) % 3] - p[k], p[(k + 2) % 3] - p[k]);
+                    a.normalize_or_zero().dot(b.normalize_or_zero()).clamp(-1.0, 1.0).acos().to_degrees()
+                })
+                .fold(f64::INFINITY, f64::min)
+        })
+        .collect();
+    min_angles.sort_unstable_by(f64::total_cmp);
+    let (shortest, _, longest) = mesh.edge_length_stats();
+    Quality {
+        min_angle_mean: min_angles.iter().sum::<f64>() / min_angles.len().max(1) as f64,
+        min_angle_p01: min_angles.get(min_angles.len() / 100).copied().unwrap_or(0.0),
+        edge_ratio: if shortest > 0.0 { longest / shortest } else { f64::INFINITY },
+    }
+}

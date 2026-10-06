@@ -1,6 +1,6 @@
 # Cahier des charges : moteur de retopologie quad
 
-**Statut : validé le 6 octobre 2026. Jalon 0 réalisé, en attente de revue.** Les points marqués
+**Statut : validé le 6 octobre 2026. Jalons 0 et 1 réalisés, en attente de revue.** Les points marqués
 *à trancher* attendent une décision ; ils sont regroupés en section 7.
 
 Première chaîne, pour l'organique : **champ de croix → paramétrisation sans couture → T-mesh →
@@ -54,64 +54,88 @@ sur S, C, A et F**, sans dégrader H ni N au-delà d'une marge.
 
 ### Résultats du jalon 0
 
-Campagne complète dans [bench/results/RESULTATS.md](bench/results/RESULTATS.md) : 9 modèles,
+Campagne complète dans [bench/results/RESULTS.md](bench/results/RESULTS.md) : 9 modèles,
 3000 quads demandés, médiane sur 5 graines. Mode d'emploi et limites dans
-[bench/README.md](bench/README.md). Sur les cinq modèles organiques :
+[bench/README.md](bench/README.md).
 
-| | QuadriFlow (Blender) | Plancher (Instant Meshes) |
-|---|---|---|
-| Maillages valides (V) | 18 sur 25 | 22 sur 25 |
-| Sommets irréguliers (S) | 8 à 78 | 91 à 212 |
-| Patchs du complexe de base (C), pour 3000 faces | 1943 à 2884 | 2319 à 3048 |
-| Alignement (A), degrés | 8,1 à 23,0 | 8,0 à 23,2 |
-| Écart d'angle moyen (F), degrés | 5,8 à 8,7 | 4,7 à 7,1 |
-| Écart au budget (N) | 1 à 11 % | 2 à 3 % |
+Quad Remesher (version d'essai 1.4.1) sert de **mire** : ce n'est pas l'adversaire à battre pour
+l'acceptation, mais le niveau visé à terme. Il est mesuré en réglage uniforme (taille de quad
+constante, pour comparer à armes égales) et n'a pas de graine, donc une seule exécution.
+
+Sur les cinq modèles organiques :
+
+| | QuadriFlow (Blender) | Quad Remesher (uniforme) | Plancher (Instant Meshes) |
+|---|---|---|---|
+| Maillages valides (V) | 18 sur 25 | 5 sur 5 | 22 sur 25 |
+| Alignement (A), degrés | 8,1 à 23,0 | 2,6 à 14,7 | 8,0 à 23,2 |
+| Sommets irréguliers (S) | 8 à 78 | 24 à 101 | 91 à 212 |
+| Patchs du complexe de base (C), pour 3000 faces | 1943 à 2884 | 1001 à 2531 | 2319 à 3048 |
+| Écart d'angle moyen (F), degrés | 5,8 à 8,7 | 4,3 à 10,6 | 4,7 à 7,1 |
+| Écart au budget (N) | 1 à 11 % | 7 à 16 % | 2 à 3 % |
+| Temps (T), secondes | 1,3 à 4,2 | 3 à 17 | 0,3 à 1,5 |
 
 Ce que ces chiffres établissent :
 
-- **Le plancher est bien en dessous sur les singularités** : 3 à 11 fois plus de sommets
-  irréguliers que QuadriFlow. C'est l'écart à combler, et il était attendu.
-- **QuadriFlow n'est pas toujours valide.** Il produit des faces repliées sur le tore (4 graines
-  sur 5), sur Suzanne (5 sur 5) et sur le blob (2 sur 5), et une face d'aire nulle sur la pièce
-  mécanique (1 sur 5). Constat recoupé par un second test indépendant de la source.
-- **Aucun des deux n'a de structure globale** : le complexe de base compte presque autant de
-  patchs que de faces, parce que les lignes d'arêtes tournent longtemps avant de rencontrer une
-  singularité. Seule exception : le cube chez QuadriFlow (6 patchs, le minimum). C'est là que la
-  chaîne cible doit faire la différence, puisque le T-mesh impose cette structure.
-- **Sur l'alignement et la forme des quads, les deux sont proches.** Sur le rocher bruité, les
-  deux sont au niveau du hasard (22,5°).
+- **Ce qui distingue Quad Remesher, c'est l'alignement.** Sur les formes lisses (blob, créature,
+  cage) ses arêtes sont à 2,6°, 4,6° et 5,3° des directions de courbure, contre 8,1° à 17,5° pour
+  QuadriFlow : environ trois fois mieux. Ses boucles d'arêtes font le tour des trous et des
+  membres ; celles de QuadriFlow forment une grille qui les ignore.
+- **Quad Remesher ne minimise pas les singularités.** Il en a autant que QuadriFlow sur les formes
+  lisses, et douze fois plus sur le rocher bruité (101 contre 8), où il suit le relief. Peu de
+  sommets irréguliers n'est donc pas l'objectif en soi : c'est le prix qu'on accepte de payer
+  pour l'alignement.
+- **Sa structure est meilleure sans être simple** : environ moitié moins de patchs que QuadriFlow
+  sur les formes lisses, mais encore un millier pour 3000 faces.
+- **Il tient mal le budget** : 7 à 16 % d'écart en réglage uniforme, et jusqu'à presque le double
+  de faces demandées en réglage par défaut (cage).
+- **QuadriFlow n'est pas toujours valide.** Faces repliées sur le tore (4 graines sur 5), sur
+  Suzanne (5 sur 5) et sur le blob (2 sur 5) ; une face d'aire nulle sur la pièce mécanique
+  (1 sur 5). Constat recoupé par un second test indépendant de la source.
+- **Le plancher est loin derrière sur les singularités** : 3 à 11 fois plus que QuadriFlow.
+- **Sur le durci**, QuadriFlow et Quad Remesher font jeu égal : 8 sommets irréguliers et 6 patchs
+  sur le cube (les minimums), 24 à 28 sommets irréguliers sur la pièce percée.
 
 Deux réserves sur les métriques elles-mêmes :
 
 - **C sature.** Près du nombre de faces, elle ne départage plus : un maillage avec davantage de
   singularités peut même obtenir un C un peu plus bas, ses lignes s'arrêtant plus tôt. Elle ne
   se lit qu'avec S.
-- **A dépend de l'échelle** à laquelle on lit la courbure (ici celle d'un quad). Sur une forme
-  bruitée, cette courbure n'a pas de direction stable et la métrique ne dit rien.
+- **A dépend de l'échelle** à laquelle on lit la courbure (ici celle d'un quad). Sur le rocher
+  bruité, QuadriFlow et le plancher sont au niveau du hasard (22,5°).
 
 ### Seuils proposés — *à trancher*
 
-Sur chaque modèle organique, médiane sur 5 graines, à budget égal :
+Sur chaque modèle organique, médiane sur 5 graines, à budget égal. Deux niveaux : l'acceptation
+(mieux que Blender) et la visée (le niveau de Quad Remesher). La visée est un palier, pas un
+plafond : si on peut faire mieux que Quad Remesher, on ne s'arrête pas là.
 
-| Métrique | Seuil proposé |
-|---|---|
-| V | 5 maillages valides sur 5 |
-| S | pas plus que QuadriFlow, et strictement moins sur au moins 3 modèles sur 5 |
-| C | au plus la moitié de celui de QuadriFlow |
-| A | au moins 2° de mieux, là où QuadriFlow fait mieux que 20° |
-| F | écart d'angle moyen pas plus élevé |
-| H | Hausdorff au plus 1,2 fois celui de QuadriFlow |
-| N | écart au budget d'au plus 5 % |
+| Métrique | Acceptation | Visée |
+|---|---|---|
+| V | 5 maillages valides sur 5 | idem |
+| A | au moins 2° de mieux que QuadriFlow, là où il fait mieux que 20° | 6° ou moins sur les formes lisses |
+| S | au plus 1,5 fois QuadriFlow | — |
+| C | pas plus que QuadriFlow | la moitié de QuadriFlow |
+| F | écart d'angle moyen pas plus élevé que QuadriFlow | idem |
+| H | Hausdorff au plus 1,2 fois celui de QuadriFlow | idem |
+| N | écart au budget d'au plus 5 % | idem |
+
+Par rapport à ma première proposition, l'alignement passe en tête et l'exigence sur les sommets
+irréguliers est assouplie (elle était « pas plus que QuadriFlow ») : la mire montre que les deux
+se négocient l'un contre l'autre, et que c'est l'alignement qui fait la qualité perçue.
 
 ### Corpus — *à trancher*
 
 Le jalon 0 tourne sur un **corpus provisoire**, entièrement généré dans Blender pour ne rien
-télécharger : cinq formes organiques (blob, rocher bruité, créature à pattes, cage de genre 5,
-Suzanne), deux mécaniques (pièce percée, cube) et deux étalons (sphère, tore). Elles couvrent les
-cas utiles, mais ce sont des formes de synthèse, pas de vraies sculptures.
+télécharger, et versionné dans `bench/corpus/` avec les mires Quad Remesher correspondantes
+(`bench/reference/`, 3 budgets et 2 réglages par modèle) : cinq formes organiques (blob, rocher
+bruité, créature à pattes, cage de genre 5, Suzanne), deux mécaniques (pièce percée, cube) et deux
+étalons (sphère, tore). Elles couvrent les cas utiles, mais ce sont des formes de synthèse, pas de
+vraies sculptures.
 
 Reste à choisir le corpus définitif : une dizaine de modèles réels sous licence libre (personnage,
-tête, main, animal, scan bruité), ce qui suppose de les télécharger.
+tête, main, animal, scan bruité), ce qui suppose de les télécharger. **C'est à décider tant que la
+licence d'essai de Quad Remesher est valide** : une fois expirée, on ne pourra plus produire de
+mires sur de nouveaux modèles.
 
 ---
 
@@ -287,6 +311,33 @@ impose des sommets irréguliers.)
 - **Test** : angles minimaux des triangles ; distance à la source ; courbures comparées aux
   valeurs exactes sur sphère, cylindre et tore.
 
+**Réalisé au jalon 1** (`crates/retopo/src/preprocess/`, interface `Preprocessor` et sa fabrique).
+Mesuré sur le corpus pour un maillage de calcul de 50 000 triangles demandés :
+
+| Modèle | Triangles | Plus petit angle, moyenne | … 1ᵉʳ centile | Hausdorff, ‰ | Temps |
+|---|---|---|---|---|---|
+| blob | 124 004 → 50 420 | 45,6° → 52,9° | 35,2° → 41,6° | 2,0 | 1,4 s |
+| rocher | 81 920 → 56 638 | 55,8° → 54,8° | 48,0° → 42,7° | 1,3 | 1,1 s |
+| créature | 78 124 → 51 162 | 43,3° → 53,3° | 32,3° → 42,0° | 0,6 | 1,1 s |
+| cage | 26 656 → 48 600 | 40,8° → 52,8° | 28,5° → 41,5° | 4,4 | 0,9 s |
+| Suzanne | 15 744 → 49 284 | 35,4° → 52,2° | 11,8° → 39,2° | 3,2 | 1,1 s |
+| pièce (arêtes vives) | 406 → 53 090 | 3,3° → 49,7° | 0,5° → 29,2° | 0,3 | 1,5 s |
+| cube (arêtes vives) | 3 072 → 50 592 | 45,0° → 46,7° | 45,0° → 39,0° | 0,0 | 0,8 s |
+
+- Topologie conservée partout : même nombre de composantes, mêmes bords, aucune arête non variété.
+- Arêtes vives et coins conservés exactement (volume du cube exact, les 8 coins présents).
+- Passage à l'échelle : 1,3 million de triangles ramenés à 100 000 en 10 secondes.
+- Courbures vérifiées sur le tore remaillé : valeur et direction justes sur plus de 97 % des
+  sommets ; indice de confiance proche de zéro sur la sphère, comme attendu.
+
+Limites constatées :
+
+- **Arêtes vives non déclarées.** Sans angle de pli fourni, une arête vive est traitée comme une
+  zone très courbe et s'érode d'environ une demi-longueur d'arête (c'est la cage, à 4,4 ‰).
+- **Taille du maillage de calcul** tenue à 13 % près, pas exactement.
+- **Entrées non variété** : laissées telles quelles, ni réparées ni refusées.
+- **Cylindre** : pas de test sur cylindre, faute de primitive ; le tore couvre le même cas.
+
 ### M2 — Champ de croix
 
 - **Entrée** : maillage de calcul, courbures et confiance ; contraintes dures éventuelles (arêtes
@@ -410,7 +461,7 @@ Chaque jalon produit quelque chose de vérifiable et se termine par **un arrêt 
 | Jalon | Contenu | Ce qu'on peut vérifier à la fin |
 |---|---|---|
 | J0 | Banc de mesure, corpus provisoire, fabrique de chaînes | **Fait, en attente de revue.** Chiffres de QuadriFlow et du plancher ; seuils proposés |
-| J1 | Prétraitement (M1) | Maillages de calcul et courbures, tests analytiques |
+| J1 | Prétraitement (M1) | **Fait, en attente de revue.** Maillages de calcul et courbures, tests analytiques |
 | J2 | Champ de croix (M2) | Champs visualisés, singularités comptées |
 | J3 | Singularités (M3), durée bornée | Gain mesuré sur S, ou décision de s'en tenir au réglage global |
 | J4 | Paramétrisation sans couture (M4) | **Jalon de vérité** : zéro inversion sur le corpus, ou activation d'un repli |
@@ -450,6 +501,8 @@ composent des mêmes briques :
 | `Quantizer` | longueurs entières (M6) | commune | commune |
 | `Mesher` | maillage quad depuis la structure quantifiée | carte entière et extraction (M7, M8) | remplissage par motifs |
 | `Relaxer` | placement final (M9) | commune | commune |
+
+Écrites à ce jour : `Remesher` et `Preprocessor`.
 
 Les deux chaînes ne diffèrent donc que par deux étapes, `LayoutBuilder` et `Mesher`, plus le
 réglage du champ de croix. Les types échangés entre étapes (maillage de calcul, champ de croix,
