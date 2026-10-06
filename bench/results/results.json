@@ -12,7 +12,7 @@
    "quadriflow": [
     {
      "seed": 1,
-     "seconds": 2.134,
+     "seconds": 2.688,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -44,7 +44,7 @@
     },
     {
      "seed": 2,
-     "seconds": 1.993,
+     "seconds": 1.951,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -76,7 +76,7 @@
     },
     {
      "seed": 3,
-     "seconds": 1.893,
+     "seconds": 1.918,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -108,7 +108,7 @@
     },
     {
      "seed": 4,
-     "seconds": 1.935,
+     "seconds": 2.209,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -140,7 +140,7 @@
     },
     {
      "seed": 5,
-     "seconds": 2.002,
+     "seconds": 1.98,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -174,7 +174,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 1.542,
+     "seconds": 1.544,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -206,7 +206,7 @@
     },
     {
      "seed": 2,
-     "seconds": 1.277,
+     "seconds": 1.891,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -238,7 +238,7 @@
     },
     {
      "seed": 3,
-     "seconds": 1.284,
+     "seconds": 1.498,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -270,7 +270,7 @@
     },
     {
      "seed": 4,
-     "seconds": 1.21,
+     "seconds": 1.649,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -302,7 +302,7 @@
     },
     {
      "seed": 5,
-     "seconds": 1.858,
+     "seconds": 1.716,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -332,13 +332,81 @@
       "budget_error": 0.03
      }
     }
+   ],
+   "quadremesher": [
+    {
+     "seed": 1,
+     "seconds": 16.381,
+     "failure": null,
+     "metrics": {
+      "valid": true,
+      "vertices": 3372,
+      "faces": 3370,
+      "quads": 3370,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 26,
+      "topological_minimum": 8,
+      "irregular_excess": 18,
+      "base_complex_patches": 1826,
+      "alignment": 3.933675522939357,
+      "angle_deviation_mean": 5.764522933218859,
+      "angle_deviation_p95": 17.20857078788852,
+      "aspect_mean": 1.6178017101123756,
+      "aspect_p95": 2.741199222375826,
+      "area_variation": 0.4421945654734451,
+      "hausdorff": 0.004212360817266057,
+      "mean_distance": 0.0004065162365465887,
+      "budget_error": 0.12333333333333334
+     }
+    }
+   ],
+   "quadremesher-uniform": [
+    {
+     "seed": 1,
+     "seconds": 12.282,
+     "failure": null,
+     "metrics": {
+      "valid": true,
+      "vertices": 2757,
+      "faces": 2755,
+      "quads": 2755,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 24,
+      "topological_minimum": 8,
+      "irregular_excess": 16,
+      "base_complex_patches": 1350,
+      "alignment": 4.553792695026089,
+      "angle_deviation_mean": 5.445826479880772,
+      "angle_deviation_p95": 15.606984962779222,
+      "aspect_mean": 1.276325271802228,
+      "aspect_p95": 1.7551756806246892,
+      "area_variation": 0.31343197656893934,
+      "hausdorff": 0.007276424761095456,
+      "mean_distance": 0.0005125357161324863,
+      "budget_error": 0.08166666666666667
+     }
+    }
    ]
   },
-  "rocher": {
+  "rock": {
    "quadriflow": [
     {
      "seed": 1,
-     "seconds": 1.476,
+     "seconds": 2.224,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -370,7 +438,7 @@
     },
     {
      "seed": 2,
-     "seconds": 1.29,
+     "seconds": 2.066,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -402,7 +470,7 @@
     },
     {
      "seed": 3,
-     "seconds": 1.694,
+     "seconds": 1.33,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -434,7 +502,7 @@
     },
     {
      "seed": 4,
-     "seconds": 1.413,
+     "seconds": 1.371,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -466,7 +534,7 @@
     },
     {
      "seed": 5,
-     "seconds": 1.413,
+     "seconds": 1.31,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -500,7 +568,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 2.666,
+     "seconds": 1.155,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -532,7 +600,7 @@
     },
     {
      "seed": 2,
-     "seconds": 0.848,
+     "seconds": 1.317,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -564,7 +632,7 @@
     },
     {
      "seed": 3,
-     "seconds": 0.92,
+     "seconds": 0.814,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -596,7 +664,7 @@
     },
     {
      "seed": 4,
-     "seconds": 0.74,
+     "seconds": 0.805,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -628,7 +696,7 @@
     },
     {
      "seed": 5,
-     "seconds": 1.107,
+     "seconds": 0.818,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -658,13 +726,81 @@
       "budget_error": 0.02666666666666667
      }
     }
+   ],
+   "quadremesher": [
+    {
+     "seed": 1,
+     "seconds": 20.486,
+     "failure": null,
+     "metrics": {
+      "valid": true,
+      "vertices": 3541,
+      "faces": 3539,
+      "quads": 3539,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 114,
+      "topological_minimum": 8,
+      "irregular_excess": 106,
+      "base_complex_patches": 3539,
+      "alignment": 14.169729979409873,
+      "angle_deviation_mean": 10.07472240990898,
+      "angle_deviation_p95": 24.880289866573634,
+      "aspect_mean": 1.470093073071521,
+      "aspect_p95": 2.1879044141312938,
+      "area_variation": 0.30790286334822775,
+      "hausdorff": 0.005133323694116062,
+      "mean_distance": 0.0007310904348234185,
+      "budget_error": 0.17966666666666667
+     }
+    }
+   ],
+   "quadremesher-uniform": [
+    {
+     "seed": 1,
+     "seconds": 16.978,
+     "failure": null,
+     "metrics": {
+      "valid": true,
+      "vertices": 2533,
+      "faces": 2531,
+      "quads": 2531,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 101,
+      "topological_minimum": 8,
+      "irregular_excess": 93,
+      "base_complex_patches": 2531,
+      "alignment": 14.678201868043823,
+      "angle_deviation_mean": 10.609090296905807,
+      "angle_deviation_p95": 26.208195456246877,
+      "aspect_mean": 1.3925213934035199,
+      "aspect_p95": 1.8996102361700709,
+      "area_variation": 0.2689077228762542,
+      "hausdorff": 0.005788214732890832,
+      "mean_distance": 0.0008893265225708634,
+      "budget_error": 0.15633333333333332
+     }
+    }
    ]
   },
   "creature": {
    "quadriflow": [
     {
      "seed": 1,
-     "seconds": 1.236,
+     "seconds": 1.281,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -696,7 +832,7 @@
     },
     {
      "seed": 2,
-     "seconds": 1.561,
+     "seconds": 1.273,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -728,7 +864,7 @@
     },
     {
      "seed": 3,
-     "seconds": 1.511,
+     "seconds": 1.726,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -760,7 +896,7 @@
     },
     {
      "seed": 4,
-     "seconds": 1.231,
+     "seconds": 1.339,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -792,7 +928,7 @@
     },
     {
      "seed": 5,
-     "seconds": 1.516,
+     "seconds": 1.286,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -826,7 +962,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 0.902,
+     "seconds": 1.396,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -858,7 +994,7 @@
     },
     {
      "seed": 2,
-     "seconds": 0.973,
+     "seconds": 1.108,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -890,7 +1026,7 @@
     },
     {
      "seed": 3,
-     "seconds": 0.838,
+     "seconds": 0.789,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -922,7 +1058,7 @@
     },
     {
      "seed": 4,
-     "seconds": 0.778,
+     "seconds": 0.779,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -954,7 +1090,7 @@
     },
     {
      "seed": 5,
-     "seconds": 1.031,
+     "seconds": 0.898,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -984,13 +1120,81 @@
       "budget_error": 0.03933333333333333
      }
     }
+   ],
+   "quadremesher": [
+    {
+     "seed": 1,
+     "seconds": 11.238,
+     "failure": null,
+     "metrics": {
+      "valid": true,
+      "vertices": 2943,
+      "faces": 2941,
+      "quads": 2941,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 42,
+      "topological_minimum": 8,
+      "irregular_excess": 34,
+      "base_complex_patches": 1465,
+      "alignment": 5.175975283751088,
+      "angle_deviation_mean": 6.1229454091479605,
+      "angle_deviation_p95": 17.13308908436194,
+      "aspect_mean": 1.3323376377181129,
+      "aspect_p95": 1.8502531175263608,
+      "area_variation": 0.34803622258546635,
+      "hausdorff": 0.002505875961689381,
+      "mean_distance": 0.00029702039852711533,
+      "budget_error": 0.019666666666666666
+     }
+    }
+   ],
+   "quadremesher-uniform": [
+    {
+     "seed": 1,
+     "seconds": 9.113,
+     "failure": null,
+     "metrics": {
+      "valid": true,
+      "vertices": 2721,
+      "faces": 2719,
+      "quads": 2719,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 46,
+      "topological_minimum": 8,
+      "irregular_excess": 38,
+      "base_complex_patches": 1301,
+      "alignment": 5.31549712923946,
+      "angle_deviation_mean": 6.534438211228075,
+      "angle_deviation_p95": 18.97812615473876,
+      "aspect_mean": 1.3340780980860836,
+      "aspect_p95": 1.84080871744144,
+      "area_variation": 0.31345909733008787,
+      "hausdorff": 0.0023694288421810404,
+      "mean_distance": 0.0003480460987903411,
+      "budget_error": 0.09366666666666666
+     }
+    }
    ]
   },
   "cage": {
    "quadriflow": [
     {
      "seed": 1,
-     "seconds": 1.973,
+     "seconds": 1.913,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1022,7 +1226,7 @@
     },
     {
      "seed": 2,
-     "seconds": 1.387,
+     "seconds": 1.385,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1054,7 +1258,7 @@
     },
     {
      "seed": 3,
-     "seconds": 1.495,
+     "seconds": 1.429,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1086,7 +1290,7 @@
     },
     {
      "seed": 4,
-     "seconds": 1.606,
+     "seconds": 1.736,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1118,7 +1322,7 @@
     },
     {
      "seed": 5,
-     "seconds": 1.515,
+     "seconds": 1.471,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1152,7 +1356,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 0.292,
+     "seconds": 0.418,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1184,7 +1388,7 @@
     },
     {
      "seed": 2,
-     "seconds": 0.293,
+     "seconds": 0.588,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1216,7 +1420,7 @@
     },
     {
      "seed": 3,
-     "seconds": 0.345,
+     "seconds": 0.316,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1248,7 +1452,7 @@
     },
     {
      "seed": 4,
-     "seconds": 0.313,
+     "seconds": 0.559,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1280,7 +1484,7 @@
     },
     {
      "seed": 5,
-     "seconds": 0.266,
+     "seconds": 0.468,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1310,13 +1514,81 @@
       "budget_error": 0.0006666666666666666
      }
     }
+   ],
+   "quadremesher": [
+    {
+     "seed": 1,
+     "seconds": 4.215,
+     "failure": null,
+     "metrics": {
+      "valid": true,
+      "vertices": 5801,
+      "faces": 5809,
+      "quads": 5809,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 44,
+      "topological_minimum": 32,
+      "irregular_excess": 12,
+      "base_complex_patches": 1092,
+      "alignment": 2.041645494719007,
+      "angle_deviation_mean": 3.9095997078322906,
+      "angle_deviation_p95": 11.901122742367562,
+      "aspect_mean": 1.9931020272327264,
+      "aspect_p95": 3.0400434731868007,
+      "area_variation": 0.31372200191191607,
+      "hausdorff": 0.005741863094334958,
+      "mean_distance": 0.0006931741536130963,
+      "budget_error": 0.9363333333333334
+     }
+    }
+   ],
+   "quadremesher-uniform": [
+    {
+     "seed": 1,
+     "seconds": 3.922,
+     "failure": null,
+     "metrics": {
+      "valid": true,
+      "vertices": 2777,
+      "faces": 2785,
+      "quads": 2785,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 43,
+      "topological_minimum": 32,
+      "irregular_excess": 11,
+      "base_complex_patches": 1001,
+      "alignment": 2.573406825139734,
+      "angle_deviation_mean": 4.299122056905873,
+      "angle_deviation_p95": 12.820414978031351,
+      "aspect_mean": 1.317773898373166,
+      "aspect_p95": 1.6746466420044388,
+      "area_variation": 0.2382086355616614,
+      "hausdorff": 0.009655446749838219,
+      "mean_distance": 0.0012759467537523717,
+      "budget_error": 0.07166666666666667
+     }
+    }
    ]
   },
   "suzanne": {
    "quadriflow": [
     {
      "seed": 1,
-     "seconds": 2.939,
+     "seconds": 3.322,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -1348,7 +1620,7 @@
     },
     {
      "seed": 2,
-     "seconds": 2.973,
+     "seconds": 3.322,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -1380,7 +1652,7 @@
     },
     {
      "seed": 3,
-     "seconds": 2.796,
+     "seconds": 2.895,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -1412,7 +1684,7 @@
     },
     {
      "seed": 4,
-     "seconds": 2.8,
+     "seconds": 3.344,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -1444,7 +1716,7 @@
     },
     {
      "seed": 5,
-     "seconds": 2.861,
+     "seconds": 3.638,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -1478,7 +1750,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 0.195,
+     "seconds": 0.696,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -1510,7 +1782,7 @@
     },
     {
      "seed": 2,
-     "seconds": 0.297,
+     "seconds": 0.252,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1542,7 +1814,7 @@
     },
     {
      "seed": 3,
-     "seconds": 0.309,
+     "seconds": 0.22,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1574,7 +1846,7 @@
     },
     {
      "seed": 4,
-     "seconds": 0.383,
+     "seconds": 0.231,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -1606,7 +1878,7 @@
     },
     {
      "seed": 5,
-     "seconds": 0.195,
+     "seconds": 0.245,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -1636,13 +1908,81 @@
       "budget_error": 0.017333333333333333
      }
     }
+   ],
+   "quadremesher": [
+    {
+     "seed": 1,
+     "seconds": 3.442,
+     "failure": null,
+     "metrics": {
+      "valid": false,
+      "vertices": 4356,
+      "faces": 4310,
+      "quads": 4310,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 88,
+      "source_boundary_edges": 168,
+      "inverted_faces": 1,
+      "degenerate_faces": 0,
+      "components": 3,
+      "source_components": 3,
+      "irregular_vertices": 80,
+      "topological_minimum": null,
+      "irregular_excess": null,
+      "base_complex_patches": 2513,
+      "alignment": 8.754521727503526,
+      "angle_deviation_mean": 7.872610832803846,
+      "angle_deviation_p95": 21.85163230231319,
+      "aspect_mean": 1.6683063160418738,
+      "aspect_p95": 3.4257809643440944,
+      "area_variation": 0.472519653144362,
+      "hausdorff": 0.006773283451069267,
+      "mean_distance": 0.0006033415903780341,
+      "budget_error": 0.43666666666666665
+     }
+    }
+   ],
+   "quadremesher-uniform": [
+    {
+     "seed": 1,
+     "seconds": 3.205,
+     "failure": null,
+     "metrics": {
+      "valid": true,
+      "vertices": 2669,
+      "faces": 2628,
+      "quads": 2628,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 78,
+      "source_boundary_edges": 168,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 3,
+      "source_components": 3,
+      "irregular_vertices": 71,
+      "topological_minimum": null,
+      "irregular_excess": null,
+      "base_complex_patches": 1838,
+      "alignment": 10.244746119347058,
+      "angle_deviation_mean": 7.873901016278934,
+      "angle_deviation_p95": 20.463893818417702,
+      "aspect_mean": 1.2840577973485476,
+      "aspect_p95": 1.7524760250519236,
+      "area_variation": 0.23568909191909307,
+      "hausdorff": 0.009468306060584184,
+      "mean_distance": 0.0010528183774421152,
+      "budget_error": 0.124
+     }
+    }
    ]
   },
-  "piece": {
+  "part": {
    "quadriflow": [
     {
      "seed": 1,
-     "seconds": 2.519,
+     "seconds": 2.452,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1674,7 +2014,7 @@
     },
     {
      "seed": 2,
-     "seconds": 2.465,
+     "seconds": 2.29,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1706,7 +2046,7 @@
     },
     {
      "seed": 3,
-     "seconds": 2.54,
+     "seconds": 3.41,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1770,7 +2110,7 @@
     },
     {
      "seed": 5,
-     "seconds": 2.287,
+     "seconds": 2.343,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -1804,7 +2144,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 0.697,
+     "seconds": 0.866,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1836,7 +2176,7 @@
     },
     {
      "seed": 2,
-     "seconds": 0.629,
+     "seconds": 1.09,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1868,7 +2208,7 @@
     },
     {
      "seed": 3,
-     "seconds": 0.743,
+     "seconds": 0.553,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1900,7 +2240,7 @@
     },
     {
      "seed": 4,
-     "seconds": 0.774,
+     "seconds": 0.504,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1932,7 +2272,7 @@
     },
     {
      "seed": 5,
-     "seconds": 0.664,
+     "seconds": 1.115,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1962,13 +2302,81 @@
       "budget_error": 0.020666666666666667
      }
     }
+   ],
+   "quadremesher": [
+    {
+     "seed": 1,
+     "seconds": 2.835,
+     "failure": null,
+     "metrics": {
+      "valid": true,
+      "vertices": 2813,
+      "faces": 2815,
+      "quads": 2815,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 24,
+      "topological_minimum": 8,
+      "irregular_excess": 16,
+      "base_complex_patches": 501,
+      "alignment": 10.90205268327779,
+      "angle_deviation_mean": 3.0232261693545124,
+      "angle_deviation_p95": 12.042780875102821,
+      "aspect_mean": 1.3260737561265497,
+      "aspect_p95": 1.6081850968042826,
+      "area_variation": 0.1963224133098877,
+      "hausdorff": 0.0008891463272615188,
+      "mean_distance": 6.810567132302252e-05,
+      "budget_error": 0.06166666666666667
+     }
+    }
+   ],
+   "quadremesher-uniform": [
+    {
+     "seed": 1,
+     "seconds": 2.881,
+     "failure": null,
+     "metrics": {
+      "valid": true,
+      "vertices": 2813,
+      "faces": 2815,
+      "quads": 2815,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 24,
+      "topological_minimum": 8,
+      "irregular_excess": 16,
+      "base_complex_patches": 501,
+      "alignment": 10.90205268327779,
+      "angle_deviation_mean": 3.0232261693545124,
+      "angle_deviation_p95": 12.042780875102821,
+      "aspect_mean": 1.3260737561265497,
+      "aspect_p95": 1.6081850968042826,
+      "area_variation": 0.1963224133098877,
+      "hausdorff": 0.0008891463272615188,
+      "mean_distance": 6.810567132302252e-05,
+      "budget_error": 0.06166666666666667
+     }
+    }
    ]
   },
   "cube": {
    "quadriflow": [
     {
      "seed": 1,
-     "seconds": 0.744,
+     "seconds": 2.328,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2000,7 +2408,7 @@
     },
     {
      "seed": 2,
-     "seconds": 0.729,
+     "seconds": 0.754,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2032,7 +2440,7 @@
     },
     {
      "seed": 3,
-     "seconds": 0.733,
+     "seconds": 1.378,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2064,7 +2472,7 @@
     },
     {
      "seed": 4,
-     "seconds": 0.735,
+     "seconds": 1.026,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2096,7 +2504,7 @@
     },
     {
      "seed": 5,
-     "seconds": 0.727,
+     "seconds": 0.734,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2130,7 +2538,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 0.376,
+     "seconds": 0.102,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2162,7 +2570,7 @@
     },
     {
      "seed": 2,
-     "seconds": 0.141,
+     "seconds": 0.12,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2194,7 +2602,7 @@
     },
     {
      "seed": 3,
-     "seconds": 0.353,
+     "seconds": 0.102,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2226,7 +2634,7 @@
     },
     {
      "seed": 4,
-     "seconds": 0.613,
+     "seconds": 0.096,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2258,7 +2666,7 @@
     },
     {
      "seed": 5,
-     "seconds": 0.364,
+     "seconds": 0.102,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2288,13 +2696,81 @@
       "budget_error": 0.01
      }
     }
+   ],
+   "quadremesher": [
+    {
+     "seed": 1,
+     "seconds": 2.968,
+     "failure": null,
+     "metrics": {
+      "valid": true,
+      "vertices": 3084,
+      "faces": 3082,
+      "quads": 3082,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 8,
+      "topological_minimum": 8,
+      "irregular_excess": 0,
+      "base_complex_patches": 6,
+      "alignment": 0.13119081723520568,
+      "angle_deviation_mean": 3.859535261858191e-05,
+      "angle_deviation_p95": 0.00010800239199681982,
+      "aspect_mean": 1.029851545973972,
+      "aspect_p95": 1.0454572561140822,
+      "area_variation": 0.020956487133865564,
+      "hausdorff": 3.2111913537771814e-17,
+      "mean_distance": 2.5543240161805878e-19,
+      "budget_error": 0.027333333333333334
+     }
+    }
+   ],
+   "quadremesher-uniform": [
+    {
+     "seed": 1,
+     "seconds": 2.997,
+     "failure": null,
+     "metrics": {
+      "valid": true,
+      "vertices": 3084,
+      "faces": 3082,
+      "quads": 3082,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 8,
+      "topological_minimum": 8,
+      "irregular_excess": 0,
+      "base_complex_patches": 6,
+      "alignment": 0.13119081723520568,
+      "angle_deviation_mean": 3.859535261858191e-05,
+      "angle_deviation_p95": 0.00010800239199681982,
+      "aspect_mean": 1.029851545973972,
+      "aspect_p95": 1.0454572561140822,
+      "area_variation": 0.020956487133865564,
+      "hausdorff": 3.2111913537771814e-17,
+      "mean_distance": 2.5543240161805878e-19,
+      "budget_error": 0.027333333333333334
+     }
+    }
    ]
   },
   "sphere": {
    "quadriflow": [
     {
      "seed": 1,
-     "seconds": 1.779,
+     "seconds": 1.826,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2326,7 +2802,7 @@
     },
     {
      "seed": 2,
-     "seconds": 1.874,
+     "seconds": 1.648,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2358,7 +2834,7 @@
     },
     {
      "seed": 3,
-     "seconds": 1.672,
+     "seconds": 1.731,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2390,7 +2866,7 @@
     },
     {
      "seed": 4,
-     "seconds": 1.634,
+     "seconds": 1.716,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2422,7 +2898,7 @@
     },
     {
      "seed": 5,
-     "seconds": 1.61,
+     "seconds": 2.45,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2456,7 +2932,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 0.383,
+     "seconds": 0.178,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2488,7 +2964,7 @@
     },
     {
      "seed": 2,
-     "seconds": 0.325,
+     "seconds": 0.186,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2520,7 +2996,7 @@
     },
     {
      "seed": 3,
-     "seconds": 0.609,
+     "seconds": 0.289,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2552,7 +3028,7 @@
     },
     {
      "seed": 4,
-     "seconds": 0.447,
+     "seconds": 0.434,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2584,7 +3060,7 @@
     },
     {
      "seed": 5,
-     "seconds": 0.387,
+     "seconds": 0.61,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2614,13 +3090,81 @@
       "budget_error": 0.03
      }
     }
+   ],
+   "quadremesher": [
+    {
+     "seed": 1,
+     "seconds": 3.56,
+     "failure": null,
+     "metrics": {
+      "valid": true,
+      "vertices": 2742,
+      "faces": 2740,
+      "quads": 2740,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 10,
+      "topological_minimum": 8,
+      "irregular_excess": 2,
+      "base_complex_patches": 1794,
+      "alignment": null,
+      "angle_deviation_mean": 6.087290006451291,
+      "angle_deviation_p95": 15.488342655129813,
+      "aspect_mean": 1.1846569768742314,
+      "aspect_p95": 1.5242159896059473,
+      "area_variation": 0.3119296910074377,
+      "hausdorff": 0.0008186012168653646,
+      "mean_distance": 0.0002580185913775361,
+      "budget_error": 0.08666666666666667
+     }
+    }
+   ],
+   "quadremesher-uniform": [
+    {
+     "seed": 1,
+     "seconds": 3.388,
+     "failure": null,
+     "metrics": {
+      "valid": true,
+      "vertices": 2742,
+      "faces": 2740,
+      "quads": 2740,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 10,
+      "topological_minimum": 8,
+      "irregular_excess": 2,
+      "base_complex_patches": 1794,
+      "alignment": null,
+      "angle_deviation_mean": 6.087290006451291,
+      "angle_deviation_p95": 15.488342655129813,
+      "aspect_mean": 1.1846569768742314,
+      "aspect_p95": 1.5242159896059473,
+      "area_variation": 0.3119296910074377,
+      "hausdorff": 0.0008186012168653646,
+      "mean_distance": 0.0002580185913775361,
+      "budget_error": 0.08666666666666667
+     }
+    }
    ]
   },
   "torus": {
    "quadriflow": [
     {
      "seed": 1,
-     "seconds": 1.575,
+     "seconds": 1.401,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -2652,7 +3196,7 @@
     },
     {
      "seed": 2,
-     "seconds": 1.628,
+     "seconds": 1.488,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -2684,7 +3228,7 @@
     },
     {
      "seed": 3,
-     "seconds": 1.34,
+     "seconds": 1.402,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -2716,7 +3260,7 @@
     },
     {
      "seed": 4,
-     "seconds": 1.308,
+     "seconds": 1.397,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2748,7 +3292,7 @@
     },
     {
      "seed": 5,
-     "seconds": 1.36,
+     "seconds": 1.428,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -2782,7 +3326,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 0.25,
+     "seconds": 0.259,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2814,7 +3358,7 @@
     },
     {
      "seed": 2,
-     "seconds": 0.386,
+     "seconds": 0.252,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2846,7 +3390,7 @@
     },
     {
      "seed": 3,
-     "seconds": 0.324,
+     "seconds": 0.301,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2878,7 +3422,7 @@
     },
     {
      "seed": 4,
-     "seconds": 0.61,
+     "seconds": 0.32,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2910,7 +3454,7 @@
     },
     {
      "seed": 5,
-     "seconds": 0.244,
+     "seconds": 0.296,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2940,6 +3484,74 @@
       "budget_error": 0.020666666666666667
      }
     }
+   ],
+   "quadremesher": [
+    {
+     "seed": 1,
+     "seconds": 4.711,
+     "failure": null,
+     "metrics": {
+      "valid": true,
+      "vertices": 2824,
+      "faces": 2824,
+      "quads": 2824,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 10,
+      "topological_minimum": 0,
+      "irregular_excess": 10,
+      "base_complex_patches": 2264,
+      "alignment": 6.899728662307953,
+      "angle_deviation_mean": 5.232856897356103,
+      "angle_deviation_p95": 14.401939367465147,
+      "aspect_mean": 1.2130007961773612,
+      "aspect_p95": 1.4895302461948405,
+      "area_variation": 0.23304386846728892,
+      "hausdorff": 0.0017107821735779464,
+      "mean_distance": 0.0005182552685857996,
+      "budget_error": 0.058666666666666666
+     }
+    }
+   ],
+   "quadremesher-uniform": [
+    {
+     "seed": 1,
+     "seconds": 2.893,
+     "failure": null,
+     "metrics": {
+      "valid": true,
+      "vertices": 2824,
+      "faces": 2824,
+      "quads": 2824,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 10,
+      "topological_minimum": 0,
+      "irregular_excess": 10,
+      "base_complex_patches": 2264,
+      "alignment": 6.899728662307953,
+      "angle_deviation_mean": 5.232856897356103,
+      "angle_deviation_p95": 14.401939367465147,
+      "aspect_mean": 1.2130007961773612,
+      "aspect_p95": 1.4895302461948405,
+      "area_variation": 0.23304386846728892,
+      "hausdorff": 0.0017107821735779464,
+      "mean_distance": 0.0005182552685857996,
+      "budget_error": 0.058666666666666666
+     }
+    }
    ]
   }
  },
@@ -2961,7 +3573,7 @@
     "hausdorff": 0.008516751796557311,
     "mean_distance": 0.000485916079348403,
     "budget_error": 0.073,
-    "seconds": 1.993
+    "seconds": 1.98
    },
    "instant-meshes": {
     "runs": 5,
@@ -2979,10 +3591,46 @@
     "hausdorff": 0.010139277594651755,
     "mean_distance": 0.0004592309793705422,
     "budget_error": 0.03,
-    "seconds": 1.284
+    "seconds": 1.649
+   },
+   "quadremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 1,
+    "failures": [],
+    "irregular_vertices": 26,
+    "irregular_excess": 18,
+    "base_complex_patches": 1826,
+    "alignment": 3.933675522939357,
+    "angle_deviation_mean": 5.764522933218859,
+    "angle_deviation_p95": 17.20857078788852,
+    "aspect_mean": 1.6178017101123756,
+    "area_variation": 0.4421945654734451,
+    "hausdorff": 0.004212360817266057,
+    "mean_distance": 0.0004065162365465887,
+    "budget_error": 0.12333333333333334,
+    "seconds": 16.381
+   },
+   "quadremesher-uniform": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 1,
+    "failures": [],
+    "irregular_vertices": 24,
+    "irregular_excess": 16,
+    "base_complex_patches": 1350,
+    "alignment": 4.553792695026089,
+    "angle_deviation_mean": 5.445826479880772,
+    "angle_deviation_p95": 15.606984962779222,
+    "aspect_mean": 1.276325271802228,
+    "area_variation": 0.31343197656893934,
+    "hausdorff": 0.007276424761095456,
+    "mean_distance": 0.0005125357161324863,
+    "budget_error": 0.08166666666666667,
+    "seconds": 12.282
    }
   },
-  "rocher": {
+  "rock": {
    "quadriflow": {
     "runs": 5,
     "produced": 5,
@@ -2999,7 +3647,7 @@
     "hausdorff": 0.005449412911999578,
     "mean_distance": 0.000788102554631053,
     "budget_error": 0.022333333333333334,
-    "seconds": 1.413
+    "seconds": 1.371
    },
    "instant-meshes": {
     "runs": 5,
@@ -3017,7 +3665,43 @@
     "hausdorff": 0.0052793288378186415,
     "mean_distance": 0.0008195256872662454,
     "budget_error": 0.034,
-    "seconds": 0.92
+    "seconds": 0.818
+   },
+   "quadremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 1,
+    "failures": [],
+    "irregular_vertices": 114,
+    "irregular_excess": 106,
+    "base_complex_patches": 3539,
+    "alignment": 14.169729979409873,
+    "angle_deviation_mean": 10.07472240990898,
+    "angle_deviation_p95": 24.880289866573634,
+    "aspect_mean": 1.470093073071521,
+    "area_variation": 0.30790286334822775,
+    "hausdorff": 0.005133323694116062,
+    "mean_distance": 0.0007310904348234185,
+    "budget_error": 0.17966666666666667,
+    "seconds": 20.486
+   },
+   "quadremesher-uniform": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 1,
+    "failures": [],
+    "irregular_vertices": 101,
+    "irregular_excess": 93,
+    "base_complex_patches": 2531,
+    "alignment": 14.678201868043823,
+    "angle_deviation_mean": 10.609090296905807,
+    "angle_deviation_p95": 26.208195456246877,
+    "aspect_mean": 1.3925213934035199,
+    "area_variation": 0.2689077228762542,
+    "hausdorff": 0.005788214732890832,
+    "mean_distance": 0.0008893265225708634,
+    "budget_error": 0.15633333333333332,
+    "seconds": 16.978
    }
   },
   "creature": {
@@ -3037,7 +3721,7 @@
     "hausdorff": 0.008011864637870451,
     "mean_distance": 0.0003203700044675092,
     "budget_error": 0.111,
-    "seconds": 1.511
+    "seconds": 1.286
    },
    "instant-meshes": {
     "runs": 5,
@@ -3055,7 +3739,43 @@
     "hausdorff": 0.00346945784216308,
     "mean_distance": 0.00027851915450128944,
     "budget_error": 0.023333333333333334,
-    "seconds": 0.902
+    "seconds": 0.898
+   },
+   "quadremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 1,
+    "failures": [],
+    "irregular_vertices": 42,
+    "irregular_excess": 34,
+    "base_complex_patches": 1465,
+    "alignment": 5.175975283751088,
+    "angle_deviation_mean": 6.1229454091479605,
+    "angle_deviation_p95": 17.13308908436194,
+    "aspect_mean": 1.3323376377181129,
+    "area_variation": 0.34803622258546635,
+    "hausdorff": 0.002505875961689381,
+    "mean_distance": 0.00029702039852711533,
+    "budget_error": 0.019666666666666666,
+    "seconds": 11.238
+   },
+   "quadremesher-uniform": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 1,
+    "failures": [],
+    "irregular_vertices": 46,
+    "irregular_excess": 38,
+    "base_complex_patches": 1301,
+    "alignment": 5.31549712923946,
+    "angle_deviation_mean": 6.534438211228075,
+    "angle_deviation_p95": 18.97812615473876,
+    "aspect_mean": 1.3340780980860836,
+    "area_variation": 0.31345909733008787,
+    "hausdorff": 0.0023694288421810404,
+    "mean_distance": 0.0003480460987903411,
+    "budget_error": 0.09366666666666666,
+    "seconds": 9.113
    }
   },
   "cage": {
@@ -3075,7 +3795,7 @@
     "hausdorff": 0.011452854356027296,
     "mean_distance": 0.000734408578027201,
     "budget_error": 0.036333333333333336,
-    "seconds": 1.515
+    "seconds": 1.471
    },
    "instant-meshes": {
     "runs": 5,
@@ -3093,7 +3813,43 @@
     "hausdorff": 0.014459016598964527,
     "mean_distance": 0.0008604033787995378,
     "budget_error": 0.018666666666666668,
-    "seconds": 0.293
+    "seconds": 0.468
+   },
+   "quadremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 1,
+    "failures": [],
+    "irregular_vertices": 44,
+    "irregular_excess": 12,
+    "base_complex_patches": 1092,
+    "alignment": 2.041645494719007,
+    "angle_deviation_mean": 3.9095997078322906,
+    "angle_deviation_p95": 11.901122742367562,
+    "aspect_mean": 1.9931020272327264,
+    "area_variation": 0.31372200191191607,
+    "hausdorff": 0.005741863094334958,
+    "mean_distance": 0.0006931741536130963,
+    "budget_error": 0.9363333333333334,
+    "seconds": 4.215
+   },
+   "quadremesher-uniform": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 1,
+    "failures": [],
+    "irregular_vertices": 43,
+    "irregular_excess": 11,
+    "base_complex_patches": 1001,
+    "alignment": 2.573406825139734,
+    "angle_deviation_mean": 4.299122056905873,
+    "angle_deviation_p95": 12.820414978031351,
+    "aspect_mean": 1.317773898373166,
+    "area_variation": 0.2382086355616614,
+    "hausdorff": 0.009655446749838219,
+    "mean_distance": 0.0012759467537523717,
+    "budget_error": 0.07166666666666667,
+    "seconds": 3.922
    }
   },
   "suzanne": {
@@ -3113,7 +3869,7 @@
     "hausdorff": 0.042258898556280976,
     "mean_distance": 0.0008336922580969827,
     "budget_error": 0.01,
-    "seconds": 2.861
+    "seconds": 3.322
    },
    "instant-meshes": {
     "runs": 5,
@@ -3131,10 +3887,46 @@
     "hausdorff": 0.02015172255300076,
     "mean_distance": 0.0009055429351172766,
     "budget_error": 0.023333333333333334,
-    "seconds": 0.297
+    "seconds": 0.245
+   },
+   "quadremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 0,
+    "failures": [],
+    "irregular_vertices": 80,
+    "irregular_excess": null,
+    "base_complex_patches": 2513,
+    "alignment": 8.754521727503526,
+    "angle_deviation_mean": 7.872610832803846,
+    "angle_deviation_p95": 21.85163230231319,
+    "aspect_mean": 1.6683063160418738,
+    "area_variation": 0.472519653144362,
+    "hausdorff": 0.006773283451069267,
+    "mean_distance": 0.0006033415903780341,
+    "budget_error": 0.43666666666666665,
+    "seconds": 3.442
+   },
+   "quadremesher-uniform": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 1,
+    "failures": [],
+    "irregular_vertices": 71,
+    "irregular_excess": null,
+    "base_complex_patches": 1838,
+    "alignment": 10.244746119347058,
+    "angle_deviation_mean": 7.873901016278934,
+    "angle_deviation_p95": 20.463893818417702,
+    "aspect_mean": 1.2840577973485476,
+    "area_variation": 0.23568909191909307,
+    "hausdorff": 0.009468306060584184,
+    "mean_distance": 0.0010528183774421152,
+    "budget_error": 0.124,
+    "seconds": 3.205
    }
   },
-  "piece": {
+  "part": {
    "quadriflow": {
     "runs": 5,
     "produced": 5,
@@ -3151,7 +3943,7 @@
     "hausdorff": 0.0055370201778286105,
     "mean_distance": 0.00011416113501339351,
     "budget_error": 0.03666666666666667,
-    "seconds": 2.465
+    "seconds": 2.393
    },
    "instant-meshes": {
     "runs": 5,
@@ -3169,7 +3961,43 @@
     "hausdorff": 0.009407724872190904,
     "mean_distance": 6.735349033653353e-05,
     "budget_error": 0.020666666666666667,
-    "seconds": 0.697
+    "seconds": 0.866
+   },
+   "quadremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 1,
+    "failures": [],
+    "irregular_vertices": 24,
+    "irregular_excess": 16,
+    "base_complex_patches": 501,
+    "alignment": 10.90205268327779,
+    "angle_deviation_mean": 3.0232261693545124,
+    "angle_deviation_p95": 12.042780875102821,
+    "aspect_mean": 1.3260737561265497,
+    "area_variation": 0.1963224133098877,
+    "hausdorff": 0.0008891463272615188,
+    "mean_distance": 6.810567132302252e-05,
+    "budget_error": 0.06166666666666667,
+    "seconds": 2.835
+   },
+   "quadremesher-uniform": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 1,
+    "failures": [],
+    "irregular_vertices": 24,
+    "irregular_excess": 16,
+    "base_complex_patches": 501,
+    "alignment": 10.90205268327779,
+    "angle_deviation_mean": 3.0232261693545124,
+    "angle_deviation_p95": 12.042780875102821,
+    "aspect_mean": 1.3260737561265497,
+    "area_variation": 0.1963224133098877,
+    "hausdorff": 0.0008891463272615188,
+    "mean_distance": 6.810567132302252e-05,
+    "budget_error": 0.06166666666666667,
+    "seconds": 2.881
    }
   },
   "cube": {
@@ -3189,7 +4017,7 @@
     "hausdorff": 0.004804846881945867,
     "mean_distance": 1.6675823534138272e-05,
     "budget_error": 0.032,
-    "seconds": 0.733
+    "seconds": 1.026
    },
    "instant-meshes": {
     "runs": 5,
@@ -3207,7 +4035,43 @@
     "hausdorff": 3.5832294041243823e-17,
     "mean_distance": 8.778540123644892e-19,
     "budget_error": 0.01,
-    "seconds": 0.364
+    "seconds": 0.102
+   },
+   "quadremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 1,
+    "failures": [],
+    "irregular_vertices": 8,
+    "irregular_excess": 0,
+    "base_complex_patches": 6,
+    "alignment": 0.13119081723520568,
+    "angle_deviation_mean": 3.859535261858191e-05,
+    "angle_deviation_p95": 0.00010800239199681982,
+    "aspect_mean": 1.029851545973972,
+    "area_variation": 0.020956487133865564,
+    "hausdorff": 3.2111913537771814e-17,
+    "mean_distance": 2.5543240161805878e-19,
+    "budget_error": 0.027333333333333334,
+    "seconds": 2.968
+   },
+   "quadremesher-uniform": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 1,
+    "failures": [],
+    "irregular_vertices": 8,
+    "irregular_excess": 0,
+    "base_complex_patches": 6,
+    "alignment": 0.13119081723520568,
+    "angle_deviation_mean": 3.859535261858191e-05,
+    "angle_deviation_p95": 0.00010800239199681982,
+    "aspect_mean": 1.029851545973972,
+    "area_variation": 0.020956487133865564,
+    "hausdorff": 3.2111913537771814e-17,
+    "mean_distance": 2.5543240161805878e-19,
+    "budget_error": 0.027333333333333334,
+    "seconds": 2.997
    }
   },
   "sphere": {
@@ -3227,7 +4091,7 @@
     "hausdorff": 0.0006342355621053156,
     "mean_distance": 0.0002159444460581061,
     "budget_error": 0.035666666666666666,
-    "seconds": 1.672
+    "seconds": 1.731
    },
    "instant-meshes": {
     "runs": 5,
@@ -3245,7 +4109,43 @@
     "hausdorff": 0.0007209423744984289,
     "mean_distance": 0.0002210605148390627,
     "budget_error": 0.03,
-    "seconds": 0.387
+    "seconds": 0.289
+   },
+   "quadremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 1,
+    "failures": [],
+    "irregular_vertices": 10,
+    "irregular_excess": 2,
+    "base_complex_patches": 1794,
+    "alignment": null,
+    "angle_deviation_mean": 6.087290006451291,
+    "angle_deviation_p95": 15.488342655129813,
+    "aspect_mean": 1.1846569768742314,
+    "area_variation": 0.3119296910074377,
+    "hausdorff": 0.0008186012168653646,
+    "mean_distance": 0.0002580185913775361,
+    "budget_error": 0.08666666666666667,
+    "seconds": 3.56
+   },
+   "quadremesher-uniform": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 1,
+    "failures": [],
+    "irregular_vertices": 10,
+    "irregular_excess": 2,
+    "base_complex_patches": 1794,
+    "alignment": null,
+    "angle_deviation_mean": 6.087290006451291,
+    "angle_deviation_p95": 15.488342655129813,
+    "aspect_mean": 1.1846569768742314,
+    "area_variation": 0.3119296910074377,
+    "hausdorff": 0.0008186012168653646,
+    "mean_distance": 0.0002580185913775361,
+    "budget_error": 0.08666666666666667,
+    "seconds": 3.388
    }
   },
   "torus": {
@@ -3265,7 +4165,7 @@
     "hausdorff": 0.0018561112345259082,
     "mean_distance": 0.0002992770835840639,
     "budget_error": 0.008,
-    "seconds": 1.36
+    "seconds": 1.402
    },
    "instant-meshes": {
     "runs": 5,
@@ -3283,7 +4183,43 @@
     "hausdorff": 0.0013758320912180626,
     "mean_distance": 0.0002976149991773916,
     "budget_error": 0.026,
-    "seconds": 0.324
+    "seconds": 0.296
+   },
+   "quadremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 1,
+    "failures": [],
+    "irregular_vertices": 10,
+    "irregular_excess": 10,
+    "base_complex_patches": 2264,
+    "alignment": 6.899728662307953,
+    "angle_deviation_mean": 5.232856897356103,
+    "angle_deviation_p95": 14.401939367465147,
+    "aspect_mean": 1.2130007961773612,
+    "area_variation": 0.23304386846728892,
+    "hausdorff": 0.0017107821735779464,
+    "mean_distance": 0.0005182552685857996,
+    "budget_error": 0.058666666666666666,
+    "seconds": 4.711
+   },
+   "quadremesher-uniform": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 1,
+    "failures": [],
+    "irregular_vertices": 10,
+    "irregular_excess": 10,
+    "base_complex_patches": 2264,
+    "alignment": 6.899728662307953,
+    "angle_deviation_mean": 5.232856897356103,
+    "angle_deviation_p95": 14.401939367465147,
+    "aspect_mean": 1.2130007961773612,
+    "area_variation": 0.23304386846728892,
+    "hausdorff": 0.0017107821735779464,
+    "mean_distance": 0.0005182552685857996,
+    "budget_error": 0.058666666666666666,
+    "seconds": 2.893
    }
   }
  }

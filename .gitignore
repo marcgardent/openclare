@@ -1,6 +1,8 @@
 /target
 *.obj
 !assets/**/*.obj
+# The corpus and the kept references are data, not build products.
+!bench/corpus/*.obj
+!bench/reference/**/*.obj
 /bench/out
-/bench/corpus
 __pycache__

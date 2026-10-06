@@ -2,7 +2,7 @@
 
 Compare n'importe quel remailleur quad à sa source, avec les métriques du cahier des charges
 ([ALGORITHME.md](../ALGORITHME.md), section 0). Les derniers chiffres sont dans
-[results/RESULTATS.md](results/RESULTATS.md).
+[results/RESULTS.md](results/RESULTS.md).
 
 ## Lancer
 
@@ -30,11 +30,29 @@ Pour mesurer un seul maillage, quel que soit l'outil qui l'a produit :
 |---|---|
 | `run.py` | lance chaque outil sur chaque modèle, mesure, écrit `results/` |
 | `quadriflow.py` | script Blender : QuadriFlow sur un OBJ, une fois par graine |
+| `quadremesher.py` | script Blender : Quad Remesher sur un OBJ |
+| `make_references.py` | produit et range les mires Quad Remesher tant qu'une licence est disponible |
+| `corpus/` | les modèles sources, versionnés |
+| `reference/` | les mires conservées, versionnées ([notice](reference/README.md)) |
 | `make_corpus.py` | script Blender : génère le corpus provisoire dans `corpus/` |
 | `blender_io.py` | lecture et écriture OBJ sans conversion d'axes, pour que tous les outils voient les mêmes coordonnées |
 
 Les métriques sont dans `crates/retopo/src/metrics.rs`, chacune testée sur un maillage dont le
 score est connu (`crates/retopo/tests/metrics.rs`).
+
+## Quad Remesher
+
+Quad Remesher (Exoside) est un logiciel commercial. Ses résultats sont calculés une fois, avec le
+module Blender et une licence valide (le banc ne contourne ni l'un ni l'autre), puis rangés dans
+`reference/`. Le banc relit ensuite ces mires, que le logiciel soit encore installé ou non. Pour
+un modèle ou un budget sans mire et sans licence, les colonnes correspondantes restent vides.
+
+- `quadremesher` : réglages par défaut (taille adaptative à 50 %, nombre de quads ajusté).
+- `quadremesher-uniform` : taille constante et nombre de quads exact, pour comparer à armes
+  égales avec des remailleurs à taille unique.
+
+Il n'a pas de graine : une seule exécution par modèle. Les mires proviennent d'une licence
+d'essai : usage non commercial.
 
 ## Ajouter un outil
 
@@ -47,11 +65,12 @@ Une ligne dans le dictionnaire `TOOLS` de `run.py`. Pour une chaîne de ce dép�
   `use_preserve_sharp` sur les modèles à arêtes vives, `use_preserve_boundary` sur les modèles
   ouverts.
 - Plancher : `--crease-angle 30` sur les modèles à arêtes vives.
+- Quad Remesher : détection des arêtes vives sur les modèles à arêtes vives seulement, symétrie désactivée.
 - Même budget de faces et mêmes graines pour tous.
 
 ## Limites connues
 
-- **Corpus de synthèse.** Les formes sont générées, pas sculptées. Les conclusions devront être
+- **Corpus de synthèse.** Les formes sont générées (`make_corpus.py`), pas sculptées. Les conclusions devront être
   confirmées sur de vrais modèles.
 - **Faces inversées.** Le test compare l'orientation de chaque face à celle de la source autour
   d'elle. Sur Suzanne (parois fines, pièces qui se traversent) le décompte est incertain à une ou
@@ -61,6 +80,7 @@ Une ligne dans le dictionnaire `TOOLS` de `run.py`. Pour une chaîne de ce dép�
 - **Alignement (A).** La courbure est lue à l'échelle d'un quad. Sur une forme bruitée elle n'a
   pas de direction stable et la métrique reste au niveau du hasard (22,5°).
 - **Temps.** Celui de QuadriFlow inclut la conversion de maillage interne à Blender, celui de
-  `retopo` exclut la lecture et l'écriture des fichiers : ordre de grandeur seulement.
+  Quad Remesher un aller-retour en FBX et son gestionnaire de licence, celui de `retopo` exclut la
+  lecture et l'écriture des fichiers : ordre de grandeur seulement.
 - **Source ouverte, sortie fermée.** Si un outil rebouche des bords, la validité ne le signale
   pas ; c'est la distance de Hausdorff qui le montre.
