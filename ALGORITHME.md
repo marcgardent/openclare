@@ -154,7 +154,7 @@ Deux réserves sur les métriques elles-mêmes :
 - **A dépend de l'échelle** à laquelle on lit la courbure (ici celle d'un quad). Sur le rocher
   bruité, QuadriFlow et le plancher sont au niveau du hasard (22,5°).
 
-### Seuils proposés — *à trancher*
+### Seuils d'acceptation (adoptés)
 
 Sur chaque modèle organique, médiane sur 5 graines, à budget égal. Deux niveaux : l'acceptation
 (mieux que Blender) et la visée (le niveau de Quad Remesher). La visée est un palier, pas un
@@ -170,11 +170,10 @@ plafond : si on peut faire mieux que Quad Remesher, on ne s'arrête pas là.
 | H | Hausdorff au plus 1,2 fois celui de QuadriFlow | idem |
 | N | écart au budget d'au plus 5 % | idem |
 
-Par rapport à ma première proposition, l'alignement passe en tête et l'exigence sur les sommets
-irréguliers est assouplie (elle était « pas plus que QuadriFlow ») : la mire montre que les deux
-se négocient l'un contre l'autre, et que c'est l'alignement qui fait la qualité perçue.
+L'alignement est en tête et l'exigence sur les sommets irréguliers est souple : la mire montre que
+les deux se négocient l'un contre l'autre, et que c'est l'alignement qui fait la qualité perçue.
 
-### Corpus — *à trancher*
+### Corpus
 
 Le jalon 0 tourne sur un **corpus provisoire**, entièrement généré dans Blender pour ne rien
 télécharger, et versionné dans `bench/corpus/` avec les mires Quad Remesher correspondantes
@@ -305,12 +304,15 @@ réutilisation et la réécriture de code existant, tout en restant intégrable 
 **Contraintes utilisateur, par rang.**
 
 1. Budget de quads cible.
-2. Préservation optionnelle des arêtes vives au-delà d'un angle.
-3. Courbes guides tracées sur la surface.
-4. Masque de densité locale peint sur les sommets.
+2. Densité adaptative automatique : quads plus petits là où la forme est fine ou très courbe.
+3. Préservation optionnelle des arêtes vives au-delà d'un angle.
+4. Courbes guides tracées sur la surface.
+5. Masque de densité locale peint sur les sommets.
 
-Le rang 1 conditionne l'acceptation. Les rangs 2 à 4 sont prévus par l'architecture mais livrés
-après le premier résultat de bout en bout.
+Le rang 1 conditionne l'acceptation. La densité adaptative (rang 2) est **prévue par les
+interfaces dès maintenant** (un champ de taille accompagne le maillage de calcul, uniforme pour
+commencer) et **livrée juste après le premier résultat complet**, avant les rangs 3 à 5 : sur
+l'ogre, c'est elle qui décide si les mains existent encore.
 
 **Deux usages, deux chaînes.** L'organique (sculptures, personnages) est servi par la première
 chaîne. Le durci (pièces mécaniques, surfaces dures) le sera par la seconde. L'utilisateur choisit
@@ -428,9 +430,9 @@ Limites constatées :
   d'alignement.
 - **Test** : somme des indices égale à 4·χ ; 8 singularités sur une sphère, 0 sur un tore ; écart
   angulaire à la direction de courbure sur un ellipsoïde ; déterminisme.
-- **À trancher** : champ par face ou par sommet. L'article de Knöppel et al. travaille par
-  sommet ; la paramétrisation (M4) attend un champ par face avec singularités aux sommets. Je
-  propose par face.
+- **Décidé : champ par face.** L'article de Knöppel et al. travaille par sommet ; on adapte sa
+  formulation aux faces, parce que la paramétrisation (M4) attend un champ par face avec les
+  singularités aux sommets.
 
 ### M3 — Simplification des singularités
 
@@ -539,16 +541,17 @@ Chaque jalon produit quelque chose de vérifiable et se termine par **un arrêt 
 | J2 | Champ de croix (M2) | Champs visualisés, singularités comptées |
 | J3 | Singularités (M3), durée bornée | Gain mesuré sur S, ou décision de s'en tenir au réglage global |
 | J4 | Paramétrisation sans couture (M4) | **Jalon de vérité** : zéro inversion sur le corpus, ou activation d'un repli |
+| J4 bis | Arrondi glouton des translations (façon MIQ) et extraction | **Premier résultat complet, provisoire**, comparé à QuadriFlow et à Quad Remesher |
 | J5 | T-mesh (M5) | Partitions en rectangles visualisées |
 | J6 | Quantification (M6) | Contraintes satisfaites, budget tenu |
-| J7 | Carte entière et extraction (M7, M8) | **Premier résultat complet, comparé à QuadriFlow** |
-| J8 | Relaxation, puis contraintes de rang 2 à 4 | Règle d'acceptation évaluée |
+| J7 | Carte entière et extraction (M7, M8) | **Résultat complet définitif**, l'arrondi glouton est retiré |
+| J8 | Relaxation ; densité adaptative, puis contraintes de rang 3 à 5 | Règle d'acceptation évaluée |
 | J9 | Chaîne durci : traçage, patchs, remplissage par motifs | Pièces mécaniques comparées à QuadriFlow |
 | J10 | Export des coutures et des UV ; bibliothèque à interface C et greffon Python sans copie mémoire | Remaillage lancé depuis Blender, UV et coutures relus dans la scène |
 
-**Variante à trancher** : après J4, un arrondi glouton des translations (comme dans MIQ) suivi de
-l'extraction donnerait un premier résultat complet plus tôt, avant d'écrire M5 et M6. C'est moins
-robuste que la quantification, mais cela permet de se comparer à QuadriFlow bien avant J7.
+Le jalon 4 bis est un raccourci assumé : un arrondi glouton des translations, comme dans MIQ,
+donne un premier maillage complet bien avant le T-mesh et la quantification. Il est moins robuste
+et sera remplacé au jalon 7 ; son intérêt est de savoir tôt où on en est.
 
 ---
 
@@ -647,17 +650,27 @@ base fiable pour le chiffrer plus finement.
 
 ---
 
-## 7. Décisions attendues
+## 7. Décisions
 
-1. **Seuils d'acceptation** proposés en section 0.
-2. **Corpus** : d'autres sculptures à toi à y ajouter, tant que la licence d'essai permet d'en
-   tirer des mires (section 0) ?
-3. **Champ par face ou par sommet** (M2) ; proposition : par face.
-4. **Variante MIQ** pour un premier résultat complet après J4 (section 4).
-5. **Rang de la densité adaptative** : la remonter, au vu de l'ogre (section 0) ?
-6. **Arithmétique du traçage** (M5) ; peut attendre J4.
+En attente :
 
-Déjà décidé : objectif (mieux que Blender), priorité (organique d'abord, durci ensuite), lignées
-(paramétrisation et isolignes pour l'organique, patchs pour le durci), architecture modulaire à
-fabriques, licence (GPL-3.0-or-later), export des coutures et des UV, forme finale en bibliothèque
-C pilotée par un greffon Python sans copie mémoire.
+1. **Desert Rose** : hors acceptation, comptée, ou retirée ; lié à la politique sur les entrées
+   non variété.
+2. **Corpus** : d'autres sculptures à ajouter plus tard, avant l'expiration de la licence d'essai
+   de Quad Remesher.
+3. **Arithmétique du traçage** (M5) ; peut attendre J4.
+
+Prises :
+
+- objectif : mieux que le remaillage quad de Blender ; Quad Remesher est un palier, pas un plafond ;
+- priorité : organique d'abord, durci ensuite ;
+- lignées : paramétrisation et isolignes pour l'organique, patchs pour le durci ;
+- architecture modulaire à fabriques ;
+- licence GPL-3.0-or-later ;
+- seuils d'acceptation de la section 0 ;
+- champ de croix par face ;
+- densité adaptative prévue d'emblée, livrée juste après le premier résultat complet ;
+- raccourci MIQ (jalon 4 bis) pour un premier résultat complet plus tôt ;
+- export des coutures et des UV, et forme finale en bibliothèque C pilotée par un greffon Python
+  sans copie mémoire ;
+- sources en anglais, documents traduits à la fin.
