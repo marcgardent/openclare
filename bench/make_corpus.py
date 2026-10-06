@@ -84,7 +84,7 @@ bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=7, radius=1.0)
 rock = bpy.context.active_object
 displace(rock, noise_texture("large", 0.9, 2), 0.55)
 displace(rock, noise_texture("grain", 0.08, 1), 0.035)
-save("rocher", rock)
+save("rock", rock)
 
 # Branching shape: torso, neck and head, four legs, tail.
 reset()
@@ -130,4 +130,4 @@ save("cage", cage)
 # Mechanical part: flat faces, hard edges, two bores, CAD-like long triangles.
 reset()
 part = drilled_block((2.4, 1.4, 0.7), [("z", 0.32, (-0.55, 0, 0)), ("z", 0.2, (0.6, 0.2, 0))])
-save("piece", part)
+save("part", part)

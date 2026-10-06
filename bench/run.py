@@ -20,36 +20,38 @@ RETOPO = ROOT / "target" / "release" / "retopo"
 CORPUS = BENCH / "corpus"
 OUTPUT = BENCH / "out"
 RESULTS = BENCH / "results"
+# Outputs of tools that cannot be re-run at will (a licence that expires).
+REFERENCE = BENCH / "reference"
 
 # name, category, has hard edges, has open boundaries
 MODELS = [
-    ("blob", "organique", False, False),
-    ("rocher", "organique", False, False),
-    ("creature", "organique", False, False),
-    ("cage", "organique", False, False),
-    ("suzanne", "organique", False, True),
-    ("piece", "mécanique", True, False),
-    ("cube", "mécanique", True, False),
-    ("sphere", "étalon", False, False),
-    ("torus", "étalon", False, False),
+    ("blob", "organic", False, False),
+    ("rock", "organic", False, False),
+    ("creature", "organic", False, False),
+    ("cage", "organic", False, False),
+    ("suzanne", "organic", False, True),
+    ("part", "mechanical", True, False),
+    ("cube", "mechanical", True, False),
+    ("sphere", "calibration", False, False),
+    ("torus", "calibration", False, False),
 ]
 PRIMITIVES = {"cube", "sphere", "torus"}
 CREASE_ANGLE = "30"
 
 # metric key, label, format, lower is better
 METRICS = [
-    ("irregular_vertices", "Sommets irréguliers (S)", "{:.0f}", True),
-    ("irregular_excess", "… dont en excès du minimum", "{:.0f}", True),
-    ("base_complex_patches", "Patchs du complexe de base (C)", "{:.0f}", True),
-    ("alignment", "Alignement, degrés (A)", "{:.2f}", True),
-    ("angle_deviation_mean", "Écart d'angle moyen, degrés (F)", "{:.2f}", True),
-    ("angle_deviation_p95", "Écart d'angle, 95ᵉ centile (F)", "{:.2f}", True),
-    ("aspect_mean", "Rapport d'aspect moyen (F)", "{:.3f}", True),
-    ("area_variation", "Dispersion des aires (F)", "{:.3f}", True),
-    ("hausdorff", "Hausdorff, ‰ de la diagonale (H)", "{:.2f}", True),
-    ("mean_distance", "Distance moyenne, ‰ (H)", "{:.3f}", True),
-    ("budget_error", "Écart au budget, % (N)", "{:.1f}", True),
-    ("seconds", "Temps, secondes (T)", "{:.2f}", True),
+    ("irregular_vertices", "Irregular vertices (S)", "{:.0f}", True),
+    ("irregular_excess", "… of which above the minimum", "{:.0f}", True),
+    ("base_complex_patches", "Base complex patches (C)", "{:.0f}", True),
+    ("alignment", "Alignment, degrees (A)", "{:.2f}", True),
+    ("angle_deviation_mean", "Mean angle deviation, degrees (F)", "{:.2f}", True),
+    ("angle_deviation_p95", "Angle deviation, 95th percentile (F)", "{:.2f}", True),
+    ("aspect_mean", "Mean aspect ratio (F)", "{:.3f}", True),
+    ("area_variation", "Area variation (F)", "{:.3f}", True),
+    ("hausdorff", "Hausdorff, ‰ of the diagonal (H)", "{:.2f}", True),
+    ("mean_distance", "Mean distance, ‰ (H)", "{:.3f}", True),
+    ("budget_error", "Off budget, % (N)", "{:.1f}", True),
+    ("seconds", "Time, seconds (T)", "{:.2f}", True),
 ]
 SCALE = {"hausdorff": 1000.0, "mean_distance": 1000.0, "budget_error": 100.0}
 # The metrics the acceptance rule is about.
@@ -92,6 +94,46 @@ def quadriflow(model, sharp, boundary, target, seeds, directory):
     return runs
 
 
+def quadremesher_reference(model, target, uniform):
+    setting = "uniform" if uniform else "default"
+    return REFERENCE / "quadremesher" / f"{model}__{target}__{setting}.obj"
+
+
+def quadremesher(uniform, refresh=False):
+    """Quad Remesher is deterministic (no seed) and needs a licence, so each
+    result is computed once and kept in bench/reference; later runs read it
+    back, with or without the software installed."""
+
+    def tool(model, sharp, boundary, target, seeds, directory):
+        path = quadremesher_reference(model, target, uniform)
+        if path.exists() and not refresh:
+            return {seeds[0]: (path, None, None)}
+        path.parent.mkdir(parents=True, exist_ok=True)
+        fresh = directory / path.name
+        fresh.unlink(missing_ok=True)
+        done = run(["blender", "-b", "--python", BENCH / "quadremesher.py", "--", source_path(model), fresh, target,
+                    int(uniform), int(sharp)])
+        line = next((l for l in done.stdout.splitlines() if l.startswith("QUADREMESHER ")), None)
+        if line is None:
+            return {seeds[0]: (None, None, "no output from Blender")}
+        _, status, seconds = line.split()
+        if status != "ok":
+            return {seeds[0]: (None, None, status)}
+        fresh.replace(path)
+        path.with_suffix(".seconds").write_text(seconds + "\n")
+        return {seeds[0]: (path, None, None)}
+
+    def timed(*arguments):
+        runs = tool(*arguments)
+        for seed, (path, _, failure) in runs.items():
+            record = path.with_suffix(".seconds") if path else None
+            seconds = float(record.read_text()) if record and record.exists() else 0.0
+            runs[seed] = (path, seconds, failure)
+        return runs
+
+    return timed
+
+
 def retopo(method):
     def tool(model, sharp, boundary, target, seeds, directory):
         runs = {}
@@ -113,6 +155,9 @@ def retopo(method):
 TOOLS = {
     "quadriflow": quadriflow,
     "instant-meshes": retopo("instant-meshes"),
+    # Commercial yardstick; needs the add-on and a licence (see bench/README.md).
+    "quadremesher": quadremesher(uniform=False),
+    "quadremesher-uniform": quadremesher(uniform=True),
 }
 
 
@@ -149,10 +194,10 @@ def cell(summary, key, pattern):
 
 def report(results, target, seeds, tools):
     lines = [
-        "# Résultats du banc de mesure",
+        "# Bench results",
         "",
-        f"Budget demandé : {target} quads. Médiane sur {len(seeds)} graines. "
-        "Pour toutes les métriques, plus bas est meilleur ; « — » signifie non mesurable.",
+        f"Requested budget: {target} quads. Median over {len(seeds)} seeds; Quad Remesher has no seed and "
+        "runs once. Lower is better for every metric; \"—\" means it could not be measured.",
         "",
     ]
     for model, category, *_ in MODELS:
@@ -160,32 +205,35 @@ def report(results, target, seeds, tools):
             continue
         lines += [f"## {model} ({category})", "", "| | " + " | ".join(tools) + " |", "|---|" + "---|" * len(tools)]
         row = [f"{results[model][t]['valid']}/{results[model][t]['runs']}" for t in tools]
-        lines.append("| **Maillages valides (V)** | " + " | ".join(row) + " |")
+        lines.append("| **Valid meshes (V)** | " + " | ".join(row) + " |")
         for key, label, pattern, _ in METRICS:
             lines.append(f"| {label} | " + " | ".join(cell(results[model][t], key, pattern) for t in tools) + " |")
-        failures = [f"{t} : {', '.join(results[model][t]['failures'])}" for t in tools if results[model][t]["failures"]]
+        failures = [f"{t}: {', '.join(results[model][t]['failures'])}" for t in tools if results[model][t]["failures"]]
         if failures:
-            lines += ["", "Échecs : " + " ; ".join(failures) + "."]
+            lines += ["", "Failures: " + "; ".join(failures) + "."]
         lines.append("")
 
-    if len(tools) == 2:
-        first, second = tools
-        lines += ["## Synthèse", "", f"Nombre de modèles où chaque outil a la meilleure médiane ({first} / {second}).", "",
-                  "| Métrique | organique | mécanique |", "|---|---|---|"]
-        for key in QUALITY:
-            label = next(l for k, l, *_ in METRICS if k == key)
-            counts = {}
-            for model, category, *_ in MODELS:
-                if model not in results or category == "étalon":
-                    continue
-                a, b = results[model][first].get(key), results[model][second].get(key)
-                if a is None or b is None or a == b:
-                    continue
-                score = counts.setdefault(category, [0, 0])
-                score[0 if a < b else 1] += 1
-            columns = ["{} / {}".format(*counts.get(c, [0, 0])) for c in ("organique", "mécanique")]
-            lines.append(f"| {label} | " + " | ".join(columns) + " |")
-        lines.append("")
+    if len(tools) >= 2:
+        lines += ["## Summary", "", "Number of models on which each tool has the best median, calibration "
+                  "shapes excluded. Ties count for each.", ""]
+        for category in ("organic", "mechanical"):
+            names = [m for m, c, *_ in MODELS if c == category and m in results]
+            if not names:
+                continue
+            lines += [f"### {category} ({len(names)} models)", "", "| Metric | " + " | ".join(tools) + " |",
+                      "|---|" + "---|" * len(tools)]
+            for key in QUALITY:
+                label = next(l for k, l, *_ in METRICS if k == key)
+                wins = dict.fromkeys(tools, 0)
+                for model in names:
+                    values = {t: results[model][t].get(key) for t in tools}
+                    known = [v for v in values.values() if v is not None]
+                    for t in tools:
+                        if known and values[t] == min(known):
+                            wins[t] += 1
+                lines.append(f"| {label} | " + " | ".join(str(wins[t]) for t in tools) + " |")
+            valid = [f"{sum(results[m][t]['valid'] for m in names)}/{sum(results[m][t]['runs'] for m in names)}" for t in tools]
+            lines += ["| Valid meshes (V) | " + " | ".join(valid) + " |", ""]
     return "\n".join(lines)
 
 
@@ -226,8 +274,8 @@ def main():
                   f"alignment {cell(summary, 'alignment', '{:.2f}'):>6}", flush=True)
 
     (RESULTS / "results.json").write_text(json.dumps({"target": options.target, "seeds": seeds, "runs": raw, "summary": results}, indent=1))
-    (RESULTS / "RESULTATS.md").write_text(report(results, options.target, seeds, tools))
-    print(f"\nwritten: {RESULTS / 'RESULTATS.md'}")
+    (RESULTS / "RESULTS.md").write_text(report(results, options.target, seeds, tools))
+    print(f"\nwritten: {RESULTS / 'RESULTS.md'}")
 
 
 if __name__ == "__main__":
