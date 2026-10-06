@@ -1,6 +1,8 @@
 use std::process::ExitCode;
 
-use retopo::mesh::{obj, primitives};
+use retopo::crossfield;
+use retopo::math::{Vec3, tangent_frame};
+use retopo::mesh::{Topology, obj, primitives};
 use retopo::metrics::measure;
 use retopo::preprocess;
 use retopo::remesher::{self, Method, Request};
@@ -13,6 +15,7 @@ USAGE:
     retopo remesh <input.obj> <output.obj> [options]
     retopo measure <source.obj> <quads.obj> [--target <N>] [--json]
     retopo preprocess <input.obj> <output.obj> [options]
+    retopo field <input.obj> [options]
     retopo primitive <torus|sphere|cube|plane> <output.obj>
 
 OPTIONS (remesh):
@@ -27,6 +30,15 @@ OPTIONS (preprocess):
     --kind <NAME>          isotropic (default) or passthrough
     --triangles <N>        size of the work mesh (default 100000)
     --crease-angle <DEG>   keep input edges sharper than this dihedral angle
+
+OPTIONS (field):
+    --kind <NAME>          power (default) or extrinsic
+    --triangles <N>        size of the work mesh (default 50000)
+    --alignment <A>        pull towards curvature directions (default 0.05, 0 to ignore)
+    --quads <N>            read curvature at the scale of a mesh of N quads
+    --scale <L>            length over which curvature is read (default: work mesh edge)
+    --crease-angle <DEG>   treat input edges sharper than this as hard constraints
+    --crosses <out.obj>    write the field as small crosses, singularities as markers
 
 OPTIONS (measure):
     --target <N>           face count that was asked for
@@ -49,6 +61,7 @@ fn run(args: &[String]) -> Result<(), String> {
         Some("remesh") => remesh(&args[1..]),
         Some("measure") => measure_command(&args[1..]),
         Some("preprocess") => preprocess_command(&args[1..]),
+        Some("field") => field_command(&args[1..]),
         Some("primitive") => primitive(&args[1..]),
         Some("-h" | "--help") => {
             print!("{USAGE}");
@@ -231,4 +244,102 @@ fn preprocess_command(args: &[String]) -> Result<(), String> {
     );
     println!("seconds      {seconds:.3}");
     Ok(())
+}
+
+fn field_command(args: &[String]) -> Result<(), String> {
+    let mut work_request = preprocess::Request { triangles: 50_000, ..Default::default() };
+    let mut request = crossfield::Request::default();
+    let mut kind = crossfield::Kind::Power;
+    let (mut crosses, mut quads, mut paths) = (None, None::<usize>, Vec::new());
+    let mut args = args.iter();
+    while let Some(arg) = args.next() {
+        let mut value = |name: &str| args.next().ok_or(format!("{name} expects a value"));
+        match arg.as_str() {
+            "--kind" => kind = value(arg)?.parse().map_err(|e: retopo::Error| e.to_string())?,
+            "--triangles" => work_request.triangles = parse(arg, value(arg)?)?,
+            "--alignment" => request.alignment = parse(arg, value(arg)?)?,
+            "--scale" => work_request.curvature_scale = Some(parse(arg, value(arg)?)?),
+            "--quads" => quads = Some(parse(arg, value(arg)?)?),
+            "--crease-angle" => work_request.crease_angle = Some(parse(arg, value(arg)?)?),
+            "--crosses" => crosses = Some(value(arg)?.clone()),
+            flag if flag.starts_with("--") => return Err(format!("unknown option '{flag}'")),
+            path => paths.push(path),
+        }
+    }
+    let [input] = paths[..] else {
+        return Err("field takes one input path".into());
+    };
+
+    let source = obj::read_obj(input).map_err(|e| format!("{input}: {e}"))?;
+    if let Some(quads) = quads.filter(|&n| n > 0) {
+        work_request.curvature_scale = Some((source.surface_area() / quads as f64).sqrt());
+    }
+    let work = preprocess::create(preprocess::Kind::Isotropic)
+        .preprocess(&source, &work_request)
+        .map_err(|e| e.to_string())?;
+    let start = std::time::Instant::now();
+    let field = crossfield::create(kind).solve(&work, &request).map_err(|e| e.to_string())?;
+    let seconds = start.elapsed().as_secs_f64();
+
+    let frames = crossfield::FaceFrames::build(&work.mesh, &Topology::build(&work.mesh));
+    let (positive, negative, other) = field.singularities();
+    println!("work mesh      {} triangles, {} feature edges", work.mesh.triangles.len(), work.feature_edges.len());
+    println!("singularities  {} (+1/4: {positive}, -1/4: {negative}, other: {other})", positive + negative + other);
+    println!("total index    {} quarter turns", field.total_index());
+    match crossfield::alignment_error(&work, &frames, &field) {
+        Some(error) => println!("alignment      {error:.2} deg (0 perfect, 22.5 random)"),
+        None => println!("alignment      n/a"),
+    }
+    println!("seconds        {seconds:.3}");
+
+    if let Some(path) = crosses {
+        obj::write_obj_poly(&path, &field_as_crosses(&work, &frames, &field)).map_err(|e| format!("{path}: {e}"))?;
+    }
+    Ok(())
+}
+
+/// The field drawn as geometry, for a viewer: a small cross on a sample of
+/// the faces, a triangle on every +1/4 singularity and a pentagon on every
+/// other one.
+fn field_as_crosses(
+    work: &preprocess::WorkMesh,
+    frames: &crossfield::FaceFrames,
+    field: &crossfield::CrossField,
+) -> PolyMesh {
+    let mesh = &work.mesh;
+    let step = (mesh.triangles.len() / 6000).max(1);
+    let arm = 0.45 * (step as f64 * mesh.surface_area() / mesh.triangles.len() as f64).sqrt();
+    let mut out = PolyMesh::default();
+    let mut polygon = |corners: &[Vec3]| {
+        let first = out.positions.len() as u32;
+        out.positions.extend_from_slice(corners);
+        out.faces.push((first..first + corners.len() as u32).collect());
+    };
+
+    for f in (0..mesh.triangles.len()).step_by(step) {
+        let [a, b, c] = mesh.corners(f);
+        let center = (a + b + c) / 3.0 + frames.normal[f] * (0.02 * arm);
+        let along = field.direction(frames, f) * arm;
+        let across = frames.normal[f].cross(along);
+        // Both arms wound the same way, facing out of the surface.
+        for (long, thin) in [(along, across * 0.06), (across, along * -0.06)] {
+            polygon(&[center - long - thin, center + long - thin, center + long + thin, center - long + thin]);
+        }
+    }
+    for (v, &index) in field.indices.iter().enumerate() {
+        if index == 0 {
+            continue;
+        }
+        let sides = if index == 1 { 3 } else { 5 };
+        let (s, t) = tangent_frame(work.normals[v]);
+        let center = mesh.positions[v] + work.normals[v] * (0.05 * arm);
+        let corners: Vec<Vec3> = (0..sides)
+            .map(|k| {
+                let angle = std::f64::consts::TAU * k as f64 / sides as f64;
+                center + (s * angle.cos() + t * angle.sin()) * (1.6 * arm)
+            })
+            .collect();
+        polygon(&corners);
+    }
+    out
 }

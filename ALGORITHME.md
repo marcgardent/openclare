@@ -1,6 +1,6 @@
 # Cahier des charges : moteur de retopologie quad
 
-**Statut : validé le 6 octobre 2026. Jalons 0 et 1 réalisés, en attente de revue.** Les points marqués
+**Statut : validé le 6 octobre 2026. Jalons 0 et 1 faits ; jalon 2 réalisé, en attente de revue.** Les points marqués
 *à trancher* attendent une décision ; ils sont regroupés en section 7.
 
 Première chaîne, pour l'organique : **champ de croix → paramétrisation sans couture → T-mesh →
@@ -143,8 +143,8 @@ quads demandés, nombre de modèles où chaque outil a la meilleure médiane :
   et replie des faces sur le cochon à chaque graine. Quad Remesher rend quelques faces non quads
   sur le scan, sur Jerry et sur Desert Rose.
 - **Desert Rose (96 coques qui se traversent) met tout le monde en échec** ; nos métriques de
-  validité y sont elles-mêmes peu fiables. C'est un cas limite, à ne pas compter dans
-  l'acceptation.
+  validité y sont elles-mêmes peu fiables. **Décidé : elle ne compte pas dans l'acceptation** ;
+  elle servira de cas de test au prétraitement de réparation (J11).
 
 Deux réserves sur les métriques elles-mêmes :
 
@@ -301,6 +301,17 @@ réutilisation et la réécriture de code existant, tout en restant intégrable 
 
 **Entrée.** Maillage triangulaire dense non structuré, 10⁵ à 10⁷ triangles, OBJ ou PLY.
 
+**Entrées acceptées.** Le cœur (du champ de croix à l'extraction) exige une surface orientée où
+chaque arête a au plus deux faces, et le vérifie. La tolérance aux entrées sales est l'affaire du
+prétraitement, qui est interchangeable :
+
+| Situation | Traitement |
+|---|---|
+| Bords ouverts | acceptés |
+| Plusieurs pièces séparées | acceptées, chaque pièce est traitée seule |
+| Pièces qui se traversent | aujourd'hui traitées coque par coque ; la fusion en une peau extérieure est un prétraitement de réparation à venir (J11) |
+| Arêtes à trois faces ou plus, orientation incohérente | refusées avec un diagnostic clair ; réparation à venir (J11) |
+
 **Contraintes utilisateur, par rang.**
 
 1. Budget de quads cible.
@@ -434,6 +445,53 @@ Limites constatées :
   formulation aux faces, parce que la paramétrisation (M4) attend un champ par face avec les
   singularités aux sommets.
 
+**Réalisé au jalon 2** (`crates/retopo/src/crossfield/`, interface `CrossFieldSolver` et sa
+fabrique ; deux solveurs : `power`, celui de cette fiche, et `extrinsic`, celui d'Instant Meshes
+lu par face, gardé comme point de comparaison).
+
+Mesuré sur un maillage de calcul de 50 000 triangles, courbure lue à l'échelle d'un maillage de
+3000 quads, poids d'alignement 0,05. Chaque case donne le nombre de singularités puis l'écart
+d'alignement en degrés :
+
+| Modèle | Notre champ | Quad Remesher (uniforme) | QuadriFlow |
+|---|---|---|---|
+| blob | 28 / 1,7 | 24 / 4,6 | 38 / 17,5 |
+| créature | 38 / 3,4 | 46 / 5,3 | 24 / 12,9 |
+| cage | 48 / 2,3 | 43 / 2,6 | 66 / 8,1 |
+| rocher | 126 / 10,0 | 101 / 14,7 | 8 / 23,0 |
+| ogre | 203 / 8,0 | 228 / 10,8 | 106 / 19,3 |
+| Spot | 74 / 4,7 | 87 / 7,6 | 68 / 18,1 |
+| Bob | 20 / 1,9 | 30 / 5,1 | 32 / 19,4 |
+| Blub | 44 / 4,9 | 46 / 7,0 | 52 / 16,0 |
+| cochon | 90 / 5,9 | 96 / 9,4 | 122 / 17,4 |
+
+**Attention à ne pas surlire ce tableau.** Notre colonne mesure un *champ* ; les deux autres
+mesurent un *maillage fini*, dont les arêtes s'écartent toujours un peu du champ qui l'a guidé
+(distorsion de la paramétrisation, arrondi aux entiers). Le maillage qu'on tirera de ce champ
+fera donc moins bien que ces chiffres. Ce que le tableau établit : le champ a autant de
+singularités que Quad Remesher, pas davantage, et il suit la courbure de près. La matière
+première est au niveau.
+
+- **Vitesse** : 0,2 à 0,5 seconde pour 50 000 triangles.
+- **Vérifié par les tests** : somme des indices égale à 4 χ pour les deux solveurs ; 8
+  singularités sur la sphère ; sur le cube, exactement une par coin et toutes les croix alignées
+  sur les axes ; champ parallèle aux bords sur une surface ouverte ; alignement sur l'ellipsoïde ;
+  déterminisme ; refus d'un maillage non variété.
+- **Solveur** : gradient conjugué appliqué directement depuis le maillage (chaque face a au plus
+  trois voisines), sans bibliothèque d'algèbre creuse. `faer` reste prévu pour la
+  paramétrisation (M4), dont le système est d'une autre nature.
+
+Constats utiles pour la suite :
+
+- **Le champ le plus lisse n'est pas celui qui a le moins de singularités.** Sur un tore épais,
+  le champ le plus lisse en porte 16 (8 de chaque signe), parce qu'elles absorbent la courbure à
+  moindre coût ; dès qu'on suit la courbure, elles disparaissent. C'est un levier pour M3.
+- **Le poids d'alignement règle le compromis** entre nombre de singularités et alignement. De 0
+  à 0,5, la créature passe de 18 singularités à 18° d'écart, à 44 singularités à 1,6°. La valeur
+  0,05 est un bon milieu sur tout le corpus.
+- **Singularités d'ordre supérieur** : sur l'ogre, 6 sommets ont un indice d'un demi-tour ou plus.
+  Rares, mais M3 devra les scinder ou les accepter.
+
 ### M3 — Simplification des singularités
 
 - **Entrée** : champ et singularités de M2.
@@ -538,7 +596,7 @@ Chaque jalon produit quelque chose de vérifiable et se termine par **un arrêt 
 |---|---|---|
 | J0 | Banc de mesure, corpus provisoire, fabrique de chaînes | **Fait, en attente de revue.** Chiffres de QuadriFlow et du plancher ; seuils proposés |
 | J1 | Prétraitement (M1) | **Fait, en attente de revue.** Maillages de calcul et courbures, tests analytiques |
-| J2 | Champ de croix (M2) | Champs visualisés, singularités comptées |
+| J2 | Champ de croix (M2) | **Fait, en attente de revue.** Champs visualisés, singularités comptées |
 | J3 | Singularités (M3), durée bornée | Gain mesuré sur S, ou décision de s'en tenir au réglage global |
 | J4 | Paramétrisation sans couture (M4) | **Jalon de vérité** : zéro inversion sur le corpus, ou activation d'un repli |
 | J4 bis | Arrondi glouton des translations (façon MIQ) et extraction | **Premier résultat complet, provisoire**, comparé à QuadriFlow et à Quad Remesher |
@@ -548,6 +606,7 @@ Chaque jalon produit quelque chose de vérifiable et se termine par **un arrêt 
 | J8 | Relaxation ; densité adaptative, puis contraintes de rang 3 à 5 | Règle d'acceptation évaluée |
 | J9 | Chaîne durci : traçage, patchs, remplissage par motifs | Pièces mécaniques comparées à QuadriFlow |
 | J10 | Export des coutures et des UV ; bibliothèque à interface C et greffon Python sans copie mémoire | Remaillage lancé depuis Blender, UV et coutures relus dans la scène |
+| J11 | Prétraitement de réparation : fusion des pièces qui se traversent, arêtes non variété | Desert Rose remaillée en une seule peau valide |
 
 Le jalon 4 bis est un raccourci assumé : un arrondi glouton des translations, comme dans MIQ,
 donne un premier maillage complet bien avant le T-mesh et la quantification. Il est moins robuste
@@ -580,7 +639,7 @@ composent des mêmes briques :
 | `Mesher` | maillage quad depuis la structure quantifiée | carte entière et extraction (M7, M8) | remplissage par motifs |
 | `Relaxer` | placement final (M9) | commune | commune |
 
-Écrites à ce jour : `Remesher` et `Preprocessor`.
+Écrites à ce jour : `Remesher`, `Preprocessor` et `CrossFieldSolver`.
 
 Les deux chaînes ne diffèrent donc que par deux étapes, `LayoutBuilder` et `Mesher`, plus le
 réglage du champ de croix. Les types échangés entre étapes (maillage de calcul, champ de croix,
@@ -654,11 +713,9 @@ base fiable pour le chiffrer plus finement.
 
 En attente :
 
-1. **Desert Rose** : hors acceptation, comptée, ou retirée ; lié à la politique sur les entrées
-   non variété.
-2. **Corpus** : d'autres sculptures à ajouter plus tard, avant l'expiration de la licence d'essai
+1. **Corpus** : d'autres sculptures à ajouter plus tard, avant l'expiration de la licence d'essai
    de Quad Remesher.
-3. **Arithmétique du traçage** (M5) ; peut attendre J4.
+2. **Arithmétique du traçage** (M5) ; peut attendre J4.
 
 Prises :
 
@@ -673,4 +730,6 @@ Prises :
 - raccourci MIQ (jalon 4 bis) pour un premier résultat complet plus tôt ;
 - export des coutures et des UV, et forme finale en bibliothèque C pilotée par un greffon Python
   sans copie mémoire ;
-- sources en anglais, documents traduits à la fin.
+- sources en anglais, documents traduits à la fin ;
+- cœur strict sur les entrées (surface orientée, deux faces par arête au plus), tolérance logée
+  dans le prétraitement ; Desert Rose hors acceptation.

@@ -43,3 +43,86 @@ impl Rng {
         }
     }
 }
+
+/// Complex number, for fields with rotational symmetry: a cross of angle `θ`
+/// is stored as `e^{4iθ}`, which is the same for its four arms.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Complex {
+    pub re: f64,
+    pub im: f64,
+}
+
+impl Complex {
+    pub const ZERO: Complex = Complex { re: 0.0, im: 0.0 };
+
+    #[inline]
+    pub fn new(re: f64, im: f64) -> Self {
+        Self { re, im }
+    }
+
+    /// `e^{i angle}`.
+    #[inline]
+    pub fn from_angle(angle: f64) -> Self {
+        let (im, re) = angle.sin_cos();
+        Self { re, im }
+    }
+
+    #[inline]
+    pub fn conj(self) -> Self {
+        Self { re: self.re, im: -self.im }
+    }
+
+    #[inline]
+    pub fn norm_squared(self) -> f64 {
+        self.re * self.re + self.im * self.im
+    }
+
+    #[inline]
+    pub fn abs(self) -> f64 {
+        self.norm_squared().sqrt()
+    }
+
+    #[inline]
+    pub fn arg(self) -> f64 {
+        self.im.atan2(self.re)
+    }
+}
+
+impl std::ops::Add for Complex {
+    type Output = Complex;
+    #[inline]
+    fn add(self, other: Complex) -> Complex {
+        Complex::new(self.re + other.re, self.im + other.im)
+    }
+}
+
+impl std::ops::Sub for Complex {
+    type Output = Complex;
+    #[inline]
+    fn sub(self, other: Complex) -> Complex {
+        Complex::new(self.re - other.re, self.im - other.im)
+    }
+}
+
+impl std::ops::Mul for Complex {
+    type Output = Complex;
+    #[inline]
+    fn mul(self, other: Complex) -> Complex {
+        Complex::new(self.re * other.re - self.im * other.im, self.re * other.im + self.im * other.re)
+    }
+}
+
+impl std::ops::Mul<f64> for Complex {
+    type Output = Complex;
+    #[inline]
+    fn mul(self, scale: f64) -> Complex {
+        Complex::new(self.re * scale, self.im * scale)
+    }
+}
+
+impl std::ops::AddAssign for Complex {
+    #[inline]
+    fn add_assign(&mut self, other: Complex) {
+        *self = *self + other;
+    }
+}

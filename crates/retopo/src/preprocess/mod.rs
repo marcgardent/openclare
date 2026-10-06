@@ -249,8 +249,10 @@ fn work_mesh(mesh: TriMesh, feature_edges: Vec<[u32; 2]>, request: &Request) -> 
 
     let (min, max) =
         mesh.positions.iter().fold((Vec3::INFINITY, Vec3::NEG_INFINITY), |(lo, hi), &p| (lo.min(p), hi.max(p)));
-    // Curvature of a sphere a thousand times the size of the model: flat.
-    let negligible = 1e-3 / (max - min).length().max(f64::MIN_POSITIVE);
+    // A direction only counts where the surface bends more than the model as
+    // a whole does (a sphere of its size): flatter regions have no direction
+    // worth following, whatever the ratio of their two tiny curvatures.
+    let negligible = 2.0 / (max - min).length().max(f64::MIN_POSITIVE);
     let confidence = (0..mesh.positions.len())
         .map(|v| curvature.anisotropy(v) / (curvature.k1[v].abs() + curvature.k2[v].abs() + negligible))
         .collect();

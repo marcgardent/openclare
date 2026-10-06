@@ -16,6 +16,7 @@
 // Index loops over parallel per-vertex arrays are the clearest form here.
 #![allow(clippy::needless_range_loop)]
 
+pub mod crossfield;
 pub mod curvature;
 pub mod error;
 pub mod extract;
