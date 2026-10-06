@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Computes and stores Quad Remesher results while a licence is available.
 
-    python3 bench/make_references.py [--targets 1000,3000,8000] [--refresh]
+    python3 bench/make_references.py [--targets 1000,3000,8000] [--models ogre,blob] [--refresh]
 
 Results already in bench/reference are kept unless --refresh is given.
 """
@@ -12,12 +12,16 @@ from run import MODELS, OUTPUT, ensure_corpus, quadremesher, quadremesher_refere
 
 parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
 parser.add_argument("--targets", default="1000,3000,8000")
+parser.add_argument("--models", default=",".join(model for model, *_ in MODELS))
 parser.add_argument("--refresh", action="store_true")
 options = parser.parse_args()
 
-ensure_corpus([model for model, *_ in MODELS])
+wanted = options.models.split(",")
+ensure_corpus(wanted)
 for target in (int(t) for t in options.targets.split(",")):
     for model, _, sharp, boundary in MODELS:
+        if model not in wanted:
+            continue
         directory = OUTPUT / model
         directory.mkdir(parents=True, exist_ok=True)
         for uniform in (False, True):

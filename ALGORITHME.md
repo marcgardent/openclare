@@ -95,6 +95,36 @@ Ce que ces chiffres établissent :
 - **Sur le durci**, QuadriFlow et Quad Remesher font jeu égal : 8 sommets irréguliers et 6 patchs
   sur le cube (les minimums), 24 à 28 sommets irréguliers sur la pièce percée.
 
+### Sur un vrai modèle : l'ogre
+
+L'ogre, mascotte du projet, est une vraie sculpture de 4,7 millions de triangles. Le banc la
+mesure à partir d'une source de 200 000 triangles produite par notre prétraitement. Résultats à
+8000 quads demandés ([RESULTS-8000.md](bench/results/RESULTS-8000.md) ; 3000 et 30 000 quads sont
+mesurés aussi) :
+
+| | QuadriFlow | Quad Remesher (défaut) | Quad Remesher (uniforme) | Plancher |
+|---|---|---|---|---|
+| Maillages valides (V) | 0 sur 5 | 1 sur 1 | 0 sur 1 | 0 sur 5 |
+| Alignement (A), degrés | 17,8 | 8,5 | 9,8 | 17,7 |
+| Sommets irréguliers (S) | 162 | 338 | 322 | 455 |
+| Hausdorff (H), ‰ | 27,3 | 5,2 | 25,6 | 30,7 |
+| Écart au budget (N) | 3 % | 59 % | 16 % | 2 % |
+| Temps (T), secondes | 4,3 | 23,5 | 24,0 | 2,8 |
+
+- **La taille adaptative est ce qui sauve les détails fins.** En réglage par défaut, Quad Remesher
+  garde les doigts et les oreilles (Hausdorff 5,2 ‰) ; en taille uniforme il les perd comme les
+  autres (25,6 ‰). Le prix : 59 % de quads de plus que demandé.
+- **Tout le monde échoue quelque part.** QuadriFlow sort 9 à 14 faces repliées à chaque graine.
+  Notre plancher perd carrément les mains : les doigts se détachent en morceaux séparés. Quad
+  Remesher en taille uniforme rend 4 faces qui ne sont pas des quads.
+- **Un vrai modèle est bien plus dur que le corpus de synthèse** : même Quad Remesher y laisse
+  plus de 300 sommets irréguliers et n'aligne qu'à 9°. QuadriFlow et le plancher y sont proches du
+  hasard (22,5°).
+
+Conséquence à trancher : la densité adaptative était au rang 4 des contraintes (section 2). Sur
+un personnage, c'est elle qui décide si les mains existent encore. Elle mérite sans doute de
+remonter, au moins comme réglage automatique piloté par la courbure.
+
 Deux réserves sur les métriques elles-mêmes :
 
 - **C sature.** Près du nombre de faces, elle ne départage plus : un maillage avec davantage de
@@ -131,6 +161,10 @@ télécharger, et versionné dans `bench/corpus/` avec les mires Quad Remesher c
 bruité, créature à pattes, cage de genre 5, Suzanne), deux mécaniques (pièce percée, cube) et deux
 étalons (sphère, tore). Elles couvrent les cas utiles, mais ce sont des formes de synthèse, pas de
 vraies sculptures.
+
+S'y ajoute un premier modèle réel, **l'ogre** (voir plus haut). Son original de 4,7 millions de
+triangles pèse 200 Mo : trop pour git, il est gardé hors versionnement dans `bench/corpus-large/`.
+Seule sa version à 200 000 triangles est versionnée.
 
 Reste à choisir le corpus définitif : une dizaine de modèles réels sous licence libre (personnage,
 tête, main, animal, scan bruité), ce qui suppose de les télécharger. **C'est à décider tant que la
@@ -562,7 +596,8 @@ base fiable pour le chiffrer plus finement.
 2. **Corpus définitif** : quels modèles réels, et l'autorisation de les télécharger (section 0).
 3. **Champ par face ou par sommet** (M2) ; proposition : par face.
 4. **Variante MIQ** pour un premier résultat complet après J4 (section 4).
-5. **Arithmétique du traçage** (M5) ; peut attendre J4.
+5. **Rang de la densité adaptative** : la remonter, au vu de l'ogre (section 0) ?
+6. **Arithmétique du traçage** (M5) ; peut attendre J4.
 
 Déjà décidé : objectif (mieux que Blender), priorité (organique d'abord, durci ensuite), lignées
 (paramétrisation et isolignes pour l'organique, patchs pour le durci), architecture modulaire à

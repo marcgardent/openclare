@@ -15,8 +15,9 @@ python3 bench/run.py
 ```
 
 Il faut `blender` dans le `PATH` : il sert à lancer QuadriFlow et à générer le corpus provisoire.
-La campagne complète prend environ trois minutes. Options : `--models blob,cube`,
-`--tools quadriflow`, `--target 5000`, `--seeds 1,2,3`.
+La campagne complète prend environ cinq minutes. Options : `--models blob,cube`,
+`--tools quadriflow`, `--target 5000`, `--seeds 1,2,3`. Un lancement partiel met à jour les résultats existants ;
+chaque budget a ses fichiers (`RESULTS.md` pour 3000 quads, `RESULTS-8000.md`, etc.).
 
 Pour mesurer un seul maillage, quel que soit l'outil qui l'a produit :
 
@@ -33,6 +34,7 @@ Pour mesurer un seul maillage, quel que soit l'outil qui l'a produit :
 | `quadremesher.py` | script Blender : Quad Remesher sur un OBJ |
 | `make_references.py` | produit et range les mires Quad Remesher tant qu'une licence est disponible |
 | `corpus/` | les modèles sources, versionnés |
+| `corpus-large/` | originaux trop lourds pour git (l'ogre à 4,7 millions de triangles), non versionnés |
 | `reference/` | les mires conservées, versionnées ([notice](reference/README.md)) |
 | `make_corpus.py` | script Blender : génère le corpus provisoire dans `corpus/` |
 | `blender_io.py` | lecture et écriture OBJ sans conversion d'axes, pour que tous les outils voient les mêmes coordonnées |
@@ -67,6 +69,17 @@ Une ligne dans le dictionnaire `TOOLS` de `run.py`. Pour une chaîne de ce dép�
 - Plancher : `--crease-angle 30` sur les modèles à arêtes vives.
 - Quad Remesher : détection des arêtes vives sur les modèles à arêtes vives seulement, symétrie désactivée.
 - Même budget de faces et mêmes graines pour tous.
+
+## L'ogre
+
+`corpus/ogre.obj` vient d'une sculpture de 4,7 millions de triangles, ramenée à 200 000 par :
+
+```bash
+./target/release/retopo preprocess bench/corpus-large/ogre_hp.obj bench/corpus/ogre.obj --triangles 200000
+```
+
+L'écart à l'original est de 0,055 ‰ de la diagonale en moyenne et 4,5 ‰ au pire (sur les détails
+les plus anguleux).
 
 ## Limites connues
 

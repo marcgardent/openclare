@@ -92,6 +92,24 @@ Requested budget: 3000 quads. Median over 5 seeds; Quad Remesher has no seed and
 | Off budget, % (N) | 1.0 | 2.3 | 43.7 | 12.4 |
 | Time, seconds (T) | 3.32 | 0.24 | 3.44 | 3.21 |
 
+## ogre (organic)
+
+| | quadriflow | instant-meshes | quadremesher | quadremesher-uniform |
+|---|---|---|---|---|
+| **Valid meshes (V)** | 1/5 | 4/5 | 1/1 | 0/1 |
+| Irregular vertices (S) | 106 | 216 | 314 | 228 |
+| … of which above the minimum | 98 | 202 | 306 | 220 |
+| Base complex patches (C) | 2857 | 2802 | 5170 | 2009 |
+| Alignment, degrees (A) | 19.31 | 18.57 | 8.42 | 10.81 |
+| Mean angle deviation, degrees (F) | 12.01 | 7.49 | 9.10 | 11.45 |
+| Angle deviation, 95th percentile (F) | 32.96 | 24.38 | 25.01 | 30.48 |
+| Mean aspect ratio (F) | 1.403 | 1.283 | 2.364 | 1.612 |
+| Area variation (F) | 0.324 | 0.224 | 0.716 | 0.393 |
+| Hausdorff, ‰ of the diagonal (H) | 36.59 | 46.14 | 5.98 | 39.35 |
+| Mean distance, ‰ (H) | 1.268 | 1.460 | 0.565 | 1.366 |
+| Off budget, % (N) | 4.3 | 4.2 | 104.5 | 19.4 |
+| Time, seconds (T) | 3.31 | 2.38 | 19.04 | 17.16 |
+
 ## part (mechanical)
 
 | | quadriflow | instant-meshes | quadremesher | quadremesher-uniform |
@@ -168,16 +186,16 @@ Requested budget: 3000 quads. Median over 5 seeds; Quad Remesher has no seed and
 
 Number of models on which each tool has the best median, calibration shapes excluded. Ties count for each.
 
-### organic (5 models)
+### organic (6 models)
 
 | Metric | quadriflow | instant-meshes | quadremesher | quadremesher-uniform |
 |---|---|---|---|---|
-| Irregular vertices (S) | 2 | 0 | 0 | 3 |
-| Base complex patches (C) | 0 | 0 | 0 | 5 |
-| Alignment, degrees (A) | 0 | 0 | 5 | 0 |
-| Mean angle deviation, degrees (F) | 0 | 3 | 1 | 1 |
-| Mean aspect ratio (F) | 2 | 3 | 0 | 0 |
-| Valid meshes (V) | 18/25 | 22/25 | 4/5 | 5/5 |
+| Irregular vertices (S) | 3 | 0 | 0 | 3 |
+| Base complex patches (C) | 0 | 0 | 0 | 6 |
+| Alignment, degrees (A) | 0 | 0 | 6 | 0 |
+| Mean angle deviation, degrees (F) | 0 | 4 | 1 | 1 |
+| Mean aspect ratio (F) | 2 | 4 | 0 | 0 |
+| Valid meshes (V) | 19/30 | 26/30 | 5/6 | 5/6 |
 
 ### mechanical (2 models)
 
