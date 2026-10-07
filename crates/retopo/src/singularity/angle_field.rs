@@ -72,7 +72,7 @@ impl<'a> AngleField<'a> {
             }
             let (f, g) = (h / 3, t as usize / 3);
             let stored = field.period_jumps[h];
-            let rest = field.angles[g] - field.angles[f] - frames.rotation[h] - stored as f64 * FRAC_PI_2;
+            let rest = field.angles[g] - field.angles[f] - frames.transport(h) - stored as f64 * FRAC_PI_2;
             jumps[h] = stored + 4 * (rest / TAU).round() as i32;
             jumps[t as usize] = -jumps[h];
         }
@@ -124,7 +124,7 @@ impl<'a> AngleField<'a> {
         }
         // Computed from one side only, so that the two are exact opposites.
         let (low, high) = (h.min(t as usize), h.max(t as usize));
-        let value = self.frames.rotation[low] + self.jumps[low] as f64 * FRAC_PI_2;
+        let value = self.frames.transport(low) + self.jumps[low] as f64 * FRAC_PI_2;
         self.expected[low] = value;
         self.expected[high] = -value;
     }

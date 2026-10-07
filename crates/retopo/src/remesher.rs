@@ -21,13 +21,31 @@ use crate::preprocess::{self, WorkMesh};
 use crate::quantization;
 use crate::relax::{Features, Laplacian, Relaxer, Squaring};
 use crate::singularity;
+use crate::sizing;
 use crate::spatial::Bvh;
 use crate::tmesh;
+
+/// What the user drew on the input to steer the result, as opposed to the
+/// settings, which do not depend on the model.
+#[derive(Clone, Copy, Default)]
+pub struct Guides<'a> {
+    /// A density painted on the vertices of the input: `density[v]`
+    /// multiplies the number of quads per unit of area around vertex `v`.
+    /// 1 leaves it alone, 4 asks for quads half as long, 0.25 twice as long.
+    pub density: Option<&'a [f64]>,
+}
 
 /// A complete triangle-to-quad remeshing chain.
 pub trait Remesher {
     fn method(&self) -> Method;
-    fn remesh(&self, input: &TriMesh, config: &RemeshConfig) -> Result<(PolyMesh, Report)>;
+
+    fn remesh(&self, input: &TriMesh, config: &RemeshConfig) -> Result<(PolyMesh, Report)> {
+        self.remesh_guided(input, &Guides::default(), config)
+    }
+
+    /// The same, steered by `guides`. A chain is free to ignore those it has
+    /// no use for.
+    fn remesh_guided(&self, input: &TriMesh, guides: &Guides, config: &RemeshConfig) -> Result<(PolyMesh, Report)>;
 }
 
 /// The chains [`create`] knows how to build.
@@ -111,7 +129,7 @@ impl Remesher for InstantMeshes {
         Method::InstantMeshes
     }
 
-    fn remesh(&self, input: &TriMesh, config: &RemeshConfig) -> Result<(PolyMesh, Report)> {
+    fn remesh_guided(&self, input: &TriMesh, _: &Guides, config: &RemeshConfig) -> Result<(PolyMesh, Report)> {
         config.validate()?;
         let params = Params {
             target: config.target,
@@ -159,11 +177,12 @@ impl Remesher for IntegerGrid {
         Method::IntegerGrid
     }
 
-    fn remesh(&self, input: &TriMesh, config: &RemeshConfig) -> Result<(PolyMesh, Report)> {
+    fn remesh_guided(&self, input: &TriMesh, _: &Guides, config: &RemeshConfig) -> Result<(PolyMesh, Report)> {
         let mut clock = Stopwatch::start();
         let mut report = Report::default();
         let size = WorkSize { per_quad: self.triangles_per_quad, least: self.min_triangles, most: self.max_triangles };
-        let Fields { work, field, edge_length, .. } = fields(input, config, &size, &mut report, &mut clock)?;
+        // Its extraction counts on quads of one size: no sizing.
+        let Fields { work, field, edge_length, .. } = fields(input, config, &size, None, &mut report, &mut clock)?;
 
         let map_request = parametrization::Request { edge_length, stiffening_rounds: self.stiffening_rounds };
         let map =
@@ -221,20 +240,24 @@ impl Remesher for QuadLayout {
         Method::QuadLayout
     }
 
-    fn remesh(&self, input: &TriMesh, config: &RemeshConfig) -> Result<(PolyMesh, Report)> {
+    fn remesh_guided(&self, input: &TriMesh, guides: &Guides, config: &RemeshConfig) -> Result<(PolyMesh, Report)> {
         let mut clock = Stopwatch::start();
         let mut report = Report::default();
         let size = WorkSize { per_quad: self.triangles_per_quad, least: self.min_triangles, most: self.max_triangles };
-        let Fields { work, field, edge_length, quads } = fields(input, config, &size, &mut report, &mut clock)?;
+        let Fields { work, field, edge_length, quads } =
+            fields(input, config, &size, Some(guides), &mut report, &mut clock)?;
 
         let layout = tmesh::create(tmesh::Kind::Motorcycle).build(&work, &field, &tmesh::Request { edge_length })?;
         report.map_inversions = layout.tmesh.report.map_inversions;
         clock.lap(&mut report, "layout");
         // A piece of surface with neither singularity nor border (a torus)
-        // has no layout; a layout that went wrong cannot be meshed from.
-        // Either way the provisional chain takes over.
+        // has no layout; a layout that went wrong cannot be meshed from, nor
+        // can vertices be read off a map that folds over. In all those
+        // cases the provisional chain takes over.
         let layout_report = &layout.tmesh.report;
-        if layout.tmesh.patches.is_empty() || layout_report.uncut_triangles > 0 || !layout_report.is_valid() {
+        let unusable =
+            layout_report.uncut_triangles > 0 || layout_report.map_inversions > 0 || !layout_report.is_valid();
+        if layout.tmesh.patches.is_empty() || unusable {
             return fall_back(input, config);
         }
 
@@ -280,11 +303,13 @@ struct Fields {
     quads: f64,
 }
 
-/// Preprocessing, cross field and singularity simplification.
+/// Preprocessing, sizing, cross field and singularity simplification.
+/// `guides` is given by the chains whose quads may vary in size.
 fn fields(
     input: &TriMesh,
     config: &RemeshConfig,
     size: &WorkSize,
+    guides: Option<&Guides>,
     report: &mut Report,
     clock: &mut Stopwatch,
 ) -> Result<Fields> {
@@ -304,10 +329,17 @@ fn fields(
     let triangles = ((size.per_quad * quads) as usize).clamp(size.least, size.most);
     let work_request =
         preprocess::Request { triangles, crease_angle: config.crease_angle, curvature_scale: Some(edge_length) };
-    let work = preprocess::create(preprocess::Kind::Isotropic).preprocess(input, &work_request)?;
+    let mut work = preprocess::create(preprocess::Kind::Isotropic).preprocess(input, &work_request)?;
     report.working_vertices = work.mesh.positions.len();
     report.feature_edges = work.feature_edges.len();
     clock.lap(report, "preprocess");
+
+    if let Some(guides) = guides {
+        let painted = guides.density.map(|density| sizing::Painted { source: input, density });
+        let request = sizing::Request { edge_length, adaptivity: config.adaptivity, painted };
+        work.sizing = sizing::create(sizing::Kind::Curvature).size(&work, &request)?;
+        clock.lap(report, "sizing");
+    }
 
     let field_request = crossfield::Request { alignment: config.alignment, seed: config.seed };
     let mut field = crossfield::create(crossfield::Kind::Power).solve(&work, &field_request)?;
@@ -332,7 +364,10 @@ fn fields(
 fn settle(mesh: &mut PolyMesh, input: &TriMesh, work: &WorkMesh, edge_length: f64, relaxer: &dyn Relaxer) {
     let constraints =
         crate::field::Constraints::from_feature_edges(&work.mesh.positions, &work.normals, &work.feature_edges);
-    let guide = Features::new(&work.mesh.positions, &work.feature_edges, &constraints, 0.35 * edge_length);
+    // A vertex belongs to a feature line when it is within a third of an
+    // edge of it: of the shortest edges there are, where sizes vary.
+    let finest = work.sizing.iter().copied().fold(1.0, f64::min);
+    let guide = Features::new(&work.mesh.positions, &work.feature_edges, &constraints, 0.35 * finest * edge_length);
     relaxer.relax(mesh, &Bvh::build(input), guide.as_ref());
 }
 

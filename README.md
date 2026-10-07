@@ -17,7 +17,8 @@ quad de Blender** (QuadriFlow) sur tous les critères retenus : maillages toujou
 modèles sur 12, contre 5), arêtes deux fois mieux alignées sur la forme (8,6° contre 17,5°), moins
 de sommets irréguliers, nombre de quads demandé tenu à 1,4 % près. Face à Quad Remesher, ses
 quads sont plus réguliers (écart d'angle moyen 5,4° contre 7,2°) ; ses arêtes suivent encore un
-peu moins bien la forme (8,4° contre 7,7°), et elle n'a pas encore de taille adaptative.
+peu moins bien la forme. La taille des quads s'adapte à la forme, et se règle aussi en peignant
+une densité sur le modèle.
 
 Deux autres chaînes restent dans le dépôt : `integer-grid`, la version provisoire, qui sert de
 repli pour les surfaces sans singularité ni bord (un tore), et `instant-meshes`, le plancher de
@@ -78,6 +79,14 @@ config.alignment = 0.1;
 let (quads, report) = config.remesh(&triangles)?;
 ```
 
+La taille des quads suit la forme (réglage `--adaptivity`, de 0 pour une taille unique à 1) et,
+si on en fournit une, une densité peinte : un fichier d'un nombre par sommet de l'entrée, où 4
+demande quatre fois plus de quads par unité d'aire et 0,25 quatre fois moins.
+
+```bash
+./target/release/retopo remesh entree.obj sortie.obj --quads 3000 --adaptivity 0.7 --density densite.txt
+```
+
 Pour voir le T-mesh d'un modèle, ses coupes écrites comme des lignes sur la surface :
 
 ```bash
@@ -99,6 +108,7 @@ Et pour le quantifier :
 | `hierarchy` | graphe multi-résolution pour résoudre du grossier au fin |
 | `field` | champ d'orientation (4-RoSy), champ de position (4-PoSy), contraintes, singularités |
 | `extract` | du champ ou de la carte entière au graphe de quads, puis aux faces |
+| `sizing` | champ de taille : quads plus petits là où la forme se courbe ou là où on l'a peint |
 | `relax` | étape de relaxation : placement final, quads tirés vers des rectangles, sur la surface et les arêtes vives |
 | `spatial` | BVH pour la projection sur la surface source |
 | `pipeline` | enchaînement complet de la chaîne Instant Meshes |

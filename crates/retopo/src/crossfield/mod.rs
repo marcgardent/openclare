@@ -138,6 +138,15 @@ pub(crate) fn prepare(mesh: &TriMesh) -> Result<(Topology, FaceFrames)> {
     Ok((topology, frames))
 }
 
+/// The same for a work mesh, whose sizing the frames then follow.
+pub(crate) fn prepare_sized(work: &WorkMesh) -> Result<(Topology, FaceFrames)> {
+    let (topology, mut frames) = prepare(&work.mesh)?;
+    if work.sizing.iter().any(|&s| s != 1.0) {
+        frames.follow_sizing(&work.mesh, &work.sizing);
+    }
+    Ok((topology, frames))
+}
+
 /// Wraps an angle difference to the nearest quarter turn: the count of
 /// quarter turns, and what is left in `(-π/4, π/4]`.
 pub(crate) fn split_quarter_turns(angle: f64) -> (i32, f64) {
@@ -176,7 +185,7 @@ pub(crate) fn build_field(
         .collect();
     let jump_of = |h: usize, g: usize| match &jumps {
         Some(jumps) => jumps[h] + turns[h / 3] - turns[g],
-        None => split_quarter_turns(angles[g] - angles[h / 3] - frames.rotation[h]).0,
+        None => split_quarter_turns(angles[g] - angles[h / 3] - frames.transport(h)).0,
     };
 
     let mut period_jumps = vec![0; half_edges];

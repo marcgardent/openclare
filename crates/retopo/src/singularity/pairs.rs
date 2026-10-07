@@ -11,7 +11,7 @@ use std::collections::{BinaryHeap, HashMap, HashSet};
 
 use super::angle_field::AngleField;
 use super::{Kind, Report, Request, SingularityOptimizer};
-use crate::crossfield::{CrossField, FaceFrames, prepare};
+use crate::crossfield::{CrossField, FaceFrames, prepare_sized};
 use crate::error::Result;
 use crate::math::INVALID;
 use crate::mesh::Topology;
@@ -35,7 +35,7 @@ impl SingularityOptimizer for PairCancellation {
     }
 
     fn optimize(&self, work: &WorkMesh, field: &CrossField, request: &Request) -> Result<(CrossField, Report)> {
-        let (topology, frames) = prepare(&work.mesh)?;
+        let (topology, frames) = prepare_sized(work)?;
         let graph = Graph::new(work, &topology);
         let mut angles = AngleField::new(work, &topology, &frames, field, request.alignment);
         let everything: Vec<u32> = (0..work.mesh.triangles.len() as u32).collect();

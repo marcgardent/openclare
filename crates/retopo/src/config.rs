@@ -9,7 +9,7 @@ use std::fmt::Write;
 
 use crate::error::{Error, Result};
 use crate::pipeline::Target;
-use crate::remesher::Method;
+use crate::remesher::{Guides, Method};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct RemeshConfig {
@@ -32,6 +32,10 @@ pub struct RemeshConfig {
     /// Dihedral angle in degrees above which an input edge is a hard edge the
     /// output must follow. `None` keeps no hard edge.
     pub crease_angle: Option<f64>,
+    /// How much the size of the quads follows the shape: 0 keeps them all
+    /// the same size; towards 1 they get smaller where the surface bends
+    /// more, larger where it is flat, for the same number in total.
+    pub adaptivity: f64,
     pub seed: u64,
 }
 
@@ -58,7 +62,7 @@ impl Preset {
 pub const PRESETS: &[Preset] = &[
     Preset {
         name: "organic",
-        summary: "sculpts and characters: edges follow the shape closely",
+        summary: "sculpts and characters: edges follow the shape closely, quads are smaller where it bends",
         build: RemeshConfig::for_organic,
     },
     Preset {
@@ -82,6 +86,7 @@ impl RemeshConfig {
             singularity_reach: 2.0,
             singularity_tolerance: 1.0,
             crease_angle: None,
+            adaptivity: 0.5,
             seed: 1,
         }
     }
@@ -91,8 +96,10 @@ impl RemeshConfig {
     }
 
     pub fn for_hard_surface(target: Target) -> Self {
-        // Hard edges lead; curvature only settles what they leave open.
-        Self { alignment: 0.02, crease_angle: Some(30.0), ..Self::for_organic(target) }
+        // Hard edges lead; curvature only settles what they leave open. And
+        // a part is cut to one size: its edges, sharp as they are, call for
+        // no smaller quads.
+        Self { alignment: 0.02, crease_angle: Some(30.0), adaptivity: 0.0, ..Self::for_organic(target) }
     }
 
     /// The shipped preset of that name.
@@ -105,7 +112,16 @@ impl RemeshConfig {
 
     /// Runs the configured chain on `input`.
     pub fn remesh(&self, input: &crate::TriMesh) -> Result<(crate::PolyMesh, crate::pipeline::Report)> {
-        crate::remesher::create(self.method).remesh(input, self)
+        self.remesh_guided(input, &Guides::default())
+    }
+
+    /// Runs the configured chain on `input`, with what the user drew on it.
+    pub fn remesh_guided(
+        &self,
+        input: &crate::TriMesh,
+        guides: &Guides,
+    ) -> Result<(crate::PolyMesh, crate::pipeline::Report)> {
+        crate::remesher::create(self.method).remesh_guided(input, guides, self)
     }
 
     pub fn validate(&self) -> Result<()> {
@@ -118,6 +134,9 @@ impl RemeshConfig {
             if !(value.is_finite() && value >= 0.0) {
                 return Err(Error::InvalidParams(format!("{name} must be a non-negative number, not {value}")));
             }
+        }
+        if !(0.0..=1.0).contains(&self.adaptivity) {
+            return Err(Error::InvalidParams(format!("adaptivity must be between 0 and 1, not {}", self.adaptivity)));
         }
         match self.crease_angle {
             Some(angle) if !(angle.is_finite() && angle > 0.0 && angle < 180.0) => {
@@ -144,6 +163,7 @@ impl RemeshConfig {
             None => writeln!(text, "crease_angle = none"),
         }
         .unwrap();
+        writeln!(text, "adaptivity = {}", self.adaptivity).unwrap();
         writeln!(text, "seed = {}", self.seed).unwrap();
         text
     }
@@ -173,6 +193,7 @@ impl RemeshConfig {
                 "singularity_tolerance" => config.singularity_tolerance = number_of("number")?,
                 "crease_angle" if value == "none" => config.crease_angle = None,
                 "crease_angle" => config.crease_angle = Some(number_of("number of degrees, nor 'none'")?),
+                "adaptivity" => config.adaptivity = number_of("number")?,
                 "seed" => config.seed = value.parse().map_err(|_| error(format!("'{value}' is not a seed")))?,
                 other => return Err(error(format!("unknown setting '{other}'"))),
             }
@@ -220,5 +241,6 @@ mod tests {
         }
         assert!(RemeshConfig::from_text("alignment = -1").is_err());
         assert!(RemeshConfig::from_text("crease_angle = 200").is_err());
+        assert!(RemeshConfig::from_text("adaptivity = 1.5").is_err());
     }
 }

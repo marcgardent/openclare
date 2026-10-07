@@ -36,6 +36,7 @@ pub mod quantization;
 pub mod relax;
 pub mod remesher;
 pub mod singularity;
+pub mod sizing;
 pub mod spatial;
 pub mod tmesh;
 
@@ -43,4 +44,4 @@ pub use config::RemeshConfig;
 pub use error::{Error, Result};
 pub use mesh::{PolyMesh, TriMesh};
 pub use pipeline::{Params, Report, Target, remesh};
-pub use remesher::{Method, Remesher};
+pub use remesher::{Guides, Method, Remesher};

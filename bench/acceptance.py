@@ -16,7 +16,15 @@ import statistics
 from run import DEFAULT_TARGET, MODELS, RESULTS
 
 ORGANIC = [name for name, category, _, _ in MODELS if category == "organic" and name != "rose"]
-TOOLS = ["quadriflow", "instant-meshes", "integer-grid", "quad-layout", "quadremesher", "quadremesher-uniform"]
+TOOLS = [
+    "quadriflow",
+    "instant-meshes",
+    "integer-grid",
+    "quad-layout",
+    "quad-layout-adaptive",
+    "quadremesher",
+    "quadremesher-uniform",
+]
 # key, letter, label, factor applied for display
 METRICS = [
     ("irregular_vertices", "S", "Irregular vertices", 1),
@@ -25,6 +33,8 @@ METRICS = [
     ("angle_deviation_mean", "F", "Mean angle deviation, degrees", 1),
     ("hausdorff", "H", "Hausdorff, per mille of the diagonal", 1000),
     ("budget_error", "N", "Off budget, %", 100),
+    ("area_variation", "", "Area variation", 1),
+    ("mean_distance", "", "Mean distance, per mille of the diagonal", 1000),
 ]
 
 
@@ -104,8 +114,9 @@ def main():
         )
         for key, letter, label, factor in METRICS:
             digits = 0 if key in ("irregular_vertices", "base_complex_patches") else 1
+            digits = 2 if key in ("area_variation", "mean_distance") else digits
             cells = [show(median([row[key] for row in counted[tool]]), factor, digits) for tool in present]
-            lines.append(f"| {label} ({letter}) | " + " | ".join(cells) + " |")
+            lines.append(f"| {label}{f' ({letter})' if letter else ''} | " + " | ".join(cells) + " |")
         lines.append(
             "| Time, seconds (T) | "
             + " | ".join(show(median([row["seconds"] for row in counted[tool]]), 1, 1) for tool in present)
