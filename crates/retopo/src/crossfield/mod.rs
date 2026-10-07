@@ -17,6 +17,7 @@ use crate::math::{INVALID, Vec3};
 use crate::mesh::{Topology, TriMesh};
 use crate::preprocess::WorkMesh;
 pub use frames::FaceFrames;
+pub(crate) use power::constraints;
 
 /// A cross per face of a work mesh.
 #[derive(Clone, Debug)]
@@ -122,7 +123,7 @@ pub fn create(kind: Kind) -> Box<dyn CrossFieldSolver> {
 
 /// The connectivity every solver needs, refusing meshes the stage cannot
 /// work on: from here on the pipeline assumes an oriented manifold.
-fn prepare(mesh: &TriMesh) -> Result<(Topology, FaceFrames)> {
+pub(crate) fn prepare(mesh: &TriMesh) -> Result<(Topology, FaceFrames)> {
     if mesh.triangles.is_empty() {
         return Err(Error::InvalidMesh("work mesh has no triangles".into()));
     }
@@ -139,19 +140,45 @@ fn prepare(mesh: &TriMesh) -> Result<(Topology, FaceFrames)> {
 
 /// Wraps an angle difference to the nearest quarter turn: the count of
 /// quarter turns, and what is left in `(-π/4, π/4]`.
-fn split_quarter_turns(angle: f64) -> (i32, f64) {
+pub(crate) fn split_quarter_turns(angle: f64) -> (i32, f64) {
     let turns = (angle / FRAC_PI_2).round();
     (turns as i32, angle - turns * FRAC_PI_2)
 }
 
 /// Derives the period jumps and vertex indices of a field given by its
-/// per-face angles.
-fn finish(mesh: &TriMesh, topology: &Topology, frames: &FaceFrames, mut angles: Vec<f64>) -> CrossField {
-    for angle in &mut angles {
-        *angle = split_quarter_turns(*angle).1;
-    }
+/// per-face angles, matching neighbouring crosses arm to nearest arm.
+fn finish(mesh: &TriMesh, topology: &Topology, frames: &FaceFrames, angles: Vec<f64>) -> CrossField {
+    debug_assert_eq!(topology.opposite.len(), frames.across.len());
+    build_field(mesh, frames, angles, None)
+}
 
+/// Assembles a field from per-face angles and, optionally, the period jump
+/// of every half-edge. Without jumps, neighbouring crosses are matched arm
+/// to nearest arm. With them the matching is imposed: that is how a field
+/// keeps prescribed singularities even where it turns by more than an
+/// eighth of a turn across an edge.
+pub(crate) fn build_field(
+    mesh: &TriMesh,
+    frames: &FaceFrames,
+    mut angles: Vec<f64>,
+    jumps: Option<Vec<i32>>,
+) -> CrossField {
     let half_edges = 3 * mesh.triangles.len();
+    // Bring every angle to its representative arm. Imposed jumps count
+    // quarter turns between the arms that were stored, so they move along.
+    let turns: Vec<i32> = angles
+        .iter_mut()
+        .map(|angle| {
+            let (turns, rest) = split_quarter_turns(*angle);
+            *angle = rest;
+            turns
+        })
+        .collect();
+    let jump_of = |h: usize, g: usize| match &jumps {
+        Some(jumps) => jumps[h] + turns[h / 3] - turns[g],
+        None => split_quarter_turns(angles[g] - angles[h / 3] - frames.rotation[h]).0,
+    };
+
     let mut period_jumps = vec![0; half_edges];
     // Around each vertex: its angle defect, plus how much the field turns
     // relative to parallel transport on the way round. Together they are a
@@ -172,13 +199,13 @@ fn finish(mesh: &TriMesh, topology: &Topology, frames: &FaceFrames, mut angles: 
             on_border[tri[(k + 1) % 3] as usize] = true;
             continue;
         }
-        let (jump, rest) = split_quarter_turns(angles[g as usize] - angles[f] - frames.rotation[h]);
+        let jump = jump_of(h, g as usize);
+        let rest = angles[g as usize] - angles[f] - frames.rotation[h] - jump as f64 * FRAC_PI_2;
         // Only meaningful modulo a full turn: keep it in -1..=2.
         period_jumps[h] = (jump + 1).rem_euclid(4) - 1;
         // Face `f` lies to the left of its half-edge, so crossing it from
         // `f` to `g` goes clockwise around the half-edge's origin.
         turning[tri[k] as usize] -= rest;
-        debug_assert_eq!(topology.opposite[h] as usize / 3, g as usize);
     }
 
     let indices = (0..mesh.positions.len())

@@ -59,7 +59,7 @@ impl CrossFieldSolver for Power {
 }
 
 /// Per face: how strongly it is tied to a target cross, and that target.
-fn constraints(work: &WorkMesh, frames: &FaceFrames, alignment: f64) -> (Vec<f64>, Vec<Complex>) {
+pub(crate) fn constraints(work: &WorkMesh, frames: &FaceFrames, alignment: f64) -> (Vec<f64>, Vec<Complex>) {
     let faces = frames.len();
     let mean_area = frames.area.iter().sum::<f64>() / faces as f64;
     let mut strength = vec![0.0; faces];

@@ -67,6 +67,7 @@ let (quads, report) = remesh(&triangles, &params)?;
 | `remesher` | interface commune à toutes les chaînes, et fabrique qui les crée par nom |
 | `preprocess` | étape de prétraitement : nettoyage, décimation, remaillage isotrope, courbures |
 | `crossfield` | étape du champ de croix : une croix par face, alignement sur la courbure, singularités |
+| `singularity` | étape de simplification : annulation des paires de singularités inutiles |
 | `curvature` | courbures et directions principales |
 | `metrics` | mesures de qualité d'un maillage quad par rapport à sa source |
 

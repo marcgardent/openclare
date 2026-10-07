@@ -1,6 +1,6 @@
 # Cahier des charges : moteur de retopologie quad
 
-**Statut : validé le 6 octobre 2026. Jalons 0 et 1 faits ; jalon 2 réalisé, en attente de revue.** Les points marqués
+**Statut : validé le 6 octobre 2026. Jalons 0 à 2 faits ; jalon 3 réalisé, en attente de revue.** Les points marqués
 *à trancher* attendent une décision ; ils sont regroupés en section 7.
 
 Première chaîne, pour l'organique : **champ de croix → paramétrisation sans couture → T-mesh →
@@ -339,6 +339,13 @@ impose des sommets irréguliers.)
   pour être dépliée ;
 - les **coordonnées UV** par coin de face.
 
+- les **plis** (creases) : un poids par arête, calculé automatiquement, pour qu'une subdivision
+  du maillage garde nettes les arêtes vives de la source ;
+- des **normales optimales** : les normales par coin qui reproduisent au mieux l'ombrage de la
+  source sur le maillage allégé ;
+- la **reconstitution Multires** : des niveaux de subdivision dont le déplacement est reprojeté
+  depuis la sculpture d'origine, pour retrouver tout son détail au-dessus du maillage quad.
+
 La chaîne organique calcule déjà une paramétrisation et un graphe de coupe pour construire le
 maillage ; les UV et les coutures en découleront. Pour la chaîne durci, les bords de patchs
 jouent le même rôle.
@@ -511,6 +518,55 @@ Constats utiles pour la suite :
 - **Critère de sortie** : réduction mesurable de S et C sur le corpus sans dégrader A. Si ce
   n'est pas atteint dans le temps imparti, on garde le seul niveau 1 et on avance.
 
+**Réalisé au jalon 3** (`crates/retopo/src/singularity/`, interface `SingularityOptimizer` et sa
+fabrique ; deux implémentations : `pair-cancellation`, et `keep` qui ne touche à rien).
+
+La méthode retenue est le niveau 2 de la fiche, avec deux précisions venues de l'expérience :
+
+- **Le champ n'est relissé qu'autour de la paire annulée.** Relisser tout le champ à chaque
+  essai le dégradait partout (jusqu'à 1° d'alignement perdu sans rien annuler) et coûtait
+  plusieurs secondes. En local, le reste du champ reste exactement celui de M2.
+- **Le réglage principal est une distance**, pas un seuil d'énergie : on annule les paires plus
+  proches que quelques arêtes de quad. Une paire plus serrée qu'un ou deux quads est du bruit que
+  le maillage ne pourrait de toute façon pas exprimer ; une paire éloignée décrit en général une
+  vraie forme.
+
+Les singularités d'ordre supérieur sont d'abord scindées en singularités simples.
+
+Mesuré comme au jalon 2 (courbure lue à l'échelle de 3000 quads), paires annulées jusqu'à 2 arêtes
+de quad. Chaque case : singularités / écart d'alignement en degrés.
+
+| Modèle | Champ de M2 | Après M3 | Réglage global seul | Quad Remesher (uniforme) |
+|---|---|---|---|---|
+| ogre | 203 / 8,0 | **98 / 9,0** | 185 / 9,2 | 228 / 10,8 |
+| rocher | 126 / 10,0 | **74 / 10,9** | 90 / 11,4 | 101 / 14,7 |
+| cochon | 90 / 5,9 | **74 / 6,2** | 90 / 7,1 | 96 / 9,4 |
+| Spot | 74 / 4,7 | 70 / 4,9 | 74 / 6,3 | 87 / 7,6 |
+| blob | 28 / 1,7 | 26 / 1,8 | 28 / 1,9 | 24 / 4,6 |
+| créature, cage, Bob, Blub | inchangés | inchangés | — | — |
+
+« Réglage global seul » est le niveau 1 de la fiche : le même champ calculé avec un poids
+d'alignement plus faible (0,02 au lieu de 0,05).
+
+- **Critère de sortie atteint.** Sur les modèles chargés, M3 retire 18 à 52 % des singularités
+  pour 0,3° à 1° d'alignement, et fait mieux que le réglage global sur les deux tableaux à la fois
+  (ogre : moitié moins de singularités pour le même alignement).
+- **Les modèles propres ne sont pas touchés** : là où il n'y a rien à retirer, le champ ressort
+  identique, bit pour bit.
+- **Vitesse** : 0,1 à 0,2 seconde.
+- **Vérifié par les tests** : un tore épais perd ses 16 singularités inutiles ; une sphère garde
+  les 8 que sa topologie impose ; la somme des indices est conservée ; résultat déterministe.
+
+Ce qui reste ouvert :
+
+- **L'effet sur la structure (C) n'est pas mesuré** : il faut un maillage pour cela, donc le
+  jalon 4 bis.
+- **Mêmes réserves qu'au jalon 2** : ces chiffres décrivent un champ, pas un maillage fini.
+- **La portée est un réglage** : à 3 arêtes de quad l'ogre tombe à 58 singularités pour 9,7°. La
+  bonne valeur se décidera sur des maillages, pas sur des champs.
+- **L'ordre est glouton**, les paires les plus proches d'abord ; aucun déplacement de singularité
+  isolée n'est tenté.
+
 ### M4 — Paramétrisation sans couture
 
 - **Entrée** : maillage de calcul, champ de M3, taille cible h = √(aire / budget).
@@ -594,10 +650,10 @@ Chaque jalon produit quelque chose de vérifiable et se termine par **un arrêt 
 
 | Jalon | Contenu | Ce qu'on peut vérifier à la fin |
 |---|---|---|
-| J0 | Banc de mesure, corpus provisoire, fabrique de chaînes | **Fait, en attente de revue.** Chiffres de QuadriFlow et du plancher ; seuils proposés |
-| J1 | Prétraitement (M1) | **Fait, en attente de revue.** Maillages de calcul et courbures, tests analytiques |
-| J2 | Champ de croix (M2) | **Fait, en attente de revue.** Champs visualisés, singularités comptées |
-| J3 | Singularités (M3), durée bornée | Gain mesuré sur S, ou décision de s'en tenir au réglage global |
+| J0 | Banc de mesure, corpus, fabrique de chaînes | **Fait.** Chiffres de QuadriFlow, de Quad Remesher et du plancher ; seuils adoptés |
+| J1 | Prétraitement (M1) | **Fait.** Maillages de calcul et courbures, tests analytiques |
+| J2 | Champ de croix (M2) | **Fait.** Champs visualisés, singularités comptées |
+| J3 | Singularités (M3), durée bornée | **Fait, en attente de revue.** Gain mesuré sur S : critère de sortie atteint |
 | J4 | Paramétrisation sans couture (M4) | **Jalon de vérité** : zéro inversion sur le corpus, ou activation d'un repli |
 | J4 bis | Arrondi glouton des translations (façon MIQ) et extraction | **Premier résultat complet, provisoire**, comparé à QuadriFlow et à Quad Remesher |
 | J5 | T-mesh (M5) | Partitions en rectangles visualisées |
@@ -607,6 +663,9 @@ Chaque jalon produit quelque chose de vérifiable et se termine par **un arrêt 
 | J9 | Chaîne durci : traçage, patchs, remplissage par motifs | Pièces mécaniques comparées à QuadriFlow |
 | J10 | Export des coutures et des UV ; bibliothèque à interface C et greffon Python sans copie mémoire | Remaillage lancé depuis Blender, UV et coutures relus dans la scène |
 | J11 | Prétraitement de réparation : fusion des pièces qui se traversent, arêtes non variété | Desert Rose remaillée en une seule peau valide |
+| J12 | Plis automatiques : un poids de pli par arête de sortie | Après subdivision, le maillage plissé est plus proche de la source que le même sans plis |
+| J13 | Normales optimales par coin | Écart angulaire entre l'ombrage du maillage allégé et celui de la source |
+| J14 | Reconstitution Multires : niveaux de subdivision avec déplacement reprojeté | À chaque niveau, l'écart à la sculpture d'origine diminue jusqu'à la retrouver |
 
 Le jalon 4 bis est un raccourci assumé : un arrondi glouton des translations, comme dans MIQ,
 donne un premier maillage complet bien avant le T-mesh et la quantification. Il est moins robuste
@@ -639,7 +698,7 @@ composent des mêmes briques :
 | `Mesher` | maillage quad depuis la structure quantifiée | carte entière et extraction (M7, M8) | remplissage par motifs |
 | `Relaxer` | placement final (M9) | commune | commune |
 
-Écrites à ce jour : `Remesher`, `Preprocessor` et `CrossFieldSolver`.
+Écrites à ce jour : `Remesher`, `Preprocessor`, `CrossFieldSolver` et `SingularityOptimizer`.
 
 Les deux chaînes ne diffèrent donc que par deux étapes, `LayoutBuilder` et `Mesher`, plus le
 réglage du champ de croix. Les types échangés entre étapes (maillage de calcul, champ de croix,
@@ -732,4 +791,6 @@ Prises :
   sans copie mémoire ;
 - sources en anglais, documents traduits à la fin ;
 - cœur strict sur les entrées (surface orientée, deux faces par arête au plus), tolérance logée
-  dans le prétraitement ; Desert Rose hors acceptation.
+  dans le prétraitement ; Desert Rose hors acceptation ;
+- feuille de route étendue : plis automatiques, normales optimales, reconstitution Multires
+  (J12 à J14).
