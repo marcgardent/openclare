@@ -19,7 +19,7 @@ use crate::parametrization;
 use crate::pipeline::{self, Params, Report, Target};
 use crate::preprocess::{self, WorkMesh};
 use crate::quantization;
-use crate::relax::{Features, relax};
+use crate::relax::{Features, Laplacian, Relaxer, Squaring};
 use crate::singularity;
 use crate::spatial::Bvh;
 use crate::tmesh;
@@ -182,7 +182,7 @@ impl Remesher for IntegerGrid {
         mesh.repair_to_quads();
         clock.lap(&mut report, "extraction");
 
-        settle(&mut mesh, input, &work, edge_length, self.relax_iterations);
+        settle(&mut mesh, input, &work, edge_length, &Laplacian { iterations: self.relax_iterations });
         clock.lap(&mut report, "relaxation");
 
         report.stats = mesh.stats();
@@ -200,8 +200,8 @@ pub struct QuadLayout {
     pub max_triangles: usize,
     /// How close to the number of quads asked for is close enough.
     pub budget_tolerance: f64,
-    /// Smoothing passes on the final mesh.
-    pub relax_iterations: usize,
+    /// Final placement of the vertices.
+    pub relaxer: Squaring,
 }
 
 impl Default for QuadLayout {
@@ -211,7 +211,7 @@ impl Default for QuadLayout {
             min_triangles: 20_000,
             max_triangles: 120_000,
             budget_tolerance: 0.02,
-            relax_iterations: 2,
+            relaxer: Squaring::default(),
         }
     }
 }
@@ -249,7 +249,7 @@ impl Remesher for QuadLayout {
         let (mut mesh, _) = meshing::create(meshing::Kind::PatchGrid).mesh(&work, &layout, &quantized)?;
         clock.lap(&mut report, "meshing");
 
-        settle(&mut mesh, input, &work, edge_length, self.relax_iterations);
+        settle(&mut mesh, input, &work, edge_length, &self.relaxer);
         clock.lap(&mut report, "relaxation");
 
         report.stats = mesh.stats();
@@ -327,13 +327,13 @@ fn fields(
     Ok(Fields { work, field, edge_length, quads })
 }
 
-/// Smooths `mesh` on the input surface. Hard edges and corners of the work
+/// Relaxes `mesh` on the input surface. Hard edges and corners of the work
 /// mesh are what its vertices snap to; the surface itself is the input.
-fn settle(mesh: &mut PolyMesh, input: &TriMesh, work: &WorkMesh, edge_length: f64, iterations: usize) {
+fn settle(mesh: &mut PolyMesh, input: &TriMesh, work: &WorkMesh, edge_length: f64, relaxer: &dyn Relaxer) {
     let constraints =
         crate::field::Constraints::from_feature_edges(&work.mesh.positions, &work.normals, &work.feature_edges);
     let guide = Features::new(&work.mesh.positions, &work.feature_edges, &constraints, 0.35 * edge_length);
-    relax(mesh, &Bvh::build(input), guide.as_ref(), iterations);
+    relaxer.relax(mesh, &Bvh::build(input), guide.as_ref());
 }
 
 /// Times the stages of a chain.

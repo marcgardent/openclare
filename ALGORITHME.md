@@ -1,6 +1,6 @@
 # openclare — cahier des charges du moteur de retopologie quad
 
-**Statut : validé le 6 octobre 2026. Jalons 0 à 6 faits ; jalon 7 (maillage complet par la route directe) réalisé, en attente de revue.**
+**Statut : validé le 6 octobre 2026. Jalons 0 à 7 faits ; jalon 8, première partie (relaxation), réalisé, en attente de revue.**
 Ce qui a été écarté, approché ou reporté en chemin est suivi ticket par ticket dans [BACKLOG.md](BACKLOG.md).
 Le projet s'appelle **openclare** ; les crates portent encore le nom provisoire `retopo`. Les points marqués
 *à trancher* attendent une décision ; ils sont regroupés en section 7.
@@ -928,7 +928,8 @@ QuadriFlow, médianes meilleures sur S, C, A et F, sans dégrader H ni N. Les de
 jalon 4 bis manquait, V et N, sont tenus.
 
 Aux autres budgets : 12 modèles valides sur 12 à 8000 quads (budget tenu à 1,6 % près), 11 sur
-12 à 1000 quads. Les mires de comparaison n'y sont pas complètes (ticket DT-022).
+12 à 1000 quads. Les mires de comparaison n'y étaient pas complètes ; elles l'ont été au jalon 8
+(voir M9).
 
 Ce qu'il ne faut pas se cacher :
 
@@ -954,6 +955,78 @@ Ce qu'il ne faut pas se cacher :
   plus poussée (type ARAP) est envisageable ensuite.
 - **Test** : métriques H et F ; aucune face inversée.
 
+**Réalisé au jalon 8** (`crates/retopo/src/relax.rs`, interface `Relaxer` et sa fabrique : deux
+implémentations, `laplacian`, celle d'origine, et `squaring`, la nouvelle, qu'utilise la chaîne
+`quad-layout`).
+
+![L'ogre à 3000 quads après le jalon 8 : QuadriFlow, openclare, Quad Remesher](docs/images/jalon8_ogre.png)
+
+Le jalon 7 avait montré que le lissage d'origine (chaque sommet vers la moyenne de ses voisins)
+plafonnait : au-delà de deux passes il usait les parties fines et finissait par inverser une
+face. La nouvelle relaxation change trois choses.
+
+- **Ce vers quoi on tire.** Chaque quad propose, pour ses quatre coins, le rectangle qui lui
+  ressemble le plus : même centre, même plan, côtés égaux à la moyenne de ses côtés opposés. Un
+  sommet va vers la moyenne de ce que proposent ses quads, avec un quart de lissage ordinaire
+  pour égaliser les tailles. On corrige ainsi les angles sans toucher aux dimensions : rien ne
+  pousse le maillage à rétrécir.
+- **Comment on bouge.** Le déplacement est rendu tangent à la surface avant la projection au
+  point le plus proche : un sommet glisse, il ne s'enfonce pas.
+- **Deux garde-fous.** Un sommet ne s'éloigne jamais de plus d'une demi-arête de l'endroit où
+  la carte l'avait placé : c'est ce qui protège les pointes et les parties minces. Et un
+  déplacement qui aplatirait ou retournerait un quad n'est pas fait.
+
+Avec ces garde-fous, soixante passes améliorent encore la forme sans rien abîmer, là où
+l'ancien lissage devait s'arrêter à deux.
+
+**Résultat.** Médianes sur les 12 modèles organiques (tableaux complets et détail par modèle
+dans `bench/results/ACCEPTANCE.md`, produit par `bench/acceptance.py`) :
+
+| À 3000 quads | QuadriFlow | openclare, J7 | **openclare, J8** | Quad Remesher, taille uniforme | Quad Remesher, défaut |
+|---|---|---|---|---|---|
+| Modèles toujours valides (V) | 5 sur 12 | 12 sur 12 | **12 sur 12** | 10 sur 12 | 8 sur 12 |
+| Écart d'angle moyen (F) | 8,6° | 7,8° | **5,4°** | 7,2° | 6,5° |
+| Hausdorff, ‰ de la diagonale (H) | 17,7 | 9,1 | **8,1** | 9,6 | 5,9 |
+| Alignement (A) | 17,5° | 8,6° | **8,4°** | 7,7° | 6,4° |
+| Temps (T) | 1,9 s | 2,2 s | **2,2 s** | 12,3 s | 14,5 s |
+
+Sur la forme des quads, openclare passe devant Quad Remesher ; sur la fidélité, devant sa
+version à taille uniforme (sa version par défaut, à taille adaptative, reste devant). Les seuils
+F et H sont désormais tenus sur les 12 modèles, un par un, et non plus seulement en médiane.
+
+**La règle d'acceptation est maintenant établie aux trois budgets**, QuadriFlow et Quad
+Remesher ayant été mesurés sur tout le corpus à 1000 et 8000 quads (ticket DT-022, fermé) :
+
+| Médianes, 12 modèles organiques | 1000 quads | 3000 quads | 8000 quads |
+|---|---|---|---|
+| Modèles toujours valides : openclare / QuadriFlow | 11 / 4 | 12 / 5 | 12 / 3 |
+| Alignement (A) : openclare / QuadriFlow / Quad Remesher uniforme | 9,1° / 18,0° / 8,1° | 8,4° / 17,5° / 7,7° | 8,7° / 15,8° / 8,6° |
+| Sommets irréguliers (S) : openclare / QuadriFlow | 42 / 62 | 50 / 66 | 67 / 70 |
+| Patchs du complexe de base (C) : openclare / QuadriFlow | 553 / 891 | 1886 / 2697 | 4436 / 7342 |
+| Écart d'angle moyen (F) : openclare / QuadriFlow / Quad Remesher uniforme | 5,3° / 9,7° / 8,8° | 5,4° / 8,6° / 7,2° | 6,1° / 6,4° / 6,8° |
+| Hausdorff, ‰ (H) : openclare / QuadriFlow | 18,5 / 38,9 | 8,1 / 17,7 | 4,7 / 6,9 |
+| Écart au budget (N) : openclare / QuadriFlow | 0,8 % / 5,9 % | 1,4 % / 4,1 % | 0,8 % / 3,0 % |
+| Temps (T) : openclare / QuadriFlow | 1,4 s / 1,3 s | 2,2 s / 1,9 s | 6,8 s / 4,1 s |
+
+En médiane, tout est meilleur que QuadriFlow aux trois budgets, sauf le temps. Modèle par
+modèle, les seuils manqués sont : à 1000 quads, S sur rock et creature, H sur cage, V sur pig
+(une face comptée inversée sur une oreille, DT-018) ; à 3000, S sur rock et creature, C sur
+rock ; à 8000, S et C sur rock, S et F sur creature, F sur spot, C sur jerry. À 8000 quads
+l'avance sur la forme des quads se réduit (6,1° contre 6,4°) : soixante passes ne suffisent
+plus tout à fait quand le maillage est plus fin (DT-023).
+
+Ce qui reste ouvert :
+
+- **L'alignement ne bouge presque pas** (8,4° contre 7,7° pour Quad Remesher) : il se joue en
+  amont, dans le champ et le T-mesh, pas dans la relaxation.
+- **Les tailles des quads sont un peu moins égales** qu'avec l'ancien lissage (variation d'aire
+  de 0,34 à 0,38 sur blob) : les rectangles gardent les tailles que la quantification leur donne.
+- **Coût** : 1,7 s sur l'ogre à 8000 quads, soit un sixième du temps total. À ce budget
+  openclare est plus lent que QuadriFlow (6,8 s contre 4,1 s) (ticket DT-023).
+- **Les seuils S et C** restent manqués sur rock et creature (DT-021) : la relaxation ne change
+  pas la connectivité.
+- **La seconde partie du jalon 8**, la densité adaptative, n'est pas commencée.
+
 ---
 
 ## 4. Jalons
@@ -970,8 +1043,8 @@ Chaque jalon produit quelque chose de vérifiable et se termine par **un arrêt 
 | J4 bis | Arrondi glouton des translations (façon MIQ) et extraction ; configuration unique et préréglages | **Fait.** Premier résultat complet, provisoire, mesuré face à QuadriFlow et à Quad Remesher |
 | J5 | T-mesh (M5) | **Fait.** Partitions en rectangles valides sur tout le corpus, bords ouverts compris |
 | J6 | Quantification (M6) | **Fait.** Contraintes satisfaites, budget tenu à 4 % près, connectivité du maillage quad construite et saine sur tout le corpus |
-| J7 | Maillage quad depuis le T-mesh quantifié, par la route directe (à la place de M7 et M8) | **Fait, en attente de revue.** Résultat complet ; règle d'acceptation tenue à 3000 quads. L'arrondi glouton reste comme repli (DT-009) |
-| J8 | Relaxation ; densité adaptative, puis contraintes de rang 3 à 5 | Règle d'acceptation évaluée |
+| J7 | Maillage quad depuis le T-mesh quantifié, par la route directe (à la place de M7 et M8) | **Fait.** Résultat complet ; règle d'acceptation tenue à 3000 quads. L'arrondi glouton reste comme repli (DT-009) |
+| J8 | Relaxation ; densité adaptative, puis contraintes de rang 3 à 5 | **Relaxation faite, en attente de revue** : règle d'acceptation tenue aux trois budgets mesurés, forme des quads devant Quad Remesher. Densité adaptative et contraintes de rang 3 à 5 : à faire |
 | J9 | Chaîne durci : traçage, patchs, remplissage par motifs | Pièces mécaniques comparées à QuadriFlow |
 | J10 | Export des coutures et des UV ; bibliothèque à interface C et greffon Python sans copie mémoire | Remaillage lancé depuis Blender, UV et coutures relus dans la scène |
 | J11 | Prétraitement de réparation : fusion des pièces qui se traversent, arêtes non variété | Desert Rose remaillée en une seule peau valide |
@@ -1015,7 +1088,9 @@ composent des mêmes briques :
 implémentations : `seamless` et `integer-grid`) et `LayoutBuilder` (une implémentation :
 `motorcycle`, qui enchaîne la paramétrisation sans couture et le traçage du T-mesh),
 `Quantizer` (une implémentation : `walk-cancelling`) et `Mesher` (une implémentation :
-`patch-grid`). La chaîne `quad-layout` les enchaîne ; c'est celle des préréglages.
+`patch-grid`) et `Relaxer` (deux implémentations : `laplacian` et `squaring`). La chaîne
+`quad-layout` les enchaîne ; c'est celle des préréglages. Toutes les étapes du tableau ont
+maintenant leur interface.
 
 Les deux chaînes ne diffèrent donc que par deux étapes, `LayoutBuilder` et `Mesher`, plus le
 réglage du champ de croix. Les types échangés entre étapes (maillage de calcul, champ de croix,

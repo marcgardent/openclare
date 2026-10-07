@@ -15,8 +15,9 @@ T-mesh, quantification, puis une grille de quads par rectangle du T-mesh.
 Sur les douze modèles organiques du corpus, à 3000 quads, elle fait **mieux que le remaillage
 quad de Blender** (QuadriFlow) sur tous les critères retenus : maillages toujours valides (12
 modèles sur 12, contre 5), arêtes deux fois mieux alignées sur la forme (8,6° contre 17,5°), moins
-de sommets irréguliers, nombre de quads demandé tenu à 1,4 % près. Elle approche Quad Remesher
-sans le rattraper sur l'alignement et la forme des quads.
+de sommets irréguliers, nombre de quads demandé tenu à 1,4 % près. Face à Quad Remesher, ses
+quads sont plus réguliers (écart d'angle moyen 5,4° contre 7,2°) ; ses arêtes suivent encore un
+peu moins bien la forme (8,4° contre 7,7°), et elle n'a pas encore de taille adaptative.
 
 Deux autres chaînes restent dans le dépôt : `integer-grid`, la version provisoire, qui sert de
 repli pour les surfaces sans singularité ni bord (un tore), et `instant-meshes`, le plancher de
@@ -98,7 +99,7 @@ Et pour le quantifier :
 | `hierarchy` | graphe multi-résolution pour résoudre du grossier au fin |
 | `field` | champ d'orientation (4-RoSy), champ de position (4-PoSy), contraintes, singularités |
 | `extract` | du champ ou de la carte entière au graphe de quads, puis aux faces |
-| `relax` | lissage final contraint à la surface et aux arêtes vives |
+| `relax` | étape de relaxation : placement final, quads tirés vers des rectangles, sur la surface et les arêtes vives |
 | `spatial` | BVH pour la projection sur la surface source |
 | `pipeline` | enchaînement complet de la chaîne Instant Meshes |
 | `remesher` | interface commune aux chaînes, fabrique qui les crée par nom, et les chaînes `quad-layout` et `integer-grid` |
