@@ -7,6 +7,7 @@ use retopo::mesh::{Topology, obj, primitives};
 use retopo::metrics::measure;
 use retopo::parametrization;
 use retopo::preprocess;
+use retopo::quantization;
 use retopo::singularity;
 use retopo::tmesh::TMesh;
 use retopo::{PolyMesh, Target, TriMesh};
@@ -22,6 +23,7 @@ USAGE:
     retopo field <input.obj> [options]
     retopo parametrize <input.obj> --quads <N> [options]
     retopo tmesh <input.obj> --quads <N> [options]
+    retopo quantize <input.obj> --quads <N> [options]
     retopo primitive <torus|sphere|cube|plane> <output.obj>
 
 OPTIONS (remesh):
@@ -72,6 +74,11 @@ OPTIONS (tmesh):
     --traces <out.obj>     write the cuts as lines on the surface
     --json                 print the report as one JSON object
 
+OPTIONS (quantize): those of tmesh up to --rounds, and
+    --tolerance <T>        how close to the number of quads is close enough (default 0.02)
+    --keep-scale           keep the scale of the T-mesh instead of aiming for the number of quads
+    --json                 print the report as one JSON object
+
 OPTIONS (measure):
     --target <N>           face count that was asked for
     --json                 print the metrics as one JSON object
@@ -102,6 +109,7 @@ fn run(args: &[String]) -> Result<(), String> {
         Some("field") => field_command(&args[1..]),
         Some("parametrize") => parametrize_command(&args[1..]),
         Some("tmesh") => tmesh_command(&args[1..]),
+        Some("quantize") => quantize_command(&args[1..]),
         Some("primitive") => primitive(&args[1..]),
         Some("-h" | "--help") => {
             print!("{USAGE}");
@@ -503,59 +511,110 @@ fn parametrize_command(args: &[String]) -> Result<(), String> {
     Ok(())
 }
 
+/// What the stages up to the T-mesh are run with.
+struct LayoutOptions {
+    input: Option<String>,
+    quads: Option<usize>,
+    work: preprocess::Request,
+    field: crossfield::Request,
+    simplify: Option<f64>,
+    rounds: usize,
+}
+
+impl LayoutOptions {
+    fn new() -> Self {
+        Self {
+            input: None,
+            quads: None,
+            work: preprocess::Request { triangles: 50_000, ..Default::default() },
+            field: crossfield::Request::default(),
+            simplify: None,
+            rounds: 40,
+        }
+    }
+
+    /// Takes `arg` if it is one of these options. Returns whether it was.
+    fn take(&mut self, arg: &str, args: &mut std::slice::Iter<String>) -> Result<bool, String> {
+        let mut value = || args.next().ok_or(format!("{arg} expects a value"));
+        match arg {
+            "--quads" => self.quads = Some(parse(arg, value()?)?),
+            "--triangles" => self.work.triangles = parse(arg, value()?)?,
+            "--alignment" => self.field.alignment = parse(arg, value()?)?,
+            "--simplify" => self.simplify = Some(parse(arg, value()?)?),
+            "--crease-angle" => self.work.crease_angle = Some(parse(arg, value()?)?),
+            "--rounds" => self.rounds = parse(arg, value()?)?,
+            flag if flag.starts_with("--") => return Ok(false),
+            path if self.input.is_none() => self.input = Some(path.to_string()),
+            _ => return Err("expected a single input path".into()),
+        }
+        Ok(true)
+    }
+
+    /// Runs the chain up to the T-mesh. Returns it with the size of the
+    /// work mesh, whether the map kept feature edges on grid lines, the
+    /// number of quads asked for, and the seconds the tracing took.
+    fn build(mut self) -> Result<Layout, String> {
+        let input = self.input.ok_or("expected an input path")?;
+        let quads = self.quads.filter(|&n| n > 0).ok_or("--quads is required")?;
+        let source = obj::read_obj(&input).map_err(|e| format!("{input}: {e}"))?;
+        let edge_length = (source.surface_area() / quads as f64).sqrt();
+        self.work.curvature_scale = Some(edge_length);
+        let work = preprocess::create(preprocess::Kind::Isotropic)
+            .preprocess(&source, &self.work)
+            .map_err(|e| e.to_string())?;
+        let mut field =
+            crossfield::create(crossfield::Kind::Power).solve(&work, &self.field).map_err(|e| e.to_string())?;
+        if let Some(quad_edges) = self.simplify {
+            let options = singularity::Request {
+                alignment: self.field.alignment,
+                reach: Some(quad_edges * edge_length),
+                ..Default::default()
+            };
+            field = singularity::create(singularity::Kind::PairCancellation)
+                .optimize(&work, &field, &options)
+                .map_err(|e| e.to_string())?
+                .0;
+        }
+        let request = parametrization::Request { edge_length, stiffening_rounds: self.rounds };
+        let map = parametrization::create(parametrization::Kind::Seamless)
+            .parametrize(&work, &field, &request)
+            .map_err(|e| e.to_string())?;
+
+        let start = std::time::Instant::now();
+        let tmesh = TMesh::trace(&work, &field, &map, 20.0 * (quads as f64).sqrt());
+        Ok(Layout {
+            tmesh,
+            triangles: work.mesh.triangles.len(),
+            features_off_grid: map.report.features_off_grid,
+            quads,
+            seconds: start.elapsed().as_secs_f64(),
+        })
+    }
+}
+
+struct Layout {
+    tmesh: TMesh,
+    triangles: usize,
+    features_off_grid: bool,
+    quads: usize,
+    seconds: f64,
+}
+
 fn tmesh_command(args: &[String]) -> Result<(), String> {
-    let mut work_request = preprocess::Request { triangles: 50_000, ..Default::default() };
-    let mut field_request = crossfield::Request::default();
-    let (mut quads, mut simplify, mut rounds, mut paths) = (None::<usize>, None::<f64>, 40usize, Vec::new());
+    let mut options = LayoutOptions::new();
     let (mut traces_path, mut json) = (None, false);
     let mut args = args.iter();
     while let Some(arg) = args.next() {
-        let mut value = |name: &str| args.next().ok_or(format!("{name} expects a value"));
+        if options.take(arg, &mut args)? {
+            continue;
+        }
         match arg.as_str() {
-            "--quads" => quads = Some(parse(arg, value(arg)?)?),
-            "--triangles" => work_request.triangles = parse(arg, value(arg)?)?,
-            "--alignment" => field_request.alignment = parse(arg, value(arg)?)?,
-            "--simplify" => simplify = Some(parse(arg, value(arg)?)?),
-            "--crease-angle" => work_request.crease_angle = Some(parse(arg, value(arg)?)?),
-            "--rounds" => rounds = parse(arg, value(arg)?)?,
-            "--traces" => traces_path = Some(value(arg)?.clone()),
+            "--traces" => traces_path = Some(args.next().ok_or("--traces expects a value")?.clone()),
             "--json" => json = true,
-            flag if flag.starts_with("--") => return Err(format!("unknown option '{flag}'")),
-            path => paths.push(path),
+            flag => return Err(format!("unknown option '{flag}'")),
         }
     }
-    let [input] = paths[..] else {
-        return Err("tmesh takes one input path".into());
-    };
-    let quads = quads.filter(|&n| n > 0).ok_or("tmesh needs --quads")?;
-
-    let source = obj::read_obj(input).map_err(|e| format!("{input}: {e}"))?;
-    let edge_length = (source.surface_area() / quads as f64).sqrt();
-    work_request.curvature_scale = Some(edge_length);
-    let work = preprocess::create(preprocess::Kind::Isotropic)
-        .preprocess(&source, &work_request)
-        .map_err(|e| e.to_string())?;
-    let mut field =
-        crossfield::create(crossfield::Kind::Power).solve(&work, &field_request).map_err(|e| e.to_string())?;
-    if let Some(quad_edges) = simplify {
-        let options = singularity::Request {
-            alignment: field_request.alignment,
-            reach: Some(quad_edges * edge_length),
-            ..Default::default()
-        };
-        field = singularity::create(singularity::Kind::PairCancellation)
-            .optimize(&work, &field, &options)
-            .map_err(|e| e.to_string())?
-            .0;
-    }
-    let request = parametrization::Request { edge_length, stiffening_rounds: rounds };
-    let map = parametrization::create(parametrization::Kind::Seamless)
-        .parametrize(&work, &field, &request)
-        .map_err(|e| e.to_string())?;
-
-    let start = std::time::Instant::now();
-    let tmesh = TMesh::trace(&work, &field, &map, 20.0 * (quads as f64).sqrt());
-    let seconds = start.elapsed().as_secs_f64();
+    let Layout { tmesh, triangles, features_off_grid, seconds, .. } = options.build()?;
 
     let report = &tmesh.report;
     if json {
@@ -565,9 +624,9 @@ fn tmesh_command(args: &[String]) -> Result<(), String> {
              \"t_junctions\": {}, \"arcs\": {}, \"patches\": {}, \"rectangles\": {}, \"side_mismatch\": {:e}, \
              \"area_error\": {:e}, \"euler\": {}, \"surface_euler\": {}, \"longest_trace\": {}, \
              \"short_arcs\": {}, \"thin_patches\": {}, \"valid\": {}, \"seconds\": {}}}",
-            work.mesh.triangles.len(),
+            triangles,
             report.map_inversions,
-            map.report.features_off_grid,
+            features_off_grid,
             report.border_off_grid,
             report.singularities,
             report.traces,
@@ -591,9 +650,7 @@ fn tmesh_command(args: &[String]) -> Result<(), String> {
     } else {
         println!(
             "work mesh      {} triangles, {} inverted in the map, {} border edges off the grid lines",
-            work.mesh.triangles.len(),
-            report.map_inversions,
-            report.border_off_grid
+            triangles, report.map_inversions, report.border_off_grid
         );
         println!(
             "traces         {} from {} singularities, {} lost, {} overlapping, longest {:.1} quad edges",
@@ -630,6 +687,86 @@ fn tmesh_command(args: &[String]) -> Result<(), String> {
             count += trace.len();
         }
         std::fs::write(&path, text).map_err(|e| format!("{path}: {e}"))?;
+    }
+    Ok(())
+}
+
+fn quantize_command(args: &[String]) -> Result<(), String> {
+    let mut options = LayoutOptions::new();
+    let mut request = quantization::Request::default();
+    let (mut json, mut exact_scale) = (false, false);
+    let mut args = args.iter();
+    while let Some(arg) = args.next() {
+        if options.take(arg, &mut args)? {
+            continue;
+        }
+        match arg.as_str() {
+            "--tolerance" => request.tolerance = parse(arg, args.next().ok_or("--tolerance expects a value")?)?,
+            "--keep-scale" => exact_scale = true,
+            "--json" => json = true,
+            flag => return Err(format!("unknown option '{flag}'")),
+        }
+    }
+    let Layout { tmesh, quads, .. } = options.build()?;
+    if !tmesh.report.is_valid() {
+        return Err("the T-mesh is not a valid partition into rectangles".into());
+    }
+    request.quads = (!exact_scale).then_some(quads);
+
+    let start = std::time::Instant::now();
+    let quantized = quantization::create(quantization::Kind::WalkCancelling)
+        .quantize(&tmesh, &request)
+        .map_err(|e| e.to_string())?;
+    let seconds = start.elapsed().as_secs_f64();
+
+    let report = &quantized.report;
+    if json {
+        println!(
+            "{{\"arcs\": {}, \"patches\": {}, \"target\": {}, \"quads\": {}, \"budget_error\": {}, \"scale\": {}, \
+             \"zero_arcs\": {}, \"collapsed_patches\": {}, \"held_arcs\": {}, \"deviation_mean\": {}, \
+             \"deviation_max\": {}, \"balanced\": {}, \"separated\": {}, \"moves\": {}, \"seconds\": {}}}",
+            report.arcs,
+            tmesh.patches.len(),
+            quads,
+            report.quads,
+            report.budget_error.map_or("null".to_string(), |error| error.to_string()),
+            report.scale,
+            report.zero_arcs,
+            report.collapsed_patches,
+            report.held_arcs,
+            report.deviation_mean,
+            report.deviation_max,
+            report.balanced,
+            report.separated,
+            report.moves,
+            seconds
+        );
+    } else {
+        println!("t-mesh         {} arcs, {} patches", report.arcs, tmesh.patches.len());
+        match report.budget_error {
+            Some(error) => println!(
+                "quads          {} for {} asked ({:+.1} %), real lengths scaled by {:.3}",
+                report.quads,
+                quads,
+                100.0 * error * if report.quads < quads { -1.0 } else { 1.0 },
+                report.scale
+            ),
+            None => println!("quads          {} at the scale of the T-mesh ({} asked)", report.quads, quads),
+        }
+        println!(
+            "closed up      {} arcs of length zero, {} patches without area; {} arcs held open",
+            report.zero_arcs, report.collapsed_patches, report.held_arcs
+        );
+        println!(
+            "deviation      mean {:.3}, worst {:.2} quad edges from the scaled real lengths",
+            report.deviation_mean, report.deviation_max
+        );
+        println!(
+            "checks         opposite sides {}; structure {}",
+            if report.balanced { "equal" } else { "NOT EQUAL" },
+            if report.separated { "intact" } else { "NOT INTACT" }
+        );
+        println!("seconds        {seconds:.3} ({} improving moves)", report.moves);
     }
     Ok(())
 }

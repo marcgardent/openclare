@@ -29,6 +29,8 @@ pub(super) struct Junction {
     pub position: Vec3,
     /// The singular vertex it sits on, if any.
     pub vertex: Option<u32>,
+    /// It is a vertex where an open border turns in the map.
+    pub corner: bool,
     /// Quarter turns in a full turn round it: four, except round a
     /// singularity. (Round a corner of the border it only has to exceed the
     /// angle of the surface there; what lies beyond is no patch.)
@@ -39,7 +41,7 @@ pub(super) struct Junction {
 
 impl Junction {
     fn regular(position: Vec3) -> Self {
-        Self { position, vertex: None, full_turn: 4.0, used: [false; 4] }
+        Self { position, vertex: None, corner: false, full_turn: 4.0, used: [false; 4] }
     }
 }
 
@@ -147,6 +149,7 @@ pub(super) fn race(map: &Map, is_singular: &[bool], max_length: f64) -> Outcome 
         race.outcome.junctions.push(Junction {
             position: map.mesh.positions[v as usize],
             vertex: Some(v),
+            corner: false,
             full_turn: departures.len() as f64,
             used: [false; 4],
         });
@@ -255,7 +258,14 @@ impl Race<'_> {
                     // what lies beyond is no patch, it only has to be there.
                     let full_turn = if turns == 2 { 4.0 } else { turns as f64 + 2.0 };
                     corners.push((index, self.outcome.junctions.len() as u32));
-                    self.outcome.junctions.push(Junction { position, vertex: None, full_turn, used: [false; 4] });
+                    let corner = turns != 2;
+                    self.outcome.junctions.push(Junction {
+                        position,
+                        vertex: None,
+                        corner,
+                        full_turn,
+                        used: [false; 4],
+                    });
                 }
             }
 

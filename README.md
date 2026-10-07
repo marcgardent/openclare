@@ -19,9 +19,11 @@ Deux chaînes de remaillage, de bout en bout (triangles en entrée, quads en sor
 - **`instant-meshes`**, le plancher de comparaison : robuste et rapide, mais sans structure et
   avec beaucoup de sommets irréguliers.
 
-La suite de la chaîne cible est en construction, étape par étape. Dernière en date : le
-**T-mesh**, qui découpe la surface en rectangles à partir des singularités (valide sur tout le
-corpus). Il n'entre pas encore dans `remesh` ; il se regarde avec `retopo tmesh`.
+La suite de la chaîne cible est en construction, étape par étape : le **T-mesh**, qui découpe
+la surface en rectangles à partir des singularités, puis la **quantification**, qui donne à
+chaque côté un nombre entier d'arêtes. Les deux sont valides sur tout le corpus, et le nombre de
+quads demandé est tenu à 4 % près. Elles n'entrent pas encore dans `remesh` ; elles se regardent
+avec `retopo tmesh` et `retopo quantize`.
 
 Le cahier des charges, les mesures et la feuille de route sont dans
 [ALGORITHME.md](ALGORITHME.md).
@@ -83,6 +85,12 @@ Pour voir le T-mesh d'un modèle, ses coupes écrites comme des lignes sur la su
 ./target/release/retopo tmesh entree.obj --quads 3000 --simplify 2 --traces coupes.obj
 ```
 
+Et pour le quantifier :
+
+```bash
+./target/release/retopo quantize entree.obj --quads 3000 --simplify 2
+```
+
 ## Organisation
 
 | Module | Rôle |
@@ -101,6 +109,7 @@ Pour voir le T-mesh d'un modèle, ses coupes écrites comme des lignes sur la su
 | `singularity` | étape de simplification : annulation des paires de singularités inutiles |
 | `parametrization` | étape de paramétrisation : graphe de coupe, carte (u, v) sans couture |
 | `tmesh` | étape de structure globale : traces depuis les singularités, patchs rectangulaires |
+| `quantization` | étape de quantification : longueurs entières, connectivité du maillage quad |
 | `linalg` | algèbre linéaire creuse (enveloppe de la bibliothèque `faer`) |
 | `config` | configuration unique d'un remaillage, préréglages, enregistrement et relecture |
 | `curvature` | courbures et directions principales |
