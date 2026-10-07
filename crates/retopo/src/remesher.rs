@@ -29,9 +29,10 @@ use crate::tmesh;
 /// settings, which do not depend on the model.
 #[derive(Clone, Copy, Default)]
 pub struct Guides<'a> {
-    /// A density painted on the vertices of the input: `density[v]`
-    /// multiplies the number of quads per unit of area around vertex `v`.
-    /// 1 leaves it alone, 4 asks for quads half as long, 0.25 twice as long.
+    /// A density painted on the vertices of the input, as one weight each:
+    /// 0 for the least dense, 1 for the most. How far apart the two are is
+    /// a setting, [`RemeshConfig::density_contrast`]. A vertex that was not
+    /// painted is simply at 0.
     pub density: Option<&'a [f64]>,
 }
 
@@ -335,7 +336,8 @@ fn fields(
     clock.lap(report, "preprocess");
 
     if let Some(guides) = guides {
-        let painted = guides.density.map(|density| sizing::Painted { source: input, density });
+        let painted =
+            guides.density.map(|weights| sizing::Painted { source: input, weights, contrast: config.density_contrast });
         let request = sizing::Request { edge_length, adaptivity: config.adaptivity, painted };
         work.sizing = sizing::create(sizing::Kind::Curvature).size(&work, &request)?;
         clock.lap(report, "sizing");

@@ -40,7 +40,7 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 | DT-024 | Courbes guides (rang 4) non commencées | J8 | moyenne | ouvert (réduit au J8) |
 | DT-025 | Densité : portée des singularités et lecture de la courbure encore à l'échelle nominale | J8 | basse | ouvert |
 | DT-026 | Densité peinte : lecture du Weight Paint de Blender à faire (pont Blender) | J8 | moyenne | ouvert |
-| DT-028 | Symétrie : absente, Quad Remesher l'a | J8 | moyenne | ouvert |
+| DT-028 | Symétrie : absente, Quad Remesher l'a | J8 | moyenne | ouvert, planifié au J9 bis |
 | DT-027 | Garde-fous de temps de calcul sur les entrées pathologiques | J8 | basse | ouvert |
 
 ## Tickets
@@ -279,7 +279,13 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   courbes guides. Il guide les boucles d'arêtes par ce que le maillage porte déjà : frontières
   entre matériaux, normales scindées, arêtes vives détectées par angle. Une variante bien moins
   coûteuse du rang 4 serait donc des **arêtes marquées par l'utilisateur** dans Blender, qui
-  passeraient par le même mécanisme que les arêtes vives du jalon 9. À décider.
+  passeraient par le même mécanisme que les arêtes vives du jalon 9.
+- **Objection du 7 octobre 2026** : marquer des arêtes est à peu près impossible sur un
+  maillage à haute densité, et des courbes libres risquent de donner une interface lourde.
+  La question est donc d'abord celle du geste dans Blender. Pistes à discuter, de la plus
+  naturelle sur une sculpture à la plus lourde : les frontières entre *Face Sets* du mode
+  Sculpt (on peint des zones, leurs frontières deviennent des boucles) ; un trait d'annotation
+  dessiné sur la surface ; des objets courbes. Rien n'est décidé.
 
 ### DT-025 — Densité : portée des singularités et lecture de la courbure encore à l'échelle nominale
 
@@ -292,19 +298,17 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   ne sont pas vus par le champ.
 - **À faire** : rendre ces deux longueurs locales.
 
-### DT-026 — Densité peinte : pas de lecture d'attribut Blender, pas de peinture dans l'OBJ
+### DT-026 — Densité peinte : lecture du Weight Paint de Blender à faire (pont Blender)
 
 - **Né au** jalon 8.
-- **Constat** : la densité peinte se donne par la bibliothèque (`Guides`) ou, en ligne de
-  commande, par un fichier texte d'un nombre par sommet (`--density`). Rien ne lit encore les
-  couleurs de sommets d'un OBJ, ni un attribut de Blender.
-- **Décision du 7 octobre 2026** : dans Blender, la densité se peindra en **Weight Paint**
-  (groupe de sommets), pas en couleurs de sommets comme Quad Remesher. Ce sera l'affaire du
-  pont Blender (jalon 10), pas encore commencé.
-- **À faire** au jalon 10 : le greffon lit le groupe de sommets choisi et le convertit en
-  facteur de densité. À régler alors : la correspondance entre poids et facteur (proposition :
-  0,5 neutre, 1 pour ×4, 0 pour ÷4), et le fait qu'un sommet absent du groupe doit rester
-  neutre et non passer pour un poids de 0.
+- **Fait côté moteur** : la densité peinte est un poids par sommet, de 0 (densité minimale) à 1
+  (densité maximale), avec un réglage de contraste (`density_contrast`). Convention fixée le
+  7 octobre 2026 pour coller au Weight Paint : un sommet non peint vaut 0 et sert de niveau de
+  base, il n'y a pas de valeur neutre à connaître.
+- **Reste** : rien ne lit encore un groupe de sommets de Blender ; en ligne de commande, les
+  poids viennent d'un fichier texte (`--density`).
+- **À faire** au jalon 10, avec le pont Blender (pas commencé) : lire le groupe de sommets
+  choisi par l'utilisateur et le passer tel quel au moteur.
 
 ### DT-027 — Garde-fous de temps de calcul sur les entrées pathologiques
 
@@ -324,4 +328,4 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   donne un maillage symétrique.
 - **Piste** : remailler une moitié avec un bord posé sur le plan de symétrie, puis la refléter ;
   les bords ouverts sont déjà pris en charge.
-- **À décider** : si c'est voulu, et à quel jalon.
+- **Décision du 7 octobre 2026** : voulue. Inscrite à la feuille de route comme jalon 9 bis.

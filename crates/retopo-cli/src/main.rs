@@ -38,7 +38,8 @@ OPTIONS (remesh):
     --singularity-tolerance <T>  what such a cancellation may cost
     --crease-angle <DEG|none>    follow input edges sharper than this dihedral angle
     --adaptivity <A>             0 for quads of one size, up to 1 for quads as small as the shape bends
-    --density <FILE>             painted density: one factor per input vertex, one per line (1 is neutral)
+    --density <FILE>             painted density: one weight per input vertex, one per line, from 0 (least dense) to 1 (most)
+    --density-contrast <F>       how many times denser a weight of 1 is than a weight of 0 (default 4)
     --seed <N>                   random seed
 
 OPTIONS (preprocess):
@@ -173,6 +174,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
             }
             "--adaptivity" => config.adaptivity = parse(arg, value(arg)?)?,
             "--density" => density_path = Some(value(arg)?.clone()),
+            "--density-contrast" => config.density_contrast = parse(arg, value(arg)?)?,
             "--seed" => config.seed = parse(arg, value(arg)?)?,
             flag if flag.starts_with("--") => return Err(format!("unknown option '{flag}'")),
             path => paths.push(path),
@@ -197,7 +199,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
                 .map(|line| parse("--density", line))
                 .collect::<Result<_, _>>()
                 .map_err(|e| format!("{path}: {e}"))?;
-            println!("density  {} painted values", values.len());
+            println!("density  {} painted weights, contrast {}", values.len(), config.density_contrast);
             Some(values)
         }
         None => None,
