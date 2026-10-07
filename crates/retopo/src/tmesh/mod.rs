@@ -11,6 +11,7 @@
 
 mod motorcycle;
 pub(crate) mod walk;
+mod walls;
 
 use std::collections::VecDeque;
 use std::fmt;
@@ -32,9 +33,10 @@ pub type HalfArc = u32;
 pub enum NodeKind {
     /// A singularity of the field, on that vertex of the work mesh.
     Singularity { vertex: u32 },
-    /// A vertex where an open border turns a corner in the map.
-    BorderCorner,
-    /// A point where a cut stops on another one, or on a border.
+    /// A vertex where a border or a hard edge turns, ends or meets another.
+    Corner,
+    /// A point where a cut stops on another one, on a border or on a hard
+    /// edge.
     Junction,
 }
 
@@ -57,6 +59,8 @@ pub struct Arc {
     /// It runs along an open border, with the surface on its left: it has
     /// no patch on its right.
     pub border: bool,
+    /// It runs along a border or a hard edge of the shape.
+    pub feature: bool,
     /// The trace it is a piece of, and the lengths of that trace at its
     /// first and second node.
     pub trace: u32,
@@ -77,13 +81,17 @@ pub struct Stretch {
     pub time: f64,
 }
 
-/// A cut: a trace from a singularity, or a straight piece of open border.
+/// A cut: a trace from a singularity or a corner, or a straight run of
+/// border or hard edge.
 #[derive(Clone, Debug)]
 pub struct Trace {
     /// Its way on the surface, for display.
     pub points: Vec<Vec3>,
     /// Its way through the map.
     pub stretches: Vec<Stretch>,
+    /// It is a run of border or hard edge.
+    pub feature: bool,
+    /// It is a run of open border.
     pub border: bool,
 }
 
@@ -117,8 +125,9 @@ pub struct Patch {
 pub struct Report {
     /// Triangles folded over in the map the traces were run on.
     pub map_inversions: usize,
-    /// Border edges that do not run along a grid line of the map.
-    pub border_off_grid: usize,
+    /// Border edges and hard edges that do not run along a grid line of the
+    /// map.
+    pub off_grid_edges: usize,
     /// Triangles of pieces of the surface that nothing cuts (no singularity,
     /// no border: a torus), and that the partition therefore leaves out.
     pub uncut_triangles: usize,
@@ -155,11 +164,13 @@ impl Report {
     pub fn is_valid(&self) -> bool {
         self.lost_traces == 0
             && self.overlaps == 0
-            && self.border_off_grid == 0
+            && self.off_grid_edges == 0
             && self.rectangles == self.patches
             && self.euler == self.surface_euler
             && self.area_error.abs() < 1e-6
-            && self.side_mismatch < 1e-6
+            // (Lengths are read off a map solved to about 1e-9; a ten-
+            // thousandth of a quad edge is still nothing.)
+            && self.side_mismatch < 1e-4
     }
 }
 
@@ -180,16 +191,31 @@ impl TMesh {
         let topology = Topology::build(mesh);
         let walk = walk::Map::new(mesh, &topology, &map.uv, &map.cut.seam, &map.cut.transition);
         let is_singular: Vec<bool> = field.indices.iter().map(|&index| index != 0).collect();
-        let outcome = motorcycle::race(&walk, &is_singular, max_trace_length);
+        // Cuts that are there from the start: open borders, and the edges
+        // the work mesh marks as features of the shape.
+        let features: std::collections::HashSet<(u32, u32)> =
+            work.feature_edges.iter().map(|&[a, b]| (a.min(b), a.max(b))).collect();
+        let is_wall: Vec<bool> = (0..3 * mesh.triangles.len())
+            .map(|h| {
+                let (a, b) = (mesh.triangles[h / 3][h % 3], mesh.triangles[h / 3][(h % 3 + 1) % 3]);
+                topology.opposite[h] == INVALID || features.contains(&(a.min(b), a.max(b)))
+            })
+            .collect();
+        let outcome = motorcycle::race(&walk, &is_singular, &is_wall, max_trace_length);
 
         let mut tmesh = TMesh::assemble(&outcome);
         let report = &mut tmesh.report;
-        report.map_inversions = (0..mesh.triangles.len()).filter(|&f| walk.area(f) <= 0.0).count();
+        // (Faces that are flat in the map do not count: slivers it was not
+        // asked to copy, and triangles with two edges on one feature line,
+        // which that line flattens. A trace crosses them in no distance.)
+        let in_map: Vec<f64> = (0..mesh.triangles.len()).map(|f| walk.area(f)).collect();
+        let flat = 1e-9 * in_map.iter().map(|area| area.abs()).sum::<f64>() / in_map.len().max(1) as f64;
+        report.map_inversions = in_map.iter().filter(|&&area| area < -flat).count();
         report.surface_euler = mesh.positions.len() as i64 - topology.edge_count() as i64 + mesh.triangles.len() as i64;
-        // Pieces of the surface with neither singularity nor border (a
-        // torus) have nothing to cut them and stay out of the count.
+        // Pieces of the surface with neither singularity nor wall (a torus)
+        // have nothing to cut them and stay out of the count.
         let mut cut = is_singular;
-        for h in topology.boundary_half_edges() {
+        for h in (0..is_wall.len()).filter(|&h| is_wall[h]) {
             cut[mesh.triangles[h / 3][h % 3] as usize] = true;
         }
         let covered = faces_reached_from(&topology, mesh, &cut);
@@ -229,6 +255,7 @@ impl TMesh {
                     length,
                     patches: [INVALID; 2],
                     border: trace.border,
+                    feature: trace.wall,
                     trace: index as u32,
                     span: [from.0, to.0],
                 });
@@ -303,7 +330,7 @@ impl TMesh {
                 position: junction.position,
                 kind: match junction.vertex {
                     Some(vertex) => NodeKind::Singularity { vertex },
-                    None if junction.corner => NodeKind::BorderCorner,
+                    None if junction.corner => NodeKind::Corner,
                     None => NodeKind::Junction,
                 },
                 arcs: list.iter().map(|&(_, half)| half).collect(),
@@ -312,10 +339,10 @@ impl TMesh {
 
         let mut report = Report {
             singularities: nodes.iter().filter(|node| matches!(node.kind, NodeKind::Singularity { .. })).count(),
-            traces: outcome.traces.iter().filter(|trace| !trace.border).count(),
+            traces: outcome.traces.iter().filter(|trace| !trace.wall).count(),
             lost_traces: outcome.lost,
             overlaps: outcome.overlaps,
-            border_off_grid: outcome.border_off_grid,
+            off_grid_edges: outcome.off_grid_edges,
             nodes: nodes.len(),
             t_junctions: nodes.iter().filter(|node| node.kind == NodeKind::Junction && node.arcs.len() == 3).count(),
             arcs: arcs.len(),
@@ -336,7 +363,12 @@ impl TMesh {
         let traces = outcome
             .traces
             .iter()
-            .map(|trace| Trace { points: trace.path.clone(), stretches: trace.stretches.clone(), border: trace.border })
+            .map(|trace| Trace {
+                points: trace.path.clone(),
+                stretches: trace.stretches.clone(),
+                feature: trace.wall,
+                border: trace.border,
+            })
             .collect();
         TMesh { nodes, arcs, patches, traces, report }
     }

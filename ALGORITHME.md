@@ -1,6 +1,6 @@
 # openclare — cahier des charges du moteur de retopologie quad
 
-**Statut : validé le 6 octobre 2026. Jalons 0 à 7 faits ; jalon 8 (relaxation, puis densité adaptative et densité peinte) réalisé, en attente de revue.**
+**Statut : validé le 6 octobre 2026. Jalons 0 à 8 faits ; jalon 9 (arêtes vives garanties) réalisé, en attente de revue.**
 Ce qui a été écarté, approché ou reporté en chemin est suivi ticket par ticket dans [BACKLOG.md](BACKLOG.md).
 Le projet s'appelle **openclare** ; les crates portent encore le nom provisoire `retopo`. Les points marqués
 *à trancher* attendent une décision ; ils sont regroupés en section 7.
@@ -332,6 +332,9 @@ l'ogre, c'est elle qui décide si les mains existent encore.
 champ de taille (fiche M1 bis) ; la densité peinte est remontée devant les rangs 3 et 4 parce
 qu'elle ne demandait rien de plus. Le rang 3 existe dans la chaîne organique, sans garantie
 (DT-002) ; le rang 4 n'est pas commencé (DT-024).
+
+*(Depuis le jalon 9, une seule chaîne sert les deux usages : les arêtes vives y sont des coupes
+du T-mesh. Le paragraphe qui suit décrit le projet d'origine, conservé au backlog, DT-030.)*
 
 **Deux usages, deux chaînes.** L'organique (sculptures, personnages) est servi par la première
 chaîne. Le durci (pièces mécaniques, surfaces dures) le sera par la seconde. L'utilisateur choisit
@@ -875,8 +878,8 @@ Ce qui reste ouvert :
   d'aujourd'hui n'est donc pas celui du maillage final.
 - **Les arêtes vives ne sont pas des arcs.** Elles sont sur des isolignes de la carte, et sur
   le cube les traces les suivent d'elles-mêmes, mais rien n'oblige en général une arête vive à
-  porter un arc, donc rien ne permettra à M6 de lui donner une coordonnée entière. À traiter
-  comme les bords (une coupe présente dès le départ), au plus tard avec la chaîne durci (J9).
+  porter un arc, donc rien ne permettra à M6 de lui donner une coordonnée entière. *Résolu au
+  jalon 9 : voir ci-dessous.*
 - **Une pièce sans singularité ni bord** (un tore) n'a pas de T-mesh : la quantification devra
   traiter ses deux périodes à part.
 - **La course est approchée** (à un triangle près) et les traces ne sont pas raccourcies : le
@@ -885,6 +888,93 @@ Ce qui reste ouvert :
 - **Aucune garantie formelle** de terminaison ou de validité hors du corpus : une trace qui
   dépasse 20 fois le côté de la carte est abandonnée et comptée, la partition est alors déclarée
   non valide. Cela ne s'est jamais produit.
+
+**Complété au jalon 9 : bords et arêtes vives sont des « murs »** (`tmesh/walls.rs`, qui
+remplace le traitement des seuls bords). Décision du 7 octobre 2026 : plutôt que d'écrire la
+seconde chaîne prévue pour le durci (patchs à la QuadWild, ticket DT-030), les arêtes vives
+deviennent des coupes du T-mesh, comme les bords ouverts. Tout l'aval est inchangé.
+
+- **Un mur** est une arête le long de laquelle le maillage doit avoir des arêtes : un bord
+  ouvert, ou une arête que le maillage de calcul marque comme caractéristique. Les murs sont
+  posés comme des traces avant la course, un par tronçon droit, entre les sommets où ils
+  tournent, s'arrêtent ou se rejoignent : les *coins*, qui deviennent des nœuds.
+- **Autour d'un sommet**, ses murs découpent la surface en secteurs. Dans la carte, chaque
+  secteur couvre un nombre entier de quarts de tour : deux là où un mur ne fait que passer, un à
+  un coin saillant, trois ou plus là où il rentre dans la surface. Un secteur de k quarts de
+  tour émet k − 1 traces, exactement comme une singularité le fait tout autour d'elle. Une
+  singularité posée sur un mur suit la même règle : ses secteurs ne font simplement pas quatre.
+- **Les traces s'arrêtent sur un mur** comme sur une autre trace, de l'un ou l'autre côté.
+- **Un mur fermé sans coin** (le bord d'un cylindre) reçoit un nœud sans rôle, pour porter son
+  arc unique.
+- **En aval** : deux murs ne peuvent pas se refermer l'un sur l'autre dans la quantification
+  (une bande mince entre deux arêtes vives garde au moins une rangée de quads) ; un sommet du
+  maillage né sur un mur y reste pendant la relaxation, et un sommet né sur un coin ne bouge
+  pas. Ces appartenances sont transmises par le maillage lui-même, plus devinées à la distance.
+
+**Résultat du jalon 9.** Avec le préréglage `hard-surface` (arêtes de plus de 30°, taille
+unique), sur les quatre pièces mécaniques du corpus (la pièce percée, le cube, et deux formes
+ajoutées pour ce jalon : un bloc en L, dont une arête rentre, et un cylindre, dont les arêtes
+vives sont des courbes fermées) :
+
+![Bloc en L, cylindre et pièce percée, préréglage hard-surface](docs/images/jalon9_durci.png)
+
+| Médianes sur les 4 pièces, à 3000 quads | QuadriFlow | `integer-grid` | **openclare, J9** | Quad Remesher |
+|---|---|---|---|---|
+| Pièces toujours valides | 2 sur 4 | 4 sur 4 | **4 sur 4** | 4 sur 4 |
+| Sommets irréguliers | 10 | 10 | **10** | 10 |
+| Patchs du complexe de base | 352 | 372 | **46** | 211 |
+| Alignement | 2,6° | 1,2° | **1,0°** | 1,1° |
+| Écart d'angle moyen | 1,7° | 1,7° | **0,7°** | 1,7° |
+| Hausdorff, ‰ de la diagonale | 5,2 | 1,0 | **0,5** | 0,4 |
+| Écart au budget | 3,3 % | 1,9 % | **0,8 %** | 4,5 % |
+| Temps | 1,2 s | 5,3 s | **1,4 s** | 2,9 s |
+
+(`integer-grid` est notre chaîne provisoire, la seule à tenir à peu près les arêtes vives avant
+ce jalon.) Sur les pièces mécaniques, openclare est au niveau de Quad Remesher, et devant
+lui sur la simplicité de la structure et la forme des quads. Le cube et le bloc en L ressortent
+exacts : écart nul à la source, tous les angles à 90°. Même tableau à 1000 et 8000 quads dans
+`bench/results/ACCEPTANCE.md` ; les 4 pièces y sont valides aussi.
+
+Trois réserves sur ces mesures. Le seuil d'alignement de la règle d'acceptation (« 2° de mieux
+que QuadriFlow ») n'a pas de sens ici : QuadriFlow est déjà à moins de 3°, on ne peut pas faire
+2° de mieux. À 1000 quads, la pièce percée s'écarte de sa source plus que celle de QuadriFlow
+(15 ‰ contre 8) : à ce budget un quad est plus gros que certains de ses détails, et deux coins
+voisins fusionnent. Enfin, à 8000 quads, QuadriFlow n'a pas terminé sur le bloc en L en dix
+minutes ; je l'ai arrêté, et il n'a pas été lancé sur le cylindre à ce budget.
+
+Vérifié par les tests (`crates/retopo/tests/hard_surface.rs`, `tmesh.rs`) : le T-mesh du cube
+est le cube lui-même (8 nœuds, 12 arcs, 6 patchs, aucune trace) ; sur le bloc en L, les deux
+coins rentrants émettent chacun deux traces et chaque face en L est coupée en trois rectangles ;
+les deux bords du cylindre sont des coupes entières de même longueur ; le maillage du bloc en L
+a un sommet sur chacun de ses 12 coins et une arête le long de chacune de ses 18 arêtes, à
+1e-6 près, sans autre sommet irrégulier que ces coins ; le cylindre garde une boucle d'arêtes
+fermée sur chaque bord ; une plaque épaisse d'un quart de quad garde ses deux contours et une
+rangée de quads sur sa tranche.
+
+Le cylindre a débusqué trois défauts anciens, tous liés aux triangles plats le long des arêtes
+vives, et tous corrigés :
+
+- le prétraitement laisse parfois des triangles d'aire quasi nulle, qui faisaient s'effondrer
+  la carte sans couture (déjà au jalon 7) : la paramétrisation les ignore maintenant ;
+- un triangle dont deux côtés sont sur la même arête vive (il coupe un léger angle de la ligne)
+  est forcément aplati dans la carte dès que cette ligne est une isoligne : il était compté
+  comme un triangle inversé, et la carte renonçait à tenir les arêtes vives ;
+- l'angle d'un tel triangle plat était lu avec un signe au hasard, ce qui faussait le décompte
+  des quarts de tour autour des sommets d'un mur.
+
+Supprimer ces triangles à la source reste à faire (DT-031).
+
+Ce qui reste ouvert :
+
+- **Sur un cylindre, les quads de la paroi sont étirés** (rapport 1,3). Le nombre de lignes
+  qui descendent la paroi est celui qui sort des disques du haut et du bas, et ces disques,
+  dont les anneaux rétrécissent vers le centre, en veulent moins que la paroi (DT-029).
+- **Une arête vive que le champ ne suit pas** (elle n'est alors pas sur une isoligne) rend le
+  T-mesh invalide, et la chaîne se replie sur `integer-grid`. Cela ne s'est pas produit sur le
+  corpus.
+- **Seules les arêtes détectées par l'angle** sont des murs. Des arêtes ou des zones désignées
+  par l'utilisateur (Face Sets, traits dessinés) passeront par le même mécanisme, à brancher
+  (DT-024). La symétrie aussi (J9 bis).
 
 ### M6 — Quantification
 
@@ -1142,8 +1232,8 @@ Chaque jalon produit quelque chose de vérifiable et se termine par **un arrêt 
 | J5 | T-mesh (M5) | **Fait.** Partitions en rectangles valides sur tout le corpus, bords ouverts compris |
 | J6 | Quantification (M6) | **Fait.** Contraintes satisfaites, budget tenu à 4 % près, connectivité du maillage quad construite et saine sur tout le corpus |
 | J7 | Maillage quad depuis le T-mesh quantifié, par la route directe (à la place de M7 et M8) | **Fait.** Résultat complet ; règle d'acceptation tenue à 3000 quads. L'arrondi glouton reste comme repli (DT-009) |
-| J8 | Relaxation ; densité adaptative, puis contraintes de rang 3 à 5 | **Fait, en attente de revue** : relaxation, densité adaptative (rang 2) et densité peinte (rang 5). Règle d'acceptation tenue aux trois budgets, forme des quads devant Quad Remesher. Reste le rang 4, les courbes guides (DT-024) ; le rang 3 relève du jalon 9 |
-| J9 | Chaîne durci : traçage, patchs, remplissage par motifs | Pièces mécaniques comparées à QuadriFlow |
+| J8 | Relaxation ; densité adaptative, puis contraintes de rang 3 à 5 | **Fait** : relaxation, densité adaptative (rang 2) et densité peinte (rang 5). Règle d'acceptation tenue aux trois budgets, forme des quads devant Quad Remesher. Reste le rang 4, les courbes guides (DT-024) ; le rang 3 relève du jalon 9 |
+| J9 | Surfaces dures : arêtes vives garanties, par des « murs » dans le T-mesh de la chaîne existante (à la place de la chaîne par patchs, DT-030) | **Fait, en attente de revue.** Pièces mécaniques comparées à QuadriFlow et à Quad Remesher ; arêtes et coins retrouvés exactement |
 | J9 bis | Symétrie : un modèle symétrique par rapport à un plan donne un maillage symétrique (DT-028) | Écart entre le maillage et son reflet nul ; boucle d'arêtes sur le plan de symétrie |
 | J10 | Export des coutures et des UV ; bibliothèque à interface C et greffon Python sans copie mémoire | Remaillage lancé depuis Blender, UV et coutures relus dans la scène |
 | J11 | Prétraitement de réparation : fusion des pièces qui se traversent, arêtes non variété | Desert Rose remaillée en une seule peau valide |
@@ -1336,6 +1426,8 @@ Prises :
   dernière se donne en poids de 0 (densité minimale) à 1 (densité maximale), avec un contraste
   réglable, et se peindra en Weight Paint dans Blender (DT-026) ;
 - symétrie : inscrite à la feuille de route (jalon 9 bis, DT-028) ;
+- surfaces dures : pas de seconde chaîne pour l'instant ; les arêtes vives sont des coupes du
+  T-mesh de la chaîne existante, et la chaîne par patchs est mise au backlog (DT-030) ;
 - licence GPL-3.0-or-later ;
 - seuils d'acceptation de la section 0 ;
 - champ de croix par face ;

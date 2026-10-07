@@ -202,7 +202,7 @@ impl Remesher for IntegerGrid {
         mesh.repair_to_quads();
         clock.lap(&mut report, "extraction");
 
-        settle(&mut mesh, input, &work, edge_length, &Laplacian { iterations: self.relax_iterations });
+        settle(&mut mesh, input, &work, edge_length, None, &Laplacian { iterations: self.relax_iterations });
         clock.lap(&mut report, "relaxation");
 
         report.stats = mesh.stats();
@@ -270,10 +270,12 @@ impl Remesher for QuadLayout {
             return fall_back(input, config);
         }
 
-        let (mut mesh, _) = meshing::create(meshing::Kind::PatchGrid).mesh(&work, &layout, &quantized)?;
+        let (mut mesh, meshed) = meshing::create(meshing::Kind::PatchGrid).mesh(&work, &layout, &quantized)?;
         clock.lap(&mut report, "meshing");
 
-        settle(&mut mesh, input, &work, edge_length, &self.relaxer);
+        // The layout knows which vertices lie on a border or a hard edge.
+        let held = Some((meshed.on_feature, meshed.on_corner));
+        settle(&mut mesh, input, &work, edge_length, held, &self.relaxer);
         clock.lap(&mut report, "relaxation");
 
         report.stats = mesh.stats();
@@ -363,13 +365,25 @@ fn fields(
 
 /// Relaxes `mesh` on the input surface. Hard edges and corners of the work
 /// mesh are what its vertices snap to; the surface itself is the input.
-fn settle(mesh: &mut PolyMesh, input: &TriMesh, work: &WorkMesh, edge_length: f64, relaxer: &dyn Relaxer) {
+/// `held` lists the vertices known to lie on feature lines and on corners;
+/// without it they are told by distance.
+fn settle(
+    mesh: &mut PolyMesh,
+    input: &TriMesh,
+    work: &WorkMesh,
+    edge_length: f64,
+    held: Option<(Vec<u32>, Vec<u32>)>,
+    relaxer: &dyn Relaxer,
+) {
     let constraints =
         crate::field::Constraints::from_feature_edges(&work.mesh.positions, &work.normals, &work.feature_edges);
     // A vertex belongs to a feature line when it is within a third of an
     // edge of it: of the shortest edges there are, where sizes vary.
     let finest = work.sizing.iter().copied().fold(1.0, f64::min);
-    let guide = Features::new(&work.mesh.positions, &work.feature_edges, &constraints, 0.35 * finest * edge_length);
+    let mut guide = Features::new(&work.mesh.positions, &work.feature_edges, &constraints, 0.35 * finest * edge_length);
+    if let Some((on_lines, on_corners)) = held {
+        guide = guide.map(|features| features.with_members(on_lines, on_corners));
+    }
     relaxer.relax(mesh, &Bvh::build(input), guide.as_ref());
 }
 

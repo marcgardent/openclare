@@ -43,10 +43,13 @@ MODELS = [
     ("bridge", "organic", False, True),
     ("part", "mechanical", True, False),
     ("cube", "mechanical", True, False),
+    # An edge that turns inwards, and hard edges that are closed curves.
+    ("lblock", "mechanical", True, False),
+    ("cylinder", "mechanical", True, False),
     ("sphere", "calibration", False, False),
     ("torus", "calibration", False, False),
 ]
-PRIMITIVES = {"cube", "sphere", "torus"}
+PRIMITIVES = {"cube", "sphere", "torus", "lblock", "cylinder"}
 DEFAULT_TARGET = 3000
 CREASE_ANGLE = "30"
 
@@ -146,15 +149,19 @@ def quadremesher(uniform, refresh=False):
     return timed
 
 
-def retopo(method, seeded=True, name=None, options=()):
+def retopo(method, seeded=True, name=None, options=(), sharp_preset=None):
     """A chain of this repository, under `name` if it is run with `options`
-    that set it apart. One that does not use the seed runs once."""
+    that set it apart. One that does not use the seed runs once. On models
+    with hard edges it starts from `sharp_preset`, if given."""
 
     def tool(model, sharp, boundary, target, seeds, directory):
         runs = {}
         for seed in seeds if seeded else seeds[:1]:
             path = directory / f"{name or method}_{seed}.obj"
-            command = [RETOPO, "remesh", source_path(model), path, "--method", method, "--quads", target, "--seed", seed]
+            command = [RETOPO, "remesh", source_path(model), path]
+            if sharp and sharp_preset:
+                command += ["--preset", sharp_preset]
+            command += ["--method", method, "--quads", target, "--seed", seed]
             command += list(options)
             if sharp:
                 command += ["--crease-angle", CREASE_ANGLE]
@@ -174,8 +181,14 @@ TOOLS = {
     "integer-grid": retopo("integer-grid", seeded=False),
     # Quads of one size, to compare like with like against the tools that
     # have nothing else; then sized by the shape, as Quad Remesher does by default.
-    "quad-layout": retopo("quad-layout", seeded=False, options=["--adaptivity", "0"]),
-    "quad-layout-adaptive": retopo("quad-layout", seeded=False, name="quad-layout-adaptive", options=["--adaptivity", "0.5"]),
+    "quad-layout": retopo("quad-layout", seeded=False, options=["--adaptivity", "0"], sharp_preset="hard-surface"),
+    "quad-layout-adaptive": retopo(
+        "quad-layout",
+        seeded=False,
+        name="quad-layout-adaptive",
+        options=["--adaptivity", "0.5"],
+        sharp_preset="hard-surface",
+    ),
     # Commercial yardstick; needs the add-on and a licence (see bench/README.md).
     "quadremesher": quadremesher(uniform=False),
     "quadremesher-uniform": quadremesher(uniform=True),

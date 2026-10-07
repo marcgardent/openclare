@@ -20,6 +20,9 @@ quads sont plus réguliers (écart d'angle moyen 5,4° contre 7,2°) ; ses arêt
 peu moins bien la forme. La taille des quads s'adapte à la forme, et se règle aussi en peignant
 une densité sur le modèle.
 
+Les **arêtes vives** sont suivies exactement : avec le préréglage `hard-surface`, le maillage a
+une arête le long de chaque arête vive de la pièce et un sommet sur chaque coin.
+
 Deux autres chaînes restent dans le dépôt : `integer-grid`, la version provisoire, qui sert de
 repli pour les surfaces sans singularité ni bord (un tore), et `instant-meshes`, le plancher de
 comparaison.

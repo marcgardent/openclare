@@ -15,7 +15,7 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 | Ticket | Sujet | Né au | Gravité | État |
 |---|---|---|---|---|
 | DT-001 | Carte à grille entière contrainte et extraction exacte, écartées | J7 | moyenne | ouvert |
-| DT-002 | Arêtes vives absentes du T-mesh | J5 | haute (durci) | ouvert |
+| DT-002 | Arêtes vives absentes du T-mesh | J5 | haute (durci) | **fermé au J9** |
 | DT-003 | Pièce sans singularité ni bord : pas de T-mesh | J5 | moyenne | ouvert |
 | DT-004 | Solveur de quantification approché | J6 | basse | ouvert |
 | DT-005 | Arcs maintenus ouverts : bandes de quads étroites | J6 | moyenne | ouvert |
@@ -25,7 +25,7 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 | DT-009 | Chaîne `integer-grid` provisoire encore dans le dépôt | J4 bis | basse | ouvert |
 | DT-010 | Lignes de défense 2 et 3 contre les inversions non écrites | J4 | moyenne | ouvert |
 | DT-011 | Faces très étirées dans la carte sans couture | J4 | basse | ouvert |
-| DT-012 | Préréglage `hard-surface` sur la chaîne organique | J4 bis | haute (durci) | ouvert |
+| DT-012 | Préréglage `hard-surface` sur la chaîne organique | J4 bis | haute (durci) | **fermé au J9** |
 | DT-013 | Valeurs des préréglages non réglées sur le corpus | J4 bis | moyenne | ouvert |
 | DT-014 | Visualisation des champs et des structures | J2 | basse | ouvert |
 | DT-015 | Code encore nommé `retopo` | J4 bis | basse | ouvert |
@@ -41,6 +41,9 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 | DT-025 | Densité : portée des singularités et lecture de la courbure encore à l'échelle nominale | J8 | basse | ouvert |
 | DT-026 | Densité peinte : lecture du Weight Paint de Blender à faire (pont Blender) | J8 | moyenne | ouvert |
 | DT-028 | Symétrie : absente, Quad Remesher l'a | J8 | moyenne | ouvert, planifié au J9 bis |
+| DT-029 | Quads étirés sur la paroi d'un cylindre | J9 | moyenne | ouvert |
+| DT-030 | Chaîne par patchs (QuadWild) non écrite | J9 | basse | ouvert |
+| DT-031 | Triangles d'aire quasi nulle laissés par le prétraitement | J9 | moyenne | ouvert |
 | DT-027 | Garde-fous de temps de calcul sur les entrées pathologiques | J8 | basse | ouvert |
 
 ## Tickets
@@ -71,6 +74,9 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   l'arête vive ; seule la relaxation les y ramène.
 - **À faire** : traiter les arêtes vives comme les bords ouverts (coupes présentes dès le
   départ, coins qui émettent des traces). Au plus tard au jalon 9.
+- **Fermé au jalon 9** : bords et arêtes vives sont des « murs » du T-mesh. Le maillage a une
+  arête le long de chaque arête vive et un sommet sur chaque coin, vérifié à 1e-6 près sur un
+  bloc en L ; un cylindre garde ses deux bords circulaires.
 
 ### DT-003 — Pièce sans singularité ni bord : pas de T-mesh
 
@@ -159,7 +165,9 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 - **Né au** jalon 4 bis.
 - **Constat** : le préréglage existe, mais il passe par la chaîne organique, faute de chaîne
   durci. Voir aussi DT-002.
-- **À faire** : jalon 9.
+- **Fermé au jalon 9** : la chaîne unique garantit maintenant les arêtes vives ; le préréglage
+  n'a plus besoin d'une autre chaîne. La chaîne par patchs prévue à l'origine est suivie à part
+  (DT-030).
 
 ### DT-013 — Valeurs des préréglages non réglées sur le corpus
 
@@ -282,6 +290,8 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   passeraient par le même mécanisme que les arêtes vives du jalon 9.
 - **Objection du 7 octobre 2026** : marquer des arêtes est à peu près impossible sur un
   maillage à haute densité, et des courbes libres risquent de donner une interface lourde.
+  (Depuis le jalon 9 le mécanisme existe côté moteur : une ligne à suivre est un « mur ». Il
+  reste à faire entrer par `Guides` des murs désignés par l'utilisateur.)
   La question est donc d'abord celle du geste dans Blender. Pistes à discuter, de la plus
   naturelle sur une sculpture à la plus lourde : les frontières entre *Face Sets* du mode
   Sculpt (on peint des zones, leurs frontières deviennent des boucles) ; un trait d'annotation
@@ -329,3 +339,41 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 - **Piste** : remailler une moitié avec un bord posé sur le plan de symétrie, puis la refléter ;
   les bords ouverts sont déjà pris en charge.
 - **Décision du 7 octobre 2026** : voulue. Inscrite à la feuille de route comme jalon 9 bis.
+
+### DT-029 — Quads étirés sur la paroi d'un cylindre
+
+- **Né au** jalon 9.
+- **Constat** : sur un cylindre à fonds plats, les quads de la paroi sont 1,3 fois plus larges
+  que hauts. Le nombre de lignes qui longent la paroi est celui qui sort des deux disques, et
+  un disque, dont les anneaux rétrécissent vers le centre, en veut moins que la paroi. La
+  carte tranche entre les deux.
+- **Pistes** : placer les quatre singularités de chaque disque plus près du bord (la zone en
+  anneaux est alors mince) ; ou pondérer la carte par l'aire concernée de chaque côté.
+
+### DT-030 — Chaîne par patchs (QuadWild) non écrite
+
+- **Né au** jalon 9, par décision du 7 octobre 2026.
+- **Ce qui était prévu** : une seconde chaîne pour les surfaces dures, sur le principe de
+  QuadWild : tracer des patchs à partir du champ sans passer par une carte, puis les remplir
+  par des motifs.
+- **Ce qui est fait à la place** : les arêtes vives sont des coupes du T-mesh de la chaîne
+  existante (fiche M5). Sur les quatre pièces du corpus, arêtes et coins sont retrouvés
+  exactement.
+- **Ce qu'on y perd** : la chaîne par patchs ne dépend pas d'une carte sans triangle inversé ;
+  c'était aussi le repli prévu si la paramétrisation échouait (section 6). Ce repli n'existe
+  donc pas : aujourd'hui, c'est `integer-grid` qui en tient lieu (DT-009).
+- **À reprendre si** des pièces mécaniques réelles font échouer la carte ou le T-mesh.
+
+### DT-031 — Triangles d'aire quasi nulle laissés par le prétraitement
+
+- **Né au** jalon 9 ; le défaut date du jalon 1.
+- **Constat** : pour ne pas ouvrir de fente, le remaillage isotrope garde des triangles plats
+  le long des arêtes vives (aire de l'ordre de 1e-18). Ils faisaient s'effondrer la carte sans
+  couture dans certaines configurations (cylindre, préréglage `hard-surface`).
+- **Même famille** : un triangle dont deux côtés sont sur la même arête vive (il coupe un
+  léger angle de la ligne) est forcément aplati dans la carte ; il faisait renoncer la carte à
+  tenir les arêtes vives, et faussait le décompte des angles autour des sommets.
+- **Traité en aval** au jalon 9 : la paramétrisation, le décompte des triangles inversés et le
+  calcul des angles autour d'un mur s'en accommodent.
+- **À faire** : les éliminer à la source, par bascule ou fusion d'arêtes qui respecte les
+  arêtes vives.

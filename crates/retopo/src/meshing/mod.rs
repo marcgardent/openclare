@@ -22,6 +22,10 @@ pub struct Report {
     /// Vertices that could not be placed by reading the map and were put
     /// between their neighbours on the rim of their patch instead.
     pub interpolated: usize,
+    /// Vertices on a border or a hard edge of the shape, which they must
+    /// not leave, and those on a corner of one, which must not move at all.
+    pub on_feature: Vec<u32>,
+    pub on_corner: Vec<u32>,
 }
 
 pub trait Mesher {
