@@ -1,6 +1,6 @@
 # openclare — cahier des charges du moteur de retopologie quad
 
-**Statut : validé le 6 octobre 2026. Jalons 0 à 4 faits ; jalon 4 bis réalisé, en attente de revue.**
+**Statut : validé le 6 octobre 2026. Jalons 0 à 4 bis faits ; jalon 5 (T-mesh) réalisé, en attente de revue.**
 Le projet s'appelle **openclare** ; les crates portent encore le nom provisoire `retopo`. Les points marqués
 *à trancher* attendent une décision ; ils sont regroupés en section 7.
 
@@ -625,8 +625,9 @@ Ce qui reste ouvert, et qu'il ne faut pas se cacher :
   près de singularités). Elles sont valides, pas belles.
 - **La distorsion ne dépend pas du budget à ce stade** : la taille du quad ne fait que mettre la
   carte à l'échelle. Elle n'entrera en jeu qu'avec les entiers.
-- **Bords et arêtes vives** ne sont pas encore contraints à tomber sur des lignes de la grille ;
-  c'est nécessaire pour un bord net et viendra avec les entiers.
+- **Bords et arêtes vives** : depuis le jalon 5, ils sont tenus sur des isolignes de la carte
+  (une coordonnée constante le long de chacun), sans inversion sur le corpus. Les placer sur des
+  lignes *entières* viendra avec la quantification.
 - **Lignes de défense 2 et 3** (contraintes d'*Integer-Grid Maps*, construction à garantie) non
   écrites : le raidissement a suffi sur le corpus.
 
@@ -707,8 +708,86 @@ Ce qui ne va pas, et pourquoi :
   quasi simultanées).
 - **Test** : chaque patch est un rectangle ; la partition couvre toute la surface ; cohérence
   avec la formule d'Euler.
-- **À trancher** : l'arithmétique du traçage (assainissement de la paramétrisation à la manière
-  de QEx, prédicats exacts, ou rationnels).
+- **Arithmétique du traçage** : tranchée au jalon 5, voir ci-dessous.
+
+**Réalisé au jalon 5** (`crates/retopo/src/tmesh/`, interface `LayoutBuilder` et sa fabrique).
+
+![Les coupes du T-mesh sur l'ogre et sur Suzanne, à 3000 quads](docs/images/tmesh.png)
+
+- **Marche dans la carte** (`walk.rs`) : une trace avance triangle par triangle. Dans un
+  triangle la carte est linéaire, donc la trace est un segment ; en traversant une couture, sa
+  direction tourne de la transition de cette couture ; en passant par un sommet, elle continue
+  dans le triangle dont le secteur contient sa direction. Le partage des directions entre les
+  secteurs autour d'un sommet est décidé par des tests de signe exacts, un par arête : aucune
+  direction n'est comptée deux fois ni oubliée. Une singularité d'indice k émet bien 4 − k traces.
+- **Course** (`motorcycle.rs`) : toutes les traces partent en même temps ; à chaque pas, c'est
+  la moins avancée qui traverse son triangle. Elle s'arrête sur le premier tronçon déjà posé
+  dans ce triangle. C'est une approximation de la course idéale, à un triangle près : le
+  résultat peut différer du « motorcycle graph » exact, mais c'est toujours une partition
+  valide, et c'est tout ce que demande la suite.
+- **Rencontres** : en travers (jonction en T), nez à nez sur la même ligne (les deux traces
+  s'arrêtent, nœud de valence 2), ou exactement sur un sommet du maillage (chaque sommet retient
+  la première trace qui l'a traversé). Ce dernier cas n'est pas un détail : sur un cube, toutes
+  les traces courent le long d'arêtes du maillage.
+- **Bords ouverts** : un bord est une coupe présente dès le départ. Les traces s'y arrêtent ;
+  là où il tourne vers l'intérieur de la surface, il émet des traces comme une singularité.
+  Cela exige des bords posés sur des isolignes : la paramétrisation sans couture (M4) impose
+  désormais que chaque arête caractéristique, bord ou arête vive, garde une coordonnée
+  constante, sans la forcer à être entière. Si cela replie la carte, elle revient à la version
+  sans cette contrainte et le signale.
+- **Patchs** : chaque nœud ordonne ses arcs dans le sens trigonométrique ; un patch se lit en
+  suivant son contour, patch à gauche. Un angle intérieur d'un quart de tour est un coin, un
+  demi-tour est une jonction en T sur un côté. Un patch est accepté s'il a exactement quatre
+  coins et rien d'autre.
+- **Arithmétique** : nombres flottants ordinaires, avec une seule tolérance de 1e-6 unité de
+  grille (la carte est exacte à 1e-10 près, un triangle mesure quelques dixièmes d'unité). En
+  dessous, une trace qui frôle un sommet passe par ce sommet, et deux traces sur des lignes
+  voisines sont sur la même ligne. Ni prédicats exacts ni rationnels : sur le corpus, ce n'est
+  pas nécessaire.
+
+**Résultat.** Sur les 16 modèles du corpus, à 1000, 3000 et 8000 quads (champ simplifié par M3,
+arêtes vives à 30° pour les deux pièces mécaniques ; tableau complet dans
+`bench/results/TMESH.md`, produit par `bench/tmesh.py`) :
+
+| | Résultat |
+|---|---|
+| Partitions valides (tous les patchs rectangulaires, aire couverte exacte, Euler) | **48 sur 48** |
+| Traces perdues, traces superposées | 0 |
+| Triangles inversés dans la carte, bords hors isolignes | 0 |
+| Écart d'aire entre les rectangles et la carte | de l'ordre de 1e-10 en valeur relative |
+| Patchs, 12 modèles organiques à 3000 quads | 60 à 340, médiane 185 (environ 3 par singularité) |
+| Patchs plus étroits qu'un demi-quad, mêmes modèles | 27 % (36 % à 1000 quads, 22 % à 8000) |
+| Temps du traçage, 50 000 triangles | moins de 0,15 seconde |
+
+Cas d'école : le cube donne ses 6 faces, 20 nœuds (8 coins, 12 milieux d'arêtes où les traces
+se rencontrent nez à nez) et 24 arcs ; le plan ouvert donne un seul rectangle bordé par son
+contour ; le tore, sans singularité, n'est pas découpé du tout.
+
+Vérifié par les tests (`crates/retopo/tests/tmesh.rs`) : sur une sphère, un cube à arêtes vives,
+un plan ouvert, un tore avec et sans singularités, chaque patch a quatre coins et des côtés
+opposés égaux, chaque demi-arc borde exactement un patch, les contours se referment, la somme
+des aires des rectangles est l'aire de la carte, et nœuds − arcs + patchs vaut la caractéristique
+d'Euler de la surface ; résultat déterministe.
+
+Ce qui reste ouvert :
+
+- **Un quart des patchs sont des lamelles.** Deux singularités presque alignées laissent entre
+  leurs traces une bande plus étroite qu'un demi-quad. C'est attendu avec une carte à
+  translations réelles, et c'est précisément le travail de la quantification (M6) : donner à ces
+  bandes une largeur entière, zéro le plus souvent, ce qui les referme. Le nombre de patchs
+  d'aujourd'hui n'est donc pas celui du maillage final.
+- **Les arêtes vives ne sont pas des arcs.** Elles sont sur des isolignes de la carte, et sur
+  le cube les traces les suivent d'elles-mêmes, mais rien n'oblige en général une arête vive à
+  porter un arc, donc rien ne permettra à M6 de lui donner une coordonnée entière. À traiter
+  comme les bords (une coupe présente dès le départ), au plus tard avec la chaîne durci (J9).
+- **Une pièce sans singularité ni bord** (un tore) n'a pas de T-mesh : la quantification devra
+  traiter ses deux périodes à part.
+- **La course est approchée** (à un triangle près) et les traces ne sont pas raccourcies : le
+  T-mesh n'est pas le plus simple possible. Lyon et al. 2021 montrent qu'on peut faire mieux en
+  choisissant quelles traces prolonger ; à regarder si M6 peine.
+- **Aucune garantie formelle** de terminaison ou de validité hors du corpus : une trace qui
+  dépasse 20 fois le côté de la carte est abandonnée et comptée, la partition est alors déclarée
+  non valide. Cela ne s'est jamais produit.
 
 ### M6 — Quantification
 
@@ -767,8 +846,8 @@ Chaque jalon produit quelque chose de vérifiable et se termine par **un arrêt 
 | J2 | Champ de croix (M2) | **Fait.** Champs visualisés, singularités comptées |
 | J3 | Singularités (M3), durée bornée | **Fait.** Gain mesuré sur S : critère de sortie atteint |
 | J4 | Paramétrisation sans couture (M4) | **Fait.** Jalon de vérité passé : zéro inversion sur tout le corpus |
-| J4 bis | Arrondi glouton des translations (façon MIQ) et extraction ; configuration unique et préréglages | **Fait, en attente de revue.** Premier résultat complet, provisoire, mesuré face à QuadriFlow et à Quad Remesher |
-| J5 | T-mesh (M5) | Partitions en rectangles visualisées |
+| J4 bis | Arrondi glouton des translations (façon MIQ) et extraction ; configuration unique et préréglages | **Fait.** Premier résultat complet, provisoire, mesuré face à QuadriFlow et à Quad Remesher |
+| J5 | T-mesh (M5) | **Fait, en attente de revue.** Partitions en rectangles valides sur tout le corpus, bords ouverts compris |
 | J6 | Quantification (M6) | Contraintes satisfaites, budget tenu |
 | J7 | Carte entière et extraction (M7, M8) | **Résultat complet définitif**, l'arrondi glouton est retiré |
 | J8 | Relaxation ; densité adaptative, puis contraintes de rang 3 à 5 | Règle d'acceptation évaluée |
@@ -811,8 +890,9 @@ composent des mêmes briques :
 | `Relaxer` | placement final (M9) | commune | commune |
 
 Écrites à ce jour : `Remesher` (deux chaînes : `instant-meshes` et `integer-grid`),
-`Preprocessor`, `CrossFieldSolver`, `SingularityOptimizer` et `Parametrizer` (deux
-implémentations : `seamless` et `integer-grid`).
+`Preprocessor`, `CrossFieldSolver`, `SingularityOptimizer`, `Parametrizer` (deux
+implémentations : `seamless` et `integer-grid`) et `LayoutBuilder` (une implémentation :
+`motorcycle`, qui enchaîne la paramétrisation sans couture et le traçage du T-mesh).
 
 Les deux chaînes ne diffèrent donc que par deux étapes, `LayoutBuilder` et `Mesher`, plus le
 réglage du champ de croix. Les types échangés entre étapes (maillage de calcul, champ de croix,
@@ -916,7 +996,7 @@ Conservés uniquement comme plancher de comparaison, hors de la chaîne cible :
 | Risque | Conséquence | Repli |
 |---|---|---|
 | Inversions locales irréductibles (M4, M7) | pas de maillage valide | construction à garantie (Campen et al. 2019) ; en dernier recours, lignée par patchs à partir du champ de M3, puisque M1 à M3 et M6 sont communs aux deux, en portant QuadWild |
-| Traçage non robuste (M5, M8) | T-mesh ou maillage incohérent | portage de libQEx pour l'extraction ; arithmétique exacte pour le T-mesh |
+| Traçage non robuste (M5, M8) | T-mesh ou maillage incohérent | pour le T-mesh, le risque ne s'est pas réalisé sur le corpus (J5) ; arithmétique exacte en réserve. Portage de libQEx pour l'extraction |
 | Solveur de couplage trop lourd à écrire (M6) | pas de quantification optimale | solveur approché seul ; arrondi glouton façon MIQ |
 | Pas d'algorithme établi pour M3 | singularités en excès | réglage global seul ; simplification pendant la quantification (Lyon et al. 2021) |
 | Densité adaptative | distorsion, singularités supplémentaires | reportée au rang 4, hors critère d'acceptation |
@@ -935,7 +1015,7 @@ En attente :
 
 1. **Corpus** : d'autres sculptures à ajouter plus tard, avant l'expiration de la licence d'essai
    de Quad Remesher.
-2. **Arithmétique du traçage** (M5) ; peut attendre J4.
+2. **Nom du code** : renommer les crates et l'exécutable `retopo` en `openclare`.
 
 Prises :
 
@@ -943,6 +1023,7 @@ Prises :
 - priorité : organique d'abord, durci ensuite ;
 - lignées : paramétrisation et isolignes pour l'organique, patchs pour le durci ;
 - architecture modulaire à fabriques ;
+- arithmétique du traçage (M5) : nombres flottants et une tolérance unique, suffisants sur le corpus ;
 - licence GPL-3.0-or-later ;
 - seuils d'acceptation de la section 0 ;
 - champ de croix par face ;

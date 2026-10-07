@@ -30,6 +30,7 @@ Pour mesurer un seul maillage, quel que soit l'outil qui l'a produit :
 | Fichier | Rôle |
 |---|---|
 | `run.py` | lance chaque outil sur chaque modèle, mesure, écrit `results/` |
+| `tmesh.py` | construit le T-mesh de chaque modèle et écrit `results/TMESH.md` |
 | `quadriflow.py` | script Blender : QuadriFlow sur un OBJ, une fois par graine |
 | `quadremesher.py` | script Blender : Quad Remesher sur un OBJ |
 | `make_references.py` | produit et range les mires Quad Remesher tant qu'une licence est disponible |

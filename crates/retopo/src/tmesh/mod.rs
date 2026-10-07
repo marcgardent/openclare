@@ -1,0 +1,408 @@
+//! T-mesh (stage M5): the surface cut into rectangles of the seamless map.
+//!
+//! Its nodes are the singularities and the points where one cut stops on
+//! another, a T-junction; its arcs are the stretches of cut between nodes,
+//! each with its length in the map; its patches are what the cuts leave.
+//! Giving every arc a whole length, the same on opposite sides of each
+//! patch, is all that then separates the map from a quad mesh: that is the
+//! next stage, quantization.
+//!
+//! The stage is a [`LayoutBuilder`]; chains get one from [`create`].
+
+mod motorcycle;
+mod walk;
+
+use std::collections::VecDeque;
+use std::fmt;
+use std::str::FromStr;
+
+use crate::crossfield::CrossField;
+use crate::error::{Error, Result};
+use crate::math::{INVALID, Vec3};
+use crate::mesh::Topology;
+use crate::parametrization::{self, Parametrization};
+use crate::preprocess::WorkMesh;
+
+/// One direction of an arc: `2 * arc` runs from its first node to its
+/// second, `2 * arc + 1` back.
+pub type HalfArc = u32;
+
+#[derive(Clone, Debug)]
+pub struct Node {
+    pub position: Vec3,
+    /// The vertex of the work mesh it sits on, for a singularity; `None` for
+    /// a T-junction or a corner of the border.
+    pub singular_vertex: Option<u32>,
+    /// The half-arcs leaving it, counter-clockwise.
+    pub arcs: Vec<HalfArc>,
+}
+
+#[derive(Clone, Debug)]
+pub struct Arc {
+    pub nodes: [u32; 2],
+    /// Length in the map: in quad edges, not yet a whole number.
+    pub length: f64,
+    /// The patch on its left going from the first node to the second, and
+    /// the one on its right.
+    pub patches: [u32; 2],
+    /// It runs along an open border, with the surface on its left: it has
+    /// no patch on its right.
+    pub border: bool,
+}
+
+#[derive(Clone, Debug)]
+pub struct Patch {
+    /// Its rim, counter-clockwise: the patch is on the left of each half-arc.
+    pub boundary: Vec<HalfArc>,
+    /// Interior angle at the end of each of those, in quarter turns: 1 at a
+    /// corner, 2 where the rim runs straight past a T-junction.
+    pub angles: Vec<u8>,
+    /// Lengths of its four sides in rim order, if it is a rectangle: four
+    /// corners and nothing else but straight stretches.
+    pub sides: Option<[f64; 4]>,
+}
+
+/// What the builder achieved, and what quantization is in for.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Report {
+    /// Triangles folded over in the map the traces were run on.
+    pub map_inversions: usize,
+    /// Border edges that do not run along a grid line of the map.
+    pub border_off_grid: usize,
+    pub singularities: usize,
+    pub traces: usize,
+    /// Traces that never met another.
+    pub lost_traces: usize,
+    /// Traces that ended on top of another arc instead of across it.
+    pub overlaps: usize,
+    pub nodes: usize,
+    pub t_junctions: usize,
+    pub arcs: usize,
+    pub patches: usize,
+    pub rectangles: usize,
+    /// Largest difference between the two opposite sides of a rectangle, in
+    /// quad edges.
+    pub side_mismatch: f64,
+    /// Area of the rectangles over the area of the map, minus one.
+    pub area_error: f64,
+    /// Nodes minus arcs plus patches, and what that must equal: the Euler
+    /// characteristic of the surface.
+    pub euler: i64,
+    pub surface_euler: i64,
+    pub longest_trace: f64,
+    /// Arcs shorter than half a quad edge, and rectangles narrower than
+    /// that: what quantization will have to collapse or widen.
+    pub short_arcs: usize,
+    pub thin_patches: usize,
+}
+
+impl Report {
+    /// Whether the partition is one into rectangles, all of the surface and
+    /// nothing else.
+    pub fn is_valid(&self) -> bool {
+        self.lost_traces == 0
+            && self.overlaps == 0
+            && self.border_off_grid == 0
+            && self.rectangles == self.patches
+            && self.euler == self.surface_euler
+            && self.area_error.abs() < 1e-6
+            && self.side_mismatch < 1e-6
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct TMesh {
+    pub nodes: Vec<Node>,
+    pub arcs: Vec<Arc>,
+    pub patches: Vec<Patch>,
+    /// The cuts as lines on the surface, one per trace, for display.
+    pub traces: Vec<Vec<Vec3>>,
+    pub report: Report,
+}
+
+impl TMesh {
+    /// Runs the motorcycle graph of `map` from the singularities of `field`.
+    /// No trace goes further than `max_trace_length` quad edges.
+    pub fn trace(work: &WorkMesh, field: &CrossField, map: &Parametrization, max_trace_length: f64) -> TMesh {
+        let mesh = &work.mesh;
+        let topology = Topology::build(mesh);
+        let walk = walk::Map::new(mesh, &topology, &map.uv, &map.cut.seam, &map.cut.transition);
+        let is_singular: Vec<bool> = field.indices.iter().map(|&index| index != 0).collect();
+        let outcome = motorcycle::race(&walk, &is_singular, max_trace_length);
+
+        let mut tmesh = TMesh::assemble(&outcome);
+        let report = &mut tmesh.report;
+        report.map_inversions = (0..mesh.triangles.len()).filter(|&f| walk.area(f) <= 0.0).count();
+        report.surface_euler = mesh.positions.len() as i64 - topology.edge_count() as i64 + mesh.triangles.len() as i64;
+        // Pieces of the surface with neither singularity nor border (a
+        // torus) have nothing to cut them and stay out of the count.
+        let mut cut = is_singular;
+        for h in topology.boundary_half_edges() {
+            cut[mesh.triangles[h / 3][h % 3] as usize] = true;
+        }
+        let covered = faces_reached_from(&topology, mesh, &cut);
+        let map_area: f64 = (0..mesh.triangles.len()).filter(|&f| covered[f]).map(|f| walk.area(f)).sum();
+        let rectangles: f64 = tmesh.patches.iter().filter_map(|patch| patch.sides).map(area_of).sum();
+        report.area_error = if map_area > 0.0 { rectangles / map_area - 1.0 } else { 0.0 };
+        tmesh
+    }
+
+    /// Nodes, arcs and patches from the traces of a race.
+    fn assemble(outcome: &motorcycle::Outcome) -> TMesh {
+        let mut arcs: Vec<Arc> = Vec::new();
+        // Per node: its half-arcs with the key that orders them round it.
+        let mut around: Vec<Vec<(f64, HalfArc)>> = vec![Vec::new(); outcome.junctions.len()];
+        let mut longest_trace = 0.0f64;
+        for trace in &outcome.traces {
+            // Stops along the trace: length there, node, key of the arc
+            // towards the next stop, key of the arc towards the previous one.
+            let mut stops = vec![(0.0, trace.start.0, trace.start.1, f64::NAN)];
+            let mut through = trace.through.clone();
+            through.sort_by(|a, b| a.0.total_cmp(&b.0));
+            stops.extend(
+                through.iter().map(|&(at, node, forward)| (at, node, forward as f64, ((forward + 2) % 4) as f64)),
+            );
+            if let Some((node, key)) = trace.end {
+                stops.push((trace.length, node, f64::NAN, key));
+                longest_trace = longest_trace.max(trace.length);
+            }
+            // The tail of a lost trace, past its last stop, is dropped.
+            for pair in stops.windows(2) {
+                let (from, to) = (pair[0], pair[1]);
+                let arc = arcs.len() as u32;
+                let length = to.0 - from.0;
+                arcs.push(Arc { nodes: [from.1, to.1], length, patches: [INVALID; 2], border: trace.border });
+                around[from.1 as usize].push((from.2, 2 * arc));
+                around[to.1 as usize].push((to.3, 2 * arc + 1));
+            }
+        }
+        for list in &mut around {
+            list.sort_by(|a, b| a.0.total_cmp(&b.0));
+        }
+
+        let full_turn: Vec<f64> = outcome.junctions.iter().map(|junction| junction.full_turn).collect();
+
+        // Where each half-arc sits round the node it leaves.
+        let mut slot = vec![0usize; 2 * arcs.len()];
+        for list in &around {
+            for (index, &(_, half)) in list.iter().enumerate() {
+                slot[half as usize] = index;
+            }
+        }
+        let origin = |half: HalfArc| arcs[half as usize / 2].nodes[half as usize % 2] as usize;
+
+        // Each patch is found by walking its rim with the patch on the left:
+        // at every node, the next half-arc is the first one clockwise from
+        // the one just walked.
+        let mut patches: Vec<Patch> = Vec::new();
+        let mut patch_of = vec![INVALID; 2 * arcs.len()];
+        for first in 0..2 * arcs.len() as u32 {
+            if patch_of[first as usize] != INVALID {
+                continue;
+            }
+            let (mut boundary, mut angles) = (Vec::new(), Vec::new());
+            let mut half = first;
+            loop {
+                patch_of[half as usize] = patches.len() as u32;
+                boundary.push(half);
+                let back = half ^ 1;
+                let node = origin(back);
+                let list = &around[node];
+                let at = slot[back as usize];
+                let (key, next) = list[(at + list.len() - 1) % list.len()];
+                let turn = (list[at].0 - key).rem_euclid(full_turn[node]);
+                let angle = if list.len() == 1 || turn == 0.0 { full_turn[node] } else { turn };
+                // Anything that is not a whole number of quarter turns comes
+                // from traces lying on each other; 0 marks it.
+                angles.push(if angle.fract() == 0.0 { angle as u8 } else { 0 });
+                half = next;
+                if half == first {
+                    break;
+                }
+            }
+            // Walked against a border, the rim is that of a hole of the
+            // surface, not of a patch.
+            if boundary.iter().any(|&half| half % 2 == 1 && arcs[half as usize / 2].border) {
+                for half in boundary {
+                    patch_of[half as usize] = OUTSIDE;
+                }
+                continue;
+            }
+            let sides = rectangle_sides(&boundary, &angles, &arcs);
+            patches.push(Patch { boundary, angles, sides });
+        }
+        for (half, &patch) in patch_of.iter().enumerate() {
+            arcs[half / 2].patches[half % 2] = if patch == OUTSIDE { INVALID } else { patch };
+        }
+
+        let nodes: Vec<Node> = outcome
+            .junctions
+            .iter()
+            .zip(&around)
+            .map(|(junction, list)| Node {
+                position: junction.position,
+                singular_vertex: junction.vertex,
+                arcs: list.iter().map(|&(_, half)| half).collect(),
+            })
+            .collect();
+
+        let mut report = Report {
+            singularities: nodes.iter().filter(|node| node.singular_vertex.is_some()).count(),
+            traces: outcome.traces.iter().filter(|trace| !trace.border).count(),
+            lost_traces: outcome.lost,
+            overlaps: outcome.overlaps,
+            border_off_grid: outcome.border_off_grid,
+            nodes: nodes.len(),
+            t_junctions: nodes.iter().filter(|node| node.singular_vertex.is_none() && node.arcs.len() == 3).count(),
+            arcs: arcs.len(),
+            patches: patches.len(),
+            rectangles: patches.iter().filter(|patch| patch.sides.is_some()).count(),
+            euler: nodes.len() as i64 - arcs.len() as i64 + patches.len() as i64,
+            longest_trace,
+            short_arcs: arcs.iter().filter(|arc| arc.length < 0.5).count(),
+            ..Default::default()
+        };
+        for sides in patches.iter().filter_map(|patch| patch.sides) {
+            report.side_mismatch =
+                report.side_mismatch.max((sides[0] - sides[2]).abs()).max((sides[1] - sides[3]).abs());
+            if sides[0].min(sides[1]) < 0.5 {
+                report.thin_patches += 1;
+            }
+        }
+        TMesh { nodes, arcs, patches, traces: outcome.traces.iter().map(|trace| trace.path.clone()).collect(), report }
+    }
+}
+
+/// Marks the half-arcs that face a hole of the surface.
+const OUTSIDE: u32 = INVALID - 1;
+
+fn area_of(sides: [f64; 4]) -> f64 {
+    0.25 * (sides[0] + sides[2]) * (sides[1] + sides[3])
+}
+
+/// The four side lengths of a rim with exactly four corners and otherwise
+/// straight; `None` for anything else.
+fn rectangle_sides(boundary: &[HalfArc], angles: &[u8], arcs: &[Arc]) -> Option<[f64; 4]> {
+    let corners = angles.iter().filter(|&&angle| angle == 1).count();
+    if corners != 4 || angles.iter().any(|&angle| angle != 1 && angle != 2) {
+        return None;
+    }
+    // Start right after a corner, so that each corner closes a side.
+    let start = (angles.iter().position(|&angle| angle == 1)? + 1) % boundary.len();
+    let mut sides = [0.0; 4];
+    let mut side = 0;
+    for step in 0..boundary.len() {
+        let at = (start + step) % boundary.len();
+        sides[side] += arcs[boundary[at] as usize / 2].length;
+        if angles[at] == 1 {
+            side += 1;
+        }
+    }
+    Some(sides)
+}
+
+/// The faces of every connected piece of the surface holding at least one
+/// flagged vertex.
+fn faces_reached_from(topology: &Topology, mesh: &crate::mesh::TriMesh, flagged: &[bool]) -> Vec<bool> {
+    let mut reached = vec![false; mesh.triangles.len()];
+    let mut queue: VecDeque<usize> = VecDeque::new();
+    for (f, triangle) in mesh.triangles.iter().enumerate() {
+        if triangle.iter().any(|&v| flagged[v as usize]) && !reached[f] {
+            reached[f] = true;
+            queue.push_back(f);
+        }
+    }
+    while let Some(f) = queue.pop_front() {
+        for h in 3 * f..3 * f + 3 {
+            let twin = topology.opposite[h];
+            if twin != INVALID && !reached[twin as usize / 3] {
+                reached[twin as usize / 3] = true;
+                queue.push_back(twin as usize / 3);
+            }
+        }
+    }
+    reached
+}
+
+#[derive(Clone, Debug)]
+pub struct Request {
+    /// Edge length of the quads to come: one unit of the map on the surface.
+    pub edge_length: f64,
+}
+
+/// Builds the global structure of the quad mesh, with real lengths.
+pub trait LayoutBuilder {
+    fn kind(&self) -> Kind;
+    fn build(&self, work: &WorkMesh, field: &CrossField, request: &Request) -> Result<TMesh>;
+}
+
+/// The layout builders [`create`] knows how to build.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Kind {
+    /// Seamless map, then the motorcycle graph of its singularities (Campen
+    /// et al. 2015). For organic shapes.
+    Motorcycle,
+}
+
+impl Kind {
+    pub const ALL: &[Kind] = &[Kind::Motorcycle];
+
+    pub fn name(self) -> &'static str {
+        match self {
+            Kind::Motorcycle => "motorcycle",
+        }
+    }
+}
+
+impl fmt::Display for Kind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl FromStr for Kind {
+    type Err = Error;
+
+    fn from_str(name: &str) -> Result<Self> {
+        Kind::ALL.iter().copied().find(|k| k.name() == name).ok_or_else(|| {
+            let known: Vec<&str> = Kind::ALL.iter().map(|k| k.name()).collect();
+            Error::InvalidParams(format!("unknown layout builder '{name}' (known: {})", known.join(", ")))
+        })
+    }
+}
+
+/// Builds the layout builder of that kind with its default tuning.
+pub fn create(kind: Kind) -> Box<dyn LayoutBuilder> {
+    match kind {
+        Kind::Motorcycle => Box::new(Motorcycle::default()),
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct Motorcycle {
+    /// Most stiffening rounds against inverted triangles in the map.
+    pub stiffening_rounds: usize,
+    /// How far a trace may go before it is given up, in times the side of a
+    /// square with the area of the map.
+    pub max_trace_length: f64,
+}
+
+impl Default for Motorcycle {
+    fn default() -> Self {
+        Self { stiffening_rounds: 40, max_trace_length: 20.0 }
+    }
+}
+
+impl LayoutBuilder for Motorcycle {
+    fn kind(&self) -> Kind {
+        Kind::Motorcycle
+    }
+
+    fn build(&self, work: &WorkMesh, field: &CrossField, request: &Request) -> Result<TMesh> {
+        let map_request =
+            parametrization::Request { edge_length: request.edge_length, stiffening_rounds: self.stiffening_rounds };
+        let map = parametrization::create(parametrization::Kind::Seamless).parametrize(work, field, &map_request)?;
+        let side = (work.mesh.surface_area().sqrt() / request.edge_length).max(1.0);
+        Ok(TMesh::trace(work, field, &map, self.max_trace_length * side))
+    }
+}
