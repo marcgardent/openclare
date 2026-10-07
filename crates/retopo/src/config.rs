@@ -76,7 +76,7 @@ pub const PRESETS: &[Preset] = &[
 impl RemeshConfig {
     pub fn for_organic(target: Target) -> Self {
         Self {
-            method: Method::IntegerGrid,
+            method: Method::QuadLayout,
             target,
             alignment: 0.05,
             singularity_reach: 2.0,

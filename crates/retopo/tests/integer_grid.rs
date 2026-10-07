@@ -30,7 +30,7 @@ fn off_grid(value: f64) -> f64 {
 }
 
 fn config(target: usize) -> RemeshConfig {
-    RemeshConfig::for_organic(Target::QuadCount(target))
+    RemeshConfig { method: Method::IntegerGrid, ..RemeshConfig::for_organic(Target::QuadCount(target)) }
 }
 
 #[test]
@@ -177,7 +177,8 @@ fn every_preset_gives_a_mesh_and_the_chain_is_deterministic() {
         assert!(mesh.faces.len() > 400, "preset {}", preset.name);
     }
     let cube = primitives::cube(8);
-    let (mesh, _) = RemeshConfig::for_hard_surface(Target::QuadCount(600)).remesh(&cube).unwrap();
+    let hard = RemeshConfig { method: Method::IntegerGrid, ..RemeshConfig::for_hard_surface(Target::QuadCount(600)) };
+    let (mesh, _) = hard.remesh(&cube).unwrap();
     assert!(measure(&cube, &mesh, None).is_valid());
 
     let settings = config(800);

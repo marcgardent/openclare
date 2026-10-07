@@ -10,7 +10,7 @@
 //! The stage is a [`LayoutBuilder`]; chains get one from [`create`].
 
 mod motorcycle;
-mod walk;
+pub(crate) mod walk;
 
 use std::collections::VecDeque;
 use std::fmt;
@@ -57,6 +57,47 @@ pub struct Arc {
     /// It runs along an open border, with the surface on its left: it has
     /// no patch on its right.
     pub border: bool,
+    /// The trace it is a piece of, and the lengths of that trace at its
+    /// first and second node.
+    pub trace: u32,
+    pub span: [f64; 2],
+}
+
+/// A piece of a trace within one triangle of the work mesh.
+#[derive(Clone, Copy, Debug)]
+pub struct Stretch {
+    pub face: u32,
+    /// Where it starts, in the coordinates the map gives that triangle.
+    pub start: [f64; 2],
+    /// The grid direction it runs along there: 0 is +u, 1 is +v, 2 is -u,
+    /// 3 is -v.
+    pub axis: u8,
+    pub length: f64,
+    /// Length of the trace where the piece starts.
+    pub time: f64,
+}
+
+/// A cut: a trace from a singularity, or a straight piece of open border.
+#[derive(Clone, Debug)]
+pub struct Trace {
+    /// Its way on the surface, for display.
+    pub points: Vec<Vec3>,
+    /// Its way through the map.
+    pub stretches: Vec<Stretch>,
+    pub border: bool,
+}
+
+impl Trace {
+    /// Where the trace is at length `time`: the triangle, the point in its
+    /// coordinates, and the direction of the trace there.
+    pub fn locate(&self, time: f64) -> Option<(usize, [f64; 2], u8)> {
+        let after = self.stretches.partition_point(|stretch| stretch.time <= time);
+        let stretch = self.stretches.get(after.max(1) - 1)?;
+        let run = (time - stretch.time).clamp(0.0, stretch.length);
+        let direction = walk::axis_vector(stretch.axis);
+        let point = [stretch.start[0] + run * direction[0], stretch.start[1] + run * direction[1]];
+        Some((stretch.face as usize, point, stretch.axis))
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -78,6 +119,9 @@ pub struct Report {
     pub map_inversions: usize,
     /// Border edges that do not run along a grid line of the map.
     pub border_off_grid: usize,
+    /// Triangles of pieces of the surface that nothing cuts (no singularity,
+    /// no border: a torus), and that the partition therefore leaves out.
+    pub uncut_triangles: usize,
     pub singularities: usize,
     pub traces: usize,
     /// Traces that never met another.
@@ -124,8 +168,7 @@ pub struct TMesh {
     pub nodes: Vec<Node>,
     pub arcs: Vec<Arc>,
     pub patches: Vec<Patch>,
-    /// The cuts as lines on the surface, one per trace, for display.
-    pub traces: Vec<Vec<Vec3>>,
+    pub traces: Vec<Trace>,
     pub report: Report,
 }
 
@@ -150,6 +193,7 @@ impl TMesh {
             cut[mesh.triangles[h / 3][h % 3] as usize] = true;
         }
         let covered = faces_reached_from(&topology, mesh, &cut);
+        report.uncut_triangles = covered.iter().filter(|&&reached| !reached).count();
         let map_area: f64 = (0..mesh.triangles.len()).filter(|&f| covered[f]).map(|f| walk.area(f)).sum();
         let rectangles: f64 = tmesh.patches.iter().filter_map(|patch| patch.sides).map(area_of).sum();
         report.area_error = if map_area > 0.0 { rectangles / map_area - 1.0 } else { 0.0 };
@@ -162,7 +206,7 @@ impl TMesh {
         // Per node: its half-arcs with the key that orders them round it.
         let mut around: Vec<Vec<(f64, HalfArc)>> = vec![Vec::new(); outcome.junctions.len()];
         let mut longest_trace = 0.0f64;
-        for trace in &outcome.traces {
+        for (index, trace) in outcome.traces.iter().enumerate() {
             // Stops along the trace: length there, node, key of the arc
             // towards the next stop, key of the arc towards the previous one.
             let mut stops = vec![(0.0, trace.start.0, trace.start.1, f64::NAN)];
@@ -180,7 +224,14 @@ impl TMesh {
                 let (from, to) = (pair[0], pair[1]);
                 let arc = arcs.len() as u32;
                 let length = to.0 - from.0;
-                arcs.push(Arc { nodes: [from.1, to.1], length, patches: [INVALID; 2], border: trace.border });
+                arcs.push(Arc {
+                    nodes: [from.1, to.1],
+                    length,
+                    patches: [INVALID; 2],
+                    border: trace.border,
+                    trace: index as u32,
+                    span: [from.0, to.0],
+                });
                 around[from.1 as usize].push((from.2, 2 * arc));
                 around[to.1 as usize].push((to.3, 2 * arc + 1));
             }
@@ -282,7 +333,12 @@ impl TMesh {
                 report.thin_patches += 1;
             }
         }
-        TMesh { nodes, arcs, patches, traces: outcome.traces.iter().map(|trace| trace.path.clone()).collect(), report }
+        let traces = outcome
+            .traces
+            .iter()
+            .map(|trace| Trace { points: trace.path.clone(), stretches: trace.stretches.clone(), border: trace.border })
+            .collect();
+        TMesh { nodes, arcs, patches, traces, report }
     }
 }
 
@@ -362,10 +418,17 @@ pub struct Request {
     pub edge_length: f64,
 }
 
+/// The global structure of the quad mesh, with real lengths, and the map it
+/// was read off.
+pub struct Layout {
+    pub tmesh: TMesh,
+    pub map: Parametrization,
+}
+
 /// Builds the global structure of the quad mesh, with real lengths.
 pub trait LayoutBuilder {
     fn kind(&self) -> Kind;
-    fn build(&self, work: &WorkMesh, field: &CrossField, request: &Request) -> Result<TMesh>;
+    fn build(&self, work: &WorkMesh, field: &CrossField, request: &Request) -> Result<Layout>;
 }
 
 /// The layout builders [`create`] knows how to build.
@@ -430,11 +493,12 @@ impl LayoutBuilder for Motorcycle {
         Kind::Motorcycle
     }
 
-    fn build(&self, work: &WorkMesh, field: &CrossField, request: &Request) -> Result<TMesh> {
+    fn build(&self, work: &WorkMesh, field: &CrossField, request: &Request) -> Result<Layout> {
         let map_request =
             parametrization::Request { edge_length: request.edge_length, stiffening_rounds: self.stiffening_rounds };
         let map = parametrization::create(parametrization::Kind::Seamless).parametrize(work, field, &map_request)?;
         let side = (work.mesh.surface_area().sqrt() / request.edge_length).max(1.0);
-        Ok(TMesh::trace(work, field, &map, self.max_trace_length * side))
+        let tmesh = TMesh::trace(work, field, &map, self.max_trace_length * side);
+        Ok(Layout { tmesh, map })
     }
 }

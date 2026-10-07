@@ -32,7 +32,7 @@ OPTIONS (remesh):
     --save-config <FILE>         write the configuration used, to reuse it as a preset
     --quads <N>                  target number of quads (default 2000)
     --edge-length <L>            target edge length, instead of a number of quads
-    --method <NAME>              remeshing chain: integer-grid or instant-meshes
+    --method <NAME>              remeshing chain: quad-layout, integer-grid or instant-meshes
     --alignment <A>              pull of the edges towards curvature directions
     --singularity-reach <R>      cancel opposite singularities closer than R quad edges
     --singularity-tolerance <T>  what such a cancellation may cost
@@ -209,6 +209,9 @@ fn remesh(args: &[String]) -> Result<(), String> {
         report.open_loops,
         report.map_inversions,
     );
+    if report.fell_back {
+        println!("note     this surface has no layout to mesh from; the integer-grid chain did the job");
+    }
     let valences: Vec<String> = stats.valences.iter().map(|(v, n)| format!("{v}:{n}")).collect();
     println!("valence  {}", valences.join("  "));
     let timings: Vec<String> =
@@ -678,7 +681,7 @@ fn tmesh_command(args: &[String]) -> Result<(), String> {
     if let Some(path) = traces_path {
         let mut text = String::new();
         let mut count = 0;
-        for trace in &tmesh.traces {
+        for trace in tmesh.traces.iter().map(|trace| &trace.points) {
             for p in trace {
                 text.push_str(&format!("v {} {} {}\n", p.x, p.y, p.z));
             }

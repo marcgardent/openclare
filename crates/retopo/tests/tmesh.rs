@@ -150,7 +150,7 @@ fn the_builder_from_the_factory_gives_the_same_layout_every_time() {
     let builder = tmesh::create(Kind::Motorcycle);
     let request = tmesh::Request { edge_length: 0.15 };
     let (first, second) =
-        (builder.build(&work, &cross, &request).unwrap(), builder.build(&work, &cross, &request).unwrap());
+        (builder.build(&work, &cross, &request).unwrap().tmesh, builder.build(&work, &cross, &request).unwrap().tmesh);
     check_structure(&first);
     assert_eq!(first.report, second.report);
     let lengths = |tmesh: &TMesh| tmesh.arcs.iter().map(|arc| arc.length).collect::<Vec<_>>();
