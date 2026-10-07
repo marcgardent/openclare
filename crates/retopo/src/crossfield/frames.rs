@@ -5,6 +5,12 @@
 //! that share an edge, one is carried across by unfolding the pair flat
 //! around that edge: its angle changes by a fixed amount, the *rotation* of
 //! the half-edge.
+//!
+//! Where quads are meant to vary in size, a field that runs straight on the
+//! surface is no longer what is wanted: grid lines have to fan out towards
+//! the larger quads. That is the same as running straight on the surface
+//! with its lengths divided by the local size, and it only adds a second
+//! term to the rotation of each half-edge, the *drift*.
 
 use crate::math::{INVALID, Vec3};
 use crate::mesh::{Topology, TriMesh};
@@ -23,6 +29,9 @@ pub struct FaceFrames {
     pub rotation: Vec<f64>,
     /// Smoothness weight of each half-edge (0 on a border).
     pub weight: Vec<f64>,
+    /// What the sizing adds to [`Self::rotation`] for a field to count as
+    /// smooth: zero where quads keep one size.
+    pub drift: Vec<f64>,
 }
 
 impl FaceFrames {
@@ -54,6 +63,7 @@ impl FaceFrames {
             across: vec![INVALID; 3 * faces],
             rotation: vec![0.0; 3 * faces],
             weight: vec![0.0; 3 * faces],
+            drift: vec![0.0; 3 * faces],
         };
         for h in 0..3 * faces {
             let twin = topology.opposite[h];
@@ -81,6 +91,36 @@ impl FaceFrames {
             }
         }
         frames
+    }
+
+    /// Sets the drift for quads whose edge length is to be `sizing[v]` times
+    /// the nominal one around vertex `v`.
+    ///
+    /// Dividing lengths by `s` is a conformal change of the surface. A
+    /// direction carried straight in the new lengths turns, relative to one
+    /// carried straight in the old, by the rate at which `-ln s` grows to
+    /// its left, times the distance covered.
+    pub fn follow_sizing(&mut self, mesh: &TriMesh, sizing: &[f64]) {
+        for h in 0..self.drift.len() {
+            let g = self.across[h];
+            if g == INVALID || self.weight[h] <= 0.0 {
+                continue;
+            }
+            let tri = mesh.triangles[h / 3];
+            let (a, b) = (tri[h % 3] as usize, tri[(h + 1) % 3] as usize);
+            // Crossing the edge from this face, its direction a -> b is to
+            // the left. The way from one face centre to the other is, over
+            // the length of the edge, twice the inverse of the weight.
+            let growth = (sizing[a] / sizing[b]).ln();
+            self.drift[h] = growth * 2.0 / self.weight[h];
+        }
+    }
+
+    /// What to add to an angle on the face of half-edge `h` for a smooth
+    /// field to have that angle on the face across.
+    #[inline]
+    pub fn transport(&self, h: usize) -> f64 {
+        self.rotation[h] + self.drift[h]
     }
 
     pub fn len(&self) -> usize {

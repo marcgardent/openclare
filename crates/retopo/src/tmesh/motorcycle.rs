@@ -341,7 +341,9 @@ impl Race<'_> {
         };
         // A trace that long is going round in circles between two others it
         // never quite meets, or the map is broken where it is.
-        let budget = 16 * map.mesh.triangles.len();
+        // (A trace crosses a few triangles per quad edge of its length; one
+        // that takes many more steps is not getting anywhere.)
+        let budget = 1024 + (64.0 * self.max_length) as usize;
         if length > self.max_length || self.outcome.traces[id].steps > budget {
             return self.lose(id);
         }

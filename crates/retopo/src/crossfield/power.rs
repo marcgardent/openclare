@@ -13,7 +13,7 @@
 //! Each face has at most three neighbours, so `A` is applied directly from
 //! the mesh and the systems are solved by conjugate gradients.
 
-use super::{CrossField, CrossFieldSolver, FaceFrames, Kind, Request, finish, prepare};
+use super::{CrossField, CrossFieldSolver, FaceFrames, Kind, Request, finish, prepare_sized};
 use crate::error::Result;
 use crate::math::{Complex, INVALID};
 use crate::preprocess::WorkMesh;
@@ -42,7 +42,7 @@ impl CrossFieldSolver for Power {
     }
 
     fn solve(&self, work: &WorkMesh, request: &Request) -> Result<CrossField> {
-        let (topology, frames) = prepare(&work.mesh)?;
+        let (topology, frames) = prepare_sized(work)?;
         let (strength, target) = constraints(work, &frames, request.alignment);
 
         let system = System::new(&frames, &strength);
@@ -114,7 +114,7 @@ pub(crate) fn constraints(work: &WorkMesh, frames: &FaceFrames, alignment: f64) 
 /// The operator `A + S` of the module documentation, applied from the mesh.
 struct System<'a> {
     frames: &'a FaceFrames,
-    /// `e^{-4i rotation}` per half-edge: carries the neighbour's value into
+    /// `e^{-4i transport}` per half-edge: carries the neighbour's value into
     /// the face of the half-edge.
     carry: Vec<Complex>,
     diagonal: Vec<f64>,
@@ -122,7 +122,7 @@ struct System<'a> {
 
 impl<'a> System<'a> {
     fn new(frames: &'a FaceFrames, strength: &[f64]) -> Self {
-        let carry = frames.rotation.iter().map(|&r| Complex::from_angle(-4.0 * r)).collect();
+        let carry = (0..frames.rotation.len()).map(|h| Complex::from_angle(-4.0 * frames.transport(h))).collect();
         // The tiny shift keeps isolated or flat faces from making it singular.
         let diagonal = (0..frames.len())
             .map(|f| strength[f] + frames.weight[3 * f..3 * f + 3].iter().sum::<f64>() + 1e-12)

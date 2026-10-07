@@ -61,7 +61,8 @@ pub(super) struct Problem<'a> {
     pub frames: FaceFrames,
     pub cut: CutMesh,
     /// The triangle of each face laid in the plane of its combed cross, in
-    /// units of the target edge length: what its map should be a copy of.
+    /// units of the edge length wanted there: what its map should be a copy
+    /// of.
     pub ideal: Vec<[[f64; 2]; 3]>,
     /// Arms of the combed cross of each face.
     pub arms: Vec<[crate::math::Vec3; 2]>,
@@ -84,7 +85,13 @@ impl<'a> Problem<'a> {
             })
             .collect();
         let ideal = (0..mesh.triangles.len())
-            .map(|f| mesh.corners(f).map(|p| [p.dot(arms[f][0]) * scale, p.dot(arms[f][1]) * scale]))
+            .map(|f| {
+                // Where quads are to be smaller, the map runs faster: the
+                // local edge length is the unit.
+                let local: f64 = mesh.triangles[f].iter().map(|&v| work.sizing[v as usize].ln()).sum::<f64>() / 3.0;
+                let scale = scale / local.exp();
+                mesh.corners(f).map(|p| [p.dot(arms[f][0]) * scale, p.dot(arms[f][1]) * scale])
+            })
             .collect();
         let unknowns = 2 * cut.wedge_count;
         Ok(Self { work, topology, frames, cut, ideal, arms, unknowns })

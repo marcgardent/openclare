@@ -146,14 +146,16 @@ def quadremesher(uniform, refresh=False):
     return timed
 
 
-def retopo(method, seeded=True):
-    """A chain of this repository. One that does not use the seed runs once."""
+def retopo(method, seeded=True, name=None, options=()):
+    """A chain of this repository, under `name` if it is run with `options`
+    that set it apart. One that does not use the seed runs once."""
 
     def tool(model, sharp, boundary, target, seeds, directory):
         runs = {}
         for seed in seeds if seeded else seeds[:1]:
-            path = directory / f"{method}_{seed}.obj"
+            path = directory / f"{name or method}_{seed}.obj"
             command = [RETOPO, "remesh", source_path(model), path, "--method", method, "--quads", target, "--seed", seed]
+            command += list(options)
             if sharp:
                 command += ["--crease-angle", CREASE_ANGLE]
             done = run(command)
@@ -170,7 +172,10 @@ TOOLS = {
     "quadriflow": quadriflow,
     "instant-meshes": retopo("instant-meshes"),
     "integer-grid": retopo("integer-grid", seeded=False),
-    "quad-layout": retopo("quad-layout", seeded=False),
+    # Quads of one size, to compare like with like against the tools that
+    # have nothing else; then sized by the shape, as Quad Remesher does by default.
+    "quad-layout": retopo("quad-layout", seeded=False, options=["--adaptivity", "0"]),
+    "quad-layout-adaptive": retopo("quad-layout", seeded=False, name="quad-layout-adaptive", options=["--adaptivity", "0.5"]),
     # Commercial yardstick; needs the add-on and a licence (see bench/README.md).
     "quadremesher": quadremesher(uniform=False),
     "quadremesher-uniform": quadremesher(uniform=True),

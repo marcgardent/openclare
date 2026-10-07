@@ -35,6 +35,10 @@ pub struct WorkMesh {
     /// the surface is flat or equally curved every way, towards 1 where one
     /// direction clearly dominates.
     pub confidence: Vec<f64>,
+    /// Factor on the edge length asked for, per vertex: below 1 where quads
+    /// should be smaller. All ones unless a chain sets it (see
+    /// [`crate::sizing`]).
+    pub sizing: Vec<f64>,
 }
 
 #[derive(Clone, Debug)]
@@ -257,7 +261,8 @@ fn work_mesh(mesh: TriMesh, feature_edges: Vec<[u32; 2]>, request: &Request) -> 
         .map(|v| curvature.anisotropy(v) / (curvature.k1[v].abs() + curvature.k2[v].abs() + negligible))
         .collect();
 
-    WorkMesh { mesh, normals, areas, feature_edges, curvature, confidence }
+    let sizing = vec![1.0; mesh.positions.len()];
+    WorkMesh { mesh, normals, areas, feature_edges, curvature, confidence, sizing }
 }
 
 /// Shape statistics of a triangle mesh.

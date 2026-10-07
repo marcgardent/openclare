@@ -1,6 +1,6 @@
 # openclare — cahier des charges du moteur de retopologie quad
 
-**Statut : validé le 6 octobre 2026. Jalons 0 à 7 faits ; jalon 8, première partie (relaxation), réalisé, en attente de revue.**
+**Statut : validé le 6 octobre 2026. Jalons 0 à 7 faits ; jalon 8 (relaxation, puis densité adaptative et densité peinte) réalisé, en attente de revue.**
 Ce qui a été écarté, approché ou reporté en chemin est suivi ticket par ticket dans [BACKLOG.md](BACKLOG.md).
 Le projet s'appelle **openclare** ; les crates portent encore le nom provisoire `retopo`. Les points marqués
 *à trancher* attendent une décision ; ils sont regroupés en section 7.
@@ -327,6 +327,11 @@ interfaces dès maintenant** (un champ de taille accompagne le maillage de calcu
 commencer) et **livrée juste après le premier résultat complet**, avant les rangs 3 à 5 : sur
 l'ogre, c'est elle qui décide si les mains existent encore.
 
+État au jalon 8 : les rangs 1, 2 et 5 sont livrés. Le rang 2 et le rang 5 passent par le même
+champ de taille (fiche M1 bis) ; la densité peinte est remontée devant les rangs 3 et 4 parce
+qu'elle ne demandait rien de plus. Le rang 3 existe dans la chaîne organique, sans garantie
+(DT-002) ; le rang 4 n'est pas commencé (DT-024).
+
 **Deux usages, deux chaînes.** L'organique (sculptures, personnages) est servi par la première
 chaîne. Le durci (pièces mécaniques, surfaces dures) le sera par la seconde. L'utilisateur choisit
 la chaîne ; le logiciel ne suppose jamais qu'il n'en existe qu'une.
@@ -431,6 +436,92 @@ Limites constatées :
 - **Taille du maillage de calcul** tenue à 13 % près, pas exactement.
 - **Entrées non variété** : laissées telles quelles, ni réparées ni refusées.
 - **Cylindre** : pas de test sur cylindre, faute de primitive ; le tore couvre le même cas.
+
+### M1 bis — Champ de taille
+
+- **Entrée** : maillage de calcul ; réglage d'adaptivité (de 0 à 1) ; en option, une densité
+  peinte par sommet du maillage d'entrée.
+- **Sortie** : par sommet du maillage de calcul, un facteur sur la longueur d'arête demandée
+  (moins de 1 : quads plus petits). Il accompagne le maillage de calcul et vaut 1 partout tant
+  qu'on ne demande rien.
+- **Méthode** : deux sources qui se multiplient.
+  - *La forme* (rang 2). Une corde de longueur l sur une surface de courbure k s'en écarte de
+    k l² / 8 : pour une erreur égale partout, l varie comme 1/√k. L'adaptivité est la part de
+    cette loi qu'on applique (0 : taille unique ; 1 : erreur égalisée), dans la limite d'un
+    facteur 3 de part et d'autre.
+  - *La densité peinte* (rang 5). Un nombre par sommet de l'entrée, qui multiplie le nombre de
+    quads par unité d'aire : 1 ne change rien, 4 demande des arêtes deux fois plus courtes. C'est
+    la convention de Quad Remesher, dont le module Blender la peint en couleurs de sommets, de
+    ×0,25 à ×4 (vérifié dans le module installé, version 1.4). Chaque sommet du maillage de
+    calcul lit la peinture au point le plus proche de l'entrée.
+
+  Le champ est ensuite lissé sur une arête et demie de quad, puis mis à l'échelle pour que le
+  nombre total de quads reste celui demandé.
+- **Comment il agit sur la chaîne** : à deux endroits, et il faut les deux.
+  - *La carte* (M4) avance plus vite là où les quads doivent être plus petits : l'unité de la
+    carte est la longueur d'arête locale. Tout l'aval (T-mesh, quantification, placement) vit
+    dans la carte et n'a pas à connaître la taille.
+  - *Le champ de croix* (M2) est calculé comme si les longueurs de la surface étaient divisées
+    par la taille locale. Sans cela la carte ne peut suivre la taille qu'à moitié : un maillage
+    quad ne change de densité qu'en créant des sommets irréguliers, et c'est le champ qui les
+    place. En pratique, le transport d'une direction d'une face à sa voisine reçoit un terme de
+    plus, proportionnel à la variation de la taille le long de l'arête traversée.
+- **Point dur** : plus la taille varie, plus il faut de sommets irréguliers ; et une partie plus
+  mince qu'un quad (une oreille) n'est pas vue par la courbure seule.
+- **Test** : sans adaptivité ni peinture, facteur 1 partout ; le nombre de quads est conservé ;
+  le maillage est mesurablement plus fin là où on l'a demandé.
+
+**Réalisé au jalon 8** (`crates/retopo/src/sizing.rs`, interface `Sizer` et sa fabrique ;
+terme de transport dans `crossfield/frames.rs` ; réglage `adaptivity` de la configuration ;
+données peintes passées par `Guides`, à côté du maillage, et non dans la configuration).
+
+![L'ogre à 3000 quads : taille unique, densité adaptative, densité peinte](docs/images/jalon8_densite.png)
+
+Sur l'image : taille unique ; densité adaptative à 0,5 (le préréglage `organic`) ; densité
+peinte, quatre fois plus de quads sur la tête et quatre fois moins sur les jambes. Les trois
+maillages sont valides et tiennent leur budget à 2 % près.
+
+**Résultat.** Médianes sur les 12 modèles organiques, densité adaptative à 0,5 (tableaux
+complets dans `bench/results/ACCEPTANCE.md` ; dans le banc, `quad-layout` est la variante à
+taille unique et `quad-layout-adaptive` celle du préréglage) :
+
+| | 1000 quads | 3000 quads | 8000 quads |
+|---|---|---|---|
+| Modèles toujours valides : taille unique / adaptative / Quad Remesher défaut | 11 / **12** / 11 | 12 / **12** / 8 | 12 / **12** / 11 |
+| Alignement (A) : taille unique / adaptative / Quad Remesher défaut | 9,1° / **8,4°** / 6,4° | 8,4° / **7,6°** / 6,4° | 8,7° / **7,8°** / 7,5° |
+| Écart d'angle moyen (F) | 5,3° / **5,4°** / 8,2° | 5,4° / **5,0°** / 6,5° | 6,1° / **5,6°** / 6,4° |
+| Hausdorff, ‰ (H) | 18,5 / **14,1** / 7,9 | 8,1 / **7,2** / 5,9 | 4,7 / **3,5** / 4,3 |
+| Sommets irréguliers (S) | 42 / **42** / 72 | 50 / **54** / 80 | 67 / **78** / 72 |
+| Écart au budget (N) | 0,8 % / **0,5 %** / 71 % | 1,4 % / **1,1 %** / 37 % | 0,8 % / **0,8 %** / 13 % |
+
+- La densité adaptative améliore l'alignement et la fidélité à tous les budgets, et rend
+  valide le dernier cas qui ne l'était pas (le cochon à 1000 quads).
+- **Face à Quad Remesher par défaut** (lui aussi à taille adaptative) : à 8000 quads openclare
+  est devant sur la fidélité et la forme, presque à égalité sur l'alignement. À 1000 et 3000
+  quads Quad Remesher reste devant sur l'alignement et la fidélité, mais il n'y tient pas le
+  budget demandé : il rend 71 % et 37 % de quads d'écart, là où openclare reste à 1 %.
+- **La règle d'acceptation face à QuadriFlow** reste tenue en médiane avec la densité
+  adaptative, à une exception : à 8000 quads, 78 sommets irréguliers contre 70 pour QuadriFlow.
+  La variante à taille unique la tient aux trois budgets.
+
+Vérifié par les tests (`crates/retopo/tests/sizing.rs`) : facteur 1 partout par défaut ;
+sur un fuseau, pointes plus fines que la taille et d'autant plus que l'adaptivité est forte,
+nombre de quads conservé ; une densité peinte seize fois plus forte sur un hémisphère donne
+un champ de taille dans un rapport 4, sans saut à l'équateur ; le maillage obtenu a des arêtes
+trois fois plus courtes là où la densité peinte est neuf fois plus forte, reste valide et tient
+son budget ; les entrées incohérentes sont refusées.
+
+Ce qui reste ouvert :
+
+- **Plus de sommets irréguliers** : c'est le prix de la variation de taille (54 en médiane
+  contre 50 à 3000 quads ; 88 contre 76 sur l'ogre).
+- **Les parties plus minces qu'un quad** restent mal rendues : les oreilles de l'ogre font
+  toujours son plus grand écart à la source. La courbure ne suffit pas à les voir (DT-018).
+- **La portée de l'annulation des singularités et l'échelle de lecture de la courbure** se
+  comptent encore en arêtes nominales, pas locales (DT-025).
+- **Format de la densité peinte** : un fichier texte, un nombre par sommet. La lecture d'un
+  attribut Blender (couleurs de sommets ou poids) viendra avec le greffon (J10, DT-026).
+- **Pièces mécaniques** : le préréglage `hard-surface` garde une taille unique.
 
 ### M2 — Champ de croix
 
@@ -1025,7 +1116,7 @@ Ce qui reste ouvert :
   openclare est plus lent que QuadriFlow (6,8 s contre 4,1 s) (ticket DT-023).
 - **Les seuils S et C** restent manqués sur rock et creature (DT-021) : la relaxation ne change
   pas la connectivité.
-- **La seconde partie du jalon 8**, la densité adaptative, n'est pas commencée.
+- **La seconde partie du jalon 8**, la densité adaptative, est faite depuis : voir M1 bis.
 
 ---
 
@@ -1044,7 +1135,7 @@ Chaque jalon produit quelque chose de vérifiable et se termine par **un arrêt 
 | J5 | T-mesh (M5) | **Fait.** Partitions en rectangles valides sur tout le corpus, bords ouverts compris |
 | J6 | Quantification (M6) | **Fait.** Contraintes satisfaites, budget tenu à 4 % près, connectivité du maillage quad construite et saine sur tout le corpus |
 | J7 | Maillage quad depuis le T-mesh quantifié, par la route directe (à la place de M7 et M8) | **Fait.** Résultat complet ; règle d'acceptation tenue à 3000 quads. L'arrondi glouton reste comme repli (DT-009) |
-| J8 | Relaxation ; densité adaptative, puis contraintes de rang 3 à 5 | **Relaxation faite, en attente de revue** : règle d'acceptation tenue aux trois budgets mesurés, forme des quads devant Quad Remesher. Densité adaptative et contraintes de rang 3 à 5 : à faire |
+| J8 | Relaxation ; densité adaptative, puis contraintes de rang 3 à 5 | **Fait, en attente de revue** : relaxation, densité adaptative (rang 2) et densité peinte (rang 5). Règle d'acceptation tenue aux trois budgets, forme des quads devant Quad Remesher. Reste le rang 4, les courbes guides (DT-024) ; le rang 3 relève du jalon 9 |
 | J9 | Chaîne durci : traçage, patchs, remplissage par motifs | Pièces mécaniques comparées à QuadriFlow |
 | J10 | Export des coutures et des UV ; bibliothèque à interface C et greffon Python sans copie mémoire | Remaillage lancé depuis Blender, UV et coutures relus dans la scène |
 | J11 | Prétraitement de réparation : fusion des pièces qui se traversent, arêtes non variété | Desert Rose remaillée en une seule peau valide |
@@ -1088,7 +1179,8 @@ composent des mêmes briques :
 implémentations : `seamless` et `integer-grid`) et `LayoutBuilder` (une implémentation :
 `motorcycle`, qui enchaîne la paramétrisation sans couture et le traçage du T-mesh),
 `Quantizer` (une implémentation : `walk-cancelling`) et `Mesher` (une implémentation :
-`patch-grid`) et `Relaxer` (deux implémentations : `laplacian` et `squaring`). La chaîne
+`patch-grid`), `Relaxer` (deux implémentations : `laplacian` et `squaring`) et `Sizer` (une
+implémentation : `curvature`, pour le champ de taille). La chaîne
 `quad-layout` les enchaîne ; c'est celle des préréglages. Toutes les étapes du tableau ont
 maintenant leur interface.
 
@@ -1127,9 +1219,14 @@ pub struct RemeshConfig {
     pub singularity_reach: f64,      // paires annulées en deçà de tant d'arêtes de quad (M3)
     pub singularity_tolerance: f64,  // ce qu'une annulation a le droit de coûter (M3)
     pub crease_angle: Option<f64>,   // arêtes vives : None, ou seuil dièdre en degrés
+    pub adaptivity: f64,             // taille des quads selon la forme : 0 unique, jusqu'à 1 (M1 bis)
     pub seed: u64,
 }
 ```
+
+Ce que l'utilisateur dessine sur un modèle précis n'est pas un réglage et ne va pas dans la
+configuration : cela accompagne le maillage, dans `Guides` (aujourd'hui la densité peinte ;
+demain les courbes guides).
 
 - **Tous les champs sont publics** et modifiables un à un.
 - **Enregistrer un préréglage**, c'est écrire la configuration dans un petit fichier texte
@@ -1139,9 +1236,9 @@ pub struct RemeshConfig {
 
 | Préréglage | Ce qu'il privilégie | Réglages actuels |
 |---|---|---|
-| `organic` | fidélité à la sculpture | alignement 0,05 ; annulation jusqu'à 2 arêtes de quad |
+| `organic` | fidélité à la sculpture | alignement 0,05 ; annulation jusqu'à 2 arêtes de quad ; adaptivité 0,5 |
 | `animation` | peu de sommets irréguliers, pour bien se déformer | comme `organic`, annulation jusqu'à 3 arêtes |
-| `hard-surface` | arêtes vives | arêtes de plus de 30° préservées ; alignement 0,02 |
+| `hard-surface` | arêtes vives | arêtes de plus de 30° préservées ; alignement 0,02 ; taille unique |
 
 Ces valeurs sont un point de départ, à régler sur le corpus. `hard-surface` tourne pour
 l'instant sur la chaîne organique, en attendant la chaîne durci (J9).
@@ -1154,8 +1251,8 @@ l'instant sur la chaîne organique, en attendant la chaîne durci (J9).
 - `singularity_reach` ajouté : le jalon 3 a montré que le réglage principal de l'annulation est
   une distance, la tolérance n'étant qu'un garde-fou.
 - `method` ajouté : le durci aura sa propre chaîne.
-- Pas encore de champ pour la densité adaptative : il viendra avec elle, et les fichiers déjà
-  enregistrés resteront lisibles.
+- `adaptivity` ajouté au jalon 8 avec la densité adaptative ; les fichiers enregistrés avant
+  restent lisibles.
 
 ### En vue de la bibliothèque C (J10)
 
@@ -1226,6 +1323,8 @@ Prises :
 - deux singularités proches restent séparées (DT-005) ;
 - le code sera renommé `openclare` au jalon 10 (DT-015) ;
 - tout ce qui est écarté, approché ou reporté fait l'objet d'un ticket numéroté dans BACKLOG.md ;
+- densité : un seul champ de taille pour la densité adaptative et la densité peinte, cette
+  dernière à la convention de Quad Remesher (facteur sur le nombre de quads par aire) ;
 - licence GPL-3.0-or-later ;
 - seuils d'acceptation de la section 0 ;
 - champ de croix par face ;

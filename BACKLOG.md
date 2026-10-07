@@ -31,13 +31,16 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 | DT-015 | Code encore nommé `retopo` | J4 bis | basse | ouvert |
 | DT-016 | Documents en français, à traduire | J0 | basse | ouvert |
 | DT-017 | Corpus : sculptures de l'auteur à ajouter avant la fin de la licence d'essai | J0 | moyenne | ouvert |
-| DT-018 | Parties plus fines qu'un quad mal rendues à bas budget | J7 | moyenne | ouvert |
+| DT-018 | Parties plus fines qu'un quad mal rendues à bas budget | J7 | moyenne | ouvert (atténué au J8) |
 | DT-019 | Relaxation rudimentaire : la forme des quads plafonne | J7 | haute | **fermé au J8** |
 | DT-020 | Complexe de base doublé par les jonctions en T | J7 | moyenne | ouvert |
 | DT-021 | Scan bruité (rock) : le champ suit le bruit | J7 | moyenne | ouvert |
 | DT-022 | Mires de comparaison incomplètes à 1000 et 8000 quads | J7 | basse | **fermé au J8** |
 | DT-023 | Relaxation : coût et tailles de quads | J8 | basse | ouvert |
-| DT-024 | Densité adaptative et contraintes de rang 3 à 5 non commencées | J8 | moyenne | ouvert |
+| DT-024 | Courbes guides (rang 4) non commencées | J8 | moyenne | ouvert (réduit au J8) |
+| DT-025 | Densité : portée des singularités et lecture de la courbure encore à l'échelle nominale | J8 | basse | ouvert |
+| DT-026 | Densité peinte : pas de lecture d'attribut Blender, pas de peinture dans l'OBJ | J8 | moyenne | ouvert |
+| DT-027 | Garde-fous de temps de calcul sur les entrées pathologiques | J8 | basse | ouvert |
 
 ## Tickets
 
@@ -198,6 +201,10 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   probablement pour la même raison ; à vérifier.
 - **Piste** : densité adaptative (rang 2 des contraintes, J8) ; à défaut, détection des parties
   minces et placement des sommets sur leur ligne médiane.
+- **Au jalon 8** : avec la densité adaptative du préréglage, le cochon est valide à 1000 quads.
+  Mais les oreilles de l'ogre restent son plus grand écart à la source : la courbure seule ne
+  voit pas qu'une partie est mince. Il faudrait une mesure d'épaisseur locale dans le champ de
+  taille.
 
 ### DT-019 — Relaxation rudimentaire : la forme des quads plafonne
 
@@ -256,11 +263,45 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   projection sur le maillage de calcul plutôt que sur la source ; part de lissage plus forte
   là où deux rectangles voisins ont des densités différentes.
 
-### DT-024 — Densité adaptative et contraintes de rang 3 à 5 non commencées
+### DT-024 — Courbes guides (rang 4) non commencées
 
-- **Né au** jalon 8, dont seule la première partie (relaxation) est faite.
-- **Ce qui était prévu** : au jalon 8, la densité adaptative (rang 2 des contraintes : quads
-  plus petits là où la forme est détaillée), puis les contraintes de rang 3 à 5.
-- **Conséquence** : toutes les mesures sont à taille uniforme. Quad Remesher par défaut, à
-  taille adaptative, garde l'avantage sur la fidélité (5,9 ‰ contre 8,1 à 3000 quads). Les
-  parties plus fines qu'un quad (DT-018) attendent aussi cela.
+- **Né au** jalon 8 sous le titre « Densité adaptative et contraintes de rang 3 à 5 non
+  commencées » ; **réduit** dans le même jalon.
+- **Fait depuis** : la densité adaptative (rang 2) et la densité peinte (rang 5), par un même
+  champ de taille (fiche M1 bis). Quad Remesher par défaut garde un avantage sur la fidélité à
+  1000 et 3000 quads, mais il y dépasse le budget demandé de 71 % et 37 %.
+- **Reste** : le rang 4, les courbes guides tracées sur la surface. Le rang 3 (arêtes vives)
+  est suivi par DT-002 et DT-012.
+- **Piste** : une courbe guide est une arête caractéristique que l'utilisateur dessine ; elle
+  entrerait par `Guides`, comme la densité peinte, et serait traitée comme une arête vive.
+
+### DT-025 — Densité : portée des singularités et lecture de la courbure encore à l'échelle nominale
+
+- **Né au** jalon 8.
+- **Constat** : là où les quads sont plus petits, deux réglages continuent de se compter en
+  arêtes nominales : la portée de l'annulation des paires de singularités (M3), qui annule donc
+  trop dans les zones denses et pas assez dans les zones lâches, et l'échelle à laquelle le
+  champ de croix lit la courbure (M2).
+- **Conséquence** : dans une zone peinte très dense, des détails que les quads pourraient suivre
+  ne sont pas vus par le champ.
+- **À faire** : rendre ces deux longueurs locales.
+
+### DT-026 — Densité peinte : pas de lecture d'attribut Blender, pas de peinture dans l'OBJ
+
+- **Né au** jalon 8.
+- **Constat** : la densité peinte se donne par la bibliothèque (`Guides`) ou, en ligne de
+  commande, par un fichier texte d'un nombre par sommet (`--density`). Rien ne lit encore les
+  couleurs de sommets d'un OBJ, ni un attribut de Blender.
+- **À faire** : au jalon 10, le greffon lira l'attribut choisi par l'utilisateur (couleurs de
+  sommets, comme Quad Remesher, ou groupe de poids) et le convertira en facteur de densité.
+  À décider alors : quelle correspondance entre la valeur peinte et le facteur.
+
+### DT-027 — Garde-fous de temps de calcul sur les entrées pathologiques
+
+- **Né au** jalon 8, sur Desert Rose (hors acceptation).
+- **Constat** : sur une surface où la carte ne se déplie pas, des traces tournaient sur place
+  pendant plus d'un quart d'heure ; leur nombre de pas est maintenant borné par leur longueur
+  permise, et une carte repliée renvoie directement à la chaîne de repli. Mais ce repli
+  (`integer-grid`) met encore plus de deux minutes sur ce modèle à 8000 quads, et la chaîne n'a
+  pas de limite de temps globale.
+- **À faire** : avec le prétraitement de réparation (J11) ; d'ici là, borner aussi le repli.

@@ -10,7 +10,7 @@ use retopo::preprocess;
 use retopo::quantization;
 use retopo::singularity;
 use retopo::tmesh::TMesh;
-use retopo::{PolyMesh, Target, TriMesh};
+use retopo::{Guides, PolyMesh, Target, TriMesh};
 
 const USAGE: &str = "\
 retopo - field-aligned automatic quad retopology
@@ -37,6 +37,8 @@ OPTIONS (remesh):
     --singularity-reach <R>      cancel opposite singularities closer than R quad edges
     --singularity-tolerance <T>  what such a cancellation may cost
     --crease-angle <DEG|none>    follow input edges sharper than this dihedral angle
+    --adaptivity <A>             0 for quads of one size, up to 1 for quads as small as the shape bends
+    --density <FILE>             painted density: one factor per input vertex, one per line (1 is neutral)
     --seed <N>                   random seed
 
 OPTIONS (preprocess):
@@ -151,7 +153,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
         (None, None) => RemeshConfig::default(),
     };
 
-    let mut save = None;
+    let (mut save, mut density_path) = (None, None);
     let mut paths = Vec::new();
     let mut args = args.iter();
     while let Some(arg) = args.next() {
@@ -169,6 +171,8 @@ fn remesh(args: &[String]) -> Result<(), String> {
                 let text = value(arg)?;
                 config.crease_angle = if text == "none" { None } else { Some(parse(arg, text)?) };
             }
+            "--adaptivity" => config.adaptivity = parse(arg, value(arg)?)?,
+            "--density" => density_path = Some(value(arg)?.clone()),
             "--seed" => config.seed = parse(arg, value(arg)?)?,
             flag if flag.starts_with("--") => return Err(format!("unknown option '{flag}'")),
             path => paths.push(path),
@@ -185,7 +189,21 @@ fn remesh(args: &[String]) -> Result<(), String> {
     let mesh = obj::read_obj(input).map_err(|e| format!("{input}: {e}"))?;
     println!("input    {} vertices, {} triangles", mesh.positions.len(), mesh.triangles.len());
 
-    let (result, report) = config.remesh(&mesh).map_err(|e| e.to_string())?;
+    let density = match &density_path {
+        Some(path) => {
+            let text = std::fs::read_to_string(path).map_err(|e| format!("{path}: {e}"))?;
+            let lines = text.lines().map(str::trim).filter(|line| !line.is_empty() && !line.starts_with('#'));
+            let values: Vec<f64> = lines
+                .map(|line| parse("--density", line))
+                .collect::<Result<_, _>>()
+                .map_err(|e| format!("{path}: {e}"))?;
+            println!("density  {} painted values", values.len());
+            Some(values)
+        }
+        None => None,
+    };
+    let guides = Guides { density: density.as_deref() };
+    let (result, report) = config.remesh_guided(&mesh, &guides).map_err(|e| e.to_string())?;
     obj::write_obj_poly(output, &result).map_err(|e| format!("{output}: {e}"))?;
 
     let stats = &report.stats;
