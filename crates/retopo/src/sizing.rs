@@ -3,7 +3,7 @@
 //! The result is one factor per vertex of the work mesh, by which the edge
 //! length asked for is multiplied there. It comes from two sources that
 //! simply multiply: the shape (smaller quads where the surface bends more)
-//! and what the user painted (a density per vertex of the input). The field
+//! and what the user painted (a weight per vertex of the input). The field
 //! is then smoothed, since the map can only follow a size that changes
 //! gently, and scaled so that the number of quads stays the one asked for.
 //!
@@ -18,12 +18,16 @@ use crate::mesh::{Topology, TriMesh};
 use crate::preprocess::WorkMesh;
 use crate::spatial::Bvh;
 
-/// A density painted on the input: `density[v]` multiplies the number of
-/// quads per unit of area around vertex `v` of `source`; 1 leaves it alone.
+/// A density painted on the input, as weights: 0 where `source` should be
+/// least dense, 1 where it should be most, anything in between in between.
 #[derive(Clone, Copy)]
 pub struct Painted<'a> {
     pub source: &'a TriMesh,
-    pub density: &'a [f64],
+    /// One weight per vertex of `source`, in `0..=1`.
+    pub weights: &'a [f64],
+    /// How many times more quads per unit of area a weight of 1 gets than a
+    /// weight of 0.
+    pub contrast: f64,
 }
 
 #[derive(Clone, Copy)]
@@ -89,8 +93,6 @@ pub struct Curvature {
     /// Largest factor the shape alone may put between the edge length asked
     /// for and the local one, either way.
     pub shape_range: f64,
-    /// The same for the painted density, as a factor on the density.
-    pub painted_range: f64,
     /// Length, in edges asked for, over which curvature is read: details
     /// smaller than that do not call for smaller quads.
     pub reading_scale: f64,
@@ -100,7 +102,7 @@ pub struct Curvature {
 
 impl Default for Curvature {
     fn default() -> Self {
-        Self { shape_range: 3.0, painted_range: 16.0, reading_scale: 0.5, smoothing_scale: 1.5 }
+        Self { shape_range: 3.0, reading_scale: 0.5, smoothing_scale: 1.5 }
     }
 }
 
@@ -148,28 +150,32 @@ impl Sizer for Curvature {
             }
         }
         if let Some(painted) = request.painted {
-            if painted.density.len() != painted.source.positions.len() {
+            if painted.weights.len() != painted.source.positions.len() {
                 return Err(Error::InvalidParams(format!(
-                    "{} densities painted for {} vertices",
-                    painted.density.len(),
+                    "{} weights painted for {} vertices",
+                    painted.weights.len(),
                     painted.source.positions.len()
                 )));
             }
-            if painted.density.iter().any(|d| !(d.is_finite() && *d > 0.0)) {
-                return Err(Error::InvalidParams("painted densities must be positive numbers".into()));
+            if painted.weights.iter().any(|w| !(0.0..=1.0).contains(w)) {
+                return Err(Error::InvalidParams("painted weights must lie between 0 and 1".into()));
+            }
+            if !(painted.contrast.is_finite() && painted.contrast >= 1.0) {
+                return Err(Error::InvalidParams(format!("density contrast {} is not 1 or more", painted.contrast)));
             }
             // Each vertex of the work mesh reads the paint at the nearest
-            // point of the input. Density counts quads per area: the edge
-            // length goes as its inverse square root.
+            // point of the input. A weight of 1 means `contrast` times the
+            // quads per area of a weight of 0, and the edge length goes as
+            // the inverse square root of that. Where the level sits does not
+            // matter: the whole field is rescaled below.
             let surface = Bvh::build(painted.source);
-            let limit = self.painted_range.ln();
+            let full = painted.contrast.ln();
             for v in 0..vertices {
                 let Some(hit) = surface.closest_point(mesh.positions[v]) else { continue };
                 let triangle = painted.source.triangles[hit.triangle as usize];
-                let weights = barycentric(painted.source.corners(hit.triangle as usize), hit.point);
-                let log_density: f64 =
-                    (0..3).map(|k| weights[k] * painted.density[triangle[k] as usize].ln().clamp(-limit, limit)).sum();
-                log_scale[v] -= 0.5 * log_density;
+                let share = barycentric(painted.source.corners(hit.triangle as usize), hit.point);
+                let weight: f64 = (0..3).map(|k| share[k] * painted.weights[triangle[k] as usize]).sum();
+                log_scale[v] -= 0.5 * weight * full;
             }
         }
 

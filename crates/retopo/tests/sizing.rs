@@ -80,33 +80,40 @@ fn quads_get_smaller_where_the_surface_bends_more() {
 fn painted_density_sets_the_size_and_blends_across_its_border() {
     let source = primitives::icosphere(4);
     let work = work_mesh(&source);
-    // Sixteen times the quads per area on the northern half than on the
-    // southern one: edges four times shorter.
-    let density: Vec<f64> = source.positions.iter().map(|p| if p.z > 0.0 { 4.0 } else { 0.25 }).collect();
-    let painted = Some(Painted { source: &source, density: &density });
-    let scale =
-        sizing::create(Kind::Curvature).size(&work, &Request { edge_length: 0.1, adaptivity: 0.0, painted }).unwrap();
+    let sizer = sizing::create(Kind::Curvature);
+    let sized =
+        |painted: Painted| sizer.size(&work, &Request { edge_length: 0.1, adaptivity: 0.0, painted: Some(painted) });
+    // The northern half painted at 1, the southern left at 0, sixteen times
+    // the quads per area between the two: edges four times shorter.
+    let weights: Vec<f64> = source.positions.iter().map(|p| if p.z > 0.0 { 1.0 } else { 0.0 }).collect();
+    let scale = sized(Painted { source: &source, weights: &weights, contrast: 16.0 }).unwrap();
     let (north, south) = (mean_where(&work, &scale, |p| p.z > 0.6), mean_where(&work, &scale, |p| p.z < -0.6));
     assert!((south / north - 4.0).abs() < 0.3, "north {north}, south {south}");
     // No jump at the equator: neighbours differ by little.
     let equator = mean_where(&work, &scale, |p| p.z.abs() < 0.03);
     assert!(equator > 1.3 * north && equator < south / 1.3, "equator {equator}");
 
-    let sizer = sizing::create(Kind::Curvature);
-    let wrong_count = Some(Painted { source: &source, density: &density[1..] });
-    assert!(sizer.size(&work, &Request { edge_length: 0.1, adaptivity: 0.0, painted: wrong_count }).is_err());
-    let negative = vec![-1.0; density.len()];
-    let not_positive = Some(Painted { source: &source, density: &negative });
-    assert!(sizer.size(&work, &Request { edge_length: 0.1, adaptivity: 0.0, painted: not_positive }).is_err());
+    // Only the difference between weights counts: paint everything alike,
+    // or ask for no contrast, and nothing changes.
+    let even = vec![0.7; weights.len()];
+    let unchanged = sized(Painted { source: &source, weights: &even, contrast: 16.0 }).unwrap();
+    assert!(unchanged.iter().all(|s| (s - 1.0).abs() < 1e-9));
+    let unchanged = sized(Painted { source: &source, weights: &weights, contrast: 1.0 }).unwrap();
+    assert!(unchanged.iter().all(|s| (s - 1.0).abs() < 1e-9));
+
+    assert!(sized(Painted { source: &source, weights: &weights[1..], contrast: 16.0 }).is_err());
+    assert!(sized(Painted { source: &source, weights: &vec![1.5; weights.len()], contrast: 16.0 }).is_err());
+    assert!(sized(Painted { source: &source, weights: &weights, contrast: 0.5 }).is_err());
     assert!(sizer.size(&work, &Request { edge_length: 0.1, adaptivity: 2.0, painted: None }).is_err());
 }
 
 #[test]
 fn the_mesh_follows_the_painted_density_and_keeps_its_budget() {
     let source = primitives::icosphere(4);
-    let density: Vec<f64> = source.positions.iter().map(|p| if p.z > 0.0 { 3.0 } else { 1.0 / 3.0 }).collect();
-    let config = RemeshConfig { adaptivity: 0.0, ..RemeshConfig::for_organic(Target::QuadCount(2000)) };
-    let (mesh, _) = config.remesh_guided(&source, &Guides { density: Some(&density) }).unwrap();
+    let weights: Vec<f64> = source.positions.iter().map(|p| if p.z > 0.0 { 1.0 } else { 0.0 }).collect();
+    let config =
+        RemeshConfig { adaptivity: 0.0, density_contrast: 9.0, ..RemeshConfig::for_organic(Target::QuadCount(2000)) };
+    let (mesh, _) = config.remesh_guided(&source, &Guides { density: Some(&weights) }).unwrap();
     let metrics = measure(&source, &mesh, Some(2000));
     assert!(metrics.is_valid(), "{metrics:?}");
     assert!(metrics.budget_error.unwrap() <= 0.05, "{} faces", metrics.faces);

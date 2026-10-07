@@ -321,6 +321,7 @@ prétraitement, qui est interchangeable :
 3. Préservation optionnelle des arêtes vives au-delà d'un angle.
 4. Courbes guides tracées sur la surface.
 5. Masque de densité locale peint sur les sommets.
+6. Symétrie par rapport à un plan (ajoutée le 7 octobre 2026 ; jalon 9 bis).
 
 Le rang 1 conditionne l'acceptation. La densité adaptative (rang 2) est **prévue par les
 interfaces dès maintenant** (un champ de taille accompagne le maillage de calcul, uniforme pour
@@ -449,11 +450,15 @@ Limites constatées :
     k l² / 8 : pour une erreur égale partout, l varie comme 1/√k. L'adaptivité est la part de
     cette loi qu'on applique (0 : taille unique ; 1 : erreur égalisée), dans la limite d'un
     facteur 3 de part et d'autre.
-  - *La densité peinte* (rang 5). Un nombre par sommet de l'entrée, qui multiplie le nombre de
-    quads par unité d'aire : 1 ne change rien, 4 demande des arêtes deux fois plus courtes. C'est
-    la convention de Quad Remesher, dont le module Blender la peint en couleurs de sommets, de
-    ×0,25 à ×4 (vérifié dans le module installé, version 1.4). Chaque sommet du maillage de
-    calcul lit la peinture au point le plus proche de l'entrée.
+  - *La densité peinte* (rang 5). Un poids par sommet de l'entrée, de 0 (le moins dense) à 1
+    (le plus dense). Un seul réglage, le contraste, dit combien de fois plus de quads par unité
+    d'aire reçoit un poids de 1 qu'un poids de 0 (4 par défaut : arêtes deux fois plus courtes).
+    Seul l'écart entre les poids compte, puisque le nombre total de quads est fixé par
+    ailleurs : un sommet non peint vaut 0 et sert simplement de niveau de base. Convention
+    retenue le 7 octobre 2026 pour coller au Weight Paint de Blender. (Quad Remesher, lui, peint
+    en couleurs de sommets un facteur de ×0,25 à ×4 autour d'une valeur neutre : vérifié dans le
+    module installé, version 1.4.) Chaque sommet du maillage de calcul lit la peinture au point
+    le plus proche de l'entrée.
 
   Le champ est ensuite lissé sur une arête et demie de quad, puis mis à l'échelle pour que le
   nombre total de quads reste celui demandé.
@@ -478,7 +483,8 @@ données peintes passées par `Guides`, à côté du maillage, et non dans la co
 ![L'ogre à 3000 quads : taille unique, densité adaptative, densité peinte](docs/images/jalon8_densite.png)
 
 Sur l'image : taille unique ; densité adaptative à 0,5 (le préréglage `organic`) ; densité
-peinte, quatre fois plus de quads sur la tête et quatre fois moins sur les jambes. Les trois
+peinte, quatre fois plus de quads sur la tête et quatre fois moins sur les jambes que sur le
+tronc (poids 1, 0 et 0,5, contraste 16). Les trois
 maillages sont valides et tiennent leur budget à 2 % près.
 
 **Résultat.** Médianes sur les 12 modèles organiques, densité adaptative à 0,5 (tableaux
@@ -506,10 +512,11 @@ taille unique et `quad-layout-adaptive` celle du préréglage) :
 
 Vérifié par les tests (`crates/retopo/tests/sizing.rs`) : facteur 1 partout par défaut ;
 sur un fuseau, pointes plus fines que la taille et d'autant plus que l'adaptivité est forte,
-nombre de quads conservé ; une densité peinte seize fois plus forte sur un hémisphère donne
-un champ de taille dans un rapport 4, sans saut à l'équateur ; le maillage obtenu a des arêtes
-trois fois plus courtes là où la densité peinte est neuf fois plus forte, reste valide et tient
-son budget ; les entrées incohérentes sont refusées.
+nombre de quads conservé ; un hémisphère peint à 1 et l'autre laissé à 0, avec un contraste de
+16, donnent un champ de taille dans un rapport 4, sans saut à l'équateur ; peindre tout au même
+poids ne change rien ; avec un contraste de 9, le maillage obtenu a des arêtes trois fois plus
+courtes du côté peint, reste valide et tient son budget ; les entrées incohérentes sont
+refusées.
 
 Ce qui reste ouvert :
 
@@ -519,8 +526,8 @@ Ce qui reste ouvert :
   toujours son plus grand écart à la source. La courbure ne suffit pas à les voir (DT-018).
 - **La portée de l'annulation des singularités et l'échelle de lecture de la courbure** se
   comptent encore en arêtes nominales, pas locales (DT-025).
-- **Format de la densité peinte** : un fichier texte, un nombre par sommet. La lecture d'un
-  attribut Blender (couleurs de sommets ou poids) viendra avec le greffon (J10, DT-026).
+- **Format de la densité peinte** : un fichier texte, un poids par sommet. La lecture du
+  Weight Paint de Blender viendra avec le pont Blender (J10, DT-026).
 - **Pièces mécaniques** : le préréglage `hard-surface` garde une taille unique.
 
 ### M2 — Champ de croix
@@ -1137,6 +1144,7 @@ Chaque jalon produit quelque chose de vérifiable et se termine par **un arrêt 
 | J7 | Maillage quad depuis le T-mesh quantifié, par la route directe (à la place de M7 et M8) | **Fait.** Résultat complet ; règle d'acceptation tenue à 3000 quads. L'arrondi glouton reste comme repli (DT-009) |
 | J8 | Relaxation ; densité adaptative, puis contraintes de rang 3 à 5 | **Fait, en attente de revue** : relaxation, densité adaptative (rang 2) et densité peinte (rang 5). Règle d'acceptation tenue aux trois budgets, forme des quads devant Quad Remesher. Reste le rang 4, les courbes guides (DT-024) ; le rang 3 relève du jalon 9 |
 | J9 | Chaîne durci : traçage, patchs, remplissage par motifs | Pièces mécaniques comparées à QuadriFlow |
+| J9 bis | Symétrie : un modèle symétrique par rapport à un plan donne un maillage symétrique (DT-028) | Écart entre le maillage et son reflet nul ; boucle d'arêtes sur le plan de symétrie |
 | J10 | Export des coutures et des UV ; bibliothèque à interface C et greffon Python sans copie mémoire | Remaillage lancé depuis Blender, UV et coutures relus dans la scène |
 | J11 | Prétraitement de réparation : fusion des pièces qui se traversent, arêtes non variété | Desert Rose remaillée en une seule peau valide |
 | J12 | Plis automatiques : un poids de pli par arête de sortie | Après subdivision, le maillage plissé est plus proche de la source que le même sans plis |
@@ -1220,6 +1228,7 @@ pub struct RemeshConfig {
     pub singularity_tolerance: f64,  // ce qu'une annulation a le droit de coûter (M3)
     pub crease_angle: Option<f64>,   // arêtes vives : None, ou seuil dièdre en degrés
     pub adaptivity: f64,             // taille des quads selon la forme : 0 unique, jusqu'à 1 (M1 bis)
+    pub density_contrast: f64,       // densité peinte : rapport entre un poids de 1 et un poids de 0
     pub seed: u64,
 }
 ```
@@ -1251,8 +1260,8 @@ l'instant sur la chaîne organique, en attendant la chaîne durci (J9).
 - `singularity_reach` ajouté : le jalon 3 a montré que le réglage principal de l'annulation est
   une distance, la tolérance n'étant qu'un garde-fou.
 - `method` ajouté : le durci aura sa propre chaîne.
-- `adaptivity` ajouté au jalon 8 avec la densité adaptative ; les fichiers enregistrés avant
-  restent lisibles.
+- `adaptivity` et `density_contrast` ajoutés au jalon 8 avec la densité ; les fichiers
+  enregistrés avant restent lisibles.
 
 ### En vue de la bibliothèque C (J10)
 
@@ -1323,8 +1332,10 @@ Prises :
 - deux singularités proches restent séparées (DT-005) ;
 - le code sera renommé `openclare` au jalon 10 (DT-015) ;
 - tout ce qui est écarté, approché ou reporté fait l'objet d'un ticket numéroté dans BACKLOG.md ;
-- densité : un seul champ de taille pour la densité adaptative et la densité peinte, cette
-  dernière à la convention de Quad Remesher (facteur sur le nombre de quads par aire) ;
+- densité : un seul champ de taille pour la densité adaptative et la densité peinte ; cette
+  dernière se donne en poids de 0 (densité minimale) à 1 (densité maximale), avec un contraste
+  réglable, et se peindra en Weight Paint dans Blender (DT-026) ;
+- symétrie : inscrite à la feuille de route (jalon 9 bis, DT-028) ;
 - licence GPL-3.0-or-later ;
 - seuils d'acceptation de la section 0 ;
 - champ de croix par face ;

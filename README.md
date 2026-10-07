@@ -80,11 +80,12 @@ let (quads, report) = config.remesh(&triangles)?;
 ```
 
 La taille des quads suit la forme (réglage `--adaptivity`, de 0 pour une taille unique à 1) et,
-si on en fournit une, une densité peinte : un fichier d'un nombre par sommet de l'entrée, où 4
-demande quatre fois plus de quads par unité d'aire et 0,25 quatre fois moins.
+si on en fournit une, une densité peinte : un fichier d'un poids par sommet de l'entrée, de 0
+(le moins dense) à 1 (le plus dense). `--density-contrast` règle l'écart entre les deux : à 4,
+la valeur par défaut, les zones peintes à 1 ont quatre fois plus de quads par unité d'aire.
 
 ```bash
-./target/release/retopo remesh entree.obj sortie.obj --quads 3000 --adaptivity 0.7 --density densite.txt
+./target/release/retopo remesh entree.obj sortie.obj --quads 3000 --adaptivity 0.7 --density poids.txt --density-contrast 8
 ```
 
 Pour voir le T-mesh d'un modèle, ses coupes écrites comme des lignes sur la surface :
