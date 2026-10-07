@@ -1,6 +1,6 @@
 # openclare — cahier des charges du moteur de retopologie quad
 
-**Statut : validé le 6 octobre 2026. Jalons 0 à 4 bis faits ; jalon 5 (T-mesh) réalisé, en attente de revue.**
+**Statut : validé le 6 octobre 2026. Jalons 0 à 5 faits ; jalon 6 (quantification) réalisé, en attente de revue.**
 Le projet s'appelle **openclare** ; les crates portent encore le nom provisoire `retopo`. Les points marqués
 *à trancher* attendent une décision ; ils sont regroupés en section 7.
 
@@ -802,6 +802,71 @@ Ce qui reste ouvert :
 - **Test** : contraintes satisfaites exactement ; optimum retrouvé sur de petits T-mesh
   construits à la main ; écart au budget mesuré (métrique N).
 
+**Réalisé au jalon 6** (`crates/retopo/src/quantization/`, interface `Quantizer` et sa fabrique).
+
+- **Le problème** (`flow.rs`) : une bande de quads traverse un rectangle d'un côté au côté
+  opposé. Les longueurs des arcs de deux côtés opposés doivent donc avoir la même somme : c'est
+  une conservation de flot, sur un réseau dont les arêtes n'ont pas de sens (une bande n'a ni
+  début ni fin). C'est exactement le flot bidirigé à déviation minimale de Bi-MDF. Sur un bord
+  ouvert, les bandes s'arrêtent librement.
+- **Le solveur, approché** : on part de zéro partout (équilibré) et on applique des marches
+  fermées qui gardent chaque rectangle équilibré : en traversant un rectangle, deux arcs
+  bougent dans le même sens ; en rebroussant chemin sur le même côté, ils bougent en sens
+  opposés. Une marche qui fait baisser le coût est appliquée, par pas de 32, 16, … puis 1,
+  jusqu'à ce qu'on n'en trouve plus. Les marches sont cherchées comme des cycles négatifs
+  (Bellman-Ford). Le coût d'un arc est l'écart au carré à sa longueur réelle, rapporté à cette
+  longueur : une arête de plus ou de moins compte sur un arc court, pas sur un long.
+- **Ce qui ne doit pas se refermer** (`lattice.rs`) : un arc de longueur zéro fusionne ses deux
+  bouts, un rectangle sans largeur replie ses deux grands côtés l'un sur l'autre. Pour savoir
+  si le résultat est sain, on **construit la connectivité du maillage quad** que ces longueurs
+  représentent, et on la vérifie : variété, même topologie que la surface, et pour seuls sommets
+  irréguliers les singularités du champ, chacune avec sa valence et aucune sur un bord. Chaque
+  défaut est ramené à ce qui s'est refermé à cet endroit ; l'arc correspondant reçoit une
+  longueur minimale de 1, et on résout de nouveau.
+- **Le budget** : les longueurs réelles sont multipliées par un facteur commun, ajusté
+  (proportion, puis dichotomie) jusqu'à tomber à 2 % du nombre de quads demandé. Un léger
+  décalage fixe par arc évite que des arcs égaux basculent tous ensemble : sans lui, un cube
+  passe de 22 à 24 arêtes par côté d'un coup, soit 15 % de quads.
+
+**Résultat.** Sur 15 modèles du corpus (le tore n'a pas de T-mesh), à 1000, 3000 et 8000 quads
+(tableau complet dans `bench/results/QUANTIZATION.md`, produit par `bench/quantize.py`) :
+
+| | Résultat |
+|---|---|
+| Quantifications valides (côtés opposés égaux, maillage quad sain) | **45 sur 45** |
+| Écart au nombre de quads demandé | médiane 1,4 %, pire cas 3,9 % |
+| Arcs de longueur zéro, modèles organiques | 16 à 24 % selon le budget |
+| Rectangles refermés (sans aire), modèles organiques | 19 à 29 % : les lamelles du jalon 5 |
+| Arcs maintenus ouverts pour garder la structure saine | 39 au total sur les 12 modèles organiques à 3000 quads |
+| Écart moyen à la longueur réelle | 0,3 arête |
+| Temps | moins de 0,25 s à 1000 et 3000 quads ; 1,3 s au pire à 8000 |
+
+Le seuil **N** (budget tenu à 5 % près), manqué au jalon 4 bis (11 %), est tenu ici. Et la
+connectivité obtenue est celle d'un maillage tout en quads, variété, sans autre sommet irrégulier
+que les singularités : le seuil **V** est tenu sur le papier, il reste à le confirmer avec des
+positions (J7).
+
+Vérifié par les tests : sur de petits réseaux, le solveur retrouve l'optimum exact (comparé à
+l'énumération complète) dans 58 cas tirés au hasard sur 60, et n'est jamais déséquilibré ; une
+borne inférieure est respectée ; les bandes s'arrêtent sur les bords. Sur une sphère, un cube,
+un plan ouvert et un tore à seize singularités : côtés opposés égaux, maillage quad sain, bon
+nombre de quads. Le plan à 400 quads donne exactement sa grille de 20 par 20. À très bas budget
+(60 quads), les lamelles se referment sans fusionner de singularités ni pincer le tube.
+
+Ce qui reste ouvert :
+
+- **Le solveur est approché.** Il juge chaque marche sur ses déplacements pris un à un, et peut
+  se tromper quand une marche repasse par le même arc : deux cas sur soixante au test. Le
+  raffinement exact de Bi-MDF (couplage) n'est pas écrit ; rien sur le corpus ne le réclame.
+- **Les arcs maintenus ouverts** donnent des bandes de quads étroites (un quad de large pour
+  une largeur réelle bien moindre). C'est le prix de la fidélité au champ : accepter au
+  contraire de fusionner deux singularités opposées proches (Lyon et al. 2021) donnerait un
+  maillage plus simple. À voir avec les résultats du jalon 7.
+- **Budget** : le pas le plus fin est une bande entière, soit 2 à 4 % des quads à 1000 quads.
+- **Une pièce sans singularité ni bord** (un tore) n'a pas de T-mesh, donc rien à quantifier :
+  ses deux périodes devront être arrondies à part.
+- **Arêtes vives** : toujours pas des arcs (voir M5), donc pas encore sur des lignes entières.
+
 ### M7 — Carte à grille entière
 
 - **Entrée** : maillage de calcul, champ, T-mesh quantifié.
@@ -847,8 +912,8 @@ Chaque jalon produit quelque chose de vérifiable et se termine par **un arrêt 
 | J3 | Singularités (M3), durée bornée | **Fait.** Gain mesuré sur S : critère de sortie atteint |
 | J4 | Paramétrisation sans couture (M4) | **Fait.** Jalon de vérité passé : zéro inversion sur tout le corpus |
 | J4 bis | Arrondi glouton des translations (façon MIQ) et extraction ; configuration unique et préréglages | **Fait.** Premier résultat complet, provisoire, mesuré face à QuadriFlow et à Quad Remesher |
-| J5 | T-mesh (M5) | **Fait, en attente de revue.** Partitions en rectangles valides sur tout le corpus, bords ouverts compris |
-| J6 | Quantification (M6) | Contraintes satisfaites, budget tenu |
+| J5 | T-mesh (M5) | **Fait.** Partitions en rectangles valides sur tout le corpus, bords ouverts compris |
+| J6 | Quantification (M6) | **Fait, en attente de revue.** Contraintes satisfaites, budget tenu à 4 % près, connectivité du maillage quad construite et saine sur tout le corpus |
 | J7 | Carte entière et extraction (M7, M8) | **Résultat complet définitif**, l'arrondi glouton est retiré |
 | J8 | Relaxation ; densité adaptative, puis contraintes de rang 3 à 5 | Règle d'acceptation évaluée |
 | J9 | Chaîne durci : traçage, patchs, remplissage par motifs | Pièces mécaniques comparées à QuadriFlow |
@@ -892,7 +957,8 @@ composent des mêmes briques :
 Écrites à ce jour : `Remesher` (deux chaînes : `instant-meshes` et `integer-grid`),
 `Preprocessor`, `CrossFieldSolver`, `SingularityOptimizer`, `Parametrizer` (deux
 implémentations : `seamless` et `integer-grid`) et `LayoutBuilder` (une implémentation :
-`motorcycle`, qui enchaîne la paramétrisation sans couture et le traçage du T-mesh).
+`motorcycle`, qui enchaîne la paramétrisation sans couture et le traçage du T-mesh) et
+`Quantizer` (une implémentation : `walk-cancelling`).
 
 Les deux chaînes ne diffèrent donc que par deux étapes, `LayoutBuilder` et `Mesher`, plus le
 réglage du champ de croix. Les types échangés entre étapes (maillage de calcul, champ de croix,
@@ -997,7 +1063,7 @@ Conservés uniquement comme plancher de comparaison, hors de la chaîne cible :
 |---|---|---|
 | Inversions locales irréductibles (M4, M7) | pas de maillage valide | construction à garantie (Campen et al. 2019) ; en dernier recours, lignée par patchs à partir du champ de M3, puisque M1 à M3 et M6 sont communs aux deux, en portant QuadWild |
 | Traçage non robuste (M5, M8) | T-mesh ou maillage incohérent | pour le T-mesh, le risque ne s'est pas réalisé sur le corpus (J5) ; arithmétique exacte en réserve. Portage de libQEx pour l'extraction |
-| Solveur de couplage trop lourd à écrire (M6) | pas de quantification optimale | solveur approché seul ; arrondi glouton façon MIQ |
+| Solveur de couplage trop lourd à écrire (M6) | pas de quantification optimale | le solveur approché suffit sur le corpus (J6) ; le couplage reste en réserve |
 | Pas d'algorithme établi pour M3 | singularités en excès | réglage global seul ; simplification pendant la quantification (Lyon et al. 2021) |
 | Densité adaptative | distorsion, singularités supplémentaires | reportée au rang 4, hors critère d'acceptation |
 | Ne pas battre QuadriFlow | objectif non atteint | mesuré dès J7, pas découvert à la fin |
@@ -1016,6 +1082,16 @@ En attente :
 1. **Corpus** : d'autres sculptures à ajouter plus tard, avant l'expiration de la licence d'essai
    de Quad Remesher.
 2. **Nom du code** : renommer les crates et l'exécutable `retopo` en `openclare`.
+3. **Route du jalon 7.** La quantification construit déjà la connectivité du maillage quad. Il
+   reste à placer ses sommets. Deux routes :
+   - *directe* : chaque sommet est placé en lisant la carte sans couture dans son rectangle
+     (la grille entière étirée sur le rectangle réel), puis relaxé. Tout ce qu'elle utilise est
+     déjà validé ; pas de nouvelle carte à résoudre, pas d'extraction par traçage.
+   - *prévue au départ* (M7, M8) : résoudre une carte à grille entière contrainte par les
+     longueurs, puis en extraire le maillage. Plus régulière en principe, mais elle rouvre le
+     risque des triangles inversés et demande une extraction robuste.
+   Proposition : la route directe d'abord, la carte entière ensuite seulement si la qualité
+   mesurée le demande.
 
 Prises :
 

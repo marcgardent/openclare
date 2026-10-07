@@ -27,12 +27,21 @@ use crate::preprocess::WorkMesh;
 /// second, `2 * arc + 1` back.
 pub type HalfArc = u32;
 
+/// What a node of the T-mesh is.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum NodeKind {
+    /// A singularity of the field, on that vertex of the work mesh.
+    Singularity { vertex: u32 },
+    /// A vertex where an open border turns a corner in the map.
+    BorderCorner,
+    /// A point where a cut stops on another one, or on a border.
+    Junction,
+}
+
 #[derive(Clone, Debug)]
 pub struct Node {
     pub position: Vec3,
-    /// The vertex of the work mesh it sits on, for a singularity; `None` for
-    /// a T-junction or a corner of the border.
-    pub singular_vertex: Option<u32>,
+    pub kind: NodeKind,
     /// The half-arcs leaving it, counter-clockwise.
     pub arcs: Vec<HalfArc>,
 }
@@ -241,19 +250,23 @@ impl TMesh {
             .zip(&around)
             .map(|(junction, list)| Node {
                 position: junction.position,
-                singular_vertex: junction.vertex,
+                kind: match junction.vertex {
+                    Some(vertex) => NodeKind::Singularity { vertex },
+                    None if junction.corner => NodeKind::BorderCorner,
+                    None => NodeKind::Junction,
+                },
                 arcs: list.iter().map(|&(_, half)| half).collect(),
             })
             .collect();
 
         let mut report = Report {
-            singularities: nodes.iter().filter(|node| node.singular_vertex.is_some()).count(),
+            singularities: nodes.iter().filter(|node| matches!(node.kind, NodeKind::Singularity { .. })).count(),
             traces: outcome.traces.iter().filter(|trace| !trace.border).count(),
             lost_traces: outcome.lost,
             overlaps: outcome.overlaps,
             border_off_grid: outcome.border_off_grid,
             nodes: nodes.len(),
-            t_junctions: nodes.iter().filter(|node| node.singular_vertex.is_none() && node.arcs.len() == 3).count(),
+            t_junctions: nodes.iter().filter(|node| node.kind == NodeKind::Junction && node.arcs.len() == 3).count(),
             arcs: arcs.len(),
             patches: patches.len(),
             rectangles: patches.iter().filter(|patch| patch.sides.is_some()).count(),
@@ -275,6 +288,25 @@ impl TMesh {
 
 /// Marks the half-arcs that face a hole of the surface.
 const OUTSIDE: u32 = INVALID - 1;
+
+impl Patch {
+    /// Which of the four sides each half-arc of the rim lies on, for a
+    /// rectangle: the index into [`Patch::sides`].
+    pub fn side_of_each(&self) -> Option<Vec<u8>> {
+        self.sides?;
+        let start = (self.angles.iter().position(|&angle| angle == 1)? + 1) % self.boundary.len();
+        let mut side_of = vec![0; self.boundary.len()];
+        let mut side = 0;
+        for step in 0..self.boundary.len() {
+            let at = (start + step) % self.boundary.len();
+            side_of[at] = side;
+            if self.angles[at] == 1 {
+                side += 1;
+            }
+        }
+        Some(side_of)
+    }
+}
 
 fn area_of(sides: [f64; 4]) -> f64 {
     0.25 * (sides[0] + sides[2]) * (sides[1] + sides[3])

@@ -31,6 +31,7 @@ pub mod metrics;
 pub mod parametrization;
 pub mod pipeline;
 pub mod preprocess;
+pub mod quantization;
 pub mod relax;
 pub mod remesher;
 pub mod singularity;
