@@ -39,7 +39,8 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 | DT-023 | Relaxation : coût et tailles de quads | J8 | basse | ouvert |
 | DT-024 | Courbes guides (rang 4) non commencées | J8 | moyenne | ouvert (réduit au J8) |
 | DT-025 | Densité : portée des singularités et lecture de la courbure encore à l'échelle nominale | J8 | basse | ouvert |
-| DT-026 | Densité peinte : pas de lecture d'attribut Blender, pas de peinture dans l'OBJ | J8 | moyenne | ouvert |
+| DT-026 | Densité peinte : lecture du Weight Paint de Blender à faire (pont Blender) | J8 | moyenne | ouvert |
+| DT-028 | Symétrie : absente, Quad Remesher l'a | J8 | moyenne | ouvert |
 | DT-027 | Garde-fous de temps de calcul sur les entrées pathologiques | J8 | basse | ouvert |
 
 ## Tickets
@@ -274,6 +275,11 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   est suivi par DT-002 et DT-012.
 - **Piste** : une courbe guide est une arête caractéristique que l'utilisateur dessine ; elle
   entrerait par `Guides`, comme la densité peinte, et serait traitée comme une arête vive.
+- **Constat du 7 octobre 2026** : Quad Remesher (module Blender 1.4, vérifié) n'a pas de
+  courbes guides. Il guide les boucles d'arêtes par ce que le maillage porte déjà : frontières
+  entre matériaux, normales scindées, arêtes vives détectées par angle. Une variante bien moins
+  coûteuse du rang 4 serait donc des **arêtes marquées par l'utilisateur** dans Blender, qui
+  passeraient par le même mécanisme que les arêtes vives du jalon 9. À décider.
 
 ### DT-025 — Densité : portée des singularités et lecture de la courbure encore à l'échelle nominale
 
@@ -292,9 +298,13 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 - **Constat** : la densité peinte se donne par la bibliothèque (`Guides`) ou, en ligne de
   commande, par un fichier texte d'un nombre par sommet (`--density`). Rien ne lit encore les
   couleurs de sommets d'un OBJ, ni un attribut de Blender.
-- **À faire** : au jalon 10, le greffon lira l'attribut choisi par l'utilisateur (couleurs de
-  sommets, comme Quad Remesher, ou groupe de poids) et le convertira en facteur de densité.
-  À décider alors : quelle correspondance entre la valeur peinte et le facteur.
+- **Décision du 7 octobre 2026** : dans Blender, la densité se peindra en **Weight Paint**
+  (groupe de sommets), pas en couleurs de sommets comme Quad Remesher. Ce sera l'affaire du
+  pont Blender (jalon 10), pas encore commencé.
+- **À faire** au jalon 10 : le greffon lit le groupe de sommets choisi et le convertit en
+  facteur de densité. À régler alors : la correspondance entre poids et facteur (proposition :
+  0,5 neutre, 1 pour ×4, 0 pour ÷4), et le fait qu'un sommet absent du groupe doit rester
+  neutre et non passer pour un poids de 0.
 
 ### DT-027 — Garde-fous de temps de calcul sur les entrées pathologiques
 
@@ -305,3 +315,13 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   (`integer-grid`) met encore plus de deux minutes sur ce modèle à 8000 quads, et la chaîne n'a
   pas de limite de temps globale.
 - **À faire** : avec le prétraitement de réparation (J11) ; d'ici là, borner aussi le repli.
+
+### DT-028 — Symétrie : absente, Quad Remesher l'a
+
+- **Né au** jalon 8, en relisant les options du module Blender de Quad Remesher (1.4).
+- **Constat** : Quad Remesher propose une symétrie selon X, Y ou Z. Le cahier des charges
+  d'openclare ne la prévoit pas, et rien ne garantit aujourd'hui qu'un modèle symétrique
+  donne un maillage symétrique.
+- **Piste** : remailler une moitié avec un bord posé sur le plan de symétrie, puis la refléter ;
+  les bords ouverts sont déjà pris en charge.
+- **À décider** : si c'est voulu, et à quel jalon.
