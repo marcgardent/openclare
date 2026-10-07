@@ -1,12 +1,12 @@
 use std::process::ExitCode;
 
+use retopo::config::{PRESETS, RemeshConfig};
 use retopo::crossfield;
 use retopo::math::{Vec3, tangent_frame};
 use retopo::mesh::{Topology, obj, primitives};
 use retopo::metrics::measure;
 use retopo::parametrization;
 use retopo::preprocess;
-use retopo::remesher::{self, Method, Request};
 use retopo::singularity;
 use retopo::{PolyMesh, Target, TriMesh};
 
@@ -15,6 +15,7 @@ retopo - field-aligned automatic quad retopology
 
 USAGE:
     retopo remesh <input.obj> <output.obj> [options]
+    retopo presets
     retopo measure <source.obj> <quads.obj> [--target <N>] [--json]
     retopo preprocess <input.obj> <output.obj> [options]
     retopo field <input.obj> [options]
@@ -22,12 +23,17 @@ USAGE:
     retopo primitive <torus|sphere|cube|plane> <output.obj>
 
 OPTIONS (remesh):
-    --method <NAME>        remeshing chain (default instant-meshes)
-    --quads <N>            target number of quads (default 2000)
-    --edge-length <L>      target edge length, overrides --quads
-    --crease-angle <DEG>   follow input edges sharper than this dihedral angle
-    --no-boundary-align    do not align the output with open boundaries
-    --seed <N>             random seed (default 1)
+    --preset <NAME>              start from a shipped preset (see `retopo presets`; default organic)
+    --config <FILE>              start from a saved configuration instead
+    --save-config <FILE>         write the configuration used, to reuse it as a preset
+    --quads <N>                  target number of quads (default 2000)
+    --edge-length <L>            target edge length, instead of a number of quads
+    --method <NAME>              remeshing chain: integer-grid or instant-meshes
+    --alignment <A>              pull of the edges towards curvature directions
+    --singularity-reach <R>      cancel opposite singularities closer than R quad edges
+    --singularity-tolerance <T>  what such a cancellation may cost
+    --crease-angle <DEG|none>    follow input edges sharper than this dihedral angle
+    --seed <N>                   random seed
 
 OPTIONS (preprocess):
     --kind <NAME>          isotropic (default) or passthrough
@@ -52,6 +58,7 @@ OPTIONS (parametrize):
     --simplify <R>         cancel opposite singularities closer than R quad edges
     --crease-angle <DEG>   treat input edges sharper than this as hard constraints
     --rounds <N>           most stiffening rounds against inverted triangles (default 40)
+    --kind <NAME>          seamless (default) or integer-grid
 
 OPTIONS (measure):
     --target <N>           face count that was asked for
@@ -72,6 +79,12 @@ fn main() -> ExitCode {
 fn run(args: &[String]) -> Result<(), String> {
     match args.first().map(String::as_str) {
         Some("remesh") => remesh(&args[1..]),
+        Some("presets") => {
+            for preset in PRESETS {
+                println!("{:14} {}", preset.name, preset.summary);
+            }
+            Ok(())
+        }
         Some("measure") => measure_command(&args[1..]),
         Some("preprocess") => preprocess_command(&args[1..]),
         Some("field") => field_command(&args[1..]),
@@ -104,22 +117,45 @@ fn parse<T: std::str::FromStr>(name: &str, text: &str) -> Result<T, String> {
 }
 
 fn remesh(args: &[String]) -> Result<(), String> {
-    let mut request = Request::default();
-    let mut method = Method::InstantMeshes;
+    // A preset or a saved file is the starting point, whatever its place on
+    // the command line; the other options then adjust it.
+    let named = |name: &str| args.iter().position(|a| a == name).and_then(|i| args.get(i + 1));
+    let mut config = match (named("--config"), named("--preset")) {
+        (Some(_), Some(_)) => return Err("--config and --preset are two starting points: give one".into()),
+        (Some(path), None) => {
+            let text = std::fs::read_to_string(path).map_err(|e| format!("{path}: {e}"))?;
+            RemeshConfig::from_text(&text).map_err(|e| format!("{path}: {e}"))?
+        }
+        (None, Some(name)) => RemeshConfig::preset(name, RemeshConfig::default().target).map_err(|e| e.to_string())?,
+        (None, None) => RemeshConfig::default(),
+    };
+
+    let mut save = None;
     let mut paths = Vec::new();
     let mut args = args.iter();
     while let Some(arg) = args.next() {
         let mut value = |name: &str| args.next().ok_or(format!("{name} expects a value"));
         match arg.as_str() {
-            "--method" => method = value(arg)?.parse().map_err(|e: retopo::Error| e.to_string())?,
-            "--quads" => request.target = Target::QuadCount(parse(arg, value(arg)?)?),
-            "--edge-length" => request.target = Target::EdgeLength(parse(arg, value(arg)?)?),
-            "--crease-angle" => request.crease_angle = Some(parse(arg, value(arg)?)?),
-            "--no-boundary-align" => request.align_boundaries = false,
-            "--seed" => request.seed = parse(arg, value(arg)?)?,
+            "--config" | "--preset" => drop(value(arg)?),
+            "--save-config" => save = Some(value(arg)?.clone()),
+            "--method" => config.method = value(arg)?.parse().map_err(|e: retopo::Error| e.to_string())?,
+            "--quads" => config.target = Target::QuadCount(parse(arg, value(arg)?)?),
+            "--edge-length" => config.target = Target::EdgeLength(parse(arg, value(arg)?)?),
+            "--alignment" => config.alignment = parse(arg, value(arg)?)?,
+            "--singularity-reach" => config.singularity_reach = parse(arg, value(arg)?)?,
+            "--singularity-tolerance" => config.singularity_tolerance = parse(arg, value(arg)?)?,
+            "--crease-angle" => {
+                let text = value(arg)?;
+                config.crease_angle = if text == "none" { None } else { Some(parse(arg, text)?) };
+            }
+            "--seed" => config.seed = parse(arg, value(arg)?)?,
             flag if flag.starts_with("--") => return Err(format!("unknown option '{flag}'")),
             path => paths.push(path),
         }
+    }
+    config.validate().map_err(|e| e.to_string())?;
+    if let Some(path) = save {
+        std::fs::write(&path, config.to_text()).map_err(|e| format!("{path}: {e}"))?;
     }
     let [input, output] = paths[..] else {
         return Err("remesh takes an input and an output path".into());
@@ -128,7 +164,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
     let mesh = obj::read_obj(input).map_err(|e| format!("{input}: {e}"))?;
     println!("input    {} vertices, {} triangles", mesh.positions.len(), mesh.triangles.len());
 
-    let (result, report) = remesher::create(method).remesh(&mesh, &request).map_err(|e| e.to_string())?;
+    let (result, report) = config.remesh(&mesh).map_err(|e| e.to_string())?;
     obj::write_obj_poly(output, &result).map_err(|e| format!("{output}: {e}"))?;
 
     let stats = &report.stats;
@@ -145,8 +181,12 @@ fn remesh(args: &[String]) -> Result<(), String> {
         stats.vertices, stats.faces, stats.quads, stats.triangles, stats.ngons, report.edge_length,
     );
     println!(
-        "quality  {} irregular vertices, {} boundary edges, {} non-manifold edges, {} open loops",
-        stats.irregular_vertices, stats.boundary_edges, stats.non_manifold_edges, report.open_loops,
+        "quality  {} irregular vertices, {} boundary edges, {} non-manifold edges, {} open loops, {} map inversions",
+        stats.irregular_vertices,
+        stats.boundary_edges,
+        stats.non_manifold_edges,
+        report.open_loops,
+        report.map_inversions,
     );
     let valences: Vec<String> = stats.valences.iter().map(|(v, n)| format!("{v}:{n}")).collect();
     println!("valence  {}", valences.join("  "));
@@ -390,6 +430,7 @@ fn parametrize_command(args: &[String]) -> Result<(), String> {
     let mut work_request = preprocess::Request { triangles: 50_000, ..Default::default() };
     let mut field_request = crossfield::Request::default();
     let (mut quads, mut simplify, mut rounds, mut paths) = (None::<usize>, None::<f64>, 40usize, Vec::new());
+    let mut kind = parametrization::Kind::Seamless;
     let mut args = args.iter();
     while let Some(arg) = args.next() {
         let mut value = |name: &str| args.next().ok_or(format!("{name} expects a value"));
@@ -400,6 +441,7 @@ fn parametrize_command(args: &[String]) -> Result<(), String> {
             "--simplify" => simplify = Some(parse(arg, value(arg)?)?),
             "--crease-angle" => work_request.crease_angle = Some(parse(arg, value(arg)?)?),
             "--rounds" => rounds = parse(arg, value(arg)?)?,
+            "--kind" => kind = value(arg)?.parse().map_err(|e: retopo::Error| e.to_string())?,
             flag if flag.starts_with("--") => return Err(format!("unknown option '{flag}'")),
             path => paths.push(path),
         }
@@ -432,20 +474,18 @@ fn parametrize_command(args: &[String]) -> Result<(), String> {
 
     let start = std::time::Instant::now();
     let request = parametrization::Request { edge_length, stiffening_rounds: rounds };
-    let map = parametrization::create(parametrization::Kind::Seamless)
-        .parametrize(&work, &field, &request)
-        .map_err(|e| e.to_string())?;
+    let map = parametrization::create(kind).parametrize(&work, &field, &request).map_err(|e| e.to_string())?;
     let seconds = start.elapsed().as_secs_f64();
 
     let report = &map.report;
     println!("work mesh      {} triangles, {} singularities", work.mesh.triangles.len(), positive + negative + other);
     println!("cut            {} seam edges, {} vertices once cut open", report.seam_edges, report.wedges);
     println!(
-        "inverted       {} after {} stiffening rounds ({} at first)",
-        report.flipped, report.rounds, report.flipped_first
+        "inverted       {} after {} stiffening rounds ({} at first, {} before the last series)",
+        report.flipped, report.rounds, report.flipped_first, report.flipped_before_stiffening
     );
     println!("distortion     mean {:.4}, worst stretch {:.2}", report.distortion_mean, report.stretch_max);
-    println!("seams          worst mismatch {:.2e}", report.seam_error);
+    println!("conditions     worst mismatch {:.2e}, {} whole numbers imposed", report.seam_error, report.integers);
     println!("seconds        {seconds:.3}");
     Ok(())
 }

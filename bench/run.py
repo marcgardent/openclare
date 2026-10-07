@@ -146,10 +146,12 @@ def quadremesher(uniform, refresh=False):
     return timed
 
 
-def retopo(method):
+def retopo(method, seeded=True):
+    """A chain of this repository. One that does not use the seed runs once."""
+
     def tool(model, sharp, boundary, target, seeds, directory):
         runs = {}
-        for seed in seeds:
+        for seed in seeds if seeded else seeds[:1]:
             path = directory / f"{method}_{seed}.obj"
             command = [RETOPO, "remesh", source_path(model), path, "--method", method, "--quads", target, "--seed", seed]
             if sharp:
@@ -167,6 +169,7 @@ def retopo(method):
 TOOLS = {
     "quadriflow": quadriflow,
     "instant-meshes": retopo("instant-meshes"),
+    "integer-grid": retopo("integer-grid", seeded=False),
     # Commercial yardstick; needs the add-on and a licence (see bench/README.md).
     "quadremesher": quadremesher(uniform=False),
     "quadremesher-uniform": quadremesher(uniform=True),
@@ -208,8 +211,8 @@ def report(results, target, seeds, tools):
     lines = [
         "# Bench results",
         "",
-        f"Requested budget: {target} quads. Median over {len(seeds)} seeds; Quad Remesher has no seed and "
-        "runs once. Lower is better for every metric; \"—\" means it could not be measured.",
+        f"Requested budget: {target} quads. Median over {len(seeds)} seeds; Quad Remesher and integer-grid have "
+        "no seed and run once. Lower is better for every metric; \"—\" means it could not be measured.",
         "",
     ]
     for model, category, *_ in MODELS:

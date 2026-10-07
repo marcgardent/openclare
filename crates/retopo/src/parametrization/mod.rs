@@ -4,6 +4,8 @@
 //! The stage is a [`Parametrizer`]; chains get one from [`create`].
 
 pub mod cut;
+mod integer;
+mod problem;
 mod seamless;
 
 use std::fmt;
@@ -31,6 +33,13 @@ pub struct Report {
     pub wedges: usize,
     /// Faces folded over or squashed flat after the first solve.
     pub flipped_first: usize,
+    /// The same at the start of the latest series of stiffening rounds.
+    pub flipped_before_stiffening: usize,
+    /// Quantities that were given a whole number.
+    pub integers: usize,
+    /// Feature edges could not be put on grid lines and were left to the
+    /// field alone.
+    pub features_off_grid: bool,
     /// The same at the end; anything but 0 means no valid mesh can be read
     /// off the map.
     pub flipped: usize,
@@ -63,14 +72,19 @@ pub enum Kind {
     /// Least-squares fit of the gradients to the cross field, seamless
     /// across the cut (after Bommes et al. 2009), no integer imposed.
     Seamless,
+    /// The same with singularities, seam shifts and feature edges on whole
+    /// numbers, found by greedy rounding: its integer grid lines are the
+    /// edges of a quad mesh. A provisional shortcut.
+    IntegerGrid,
 }
 
 impl Kind {
-    pub const ALL: &[Kind] = &[Kind::Seamless];
+    pub const ALL: &[Kind] = &[Kind::Seamless, Kind::IntegerGrid];
 
     pub fn name(self) -> &'static str {
         match self {
             Kind::Seamless => "seamless",
+            Kind::IntegerGrid => "integer-grid",
         }
     }
 }
@@ -96,5 +110,6 @@ impl FromStr for Kind {
 pub fn create(kind: Kind) -> Box<dyn Parametrizer> {
     match kind {
         Kind::Seamless => Box::new(seamless::Seamless::default()),
+        Kind::IntegerGrid => Box::new(integer::IntegerGrid::default()),
     }
 }
