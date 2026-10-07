@@ -27,6 +27,7 @@ pub mod hierarchy;
 pub mod linalg;
 pub mod math;
 pub mod mesh;
+pub mod meshing;
 pub mod metrics;
 pub mod parametrization;
 pub mod pipeline;

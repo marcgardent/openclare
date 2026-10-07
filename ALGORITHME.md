@@ -1,6 +1,7 @@
 # openclare — cahier des charges du moteur de retopologie quad
 
-**Statut : validé le 6 octobre 2026. Jalons 0 à 5 faits ; jalon 6 (quantification) réalisé, en attente de revue.**
+**Statut : validé le 6 octobre 2026. Jalons 0 à 6 faits ; jalon 7 (maillage complet par la route directe) réalisé, en attente de revue.**
+Ce qui a été écarté, approché ou reporté en chemin est suivi ticket par ticket dans [BACKLOG.md](BACKLOG.md).
 Le projet s'appelle **openclare** ; les crates portent encore le nom provisoire `retopo`. Les points marqués
 *à trancher* attendent une décision ; ils sont regroupés en section 7.
 
@@ -375,10 +376,8 @@ tableaux qu'il fournit.
      │
  M6  quantification ────────────► longueurs entières
      │
- M7  carte à grille entière ────► (u, v) par coin, transitions entières
-     │
- M8  extraction ────────────────► maillage quad
-     │
+ M7  maillage par rectangle ────► connectivité de M6, sommets lus dans la carte de M4
+     │                            (route directe ; M8, l'extraction, n'a plus lieu d'être)
  M9  relaxation et projection ──► maillage quad final sur la source
 
  M0  banc de mesure : compare n'importe quel maillage quad à sa source
@@ -820,7 +819,8 @@ Ce qui reste ouvert :
   bouts, un rectangle sans largeur replie ses deux grands côtés l'un sur l'autre. Pour savoir
   si le résultat est sain, on **construit la connectivité du maillage quad** que ces longueurs
   représentent, et on la vérifie : variété, même topologie que la surface, et pour seuls sommets
-  irréguliers les singularités du champ, chacune avec sa valence et aucune sur un bord. Chaque
+  irréguliers les singularités du champ, chacune avec sa valence (règle assouplie au jalon 7
+  pour les bords, voir plus bas). Chaque
   défaut est ramené à ce qui s'est refermé à cet endroit ; l'arc correspondant reçoit une
   longueur minimale de 1, et on résout de nouveau.
 - **Le budget** : les longueurs réelles sont multipliées par un facteur commun, ajusté
@@ -834,12 +834,12 @@ Ce qui reste ouvert :
 | | Résultat |
 |---|---|
 | Quantifications valides (côtés opposés égaux, maillage quad sain) | **45 sur 45** |
-| Écart au nombre de quads demandé | médiane 1,4 %, pire cas 3,9 % |
-| Arcs de longueur zéro, modèles organiques | 16 à 24 % selon le budget |
-| Rectangles refermés (sans aire), modèles organiques | 19 à 29 % : les lamelles du jalon 5 |
-| Arcs maintenus ouverts pour garder la structure saine | 39 au total sur les 12 modèles organiques à 3000 quads |
+| Écart au nombre de quads demandé | médiane 1,3 %, pire cas 3,9 % |
+| Arcs de longueur zéro, modèles organiques | 16 à 25 % selon le budget |
+| Rectangles refermés (sans aire), modèles organiques | 19 à 31 % : les lamelles du jalon 5 |
+| Arcs maintenus ouverts pour garder la structure saine | 29 au total sur les 12 modèles organiques à 3000 quads (39 avant l'assouplissement du jalon 7) |
 | Écart moyen à la longueur réelle | 0,3 arête |
-| Temps | moins de 0,25 s à 1000 et 3000 quads ; 1,3 s au pire à 8000 |
+| Temps | moins de 0,15 s à 1000 et 3000 quads ; 1 s au pire à 8000 |
 
 Le seuil **N** (budget tenu à 5 % près), manqué au jalon 4 bis (11 %), est tenu ici. Et la
 connectivité obtenue est celle d'un maillage tout en quads, variété, sans autre sommet irrégulier
@@ -867,26 +867,82 @@ Ce qui reste ouvert :
   ses deux périodes devront être arrondies à part.
 - **Arêtes vives** : toujours pas des arcs (voir M5), donc pas encore sur des lignes entières.
 
-### M7 — Carte à grille entière
+### M7 et M8 — Du T-mesh quantifié au maillage quad
 
-- **Entrée** : maillage de calcul, champ, T-mesh quantifié.
-- **Sortie** : (u, v) par coin, avec translations entières aux coutures, singularités sur des
-  points entiers, sans triangle inversé.
-- **Méthode** : même problème que M4, avec en plus une contrainte linéaire par arc du T-mesh
-  imposant sa longueur entière.
-- **Point dur** : le même que M4.
-- **Test** : transitions entières exactes ; singularités sur la grille ; zéro inversion.
+Le cahier des charges prévoyait deux modules : M7, une carte à grille entière contrainte par les
+longueurs quantifiées, sans triangle inversé ; M8, l'extraction exacte de ses isolignes (principe
+de QEx). **Décision du 7 octobre 2026 : route directe.** Ces deux modules ne sont pas écrits
+(ticket DT-001) ; ils sont remplacés par ce qui suit.
 
-### M8 — Extraction
+- **Entrée** : maillage de calcul, carte sans couture, T-mesh, quantification.
+- **Sortie** : le maillage quad, sommets posés sur le maillage de calcul.
+- **Méthode** : la connectivité est celle que la quantification a construite et vérifiée
+  (M6). Un sommet situé sur un arc est placé le long de la trace dont l'arc est un morceau. Un
+  sommet intérieur à un rectangle est placé en partant du bord du rectangle et en marchant dans
+  la carte sans couture vers l'intérieur. La grille entière de chaque rectangle est ainsi
+  étirée sur son étendue réelle.
+- **Point dur** : là où les longueurs entières s'écartent des réelles, les lignes de la grille
+  se brisent aux frontières entre rectangles ; la relaxation (M9) l'atténue.
+- **Test** : 100 % quads, variété ; nombre de faces égal à celui de la quantification ; sommets
+  sur la surface ; valences conformes aux indices du champ.
 
-- **Entrée** : carte à grille entière.
-- **Sortie** : le maillage quad dont les sommets sont les points entiers et les arêtes les
-  segments d'isolignes entières.
-- **Méthode** : principe de QEx. Son code de référence (libQEx, GPL-3.0) peut être porté, ce
-  qui réduit le risque de ce module.
-- **Point dur** : cas dégénérés et imprécisions numériques.
-- **Test** : 100 % quads, variété ; nombre de faces égal à celui que prédit la quantification ;
-  valences conformes aux indices du champ.
+**Réalisé au jalon 7** (`crates/retopo/src/meshing/`, interface `Mesher` et sa fabrique ; chaîne
+`quad-layout` dans `remesher.rs`, devenue celle des préréglages).
+
+![L'ogre à 3000 quads : QuadriFlow, openclare, Quad Remesher](docs/images/jalon7_ogre.png)
+
+- **Lecture de la carte** : le T-mesh garde, pour chaque trace, son chemin dans la carte
+  (triangle par triangle) et, pour chaque arc, la portion de trace qu'il couvre. Placer un point
+  revient à retrouver un point d'une trace, puis à marcher en ligne droite dans la carte, avec
+  la même mécanique que le traçage. Sur le corpus, aucun sommet n'a dû être placé autrement.
+- **Sommets fusionnés** : un sommet né de la fusion de plusieurs points (lamelle refermée) est
+  mis à leur moyenne, sauf s'il contient une singularité ou un coin de bord, qui ne bouge pas.
+- **Relaxation** : deux passes seulement. Le placement brut est déjà valide partout ; la
+  relaxation améliore la forme des quads, mais au-delà de quelques passes elle érode les
+  détails fins et dégrade la fidélité (ticket DT-019).
+- **Deux règles de la quantification assouplies** au vu des premiers maillages, toutes deux
+  pour les bords ouverts. Une singularité que les longueurs amènent sur un bord devient un coin
+  du bord, au lieu d'être tenue à une fraction d'arête de lui. Deux coins de bord presque
+  confondus (une marche d'escalier minuscule dans la carte) peuvent fusionner. Sans cela, des
+  rangées de quads écrasés longeaient les bords. La décision de garder séparées les
+  *singularités* entre elles est inchangée.
+- **Repli** : une surface dont une pièce n'a ni singularité ni bord (un tore) n'a pas de T-mesh
+  complet ; la chaîne passe alors la main à `integer-grid` et le signale (ticket DT-003).
+
+**Résultat.** Sur les 12 modèles organiques, à 3000 quads, médianes (tableaux complets dans
+`bench/results/RESULTS.md`) :
+
+| | QuadriFlow | openclare, J4 bis | **openclare, J7** | Quad Remesher, taille uniforme |
+|---|---|---|---|---|
+| Modèles toujours valides (V) | 5 sur 12 | 9 sur 12 | **12 sur 12** | 10 sur 12 |
+| Alignement (A) | 17,5° | 8,8° | **8,6°** | 7,8° |
+| Sommets irréguliers (S) | 66 | 50 | **50** | 67,5 |
+| Patchs du complexe de base (C) | 2697 | 951 | **1886** | 2009 |
+| Écart d'angle moyen (F) | 8,6° | 8,0° | **7,8°** | 7,2° |
+| Hausdorff, ‰ de la diagonale (H) | 17,7 | 9,3 | **9,1** | 9,6 |
+| Écart au budget (N) | 4,1 % | 11,1 % | **1,4 %** | 10,3 % |
+| Temps (T) | 1,9 s | 6,5 s | **2,2 s** | 12,3 s |
+
+**La règle d'acceptation est tenue à 3000 quads** : validité jamais moins bonne que celle de
+QuadriFlow, médianes meilleures sur S, C, A et F, sans dégrader H ni N. Les deux seuils que le
+jalon 4 bis manquait, V et N, sont tenus.
+
+Aux autres budgets : 12 modèles valides sur 12 à 8000 quads (budget tenu à 1,6 % près), 11 sur
+12 à 1000 quads. Les mires de comparaison n'y sont pas complètes (ticket DT-022).
+
+Ce qu'il ne faut pas se cacher :
+
+- **Modèle par modèle, tout n'est pas tenu.** À 3000 quads, les seuils A, H, N et V sont tenus
+  sur les 11 modèles où QuadriFlow donne un maillage (il échoue sur bridge, où le nôtre est
+  valide). F (forme des quads) ne l'est pas sur rock, creature et spot ; S pas sur
+  rock et creature ; C pas sur rock. Le scan brut (rock) est notre plus mauvais cas : QuadriFlow
+  y ignore le bruit de surface, notre champ le suit.
+- **Quad Remesher reste devant** sur l'alignement (de 1° environ) et sur la forme des quads.
+- **Le complexe de base a doublé** par rapport au jalon 4 bis (1886 contre 951) : les jonctions
+  en T du T-mesh décalent les lignes de part et d'autre (ticket DT-020).
+- **Parties plus fines qu'un quad** : à 1000 quads, deux faces du cochon (oreilles) sont comptées
+  inversées, et les oreilles de l'ogre perdent leur volume (ticket DT-018).
+- **Bandes étroites** là où deux singularités proches sont tenues séparées (ticket DT-005).
 
 ### M9 — Relaxation et projection
 
@@ -913,8 +969,8 @@ Chaque jalon produit quelque chose de vérifiable et se termine par **un arrêt 
 | J4 | Paramétrisation sans couture (M4) | **Fait.** Jalon de vérité passé : zéro inversion sur tout le corpus |
 | J4 bis | Arrondi glouton des translations (façon MIQ) et extraction ; configuration unique et préréglages | **Fait.** Premier résultat complet, provisoire, mesuré face à QuadriFlow et à Quad Remesher |
 | J5 | T-mesh (M5) | **Fait.** Partitions en rectangles valides sur tout le corpus, bords ouverts compris |
-| J6 | Quantification (M6) | **Fait, en attente de revue.** Contraintes satisfaites, budget tenu à 4 % près, connectivité du maillage quad construite et saine sur tout le corpus |
-| J7 | Carte entière et extraction (M7, M8) | **Résultat complet définitif**, l'arrondi glouton est retiré |
+| J6 | Quantification (M6) | **Fait.** Contraintes satisfaites, budget tenu à 4 % près, connectivité du maillage quad construite et saine sur tout le corpus |
+| J7 | Maillage quad depuis le T-mesh quantifié, par la route directe (à la place de M7 et M8) | **Fait, en attente de revue.** Résultat complet ; règle d'acceptation tenue à 3000 quads. L'arrondi glouton reste comme repli (DT-009) |
 | J8 | Relaxation ; densité adaptative, puis contraintes de rang 3 à 5 | Règle d'acceptation évaluée |
 | J9 | Chaîne durci : traçage, patchs, remplissage par motifs | Pièces mécaniques comparées à QuadriFlow |
 | J10 | Export des coutures et des UV ; bibliothèque à interface C et greffon Python sans copie mémoire | Remaillage lancé depuis Blender, UV et coutures relus dans la scène |
@@ -951,14 +1007,15 @@ composent des mêmes briques :
 | `SingularityOptimizer` | simplification (M3) | commune | commune |
 | `LayoutBuilder` | structure globale à longueurs réelles | paramétrisation et T-mesh (M4, M5) | traçage et patchs |
 | `Quantizer` | longueurs entières (M6) | commune | commune |
-| `Mesher` | maillage quad depuis la structure quantifiée | carte entière et extraction (M7, M8) | remplissage par motifs |
+| `Mesher` | maillage quad depuis la structure quantifiée | une grille par rectangle, lue dans la carte (M7) | remplissage par motifs |
 | `Relaxer` | placement final (M9) | commune | commune |
 
-Écrites à ce jour : `Remesher` (deux chaînes : `instant-meshes` et `integer-grid`),
+Écrites à ce jour : `Remesher` (trois chaînes : `instant-meshes`, `integer-grid` et `quad-layout`),
 `Preprocessor`, `CrossFieldSolver`, `SingularityOptimizer`, `Parametrizer` (deux
 implémentations : `seamless` et `integer-grid`) et `LayoutBuilder` (une implémentation :
-`motorcycle`, qui enchaîne la paramétrisation sans couture et le traçage du T-mesh) et
-`Quantizer` (une implémentation : `walk-cancelling`).
+`motorcycle`, qui enchaîne la paramétrisation sans couture et le traçage du T-mesh),
+`Quantizer` (une implémentation : `walk-cancelling`) et `Mesher` (une implémentation :
+`patch-grid`). La chaîne `quad-layout` les enchaîne ; c'est celle des préréglages.
 
 Les deux chaînes ne diffèrent donc que par deux étapes, `LayoutBuilder` et `Mesher`, plus le
 réglage du champ de croix. Les types échangés entre étapes (maillage de calcul, champ de croix,
@@ -1081,17 +1138,6 @@ En attente :
 
 1. **Corpus** : d'autres sculptures à ajouter plus tard, avant l'expiration de la licence d'essai
    de Quad Remesher.
-2. **Nom du code** : renommer les crates et l'exécutable `retopo` en `openclare`.
-3. **Route du jalon 7.** La quantification construit déjà la connectivité du maillage quad. Il
-   reste à placer ses sommets. Deux routes :
-   - *directe* : chaque sommet est placé en lisant la carte sans couture dans son rectangle
-     (la grille entière étirée sur le rectangle réel), puis relaxé. Tout ce qu'elle utilise est
-     déjà validé ; pas de nouvelle carte à résoudre, pas d'extraction par traçage.
-   - *prévue au départ* (M7, M8) : résoudre une carte à grille entière contrainte par les
-     longueurs, puis en extraire le maillage. Plus régulière en principe, mais elle rouvre le
-     risque des triangles inversés et demande une extraction robuste.
-   Proposition : la route directe d'abord, la carte entière ensuite seulement si la qualité
-   mesurée le demande.
 
 Prises :
 
@@ -1100,6 +1146,11 @@ Prises :
 - lignées : paramétrisation et isolignes pour l'organique, patchs pour le durci ;
 - architecture modulaire à fabriques ;
 - arithmétique du traçage (M5) : nombres flottants et une tolérance unique, suffisants sur le corpus ;
+- route du jalon 7 : directe ; la carte à grille entière et l'extraction exacte sont mises au
+  backlog (DT-001) ;
+- deux singularités proches restent séparées (DT-005) ;
+- le code sera renommé `openclare` au jalon 10 (DT-015) ;
+- tout ce qui est écarté, approché ou reporté fait l'objet d'un ticket numéroté dans BACKLOG.md ;
 - licence GPL-3.0-or-later ;
 - seuils d'acceptation de la section 0 ;
 - champ de croix par face ;

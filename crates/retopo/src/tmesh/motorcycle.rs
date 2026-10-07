@@ -18,6 +18,7 @@
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 
+use super::Stretch;
 use super::walk::{Axis, Departure, EPSILON, Exit, Map, axis_vector};
 use crate::math::{INVALID, Vec3};
 
@@ -57,6 +58,8 @@ pub(super) struct Trace {
     pub length: f64,
     /// Where it went on the surface, one point per triangle crossed.
     pub path: Vec<Vec3>,
+    /// The same in the map, one stretch per triangle crossed.
+    pub stretches: Vec<Stretch>,
     /// A stretch of open border rather than a trace: there from the start,
     /// with the surface on its left only.
     pub border: bool,
@@ -181,6 +184,7 @@ impl Race<'_> {
             through: Vec::new(),
             length: 0.0,
             path: vec![self.outcome.junctions[node as usize].position],
+            stretches: Vec::new(),
             border: false,
             face,
             point: self.map.uv[3 * face + corner],
@@ -273,9 +277,16 @@ impl Race<'_> {
                 // One cut per straight stretch, up to the next corner.
                 let (to, end) = corners.get(which + 1).copied().unwrap_or((ring.len(), corners[0].1));
                 let id = self.outcome.traces.len() as u32;
-                let (mut path, mut length) = (Vec::new(), 0.0);
+                let (mut path, mut stretches, mut length) = (Vec::new(), Vec::new(), 0.0);
                 for &(h, _) in &ring[from..to] {
                     let (axis, along, across) = run(h);
+                    stretches.push(Stretch {
+                        face: (h / 3) as u32,
+                        start: map.uv[h],
+                        axis,
+                        length: along,
+                        time: length,
+                    });
                     if across > EPSILON.max(1e-3 * along) {
                         self.outcome.border_off_grid += 1;
                     }
@@ -295,6 +306,7 @@ impl Race<'_> {
                     through: Vec::new(),
                     length,
                     path,
+                    stretches,
                     border: true,
                     face: 0,
                     point: [0.0; 2],
@@ -382,6 +394,15 @@ impl Race<'_> {
         if distance > 0.0 {
             self.segments[face].push(Segment {
                 trace: id as u32,
+                start: point,
+                axis,
+                length: distance,
+                time: trace.length,
+            });
+        }
+        if distance > 0.0 {
+            trace.stretches.push(Stretch {
+                face: face as u32,
                 start: point,
                 axis,
                 length: distance,

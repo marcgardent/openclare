@@ -11,15 +11,15 @@ use crate::mesh::{Topology, TriMesh};
 
 /// A grid direction: 0 is +u, 1 is +v, 2 is -u, 3 is -v, each a quarter turn
 /// counter-clockwise from the last.
-pub(super) type Axis = u8;
+pub(crate) type Axis = u8;
 
 /// Lengths below this, in grid units, are taken to be zero. Well above what
 /// the map is accurate to (its seams close to about 1e-10), well below the
 /// size of anything in it: a trace this close to a vertex goes through it,
 /// two traces this close to one line are on the same line.
-pub(super) const EPSILON: f64 = 1e-6;
+pub(crate) const EPSILON: f64 = 1e-6;
 
-pub(super) fn axis_vector(axis: Axis) -> [f64; 2] {
+pub(crate) fn axis_vector(axis: Axis) -> [f64; 2] {
     [[1.0, 0.0], [0.0, 1.0], [-1.0, 0.0], [0.0, -1.0]][axis as usize % 4]
 }
 
@@ -40,7 +40,7 @@ fn dot(a: [f64; 2], b: [f64; 2]) -> f64 {
 
 /// Where a ray leaves its triangle.
 #[derive(Clone, Copy, Debug)]
-pub(super) enum Exit {
+pub(crate) enum Exit {
     /// Through the edge leaving corner `edge`, at fraction `t` along it.
     Edge { edge: usize, t: f64 },
     /// Through corner `corner`.
@@ -49,9 +49,9 @@ pub(super) enum Exit {
 
 /// A direction leaving a vertex: the face it enters, the corner the vertex
 /// has there, and the direction in the coordinates of that face.
-pub(super) type Departure = (usize, usize, Axis);
+pub(crate) type Departure = (usize, usize, Axis);
 
-pub(super) struct Map<'a> {
+pub(crate) struct Map<'a> {
     pub mesh: &'a TriMesh,
     pub topology: &'a Topology,
     /// Coordinates of corner `3 * f + k`.
@@ -143,6 +143,36 @@ impl<'a> Map<'a> {
             }
         }
         best.map(|(exit, point, distance)| (exit, point, distance.max(0.0)))
+    }
+
+    /// The point of the surface at `p` in the coordinates of face `f`.
+    pub fn position(&self, f: usize, p: [f64; 2]) -> crate::math::Vec3 {
+        let weights = self.barycentric(f, p);
+        let triangle = self.mesh.triangles[f];
+        (0..3).map(|k| self.mesh.positions[triangle[k] as usize] * weights[k]).sum()
+    }
+
+    /// Goes `distance` from `p` in face `f` along `axis`: the face and the
+    /// point reached. `None` if the way leaves the surface or gets stuck.
+    pub fn walk(&self, f: usize, p: [f64; 2], axis: Axis, distance: f64) -> Option<(usize, [f64; 2])> {
+        let (mut face, mut point, mut axis, mut left) = (f, p, axis, distance);
+        // Far more triangles than any straight way crosses.
+        for _ in 0..self.mesh.triangles.len().max(64) {
+            let (exit, _, reach) = self.exit(face, point, axis)?;
+            if reach >= left {
+                let direction = axis_vector(axis);
+                return Some((face, [point[0] + left * direction[0], point[1] + left * direction[1]]));
+            }
+            left -= reach;
+            match exit {
+                Exit::Edge { edge, t } => (face, point, axis) = self.cross_edge(face, edge, t, axis)?,
+                Exit::Vertex { corner } => {
+                    let (next, at, carried) = self.enter_from_vertex(face, corner, axis)?;
+                    (face, point, axis) = (next, self.uv[3 * next + at], carried);
+                }
+            }
+        }
+        None
     }
 
     /// Crosses the edge leaving corner `edge` of face `f` at fraction `t`:

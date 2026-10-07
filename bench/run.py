@@ -170,6 +170,7 @@ TOOLS = {
     "quadriflow": quadriflow,
     "instant-meshes": retopo("instant-meshes"),
     "integer-grid": retopo("integer-grid", seeded=False),
+    "quad-layout": retopo("quad-layout", seeded=False),
     # Commercial yardstick; needs the add-on and a licence (see bench/README.md).
     "quadremesher": quadremesher(uniform=False),
     "quadremesher-uniform": quadremesher(uniform=True),

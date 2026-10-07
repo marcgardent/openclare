@@ -37,6 +37,9 @@ pub struct Lattice {
     pub quads: Vec<[u32; 4]>,
     /// The vertex each node of the T-mesh became.
     pub node_vertex: Vec<u32>,
+    /// Every point before merging, and the vertex it went into.
+    pub points: Vec<Source>,
+    pub point_vertex: Vec<u32>,
 }
 
 /// A merge of two points: which, the arc to lengthen to undo it, and the
@@ -53,8 +56,6 @@ pub(super) struct Built {
     /// Vertex of each point, before merging.
     vertex_of: Vec<u32>,
     merges: Vec<Merge>,
-    /// Points on an open border.
-    on_border: Vec<bool>,
 }
 
 pub(super) fn build(tmesh: &TMesh, x: &[i64]) -> Built {
@@ -83,13 +84,6 @@ pub(super) fn build(tmesh: &TMesh, x: &[i64]) -> Built {
     for (arc, &length) in x.iter().enumerate() {
         sources.extend((1..length).map(|step| Source::Arc { arc: arc as u32, step: step as u32 }));
     }
-    let mut on_border = vec![false; points as usize];
-    for (arc, _) in tmesh.arcs.iter().enumerate().filter(|(_, data)| data.border) {
-        for step in 0..=x[arc] {
-            on_border[along(2 * arc as u32, step) as usize] = true;
-        }
-    }
-
     let mut merges = Vec::new();
     for (arc, data) in tmesh.arcs.iter().enumerate() {
         if x[arc] == 0 {
@@ -147,7 +141,6 @@ pub(super) fn build(tmesh: &TMesh, x: &[i64]) -> Built {
             }
         }
         points += ((w - 1) * (h - 1)) as u32;
-        on_border.resize(points as usize, false);
         let at = |i: usize, j: usize| {
             if j == 0 {
                 sides[0][i]
@@ -186,8 +179,14 @@ pub(super) fn build(tmesh: &TMesh, x: &[i64]) -> Built {
     for quad in &mut quads {
         *quad = quad.map(|point| vertex_of[point as usize]);
     }
-    let lattice = Lattice { sources: kept_sources, quads, node_vertex: vertex_of[..nodes].to_vec() };
-    Built { lattice, vertex_of, merges, on_border }
+    let lattice = Lattice {
+        sources: kept_sources,
+        quads,
+        node_vertex: vertex_of[..nodes].to_vec(),
+        points: sources,
+        point_vertex: vertex_of.clone(),
+    };
+    Built { lattice, vertex_of, merges }
 }
 
 /// What is wrong with a lattice.
@@ -209,7 +208,7 @@ impl Defects {
 impl Built {
     /// Checks that the lattice is a manifold quad mesh whose irregular
     /// vertices are the singularities of the T-mesh, each with its valence
-    /// and none on a border.
+    /// unless it came to lie on a border.
     pub fn defects(&self, tmesh: &TMesh) -> Defects {
         let lattice = &self.lattice;
         let vertices = lattice.sources.len();
@@ -226,25 +225,25 @@ impl Built {
             }
         };
 
-        // Nodes that must each stay a vertex of their own.
-        let mut anchor: Vec<Option<u32>> = vec![None; vertices];
+        // Singularities must each stay a vertex of their own. (Corners of
+        // the border need not: two of them a hair apart are a step in the
+        // border too small to keep, and the border is as well without it.)
+        let mut singularity: Vec<Option<u32>> = vec![None; vertices];
         let mut expected_valence: Vec<Option<usize>> = vec![None; vertices];
         for (node, data) in tmesh.nodes.iter().enumerate() {
-            if data.kind == NodeKind::Junction {
+            if !matches!(data.kind, NodeKind::Singularity { .. }) {
                 continue;
             }
             let vertex = lattice.node_vertex[node] as usize;
-            if let Some(other) = anchor[vertex] {
+            if let Some(other) = singularity[vertex] {
                 // Two of them in one vertex: reopen something between them.
                 charge(&mut defects, vertex as u32, &|| {
                     self.largest_merge_between(other, |point| point == node as u32)
                 });
                 continue;
             }
-            anchor[vertex] = Some(node as u32);
-            if matches!(data.kind, NodeKind::Singularity { .. }) {
-                expected_valence[vertex] = Some(data.arcs.len());
-            }
+            singularity[vertex] = Some(node as u32);
+            expected_valence[vertex] = Some(data.arcs.len());
         }
 
         // Each directed edge belongs to one quad at most.
@@ -303,18 +302,11 @@ impl Built {
             let valence = around.len() + border as usize;
             let sound = fan == around.len()
                 && unmatched <= 1
-                && match expected_valence[vertex as usize] {
-                    Some(expected) => !border && valence == expected,
-                    None => border || valence == 4,
-                };
-            if sound {
-                continue;
-            }
-            // A singularity on a border is undone by what brought it there.
-            let on_border = |point: u32| self.on_border[point as usize];
-            match anchor[vertex as usize].filter(|_| expected_valence[vertex as usize].is_some() && border) {
-                Some(node) => charge(&mut defects, vertex, &|| self.largest_merge_between(node, on_border)),
-                None => charge(&mut defects, vertex, &|| self.largest_merge_at(vertex)),
+                // On a border any valence will do: a singularity that the
+                // lengths bring onto it simply becomes a corner of the border.
+                && (border || valence == expected_valence[vertex as usize].unwrap_or(4));
+            if !sound {
+                charge(&mut defects, vertex, &|| self.largest_merge_at(vertex));
             }
         }
         defects.reopen.sort_unstable();

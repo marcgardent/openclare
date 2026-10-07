@@ -14,12 +14,15 @@ use crate::crossfield;
 use crate::error::{Error, Result};
 use crate::extract::{extract_faces, grid::graph_from_parametrization};
 use crate::mesh::{PolyMesh, TriMesh};
+use crate::meshing;
 use crate::parametrization;
 use crate::pipeline::{self, Params, Report, Target};
-use crate::preprocess;
+use crate::preprocess::{self, WorkMesh};
+use crate::quantization;
 use crate::relax::{Features, relax};
 use crate::singularity;
 use crate::spatial::Bvh;
+use crate::tmesh;
 
 /// A complete triangle-to-quad remeshing chain.
 pub trait Remesher {
@@ -37,15 +40,19 @@ pub enum Method {
     /// and extraction of its grid lines. The integers come from greedy
     /// rounding for now, which makes this chain provisional.
     IntegerGrid,
+    /// Cross field, singularity simplification, seamless map, T-mesh,
+    /// quantization, and one grid of quads per rectangle of the T-mesh.
+    QuadLayout,
 }
 
 impl Method {
-    pub const ALL: &[Method] = &[Method::InstantMeshes, Method::IntegerGrid];
+    pub const ALL: &[Method] = &[Method::InstantMeshes, Method::IntegerGrid, Method::QuadLayout];
 
     pub fn name(self) -> &'static str {
         match self {
             Method::InstantMeshes => "instant-meshes",
             Method::IntegerGrid => "integer-grid",
+            Method::QuadLayout => "quad-layout",
         }
     }
 }
@@ -72,6 +79,7 @@ pub fn create(method: Method) -> Box<dyn Remesher> {
     match method {
         Method::InstantMeshes => Box::new(InstantMeshes::default()),
         Method::IntegerGrid => Box::new(IntegerGrid::default()),
+        Method::QuadLayout => Box::new(QuadLayout::default()),
     }
 }
 
@@ -152,54 +160,16 @@ impl Remesher for IntegerGrid {
     }
 
     fn remesh(&self, input: &TriMesh, config: &RemeshConfig) -> Result<(PolyMesh, Report)> {
-        config.validate()?;
-        input.validate()?;
-        let area = input.surface_area();
-        let (quads, edge_length) = match config.target {
-            Target::QuadCount(0) => return Err(Error::InvalidParams("target quad count is zero".into())),
-            Target::QuadCount(count) => (count as f64, (area / count as f64).sqrt()),
-            Target::EdgeLength(length) if length.is_finite() && length > 0.0 => (area / (length * length), length),
-            Target::EdgeLength(length) => {
-                return Err(Error::InvalidParams(format!("edge length {length} is not positive")));
-            }
-        };
-
-        let mut report = Report { edge_length, ..Default::default() };
-        let mut clock = Instant::now();
-        let mut lap = |report: &mut Report, stage: &'static str| {
-            report.timings.push((stage, clock.elapsed()));
-            clock = Instant::now();
-        };
-
-        let triangles = ((self.triangles_per_quad * quads) as usize).clamp(self.min_triangles, self.max_triangles);
-        let work_request =
-            preprocess::Request { triangles, crease_angle: config.crease_angle, curvature_scale: Some(edge_length) };
-        let work = preprocess::create(preprocess::Kind::Isotropic).preprocess(input, &work_request)?;
-        report.working_vertices = work.mesh.positions.len();
-        report.feature_edges = work.feature_edges.len();
-        lap(&mut report, "preprocess");
-
-        let field_request = crossfield::Request { alignment: config.alignment, seed: config.seed };
-        let mut field = crossfield::create(crossfield::Kind::Power).solve(&work, &field_request)?;
-        lap(&mut report, "cross field");
-
-        if config.singularity_reach > 0.0 {
-            let request = singularity::Request {
-                alignment: config.alignment,
-                tolerance: config.singularity_tolerance,
-                reach: Some(config.singularity_reach * edge_length),
-            };
-            field = singularity::create(singularity::Kind::PairCancellation).optimize(&work, &field, &request)?.0;
-        }
-        let (positive, negative, _) = field.singularities();
-        report.singularities = (positive, negative);
-        lap(&mut report, "singularities");
+        let mut clock = Stopwatch::start();
+        let mut report = Report::default();
+        let size = WorkSize { per_quad: self.triangles_per_quad, least: self.min_triangles, most: self.max_triangles };
+        let Fields { work, field, edge_length, .. } = fields(input, config, &size, &mut report, &mut clock)?;
 
         let map_request = parametrization::Request { edge_length, stiffening_rounds: self.stiffening_rounds };
         let map =
             parametrization::create(parametrization::Kind::IntegerGrid).parametrize(&work, &field, &map_request)?;
         report.map_inversions = map.report.flipped;
-        lap(&mut report, "parametrization");
+        clock.lap(&mut report, "parametrization");
 
         let mut graph = graph_from_parametrization(&work.mesh, &work.normals, &map.uv);
         graph.remove_spurious_vertices();
@@ -210,18 +180,173 @@ impl Remesher for IntegerGrid {
         let mut mesh = extraction.mesh;
         mesh.dissolve_valence_two();
         mesh.repair_to_quads();
-        lap(&mut report, "extraction");
+        clock.lap(&mut report, "extraction");
 
-        // Hard edges and corners of the work mesh are what the final vertices
-        // snap to; the surface itself is the input.
-        let constraints =
-            crate::field::Constraints::from_feature_edges(&work.mesh.positions, &work.normals, &work.feature_edges);
-        let guide = Features::new(&work.mesh.positions, &work.feature_edges, &constraints, 0.35 * edge_length);
-        relax(&mut mesh, &Bvh::build(input), guide.as_ref(), self.relax_iterations);
-        lap(&mut report, "relaxation");
+        settle(&mut mesh, input, &work, edge_length, self.relax_iterations);
+        clock.lap(&mut report, "relaxation");
 
         report.stats = mesh.stats();
         Ok((mesh, report))
+    }
+}
+
+/// Tuning of the quad-layout chain: what the configuration does not cover.
+#[derive(Clone, Debug)]
+pub struct QuadLayout {
+    /// Triangles of the work mesh per quad asked for, and the bounds it is
+    /// kept within.
+    pub triangles_per_quad: f64,
+    pub min_triangles: usize,
+    pub max_triangles: usize,
+    /// How close to the number of quads asked for is close enough.
+    pub budget_tolerance: f64,
+    /// Smoothing passes on the final mesh.
+    pub relax_iterations: usize,
+}
+
+impl Default for QuadLayout {
+    fn default() -> Self {
+        Self {
+            triangles_per_quad: 10.0,
+            min_triangles: 20_000,
+            max_triangles: 120_000,
+            budget_tolerance: 0.02,
+            relax_iterations: 2,
+        }
+    }
+}
+
+impl Remesher for QuadLayout {
+    fn method(&self) -> Method {
+        Method::QuadLayout
+    }
+
+    fn remesh(&self, input: &TriMesh, config: &RemeshConfig) -> Result<(PolyMesh, Report)> {
+        let mut clock = Stopwatch::start();
+        let mut report = Report::default();
+        let size = WorkSize { per_quad: self.triangles_per_quad, least: self.min_triangles, most: self.max_triangles };
+        let Fields { work, field, edge_length, quads } = fields(input, config, &size, &mut report, &mut clock)?;
+
+        let layout = tmesh::create(tmesh::Kind::Motorcycle).build(&work, &field, &tmesh::Request { edge_length })?;
+        report.map_inversions = layout.tmesh.report.map_inversions;
+        clock.lap(&mut report, "layout");
+        // A piece of surface with neither singularity nor border (a torus)
+        // has no layout; a layout that went wrong cannot be meshed from.
+        // Either way the provisional chain takes over.
+        let layout_report = &layout.tmesh.report;
+        if layout.tmesh.patches.is_empty() || layout_report.uncut_triangles > 0 || !layout_report.is_valid() {
+            return fall_back(input, config);
+        }
+
+        let request =
+            quantization::Request { quads: Some((quads.round() as usize).max(1)), tolerance: self.budget_tolerance };
+        let quantized = quantization::create(quantization::Kind::WalkCancelling).quantize(&layout.tmesh, &request)?;
+        clock.lap(&mut report, "quantization");
+        if !quantized.report.is_valid() || quantized.report.quads == 0 {
+            return fall_back(input, config);
+        }
+
+        let (mut mesh, _) = meshing::create(meshing::Kind::PatchGrid).mesh(&work, &layout, &quantized)?;
+        clock.lap(&mut report, "meshing");
+
+        settle(&mut mesh, input, &work, edge_length, self.relax_iterations);
+        clock.lap(&mut report, "relaxation");
+
+        report.stats = mesh.stats();
+        Ok((mesh, report))
+    }
+}
+
+/// Hands the job to the integer-grid chain, and says so in the report.
+fn fall_back(input: &TriMesh, config: &RemeshConfig) -> Result<(PolyMesh, Report)> {
+    let (mesh, mut report) = IntegerGrid::default().remesh(input, config)?;
+    report.fell_back = true;
+    Ok((mesh, report))
+}
+
+/// How large a work mesh a chain computes on.
+struct WorkSize {
+    per_quad: f64,
+    least: usize,
+    most: usize,
+}
+
+/// What the stages common to the field-based chains produce.
+struct Fields {
+    work: WorkMesh,
+    field: crossfield::CrossField,
+    /// Edge length of the quads to come, and how many that makes.
+    edge_length: f64,
+    quads: f64,
+}
+
+/// Preprocessing, cross field and singularity simplification.
+fn fields(
+    input: &TriMesh,
+    config: &RemeshConfig,
+    size: &WorkSize,
+    report: &mut Report,
+    clock: &mut Stopwatch,
+) -> Result<Fields> {
+    config.validate()?;
+    input.validate()?;
+    let area = input.surface_area();
+    let (quads, edge_length) = match config.target {
+        Target::QuadCount(0) => return Err(Error::InvalidParams("target quad count is zero".into())),
+        Target::QuadCount(count) => (count as f64, (area / count as f64).sqrt()),
+        Target::EdgeLength(length) if length.is_finite() && length > 0.0 => (area / (length * length), length),
+        Target::EdgeLength(length) => {
+            return Err(Error::InvalidParams(format!("edge length {length} is not positive")));
+        }
+    };
+    report.edge_length = edge_length;
+
+    let triangles = ((size.per_quad * quads) as usize).clamp(size.least, size.most);
+    let work_request =
+        preprocess::Request { triangles, crease_angle: config.crease_angle, curvature_scale: Some(edge_length) };
+    let work = preprocess::create(preprocess::Kind::Isotropic).preprocess(input, &work_request)?;
+    report.working_vertices = work.mesh.positions.len();
+    report.feature_edges = work.feature_edges.len();
+    clock.lap(report, "preprocess");
+
+    let field_request = crossfield::Request { alignment: config.alignment, seed: config.seed };
+    let mut field = crossfield::create(crossfield::Kind::Power).solve(&work, &field_request)?;
+    clock.lap(report, "cross field");
+
+    if config.singularity_reach > 0.0 {
+        let request = singularity::Request {
+            alignment: config.alignment,
+            tolerance: config.singularity_tolerance,
+            reach: Some(config.singularity_reach * edge_length),
+        };
+        field = singularity::create(singularity::Kind::PairCancellation).optimize(&work, &field, &request)?.0;
+    }
+    let (positive, negative, _) = field.singularities();
+    report.singularities = (positive, negative);
+    clock.lap(report, "singularities");
+    Ok(Fields { work, field, edge_length, quads })
+}
+
+/// Smooths `mesh` on the input surface. Hard edges and corners of the work
+/// mesh are what its vertices snap to; the surface itself is the input.
+fn settle(mesh: &mut PolyMesh, input: &TriMesh, work: &WorkMesh, edge_length: f64, iterations: usize) {
+    let constraints =
+        crate::field::Constraints::from_feature_edges(&work.mesh.positions, &work.normals, &work.feature_edges);
+    let guide = Features::new(&work.mesh.positions, &work.feature_edges, &constraints, 0.35 * edge_length);
+    relax(mesh, &Bvh::build(input), guide.as_ref(), iterations);
+}
+
+/// Times the stages of a chain.
+struct Stopwatch(Instant);
+
+impl Stopwatch {
+    fn start() -> Self {
+        Self(Instant::now())
+    }
+
+    fn lap(&mut self, report: &mut Report, stage: &'static str) {
+        report.timings.push((stage, self.0.elapsed()));
+        self.0 = Instant::now();
     }
 }
 

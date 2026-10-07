@@ -76,6 +76,8 @@ pub struct Report {
     /// Triangles left inverted in the parametrization, for the chains that
     /// have one: each is a likely defect in the mesh.
     pub map_inversions: usize,
+    /// The chain asked for could not do the job, and another one did.
+    pub fell_back: bool,
     pub stats: MeshStats,
     pub timings: Vec<(&'static str, Duration)>,
 }

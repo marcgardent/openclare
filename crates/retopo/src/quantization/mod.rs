@@ -60,7 +60,7 @@ pub struct Report {
     pub balanced: bool,
     /// The quad mesh the lengths stand for is a manifold with the topology
     /// of the surface, and its irregular vertices are the singularities of
-    /// the T-mesh: no two of them merged, none on a border, nothing pinched.
+    /// the T-mesh: no two of them merged, nothing pinched.
     pub separated: bool,
     /// Improving moves made by the solver, over all its runs.
     pub moves: usize,

@@ -8,25 +8,23 @@ Blender. (Les crates et l'exécutable portent encore le nom provisoire `retopo`.
 
 ## État
 
-Deux chaînes de remaillage, de bout en bout (triangles en entrée, quads en sortie) :
+La chaîne cible, `quad-layout`, va de bout en bout (triangles en entrée, quads en sortie) :
+champ de croix aligné sur la courbure, simplification des singularités, carte sans couture,
+T-mesh, quantification, puis une grille de quads par rectangle du T-mesh.
 
-- **`integer-grid`**, la chaîne cible, encore provisoire. Champ de croix aligné sur la courbure,
-  simplification des singularités, paramétrisation à grille entière, extraction. Sur le corpus,
-  ses arêtes suivent la forme deux fois mieux que celles de Blender et presque aussi bien que
-  celles de Quad Remesher, avec une vraie structure globale. Elle n'est pas encore fiable : un
-  maillage sur quatre garde quelques faces non quads, et le nombre de faces demandé n'est tenu
-  qu'à 10 % près.
-- **`instant-meshes`**, le plancher de comparaison : robuste et rapide, mais sans structure et
-  avec beaucoup de sommets irréguliers.
+Sur les douze modèles organiques du corpus, à 3000 quads, elle fait **mieux que le remaillage
+quad de Blender** (QuadriFlow) sur tous les critères retenus : maillages toujours valides (12
+modèles sur 12, contre 5), arêtes deux fois mieux alignées sur la forme (8,6° contre 17,5°), moins
+de sommets irréguliers, nombre de quads demandé tenu à 1,4 % près. Elle approche Quad Remesher
+sans le rattraper sur l'alignement et la forme des quads.
 
-La suite de la chaîne cible est en construction, étape par étape : le **T-mesh**, qui découpe
-la surface en rectangles à partir des singularités, puis la **quantification**, qui donne à
-chaque côté un nombre entier d'arêtes. Les deux sont valides sur tout le corpus, et le nombre de
-quads demandé est tenu à 4 % près. Elles n'entrent pas encore dans `remesh` ; elles se regardent
-avec `retopo tmesh` et `retopo quantize`.
+Deux autres chaînes restent dans le dépôt : `integer-grid`, la version provisoire, qui sert de
+repli pour les surfaces sans singularité ni bord (un tore), et `instant-meshes`, le plancher de
+comparaison.
 
 Le cahier des charges, les mesures et la feuille de route sont dans
-[ALGORITHME.md](ALGORITHME.md).
+[ALGORITHME.md](ALGORITHME.md) ; ce qui a été écarté ou reporté en chemin, dans
+[BACKLOG.md](BACKLOG.md).
 
 ## Utilisation
 
@@ -103,13 +101,14 @@ Et pour le quantifier :
 | `relax` | lissage final contraint à la surface et aux arêtes vives |
 | `spatial` | BVH pour la projection sur la surface source |
 | `pipeline` | enchaînement complet de la chaîne Instant Meshes |
-| `remesher` | interface commune aux chaînes, fabrique qui les crée par nom, et la chaîne `integer-grid` |
+| `remesher` | interface commune aux chaînes, fabrique qui les crée par nom, et les chaînes `quad-layout` et `integer-grid` |
 | `preprocess` | étape de prétraitement : nettoyage, décimation, remaillage isotrope, courbures |
 | `crossfield` | étape du champ de croix : une croix par face, alignement sur la courbure, singularités |
 | `singularity` | étape de simplification : annulation des paires de singularités inutiles |
 | `parametrization` | étape de paramétrisation : graphe de coupe, carte (u, v) sans couture |
 | `tmesh` | étape de structure globale : traces depuis les singularités, patchs rectangulaires |
 | `quantization` | étape de quantification : longueurs entières, connectivité du maillage quad |
+| `meshing` | étape de maillage : une grille de quads par rectangle, sommets lus dans la carte |
 | `linalg` | algèbre linéaire creuse (enveloppe de la bibliothèque `faer`) |
 | `config` | configuration unique d'un remaillage, préréglages, enregistrement et relecture |
 | `curvature` | courbures et directions principales |
