@@ -10,6 +10,9 @@ license = "GPL-3.0-or-later"
 
 [workspace.dependencies]
 glam = "0.34"
+# Sparse direct solvers, for the constrained least-squares systems of the
+# parametrization. Pure Rust, MIT.
+faer = { version = "0.24", default-features = false, features = ["std", "sparse-linalg"] }
 
 [profile.release]
 debug = 1

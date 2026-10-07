@@ -68,6 +68,8 @@ let (quads, report) = remesh(&triangles, &params)?;
 | `preprocess` | étape de prétraitement : nettoyage, décimation, remaillage isotrope, courbures |
 | `crossfield` | étape du champ de croix : une croix par face, alignement sur la courbure, singularités |
 | `singularity` | étape de simplification : annulation des paires de singularités inutiles |
+| `parametrization` | étape de paramétrisation : graphe de coupe, carte (u, v) sans couture |
+| `linalg` | algèbre linéaire creuse (enveloppe de la bibliothèque `faer`) |
 | `curvature` | courbures et directions principales |
 | `metrics` | mesures de qualité d'un maillage quad par rapport à sa source |
 

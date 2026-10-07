@@ -3,9 +3,14 @@ use std::fmt;
 #[derive(Debug)]
 pub enum Error {
     Io(std::io::Error),
-    Parse { line: usize, message: String },
+    Parse {
+        line: usize,
+        message: String,
+    },
     InvalidMesh(String),
     InvalidParams(String),
+    /// A numerical step could not complete (singular system, no convergence).
+    Numerical(String),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -17,6 +22,7 @@ impl fmt::Display for Error {
             Error::Parse { line, message } => write!(f, "parse error at line {line}: {message}"),
             Error::InvalidMesh(m) => write!(f, "invalid mesh: {m}"),
             Error::InvalidParams(m) => write!(f, "invalid parameters: {m}"),
+            Error::Numerical(m) => write!(f, "numerical failure: {m}"),
         }
     }
 }

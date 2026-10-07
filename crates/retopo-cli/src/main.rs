@@ -4,6 +4,7 @@ use retopo::crossfield;
 use retopo::math::{Vec3, tangent_frame};
 use retopo::mesh::{Topology, obj, primitives};
 use retopo::metrics::measure;
+use retopo::parametrization;
 use retopo::preprocess;
 use retopo::remesher::{self, Method, Request};
 use retopo::singularity;
@@ -17,6 +18,7 @@ USAGE:
     retopo measure <source.obj> <quads.obj> [--target <N>] [--json]
     retopo preprocess <input.obj> <output.obj> [options]
     retopo field <input.obj> [options]
+    retopo parametrize <input.obj> --quads <N> [options]
     retopo primitive <torus|sphere|cube|plane> <output.obj>
 
 OPTIONS (remesh):
@@ -43,6 +45,14 @@ OPTIONS (field):
     --tolerance <T>        what a cancellation may cost (default 1)
     --crosses <out.obj>    write the field as small crosses, singularities as markers
 
+OPTIONS (parametrize):
+    --quads <N>            number of quads the map is scaled for (required)
+    --triangles <N>        size of the work mesh (default 50000)
+    --alignment <A>        pull of the field towards curvature (default 0.05)
+    --simplify <R>         cancel opposite singularities closer than R quad edges
+    --crease-angle <DEG>   treat input edges sharper than this as hard constraints
+    --rounds <N>           most stiffening rounds against inverted triangles (default 40)
+
 OPTIONS (measure):
     --target <N>           face count that was asked for
     --json                 print the metrics as one JSON object
@@ -65,6 +75,7 @@ fn run(args: &[String]) -> Result<(), String> {
         Some("measure") => measure_command(&args[1..]),
         Some("preprocess") => preprocess_command(&args[1..]),
         Some("field") => field_command(&args[1..]),
+        Some("parametrize") => parametrize_command(&args[1..]),
         Some("primitive") => primitive(&args[1..]),
         Some("-h" | "--help") => {
             print!("{USAGE}");
@@ -373,4 +384,68 @@ fn field_as_crosses(
         polygon(&corners);
     }
     out
+}
+
+fn parametrize_command(args: &[String]) -> Result<(), String> {
+    let mut work_request = preprocess::Request { triangles: 50_000, ..Default::default() };
+    let mut field_request = crossfield::Request::default();
+    let (mut quads, mut simplify, mut rounds, mut paths) = (None::<usize>, None::<f64>, 40usize, Vec::new());
+    let mut args = args.iter();
+    while let Some(arg) = args.next() {
+        let mut value = |name: &str| args.next().ok_or(format!("{name} expects a value"));
+        match arg.as_str() {
+            "--quads" => quads = Some(parse(arg, value(arg)?)?),
+            "--triangles" => work_request.triangles = parse(arg, value(arg)?)?,
+            "--alignment" => field_request.alignment = parse(arg, value(arg)?)?,
+            "--simplify" => simplify = Some(parse(arg, value(arg)?)?),
+            "--crease-angle" => work_request.crease_angle = Some(parse(arg, value(arg)?)?),
+            "--rounds" => rounds = parse(arg, value(arg)?)?,
+            flag if flag.starts_with("--") => return Err(format!("unknown option '{flag}'")),
+            path => paths.push(path),
+        }
+    }
+    let [input] = paths[..] else {
+        return Err("parametrize takes one input path".into());
+    };
+    let quads = quads.filter(|&n| n > 0).ok_or("parametrize needs --quads")?;
+
+    let source = obj::read_obj(input).map_err(|e| format!("{input}: {e}"))?;
+    let edge_length = (source.surface_area() / quads as f64).sqrt();
+    work_request.curvature_scale = Some(edge_length);
+    let work = preprocess::create(preprocess::Kind::Isotropic)
+        .preprocess(&source, &work_request)
+        .map_err(|e| e.to_string())?;
+    let mut field =
+        crossfield::create(crossfield::Kind::Power).solve(&work, &field_request).map_err(|e| e.to_string())?;
+    if let Some(quad_edges) = simplify {
+        let options = singularity::Request {
+            alignment: field_request.alignment,
+            reach: Some(quad_edges * edge_length),
+            ..Default::default()
+        };
+        field = singularity::create(singularity::Kind::PairCancellation)
+            .optimize(&work, &field, &options)
+            .map_err(|e| e.to_string())?
+            .0;
+    }
+    let (positive, negative, other) = field.singularities();
+
+    let start = std::time::Instant::now();
+    let request = parametrization::Request { edge_length, stiffening_rounds: rounds };
+    let map = parametrization::create(parametrization::Kind::Seamless)
+        .parametrize(&work, &field, &request)
+        .map_err(|e| e.to_string())?;
+    let seconds = start.elapsed().as_secs_f64();
+
+    let report = &map.report;
+    println!("work mesh      {} triangles, {} singularities", work.mesh.triangles.len(), positive + negative + other);
+    println!("cut            {} seam edges, {} vertices once cut open", report.seam_edges, report.wedges);
+    println!(
+        "inverted       {} after {} stiffening rounds ({} at first)",
+        report.flipped, report.rounds, report.flipped_first
+    );
+    println!("distortion     mean {:.4}, worst stretch {:.2}", report.distortion_mean, report.stretch_max);
+    println!("seams          worst mismatch {:.2e}", report.seam_error);
+    println!("seconds        {seconds:.3}");
+    Ok(())
 }

@@ -1,6 +1,6 @@
 # Cahier des charges : moteur de retopologie quad
 
-**Statut : validé le 6 octobre 2026. Jalons 0 à 2 faits ; jalon 3 réalisé, en attente de revue.** Les points marqués
+**Statut : validé le 6 octobre 2026. Jalons 0 à 3 faits ; jalon 4 réalisé, en attente de revue.** Les points marqués
 *à trancher* attendent une décision ; ils sont regroupés en section 7.
 
 Première chaîne, pour l'organique : **champ de croix → paramétrisation sans couture → T-mesh →
@@ -584,6 +584,51 @@ Ce qui reste ouvert :
 - **Test** : zéro triangle inversé sur tout le corpus ; transitions exactes aux coutures ;
   distorsion mesurée ; sur un tore, la paramétrisation est la grille attendue.
 
+**Réalisé au jalon 4** (`crates/retopo/src/parametrization/`, interface `Parametrizer` et sa
+fabrique).
+
+- **Graphe de coupe** : arbre couvrant des faces, dont le complément est élagué jusqu'aux
+  singularités et aux bords. Le champ est peigné le long de l'arbre.
+- **Résolution** : les conditions de couture sont imposées par lagrangien augmenté, ce qui garde
+  un système symétrique défini positif. Une seule factorisation de Cholesky sert à toutes les
+  itérations, et les coutures finissent exactes (écart de l'ordre de 1e-10).
+- **Inversions** : première ligne de défense seulement, le raidissement. Les faces repliées et
+  leurs voisines sont alourdies, puis on résout de nouveau.
+
+**Jalon de vérité : passé.** Sur les 16 modèles du corpus, à 1000, 3000 et 8000 quads (champ
+simplifié par M3) :
+
+| | Résultat |
+|---|---|
+| Cas sans aucun triangle inversé | **48 sur 48** |
+| Triangles inversés à la première résolution | 0 à 146 selon le modèle |
+| Passes de raidissement nécessaires | 0 à 15 |
+| Distorsion moyenne | de 0,001 (cube) à 0,48 (ogre à 1000 quads) ; 0 = copie rigide de chaque face |
+| Temps, 50 000 triangles | 0,2 à 3,6 secondes |
+
+Les cas les plus durs sont ceux où le quad demandé est gros devant les détails : l'ogre et la
+créature à 1000 quads (15 et 14 passes), et le scan brut à 3000 (11 passes).
+
+Vérifié par les tests : un plan est déplié rigidement ; un cube se déplie sans aucune distorsion,
+ses 8 coins sur la coupe ; un tore se referme avec la bonne période (la circonférence du tube, à
+10 % près) ; la surface coupée est toujours un disque ; le champ est peigné partout hors de la
+coupe ; résultat déterministe.
+
+Ce qui reste ouvert, et qu'il ne faut pas se cacher :
+
+- **Ce jalon ne valide que la moitié du risque.** La carte est sans couture, mais ses
+  translations sont encore réelles. Les rendre entières (J4 bis, puis J7) ajoute des contraintes,
+  donc de la distorsion : des inversions peuvent revenir. Le verdict définitif sur la lignée
+  tombera là.
+- **Faces très étirées** : certaines ne sont pas inversées mais écrasées (étirement jusqu'à 1000
+  près de singularités). Elles sont valides, pas belles.
+- **La distorsion ne dépend pas du budget à ce stade** : la taille du quad ne fait que mettre la
+  carte à l'échelle. Elle n'entrera en jeu qu'avec les entiers.
+- **Bords et arêtes vives** ne sont pas encore contraints à tomber sur des lignes de la grille ;
+  c'est nécessaire pour un bord net et viendra avec les entiers.
+- **Lignes de défense 2 et 3** (contraintes d'*Integer-Grid Maps*, construction à garantie) non
+  écrites : le raidissement a suffi sur le corpus.
+
 ### M5 — T-mesh
 
 - **Entrée** : paramétrisation sans couture de M4.
@@ -653,9 +698,9 @@ Chaque jalon produit quelque chose de vérifiable et se termine par **un arrêt 
 | J0 | Banc de mesure, corpus, fabrique de chaînes | **Fait.** Chiffres de QuadriFlow, de Quad Remesher et du plancher ; seuils adoptés |
 | J1 | Prétraitement (M1) | **Fait.** Maillages de calcul et courbures, tests analytiques |
 | J2 | Champ de croix (M2) | **Fait.** Champs visualisés, singularités comptées |
-| J3 | Singularités (M3), durée bornée | **Fait, en attente de revue.** Gain mesuré sur S : critère de sortie atteint |
-| J4 | Paramétrisation sans couture (M4) | **Jalon de vérité** : zéro inversion sur le corpus, ou activation d'un repli |
-| J4 bis | Arrondi glouton des translations (façon MIQ) et extraction | **Premier résultat complet, provisoire**, comparé à QuadriFlow et à Quad Remesher |
+| J3 | Singularités (M3), durée bornée | **Fait.** Gain mesuré sur S : critère de sortie atteint |
+| J4 | Paramétrisation sans couture (M4) | **Fait, en attente de revue.** Jalon de vérité passé : zéro inversion sur tout le corpus |
+| J4 bis | Arrondi glouton des translations (façon MIQ) et extraction ; configuration unique et préréglages | **Premier résultat complet, provisoire**, comparé à QuadriFlow et à Quad Remesher |
 | J5 | T-mesh (M5) | Partitions en rectangles visualisées |
 | J6 | Quantification (M6) | Contraintes satisfaites, budget tenu |
 | J7 | Carte entière et extraction (M7, M8) | **Résultat complet définitif**, l'arrondi glouton est retiré |
@@ -698,7 +743,8 @@ composent des mêmes briques :
 | `Mesher` | maillage quad depuis la structure quantifiée | carte entière et extraction (M7, M8) | remplissage par motifs |
 | `Relaxer` | placement final (M9) | commune | commune |
 
-Écrites à ce jour : `Remesher`, `Preprocessor`, `CrossFieldSolver` et `SingularityOptimizer`.
+Écrites à ce jour : `Remesher`, `Preprocessor`, `CrossFieldSolver`, `SingularityOptimizer` et
+`Parametrizer` (la première moitié de `LayoutBuilder` pour la chaîne organique).
 
 Les deux chaînes ne diffèrent donc que par deux étapes, `LayoutBuilder` et `Mesher`, plus le
 réglage du champ de croix. Les types échangés entre étapes (maillage de calcul, champ de croix,
@@ -712,11 +758,54 @@ qu'elle soit dictée par un besoin réel. Son contrat, lui, est déjà fixé par
 - **Langage** : Rust, dans l'espace de travail existant.
 - **Maillage** : tableaux plats et table des demi-arêtes opposées (`Topology`), à étendre avec
   des données par coin pour (u, v).
-- **Algèbre linéaire creuse** : `faer`, en Rust pur, qui fournit les factorisations creuses de
-  Cholesky (LLT, LDLT). *À valider en performance sur 200 000 inconnues.* Le problème aux valeurs
-  propres de M2 se ramène à des résolutions répétées avec la même factorisation.
+- **Algèbre linéaire creuse** : `faer` (Rust pur, licence MIT), enveloppé dans `linalg.rs` pour que
+  le reste du code ne le nomme jamais. Sa factorisation de Cholesky creuse sert à la
+  paramétrisation ; le champ de croix s'en passe (gradient conjugué). `faer` n'offre pas en haut
+  niveau de factorisation pour systèmes symétriques indéfinis, d'où la formulation retenue en M4.
 - **Requêtes spatiales** : le BVH existant.
 - **Blender** : utilisé seulement par le banc de mesure, jamais comme dépendance.
+
+### Configuration et préréglages
+
+La chaîne complète (à partir du jalon 4 bis) se règle par une seule structure, avec trois
+préréglages. Elle reprend la proposition d'origine, adaptée à ce que le code expose réellement :
+
+```rust
+pub struct RemeshConfig {
+    pub target: Target,              // nombre de quads ou longueur d'arête
+    pub method: Method,              // quelle chaîne : organique ou durci
+    pub alignment: f64,              // attraction vers la courbure (M2)
+    pub singularity_reach: f64,      // paires annulées en deçà de tant d'arêtes de quad (M3)
+    pub singularity_tolerance: f64,  // ce qu'une annulation a le droit de coûter (M3)
+    pub crease_angle: Option<f64>,   // arêtes vives : None, ou seuil dièdre en degrés
+    pub adaptive_density: f64,       // 0 = taille uniforme ; quand la densité adaptative existera
+}
+
+impl RemeshConfig {
+    pub fn for_animation(target: Target) -> Self;
+    pub fn for_organic(target: Target) -> Self;
+    pub fn for_hard_surface(target: Target) -> Self;
+}
+```
+
+Écarts avec la proposition, et pourquoi :
+
+- `f64` partout au lieu de `f32` : c'est le type de tout le cœur.
+- `preserve_sharp_edges` et `sharp_angle_threshold` fondus en `crease_angle: Option<f64>`, comme
+  dans les étapes déjà écrites : pas de seuil sans préservation, ni l'inverse.
+- `singularity_reach` ajouté : le jalon 3 a montré que le réglage principal de l'annulation est
+  une distance, la tolérance n'étant qu'un garde-fou.
+- `method` et `adaptive_density` ajoutés : le durci a sa propre chaîne, et la densité adaptative
+  est prévue au rang 2.
+
+Intention de chaque préréglage (les valeurs seront fixées sur le corpus, quand il y aura des
+maillages à mesurer) :
+
+| Préréglage | Ce qu'il privilégie | Réglages attendus |
+|---|---|---|
+| `for_animation` | boucles d'arêtes propres, peu de sommets irréguliers, pour bien se déformer | annulation large des singularités, alignement modéré, pas d'arêtes vives |
+| `for_organic` | fidélité à la sculpture | alignement fort, annulation prudente, densité adaptative |
+| `for_hard_surface` | arêtes vives exactes | chaîne durci, arêtes vives préservées (30°), alignement faible puisque ce sont les arêtes qui guident |
 
 ### En vue de la bibliothèque C (J10)
 
@@ -793,4 +882,6 @@ Prises :
 - cœur strict sur les entrées (surface orientée, deux faces par arête au plus), tolérance logée
   dans le prétraitement ; Desert Rose hors acceptation ;
 - feuille de route étendue : plis automatiques, normales optimales, reconstitution Multires
-  (J12 à J14).
+  (J12 à J14) ;
+- une configuration unique `RemeshConfig` et trois préréglages (animation, organique, durci),
+  introduits avec la première chaîne complète (J4 bis).
