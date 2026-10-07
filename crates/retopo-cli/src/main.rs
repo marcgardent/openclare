@@ -6,6 +6,7 @@ use retopo::mesh::{Topology, obj, primitives};
 use retopo::metrics::measure;
 use retopo::preprocess;
 use retopo::remesher::{self, Method, Request};
+use retopo::singularity;
 use retopo::{PolyMesh, Target, TriMesh};
 
 const USAGE: &str = "\
@@ -38,6 +39,8 @@ OPTIONS (field):
     --quads <N>            read curvature at the scale of a mesh of N quads
     --scale <L>            length over which curvature is read (default: work mesh edge)
     --crease-angle <DEG>   treat input edges sharper than this as hard constraints
+    --simplify <R>         cancel opposite singularities closer than R quad edges (needs --quads)
+    --tolerance <T>        what a cancellation may cost (default 1)
     --crosses <out.obj>    write the field as small crosses, singularities as markers
 
 OPTIONS (measure):
@@ -251,6 +254,7 @@ fn field_command(args: &[String]) -> Result<(), String> {
     let mut request = crossfield::Request::default();
     let mut kind = crossfield::Kind::Power;
     let (mut crosses, mut quads, mut paths) = (None, None::<usize>, Vec::new());
+    let (mut simplify, mut tolerance) = (None::<f64>, singularity::Request::default().tolerance);
     let mut args = args.iter();
     while let Some(arg) = args.next() {
         let mut value = |name: &str| args.next().ok_or(format!("{name} expects a value"));
@@ -262,6 +266,8 @@ fn field_command(args: &[String]) -> Result<(), String> {
             "--quads" => quads = Some(parse(arg, value(arg)?)?),
             "--crease-angle" => work_request.crease_angle = Some(parse(arg, value(arg)?)?),
             "--crosses" => crosses = Some(value(arg)?.clone()),
+            "--simplify" => simplify = Some(parse(arg, value(arg)?)?),
+            "--tolerance" => tolerance = parse(arg, value(arg)?)?,
             flag if flag.starts_with("--") => return Err(format!("unknown option '{flag}'")),
             path => paths.push(path),
         }
@@ -278,8 +284,22 @@ fn field_command(args: &[String]) -> Result<(), String> {
         .preprocess(&source, &work_request)
         .map_err(|e| e.to_string())?;
     let start = std::time::Instant::now();
-    let field = crossfield::create(kind).solve(&work, &request).map_err(|e| e.to_string())?;
+    let mut field = crossfield::create(kind).solve(&work, &request).map_err(|e| e.to_string())?;
     let seconds = start.elapsed().as_secs_f64();
+
+    let mut simplification = None;
+    if let Some(quad_edges) = simplify {
+        let quad_edge = work_request.curvature_scale.ok_or("--simplify needs --quads or --scale")?;
+        let optimizer = singularity::create(singularity::Kind::PairCancellation);
+        let options =
+            singularity::Request { alignment: request.alignment, tolerance, reach: Some(quad_edges * quad_edge) };
+        let start = std::time::Instant::now();
+        let (simplified, report) = optimizer.optimize(&work, &field, &options).map_err(|e| e.to_string())?;
+        let frames = crossfield::FaceFrames::build(&work.mesh, &Topology::build(&work.mesh));
+        let before = crossfield::alignment_error(&work, &frames, &field);
+        simplification = Some((report, before, start.elapsed().as_secs_f64()));
+        field = simplified;
+    }
 
     let frames = crossfield::FaceFrames::build(&work.mesh, &Topology::build(&work.mesh));
     let (positive, negative, other) = field.singularities();
@@ -291,6 +311,17 @@ fn field_command(args: &[String]) -> Result<(), String> {
         None => println!("alignment      n/a"),
     }
     println!("seconds        {seconds:.3}");
+    if let Some((report, alignment_before, seconds)) = simplification {
+        println!(
+            "simplified     {} -> {} singularities ({} pairs cancelled of {} tried, {} split), alignment was {}, {seconds:.3} s",
+            report.singularities_before,
+            report.singularities_after,
+            report.cancelled,
+            report.tried,
+            report.split,
+            alignment_before.map_or("n/a".into(), |a| format!("{a:.2} deg")),
+        );
+    }
 
     if let Some(path) = crosses {
         obj::write_obj_poly(&path, &field_as_crosses(&work, &frames, &field)).map_err(|e| format!("{path}: {e}"))?;

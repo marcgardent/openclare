@@ -30,6 +30,7 @@ pub mod pipeline;
 pub mod preprocess;
 pub mod relax;
 pub mod remesher;
+pub mod singularity;
 pub mod spatial;
 
 pub use error::{Error, Result};

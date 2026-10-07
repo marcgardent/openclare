@@ -64,9 +64,15 @@ impl FaceFrames {
             frames.across[h] = g as u32;
             let tri = mesh.triangles[f];
             let edge = mesh.positions[tri[(h + 1) % 3] as usize] - mesh.positions[tri[h % 3] as usize];
-            // Wrapped to (-π, π], so that the two sides of an edge are exact opposites.
-            let turn = frames.angle_of(g, edge) - frames.angle_of(f, edge);
-            frames.rotation[h] = turn.sin().atan2(turn.cos());
+            // Computed once per edge and negated for the other side, so that
+            // the two are exact opposites. Each side on its own would not do:
+            // where the edge is the first edge of both faces the turn is half
+            // a turn, and both sides would call it +π.
+            if h < twin as usize {
+                let turn = frames.angle_of(g, edge) - frames.angle_of(f, edge);
+                frames.rotation[h] = turn.sin().atan2(turn.cos());
+                frames.rotation[twin as usize] = -frames.rotation[h];
+            }
             let total_area = frames.area[f] + frames.area[g];
             if frames.area[f] > 0.0 && frames.area[g] > 0.0 {
                 // Edge length over the distance between the two faces, up to
@@ -111,8 +117,7 @@ mod tests {
         let frames = FaceFrames::build(&mesh, &topology);
         for h in 0..3 * mesh.triangles.len() {
             let back = topology.opposite[h] as usize;
-            let round_trip = frames.rotation[h] + frames.rotation[back];
-            assert!((round_trip.sin()).abs() < 1e-12 && round_trip.cos() > 0.0);
+            assert_eq!(frames.rotation[h], -frames.rotation[back]);
             assert!((frames.weight[h] - frames.weight[back]).abs() < 1e-12);
         }
     }
