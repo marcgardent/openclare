@@ -60,7 +60,10 @@ d'essai : usage non commercial.
 ## Ajouter un outil
 
 Une ligne dans le dictionnaire `TOOLS` de `run.py`. Pour une chaîne de ce dépôt :
-`"nom": retopo("nom")`, où le nom est celui que connaît `retopo remesh --method`.
+`"nom": retopo("nom")`, où le nom est celui que connaît `retopo remesh --method`. Une chaîne
+qui n'utilise pas la graine se déclare avec `seeded=False` et n'est lancée qu'une fois.
+
+Les deux chaînes du dépôt y sont : `instant-meshes` (le plancher) et `integer-grid` (la cible).
 
 ## Réglages de la comparaison
 

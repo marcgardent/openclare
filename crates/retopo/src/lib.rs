@@ -16,6 +16,7 @@
 // Index loops over parallel per-vertex arrays are the clearest form here.
 #![allow(clippy::needless_range_loop)]
 
+pub mod config;
 pub mod crossfield;
 pub mod curvature;
 pub mod error;
@@ -35,7 +36,8 @@ pub mod remesher;
 pub mod singularity;
 pub mod spatial;
 
+pub use config::RemeshConfig;
 pub use error::{Error, Result};
 pub use mesh::{PolyMesh, TriMesh};
 pub use pipeline::{Params, Report, Target, remesh};
-pub use remesher::{Method, Remesher, Request};
+pub use remesher::{Method, Remesher};

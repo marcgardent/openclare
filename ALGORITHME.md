@@ -1,6 +1,7 @@
-# Cahier des charges : moteur de retopologie quad
+# openclare — cahier des charges du moteur de retopologie quad
 
-**Statut : validé le 6 octobre 2026. Jalons 0 à 3 faits ; jalon 4 réalisé, en attente de revue.** Les points marqués
+**Statut : validé le 6 octobre 2026. Jalons 0 à 4 faits ; jalon 4 bis réalisé, en attente de revue.**
+Le projet s'appelle **openclare** ; les crates portent encore le nom provisoire `retopo`. Les points marqués
 *à trancher* attendent une décision ; ils sont regroupés en section 7.
 
 Première chaîne, pour l'organique : **champ de croix → paramétrisation sans couture → T-mesh →
@@ -629,6 +630,72 @@ Ce qui reste ouvert, et qu'il ne faut pas se cacher :
 - **Lignes de défense 2 et 3** (contraintes d'*Integer-Grid Maps*, construction à garantie) non
   écrites : le raidissement a suffi sur le corpus.
 
+### Jalon 4 bis — premier résultat complet (provisoire)
+
+La première chaîne complète existe : `integer-grid`. Elle enchaîne prétraitement, champ de
+croix, simplification des singularités, paramétrisation entière, extraction et relaxation.
+
+- **Carte entière par arrondi glouton** (`parametrization/integer.rs`) : on résout sans entiers,
+  on arrondit les quantités les plus proches d'un entier, on résout de nouveau, jusqu'à
+  épuisement. Les quantités entières sont les coordonnées des singularités, les translations des
+  coutures qu'aucune singularité ne fixe, et la ligne de grille de chaque arête caractéristique.
+- **Extraction** (`extract/grid.rs`) : chaque point de la surface appartient au point de grille
+  le plus proche ; les triangles sont raffinés, les sommets d'une même cellule fusionnés, et deux
+  cellules voisines reliées. C'est l'extraction d'Instant Meshes nourrie d'une grille globalement
+  cohérente. Elle n'a jamais à suivre une ligne à travers une couture, et tolère quelques
+  triangles inversés ; ce n'est pas l'extraction exacte du module M8.
+- **Réparation locale** : les rares faces non quads sont fusionnées par paires ou recoupées.
+
+Mesuré à 3000 quads sur les 12 modèles organiques (Desert Rose hors acceptation) :
+
+| | QuadriFlow | Quad Remesher (uniforme) | **openclare** | Plancher |
+|---|---|---|---|---|
+| Maillages valides (V) | 36 sur 60 | 10 sur 12 | **9 sur 12** | 47 sur 60 |
+| Alignement (A), médiane | 17,5° | 7,7° | **8,8°** | 16,6° |
+| Sommets irréguliers (S), médiane | 66 | 68 | **50** | 156 |
+| Écart d'angle moyen (F), médiane | 8,6° | 7,2° | **8,0°** | 6,0° |
+| Écart au budget (N), médiane | 4 % | 10 % | **11 %** | 2 % |
+| Temps, médiane | 1,9 s | 12 s | **6,5 s** | 1,2 s |
+
+Structure (C), sur les modèles où notre maillage est valide : toujours moins de patchs que
+QuadriFlow, et le plus souvent moins que Quad Remesher (blob 951 contre 2697 et 1350 ; cage 427
+contre 1943 et 1001 ; Bob 714 contre 2903 et 2568). Le tore sort en grille parfaite : aucun
+sommet irrégulier, un seul patch.
+
+Face aux seuils d'acceptation :
+
+| Seuil | Verdict |
+|---|---|
+| A : au moins 2° de mieux que QuadriFlow | **tenu sur les 11 modèles comparables** |
+| C : pas plus de patchs que QuadriFlow | **tenu partout où il est mesurable** (8 modèles) |
+| H : Hausdorff au plus 1,2 fois celui de QuadriFlow | tenu sur 10 modèles sur 11 |
+| S : au plus 1,5 fois QuadriFlow | tenu sur 9 sur 11 (pas sur le rocher ni la créature) |
+| F : écart d'angle pas plus élevé | tenu sur 8 sur 11 |
+| V : tous les maillages valides | **non tenu** : 9 sur 12 |
+| N : écart au budget d'au plus 5 % | **non tenu** : 1 sur 12, il manque 8 à 18 % des faces |
+
+**Verdict sur la lignée.** Les deux jalons de vérité sont passés sur le fond : la chaîne produit
+de vrais maillages quad, structurés, mieux alignés que ceux de QuadriFlow sur tous les modèles
+et proches de ceux de Quad Remesher. Elle n'est pas encore acceptable : la validité et le budget
+ne sont pas tenus, et ce sont précisément les deux points que la quantification (J5, J6) est
+faite pour régler.
+
+Ce qui ne va pas, et pourquoi :
+
+- **Trois maillages invalides** (ogre, Blub, cochon) : il y reste 2 à 6 faces non quads, isolées,
+  que la réparation locale ne sait pas apparier. Aucun trou, aucune face inversée.
+- **La carte garde des triangles inversés après arrondi** (6 à 80 selon le modèle), que le
+  raidissement ne résout plus : l'arrondi glouton peut pousser deux singularités sur le même
+  point de grille. C'est la limite connue de cette méthode.
+- **Impasse de parité, contournée.** Arrondies dans le désordre, les dernières singularités se
+  retrouvent forcées sur des demi-entiers. La carte est donc calculée sur une grille deux fois
+  plus grossière puis doublée : les choix libres tombent sur des lignes paires. C'est moins fin,
+  et c'est une cause du budget non tenu et de quads étirés.
+- **Arêtes vives** : sur le cube, les contraintes de lignes de grille ne se concilient pas avec le
+  reste ; la chaîne se replie alors sur le champ seul (8 sommets irréguliers, mais des lignes
+  décalées des arêtes). La pièce percée, elle, passe.
+- **Vitesse** : 2 à 10 secondes, dominées par les résolutions répétées de l'arrondi.
+
 ### M5 — T-mesh
 
 - **Entrée** : paramétrisation sans couture de M4.
@@ -699,8 +766,8 @@ Chaque jalon produit quelque chose de vérifiable et se termine par **un arrêt 
 | J1 | Prétraitement (M1) | **Fait.** Maillages de calcul et courbures, tests analytiques |
 | J2 | Champ de croix (M2) | **Fait.** Champs visualisés, singularités comptées |
 | J3 | Singularités (M3), durée bornée | **Fait.** Gain mesuré sur S : critère de sortie atteint |
-| J4 | Paramétrisation sans couture (M4) | **Fait, en attente de revue.** Jalon de vérité passé : zéro inversion sur tout le corpus |
-| J4 bis | Arrondi glouton des translations (façon MIQ) et extraction ; configuration unique et préréglages | **Premier résultat complet, provisoire**, comparé à QuadriFlow et à Quad Remesher |
+| J4 | Paramétrisation sans couture (M4) | **Fait.** Jalon de vérité passé : zéro inversion sur tout le corpus |
+| J4 bis | Arrondi glouton des translations (façon MIQ) et extraction ; configuration unique et préréglages | **Fait, en attente de revue.** Premier résultat complet, provisoire, mesuré face à QuadriFlow et à Quad Remesher |
 | J5 | T-mesh (M5) | Partitions en rectangles visualisées |
 | J6 | Quantification (M6) | Contraintes satisfaites, budget tenu |
 | J7 | Carte entière et extraction (M7, M8) | **Résultat complet définitif**, l'arrondi glouton est retiré |
@@ -743,8 +810,9 @@ composent des mêmes briques :
 | `Mesher` | maillage quad depuis la structure quantifiée | carte entière et extraction (M7, M8) | remplissage par motifs |
 | `Relaxer` | placement final (M9) | commune | commune |
 
-Écrites à ce jour : `Remesher`, `Preprocessor`, `CrossFieldSolver`, `SingularityOptimizer` et
-`Parametrizer` (la première moitié de `LayoutBuilder` pour la chaîne organique).
+Écrites à ce jour : `Remesher` (deux chaînes : `instant-meshes` et `integer-grid`),
+`Preprocessor`, `CrossFieldSolver`, `SingularityOptimizer` et `Parametrizer` (deux
+implémentations : `seamless` et `integer-grid`).
 
 Les deux chaînes ne diffèrent donc que par deux étapes, `LayoutBuilder` et `Mesher`, plus le
 réglage du champ de croix. Les types échangés entre étapes (maillage de calcul, champ de croix,
@@ -767,45 +835,49 @@ qu'elle soit dictée par un besoin réel. Son contrat, lui, est déjà fixé par
 
 ### Configuration et préréglages
 
-La chaîne complète (à partir du jalon 4 bis) se règle par une seule structure, avec trois
-préréglages. Elle reprend la proposition d'origine, adaptée à ce que le code expose réellement :
+Dans l'esprit de Blender : un préréglage n'est qu'un jeu de paramètres nommé. L'utilisateur garde
+la main sur chaque réglage, peut enregistrer les siens, et le projet en fournit quelques-uns,
+documentés.
+
+En place depuis le jalon 4 bis (`crates/retopo/src/config.rs`) :
 
 ```rust
 pub struct RemeshConfig {
+    pub method: Method,              // quelle chaîne
     pub target: Target,              // nombre de quads ou longueur d'arête
-    pub method: Method,              // quelle chaîne : organique ou durci
     pub alignment: f64,              // attraction vers la courbure (M2)
     pub singularity_reach: f64,      // paires annulées en deçà de tant d'arêtes de quad (M3)
     pub singularity_tolerance: f64,  // ce qu'une annulation a le droit de coûter (M3)
     pub crease_angle: Option<f64>,   // arêtes vives : None, ou seuil dièdre en degrés
-    pub adaptive_density: f64,       // 0 = taille uniforme ; quand la densité adaptative existera
-}
-
-impl RemeshConfig {
-    pub fn for_animation(target: Target) -> Self;
-    pub fn for_organic(target: Target) -> Self;
-    pub fn for_hard_surface(target: Target) -> Self;
+    pub seed: u64,
 }
 ```
 
-Écarts avec la proposition, et pourquoi :
+- **Tous les champs sont publics** et modifiables un à un.
+- **Enregistrer un préréglage**, c'est écrire la configuration dans un petit fichier texte
+  (`clé = valeur`, une ligne par champ) ; le relire redonne la même configuration. Un fichier
+  peut être édité à la main, et ce qu'il ne mentionne pas garde sa valeur par défaut.
+- **Trois préréglages fournis**, listés par `retopo presets` :
+
+| Préréglage | Ce qu'il privilégie | Réglages actuels |
+|---|---|---|
+| `organic` | fidélité à la sculpture | alignement 0,05 ; annulation jusqu'à 2 arêtes de quad |
+| `animation` | peu de sommets irréguliers, pour bien se déformer | comme `organic`, annulation jusqu'à 3 arêtes |
+| `hard-surface` | arêtes vives | arêtes de plus de 30° préservées ; alignement 0,02 |
+
+Ces valeurs sont un point de départ, à régler sur le corpus. `hard-surface` tourne pour
+l'instant sur la chaîne organique, en attendant la chaîne durci (J9).
+
+Écarts avec la proposition d'origine, et pourquoi :
 
 - `f64` partout au lieu de `f32` : c'est le type de tout le cœur.
-- `preserve_sharp_edges` et `sharp_angle_threshold` fondus en `crease_angle: Option<f64>`, comme
-  dans les étapes déjà écrites : pas de seuil sans préservation, ni l'inverse.
+- `preserve_sharp_edges` et `sharp_angle_threshold` fondus en `crease_angle: Option<f64>` : pas
+  de seuil sans préservation, ni l'inverse.
 - `singularity_reach` ajouté : le jalon 3 a montré que le réglage principal de l'annulation est
   une distance, la tolérance n'étant qu'un garde-fou.
-- `method` et `adaptive_density` ajoutés : le durci a sa propre chaîne, et la densité adaptative
-  est prévue au rang 2.
-
-Intention de chaque préréglage (les valeurs seront fixées sur le corpus, quand il y aura des
-maillages à mesurer) :
-
-| Préréglage | Ce qu'il privilégie | Réglages attendus |
-|---|---|---|
-| `for_animation` | boucles d'arêtes propres, peu de sommets irréguliers, pour bien se déformer | annulation large des singularités, alignement modéré, pas d'arêtes vives |
-| `for_organic` | fidélité à la sculpture | alignement fort, annulation prudente, densité adaptative |
-| `for_hard_surface` | arêtes vives exactes | chaîne durci, arêtes vives préservées (30°), alignement faible puisque ce sont les arêtes qui guident |
+- `method` ajouté : le durci aura sa propre chaîne.
+- Pas encore de champ pour la densité adaptative : il viendra avec elle, et les fichiers déjà
+  enregistrés resteront lisibles.
 
 ### En vue de la bibliothèque C (J10)
 

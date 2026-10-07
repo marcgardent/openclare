@@ -73,6 +73,9 @@ pub struct Report {
     /// Loops of the extracted graph left without a face (see
     /// [`crate::extract::FaceExtraction::open_loops`]).
     pub open_loops: usize,
+    /// Triangles left inverted in the parametrization, for the chains that
+    /// have one: each is a likely defect in the mesh.
+    pub map_inversions: usize,
     pub stats: MeshStats,
     pub timings: Vec<(&'static str, Duration)>,
 }

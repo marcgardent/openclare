@@ -1,27 +1,26 @@
-# retopo
+# openclare
 
 Retopologie automatique en quads, alignée sur un champ de directions, écrite en Rust.
-Objectif : une alternative open source à Quad Remesher.
+Objectif : une alternative open source à Quad Remesher, meilleure que le remaillage quad de
+Blender. (Les crates et l'exécutable portent encore le nom provisoire `retopo`.)
 
 ![Tore, cube à arêtes vives et Suzanne remaillés](docs/images/apercu.png)
 
 ## État
 
-Première chaîne complète et fonctionnelle, de bout en bout : maillage triangulé en entrée,
-maillage 100 % quads en sortie. Elle réimplémente l'approche d'*Instant Field-Aligned Meshes*
-(Jakob et al., 2015), qui sert de socle au reste.
+Deux chaînes de remaillage, de bout en bout (triangles en entrée, quads en sortie) :
 
-Ce qui marche :
+- **`integer-grid`**, la chaîne cible, encore provisoire. Champ de croix aligné sur la courbure,
+  simplification des singularités, paramétrisation à grille entière, extraction. Sur le corpus,
+  ses arêtes suivent la forme deux fois mieux que celles de Blender et presque aussi bien que
+  celles de Quad Remesher, avec une vraie structure globale. Elle n'est pas encore fiable : un
+  maillage sur quatre garde quelques faces non quads, et le nombre de faces demandé n'est tenu
+  qu'à 10 % près.
+- **`instant-meshes`**, le plancher de comparaison : robuste et rapide, mais sans structure et
+  avec beaucoup de sommets irréguliers.
 
-- nombre de quads cible ou longueur d'arête cible ;
-- sortie quads purs (par défaut) ou quad-dominante ;
-- suivi des bords ouverts et des arêtes vives (`--crease-angle`), coins conservés ;
-- résultat projeté sur la surface d'origine, déterministe (graine fixée) ;
-- ~4,5 s pour 100 000 quads sur un seul cœur.
-
-Cette chaîne est un **plancher de comparaison**, pas la cible : il reste 3 à 6 % de sommets
-irréguliers parasites. La cible, son critère d'acceptation (faire mieux que le remaillage quad de
-Blender) et ses jalons sont dans le cahier des charges [ALGORITHME.md](ALGORITHME.md).
+Le cahier des charges, les mesures et la feuille de route sont dans
+[ALGORITHME.md](ALGORITHME.md).
 
 ## Utilisation
 
@@ -30,7 +29,7 @@ cargo build --release
 ```
 
 ```bash
-./target/release/retopo remesh entree.obj sortie.obj --quads 5000 --crease-angle 30
+./target/release/retopo remesh entree.obj sortie.obj --quads 5000
 ```
 
 Pour essayer sans maillage sous la main (`torus`, `sphere`, `cube`, `plane`) :
@@ -39,17 +38,39 @@ Pour essayer sans maillage sous la main (`torus`, `sphere`, `cube`, `plane`) :
 ./target/release/retopo primitive torus tore.obj
 ```
 
-`retopo --help` liste les options, dont `--method` qui choisit la chaîne de remaillage (une seule
-pour l'instant, `instant-meshes`). Pour mesurer un résultat et le comparer à Blender, voir
-[bench/README.md](bench/README.md).
+### Préréglages
+
+Un préréglage est un jeu de paramètres nommé ; chaque paramètre reste réglable par-dessus.
+
+```bash
+./target/release/retopo presets
+```
+
+```bash
+./target/release/retopo remesh entree.obj sortie.obj --preset animation --quads 8000 --alignment 0.1
+```
+
+Pour enregistrer les réglages d'un lancement et les réutiliser comme préréglage personnel :
+
+```bash
+./target/release/retopo remesh entree.obj sortie.obj --preset organic --singularity-reach 4 --save-config perso.txt
+```
+
+```bash
+./target/release/retopo remesh autre.obj sortie.obj --config perso.txt
+```
+
+`retopo --help` liste toutes les options. Pour mesurer un résultat et le comparer à Blender et à
+Quad Remesher, voir [bench/README.md](bench/README.md).
 
 Comme bibliothèque :
 
 ```rust
-use retopo::{Params, Target, remesh};
+use retopo::{RemeshConfig, Target};
 
-let params = Params { target: Target::QuadCount(5000), crease_angle: Some(30.0), ..Default::default() };
-let (quads, report) = remesh(&triangles, &params)?;
+let mut config = RemeshConfig::for_organic(Target::QuadCount(5000));
+config.alignment = 0.1;
+let (quads, report) = config.remesh(&triangles)?;
 ```
 
 ## Organisation
@@ -60,16 +81,17 @@ let (quads, report) = remesh(&triangles, &params)?;
 | `geometry` | normales, aires, détection des arêtes caractéristiques |
 | `hierarchy` | graphe multi-résolution pour résoudre du grossier au fin |
 | `field` | champ d'orientation (4-RoSy), champ de position (4-PoSy), contraintes, singularités |
-| `extract` | du champ au graphe de quads, puis aux faces |
+| `extract` | du champ ou de la carte entière au graphe de quads, puis aux faces |
 | `relax` | lissage final contraint à la surface et aux arêtes vives |
 | `spatial` | BVH pour la projection sur la surface source |
 | `pipeline` | enchaînement complet de la chaîne Instant Meshes |
-| `remesher` | interface commune à toutes les chaînes, et fabrique qui les crée par nom |
+| `remesher` | interface commune aux chaînes, fabrique qui les crée par nom, et la chaîne `integer-grid` |
 | `preprocess` | étape de prétraitement : nettoyage, décimation, remaillage isotrope, courbures |
 | `crossfield` | étape du champ de croix : une croix par face, alignement sur la courbure, singularités |
 | `singularity` | étape de simplification : annulation des paires de singularités inutiles |
 | `parametrization` | étape de paramétrisation : graphe de coupe, carte (u, v) sans couture |
 | `linalg` | algèbre linéaire creuse (enveloppe de la bibliothèque `faer`) |
+| `config` | configuration unique d'un remaillage, préréglages, enregistrement et relecture |
 | `curvature` | courbures et directions principales |
 | `metrics` | mesures de qualité d'un maillage quad par rapport à sa source |
 

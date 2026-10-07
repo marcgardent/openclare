@@ -6,6 +6,7 @@
 
 pub mod faces;
 pub mod graph;
+pub mod grid;
 
 pub use faces::{FaceExtraction, extract_faces};
 pub use graph::LatticeGraph;

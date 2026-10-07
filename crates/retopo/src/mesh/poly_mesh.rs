@@ -124,6 +124,91 @@ impl PolyMesh {
         PolyMesh { positions, faces }
     }
 
+    /// Turns the faces that are not quads into quads where that only takes
+    /// moving edges, not vertices: two odd faces sharing an edge are merged,
+    /// and any face with an even number of sides is cut into quads from one
+    /// of its corners. Odd faces with no odd neighbour are left as they are.
+    /// Returns how many non-quad faces remain.
+    pub fn repair_to_quads(&mut self) -> usize {
+        // Merge pairs of odd faces across the edge they share.
+        let mut across: HashMap<(u32, u32), usize> = HashMap::new();
+        for (f, face) in self.faces.iter().enumerate() {
+            if face.len() % 2 == 1 {
+                for k in 0..face.len() {
+                    across.insert((face[k], face[(k + 1) % face.len()]), f);
+                }
+            }
+        }
+        let mut merged = vec![false; self.faces.len()];
+        let mut additions = Vec::new();
+        for f in 0..self.faces.len() {
+            if merged[f] || self.faces[f].len().is_multiple_of(2) {
+                continue;
+            }
+            let face = &self.faces[f];
+            let n = face.len();
+            let partner = (0..n).find_map(|k| {
+                let g = *across.get(&(face[(k + 1) % n], face[k]))?;
+                (g != f && !merged[g]).then_some((k, g))
+            });
+            let Some((k, g)) = partner else { continue };
+            let other = &self.faces[g];
+            let m = other.len();
+            // The shared edge runs a -> b in `face` and b -> a in `other`.
+            let (a, b) = (face[k], face[(k + 1) % n]);
+            let at = (0..m).find(|&j| other[j] == b && other[(j + 1) % m] == a).unwrap();
+            // Round `face` from b back to a, then round `other` from a to b,
+            // leaving out the shared edge itself.
+            let mut polygon: Vec<u32> = (1..=n).map(|i| face[(k + i) % n]).collect();
+            polygon.extend((2..m).map(|j| other[(at + j) % m]));
+            let simple = {
+                let mut sorted = polygon.clone();
+                sorted.sort_unstable();
+                sorted.windows(2).all(|w| w[0] != w[1])
+            };
+            if simple {
+                merged[f] = true;
+                merged[g] = true;
+                additions.push(polygon);
+            }
+        }
+        let mut faces: Vec<Vec<u32>> =
+            self.faces.drain(..).zip(merged).filter(|(_, gone)| !gone).map(|(face, _)| face).collect();
+        faces.extend(additions);
+
+        // Cut even faces of six sides or more into quads, fanning from the
+        // corner that leaves the shortest diagonals.
+        let mut out = Vec::with_capacity(faces.len());
+        for face in faces {
+            let n = face.len();
+            if n < 6 || n % 2 == 1 {
+                out.push(face);
+                continue;
+            }
+            // The fan from a corner uses the diagonals to every second
+            // vertex after its neighbour: 3, 5, ... steps round the face.
+            let reach = |start: usize| -> f64 {
+                (3..n - 1)
+                    .step_by(2)
+                    .map(|j| {
+                        self.positions[face[start] as usize].distance(self.positions[face[(start + j) % n] as usize])
+                    })
+                    .sum()
+            };
+            let start = (0..n).min_by(|&a, &b| reach(a).total_cmp(&reach(b))).unwrap();
+            for i in 0..(n - 2) / 2 {
+                out.push(vec![
+                    face[start],
+                    face[(start + 2 * i + 1) % n],
+                    face[(start + 2 * i + 2) % n],
+                    face[(start + 2 * i + 3) % n],
+                ]);
+            }
+        }
+        self.faces = out;
+        self.faces.iter().filter(|face| face.len() != 4).count()
+    }
+
     /// Removes interior vertices of valence 2: they sit in the middle of what
     /// is really a single edge between two faces. Returns how many went.
     pub fn dissolve_valence_two(&mut self) -> usize {
@@ -226,6 +311,28 @@ mod tests {
         // 6 corners + 7 edge midpoints + 2 centres; the shared edge is split once.
         assert_eq!(stats.vertices, 15);
         assert_eq!(stats.non_manifold_edges, 0);
+    }
+
+    #[test]
+    fn odd_pairs_and_even_polygons_become_quads() {
+        // A triangle and a pentagon glued along 0-1, next to a hexagon.
+        let positions = (0..12).map(|i| Vec3::new((i as f64).cos(), (i as f64).sin(), 0.0)).collect();
+        let mut mesh = PolyMesh {
+            positions,
+            faces: vec![vec![0, 1, 2], vec![1, 0, 3, 4, 5], vec![6, 7, 8, 9, 10, 11], vec![0, 2, 6, 7]],
+        };
+        assert_eq!(mesh.repair_to_quads(), 0);
+        // Triangle + pentagon -> one hexagon -> two quads; hexagon -> two quads.
+        assert_eq!(mesh.faces.len(), 5);
+        assert!(mesh.faces.iter().all(|face| face.len() == 4));
+        let mut used: Vec<u32> = mesh.faces.iter().flatten().copied().collect();
+        used.sort_unstable();
+        used.dedup();
+        assert_eq!(used.len(), 12, "no vertex may be lost");
+
+        // A lone triangle has nothing to pair with.
+        let mut lone = PolyMesh { positions: mesh.positions.clone(), faces: vec![vec![0, 1, 2], vec![2, 1, 3, 4]] };
+        assert_eq!(lone.repair_to_quads(), 1);
     }
 
     #[test]
