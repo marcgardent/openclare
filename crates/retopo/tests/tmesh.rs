@@ -88,14 +88,15 @@ fn the_cuts_of_a_cube_are_its_edges() {
     let (_, tmesh) = layout(&primitives::cube(8), Some(30.0), 0.0, 0.1);
     check_structure(&tmesh);
     let report = &tmesh.report;
-    // Three traces per corner, along the edges; those of neighbouring
-    // corners meet nose to nose in the middle of each edge.
-    assert_eq!((report.singularities, report.traces), (8, 24));
-    assert_eq!((report.nodes, report.arcs, report.patches), (20, 24, 6));
+    // Its hard edges are cuts from the start, corner to corner; nothing
+    // else is needed, and its corners send no trace out.
+    assert_eq!((report.singularities, report.traces, report.off_grid_edges), (8, 0, 0));
+    assert_eq!((report.nodes, report.arcs, report.patches), (8, 12, 6));
     assert_eq!(report.t_junctions, 0);
     for arc in &tmesh.arcs {
-        // Half an edge of a cube of side 2, in quads of 0.1.
-        assert!((arc.length - 10.0).abs() < 0.2, "{}", arc.length);
+        assert!(arc.feature && !arc.border);
+        // An edge of a cube of side 2, in quads of 0.1.
+        assert!((arc.length - 20.0).abs() < 1e-3, "{}", arc.length);
     }
     for patch in &tmesh.patches {
         for side in patch.sides.unwrap() {
@@ -105,11 +106,50 @@ fn the_cuts_of_a_cube_are_its_edges() {
 }
 
 #[test]
+fn an_edge_that_turns_inwards_sends_traces_out() {
+    // An L-shaped block: on each of its two L faces, the inner corner spans
+    // three quarter turns and sends two traces across the face.
+    let (_, tmesh) = layout(&primitives::l_block(8), Some(30.0), 0.0, 0.08);
+    check_structure(&tmesh);
+    let report = &tmesh.report;
+    assert_eq!((report.singularities, report.traces), (12, 4));
+    // Each L face is cut into three rectangles; the six sides are whole.
+    assert_eq!(report.patches, 12);
+    assert_eq!(report.t_junctions, 4);
+    let walls = tmesh.arcs.iter().filter(|arc| arc.feature).count();
+    assert_eq!(tmesh.arcs.len() - walls, 4);
+    assert_eq!(report.euler, 2);
+}
+
+#[test]
+fn a_hard_edge_that_closes_on_itself_is_a_cut_too() {
+    // The two rims of a cylinder: closed curves without a corner.
+    let (_, tmesh) = layout(&primitives::cylinder(12), Some(30.0), 0.0, 0.12);
+    check_structure(&tmesh);
+    let report = &tmesh.report;
+    assert_eq!(report.off_grid_edges, 0);
+    // Each flat cap needs four singularities to turn its grid into a disk.
+    assert_eq!(report.singularities, 8);
+    // Both rims are whole in the T-mesh, and the same length in the map: the
+    // grid lines that leave one cap all reach the other. (That length is
+    // less than the 2 pi / 0.12 of the circle: the caps, whose rings shrink
+    // towards their centre, pull it down.)
+    let rim_at = |top: bool| -> f64 {
+        let on_it = |node: u32| (tmesh.nodes[node as usize].position.z > 0.0) == top;
+        tmesh.arcs.iter().filter(|arc| arc.feature && on_it(arc.nodes[0])).map(|arc| arc.length).sum()
+    };
+    let rims = [rim_at(true), rim_at(false)];
+    assert!((rims[0] - rims[1]).abs() < 1e-3, "{rims:?}");
+    let circle = std::f64::consts::TAU / 0.12;
+    assert!(rims[0] > 0.5 * circle && rims[0] < 1.1 * circle, "{rims:?} for a circle of {circle}");
+}
+
+#[test]
 fn an_open_sheet_is_one_rectangle_bounded_by_its_border() {
     let (_, tmesh) = layout(&primitives::plane(24), None, 0.0, 0.1);
     check_structure(&tmesh);
     let report = &tmesh.report;
-    assert_eq!((report.singularities, report.traces, report.border_off_grid), (0, 0, 0));
+    assert_eq!((report.singularities, report.traces, report.off_grid_edges), (0, 0, 0));
     assert_eq!((report.nodes, report.arcs, report.patches), (4, 4, 1));
     assert!(tmesh.arcs.iter().all(|arc| arc.border && arc.patches == [0, u32::MAX]));
     for side in tmesh.patches[0].sides.unwrap() {

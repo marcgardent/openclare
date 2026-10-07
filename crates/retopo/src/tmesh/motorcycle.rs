@@ -5,9 +5,10 @@
 //! 2008; used this way by Campen et al. 2015). What is left is a partition
 //! of the surface into rectangles of the map.
 //!
-//! An open border is a cut that is there from the start: traces stop on it,
-//! and where it turns a corner into the surface it sends traces out as a
-//! singularity does. That takes a map whose borders run along grid lines.
+//! Open borders and hard edges are cuts that are there from the start (see
+//! [`super::walls`]): traces stop on them, and where they turn a corner they
+//! send traces out as a singularity does. That takes a map in which they run
+//! along grid lines.
 //!
 //! Traces advance one triangle at a time, the one furthest behind first. A
 //! trace is therefore stopped by whatever was laid down in its triangle
@@ -30,7 +31,8 @@ pub(super) struct Junction {
     pub position: Vec3,
     /// The singular vertex it sits on, if any.
     pub vertex: Option<u32>,
-    /// It is a vertex where an open border turns in the map.
+    /// It is a vertex where a border or a hard edge turns, ends or meets
+    /// another.
     pub corner: bool,
     /// Quarter turns in a full turn round it: four, except round a
     /// singularity. (Round a corner of the border it only has to exceed the
@@ -43,6 +45,11 @@ pub(super) struct Junction {
 impl Junction {
     fn regular(position: Vec3) -> Self {
         Self { position, vertex: None, corner: false, full_turn: 4.0, used: [false; 4] }
+    }
+
+    /// A node on a wall: `corner` unless the wall just runs through it.
+    pub(super) fn at_wall(position: Vec3, vertex: Option<u32>, corner: bool, full_turn: f64) -> Self {
+        Self { position, vertex, corner, full_turn, used: [false; 4] }
     }
 }
 
@@ -60,14 +67,44 @@ pub(super) struct Trace {
     pub path: Vec<Vec3>,
     /// The same in the map, one stretch per triangle crossed.
     pub stretches: Vec<Stretch>,
-    /// A stretch of open border rather than a trace: there from the start,
-    /// with the surface on its left only.
+    /// A stretch of border or hard edge rather than a trace: there from the
+    /// start.
+    pub wall: bool,
+    /// A stretch of open border: the surface is on its left only.
     pub border: bool,
-    face: usize,
-    point: [f64; 2],
-    axis: Axis,
-    running: bool,
-    steps: usize,
+    pub(super) face: usize,
+    pub(super) point: [f64; 2],
+    pub(super) axis: Axis,
+    pub(super) running: bool,
+    pub(super) steps: usize,
+}
+
+impl Trace {
+    /// A run of wall, laid whole before the race.
+    pub(super) fn wall(
+        start: (u32, f64),
+        end: (u32, f64),
+        length: f64,
+        path: Vec<Vec3>,
+        stretches: Vec<Stretch>,
+        border: bool,
+    ) -> Self {
+        Self {
+            start,
+            end: Some(end),
+            through: Vec::new(),
+            length,
+            path,
+            stretches,
+            wall: true,
+            border,
+            face: 0,
+            point: [0.0; 2],
+            axis: 0,
+            running: false,
+            steps: 0,
+        }
+    }
 }
 
 /// A stretch of a trace within one triangle, in the coordinates of that
@@ -84,29 +121,33 @@ struct Segment {
 /// A trace that went through a regular vertex: which, its length there, and
 /// the direction it left in.
 #[derive(Clone, Copy)]
-struct Passage {
-    trace: u32,
-    time: f64,
-    departure: Departure,
+pub(super) struct Passage {
+    pub trace: u32,
+    pub time: f64,
+    pub departure: Departure,
 }
 
-/// A border edge as a stretch of cut.
+/// One side of a border edge or hard edge, as a stretch of cut.
 #[derive(Clone, Copy)]
-struct BorderEdge {
-    trace: u32,
-    /// Length of the border trace where the edge starts.
-    time: f64,
-    length: f64,
-    axis: Axis,
+pub(super) struct Wall {
+    pub trace: u32,
+    /// Length of its trace where this half-edge starts, and whether the
+    /// trace runs the way the half-edge does (1) or against it (-1).
+    pub time: f64,
+    pub sense: f64,
+    pub length: f64,
+    /// Direction of the trace in the coordinates of the face of the
+    /// half-edge.
+    pub axis: Axis,
 }
 
 #[derive(Default)]
 pub(super) struct Outcome {
     pub junctions: Vec<Junction>,
     pub traces: Vec<Trace>,
-    /// Border edges that do not run along a grid line of the map: no
-    /// rectangle can have them for a side.
-    pub border_off_grid: usize,
+    /// Border edges and hard edges that do not run along a grid line of the
+    /// map: no rectangle can have them for a side.
+    pub off_grid_edges: usize,
     /// Traces that never met another: out of length, at a border, or off the
     /// map through a degenerate triangle.
     pub lost: usize,
@@ -121,31 +162,40 @@ struct Hit {
     crossing: bool,
 }
 
-struct Race<'a> {
-    map: &'a Map<'a>,
+pub(super) struct Race<'a> {
+    pub(super) map: &'a Map<'a>,
     singular: Vec<u32>,
     segments: Vec<Vec<Segment>>,
-    passages: Vec<Option<Passage>>,
-    /// Per half-edge, for those on a border.
-    border: Vec<Option<BorderEdge>>,
-    outcome: Outcome,
+    pub(super) passages: Vec<Option<Passage>>,
+    /// Per half-edge, for those on a border or a hard edge.
+    pub(super) walls: Vec<Option<Wall>>,
+    pub(super) outcome: Outcome,
     max_length: f64,
 }
 
-/// Runs the race on `map` from the vertices flagged in `is_singular`.
-pub(super) fn race(map: &Map, is_singular: &[bool], max_length: f64) -> Outcome {
+/// Runs the race on `map` from the vertices flagged in `is_singular`, with
+/// the half-edges flagged in `is_wall` for cuts already there.
+pub(super) fn race(map: &Map, is_singular: &[bool], is_wall: &[bool], max_length: f64) -> Outcome {
     let vertices = map.mesh.positions.len();
     let mut race = Race {
         map,
         singular: vec![INVALID; vertices],
         segments: (0..map.mesh.triangles.len()).map(|_| Vec::new()).collect(),
         passages: vec![None; vertices],
-        border: vec![None; 3 * map.mesh.triangles.len()],
+        walls: vec![None; 3 * map.mesh.triangles.len()],
         outcome: Outcome::default(),
         max_length,
     };
 
-    for v in (0..vertices as u32).filter(|&v| is_singular[v as usize]) {
+    // A singularity on a wall is dealt with as part of the wall: what it
+    // sends out depends on the corners the wall makes there.
+    let mut on_wall = vec![false; vertices];
+    for h in (0..is_wall.len()).filter(|&h| is_wall[h]) {
+        let triangle = map.mesh.triangles[h / 3];
+        on_wall[triangle[h % 3] as usize] = true;
+        on_wall[triangle[(h + 1) % 3] as usize] = true;
+    }
+    for v in (0..vertices as u32).filter(|&v| is_singular[v as usize] && !on_wall[v as usize]) {
         let departures = map.departures(v);
         let node = race.outcome.junctions.len() as u32;
         race.singular[v as usize] = node;
@@ -160,7 +210,7 @@ pub(super) fn race(map: &Map, is_singular: &[bool], max_length: f64) -> Outcome 
             race.start(node, rank as f64, departure);
         }
     }
-    race.lay_borders();
+    race.lay_walls(is_wall, is_singular);
 
     let mut queue: BinaryHeap<Reverse<(Time, u32)>> = (0..race.outcome.traces.len() as u32)
         .filter(|&id| race.outcome.traces[id as usize].running)
@@ -177,7 +227,7 @@ pub(super) fn race(map: &Map, is_singular: &[bool], max_length: f64) -> Outcome 
 
 impl Race<'_> {
     /// A new trace leaving `node` along `departure`.
-    fn start(&mut self, node: u32, key: f64, (face, corner, axis): Departure) {
+    pub(super) fn start(&mut self, node: u32, key: f64, (face, corner, axis): Departure) {
         self.outcome.traces.push(Trace {
             start: (node, key),
             end: None,
@@ -185,6 +235,7 @@ impl Race<'_> {
             length: 0.0,
             path: vec![self.outcome.junctions[node as usize].position],
             stretches: Vec::new(),
+            wall: false,
             border: false,
             face,
             point: self.map.uv[3 * face + corner],
@@ -192,142 +243,6 @@ impl Race<'_> {
             running: true,
             steps: 0,
         });
-    }
-
-    /// Turns every open border into cuts: one per straight stretch, between
-    /// the vertices where the border turns in the map. Those vertices become
-    /// nodes, and send a trace along each grid direction the surface has
-    /// there beyond the two the border itself takes.
-    fn lay_borders(&mut self) {
-        let map = self.map;
-        let twin = &map.topology.opposite;
-        let half_edges = 3 * map.mesh.triangles.len();
-        let start_of = |h: usize| map.mesh.triangles[h / 3][h % 3];
-        // Direction and length of a border edge in the map.
-        let run = |h: usize| {
-            let (a, b) = (map.uv[h], map.uv[3 * (h / 3) + (h % 3 + 1) % 3]);
-            let d = [b[0] - a[0], b[1] - a[1]];
-            let along = if d[0].abs() >= d[1].abs() { 0 } else { 1 };
-            let axis = (along + if d[along] < 0.0 { 2 } else { 0 }) as Axis;
-            (axis, d[along].abs(), d[1 - along].abs())
-        };
-
-        // The border edge after `h`, and how far the surface spans round the
-        // vertex between them, in quarter turns.
-        let after = |h: usize| {
-            let (mut face, mut corner) = (h / 3, (h % 3 + 1) % 3);
-            let mut angle = 0.0;
-            loop {
-                let [a, b, c] = std::array::from_fn(|k| map.uv[3 * face + (corner + k) % 3]);
-                let (first, second) = ([b[0] - a[0], b[1] - a[1]], [c[0] - a[0], c[1] - a[1]]);
-                angle +=
-                    (first[0] * second[1] - first[1] * second[0]).atan2(first[0] * second[0] + first[1] * second[1]);
-                // Clockwise round the vertex is across the edge leaving it.
-                let across = twin[3 * face + corner];
-                if across == INVALID {
-                    break;
-                }
-                (face, corner) = (across as usize / 3, (across as usize % 3 + 1) % 3);
-            }
-            let turns = (angle / std::f64::consts::FRAC_PI_2).round().max(1.0) as usize;
-            (3 * face + corner, turns)
-        };
-
-        let mut seen = vec![false; half_edges];
-        for first in (0..half_edges).filter(|&h| twin[h] == INVALID) {
-            if seen[first] {
-                continue;
-            }
-            // The edges of the loop, each with the angle at its start.
-            let mut ring: Vec<(usize, usize)> = Vec::new();
-            let (mut h, mut turns) = (first, 0);
-            loop {
-                seen[h] = true;
-                ring.push((h, turns));
-                (h, turns) = after(h);
-                if h == first {
-                    ring[0].1 = turns;
-                    break;
-                }
-            }
-            // Start the loop at a corner; one that has none still needs a
-            // node to hang its single arc on.
-            let pivot = ring.iter().position(|&(_, turns)| turns != 2).unwrap_or(0);
-            ring.rotate_left(pivot);
-            let mut corners: Vec<(usize, u32)> = Vec::new();
-            for (index, &(h, turns)) in ring.iter().enumerate() {
-                if index == 0 || turns != 2 {
-                    let position = map.mesh.positions[start_of(h) as usize];
-                    // Round a corner the surface spans `turns` quarter turns;
-                    // what lies beyond is no patch, it only has to be there.
-                    let full_turn = if turns == 2 { 4.0 } else { turns as f64 + 2.0 };
-                    corners.push((index, self.outcome.junctions.len() as u32));
-                    let corner = turns != 2;
-                    self.outcome.junctions.push(Junction {
-                        position,
-                        vertex: None,
-                        corner,
-                        full_turn,
-                        used: [false; 4],
-                    });
-                }
-            }
-
-            for (which, &(from, node)) in corners.iter().enumerate() {
-                // One cut per straight stretch, up to the next corner.
-                let (to, end) = corners.get(which + 1).copied().unwrap_or((ring.len(), corners[0].1));
-                let id = self.outcome.traces.len() as u32;
-                let (mut path, mut stretches, mut length) = (Vec::new(), Vec::new(), 0.0);
-                for &(h, _) in &ring[from..to] {
-                    let (axis, along, across) = run(h);
-                    stretches.push(Stretch {
-                        face: (h / 3) as u32,
-                        start: map.uv[h],
-                        axis,
-                        length: along,
-                        time: length,
-                    });
-                    if across > EPSILON.max(1e-3 * along) {
-                        self.outcome.border_off_grid += 1;
-                    }
-                    self.border[h] = Some(BorderEdge { trace: id, time: length, length: along, axis });
-                    self.passages[start_of(h) as usize] =
-                        Some(Passage { trace: id, time: length, departure: (h / 3, h % 3, axis) });
-                    path.push(map.mesh.positions[start_of(h) as usize]);
-                    length += along;
-                }
-                path.push(self.outcome.junctions[end as usize].position);
-                // Round its end node, the arc back along the border comes
-                // after everything the surface holds there.
-                let end_key = ring[to % ring.len()].1 as f64;
-                self.outcome.traces.push(Trace {
-                    start: (node, 0.0),
-                    end: Some((end, end_key)),
-                    through: Vec::new(),
-                    length,
-                    path,
-                    stretches,
-                    border: true,
-                    face: 0,
-                    point: [0.0; 2],
-                    axis: 0,
-                    running: false,
-                    steps: 0,
-                });
-            }
-
-            // A corner that turns into the surface sends a trace along each
-            // grid direction between the two the border takes.
-            for &(index, node) in &corners {
-                let (h, turns) = ring[index];
-                let (axis, _, _) = run(h);
-                for quarter in 1..turns {
-                    if let Some(departure) = map.enter_from_vertex(h / 3, h % 3, (axis + quarter as Axis) % 4) {
-                        self.start(node, quarter as f64, departure);
-                    }
-                }
-            }
-        }
     }
 
     /// Takes trace `id` across the triangle it is in. Returns whether it is
@@ -368,23 +283,23 @@ impl Race<'_> {
 
         self.lay(id, face, point, axis, distance, target);
         match exit {
-            Exit::Edge { edge, t } => match map.cross_edge(face, edge, t, axis) {
-                Some((next, point, axis)) => {
-                    let trace = &mut self.outcome.traces[id];
-                    (trace.face, trace.point, trace.axis) = (next, point, axis);
-                    true
-                }
-                None => {
-                    // An open border: the trace stops on it.
-                    let Some(border) = self.border[3 * face + edge] else {
-                        return self.lose(id);
-                    };
+            Exit::Edge { edge, t } => {
+                if let Some(wall) = self.walls[3 * face + edge] {
+                    // A border or a hard edge: the trace stops on it.
                     let position = self.position(face, target);
-                    let time = border.time + t * border.length;
-                    self.stop_at(id, border.trace as usize, time, (axis + 4 - border.axis) % 4, position);
-                    false
+                    let time = wall.time + wall.sense * t * wall.length;
+                    self.stop_at(id, wall.trace as usize, time, (axis + 4 - wall.axis) % 4, position);
+                    return false;
                 }
-            },
+                match map.cross_edge(face, edge, t, axis) {
+                    Some((next, point, axis)) => {
+                        let trace = &mut self.outcome.traces[id];
+                        (trace.face, trace.point, trace.axis) = (next, point, axis);
+                        true
+                    }
+                    None => self.lose(id),
+                }
+            }
             Exit::Vertex { corner } => self.reach_vertex(id, face, corner, axis),
         }
     }
@@ -534,16 +449,16 @@ impl Race<'_> {
     /// The singular node trace `other` has at length `time`, if any.
     fn singular_end(&self, other: usize, time: f64) -> Option<u32> {
         let trace = &self.outcome.traces[other];
-        let singular = |node: u32| self.outcome.junctions[node as usize].vertex.is_some();
+        // (A singularity on a wall numbers its directions as walls do.)
+        let singular = |node: u32| {
+            let junction = &self.outcome.junctions[node as usize];
+            junction.vertex.is_some() && !junction.corner
+        };
         if time <= MERGE {
             return Some(trace.start.0).filter(|&node| singular(node));
         }
         match trace.end {
-            Some((node, _))
-                if time >= trace.length - MERGE && self.outcome.junctions[node as usize].vertex.is_some() =>
-            {
-                Some(node)
-            }
+            Some((node, _)) if time >= trace.length - MERGE && singular(node) => Some(node),
             _ => None,
         }
     }

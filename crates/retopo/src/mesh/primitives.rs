@@ -140,3 +140,114 @@ pub fn plane_quads(segments: u32) -> PolyMesh {
     }
     mesh
 }
+
+/// The surface of a set of unit cubes on the integer lattice, each given by
+/// its lowest corner, with `segments` quads along every unit edge. The cubes
+/// must touch by whole faces and leave no edge shared by more than two
+/// outer faces. Three cubes in an L make the simplest shape with an edge
+/// that turns inwards.
+pub fn blocks_quads(cells: &[[i32; 3]], segments: u32) -> PolyMesh {
+    let n = segments.max(1) as i32;
+    let filled: std::collections::HashSet<[i32; 3]> = cells.iter().copied().collect();
+    let mut mesh = PolyMesh::default();
+    let mut indices: HashMap<[i32; 3], u32> = HashMap::new();
+    let mut vertex = |mesh: &mut PolyMesh, at: [i32; 3]| {
+        *indices.entry(at).or_insert_with(|| {
+            mesh.positions.push(Vec3::new(at[0] as f64, at[1] as f64, at[2] as f64) / n as f64);
+            (mesh.positions.len() - 1) as u32
+        })
+    };
+    for &cell in cells {
+        for axis in 0..3 {
+            for (side, step) in [(0, -1), (1, 1)] {
+                let mut neighbour = cell;
+                neighbour[axis] += step;
+                if filled.contains(&neighbour) {
+                    continue;
+                }
+                // The two other axes, in the order that winds the face
+                // outwards.
+                let (u, v) =
+                    if side == 1 { ((axis + 1) % 3, (axis + 2) % 3) } else { ((axis + 2) % 3, (axis + 1) % 3) };
+                for j in 0..n {
+                    for i in 0..n {
+                        let corner = |di: i32, dj: i32| {
+                            let mut at = [cell[0] * n, cell[1] * n, cell[2] * n];
+                            at[axis] += side * n;
+                            at[u] += i + di;
+                            at[v] += j + dj;
+                            at
+                        };
+                        let face = [corner(0, 0), corner(1, 0), corner(1, 1), corner(0, 1)];
+                        let face = face.map(|at| vertex(&mut mesh, at));
+                        mesh.faces.push(face.to_vec());
+                    }
+                }
+            }
+        }
+    }
+    mesh
+}
+
+/// An L-shaped block: three unit cubes, with one edge that turns inwards.
+pub fn l_block(segments: u32) -> TriMesh {
+    blocks_quads(&[[0, 0, 0], [1, 0, 0], [0, 1, 0]], segments).triangulated()
+}
+
+/// A cylinder of radius 1 and height 2 around the z axis, with flat caps:
+/// two hard edges that are closed curves without a corner. Each cap is a
+/// grid of `segments` by `segments` quads.
+pub fn cylinder(segments: u32) -> TriMesh {
+    let n = segments.max(2);
+    let layers = (n as f64 * 2.0 / std::f64::consts::FRAC_PI_2).round().max(1.0) as u32;
+    let mut mesh = PolyMesh::default();
+    // A square grid squeezed into a disk: its rim lands on the circle.
+    let cap = |mesh: &mut PolyMesh, z: f64, upwards: bool| {
+        let first = mesh.positions.len() as u32;
+        for j in 0..=n {
+            for i in 0..=n {
+                let (x, y) = (2.0 * i as f64 / n as f64 - 1.0, 2.0 * j as f64 / n as f64 - 1.0);
+                mesh.positions.push(Vec3::new(x * (1.0 - 0.5 * y * y).sqrt(), y * (1.0 - 0.5 * x * x).sqrt(), z));
+            }
+        }
+        let index = |i: u32, j: u32| first + j * (n + 1) + i;
+        for j in 0..n {
+            for i in 0..n {
+                let mut face = vec![index(i, j), index(i + 1, j), index(i + 1, j + 1), index(i, j + 1)];
+                if !upwards {
+                    face.reverse();
+                }
+                mesh.faces.push(face);
+            }
+        }
+        // Its rim, counter-clockwise seen from above.
+        let mut rim: Vec<u32> = (0..n).map(|i| index(i, 0)).collect();
+        rim.extend((0..n).map(|j| index(n, j)));
+        rim.extend((0..n).map(|i| index(n - i, n)));
+        rim.extend((0..n).map(|j| index(0, n - j)));
+        rim
+    };
+    let top = cap(&mut mesh, 1.0, true);
+    let bottom = cap(&mut mesh, -1.0, false);
+    let mut ring = top.clone();
+    for layer in 1..=layers {
+        let below: Vec<u32> = if layer == layers {
+            bottom.clone()
+        } else {
+            let z = 1.0 - 2.0 * layer as f64 / layers as f64;
+            top.iter()
+                .map(|&v| {
+                    let p = mesh.positions[v as usize];
+                    mesh.positions.push(Vec3::new(p.x, p.y, z));
+                    (mesh.positions.len() - 1) as u32
+                })
+                .collect()
+        };
+        for i in 0..ring.len() {
+            let next = (i + 1) % ring.len();
+            mesh.faces.push(vec![below[i], below[next], ring[next], ring[i]]);
+        }
+        ring = below;
+    }
+    mesh.triangulated()
+}

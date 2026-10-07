@@ -18,7 +18,7 @@ Requested budget: 3000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Hausdorff, ‰ of the diagonal (H) | 8.52 | 10.14 | 7.34 | 4.40 | 3.50 | 4.21 | 7.28 |
 | Mean distance, ‰ (H) | 0.486 | 0.459 | 0.582 | 0.459 | 0.456 | 0.407 | 0.513 |
 | Off budget, % (N) | 7.3 | 3.0 | 16.4 | 0.7 | 0.2 | 12.3 | 8.2 |
-| Time, seconds (T) | 1.89 | 1.68 | 4.15 | 2.56 | 2.57 | 16.38 | 12.28 |
+| Time, seconds (T) | 1.89 | 1.68 | 4.15 | 1.95 | 1.82 | 16.38 | 12.28 |
 
 ## rock (organic)
 
@@ -36,7 +36,7 @@ Requested budget: 3000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Hausdorff, ‰ of the diagonal (H) | 5.45 | 5.28 | 5.55 | 5.70 | 5.60 | 5.13 | 5.79 |
 | Mean distance, ‰ (H) | 0.788 | 0.820 | 0.861 | 0.791 | 0.787 | 0.731 | 0.889 |
 | Off budget, % (N) | 2.2 | 3.4 | 10.4 | 1.1 | 0.5 | 18.0 | 15.6 |
-| Time, seconds (T) | 2.44 | 0.83 | 5.58 | 1.76 | 1.95 | 20.49 | 16.98 |
+| Time, seconds (T) | 2.44 | 0.83 | 5.58 | 1.70 | 4.80 | 20.49 | 16.98 |
 
 ## creature (organic)
 
@@ -54,7 +54,7 @@ Requested budget: 3000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Hausdorff, ‰ of the diagonal (H) | 8.01 | 3.47 | 3.16 | 2.38 | 2.45 | 2.51 | 2.37 |
 | Mean distance, ‰ (H) | 0.320 | 0.279 | 0.370 | 0.295 | 0.302 | 0.297 | 0.348 |
 | Off budget, % (N) | 11.1 | 2.3 | 13.4 | 1.4 | 1.5 | 2.0 | 9.4 |
-| Time, seconds (T) | 1.64 | 0.80 | 5.46 | 2.44 | 1.59 | 11.24 | 9.11 |
+| Time, seconds (T) | 1.64 | 0.80 | 5.46 | 3.53 | 2.74 | 11.24 | 9.11 |
 
 ## cage (organic)
 
@@ -72,7 +72,7 @@ Requested budget: 3000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Hausdorff, ‰ of the diagonal (H) | 11.45 | 14.46 | 16.28 | 13.74 | 14.20 | 5.74 | 9.66 |
 | Mean distance, ‰ (H) | 0.734 | 0.860 | 1.017 | 0.924 | 0.681 | 0.693 | 1.276 |
 | Off budget, % (N) | 3.6 | 1.9 | 4.2 | 1.3 | 1.1 | 93.6 | 7.2 |
-| Time, seconds (T) | 2.19 | 0.61 | 6.83 | 2.42 | 2.31 | 4.21 | 3.92 |
+| Time, seconds (T) | 2.19 | 0.61 | 6.83 | 2.82 | 1.55 | 4.21 | 3.92 |
 
 ## suzanne (organic)
 
@@ -81,16 +81,16 @@ Requested budget: 3000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | **Valid meshes (V)** | 0/5 | 2/5 | 1/1 | 1/1 | 1/1 | 0/1 | 1/1 |
 | Irregular vertices (S) | 78 | 212 | 52 | 53 | 56 | 80 | 71 |
 | … of which above the minimum | 54 | — | — | — | — | — | — |
-| Base complex patches (C) | 2884 | 3002 | 1858 | 2475 | 1872 | 2513 | 1838 |
-| Alignment, degrees (A) | 15.33 | 17.02 | 10.40 | 10.57 | 9.85 | 8.75 | 10.24 |
-| Mean angle deviation, degrees (F) | 8.61 | 7.08 | 7.14 | 4.41 | 4.49 | 7.87 | 7.87 |
-| Angle deviation, 95th percentile (F) | 26.08 | 25.30 | 18.15 | 11.84 | 12.53 | 21.85 | 20.46 |
-| Mean aspect ratio (F) | 1.260 | 1.263 | 1.223 | 1.205 | 1.222 | 1.668 | 1.284 |
-| Area variation (F) | 0.837 | 0.221 | 0.243 | 0.285 | 0.349 | 0.473 | 0.236 |
-| Hausdorff, ‰ of the diagonal (H) | 42.26 | 20.15 | 11.31 | 9.22 | 6.96 | 6.77 | 9.47 |
-| Mean distance, ‰ (H) | 0.834 | 0.906 | 0.980 | 0.773 | 0.648 | 0.603 | 1.053 |
-| Off budget, % (N) | 1.0 | 2.3 | 8.1 | 0.7 | 1.1 | 43.7 | 12.4 |
-| Time, seconds (T) | 3.20 | 0.30 | 8.05 | 1.53 | 2.21 | 3.44 | 3.21 |
+| Base complex patches (C) | 2884 | 3002 | 1858 | 2395 | 1872 | 2513 | 1838 |
+| Alignment, degrees (A) | 15.33 | 17.02 | 10.40 | 10.45 | 9.82 | 8.75 | 10.24 |
+| Mean angle deviation, degrees (F) | 8.61 | 7.08 | 7.14 | 4.27 | 4.45 | 7.87 | 7.87 |
+| Angle deviation, 95th percentile (F) | 26.08 | 25.30 | 18.15 | 11.75 | 12.00 | 21.85 | 20.46 |
+| Mean aspect ratio (F) | 1.260 | 1.263 | 1.223 | 1.200 | 1.213 | 1.668 | 1.284 |
+| Area variation (F) | 0.837 | 0.221 | 0.243 | 0.301 | 0.352 | 0.473 | 0.236 |
+| Hausdorff, ‰ of the diagonal (H) | 42.26 | 20.15 | 11.31 | 8.25 | 6.96 | 6.77 | 9.47 |
+| Mean distance, ‰ (H) | 0.834 | 0.906 | 0.980 | 0.783 | 0.638 | 0.603 | 1.053 |
+| Off budget, % (N) | 1.0 | 2.3 | 8.1 | 1.4 | 1.1 | 43.7 | 12.4 |
+| Time, seconds (T) | 3.20 | 0.30 | 8.05 | 1.50 | 1.45 | 3.44 | 3.21 |
 
 ## ogre (organic)
 
@@ -108,7 +108,7 @@ Requested budget: 3000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Hausdorff, ‰ of the diagonal (H) | 36.59 | 46.14 | 37.31 | 27.60 | 25.27 | 5.98 | 39.35 |
 | Mean distance, ‰ (H) | 1.268 | 1.460 | 1.394 | 0.991 | 0.962 | 0.565 | 1.366 |
 | Off budget, % (N) | 4.3 | 4.2 | 17.7 | 2.0 | 0.5 | 104.5 | 19.4 |
-| Time, seconds (T) | 3.76 | 2.39 | 9.22 | 5.17 | 3.88 | 19.04 | 17.16 |
+| Time, seconds (T) | 3.76 | 2.39 | 9.22 | 4.45 | 3.48 | 19.04 | 17.16 |
 
 ## spot (organic)
 
@@ -126,7 +126,7 @@ Requested budget: 3000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Hausdorff, ‰ of the diagonal (H) | 17.71 | 19.38 | 7.35 | 6.29 | 7.46 | 6.64 | 10.63 |
 | Mean distance, ‰ (H) | 0.448 | 0.479 | 0.477 | 0.416 | 0.422 | 0.372 | 0.476 |
 | Off budget, % (N) | 1.2 | 1.5 | 10.5 | 1.6 | 0.7 | 15.9 | 10.5 |
-| Time, seconds (T) | 1.89 | 1.35 | 7.82 | 2.38 | 2.89 | 19.14 | 15.16 |
+| Time, seconds (T) | 1.89 | 1.35 | 7.82 | 3.36 | 3.24 | 19.14 | 15.16 |
 
 ## bob (organic)
 
@@ -144,7 +144,7 @@ Requested budget: 3000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Hausdorff, ‰ of the diagonal (H) | 6.82 | 7.32 | 3.63 | 2.49 | 2.10 | 1.96 | 2.27 |
 | Mean distance, ‰ (H) | 0.309 | 0.325 | 0.378 | 0.328 | 0.336 | 0.322 | 0.355 |
 | Off budget, % (N) | 2.4 | 1.3 | 11.9 | 1.4 | 1.7 | 2.7 | 10.1 |
-| Time, seconds (T) | 1.83 | 1.33 | 6.12 | 1.60 | 2.27 | 17.24 | 17.35 |
+| Time, seconds (T) | 1.83 | 1.33 | 6.12 | 2.10 | 2.52 | 17.24 | 17.35 |
 
 ## blub (organic)
 
@@ -162,7 +162,7 @@ Requested budget: 3000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Hausdorff, ‰ of the diagonal (H) | 40.70 | 15.68 | 14.68 | 10.36 | 8.65 | 5.19 | 11.32 |
 | Mean distance, ‰ (H) | 0.588 | 0.390 | 0.456 | 0.343 | 0.330 | 0.230 | 0.392 |
 | Off budget, % (N) | 10.1 | 1.2 | 11.6 | 0.2 | 0.3 | 29.6 | 9.9 |
-| Time, seconds (T) | 2.09 | 1.30 | 5.78 | 2.41 | 2.54 | 14.34 | 12.32 |
+| Time, seconds (T) | 2.09 | 1.30 | 5.78 | 3.10 | 2.00 | 14.34 | 12.32 |
 
 ## pig (organic)
 
@@ -180,7 +180,7 @@ Requested budget: 3000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Hausdorff, ‰ of the diagonal (H) | 44.59 | 48.32 | 23.75 | 18.14 | 22.22 | 10.22 | 12.72 |
 | Mean distance, ‰ (H) | 1.056 | 1.012 | 0.860 | 0.607 | 0.583 | 0.375 | 0.724 |
 | Off budget, % (N) | 10.8 | 1.1 | 9.9 | 1.6 | 1.8 | 56.6 | 14.9 |
-| Time, seconds (T) | 1.91 | 1.18 | 9.15 | 2.59 | 2.48 | 14.59 | 16.02 |
+| Time, seconds (T) | 1.91 | 1.18 | 9.15 | 3.56 | 2.42 | 14.59 | 16.02 |
 
 ## jerry (organic)
 
@@ -190,15 +190,15 @@ Requested budget: 3000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Irregular vertices (S) | 104 | 265 | 95 | 86 | 102 | 206 | 181 |
 | … of which above the minimum | — | — | — | — | — | — | — |
 | Base complex patches (C) | 2211 | 2959 | 1963 | 2043 | 2384 | — | 2088 |
-| Alignment, degrees (A) | 17.93 | 18.35 | 15.03 | 14.31 | 13.83 | 11.02 | 13.58 |
-| Mean angle deviation, degrees (F) | 11.25 | 8.58 | 9.56 | 6.33 | 6.04 | 9.67 | 10.03 |
-| Angle deviation, 95th percentile (F) | 29.73 | 29.29 | 24.76 | 16.15 | 18.54 | 26.54 | 28.28 |
-| Mean aspect ratio (F) | 1.301 | 1.357 | 1.329 | 1.268 | 1.294 | 2.063 | 1.483 |
-| Area variation (F) | 0.278 | 0.258 | 0.272 | 0.300 | 0.440 | 0.724 | 0.324 |
+| Alignment, degrees (A) | 17.93 | 18.35 | 15.03 | 14.30 | 13.83 | 11.02 | 13.58 |
+| Mean angle deviation, degrees (F) | 11.25 | 8.58 | 9.56 | 6.30 | 5.96 | 9.67 | 10.03 |
+| Angle deviation, 95th percentile (F) | 29.73 | 29.29 | 24.76 | 16.07 | 18.39 | 26.54 | 28.28 |
+| Mean aspect ratio (F) | 1.301 | 1.357 | 1.329 | 1.268 | 1.292 | 2.063 | 1.483 |
+| Area variation (F) | 0.278 | 0.258 | 0.272 | 0.309 | 0.452 | 0.724 | 0.324 |
 | Hausdorff, ‰ of the diagonal (H) | 38.82 | 49.21 | 44.34 | 31.62 | 22.32 | 6.74 | 15.07 |
-| Mean distance, ‰ (H) | 1.467 | 2.158 | 2.165 | 1.373 | 1.232 | 0.529 | 1.488 |
+| Mean distance, ‰ (H) | 1.467 | 2.158 | 2.165 | 1.372 | 1.221 | 0.529 | 1.488 |
 | Off budget, % (N) | 4.1 | 1.4 | 12.8 | 0.0 | 1.1 | 129.1 | 14.2 |
-| Time, seconds (T) | 1.77 | 0.75 | 5.83 | 1.53 | 1.76 | 6.74 | 6.79 |
+| Time, seconds (T) | 1.77 | 0.75 | 5.83 | 1.80 | 1.51 | 6.74 | 6.79 |
 
 ## rose (organic)
 
@@ -216,7 +216,7 @@ Requested budget: 3000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Hausdorff, ‰ of the diagonal (H) | 75.61 | 79.25 | 75.28 | 75.28 | 75.28 | 74.46 | 78.76 |
 | Mean distance, ‰ (H) | 3.765 | 4.183 | 3.990 | 3.990 | 3.990 | 0.842 | 3.206 |
 | Off budget, % (N) | 30.5 | 25.8 | 31.3 | 31.3 | 31.3 | 1095.8 | 10.4 |
-| Time, seconds (T) | 2.33 | 1.87 | 23.35 | 18.45 | 18.00 | 9.53 | 10.86 |
+| Time, seconds (T) | 2.33 | 1.87 | 23.35 | 18.45 | 20.11 | 9.53 | 10.86 |
 
 ## bridge (organic)
 
@@ -227,14 +227,14 @@ Requested budget: 3000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | … of which above the minimum | — | — | — | — | — | — | — |
 | Base complex patches (C) | — | 1879 | 763 | 1066 | 764 | — | — |
 | Alignment, degrees (A) | — | 12.58 | 8.36 | 8.02 | 7.42 | 6.49 | 7.93 |
-| Mean angle deviation, degrees (F) | — | 6.12 | 6.49 | 3.77 | 3.92 | 6.65 | 7.20 |
-| Angle deviation, 95th percentile (F) | — | 20.51 | 18.53 | 11.08 | 11.59 | 18.96 | 19.72 |
-| Mean aspect ratio (F) | — | 1.215 | 1.302 | 1.244 | 1.247 | 1.753 | 1.413 |
-| Area variation (F) | — | 0.174 | 0.238 | 0.294 | 0.437 | 0.421 | 0.275 |
+| Mean angle deviation, degrees (F) | — | 6.12 | 6.49 | 3.77 | 3.90 | 6.65 | 7.20 |
+| Angle deviation, 95th percentile (F) | — | 20.51 | 18.53 | 11.08 | 11.57 | 18.96 | 19.72 |
+| Mean aspect ratio (F) | — | 1.215 | 1.302 | 1.244 | 1.248 | 1.753 | 1.413 |
+| Area variation (F) | — | 0.174 | 0.238 | 0.294 | 0.436 | 0.421 | 0.275 |
 | Hausdorff, ‰ of the diagonal (H) | — | 28.19 | 6.91 | 6.89 | 6.65 | 6.05 | 7.00 |
-| Mean distance, ‰ (H) | — | 0.638 | 0.680 | 0.597 | 0.578 | 0.414 | 0.670 |
+| Mean distance, ‰ (H) | — | 0.638 | 0.680 | 0.597 | 0.577 | 0.414 | 0.670 |
 | Off budget, % (N) | — | 3.2 | 10.6 | 1.6 | 1.4 | 51.1 | 9.1 |
-| Time, seconds (T) | — | 2.27 | 9.04 | 3.41 | 2.56 | 11.41 | 11.88 |
+| Time, seconds (T) | — | 2.27 | 9.04 | 4.55 | 2.27 | 11.41 | 11.88 |
 
 Failures: quadriflow: cancelled.
 
@@ -245,16 +245,16 @@ Failures: quadriflow: cancelled.
 | **Valid meshes (V)** | 4/5 | 5/5 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 |
 | Irregular vertices (S) | 28 | 204 | 24 | 24 | 24 | 24 | 24 |
 | … of which above the minimum | 20 | 196 | 16 | 16 | 16 | 16 | 16 |
-| Base complex patches (C) | 619 | 1782 | 78 | 78 | 448 | 501 | 501 |
-| Alignment, degrees (A) | 12.97 | 13.96 | 11.66 | 12.02 | 10.86 | 10.90 | 10.90 |
-| Mean angle deviation, degrees (F) | 2.66 | 6.10 | 2.61 | 1.50 | 2.06 | 3.02 | 3.02 |
-| Angle deviation, 95th percentile (F) | 10.11 | 25.03 | 10.79 | 5.53 | 7.85 | 12.04 | 12.04 |
-| Mean aspect ratio (F) | 1.116 | 1.233 | 1.164 | 1.151 | 1.168 | 1.326 | 1.326 |
-| Area variation (F) | 0.100 | 0.199 | 0.126 | 0.144 | 0.379 | 0.196 | 0.196 |
-| Hausdorff, ‰ of the diagonal (H) | 5.54 | 9.41 | 0.88 | 11.31 | 9.28 | 0.89 | 0.89 |
-| Mean distance, ‰ (H) | 0.114 | 0.067 | 0.053 | 0.100 | 0.173 | 0.068 | 0.068 |
-| Off budget, % (N) | 3.7 | 2.1 | 0.8 | 0.9 | 0.2 | 6.2 | 6.2 |
-| Time, seconds (T) | 3.08 | 1.37 | 3.92 | 1.80 | 1.80 | 2.83 | 2.88 |
+| Base complex patches (C) | 619 | 1782 | 78 | 78 | 281 | 501 | 501 |
+| Alignment, degrees (A) | 12.97 | 13.96 | 11.66 | 11.95 | 10.50 | 10.90 | 10.90 |
+| Mean angle deviation, degrees (F) | 2.66 | 6.10 | 2.61 | 1.40 | 2.27 | 3.02 | 3.02 |
+| Angle deviation, 95th percentile (F) | 10.11 | 25.03 | 10.79 | 5.12 | 6.47 | 12.04 | 12.04 |
+| Mean aspect ratio (F) | 1.116 | 1.233 | 1.164 | 1.139 | 1.160 | 1.326 | 1.326 |
+| Area variation (F) | 0.100 | 0.199 | 0.126 | 0.123 | 0.362 | 0.196 | 0.196 |
+| Hausdorff, ‰ of the diagonal (H) | 5.54 | 9.41 | 0.88 | 1.07 | 0.57 | 0.89 | 0.89 |
+| Mean distance, ‰ (H) | 0.114 | 0.067 | 0.053 | 0.054 | 0.058 | 0.068 | 0.068 |
+| Off budget, % (N) | 3.7 | 2.1 | 0.8 | 2.0 | 1.9 | 6.2 | 6.2 |
+| Time, seconds (T) | 3.08 | 1.37 | 3.92 | 3.33 | 2.28 | 2.83 | 2.88 |
 
 ## cube (mechanical)
 
@@ -264,15 +264,51 @@ Failures: quadriflow: cancelled.
 | Irregular vertices (S) | 8 | 24 | 8 | 8 | 8 | 8 | 8 |
 | … of which above the minimum | 0 | 16 | 0 | 0 | 0 | 0 | 0 |
 | Base complex patches (C) | 6 | 274 | 1102 | 6 | 6 | 6 | 6 |
-| Alignment, degrees (A) | 0.29 | 1.97 | 0.75 | 0.31 | 0.45 | 0.13 | 0.13 |
-| Mean angle deviation, degrees (F) | 0.18 | 1.65 | 0.75 | 0.41 | 0.62 | 0.00 | 0.00 |
-| Angle deviation, 95th percentile (F) | 0.43 | 4.89 | 1.98 | 1.70 | 1.83 | 0.00 | 0.00 |
-| Mean aspect ratio (F) | 1.005 | 1.062 | 1.041 | 1.032 | 1.091 | 1.030 | 1.030 |
-| Area variation (F) | 0.004 | 0.090 | 0.048 | 0.032 | 0.100 | 0.021 | 0.021 |
+| Alignment, degrees (A) | 0.29 | 1.97 | 0.75 | 0.14 | 0.36 | 0.13 | 0.13 |
+| Mean angle deviation, degrees (F) | 0.18 | 1.65 | 0.75 | 0.01 | 0.36 | 0.00 | 0.00 |
+| Angle deviation, 95th percentile (F) | 0.43 | 4.89 | 1.98 | 0.02 | 0.85 | 0.00 | 0.00 |
+| Mean aspect ratio (F) | 1.005 | 1.062 | 1.041 | 1.031 | 1.088 | 1.030 | 1.030 |
+| Area variation (F) | 0.004 | 0.090 | 0.048 | 0.021 | 0.098 | 0.021 | 0.021 |
 | Hausdorff, ‰ of the diagonal (H) | 4.80 | 0.00 | 11.17 | 0.00 | 0.00 | 0.00 | 0.00 |
 | Mean distance, ‰ (H) | 0.017 | 0.000 | 0.047 | 0.000 | 0.000 | 0.000 | 0.000 |
 | Off budget, % (N) | 3.2 | 1.0 | 0.3 | 0.3 | 0.3 | 2.7 | 2.7 |
-| Time, seconds (T) | 0.75 | 0.27 | 5.48 | 1.44 | 1.36 | 2.97 | 3.00 |
+| Time, seconds (T) | 0.75 | 0.27 | 5.48 | 1.32 | 1.68 | 2.97 | 3.00 |
+
+## lblock (mechanical)
+
+| | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform |
+|---|---|---|---|---|---|---|---|
+| **Valid meshes (V)** | 4/5 | 5/5 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 |
+| Irregular vertices (S) | 12 | 24 | 12 | 12 | 12 | 12 | 12 |
+| … of which above the minimum | 4 | 16 | 4 | 4 | 4 | 4 | 4 |
+| Base complex patches (C) | 86 | 464 | 14 | 14 | 14 | 14 | 14 |
+| Alignment, degrees (A) | 1.09 | 1.54 | 0.71 | 0.52 | 0.86 | 0.63 | 0.63 |
+| Mean angle deviation, degrees (F) | 0.80 | 1.56 | 0.67 | 0.00 | 0.53 | 0.37 | 0.37 |
+| Angle deviation, 95th percentile (F) | 2.44 | 4.54 | 2.69 | 0.01 | 1.43 | 1.43 | 1.43 |
+| Mean aspect ratio (F) | 1.047 | 1.051 | 1.058 | 1.040 | 1.097 | 1.037 | 1.037 |
+| Area variation (F) | 0.039 | 0.063 | 0.036 | 0.034 | 0.106 | 0.021 | 0.021 |
+| Hausdorff, ‰ of the diagonal (H) | 10.33 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 |
+| Mean distance, ‰ (H) | 0.034 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 |
+| Off budget, % (N) | 2.4 | 7.3 | 2.9 | 1.0 | 0.9 | 1.0 | 1.0 |
+| Time, seconds (T) | 1.15 | 0.25 | 57.81 | 0.89 | 1.77 | 2.73 | 2.90 |
+
+## cylinder (mechanical)
+
+| | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform |
+|---|---|---|---|---|---|---|---|
+| **Valid meshes (V)** | 5/5 | 5/5 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 |
+| Irregular vertices (S) | 8 | 91 | 8 | 8 | 8 | 8 | 8 |
+| … of which above the minimum | 0 | 83 | 0 | 0 | 0 | 0 | 0 |
+| Base complex patches (C) | 1003 | 3052 | 667 | 722 | 463 | 408 | 408 |
+| Alignment, degrees (A) | 4.18 | 5.46 | 1.61 | 1.50 | 1.63 | 1.52 | 1.52 |
+| Mean angle deviation, degrees (F) | 4.32 | 4.18 | 4.32 | 3.59 | 2.70 | 3.22 | 3.22 |
+| Angle deviation, 95th percentile (F) | 17.78 | 15.60 | 18.66 | 13.76 | 8.52 | 11.87 | 11.87 |
+| Mean aspect ratio (F) | 1.087 | 1.132 | 1.361 | 1.388 | 1.532 | 1.511 | 1.511 |
+| Area variation (F) | 0.103 | 0.140 | 0.367 | 0.375 | 0.233 | 0.403 | 0.403 |
+| Hausdorff, ‰ of the diagonal (H) | 2.07 | 3.74 | 1.02 | 0.94 | 0.93 | 1.43 | 1.43 |
+| Mean distance, ‰ (H) | 0.144 | 0.121 | 0.221 | 0.176 | 0.165 | 0.369 | 0.369 |
+| Off budget, % (N) | 3.3 | 3.3 | 16.6 | 0.5 | 1.3 | 18.1 | 18.1 |
+| Time, seconds (T) | 1.30 | 0.18 | 5.16 | 1.42 | 3.07 | 2.68 | 2.49 |
 
 ## sphere (calibration)
 
@@ -290,7 +326,7 @@ Failures: quadriflow: cancelled.
 | Hausdorff, ‰ of the diagonal (H) | 0.63 | 0.72 | 0.68 | 0.86 | 0.86 | 0.82 | 0.82 |
 | Mean distance, ‰ (H) | 0.216 | 0.221 | 0.230 | 0.223 | 0.223 | 0.258 | 0.258 |
 | Off budget, % (N) | 3.6 | 3.0 | 0.0 | 0.0 | 0.0 | 8.7 | 8.7 |
-| Time, seconds (T) | 1.76 | 0.50 | 2.34 | 0.77 | 0.85 | 3.56 | 3.39 |
+| Time, seconds (T) | 1.76 | 0.50 | 2.34 | 0.98 | 1.48 | 3.56 | 3.39 |
 
 ## torus (calibration)
 
@@ -308,7 +344,7 @@ Failures: quadriflow: cancelled.
 | Hausdorff, ‰ of the diagonal (H) | 1.86 | 1.38 | 1.02 | 1.02 | 1.02 | 1.71 | 1.71 |
 | Mean distance, ‰ (H) | 0.299 | 0.298 | 0.338 | 0.338 | 0.338 | 0.518 | 0.518 |
 | Off budget, % (N) | 0.8 | 2.6 | 9.3 | 9.3 | 9.3 | 5.9 | 5.9 |
-| Time, seconds (T) | 1.38 | 0.17 | 1.59 | 1.20 | 1.32 | 4.71 | 2.89 |
+| Time, seconds (T) | 1.38 | 0.17 | 1.59 | 1.18 | 2.75 | 4.71 | 2.89 |
 
 ## Summary
 
@@ -325,13 +361,13 @@ Number of models on which each tool has the best median, calibration shapes excl
 | Mean aspect ratio (F) | 1 | 8 | 0 | 4 | 0 | 0 | 0 |
 | Valid meshes (V) | 36/65 | 47/65 | 9/13 | 12/13 | 12/13 | 8/13 | 10/13 |
 
-### mechanical (2 models)
+### mechanical (4 models)
 
 | Metric | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform |
 |---|---|---|---|---|---|---|---|
-| Irregular vertices (S) | 1 | 0 | 2 | 2 | 2 | 2 | 2 |
-| Base complex patches (C) | 1 | 0 | 1 | 2 | 1 | 1 | 1 |
-| Alignment, degrees (A) | 0 | 0 | 0 | 0 | 1 | 1 | 1 |
-| Mean angle deviation, degrees (F) | 0 | 0 | 0 | 1 | 0 | 1 | 1 |
-| Mean aspect ratio (F) | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
-| Valid meshes (V) | 9/10 | 10/10 | 2/2 | 2/2 | 2/2 | 2/2 | 2/2 |
+| Irregular vertices (S) | 3 | 0 | 4 | 4 | 4 | 4 | 4 |
+| Base complex patches (C) | 1 | 0 | 2 | 3 | 2 | 3 | 3 |
+| Alignment, degrees (A) | 0 | 0 | 0 | 2 | 1 | 1 | 1 |
+| Mean angle deviation, degrees (F) | 0 | 0 | 0 | 2 | 1 | 1 | 1 |
+| Mean aspect ratio (F) | 3 | 0 | 0 | 0 | 0 | 1 | 1 |
+| Valid meshes (V) | 18/20 | 20/20 | 4/4 | 4/4 | 4/4 | 4/4 | 4/4 |

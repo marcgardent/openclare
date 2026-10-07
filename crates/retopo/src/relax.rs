@@ -20,6 +20,9 @@ pub struct Features {
     corners: Bvh,
     /// Output vertices closer than this to a line (resp. corner) belong to it.
     snap_distance: f64,
+    /// When the chain knows which vertices belong to a line and which to a
+    /// corner, these replace the test by distance.
+    members: Option<(Vec<u32>, Vec<u32>)>,
 }
 
 impl Features {
@@ -40,7 +43,15 @@ impl Features {
             lines: Bvh::from_triangles(segments.collect()),
             corners: Bvh::from_triangles(corners.collect()),
             snap_distance,
+            members: None,
         })
+    }
+
+    /// Says outright which vertices of the mesh to come lie on a feature
+    /// line and which on a corner, instead of telling by distance.
+    pub fn with_members(mut self, on_lines: Vec<u32>, on_corners: Vec<u32>) -> Self {
+        self.members = Some((on_lines, on_corners));
+        self
     }
 }
 
@@ -148,7 +159,20 @@ fn classify(mesh: &mut PolyMesh, features: Option<&Features>) -> (Vec<Hold>, Vec
     }
 
     let mut kind = vec![Hold::Free; n];
-    if let Some(features) = features {
+    if let Some((on_lines, on_corners)) = features.and_then(|features| features.members.as_ref()) {
+        // On a line: brought onto it, in case it is the average of several
+        // points. On a corner: left exactly where it was put.
+        let lines = &features.expect("checked just above").lines;
+        for &v in on_lines {
+            kind[v as usize] = Hold::Line;
+            if let Some(hit) = lines.closest_point(mesh.positions[v as usize]) {
+                mesh.positions[v as usize] = hit.point;
+            }
+        }
+        for &v in on_corners {
+            kind[v as usize] = Hold::Pinned;
+        }
+    } else if let Some(features) = features {
         let limit = features.snap_distance * features.snap_distance;
         // Each corner captures the one vertex nearest to it.
         let mut captured: Vec<Option<(f64, usize)>> = Vec::new();

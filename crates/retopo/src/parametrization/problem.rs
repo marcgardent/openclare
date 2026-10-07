@@ -55,6 +55,9 @@ impl Default for Solver {
     }
 }
 
+/// A face with less than this share of the mean area is a sliver.
+const SLIVER: f64 = 1e-9;
+
 pub(super) struct Problem<'a> {
     pub work: &'a WorkMesh,
     pub topology: Topology,
@@ -75,7 +78,16 @@ impl<'a> Problem<'a> {
             return Err(Error::InvalidParams(format!("edge length {edge_length} is not positive")));
         }
         let mesh = &work.mesh;
-        let (topology, frames) = prepare(mesh)?;
+        let (topology, mut frames) = prepare(mesh)?;
+        // Slivers with next to no area (the preprocessing leaves some along
+        // hard edges) have no shape for the map to copy, and gradients large
+        // enough to drown everything else: they count as having no area.
+        let typical = frames.area.iter().sum::<f64>() / frames.area.len().max(1) as f64;
+        for area in &mut frames.area {
+            if *area < SLIVER * typical {
+                *area = 0.0;
+            }
+        }
         let cut = CutMesh::build(mesh, &topology, field);
         let scale = 1.0 / edge_length;
         let arms: Vec<[crate::math::Vec3; 2]> = (0..mesh.triangles.len())
@@ -94,7 +106,21 @@ impl<'a> Problem<'a> {
             })
             .collect();
         let unknowns = 2 * cut.wedge_count;
-        Ok(Self { work, topology, frames, cut, ideal, arms, unknowns })
+        let mut problem = Self { work, topology, frames, cut, ideal, arms, unknowns };
+        // A triangle with two edges on the same feature line (it cuts a
+        // slight bend of the line) has all three corners on one grid line
+        // once that line is: it is bound to be flat in the map. Like a
+        // sliver, it is not something to fit, nor a fold to fight.
+        let mut held = vec![[0u8; 2]; mesh.triangles.len()];
+        for (f, _, along_u) in problem.edges_on_lines() {
+            held[f][along_u as usize] += 1;
+        }
+        for (f, count) in held.into_iter().enumerate() {
+            if count[0] >= 2 || count[1] >= 2 {
+                problem.frames.area[f] = 0.0;
+            }
+        }
+        Ok(problem)
     }
 
     /// Index of the `u` unknown of a corner; its `v` follows.
@@ -236,34 +262,46 @@ impl<'a> Problem<'a> {
     /// one on a line (one coordinate constant along it) and the expressions
     /// (that coordinate) that must then be whole numbers.
     pub fn feature_conditions(&self) -> (Vec<Constraint>, Vec<Row>) {
+        let (mut constraints, mut expressions) = (Vec::new(), Vec::new());
+        for (f, k, along_u) in self.edges_on_lines() {
+            let (here, there) = (3 * f + k, 3 * f + (k + 1) % 3);
+            // Running along u, it is v that stays constant, and conversely.
+            let constant = |corner: usize| if along_u { self.v(corner) } else { self.u(corner) };
+            constraints.push(Constraint::zero(merged(vec![(constant(here), 1.0), (constant(there), -1.0)])));
+            expressions.push(vec![(constant(here), 1.0)]);
+        }
+        (constraints, expressions)
+    }
+
+    /// The feature edges the field follows, each as seen from a face: the
+    /// face, the corner the edge leaves from, and whether it runs along `u`
+    /// (otherwise along `v`).
+    fn edges_on_lines(&self) -> Vec<(usize, usize, bool)> {
         let mesh = &self.work.mesh;
         let on_feature: std::collections::HashSet<(u32, u32)> =
             self.work.feature_edges.iter().map(|&[a, b]| (a.min(b), a.max(b))).collect();
-        let (mut constraints, mut expressions) = (Vec::new(), Vec::new());
+        let mut out = Vec::new();
         if on_feature.is_empty() {
-            return (constraints, expressions);
+            return out;
         }
         for (f, tri) in mesh.triangles.iter().enumerate() {
             for k in 0..3 {
                 let (a, b) = (tri[k], tri[(k + 1) % 3]);
-                if !on_feature.contains(&(a.min(b), a.max(b))) || self.frames.area[f] == 0.0 {
+                if !on_feature.contains(&(a.min(b), a.max(b))) {
                     continue;
                 }
                 let edge = (mesh.positions[b as usize] - mesh.positions[a as usize]).normalize_or_zero();
                 let (along_u, along_v) = (edge.dot(self.arms[f][0]).abs(), edge.dot(self.arms[f][1]).abs());
                 // Where the field does not follow the edge (a corner triangle
-                // left free), forcing it onto a grid line would fold the map.
+                // left free, a face too flat to have a direction), forcing it
+                // onto a grid line would fold the map.
                 if along_u.max(along_v) < 0.95 {
                     continue;
                 }
-                let (here, there) = (3 * f + k, 3 * f + (k + 1) % 3);
-                // Running along u, it is v that stays constant, and conversely.
-                let constant = |corner: usize| if along_u > along_v { self.v(corner) } else { self.u(corner) };
-                constraints.push(Constraint::zero(merged(vec![(constant(here), 1.0), (constant(there), -1.0)])));
-                expressions.push(vec![(constant(here), 1.0)]);
+                out.push((f, k, along_u > along_v));
             }
         }
-        (constraints, expressions)
+        out
     }
 
     /// Minimises the energy under the constraints. Returns the unknowns and

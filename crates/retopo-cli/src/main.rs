@@ -24,7 +24,7 @@ USAGE:
     retopo parametrize <input.obj> --quads <N> [options]
     retopo tmesh <input.obj> --quads <N> [options]
     retopo quantize <input.obj> --quads <N> [options]
-    retopo primitive <torus|sphere|cube|plane> <output.obj>
+    retopo primitive <torus|sphere|cube|plane|lblock|cylinder> <output.obj> [detail]
 
 OPTIONS (remesh):
     --preset <NAME>              start from a shipped preset (see `retopo presets`; default organic)
@@ -123,14 +123,18 @@ fn run(args: &[String]) -> Result<(), String> {
 }
 
 fn primitive(args: &[String]) -> Result<(), String> {
-    let [shape, output] = args else {
-        return Err("primitive takes a shape and an output path".into());
+    let (shape, output, detail) = match args {
+        [shape, output] => (shape, output, None),
+        [shape, output, detail] => (shape, output, Some(parse::<u32>("detail", detail)?)),
+        _ => return Err("primitive takes a shape, an output path and optionally a level of detail".into()),
     };
     let mesh: TriMesh = match shape.as_str() {
-        "torus" => primitives::torus(1.0, 0.4, 96, 48),
-        "sphere" => primitives::icosphere(4),
-        "cube" => primitives::cube(16),
-        "plane" => primitives::plane(24),
+        "torus" => primitives::torus(1.0, 0.4, 2 * detail.unwrap_or(48), detail.unwrap_or(48)),
+        "sphere" => primitives::icosphere(detail.unwrap_or(4)),
+        "cube" => primitives::cube(detail.unwrap_or(16)),
+        "plane" => primitives::plane(detail.unwrap_or(24)),
+        "lblock" => primitives::l_block(detail.unwrap_or(12)),
+        "cylinder" => primitives::cylinder(detail.unwrap_or(16)),
         other => return Err(format!("unknown primitive '{other}'")),
     };
     obj::write_obj_tri(output, &mesh).map_err(|e| e.to_string())
@@ -642,7 +646,7 @@ fn tmesh_command(args: &[String]) -> Result<(), String> {
     let report = &tmesh.report;
     if json {
         println!(
-            "{{\"triangles\": {}, \"map_inversions\": {}, \"features_off_grid\": {}, \"border_off_grid\": {}, \
+            "{{\"triangles\": {}, \"map_inversions\": {}, \"features_off_grid\": {}, \"off_grid_edges\": {}, \
              \"singularities\": {}, \"traces\": {}, \"lost_traces\": {}, \"overlaps\": {}, \"nodes\": {}, \
              \"t_junctions\": {}, \"arcs\": {}, \"patches\": {}, \"rectangles\": {}, \"side_mismatch\": {:e}, \
              \"area_error\": {:e}, \"euler\": {}, \"surface_euler\": {}, \"longest_trace\": {}, \
@@ -650,7 +654,7 @@ fn tmesh_command(args: &[String]) -> Result<(), String> {
             triangles,
             report.map_inversions,
             features_off_grid,
-            report.border_off_grid,
+            report.off_grid_edges,
             report.singularities,
             report.traces,
             report.lost_traces,
@@ -672,8 +676,8 @@ fn tmesh_command(args: &[String]) -> Result<(), String> {
         );
     } else {
         println!(
-            "work mesh      {} triangles, {} inverted in the map, {} border edges off the grid lines",
-            triangles, report.map_inversions, report.border_off_grid
+            "work mesh      {} triangles, {} inverted in the map, {} border or hard edges off the grid lines",
+            triangles, report.map_inversions, report.off_grid_edges
         );
         println!(
             "traces         {} from {} singularities, {} lost, {} overlapping, longest {:.1} quad edges",
@@ -695,6 +699,26 @@ fn tmesh_command(args: &[String]) -> Result<(), String> {
             "to quantize    {} arcs and {} patches under half a quad edge",
             report.short_arcs, report.thin_patches
         );
+        // What is wrong with the patches that are no rectangles: the angles
+        // round their rim, in quarter turns, the kind of node at each, and a
+        // star where the rim runs along a border or a hard edge.
+        for patch in tmesh.patches.iter().filter(|patch| patch.sides.is_none()).take(5) {
+            let rim: Vec<String> = patch
+                .boundary
+                .iter()
+                .zip(&patch.angles)
+                .map(|(&half, angle)| {
+                    let arc = &tmesh.arcs[half as usize / 2];
+                    let kind = match tmesh.nodes[arc.nodes[1 - half as usize % 2] as usize].kind {
+                        retopo::tmesh::NodeKind::Singularity { .. } => "s",
+                        retopo::tmesh::NodeKind::Corner => "c",
+                        retopo::tmesh::NodeKind::Junction => "j",
+                    };
+                    format!("{angle}{kind}{}", if arc.feature { "*" } else { "" })
+                })
+                .collect();
+            println!("not a rectangle {}", rim.join(" "));
+        }
         println!("seconds        {seconds:.3}");
     }
 

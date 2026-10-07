@@ -56,6 +56,10 @@ pub(super) struct Built {
     /// Vertex of each point, before merging.
     vertex_of: Vec<u32>,
     merges: Vec<Merge>,
+    /// Arcs to lengthen because, as things stand, a rectangle between two
+    /// runs of border or hard edge has closed up and folded one onto the
+    /// other.
+    clashes: Vec<usize>,
 }
 
 pub(super) fn build(tmesh: &TMesh, x: &[i64]) -> Built {
@@ -92,12 +96,15 @@ pub(super) fn build(tmesh: &TMesh, x: &[i64]) -> Built {
     }
 
     let mut quads = Vec::new();
+    let mut clashes = Vec::new();
     for (index, patch) in tmesh.patches.iter().enumerate() {
         let (Some(side_of), Some(real)) = (patch.side_of_each(), patch.sides) else { continue };
         // The points along each side, corner to corner, and the arc of each
         // pair of opposite sides that is cheapest to lengthen.
         let mut sides: [Vec<u32>; 4] = Default::default();
         let mut longest: [Option<usize>; 2] = [None; 2];
+        // Whether each side still has some length of border or hard edge.
+        let mut walled = [false; 4];
         // Round the rim from the first corner, so that each side is met in
         // one piece.
         let count = patch.boundary.len();
@@ -110,6 +117,7 @@ pub(super) fn build(tmesh: &TMesh, x: &[i64]) -> Built {
                 along_side.push(along(half, 0));
             }
             along_side.extend((1..=x[arc]).map(|step| along(half, step)));
+            walled[side as usize] |= tmesh.arcs[arc].feature && x[arc] > 0;
             let kept = &mut longest[side as usize % 2];
             if kept.is_none_or(|other| tmesh.arcs[arc].length > tmesh.arcs[other].length) {
                 *kept = Some(arc);
@@ -128,6 +136,9 @@ pub(super) fn build(tmesh: &TMesh, x: &[i64]) -> Built {
             // other, running opposite ways round the rim.
             let (a, b, across) = if w == 0 { (1, 3, 0) } else { (0, 2, 1) };
             let Some(arc) = longest[across] else { continue };
+            if walled[a] && walled[b] {
+                clashes.push(arc);
+            }
             for (step, &point) in sides[a].iter().enumerate() {
                 let facing = sides[b][sides[b].len() - 1 - step];
                 merges.push(Merge { points: [point, facing], arc, size: real[across] });
@@ -186,7 +197,7 @@ pub(super) fn build(tmesh: &TMesh, x: &[i64]) -> Built {
         points: sources,
         point_vertex: vertex_of.clone(),
     };
-    Built { lattice, vertex_of, merges }
+    Built { lattice, vertex_of, merges, clashes }
 }
 
 /// What is wrong with a lattice.
@@ -212,7 +223,7 @@ impl Built {
     pub fn defects(&self, tmesh: &TMesh) -> Defects {
         let lattice = &self.lattice;
         let vertices = lattice.sources.len();
-        let mut defects = Defects::default();
+        let mut defects = Defects { reopen: self.clashes.clone(), unexplained: 0 };
         // Whether a defect was already charged to each vertex.
         let mut blamed = vec![false; vertices];
         // Charges a defect at `vertex` to the arc `culprit` finds, once.

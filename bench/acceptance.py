@@ -4,9 +4,9 @@
     python3 bench/acceptance.py [--tool quad-layout] [--targets 1000,3000,8000]
 
 Reads bench/results/results*.json (see run.py) and writes
-bench/results/ACCEPTANCE.md: medians of every tool over the organic models,
-then, model by model, which thresholds the tool under test meets against
-QuadriFlow.
+bench/results/ACCEPTANCE.md: for the organic models, then for the mechanical
+ones, medians of every tool, then, model by model, which thresholds the tool
+under test meets against QuadriFlow.
 """
 
 import argparse
@@ -15,7 +15,11 @@ import statistics
 
 from run import DEFAULT_TARGET, MODELS, RESULTS
 
-ORGANIC = [name for name, category, _, _ in MODELS if category == "organic" and name != "rose"]
+# Desert Rose is not a manifold surface: it waits for the repair stage.
+GROUPS = [
+    ("organic", [name for name, category, _, _ in MODELS if category == "organic" and name != "rose"]),
+    ("mechanical", [name for name, category, _, _ in MODELS if category == "mechanical"]),
+]
 TOOLS = [
     "quadriflow",
     "instant-meshes",
@@ -88,8 +92,9 @@ def main():
     lines = [
         "# Acceptance",
         "",
-        f"Chain under test: `{args.tool}`. Organic models of the corpus: {', '.join(ORGANIC)}.",
+        f"Chain under test: `{args.tool}`.",
         "The thresholds are those of ALGORITHME.md, section 0, against QuadriFlow at the same budget.",
+        "They were set for the organic models; the mechanical ones are held to the same for reference.",
         "",
     ]
     for target in [int(t) for t in args.targets.split(",")]:
@@ -98,66 +103,74 @@ def main():
         if not path.exists():
             continue
         runs = json.loads(path.read_text())["runs"]
-        rows = {tool: {m: of_model(runs, m, tool) for m in ORGANIC} for tool in TOOLS}
-        present = [tool for tool in TOOLS if any(rows[tool].values())]
-
-        lines += [f"## {target} quads", "", "Medians over the organic models each tool was run on.", ""]
-        lines += ["| | " + " | ".join(present) + " |", "|---|" + "---|" * len(present)]
-        counted = {tool: [row for row in rows[tool].values() if row] for tool in present}
-        lines.append(
-            "| Models run | " + " | ".join(str(len(counted[tool])) for tool in present) + " |"
-        )
-        lines.append(
-            "| Models valid on every run (V) | "
-            + " | ".join(str(sum(1 for row in counted[tool] if row["valid"] == row["runs"])) for tool in present)
-            + " |"
-        )
-        for key, letter, label, factor in METRICS:
-            digits = 0 if key in ("irregular_vertices", "base_complex_patches") else 1
-            digits = 2 if key in ("area_variation", "mean_distance") else digits
-            cells = [show(median([row[key] for row in counted[tool]]), factor, digits) for tool in present]
-            lines.append(f"| {label}{f' ({letter})' if letter else ''} | " + " | ".join(cells) + " |")
-        lines.append(
-            "| Time, seconds (T) | "
-            + " | ".join(show(median([row["seconds"] for row in counted[tool]]), 1, 1) for tool in present)
-            + " |"
-        )
-        lines.append("")
-
-        if args.tool not in present or "quadriflow" not in present:
-            lines += ["No model by model check: one of the two tools has no result at this budget.", ""]
-            continue
-        lines += [
-            "Model by model, against QuadriFlow (ours / QuadriFlow's). A letter in the last column is a threshold missed.",
-            "",
-            "| Model | V | A | S | C | F | H | N | Missed |",
-            "|---|---|---|---|---|---|---|---|---|",
-        ]
-        met = {letter: 0 for letter in "VASCFHN"}
-        compared = 0
-        for model in ORGANIC:
-            ours, theirs = rows[args.tool][model], rows["quadriflow"][model]
-            if not ours or not theirs:
+        for group, models in GROUPS:
+            rows = {tool: {m: of_model(runs, m, tool) for m in models} for tool in TOOLS}
+            present = [tool for tool in TOOLS if any(rows[tool].values())]
+            if not present:
                 continue
-            compared += 1
-            verdict = thresholds(ours, theirs)
-            for letter, ok in verdict.items():
-                met[letter] += ok
-            pair = lambda key, factor=1, digits=1: f"{show(ours[key], factor, digits)} / {show(theirs[key], factor, digits)}"
+
+            lines += [
+                f"## {target} quads, {group} models",
+                "",
+                f"Models: {', '.join(models)}. Medians over those each tool was run on.",
+                "",
+            ]
+            lines += ["| | " + " | ".join(present) + " |", "|---|" + "---|" * len(present)]
+            counted = {tool: [row for row in rows[tool].values() if row] for tool in present}
             lines.append(
-                f"| {model} | {ours['valid']}/{ours['runs']} / {theirs['valid']}/{theirs['runs']} | {pair('alignment')} "
-                f"| {pair('irregular_vertices', 1, 0)} | {pair('base_complex_patches', 1, 0)} "
-                f"| {pair('angle_deviation_mean')} | {pair('hausdorff', 1000)} | {show(ours['budget_error'], 100)} % "
-                f"| {''.join(letter for letter, ok in verdict.items() if not ok) or '—'} |"
+                "| Models run | " + " | ".join(str(len(counted[tool])) for tool in present) + " |"
             )
-        lines += [
-            "",
-            "Thresholds met, out of "
-            + f"{compared} models: "
-            + ", ".join(f"{letter} {count}" for letter, count in met.items())
-            + ".",
-            "",
-        ]
+            lines.append(
+                "| Models valid on every run (V) | "
+                + " | ".join(str(sum(1 for row in counted[tool] if row["valid"] == row["runs"])) for tool in present)
+                + " |"
+            )
+            for key, letter, label, factor in METRICS:
+                digits = 0 if key in ("irregular_vertices", "base_complex_patches") else 1
+                digits = 2 if key in ("area_variation", "mean_distance") else digits
+                cells = [show(median([row[key] for row in counted[tool]]), factor, digits) for tool in present]
+                lines.append(f"| {label}{f' ({letter})' if letter else ''} | " + " | ".join(cells) + " |")
+            lines.append(
+                "| Time, seconds (T) | "
+                + " | ".join(show(median([row["seconds"] for row in counted[tool]]), 1, 1) for tool in present)
+                + " |"
+            )
+            lines.append("")
+
+            if args.tool not in present or "quadriflow" not in present:
+                lines += ["No model by model check: one of the two tools has no result at this budget.", ""]
+                continue
+            lines += [
+                "Model by model, against QuadriFlow (ours / QuadriFlow's). A letter in the last column is a threshold missed.",
+                "",
+                "| Model | V | A | S | C | F | H | N | Missed |",
+                "|---|---|---|---|---|---|---|---|---|",
+            ]
+            met = {letter: 0 for letter in "VASCFHN"}
+            compared = 0
+            for model in models:
+                ours, theirs = rows[args.tool][model], rows["quadriflow"][model]
+                if not ours or not theirs:
+                    continue
+                compared += 1
+                verdict = thresholds(ours, theirs)
+                for letter, ok in verdict.items():
+                    met[letter] += ok
+                pair = lambda key, factor=1, digits=1: f"{show(ours[key], factor, digits)} / {show(theirs[key], factor, digits)}"
+                lines.append(
+                    f"| {model} | {ours['valid']}/{ours['runs']} / {theirs['valid']}/{theirs['runs']} | {pair('alignment')} "
+                    f"| {pair('irregular_vertices', 1, 0)} | {pair('base_complex_patches', 1, 0)} "
+                    f"| {pair('angle_deviation_mean')} | {pair('hausdorff', 1000)} | {show(ours['budget_error'], 100)} % "
+                    f"| {''.join(letter for letter, ok in verdict.items() if not ok) or '—'} |"
+                )
+            lines += [
+                "",
+                "Thresholds met, out of "
+                + f"{compared} models: "
+                + ", ".join(f"{letter} {count}" for letter, count in met.items())
+                + ".",
+                "",
+            ]
     (RESULTS / "ACCEPTANCE.md").write_text("\n".join(lines))
     print("\n".join(lines))
 

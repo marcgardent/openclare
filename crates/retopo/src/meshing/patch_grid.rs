@@ -35,50 +35,75 @@ impl Mesher for PatchGrid {
         let rims: Vec<Option<Rim>> =
             (0..tmesh.patches.len()).map(|patch| Rim::new(tmesh, &quantization.lengths, patch)).collect();
 
-        let mut report = Report { vertices: lattice.sources.len(), quads: lattice.quads.len(), interpolated: 0 };
-        // Each vertex goes where its points are on average, unless one of
-        // them has to stay put: a singularity, a corner of the border.
+        let mut report = Report { vertices: lattice.sources.len(), quads: lattice.quads.len(), ..Default::default() };
+        let node_on_feature =
+            |node: u32| tmesh.nodes[node as usize].arcs.iter().any(|&half| tmesh.arcs[half as usize / 2].feature);
+        // Each vertex goes where its points are on average. But some points
+        // outrank the others: those on a border or a hard edge keep the
+        // vertex on it, and a singularity or a corner keeps it where it is.
+        const FREE: u8 = 0;
+        const ON_FEATURE: u8 = 1;
+        const PINNED: u8 = 2;
         let mut sum = vec![(Vec3::ZERO, 0.0); lattice.sources.len()];
-        let mut pinned = vec![false; lattice.sources.len()];
+        let mut rank = vec![FREE; lattice.sources.len()];
+        let mut corner = vec![false; lattice.sources.len()];
         for (&source, &vertex) in lattice.points.iter().zip(&lattice.point_vertex) {
             let vertex = vertex as usize;
-            let position = match source {
+            let (position, standing) = match source {
                 Source::Node(node) => {
-                    let node = &tmesh.nodes[node as usize];
-                    if node.kind != NodeKind::Junction && !std::mem::replace(&mut pinned[vertex], true) {
-                        sum[vertex] = (node.position, 1.0);
-                        continue;
-                    }
-                    node.position
+                    let data = &tmesh.nodes[node as usize];
+                    let walled = node_on_feature(node);
+                    corner[vertex] |= data.kind == NodeKind::Corner || (data.kind != NodeKind::Junction && walled);
+                    let standing = match data.kind {
+                        NodeKind::Junction if walled => ON_FEATURE,
+                        NodeKind::Junction => FREE,
+                        _ => PINNED,
+                    };
+                    (data.position, standing)
                 }
                 Source::Arc { arc, step } => {
                     let data = &tmesh.arcs[arc as usize];
                     let along = step as f64 / quantization.lengths[arc as usize] as f64;
                     let time = data.span[0] + along * (data.span[1] - data.span[0]);
-                    match tmesh.traces[data.trace as usize].locate(time) {
+                    let position = match tmesh.traces[data.trace as usize].locate(time) {
                         Some((face, point, _)) => map.position(face, point),
                         None => {
                             report.interpolated += 1;
                             let [from, to] = data.nodes.map(|node| tmesh.nodes[node as usize].position);
                             from.lerp(to, along)
                         }
-                    }
+                    };
+                    (position, if data.feature { ON_FEATURE } else { FREE })
                 }
                 Source::Patch { patch, i, j } => {
                     let rim = rims[patch as usize].as_ref().expect("a patch with a grid is a rectangle");
                     let (u, v) = rim.real(i as usize, j as usize);
-                    match rim.read(tmesh, &map, u, v) {
+                    let position = match rim.read(tmesh, &map, u, v) {
                         Some(position) => position,
                         None => {
                             report.interpolated += 1;
                             rim.between(tmesh, &map, i as usize, j as usize)
                         }
-                    }
+                    };
+                    (position, FREE)
                 }
             };
-            if !pinned[vertex] {
+            // The first pinned point wins; otherwise only the points of the
+            // highest standing seen so far are averaged.
+            if standing > rank[vertex] {
+                rank[vertex] = standing;
+                sum[vertex] = (Vec3::ZERO, 0.0);
+            }
+            if standing == rank[vertex] && !(standing == PINNED && sum[vertex].1 > 0.0) {
                 sum[vertex].0 += position;
                 sum[vertex].1 += 1.0;
+            }
+        }
+        for vertex in 0..rank.len() as u32 {
+            if corner[vertex as usize] {
+                report.on_corner.push(vertex);
+            } else if rank[vertex as usize] == ON_FEATURE {
+                report.on_feature.push(vertex);
             }
         }
         let positions = sum.into_iter().map(|(total, count)| total / f64::max(count, 1.0)).collect();
