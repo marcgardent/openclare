@@ -21,12 +21,37 @@ impl Parametrizer for Seamless {
 
     fn parametrize(&self, work: &WorkMesh, field: &CrossField, request: &Request) -> Result<Parametrization> {
         let problem = Problem::new(work, field, request.edge_length)?;
-        let constraints = problem.seam_constraints();
-        let mut weights = vec![1.0; work.mesh.triangles.len()];
-        let mut report =
-            Report { seam_edges: problem.cut.seam_edges(), wedges: problem.cut.wedge_count, ..Default::default() };
-        let uv = untangle(&problem, &constraints, &mut weights, &self.solver, request.stiffening_rounds, &mut report)?;
-        report.flipped_first = report.flipped_before_stiffening;
+        let seams = problem.seam_constraints();
+        let seam_edges = problem.cut.seam_edges();
+        let wedges = problem.cut.wedge_count;
+        let solve = |constraints: &[Constraint]| -> Result<(Vec<[f64; 2]>, Report)> {
+            let mut weights = vec![1.0; work.mesh.triangles.len()];
+            let mut report = Report { seam_edges, wedges, ..Default::default() };
+            let uv =
+                untangle(&problem, constraints, &mut weights, &self.solver, request.stiffening_rounds, &mut report)?;
+            report.flipped_first = report.flipped_before_stiffening;
+            Ok((uv, report))
+        };
+
+        // Feature edges are kept on grid lines (which one is left free), so
+        // that borders and creases bound the rectangles the map is cut into.
+        // Where that folds the map, a map that only follows them through the
+        // field is the better one.
+        let (on_lines, _) = problem.feature_conditions();
+        let (uv, report) = if on_lines.is_empty() {
+            solve(&seams)?
+        } else {
+            let mut constraints = seams.clone();
+            constraints.extend(on_lines);
+            match solve(&constraints) {
+                Ok(aligned) if aligned.1.flipped == 0 => aligned,
+                _ => {
+                    let (uv, mut report) = solve(&seams)?;
+                    report.features_off_grid = true;
+                    (uv, report)
+                }
+            }
+        };
         Ok(Parametrization { cut: problem.cut, uv, report })
     }
 }

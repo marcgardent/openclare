@@ -8,6 +8,7 @@ use retopo::metrics::measure;
 use retopo::parametrization;
 use retopo::preprocess;
 use retopo::singularity;
+use retopo::tmesh::TMesh;
 use retopo::{PolyMesh, Target, TriMesh};
 
 const USAGE: &str = "\
@@ -20,6 +21,7 @@ USAGE:
     retopo preprocess <input.obj> <output.obj> [options]
     retopo field <input.obj> [options]
     retopo parametrize <input.obj> --quads <N> [options]
+    retopo tmesh <input.obj> --quads <N> [options]
     retopo primitive <torus|sphere|cube|plane> <output.obj>
 
 OPTIONS (remesh):
@@ -60,6 +62,16 @@ OPTIONS (parametrize):
     --rounds <N>           most stiffening rounds against inverted triangles (default 40)
     --kind <NAME>          seamless (default) or integer-grid
 
+OPTIONS (tmesh):
+    --quads <N>            number of quads the map is scaled for (required)
+    --triangles <N>        size of the work mesh (default 50000)
+    --alignment <A>        pull of the field towards curvature (default 0.05)
+    --simplify <R>         cancel opposite singularities closer than R quad edges
+    --crease-angle <DEG>   treat input edges sharper than this as hard constraints
+    --rounds <N>           most stiffening rounds against inverted triangles (default 40)
+    --traces <out.obj>     write the cuts as lines on the surface
+    --json                 print the report as one JSON object
+
 OPTIONS (measure):
     --target <N>           face count that was asked for
     --json                 print the metrics as one JSON object
@@ -89,6 +101,7 @@ fn run(args: &[String]) -> Result<(), String> {
         Some("preprocess") => preprocess_command(&args[1..]),
         Some("field") => field_command(&args[1..]),
         Some("parametrize") => parametrize_command(&args[1..]),
+        Some("tmesh") => tmesh_command(&args[1..]),
         Some("primitive") => primitive(&args[1..]),
         Some("-h" | "--help") => {
             print!("{USAGE}");
@@ -487,5 +500,136 @@ fn parametrize_command(args: &[String]) -> Result<(), String> {
     println!("distortion     mean {:.4}, worst stretch {:.2}", report.distortion_mean, report.stretch_max);
     println!("conditions     worst mismatch {:.2e}, {} whole numbers imposed", report.seam_error, report.integers);
     println!("seconds        {seconds:.3}");
+    Ok(())
+}
+
+fn tmesh_command(args: &[String]) -> Result<(), String> {
+    let mut work_request = preprocess::Request { triangles: 50_000, ..Default::default() };
+    let mut field_request = crossfield::Request::default();
+    let (mut quads, mut simplify, mut rounds, mut paths) = (None::<usize>, None::<f64>, 40usize, Vec::new());
+    let (mut traces_path, mut json) = (None, false);
+    let mut args = args.iter();
+    while let Some(arg) = args.next() {
+        let mut value = |name: &str| args.next().ok_or(format!("{name} expects a value"));
+        match arg.as_str() {
+            "--quads" => quads = Some(parse(arg, value(arg)?)?),
+            "--triangles" => work_request.triangles = parse(arg, value(arg)?)?,
+            "--alignment" => field_request.alignment = parse(arg, value(arg)?)?,
+            "--simplify" => simplify = Some(parse(arg, value(arg)?)?),
+            "--crease-angle" => work_request.crease_angle = Some(parse(arg, value(arg)?)?),
+            "--rounds" => rounds = parse(arg, value(arg)?)?,
+            "--traces" => traces_path = Some(value(arg)?.clone()),
+            "--json" => json = true,
+            flag if flag.starts_with("--") => return Err(format!("unknown option '{flag}'")),
+            path => paths.push(path),
+        }
+    }
+    let [input] = paths[..] else {
+        return Err("tmesh takes one input path".into());
+    };
+    let quads = quads.filter(|&n| n > 0).ok_or("tmesh needs --quads")?;
+
+    let source = obj::read_obj(input).map_err(|e| format!("{input}: {e}"))?;
+    let edge_length = (source.surface_area() / quads as f64).sqrt();
+    work_request.curvature_scale = Some(edge_length);
+    let work = preprocess::create(preprocess::Kind::Isotropic)
+        .preprocess(&source, &work_request)
+        .map_err(|e| e.to_string())?;
+    let mut field =
+        crossfield::create(crossfield::Kind::Power).solve(&work, &field_request).map_err(|e| e.to_string())?;
+    if let Some(quad_edges) = simplify {
+        let options = singularity::Request {
+            alignment: field_request.alignment,
+            reach: Some(quad_edges * edge_length),
+            ..Default::default()
+        };
+        field = singularity::create(singularity::Kind::PairCancellation)
+            .optimize(&work, &field, &options)
+            .map_err(|e| e.to_string())?
+            .0;
+    }
+    let request = parametrization::Request { edge_length, stiffening_rounds: rounds };
+    let map = parametrization::create(parametrization::Kind::Seamless)
+        .parametrize(&work, &field, &request)
+        .map_err(|e| e.to_string())?;
+
+    let start = std::time::Instant::now();
+    let tmesh = TMesh::trace(&work, &field, &map, 20.0 * (quads as f64).sqrt());
+    let seconds = start.elapsed().as_secs_f64();
+
+    let report = &tmesh.report;
+    if json {
+        println!(
+            "{{\"triangles\": {}, \"map_inversions\": {}, \"features_off_grid\": {}, \"border_off_grid\": {}, \
+             \"singularities\": {}, \"traces\": {}, \"lost_traces\": {}, \"overlaps\": {}, \"nodes\": {}, \
+             \"t_junctions\": {}, \"arcs\": {}, \"patches\": {}, \"rectangles\": {}, \"side_mismatch\": {:e}, \
+             \"area_error\": {:e}, \"euler\": {}, \"surface_euler\": {}, \"longest_trace\": {}, \
+             \"short_arcs\": {}, \"thin_patches\": {}, \"valid\": {}, \"seconds\": {}}}",
+            work.mesh.triangles.len(),
+            report.map_inversions,
+            map.report.features_off_grid,
+            report.border_off_grid,
+            report.singularities,
+            report.traces,
+            report.lost_traces,
+            report.overlaps,
+            report.nodes,
+            report.t_junctions,
+            report.arcs,
+            report.patches,
+            report.rectangles,
+            report.side_mismatch,
+            report.area_error,
+            report.euler,
+            report.surface_euler,
+            report.longest_trace,
+            report.short_arcs,
+            report.thin_patches,
+            report.is_valid(),
+            seconds
+        );
+    } else {
+        println!(
+            "work mesh      {} triangles, {} inverted in the map, {} border edges off the grid lines",
+            work.mesh.triangles.len(),
+            report.map_inversions,
+            report.border_off_grid
+        );
+        println!(
+            "traces         {} from {} singularities, {} lost, {} overlapping, longest {:.1} quad edges",
+            report.traces, report.singularities, report.lost_traces, report.overlaps, report.longest_trace
+        );
+        println!("graph          {} nodes ({} T-junctions), {} arcs", report.nodes, report.t_junctions, report.arcs);
+        println!(
+            "patches        {} of which {} rectangles; opposite sides differ by {:.2e} at most",
+            report.patches, report.rectangles, report.side_mismatch
+        );
+        println!(
+            "checks         area off by {:.2e}; nodes - arcs + patches = {} (surface: {}); {}",
+            report.area_error,
+            report.euler,
+            report.surface_euler,
+            if report.is_valid() { "valid" } else { "NOT VALID" }
+        );
+        println!(
+            "to quantize    {} arcs and {} patches under half a quad edge",
+            report.short_arcs, report.thin_patches
+        );
+        println!("seconds        {seconds:.3}");
+    }
+
+    if let Some(path) = traces_path {
+        let mut text = String::new();
+        let mut count = 0;
+        for trace in &tmesh.traces {
+            for p in trace {
+                text.push_str(&format!("v {} {} {}\n", p.x, p.y, p.z));
+            }
+            let indices: Vec<String> = (count + 1..=count + trace.len()).map(|i| i.to_string()).collect();
+            text.push_str(&format!("l {}\n", indices.join(" ")));
+            count += trace.len();
+        }
+        std::fs::write(&path, text).map_err(|e| format!("{path}: {e}"))?;
+    }
     Ok(())
 }

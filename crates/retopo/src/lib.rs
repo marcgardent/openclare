@@ -35,6 +35,7 @@ pub mod relax;
 pub mod remesher;
 pub mod singularity;
 pub mod spatial;
+pub mod tmesh;
 
 pub use config::RemeshConfig;
 pub use error::{Error, Result};

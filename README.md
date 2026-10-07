@@ -19,6 +19,10 @@ Deux chaînes de remaillage, de bout en bout (triangles en entrée, quads en sor
 - **`instant-meshes`**, le plancher de comparaison : robuste et rapide, mais sans structure et
   avec beaucoup de sommets irréguliers.
 
+La suite de la chaîne cible est en construction, étape par étape. Dernière en date : le
+**T-mesh**, qui découpe la surface en rectangles à partir des singularités (valide sur tout le
+corpus). Il n'entre pas encore dans `remesh` ; il se regarde avec `retopo tmesh`.
+
 Le cahier des charges, les mesures et la feuille de route sont dans
 [ALGORITHME.md](ALGORITHME.md).
 
@@ -73,6 +77,12 @@ config.alignment = 0.1;
 let (quads, report) = config.remesh(&triangles)?;
 ```
 
+Pour voir le T-mesh d'un modèle, ses coupes écrites comme des lignes sur la surface :
+
+```bash
+./target/release/retopo tmesh entree.obj --quads 3000 --simplify 2 --traces coupes.obj
+```
+
 ## Organisation
 
 | Module | Rôle |
@@ -90,6 +100,7 @@ let (quads, report) = config.remesh(&triangles)?;
 | `crossfield` | étape du champ de croix : une croix par face, alignement sur la courbure, singularités |
 | `singularity` | étape de simplification : annulation des paires de singularités inutiles |
 | `parametrization` | étape de paramétrisation : graphe de coupe, carte (u, v) sans couture |
+| `tmesh` | étape de structure globale : traces depuis les singularités, patchs rectangulaires |
 | `linalg` | algèbre linéaire creuse (enveloppe de la bibliothèque `faer`) |
 | `config` | configuration unique d'un remaillage, préréglages, enregistrement et relecture |
 | `curvature` | courbures et directions principales |
