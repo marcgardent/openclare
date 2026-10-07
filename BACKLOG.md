@@ -32,10 +32,12 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 | DT-016 | Documents en français, à traduire | J0 | basse | ouvert |
 | DT-017 | Corpus : sculptures de l'auteur à ajouter avant la fin de la licence d'essai | J0 | moyenne | ouvert |
 | DT-018 | Parties plus fines qu'un quad mal rendues à bas budget | J7 | moyenne | ouvert |
-| DT-019 | Relaxation rudimentaire : la forme des quads plafonne | J7 | haute | ouvert |
+| DT-019 | Relaxation rudimentaire : la forme des quads plafonne | J7 | haute | **fermé au J8** |
 | DT-020 | Complexe de base doublé par les jonctions en T | J7 | moyenne | ouvert |
 | DT-021 | Scan bruité (rock) : le champ suit le bruit | J7 | moyenne | ouvert |
-| DT-022 | Mires de comparaison incomplètes à 1000 et 8000 quads | J7 | basse | ouvert |
+| DT-022 | Mires de comparaison incomplètes à 1000 et 8000 quads | J7 | basse | **fermé au J8** |
+| DT-023 | Relaxation : coût et tailles de quads | J8 | basse | ouvert |
+| DT-024 | Densité adaptative et contraintes de rang 3 à 5 non commencées | J8 | moyenne | ouvert |
 
 ## Tickets
 
@@ -204,9 +206,12 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   améliorent la forme ; davantage érode les détails fins (le Hausdorff de l'ogre passe de 27 à
   46 ‰ entre 0 et 25 passes) et finit par inverser une face. La métrique F reste derrière
   QuadriFlow sur rock, creature et spot, et derrière Quad Remesher partout.
-- **Conséquence** : c'est aujourd'hui le premier frein à la qualité perçue.
-- **À faire** : jalon 8. Lissage qui préserve le volume, ou optimisation de forme (type ARAP),
-  comme l'envisageait la fiche M9.
+- **Conséquence** : c'était le premier frein à la qualité perçue.
+- **Fermé au jalon 8** : nouvelle relaxation `squaring` (chaque quad tiré vers son rectangle,
+  déplacement tangent, sommet tenu à une demi-arête de son point de départ, déplacements qui
+  retournent un quad refusés). À 3000 quads, l'écart d'angle moyen passe de 7,8° à 5,4°
+  (Quad Remesher : 7,2°) et le Hausdorff de 9,1 à 8,1 ‰. Le seuil F est tenu sur les 12 modèles.
+  L'ancien lissage reste disponible (`laplacian`) pour les deux autres chaînes.
 
 ### DT-020 — Complexe de base doublé par les jonctions en T
 
@@ -231,5 +236,31 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 - **Né au** jalon 7.
 - **Constat** : QuadriFlow n'a été lancé sur tout le corpus qu'à 3000 quads ; à 8000 il n'y a
   qu'un modèle, à 1000 aucun. La règle d'acceptation n'est donc établie qu'à 3000 quads.
-- **À faire** : lancer `bench/run.py --target 1000` et `--target 8000` avec tous les outils
-  (les mires Quad Remesher existent déjà pour une partie des modèles).
+- **Fermé au jalon 8** : tous les outils ont été lancés sur tout le corpus à 1000 et 8000
+  quads (les mires Quad Remesher existaient déjà). La règle d'acceptation est tenue en médiane
+  aux trois budgets ; le détail par modèle est dans `bench/results/ACCEPTANCE.md`. Réserve : ces
+  deux campagnes ont tourné pendant que je compilais et testais, leurs temps de calcul sont donc
+  un peu surestimés.
+
+### DT-023 — Relaxation : coût et tailles de quads
+
+- **Né au** jalon 8.
+- **Constat** : soixante passes, chacune avec une projection sur la source par sommet : 1,7 s
+  sur l'ogre à 8000 quads, un sixième du temps total. Par ailleurs les quads gardent les tailles
+  que la quantification leur donne ; la variation d'aire monte un peu (0,34 à 0,38 sur blob).
+- **Constaté aussi** : à 8000 quads les soixante passes ne suffisent plus tout à fait (écart
+  d'angle moyen de 6,1° contre 5,4° à 3000 quads), et openclare y est plus lent que QuadriFlow
+  (6,8 s contre 4,1 s en médiane).
+- **Pistes** : nombre de passes selon la taille du maillage, ou du grossier au fin ; ne
+  projeter qu'une passe sur plusieurs ; arrêt quand plus rien ne bouge ;
+  projection sur le maillage de calcul plutôt que sur la source ; part de lissage plus forte
+  là où deux rectangles voisins ont des densités différentes.
+
+### DT-024 — Densité adaptative et contraintes de rang 3 à 5 non commencées
+
+- **Né au** jalon 8, dont seule la première partie (relaxation) est faite.
+- **Ce qui était prévu** : au jalon 8, la densité adaptative (rang 2 des contraintes : quads
+  plus petits là où la forme est détaillée), puis les contraintes de rang 3 à 5.
+- **Conséquence** : toutes les mesures sont à taille uniforme. Quad Remesher par défaut, à
+  taille adaptative, garde l'avantage sur la fidélité (5,9 ‰ contre 8,1 à 3000 quads). Les
+  parties plus fines qu'un quad (DT-018) attendent aussi cela.
