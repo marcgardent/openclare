@@ -41,6 +41,8 @@ OPTIONS (remesh):
     --density <FILE>             painted density: one weight per input vertex, one per line, from 0 (least dense) to 1 (most)
     --density-contrast <F>       how many times denser a weight of 1 is than a weight of 0 (default 4)
     --skip-pieces-under <Q>      leave out the separate pieces whose share of the quads is below Q (default 0: keep all)
+    --record <FILE.rrd>          record what each stage makes, to open in the Rerun viewer
+                                 (needs a build with `--features rerun`)
     --seed <N>                   random seed
 
 OPTIONS (preprocess):
@@ -141,6 +143,33 @@ fn primitive(args: &[String]) -> Result<(), String> {
     obj::write_obj_tri(output, &mesh).map_err(|e| e.to_string())
 }
 
+/// Runs the chain while recording what its stages make to the file at
+/// `path`. The recording is kept even if the chain fails: that is when it
+/// is most worth a look.
+#[cfg(feature = "rerun")]
+fn remesh_recorded(
+    path: &str,
+    config: &RemeshConfig,
+    mesh: &retopo::TriMesh,
+    guides: &Guides,
+) -> Result<(retopo::PolyMesh, retopo::Report), String> {
+    let mut recorder = retopo_rerun::RerunRecorder::create(std::path::Path::new(path))?;
+    let done = config.remesh_recorded(mesh, guides, &mut recorder).map_err(|e| e.to_string());
+    recorder.finish()?;
+    println!("recorded {path}");
+    done
+}
+
+#[cfg(not(feature = "rerun"))]
+fn remesh_recorded(
+    _: &str,
+    _: &RemeshConfig,
+    _: &retopo::TriMesh,
+    _: &Guides,
+) -> Result<(retopo::PolyMesh, retopo::Report), String> {
+    Err("this build cannot record".into())
+}
+
 fn parse<T: std::str::FromStr>(name: &str, text: &str) -> Result<T, String> {
     text.parse().map_err(|_| format!("invalid value '{text}' for {name}"))
 }
@@ -159,7 +188,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
         (None, None) => RemeshConfig::default(),
     };
 
-    let (mut save, mut density_path) = (None, None);
+    let (mut save, mut density_path, mut record_path) = (None, None, None::<String>);
     let mut paths = Vec::new();
     let mut args = args.iter();
     while let Some(arg) = args.next() {
@@ -181,12 +210,16 @@ fn remesh(args: &[String]) -> Result<(), String> {
             "--density" => density_path = Some(value(arg)?.clone()),
             "--density-contrast" => config.density_contrast = parse(arg, value(arg)?)?,
             "--skip-pieces-under" => config.skip_pieces_under = parse(arg, value(arg)?)?,
+            "--record" => record_path = Some(value(arg)?.clone()),
             "--seed" => config.seed = parse(arg, value(arg)?)?,
             flag if flag.starts_with("--") => return Err(format!("unknown option '{flag}'")),
             path => paths.push(path),
         }
     }
     config.validate().map_err(|e| e.to_string())?;
+    if record_path.is_some() && !cfg!(feature = "rerun") {
+        return Err("this build cannot record: build it with `cargo build --release --features rerun`".into());
+    }
     if let Some(path) = save {
         std::fs::write(&path, config.to_text()).map_err(|e| format!("{path}: {e}"))?;
     }
@@ -211,7 +244,10 @@ fn remesh(args: &[String]) -> Result<(), String> {
         None => None,
     };
     let guides = Guides { density: density.as_deref() };
-    let (result, report) = config.remesh_guided(&mesh, &guides).map_err(|e| e.to_string())?;
+    let (result, report) = match &record_path {
+        Some(path) => remesh_recorded(path, &config, &mesh, &guides)?,
+        None => config.remesh_guided(&mesh, &guides).map_err(|e| e.to_string())?,
+    };
     obj::write_obj_poly(output, &result).map_err(|e| format!("{output}: {e}"))?;
 
     let stats = &report.stats;
