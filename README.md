@@ -19,19 +19,27 @@ make addon
 
 Then, in Blender: *Edit > Preferences > Get Extensions*, the arrow at the top right, *Install
 from Disk*, and pick `dist/openclare-0.1.0-linux-x64.zip`. A tab named *openclare* appears in
-the sidebar of the 3D viewport (key N): choose a preset and a number of quads, select a mesh,
-press *Remesh to Quads*. The result is a new object, `<name>.quads`, at the same place as the
-original, which is left as it is. What is remeshed is the object as it is seen, modifiers
-applied.
+the sidebar of the 3D viewport (key N): select a mesh, set what follows, press *Remesh to
+Quads*. The result is a new object, `<name>.quads`, at the same place as the original, which
+is left as it is. What is remeshed is the object as it is seen, modifiers applied.
 
-This is a first version: a preset, a number of quads and a button. Blender waits while the
-engine runs (about eight seconds for the 200,000 triangles of the ogre at 3000 quads). Density
-from Weight Paint, hard edges from the marked ones and UV layers come next
-([ROADMAP.md](ROADMAP.md)).
+| Setting | What it does |
+|---|---|
+| Preset | What the mesh is for: organic, animation, hard surface |
+| Quads | The number of quads asked for |
+| Adaptive Size | How much the size of the quads follows the curvature: at 0 % they are all the same size; towards 100 % they get smaller where the shape bends and larger where it is flat, for the same number in total. Each preset brings its own value (50 %, or 0 % for hard surfaces) |
+| Density | A vertex group of the object, painted in Weight Paint: quads are smallest where the weight is 1, largest where it is 0 |
+| Factor | How many times more quads a weight of 1 gets than a weight of 0, for the same area |
+
+Blender waits while the engine runs (about eight seconds for the 200,000 triangles of the ogre
+at 3000 quads), and says where it is: the status bar shows each stage as it begins, the cursor
+counts them, and they are written to the Info log. Hard edges from the marked ones and UV
+layers come next ([ROADMAP.md](ROADMAP.md)).
 
 The add-on calls the engine through a C interface (`crates/openclare-capi`), which any other
 host can use: one call, flat arrays in, quads out, settings as the text of a saved
-configuration. Blender's own arrays are read where they are, without a copy on the Python
+configuration, and a function of the host's called as each stage begins, which can stop the
+run. Blender's own arrays are read where they are, without a copy on the Python
 side.
 
 ## État

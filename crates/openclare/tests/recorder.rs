@@ -75,6 +75,71 @@ fn a_chain_shows_its_stages_in_the_order_they_run() {
     assert!(paths.elements > quads.faces.len());
 }
 
+/// Keeps the names of the stages as they begin, and stops the chain when
+/// one of them is `stop_at`.
+#[derive(Default)]
+struct Stages {
+    begun: Vec<String>,
+    stop_at: Option<&'static str>,
+}
+
+impl Recorder for Stages {
+    fn is_listening(&self) -> bool {
+        false
+    }
+
+    fn record(&mut self, _: &str, _: Shape<'_>) {}
+
+    fn begin(&mut self, stage: &str) -> openclare::Result<()> {
+        self.begun.push(stage.to_string());
+        if self.stop_at.is_some_and(|stop| stage.ends_with(stop)) { Err(openclare::Error::Cancelled) } else { Ok(()) }
+    }
+}
+
+#[test]
+fn a_host_is_told_each_stage_as_it_begins() {
+    let mesh = primitives::icosphere(4);
+    let mut stages = Stages::default();
+    config(600).remesh_recorded(&mesh, &Guides::default(), &mut stages).unwrap();
+    assert_eq!(
+        stages.begun,
+        [
+            "preprocessing",
+            "sizing",
+            "cross field",
+            "singularities",
+            "layout",
+            "quantization",
+            "meshing",
+            "relaxation",
+            "fitting"
+        ]
+    );
+}
+
+#[test]
+fn a_host_can_stop_a_run_between_two_stages() {
+    let mesh = primitives::icosphere(4);
+    let mut stages = Stages { stop_at: Some("layout"), ..Default::default() };
+    let stopped = config(600).remesh_recorded(&mesh, &Guides::default(), &mut stages);
+    assert!(matches!(stopped, Err(openclare::Error::Cancelled)));
+    assert_eq!(stages.begun.last().map(String::as_str), Some("layout"));
+}
+
+#[test]
+fn the_stages_of_a_piece_say_which_piece() {
+    let mut mesh = TriMesh::default();
+    for offset in [Vec3::ZERO, Vec3::new(10.0, 0.0, 0.0)] {
+        let (piece, first) = (primitives::icosphere(3), mesh.positions.len() as u32);
+        mesh.positions.extend(piece.positions.iter().map(|&p| p + offset));
+        mesh.triangles.extend(piece.triangles.iter().map(|tri| tri.map(|v| v + first)));
+    }
+    let mut stages = Stages::default();
+    config(600).remesh_recorded(&mesh, &Guides::default(), &mut stages).unwrap();
+    assert_eq!(stages.begun.first().map(String::as_str), Some("piece 1 of 2: preprocessing"));
+    assert!(stages.begun.contains(&"piece 2 of 2: fitting".to_string()), "{:?}", stages.begun);
+}
+
 #[test]
 fn being_watched_changes_nothing_to_the_result() {
     let mesh = primitives::icosphere(4);

@@ -212,12 +212,14 @@ impl Remesher for IntegerGrid {
         let Fields { work, field, edge_length, .. } =
             fields(input, config, &size, None, &mut report, &mut clock, recorder)?;
 
+        recorder.begin("parametrization")?;
         let map_request = parametrization::Request { edge_length, stiffening_rounds: self.stiffening_rounds };
         let map =
             parametrization::create(parametrization::Kind::IntegerGrid).parametrize(&work, &field, &map_request)?;
         report.map_inversions = map.report.flipped;
         clock.lap(&mut report, "parametrization");
 
+        recorder.begin("extraction")?;
         let mut graph = graph_from_parametrization(&work.mesh, &work.normals, &map.uv);
         graph.remove_spurious_vertices();
         graph.prune_dangling_edges();
@@ -231,7 +233,7 @@ impl Remesher for IntegerGrid {
         recorder.record("extraction/quads", Shape::Polygons(&mesh));
 
         let relaxer = Laplacian { iterations: self.relax_iterations };
-        settle(&mut mesh, input, &work, edge_length, None, &relaxer, config.volume_fit, recorder);
+        settle(&mut mesh, input, &work, edge_length, None, &relaxer, config.volume_fit, recorder)?;
         clock.lap(&mut report, "relaxation");
 
         report.stats = mesh.stats();
@@ -325,7 +327,7 @@ impl Remesher for QuadLayout {
             // A work mesh in proportion: a button does not need the
             // triangles a body does.
             let least = ((self.min_triangles as f64 * piece.surface_area() / area) as usize).max(MIN_PIECE_TRIANGLES);
-            let mut recorder = recorder::Piece::new(recorder, index);
+            let mut recorder = recorder::Piece::new(recorder, index, pieces.len());
             match self.remesh_piece(piece, &piece_guides, &piece_config, least, &mut recorder) {
                 // A piece that comes out with no face at all is as good as
                 // not meshed.
@@ -434,6 +436,7 @@ impl QuadLayout {
         let Fields { work, field, edge_length, quads } =
             fields(input, config, &size, Some(guides), &mut report, &mut clock, recorder)?;
 
+        recorder.begin("layout")?;
         let layout = tmesh::create(tmesh::Kind::Motorcycle).build(&work, &field, &tmesh::Request { edge_length })?;
         report.map_inversions = layout.tmesh.report.map_inversions;
         clock.lap(&mut report, "layout");
@@ -460,6 +463,7 @@ impl QuadLayout {
             return fall_back(input, config, least, cause, recorder);
         }
 
+        recorder.begin("quantization")?;
         let request =
             quantization::Request { quads: Some((quads.round() as usize).max(1)), tolerance: self.budget_tolerance };
         let quantized = quantization::create(quantization::Kind::WalkCancelling).quantize(&layout.tmesh, &request)?;
@@ -469,13 +473,14 @@ impl QuadLayout {
             return fall_back(input, config, least, "no sound whole lengths for the layout", recorder);
         }
 
+        recorder.begin("meshing")?;
         let (mut mesh, meshed) = meshing::create(meshing::Kind::PatchGrid).mesh(&work, &layout, &quantized)?;
         clock.lap(&mut report, "meshing");
         recorder.record("meshing/quads", Shape::Polygons(&mesh));
 
         // The layout knows which vertices lie on a border or a hard edge.
         let held = Some((meshed.on_feature, meshed.on_corner));
-        settle(&mut mesh, input, &work, edge_length, held, &self.relaxer, config.volume_fit, recorder);
+        settle(&mut mesh, input, &work, edge_length, held, &self.relaxer, config.volume_fit, recorder)?;
         clock.lap(&mut report, "relaxation");
 
         report.stats = mesh.stats();
@@ -539,6 +544,7 @@ fn fields(
     };
     report.edge_length = edge_length;
 
+    recorder.begin("preprocessing")?;
     let triangles = ((size.per_quad * quads) as usize).clamp(size.least, size.most);
     let work_request =
         preprocess::Request { triangles, crease_angle: config.crease_angle, curvature_scale: Some(edge_length) };
@@ -549,6 +555,7 @@ fn fields(
     recorder::show_work(recorder, &work);
 
     if let Some(guides) = guides {
+        recorder.begin("sizing")?;
         let painted =
             guides.density.map(|weights| sizing::Painted { source: input, weights, contrast: config.density_contrast });
         let request =
@@ -558,12 +565,14 @@ fn fields(
         recorder::show_sizing(recorder, &work);
     }
 
+    recorder.begin("cross field")?;
     let field_request = crossfield::Request { alignment: config.alignment, seed: config.seed };
     let mut field = crossfield::create(crossfield::Kind::Power).solve(&work, &field_request)?;
     clock.lap(report, "cross field");
     recorder::show_field(recorder, "cross-field", &work, &field);
 
     if config.singularity_reach > 0.0 {
+        recorder.begin("singularities")?;
         let request = singularity::Request {
             alignment: config.alignment,
             tolerance: config.singularity_tolerance,
@@ -593,7 +602,7 @@ fn settle(
     relaxer: &dyn Relaxer,
     volume_fit: f64,
     recorder: &mut dyn Recorder,
-) {
+) -> Result<()> {
     let constraints =
         crate::field::Constraints::from_feature_edges(&work.mesh.positions, &work.normals, &work.feature_edges);
     // A vertex belongs to a feature line when it is within a third of an
@@ -603,12 +612,15 @@ fn settle(
     if let Some((on_lines, on_corners)) = held {
         guide = guide.map(|features| features.with_members(on_lines, on_corners));
     }
+    recorder.begin("relaxation")?;
     let surface = Bvh::build(input);
     relaxer.relax(mesh, &surface, guide.as_ref());
     if volume_fit > 0.0 {
         recorder.record("relaxation/quads", Shape::Polygons(mesh));
+        recorder.begin("fitting")?;
         fitting::create(fitting::Kind::LeastSquares).fit(mesh, input, &surface, guide.as_ref(), volume_fit);
     }
+    Ok(())
 }
 
 /// Times the stages of a chain.
