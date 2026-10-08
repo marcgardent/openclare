@@ -29,7 +29,7 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 | DT-013 | Valeurs des préréglages non réglées sur le corpus | J4 bis | moyenne | ouvert |
 | DT-014 | Visualisation des champs et des structures | J2 | basse | **fermé (T1, T2)**, reste DT-035 |
 | DT-015 | Code encore nommé `retopo` | J4 bis | basse | ouvert |
-| DT-016 | Documents en français, à traduire | J0 | basse | ouvert |
+| DT-016 | Documents en français, à traduire | J0 | basse | ouvert (new text in English since 8 October 2026; `CREDITS.md` translated) |
 | DT-017 | Corpus : sculptures de l'auteur à ajouter avant la fin de la licence d'essai | J0 | moyenne | ouvert |
 | DT-018 | Parties plus fines qu'un quad mal rendues à bas budget | J7 | haute | ouvert (doigts traités au Q2 ; restent les feuilles minces) |
 | DT-019 | Relaxation rudimentaire : la forme des quads plafonne | J7 | haute | **fermé au J8** |
@@ -208,6 +208,10 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 - **Né au** jalon 0, par décision (« pour les docs on traduira à la fin »).
 - **Constat** : `ALGORITHME.md`, `BACKLOG.md`, les `README.md` et `docs/` sont en français ; le
   code et ses commentaires sont en anglais.
+- **8 October 2026**: the author asks for documents to be written in English from now on, so
+  that there is less to translate at the end. `CREDITS.md` is translated. What is added to the
+  other documents is written in English; what they already hold in French (`ALGORITHME.md`,
+  this file, the `README.md` files) is still to translate.
 
 ### DT-017 — Corpus : sculptures de l'auteur à ajouter
 
