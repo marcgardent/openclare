@@ -7,8 +7,14 @@
 //! is then smoothed, since the map can only follow a size that changes
 //! gently, and scaled so that the number of quads stays the one asked for.
 //!
+//! On top of that comes a bound: a thin part, a finger say, gets quads small
+//! enough for a given number of them to go round it, without which it comes
+//! out flat and its volume is lost. The other quads grow to make up for it.
+//!
 //! The stage is a [`Sizer`]; chains get one from [`create`].
 
+use std::cmp::Reverse;
+use std::collections::BinaryHeap;
 use std::fmt;
 use std::str::FromStr;
 
@@ -17,6 +23,7 @@ use crate::error::{Error, Result};
 use crate::mesh::{Topology, TriMesh};
 use crate::preprocess::WorkMesh;
 use crate::spatial::Bvh;
+use crate::thickness;
 
 /// A density painted on the input, as weights: 0 where `source` should be
 /// least dense, 1 where it should be most, anything in between in between.
@@ -39,6 +46,8 @@ pub struct Request<'a> {
     /// small as the surface bends.
     pub adaptivity: f64,
     pub painted: Option<Painted<'a>>,
+    /// Fewest quads that should go round a thin part; 0 not to care.
+    pub quads_around: f64,
 }
 
 pub trait Sizer {
@@ -98,11 +107,17 @@ pub struct Curvature {
     pub reading_scale: f64,
     /// Length, in edges asked for, over which the size is smoothed.
     pub smoothing_scale: f64,
+    /// Largest factor by which thin parts may make quads smaller than asked
+    /// for: thinner than that, a part is beyond what the budget can render.
+    pub thin_range: f64,
+    /// How fast the size may grow away from a thin part: by this much of an
+    /// edge asked for, per edge asked for travelled.
+    pub gradation: f64,
 }
 
 impl Default for Curvature {
     fn default() -> Self {
-        Self { shape_range: 3.0, reading_scale: 0.5, smoothing_scale: 1.5 }
+        Self { shape_range: 3.0, reading_scale: 0.5, smoothing_scale: 1.5, thin_range: 6.0, gradation: 0.5 }
     }
 }
 
@@ -117,7 +132,13 @@ impl Sizer for Curvature {
         }
         let mesh = &work.mesh;
         let vertices = mesh.positions.len();
-        if request.adaptivity == 0.0 && request.painted.is_none() {
+        if !(request.quads_around.is_finite() && request.quads_around >= 0.0) {
+            return Err(Error::InvalidParams(format!(
+                "quads around a thin part: {} is not a number of quads",
+                request.quads_around
+            )));
+        }
+        if request.adaptivity == 0.0 && request.painted.is_none() && request.quads_around == 0.0 {
             return Ok(vec![1.0; vertices]);
         }
         let topology = Topology::build(mesh);
@@ -194,17 +215,64 @@ impl Sizer for Curvature {
             }
         }
 
-        // Same number of quads as with the uniform size: a region of area A
-        // holds A / (h s)² of them.
         let mut scale: Vec<f64> = log_scale.into_iter().map(f64::exp).collect();
-        let density = weighted_mean(&scale.iter().map(|s| 1.0 / (s * s)).collect::<Vec<_>>(), &work.areas);
-        if density.is_finite() && density > 0.0 {
-            let correction = density.sqrt();
-            for s in &mut scale {
-                *s *= correction;
+        keep_the_count(&mut scale, &work.areas);
+
+        if request.quads_around > 0.0 {
+            // Beyond this, a part is thick enough whatever the size there.
+            let reach = request.quads_around * request.edge_length * self.shape_range;
+            let girth = thickness::measure(mesh, &work.normals, reach).girth;
+            let smallest = 1.0 / self.thin_range;
+            let most: Vec<f64> =
+                girth.iter().map(|g| (g / (request.quads_around * request.edge_length)).max(smallest)).collect();
+            // Making the thin parts finer makes the rest coarser to keep the
+            // count, and that moves the bound in turn: a few rounds settle it.
+            for _ in 0..THIN_ROUNDS {
+                for v in 0..vertices {
+                    scale[v] = scale[v].min(most[v]);
+                }
+                grade(&mut scale, mesh, &topology, self.gradation / request.edge_length);
+                keep_the_count(&mut scale, &work.areas);
             }
         }
         Ok(scale)
+    }
+}
+
+/// Rounds of bounding the size on thin parts and restoring the count.
+const THIN_ROUNDS: usize = 6;
+
+/// Scales the factors so that the number of quads is the one the uniform
+/// size gives: a region of area A holds A / (h s)² of them.
+fn keep_the_count(scale: &mut [f64], areas: &[f64]) {
+    let density = weighted_mean(&scale.iter().map(|s| 1.0 / (s * s)).collect::<Vec<_>>(), areas);
+    if density.is_finite() && density > 0.0 {
+        let correction = density.sqrt();
+        for s in scale {
+            *s *= correction;
+        }
+    }
+}
+
+/// Lowers the factors so that none grows faster than `rate` per unit of
+/// length away from a smaller one: the small ones are kept as they are and
+/// the others follow, where smoothing would wash a small part out.
+fn grade(scale: &mut [f64], mesh: &TriMesh, topology: &Topology, rate: f64) {
+    // Factors are positive, so their bit patterns order like they do.
+    let mut queue: BinaryHeap<Reverse<(u64, u32)>> =
+        (0..scale.len()).map(|v| Reverse((scale[v].to_bits(), v as u32))).collect();
+    while let Some(Reverse((bits, v))) = queue.pop() {
+        let here = f64::from_bits(bits);
+        if here > scale[v as usize] {
+            continue;
+        }
+        for &next in &topology.neighbors[v as usize] {
+            let allowed = here + rate * mesh.positions[v as usize].distance(mesh.positions[next as usize]);
+            if allowed < scale[next as usize] {
+                scale[next as usize] = allowed;
+                queue.push(Reverse((allowed.to_bits(), next)));
+            }
+        }
     }
 }
 

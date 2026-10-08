@@ -84,10 +84,12 @@ METRICS = [
     ("area_variation", "Area variation (F)", "{:.3f}", True),
     ("hausdorff", "Hausdorff, ‰ of the diagonal (H)", "{:.2f}", True),
     ("mean_distance", "Mean distance, ‰ (H)", "{:.3f}", True),
+    ("thin_distance", "Thin parts: mean distance, % of a quad edge (V)", "{:.1f}", True),
+    ("volume_ratio", "Volume kept, % of the source (V)", "{:.2f}", False),
     ("budget_error", "Off budget, % (N)", "{:.1f}", True),
     ("seconds", "Time, seconds (T)", "{:.2f}", True),
 ]
-SCALE = {"hausdorff": 1000.0, "mean_distance": 1000.0, "budget_error": 100.0}
+SCALE = {"hausdorff": 1000.0, "mean_distance": 1000.0, "budget_error": 100.0, "thin_distance": 100.0, "volume_ratio": 100.0}
 # The metrics the acceptance rule is about.
 QUALITY = ["irregular_vertices", "base_complex_patches", "alignment", "angle_deviation_mean", "aspect_mean"]
 
@@ -206,7 +208,12 @@ TOOLS = {
     "integer-grid": retopo("integer-grid", seeded=False),
     # Quads of one size, to compare like with like against the tools that
     # have nothing else; then sized by the shape, as Quad Remesher does by default.
-    "quad-layout": retopo("quad-layout", seeded=False, options=["--adaptivity", "0"], sharp_preset="hard-surface"),
+    "quad-layout": retopo(
+        "quad-layout",
+        seeded=False,
+        options=["--adaptivity", "0", "--quads-around", "0"],
+        sharp_preset="hard-surface",
+    ),
     "quad-layout-adaptive": retopo(
         "quad-layout",
         seeded=False,

@@ -69,6 +69,15 @@ pub struct Metrics {
     /// Two-sided Hausdorff distance (sampled at vertices and face centres).
     pub hausdorff: f64,
     pub mean_distance: f64,
+    /// Share of the vertices of the source that sit on a thin part: one the
+    /// shape is thinner across than one quad edge.
+    pub thin_share: f64,
+    /// Mean distance from those vertices to the mesh, in quad edges: how
+    /// much of fingers, ears and the like is lost. `None` where the source
+    /// has next to nothing that thin.
+    pub thin_distance: Option<f64>,
+    /// Volume of the mesh over that of the source, both closed.
+    pub volume_ratio: Option<f64>,
 
     // Budget.
     /// `|faces - target| / target`.
@@ -97,7 +106,7 @@ impl Metrics {
         fn optional<T: ToString>(value: Option<T>) -> String {
             value.map_or("null".into(), |v| v.to_string())
         }
-        let fields: [(&str, String); 24] = [
+        let fields: [(&str, String); 27] = [
             ("valid", self.is_valid().to_string()),
             ("vertices", self.vertices.to_string()),
             ("faces", self.faces.to_string()),
@@ -122,6 +131,9 @@ impl Metrics {
             ("area_variation", self.area_variation.to_string()),
             ("hausdorff", self.hausdorff.to_string()),
             ("mean_distance", self.mean_distance.to_string()),
+            ("thin_share", self.thin_share.to_string()),
+            ("thin_distance", optional(self.thin_distance)),
+            ("volume_ratio", optional(self.volume_ratio)),
         ];
         let mut json = String::from("{");
         for (name, value) in &fields {
@@ -170,7 +182,40 @@ pub fn measure(source: &TriMesh, mesh: &PolyMesh, target_faces: Option<usize>) -
     metrics.alignment = alignment(source, &source_topology, &surface, mesh, &connectivity, target_edge);
     quad_shape(mesh, &mut metrics);
     fidelity(source, &surface, mesh, diagonal, &mut metrics);
+    thin_parts(source, mesh, target_edge, &mut metrics);
+    if metrics.source_boundary_edges == 0 && metrics.boundary_edges == 0 && metrics.non_manifold_edges == 0 {
+        let volume = source.signed_volume();
+        if volume.abs() > 0.0 {
+            metrics.volume_ratio = Some((mesh.triangulated().signed_volume() / volume).abs());
+        }
+    }
     metrics
+}
+
+/// Fewest thin vertices for their mean distance to mean something.
+const THIN_SAMPLES: usize = 20;
+
+/// How well the parts of the source thinner than one quad edge are kept.
+fn thin_parts(source: &TriMesh, mesh: &PolyMesh, quad_edge: f64, metrics: &mut Metrics) {
+    if !(quad_edge.is_finite() && quad_edge > 0.0) {
+        return;
+    }
+    let normals = crate::geometry::vertex_normals(source);
+    let across = crate::thickness::measure(source, &normals, quad_edge).across;
+    let output = Bvh::build(&mesh.triangulated());
+    let (mut sum, mut count) = (0.0, 0usize);
+    for (v, &p) in source.positions.iter().enumerate() {
+        if across[v] < quad_edge
+            && let Some(hit) = output.closest_point(p)
+        {
+            sum += hit.distance_squared.sqrt();
+            count += 1;
+        }
+    }
+    metrics.thin_share = count as f64 / source.positions.len().max(1) as f64;
+    if count >= THIN_SAMPLES {
+        metrics.thin_distance = Some(sum / count as f64 / quad_edge);
+    }
 }
 
 /// Half-edge view of a polygon mesh. Half-edge `h` leaves `origin[h]` along

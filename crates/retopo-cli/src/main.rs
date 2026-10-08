@@ -38,6 +38,7 @@ OPTIONS (remesh):
     --singularity-tolerance <T>  what such a cancellation may cost
     --crease-angle <DEG|none>    follow input edges sharper than this dihedral angle
     --adaptivity <A>             0 for quads of one size, up to 1 for quads as small as the shape bends
+    --quads-around <N>           fewest quads round a thin part, so that it keeps its volume (0: do not look at thickness)
     --density <FILE>             painted density: one weight per input vertex, one per line, from 0 (least dense) to 1 (most)
     --density-contrast <F>       how many times denser a weight of 1 is than a weight of 0 (default 4)
     --skip-pieces-under <Q>      leave out the separate pieces whose share of the quads is below Q (default 0: keep all)
@@ -207,6 +208,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
                 config.crease_angle = if text == "none" { None } else { Some(parse(arg, text)?) };
             }
             "--adaptivity" => config.adaptivity = parse(arg, value(arg)?)?,
+            "--quads-around" => config.quads_around = parse(arg, value(arg)?)?,
             "--density" => density_path = Some(value(arg)?.clone()),
             "--density-contrast" => config.density_contrast = parse(arg, value(arg)?)?,
             "--skip-pieces-under" => config.skip_pieces_under = parse(arg, value(arg)?)?,
@@ -337,6 +339,12 @@ fn measure_command(args: &[String]) -> Result<(), String> {
         m.angle_deviation_mean, m.angle_deviation_p95, m.aspect_mean, m.aspect_p95, m.area_variation,
     );
     println!("fidelity     Hausdorff {:.5}, mean {:.6} (of the bounding diagonal)", m.hausdorff, m.mean_distance);
+    println!(
+        "volume       {} of the source; thin parts ({:.1} % of the source): {}",
+        optional(m.volume_ratio.map(|ratio| format!("{:.1} %", 100.0 * ratio))),
+        100.0 * m.thin_share,
+        optional(m.thin_distance.map(|distance| format!("{distance:.3} quad edges away on average"))),
+    );
     println!("budget       {}", optional(m.budget_error.map(|e| format!("{:.1} % off target", 100.0 * e))));
     Ok(())
 }

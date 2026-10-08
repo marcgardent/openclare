@@ -282,7 +282,10 @@ impl<'a> Graph<'a> {
                 if self.interior_half_edge(v, next).is_none() {
                     continue;
                 }
-                let through = reached + positions[v as usize].distance(positions[next as usize]);
+                // Where quads are smaller, so is what counts as close: the
+                // way is measured in quads, as it were.
+                let size = 0.5 * (self.work.sizing[v as usize] + self.work.sizing[next as usize]);
+                let through = reached + positions[v as usize].distance(positions[next as usize]) / size;
                 if through < limit && distance.get(&next).is_none_or(|&known| through < known) {
                     distance.insert(next, through);
                     previous.insert(next, v);

@@ -36,6 +36,12 @@ pub struct RemeshConfig {
     /// the same size; towards 1 they get smaller where the surface bends
     /// more, larger where it is flat, for the same number in total.
     pub adaptivity: f64,
+    /// Fewest quads that go round a thin part of the shape, a finger or
+    /// the tip of an ear: where the quads asked for are too large for that,
+    /// they are made smaller there and larger elsewhere, so that the part
+    /// keeps its volume instead of coming out flat. 0 does not look at
+    /// thickness.
+    pub quads_around: f64,
     /// With a painted density: how many times more quads per unit of area
     /// the places painted at 1 get than those left at 0. At 4, their edges
     /// are half as long.
@@ -95,6 +101,7 @@ impl RemeshConfig {
             singularity_tolerance: 1.0,
             crease_angle: None,
             adaptivity: 0.5,
+            quads_around: 6.0,
             density_contrast: 4.0,
             skip_pieces_under: 0.0,
             seed: 1,
@@ -109,7 +116,13 @@ impl RemeshConfig {
         // Hard edges lead; curvature only settles what they leave open. And
         // a part is cut to one size: its edges, sharp as they are, call for
         // no smaller quads.
-        Self { alignment: 0.02, crease_angle: Some(30.0), adaptivity: 0.0, ..Self::for_organic(target) }
+        Self {
+            alignment: 0.02,
+            crease_angle: Some(30.0),
+            adaptivity: 0.0,
+            quads_around: 0.0,
+            ..Self::for_organic(target)
+        }
     }
 
     /// The shipped preset of that name.
@@ -152,6 +165,7 @@ impl RemeshConfig {
     pub fn validate(&self) -> Result<()> {
         let non_negative = [
             ("skip_pieces_under", self.skip_pieces_under),
+            ("quads_around", self.quads_around),
             ("alignment", self.alignment),
             ("singularity_reach", self.singularity_reach),
             ("singularity_tolerance", self.singularity_tolerance),
@@ -196,6 +210,7 @@ impl RemeshConfig {
         }
         .unwrap();
         writeln!(text, "adaptivity = {}", self.adaptivity).unwrap();
+        writeln!(text, "quads_around = {}", self.quads_around).unwrap();
         writeln!(text, "density_contrast = {}", self.density_contrast).unwrap();
         writeln!(text, "skip_pieces_under = {}", self.skip_pieces_under).unwrap();
         writeln!(text, "seed = {}", self.seed).unwrap();
@@ -228,6 +243,7 @@ impl RemeshConfig {
                 "crease_angle" if value == "none" => config.crease_angle = None,
                 "crease_angle" => config.crease_angle = Some(number_of("number of degrees, nor 'none'")?),
                 "adaptivity" => config.adaptivity = number_of("number")?,
+                "quads_around" => config.quads_around = number_of("number")?,
                 "density_contrast" => config.density_contrast = number_of("number")?,
                 "skip_pieces_under" => config.skip_pieces_under = number_of("number")?,
                 "seed" => config.seed = value.parse().map_err(|_| error(format!("'{value}' is not a seed")))?,
