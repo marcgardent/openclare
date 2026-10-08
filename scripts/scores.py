@@ -33,7 +33,7 @@ CRITERIA = [
     ("validity", "Validity", "all quads, manifold, no flipped or collapsed face, no hole the source lacks"),
     ("alignment", "Alignment", "edges along the principal curvature directions"),
     ("shape", "Quad shape", "corners at right angles"),
-    ("fidelity", "Fidelity", "no point of the source far from the mesh"),
+    ("fidelity", "Fidelity", "no point of the source far from the mesh, thin parts kept"),
     ("singularities", "Regularity", "no irregular vertex beyond what the topology imposes"),
     ("structure", "Structure", "few patches in the base complex: edge loops that run long"),
     ("budget", "Budget", "the number of quads asked for"),
@@ -58,6 +58,16 @@ def linear(value, full, none):
     return max(0.0, min(100.0, 100.0 * (none - value) / (none - full)))
 
 
+def fidelity(metrics):
+    """The Hausdorff distance, as a share of the diagonal of the bounding box;
+    and, where the source has parts thinner than a quad (fingers, ears), how
+    far those are from the mesh on average, in quad edges: half a quad edge
+    away, they are as good as gone. The two count the same."""
+    whole = linear(metrics["hausdorff"], 0.0, 0.05)
+    thin = metrics.get("thin_distance")
+    return whole if thin is None else 0.5 * (whole + linear(thin, 0.0, 0.5))
+
+
 def per_100_quads(count, metrics):
     return 100.0 * count / max(metrics["faces"], 1)
 
@@ -69,8 +79,7 @@ SCALES = {
     "alignment": lambda m: None if m.get("alignment") is None else linear(m["alignment"], 0.0, 22.5),
     # Mean distance of the corners from a right angle, in degrees.
     "shape": lambda m: linear(m["angle_deviation_mean"], 0.0, 20.0),
-    # Hausdorff distance, as a share of the diagonal of the bounding box.
-    "fidelity": lambda m: linear(m["hausdorff"], 0.0, 0.05),
+    "fidelity": lambda m: fidelity(m),
     # Irregular vertices beyond the topological minimum (or all of them
     # where that minimum is not known), per 100 quads.
     "singularities": lambda m: linear(
@@ -206,11 +215,16 @@ def write_report(targets):
         "| Validity | " + CRITERIA[0][2] + " | every run valid | no run valid | 25 |",
         "| Alignment | " + CRITERIA[1][2] + " | 0° off | 22.5° off (edges at random) | 20 |",
         "| Quad shape | " + CRITERIA[2][2] + " | 0° mean deviation | 20° | 15 |",
-        "| Fidelity | " + CRITERIA[3][2] + " | Hausdorff distance 0 | 5 % of the bounding diagonal | 15 |",
+        "| Fidelity | " + CRITERIA[3][2] + " | Hausdorff distance 0; thin parts on the mesh | 5 % of the bounding diagonal; "
+        "thin parts half a quad edge away | 15 |",
         "| Regularity | " + CRITERIA[4][2] + " | none | 10 per 100 quads | 10 |",
         "| Structure | " + CRITERIA[5][2] + " | — | one patch per quad | 5 |",
         "| Budget | " + CRITERIA[6][2] + " | exact | 25 % off | 10 |",
         "| Speed | " + CRITERIA[7][2] + " | 1 s | 60 s (logarithmic) | 0 |",
+        "",
+        "Fidelity is two marks that count the same where the source has parts thinner than a quad edge",
+        "(fingers, ears): one for the Hausdorff distance, one for how far those parts are from the mesh",
+        "on average, in quad edges. Elsewhere it is the first alone.",
         "",
         "The overall mark is the weighted mean of the criteria that exist for the model (a sphere has no",
         "direction to align with; a mesh with open borders has no topological minimum). Speed is shown but",
