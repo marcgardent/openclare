@@ -48,8 +48,9 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 | DT-034 | Petites pièces : quelques-unes passent encore par le repli, ou n'en sortent pas | Q1 | moyenne | ouvert |
 | DT-035 | Visualisation Rerun : ce qui n'est pas montré, version en retard | T2 | basse | ouvert |
 | DT-036 | Poches et cavités profondes refermées par le maillage | Q2 | moyenne | ouvert |
-| DT-037 | Volume : le maillage est inscrit dans la forme | Q2 | haute | ouvert |
+| DT-037 | Volume : le maillage est inscrit dans la forme | Q2 | haute | **closed (Q2 bis)**, DT-039 remains |
 | DT-038 | Parties fines : limites de la borne de taille | Q2 | moyenne | ouvert |
+| DT-039 | Fitting: limits, and the volume after subdivision | Q2 bis | medium | open |
 | DT-033 | Terrains et scans : aucun outil n'aligne, le champ n'a rien à suivre | J9 | moyenne | ouvert |
 | DT-027 | Garde-fous de temps de calcul sur les entrées pathologiques | J8 | basse | ouvert |
 
@@ -517,6 +518,9 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   maillage passe au milieu de la surface plutôt qu'en dessous (moindres carrés sur la distance
   de la source au maillage, et non des sommets à la source) ; en option, viser la surface
   limite de la subdivision. La mesure `volume_ratio` du banc est là pour le vérifier.
+- **Closed at track Q2 bis (8 October 2026)**: a last stage, fitting, does this
+  (`fitting.rs`, setting `volume_fit`). Median volume kept over the bench: 100.0 % at the three
+  budgets; the ogre 99.8 % at 1000 quads and 100.0 % above. What it leaves open is DT-039.
 
 ### DT-038 — Parties fines : limites de la borne de taille
 
@@ -540,3 +544,22 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   surestimée d'un tiers environ (le rayon central file le long du doigt).
 - **Préréglage `hard-surface`** : la borne y est désactivée, sans essai. Une pièce mécanique
   avec des tiges fines en aurait peut-être besoin.
+
+### DT-039 — Fitting: limits, and the volume after subdivision
+
+- **Born at** track Q2 bis.
+- **After subdivision the volume is lost again.** Fitting makes the quad mesh keep the volume
+  of the shape. A Catmull-Clark subdivision, the normal use of such a mesh, rounds it off and
+  shrinks it. To keep the volume there, the fit should aim the limit surface of the
+  subdivision at the source, not the faces of the mesh. Not measured yet: the bench has no
+  metric on the subdivided mesh.
+- **Rims stay inscribed**: vertices on hard edges, corners and borders do not move. The rim of
+  a cylinder is still a polygon inside its circle; it could slide outwards in the plane of the
+  cap.
+- **The two guards are tuned on the bench**: a vertex goes no farther than a quarter of its
+  shortest edge, and a face tilted by more than 20 degrees is put back. The second came from
+  one face of Desert Rose; nothing says these values hold everywhere.
+- **Only quads are looked at**: a face that is not a quad (the fallback chain leaves a few)
+  asks for nothing, and its corners follow their other faces.
+- **Vertices off the surface**: by design, but a later stage that expects them on the source
+  (a shrinkwrap in Blender, say) will undo the fit. To say in the documentation of the add-on.

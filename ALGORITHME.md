@@ -1,6 +1,6 @@
 # openclare — cahier des charges du moteur de retopologie quad
 
-**Statut : validé le 6 octobre 2026. Jalons 0 à 9 et chantier de qualité Q1 faits. Chantiers d'outils T1 (notes, rendus, pages par modèle) et T2 (enregistrement des étapes pour Rerun) réalisés et fusionnés. Chantier de qualité Q2 (parties fines) réalisé, en attente de revue.**
+**Statut : validé le 6 octobre 2026. Jalons 0 à 9 et chantier de qualité Q1 faits. Chantiers d'outils T1 (notes, rendus, pages par modèle) et T2 (enregistrement des étapes pour Rerun) réalisés et fusionnés. Chantier de qualité Q2 (parties fines) réalisé et fusionné. Track Q2 bis (keeping the volume) done, awaiting review. What is left: [ROADMAP.md](ROADMAP.md).**
 Ce qui a été écarté, approché ou reporté en chemin est suivi ticket par ticket dans [BACKLOG.md](BACKLOG.md).
 Le projet s'appelle **openclare** ; les crates portent encore le nom provisoire `retopo`. Les points marqués
 *à trancher* attendent une décision ; ils sont regroupés en section 7.
@@ -1392,6 +1392,67 @@ Ce qui reste ouvert :
 - **Limites de la borne** (DT-038) : pas de plafond sur la part du budget que prennent les
   parties fines ; l'épaisseur n'est pas montrée dans Rerun ; les notes ne la comptent pas.
 
+### Track Q2 bis — Keeping the volume
+
+Opened on 8 October 2026, straight after the thin parts: the author holds the volume of the
+shape for very important, and the bench had just shown that every mesh was losing some.
+
+**The diagnosis.** Relaxation leaves every vertex on the source surface. Wherever that surface
+bulges, the faces then run under it, flat between their corners: the mesh is *inscribed* in the
+shape. The ogre kept 96.5 % of its volume at 1000 quads, 98.9 % at 3000, 99.6 % at 8000; the
+other closed models between 97 and 98 % at 1000 quads. On a thin part it is far worse: six
+faces round a finger hold 83 % of its section, four faces 64 %.
+
+**What was done** (`crates/retopo/src/fitting.rs`, a stage of its own with its `Fitter`
+interface and factory, called last):
+
+- **Fit the faces, not the corners.** Sixteen points are looked at on each quad. For each, the
+  nearest point of the source that faces the same way gives how far the surface is from the
+  face there, and on which side. Each corner then moves along its normal by the average of what
+  the points around it ask for, weighted by how close they are to it. Eight rounds. At the end
+  as much of the mesh is above the surface as below, which is what keeping the volume means.
+- **Looking from the mesh rather than from the source** keeps the number of points in step
+  with the quads: a finger meshed four times finer gets four times the points per length,
+  where a fixed sampling of the source would have left it one or two.
+- **What does not move**: vertices on hard edges and corners, and those of a border. A flat
+  face asks for nothing, so mechanical parts stay exact.
+- **Two guards.** A vertex goes no farther than a quarter of its shortest edge: six faces round
+  a finger call for an eighth, and much more is not a matter of volume. And a face that the
+  move folds, or tilts by more than 20 degrees, is put back where it was: on Desert Rose, whose
+  shells cross each other, a face was being pulled towards the wrong shell and came out
+  inverted.
+- **One setting**, `volume_fit` (`--volume-fit`): 0 leaves the vertices on the surface, as
+  before; 1, the default in the three presets, fits all the way; in between, part of the way.
+
+**Results**, adaptive variant, medians over the 22 models of the bench, before → after:
+
+| Quads asked for | Volume kept | Mean distance to the source | Hausdorff distance | Thin parts, share of a quad edge |
+|---|---|---|---|---|
+| 1000 | 98.24 → 100.01 % | 1.20 → 0.61 ‰ | 9.9 → 8.4 ‰ | 10.7 → 9.7 % |
+| 3000 | 99.39 → 100.00 % | 0.49 → 0.25 ‰ | 6.5 → 5.9 ‰ | 13.8 → 11.3 % |
+| 8000 | 99.77 → 100.00 % | 0.19 → 0.11 ‰ | 3.3 → 2.5 ‰ | 12.7 → 10.8 % |
+
+- **The ogre** keeps 99.8 % of its volume at 1000 quads and 100.0 % at 3000 and 8000.
+- **Validity**: no model loses it at any budget, for any of the three chains of the project.
+  The uniform variant gains the pig at 1000 quads and Desert Rose at 8000.
+- **Alignment and quad shape** move by a tenth of a degree, the mean angle deviation up by
+  0.05 to 0.25 degree.
+- **Mechanical parts**: the cylinder goes from 99.5 to 99.99 % of its volume at 1000 quads;
+  the cube and the L-shaped block stay exact.
+
+**What it costs, and what it does not do:**
+
+- **The vertices are no longer on the surface.** They sit a little outside where the shape
+  bulges, a little inside where it is hollow. Anything that expects them on the source should
+  run with `--volume-fit 0`.
+- **The Hausdorff distance of the ogre goes up a little** at 1000 and 3000 quads (27.3 to
+  28.4 per mille at 3000): it comes from two pockets behind the eyes (DT-036), which fitting
+  does not reach.
+- **Rims stay inscribed**: the vertices of a hard edge or of a border do not move, so the rim
+  of a cylinder is still a polygon inside its circle.
+- **Subdivision still shrinks the mesh.** Fitting makes the quad mesh itself keep the volume,
+  not the smooth surface a Catmull-Clark subdivision makes of it (DT-039).
+
 ---
 
 ## 4. Jalons
@@ -1429,6 +1490,7 @@ chantiers sont numérotés à part et partent du backlog.
 |---|---|---|
 | Q1 | Modèles en plusieurs pièces (DT-032) et pièces sans singularité ni bord (DT-003) | **Fait.** Chaque pièce maillée pour elle-même ; un anneau passe par la chaîne principale |
 | Q2 | Parties plus minces qu'un quad : doigts, oreilles (DT-018). Garder au moins leur volume | **Fait pour les doigts, en attente de revue.** Assez de quads autour de chaque partie fine (`quads_around`) ; l'écart sur les parties fines de l'ogre passe de 30 à 9 % d'une arête à 3000 quads. Restent les feuilles minces et l'ajustement du volume (DT-018, DT-037) |
+| Q2 bis | Keeping the volume (DT-037): a last stage, fitting, moves the vertices off the surface for the faces to run through it rather than under it (`volume_fit`) | **Done, awaiting review.** Median volume kept 100.0 % at the three budgets (98.2 % at 1000 quads before); mean distance to the source halved; no model loses its validity |
 | Q3 | Alignement : champ de croix sur les surfaces bruitées, échelles locales, réglage des préréglages (DT-021, DT-025, DT-013) | Écart d'alignement avec Quad Remesher réduit |
 | Q4 | Structure globale : simplification du T-mesh, bandes étroites (DT-020, DT-007, DT-005) | Moins de patchs dans le complexe de base |
 
