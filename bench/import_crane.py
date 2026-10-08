@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 
 BENCH = Path(__file__).resolve().parent
-RETOPO = BENCH.parent / "target" / "release" / "retopo"
+OPENCLARE = BENCH.parent / "target" / "release" / "openclare"
 CRANE = BENCH / "corpus-large" / "crane"
 CORPUS = BENCH / "corpus"
 
@@ -52,7 +52,7 @@ for name, relative, levels, (kind, triangles) in MODELS:
         dense = CRANE / f"{name}_dense.obj"
         run(["blender", "-b", "--python", BENCH / "subdivide.py", "--", source, dense, levels])
         source = dense
-    command = [RETOPO, "preprocess", source, CORPUS / f"{name}.obj", "--kind", kind]
+    command = [OPENCLARE, "preprocess", source, CORPUS / f"{name}.obj", "--kind", kind]
     if triangles:
         command += ["--triangles", triangles]
     report = run(command)

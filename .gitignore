@@ -8,3 +8,6 @@
 # Full-resolution originals: too large for git, kept beside the repository data.
 /bench/corpus-large
 __pycache__
+# The engine built into the Blender add-on, and the archives made of it.
+/blender/openclare/lib
+/dist

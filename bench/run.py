@@ -4,7 +4,7 @@
     python3 bench/run.py [--models a,b] [--tools a,b] [--target N] [--seeds 1,2,3]
 
 Needs `blender` on the PATH (for QuadriFlow and the provisional corpus) and a
-release build of `retopo`. Results go to bench/results/.
+release build of `openclare`. Results go to bench/results/.
 """
 
 import argparse
@@ -16,7 +16,7 @@ from pathlib import Path
 
 BENCH = Path(__file__).resolve().parent
 ROOT = BENCH.parent
-RETOPO = ROOT / "target" / "release" / "retopo"
+OPENCLARE = ROOT / "target" / "release" / "openclare"
 CORPUS = BENCH / "corpus"
 OUTPUT = BENCH / "out"
 RESULTS = BENCH / "results"
@@ -43,7 +43,7 @@ MODELS = [
     ("cage", "organic", False, False),
     ("suzanne", "organic", False, True),
     # The project mascot: a real 4.7 million triangle sculpt, brought down to
-    # 200 000 triangles by `retopo preprocess` (see bench/README.md).
+    # 200 000 triangles by `openclare preprocess` (see bench/README.md).
     ("ogre", "organic", False, False),
     # From Keenan Crane's model repository (see bench/import_crane.py).
     ("spot", "organic", False, False),
@@ -112,7 +112,7 @@ def ensure_corpus(models):
     CORPUS.mkdir(exist_ok=True)
     for model in models:
         if model in PRIMITIVES and not source_path(model).exists():
-            run([RETOPO, "primitive", model, source_path(model)])
+            run([OPENCLARE, "primitive", model, source_path(model)])
     if any(not source_path(model).exists() for model in models if model not in LOCAL_MODELS):
         run(["blender", "-b", "--python", BENCH / "make_corpus.py", "--", CORPUS])
     missing = [model for model in models if not source_path(model).exists()]
@@ -177,7 +177,7 @@ def quadremesher(uniform, refresh=False):
     return timed
 
 
-def retopo(method, seeded=True, name=None, options=(), sharp_preset=None):
+def openclare(method, seeded=True, name=None, options=(), sharp_preset=None):
     """A chain of this repository, under `name` if it is run with `options`
     that set it apart. One that does not use the seed runs once. On models
     with hard edges it starts from `sharp_preset`, if given."""
@@ -186,7 +186,7 @@ def retopo(method, seeded=True, name=None, options=(), sharp_preset=None):
         runs = {}
         for seed in seeds if seeded else seeds[:1]:
             path = directory / f"{name or method}_{seed}.obj"
-            command = [RETOPO, "remesh", source_path(model), path]
+            command = [OPENCLARE, "remesh", source_path(model), path]
             if sharp and sharp_preset:
                 command += ["--preset", sharp_preset]
             command += ["--method", method, "--quads", target, "--seed", seed]
@@ -229,7 +229,7 @@ def quad_layout_matched(model, sharp, boundary, target, seeds, directory):
     if not reference.exists():
         return {seeds[0]: (None, 0.0, "no Quad Remesher reference to match", None)}
     count = faces_of(reference)
-    chain = retopo("quad-layout", seeded=False, name="quad-layout-matched", options=["--adaptivity", "0.5"],
+    chain = openclare("quad-layout", seeded=False, name="quad-layout-matched", options=["--adaptivity", "0.5"],
                    sharp_preset="hard-surface")
     return {seed: (*made, count) for seed, made in chain(model, sharp, boundary, count, seeds, directory).items()}
 
@@ -237,17 +237,17 @@ def quad_layout_matched(model, sharp, boundary, target, seeds, directory):
 # Every remesher under test. A new chain only needs a line here.
 TOOLS = {
     "quadriflow": quadriflow,
-    "instant-meshes": retopo("instant-meshes"),
-    "integer-grid": retopo("integer-grid", seeded=False),
+    "instant-meshes": openclare("instant-meshes"),
+    "integer-grid": openclare("integer-grid", seeded=False),
     # Quads of one size, to compare like with like against the tools that
     # have nothing else; then sized by the shape, as Quad Remesher does by default.
-    "quad-layout": retopo(
+    "quad-layout": openclare(
         "quad-layout",
         seeded=False,
         options=["--adaptivity", "0", "--quads-around", "0"],
         sharp_preset="hard-surface",
     ),
-    "quad-layout-adaptive": retopo(
+    "quad-layout-adaptive": openclare(
         "quad-layout",
         seeded=False,
         name="quad-layout-adaptive",
@@ -263,7 +263,7 @@ TOOLS = {
 
 
 def measure(model, path, target):
-    done = run([RETOPO, "measure", source_path(model), path, "--target", target, "--json"])
+    done = run([OPENCLARE, "measure", source_path(model), path, "--target", target, "--json"])
     if done.returncode != 0:
         return None
     return json.loads(done.stdout)
@@ -357,8 +357,8 @@ def main():
     tools = options.tools.split(",")
     seeds = [int(s) for s in options.seeds.split(",")]
 
-    if not RETOPO.exists():
-        sys.exit("build retopo first: cargo build --release")
+    if not OPENCLARE.exists():
+        sys.exit("build openclare first: cargo build --release")
     ensure_corpus(models)
     RESULTS.mkdir(exist_ok=True)
 

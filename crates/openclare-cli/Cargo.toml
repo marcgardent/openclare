@@ -1,0 +1,23 @@
+[package]
+name = "openclare-cli"
+description = "Command line front-end for the openclare quad remesher"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "openclare"
+path = "src/main.rs"
+doc = false
+
+[dependencies]
+openclare = { path = "../openclare" }
+# Only with the `rerun` feature: see below.
+openclare-rerun = { path = "../openclare-rerun", optional = true }
+
+[features]
+# `openclare remesh --record file.rrd`: records what each stage makes, for the
+# Rerun viewer. Off by default: it brings a few hundred crates with it and
+# asks for Rust 1.95.
+rerun = ["dep:openclare-rerun"]

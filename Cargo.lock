@@ -5863,6 +5863,44 @@ dependencies = [
 ]
 
 [[package]]
+name = "openclare"
+version = "0.1.0"
+dependencies = [
+ "faer",
+ "glam 0.34.1",
+]
+
+[[package]]
+name = "openclare-capi"
+version = "0.1.0"
+dependencies = [
+ "openclare",
+]
+
+[[package]]
+name = "openclare-cli"
+version = "0.1.0"
+dependencies = [
+ "openclare",
+ "openclare-rerun",
+]
+
+[[package]]
+name = "openclare-rerun"
+version = "0.1.0"
+dependencies = [
+ "openclare",
+ "rerun",
+]
+
+[[package]]
+name = "openclare-viewer"
+version = "0.1.0"
+dependencies = [
+ "rerun",
+]
+
+[[package]]
 name = "openssl-probe"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9527,37 +9565,6 @@ dependencies = [
  "svgtypes",
  "tiny-skia",
  "usvg",
-]
-
-[[package]]
-name = "retopo"
-version = "0.1.0"
-dependencies = [
- "faer",
- "glam 0.34.1",
-]
-
-[[package]]
-name = "retopo-cli"
-version = "0.1.0"
-dependencies = [
- "retopo",
- "retopo-rerun",
-]
-
-[[package]]
-name = "retopo-rerun"
-version = "0.1.0"
-dependencies = [
- "rerun",
- "retopo",
-]
-
-[[package]]
-name = "retopo-viewer"
-version = "0.1.0"
-dependencies = [
- "rerun",
 ]
 
 [[package]]

@@ -2,11 +2,37 @@
 
 Retopologie automatique en quads, alignée sur un champ de directions, écrite en Rust.
 Objectif : une alternative open source à Quad Remesher, meilleure que le remaillage quad de
-Blender. (Les crates et l'exécutable portent encore le nom provisoire `retopo`.)
+Blender.
 
 ![Tore, cube à arêtes vives et Suzanne remaillés](docs/images/apercu.png)
 
 What is left to do, in order: [ROADMAP.md](ROADMAP.md).
+
+## In Blender
+
+openclare comes as a Blender add-on (Blender 4.2 or later; built here for Linux, 64-bit Intel
+or AMD). Build its archive:
+
+```bash
+make addon
+```
+
+Then, in Blender: *Edit > Preferences > Get Extensions*, the arrow at the top right, *Install
+from Disk*, and pick `dist/openclare-0.1.0-linux-x64.zip`. A tab named *openclare* appears in
+the sidebar of the 3D viewport (key N): choose a preset and a number of quads, select a mesh,
+press *Remesh to Quads*. The result is a new object, `<name>.quads`, at the same place as the
+original, which is left as it is. What is remeshed is the object as it is seen, modifiers
+applied.
+
+This is a first version: a preset, a number of quads and a button. Blender waits while the
+engine runs (about eight seconds for the 200,000 triangles of the ogre at 3000 quads). Density
+from Weight Paint, hard edges from the marked ones and UV layers come next
+([ROADMAP.md](ROADMAP.md)).
+
+The add-on calls the engine through a C interface (`crates/openclare-capi`), which any other
+host can use: one call, flat arrays in, quads out, settings as the text of a saved
+configuration. Blender's own arrays are read where they are, without a copy on the Python
+side.
 
 ## État
 
@@ -41,13 +67,13 @@ cargo build --release
 ```
 
 ```bash
-./target/release/retopo remesh entree.obj sortie.obj --quads 5000
+./target/release/openclare remesh entree.obj sortie.obj --quads 5000
 ```
 
 Pour essayer sans maillage sous la main (`torus`, `sphere`, `cube`, `plane`) :
 
 ```bash
-./target/release/retopo primitive torus tore.obj
+./target/release/openclare primitive torus tore.obj
 ```
 
 ### Préréglages
@@ -55,30 +81,30 @@ Pour essayer sans maillage sous la main (`torus`, `sphere`, `cube`, `plane`) :
 Un préréglage est un jeu de paramètres nommé ; chaque paramètre reste réglable par-dessus.
 
 ```bash
-./target/release/retopo presets
+./target/release/openclare presets
 ```
 
 ```bash
-./target/release/retopo remesh entree.obj sortie.obj --preset animation --quads 8000 --alignment 0.1
+./target/release/openclare remesh entree.obj sortie.obj --preset animation --quads 8000 --alignment 0.1
 ```
 
 Pour enregistrer les réglages d'un lancement et les réutiliser comme préréglage personnel :
 
 ```bash
-./target/release/retopo remesh entree.obj sortie.obj --preset organic --singularity-reach 4 --save-config perso.txt
+./target/release/openclare remesh entree.obj sortie.obj --preset organic --singularity-reach 4 --save-config perso.txt
 ```
 
 ```bash
-./target/release/retopo remesh autre.obj sortie.obj --config perso.txt
+./target/release/openclare remesh autre.obj sortie.obj --config perso.txt
 ```
 
-`retopo --help` liste toutes les options. Pour mesurer un résultat et le comparer à Blender et à
+`openclare --help` liste toutes les options. Pour mesurer un résultat et le comparer à Blender et à
 Quad Remesher, voir [bench/README.md](bench/README.md).
 
 Comme bibliothèque :
 
 ```rust
-use retopo::{RemeshConfig, Target};
+use openclare::{RemeshConfig, Target};
 
 let mut config = RemeshConfig::for_organic(Target::QuadCount(5000));
 config.alignment = 0.1;
@@ -91,7 +117,7 @@ si on en fournit une, une densité peinte : un fichier d'un poids par sommet de 
 la valeur par défaut, les zones peintes à 1 ont quatre fois plus de quads par unité d'aire.
 
 ```bash
-./target/release/retopo remesh entree.obj sortie.obj --quads 3000 --adaptivity 0.7 --density poids.txt --density-contrast 8
+./target/release/openclare remesh entree.obj sortie.obj --quads 3000 --adaptivity 0.7 --density poids.txt --density-contrast 8
 ```
 
 Les parties fines gardent leur volume : là où la forme est trop mince pour les quads demandés
@@ -101,7 +127,7 @@ nombre autour, et un peu plus grands ailleurs, pour le même total. Ce nombre se
 l'épaisseur) dans `hard-surface`.
 
 ```bash
-./target/release/retopo remesh entree.obj sortie.obj --quads 3000 --quads-around 8
+./target/release/openclare remesh entree.obj sortie.obj --quads 3000 --quads-around 8
 ```
 
 ![La main de l'ogre à 3000 quads](docs/images/q2_main.png)
@@ -113,19 +139,19 @@ qu'en dessous. `--volume-fit` règle cet écart, de 0 (sommets sur la surface) �
 par défaut).
 
 ```bash
-./target/release/retopo remesh entree.obj sortie.obj --quads 3000 --volume-fit 0
+./target/release/openclare remesh entree.obj sortie.obj --quads 3000 --volume-fit 0
 ```
 
 Pour voir le T-mesh d'un modèle, ses coupes écrites comme des lignes sur la surface :
 
 ```bash
-./target/release/retopo tmesh entree.obj --quads 3000 --simplify 2 --traces coupes.obj
+./target/release/openclare tmesh entree.obj --quads 3000 --simplify 2 --traces coupes.obj
 ```
 
 Et pour le quantifier :
 
 ```bash
-./target/release/retopo quantize entree.obj --quads 3000 --simplify 2
+./target/release/openclare quantize entree.obj --quads 3000 --simplify 2
 ```
 
 ### Notes comparatives
@@ -179,28 +205,28 @@ Cette commande construit ce qu'il faut, remaille le modèle en enregistrant, pui
 visionneuse. La première construction est longue (Rerun compte plusieurs centaines de
 dépendances) et demande Rust 1.95.
 
-Rien de tout cela ne pèse sur le reste. La bibliothèque `retopo` ne connaît qu'une interface,
+Rien de tout cela ne pèse sur le reste. La bibliothèque `openclare` ne connaît qu'une interface,
 `Recorder`, et son implémentation muette `Silent`, celle qui sert par défaut : elle ne garde
 rien et les étapes ne préparent alors rien. Rerun vit dans deux crates à part, construites
 seulement sur demande :
 
 | Crate | Rôle | Se construit avec |
 |---|---|---|
-| `retopo-rerun` | implémentation de `Recorder` qui écrit un `.rrd` ; donne l'option `--record` à `retopo remesh` | `cargo build --release -p retopo-cli --features rerun` |
-| `retopo-viewer` | la visionneuse de Rerun embarquée, exécutable `retopo-view`, pour qui travaille sur le projet : rien d'autre à installer, et la bonne version | `cargo build --release -p retopo-viewer` |
+| `openclare-rerun` | implémentation de `Recorder` qui écrit un `.rrd` ; donne l'option `--record` à `openclare remesh` | `cargo build --release -p openclare-cli --features rerun` |
+| `openclare-viewer` | la visionneuse de Rerun embarquée, exécutable `openclare-view`, pour qui travaille sur le projet : rien d'autre à installer, et la bonne version | `cargo build --release -p openclare-viewer` |
 
 À la main :
 
 ```bash
-target/release/retopo remesh modele.obj quads.obj --quads 3000 --record modele.rrd
+target/release/openclare remesh modele.obj quads.obj --quads 3000 --record modele.rrd
 ```
 
 ```bash
-target/release/retopo-view modele.rrd
+target/release/openclare-view modele.rrd
 ```
 
 Un `.rrd` se lit avec la visionneuse de la version qui l'a écrit, ici la 0.36. Qui a déjà
-Rerun 0.36 installé peut s'en servir à la place de `retopo-view`.
+Rerun 0.36 installé peut s'en servir à la place de `openclare-view`.
 
 ## Organisation
 
@@ -229,6 +255,7 @@ Rerun 0.36 installé peut s'en servir à la place de `retopo-view`.
 | `metrics` | mesures de qualité d'un maillage quad par rapport à sa source |
 | `fitting` | étape d'ajustement : les sommets quittent la surface pour que le maillage garde le volume |
 | `thickness` | épaisseur de la forme sous chaque sommet, mesurée par des rayons à travers l'intérieur |
+| crate `openclare-capi` | interface C du moteur : une bibliothèque partagée, pour Blender et d'autres hôtes |
 | `recorder` | interface `Recorder` par laquelle les étapes montrent leur travail, et `Silent`, qui n'écoute rien ; aucune dépendance |
 
 La chaîne actuelle est décrite dans

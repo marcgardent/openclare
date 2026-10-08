@@ -1,0 +1,11 @@
+[package]
+name = "openclare"
+description = "Field-aligned automatic quad retopology"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+glam.workspace = true
+faer.workspace = true

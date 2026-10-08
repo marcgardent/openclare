@@ -13,7 +13,7 @@ source and its licence. No model enters the bench without its line here.
 
 | Model | Author | Year | Source | Licence | Where |
 |---|---|---|---|---|---|
-| `ogre` | Marc Gardent | 2026 | original sculpt, 4.7 million triangles, brought down to 200,000 by `retopo preprocess`; the mascot of the project | © 2026 Marc Gardent, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.en) | in the repository; the original out of it |
+| `ogre` | Marc Gardent | 2026 | original sculpt, 4.7 million triangles, brought down to 200,000 by `openclare preprocess`; the mascot of the project | © 2026 Marc Gardent, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.en) | in the repository; the original out of it |
 
 Convention for those to come: **Marc Gardent, 2026, CC BY-SA 4.0**.
 
@@ -47,7 +47,7 @@ No third-party rights. They are made by scripts of the repository and follow its
 | Model | Made by | What it is |
 |---|---|---|
 | `blob`, `rock`, `creature`, `cage`, `part` | `bench/make_corpus.py` (Blender) | merged balls; noisy sphere; quadruped; softened cube with holes; mechanical part with holes |
-| `cube`, `sphere`, `torus`, `lblock`, `cylinder` | `retopo primitive` | yardsticks and test shapes |
+| `cube`, `sphere`, `torus`, `lblock`, `cylinder` | `openclare primitive` | yardsticks and test shapes |
 
 ## Comparison meshes
 

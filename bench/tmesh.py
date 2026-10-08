@@ -3,7 +3,7 @@
 
     python3 bench/tmesh.py [--models a,b] [--targets 1000,3000,8000]
 
-Needs a release build of `retopo`. The table goes to bench/results/TMESH.md.
+Needs a release build of `openclare`. The table goes to bench/results/TMESH.md.
 """
 
 import argparse
@@ -11,14 +11,14 @@ import json
 import subprocess
 import sys
 
-from run import CREASE_ANGLE, LOCAL_MODELS, MODELS, RESULTS, RETOPO, source_path
+from run import CREASE_ANGLE, LOCAL_MODELS, MODELS, RESULTS, OPENCLARE, source_path
 
 # Desert Rose is not a manifold surface: it waits for the repair stage.
 SKIPPED = {"rose"}
 
 
 def tmesh(model, target, hard_edges):
-    command = [str(RETOPO), "tmesh", str(source_path(model)), "--quads", str(target), "--simplify", "2", "--json"]
+    command = [str(OPENCLARE), "tmesh", str(source_path(model)), "--quads", str(target), "--simplify", "2", "--json"]
     if hard_edges:
         command += ["--crease-angle", CREASE_ANGLE]
     done = subprocess.run(command, capture_output=True, text=True)

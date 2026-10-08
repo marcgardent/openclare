@@ -8,7 +8,7 @@
                                                    the scores of any quad mesh against its source
 
 The first two read what the bench measured (bench/results/results*.json, see
-bench/run.py); the last one measures the mesh with `retopo measure`.
+bench/run.py); the last one measures the mesh with `openclare measure`.
 
 Every score is an absolute mark, not a rank: a remesher keeps its score
 whichever others it is compared with. `SCALES` below says how each metric
@@ -26,7 +26,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "bench"))
-from run import DEFAULT_TARGET, MATCHED, MODELS, RESULTS, RETOPO  # noqa: E402
+from run import DEFAULT_TARGET, MATCHED, MODELS, RESULTS, OPENCLARE  # noqa: E402
 
 # Criteria, in the order they are shown: key, title, what a full mark means.
 CRITERIA = [
@@ -347,12 +347,12 @@ def main():
         return
 
     if options.command == "mesh":
-        command = [str(RETOPO), "measure", options.source, options.quads, "--json"]
+        command = [str(OPENCLARE), "measure", options.source, options.quads, "--json"]
         if options.target:
             command += ["--target", str(options.target)]
         done = subprocess.run(command, capture_output=True, text=True)
         if done.returncode != 0:
-            sys.exit(done.stderr.strip().splitlines()[0] if done.stderr.strip() else "retopo measure failed")
+            sys.exit(done.stderr.strip().splitlines()[0] if done.stderr.strip() else "openclare measure failed")
         marks = scores_of([json.loads(done.stdout)], 1, None)
         if options.json:
             print(json.dumps(marks, indent=1, sort_keys=True))

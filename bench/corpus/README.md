@@ -9,7 +9,7 @@ pas : ils vivent sous `../corpus-large/`, hors git, et `make blenderkit` les ret
 
 ## Formes de synthèse
 
-Générées par `../make_corpus.py` (Blender) ou par `retopo primitive`. Aucun droit de tiers.
+Générées par `../make_corpus.py` (Blender) ou par `openclare primitive`. Aucun droit de tiers.
 
 | Fichier | Contenu |
 |---|---|
@@ -24,7 +24,7 @@ Générées par `../make_corpus.py` (Blender) ou par `retopo primitive`. Aucun d
 ## L'ogre
 
 `ogre.obj` : la mascotte du projet, sculpture fournie par l'auteur du projet, 4,7 millions de
-triangles à l'origine, ramenée à 200 000 par `retopo preprocess`. L'original est dans `../corpus-large/`,
+triangles à l'origine, ramenée à 200 000 par `openclare preprocess`. L'original est dans `../corpus-large/`,
 hors git.
 
 ## Dépôt de Keenan Crane

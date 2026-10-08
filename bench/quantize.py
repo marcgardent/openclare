@@ -3,7 +3,7 @@
 
     python3 bench/quantize.py [--models a,b] [--targets 1000,3000,8000]
 
-Needs a release build of `retopo`. The table goes to bench/results/QUANTIZATION.md.
+Needs a release build of `openclare`. The table goes to bench/results/QUANTIZATION.md.
 """
 
 import argparse
@@ -12,7 +12,7 @@ import statistics
 import subprocess
 import sys
 
-from run import CREASE_ANGLE, LOCAL_MODELS, MODELS, RESULTS, RETOPO, source_path
+from run import CREASE_ANGLE, LOCAL_MODELS, MODELS, RESULTS, OPENCLARE, source_path
 
 # Desert Rose is not a manifold surface: it waits for the repair stage. A
 # torus has no singularity, hence no T-mesh to quantize.
@@ -20,7 +20,7 @@ SKIPPED = {"rose", "torus"}
 
 
 def quantize(model, target, hard_edges):
-    command = [str(RETOPO), "quantize", str(source_path(model)), "--quads", str(target), "--simplify", "2", "--json"]
+    command = [str(OPENCLARE), "quantize", str(source_path(model)), "--quads", str(target), "--simplify", "2", "--json"]
     if hard_edges:
         command += ["--crease-angle", CREASE_ANGLE]
     done = subprocess.run(command, capture_output=True, text=True)

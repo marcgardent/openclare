@@ -22,7 +22,7 @@ chaque budget a ses fichiers (`RESULTS.md` pour 3000 quads, `RESULTS-8000.md`, e
 Pour mesurer un seul maillage, quel que soit l'outil qui l'a produit :
 
 ```bash
-./target/release/retopo measure source.obj quads.obj --target 3000
+./target/release/openclare measure source.obj quads.obj --target 3000
 ```
 
 ## Fichiers
@@ -46,8 +46,8 @@ Pour mesurer un seul maillage, quel que soit l'outil qui l'a produit :
 | `import_crane.py`, `subdivide.py` | convertissent les modèles téléchargés du dépôt de Keenan Crane en sources du corpus |
 | `blender_io.py` | lecture et écriture OBJ sans conversion d'axes, pour que tous les outils voient les mêmes coordonnées |
 
-Les métriques sont dans `crates/retopo/src/metrics.rs`, chacune testée sur un maillage dont le
-score est connu (`crates/retopo/tests/metrics.rs`).
+Les métriques sont dans `crates/openclare/src/metrics.rs`, chacune testée sur un maillage dont le
+score est connu (`crates/openclare/tests/metrics.rs`).
 
 ## Quad Remesher
 
@@ -66,7 +66,7 @@ d'essai : usage non commercial.
 ## Ajouter un outil
 
 Une ligne dans le dictionnaire `TOOLS` de `run.py`. Pour une chaîne de ce dépôt :
-`"nom": retopo("nom")`, où le nom est celui que connaît `retopo remesh --method`. Une chaîne
+`"nom": openclare("nom")`, où le nom est celui que connaît `openclare remesh --method`. Une chaîne
 qui n'utilise pas la graine se déclare avec `seeded=False` et n'est lancée qu'une fois.
 
 Les trois chaînes du dépôt y sont : `instant-meshes` (le plancher), `integer-grid` (la version
@@ -86,7 +86,7 @@ provisoire) et `quad-layout` (la cible).
 `corpus/ogre.obj` vient d'une sculpture de 4,7 millions de triangles, ramenée à 200 000 par :
 
 ```bash
-./target/release/retopo preprocess bench/corpus-large/ogre_hp.obj bench/corpus/ogre.obj --triangles 200000
+./target/release/openclare preprocess bench/corpus-large/ogre_hp.obj bench/corpus/ogre.obj --triangles 200000
 ```
 
 L'écart à l'original est de 0,055 ‰ de la diagonale en moyenne et 4,5 ‰ au pire (sur les détails
@@ -104,7 +104,7 @@ les plus anguleux).
 - **Alignement (A).** La courbure est lue à l'échelle d'un quad. Sur une forme bruitée elle n'a
   pas de direction stable et la métrique reste au niveau du hasard (22,5°).
 - **Temps.** Celui de QuadriFlow inclut la conversion de maillage interne à Blender, celui de
-  Quad Remesher un aller-retour en FBX et son gestionnaire de licence, celui de `retopo` exclut la
+  Quad Remesher un aller-retour en FBX et son gestionnaire de licence, celui de `openclare` exclut la
   lecture et l'écriture des fichiers : ordre de grandeur seulement.
 - **Source ouverte, sortie fermée.** Si un outil rebouche des bords, la validité ne le signale
   pas ; c'est la distance de Hausdorff qui le montre.

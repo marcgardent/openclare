@@ -34,7 +34,7 @@ class Driver:
 
     def __init__(self, operators):
         self.the_input_object = None
-        self.retopoFilename = ""
+        self.openclareFilename = ""
         self.IsRemeshing = False
         self.progressData = operators.QRCheckProgressData()
         self.messages = []
