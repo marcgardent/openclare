@@ -1449,6 +1449,8 @@ Prises :
 - symétrie : inscrite à la feuille de route (jalon 9 bis, DT-028) ;
 - ordre des travaux (8 octobre 2026) : ce qui fait progresser la qualité du maillage passe avant
   les fonctionnalités annexes (symétrie, export, interface) ;
+- licence des modèles de l'auteur (8 octobre 2026) : CC BY-SA 4.0, l'équivalent de la GPL pour
+  une œuvre ; crédits de tous les modèles dans CREDITS.md ;
 - surfaces dures : pas de seconde chaîne pour l'instant ; les arêtes vives sont des coupes du
   T-mesh de la chaîne existante, et la chaîne par patchs est mise au backlog (DT-030) ;
 - licence GPL-3.0-or-later ;

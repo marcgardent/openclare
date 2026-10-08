@@ -13,9 +13,15 @@ source et leur licence. Un modèle n'entre pas dans le banc de mesure sans sa li
 
 | Modèle | Auteur | Année | Source | Licence | Où |
 |---|---|---|---|---|---|
-| `ogre` | Marc Gardent | 2026 | sculpture originale, 4,7 millions de triangles, ramenée à 200 000 par `retopo preprocess` ; la mascotte du projet | © 2026 Marc Gardent *(licence à préciser)* | dans le dépôt ; l'original hors dépôt |
+| `ogre` | Marc Gardent | 2026 | sculpture originale, 4,7 millions de triangles, ramenée à 200 000 par `retopo preprocess` ; la mascotte du projet | © 2026 Marc Gardent, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.fr) | dans le dépôt ; l'original hors dépôt |
 
-Convention pour les prochains : **Marc Gardent, 2026**.
+Convention pour les prochains : **Marc Gardent, 2026, CC BY-SA 4.0**.
+
+La CC BY-SA 4.0 (attribution, partage dans les mêmes conditions) est pour une œuvre ce que la
+GPL est pour un logiciel : on peut la réutiliser et la transformer, à condition de citer
+l'auteur et de garder la même liberté pour ce qu'on en tire. Creative Commons l'a déclarée
+compatible avec la GPLv3 le 8 octobre 2015, dans un seul sens : ce qu'on tire d'une œuvre sous
+BY-SA 4.0 peut être placé sous GPLv3, pas l'inverse. Décision du 8 octobre 2026.
 
 ## Modèles de tiers
 
