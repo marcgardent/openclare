@@ -42,8 +42,8 @@ VIEWS = {
     "cylinder": (35, 28),
     "part": (35, 28),
 }
-# Pictures of these are not published: a fan creation after a game.
-UNPICTURED = {"marine"}
+# Models no picture of which is to be published. None at the moment.
+UNPICTURED = set()
 # A source with more triangles than this is shown without its edges.
 DENSE = 20_000
 
