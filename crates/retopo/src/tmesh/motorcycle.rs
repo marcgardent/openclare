@@ -174,8 +174,10 @@ pub(super) struct Race<'a> {
 }
 
 /// Runs the race on `map` from the vertices flagged in `is_singular`, with
-/// the half-edges flagged in `is_wall` for cuts already there.
-pub(super) fn race(map: &Map, is_singular: &[bool], is_wall: &[bool], max_length: f64) -> Outcome {
+/// the half-edges flagged in `is_wall` for cuts already there. `seeds` are
+/// plain vertices to start from as well, for the pieces of surface that
+/// have neither.
+pub(super) fn race(map: &Map, is_singular: &[bool], is_wall: &[bool], seeds: &[u32], max_length: f64) -> Outcome {
     let vertices = map.mesh.positions.len();
     let mut race = Race {
         map,
@@ -211,6 +213,21 @@ pub(super) fn race(map: &Map, is_singular: &[bool], is_wall: &[bool], max_length
         }
     }
     race.lay_walls(is_wall, is_singular);
+    // A piece with no singularity and no wall (a ring) has nothing to be cut
+    // from. Any vertex will do to start: it sends a trace along each of its
+    // four grid directions, which go round the piece and stop on one
+    // another.
+    for &v in seeds {
+        let node = race.outcome.junctions.len() as u32;
+        race.outcome.junctions.push(Junction::regular(map.mesh.positions[v as usize]));
+        for (rank, departure) in map.departures(v).into_iter().enumerate() {
+            if rank == 0 {
+                let trace = race.outcome.traces.len() as u32;
+                race.passages[v as usize] = Some(Passage { trace, time: 0.0, departure });
+            }
+            race.start(node, rank as f64, departure);
+        }
+    }
 
     let mut queue: BinaryHeap<Reverse<(Time, u32)>> = (0..race.outcome.traces.len() as u32)
         .filter(|&id| race.outcome.traces[id as usize].running)

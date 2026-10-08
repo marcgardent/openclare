@@ -246,13 +246,17 @@ fn work_mesh(mesh: TriMesh, feature_edges: Vec<[u32; 2]>, request: &Request) -> 
 
     // n smoothing passes reach about sqrt(n) edges.
     let edge = mesh.edge_length_stats().1;
-    let passes = request.curvature_scale.map_or(0, |scale| ((scale / edge).powi(2).round() as usize).min(400));
+    let (min, max) =
+        mesh.positions.iter().fold((Vec3::INFINITY, Vec3::NEG_INFINITY), |(lo, hi), &p| (lo.min(p), hi.max(p)));
+    // A scale larger than a tenth of the piece (a ring asked for six quads)
+    // would average the curvature of the whole of it into nothing.
+    let widest = 0.1 * (max - min).length();
+    let passes =
+        request.curvature_scale.map_or(0, |scale| ((scale.min(widest) / edge).powi(2).round() as usize).min(400));
     let curvature = TensorField::estimate(&mesh, &normals, &areas)
         .smoothed(&topology.neighbors, &normals, &areas, passes)
         .principal(&normals);
 
-    let (min, max) =
-        mesh.positions.iter().fold((Vec3::INFINITY, Vec3::NEG_INFINITY), |(lo, hi), &p| (lo.min(p), hi.max(p)));
     // A direction only counts where the surface bends more than the model as
     // a whole does (a sphere of its size): flatter regions have no direction
     // worth following, whatever the ratio of their two tiny curvatures.

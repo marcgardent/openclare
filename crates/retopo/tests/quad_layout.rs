@@ -72,15 +72,17 @@ fn a_flat_sheet_comes_out_as_its_exact_grid() {
 }
 
 #[test]
-fn a_surface_without_layout_is_handed_to_the_other_chain() {
+fn a_torus_comes_out_as_one_regular_grid() {
     // Following the curvature, the field of a torus has no singularity:
-    // nothing to cut it into rectangles.
+    // the layout is then cut from an arbitrary vertex.
     let source = primitives::torus(1.0, 0.4, 96, 48);
     let (mesh, report) = config(2000).remesh(&source).unwrap();
-    assert!(report.fell_back);
+    assert!(!report.fell_back);
     let metrics = measure(&source, &mesh, Some(2000));
     assert!(metrics.is_valid(), "{metrics:?}");
     assert_eq!(metrics.irregular_vertices, 0);
+    assert_eq!(metrics.base_complex_patches, Some(1));
+    assert!(metrics.budget_error.unwrap() <= 0.05, "{} faces", metrics.faces);
 }
 
 #[test]

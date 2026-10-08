@@ -404,7 +404,7 @@
    "quad-layout": [
     {
      "seed": 1,
-     "seconds": 8.719,
+     "seconds": 9.261,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -472,7 +472,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 10.521,
+     "seconds": 11.414,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -508,7 +508,7 @@
    "quad-layout": [
     {
      "seed": 1,
-     "seconds": 4.669,
+     "seconds": 4.727,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -968,7 +968,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 4.367,
+     "seconds": 4.86,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1004,7 +1004,7 @@
    "quad-layout": [
     {
      "seed": 1,
-     "seconds": 4.587,
+     "seconds": 4.919,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1464,7 +1464,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 4.568,
+     "seconds": 5.822,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1500,7 +1500,7 @@
    "quad-layout": [
     {
      "seed": 1,
-     "seconds": 9.723,
+     "seconds": 10.6,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1960,7 +1960,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 11.171,
+     "seconds": 13.09,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1996,7 +1996,7 @@
    "quad-layout": [
     {
      "seed": 1,
-     "seconds": 3.768,
+     "seconds": 5.441,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2456,7 +2456,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 4.23,
+     "seconds": 5.336,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2492,16 +2492,16 @@
    "quad-layout": [
     {
      "seed": 1,
-     "seconds": 4.896,
+     "seconds": 4.549,
      "failure": null,
      "metrics": {
       "valid": true,
-      "vertices": 7925,
-      "faces": 7860,
-      "quads": 7860,
+      "vertices": 8106,
+      "faces": 8040,
+      "quads": 8040,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
-      "boundary_edges": 126,
+      "boundary_edges": 128,
       "source_boundary_edges": 168,
       "inverted_faces": 0,
       "degenerate_faces": 0,
@@ -2510,16 +2510,16 @@
       "irregular_vertices": 64,
       "topological_minimum": null,
       "irregular_excess": null,
-      "base_complex_patches": 3264,
-      "alignment": 9.959419920261928,
-      "angle_deviation_mean": 5.343604078477203,
-      "angle_deviation_p95": 15.155244816700815,
-      "aspect_mean": 1.196618573129324,
-      "aspect_p95": 1.5206801804342729,
-      "area_variation": 0.26236934618556657,
-      "hausdorff": 0.005820770913040125,
-      "mean_distance": 0.0002805515169445847,
-      "budget_error": 0.0175
+      "base_complex_patches": 3543,
+      "alignment": 9.963820675768003,
+      "angle_deviation_mean": 5.437090820084741,
+      "angle_deviation_p95": 15.150806722207989,
+      "aspect_mean": 1.2100963898667902,
+      "aspect_p95": 1.572108445582247,
+      "area_variation": 0.24956914000336675,
+      "hausdorff": 0.004989465154964721,
+      "mean_distance": 0.0002730346786098053,
+      "budget_error": 0.005
      }
     }
    ],
@@ -2952,13 +2952,13 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 6.398,
+     "seconds": 9.516,
      "failure": null,
      "metrics": {
       "valid": true,
-      "vertices": 7967,
-      "faces": 7898,
-      "quads": 7898,
+      "vertices": 8202,
+      "faces": 8133,
+      "quads": 8133,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 134,
@@ -2967,19 +2967,19 @@
       "degenerate_faces": 0,
       "components": 3,
       "source_components": 3,
-      "irregular_vertices": 78,
+      "irregular_vertices": 76,
       "topological_minimum": null,
       "irregular_excess": null,
-      "base_complex_patches": 4489,
-      "alignment": 9.986283430327775,
-      "angle_deviation_mean": 5.941104042789501,
-      "angle_deviation_p95": 15.350468147108444,
-      "aspect_mean": 1.230547900095824,
-      "aspect_p95": 1.651419844824373,
-      "area_variation": 0.3829675396405636,
-      "hausdorff": 0.004226007514975244,
-      "mean_distance": 0.00023087469974724122,
-      "budget_error": 0.01275
+      "base_complex_patches": 5461,
+      "alignment": 9.870890856504298,
+      "angle_deviation_mean": 5.935139840307469,
+      "angle_deviation_p95": 15.308962339395308,
+      "aspect_mean": 1.2323930198356734,
+      "aspect_p95": 1.6441692294715013,
+      "area_variation": 0.38199112413569475,
+      "hausdorff": 0.004409675000460864,
+      "mean_distance": 0.0002247474510470022,
+      "budget_error": 0.016625
      }
     }
    ]
@@ -2988,7 +2988,7 @@
    "quad-layout": [
     {
      "seed": 1,
-     "seconds": 9.602,
+     "seconds": 10.817,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -3448,7 +3448,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 12.574,
+     "seconds": 11.636,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -3484,7 +3484,7 @@
    "quad-layout": [
     {
      "seed": 1,
-     "seconds": 8.188,
+     "seconds": 7.73,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -3944,7 +3944,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 5.567,
+     "seconds": 6.222,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -3980,7 +3980,7 @@
    "quad-layout": [
     {
      "seed": 1,
-     "seconds": 6.579,
+     "seconds": 6.418,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -4440,7 +4440,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 6.483,
+     "seconds": 6.762,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -4476,7 +4476,7 @@
    "quad-layout": [
     {
      "seed": 1,
-     "seconds": 9.438,
+     "seconds": 10.842,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -4936,7 +4936,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 11.051,
+     "seconds": 9.871,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -4972,7 +4972,7 @@
    "quad-layout": [
     {
      "seed": 1,
-     "seconds": 5.343,
+     "seconds": 4.924,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -5432,7 +5432,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 6.811,
+     "seconds": 5.681,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -5468,34 +5468,34 @@
    "quad-layout": [
     {
      "seed": 1,
-     "seconds": 152.098,
+     "seconds": 9.824,
      "failure": null,
      "metrics": {
       "valid": false,
-      "vertices": 6580,
-      "faces": 6566,
-      "quads": 6536,
-      "non_manifold_edges": 3,
+      "vertices": 8873,
+      "faces": 8743,
+      "quads": 8743,
+      "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 0,
       "source_boundary_edges": 0,
-      "inverted_faces": 13,
+      "inverted_faces": 1,
       "degenerate_faces": 0,
-      "components": 39,
+      "components": 96,
       "source_components": 96,
-      "irregular_vertices": 557,
-      "topological_minimum": null,
-      "irregular_excess": null,
-      "base_complex_patches": null,
-      "alignment": 14.2432546565668,
-      "angle_deviation_mean": 10.21217240065519,
-      "angle_deviation_p95": 29.727914378817438,
-      "aspect_mean": 1.4126210410822848,
-      "aspect_p95": 2.033564788561147,
-      "area_variation": 0.3309618498748197,
-      "hausdorff": 0.07497888059233522,
-      "mean_distance": 0.0015479022655742565,
-      "budget_error": 0.17925
+      "irregular_vertices": 1279,
+      "topological_minimum": 616,
+      "irregular_excess": 663,
+      "base_complex_patches": 7101,
+      "alignment": 11.982543249901147,
+      "angle_deviation_mean": 10.601787176508486,
+      "angle_deviation_p95": 37.56909242452967,
+      "aspect_mean": 2.3275886558438486,
+      "aspect_p95": 4.521322730315714,
+      "area_variation": 0.5400728764426602,
+      "hausdorff": 0.015376006506426322,
+      "mean_distance": 0.0007542618813705915,
+      "budget_error": 0.092875
      }
     }
    ],
@@ -5928,34 +5928,34 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 124.824,
+     "seconds": 9.294,
      "failure": null,
      "metrics": {
       "valid": false,
-      "vertices": 6580,
-      "faces": 6566,
-      "quads": 6536,
-      "non_manifold_edges": 3,
+      "vertices": 8742,
+      "faces": 8613,
+      "quads": 8611,
+      "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 0,
       "source_boundary_edges": 0,
-      "inverted_faces": 13,
+      "inverted_faces": 1,
       "degenerate_faces": 0,
-      "components": 39,
+      "components": 96,
       "source_components": 96,
-      "irregular_vertices": 557,
+      "irregular_vertices": 1304,
       "topological_minimum": null,
       "irregular_excess": null,
       "base_complex_patches": null,
-      "alignment": 14.2432546565668,
-      "angle_deviation_mean": 10.21217240065519,
-      "angle_deviation_p95": 29.727914378817438,
-      "aspect_mean": 1.4126210410822848,
-      "aspect_p95": 2.033564788561147,
-      "area_variation": 0.3309618498748197,
-      "hausdorff": 0.07497888059233522,
-      "mean_distance": 0.0015479022655742565,
-      "budget_error": 0.17925
+      "alignment": 11.619223767589844,
+      "angle_deviation_mean": 10.216180985160513,
+      "angle_deviation_p95": 35.76123399917549,
+      "aspect_mean": 3.2873387016583453,
+      "aspect_p95": 4.2692126681741245,
+      "area_variation": 0.5518959344927391,
+      "hausdorff": 0.02341316027061231,
+      "mean_distance": 0.0007639471027928563,
+      "budget_error": 0.076625
      }
     }
    ]
@@ -5964,7 +5964,7 @@
    "quad-layout": [
     {
      "seed": 1,
-     "seconds": 4.899,
+     "seconds": 5.048,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -5983,14 +5983,14 @@
       "topological_minimum": null,
       "irregular_excess": null,
       "base_complex_patches": 2987,
-      "alignment": 9.87443523799841,
-      "angle_deviation_mean": 4.766783793257113,
-      "angle_deviation_p95": 12.293897348079582,
-      "aspect_mean": 1.263803810381056,
-      "aspect_p95": 1.5880147087812173,
-      "area_variation": 0.26464090081876707,
-      "hausdorff": 0.006695920381026785,
-      "mean_distance": 0.00027728235474113903,
+      "alignment": 9.874172167361698,
+      "angle_deviation_mean": 4.7677565469503795,
+      "angle_deviation_p95": 12.297338175631026,
+      "aspect_mean": 1.2638790625530298,
+      "aspect_p95": 1.5882087043607689,
+      "area_variation": 0.2646627157962418,
+      "hausdorff": 0.006695920391332893,
+      "mean_distance": 0.0002772724005743878,
       "budget_error": 0.015
      }
     }
@@ -6294,7 +6294,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 4.169,
+     "seconds": 4.731,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -6313,14 +6313,14 @@
       "topological_minimum": null,
       "irregular_excess": null,
       "base_complex_patches": 2286,
-      "alignment": 8.88436158962934,
-      "angle_deviation_mean": 4.328718538917783,
-      "angle_deviation_p95": 11.69761710371914,
-      "aspect_mean": 1.2543058356048074,
-      "aspect_p95": 1.5968721721149604,
-      "area_variation": 0.34153424634127394,
-      "hausdorff": 0.006542497645320177,
-      "mean_distance": 0.0002736374500167825,
+      "alignment": 8.884319873494398,
+      "angle_deviation_mean": 4.3295275262047594,
+      "angle_deviation_p95": 11.699030201554251,
+      "aspect_mean": 1.2543617700585892,
+      "aspect_p95": 1.5969058976829682,
+      "area_variation": 0.34154413117632615,
+      "hausdorff": 0.006542497643837532,
+      "mean_distance": 0.0002736234714515233,
       "budget_error": 0.018
      }
     }
@@ -6330,13 +6330,13 @@
    "quad-layout": [
     {
      "seed": 1,
-     "seconds": 4.405,
+     "seconds": 5.596,
      "failure": null,
      "metrics": {
       "valid": true,
-      "vertices": 7886,
-      "faces": 7888,
-      "quads": 7888,
+      "vertices": 8076,
+      "faces": 8078,
+      "quads": 8078,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 0,
@@ -6348,16 +6348,16 @@
       "irregular_vertices": 24,
       "topological_minimum": 8,
       "irregular_excess": 16,
-      "base_complex_patches": 78,
-      "alignment": 11.896671770053842,
-      "angle_deviation_mean": 1.088479758182865,
-      "angle_deviation_p95": 3.7858955472932507,
-      "aspect_mean": 1.1024323030359866,
-      "aspect_p95": 1.2749899530177187,
-      "area_variation": 0.11710626197210892,
-      "hausdorff": 0.00043805828046379044,
-      "mean_distance": 2.1126666613186123e-05,
-      "budget_error": 0.014
+      "base_complex_patches": 429,
+      "alignment": 11.83720536308473,
+      "angle_deviation_mean": 1.2544154412294863,
+      "angle_deviation_p95": 3.8014236593646302,
+      "aspect_mean": 1.093084171578112,
+      "aspect_p95": 1.262737566871366,
+      "area_variation": 0.12640085867599757,
+      "hausdorff": 0.0004157116439533046,
+      "mean_distance": 2.070517127509814e-05,
+      "budget_error": 0.00975
      }
     }
    ],
@@ -6790,13 +6790,13 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 5.12,
+     "seconds": 5.377,
      "failure": null,
      "metrics": {
       "valid": true,
-      "vertices": 8051,
-      "faces": 8053,
-      "quads": 8053,
+      "vertices": 8096,
+      "faces": 8098,
+      "quads": 8098,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 0,
@@ -6809,15 +6809,15 @@
       "topological_minimum": 8,
       "irregular_excess": 16,
       "base_complex_patches": 92,
-      "alignment": 10.361607332634893,
-      "angle_deviation_mean": 1.0260382867418758,
-      "angle_deviation_p95": 3.8662073531838956,
-      "aspect_mean": 1.1362869018742459,
-      "aspect_p95": 1.3504449151357536,
-      "area_variation": 0.32140651309489243,
-      "hausdorff": 0.0003628182166177212,
-      "mean_distance": 2.0889836655457784e-05,
-      "budget_error": 0.006625
+      "alignment": 10.3459532397204,
+      "angle_deviation_mean": 1.0019390883096002,
+      "angle_deviation_p95": 3.8038925532602264,
+      "aspect_mean": 1.1296364180527583,
+      "aspect_p95": 1.3470558842259106,
+      "area_variation": 0.32874168839568135,
+      "hausdorff": 0.00036279603949460293,
+      "mean_distance": 2.1301784981043744e-05,
+      "budget_error": 0.01225
      }
     }
    ]
@@ -6826,7 +6826,7 @@
    "quad-layout": [
     {
      "seed": 1,
-     "seconds": 4.463,
+     "seconds": 3.382,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -6845,14 +6845,14 @@
       "topological_minimum": 8,
       "irregular_excess": 0,
       "base_complex_patches": 6,
-      "alignment": 0.11460027451302791,
-      "angle_deviation_mean": 0.006966394317558453,
-      "angle_deviation_p95": 0.01656736460641639,
-      "aspect_mean": 1.0184271578108897,
-      "aspect_p95": 1.0281649970855524,
-      "area_variation": 0.012917526979832443,
-      "hausdorff": 3.5832294041243823e-17,
-      "mean_distance": 8.268292505164669e-19,
+      "alignment": 0.11460027405871463,
+      "angle_deviation_mean": 0.006966394123620894,
+      "angle_deviation_p95": 0.01656736495242228,
+      "aspect_mean": 1.0184271578064268,
+      "aspect_p95": 1.028164997212479,
+      "area_variation": 0.012917526979715635,
+      "hausdorff": 3.229879337080184e-17,
+      "mean_distance": 8.271793412652092e-19,
       "budget_error": 0.00825
      }
     }
@@ -7286,7 +7286,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 3.9,
+     "seconds": 3.508,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -7305,14 +7305,14 @@
       "topological_minimum": 8,
       "irregular_excess": 0,
       "base_complex_patches": 6,
-      "alignment": 0.27499240572423794,
-      "angle_deviation_mean": 0.2045507097193181,
-      "angle_deviation_p95": 0.7425400558644242,
-      "aspect_mean": 1.0738360363914126,
-      "aspect_p95": 1.2535780624202328,
-      "area_variation": 0.09252273503473263,
+      "alignment": 0.2749924056809541,
+      "angle_deviation_mean": 0.20455070971360778,
+      "angle_deviation_p95": 0.7425400558643105,
+      "aspect_mean": 1.0738360363912303,
+      "aspect_p95": 1.2535780624202222,
+      "area_variation": 0.09252273503481101,
       "hausdorff": 3.229879337080184e-17,
-      "mean_distance": 8.513901557037029e-19,
+      "mean_distance": 7.880559887532221e-19,
       "budget_error": 0.00825
      }
     }
@@ -7322,7 +7322,7 @@
    "quad-layout": [
     {
      "seed": 1,
-     "seconds": 4.49,
+     "seconds": 4.483,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -7782,7 +7782,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 4.422,
+     "seconds": 4.334,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -7818,13 +7818,13 @@
    "quad-layout": [
     {
      "seed": 1,
-     "seconds": 3.647,
+     "seconds": 3.069,
      "failure": null,
      "metrics": {
       "valid": true,
-      "vertices": 7280,
-      "faces": 7280,
-      "quads": 7280,
+      "vertices": 8024,
+      "faces": 8024,
+      "quads": 8024,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 0,
@@ -7837,15 +7837,15 @@
       "topological_minimum": 0,
       "irregular_excess": 0,
       "base_complex_patches": 1,
-      "alignment": 0.6066269989750831,
-      "angle_deviation_mean": 0.9053216046431468,
-      "angle_deviation_p95": 1.4424163761983237,
-      "aspect_mean": 1.3401655609642675,
-      "aspect_p95": 1.5452077966608107,
-      "area_variation": 0.2804829230442593,
-      "hausdorff": 0.0006112287346383074,
-      "mean_distance": 0.00013296635253917102,
-      "budget_error": 0.09
+      "alignment": 0.6395299088875713,
+      "angle_deviation_mean": 0.9150093886746795,
+      "angle_deviation_p95": 1.3974910765180937,
+      "aspect_mean": 1.3211868322610578,
+      "aspect_p95": 1.5054429190623464,
+      "area_variation": 0.29821101916166115,
+      "hausdorff": 0.0006020581108656848,
+      "mean_distance": 0.00011956155542525978,
+      "budget_error": 0.003
      }
     }
    ],
@@ -8278,13 +8278,13 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 3.439,
+     "seconds": 3.798,
      "failure": null,
      "metrics": {
       "valid": true,
-      "vertices": 7280,
-      "faces": 7280,
-      "quads": 7280,
+      "vertices": 8024,
+      "faces": 8024,
+      "quads": 8024,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 0,
@@ -8297,15 +8297,15 @@
       "topological_minimum": 0,
       "irregular_excess": 0,
       "base_complex_patches": 1,
-      "alignment": 0.6066269989750831,
-      "angle_deviation_mean": 0.9053216046431468,
-      "angle_deviation_p95": 1.4424163761983237,
-      "aspect_mean": 1.3401655609642675,
-      "aspect_p95": 1.5452077966608107,
-      "area_variation": 0.2804829230442593,
-      "hausdorff": 0.0006112287346383074,
-      "mean_distance": 0.00013296635253917102,
-      "budget_error": 0.09
+      "alignment": 0.6394260418872768,
+      "angle_deviation_mean": 0.9147865425544981,
+      "angle_deviation_p95": 1.3980072681953004,
+      "aspect_mean": 1.319067797245139,
+      "aspect_p95": 1.5030582852678651,
+      "area_variation": 0.29974307859476335,
+      "hausdorff": 0.0006022480939097022,
+      "mean_distance": 0.00011955103433487443,
+      "budget_error": 0.003
      }
     }
    ]
@@ -8314,7 +8314,7 @@
    "quad-layout": [
     {
      "seed": 1,
-     "seconds": 3.649,
+     "seconds": 3.469,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -8333,14 +8333,14 @@
       "topological_minimum": 8,
       "irregular_excess": 4,
       "base_complex_patches": 14,
-      "alignment": 0.6089243318951044,
-      "angle_deviation_mean": 0.002641892794302789,
-      "angle_deviation_p95": 0.008500592958114339,
-      "aspect_mean": 1.0000855936850623,
-      "aspect_p95": 1.000235898537932,
-      "area_variation": 7.298245131652408e-05,
-      "hausdorff": 7.415928770090618e-17,
-      "mean_distance": 1.2464480491947366e-18,
+      "alignment": 0.6089243371931774,
+      "angle_deviation_mean": 0.0026418971116968348,
+      "angle_deviation_p95": 0.008500593097650722,
+      "aspect_mean": 1.0000855937288222,
+      "aspect_p95": 1.0002358988394744,
+      "area_variation": 7.298244209684978e-05,
+      "hausdorff": 7.629277997537062e-17,
+      "mean_distance": 1.2369469083956994e-18,
       "budget_error": 0.008
      }
     }
@@ -8348,7 +8348,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 3.163,
+     "seconds": 3.554,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -8367,14 +8367,14 @@
       "topological_minimum": 8,
       "irregular_excess": 4,
       "base_complex_patches": 14,
-      "alignment": 0.9199265077501139,
-      "angle_deviation_mean": 0.49232914007760514,
-      "angle_deviation_p95": 1.4838558901534782,
-      "aspect_mean": 1.078220412625437,
-      "aspect_p95": 1.2448190373211165,
-      "area_variation": 0.0964324137817759,
-      "hausdorff": 7.402390277506137e-17,
-      "mean_distance": 1.1487109718370944e-18,
+      "alignment": 0.9199265093061403,
+      "angle_deviation_mean": 0.49232914045590487,
+      "angle_deviation_p95": 1.4838559137484708,
+      "aspect_mean": 1.078220412624522,
+      "aspect_p95": 1.2448190373217372,
+      "area_variation": 0.09643241379018903,
+      "hausdorff": 7.405099956180568e-17,
+      "mean_distance": 1.1045699079070597e-18,
       "budget_error": 0.008
      }
     }
@@ -8648,7 +8648,7 @@
    "quad-layout": [
     {
      "seed": 1,
-     "seconds": 4.737,
+     "seconds": 4.052,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -8666,15 +8666,15 @@
       "irregular_vertices": 8,
       "topological_minimum": 8,
       "irregular_excess": 0,
-      "base_complex_patches": 1478,
-      "alignment": 1.338111542938856,
-      "angle_deviation_mean": 2.2775961129604747,
-      "angle_deviation_p95": 10.134395337384177,
-      "aspect_mean": 1.2891949526683617,
-      "aspect_p95": 1.4023730106190224,
-      "area_variation": 0.29668548549400076,
-      "hausdorff": 0.000522490987978451,
-      "mean_distance": 5.5424641873057286e-05,
+      "base_complex_patches": 182,
+      "alignment": 1.3829192132414314,
+      "angle_deviation_mean": 2.4057869868334913,
+      "angle_deviation_p95": 10.189833555314252,
+      "aspect_mean": 1.2884186010897132,
+      "aspect_p95": 1.4128536809988825,
+      "area_variation": 0.29646747206714413,
+      "hausdorff": 0.0005472729184427012,
+      "mean_distance": 5.471848691367957e-05,
       "budget_error": 0.00075
      }
     }
@@ -8682,7 +8682,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 6.012,
+     "seconds": 4.063,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -8701,14 +8701,14 @@
       "topological_minimum": 8,
       "irregular_excess": 0,
       "base_complex_patches": 1399,
-      "alignment": 1.2814304654202329,
-      "angle_deviation_mean": 2.2558432567776037,
-      "angle_deviation_p95": 10.185337054601789,
-      "aspect_mean": 1.40004029057201,
-      "aspect_p95": 1.6749354115509796,
-      "area_variation": 0.20859349426550997,
-      "hausdorff": 0.000559145123587539,
-      "mean_distance": 5.908579151583757e-05,
+      "alignment": 1.2814648352777203,
+      "angle_deviation_mean": 2.258198077862709,
+      "angle_deviation_p95": 10.241732566004103,
+      "aspect_mean": 1.399881862802518,
+      "aspect_p95": 1.6732736976191132,
+      "area_variation": 0.20797908123217734,
+      "hausdorff": 0.0005588154224263332,
+      "mean_distance": 6.14241404354318e-05,
       "budget_error": 0.012625
      }
     }
@@ -9340,7 +9340,7 @@
    "quad-layout": [
     {
      "seed": 1,
-     "seconds": 11.119,
+     "seconds": 9.574,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -9374,7 +9374,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 11.963,
+     "seconds": 9.148,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -9473,46 +9473,150 @@
      }
     }
    ]
+  },
+  "mahaveer": {
+   "quad-layout": [
+    {
+     "seed": 1,
+     "seconds": 15.938,
+     "failure": null,
+     "metrics": {
+      "valid": false,
+      "vertices": 8274,
+      "faces": 7854,
+      "quads": 7845,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 615,
+      "source_boundary_edges": 2130,
+      "inverted_faces": 3,
+      "degenerate_faces": 5,
+      "components": 157,
+      "source_components": 164,
+      "irregular_vertices": 552,
+      "topological_minimum": null,
+      "irregular_excess": null,
+      "base_complex_patches": null,
+      "alignment": 11.802030143646135,
+      "angle_deviation_mean": 13.354340902224983,
+      "angle_deviation_p95": 61.70101489619415,
+      "aspect_mean": 35.141172872481555,
+      "aspect_p95": 7.091494661764374,
+      "area_variation": 0.743770805078306,
+      "hausdorff": 0.015726900043289374,
+      "mean_distance": 0.001283914854879156,
+      "budget_error": 0.01825
+     }
+    }
+   ],
+   "quad-layout-adaptive": [
+    {
+     "seed": 1,
+     "seconds": 14.727,
+     "failure": null,
+     "metrics": {
+      "valid": false,
+      "vertices": 8277,
+      "faces": 7854,
+      "quads": 7845,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 621,
+      "source_boundary_edges": 2130,
+      "inverted_faces": 2,
+      "degenerate_faces": 7,
+      "components": 157,
+      "source_components": 164,
+      "irregular_vertices": 560,
+      "topological_minimum": null,
+      "irregular_excess": null,
+      "base_complex_patches": null,
+      "alignment": 11.582165563501194,
+      "angle_deviation_mean": 13.592253706550668,
+      "angle_deviation_p95": 62.11675338458713,
+      "aspect_mean": 31.911822015804123,
+      "aspect_p95": 7.019279585842921,
+      "area_variation": 0.7752896770021472,
+      "hausdorff": 0.015726900043289374,
+      "mean_distance": 0.0012761560965871372,
+      "budget_error": 0.01825
+     }
+    }
+   ]
+  },
+  "marine": {
+   "quad-layout": [
+    {
+     "seed": 1,
+     "seconds": 40.395,
+     "failure": null,
+     "metrics": {
+      "valid": false,
+      "vertices": 10544,
+      "faces": 8972,
+      "quads": 8910,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 286,
+      "source_boundary_edges": 3026,
+      "inverted_faces": 14,
+      "degenerate_faces": 1,
+      "components": 767,
+      "source_components": 820,
+      "irregular_vertices": 5777,
+      "topological_minimum": null,
+      "irregular_excess": null,
+      "base_complex_patches": null,
+      "alignment": 12.645637031226267,
+      "angle_deviation_mean": 22.00388972958131,
+      "angle_deviation_p95": 70.79572789388403,
+      "aspect_mean": 5.984762259755506,
+      "aspect_p95": 12.07043179103336,
+      "area_variation": 1.197578248667401,
+      "hausdorff": 0.0035283743329420645,
+      "mean_distance": 0.00035183479899848454,
+      "budget_error": 0.1215
+     }
+    }
+   ],
+   "quad-layout-adaptive": [
+    {
+     "seed": 1,
+     "seconds": 35.287,
+     "failure": null,
+     "metrics": {
+      "valid": false,
+      "vertices": 10636,
+      "faces": 9059,
+      "quads": 8995,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 296,
+      "source_boundary_edges": 3026,
+      "inverted_faces": 13,
+      "degenerate_faces": 2,
+      "components": 767,
+      "source_components": 820,
+      "irregular_vertices": 5768,
+      "topological_minimum": null,
+      "irregular_excess": null,
+      "base_complex_patches": null,
+      "alignment": 12.556106811801188,
+      "angle_deviation_mean": 21.964577156770922,
+      "angle_deviation_p95": 70.93460258673497,
+      "aspect_mean": 5.989098457280096,
+      "aspect_p95": 11.777981427365239,
+      "area_variation": 1.207425224137269,
+      "hausdorff": 0.0035283743329420645,
+      "mean_distance": 0.00035453038473300325,
+      "budget_error": 0.132375
+     }
+    }
+   ]
   }
  },
  "summary": {
   "ogre": {
-   "instant-meshes": {
-    "runs": 5,
-    "produced": 5,
-    "valid": 0,
-    "failures": [],
-    "irregular_vertices": 455,
-    "irregular_excess": 429,
-    "base_complex_patches": 7656,
-    "alignment": 17.723640151999064,
-    "angle_deviation_mean": 6.18341233408987,
-    "angle_deviation_p95": 20.838492190393467,
-    "aspect_mean": 1.224610271489341,
-    "area_variation": 0.19557099952328189,
-    "hausdorff": 0.03074082157434454,
-    "mean_distance": 0.0006008725179620303,
-    "budget_error": 0.0205,
-    "seconds": 2.812
-   },
-   "integer-grid": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 0,
-    "failures": [],
-    "irregular_vertices": 169,
-    "irregular_excess": null,
-    "base_complex_patches": null,
-    "alignment": 11.516125034811827,
-    "angle_deviation_mean": 8.653094548288099,
-    "angle_deviation_p95": 23.633522502341236,
-    "aspect_mean": 1.3987619306818115,
-    "area_variation": 0.3024894532420965,
-    "hausdorff": 0.022534384511499774,
-    "mean_distance": 0.0005351089045820186,
-    "budget_error": 0.120625,
-    "seconds": 34.145
-   },
    "quad-layout": {
     "runs": 1,
     "produced": 1,
@@ -9529,7 +9633,7 @@
     "hausdorff": 0.012967360199629583,
     "mean_distance": 0.00043330677587796604,
     "budget_error": 0.00375,
-    "seconds": 8.719
+    "seconds": 9.261
    },
    "quad-layout-adaptive": {
     "runs": 1,
@@ -9547,82 +9651,10 @@
     "hausdorff": 0.007855336368931506,
     "mean_distance": 0.00039842118990396266,
     "budget_error": 0.00675,
-    "seconds": 10.521
-   },
-   "quadremesher": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 338,
-    "irregular_excess": 330,
-    "base_complex_patches": 9903,
-    "alignment": 8.504577217716985,
-    "angle_deviation_mean": 7.9507840262270575,
-    "angle_deviation_p95": 22.54677467524769,
-    "aspect_mean": 2.0251644932212605,
-    "area_variation": 0.64277075207469,
-    "hausdorff": 0.005232044263594289,
-    "mean_distance": 0.00034623967655915915,
-    "budget_error": 0.589625,
-    "seconds": 23.499
-   },
-   "quadremesher-uniform": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 0,
-    "failures": [],
-    "irregular_vertices": 322,
-    "irregular_excess": null,
-    "base_complex_patches": null,
-    "alignment": 9.787039980466497,
-    "angle_deviation_mean": 8.385485455281268,
-    "angle_deviation_p95": 22.691870669215035,
-    "aspect_mean": 1.48218997724847,
-    "area_variation": 0.36393286798455016,
-    "hausdorff": 0.02557199650728604,
-    "mean_distance": 0.0005478004283396108,
-    "budget_error": 0.154875,
-    "seconds": 24.031
+    "seconds": 11.414
    }
   },
   "blob": {
-   "instant-meshes": {
-    "runs": 5,
-    "produced": 5,
-    "valid": 5,
-    "failures": [],
-    "irregular_vertices": 277,
-    "irregular_excess": 269,
-    "base_complex_patches": 8164,
-    "alignment": 15.048787733486392,
-    "angle_deviation_mean": 4.8506193978430785,
-    "angle_deviation_p95": 15.767235101333767,
-    "aspect_mean": 1.141843116816886,
-    "area_variation": 0.1532823032825195,
-    "hausdorff": 0.004967794885131641,
-    "mean_distance": 0.0001777854954497417,
-    "budget_error": 0.0205,
-    "seconds": 1.583
-   },
-   "integer-grid": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 24,
-    "irregular_excess": 16,
-    "base_complex_patches": 5660,
-    "alignment": 5.879045772855454,
-    "angle_deviation_mean": 7.412099659204755,
-    "angle_deviation_p95": 19.757757836856356,
-    "aspect_mean": 1.3166066554381048,
-    "area_variation": 0.31763884589894525,
-    "hausdorff": 0.0030474695702585454,
-    "mean_distance": 0.00020437510053505795,
-    "budget_error": 0.1095,
-    "seconds": 13.048
-   },
    "quad-layout": {
     "runs": 1,
     "produced": 1,
@@ -9639,7 +9671,7 @@
     "hausdorff": 0.0024922176658266665,
     "mean_distance": 0.0001765918770176223,
     "budget_error": 0.0085,
-    "seconds": 4.669
+    "seconds": 4.727
    },
    "quad-layout-adaptive": {
     "runs": 1,
@@ -9657,82 +9689,10 @@
     "hausdorff": 0.0022069952383228647,
     "mean_distance": 0.0001743781343392711,
     "budget_error": 0.002625,
-    "seconds": 4.367
-   },
-   "quadremesher": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 24,
-    "irregular_excess": 16,
-    "base_complex_patches": 4563,
-    "alignment": 4.0789580277530515,
-    "angle_deviation_mean": 5.52196232847339,
-    "angle_deviation_p95": 14.942258416934934,
-    "aspect_mean": 1.4143885657707713,
-    "area_variation": 0.3946980162476435,
-    "hausdorff": 0.0030027092986091943,
-    "mean_distance": 0.0001852715480188485,
-    "budget_error": 0.011125,
-    "seconds": 12.365
-   },
-   "quadremesher-uniform": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 24,
-    "irregular_excess": 16,
-    "base_complex_patches": 2919,
-    "alignment": 4.445707586302923,
-    "angle_deviation_mean": 5.545735301725526,
-    "angle_deviation_p95": 14.713631615124186,
-    "aspect_mean": 1.3229220355312583,
-    "area_variation": 0.33134695289759325,
-    "hausdorff": 0.003661648710485738,
-    "mean_distance": 0.00021613876109047205,
-    "budget_error": 0.120625,
-    "seconds": 12.608
+    "seconds": 4.86
    }
   },
   "rock": {
-   "instant-meshes": {
-    "runs": 5,
-    "produced": 5,
-    "valid": 5,
-    "failures": [],
-    "irregular_vertices": 162,
-    "irregular_excess": 154,
-    "base_complex_patches": 7792,
-    "alignment": 22.820591037482256,
-    "angle_deviation_mean": 4.13163703950864,
-    "angle_deviation_p95": 12.426674702030994,
-    "aspect_mean": 1.1148390335200664,
-    "area_variation": 0.12820135338138702,
-    "hausdorff": 0.0032247469719935656,
-    "mean_distance": 0.0004333663128399582,
-    "budget_error": 0.026,
-    "seconds": 1.071
-   },
-   "integer-grid": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 114,
-    "irregular_excess": 106,
-    "base_complex_patches": 7393,
-    "alignment": 16.053895539141696,
-    "angle_deviation_mean": 9.272121689477764,
-    "angle_deviation_p95": 22.20555610870771,
-    "aspect_mean": 1.2458714277032255,
-    "area_variation": 0.2032866685932701,
-    "hausdorff": 0.003880594385296564,
-    "mean_distance": 0.0004532539115998782,
-    "budget_error": 0.075875,
-    "seconds": 38.833
-   },
    "quad-layout": {
     "runs": 1,
     "produced": 1,
@@ -9749,7 +9709,7 @@
     "hausdorff": 0.0031199388765739584,
     "mean_distance": 0.0004255217730490816,
     "budget_error": 0.007125,
-    "seconds": 4.587
+    "seconds": 4.919
    },
    "quad-layout-adaptive": {
     "runs": 1,
@@ -9767,82 +9727,10 @@
     "hausdorff": 0.003006316311724094,
     "mean_distance": 0.00041622327387788447,
     "budget_error": 0.000875,
-    "seconds": 4.568
-   },
-   "quadremesher": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 68,
-    "irregular_excess": 60,
-    "base_complex_patches": 7071,
-    "alignment": 17.283219901502488,
-    "angle_deviation_mean": 9.799660686874264,
-    "angle_deviation_p95": 23.731532116666074,
-    "aspect_mean": 1.3495138552911816,
-    "area_variation": 0.28672973926749895,
-    "hausdorff": 0.004182357843034038,
-    "mean_distance": 0.0005150335984160237,
-    "budget_error": 0.116125,
-    "seconds": 18.306
-   },
-   "quadremesher-uniform": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 68,
-    "irregular_excess": 60,
-    "base_complex_patches": 6767,
-    "alignment": 17.32483664674219,
-    "angle_deviation_mean": 9.885753524479123,
-    "angle_deviation_p95": 23.66682526494013,
-    "aspect_mean": 1.3404505501702757,
-    "area_variation": 0.2807006863569209,
-    "hausdorff": 0.004359668943544984,
-    "mean_distance": 0.0005301430499451992,
-    "budget_error": 0.154125,
-    "seconds": 18.002
+    "seconds": 5.822
    }
   },
   "creature": {
-   "instant-meshes": {
-    "runs": 5,
-    "produced": 5,
-    "valid": 5,
-    "failures": [],
-    "irregular_vertices": 214,
-    "irregular_excess": 206,
-    "base_complex_patches": 7510,
-    "alignment": 11.814986746633233,
-    "angle_deviation_mean": 3.9133673817783636,
-    "angle_deviation_p95": 12.204221041960679,
-    "aspect_mean": 1.115516019117082,
-    "area_variation": 0.1265170244887044,
-    "hausdorff": 0.001704765260348081,
-    "mean_distance": 0.00010602061947553127,
-    "budget_error": 0.02925,
-    "seconds": 0.817
-   },
-   "integer-grid": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 0,
-    "failures": [],
-    "irregular_vertices": 40,
-    "irregular_excess": null,
-    "base_complex_patches": 2490,
-    "alignment": 6.400642896824124,
-    "angle_deviation_mean": 8.742717669845138,
-    "angle_deviation_p95": 25.47679851826618,
-    "aspect_mean": 1.3509556073316895,
-    "area_variation": 0.3343588672645927,
-    "hausdorff": 0.002346361471206108,
-    "mean_distance": 0.00014314254655001802,
-    "budget_error": 0.13475,
-    "seconds": 24.726
-   },
    "quad-layout": {
     "runs": 1,
     "produced": 1,
@@ -9859,7 +9747,7 @@
     "hausdorff": 0.001483266792430651,
     "mean_distance": 0.00012406857017268282,
     "budget_error": 0.0145,
-    "seconds": 9.723
+    "seconds": 10.6
    },
    "quad-layout-adaptive": {
     "runs": 1,
@@ -9877,82 +9765,10 @@
     "hausdorff": 0.001539690396839758,
     "mean_distance": 0.00011759819769105056,
     "budget_error": 0.021875,
-    "seconds": 11.171
-   },
-   "quadremesher": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 40,
-    "irregular_excess": 32,
-    "base_complex_patches": 3236,
-    "alignment": 6.6376129745486026,
-    "angle_deviation_mean": 6.125449802962954,
-    "angle_deviation_p95": 17.402766011523383,
-    "aspect_mean": 1.2769732094725637,
-    "area_variation": 0.2768323906903238,
-    "hausdorff": 0.0012428625218076118,
-    "mean_distance": 0.0001438034555588287,
-    "budget_error": 0.10175,
-    "seconds": 12.493
-   },
-   "quadremesher-uniform": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 40,
-    "irregular_excess": 32,
-    "base_complex_patches": 3467,
-    "alignment": 6.664504555562274,
-    "angle_deviation_mean": 6.155090597961482,
-    "angle_deviation_p95": 17.67056404587018,
-    "aspect_mean": 1.2782610408967978,
-    "area_variation": 0.2752335000514399,
-    "hausdorff": 0.0013363688187452067,
-    "mean_distance": 0.000145112624620826,
-    "budget_error": 0.099125,
-    "seconds": 8.519
+    "seconds": 13.09
    }
   },
   "cage": {
-   "instant-meshes": {
-    "runs": 5,
-    "produced": 5,
-    "valid": 5,
-    "failures": [],
-    "irregular_vertices": 250,
-    "irregular_excess": 218,
-    "base_complex_patches": 7125,
-    "alignment": 8.800380903926165,
-    "angle_deviation_mean": 4.401406768597744,
-    "angle_deviation_p95": 14.229873511222848,
-    "aspect_mean": 1.143895498419958,
-    "area_variation": 0.13804141993139996,
-    "hausdorff": 0.009874861850712536,
-    "mean_distance": 0.0003437513361685695,
-    "budget_error": 0.00625,
-    "seconds": 0.508
-   },
-   "integer-grid": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 40,
-    "irregular_excess": 8,
-    "base_complex_patches": 766,
-    "alignment": 2.6917750901576962,
-    "angle_deviation_mean": 3.5641501548263803,
-    "angle_deviation_p95": 10.68303351444034,
-    "aspect_mean": 1.2020816668622776,
-    "area_variation": 0.18919918368488176,
-    "hausdorff": 0.006719764856568117,
-    "mean_distance": 0.0003487200348023095,
-    "budget_error": 0.029375,
-    "seconds": 25.826
-   },
    "quad-layout": {
     "runs": 1,
     "produced": 1,
@@ -9969,7 +9785,7 @@
     "hausdorff": 0.004649150465671901,
     "mean_distance": 0.00029095547735821217,
     "budget_error": 0.014,
-    "seconds": 3.768
+    "seconds": 5.441
    },
    "quad-layout-adaptive": {
     "runs": 1,
@@ -9987,82 +9803,10 @@
     "hausdorff": 0.0037458878599226234,
     "mean_distance": 0.00025255173008632473,
     "budget_error": 0.004375,
-    "seconds": 4.23
-   },
-   "quadremesher": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 62,
-    "irregular_excess": 30,
-    "base_complex_patches": 3227,
-    "alignment": 2.0550985458451025,
-    "angle_deviation_mean": 3.2222615383174245,
-    "angle_deviation_p95": 9.037418314794536,
-    "aspect_mean": 1.6930468228413922,
-    "area_variation": 0.33768601130037074,
-    "hausdorff": 0.004527661527238082,
-    "mean_distance": 0.0004513147944909229,
-    "budget_error": 0.376125,
-    "seconds": 5.756
-   },
-   "quadremesher-uniform": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 64,
-    "irregular_excess": 32,
-    "base_complex_patches": 1954,
-    "alignment": 2.285639933758253,
-    "angle_deviation_mean": 3.484386840320696,
-    "angle_deviation_p95": 10.219265434682768,
-    "aspect_mean": 1.2894780979467573,
-    "area_variation": 0.22852300657245542,
-    "hausdorff": 0.005927123528118871,
-    "mean_distance": 0.0006136815206406861,
-    "budget_error": 0.06125,
-    "seconds": 4.923
+    "seconds": 5.336
    }
   },
   "suzanne": {
-   "instant-meshes": {
-    "runs": 5,
-    "produced": 5,
-    "valid": 5,
-    "failures": [],
-    "irregular_vertices": 346,
-    "irregular_excess": null,
-    "base_complex_patches": 7878,
-    "alignment": 16.640295268865266,
-    "angle_deviation_mean": 5.1743779714068445,
-    "angle_deviation_p95": 17.78484185647801,
-    "aspect_mean": 1.1688500520275198,
-    "area_variation": 0.16425429129304858,
-    "hausdorff": 0.005941506461943288,
-    "mean_distance": 0.00028566140144908425,
-    "budget_error": 0.01225,
-    "seconds": 0.525
-   },
-   "integer-grid": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 67,
-    "irregular_excess": null,
-    "base_complex_patches": 4267,
-    "alignment": 9.918630742364511,
-    "angle_deviation_mean": 7.607781312822647,
-    "angle_deviation_p95": 21.30197385264836,
-    "aspect_mean": 1.224510788971347,
-    "area_variation": 0.2186029087718241,
-    "hausdorff": 0.005708341967777908,
-    "mean_distance": 0.00032786049970194385,
-    "budget_error": 0.078,
-    "seconds": 78.257
-   },
    "quad-layout": {
     "runs": 1,
     "produced": 1,
@@ -10070,109 +9814,37 @@
     "failures": [],
     "irregular_vertices": 64,
     "irregular_excess": null,
-    "base_complex_patches": 3264,
-    "alignment": 9.959419920261928,
-    "angle_deviation_mean": 5.343604078477203,
-    "angle_deviation_p95": 15.155244816700815,
-    "aspect_mean": 1.196618573129324,
-    "area_variation": 0.26236934618556657,
-    "hausdorff": 0.005820770913040125,
-    "mean_distance": 0.0002805515169445847,
-    "budget_error": 0.0175,
-    "seconds": 4.896
+    "base_complex_patches": 3543,
+    "alignment": 9.963820675768003,
+    "angle_deviation_mean": 5.437090820084741,
+    "angle_deviation_p95": 15.150806722207989,
+    "aspect_mean": 1.2100963898667902,
+    "area_variation": 0.24956914000336675,
+    "hausdorff": 0.004989465154964721,
+    "mean_distance": 0.0002730346786098053,
+    "budget_error": 0.005,
+    "seconds": 4.549
    },
    "quad-layout-adaptive": {
     "runs": 1,
     "produced": 1,
     "valid": 1,
     "failures": [],
-    "irregular_vertices": 78,
+    "irregular_vertices": 76,
     "irregular_excess": null,
-    "base_complex_patches": 4489,
-    "alignment": 9.986283430327775,
-    "angle_deviation_mean": 5.941104042789501,
-    "angle_deviation_p95": 15.350468147108444,
-    "aspect_mean": 1.230547900095824,
-    "area_variation": 0.3829675396405636,
-    "hausdorff": 0.004226007514975244,
-    "mean_distance": 0.00023087469974724122,
-    "budget_error": 0.01275,
-    "seconds": 6.398
-   },
-   "quadremesher": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 78,
-    "irregular_excess": null,
-    "base_complex_patches": 4088,
-    "alignment": 8.5750051951113,
-    "angle_deviation_mean": 7.036055190295721,
-    "angle_deviation_p95": 18.570784974530596,
-    "aspect_mean": 1.470311306331972,
-    "area_variation": 0.36576045482722214,
-    "hausdorff": 0.003572596500773679,
-    "mean_distance": 0.0003218793697209476,
-    "budget_error": 0.15575,
-    "seconds": 7.677
-   },
-   "quadremesher-uniform": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 72,
-    "irregular_excess": null,
-    "base_complex_patches": 3340,
-    "alignment": 9.855530768988952,
-    "angle_deviation_mean": 6.9129050471766575,
-    "angle_deviation_p95": 19.32686052881064,
-    "aspect_mean": 1.2460550144322866,
-    "area_variation": 0.24784335438063282,
-    "hausdorff": 0.004988217365912966,
-    "mean_distance": 0.0004222067544269001,
-    "budget_error": 0.085375,
-    "seconds": 4.939
+    "base_complex_patches": 5461,
+    "alignment": 9.870890856504298,
+    "angle_deviation_mean": 5.935139840307469,
+    "angle_deviation_p95": 15.308962339395308,
+    "aspect_mean": 1.2323930198356734,
+    "area_variation": 0.38199112413569475,
+    "hausdorff": 0.004409675000460864,
+    "mean_distance": 0.0002247474510470022,
+    "budget_error": 0.016625,
+    "seconds": 9.516
    }
   },
   "spot": {
-   "instant-meshes": {
-    "runs": 5,
-    "produced": 5,
-    "valid": 5,
-    "failures": [],
-    "irregular_vertices": 286,
-    "irregular_excess": 278,
-    "base_complex_patches": 7942,
-    "alignment": 16.864451866294488,
-    "angle_deviation_mean": 4.470849175557553,
-    "angle_deviation_p95": 14.927915423228228,
-    "aspect_mean": 1.1355190889464677,
-    "area_variation": 0.1443711074248058,
-    "hausdorff": 0.007098064384254409,
-    "mean_distance": 0.00017241616079858308,
-    "budget_error": 0.01225,
-    "seconds": 1.125
-   },
-   "integer-grid": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 80,
-    "irregular_excess": 72,
-    "base_complex_patches": 3692,
-    "alignment": 8.47865110015782,
-    "angle_deviation_mean": 9.079367977919146,
-    "angle_deviation_p95": 23.366819658563998,
-    "aspect_mean": 1.3479557868335945,
-    "area_variation": 0.29866012003021525,
-    "hausdorff": 0.0036026120564839332,
-    "mean_distance": 0.00018355053462219693,
-    "budget_error": 0.1145,
-    "seconds": 38.484
-   },
    "quad-layout": {
     "runs": 1,
     "produced": 1,
@@ -10189,7 +9861,7 @@
     "hausdorff": 0.0030092522858348194,
     "mean_distance": 0.00016162718166828484,
     "budget_error": 0.004125,
-    "seconds": 9.602
+    "seconds": 10.817
    },
    "quad-layout-adaptive": {
     "runs": 1,
@@ -10207,82 +9879,10 @@
     "hausdorff": 0.0024020052431377565,
     "mean_distance": 0.0001554820843639578,
     "budget_error": 0.011625,
-    "seconds": 12.574
-   },
-   "quadremesher": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 76,
-    "irregular_excess": 68,
-    "base_complex_patches": 4605,
-    "alignment": 7.564262911628812,
-    "angle_deviation_mean": 5.563420797246975,
-    "angle_deviation_p95": 14.900352397750098,
-    "aspect_mean": 1.3418567559070071,
-    "area_variation": 0.3013526569407983,
-    "hausdorff": 0.004733195222710733,
-    "mean_distance": 0.00016851871139979719,
-    "budget_error": 0.004375,
-    "seconds": 17.706
-   },
-   "quadremesher-uniform": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 80,
-    "irregular_excess": 72,
-    "base_complex_patches": 3862,
-    "alignment": 8.42131644874204,
-    "angle_deviation_mean": 6.010939515193779,
-    "angle_deviation_p95": 15.808723862346696,
-    "aspect_mean": 1.289075344206479,
-    "area_variation": 0.25648247468444274,
-    "hausdorff": 0.00587990890244357,
-    "mean_distance": 0.0001874453196124442,
-    "budget_error": 0.09075,
-    "seconds": 17.385
+    "seconds": 11.636
    }
   },
   "bob": {
-   "instant-meshes": {
-    "runs": 5,
-    "produced": 5,
-    "valid": 5,
-    "failures": [],
-    "irregular_vertices": 245,
-    "irregular_excess": 245,
-    "base_complex_patches": 8072,
-    "alignment": 20.14941662905128,
-    "angle_deviation_mean": 4.310076015868343,
-    "angle_deviation_p95": 14.246256475254825,
-    "aspect_mean": 1.1238423053833044,
-    "area_variation": 0.13921207019888107,
-    "hausdorff": 0.002842954157624319,
-    "mean_distance": 0.0001197918434048577,
-    "budget_error": 0.009,
-    "seconds": 0.969
-   },
-   "integer-grid": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 0,
-    "failures": [],
-    "irregular_vertices": 18,
-    "irregular_excess": null,
-    "base_complex_patches": 1541,
-    "alignment": 4.095494962168227,
-    "angle_deviation_mean": 4.938575497881484,
-    "angle_deviation_p95": 16.52802742952659,
-    "aspect_mean": 1.406906198924613,
-    "area_variation": 0.35590404575324636,
-    "hausdorff": 0.003524690055469827,
-    "mean_distance": 0.0001431940962100591,
-    "budget_error": 0.1185,
-    "seconds": 20.35
-   },
    "quad-layout": {
     "runs": 1,
     "produced": 1,
@@ -10299,7 +9899,7 @@
     "hausdorff": 0.0009142115653175471,
     "mean_distance": 0.0001263457045675776,
     "budget_error": 0.004,
-    "seconds": 8.188
+    "seconds": 7.73
    },
    "quad-layout-adaptive": {
     "runs": 1,
@@ -10317,82 +9917,10 @@
     "hausdorff": 0.0012816408046514688,
     "mean_distance": 0.00012595018347422287,
     "budget_error": 0.00175,
-    "seconds": 5.567
-   },
-   "quadremesher": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 34,
-    "irregular_excess": 34,
-    "base_complex_patches": 4859,
-    "alignment": 5.483134620876905,
-    "angle_deviation_mean": 6.426918986049693,
-    "angle_deviation_p95": 18.710705702555728,
-    "aspect_mean": 1.4072827554458796,
-    "area_variation": 0.3692308653134086,
-    "hausdorff": 0.001497430671732921,
-    "mean_distance": 0.00014967014206094102,
-    "budget_error": 0.138,
-    "seconds": 20.375
-   },
-   "quadremesher-uniform": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 30,
-    "irregular_excess": 30,
-    "base_complex_patches": 3789,
-    "alignment": 5.821179481621368,
-    "angle_deviation_mean": 6.856039232331882,
-    "angle_deviation_p95": 21.477266015514033,
-    "aspect_mean": 1.4066518155798815,
-    "area_variation": 0.3734576220205517,
-    "hausdorff": 0.0012983522390042725,
-    "mean_distance": 0.00015328300597799193,
-    "budget_error": 0.146,
-    "seconds": 16.979
+    "seconds": 6.222
    }
   },
   "blub": {
-   "instant-meshes": {
-    "runs": 5,
-    "produced": 5,
-    "valid": 5,
-    "failures": [],
-    "irregular_vertices": 280,
-    "irregular_excess": 272,
-    "base_complex_patches": 7910,
-    "alignment": 14.612926856458706,
-    "angle_deviation_mean": 4.496388758917089,
-    "angle_deviation_p95": 15.338537876206388,
-    "aspect_mean": 1.1389464592252063,
-    "area_variation": 0.1435370930347777,
-    "hausdorff": 0.00599080547913105,
-    "mean_distance": 0.0001324917906645807,
-    "budget_error": 0.0125,
-    "seconds": 1.371
-   },
-   "integer-grid": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 48,
-    "irregular_excess": 40,
-    "base_complex_patches": 2997,
-    "alignment": 7.27011975723187,
-    "angle_deviation_mean": 8.895901218631556,
-    "angle_deviation_p95": 24.3068238031275,
-    "aspect_mean": 1.3333803794093744,
-    "area_variation": 0.26847785069864616,
-    "hausdorff": 0.005596306054519031,
-    "mean_distance": 0.00015570357155974342,
-    "budget_error": 0.117875,
-    "seconds": 16.958
-   },
    "quad-layout": {
     "runs": 1,
     "produced": 1,
@@ -10409,7 +9937,7 @@
     "hausdorff": 0.004700760224729087,
     "mean_distance": 0.00013415831439292437,
     "budget_error": 0.00125,
-    "seconds": 6.579
+    "seconds": 6.418
    },
    "quad-layout-adaptive": {
     "runs": 1,
@@ -10427,82 +9955,10 @@
     "hausdorff": 0.0032779317280510452,
     "mean_distance": 0.00011557158420378609,
     "budget_error": 0.00575,
-    "seconds": 6.483
-   },
-   "quadremesher": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 51,
-    "irregular_excess": 43,
-    "base_complex_patches": 6215,
-    "alignment": 6.322552005080795,
-    "angle_deviation_mean": 6.443781833097598,
-    "angle_deviation_p95": 16.31241135895931,
-    "aspect_mean": 1.59466684527029,
-    "area_variation": 0.36479585892990113,
-    "hausdorff": 0.004293082249671008,
-    "mean_distance": 0.00012827843442470338,
-    "budget_error": 0.064125,
-    "seconds": 15.557
-   },
-   "quadremesher-uniform": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 48,
-    "irregular_excess": 40,
-    "base_complex_patches": 4909,
-    "alignment": 7.75377139921545,
-    "angle_deviation_mean": 7.526201438518432,
-    "angle_deviation_p95": 19.461830443154923,
-    "aspect_mean": 1.3505808470622915,
-    "area_variation": 0.27041391896909756,
-    "hausdorff": 0.008042135350246627,
-    "mean_distance": 0.00017613541227047685,
-    "budget_error": 0.132125,
-    "seconds": 13.358
+    "seconds": 6.762
    }
   },
   "pig": {
-   "instant-meshes": {
-    "runs": 5,
-    "produced": 5,
-    "valid": 4,
-    "failures": [],
-    "irregular_vertices": 370,
-    "irregular_excess": 362.5,
-    "base_complex_patches": 7826,
-    "alignment": 14.89982971835677,
-    "angle_deviation_mean": 5.038895656699057,
-    "angle_deviation_p95": 17.35410606054876,
-    "aspect_mean": 1.1608585988240097,
-    "area_variation": 0.16135539616715286,
-    "hausdorff": 0.021494429766662944,
-    "mean_distance": 0.0002377375502309683,
-    "budget_error": 0.0145,
-    "seconds": 1.171
-   },
-   "integer-grid": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 0,
-    "failures": [],
-    "irregular_vertices": 81,
-    "irregular_excess": null,
-    "base_complex_patches": 4511,
-    "alignment": 9.138039169999576,
-    "angle_deviation_mean": 8.761279146790285,
-    "angle_deviation_p95": 24.69036086189557,
-    "aspect_mean": 1.3564496657317817,
-    "area_variation": 0.31191885852304024,
-    "hausdorff": 0.00870621424553827,
-    "mean_distance": 0.00025775629409847397,
-    "budget_error": 0.101375,
-    "seconds": 35.748
-   },
    "quad-layout": {
     "runs": 1,
     "produced": 1,
@@ -10519,7 +9975,7 @@
     "hausdorff": 0.008296221928752592,
     "mean_distance": 0.0002235882129276014,
     "budget_error": 0.011625,
-    "seconds": 9.438
+    "seconds": 10.842
    },
    "quad-layout-adaptive": {
     "runs": 1,
@@ -10537,82 +9993,10 @@
     "hausdorff": 0.007018130327249834,
     "mean_distance": 0.00020934006674591047,
     "budget_error": 0.01775,
-    "seconds": 11.051
-   },
-   "quadremesher": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 0,
-    "failures": [],
-    "irregular_vertices": 101,
-    "irregular_excess": null,
-    "base_complex_patches": null,
-    "alignment": 7.391411304824251,
-    "angle_deviation_mean": 6.399152607055213,
-    "angle_deviation_p95": 18.753594297575418,
-    "aspect_mean": 1.5460079809760918,
-    "area_variation": 0.4622998583848428,
-    "hausdorff": 0.009111298255473918,
-    "mean_distance": 0.0002224168667515682,
-    "budget_error": 0.228,
-    "seconds": 16.839
-   },
-   "quadremesher-uniform": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 98,
-    "irregular_excess": 90,
-    "base_complex_patches": 4284,
-    "alignment": 8.840973886189206,
-    "angle_deviation_mean": 6.590848488219215,
-    "angle_deviation_p95": 19.796296161001507,
-    "aspect_mean": 1.3293080068997354,
-    "area_variation": 0.25990183433384056,
-    "hausdorff": 0.009710407151624509,
-    "mean_distance": 0.0003010428972729625,
-    "budget_error": 0.11625,
-    "seconds": 16.134
+    "seconds": 9.871
    }
   },
   "jerry": {
-   "instant-meshes": {
-    "runs": 5,
-    "produced": 5,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 490,
-    "irregular_excess": null,
-    "base_complex_patches": 7797,
-    "alignment": 18.648041364972503,
-    "angle_deviation_mean": 6.62622155470175,
-    "angle_deviation_p95": 23.27465562032006,
-    "aspect_mean": 1.2411422031212622,
-    "area_variation": 0.20993023771287023,
-    "hausdorff": 0.02967372230798319,
-    "mean_distance": 0.0006289627263863807,
-    "budget_error": 0.008375,
-    "seconds": 0.669
-   },
-   "integer-grid": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 0,
-    "failures": [],
-    "irregular_vertices": 170,
-    "irregular_excess": null,
-    "base_complex_patches": null,
-    "alignment": 13.296289481662422,
-    "angle_deviation_mean": 8.689665987252596,
-    "angle_deviation_p95": 23.171936171714094,
-    "aspect_mean": 1.2905999673672925,
-    "area_variation": 0.26123625284057345,
-    "hausdorff": 0.01897778195931965,
-    "mean_distance": 0.0006008087001357409,
-    "budget_error": 0.0825,
-    "seconds": 46.075
-   },
    "quad-layout": {
     "runs": 1,
     "produced": 1,
@@ -10629,7 +10013,7 @@
     "hausdorff": 0.015026321618718839,
     "mean_distance": 0.00047284461348006047,
     "budget_error": 0.015875,
-    "seconds": 5.343
+    "seconds": 4.924
    },
    "quad-layout-adaptive": {
     "runs": 1,
@@ -10647,192 +10031,48 @@
     "hausdorff": 0.01151244205974315,
     "mean_distance": 0.0003813545625859932,
     "budget_error": 0.010125,
-    "seconds": 6.811
-   },
-   "quadremesher": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 244,
-    "irregular_excess": null,
-    "base_complex_patches": 11709,
-    "alignment": 10.637562640004436,
-    "angle_deviation_mean": 8.15144285155866,
-    "angle_deviation_p95": 22.376334708805132,
-    "aspect_mean": 1.8790905624571055,
-    "area_variation": 0.6511907279196115,
-    "hausdorff": 0.004222015730734395,
-    "mean_distance": 0.00031022105685697227,
-    "budget_error": 0.71425,
-    "seconds": 9.49
-   },
-   "quadremesher-uniform": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 0,
-    "failures": [],
-    "irregular_vertices": 247,
-    "irregular_excess": null,
-    "base_complex_patches": null,
-    "alignment": 12.689148307847915,
-    "angle_deviation_mean": 8.378575951425006,
-    "angle_deviation_p95": 23.18126450160392,
-    "aspect_mean": 1.3802449082757473,
-    "area_variation": 0.2791237485426044,
-    "hausdorff": 0.01030690631827954,
-    "mean_distance": 0.0005980233776782889,
-    "budget_error": 0.131625,
-    "seconds": 8.463
+    "seconds": 5.681
    }
   },
   "rose": {
-   "instant-meshes": {
-    "runs": 5,
-    "produced": 5,
-    "valid": 0,
-    "failures": [],
-    "irregular_vertices": 1126,
-    "irregular_excess": null,
-    "base_complex_patches": 6434.5,
-    "alignment": 18.494284145539684,
-    "angle_deviation_mean": 12.06233616195067,
-    "angle_deviation_p95": 40.68533609547043,
-    "aspect_mean": 1.5945362071092293,
-    "area_variation": 0.3585145781118238,
-    "hausdorff": 0.0722216821286026,
-    "mean_distance": 0.001750431504967884,
-    "budget_error": 0.1335,
-    "seconds": 1.604
-   },
-   "integer-grid": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 0,
-    "failures": [],
-    "irregular_vertices": 557,
-    "irregular_excess": null,
-    "base_complex_patches": null,
-    "alignment": 14.2432546565668,
-    "angle_deviation_mean": 10.21217240065519,
-    "angle_deviation_p95": 29.727914378817438,
-    "aspect_mean": 1.4126210410822848,
-    "area_variation": 0.3309618498748197,
-    "hausdorff": 0.07497888059233522,
-    "mean_distance": 0.0015479022655742565,
-    "budget_error": 0.17925,
-    "seconds": 160.117
-   },
    "quad-layout": {
     "runs": 1,
     "produced": 1,
     "valid": 0,
     "failures": [],
-    "irregular_vertices": 557,
-    "irregular_excess": null,
-    "base_complex_patches": null,
-    "alignment": 14.2432546565668,
-    "angle_deviation_mean": 10.21217240065519,
-    "angle_deviation_p95": 29.727914378817438,
-    "aspect_mean": 1.4126210410822848,
-    "area_variation": 0.3309618498748197,
-    "hausdorff": 0.07497888059233522,
-    "mean_distance": 0.0015479022655742565,
-    "budget_error": 0.17925,
-    "seconds": 152.098
+    "irregular_vertices": 1279,
+    "irregular_excess": 663,
+    "base_complex_patches": 7101,
+    "alignment": 11.982543249901147,
+    "angle_deviation_mean": 10.601787176508486,
+    "angle_deviation_p95": 37.56909242452967,
+    "aspect_mean": 2.3275886558438486,
+    "area_variation": 0.5400728764426602,
+    "hausdorff": 0.015376006506426322,
+    "mean_distance": 0.0007542618813705915,
+    "budget_error": 0.092875,
+    "seconds": 9.824
    },
    "quad-layout-adaptive": {
     "runs": 1,
     "produced": 1,
     "valid": 0,
     "failures": [],
-    "irregular_vertices": 557,
+    "irregular_vertices": 1304,
     "irregular_excess": null,
     "base_complex_patches": null,
-    "alignment": 14.2432546565668,
-    "angle_deviation_mean": 10.21217240065519,
-    "angle_deviation_p95": 29.727914378817438,
-    "aspect_mean": 1.4126210410822848,
-    "area_variation": 0.3309618498748197,
-    "hausdorff": 0.07497888059233522,
-    "mean_distance": 0.0015479022655742565,
-    "budget_error": 0.17925,
-    "seconds": 124.824
-   },
-   "quadremesher": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 0,
-    "failures": [],
-    "irregular_vertices": 1899,
-    "irregular_excess": null,
-    "base_complex_patches": null,
-    "alignment": 9.049679440773765,
-    "angle_deviation_mean": 8.607315764756954,
-    "angle_deviation_p95": 24.640117515062045,
-    "aspect_mean": 1.8389231251981693,
-    "area_variation": 1.220440684691394,
-    "hausdorff": 0.07367707842755294,
-    "mean_distance": 0.0006893964656273834,
-    "budget_error": 5.73425,
-    "seconds": 9.67
-   },
-   "quadremesher-uniform": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 0,
-    "failures": [],
-    "irregular_vertices": 1164,
-    "irregular_excess": null,
-    "base_complex_patches": null,
-    "alignment": 12.401819110026253,
-    "angle_deviation_mean": 11.605492174470955,
-    "angle_deviation_p95": 31.662316751249513,
-    "aspect_mean": 1.5175429994377894,
-    "area_variation": 0.43254647091369774,
-    "hausdorff": 0.07512774355447298,
-    "mean_distance": 0.0015932507770294664,
-    "budget_error": 0.138,
-    "seconds": 7.853
+    "alignment": 11.619223767589844,
+    "angle_deviation_mean": 10.216180985160513,
+    "angle_deviation_p95": 35.76123399917549,
+    "aspect_mean": 3.2873387016583453,
+    "area_variation": 0.5518959344927391,
+    "hausdorff": 0.02341316027061231,
+    "mean_distance": 0.0007639471027928563,
+    "budget_error": 0.076625,
+    "seconds": 9.294
    }
   },
   "bridge": {
-   "instant-meshes": {
-    "runs": 5,
-    "produced": 5,
-    "valid": 5,
-    "failures": [],
-    "irregular_vertices": 258,
-    "irregular_excess": null,
-    "base_complex_patches": 5201,
-    "alignment": 13.87892258200566,
-    "angle_deviation_mean": 4.479763793922177,
-    "angle_deviation_p95": 14.921356386478934,
-    "aspect_mean": 1.1445688447670768,
-    "area_variation": 0.14024724183948253,
-    "hausdorff": 0.009028685891024723,
-    "mean_distance": 0.00028099033119523097,
-    "budget_error": 0.005,
-    "seconds": 1.857
-   },
-   "integer-grid": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 66,
-    "irregular_excess": null,
-    "base_complex_patches": 1629,
-    "alignment": 9.817450087072801,
-    "angle_deviation_mean": 6.904435831840363,
-    "angle_deviation_p95": 19.610471768394177,
-    "aspect_mean": 1.2648251738126934,
-    "area_variation": 0.2306552108966604,
-    "hausdorff": 0.006765225600694773,
-    "mean_distance": 0.00030100731129590865,
-    "budget_error": 0.0765,
-    "seconds": 24.781
-   },
    "quad-layout": {
     "runs": 1,
     "produced": 1,
@@ -10841,15 +10081,15 @@
     "irregular_vertices": 70,
     "irregular_excess": null,
     "base_complex_patches": 2987,
-    "alignment": 9.87443523799841,
-    "angle_deviation_mean": 4.766783793257113,
-    "angle_deviation_p95": 12.293897348079582,
-    "aspect_mean": 1.263803810381056,
-    "area_variation": 0.26464090081876707,
-    "hausdorff": 0.006695920381026785,
-    "mean_distance": 0.00027728235474113903,
+    "alignment": 9.874172167361698,
+    "angle_deviation_mean": 4.7677565469503795,
+    "angle_deviation_p95": 12.297338175631026,
+    "aspect_mean": 1.2638790625530298,
+    "area_variation": 0.2646627157962418,
+    "hausdorff": 0.006695920391332893,
+    "mean_distance": 0.0002772724005743878,
     "budget_error": 0.015,
-    "seconds": 4.899
+    "seconds": 5.048
    },
    "quad-layout-adaptive": {
     "runs": 1,
@@ -10859,90 +10099,18 @@
     "irregular_vertices": 86,
     "irregular_excess": null,
     "base_complex_patches": 2286,
-    "alignment": 8.88436158962934,
-    "angle_deviation_mean": 4.328718538917783,
-    "angle_deviation_p95": 11.69761710371914,
-    "aspect_mean": 1.2543058356048074,
-    "area_variation": 0.34153424634127394,
-    "hausdorff": 0.006542497645320177,
-    "mean_distance": 0.0002736374500167825,
+    "alignment": 8.884319873494398,
+    "angle_deviation_mean": 4.3295275262047594,
+    "angle_deviation_p95": 11.699030201554251,
+    "aspect_mean": 1.2543617700585892,
+    "area_variation": 0.34154413117632615,
+    "hausdorff": 0.006542497643837532,
+    "mean_distance": 0.0002736234714515233,
     "budget_error": 0.018,
-    "seconds": 4.169
-   },
-   "quadremesher": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 82,
-    "irregular_excess": null,
-    "base_complex_patches": 2942,
-    "alignment": 8.334212149230044,
-    "angle_deviation_mean": 6.1687383166661744,
-    "angle_deviation_p95": 17.328756299226015,
-    "aspect_mean": 1.4802268601231268,
-    "area_variation": 0.35365068544520395,
-    "hausdorff": 0.006686343754749965,
-    "mean_distance": 0.00026447875320923805,
-    "budget_error": 0.100625,
-    "seconds": 15.514
-   },
-   "quadremesher-uniform": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 0,
-    "failures": [],
-    "irregular_vertices": 79,
-    "irregular_excess": null,
-    "base_complex_patches": null,
-    "alignment": 9.155398177590138,
-    "angle_deviation_mean": 6.739826418453526,
-    "angle_deviation_p95": 19.993584204692894,
-    "aspect_mean": 1.3862484984808585,
-    "area_variation": 0.28478761253504004,
-    "hausdorff": 0.0064508659491890104,
-    "mean_distance": 0.00032501315027859374,
-    "budget_error": 0.11825,
-    "seconds": 11.756
+    "seconds": 4.731
    }
   },
   "part": {
-   "instant-meshes": {
-    "runs": 5,
-    "produced": 5,
-    "valid": 5,
-    "failures": [],
-    "irregular_vertices": 337,
-    "irregular_excess": 329,
-    "base_complex_patches": 4678,
-    "alignment": 13.520741061553984,
-    "angle_deviation_mean": 4.516911111864466,
-    "angle_deviation_p95": 18.206772876943774,
-    "aspect_mean": 1.1779285063068579,
-    "area_variation": 0.16594816292340625,
-    "hausdorff": 0.00504621901931787,
-    "mean_distance": 2.3427681526391414e-05,
-    "budget_error": 0.0335,
-    "seconds": 2.422
-   },
-   "integer-grid": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 24,
-    "irregular_excess": 16,
-    "base_complex_patches": 128,
-    "alignment": 11.846601622653894,
-    "angle_deviation_mean": 1.6568101481588668,
-    "angle_deviation_p95": 7.017584868616623,
-    "aspect_mean": 1.151405978015886,
-    "area_variation": 0.1053432302196939,
-    "hausdorff": 0.0004214147572897672,
-    "mean_distance": 2.0550814202148795e-05,
-    "budget_error": 0.022,
-    "seconds": 15.27
-   },
    "quad-layout": {
     "runs": 1,
     "produced": 1,
@@ -10950,16 +10118,16 @@
     "failures": [],
     "irregular_vertices": 24,
     "irregular_excess": 16,
-    "base_complex_patches": 78,
-    "alignment": 11.896671770053842,
-    "angle_deviation_mean": 1.088479758182865,
-    "angle_deviation_p95": 3.7858955472932507,
-    "aspect_mean": 1.1024323030359866,
-    "area_variation": 0.11710626197210892,
-    "hausdorff": 0.00043805828046379044,
-    "mean_distance": 2.1126666613186123e-05,
-    "budget_error": 0.014,
-    "seconds": 4.405
+    "base_complex_patches": 429,
+    "alignment": 11.83720536308473,
+    "angle_deviation_mean": 1.2544154412294863,
+    "angle_deviation_p95": 3.8014236593646302,
+    "aspect_mean": 1.093084171578112,
+    "area_variation": 0.12640085867599757,
+    "hausdorff": 0.0004157116439533046,
+    "mean_distance": 2.070517127509814e-05,
+    "budget_error": 0.00975,
+    "seconds": 5.596
    },
    "quad-layout-adaptive": {
     "runs": 1,
@@ -10969,90 +10137,18 @@
     "irregular_vertices": 24,
     "irregular_excess": 16,
     "base_complex_patches": 92,
-    "alignment": 10.361607332634893,
-    "angle_deviation_mean": 1.0260382867418758,
-    "angle_deviation_p95": 3.8662073531838956,
-    "aspect_mean": 1.1362869018742459,
-    "area_variation": 0.32140651309489243,
-    "hausdorff": 0.0003628182166177212,
-    "mean_distance": 2.0889836655457784e-05,
-    "budget_error": 0.006625,
-    "seconds": 5.12
-   },
-   "quadremesher": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 24,
-    "irregular_excess": 16,
-    "base_complex_patches": 730,
-    "alignment": 10.868716708349925,
-    "angle_deviation_mean": 3.6284873408567617,
-    "angle_deviation_p95": 14.813922607257581,
-    "aspect_mean": 1.3005044199671352,
-    "area_variation": 0.24441287360072686,
-    "hausdorff": 0.0006751997734251337,
-    "mean_distance": 4.010726227144758e-05,
-    "budget_error": 0.080875,
-    "seconds": 2.652
-   },
-   "quadremesher-uniform": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 24,
-    "irregular_excess": 16,
-    "base_complex_patches": 730,
-    "alignment": 10.868716708349925,
-    "angle_deviation_mean": 3.6284873408567617,
-    "angle_deviation_p95": 14.813922607257581,
-    "aspect_mean": 1.3005044199671352,
-    "area_variation": 0.24441287360072686,
-    "hausdorff": 0.0006751997734251337,
-    "mean_distance": 4.010726227144758e-05,
-    "budget_error": 0.080875,
-    "seconds": 2.72
+    "alignment": 10.3459532397204,
+    "angle_deviation_mean": 1.0019390883096002,
+    "angle_deviation_p95": 3.8038925532602264,
+    "aspect_mean": 1.1296364180527583,
+    "area_variation": 0.32874168839568135,
+    "hausdorff": 0.00036279603949460293,
+    "mean_distance": 2.1301784981043744e-05,
+    "budget_error": 0.01225,
+    "seconds": 5.377
    }
   },
   "cube": {
-   "instant-meshes": {
-    "runs": 5,
-    "produced": 5,
-    "valid": 5,
-    "failures": [],
-    "irregular_vertices": 18,
-    "irregular_excess": 10,
-    "base_complex_patches": 376,
-    "alignment": 0.9587538208363887,
-    "angle_deviation_mean": 0.9080511078747592,
-    "angle_deviation_p95": 2.603013034702059,
-    "aspect_mean": 1.0296928207653917,
-    "area_variation": 0.04467715112522401,
-    "hausdorff": 3.303574279200384e-17,
-    "mean_distance": 6.369487291098198e-19,
-    "budget_error": 0.02475,
-    "seconds": 0.86
-   },
-   "integer-grid": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 8,
-    "irregular_excess": 0,
-    "base_complex_patches": 8028,
-    "alignment": 0.6741151210001147,
-    "angle_deviation_mean": 0.9475544048499478,
-    "angle_deviation_p95": 2.220298080358461,
-    "aspect_mean": 1.034256582131952,
-    "area_variation": 0.04668096692464937,
-    "hausdorff": 0.006861509787498687,
-    "mean_distance": 2.9787773484365138e-05,
-    "budget_error": 0.0035,
-    "seconds": 71.952
-   },
    "quad-layout": {
     "runs": 1,
     "produced": 1,
@@ -11061,15 +10157,15 @@
     "irregular_vertices": 8,
     "irregular_excess": 0,
     "base_complex_patches": 6,
-    "alignment": 0.11460027451302791,
-    "angle_deviation_mean": 0.006966394317558453,
-    "angle_deviation_p95": 0.01656736460641639,
-    "aspect_mean": 1.0184271578108897,
-    "area_variation": 0.012917526979832443,
-    "hausdorff": 3.5832294041243823e-17,
-    "mean_distance": 8.268292505164669e-19,
+    "alignment": 0.11460027405871463,
+    "angle_deviation_mean": 0.006966394123620894,
+    "angle_deviation_p95": 0.01656736495242228,
+    "aspect_mean": 1.0184271578064268,
+    "area_variation": 0.012917526979715635,
+    "hausdorff": 3.229879337080184e-17,
+    "mean_distance": 8.271793412652092e-19,
     "budget_error": 0.00825,
-    "seconds": 4.463
+    "seconds": 3.382
    },
    "quad-layout-adaptive": {
     "runs": 1,
@@ -11079,90 +10175,18 @@
     "irregular_vertices": 8,
     "irregular_excess": 0,
     "base_complex_patches": 6,
-    "alignment": 0.27499240572423794,
-    "angle_deviation_mean": 0.2045507097193181,
-    "angle_deviation_p95": 0.7425400558644242,
-    "aspect_mean": 1.0738360363914126,
-    "area_variation": 0.09252273503473263,
+    "alignment": 0.2749924056809541,
+    "angle_deviation_mean": 0.20455070971360778,
+    "angle_deviation_p95": 0.7425400558643105,
+    "aspect_mean": 1.0738360363912303,
+    "area_variation": 0.09252273503481101,
     "hausdorff": 3.229879337080184e-17,
-    "mean_distance": 8.513901557037029e-19,
+    "mean_distance": 7.880559887532221e-19,
     "budget_error": 0.00825,
-    "seconds": 3.9
-   },
-   "quadremesher": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 8,
-    "irregular_excess": 0,
-    "base_complex_patches": 6,
-    "alignment": 0.11119497594667989,
-    "angle_deviation_mean": 2.432895284538537e-05,
-    "angle_deviation_p95": 0.00011099041653039876,
-    "aspect_mean": 1.018687659445102,
-    "area_variation": 0.01291640441706769,
-    "hausdorff": 1.72063788530119e-08,
-    "mean_distance": 1.1880123559531092e-11,
-    "budget_error": 0.01,
-    "seconds": 3.503
-   },
-   "quadremesher-uniform": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 8,
-    "irregular_excess": 0,
-    "base_complex_patches": 6,
-    "alignment": 0.11119497594667989,
-    "angle_deviation_mean": 2.432895284538537e-05,
-    "angle_deviation_p95": 0.00011099041653039876,
-    "aspect_mean": 1.018687659445102,
-    "area_variation": 0.01291640441706769,
-    "hausdorff": 1.72063788530119e-08,
-    "mean_distance": 1.1880123559531092e-11,
-    "budget_error": 0.01,
-    "seconds": 2.898
+    "seconds": 3.508
    }
   },
   "sphere": {
-   "instant-meshes": {
-    "runs": 5,
-    "produced": 5,
-    "valid": 5,
-    "failures": [],
-    "irregular_vertices": 193,
-    "irregular_excess": 185,
-    "base_complex_patches": 8190,
-    "alignment": null,
-    "angle_deviation_mean": 3.489302662815202,
-    "angle_deviation_p95": 11.925320038687218,
-    "aspect_mean": 1.0967379821705832,
-    "area_variation": 0.12195560957140737,
-    "hausdorff": 0.0004300116341352362,
-    "mean_distance": 8.174368393927425e-05,
-    "budget_error": 0.02375,
-    "seconds": 0.365
-   },
-   "integer-grid": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 24,
-    "irregular_excess": 16,
-    "base_complex_patches": 7528,
-    "alignment": null,
-    "angle_deviation_mean": 7.080577918945992,
-    "angle_deviation_p95": 15.763662842994506,
-    "aspect_mean": 1.1560781518197774,
-    "area_variation": 0.15463972989802163,
-    "hausdorff": 0.0006407689098715752,
-    "mean_distance": 9.021043089116267e-05,
-    "budget_error": 0.059,
-    "seconds": 14.626
-   },
    "quad-layout": {
     "runs": 1,
     "produced": 1,
@@ -11179,7 +10203,7 @@
     "hausdorff": 0.00046616580208915437,
     "mean_distance": 8.358396624528227e-05,
     "budget_error": 0.004375,
-    "seconds": 4.49
+    "seconds": 4.483
    },
    "quad-layout-adaptive": {
     "runs": 1,
@@ -11197,82 +10221,10 @@
     "hausdorff": 0.00047288147496801915,
     "mean_distance": 8.416476534510205e-05,
     "budget_error": 0.003875,
-    "seconds": 4.422
-   },
-   "quadremesher": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 8,
-    "irregular_excess": 0,
-    "base_complex_patches": 4992,
-    "alignment": null,
-    "angle_deviation_mean": 7.64577938890336,
-    "angle_deviation_p95": 17.996708700772928,
-    "aspect_mean": 1.18689208335527,
-    "area_variation": 0.39063201886211707,
-    "hausdorff": 0.0005531616263306494,
-    "mean_distance": 0.00015936993125110734,
-    "budget_error": 0.114,
-    "seconds": 4.185
-   },
-   "quadremesher-uniform": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 8,
-    "irregular_excess": 0,
-    "base_complex_patches": 4992,
-    "alignment": null,
-    "angle_deviation_mean": 7.64577938890336,
-    "angle_deviation_p95": 17.996708700772928,
-    "aspect_mean": 1.18689208335527,
-    "area_variation": 0.39063201886211707,
-    "hausdorff": 0.0005531616263306494,
-    "mean_distance": 0.00015936993125110734,
-    "budget_error": 0.114,
-    "seconds": 4.204
+    "seconds": 4.334
    }
   },
   "torus": {
-   "instant-meshes": {
-    "runs": 5,
-    "produced": 5,
-    "valid": 5,
-    "failures": [],
-    "irregular_vertices": 262,
-    "irregular_excess": 262,
-    "base_complex_patches": 7956,
-    "alignment": 6.28527790249446,
-    "angle_deviation_mean": 5.11986489871875,
-    "angle_deviation_p95": 15.849392355629547,
-    "aspect_mean": 1.1385134269974362,
-    "area_variation": 0.14909320075592122,
-    "hausdorff": 0.0006534008628087584,
-    "mean_distance": 0.00011884168102732393,
-    "budget_error": 0.0055,
-    "seconds": 0.754
-   },
-   "integer-grid": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 0,
-    "irregular_excess": 0,
-    "base_complex_patches": 1,
-    "alignment": 0.6066269989750831,
-    "angle_deviation_mean": 0.9053216046431468,
-    "angle_deviation_p95": 1.4424163761983237,
-    "aspect_mean": 1.3401655609642675,
-    "area_variation": 0.2804829230442593,
-    "hausdorff": 0.0006112287346383074,
-    "mean_distance": 0.00013296635253917102,
-    "budget_error": 0.09,
-    "seconds": 6.613
-   },
    "quad-layout": {
     "runs": 1,
     "produced": 1,
@@ -11281,15 +10233,15 @@
     "irregular_vertices": 0,
     "irregular_excess": 0,
     "base_complex_patches": 1,
-    "alignment": 0.6066269989750831,
-    "angle_deviation_mean": 0.9053216046431468,
-    "angle_deviation_p95": 1.4424163761983237,
-    "aspect_mean": 1.3401655609642675,
-    "area_variation": 0.2804829230442593,
-    "hausdorff": 0.0006112287346383074,
-    "mean_distance": 0.00013296635253917102,
-    "budget_error": 0.09,
-    "seconds": 3.647
+    "alignment": 0.6395299088875713,
+    "angle_deviation_mean": 0.9150093886746795,
+    "angle_deviation_p95": 1.3974910765180937,
+    "aspect_mean": 1.3211868322610578,
+    "area_variation": 0.29821101916166115,
+    "hausdorff": 0.0006020581108656848,
+    "mean_distance": 0.00011956155542525978,
+    "budget_error": 0.003,
+    "seconds": 3.069
    },
    "quad-layout-adaptive": {
     "runs": 1,
@@ -11299,90 +10251,18 @@
     "irregular_vertices": 0,
     "irregular_excess": 0,
     "base_complex_patches": 1,
-    "alignment": 0.6066269989750831,
-    "angle_deviation_mean": 0.9053216046431468,
-    "angle_deviation_p95": 1.4424163761983237,
-    "aspect_mean": 1.3401655609642675,
-    "area_variation": 0.2804829230442593,
-    "hausdorff": 0.0006112287346383074,
-    "mean_distance": 0.00013296635253917102,
-    "budget_error": 0.09,
-    "seconds": 3.439
-   },
-   "quadremesher": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 20,
-    "irregular_excess": 20,
-    "base_complex_patches": 5983,
-    "alignment": 4.25416504768451,
-    "angle_deviation_mean": 3.6830805199050483,
-    "angle_deviation_p95": 10.812966097711211,
-    "aspect_mean": 1.232973253267202,
-    "area_variation": 0.22524134532912327,
-    "hausdorff": 0.0006888272057858556,
-    "mean_distance": 0.00022207911141530325,
-    "budget_error": 0.074875,
-    "seconds": 6.204
-   },
-   "quadremesher-uniform": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 20,
-    "irregular_excess": 20,
-    "base_complex_patches": 5983,
-    "alignment": 4.25416504768451,
-    "angle_deviation_mean": 3.6830805199050483,
-    "angle_deviation_p95": 10.812966097711211,
-    "aspect_mean": 1.232973253267202,
-    "area_variation": 0.22524134532912327,
-    "hausdorff": 0.0006888272057858556,
-    "mean_distance": 0.00022207911141530325,
-    "budget_error": 0.074875,
-    "seconds": 5.733
+    "alignment": 0.6394260418872768,
+    "angle_deviation_mean": 0.9147865425544981,
+    "angle_deviation_p95": 1.3980072681953004,
+    "aspect_mean": 1.319067797245139,
+    "area_variation": 0.29974307859476335,
+    "hausdorff": 0.0006022480939097022,
+    "mean_distance": 0.00011955103433487443,
+    "budget_error": 0.003,
+    "seconds": 3.798
    }
   },
   "lblock": {
-   "instant-meshes": {
-    "runs": 5,
-    "produced": 5,
-    "valid": 5,
-    "failures": [],
-    "irregular_vertices": 24,
-    "irregular_excess": 16,
-    "base_complex_patches": 706,
-    "alignment": 1.1716510280164354,
-    "angle_deviation_mean": 0.8797929923786136,
-    "angle_deviation_p95": 2.621196516947734,
-    "aspect_mean": 1.0246158637041787,
-    "area_variation": 0.041357525911282875,
-    "hausdorff": 7.405099956180568e-17,
-    "mean_distance": 9.23993621874105e-19,
-    "budget_error": 0.00125,
-    "seconds": 1.336
-   },
-   "integer-grid": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 12,
-    "irregular_excess": 4,
-    "base_complex_patches": 14,
-    "alignment": 0.5695848771293829,
-    "angle_deviation_mean": 0.00940587620332609,
-    "angle_deviation_p95": 0.030631495670419895,
-    "aspect_mean": 1.000206998319532,
-    "area_variation": 0.000182846741091097,
-    "hausdorff": 7.402390277506137e-17,
-    "mean_distance": 9.648441832870425e-19,
-    "budget_error": 0.008,
-    "seconds": 4.677
-   },
    "quad-layout": {
     "runs": 1,
     "produced": 1,
@@ -11391,15 +10271,15 @@
     "irregular_vertices": 12,
     "irregular_excess": 4,
     "base_complex_patches": 14,
-    "alignment": 0.6089243318951044,
-    "angle_deviation_mean": 0.002641892794302789,
-    "angle_deviation_p95": 0.008500592958114339,
-    "aspect_mean": 1.0000855936850623,
-    "area_variation": 7.298245131652408e-05,
-    "hausdorff": 7.415928770090618e-17,
-    "mean_distance": 1.2464480491947366e-18,
+    "alignment": 0.6089243371931774,
+    "angle_deviation_mean": 0.0026418971116968348,
+    "angle_deviation_p95": 0.008500593097650722,
+    "aspect_mean": 1.0000855937288222,
+    "area_variation": 7.298244209684978e-05,
+    "hausdorff": 7.629277997537062e-17,
+    "mean_distance": 1.2369469083956994e-18,
     "budget_error": 0.008,
-    "seconds": 3.649
+    "seconds": 3.469
    },
    "quad-layout-adaptive": {
     "runs": 1,
@@ -11409,90 +10289,18 @@
     "irregular_vertices": 12,
     "irregular_excess": 4,
     "base_complex_patches": 14,
-    "alignment": 0.9199265077501139,
-    "angle_deviation_mean": 0.49232914007760514,
-    "angle_deviation_p95": 1.4838558901534782,
-    "aspect_mean": 1.078220412625437,
-    "area_variation": 0.0964324137817759,
-    "hausdorff": 7.402390277506137e-17,
-    "mean_distance": 1.1487109718370944e-18,
+    "alignment": 0.9199265093061403,
+    "angle_deviation_mean": 0.49232914045590487,
+    "angle_deviation_p95": 1.4838559137484708,
+    "aspect_mean": 1.078220412624522,
+    "area_variation": 0.09643241379018903,
+    "hausdorff": 7.405099956180568e-17,
+    "mean_distance": 1.1045699079070597e-18,
     "budget_error": 0.008,
-    "seconds": 3.163
-   },
-   "quadremesher": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 12,
-    "irregular_excess": 4,
-    "base_complex_patches": 14,
-    "alignment": 0.5376944655320236,
-    "angle_deviation_mean": 6.928274547065334e-05,
-    "angle_deviation_p95": 0.0003093974461023663,
-    "aspect_mean": 1.0000033912168156,
-    "area_variation": 2.7363014270134997e-06,
-    "hausdorff": 7.459086818853016e-17,
-    "mean_distance": 2.2960299144657468e-18,
-    "budget_error": 0.008,
-    "seconds": 3.104
-   },
-   "quadremesher-uniform": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 12,
-    "irregular_excess": 4,
-    "base_complex_patches": 14,
-    "alignment": 0.5376944655320236,
-    "angle_deviation_mean": 6.928274547065334e-05,
-    "angle_deviation_p95": 0.0003093974461023663,
-    "aspect_mean": 1.0000033912168156,
-    "area_variation": 2.7363014270134997e-06,
-    "hausdorff": 7.459086818853016e-17,
-    "mean_distance": 2.2960299144657468e-18,
-    "budget_error": 0.008,
-    "seconds": 3.179
+    "seconds": 3.554
    }
   },
   "cylinder": {
-   "instant-meshes": {
-    "runs": 5,
-    "produced": 5,
-    "valid": 4,
-    "failures": [],
-    "irregular_vertices": 165,
-    "irregular_excess": 157,
-    "base_complex_patches": 4940,
-    "alignment": 3.4728957493832686,
-    "angle_deviation_mean": 3.0508454781514867,
-    "angle_deviation_p95": 11.701488828300896,
-    "aspect_mean": 1.0972746475439994,
-    "area_variation": 0.11464301129071744,
-    "hausdorff": 0.0020672615765258973,
-    "mean_distance": 4.489188545088475e-05,
-    "budget_error": 0.00525,
-    "seconds": 0.793
-   },
-   "integer-grid": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 8,
-    "irregular_excess": 0,
-    "base_complex_patches": 1346,
-    "alignment": 1.3059347690899752,
-    "angle_deviation_mean": 2.500554264668356,
-    "angle_deviation_p95": 13.390609260691548,
-    "aspect_mean": 1.2827065965350948,
-    "area_variation": 0.2906386969969508,
-    "hausdorff": 0.000542203287818193,
-    "mean_distance": 6.179247669962135e-05,
-    "budget_error": 0.0845,
-    "seconds": 9.271
-   },
    "quad-layout": {
     "runs": 1,
     "produced": 1,
@@ -11500,16 +10308,16 @@
     "failures": [],
     "irregular_vertices": 8,
     "irregular_excess": 0,
-    "base_complex_patches": 1478,
-    "alignment": 1.338111542938856,
-    "angle_deviation_mean": 2.2775961129604747,
-    "angle_deviation_p95": 10.134395337384177,
-    "aspect_mean": 1.2891949526683617,
-    "area_variation": 0.29668548549400076,
-    "hausdorff": 0.000522490987978451,
-    "mean_distance": 5.5424641873057286e-05,
+    "base_complex_patches": 182,
+    "alignment": 1.3829192132414314,
+    "angle_deviation_mean": 2.4057869868334913,
+    "angle_deviation_p95": 10.189833555314252,
+    "aspect_mean": 1.2884186010897132,
+    "area_variation": 0.29646747206714413,
+    "hausdorff": 0.0005472729184427012,
+    "mean_distance": 5.471848691367957e-05,
     "budget_error": 0.00075,
-    "seconds": 4.737
+    "seconds": 4.052
    },
    "quad-layout-adaptive": {
     "runs": 1,
@@ -11519,90 +10327,18 @@
     "irregular_vertices": 8,
     "irregular_excess": 0,
     "base_complex_patches": 1399,
-    "alignment": 1.2814304654202329,
-    "angle_deviation_mean": 2.2558432567776037,
-    "angle_deviation_p95": 10.185337054601789,
-    "aspect_mean": 1.40004029057201,
-    "area_variation": 0.20859349426550997,
-    "hausdorff": 0.000559145123587539,
-    "mean_distance": 5.908579151583757e-05,
+    "alignment": 1.2814648352777203,
+    "angle_deviation_mean": 2.258198077862709,
+    "angle_deviation_p95": 10.241732566004103,
+    "aspect_mean": 1.399881862802518,
+    "area_variation": 0.20797908123217734,
+    "hausdorff": 0.0005588154224263332,
+    "mean_distance": 6.14241404354318e-05,
     "budget_error": 0.012625,
-    "seconds": 6.012
-   },
-   "quadremesher": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 8,
-    "irregular_excess": 0,
-    "base_complex_patches": 850,
-    "alignment": 1.726044732109045,
-    "angle_deviation_mean": 4.408144804553381,
-    "angle_deviation_p95": 18.993372321036816,
-    "aspect_mean": 1.3493867861087343,
-    "area_variation": 0.3216175390358988,
-    "hausdorff": 0.0007315413195275089,
-    "mean_distance": 0.00014695789093214357,
-    "budget_error": 0.13475,
-    "seconds": 4.417
-   },
-   "quadremesher-uniform": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 8,
-    "irregular_excess": 0,
-    "base_complex_patches": 850,
-    "alignment": 1.726044732109045,
-    "angle_deviation_mean": 4.408144804553381,
-    "angle_deviation_p95": 18.993372321036816,
-    "aspect_mean": 1.3493867861087343,
-    "area_variation": 0.3216175390358988,
-    "hausdorff": 0.0007315413195275089,
-    "mean_distance": 0.00014695789093214357,
-    "budget_error": 0.13475,
-    "seconds": 4.473
+    "seconds": 4.063
    }
   },
   "terrain": {
-   "instant-meshes": {
-    "runs": 5,
-    "produced": 5,
-    "valid": 4,
-    "failures": [],
-    "irregular_vertices": 273,
-    "irregular_excess": null,
-    "base_complex_patches": 3587,
-    "alignment": 21.430903981109193,
-    "angle_deviation_mean": 7.4460595746725575,
-    "angle_deviation_p95": 25.480375778748623,
-    "aspect_mean": 1.2643106574885825,
-    "area_variation": 0.2149716017462738,
-    "hausdorff": 0.13045309897143134,
-    "mean_distance": 0.001477456396023265,
-    "budget_error": 0.399125,
-    "seconds": 8.988
-   },
-   "integer-grid": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 123,
-    "irregular_excess": null,
-    "base_complex_patches": 4449,
-    "alignment": 17.778173988407154,
-    "angle_deviation_mean": 9.694578274691034,
-    "angle_deviation_p95": 25.625714068243823,
-    "aspect_mean": 1.334071849287,
-    "area_variation": 0.29772956169241055,
-    "hausdorff": 0.017981101152701014,
-    "mean_distance": 0.0011918199395351285,
-    "budget_error": 0.14075,
-    "seconds": 34.777
-   },
    "quad-layout": {
     "runs": 1,
     "produced": 1,
@@ -11619,7 +10355,7 @@
     "hausdorff": 0.011915300385290265,
     "mean_distance": 0.0008720614174829461,
     "budget_error": 0.00525,
-    "seconds": 11.119
+    "seconds": 9.574
    },
    "quad-layout-adaptive": {
     "runs": 1,
@@ -11637,43 +10373,83 @@
     "hausdorff": 0.011027017365363588,
     "mean_distance": 0.0007659877716397586,
     "budget_error": 0.018125,
-    "seconds": 11.963
-   },
-   "quadremesher": {
+    "seconds": 9.148
+   }
+  },
+  "mahaveer": {
+   "quad-layout": {
     "runs": 1,
     "produced": 1,
     "valid": 0,
     "failures": [],
-    "irregular_vertices": 296,
+    "irregular_vertices": 552,
     "irregular_excess": null,
-    "base_complex_patches": 8228,
-    "alignment": 18.098368545844142,
-    "angle_deviation_mean": 8.686973197950428,
-    "angle_deviation_p95": 25.150058877949164,
-    "aspect_mean": 1.6682647197768956,
-    "area_variation": 0.5182314024045657,
-    "hausdorff": 0.01069709638540697,
-    "mean_distance": 0.0007189371513040618,
-    "budget_error": 0.477375,
-    "seconds": 24.961
+    "base_complex_patches": null,
+    "alignment": 11.802030143646135,
+    "angle_deviation_mean": 13.354340902224983,
+    "angle_deviation_p95": 61.70101489619415,
+    "aspect_mean": 35.141172872481555,
+    "area_variation": 0.743770805078306,
+    "hausdorff": 0.015726900043289374,
+    "mean_distance": 0.001283914854879156,
+    "budget_error": 0.01825,
+    "seconds": 15.938
    },
-   "quadremesher-uniform": {
+   "quad-layout-adaptive": {
     "runs": 1,
     "produced": 1,
-    "valid": 1,
+    "valid": 0,
     "failures": [],
-    "irregular_vertices": 253,
+    "irregular_vertices": 560,
     "irregular_excess": null,
-    "base_complex_patches": 4351,
-    "alignment": 18.38571000530692,
-    "angle_deviation_mean": 7.984440347255523,
-    "angle_deviation_p95": 22.111240201540554,
-    "aspect_mean": 1.3419912219804737,
-    "area_variation": 0.23661147161878246,
-    "hausdorff": 0.016842427506978844,
-    "mean_distance": 0.0010710205763786894,
-    "budget_error": 0.102125,
-    "seconds": 24.229
+    "base_complex_patches": null,
+    "alignment": 11.582165563501194,
+    "angle_deviation_mean": 13.592253706550668,
+    "angle_deviation_p95": 62.11675338458713,
+    "aspect_mean": 31.911822015804123,
+    "area_variation": 0.7752896770021472,
+    "hausdorff": 0.015726900043289374,
+    "mean_distance": 0.0012761560965871372,
+    "budget_error": 0.01825,
+    "seconds": 14.727
+   }
+  },
+  "marine": {
+   "quad-layout": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 0,
+    "failures": [],
+    "irregular_vertices": 5777,
+    "irregular_excess": null,
+    "base_complex_patches": null,
+    "alignment": 12.645637031226267,
+    "angle_deviation_mean": 22.00388972958131,
+    "angle_deviation_p95": 70.79572789388403,
+    "aspect_mean": 5.984762259755506,
+    "area_variation": 1.197578248667401,
+    "hausdorff": 0.0035283743329420645,
+    "mean_distance": 0.00035183479899848454,
+    "budget_error": 0.1215,
+    "seconds": 40.395
+   },
+   "quad-layout-adaptive": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 0,
+    "failures": [],
+    "irregular_vertices": 5768,
+    "irregular_excess": null,
+    "base_complex_patches": null,
+    "alignment": 12.556106811801188,
+    "angle_deviation_mean": 21.964577156770922,
+    "angle_deviation_p95": 70.93460258673497,
+    "aspect_mean": 5.989098457280096,
+    "area_variation": 1.207425224137269,
+    "hausdorff": 0.0035283743329420645,
+    "mean_distance": 0.00035453038473300325,
+    "budget_error": 0.132375,
+    "seconds": 35.287
    }
   }
  }

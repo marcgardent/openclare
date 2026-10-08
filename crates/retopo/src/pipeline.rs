@@ -78,8 +78,41 @@ pub struct Report {
     pub map_inversions: usize,
     /// The chain asked for could not do the job, and another one did.
     pub fell_back: bool,
+    /// Separate pieces the input was made of, for the chains that mesh each
+    /// on its own; how many of them went to the other chain, and how many
+    /// could not be meshed at all and are missing from the output.
+    pub pieces: usize,
+    pub pieces_fell_back: usize,
+    pub pieces_failed: usize,
+    /// Why pieces went to the other chain, with how many for each reason.
+    pub fallback_causes: Vec<(&'static str, usize)>,
     pub stats: MeshStats,
     pub timings: Vec<(&'static str, Duration)>,
+}
+
+impl Report {
+    /// Adds what was done on one piece to what was done on the others.
+    pub(crate) fn absorb(&mut self, piece: Report) {
+        self.working_vertices += piece.working_vertices;
+        self.feature_edges += piece.feature_edges;
+        self.singularities.0 += piece.singularities.0;
+        self.singularities.1 += piece.singularities.1;
+        self.open_loops += piece.open_loops;
+        self.map_inversions += piece.map_inversions;
+        self.pieces_fell_back += piece.fell_back as usize;
+        for (cause, count) in piece.fallback_causes {
+            match self.fallback_causes.iter_mut().find(|(name, _)| *name == cause) {
+                Some((_, total)) => *total += count,
+                None => self.fallback_causes.push((cause, count)),
+            }
+        }
+        for (stage, time) in piece.timings {
+            match self.timings.iter_mut().find(|(name, _)| *name == stage) {
+                Some((_, total)) => *total += time,
+                None => self.timings.push((stage, time)),
+            }
+        }
+    }
 }
 
 /// Remeshes `input` into a field-aligned quad mesh.

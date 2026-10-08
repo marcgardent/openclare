@@ -201,7 +201,34 @@ impl TMesh {
                 topology.opposite[h] == INVALID || features.contains(&(a.min(b), a.max(b)))
             })
             .collect();
-        let outcome = motorcycle::race(&walk, &is_singular, &is_wall, max_trace_length);
+        // Pieces of the surface with neither singularity nor wall (a ring, a
+        // torus) are cut from one of their vertices, any.
+        let mut cut = is_singular.clone();
+        for h in (0..is_wall.len()).filter(|&h| is_wall[h]) {
+            cut[mesh.triangles[h / 3][h % 3] as usize] = true;
+        }
+        let reached = faces_reached_from(&topology, mesh, &cut);
+        let mut seeds: Vec<u32> = Vec::new();
+        let mut seen = reached.clone();
+        for first in 0..mesh.triangles.len() {
+            if seen[first] {
+                continue;
+            }
+            seeds.push(mesh.triangles[first][0]);
+            // Flag the whole piece of this face as dealt with.
+            let mut stack = vec![first];
+            seen[first] = true;
+            while let Some(f) = stack.pop() {
+                for h in 3 * f..3 * f + 3 {
+                    let twin = topology.opposite[h];
+                    if twin != INVALID && !seen[twin as usize / 3] {
+                        seen[twin as usize / 3] = true;
+                        stack.push(twin as usize / 3);
+                    }
+                }
+            }
+        }
+        let outcome = motorcycle::race(&walk, &is_singular, &is_wall, &seeds, max_trace_length);
 
         let mut tmesh = TMesh::assemble(&outcome);
         let report = &mut tmesh.report;
@@ -212,11 +239,8 @@ impl TMesh {
         let flat = 1e-9 * in_map.iter().map(|area| area.abs()).sum::<f64>() / in_map.len().max(1) as f64;
         report.map_inversions = in_map.iter().filter(|&&area| area < -flat).count();
         report.surface_euler = mesh.positions.len() as i64 - topology.edge_count() as i64 + mesh.triangles.len() as i64;
-        // Pieces of the surface with neither singularity nor wall (a torus)
-        // have nothing to cut them and stay out of the count.
-        let mut cut = is_singular;
-        for h in (0..is_wall.len()).filter(|&h| is_wall[h]) {
-            cut[mesh.triangles[h / 3][h % 3] as usize] = true;
+        for &seed in &seeds {
+            cut[seed as usize] = true;
         }
         let covered = faces_reached_from(&topology, mesh, &cut);
         report.uncut_triangles = covered.iter().filter(|&&reached| !reached).count();

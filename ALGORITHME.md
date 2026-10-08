@@ -1,6 +1,6 @@
 # openclare — cahier des charges du moteur de retopologie quad
 
-**Statut : validé le 6 octobre 2026. Jalons 0 à 8 faits ; jalon 9 (arêtes vives garanties) réalisé, en attente de revue.**
+**Statut : validé le 6 octobre 2026. Jalons 0 à 9 faits. Chantier de qualité Q1 (modèles en plusieurs pièces) réalisé, en attente de revue.**
 Ce qui a été écarté, approché ou reporté en chemin est suivi ticket par ticket dans [BACKLOG.md](BACKLOG.md).
 Le projet s'appelle **openclare** ; les crates portent encore le nom provisoire `retopo`. Les points marqués
 *à trancher* attendent une décision ; ils sont regroupés en section 7.
@@ -318,7 +318,7 @@ prétraitement, qui est interchangeable :
 | Situation | Traitement |
 |---|---|
 | Bords ouverts | acceptés |
-| Plusieurs pièces séparées | acceptées, chaque pièce est traitée seule |
+| Plusieurs pièces séparées | acceptées, chaque pièce est traitée seule (réellement depuis le chantier Q1 : avant, tout était traité d'un bloc) |
 | Pièces qui se traversent | aujourd'hui traitées coque par coque ; la fusion en une peau extérieure est un prétraitement de réparation à venir (J11) |
 | Arêtes à trois faces ou plus, orientation incohérente | refusées avec un diagnostic clair ; réparation à venir (J11) |
 
@@ -1236,6 +1236,62 @@ Ce qui reste ouvert :
   pas la connectivité.
 - **La seconde partie du jalon 8**, la densité adaptative, est faite depuis : voir M1 bis.
 
+### Chantier Q1 — Modèles en plusieurs pièces
+
+Né de deux personnages de jeu récupérés de BlenderKit (voir CREDITS.md), qui ont montré que le
+cahier des charges n'était pas respecté sur un point : « plusieurs pièces séparées : acceptées,
+chaque pièce est traitée seule ». Le code traitait tout d'un bloc.
+
+- **Chaque pièce pour elle-même** (`remesher.rs`). Le maillage d'entrée est séparé en pièces
+  connexes ; chacune passe seule par toute la chaîne, avec son maillage de calcul, à sa
+  mesure, et son propre repli si la chaîne principale ne peut pas la traiter. Une pièce
+  récalcitrante n'entraîne plus les autres.
+- **Le budget** est partagé au prorata de l'aire, pondérée par la densité peinte s'il y en a
+  une (une pièce peinte à 1 reçoit plus de quads qu'une pièce laissée à 0). Chaque pièce reçoit
+  au moins ce dont une forme ne peut se passer : 1 quad pour une nappe ouverte, 6 pour une
+  boule (un cube), 16 pour une forme percée (un anneau de 4 par 4). Ce que ces minimums
+  prennent est repris sur les grandes pièces.
+- **Pièce sans singularité ni mur** (un anneau, un tore) : elle n'avait rien d'où partir pour
+  être découpée (DT-003). Un de ses sommets, n'importe lequel, sert de point de départ et émet
+  une trace dans chacune de ses quatre directions ; elles font le tour de la pièce et
+  s'arrêtent les unes sur les autres. La quantification referme les lamelles, et le tore
+  ressort en une seule grille régulière.
+- **L'échelle de lecture de la courbure** est plafonnée au dixième de la taille de la pièce :
+  sur un anneau à qui on demande six quads, l'échelle d'un quad moyennait la courbure de tout
+  l'anneau, et la carte se repliait.
+- **Le rapport** dit combien de pièces sont passées par le repli, combien n'ont pas pu être
+  maillées, et pour quelles raisons.
+
+**Résultat.**
+
+| | Avant | Après |
+|---|---|---|
+| `mahaveer`, 164 pièces, 8000 quads : temps | 84 s | **15 s** |
+| … pièces par la chaîne principale | 0 | **150** (6 par le repli, 8 sans maillage) |
+| … écart au budget | 28 % | **1,8 %** |
+| … faces qui ne sont pas des quads | 18 sur 5779 | **9 sur 7854** |
+| Desert Rose, 96 coques, 3000 quads : temps | 137 s | **12 s** |
+| … coques par la chaîne principale | 0 | **84** |
+| Tore : chaîne utilisée | repli | **principale**, une seule grille régulière |
+
+Sur le corpus de la règle d'acceptation, rien n'a bougé : 12 modèles organiques valides sur 12
+aux trois budgets, 4 pièces mécaniques sur 4, mêmes médianes. Suzanne, faite de trois pièces,
+passe maintenant pièce par pièce. `marine`, auparavant refusé en bloc, donne un maillage
+partiel : ses pièces à arêtes non variété sont laissées de côté, les autres sont maillées.
+
+Vérifié par les tests (`crates/retopo/tests/pieces.rs`) : un maillage est bien séparé en ses
+pièces, chaque sommet retrouvant son origine ; deux boules dont l'une a quatre fois l'aire de
+l'autre reçoivent des quads dans ce rapport ; un anneau posé à côté d'une boule passe, comme
+elle, par la chaîne principale ; une perle cent fois plus petite que la boule reçoit quand même
+de quoi exister ; peindre une pièce plus dense en retire aux autres.
+
+Ce qui reste ouvert :
+
+- **Ces deux modèles ne sont toujours pas valides en entier** : quelques pièces passent encore
+  par le repli ou n'en sortent pas, et la rose garde ses coques qui se traversent (DT-034,
+  J11).
+- **Les arêtes non variété** (`marine`) restent refusées : c'est l'affaire du jalon 11.
+
 ---
 
 ## 4. Jalons
@@ -1254,13 +1310,24 @@ Chaque jalon produit quelque chose de vérifiable et se termine par **un arrêt 
 | J6 | Quantification (M6) | **Fait.** Contraintes satisfaites, budget tenu à 4 % près, connectivité du maillage quad construite et saine sur tout le corpus |
 | J7 | Maillage quad depuis le T-mesh quantifié, par la route directe (à la place de M7 et M8) | **Fait.** Résultat complet ; règle d'acceptation tenue à 3000 quads. L'arrondi glouton reste comme repli (DT-009) |
 | J8 | Relaxation ; densité adaptative, puis contraintes de rang 3 à 5 | **Fait** : relaxation, densité adaptative (rang 2) et densité peinte (rang 5). Règle d'acceptation tenue aux trois budgets, forme des quads devant Quad Remesher. Reste le rang 4, les courbes guides (DT-024) ; le rang 3 relève du jalon 9 |
-| J9 | Surfaces dures : arêtes vives garanties, par des « murs » dans le T-mesh de la chaîne existante (à la place de la chaîne par patchs, DT-030) | **Fait, en attente de revue.** Pièces mécaniques comparées à QuadriFlow et à Quad Remesher ; arêtes et coins retrouvés exactement |
+| J9 | Surfaces dures : arêtes vives garanties, par des « murs » dans le T-mesh de la chaîne existante (à la place de la chaîne par patchs, DT-030) | **Fait.** Pièces mécaniques comparées à QuadriFlow et à Quad Remesher ; arêtes et coins retrouvés exactement |
 | J9 bis | Symétrie : un modèle symétrique par rapport à un plan donne un maillage symétrique (DT-028). **Reportée** : passe après les travaux de qualité (décision du 8 octobre 2026) | Écart entre le maillage et son reflet nul ; boucle d'arêtes sur le plan de symétrie |
 | J10 | Export des coutures et des UV ; bibliothèque à interface C et greffon Python sans copie mémoire | Remaillage lancé depuis Blender, UV et coutures relus dans la scène |
 | J11 | Prétraitement de réparation : fusion des pièces qui se traversent, arêtes non variété | Desert Rose remaillée en une seule peau valide |
 | J12 | Plis automatiques : un poids de pli par arête de sortie | Après subdivision, le maillage plissé est plus proche de la source que le même sans plis |
 | J13 | Normales optimales par coin | Écart angulaire entre l'ombrage du maillage allégé et celui de la source |
 | J14 | Reconstitution Multires : niveaux de subdivision avec déplacement reprojeté | À chaque niveau, l'écart à la sculpture d'origine diminue jusqu'à la retrouver |
+
+**Chantiers de qualité.** Depuis le 8 octobre 2026, ce qui fait progresser la qualité ou la
+robustesse du maillage passe avant les jalons de fonctionnalités (J9 bis, J10 et suivants). Ces
+chantiers sont numérotés à part et partent du backlog.
+
+| Chantier | Contenu | Ce qu'on peut vérifier à la fin |
+|---|---|---|
+| Q1 | Modèles en plusieurs pièces (DT-032) et pièces sans singularité ni bord (DT-003) | **Fait, en attente de revue.** Chaque pièce maillée pour elle-même ; un anneau passe par la chaîne principale |
+| Q2 | Alignement : champ de croix sur les surfaces bruitées, échelles locales, réglage des préréglages (DT-021, DT-025, DT-013) | Écart d'alignement avec Quad Remesher réduit |
+| Q3 | Parties plus minces qu'un quad (DT-018) | Fidélité sur les personnages à bas budget |
+| Q4 | Structure globale : simplification du T-mesh, bandes étroites (DT-020, DT-007, DT-005) | Moins de patchs dans le complexe de base |
 
 Le jalon 4 bis est un raccourci assumé : un arrondi glouton des translations, comme dans MIQ,
 donne un premier maillage complet bien avant le T-mesh et la quantification. Il est moins robuste

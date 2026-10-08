@@ -233,8 +233,16 @@ fn remesh(args: &[String]) -> Result<(), String> {
         report.open_loops,
         report.map_inversions,
     );
-    if report.fell_back {
-        println!("note     this surface has no layout to mesh from; the integer-grid chain did the job");
+    if report.pieces > 1 {
+        println!(
+            "pieces   {} separate pieces, {} through the integer-grid chain, {} not meshed",
+            report.pieces, report.pieces_fell_back, report.pieces_failed
+        );
+    } else if report.fell_back {
+        println!("note     the integer-grid chain did the job");
+    }
+    for (cause, count) in &report.fallback_causes {
+        println!("         {count} x {cause}");
     }
     let valences: Vec<String> = stats.valences.iter().map(|(v, n)| format!("{v}:{n}")).collect();
     println!("valence  {}", valences.join("  "));

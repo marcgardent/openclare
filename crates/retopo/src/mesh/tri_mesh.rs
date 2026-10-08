@@ -70,6 +70,48 @@ impl TriMesh {
 
     /// Drops degenerate triangles (repeated index or zero area) and the
     /// vertices nothing references any more.
+    /// The connected pieces of the mesh, largest first: each as a mesh of
+    /// its own, with the vertex of this mesh each of its vertices was.
+    pub fn pieces(&self) -> Vec<(TriMesh, Vec<u32>)> {
+        // Disjoint sets over the vertices: a triangle joins its three.
+        let mut parent: Vec<u32> = (0..self.positions.len() as u32).collect();
+        fn find(parent: &mut [u32], mut x: u32) -> u32 {
+            while parent[x as usize] != x {
+                parent[x as usize] = parent[parent[x as usize] as usize];
+                x = parent[x as usize];
+            }
+            x
+        }
+        for tri in &self.triangles {
+            let root = find(&mut parent, tri[0]);
+            for &v in &tri[1..] {
+                let other = find(&mut parent, v);
+                parent[other as usize] = root;
+            }
+        }
+        let mut piece_of = vec![INVALID; self.positions.len()];
+        let mut pieces: Vec<(TriMesh, Vec<u32>)> = Vec::new();
+        let mut local = vec![INVALID; self.positions.len()];
+        for tri in &self.triangles {
+            let root = find(&mut parent, tri[0]) as usize;
+            if piece_of[root] == INVALID {
+                piece_of[root] = pieces.len() as u32;
+                pieces.push((TriMesh::default(), Vec::new()));
+            }
+            let (mesh, origin) = &mut pieces[piece_of[root] as usize];
+            mesh.triangles.push(tri.map(|v| {
+                if local[v as usize] == INVALID {
+                    local[v as usize] = mesh.positions.len() as u32;
+                    mesh.positions.push(self.positions[v as usize]);
+                    origin.push(v);
+                }
+                local[v as usize]
+            }));
+        }
+        pieces.sort_by(|a, b| b.0.surface_area().total_cmp(&a.0.surface_area()));
+        pieces
+    }
+
     pub fn cleaned(&self) -> TriMesh {
         let mut remap = vec![INVALID; self.positions.len()];
         let mut out = TriMesh::default();

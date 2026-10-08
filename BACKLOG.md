@@ -16,7 +16,7 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 |---|---|---|---|---|
 | DT-001 | Carte à grille entière contrainte et extraction exacte, écartées | J7 | moyenne | ouvert |
 | DT-002 | Arêtes vives absentes du T-mesh | J5 | haute (durci) | **fermé au J9** |
-| DT-003 | Pièce sans singularité ni bord : pas de T-mesh | J5 | moyenne | ouvert |
+| DT-003 | Pièce sans singularité ni bord : pas de T-mesh | J5 | moyenne | **fermé (Q1)** |
 | DT-004 | Solveur de quantification approché | J6 | basse | ouvert |
 | DT-005 | Arcs maintenus ouverts : bandes de quads étroites | J6 | moyenne | ouvert |
 | DT-006 | Budget de quads : pas plus fin qu'une bande | J6 | basse | ouvert |
@@ -44,7 +44,8 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 | DT-029 | Quads étirés sur la paroi d'un cylindre | J9 | moyenne | ouvert |
 | DT-030 | Chaîne par patchs (QuadWild) non écrite | J9 | basse | ouvert |
 | DT-031 | Triangles d'aire quasi nulle laissés par le prétraitement | J9 | moyenne | ouvert |
-| DT-032 | Modèles faits de nombreuses pièces détachées : toute la chaîne se replie | J9 | haute | ouvert |
+| DT-032 | Modèles faits de nombreuses pièces détachées : toute la chaîne se replie | J9 | haute | **fermé (Q1)**, reste DT-034 |
+| DT-034 | Petites pièces : quelques-unes passent encore par le repli, ou n'en sortent pas | Q1 | moyenne | ouvert |
 | DT-033 | Terrains et scans : aucun outil n'aligne, le champ n'a rien à suivre | J9 | moyenne | ouvert |
 | DT-027 | Garde-fous de temps de calcul sur les entrées pathologiques | J8 | basse | ouvert |
 
@@ -90,6 +91,10 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   Un modèle à plusieurs pièces dont une seule est un tore perd donc tout le bénéfice.
 - **À faire** : quantifier les deux périodes à part, ou poser une coupe arbitraire ; traiter
   chaque pièce séparément.
+- **Fermé au chantier Q1** : une pièce sans singularité ni mur est découpée à partir d'un de
+  ses sommets, pris au hasard, d'où partent quatre traces. Le tore ressort en une seule grille
+  régulière par la chaîne principale, sans repli. Ce cas, que je croyais marginal, est en
+  réalité courant : sur un personnage de jeu, 92 pièces sur 164 étaient des anneaux.
 
 ### DT-004 — Solveur de quantification approché
 
@@ -397,6 +402,11 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 - **À faire** : traiter chaque pièce pour elle-même (budget réparti au prorata de l'aire,
   repli pièce par pièce), ignorer ou regrouper les pièces plus petites qu'un quad. La fusion
   des pièces qui se traversent en une seule peau reste l'affaire du jalon 11.
+- **Fermé au chantier Q1** : chaque pièce est maillée pour elle-même, avec sa part des quads
+  (au prorata de l'aire, pondérée par la densité peinte, avec un minimum par pièce), un
+  maillage de calcul à sa mesure, et son propre repli si besoin. Sur `mahaveer` : 15 secondes
+  au lieu de 84, 150 pièces sur 164 par la chaîne principale, budget tenu à 1,8 %. Ce qui
+  reste est suivi par DT-034.
 
 ### DT-033 — Terrains et scans : aucun outil n'aligne, le champ n'a rien à suivre
 
@@ -409,3 +419,18 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 - **Piste** : sur ces surfaces, la métrique d'alignement ne dit pas grand-chose ; ce qui
   compterait serait de suivre les lignes de crête et de vallée, à détecter comme des lignes à
   suivre plutôt que par la courbure point par point.
+
+### DT-034 — Petites pièces : quelques-unes passent encore par le repli, ou n'en sortent pas
+
+- **Né au** chantier Q1, sur `mahaveer` (164 pièces) et sur Desert Rose (96 coques).
+- **Constat** : sur `mahaveer` à 8000 quads, 6 pièces passent encore par la chaîne de repli et
+  8 n'en sortent avec aucune face ; le maillage garde 9 faces qui ne sont pas des quads. Sur
+  la rose, 12 coques sur 96 passent par le repli. Les causes, que le rapport détaille
+  maintenant pièce par pièce : la carte se replie (le plus souvent), pas de longueurs entières
+  saines, un bord hors des isolignes, une trace perdue.
+- **Par ailleurs** : une pièce dont la juste part est inférieure à un quad reçoit quand même
+  le minimum (6 quads pour une boule, 16 pour un anneau). Sur un modèle à très nombreuses
+  petites pièces, ces minimums pèsent sur le budget. Faut-il plutôt les ignorer, ou les
+  regrouper ? À décider.
+- **À faire** : reprendre ces causes une à une ; rendre le repli lui-même plus sûr sur les
+  très petites pièces, ou s'en passer.
