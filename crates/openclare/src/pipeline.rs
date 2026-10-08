@@ -92,6 +92,10 @@ pub struct Report {
     /// Edges of the output, as their two vertices, that run along a hard
     /// edge of the input.
     pub hard_edges: Vec<[u32; 2]>,
+    /// Edges of the output that should stay sharp when it is subdivided,
+    /// with how sharp, from 0 to 1 (see [`crate::creases`]). The hard edges
+    /// are among them, at 1.
+    pub creases: Vec<crate::creases::Crease>,
     pub stats: MeshStats,
     pub timings: Vec<(&'static str, Duration)>,
 }
@@ -107,6 +111,7 @@ impl Report {
         self.map_inversions += piece.map_inversions;
         self.pieces_fell_back += piece.fell_back as usize;
         self.hard_edges.extend(piece.hard_edges);
+        self.creases.extend(piece.creases);
         for (cause, count) in piece.fallback_causes {
             match self.fallback_causes.iter_mut().find(|(name, _)| *name == cause) {
                 Some((_, total)) => *total += count,

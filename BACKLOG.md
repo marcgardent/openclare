@@ -54,6 +54,7 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 | DT-040 | Improving a mesh from a dry run: tried for density, the rest to do | idea of the author | medium | open |
 | DT-041 | Blender add-on, first version: what it does not do | J10 | medium | open |
 | DT-042 | UV layers unfolded from the quad mesh: limits | J10 | medium | open |
+| DT-043 | Creases: limits | J12 | low | open |
 | DT-033 | Terrains et scans : aucun outil n'aligne, le champ n'a rien à suivre | J9 | moyenne | ouvert |
 | DT-027 | Garde-fous de temps de calcul sur les entrées pathologiques | J8 | basse | ouvert |
 
@@ -559,8 +560,10 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 - **After subdivision the volume is lost again.** Fitting makes the quad mesh keep the volume
   of the shape. A Catmull-Clark subdivision, the normal use of such a mesh, rounds it off and
   shrinks it. To keep the volume there, the fit should aim the limit surface of the
-  subdivision at the source, not the faces of the mesh. Not measured yet: the bench has no
-  metric on the subdivided mesh.
+  subdivision at the source, not the faces of the mesh. **Measured at milestone 12**
+  (`bench/creases.py` subdivides with Blender): the ogre at 1000 quads keeps 99.8 % of its
+  volume as a quad mesh and 96.4 % once subdivided twice; 98.8 % at 3000 quads. The other
+  closed organic models lose 2 to 3 % at 1000 quads the same way.
 - **Rims stay inscribed**: vertices on hard edges, corners and borders do not move. The rim of
   a cylinder is still a polygon inside its circle; it could slide outwards in the plane of the
   cap.
@@ -670,3 +673,25 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   own.
 - **Seen as a drawing of the coordinates only**: the two layers of the ogre were read back
   from Blender and plotted; nobody has yet looked at a texture on the model.
+
+### DT-043 — Creases: limits
+
+- **Born at** milestone 12.
+- **Little effect on organic shapes.** The rule finds few folds there (124 edges on the ogre at
+  3000 quads) and the subdivided mesh is hardly closer to the source for it. Either such
+  shapes have few folds worth a crease, or the rule misses them; the bench cannot tell which.
+  A picture of a subdivided nail or eyelid, with and without, would.
+- **A fold is only creased where edges run along it.** Nothing here moves edges onto a fold:
+  with the organic preset a fold the cross field did not follow is crossed by edges, and no
+  edge gets its weight. Hard edges (preset *Hard surface*) and guide curves are what put
+  edges on a line.
+- **Thresholds set by hand**: no weight under 30 degrees, full weight from 70, at least 60 %
+  of the turn close to the edge. Tried on a lens and on the bench, not tuned.
+- **A partial weight is Blender's**: the engine gives a number from 0 to 1 and Blender turns
+  it into a sharpness for the subdivision in its own way. Another host may read the same
+  number otherwise.
+- **Borders get no weight**: how a border is subdivided is a setting of the modifier.
+- **The `part` model at 1000 quads** stays at 15 per mille after subdivision, creases or not:
+  its holes have few quads round them and subdivision shrinks them.
+- **No setting**: the weights are always computed (it costs a few queries per edge) and the
+  add-on has a box to write them or not. The thresholds are not exposed.

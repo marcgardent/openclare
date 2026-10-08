@@ -70,9 +70,11 @@ islands that overlap) and an atlas where each rectangular patch is an island of 
 
 ## 4. Beyond the quad mesh
 
-Later, and each to be confirmed when its turn comes: seams and UVs (with milestone 10),
-automatic creases for subdivision (milestone 12), optimal normals per corner (milestone 13),
-Multires levels with the detail of the sculpt reprojected (milestone 14).
+Done ahead of their turn, at the author's request: two UV layers and their seams (milestone
+10, DT-042) and crease weights for subdivision (milestone 12, DT-043).
+
+Later, and each to be confirmed when its turn comes: optimal normals per corner (milestone
+13), Multires levels with the detail of the sculpt reprojected (milestone 14).
 
 ## 5. The project itself
 

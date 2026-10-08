@@ -81,6 +81,8 @@ pub struct OpenclareResult {
     mesh: PolyMesh,
     /// Edges of the mesh along a hard edge of the input.
     hard_edges: Vec<[u32; 2]>,
+    /// Edges to keep sharp under subdivision, and how sharp.
+    creases: Vec<([u32; 2], f64)>,
     /// Texture coordinates, worked out the first time they are asked for.
     layers: OnceLock<uv::Layers>,
     /// Empty when all went well.
@@ -94,6 +96,7 @@ impl OpenclareResult {
         Self {
             mesh: PolyMesh::default(),
             hard_edges: Vec::new(),
+            creases: Vec::new(),
             layers: OnceLock::new(),
             error: text(message),
             report: CString::default(),
@@ -268,6 +271,7 @@ unsafe fn remesh(
     Ok(OpenclareResult {
         mesh,
         hard_edges: done.hard_edges,
+        creases: done.creases,
         layers: OnceLock::new(),
         error: CString::default(),
         report: text(report),
@@ -481,6 +485,46 @@ pub unsafe extern "C" fn openclare_result_copy_hard_edges(result: *const Opencla
     let Some(result) = (unsafe { held(result) }) else { return };
     // SAFETY: room as documented.
     unsafe { copy_edges(&result.hard_edges, vertices) }
+}
+
+/// How many edges of the mesh carry a crease: those to keep sharp, wholly or
+/// in part, when the mesh is subdivided.
+///
+/// # Safety
+///
+/// See [`openclare_result_ok`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_result_crease_count(result: *const OpenclareResult) -> usize {
+    unsafe { held(result) }.map_or(0, |result| result.creases.len())
+}
+
+/// Writes the creased edges, two vertices per edge, into `vertices`, and
+/// their weights, from 0 (smooth) to 1 (sharp), into `weights`.
+///
+/// # Safety
+///
+/// See [`openclare_result_ok`]; with [`openclare_result_crease_count`] as
+/// the number of edges, `vertices` must have room for twice that many
+/// numbers and `weights` for that many.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_result_copy_creases(
+    result: *const OpenclareResult,
+    vertices: *mut u32,
+    weights: *mut f32,
+) {
+    let Some(result) = (unsafe { held(result) }) else { return };
+    if vertices.is_null() || weights.is_null() {
+        return;
+    }
+    let edges: Vec<[u32; 2]> = result.creases.iter().map(|&(edge, _)| edge).collect();
+    // SAFETY: room as documented.
+    unsafe {
+        copy_edges(&edges, vertices);
+        let out = std::slice::from_raw_parts_mut(weights, result.creases.len());
+        for (slot, &(_, weight)) in out.iter_mut().zip(&result.creases) {
+            *slot = weight as f32;
+        }
+    }
 }
 
 /// Writes edges as pairs of vertices; nothing if `vertices` is null.

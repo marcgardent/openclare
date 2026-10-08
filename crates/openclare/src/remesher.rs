@@ -10,6 +10,7 @@ use std::str::FromStr;
 use std::time::Instant;
 
 use crate::config::RemeshConfig;
+use crate::creases::{Crease, Creases};
 use crate::crossfield;
 use crate::error::{Error, Result};
 use crate::extract::{extract_faces, grid::graph_from_parametrization};
@@ -233,7 +234,8 @@ impl Remesher for IntegerGrid {
         recorder.record("extraction/quads", Shape::Polygons(&mesh));
 
         let relaxer = Laplacian { iterations: self.relax_iterations };
-        report.hard_edges = settle(&mut mesh, input, &work, edge_length, None, &relaxer, config.volume_fit, recorder)?;
+        (report.hard_edges, report.creases) =
+            settle(&mut mesh, input, &work, edge_length, None, &relaxer, config.volume_fit, recorder)?;
         clock.lap(&mut report, "relaxation");
 
         report.stats = mesh.stats();
@@ -334,7 +336,7 @@ impl Remesher for QuadLayout {
                 Ok((mesh, _)) if mesh.faces.is_empty() => report.pieces_failed += 1,
                 Ok((mesh, mut done)) => {
                     let offset = merged.positions.len() as u32;
-                    for edge in &mut done.hard_edges {
+                    for edge in done.hard_edges.iter_mut().chain(done.creases.iter_mut().map(|(edge, _)| edge)) {
                         *edge = edge.map(|v| v + offset);
                     }
                     merged.positions.extend(mesh.positions);
@@ -483,7 +485,7 @@ impl QuadLayout {
 
         // The layout knows which vertices lie on a border or a hard edge.
         let held = Some((meshed.on_feature, meshed.on_corner));
-        report.hard_edges =
+        (report.hard_edges, report.creases) =
             settle(&mut mesh, input, &work, edge_length, held, &self.relaxer, config.volume_fit, recorder)?;
         clock.lap(&mut report, "relaxation");
 
@@ -596,7 +598,7 @@ fn fields(
 /// are what its vertices snap to; the surface itself is the input. `held`
 /// lists the vertices known to lie on feature lines and on corners; without
 /// it they are told by distance. Returns the edges of the mesh that ended up
-/// along a feature line.
+/// along a feature line, and those to crease with their weights.
 #[allow(clippy::too_many_arguments)]
 fn settle(
     mesh: &mut PolyMesh,
@@ -607,7 +609,7 @@ fn settle(
     relaxer: &dyn Relaxer,
     volume_fit: f64,
     recorder: &mut dyn Recorder,
-) -> Result<Vec<[u32; 2]>> {
+) -> Result<(Vec<[u32; 2]>, Vec<Crease>)> {
     let constraints =
         crate::field::Constraints::from_feature_edges(&work.mesh.positions, &work.normals, &work.feature_edges);
     // A vertex belongs to a feature line when it is within a third of an
@@ -625,7 +627,9 @@ fn settle(
         recorder.begin("fitting")?;
         fitting::create(fitting::Kind::LeastSquares).fit(mesh, input, &surface, guide.as_ref(), volume_fit);
     }
-    Ok(guide.map_or_else(Vec::new, |features| features.edges_along(mesh)))
+    let hard_edges = guide.map_or_else(Vec::new, |features| features.edges_along(mesh));
+    let creases = Creases::default().mark(mesh, input, &surface, &hard_edges);
+    Ok((hard_edges, creases))
 }
 
 /// Times the stages of a chain.

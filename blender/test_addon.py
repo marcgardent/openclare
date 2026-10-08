@@ -147,16 +147,22 @@ settings.preset, settings.quads = "hard-surface", 600
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 mesh = bpy.context.active_object.data
 sharp = sum(edge.use_edge_sharp for edge in mesh.edges)
-print("EXPORT cube:", len(mesh.polygons), "quads,", sharp, "sharp edges")
+creases = [item.value for item in mesh.attributes["crease_edge"].data]
+creased = sum(1 for value in creases if value > 0)
+print("EXPORT cube:", len(mesh.polygons), "quads,", sharp, "sharp edges,", creased, "creased")
 assert sharp >= 12 and sharp % 12 == 0, f"{sharp} sharp edges on a cube"
+# The same edges are creased, all the way, and they are the sharp ones.
+assert creased == sharp and all(value in (0.0, 1.0) for value in creases)
+assert all((edge.use_edge_sharp) == (creases[edge.index] == 1.0) for edge in mesh.edges)
 
 # With the boxes unticked, the result is a bare mesh.
 alone(cube)
-settings.export_grid_uv = settings.export_atlas_uv = settings.export_sharp_edges = False
+settings.export_grid_uv = settings.export_atlas_uv = settings.export_sharp_edges = settings.export_creases = False
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 mesh = bpy.context.active_object.data
 assert len(mesh.uv_layers) == 0 and not any(edge.use_seam or edge.use_edge_sharp for edge in mesh.edges)
-settings.export_grid_uv = settings.export_atlas_uv = settings.export_sharp_edges = True
+assert "crease_edge" not in mesh.attributes
+settings.export_grid_uv = settings.export_atlas_uv = settings.export_sharp_edges = settings.export_creases = True
 settings.preset, settings.quads = "organic", 800
 
 # Nothing to remesh: said, not crashed.

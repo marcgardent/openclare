@@ -17,6 +17,7 @@
 #![allow(clippy::needless_range_loop)]
 
 pub mod config;
+pub mod creases;
 pub mod crossfield;
 pub mod curvature;
 pub mod error;

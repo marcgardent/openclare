@@ -235,8 +235,15 @@ fn a_result_carries_its_texture_coordinates_and_its_hard_edges() {
         let mut hard = vec![u32::MAX; 2 * openclare_result_hard_edge_count(result)];
         openclare_result_copy_hard_edges(result, hard.as_mut_ptr());
         assert!(hard.len() >= 2 * 12 && hard.iter().all(|&v| (v as usize) < vertices), "{} numbers", hard.len());
+        // Creases: the same twelve edges, at full weight.
+        let count = openclare_result_crease_count(result);
+        let (mut creased, mut weights) = (vec![u32::MAX; 2 * count], vec![-1f32; count]);
+        openclare_result_copy_creases(result, creased.as_mut_ptr(), weights.as_mut_ptr());
+        assert_eq!(2 * count, hard.len());
+        assert!(creased.iter().all(|&v| (v as usize) < vertices) && weights.iter().all(|&w| w == 1.0));
         openclare_result_free(result);
 
+        assert_eq!(openclare_result_crease_count(null()), 0);
         assert_eq!(openclare_result_seam_count(null()), 0);
         assert_eq!(openclare_result_hard_edge_count(null()), 0);
         assert_eq!(openclare_result_copy_uv(null(), OPENCLARE_UV_GRID, grid.as_mut_ptr()), 0);
