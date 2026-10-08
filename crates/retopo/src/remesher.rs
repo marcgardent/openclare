@@ -273,12 +273,16 @@ impl Remesher for QuadLayout {
                 input.positions.len()
             )));
         }
-        let shares = shares_of(&pieces, guides, config.density_contrast, quads);
+        let shares = shares_of(&pieces, guides, config, quads);
 
         let mut merged = PolyMesh::default();
         let mut report = Report { edge_length, pieces: pieces.len(), ..Default::default() };
         let mut first_error = None;
         for ((piece, origin), share) in pieces.iter().zip(shares) {
+            let Some(share) = share else {
+                report.pieces_skipped += 1;
+                continue;
+            };
             let density: Option<Vec<f64>> =
                 guides.density.map(|density| origin.iter().map(|&v| density[v as usize]).collect());
             let piece_guides = Guides { density: density.as_deref() };
@@ -330,8 +334,10 @@ fn least_quads(piece: &TriMesh) -> usize {
 
 /// How many quads each piece is asked for, out of `quads` in all: in
 /// proportion to its area, weighted by the painted density if there is one,
-/// and never less than a piece can be meshed with.
-fn shares_of(pieces: &[(TriMesh, Vec<u32>)], guides: &Guides, contrast: f64, quads: f64) -> Vec<usize> {
+/// and never less than a piece can be meshed with. `None` for a piece that
+/// the configuration says to leave out as too small.
+fn shares_of(pieces: &[(TriMesh, Vec<u32>)], guides: &Guides, config: &RemeshConfig, quads: f64) -> Vec<Option<usize>> {
+    let contrast = config.density_contrast;
     let weights: Vec<f64> = pieces
         .iter()
         .map(|(piece, origin)| match guides.density {
@@ -347,11 +353,16 @@ fn shares_of(pieces: &[(TriMesh, Vec<u32>)], guides: &Guides, contrast: f64, qua
         })
         .collect();
     let total: f64 = weights.iter().sum();
-    let floors: Vec<usize> = pieces.iter().map(|(piece, _)| least_quads(piece)).collect();
-    let mut shares: Vec<usize> = weights
+    let fair: Vec<f64> = weights.iter().map(|weight| quads * weight / total.max(f64::MIN_POSITIVE)).collect();
+    let kept: Vec<bool> = fair.iter().map(|&share| share >= config.skip_pieces_under).collect();
+    // A piece left out has no floor and takes nothing.
+    let floors: Vec<usize> =
+        pieces.iter().zip(&kept).map(|((piece, _), &kept)| if kept { least_quads(piece) } else { 0 }).collect();
+    let mut shares: Vec<usize> = fair
         .iter()
         .zip(&floors)
-        .map(|(weight, &floor)| ((quads * weight / total.max(f64::MIN_POSITIVE)).round() as usize).max(floor))
+        .zip(&kept)
+        .map(|((&share, &floor), &kept)| if kept { (share.round() as usize).max(floor) } else { 0 })
         .collect();
     // What the small pieces took beyond their due comes off the others, as
     // far as their own floors allow.
@@ -367,7 +378,7 @@ fn shares_of(pieces: &[(TriMesh, Vec<u32>)], guides: &Guides, contrast: f64, qua
             excess -= less;
         }
     }
-    shares
+    shares.into_iter().zip(kept).map(|(share, kept)| kept.then_some(share)).collect()
 }
 
 impl QuadLayout {

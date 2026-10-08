@@ -124,6 +124,15 @@ make scores MODEL=ogre TARGET=8000
 python3 scripts/scores.py mesh source.obj quads.obj --target 3000
 ```
 
+### Une page par modèle
+
+Ce que chaque remailleur fait de chaque modèle, en images, avec ses notes :
+[docs/models/](docs/models/README.md). Les images sont rendues par Blender.
+
+```bash
+make pages
+```
+
 ## Organisation
 
 | Module | Rôle |

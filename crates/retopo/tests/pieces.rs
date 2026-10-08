@@ -87,6 +87,19 @@ fn a_piece_too_small_for_its_share_still_gets_a_mesh() {
 }
 
 #[test]
+fn pieces_too_small_can_be_left_out_instead() {
+    let far = Vec3::new(10.0, 0.0, 0.0);
+    let mesh = assembly(&[(primitives::icosphere(4), Vec3::ZERO, 1.0), (primitives::icosphere(3), far, 0.01)]);
+    let settings = RemeshConfig { skip_pieces_under: 1.0, ..config(1000) };
+    let (quads, report) = settings.remesh(&mesh).unwrap();
+    assert_eq!((report.pieces, report.pieces_skipped, report.pieces_failed), (2, 1, 0));
+    assert_eq!(faces_where(&quads, |p| p.x > 5.0), 0);
+    assert!((quads.faces.len() as f64 - 1000.0).abs() < 50.0, "{} faces", quads.faces.len());
+    // The setting survives being saved and read back.
+    assert_eq!(RemeshConfig::from_text(&settings.to_text()).unwrap(), settings);
+}
+
+#[test]
 fn painting_one_piece_denser_takes_quads_from_the_others() {
     let far = Vec3::new(10.0, 0.0, 0.0);
     let mesh = assembly(&[(primitives::icosphere(4), Vec3::ZERO, 1.0), (primitives::icosphere(4), far, 1.0)]);
