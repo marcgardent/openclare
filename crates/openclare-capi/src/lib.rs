@@ -37,10 +37,12 @@
 
 use std::ffi::{CStr, CString, c_char, c_void};
 use std::panic::{AssertUnwindSafe, catch_unwind};
+use std::sync::OnceLock;
 use std::time::Instant;
 
 use openclare::math::Vec3;
 use openclare::recorder::{Recorder, Shape};
+use openclare::uv;
 use openclare::{Guides, PolyMesh, RemeshConfig, Target, TriMesh};
 
 /// Called when a stage of the run begins, with its name ("cross field", or
@@ -77,6 +79,10 @@ impl Recorder for Watcher {
 /// What a call to [`openclare_remesh`] gives back.
 pub struct OpenclareResult {
     mesh: PolyMesh,
+    /// Edges of the mesh along a hard edge of the input.
+    hard_edges: Vec<[u32; 2]>,
+    /// Texture coordinates, worked out the first time they are asked for.
+    layers: OnceLock<uv::Layers>,
     /// Empty when all went well.
     error: CString,
     /// What happened, as `key = value` lines.
@@ -85,7 +91,13 @@ pub struct OpenclareResult {
 
 impl OpenclareResult {
     fn failed(message: String) -> Self {
-        Self { mesh: PolyMesh::default(), error: text(message), report: CString::default() }
+        Self {
+            mesh: PolyMesh::default(),
+            hard_edges: Vec::new(),
+            layers: OnceLock::new(),
+            error: text(message),
+            report: CString::default(),
+        }
     }
 }
 
@@ -253,7 +265,13 @@ unsafe fn remesh(
         done.pieces_failed,
         done.pieces_skipped,
     );
-    Ok(OpenclareResult { mesh, error: CString::default(), report: text(report) })
+    Ok(OpenclareResult {
+        mesh,
+        hard_edges: done.hard_edges,
+        layers: OnceLock::new(),
+        error: CString::default(),
+        report: text(report),
+    })
 }
 
 /// The result behind a handle; `None` for a null one.
@@ -373,6 +391,107 @@ pub unsafe extern "C" fn openclare_result_copy_faces(
         *size = face.len() as u32;
         corners[next..next + face.len()].copy_from_slice(face);
         next += face.len();
+    }
+}
+
+/// Which layer of texture coordinates [`openclare_result_copy_uv`] writes.
+/// The grid: every quad a unit square, coordinates in whole numbers of
+/// quads, parts of the surface on top of each other. For patterns that
+/// repeat along the edge flow.
+pub const OPENCLARE_UV_GRID: u32 = 0;
+/// The atlas: islands that cover nothing twice, packed into the unit square.
+/// For painting; its cuts are given by [`openclare_result_copy_seams`].
+pub const OPENCLARE_UV_ATLAS: u32 = 1;
+
+/// Writes a layer of texture coordinates, u v for each corner of each face,
+/// in the order of [`openclare_result_copy_faces`], into `coordinates`.
+/// Returns 1 if it did, 0 if `layer` is not one of the two.
+///
+/// # Safety
+///
+/// See [`openclare_result_ok`]; `coordinates` must have room for twice
+/// [`openclare_result_corner_count`] numbers.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_result_copy_uv(
+    result: *const OpenclareResult,
+    layer: u32,
+    coordinates: *mut f32,
+) -> i32 {
+    let Some(result) = (unsafe { held(result) }) else { return 0 };
+    if coordinates.is_null() {
+        return 0;
+    }
+    let layers = result.layers.get_or_init(|| uv::unfold(&result.mesh));
+    let layer = match layer {
+        OPENCLARE_UV_GRID => &layers.grid,
+        OPENCLARE_UV_ATLAS => &layers.atlas,
+        _ => return 0,
+    };
+    // SAFETY: room for two numbers per corner, as documented.
+    let out = unsafe { std::slice::from_raw_parts_mut(coordinates, 2 * layer.len()) };
+    for (slot, uv) in out.chunks_exact_mut(2).zip(layer) {
+        slot.copy_from_slice(&[uv[0] as f32, uv[1] as f32]);
+    }
+    1
+}
+
+/// How many edges the atlas is cut along.
+///
+/// # Safety
+///
+/// See [`openclare_result_ok`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_result_seam_count(result: *const OpenclareResult) -> usize {
+    unsafe { held(result) }.map_or(0, |result| result.layers.get_or_init(|| uv::unfold(&result.mesh)).seams.len())
+}
+
+/// Writes the seams of the atlas, two vertices per edge, into `vertices`.
+///
+/// # Safety
+///
+/// See [`openclare_result_ok`]; `vertices` must have room for twice
+/// [`openclare_result_seam_count`] numbers.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_result_copy_seams(result: *const OpenclareResult, vertices: *mut u32) {
+    let Some(result) = (unsafe { held(result) }) else { return };
+    let seams = &result.layers.get_or_init(|| uv::unfold(&result.mesh)).seams;
+    // SAFETY: room as documented.
+    unsafe { copy_edges(seams, vertices) }
+}
+
+/// How many edges of the mesh run along a hard edge of the input.
+///
+/// # Safety
+///
+/// See [`openclare_result_ok`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_result_hard_edge_count(result: *const OpenclareResult) -> usize {
+    unsafe { held(result) }.map_or(0, |result| result.hard_edges.len())
+}
+
+/// Writes the edges along a hard edge of the input, two vertices per edge,
+/// into `vertices`.
+///
+/// # Safety
+///
+/// See [`openclare_result_ok`]; `vertices` must have room for twice
+/// [`openclare_result_hard_edge_count`] numbers.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_result_copy_hard_edges(result: *const OpenclareResult, vertices: *mut u32) {
+    let Some(result) = (unsafe { held(result) }) else { return };
+    // SAFETY: room as documented.
+    unsafe { copy_edges(&result.hard_edges, vertices) }
+}
+
+/// Writes edges as pairs of vertices; nothing if `vertices` is null.
+unsafe fn copy_edges(edges: &[[u32; 2]], vertices: *mut u32) {
+    if vertices.is_null() {
+        return;
+    }
+    // SAFETY: the caller has room for two numbers per edge.
+    let out = unsafe { std::slice::from_raw_parts_mut(vertices, 2 * edges.len()) };
+    for (slot, edge) in out.chunks_exact_mut(2).zip(edges) {
+        slot.copy_from_slice(edge);
     }
 }
 

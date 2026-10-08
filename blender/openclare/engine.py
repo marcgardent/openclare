@@ -44,6 +44,12 @@ def library():
     lib.openclare_result_report.argtypes = lib.openclare_result_free.argtypes = [pointer]
     lib.openclare_result_copy_positions.argtypes = [pointer, pointer]
     lib.openclare_result_copy_faces.argtypes = [pointer, pointer, pointer]
+    lib.openclare_result_copy_uv.restype = ctypes.c_int32
+    lib.openclare_result_copy_uv.argtypes = [pointer, ctypes.c_uint32, pointer]
+    for edges in ("seam", "hard_edge"):
+        count, copy = getattr(lib, f"openclare_result_{edges}_count"), getattr(lib, f"openclare_result_copy_{edges}s")
+        count.restype, count.argtypes = size, [pointer]
+        copy.restype, copy.argtypes = None, [pointer, pointer]
     lib.openclare_result_free.restype = None
     _library = lib
     return lib
@@ -53,9 +59,26 @@ def version():
     return library().openclare_version().decode()
 
 
+# The layers of texture coordinates the engine can give with a mesh.
+UV_LAYERS = {"grid": 0, "atlas": 1}
+
+
+class Remeshed:
+    """What a run gives: `positions` (three floats per vertex), `sizes` (the
+    number of corners of each face), `corners` (the vertex of each corner),
+    `report` (what the engine says of the run, as a dictionary), and what was
+    asked for on top: `uv` (per layer name, two floats per corner), `seams`
+    and `hard_edges` (two vertices per edge), None when not asked for."""
+
+    def __init__(self):
+        self.positions = self.sizes = self.corners = None
+        self.report, self.uv = {}, {}
+        self.seams = self.hard_edges = None
+
+
 def remesh(
     positions, vertex_count, triangles, triangle_count, corner_vertices, corner_count, preset, settings,
-    density=None, on_stage=None,
+    density=None, on_stage=None, uv_layers=(), seams=False, hard_edges=False,
 ):
     """Remeshes into quads the triangle mesh whose arrays sit at the addresses
     given: three floats per vertex at `positions`, three corners per triangle
@@ -70,9 +93,11 @@ def remesh(
     ("cross field", or "piece 3 of 12: cross field"); the run stops if it
     returns something true, and `EngineError` says so.
 
-    Returns `(positions, sizes, corners, report)`: numpy arrays of the
-    coordinates, of the number of corners of each face and of the vertex of
-    each corner, and what the engine says of the run as a dictionary.
+    `uv_layers` names the layers of texture coordinates wanted, among
+    "grid" and "atlas"; `seams` asks for the edges the atlas is cut along,
+    `hard_edges` for those that run along a hard edge of the input.
+
+    Returns a `Remeshed`.
     """
     import numpy
 
@@ -99,15 +124,26 @@ def remesh(
     try:
         if not lib.openclare_result_ok(result):
             raise EngineError(lib.openclare_result_error(result).decode())
-        out_positions = numpy.empty(3 * lib.openclare_result_vertex_count(result), numpy.float32)
-        sizes = numpy.empty(lib.openclare_result_face_count(result), numpy.uint32)
-        corners = numpy.empty(lib.openclare_result_corner_count(result), numpy.uint32)
-        lib.openclare_result_copy_positions(result, out_positions.ctypes.data)
-        lib.openclare_result_copy_faces(result, sizes.ctypes.data, corners.ctypes.data)
-        report = {}
+        out = Remeshed()
+        out.positions = numpy.empty(3 * lib.openclare_result_vertex_count(result), numpy.float32)
+        out.sizes = numpy.empty(lib.openclare_result_face_count(result), numpy.uint32)
+        out.corners = numpy.empty(lib.openclare_result_corner_count(result), numpy.uint32)
+        lib.openclare_result_copy_positions(result, out.positions.ctypes.data)
+        lib.openclare_result_copy_faces(result, out.sizes.ctypes.data, out.corners.ctypes.data)
         for line in lib.openclare_result_report(result).decode().splitlines():
             key, _, value = line.partition(" = ")
-            report[key] = value
-        return out_positions, sizes, corners, report
+            out.report[key] = value
+        for name in uv_layers:
+            coordinates = numpy.empty(2 * len(out.corners), numpy.float32)
+            if not lib.openclare_result_copy_uv(result, UV_LAYERS[name], coordinates.ctypes.data):
+                raise EngineError(f"the engine has no layer of texture coordinates named '{name}'")
+            out.uv[name] = coordinates
+        if seams:
+            out.seams = numpy.empty(2 * lib.openclare_result_seam_count(result), numpy.uint32)
+            lib.openclare_result_copy_seams(result, out.seams.ctypes.data)
+        if hard_edges:
+            out.hard_edges = numpy.empty(2 * lib.openclare_result_hard_edge_count(result), numpy.uint32)
+            lib.openclare_result_copy_hard_edges(result, out.hard_edges.ctypes.data)
+        return out
     finally:
         lib.openclare_result_free(result)

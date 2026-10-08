@@ -42,6 +42,7 @@ pub mod sizing;
 pub mod spatial;
 pub mod thickness;
 pub mod tmesh;
+pub mod uv;
 
 pub use config::RemeshConfig;
 pub use error::{Error, Result};

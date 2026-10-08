@@ -115,6 +115,50 @@ assert settings.adaptive_size == 0.0
 settings.preset = "organic"
 assert settings.adaptive_size == 50.0
 
+# Export: the result carries its two UV layers, the seams of the atlas and,
+# on a shape with hard edges, those edges marked sharp.
+def alone(target):
+    for other in bpy.context.selected_objects:
+        other.select_set(False)
+    bpy.context.view_layer.objects.active = target
+    target.select_set(True)
+
+alone(original)
+settings.preset = "organic"
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+mesh = bpy.context.active_object.data
+assert [layer.name for layer in mesh.uv_layers] == ["openclare grid", "openclare atlas"], list(mesh.uv_layers.keys())
+assert mesh.uv_layers.active.name == "openclare atlas"
+atlas = [tuple(item.uv) for item in mesh.uv_layers["openclare atlas"].data]
+grid = [tuple(item.uv) for item in mesh.uv_layers["openclare grid"].data]
+assert len(atlas) == len(grid) == len(mesh.loops)
+assert all(0.0 <= c <= 1.0 for uv in atlas for c in uv), "the atlas leaves the unit square"
+assert all(c == round(c) for uv in grid for c in uv), "the grid is not on whole numbers"
+seams = sum(edge.use_seam for edge in mesh.edges)
+assert seams > 0 and not any(edge.use_edge_sharp for edge in mesh.edges)
+print("EXPORT organic: 2 UV layers,", seams, "seam edges, no sharp edge")
+
+bpy.ops.mesh.primitive_cube_add()
+cube = bpy.context.active_object
+cube.modifiers.new("subdivide", "SUBSURF").subdivision_type = "SIMPLE"
+cube.modifiers["subdivide"].levels = 4
+alone(cube)
+settings.preset, settings.quads = "hard-surface", 600
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+mesh = bpy.context.active_object.data
+sharp = sum(edge.use_edge_sharp for edge in mesh.edges)
+print("EXPORT cube:", len(mesh.polygons), "quads,", sharp, "sharp edges")
+assert sharp >= 12 and sharp % 12 == 0, f"{sharp} sharp edges on a cube"
+
+# With the boxes unticked, the result is a bare mesh.
+alone(cube)
+settings.export_grid_uv = settings.export_atlas_uv = settings.export_sharp_edges = False
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+mesh = bpy.context.active_object.data
+assert len(mesh.uv_layers) == 0 and not any(edge.use_seam or edge.use_edge_sharp for edge in mesh.edges)
+settings.export_grid_uv = settings.export_atlas_uv = settings.export_sharp_edges = True
+settings.preset, settings.quads = "organic", 800
+
 # Nothing to remesh: said, not crashed.
 bpy.ops.object.empty_add()
 assert not bpy.ops.object.openclare_remesh.poll()

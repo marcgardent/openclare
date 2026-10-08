@@ -47,6 +47,32 @@ impl Features {
         })
     }
 
+    /// The edges of `mesh` that run along a feature line inside the surface:
+    /// both ends on a line, and the middle no farther from one than a fifth
+    /// of the edge is long (the chord of a curved line strays from it; an
+    /// edge that crosses from one line to another strays by half its
+    /// length). Edges of a border are left out: a border is a line to keep,
+    /// not a hard edge.
+    pub fn edges_along(&self, mesh: &PolyMesh) -> Vec<[u32; 2]> {
+        let on_a_line = |p: Vec3, within: f64| {
+            self.lines.closest_point(p).is_some_and(|hit| hit.distance_squared <= within * within)
+        };
+        let mut edges: Vec<[u32; 2]> = mesh
+            .edge_uses()
+            .into_iter()
+            .filter(|&(_, faces)| faces == 2)
+            .map(|(edge, _)| edge)
+            .filter(|&(a, b)| {
+                let (p, q) = (mesh.positions[a as usize], mesh.positions[b as usize]);
+                let length = p.distance(q);
+                on_a_line(p, 0.02 * length) && on_a_line(q, 0.02 * length) && on_a_line(0.5 * (p + q), 0.2 * length)
+            })
+            .map(|(a, b)| [a, b])
+            .collect();
+        edges.sort_unstable();
+        edges
+    }
+
     /// Says outright which vertices of the mesh to come lie on a feature
     /// line and which on a corner, instead of telling by distance.
     pub fn with_members(mut self, on_lines: Vec<u32>, on_corners: Vec<u32>) -> Self {

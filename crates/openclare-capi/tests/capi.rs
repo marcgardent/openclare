@@ -198,6 +198,52 @@ fn a_host_follows_the_stages_and_can_stop_the_run() {
 }
 
 #[test]
+fn a_result_carries_its_texture_coordinates_and_its_hard_edges() {
+    let cube = primitives::cube(8);
+    let positions: Vec<f32> = cube.positions.iter().flat_map(|p| [p.x as f32, p.y as f32, p.z as f32]).collect();
+    let triangles: Vec<u32> = cube.triangles.iter().flatten().copied().collect();
+    unsafe {
+        let result = openclare_remesh(
+            positions.as_ptr(),
+            positions.len() / 3,
+            triangles.as_ptr(),
+            triangles.len() / 3,
+            null(),
+            0,
+            null(),
+            c"hard-surface".as_ptr(),
+            c"quads = 600".as_ptr(),
+            None,
+            null_mut(),
+        );
+        assert_eq!(openclare_result_ok(result), 1, "{}", text(openclare_result_error(result)));
+        let (vertices, corners) = (openclare_result_vertex_count(result), openclare_result_corner_count(result));
+
+        let mut grid = vec![-1f32; 2 * corners];
+        let mut atlas = vec![-1f32; 2 * corners];
+        assert_eq!(openclare_result_copy_uv(result, OPENCLARE_UV_GRID, grid.as_mut_ptr()), 1);
+        assert_eq!(openclare_result_copy_uv(result, OPENCLARE_UV_ATLAS, atlas.as_mut_ptr()), 1);
+        assert_eq!(openclare_result_copy_uv(result, 7, atlas.as_mut_ptr()), 0);
+        assert!(grid.iter().all(|&c| c >= 0.0 && c == c.round()));
+        assert!(atlas.iter().all(|&c| (0.0..=1.0).contains(&c)));
+
+        let mut seams = vec![u32::MAX; 2 * openclare_result_seam_count(result)];
+        openclare_result_copy_seams(result, seams.as_mut_ptr());
+        assert!(!seams.is_empty() && seams.iter().all(|&v| (v as usize) < vertices));
+
+        // The twelve edges of the cube.
+        let mut hard = vec![u32::MAX; 2 * openclare_result_hard_edge_count(result)];
+        openclare_result_copy_hard_edges(result, hard.as_mut_ptr());
+        assert!(hard.len() >= 2 * 12 && hard.iter().all(|&v| (v as usize) < vertices), "{} numbers", hard.len());
+        openclare_result_free(result);
+
+        assert_eq!(openclare_result_seam_count(null()), 0);
+        assert_eq!(openclare_result_hard_edge_count(null()), 0);
+        assert_eq!(openclare_result_copy_uv(null(), OPENCLARE_UV_GRID, grid.as_mut_ptr()), 0);
+    }
+}
+
+#[test]
 fn a_null_result_is_harmless() {
     unsafe {
         assert_eq!(openclare_result_ok(null()), 0);
