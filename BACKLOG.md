@@ -51,6 +51,7 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 | DT-037 | Volume : le maillage est inscrit dans la forme | Q2 | haute | **closed (Q2 bis)**, DT-039 remains |
 | DT-038 | Parties fines : limites de la borne de taille | Q2 | moyenne | ouvert |
 | DT-039 | Fitting: limits, and the volume after subdivision | Q2 bis | medium | open |
+| DT-040 | Improving a mesh from a dry run: tried for density, the rest to do | idea of the author | medium | open |
 | DT-033 | Terrains et scans : aucun outil n'aligne, le champ n'a rien à suivre | J9 | moyenne | ouvert |
 | DT-027 | Garde-fous de temps de calcul sur les entrées pathologiques | J8 | basse | ouvert |
 
@@ -563,3 +564,32 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   asks for nothing, and its corners follow their other faces.
 - **Vertices off the surface**: by design, but a later stage that expects them on the source
   (a shrinkwrap in Blender, say) will undo the fit. To say in the documentation of the add-on.
+
+### DT-040 — Improving a mesh from a dry run
+
+- **Born** on 8 October 2026, from an idea of the author: run the chain once to mark the mesh,
+  turn the marks into one or several weights, and run again.
+- **Tried for density** (a script outside the repository): after each round, a density is
+  painted where the mesh was far from the source, and the next round uses it. On the ogre and
+  the pig at 3000 quads, three rounds, contrast 4:
+
+  | | Ogre, round 0 → best round | Pig, round 0 → best round |
+  |---|---|---|
+  | Distance to the mesh, 99th centile, share of a quad edge | 26.9 → 22.4 % | 17.4 → 15.3 % |
+  | Mean angle deviation | 6.3 → 7.6 degrees | 5.3 → 6.2 degrees |
+  | Irregular vertices | 155 → 183 | 102 → 104 |
+  | Hausdorff distance | 28.4 → 25.6 ‰ | 10.0 → 8.2 ‰, then 11.8 the round after |
+
+- **What it says**: density driven by the error gains 10 to 15 % on the worst distances, costs
+  a degree of quad shape, and swings from one round to the next. Curvature and thickness
+  already put the density about where it belongs, and every round redraws the whole mesh, so
+  the marks of one round only half predict the next.
+- **Where the idea should pay**, none of it written yet:
+  - *keep the best of several rounds*: results vary from run to run, the marks exist in the
+    library (`metrics::measure`), so marking a few runs and keeping the best is nearly free;
+  - *a validity loop*: when a round gives an inverted face or a piece through the fallback,
+    run again with what went wrong corrected there (smaller quads, another tolerance);
+  - *a weight for alignment*: where edges follow the shape badly, pull the cross field harder
+    towards curvature there. Alignment is the largest gap left with Quad Remesher.
+- **Decided on 8 October 2026**: a quality track of its own, after the first version of the
+  Blender add-on, starting with the best of several rounds and the validity loop.
