@@ -1234,7 +1234,7 @@ Chaque jalon produit quelque chose de vérifiable et se termine par **un arrêt 
 | J7 | Maillage quad depuis le T-mesh quantifié, par la route directe (à la place de M7 et M8) | **Fait.** Résultat complet ; règle d'acceptation tenue à 3000 quads. L'arrondi glouton reste comme repli (DT-009) |
 | J8 | Relaxation ; densité adaptative, puis contraintes de rang 3 à 5 | **Fait** : relaxation, densité adaptative (rang 2) et densité peinte (rang 5). Règle d'acceptation tenue aux trois budgets, forme des quads devant Quad Remesher. Reste le rang 4, les courbes guides (DT-024) ; le rang 3 relève du jalon 9 |
 | J9 | Surfaces dures : arêtes vives garanties, par des « murs » dans le T-mesh de la chaîne existante (à la place de la chaîne par patchs, DT-030) | **Fait, en attente de revue.** Pièces mécaniques comparées à QuadriFlow et à Quad Remesher ; arêtes et coins retrouvés exactement |
-| J9 bis | Symétrie : un modèle symétrique par rapport à un plan donne un maillage symétrique (DT-028) | Écart entre le maillage et son reflet nul ; boucle d'arêtes sur le plan de symétrie |
+| J9 bis | Symétrie : un modèle symétrique par rapport à un plan donne un maillage symétrique (DT-028). **Reportée** : passe après les travaux de qualité (décision du 8 octobre 2026) | Écart entre le maillage et son reflet nul ; boucle d'arêtes sur le plan de symétrie |
 | J10 | Export des coutures et des UV ; bibliothèque à interface C et greffon Python sans copie mémoire | Remaillage lancé depuis Blender, UV et coutures relus dans la scène |
 | J11 | Prétraitement de réparation : fusion des pièces qui se traversent, arêtes non variété | Desert Rose remaillée en une seule peau valide |
 | J12 | Plis automatiques : un poids de pli par arête de sortie | Après subdivision, le maillage plissé est plus proche de la source que le même sans plis |
@@ -1426,6 +1426,8 @@ Prises :
   dernière se donne en poids de 0 (densité minimale) à 1 (densité maximale), avec un contraste
   réglable, et se peindra en Weight Paint dans Blender (DT-026) ;
 - symétrie : inscrite à la feuille de route (jalon 9 bis, DT-028) ;
+- ordre des travaux (8 octobre 2026) : ce qui fait progresser la qualité du maillage passe avant
+  les fonctionnalités annexes (symétrie, export, interface) ;
 - surfaces dures : pas de seconde chaîne pour l'instant ; les arêtes vives sont des coupes du
   T-mesh de la chaîne existante, et la chaîne par patchs est mise au backlog (DT-030) ;
 - licence GPL-3.0-or-later ;
