@@ -49,10 +49,27 @@ fn a_chain_shows_its_stages_in_the_order_they_run() {
     order.dedup();
     assert_eq!(
         order,
-        ["input", "work", "sizing", "cross-field", "singularities", "layout", "quantization", "meshing", "result"]
+        [
+            "input",
+            "work",
+            "curvature",
+            "sizing",
+            "cross-field",
+            "singularities",
+            "layout",
+            "quantization",
+            "meshing",
+            "result"
+        ]
     );
     for layer in ["work/surface", "cross-field/crosses", "singularities/valence-3", "layout/cuts", "result/quads"] {
         assert!(paths.seen.iter().any(|path| path == layer), "{layer} is missing from {:?}", paths.seen);
+    }
+    // A viewer may show one stage at a time: what a stage draws on the
+    // surface comes with that surface.
+    for stage in ["cross-field", "singularities", "layout", "quantization"] {
+        let surface = format!("{stage}/surface");
+        assert!(paths.seen.contains(&surface), "{surface} is missing from {:?}", paths.seen);
     }
     assert!(paths.elements > quads.faces.len());
 }

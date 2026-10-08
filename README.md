@@ -139,8 +139,13 @@ Chaque étape de la chaîne peut montrer ce qu'elle produit : maillage de travai
 taille demandée aux quads, champ de croix et singularités avant et après simplification,
 coupes et nœuds de la structure globale, longueurs entières, quads avant et après relaxation.
 Le tout s'enregistre dans un fichier `.rrd` que l'on ouvre dans la visionneuse de
-[Rerun](https://rerun.io) : chaque calque se masque à part, et la ligne de temps `step`
-déroule les étapes dans l'ordre.
+[Rerun](https://rerun.io). Deux lignes de temps, à choisir en bas de la fenêtre :
+
+- `step`, celle qui s'ouvre : une étape à la fois. Chaque étape remplace la précédente, sur
+  la surface où elle se lit ; les flèches gauche et droite passent de l'une à l'autre, et la
+  dernière montre le maillage final seul.
+- `stack` : tout ce qui a été montré jusque-là reste, pour superposer deux étapes (les coupes
+  sur le maillage final, par exemple) en masquant les calques dont on ne veut pas.
 
 ```bash
 make view MODEL=ogre
