@@ -7,6 +7,7 @@
 
 mod decimate;
 mod dynamic_mesh;
+mod imprint;
 mod isotropic;
 
 use std::collections::HashMap;
@@ -20,6 +21,7 @@ use crate::math::Vec3;
 use crate::mesh::{Topology, TriMesh};
 use crate::spatial::Bvh;
 use dynamic_mesh::DynamicMesh;
+pub use imprint::GuideCurve;
 
 /// What the solvers work on.
 #[derive(Clone, Debug)]
@@ -27,8 +29,14 @@ pub struct WorkMesh {
     pub mesh: TriMesh,
     pub normals: Vec<Vec3>,
     pub areas: Vec<f64>,
-    /// Edges the output must follow: creases and open boundaries.
+    /// Edges the output must follow: creases, open boundaries and guide
+    /// curves.
     pub feature_edges: Vec<[u32; 2]>,
+    /// The guide curves as they were laid on the surface, stretch by
+    /// stretch: what tells a line drawn by the user from a hard edge.
+    pub guide_lines: Vec<[Vec3; 2]>,
+    /// Places where a guide curve could not be laid as one unbroken line.
+    pub guide_gaps: usize,
     /// Principal curvatures per vertex, read at [`Request::curvature_scale`].
     pub curvature: Curvature,
     /// How much the principal directions can be trusted, per vertex: 0 where
@@ -42,7 +50,7 @@ pub struct WorkMesh {
 }
 
 #[derive(Clone, Debug)]
-pub struct Request {
+pub struct Request<'a> {
     /// Size of the work mesh.
     pub triangles: usize,
     /// Dihedral angle in degrees above which an edge is a crease to keep.
@@ -52,11 +60,13 @@ pub struct Request {
     /// the quads to come, since smaller detail cannot be followed anyway.
     /// `None` reads it at the scale of the work mesh itself.
     pub curvature_scale: Option<f64>,
+    /// Curves drawn on the surface, to keep as lines of edges.
+    pub curves: &'a [GuideCurve],
 }
 
-impl Default for Request {
+impl Default for Request<'_> {
     fn default() -> Self {
-        Self { triangles: 100_000, crease_angle: None, curvature_scale: None }
+        Self { triangles: 100_000, crease_angle: None, curvature_scale: None, curves: &[] }
     }
 }
 
@@ -140,19 +150,26 @@ impl Preprocessor for Isotropic {
         let surface = Bvh::build(&source);
         let face_normals: Vec<Vec3> =
             (0..source.triangles.len()).map(|f| source.area_vector(f).normalize_or_zero()).collect();
-        let lines = (!features.is_empty()).then(|| {
-            let segment = |&[a, b]: &[u32; 2]| {
-                let (a, b) = (source.positions[a as usize], source.positions[b as usize]);
-                [a, b, b]
-            };
-            Bvh::from_triangles(features.iter().map(segment).collect())
-        });
-
         let mut mesh = DynamicMesh::new(&source, &features);
         let ceiling = (self.decimate_above * request.triangles as f64) as usize;
         if mesh.triangle_count() > ceiling {
             decimate::decimate(&mut mesh, ceiling);
         }
+        // Guide curves go in once the mesh is light, and before it is evened
+        // out, which then treats them as it does creases.
+        let laid = imprint::imprint(&mut mesh, &surface, &face_normals, request.curves);
+
+        // What the vertices of a line are held on: the creases of the source
+        // and the curves as laid.
+        let mut segments: Vec<[Vec3; 3]> = features
+            .iter()
+            .map(|&[a, b]| {
+                let (a, b) = (source.positions[a as usize], source.positions[b as usize]);
+                [a, b, b]
+            })
+            .collect();
+        segments.extend(laid.segments.iter().map(|&[a, b]| [a, b, b]));
+        let lines = (!segments.is_empty()).then(|| Bvh::from_triangles(segments));
 
         // Edge of the equilateral triangle that tiles the surface `triangles`
         // times, stretched a little: remeshing settles on edges slightly
@@ -162,11 +179,14 @@ impl Preprocessor for Isotropic {
         isotropic::remesh(&mut mesh, &target, edge_length, self.iterations);
 
         let (mesh, features) = mesh.finish();
-        Ok(work_mesh(mesh, features, request))
+        let mut work = work_mesh(mesh, features, request);
+        work.guide_lines = laid.segments;
+        work.guide_gaps = laid.gaps;
+        Ok(work)
     }
 }
 
-/// Leaves the triangulation as it is.
+/// Leaves the triangulation as it is. Guide curves are not laid.
 #[derive(Clone, Copy, Debug)]
 pub struct Passthrough;
 
@@ -266,7 +286,17 @@ fn work_mesh(mesh: TriMesh, feature_edges: Vec<[u32; 2]>, request: &Request) -> 
         .collect();
 
     let sizing = vec![1.0; mesh.positions.len()];
-    WorkMesh { mesh, normals, areas, feature_edges, curvature, confidence, sizing }
+    WorkMesh {
+        mesh,
+        normals,
+        areas,
+        feature_edges,
+        guide_lines: Vec::new(),
+        guide_gaps: 0,
+        curvature,
+        confidence,
+        sizing,
+    }
 }
 
 /// Shape statistics of a triangle mesh.

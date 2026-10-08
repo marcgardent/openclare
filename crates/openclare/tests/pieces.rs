@@ -106,11 +106,12 @@ fn painting_one_piece_denser_takes_quads_from_the_others() {
     // The second ball painted at 1, the first left at 0: four times the
     // quads per area with the default contrast.
     let weights: Vec<f64> = mesh.positions.iter().map(|p| if p.x > 5.0 { 1.0 } else { 0.0 }).collect();
-    let (quads, _) = config(2000).remesh_guided(&mesh, &Guides { density: Some(&weights) }).unwrap();
+    let (quads, _) =
+        config(2000).remesh_guided(&mesh, &Guides { density: Some(&weights), ..Default::default() }).unwrap();
     let (plain, painted) = (faces_where(&quads, |p| p.x < 5.0), faces_where(&quads, |p| p.x > 5.0));
     assert!((painted as f64 / plain as f64 - 4.0).abs() < 0.6, "{plain} plain, {painted} painted");
     assert!(((plain + painted) as f64 - 2000.0).abs() < 100.0);
 
     // One weight too few is refused, whatever the number of pieces.
-    assert!(config(2000).remesh_guided(&mesh, &Guides { density: Some(&weights[1..]) }).is_err());
+    assert!(config(2000).remesh_guided(&mesh, &Guides { density: Some(&weights[1..]), ..Default::default() }).is_err());
 }

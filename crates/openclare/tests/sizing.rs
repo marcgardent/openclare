@@ -117,7 +117,7 @@ fn the_mesh_follows_the_painted_density_and_keeps_its_budget() {
     let weights: Vec<f64> = source.positions.iter().map(|p| if p.z > 0.0 { 1.0 } else { 0.0 }).collect();
     let config =
         RemeshConfig { adaptivity: 0.0, density_contrast: 9.0, ..RemeshConfig::for_organic(Target::QuadCount(2000)) };
-    let (mesh, _) = config.remesh_guided(&source, &Guides { density: Some(&weights) }).unwrap();
+    let (mesh, _) = config.remesh_guided(&source, &Guides { density: Some(&weights), ..Default::default() }).unwrap();
     let metrics = measure(&source, &mesh, Some(2000));
     assert!(metrics.is_valid(), "{metrics:?}");
     assert!(metrics.budget_error.unwrap() <= 0.05, "{} faces", metrics.faces);

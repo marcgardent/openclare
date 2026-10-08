@@ -247,7 +247,7 @@ unsafe fn remesh(
     }
 
     let clock = Instant::now();
-    let guides = Guides { density: painted.as_deref() };
+    let guides = Guides { density: painted.as_deref(), ..Default::default() };
     let (mesh, done) = config.remesh_recorded(&input, &guides, watcher).map_err(|error| error.to_string())?;
     let seconds = clock.elapsed().as_secs_f64();
 

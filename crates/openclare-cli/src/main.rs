@@ -247,7 +247,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
         }
         None => None,
     };
-    let guides = Guides { density: density.as_deref() };
+    let guides = Guides { density: density.as_deref(), ..Default::default() };
     let (result, report) = match &record_path {
         Some(path) => remesh_recorded(path, &config, &mesh, &guides)?,
         None => config.remesh_guided(&mesh, &guides).map_err(|e| e.to_string())?,
@@ -598,7 +598,7 @@ fn parametrize_command(args: &[String]) -> Result<(), String> {
 struct LayoutOptions {
     input: Option<String>,
     quads: Option<usize>,
-    work: preprocess::Request,
+    work: preprocess::Request<'static>,
     field: crossfield::Request,
     simplify: Option<f64>,
     rounds: usize,
