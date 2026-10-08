@@ -33,6 +33,7 @@ Pour mesurer un seul maillage, quel que soit l'outil qui l'a produit :
 | `tmesh.py` | construit le T-mesh de chaque modèle et écrit `results/TMESH.md` |
 | `fetch_blenderkit.py` | télécharge les modèles BlenderKit du banc, non redistribuables, et les exporte (`make blenderkit`) |
 | `import_blenderkit.py` | script Blender : exporte un `.blend` de BlenderKit en OBJ source |
+| `../scripts/scores.py` | notes de 0 à 100 par modèle, remailleur et critère ; écrit `results/SCORES.md` (`make scores`) |
 | `acceptance.py` | confronte les résultats aux seuils d'acceptation, écrit `results/ACCEPTANCE.md` |
 | `quantize.py` | quantifie le T-mesh de chaque modèle et écrit `results/QUANTIZATION.md` |
 | `quadriflow.py` | script Blender : QuadriFlow sur un OBJ, une fois par graine |

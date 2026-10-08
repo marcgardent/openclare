@@ -104,6 +104,26 @@ Et pour le quantifier :
 ./target/release/retopo quantize entree.obj --quads 3000 --simplify 2
 ```
 
+### Notes comparatives
+
+Une note de 0 à 100, globale et par critère, pour chaque modèle du banc et chaque remailleur.
+Le rapport (en anglais) est dans [bench/results/SCORES.md](bench/results/SCORES.md) ; il
+explique comment chaque note est calculée.
+
+```bash
+make scores
+```
+
+Pour les notes d'un seul modèle, ou d'un maillage quelconque face à sa source :
+
+```bash
+make scores MODEL=ogre TARGET=8000
+```
+
+```bash
+python3 scripts/scores.py mesh source.obj quads.obj --target 3000
+```
+
 ## Organisation
 
 | Module | Rôle |
