@@ -74,6 +74,7 @@ CREASE_ANGLE = "30"
 
 # metric key, label, format, lower is better
 METRICS = [
+    ("faces", "Quads made", "{:.0f}", True),
     ("irregular_vertices", "Irregular vertices (S)", "{:.0f}", True),
     ("irregular_excess", "… of which above the minimum", "{:.0f}", True),
     ("base_complex_patches", "Base complex patches (C)", "{:.0f}", True),
@@ -201,6 +202,38 @@ def retopo(method, seeded=True, name=None, options=(), sharp_preset=None):
     return tool
 
 
+def faces_of(path):
+    with open(path) as lines:
+        return sum(1 for line in lines if line.startswith("f "))
+
+
+# Quad Remesher, left to itself, makes about twice the quads it is asked for.
+# These two set the budget aside to compare at equal quad count: its mesh as
+# it is, and ours asked for as many quads as that mesh has. Both are measured
+# against that number, not against the budget of the bench.
+MATCHED = ("quadremesher-as-made", "quad-layout-matched")
+
+
+def quadremesher_as_made(model, sharp, boundary, target, seeds, directory):
+    """Returns {seed: (path or None, seconds, failure reason, quads to measure against)}."""
+    path = quadremesher_reference(model, target, uniform=False)
+    if not path.exists():
+        return {seeds[0]: (None, 0.0, "no Quad Remesher reference", None)}
+    record = path.with_suffix(".seconds")
+    seconds = float(record.read_text()) if record.exists() else 0.0
+    return {seeds[0]: (path, seconds, None, faces_of(path))}
+
+
+def quad_layout_matched(model, sharp, boundary, target, seeds, directory):
+    reference = quadremesher_reference(model, target, uniform=False)
+    if not reference.exists():
+        return {seeds[0]: (None, 0.0, "no Quad Remesher reference to match", None)}
+    count = faces_of(reference)
+    chain = retopo("quad-layout", seeded=False, name="quad-layout-matched", options=["--adaptivity", "0.5"],
+                   sharp_preset="hard-surface")
+    return {seed: (*made, count) for seed, made in chain(model, sharp, boundary, count, seeds, directory).items()}
+
+
 # Every remesher under test. A new chain only needs a line here.
 TOOLS = {
     "quadriflow": quadriflow,
@@ -224,6 +257,8 @@ TOOLS = {
     # Commercial yardstick; needs the add-on and a licence (see bench/README.md).
     "quadremesher": quadremesher(uniform=False),
     "quadremesher-uniform": quadremesher(uniform=True),
+    "quadremesher-as-made": quadremesher_as_made,
+    "quad-layout-matched": quad_layout_matched,
 }
 
 
@@ -263,9 +298,17 @@ def report(results, target, seeds, tools):
         "# Bench results",
         "",
         f"Requested budget: {target} quads. Median over {len(seeds)} seeds; Quad Remesher and integer-grid have "
-        "no seed and run once. Lower is better for every metric; \"—\" means it could not be measured.",
+        "no seed and run once. The first row is how many quads each tool made; below it, lower is better "
+        "for every metric. \"—\" means it could not be measured.",
         "",
     ]
+    if all(tool in tools for tool in MATCHED):
+        lines += [
+            "The last two columns compare at equal quad count: `quadremesher-as-made` is the mesh of "
+            "`quadremesher` measured against the number of quads it has rather than the budget, and "
+            "`quad-layout-matched` is `quad-layout-adaptive` asked for that same number.",
+            "",
+        ]
     for model, category, *_ in MODELS:
         if model not in results:
             continue
@@ -337,9 +380,12 @@ def main():
         raw.setdefault(model, {})
         for tool in tools:
             runs = []
-            for seed, (path, seconds, failure) in sorted(TOOLS[tool](model, sharp, boundary, options.target, seeds, directory).items()):
-                metrics = measure(model, path, options.target) if path else None
-                runs.append({"seed": seed, "seconds": seconds, "failure": failure, "metrics": metrics})
+            for seed, (path, seconds, failure, *own) in sorted(TOOLS[tool](model, sharp, boundary, options.target, seeds, directory).items()):
+                # A tool may say what number of quads its mesh is to be
+                # measured against, instead of the budget of the bench.
+                against = own[0] if own and own[0] else options.target
+                metrics = measure(model, path, against) if path else None
+                runs.append({"seed": seed, "seconds": seconds, "failure": failure, "metrics": metrics, "against": against})
             raw[model][tool] = runs
             summary = summarize(runs)
             print(f"{model:10} {tool:15} valid {summary['valid']}/{summary['runs']}  "

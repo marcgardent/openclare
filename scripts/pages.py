@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "bench"))
 sys.path.insert(0, str(ROOT / "scripts"))
 from run import DEFAULT_TARGET, LOCAL_MODELS, MODELS, OUTPUT, TOOLS, available_models, source_path  # noqa: E402
-from scores import load, rows_of  # noqa: E402
+from scores import MATCHED, load, rows_of, without_matched  # noqa: E402
 
 PAGES = ROOT / "docs" / "models"
 # The remeshers pictured, with the name they go by on the page.
@@ -137,7 +137,11 @@ def main():
         for target in (1000, 3000, 8000):
             table = marks[target].get(model)
             if table:
-                lines += [f"### {target} quads", ""] + rows_of(table, bold="quad-layout-adaptive") + [""]
+                lines += [f"### {target} quads", ""] + rows_of(without_matched(table), bold="quad-layout-adaptive") + [""]
+                pair = {tool: table[tool] for tool in MATCHED if tool in table}
+                if len(pair) == len(MATCHED):
+                    lines += ["At equal quad count: Quad Remesher's mesh as it is, and openclare asked for as many quads.", ""]
+                    lines += rows_of(pair) + [""]
         (PAGES / f"{model}.md").write_text("\n".join(lines))
         print(f"{model}: {len(shown)} pictures", flush=True)
 

@@ -26,7 +26,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "bench"))
-from run import DEFAULT_TARGET, MODELS, RESULTS, RETOPO  # noqa: E402
+from run import DEFAULT_TARGET, MATCHED, MODELS, RESULTS, RETOPO  # noqa: E402
 
 # Criteria, in the order they are shown: key, title, what a full mark means.
 CRITERIA = [
@@ -108,10 +108,12 @@ def median(values):
     return statistics.median(values) if values else None
 
 
-def scores_of(measured, runs, seconds):
+def scores_of(measured, runs, seconds, budget_counts=True):
     """Marks of a remesher on a model. `measured` holds the metrics of the
-    runs that gave a mesh, `runs` is how many were launched."""
+    runs that gave a mesh, `runs` is how many were launched. Without
+    `budget_counts`, the number of quads is left out of the overall mark."""
     marks = {key: None for key, *_ in CRITERIA}
+    quads = None
     if runs == 0:
         return None
     marks["validity"] = 100.0 * sum(1 for m in measured if m.get("valid")) / runs
@@ -121,12 +123,19 @@ def scores_of(measured, runs, seconds):
         if typical.get("faces"):
             for key, scale in SCALES.items():
                 marks[key] = scale(typical)
+        quads = typical.get("faces")
     marks["speed"] = speed_score(seconds)
     # Overall: the weighted mean of the criteria that exist for this model.
     # A remesher that gave no mesh at all has nothing but its validity: 0.
-    counted = [(marks[key], WEIGHTS[key]) for key in marks if marks[key] is not None and WEIGHTS[key] > 0]
+    counted = [
+        (marks[key], WEIGHTS[key])
+        for key in marks
+        if marks[key] is not None and WEIGHTS[key] > 0 and (budget_counts or key != "budget")
+    ]
     weight = sum(w for _, w in counted)
     marks["overall"] = sum(mark * w for mark, w in counted) / weight if measured and weight else 0.0
+    # Not a mark: how many quads the mesh has, to read the marks by.
+    marks["quads"] = quads
     return marks
 
 
@@ -144,7 +153,7 @@ def load(target):
         for tool, runs in tools.items():
             measured = [run["metrics"] for run in runs if run.get("metrics")]
             seconds = median([run.get("seconds") for run in runs])
-            marks = scores_of(measured, len(runs), seconds)
+            marks = scores_of(measured, len(runs), seconds, budget_counts=tool not in MATCHED)
             if marks:
                 table.setdefault(model, {})[tool] = marks
     return table
@@ -157,24 +166,44 @@ def show(mark):
 def rows_of(tools, bold=None):
     """Markdown rows: one remesher per line, overall first, then each criterion."""
     lines = [
-        "| Remesher | Overall | " + " | ".join(title for _, title, _ in CRITERIA) + " |",
-        "|---|---|" + "---|" * len(CRITERIA),
+        "| Remesher | Quads | Overall | " + " | ".join(title for _, title, _ in CRITERIA) + " |",
+        "|---|---|---|" + "---|" * len(CRITERIA),
     ]
     for tool, marks in sorted(tools.items(), key=lambda item: -item[1]["overall"]):
         name = f"**{tool}**" if tool == bold else tool
         cells = [show(marks[key]) for key, *_ in CRITERIA]
-        lines.append(f"| {name} | **{marks['overall']:.0f}** | " + " | ".join(cells) + " |")
+        lines.append(f"| {name} | {show(marks.get('quads'))} | **{marks['overall']:.0f}** | " + " | ".join(cells) + " |")
+    return lines
+
+
+def without_matched(tools):
+    """The remeshers run at the budget of the bench."""
+    return {tool: marks for tool, marks in tools.items() if tool not in MATCHED}
+
+
+def matched_rows(table, models):
+    """Markdown rows: one model per line, Quad Remesher as it is against
+    openclare at the same number of quads, as `theirs / ours`."""
+    theirs, ours = MATCHED
+    shown = [("quads", "Quads"), ("overall", "Overall")] + [(key, title) for key, title, _ in CRITERIA if WEIGHTS[key] > 0 and key != "budget"]
+    lines = ["| Model | " + " | ".join(title for _, title in shown) + " |", "|---|" + "---|" * len(shown)]
+    for model in models:
+        pair = table.get(model, {})
+        if theirs not in pair or ours not in pair:
+            continue
+        cells = [f"{show(pair[theirs].get(key))} / {show(pair[ours].get(key))}" for key, _ in shown]
+        lines.append(f"| {model} | " + " | ".join(cells) + " |")
     return lines
 
 
 def text_table(tools):
     """The same as plain text, for the terminal."""
     width = max(len(tool) for tool in tools)
-    header = f"{'':{width}}  overall  " + "  ".join(f"{title[:10]:>10}" for _, title, _ in CRITERIA)
+    header = f"{'':{width}}    quads  overall  " + "  ".join(f"{title[:10]:>10}" for _, title, _ in CRITERIA)
     lines = [header]
     for tool, marks in sorted(tools.items(), key=lambda item: -item[1]["overall"]):
         cells = "  ".join(f"{show(marks[key]):>10}" for key, *_ in CRITERIA)
-        lines.append(f"{tool:{width}}  {marks['overall']:7.0f}  {cells}")
+        lines.append(f"{tool:{width}}  {show(marks.get('quads')):>7}  {marks['overall']:7.0f}  {cells}")
     return "\n".join(lines)
 
 
@@ -185,8 +214,8 @@ def averages(table, models):
     for tool in tools:
         run_on = [table[model][tool] for model in models if tool in table.get(model, {})]
         marks = {}
-        for key in [key for key, *_ in CRITERIA] + ["overall"]:
-            values = [m[key] for m in run_on if m[key] is not None]
+        for key in [key for key, *_ in CRITERIA] + ["overall", "quads"]:
+            values = [m[key] for m in run_on if m.get(key) is not None]
             marks[key] = sum(values) / len(values) if values else None
         out[tool] = (marks, len(run_on))
     return out
@@ -222,6 +251,13 @@ def write_report(targets):
         "| Budget | " + CRITERIA[6][2] + " | exact | 25 % off | 10 |",
         "| Speed | " + CRITERIA[7][2] + " | 1 s | 60 s (logarithmic) | 0 |",
         "",
+        "The *Quads* column is not a mark: it is how many quads the mesh has (the mean over the models, in",
+        "the averages). Quad Remesher, left to itself, makes about twice the quads it is asked for, and its",
+        "Budget mark says so. To compare at equal quad count, two more rows are set apart under each",
+        "budget: `quadremesher-as-made` is the mesh of `quadremesher` marked against the number of quads",
+        "it has, and `quad-layout-matched` is openclare (`quad-layout-adaptive`) asked for that same number.",
+        "Budget does not count there.",
+        "",
         "Fidelity is two marks that count the same where the source has parts thinner than a quad edge",
         "(fingers, ears): one for the Hausdorff distance, one for how far those parts are from the mesh",
         "on average, in quad edges. Elsewhere it is the first alone.",
@@ -249,18 +285,28 @@ def write_report(targets):
             lines += [f"### {category.capitalize()} models: average", ""]
             lines += [f"Over {', '.join(present)}.", ""]
             mean = averages(table, present)
-            lines += rows_of({tool: marks for tool, (marks, _) in mean.items()})
+            lines += rows_of(without_matched({tool: marks for tool, (marks, _) in mean.items()}))
             partial = [f"{tool} ({count} of {len(present)})" for tool, (_, count) in mean.items() if count < len(present)]
             if partial:
                 lines += ["", "Not run on every model: " + ", ".join(partial) + "."]
             lines.append("")
+        for category, names in groups:
+            present = [name for name in names if all(tool in table.get(name, {}) for tool in MATCHED)]
+            if not present:
+                continue
+            lines += [f"### {category.capitalize()} models at equal quad count", ""]
+            lines += ["Quad Remesher as it is / openclare asked for as many quads; the last line is the average.", ""]
+            rows = matched_rows(table, present)
+            mean = {tool: marks for tool, (marks, _) in averages(table, present).items()}
+            rows += matched_rows({"**average**": mean}, ["**average**"])[2:]
+            lines += rows + [""]
         lines += [f"### Model by model, {target} quads", ""]
         for category, names in groups:
             for name in names:
                 if name not in table:
                     continue
                 lines += [f"#### {name} ({category})", ""]
-                lines += rows_of(table[name])
+                lines += rows_of(without_matched(table[name]))
                 lines.append("")
     RESULTS.mkdir(exist_ok=True)
     (RESULTS / "SCORES.md").write_text("\n".join(lines))
