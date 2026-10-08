@@ -36,6 +36,8 @@ BY-SA 4.0 peut être placé sous GPLv3, pas l'inverse. Décision du 8 octobre 20
 | `bridge` | *Pittsburgh Bridge*, scan du Panoptic Studio (Carnegie Mellon) | idem | versé au domaine public par ses auteurs | dans le dépôt | tel quel |
 | `suzanne` | *Suzanne*, la tête de singe de Blender, Blender Foundation | primitive « Monkey » de Blender, exportée par `bench/make_corpus.py` | livrée avec Blender, logiciel sous licence GNU GPL | dans le dépôt | subdivisée |
 | `terrain` | *Mountain Range Terrain*, Bipro Fx | [BlenderKit](https://www.blenderkit.com/), `asset_base_id:43a14c49-93bb-49e7-baec-6397eae071c5`, publié le 7 juillet 2026, récupéré le 8 octobre 2026 | Royalty Free de BlenderKit : utilisable dans un projet, pas redistribuable tel quel | **hors dépôt** | exporté tel quel par `bench/import_blenderkit.py`, 543 557 triangles |
+| `mahaveer` | *Mahaveer Dev*, Avi Panchal | BlenderKit, `asset_base_id:b6564fca-81c7-4873-945a-287fe143b7e6`, publié le 29 décembre 2025, récupéré le 8 octobre 2026 | Royalty Free de BlenderKit | **hors dépôt** | exporté tel quel, 418 472 triangles, 164 morceaux |
+| `marine` | *Marine Armor*, Grudgebearer iZerat ; création de fan d'après un jeu vidéo | BlenderKit, `asset_base_id:22029966-6ee8-48d1-8d6b-d962162e09fa`, publié le 9 janvier 2024, récupéré le 8 octobre 2026 | Royalty Free de BlenderKit | **hors dépôt**, aucune image publiée | exporté tel quel, 247 198 triangles |
 
 ## Formes produites par le projet
 
@@ -53,6 +55,12 @@ Aucun droit de tiers. Elles sont produites par des scripts du dépôt et suivent
 |---|---|---|
 | `bench/reference/quadremesher/` | Quad Remesher 1.4.1, Exoside | licence d'essai, usage non commercial ; lancé depuis Blender 5.2.2 les 6, 7 et 8 octobre 2026 |
 | résultats « quadriflow » | QuadriFlow, intégré à Blender | relancé à chaque mesure, rien n'est conservé |
+
+## Images
+
+Les pages de `docs/models/` montrent des rendus des modèles et de leurs remaillages. Pour les
+modèles sous licence Royalty Free de BlenderKit, des images sont permises, pas les modèles
+eux-mêmes. Aucune image de `marine` n'est publiée : c'est une création de fan d'après un jeu.
 
 ## Ajouter un modèle
 

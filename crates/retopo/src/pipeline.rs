@@ -84,6 +84,9 @@ pub struct Report {
     pub pieces: usize,
     pub pieces_fell_back: usize,
     pub pieces_failed: usize,
+    /// Pieces left out because their share of the quads was too small (see
+    /// [`crate::RemeshConfig::skip_pieces_under`]).
+    pub pieces_skipped: usize,
     /// Why pieces went to the other chain, with how many for each reason.
     pub fallback_causes: Vec<(&'static str, usize)>,
     pub stats: MeshStats,

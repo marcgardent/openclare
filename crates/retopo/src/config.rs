@@ -40,6 +40,10 @@ pub struct RemeshConfig {
     /// the places painted at 1 get than those left at 0. At 4, their edges
     /// are half as long.
     pub density_contrast: f64,
+    /// On a model made of several separate pieces: a piece whose fair share
+    /// of the quads is below this is left out, instead of getting the few
+    /// quads no shape can do without. 0 keeps every piece.
+    pub skip_pieces_under: f64,
     pub seed: u64,
 }
 
@@ -92,6 +96,7 @@ impl RemeshConfig {
             crease_angle: None,
             adaptivity: 0.5,
             density_contrast: 4.0,
+            skip_pieces_under: 0.0,
             seed: 1,
         }
     }
@@ -131,6 +136,7 @@ impl RemeshConfig {
 
     pub fn validate(&self) -> Result<()> {
         let non_negative = [
+            ("skip_pieces_under", self.skip_pieces_under),
             ("alignment", self.alignment),
             ("singularity_reach", self.singularity_reach),
             ("singularity_tolerance", self.singularity_tolerance),
@@ -176,6 +182,7 @@ impl RemeshConfig {
         .unwrap();
         writeln!(text, "adaptivity = {}", self.adaptivity).unwrap();
         writeln!(text, "density_contrast = {}", self.density_contrast).unwrap();
+        writeln!(text, "skip_pieces_under = {}", self.skip_pieces_under).unwrap();
         writeln!(text, "seed = {}", self.seed).unwrap();
         text
     }
@@ -207,6 +214,7 @@ impl RemeshConfig {
                 "crease_angle" => config.crease_angle = Some(number_of("number of degrees, nor 'none'")?),
                 "adaptivity" => config.adaptivity = number_of("number")?,
                 "density_contrast" => config.density_contrast = number_of("number")?,
+                "skip_pieces_under" => config.skip_pieces_under = number_of("number")?,
                 "seed" => config.seed = value.parse().map_err(|_| error(format!("'{value}' is not a seed")))?,
                 other => return Err(error(format!("unknown setting '{other}'"))),
             }

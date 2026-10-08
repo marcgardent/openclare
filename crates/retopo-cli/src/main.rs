@@ -40,6 +40,7 @@ OPTIONS (remesh):
     --adaptivity <A>             0 for quads of one size, up to 1 for quads as small as the shape bends
     --density <FILE>             painted density: one weight per input vertex, one per line, from 0 (least dense) to 1 (most)
     --density-contrast <F>       how many times denser a weight of 1 is than a weight of 0 (default 4)
+    --skip-pieces-under <Q>      leave out the separate pieces whose share of the quads is below Q (default 0: keep all)
     --seed <N>                   random seed
 
 OPTIONS (preprocess):
@@ -179,6 +180,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
             "--adaptivity" => config.adaptivity = parse(arg, value(arg)?)?,
             "--density" => density_path = Some(value(arg)?.clone()),
             "--density-contrast" => config.density_contrast = parse(arg, value(arg)?)?,
+            "--skip-pieces-under" => config.skip_pieces_under = parse(arg, value(arg)?)?,
             "--seed" => config.seed = parse(arg, value(arg)?)?,
             flag if flag.starts_with("--") => return Err(format!("unknown option '{flag}'")),
             path => paths.push(path),
@@ -235,8 +237,8 @@ fn remesh(args: &[String]) -> Result<(), String> {
     );
     if report.pieces > 1 {
         println!(
-            "pieces   {} separate pieces, {} through the integer-grid chain, {} not meshed",
-            report.pieces, report.pieces_fell_back, report.pieces_failed
+            "pieces   {} separate pieces, {} through the integer-grid chain, {} not meshed, {} left out as too small",
+            report.pieces, report.pieces_fell_back, report.pieces_failed, report.pieces_skipped
         );
     } else if report.fell_back {
         println!("note     the integer-grid chain did the job");

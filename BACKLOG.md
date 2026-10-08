@@ -27,11 +27,11 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 | DT-011 | Faces très étirées dans la carte sans couture | J4 | basse | ouvert |
 | DT-012 | Préréglage `hard-surface` sur la chaîne organique | J4 bis | haute (durci) | **fermé au J9** |
 | DT-013 | Valeurs des préréglages non réglées sur le corpus | J4 bis | moyenne | ouvert |
-| DT-014 | Visualisation des champs et des structures | J2 | basse | ouvert |
+| DT-014 | Visualisation des champs et des structures | J2 | basse | ouvert (rendus faits au T1, interface au T2) |
 | DT-015 | Code encore nommé `retopo` | J4 bis | basse | ouvert |
 | DT-016 | Documents en français, à traduire | J0 | basse | ouvert |
 | DT-017 | Corpus : sculptures de l'auteur à ajouter avant la fin de la licence d'essai | J0 | moyenne | ouvert |
-| DT-018 | Parties plus fines qu'un quad mal rendues à bas budget | J7 | moyenne | ouvert (atténué au J8) |
+| DT-018 | Parties plus fines qu'un quad mal rendues à bas budget | J7 | haute | ouvert (atténué au J8) ; chantier Q2 |
 | DT-019 | Relaxation rudimentaire : la forme des quads plafonne | J7 | haute | **fermé au J8** |
 | DT-020 | Complexe de base doublé par les jonctions en T | J7 | moyenne | ouvert |
 | DT-021 | Scan bruité (rock) : le champ suit le bruit | J7 | moyenne | ouvert |
@@ -188,6 +188,10 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 - **Né au** jalon 2. Reporté par décision (« nous verrons plus tard »).
 - **Constat** : les champs, traces et patchs ne se regardent que par des OBJ de lignes et des
   rendus faits à la main.
+- **Chantier T1 (8 octobre 2026)** : les maillages finaux ont maintenant de vrais rendus
+  (Blender, `scripts/render.py`) et une page par modèle (`make pages`). Les étapes
+  intermédiaires (champ, traces, patchs) restent sans visualisation.
+- **Chantier T2** : interface avec Rerun, demandée le 8 octobre 2026. À faire.
 
 ### DT-015 — Code encore nommé `retopo`
 
@@ -217,6 +221,9 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   probablement pour la même raison ; à vérifier.
 - **Piste** : densité adaptative (rang 2 des contraintes, J8) ; à défaut, détection des parties
   minces et placement des sommets sur leur ligne médiane.
+- **Remarque de l'auteur, 8 octobre 2026** : les doigts et les oreilles de l'ogre sont un vrai
+  problème pour tous les remailleurs. L'exigence à tenir : garder au moins le volume de ces
+  parties. C'est devenu le chantier de qualité Q2.
 - **Au jalon 8** : avec la densité adaptative du préréglage, le cochon est valide à 1000 quads.
   Mais les oreilles de l'ogre restent son plus grand écart à la source : la courbure seule ne
   voit pas qu'une partie est mince. Il faudrait une mesure d'épaisseur locale dans le champ de
@@ -430,7 +437,8 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   saines, un bord hors des isolignes, une trace perdue.
 - **Par ailleurs** : une pièce dont la juste part est inférieure à un quad reçoit quand même
   le minimum (6 quads pour une boule, 16 pour un anneau). Sur un modèle à très nombreuses
-  petites pièces, ces minimums pèsent sur le budget. Faut-il plutôt les ignorer, ou les
-  regrouper ? À décider.
+  petites pièces, ces minimums pèsent sur le budget. **Décidé le 8 octobre 2026** : on garde
+  ce minimum par défaut, et le réglage `skip_pieces_under` permet de laisser de côté les
+  pièces dont la part est inférieure à un seuil.
 - **À faire** : reprendre ces causes une à une ; rendre le repli lui-même plus sûr sur les
   très petites pièces, ou s'en passer.

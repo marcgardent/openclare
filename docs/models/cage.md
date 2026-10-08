@@ -1,0 +1,50 @@
+# cage
+
+An organic model; 26 656 triangles in the source.
+Author, source and licence: [CREDITS.md](../../CREDITS.md).
+
+## At 3000 quads
+
+| Source | QuadriFlow (Blender) | openclare | Quad Remesher |
+|---|---|---|---|
+| ![Source](img/cage__source.webp) | ![QuadriFlow (Blender)](img/cage__quadriflow.webp) | ![openclare](img/cage__quad-layout-adaptive.webp) | ![Quad Remesher](img/cage__quadremesher.webp) |
+
+## Marks
+
+From 0 to 100; how they are made is in [SCORES.md](../../bench/results/SCORES.md).
+
+### 1000 quads
+
+| Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
+|---|---|---|---|---|---|---|---|---|---|
+| **quad-layout-adaptive** | **86** | 100 | 86 | 75 | 70 | 84 | 79 | 100 | 92 |
+| integer-grid | **83** | 100 | 86 | 75 | 46 | 92 | 90 | 88 | 73 |
+| quad-layout | **81** | 100 | 82 | 77 | 41 | 84 | 74 | 100 | 100 |
+| quadremesher | **80** | 100 | 88 | 78 | 86 | 91 | 77 | 0 | 60 |
+| quadremesher-uniform | **77** | 100 | 86 | 70 | 36 | 82 | 77 | 74 | 66 |
+| quadriflow | **73** | 100 | 66 | 65 | 57 | 69 | 31 | 83 | 100 |
+| instant-meshes | **60** | 100 | 55 | 53 | 43 | 0 | 20 | 90 | 100 |
+
+### 3000 quads
+
+| Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
+|---|---|---|---|---|---|---|---|---|---|
+| **quad-layout-adaptive** | **90** | 100 | 90 | 84 | 72 | 95 | 90 | 96 | 87 |
+| quad-layout | **89** | 100 | 86 | 85 | 73 | 95 | 77 | 95 | 90 |
+| quadremesher-uniform | **87** | 100 | 89 | 79 | 81 | 96 | 64 | 71 | 67 |
+| integer-grid | **86** | 100 | 85 | 80 | 67 | 97 | 85 | 83 | 53 |
+| quadremesher | **82** | 100 | 91 | 80 | 89 | 98 | 81 | 0 | 65 |
+| quadriflow | **79** | 100 | 64 | 71 | 77 | 88 | 33 | 85 | 81 |
+| instant-meshes | **73** | 100 | 65 | 68 | 71 | 43 | 21 | 93 | 100 |
+
+### 8000 quads
+
+| Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
+|---|---|---|---|---|---|---|---|---|---|
+| **quad-layout-adaptive** | **94** | 100 | 90 | 87 | 93 | 98 | 93 | 98 | 59 |
+| quad-layout | **93** | 100 | 89 | 89 | 91 | 98 | 80 | 94 | 59 |
+| integer-grid | **91** | 100 | 88 | 82 | 87 | 99 | 90 | 88 | 21 |
+| quadremesher-uniform | **89** | 100 | 90 | 83 | 88 | 96 | 74 | 76 | 61 |
+| quadremesher | **83** | 100 | 91 | 84 | 91 | 97 | 71 | 0 | 57 |
+| quadriflow | **81** | 100 | 63 | 71 | 87 | 95 | 8 | 97 | 62 |
+| instant-meshes | **79** | 100 | 61 | 78 | 80 | 73 | 11 | 98 | 100 |

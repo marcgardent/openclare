@@ -1,6 +1,6 @@
 # openclare — cahier des charges du moteur de retopologie quad
 
-**Statut : validé le 6 octobre 2026. Jalons 0 à 9 faits. Chantier de qualité Q1 (modèles en plusieurs pièces) réalisé, en attente de revue.**
+**Statut : validé le 6 octobre 2026. Jalons 0 à 9 et chantier de qualité Q1 faits. Chantier d'outils T1 (notes, rendus, pages par modèle) réalisé, en attente de revue.**
 Ce qui a été écarté, approché ou reporté en chemin est suivi ticket par ticket dans [BACKLOG.md](BACKLOG.md).
 Le projet s'appelle **openclare** ; les crates portent encore le nom provisoire `retopo`. Les points marqués
 *à trancher* attendent une décision ; ils sont regroupés en section 7.
@@ -1324,10 +1324,17 @@ chantiers sont numérotés à part et partent du backlog.
 
 | Chantier | Contenu | Ce qu'on peut vérifier à la fin |
 |---|---|---|
-| Q1 | Modèles en plusieurs pièces (DT-032) et pièces sans singularité ni bord (DT-003) | **Fait, en attente de revue.** Chaque pièce maillée pour elle-même ; un anneau passe par la chaîne principale |
-| Q2 | Alignement : champ de croix sur les surfaces bruitées, échelles locales, réglage des préréglages (DT-021, DT-025, DT-013) | Écart d'alignement avec Quad Remesher réduit |
-| Q3 | Parties plus minces qu'un quad (DT-018) | Fidélité sur les personnages à bas budget |
+| Q1 | Modèles en plusieurs pièces (DT-032) et pièces sans singularité ni bord (DT-003) | **Fait.** Chaque pièce maillée pour elle-même ; un anneau passe par la chaîne principale |
+| Q2 | Parties plus minces qu'un quad : doigts, oreilles (DT-018). Garder au moins leur volume | Fidélité sur les personnages ; les mains et les oreilles de l'ogre existent encore à bas budget |
+| Q3 | Alignement : champ de croix sur les surfaces bruitées, échelles locales, réglage des préréglages (DT-021, DT-025, DT-013) | Écart d'alignement avec Quad Remesher réduit |
 | Q4 | Structure globale : simplification du T-mesh, bandes étroites (DT-020, DT-007, DT-005) | Moins de patchs dans le complexe de base |
+
+**Chantiers d'outils**, ouverts le 8 octobre 2026 : de quoi regarder et juger les résultats.
+
+| Chantier | Contenu | État |
+|---|---|---|
+| T1 | Notes de 0 à 100 par modèle, remailleur et critère (`make scores`) ; rendus par Blender (`scripts/render.py`) ; une page par modèle avec images et notes (`make pages`, `docs/models/`) | **Fait, en attente de revue** |
+| T2 | Interface de visualisation avec Rerun : étapes de la chaîne (champ, singularités, traces, patchs, maillage) et comparaison des remailleurs | À faire ; Rerun n'est pas installé, son installation attend un accord |
 
 Le jalon 4 bis est un raccourci assumé : un arrondi glouton des translations, comme dans MIQ,
 donne un premier maillage complet bien avant le T-mesh et la quantification. Il est moins robuste

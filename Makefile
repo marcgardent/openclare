@@ -1,6 +1,6 @@
 # Shortcuts for the common tasks. `make help` lists them.
 
-.PHONY: help build test blenderkit scores
+.PHONY: help build test blenderkit scores pages
 
 help:
 	@echo "make build       build the retopo binary (release)"
@@ -11,6 +11,8 @@ help:
 	@echo "                 and remesher (bench/results/SCORES.md)"
 	@echo "make scores MODEL=ogre [TARGET=8000]"
 	@echo "                 print the marks of one model instead"
+	@echo "make pages       write one page per model, with rendered pictures and marks"
+	@echo "                 (docs/models; needs blender). MODELS=ogre,blob for some only"
 
 build:
 	cargo build --release
@@ -29,3 +31,7 @@ ifdef MODEL
 else
 	python3 scripts/scores.py report
 endif
+
+# One page per model: pictures of what each remesher makes of it, and its marks.
+pages: scores
+	python3 scripts/pages.py $(if $(MODELS),--models $(MODELS))
