@@ -1,77 +1,78 @@
-# openclare — crédits des modèles
+# openclare — credits for the models
 
-Tous les modèles 3D dont le projet se sert pour ses mesures et ses images, avec leur auteur, leur
-source et leur licence. Un modèle n'entre pas dans le banc de mesure sans sa ligne ici.
+Every 3D model the project uses for its measurements and its pictures, with its author, its
+source and its licence. No model enters the bench without its line here.
 
-- **Dans le dépôt** : le fichier est versionné sous `bench/corpus/`, et les maillages de
-  comparaison qui en sont tirés sous `bench/reference/`.
-- **Hors dépôt** : la licence ne permet pas de redistribuer le modèle. Il est rangé sous
-  `bench/corpus-large/`, qui n'est pas versionné, avec tout ce qui en est tiré. Les chiffres
-  mesurés, eux, figurent dans les résultats. La colonne « Source » dit comment le retrouver.
+- **In the repository**: the file is tracked under `bench/corpus/`, and the comparison meshes
+  made from it under `bench/reference/`.
+- **Out of the repository**: the licence does not allow passing the model on. It is kept under
+  `bench/corpus-large/`, which is not tracked, with everything made from it. The figures
+  measured on it are in the results. The "Source" column says how to get it again.
 
-## Modèles de l'auteur du projet
+## Models by the author of the project
 
-| Modèle | Auteur | Année | Source | Licence | Où |
+| Model | Author | Year | Source | Licence | Where |
 |---|---|---|---|---|---|
-| `ogre` | Marc Gardent | 2026 | sculpture originale, 4,7 millions de triangles, ramenée à 200 000 par `retopo preprocess` ; la mascotte du projet | © 2026 Marc Gardent, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.fr) | dans le dépôt ; l'original hors dépôt |
+| `ogre` | Marc Gardent | 2026 | original sculpt, 4.7 million triangles, brought down to 200,000 by `retopo preprocess`; the mascot of the project | © 2026 Marc Gardent, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.en) | in the repository; the original out of it |
 
-Convention pour les prochains : **Marc Gardent, 2026, CC BY-SA 4.0**.
+Convention for those to come: **Marc Gardent, 2026, CC BY-SA 4.0**.
 
-La CC BY-SA 4.0 (attribution, partage dans les mêmes conditions) est pour une œuvre ce que la
-GPL est pour un logiciel : on peut la réutiliser et la transformer, à condition de citer
-l'auteur et de garder la même liberté pour ce qu'on en tire. Creative Commons l'a déclarée
-compatible avec la GPLv3 le 8 octobre 2015, dans un seul sens : ce qu'on tire d'une œuvre sous
-BY-SA 4.0 peut être placé sous GPLv3, pas l'inverse. Décision du 8 octobre 2026.
+CC BY-SA 4.0 (attribution, share alike) is to a work what the GPL is to software: it may be
+reused and transformed, provided the author is credited and what is made from it stays as free.
+Creative Commons declared it compatible with the GPLv3 on 8 October 2015, one way only: what is
+made from a work under BY-SA 4.0 may be placed under the GPLv3, not the reverse. Decided on
+8 October 2026.
 
-## Modèles de tiers
+## Models by others
 
-| Modèle | Titre et auteur | Source | Licence | Où | Traitement |
+| Model | Title and author | Source | Licence | Where | Processing |
 |---|---|---|---|---|---|
-| `spot` | *Spot*, Keenan Crane | [3D Model Repository](https://www.cs.cmu.edu/~kmcrane/Projects/ModelRepository/) de Keenan Crane (Carnegie Mellon), téléchargé le 6 octobre 2026 | le dépôt indique : « you can do whatever you like with the data without asking for permission » | dans le dépôt | subdivisé deux fois, puis 100 000 triangles |
-| `bob` | *Bob*, Keenan Crane | idem | idem | dans le dépôt | subdivisé deux fois, puis 100 000 triangles |
-| `blub` | *Blub*, Keenan Crane | idem | idem | dans le dépôt | subdivisé deux fois, puis 100 000 triangles |
-| `pig` | *Origins of the Pig*, Keenan Crane | idem | idem | dans le dépôt | corps seul, subdivisé deux fois, puis 100 000 triangles |
-| `jerry` | *Jerry the Ogre*, Keenan Crane | idem | idem | dans le dépôt | visage au repos, tel quel |
-| `rose` | *Desert Rose*, Keenan Crane | idem | idem | dans le dépôt | 150 000 triangles |
-| `bridge` | *Pittsburgh Bridge*, scan du Panoptic Studio (Carnegie Mellon) | idem | versé au domaine public par ses auteurs | dans le dépôt | tel quel |
-| `suzanne` | *Suzanne*, la tête de singe de Blender, Blender Foundation | primitive « Monkey » de Blender, exportée par `bench/make_corpus.py` | livrée avec Blender, logiciel sous licence GNU GPL | dans le dépôt | subdivisée |
-| `terrain` | *Mountain Range Terrain*, Bipro Fx | [BlenderKit](https://www.blenderkit.com/), `asset_base_id:43a14c49-93bb-49e7-baec-6397eae071c5`, publié le 7 juillet 2026, récupéré le 8 octobre 2026 | Royalty Free de BlenderKit : utilisable dans un projet, pas redistribuable tel quel | **hors dépôt** | exporté tel quel par `bench/import_blenderkit.py`, 543 557 triangles |
-| `mahaveer` | *Mahaveer Dev*, Avi Panchal | BlenderKit, `asset_base_id:b6564fca-81c7-4873-945a-287fe143b7e6`, publié le 29 décembre 2025, récupéré le 8 octobre 2026 | Royalty Free de BlenderKit | **hors dépôt** | exporté tel quel, 418 472 triangles, 164 morceaux |
-| `marine` | *Marine Armor*, Grudgebearer iZerat ; création de fan d'après un jeu vidéo | BlenderKit, `asset_base_id:22029966-6ee8-48d1-8d6b-d962162e09fa`, publié le 9 janvier 2024, récupéré le 8 octobre 2026 | Royalty Free de BlenderKit | **hors dépôt** | exporté tel quel, 247 198 triangles |
+| `spot` | *Spot*, Keenan Crane | Keenan Crane's [3D Model Repository](https://www.cs.cmu.edu/~kmcrane/Projects/ModelRepository/) (Carnegie Mellon), downloaded on 6 October 2026 | the repository says: "you can do whatever you like with the data without asking for permission" | in the repository | subdivided twice, then 100,000 triangles |
+| `bob` | *Bob*, Keenan Crane | same | same | in the repository | subdivided twice, then 100,000 triangles |
+| `blub` | *Blub*, Keenan Crane | same | same | in the repository | subdivided twice, then 100,000 triangles |
+| `pig` | *Origins of the Pig*, Keenan Crane | same | same | in the repository | body only, subdivided twice, then 100,000 triangles |
+| `jerry` | *Jerry the Ogre*, Keenan Crane | same | same | in the repository | face at rest, as it is |
+| `rose` | *Desert Rose*, Keenan Crane | same | same | in the repository | 150,000 triangles |
+| `bridge` | *Pittsburgh Bridge*, scan by the Panoptic Studio (Carnegie Mellon) | same | released into the public domain by its authors | in the repository | as it is |
+| `suzanne` | *Suzanne*, Blender's monkey head, Blender Foundation | Blender's "Monkey" primitive, exported by `bench/make_corpus.py` | ships with Blender, software under the GNU GPL | in the repository | subdivided |
+| `terrain` | *Mountain Range Terrain*, Bipro Fx | [BlenderKit](https://www.blenderkit.com/), `asset_base_id:43a14c49-93bb-49e7-baec-6397eae071c5`, published on 7 July 2026, fetched on 8 October 2026 | BlenderKit Royalty Free: may be used in a project, may not be passed on as it is | **out of the repository** | exported as it is by `bench/import_blenderkit.py`, 543,557 triangles |
+| `mahaveer` | *Mahaveer Dev*, Avi Panchal | BlenderKit, `asset_base_id:b6564fca-81c7-4873-945a-287fe143b7e6`, published on 29 December 2025, fetched on 8 October 2026 | BlenderKit Royalty Free | **out of the repository** | exported as it is, 418,472 triangles, 164 pieces |
+| `marine` | *Marine Armor*, Grudgebearer iZerat; a fan creation after a video game | BlenderKit, `asset_base_id:22029966-6ee8-48d1-8d6b-d962162e09fa`, published on 9 January 2024, fetched on 8 October 2026 | BlenderKit Royalty Free | **out of the repository** | exported as it is, 247,198 triangles |
 
-## Formes produites par le projet
+## Shapes made by the project
 
-Aucun droit de tiers. Elles sont produites par des scripts du dépôt et suivent sa licence
+No third-party rights. They are made by scripts of the repository and follow its licence
 (GPL-3.0-or-later).
 
-| Modèle | Produit par | Contenu |
+| Model | Made by | What it is |
 |---|---|---|
-| `blob`, `rock`, `creature`, `cage`, `part` | `bench/make_corpus.py` (Blender) | boules fusionnées ; sphère bruitée ; quadrupède ; cube percé adouci ; pièce mécanique percée |
-| `cube`, `sphere`, `torus`, `lblock`, `cylinder` | `retopo primitive` | étalons et formes d'essai |
+| `blob`, `rock`, `creature`, `cage`, `part` | `bench/make_corpus.py` (Blender) | merged balls; noisy sphere; quadruped; softened cube with holes; mechanical part with holes |
+| `cube`, `sphere`, `torus`, `lblock`, `cylinder` | `retopo primitive` | yardsticks and test shapes |
 
-## Maillages de comparaison
+## Comparison meshes
 
-| Quoi | Outil | Conditions |
+| What | Tool | Terms |
 |---|---|---|
-| `bench/reference/quadremesher/` | Quad Remesher 1.4.1, Exoside | licence d'essai, usage non commercial ; lancé depuis Blender 5.2.2 les 6, 7 et 8 octobre 2026 |
-| résultats « quadriflow » | QuadriFlow, intégré à Blender | relancé à chaque mesure, rien n'est conservé |
+| `bench/reference/quadremesher/` | Quad Remesher 1.4.1, Exoside | trial licence, non-commercial use; run from Blender 5.2.2 on 6, 7 and 8 October 2026 |
+| "quadriflow" results | QuadriFlow, built into Blender | run again at every measurement, nothing is kept |
 
-## Images
+## Pictures
 
-Les pages de `docs/models/` montrent des rendus des modèles et de leurs remaillages. Pour les
-modèles sous licence Royalty Free de BlenderKit, des images sont permises, pas les modèles
-eux-mêmes. C'est aussi le cas de `marine`, création de fan d'après un jeu vidéo : son image est
-publiée depuis le 8 octobre 2026, par décision de l'auteur du projet, avec le crédit ci-dessus.
+The pages of `docs/models/` show renders of the models and of what the remeshers make of them.
+For the models under the BlenderKit Royalty Free licence, pictures are allowed; passing on the
+models themselves is not. That holds for `marine` too, a fan creation after a video game: its
+picture is published since 8 October 2026, by decision of the author of the project, with the
+credit above.
 
-## Ajouter un modèle
+## Adding a model
 
-1. Vérifier sa licence. Si elle n'autorise pas la redistribution, le modèle va sous
-   `bench/corpus-large/` et son nom dans `LOCAL_MODELS` de `bench/run.py`.
-2. Ajouter sa ligne dans ce fichier : titre, auteur, source précise (lien ou identifiant), date
-   de récupération, licence, traitement appliqué.
-3. Pour un modèle BlenderKit : dans Blender, chercher `asset_base_id:<identifiant>` avec le
-   module BlenderKit, puis exporter le fichier obtenu :
+1. Check its licence. If it does not allow redistribution, the model goes under
+   `bench/corpus-large/` and its name into `LOCAL_MODELS` in `bench/run.py`.
+2. Add its line to this file: title, author, exact source (link or identifier), date fetched,
+   licence, processing applied.
+3. For a BlenderKit model: in Blender, search for `asset_base_id:<identifier>` with the
+   BlenderKit add-on, then export the file obtained:
 
 ```bash
-blender -b modele.blend --python bench/import_blenderkit.py -- bench/corpus-large/nom.obj
+blender -b model.blend --python bench/import_blenderkit.py -- bench/corpus-large/name.obj
 ```
