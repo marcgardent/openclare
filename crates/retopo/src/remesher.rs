@@ -19,6 +19,7 @@ use crate::parametrization;
 use crate::pipeline::{self, Params, Report, Target};
 use crate::preprocess::{self, WorkMesh};
 use crate::quantization;
+use crate::recorder::{self, Recorder, Shape, Silent};
 use crate::relax::{Features, Laplacian, Relaxer, Squaring};
 use crate::singularity;
 use crate::sizing;
@@ -46,7 +47,19 @@ pub trait Remesher {
 
     /// The same, steered by `guides`. A chain is free to ignore those it has
     /// no use for.
-    fn remesh_guided(&self, input: &TriMesh, guides: &Guides, config: &RemeshConfig) -> Result<(PolyMesh, Report)>;
+    fn remesh_guided(&self, input: &TriMesh, guides: &Guides, config: &RemeshConfig) -> Result<(PolyMesh, Report)> {
+        self.remesh_recorded(input, guides, config, &mut Silent)
+    }
+
+    /// The same, showing `recorder` what each stage makes on the way. What
+    /// comes out does not depend on who listens.
+    fn remesh_recorded(
+        &self,
+        input: &TriMesh,
+        guides: &Guides,
+        config: &RemeshConfig,
+        recorder: &mut dyn Recorder,
+    ) -> Result<(PolyMesh, Report)>;
 }
 
 /// The chains [`create`] knows how to build.
@@ -130,7 +143,13 @@ impl Remesher for InstantMeshes {
         Method::InstantMeshes
     }
 
-    fn remesh_guided(&self, input: &TriMesh, _: &Guides, config: &RemeshConfig) -> Result<(PolyMesh, Report)> {
+    fn remesh_recorded(
+        &self,
+        input: &TriMesh,
+        _: &Guides,
+        config: &RemeshConfig,
+        _: &mut dyn Recorder,
+    ) -> Result<(PolyMesh, Report)> {
         config.validate()?;
         let params = Params {
             target: config.target,
@@ -178,12 +197,19 @@ impl Remesher for IntegerGrid {
         Method::IntegerGrid
     }
 
-    fn remesh_guided(&self, input: &TriMesh, _: &Guides, config: &RemeshConfig) -> Result<(PolyMesh, Report)> {
+    fn remesh_recorded(
+        &self,
+        input: &TriMesh,
+        _: &Guides,
+        config: &RemeshConfig,
+        recorder: &mut dyn Recorder,
+    ) -> Result<(PolyMesh, Report)> {
         let mut clock = Stopwatch::start();
         let mut report = Report::default();
         let size = WorkSize { per_quad: self.triangles_per_quad, least: self.min_triangles, most: self.max_triangles };
         // Its extraction counts on quads of one size: no sizing.
-        let Fields { work, field, edge_length, .. } = fields(input, config, &size, None, &mut report, &mut clock)?;
+        let Fields { work, field, edge_length, .. } =
+            fields(input, config, &size, None, &mut report, &mut clock, recorder)?;
 
         let map_request = parametrization::Request { edge_length, stiffening_rounds: self.stiffening_rounds };
         let map =
@@ -201,6 +227,7 @@ impl Remesher for IntegerGrid {
         mesh.dissolve_valence_two();
         mesh.repair_to_quads();
         clock.lap(&mut report, "extraction");
+        recorder.record("extraction/quads", Shape::Polygons(&mesh));
 
         settle(&mut mesh, input, &work, edge_length, None, &Laplacian { iterations: self.relax_iterations });
         clock.lap(&mut report, "relaxation");
@@ -241,12 +268,18 @@ impl Remesher for QuadLayout {
         Method::QuadLayout
     }
 
-    fn remesh_guided(&self, input: &TriMesh, guides: &Guides, config: &RemeshConfig) -> Result<(PolyMesh, Report)> {
+    fn remesh_recorded(
+        &self,
+        input: &TriMesh,
+        guides: &Guides,
+        config: &RemeshConfig,
+        recorder: &mut dyn Recorder,
+    ) -> Result<(PolyMesh, Report)> {
         config.validate()?;
         input.validate()?;
         let pieces = input.pieces();
         if pieces.len() <= 1 {
-            let (mesh, mut report) = self.remesh_piece(input, guides, config, self.min_triangles)?;
+            let (mesh, mut report) = self.remesh_piece(input, guides, config, self.min_triangles, recorder)?;
             report.pieces = 1;
             report.pieces_fell_back = report.fell_back as usize;
             return Ok((mesh, report));
@@ -278,7 +311,7 @@ impl Remesher for QuadLayout {
         let mut merged = PolyMesh::default();
         let mut report = Report { edge_length, pieces: pieces.len(), ..Default::default() };
         let mut first_error = None;
-        for ((piece, origin), share) in pieces.iter().zip(shares) {
+        for (index, ((piece, origin), share)) in pieces.iter().zip(shares).enumerate() {
             let Some(share) = share else {
                 report.pieces_skipped += 1;
                 continue;
@@ -290,7 +323,8 @@ impl Remesher for QuadLayout {
             // A work mesh in proportion: a button does not need the
             // triangles a body does.
             let least = ((self.min_triangles as f64 * piece.surface_area() / area) as usize).max(MIN_PIECE_TRIANGLES);
-            match self.remesh_piece(piece, &piece_guides, &piece_config, least) {
+            let mut recorder = recorder::Piece::new(recorder, index);
+            match self.remesh_piece(piece, &piece_guides, &piece_config, least, &mut recorder) {
                 // A piece that comes out with no face at all is as good as
                 // not meshed.
                 Ok((mesh, _)) if mesh.faces.is_empty() => report.pieces_failed += 1,
@@ -390,16 +424,18 @@ impl QuadLayout {
         guides: &Guides,
         config: &RemeshConfig,
         least: usize,
+        recorder: &mut dyn Recorder,
     ) -> Result<(PolyMesh, Report)> {
         let mut clock = Stopwatch::start();
         let mut report = Report::default();
         let size = WorkSize { per_quad: self.triangles_per_quad, least, most: self.max_triangles };
         let Fields { work, field, edge_length, quads } =
-            fields(input, config, &size, Some(guides), &mut report, &mut clock)?;
+            fields(input, config, &size, Some(guides), &mut report, &mut clock, recorder)?;
 
         let layout = tmesh::create(tmesh::Kind::Motorcycle).build(&work, &field, &tmesh::Request { edge_length })?;
         report.map_inversions = layout.tmesh.report.map_inversions;
         clock.lap(&mut report, "layout");
+        recorder::show_layout(recorder, &layout.tmesh);
         // A piece of surface with neither singularity nor border (a torus)
         // has no layout; a layout that went wrong cannot be meshed from, nor
         // can vertices be read off a map that folds over. In all those
@@ -419,19 +455,21 @@ impl QuadLayout {
             None
         };
         if let Some(cause) = cause {
-            return fall_back(input, config, least, cause);
+            return fall_back(input, config, least, cause, recorder);
         }
 
         let request =
             quantization::Request { quads: Some((quads.round() as usize).max(1)), tolerance: self.budget_tolerance };
         let quantized = quantization::create(quantization::Kind::WalkCancelling).quantize(&layout.tmesh, &request)?;
         clock.lap(&mut report, "quantization");
+        recorder::show_lengths(recorder, &layout.tmesh, &quantized);
         if !quantized.report.is_valid() || quantized.report.quads == 0 {
-            return fall_back(input, config, least, "no sound whole lengths for the layout");
+            return fall_back(input, config, least, "no sound whole lengths for the layout", recorder);
         }
 
         let (mut mesh, meshed) = meshing::create(meshing::Kind::PatchGrid).mesh(&work, &layout, &quantized)?;
         clock.lap(&mut report, "meshing");
+        recorder.record("meshing/quads", Shape::Polygons(&mesh));
 
         // The layout knows which vertices lie on a border or a hard edge.
         let held = Some((meshed.on_feature, meshed.on_corner));
@@ -444,9 +482,16 @@ impl QuadLayout {
 }
 
 /// Hands the job to the integer-grid chain, and says so in the report.
-fn fall_back(input: &TriMesh, config: &RemeshConfig, least: usize, cause: &'static str) -> Result<(PolyMesh, Report)> {
+fn fall_back(
+    input: &TriMesh,
+    config: &RemeshConfig,
+    least: usize,
+    cause: &'static str,
+    recorder: &mut dyn Recorder,
+) -> Result<(PolyMesh, Report)> {
+    recorder.record("notes/fallback", Shape::Note(&format!("meshed by the integer-grid chain instead: {cause}")));
     let chain = IntegerGrid { min_triangles: least, ..Default::default() };
-    let (mesh, mut report) = chain.remesh(input, config)?;
+    let (mesh, mut report) = chain.remesh_recorded(input, &Guides::default(), config, recorder)?;
     report.fell_back = true;
     report.fallback_causes = vec![(cause, 1)];
     Ok((mesh, report))
@@ -477,6 +522,7 @@ fn fields(
     guides: Option<&Guides>,
     report: &mut Report,
     clock: &mut Stopwatch,
+    recorder: &mut dyn Recorder,
 ) -> Result<Fields> {
     config.validate()?;
     input.validate()?;
@@ -498,6 +544,7 @@ fn fields(
     report.working_vertices = work.mesh.positions.len();
     report.feature_edges = work.feature_edges.len();
     clock.lap(report, "preprocess");
+    recorder::show_work(recorder, &work);
 
     if let Some(guides) = guides {
         let painted =
@@ -505,11 +552,13 @@ fn fields(
         let request = sizing::Request { edge_length, adaptivity: config.adaptivity, painted };
         work.sizing = sizing::create(sizing::Kind::Curvature).size(&work, &request)?;
         clock.lap(report, "sizing");
+        recorder::show_sizing(recorder, &work);
     }
 
     let field_request = crossfield::Request { alignment: config.alignment, seed: config.seed };
     let mut field = crossfield::create(crossfield::Kind::Power).solve(&work, &field_request)?;
     clock.lap(report, "cross field");
+    recorder::show_field(recorder, "cross-field", &work, &field);
 
     if config.singularity_reach > 0.0 {
         let request = singularity::Request {
@@ -522,6 +571,7 @@ fn fields(
     let (positive, negative, _) = field.singularities();
     report.singularities = (positive, negative);
     clock.lap(report, "singularities");
+    recorder::show_field(recorder, "singularities", &work, &field);
     Ok(Fields { work, field, edge_length, quads })
 }
 

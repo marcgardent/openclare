@@ -133,6 +133,46 @@ Ce que chaque remailleur fait de chaque modèle, en images, avec ses notes :
 make pages
 ```
 
+### Regarder la chaîne travailler
+
+Chaque étape de la chaîne peut montrer ce qu'elle produit : maillage de travail et courbure,
+taille demandée aux quads, champ de croix et singularités avant et après simplification,
+coupes et nœuds de la structure globale, longueurs entières, quads avant et après relaxation.
+Le tout s'enregistre dans un fichier `.rrd` que l'on ouvre dans la visionneuse de
+[Rerun](https://rerun.io) : chaque calque se masque à part, et la ligne de temps `step`
+déroule les étapes dans l'ordre.
+
+```bash
+make view MODEL=ogre
+```
+
+Cette commande construit ce qu'il faut, remaille le modèle en enregistrant, puis ouvre la
+visionneuse. La première construction est longue (Rerun compte plusieurs centaines de
+dépendances) et demande Rust 1.95.
+
+Rien de tout cela ne pèse sur le reste. La bibliothèque `retopo` ne connaît qu'une interface,
+`Recorder`, et son implémentation muette `Silent`, celle qui sert par défaut : elle ne garde
+rien et les étapes ne préparent alors rien. Rerun vit dans deux crates à part, construites
+seulement sur demande :
+
+| Crate | Rôle | Se construit avec |
+|---|---|---|
+| `retopo-rerun` | implémentation de `Recorder` qui écrit un `.rrd` ; donne l'option `--record` à `retopo remesh` | `cargo build --release -p retopo-cli --features rerun` |
+| `retopo-viewer` | la visionneuse de Rerun embarquée, exécutable `retopo-view`, pour qui travaille sur le projet : rien d'autre à installer, et la bonne version | `cargo build --release -p retopo-viewer` |
+
+À la main :
+
+```bash
+target/release/retopo remesh modele.obj quads.obj --quads 3000 --record modele.rrd
+```
+
+```bash
+target/release/retopo-view modele.rrd
+```
+
+Un `.rrd` se lit avec la visionneuse de la version qui l'a écrit, ici la 0.36. Qui a déjà
+Rerun 0.36 installé peut s'en servir à la place de `retopo-view`.
+
 ## Organisation
 
 | Module | Rôle |
@@ -158,6 +198,7 @@ make pages
 | `config` | configuration unique d'un remaillage, préréglages, enregistrement et relecture |
 | `curvature` | courbures et directions principales |
 | `metrics` | mesures de qualité d'un maillage quad par rapport à sa source |
+| `recorder` | interface `Recorder` par laquelle les étapes montrent leur travail, et `Silent`, qui n'écoute rien ; aucune dépendance |
 
 La chaîne actuelle est décrite dans
 [docs/REFERENCE_INSTANT_MESHES.md](docs/REFERENCE_INSTANT_MESHES.md).

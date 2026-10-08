@@ -1,6 +1,6 @@
 # openclare — cahier des charges du moteur de retopologie quad
 
-**Statut : validé le 6 octobre 2026. Jalons 0 à 9 et chantier de qualité Q1 faits. Chantier d'outils T1 (notes, rendus, pages par modèle) réalisé, en attente de revue.**
+**Statut : validé le 6 octobre 2026. Jalons 0 à 9 et chantier de qualité Q1 faits. Chantiers d'outils T1 (notes, rendus, pages par modèle) et T2 (enregistrement des étapes pour Rerun) réalisés, en attente de revue.**
 Ce qui a été écarté, approché ou reporté en chemin est suivi ticket par ticket dans [BACKLOG.md](BACKLOG.md).
 Le projet s'appelle **openclare** ; les crates portent encore le nom provisoire `retopo`. Les points marqués
 *à trancher* attendent une décision ; ils sont regroupés en section 7.
@@ -1334,7 +1334,7 @@ chantiers sont numérotés à part et partent du backlog.
 | Chantier | Contenu | État |
 |---|---|---|
 | T1 | Notes de 0 à 100 par modèle, remailleur et critère (`make scores`) ; rendus par Blender (`scripts/render.py`) ; une page par modèle avec images et notes (`make pages`, `docs/models/`) | **Fait, en attente de revue** |
-| T2 | Interface de visualisation avec Rerun : étapes de la chaîne (champ, singularités, traces, patchs, maillage) et comparaison des remailleurs | À faire ; Rerun n'est pas installé, son installation attend un accord |
+| T2 | Les étapes de la chaîne montrées à un `Recorder` (module `recorder`, sans dépendance ; `Silent` par défaut). Deux crates à part, construites sur demande : `retopo-rerun` écrit un fichier `.rrd` (`retopo remesh --record`), `retopo-viewer` embarque la visionneuse de Rerun (`retopo-view`). `make view MODEL=ogre` enchaîne le tout. Ce qui n'est pas montré est suivi par DT-035 | **Fait, en attente de revue** |
 
 Le jalon 4 bis est un raccourci assumé : un arrondi glouton des translations, comme dans MIQ,
 donne un premier maillage complet bien avant le T-mesh et la quantification. Il est moins robuste

@@ -131,7 +131,22 @@ impl RemeshConfig {
         input: &crate::TriMesh,
         guides: &Guides,
     ) -> Result<(crate::PolyMesh, crate::pipeline::Report)> {
-        crate::remesher::create(self.method).remesh_guided(input, guides, self)
+        self.remesh_recorded(input, guides, &mut crate::recorder::Silent)
+    }
+
+    /// The same, showing `recorder` the input, what each stage makes of it
+    /// and the result.
+    pub fn remesh_recorded(
+        &self,
+        input: &crate::TriMesh,
+        guides: &Guides,
+        recorder: &mut dyn crate::recorder::Recorder,
+    ) -> Result<(crate::PolyMesh, crate::pipeline::Report)> {
+        use crate::recorder::Shape;
+        recorder.record("input/surface", Shape::Surface { mesh: input, values: guides.density });
+        let (mesh, report) = crate::remesher::create(self.method).remesh_recorded(input, guides, self, recorder)?;
+        recorder.record("result/quads", Shape::Polygons(&mesh));
+        Ok((mesh, report))
     }
 
     pub fn validate(&self) -> Result<()> {

@@ -27,7 +27,7 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 | DT-011 | Faces très étirées dans la carte sans couture | J4 | basse | ouvert |
 | DT-012 | Préréglage `hard-surface` sur la chaîne organique | J4 bis | haute (durci) | **fermé au J9** |
 | DT-013 | Valeurs des préréglages non réglées sur le corpus | J4 bis | moyenne | ouvert |
-| DT-014 | Visualisation des champs et des structures | J2 | basse | ouvert (rendus faits au T1, interface au T2) |
+| DT-014 | Visualisation des champs et des structures | J2 | basse | **fermé (T1, T2)**, reste DT-035 |
 | DT-015 | Code encore nommé `retopo` | J4 bis | basse | ouvert |
 | DT-016 | Documents en français, à traduire | J0 | basse | ouvert |
 | DT-017 | Corpus : sculptures de l'auteur à ajouter avant la fin de la licence d'essai | J0 | moyenne | ouvert |
@@ -46,6 +46,7 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 | DT-031 | Triangles d'aire quasi nulle laissés par le prétraitement | J9 | moyenne | ouvert |
 | DT-032 | Modèles faits de nombreuses pièces détachées : toute la chaîne se replie | J9 | haute | **fermé (Q1)**, reste DT-034 |
 | DT-034 | Petites pièces : quelques-unes passent encore par le repli, ou n'en sortent pas | Q1 | moyenne | ouvert |
+| DT-035 | Visualisation Rerun : ce qui n'est pas montré, version en retard | T2 | basse | ouvert |
 | DT-033 | Terrains et scans : aucun outil n'aligne, le champ n'a rien à suivre | J9 | moyenne | ouvert |
 | DT-027 | Garde-fous de temps de calcul sur les entrées pathologiques | J8 | basse | ouvert |
 
@@ -191,7 +192,8 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 - **Chantier T1 (8 octobre 2026)** : les maillages finaux ont maintenant de vrais rendus
   (Blender, `scripts/render.py`) et une page par modèle (`make pages`). Les étapes
   intermédiaires (champ, traces, patchs) restent sans visualisation.
-- **Chantier T2** : interface avec Rerun, demandée le 8 octobre 2026. À faire.
+- **Chantier T2 (8 octobre 2026)** : les étapes intermédiaires se regardent dans Rerun
+  (`make view MODEL=ogre`). **Fermé** ; ce qui manque encore est suivi par DT-035.
 
 ### DT-015 — Code encore nommé `retopo`
 
@@ -442,3 +444,31 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   pièces dont la part est inférieure à un seuil.
 - **À faire** : reprendre ces causes une à une ; rendre le repli lui-même plus sûr sur les
   très petites pièces, ou s'en passer.
+
+### DT-035 — Visualisation Rerun : ce qui n'est pas montré, version en retard
+
+- **Né au** chantier T2.
+- **Ce qui n'est pas montré** :
+  - les patchs de la structure globale comme des régions colorées : on voit leurs bords (les
+    coupes), pas leur surface ;
+  - la carte sans couture (ses isolignes, ses triangles repliés), alors que « la carte se
+    replie » est la première cause de repli (DT-034) ;
+  - les traces perdues et les chevauchements, que le T-mesh compte sans garder leur position ;
+  - la comparaison entre remailleurs : un enregistrement montre une seule exécution.
+- **Approximations** : la longueur entière d'un arc est écrite au milieu de la corde entre ses
+  deux nœuds, pas au milieu de l'arc ; les quads sont affichés en ombrage lissé.
+- **Tous les calques s'affichent ensemble à l'ouverture** : il faut en masquer, ou remonter
+  la ligne de temps `step`. Une disposition par défaut (un « blueprint ») réglerait cela ; je
+  n'ai pas vérifié si l'interface Rust de Rerun 0.36 permet d'en écrire une.
+- **Version** : Rerun 0.36.3, la dernière qui se construit avec Rust 1.95 ; la plus récente
+  (0.38.1) demande Rust 1.96. La visionneuse de la 0.36 impose de plus des versions exactes
+  de `wasm-bindgen` et de ses voisines, fixées dans `Cargo.lock`.
+- **Poids** : `Cargo.lock` passe à un millier de paquets, que seules les deux crates Rerun
+  utilisent. Première construction en mode release : environ 5 minutes pour `retopo` avec
+  `--features rerun` (31 Mo au lieu de 17), environ 17 minutes pour `retopo-view` (265 Mo).
+  Les informations de débogage des dépendances ont été retirées du profil release pour
+  cela : avec elles, `retopo-view` pesait 1,5 Go.
+- **Visionneuse embarquée non vérifiée à l'œil** : `retopo-view` démarre et reste ouvert sans
+  erreur, mais c'est dans la visionneuse web de Rerun que l'enregistrement a été regardé.
+- **Temps mesurés** : pendant un enregistrement, le temps passé à écrire les calques d'une
+  étape est compté dans l'étape suivante.

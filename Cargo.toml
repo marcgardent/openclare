@@ -1,5 +1,9 @@
 [workspace]
-members = ["crates/retopo", "crates/retopo-cli"]
+members = ["crates/retopo", "crates/retopo-cli", "crates/retopo-rerun", "crates/retopo-viewer"]
+# Rerun brings a lot with it: its recorder is only built when asked for
+# (`--features rerun` on the command line tool), its viewer by name
+# (`-p retopo-viewer`).
+default-members = ["crates/retopo", "crates/retopo-cli"]
 resolver = "3"
 
 [workspace.package]
@@ -14,8 +18,18 @@ glam = "0.34"
 # parametrization. Pure Rust, MIT.
 faer = { version = "0.24", default-features = false, features = ["std", "sparse-linalg"] }
 
+# One version for the recorder and for the viewer: a recording is read by the
+# viewer of the version that wrote it. 0.36 is the last to build with Rust
+# 1.95. MIT or Apache-2.0.
+rerun = { version = "0.36", default-features = false }
+
 [profile.release]
 debug = 1
+
+# Line numbers for our own code only: with those of the dependencies, the
+# viewer of Rerun weighs a gigabyte and a half.
+[profile.release.package."*"]
+debug = false
 
 # The solvers are tight numeric loops: unoptimised test runs are painfully slow.
 [profile.dev]
