@@ -11,6 +11,7 @@
 //! lines and points lie on included, and no two surfaces at the same place.
 
 use crate::crossfield::{self, CrossField};
+use crate::error::Result;
 use crate::math::Vec3;
 use crate::mesh::{PolyMesh, TriMesh};
 use crate::preprocess::WorkMesh;
@@ -47,6 +48,14 @@ pub trait Recorder {
     /// made of several pieces meshed apart. A stage is over when another
     /// one records; what is under `notes` belongs to no stage.
     fn record(&mut self, path: &str, shape: Shape<'_>);
+
+    /// Told when a stage begins, by a name meant to be read ("cross field",
+    /// or "piece 3 of 12: cross field"), whether anything is kept or not:
+    /// this is how a host follows a run. An error stops the chain there,
+    /// which is how a host cancels one ([`crate::Error::Cancelled`]).
+    fn begin(&mut self, _stage: &str) -> Result<()> {
+        Ok(())
+    }
 }
 
 /// The recorder that keeps nothing.
@@ -65,11 +74,14 @@ impl Recorder for Silent {
 pub(crate) struct Piece<'a> {
     recorder: &'a mut dyn Recorder,
     name: String,
+    /// "piece 3 of 12", for those who follow the run.
+    place: String,
 }
 
 impl<'a> Piece<'a> {
-    pub(crate) fn new(recorder: &'a mut dyn Recorder, index: usize) -> Self {
-        Self { recorder, name: format!("piece-{index:03}") }
+    /// The piece of that `index` among `count`.
+    pub(crate) fn new(recorder: &'a mut dyn Recorder, index: usize, count: usize) -> Self {
+        Self { recorder, name: format!("piece-{index:03}"), place: format!("piece {} of {count}", index + 1) }
     }
 }
 
@@ -80,6 +92,10 @@ impl Recorder for Piece<'_> {
 
     fn record(&mut self, path: &str, shape: Shape<'_>) {
         self.recorder.record(&format!("{path}/{}", self.name), shape);
+    }
+
+    fn begin(&mut self, stage: &str) -> Result<()> {
+        self.recorder.begin(&format!("{}: {stage}", self.place))
     }
 }
 
@@ -240,9 +256,9 @@ mod tests {
     #[test]
     fn a_piece_files_what_it_shows_under_its_own_name() {
         let mut paths = Paths(Vec::new());
-        Piece::new(&mut paths, 7).record("layout/cuts", Shape::Note(""));
+        Piece::new(&mut paths, 7, 9).record("layout/cuts", Shape::Note(""));
         assert_eq!(paths.0, ["layout/cuts/piece-007"]);
-        assert!(Piece::new(&mut paths, 0).is_listening());
-        assert!(!Piece::new(&mut Silent, 0).is_listening());
+        assert!(Piece::new(&mut paths, 0, 1).is_listening());
+        assert!(!Piece::new(&mut Silent, 0, 1).is_listening());
     }
 }

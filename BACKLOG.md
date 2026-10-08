@@ -39,7 +39,7 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 | DT-023 | Relaxation : coût et tailles de quads | J8 | basse | ouvert |
 | DT-024 | Courbes guides (rang 4) non commencées | J8 | moyenne | ouvert (réduit au J8) |
 | DT-025 | Densité : portée des singularités et lecture de la courbure encore à l'échelle nominale | J8 | basse | ouvert (portée locale faite au Q2 ; reste la courbure) |
-| DT-026 | Densité peinte : lecture du Weight Paint de Blender à faire (pont Blender) | J8 | moyenne | ouvert |
+| DT-026 | Densité peinte : lecture du Weight Paint de Blender à faire (pont Blender) | J8 | moyenne | **closed at J10** |
 | DT-028 | Symétrie : absente, Quad Remesher l'a | J8 | basse | ouvert, après la qualité |
 | DT-029 | Quads étirés sur la paroi d'un cylindre | J9 | moyenne | ouvert |
 | DT-030 | Chaîne par patchs (QuadWild) non écrite | J9 | basse | ouvert |
@@ -355,6 +355,9 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   base, il n'y a pas de valeur neutre à connaître.
 - **Reste** : rien ne lit encore un groupe de sommets de Blender ; en ligne de commande, les
   poids viennent d'un fichier texte (`--density`).
+- **Closed at milestone 10 (8 October 2026)**: the add-on lets the user pick a vertex group of
+  the object and a factor (how many times more quads a weight of 1 gets than a weight of 0),
+  and hands its weights to the engine.
 - **À faire** au jalon 10, avec le pont Blender (pas commencé) : lire le groupe de sommets
   choisi par l'utilisateur et le passer tel quel au moteur.
 
@@ -601,15 +604,24 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 
 - **Born at** milestone 10, first step (8 October 2026), by decision: the least that runs
   first.
-- **Blender waits while the engine runs.** No progress, no way to cancel. The engine would
-  have to report its stages and check for a stop between them, and the operator to run it
-  aside.
-- **Only a preset and a number of quads.** The other settings (adaptivity, quads round thin
-  parts, volume fitting) exist in the engine and pass through the interface as text; the
-  panel does not show them.
-- **Next step, decided**: density from the Weight Paint of the active vertex group (DT-026),
-  hard edges from the edges marked sharp, and two UV layers (the map of the engine as it is,
-  and an atlas of its rectangular patches).
+- **Blender waits while the engine runs**, and cannot be made to stop it. Since 8 October 2026
+  the engine tells its host each stage as it begins and stops if the host says so
+  (`Recorder::begin`, `on_stage` in the C interface), and the add-on shows the stage in the
+  status bar, on the cursor and in the Info log, asking Blender to redraw each time. What is
+  missing is a way for the user to say stop: Blender reads no key while an operator runs. The
+  operator would have to run the engine aside, on a copy of the mesh (reading Blender's
+  arrays in place from another thread is not safe while the user can change the scene).
+- **The redraw in the middle of a run is a workaround** (`wm.redraw_timer`), which Blender's
+  documentation advises against. Seen to work on Blender 5.2.2 on Linux (a picture of the
+  window taken during a run shows the stage in the status bar); not tried elsewhere.
+- **Few settings shown**: preset, quads, adaptive size, a vertex group for density and its
+  factor (added on 8 October 2026 at the author's request). Quads round thin parts and volume
+  fitting exist in the engine and pass through the interface as text; the panel does not show
+  them.
+- **Vertex group weights are read one vertex at a time** in Python: Blender offers no array of
+  them. About 0.2 second for 100,000 vertices, so a couple of seconds per million.
+- **Next step, decided**: hard edges from the edges marked sharp, and two UV layers (the map of
+  the engine as it is, and an atlas of its rectangular patches).
 - **Linux, 64-bit Intel or AMD only.** The archive carries one native library; Windows and
   macOS need their own builds, and a way to make them (continuous integration).
 - **Reading in place relies on how Blender lays a mesh out in memory**: positions as a packed

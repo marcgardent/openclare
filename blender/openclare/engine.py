@@ -5,6 +5,10 @@ import ctypes
 import sys
 from pathlib import Path
 
+# What the engine calls as each stage begins: the name of the stage and a
+# pointer it was given, back; 0 to go on, anything else to stop.
+ON_STAGE = ctypes.CFUNCTYPE(ctypes.c_int32, ctypes.c_char_p, ctypes.c_void_p)
+
 _NAMES = {"linux": "libopenclare_capi.so", "darwin": "libopenclare_capi.dylib", "win32": "openclare_capi.dll"}
 _library = None
 
@@ -29,7 +33,7 @@ def library():
     pointer, size, text = ctypes.c_void_p, ctypes.c_size_t, ctypes.c_char_p
     lib.openclare_version.restype = text
     lib.openclare_remesh.restype = pointer
-    lib.openclare_remesh.argtypes = [pointer, size, pointer, size, pointer, size, pointer, text, text]
+    lib.openclare_remesh.argtypes = [pointer, size, pointer, size, pointer, size, pointer, text, text, ON_STAGE, pointer]
     lib.openclare_result_ok.restype = ctypes.c_int32
     lib.openclare_result_error.restype = text
     lib.openclare_result_report.restype = text
@@ -49,13 +53,22 @@ def version():
     return library().openclare_version().decode()
 
 
-def remesh(positions, vertex_count, triangles, triangle_count, corner_vertices, corner_count, preset, settings):
+def remesh(
+    positions, vertex_count, triangles, triangle_count, corner_vertices, corner_count, preset, settings,
+    density=None, on_stage=None,
+):
     """Remeshes into quads the triangle mesh whose arrays sit at the addresses
     given: three floats per vertex at `positions`, three corners per triangle
     at `triangles`, the vertex of each corner at `corner_vertices`. They are
     read in place.
 
-    `settings` maps setting names to values, on top of the preset.
+    `settings` maps setting names to values, on top of the preset. `density`
+    is None or a numpy array of one 32-bit float per vertex, from 0 where the
+    quads should be largest to 1 where they should be smallest.
+
+    `on_stage`, if given, is called with the name of each stage as it begins
+    ("cross field", or "piece 3 of 12: cross field"); the run stops if it
+    returns something true, and `EngineError` says so.
 
     Returns `(positions, sizes, corners, report)`: numpy arrays of the
     coordinates, of the number of corners of each face and of the vertex of
@@ -65,9 +78,23 @@ def remesh(positions, vertex_count, triangles, triangle_count, corner_vertices, 
 
     lib = library()
     lines = "".join(f"{key} = {value}\n" for key, value in settings.items())
+    if density is not None and (density.dtype != numpy.float32 or len(density) != vertex_count):
+        raise EngineError(f"{len(density)} weights of type {density.dtype} for {vertex_count} vertices")
+    def told(stage, _):
+        # Whatever goes wrong in the host's function must not unwind into
+        # the engine: the run goes on.
+        try:
+            return 1 if on_stage(stage.decode()) else 0
+        except Exception as error:  # noqa: BLE001
+            print(f"openclare: {error!r} while being told of a stage")
+            return 0
+
+    # Kept in a variable: the engine calls it for as long as the run lasts.
+    callback = ON_STAGE(told) if on_stage else ON_STAGE()
     result = lib.openclare_remesh(
-        positions, vertex_count, triangles, triangle_count, corner_vertices, corner_count, None,
-        preset.encode(), lines.encode(),
+        positions, vertex_count, triangles, triangle_count, corner_vertices, corner_count,
+        None if density is None else density.ctypes.data,
+        preset.encode(), lines.encode(), callback, None,
     )
     try:
         if not lib.openclare_result_ok(result):

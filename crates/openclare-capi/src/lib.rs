@@ -9,7 +9,8 @@
 //!     NULL, 0,                    /* triangles hold vertex indices */
 //!     NULL,                       /* no painted density */
 //!     "organic",                  /* preset */
-//!     "quads = 3000\n");          /* settings on top of it */
+//!     "quads = 3000\n",           /* settings on top of it */
+//!     NULL, NULL);                /* nobody follows the run */
 //! if (openclare_result_ok(result)) {
 //!     size_t vertices = openclare_result_vertex_count(result);
 //!     ...
@@ -34,12 +35,44 @@
 //! Nothing here unwinds into the caller: a panic inside the library comes
 //! back as an error of the result.
 
-use std::ffi::{CStr, CString, c_char};
+use std::ffi::{CStr, CString, c_char, c_void};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::time::Instant;
 
 use openclare::math::Vec3;
+use openclare::recorder::{Recorder, Shape};
 use openclare::{Guides, PolyMesh, RemeshConfig, Target, TriMesh};
+
+/// Called when a stage of the run begins, with its name ("cross field", or
+/// "piece 3 of 12: cross field") and the `user` pointer given to
+/// [`openclare_remesh`]. Return 0 to go on, anything else to stop the run:
+/// the result then holds the error "stopped on request".
+pub type OpenclareOnStage = Option<unsafe extern "C" fn(stage: *const c_char, user: *mut c_void) -> i32>;
+
+/// Passes the stages on to the host, and its wish to stop back to the chain.
+struct Watcher {
+    on_stage: OpenclareOnStage,
+    user: *mut c_void,
+}
+
+impl Recorder for Watcher {
+    fn is_listening(&self) -> bool {
+        false
+    }
+
+    fn record(&mut self, _: &str, _: Shape<'_>) {}
+
+    fn begin(&mut self, stage: &str) -> openclare::Result<()> {
+        let Some(on_stage) = self.on_stage else { return Ok(()) };
+        let name = text(stage.to_string());
+        // SAFETY: the host gave this function and this pointer to be called
+        // together; the name is a NUL-terminated string that outlives the call.
+        match unsafe { on_stage(name.as_ptr(), self.user) } {
+            0 => Ok(()),
+            _ => Err(openclare::Error::Cancelled),
+        }
+    }
+}
 
 /// What a call to [`openclare_remesh`] gives back.
 pub struct OpenclareResult {
@@ -81,6 +114,8 @@ pub extern "C" fn openclare_version() -> *const c_char {
 /// - `preset`: null for the default one, or the name of a shipped preset
 ///   (`organic`, `animation`, `hard-surface`).
 /// - `settings`: null, or `key = value` lines that adjust the preset.
+/// - `on_stage`: null, or a function to call as each stage begins, with
+///   `user`; it is called from the thread that called this one.
 ///
 /// Always returns a result to free with [`openclare_result_free`]; ask it
 /// whether it holds a mesh with [`openclare_result_ok`].
@@ -88,7 +123,9 @@ pub extern "C" fn openclare_version() -> *const c_char {
 /// # Safety
 ///
 /// The arrays must hold what their counts say, and the two texts, when not
-/// null, must end with a NUL.
+/// null, must end with a NUL. `on_stage`, when not null, must be safe to call
+/// with `user`.
+#[allow(clippy::too_many_arguments)]
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn openclare_remesh(
     positions: *const f32,
@@ -100,13 +137,16 @@ pub unsafe extern "C" fn openclare_remesh(
     density: *const f32,
     preset: *const c_char,
     settings: *const c_char,
+    on_stage: OpenclareOnStage,
+    user: *mut c_void,
 ) -> *mut OpenclareResult {
     let outcome = catch_unwind(AssertUnwindSafe(|| {
+        let mut watcher = Watcher { on_stage, user };
         // SAFETY: the caller vouches for the pointers and their lengths.
         unsafe {
             let corners =
                 (!corner_vertices.is_null()).then(|| std::slice::from_raw_parts(corner_vertices, corner_count));
-            remesh(positions, vertex_count, triangles, triangle_count, corners, density, preset, settings)
+            remesh(positions, vertex_count, triangles, triangle_count, corners, density, preset, settings, &mut watcher)
         }
     }));
     let result = match outcome {
@@ -134,6 +174,7 @@ unsafe fn remesh(
     density: *const f32,
     preset: *const c_char,
     settings: *const c_char,
+    watcher: &mut Watcher,
 ) -> Result<OpenclareResult, String> {
     if (positions.is_null() && vertex_count > 0) || (triangles.is_null() && triangle_count > 0) {
         return Err("the mesh arrays are missing".into());
@@ -192,7 +233,7 @@ unsafe fn remesh(
 
     let clock = Instant::now();
     let guides = Guides { density: painted.as_deref() };
-    let (mesh, done) = config.remesh_guided(&input, &guides).map_err(|error| error.to_string())?;
+    let (mesh, done) = config.remesh_recorded(&input, &guides, watcher).map_err(|error| error.to_string())?;
     let seconds = clock.elapsed().as_secs_f64();
 
     let asked = match config.target {

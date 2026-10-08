@@ -11,6 +11,8 @@ pub enum Error {
     InvalidParams(String),
     /// A numerical step could not complete (singular system, no convergence).
     Numerical(String),
+    /// Whoever was watching the run asked for it to stop.
+    Cancelled,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -23,6 +25,7 @@ impl fmt::Display for Error {
             Error::InvalidMesh(m) => write!(f, "invalid mesh: {m}"),
             Error::InvalidParams(m) => write!(f, "invalid parameters: {m}"),
             Error::Numerical(m) => write!(f, "numerical failure: {m}"),
+            Error::Cancelled => write!(f, "stopped on request"),
         }
     }
 }

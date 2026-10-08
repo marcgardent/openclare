@@ -1,6 +1,6 @@
 //! The C interface, called the way a host calls it.
 
-use std::ffi::{CStr, CString, c_char};
+use std::ffi::{CStr, CString, c_char, c_void};
 use std::ptr::{null, null_mut};
 
 use openclare::mesh::primitives;
@@ -43,6 +43,8 @@ fn a_mesh_goes_in_as_arrays_and_quads_come_out() {
             null(),
             c"organic".as_ptr(),
             settings.as_ptr(),
+            None,
+            null_mut(),
         );
         assert_eq!(openclare_result_ok(result), 1, "{}", text(openclare_result_error(result)));
         assert_eq!(text(openclare_result_error(result)), "");
@@ -89,6 +91,8 @@ fn triangles_may_be_given_by_their_corners_as_blender_keeps_them() {
             null(),
             null(),
             c"quads = 300".as_ptr(),
+            None,
+            null_mut(),
         );
         let through = openclare_remesh(
             positions.as_ptr(),
@@ -100,6 +104,8 @@ fn triangles_may_be_given_by_their_corners_as_blender_keeps_them() {
             null(),
             null(),
             c"quads = 300".as_ptr(),
+            None,
+            null_mut(),
         );
         assert_eq!((openclare_result_ok(direct), openclare_result_ok(through)), (1, 1));
         assert_eq!(faces_of(direct), faces_of(through));
@@ -122,6 +128,8 @@ fn what_goes_wrong_is_said_not_thrown() {
             null(),
             preset.as_ptr(),
             settings.as_ptr(),
+            None,
+            null_mut(),
         );
         let outcome = (openclare_result_ok(result), text(openclare_result_error(result)));
         assert_eq!(openclare_result_vertex_count(result), 0);
@@ -144,6 +152,49 @@ fn what_goes_wrong_is_said_not_thrown() {
 
     let (ok, _) = attempt(&[], c"organic", c"quads = 100");
     assert_eq!(ok, 0);
+}
+
+/// Notes each stage in the list `user` points to; stops at "layout" if the
+/// list starts with the word "stop".
+unsafe extern "C" fn note(stage: *const c_char, user: *mut c_void) -> i32 {
+    let stages = unsafe { &mut *user.cast::<Vec<String>>() };
+    let name = text(stage);
+    let stop = stages.first().is_some_and(|first| first == "stop") && name == "layout";
+    stages.push(name);
+    stop as i32
+}
+
+#[test]
+fn a_host_follows_the_stages_and_can_stop_the_run() {
+    let (positions, triangles) = ball();
+    let run = |stages: &mut Vec<String>| unsafe {
+        let result = openclare_remesh(
+            positions.as_ptr(),
+            positions.len() / 3,
+            triangles.as_ptr(),
+            triangles.len() / 3,
+            null(),
+            0,
+            null(),
+            null(),
+            c"quads = 300".as_ptr(),
+            Some(note),
+            (stages as *mut Vec<String>).cast(),
+        );
+        let outcome = (openclare_result_ok(result), text(openclare_result_error(result)));
+        openclare_result_free(result);
+        outcome
+    };
+    let mut stages = Vec::new();
+    assert_eq!(run(&mut stages).0, 1);
+    assert_eq!(stages.first().map(String::as_str), Some("preprocessing"));
+    assert_eq!(stages.last().map(String::as_str), Some("fitting"));
+    assert!(stages.len() >= 8, "{stages:?}");
+
+    let mut stages = vec!["stop".to_string()];
+    let (ok, error) = run(&mut stages);
+    assert_eq!((ok, error.as_str()), (0, "stopped on request"));
+    assert_eq!(stages.last().map(String::as_str), Some("layout"));
 }
 
 #[test]
