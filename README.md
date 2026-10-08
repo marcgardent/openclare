@@ -6,6 +6,8 @@ Blender. (Les crates et l'exécutable portent encore le nom provisoire `retopo`.
 
 ![Tore, cube à arêtes vives et Suzanne remaillés](docs/images/apercu.png)
 
+What is left to do, in order: [ROADMAP.md](ROADMAP.md).
+
 ## État
 
 La chaîne cible, `quad-layout`, va de bout en bout (triangles en entrée, quads en sortie) :
