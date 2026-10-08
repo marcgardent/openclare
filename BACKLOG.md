@@ -457,9 +457,10 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   - la comparaison entre remailleurs : un enregistrement montre une seule exécution.
 - **Approximations** : la longueur entière d'un arc est écrite au milieu de la corde entre ses
   deux nœuds, pas au milieu de l'arc ; les quads sont affichés en ombrage lissé.
-- **Tous les calques s'affichent ensemble à l'ouverture** : il faut en masquer, ou remonter
-  la ligne de temps `step`. Une disposition par défaut (un « blueprint ») réglerait cela ; je
-  n'ai pas vérifié si l'interface Rust de Rerun 0.36 permet d'en écrire une.
+- **Une étape à la fois** (demandé le 8 octobre 2026, fait) : le long de la ligne de temps
+  `step`, chaque étape efface la précédente ; la ligne `stack` garde tout. Reste que les
+  étapes d'un modèle en plusieurs pièces défilent pièce après pièce, sans vue d'ensemble
+  d'une même étape sur toutes les pièces.
 - **Version** : Rerun 0.36.3, la dernière qui se construit avec Rust 1.95 ; la plus récente
   (0.38.1) demande Rust 1.96. La visionneuse de la 0.36 impose de plus des versions exactes
   de `wasm-bindgen` et de ses voisines, fixées dans `Cargo.lock`.

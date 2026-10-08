@@ -5,6 +5,10 @@
 //! library knows no viewer and depends on none: [`Silent`] listens to
 //! nothing and is what every chain gets unless told otherwise; the viewers
 //! live in crates of their own and implement the trait.
+//!
+//! A viewer may show one stage at a time, taking away what the stage before
+//! showed. So a stage records all it takes to read it, the surface its
+//! lines and points lie on included, and no two surfaces at the same place.
 
 use crate::crossfield::{self, CrossField};
 use crate::math::Vec3;
@@ -40,7 +44,8 @@ pub trait Recorder {
     }
 
     /// `path` is `stage/layer`, followed by `/piece-NNN` when the input is
-    /// made of several pieces meshed apart.
+    /// made of several pieces meshed apart. A stage is over when another
+    /// one records; what is under `notes` belongs to no stage.
     fn record(&mut self, path: &str, shape: Shape<'_>);
 }
 
@@ -91,26 +96,39 @@ const CUTS: Colour = [255, 225, 80];
 const CORNERS: Colour = [120, 230, 120];
 const JUNCTIONS: Colour = [245, 245, 245];
 
-/// The work mesh: its surface, its curvature and its hard edges.
+/// The surface of the work mesh under `stage`, for what the stage draws to
+/// lie on.
+fn show_surface(recorder: &mut dyn Recorder, stage: &str, work: &WorkMesh) {
+    recorder.record(&format!("{stage}/surface"), Shape::Surface { mesh: &work.mesh, values: None });
+}
+
+/// The hard edges of the work mesh under `stage`, if it has any.
+fn show_hard_edges(recorder: &mut dyn Recorder, stage: &str, work: &WorkMesh) {
+    if !work.feature_edges.is_empty() {
+        let position = |v: u32| work.mesh.positions[v as usize];
+        let edges: Vec<Vec<Vec3>> = work.feature_edges.iter().map(|&[a, b]| vec![position(a), position(b)]).collect();
+        recorder.record(&format!("{stage}/hard-edges"), Shape::Lines { strips: &edges, colour: HARD_EDGES });
+    }
+}
+
+/// The work mesh and its hard edges, then how much it bends.
 pub(crate) fn show_work(recorder: &mut dyn Recorder, work: &WorkMesh) {
     if !recorder.is_listening() {
         return;
     }
-    recorder.record("work/surface", Shape::Surface { mesh: &work.mesh, values: None });
+    show_surface(recorder, "work", work);
+    show_hard_edges(recorder, "work", work);
     let bend: Vec<f64> =
         (0..work.mesh.positions.len()).map(|v| work.curvature.k1[v].abs().max(work.curvature.k2[v].abs())).collect();
-    recorder.record("work/curvature", Shape::Surface { mesh: &work.mesh, values: Some(&bend) });
-    if !work.feature_edges.is_empty() {
-        let position = |v: u32| work.mesh.positions[v as usize];
-        let edges: Vec<Vec<Vec3>> = work.feature_edges.iter().map(|&[a, b]| vec![position(a), position(b)]).collect();
-        recorder.record("work/hard-edges", Shape::Lines { strips: &edges, colour: HARD_EDGES });
-    }
+    recorder.record("curvature/bend", Shape::Surface { mesh: &work.mesh, values: Some(&bend) });
+    show_hard_edges(recorder, "curvature", work);
 }
 
 /// How long the edges are asked to be, relative to the mean.
 pub(crate) fn show_sizing(recorder: &mut dyn Recorder, work: &WorkMesh) {
     if recorder.is_listening() {
         recorder.record("sizing/edge-length", Shape::Surface { mesh: &work.mesh, values: Some(&work.sizing) });
+        show_hard_edges(recorder, "sizing", work);
     }
 }
 
@@ -121,6 +139,7 @@ pub(crate) fn show_field(recorder: &mut dyn Recorder, stage: &str, work: &WorkMe
         return;
     }
     let mesh = &work.mesh;
+    show_surface(recorder, stage, work);
     if let Ok((_, frames)) = crossfield::prepare(mesh) {
         let mut crosses = Vec::with_capacity(2 * mesh.triangles.len());
         for f in 0..mesh.triangles.len() {
@@ -148,11 +167,10 @@ pub(crate) fn show_field(recorder: &mut dyn Recorder, stage: &str, work: &WorkMe
     }
 }
 
-/// The T-mesh: its cuts, borders and hard edges, and its nodes by kind.
-pub(crate) fn show_layout(recorder: &mut dyn Recorder, layout: &TMesh) {
-    if !recorder.is_listening() {
-        return;
-    }
+/// The lines of the T-mesh under `stage`, on the surface they run on: its
+/// cuts, borders and hard edges.
+fn show_cuts(recorder: &mut dyn Recorder, stage: &str, work: &WorkMesh, layout: &TMesh) {
+    show_surface(recorder, stage, work);
     let lines: Layers<(bool, bool)> = [
         ("cuts", |(border, feature)| !border && !feature, CUTS),
         ("borders", |(border, _)| border, BORDERS),
@@ -166,9 +184,17 @@ pub(crate) fn show_layout(recorder: &mut dyn Recorder, layout: &TMesh) {
             .map(|trace| trace.points.clone())
             .collect();
         if !strips.is_empty() {
-            recorder.record(&format!("layout/{name}"), Shape::Lines { strips: &strips, colour });
+            recorder.record(&format!("{stage}/{name}"), Shape::Lines { strips: &strips, colour });
         }
     }
+}
+
+/// The T-mesh: its lines, and its nodes by kind.
+pub(crate) fn show_layout(recorder: &mut dyn Recorder, work: &WorkMesh, layout: &TMesh) {
+    if !recorder.is_listening() {
+        return;
+    }
+    show_cuts(recorder, "layout", work, layout);
     let nodes: Layers<NodeKind> = [
         ("singularities", |kind| matches!(kind, NodeKind::Singularity { .. }), VALENCE_5),
         ("corners", |kind| kind == NodeKind::Corner, CORNERS),
@@ -184,10 +210,11 @@ pub(crate) fn show_layout(recorder: &mut dyn Recorder, layout: &TMesh) {
 }
 
 /// The whole length each arc of the T-mesh was given, written at its middle.
-pub(crate) fn show_lengths(recorder: &mut dyn Recorder, layout: &TMesh, quantized: &Quantization) {
+pub(crate) fn show_lengths(recorder: &mut dyn Recorder, work: &WorkMesh, layout: &TMesh, quantized: &Quantization) {
     if !recorder.is_listening() {
         return;
     }
+    show_cuts(recorder, "quantization", work, layout);
     let position = |node: u32| layout.nodes[node as usize].position;
     let middles: Vec<Vec3> =
         layout.arcs.iter().map(|arc| 0.5 * (position(arc.nodes[0]) + position(arc.nodes[1]))).collect();

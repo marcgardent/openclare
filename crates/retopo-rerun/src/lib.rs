@@ -7,7 +7,7 @@
 use std::collections::HashSet;
 use std::path::Path;
 
-use rerun::{Color, LineStrips3D, Mesh3D, Points3D, Radius, RecordingStream, RecordingStreamBuilder, TextLog};
+use rerun::{Clear, Color, LineStrips3D, Mesh3D, Points3D, Radius, RecordingStream, RecordingStreamBuilder, TextLog};
 use retopo::math::Vec3;
 use retopo::recorder::{Colour, Recorder, Shape};
 use retopo::{PolyMesh, TriMesh};
@@ -21,10 +21,19 @@ const EDGES: Colour = [25, 30, 40];
 /// From the least to the most of a quantity.
 const RAMP: [Colour; 5] = [[68, 1, 84], [59, 82, 139], [33, 145, 140], [94, 201, 98], [253, 231, 37]];
 
+/// Timeline along which each stage takes the place of the one before.
+const STEP: &str = "step";
+/// Timeline along which the stages pile up.
+const STACK: &str = "stack";
+/// What is recorded under this belongs to no stage.
+const NOTES: &str = "notes";
+
 /// A recording being written to a file.
 ///
-/// Each stage of the chain is one step of the `step` timeline: moving along
-/// it shows the chain at work, and each layer can be hidden on its own.
+/// Each stage of the chain is one tick of two timelines. Along `step`, a
+/// stage takes the place of the one before: moving along it shows the chain
+/// at work, one task at a time. Along `stack`, everything shown so far
+/// stays, to lay one stage over another.
 pub struct RerunRecorder {
     stream: RecordingStream,
     stage: String,
@@ -60,10 +69,17 @@ impl RerunRecorder {
 impl Recorder for RerunRecorder {
     fn record(&mut self, path: &str, shape: Shape<'_>) {
         let stage = path.split('/').next().unwrap_or(path);
-        if stage != self.stage {
-            self.stage = stage.to_string();
+        if stage != self.stage && stage != NOTES {
             self.step += 1;
-            self.stream.set_time_sequence("step", self.step);
+            self.stream.set_time_sequence(STEP, self.step);
+            if !self.stage.is_empty() {
+                // The stage before leaves, along `step` only.
+                self.stream.disable_timeline(STACK);
+                let before = std::mem::take(&mut self.stage);
+                self.log(&before, &Clear::recursive());
+            }
+            self.stream.set_time_sequence(STACK, self.step);
+            self.stage = stage.to_string();
         }
         match shape {
             Shape::Surface { mesh, values } => {

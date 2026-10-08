@@ -435,7 +435,7 @@ impl QuadLayout {
         let layout = tmesh::create(tmesh::Kind::Motorcycle).build(&work, &field, &tmesh::Request { edge_length })?;
         report.map_inversions = layout.tmesh.report.map_inversions;
         clock.lap(&mut report, "layout");
-        recorder::show_layout(recorder, &layout.tmesh);
+        recorder::show_layout(recorder, &work, &layout.tmesh);
         // A piece of surface with neither singularity nor border (a torus)
         // has no layout; a layout that went wrong cannot be meshed from, nor
         // can vertices be read off a map that folds over. In all those
@@ -462,7 +462,7 @@ impl QuadLayout {
             quantization::Request { quads: Some((quads.round() as usize).max(1)), tolerance: self.budget_tolerance };
         let quantized = quantization::create(quantization::Kind::WalkCancelling).quantize(&layout.tmesh, &request)?;
         clock.lap(&mut report, "quantization");
-        recorder::show_lengths(recorder, &layout.tmesh, &quantized);
+        recorder::show_lengths(recorder, &work, &layout.tmesh, &quantized);
         if !quantized.report.is_valid() || quantized.report.quads == 0 {
             return fall_back(input, config, least, "no sound whole lengths for the layout", recorder);
         }
