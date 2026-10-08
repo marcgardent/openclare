@@ -89,6 +89,9 @@ pub struct Report {
     pub pieces_skipped: usize,
     /// Why pieces went to the other chain, with how many for each reason.
     pub fallback_causes: Vec<(&'static str, usize)>,
+    /// Edges of the output, as their two vertices, that run along a hard
+    /// edge of the input.
+    pub hard_edges: Vec<[u32; 2]>,
     pub stats: MeshStats,
     pub timings: Vec<(&'static str, Duration)>,
 }
@@ -103,6 +106,7 @@ impl Report {
         self.open_loops += piece.open_loops;
         self.map_inversions += piece.map_inversions;
         self.pieces_fell_back += piece.fell_back as usize;
+        self.hard_edges.extend(piece.hard_edges);
         for (cause, count) in piece.fallback_causes {
             match self.fallback_causes.iter_mut().find(|(name, _)| *name == cause) {
                 Some((_, total)) => *total += count,

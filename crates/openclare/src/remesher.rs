@@ -233,7 +233,7 @@ impl Remesher for IntegerGrid {
         recorder.record("extraction/quads", Shape::Polygons(&mesh));
 
         let relaxer = Laplacian { iterations: self.relax_iterations };
-        settle(&mut mesh, input, &work, edge_length, None, &relaxer, config.volume_fit, recorder)?;
+        report.hard_edges = settle(&mut mesh, input, &work, edge_length, None, &relaxer, config.volume_fit, recorder)?;
         clock.lap(&mut report, "relaxation");
 
         report.stats = mesh.stats();
@@ -332,8 +332,11 @@ impl Remesher for QuadLayout {
                 // A piece that comes out with no face at all is as good as
                 // not meshed.
                 Ok((mesh, _)) if mesh.faces.is_empty() => report.pieces_failed += 1,
-                Ok((mesh, done)) => {
+                Ok((mesh, mut done)) => {
                     let offset = merged.positions.len() as u32;
+                    for edge in &mut done.hard_edges {
+                        *edge = edge.map(|v| v + offset);
+                    }
                     merged.positions.extend(mesh.positions);
                     merged
                         .faces
@@ -480,7 +483,8 @@ impl QuadLayout {
 
         // The layout knows which vertices lie on a border or a hard edge.
         let held = Some((meshed.on_feature, meshed.on_corner));
-        settle(&mut mesh, input, &work, edge_length, held, &self.relaxer, config.volume_fit, recorder)?;
+        report.hard_edges =
+            settle(&mut mesh, input, &work, edge_length, held, &self.relaxer, config.volume_fit, recorder)?;
         clock.lap(&mut report, "relaxation");
 
         report.stats = mesh.stats();
@@ -591,7 +595,8 @@ fn fields(
 /// `volume_fit` (see [`fitting`]). Hard edges and corners of the work mesh
 /// are what its vertices snap to; the surface itself is the input. `held`
 /// lists the vertices known to lie on feature lines and on corners; without
-/// it they are told by distance.
+/// it they are told by distance. Returns the edges of the mesh that ended up
+/// along a feature line.
 #[allow(clippy::too_many_arguments)]
 fn settle(
     mesh: &mut PolyMesh,
@@ -602,7 +607,7 @@ fn settle(
     relaxer: &dyn Relaxer,
     volume_fit: f64,
     recorder: &mut dyn Recorder,
-) -> Result<()> {
+) -> Result<Vec<[u32; 2]>> {
     let constraints =
         crate::field::Constraints::from_feature_edges(&work.mesh.positions, &work.normals, &work.feature_edges);
     // A vertex belongs to a feature line when it is within a third of an
@@ -620,7 +625,7 @@ fn settle(
         recorder.begin("fitting")?;
         fitting::create(fitting::Kind::LeastSquares).fit(mesh, input, &surface, guide.as_ref(), volume_fit);
     }
-    Ok(())
+    Ok(guide.map_or_else(Vec::new, |features| features.edges_along(mesh)))
 }
 
 /// Times the stages of a chain.

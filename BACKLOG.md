@@ -53,6 +53,7 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 | DT-039 | Fitting: limits, and the volume after subdivision | Q2 bis | medium | open |
 | DT-040 | Improving a mesh from a dry run: tried for density, the rest to do | idea of the author | medium | open |
 | DT-041 | Blender add-on, first version: what it does not do | J10 | medium | open |
+| DT-042 | UV layers unfolded from the quad mesh: limits | J10 | medium | open |
 | DT-033 | Terrains et scans : aucun outil n'aligne, le champ n'a rien à suivre | J9 | moyenne | ouvert |
 | DT-027 | Garde-fous de temps de calcul sur les entrées pathologiques | J8 | basse | ouvert |
 
@@ -620,8 +621,12 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   them.
 - **Vertex group weights are read one vertex at a time** in Python: Blender offers no array of
   them. About 0.2 second for 100,000 vertices, so a couple of seconds per million.
-- **Next step, decided**: hard edges from the edges marked sharp, and two UV layers (the map of
-  the engine as it is, and an atlas of its rectangular patches).
+- **Export, added on 8 October 2026** at the author's request: a section of the panel with
+  boxes to tick for the two UV layers and for marking sharp the edges that follow a hard edge
+  of the original. The limits of the UV layers are in DT-042.
+- **Still to do**: reading the edges *marked* sharp in Blender as hard edges to keep. Today
+  only the angle between faces makes a hard edge (preset *Hard surface*, 30 degrees); the
+  engine has no way yet to be given a list of edges.
 - **Linux, 64-bit Intel or AMD only.** The archive carries one native library; Windows and
   macOS need their own builds, and a way to make them (continuous integration).
 - **Reading in place relies on how Blender lays a mesh out in memory**: positions as a packed
@@ -638,3 +643,30 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   over from the original.
 - **In the local coordinates of the object**: a non-uniform scale on the object is not applied
   before remeshing, so quads that are square in local space are not in the scene.
+
+### DT-042 — UV layers unfolded from the quad mesh: limits
+
+- **Born at** milestone 10 (8 October 2026), with the Export section of the add-on.
+- **What they are**: both layers are read off the quad mesh itself, by laying one quad on a
+  unit square and unfolding its neighbours next to it (`uv.rs`). It works on any mesh of
+  quads, pieces through the fallback chain included; it does not use the map or the patches
+  the chain worked with.
+- **Not what was first described.** The atlas was announced as one rectangular island per
+  rectangular patch of the layout. It is made of islands grown from the quads instead, each
+  kept within a square of its own: far fewer islands (53 on the ogre at 8000 quads, where the
+  layout has several hundred patches), but with ragged outlines.
+- **Every quad takes the same room**, whatever its size on the surface. Where quads are four
+  times smaller (thin parts, painted density), the texture is four times finer there, and
+  coarser elsewhere.
+- **The atlas is filled at 50 to 60 %** (60 % on the ogre at 3000 quads). Islands are odd
+  shapes fitted cell by cell; a model in hundreds of pieces falls to 25 % (`marine`).
+- **Many seams**: about a third of the edges on the ogre (1034 of 5898 at 3000 quads). Islands
+  are cut where the unfolding meets itself, which leaves cuts inside them. Seams placed where
+  they are least seen (creases, hidden sides) is another problem, not started.
+- **The grid layer overlaps itself**, by nature, and its coordinates leave the unit square
+  (they count quads). Fine for a pattern that repeats; a renderer that expects coordinates
+  between 0 and 1 needs the texture set to repeat.
+- **Faces that are not quads** (the fallback chain leaves a few) get a small island of their
+  own.
+- **Seen as a drawing of the coordinates only**: the two layers of the ogre were read back
+  from Blender and plotted; nobody has yet looked at a texture on the model.

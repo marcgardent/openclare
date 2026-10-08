@@ -117,3 +117,24 @@ fn two_hard_edges_close_together_keep_a_row_of_quads_between_them() {
     });
     assert!(upright.count() >= 8);
 }
+
+#[test]
+fn the_report_lists_the_edges_that_follow_a_hard_edge() {
+    let source = primitives::cube(8);
+    let (mesh, report) = RemeshConfig::for_hard_surface(Target::QuadCount(600)).remesh(&source).unwrap();
+    // The twelve edges of the cube, ten quads long each.
+    let along_an_edge_of_the_cube = |[a, b]: [u32; 2]| {
+        let (p, q) = (mesh.positions[a as usize], mesh.positions[b as usize]);
+        // Two coordinates at plus or minus one, for both ends, and the same ones.
+        (0..3).filter(|&k| (p[k].abs() - 1.0).abs() < 1e-9 && (p[k] - q[k]).abs() < 1e-9).count() == 2
+    };
+    assert!(!report.hard_edges.is_empty());
+    assert!(report.hard_edges.iter().all(|&edge| along_an_edge_of_the_cube(edge)));
+    let all: usize = mesh.edge_uses().into_keys().filter(|&(a, b)| along_an_edge_of_the_cube([a, b])).count();
+    assert_eq!(report.hard_edges.len(), all);
+    assert_eq!(all % 12, 0);
+
+    // A shape without a hard edge has none to list.
+    let (_, smooth) = RemeshConfig::for_organic(Target::QuadCount(300)).remesh(&primitives::icosphere(4)).unwrap();
+    assert!(smooth.hard_edges.is_empty());
+}

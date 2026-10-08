@@ -31,10 +31,18 @@ is left as it is. What is remeshed is the object as it is seen, modifiers applie
 | Density | A vertex group of the object, painted in Weight Paint: quads are smallest where the weight is 1, largest where it is 0 |
 | Factor | How many times more quads a weight of 1 gets than a weight of 0, for the same area |
 
+A section *Export* says what the result carries besides its quads, each with its box to tick:
+
+| Export | What the result gets |
+|---|---|
+| UV Layers: Grid | A UV layer, `openclare grid`, where every quad is a unit square: stripes and checkers follow the edges across the surface. Parts of it lie on top of each other: it is for patterns that repeat, not for painting |
+| UV Layers: Atlas | A UV layer, `openclare atlas`, made of islands that never overlap, packed into the unit square, to paint or bake on; its seams are marked on the edges. Every quad takes the same room in it, whatever its size on the surface |
+| Edges: Sharp | The edges that follow a hard edge of the original are marked sharp. Only a preset that keeps hard edges (*Hard surface*) has any |
+
 Blender waits while the engine runs (about eight seconds for the 200,000 triangles of the ogre
 at 3000 quads), and says where it is: the status bar shows each stage as it begins, the cursor
-counts them, and they are written to the Info log. Hard edges from the marked ones and UV
-layers come next ([ROADMAP.md](ROADMAP.md)).
+counts them, and they are written to the Info log. Reading the edges marked sharp in Blender
+as hard edges to keep comes next ([ROADMAP.md](ROADMAP.md)).
 
 The add-on calls the engine through a C interface (`crates/openclare-capi`), which any other
 host can use: one call, flat arrays in, quads out, settings as the text of a saved
@@ -262,6 +270,7 @@ Rerun 0.36 installé peut s'en servir à la place de `openclare-view`.
 | `curvature` | courbures et directions principales |
 | `metrics` | mesures de qualité d'un maillage quad par rapport à sa source |
 | `fitting` | étape d'ajustement : les sommets quittent la surface pour que le maillage garde le volume |
+| `uv` | deux couches de coordonnées de texture dépliées du maillage quad : la grille et l'atlas |
 | `thickness` | épaisseur de la forme sous chaque sommet, mesurée par des rayons à travers l'intérieur |
 | crate `openclare-capi` | interface C du moteur : une bibliothèque partagée, pour Blender et d'autres hôtes |
 | `recorder` | interface `Recorder` par laquelle les étapes montrent leur travail, et `Silent`, qui n'écoute rien ; aucune dépendance |

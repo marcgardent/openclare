@@ -60,6 +60,30 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         soft_max=16.0,
         max=100.0,
     )
+    export_grid_uv: bpy.props.BoolProperty(
+        name="Grid UV",
+        description=(
+            "Give the result a UV layer where every quad is a unit square: stripes and checkers follow the "
+            "edges. Parts of it overlap, so it is for patterns that repeat, not for painting"
+        ),
+        default=True,
+    )
+    export_atlas_uv: bpy.props.BoolProperty(
+        name="Atlas UV",
+        description=(
+            "Give the result a UV layer made of islands that never overlap, packed into the unit square, "
+            "to paint or bake on, and mark its seams on the edges"
+        ),
+        default=True,
+    )
+    export_sharp_edges: bpy.props.BoolProperty(
+        name="Sharp Edges",
+        description=(
+            "Mark as sharp the edges of the result that follow a hard edge of the original. "
+            "Only presets that keep hard edges (Hard surface) have any"
+        ),
+        default=True,
+    )
 
 
 def weights_of(evaluated, mesh, name):
@@ -107,11 +131,35 @@ def in_place(mesh):
     )
 
 
-def quads_of(source, preset, settings, density=None, on_stage=None):
+# Names of the layers of texture coordinates on the mesh made.
+UV_NAMES = {"grid": "openclare grid", "atlas": "openclare atlas"}
+
+
+def flag_edges(mesh, attribute, pairs):
+    """Sets the boolean `attribute` of the edges of `mesh` on those given as
+    `pairs` of vertices, off on the others."""
+    import numpy
+
+    ends = numpy.empty(2 * len(mesh.edges), numpy.int64)
+    mesh.edges.foreach_get("vertices", ends)
+    ends = numpy.sort(ends.reshape(-1, 2), axis=1)
+    wanted = numpy.sort(pairs.astype(numpy.int64).reshape(-1, 2), axis=1)
+    count = len(mesh.vertices)
+    flags = numpy.isin(ends[:, 0] * count + ends[:, 1], wanted[:, 0] * count + wanted[:, 1])
+    mesh.edges.foreach_set(attribute, flags)
+    return int(flags.sum())
+
+
+def quads_of(source, preset, settings, density=None, on_stage=None, uv_layers=(), sharp_edges=False):
     """A new mesh datablock: `source`, an evaluated mesh, remeshed into quads
     with the engine's `settings` on top of `preset`, and `density` if given
     (one weight per vertex of `source`). `on_stage`, if given, is told the
-    name of each stage as it begins."""
+    name of each stage as it begins.
+
+    `uv_layers` names the layers of texture coordinates to put on the mesh
+    ("grid", "atlas"); with the atlas come its seams, marked on the edges.
+    `sharp_edges` marks as sharp the edges that follow a hard edge of
+    `source`."""
     import numpy
 
     source.calc_loop_triangles()
@@ -136,10 +184,12 @@ def quads_of(source, preset, settings, density=None, on_stage=None):
         source.loop_triangles.foreach_get("loops", kept[1])
         source.loops.foreach_get("vertex_index", kept[2])
         addresses = tuple(array.ctypes.data for array in kept)
-    positions, sizes, corner_vertices, report = engine.remesh(
-        addresses[0], vertices, addresses[1], triangles, addresses[2], corners, preset, settings, density, on_stage
+    made = engine.remesh(
+        addresses[0], vertices, addresses[1], triangles, addresses[2], corners, preset, settings, density, on_stage,
+        uv_layers=uv_layers, seams="atlas" in uv_layers, hard_edges=sharp_edges,
     )
     del kept
+    positions, sizes, corner_vertices, report = made.positions, made.sizes, made.corners, made.report
 
     mesh = bpy.data.meshes.new("openclare")
     mesh.vertices.add(len(positions) // 3)
@@ -153,6 +203,16 @@ def quads_of(source, preset, settings, density=None, on_stage=None):
     mesh.polygons.foreach_set("loop_total", sizes.astype(numpy.int32))
     mesh.update(calc_edges=True)
     mesh.validate()
+    for name in uv_layers:
+        layer = mesh.uv_layers.new(name=UV_NAMES[name], do_init=False)
+        layer.data.foreach_set("uv", made.uv[name])
+    if "atlas" in uv_layers:
+        # The atlas is the one to paint on: it is the one Blender shows.
+        mesh.uv_layers.active = mesh.uv_layers[UV_NAMES["atlas"]]
+        mesh.uv_layers[UV_NAMES["atlas"]].active_render = True
+        report["seams"] = flag_edges(mesh, "use_seam", made.seams)
+    if sharp_edges:
+        report["sharp_edges"] = flag_edges(mesh, "use_edge_sharp", made.hard_edges)
     return mesh, report
 
 
@@ -226,7 +286,10 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
             if settings.density_group:
                 density = weights_of(evaluated, source, settings.density_group)
                 engine_settings["density_contrast"] = settings.density_factor
-            mesh, report = quads_of(source, settings.preset, engine_settings, density, on_stage)
+            layers = [name for name in ("grid", "atlas") if getattr(settings, f"export_{name}_uv")]
+            mesh, report = quads_of(
+                source, settings.preset, engine_settings, density, on_stage, layers, settings.export_sharp_edges
+            )
         except engine.EngineError as error:
             self.report({"ERROR"}, f"openclare: {error}")
             return {"CANCELLED"}
@@ -274,7 +337,28 @@ class OPENCLARE_PT_panel(bpy.types.Panel):
         layout.operator(OPENCLARE_OT_remesh.bl_idname, icon="MOD_REMESH")
 
 
-CLASSES = (OpenclareSettings, OPENCLARE_OT_remesh, OPENCLARE_PT_panel)
+class OPENCLARE_PT_export(bpy.types.Panel):
+    """What the result carries besides its quads"""
+
+    bl_label = "Export"
+    bl_idname = "OPENCLARE_PT_export"
+    bl_parent_id = "OPENCLARE_PT_panel"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "openclare"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        settings = context.scene.openclare
+        column = layout.column(heading="UV Layers")
+        column.prop(settings, "export_grid_uv", text="Grid")
+        column.prop(settings, "export_atlas_uv", text="Atlas")
+        column = layout.column(heading="Edges")
+        column.prop(settings, "export_sharp_edges", text="Sharp")
+
+
+CLASSES = (OpenclareSettings, OPENCLARE_OT_remesh, OPENCLARE_PT_panel, OPENCLARE_PT_export)
 
 
 def register():
