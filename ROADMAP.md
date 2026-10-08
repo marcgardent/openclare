@@ -1,6 +1,8 @@
 # openclare — roadmap
 
-What matters among what is left to do, in the order proposed. Written on 8 October 2026.
+What matters among what is left to do. Written on 8 October 2026 and reordered the same day:
+the author chose to start the Blender add-on now (section 3), with its UV layers, and to keep
+the quality tracks for after its first version.
 The full list of shortcuts and known limits is in [BACKLOG.md](BACKLOG.md) (tickets `DT-nnn`);
 the specification and what each finished milestone delivered are in
 [ALGORITHME.md](ALGORITHME.md).
@@ -35,6 +37,7 @@ Each track ends with the bench run at 1000, 3000 and 8000 quads and a stop for r
 | 1 | **Volume fitting** (done, awaiting review) | With its vertices on the surface a mesh is inscribed in the shape: the ogre lost 3.5 % of its volume at 1000 quads | Done: median volume kept 100.0 % at the three budgets, the ogre 99.8 % at 1000 quads, no model losing its validity. Left: the volume after subdivision | DT-037 (closed), DT-039 |
 | 2 | **Alignment** | The largest gap left with Quad Remesher: edges are 7.7 to 8.4 degrees off the curvature directions, against 6.4 to 7.5. It is what an artist sees first in an edge flow | Median alignment at or under Quad Remesher's at the three budgets, validity untouched | DT-021, DT-025, DT-013, DT-033 |
 | 3 | **Fewer irregular vertices, longer edge loops** | The weakest marks of the chain (structure about 40 out of 100; regularity 50 at 1000 quads), and thin parts made it worse: 155 irregular vertices on the ogre at 3000 quads for 88 before | Irregular vertices back to what they were before the thin-part work, with the fingers kept; fewer patches in the base complex | DT-020, DT-007, DT-005, DT-038 |
+| 3 bis | **Improving a mesh from a dry run**: mark a first run, keep the best of several, run again where one went wrong, and weigh alignment where it is poor | Density driven by the error was tried and gains little (10 to 15 % on the worst distances); the other uses are not tried | A run that gives an invalid mesh is caught and corrected without the user; the best of three runs beats one on the marks | DT-040 |
 | 4 | **What a mesh still loses of the shape** | Ears and thin sheets stay rough at their rim; deep pockets are closed over (the Hausdorff distance of the ogre comes from two pockets behind its eyes, not from its hands) | Thin-part distance of `jerry` under 10 % of a quad edge; Hausdorff of the ogre at 3000 quads under 10 per mille | DT-018, DT-036 |
 
 ## 2. Robustness: inputs that are not clean
@@ -52,8 +55,11 @@ them more often than like a clean sculpt.
 ## 3. Use: openclare inside Blender
 
 This is what turns the engine into a tool, and what will bring feedback from other people's
-models. It comes after the quality tracks by the rule above; it could come earlier if trying it
-on real work matters more than the last points of alignment.
+models. **Next up**, by decision of 8 October 2026, in two steps: first the least that runs
+(rename, C library called from Python with `ctypes`, a panel with a preset, a number of quads
+and a button, the result as a new object); then density from Weight Paint, hard edges from the
+marked ones, and two UV layers: the map the engine uses as it is (every quad a unit square,
+islands that overlap) and an atlas where each rectangular patch is an island of its own.
 
 | Order | Track | Done when | Tickets |
 |---|---|---|---|
