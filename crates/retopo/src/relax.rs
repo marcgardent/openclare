@@ -133,7 +133,7 @@ impl Relaxer for Laplacian {
 
 /// What a vertex is allowed to do.
 #[derive(Clone, Copy, PartialEq)]
-enum Hold {
+pub(crate) enum Hold {
     /// Slides on the surface.
     Free,
     /// Slides along a feature line.
@@ -145,7 +145,7 @@ enum Hold {
 /// Sorts the vertices of `mesh` by what they may do, snapping those that
 /// belong to a feature line or corner onto it. Returns that and the
 /// neighbours of each vertex.
-fn classify(mesh: &mut PolyMesh, features: Option<&Features>) -> (Vec<Hold>, Vec<Vec<u32>>) {
+pub(crate) fn classify(mesh: &mut PolyMesh, features: Option<&Features>) -> (Vec<Hold>, Vec<Vec<u32>>) {
     let n = mesh.positions.len();
     let mut neighbors = vec![Vec::new(); n];
     let mut on_border = vec![false; n];

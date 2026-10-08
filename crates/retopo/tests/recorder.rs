@@ -59,6 +59,7 @@ fn a_chain_shows_its_stages_in_the_order_they_run() {
             "layout",
             "quantization",
             "meshing",
+            "relaxation",
             "result"
         ]
     );

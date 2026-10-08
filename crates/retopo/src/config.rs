@@ -42,6 +42,12 @@ pub struct RemeshConfig {
     /// keeps its volume instead of coming out flat. 0 does not look at
     /// thickness.
     pub quads_around: f64,
+    /// How far the vertices are moved off the surface, at the very end, for
+    /// the mesh to keep the volume of the shape: with every vertex on the
+    /// surface the faces run under it wherever it bulges. 0 leaves the
+    /// vertices on the surface; 1 puts as much of the mesh above the surface
+    /// as below.
+    pub volume_fit: f64,
     /// With a painted density: how many times more quads per unit of area
     /// the places painted at 1 get than those left at 0. At 4, their edges
     /// are half as long.
@@ -102,6 +108,7 @@ impl RemeshConfig {
             crease_angle: None,
             adaptivity: 0.5,
             quads_around: 6.0,
+            volume_fit: 1.0,
             density_contrast: 4.0,
             skip_pieces_under: 0.0,
             seed: 1,
@@ -175,6 +182,9 @@ impl RemeshConfig {
                 return Err(Error::InvalidParams(format!("{name} must be a non-negative number, not {value}")));
             }
         }
+        if !(0.0..=1.0).contains(&self.volume_fit) {
+            return Err(Error::InvalidParams(format!("volume_fit must be between 0 and 1, not {}", self.volume_fit)));
+        }
         if !(0.0..=1.0).contains(&self.adaptivity) {
             return Err(Error::InvalidParams(format!("adaptivity must be between 0 and 1, not {}", self.adaptivity)));
         }
@@ -211,6 +221,7 @@ impl RemeshConfig {
         .unwrap();
         writeln!(text, "adaptivity = {}", self.adaptivity).unwrap();
         writeln!(text, "quads_around = {}", self.quads_around).unwrap();
+        writeln!(text, "volume_fit = {}", self.volume_fit).unwrap();
         writeln!(text, "density_contrast = {}", self.density_contrast).unwrap();
         writeln!(text, "skip_pieces_under = {}", self.skip_pieces_under).unwrap();
         writeln!(text, "seed = {}", self.seed).unwrap();
@@ -244,6 +255,7 @@ impl RemeshConfig {
                 "crease_angle" => config.crease_angle = Some(number_of("number of degrees, nor 'none'")?),
                 "adaptivity" => config.adaptivity = number_of("number")?,
                 "quads_around" => config.quads_around = number_of("number")?,
+                "volume_fit" => config.volume_fit = number_of("number")?,
                 "density_contrast" => config.density_contrast = number_of("number")?,
                 "skip_pieces_under" => config.skip_pieces_under = number_of("number")?,
                 "seed" => config.seed = value.parse().map_err(|_| error(format!("'{value}' is not a seed")))?,
