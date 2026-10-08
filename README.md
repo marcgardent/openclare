@@ -145,4 +145,7 @@ sur la surface, coins et arêtes vives retrouvés exactement, déterminisme.
 
 ## Licence
 
-GPL-3.0-or-later, voir [LICENSE](LICENSE).
+Le code : GPL-3.0-or-later, voir [LICENSE](LICENSE).
+
+Les modèles 3D de l'auteur du projet (l'ogre) : CC BY-SA 4.0. Ceux de tiers gardent chacun leur
+licence ; tout est détaillé dans [CREDITS.md](CREDITS.md).
