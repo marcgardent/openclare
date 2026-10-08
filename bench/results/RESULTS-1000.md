@@ -20,7 +20,7 @@ Requested budget: 1000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Thin parts: mean distance, % of a quad edge (V) | — | — |
 | Volume kept, % of the source (V) | 98.35 | 98.33 |
 | Off budget, % (N) | 2.6 | 1.0 |
-| Time, seconds (T) | 1.86 | 1.97 |
+| Time, seconds (T) | 1.86 | 1.64 |
 
 ## rock (organic)
 
@@ -40,7 +40,7 @@ Requested budget: 1000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Thin parts: mean distance, % of a quad edge (V) | — | — |
 | Volume kept, % of the source (V) | 99.29 | 99.19 |
 | Off budget, % (N) | 2.2 | 1.9 |
-| Time, seconds (T) | 1.12 | 1.31 |
+| Time, seconds (T) | 1.12 | 1.30 |
 
 ## creature (organic)
 
@@ -60,7 +60,7 @@ Requested budget: 1000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Thin parts: mean distance, % of a quad edge (V) | — | — |
 | Volume kept, % of the source (V) | 98.25 | 98.03 |
 | Off budget, % (N) | 3.5 | 0.1 |
-| Time, seconds (T) | 2.25 | 1.68 |
+| Time, seconds (T) | 2.25 | 1.44 |
 
 ## cage (organic)
 
@@ -80,7 +80,7 @@ Requested budget: 1000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Thin parts: mean distance, % of a quad edge (V) | — | — |
 | Volume kept, % of the source (V) | 95.71 | 97.28 |
 | Off budget, % (N) | 0.1 | 0.1 |
-| Time, seconds (T) | 0.79 | 1.48 |
+| Time, seconds (T) | 0.79 | 1.43 |
 
 ## suzanne (organic)
 
@@ -100,27 +100,27 @@ Requested budget: 1000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Thin parts: mean distance, % of a quad edge (V) | 12.3 | 7.3 |
 | Volume kept, % of the source (V) | — | — |
 | Off budget, % (N) | 0.2 | 0.6 |
-| Time, seconds (T) | 0.87 | 1.29 |
+| Time, seconds (T) | 0.87 | 1.92 |
 
 ## ogre (organic)
 
 | | quad-layout | quad-layout-adaptive |
 |---|---|---|
 | **Valid meshes (V)** | 1/1 | 1/1 |
-| Irregular vertices (S) | 46 | 106 |
-| … of which above the minimum | 38 | 98 |
-| Base complex patches (C) | 562 | 611 |
-| Alignment, degrees (A) | 10.54 | 10.80 |
-| Mean angle deviation, degrees (F) | 6.95 | 9.21 |
-| Angle deviation, 95th percentile (F) | 19.86 | 27.40 |
-| Mean aspect ratio (F) | 1.666 | 1.669 |
-| Area variation (F) | 0.424 | 0.831 |
-| Hausdorff, ‰ of the diagonal (H) | 28.57 | 29.26 |
-| Mean distance, ‰ (H) | 2.188 | 2.521 |
-| Thin parts: mean distance, % of a quad edge (V) | 20.5 | 7.9 |
-| Volume kept, % of the source (V) | 96.91 | 96.37 |
-| Off budget, % (N) | 0.2 | 3.1 |
-| Time, seconds (T) | 3.41 | 3.37 |
+| Irregular vertices (S) | 46 | 102 |
+| … of which above the minimum | 38 | 94 |
+| Base complex patches (C) | 562 | 534 |
+| Alignment, degrees (A) | 10.54 | 11.02 |
+| Mean angle deviation, degrees (F) | 6.95 | 9.07 |
+| Angle deviation, 95th percentile (F) | 19.86 | 27.73 |
+| Mean aspect ratio (F) | 1.666 | 1.707 |
+| Area variation (F) | 0.424 | 0.819 |
+| Hausdorff, ‰ of the diagonal (H) | 28.57 | 27.87 |
+| Mean distance, ‰ (H) | 2.188 | 2.473 |
+| Thin parts: mean distance, % of a quad edge (V) | 20.5 | 7.6 |
+| Volume kept, % of the source (V) | 96.91 | 96.46 |
+| Off budget, % (N) | 0.2 | 3.7 |
+| Time, seconds (T) | 3.41 | 5.10 |
 
 ## spot (organic)
 
@@ -140,7 +140,7 @@ Requested budget: 1000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Thin parts: mean distance, % of a quad edge (V) | 13.9 | 21.1 |
 | Volume kept, % of the source (V) | 97.91 | 97.89 |
 | Off budget, % (N) | 1.0 | 0.9 |
-| Time, seconds (T) | 2.72 | 2.05 |
+| Time, seconds (T) | 2.72 | 2.56 |
 
 ## bob (organic)
 
@@ -160,7 +160,7 @@ Requested budget: 1000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Thin parts: mean distance, % of a quad edge (V) | — | — |
 | Volume kept, % of the source (V) | 98.04 | 97.91 |
 | Off budget, % (N) | 0.7 | 2.8 |
-| Time, seconds (T) | 1.30 | 1.95 |
+| Time, seconds (T) | 1.30 | 1.50 |
 
 ## blub (organic)
 
@@ -170,17 +170,17 @@ Requested budget: 1000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Irregular vertices (S) | 40 | 50 |
 | … of which above the minimum | 32 | 42 |
 | Base complex patches (C) | 321 | 523 |
-| Alignment, degrees (A) | 8.65 | 9.15 |
+| Alignment, degrees (A) | 8.65 | 9.14 |
 | Mean angle deviation, degrees (F) | 4.73 | 5.64 |
-| Angle deviation, 95th percentile (F) | 13.69 | 17.16 |
+| Angle deviation, 95th percentile (F) | 13.69 | 17.00 |
 | Mean aspect ratio (F) | 1.312 | 1.355 |
 | Area variation (F) | 0.349 | 0.470 |
 | Hausdorff, ‰ of the diagonal (H) | 21.55 | 19.65 |
-| Mean distance, ‰ (H) | 1.274 | 1.064 |
+| Mean distance, ‰ (H) | 1.274 | 1.063 |
 | Thin parts: mean distance, % of a quad edge (V) | 22.2 | 9.1 |
 | Volume kept, % of the source (V) | 97.41 | 97.82 |
 | Off budget, % (N) | 1.7 | 1.1 |
-| Time, seconds (T) | 2.11 | 1.62 |
+| Time, seconds (T) | 2.11 | 2.02 |
 
 ## pig (organic)
 
@@ -189,58 +189,58 @@ Requested budget: 1000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | **Valid meshes (V)** | 0/1 | 1/1 |
 | Irregular vertices (S) | 60 | 92 |
 | … of which above the minimum | 52 | 84 |
-| Base complex patches (C) | 541 | 622 |
-| Alignment, degrees (A) | 11.72 | 9.30 |
-| Mean angle deviation, degrees (F) | 5.95 | 7.10 |
-| Angle deviation, 95th percentile (F) | 18.82 | 21.70 |
-| Mean aspect ratio (F) | 1.342 | 1.447 |
-| Area variation (F) | 0.325 | 0.906 |
-| Hausdorff, ‰ of the diagonal (H) | 23.62 | 19.87 |
-| Mean distance, ‰ (H) | 1.664 | 1.863 |
-| Thin parts: mean distance, % of a quad edge (V) | 16.7 | 6.7 |
-| Volume kept, % of the source (V) | 97.68 | 97.19 |
-| Off budget, % (N) | 0.9 | 0.8 |
-| Time, seconds (T) | 2.00 | 2.46 |
+| Base complex patches (C) | 541 | 603 |
+| Alignment, degrees (A) | 11.72 | 9.05 |
+| Mean angle deviation, degrees (F) | 5.95 | 7.09 |
+| Angle deviation, 95th percentile (F) | 18.82 | 21.65 |
+| Mean aspect ratio (F) | 1.342 | 1.448 |
+| Area variation (F) | 0.325 | 0.905 |
+| Hausdorff, ‰ of the diagonal (H) | 23.62 | 19.93 |
+| Mean distance, ‰ (H) | 1.664 | 1.868 |
+| Thin parts: mean distance, % of a quad edge (V) | 16.7 | 6.8 |
+| Volume kept, % of the source (V) | 97.68 | 97.17 |
+| Off budget, % (N) | 0.9 | 0.9 |
+| Time, seconds (T) | 2.00 | 3.34 |
 
 ## jerry (organic)
 
 | | quad-layout | quad-layout-adaptive |
 |---|---|---|
-| **Valid meshes (V)** | 1/1 | 0/1 |
-| Irregular vertices (S) | 51 | 103 |
+| **Valid meshes (V)** | 1/1 | 1/1 |
+| Irregular vertices (S) | 51 | 83 |
 | … of which above the minimum | — | — |
-| Base complex patches (C) | 605 | 982 |
-| Alignment, degrees (A) | 14.76 | 16.17 |
-| Mean angle deviation, degrees (F) | 7.50 | 10.34 |
-| Angle deviation, 95th percentile (F) | 20.89 | 30.37 |
-| Mean aspect ratio (F) | 1.419 | 1.551 |
-| Area variation (F) | 0.328 | 1.012 |
-| Hausdorff, ‰ of the diagonal (H) | 35.79 | 28.86 |
-| Mean distance, ‰ (H) | 3.338 | 3.425 |
-| Thin parts: mean distance, % of a quad edge (V) | 21.8 | 16.5 |
+| Base complex patches (C) | 605 | 886 |
+| Alignment, degrees (A) | 14.76 | 15.38 |
+| Mean angle deviation, degrees (F) | 7.50 | 8.77 |
+| Angle deviation, 95th percentile (F) | 20.89 | 27.02 |
+| Mean aspect ratio (F) | 1.419 | 1.437 |
+| Area variation (F) | 0.328 | 0.788 |
+| Hausdorff, ‰ of the diagonal (H) | 35.79 | 25.52 |
+| Mean distance, ‰ (H) | 3.338 | 3.339 |
+| Thin parts: mean distance, % of a quad edge (V) | 21.8 | 15.7 |
 | Volume kept, % of the source (V) | — | — |
-| Off budget, % (N) | 0.0 | 1.8 |
-| Time, seconds (T) | 1.09 | 1.29 |
+| Off budget, % (N) | 0.0 | 0.5 |
+| Time, seconds (T) | 1.09 | 2.03 |
 
 ## rose (organic)
 
 | | quad-layout | quad-layout-adaptive |
 |---|---|---|
 | **Valid meshes (V)** | 0/1 | 0/1 |
-| Irregular vertices (S) | 715 | 842 |
+| Irregular vertices (S) | 715 | 731 |
 | … of which above the minimum | — | — |
 | Base complex patches (C) | — | — |
-| Alignment, degrees (A) | 17.39 | 17.22 |
-| Mean angle deviation, degrees (F) | 25.75 | 28.43 |
-| Angle deviation, 95th percentile (F) | 69.17 | 73.44 |
-| Mean aspect ratio (F) | 4.884 | 4.652 |
-| Area variation (F) | 2.023 | 2.048 |
-| Hausdorff, ‰ of the diagonal (H) | 77.32 | 76.71 |
-| Mean distance, ‰ (H) | 6.886 | 8.013 |
-| Thin parts: mean distance, % of a quad edge (V) | 32.8 | 39.1 |
+| Alignment, degrees (A) | 17.39 | 17.58 |
+| Mean angle deviation, degrees (F) | 25.75 | 29.33 |
+| Angle deviation, 95th percentile (F) | 69.17 | 75.37 |
+| Mean aspect ratio (F) | 4.884 | 6.263 |
+| Area variation (F) | 2.023 | 2.198 |
+| Hausdorff, ‰ of the diagonal (H) | 77.32 | 74.55 |
+| Mean distance, ‰ (H) | 6.886 | 8.960 |
+| Thin parts: mean distance, % of a quad edge (V) | 32.8 | 42.9 |
 | Volume kept, % of the source (V) | — | — |
-| Off budget, % (N) | 77.3 | 57.7 |
-| Time, seconds (T) | 8.50 | 10.69 |
+| Off budget, % (N) | 77.3 | 34.3 |
+| Time, seconds (T) | 8.50 | 10.84 |
 
 ## bridge (organic)
 
@@ -260,7 +260,7 @@ Requested budget: 1000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Thin parts: mean distance, % of a quad edge (V) | 6.9 | 3.9 |
 | Volume kept, % of the source (V) | — | — |
 | Off budget, % (N) | 0.3 | 0.8 |
-| Time, seconds (T) | 2.19 | 2.68 |
+| Time, seconds (T) | 2.19 | 2.92 |
 
 ## part (mechanical)
 
@@ -280,7 +280,7 @@ Requested budget: 1000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Thin parts: mean distance, % of a quad edge (V) | — | — |
 | Volume kept, % of the source (V) | 100.31 | 100.24 |
 | Off budget, % (N) | 2.4 | 1.8 |
-| Time, seconds (T) | 1.33 | 1.26 |
+| Time, seconds (T) | 1.33 | 1.13 |
 
 ## cube (mechanical)
 
@@ -300,7 +300,7 @@ Requested budget: 1000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Thin parts: mean distance, % of a quad edge (V) | — | — |
 | Volume kept, % of the source (V) | 100.00 | 100.00 |
 | Off budget, % (N) | 1.4 | 1.4 |
-| Time, seconds (T) | 0.56 | 0.93 |
+| Time, seconds (T) | 0.56 | 1.19 |
 
 ## lblock (mechanical)
 
@@ -320,7 +320,7 @@ Requested budget: 1000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Thin parts: mean distance, % of a quad edge (V) | — | — |
 | Volume kept, % of the source (V) | 100.00 | 100.00 |
 | Off budget, % (N) | 0.6 | 0.6 |
-| Time, seconds (T) | 1.00 | 0.89 |
+| Time, seconds (T) | 1.00 | 0.75 |
 
 ## cylinder (mechanical)
 
@@ -340,7 +340,7 @@ Requested budget: 1000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Thin parts: mean distance, % of a quad edge (V) | — | — |
 | Volume kept, % of the source (V) | 99.50 | 99.44 |
 | Off budget, % (N) | 1.0 | 3.2 |
-| Time, seconds (T) | 0.72 | 0.74 |
+| Time, seconds (T) | 0.72 | 0.82 |
 
 ## terrain (extra)
 
@@ -349,58 +349,58 @@ Requested budget: 1000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | **Valid meshes (V)** | 1/1 | 1/1 |
 | Irregular vertices (S) | 36 | 38 |
 | … of which above the minimum | — | — |
-| Base complex patches (C) | 647 | 661 |
-| Alignment, degrees (A) | 17.95 | 18.11 |
-| Mean angle deviation, degrees (F) | 5.66 | 5.86 |
-| Angle deviation, 95th percentile (F) | 18.16 | 17.01 |
-| Mean aspect ratio (F) | 1.290 | 1.303 |
-| Area variation (F) | 0.373 | 0.504 |
-| Hausdorff, ‰ of the diagonal (H) | 24.30 | 27.60 |
-| Mean distance, ‰ (H) | 2.485 | 2.179 |
-| Thin parts: mean distance, % of a quad edge (V) | 24.3 | 20.8 |
+| Base complex patches (C) | 647 | 639 |
+| Alignment, degrees (A) | 17.95 | 17.41 |
+| Mean angle deviation, degrees (F) | 5.66 | 5.99 |
+| Angle deviation, 95th percentile (F) | 18.16 | 17.77 |
+| Mean aspect ratio (F) | 1.290 | 1.329 |
+| Area variation (F) | 0.373 | 0.465 |
+| Hausdorff, ‰ of the diagonal (H) | 24.30 | 27.59 |
+| Mean distance, ‰ (H) | 2.485 | 2.230 |
+| Thin parts: mean distance, % of a quad edge (V) | 24.3 | 21.0 |
 | Volume kept, % of the source (V) | — | — |
-| Off budget, % (N) | 1.7 | 1.5 |
-| Time, seconds (T) | 7.04 | 6.85 |
+| Off budget, % (N) | 1.7 | 0.7 |
+| Time, seconds (T) | 7.04 | 7.01 |
 
 ## mahaveer (extra)
 
 | | quad-layout | quad-layout-adaptive |
 |---|---|---|
 | **Valid meshes (V)** | 0/1 | 0/1 |
-| Irregular vertices (S) | 421 | 427 |
+| Irregular vertices (S) | 421 | 421 |
 | … of which above the minimum | — | — |
 | Base complex patches (C) | — | — |
-| Alignment, degrees (A) | 16.19 | 16.98 |
-| Mean angle deviation, degrees (F) | 35.08 | 35.59 |
-| Angle deviation, 95th percentile (F) | 86.45 | 88.74 |
-| Mean aspect ratio (F) | 129.120 | 193.627 |
-| Area variation (F) | 8.454 | 11.860 |
+| Alignment, degrees (A) | 16.19 | 16.72 |
+| Mean angle deviation, degrees (F) | 35.08 | 35.64 |
+| Angle deviation, 95th percentile (F) | 86.45 | 88.83 |
+| Mean aspect ratio (F) | 129.120 | 193.217 |
+| Area variation (F) | 8.454 | 8.428 |
 | Hausdorff, ‰ of the diagonal (H) | 325.73 | 325.66 |
-| Mean distance, ‰ (H) | 40.224 | 40.303 |
-| Thin parts: mean distance, % of a quad edge (V) | 154.1 | 154.2 |
+| Mean distance, ‰ (H) | 40.224 | 40.215 |
+| Thin parts: mean distance, % of a quad edge (V) | 154.1 | 154.0 |
 | Volume kept, % of the source (V) | — | — |
-| Off budget, % (N) | 105.3 | 100.3 |
-| Time, seconds (T) | 8.02 | 9.16 |
+| Off budget, % (N) | 105.3 | 102.1 |
+| Time, seconds (T) | 8.02 | 12.56 |
 
 ## marine (extra)
 
 | | quad-layout | quad-layout-adaptive |
 |---|---|---|
 | **Valid meshes (V)** | 0/1 | 0/1 |
-| Irregular vertices (S) | 5577 | 5589 |
+| Irregular vertices (S) | 5577 | 5538 |
 | … of which above the minimum | — | — |
 | Base complex patches (C) | — | — |
 | Alignment, degrees (A) | — | — |
-| Mean angle deviation, degrees (F) | 26.27 | 26.75 |
-| Angle deviation, 95th percentile (F) | 74.74 | 73.36 |
-| Mean aspect ratio (F) | 7.329 | 6.246 |
-| Area variation (F) | 2.632 | 2.755 |
-| Hausdorff, ‰ of the diagonal (H) | 6.26 | 5.58 |
-| Mean distance, ‰ (H) | 0.581 | 0.589 |
+| Mean angle deviation, degrees (F) | 26.27 | 26.41 |
+| Angle deviation, 95th percentile (F) | 74.74 | 74.04 |
+| Mean aspect ratio (F) | 7.329 | 14.891 |
+| Area variation (F) | 2.632 | 2.459 |
+| Hausdorff, ‰ of the diagonal (H) | 6.26 | 6.25 |
+| Mean distance, ‰ (H) | 0.581 | 0.596 |
 | Thin parts: mean distance, % of a quad edge (V) | 10.4 | 10.6 |
 | Volume kept, % of the source (V) | — | — |
-| Off budget, % (N) | 548.5 | 555.7 |
-| Time, seconds (T) | 41.66 | 53.54 |
+| Off budget, % (N) | 548.5 | 536.4 |
+| Time, seconds (T) | 41.66 | 58.10 |
 
 ## sphere (calibration)
 
@@ -420,7 +420,7 @@ Requested budget: 1000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Thin parts: mean distance, % of a quad edge (V) | — | — |
 | Volume kept, % of the source (V) | 99.34 | 99.34 |
 | Off budget, % (N) | 1.0 | 1.0 |
-| Time, seconds (T) | 0.98 | 2.00 |
+| Time, seconds (T) | 0.98 | 1.49 |
 
 ## torus (calibration)
 
@@ -440,7 +440,7 @@ Requested budget: 1000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Thin parts: mean distance, % of a quad edge (V) | — | — |
 | Volume kept, % of the source (V) | 98.24 | 98.24 |
 | Off budget, % (N) | 0.8 | 0.8 |
-| Time, seconds (T) | 1.54 | 1.24 |
+| Time, seconds (T) | 1.54 | 1.02 |
 
 ## Summary
 
@@ -451,11 +451,11 @@ Number of models on which each tool has the best median, calibration shapes excl
 | Metric | quad-layout | quad-layout-adaptive |
 |---|---|---|
 | Irregular vertices (S) | 13 | 4 |
-| Base complex patches (C) | 7 | 5 |
-| Alignment, degrees (A) | 3 | 10 |
+| Base complex patches (C) | 6 | 6 |
+| Alignment, degrees (A) | 4 | 9 |
 | Mean angle deviation, degrees (F) | 9 | 4 |
-| Mean aspect ratio (F) | 9 | 4 |
-| Valid meshes (V) | 11/13 | 11/13 |
+| Mean aspect ratio (F) | 10 | 3 |
+| Valid meshes (V) | 11/13 | 12/13 |
 
 ### mechanical (4 models)
 

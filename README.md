@@ -92,6 +92,18 @@ la valeur par défaut, les zones peintes à 1 ont quatre fois plus de quads par 
 ./target/release/retopo remesh entree.obj sortie.obj --quads 3000 --adaptivity 0.7 --density poids.txt --density-contrast 8
 ```
 
+Les parties fines gardent leur volume : là où la forme est trop mince pour les quads demandés
+(un doigt, le bout d'une oreille), ils sont rendus assez petits pour qu'il en passe un certain
+nombre autour, et un peu plus grands ailleurs, pour le même total. Ce nombre se règle avec
+`--quads-around` : 6 dans les préréglages `organic` et `animation`, 0 (on ne regarde pas
+l'épaisseur) dans `hard-surface`.
+
+```bash
+./target/release/retopo remesh entree.obj sortie.obj --quads 3000 --quads-around 8
+```
+
+![La main de l'ogre à 3000 quads](docs/images/q2_main.png)
+
 Pour voir le T-mesh d'un modèle, ses coupes écrites comme des lignes sur la surface :
 
 ```bash
@@ -203,6 +215,7 @@ Rerun 0.36 installé peut s'en servir à la place de `retopo-view`.
 | `config` | configuration unique d'un remaillage, préréglages, enregistrement et relecture |
 | `curvature` | courbures et directions principales |
 | `metrics` | mesures de qualité d'un maillage quad par rapport à sa source |
+| `thickness` | épaisseur de la forme sous chaque sommet, mesurée par des rayons à travers l'intérieur |
 | `recorder` | interface `Recorder` par laquelle les étapes montrent leur travail, et `Silent`, qui n'écoute rien ; aucune dépendance |
 
 La chaîne actuelle est décrite dans
