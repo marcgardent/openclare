@@ -368,7 +368,7 @@ def main():
     organic = [name for name in dict(groups).get("organic", []) if name in table]
     if organic:
         print(f"\norganic models, {DEFAULT_TARGET} quads, average\n")
-        print(text_table({tool: marks for tool, (marks, _) in averages(table, organic).items()}))
+        print(text_table(without_matched({tool: marks for tool, (marks, _) in averages(table, organic).items()})))
 
 
 if __name__ == "__main__":
