@@ -54,9 +54,14 @@ impl Features {
     /// length). Edges of a border are left out: a border is a line to keep,
     /// not a hard edge.
     pub fn edges_along(&self, mesh: &PolyMesh) -> Vec<[u32; 2]> {
-        let on_a_line = |p: Vec3, within: f64| {
-            self.lines.closest_point(p).is_some_and(|hit| hit.distance_squared <= within * within)
-        };
+        Self::edges_on(&self.lines, mesh)
+    }
+
+    /// The same for any set of lines, given as a hierarchy over their
+    /// segments.
+    pub fn edges_on(lines: &Bvh, mesh: &PolyMesh) -> Vec<[u32; 2]> {
+        let on_a_line =
+            |p: Vec3, within: f64| lines.closest_point(p).is_some_and(|hit| hit.distance_squared <= within * within);
         let mut edges: Vec<[u32; 2]> = mesh
             .edge_uses()
             .into_iter()

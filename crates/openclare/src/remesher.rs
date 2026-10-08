@@ -19,7 +19,7 @@ use crate::mesh::{PolyMesh, TriMesh};
 use crate::meshing;
 use crate::parametrization;
 use crate::pipeline::{self, Params, Report, Target};
-use crate::preprocess::{self, WorkMesh};
+use crate::preprocess::{self, GuideCurve, WorkMesh};
 use crate::quantization;
 use crate::recorder::{self, Recorder, Shape, Silent};
 use crate::relax::{Features, Laplacian, Relaxer, Squaring};
@@ -37,6 +37,9 @@ pub struct Guides<'a> {
     /// a setting, [`RemeshConfig::density_contrast`]. A vertex that was not
     /// painted is simply at 0.
     pub density: Option<&'a [f64]>,
+    /// Curves drawn on the input for the quad mesh to have lines of edges
+    /// along: an edge loop round an eye, a line down the middle of a back.
+    pub curves: &'a [GuideCurve],
 }
 
 /// A complete triangle-to-quad remeshing chain.
@@ -234,8 +237,8 @@ impl Remesher for IntegerGrid {
         recorder.record("extraction/quads", Shape::Polygons(&mesh));
 
         let relaxer = Laplacian { iterations: self.relax_iterations };
-        (report.hard_edges, report.creases) =
-            settle(&mut mesh, input, &work, edge_length, None, &relaxer, config.volume_fit, recorder)?;
+        settle(&mut mesh, input, &work, edge_length, None, &relaxer, config.volume_fit, recorder)?
+            .into_report(&mut report);
         clock.lap(&mut report, "relaxation");
 
         report.stats = mesh.stats();
@@ -324,7 +327,7 @@ impl Remesher for QuadLayout {
             };
             let density: Option<Vec<f64>> =
                 guides.density.map(|density| origin.iter().map(|&v| density[v as usize]).collect());
-            let piece_guides = Guides { density: density.as_deref() };
+            let piece_guides = Guides { density: density.as_deref(), curves: guides.curves };
             let piece_config = RemeshConfig { target: Target::QuadCount(share), ..config.clone() };
             // A work mesh in proportion: a button does not need the
             // triangles a body does.
@@ -336,7 +339,8 @@ impl Remesher for QuadLayout {
                 Ok((mesh, _)) if mesh.faces.is_empty() => report.pieces_failed += 1,
                 Ok((mesh, mut done)) => {
                     let offset = merged.positions.len() as u32;
-                    for edge in done.hard_edges.iter_mut().chain(done.creases.iter_mut().map(|(edge, _)| edge)) {
+                    let listed = done.hard_edges.iter_mut().chain(done.guide_edges.iter_mut());
+                    for edge in listed.chain(done.creases.iter_mut().map(|(edge, _)| edge)) {
                         *edge = edge.map(|v| v + offset);
                     }
                     merged.positions.extend(mesh.positions);
@@ -485,8 +489,8 @@ impl QuadLayout {
 
         // The layout knows which vertices lie on a border or a hard edge.
         let held = Some((meshed.on_feature, meshed.on_corner));
-        (report.hard_edges, report.creases) =
-            settle(&mut mesh, input, &work, edge_length, held, &self.relaxer, config.volume_fit, recorder)?;
+        settle(&mut mesh, input, &work, edge_length, held, &self.relaxer, config.volume_fit, recorder)?
+            .into_report(&mut report);
         clock.lap(&mut report, "relaxation");
 
         report.stats = mesh.stats();
@@ -552,11 +556,16 @@ fn fields(
 
     recorder.begin("preprocessing")?;
     let triangles = ((size.per_quad * quads) as usize).clamp(size.least, size.most);
-    let work_request =
-        preprocess::Request { triangles, crease_angle: config.crease_angle, curvature_scale: Some(edge_length) };
+    let work_request = preprocess::Request {
+        triangles,
+        crease_angle: config.crease_angle,
+        curvature_scale: Some(edge_length),
+        curves: guides.map_or(&[], |guides| guides.curves),
+    };
     let mut work = preprocess::create(preprocess::Kind::Isotropic).preprocess(input, &work_request)?;
     report.working_vertices = work.mesh.positions.len();
     report.feature_edges = work.feature_edges.len();
+    report.guide_gaps = work.guide_gaps;
     clock.lap(report, "preprocess");
     recorder::show_work(recorder, &work);
 
@@ -598,7 +607,8 @@ fn fields(
 /// are what its vertices snap to; the surface itself is the input. `held`
 /// lists the vertices known to lie on feature lines and on corners; without
 /// it they are told by distance. Returns the edges of the mesh that ended up
-/// along a feature line, and those to crease with their weights.
+/// along a hard edge, those to crease with their weights, and those along a
+/// guide curve.
 #[allow(clippy::too_many_arguments)]
 fn settle(
     mesh: &mut PolyMesh,
@@ -609,7 +619,7 @@ fn settle(
     relaxer: &dyn Relaxer,
     volume_fit: f64,
     recorder: &mut dyn Recorder,
-) -> Result<(Vec<[u32; 2]>, Vec<Crease>)> {
+) -> Result<Lines> {
     let constraints =
         crate::field::Constraints::from_feature_edges(&work.mesh.positions, &work.normals, &work.feature_edges);
     // A vertex belongs to a feature line when it is within a third of an
@@ -627,9 +637,34 @@ fn settle(
         recorder.begin("fitting")?;
         fitting::create(fitting::Kind::LeastSquares).fit(mesh, input, &surface, guide.as_ref(), volume_fit);
     }
-    let hard_edges = guide.map_or_else(Vec::new, |features| features.edges_along(mesh));
+    // A line drawn by the user is a line of edges, not a hard edge: it is
+    // listed apart, and neither marked sharp nor creased for being there.
+    let mut hard_edges = guide.map_or_else(Vec::new, |features| features.edges_along(mesh));
+    let mut guide_edges = Vec::new();
+    if !work.guide_lines.is_empty() {
+        let drawn = Bvh::from_triangles(work.guide_lines.iter().map(|&[a, b]| [a, b, b]).collect());
+        guide_edges = Features::edges_on(&drawn, mesh);
+        let drawn: std::collections::HashSet<[u32; 2]> = guide_edges.iter().copied().collect();
+        hard_edges.retain(|edge| !drawn.contains(edge));
+    }
     let creases = Creases::default().mark(mesh, input, &surface, &hard_edges);
-    Ok((hard_edges, creases))
+    Ok(Lines { hard_edges, creases, guide_edges })
+}
+
+/// The edges of a finished mesh that are worth telling apart.
+struct Lines {
+    /// Along a hard edge of the input.
+    hard_edges: Vec<[u32; 2]>,
+    /// To keep sharp under subdivision, with their weights.
+    creases: Vec<Crease>,
+    /// Along a guide curve.
+    guide_edges: Vec<[u32; 2]>,
+}
+
+impl Lines {
+    fn into_report(self, report: &mut Report) {
+        (report.hard_edges, report.creases, report.guide_edges) = (self.hard_edges, self.creases, self.guide_edges);
+    }
 }
 
 /// Times the stages of a chain.

@@ -55,18 +55,38 @@ impl DynamicMesh {
             live: mesh.triangles.len(),
         };
         for v in 0..mesh.positions.len() as u32 {
-            let p = mesh.positions[v as usize];
-            mesh.corner[v as usize] = match mesh.feature_neighbors(v)[..] {
-                [] => false,
-                [x, y] => {
-                    let incoming = (p - mesh.positions[x as usize]).normalize_or_zero();
-                    let outgoing = (mesh.positions[y as usize] - p).normalize_or_zero();
-                    incoming.dot(outgoing) < CORNER_COS
-                }
-                _ => true,
-            };
+            mesh.refresh_corner(v);
         }
         mesh
+    }
+
+    /// Makes the edge `a-b` one that must survive as an edge. The corners
+    /// at its ends are to be looked at again ([`Self::refresh_corner`]).
+    pub fn mark_feature(&mut self, a: u32, b: u32) {
+        self.features.insert(key(a, b));
+    }
+
+    /// Says that `v`, on a feature line that merely runs through it, is no
+    /// corner however the line turns there: it may slide along the line.
+    pub fn let_slide(&mut self, v: u32) {
+        if self.feature_degree(v) == 2 {
+            self.corner[v as usize] = false;
+        }
+    }
+
+    /// Decides again whether `v` is a corner: where feature lines meet, end,
+    /// or turn sharply.
+    pub fn refresh_corner(&mut self, v: u32) {
+        let p = self.positions[v as usize];
+        self.corner[v as usize] = match self.feature_neighbors(v)[..] {
+            [] => false,
+            [x, y] => {
+                let incoming = (p - self.positions[x as usize]).normalize_or_zero();
+                let outgoing = (self.positions[y as usize] - p).normalize_or_zero();
+                incoming.dot(outgoing) < CORNER_COS
+            }
+            _ => true,
+        };
     }
 
     pub fn is_corner(&self, v: u32) -> bool {
