@@ -8,11 +8,11 @@ Results already in bench/reference are kept unless --refresh is given.
 
 import argparse
 
-from run import MODELS, OUTPUT, ensure_corpus, quadremesher, quadremesher_reference
+from run import MODELS, OUTPUT, available_models, ensure_corpus, quadremesher, quadremesher_reference
 
 parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
 parser.add_argument("--targets", default="1000,3000,8000")
-parser.add_argument("--models", default=",".join(model for model, *_ in MODELS))
+parser.add_argument("--models", default=",".join(available_models()))
 parser.add_argument("--refresh", action="store_true")
 options = parser.parse_args()
 

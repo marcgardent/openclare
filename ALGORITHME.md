@@ -197,6 +197,14 @@ Le corpus compte ainsi 17 modèles, tous avec leurs mires Quad Remesher. Il manq
 vraies sculptures denses autres que l'ogre : les scans classiques (Stanford) ont des conditions
 réservées à la recherche et ont été écartés.
 
+Depuis le jalon 9 : deux formes mécaniques de plus (bloc en L, cylindre), et trois **modèles
+locaux** récupérés de BlenderKit, un terrain et deux personnages de jeu. Leur licence (Royalty
+Free) n'autorise pas à remettre un modèle en circulation, même modifié : ils restent sous
+`bench/corpus-large/`, hors git, avec les maillages qui en sont tirés ; `make blenderkit` les
+retélécharge. Ils sont mesurés mais n'entrent pas dans les groupes de la règle d'acceptation,
+que chacun doit pouvoir reproduire. Auteurs, sources et licences de tous les modèles :
+[CREDITS.md](CREDITS.md).
+
 ---
 
 ## 1. Références
@@ -963,6 +971,19 @@ vives, et tous corrigés :
   des quarts de tour autour des sommets d'un mur.
 
 Supprimer ces triangles à la source reste à faire (DT-031).
+
+Premiers modèles venus de l'extérieur, premiers enseignements (trois modèles de BlenderKit,
+voir CREDITS.md) :
+
+- un **terrain** de 543 557 triangles passe : maillage valide, budget tenu à 1 %, trois fois
+  moins de sommets irréguliers que Quad Remesher, fidélité comparable. Aucun outil n'y aligne
+  ses arêtes mieux que le hasard (DT-033) ;
+- un **personnage en 164 pièces détachées** a fait planter le traçage, sur un cas que le corpus
+  ne contenait pas : un sommet où deux nappes de surface se touchent en un point. Corrigé (un
+  tel sommet est traité comme autant de sommets qu'il a de nappes) et couvert par un test. Le
+  modèle entier, lui, ne passe toujours pas : faute de traiter chaque pièce pour elle-même,
+  toute la chaîne se replie (DT-032) ;
+- un **personnage à arêtes non variété** est refusé avec un diagnostic clair, comme prévu.
 
 Ce qui reste ouvert :
 

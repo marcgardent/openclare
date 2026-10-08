@@ -44,6 +44,8 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 | DT-029 | Quads étirés sur la paroi d'un cylindre | J9 | moyenne | ouvert |
 | DT-030 | Chaîne par patchs (QuadWild) non écrite | J9 | basse | ouvert |
 | DT-031 | Triangles d'aire quasi nulle laissés par le prétraitement | J9 | moyenne | ouvert |
+| DT-032 | Modèles faits de nombreuses pièces détachées : toute la chaîne se replie | J9 | haute | ouvert |
+| DT-033 | Terrains et scans : aucun outil n'aligne, le champ n'a rien à suivre | J9 | moyenne | ouvert |
 | DT-027 | Garde-fous de temps de calcul sur les entrées pathologiques | J8 | basse | ouvert |
 
 ## Tickets
@@ -379,3 +381,31 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   calcul des angles autour d'un mur s'en accommodent.
 - **À faire** : les éliminer à la source, par bascule ou fusion d'arêtes qui respecte les
   arêtes vives.
+
+### DT-032 — Modèles faits de nombreuses pièces détachées : toute la chaîne se replie
+
+- **Né au** jalon 9, sur deux personnages de jeu récupérés de BlenderKit (voir CREDITS.md).
+- **Constat** : `mahaveer` est fait de 164 pièces ouvertes détachées (vêtements, bijoux),
+  `marine` de 820, avec en plus 305 arêtes à trois faces. Le cahier des charges dit que
+  plusieurs pièces séparées sont « acceptées, chaque pièce est traitée seule » : ce n'est pas
+  ce que fait le code. Tout est traité d'un bloc ; il suffit qu'une pièce n'ait pas de T-mesh
+  valide pour que le modèle entier parte dans la chaîne de repli, qui met 84 secondes sur
+  `mahaveer` et rend un maillage non valide (17 pièces sur 164, budget manqué de 28 %).
+  `marine` est refusé d'emblée, avec un diagnostic clair, pour ses arêtes non variété : c'est
+  le comportement prévu en attendant la réparation (J11).
+- **Conséquence** : les modèles assemblés, courants dans la production, ne passent pas.
+- **À faire** : traiter chaque pièce pour elle-même (budget réparti au prorata de l'aire,
+  repli pièce par pièce), ignorer ou regrouper les pièces plus petites qu'un quad. La fusion
+  des pièces qui se traversent en une seule peau reste l'affaire du jalon 11.
+
+### DT-033 — Terrains et scans : aucun outil n'aligne, le champ n'a rien à suivre
+
+- **Né au** jalon 9, sur un terrain de montagne de 543 557 triangles (BlenderKit).
+- **Constat** : openclare y donne un maillage valide, au budget, avec trois fois moins de
+  sommets irréguliers que Quad Remesher (56 contre 167) et une fidélité comparable. Mais
+  l'alignement est à 18,6°, proche du hasard (22,5°), comme pour tous les outils mesurés
+  (QuadriFlow 20,2°, Quad Remesher 18,6°) : un relief érodé n'a pas de directions de courbure
+  stables à l'échelle d'un quad. Même famille que le scan `rock` (DT-021).
+- **Piste** : sur ces surfaces, la métrique d'alignement ne dit pas grand-chose ; ce qui
+  compterait serait de suivre les lignes de crête et de vallée, à détecter comme des lignes à
+  suivre plutôt que par la courbure point par point.

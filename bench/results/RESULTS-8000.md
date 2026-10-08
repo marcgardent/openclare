@@ -308,6 +308,24 @@ Requested budget: 8000 quads. Median over 5 seeds; Quad Remesher and integer-gri
 | Off budget, % (N) | 0.5 | 8.5 | 0.1 | 1.3 | 13.5 | 13.5 |
 | Time, seconds (T) | 0.79 | 9.27 | 4.74 | 6.01 | 4.42 | 4.47 |
 
+## terrain (extra)
+
+| | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform |
+|---|---|---|---|---|---|---|
+| **Valid meshes (V)** | 4/5 | 1/1 | 1/1 | 1/1 | 0/1 | 1/1 |
+| Irregular vertices (S) | 273 | 123 | 124 | 148 | 296 | 253 |
+| … of which above the minimum | — | — | — | — | — | — |
+| Base complex patches (C) | 3587 | 4449 | 5354 | 6466 | 8228 | 4351 |
+| Alignment, degrees (A) | 21.43 | 17.78 | 17.76 | 17.69 | 18.10 | 18.39 |
+| Mean angle deviation, degrees (F) | 7.45 | 9.69 | 6.62 | 6.61 | 8.69 | 7.98 |
+| Angle deviation, 95th percentile (F) | 25.48 | 25.63 | 18.39 | 17.50 | 25.15 | 22.11 |
+| Mean aspect ratio (F) | 1.264 | 1.334 | 1.292 | 1.299 | 1.668 | 1.342 |
+| Area variation (F) | 0.215 | 0.298 | 0.333 | 0.476 | 0.518 | 0.237 |
+| Hausdorff, ‰ of the diagonal (H) | 130.45 | 17.98 | 11.92 | 11.03 | 10.70 | 16.84 |
+| Mean distance, ‰ (H) | 1.477 | 1.192 | 0.872 | 0.766 | 0.719 | 1.071 |
+| Off budget, % (N) | 39.9 | 14.1 | 0.5 | 1.8 | 47.7 | 10.2 |
+| Time, seconds (T) | 8.99 | 34.78 | 11.12 | 11.96 | 24.96 | 24.23 |
+
 ## sphere (calibration)
 
 | | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform |

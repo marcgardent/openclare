@@ -310,6 +310,24 @@ Failures: quadriflow: cancelled.
 | Off budget, % (N) | 3.3 | 3.3 | 16.6 | 0.5 | 1.3 | 18.1 | 18.1 |
 | Time, seconds (T) | 1.30 | 0.18 | 5.16 | 1.42 | 3.07 | 2.68 | 2.49 |
 
+## terrain (extra)
+
+| | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform |
+|---|---|---|---|---|---|---|---|
+| **Valid meshes (V)** | 5/5 | 5/5 | 1/1 | 1/1 | 1/1 | 0/1 | 1/1 |
+| Irregular vertices (S) | 112 | 115 | 55 | 56 | 68 | 231 | 167 |
+| … of which above the minimum | — | — | — | — | — | — | — |
+| Base complex patches (C) | 826 | 1209 | 997 | 1681 | 1952 | — | 1662 |
+| Alignment, degrees (A) | 20.17 | 21.17 | 18.69 | 18.56 | 18.78 | 18.30 | 18.61 |
+| Mean angle deviation, degrees (F) | 6.49 | 8.24 | 9.46 | 6.16 | 6.39 | 9.57 | 8.13 |
+| Angle deviation, 95th percentile (F) | 23.46 | 27.33 | 27.18 | 17.46 | 18.13 | 26.86 | 23.75 |
+| Mean aspect ratio (F) | 1.209 | 1.291 | 1.347 | 1.292 | 1.325 | 1.806 | 1.429 |
+| Area variation (F) | 0.187 | 0.215 | 0.283 | 0.317 | 0.460 | 0.552 | 0.247 |
+| Hausdorff, ‰ of the diagonal (H) | 23.91 | 143.82 | 26.92 | 21.40 | 18.85 | 12.55 | 25.16 |
+| Mean distance, ‰ (H) | 1.851 | 2.384 | 2.069 | 1.537 | 1.317 | 0.967 | 1.780 |
+| Off budget, % (N) | 9.4 | 41.6 | 16.6 | 1.1 | 0.5 | 55.9 | 13.4 |
+| Time, seconds (T) | 20.90 | 7.98 | 12.64 | 6.92 | 7.01 | 21.17 | 19.56 |
+
 ## sphere (calibration)
 
 | | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform |
