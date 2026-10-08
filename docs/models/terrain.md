@@ -38,7 +38,7 @@ At equal quad count: Quad Remesher's mesh as it is, and openclare asked for as m
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
 | quad-layout | 2968 | **67** | 100 | 17 | 69 | 54 | 81 | 43 | 96 | 44 |
-| **quad-layout-adaptive** | 2965 | **65** | 100 | 17 | 66 | 61 | 67 | 23 | 95 | 47 |
+| **quad-layout-adaptive** | 2965 | **65** | 100 | 17 | 66 | 61 | 67 | 23 | 95 | 45 |
 | quadriflow | 2717 | **59** | 100 | 10 | 68 | 43 | 59 | 70 | 62 | 23 |
 | integer-grid | 2502 | **56** | 100 | 17 | 53 | 40 | 78 | 60 | 34 | 38 |
 | quadremesher-uniform | 2597 | **54** | 100 | 17 | 59 | 43 | 36 | 36 | 46 | 27 |

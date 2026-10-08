@@ -33,7 +33,11 @@ def library():
     pointer, size, text = ctypes.c_void_p, ctypes.c_size_t, ctypes.c_char_p
     lib.openclare_version.restype = text
     lib.openclare_remesh.restype = pointer
-    lib.openclare_remesh.argtypes = [pointer, size, pointer, size, pointer, size, pointer, text, text, ON_STAGE, pointer]
+    lib.openclare_remesh.argtypes = [
+        pointer, size, pointer, size, pointer, size, pointer,
+        pointer, pointer, pointer, size,
+        text, text, ON_STAGE, pointer,
+    ]
     lib.openclare_result_ok.restype = ctypes.c_int32
     lib.openclare_result_error.restype = text
     lib.openclare_result_report.restype = text
@@ -83,7 +87,7 @@ class Remeshed:
 
 def remesh(
     positions, vertex_count, triangles, triangle_count, corner_vertices, corner_count, preset, settings,
-    density=None, on_stage=None, uv_layers=(), seams=False, hard_edges=False, creases=False,
+    density=None, on_stage=None, uv_layers=(), seams=False, hard_edges=False, creases=False, curves=(),
 ):
     """Remeshes into quads the triangle mesh whose arrays sit at the addresses
     given: three floats per vertex at `positions`, three corners per triangle
@@ -93,6 +97,10 @@ def remesh(
     `settings` maps setting names to values, on top of the preset. `density`
     is None or a numpy array of one 32-bit float per vertex, from 0 where the
     quads should be largest to 1 where they should be smallest.
+
+    `curves` are guide curves, lines drawn on the surface for the quad mesh
+    to have edges along: for each, a pair of its points (a numpy array of
+    three floats per point) and whether its last point joins the first.
 
     `on_stage`, if given, is called with the name of each stage as it begins
     ("cross field", or "piece 3 of 12: cross field"); the run stops if it
@@ -120,11 +128,22 @@ def remesh(
             print(f"openclare: {error!r} while being told of a stage")
             return 0
 
+    curves = [(numpy.ascontiguousarray(points, numpy.float32).reshape(-1, 3), closed) for points, closed in curves]
+    curves = [(points, closed) for points, closed in curves if len(points) >= 2]
+    if curves:
+        curve_points = numpy.concatenate([points for points, _ in curves])
+        curve_sizes = numpy.array([len(points) for points, _ in curves], numpy.uint32)
+        curve_closed = numpy.array([bool(closed) for _, closed in curves], numpy.uint8)
+        curve_arguments = (curve_points.ctypes.data, curve_sizes.ctypes.data, curve_closed.ctypes.data, len(curves))
+    else:
+        curve_arguments = (None, None, None, 0)
+
     # Kept in a variable: the engine calls it for as long as the run lasts.
     callback = ON_STAGE(told) if on_stage else ON_STAGE()
     result = lib.openclare_remesh(
         positions, vertex_count, triangles, triangle_count, corner_vertices, corner_count,
         None if density is None else density.ctypes.data,
+        *curve_arguments,
         preset.encode(), lines.encode(), callback, None,
     )
     try:

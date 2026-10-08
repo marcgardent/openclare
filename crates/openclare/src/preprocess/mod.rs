@@ -37,6 +37,9 @@ pub struct WorkMesh {
     pub guide_lines: Vec<[Vec3; 2]>,
     /// Places where a guide curve could not be laid as one unbroken line.
     pub guide_gaps: usize,
+    /// Those of the feature edges that are along a guide curve: lines to
+    /// follow if they can be, where a crease or a border must be.
+    pub guide_edges: Vec<[u32; 2]>,
     /// Principal curvatures per vertex, read at [`Request::curvature_scale`].
     pub curvature: Curvature,
     /// How much the principal directions can be trusted, per vertex: 0 where
@@ -177,9 +180,33 @@ impl Preprocessor for Isotropic {
         let edge_length = 1.06 * (4.0 * source.surface_area() / (3.0f64.sqrt() * request.triangles as f64)).sqrt();
         let target = isotropic::Target { surface: &surface, face_normals: &face_normals, features: lines.as_ref() };
         isotropic::remesh(&mut mesh, &target, edge_length, self.iterations);
+        if !laid.segments.is_empty() {
+            imprint::unpinch(&mut mesh);
+        }
 
         let (mesh, features) = mesh.finish();
         let mut work = work_mesh(mesh, features, request);
+        if !laid.segments.is_empty() {
+            // What is kept as a line without being a border or a crease can
+            // only come from a curve.
+            let mut sides: HashMap<(u32, u32), Vec<Vec3>> = HashMap::new();
+            for (f, tri) in work.mesh.triangles.iter().enumerate() {
+                for k in 0..3 {
+                    let (a, b) = (tri[k], tri[(k + 1) % 3]);
+                    sides.entry((a.min(b), a.max(b))).or_default().push(work.mesh.area_vector(f).normalize_or_zero());
+                }
+            }
+            let sharp = request.crease_angle.map(|degrees| degrees.to_radians().cos());
+            work.guide_edges = work
+                .feature_edges
+                .iter()
+                .copied()
+                .filter(|&[a, b]| match sides.get(&(a.min(b), a.max(b))).map(Vec::as_slice) {
+                    Some([one, other]) => sharp.is_none_or(|cos| one.dot(*other) > cos),
+                    _ => false,
+                })
+                .collect();
+        }
         work.guide_lines = laid.segments;
         work.guide_gaps = laid.gaps;
         Ok(work)
@@ -293,6 +320,7 @@ fn work_mesh(mesh: TriMesh, feature_edges: Vec<[u32; 2]>, request: &Request) -> 
         feature_edges,
         guide_lines: Vec::new(),
         guide_gaps: 0,
+        guide_edges: Vec::new(),
         curvature,
         confidence,
         sizing,

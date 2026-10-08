@@ -42,6 +42,8 @@ OPTIONS (remesh):
     --volume-fit <F>             0 leaves every vertex on the surface; 1 moves them off it for the mesh to keep the volume
     --density <FILE>             painted density: one weight per input vertex, one per line, from 0 (least dense) to 1 (most)
     --density-contrast <F>       how many times denser a weight of 1 is than a weight of 0 (default 4)
+    --curves <FILE>              guide curves, lines for the quad mesh to have edges along: one point per line
+                                 as x y z; a blank line starts another curve; a line saying closed closes one
     --skip-pieces-under <Q>      leave out the separate pieces whose share of the quads is below Q (default 0: keep all)
     --record <FILE.rrd>          record what each stage makes, to open in the Rerun viewer
                                  (needs a build with `--features rerun`)
@@ -145,6 +147,35 @@ fn primitive(args: &[String]) -> Result<(), String> {
     obj::write_obj_tri(output, &mesh).map_err(|e| e.to_string())
 }
 
+/// Guide curves from text: one point per line as `x y z`; a blank line ends
+/// a curve; a line `closed` says the curve it is in joins its first point.
+fn read_curves(text: &str) -> Result<Vec<openclare::GuideCurve>, String> {
+    let mut curves = vec![openclare::GuideCurve::default()];
+    for (number, line) in text.lines().enumerate() {
+        let line = line.trim();
+        let current = curves.last_mut().expect("never empty");
+        if line.is_empty() {
+            if !current.points.is_empty() {
+                curves.push(openclare::GuideCurve::default());
+            }
+        } else if line == "closed" {
+            current.closed = true;
+        } else if !line.starts_with('#') {
+            let numbers: Vec<f64> = line
+                .split_whitespace()
+                .map(str::parse)
+                .collect::<Result<_, _>>()
+                .map_err(|_| format!("line {}: '{line}' is not a point", number + 1))?;
+            let [x, y, z] = numbers[..] else {
+                return Err(format!("line {}: a point is three numbers", number + 1));
+            };
+            current.points.push(openclare::math::Vec3::new(x, y, z));
+        }
+    }
+    curves.retain(|curve| curve.points.len() >= 2);
+    Ok(curves)
+}
+
 /// Runs the chain while recording what its stages make to the file at
 /// `path`. The recording is kept even if the chain fails: that is when it
 /// is most worth a look.
@@ -191,6 +222,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
     };
 
     let (mut save, mut density_path, mut record_path) = (None, None, None::<String>);
+    let mut curves_path = None::<String>;
     let mut paths = Vec::new();
     let mut args = args.iter();
     while let Some(arg) = args.next() {
@@ -212,6 +244,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
             "--quads-around" => config.quads_around = parse(arg, value(arg)?)?,
             "--volume-fit" => config.volume_fit = parse(arg, value(arg)?)?,
             "--density" => density_path = Some(value(arg)?.clone()),
+            "--curves" => curves_path = Some(value(arg)?.clone()),
             "--density-contrast" => config.density_contrast = parse(arg, value(arg)?)?,
             "--skip-pieces-under" => config.skip_pieces_under = parse(arg, value(arg)?)?,
             "--record" => record_path = Some(value(arg)?.clone()),
@@ -247,7 +280,16 @@ fn remesh(args: &[String]) -> Result<(), String> {
         }
         None => None,
     };
-    let guides = Guides { density: density.as_deref(), ..Default::default() };
+    let curves = match &curves_path {
+        Some(path) => {
+            let text = std::fs::read_to_string(path).map_err(|e| format!("{path}: {e}"))?;
+            let curves = read_curves(&text).map_err(|e| format!("{path}: {e}"))?;
+            println!("curves   {} guide curves", curves.len());
+            curves
+        }
+        None => Vec::new(),
+    };
+    let guides = Guides { density: density.as_deref(), curves: &curves };
     let (result, report) = match &record_path {
         Some(path) => remesh_recorded(path, &config, &mesh, &guides)?,
         None => config.remesh_guided(&mesh, &guides).map_err(|e| e.to_string())?,
@@ -275,6 +317,12 @@ fn remesh(args: &[String]) -> Result<(), String> {
         report.open_loops,
         report.map_inversions,
     );
+    if !curves.is_empty() {
+        println!("guides   {} edges along the guide curves, {} breaks", report.guide_edges.len(), report.guide_gaps);
+        if report.guides_let_go > 0 {
+            println!("         could not be kept as lines of edges on {} piece(s)", report.guides_let_go);
+        }
+    }
     if report.pieces > 1 {
         println!(
             "pieces   {} separate pieces, {} through the integer-grid chain, {} not meshed, {} left out as too small",

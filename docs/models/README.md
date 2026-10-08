@@ -26,7 +26,7 @@ Overall mark at 3000 quads:
 | [lblock](lblock.md) | mechanical | 89 | 98 | 99 |
 | [cylinder](cylinder.md) | mechanical | 89 | 95 | 88 |
 | [terrain](terrain.md) | extra | 59 | 65 | 29 |
-| [mahaveer](mahaveer.md) | extra | 0 | 25 | 30 |
+| [mahaveer](mahaveer.md) | extra | 0 | 23 | 30 |
 | [marine](marine.md) | extra | 0 | 21 | 39 |
 | [sphere](sphere.md) | calibration | 88 | 95 | 85 |
 | [torus](torus.md) | calibration | 56 | 98 | 83 |

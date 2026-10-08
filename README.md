@@ -30,6 +30,7 @@ is left as it is. What is remeshed is the object as it is seen, modifiers applie
 | Adaptive Size | How much the size of the quads follows the curvature: at 0 % they are all the same size; towards 100 % they get smaller where the shape bends and larger where it is flat, for the same number in total. Each preset brings its own value (50 %, or 0 % for hard surfaces) |
 | Density | A vertex group of the object, painted in Weight Paint: quads are smallest where the weight is 1, largest where it is 0 |
 | Factor | How many times more quads a weight of 1 gets than a weight of 0, for the same area |
+| Guide Curves | A collection of curves drawn on the model: the result has a line of edges along each. Curves are taken with their modifiers, so a Shrinkwrap is what keeps a curve on the model. A curve that cannot be kept as a line of edges is let go, and the report says so |
 
 A section *Export* says what the result carries besides its quads, each with its box to tick:
 
@@ -44,6 +45,12 @@ Blender waits while the engine runs (about eight seconds for the 200,000 triangl
 at 3000 quads), and says where it is: the status bar shows each stage as it begins, the cursor
 counts them, and they are written to the Info log. Reading the edges marked sharp in Blender
 as hard edges to keep comes next ([ROADMAP.md](ROADMAP.md)).
+
+![The ogre with and without guide curves](docs/images/guide_curves.png)
+
+From the command line the same curves go in as a text file, `--curves curves.txt`: one point
+per line as `x y z`, a blank line between two curves, and a line saying `closed` for one that
+joins its first point.
 
 The add-on calls the engine through a C interface (`crates/openclare-capi`), which any other
 host can use: one call, flat arrays in, quads out, settings as the text of a saved

@@ -448,6 +448,7 @@ impl QuadLayout {
         recorder.begin("layout")?;
         let layout = tmesh::create(tmesh::Kind::Motorcycle).build(&work, &field, &tmesh::Request { edge_length })?;
         report.map_inversions = layout.tmesh.report.map_inversions;
+        report.guides_let_go = layout.map.report.guides_off_grid as usize;
         clock.lap(&mut report, "layout");
         recorder::show_layout(recorder, &work, &layout.tmesh);
         // A piece of surface with neither singularity nor border (a torus)
@@ -469,6 +470,15 @@ impl QuadLayout {
             None
         };
         if let Some(cause) = cause {
+            // With guide curves, the first thing to try is to do without
+            // them: the layout without the lines drawn is still better than
+            // the other chain.
+            if !guides.curves.is_empty() {
+                let free = Guides { curves: &[], ..*guides };
+                let (mesh, mut report) = self.remesh_piece(input, &free, config, least, recorder)?;
+                report.guides_let_go = 1;
+                return Ok((mesh, report));
+            }
             return fall_back(input, config, least, cause, recorder);
         }
 
@@ -479,6 +489,12 @@ impl QuadLayout {
         clock.lap(&mut report, "quantization");
         recorder::show_lengths(recorder, &work, &layout.tmesh, &quantized);
         if !quantized.report.is_valid() || quantized.report.quads == 0 {
+            if !guides.curves.is_empty() {
+                let free = Guides { curves: &[], ..*guides };
+                let (mesh, mut report) = self.remesh_piece(input, &free, config, least, recorder)?;
+                report.guides_let_go = 1;
+                return Ok((mesh, report));
+            }
             return fall_back(input, config, least, "no sound whole lengths for the layout", recorder);
         }
 

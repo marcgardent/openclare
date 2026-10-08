@@ -8,6 +8,7 @@
 //!     positions, vertex_count, triangles, triangle_count,
 //!     NULL, 0,                    /* triangles hold vertex indices */
 //!     NULL,                       /* no painted density */
+//!     NULL, NULL, NULL, 0,        /* no guide curve */
 //!     "organic",                  /* preset */
 //!     "quads = 3000\n",           /* settings on top of it */
 //!     NULL, NULL);                /* nobody follows the run */
@@ -43,7 +44,7 @@ use std::time::Instant;
 use openclare::math::Vec3;
 use openclare::recorder::{Recorder, Shape};
 use openclare::uv;
-use openclare::{Guides, PolyMesh, RemeshConfig, Target, TriMesh};
+use openclare::{GuideCurve, Guides, PolyMesh, RemeshConfig, Target, TriMesh};
 
 /// Called when a stage of the run begins, with its name ("cross field", or
 /// "piece 3 of 12: cross field") and the `user` pointer given to
@@ -126,6 +127,12 @@ pub extern "C" fn openclare_version() -> *const c_char {
 ///   corners, which is how Blender stores faces.
 /// - `density`: null, or one weight per vertex from 0 (least dense) to 1
 ///   (most dense).
+/// - `curve_points`, `curve_sizes`, `curve_closed`, `curve_count`: guide
+///   curves, lines drawn on the surface for the quad mesh to have edges
+///   along. `curve_count` curves, one after the other in `curve_points`
+///   (x y z per point), with as many points each as `curve_sizes` says, and
+///   in `curve_closed` 1 for a curve whose last point joins the first, 0
+///   otherwise. All null and 0 for none.
 /// - `preset`: null for the default one, or the name of a shipped preset
 ///   (`organic`, `animation`, `hard-surface`).
 /// - `settings`: null, or `key = value` lines that adjust the preset.
@@ -137,7 +144,8 @@ pub extern "C" fn openclare_version() -> *const c_char {
 ///
 /// # Safety
 ///
-/// The arrays must hold what their counts say, and the two texts, when not
+/// The arrays must hold what their counts say (for the curves, three numbers
+/// for each point `curve_sizes` adds up to), and the two texts, when not
 /// null, must end with a NUL. `on_stage`, when not null, must be safe to call
 /// with `user`.
 #[allow(clippy::too_many_arguments)]
@@ -150,6 +158,10 @@ pub unsafe extern "C" fn openclare_remesh(
     corner_vertices: *const u32,
     corner_count: usize,
     density: *const f32,
+    curve_points: *const f32,
+    curve_sizes: *const u32,
+    curve_closed: *const u8,
+    curve_count: usize,
     preset: *const c_char,
     settings: *const c_char,
     on_stage: OpenclareOnStage,
@@ -161,7 +173,19 @@ pub unsafe extern "C" fn openclare_remesh(
         unsafe {
             let corners =
                 (!corner_vertices.is_null()).then(|| std::slice::from_raw_parts(corner_vertices, corner_count));
-            remesh(positions, vertex_count, triangles, triangle_count, corners, density, preset, settings, &mut watcher)
+            let curves = curves_of(curve_points, curve_sizes, curve_closed, curve_count);
+            remesh(
+                positions,
+                vertex_count,
+                triangles,
+                triangle_count,
+                corners,
+                density,
+                &curves,
+                preset,
+                settings,
+                &mut watcher,
+            )
         }
     }));
     let result = match outcome {
@@ -187,6 +211,7 @@ unsafe fn remesh(
     triangle_count: usize,
     corner_vertices: Option<&[u32]>,
     density: *const f32,
+    curves: &[GuideCurve],
     preset: *const c_char,
     settings: *const c_char,
     watcher: &mut Watcher,
@@ -247,7 +272,7 @@ unsafe fn remesh(
     }
 
     let clock = Instant::now();
-    let guides = Guides { density: painted.as_deref(), ..Default::default() };
+    let guides = Guides { density: painted.as_deref(), curves };
     let (mesh, done) = config.remesh_recorded(&input, &guides, watcher).map_err(|error| error.to_string())?;
     let seconds = clock.elapsed().as_secs_f64();
 
@@ -258,7 +283,7 @@ unsafe fn remesh(
     let stats = &done.stats;
     let report = format!(
         "{asked}\nvertices = {}\nfaces = {}\nquads = {}\nirregular_vertices = {}\npieces = {}\n\
-         pieces_through_fallback = {}\npieces_failed = {}\npieces_skipped = {}\nseconds = {seconds:.3}\n",
+         pieces_through_fallback = {}\npieces_failed = {}\npieces_skipped = {}\nguide_edges = {}\nguide_gaps = {}\nguides_let_go = {}\nseconds = {seconds:.3}\n",
         stats.vertices,
         stats.faces,
         stats.quads,
@@ -267,6 +292,9 @@ unsafe fn remesh(
         done.pieces_fell_back,
         done.pieces_failed,
         done.pieces_skipped,
+        done.guide_edges.len(),
+        done.guide_gaps,
+        done.guides_let_go,
     );
     Ok(OpenclareResult {
         mesh,
@@ -276,6 +304,35 @@ unsafe fn remesh(
         error: CString::default(),
         report: text(report),
     })
+}
+
+/// The guide curves a host gave as flat arrays.
+///
+/// # Safety
+///
+/// The arrays must hold what `count` and the sizes say, or be null.
+unsafe fn curves_of(points: *const f32, sizes: *const u32, closed: *const u8, count: usize) -> Vec<GuideCurve> {
+    if points.is_null() || sizes.is_null() || count == 0 {
+        return Vec::new();
+    }
+    // SAFETY: `count` sizes, and three numbers for each point they add up to.
+    let sizes = unsafe { std::slice::from_raw_parts(sizes, count) };
+    let total: usize = sizes.iter().map(|&size| size as usize).sum();
+    let coordinates = unsafe { std::slice::from_raw_parts(points, 3 * total) };
+    let closed = (!closed.is_null()).then(|| unsafe { std::slice::from_raw_parts(closed, count) });
+    let mut next = 0;
+    sizes
+        .iter()
+        .enumerate()
+        .map(|(index, &size)| {
+            let slice = &coordinates[3 * next..3 * (next + size as usize)];
+            next += size as usize;
+            GuideCurve {
+                points: slice.chunks_exact(3).map(|p| Vec3::new(p[0] as f64, p[1] as f64, p[2] as f64)).collect(),
+                closed: closed.is_some_and(|closed| closed[index] != 0),
+            }
+        })
+        .collect()
 }
 
 /// The result behind a handle; `None` for a null one.

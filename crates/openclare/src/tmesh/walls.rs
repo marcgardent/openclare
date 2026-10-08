@@ -257,6 +257,24 @@ impl Race<'_> {
             ));
         }
 
+        // A triangle with two edges on the same wall, one after the other,
+        // is flat in the map: its third edge lies on the wall too. A trace
+        // that comes to that edge from the other side stops there, as on the
+        // wall itself, rather than step into a triangle with no inside.
+        for face in 0..map.mesh.triangles.len() {
+            for k in 0..3 {
+                let (first, second, chord) = (3 * face + k, 3 * face + (k + 1) % 3, 3 * face + (k + 2) % 3);
+                let (Some(one), Some(other)) = (self.walls[first], self.walls[second]) else { continue };
+                let beyond = twin[chord];
+                if one.trace != other.trace || beyond == INVALID || self.walls[beyond as usize].is_some() {
+                    continue;
+                }
+                // Seen from the other side the chord runs the way the two
+                // edges do, from the start of the first to the end of the second.
+                self.walls[beyond as usize] = Some(Wall { length: one.length + other.length, ..one });
+            }
+        }
+
         // The traces of the corners: one along each grid direction strictly
         // inside a sector.
         for (index, fan) in fans.iter().enumerate().filter(|&(index, _)| node[index] != INVALID) {

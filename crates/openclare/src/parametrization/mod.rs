@@ -40,6 +40,12 @@ pub struct Report {
     /// Feature edges could not be put on grid lines and were left to the
     /// field alone.
     pub features_off_grid: bool,
+    /// The same for guide curves only: creases and borders are on grid
+    /// lines, the curves are only followed by the field.
+    pub guides_off_grid: bool,
+    /// The edges of the guide curves that were let go, as their two
+    /// vertices.
+    pub loose_guides: Vec<[u32; 2]>,
     /// The same at the end; anything but 0 means no valid mesh can be read
     /// off the map.
     pub flipped: usize,
