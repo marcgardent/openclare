@@ -96,6 +96,9 @@ pub struct Report {
     pub guide_edges: Vec<[u32; 2]>,
     /// Places where a guide curve could not be laid as one unbroken line.
     pub guide_gaps: usize,
+    /// Pieces on which the guide curves could not be kept as lines of edges:
+    /// there the edges only run along them, or not at all.
+    pub guides_let_go: usize,
     /// Edges of the output that should stay sharp when it is subdivided,
     /// with how sharp, from 0 to 1 (see [`crate::creases`]). The hard edges
     /// are among them, at 1.
@@ -118,6 +121,7 @@ impl Report {
         self.creases.extend(piece.creases);
         self.guide_edges.extend(piece.guide_edges);
         self.guide_gaps += piece.guide_gaps;
+        self.guides_let_go += piece.guides_let_go;
         for (cause, count) in piece.fallback_causes {
             match self.fallback_causes.iter_mut().find(|(name, _)| *name == cause) {
                 Some((_, total)) => *total += count,

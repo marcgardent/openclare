@@ -1502,6 +1502,67 @@ measured against the source. Hausdorff distance in per mille of the diagonal, wi
 
 What is left open is in DT-043.
 
+### Guide curves
+
+Done on 9 October 2026, at the author's request: curves drawn on the model, held on it by a
+Shrinkwrap in Blender, that the quad mesh should have lines of edges along. It was rank 4 of
+the constraints of the specification (DT-024).
+
+**How.** The chain already follows lines of edges of the work mesh: creases and borders. A
+curve is made into one.
+
+- **Laying the curve** (`preprocess/imprint.rs`). The curve is cut into the mesh during
+  preprocessing, once the mesh is light and before it is evened out. It is taken in stretches
+  about as long as an edge, each brought back onto the surface. Every vertex near the curve is
+  told which side of it it is on, from the stretch nearest to it; an edge whose two ends are on
+  either side is crossed, and is split where it is crossed, or its nearest end is moved there
+  when the crossing is close to it. The pieces between two crossings are edges of the mesh by
+  then, and are marked to be kept like a crease. Where a crossing was missed, the line goes on
+  along the edges that are there.
+- **From there on, the chain does what it does for creases**: the cross field has an arm along
+  the line, the map keeps the line on a grid line, the layout has a wall along it, and the quad
+  mesh ends up with edges exactly on it, held on it through relaxation and fitting.
+- **A line drawn is not a hard edge**: the edges along guide curves are listed apart in the
+  report, and are neither marked sharp nor creased for being there.
+- **Triangles that a line runs round.** A curve that bends within a triangle leaves two of its
+  edges in a row on that triangle, which is then bound to be flat in the map. Three things
+  were needed for that: such triangles are not counted as folds of the map, even where the
+  field could not settle on a line that bends that much; after the mesh is evened out their
+  third edge is turned wherever that leaves the surface as it is; and where it could not be
+  turned, a trace of the layout that comes to it stops there as on the wall itself, instead of
+  stepping into a triangle with no inside.
+- **Letting go.** When the map cannot keep every line on a grid line without folding, the
+  guide curves are let go before the creases are: each curve is tried alone, then those that
+  can be kept together. A curve let go is still followed by the cross field, so edges run
+  along it nearby; it just has none exactly on it. If the layout then still fails, the piece
+  is done again without its curves rather than handed to the other chain. The report says how
+  many pieces had curves let go.
+- **Into the engine**: `Guides::curves` in the library; `--curves` on the command line; four
+  arguments of `openclare_remesh` in the C interface; in the add-on, a collection of curve
+  objects, read as they are seen, modifiers applied.
+
+![The ogre with and without guide curves](docs/images/guide_curves.png)
+
+**What it gives.** On simple shapes it is exact: an edge loop on a circle of latitude of a
+sphere, a line across a flat sheet, two lines that cross sharing a vertex (tests in
+`tests/guide_curves.rs`). On the ogre, with curves cut out of it by planes and balls:
+
+| Curves | Quads asked for | Result |
+|---|---|---|
+| Line down the front of the body | 3000 | kept: 29 edges along it |
+| Line down the back | 3000 | kept: 26 edges |
+| Rings round the belly and both arms | 3000 | two kept (41 edges), one let go |
+| Those rings and the two lines together (the picture, left) | 3000 | 102 edges along them, one curve let go |
+| Loops round both eyes, the nose and the mouth | 8000 | kept: 40 edges |
+| The same four loops | 3000 | let go: each is under nine quad edges round |
+| Profile of the face, over the nose and into the mouth | 3000 | let go |
+| Line through the crotch | 3000 | let go |
+
+Every one of these runs gives a valid mesh of quads from the main chain; "let go" means
+without edges on the curve, not a failure.
+
+What is left open is in DT-044.
+
 ---
 
 ## 4. Jalons

@@ -514,7 +514,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 3.293,
+     "seconds": 2.034,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -545,7 +545,8 @@
       "thin_distance": null,
       "volume_ratio": 1.0006792073474056,
       "budget_error": 0.01
-     }
+     },
+     "against": 1000
     }
    ],
    "quadremesher-as-made": [
@@ -1131,7 +1132,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 2.542,
+     "seconds": 2.032,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1162,7 +1163,8 @@
       "thin_distance": null,
       "volume_ratio": 0.999851140451907,
       "budget_error": 0.019
-     }
+     },
+     "against": 1000
     }
    ],
    "quadremesher-as-made": [
@@ -1748,7 +1750,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 2.2,
+     "seconds": 1.661,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1779,7 +1781,8 @@
       "thin_distance": null,
       "volume_ratio": 1.0006588030591248,
       "budget_error": 0.001
-     }
+     },
+     "against": 1000
     }
    ],
    "quadremesher-as-made": [
@@ -2365,7 +2368,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 1.638,
+     "seconds": 1.186,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2396,7 +2399,8 @@
       "thin_distance": null,
       "volume_ratio": 0.9992849052560736,
       "budget_error": 0.001
-     }
+     },
+     "against": 1000
     }
    ],
    "quadremesher-as-made": [
@@ -2982,7 +2986,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 2.065,
+     "seconds": 1.431,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -3013,7 +3017,8 @@
       "thin_distance": 0.050707938542258774,
       "volume_ratio": null,
       "budget_error": 0.006
-     }
+     },
+     "against": 1000
     }
    ],
    "quadremesher-as-made": [
@@ -3599,7 +3604,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 3.087,
+     "seconds": 4.402,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -3630,7 +3635,8 @@
       "thin_distance": 0.05783929253037183,
       "volume_ratio": 0.9977537012359764,
       "budget_error": 0.037
-     }
+     },
+     "against": 1000
     }
    ],
    "quadremesher-as-made": [
@@ -4216,7 +4222,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 2.131,
+     "seconds": 2.496,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -4247,7 +4253,8 @@
       "thin_distance": 0.18698578455203244,
       "volume_ratio": 1.0001240827440305,
       "budget_error": 0.009
-     }
+     },
+     "against": 1000
     }
    ],
    "quadremesher-as-made": [
@@ -4833,7 +4840,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 2.804,
+     "seconds": 2.836,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -4864,7 +4871,8 @@
       "thin_distance": null,
       "volume_ratio": 1.0004639794979036,
       "budget_error": 0.028
-     }
+     },
+     "against": 1000
     }
    ],
    "quadremesher-as-made": [
@@ -5450,7 +5458,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 1.591,
+     "seconds": 2.799,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -5481,7 +5489,8 @@
       "thin_distance": 0.06561031581455565,
       "volume_ratio": 0.9984009675656352,
       "budget_error": 0.011
-     }
+     },
+     "against": 1000
     }
    ],
    "quadremesher-as-made": [
@@ -6067,7 +6076,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 2.228,
+     "seconds": 2.527,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -6098,7 +6107,8 @@
       "thin_distance": 0.04731053937227456,
       "volume_ratio": 0.9973251540207245,
       "budget_error": 0.009
-     }
+     },
+     "against": 1000
     }
    ],
    "quadremesher-as-made": [
@@ -6684,7 +6694,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 1.623,
+     "seconds": 2.161,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -6715,7 +6725,8 @@
       "thin_distance": 0.14252809159264931,
       "volume_ratio": null,
       "budget_error": 0.005
-     }
+     },
+     "against": 1000
     }
    ],
    "quadremesher-as-made": [
@@ -7301,7 +7312,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 11.405,
+     "seconds": 11.361,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -7332,7 +7343,8 @@
       "thin_distance": 0.4071478447595847,
       "volume_ratio": null,
       "budget_error": 0.343
-     }
+     },
+     "against": 1000
     }
    ],
    "quadremesher-as-made": [
@@ -7773,7 +7785,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 2.304,
+     "seconds": 3.681,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -7804,7 +7816,8 @@
       "thin_distance": 0.027644023980869264,
       "volume_ratio": null,
       "budget_error": 0.008
-     }
+     },
+     "against": 1000
     }
    ],
    "quadremesher-as-made": [
@@ -8390,7 +8403,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 1.268,
+     "seconds": 1.873,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -8421,7 +8434,8 @@
       "thin_distance": null,
       "volume_ratio": 1.000116582844186,
       "budget_error": 0.018
-     }
+     },
+     "against": 1000
     }
    ],
    "quadremesher-as-made": [
@@ -9007,7 +9021,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 0.722,
+     "seconds": 1.069,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -9038,7 +9052,8 @@
       "thin_distance": null,
       "volume_ratio": 0.9999999999999549,
       "budget_error": 0.014
-     }
+     },
+     "against": 1000
     }
    ],
    "quadremesher-as-made": [
@@ -9624,7 +9639,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 1.405,
+     "seconds": 1.279,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -9655,7 +9670,8 @@
       "thin_distance": null,
       "volume_ratio": 1.0002279049739828,
       "budget_error": 0.01
-     }
+     },
+     "against": 1000
     }
    ],
    "quadremesher-as-made": [
@@ -10241,7 +10257,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 1.15,
+     "seconds": 1.041,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -10272,7 +10288,8 @@
       "thin_distance": null,
       "volume_ratio": 1.0004369201057675,
       "budget_error": 0.008
-     }
+     },
+     "against": 1000
     }
    ],
    "quadremesher-as-made": [
@@ -10858,7 +10875,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 0.834,
+     "seconds": 1.159,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -10889,7 +10906,8 @@
       "thin_distance": null,
       "volume_ratio": 0.9999999999999853,
       "budget_error": 0.006
-     }
+     },
+     "against": 1000
     }
    ],
    "quadremesher-as-made": [
@@ -11475,7 +11493,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 1.024,
+     "seconds": 1.39,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -11506,7 +11524,8 @@
       "thin_distance": null,
       "volume_ratio": 1.00016591282739,
       "budget_error": 0.032
-     }
+     },
+     "against": 1000
     }
    ],
    "quadremesher-as-made": [
@@ -11627,7 +11646,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 7.338,
+     "seconds": 7.394,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -11658,7 +11677,8 @@
       "thin_distance": 0.1943816345270269,
       "volume_ratio": null,
       "budget_error": 0.007
-     }
+     },
+     "against": 1000
     }
    ],
    "quadremesher": [
@@ -12244,7 +12264,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 13.721,
+     "seconds": 11.444,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -12275,7 +12295,8 @@
       "thin_distance": 1.5348068556448884,
       "volume_ratio": null,
       "budget_error": 1.021
-     }
+     },
+     "against": 1000
     }
    ],
    "quadremesher": [
@@ -12716,7 +12737,7 @@
    "quad-layout-adaptive": [
     {
      "seed": 1,
-     "seconds": 54.313,
+     "seconds": 57.947,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -12747,7 +12768,8 @@
       "thin_distance": 0.0974251633265243,
       "volume_ratio": null,
       "budget_error": 5.364
-     }
+     },
+     "against": 1000
     }
    ],
    "quadremesher": [
@@ -13224,7 +13246,7 @@
     "thin_distance": null,
     "volume_ratio": 1.0006792073474056,
     "budget_error": 0.01,
-    "seconds": 3.293
+    "seconds": 2.034
    },
    "quadremesher": {
     "runs": 1,
@@ -13415,7 +13437,7 @@
     "thin_distance": null,
     "volume_ratio": 0.999851140451907,
     "budget_error": 0.019,
-    "seconds": 2.542
+    "seconds": 2.032
    },
    "quadremesher": {
     "runs": 1,
@@ -13606,7 +13628,7 @@
     "thin_distance": null,
     "volume_ratio": 1.0006588030591248,
     "budget_error": 0.001,
-    "seconds": 2.2
+    "seconds": 1.661
    },
    "quadremesher": {
     "runs": 1,
@@ -13797,7 +13819,7 @@
     "thin_distance": null,
     "volume_ratio": 0.9992849052560736,
     "budget_error": 0.001,
-    "seconds": 1.638
+    "seconds": 1.186
    },
    "quadremesher": {
     "runs": 1,
@@ -13988,7 +14010,7 @@
     "thin_distance": 0.050707938542258774,
     "volume_ratio": null,
     "budget_error": 0.006,
-    "seconds": 2.065
+    "seconds": 1.431
    },
    "quadremesher": {
     "runs": 1,
@@ -14179,7 +14201,7 @@
     "thin_distance": 0.05783929253037183,
     "volume_ratio": 0.9977537012359764,
     "budget_error": 0.037,
-    "seconds": 3.087
+    "seconds": 4.402
    },
    "quadremesher": {
     "runs": 1,
@@ -14370,7 +14392,7 @@
     "thin_distance": 0.18698578455203244,
     "volume_ratio": 1.0001240827440305,
     "budget_error": 0.009,
-    "seconds": 2.131
+    "seconds": 2.496
    },
    "quadremesher": {
     "runs": 1,
@@ -14561,7 +14583,7 @@
     "thin_distance": null,
     "volume_ratio": 1.0004639794979036,
     "budget_error": 0.028,
-    "seconds": 2.804
+    "seconds": 2.836
    },
    "quadremesher": {
     "runs": 1,
@@ -14752,7 +14774,7 @@
     "thin_distance": 0.06561031581455565,
     "volume_ratio": 0.9984009675656352,
     "budget_error": 0.011,
-    "seconds": 1.591
+    "seconds": 2.799
    },
    "quadremesher": {
     "runs": 1,
@@ -14943,7 +14965,7 @@
     "thin_distance": 0.04731053937227456,
     "volume_ratio": 0.9973251540207245,
     "budget_error": 0.009,
-    "seconds": 2.228
+    "seconds": 2.527
    },
    "quadremesher": {
     "runs": 1,
@@ -15134,7 +15156,7 @@
     "thin_distance": 0.14252809159264931,
     "volume_ratio": null,
     "budget_error": 0.005,
-    "seconds": 1.623
+    "seconds": 2.161
    },
    "quadremesher": {
     "runs": 1,
@@ -15325,7 +15347,7 @@
     "thin_distance": 0.4071478447595847,
     "volume_ratio": null,
     "budget_error": 0.343,
-    "seconds": 11.405
+    "seconds": 11.361
    },
    "quadremesher": {
     "runs": 1,
@@ -15518,7 +15540,7 @@
     "thin_distance": 0.027644023980869264,
     "volume_ratio": null,
     "budget_error": 0.008,
-    "seconds": 2.304
+    "seconds": 3.681
    },
    "quadremesher": {
     "runs": 1,
@@ -15709,7 +15731,7 @@
     "thin_distance": null,
     "volume_ratio": 1.000116582844186,
     "budget_error": 0.018,
-    "seconds": 1.268
+    "seconds": 1.873
    },
    "quadremesher": {
     "runs": 1,
@@ -15900,7 +15922,7 @@
     "thin_distance": null,
     "volume_ratio": 0.9999999999999549,
     "budget_error": 0.014,
-    "seconds": 0.722
+    "seconds": 1.069
    },
    "quadremesher": {
     "runs": 1,
@@ -16091,7 +16113,7 @@
     "thin_distance": null,
     "volume_ratio": 1.0002279049739828,
     "budget_error": 0.01,
-    "seconds": 1.405
+    "seconds": 1.279
    },
    "quadremesher": {
     "runs": 1,
@@ -16282,7 +16304,7 @@
     "thin_distance": null,
     "volume_ratio": 1.0004369201057675,
     "budget_error": 0.008,
-    "seconds": 1.15
+    "seconds": 1.041
    },
    "quadremesher": {
     "runs": 1,
@@ -16473,7 +16495,7 @@
     "thin_distance": null,
     "volume_ratio": 0.9999999999999853,
     "budget_error": 0.006,
-    "seconds": 0.834
+    "seconds": 1.159
    },
    "quadremesher": {
     "runs": 1,
@@ -16664,7 +16686,7 @@
     "thin_distance": null,
     "volume_ratio": 1.00016591282739,
     "budget_error": 0.032,
-    "seconds": 1.024
+    "seconds": 1.39
    },
    "quadremesher": {
     "runs": 1,
@@ -16855,7 +16877,7 @@
     "thin_distance": 0.1943816345270269,
     "volume_ratio": null,
     "budget_error": 0.007,
-    "seconds": 7.338
+    "seconds": 7.394
    },
    "quadremesher": {
     "runs": 1,
@@ -17048,7 +17070,7 @@
     "thin_distance": 1.5348068556448884,
     "volume_ratio": null,
     "budget_error": 1.021,
-    "seconds": 13.721
+    "seconds": 11.444
    },
    "quadremesher": {
     "runs": 1,
@@ -17243,7 +17265,7 @@
     "thin_distance": 0.0974251633265243,
     "volume_ratio": null,
     "budget_error": 5.364,
-    "seconds": 54.313
+    "seconds": 57.947
    },
    "quadremesher": {
     "runs": 1,

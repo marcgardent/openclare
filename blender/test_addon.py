@@ -165,6 +165,38 @@ assert "crease_edge" not in mesh.attributes
 settings.export_grid_uv = settings.export_atlas_uv = settings.export_sharp_edges = settings.export_creases = True
 settings.preset, settings.quads = "organic", 800
 
+# Guide curves: a circle drawn round a ball, held on it by a Shrinkwrap, in
+# a collection of its own. The result has an edge loop on the circle.
+bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=5, radius=1.0, location=(4.0, 0.0, 0.0))
+ball = bpy.context.active_object
+bpy.ops.curve.primitive_bezier_circle_add(radius=1.1, location=(4.0, 0.0, 0.3))
+circle = bpy.context.active_object
+circle.data.resolution_u = 16
+wrap = circle.modifiers.new("on the ball", "SHRINKWRAP")
+wrap.target = ball
+guides = bpy.data.collections.new("guides")
+bpy.context.scene.collection.children.link(guides)
+for collection in circle.users_collection:
+    collection.objects.unlink(circle)
+guides.objects.link(circle)
+
+alone(ball)
+settings.quads, settings.adaptive_size = 600, 0.0
+settings.guide_curves = guides
+curves = openclare.curves_of(guides, ball)
+assert len(curves) == 1 and curves[0][1], "one closed curve expected"
+assert all(abs(float((point ** 2).sum()) ** 0.5 - 1.0) < 0.02 for point in curves[0][0]), "the circle is not on the ball"
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+mesh = bpy.context.active_object.data
+# The Shrinkwrap brought the circle to the height where a ball of radius 1 is 1.1 wide... which is nowhere:
+# it lands on the nearest points, a circle of latitude; the loop is at its height.
+height = sum(float(point[2]) for point in curves[0][0]) / len(curves[0][0])
+on_the_loop = sum(1 for vertex in mesh.vertices if abs(vertex.co.z - height) < 0.01)
+print("GUIDES a loop of", on_the_loop, "vertices at height %.3f" % height)
+assert on_the_loop >= 12, f"{on_the_loop} vertices on the guide curve"
+settings.guide_curves = None
+settings.quads, settings.adaptive_size = 800, 50.0
+
 # Nothing to remesh: said, not crashed.
 bpy.ops.object.empty_add()
 assert not bpy.ops.object.openclare_remesh.poll()

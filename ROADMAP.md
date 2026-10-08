@@ -66,7 +66,7 @@ islands that overlap) and an atlas where each rectangular patch is an island of 
 | 8 | **C library and Blender add-on** (milestone 10): remesh from Blender without copying memory, density read from Weight Paint, hard edges from the marked ones, UV layers | Done, awaiting review: `make addon`; preset, quads, adaptive size, density from a vertex group; each stage announced; export of two UV layers and of sharp edges. Left: reading the edges marked sharp, stopping a run, Windows and macOS | J10, DT-041, DT-042 |
 | 9 | **Rename** the crates and the executable from `retopo` to `openclare` | Done on 8 October 2026 | DT-015 (closed) |
 | 10 | **Symmetry**: a symmetric model gives a symmetric mesh, with an edge loop on the plane | Mesh and mirror image coincide on the symmetric models of the bench | J9 bis, DT-028 |
-| 11 | **Guide curves**: edge loops where the artist draws them, in a way that stays simple in Blender (face sets or annotation strokes rather than marked seams) | An edge loop follows a stroke drawn on the ogre | DT-024 |
+| 11 | **Guide curves**: edge loops where the artist draws them, as curves held on the model by a Shrinkwrap | First version done on 9 October 2026, awaiting review: exact on simple shapes, kept on part of the curves tried on the ogre and let go on the others. Done when a curve drawn where a mesh of quads can follow it is kept, every time | DT-024 (closed), DT-044 |
 
 ## 4. Beyond the quad mesh
 

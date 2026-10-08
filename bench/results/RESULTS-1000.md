@@ -23,7 +23,7 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — | — |
 | Volume kept, % of the source (V) | 98.58 | 98.90 | 100.06 | 100.05 | 100.07 | 98.08 | 98.43 | 98.08 | 100.04 |
 | Off budget, % (N) | 5.9 | 3.6 | 13.3 | 2.6 | 1.0 | 36.2 | 12.2 | 0.0 | 1.6 |
-| Time, seconds (T) | 1.95 | 1.70 | 4.48 | 2.42 | 3.29 | 14.01 | 13.25 | 14.01 | 2.35 |
+| Time, seconds (T) | 1.95 | 1.70 | 4.48 | 2.42 | 2.03 | 14.01 | 13.25 | 14.01 | 2.35 |
 
 ## rock (organic)
 
@@ -44,7 +44,7 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — | — |
 | Volume kept, % of the source (V) | 99.30 | 99.04 | 99.94 | 100.02 | 99.99 | 99.46 | 98.87 | 99.46 | 100.02 |
 | Off budget, % (N) | 5.3 | 3.4 | 10.2 | 2.2 | 1.9 | 29.0 | 16.3 | 0.0 | 0.6 |
-| Time, seconds (T) | 1.04 | 1.20 | 4.29 | 1.55 | 2.54 | 28.00 | 16.00 | 28.00 | 1.52 |
+| Time, seconds (T) | 1.04 | 1.20 | 4.29 | 1.55 | 2.03 | 28.00 | 16.00 | 28.00 | 1.52 |
 
 ## creature (organic)
 
@@ -65,7 +65,7 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — | — |
 | Volume kept, % of the source (V) | 97.34 | 98.23 | — | 100.08 | 100.07 | 98.75 | 98.01 | 98.75 | 100.05 |
 | Off budget, % (N) | 18.8 | 1.4 | 8.0 | 3.5 | 0.1 | 20.8 | 7.2 | 0.0 | 0.1 |
-| Time, seconds (T) | 1.11 | 1.03 | 3.88 | 1.79 | 2.20 | 11.95 | 8.72 | 11.95 | 1.76 |
+| Time, seconds (T) | 1.11 | 1.03 | 3.88 | 1.79 | 1.66 | 11.95 | 8.72 | 11.95 | 1.76 |
 
 ## cage (organic)
 
@@ -86,7 +86,7 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — | — |
 | Volume kept, % of the source (V) | 98.12 | 95.62 | 99.67 | 99.47 | 99.93 | 99.30 | 95.23 | 99.30 | 99.97 |
 | Off budget, % (N) | 4.3 | 2.6 | 3.0 | 0.1 | 0.1 | 222.4 | 6.6 | 0.0 | 1.7 |
-| Time, seconds (T) | 0.39 | 0.57 | 4.72 | 0.98 | 1.64 | 5.08 | 4.00 | 5.08 | 3.22 |
+| Time, seconds (T) | 0.39 | 0.57 | 4.72 | 0.98 | 1.19 | 5.08 | 4.00 | 5.08 | 3.22 |
 
 ## suzanne (organic)
 
@@ -107,7 +107,7 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Thin parts: mean distance, % of a quad edge (V) | 10.6 | 23.9 | 12.5 | 9.7 | 5.1 | 4.8 | 12.7 | 6.4 | 3.9 |
 | Volume kept, % of the source (V) | — | — | — | — | — | — | — | — | — |
 | Off budget, % (N) | 1.0 | 4.2 | 2.4 | 0.2 | 0.6 | 79.0 | 7.8 | 0.0 | 1.1 |
-| Time, seconds (T) | 0.76 | 0.30 | 4.33 | 1.41 | 2.06 | 4.46 | 3.77 | 4.46 | 1.84 |
+| Time, seconds (T) | 0.76 | 0.30 | 4.33 | 1.41 | 1.43 | 4.46 | 3.77 | 4.46 | 1.84 |
 
 ## ogre (organic)
 
@@ -128,7 +128,7 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Thin parts: mean distance, % of a quad edge (V) | 115.0 | 107.2 | 35.3 | 20.5 | 5.8 | 4.5 | 50.1 | 8.9 | 7.7 |
 | Volume kept, % of the source (V) | 94.57 | 95.94 | 99.48 | 99.75 | 99.78 | 98.71 | — | 98.71 | 100.00 |
 | Off budget, % (N) | 10.9 | 6.8 | 21.7 | 0.2 | 3.7 | 189.0 | 20.1 | 0.0 | 0.1 |
-| Time, seconds (T) | 3.33 | 2.71 | 5.13 | 3.44 | 3.09 | 18.93 | 16.67 | 18.93 | 4.74 |
+| Time, seconds (T) | 3.33 | 2.71 | 5.13 | 3.44 | 4.40 | 18.93 | 16.67 | 18.93 | 4.74 |
 
 ## spot (organic)
 
@@ -149,7 +149,7 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Thin parts: mean distance, % of a quad edge (V) | 29.6 | 37.4 | 23.2 | 13.4 | 18.7 | 12.2 | 14.9 | 14.7 | 17.7 |
 | Volume kept, % of the source (V) | 98.16 | 97.96 | 99.82 | 100.04 | 100.01 | 98.52 | 97.64 | 98.52 | 100.01 |
 | Off budget, % (N) | 2.8 | 1.6 | 9.3 | 1.0 | 0.9 | 49.7 | 11.8 | 0.0 | 1.1 |
-| Time, seconds (T) | 1.54 | 2.26 | 6.57 | 2.20 | 2.13 | 17.76 | 13.95 | 17.76 | 2.09 |
+| Time, seconds (T) | 1.54 | 2.26 | 6.57 | 2.20 | 2.50 | 17.76 | 13.95 | 17.76 | 2.09 |
 
 ## bob (organic)
 
@@ -170,7 +170,7 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — | — |
 | Volume kept, % of the source (V) | 98.35 | 98.23 | 100.01 | 100.05 | 100.05 | 97.96 | 97.78 | 97.96 | 100.05 |
 | Off budget, % (N) | 2.8 | 2.4 | 13.9 | 0.7 | 2.8 | 4.6 | 10.7 | 0.0 | 0.3 |
-| Time, seconds (T) | 1.43 | 1.10 | 3.35 | 3.16 | 2.80 | 12.87 | 16.31 | 12.87 | 2.06 |
+| Time, seconds (T) | 1.43 | 1.10 | 3.35 | 3.16 | 2.84 | 12.87 | 16.31 | 12.87 | 2.06 |
 
 ## blub (organic)
 
@@ -191,7 +191,7 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Thin parts: mean distance, % of a quad edge (V) | 30.4 | 26.6 | 26.5 | 17.9 | 6.6 | 4.0 | 21.3 | 6.8 | 9.8 |
 | Volume kept, % of the source (V) | 96.59 | 97.11 | 99.08 | 99.46 | 99.84 | 98.99 | 97.39 | 98.99 | 99.85 |
 | Off budget, % (N) | 15.3 | 1.5 | 8.8 | 1.7 | 1.1 | 63.8 | 10.8 | 0.0 | 0.5 |
-| Time, seconds (T) | 1.50 | 1.14 | 5.30 | 1.54 | 1.59 | 14.40 | 12.45 | 14.40 | 1.98 |
+| Time, seconds (T) | 1.50 | 1.14 | 5.30 | 1.54 | 2.80 | 14.40 | 12.45 | 14.40 | 1.98 |
 
 ## pig (organic)
 
@@ -212,7 +212,7 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Thin parts: mean distance, % of a quad edge (V) | 84.1 | 119.6 | 24.5 | 13.9 | 4.7 | 3.5 | 50.0 | 6.0 | 4.8 |
 | Volume kept, % of the source (V) | 96.89 | 96.53 | 98.61 | 99.33 | 99.73 | 98.97 | 97.29 | 98.97 | 99.97 |
 | Off budget, % (N) | 13.9 | 9.0 | 9.7 | 0.9 | 0.9 | 97.5 | 14.7 | 0.0 | 1.3 |
-| Time, seconds (T) | 1.55 | 1.07 | 5.45 | 3.03 | 2.23 | 17.10 | 15.43 | 17.10 | 2.65 |
+| Time, seconds (T) | 1.55 | 1.07 | 5.45 | 3.03 | 2.53 | 17.10 | 15.43 | 17.10 | 2.65 |
 
 ## jerry (organic)
 
@@ -233,7 +233,7 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Thin parts: mean distance, % of a quad edge (V) | 28.0 | 42.2 | 38.8 | 22.1 | 14.3 | 4.8 | 18.4 | 9.8 | 16.5 |
 | Volume kept, % of the source (V) | — | — | — | — | — | — | — | — | — |
 | Off budget, % (N) | 10.0 | 11.4 | 17.0 | 0.0 | 0.5 | 209.3 | 12.4 | 0.0 | 0.7 |
-| Time, seconds (T) | 0.74 | 0.37 | 36.70 | 1.84 | 1.62 | 6.67 | 10.59 | 6.67 | 3.19 |
+| Time, seconds (T) | 0.74 | 0.37 | 36.70 | 1.84 | 2.16 | 6.67 | 10.59 | 6.67 | 3.19 |
 
 ## rose (organic)
 
@@ -254,7 +254,7 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Thin parts: mean distance, % of a quad edge (V) | 64.1 | 71.0 | 43.1 | 29.9 | 40.7 | 5.8 | 28.8 | 91.4 | 10.9 |
 | Volume kept, % of the source (V) | — | — | — | — | — | — | — | — | 99.44 |
 | Off budget, % (N) | 50.6 | 47.0 | 40.4 | 77.3 | 34.3 | 2533.9 | 27.1 | 0.0 | 0.8 |
-| Time, seconds (T) | 2.12 | 1.63 | 6.88 | 9.25 | 11.40 | 14.03 | 9.27 | 14.03 | 30.43 |
+| Time, seconds (T) | 2.12 | 1.63 | 6.88 | 9.25 | 11.36 | 14.03 | 9.27 | 14.03 | 30.43 |
 
 ## bridge (organic)
 
@@ -275,7 +275,7 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Thin parts: mean distance, % of a quad edge (V) | — | 48.5 | 8.2 | 4.7 | 2.8 | 3.4 | 5.6 | — | — |
 | Volume kept, % of the source (V) | — | — | — | — | — | — | — | — | — |
 | Off budget, % (N) | — | 15.5 | 8.8 | 0.3 | 0.8 | 110.5 | 6.4 | 0.0 | 0.7 |
-| Time, seconds (T) | — | 1.83 | 6.12 | 2.70 | 2.30 | 13.07 | 11.79 | 13.07 | 2.72 |
+| Time, seconds (T) | — | 1.83 | 6.12 | 2.70 | 3.68 | 13.07 | 11.79 | 13.07 | 2.72 |
 
 Failures: quadriflow: cancelled.
 
@@ -298,7 +298,7 @@ Failures: quadriflow: cancelled.
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — | — |
 | Volume kept, % of the source (V) | 100.43 | 100.43 | 99.90 | 100.01 | 100.01 | 100.26 | 100.31 | 100.26 | 100.01 |
 | Off budget, % (N) | 5.7 | 3.6 | 4.1 | 2.4 | 1.8 | 1.3 | 7.6 | 0.0 | 0.5 |
-| Time, seconds (T) | 0.70 | 0.15 | 9.34 | 1.15 | 1.27 | 3.06 | 2.65 | 3.06 | 0.87 |
+| Time, seconds (T) | 0.70 | 0.15 | 9.34 | 1.15 | 1.87 | 3.06 | 2.65 | 3.06 | 0.87 |
 
 ## cube (mechanical)
 
@@ -319,7 +319,7 @@ Failures: quadriflow: cancelled.
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — | — |
 | Volume kept, % of the source (V) | 100.00 | 100.00 | 99.93 | 100.00 | 100.00 | 100.00 | 100.00 | 100.00 | 100.00 |
 | Off budget, % (N) | 1.4 | 10.0 | 0.1 | 1.4 | 1.4 | 1.4 | 1.4 | 0.0 | 0.0 |
-| Time, seconds (T) | 0.33 | 0.06 | 3.86 | 0.67 | 0.72 | 2.35 | 3.01 | 2.35 | 0.94 |
+| Time, seconds (T) | 0.33 | 0.06 | 3.86 | 0.67 | 1.07 | 2.35 | 3.01 | 2.35 | 0.94 |
 
 ## lblock (mechanical)
 
@@ -340,7 +340,7 @@ Failures: quadriflow: cancelled.
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — | — |
 | Volume kept, % of the source (V) | 99.99 | 100.00 | 99.86 | 100.00 | 100.00 | 100.00 | 100.00 | 100.00 | 100.00 |
 | Off budget, % (N) | 7.0 | 9.8 | 0.8 | 0.6 | 0.6 | 1.0 | 1.0 | 0.0 | 1.8 |
-| Time, seconds (T) | 0.23 | 0.05 | 3.04 | 1.31 | 0.83 | 2.79 | 2.67 | 2.79 | 1.13 |
+| Time, seconds (T) | 0.23 | 0.05 | 3.04 | 1.31 | 1.16 | 2.79 | 2.67 | 2.79 | 1.13 |
 
 ## cylinder (mechanical)
 
@@ -361,7 +361,7 @@ Failures: quadriflow: cancelled.
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — | — |
 | Volume kept, % of the source (V) | 99.73 | 99.66 | 100.00 | 99.99 | 100.02 | 99.00 | 99.00 | 99.00 | 100.00 |
 | Off budget, % (N) | 1.8 | 1.0 | 10.8 | 1.0 | 3.2 | 21.8 | 21.8 | 0.0 | 2.3 |
-| Time, seconds (T) | 0.33 | 0.05 | 1.84 | 0.98 | 1.02 | 2.92 | 2.88 | 2.92 | 0.91 |
+| Time, seconds (T) | 0.33 | 0.05 | 1.84 | 0.98 | 1.39 | 2.92 | 2.88 | 2.92 | 0.91 |
 
 ## terrain (extra)
 
@@ -382,7 +382,7 @@ Failures: quadriflow: cancelled.
 | Thin parts: mean distance, % of a quad edge (V) | 29.7 | 44.9 | 29.2 | 22.3 | 19.4 | 11.3 | 27.0 | 14.3 | 20.6 |
 | Volume kept, % of the source (V) | — | — | — | — | — | — | — | — | — |
 | Off budget, % (N) | 12.8 | 42.6 | 11.5 | 1.7 | 0.7 | 54.1 | 12.2 | 0.0 | 1.8 |
-| Time, seconds (T) | 19.49 | 8.90 | 11.19 | 6.89 | 7.34 | 19.65 | 21.87 | 19.65 | 10.63 |
+| Time, seconds (T) | 19.49 | 8.90 | 11.19 | 6.89 | 7.39 | 19.65 | 21.87 | 19.65 | 10.63 |
 
 ## mahaveer (extra)
 
@@ -403,7 +403,7 @@ Failures: quadriflow: cancelled.
 | Thin parts: mean distance, % of a quad edge (V) | — | 50.2 | 28.2 | 153.5 | 153.5 | 7.4 | 22.4 | 50.7 | 29.1 |
 | Volume kept, % of the source (V) | — | — | — | — | — | — | — | — | — |
 | Off budget, % (N) | — | 43.8 | 33.8 | 105.3 | 102.1 | 4082.1 | 168.8 | 0.0 | 3.3 |
-| Time, seconds (T) | — | 5.58 | 16.18 | 8.14 | 13.72 | 16.61 | 15.33 | 16.61 | 74.02 |
+| Time, seconds (T) | — | 5.58 | 16.18 | 8.14 | 11.44 | 16.61 | 15.33 | 16.61 | 74.02 |
 
 Failures: quadriflow: cancelled.
 
@@ -426,7 +426,7 @@ Failures: quadriflow: cancelled.
 | Thin parts: mean distance, % of a quad edge (V) | — | 70.3 | — | 9.5 | 9.7 | 5.2 | 11.1 | 66.6 | 30.2 |
 | Volume kept, % of the source (V) | — | — | — | — | — | — | — | — | — |
 | Off budget, % (N) | — | 79.6 | — | 548.5 | 536.4 | 20418.5 | 962.3 | 0.0 | 8.1 |
-| Time, seconds (T) | — | 3.43 | — | 41.94 | 54.31 | 14.01 | 8.85 | 14.01 | 172.30 |
+| Time, seconds (T) | — | 3.43 | — | 41.94 | 57.95 | 14.01 | 8.85 | 14.01 | 172.30 |
 
 Failures: quadriflow: cancelled; integer-grid: error: invalid mesh: work mesh has 545 non-manifold or inconsistently oriented edges.
 
@@ -449,7 +449,7 @@ Failures: quadriflow: cancelled; integer-grid: error: invalid mesh: work mesh ha
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — | — |
 | Volume kept, % of the source (V) | 99.38 | 99.38 | 100.02 | 100.02 | 100.02 | 99.24 | 99.24 | 99.24 | 100.02 |
 | Off budget, % (N) | 5.0 | 6.6 | 7.7 | 1.0 | 1.0 | 8.5 | 8.5 | 0.0 | 1.6 |
-| Time, seconds (T) | 0.41 | 0.19 | 2.04 | 0.76 | 1.41 | 4.77 | 3.75 | 4.77 | 1.50 |
+| Time, seconds (T) | 0.41 | 0.19 | 2.04 | 0.76 | 1.28 | 4.77 | 3.75 | 4.77 | 1.50 |
 
 ## torus (calibration)
 
@@ -470,7 +470,7 @@ Failures: quadriflow: cancelled; integer-grid: error: invalid mesh: work mesh ha
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — | — |
 | Volume kept, % of the source (V) | 98.57 | 98.28 | 100.06 | 100.04 | 100.04 | 97.62 | 97.62 | 97.62 | 100.06 |
 | Off budget, % (N) | 2.8 | 5.4 | 8.0 | 0.8 | 0.8 | 8.0 | 8.0 | 0.0 | 0.0 |
-| Time, seconds (T) | 0.31 | 0.27 | 0.99 | 0.92 | 1.15 | 4.41 | 2.61 | 4.41 | 1.39 |
+| Time, seconds (T) | 0.31 | 0.27 | 0.99 | 0.92 | 1.04 | 4.41 | 2.61 | 4.41 | 1.39 |
 
 ## Summary
 

@@ -37,7 +37,7 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 | DT-021 | Scan bruité (rock) : le champ suit le bruit | J7 | moyenne | ouvert |
 | DT-022 | Mires de comparaison incomplètes à 1000 et 8000 quads | J7 | basse | **fermé au J8** |
 | DT-023 | Relaxation : coût et tailles de quads | J8 | basse | ouvert |
-| DT-024 | Courbes guides (rang 4) non commencées | J8 | moyenne | ouvert (réduit au J8) |
+| DT-024 | Courbes guides (rang 4) non commencées | J8 | moyenne | **closed (9 October 2026)**, DT-044 remains |
 | DT-025 | Densité : portée des singularités et lecture de la courbure encore à l'échelle nominale | J8 | basse | ouvert (portée locale faite au Q2 ; reste la courbure) |
 | DT-026 | Densité peinte : lecture du Weight Paint de Blender à faire (pont Blender) | J8 | moyenne | **closed at J10** |
 | DT-028 | Symétrie : absente, Quad Remesher l'a | J8 | basse | ouvert, après la qualité |
@@ -55,6 +55,7 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 | DT-041 | Blender add-on, first version: what it does not do | J10 | medium | open |
 | DT-042 | UV layers unfolded from the quad mesh: limits | J10 | medium | open |
 | DT-043 | Creases: limits | J12 | low | open |
+| DT-044 | Guide curves: not kept everywhere | guide curves | high | open |
 | DT-033 | Terrains et scans : aucun outil n'aligne, le champ n'a rien à suivre | J9 | moyenne | ouvert |
 | DT-027 | Garde-fous de temps de calcul sur les entrées pathologiques | J8 | basse | ouvert |
 
@@ -320,6 +321,9 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   est suivi par DT-002 et DT-012.
 - **Piste** : une courbe guide est une arête caractéristique que l'utilisateur dessine ; elle
   entrerait par `Guides`, comme la densité peinte, et serait traitée comme une arête vive.
+- **Closed on 9 October 2026**: this is what was done, with curves drawn in Blender and held on
+  the model by a Shrinkwrap, as the author proposed (fiche "Guide curves" of the
+  specification). What is not reliable yet is DT-044.
 - **Constat du 7 octobre 2026** : Quad Remesher (module Blender 1.4, vérifié) n'a pas de
   courbes guides. Il guide les boucles d'arêtes par ce que le maillage porte déjà : frontières
   entre matériaux, normales scindées, arêtes vives détectées par angle. Une variante bien moins
@@ -695,3 +699,35 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   its holes have few quads round them and subdivision shrinks them.
 - **No setting**: the weights are always computed (it costs a few queries per edge) and the
   add-on has a box to write them or not. The thresholds are not exposed.
+
+### DT-044 — Guide curves: not kept everywhere
+
+- **Born** with guide curves, 9 October 2026. Priority high: a curve that is let go is a
+  feature that did not work for the user who drew it.
+- **Which curves are kept is not predictable enough.** On the ogre at 3000 quads a line down
+  the front or the back is kept, two rings out of three round the belly and the arms are, and
+  the profile of the face and a line through the crotch are not. During the work the same
+  curve went from kept to let go and back with changes that had nothing to do with it. What
+  decides is one or two triangles of the work mesh along the line: a single fold of the map
+  that stiffening cannot undo is enough to let a curve go.
+- **Small loops need enough quads**: a loop under about nine quad edges round is let go (the
+  eyes of the ogre at 3000 quads; kept at 8000).
+- **Curves that touch are one**: letting go is decided curve by curve, but two curves that
+  cross hang together and go together. A long curve with one bad stretch is lost whole, where
+  it could be kept up to that stretch.
+- **The fallback chain ignores curves**, and the fallback of the fallback is to do the piece
+  again without them.
+- **A curve is cut into the work mesh by its crossings**: its own bends inside a triangle are
+  lost, which is nothing on a dense sculpt and too much on a model of a few large triangles.
+  An open curve loses up to a triangle at each end.
+- **Cost**: each curve tried alone is one more solve of the map, about half a second each on
+  the ogre.
+- **Only curve objects** are read by the add-on: not the edges of a mesh object, not
+  annotation strokes, not face set borders. The edges along the curves come back in the
+  report, but the add-on does not mark them on the result.
+- **Not measured on the bench**: no model of the bench has curves, so no metric says whether
+  the edges along a curve are where they should be; the tests check it on a sphere and on a
+  flat sheet.
+- **Where to look next**: the triangles along a laid line. Evening the mesh out again along
+  the line (collapsing the short edges crossings leave), rather than making up for them in the
+  map and in the layout as now, should make the outcome depend less on luck.

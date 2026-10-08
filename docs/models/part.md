@@ -17,7 +17,7 @@ From 0 to 100; how they are made is in [SCORES.md](../../bench/results/SCORES.md
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| **quad-layout-adaptive** | 1018 | **86** | 100 | 52 | 89 | 97 | 84 | 93 | 93 | 94 |
+| **quad-layout-adaptive** | 1018 | **86** | 100 | 52 | 89 | 97 | 84 | 93 | 93 | 85 |
 | quadremesher | 1013 | **82** | 100 | 51 | 78 | 97 | 82 | 64 | 95 | 73 |
 | quad-layout | 976 | **80** | 100 | 45 | 90 | 71 | 84 | 91 | 90 | 97 |
 | quadremesher-uniform | 924 | **80** | 100 | 51 | 77 | 95 | 83 | 68 | 70 | 76 |
@@ -36,7 +36,7 @@ At equal quad count: Quad Remesher's mesh as it is, and openclare asked for as m
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| **quad-layout-adaptive** | 2978 | **88** | 100 | 53 | 89 | 99 | 95 | 90 | 97 | 74 |
+| **quad-layout-adaptive** | 2978 | **88** | 100 | 53 | 89 | 99 | 95 | 90 | 97 | 79 |
 | quad-layout | 3049 | **87** | 100 | 47 | 93 | 98 | 95 | 97 | 93 | 77 |
 | integer-grid | 2976 | **86** | 100 | 48 | 87 | 98 | 95 | 97 | 97 | 66 |
 | quadremesher | 2815 | **84** | 100 | 52 | 85 | 98 | 94 | 82 | 75 | 75 |

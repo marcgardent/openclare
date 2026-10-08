@@ -112,12 +112,52 @@ impl<'a> Problem<'a> {
         // once that line is: it is bound to be flat in the map. Like a
         // sliver, it is not something to fit, nor a fold to fight.
         let mut held = vec![[0u8; 2]; mesh.triangles.len()];
-        for (f, _, along_u) in problem.edges_on_lines() {
+        for (f, _, along_u) in problem.edges_on_lines(true) {
             held[f][along_u as usize] += 1;
         }
         for (f, count) in held.into_iter().enumerate() {
             if count[0] >= 2 || count[1] >= 2 {
                 problem.frames.area[f] = 0.0;
+            }
+        }
+        // The same where the field could not settle on the line because it
+        // bends too much within the triangle (a guide curve over a ridge):
+        // two feature edges that go on from one another, rather than meet at
+        // a corner, are one line, and its neighbours will flatten the
+        // triangle whether or not it is itself held.
+        let on_feature: std::collections::HashSet<(u32, u32)> =
+            work.feature_edges.iter().map(|&[a, b]| (a.min(b), a.max(b))).collect();
+        if !on_feature.is_empty() {
+            for (f, tri) in mesh.triangles.iter().enumerate() {
+                for k in 0..3 {
+                    let (a, b, c) = (tri[k], tri[(k + 1) % 3], tri[(k + 2) % 3]);
+                    let both = on_feature.contains(&(a.min(b), a.max(b))) && on_feature.contains(&(b.min(c), b.max(c)));
+                    let onward = (mesh.positions[b as usize] - mesh.positions[a as usize])
+                        .normalize_or_zero()
+                        .dot((mesh.positions[c as usize] - mesh.positions[b as usize]).normalize_or_zero());
+                    if both && onward > 0.5 {
+                        problem.frames.area[f] = 0.0;
+                    }
+                }
+            }
+            // And a thin triangle laid along a line, with one edge on it and
+            // its third vertex a little farther on the same line (the line
+            // makes a small step aside there): its three corners end up on
+            // one grid line all the same.
+            let on_line: std::collections::HashSet<u32> = work.feature_edges.iter().flatten().copied().collect();
+            for (f, tri) in mesh.triangles.iter().enumerate() {
+                if !tri.iter().all(|v| on_line.contains(v)) {
+                    continue;
+                }
+                let along =
+                    (0..3).any(|k| on_feature.contains(&(tri[k].min(tri[(k + 1) % 3]), tri[k].max(tri[(k + 1) % 3]))));
+                let corners = mesh.corners(f);
+                let widest = (0..3)
+                    .map(|k| (corners[(k + 1) % 3] - corners[k]).angle_between(corners[(k + 2) % 3] - corners[k]))
+                    .fold(0.0, f64::max);
+                if along && widest > 140f64.to_radians() {
+                    problem.frames.area[f] = 0.0;
+                }
             }
         }
         Ok(problem)
@@ -262,8 +302,14 @@ impl<'a> Problem<'a> {
     /// one on a line (one coordinate constant along it) and the expressions
     /// (that coordinate) that must then be whole numbers.
     pub fn feature_conditions(&self) -> (Vec<Constraint>, Vec<Row>) {
+        self.feature_conditions_for(true)
+    }
+
+    /// The same, with or without the edges that are only along a guide
+    /// curve: those may be let go where they cannot be kept.
+    pub fn feature_conditions_for(&self, guides_too: bool) -> (Vec<Constraint>, Vec<Row>) {
         let (mut constraints, mut expressions) = (Vec::new(), Vec::new());
-        for (f, k, along_u) in self.edges_on_lines() {
+        for (f, k, along_u) in self.edges_on_lines(guides_too) {
             let (here, there) = (3 * f + k, 3 * f + (k + 1) % 3);
             // Running along u, it is v that stays constant, and conversely.
             let constant = |corner: usize| if along_u { self.v(corner) } else { self.u(corner) };
@@ -276,10 +322,15 @@ impl<'a> Problem<'a> {
     /// The feature edges the field follows, each as seen from a face: the
     /// face, the corner the edge leaves from, and whether it runs along `u`
     /// (otherwise along `v`).
-    fn edges_on_lines(&self) -> Vec<(usize, usize, bool)> {
+    fn edges_on_lines(&self, guides_too: bool) -> Vec<(usize, usize, bool)> {
         let mesh = &self.work.mesh;
-        let on_feature: std::collections::HashSet<(u32, u32)> =
+        let mut on_feature: std::collections::HashSet<(u32, u32)> =
             self.work.feature_edges.iter().map(|&[a, b]| (a.min(b), a.max(b))).collect();
+        if !guides_too {
+            for &[a, b] in &self.work.guide_edges {
+                on_feature.remove(&(a.min(b), a.max(b)));
+            }
+        }
         let mut out = Vec::new();
         if on_feature.is_empty() {
             return out;

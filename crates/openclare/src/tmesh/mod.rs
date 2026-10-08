@@ -193,8 +193,13 @@ impl TMesh {
         let is_singular: Vec<bool> = field.indices.iter().map(|&index| index != 0).collect();
         // Cuts that are there from the start: open borders, and the edges
         // the work mesh marks as features of the shape.
-        let features: std::collections::HashSet<(u32, u32)> =
+        let mut features: std::collections::HashSet<(u32, u32)> =
             work.feature_edges.iter().map(|&[a, b]| (a.min(b), a.max(b))).collect();
+        // A guide curve the map could not keep on a grid line is no wall:
+        // the field still runs along it, and that is all that is left of it.
+        for &[a, b] in &map.report.loose_guides {
+            features.remove(&(a.min(b), a.max(b)));
+        }
         let is_wall: Vec<bool> = (0..3 * mesh.triangles.len())
             .map(|h| {
                 let (a, b) = (mesh.triangles[h / 3][h % 3], mesh.triangles[h / 3][(h % 3 + 1) % 3]);

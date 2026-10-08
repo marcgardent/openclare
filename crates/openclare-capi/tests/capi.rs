@@ -41,6 +41,10 @@ fn a_mesh_goes_in_as_arrays_and_quads_come_out() {
             null(),
             0,
             null(),
+            null(),
+            null(),
+            null(),
+            0,
             c"organic".as_ptr(),
             settings.as_ptr(),
             None,
@@ -90,6 +94,10 @@ fn triangles_may_be_given_by_their_corners_as_blender_keeps_them() {
             0,
             null(),
             null(),
+            null(),
+            null(),
+            0,
+            null(),
             c"quads = 300".as_ptr(),
             None,
             null_mut(),
@@ -102,6 +110,10 @@ fn triangles_may_be_given_by_their_corners_as_blender_keeps_them() {
             corner_vertices.as_ptr(),
             corner_vertices.len(),
             null(),
+            null(),
+            null(),
+            null(),
+            0,
             null(),
             c"quads = 300".as_ptr(),
             None,
@@ -126,6 +138,10 @@ fn what_goes_wrong_is_said_not_thrown() {
             null(),
             0,
             null(),
+            null(),
+            null(),
+            null(),
+            0,
             preset.as_ptr(),
             settings.as_ptr(),
             None,
@@ -177,6 +193,10 @@ fn a_host_follows_the_stages_and_can_stop_the_run() {
             0,
             null(),
             null(),
+            null(),
+            null(),
+            0,
+            null(),
             c"quads = 300".as_ptr(),
             Some(note),
             (stages as *mut Vec<String>).cast(),
@@ -211,6 +231,10 @@ fn a_result_carries_its_texture_coordinates_and_its_hard_edges() {
             null(),
             0,
             null(),
+            null(),
+            null(),
+            null(),
+            0,
             c"hard-surface".as_ptr(),
             c"quads = 600".as_ptr(),
             None,
@@ -247,6 +271,54 @@ fn a_result_carries_its_texture_coordinates_and_its_hard_edges() {
         assert_eq!(openclare_result_seam_count(null()), 0);
         assert_eq!(openclare_result_hard_edge_count(null()), 0);
         assert_eq!(openclare_result_copy_uv(null(), OPENCLARE_UV_GRID, grid.as_mut_ptr()), 0);
+    }
+}
+
+#[test]
+fn guide_curves_go_in_as_flat_arrays() {
+    let (positions, triangles) = ball();
+    // A circle of latitude and a short open line, one after the other.
+    let radius = (1.0f32 - 0.09).sqrt();
+    let mut points: Vec<f32> = (0..32)
+        .flat_map(|k| {
+            let turn = std::f32::consts::TAU * k as f32 / 32.0;
+            [radius * turn.cos(), radius * turn.sin(), 0.3]
+        })
+        .collect();
+    points.extend([0.0, 0.3, -0.954, 0.0, -0.3, -0.954]);
+    let (sizes, closed) = ([32u32, 2], [1u8, 0]);
+    unsafe {
+        let result = openclare_remesh(
+            positions.as_ptr(),
+            positions.len() / 3,
+            triangles.as_ptr(),
+            triangles.len() / 3,
+            null(),
+            0,
+            null(),
+            points.as_ptr(),
+            sizes.as_ptr(),
+            closed.as_ptr(),
+            2,
+            null(),
+            c"quads = 600".as_ptr(),
+            None,
+            null_mut(),
+        );
+        assert_eq!(openclare_result_ok(result), 1, "{}", text(openclare_result_error(result)));
+        let report = text(openclare_result_report(result));
+        let edges: usize = report
+            .lines()
+            .find_map(|line| line.strip_prefix("guide_edges = "))
+            .and_then(|count| count.parse().ok())
+            .unwrap();
+        assert!(edges >= 14, "{report}");
+        // The loop is there: vertices on the circle of latitude.
+        let mut out = vec![0f32; 3 * openclare_result_vertex_count(result)];
+        openclare_result_copy_positions(result, out.as_mut_ptr());
+        let on_the_circle = out.chunks_exact(3).filter(|p| (p[2] - 0.3).abs() < 5e-3).count();
+        assert!(on_the_circle >= 12, "{on_the_circle} vertices on the circle");
+        openclare_result_free(result);
     }
 }
 

@@ -60,6 +60,15 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         soft_max=16.0,
         max=100.0,
     )
+    guide_curves: bpy.props.PointerProperty(
+        name="Guide Curves",
+        type=bpy.types.Collection,
+        description=(
+            "Collection of curves drawn on the model: the result has a line of edges along each. "
+            "Curves are taken with their modifiers, so a Shrinkwrap keeps them on the model. "
+            "Leave empty for none"
+        ),
+    )
     export_grid_uv: bpy.props.BoolProperty(
         name="Grid UV",
         description=(
@@ -186,7 +195,54 @@ def crease_edges(mesh, pairs, weights):
     return int((values > 0).sum())
 
 
-def quads_of(source, preset, settings, density=None, on_stage=None, uv_layers=(), sharp_edges=False, creases=False):
+def curves_of(collection, target):
+    """The curves of `collection` as the engine takes them: for each stretch
+    of each curve object, its points in the space of the object `target`,
+    and whether it closes on itself. Curves are taken as they are seen,
+    modifiers applied: a Shrinkwrap is what keeps a curve on a model."""
+    import numpy
+
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    into_target = target.matrix_world.inverted()
+    curves = []
+    for drawn in collection.all_objects:
+        if drawn.type != "CURVE":
+            continue
+        evaluated = drawn.evaluated_get(depsgraph)
+        mesh = evaluated.to_mesh()
+        if mesh is None:
+            continue
+        matrix = into_target @ evaluated.matrix_world
+        points = [matrix @ vertex.co for vertex in mesh.vertices]
+        # A curve comes out as chains of edges, one per stretch.
+        joined = [[] for _ in points]
+        for edge in mesh.edges:
+            a, b = edge.vertices
+            joined[a].append(b)
+            joined[b].append(a)
+        evaluated.to_mesh_clear()
+        seen = [False] * len(points)
+        ends = [v for v in range(len(points)) if len(joined[v]) == 1]
+        for start in ends + list(range(len(points))):
+            if seen[start] or not joined[start]:
+                continue
+            chain, previous, current = [start], None, start
+            seen[start] = True
+            while True:
+                onward = [v for v in joined[current] if v != previous and not seen[v]]
+                if not onward:
+                    break
+                previous, current = current, onward[0]
+                seen[current] = True
+                chain.append(current)
+            closed = len(chain) > 2 and chain[0] in joined[chain[-1]]
+            curves.append((numpy.array([tuple(points[v]) for v in chain], numpy.float32), closed))
+    return curves
+
+
+def quads_of(
+    source, preset, settings, density=None, on_stage=None, uv_layers=(), sharp_edges=False, creases=False, curves=()
+):
     """A new mesh datablock: `source`, an evaluated mesh, remeshed into quads
     with the engine's `settings` on top of `preset`, and `density` if given
     (one weight per vertex of `source`). `on_stage`, if given, is told the
@@ -196,7 +252,8 @@ def quads_of(source, preset, settings, density=None, on_stage=None, uv_layers=()
     ("grid", "atlas"); with the atlas come its seams, marked on the edges.
     `sharp_edges` marks as sharp the edges that follow a hard edge of
     `source`. `creases` gives a crease weight to the edges that should stay
-    sharp when the mesh is subdivided."""
+    sharp when the mesh is subdivided. `curves` are guide curves, as
+    `curves_of` gives them, in the space of `source`."""
     import numpy
 
     source.calc_loop_triangles()
@@ -223,7 +280,7 @@ def quads_of(source, preset, settings, density=None, on_stage=None, uv_layers=()
         addresses = tuple(array.ctypes.data for array in kept)
     made = engine.remesh(
         addresses[0], vertices, addresses[1], triangles, addresses[2], corners, preset, settings, density, on_stage,
-        uv_layers=uv_layers, seams="atlas" in uv_layers, hard_edges=sharp_edges, creases=creases,
+        uv_layers=uv_layers, seams="atlas" in uv_layers, hard_edges=sharp_edges, creases=creases, curves=curves,
     )
     del kept
     positions, sizes, corner_vertices, report = made.positions, made.sizes, made.corners, made.report
@@ -326,9 +383,10 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
                 density = weights_of(evaluated, source, settings.density_group)
                 engine_settings["density_contrast"] = settings.density_factor
             layers = [name for name in ("grid", "atlas") if getattr(settings, f"export_{name}_uv")]
+            curves = curves_of(settings.guide_curves, original) if settings.guide_curves else ()
             mesh, report = quads_of(
                 source, settings.preset, engine_settings, density, on_stage, layers,
-                settings.export_sharp_edges, settings.export_creases,
+                settings.export_sharp_edges, settings.export_creases, curves,
             )
         except engine.EngineError as error:
             self.report({"ERROR"}, f"openclare: {error}")
@@ -349,7 +407,12 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
         context.view_layer.objects.active = remeshed
 
         seconds = float(report.get("seconds", 0.0))
-        self.report({"INFO"}, f"openclare: {report.get('quads', '?')} quads in {seconds:.1f} s")
+        said = f"openclare: {report.get('quads', '?')} quads in {seconds:.1f} s"
+        if settings.guide_curves:
+            said += f", {report.get('guide_edges', '0')} edges along the guide curves"
+            if report.get("guide_gaps", "0") != "0":
+                said += f" ({report['guide_gaps']} breaks)"
+        self.report({"INFO"}, said)
         return {"FINISHED"}
 
 
@@ -374,6 +437,7 @@ class OPENCLARE_PT_panel(bpy.types.Panel):
             factor = column.row()
             factor.enabled = bool(settings.density_group)
             factor.prop(settings, "density_factor")
+        layout.prop(settings, "guide_curves")
         layout.operator(OPENCLARE_OT_remesh.bl_idname, icon="MOD_REMESH")
 
 

@@ -23,7 +23,7 @@ From 0 to 100; how they are made is in [SCORES.md](../../bench/results/SCORES.md
 | instant-meshes | 562 | **22** | 0 | 49 | 25 | 0 | 77 | 25 | 0 | 58 |
 | quadremesher-uniform | 2688 | **14** | 0 | 35 | 15 | 28 | 0 | — | 0 | 33 |
 | quad-layout | 2053 | **5** | 0 | 23 | 0 | 0 | 0 | — | 0 | 49 |
-| **quad-layout-adaptive** | 2021 | **4** | 0 | 21 | 0 | 0 | 0 | — | 0 | 36 |
+| **quad-layout-adaptive** | 2021 | **4** | 0 | 21 | 0 | 0 | 0 | — | 0 | 40 |
 | quadriflow | — | **0** | 0 | — | — | — | — | — | — | 100 |
 
 At equal quad count: Quad Remesher's mesh as it is, and openclare asked for as many quads.
@@ -40,8 +40,8 @@ At equal quad count: Quad Remesher's mesh as it is, and openclare asked for as m
 | integer-grid | 2127 | **64** | 100 | 68 | 62 | 34 | 69 | 82 | 0 | 22 |
 | quadremesher | 46202 | **30** | 0 | 40 | 38 | 75 | 33 | — | 0 | 35 |
 | quad-layout | 3011 | **26** | 0 | 33 | 0 | 35 | 0 | 76 | 99 | 35 |
-| **quad-layout-adaptive** | 2979 | **25** | 0 | 33 | 0 | 35 | 0 | 76 | 97 | 31 |
 | quadremesher-uniform | 4324 | **25** | 0 | 48 | 37 | 54 | 0 | — | 0 | 34 |
+| **quad-layout-adaptive** | 2996 | **23** | 0 | 34 | 0 | 33 | 0 | — | 99 | 31 |
 | instant-meshes | 1699 | **20** | 0 | 56 | 52 | 0 | 0 | 28 | 0 | 52 |
 | quadriflow | — | **0** | 0 | — | — | — | — | — | — | 100 |
 
