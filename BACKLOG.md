@@ -40,7 +40,7 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 | DT-024 | Courbes guides (rang 4) non commencées | J8 | moyenne | ouvert (réduit au J8) |
 | DT-025 | Densité : portée des singularités et lecture de la courbure encore à l'échelle nominale | J8 | basse | ouvert |
 | DT-026 | Densité peinte : lecture du Weight Paint de Blender à faire (pont Blender) | J8 | moyenne | ouvert |
-| DT-028 | Symétrie : absente, Quad Remesher l'a | J8 | moyenne | ouvert, planifié au J9 bis |
+| DT-028 | Symétrie : absente, Quad Remesher l'a | J8 | basse | ouvert, après la qualité |
 | DT-029 | Quads étirés sur la paroi d'un cylindre | J9 | moyenne | ouvert |
 | DT-030 | Chaîne par patchs (QuadWild) non écrite | J9 | basse | ouvert |
 | DT-031 | Triangles d'aire quasi nulle laissés par le prétraitement | J9 | moyenne | ouvert |
@@ -339,6 +339,8 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 - **Piste** : remailler une moitié avec un bord posé sur le plan de symétrie, puis la refléter ;
   les bords ouverts sont déjà pris en charge.
 - **Décision du 7 octobre 2026** : voulue. Inscrite à la feuille de route comme jalon 9 bis.
+- **Décision du 8 octobre 2026** : c'est une fonctionnalité annexe, qui ne fait pas progresser
+  la qualité ; elle passe après les travaux de qualité.
 
 ### DT-029 — Quads étirés sur la paroi d'un cylindre
 
