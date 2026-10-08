@@ -17,8 +17,8 @@ From 0 to 100; how they are made is in [SCORES.md](../../bench/results/SCORES.md
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout | **62** | 100 | 34 | 62 | 28 | 49 | 40 | 100 | 94 |
-| **quad-layout-adaptive** | **61** | 100 | 32 | 63 | 32 | 49 | 28 | 96 | 77 |
+| quad-layout | **62** | 100 | 34 | 62 | 28 | 49 | 40 | 100 | 98 |
+| **quad-layout-adaptive** | **59** | 100 | 32 | 56 | 49 | 17 | 12 | 98 | 83 |
 | integer-grid | **46** | 100 | 30 | 46 | 0 | 37 | 28 | 32 | 14 |
 | quadriflow | **40** | 80 | 18 | 49 | 0 | 23 | 20 | 60 | 100 |
 | quadremesher | **35** | 0 | 46 | 46 | 85 | 41 | — | 0 | 54 |
@@ -29,11 +29,11 @@ From 0 to 100; how they are made is in [SCORES.md](../../bench/results/SCORES.md
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| **quad-layout-adaptive** | **69** | 100 | 39 | 70 | 55 | 66 | 20 | 95 | 88 |
-| quad-layout | **67** | 100 | 36 | 69 | 37 | 71 | 32 | 100 | 86 |
+| quad-layout | **67** | 100 | 36 | 69 | 37 | 71 | 32 | 100 | 73 |
+| **quad-layout-adaptive** | **66** | 100 | 40 | 67 | 55 | 47 | 18 | 93 | 78 |
 | quadremesher-uniform | **59** | 100 | 40 | 50 | 70 | 30 | 19 | 43 | 53 |
-| integer-grid | **54** | 100 | 33 | 52 | 11 | 64 | 25 | 49 | 57 |
-| quadriflow | **50** | 80 | 20 | 44 | 22 | 67 | 29 | 84 | 86 |
+| integer-grid | **54** | 100 | 33 | 52 | 11 | 64 | 25 | 49 | 55 |
+| quadriflow | **50** | 80 | 20 | 44 | 22 | 67 | 29 | 84 | 82 |
 | quadremesher | **40** | 0 | 51 | 52 | 87 | 70 | — | 0 | 53 |
 | instant-meshes | **28** | 20 | 18 | 57 | 2 | 10 | 0 | 95 | 100 |
 
@@ -41,8 +41,8 @@ From 0 to 100; how they are made is in [SCORES.md](../../bench/results/SCORES.md
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| **quad-layout-adaptive** | **74** | 100 | 45 | 72 | 77 | 77 | 13 | 96 | 58 |
-| quad-layout | **74** | 100 | 43 | 74 | 70 | 79 | 32 | 94 | 61 |
+| quad-layout | **74** | 100 | 43 | 74 | 70 | 79 | 32 | 94 | 58 |
+| **quad-layout-adaptive** | **73** | 100 | 45 | 70 | 80 | 66 | 13 | 95 | 40 |
 | quadremesher | **67** | 100 | 53 | 59 | 92 | 82 | 15 | 0 | 45 |
 | quadriflow | **58** | 80 | 22 | 61 | 37 | 86 | 36 | 89 | 59 |
 | quadremesher-uniform | **43** | 0 | 44 | 58 | 79 | 64 | — | 47 | 48 |

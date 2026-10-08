@@ -29,20 +29,20 @@ From 0 to 100; how they are made is in [SCORES.md](../../bench/results/SCORES.md
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| **quad-layout-adaptive** | **95** | 100 | 93 | 86 | 98 | 100 | 85 | 95 | 92 |
-| quad-layout | **94** | 100 | 93 | 82 | 98 | 100 | 76 | 98 | 92 |
-| quadriflow | **89** | 100 | 81 | 78 | 96 | 100 | 65 | 87 | 94 |
+| **quad-layout-adaptive** | **95** | 100 | 93 | 86 | 98 | 100 | 85 | 95 | 79 |
+| quad-layout | **94** | 100 | 93 | 82 | 98 | 100 | 76 | 98 | 89 |
+| quadriflow | **89** | 100 | 81 | 78 | 96 | 100 | 65 | 87 | 86 |
+| integer-grid | **88** | 100 | 93 | 76 | 98 | 98 | 72 | 52 | 71 |
 | quadremesher | **88** | 100 | 93 | 84 | 97 | 100 | 83 | 28 | 76 |
 | quadremesher-uniform | **88** | 100 | 93 | 84 | 97 | 100 | 83 | 28 | 78 |
-| integer-grid | **87** | 100 | 93 | 78 | 98 | 100 | 73 | 34 | 60 |
 | instant-meshes | **82** | 100 | 76 | 79 | 93 | 73 | 2 | 87 | 100 |
 
 ### 8000 quads
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout | **97** | 100 | 94 | 88 | 99 | 100 | 98 | 100 | 66 |
-| **quad-layout-adaptive** | **96** | 100 | 94 | 89 | 99 | 100 | 82 | 95 | 66 |
+| quad-layout | **97** | 100 | 94 | 88 | 99 | 100 | 98 | 100 | 63 |
+| **quad-layout-adaptive** | **96** | 100 | 94 | 89 | 99 | 100 | 82 | 95 | 60 |
 | integer-grid | **93** | 100 | 94 | 87 | 99 | 100 | 82 | 66 | 46 |
 | quadremesher | **89** | 100 | 92 | 78 | 99 | 100 | 88 | 46 | 64 |
 | quadremesher-uniform | **89** | 100 | 92 | 78 | 99 | 100 | 88 | 46 | 63 |
