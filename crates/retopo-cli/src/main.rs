@@ -39,6 +39,7 @@ OPTIONS (remesh):
     --crease-angle <DEG|none>    follow input edges sharper than this dihedral angle
     --adaptivity <A>             0 for quads of one size, up to 1 for quads as small as the shape bends
     --quads-around <N>           fewest quads round a thin part, so that it keeps its volume (0: do not look at thickness)
+    --volume-fit <F>             0 leaves every vertex on the surface; 1 moves them off it for the mesh to keep the volume
     --density <FILE>             painted density: one weight per input vertex, one per line, from 0 (least dense) to 1 (most)
     --density-contrast <F>       how many times denser a weight of 1 is than a weight of 0 (default 4)
     --skip-pieces-under <Q>      leave out the separate pieces whose share of the quads is below Q (default 0: keep all)
@@ -209,6 +210,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
             }
             "--adaptivity" => config.adaptivity = parse(arg, value(arg)?)?,
             "--quads-around" => config.quads_around = parse(arg, value(arg)?)?,
+            "--volume-fit" => config.volume_fit = parse(arg, value(arg)?)?,
             "--density" => density_path = Some(value(arg)?.clone()),
             "--density-contrast" => config.density_contrast = parse(arg, value(arg)?)?,
             "--skip-pieces-under" => config.skip_pieces_under = parse(arg, value(arg)?)?,

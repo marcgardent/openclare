@@ -13,6 +13,7 @@ use crate::config::RemeshConfig;
 use crate::crossfield;
 use crate::error::{Error, Result};
 use crate::extract::{extract_faces, grid::graph_from_parametrization};
+use crate::fitting;
 use crate::mesh::{PolyMesh, TriMesh};
 use crate::meshing;
 use crate::parametrization;
@@ -229,7 +230,8 @@ impl Remesher for IntegerGrid {
         clock.lap(&mut report, "extraction");
         recorder.record("extraction/quads", Shape::Polygons(&mesh));
 
-        settle(&mut mesh, input, &work, edge_length, None, &Laplacian { iterations: self.relax_iterations });
+        let relaxer = Laplacian { iterations: self.relax_iterations };
+        settle(&mut mesh, input, &work, edge_length, None, &relaxer, config.volume_fit, recorder);
         clock.lap(&mut report, "relaxation");
 
         report.stats = mesh.stats();
@@ -473,7 +475,7 @@ impl QuadLayout {
 
         // The layout knows which vertices lie on a border or a hard edge.
         let held = Some((meshed.on_feature, meshed.on_corner));
-        settle(&mut mesh, input, &work, edge_length, held, &self.relaxer);
+        settle(&mut mesh, input, &work, edge_length, held, &self.relaxer, config.volume_fit, recorder);
         clock.lap(&mut report, "relaxation");
 
         report.stats = mesh.stats();
@@ -576,10 +578,12 @@ fn fields(
     Ok(Fields { work, field, edge_length, quads })
 }
 
-/// Relaxes `mesh` on the input surface. Hard edges and corners of the work
-/// mesh are what its vertices snap to; the surface itself is the input.
-/// `held` lists the vertices known to lie on feature lines and on corners;
-/// without it they are told by distance.
+/// Relaxes `mesh` on the input surface, then fits it to that surface by
+/// `volume_fit` (see [`fitting`]). Hard edges and corners of the work mesh
+/// are what its vertices snap to; the surface itself is the input. `held`
+/// lists the vertices known to lie on feature lines and on corners; without
+/// it they are told by distance.
+#[allow(clippy::too_many_arguments)]
 fn settle(
     mesh: &mut PolyMesh,
     input: &TriMesh,
@@ -587,6 +591,8 @@ fn settle(
     edge_length: f64,
     held: Option<(Vec<u32>, Vec<u32>)>,
     relaxer: &dyn Relaxer,
+    volume_fit: f64,
+    recorder: &mut dyn Recorder,
 ) {
     let constraints =
         crate::field::Constraints::from_feature_edges(&work.mesh.positions, &work.normals, &work.feature_edges);
@@ -597,7 +603,12 @@ fn settle(
     if let Some((on_lines, on_corners)) = held {
         guide = guide.map(|features| features.with_members(on_lines, on_corners));
     }
-    relaxer.relax(mesh, &Bvh::build(input), guide.as_ref());
+    let surface = Bvh::build(input);
+    relaxer.relax(mesh, &surface, guide.as_ref());
+    if volume_fit > 0.0 {
+        recorder.record("relaxation/quads", Shape::Polygons(mesh));
+        fitting::create(fitting::Kind::LeastSquares).fit(mesh, input, &surface, guide.as_ref(), volume_fit);
+    }
 }
 
 /// Times the stages of a chain.

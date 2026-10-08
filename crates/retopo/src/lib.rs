@@ -22,6 +22,7 @@ pub mod curvature;
 pub mod error;
 pub mod extract;
 pub mod field;
+pub mod fitting;
 pub mod geometry;
 pub mod hierarchy;
 pub mod linalg;
