@@ -28,7 +28,7 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 | DT-012 | Préréglage `hard-surface` sur la chaîne organique | J4 bis | haute (durci) | **fermé au J9** |
 | DT-013 | Valeurs des préréglages non réglées sur le corpus | J4 bis | moyenne | ouvert |
 | DT-014 | Visualisation des champs et des structures | J2 | basse | **fermé (T1, T2)**, reste DT-035 |
-| DT-015 | Code encore nommé `retopo` | J4 bis | basse | ouvert |
+| DT-015 | Code encore nommé `retopo` | J4 bis | basse | **closed at J10** |
 | DT-016 | Documents en français, à traduire | J0 | basse | ouvert (new text in English since 8 October 2026; `CREDITS.md` translated) |
 | DT-017 | Corpus : sculptures de l'auteur à ajouter avant la fin de la licence d'essai | J0 | moyenne | ouvert |
 | DT-018 | Parties plus fines qu'un quad mal rendues à bas budget | J7 | haute | ouvert (doigts traités au Q2 ; restent les feuilles minces) |
@@ -52,6 +52,7 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 | DT-038 | Parties fines : limites de la borne de taille | Q2 | moyenne | ouvert |
 | DT-039 | Fitting: limits, and the volume after subdivision | Q2 bis | medium | open |
 | DT-040 | Improving a mesh from a dry run: tried for density, the rest to do | idea of the author | medium | open |
+| DT-041 | Blender add-on, first version: what it does not do | J10 | medium | open |
 | DT-033 | Terrains et scans : aucun outil n'aligne, le champ n'a rien à suivre | J9 | moyenne | ouvert |
 | DT-027 | Garde-fous de temps de calcul sur les entrées pathologiques | J8 | basse | ouvert |
 
@@ -204,6 +205,8 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 
 - **Né au** jalon 4 bis. Décision du 7 octobre 2026 : renommage au jalon 10.
 - **Constat** : crates, exécutable et scripts du banc portent l'ancien nom.
+- **Closed at milestone 10 (8 October 2026)**: crates, executable, scripts and documents are
+  named `openclare`. The folder of the repository on the author's machine keeps its name.
 
 ### DT-016 — Documents en français, à traduire
 
@@ -484,11 +487,11 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   (0.38.1) demande Rust 1.96. La visionneuse de la 0.36 impose de plus des versions exactes
   de `wasm-bindgen` et de ses voisines, fixées dans `Cargo.lock`.
 - **Poids** : `Cargo.lock` passe à un millier de paquets, que seules les deux crates Rerun
-  utilisent. Première construction en mode release : environ 5 minutes pour `retopo` avec
-  `--features rerun` (31 Mo au lieu de 17), environ 17 minutes pour `retopo-view` (265 Mo).
+  utilisent. Première construction en mode release : environ 5 minutes pour `openclare` avec
+  `--features rerun` (31 Mo au lieu de 17), environ 17 minutes pour `openclare-view` (265 Mo).
   Les informations de débogage des dépendances ont été retirées du profil release pour
-  cela : avec elles, `retopo-view` pesait 1,5 Go.
-- **Visionneuse embarquée non vérifiée à l'œil** : `retopo-view` démarre et reste ouvert sans
+  cela : avec elles, `openclare-view` pesait 1,5 Go.
+- **Visionneuse embarquée non vérifiée à l'œil** : `openclare-view` démarre et reste ouvert sans
   erreur, mais c'est dans la visionneuse web de Rerun que l'enregistrement a été regardé.
 - **Temps mesurés** : pendant un enregistrement, le temps passé à écrire les calques d'une
   étape est compté dans l'étape suivante.
@@ -593,3 +596,33 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
     towards curvature there. Alignment is the largest gap left with Quad Remesher.
 - **Decided on 8 October 2026**: a quality track of its own, after the first version of the
   Blender add-on, starting with the best of several rounds and the validity loop.
+
+### DT-041 — Blender add-on, first version: what it does not do
+
+- **Born at** milestone 10, first step (8 October 2026), by decision: the least that runs
+  first.
+- **Blender waits while the engine runs.** No progress, no way to cancel. The engine would
+  have to report its stages and check for a stop between them, and the operator to run it
+  aside.
+- **Only a preset and a number of quads.** The other settings (adaptivity, quads round thin
+  parts, volume fitting) exist in the engine and pass through the interface as text; the
+  panel does not show them.
+- **Next step, decided**: density from the Weight Paint of the active vertex group (DT-026),
+  hard edges from the edges marked sharp, and two UV layers (the map of the engine as it is,
+  and an atlas of its rectangular patches).
+- **Linux, 64-bit Intel or AMD only.** The archive carries one native library; Windows and
+  macOS need their own builds, and a way to make them (continuous integration).
+- **Reading in place relies on how Blender lays a mesh out in memory**: positions as a packed
+  array of three floats, corner vertices and triangle corners as packed integers. Checked on
+  Blender 5.2.2 against the documented accessors; true since Blender 4.0 as far as its
+  release notes say, not checked on 4.2 to 5.1. If a version changed it the add-on would read
+  nonsense rather than fail; so the add-on compares a few values with the documented accessors
+  first, and copies the arrays out the documented way if they do not match. That other way is
+  tested, but only by forcing it.
+- **Tried without interface only.** `make addon-test` runs the operator in a Blender started
+  with `-b`; the archive is accepted by Blender's own validation. Nobody has installed it and
+  pressed the button yet.
+- **The result is a bare mesh**: no material, no vertex group, no custom attribute carried
+  over from the original.
+- **In the local coordinates of the object**: a non-uniform scale on the object is not applied
+  before remeshing, so quads that are square in local space are not in the scene.

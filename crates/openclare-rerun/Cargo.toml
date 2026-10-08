@@ -1,0 +1,14 @@
+[package]
+name = "openclare-rerun"
+description = "Writes what the openclare chains show of their work as a Rerun recording"
+version.workspace = true
+edition.workspace = true
+# Rerun asks for a newer compiler than the library does.
+rust-version = "1.95"
+license.workspace = true
+
+[dependencies]
+openclare = { path = "../openclare" }
+# Only what it takes to write a recording: no viewer, no server, no usage
+# statistics.
+rerun = { workspace = true, features = ["sdk", "rrd"] }

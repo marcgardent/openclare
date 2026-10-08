@@ -2,7 +2,7 @@
 
 **Statut : validé le 6 octobre 2026. Jalons 0 à 9 et chantier de qualité Q1 faits. Chantiers d'outils T1 (notes, rendus, pages par modèle) et T2 (enregistrement des étapes pour Rerun) réalisés et fusionnés. Chantier de qualité Q2 (parties fines) réalisé et fusionné. Track Q2 bis (keeping the volume) done, awaiting review. What is left: [ROADMAP.md](ROADMAP.md).**
 Ce qui a été écarté, approché ou reporté en chemin est suivi ticket par ticket dans [BACKLOG.md](BACKLOG.md).
-Le projet s'appelle **openclare** ; les crates portent encore le nom provisoire `retopo`. Les points marqués
+Le projet s'appelle **openclare**, et son code aussi depuis le jalon 10 (il s'appelait `retopo` avant). Les points marqués
 *à trancher* attendent une décision ; ils sont regroupés en section 7.
 
 Première chaîne, pour l'organique : **champ de croix → paramétrisation sans couture → T-mesh →
@@ -404,7 +404,7 @@ tableaux qu'il fournit.
 
 - **Entrée** : un maillage source et un maillage quad, quel que soit l'outil qui l'a produit.
 - **Sortie** : le tableau des métriques de la section 0.
-- **Méthode** : Blender sans interface pour QuadriFlow ; l'exécutable `retopo` pour le plancher.
+- **Méthode** : Blender sans interface pour QuadriFlow ; l'exécutable `openclare` pour le plancher.
 - **Test** : valeurs connues sur primitives (grille parfaite sur un tore : S = 0, F idéale).
 - **Pourquoi en premier** : sans lui, « supérieur à Blender » n'est pas vérifiable.
 
@@ -422,7 +422,7 @@ tableaux qu'il fournit.
 - **Test** : angles minimaux des triangles ; distance à la source ; courbures comparées aux
   valeurs exactes sur sphère, cylindre et tore.
 
-**Réalisé au jalon 1** (`crates/retopo/src/preprocess/`, interface `Preprocessor` et sa fabrique).
+**Réalisé au jalon 1** (`crates/openclare/src/preprocess/`, interface `Preprocessor` et sa fabrique).
 Mesuré sur le corpus pour un maillage de calcul de 50 000 triangles demandés :
 
 | Modèle | Triangles | Plus petit angle, moyenne | … 1ᵉʳ centile | Hausdorff, ‰ | Temps |
@@ -488,7 +488,7 @@ Limites constatées :
 - **Test** : sans adaptivité ni peinture, facteur 1 partout ; le nombre de quads est conservé ;
   le maillage est mesurablement plus fin là où on l'a demandé.
 
-**Réalisé au jalon 8** (`crates/retopo/src/sizing.rs`, interface `Sizer` et sa fabrique ;
+**Réalisé au jalon 8** (`crates/openclare/src/sizing.rs`, interface `Sizer` et sa fabrique ;
 terme de transport dans `crossfield/frames.rs` ; réglage `adaptivity` de la configuration ;
 données peintes passées par `Guides`, à côté du maillage, et non dans la configuration).
 
@@ -522,7 +522,7 @@ taille unique et `quad-layout-adaptive` celle du préréglage) :
   adaptative, à une exception : à 8000 quads, 78 sommets irréguliers contre 70 pour QuadriFlow.
   La variante à taille unique la tient aux trois budgets.
 
-Vérifié par les tests (`crates/retopo/tests/sizing.rs`) : facteur 1 partout par défaut ;
+Vérifié par les tests (`crates/openclare/tests/sizing.rs`) : facteur 1 partout par défaut ;
 sur un fuseau, pointes plus fines que la taille et d'autant plus que l'adaptivité est forte,
 nombre de quads conservé ; un hémisphère peint à 1 et l'autre laissé à 0, avec un contraste de
 16, donnent un champ de taille dans un rapport 4, sans saut à l'équateur ; peindre tout au même
@@ -562,7 +562,7 @@ Ce qui reste ouvert :
   formulation aux faces, parce que la paramétrisation (M4) attend un champ par face avec les
   singularités aux sommets.
 
-**Réalisé au jalon 2** (`crates/retopo/src/crossfield/`, interface `CrossFieldSolver` et sa
+**Réalisé au jalon 2** (`crates/openclare/src/crossfield/`, interface `CrossFieldSolver` et sa
 fabrique ; deux solveurs : `power`, celui de cette fiche, et `extrinsic`, celui d'Instant Meshes
 lu par face, gardé comme point de comparaison).
 
@@ -628,7 +628,7 @@ Constats utiles pour la suite :
 - **Critère de sortie** : réduction mesurable de S et C sur le corpus sans dégrader A. Si ce
   n'est pas atteint dans le temps imparti, on garde le seul niveau 1 et on avance.
 
-**Réalisé au jalon 3** (`crates/retopo/src/singularity/`, interface `SingularityOptimizer` et sa
+**Réalisé au jalon 3** (`crates/openclare/src/singularity/`, interface `SingularityOptimizer` et sa
 fabrique ; deux implémentations : `pair-cancellation`, et `keep` qui ne touche à rien).
 
 La méthode retenue est le niveau 2 de la fiche, avec deux précisions venues de l'expérience :
@@ -694,7 +694,7 @@ Ce qui reste ouvert :
 - **Test** : zéro triangle inversé sur tout le corpus ; transitions exactes aux coutures ;
   distorsion mesurée ; sur un tore, la paramétrisation est la grille attendue.
 
-**Réalisé au jalon 4** (`crates/retopo/src/parametrization/`, interface `Parametrizer` et sa
+**Réalisé au jalon 4** (`crates/openclare/src/parametrization/`, interface `Parametrizer` et sa
 fabrique).
 
 - **Graphe de coupe** : arbre couvrant des faces, dont le complément est élagué jusqu'aux
@@ -819,7 +819,7 @@ Ce qui ne va pas, et pourquoi :
   avec la formule d'Euler.
 - **Arithmétique du traçage** : tranchée au jalon 5, voir ci-dessous.
 
-**Réalisé au jalon 5** (`crates/retopo/src/tmesh/`, interface `LayoutBuilder` et sa fabrique).
+**Réalisé au jalon 5** (`crates/openclare/src/tmesh/`, interface `LayoutBuilder` et sa fabrique).
 
 ![Les coupes du T-mesh sur l'ogre et sur Suzanne, à 3000 quads](docs/images/tmesh.png)
 
@@ -872,7 +872,7 @@ Cas d'école : le cube donne ses 6 faces, 20 nœuds (8 coins, 12 milieux d'arêt
 se rencontrent nez à nez) et 24 arcs ; le plan ouvert donne un seul rectangle bordé par son
 contour ; le tore, sans singularité, n'est pas découpé du tout.
 
-Vérifié par les tests (`crates/retopo/tests/tmesh.rs`) : sur une sphère, un cube à arêtes vives,
+Vérifié par les tests (`crates/openclare/tests/tmesh.rs`) : sur une sphère, un cube à arêtes vives,
 un plan ouvert, un tore avec et sans singularités, chaque patch a quatre coins et des côtés
 opposés égaux, chaque demi-arc borde exactement un patch, les contours se referment, la somme
 des aires des rectangles est l'aire de la carte, et nœuds − arcs + patchs vaut la caractéristique
@@ -951,7 +951,7 @@ que QuadriFlow ») n'a pas de sens ici : QuadriFlow est déjà à moins de 3°, 
 voisins fusionnent. Enfin, à 8000 quads, QuadriFlow n'a pas terminé sur le bloc en L en dix
 minutes ; je l'ai arrêté, et il n'a pas été lancé sur le cylindre à ce budget.
 
-Vérifié par les tests (`crates/retopo/tests/hard_surface.rs`, `tmesh.rs`) : le T-mesh du cube
+Vérifié par les tests (`crates/openclare/tests/hard_surface.rs`, `tmesh.rs`) : le T-mesh du cube
 est le cube lui-même (8 nœuds, 12 arcs, 6 patchs, aucune trace) ; sur le bloc en L, les deux
 coins rentrants émettent chacun deux traces et chaque face en L est coupée en trois rectangles ;
 les deux bords du cylindre sont des coupes entières de même longueur ; le maillage du bloc en L
@@ -1011,7 +1011,7 @@ Ce qui reste ouvert :
 - **Test** : contraintes satisfaites exactement ; optimum retrouvé sur de petits T-mesh
   construits à la main ; écart au budget mesuré (métrique N).
 
-**Réalisé au jalon 6** (`crates/retopo/src/quantization/`, interface `Quantizer` et sa fabrique).
+**Réalisé au jalon 6** (`crates/openclare/src/quantization/`, interface `Quantizer` et sa fabrique).
 
 - **Le problème** (`flow.rs`) : une bande de quads traverse un rectangle d'un côté au côté
   opposé. Les longueurs des arcs de deux côtés opposés doivent donc avoir la même somme : c'est
@@ -1096,7 +1096,7 @@ de QEx). **Décision du 7 octobre 2026 : route directe.** Ces deux modules ne so
 - **Test** : 100 % quads, variété ; nombre de faces égal à celui de la quantification ; sommets
   sur la surface ; valences conformes aux indices du champ.
 
-**Réalisé au jalon 7** (`crates/retopo/src/meshing/`, interface `Mesher` et sa fabrique ; chaîne
+**Réalisé au jalon 7** (`crates/openclare/src/meshing/`, interface `Mesher` et sa fabrique ; chaîne
 `quad-layout` dans `remesher.rs`, devenue celle des préréglages).
 
 ![L'ogre à 3000 quads : QuadriFlow, openclare, Quad Remesher](docs/images/jalon7_ogre.png)
@@ -1165,7 +1165,7 @@ Ce qu'il ne faut pas se cacher :
   plus poussée (type ARAP) est envisageable ensuite.
 - **Test** : métriques H et F ; aucune face inversée.
 
-**Réalisé au jalon 8** (`crates/retopo/src/relax.rs`, interface `Relaxer` et sa fabrique : deux
+**Réalisé au jalon 8** (`crates/openclare/src/relax.rs`, interface `Relaxer` et sa fabrique : deux
 implémentations, `laplacian`, celle d'origine, et `squaring`, la nouvelle, qu'utilise la chaîne
 `quad-layout`).
 
@@ -1280,7 +1280,7 @@ aux trois budgets, 4 pièces mécaniques sur 4, mêmes médianes. Suzanne, faite
 passe maintenant pièce par pièce. `marine`, auparavant refusé en bloc, donne un maillage
 partiel : ses pièces à arêtes non variété sont laissées de côté, les autres sont maillées.
 
-Vérifié par les tests (`crates/retopo/tests/pieces.rs`) : un maillage est bien séparé en ses
+Vérifié par les tests (`crates/openclare/tests/pieces.rs`) : un maillage est bien séparé en ses
 pièces, chaque sommet retrouvant son origine ; deux boules dont l'une a quatre fois l'aire de
 l'autre reçoivent des quads dans ce rapport ; un anneau posé à côté d'une boule passe, comme
 elle, par la chaîne principale ; une perle cent fois plus petite que la boule reçoit quand même
@@ -1316,7 +1316,7 @@ leur volume.
 
 **Ce qui a été fait** :
 
-- **Mesurer l'épaisseur** (`crates/retopo/src/thickness.rs`). Sous chaque sommet du maillage de
+- **Mesurer l'épaisseur** (`crates/openclare/src/thickness.rs`). Sous chaque sommet du maillage de
   calcul, des rayons lancés à travers l'intérieur de la forme donnent deux longueurs :
   l'épaisseur *en travers*, jusqu'à la face opposée (c'est la « shape diameter function » de
   Shapira, Shamir et Cohen-Or, 2008, avec sept rayons au lieu de trente), et le *tour* de la
@@ -1337,7 +1337,7 @@ leur volume.
 - **Un réglage**, `quads_around` (`--quads-around`) : le nombre de quads qu'on veut au moins
   autour d'une partie fine. 6 dans les préréglages `organic` et `animation` ; 0, c'est-à-dire
   qu'on ne regarde pas l'épaisseur, dans `hard-surface`, où la taille est unique.
-- **Deux mesures de plus au banc** (`metrics.rs`, `retopo measure`) : l'écart moyen entre les
+- **Deux mesures de plus au banc** (`metrics.rs`, `openclare measure`) : l'écart moyen entre les
   parties fines de la source (plus minces qu'une arête de quad) et le maillage, en arêtes de
   quad ; et le volume gardé, pour les formes fermées.
 
@@ -1403,7 +1403,7 @@ shape. The ogre kept 96.5 % of its volume at 1000 quads, 98.9 % at 3000, 99.6 % 
 other closed models between 97 and 98 % at 1000 quads. On a thin part it is far worse: six
 faces round a finger hold 83 % of its section, four faces 64 %.
 
-**What was done** (`crates/retopo/src/fitting.rs`, a stage of its own with its `Fitter`
+**What was done** (`crates/openclare/src/fitting.rs`, a stage of its own with its `Fitter`
 interface and factory, called last):
 
 - **Fit the faces, not the corners.** Sixteen points are looked at on each quad. For each, the
@@ -1476,7 +1476,7 @@ What is left to do, by order of importance, is in [ROADMAP.md](ROADMAP.md) since
 | J8 | Relaxation ; densité adaptative, puis contraintes de rang 3 à 5 | **Fait** : relaxation, densité adaptative (rang 2) et densité peinte (rang 5). Règle d'acceptation tenue aux trois budgets, forme des quads devant Quad Remesher. Reste le rang 4, les courbes guides (DT-024) ; le rang 3 relève du jalon 9 |
 | J9 | Surfaces dures : arêtes vives garanties, par des « murs » dans le T-mesh de la chaîne existante (à la place de la chaîne par patchs, DT-030) | **Fait.** Pièces mécaniques comparées à QuadriFlow et à Quad Remesher ; arêtes et coins retrouvés exactement |
 | J9 bis | Symétrie : un modèle symétrique par rapport à un plan donne un maillage symétrique (DT-028). **Reportée** : passe après les travaux de qualité (décision du 8 octobre 2026) | Écart entre le maillage et son reflet nul ; boucle d'arêtes sur le plan de symétrie |
-| J10 | Export des coutures et des UV ; bibliothèque à interface C et greffon Python sans copie mémoire | Remaillage lancé depuis Blender, UV et coutures relus dans la scène |
+| J10 | Export des coutures et des UV ; bibliothèque à interface C et greffon Python sans copie mémoire | Remaillage lancé depuis Blender, UV et coutures relus dans la scène. **First step done, awaiting review**: code renamed to `openclare`, C library (`openclare-capi`), add-on with a preset, a number of quads and a button (`make addon`). Next step: Weight Paint, marked edges, UV layers |
 | J11 | Prétraitement de réparation : fusion des pièces qui se traversent, arêtes non variété | Desert Rose remaillée en une seule peau valide |
 | J12 | Plis automatiques : un poids de pli par arête de sortie | Après subdivision, le maillage plissé est plus proche de la source que le même sans plis |
 | J13 | Normales optimales par coin | Écart angulaire entre l'ombrage du maillage allégé et celui de la source |
@@ -1499,7 +1499,7 @@ chantiers sont numérotés à part et partent du backlog.
 | Chantier | Contenu | État |
 |---|---|---|
 | T1 | Notes de 0 à 100 par modèle, remailleur et critère (`make scores`) ; rendus par Blender (`scripts/render.py`) ; une page par modèle avec images et notes (`make pages`, `docs/models/`) | **Fait, en attente de revue** |
-| T2 | Les étapes de la chaîne montrées à un `Recorder` (module `recorder`, sans dépendance ; `Silent` par défaut). Deux crates à part, construites sur demande : `retopo-rerun` écrit un fichier `.rrd` (`retopo remesh --record`), `retopo-viewer` embarque la visionneuse de Rerun (`retopo-view`). `make view MODEL=ogre` enchaîne le tout. Ce qui n'est pas montré est suivi par DT-035 | **Fait, en attente de revue** |
+| T2 | Les étapes de la chaîne montrées à un `Recorder` (module `recorder`, sans dépendance ; `Silent` par défaut). Deux crates à part, construites sur demande : `openclare-rerun` écrit un fichier `.rrd` (`openclare remesh --record`), `openclare-viewer` embarque la visionneuse de Rerun (`openclare-view`). `make view MODEL=ogre` enchaîne le tout. Ce qui n'est pas montré est suivi par DT-035 | **Fait, en attente de revue** |
 
 Le jalon 4 bis est un raccourci assumé : un arrondi glouton des translations, comme dans MIQ,
 donne un premier maillage complet bien avant le T-mesh et la quantification. Il est moins robuste
@@ -1567,7 +1567,7 @@ Dans l'esprit de Blender : un préréglage n'est qu'un jeu de paramètres nommé
 la main sur chaque réglage, peut enregistrer les siens, et le projet en fournit quelques-uns,
 documentés.
 
-En place depuis le jalon 4 bis (`crates/retopo/src/config.rs`) :
+En place depuis le jalon 4 bis (`crates/openclare/src/config.rs`) :
 
 ```rust
 pub struct RemeshConfig {
@@ -1593,7 +1593,7 @@ demain les courbes guides).
 - **Enregistrer un préréglage**, c'est écrire la configuration dans un petit fichier texte
   (`clé = valeur`, une ligne par champ) ; le relire redonne la même configuration. Un fichier
   peut être édité à la main, et ce qu'il ne mentionne pas garde sa valeur par défaut.
-- **Trois préréglages fournis**, listés par `retopo presets` :
+- **Trois préréglages fournis**, listés par `openclare presets` :
 
 | Préréglage | Ce qu'il privilégie | Réglages actuels |
 |---|---|---|
@@ -1633,16 +1633,35 @@ maintenant quelques règles :
 - **Interface C mince**, dans une crate à part, posée par-dessus `Remesher` ; le cœur n'en sait
   rien.
 
+**Done at milestone 10, first step** (`crates/openclare-capi`, `blender/openclare`):
+
+- **One call**, `openclare_remesh`, takes the mesh as flat arrays and gives back a handle to
+  read the quads from, or the reason there are none. A panic in the engine comes back as an
+  error, never as a crash of the host.
+- **Blender's arrays are read where they are.** The interface takes them the way Blender keeps
+  a mesh: three floats per vertex, three corners per triangle, and the vertex of each corner.
+  The add-on passes the addresses of Blender's own arrays (`as_pointer`), checked on Blender
+  5.2: nothing is copied on the Python side. The engine then builds its working mesh from
+  them in double precision; that one conversion is the only copy.
+- **Settings travel as text**: the name of a preset and the `key = value` lines of a saved
+  configuration on top of it (`RemeshConfig::apply_text`). A setting added to the engine
+  needs no change to the interface.
+- **The add-on** is a Blender extension (`blender_manifest.toml`): a panel in the sidebar of
+  the 3D viewport, an operator that remeshes the active object as it is seen (modifiers
+  applied) and puts the result next to it as a new object. `make addon` builds the archive,
+  `make addon-test` runs it in a Blender without interface.
+- **What it does not do yet** is in DT-041.
+
 ### Ce qui est réutilisé du code existant
 
 | Module existant | Réutilisé pour |
 |---|---|
-| `crates/retopo/src/mesh/` | conteneurs, connectivité, OBJ, subdivision, primitives de test |
-| `crates/retopo/src/geometry.rs` | normales, aires, détection des arêtes vives |
-| `crates/retopo/src/spatial/bvh.rs` | projection sur la source (M1, M9) |
-| `crates/retopo/src/relax.rs` | M9 |
-| `crates/retopo/src/field/orientation.rs` | détection des singularités, à adapter au champ par face |
-| `crates/retopo/tests/pipeline.rs` | invariants : Poincaré-Hopf, Euler, variété, déterminisme |
+| `crates/openclare/src/mesh/` | conteneurs, connectivité, OBJ, subdivision, primitives de test |
+| `crates/openclare/src/geometry.rs` | normales, aires, détection des arêtes vives |
+| `crates/openclare/src/spatial/bvh.rs` | projection sur la source (M1, M9) |
+| `crates/openclare/src/relax.rs` | M9 |
+| `crates/openclare/src/field/orientation.rs` | détection des singularités, à adapter au champ par face |
+| `crates/openclare/tests/pipeline.rs` | invariants : Poincaré-Hopf, Euler, variété, déterminisme |
 
 Conservés uniquement comme plancher de comparaison, hors de la chaîne cible :
 `field/position.rs`, `extract/`, `hierarchy.rs`, `pipeline.rs`.
@@ -1684,7 +1703,7 @@ Prises :
 - route du jalon 7 : directe ; la carte à grille entière et l'extraction exacte sont mises au
   backlog (DT-001) ;
 - deux singularités proches restent séparées (DT-005) ;
-- le code sera renommé `openclare` au jalon 10 (DT-015) ;
+- le code a été renommé `openclare` au jalon 10, le 8 octobre 2026 (DT-015) ; il s'appelait `retopo` ;
 - tout ce qui est écarté, approché ou reporté fait l'objet d'un ticket numéroté dans BACKLOG.md ;
 - densité : un seul champ de taille pour la densité adaptative et la densité peinte ; cette
   dernière se donne en poids de 0 (densité minimale) à 1 (densité maximale), avec un contraste

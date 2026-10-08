@@ -1,0 +1,17 @@
+[package]
+name = "openclare-capi"
+description = "C interface of the openclare quad remesher, for Blender and other hosts"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lib]
+# The shared library is what hosts load (libopenclare_capi.so,
+# openclare_capi.dll, libopenclare_capi.dylib); the Rust library is there for
+# the tests.
+name = "openclare_capi"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+openclare = { path = "../openclare" }

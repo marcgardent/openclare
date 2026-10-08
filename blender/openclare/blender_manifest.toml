@@ -1,0 +1,21 @@
+schema_version = "1.0.0"
+
+id = "openclare"
+version = "0.1.0"
+name = "openclare"
+tagline = "Automatic quad retopology"
+maintainer = "Marc Gardent"
+type = "add-on"
+tags = ["Mesh", "Modeling", "Sculpt"]
+
+blender_version_min = "4.2.0"
+
+license = ["SPDX:GPL-3.0-or-later"]
+copyright = ["2026 Marc Gardent"]
+
+# The engine is a native library, built for one system at a time and put in
+# `lib/` by `make addon`.
+platforms = ["linux-x64"]
+
+[build]
+paths_exclude_pattern = ["__pycache__/", "*.pyc"]

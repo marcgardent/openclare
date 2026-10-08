@@ -8,7 +8,7 @@ index, docs/models/README.md. The marks come from scripts/scores.py, hence
 from what the bench measured; the pictures are rendered here, with Blender
 (scripts/render.py), from one run of each remesher at `--target` quads.
 
-Needs `blender` on the PATH and a release build of `retopo`. The meshes are
+Needs `blender` on the PATH and a release build of `openclare`. The meshes are
 made again if they are not there (bench/out/pages), so this can take a
 while the first time.
 """

@@ -1,10 +1,13 @@
 # Shortcuts for the common tasks. `make help` lists them.
 
-.PHONY: help build test blenderkit scores pages view
+.PHONY: help build test blenderkit scores pages view addon addon-test
 
 help:
-	@echo "make build       build the retopo binary (release)"
+	@echo "make build       build the openclare binary (release)"
 	@echo "make test        run the test suite"
+	@echo "make addon       build the Blender add-on: dist/openclare-<version>-<system>.zip, to install"
+	@echo "                 from Blender (Preferences, Get Extensions, Install from Disk)"
+	@echo "make addon-test  run the add-on in a Blender without interface (needs blender)"
 	@echo "make blenderkit  download the BlenderKit models of the bench that cannot be"
 	@echo "                 redistributed, into bench/corpus-large (needs blender)"
 	@echo "make scores      write the comparative report, marks from 0 to 100 for every model"
@@ -46,9 +49,25 @@ VIEW_SOURCE = $(or $(FILE),$(firstword $(wildcard bench/corpus/$(MODEL).obj benc
 VIEW_NAME = $(basename $(notdir $(VIEW_SOURCE)))
 view:
 	@test -n "$(VIEW_SOURCE)" || { echo "which model? make view MODEL=ogre, or FILE=mesh.obj"; exit 2; }
-	cargo build --release -p retopo-cli --features rerun
-	cargo build --release -p retopo-viewer
+	cargo build --release -p openclare-cli --features rerun
+	cargo build --release -p openclare-viewer
 	mkdir -p bench/out/view
-	target/release/retopo remesh $(VIEW_SOURCE) bench/out/view/$(VIEW_NAME).obj --quads $(or $(QUADS),3000) \
+	target/release/openclare remesh $(VIEW_SOURCE) bench/out/view/$(VIEW_NAME).obj --quads $(or $(QUADS),3000) \
 		$(OPTIONS) --record bench/out/view/$(VIEW_NAME).rrd
-	target/release/retopo-view bench/out/view/$(VIEW_NAME).rrd
+	target/release/openclare-view bench/out/view/$(VIEW_NAME).rrd
+
+# The Blender add-on: the Python package of blender/openclare with the engine,
+# built for this system, in its lib/ folder.
+ADDON_VERSION = $(shell sed -n 's/^version = "\(.*\)"/\1/p' blender/openclare/blender_manifest.toml)
+ADDON_SYSTEM = $(shell sed -n 's/^platforms = \["\(.*\)"\]/\1/p' blender/openclare/blender_manifest.toml)
+addon:
+	cargo build --release -p openclare-capi
+	mkdir -p blender/openclare/lib dist
+	cp target/release/libopenclare_capi.so blender/openclare/lib/
+	strip blender/openclare/lib/libopenclare_capi.so
+	rm -f dist/openclare-$(ADDON_VERSION)-$(ADDON_SYSTEM).zip
+	cd blender/openclare && zip -q -r ../../dist/openclare-$(ADDON_VERSION)-$(ADDON_SYSTEM).zip . -x '__pycache__/*' '*.pyc'
+	@echo "written: dist/openclare-$(ADDON_VERSION)-$(ADDON_SYSTEM).zip"
+
+addon-test: addon
+	blender -b --factory-startup --python blender/test_addon.py
