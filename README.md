@@ -104,6 +104,16 @@ l'épaisseur) dans `hard-surface`.
 
 ![La main de l'ogre à 3000 quads](docs/images/q2_main.png)
 
+Le maillage garde aussi le volume de la forme. Des sommets posés sur la surface donnent des
+faces qui passent en dessous partout où elle est bombée ; une dernière étape les écarte donc
+un peu de la surface, le long de leur normale, pour que les faces passent au travers plutôt
+qu'en dessous. `--volume-fit` règle cet écart, de 0 (sommets sur la surface) à 1 (la valeur
+par défaut).
+
+```bash
+./target/release/retopo remesh entree.obj sortie.obj --quads 3000 --volume-fit 0
+```
+
 Pour voir le T-mesh d'un modèle, ses coupes écrites comme des lignes sur la surface :
 
 ```bash
@@ -215,6 +225,7 @@ Rerun 0.36 installé peut s'en servir à la place de `retopo-view`.
 | `config` | configuration unique d'un remaillage, préréglages, enregistrement et relecture |
 | `curvature` | courbures et directions principales |
 | `metrics` | mesures de qualité d'un maillage quad par rapport à sa source |
+| `fitting` | étape d'ajustement : les sommets quittent la surface pour que le maillage garde le volume |
 | `thickness` | épaisseur de la forme sous chaque sommet, mesurée par des rayons à travers l'intérieur |
 | `recorder` | interface `Recorder` par laquelle les étapes montrent leur travail, et `Silent`, qui n'écoute rien ; aucune dépendance |
 
