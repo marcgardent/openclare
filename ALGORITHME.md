@@ -1,6 +1,6 @@
 # openclare — cahier des charges du moteur de retopologie quad
 
-**Statut : validé le 6 octobre 2026. Jalons 0 à 9 et chantier de qualité Q1 faits. Chantiers d'outils T1 (notes, rendus, pages par modèle) et T2 (enregistrement des étapes pour Rerun) réalisés, en attente de revue.**
+**Statut : validé le 6 octobre 2026. Jalons 0 à 9 et chantier de qualité Q1 faits. Chantiers d'outils T1 (notes, rendus, pages par modèle) et T2 (enregistrement des étapes pour Rerun) réalisés et fusionnés. Chantier de qualité Q2 (parties fines) réalisé, en attente de revue.**
 Ce qui a été écarté, approché ou reporté en chemin est suivi ticket par ticket dans [BACKLOG.md](BACKLOG.md).
 Le projet s'appelle **openclare** ; les crates portent encore le nom provisoire `retopo`. Les points marqués
 *à trancher* attendent une décision ; ils sont regroupés en section 7.
@@ -483,7 +483,8 @@ Limites constatées :
     place. En pratique, le transport d'une direction d'une face à sa voisine reçoit un terme de
     plus, proportionnel à la variation de la taille le long de l'arête traversée.
 - **Point dur** : plus la taille varie, plus il faut de sommets irréguliers ; et une partie plus
-  mince qu'un quad (une oreille) n'est pas vue par la courbure seule.
+  mince qu'un quad (une oreille) n'est pas vue par la courbure seule. C'est l'objet du
+  chantier Q2, qui ajoute une borne sur les parties fines (voir sa fiche).
 - **Test** : sans adaptivité ni peinture, facteur 1 partout ; le nombre de quads est conservé ;
   le maillage est mesurablement plus fin là où on l'a demandé.
 
@@ -1292,6 +1293,105 @@ Ce qui reste ouvert :
   J11).
 - **Les arêtes non variété** (`marine`) restent refusées : c'est l'affaire du jalon 11.
 
+### Chantier Q2 — Parties fines : garder le volume
+
+Né d'une remarque de l'auteur sur sa sculpture, le 8 octobre 2026 : les doigts et les oreilles
+de l'ogre sont un vrai problème pour tous les remailleurs, et il faut arriver à garder au moins
+leur volume.
+
+![La main de l'ogre à 3000 quads](docs/images/q2_main.png)
+
+**Le diagnostic**, mesuré avant d'écrire quoi que ce soit :
+
+- Une partie plus mince qu'un quad ne peut pas être rendue par des quads de cette taille : il
+  n'en passe qu'un ou deux autour, et elle ressort comme une lame. Sur l'ogre à 3000 quads, le
+  pouce était un seul quad plié.
+- La courbure ne suffit pas à le voir : elle est lue à l'échelle d'un demi-quad, exprès, pour
+  ne pas suivre le grain de la peau. Un doigt plus fin que cela passe inaperçu.
+- L'annulation des paires de singularités (M3) achevait le travail. Un doigt a besoin de
+  singularités à son bout et à sa base ; à moins de deux arêtes l'une de l'autre, elles
+  étaient prises pour du bruit et annulées.
+- Quad Remesher fait mieux sur ces parties, mais avec le double du budget demandé (6134 quads
+  pour 3000). À budget tenu (sa variante « uniforme »), il fait moins bien que nous.
+
+**Ce qui a été fait** :
+
+- **Mesurer l'épaisseur** (`crates/retopo/src/thickness.rs`). Sous chaque sommet du maillage de
+  calcul, des rayons lancés à travers l'intérieur de la forme donnent deux longueurs :
+  l'épaisseur *en travers*, jusqu'à la face opposée (c'est la « shape diameter function » de
+  Shapira, Shamir et Cohen-Or, 2008, avec sept rayons au lieu de trente), et le *tour* de la
+  partie, à son plus étroit : à mi-épaisseur, la plus courte corde qui longe la surface donne
+  l'autre largeur. Un doigt est aussi large qu'épais ; une oreille ou un drap sont bien plus
+  larges, et ne sont pas pris pour des doigts. Les rayons passent par la structure spatiale
+  qui servait déjà à la projection, à laquelle il a fallu ajouter le lancer de rayon.
+- **Borner la taille** (M1 bis, `sizing.rs`). Là où le tour d'une partie ne laisse pas passer
+  `quads_around` quads de la taille prévue, la taille est abaissée pour qu'ils passent. Elle
+  remonte ensuite en s'éloignant, d'une demi-arête par arête parcourue : une moyenne, comme
+  pour le reste du champ, aurait noyé un doigt dans ce qui l'entoure. Le reste du maillage
+  grossit pour que le nombre de quads reste celui demandé ; quelques tours de boucle accordent
+  les deux. La taille ne descend pas sous le quart de la taille demandée : à un sixième, des
+  quads se retournaient sur les feuilles les plus fines (les oreilles de `jerry`).
+- **Compter la portée des singularités en quads locaux** (M3). Deux singularités sont proches
+  quand peu de quads les séparent, là où elles sont. Sur un doigt maillé fin, celles dont il a
+  besoin ne sont plus annulées. C'est la moitié de DT-025.
+- **Un réglage**, `quads_around` (`--quads-around`) : le nombre de quads qu'on veut au moins
+  autour d'une partie fine. 6 dans les préréglages `organic` et `animation` ; 0, c'est-à-dire
+  qu'on ne regarde pas l'épaisseur, dans `hard-surface`, où la taille est unique.
+- **Deux mesures de plus au banc** (`metrics.rs`, `retopo measure`) : l'écart moyen entre les
+  parties fines de la source (plus minces qu'une arête de quad) et le maillage, en arêtes de
+  quad ; et le volume gardé, pour les formes fermées.
+
+**Résultats**, variante adaptative, écart sur les parties fines en pourcentage d'une arête de
+quad (plus bas est mieux) :
+
+| Modèle | 1000 quads, avant → après | 3000 quads, avant → après | 8000 quads, avant → après | QuadriFlow à 3000 | Quad Remesher à 3000, budget tenu | Quad Remesher à 3000, budget doublé |
+|---|---|---|---|---|---|---|
+| ogre | 20 → 8 | 30 → 9 | 15 → 6 | 54 | 75 | 7 |
+| pig | 17 → 7 | 19 → 5 | 21 → 8 | 68 | 16 | 4 |
+| jerry | 22 → 16 | 31 → 17 | 25 → 11 | 23 | 19 | 5 |
+| blub | 22 → 9 | 14 → 11 | — | 46 | 20 | 8 |
+| suzanne | 12 → 7 | 13 → 11 | — | 16 | 17 | 5 |
+| spot | 14 → 21 | 7 → 7 | — | 56 | 21 | 9 |
+
+« Avant » est la variante à taille unique, qui n'a pas changé ; un tiret veut dire qu'à ce
+budget le modèle n'a plus rien de plus mince qu'un quad. Sur le reste :
+
+- **Validité** : les 12 modèles organiques restent valides aux trois budgets. La rose devient
+  valide à 8000 quads, ce qu'elle n'était pas.
+- **Les modèles sans partie fine ressortent identiques** (blob, rock, creature, cage, bob, et
+  les quatre mécaniques).
+- **Fidélité** : le Hausdorff du cochon est divisé par deux à 3000 quads (22 → 11 ‰) ; à 1000
+  quads, pig passe de 33 à 20 ‰, jerry de 34 à 26, bridge de 17 à 11.
+- **Notes** : la moyenne des modèles organiques passe de 71 à 70 à 1000 quads, reste à 76 à
+  3000 et monte de 79 à 81 à 8000.
+
+**Ce que ça coûte**, et qu'il faut dire :
+
+- **Plus de sommets irréguliers** là où il y a des parties fines : l'ogre passe de 88 à 155 à
+  3000 quads (44 → 102 à 1000), jerry de 102 à 162. Chaque doigt en demande à son bout et à sa
+  base, et la portée locale en laisse davantage dans les zones denses. La note de régularité
+  de l'ogre baisse (73 → 51 à 3000) et sa note globale avec (71 → 68) : le barème ne voit pas
+  les parties fines, il ne voit que leur prix.
+- **Le reste est un peu plus grossier** : sur l'ogre à 1000 quads, la distance moyenne à la
+  source passe de 2,2 à 2,5 ‰ et l'écart moyen des angles de 7,5° à 9,1°.
+- **Un détail plus petit qu'un quad reste hors de portée** : la queue de `spot` à 1000 quads,
+  un bouton plus petit qu'un quad, est moins bien rendue qu'avant (Hausdorff 10 → 16 ‰).
+- **Temps** : de 30 à 50 % de plus sur les modèles concernés.
+
+Ce qui reste ouvert :
+
+- **Les oreilles et les feuilles minces** (DT-018) : la mesure du tour les laisse de côté à
+  dessein, et leur bord reste grossier.
+- **Le volume lui-même** (DT-037) : les sommets sont posés sur la surface, le maillage est donc
+  inscrit dans la forme et perd du volume partout où elle est bombée : 1,2 % sur l'ogre à
+  3000 quads, 3,5 % à 1000. Un doigt à six faces dont les sommets touchent la surface n'a que
+  83 % de la section du doigt. La suite naturelle est d'ajuster les sommets pour que le
+  maillage passe *au milieu* de la surface plutôt qu'en dessous.
+- **Les poches profondes** (DT-036) : le Hausdorff de l'ogre (27 ‰ à 3000 quads) ne vient pas
+  de ses doigts mais de deux petites poches derrière les yeux, que le maillage referme.
+- **Limites de la borne** (DT-038) : pas de plafond sur la part du budget que prennent les
+  parties fines ; l'épaisseur n'est pas montrée dans Rerun ; les notes ne la comptent pas.
+
 ---
 
 ## 4. Jalons
@@ -1325,7 +1425,7 @@ chantiers sont numérotés à part et partent du backlog.
 | Chantier | Contenu | Ce qu'on peut vérifier à la fin |
 |---|---|---|
 | Q1 | Modèles en plusieurs pièces (DT-032) et pièces sans singularité ni bord (DT-003) | **Fait.** Chaque pièce maillée pour elle-même ; un anneau passe par la chaîne principale |
-| Q2 | Parties plus minces qu'un quad : doigts, oreilles (DT-018). Garder au moins leur volume | Fidélité sur les personnages ; les mains et les oreilles de l'ogre existent encore à bas budget |
+| Q2 | Parties plus minces qu'un quad : doigts, oreilles (DT-018). Garder au moins leur volume | **Fait pour les doigts, en attente de revue.** Assez de quads autour de chaque partie fine (`quads_around`) ; l'écart sur les parties fines de l'ogre passe de 30 à 9 % d'une arête à 3000 quads. Restent les feuilles minces et l'ajustement du volume (DT-018, DT-037) |
 | Q3 | Alignement : champ de croix sur les surfaces bruitées, échelles locales, réglage des préréglages (DT-021, DT-025, DT-013) | Écart d'alignement avec Quad Remesher réduit |
 | Q4 | Structure globale : simplification du T-mesh, bandes étroites (DT-020, DT-007, DT-005) | Moins de patchs dans le complexe de base |
 
@@ -1413,6 +1513,7 @@ pub struct RemeshConfig {
     pub singularity_tolerance: f64,  // ce qu'une annulation a le droit de coûter (M3)
     pub crease_angle: Option<f64>,   // arêtes vives : None, ou seuil dièdre en degrés
     pub adaptivity: f64,             // taille des quads selon la forme : 0 unique, jusqu'à 1 (M1 bis)
+    pub quads_around: f64,           // quads au moins autour d'une partie fine ; 0 : sans objet (Q2)
     pub density_contrast: f64,       // densité peinte : rapport entre un poids de 1 et un poids de 0
     pub seed: u64,
 }
@@ -1430,9 +1531,9 @@ demain les courbes guides).
 
 | Préréglage | Ce qu'il privilégie | Réglages actuels |
 |---|---|---|
-| `organic` | fidélité à la sculpture | alignement 0,05 ; annulation jusqu'à 2 arêtes de quad ; adaptivité 0,5 |
+| `organic` | fidélité à la sculpture | alignement 0,05 ; annulation jusqu'à 2 arêtes de quad ; adaptivité 0,5 ; 6 quads autour des parties fines |
 | `animation` | peu de sommets irréguliers, pour bien se déformer | comme `organic`, annulation jusqu'à 3 arêtes |
-| `hard-surface` | arêtes vives | arêtes de plus de 30° préservées ; alignement 0,02 ; taille unique |
+| `hard-surface` | arêtes vives | arêtes de plus de 30° préservées ; alignement 0,02 ; taille unique ; épaisseur non regardée |
 
 Ces valeurs sont un point de départ, à régler sur le corpus. `hard-surface` tourne pour
 l'instant sur la chaîne organique, en attendant la chaîne durci (J9).
@@ -1447,6 +1548,7 @@ l'instant sur la chaîne organique, en attendant la chaîne durci (J9).
 - `method` ajouté : le durci aura sa propre chaîne.
 - `adaptivity` et `density_contrast` ajoutés au jalon 8 avec la densité ; les fichiers
   enregistrés avant restent lisibles.
+- `quads_around` ajouté au chantier Q2 pour les parties fines.
 
 ### En vue de la bibliothèque C (J10)
 

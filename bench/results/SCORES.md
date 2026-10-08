@@ -35,7 +35,7 @@ Over blob, rock, creature, cage, suzanne, ogre, spot, bob, blub, pig, jerry, ros
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **71** | 92 | 59 | 66 | 61 | 60 | 47 | 89 | 84 |
+| quad-layout-adaptive | **70** | 92 | 59 | 64 | 65 | 50 | 43 | 88 | 79 |
 | quad-layout | **68** | 85 | 56 | 66 | 57 | 62 | 47 | 88 | 84 |
 | quadremesher | **64** | 85 | 69 | 60 | 75 | 59 | 40 | 8 | 39 |
 | integer-grid | **53** | 62 | 53 | 54 | 39 | 57 | 41 | 54 | 62 |
@@ -49,8 +49,8 @@ Over part, cube, lblock, cylinder.
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **94** | 100 | 85 | 92 | 98 | 95 | 93 | 93 | 100 |
-| quad-layout | **93** | 100 | 84 | 94 | 92 | 95 | 97 | 95 | 97 |
+| quad-layout-adaptive | **94** | 100 | 85 | 92 | 98 | 95 | 93 | 93 | 98 |
+| quad-layout | **93** | 100 | 84 | 94 | 92 | 95 | 97 | 95 | 98 |
 | quadremesher | **91** | 100 | 85 | 89 | 98 | 95 | 86 | 74 | 75 |
 | quadremesher-uniform | **91** | 100 | 85 | 89 | 98 | 95 | 87 | 68 | 75 |
 | quadriflow | **89** | 100 | 79 | 88 | 88 | 93 | 82 | 84 | 100 |
@@ -63,8 +63,8 @@ Over sphere, torus.
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **93** | 100 | 99 | 82 | 96 | 100 | 50 | 96 | 98 |
-| quad-layout | **93** | 100 | 99 | 82 | 96 | 100 | 50 | 96 | 89 |
+| quad-layout-adaptive | **93** | 100 | 99 | 82 | 96 | 100 | 50 | 96 | 95 |
+| quad-layout | **93** | 100 | 99 | 82 | 96 | 100 | 50 | 96 | 95 |
 | quadremesher | **89** | 100 | 97 | 79 | 95 | 99 | 62 | 67 | 63 |
 | quadremesher-uniform | **89** | 100 | 97 | 79 | 95 | 99 | 62 | 67 | 72 |
 | integer-grid | **88** | 100 | 97 | 73 | 96 | 100 | 50 | 69 | 97 |
@@ -78,7 +78,7 @@ Over terrain, mahaveer, marine.
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
 | quad-layout | **30** | 33 | 24 | 24 | 46 | 22 | 36 | 31 | 37 |
-| quad-layout-adaptive | **29** | 33 | 25 | 23 | 40 | 23 | 41 | 32 | 39 |
+| quad-layout-adaptive | **29** | 33 | 24 | 23 | 44 | 21 | 36 | 32 | 30 |
 
 ### Model by model, 1000 quads
 
@@ -86,8 +86,8 @@ Over terrain, mahaveer, marine.
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **82** | 100 | 79 | 72 | 75 | 84 | 20 | 99 | 89 |
-| quad-layout | **81** | 100 | 77 | 68 | 72 | 84 | 35 | 90 | 91 |
+| quad-layout-adaptive | **83** | 100 | 80 | 71 | 83 | 84 | 20 | 96 | 88 |
+| quad-layout | **81** | 100 | 77 | 68 | 72 | 84 | 35 | 90 | 85 |
 | quadremesher | **76** | 100 | 85 | 66 | 85 | 87 | 62 | 0 | 36 |
 | quadremesher-uniform | **76** | 100 | 78 | 68 | 62 | 79 | 51 | 51 | 37 |
 | integer-grid | **69** | 100 | 66 | 52 | 57 | 82 | 31 | 47 | 68 |
@@ -98,8 +98,8 @@ Over terrain, mahaveer, marine.
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **71** | 100 | 26 | 76 | 82 | 82 | 0 | 92 | 94 |
-| quad-layout | **71** | 100 | 25 | 72 | 81 | 82 | 22 | 91 | 98 |
+| quad-layout-adaptive | **71** | 100 | 25 | 76 | 82 | 82 | 0 | 92 | 94 |
+| quad-layout | **71** | 100 | 25 | 72 | 81 | 82 | 22 | 91 | 97 |
 | quadriflow | **65** | 100 | 0 | 69 | 81 | 100 | 1 | 79 | 97 |
 | integer-grid | **64** | 100 | 28 | 53 | 79 | 80 | 0 | 59 | 68 |
 | instant-meshes | **63** | 100 | 0 | 70 | 79 | 67 | 6 | 86 | 100 |
@@ -110,9 +110,9 @@ Over terrain, mahaveer, marine.
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **84** | 100 | 75 | 73 | 90 | 68 | 65 | 100 | 87 |
+| quad-layout-adaptive | **84** | 100 | 75 | 73 | 90 | 68 | 65 | 100 | 91 |
 | quadremesher-uniform | **80** | 100 | 79 | 65 | 87 | 67 | 63 | 71 | 47 |
-| quad-layout | **80** | 100 | 64 | 76 | 84 | 81 | 20 | 86 | 87 |
+| quad-layout | **80** | 100 | 64 | 76 | 84 | 81 | 20 | 86 | 80 |
 | quadremesher | **76** | 100 | 79 | 68 | 93 | 72 | 51 | 17 | 39 |
 | instant-meshes | **70** | 100 | 47 | 69 | 62 | 57 | 17 | 94 | 100 |
 | integer-grid | **49** | 0 | 64 | 64 | 74 | 74 | 28 | 68 | 69 |
@@ -122,7 +122,7 @@ Over terrain, mahaveer, marine.
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **86** | 100 | 86 | 75 | 70 | 84 | 79 | 100 | 92 |
+| quad-layout-adaptive | **86** | 100 | 86 | 75 | 70 | 84 | 79 | 100 | 91 |
 | integer-grid | **83** | 100 | 86 | 75 | 46 | 92 | 90 | 88 | 73 |
 | quad-layout | **81** | 100 | 82 | 77 | 41 | 84 | 74 | 100 | 100 |
 | quadremesher | **80** | 100 | 88 | 78 | 86 | 91 | 77 | 0 | 60 |
@@ -134,8 +134,8 @@ Over terrain, mahaveer, marine.
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **75** | 100 | 54 | 74 | 74 | 52 | 35 | 98 | 97 |
-| quad-layout | **73** | 100 | 50 | 76 | 62 | 56 | 40 | 99 | 96 |
+| quad-layout-adaptive | **75** | 100 | 55 | 72 | 76 | 52 | 44 | 98 | 84 |
+| quad-layout | **73** | 100 | 50 | 76 | 62 | 56 | 40 | 99 | 100 |
 | quadremesher-uniform | **65** | 100 | 57 | 57 | 65 | 26 | 13 | 69 | 68 |
 | quadremesher | **65** | 100 | 62 | 56 | 79 | 62 | 14 | 0 | 63 |
 | integer-grid | **37** | 0 | 47 | 54 | 26 | 48 | 25 | 90 | 65 |
@@ -146,8 +146,8 @@ Over terrain, mahaveer, marine.
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout | **70** | 100 | 53 | 65 | 43 | 62 | 44 | 99 | 68 |
-| quad-layout-adaptive | **70** | 100 | 56 | 62 | 37 | 64 | 57 | 98 | 78 |
+| quad-layout | **70** | 100 | 53 | 65 | 43 | 62 | 44 | 99 | 70 |
+| quad-layout-adaptive | **61** | 100 | 51 | 55 | 44 | 2 | 45 | 85 | 60 |
 | quadremesher | **56** | 100 | 65 | 53 | 44 | 18 | 24 | 0 | 28 |
 | integer-grid | **52** | 100 | 48 | 45 | 22 | 49 | 29 | 13 | 62 |
 | instant-meshes | **39** | 80 | 16 | 52 | 0 | 0 | 8 | 73 | 75 |
@@ -158,8 +158,8 @@ Over terrain, mahaveer, marine.
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **75** | 100 | 64 | 62 | 80 | 42 | 32 | 99 | 88 |
-| quad-layout | **72** | 100 | 58 | 64 | 75 | 43 | 22 | 96 | 88 |
+| quad-layout-adaptive | **73** | 100 | 66 | 65 | 68 | 39 | 27 | 96 | 77 |
+| quad-layout | **72** | 100 | 58 | 64 | 75 | 43 | 22 | 96 | 76 |
 | quadremesher | **67** | 100 | 72 | 59 | 83 | 53 | 28 | 0 | 30 |
 | quadremesher-uniform | **66** | 100 | 68 | 55 | 69 | 23 | 29 | 53 | 36 |
 | quadriflow | **61** | 100 | 19 | 62 | 59 | 47 | 6 | 89 | 91 |
@@ -170,8 +170,8 @@ Over terrain, mahaveer, marine.
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **88** | 100 | 84 | 78 | 89 | 79 | 81 | 89 | 91 |
-| quad-layout | **87** | 100 | 81 | 78 | 84 | 82 | 76 | 97 | 89 |
+| quad-layout-adaptive | **88** | 100 | 84 | 78 | 89 | 79 | 81 | 89 | 90 |
+| quad-layout | **87** | 100 | 81 | 78 | 84 | 82 | 76 | 97 | 94 |
 | quadremesher | **85** | 100 | 86 | 73 | 85 | 78 | 58 | 82 | 38 |
 | quadremesher-uniform | **82** | 100 | 84 | 69 | 85 | 76 | 74 | 57 | 32 |
 | integer-grid | **76** | 100 | 81 | 73 | 53 | 79 | 79 | 44 | 75 |
@@ -182,8 +182,8 @@ Over terrain, mahaveer, marine.
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **78** | 100 | 62 | 75 | 61 | 68 | 59 | 99 | 93 |
-| quad-layout | **77** | 100 | 62 | 76 | 57 | 67 | 67 | 93 | 92 |
+| quad-layout | **77** | 100 | 62 | 76 | 57 | 67 | 67 | 93 | 82 |
+| quad-layout-adaptive | **74** | 100 | 59 | 72 | 61 | 58 | 47 | 96 | 83 |
 | quadremesher | **72** | 100 | 78 | 66 | 84 | 68 | 49 | 0 | 35 |
 | quadremesher-uniform | **67** | 100 | 69 | 58 | 41 | 50 | 51 | 57 | 38 |
 | instant-meshes | **45** | 60 | 24 | 62 | 26 | 26 | 2 | 94 | 95 |
@@ -194,9 +194,9 @@ Over terrain, mahaveer, marine.
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **67** | 100 | 51 | 71 | 33 | 51 | 36 | 90 | 74 |
+| quad-layout-adaptive | **69** | 100 | 60 | 65 | 60 | 17 | 40 | 96 | 71 |
 | quadremesher | **66** | 100 | 67 | 59 | 77 | 56 | 42 | 0 | 31 |
-| quad-layout | **45** | 0 | 48 | 70 | 53 | 48 | 46 | 96 | 79 |
+| quad-layout | **45** | 0 | 48 | 70 | 53 | 48 | 46 | 96 | 83 |
 | integer-grid | **32** | 0 | 44 | 58 | 23 | 35 | — | 61 | 66 |
 | quadremesher-uniform | **24** | 0 | 54 | 53 | 0 | 0 | — | 41 | 33 |
 | instant-meshes | **23** | 0 | 28 | 58 | 0 | 18 | 5 | 64 | 97 |
@@ -206,8 +206,8 @@ Over terrain, mahaveer, marine.
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout | **62** | 100 | 34 | 62 | 28 | 49 | 40 | 100 | 94 |
-| quad-layout-adaptive | **61** | 100 | 32 | 63 | 32 | 49 | 28 | 96 | 77 |
+| quad-layout | **62** | 100 | 34 | 62 | 28 | 49 | 40 | 100 | 98 |
+| quad-layout-adaptive | **59** | 100 | 32 | 56 | 49 | 17 | 12 | 98 | 83 |
 | integer-grid | **46** | 100 | 30 | 46 | 0 | 37 | 28 | 32 | 14 |
 | quadriflow | **40** | 80 | 18 | 49 | 0 | 23 | 20 | 60 | 100 |
 | quadremesher | **35** | 0 | 46 | 46 | 85 | 41 | — | 0 | 54 |
@@ -221,17 +221,17 @@ Over terrain, mahaveer, marine.
 | quadremesher | **25** | 0 | 58 | 55 | 0 | 36 | — | 0 | 36 |
 | quadremesher-uniform | **10** | 0 | 36 | 16 | 0 | 0 | — | 0 | 46 |
 | integer-grid | **9** | 0 | 28 | 18 | 0 | 0 | — | 0 | 51 |
-| quad-layout-adaptive | **5** | 0 | 24 | 0 | 0 | 0 | — | 0 | 51 |
 | quadriflow | **5** | 0 | 18 | 7 | 0 | 0 | 8 | 0 | 80 |
 | quad-layout | **5** | 0 | 23 | 0 | 0 | 0 | — | 0 | 48 |
+| quad-layout-adaptive | **5** | 0 | 22 | 0 | 0 | 0 | — | 0 | 42 |
 | instant-meshes | **4** | 0 | 17 | 0 | 0 | 0 | 6 | 0 | 88 |
 
 #### bridge (organic)
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout | **80** | 100 | 69 | 80 | 65 | 64 | 72 | 99 | 67 |
-| quad-layout-adaptive | **79** | 100 | 71 | 76 | 65 | 63 | 69 | 93 | 79 |
+| quad-layout-adaptive | **81** | 100 | 70 | 73 | 78 | 64 | 55 | 97 | 74 |
+| quad-layout | **80** | 100 | 69 | 80 | 65 | 64 | 72 | 99 | 81 |
 | integer-grid | **73** | 100 | 64 | 62 | 55 | 70 | 81 | 65 | 57 |
 | quadremesher | **70** | 100 | 71 | 60 | 89 | 64 | 36 | 0 | 37 |
 | quadremesher-uniform | **44** | 0 | 60 | 51 | 73 | 42 | — | 74 | 40 |
@@ -242,9 +242,9 @@ Over terrain, mahaveer, marine.
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **86** | 100 | 52 | 89 | 97 | 84 | 93 | 93 | 100 |
+| quad-layout-adaptive | **86** | 100 | 52 | 89 | 97 | 84 | 93 | 93 | 97 |
 | quadremesher | **82** | 100 | 51 | 78 | 97 | 82 | 64 | 95 | 73 |
-| quad-layout | **80** | 100 | 45 | 90 | 70 | 84 | 91 | 90 | 90 |
+| quad-layout | **80** | 100 | 45 | 90 | 70 | 84 | 91 | 90 | 93 |
 | quadremesher-uniform | **80** | 100 | 51 | 77 | 95 | 83 | 68 | 70 | 76 |
 | quadriflow | **77** | 100 | 40 | 81 | 84 | 77 | 76 | 77 | 100 |
 | integer-grid | **74** | 100 | 43 | 76 | 60 | 83 | 60 | 84 | 43 |
@@ -257,7 +257,7 @@ Over terrain, mahaveer, marine.
 | quadremesher | **99** | 100 | 100 | 100 | 100 | 100 | 99 | 94 | 79 |
 | quadremesher-uniform | **99** | 100 | 100 | 100 | 100 | 100 | 99 | 94 | 73 |
 | quad-layout | **99** | 100 | 100 | 100 | 100 | 100 | 99 | 94 | 100 |
-| quad-layout-adaptive | **99** | 100 | 99 | 98 | 100 | 100 | 99 | 94 | 100 |
+| quad-layout-adaptive | **99** | 100 | 99 | 98 | 100 | 100 | 99 | 94 | 96 |
 | quadriflow | **99** | 100 | 99 | 100 | 95 | 100 | 99 | 94 | 100 |
 | instant-meshes | **91** | 100 | 94 | 90 | 100 | 91 | 81 | 60 | 100 |
 | integer-grid | **84** | 100 | 93 | 87 | 48 | 100 | 0 | 100 | 78 |
@@ -290,8 +290,8 @@ Over terrain, mahaveer, marine.
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **88** | 100 | — | 77 | 97 | 100 | 0 | 96 | 96 |
-| quad-layout | **88** | 100 | — | 77 | 97 | 100 | 0 | 96 | 84 |
+| quad-layout-adaptive | **88** | 100 | — | 77 | 97 | 100 | 0 | 96 | 90 |
+| quad-layout | **88** | 100 | — | 77 | 97 | 100 | 0 | 96 | 100 |
 | quadriflow | **87** | 100 | — | 77 | 97 | 100 | 1 | 80 | 100 |
 | quadremesher | **84** | 100 | — | 70 | 96 | 98 | 24 | 66 | 62 |
 | quadremesher-uniform | **84** | 100 | — | 70 | 96 | 98 | 24 | 66 | 68 |
@@ -302,8 +302,8 @@ Over terrain, mahaveer, marine.
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **97** | 100 | 99 | 88 | 96 | 100 | 100 | 97 | 100 |
-| quad-layout | **97** | 100 | 99 | 88 | 96 | 100 | 100 | 97 | 95 |
+| quad-layout-adaptive | **97** | 100 | 99 | 88 | 96 | 100 | 100 | 97 | 99 |
+| quad-layout | **97** | 100 | 99 | 88 | 96 | 100 | 100 | 97 | 89 |
 | integer-grid | **94** | 100 | 97 | 87 | 96 | 100 | 100 | 68 | 100 |
 | quadremesher | **94** | 100 | 97 | 88 | 95 | 100 | 100 | 68 | 64 |
 | quadremesher-uniform | **94** | 100 | 97 | 88 | 95 | 100 | 100 | 68 | 77 |
@@ -314,22 +314,22 @@ Over terrain, mahaveer, marine.
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout | **65** | 100 | 20 | 72 | 51 | 65 | 36 | 93 | 48 |
-| quad-layout-adaptive | **63** | 100 | 21 | 70 | 34 | 68 | 41 | 96 | 57 |
+| quad-layout | **65** | 100 | 20 | 72 | 51 | 65 | 36 | 93 | 52 |
+| quad-layout-adaptive | **64** | 100 | 23 | 70 | 45 | 62 | 36 | 97 | 52 |
 
 #### mahaveer (extra)
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **6** | 0 | 29 | 0 | 0 | 0 | — | 0 | 50 |
-| quad-layout | **6** | 0 | 28 | 0 | 0 | 0 | — | 0 | 53 |
+| quad-layout | **6** | 0 | 28 | 0 | 0 | 0 | — | 0 | 49 |
+| quad-layout-adaptive | **5** | 0 | 26 | 0 | 0 | 0 | — | 0 | 38 |
 
 #### marine (extra)
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout | **17** | 0 | — | 0 | 87 | 0 | — | 0 | 11 |
-| quad-layout-adaptive | **17** | 0 | — | 0 | 87 | 0 | — | 0 | 9 |
+| quad-layout-adaptive | **17** | 0 | — | 0 | 87 | 0 | — | 0 | 1 |
+| quad-layout | **17** | 0 | — | 0 | 87 | 0 | — | 0 | 9 |
 
 ## 3000 quads
 
@@ -339,13 +339,13 @@ Over blob, rock, creature, cage, suzanne, ogre, spot, bob, blub, pig, jerry, ros
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **76** | 92 | 61 | 70 | 75 | 77 | 44 | 91 | 77 |
-| quad-layout | **75** | 92 | 58 | 69 | 73 | 78 | 38 | 93 | 76 |
+| quad-layout-adaptive | **76** | 92 | 61 | 70 | 77 | 73 | 39 | 91 | 68 |
+| quad-layout | **75** | 92 | 58 | 69 | 73 | 78 | 38 | 93 | 75 |
 | quadremesher-uniform | **64** | 77 | 61 | 60 | 72 | 65 | 28 | 53 | 43 |
 | quadremesher | **63** | 62 | 68 | 64 | 82 | 79 | 37 | 23 | 41 |
-| integer-grid | **62** | 69 | 56 | 60 | 64 | 76 | 50 | 50 | 51 |
-| instant-meshes | **54** | 72 | 27 | 65 | 51 | 43 | 7 | 84 | 93 |
-| quadriflow | **46** | 55 | 25 | 52 | 48 | 75 | 8 | 72 | 82 |
+| integer-grid | **62** | 69 | 56 | 60 | 64 | 76 | 50 | 50 | 50 |
+| instant-meshes | **54** | 72 | 27 | 65 | 51 | 43 | 7 | 84 | 92 |
+| quadriflow | **46** | 55 | 25 | 52 | 48 | 75 | 8 | 72 | 83 |
 
 ### Mechanical models: average
 
@@ -353,13 +353,13 @@ Over part, cube, lblock, cylinder.
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **95** | 100 | 85 | 93 | 99 | 98 | 94 | 97 | 92 |
-| quad-layout | **95** | 100 | 84 | 94 | 99 | 98 | 93 | 96 | 92 |
+| quad-layout-adaptive | **95** | 100 | 85 | 93 | 99 | 98 | 94 | 97 | 83 |
+| quad-layout | **95** | 100 | 84 | 94 | 99 | 98 | 93 | 96 | 88 |
 | quadremesher | **92** | 100 | 85 | 92 | 99 | 98 | 91 | 72 | 75 |
 | quadremesher-uniform | **92** | 100 | 85 | 92 | 99 | 98 | 91 | 72 | 75 |
-| integer-grid | **91** | 100 | 84 | 90 | 93 | 98 | 83 | 79 | 46 |
-| quadriflow | **88** | 90 | 79 | 90 | 89 | 98 | 85 | 87 | 91 |
-| instant-meshes | **85** | 100 | 75 | 83 | 93 | 74 | 54 | 86 | 98 |
+| integer-grid | **91** | 100 | 84 | 89 | 93 | 98 | 83 | 84 | 47 |
+| quadriflow | **88** | 90 | 79 | 90 | 89 | 98 | 85 | 87 | 88 |
+| instant-meshes | **85** | 100 | 75 | 83 | 93 | 74 | 54 | 86 | 100 |
 
 ### Calibration models: average
 
@@ -367,13 +367,13 @@ Over sphere, torus.
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout | **96** | 100 | 97 | 87 | 98 | 96 | 99 | 97 | 99 |
-| quad-layout-adaptive | **96** | 100 | 97 | 87 | 98 | 96 | 99 | 97 | 98 |
-| integer-grid | **93** | 100 | 97 | 75 | 98 | 96 | 99 | 81 | 84 |
+| quad-layout | **96** | 100 | 97 | 87 | 98 | 96 | 99 | 97 | 91 |
+| quad-layout-adaptive | **96** | 100 | 97 | 87 | 98 | 96 | 99 | 97 | 90 |
+| integer-grid | **93** | 100 | 97 | 75 | 98 | 96 | 99 | 81 | 85 |
 | quadremesher | **84** | 100 | 69 | 72 | 97 | 98 | 27 | 71 | 66 |
 | quadremesher-uniform | **84** | 100 | 69 | 72 | 97 | 98 | 27 | 71 | 72 |
 | instant-meshes | **79** | 100 | 37 | 76 | 98 | 65 | 0 | 89 | 100 |
-| quadriflow | **72** | 60 | 55 | 63 | 98 | 95 | 6 | 91 | 89 |
+| quadriflow | **72** | 60 | 55 | 63 | 98 | 95 | 6 | 91 | 87 |
 
 ### Extra models: average
 
@@ -381,15 +381,13 @@ Over terrain, mahaveer, marine.
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quadriflow | **61** | 100 | 10 | 68 | 52 | 59 | 70 | 62 | 26 |
-| integer-grid | **57** | 100 | 17 | 53 | 46 | 78 | 60 | 34 | 38 |
-| quadremesher-uniform | **55** | 100 | 17 | 59 | 50 | 36 | 36 | 46 | 27 |
-| instant-meshes | **40** | 100 | 6 | 59 | 0 | 34 | 31 | 0 | 49 |
-| quad-layout-adaptive | **38** | 33 | 34 | 23 | 56 | 26 | 56 | 66 | 35 |
-| quad-layout | **38** | 33 | 34 | 23 | 54 | 27 | 60 | 65 | 36 |
-| quadremesher | **29** | 0 | 19 | 52 | 75 | 51 | — | 0 | 25 |
-
-Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadremesher (1 of 3), quadremesher-uniform (1 of 3), quadriflow (1 of 3).
+| integer-grid | **41** | 67 | 43 | 58 | 42 | 74 | 71 | 17 | 28 |
+| quad-layout | **38** | 33 | 34 | 23 | 54 | 27 | 60 | 65 | 34 |
+| quad-layout-adaptive | **37** | 33 | 33 | 22 | 56 | 22 | 49 | 64 | 26 |
+| quadremesher-uniform | **35** | 33 | 35 | 37 | 65 | 12 | 36 | 15 | 34 |
+| quadremesher | **33** | 0 | 38 | 47 | 81 | 45 | — | 0 | 33 |
+| instant-meshes | **26** | 33 | 28 | 37 | 28 | 11 | 22 | 0 | 55 |
+| quadriflow | **20** | 33 | 10 | 68 | 52 | 59 | 70 | 62 | 74 |
 
 ### Model by model, 3000 quads
 
@@ -397,23 +395,23 @@ Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadreme
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **86** | 100 | 78 | 72 | 93 | 95 | 32 | 99 | 84 |
-| quad-layout | **85** | 100 | 76 | 69 | 91 | 95 | 22 | 97 | 74 |
+| quad-layout-adaptive | **86** | 100 | 78 | 72 | 93 | 95 | 32 | 99 | 78 |
+| quad-layout | **85** | 100 | 76 | 69 | 91 | 95 | 22 | 97 | 78 |
 | quadremesher-uniform | **83** | 100 | 80 | 73 | 85 | 94 | 51 | 67 | 39 |
 | quadremesher | **83** | 100 | 83 | 71 | 92 | 95 | 46 | 51 | 32 |
-| integer-grid | **77** | 100 | 72 | 60 | 85 | 93 | 62 | 34 | 65 |
+| integer-grid | **77** | 100 | 72 | 60 | 85 | 93 | 62 | 34 | 63 |
 | instant-meshes | **68** | 100 | 30 | 71 | 80 | 56 | 1 | 88 | 87 |
-| quadriflow | **57** | 60 | 22 | 56 | 83 | 89 | 3 | 71 | 84 |
+| quadriflow | **57** | 60 | 22 | 56 | 83 | 89 | 3 | 71 | 76 |
 
 #### rock (organic)
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **73** | 100 | 30 | 75 | 89 | 81 | 0 | 98 | 81 |
-| quad-layout | **73** | 100 | 27 | 74 | 89 | 86 | 0 | 96 | 85 |
-| quadriflow | **68** | 100 | 0 | 71 | 89 | 100 | 6 | 91 | 78 |
-| integer-grid | **67** | 100 | 30 | 56 | 89 | 84 | 0 | 58 | 58 |
-| instant-meshes | **65** | 100 | 0 | 74 | 89 | 71 | 0 | 86 | 100 |
+| quad-layout-adaptive | **73** | 100 | 30 | 75 | 89 | 81 | 0 | 98 | 77 |
+| quad-layout | **73** | 100 | 27 | 74 | 89 | 86 | 0 | 96 | 84 |
+| quadriflow | **68** | 100 | 0 | 71 | 89 | 100 | 6 | 91 | 92 |
+| integer-grid | **67** | 100 | 30 | 56 | 89 | 84 | 0 | 58 | 53 |
+| instant-meshes | **65** | 100 | 0 | 74 | 89 | 71 | 0 | 86 | 99 |
 | quadremesher | **63** | 100 | 37 | 50 | 90 | 70 | 0 | 28 | 26 |
 | quadremesher-uniform | **62** | 100 | 35 | 47 | 88 | 63 | 0 | 37 | 31 |
 
@@ -422,106 +420,106 @@ Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadreme
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
 | quadremesher | **86** | 100 | 77 | 69 | 95 | 88 | 50 | 92 | 41 |
-| quad-layout | **85** | 100 | 69 | 72 | 95 | 89 | 57 | 95 | 80 |
-| quad-layout-adaptive | **84** | 100 | 74 | 75 | 95 | 89 | 4 | 94 | 88 |
+| quad-layout | **85** | 100 | 69 | 72 | 95 | 89 | 57 | 95 | 79 |
+| quad-layout-adaptive | **84** | 100 | 74 | 75 | 95 | 89 | 4 | 94 | 78 |
 | quadremesher-uniform | **82** | 100 | 76 | 67 | 95 | 86 | 52 | 63 | 46 |
-| integer-grid | **78** | 100 | 69 | 59 | 94 | 87 | 65 | 46 | 59 |
+| integer-grid | **78** | 100 | 69 | 59 | 94 | 87 | 65 | 46 | 56 |
 | instant-meshes | **76** | 100 | 46 | 77 | 93 | 66 | 7 | 91 | 100 |
-| quadriflow | **71** | 100 | 43 | 66 | 84 | 94 | 0 | 56 | 88 |
+| quadriflow | **71** | 100 | 43 | 66 | 84 | 94 | 0 | 56 | 87 |
 
 #### cage (organic)
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **90** | 100 | 90 | 84 | 72 | 95 | 90 | 96 | 87 |
-| quad-layout | **89** | 100 | 86 | 85 | 73 | 95 | 77 | 95 | 90 |
+| quad-layout-adaptive | **90** | 100 | 90 | 84 | 72 | 95 | 90 | 96 | 73 |
+| quad-layout | **89** | 100 | 86 | 85 | 73 | 95 | 77 | 95 | 84 |
 | quadremesher-uniform | **87** | 100 | 89 | 79 | 81 | 96 | 64 | 71 | 67 |
-| integer-grid | **86** | 100 | 85 | 80 | 67 | 97 | 85 | 83 | 53 |
+| integer-grid | **86** | 100 | 85 | 80 | 67 | 97 | 85 | 83 | 52 |
 | quadremesher | **82** | 100 | 91 | 80 | 89 | 98 | 81 | 0 | 65 |
-| quadriflow | **79** | 100 | 64 | 71 | 77 | 88 | 33 | 85 | 81 |
+| quadriflow | **79** | 100 | 64 | 71 | 77 | 88 | 33 | 85 | 89 |
 | instant-meshes | **73** | 100 | 65 | 68 | 71 | 43 | 21 | 93 | 100 |
 
 #### suzanne (organic)
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **80** | 100 | 56 | 78 | 82 | 81 | 36 | 95 | 84 |
-| quad-layout | **79** | 100 | 54 | 79 | 82 | 82 | 17 | 97 | 76 |
+| quad-layout-adaptive | **80** | 100 | 56 | 78 | 82 | 81 | 33 | 98 | 73 |
+| quad-layout | **79** | 100 | 54 | 79 | 82 | 82 | 17 | 97 | 83 |
 | integer-grid | **74** | 100 | 54 | 64 | 77 | 81 | 33 | 68 | 49 |
 | quadremesher-uniform | **71** | 100 | 54 | 61 | 81 | 73 | 30 | 50 | 72 |
 | instant-meshes | **46** | 40 | 24 | 65 | 60 | 31 | 2 | 91 | 100 |
 | quadremesher | **45** | 0 | 61 | 61 | 86 | 81 | 42 | 0 | 70 |
-| quadriflow | **35** | 0 | 32 | 57 | 15 | 82 | 5 | 96 | 72 |
+| quadriflow | **35** | 0 | 32 | 57 | 15 | 82 | 5 | 96 | 71 |
 
 #### ogre (organic)
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **71** | 100 | 45 | 70 | 49 | 73 | 29 | 98 | 66 |
-| quad-layout | **69** | 100 | 46 | 68 | 45 | 78 | 11 | 92 | 62 |
+| quad-layout | **69** | 100 | 46 | 68 | 45 | 78 | 11 | 92 | 65 |
+| quad-layout-adaptive | **68** | 100 | 48 | 69 | 45 | 51 | 18 | 97 | 55 |
 | quadremesher | **65** | 100 | 63 | 54 | 88 | 50 | 16 | 0 | 28 |
-| instant-meshes | **45** | 80 | 17 | 63 | 8 | 30 | 3 | 83 | 79 |
-| quadriflow | **33** | 20 | 14 | 40 | 27 | 67 | 3 | 83 | 68 |
-| integer-grid | **32** | 0 | 44 | 50 | 25 | 70 | — | 29 | 46 |
+| instant-meshes | **45** | 80 | 17 | 63 | 8 | 30 | 3 | 83 | 76 |
+| quadriflow | **33** | 20 | 14 | 40 | 27 | 67 | 3 | 83 | 67 |
+| integer-grid | **32** | 0 | 44 | 50 | 25 | 70 | — | 29 | 48 |
 | quadremesher-uniform | **24** | 0 | 52 | 43 | 21 | 9 | 17 | 22 | 31 |
 
 #### spot (organic)
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **81** | 100 | 65 | 72 | 85 | 79 | 44 | 97 | 69 |
-| quad-layout | **81** | 100 | 61 | 72 | 87 | 80 | 43 | 94 | 69 |
+| quad-layout-adaptive | **81** | 100 | 65 | 72 | 85 | 79 | 44 | 97 | 63 |
+| quad-layout | **81** | 100 | 61 | 72 | 87 | 80 | 43 | 94 | 75 |
 | quadremesher | **76** | 100 | 72 | 68 | 87 | 79 | 30 | 36 | 28 |
 | quadremesher-uniform | **74** | 100 | 66 | 65 | 79 | 71 | 21 | 58 | 34 |
 | integer-grid | **73** | 100 | 59 | 55 | 85 | 77 | 33 | 58 | 50 |
-| quadriflow | **66** | 100 | 19 | 64 | 65 | 80 | 2 | 95 | 84 |
-| instant-meshes | **64** | 100 | 24 | 72 | 61 | 52 | 2 | 94 | 93 |
+| quadriflow | **66** | 100 | 19 | 64 | 65 | 80 | 2 | 95 | 82 |
+| instant-meshes | **64** | 100 | 24 | 72 | 61 | 52 | 2 | 94 | 95 |
 
 #### bob (organic)
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **92** | 100 | 84 | 84 | 96 | 93 | 92 | 93 | 86 |
-| quad-layout | **90** | 100 | 82 | 84 | 95 | 93 | 58 | 94 | 87 |
+| quad-layout-adaptive | **92** | 100 | 84 | 84 | 96 | 93 | 92 | 93 | 67 |
+| quad-layout | **90** | 100 | 82 | 84 | 95 | 93 | 58 | 94 | 82 |
 | quadremesher | **85** | 100 | 78 | 72 | 96 | 90 | 18 | 89 | 30 |
-| integer-grid | **85** | 100 | 81 | 76 | 93 | 92 | 73 | 52 | 56 |
+| integer-grid | **85** | 100 | 81 | 76 | 93 | 92 | 73 | 52 | 54 |
 | quadremesher-uniform | **80** | 100 | 77 | 70 | 95 | 89 | 5 | 59 | 30 |
-| quadriflow | **69** | 100 | 14 | 68 | 86 | 89 | 1 | 90 | 85 |
-| instant-meshes | **66** | 100 | 8 | 73 | 85 | 57 | 0 | 95 | 93 |
+| quadriflow | **69** | 100 | 14 | 68 | 86 | 89 | 1 | 90 | 83 |
+| instant-meshes | **66** | 100 | 8 | 73 | 85 | 57 | 0 | 95 | 91 |
 
 #### blub (organic)
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **84** | 100 | 68 | 76 | 83 | 85 | 65 | 99 | 71 |
-| quad-layout | **83** | 100 | 65 | 74 | 79 | 88 | 57 | 99 | 82 |
+| quad-layout-adaptive | **83** | 100 | 67 | 76 | 83 | 83 | 55 | 96 | 71 |
+| quad-layout | **83** | 100 | 65 | 74 | 79 | 88 | 57 | 99 | 80 |
 | quadremesher-uniform | **76** | 100 | 69 | 64 | 77 | 86 | 24 | 60 | 39 |
 | quadremesher | **75** | 100 | 77 | 68 | 90 | 88 | 48 | 0 | 35 |
-| instant-meshes | **67** | 100 | 31 | 72 | 69 | 51 | 4 | 95 | 94 |
-| integer-grid | **48** | 0 | 63 | 57 | 71 | 83 | — | 54 | 57 |
-| quadriflow | **45** | 60 | 29 | 46 | 19 | 84 | 4 | 60 | 82 |
+| instant-meshes | **67** | 100 | 31 | 72 | 69 | 51 | 4 | 95 | 95 |
+| integer-grid | **48** | 0 | 63 | 57 | 71 | 83 | — | 54 | 56 |
+| quadriflow | **45** | 60 | 29 | 46 | 19 | 84 | 4 | 60 | 85 |
 
 #### pig (organic)
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **75** | 100 | 60 | 73 | 56 | 76 | 45 | 93 | 64 |
-| quad-layout | **74** | 100 | 53 | 71 | 64 | 77 | 21 | 93 | 75 |
+| quad-layout-adaptive | **78** | 100 | 60 | 74 | 78 | 69 | 39 | 96 | 71 |
+| quad-layout | **74** | 100 | 53 | 71 | 64 | 77 | 21 | 93 | 81 |
 | quadremesher-uniform | **69** | 100 | 58 | 60 | 75 | 66 | 28 | 40 | 32 |
 | quadremesher | **45** | 0 | 68 | 64 | 80 | 79 | 36 | 0 | 35 |
-| integer-grid | **43** | 0 | 53 | 62 | 52 | 73 | — | 61 | 46 |
-| instant-meshes | **29** | 0 | 28 | 66 | 3 | 37 | 3 | 96 | 96 |
+| integer-grid | **43** | 0 | 53 | 62 | 52 | 73 | — | 61 | 45 |
+| instant-meshes | **29** | 0 | 28 | 66 | 3 | 37 | 3 | 96 | 97 |
 | quadriflow | **22** | 0 | 23 | 28 | 11 | 57 | 2 | 57 | 84 |
 
 #### jerry (organic)
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **69** | 100 | 39 | 70 | 55 | 66 | 20 | 95 | 88 |
-| quad-layout | **67** | 100 | 36 | 69 | 37 | 71 | 32 | 100 | 86 |
+| quad-layout | **67** | 100 | 36 | 69 | 37 | 71 | 32 | 100 | 73 |
+| quad-layout-adaptive | **66** | 100 | 40 | 67 | 55 | 47 | 18 | 93 | 78 |
 | quadremesher-uniform | **59** | 100 | 40 | 50 | 70 | 30 | 19 | 43 | 53 |
-| integer-grid | **54** | 100 | 33 | 52 | 11 | 64 | 25 | 49 | 57 |
-| quadriflow | **50** | 80 | 20 | 44 | 22 | 67 | 29 | 84 | 86 |
+| integer-grid | **54** | 100 | 33 | 52 | 11 | 64 | 25 | 49 | 55 |
+| quadriflow | **50** | 80 | 20 | 44 | 22 | 67 | 29 | 84 | 82 |
 | quadremesher | **40** | 0 | 51 | 52 | 87 | 70 | — | 0 | 53 |
 | instant-meshes | **28** | 20 | 18 | 57 | 2 | 10 | 0 | 95 | 100 |
 
@@ -530,21 +528,21 @@ Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadreme
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
 | quadremesher | **27** | 0 | 60 | 55 | 0 | 51 | — | 0 | 45 |
-| quad-layout | **19** | 0 | 35 | 1 | 29 | 0 | — | 68 | 51 |
+| quad-layout | **19** | 0 | 35 | 1 | 29 | 0 | — | 68 | 45 |
 | quadremesher-uniform | **19** | 0 | 37 | 32 | 0 | 0 | — | 59 | 42 |
-| quad-layout-adaptive | **17** | 0 | 37 | 2 | 29 | 0 | — | 37 | 50 |
-| integer-grid | **12** | 0 | 28 | 38 | 0 | 0 | — | 0 | 23 |
-| instant-meshes | **7** | 0 | 15 | 22 | 0 | 0 | 12 | 0 | 85 |
-| quadriflow | **7** | 0 | 18 | 18 | 0 | 0 | 10 | 0 | 79 |
+| quad-layout-adaptive | **17** | 0 | 35 | 0 | 47 | 0 | 9 | 24 | 37 |
+| integer-grid | **12** | 0 | 28 | 38 | 0 | 0 | — | 0 | 22 |
+| instant-meshes | **7** | 0 | 15 | 22 | 0 | 0 | 12 | 0 | 82 |
+| quadriflow | **7** | 0 | 18 | 18 | 0 | 0 | 10 | 0 | 75 |
 
 #### bridge (organic)
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **85** | 100 | 67 | 81 | 87 | 84 | 74 | 95 | 78 |
-| quad-layout | **84** | 100 | 64 | 81 | 86 | 83 | 64 | 94 | 76 |
-| integer-grid | **78** | 100 | 63 | 68 | 86 | 81 | 72 | 58 | 46 |
-| instant-meshes | **66** | 100 | 44 | 69 | 44 | 48 | 35 | 87 | 80 |
+| quad-layout-adaptive | **85** | 100 | 67 | 81 | 87 | 84 | 74 | 95 | 70 |
+| quad-layout | **84** | 100 | 64 | 81 | 86 | 83 | 64 | 94 | 67 |
+| integer-grid | **78** | 100 | 63 | 68 | 86 | 81 | 72 | 58 | 47 |
+| instant-meshes | **66** | 100 | 44 | 69 | 44 | 48 | 35 | 87 | 73 |
 | quadremesher-uniform | **52** | 0 | 65 | 64 | 86 | 77 | — | 63 | 40 |
 | quadremesher | **48** | 0 | 71 | 67 | 88 | 82 | — | 0 | 41 |
 | quadriflow | **0** | 0 | — | — | — | — | — | — | 100 |
@@ -553,25 +551,25 @@ Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadreme
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **88** | 100 | 53 | 89 | 99 | 95 | 90 | 97 | 88 |
-| quad-layout | **87** | 100 | 47 | 93 | 98 | 95 | 97 | 93 | 88 |
-| integer-grid | **86** | 100 | 48 | 87 | 98 | 95 | 97 | 97 | 67 |
+| quad-layout-adaptive | **88** | 100 | 53 | 89 | 99 | 95 | 90 | 97 | 83 |
+| quad-layout | **87** | 100 | 47 | 93 | 98 | 95 | 97 | 93 | 85 |
+| integer-grid | **86** | 100 | 48 | 87 | 98 | 95 | 97 | 97 | 62 |
 | quadremesher | **84** | 100 | 52 | 85 | 98 | 94 | 82 | 75 | 75 |
 | quadremesher-uniform | **84** | 100 | 52 | 85 | 98 | 94 | 82 | 75 | 74 |
-| quadriflow | **77** | 80 | 42 | 87 | 89 | 93 | 79 | 85 | 72 |
-| instant-meshes | **70** | 100 | 38 | 69 | 81 | 33 | 39 | 92 | 92 |
+| quadriflow | **77** | 80 | 42 | 87 | 89 | 93 | 79 | 85 | 74 |
+| instant-meshes | **70** | 100 | 38 | 69 | 81 | 33 | 39 | 92 | 100 |
 
 #### cube (mechanical)
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout | **100** | 100 | 99 | 100 | 100 | 100 | 100 | 99 | 93 |
-| quad-layout-adaptive | **99** | 100 | 98 | 98 | 100 | 100 | 100 | 99 | 95 |
+| quad-layout | **100** | 100 | 99 | 100 | 100 | 100 | 100 | 99 | 85 |
+| quad-layout-adaptive | **99** | 100 | 98 | 98 | 100 | 100 | 100 | 99 | 79 |
 | quadremesher | **99** | 100 | 99 | 100 | 100 | 100 | 100 | 89 | 73 |
 | quadremesher-uniform | **99** | 100 | 99 | 100 | 100 | 100 | 100 | 89 | 73 |
 | quadriflow | **97** | 100 | 99 | 99 | 90 | 100 | 100 | 87 | 100 |
 | instant-meshes | **96** | 100 | 91 | 92 | 100 | 95 | 91 | 96 | 100 |
-| integer-grid | **93** | 100 | 97 | 96 | 78 | 100 | 63 | 99 | 58 |
+| integer-grid | **93** | 100 | 97 | 96 | 78 | 100 | 63 | 99 | 54 |
 
 #### lblock (mechanical)
 
@@ -580,30 +578,30 @@ Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadreme
 | quadremesher | **99** | 100 | 97 | 98 | 100 | 99 | 100 | 96 | 75 |
 | quadremesher-uniform | **99** | 100 | 97 | 98 | 100 | 99 | 100 | 96 | 74 |
 | quad-layout | **99** | 100 | 98 | 100 | 100 | 99 | 100 | 92 | 95 |
-| quad-layout-adaptive | **98** | 100 | 96 | 97 | 100 | 99 | 100 | 96 | 94 |
+| quad-layout-adaptive | **98** | 100 | 96 | 97 | 100 | 99 | 100 | 96 | 93 |
 | integer-grid | **98** | 100 | 97 | 97 | 100 | 99 | 100 | 88 | 1 |
 | instant-meshes | **93** | 100 | 93 | 92 | 100 | 94 | 83 | 71 | 100 |
-| quadriflow | **89** | 80 | 95 | 96 | 79 | 99 | 97 | 90 | 97 |
+| quadriflow | **89** | 80 | 95 | 96 | 79 | 99 | 97 | 90 | 92 |
 
 #### cylinder (mechanical)
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **95** | 100 | 93 | 86 | 98 | 100 | 85 | 95 | 92 |
-| quad-layout | **94** | 100 | 93 | 82 | 98 | 100 | 76 | 98 | 92 |
-| quadriflow | **89** | 100 | 81 | 78 | 96 | 100 | 65 | 87 | 94 |
+| quad-layout-adaptive | **95** | 100 | 93 | 86 | 98 | 100 | 85 | 95 | 79 |
+| quad-layout | **94** | 100 | 93 | 82 | 98 | 100 | 76 | 98 | 89 |
+| quadriflow | **89** | 100 | 81 | 78 | 96 | 100 | 65 | 87 | 86 |
+| integer-grid | **88** | 100 | 93 | 76 | 98 | 98 | 72 | 52 | 71 |
 | quadremesher | **88** | 100 | 93 | 84 | 97 | 100 | 83 | 28 | 76 |
 | quadremesher-uniform | **88** | 100 | 93 | 84 | 97 | 100 | 83 | 28 | 78 |
-| integer-grid | **87** | 100 | 93 | 78 | 98 | 100 | 73 | 34 | 60 |
 | instant-meshes | **82** | 100 | 76 | 79 | 93 | 73 | 2 | 87 | 100 |
 
 #### sphere (calibration)
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout | **95** | 100 | — | 80 | 98 | 92 | 99 | 100 | 100 |
-| quad-layout-adaptive | **95** | 100 | — | 80 | 98 | 92 | 99 | 100 | 100 |
-| integer-grid | **91** | 100 | — | 58 | 99 | 92 | 99 | 100 | 79 |
+| quad-layout | **95** | 100 | — | 80 | 98 | 92 | 99 | 100 | 91 |
+| quad-layout-adaptive | **95** | 100 | — | 80 | 98 | 92 | 99 | 100 | 96 |
+| integer-grid | **91** | 100 | — | 58 | 99 | 92 | 99 | 100 | 89 |
 | quadriflow | **88** | 100 | — | 78 | 99 | 100 | 12 | 86 | 86 |
 | quadremesher | **85** | 100 | — | 70 | 98 | 99 | 35 | 65 | 69 |
 | quadremesher-uniform | **85** | 100 | — | 70 | 98 | 99 | 35 | 65 | 70 |
@@ -613,39 +611,49 @@ Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadreme
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **97** | 100 | 97 | 93 | 98 | 100 | 100 | 94 | 97 |
-| quad-layout | **97** | 100 | 97 | 93 | 98 | 100 | 100 | 94 | 97 |
-| integer-grid | **94** | 100 | 97 | 93 | 98 | 100 | 100 | 63 | 89 |
+| quad-layout-adaptive | **97** | 100 | 97 | 93 | 98 | 100 | 100 | 94 | 84 |
+| quad-layout | **97** | 100 | 97 | 93 | 98 | 100 | 100 | 94 | 90 |
+| integer-grid | **94** | 100 | 97 | 93 | 98 | 100 | 100 | 63 | 82 |
 | quadremesher | **83** | 100 | 69 | 74 | 97 | 96 | 20 | 77 | 62 |
 | quadremesher-uniform | **83** | 100 | 69 | 74 | 97 | 96 | 20 | 77 | 74 |
 | instant-meshes | **73** | 100 | 37 | 72 | 97 | 59 | 0 | 90 | 100 |
-| quadriflow | **56** | 20 | 55 | 49 | 96 | 90 | 0 | 97 | 92 |
+| quadriflow | **56** | 20 | 55 | 49 | 96 | 90 | 0 | 97 | 89 |
 
 #### terrain (extra)
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout | **67** | 100 | 17 | 69 | 57 | 81 | 43 | 96 | 52 |
-| quad-layout-adaptive | **67** | 100 | 17 | 68 | 62 | 77 | 35 | 98 | 54 |
-| quadriflow | **61** | 100 | 10 | 68 | 52 | 59 | 70 | 62 | 26 |
-| integer-grid | **57** | 100 | 17 | 53 | 46 | 78 | 60 | 34 | 38 |
+| quad-layout | **67** | 100 | 17 | 69 | 57 | 81 | 43 | 96 | 50 |
+| quad-layout-adaptive | **65** | 100 | 17 | 67 | 62 | 67 | 23 | 95 | 47 |
+| quadriflow | **61** | 100 | 10 | 68 | 52 | 59 | 70 | 62 | 23 |
+| integer-grid | **57** | 100 | 17 | 53 | 46 | 78 | 60 | 34 | 34 |
 | quadremesher-uniform | **55** | 100 | 17 | 59 | 50 | 36 | 36 | 46 | 27 |
-| instant-meshes | **40** | 100 | 6 | 59 | 0 | 34 | 31 | 0 | 49 |
+| instant-meshes | **40** | 100 | 6 | 59 | 0 | 34 | 31 | 0 | 47 |
 | quadremesher | **29** | 0 | 19 | 52 | 75 | 51 | — | 0 | 25 |
 
 #### mahaveer (extra)
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **24** | 0 | 38 | 0 | 18 | 0 | 76 | 99 | 41 |
-| quad-layout | **24** | 0 | 37 | 0 | 18 | 0 | 76 | 99 | 44 |
+| integer-grid | **65** | 100 | 69 | 64 | 39 | 69 | 82 | 0 | 22 |
+| quadremesher | **29** | 0 | 40 | 38 | 73 | 33 | — | 0 | 35 |
+| quadremesher-uniform | **24** | 0 | 48 | 37 | 52 | 0 | — | 0 | 34 |
+| quad-layout | **24** | 0 | 37 | 0 | 18 | 0 | 76 | 99 | 41 |
+| quad-layout-adaptive | **24** | 0 | 37 | 0 | 18 | 0 | 76 | 97 | 29 |
+| instant-meshes | **20** | 0 | 56 | 52 | 0 | 0 | 28 | 0 | 52 |
+| quadriflow | **0** | 0 | — | — | — | — | — | — | 100 |
 
 #### marine (extra)
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **23** | 0 | 46 | 0 | 87 | 0 | — | 0 | 10 |
-| quad-layout | **23** | 0 | 46 | 0 | 87 | 0 | — | 0 | 12 |
+| quadremesher | **40** | 0 | 55 | 51 | 96 | 52 | — | 0 | 39 |
+| quadremesher-uniform | **25** | 0 | 39 | 15 | 94 | 0 | — | 0 | 42 |
+| quad-layout | **23** | 0 | 46 | 0 | 87 | 0 | — | 0 | 11 |
+| quad-layout-adaptive | **23** | 0 | 44 | 0 | 87 | 0 | — | 0 | 2 |
+| instant-meshes | **17** | 0 | 21 | 0 | 85 | 0 | 7 | 0 | 66 |
+| integer-grid | **0** | 0 | — | — | — | — | — | — | — |
+| quadriflow | **0** | 0 | — | — | — | — | — | — | 100 |
 
 ## 8000 quads
 
@@ -655,8 +663,8 @@ Over blob, rock, creature, cage, suzanne, ogre, spot, bob, blub, pig, jerry, ros
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **79** | 92 | 63 | 72 | 88 | 83 | 42 | 94 | 51 |
-| quad-layout | **79** | 92 | 61 | 70 | 87 | 86 | 42 | 94 | 53 |
+| quad-layout-adaptive | **81** | 100 | 63 | 71 | 89 | 82 | 39 | 95 | 44 |
+| quad-layout | **79** | 92 | 61 | 70 | 87 | 86 | 42 | 94 | 50 |
 | quadremesher | **72** | 85 | 65 | 66 | 84 | 89 | 39 | 41 | 37 |
 | quadremesher-uniform | **66** | 69 | 61 | 64 | 79 | 80 | 44 | 52 | 41 |
 | integer-grid | **63** | 54 | 59 | 60 | 78 | 84 | 52 | 59 | 16 |
@@ -669,8 +677,8 @@ Over part, cube, lblock, cylinder.
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout | **96** | 100 | 85 | 95 | 100 | 99 | 98 | 97 | 66 |
-| quad-layout-adaptive | **96** | 100 | 86 | 95 | 100 | 99 | 95 | 96 | 66 |
+| quad-layout | **96** | 100 | 85 | 95 | 100 | 99 | 98 | 97 | 62 |
+| quad-layout-adaptive | **96** | 100 | 86 | 95 | 100 | 99 | 95 | 96 | 62 |
 | quadremesher | **93** | 100 | 85 | 90 | 99 | 99 | 94 | 77 | 70 |
 | quadremesher-uniform | **93** | 100 | 85 | 90 | 99 | 99 | 94 | 77 | 71 |
 | integer-grid | **93** | 100 | 84 | 94 | 96 | 99 | 70 | 88 | 35 |
@@ -685,8 +693,8 @@ Over sphere, torus.
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout | **93** | 100 | 97 | 85 | 99 | 99 | 50 | 99 | 68 |
-| quad-layout-adaptive | **93** | 100 | 97 | 85 | 99 | 99 | 50 | 99 | 66 |
+| quad-layout | **93** | 100 | 97 | 85 | 99 | 99 | 50 | 99 | 65 |
+| quad-layout-adaptive | **93** | 100 | 97 | 85 | 99 | 99 | 50 | 99 | 58 |
 | integer-grid | **89** | 100 | 97 | 80 | 99 | 99 | 50 | 70 | 44 |
 | quadremesher | **84** | 100 | 81 | 72 | 99 | 99 | 24 | 62 | 60 |
 | quadremesher-uniform | **84** | 100 | 81 | 72 | 99 | 99 | 24 | 62 | 61 |
@@ -702,8 +710,8 @@ Over terrain, mahaveer, marine.
 | quadriflow | **63** | 100 | 7 | 71 | 66 | 73 | 70 | 48 | 25 |
 | quadremesher-uniform | **62** | 100 | 18 | 60 | 66 | 65 | 39 | 59 | 22 |
 | integer-grid | **61** | 100 | 21 | 52 | 64 | 82 | 35 | 44 | 13 |
-| quad-layout | **46** | 33 | 37 | 33 | 79 | 38 | 33 | 81 | 29 |
-| quad-layout-adaptive | **46** | 33 | 38 | 33 | 80 | 37 | 21 | 78 | 31 |
+| quad-layout | **46** | 33 | 37 | 33 | 79 | 38 | 33 | 81 | 28 |
+| quad-layout-adaptive | **44** | 33 | 37 | 32 | 81 | 29 | 15 | 74 | 21 |
 | instant-meshes | **36** | 80 | 5 | 63 | 0 | 43 | 25 | 0 | 46 |
 | quadremesher | **33** | 0 | 20 | 57 | 79 | 75 | 30 | 0 | 21 |
 
@@ -716,8 +724,8 @@ Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadreme
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
 | quadremesher | **88** | 100 | 82 | 72 | 94 | 98 | 42 | 96 | 39 |
-| quad-layout-adaptive | **86** | 100 | 76 | 71 | 96 | 98 | 15 | 99 | 61 |
-| quad-layout | **85** | 100 | 74 | 69 | 95 | 98 | 16 | 97 | 62 |
+| quad-layout-adaptive | **86** | 100 | 76 | 71 | 96 | 98 | 15 | 99 | 53 |
+| quad-layout | **85** | 100 | 74 | 69 | 95 | 98 | 16 | 97 | 56 |
 | quadremesher-uniform | **84** | 100 | 80 | 72 | 93 | 98 | 59 | 52 | 38 |
 | integer-grid | **80** | 100 | 74 | 63 | 94 | 98 | 21 | 56 | 37 |
 | instant-meshes | **72** | 100 | 33 | 76 | 90 | 67 | 0 | 92 | 89 |
@@ -727,8 +735,8 @@ Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadreme
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **74** | 100 | 27 | 73 | 94 | 85 | 0 | 100 | 57 |
-| quad-layout | **73** | 100 | 26 | 71 | 94 | 86 | 0 | 97 | 61 |
+| quad-layout-adaptive | **74** | 100 | 28 | 73 | 93 | 84 | 0 | 97 | 59 |
+| quad-layout | **73** | 100 | 26 | 71 | 94 | 86 | 0 | 97 | 54 |
 | integer-grid | **68** | 100 | 29 | 54 | 92 | 86 | 0 | 70 | 11 |
 | instant-meshes | **68** | 100 | 0 | 79 | 94 | 80 | 0 | 90 | 98 |
 | quadremesher | **66** | 100 | 23 | 51 | 92 | 92 | 0 | 54 | 29 |
@@ -739,8 +747,8 @@ Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadreme
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **87** | 100 | 75 | 72 | 97 | 96 | 59 | 91 | 37 |
-| quad-layout | **86** | 100 | 73 | 66 | 97 | 96 | 64 | 94 | 42 |
+| quad-layout-adaptive | **87** | 100 | 75 | 72 | 97 | 96 | 59 | 91 | 33 |
+| quad-layout | **86** | 100 | 73 | 66 | 97 | 96 | 64 | 94 | 37 |
 | quadremesher | **82** | 100 | 70 | 69 | 98 | 96 | 55 | 59 | 38 |
 | quadremesher-uniform | **82** | 100 | 70 | 69 | 97 | 96 | 52 | 60 | 48 |
 | instant-meshes | **78** | 100 | 47 | 80 | 97 | 75 | 9 | 88 | 100 |
@@ -751,8 +759,8 @@ Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadreme
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **94** | 100 | 90 | 87 | 93 | 98 | 93 | 98 | 59 |
-| quad-layout | **93** | 100 | 89 | 89 | 91 | 98 | 80 | 94 | 59 |
+| quad-layout-adaptive | **95** | 100 | 91 | 89 | 92 | 97 | 97 | 97 | 55 |
+| quad-layout | **93** | 100 | 89 | 89 | 91 | 98 | 80 | 94 | 62 |
 | integer-grid | **91** | 100 | 88 | 82 | 87 | 99 | 90 | 88 | 21 |
 | quadremesher-uniform | **89** | 100 | 90 | 83 | 88 | 96 | 74 | 76 | 61 |
 | quadremesher | **83** | 100 | 91 | 84 | 91 | 97 | 71 | 0 | 57 |
@@ -763,8 +771,8 @@ Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadreme
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout | **82** | 100 | 56 | 73 | 90 | 92 | 56 | 98 | 63 |
-| quad-layout-adaptive | **80** | 100 | 56 | 70 | 91 | 91 | 33 | 93 | 45 |
+| quad-layout | **82** | 100 | 56 | 73 | 90 | 92 | 56 | 98 | 62 |
+| quad-layout-adaptive | **81** | 100 | 57 | 70 | 92 | 90 | 41 | 95 | 41 |
 | quadremesher-uniform | **78** | 100 | 56 | 65 | 90 | 90 | 54 | 66 | 61 |
 | integer-grid | **77** | 100 | 56 | 62 | 89 | 91 | 42 | 69 | 0 |
 | quadremesher | **77** | 100 | 62 | 65 | 93 | 92 | 56 | 38 | 50 |
@@ -775,8 +783,8 @@ Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadreme
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **77** | 100 | 52 | 69 | 84 | 73 | 25 | 97 | 41 |
-| quad-layout | **75** | 100 | 50 | 69 | 74 | 76 | 22 | 98 | 46 |
+| quad-layout-adaptive | **76** | 100 | 52 | 69 | 81 | 71 | 23 | 98 | 35 |
+| quad-layout | **75** | 100 | 50 | 69 | 74 | 76 | 22 | 98 | 42 |
 | quadremesher | **68** | 100 | 62 | 60 | 90 | 74 | 22 | 0 | 23 |
 | integer-grid | **41** | 0 | 49 | 57 | 55 | 76 | — | 52 | 14 |
 | quadremesher-uniform | **38** | 0 | 57 | 58 | 49 | 52 | — | 38 | 22 |
@@ -788,8 +796,8 @@ Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadreme
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
 | quadremesher | **84** | 100 | 66 | 72 | 91 | 91 | 42 | 98 | 30 |
-| quad-layout-adaptive | **83** | 100 | 66 | 68 | 95 | 91 | 38 | 95 | 40 |
-| quad-layout | **83** | 100 | 65 | 68 | 94 | 91 | 33 | 98 | 42 |
+| quad-layout-adaptive | **83** | 100 | 66 | 68 | 95 | 91 | 38 | 95 | 36 |
+| quad-layout | **83** | 100 | 65 | 68 | 94 | 91 | 33 | 98 | 41 |
 | quadremesher-uniform | **79** | 100 | 63 | 70 | 88 | 90 | 47 | 64 | 30 |
 | integer-grid | **76** | 100 | 62 | 55 | 93 | 90 | 48 | 54 | 11 |
 | instant-meshes | **71** | 100 | 25 | 78 | 86 | 66 | 2 | 95 | 97 |
@@ -799,8 +807,8 @@ Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadreme
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout | **93** | 100 | 84 | 82 | 98 | 97 | 84 | 98 | 50 |
-| quad-layout-adaptive | **91** | 100 | 83 | 81 | 97 | 98 | 64 | 99 | 55 |
+| quad-layout | **93** | 100 | 84 | 82 | 98 | 97 | 84 | 98 | 46 |
+| quad-layout-adaptive | **91** | 100 | 83 | 81 | 97 | 98 | 64 | 99 | 48 |
 | quadremesher | **80** | 100 | 76 | 68 | 97 | 95 | 30 | 45 | 26 |
 | quadremesher-uniform | **80** | 100 | 74 | 66 | 97 | 96 | 45 | 42 | 31 |
 | instant-meshes | **70** | 100 | 10 | 78 | 94 | 70 | 0 | 96 | 100 |
@@ -811,8 +819,8 @@ Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadreme
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **86** | 100 | 71 | 70 | 93 | 94 | 63 | 98 | 53 |
-| quad-layout | **85** | 100 | 69 | 67 | 91 | 95 | 58 | 100 | 55 |
+| quad-layout-adaptive | **85** | 100 | 71 | 69 | 93 | 94 | 45 | 100 | 50 |
+| quad-layout | **85** | 100 | 69 | 67 | 91 | 95 | 58 | 100 | 51 |
 | quadremesher | **82** | 100 | 72 | 68 | 91 | 95 | 27 | 74 | 33 |
 | integer-grid | **78** | 100 | 68 | 56 | 89 | 94 | 58 | 53 | 31 |
 | quadremesher-uniform | **76** | 100 | 66 | 62 | 84 | 94 | 29 | 47 | 37 |
@@ -823,8 +831,8 @@ Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadreme
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **82** | 100 | 64 | 72 | 86 | 89 | 37 | 93 | 44 |
-| quad-layout | **79** | 100 | 58 | 65 | 83 | 90 | 26 | 95 | 42 |
+| quad-layout-adaptive | **81** | 100 | 64 | 72 | 86 | 89 | 34 | 93 | 36 |
+| quad-layout | **79** | 100 | 58 | 65 | 83 | 90 | 26 | 95 | 41 |
 | quadremesher-uniform | **75** | 100 | 61 | 67 | 81 | 87 | 39 | 53 | 32 |
 | instant-meshes | **62** | 80 | 34 | 75 | 57 | 55 | 4 | 94 | 96 |
 | integer-grid | **49** | 0 | 59 | 56 | 83 | 89 | 37 | 59 | 13 |
@@ -835,8 +843,8 @@ Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadreme
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **74** | 100 | 45 | 72 | 77 | 77 | 13 | 96 | 58 |
-| quad-layout | **74** | 100 | 43 | 74 | 70 | 79 | 32 | 94 | 61 |
+| quad-layout | **74** | 100 | 43 | 74 | 70 | 79 | 32 | 94 | 58 |
+| quad-layout-adaptive | **73** | 100 | 45 | 70 | 80 | 66 | 13 | 95 | 40 |
 | quadremesher | **67** | 100 | 53 | 59 | 92 | 82 | 15 | 0 | 45 |
 | quadriflow | **58** | 80 | 22 | 61 | 37 | 86 | 36 | 89 | 59 |
 | quadremesher-uniform | **43** | 0 | 44 | 58 | 79 | 64 | — | 47 | 48 |
@@ -847,8 +855,8 @@ Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadreme
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout | **36** | 0 | 47 | 47 | 69 | 24 | 19 | 63 | 44 |
-| quad-layout-adaptive | **34** | 0 | 48 | 49 | 53 | 0 | — | 69 | 46 |
+| quad-layout-adaptive | **60** | 100 | 49 | 37 | 70 | 0 | 13 | 79 | 30 |
+| quad-layout | **36** | 0 | 47 | 47 | 69 | 24 | 19 | 63 | 47 |
 | quadremesher | **28** | 0 | 60 | 57 | 0 | 65 | — | 0 | 45 |
 | quadremesher-uniform | **21** | 0 | 45 | 42 | 0 | 0 | — | 45 | 50 |
 | integer-grid | **20** | 0 | 37 | 49 | 0 | 15 | — | 28 | 0 |
@@ -859,8 +867,8 @@ Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadreme
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **84** | 100 | 61 | 78 | 87 | 89 | 71 | 93 | 62 |
-| quad-layout | **82** | 100 | 56 | 76 | 87 | 91 | 62 | 94 | 60 |
+| quad-layout-adaptive | **83** | 100 | 60 | 77 | 87 | 90 | 66 | 95 | 55 |
+| quad-layout | **82** | 100 | 56 | 76 | 87 | 91 | 62 | 94 | 54 |
 | quadremesher | **79** | 100 | 63 | 69 | 87 | 91 | 67 | 60 | 33 |
 | integer-grid | **79** | 100 | 56 | 65 | 86 | 91 | 78 | 69 | 22 |
 | instant-meshes | **75** | 100 | 38 | 78 | 82 | 68 | 35 | 98 | 85 |
@@ -872,7 +880,7 @@ Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadreme
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
 | quad-layout-adaptive | **89** | 100 | 54 | 95 | 99 | 98 | 99 | 95 | 59 |
-| quad-layout | **88** | 100 | 47 | 94 | 99 | 98 | 95 | 96 | 58 |
+| quad-layout | **88** | 100 | 47 | 94 | 99 | 98 | 95 | 96 | 59 |
 | integer-grid | **87** | 100 | 47 | 92 | 99 | 98 | 98 | 91 | 33 |
 | quadremesher | **83** | 100 | 52 | 82 | 99 | 98 | 90 | 68 | 76 |
 | quadremesher-uniform | **83** | 100 | 52 | 82 | 99 | 98 | 90 | 68 | 76 |
@@ -883,10 +891,10 @@ Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadreme
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout | **100** | 100 | 99 | 100 | 100 | 100 | 100 | 97 | 70 |
+| quad-layout | **100** | 100 | 99 | 100 | 100 | 100 | 100 | 97 | 59 |
 | quadremesher | **99** | 100 | 100 | 100 | 100 | 100 | 100 | 96 | 69 |
 | quadremesher-uniform | **99** | 100 | 100 | 100 | 100 | 100 | 100 | 96 | 74 |
-| quad-layout-adaptive | **99** | 100 | 99 | 99 | 100 | 100 | 100 | 97 | 69 |
+| quad-layout-adaptive | **99** | 100 | 99 | 99 | 100 | 100 | 100 | 97 | 62 |
 | quadriflow | **99** | 100 | 98 | 98 | 98 | 100 | 100 | 96 | 67 |
 | instant-meshes | **97** | 100 | 96 | 95 | 100 | 99 | 95 | 90 | 100 |
 | integer-grid | **91** | 100 | 97 | 95 | 86 | 100 | 0 | 99 | 0 |
@@ -898,16 +906,16 @@ Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadreme
 | quadremesher | **99** | 100 | 98 | 100 | 100 | 100 | 100 | 97 | 72 |
 | quadremesher-uniform | **99** | 100 | 98 | 100 | 100 | 100 | 100 | 97 | 72 |
 | integer-grid | **99** | 100 | 97 | 100 | 100 | 100 | 100 | 97 | 62 |
-| quad-layout | **99** | 100 | 97 | 100 | 100 | 100 | 100 | 97 | 70 |
-| quad-layout-adaptive | **98** | 100 | 96 | 98 | 100 | 100 | 100 | 97 | 69 |
+| quad-layout | **99** | 100 | 97 | 100 | 100 | 100 | 100 | 97 | 68 |
+| quad-layout-adaptive | **98** | 100 | 96 | 98 | 100 | 100 | 100 | 97 | 66 |
 | instant-meshes | **98** | 100 | 95 | 96 | 100 | 98 | 91 | 100 | 93 |
 
 #### cylinder (mechanical)
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout | **97** | 100 | 94 | 88 | 99 | 100 | 98 | 100 | 66 |
-| quad-layout-adaptive | **96** | 100 | 94 | 89 | 99 | 100 | 82 | 95 | 66 |
+| quad-layout | **97** | 100 | 94 | 88 | 99 | 100 | 98 | 100 | 63 |
+| quad-layout-adaptive | **96** | 100 | 94 | 89 | 99 | 100 | 82 | 95 | 60 |
 | integer-grid | **93** | 100 | 94 | 87 | 99 | 100 | 82 | 66 | 46 |
 | quadremesher | **89** | 100 | 92 | 78 | 99 | 100 | 88 | 46 | 64 |
 | quadremesher-uniform | **89** | 100 | 92 | 78 | 99 | 100 | 88 | 46 | 63 |
@@ -917,8 +925,8 @@ Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadreme
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout | **88** | 100 | — | 75 | 99 | 98 | 0 | 98 | 63 |
-| quad-layout-adaptive | **88** | 100 | — | 75 | 99 | 98 | 0 | 98 | 64 |
+| quad-layout | **88** | 100 | — | 75 | 99 | 98 | 0 | 98 | 62 |
+| quad-layout-adaptive | **88** | 100 | — | 75 | 99 | 98 | 0 | 98 | 50 |
 | instant-meshes | **86** | 100 | — | 83 | 99 | 77 | 0 | 90 | 100 |
 | integer-grid | **84** | 100 | — | 65 | 99 | 98 | 0 | 76 | 34 |
 | quadremesher | **83** | 100 | — | 62 | 99 | 100 | 30 | 54 | 65 |
@@ -929,8 +937,8 @@ Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadreme
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout-adaptive | **98** | 100 | 97 | 95 | 99 | 100 | 100 | 99 | 67 |
-| quad-layout | **98** | 100 | 97 | 95 | 99 | 100 | 100 | 99 | 73 |
+| quad-layout-adaptive | **98** | 100 | 97 | 95 | 99 | 100 | 100 | 99 | 66 |
+| quad-layout | **98** | 100 | 97 | 95 | 99 | 100 | 100 | 99 | 69 |
 | integer-grid | **95** | 100 | 97 | 95 | 99 | 100 | 100 | 64 | 54 |
 | quadremesher | **86** | 100 | 81 | 82 | 99 | 97 | 19 | 70 | 55 |
 | quadremesher-uniform | **86** | 100 | 81 | 82 | 99 | 97 | 19 | 70 | 57 |
@@ -941,8 +949,8 @@ Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadreme
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout | **71** | 100 | 21 | 67 | 76 | 85 | 33 | 98 | 45 |
-| quad-layout-adaptive | **70** | 100 | 21 | 67 | 78 | 82 | 21 | 93 | 46 |
+| quad-layout | **71** | 100 | 21 | 67 | 76 | 85 | 33 | 98 | 42 |
+| quad-layout-adaptive | **69** | 100 | 22 | 65 | 82 | 72 | 15 | 95 | 36 |
 | quadriflow | **63** | 100 | 7 | 71 | 66 | 73 | 70 | 48 | 25 |
 | quadremesher-uniform | **62** | 100 | 18 | 60 | 66 | 65 | 39 | 59 | 22 |
 | integer-grid | **61** | 100 | 21 | 52 | 64 | 82 | 35 | 44 | 13 |
@@ -953,12 +961,12 @@ Not run on every model: instant-meshes (1 of 3), integer-grid (1 of 3), quadreme
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
-| quad-layout | **39** | 0 | 48 | 33 | 69 | 30 | — | 93 | 32 |
-| quad-layout-adaptive | **39** | 0 | 49 | 32 | 69 | 29 | — | 93 | 34 |
+| quad-layout | **39** | 0 | 48 | 33 | 69 | 30 | — | 93 | 33 |
+| quad-layout-adaptive | **37** | 0 | 48 | 31 | 69 | 16 | — | 86 | 28 |
 
 #### marine (extra)
 
 | Remesher | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|
 | quad-layout | **29** | 0 | 44 | 0 | 93 | 0 | — | 51 | 10 |
-| quad-layout-adaptive | **29** | 0 | 44 | 0 | 93 | 0 | — | 47 | 13 |
+| quad-layout-adaptive | **27** | 0 | 41 | 0 | 93 | 0 | — | 40 | 1 |

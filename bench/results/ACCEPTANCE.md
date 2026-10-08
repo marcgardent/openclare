@@ -12,34 +12,34 @@ Models: blob, rock, creature, cage, suzanne, ogre, spot, bob, blub, pig, jerry, 
 |---|---|---|---|---|---|---|---|
 | Models run | 12 | 12 | 12 | 12 | 12 | 12 | 12 |
 | Models valid on every run (V) | 4 | 6 | 8 | 11 | 12 | 11 | 8 |
-| Irregular vertices (S) | 62 | 88 | 40 | 42 | 42 | 72 | 61 |
-| Base complex patches (C) | 891 | 886 | 598 | 582 | 530 | 1079 | 437 |
+| Irregular vertices (S) | 62 | 88 | 40 | 42 | 48 | 72 | 61 |
+| Base complex patches (C) | 891 | 886 | 598 | 582 | 544 | 1079 | 437 |
 | Alignment, degrees (A) | 18.0 | 17.8 | 10.3 | 9.1 | 8.4 | 6.4 | 8.1 |
-| Mean angle deviation, degrees (F) | 9.7 | 8.1 | 8.8 | 5.3 | 5.3 | 8.2 | 8.8 |
-| Hausdorff, per mille of the diagonal (H) | 38.9 | 41.1 | 27.2 | 18.1 | 14.1 | 7.9 | 18.3 |
-| Off budget, % (N) | 5.9 | 3.5 | 9.5 | 0.8 | 0.5 | 71.4 | 11.3 |
-| Area variation | 0.27 | 0.25 | 0.31 | 0.35 | 0.48 | 0.55 | 0.33 |
-| Mean distance, per mille of the diagonal | 1.55 | 1.95 | 1.70 | 1.44 | 1.44 | 0.90 | 1.65 |
-| Time, seconds (T) | 1.3 | 1.1 | 3.9 | 1.5 | 1.6 | 13.5 | 12.9 |
+| Mean angle deviation, degrees (F) | 9.7 | 8.1 | 8.8 | 5.3 | 5.6 | 8.2 | 8.8 |
+| Hausdorff, per mille of the diagonal (H) | 38.9 | 41.1 | 27.2 | 18.1 | 13.6 | 7.9 | 18.3 |
+| Off budget, % (N) | 5.9 | 3.5 | 9.5 | 0.8 | 0.9 | 71.4 | 11.3 |
+| Area variation | 0.27 | 0.25 | 0.31 | 0.35 | 0.47 | 0.55 | 0.33 |
+| Mean distance, per mille of the diagonal | 1.55 | 1.95 | 1.70 | 1.44 | 1.45 | 0.90 | 1.65 |
+| Time, seconds (T) | 1.3 | 1.1 | 3.9 | 1.9 | 2.0 | 13.5 | 12.9 |
 
 Model by model, against QuadriFlow (ours / QuadriFlow's). A letter in the last column is a threshold missed.
 
 | Model | V | A | S | C | F | H | N | Missed |
 |---|---|---|---|---|---|---|---|---|
-| blob | 1/1 / 4/5 | 4.7 / 18.0 | 24 / 36 | 802 / 941 | 5.7 / 9.3 | 12.3 / 14.5 | 0.2 % | — |
+| blob | 1/1 / 4/5 | 4.4 / 18.0 | 24 / 36 | 790 / 941 | 5.8 / 9.3 | 8.3 / 14.5 | 1.0 % | — |
 | rock | 1/1 / 5/5 | 16.8 / 23.1 | 26 / 8 | 981 / 941 | 4.8 / 6.2 | 9.1 / 9.4 | 1.9 % | SC |
 | creature | 1/1 / 4/5 | 5.7 / 14.8 | 40 / 16 | 355 / 812 | 5.5 / 12.6 | 5.0 / 40.5 | 0.1 % | S |
 | cage | 1/1 / 5/5 | 3.2 / 7.7 | 48 / 64 | 208 / 716 | 5.0 / 7.0 | 15.1 / 21.4 | 0.1 % | — |
-| suzanne | 1/1 / 0/5 | 10.4 / 15.7 | 48 / 67 | 648 / 995 | 5.2 / 9.7 | 13.1 / 44.8 | 0.6 % | — |
-| ogre | 1/1 / 3/5 | 10.0 / 20.9 | 44 / 73 | 436 / 891 | 7.5 / 14.2 | 31.5 / 95.0 | 0.4 % | — |
-| spot | 1/1 / 5/5 | 8.2 / 18.2 | 66 / 62 | 681 / 965 | 7.5 / 7.6 | 10.2 / 20.4 | 0.3 % | — |
+| suzanne | 1/1 / 0/5 | 10.1 / 15.7 | 48 / 67 | 554 / 995 | 5.5 / 9.7 | 12.1 / 44.8 | 0.6 % | — |
+| ogre | 1/1 / 3/5 | 11.0 / 20.9 | 102 / 73 | 534 / 891 | 9.1 / 14.2 | 27.9 / 95.0 | 3.7 % | — |
+| spot | 1/1 / 5/5 | 7.7 / 18.2 | 68 / 62 | 721 / 965 | 6.9 / 7.6 | 16.2 / 20.4 | 0.9 % | — |
 | bob | 1/1 / 5/5 | 3.6 / 20.0 | 20 / 28 | 185 / 958 | 4.5 / 7.9 | 5.5 / 12.6 | 2.8 % | — |
-| blub | 1/1 / 3/5 | 8.6 / 16.3 | 40 / 44 | 406 / 785 | 5.0 / 10.0 | 19.4 / 38.9 | 0.2 % | — |
-| pig | 1/1 / 0/5 | 10.9 / 17.3 | 56 / 92 | 625 / 848 | 5.9 / 15.5 | 33.3 / 130.1 | 2.5 % | — |
-| jerry | 1/1 / 4/5 | 15.4 / 18.5 | 50 / 69 | 714 / 724 | 7.5 / 10.2 | 33.9 / 58.1 | 1.1 % | — |
-| bridge | 1/1 / 0/5 | 6.6 / — | 36 / — | 303 / — | 4.7 / — | 17.5 / — | 1.8 % | — |
+| blub | 1/1 / 3/5 | 9.1 / 16.3 | 50 / 44 | 523 / 785 | 5.6 / 10.0 | 19.6 / 38.9 | 1.1 % | — |
+| pig | 1/1 / 0/5 | 9.1 / 17.3 | 92 / 92 | 603 / 848 | 7.1 / 15.5 | 19.9 / 130.1 | 0.9 % | — |
+| jerry | 1/1 / 4/5 | 15.4 / 18.5 | 83 / 69 | 886 / 724 | 8.8 / 10.2 | 25.5 / 58.1 | 0.5 % | C |
+| bridge | 1/1 / 0/5 | 6.7 / — | 36 / — | 451 / — | 5.5 / — | 10.8 / — | 0.8 % | — |
 
-Thresholds met, out of 12 models: V 12, A 12, S 10, C 11, F 12, H 12, N 12.
+Thresholds met, out of 12 models: V 12, A 12, S 10, C 10, F 12, H 12, N 12.
 
 ## 1000 quads, mechanical models
 
@@ -57,7 +57,7 @@ Models: part, cube, lblock, cylinder. Medians over those each tool was run on.
 | Off budget, % (N) | 3.8 | 6.7 | 2.5 | 1.2 | 1.6 | 1.4 | 4.5 |
 | Area variation | 0.09 | 0.14 | 0.12 | 0.12 | 0.15 | 0.17 | 0.16 |
 | Mean distance, per mille of the diagonal | 0.23 | 0.12 | 0.47 | 0.12 | 0.08 | 0.07 | 0.09 |
-| Time, seconds (T) | 0.4 | 0.1 | 2.7 | 1.0 | 0.8 | 2.9 | 2.8 |
+| Time, seconds (T) | 0.4 | 0.1 | 2.7 | 0.9 | 1.0 | 2.9 | 2.8 |
 
 Model by model, against QuadriFlow (ours / QuadriFlow's). A letter in the last column is a threshold missed.
 
@@ -78,15 +78,15 @@ Models: blob, rock, creature, cage, suzanne, ogre, spot, bob, blub, pig, jerry, 
 |---|---|---|---|---|---|---|---|
 | Models run | 12 | 12 | 12 | 12 | 12 | 12 | 12 |
 | Models valid on every run (V) | 5 | 8 | 9 | 12 | 12 | 8 | 10 |
-| Irregular vertices (S) | 66 | 156 | 50 | 50 | 54 | 80 | 68 |
-| Base complex patches (C) | 2697 | 2917 | 951 | 1886 | 1780 | 2409 | 2009 |
-| Alignment, degrees (A) | 17.5 | 16.6 | 8.8 | 8.4 | 7.6 | 6.4 | 7.7 |
+| Irregular vertices (S) | 66 | 156 | 50 | 50 | 57 | 80 | 68 |
+| Base complex patches (C) | 2697 | 2917 | 951 | 1886 | 1924 | 2409 | 2009 |
+| Alignment, degrees (A) | 17.5 | 16.6 | 8.8 | 8.4 | 7.7 | 6.4 | 7.7 |
 | Mean angle deviation, degrees (F) | 8.6 | 6.0 | 8.0 | 5.4 | 5.0 | 6.5 | 7.2 |
 | Hausdorff, per mille of the diagonal (H) | 17.7 | 17.5 | 9.3 | 8.0 | 8.1 | 5.9 | 9.6 |
-| Off budget, % (N) | 4.1 | 2.1 | 11.1 | 1.4 | 1.1 | 36.6 | 10.3 |
+| Off budget, % (N) | 4.1 | 2.1 | 11.1 | 1.4 | 1.0 | 36.6 | 10.3 |
 | Area variation | 0.24 | 0.18 | 0.27 | 0.30 | 0.43 | 0.43 | 0.28 |
-| Mean distance, per mille of the diagonal | 0.73 | 0.73 | 0.77 | 0.60 | 0.58 | 0.41 | 0.70 |
-| Time, seconds (T) | 1.9 | 1.2 | 6.5 | 2.5 | 2.1 | 14.5 | 12.3 |
+| Mean distance, per mille of the diagonal | 0.73 | 0.73 | 0.77 | 0.60 | 0.55 | 0.41 | 0.70 |
+| Time, seconds (T) | 2.0 | 1.2 | 7.0 | 2.3 | 3.2 | 14.5 | 12.3 |
 
 Model by model, against QuadriFlow (ours / QuadriFlow's). A letter in the last column is a threshold missed.
 
@@ -96,16 +96,16 @@ Model by model, against QuadriFlow (ours / QuadriFlow's). A letter in the last c
 | rock | 1/1 / 5/5 | 15.7 / 23.0 | 66 / 8 | 2984 / 2855 | 5.0 / 5.8 | 5.6 / 5.4 | 0.5 % | SC |
 | creature | 1/1 / 5/5 | 5.7 / 12.9 | 40 / 24 | 2839 / 2667 | 5.1 / 6.8 | 2.4 / 8.0 | 1.5 % | SC |
 | cage | 1/1 / 5/5 | 2.3 / 8.1 | 48 / 66 | 304 / 1943 | 3.2 / 5.9 | 14.2 / 11.5 | 1.1 % | H |
-| suzanne | 1/1 / 0/5 | 9.8 / 15.3 | 56 / 78 | 1895 / 2884 | 4.4 / 8.6 | 9.0 / 42.3 | 1.3 % | — |
-| ogre | 1/1 / 1/5 | 12.3 / 19.3 | 88 / 106 | 2109 / 2857 | 5.9 / 12.0 | 25.3 / 36.6 | 0.5 % | — |
+| suzanne | 1/1 / 0/5 | 9.8 / 15.3 | 56 / 78 | 2000 / 2884 | 4.3 / 8.6 | 8.9 / 42.3 | 0.5 % | — |
+| ogre | 1/1 / 1/5 | 11.6 / 19.3 | 155 / 106 | 2483 / 2857 | 6.2 / 12.0 | 27.3 / 36.6 | 0.6 % | — |
 | spot | 1/1 / 5/5 | 7.9 / 18.1 | 70 / 68 | 1663 / 2902 | 5.6 / 7.2 | 7.5 / 17.7 | 0.7 % | — |
 | bob | 1/1 / 5/5 | 3.6 / 19.4 | 20 / 32 | 237 / 2903 | 3.2 / 6.4 | 2.1 / 6.8 | 1.7 % | — |
-| blub | 1/1 / 3/5 | 7.1 / 16.0 | 52 / 52 | 1036 / 2584 | 4.8 / 10.7 | 8.7 / 40.7 | 0.3 % | — |
-| pig | 1/1 / 0/5 | 9.0 / 17.4 | 80 / 122 | 1666 / 2612 | 5.4 / 14.3 | 22.2 / 44.6 | 1.8 % | — |
-| jerry | 1/1 / 4/5 | 13.8 / 17.9 | 102 / 104 | 2384 / 2211 | 6.0 / 11.3 | 22.3 / 38.8 | 1.1 % | C |
+| blub | 1/1 / 3/5 | 7.5 / 16.0 | 58 / 52 | 1333 / 2584 | 4.8 / 10.7 | 8.7 / 40.7 | 0.9 % | — |
+| pig | 1/1 / 0/5 | 9.0 / 17.4 | 102 / 122 | 1849 / 2612 | 5.2 / 14.3 | 10.9 / 44.6 | 1.0 % | — |
+| jerry | 1/1 / 4/5 | 13.5 / 17.9 | 162 / 104 | 2491 / 2211 | 6.6 / 11.3 | 22.5 / 38.8 | 1.8 % | SC |
 | bridge | 1/1 / 0/5 | 7.4 / — | 46 / — | 764 / — | 3.9 / — | 6.7 / — | 1.4 % | — |
 
-Thresholds met, out of 12 models: V 12, A 12, S 10, C 9, F 12, H 11, N 12.
+Thresholds met, out of 12 models: V 12, A 12, S 9, C 9, F 12, H 11, N 12.
 
 ## 3000 quads, mechanical models
 
@@ -115,15 +115,15 @@ Models: part, cube, lblock, cylinder. Medians over those each tool was run on.
 |---|---|---|---|---|---|---|---|
 | Models run | 4 | 4 | 4 | 4 | 4 | 4 | 4 |
 | Models valid on every run (V) | 2 | 4 | 4 | 4 | 4 | 4 | 4 |
-| Irregular vertices (S) | 10 | 58 | 10 | 10 | 10 | 10 | 10 |
-| Base complex patches (C) | 352 | 1123 | 372 | 46 | 150 | 211 | 211 |
+| Irregular vertices (S) | 10 | 58 | 12 | 10 | 10 | 10 | 10 |
+| Base complex patches (C) | 352 | 1123 | 407 | 46 | 150 | 211 | 211 |
 | Alignment, degrees (A) | 2.6 | 3.7 | 1.2 | 1.0 | 1.2 | 1.1 | 1.1 |
 | Mean angle deviation, degrees (F) | 1.7 | 2.9 | 1.7 | 0.7 | 1.4 | 1.7 | 1.7 |
-| Hausdorff, per mille of the diagonal (H) | 5.2 | 1.9 | 1.0 | 0.5 | 0.3 | 0.4 | 0.4 |
+| Hausdorff, per mille of the diagonal (H) | 5.2 | 1.9 | 0.9 | 0.5 | 0.3 | 0.4 | 0.4 |
 | Off budget, % (N) | 3.3 | 2.7 | 1.9 | 1.1 | 0.8 | 4.5 | 4.5 |
 | Area variation | 0.07 | 0.12 | 0.09 | 0.07 | 0.17 | 0.11 | 0.11 |
 | Mean distance, per mille of the diagonal | 0.07 | 0.03 | 0.05 | 0.03 | 0.03 | 0.03 | 0.03 |
-| Time, seconds (T) | 1.2 | 0.3 | 5.3 | 1.4 | 1.3 | 2.8 | 2.9 |
+| Time, seconds (T) | 1.6 | 0.3 | 5.7 | 1.7 | 2.2 | 2.8 | 2.9 |
 
 Model by model, against QuadriFlow (ours / QuadriFlow's). A letter in the last column is a threshold missed.
 
@@ -144,32 +144,32 @@ Models: blob, rock, creature, cage, suzanne, ogre, spot, bob, blub, pig, jerry, 
 |---|---|---|---|---|---|---|---|
 | Models run | 12 | 12 | 12 | 12 | 12 | 12 | 12 |
 | Models valid on every run (V) | 3 | 9 | 7 | 12 | 12 | 11 | 9 |
-| Irregular vertices (S) | 70 | 278 | 66 | 67 | 77 | 72 | 70 |
-| Base complex patches (C) | 7342 | 7812 | 3344 | 4436 | 4996 | 4605 | 3789 |
+| Irregular vertices (S) | 70 | 278 | 66 | 67 | 80 | 72 | 70 |
+| Base complex patches (C) | 7342 | 7812 | 3344 | 4436 | 4895 | 4605 | 3789 |
 | Alignment, degrees (A) | 15.8 | 15.8 | 8.8 | 8.7 | 7.8 | 7.5 | 8.6 |
-| Mean angle deviation, degrees (F) | 6.4 | 4.5 | 8.7 | 6.1 | 5.6 | 6.4 | 6.8 |
-| Hausdorff, per mille of the diagonal (H) | 6.9 | 6.5 | 5.7 | 4.7 | 3.5 | 4.3 | 5.9 |
-| Off budget, % (N) | 3.0 | 1.2 | 10.5 | 0.8 | 0.8 | 12.7 | 11.9 |
-| Area variation | 0.21 | 0.14 | 0.28 | 0.32 | 0.42 | 0.37 | 0.28 |
-| Mean distance, per mille of the diagonal | 0.27 | 0.26 | 0.28 | 0.25 | 0.22 | 0.24 | 0.31 |
-| Time, seconds (T) | 4.1 | 1.1 | 30.0 | 5.9 | 6.5 | 15.5 | 13.0 |
+| Mean angle deviation, degrees (F) | 6.4 | 4.5 | 8.7 | 6.1 | 5.7 | 6.4 | 6.8 |
+| Hausdorff, per mille of the diagonal (H) | 6.9 | 6.5 | 5.7 | 4.7 | 3.6 | 4.3 | 5.9 |
+| Off budget, % (N) | 3.0 | 1.2 | 10.5 | 0.8 | 1.0 | 12.7 | 11.9 |
+| Area variation | 0.21 | 0.14 | 0.28 | 0.32 | 0.41 | 0.37 | 0.28 |
+| Mean distance, per mille of the diagonal | 0.27 | 0.26 | 0.28 | 0.25 | 0.21 | 0.24 | 0.31 |
+| Time, seconds (T) | 4.1 | 1.1 | 30.0 | 7.0 | 9.8 | 15.5 | 13.0 |
 
 Model by model, against QuadriFlow (ours / QuadriFlow's). A letter in the last column is a threshold missed.
 
 | Model | V | A | S | C | F | H | N | Missed |
 |---|---|---|---|---|---|---|---|---|
 | blob | 1/1 / 3/5 | 5.5 / 14.8 | 24 / 40 | 6819 / 7412 | 5.8 / 7.8 | 2.2 / 5.2 | 0.3 % | — |
-| rock | 1/1 / 5/5 | 16.4 / 22.4 | 130 / 10 | 7993 / 7342 | 5.4 / 6.2 | 3.0 / 7.0 | 0.1 % | SC |
+| rock | 1/1 / 5/5 | 16.3 / 22.4 | 134 / 10 | 7940 / 7342 | 5.4 / 6.2 | 3.4 / 7.0 | 0.8 % | SC |
 | creature | 1/1 / 4/5 | 5.6 / 13.7 | 42 / 22 | 3225 / 8170 | 5.6 / 6.0 | 1.5 / 3.2 | 2.2 % | S |
-| cage | 1/1 / 5/5 | 2.2 / 8.2 | 48 / 72 | 556 / 7283 | 2.5 / 5.8 | 3.7 / 6.6 | 0.4 % | — |
-| suzanne | 1/1 / 5/5 | 9.9 / 14.3 | 76 / 55 | 5461 / 6194 | 5.9 / 6.1 | 4.4 / 6.9 | 1.7 % | — |
-| ogre | 1/1 / 0/5 | 10.8 / 17.8 | 228 / 162 | 6062 / 7352 | 6.2 / 11.6 | 7.9 / 27.3 | 0.7 % | — |
+| cage | 1/1 / 5/5 | 1.9 / 8.2 | 58 / 72 | 275 / 7283 | 2.3 / 5.8 | 3.9 / 6.6 | 0.7 % | — |
+| suzanne | 1/1 / 5/5 | 9.8 / 14.3 | 82 / 55 | 4783 / 6194 | 6.0 / 6.1 | 4.2 / 6.9 | 1.3 % | — |
+| ogre | 1/1 / 0/5 | 10.8 / 17.8 | 240 / 162 | 6091 / 7352 | 6.3 / 11.6 | 9.6 / 27.3 | 0.6 % | — |
 | spot | 1/1 / 4/5 | 7.5 / 16.8 | 78 / 76 | 5007 / 7772 | 6.5 / 6.2 | 2.4 / 5.3 | 1.2 % | F |
 | bob | 1/1 / 3/5 | 3.8 / 17.3 | 20 / 36 | 2898 / 8263 | 3.8 / 6.4 | 1.3 / 3.2 | 0.2 % | — |
-| blub | 1/1 / 0/5 | 6.4 / 15.2 | 56 / 70 | 2980 / 6275 | 6.0 / 10.3 | 3.3 / 21.9 | 0.6 % | — |
-| pig | 1/1 / 0/5 | 8.1 / 15.8 | 94 / 136 | 4984 / 6841 | 5.6 / 11.4 | 7.0 / 56.2 | 1.8 % | — |
-| jerry | 1/1 / 4/5 | 12.3 / 17.6 | 182 / 112 | 7034 / 4991 | 5.7 / 7.8 | 11.5 / 31.3 | 1.0 % | SC |
-| bridge | 1/1 / 0/5 | 8.9 / — | 86 / — | 2286 / — | 4.3 / — | 6.5 / — | 1.8 % | — |
+| blub | 1/1 / 0/5 | 6.5 / 15.2 | 56 / 70 | 4424 / 6275 | 6.1 / 10.3 | 3.3 / 21.9 | 0.1 % | — |
+| pig | 1/1 / 0/5 | 8.1 / 15.8 | 98 / 136 | 5403 / 6841 | 5.6 / 11.4 | 7.1 / 56.2 | 1.8 % | — |
+| jerry | 1/1 / 4/5 | 12.4 / 17.6 | 273 / 112 | 7075 / 4991 | 5.9 / 7.8 | 10.0 / 31.3 | 1.3 % | SC |
+| bridge | 1/1 / 0/5 | 9.0 / — | 81 / — | 2725 / — | 4.6 / — | 6.4 / — | 1.4 % | — |
 
 Thresholds met, out of 12 models: V 12, A 12, S 9, C 10, F 11, H 12, N 12.
 
@@ -189,7 +189,7 @@ Models: part, cube, lblock, cylinder. Medians over those each tool was run on.
 | Off budget, % (N) | 0.6 | 1.5 | 1.5 | 0.8 | 1.0 | 4.5 | 4.5 |
 | Area variation | 0.05 | 0.08 | 0.08 | 0.07 | 0.15 | 0.13 | 0.13 |
 | Mean distance, per mille of the diagonal | 0.02 | 0.01 | 0.03 | 0.01 | 0.01 | 0.02 | 0.02 |
-| Time, seconds (T) | 5.3 | 1.1 | 12.3 | 3.8 | 3.8 | 3.3 | 3.0 |
+| Time, seconds (T) | 5.3 | 1.1 | 12.3 | 4.9 | 5.0 | 3.3 | 3.0 |
 
 Model by model, against QuadriFlow (ours / QuadriFlow's). A letter in the last column is a threshold missed.
 

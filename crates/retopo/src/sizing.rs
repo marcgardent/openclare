@@ -109,6 +109,8 @@ pub struct Curvature {
     pub smoothing_scale: f64,
     /// Largest factor by which thin parts may make quads smaller than asked
     /// for: thinner than that, a part is beyond what the budget can render.
+    /// At 6, quads that small on the thinnest sheets (the ears of a face)
+    /// came out inverted now and then; at 4 fingers are kept just as well.
     pub thin_range: f64,
     /// How fast the size may grow away from a thin part: by this much of an
     /// edge asked for, per edge asked for travelled.
@@ -117,7 +119,7 @@ pub struct Curvature {
 
 impl Default for Curvature {
     fn default() -> Self {
-        Self { shape_range: 3.0, reading_scale: 0.5, smoothing_scale: 1.5, thin_range: 6.0, gradation: 0.5 }
+        Self { shape_range: 3.0, reading_scale: 0.5, smoothing_scale: 1.5, thin_range: 4.0, gradation: 0.5 }
     }
 }
 

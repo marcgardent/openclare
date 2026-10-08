@@ -31,14 +31,14 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 | DT-015 | Code encore nommé `retopo` | J4 bis | basse | ouvert |
 | DT-016 | Documents en français, à traduire | J0 | basse | ouvert |
 | DT-017 | Corpus : sculptures de l'auteur à ajouter avant la fin de la licence d'essai | J0 | moyenne | ouvert |
-| DT-018 | Parties plus fines qu'un quad mal rendues à bas budget | J7 | haute | ouvert (atténué au J8) ; chantier Q2 |
+| DT-018 | Parties plus fines qu'un quad mal rendues à bas budget | J7 | haute | ouvert (doigts traités au Q2 ; restent les feuilles minces) |
 | DT-019 | Relaxation rudimentaire : la forme des quads plafonne | J7 | haute | **fermé au J8** |
 | DT-020 | Complexe de base doublé par les jonctions en T | J7 | moyenne | ouvert |
 | DT-021 | Scan bruité (rock) : le champ suit le bruit | J7 | moyenne | ouvert |
 | DT-022 | Mires de comparaison incomplètes à 1000 et 8000 quads | J7 | basse | **fermé au J8** |
 | DT-023 | Relaxation : coût et tailles de quads | J8 | basse | ouvert |
 | DT-024 | Courbes guides (rang 4) non commencées | J8 | moyenne | ouvert (réduit au J8) |
-| DT-025 | Densité : portée des singularités et lecture de la courbure encore à l'échelle nominale | J8 | basse | ouvert |
+| DT-025 | Densité : portée des singularités et lecture de la courbure encore à l'échelle nominale | J8 | basse | ouvert (portée locale faite au Q2 ; reste la courbure) |
 | DT-026 | Densité peinte : lecture du Weight Paint de Blender à faire (pont Blender) | J8 | moyenne | ouvert |
 | DT-028 | Symétrie : absente, Quad Remesher l'a | J8 | basse | ouvert, après la qualité |
 | DT-029 | Quads étirés sur la paroi d'un cylindre | J9 | moyenne | ouvert |
@@ -47,6 +47,9 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 | DT-032 | Modèles faits de nombreuses pièces détachées : toute la chaîne se replie | J9 | haute | **fermé (Q1)**, reste DT-034 |
 | DT-034 | Petites pièces : quelques-unes passent encore par le repli, ou n'en sortent pas | Q1 | moyenne | ouvert |
 | DT-035 | Visualisation Rerun : ce qui n'est pas montré, version en retard | T2 | basse | ouvert |
+| DT-036 | Poches et cavités profondes refermées par le maillage | Q2 | moyenne | ouvert |
+| DT-037 | Volume : le maillage est inscrit dans la forme | Q2 | haute | ouvert |
+| DT-038 | Parties fines : limites de la borne de taille | Q2 | moyenne | ouvert |
 | DT-033 | Terrains et scans : aucun outil n'aligne, le champ n'a rien à suivre | J9 | moyenne | ouvert |
 | DT-027 | Garde-fous de temps de calcul sur les entrées pathologiques | J8 | basse | ouvert |
 
@@ -226,6 +229,13 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 - **Remarque de l'auteur, 8 octobre 2026** : les doigts et les oreilles de l'ogre sont un vrai
   problème pour tous les remailleurs. L'exigence à tenir : garder au moins le volume de ces
   parties. C'est devenu le chantier de qualité Q2.
+- **Au chantier Q2 (8 octobre 2026)** : une mesure d'épaisseur borne maintenant la taille des
+  quads pour qu'il en passe six autour d'une partie fine (`quads_around`), et les singularités
+  d'un doigt ne sont plus annulées. Sur l'ogre à 3000 quads, l'écart sur les parties fines
+  passe de 30 à 9 % d'une arête de quad ; les mains ont des doigts. **Reste ouvert** : les
+  feuilles minces (oreilles, tissus), que la mesure du tour laisse de côté à dessein et dont
+  le bord reste grossier ; et les détails plus petits qu'un quad (la queue de `spot` à 1000
+  quads est moins bien rendue qu'avant).
 - **Au jalon 8** : avec la densité adaptative du préréglage, le cochon est valide à 1000 quads.
   Mais les oreilles de l'ogre restent son plus grand écart à la source : la courbure seule ne
   voit pas qu'une partie est mince. Il faudrait une mesure d'épaisseur locale dans le champ de
@@ -323,6 +333,9 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 - **Conséquence** : dans une zone peinte très dense, des détails que les quads pourraient suivre
   ne sont pas vus par le champ.
 - **À faire** : rendre ces deux longueurs locales.
+- **Au chantier Q2** : la portée de l'annulation se compte maintenant en quads locaux (le
+  chemin entre deux singularités est mesuré dans la métrique du champ de taille). Reste
+  l'échelle de lecture de la courbure.
 
 ### DT-026 — Densité peinte : lecture du Weight Paint de Blender à faire (pont Blender)
 
@@ -473,3 +486,53 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
   erreur, mais c'est dans la visionneuse web de Rerun que l'enregistrement a été regardé.
 - **Temps mesurés** : pendant un enregistrement, le temps passé à écrire les calques d'une
   étape est compté dans l'étape suivante.
+
+### DT-036 — Poches et cavités profondes refermées par le maillage
+
+- **Né au** chantier Q2, en cherchant d'où vient le Hausdorff de l'ogre.
+- **Constat** : à 3000 quads, le point de la source le plus éloigné du maillage (1,6 arête de
+  quad) n'est pas sur un doigt mais dans deux petites poches derrière les yeux, de 0,15 de
+  large et 0,35 de profondeur, que le maillage referme. Quad Remesher, au double du budget,
+  les suit (0,36 arête). Tant qu'elles sont là, le Hausdorff de l'ogre (27 ‰) ne dit rien de
+  ses mains.
+- **Piste** : c'est le pendant en creux des parties fines. La même mesure, rayons lancés vers
+  l'extérieur, donnerait la largeur d'une cavité ; reste à décider si on veut la suivre ou la
+  boucher proprement.
+
+### DT-037 — Volume : le maillage est inscrit dans la forme
+
+- **Né au** chantier Q2. Priorité haute : l'auteur tient la préservation des volumes pour très
+  importante.
+- **Constat** : les sommets du maillage sont posés sur la surface. Partout où elle est bombée,
+  les faces passent donc en dessous, et le volume baisse : 99,6 % du volume de l'ogre à 8000
+  quads, 98,8 % à 3000, 96,5 % à 1000 ; entre 97 et 98 % à 1000 quads sur les autres modèles
+  fermés. Sur une partie fine c'est bien plus : un doigt à six faces n'a que 83 % de la
+  section du doigt, à quatre faces 64 %. Une subdivision de Catmull-Clark, usage normal d'un
+  tel maillage, retire encore du volume.
+- **Piste** : après la relaxation, ajuster les sommets le long de la normale pour que le
+  maillage passe au milieu de la surface plutôt qu'en dessous (moindres carrés sur la distance
+  de la source au maillage, et non des sommets à la source) ; en option, viser la surface
+  limite de la subdivision. La mesure `volume_ratio` du banc est là pour le vérifier.
+
+### DT-038 — Parties fines : limites de la borne de taille
+
+- **Né au** chantier Q2.
+- **Pas de plafond sur la part du budget** que prennent les parties fines : sur un modèle fait
+  surtout de parties fines, le reste devient très grossier. Le seul garde-fou est le plancher
+  de taille (un quart de la taille demandée).
+- **Le plancher est réglé sur un cas** : à un sixième, une ou deux faces de `jerry` se
+  retournaient sur ses oreilles à 1000 quads ; à un quart, non. Rien ne garantit que ce soit
+  vrai partout.
+- **Plus de sommets irréguliers** : l'ogre passe de 88 à 155 à 3000 quads, `jerry` de 102 à
+  162. Le préréglage `animation`, qui veut peu de sommets irréguliers, garde pour l'instant le
+  même réglage que `organic` ; à revoir avec DT-013.
+- **Les notes ne comptent pas les parties fines** : le barème de `SCORES.md` voit ce qu'elles
+  coûtent (régularité) et pas ce qu'elles rapportent. Décision à prendre : ajouter un critère,
+  ou l'intégrer à la fidélité.
+- **L'épaisseur n'est pas montrée** dans l'enregistrement Rerun ; on n'y voit que son effet
+  sur le champ de taille.
+- **La mesure** : sept rayons en travers et quatre cordes par sommet, médiane sur le
+  voisinage. Elle coûte de 0,3 à 0,5 seconde. Au bout d'un doigt, l'épaisseur en travers est
+  surestimée d'un tiers environ (le rayon central file le long du doigt).
+- **Préréglage `hard-surface`** : la borne y est désactivée, sans essai. Une pièce mécanique
+  avec des tiges fines en aurait peut-être besoin.

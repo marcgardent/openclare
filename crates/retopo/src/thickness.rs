@@ -26,6 +26,8 @@ use crate::spatial::Bvh;
 #[derive(Clone, Debug, Default)]
 pub struct Thickness {
     pub across: Vec<f64>,
+    /// The other width of the part: its shortest chord half way across.
+    pub width: Vec<f64>,
     pub girth: Vec<f64>,
 }
 
@@ -77,6 +79,7 @@ pub fn measure(mesh: &TriMesh, normals: &[Vec3], reach: f64) -> Thickness {
     }
 
     let mut girth = vec![f64::INFINITY; vertices];
+    let mut widths = vec![f64::INFINITY; vertices];
     for v in 0..vertices {
         if !across[v].is_finite() {
             continue;
@@ -92,9 +95,10 @@ pub fn measure(mesh: &TriMesh, normals: &[Vec3], reach: f64) -> Thickness {
             })
             .fold(f64::INFINITY, f64::min);
         // Round an ellipse of those two widths, near enough.
+        widths[v] = width;
         girth[v] = std::f64::consts::FRAC_PI_2 * (across[v] + width);
     }
-    Thickness { across, girth }
+    Thickness { across, width: widths, girth }
 }
 
 /// Two unit vectors that make a frame with `axis`.
