@@ -43,8 +43,11 @@ mesh = surface.data
 if options["up"] == "y":
     # Bring y up to z, the way Blender stands.
     mesh.transform(Matrix.Rotation(math.radians(90.0), 4, "X"))
-low = Vector(tuple(min(v.co[k] for v in mesh.vertices) for k in range(3)))
-high = Vector(tuple(max(v.co[k] for v in mesh.vertices) for k in range(3)))
+# What is framed is what is seen: a file may carry vertices no face uses,
+# far from the rest.
+seen = sorted({index for polygon in mesh.polygons for index in polygon.vertices})
+low = Vector(tuple(min(mesh.vertices[v].co[k] for v in seen) for k in range(3)))
+high = Vector(tuple(max(mesh.vertices[v].co[k] for v in seen) for k in range(3)))
 centre, extent = (low + high) / 2, max((high - low).length, 1e-12)
 mesh.transform(Matrix.Scale(2.0 / extent, 4) @ Matrix.Translation(-centre))
 for polygon in mesh.polygons:
@@ -84,8 +87,8 @@ camera.rotation_euler = (-towards).to_track_quat("-Z", "Y").to_euler()
 # The mesh fits in a ball of radius 1: frame what the camera actually sees.
 side, up = towards.cross(Vector((0, 0, 1))).normalized(), None
 up = side.cross(towards).normalized()
-across = max(abs(v.co.dot(side)) for v in mesh.vertices)
-upwards = max(abs(v.co.dot(up)) for v in mesh.vertices)
+across = max(abs(mesh.vertices[v].co.dot(side)) for v in seen)
+upwards = max(abs(mesh.vertices[v].co.dot(up)) for v in seen)
 camera.data.ortho_scale = 2.1 * max(across, upwards)
 
 sun = bpy.data.objects.new("sun", bpy.data.lights.new("sun", "SUN"))
