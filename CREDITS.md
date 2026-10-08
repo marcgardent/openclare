@@ -37,7 +37,7 @@ BY-SA 4.0 peut être placé sous GPLv3, pas l'inverse. Décision du 8 octobre 20
 | `suzanne` | *Suzanne*, la tête de singe de Blender, Blender Foundation | primitive « Monkey » de Blender, exportée par `bench/make_corpus.py` | livrée avec Blender, logiciel sous licence GNU GPL | dans le dépôt | subdivisée |
 | `terrain` | *Mountain Range Terrain*, Bipro Fx | [BlenderKit](https://www.blenderkit.com/), `asset_base_id:43a14c49-93bb-49e7-baec-6397eae071c5`, publié le 7 juillet 2026, récupéré le 8 octobre 2026 | Royalty Free de BlenderKit : utilisable dans un projet, pas redistribuable tel quel | **hors dépôt** | exporté tel quel par `bench/import_blenderkit.py`, 543 557 triangles |
 | `mahaveer` | *Mahaveer Dev*, Avi Panchal | BlenderKit, `asset_base_id:b6564fca-81c7-4873-945a-287fe143b7e6`, publié le 29 décembre 2025, récupéré le 8 octobre 2026 | Royalty Free de BlenderKit | **hors dépôt** | exporté tel quel, 418 472 triangles, 164 morceaux |
-| `marine` | *Marine Armor*, Grudgebearer iZerat ; création de fan d'après un jeu vidéo | BlenderKit, `asset_base_id:22029966-6ee8-48d1-8d6b-d962162e09fa`, publié le 9 janvier 2024, récupéré le 8 octobre 2026 | Royalty Free de BlenderKit | **hors dépôt**, aucune image publiée | exporté tel quel, 247 198 triangles |
+| `marine` | *Marine Armor*, Grudgebearer iZerat ; création de fan d'après un jeu vidéo | BlenderKit, `asset_base_id:22029966-6ee8-48d1-8d6b-d962162e09fa`, publié le 9 janvier 2024, récupéré le 8 octobre 2026 | Royalty Free de BlenderKit | **hors dépôt** | exporté tel quel, 247 198 triangles |
 
 ## Formes produites par le projet
 
@@ -60,7 +60,8 @@ Aucun droit de tiers. Elles sont produites par des scripts du dépôt et suivent
 
 Les pages de `docs/models/` montrent des rendus des modèles et de leurs remaillages. Pour les
 modèles sous licence Royalty Free de BlenderKit, des images sont permises, pas les modèles
-eux-mêmes. Aucune image de `marine` n'est publiée : c'est une création de fan d'après un jeu.
+eux-mêmes. C'est aussi le cas de `marine`, création de fan d'après un jeu vidéo : son image est
+publiée depuis le 8 octobre 2026, par décision de l'auteur du projet, avec le crédit ci-dessus.
 
 ## Ajouter un modèle
 
