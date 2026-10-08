@@ -1398,6 +1398,9 @@ Ce qui reste ouvert :
 
 Chaque jalon produit quelque chose de vérifiable et se termine par **un arrêt pour revue**.
 
+What is left to do, by order of importance, is in [ROADMAP.md](ROADMAP.md) since 8 October
+2026; the tables below record what each milestone was and what it delivered.
+
 | Jalon | Contenu | Ce qu'on peut vérifier à la fin |
 |---|---|---|
 | J0 | Banc de mesure, corpus, fabrique de chaînes | **Fait.** Chiffres de QuadriFlow, de Quad Remesher et du plancher ; seuils adoptés |
