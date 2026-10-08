@@ -29,7 +29,8 @@ comparaison.
 
 Le cahier des charges, les mesures et la feuille de route sont dans
 [ALGORITHME.md](ALGORITHME.md) ; ce qui a été écarté ou reporté en chemin, dans
-[BACKLOG.md](BACKLOG.md).
+[BACKLOG.md](BACKLOG.md) ; les auteurs, sources et licences des modèles 3D utilisés, dans
+[CREDITS.md](CREDITS.md).
 
 ## Utilisation
 

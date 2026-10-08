@@ -119,6 +119,26 @@ fn vertices_are_read_off_the_map_onto_the_surface() {
 }
 
 #[test]
+fn two_sheets_that_touch_at_one_point_are_meshed_all_the_same() {
+    // Two squares sharing a single corner: round that vertex the surface is
+    // two separate fans, each with its own pair of border edges.
+    let mut mesh = primitives::plane(12);
+    let shared = mesh.positions.iter().position(|p| p.x == 1.0 && p.y == 1.0).unwrap() as u32;
+    let first = mesh.positions.len() as u32;
+    let other = primitives::plane(12);
+    let twin = other.positions.iter().position(|p| p.x == -1.0 && p.y == -1.0).unwrap() as u32;
+    mesh.positions.extend(other.positions.iter().map(|&p| p + Vec3::new(2.0, 2.0, 0.0)));
+    let moved = |v: u32| if v == twin { shared } else { first + v };
+    mesh.triangles.extend(other.triangles.iter().map(|tri| tri.map(moved)));
+
+    let (quads, _) = config(800).remesh(&mesh).unwrap();
+    let stats = quads.stats();
+    assert_eq!(stats.quads, stats.faces);
+    assert!(stats.faces > 600 && stats.faces < 1000, "{} faces", stats.faces);
+    assert_eq!(stats.non_manifold_edges, 0);
+}
+
+#[test]
 fn the_chain_is_deterministic_and_checks_its_configuration() {
     let sphere = primitives::icosphere(4);
     let settings = config(800);

@@ -63,23 +63,30 @@ impl Race<'_> {
             (axis, d[along].abs(), d[1 - along].abs())
         };
 
-        // A wall half-edge to start from at each vertex: the one along the
-        // border if there is a border, since the sectors then begin there.
-        let mut first = vec![usize::MAX; vertices];
-        for h in (0..is_wall.len()).filter(|&h| is_wall[h]) {
-            let v = start_of(h) as usize;
-            if first[v] == usize::MAX || twin[h] == INVALID {
-                first[v] = h;
-            }
+        // Round a vertex the surface is a fan of triangles: closed, or open
+        // on a border. A vertex where two sheets of the surface merely touch
+        // has several fans, and each is dealt with as a vertex of its own.
+        // The spokes of a fan are listed counter-clockwise, from the border
+        // if it has one, since the sectors then begin there.
+        struct Fan {
+            vertex: usize,
+            spokes: Vec<Spoke>,
+            on_border: bool,
         }
-
-        // The spokes of each vertex, counter-clockwise.
-        let mut spokes: Vec<Vec<Spoke>> = vec![Vec::new(); vertices];
-        let mut on_border = vec![false; vertices];
-        for v in (0..vertices).filter(|&v| first[v] != usize::MAX) {
-            let mut h = first[v];
-            let mut key = 0;
+        let mut fans: Vec<Fan> = Vec::new();
+        let mut fans_at: Vec<Vec<usize>> = vec![Vec::new(); vertices];
+        let mut listed = vec![false; is_wall.len()];
+        let walls = (0..is_wall.len()).filter(|&h| is_wall[h]);
+        let from_borders = walls.clone().filter(|&h| twin[h] == INVALID);
+        for first in from_borders.chain(walls) {
+            if listed[first] {
+                continue;
+            }
+            let v = start_of(first) as usize;
+            let mut fan = Fan { vertex: v, spokes: Vec::new(), on_border: false };
+            let (mut h, mut key) = (first, 0);
             loop {
+                listed[h] = true;
                 // The sector counter-clockwise of `h`, up to the next wall.
                 let (mut face, mut corner) = (h / 3, h % 3);
                 let mut angle = 0.0;
@@ -102,77 +109,89 @@ impl Race<'_> {
                 };
                 let turns = (angle / std::f64::consts::FRAC_PI_2).round().max(1.0) as usize;
                 let back = Some(twin[h]).filter(|&t| t != INVALID).map(|t| t as usize);
-                spokes[v].push(Spoke { out: Some(h), back, other: end_of(h), turns, key });
+                fan.spokes.push(Spoke { out: Some(h), back, other: end_of(h), turns, key });
                 key += turns;
                 let next = twin[arriving];
                 if next == INVALID {
                     // The far side of the border: a spoke with no sector.
-                    on_border[v] = true;
-                    spokes[v].push(Spoke { out: None, back: Some(arriving), other: start_of(arriving), turns: 0, key });
+                    fan.on_border = true;
+                    fan.spokes.push(Spoke {
+                        out: None,
+                        back: Some(arriving),
+                        other: start_of(arriving),
+                        turns: 0,
+                        key,
+                    });
                     break;
                 }
-                if next as usize == first[v] {
+                if next as usize == first {
                     break;
                 }
                 h = next as usize;
             }
+            fans_at[v].push(fans.len());
+            fans.push(fan);
         }
 
-        // A vertex a wall merely runs through is no corner.
-        let runs_through = |v: usize| {
-            let around = &spokes[v];
-            around.len() == 2 && around[0].turns == 2 && (on_border[v] || around[1].turns == 2)
+        // A fan a wall merely runs through is no corner.
+        let runs_through = |fan: &Fan| {
+            let around = &fan.spokes;
+            around.len() == 2 && around[0].turns == 2 && (fan.on_border || around[1].turns == 2)
         };
-        let mut node = vec![INVALID; vertices];
-        let new_node = |race: &mut Self, v: usize, corner: bool| {
-            let turns: usize = spokes[v].iter().map(|spoke| spoke.turns).sum();
+        let mut node = vec![INVALID; fans.len()];
+        let new_node = |race: &mut Self, fan: &Fan, corner: bool| {
+            let turns: usize = fan.spokes.iter().map(|spoke| spoke.turns).sum();
             // Past a border there is no surface, only room for the rim of
             // the hole to close.
-            let full_turn = (turns + if on_border[v] { 2 } else { 0 }) as f64;
+            let full_turn = (turns + if fan.on_border { 2 } else { 0 }) as f64;
             race.outcome.junctions.push(Junction::at_wall(
-                map.mesh.positions[v],
-                (is_singular[v] && !on_border[v]).then_some(v as u32),
+                map.mesh.positions[fan.vertex],
+                (is_singular[fan.vertex] && !fan.on_border).then_some(fan.vertex as u32),
                 corner,
                 full_turn,
             ));
             race.outcome.junctions.len() as u32 - 1
         };
-        for v in (0..vertices).filter(|&v| !spokes[v].is_empty() && !runs_through(v)) {
-            node[v] = new_node(self, v, true);
+        for (index, fan) in fans.iter().enumerate() {
+            if !runs_through(fan) {
+                node[index] = new_node(self, fan, true);
+            }
         }
 
         // One trace per run of wall from a corner to the next. A border is
         // only ever followed with the surface on its left.
         let mut used = vec![false; is_wall.len()];
         let mut starts: Vec<(usize, usize)> = Vec::new();
-        for v in (0..vertices).filter(|&v| node[v] != INVALID) {
-            starts.extend((0..spokes[v].len()).map(|index| (v, index)));
+        for index in (0..fans.len()).filter(|&index| node[index] != INVALID) {
+            starts.extend((0..fans[index].spokes.len()).map(|spoke| (index, spoke)));
         }
         let mut pending = 0;
         loop {
             let Some(&(from, index)) = starts.get(pending) else {
                 // What is left are closed walls without a corner: each needs
                 // some vertex to hang its single arc on.
-                let Some(v) = (0..vertices).find(|&v| {
-                    node[v] == INVALID && spokes[v].iter().any(|spoke| spoke.out.is_some() && !used[spoke.edge()])
+                let Some(fan) = (0..fans.len()).find(|&fan| {
+                    node[fan] == INVALID
+                        && fans[fan].spokes.iter().any(|spoke| spoke.out.is_some() && !used[spoke.edge()])
                 }) else {
                     break;
                 };
-                node[v] = new_node(self, v, false);
-                starts.push((v, 0));
+                node[fan] = new_node(self, &fans[fan], false);
+                starts.push((fan, 0));
                 continue;
             };
             pending += 1;
-            if spokes[from][index].out.is_none() || used[spokes[from][index].edge()] {
+            if fans[from].spokes[index].out.is_none() || used[fans[from].spokes[index].edge()] {
                 continue;
             }
 
             let id = self.outcome.traces.len() as u32;
             let (mut path, mut stretches, mut length) = (Vec::new(), Vec::new(), 0.0);
             let mut border = true;
-            let (mut v, mut spoke) = (from, spokes[from][index]);
-            let end_key = loop {
+            let (mut at, mut spoke) = (from, fans[from].spokes[index]);
+            let end = loop {
                 used[spoke.edge()] = true;
+                let v = fans[at].vertex;
                 let other = spoke.other as usize;
                 // The trace is told from the face on its left, or from the
                 // one on its right where the left is off the surface.
@@ -208,25 +227,29 @@ impl Race<'_> {
                 path.push(map.mesh.positions[v]);
                 length += along;
 
-                // On to the same edge seen from its other end.
-                let arrival = spokes[other]
+                // On to the same edge seen from its other end: in whichever
+                // fan of that vertex holds it.
+                let (there, arrival) = fans_at[other]
                     .iter()
-                    .position(|candidate| candidate.other as usize == v && candidate.edge() == spoke.edge())
-                    .expect("a wall edge has two ends");
-                if node[other] != INVALID {
+                    .find_map(|&fan| {
+                        let found = fans[fan].spokes.iter().position(|candidate| candidate.edge() == spoke.edge());
+                        found.map(|arrival| (fan, arrival))
+                    })
+                    .expect("a wall edge is listed at both its ends");
+                if node[there] != INVALID {
                     if self.passages[other].is_none() {
                         self.passages[other] =
                             Some(Passage { trace: id, time: length, departure: (face, corner, axis) });
                     }
                     path.push(map.mesh.positions[other]);
-                    break (other, spokes[other][arrival].key);
+                    break (there, fans[there].spokes[arrival].key);
                 }
                 // No corner there: the wall has exactly one other spoke.
-                (v, spoke) = (other, spokes[other][1 - arrival]);
+                (at, spoke) = (there, fans[there].spokes[1 - arrival]);
             };
             self.outcome.traces.push(Trace::wall(
-                (node[from], spokes[from][index].key as f64),
-                (node[end_key.0], end_key.1 as f64),
+                (node[from], fans[from].spokes[index].key as f64),
+                (node[end.0], end.1 as f64),
                 length,
                 path,
                 stretches,
@@ -236,13 +259,13 @@ impl Race<'_> {
 
         // The traces of the corners: one along each grid direction strictly
         // inside a sector.
-        for v in (0..vertices).filter(|&v| node[v] != INVALID) {
-            for spoke in &spokes[v] {
+        for (index, fan) in fans.iter().enumerate().filter(|&(index, _)| node[index] != INVALID) {
+            for spoke in &fan.spokes {
                 let Some(h) = spoke.out else { continue };
                 let (axis, _, _) = run(h);
                 for quarter in 1..spoke.turns {
                     if let Some(departure) = map.enter_from_vertex(h / 3, h % 3, (axis + quarter as Axis) % 4) {
-                        self.start(node[v], (spoke.key + quarter) as f64, departure);
+                        self.start(node[index], (spoke.key + quarter) as f64, departure);
                     }
                 }
             }

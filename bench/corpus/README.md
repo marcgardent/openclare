@@ -3,6 +3,10 @@
 Les modèles sources du banc de mesure. Ils sont versionnés parce que les mires conservées
 (`../reference/`) n'ont de sens que face à ces fichiers exacts.
 
+Les auteurs, sources et licences de tous les modèles sont dans
+[CREDITS.md](../../CREDITS.md). Les modèles dont la licence interdit la redistribution n'y sont
+pas : ils vivent sous `../corpus-large/`, hors git, et `make blenderkit` les retélécharge.
+
 ## Formes de synthèse
 
 Générées par `../make_corpus.py` (Blender) ou par `retopo primitive`. Aucun droit de tiers.

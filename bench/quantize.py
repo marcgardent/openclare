@@ -12,7 +12,7 @@ import statistics
 import subprocess
 import sys
 
-from run import CORPUS, CREASE_ANGLE, MODELS, RESULTS, RETOPO
+from run import CREASE_ANGLE, LOCAL_MODELS, MODELS, RESULTS, RETOPO, source_path
 
 # Desert Rose is not a manifold surface: it waits for the repair stage. A
 # torus has no singularity, hence no T-mesh to quantize.
@@ -20,7 +20,7 @@ SKIPPED = {"rose", "torus"}
 
 
 def quantize(model, target, hard_edges):
-    command = [str(RETOPO), "quantize", str(CORPUS / f"{model}.obj"), "--quads", str(target), "--simplify", "2", "--json"]
+    command = [str(RETOPO), "quantize", str(source_path(model)), "--quads", str(target), "--simplify", "2", "--json"]
     if hard_edges:
         command += ["--crease-angle", CREASE_ANGLE]
     done = subprocess.run(command, capture_output=True, text=True)
@@ -50,7 +50,7 @@ def main():
     valid = total = 0
     errors = []
     for model, _, hard_edges, _ in MODELS:
-        if model in SKIPPED or (wanted and model not in wanted):
+        if model in SKIPPED or model in LOCAL_MODELS or (wanted and model not in wanted):
             continue
         for target in targets:
             r = quantize(model, target, hard_edges)

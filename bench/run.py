@@ -22,6 +22,18 @@ OUTPUT = BENCH / "out"
 RESULTS = BENCH / "results"
 # Outputs of tools that cannot be re-run at will (a licence that expires).
 REFERENCE = BENCH / "reference"
+# Models whose licence does not allow passing them on: they, and what is
+# remeshed from them, stay in this directory, which is not tracked. See
+# CREDITS.md for where each one comes from and how to fetch it again.
+LOCAL = BENCH / "corpus-large"
+# Those that come from BlenderKit, by their `asset_base_id`: `make blenderkit`
+# (bench/fetch_blenderkit.py) downloads them again.
+BLENDERKIT = {
+    "terrain": "43a14c49-93bb-49e7-baec-6397eae071c5",
+    "mahaveer": "b6564fca-81c7-4873-945a-287fe143b7e6",
+    "marine": "22029966-6ee8-48d1-8d6b-d962162e09fa",
+}
+LOCAL_MODELS = set(BLENDERKIT)
 
 # name, category, has hard edges, has open boundaries
 MODELS = [
@@ -46,6 +58,13 @@ MODELS = [
     # An edge that turns inwards, and hard edges that are closed curves.
     ("lblock", "mechanical", True, False),
     ("cylinder", "mechanical", True, False),
+    # Not redistributable (see LOCAL_MODELS): measured, but kept out of the
+    # acceptance groups, which anyone must be able to reproduce.
+    # A landscape from BlenderKit: half a million triangles, open, rugged.
+    ("terrain", "extra", False, True),
+    # Two game characters from BlenderKit, made of many separate pieces.
+    ("mahaveer", "extra", False, True),
+    ("marine", "extra", False, True),
     ("sphere", "calibration", False, False),
     ("torus", "calibration", False, False),
 ]
@@ -78,7 +97,12 @@ def run(command, timeout=1800):
 
 
 def source_path(model):
-    return CORPUS / f"{model}.obj"
+    return (LOCAL if model in LOCAL_MODELS else CORPUS) / f"{model}.obj"
+
+
+def available_models():
+    """Every model of the corpus, less the local ones this machine lacks."""
+    return [name for name, *_ in MODELS if name not in LOCAL_MODELS or source_path(name).exists()]
 
 
 def ensure_corpus(models):
@@ -86,7 +110,7 @@ def ensure_corpus(models):
     for model in models:
         if model in PRIMITIVES and not source_path(model).exists():
             run([RETOPO, "primitive", model, source_path(model)])
-    if any(not source_path(model).exists() for model in models):
+    if any(not source_path(model).exists() for model in models if model not in LOCAL_MODELS):
         run(["blender", "-b", "--python", BENCH / "make_corpus.py", "--", CORPUS])
     missing = [model for model in models if not source_path(model).exists()]
     if missing:
@@ -111,7 +135,8 @@ def quadriflow(model, sharp, boundary, target, seeds, directory):
 
 def quadremesher_reference(model, target, uniform):
     setting = "uniform" if uniform else "default"
-    return REFERENCE / "quadremesher" / f"{model}__{target}__{setting}.obj"
+    kept = LOCAL / "reference" if model in LOCAL_MODELS else REFERENCE
+    return kept / "quadremesher" / f"{model}__{target}__{setting}.obj"
 
 
 def quadremesher(uniform, refresh=False):
@@ -273,7 +298,7 @@ def report(results, target, seeds, tools):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--models", default=",".join(m[0] for m in MODELS))
+    parser.add_argument("--models", default=",".join(available_models()))
     parser.add_argument("--tools", default=",".join(TOOLS))
     parser.add_argument("--target", type=int, default=DEFAULT_TARGET)
     parser.add_argument("--seeds", default="1,2,3,4,5")
