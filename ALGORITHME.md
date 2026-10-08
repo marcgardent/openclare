@@ -1514,6 +1514,7 @@ pub struct RemeshConfig {
     pub crease_angle: Option<f64>,   // arêtes vives : None, ou seuil dièdre en degrés
     pub adaptivity: f64,             // taille des quads selon la forme : 0 unique, jusqu'à 1 (M1 bis)
     pub quads_around: f64,           // quads au moins autour d'une partie fine ; 0 : sans objet (Q2)
+    pub volume_fit: f64,             // 0 : sommets sur la surface ; 1 : maillage ajusté au volume (Q2 bis)
     pub density_contrast: f64,       // densité peinte : rapport entre un poids de 1 et un poids de 0
     pub seed: u64,
 }
@@ -1548,7 +1549,8 @@ l'instant sur la chaîne organique, en attendant la chaîne durci (J9).
 - `method` ajouté : le durci aura sa propre chaîne.
 - `adaptivity` et `density_contrast` ajoutés au jalon 8 avec la densité ; les fichiers
   enregistrés avant restent lisibles.
-- `quads_around` ajouté au chantier Q2 pour les parties fines.
+- `quads_around` ajouté au chantier Q2 pour les parties fines, `volume_fit` au chantier Q2 bis
+  pour le volume ; ce dernier vaut 1 dans les trois préréglages.
 
 ### En vue de la bibliothèque C (J10)
 
