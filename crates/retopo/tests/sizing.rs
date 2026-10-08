@@ -52,7 +52,7 @@ fn mean_edge(mesh: &PolyMesh, keep: impl Fn(Vec3) -> bool) -> f64 {
 fn without_adaptivity_or_paint_every_quad_is_the_size_asked_for() {
     let work = work_mesh(&spindle());
     assert!(work.sizing.iter().all(|&s| s == 1.0));
-    let request = Request { edge_length: 0.15, adaptivity: 0.0, painted: None };
+    let request = Request { edge_length: 0.15, adaptivity: 0.0, painted: None, quads_around: 0.0 };
     let scale = sizing::create(Kind::Curvature).size(&work, &request).unwrap();
     assert!(scale.iter().all(|&s| s == 1.0));
 }
@@ -62,7 +62,8 @@ fn quads_get_smaller_where_the_surface_bends_more() {
     let work = work_mesh(&spindle());
     let sizer = sizing::create(Kind::Curvature);
     let at = |adaptivity: f64| {
-        let scale = sizer.size(&work, &Request { edge_length: 0.15, adaptivity, painted: None }).unwrap();
+        let scale =
+            sizer.size(&work, &Request { edge_length: 0.15, adaptivity, painted: None, quads_around: 0.0 }).unwrap();
         // The number of quads is unchanged: on average, 1 / s² is 1.
         let density: Vec<f64> = scale.iter().map(|s| 1.0 / (s * s)).collect();
         assert!((mean_where(&work, &density, |_| true) - 1.0).abs() < 1e-9);
@@ -81,8 +82,9 @@ fn painted_density_sets_the_size_and_blends_across_its_border() {
     let source = primitives::icosphere(4);
     let work = work_mesh(&source);
     let sizer = sizing::create(Kind::Curvature);
-    let sized =
-        |painted: Painted| sizer.size(&work, &Request { edge_length: 0.1, adaptivity: 0.0, painted: Some(painted) });
+    let sized = |painted: Painted| {
+        sizer.size(&work, &Request { edge_length: 0.1, adaptivity: 0.0, painted: Some(painted), quads_around: 0.0 })
+    };
     // The northern half painted at 1, the southern left at 0, sixteen times
     // the quads per area between the two: edges four times shorter.
     let weights: Vec<f64> = source.positions.iter().map(|p| if p.z > 0.0 { 1.0 } else { 0.0 }).collect();
@@ -104,7 +106,9 @@ fn painted_density_sets_the_size_and_blends_across_its_border() {
     assert!(sized(Painted { source: &source, weights: &weights[1..], contrast: 16.0 }).is_err());
     assert!(sized(Painted { source: &source, weights: &vec![1.5; weights.len()], contrast: 16.0 }).is_err());
     assert!(sized(Painted { source: &source, weights: &weights, contrast: 0.5 }).is_err());
-    assert!(sizer.size(&work, &Request { edge_length: 0.1, adaptivity: 2.0, painted: None }).is_err());
+    assert!(
+        sizer.size(&work, &Request { edge_length: 0.1, adaptivity: 2.0, painted: None, quads_around: 0.0 }).is_err()
+    );
 }
 
 #[test]

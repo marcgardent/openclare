@@ -549,7 +549,8 @@ fn fields(
     if let Some(guides) = guides {
         let painted =
             guides.density.map(|weights| sizing::Painted { source: input, weights, contrast: config.density_contrast });
-        let request = sizing::Request { edge_length, adaptivity: config.adaptivity, painted };
+        let request =
+            sizing::Request { edge_length, adaptivity: config.adaptivity, painted, quads_around: config.quads_around };
         work.sizing = sizing::create(sizing::Kind::Curvature).size(&work, &request)?;
         clock.lap(report, "sizing");
         recorder::show_sizing(recorder, &work);
