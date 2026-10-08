@@ -50,6 +50,10 @@ def library():
         count, copy = getattr(lib, f"openclare_result_{edges}_count"), getattr(lib, f"openclare_result_copy_{edges}s")
         count.restype, count.argtypes = size, [pointer]
         copy.restype, copy.argtypes = None, [pointer, pointer]
+    lib.openclare_result_crease_count.restype = size
+    lib.openclare_result_crease_count.argtypes = [pointer]
+    lib.openclare_result_copy_creases.restype = None
+    lib.openclare_result_copy_creases.argtypes = [pointer, pointer, pointer]
     lib.openclare_result_free.restype = None
     _library = lib
     return lib
@@ -68,17 +72,18 @@ class Remeshed:
     number of corners of each face), `corners` (the vertex of each corner),
     `report` (what the engine says of the run, as a dictionary), and what was
     asked for on top: `uv` (per layer name, two floats per corner), `seams`
-    and `hard_edges` (two vertices per edge), None when not asked for."""
+    and `hard_edges` (two vertices per edge), `creases` (the same, and one
+    weight per edge), None when not asked for."""
 
     def __init__(self):
         self.positions = self.sizes = self.corners = None
         self.report, self.uv = {}, {}
-        self.seams = self.hard_edges = None
+        self.seams = self.hard_edges = self.creases = None
 
 
 def remesh(
     positions, vertex_count, triangles, triangle_count, corner_vertices, corner_count, preset, settings,
-    density=None, on_stage=None, uv_layers=(), seams=False, hard_edges=False,
+    density=None, on_stage=None, uv_layers=(), seams=False, hard_edges=False, creases=False,
 ):
     """Remeshes into quads the triangle mesh whose arrays sit at the addresses
     given: three floats per vertex at `positions`, three corners per triangle
@@ -95,7 +100,8 @@ def remesh(
 
     `uv_layers` names the layers of texture coordinates wanted, among
     "grid" and "atlas"; `seams` asks for the edges the atlas is cut along,
-    `hard_edges` for those that run along a hard edge of the input.
+    `hard_edges` for those that run along a hard edge of the input,
+    `creases` for those to keep sharp under subdivision, with their weights.
 
     Returns a `Remeshed`.
     """
@@ -144,6 +150,10 @@ def remesh(
         if hard_edges:
             out.hard_edges = numpy.empty(2 * lib.openclare_result_hard_edge_count(result), numpy.uint32)
             lib.openclare_result_copy_hard_edges(result, out.hard_edges.ctypes.data)
+        if creases:
+            count = lib.openclare_result_crease_count(result)
+            out.creases = (numpy.empty(2 * count, numpy.uint32), numpy.empty(count, numpy.float32))
+            lib.openclare_result_copy_creases(result, out.creases[0].ctypes.data, out.creases[1].ctypes.data)
         return out
     finally:
         lib.openclare_result_free(result)

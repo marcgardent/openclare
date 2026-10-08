@@ -1453,6 +1453,55 @@ interface and factory, called last):
 - **Subdivision still shrinks the mesh.** Fitting makes the quad mesh itself keep the volume,
   not the smooth surface a Catmull-Clark subdivision makes of it (DT-039).
 
+### Milestone 12 — Creases
+
+Done on 8 and 9 October 2026, at the author's suggestion ("computing and exporting creases
+could be very nice"), ahead of the order of the table below.
+
+**What for.** A quad mesh is made to be subdivided, and subdivision rounds everything off:
+subdivided twice, a cube of 1000 quads ends up 19 per mille of its diagonal away from the
+cube. A crease weight on an edge, from 0 to 1, tells the subdivision to keep that edge sharp,
+wholly or in part.
+
+**What was done** (`crates/openclare/src/creases.rs`, called at the very end of a chain):
+
+- **Along a hard edge of the input**: weight 1. The chain knows these edges since milestone 9.
+- **Where the source folds without being marked hard**: the source is looked at on either side
+  of each edge, close to it and at the middle of the two faces, three points along the edge
+  each time. If at least 60 % of the turn between the two faces happens close to the edge,
+  the source has a fold there, and the weight goes from 0 at 30 degrees to 1 at 70. Where the
+  surface turns evenly from one face to the other it is just curved, and no weight is given:
+  subdivision is right to round it.
+- **Out of the engine**: the report of a run lists the creased edges with their weights; the
+  C interface gives them (`openclare_result_copy_creases`); the add-on writes them to the
+  `crease_edge` attribute, which Blender's Subdivision Surface modifier reads (box *Creases*
+  of the Export section).
+
+**Does it help?** Measured with Blender's own subdivision (`bench/creases.py`, results in
+`bench/results/CREASES.md`): each mesh subdivided twice with its weights and without, both
+measured against the source. Hausdorff distance in per mille of the diagonal, without → with:
+
+| Model | 1000 quads | 3000 quads |
+|---|---|---|
+| cube | 19.2 → 0.0 | 11.2 → 0.0 |
+| lblock | 17.4 → 0.0 | 9.9 → 0.0 |
+| cylinder | 11.5 → 2.0 | 6.3 → 1.2 |
+| part | 18.4 → 15.1 | 10.1 → 1.4 |
+| jerry | 30.9 → 29.7 | 22.9 → 22.5 |
+| ogre | 28.8 → 28.9 | 29.6 → 29.7 |
+| pig | 17.6 → 17.4 | 13.4 → 13.4 |
+
+- **On mechanical shapes the criterion of the milestone is met, and by far**: the subdivided
+  cube and L-shaped block are the source again, to the last digit shown.
+- **On organic shapes it changes little**, either way: a few dozen edges get a weight (124 on
+  the ogre at 3000 quads, most of them partial), the mean distance improves by one per cent
+  or less, the Hausdorff distance moves by less than one per cent. Models with no fold (blob,
+  creature, bob, sphere, torus) get no crease at all, as they should.
+- **A side finding**: subdivision loses volume again. The ogre at 1000 quads keeps 99.8 % of
+  its volume as a quad mesh and 96.4 % once subdivided twice. That is DT-039, now measured.
+
+What is left open is in DT-043.
+
 ---
 
 ## 4. Jalons
@@ -1478,7 +1527,7 @@ What is left to do, by order of importance, is in [ROADMAP.md](ROADMAP.md) since
 | J9 bis | Symétrie : un modèle symétrique par rapport à un plan donne un maillage symétrique (DT-028). **Reportée** : passe après les travaux de qualité (décision du 8 octobre 2026) | Écart entre le maillage et son reflet nul ; boucle d'arêtes sur le plan de symétrie |
 | J10 | Export des coutures et des UV ; bibliothèque à interface C et greffon Python sans copie mémoire | Remaillage lancé depuis Blender, UV et coutures relus dans la scène. **First step done, awaiting review**: code renamed to `openclare`, C library (`openclare-capi`), add-on with a preset, a number of quads and a button (`make addon`). Next step: Weight Paint, marked edges, UV layers |
 | J11 | Prétraitement de réparation : fusion des pièces qui se traversent, arêtes non variété | Desert Rose remaillée en une seule peau valide |
-| J12 | Plis automatiques : un poids de pli par arête de sortie | Après subdivision, le maillage plissé est plus proche de la source que le même sans plis |
+| J12 | Plis automatiques : un poids de pli par arête de sortie | Après subdivision, le maillage plissé est plus proche de la source que le même sans plis. **Done, awaiting review**: yes on mechanical shapes (the subdivided cube is the cube again), little change on organic ones |
 | J13 | Normales optimales par coin | Écart angulaire entre l'ombrage du maillage allégé et celui de la source |
 | J14 | Reconstitution Multires : niveaux de subdivision avec déplacement reprojeté | À chaque niveau, l'écart à la sculpture d'origine diminue jusqu'à la retrouver |
 

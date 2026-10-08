@@ -84,6 +84,15 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         ),
         default=True,
     )
+    export_creases: bpy.props.BoolProperty(
+        name="Creases",
+        description=(
+            "Give a crease weight to the edges that should stay sharp when the result is subdivided: "
+            "those along a hard edge of the original, and those where the original folds sharply. "
+            "A Subdivision Surface modifier reads them"
+        ),
+        default=True,
+    )
 
 
 def weights_of(evaluated, mesh, name):
@@ -135,9 +144,9 @@ def in_place(mesh):
 UV_NAMES = {"grid": "openclare grid", "atlas": "openclare atlas"}
 
 
-def flag_edges(mesh, attribute, pairs):
-    """Sets the boolean `attribute` of the edges of `mesh` on those given as
-    `pairs` of vertices, off on the others."""
+def edge_keys(mesh, pairs):
+    """One number per edge, whichever way round its two vertices are given:
+    for the edges of `mesh`, and for those given as `pairs` of vertices."""
     import numpy
 
     ends = numpy.empty(2 * len(mesh.edges), numpy.int64)
@@ -145,12 +154,39 @@ def flag_edges(mesh, attribute, pairs):
     ends = numpy.sort(ends.reshape(-1, 2), axis=1)
     wanted = numpy.sort(pairs.astype(numpy.int64).reshape(-1, 2), axis=1)
     count = len(mesh.vertices)
-    flags = numpy.isin(ends[:, 0] * count + ends[:, 1], wanted[:, 0] * count + wanted[:, 1])
+    return ends[:, 0] * count + ends[:, 1], wanted[:, 0] * count + wanted[:, 1]
+
+
+def flag_edges(mesh, attribute, pairs):
+    """Sets the boolean `attribute` of the edges of `mesh` on those given as
+    `pairs` of vertices, off on the others."""
+    import numpy
+
+    of_mesh, wanted = edge_keys(mesh, pairs)
+    flags = numpy.isin(of_mesh, wanted)
     mesh.edges.foreach_set(attribute, flags)
     return int(flags.sum())
 
 
-def quads_of(source, preset, settings, density=None, on_stage=None, uv_layers=(), sharp_edges=False):
+def crease_edges(mesh, pairs, weights):
+    """Gives the edges of `mesh` given as `pairs` of vertices their crease
+    `weights`, what a Subdivision Surface modifier reads; the others get 0."""
+    import numpy
+
+    of_mesh, wanted = edge_keys(mesh, pairs)
+    order = numpy.argsort(wanted)
+    found = numpy.searchsorted(wanted[order], of_mesh)
+    found[found >= len(wanted)] = 0
+    values = numpy.zeros(len(of_mesh), numpy.float32)
+    if len(wanted):
+        match = wanted[order][found] == of_mesh
+        values[match] = weights[order][found[match]]
+    attribute = mesh.attributes.get("crease_edge") or mesh.attributes.new("crease_edge", "FLOAT", "EDGE")
+    attribute.data.foreach_set("value", values)
+    return int((values > 0).sum())
+
+
+def quads_of(source, preset, settings, density=None, on_stage=None, uv_layers=(), sharp_edges=False, creases=False):
     """A new mesh datablock: `source`, an evaluated mesh, remeshed into quads
     with the engine's `settings` on top of `preset`, and `density` if given
     (one weight per vertex of `source`). `on_stage`, if given, is told the
@@ -159,7 +195,8 @@ def quads_of(source, preset, settings, density=None, on_stage=None, uv_layers=()
     `uv_layers` names the layers of texture coordinates to put on the mesh
     ("grid", "atlas"); with the atlas come its seams, marked on the edges.
     `sharp_edges` marks as sharp the edges that follow a hard edge of
-    `source`."""
+    `source`. `creases` gives a crease weight to the edges that should stay
+    sharp when the mesh is subdivided."""
     import numpy
 
     source.calc_loop_triangles()
@@ -186,7 +223,7 @@ def quads_of(source, preset, settings, density=None, on_stage=None, uv_layers=()
         addresses = tuple(array.ctypes.data for array in kept)
     made = engine.remesh(
         addresses[0], vertices, addresses[1], triangles, addresses[2], corners, preset, settings, density, on_stage,
-        uv_layers=uv_layers, seams="atlas" in uv_layers, hard_edges=sharp_edges,
+        uv_layers=uv_layers, seams="atlas" in uv_layers, hard_edges=sharp_edges, creases=creases,
     )
     del kept
     positions, sizes, corner_vertices, report = made.positions, made.sizes, made.corners, made.report
@@ -213,6 +250,8 @@ def quads_of(source, preset, settings, density=None, on_stage=None, uv_layers=()
         report["seams"] = flag_edges(mesh, "use_seam", made.seams)
     if sharp_edges:
         report["sharp_edges"] = flag_edges(mesh, "use_edge_sharp", made.hard_edges)
+    if creases:
+        report["creases"] = crease_edges(mesh, *made.creases)
     return mesh, report
 
 
@@ -288,7 +327,8 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
                 engine_settings["density_contrast"] = settings.density_factor
             layers = [name for name in ("grid", "atlas") if getattr(settings, f"export_{name}_uv")]
             mesh, report = quads_of(
-                source, settings.preset, engine_settings, density, on_stage, layers, settings.export_sharp_edges
+                source, settings.preset, engine_settings, density, on_stage, layers,
+                settings.export_sharp_edges, settings.export_creases,
             )
         except engine.EngineError as error:
             self.report({"ERROR"}, f"openclare: {error}")
@@ -356,6 +396,7 @@ class OPENCLARE_PT_export(bpy.types.Panel):
         column.prop(settings, "export_atlas_uv", text="Atlas")
         column = layout.column(heading="Edges")
         column.prop(settings, "export_sharp_edges", text="Sharp")
+        column.prop(settings, "export_creases", text="Creases")
 
 
 CLASSES = (OpenclareSettings, OPENCLARE_OT_remesh, OPENCLARE_PT_panel, OPENCLARE_PT_export)
