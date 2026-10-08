@@ -242,9 +242,147 @@ impl Remesher for QuadLayout {
     }
 
     fn remesh_guided(&self, input: &TriMesh, guides: &Guides, config: &RemeshConfig) -> Result<(PolyMesh, Report)> {
+        config.validate()?;
+        input.validate()?;
+        let pieces = input.pieces();
+        if pieces.len() <= 1 {
+            let (mesh, mut report) = self.remesh_piece(input, guides, config, self.min_triangles)?;
+            report.pieces = 1;
+            report.pieces_fell_back = report.fell_back as usize;
+            return Ok((mesh, report));
+        }
+
+        // Each piece is meshed on its own, with its share of the quads, so
+        // that one piece the layout cannot handle does not drag the others
+        // to the other chain with it.
+        let area = input.surface_area();
+        let (quads, edge_length) = match config.target {
+            Target::QuadCount(0) => return Err(Error::InvalidParams("target quad count is zero".into())),
+            Target::QuadCount(count) => (count as f64, (area / count as f64).sqrt()),
+            Target::EdgeLength(length) if length.is_finite() && length > 0.0 => (area / (length * length), length),
+            Target::EdgeLength(length) => {
+                return Err(Error::InvalidParams(format!("edge length {length} is not positive")));
+            }
+        };
+        if let Some(density) = guides.density
+            && density.len() != input.positions.len()
+        {
+            return Err(Error::InvalidParams(format!(
+                "{} weights painted for {} vertices",
+                density.len(),
+                input.positions.len()
+            )));
+        }
+        let shares = shares_of(&pieces, guides, config.density_contrast, quads);
+
+        let mut merged = PolyMesh::default();
+        let mut report = Report { edge_length, pieces: pieces.len(), ..Default::default() };
+        let mut first_error = None;
+        for ((piece, origin), share) in pieces.iter().zip(shares) {
+            let density: Option<Vec<f64>> =
+                guides.density.map(|density| origin.iter().map(|&v| density[v as usize]).collect());
+            let piece_guides = Guides { density: density.as_deref() };
+            let piece_config = RemeshConfig { target: Target::QuadCount(share), ..config.clone() };
+            // A work mesh in proportion: a button does not need the
+            // triangles a body does.
+            let least = ((self.min_triangles as f64 * piece.surface_area() / area) as usize).max(MIN_PIECE_TRIANGLES);
+            match self.remesh_piece(piece, &piece_guides, &piece_config, least) {
+                // A piece that comes out with no face at all is as good as
+                // not meshed.
+                Ok((mesh, _)) if mesh.faces.is_empty() => report.pieces_failed += 1,
+                Ok((mesh, done)) => {
+                    let offset = merged.positions.len() as u32;
+                    merged.positions.extend(mesh.positions);
+                    merged
+                        .faces
+                        .extend(mesh.faces.into_iter().map(|face| face.into_iter().map(|v| v + offset).collect()));
+                    report.absorb(done);
+                }
+                Err(error) => {
+                    report.pieces_failed += 1;
+                    first_error.get_or_insert(error);
+                }
+            }
+        }
+        if let (true, Some(error)) = (merged.faces.is_empty(), first_error) {
+            return Err(error);
+        }
+        report.fell_back = report.pieces_fell_back == report.pieces;
+        report.stats = merged.stats();
+        Ok((merged, report))
+    }
+}
+
+/// Fewest triangles the work mesh of one piece among several is given.
+const MIN_PIECE_TRIANGLES: usize = 1500;
+
+/// Fewest quads a piece is asked for: one for an open sheet; for a closed
+/// shape, what it cannot do without, a cube for a ball and four rings of
+/// four for anything with a hole through it.
+fn least_quads(piece: &TriMesh) -> usize {
+    let topology = crate::mesh::Topology::build(piece);
+    if !topology.is_closed() {
+        return 1;
+    }
+    let euler = piece.positions.len() as i64 - topology.edge_count() as i64 + piece.triangles.len() as i64;
+    if euler >= 2 { 6 } else { 16 }
+}
+
+/// How many quads each piece is asked for, out of `quads` in all: in
+/// proportion to its area, weighted by the painted density if there is one,
+/// and never less than a piece can be meshed with.
+fn shares_of(pieces: &[(TriMesh, Vec<u32>)], guides: &Guides, contrast: f64, quads: f64) -> Vec<usize> {
+    let weights: Vec<f64> = pieces
+        .iter()
+        .map(|(piece, origin)| match guides.density {
+            None => piece.surface_area(),
+            // A weight of 1 calls for `contrast` times the quads of a
+            // weight of 0, between pieces as within one.
+            Some(density) => (0..piece.triangles.len())
+                .map(|f| {
+                    let painted: f64 = piece.triangles[f].iter().map(|&v| density[origin[v as usize] as usize]).sum();
+                    piece.area_vector(f).length() * contrast.powf(painted / 3.0)
+                })
+                .sum(),
+        })
+        .collect();
+    let total: f64 = weights.iter().sum();
+    let floors: Vec<usize> = pieces.iter().map(|(piece, _)| least_quads(piece)).collect();
+    let mut shares: Vec<usize> = weights
+        .iter()
+        .zip(&floors)
+        .map(|(weight, &floor)| ((quads * weight / total.max(f64::MIN_POSITIVE)).round() as usize).max(floor))
+        .collect();
+    // What the small pieces took beyond their due comes off the others, as
+    // far as their own floors allow.
+    let asked = quads.round() as usize;
+    let mut excess = shares.iter().sum::<usize>().saturating_sub(asked);
+    let spare: usize = shares.iter().zip(&floors).map(|(share, floor)| share - floor).sum();
+    if excess > 0 && spare > 0 {
+        let cut = (excess as f64 / spare as f64).min(1.0);
+        for (share, &floor) in shares.iter_mut().zip(&floors) {
+            let less = (((*share - floor) as f64) * cut).floor() as usize;
+            let less = less.min(excess);
+            *share -= less;
+            excess -= less;
+        }
+    }
+    shares
+}
+
+impl QuadLayout {
+    /// The chain on one connected piece. `least` is the fewest triangles its
+    /// work mesh is given.
+    fn remesh_piece(
+        &self,
+        input: &TriMesh,
+        guides: &Guides,
+        config: &RemeshConfig,
+        least: usize,
+    ) -> Result<(PolyMesh, Report)> {
         let mut clock = Stopwatch::start();
         let mut report = Report::default();
-        let size = WorkSize { per_quad: self.triangles_per_quad, least: self.min_triangles, most: self.max_triangles };
+        let size = WorkSize { per_quad: self.triangles_per_quad, least, most: self.max_triangles };
         let Fields { work, field, edge_length, quads } =
             fields(input, config, &size, Some(guides), &mut report, &mut clock)?;
 
@@ -256,10 +394,21 @@ impl Remesher for QuadLayout {
         // can vertices be read off a map that folds over. In all those
         // cases the provisional chain takes over.
         let layout_report = &layout.tmesh.report;
-        let unusable =
-            layout_report.uncut_triangles > 0 || layout_report.map_inversions > 0 || !layout_report.is_valid();
-        if layout.tmesh.patches.is_empty() || unusable {
-            return fall_back(input, config);
+        let cause = if layout.tmesh.patches.is_empty() || layout_report.uncut_triangles > 0 {
+            Some("nothing to cut the surface from (no singularity, border or hard edge)")
+        } else if layout_report.map_inversions > 0 {
+            Some("the map folds over")
+        } else if layout_report.off_grid_edges > 0 {
+            Some("a border or hard edge is off the grid lines of the map")
+        } else if layout_report.lost_traces > 0 || layout_report.overlaps > 0 {
+            Some("a trace got lost")
+        } else if !layout_report.is_valid() {
+            Some("the layout is not made of rectangles")
+        } else {
+            None
+        };
+        if let Some(cause) = cause {
+            return fall_back(input, config, least, cause);
         }
 
         let request =
@@ -267,7 +416,7 @@ impl Remesher for QuadLayout {
         let quantized = quantization::create(quantization::Kind::WalkCancelling).quantize(&layout.tmesh, &request)?;
         clock.lap(&mut report, "quantization");
         if !quantized.report.is_valid() || quantized.report.quads == 0 {
-            return fall_back(input, config);
+            return fall_back(input, config, least, "no sound whole lengths for the layout");
         }
 
         let (mut mesh, meshed) = meshing::create(meshing::Kind::PatchGrid).mesh(&work, &layout, &quantized)?;
@@ -284,9 +433,11 @@ impl Remesher for QuadLayout {
 }
 
 /// Hands the job to the integer-grid chain, and says so in the report.
-fn fall_back(input: &TriMesh, config: &RemeshConfig) -> Result<(PolyMesh, Report)> {
-    let (mesh, mut report) = IntegerGrid::default().remesh(input, config)?;
+fn fall_back(input: &TriMesh, config: &RemeshConfig, least: usize, cause: &'static str) -> Result<(PolyMesh, Report)> {
+    let chain = IntegerGrid { min_triangles: least, ..Default::default() };
+    let (mesh, mut report) = chain.remesh(input, config)?;
     report.fell_back = true;
+    report.fallback_causes = vec![(cause, 1)];
     Ok((mesh, report))
 }
 

@@ -152,12 +152,13 @@ fn an_open_sheet_gets_exactly_its_grid() {
 }
 
 #[test]
-fn a_surface_without_singularity_has_nothing_to_quantize() {
+fn a_torus_without_singularity_becomes_one_grid() {
     let tmesh = layout(&primitives::torus(1.0, 0.4, 96, 48), None, 0.05, 0.1);
     let quantized = quantize(&tmesh, Some(2000));
-    assert!(quantized.lengths.is_empty());
-    assert_eq!(quantized.report.quads, 0);
-    assert!(quantized.report.is_valid());
+    let lattice = check(&tmesh, &quantized);
+    assert!(quantized.report.budget_error.unwrap() <= 0.05, "{} quads", quantized.report.quads);
+    // Every vertex has four neighbours: a grid closed both ways.
+    assert!(valences(&lattice).iter().all(|&(count, border)| count == 4 && !border));
 }
 
 #[test]

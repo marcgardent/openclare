@@ -159,13 +159,17 @@ fn an_open_sheet_is_one_rectangle_bounded_by_its_border() {
 }
 
 #[test]
-fn a_torus_without_singularity_is_left_whole() {
+fn a_torus_without_singularity_is_cut_from_one_of_its_vertices() {
     // Following the curvature, the field of a torus has no singularity (the
-    // smoothest one, left to itself, has sixteen).
+    // smoothest one, left to itself, has sixteen): nothing to cut it from.
+    // Any vertex then serves, sending a trace along each of its four
+    // directions.
     let (_, tmesh) = layout(&primitives::torus(1.0, 0.4, 96, 48), None, 0.05, 0.1);
-    assert_eq!(tmesh.report.singularities, 0);
-    assert!(tmesh.nodes.is_empty() && tmesh.arcs.is_empty() && tmesh.patches.is_empty());
-    assert!(tmesh.report.is_valid());
+    check_structure(&tmesh);
+    let report = &tmesh.report;
+    assert_eq!((report.singularities, report.traces, report.uncut_triangles), (0, 4, 0));
+    assert_eq!(report.euler, 0);
+    assert!(report.patches >= 1 && report.patches <= 4, "{report:?}");
 }
 
 #[test]
