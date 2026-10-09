@@ -1,31 +1,31 @@
-# Mires conservées
+# References kept
 
-Sorties d'outils qu'on ne pourra pas relancer à volonté. Elles sont versionnées pour que le banc
-de mesure continue à s'y comparer une fois la licence expirée.
+Outputs of tools that cannot be run again at will. They are tracked so that the bench can go
+on comparing with them once the licence has expired.
 
 ## quadremesher/
 
-Quad Remesher 1.4.1 (Exoside), licence d'essai, lancé le 6 octobre 2026 depuis Blender 5.2.2 sur
-les modèles de `bench/corpus/`. Usage non commercial.
+Quad Remesher 1.4.1 (Exoside), trial licence, run on 6, 7 and 8 October 2026 from Blender 5.2.2
+on the models of `bench/corpus/`. Non-commercial use.
 
-Un fichier par modèle, budget et réglage : `<modèle>__<quads demandés>__<réglage>.obj`, avec à côté
-un `.seconds` qui garde le temps de calcul mesuré.
+One file per model, budget and setting: `<model>__<quads asked for>__<setting>.obj`, with a
+`.seconds` file beside it that keeps the computing time measured.
 
-| Réglage | Signification |
+| Setting | Meaning |
 |---|---|
-| `default` | réglages d'origine : taille adaptative à 50 %, nombre de quads ajusté |
-| `uniform` | taille constante et nombre de quads exact, pour comparer à armes égales |
+| `default` | settings as shipped: adaptive size at 50 %, quad count adjusted |
+| `uniform` | constant size and exact quad count, to compare on equal terms |
 
-Budgets : 1000, 3000 et 8000 quads. Détection des arêtes vives activée sur les modèles mécaniques
-(`part`, `cube`) seulement ; symétrie désactivée.
+Budgets: 1000, 3000 and 8000 quads. Detection of hard edges on the mechanical models only;
+symmetry off.
 
-Ces maillages ne valent que pour les sources exactes de `bench/corpus/`, elles aussi versionnées :
-régénérer le corpus avec une autre version de Blender donnerait des sources légèrement différentes.
+These meshes only stand against the exact sources of `bench/corpus/`, tracked too: making the
+corpus again with another version of Blender would give slightly different sources.
 
-Pour en produire d'autres tant qu'une licence est disponible :
+To make more while a licence is available:
 
 ```bash
 python3 bench/make_references.py --targets 1000,3000,8000
 ```
 
-Les mires déjà présentes sont conservées ; `--refresh` les recalcule.
+References already there are kept; `--refresh` computes them again.
