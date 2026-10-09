@@ -25,19 +25,7 @@
     "structure": 30.680507497116494,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 76.58867858514014,
-    "budget": 89.60000000000001,
-    "fidelity": 79.4810980844072,
-    "overall": 81.6138009288342,
-    "quads": 1026,
-    "shape": 68.06148091047993,
-    "singularities": 84.40545808966861,
-    "speed": 78.40482977143343,
-    "structure": 35.28265107212476,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 80.29485369396589,
     "budget": 96.0,
     "fidelity": 87.32708435418093,
@@ -49,7 +37,7 @@
     "structure": 20.2020202020202,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 78.35078329835507,
     "budget": 93.5389133627019,
     "fidelity": 91.33468832881115,
@@ -59,6 +47,18 @@
     "singularities": 88.05970149253731,
     "speed": 79.15261187733061,
     "structure": 14.328358208955228,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 76.58867858514014,
+    "budget": 89.60000000000001,
+    "fidelity": 79.4810980844072,
+    "overall": 81.6138009288342,
+    "quads": 1026,
+    "shape": 68.06148091047993,
+    "singularities": 84.40545808966861,
+    "speed": 78.40482977143343,
+    "structure": 35.28265107212476,
     "validity": 100.0
    },
    "quadremesher": {
@@ -135,19 +135,7 @@
     "structure": null,
     "validity": 0.0
    },
-   "quad-layout": {
-    "alignment": 62.27732445941238,
-    "budget": 93.19999999999999,
-    "fidelity": 59.42772278431275,
-    "overall": 77.16379831123615,
-    "quads": 983,
-    "shape": 75.74848441287045,
-    "singularities": 67.44659206510681,
-    "speed": 89.4224760872081,
-    "structure": 67.34486266531027,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 59.19509490265881,
     "budget": 95.6,
     "fidelity": 76.17306562414521,
@@ -159,7 +147,7 @@
     "structure": 47.11830131445905,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 63.64352625432918,
     "budget": 97.8021978021978,
     "fidelity": 77.62549251805274,
@@ -169,6 +157,18 @@
     "singularities": 74.4990892531876,
     "speed": 83.34077108472924,
     "structure": 35.45840922890103,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 62.27732445941238,
+    "budget": 93.19999999999999,
+    "fidelity": 59.42772278431275,
+    "overall": 77.16379831123615,
+    "quads": 983,
+    "shape": 75.74848441287045,
+    "singularities": 67.44659206510681,
+    "speed": 89.4224760872081,
+    "structure": 67.34486266531027,
     "validity": 100.0
    },
    "quadremesher": {
@@ -245,19 +245,7 @@
     "structure": 79.44250871080139,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 80.92788992469436,
-    "budget": 97.2,
-    "fidelity": 90.28566585790223,
-    "overall": 88.07568250455869,
-    "quads": 993,
-    "shape": 77.55531291337994,
-    "singularities": 81.87311178247734,
-    "speed": 71.89850511813356,
-    "structure": 76.13293051359517,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 84.01643177994721,
     "budget": 88.8,
     "fidelity": 91.33063152369267,
@@ -269,7 +257,7 @@
     "structure": 80.96707818930041,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 83.13002052147034,
     "budget": 98.74213836477988,
     "fidelity": 91.22066870016123,
@@ -279,6 +267,18 @@
     "singularities": 78.96950578338593,
     "speed": 82.30129788524604,
     "structure": 80.54679284963197,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 80.92788992469436,
+    "budget": 97.2,
+    "fidelity": 90.28566585790223,
+    "overall": 88.07568250455869,
+    "quads": 993,
+    "shape": 77.55531291337994,
+    "singularities": 81.87311178247734,
+    "speed": 71.89850511813356,
+    "structure": 76.13293051359517,
     "validity": 100.0
    },
    "quadremesher": {
@@ -355,19 +355,7 @@
     "structure": 81.25,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 68.72911215219627,
-    "budget": 98.8,
-    "fidelity": 77.82598683606275,
-    "overall": 82.1404070247118,
-    "quads": 1003,
-    "shape": 78.80497592934348,
-    "singularities": 64.10767696909272,
-    "speed": 75.74993215771254,
-    "structure": 72.18344965104686,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 70.4415119059588,
     "budget": 96.8,
     "fidelity": 88.1514466897514,
@@ -379,7 +367,7 @@
     "structure": 55.25793650793651,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 67.13086295509702,
     "budget": 97.14964370546319,
     "fidelity": 84.49632567802027,
@@ -389,6 +377,18 @@
     "singularities": 83.0188679245283,
     "speed": 75.58758635834639,
     "structure": 71.5566037735849,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 68.72911215219627,
+    "budget": 98.8,
+    "fidelity": 77.82598683606275,
+    "overall": 82.1404070247118,
+    "quads": 1003,
+    "shape": 78.80497592934348,
+    "singularities": 64.10767696909272,
+    "speed": 75.74993215771254,
+    "structure": 72.18344965104686,
     "validity": 100.0
    },
    "quadremesher": {
@@ -465,19 +465,7 @@
     "structure": 90.10309278350516,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 81.959161873627,
-    "budget": 99.6,
-    "fidelity": 48.6180953749554,
-    "overall": 82.18989390360689,
-    "quads": 1001,
-    "shape": 76.38290089817392,
-    "singularities": 84.01598401598402,
-    "speed": 100.0,
-    "structure": 73.72627372627373,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 85.90447884639549,
     "budget": 99.6,
     "fidelity": 78.5912944904336,
@@ -489,7 +477,7 @@
     "structure": 79.2207792207792,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 89.89889057229229,
     "budget": 93.05210918114145,
     "fidelity": 78.633313051136,
@@ -499,6 +487,18 @@
     "singularities": 94.94949494949495,
     "speed": 71.45428210038392,
     "structure": 86.17424242424244,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 81.959161873627,
+    "budget": 99.6,
+    "fidelity": 48.6180953749554,
+    "overall": 82.18989390360689,
+    "quads": 1001,
+    "shape": 76.38290089817392,
+    "singularities": 84.01598401598402,
+    "speed": 100.0,
+    "structure": 73.72627372627373,
     "validity": 100.0
    },
    "quadremesher": {
@@ -575,19 +575,7 @@
     "structure": 27.60869565217391,
     "validity": 0.0
    },
-   "quad-layout": {
-    "alignment": 64.2936502641914,
-    "budget": 86.0,
-    "fidelity": 89.93890060837636,
-    "overall": 80.32430506135678,
-    "quads": 965,
-    "shape": 74.96804159003713,
-    "singularities": 81.34715025906736,
-    "speed": 85.79365278893619,
-    "structure": 19.896373056994822,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 74.80311027851077,
     "budget": 99.6,
     "fidelity": 93.50307128659786,
@@ -599,7 +587,7 @@
     "structure": 64.53546453546454,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 73.70991573165992,
     "budget": 99.66887417218543,
     "fidelity": 93.40805115655354,
@@ -609,6 +597,18 @@
     "singularities": 73.48798674399337,
     "speed": 86.15121676256776,
     "structure": 61.47473073736537,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 64.2936502641914,
+    "budget": 86.0,
+    "fidelity": 89.93890060837636,
+    "overall": 80.32430506135678,
+    "quads": 965,
+    "shape": 74.96804159003713,
+    "singularities": 81.34715025906736,
+    "speed": 85.79365278893619,
+    "structure": 19.896373056994822,
     "validity": 100.0
    },
    "quadremesher": {
@@ -685,19 +685,7 @@
     "structure": 0.0,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 99.51977193094511,
-    "budget": 94.39999999999999,
-    "fidelity": 99.9999999999999,
-    "overall": 99.31165595269391,
-    "quads": 1014,
-    "shape": 99.98191576880978,
-    "singularities": 100.0,
-    "speed": 100.0,
-    "structure": 99.40828402366864,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 98.87712734875248,
     "budget": 94.39999999999999,
     "fidelity": 99.99999999999993,
@@ -709,13 +697,25 @@
     "structure": 99.40828402366864,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 98.87924673712496,
     "budget": 100.0,
     "fidelity": 99.99999999999993,
     "overall": 99.4463892716181,
     "quads": 1014,
     "shape": 98.36991197231914,
+    "singularities": 100.0,
+    "speed": 100.0,
+    "structure": 99.40828402366864,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 99.51977193094511,
+    "budget": 94.39999999999999,
+    "fidelity": 99.9999999999999,
+    "overall": 99.31165595269391,
+    "quads": 1014,
+    "shape": 99.98191576880978,
     "singularities": 100.0,
     "speed": 100.0,
     "structure": 99.40828402366864,
@@ -795,19 +795,7 @@
     "structure": 80.04484304932735,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 94.50488063690304,
-    "budget": 96.0,
-    "fidelity": 97.0490789025902,
-    "overall": 96.0371112624735,
-    "quads": 990,
-    "shape": 86.72717553338256,
-    "singularities": 100.0,
-    "speed": 100.0,
-    "structure": 99.39393939393939,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 91.96887273108145,
     "budget": 87.2,
     "fidelity": 96.59190141805612,
@@ -819,7 +807,7 @@
     "structure": 80.78512396694215,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 93.8287117251186,
     "budget": 90.7928388746803,
     "fidelity": 96.09263685612738,
@@ -829,6 +817,18 @@
     "singularities": 100.0,
     "speed": 100.0,
     "structure": 92.67015706806284,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 94.50488063690304,
+    "budget": 96.0,
+    "fidelity": 97.0490789025902,
+    "overall": 96.0371112624735,
+    "quads": 990,
+    "shape": 86.72717553338256,
+    "singularities": 100.0,
+    "speed": 100.0,
+    "structure": 99.39393939393939,
     "validity": 100.0
    },
    "quadremesher": {
@@ -905,19 +905,7 @@
     "structure": 28.31325301204819,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 34.445700487179984,
-    "budget": 100.0,
-    "fidelity": 41.42028085870363,
-    "overall": 64.09318109441855,
-    "quads": 1000,
-    "shape": 60.77332578784676,
-    "singularities": 49.00000000000001,
-    "speed": 85.05408824697722,
-    "structure": 39.5,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 32.12636413159749,
     "budget": 98.0,
     "fidelity": 60.6478629825439,
@@ -929,7 +917,7 @@
     "structure": 11.840796019900502,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 37.42890784249706,
     "budget": 97.15486582605884,
     "fidelity": 57.29418836314669,
@@ -939,6 +927,18 @@
     "singularities": 43.99218495604038,
     "speed": 71.68304368846921,
     "structure": 13.253012048192769,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 34.445700487179984,
+    "budget": 100.0,
+    "fidelity": 41.42028085870363,
+    "overall": 64.09318109441855,
+    "quads": 1000,
+    "shape": 60.77332578784676,
+    "singularities": 49.00000000000001,
+    "speed": 85.05408824697722,
+    "structure": 39.5,
     "validity": 100.0
    },
    "quadremesher": {
@@ -1015,19 +1015,7 @@
     "structure": 97.37903225806451,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 97.51054482024273,
-    "budget": 97.6,
-    "fidelity": 99.99999999999983,
-    "overall": 98.71586493775848,
-    "quads": 994,
-    "shape": 99.51061997228507,
-    "singularities": 95.97585513078471,
-    "speed": 93.42352645617039,
-    "structure": 98.59154929577466,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 97.17380133945937,
     "budget": 97.6,
     "fidelity": 99.99999999999983,
@@ -1039,7 +1027,7 @@
     "structure": 98.59154929577466,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 97.14955925546417,
     "budget": 92.87128712871288,
     "fidelity": 99.99999999999986,
@@ -1049,6 +1037,18 @@
     "singularities": 96.10894941634241,
     "speed": 97.03658831533038,
     "structure": 98.63813229571986,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 97.51054482024273,
+    "budget": 97.6,
+    "fidelity": 99.99999999999983,
+    "overall": 98.71586493775848,
+    "quads": 994,
+    "shape": 99.51061997228507,
+    "singularities": 95.97585513078471,
+    "speed": 93.42352645617039,
+    "structure": 98.59154929577466,
     "validity": 100.0
    },
    "quadremesher": {
@@ -1125,19 +1125,7 @@
     "structure": 75.52870090634441,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 22.689969201563226,
-    "budget": 0.0,
-    "fidelity": 0.0,
-    "overall": 4.776835621381732,
-    "quads": 2053,
-    "shape": 0.0,
-    "singularities": 0.0,
-    "speed": 48.78813572845784,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 21.141693137590416,
     "budget": 0.0,
     "fidelity": 0.0,
@@ -1149,7 +1137,7 @@
     "structure": null,
     "validity": 0.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 57.7225187938413,
     "budget": 86.81045407809474,
     "fidelity": 57.69945546248033,
@@ -1158,6 +1146,18 @@
     "shape": 63.71591768777321,
     "singularities": 69.38825972998367,
     "speed": 0.0,
+    "structure": null,
+    "validity": 0.0
+   },
+   "openclare-uniform": {
+    "alignment": 22.689969201563226,
+    "budget": 0.0,
+    "fidelity": 0.0,
+    "overall": 4.776835621381732,
+    "quads": 2053,
+    "shape": 0.0,
+    "singularities": 0.0,
+    "speed": 48.78813572845784,
     "structure": null,
     "validity": 0.0
    },
@@ -1235,19 +1235,7 @@
     "structure": null,
     "validity": 0.0
    },
-   "quad-layout": {
-    "alignment": null,
-    "budget": 0.0,
-    "fidelity": 84.24055428227066,
-    "overall": 16.84811085645413,
-    "quads": 6485,
-    "shape": 0.0,
-    "singularities": 0.0,
-    "speed": 8.748068576588208,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": null,
     "budget": 0.0,
     "fidelity": 83.95192827526003,
@@ -1259,7 +1247,7 @@
     "structure": null,
     "validity": 0.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 63.36765388356486,
     "budget": 67.65455564490581,
     "fidelity": 66.79142624932078,
@@ -1268,6 +1256,18 @@
     "shape": 73.54651404493805,
     "singularities": 41.45593950995,
     "speed": 0.0,
+    "structure": null,
+    "validity": 0.0
+   },
+   "openclare-uniform": {
+    "alignment": null,
+    "budget": 0.0,
+    "fidelity": 84.24055428227066,
+    "overall": 16.84811085645413,
+    "quads": 6485,
+    "shape": 0.0,
+    "singularities": 0.0,
+    "speed": 8.748068576588208,
     "structure": null,
     "validity": 0.0
    },
@@ -1345,19 +1345,7 @@
     "structure": 29.118773946360154,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 53.172873648877776,
-    "budget": 99.2,
-    "fidelity": 49.54142781478285,
-    "overall": 70.9704046960323,
-    "quads": 1002,
-    "shape": 63.87614787509919,
-    "singularities": 62.075848303393215,
-    "speed": 69.80363607489369,
-    "structure": 43.912175648702586,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 50.40026238610343,
     "budget": 85.2,
     "fidelity": 64.40946174470876,
@@ -1369,7 +1357,7 @@
     "structure": 44.54828660436137,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 47.258490211243945,
     "budget": 99.58477508650519,
     "fidelity": 62.483416420604996,
@@ -1379,6 +1367,18 @@
     "singularities": 49.77485278836162,
     "speed": 62.00575984517718,
     "structure": 12.054035330793212,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 53.172873648877776,
+    "budget": 99.2,
+    "fidelity": 49.54142781478285,
+    "overall": 70.9704046960323,
+    "quads": 1002,
+    "shape": 63.87614787509919,
+    "singularities": 62.075848303393215,
+    "speed": 69.80363607489369,
+    "structure": 43.912175648702586,
     "validity": 100.0
    },
    "quadremesher": {
@@ -1455,19 +1455,7 @@
     "structure": 59.541188738269035,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 44.621854700430795,
-    "budget": 90.4,
-    "fidelity": 71.27995595033876,
-    "overall": 80.02134171781114,
-    "quads": 976,
-    "shape": 89.63263611974033,
-    "singularities": 83.60655737704917,
-    "speed": 96.58646359017457,
-    "structure": 91.18852459016394,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 51.68604715234596,
     "budget": 92.80000000000001,
     "fidelity": 97.25159578735118,
@@ -1479,7 +1467,7 @@
     "structure": 93.32023575638507,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 51.701475363695984,
     "budget": 98.02566633761106,
     "fidelity": 97.25688835740593,
@@ -1489,6 +1477,18 @@
     "singularities": 84.28290766208252,
     "speed": 100.0,
     "structure": 93.32023575638507,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 44.621854700430795,
+    "budget": 90.4,
+    "fidelity": 71.27995595033876,
+    "overall": 80.02134171781114,
+    "quads": 976,
+    "shape": 89.63263611974033,
+    "singularities": 83.60655737704917,
+    "speed": 96.58646359017457,
+    "structure": 91.18852459016394,
     "validity": 100.0
    },
    "quadremesher": {
@@ -1565,19 +1565,7 @@
     "structure": null,
     "validity": 0.0
    },
-   "quad-layout": {
-    "alignment": 46.43581906758625,
-    "budget": 96.39999999999999,
-    "fidelity": 63.9656956841672,
-    "overall": 70.99265398706537,
-    "quads": 1009,
-    "shape": 68.70083609720083,
-    "singularities": 48.46382556987116,
-    "speed": 72.93260214905715,
-    "structure": 46.382556987115954,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 58.85603783962498,
     "budget": 96.39999999999999,
     "fidelity": 76.62611570478913,
@@ -1589,7 +1577,7 @@
     "structure": 40.237859266600594,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 55.259952660513235,
     "budget": 94.73417721518987,
     "fidelity": 83.6269068019209,
@@ -1599,6 +1587,18 @@
     "singularities": 55.87480759363776,
     "speed": 76.1882051573655,
     "structure": 43.71472550025655,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 46.43581906758625,
+    "budget": 96.39999999999999,
+    "fidelity": 63.9656956841672,
+    "overall": 70.99265398706537,
+    "quads": 1009,
+    "shape": 68.70083609720083,
+    "singularities": 48.46382556987116,
+    "speed": 72.93260214905715,
+    "structure": 46.382556987115954,
     "validity": 100.0
    },
    "quadremesher": {
@@ -1675,19 +1675,7 @@
     "structure": 0.0,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 24.341350459082285,
-    "budget": 91.2,
-    "fidelity": 82.34801038929135,
-    "overall": 71.25523631524102,
-    "quads": 978,
-    "shape": 71.17682237491604,
-    "singularities": 81.59509202453987,
-    "speed": 89.34340857345605,
-    "structure": 21.574642126789367,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 25.104518304225284,
     "budget": 92.4,
     "fidelity": 84.53802547098277,
@@ -1699,7 +1687,7 @@
     "structure": 0.0,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 26.005288117358088,
     "budget": 97.51937984496124,
     "fidelity": 84.89643879604672,
@@ -1709,6 +1697,18 @@
     "singularities": 79.96918335901387,
     "speed": 89.82169932126516,
     "structure": 0.0,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 24.341350459082285,
+    "budget": 91.2,
+    "fidelity": 82.34801038929135,
+    "overall": 71.25523631524102,
+    "quads": 978,
+    "shape": 71.17682237491604,
+    "singularities": 81.59509202453987,
+    "speed": 89.34340857345605,
+    "structure": 21.574642126789367,
     "validity": 100.0
    },
    "quadremesher": {
@@ -1785,19 +1785,7 @@
     "structure": null,
     "validity": 0.0
    },
-   "quad-layout": {
-    "alignment": 22.70676431444253,
-    "budget": 0.0,
-    "fidelity": 20.06814109897224,
-    "overall": 7.949025292351938,
-    "quads": 1773,
-    "shape": 0.0,
-    "singularities": 0.0,
-    "speed": 45.66066166249286,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 22.815563601719806,
     "budget": 0.0,
     "fidelity": 9.28521552404153,
@@ -1809,7 +1797,7 @@
     "structure": null,
     "validity": 0.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 56.142090540186686,
     "budget": 96.82599946846881,
     "fidelity": 77.07657808674263,
@@ -1819,6 +1807,18 @@
     "singularities": 41.0501732710562,
     "speed": 16.58178953909919,
     "structure": 19.13515142383607,
+    "validity": 0.0
+   },
+   "openclare-uniform": {
+    "alignment": 22.70676431444253,
+    "budget": 0.0,
+    "fidelity": 20.06814109897224,
+    "overall": 7.949025292351938,
+    "quads": 1773,
+    "shape": 0.0,
+    "singularities": 0.0,
+    "speed": 45.66066166249286,
+    "structure": null,
     "validity": 0.0
    },
    "quadremesher": {
@@ -1895,19 +1895,7 @@
     "structure": 0.0,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": null,
-    "budget": 96.0,
-    "fidelity": 98.0273366844612,
-    "overall": 88.55971625701372,
-    "quads": 1010,
-    "shape": 76.95781668627865,
-    "singularities": 100.0,
-    "speed": 100.0,
-    "structure": 0.0,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": null,
     "budget": 96.0,
     "fidelity": 98.02728896648557,
@@ -1919,7 +1907,7 @@
     "structure": 0.0,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": null,
     "budget": 93.44262295081968,
     "fidelity": 95.84965089199999,
@@ -1929,6 +1917,18 @@
     "singularities": 97.77777777777779,
     "speed": 90.04814801054025,
     "structure": 6.000000000000005,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": null,
+    "budget": 96.0,
+    "fidelity": 98.0273366844612,
+    "overall": 88.55971625701372,
+    "quads": 1010,
+    "shape": 76.95781668627865,
+    "singularities": 100.0,
+    "speed": 100.0,
+    "structure": 0.0,
     "validity": 100.0
    },
    "quadremesher": {
@@ -2005,19 +2005,7 @@
     "structure": 17.640573318632857,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 57.697372391272125,
-    "budget": 96.0,
-    "fidelity": 74.01335246909981,
-    "overall": 72.23306623192093,
-    "quads": 990,
-    "shape": 63.58028952504052,
-    "singularities": 43.43434343434343,
-    "speed": 80.70948705422214,
-    "structure": 22.22222222222222,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 65.80636855807079,
     "budget": 96.39999999999999,
     "fidelity": 66.20655658831473,
@@ -2029,7 +2017,7 @@
     "structure": 27.2452068617558,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 65.36016490704652,
     "budget": 95.45758183032731,
     "fidelity": 68.28487632508043,
@@ -2039,6 +2027,18 @@
     "singularities": 60.36988110964332,
     "speed": 82.0072426397203,
     "structure": 36.063408190224564,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 57.697372391272125,
+    "budget": 96.0,
+    "fidelity": 74.01335246909981,
+    "overall": 72.23306623192093,
+    "quads": 990,
+    "shape": 63.58028952504052,
+    "singularities": 43.43434343434343,
+    "speed": 80.70948705422214,
+    "structure": 22.22222222222222,
     "validity": 100.0
    },
    "quadremesher": {
@@ -2115,19 +2115,7 @@
     "structure": 24.897540983606557,
     "validity": 0.0
    },
-   "quad-layout": {
-    "alignment": 49.42812493435031,
-    "budget": 99.2,
-    "fidelity": 73.45223523057962,
-    "overall": 74.7955292864658,
-    "quads": 1002,
-    "shape": 75.74859050591351,
-    "singularities": 56.087824351297414,
-    "speed": 91.66020902874541,
-    "structure": 40.019960079840324,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 53.947485782678704,
     "budget": 97.6,
     "fidelity": 82.01099920181908,
@@ -2139,7 +2127,7 @@
     "structure": 44.26559356136821,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 52.542902653044855,
     "budget": 95.75418994413408,
     "fidelity": 86.84794349055426,
@@ -2149,6 +2137,18 @@
     "singularities": 71.7673630717109,
     "speed": 85.1602794302064,
     "structure": 52.117447769621684,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 49.42812493435031,
+    "budget": 99.2,
+    "fidelity": 73.45223523057962,
+    "overall": 74.7955292864658,
+    "quads": 1002,
+    "shape": 75.74859050591351,
+    "singularities": 56.087824351297414,
+    "speed": 91.66020902874541,
+    "structure": 40.019960079840324,
     "validity": 100.0
    },
    "quadremesher": {
@@ -2225,19 +2225,7 @@
     "structure": 70.39548022598869,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 21.398664205592123,
-    "budget": 93.19999999999999,
-    "fidelity": 54.033110320069326,
-    "overall": 65.71163909263223,
-    "quads": 1017,
-    "shape": 71.51791332981294,
-    "singularities": 64.60176991150442,
-    "speed": 52.845896608006484,
-    "structure": 36.38151425762045,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 21.96636455517388,
     "budget": 97.2,
     "fidelity": 53.70077623828237,
@@ -2249,7 +2237,7 @@
     "structure": 35.649546827794566,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 16.960732779475002,
     "budget": 92.73199221284881,
     "fidelity": 50.20119049327853,
@@ -2259,6 +2247,18 @@
     "singularities": 73.23135755258126,
     "speed": 42.27422748673495,
     "structure": 35.56405353728489,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 21.398664205592123,
+    "budget": 93.19999999999999,
+    "fidelity": 54.033110320069326,
+    "overall": 65.71163909263223,
+    "quads": 1017,
+    "shape": 71.51791332981294,
+    "singularities": 64.60176991150442,
+    "speed": 52.845896608006484,
+    "structure": 36.38151425762045,
     "validity": 100.0
    },
    "quadremesher": {
@@ -2335,19 +2335,7 @@
     "structure": 99.89130434782608,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 99.28082292665125,
-    "budget": 96.8,
-    "fidelity": 97.2945327977616,
-    "overall": 97.3219802858177,
-    "quads": 1008,
-    "shape": 87.97730732189014,
-    "singularities": 100.0,
-    "speed": 100.0,
-    "structure": 99.90079365079364,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 99.28084934963354,
     "budget": 96.8,
     "fidelity": 97.2947581867469,
@@ -2359,7 +2347,7 @@
     "structure": 99.90079365079364,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 97.13915412273045,
     "budget": 100.0,
     "fidelity": 96.6549393145571,
@@ -2369,6 +2357,18 @@
     "singularities": 100.0,
     "speed": 91.92199003073824,
     "structure": 99.89130434782608,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 99.28082292665125,
+    "budget": 96.8,
+    "fidelity": 97.2945327977616,
+    "overall": 97.3219802858177,
+    "quads": 1008,
+    "shape": 87.97730732189014,
+    "singularities": 100.0,
+    "speed": 100.0,
+    "structure": 99.90079365079364,
     "validity": 100.0
    },
    "quadremesher": {
@@ -2447,19 +2447,7 @@
     "structure": 62.066214599122446,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 76.21356789890348,
-    "budget": 97.2,
-    "fidelity": 93.60269654716693,
-    "overall": 84.96004124037827,
-    "quads": 3021,
-    "shape": 69.29463736580949,
-    "singularities": 94.70374048328368,
-    "speed": 68.68065813100583,
-    "structure": 21.847070506454813,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 78.27423690588301,
     "budget": 99.33333333333333,
     "fidelity": 95.13392258764725,
@@ -2471,7 +2459,7 @@
     "structure": 31.946755407653914,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 78.0289236810488,
     "budget": 97.3887240356083,
     "fidelity": 94.34968843394799,
@@ -2481,6 +2469,18 @@
     "singularities": 95.28301886792454,
     "speed": 67.8284966027001,
     "structure": 32.95990566037735,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 76.21356789890348,
+    "budget": 97.2,
+    "fidelity": 93.60269654716693,
+    "overall": 84.96004124037827,
+    "quads": 3021,
+    "shape": 69.29463736580949,
+    "singularities": 94.70374048328368,
+    "speed": 68.68065813100583,
+    "structure": 21.847070506454813,
     "validity": 100.0
    },
    "quadremesher": {
@@ -2557,19 +2557,7 @@
     "structure": null,
     "validity": 0.0
    },
-   "quad-layout": {
-    "alignment": 65.51505377782097,
-    "budget": 99.06666666666666,
-    "fidelity": 81.87623320664511,
-    "overall": 83.05397399351484,
-    "quads": 2993,
-    "shape": 74.10456563031445,
-    "singularities": 87.97193451386569,
-    "speed": 75.56961436808176,
-    "structure": 56.99966588706983,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 66.80189718629238,
     "budget": 96.39999999999999,
     "fidelity": 84.98711754580626,
@@ -2581,7 +2569,7 @@
     "structure": 55.16313488059199,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 67.33384301308944,
     "budget": 97.7372075083569,
     "fidelity": 90.86820350862894,
@@ -2591,6 +2579,18 @@
     "singularities": 88.7496803886474,
     "speed": 66.20849682049258,
     "structure": 49.961646637688574,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 65.51505377782097,
+    "budget": 99.06666666666666,
+    "fidelity": 81.87623320664511,
+    "overall": 83.05397399351484,
+    "quads": 2993,
+    "shape": 74.10456563031445,
+    "singularities": 87.97193451386569,
+    "speed": 75.56961436808176,
+    "structure": 56.99966588706983,
     "validity": 100.0
    },
    "quadremesher": {
@@ -2667,19 +2667,7 @@
     "structure": 72.97501892505677,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 82.16723066269931,
-    "budget": 94.39999999999999,
-    "fidelity": 96.09070018576875,
-    "overall": 90.04176546795307,
-    "quads": 3042,
-    "shape": 83.5499472355044,
-    "singularities": 93.42537804076265,
-    "speed": 74.85264365189728,
-    "structure": 57.59368836291914,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 83.94024301460472,
     "budget": 93.33333333333333,
     "fidelity": 97.20115361323235,
@@ -2691,7 +2679,7 @@
     "structure": 91.96610169491525,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 82.32977498011925,
     "budget": 96.30136986301369,
     "fidelity": 96.17585736316614,
@@ -2701,6 +2689,18 @@
     "singularities": 93.21343739395995,
     "speed": 70.18253098049509,
     "structure": 69.18900576857821,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 82.16723066269931,
+    "budget": 94.39999999999999,
+    "fidelity": 96.09070018576875,
+    "overall": 90.04176546795307,
+    "quads": 3042,
+    "shape": 83.5499472355044,
+    "singularities": 93.42537804076265,
+    "speed": 74.85264365189728,
+    "structure": 57.59368836291914,
     "validity": 100.0
    },
    "quadremesher": {
@@ -2777,19 +2777,7 @@
     "structure": 71.5510812826249,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 64.43271750679165,
-    "budget": 93.6,
-    "fidelity": 85.69488459520845,
-    "overall": 83.65966816382446,
-    "quads": 2952,
-    "shape": 80.38809644273194,
-    "singularities": 83.06233062330622,
-    "speed": 58.53267849713978,
-    "structure": 63.888888888888886,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 67.14412832506859,
     "budget": 94.53333333333333,
     "fidelity": 86.54711181466122,
@@ -2801,7 +2789,7 @@
     "structure": 74.18046637377492,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 64.19050494740677,
     "budget": 99.64703287006398,
     "fidelity": 86.80189539224708,
@@ -2811,6 +2799,18 @@
     "singularities": 88.09786202336346,
     "speed": 60.159693952813754,
     "structure": 64.33766806259644,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 64.43271750679165,
+    "budget": 93.6,
+    "fidelity": 85.69488459520845,
+    "overall": 83.65966816382446,
+    "quads": 2952,
+    "shape": 80.38809644273194,
+    "singularities": 83.06233062330622,
+    "speed": 58.53267849713978,
+    "structure": 63.888888888888886,
     "validity": 100.0
    },
    "quadremesher": {
@@ -2887,19 +2887,7 @@
     "structure": 85.14265831593598,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 85.95978292207474,
-    "budget": 94.66666666666667,
-    "fidelity": 78.71877317867985,
-    "overall": 89.60302578914988,
-    "quads": 3040,
-    "shape": 85.30750689967002,
-    "singularities": 94.73684210526315,
-    "speed": 84.4393704537034,
-    "structure": 77.33552631578947,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 89.73707747621002,
     "budget": 95.73333333333333,
     "fidelity": 78.86300814299645,
@@ -2911,7 +2899,7 @@
     "structure": 89.75741239892183,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 90.60454778170882,
     "budget": 94.42244792563264,
     "fidelity": 93.93941935230544,
@@ -2921,6 +2909,18 @@
     "singularities": 96.60441426146011,
     "speed": 57.50811521428323,
     "structure": 91.54499151103566,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 85.95978292207474,
+    "budget": 94.66666666666667,
+    "fidelity": 78.71877317867985,
+    "overall": 89.60302578914988,
+    "quads": 3040,
+    "shape": 85.30750689967002,
+    "singularities": 94.73684210526315,
+    "speed": 84.4393704537034,
+    "structure": 77.33552631578947,
     "validity": 100.0
    },
    "quadremesher": {
@@ -2997,19 +2997,7 @@
     "structure": 64.84405082787832,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 69.10322568498155,
-    "budget": 94.53333333333333,
-    "fidelity": 95.87256416195183,
-    "overall": 85.1726913930805,
-    "quads": 3041,
-    "shape": 71.39475140986738,
-    "singularities": 89.47714567576455,
-    "speed": 66.1901352606746,
-    "structure": 57.218020388030254,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 74.44217363355332,
     "budget": 94.0,
     "fidelity": 95.90762001051864,
@@ -3021,7 +3009,7 @@
     "structure": 3.9255499153976303,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 74.74980622874824,
     "budget": 93.60761645698742,
     "fidelity": 96.2059623454994,
@@ -3031,6 +3019,18 @@
     "singularities": 88.94263994471319,
     "speed": 67.29780201962913,
     "structure": 37.11126468555632,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 69.10322568498155,
+    "budget": 94.53333333333333,
+    "fidelity": 95.87256416195183,
+    "overall": 85.1726913930805,
+    "quads": 3041,
+    "shape": 71.39475140986738,
+    "singularities": 89.47714567576455,
+    "speed": 66.1901352606746,
+    "structure": 57.218020388030254,
     "validity": 100.0
    },
    "quadremesher": {
@@ -3107,19 +3107,7 @@
     "structure": 63.168449197860966,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 99.38489726013154,
-    "budget": 98.93333333333332,
-    "fidelity": 99.9999999999999,
-    "overall": 99.75455420472042,
-    "quads": 2992,
-    "shape": 99.96178771552482,
-    "singularities": 100.0,
-    "speed": 83.7265839192476,
-    "structure": 99.79946524064172,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 98.38222529488759,
     "budget": 98.93333333333332,
     "fidelity": 99.99999999999993,
@@ -3131,7 +3119,7 @@
     "structure": 99.79946524064172,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 98.34003247495156,
     "budget": 100.0,
     "fidelity": 99.99999999999993,
@@ -3141,6 +3129,18 @@
     "singularities": 100.0,
     "speed": 83.08283426096541,
     "structure": 99.80532121998702,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 99.38489726013154,
+    "budget": 98.93333333333332,
+    "fidelity": 99.9999999999999,
+    "overall": 99.75455420472042,
+    "quads": 2992,
+    "shape": 99.96178771552482,
+    "singularities": 100.0,
+    "speed": 83.7265839192476,
+    "structure": 99.79946524064172,
     "validity": 100.0
    },
    "quadremesher": {
@@ -3217,19 +3217,7 @@
     "structure": 72.12121212121212,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 93.34236719211636,
-    "budget": 97.86666666666667,
-    "fidelity": 98.13328996919377,
-    "overall": 94.27427352918616,
-    "quads": 2984,
-    "shape": 82.0595030100357,
-    "singularities": 100.0,
-    "speed": 86.75430749455467,
-    "structure": 75.80428954423593,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 92.74552807174712,
     "budget": 94.66666666666667,
     "fidelity": 98.33844105330932,
@@ -3241,7 +3229,7 @@
     "structure": 84.76973684210527,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 92.24594961212941,
     "budget": 94.14157851912124,
     "fidelity": 97.81602026353227,
@@ -3251,6 +3239,18 @@
     "singularities": 100.0,
     "speed": 95.52664558845912,
     "structure": 80.83400160384923,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 93.34236719211636,
+    "budget": 97.86666666666667,
+    "fidelity": 98.13328996919377,
+    "overall": 94.27427352918616,
+    "quads": 2984,
+    "shape": 82.0595030100357,
+    "singularities": 100.0,
+    "speed": 86.75430749455467,
+    "structure": 75.80428954423593,
     "validity": 100.0
    },
    "quadremesher": {
@@ -3327,19 +3327,7 @@
     "structure": 24.9904470768055,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 37.14190692233139,
-    "budget": 100.0,
-    "fidelity": 38.44596962650101,
-    "overall": 67.10437437671857,
-    "quads": 3000,
-    "shape": 67.87176143295868,
-    "singularities": 71.33333333333333,
-    "speed": 85.90311598019788,
-    "structure": 31.899999999999995,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 39.59518025141741,
     "budget": 92.66666666666666,
     "fidelity": 63.17598517949102,
@@ -3351,7 +3339,7 @@
     "structure": 18.461538461538463,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 45.06700058981132,
     "budget": 100.0,
     "fidelity": 76.85280343063471,
@@ -3361,6 +3349,18 @@
     "singularities": 61.874272409778804,
     "speed": 56.74823573347395,
     "structure": 17.40395809080326,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 37.14190692233139,
+    "budget": 100.0,
+    "fidelity": 38.44596962650101,
+    "overall": 67.10437437671857,
+    "quads": 3000,
+    "shape": 67.87176143295868,
+    "singularities": 71.33333333333333,
+    "speed": 85.90311598019788,
+    "structure": 31.899999999999995,
     "validity": 100.0
    },
    "quadremesher": {
@@ -3437,19 +3437,7 @@
     "structure": 99.51923076923077,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 97.67896646986895,
-    "budget": 92.0,
-    "fidelity": 99.99999999999983,
-    "overall": 98.57262231106786,
-    "quads": 3060,
-    "shape": 99.93615858890614,
-    "singularities": 98.69281045751634,
-    "speed": 86.27621868626916,
-    "structure": 99.54248366013073,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 96.18625078507347,
     "budget": 96.26666666666667,
     "fidelity": 99.99999999999986,
@@ -3461,7 +3449,7 @@
     "structure": 99.52893674293405,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 96.19003422240596,
     "budget": 92.34323432343234,
     "fidelity": 99.99999999999986,
@@ -3471,6 +3459,18 @@
     "singularities": 98.65410497981158,
     "speed": 85.94429148924924,
     "structure": 99.52893674293405,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 97.67896646986895,
+    "budget": 92.0,
+    "fidelity": 99.99999999999983,
+    "overall": 98.57262231106786,
+    "quads": 3060,
+    "shape": 99.93615858890614,
+    "singularities": 98.69281045751634,
+    "speed": 86.27621868626916,
+    "structure": 99.54248366013073,
     "validity": 100.0
    },
    "quadremesher": {
@@ -3547,19 +3547,7 @@
     "structure": 81.75834508697697,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 33.388105290742494,
-    "budget": 98.53333333333333,
-    "fidelity": 34.976894579445876,
-    "overall": 25.591835971291438,
-    "quads": 3011,
-    "shape": 0.0,
-    "singularities": 0.0,
-    "speed": 35.271466259448694,
-    "structure": 76.28694785785454,
-    "validity": 0.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 33.89768512385905,
     "budget": 99.46666666666667,
     "fidelity": 32.9437076953367,
@@ -3571,7 +3559,7 @@
     "structure": null,
     "validity": 0.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 58.840995900178214,
     "budget": 83.32539716895373,
     "fidelity": 53.58531243139828,
@@ -3581,6 +3569,18 @@
     "singularities": 72.55849670250248,
     "speed": 0.0,
     "structure": null,
+    "validity": 0.0
+   },
+   "openclare-uniform": {
+    "alignment": 33.388105290742494,
+    "budget": 98.53333333333333,
+    "fidelity": 34.976894579445876,
+    "overall": 25.591835971291438,
+    "quads": 3011,
+    "shape": 0.0,
+    "singularities": 0.0,
+    "speed": 35.271466259448694,
+    "structure": 76.28694785785454,
     "validity": 0.0
    },
    "quadremesher": {
@@ -3657,19 +3657,7 @@
     "structure": null,
     "validity": 0.0
    },
-   "quad-layout": {
-    "alignment": 44.65943433421361,
-    "budget": 0.0,
-    "fidelity": 79.05456179543219,
-    "overall": 21.88428540648163,
-    "quads": 6485,
-    "shape": 0.0,
-    "singularities": 0.0,
-    "speed": 9.305324112792036,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 39.93455989728566,
     "budget": 0.0,
     "fidelity": 78.59419951732878,
@@ -3681,7 +3669,7 @@
     "structure": null,
     "validity": 0.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 63.23166861664901,
     "budget": 68.4568587688886,
     "fidelity": 67.1411503743097,
@@ -3690,6 +3678,18 @@
     "shape": 73.89737354594624,
     "singularities": 44.66904398374767,
     "speed": 0.0,
+    "structure": null,
+    "validity": 0.0
+   },
+   "openclare-uniform": {
+    "alignment": 44.65943433421361,
+    "budget": 0.0,
+    "fidelity": 79.05456179543219,
+    "overall": 21.88428540648163,
+    "quads": 6485,
+    "shape": 0.0,
+    "singularities": 0.0,
+    "speed": 9.305324112792036,
     "structure": null,
     "validity": 0.0
    },
@@ -3767,19 +3767,7 @@
     "structure": null,
     "validity": 0.0
    },
-   "quad-layout": {
-    "alignment": 45.29789217133884,
-    "budget": 92.13333333333334,
-    "fidelity": 45.13405520868169,
-    "overall": 68.41084970360208,
-    "quads": 3059,
-    "shape": 66.98744886939832,
-    "singularities": 77.77051323962078,
-    "speed": 62.10389992428578,
-    "structure": 10.85322000653809,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 48.32805176557544,
     "budget": 97.46666666666667,
     "fidelity": 65.29447955112133,
@@ -3791,7 +3779,7 @@
     "structure": 17.754223252732693,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 51.569007093082945,
     "budget": 94.71796543853928,
     "fidelity": 76.00345184328047,
@@ -3801,6 +3789,18 @@
     "singularities": 66.29770361804064,
     "speed": 46.07867563613406,
     "structure": 20.32050223029902,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 45.29789217133884,
+    "budget": 92.13333333333334,
+    "fidelity": 45.13405520868169,
+    "overall": 68.41084970360208,
+    "quads": 3059,
+    "shape": 66.98744886939832,
+    "singularities": 77.77051323962078,
+    "speed": 62.10389992428578,
+    "structure": 10.85322000653809,
     "validity": 100.0
    },
    "quadremesher": {
@@ -3877,19 +3877,7 @@
     "structure": 97.37903225806451,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 46.85620649553274,
-    "budget": 93.46666666666667,
-    "fidelity": 98.15386155710928,
-    "overall": 86.7768920353935,
-    "quads": 3049,
-    "shape": 93.25718562398231,
-    "singularities": 94.75237782879633,
-    "speed": 76.72849727040531,
-    "structure": 97.4417841915382,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 53.43744613900331,
     "budget": 97.06666666666666,
     "fidelity": 99.0502937918976,
@@ -3901,7 +3889,7 @@
     "structure": 90.42981867024848,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 53.15903444146874,
     "budget": 98.15275310834814,
     "fidelity": 98.91711287215092,
@@ -3911,6 +3899,18 @@
     "singularities": 94.34229137199434,
     "speed": 72.82800270152858,
     "structure": 93.56435643564356,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 46.85620649553274,
+    "budget": 93.46666666666667,
+    "fidelity": 98.15386155710928,
+    "overall": 86.7768920353935,
+    "quads": 3049,
+    "shape": 93.25718562398231,
+    "singularities": 94.75237782879633,
+    "speed": 76.72849727040531,
+    "structure": 97.4417841915382,
     "validity": 100.0
    },
    "quadremesher": {
@@ -3987,19 +3987,7 @@
     "structure": null,
     "validity": 0.0
    },
-   "quad-layout": {
-    "alignment": 52.33633578871011,
-    "budget": 93.46666666666667,
-    "fidelity": 67.04323268693008,
-    "overall": 74.12155973151347,
-    "quads": 3049,
-    "shape": 69.89554809532086,
-    "singularities": 77.04165300098393,
-    "speed": 71.40878578111031,
-    "structure": 21.252869793374874,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 59.71007695156096,
     "budget": 95.86666666666666,
     "fidelity": 85.61397504469593,
@@ -4011,7 +3999,7 @@
     "structure": 38.99703068294292,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 60.85421068474814,
     "budget": 92.93316304810557,
     "fidelity": 84.93961710219486,
@@ -4021,6 +4009,18 @@
     "singularities": 79.19826652221019,
     "speed": 51.424879792488866,
     "structure": 36.74972914409535,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 52.33633578871011,
+    "budget": 93.46666666666667,
+    "fidelity": 67.04323268693008,
+    "overall": 74.12155973151347,
+    "quads": 3049,
+    "shape": 69.89554809532086,
+    "singularities": 77.04165300098393,
+    "speed": 71.40878578111031,
+    "structure": 21.252869793374874,
     "validity": 100.0
    },
    "quadremesher": {
@@ -4097,19 +4097,7 @@
     "structure": 0.0,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 27.050560509343708,
-    "budget": 95.73333333333333,
-    "fidelity": 90.79606175585621,
-    "overall": 73.16995627862266,
-    "quads": 2968,
-    "shape": 73.21463946443194,
-    "singularities": 85.84905660377359,
-    "speed": 75.22177813924597,
-    "structure": 0.0,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 29.951211421619103,
     "budget": 97.86666666666667,
     "fidelity": 90.70755589506047,
@@ -4121,7 +4109,7 @@
     "structure": 0.0,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 30.528815045713735,
     "budget": 94.34868606951116,
     "fidelity": 90.88947377240248,
@@ -4130,6 +4118,18 @@
     "shape": 72.53279419269383,
     "singularities": 81.05321816662023,
     "speed": 77.26175053249847,
+    "structure": 0.0,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 27.050560509343708,
+    "budget": 95.73333333333333,
+    "fidelity": 90.79606175585621,
+    "overall": 73.16995627862266,
+    "quads": 2968,
+    "shape": 73.21463946443194,
+    "singularities": 85.84905660377359,
+    "speed": 75.22177813924597,
     "structure": 0.0,
     "validity": 100.0
    },
@@ -4207,19 +4207,7 @@
     "structure": null,
     "validity": 0.0
    },
-   "quad-layout": {
-    "alignment": 32.48644555264575,
-    "budget": 67.73333333333333,
-    "fidelity": 38.91761040027561,
-    "overall": 20.568091305819962,
-    "quads": 3242,
-    "shape": 2.876151577500927,
-    "singularities": 0.0,
-    "speed": 47.151915105570666,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 34.130531082567295,
     "budget": 24.26666666666667,
     "fidelity": 55.292918137995365,
@@ -4231,7 +4219,7 @@
     "structure": 8.968609865470857,
     "validity": 0.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 58.80118129389984,
     "budget": 97.2124658527067,
     "fidelity": 72.61140543479436,
@@ -4241,6 +4229,18 @@
     "singularities": 53.29974532166981,
     "speed": 6.50810699629456,
     "structure": 20.13896578451999,
+    "validity": 0.0
+   },
+   "openclare-uniform": {
+    "alignment": 32.48644555264575,
+    "budget": 67.73333333333333,
+    "fidelity": 38.91761040027561,
+    "overall": 20.568091305819962,
+    "quads": 3242,
+    "shape": 2.876151577500927,
+    "singularities": 0.0,
+    "speed": 47.151915105570666,
+    "structure": null,
     "validity": 0.0
    },
    "quadremesher": {
@@ -4317,19 +4317,7 @@
     "structure": 99.0,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": null,
-    "budget": 100.0,
-    "fidelity": 99.00463506146482,
-    "overall": 95.06109139042277,
-    "quads": 3000,
-    "shape": 80.32118568745668,
-    "singularities": 91.99999999999999,
-    "speed": 99.13619522490562,
-    "structure": 99.0,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": null,
     "budget": 100.0,
     "fidelity": 99.00468621711202,
@@ -4341,7 +4329,7 @@
     "structure": 99.0,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": null,
     "budget": 95.03649635036496,
     "fidelity": 98.80441266209381,
@@ -4351,6 +4339,18 @@
     "singularities": 91.13082039911309,
     "speed": 94.66747385328767,
     "structure": 98.89135254988913,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": null,
+    "budget": 100.0,
+    "fidelity": 99.00463506146482,
+    "overall": 95.06109139042277,
+    "quads": 3000,
+    "shape": 80.32118568745668,
+    "singularities": 91.99999999999999,
+    "speed": 99.13619522490562,
+    "structure": 99.0,
     "validity": 100.0
    },
    "quadremesher": {
@@ -4427,19 +4427,7 @@
     "structure": 33.35815338793745,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 61.292541795569306,
-    "budget": 93.6,
-    "fidelity": 90.95362611373844,
-    "overall": 81.19188174337192,
-    "quads": 3048,
-    "shape": 72.01584474194519,
-    "singularities": 79.65879265091864,
-    "speed": 67.54230076305359,
-    "structure": 43.24146981627297,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 64.79401358838012,
     "budget": 97.2,
     "fidelity": 90.58427624097325,
@@ -4451,7 +4439,7 @@
     "structure": 44.175897952332996,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 65.20905322874015,
     "budget": 95.16963772282921,
     "fidelity": 93.31341315075322,
@@ -4461,6 +4449,18 @@
     "singularities": 81.95576251455182,
     "speed": 62.579485286409096,
     "structure": 45.750873108265424,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 61.292541795569306,
+    "budget": 93.6,
+    "fidelity": 90.95362611373844,
+    "overall": 81.19188174337192,
+    "quads": 3048,
+    "shape": 72.01584474194519,
+    "singularities": 79.65879265091864,
+    "speed": 67.54230076305359,
+    "structure": 43.24146981627297,
     "validity": 100.0
    },
    "quadremesher": {
@@ -4537,19 +4537,7 @@
     "structure": 32.607907145447946,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 53.996647999208655,
-    "budget": 97.33333333333334,
-    "fidelity": 81.63843664117225,
-    "overall": 78.5995748597759,
-    "quads": 2980,
-    "shape": 78.31547284712865,
-    "singularities": 82.21476510067114,
-    "speed": 84.90882516922179,
-    "structure": 17.046979865771817,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 56.140792194062044,
     "budget": 98.13333333333333,
     "fidelity": 85.36193802121264,
@@ -4561,7 +4549,7 @@
     "structure": 33.020763563295375,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 56.232474833359944,
     "budget": 99.62877030162413,
     "fidelity": 88.95835521621837,
@@ -4571,6 +4559,18 @@
     "singularities": 86.99489084997677,
     "speed": 68.721342094329,
     "structure": 56.22387366465398,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 53.996647999208655,
+    "budget": 97.33333333333334,
+    "fidelity": 81.63843664117225,
+    "overall": 78.5995748597759,
+    "quads": 2980,
+    "shape": 78.31547284712865,
+    "singularities": 82.21476510067114,
+    "speed": 84.90882516922179,
+    "structure": 17.046979865771817,
     "validity": 100.0
    },
    "quadremesher": {
@@ -4647,19 +4647,7 @@
     "structure": 60.15187849720224,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 16.984320068939777,
-    "budget": 95.73333333333333,
-    "fidelity": 53.50254856082768,
-    "overall": 66.58473190683044,
-    "quads": 2968,
-    "shape": 68.7187869585272,
-    "singularities": 81.13207547169812,
-    "speed": 43.99741689796116,
-    "structure": 43.36253369272237,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 16.81115131292914,
     "budget": 95.33333333333334,
     "fidelity": 61.303220142093764,
@@ -4671,7 +4659,7 @@
     "structure": 23.069139966273188,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 19.671531729977104,
     "budget": 96.66452854393842,
     "fidelity": 69.59847157221594,
@@ -4681,6 +4669,18 @@
     "singularities": 68.95213454075032,
     "speed": 39.66554451250322,
     "structure": 15.265200517464429,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 16.984320068939777,
+    "budget": 95.73333333333333,
+    "fidelity": 53.50254856082768,
+    "overall": 66.58473190683044,
+    "quads": 2968,
+    "shape": 68.7187869585272,
+    "singularities": 81.13207547169812,
+    "speed": 43.99741689796116,
+    "structure": 43.36253369272237,
     "validity": 100.0
    },
    "quadremesher": {
@@ -4757,19 +4757,7 @@
     "structure": 99.96323529411765,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 97.22445854633125,
-    "budget": 93.6,
-    "fidelity": 98.82798431317823,
-    "overall": 97.5455180866869,
-    "quads": 2952,
-    "shape": 92.78748331587727,
-    "singularities": 100.0,
-    "speed": 87.73951074536956,
-    "structure": 99.96612466124661,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 97.22463563593384,
     "budget": 93.6,
     "fidelity": 98.82822069651678,
@@ -4781,7 +4769,7 @@
     "structure": 99.96612466124661,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 97.22928588323914,
     "budget": 96.60056657223795,
     "fidelity": 98.76249156511955,
@@ -4791,6 +4779,18 @@
     "singularities": 100.0,
     "speed": 78.75026553982788,
     "structure": 99.96428571428572,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 97.22445854633125,
+    "budget": 93.6,
+    "fidelity": 98.82798431317823,
+    "overall": 97.5455180866869,
+    "quads": 2952,
+    "shape": 92.78748331587727,
+    "singularities": 100.0,
+    "speed": 87.73951074536956,
+    "structure": 99.96612466124661,
     "validity": 100.0
    },
    "quadremesher": {
@@ -4869,19 +4869,7 @@
     "structure": 20.55025266704099,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 74.17774048521494,
-    "budget": 96.6,
-    "fidelity": 96.23926080590714,
-    "overall": 84.79561506005174,
-    "quads": 8068,
-    "shape": 68.54419668670131,
-    "singularities": 98.01685671789787,
-    "speed": 54.51351931295956,
-    "structure": 15.617253346554294,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 75.7296320659544,
     "budget": 98.95,
     "fidelity": 96.47797174128493,
@@ -4893,7 +4881,7 @@
     "structure": 14.5381626770272,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 76.51405786680685,
     "budget": 98.07862469978511,
     "fidelity": 96.54380947053426,
@@ -4903,6 +4891,18 @@
     "singularities": 97.9871681972575,
     "speed": 51.5589486548223,
     "structure": 14.593030569883004,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 74.17774048521494,
+    "budget": 96.6,
+    "fidelity": 96.23926080590714,
+    "overall": 84.79561506005174,
+    "quads": 8068,
+    "shape": 68.54419668670131,
+    "singularities": 98.01685671789787,
+    "speed": 54.51351931295956,
+    "structure": 15.617253346554294,
     "validity": 100.0
    },
    "quadremesher": {
@@ -4979,19 +4979,7 @@
     "structure": 57.5315289783194,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 69.20343449843381,
-    "budget": 99.5,
-    "fidelity": 92.7611716832148,
-    "overall": 85.1934510733771,
-    "quads": 7990,
-    "shape": 67.18716853187564,
-    "singularities": 94.99374217772217,
-    "speed": 47.09865809936717,
-    "structure": 58.22277847309137,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 71.40924250418222,
     "budget": 99.7,
     "fidelity": 95.27230577271922,
@@ -5003,7 +4991,7 @@
     "structure": 44.65849387040281,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 70.65000252457546,
     "budget": 93.23387759896629,
     "fidelity": 95.39291929706255,
@@ -5013,6 +5001,18 @@
     "singularities": 94.26454773569125,
     "speed": 48.42183686238344,
     "structure": 67.48715497669973,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 69.20343449843381,
+    "budget": 99.5,
+    "fidelity": 92.7611716832148,
+    "overall": 85.1934510733771,
+    "quads": 7990,
+    "shape": 67.18716853187564,
+    "singularities": 94.99374217772217,
+    "speed": 47.09865809936717,
+    "structure": 58.22277847309137,
     "validity": 100.0
    },
    "quadremesher": {
@@ -5089,19 +5089,7 @@
     "structure": 78.14804310833806,
     "validity": 0.0
    },
-   "quad-layout": {
-    "alignment": 83.82719295377503,
-    "budget": 98.4,
-    "fidelity": 98.89243094525082,
-    "overall": 92.65270375374831,
-    "quads": 7968,
-    "shape": 81.77993252423603,
-    "singularities": 97.48995983935743,
-    "speed": 46.081361208039304,
-    "structure": 83.94829317269077,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 83.32095781433745,
     "budget": 99.3,
     "fidelity": 98.08054017534391,
@@ -5113,7 +5101,7 @@
     "structure": 63.838283004741704,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 83.77539650723318,
     "budget": 92.69141531322505,
     "fidelity": 98.02200808947521,
@@ -5123,6 +5111,18 @@
     "singularities": 97.04579025110783,
     "speed": 53.656320448507486,
     "structure": 59.68980797636632,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 83.82719295377503,
+    "budget": 98.4,
+    "fidelity": 98.89243094525082,
+    "overall": 92.65270375374831,
+    "quads": 7968,
+    "shape": 81.77993252423603,
+    "singularities": 97.48995983935743,
+    "speed": 46.081361208039304,
+    "structure": 83.94829317269077,
     "validity": 100.0
    },
    "quadremesher": {
@@ -5199,19 +5199,7 @@
     "structure": 77.9507309149973,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 56.12013787273774,
-    "budget": 94.0,
-    "fidelity": 86.34467016605839,
-    "overall": 82.17341437531671,
-    "quads": 7880,
-    "shape": 75.87543811656512,
-    "singularities": 91.11675126903552,
-    "speed": 56.84402415437857,
-    "structure": 62.09390862944162,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 59.89440841016466,
     "budget": 94.55,
     "fidelity": 86.50713738825233,
@@ -5223,7 +5211,7 @@
     "structure": 66.39536317671723,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 59.006135140834616,
     "budget": 98.36456558773425,
     "fidelity": 85.48960713231708,
@@ -5233,6 +5221,18 @@
     "singularities": 89.93326546770729,
     "speed": 48.63857044987744,
     "structure": 59.83486030991969,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 56.12013787273774,
+    "budget": 94.0,
+    "fidelity": 86.34467016605839,
+    "overall": 82.17341437531671,
+    "quads": 7880,
+    "shape": 75.87543811656512,
+    "singularities": 91.11675126903552,
+    "speed": 56.84402415437857,
+    "structure": 62.09390862944162,
     "validity": 100.0
    },
    "quadremesher": {
@@ -5309,19 +5309,7 @@
     "structure": 90.13522215067611,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 89.00759611435608,
-    "budget": 94.39999999999999,
-    "fidelity": 93.96079179314877,
-    "overall": 93.5184857800045,
-    "quads": 8112,
-    "shape": 89.33042509661554,
-    "singularities": 98.0276134122288,
-    "speed": 58.72571858810971,
-    "structure": 79.6104536489152,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 91.36794855846045,
     "budget": 97.15,
     "fidelity": 94.27608655543771,
@@ -5333,7 +5321,7 @@
     "structure": 96.58681891522899,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 91.50058098398227,
     "budget": 94.29557634662548,
     "fidelity": 96.26602360410341,
@@ -5343,6 +5331,18 @@
     "singularities": 97.13415726312017,
     "speed": 44.5485904733624,
     "structure": 98.92530897367007,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 89.00759611435608,
+    "budget": 94.39999999999999,
+    "fidelity": 93.96079179314877,
+    "overall": 93.5184857800045,
+    "quads": 8112,
+    "shape": 89.33042509661554,
+    "singularities": 98.0276134122288,
+    "speed": 58.72571858810971,
+    "structure": 79.6104536489152,
     "validity": 100.0
    },
    "quadremesher": {
@@ -5419,19 +5419,7 @@
     "structure": 64.02773764807858,
     "validity": 0.0
    },
-   "quad-layout": {
-    "alignment": 73.23280831680219,
-    "budget": 94.19999999999999,
-    "fidelity": 98.08378071012615,
-    "overall": 86.5217040512009,
-    "quads": 7884,
-    "shape": 66.4319833569584,
-    "singularities": 95.94114662607814,
-    "speed": 32.79616437757712,
-    "structure": 63.67326230339929,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 74.9953069327284,
     "budget": 91.25,
     "fidelity": 98.20697222199037,
@@ -5443,7 +5431,7 @@
     "structure": 58.78594249201278,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 75.39499277090988,
     "budget": 98.99805176732535,
     "fidelity": 98.10325603192116,
@@ -5453,6 +5441,18 @@
     "singularities": 95.53571428571429,
     "speed": 42.21455052110328,
     "structure": 39.78794642857143,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 73.23280831680219,
+    "budget": 94.19999999999999,
+    "fidelity": 98.08378071012615,
+    "overall": 86.5217040512009,
+    "quads": 7884,
+    "shape": 66.4319833569584,
+    "singularities": 95.94114662607814,
+    "speed": 32.79616437757712,
+    "structure": 63.67326230339929,
     "validity": 100.0
    },
    "quadremesher": {
@@ -5529,19 +5529,7 @@
     "structure": 0.0,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 99.49066544862795,
-    "budget": 96.7,
-    "fidelity": 99.99999999999993,
-    "overall": 99.55918897848694,
-    "quads": 8066,
-    "shape": 99.9651680293819,
-    "singularities": 100.0,
-    "speed": 60.76457711360885,
-    "structure": 99.92561368708157,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 98.77781153030686,
     "budget": 96.7,
     "fidelity": 99.99999999999993,
@@ -5553,7 +5541,7 @@
     "structure": 99.92561368708157,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 98.74306584512865,
     "budget": 92.72727272727272,
     "fidelity": 99.99999999999993,
@@ -5563,6 +5551,18 @@
     "singularities": 100.0,
     "speed": 58.59087871488742,
     "structure": 99.92283950617285,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 99.49066544862795,
+    "budget": 96.7,
+    "fidelity": 99.99999999999993,
+    "overall": 99.55918897848694,
+    "quads": 8066,
+    "shape": 99.9651680293819,
+    "singularities": 100.0,
+    "speed": 60.76457711360885,
+    "structure": 99.92561368708157,
     "validity": 100.0
    },
    "quadremesher": {
@@ -5639,19 +5639,7 @@
     "structure": 81.62206444565811,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 93.87646762920431,
-    "budget": 99.7,
-    "fidelity": 98.93675075247039,
-    "overall": 96.66771349439388,
-    "quads": 8006,
-    "shape": 87.97048071412588,
-    "singularities": 100.0,
-    "speed": 58.50139726778405,
-    "structure": 97.72670497127154,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 94.33484217449441,
     "budget": 94.95,
     "fidelity": 98.89001291713657,
@@ -5663,7 +5651,7 @@
     "structure": 82.2888973287758,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 94.11905506064258,
     "budget": 95.08812481941635,
     "fidelity": 98.8470263250152,
@@ -5673,6 +5661,18 @@
     "singularities": 100.0,
     "speed": 65.91030630961019,
     "structure": 82.20351077493935,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 93.87646762920431,
+    "budget": 99.7,
+    "fidelity": 98.93675075247039,
+    "overall": 96.66771349439388,
+    "quads": 8006,
+    "shape": 87.97048071412588,
+    "singularities": 100.0,
+    "speed": 58.50139726778405,
+    "structure": 97.72670497127154,
     "validity": 100.0
    },
    "quadremesher": {
@@ -5737,19 +5737,7 @@
     "structure": null,
     "validity": 0.0
    },
-   "quad-layout": {
-    "alignment": 42.27253518804801,
-    "budget": 93.65,
-    "fidelity": 62.10576361070982,
-    "overall": 72.66290862705691,
-    "quads": 7873,
-    "shape": 73.48177245239081,
-    "singularities": 78.91528007112917,
-    "speed": 57.43532931198894,
-    "structure": 32.274863457386004,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 44.72822755712267,
     "budget": 94.89999999999999,
     "fidelity": 80.69898505651071,
@@ -5761,7 +5749,7 @@
     "structure": 12.675882498148605,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 47.86191609894997,
     "budget": 97.19994166545136,
     "fidelity": 79.81665482840768,
@@ -5772,6 +5760,18 @@
     "speed": 37.404626414784616,
     "structure": 13.64952932657495,
     "validity": 0.0
+   },
+   "openclare-uniform": {
+    "alignment": 42.27253518804801,
+    "budget": 93.65,
+    "fidelity": 62.10576361070982,
+    "overall": 72.66290862705691,
+    "quads": 7873,
+    "shape": 73.48177245239081,
+    "singularities": 78.91528007112917,
+    "speed": 57.43532931198894,
+    "structure": 32.274863457386004,
+    "validity": 100.0
    },
    "quadremesher": {
     "alignment": 52.721943822202505,
@@ -5847,19 +5847,7 @@
     "structure": 99.82638888888889,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 97.29366961247477,
-    "budget": 96.8,
-    "fidelity": 99.99999999999986,
-    "overall": 99.07846876950244,
-    "quads": 8064,
-    "shape": 99.98679051444151,
-    "singularities": 99.50396825396827,
-    "speed": 62.29093798193986,
-    "structure": 99.82638888888889,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 95.91143773641714,
     "budget": 96.8,
     "fidelity": 99.99999999999986,
@@ -5871,7 +5859,7 @@
     "structure": 99.82638888888889,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 95.90991594261304,
     "budget": 100.0,
     "fidelity": 99.99999999999986,
@@ -5880,6 +5868,18 @@
     "shape": 97.56348911623583,
     "singularities": 99.50396825396827,
     "speed": 61.591741638746555,
+    "structure": 99.82638888888889,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 97.29366961247477,
+    "budget": 96.8,
+    "fidelity": 99.99999999999986,
+    "overall": 99.07846876950244,
+    "quads": 8064,
+    "shape": 99.98679051444151,
+    "singularities": 99.50396825396827,
+    "speed": 62.29093798193986,
     "structure": 99.82638888888889,
     "validity": 100.0
    },
@@ -5945,19 +5945,7 @@
     "structure": null,
     "validity": 0.0
    },
-   "quad-layout": {
-    "alignment": 45.08990999768437,
-    "budget": 92.7,
-    "fidelity": 65.74360036753448,
-    "overall": 38.35248322093916,
-    "quads": 7854,
-    "shape": 35.4240190468028,
-    "singularities": 29.717341482047363,
-    "speed": 31.716646241321932,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 46.14120397566434,
     "budget": 85.7,
     "fidelity": 67.35562283069592,
@@ -5969,7 +5957,7 @@
     "structure": null,
     "validity": 0.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 59.7117268759427,
     "budget": 84.19021039850674,
     "fidelity": 50.09196944153748,
@@ -5978,6 +5966,18 @@
     "shape": 65.03354495734723,
     "singularities": 77.69811320754717,
     "speed": 0.0,
+    "structure": null,
+    "validity": 0.0
+   },
+   "openclare-uniform": {
+    "alignment": 45.08990999768437,
+    "budget": 92.7,
+    "fidelity": 65.74360036753448,
+    "overall": 38.35248322093916,
+    "quads": 7854,
+    "shape": 35.4240190468028,
+    "singularities": 29.717341482047363,
+    "speed": 31.716646241321932,
     "structure": null,
     "validity": 0.0
    },
@@ -6055,19 +6055,7 @@
     "structure": null,
     "validity": 0.0
    },
-   "quad-layout": {
-    "alignment": 42.82536979132929,
-    "budget": 51.4,
-    "fidelity": 81.17762683074207,
-    "overall": 27.24391366618649,
-    "quads": 8972,
-    "shape": 0.0,
-    "singularities": 0.0,
-    "speed": 7.920117566884565,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 37.844680700222476,
     "budget": 39.65,
     "fidelity": 80.100748377271,
@@ -6079,7 +6067,7 @@
     "structure": null,
     "validity": 0.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 64.17160821872667,
     "budget": 69.1704969865441,
     "fidelity": 63.92412335921587,
@@ -6088,6 +6076,18 @@
     "shape": 75.48254431815931,
     "singularities": 50.51035235889351,
     "speed": 0.0,
+    "structure": null,
+    "validity": 0.0
+   },
+   "openclare-uniform": {
+    "alignment": 42.82536979132929,
+    "budget": 51.4,
+    "fidelity": 81.17762683074207,
+    "overall": 27.24391366618649,
+    "quads": 8972,
+    "shape": 0.0,
+    "singularities": 0.0,
+    "speed": 7.920117566884565,
     "structure": null,
     "validity": 0.0
    },
@@ -6165,19 +6165,7 @@
     "structure": null,
     "validity": 0.0
    },
-   "quad-layout": {
-    "alignment": 49.68268071670567,
-    "budget": 98.5,
-    "fidelity": 76.02291362639689,
-    "overall": 75.05118933000469,
-    "quads": 7970,
-    "shape": 68.11701602455128,
-    "singularities": 75.65872020075282,
-    "speed": 39.06980927934245,
-    "structure": 21.555834378920956,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 51.94869296571005,
     "budget": 97.75,
     "fidelity": 86.58415351530165,
@@ -6189,7 +6177,7 @@
     "structure": 23.43180389692018,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 54.56611565890846,
     "budget": 96.38279468428088,
     "fidelity": 93.01327794171512,
@@ -6199,6 +6187,18 @@
     "singularities": 78.95885286783042,
     "speed": 29.82866996110364,
     "structure": 17.70573566084788,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 49.68268071670567,
+    "budget": 98.5,
+    "fidelity": 76.02291362639689,
+    "overall": 75.05118933000469,
+    "quads": 7970,
+    "shape": 68.11701602455128,
+    "singularities": 75.65872020075282,
+    "speed": 39.06980927934245,
+    "structure": 21.555834378920956,
     "validity": 100.0
    },
    "quadremesher": {
@@ -6275,19 +6275,7 @@
     "structure": 98.3640081799591,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 47.418538142482326,
-    "budget": 96.1,
-    "fidelity": 99.38902654060155,
-    "overall": 87.59747083453647,
-    "quads": 8078,
-    "shape": 93.72676051757392,
-    "singularities": 98.0193117108195,
-    "speed": 52.870708675400266,
-    "structure": 94.68927952463481,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 54.08033149366061,
     "budget": 95.1,
     "fidelity": 99.4934815359369,
@@ -6299,7 +6287,7 @@
     "structure": 98.8639170165473,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 53.37025385599275,
     "budget": 95.97443220454235,
     "fidelity": 99.46567171454954,
@@ -6309,6 +6297,18 @@
     "singularities": 97.8018958648166,
     "speed": 57.72778349992376,
     "structure": 95.65874433301278,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 47.418538142482326,
+    "budget": 96.1,
+    "fidelity": 99.38902654060155,
+    "overall": 87.59747083453647,
+    "quads": 8078,
+    "shape": 93.72676051757392,
+    "singularities": 98.0193117108195,
+    "speed": 52.870708675400266,
+    "structure": 94.68927952463481,
     "validity": 100.0
    },
    "quadremesher": {
@@ -6385,19 +6385,7 @@
     "structure": 37.25135623869801,
     "validity": 0.0
    },
-   "quad-layout": {
-    "alignment": 57.89457392192051,
-    "budget": 95.35,
-    "fidelity": 76.92126116313506,
-    "overall": 77.6718313170807,
-    "quads": 8093,
-    "shape": 64.70583921094428,
-    "singularities": 90.11491412331644,
-    "speed": 47.843486607209385,
-    "structure": 26.04720128506116,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 63.74113330558632,
     "budget": 92.95,
     "fidelity": 88.01355953196767,
@@ -6409,7 +6397,7 @@
     "structure": 33.63223191254146,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 62.607913580539396,
     "budget": 94.82899022801303,
     "fidelity": 88.52350657536746,
@@ -6419,6 +6407,18 @@
     "singularities": 90.95568284594513,
     "speed": 34.25601417445733,
     "structure": 33.805647673600646,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 57.89457392192051,
+    "budget": 95.35,
+    "fidelity": 76.92126116313506,
+    "overall": 77.6718313170807,
+    "quads": 8093,
+    "shape": 64.70583921094428,
+    "singularities": 90.11491412331644,
+    "speed": 47.843486607209385,
+    "structure": 26.04720128506116,
     "validity": 100.0
    },
    "quadremesher": {
@@ -6495,19 +6495,7 @@
     "structure": 0.0,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 26.21879865493653,
-    "budget": 97.15,
-    "fidelity": 94.25422381781404,
-    "overall": 73.29061596819304,
-    "quads": 7943,
-    "shape": 70.3560695995557,
-    "singularities": 86.40312224600277,
-    "speed": 54.42265354267145,
-    "structure": 0.0,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 27.46549801413325,
     "budget": 97.0,
     "fidelity": 94.85694767275555,
@@ -6519,7 +6507,7 @@
     "structure": 0.0,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 28.4253221640593,
     "budget": 99.4343091500495,
     "fidelity": 93.30327502283976,
@@ -6528,6 +6516,18 @@
     "shape": 72.56531805275654,
     "singularities": 84.70471604588586,
     "speed": 55.25287819164133,
+    "structure": 0.0,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 26.21879865493653,
+    "budget": 97.15,
+    "fidelity": 94.25422381781404,
+    "overall": 73.29061596819304,
+    "quads": 7943,
+    "shape": 70.3560695995557,
+    "singularities": 86.40312224600277,
+    "speed": 54.42265354267145,
     "structure": 0.0,
     "validity": 100.0
    },
@@ -6605,19 +6605,7 @@
     "structure": null,
     "validity": 0.0
    },
-   "quad-layout": {
-    "alignment": 46.021246247481606,
-    "budget": 62.85000000000001,
-    "fidelity": 72.14231691158804,
-    "overall": 61.61386738095399,
-    "quads": 8743,
-    "shape": 46.3162871704085,
-    "singularities": 24.167905753173972,
-    "speed": 42.73587990682911,
-    "structure": 18.78073887681574,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 48.43466511753199,
     "budget": 79.14999999999999,
     "fidelity": 74.43156423318317,
@@ -6629,7 +6617,7 @@
     "structure": 13.080670072472378,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 58.92524159141848,
     "budget": 98.30716115380332,
     "fidelity": 77.30751641943917,
@@ -6640,6 +6628,18 @@
     "speed": 7.5347154465737365,
     "structure": 20.495470305334972,
     "validity": 0.0
+   },
+   "openclare-uniform": {
+    "alignment": 46.021246247481606,
+    "budget": 62.85000000000001,
+    "fidelity": 72.14231691158804,
+    "overall": 61.61386738095399,
+    "quads": 8743,
+    "shape": 46.3162871704085,
+    "singularities": 24.167905753173972,
+    "speed": 42.73587990682911,
+    "structure": 18.78073887681574,
+    "validity": 100.0
    },
    "quadremesher": {
     "alignment": 59.77920248544993,
@@ -6715,19 +6715,7 @@
     "structure": 0.0,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": null,
-    "budget": 98.25,
-    "fidelity": 99.30897014259116,
-    "overall": 88.43673751768753,
-    "quads": 8035,
-    "shape": 75.17970338049153,
-    "singularities": 97.51088985687616,
-    "speed": 59.65823590264916,
-    "structure": 0.0,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": null,
     "budget": 98.45,
     "fidelity": 99.28990686409314,
@@ -6739,7 +6727,7 @@
     "structure": 0.0,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": null,
     "budget": 96.27539503386005,
     "fidelity": 99.32386473723491,
@@ -6748,6 +6736,18 @@
     "shape": 74.07628121246427,
     "singularities": 99.43036172030762,
     "speed": 60.289086232098924,
+    "structure": 0.0,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": null,
+    "budget": 98.25,
+    "fidelity": 99.30897014259116,
+    "overall": 88.43673751768753,
+    "quads": 8035,
+    "shape": 75.17970338049153,
+    "singularities": 97.51088985687616,
+    "speed": 59.65823590264916,
     "structure": 0.0,
     "validity": 100.0
    },
@@ -6825,19 +6825,7 @@
     "structure": 47.882552230378316,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 64.75688128890759,
-    "budget": 98.35000000000001,
-    "fidelity": 95.51511819349145,
-    "overall": 83.01202050738546,
-    "quads": 7967,
-    "shape": 67.64350089072644,
-    "singularities": 90.96272122505334,
-    "speed": 42.68207494523363,
-    "structure": 33.111585289318434,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 66.46301152116199,
     "budget": 95.35,
     "fidelity": 95.87525868262831,
@@ -6849,7 +6837,7 @@
     "structure": 38.13171876930681,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 67.29929130817303,
     "budget": 97.89077212806026,
     "fidelity": 95.78355500348987,
@@ -6859,6 +6847,18 @@
     "singularities": 91.25764955663793,
     "speed": 36.8978335003188,
     "structure": 34.319970026227054,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 64.75688128890759,
+    "budget": 98.35000000000001,
+    "fidelity": 95.51511819349145,
+    "overall": 83.01202050738546,
+    "quads": 7967,
+    "shape": 67.64350089072644,
+    "singularities": 90.96272122505334,
+    "speed": 42.68207494523363,
+    "structure": 33.111585289318434,
     "validity": 100.0
    },
    "quadremesher": {
@@ -6935,19 +6935,7 @@
     "structure": 42.15021691973969,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 55.57629445585836,
-    "budget": 98.0,
-    "fidelity": 91.38779833409409,
-    "overall": 82.53604759074264,
-    "quads": 8040,
-    "shape": 72.74664705939726,
-    "singularities": 92.03980099502488,
-    "speed": 57.72345723409585,
-    "structure": 55.93283582089552,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 56.42243078409423,
     "budget": 94.85,
     "fidelity": 94.08498951031278,
@@ -6959,7 +6947,7 @@
     "structure": 40.97247932864371,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 58.22574977104543,
     "budget": 94.20289855072464,
     "fidelity": 94.81371767345259,
@@ -6969,6 +6957,18 @@
     "singularities": 90.8315565031983,
     "speed": 48.20993973570387,
     "structure": 36.066098081023455,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 55.57629445585836,
+    "budget": 98.0,
+    "fidelity": 91.38779833409409,
+    "overall": 82.53604759074264,
+    "quads": 8040,
+    "shape": 72.74664705939726,
+    "singularities": 92.03980099502488,
+    "speed": 57.72345723409585,
+    "structure": 55.93283582089552,
     "validity": 100.0
    },
    "quadremesher": {
@@ -7045,19 +7045,7 @@
     "structure": 35.2778585976142,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 20.829508241541816,
-    "budget": 97.89999999999999,
-    "fidelity": 65.12509684176753,
-    "overall": 68.80942834317626,
-    "quads": 8042,
-    "shape": 66.36960736127293,
-    "singularities": 84.58095001243471,
-    "speed": 42.30412073884766,
-    "structure": 33.424521263367325,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 21.939376322277756,
     "budget": 95.25,
     "fidelity": 73.23406288438392,
@@ -7069,7 +7057,7 @@
     "structure": 14.522454142947506,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 23.02881891611409,
     "budget": 99.39081140536425,
     "fidelity": 73.27697124314602,
@@ -7079,6 +7067,18 @@
     "singularities": 73.30734683501399,
     "speed": 34.15691774286418,
     "structure": 11.03296330819422,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 20.829508241541816,
+    "budget": 97.89999999999999,
+    "fidelity": 65.12509684176753,
+    "overall": 68.80942834317626,
+    "quads": 8042,
+    "shape": 66.36960736127293,
+    "singularities": 84.58095001243471,
+    "speed": 42.30412073884766,
+    "structure": 33.424521263367325,
     "validity": 100.0
    },
    "quadremesher": {
@@ -7155,19 +7155,7 @@
     "structure": 99.98626373626374,
     "validity": 100.0
    },
-   "quad-layout": {
-    "alignment": 97.15842624222425,
-    "budget": 98.8,
-    "fidelity": 99.30807909892678,
-    "overall": 98.52079448416868,
-    "quads": 8024,
-    "shape": 95.42347000995325,
-    "singularities": 100.0,
-    "speed": 64.31248338874575,
-    "structure": 99.98753738783648,
-    "validity": 100.0
-   },
-   "quad-layout-adaptive": {
+   "openclare": {
     "alignment": 97.15886963008323,
     "budget": 98.8,
     "fidelity": 99.308226508805,
@@ -7179,7 +7167,7 @@
     "structure": 99.98753738783648,
     "validity": 100.0
    },
-   "quad-layout-matched": {
+   "openclare-matched": {
     "alignment": 97.23651882044913,
     "budget": 96.43291447101743,
     "fidelity": 99.3155150600322,
@@ -7189,6 +7177,18 @@
     "singularities": 100.0,
     "speed": 58.64921795028308,
     "structure": 99.98660774072586,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 97.15842624222425,
+    "budget": 98.8,
+    "fidelity": 99.30807909892678,
+    "overall": 98.52079448416868,
+    "quads": 8024,
+    "shape": 95.42347000995325,
+    "singularities": 100.0,
+    "speed": 64.31248338874575,
+    "structure": 99.98753738783648,
     "validity": 100.0
    },
    "quadremesher": {

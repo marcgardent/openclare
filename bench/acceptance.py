@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Checks the acceptance thresholds of ALGORITHM.md against the bench results.
 
-    python3 bench/acceptance.py [--tool quad-layout] [--targets 1000,3000,8000]
+    python3 bench/acceptance.py [--tool openclare] [--targets 1000,3000,8000]
 
 Reads bench/results/results*.json (see run.py) and writes
 bench/results/ACCEPTANCE.md: for the organic models, then for the mechanical
@@ -24,8 +24,8 @@ TOOLS = [
     "quadriflow",
     "instant-meshes",
     "integer-grid",
-    "quad-layout",
-    "quad-layout-adaptive",
+    "openclare-uniform",
+    "openclare",
     "quadremesher",
     "quadremesher-uniform",
 ]
@@ -85,7 +85,7 @@ def show(value, factor=1, digits=1):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--tool", default="quad-layout", help="the chain under test")
+    parser.add_argument("--tool", default="openclare", help="the chain under test")
     parser.add_argument("--targets", default="1000,3000,8000")
     args = parser.parse_args()
 

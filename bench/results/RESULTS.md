@@ -2,11 +2,11 @@
 
 Requested budget: 3000 quads. Median over 5 seeds; Quad Remesher and integer-grid have no seed and run once. The first row is how many quads each tool made; below it, lower is better for every metric. "—" means it could not be measured.
 
-The last two columns compare at equal quad count: `quadremesher-as-made` is the mesh of `quadremesher` measured against the number of quads it has rather than the budget, and `quad-layout-matched` is `quad-layout-adaptive` asked for that same number.
+The last two columns compare at equal quad count: `quadremesher-as-made` is the mesh of `quadremesher` measured against the number of quads it has rather than the budget, and `openclare-matched` is `openclare` asked for that same number.
 
 ## blob (organic)
 
-| | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform | quadremesher-as-made | quad-layout-matched |
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
 |---|---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 3/5 | 5/5 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 |
 | Quads made | 2781 | 3090 | 2507 | 3021 | 3005 | 3370 | 2755 | 3370 | 3392 |
@@ -27,7 +27,7 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 
 ## rock (organic)
 
-| | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform | quadremesher-as-made | quad-layout-matched |
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
 |---|---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 5/5 | 5/5 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 |
 | Quads made | 3036 | 2898 | 2687 | 2968 | 2984 | 3539 | 2531 | 3539 | 3589 |
@@ -48,7 +48,7 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 
 ## creature (organic)
 
-| | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform | quadremesher-as-made | quad-layout-matched |
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
 |---|---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 5/5 | 5/5 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 |
 | Quads made | 2667 | 3070 | 2597 | 3041 | 2955 | 2941 | 2719 | 2941 | 2894 |
@@ -69,7 +69,7 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 
 ## cage (organic)
 
-| | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform | quadremesher-as-made | quad-layout-matched |
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
 |---|---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 5/5 | 5/5 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 |
 | Quads made | 2891 | 2944 | 2874 | 3040 | 2968 | 5809 | 2785 | 5809 | 5890 |
@@ -90,7 +90,7 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 
 ## suzanne (organic)
 
-| | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform | quadremesher-as-made | quad-layout-matched |
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
 |---|---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 0/5 | 2/5 | 1/1 | 1/1 | 1/1 | 0/1 | 1/1 | 0/1 | 1/1 |
 | Quads made | 3030 | 3070 | 2757 | 2980 | 2986 | 4310 | 2628 | 4310 | 4306 |
@@ -111,7 +111,7 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 
 ## ogre (organic)
 
-| | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform | quadremesher-as-made | quad-layout-matched |
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
 |---|---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 1/5 | 4/5 | 0/1 | 1/1 | 1/1 | 1/1 | 0/1 | 1/1 | 1/1 |
 | Quads made | 2935 | 2874 | 2469 | 3059 | 3019 | 6134 | 2417 | 6134 | 6053 |
@@ -132,7 +132,7 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 
 ## spot (organic)
 
-| | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform | quadremesher-as-made | quad-layout-matched |
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
 |---|---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 5/5 | 5/5 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 |
 | Quads made | 2964 | 3044 | 2686 | 3048 | 2979 | 3478 | 2686 | 3478 | 3436 |
@@ -153,7 +153,7 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 
 ## bob (organic)
 
-| | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform | quadremesher-as-made | quad-layout-matched |
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
 |---|---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 5/5 | 5/5 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 |
 | Quads made | 2928 | 3040 | 2642 | 3042 | 2950 | 2920 | 2696 | 2920 | 2947 |
@@ -174,7 +174,7 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 
 ## blub (organic)
 
-| | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform | quadremesher-as-made | quad-layout-matched |
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
 |---|---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 3/5 | 5/5 | 0/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 |
 | Quads made | 2698 | 3036 | 2652 | 2993 | 2973 | 3889 | 2703 | 3889 | 3911 |
@@ -195,7 +195,7 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 
 ## pig (organic)
 
-| | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform | quadremesher-as-made | quad-layout-matched |
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
 |---|---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 0/5 | 0/5 | 0/1 | 1/1 | 1/1 | 0/1 | 1/1 | 0/1 | 1/1 |
 | Quads made | 2675 | 3016 | 2704 | 3049 | 3031 | 4698 | 2552 | 4698 | 4615 |
@@ -216,7 +216,7 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 
 ## jerry (organic)
 
-| | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform | quadremesher-as-made | quad-layout-matched |
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
 |---|---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 4/5 | 1/5 | 1/1 | 1/1 | 1/1 | 0/1 | 1/1 | 0/1 | 1/1 |
 | Quads made | 3122 | 2959 | 2617 | 3000 | 3055 | 6872 | 2573 | 6872 | 6872 |
@@ -237,7 +237,7 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 
 ## rose (organic)
 
-| | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform | quadremesher-as-made | quad-layout-matched |
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
 |---|---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 0/5 | 0/5 | 0/1 | 0/1 | 0/1 | 0/1 | 0/1 | 0/1 | 0/1 |
 | Quads made | 2085 | 2226 | 2060 | 3242 | 3568 | 35874 | 2689 | 35874 | 36124 |
@@ -258,7 +258,7 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 
 ## bridge (organic)
 
-| | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform | quadremesher-as-made | quad-layout-matched |
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
 |---|---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 0/5 | 5/5 | 1/1 | 1/1 | 1/1 | 0/1 | 0/1 | 0/1 | 1/1 |
 | Quads made | — | 2903 | 2682 | 2952 | 2959 | 4533 | 2726 | 4533 | 4537 |
@@ -281,7 +281,7 @@ Failures: quadriflow: cancelled.
 
 ## part (mechanical)
 
-| | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform | quadremesher-as-made | quad-layout-matched |
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
 |---|---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 4/5 | 5/5 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 |
 | Quads made | 2890 | 2938 | 2976 | 3049 | 2978 | 2815 | 2815 | 2815 | 2828 |
@@ -302,7 +302,7 @@ Failures: quadriflow: cancelled.
 
 ## cube (mechanical)
 
-| | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform | quadremesher-as-made | quad-layout-matched |
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
 |---|---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 5/5 | 5/5 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 |
 | Quads made | 2904 | 2974 | 2992 | 2992 | 2992 | 3082 | 3082 | 3082 | 3082 |
@@ -323,7 +323,7 @@ Failures: quadriflow: cancelled.
 
 ## lblock (mechanical)
 
-| | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform | quadremesher-as-made | quad-layout-matched |
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
 |---|---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 4/5 | 5/5 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 |
 | Quads made | 2928 | 2780 | 2912 | 3060 | 2972 | 3030 | 3030 | 3030 | 2972 |
@@ -344,7 +344,7 @@ Failures: quadriflow: cancelled.
 
 ## cylinder (mechanical)
 
-| | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform | quadremesher-as-made | quad-layout-matched |
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
 |---|---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 5/5 | 5/5 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 |
 | Quads made | 2900 | 3100 | 2640 | 2984 | 3040 | 2458 | 2458 | 2458 | 2494 |
@@ -365,7 +365,7 @@ Failures: quadriflow: cancelled.
 
 ## terrain (extra)
 
-| | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform | quadremesher-as-made | quad-layout-matched |
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
 |---|---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 5/5 | 5/5 | 1/1 | 1/1 | 1/1 | 0/1 | 1/1 | 0/1 | 1/1 |
 | Quads made | 2717 | 1753 | 2502 | 2968 | 2965 | 4677 | 2597 | 4677 | 4638 |
@@ -386,7 +386,7 @@ Failures: quadriflow: cancelled.
 
 ## mahaveer (extra)
 
-| | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform | quadremesher-as-made | quad-layout-matched |
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
 |---|---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 0/5 | 0/5 | 1/1 | 0/1 | 0/1 | 0/1 | 0/1 | 0/1 | 0/1 |
 | Quads made | — | 1699 | 2127 | 3011 | 2996 | 46202 | 4324 | 46202 | 44276 |
@@ -409,7 +409,7 @@ Failures: quadriflow: cancelled.
 
 ## marine (extra)
 
-| | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform | quadremesher-as-made | quad-layout-matched |
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
 |---|---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 0/5 | 0/5 | 0/1 | 0/1 | 0/1 | 0/1 | 0/1 | 0/1 | 0/1 |
 | Quads made | — | 1225 | — | 6485 | 6364 | 214018 | 11340 | 214018 | 197141 |
@@ -432,7 +432,7 @@ Failures: quadriflow: cancelled; integer-grid: error: invalid mesh: work mesh ha
 
 ## sphere (calibration)
 
-| | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform | quadremesher-as-made | quad-layout-matched |
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
 |---|---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 5/5 | 5/5 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 |
 | Quads made | 3107 | 3090 | 3000 | 3000 | 3000 | 2740 | 2740 | 2740 | 2706 |
@@ -453,7 +453,7 @@ Failures: quadriflow: cancelled; integer-grid: error: invalid mesh: work mesh ha
 
 ## torus (calibration)
 
-| | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform | quadremesher-as-made | quad-layout-matched |
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
 |---|---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 1/5 | 5/5 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 |
 | Quads made | 2976 | 3078 | 2720 | 2952 | 2952 | 2824 | 2824 | 2824 | 2800 |
@@ -478,7 +478,7 @@ Number of models on which each tool has the best median, calibration shapes excl
 
 ### organic (13 models)
 
-| Metric | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform | quadremesher-as-made | quad-layout-matched |
+| Metric | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
 |---|---|---|---|---|---|---|---|---|---|
 | Irregular vertices (S) | 3 | 0 | 7 | 4 | 3 | 0 | 1 | 0 | 2 |
 | Base complex patches (C) | 1 | 0 | 4 | 1 | 3 | 0 | 4 | 0 | 0 |
@@ -489,7 +489,7 @@ Number of models on which each tool has the best median, calibration shapes excl
 
 ### mechanical (4 models)
 
-| Metric | quadriflow | instant-meshes | integer-grid | quad-layout | quad-layout-adaptive | quadremesher | quadremesher-uniform | quadremesher-as-made | quad-layout-matched |
+| Metric | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
 |---|---|---|---|---|---|---|---|---|---|
 | Irregular vertices (S) | 3 | 0 | 3 | 4 | 4 | 4 | 4 | 4 | 4 |
 | Base complex patches (C) | 1 | 0 | 2 | 3 | 2 | 3 | 3 | 3 | 2 |

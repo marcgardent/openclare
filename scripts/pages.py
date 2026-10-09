@@ -21,16 +21,29 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "bench"))
 sys.path.insert(0, str(ROOT / "scripts"))
-from run import DEFAULT_TARGET, LOCAL_MODELS, MODELS, OUTPUT, TOOLS, available_models, source_path  # noqa: E402
+from run import (  # noqa: E402
+    DEFAULT_TARGET,
+    LOCAL_MODELS,
+    MODELS,
+    OUTPUT,
+    TOOLS,
+    available_models,
+    faces_of,
+    quadremesher_reference,
+    source_path,
+)
 from scores import MATCHED, load, rows_of, without_matched  # noqa: E402
 
 PAGES = ROOT / "docs" / "models"
 # The remeshers pictured, with the name they go by on the page.
 PICTURED = [
     ("quadriflow", "QuadriFlow (Blender)"),
-    ("quad-layout-adaptive", "openclare"),
+    ("openclare", "openclare"),
     ("quadremesher", "Quad Remesher"),
 ]
+# Quad Remesher makes more quads than it is asked for. Pictured next to its
+# mesh, in a section of its own: openclare asked for as many quads as that.
+EQUAL = ("openclare-matched", "openclare, as many quads")
 # Models that come y-up, and those best looked at from somewhere else than
 # the default (azimuth, elevation).
 Y_UP = {"spot", "bob", "blub", "pig", "jerry", "rose", "bridge"}
@@ -62,6 +75,27 @@ def render(mesh, picture, model, edges=True):
 def triangles_of(path):
     with open(path) as lines:
         return sum(1 for line in lines if line.startswith("f "))
+
+
+def spaced(count):
+    return f"{count:,}".replace(",", " ")
+
+
+def mesh_of(tool, model, target, directory):
+    """Where the mesh a picture was rendered from is kept, to count its
+    quads when the pictures are not made again."""
+    if tool == "quadremesher":
+        return quadremesher_reference(model, target, uniform=False)
+    return directory / f"{tool}_1.obj"
+
+
+def gallery(shown):
+    """Markdown: the pictures side by side, with what each is and how many
+    faces it has."""
+    lines = ["| " + " | ".join(label for label, _, _ in shown) + " |", "|" + "---|" * len(shown)]
+    lines += ["| " + " | ".join(f"![{label}](img/{picture.name})" for label, picture, _ in shown) + " |"]
+    lines += ["| " + " | ".join(caption for _, _, caption in shown) + " |", ""]
+    return lines
 
 
 def main():
@@ -97,47 +131,61 @@ def main():
             continue
 
         source = source_path(model)
-        shown = []
+        triangles = f"{spaced(triangles_of(source))} triangles"
+        # What is shown: the label of each picture, the picture, and how
+        # many faces the mesh in it has.
+        shown, equal = [], []
+        directory = OUTPUT / "pages" / model
         if model not in UNPICTURED and not options.no_render:
             picture = pictures / f"{model}__source.webp"
             if render(source, picture, model, edges=triangles_of(source) <= DENSE):
-                shown.append(("Source", picture))
-            directory = OUTPUT / "pages" / model
+                shown.append(("Source", picture, triangles))
             directory.mkdir(parents=True, exist_ok=True)
-            for tool, label in PICTURED:
-                path, _, failure = TOOLS[tool](model, sharp, boundary, options.target, [1], directory)[1]
+            for tool, label in PICTURED + [EQUAL]:
+                path, _, failure, *_ = TOOLS[tool](model, sharp, boundary, options.target, [1], directory)[1]
                 picture = pictures / f"{model}__{tool}.webp"
                 if path and render(path, picture, model):
-                    shown.append((label, picture))
+                    (equal if tool == EQUAL[0] else shown).append((label, picture, f"{spaced(faces_of(path))} quads"))
                 else:
                     picture.unlink(missing_ok=True)
                     print(f"{model}: no picture for {tool} ({failure or 'render failed'})", file=sys.stderr)
         elif model not in UNPICTURED:
-            for name, label in [("source", "Source")] + PICTURED:
-                picture = pictures / f"{model}__{name}.webp"
+            if (pictures / f"{model}__source.webp").exists():
+                shown.append(("Source", pictures / f"{model}__source.webp", triangles))
+            for tool, label in PICTURED + [EQUAL]:
+                picture, mesh = pictures / f"{model}__{tool}.webp", mesh_of(tool, model, options.target, directory)
                 if picture.exists():
-                    shown.append((label, picture))
+                    caption = f"{spaced(faces_of(mesh))} quads" if mesh.exists() else ""
+                    (equal if tool == EQUAL[0] else shown).append((label, picture, caption))
+        # Next to ours at equal quad count, the mesh of Quad Remesher again.
+        theirs = [entry for entry in shown if entry[0] == "Quad Remesher"]
+        equal = theirs + equal if theirs and equal else []
 
         lines = [f"# {model}", ""]
         kind = f"{'An' if category[0] in 'aeiou' else 'A'} {category} model"
         kind += ", with hard edges" if sharp else ""
         kind += ", with open borders" if boundary else ""
-        triangles = f"{triangles_of(source):,}".replace(",", " ")
-        lines += [f"{kind}; {triangles} triangles in the source."]
+        lines += [f"{kind}; {triangles} in the source."]
         if model in LOCAL_MODELS:
             lines += ["Its licence does not allow passing it on: the model is not in the repository (`make blenderkit`)."]
         lines += ["Author, source and licence: [CREDITS.md](../../CREDITS.md).", ""]
         if shown:
-            lines += [f"## At {options.target} quads", ""]
-            lines += ["| " + " | ".join(label for label, _ in shown) + " |", "|" + "---|" * len(shown)]
-            lines += ["| " + " | ".join(f"![{label}](img/{picture.name})" for label, picture in shown) + " |", ""]
-        elif model in UNPICTURED:
+            lines += [f"## At {options.target} quads asked for", ""] + gallery(shown)
+        if equal:
+            lines += [
+                "## At equal quad count",
+                "",
+                f"Quad Remesher makes more quads than the {options.target} it is asked for. "
+                "Next to its mesh, openclare asked for as many quads as that mesh has.",
+                "",
+            ] + gallery(equal)
+        if not shown and model in UNPICTURED:
             lines += ["No picture of this one is published.", ""]
         lines += ["## Marks", "", "From 0 to 100; how they are made is in [SCORES.md](../../bench/results/SCORES.md).", ""]
         for target in (1000, 3000, 8000):
             table = marks[target].get(model)
             if table:
-                lines += [f"### {target} quads", ""] + rows_of(without_matched(table), bold="quad-layout-adaptive") + [""]
+                lines += [f"### {target} quads", ""] + rows_of(without_matched(table), bold="openclare") + [""]
                 pair = {tool: table[tool] for tool in MATCHED if tool in table}
                 if len(pair) == len(MATCHED):
                     lines += ["At equal quad count: Quad Remesher's mesh as it is, and openclare asked for as many quads.", ""]

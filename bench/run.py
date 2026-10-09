@@ -211,7 +211,7 @@ def faces_of(path):
 # These two set the budget aside to compare at equal quad count: its mesh as
 # it is, and ours asked for as many quads as that mesh has. Both are measured
 # against that number, not against the budget of the bench.
-MATCHED = ("quadremesher-as-made", "quad-layout-matched")
+MATCHED = ("quadremesher-as-made", "openclare-matched")
 
 
 def quadremesher_as_made(model, sharp, boundary, target, seeds, directory):
@@ -224,13 +224,13 @@ def quadremesher_as_made(model, sharp, boundary, target, seeds, directory):
     return {seeds[0]: (path, seconds, None, faces_of(path))}
 
 
-def quad_layout_matched(model, sharp, boundary, target, seeds, directory):
+def openclare_matched(model, sharp, boundary, target, seeds, directory):
     reference = quadremesher_reference(model, target, uniform=False)
     if not reference.exists():
         return {seeds[0]: (None, 0.0, "no Quad Remesher reference to match", None)}
     count = faces_of(reference)
-    chain = openclare("quad-layout", seeded=False, name="quad-layout-matched", options=["--adaptivity", "0.5"],
-                   sharp_preset="hard-surface")
+    chain = openclare("quad-layout", seeded=False, name="openclare-matched", options=["--adaptivity", "0.5"],
+                      sharp_preset="hard-surface")
     return {seed: (*made, count) for seed, made in chain(model, sharp, boundary, count, seeds, directory).items()}
 
 
@@ -239,18 +239,21 @@ TOOLS = {
     "quadriflow": quadriflow,
     "instant-meshes": openclare("instant-meshes"),
     "integer-grid": openclare("integer-grid", seeded=False),
-    # Quads of one size, to compare like with like against the tools that
-    # have nothing else; then sized by the shape, as Quad Remesher does by default.
-    "quad-layout": openclare(
+    # The chain the project is about (`quad-layout` in the engine), under
+    # two settings: quads of one size, to compare like with like against the
+    # tools that have nothing else; then sized by the shape, as the presets
+    # do and as Quad Remesher does by default.
+    "openclare-uniform": openclare(
         "quad-layout",
         seeded=False,
+        name="openclare-uniform",
         options=["--adaptivity", "0", "--quads-around", "0"],
         sharp_preset="hard-surface",
     ),
-    "quad-layout-adaptive": openclare(
+    "openclare": openclare(
         "quad-layout",
         seeded=False,
-        name="quad-layout-adaptive",
+        name="openclare",
         options=["--adaptivity", "0.5"],
         sharp_preset="hard-surface",
     ),
@@ -258,7 +261,7 @@ TOOLS = {
     "quadremesher": quadremesher(uniform=False),
     "quadremesher-uniform": quadremesher(uniform=True),
     "quadremesher-as-made": quadremesher_as_made,
-    "quad-layout-matched": quad_layout_matched,
+    "openclare-matched": openclare_matched,
 }
 
 
@@ -306,7 +309,7 @@ def report(results, target, seeds, tools):
         lines += [
             "The last two columns compare at equal quad count: `quadremesher-as-made` is the mesh of "
             "`quadremesher` measured against the number of quads it has rather than the budget, and "
-            "`quad-layout-matched` is `quad-layout-adaptive` asked for that same number.",
+            "`openclare-matched` is `openclare` asked for that same number.",
             "",
         ]
     for model, category, *_ in MODELS:

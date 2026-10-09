@@ -63,7 +63,7 @@ not. For a model or a budget with no reference and no licence, the columns stay 
   remeshers of one size.
 - `quadremesher-as-made`: the mesh of `quadremesher`, measured against the number of quads it
   has rather than the budget. Left to itself it makes about twice the quads asked for;
-  `quad-layout-matched` is openclare asked for that same number, to compare at equal quad
+  `openclare-matched` is openclare asked for that same number, to compare at equal quad
   count.
 
 It has no seed: one run per model. The references come from a trial licence: non-commercial
@@ -76,8 +76,11 @@ One line in the `TOOLS` dictionary of `run.py`. For a chain of this repository:
 chain that does not use the seed is declared with `seeded=False` and is run once.
 
 The three chains of the repository are there: `instant-meshes` (the floor), `integer-grid`
-(the provisional one) and `quad-layout` (the one the project is about), the last under two
-settings: quads of one size, and sized by the shape.
+(the provisional one) and `quad-layout`, the one the project is about. That last one goes by
+the name of the project in the reports, under two settings: `openclare`, quads sized by the
+shape as the presets do, and `openclare-uniform`, quads of one size. (Until 9 October 2026
+they were called `quad-layout-adaptive` and `quad-layout`, and `openclare-matched` was
+`quad-layout-matched`.)
 
 ## Settings of the comparison
 

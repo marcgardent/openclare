@@ -3,7 +3,7 @@
 
     python3 scripts/scores.py                      write the report (bench/results/SCORES.md)
     python3 scripts/scores.py model ogre           the scores of one model, every remesher
-    python3 scripts/scores.py model ogre --target 8000 --tool quad-layout
+    python3 scripts/scores.py model ogre --target 8000 --tool openclare
     python3 scripts/scores.py mesh source.obj quads.obj --target 3000
                                                    the scores of any quad mesh against its source
 
@@ -255,7 +255,7 @@ def write_report(targets):
         "the averages). Quad Remesher, left to itself, makes about twice the quads it is asked for, and its",
         "Budget mark says so. To compare at equal quad count, two more rows are set apart under each",
         "budget: `quadremesher-as-made` is the mesh of `quadremesher` marked against the number of quads",
-        "it has, and `quad-layout-matched` is openclare (`quad-layout-adaptive`) asked for that same number.",
+        "it has, and `openclare-matched` is `openclare` asked for that same number.",
         "Budget does not count there.",
         "",
         "Fidelity is two marks that count the same where the source has parts thinner than a quad edge",
