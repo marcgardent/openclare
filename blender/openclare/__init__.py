@@ -49,7 +49,27 @@ def preset_changed(settings, context):
     settings.adaptive_size = ADAPTIVE_SIZE[settings.preset]
 
 
+def is_a_mesh(settings, candidate):
+    return candidate.type == "MESH"
+
+
+def object_to_remesh(context):
+    """The object the panel is about: the one chosen in it, or failing that
+    the active object, if it is a mesh; None otherwise."""
+    chosen = context.scene.openclare.source or context.active_object
+    return chosen if chosen is not None and chosen.type == "MESH" else None
+
+
 class OpenclareSettings(bpy.types.PropertyGroup):
+    source: bpy.props.PointerProperty(
+        name="Object",
+        type=bpy.types.Object,
+        poll=is_a_mesh,
+        description=(
+            "The object to remesh, taken as it is seen, modifiers applied. "
+            "Leave empty to remesh the active object, whichever it is at the time"
+        ),
+    )
     preset: bpy.props.EnumProperty(
         name="Preset", description="What the mesh is for", items=PRESETS, default="organic", update=preset_changed
     )
@@ -408,8 +428,7 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        active = context.active_object
-        return active is not None and active.type == "MESH" and context.mode == "OBJECT"
+        return object_to_remesh(context) is not None and context.mode == "OBJECT"
 
     def say(self, context, message, done=0):
         """Shows where the run is: in the status bar and in the Info log, and
@@ -431,7 +450,7 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
 
     def execute(self, context):
         settings = context.scene.openclare
-        original = context.active_object
+        original = object_to_remesh(context)
         self.drawn, self.stages = 0.0, []
         context.window_manager.progress_begin(0, STAGES)
         self.say(context, f"reading '{original.name}'")
@@ -615,13 +634,18 @@ class OPENCLARE_PT_panel(bpy.types.Panel):
         layout = self.layout
         layout.use_property_split = True
         settings = context.scene.openclare
+        layout.prop(settings, "source")
+        if settings.source is None:
+            # Said, so that it is plain what the button will act on.
+            active = object_to_remesh(context)
+            layout.label(text=f"Active object: {active.name}" if active else "No mesh is active", icon="INFO")
         layout.prop(settings, "preset")
         layout.prop(settings, "quads")
         layout.prop(settings, "adaptive_size", slider=True)
-        active = context.active_object
-        if active is not None and active.type == "MESH":
+        chosen = object_to_remesh(context)
+        if chosen is not None:
             column = layout.column(align=True)
-            column.prop_search(settings, "density_group", active, "vertex_groups", icon="GROUP_VERTEX")
+            column.prop_search(settings, "density_group", chosen, "vertex_groups", icon="GROUP_VERTEX")
             factor = column.row()
             factor.enabled = bool(settings.density_group)
             factor.prop(settings, "density_factor")
