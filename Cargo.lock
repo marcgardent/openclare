@@ -5898,6 +5898,7 @@ name = "openclare-viewer"
 version = "0.1.0"
 dependencies = [
  "rerun",
+ "tokio",
 ]
 
 [[package]]
