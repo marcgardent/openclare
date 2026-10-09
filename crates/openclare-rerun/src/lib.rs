@@ -10,7 +10,9 @@ use std::path::Path;
 use openclare::math::Vec3;
 use openclare::recorder::{Colour, Recorder, Shape};
 use openclare::{PolyMesh, TriMesh};
-use rerun::{Clear, Color, LineStrips3D, Mesh3D, Points3D, Radius, RecordingStream, RecordingStreamBuilder, TextLog};
+use rerun::{
+    Clear, Color, LineStrips3D, Mesh3D, Points3D, Radius, RecordingStream, RecordingStreamBuilder, TextLog, Transform3D,
+};
 
 /// Colour of a surface that carries no quantity, and of the faces of a
 /// polygon mesh.
@@ -38,6 +40,10 @@ pub struct RerunRecorder {
     stream: RecordingStream,
     stage: String,
     step: i64,
+    /// How many times its size the model is shown, once its size is known:
+    /// the viewer is awkward to move about in when a model is very small or
+    /// very large, so such a model is shown at a size it handles well.
+    zoom: Option<f32>,
     /// The first thing that went wrong: a recorder cannot stop the chain.
     failure: Option<String>,
 }
@@ -48,7 +54,7 @@ impl RerunRecorder {
         let stream = RecordingStreamBuilder::new("openclare")
             .save(path)
             .map_err(|error| format!("cannot record to {}: {error}", path.display()))?;
-        Ok(Self { stream, stage: String::new(), step: -1, failure: None })
+        Ok(Self { stream, stage: String::new(), step: -1, zoom: None, failure: None })
     }
 
     /// Writes what is left to write. Fails if anything could not be recorded.
@@ -57,6 +63,14 @@ impl RerunRecorder {
             self.failure.get_or_insert(error.to_string());
         }
         self.failure.map_or(Ok(()), Err)
+    }
+
+    /// Has everything of the stage under way shown at the size chosen.
+    fn show_at_size(&mut self) {
+        if let Some(zoom) = self.zoom.filter(|&zoom| zoom != 1.0) {
+            let stage = self.stage.clone();
+            self.log(&stage, &Transform3D::from_scale(zoom));
+        }
     }
 
     fn log(&mut self, path: &str, shape: &impl rerun::AsComponents) {
@@ -80,6 +94,26 @@ impl Recorder for RerunRecorder {
             }
             self.stream.set_time_sequence(STACK, self.step);
             self.stage = stage.to_string();
+            self.show_at_size();
+        }
+        if self.zoom.is_none()
+            && let Shape::Surface { mesh, .. } = &shape
+        {
+            // The first surface shown is the model: a power of ten brings
+            // it to a few units across if it is far from that.
+            let (low, high) = mesh
+                .positions
+                .iter()
+                .fold((Vec3::INFINITY, Vec3::NEG_INFINITY), |(low, high), &p| (low.min(p), high.max(p)));
+            let across = (high - low).length();
+            let comfortable = (1.0..=1000.0).contains(&across) || !(across.is_finite() && across > 0.0);
+            let zoom = if comfortable { 1.0 } else { 10f64.powf((10.0 / across).log10().round()) };
+            self.zoom = Some(zoom as f32);
+            if zoom != 1.0 {
+                let note = format!("the model is {across:.3e} across: it is shown {zoom:e} times its size");
+                self.log(&format!("{NOTES}/size"), &TextLog::new(note));
+            }
+            self.show_at_size();
         }
         match shape {
             Shape::Surface { mesh, values } => {
