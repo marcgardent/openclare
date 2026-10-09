@@ -36,10 +36,26 @@ impl Parametrizer for Seamless {
         // Feature edges are kept on grid lines (which one is left free), so
         // that borders, creases and guide curves bound the rectangles the
         // map is cut into.
-        let mut folds = match self.solve_or_folds(work, field, request)? {
+        let folds = match self.solve_or_folds(work, field, request)? {
             Ok(map) => return Ok(map),
             Err(folds) => folds,
         };
+        let mut map = self.with_fewer_lines(work, field, request, folds.clone())?;
+        map.report.folds_with_lines = folds;
+        Ok(map)
+    }
+}
+
+impl Seamless {
+    /// The map of `work` when it folds with every line on a grid line, at
+    /// the triangles `folds`: with what lines it can keep there.
+    fn with_fewer_lines(
+        &self,
+        work: &WorkMesh,
+        field: &CrossField,
+        request: &Request,
+        mut folds: Vec<usize>,
+    ) -> Result<Parametrization> {
         // Where that folds the map, guide lines are let go first: a line
         // drawn that cannot be kept should not cost the creases theirs, nor
         // the other lines. And of a line, only what is near a fold: the
@@ -118,9 +134,7 @@ impl Parametrizer for Seamless {
         map.report.loose_guides = work.guide_edges.clone();
         Ok(map)
     }
-}
 
-impl Seamless {
     /// The map of `work`: with its feature edges on grid lines if `on_lines`,
     /// and then only if that does not fold it; held by its seams alone
     /// otherwise, folds or not.

@@ -49,6 +49,8 @@ OPTIONS (remesh):
                                  the quad mesh has a line of edges where two groups meet, and the group of each
                                  of its faces is written next to it, as <output>.groups
     --skip-pieces-under <Q>      leave out the separate pieces whose share of the quads is below Q (default 0: keep all)
+    --notes                      print what the stages remark on: why a piece went to the other chain, what the
+                                 map folded on, how many guide lines were let go
     --record <FILE.rrd>          record what each stage makes, to open in the Rerun viewer
                                  (needs a build with `--features rerun`)
     --seed <N>                   random seed
@@ -183,6 +185,18 @@ fn read_curves(text: &str) -> Result<Vec<openclare::GuideCurve>, String> {
     Ok(curves)
 }
 
+/// The recorder that prints what the stages remark on, and keeps nothing
+/// else: why a piece went to the other chain, what the map folded on.
+struct Notes;
+
+impl openclare::recorder::Recorder for Notes {
+    fn record(&mut self, path: &str, shape: openclare::recorder::Shape<'_>) {
+        if let openclare::recorder::Shape::Note(text) = shape {
+            println!("note     {}: {text}", path.strip_prefix("notes/").unwrap_or(path));
+        }
+    }
+}
+
 /// Runs the chain while recording what its stages make to the file at
 /// `path`. The recording is kept even if the chain fails: that is when it
 /// is most worth a look.
@@ -229,6 +243,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
     };
 
     let (mut save, mut density_path, mut record_path) = (None, None, None::<String>);
+    let mut notes = false;
     let mut curves_path = None::<String>;
     let mut groups_path = None::<String>;
     let mut paths = Vec::new();
@@ -257,6 +272,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
             "--density-contrast" => config.density_contrast = parse(arg, value(arg)?)?,
             "--skip-pieces-under" => config.skip_pieces_under = parse(arg, value(arg)?)?,
             "--record" => record_path = Some(value(arg)?.clone()),
+            "--notes" => notes = true,
             "--seed" => config.seed = parse(arg, value(arg)?)?,
             flag if flag.starts_with("--") => return Err(format!("unknown option '{flag}'")),
             path => paths.push(path),
@@ -315,6 +331,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
     let guides = Guides { density: density.as_deref(), curves: &curves, groups: groups.as_deref(), lines: &[] };
     let (result, report) = match &record_path {
         Some(path) => remesh_recorded(path, &config, &mesh, &guides)?,
+        None if notes => config.remesh_recorded(&mesh, &guides, &mut Notes).map_err(|e| e.to_string())?,
         None => config.remesh_guided(&mesh, &guides).map_err(|e| e.to_string())?,
     };
     obj::write_obj_poly(output, &result).map_err(|e| format!("{output}: {e}"))?;

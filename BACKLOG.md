@@ -499,8 +499,10 @@ track. "DT" stands for *dette technique*, technical debt.
 - **What is not shown**:
   - the patches of the global structure as coloured regions: their borders (the cuts) are
     seen, not their surface;
-  - the seamless map (its isolines, its folded triangles), although "the map folds" is the
-    first cause of fallback (DT-034);
+  - the seamless map was not shown until 9 October 2026. It is now, as a stage of its own
+    before the layout: its grid lines, the triangles it folds or flattens, those that folded
+    when every line was put on a grid line, and the guide lines kept and let go. Not shown
+    yet: the map of the attempts in between, and that of the fallback chain;
   - lost traces and overlaps, which the T-mesh counts without keeping their position;
   - the comparison between remeshers: a recording shows one run only.
 - **Approximations**: the whole length of an arc is written at the middle of the chord between
@@ -838,6 +840,17 @@ track. "DT" stands for *dette technique*, technical debt.
   three borders that meet at odd angles, need an irregular vertex exactly there, and nothing
   puts one there. The recording for Rerun does not show the map yet (DT-035); it should, for
   this.
+- **With the map shown and counted, the same day** (`--notes` on the command line prints what
+  the stages remark on; the recording shows it). On the body of the car, 668 triangles fold
+  when every line is on a grid line. Only 199 of them are within two edges of a place where
+  the lines turn by more than 30 degrees, meet or end; 638 are within two edges of a line. So
+  corners are a third of it at most: the map folds along plain stretches of the lines too.
+  And the body does not come out of the main chain at all, borders between materials or not:
+  done again without them, its map has no fold, but the layout finds a border off the grid
+  lines and the whole body goes to the fallback chain, which knows nothing of lines. The 61
+  edges along borders are all on the small pieces. The open borders of the body, some of them
+  made by taking faces apart along edges with three faces, are the first thing to look at in
+  the recording.
 - **Also left**: the bench passes the groups of a model to the chain but keeps nothing of what
   the report says about them; the command line writes the group of each face next to the
   mesh, not into it.
