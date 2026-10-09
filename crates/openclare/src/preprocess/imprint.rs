@@ -24,6 +24,9 @@ pub struct GuideCurve {
     pub points: Vec<Vec3>,
     /// Whether the last point joins the first.
     pub closed: bool,
+    /// Whether the edges along it are hard edges of the result, as if the
+    /// surface had a crease there, and not only a line of edges.
+    pub sharp: bool,
 }
 
 /// What laying the curves did.
@@ -32,6 +35,8 @@ pub(crate) struct Laid {
     /// The stretches of the curves, on the surface: what the vertices of
     /// the lines are held on from here on.
     pub segments: Vec<[Vec3; 2]>,
+    /// Those of the stretches that belong to curves drawn as hard edges.
+    pub sharp_segments: Vec<[Vec3; 2]>,
     /// Places where two points of a curve in a row ended up with no edge
     /// between them: the line is broken there.
     pub gaps: usize,
@@ -147,7 +152,11 @@ pub(crate) fn imprint(mesh: &mut DynamicMesh, surface: &Bvh, face_normals: &[Vec
         if stretches.is_empty() {
             continue;
         }
-        laid.segments.extend(stretches.iter().map(|&(from, along, _, _, length)| [from, from + along * length]));
+        let segments = stretches.iter().map(|&(from, along, _, _, length)| [from, from + along * length]);
+        laid.segments.extend(segments.clone());
+        if curve.sharp {
+            laid.sharp_segments.extend(segments);
+        }
 
         let reach = 2.0 * spacing;
         let mut place: HashMap<u32, (f64, f64, f64)> = HashMap::new();

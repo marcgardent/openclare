@@ -19,6 +19,31 @@ PRESETS = [
 ADAPTIVE_SIZE = {"organic": 50.0, "animation": 50.0, "hard-surface": 0.0}
 
 
+# The two kinds of curves drawn on a model, each with its collection and the
+# colour its curves take in the viewport: name, label, what it does, colour
+# of the objects, colour tag of the collection (the nearest Blender has).
+CATEGORIES = [
+    (
+        "guide",
+        "Guide",
+        "Curves the result has a line of edges along, and nothing more: edge loops round an eye, a limb, a muscle",
+        (0.0, 0.85, 1.0, 1.0),
+        "COLOR_05",
+    ),
+    (
+        "sharp",
+        "Sharp",
+        "Curves the result has a line of hard edges along: marked sharp and creased, "
+        "as if the surface had a crease there",
+        (0.6, 0.25, 1.0, 1.0),
+        "COLOR_06",
+    ),
+]
+CATEGORY = {name: (label, colour, tag) for name, label, _, colour, tag in CATEGORIES}
+# What a curve goes back to when it leaves its category.
+PLAIN = (1.0, 1.0, 1.0, 1.0)
+
+
 def preset_changed(settings, context):
     settings.adaptive_size = ADAPTIVE_SIZE[settings.preset]
 
@@ -60,6 +85,12 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         soft_max=16.0,
         max=100.0,
     )
+    curve_category: bpy.props.EnumProperty(
+        name="Category",
+        description="Which kind of curves the buttons below act on",
+        items=[(name, label, description) for name, label, description, _, _ in CATEGORIES],
+        default="guide",
+    )
     guide_curves: bpy.props.PointerProperty(
         name="Guide Curves",
         type=bpy.types.Collection,
@@ -67,6 +98,15 @@ class OpenclareSettings(bpy.types.PropertyGroup):
             "Collection of curves drawn on the model: the result has a line of edges along each. "
             "Curves are taken with their modifiers, so a Shrinkwrap keeps them on the model. "
             "Leave empty for none"
+        ),
+    )
+    sharp_curves: bpy.props.PointerProperty(
+        name="Sharp Curves",
+        type=bpy.types.Collection,
+        description=(
+            "Collection of curves drawn on the model: the result has a line of hard edges along each, "
+            "marked sharp and creased. Curves are taken with their modifiers, so a Shrinkwrap keeps them "
+            "on the model. Leave empty for none"
         ),
     )
     export_grid_uv: bpy.props.BoolProperty(
@@ -88,8 +128,8 @@ class OpenclareSettings(bpy.types.PropertyGroup):
     export_sharp_edges: bpy.props.BoolProperty(
         name="Sharp Edges",
         description=(
-            "Mark as sharp the edges of the result that follow a hard edge of the original. "
-            "Only presets that keep hard edges (Hard surface) have any"
+            "Mark as sharp the edges of the result that follow a hard edge of the original "
+            "(only presets that keep hard edges, Hard surface, find any) or a curve of the Sharp category"
         ),
         default=True,
     )
@@ -97,7 +137,8 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         name="Creases",
         description=(
             "Give a crease weight to the edges that should stay sharp when the result is subdivided: "
-            "those along a hard edge of the original, and those where the original folds sharply. "
+            "those along a hard edge of the original or a curve of the Sharp category, and those where "
+            "the original folds sharply. "
             "A Subdivision Surface modifier reads them"
         ),
         default=True,
@@ -195,18 +236,26 @@ def crease_edges(mesh, pairs, weights):
     return int((values > 0).sum())
 
 
-def curves_of(collection, target):
+def curve_objects(collection):
+    """The curve objects of `collection`, those of the collections inside it
+    included; none if there is no collection."""
+    return [] if collection is None else [drawn for drawn in collection.all_objects if drawn.type == "CURVE"]
+
+
+def curves_of(collection, target, sharp=False, but=()):
     """The curves of `collection` as the engine takes them: for each stretch
     of each curve object, its points in the space of the object `target`,
-    and whether it closes on itself. Curves are taken as they are seen,
-    modifiers applied: a Shrinkwrap is what keeps a curve on a model."""
+    whether it closes on itself, and `sharp`: whether the edges along it are
+    to be hard edges. The objects in `but` are left out. Curves are taken as
+    they are seen, modifiers applied: a Shrinkwrap is what keeps a curve on
+    a model."""
     import numpy
 
     depsgraph = bpy.context.evaluated_depsgraph_get()
     into_target = target.matrix_world.inverted()
     curves = []
-    for drawn in collection.all_objects:
-        if drawn.type != "CURVE":
+    for drawn in curve_objects(collection):
+        if drawn in but:
             continue
         evaluated = drawn.evaluated_get(depsgraph)
         mesh = evaluated.to_mesh()
@@ -236,7 +285,7 @@ def curves_of(collection, target):
                 seen[current] = True
                 chain.append(current)
             closed = len(chain) > 2 and chain[0] in joined[chain[-1]]
-            curves.append((numpy.array([tuple(points[v]) for v in chain], numpy.float32), closed))
+            curves.append((numpy.array([tuple(points[v]) for v in chain], numpy.float32), closed, sharp))
     return curves
 
 
@@ -383,7 +432,10 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
                 density = weights_of(evaluated, source, settings.density_group)
                 engine_settings["density_contrast"] = settings.density_factor
             layers = [name for name in ("grid", "atlas") if getattr(settings, f"export_{name}_uv")]
-            curves = curves_of(settings.guide_curves, original) if settings.guide_curves else ()
+            # A curve put in both collections by hand is a sharp one.
+            sharp = curve_objects(settings.sharp_curves)
+            curves = curves_of(settings.sharp_curves, original, sharp=True)
+            curves += curves_of(settings.guide_curves, original, but=sharp)
             mesh, report = quads_of(
                 source, settings.preset, engine_settings, density, on_stage, layers,
                 settings.export_sharp_edges, settings.export_creases, curves,
@@ -408,11 +460,116 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
 
         seconds = float(report.get("seconds", 0.0))
         said = f"openclare: {report.get('quads', '?')} quads in {seconds:.1f} s"
-        if settings.guide_curves:
+        if curves:
             said += f", {report.get('guide_edges', '0')} edges along the guide curves"
+            if sharp:
+                said += f", {report.get('sharp_curve_edges', '0')} along the sharp curves"
             if report.get("guide_gaps", "0") != "0":
                 said += f" ({report['guide_gaps']} breaks)"
         self.report({"INFO"}, said)
+        return {"FINISHED"}
+
+
+def category_collection(context, create=False):
+    """The collection of the category the panel is on; made and put in the
+    scene if there is none yet and `create` says so."""
+    settings = context.scene.openclare
+    name = settings.curve_category
+    collection = getattr(settings, f"{name}_curves")
+    if collection is None and create:
+        label, _, tag = CATEGORY[name]
+        collection = bpy.data.collections.new(f"openclare {label.lower()} curves")
+        collection.color_tag = tag
+        context.scene.collection.children.link(collection)
+        setattr(settings, f"{name}_curves", collection)
+    return collection
+
+
+def show_object_colours(context):
+    """Has the 3D viewports of the screen draw wires in the colour of their
+    object, which is how the two categories are told apart."""
+    for area in context.screen.areas if context.screen else ():
+        if area.type == "VIEW_3D":
+            area.spaces.active.shading.wireframe_color_type = "OBJECT"
+
+
+class CurvesOperator:
+    """What the four buttons of the curve categories have in common."""
+
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == "OBJECT"
+
+
+class OPENCLARE_OT_curves_assign(CurvesOperator, bpy.types.Operator):
+    """Move the selected curves to the collection of this category, and give them its colour"""
+
+    bl_idname = "object.openclare_curves_assign"
+    bl_label = "Assign"
+
+    def execute(self, context):
+        settings = context.scene.openclare
+        chosen = [drawn for drawn in context.selected_objects if drawn.type == "CURVE"]
+        if not chosen:
+            self.report({"WARNING"}, "openclare: no curve is selected")
+            return {"CANCELLED"}
+        collection = category_collection(context, create=True)
+        label, colour, _ = CATEGORY[settings.curve_category]
+        for drawn in chosen:
+            # Moved, not linked as well: a curve that stayed in another
+            # collection too would still show when its category is hidden.
+            for other in drawn.users_collection:
+                if other != collection:
+                    other.objects.unlink(drawn)
+            if drawn.name not in collection.objects:
+                collection.objects.link(drawn)
+            drawn.color = colour
+        show_object_colours(context)
+        self.report({"INFO"}, f"openclare: {len(chosen)} curve(s) in the {label} category")
+        return {"FINISHED"}
+
+
+class OPENCLARE_OT_curves_remove(CurvesOperator, bpy.types.Operator):
+    """Take the selected curves out of this category: back to the collection of the scene, in their plain colour"""
+
+    bl_idname = "object.openclare_curves_remove"
+    bl_label = "Remove"
+
+    def execute(self, context):
+        collection = category_collection(context)
+        chosen = [drawn for drawn in context.selected_objects if drawn.type == "CURVE"]
+        chosen = [drawn for drawn in chosen if collection is not None and drawn.name in collection.objects]
+        for drawn in chosen:
+            collection.objects.unlink(drawn)
+            # A curve must stay somewhere in the scene.
+            if not drawn.users_collection:
+                context.scene.collection.objects.link(drawn)
+            drawn.color = PLAIN
+        self.report({"INFO"}, f"openclare: {len(chosen)} curve(s) taken out")
+        return {"FINISHED"}
+
+
+class OPENCLARE_OT_curves_select(CurvesOperator, bpy.types.Operator):
+    """Select the curves of this category"""
+
+    bl_idname = "object.openclare_curves_select"
+    bl_label = "Select"
+
+    select: bpy.props.BoolProperty(default=True, options={"HIDDEN"})
+
+    @classmethod
+    def description(cls, context, properties):
+        return "Select the curves of this category" if properties.select else "Deselect the curves of this category"
+
+    def execute(self, context):
+        for drawn in curve_objects(category_collection(context)):
+            # Only what this view layer shows can be selected.
+            if drawn.name in context.view_layer.objects and (drawn.visible_get() or not self.select):
+                drawn.select_set(self.select)
+                if self.select:
+                    context.view_layer.objects.active = drawn
         return {"FINISHED"}
 
 
@@ -437,8 +594,35 @@ class OPENCLARE_PT_panel(bpy.types.Panel):
             factor = column.row()
             factor.enabled = bool(settings.density_group)
             factor.prop(settings, "density_factor")
-        layout.prop(settings, "guide_curves")
         layout.operator(OPENCLARE_OT_remesh.bl_idname, icon="MOD_REMESH")
+
+
+class OPENCLARE_PT_curves(bpy.types.Panel):
+    """Curves drawn on the model for the result to have edges along"""
+
+    bl_label = "Curves"
+    bl_idname = "OPENCLARE_PT_curves"
+    bl_parent_id = "OPENCLARE_PT_panel"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "openclare"
+
+    def draw(self, context):
+        layout = self.layout
+        settings = context.scene.openclare
+        layout.row().prop(settings, "curve_category", expand=True)
+        name = settings.curve_category
+        column = layout.column()
+        column.use_property_split = True
+        column.prop(settings, f"{name}_curves", text="Collection")
+        count = len(curve_objects(getattr(settings, f"{name}_curves")))
+        column.label(text=f"{count} curve" + ("" if count == 1 else "s"), icon="OUTLINER_OB_CURVE")
+        row = layout.row(align=True)
+        row.operator(OPENCLARE_OT_curves_assign.bl_idname)
+        row.operator(OPENCLARE_OT_curves_remove.bl_idname)
+        row = layout.row(align=True)
+        row.operator(OPENCLARE_OT_curves_select.bl_idname, text="Select").select = True
+        row.operator(OPENCLARE_OT_curves_select.bl_idname, text="Deselect").select = False
 
 
 class OPENCLARE_PT_export(bpy.types.Panel):
@@ -463,7 +647,16 @@ class OPENCLARE_PT_export(bpy.types.Panel):
         column.prop(settings, "export_creases", text="Creases")
 
 
-CLASSES = (OpenclareSettings, OPENCLARE_OT_remesh, OPENCLARE_PT_panel, OPENCLARE_PT_export)
+CLASSES = (
+    OpenclareSettings,
+    OPENCLARE_OT_remesh,
+    OPENCLARE_OT_curves_assign,
+    OPENCLARE_OT_curves_remove,
+    OPENCLARE_OT_curves_select,
+    OPENCLARE_PT_panel,
+    OPENCLARE_PT_curves,
+    OPENCLARE_PT_export,
+)
 
 
 def register():

@@ -165,36 +165,89 @@ assert "crease_edge" not in mesh.attributes
 settings.export_grid_uv = settings.export_atlas_uv = settings.export_sharp_edges = settings.export_creases = True
 settings.preset, settings.quads = "organic", 800
 
-# Guide curves: a circle drawn round a ball, held on it by a Shrinkwrap, in
-# a collection of its own. The result has an edge loop on the circle.
+# Curves: two circles drawn round a ball, each held on it by a Shrinkwrap.
+# One is put in the Guide category and the other in the Sharp one, with the
+# buttons of the panel. The result has an edge loop on each, and the edges of
+# the second are marked sharp and creased.
 bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=5, radius=1.0, location=(4.0, 0.0, 0.0))
 ball = bpy.context.active_object
-bpy.ops.curve.primitive_bezier_circle_add(radius=1.1, location=(4.0, 0.0, 0.3))
-circle = bpy.context.active_object
-circle.data.resolution_u = 16
-wrap = circle.modifiers.new("on the ball", "SHRINKWRAP")
-wrap.target = ball
-guides = bpy.data.collections.new("guides")
-bpy.context.scene.collection.children.link(guides)
-for collection in circle.users_collection:
-    collection.objects.unlink(circle)
-guides.objects.link(circle)
+
+
+def circle_at(height):
+    bpy.ops.curve.primitive_bezier_circle_add(radius=1.1, location=(4.0, 0.0, height))
+    circle = bpy.context.active_object
+    circle.data.resolution_u = 16
+    circle.modifiers.new("on the ball", "SHRINKWRAP").target = ball
+    return circle
+
+
+def assign(circle, category):
+    alone(circle)
+    settings.curve_category = category
+    assert bpy.ops.object.openclare_curves_assign() == {"FINISHED"}
+
+
+loop, ridge = circle_at(0.3), circle_at(-0.3)
+assign(loop, "guide")
+assign(ridge, "sharp")
+guides, sharps = settings.guide_curves, settings.sharp_curves
+assert guides is not None and sharps is not None and guides != sharps
+assert list(guides.objects) == [loop] and list(sharps.objects) == [ridge]
+
+
+def coloured(drawn, colour):
+    return all(abs(got - wanted) < 1e-6 for got, wanted in zip(drawn.color, colour))
+
+
+assert coloured(loop, openclare.CATEGORY["guide"][1]) and coloured(ridge, openclare.CATEGORY["sharp"][1])
+assert not coloured(loop, openclare.CATEGORY["sharp"][1])
+
+# Moving a curve to the other category takes it out of the first.
+assign(loop, "sharp")
+assert list(guides.objects) == [] and set(sharps.objects) == {loop, ridge}
+assign(loop, "guide")
+assert list(guides.objects) == [loop] and list(sharps.objects) == [ridge]
+
+# Select and Deselect act on the curves of the category shown.
+alone(ball)
+settings.curve_category = "sharp"
+assert bpy.ops.object.openclare_curves_select(select=True) == {"FINISHED"}
+assert ridge.select_get() and not loop.select_get()
+assert bpy.ops.object.openclare_curves_select(select=False) == {"FINISHED"}
+assert not ridge.select_get()
 
 alone(ball)
 settings.quads, settings.adaptive_size = 600, 0.0
-settings.guide_curves = guides
 curves = openclare.curves_of(guides, ball)
-assert len(curves) == 1 and curves[0][1], "one closed curve expected"
+assert len(curves) == 1 and curves[0][1] and not curves[0][2], "one closed guide curve expected"
 assert all(abs(float((point ** 2).sum()) ** 0.5 - 1.0) < 0.02 for point in curves[0][0]), "the circle is not on the ball"
+assert openclare.curves_of(sharps, ball, sharp=True)[0][2]
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 mesh = bpy.context.active_object.data
-# The Shrinkwrap brought the circle to the height where a ball of radius 1 is 1.1 wide... which is nowhere:
-# it lands on the nearest points, a circle of latitude; the loop is at its height.
+# The Shrinkwrap brought each circle to the nearest points of the ball, a
+# circle of latitude; the loop is at its height.
 height = sum(float(point[2]) for point in curves[0][0]) / len(curves[0][0])
-on_the_loop = sum(1 for vertex in mesh.vertices if abs(vertex.co.z - height) < 0.01)
-print("GUIDES a loop of", on_the_loop, "vertices at height %.3f" % height)
-assert on_the_loop >= 12, f"{on_the_loop} vertices on the guide curve"
-settings.guide_curves = None
+on_the_loop = [vertex.index for vertex in mesh.vertices if abs(vertex.co.z - height) < 0.01]
+on_the_ridge = [vertex.index for vertex in mesh.vertices if abs(vertex.co.z + height) < 0.01]
+print("CURVES a loop of", len(on_the_loop), "vertices at height %.3f," % height, len(on_the_ridge), "on the ridge")
+assert len(on_the_loop) >= 12 and len(on_the_ridge) >= 12, "the curves have no loop of edges"
+# Sharp and creased along the ridge, and nowhere else.
+sharp = [edge for edge in mesh.edges if edge.use_edge_sharp]
+weights = mesh.attributes["crease_edge"].data
+assert len(sharp) >= 12, f"{len(sharp)} sharp edges"
+assert all(set(edge.vertices) <= set(on_the_ridge) for edge in sharp), "a sharp edge off the ridge"
+assert all(weights[edge.index].value == 1.0 for edge in sharp), "a sharp edge is not creased in full"
+assert sum(1 for weight in weights if weight.value > 0) == len(sharp)
+
+# Remove takes a curve out of its category and gives it back its colour.
+alone(ridge)
+settings.curve_category = "sharp"
+assert bpy.ops.object.openclare_curves_remove() == {"FINISHED"}
+assert list(sharps.objects) == [] and ridge.users_collection and coloured(ridge, openclare.PLAIN)
+alone(ball)
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+assert not any(edge.use_edge_sharp for edge in bpy.context.active_object.data.edges)
+settings.guide_curves = settings.sharp_curves = None
 settings.quads, settings.adaptive_size = 800, 50.0
 
 # Nothing to remesh: said, not crashed.

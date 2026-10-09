@@ -69,6 +69,9 @@ def version():
 
 # The layers of texture coordinates the engine can give with a mesh.
 UV_LAYERS = {"grid": 0, "atlas": 1}
+# What a guide curve is, as the engine's flags: its last point joins the
+# first; the edges along it are hard edges of the result.
+CURVE_CLOSED, CURVE_SHARP = 1, 2
 
 
 class Remeshed:
@@ -99,8 +102,9 @@ def remesh(
     quads should be largest to 1 where they should be smallest.
 
     `curves` are guide curves, lines drawn on the surface for the quad mesh
-    to have edges along: for each, a pair of its points (a numpy array of
-    three floats per point) and whether its last point joins the first.
+    to have edges along: for each, its points (a numpy array of three floats
+    per point), whether its last point joins the first, and whether the
+    edges along it are to be hard edges of the result.
 
     `on_stage`, if given, is called with the name of each stage as it begins
     ("cross field", or "piece 3 of 12: cross field"); the run stops if it
@@ -128,13 +132,18 @@ def remesh(
             print(f"openclare: {error!r} while being told of a stage")
             return 0
 
-    curves = [(numpy.ascontiguousarray(points, numpy.float32).reshape(-1, 3), closed) for points, closed in curves]
-    curves = [(points, closed) for points, closed in curves if len(points) >= 2]
+    curves = [
+        (numpy.ascontiguousarray(points, numpy.float32).reshape(-1, 3), closed, sharp)
+        for points, closed, sharp in curves
+    ]
+    curves = [curve for curve in curves if len(curve[0]) >= 2]
     if curves:
-        curve_points = numpy.concatenate([points for points, _ in curves])
-        curve_sizes = numpy.array([len(points) for points, _ in curves], numpy.uint32)
-        curve_closed = numpy.array([bool(closed) for _, closed in curves], numpy.uint8)
-        curve_arguments = (curve_points.ctypes.data, curve_sizes.ctypes.data, curve_closed.ctypes.data, len(curves))
+        curve_points = numpy.concatenate([points for points, _, _ in curves])
+        curve_sizes = numpy.array([len(points) for points, _, _ in curves], numpy.uint32)
+        curve_flags = numpy.array(
+            [CURVE_CLOSED * bool(closed) + CURVE_SHARP * bool(sharp) for _, closed, sharp in curves], numpy.uint8
+        )
+        curve_arguments = (curve_points.ctypes.data, curve_sizes.ctypes.data, curve_flags.ctypes.data, len(curves))
     else:
         curve_arguments = (None, None, None, 0)
 

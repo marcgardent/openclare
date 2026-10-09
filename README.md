@@ -29,7 +29,7 @@ is left as it is. What is remeshed is the object as it is seen, modifiers applie
 | Adaptive Size | How much the size of the quads follows the curvature: at 0 % they are all the same size; towards 100 % they get smaller where the shape bends and larger where it is flat, for the same number in total. Each preset brings its own value (50 %, or 0 % for hard surfaces) |
 | Density | A vertex group of the object, painted in Weight Paint: quads are smallest where the weight is 1, largest where it is 0 |
 | Factor | How many times more quads a weight of 1 gets than a weight of 0, for the same area |
-| Guide Curves | A collection of curves drawn on the model: the result has a line of edges along each. Curves are taken with their modifiers, so a Shrinkwrap is what keeps a curve on the model. A curve that cannot be kept as a line of edges is let go, and the report says so |
+| Curves | Curves drawn on the model, in two categories, each with its collection. *Guide* (cyan): the result has a line of edges along each. *Sharp* (violet): that line is made of hard edges, marked sharp and creased. *Assign* moves the selected curves to the category shown and gives them its colour, *Remove* takes them out, *Select* and *Deselect* act on all its curves. Curves are taken with their modifiers, so a Shrinkwrap is what keeps a curve on the model. A curve that cannot be kept as a line of edges is let go, and the report says so |
 
 A section *Export* says what the result carries besides its quads, each with its box to tick:
 

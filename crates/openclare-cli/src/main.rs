@@ -43,7 +43,8 @@ OPTIONS (remesh):
     --density <FILE>             painted density: one weight per input vertex, one per line, from 0 (least dense) to 1 (most)
     --density-contrast <F>       how many times denser a weight of 1 is than a weight of 0 (default 4)
     --curves <FILE>              guide curves, lines for the quad mesh to have edges along: one point per line
-                                 as x y z; a blank line starts another curve; a line saying closed closes one
+                                 as x y z; a blank line starts another curve; a line saying closed closes one,
+                                 a line saying sharp makes the edges along one hard edges of the result
     --skip-pieces-under <Q>      leave out the separate pieces whose share of the quads is below Q (default 0: keep all)
     --record <FILE.rrd>          record what each stage makes, to open in the Rerun viewer
                                  (needs a build with `--features rerun`)
@@ -148,7 +149,8 @@ fn primitive(args: &[String]) -> Result<(), String> {
 }
 
 /// Guide curves from text: one point per line as `x y z`; a blank line ends
-/// a curve; a line `closed` says the curve it is in joins its first point.
+/// a curve; a line `closed` says the curve it is in joins its first point,
+/// a line `sharp` that the edges along it are hard edges of the result.
 fn read_curves(text: &str) -> Result<Vec<openclare::GuideCurve>, String> {
     let mut curves = vec![openclare::GuideCurve::default()];
     for (number, line) in text.lines().enumerate() {
@@ -160,6 +162,8 @@ fn read_curves(text: &str) -> Result<Vec<openclare::GuideCurve>, String> {
             }
         } else if line == "closed" {
             current.closed = true;
+        } else if line == "sharp" {
+            current.sharp = true;
         } else if !line.starts_with('#') {
             let numbers: Vec<f64> = line
                 .split_whitespace()
@@ -319,6 +323,9 @@ fn remesh(args: &[String]) -> Result<(), String> {
     );
     if !curves.is_empty() {
         println!("guides   {} edges along the guide curves, {} breaks", report.guide_edges.len(), report.guide_gaps);
+        if curves.iter().any(|curve| curve.sharp) {
+            println!("         {} hard edges along the curves drawn as sharp", report.sharp_curve_edges.len());
+        }
         if report.guides_let_go > 0 {
             println!("         could not be kept as lines of edges on {} piece(s)", report.guides_let_go);
         }

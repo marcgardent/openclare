@@ -318,6 +318,36 @@ fn guide_curves_go_in_as_flat_arrays() {
         openclare_result_copy_positions(result, out.as_mut_ptr());
         let on_the_circle = out.chunks_exact(3).filter(|p| (p[2] - 0.3).abs() < 5e-3).count();
         assert!(on_the_circle >= 12, "{on_the_circle} vertices on the circle");
+        assert_eq!(openclare_result_hard_edge_count(result), 0);
+        openclare_result_free(result);
+
+        // The same with the circle drawn as sharp: its edges are hard edges.
+        let flags = [OPENCLARE_CURVE_CLOSED | OPENCLARE_CURVE_SHARP, 0];
+        let result = openclare_remesh(
+            positions.as_ptr(),
+            positions.len() / 3,
+            triangles.as_ptr(),
+            triangles.len() / 3,
+            null(),
+            0,
+            null(),
+            points.as_ptr(),
+            sizes.as_ptr(),
+            flags.as_ptr(),
+            2,
+            null(),
+            c"quads = 600".as_ptr(),
+            None,
+            null_mut(),
+        );
+        assert_eq!(openclare_result_ok(result), 1, "{}", text(openclare_result_error(result)));
+        let report = text(openclare_result_report(result));
+        let count = |key: &str| -> usize {
+            report.lines().find_map(|line| line.strip_prefix(key)).and_then(|count| count.parse().ok()).unwrap()
+        };
+        assert!(count("sharp_curve_edges = ") >= 12, "{report}");
+        assert!(count("guide_edges = ") + count("sharp_curve_edges = ") == edges, "{report}");
+        assert_eq!(openclare_result_hard_edge_count(result), count("sharp_curve_edges = "));
         openclare_result_free(result);
     }
 }
