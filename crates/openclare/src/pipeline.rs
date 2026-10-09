@@ -112,6 +112,12 @@ pub struct Report {
     /// For each face of the output, the group of the input it lies in, when
     /// the input came with groups (see [`crate::Guides::groups`]); empty
     /// otherwise.
+    /// What mending the input took, when it had defects: vertices of torn
+    /// borders welded to another at the same place, and edges with more
+    /// than two faces whose faces were taken apart. Both 0 for an input
+    /// left as it was.
+    pub welded_vertices: usize,
+    pub edges_taken_apart: usize,
     pub face_groups: Vec<u32>,
     /// How many faces of the output lie across a border between two groups
     /// of the input: none where every border is a line of edges.

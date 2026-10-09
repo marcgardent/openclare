@@ -357,6 +357,12 @@ fn remesh(args: &[String]) -> Result<(), String> {
         report.open_loops,
         report.map_inversions,
     );
+    if report.welded_vertices + report.edges_taken_apart > 0 {
+        println!(
+            "mended   the input had defects: {} vertices of torn borders welded, {} edges with more than two faces taken apart",
+            report.welded_vertices, report.edges_taken_apart
+        );
+    }
     if groups.is_some() {
         let mut faces: std::collections::BTreeMap<u32, usize> = std::collections::BTreeMap::new();
         for &group in &report.face_groups {

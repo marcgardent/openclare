@@ -9,4 +9,4 @@ pub mod tri_mesh;
 
 pub use poly_mesh::{MeshStats, PolyMesh};
 pub use topology::Topology;
-pub use tri_mesh::TriMesh;
+pub use tri_mesh::{Mended, TriMesh};
