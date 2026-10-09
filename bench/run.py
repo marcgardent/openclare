@@ -32,6 +32,8 @@ BLENDERKIT = {
     "terrain": "43a14c49-93bb-49e7-baec-6397eae071c5",
     "mahaveer": "b6564fca-81c7-4873-945a-287fe143b7e6",
     "marine": "22029966-6ee8-48d1-8d6b-d962162e09fa",
+    "f16": "2b0e1d40-8487-4b92-8594-6141f2ec6162",
+    "camera": "3ef12fa4-29a0-463f-b338-7ad3f81b654b",
 }
 LOCAL_MODELS = set(BLENDERKIT)
 
@@ -65,6 +67,10 @@ MODELS = [
     # Two game characters from BlenderKit, made of many separate pieces.
     ("mahaveer", "extra", False, True),
     ("marine", "extra", False, True),
+    # Two hard-surface models from BlenderKit, assembled from many parts: a
+    # fighter jet and a film camera.
+    ("f16", "extra", True, True),
+    ("camera", "extra", True, True),
     ("sphere", "calibration", False, False),
     ("torus", "calibration", False, False),
 ]
