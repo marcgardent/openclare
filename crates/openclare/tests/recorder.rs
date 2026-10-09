@@ -44,7 +44,9 @@ fn a_chain_shows_its_stages_in_the_order_they_run() {
     let mesh = primitives::icosphere(4);
     let mut paths = Paths::default();
     let (quads, _) = config(600).remesh_recorded(&mesh, &Guides::default(), &mut paths).unwrap();
-    let stages: Vec<&str> = paths.seen.iter().map(|path| path.split('/').next().unwrap()).collect();
+    // What is under `notes` belongs to no stage.
+    let stages: Vec<&str> =
+        paths.seen.iter().map(|path| path.split('/').next().unwrap()).filter(|&stage| stage != "notes").collect();
     let mut order = stages.clone();
     order.dedup();
     assert_eq!(
@@ -56,6 +58,7 @@ fn a_chain_shows_its_stages_in_the_order_they_run() {
             "sizing",
             "cross-field",
             "singularities",
+            "map",
             "layout",
             "quantization",
             "meshing",

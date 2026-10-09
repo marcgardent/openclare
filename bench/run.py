@@ -61,10 +61,10 @@ MODELS = [
     # An edge that turns inwards, and hard edges that are closed curves.
     ("lblock", "mechanical", True, False),
     ("cylinder", "mechanical", True, False),
-    # A car by the author of the project, modelled rather than sculpted, in
-    # thirteen materials (bench/corpus/venturi.groups): what a modifier that
-    # splits edges and a few edges with three faces make of an input.
-    ("venturi", "extra", True, True),
+    # A car by the author of the project, modelled rather than sculpted: a
+    # closed surface in thirteen materials (bench/corpus/venturi.groups),
+    # whose borders the quad mesh is to follow.
+    ("venturi", "extra", False, False),
     # Not redistributable (see LOCAL_MODELS): measured, but kept out of the
     # acceptance groups, which anyone must be able to reproduce.
     # A landscape from BlenderKit: half a million triangles, open, rugged.
