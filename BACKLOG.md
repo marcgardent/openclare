@@ -927,6 +927,17 @@ track. "DT" stands for *dette technique*, technical debt.
   pieces of the car fail (7 through the fallback chain and 6 not meshed, against 1 and 1),
   and the run takes 121 seconds instead of 45. Off by default, in no preset, not in the
   add-on: those small pieces first.
+- **Acute tips, the same evening**, from two more pictures of the author: the air intakes of
+  the car, where two edges run into one another at a sharp angle. Two lines that meet at
+  less than a quarter turn or so cannot both be lines of a grid of quads. With `edge_angle`
+  at 60 degrees the body of the car had 4837 guide edges, its map folded on 1191 triangles
+  with all of them on grid lines, every one was let go, and the body went to the fallback
+  chain. Now the lines are let go beforehand within a quad edge and a half of any place
+  where two meet at less than 50 degrees: 127 triangles fold instead of 1191, 417 guide
+  edges are let go out of 3707, and the car takes 76 seconds instead of 121, with 3 pieces
+  through the fallback chain and 4 not meshed instead of 7 and 6. The body still ends in the
+  fallback chain: its map has no fold by its own count, and the layout finds some. That
+  disagreement between the two counts is the next thing to look at.
 - **What the car asks for instead**: its hard edges kept. At 30 degrees they are 9058 edges of
   the source in 179 connected lines, 5577 quad edges long in all for a mesh of 8000 quads,
   with 1300 junctions and 246 loose ends. Short stray bits are not the trouble (33 quad edges
