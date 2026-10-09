@@ -24,6 +24,7 @@ is left as it is. What is remeshed is the object as it is seen, modifiers applie
 
 | Setting | What it does |
 |---|---|
+| Object | The object to remesh. Left empty, it is the active object, and the panel says which that is |
 | Preset | What the mesh is for: organic, animation, hard surface |
 | Quads | The number of quads asked for |
 | Adaptive Size | How much the size of the quads follows the curvature: at 0 % they are all the same size; towards 100 % they get smaller where the shape bends and larger where it is flat, for the same number in total. Each preset brings its own value (50 %, or 0 % for hard surfaces) |

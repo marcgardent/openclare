@@ -284,5 +284,16 @@ settings.quads, settings.adaptive_size = 800, 50.0
 bpy.ops.object.empty_add()
 assert not bpy.ops.object.openclare_remesh.poll()
 
+# Unless an object is chosen in the panel: it is the one remeshed, whatever
+# is active, and only a mesh can be chosen.
+settings.source = sheet
+assert bpy.ops.object.openclare_remesh.poll()
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+assert bpy.context.active_object.name.startswith(sheet.name) and bpy.context.active_object != sheet
+assert len(bpy.context.active_object.data.polygons) > 300
+settings.source = None
+bpy.ops.object.empty_add()
+assert not bpy.ops.object.openclare_remesh.poll()
+
 openclare.unregister()
 print("ADD-ON OK")
