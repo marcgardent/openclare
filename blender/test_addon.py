@@ -249,6 +249,37 @@ assert not any(edge.use_edge_sharp for edge in bpy.context.active_object.data.ed
 settings.guide_curves = settings.sharp_curves = None
 settings.quads, settings.adaptive_size = 800, 50.0
 
+# Materials: a flat grid whose left third is of another material. The result
+# has both, each quad that of the surface under it, and no quad across the
+# border between the two.
+bpy.ops.mesh.primitive_grid_add(x_subdivisions=24, y_subdivisions=24, size=2.0, location=(8.0, 0.0, 0.0))
+sheet = bpy.context.active_object
+for name in ("body", "trim"):
+    sheet.data.materials.append(bpy.data.materials.new(name))
+border = -1.0 + 2.0 * 8 / 24
+for polygon in sheet.data.polygons:
+    polygon.material_index = int(polygon.center.x < border)
+alone(sheet)
+settings.quads, settings.adaptive_size = 400, 0.0
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+mesh = bpy.context.active_object.data
+assert [material.name for material in mesh.materials] == ["body", "trim"]
+used = {polygon.material_index for polygon in mesh.polygons}
+assert used == {0, 1}, f"materials used: {used}"
+for polygon in mesh.polygons:
+    xs = [mesh.vertices[v].co.x for v in polygon.vertices]
+    left, right = all(x <= border + 1e-5 for x in xs), all(x >= border - 1e-5 for x in xs)
+    assert left or right, f"a quad from {min(xs):.3f} to {max(xs):.3f} is across the border at {border:.3f}"
+    assert polygon.material_index == int(left), "a quad has the material of the other side"
+print("MATERIALS", len(mesh.polygons), "quads,", sum(p.material_index for p in mesh.polygons), "of the second material")
+# Not asked for: the result has no material.
+settings.export_materials = False
+alone(sheet)
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+assert len(bpy.context.active_object.data.materials) == 0
+settings.export_materials = True
+settings.quads, settings.adaptive_size = 800, 50.0
+
 # Nothing to remesh: said, not crashed.
 bpy.ops.object.empty_add()
 assert not bpy.ops.object.openclare_remesh.poll()

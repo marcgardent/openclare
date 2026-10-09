@@ -34,7 +34,7 @@ def library():
     lib.openclare_version.restype = text
     lib.openclare_remesh.restype = pointer
     lib.openclare_remesh.argtypes = [
-        pointer, size, pointer, size, pointer, size, pointer,
+        pointer, size, pointer, size, pointer, size, pointer, pointer,
         pointer, pointer, pointer, size,
         text, text, ON_STAGE, pointer,
     ]
@@ -58,6 +58,8 @@ def library():
     lib.openclare_result_crease_count.argtypes = [pointer]
     lib.openclare_result_copy_creases.restype = None
     lib.openclare_result_copy_creases.argtypes = [pointer, pointer, pointer]
+    lib.openclare_result_copy_face_groups.restype = ctypes.c_int32
+    lib.openclare_result_copy_face_groups.argtypes = [pointer, pointer]
     lib.openclare_result_free.restype = None
     _library = lib
     return lib
@@ -80,17 +82,19 @@ class Remeshed:
     `report` (what the engine says of the run, as a dictionary), and what was
     asked for on top: `uv` (per layer name, two floats per corner), `seams`
     and `hard_edges` (two vertices per edge), `creases` (the same, and one
-    weight per edge), None when not asked for."""
+    weight per edge), None when not asked for; and `face_groups`, the group
+    of the input each face lies in, None when the input came without groups."""
 
     def __init__(self):
         self.positions = self.sizes = self.corners = None
         self.report, self.uv = {}, {}
-        self.seams = self.hard_edges = self.creases = None
+        self.seams = self.hard_edges = self.creases = self.face_groups = None
 
 
 def remesh(
     positions, vertex_count, triangles, triangle_count, corner_vertices, corner_count, preset, settings,
     density=None, on_stage=None, uv_layers=(), seams=False, hard_edges=False, creases=False, curves=(),
+    groups=None,
 ):
     """Remeshes into quads the triangle mesh whose arrays sit at the addresses
     given: three floats per vertex at `positions`, three corners per triangle
@@ -105,6 +109,10 @@ def remesh(
     to have edges along: for each, its points (a numpy array of three floats
     per point), whether its last point joins the first, and whether the
     edges along it are to be hard edges of the result.
+
+    `groups` is None or a numpy array of one unsigned 32-bit integer per
+    triangle: the material of each, say. The result has a line of edges where
+    two groups meet, and says which group each of its faces lies in.
 
     `on_stage`, if given, is called with the name of each stage as it begins
     ("cross field", or "piece 3 of 12: cross field"); the run stops if it
@@ -123,6 +131,8 @@ def remesh(
     lines = "".join(f"{key} = {value}\n" for key, value in settings.items())
     if density is not None and (density.dtype != numpy.float32 or len(density) != vertex_count):
         raise EngineError(f"{len(density)} weights of type {density.dtype} for {vertex_count} vertices")
+    if groups is not None and (groups.dtype != numpy.uint32 or len(groups) != triangle_count):
+        raise EngineError(f"{len(groups)} groups of type {groups.dtype} for {triangle_count} triangles")
     def told(stage, _):
         # Whatever goes wrong in the host's function must not unwind into
         # the engine: the run goes on.
@@ -152,6 +162,7 @@ def remesh(
     result = lib.openclare_remesh(
         positions, vertex_count, triangles, triangle_count, corner_vertices, corner_count,
         None if density is None else density.ctypes.data,
+        None if groups is None else groups.ctypes.data,
         *curve_arguments,
         preset.encode(), lines.encode(), callback, None,
     )
@@ -172,6 +183,10 @@ def remesh(
             if not lib.openclare_result_copy_uv(result, UV_LAYERS[name], coordinates.ctypes.data):
                 raise EngineError(f"the engine has no layer of texture coordinates named '{name}'")
             out.uv[name] = coordinates
+        if groups is not None:
+            face_groups = numpy.empty(len(out.sizes), numpy.uint32)
+            if lib.openclare_result_copy_face_groups(result, face_groups.ctypes.data):
+                out.face_groups = face_groups
         if seams:
             out.seams = numpy.empty(2 * lib.openclare_result_seam_count(result), numpy.uint32)
             lib.openclare_result_copy_seams(result, out.seams.ctypes.data)

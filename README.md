@@ -39,6 +39,7 @@ A section *Export* says what the result carries besides its quads, each with its
 | UV Layers: Atlas | A UV layer, `openclare atlas`, made of islands that never overlap, packed into the unit square, to paint or bake on; its seams are marked on the edges. Every quad takes the same room in it, whatever its size on the surface |
 | Edges: Sharp | The edges that follow a hard edge of the original are marked sharp. Only a preset that keeps hard edges (*Hard surface*) has any |
 | Edges: Creases | The edges that should stay sharp when the result is subdivided get a crease weight, which a Subdivision Surface modifier reads: 1 along a hard edge of the original, less where the original folds without being marked hard |
+| Surface: Materials | Each quad gets the material of the surface it lies on, and the borders between materials are kept as lines of edges where that can be done (on a model of many materials they often cannot yet). No effect on an object of one material |
 
 Blender waits while the engine runs (about eight seconds for the 200,000 triangles of the ogre
 at 3000 quads), and says where it is: the status bar shows each stage as it begins, the cursor

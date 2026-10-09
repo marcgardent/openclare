@@ -106,6 +106,10 @@ pub struct Report {
     /// with how sharp, from 0 to 1 (see [`crate::creases`]). The hard edges
     /// are among them, at 1.
     pub creases: Vec<crate::creases::Crease>,
+    /// For each face of the output, the group of the input it lies in, when
+    /// the input came with groups (see [`crate::Guides::groups`]); empty
+    /// otherwise.
+    pub face_groups: Vec<u32>,
     pub stats: MeshStats,
     pub timings: Vec<(&'static str, Duration)>,
 }

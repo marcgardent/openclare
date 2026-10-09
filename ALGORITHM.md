@@ -1571,6 +1571,39 @@ without edges on the curve, not a failure.
 
 What is left open is in DT-044.
 
+### Materials, and mending the input
+
+Done on 9 October 2026, at the author's request, on a car of his in thirteen materials: the
+borders between materials as lines the quad mesh should keep, and the materials themselves on
+the result.
+
+- **Groups of triangles** (`Guides::groups`; `--groups` on the command line; one more argument
+  of `openclare_remesh`): a whole number per triangle of the input, its material in Blender.
+  An edge between two triangles of different groups is a line to follow, of the same kind as a
+  guide curve: a line of edges, neither sharp nor creased, let go before a crease is. Lines
+  can also be given outright, each by where its two ends are (`Guides::lines`).
+- **Lines by where they are**: preprocessing cleans the mesh and numbers its vertices anew,
+  and each piece has its own numbers, so a line is told by the position of its ends and found
+  again among the edges of the source (`preprocess::Request::lines`).
+- **The group of each face** of the result is that of the triangle of the input under its
+  middle (`Report::face_groups`, `openclare_result_copy_face_groups`). The add-on gives the
+  result the materials of the object and each quad its own (box *Materials* of the section
+  *Export*).
+- **Mending the input** (`TriMesh::stitched`), which that car needed before anything else. A
+  modifier that splits edges for shading, or a format that gives each face vertices of its
+  own, tears a surface into as many pieces as it has faces or panels: open borders that
+  coincide are stitched, unless that would leave an edge with more than two faces. And where
+  the input itself has an edge with more than two faces, the faces are taken apart along it,
+  each keeping the edge as a border: every piece is then a surface, where the whole piece was
+  refused before. A mesh with nothing to mend is left exactly as it is.
+
+**What it gives.** Tests (`tests/groups.rs`, and the test of the add-on): a ball written one
+triangle at a time is one closed piece again; three sheets that meet along a line come apart
+in three; on a flat sheet in two materials the border is a line of edges and every quad is
+of the material of its side. On the car at 8000 quads: 17 pieces instead of 373, 6995 quads
+instead of 1787, every quad with a material, but the borders between materials let go nearly
+everywhere (DT-047). The models of the acceptance rule come out as before, to the vertex.
+
 ---
 
 ## 4. Milestones

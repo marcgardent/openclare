@@ -34,6 +34,7 @@ BLENDERKIT = {
     "marine": "22029966-6ee8-48d1-8d6b-d962162e09fa",
     "f16": "2b0e1d40-8487-4b92-8594-6141f2ec6162",
     "camera": "3ef12fa4-29a0-463f-b338-7ad3f81b654b",
+    "wolf": "c63283ec-7419-4bff-8f6f-13cf70bd1b14",
 }
 LOCAL_MODELS = set(BLENDERKIT)
 
@@ -60,6 +61,10 @@ MODELS = [
     # An edge that turns inwards, and hard edges that are closed curves.
     ("lblock", "mechanical", True, False),
     ("cylinder", "mechanical", True, False),
+    # A car by the author of the project, modelled rather than sculpted, in
+    # thirteen materials (bench/corpus/venturi.groups): what a modifier that
+    # splits edges and a few edges with three faces make of an input.
+    ("venturi", "extra", True, True),
     # Not redistributable (see LOCAL_MODELS): measured, but kept out of the
     # acceptance groups, which anyone must be able to reproduce.
     # A landscape from BlenderKit: half a million triangles, open, rugged.
@@ -71,6 +76,8 @@ MODELS = [
     # fighter jet and a film camera.
     ("f16", "extra", True, True),
     ("camera", "extra", True, True),
+    # A stylized game character from BlenderKit, low-poly and rigged.
+    ("wolf", "extra", False, True),
     ("sphere", "calibration", False, False),
     ("torus", "calibration", False, False),
 ]
@@ -196,6 +203,10 @@ def openclare(method, seeded=True, name=None, options=(), sharp_preset=None):
             if sharp and sharp_preset:
                 command += ["--preset", sharp_preset]
             command += ["--method", method, "--quads", target, "--seed", seed]
+            # The materials of the model, where it comes with them.
+            groups = source_path(model).with_suffix(".groups")
+            if method == "quad-layout" and groups.exists():
+                command += ["--groups", groups]
             command += list(options)
             if sharp:
                 command += ["--crease-angle", CREASE_ANGLE]
