@@ -1542,9 +1542,11 @@ curve is made into one.
   the result, so they are marked sharp and creased in full. It is the way to say where a
   sculpt has a hard edge without marking edges of the dense mesh, which the author had found
   close to impossible (DT-024). In the add-on each category has its collection and its colour
-  in the viewport, cyan for guides and violet for sharp curves, and four buttons: *Assign*
-  moves the selected curves to the category shown, *Remove* takes them out, *Select* and
-  *Deselect* act on all its curves. Checked by a test of the engine (a loop on a sphere, as a
+  in the viewport, cyan for guides and violet for sharp curves, and a box of the panel with
+  four buttons: *Assign* moves the selected curves to the category, *Remove* takes them out,
+  *Select* and *Deselect* act on all its curves. A run takes the curves of both categories,
+  and a curve is in one only: the two boxes are shown together for that to be plain (a first
+  version had a switch between the two, which read as a choice of one or the other). Checked by a test of the engine (a loop on a sphere, as a
   guide then as a sharp curve) and by the test of the add-on.
 
 ![The ogre with and without guide curves](docs/images/guide_curves.png)

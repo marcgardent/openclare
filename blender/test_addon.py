@@ -183,8 +183,7 @@ def circle_at(height):
 
 def assign(circle, category):
     alone(circle)
-    settings.curve_category = category
-    assert bpy.ops.object.openclare_curves_assign() == {"FINISHED"}
+    assert bpy.ops.object.openclare_curves_assign(category=category) == {"FINISHED"}
 
 
 loop, ridge = circle_at(0.3), circle_at(-0.3)
@@ -208,12 +207,11 @@ assert list(guides.objects) == [] and set(sharps.objects) == {loop, ridge}
 assign(loop, "guide")
 assert list(guides.objects) == [loop] and list(sharps.objects) == [ridge]
 
-# Select and Deselect act on the curves of the category shown.
+# Select and Deselect act on the curves of one category.
 alone(ball)
-settings.curve_category = "sharp"
-assert bpy.ops.object.openclare_curves_select(select=True) == {"FINISHED"}
+assert bpy.ops.object.openclare_curves_select(category="sharp", select=True) == {"FINISHED"}
 assert ridge.select_get() and not loop.select_get()
-assert bpy.ops.object.openclare_curves_select(select=False) == {"FINISHED"}
+assert bpy.ops.object.openclare_curves_select(category="sharp", select=False) == {"FINISHED"}
 assert not ridge.select_get()
 
 alone(ball)
@@ -241,8 +239,9 @@ assert sum(1 for weight in weights if weight.value > 0) == len(sharp)
 
 # Remove takes a curve out of its category and gives it back its colour.
 alone(ridge)
-settings.curve_category = "sharp"
-assert bpy.ops.object.openclare_curves_remove() == {"FINISHED"}
+assert bpy.ops.object.openclare_curves_remove(category="guide") == {"FINISHED"}
+assert list(sharps.objects) == [ridge], "taken out of a category it was not in"
+assert bpy.ops.object.openclare_curves_remove(category="sharp") == {"FINISHED"}
 assert list(sharps.objects) == [] and ridge.users_collection and coloured(ridge, openclare.PLAIN)
 alone(ball)
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
