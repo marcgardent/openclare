@@ -267,6 +267,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
             "--alignment" => config.alignment = parse(arg, value(arg)?)?,
             "--singularity-reach" => config.singularity_reach = parse(arg, value(arg)?)?,
             "--singularity-tolerance" => config.singularity_tolerance = parse(arg, value(arg)?)?,
+            "--edge-angle" => config.edge_angle = Some(parse(arg, value(arg)?)?),
             "--crease-angle" => {
                 let text = value(arg)?;
                 config.crease_angle = if text == "none" { None } else { Some(parse(arg, text)?) };

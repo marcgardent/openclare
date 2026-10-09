@@ -72,11 +72,22 @@ pub struct Request<'a> {
     /// Edges of the source to keep as lines of edges, each given by where
     /// its two ends are. Those that are no edge of the source are ignored.
     pub lines: &'a [[Vec3; 2]],
+    /// Dihedral angle in degrees above which an edge is kept as a line of
+    /// the work mesh, for its shape to stay crisp, without being a crease
+    /// to keep at any cost: a line the chain follows if it can.
+    pub edge_angle: Option<f64>,
 }
 
 impl Default for Request<'_> {
     fn default() -> Self {
-        Self { triangles: 100_000, crease_angle: None, curvature_scale: None, curves: &[], lines: &[] }
+        Self {
+            triangles: 100_000,
+            crease_angle: None,
+            curvature_scale: None,
+            curves: &[],
+            lines: &[],
+            edge_angle: None,
+        }
     }
 }
 
@@ -197,13 +208,13 @@ impl Preprocessor for Isotropic {
         // dozens of times that is a surface it cannot tile at that length.
         let most = MOST_TRIANGLES * request.triangles.max(mesh.triangle_count());
         isotropic::remesh(&mut mesh, &target, edge_length, self.iterations, most);
-        if !laid.segments.is_empty() || !request.lines.is_empty() {
+        if !laid.segments.is_empty() || !request.lines.is_empty() || request.edge_angle.is_some() {
             imprint::unpinch(&mut mesh);
         }
 
         let (mesh, features) = mesh.finish();
         let mut work = work_mesh(mesh, features, request);
-        if !laid.segments.is_empty() || !request.lines.is_empty() {
+        if !laid.segments.is_empty() || !request.lines.is_empty() || request.edge_angle.is_some() {
             // What is kept as a line without being a border or a crease can
             // only come from a curve, or from a line asked for.
             let mut sides: HashMap<(u32, u32), Vec<Vec3>> = HashMap::new();
@@ -314,7 +325,13 @@ fn cleaned(source: &TriMesh) -> Result<TriMesh> {
 
 fn source_features(mesh: &TriMesh, request: &Request) -> Vec<[u32; 2]> {
     let topology = Topology::build(mesh);
-    let mut features = feature_edges(mesh, &topology, request.crease_angle.map(f64::to_radians), true);
+    // The lesser of the two angles finds the edges of both kinds; which are
+    // creases to keep and which are lines to follow is told afterwards.
+    let angle = match (request.crease_angle, request.edge_angle) {
+        (Some(hard), Some(soft)) => Some(hard.min(soft)),
+        (hard, soft) => hard.or(soft),
+    };
+    let mut features = feature_edges(mesh, &topology, angle.map(f64::to_radians), true);
     if !request.lines.is_empty() {
         // The edges asked for, found by where their ends are: the vertices
         // have other numbers here than where the lines were told.

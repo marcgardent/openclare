@@ -330,15 +330,34 @@ pub(crate) fn show_map(recorder: &mut dyn Recorder, work: &WorkMesh, map: &Param
             let middle = corners(f).iter().sum::<Vec3>() / 3.0;
             points.iter().any(|p| p.distance(middle) <= reach)
         };
+        // A triangle with its three corners on lines has nowhere to go when
+        // two lines run side by side a triangle apart: how many are such.
+        let on_a_line = |v: u32| !along[v as usize].is_empty();
+        let feature: std::collections::HashSet<(u32, u32)> =
+            work.feature_edges.iter().map(|&[a, b]| (a.min(b), a.max(b))).collect();
+        let sides_on_lines = |f: usize| {
+            let tri = mesh.triangles[f];
+            (0..3).filter(|&k| feature.contains(&(tri[k].min(tri[(k + 1) % 3]), tri[k].max(tri[(k + 1) % 3])))).count()
+        };
+        let between = report
+            .folds_with_lines
+            .iter()
+            .filter(|&&f| mesh.triangles[f].iter().all(|&v| on_a_line(v)) && sides_on_lines(f) <= 1)
+            .count();
+        let pinched = report.folds_with_lines.iter().filter(|&&f| sides_on_lines(f) >= 2).count();
         let at_joints = report.folds_with_lines.iter().filter(|&&f| near(&joints, f)).count();
         let at_lines = report.folds_with_lines.iter().filter(|&&f| near(&on_lines, f)).count();
         let note = format!(
             "of the {} triangles folded with every line on a grid line, {} are within two edges of a place where \
-             lines turn by more than 30 degrees, meet or end ({} such places), {} within two edges of a line at all",
+             lines turn by more than 30 degrees, meet or end ({} such places), {} within two edges of a line at all; \
+             {} span from one line to another a triangle away (three corners on lines, at most one side along one), \
+             {} have two sides along lines",
             report.folds_with_lines.len(),
             at_joints,
             joints.len(),
             at_lines,
+            between,
+            pinched,
         );
         recorder.record("notes/map folds", Shape::Note(&note));
     }

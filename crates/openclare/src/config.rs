@@ -32,6 +32,11 @@ pub struct RemeshConfig {
     /// Dihedral angle in degrees above which an input edge is a hard edge the
     /// output must follow. `None` keeps no hard edge.
     pub crease_angle: Option<f64>,
+    /// Edges of the input sharper than this dihedral angle, in degrees, keep
+    /// the shape of the work mesh crisp, and the quads follow them where
+    /// they can, without it being imposed as it is for [`Self::crease_angle`]:
+    /// one the map cannot keep is let go. `None` for none.
+    pub edge_angle: Option<f64>,
     /// How much the size of the quads follows the shape: 0 keeps them all
     /// the same size; towards 1 they get smaller where the surface bends
     /// more, larger where it is flat, for the same number in total.
@@ -106,6 +111,7 @@ impl RemeshConfig {
             singularity_reach: 2.0,
             singularity_tolerance: 1.0,
             crease_angle: None,
+            edge_angle: None,
             adaptivity: 0.5,
             quads_around: 6.0,
             volume_fit: 1.0,
@@ -214,6 +220,11 @@ impl RemeshConfig {
         writeln!(text, "alignment = {}", self.alignment).unwrap();
         writeln!(text, "singularity_reach = {}", self.singularity_reach).unwrap();
         writeln!(text, "singularity_tolerance = {}", self.singularity_tolerance).unwrap();
+        match self.edge_angle {
+            Some(angle) => writeln!(text, "edge_angle = {angle}"),
+            None => writeln!(text, "edge_angle = none"),
+        }
+        .unwrap();
         match self.crease_angle {
             Some(angle) => writeln!(text, "crease_angle = {angle}"),
             None => writeln!(text, "crease_angle = none"),
@@ -261,6 +272,8 @@ impl RemeshConfig {
                 "alignment" => config.alignment = number_of("number")?,
                 "singularity_reach" => config.singularity_reach = number_of("number")?,
                 "singularity_tolerance" => config.singularity_tolerance = number_of("number")?,
+                "edge_angle" if value == "none" => config.edge_angle = None,
+                "edge_angle" => config.edge_angle = Some(number_of("number of degrees, nor 'none'")?),
                 "crease_angle" if value == "none" => config.crease_angle = None,
                 "crease_angle" => config.crease_angle = Some(number_of("number of degrees, nor 'none'")?),
                 "adaptivity" => config.adaptivity = number_of("number")?,

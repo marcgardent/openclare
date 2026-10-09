@@ -915,6 +915,18 @@ track. "DT" stands for *dette technique*, technical debt.
   as creases does (0.2 %). Elsewhere it is neither better nor worse: on the ogre at 3000 quads
   the Hausdorff distance is halved (28 to 13 per mille, the pockets behind the eyes, DT-036);
   on the pig it goes up (10 to 17) and `jerry` comes out invalid.
+- **A lead that holds, 9 October 2026**, after pictures of the map taken by the author in
+  Rerun: the spoiler of his car came out serrated, its edges chewed by the remeshing of the
+  work mesh. A new setting, `edge_angle` (`--edge-angle`): edges of the input sharper than it
+  are kept as lines of the work mesh, so its shape stays crisp, and the quads follow them
+  where the map can, as it does for guide curves; they are not creases to keep at any cost,
+  nor hard edges of the result. On the car as it is seen, at 60 degrees and 8000 quads: the
+  spoiler, the air intakes and the lines of the body come out straight; 486 irregular
+  vertices instead of 886; mean distance to the source 1.60 per mille instead of 2.01. And a
+  cube under the `organic` preset comes out exact (a test). What it costs: more of the small
+  pieces of the car fail (7 through the fallback chain and 6 not meshed, against 1 and 1),
+  and the run takes 121 seconds instead of 45. Off by default, in no preset, not in the
+  add-on: those small pieces first.
 - **What the car asks for instead**: its hard edges kept. At 30 degrees they are 9058 edges of
   the source in 179 connected lines, 5577 quad edges long in all for a mesh of 8000 quads,
   with 1300 junctions and 246 loose ends. Short stray bits are not the trouble (33 quad edges
