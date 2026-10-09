@@ -4,7 +4,7 @@
 use openclare::math::Vec3;
 use openclare::mesh::primitives;
 use openclare::metrics::measure;
-use openclare::{PolyMesh, RemeshConfig, Target, TriMesh};
+use openclare::{Guides, PolyMesh, RemeshConfig, Target, TriMesh};
 
 fn remesh(source: &TriMesh, quads: usize) -> PolyMesh {
     let config = RemeshConfig::for_hard_surface(Target::QuadCount(quads));
@@ -137,4 +137,23 @@ fn the_report_lists_the_edges_that_follow_a_hard_edge() {
     // A shape without a hard edge has none to list.
     let (_, smooth) = RemeshConfig::for_organic(Target::QuadCount(300)).remesh(&primitives::icosphere(4)).unwrap();
     assert!(smooth.hard_edges.is_empty());
+}
+
+#[test]
+fn edges_kept_for_the_shape_are_followed_without_being_hard_edges() {
+    // A cube under the organic preset, which keeps no crease: its edges are
+    // rounded off. With an edge angle they keep the work mesh crisp and the
+    // quads follow them, as lines, not as hard edges of the result.
+    let source = primitives::cube(12);
+    let round = RemeshConfig::for_organic(Target::QuadCount(600));
+    let crisp = RemeshConfig { edge_angle: Some(30.0), ..round.clone() };
+    let (rounded, _) = round.remesh_guided(&source, &Guides::default()).unwrap();
+    let (mesh, report) = crisp.remesh_guided(&source, &Guides::default()).unwrap();
+    assert!(measure(&source, &mesh, Some(600)).is_valid());
+    assert!(!report.fell_back && report.guides_let_go == 0);
+    assert!(report.hard_edges.is_empty(), "{} hard edges", report.hard_edges.len());
+    assert!(report.guide_edges.len() >= 100, "{} edges along the edges of the cube", report.guide_edges.len());
+    let off = |mesh: &PolyMesh| measure(&source, mesh, Some(600)).hausdorff;
+    assert!(off(&mesh) < 1e-6, "the cube is {} away", off(&mesh));
+    assert!(off(&rounded) > 100.0 * off(&mesh).max(1e-9), "rounded {} against crisp {}", off(&rounded), off(&mesh));
 }

@@ -689,6 +689,7 @@ fn fields(
         curvature_scale: Some(edge_length),
         curves: guides.map_or(&[], |guides| guides.curves),
         lines: guides.map_or(&[], |guides| guides.lines),
+        edge_angle: config.edge_angle,
     };
     let mut work = preprocess::create(preprocess::Kind::Isotropic).preprocess(input, &work_request)?;
     report.working_vertices = work.mesh.positions.len();
