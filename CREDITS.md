@@ -38,6 +38,8 @@ made from a work under BY-SA 4.0 may be placed under the GPLv3, not the reverse.
 | `terrain` | *Mountain Range Terrain*, Bipro Fx | [BlenderKit](https://www.blenderkit.com/), `asset_base_id:43a14c49-93bb-49e7-baec-6397eae071c5`, published on 7 July 2026, fetched on 8 October 2026 | BlenderKit Royalty Free: may be used in a project, may not be passed on as it is | **out of the repository** | exported as it is by `bench/import_blenderkit.py`, 543,557 triangles |
 | `mahaveer` | *Mahaveer Dev*, Avi Panchal | BlenderKit, `asset_base_id:b6564fca-81c7-4873-945a-287fe143b7e6`, published on 29 December 2025, fetched on 8 October 2026 | BlenderKit Royalty Free | **out of the repository** | exported as it is, 418,472 triangles, 164 pieces |
 | `marine` | *Marine Armor*, Grudgebearer iZerat; a fan creation after a video game | BlenderKit, `asset_base_id:22029966-6ee8-48d1-8d6b-d962162e09fa`, published on 9 January 2024, fetched on 8 October 2026 | BlenderKit Royalty Free | **out of the repository** | exported as it is, 247,198 triangles |
+| `f16` | *F-16 fighter jet*, Joe Naaman | BlenderKit, `asset_base_id:2b0e1d40-8487-4b92-8594-6141f2ec6162`, published on 8 May 2025, fetched on 9 October 2026 | BlenderKit Royalty Free | **out of the repository** | exported as it is, 261,232 triangles, 296 pieces |
+| `camera` | *Vintage 35mm Film Camera*, Hesoyam 3dart | BlenderKit, `asset_base_id:3ef12fa4-29a0-463f-b338-7ad3f81b654b`, published on 12 September 2026, fetched on 9 October 2026 | BlenderKit Royalty Free | **out of the repository** | exported as it is, 34,600 triangles, 42 pieces |
 
 ## Shapes made by the project
 

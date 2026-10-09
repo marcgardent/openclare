@@ -475,6 +475,14 @@ track. "DT" stands for *dette technique*, technical debt.
   `skip_pieces_under` lets one leave aside the pieces whose share is below a threshold.
 - **To do**: take these causes up one by one; make the fallback itself safer on very small
   pieces, or do without it.
+- **Two assembled hard-surface models, 9 October 2026** (BlenderKit, proposed by the author;
+  see CREDITS.md), `hard-surface` preset, 8000 quads. Both come out invalid, and far worse
+  than the characters above. `f16`, a fighter jet in 296 pieces: 187 pieces not meshed at
+  all, 57 through the fallback, 140 faces that are not quads, 36 seconds. `camera`, a film
+  camera in 42 pieces: 9 not meshed, 15 through the fallback, and 351 seconds, nearly all of
+  them in the fallback (DT-027). The first cause by far is again "the map folds over". Parts
+  of such models are thin plates, discs and rings with hard edges all round: the case to
+  study first. Neither has Quad Remesher references nor a page yet.
 
 ### DT-035 — Rerun visualization: what is not shown, version behind
 
