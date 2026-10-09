@@ -67,7 +67,9 @@ fn borders_torn_apart_are_stitched() {
         torn.triangles.push([first, first + 1, first + 2]);
     }
     assert_eq!(torn.pieces().len(), ball.triangles.len());
-    let (stitched, vertex_was, triangle_was) = torn.stitched().expect("a torn mesh is mended");
+    let mended = torn.stitched().expect("a torn mesh is mended");
+    assert_eq!((mended.welded, mended.taken_apart), (torn.positions.len() - ball.positions.len(), 0));
+    let (stitched, vertex_was, triangle_was) = (mended.mesh, mended.vertex_was, mended.triangle_was);
     assert_eq!(stitched.pieces().len(), 1);
     assert_eq!(stitched.positions.len(), ball.positions.len());
     assert_eq!(stitched.triangles.len(), ball.triangles.len());
@@ -82,7 +84,11 @@ fn borders_torn_apart_are_stitched() {
     let config = RemeshConfig::for_organic(Target::QuadCount(300));
     let (mesh, report) = config.remesh_guided(&torn, &Guides::default()).unwrap();
     assert_eq!(report.pieces, 1);
+    assert_eq!((report.welded_vertices, report.edges_taken_apart), (torn.positions.len() - ball.positions.len(), 0));
     assert!(measure(&ball, &mesh, Some(300)).is_valid());
+    // The ball itself has no defect, and is not touched.
+    let (_, untouched) = config.remesh_guided(&ball, &Guides::default()).unwrap();
+    assert_eq!((untouched.welded_vertices, untouched.edges_taken_apart), (0, 0));
 }
 
 #[test]
@@ -99,7 +105,9 @@ fn faces_that_share_an_edge_in_threes_are_taken_apart() {
         book.triangles.extend([[0, first, first + 1], [0, first + 1, 1]]);
     }
     assert_eq!(book.pieces().len(), 1);
-    let (apart, _, triangle_was) = book.stitched().expect("three sheets on a line are taken apart");
+    let mended = book.stitched().expect("three sheets on a line are taken apart");
+    assert_eq!((mended.welded, mended.taken_apart), (0, 1));
+    let (apart, triangle_was) = (mended.mesh, mended.triangle_was);
     assert_eq!(apart.pieces().len(), 3);
     assert_eq!(apart.positions.len(), 12);
     assert_eq!(triangle_was.len(), 6);

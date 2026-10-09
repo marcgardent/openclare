@@ -3,6 +3,20 @@ use std::collections::{HashMap, HashSet};
 use crate::error::{Error, Result};
 use crate::math::{INVALID, Vec3};
 
+/// A mesh mended by [`TriMesh::stitched`], and what was done to it.
+#[derive(Clone, Debug)]
+pub struct Mended {
+    pub mesh: TriMesh,
+    /// The vertex of the mesh as it was each vertex of this one comes from.
+    pub vertex_was: Vec<u32>,
+    /// The same for the triangles.
+    pub triangle_was: Vec<u32>,
+    /// Vertices of torn borders welded into another at the same place.
+    pub welded: usize,
+    /// Edges with more than two faces, whose faces were taken apart there.
+    pub taken_apart: usize,
+}
+
 /// Indexed triangle mesh: the input representation of the remesher.
 #[derive(Clone, Debug, Default)]
 pub struct TriMesh {
@@ -76,7 +90,9 @@ impl TriMesh {
     /// modifier that splits edges for shading, or a format that writes each
     /// face with vertices of its own, tore apart. With it come the vertex
     /// of this mesh each of its vertices was, and the triangle of this mesh
-    /// each of its triangles was. `None` if there was nothing to mend.
+    /// each of its triangles was. `None` if there was nothing to mend: a mesh
+    /// is only touched for a defect it is found to have, borders that
+    /// coincide or an edge with more than two faces.
     ///
     /// Only vertices on an open border are welded: inside a closed shell
     /// there is nothing to stitch. And a weld that would leave an edge with
@@ -87,7 +103,7 @@ impl TriMesh {
     /// faces are taken apart along it, each keeping the edge as a border of
     /// its own: what comes out is a surface everywhere, in more pieces if
     /// need be, where the mesh as it was could not be worked on at all.
-    pub fn stitched(&self) -> Option<(TriMesh, Vec<u32>, Vec<u32>)> {
+    pub fn stitched(&self) -> Option<Mended> {
         let key = |a: u32, b: u32| (a.min(b), a.max(b));
         // A closed surface, every edge with its two faces and every vertex
         // in use, is the common case and the largest meshes: told at once.
@@ -202,7 +218,9 @@ impl TriMesh {
         // whole as it is, and is better left with its own numbering.
         let whole =
             remap == own && kept.len() == self.triangles.len() && stitched.positions.len() == self.positions.len();
-        (!whole).then_some((stitched, vertex_was, triangle_was))
+        let welded = remap.iter().zip(&own).filter(|(to, own)| to != own).count();
+        let taken_apart = sides.values().filter(|faces| faces.len() > 2).count();
+        (!whole).then_some(Mended { mesh: stitched, vertex_was, triangle_was, welded, taken_apart })
     }
 
     /// The connected pieces of the mesh, largest first: each as a mesh of

@@ -481,6 +481,11 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
         said = f"openclare: {report.get('quads', '?')} quads in {seconds:.1f} s"
         if "materials" in report:
             said += f", {report['materials']} materials"
+        welded, apart = int(report.get("welded_vertices", 0)), int(report.get("edges_taken_apart", 0))
+        if welded or apart:
+            # Said, because the result then has borders the object did not show.
+            said += f"; the mesh had defects and was mended ({welded} vertices welded along torn borders"
+            said += f", {apart} edges with more than two faces taken apart)"
         if curves:
             said += f", {report.get('guide_edges', '0')} edges along the guide curves"
             if sharp:

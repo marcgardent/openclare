@@ -329,10 +329,14 @@ impl Remesher for QuadLayout {
         // surface, not of the way it was written down.
         let mended = input.stitched();
         let (stitched, density, groups) = match &mended {
-            Some((stitched, vertex_was, triangle_was)) => (
-                stitched,
-                guides.density.map(|density| vertex_was.iter().map(|&v| density[v as usize]).collect::<Vec<f64>>()),
-                guides.groups.map(|groups| triangle_was.iter().map(|&f| groups[f as usize]).collect::<Vec<u32>>()),
+            Some(mended) => (
+                &mended.mesh,
+                guides
+                    .density
+                    .map(|density| mended.vertex_was.iter().map(|&v| density[v as usize]).collect::<Vec<f64>>()),
+                guides
+                    .groups
+                    .map(|groups| mended.triangle_was.iter().map(|&f| groups[f as usize]).collect::<Vec<u32>>()),
             ),
             None => (input, guides.density.map(<[f64]>::to_vec), guides.groups.map(<[u32]>::to_vec)),
         };
@@ -342,6 +346,9 @@ impl Remesher for QuadLayout {
         }
         let guides = &Guides { density: density.as_deref(), lines: &lines, groups: None, ..*guides };
         let (mesh, mut report) = self.remesh_stitched(stitched, guides, config, recorder)?;
+        if let Some(mended) = &mended {
+            (report.welded_vertices, report.edges_taken_apart) = (mended.welded, mended.taken_apart);
+        }
         if let Some(groups) = &groups {
             // Each face is of the group of the triangle under its middle.
             // One whose corners, seen from a little inside it, are not all

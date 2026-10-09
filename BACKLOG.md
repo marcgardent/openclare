@@ -62,6 +62,8 @@ track. "DT" stands for *dette technique*, technical debt.
 | DT-045 | Sculpts of millions of triangles: most of the time goes to preprocessing | guide curves | medium | open |
 | DT-046 | Add-on: a button to write the density worked out from curvature as weights on the source | idea of the author | medium | open |
 | DT-047 | Borders between materials: mostly let go on a real model | materials | high | open |
+| DT-048 | The work mesh has triangles of one size: what is finer is lost before anything else runs | materials | high | open |
+| DT-049 | The bench has no model with curves or a painted density | materials | medium | open |
 | DT-033 | Terrains and scans: no tool aligns, the field has nothing to follow | J9 | medium | open |
 | DT-027 | Guards on computing time for pathological inputs | J8 | low | open |
 
@@ -876,4 +878,37 @@ track. "DT" stands for *dette technique*, technical debt.
 - **Also left**: the bench passes the groups of a model to the chain but keeps nothing of what
   the report says about them; the command line writes the group of each face next to the
   mesh, not into it.
+
+### DT-048 — The work mesh has triangles of one size: what is finer is lost before anything else runs
+
+- **Born on** 9 October 2026, from what the author saw in the recording of his car: the fine
+  edges of the model are gone after preprocessing.
+- **Finding**: no vertices are merged by distance (the only weld is of border vertices at the
+  very same place, a billionth of the diagonal apart at most). What removes fine edges is the
+  isotropic remeshing: it gives the work mesh triangles of one size and collapses whatever is
+  shorter. On the car, 80,000 triangles make edges of 1.45e-3 where a quarter of the edges of
+  the source are less than half that and 7 % less than a fifth: the narrow strips that round
+  its panels off. The work mesh ends up 1.2 % of the diagonal away from the source at worst,
+  0.2 % when edges sharper than 30 degrees are kept as creases; but then the map cannot keep
+  that many creases (DT-047).
+- **Leads**: triangles whose size follows the shape (smaller where the source bends within
+  less than a triangle, as the sizing field already does for the quads); or the source left
+  as it is where it is already fine and well shaped enough; a bound on how far the work mesh
+  may stray from the source, checked while it is made.
+
+### DT-049 — The bench has no model with curves or a painted density
+
+- **Born on** 9 October 2026, at a question of the author: how is what was said of curves,
+  densities and materials measured, and can it be run again?
+- **Finding**: materials, yes: the car is in the corpus with the material of each triangle
+  beside it (`venturi.groups`, written by `bench/export_object.py`), and the bench passes it
+  on. Curves and painted densities, no. The tests draw their own on spheres and flat sheets.
+  What was said of the ogre with curves cut out of it, and of the author's own scene (his
+  sculpt of 4.7 million triangles, four curves and a painted group), came from files copied
+  out of Blender into a scratch folder, in no repository, and from no `.blend` kept.
+- **To do**: the same sidecars for those as for materials, in the formats the command line
+  already reads (`<model>.curves`, `<model>.density`), written by `bench/export_object.py`
+  from a collection of curves and a vertex group; a model of the corpus that has them, the
+  ogre with its author's curves being the obvious one; and what the report says of lines and
+  borders kept among what the bench stores.
 
