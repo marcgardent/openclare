@@ -863,6 +863,16 @@ track. "DT" stands for *dette technique*, technical debt.
   `hard-surface` preset, which finds creases all over a smooth subdivided body at 30 degrees
   and sends most pieces to the fallback chain. The first export, torn, is no longer in the
   corpus; what it showed of mending stays true (DT-034).
+- **Not the size of the model, but luck, measured the same day.** The author asked whether
+  the chain is sensitive to the size of a model, his car being tiny (0.18 long). It is not:
+  the ogre gives 155 irregular vertices and a valid mesh at every size from a millionth to a
+  million times its own, and the car scaled by an exact power of two (1/1024, 8, 1024) gives
+  the same map, fold for fold. But scaled by 3, by 0.7, or by 1.0000001, the body of the car
+  loses every one of its 3046 guide edges, where it kept 2188 of them: a change in the last
+  digits of the coordinates decides it. The 982 edges along the borders reported above are
+  one outcome among others, not a result to count on. Letting go near the folds either
+  settles in its five rounds or does not, and then everything goes. That is the first thing
+  to make steady (DT-044), before corners.
 - **Also left**: the bench passes the groups of a model to the chain but keeps nothing of what
   the report says about them; the command line writes the group of each face next to the
   mesh, not into it.
