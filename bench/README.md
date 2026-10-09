@@ -44,7 +44,7 @@ seen, modifiers applied, by the button of the panel.
 There are two kinds of scenes:
 
 - **A plain mesh**, made from a file as it is by `make_scenes.py` (`make scenes`): one mesh
-  object named after the model, with the vertices and faces of `corpus/<model>.obj`, 3000
+  object named after the model, with the vertices and faces of the file it was made from, 3000
   quads, the preset `hard-surface` for the models `run.py` says have hard edges and `organic`
   for the others, an adaptive size of 50 %. For a BlenderKit model, every mesh object of the
   file downloaded, modifiers and place in the scene applied, in one mesh.
@@ -55,10 +55,10 @@ There are two kinds of scenes:
   guide curves and a sharp one, each held on it by a Shrinkwrap, and a painted density) are
   such scenes.
 
-The scenes are binary files, meant to be tracked with Git LFS. Until that is set up they are
-not in the repository: `make scenes` makes those that are a plain mesh from the OBJ files of
-`corpus/`, which stay tracked for now; `venturi` and `ogre_hp` are on their author's machine
-only, and the bench leaves out a model made by hand whose scene it does not find.
+The scenes are binary files, tracked through Git LFS (`git lfs install` once, on a machine that
+has it). Those that are a plain mesh were made from OBJ files the repository had until
+9 October 2026; `make scenes` still makes the scene of an OBJ file put under `corpus/`, which is
+how a model that comes as one is added.
 
 To make a scene from a `.blend` of your own:
 
@@ -122,7 +122,8 @@ To measure one mesh, whatever made it:
 | `quadremesher.py` | Blender script: Quad Remesher on an OBJ |
 | `make_references.py` | makes and stores the Quad Remesher references while a licence is available |
 | `scenes/` | the scenes the bench runs on (see above) |
-| `corpus/` | the models that are a plain mesh, as OBJ files: what their scenes are made from ([where they come from](corpus/README.md)) |
+| `scenes/` | [where each model comes from](scenes/README.md) |
+| `corpus/` | not tracked: where an OBJ file is put for `make scenes` to make its scene |
 | `corpus-large/` | the models whose licence forbids passing them on, and their scenes; not tracked |
 | `reference/` | the references kept, tracked ([notice](reference/README.md)) |
 | `make_corpus.py` | Blender script: makes the synthetic shapes of the corpus |
@@ -189,11 +190,9 @@ files.)
 
 ## The ogre
 
-`corpus/ogre.obj` comes from a sculpt of 4.7 million triangles, brought down to 200,000 by:
-
-```bash
-./target/release/openclare preprocess bench/corpus-large/ogre_hp.obj bench/corpus/ogre.obj --triangles 200000
-```
+The scene `ogre` comes from a sculpt of 4.7 million triangles, brought down to 200,000 by
+`openclare preprocess <sculpt.obj> <ogre.obj> --triangles 200000`, before the bench had scenes.
+The sculpt itself, at 2.3 million vertices, is the scene `ogre_hp`.
 
 It is 0.055 per mille of the diagonal away from the original on average, and 4.5 per mille at
 worst (on the sharpest details). The sculpt itself is the scene `ogre_hp`, with the curves and

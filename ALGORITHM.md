@@ -182,13 +182,13 @@ quality.
 ### Corpus
 
 Milestone 0 runs on a **provisional corpus**, generated entirely in Blender so as to download
-nothing, and tracked in `bench/corpus/` with the matching Quad Remesher references
+nothing, and tracked in `bench/corpus/` (as scenes under `bench/scenes/` since 9 October 2026) with the matching Quad Remesher references
 (`bench/reference/`, 3 budgets and 2 settings per model): five organic shapes (blob, noisy
 rock, creature with legs, cage of genus 5, Suzanne), two mechanical ones (part with holes,
 cube) and two yardsticks (sphere, torus). They cover the useful cases, but they are synthetic
 shapes, not real sculpts.
 
-Real models are added to them, detailed in [bench/corpus/README.md](bench/corpus/README.md):
+Real models are added to them, detailed in [bench/scenes/README.md](bench/scenes/README.md):
 
 - **the ogre**, mascot of the project (see above). Its original of 4.7 million triangles
   weighs 200 MB: too much for git, it is kept untracked in `bench/corpus-large/`. Only its

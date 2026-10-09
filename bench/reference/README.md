@@ -6,7 +6,7 @@ on comparing with them once the licence has expired.
 ## quadremesher/
 
 Quad Remesher 1.4.1 (Exoside), trial licence, run on 6, 7 and 8 October 2026 from Blender 5.2.2
-on the models of `bench/corpus/`. Non-commercial use.
+on the models of the bench (`bench/scenes/`). Non-commercial use.
 
 One file per model, budget and setting: `<model>__<quads asked for>__<setting>.obj`, with a
 `.seconds` file beside it that keeps the computing time measured.
@@ -19,8 +19,8 @@ One file per model, budget and setting: `<model>__<quads asked for>__<setting>.o
 Budgets: 1000, 3000 and 8000 quads. Detection of hard edges on the mechanical models only;
 symmetry off.
 
-These meshes only stand against the exact sources of `bench/corpus/`, tracked too: making the
-corpus again with another version of Blender would give slightly different sources.
+These meshes only stand against the exact models of `bench/scenes/`, tracked too: making the
+models again with another version of Blender would give slightly different ones.
 
 To make more while a licence is available:
 
