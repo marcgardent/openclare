@@ -8,10 +8,9 @@ Needs a release build of `openclare`. The table goes to bench/results/TMESH.md.
 
 import argparse
 import json
-import subprocess
 import sys
 
-from run import CREASE_ANGLE, LOCAL_MODELS, MODELS, RESULTS, OPENCLARE, source_path
+from run import AUTHORED, CREASE_ANGLE, LOCAL_MODELS, MODELS, RESULTS, OPENCLARE, memory_cap, run, source_path
 
 # Desert Rose is not a manifold surface: it waits for the repair stage.
 SKIPPED = {"rose"}
@@ -21,7 +20,7 @@ def tmesh(model, target, hard_edges):
     command = [str(OPENCLARE), "tmesh", str(source_path(model)), "--quads", str(target), "--simplify", "2", "--json"]
     if hard_edges:
         command += ["--crease-angle", CREASE_ANGLE]
-    done = subprocess.run(command, capture_output=True, text=True)
+    done = run(command, memory=memory_cap(model))
     if done.returncode != 0:
         return {"error": done.stderr.strip().splitlines()[0] if done.stderr.strip() else "failed"}
     return json.loads(done.stdout)
@@ -47,7 +46,10 @@ def main():
     ]
     valid = total = 0
     for model, _, hard_edges, _ in MODELS:
-        if model in SKIPPED or model in LOCAL_MODELS or (wanted and model not in wanted):
+        # The scenes made by hand are more than a mesh: only if asked for.
+        if model in SKIPPED or model in LOCAL_MODELS or (wanted and model not in wanted) or (
+            model in AUTHORED and not wanted
+        ):
             continue
         for target in targets:
             r = tmesh(model, target, hard_edges)
