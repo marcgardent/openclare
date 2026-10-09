@@ -3,18 +3,22 @@
 Every 3D model the project uses for its measurements and its pictures, with its author, its
 source and its licence. No model enters the bench without its line here.
 
-- **In the repository**: the file is tracked under `bench/corpus/`, and the comparison meshes
-  made from it under `bench/reference/`.
+- **In the repository**: the model is under `bench/corpus/` as an OBJ file, or under
+  `bench/scenes/` as the scene the bench runs it from (a `.blend`; see
+  [bench/README.md](bench/README.md#scenes)), and the comparison meshes made from it under
+  `bench/reference/`. The scenes are to be tracked with Git LFS; until that is set up, those
+  made by hand are on their author's machine only.
 - **Out of the repository**: the licence does not allow passing the model on. It is kept under
-  `bench/corpus-large/`, which is not tracked, with everything made from it. The figures
-  measured on it are in the results. The "Source" column says how to get it again.
+  `bench/corpus-large/`, which is not tracked, with its scene and everything made from it. The
+  figures measured on it are in the results. The "Source" column says how to get it again.
 
 ## Models by the author of the project
 
 | Model | Author | Year | Source | Licence | Where |
 |---|---|---|---|---|---|
 | `ogre` | Marc Gardent | 2026 | original sculpt, 4.7 million triangles, brought down to 200,000 by `openclare preprocess`; the mascot of the project | © 2026 Marc Gardent, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.en) | in the repository; the original out of it |
-| `venturi` | Marc Gardent | 2026 | a car modelled in Blender after the Venturi 500 LM, exported by `bench/export_object.py` with its mirror and one level of subdivision applied, and without the two modifiers that split its edges for shading and cut it with a boolean (`--without EDGE_SPLIT,BOOLEAN`): a closed surface of 39,820 triangles in thirteen materials, listed in `venturi.groups` | © 2026 Marc Gardent, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.en) | in the repository |
+| `venturi` | Marc Gardent | 2026 | a car modelled in Blender after the Venturi 500 LM. The bench runs it from the scene `bench/scenes/venturi.blend`, made by `bench/make_scene.py`: the object as it is in its author's file, with its four modifiers (Mirror, Subdivision Surface, Edge Split, Boolean) and its thirteen materials; 40,764 triangles as the add-on sees it. Until 9 October 2026 it was `bench/corpus/venturi.obj`, exported by `bench/export_object.py` without the last two modifiers, a closed surface of 39,820 triangles, with its materials in `venturi.groups` | © 2026 Marc Gardent, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.en) | in the repository |
+| `ogre_hp` | Marc Gardent | 2026 | the sculpt the `ogre` comes from, as it is: 2.3 million vertices, 4.7 million triangles. The scene `bench/scenes/ogre_hp.blend`, made by `bench/make_scene.py` from its author's file, holds it with the three guide curves and the sharp curve drawn on it and a vertex group painted as density | © 2026 Marc Gardent, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.en) | in the repository |
 
 Convention for those to come: **Marc Gardent, 2026, CC BY-SA 4.0**.
 
@@ -36,7 +40,7 @@ made from a work under BY-SA 4.0 may be placed under the GPLv3, not the reverse.
 | `rose` | *Desert Rose*, Keenan Crane | same | same | in the repository | 150,000 triangles |
 | `bridge` | *Pittsburgh Bridge*, scan by the Panoptic Studio (Carnegie Mellon) | same | released into the public domain by its authors | in the repository | as it is |
 | `suzanne` | *Suzanne*, Blender's monkey head, Blender Foundation | Blender's "Monkey" primitive, exported by `bench/make_corpus.py` | ships with Blender, software under the GNU GPL | in the repository | subdivided |
-| `terrain` | *Mountain Range Terrain*, Bipro Fx | [BlenderKit](https://www.blenderkit.com/), `asset_base_id:43a14c49-93bb-49e7-baec-6397eae071c5`, published on 7 July 2026, fetched on 8 October 2026 | BlenderKit Royalty Free: may be used in a project, may not be passed on as it is | **out of the repository** | exported as it is by `bench/import_blenderkit.py`, 543,557 triangles |
+| `terrain` | *Mountain Range Terrain*, Bipro Fx | [BlenderKit](https://www.blenderkit.com/), `asset_base_id:43a14c49-93bb-49e7-baec-6397eae071c5`, published on 7 July 2026, fetched on 8 October 2026 | BlenderKit Royalty Free: may be used in a project, may not be passed on as it is | **out of the repository** | taken as it is by `bench/make_scenes.py` (every mesh object of the file, modifiers applied, in one mesh), 543,557 triangles |
 | `mahaveer` | *Mahaveer Dev*, Avi Panchal | BlenderKit, `asset_base_id:b6564fca-81c7-4873-945a-287fe143b7e6`, published on 29 December 2025, fetched on 8 October 2026 | BlenderKit Royalty Free | **out of the repository** | exported as it is, 418,472 triangles, 164 pieces |
 | `marine` | *Marine Armor*, Grudgebearer iZerat; a fan creation after a video game | BlenderKit, `asset_base_id:22029966-6ee8-48d1-8d6b-d962162e09fa`, published on 9 January 2024, fetched on 8 October 2026 | BlenderKit Royalty Free | **out of the repository** | exported as it is, 247,198 triangles |
 | `f16` | *F-16 fighter jet*, Joe Naaman | BlenderKit, `asset_base_id:2b0e1d40-8487-4b92-8594-6141f2ec6162`, published on 8 May 2025, fetched on 9 October 2026 | BlenderKit Royalty Free | **out of the repository** | exported as it is, 261,232 triangles, 296 pieces |
@@ -52,6 +56,10 @@ No third-party rights. They are made by scripts of the repository and follow its
 |---|---|---|
 | `blob`, `rock`, `creature`, `cage`, `part` | `bench/make_corpus.py` (Blender) | merged balls; noisy sphere; quadruped; softened cube with holes; mechanical part with holes |
 | `cube`, `sphere`, `torus`, `lblock`, `cylinder` | `openclare primitive` | yardsticks and test shapes |
+
+The scene of each model that is an OBJ file, those by others included, is made from that file
+by `bench/make_scenes.py` (`make scenes`), which changes nothing in it: the same vertices and
+the same faces.
 
 ## Comparison meshes
 
@@ -74,9 +82,14 @@ credit above.
    `bench/corpus-large/` and its name into `LOCAL_MODELS` in `bench/run.py`.
 2. Add its line to this file: title, author, exact source (link or identifier), date fetched,
    licence, processing applied.
-3. For a BlenderKit model: in Blender, search for `asset_base_id:<identifier>` with the
-   BlenderKit add-on, then export the file obtained:
+3. Give it a line in `MODELS` of `bench/run.py`, and make its scene
+   ([bench/README.md](bench/README.md#scenes)): `make scenes` for a mesh put under
+   `bench/corpus/` as an OBJ file, `bench/make_scene.py` for an object of a `.blend` with its
+   modifiers, its curves or its painted density.
+4. For a BlenderKit model: add its `asset_base_id` to `BLENDERKIT` in `bench/run.py`; then
+   `make blenderkit` downloads the file and makes its scene, under
+   `bench/corpus-large/scenes/`:
 
 ```bash
-blender -b model.blend --python bench/import_blenderkit.py -- bench/corpus-large/name.obj
+python3 bench/fetch_blenderkit.py --models name
 ```
