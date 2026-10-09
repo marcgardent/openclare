@@ -10,14 +10,14 @@ mod dynamic_mesh;
 mod imprint;
 mod isotropic;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::str::FromStr;
 
 use crate::curvature::{Curvature, TensorField};
 use crate::error::{Error, Result};
 use crate::geometry::{feature_edges, vertex_areas, vertex_normals};
-use crate::math::Vec3;
+use crate::math::{INVALID, Vec3};
 use crate::mesh::{Topology, TriMesh};
 use crate::spatial::Bvh;
 use dynamic_mesh::DynamicMesh;
@@ -69,11 +69,14 @@ pub struct Request<'a> {
     pub curvature_scale: Option<f64>,
     /// Curves drawn on the surface, to keep as lines of edges.
     pub curves: &'a [GuideCurve],
+    /// Edges of the source to keep as lines of edges, each given by where
+    /// its two ends are. Those that are no edge of the source are ignored.
+    pub lines: &'a [[Vec3; 2]],
 }
 
 impl Default for Request<'_> {
     fn default() -> Self {
-        Self { triangles: 100_000, crease_angle: None, curvature_scale: None, curves: &[] }
+        Self { triangles: 100_000, crease_angle: None, curvature_scale: None, curves: &[], lines: &[] }
     }
 }
 
@@ -184,15 +187,15 @@ impl Preprocessor for Isotropic {
         let edge_length = 1.06 * (4.0 * source.surface_area() / (3.0f64.sqrt() * request.triangles as f64)).sqrt();
         let target = isotropic::Target { surface: &surface, face_normals: &face_normals, features: lines.as_ref() };
         isotropic::remesh(&mut mesh, &target, edge_length, self.iterations);
-        if !laid.segments.is_empty() {
+        if !laid.segments.is_empty() || !request.lines.is_empty() {
             imprint::unpinch(&mut mesh);
         }
 
         let (mesh, features) = mesh.finish();
         let mut work = work_mesh(mesh, features, request);
-        if !laid.segments.is_empty() {
+        if !laid.segments.is_empty() || !request.lines.is_empty() {
             // What is kept as a line without being a border or a crease can
-            // only come from a curve.
+            // only come from a curve, or from a line asked for.
             let mut sides: HashMap<(u32, u32), Vec<Vec3>> = HashMap::new();
             for (f, tri) in work.mesh.triangles.iter().enumerate() {
                 for k in 0..3 {
@@ -300,7 +303,29 @@ fn cleaned(source: &TriMesh) -> Result<TriMesh> {
 }
 
 fn source_features(mesh: &TriMesh, request: &Request) -> Vec<[u32; 2]> {
-    feature_edges(mesh, &Topology::build(mesh), request.crease_angle.map(f64::to_radians), true)
+    let topology = Topology::build(mesh);
+    let mut features = feature_edges(mesh, &topology, request.crease_angle.map(f64::to_radians), true);
+    if !request.lines.is_empty() {
+        // The edges asked for, found by where their ends are: the vertices
+        // have other numbers here than where the lines were told.
+        let at = |p: Vec3| p.to_array().map(f64::to_bits);
+        let asked: HashSet<[[u64; 3]; 2]> =
+            request.lines.iter().flat_map(|&[a, b]| [[at(a), at(b)], [at(b), at(a)]]).collect();
+        let known: HashSet<(u32, u32)> = features.iter().map(|&[a, b]| (a.min(b), a.max(b))).collect();
+        for (h, &opposite) in topology.opposite.iter().enumerate() {
+            let tri = mesh.triangles[h / 3];
+            let (a, b) = (tri[h % 3], tri[(h + 1) % 3]);
+            // Each inner edge once, from the lower of its two half-edges.
+            let inner_once = opposite != INVALID && (h as u32) < opposite;
+            if inner_once
+                && !known.contains(&(a.min(b), a.max(b)))
+                && asked.contains(&[at(mesh.positions[a as usize]), at(mesh.positions[b as usize])])
+            {
+                features.push([a, b]);
+            }
+        }
+    }
+    features
 }
 
 fn work_mesh(mesh: TriMesh, feature_edges: Vec<[u32; 2]>, request: &Request) -> WorkMesh {

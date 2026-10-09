@@ -5,7 +5,7 @@
 //! [`Remesher`]. Callers pick one by [`Method`] and get it from [`create`];
 //! nothing outside this module names a concrete chain.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::str::FromStr;
 use std::time::Instant;
@@ -42,6 +42,36 @@ pub struct Guides<'a> {
     /// Curves drawn on the input for the quad mesh to have lines of edges
     /// along: an edge loop round an eye, a line down the middle of a back.
     pub curves: &'a [GuideCurve],
+    /// Edges of the input for the quad mesh to have lines of edges along,
+    /// each given by where its two ends are.
+    pub lines: &'a [[Vec3; 2]],
+    /// A group for each triangle of the input: its material, say. Where two
+    /// groups meet the quad mesh has a line of edges, so that no face
+    /// straddles two of them, and the report says which group each face of
+    /// the quad mesh lies in ([`Report::face_groups`]).
+    pub groups: Option<&'a [u32]>,
+}
+
+/// The edges of `mesh` between two triangles of different `groups`, each by
+/// where its two ends are.
+fn group_borders(mesh: &TriMesh, groups: &[u32]) -> Vec<[Vec3; 2]> {
+    let mut sides: HashMap<(u32, u32), (u32, u32)> = HashMap::new();
+    for (tri, &group) in mesh.triangles.iter().zip(groups) {
+        for k in 0..3 {
+            let (a, b) = (tri[k], tri[(k + 1) % 3]);
+            let seen = sides.entry((a.min(b), a.max(b))).or_insert((0, group));
+            // Two faces of different groups: a border. A third face, or two
+            // of the same group, and it is none.
+            seen.0 += if seen.0 == 0 || (seen.0 == 1 && seen.1 != group) { 1 } else { 2 };
+            if seen.0 == 1 {
+                seen.1 = group;
+            }
+        }
+    }
+    let mut borders: Vec<(u32, u32)> =
+        sides.into_iter().filter(|&(_, (count, _))| count == 2).map(|(edge, _)| edge).collect();
+    borders.sort_unstable();
+    borders.into_iter().map(|(a, b)| [mesh.positions[a as usize], mesh.positions[b as usize]]).collect()
 }
 
 /// A complete triangle-to-quad remeshing chain.
@@ -288,6 +318,55 @@ impl Remesher for QuadLayout {
     ) -> Result<(PolyMesh, Report)> {
         config.validate()?;
         input.validate()?;
+        let expect = |what: &str, given: Option<usize>, wanted: usize, of: &str| match given {
+            Some(given) if given != wanted => Err(Error::InvalidParams(format!("{given} {what} for {wanted} {of}"))),
+            _ => Ok(()),
+        };
+        expect("weights painted", guides.density.map(<[f64]>::len), input.positions.len(), "vertices")?;
+        expect("groups", guides.groups.map(<[u32]>::len), input.triangles.len(), "triangles")?;
+
+        // Borders torn apart are stitched first: the pieces are those of the
+        // surface, not of the way it was written down.
+        let mended = input.stitched();
+        let (stitched, density, groups) = match &mended {
+            Some((stitched, vertex_was, triangle_was)) => (
+                stitched,
+                guides.density.map(|density| vertex_was.iter().map(|&v| density[v as usize]).collect::<Vec<f64>>()),
+                guides.groups.map(|groups| triangle_was.iter().map(|&f| groups[f as usize]).collect::<Vec<u32>>()),
+            ),
+            None => (input, guides.density.map(<[f64]>::to_vec), guides.groups.map(<[u32]>::to_vec)),
+        };
+        let mut lines = guides.lines.to_vec();
+        if let Some(groups) = &groups {
+            lines.extend(group_borders(stitched, groups));
+        }
+        let guides = &Guides { density: density.as_deref(), lines: &lines, groups: None, ..*guides };
+        let (mesh, mut report) = self.remesh_stitched(stitched, guides, config, recorder)?;
+        if let Some(groups) = &groups {
+            // Each face is of the group of the triangle under its middle.
+            let surface = Bvh::build(stitched);
+            report.face_groups = mesh
+                .faces
+                .iter()
+                .map(|face| {
+                    let middle = face.iter().map(|&v| mesh.positions[v as usize]).sum::<Vec3>() / face.len() as f64;
+                    surface.closest_point(middle).map_or(0, |hit| groups[hit.triangle as usize])
+                })
+                .collect();
+        }
+        Ok((mesh, report))
+    }
+}
+
+impl QuadLayout {
+    /// The chain on a surface whose torn borders are stitched.
+    fn remesh_stitched(
+        &self,
+        input: &TriMesh,
+        guides: &Guides,
+        config: &RemeshConfig,
+        recorder: &mut dyn Recorder,
+    ) -> Result<(PolyMesh, Report)> {
         let pieces = input.pieces();
         if pieces.len() <= 1 {
             let (mesh, mut report) = self.remesh_piece(input, guides, config, self.min_triangles, recorder)?;
@@ -329,7 +408,7 @@ impl Remesher for QuadLayout {
             };
             let density: Option<Vec<f64>> =
                 guides.density.map(|density| origin.iter().map(|&v| density[v as usize]).collect());
-            let piece_guides = Guides { density: density.as_deref(), curves: guides.curves };
+            let piece_guides = Guides { density: density.as_deref(), ..*guides };
             let piece_config = RemeshConfig { target: Target::QuadCount(share), ..config.clone() };
             // A work mesh in proportion: a button does not need the
             // triangles a body does.
@@ -476,8 +555,8 @@ impl QuadLayout {
             // With guide curves, the first thing to try is to do without
             // them: the layout without the lines drawn is still better than
             // the other chain.
-            if !guides.curves.is_empty() {
-                let free = Guides { curves: &[], ..*guides };
+            if !guides.curves.is_empty() || !guides.lines.is_empty() {
+                let free = Guides { curves: &[], lines: &[], ..*guides };
                 let (mesh, mut report) = self.remesh_piece(input, &free, config, least, recorder)?;
                 report.guides_let_go = 1;
                 return Ok((mesh, report));
@@ -492,8 +571,8 @@ impl QuadLayout {
         clock.lap(&mut report, "quantization");
         recorder::show_lengths(recorder, &work, &layout.tmesh, &quantized);
         if !quantized.report.is_valid() || quantized.report.quads == 0 {
-            if !guides.curves.is_empty() {
-                let free = Guides { curves: &[], ..*guides };
+            if !guides.curves.is_empty() || !guides.lines.is_empty() {
+                let free = Guides { curves: &[], lines: &[], ..*guides };
                 let (mesh, mut report) = self.remesh_piece(input, &free, config, least, recorder)?;
                 report.guides_let_go = 1;
                 return Ok((mesh, report));
@@ -580,6 +659,7 @@ fn fields(
         crease_angle: config.crease_angle,
         curvature_scale: Some(edge_length),
         curves: guides.map_or(&[], |guides| guides.curves),
+        lines: guides.map_or(&[], |guides| guides.lines),
     };
     let mut work = preprocess::create(preprocess::Kind::Isotropic).preprocess(input, &work_request)?;
     report.working_vertices = work.mesh.positions.len();

@@ -84,6 +84,8 @@ pub struct OpenclareResult {
     hard_edges: Vec<[u32; 2]>,
     /// Edges to keep sharp under subdivision, and how sharp.
     creases: Vec<([u32; 2], f64)>,
+    /// The group of the input each face lies in; empty if it had none.
+    face_groups: Vec<u32>,
     /// Texture coordinates, worked out the first time they are asked for.
     layers: OnceLock<uv::Layers>,
     /// Empty when all went well.
@@ -98,6 +100,7 @@ impl OpenclareResult {
             mesh: PolyMesh::default(),
             hard_edges: Vec::new(),
             creases: Vec::new(),
+            face_groups: Vec::new(),
             layers: OnceLock::new(),
             error: text(message),
             report: CString::default(),
@@ -127,6 +130,10 @@ pub extern "C" fn openclare_version() -> *const c_char {
 ///   corners, which is how Blender stores faces.
 /// - `density`: null, or one weight per vertex from 0 (least dense) to 1
 ///   (most dense).
+/// - `triangle_groups`: null, or a group for each of the `triangle_count`
+///   triangles: its material, say. The quad mesh has a line of edges where
+///   two groups meet, and [`openclare_result_copy_face_groups`] gives the
+///   group of each of its faces.
 /// - `curve_points`, `curve_sizes`, `curve_flags`, `curve_count`: guide
 ///   curves, lines drawn on the surface for the quad mesh to have edges
 ///   along. `curve_count` curves, one after the other in `curve_points`
@@ -159,6 +166,7 @@ pub unsafe extern "C" fn openclare_remesh(
     corner_vertices: *const u32,
     corner_count: usize,
     density: *const f32,
+    triangle_groups: *const u32,
     curve_points: *const f32,
     curve_sizes: *const u32,
     curve_flags: *const u8,
@@ -182,6 +190,7 @@ pub unsafe extern "C" fn openclare_remesh(
                 triangle_count,
                 corners,
                 density,
+                triangle_groups,
                 &curves,
                 preset,
                 settings,
@@ -212,6 +221,7 @@ unsafe fn remesh(
     triangle_count: usize,
     corner_vertices: Option<&[u32]>,
     density: *const f32,
+    triangle_groups: *const u32,
     curves: &[GuideCurve],
     preset: *const c_char,
     settings: *const c_char,
@@ -273,7 +283,10 @@ unsafe fn remesh(
     }
 
     let clock = Instant::now();
-    let guides = Guides { density: painted.as_deref(), curves };
+    // SAFETY: null, or one group per triangle as the caller says.
+    let groups =
+        (!triangle_groups.is_null()).then(|| unsafe { std::slice::from_raw_parts(triangle_groups, triangle_count) });
+    let guides = Guides { density: painted.as_deref(), curves, groups, lines: &[] };
     let (mesh, done) = config.remesh_recorded(&input, &guides, watcher).map_err(|error| error.to_string())?;
     let seconds = clock.elapsed().as_secs_f64();
 
@@ -302,6 +315,7 @@ unsafe fn remesh(
     Ok(OpenclareResult {
         mesh,
         hard_edges: done.hard_edges,
+        face_groups: done.face_groups,
         creases: done.creases,
         layers: OnceLock::new(),
         error: CString::default(),
@@ -553,6 +567,25 @@ pub unsafe extern "C" fn openclare_result_copy_hard_edges(result: *const Opencla
     let Some(result) = (unsafe { held(result) }) else { return };
     // SAFETY: room as documented.
     unsafe { copy_edges(&result.hard_edges, vertices) }
+}
+
+/// Writes the group of the input each face of the mesh lies in, one number
+/// per face, into `groups`. Returns 0, and writes nothing, if the input came
+/// without groups.
+///
+/// # Safety
+///
+/// See [`openclare_result_ok`]; `groups` must have room for
+/// [`openclare_result_face_count`] numbers.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_result_copy_face_groups(result: *const OpenclareResult, groups: *mut u32) -> i32 {
+    let Some(result) = (unsafe { held(result) }) else { return 0 };
+    if result.face_groups.is_empty() || groups.is_null() {
+        return 0;
+    }
+    // SAFETY: room as documented.
+    unsafe { std::slice::from_raw_parts_mut(groups, result.face_groups.len()) }.copy_from_slice(&result.face_groups);
+    1
 }
 
 /// How many edges of the mesh carry a crease: those to keep sharp, wholly or

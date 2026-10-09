@@ -128,6 +128,15 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         ),
         default=True,
     )
+    export_materials: bpy.props.BoolProperty(
+        name="Materials",
+        description=(
+            "Give each quad of the result the material of the surface it lies on, and keep the borders "
+            "between materials as lines of edges where that can be done. Has no effect on an object of "
+            "one material"
+        ),
+        default=True,
+    )
     export_creases: bpy.props.BoolProperty(
         name="Creases",
         description=(
@@ -285,7 +294,8 @@ def curves_of(collection, target, sharp=False, but=()):
 
 
 def quads_of(
-    source, preset, settings, density=None, on_stage=None, uv_layers=(), sharp_edges=False, creases=False, curves=()
+    source, preset, settings, density=None, on_stage=None, uv_layers=(), sharp_edges=False, creases=False, curves=(),
+    materials=False,
 ):
     """A new mesh datablock: `source`, an evaluated mesh, remeshed into quads
     with the engine's `settings` on top of `preset`, and `density` if given
@@ -297,7 +307,9 @@ def quads_of(
     `sharp_edges` marks as sharp the edges that follow a hard edge of
     `source`. `creases` gives a crease weight to the edges that should stay
     sharp when the mesh is subdivided. `curves` are guide curves, as
-    `curves_of` gives them, in the space of `source`."""
+    `curves_of` gives them, in the space of `source`. `materials` gives the
+    mesh the materials of `source`, each face that of the surface it lies
+    on, with the borders between them kept as lines of edges."""
     import numpy
 
     source.calc_loop_triangles()
@@ -322,9 +334,16 @@ def quads_of(
         source.loop_triangles.foreach_get("loops", kept[1])
         source.loops.foreach_get("vertex_index", kept[2])
         addresses = tuple(array.ctypes.data for array in kept)
+    groups = None
+    if materials and len(source.materials) > 1:
+        # The material of each triangle; an object all of one is left alone.
+        groups = numpy.empty(triangles, numpy.int32)
+        source.loop_triangles.foreach_get("material_index", groups)
+        groups = groups.astype(numpy.uint32) if groups.min() != groups.max() else None
     made = engine.remesh(
         addresses[0], vertices, addresses[1], triangles, addresses[2], corners, preset, settings, density, on_stage,
         uv_layers=uv_layers, seams="atlas" in uv_layers, hard_edges=sharp_edges, creases=creases, curves=curves,
+        groups=groups,
     )
     del kept
     positions, sizes, corner_vertices, report = made.positions, made.sizes, made.corners, made.report
@@ -349,6 +368,11 @@ def quads_of(
         mesh.uv_layers.active = mesh.uv_layers[UV_NAMES["atlas"]]
         mesh.uv_layers[UV_NAMES["atlas"]].active_render = True
         report["seams"] = flag_edges(mesh, "use_seam", made.seams)
+    if made.face_groups is not None:
+        for material in source.materials:
+            mesh.materials.append(material)
+        mesh.polygons.foreach_set("material_index", made.face_groups.astype(numpy.int32))
+        report["materials"] = len(numpy.unique(made.face_groups))
     if sharp_edges:
         report["sharp_edges"] = flag_edges(mesh, "use_edge_sharp", made.hard_edges)
     if creases:
@@ -433,7 +457,7 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
             curves += curves_of(settings.guide_curves, original, but=sharp)
             mesh, report = quads_of(
                 source, settings.preset, engine_settings, density, on_stage, layers,
-                settings.export_sharp_edges, settings.export_creases, curves,
+                settings.export_sharp_edges, settings.export_creases, curves, settings.export_materials,
             )
         except engine.EngineError as error:
             self.report({"ERROR"}, f"openclare: {error}")
@@ -455,6 +479,8 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
 
         seconds = float(report.get("seconds", 0.0))
         said = f"openclare: {report.get('quads', '?')} quads in {seconds:.1f} s"
+        if "materials" in report:
+            said += f", {report['materials']} materials"
         if curves:
             said += f", {report.get('guide_edges', '0')} edges along the guide curves"
             if sharp:
@@ -645,6 +671,8 @@ class OPENCLARE_PT_export(bpy.types.Panel):
         column = layout.column(heading="UV Layers")
         column.prop(settings, "export_grid_uv", text="Grid")
         column.prop(settings, "export_atlas_uv", text="Atlas")
+        column = layout.column(heading="Surface")
+        column.prop(settings, "export_materials", text="Materials")
         column = layout.column(heading="Edges")
         column.prop(settings, "export_sharp_edges", text="Sharp")
         column.prop(settings, "export_creases", text="Creases")

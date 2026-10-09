@@ -14,6 +14,7 @@ source and its licence. No model enters the bench without its line here.
 | Model | Author | Year | Source | Licence | Where |
 |---|---|---|---|---|---|
 | `ogre` | Marc Gardent | 2026 | original sculpt, 4.7 million triangles, brought down to 200,000 by `openclare preprocess`; the mascot of the project | © 2026 Marc Gardent, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.en) | in the repository; the original out of it |
+| `venturi` | Marc Gardent | 2026 | a car modelled in Blender after the Venturi 500 LM, exported as it is seen (mirror, one level of subdivision, edges split for shading, a boolean) by `bench/export_object.py`: 39,317 triangles in thirteen materials, listed in `venturi.groups` | © 2026 Marc Gardent, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.en) | in the repository |
 
 Convention for those to come: **Marc Gardent, 2026, CC BY-SA 4.0**.
 
@@ -40,6 +41,7 @@ made from a work under BY-SA 4.0 may be placed under the GPLv3, not the reverse.
 | `marine` | *Marine Armor*, Grudgebearer iZerat; a fan creation after a video game | BlenderKit, `asset_base_id:22029966-6ee8-48d1-8d6b-d962162e09fa`, published on 9 January 2024, fetched on 8 October 2026 | BlenderKit Royalty Free | **out of the repository** | exported as it is, 247,198 triangles |
 | `f16` | *F-16 fighter jet*, Joe Naaman | BlenderKit, `asset_base_id:2b0e1d40-8487-4b92-8594-6141f2ec6162`, published on 8 May 2025, fetched on 9 October 2026 | BlenderKit Royalty Free | **out of the repository** | exported as it is, 261,232 triangles, 296 pieces |
 | `camera` | *Vintage 35mm Film Camera*, Hesoyam 3dart | BlenderKit, `asset_base_id:3ef12fa4-29a0-463f-b338-7ad3f81b654b`, published on 12 September 2026, fetched on 9 October 2026 | BlenderKit Royalty Free | **out of the repository** | exported as it is, 34,600 triangles, 42 pieces |
+| `wolf` | *Stylized Wolf Warrior-Rigged-Animated*, Amin khedri | BlenderKit, `asset_base_id:c63283ec-7419-4bff-8f6f-13cf70bd1b14`, published on 8 February 2026, fetched on 9 October 2026 | BlenderKit Royalty Free | **out of the repository** | exported as it is, 14,797 triangles |
 
 ## Shapes made by the project
 

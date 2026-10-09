@@ -45,6 +45,9 @@ OPTIONS (remesh):
     --curves <FILE>              guide curves, lines for the quad mesh to have edges along: one point per line
                                  as x y z; a blank line starts another curve; a line saying closed closes one,
                                  a line saying sharp makes the edges along one hard edges of the result
+    --groups <FILE>              a group for each input triangle (its material, say), one whole number per line:
+                                 the quad mesh has a line of edges where two groups meet, and the group of each
+                                 of its faces is written next to it, as <output>.groups
     --skip-pieces-under <Q>      leave out the separate pieces whose share of the quads is below Q (default 0: keep all)
     --record <FILE.rrd>          record what each stage makes, to open in the Rerun viewer
                                  (needs a build with `--features rerun`)
@@ -227,6 +230,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
 
     let (mut save, mut density_path, mut record_path) = (None, None, None::<String>);
     let mut curves_path = None::<String>;
+    let mut groups_path = None::<String>;
     let mut paths = Vec::new();
     let mut args = args.iter();
     while let Some(arg) = args.next() {
@@ -249,6 +253,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
             "--volume-fit" => config.volume_fit = parse(arg, value(arg)?)?,
             "--density" => density_path = Some(value(arg)?.clone()),
             "--curves" => curves_path = Some(value(arg)?.clone()),
+            "--groups" => groups_path = Some(value(arg)?.clone()),
             "--density-contrast" => config.density_contrast = parse(arg, value(arg)?)?,
             "--skip-pieces-under" => config.skip_pieces_under = parse(arg, value(arg)?)?,
             "--record" => record_path = Some(value(arg)?.clone()),
@@ -293,7 +298,21 @@ fn remesh(args: &[String]) -> Result<(), String> {
         }
         None => Vec::new(),
     };
-    let guides = Guides { density: density.as_deref(), curves: &curves };
+    let groups = match &groups_path {
+        Some(path) => {
+            let text = std::fs::read_to_string(path).map_err(|e| format!("{path}: {e}"))?;
+            let lines = text.lines().map(str::trim).filter(|line| !line.is_empty() && !line.starts_with('#'));
+            let values: Vec<u32> = lines
+                .map(|line| parse("--groups", line))
+                .collect::<Result<_, _>>()
+                .map_err(|e| format!("{path}: {e}"))?;
+            let kinds: std::collections::BTreeSet<u32> = values.iter().copied().collect();
+            println!("groups   {} triangles in {} groups", values.len(), kinds.len());
+            Some(values)
+        }
+        None => None,
+    };
+    let guides = Guides { density: density.as_deref(), curves: &curves, groups: groups.as_deref(), lines: &[] };
     let (result, report) = match &record_path {
         Some(path) => remesh_recorded(path, &config, &mesh, &guides)?,
         None => config.remesh_guided(&mesh, &guides).map_err(|e| e.to_string())?,
@@ -321,6 +340,27 @@ fn remesh(args: &[String]) -> Result<(), String> {
         report.open_loops,
         report.map_inversions,
     );
+    if groups.is_some() {
+        let mut faces: std::collections::BTreeMap<u32, usize> = std::collections::BTreeMap::new();
+        for &group in &report.face_groups {
+            *faces.entry(group).or_default() += 1;
+        }
+        let counts: Vec<String> = faces.iter().map(|(group, count)| format!("{group}:{count}")).collect();
+        println!(
+            "groups   {} edges along their borders; faces in each  {}",
+            report.guide_edges.len(),
+            counts.join("  ")
+        );
+        if report.guides_let_go > 0 {
+            println!("         the borders could not be kept as lines of edges on {} piece(s)", report.guides_let_go);
+        }
+        if let Some(path) = output.strip_suffix(".obj") {
+            let lines: Vec<String> = report.face_groups.iter().map(u32::to_string).collect();
+            let path = format!("{path}.groups");
+            std::fs::write(&path, lines.join("\n") + "\n").map_err(|e| format!("{path}: {e}"))?;
+            println!("         written: {path}, the group of each face");
+        }
+    }
     if !curves.is_empty() {
         println!("guides   {} edges along the guide curves, {} breaks", report.guide_edges.len(), report.guide_gaps);
         if curves.iter().any(|curve| curve.sharp) {

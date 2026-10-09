@@ -16,6 +16,11 @@ pub struct Seamless {
     pub(super) solver: Solver,
 }
 
+/// With more guide lines than this on a piece, they are kept all together
+/// or not at all: trying each alone costs a solve of the map apiece, which
+/// the borders between the materials of a model can ask for by the hundred.
+const SINGLE_TRIALS: usize = 8;
+
 impl Parametrizer for Seamless {
     fn kind(&self) -> Kind {
         Kind::Seamless
@@ -42,7 +47,7 @@ impl Parametrizer for Seamless {
                 (lighter, dropped.into_iter().collect::<Vec<_>>())
             };
             let mut fits = vec![false; curves.len()];
-            if curves.len() > 1 {
+            if curves.len() > 1 && curves.len() <= SINGLE_TRIALS {
                 for index in 0..curves.len() {
                     let others: Vec<&Vec<[u32; 2]>> =
                         (0..curves.len()).filter(|&k| k != index).map(|k| &curves[k]).collect();

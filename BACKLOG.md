@@ -60,6 +60,8 @@ track. "DT" stands for *dette technique*, technical debt.
 | DT-043 | Creases: limits | J12 | low | open |
 | DT-044 | Guide curves: not kept everywhere | guide curves | high | open |
 | DT-045 | Sculpts of millions of triangles: most of the time goes to preprocessing | guide curves | medium | open |
+| DT-046 | Add-on: a button to write the density worked out from curvature as weights on the source | idea of the author | medium | open |
+| DT-047 | Borders between materials: mostly let go on a real model | materials | high | open |
 | DT-033 | Terrains and scans: no tool aligns, the field has nothing to follow | J9 | medium | open |
 | DT-027 | Guards on computing time for pathological inputs | J8 | low | open |
 
@@ -476,6 +478,12 @@ track. "DT" stands for *dette technique*, technical debt.
   `skip_pieces_under` lets one leave aside the pieces whose share is below a threshold.
 - **To do**: take these causes up one by one; make the fallback itself safer on very small
   pieces, or do without it.
+- **Mending the input, 9 October 2026**: before a model is split into pieces, borders torn
+  apart are stitched and faces that share an edge in threes are taken apart there
+  (`TriMesh::stitched`). The author's car, exported with a modifier that splits edges for
+  shading, went from 373 pieces to 17 and from 1787 quads out of 8000 to 6995; a low-poly
+  game character with every hard edge split (`wolf`) comes out all in quads. Faces taken
+  apart stay apart: the result has a border where the input had an edge with three faces.
 - **Two assembled hard-surface models, 9 October 2026** (BlenderKit, proposed by the author;
   see CREDITS.md), `hard-surface` preset, 8000 quads. Both come out invalid, and far worse
   than the characters above. `f16`, a fighter jet in 296 pieces: 187 pieces not meshed at
@@ -774,4 +782,38 @@ track. "DT" stands for *dette technique*, technical debt.
   source for projections); decimate in a first coarse pass by clustering vertices before the
   error-driven one; do the passes on several threads. Relaxation and fitting project onto the
   full source too, and could project onto a lighter copy of it.
+
+### DT-046 — Add-on: a button to write the density worked out from curvature as weights on the source
+
+- **Born on** 9 October 2026, an idea of the author.
+- **What is wanted**: a button of the add-on that writes, as a vertex group of the dense
+  source, the density the engine works out by itself from the shape (the sizing field of
+  *Adaptive Size*, thin parts included). The user then paints on top of it in Weight Paint to
+  add detail where he wants more, without painting again what was already handled, and gives
+  that group back as *Density*.
+- **What it takes**: the sizing field lives on the work mesh, not on the source; it has to be
+  read back at each vertex of the source (closest point), turned into a weight from 0 to 1
+  that means the same as the painted density (the inverse of what `density_contrast` does),
+  and given out by the C interface without running the rest of the chain. And a run with that
+  group as *Density* should then switch *Adaptive Size* off, or the shape would count twice.
+
+### DT-047 — Borders between materials: mostly let go on a real model
+
+- **Born on** 9 October 2026, with the materials of a model given to the engine as groups of
+  triangles (sheet "Materials, and mending the input" of the specification).
+- **Finding**: on a flat sheet in two materials the border is a line of edges and no quad is
+  across it. On the author's car (`venturi`, thirteen materials, 8000 quads) every quad gets
+  the material of the surface under it, but the borders are let go on 6 pieces out of 17
+  with the `hard-surface` preset, and no edge is along them; 22 edges with `organic`. A quad
+  across a border has the material of its middle, so the borders of the result are jagged.
+- **Why**: the map folds with all the lines of a piece at once, and the lines of a piece are
+  then kept all together or not at all. Trying each alone, as for guide curves, is one solve
+  of the map per line: with the borders of thirteen materials that ran for more than twenty
+  minutes, and was capped at 8 lines per piece. It is DT-044 on a larger scale.
+- **Leads**: find the lines that make the map fold from the triangles that fold, rather than
+  by trying each; keep a line up to the stretch that cannot be kept; where a border is let
+  go, move the vertices next to it onto it after the fact.
+- **Also left**: the bench passes the groups of a model to the chain but measures nothing
+  about them (how many quads are across a border); the command line writes the group of each
+  face next to the mesh, not into it.
 
