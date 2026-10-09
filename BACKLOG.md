@@ -826,11 +826,18 @@ track. "DT" stands for *dette technique*, technical debt.
     folds without any border either: their creases are what the map cannot keep, the
     materials have nothing to do with it. With `organic`, two pieces lose them whole and three
     in part.
-- **What it points to**: the borders of this model come closer to one another than a quad is
-  wide (stripes, window frames, lights), and turn sharp corners. No map can put two lines
-  less than a quad apart on two grid lines without folding. The size of the quads has to come
-  down where lines are close, as it does round thin parts (`quads_around`), and a line that
-  turns a corner has to be allowed its corner. Both before more is tried in the map itself.
+- **A lead tried and dropped the same day**: bringing the size of the quads down to the gap
+  where two lines run closer than a quad is wide (stripes, window frames), the way it comes
+  down round thin parts. Written, measured on the car, and taken out again: 52 edges along
+  the borders instead of 61, 1471 faces across instead of 1456, and no better at 20,000
+  quads (148 edges, 2305 faces across). Lines too close together are not what makes the map
+  fold here.
+- **What is left to look at**, and it has to be looked at rather than guessed: where exactly
+  the map folds on the body of the car. The likeliest cause now is the corners. A border that
+  turns by a quarter turn sits on two grid lines; one that turns by 45 or 120 degrees, or
+  three borders that meet at odd angles, need an irregular vertex exactly there, and nothing
+  puts one there. The recording for Rerun does not show the map yet (DT-035); it should, for
+  this.
 - **Also left**: the bench passes the groups of a model to the chain but keeps nothing of what
   the report says about them; the command line writes the group of each face next to the
   mesh, not into it.
