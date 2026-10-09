@@ -875,6 +875,16 @@ track. "DT" stands for *dette technique*, technical debt.
   one outcome among others, not a result to count on. Letting go near the folds either
   settles in its five rounds or does not, and then everything goes. That is the first thing
   to make steady (DT-044), before corners.
+- **Another lead tried and dropped, 9 October 2026**: a line the map lets go still holds the
+  cross field, so the field was worked out again without the lines let go, and the layout
+  with it, up to three times. That makes the outcome steady, and steadily poor: 68 to 90
+  edges along the borders at every scaling of the car, the lucky ones included. Each release
+  changes the field, the map folds somewhere else, and more lines go.
+- **Three leads dropped in a day** (the gap between lines, the size of the work triangles,
+  the field released): enough guessing. The map is now recorded for Rerun, which its author
+  can look at and the one writing this cannot. The next step is to give the latter eyes too:
+  the layers of the recording written as pictures, to see where the body of the car folds
+  before anything else is changed.
 - **Also left**: the bench passes the groups of a model to the chain but keeps nothing of what
   the report says about them; the command line writes the group of each face next to the
   mesh, not into it.
@@ -895,6 +905,20 @@ track. "DT" stands for *dette technique*, technical debt.
   less than a triangle, as the sizing field already does for the quads); or the source left
   as it is where it is already fine and well shaped enough; a bound on how far the work mesh
   may stray from the source, checked while it is made.
+- **The first lead, written, measured and taken out again the same day.** The isotropic
+  remeshing was given a size per place, from how tightly the source bends (a chord may stray
+  by a twentieth of the edge length), between a quarter and twice the one size, for the same
+  number of triangles. On the car it is worse: the work mesh strays by 2.1 % of the diagonal
+  instead of 1.2 %. What the car loses is not narrow rounded strips but hard edges, each a
+  single edge between two large faces, and no size of triangle keeps those: only keeping them
+  as creases does (0.2 %). Elsewhere it is neither better nor worse: on the ogre at 3000 quads
+  the Hausdorff distance is halved (28 to 13 per mille, the pockets behind the eyes, DT-036);
+  on the pig it goes up (10 to 17) and `jerry` comes out invalid.
+- **What the car asks for instead**: its hard edges kept. At 30 degrees they are 9058 edges of
+  the source in 179 connected lines, 5577 quad edges long in all for a mesh of 8000 quads,
+  with 1300 junctions and 246 loose ends. Short stray bits are not the trouble (33 quad edges
+  in all). It is a net of lines nearly as dense as the mesh asked for, which is DT-047 again:
+  how many lines the map can keep.
 
 ### DT-049 — The bench has no model with curves or a painted density
 
