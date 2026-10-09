@@ -45,6 +45,12 @@ CATEGORY = {name: (label, colour, tag) for name, label, _, colour, tag in CATEGO
 PLAIN = (1.0, 1.0, 1.0, 1.0)
 
 
+# What the engine said of the last run of the operator, name by name: for a
+# script that drives the add-on (bench/blender_run.py). Empty until a run
+# ends well.
+last_report = {}
+
+
 def preset_changed(settings, context):
     settings.adaptive_size = ADAPTIVE_SIZE[settings.preset]
 
@@ -452,6 +458,7 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
         settings = context.scene.openclare
         original = object_to_remesh(context)
         self.drawn, self.stages = 0.0, []
+        last_report.clear()
         context.window_manager.progress_begin(0, STAGES)
         self.say(context, f"reading '{original.name}'")
         # With its modifiers applied: what is seen is what is remeshed.
@@ -496,6 +503,7 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
         remeshed.select_set(True)
         context.view_layer.objects.active = remeshed
 
+        last_report.update(report)
         seconds = float(report.get("seconds", 0.0))
         said = f"openclare: {report.get('quads', '?')} quads in {seconds:.1f} s"
         if "materials" in report:

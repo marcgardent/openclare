@@ -36,6 +36,10 @@ assert tuple(remeshed.location) == (1.0, 2.0, 3.0), "the result is not where the
 assert all(len(polygon.vertices) == 4 for polygon in mesh.polygons), "not all quads"
 assert abs(len(mesh.polygons) - 800) < 80, f"{len(mesh.polygons)} quads for 800 asked"
 assert remeshed.select_get() and not original.select_get()
+# What the engine said of the run is kept, for a script to read.
+said = openclare.last_report
+assert int(said["quads"]) == len(mesh.polygons) and int(said["pieces"]) == 3, said
+assert float(said["seconds"]) > 0.0 and said["guide_edges"] == "0", said
 
 # Each stage is announced as it begins, and a host can stop the run.
 evaluated = original.evaluated_get(bpy.context.evaluated_depsgraph_get())
@@ -109,6 +113,7 @@ try:
     raise AssertionError("a vertex group that does not exist went unnoticed")
 except RuntimeError as error:
     assert "no such group" in str(error)
+assert not openclare.last_report, "a run that failed left a report"
 settings.density_group = ""
 settings.preset = "hard-surface"
 assert settings.adaptive_size == 0.0
