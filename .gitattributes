@@ -1,0 +1,2 @@
+# Scenes of the bench are Blender files, large and binary: kept through Git LFS.
+*.blend filter=lfs diff=lfs merge=lfs -text
