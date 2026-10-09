@@ -508,8 +508,8 @@ four times more quads on the head and four times fewer on the legs than on the t
 1, 0 and 0.5, contrast 16). The three meshes are valid and hold their budget to within 2 %.
 
 **Result.** Medians over the 12 organic models, adaptive density at 0.5 (full tables in
-`bench/results/ACCEPTANCE.md`; in the bench, `quad-layout` is the variant with a single size
-and `quad-layout-adaptive` that of the preset):
+`bench/results/ACCEPTANCE.md`; in the bench, `openclare-uniform` is the variant with a single
+size and `openclare` that of the preset):
 
 | | 1000 quads | 3000 quads | 8000 quads |
 |---|---|---|---|
