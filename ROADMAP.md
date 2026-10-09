@@ -34,7 +34,7 @@ Each track ends with the bench run at 1000, 3000 and 8000 quads and a stop for r
 
 | Order | Track | Why it matters | Done when | Tickets |
 |---|---|---|---|---|
-| 1 | **Volume fitting** (done, awaiting review) | With its vertices on the surface a mesh is inscribed in the shape: the ogre lost 3.5 % of its volume at 1000 quads | Done: median volume kept 100.0 % at the three budgets, the ogre 99.8 % at 1000 quads, no model losing its validity. Left: the volume after subdivision | DT-037 (closed), DT-039 |
+| 1 | **Volume fitting** (done, merged) | With its vertices on the surface a mesh is inscribed in the shape: the ogre lost 3.5 % of its volume at 1000 quads | Done: median volume kept 100.0 % at the three budgets, the ogre 99.8 % at 1000 quads, no model losing its validity. Left: the volume after subdivision | DT-037 (closed), DT-039 |
 | 2 | **Alignment** | The largest gap left with Quad Remesher: edges are 7.7 to 8.4 degrees off the curvature directions, against 6.4 to 7.5. It is what an artist sees first in an edge flow | Median alignment at or under Quad Remesher's at the three budgets, validity untouched | DT-021, DT-025, DT-013, DT-033 |
 | 3 | **Fewer irregular vertices, longer edge loops** | The weakest marks of the chain (structure about 40 out of 100; regularity 50 at 1000 quads), and thin parts made it worse: 155 irregular vertices on the ogre at 3000 quads for 88 before | Irregular vertices back to what they were before the thin-part work, with the fingers kept; fewer patches in the base complex | DT-020, DT-007, DT-005, DT-038 |
 | 3 bis | **Improving a mesh from a dry run**: mark a first run, keep the best of several, run again where one went wrong, and weigh alignment where it is poor | Density driven by the error was tried and gains little (10 to 15 % on the worst distances); the other uses are not tried | A run that gives an invalid mesh is caught and corrected without the user; the best of three runs beats one on the marks | DT-040 |
@@ -63,10 +63,10 @@ islands that overlap) and an atlas where each rectangular patch is an island of 
 
 | Order | Track | Done when | Tickets |
 |---|---|---|---|
-| 8 | **C library and Blender add-on** (milestone 10): remesh from Blender without copying memory, density read from Weight Paint, hard edges from the marked ones, UV layers | Done, awaiting review: `make addon`; preset, quads, adaptive size, density from a vertex group; each stage announced; export of two UV layers and of sharp edges. Left: reading the edges marked sharp, stopping a run, Windows and macOS | J10, DT-041, DT-042 |
+| 8 | **C library and Blender add-on** (milestone 10): remesh from Blender without copying memory, density read from Weight Paint, hard edges from the marked ones, UV layers | Done, merged on 9 October 2026: `make addon`; preset, quads, adaptive size, density from a vertex group; each stage announced; export of two UV layers and of sharp edges. Left: reading the edges marked sharp, stopping a run, Windows and macOS | J10, DT-041, DT-042 |
 | 9 | **Rename** the crates and the executable from `retopo` to `openclare` | Done on 8 October 2026 | DT-015 (closed) |
 | 10 | **Symmetry**: a symmetric model gives a symmetric mesh, with an edge loop on the plane | Mesh and mirror image coincide on the symmetric models of the bench | J9 bis, DT-028 |
-| 11 | **Guide curves**: edge loops where the artist draws them, as curves held on the model by a Shrinkwrap | First version done on 9 October 2026, awaiting review: exact on simple shapes, kept on part of the curves tried on the ogre and let go on the others. Done when a curve drawn where a mesh of quads can follow it is kept, every time | DT-024 (closed), DT-044 |
+| 11 | **Guide curves**: edge loops where the artist draws them, as curves held on the model by a Shrinkwrap | First version done and merged on 9 October 2026, with two categories of curves (guide and sharp): exact on simple shapes, kept on part of the curves tried on the ogre and let go on the others. Done when a curve drawn where a mesh of quads can follow it is kept, every time | DT-024 (closed), DT-044 |
 
 ## 4. Beyond the quad mesh
 
