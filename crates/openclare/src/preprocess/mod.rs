@@ -250,7 +250,57 @@ impl Preprocessor for Isotropic {
         }
         work.guide_lines = laid.segments;
         work.guide_gaps = laid.gaps;
+        if let Some(reach) = request.curvature_scale {
+            blunt_acute_tips(&mut work, ACUTE_REACH * reach);
+        }
         Ok(work)
+    }
+}
+
+/// Two lines to follow that meet at less than this angle, in degrees, cannot
+/// both be lines of a grid of quads there: the sides of a quad meet at a
+/// quarter turn, give or take.
+const ACUTE: f64 = 50.0;
+/// Round such a meeting the lines are let go within this many quad edges.
+const ACUTE_REACH: f64 = 1.5;
+
+/// Lets go of the guide lines of `work` round the places where two of them
+/// meet at an acute angle, within `reach`: the tip of an air intake, where
+/// an edge fades into another. The work mesh keeps its shape there; the
+/// lines are just no longer something the quads are asked to follow.
+fn blunt_acute_tips(work: &mut WorkMesh, reach: f64) {
+    if work.guide_edges.is_empty() {
+        return;
+    }
+    let positions = &work.mesh.positions;
+    let mut along: HashMap<u32, Vec<u32>> = HashMap::new();
+    for &[a, b] in &work.feature_edges {
+        along.entry(a).or_default().push(b);
+        along.entry(b).or_default().push(a);
+    }
+    let cos = ACUTE.to_radians().cos();
+    let tips: Vec<Vec3> = along
+        .iter()
+        .filter(|(v, ends)| {
+            let here = positions[**v as usize];
+            let ways: Vec<Vec3> =
+                ends.iter().map(|&end| (positions[end as usize] - here).normalize_or_zero()).collect();
+            (0..ways.len()).any(|i| (i + 1..ways.len()).any(|j| ways[i].dot(ways[j]) > cos))
+        })
+        .map(|(&v, _)| positions[v as usize])
+        .collect();
+    if tips.is_empty() {
+        return;
+    }
+    let near = |p: Vec3| tips.iter().any(|tip| tip.distance(p) <= reach);
+    let gone: HashSet<[u32; 2]> = work
+        .guide_edges
+        .iter()
+        .copied()
+        .filter(|&[a, b]| near(positions[a as usize]) || near(positions[b as usize]))
+        .collect();
+    for edges in [&mut work.feature_edges, &mut work.guide_edges, &mut work.sharp_guide_edges] {
+        edges.retain(|edge| !gone.contains(edge));
     }
 }
 
