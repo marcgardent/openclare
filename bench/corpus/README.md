@@ -1,48 +1,48 @@
 # Corpus
 
-Les modèles sources du banc de mesure. Ils sont versionnés parce que les mires conservées
-(`../reference/`) n'ont de sens que face à ces fichiers exacts.
+The source models of the bench. They are tracked because the references kept (`../reference/`)
+only mean something against these exact files.
 
-Les auteurs, sources et licences de tous les modèles sont dans
-[CREDITS.md](../../CREDITS.md). Les modèles dont la licence interdit la redistribution n'y sont
-pas : ils vivent sous `../corpus-large/`, hors git, et `make blenderkit` les retélécharge.
+The authors, sources and licences of all the models are in [CREDITS.md](../../CREDITS.md). The
+models whose licence forbids passing them on are not here: they live under `../corpus-large/`,
+out of git, and `make blenderkit` downloads them again.
 
-## Formes de synthèse
+## Synthetic shapes
 
-Générées par `../make_corpus.py` (Blender) ou par `openclare primitive`. Aucun droit de tiers.
+Made by `../make_corpus.py` (Blender) or by `openclare primitive`. No third-party rights.
 
-| Fichier | Contenu |
+| File | What it is |
 |---|---|
-| `blob.obj` | boules fusionnées, genre 0 |
-| `rock.obj` | sphère bruitée à deux échelles |
-| `creature.obj` | quadrupède, forme à branches |
-| `cage.obj` | cube percé selon ses trois axes puis adouci, genre 5 |
-| `suzanne.obj` | la tête de singe de Blender, ouverte, en trois pièces |
-| `part.obj` | pièce mécanique percée, triangles effilés de type CAO |
-| `cube.obj`, `sphere.obj`, `torus.obj` | étalons |
+| `blob.obj` | merged balls, genus 0 |
+| `rock.obj` | a sphere with noise at two scales |
+| `creature.obj` | a quadruped, a branching shape |
+| `cage.obj` | a cube pierced along its three axes then softened, genus 5 |
+| `suzanne.obj` | Blender's monkey head, open, in three pieces |
+| `part.obj` | a pierced mechanical part, with the long thin triangles of CAD |
+| `cube.obj`, `sphere.obj`, `torus.obj`, `lblock.obj`, `cylinder.obj` | yardsticks and test shapes |
 
-## L'ogre
+## The ogre
 
-`ogre.obj` : la mascotte du projet, sculpture fournie par l'auteur du projet, 4,7 millions de
-triangles à l'origine, ramenée à 200 000 par `openclare preprocess`. L'original est dans `../corpus-large/`,
-hors git.
+`ogre.obj`: the mascot of the project, a sculpt by its author, 4.7 million triangles at first,
+brought down to 200,000 by `openclare preprocess`. The original is in `../corpus-large/`, out of
+git.
 
-## Dépôt de Keenan Crane
+## Keenan Crane's repository
 
-Téléchargés le 6 octobre 2026 depuis le
-[3D Model Repository](https://www.cs.cmu.edu/~kmcrane/Projects/ModelRepository/) de Keenan Crane
-(Carnegie Mellon), qui indique : « you can do whatever you like with the data without asking for
-permission ». Convertis par `../import_crane.py`.
+Downloaded on 6 October 2026 from Keenan Crane's
+[3D Model Repository](https://www.cs.cmu.edu/~kmcrane/Projects/ModelRepository/) (Carnegie
+Mellon), which says: "you can do whatever you like with the data without asking for
+permission". Converted by `../import_crane.py`.
 
-| Fichier | Origine | Traitement |
+| File | Origin | Processing |
 |---|---|---|
-| `spot.obj` | Spot, la vache | subdivisé deux fois, puis 100 000 triangles |
-| `bob.obj` | Bob, bouée canard, genre 1 | subdivisé deux fois, puis 100 000 triangles |
-| `blub.obj` | Blub, le poisson | subdivisé deux fois, puis 100 000 triangles |
-| `pig.obj` | Origins of the Pig, corps seul | subdivisé deux fois, puis 100 000 triangles |
-| `jerry.obj` | Jerry the Ogre, visage au repos, surface ouverte | tel quel |
-| `rose.obj` | Desert Rose, 96 coques fermées qui se traversent | 150 000 triangles |
-| `bridge.obj` | Pittsburgh Bridge, scan brut à bords ouverts, versé au domaine public par ses auteurs (Panoptic Studio, CMU) | tel quel |
+| `spot.obj` | Spot, the cow | subdivided twice, then 100,000 triangles |
+| `bob.obj` | Bob, a rubber-duck float, genus 1 | subdivided twice, then 100,000 triangles |
+| `blub.obj` | Blub, the fish | subdivided twice, then 100,000 triangles |
+| `pig.obj` | Origins of the Pig, body only | subdivided twice, then 100,000 triangles |
+| `jerry.obj` | Jerry the Ogre, face at rest, an open surface | as it is |
+| `rose.obj` | Desert Rose, 96 closed shells that cross each other | 150,000 triangles |
+| `bridge.obj` | Pittsburgh Bridge, a raw scan with open borders, released into the public domain by its authors (Panoptic Studio, CMU) | as it is |
 
-Les personnages sont fournis sous forme de cages de subdivision grossières ; ils sont subdivisés
-en surfaces lisses et denses, qui sont ce qu'on donne en pratique à un remailleur.
+The characters come as coarse subdivision cages; they are subdivided into smooth dense
+surfaces, which is what a remesher is given in practice.

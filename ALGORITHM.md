@@ -492,7 +492,7 @@ Limites constatées :
 terme de transport dans `crossfield/frames.rs` ; réglage `adaptivity` de la configuration ;
 données peintes passées par `Guides`, à côté du maillage, et non dans la configuration).
 
-![L'ogre à 3000 quads : taille unique, densité adaptative, densité peinte](docs/images/jalon8_densite.png)
+![L'ogre à 3000 quads : taille unique, densité adaptative, densité peinte](docs/images/milestone8_density.png)
 
 Sur l'image : taille unique ; densité adaptative à 0,5 (le préréglage `organic`) ; densité
 peinte, quatre fois plus de quads sur la tête et quatre fois moins sur les jambes que sur le
@@ -925,7 +925,7 @@ unique), sur les quatre pièces mécaniques du corpus (la pièce percée, le cub
 ajoutées pour ce jalon : un bloc en L, dont une arête rentre, et un cylindre, dont les arêtes
 vives sont des courbes fermées) :
 
-![Bloc en L, cylindre et pièce percée, préréglage hard-surface](docs/images/jalon9_durci.png)
+![Bloc en L, cylindre et pièce percée, préréglage hard-surface](docs/images/milestone9_hard_surface.png)
 
 | Médianes sur les 4 pièces, à 3000 quads | QuadriFlow | `integer-grid` | **openclare, J9** | Quad Remesher |
 |---|---|---|---|---|
@@ -1099,7 +1099,7 @@ de QEx). **Décision du 7 octobre 2026 : route directe.** Ces deux modules ne so
 **Réalisé au jalon 7** (`crates/openclare/src/meshing/`, interface `Mesher` et sa fabrique ; chaîne
 `quad-layout` dans `remesher.rs`, devenue celle des préréglages).
 
-![L'ogre à 3000 quads : QuadriFlow, openclare, Quad Remesher](docs/images/jalon7_ogre.png)
+![L'ogre à 3000 quads : QuadriFlow, openclare, Quad Remesher](docs/images/milestone7_ogre.png)
 
 - **Lecture de la carte** : le T-mesh garde, pour chaque trace, son chemin dans la carte
   (triangle par triangle) et, pour chaque arc, la portion de trace qu'il couvre. Placer un point
@@ -1169,7 +1169,7 @@ Ce qu'il ne faut pas se cacher :
 implémentations, `laplacian`, celle d'origine, et `squaring`, la nouvelle, qu'utilise la chaîne
 `quad-layout`).
 
-![L'ogre à 3000 quads après le jalon 8 : QuadriFlow, openclare, Quad Remesher](docs/images/jalon8_ogre.png)
+![L'ogre à 3000 quads après le jalon 8 : QuadriFlow, openclare, Quad Remesher](docs/images/milestone8_ogre.png)
 
 Le jalon 7 avait montré que le lissage d'origine (chaque sommet vers la moyenne de ses voisins)
 plafonnait : au-delà de deux passes il usait les parties fines et finissait par inverser une
@@ -1299,7 +1299,7 @@ Né d'une remarque de l'auteur sur sa sculpture, le 8 octobre 2026 : les doigts 
 de l'ogre sont un vrai problème pour tous les remailleurs, et il faut arriver à garder au moins
 leur volume.
 
-![La main de l'ogre à 3000 quads](docs/images/q2_main.png)
+![La main de l'ogre à 3000 quads](docs/images/thin_parts_hand.png)
 
 **Le diagnostic**, mesuré avant d'écrire quoi que ce soit :
 

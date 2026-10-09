@@ -1,10 +1,9 @@
 # openclare
 
-Retopologie automatique en quads, alignée sur un champ de directions, écrite en Rust.
-Objectif : une alternative open source à Quad Remesher, meilleure que le remaillage quad de
-Blender.
+Automatic quad retopology, aligned on a field of directions, written in Rust.
+The aim: an open-source alternative to Quad Remesher, better than Blender's quad remesher.
 
-![Tore, cube à arêtes vives et Suzanne remaillés](docs/images/apercu.png)
+![A torus, a cube with hard edges and Suzanne, remeshed](docs/images/overview.png)
 
 What is left to do, in order: [ROADMAP.md](ROADMAP.md).
 
@@ -58,74 +57,76 @@ configuration, and a function of the host's called as each stage begins, which c
 run. Blender's own arrays are read where they are, without a copy on the Python
 side.
 
-## État
+## Where it stands
 
-La chaîne cible, `quad-layout`, va de bout en bout (triangles en entrée, quads en sortie) :
-champ de croix aligné sur la courbure, simplification des singularités, carte sans couture,
-T-mesh, quantification, puis une grille de quads par rectangle du T-mesh.
+The chain the project is about, `quad-layout`, runs end to end (triangles in, quads out): a
+cross field aligned on curvature, simplification of its singularities, a seamless map, a
+T-mesh, its quantization, then one grid of quads per rectangle of the T-mesh, relaxed and
+fitted to the shape.
 
-Sur les douze modèles organiques du corpus, à 3000 quads, elle fait **mieux que le remaillage
-quad de Blender** (QuadriFlow) sur tous les critères retenus : maillages toujours valides (12
-modèles sur 12, contre 5), arêtes deux fois mieux alignées sur la forme (8,6° contre 17,5°), moins
-de sommets irréguliers, nombre de quads demandé tenu à 1,4 % près. Face à Quad Remesher, ses
-quads sont plus réguliers (écart d'angle moyen 5,4° contre 7,2°) ; ses arêtes suivent encore un
-peu moins bien la forme. La taille des quads s'adapte à la forme, et se règle aussi en peignant
-une densité sur le modèle.
+On the twelve organic models of the bench, at 3000 quads, it does **better than Blender's quad
+remesher** (QuadriFlow) on every criterion kept: meshes always valid (12 models out of 12,
+against 5), edges twice as well aligned on the shape (7.7 degrees off against 17.5), fewer
+irregular vertices, the number of quads asked for held within 1 %. Against Quad Remesher its
+quads are more regular (mean angle deviation 5.0 degrees against 6.5); its edges still follow
+the shape a little less well. The size of the quads adapts to the shape, and can also be set by
+painting a density on the model. The marks of every remesher on every model are in
+[bench/results/SCORES.md](bench/results/SCORES.md).
 
-Les **arêtes vives** sont suivies exactement : avec le préréglage `hard-surface`, le maillage a
-une arête le long de chaque arête vive de la pièce et un sommet sur chaque coin.
+**Hard edges** are followed exactly: with the `hard-surface` preset, the mesh has an edge along
+every hard edge of the part and a vertex on every corner.
 
-Deux autres chaînes restent dans le dépôt : `integer-grid`, la version provisoire, qui sert de
-repli pour les surfaces sans singularité ni bord (un tore), et `instant-meshes`, le plancher de
-comparaison.
+Two other chains stay in the repository: `integer-grid`, the provisional one, which serves as
+a fallback where the main chain gives up, and `instant-meshes`, the floor the others are
+measured against.
 
-Le cahier des charges, les mesures et la feuille de route sont dans
-[ALGORITHME.md](ALGORITHME.md) ; ce qui a été écarté ou reporté en chemin, dans
-[BACKLOG.md](BACKLOG.md) ; les auteurs, sources et licences des modèles 3D utilisés, dans
+The specification and what each milestone delivered are in [ALGORITHM.md](ALGORITHM.md); what
+is left to do, in [ROADMAP.md](ROADMAP.md); what was set aside or put off on the way, in
+[BACKLOG.md](BACKLOG.md); the authors, sources and licences of the 3D models used, in
 [CREDITS.md](CREDITS.md).
 
-## Utilisation
+## Use
 
 ```bash
 cargo build --release
 ```
 
 ```bash
-./target/release/openclare remesh entree.obj sortie.obj --quads 5000
+./target/release/openclare remesh input.obj output.obj --quads 5000
 ```
 
-Pour essayer sans maillage sous la main (`torus`, `sphere`, `cube`, `plane`) :
+To try it with no mesh at hand (`torus`, `sphere`, `cube`, `plane`):
 
 ```bash
-./target/release/openclare primitive torus tore.obj
+./target/release/openclare primitive torus torus.obj
 ```
 
-### Préréglages
+### Presets
 
-Un préréglage est un jeu de paramètres nommé ; chaque paramètre reste réglable par-dessus.
+A preset is a named set of settings; each setting can still be changed on top of it.
 
 ```bash
 ./target/release/openclare presets
 ```
 
 ```bash
-./target/release/openclare remesh entree.obj sortie.obj --preset animation --quads 8000 --alignment 0.1
+./target/release/openclare remesh input.obj output.obj --preset animation --quads 8000 --alignment 0.1
 ```
 
-Pour enregistrer les réglages d'un lancement et les réutiliser comme préréglage personnel :
+To save the settings of a run and use them again as a preset of your own:
 
 ```bash
-./target/release/openclare remesh entree.obj sortie.obj --preset organic --singularity-reach 4 --save-config perso.txt
+./target/release/openclare remesh input.obj output.obj --preset organic --singularity-reach 4 --save-config mine.txt
 ```
 
 ```bash
-./target/release/openclare remesh autre.obj sortie.obj --config perso.txt
+./target/release/openclare remesh other.obj output.obj --config mine.txt
 ```
 
-`openclare --help` liste toutes les options. Pour mesurer un résultat et le comparer à Blender et à
-Quad Remesher, voir [bench/README.md](bench/README.md).
+`openclare --help` lists every option. To measure a result and compare it with Blender and
+Quad Remesher, see [bench/README.md](bench/README.md).
 
-Comme bibliothèque :
+As a library:
 
 ```rust
 use openclare::{RemeshConfig, Target};
@@ -135,60 +136,58 @@ config.alignment = 0.1;
 let (quads, report) = config.remesh(&triangles)?;
 ```
 
-La taille des quads suit la forme (réglage `--adaptivity`, de 0 pour une taille unique à 1) et,
-si on en fournit une, une densité peinte : un fichier d'un poids par sommet de l'entrée, de 0
-(le moins dense) à 1 (le plus dense). `--density-contrast` règle l'écart entre les deux : à 4,
-la valeur par défaut, les zones peintes à 1 ont quatre fois plus de quads par unité d'aire.
+The size of the quads follows the shape (setting `--adaptivity`, from 0 for quads of one size
+to 1) and, if one is given, a painted density: a file of one weight per vertex of the input,
+from 0 (least dense) to 1 (most dense). `--density-contrast` sets how far apart the two are:
+at 4, the default, the places painted at 1 have four times the quads per unit of area.
 
 ```bash
-./target/release/openclare remesh entree.obj sortie.obj --quads 3000 --adaptivity 0.7 --density poids.txt --density-contrast 8
+./target/release/openclare remesh input.obj output.obj --quads 3000 --adaptivity 0.7 --density weights.txt --density-contrast 8
 ```
 
-Les parties fines gardent leur volume : là où la forme est trop mince pour les quads demandés
-(un doigt, le bout d'une oreille), ils sont rendus assez petits pour qu'il en passe un certain
-nombre autour, et un peu plus grands ailleurs, pour le même total. Ce nombre se règle avec
-`--quads-around` : 6 dans les préréglages `organic` et `animation`, 0 (on ne regarde pas
-l'épaisseur) dans `hard-surface`.
+Thin parts keep their volume: where the shape is too thin for the quads asked for (a finger,
+the tip of an ear), they are made small enough for a given number of them to go round it, and
+a little larger elsewhere, for the same total. That number is set with `--quads-around`: 6 in
+the `organic` and `animation` presets, 0 (thickness is not looked at) in `hard-surface`.
 
 ```bash
-./target/release/openclare remesh entree.obj sortie.obj --quads 3000 --quads-around 8
+./target/release/openclare remesh input.obj output.obj --quads 3000 --quads-around 8
 ```
 
-![La main de l'ogre à 3000 quads](docs/images/q2_main.png)
+![The hand of the ogre at 3000 quads](docs/images/thin_parts_hand.png)
 
-Le maillage garde aussi le volume de la forme. Des sommets posés sur la surface donnent des
-faces qui passent en dessous partout où elle est bombée ; une dernière étape les écarte donc
-un peu de la surface, le long de leur normale, pour que les faces passent au travers plutôt
-qu'en dessous. `--volume-fit` règle cet écart, de 0 (sommets sur la surface) à 1 (la valeur
-par défaut).
+The mesh also keeps the volume of the shape. Vertices sitting on the surface give faces that
+run under it wherever it bulges; a last stage therefore moves them a little off the surface,
+along their normals, for the faces to run through it rather than under it. `--volume-fit` sets
+how far, from 0 (vertices on the surface) to 1 (the default).
 
 ```bash
-./target/release/openclare remesh entree.obj sortie.obj --quads 3000 --volume-fit 0
+./target/release/openclare remesh input.obj output.obj --quads 3000 --volume-fit 0
 ```
 
-Pour voir le T-mesh d'un modèle, ses coupes écrites comme des lignes sur la surface :
+To see the T-mesh of a model, its cuts written as lines on the surface:
 
 ```bash
-./target/release/openclare tmesh entree.obj --quads 3000 --simplify 2 --traces coupes.obj
+./target/release/openclare tmesh input.obj --quads 3000 --simplify 2 --traces cuts.obj
 ```
 
-Et pour le quantifier :
+And to quantize it:
 
 ```bash
-./target/release/openclare quantize entree.obj --quads 3000 --simplify 2
+./target/release/openclare quantize input.obj --quads 3000 --simplify 2
 ```
 
-### Notes comparatives
+### Marks
 
-Une note de 0 à 100, globale et par critère, pour chaque modèle du banc et chaque remailleur.
-Le rapport (en anglais) est dans [bench/results/SCORES.md](bench/results/SCORES.md) ; il
-explique comment chaque note est calculée.
+A mark from 0 to 100, overall and per criterion, for every model of the bench and every
+remesher. The report is in [bench/results/SCORES.md](bench/results/SCORES.md); it says how
+each mark is made.
 
 ```bash
 make scores
 ```
 
-Pour les notes d'un seul modèle, ou d'un maillage quelconque face à sa source :
+For the marks of one model, or of any mesh against its source:
 
 ```bash
 make scores MODEL=ogre TARGET=8000
@@ -198,93 +197,91 @@ make scores MODEL=ogre TARGET=8000
 python3 scripts/scores.py mesh source.obj quads.obj --target 3000
 ```
 
-### Une page par modèle
+### One page per model
 
-Ce que chaque remailleur fait de chaque modèle, en images, avec ses notes :
-[docs/models/](docs/models/README.md). Les images sont rendues par Blender.
+What each remesher makes of each model, in pictures, with its marks:
+[docs/models/](docs/models/README.md). The pictures are rendered by Blender.
 
 ```bash
 make pages
 ```
 
-### Regarder la chaîne travailler
+### Watching the chain at work
 
-Chaque étape de la chaîne peut montrer ce qu'elle produit : maillage de travail et courbure,
-taille demandée aux quads, champ de croix et singularités avant et après simplification,
-coupes et nœuds de la structure globale, longueurs entières, quads avant et après relaxation.
-Le tout s'enregistre dans un fichier `.rrd` que l'on ouvre dans la visionneuse de
-[Rerun](https://rerun.io). Deux lignes de temps, à choisir en bas de la fenêtre :
+Each stage of the chain can show what it makes: the work mesh and its curvature, the size
+asked of the quads, the cross field and its singularities before and after simplification,
+the cuts and nodes of the layout, the whole lengths, the quads before and after relaxation.
+All of it is recorded in a `.rrd` file to open in the viewer of [Rerun](https://rerun.io).
+Two timelines, to pick at the bottom of the window:
 
-- `step`, celle qui s'ouvre : une étape à la fois. Chaque étape remplace la précédente, sur
-  la surface où elle se lit ; les flèches gauche et droite passent de l'une à l'autre, et la
-  dernière montre le maillage final seul.
-- `stack` : tout ce qui a été montré jusque-là reste, pour superposer deux étapes (les coupes
-  sur le maillage final, par exemple) en masquant les calques dont on ne veut pas.
+- `step`, the one it opens on: one stage at a time. Each stage takes the place of the one
+  before, on the surface it is read on; the left and right arrows go from one to the next, and
+  the last shows the final mesh alone.
+- `stack`: everything shown so far stays, to lay one stage over another (the cuts over the
+  final mesh, say), hiding the layers that are not wanted.
 
 ```bash
 make view MODEL=ogre
 ```
 
-Cette commande construit ce qu'il faut, remaille le modèle en enregistrant, puis ouvre la
-visionneuse. La première construction est longue (Rerun compte plusieurs centaines de
-dépendances) et demande Rust 1.95.
+This command builds what it takes, remeshes the model while recording, then opens the viewer.
+The first build is long (Rerun comes with several hundred dependencies) and needs Rust 1.95.
 
-Rien de tout cela ne pèse sur le reste. La bibliothèque `openclare` ne connaît qu'une interface,
-`Recorder`, et son implémentation muette `Silent`, celle qui sert par défaut : elle ne garde
-rien et les étapes ne préparent alors rien. Rerun vit dans deux crates à part, construites
-seulement sur demande :
+None of this weighs on the rest. The `openclare` library knows one interface only, `Recorder`,
+and its silent implementation `Silent`, the default one: it keeps nothing, and the stages then
+prepare nothing. Rerun lives in two crates apart, built on demand only:
 
-| Crate | Rôle | Se construit avec |
+| Crate | What it is | Built with |
 |---|---|---|
-| `openclare-rerun` | implémentation de `Recorder` qui écrit un `.rrd` ; donne l'option `--record` à `openclare remesh` | `cargo build --release -p openclare-cli --features rerun` |
-| `openclare-viewer` | la visionneuse de Rerun embarquée, exécutable `openclare-view`, pour qui travaille sur le projet : rien d'autre à installer, et la bonne version | `cargo build --release -p openclare-viewer` |
+| `openclare-rerun` | the `Recorder` that writes a `.rrd`; gives `openclare remesh` its `--record` option | `cargo build --release -p openclare-cli --features rerun` |
+| `openclare-viewer` | the Rerun viewer built in, executable `openclare-view`, for those who work on the project: nothing else to install, and the right version | `cargo build --release -p openclare-viewer` |
 
-À la main :
+By hand:
 
 ```bash
-target/release/openclare remesh modele.obj quads.obj --quads 3000 --record modele.rrd
+target/release/openclare remesh model.obj quads.obj --quads 3000 --record model.rrd
 ```
 
 ```bash
-target/release/openclare-view modele.rrd
+target/release/openclare-view model.rrd
 ```
 
-Un `.rrd` se lit avec la visionneuse de la version qui l'a écrit, ici la 0.36. Qui a déjà
-Rerun 0.36 installé peut s'en servir à la place de `openclare-view`.
+A `.rrd` is read by the viewer of the version that wrote it, here 0.36. Whoever has Rerun 0.36
+installed can use it instead of `openclare-view`.
 
-## Organisation
+## Layout of the code
 
-| Module | Rôle |
+| Module | What it does |
 |---|---|
-| `mesh` | conteneurs (`TriMesh`, `PolyMesh`), connectivité, OBJ, subdivision, primitives de test |
-| `geometry` | normales, aires, détection des arêtes caractéristiques |
-| `hierarchy` | graphe multi-résolution pour résoudre du grossier au fin |
-| `field` | champ d'orientation (4-RoSy), champ de position (4-PoSy), contraintes, singularités |
-| `extract` | du champ ou de la carte entière au graphe de quads, puis aux faces |
-| `sizing` | champ de taille : quads plus petits là où la forme se courbe ou là où on l'a peint |
-| `relax` | étape de relaxation : placement final, quads tirés vers des rectangles, sur la surface et les arêtes vives |
-| `spatial` | BVH pour la projection sur la surface source |
-| `pipeline` | enchaînement complet de la chaîne Instant Meshes |
-| `remesher` | interface commune aux chaînes, fabrique qui les crée par nom, et les chaînes `quad-layout` et `integer-grid` |
-| `preprocess` | étape de prétraitement : nettoyage, décimation, remaillage isotrope, courbures |
-| `crossfield` | étape du champ de croix : une croix par face, alignement sur la courbure, singularités |
-| `singularity` | étape de simplification : annulation des paires de singularités inutiles |
-| `parametrization` | étape de paramétrisation : graphe de coupe, carte (u, v) sans couture |
-| `tmesh` | étape de structure globale : traces depuis les singularités, patchs rectangulaires |
-| `quantization` | étape de quantification : longueurs entières, connectivité du maillage quad |
-| `meshing` | étape de maillage : une grille de quads par rectangle, sommets lus dans la carte |
-| `linalg` | algèbre linéaire creuse (enveloppe de la bibliothèque `faer`) |
-| `config` | configuration unique d'un remaillage, préréglages, enregistrement et relecture |
-| `curvature` | courbures et directions principales |
-| `metrics` | mesures de qualité d'un maillage quad par rapport à sa source |
-| `fitting` | étape d'ajustement : les sommets quittent la surface pour que le maillage garde le volume |
-| `creases` | poids de pli par arête, pour que la subdivision garde les arêtes vives et les plis de la source |
-| `uv` | deux couches de coordonnées de texture dépliées du maillage quad : la grille et l'atlas |
-| `thickness` | épaisseur de la forme sous chaque sommet, mesurée par des rayons à travers l'intérieur |
-| crate `openclare-capi` | interface C du moteur : une bibliothèque partagée, pour Blender et d'autres hôtes |
-| `recorder` | interface `Recorder` par laquelle les étapes montrent leur travail, et `Silent`, qui n'écoute rien ; aucune dépendance |
+| `mesh` | containers (`TriMesh`, `PolyMesh`), connectivity, OBJ, subdivision, test primitives |
+| `geometry` | normals, areas, detection of feature edges |
+| `hierarchy` | multi-resolution graph, to solve from coarse to fine |
+| `field` | orientation field (4-RoSy), position field (4-PoSy), constraints, singularities |
+| `extract` | from the field or the integer map to the graph of quads, then to faces |
+| `sizing` | sizing field: quads smaller where the shape bends, where it is thin, or where it was painted |
+| `relax` | relaxation stage: final placement, quads drawn towards rectangles, on the surface and on hard edges |
+| `spatial` | BVH, for projecting onto the source surface and casting rays through it |
+| `pipeline` | the whole Instant Meshes chain |
+| `remesher` | the interface the chains share, the factory that makes them by name, and the `quad-layout` and `integer-grid` chains |
+| `preprocess` | preprocessing stage: cleaning, decimation, isotropic remeshing, curvature, guide curves laid into the mesh |
+| `crossfield` | cross field stage: one cross per face, alignment on curvature, singularities |
+| `singularity` | simplification stage: cancelling the pairs of singularities that are not needed |
+| `parametrization` | parametrization stage: cut graph, seamless (u, v) map |
+| `tmesh` | layout stage: traces from the singularities, rectangular patches |
+| `quantization` | quantization stage: whole lengths, connectivity of the quad mesh |
+| `meshing` | meshing stage: one grid of quads per rectangle, vertices read off the map |
+| `linalg` | sparse linear algebra (a wrapper round the `faer` library) |
+| `config` | the one configuration of a run, presets, saving and reading back |
+| `curvature` | curvatures and principal directions |
+| `metrics` | quality measures of a quad mesh against its source |
+| `fitting` | fitting stage: the vertices leave the surface for the mesh to keep the volume |
+| `creases` | crease weight per edge, for subdivision to keep the hard edges and folds of the source |
+| `uv` | two layers of texture coordinates unfolded from the quad mesh: the grid and the atlas |
+| `thickness` | thickness of the shape under each vertex, measured by rays through its inside |
+| `recorder` | the `Recorder` interface through which the stages show their work, and `Silent`, which listens to nothing; no dependency |
+| crate `openclare-capi` | C interface of the engine: a shared library, for Blender and other hosts |
 
-La chaîne actuelle est décrite dans
+The chain the project started from is described in
 [docs/REFERENCE_INSTANT_MESHES.md](docs/REFERENCE_INSTANT_MESHES.md).
 
 ## Tests
@@ -293,13 +290,13 @@ La chaîne actuelle est décrite dans
 cargo test
 ```
 
-Les tests vérifient des invariants plutôt que des valeurs figées : théorème de Poincaré-Hopf sur
-les singularités du champ, caractéristique d'Euler conservée, maillage fermé et variété, sommets
-sur la surface, coins et arêtes vives retrouvés exactement, déterminisme.
+The tests check invariants rather than frozen values: the Poincaré-Hopf theorem on the
+singularities of the field, the Euler characteristic kept, a closed manifold mesh, vertices on
+the surface, corners and hard edges found exactly, determinism.
 
 ## Licence
 
-Le code : GPL-3.0-or-later, voir [LICENSE](LICENSE).
+The code: GPL-3.0-or-later, see [LICENSE](LICENSE).
 
-Les modèles 3D de l'auteur du projet (l'ogre) : CC BY-SA 4.0. Ceux de tiers gardent chacun leur
-licence ; tout est détaillé dans [CREDITS.md](CREDITS.md).
+The 3D models by the author of the project (the ogre): CC BY-SA 4.0. Those by others each keep
+their licence; all of it is in [CREDITS.md](CREDITS.md).

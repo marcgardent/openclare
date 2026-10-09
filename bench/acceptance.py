@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Checks the acceptance thresholds of ALGORITHME.md against the bench results.
+"""Checks the acceptance thresholds of ALGORITHM.md against the bench results.
 
     python3 bench/acceptance.py [--tool quad-layout] [--targets 1000,3000,8000]
 
@@ -93,7 +93,7 @@ def main():
         "# Acceptance",
         "",
         f"Chain under test: `{args.tool}`.",
-        "The thresholds are those of ALGORITHME.md, section 0, against QuadriFlow at the same budget.",
+        "The thresholds are those of ALGORITHM.md, section 0, against QuadriFlow at the same budget.",
         "They were set for the organic models; the mechanical ones are held to the same for reference.",
         "",
     ]

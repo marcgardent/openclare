@@ -1,10 +1,10 @@
 # openclare — backlog de dette technique
 
 Un ticket par raccourci, approximation, repli ou action du cahier des charges
-([ALGORITHME.md](ALGORITHME.md)) qui n'a pas été faite. Rien n'est supprimé : un ticket soldé
+([ALGORITHM.md](ALGORITHM.md)) qui n'a pas été faite. Rien n'est supprimé : un ticket soldé
 passe à l'état *fermé*, avec le jalon qui l'a soldé. Les numéros ne sont jamais réutilisés.
 
-Ce fichier ne contient pas la feuille de route (les jalons à venir sont dans ALGORITHME.md,
+Ce fichier ne contient pas la feuille de route (les jalons à venir sont dans ALGORITHM.md,
 section 4), seulement ce qu'on a laissé derrière soi en avançant.
 
 **Gravité** : *haute* = limite un résultat visé par la règle d'acceptation ; *moyenne* = limite
@@ -214,11 +214,11 @@ la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, gara
 ### DT-016 — Documents en français, à traduire
 
 - **Né au** jalon 0, par décision (« pour les docs on traduira à la fin »).
-- **Constat** : `ALGORITHME.md`, `BACKLOG.md`, les `README.md` et `docs/` sont en français ; le
+- **Constat** : `ALGORITHM.md`, `BACKLOG.md`, les `README.md` et `docs/` sont en français ; le
   code et ses commentaires sont en anglais.
 - **8 October 2026**: the author asks for documents to be written in English from now on, so
   that there is less to translate at the end. `CREDITS.md` is translated. What is added to the
-  other documents is written in English; what they already hold in French (`ALGORITHME.md`,
+  other documents is written in English; what they already hold in French (`ALGORITHM.md`,
   this file, the `README.md` files) is still to translate.
 
 ### DT-017 — Corpus : sculptures de l'auteur à ajouter

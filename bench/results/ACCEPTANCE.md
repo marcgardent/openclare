@@ -1,7 +1,7 @@
 # Acceptance
 
 Chain under test: `quad-layout-adaptive`.
-The thresholds are those of ALGORITHME.md, section 0, against QuadriFlow at the same budget.
+The thresholds are those of ALGORITHM.md, section 0, against QuadriFlow at the same budget.
 They were set for the organic models; the mechanical ones are held to the same for reference.
 
 ## 1000 quads, organic models
