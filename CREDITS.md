@@ -3,11 +3,9 @@
 Every 3D model the project uses for its measurements and its pictures, with its author, its
 source and its licence. No model enters the bench without its line here.
 
-- **In the repository**: the model is under `bench/corpus/` as an OBJ file, or under
-  `bench/scenes/` as the scene the bench runs it from (a `.blend`; see
-  [bench/README.md](bench/README.md#scenes)), and the comparison meshes made from it under
-  `bench/reference/`. The scenes are to be tracked with Git LFS; until that is set up, those
-  made by hand are on their author's machine only.
+- **In the repository**: the model is under `bench/scenes/`, as the scene the bench runs it
+  from (a `.blend`, tracked through Git LFS; see [bench/README.md](bench/README.md#scenes)),
+  and the comparison meshes made from it under `bench/reference/`.
 - **Out of the repository**: the licence does not allow passing the model on. It is kept under
   `bench/corpus-large/`, which is not tracked, with its scene and everything made from it. The
   figures measured on it are in the results. The "Source" column says how to get it again.
@@ -83,9 +81,9 @@ credit above.
 2. Add its line to this file: title, author, exact source (link or identifier), date fetched,
    licence, processing applied.
 3. Give it a line in `MODELS` of `bench/run.py`, and make its scene
-   ([bench/README.md](bench/README.md#scenes)): `make scenes` for a mesh put under
-   `bench/corpus/` as an OBJ file, `bench/make_scene.py` for an object of a `.blend` with its
-   modifiers, its curves or its painted density.
+   ([bench/README.md](bench/README.md#scenes)): `bench/make_scene.py` for an object of a `.blend`, with its
+   modifiers, its curves or its painted density; or, for a mesh that comes as an OBJ file,
+   `make scenes` once the file is put under `bench/corpus/` (it need not be tracked).
 4. For a BlenderKit model: add its `asset_base_id` to `BLENDERKIT` in `bench/run.py`; then
    `make blenderkit` downloads the file and makes its scene, under
    `bench/corpus-large/scenes/`:

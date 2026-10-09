@@ -973,9 +973,8 @@ track. "DT" stands for *dette technique*, technical debt.
   `ogre_hp`), `bench/blender_run.py` caps itself, and a run that hits the cap is reported as
   `out of memory`. No figure is stored for the car; where the memory goes is not known yet.
 - **Left**:
-  - The scenes are not in git: binary files, they wait for Git LFS. Until then the OBJ files
-    of `bench/corpus` stay, the scenes that are a plain mesh are made from them on each
-    machine, and `venturi` and `ogre_hp` exist on their author's machine only.
+  - The scenes are in git since 9 October 2026, through Git LFS, and the OBJ files they were
+    made from are gone. There is no remote yet: what LFS stores is on one machine.
   - The results stored were not measured again from the scenes, and neither `venturi` nor
     `ogre_hp` has a Quad Remesher reference.
   - The other tools get the object of a scene, not its curves nor its painted density:

@@ -224,7 +224,7 @@ Two timelines, to pick at the bottom of the window:
 
 ```bash
 make view MODEL=ogre
-make view FILE=bench/corpus/venturi.obj QUADS=8000 OPTIONS='--groups bench/corpus/venturi.groups'
+make view MODEL=venturi QUADS=8000 OPTIONS='--groups bench/out/venturi/source.groups'
 ```
 
 The stage `map` shows what the layout is cut from: its grid lines (`u-lines`, `v-lines`), the
