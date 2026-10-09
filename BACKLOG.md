@@ -813,7 +813,25 @@ track. "DT" stands for *dette technique*, technical debt.
 - **Leads**: find the lines that make the map fold from the triangles that fold, rather than
   by trying each; keep a line up to the stretch that cannot be kept; where a border is let
   go, move the vertices next to it onto it after the fact.
-- **Also left**: the bench passes the groups of a model to the chain but measures nothing
-  about them (how many quads are across a border); the command line writes the group of each
-  face next to the mesh, not into it.
+- **First step, 9 October 2026** (track "lines kept"). Three things, and what they showed:
+  - *Letting go near the folds.* When the map folds with every line on a grid line, the lines
+    are now let go only within a few edges of the folded triangles, a reach that doubles up to
+    five times, before whole lines are tried. A line can thus be kept in part. On the car with
+    the `organic` preset: 61 edges along the borders instead of 22. Little, then.
+  - *A measure*: the report counts the faces that lie across a border between two groups
+    (`faces_across_groups`). On the car at 8000 quads: 1456 of 8450 with `organic`, 1055 of
+    6995 with `hard-surface`.
+  - *Why lines are let go*, piece by piece (`Report::line_causes`, printed by the command
+    line). With `hard-surface` the five pieces that lose their borders are the five whose map
+    folds without any border either: their creases are what the map cannot keep, the
+    materials have nothing to do with it. With `organic`, two pieces lose them whole and three
+    in part.
+- **What it points to**: the borders of this model come closer to one another than a quad is
+  wide (stripes, window frames, lights), and turn sharp corners. No map can put two lines
+  less than a quad apart on two grid lines without folding. The size of the quads has to come
+  down where lines are close, as it does round thin parts (`quads_around`), and a line that
+  turns a corner has to be allowed its corner. Both before more is tried in the map itself.
+- **Also left**: the bench passes the groups of a model to the chain but keeps nothing of what
+  the report says about them; the command line writes the group of each face next to the
+  mesh, not into it.
 

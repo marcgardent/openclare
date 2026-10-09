@@ -344,15 +344,17 @@ impl Remesher for QuadLayout {
         let (mesh, mut report) = self.remesh_stitched(stitched, guides, config, recorder)?;
         if let Some(groups) = &groups {
             // Each face is of the group of the triangle under its middle.
+            // One whose corners, seen from a little inside it, are not all
+            // of that group lies across a border between two.
             let surface = Bvh::build(stitched);
-            report.face_groups = mesh
-                .faces
-                .iter()
-                .map(|face| {
-                    let middle = face.iter().map(|&v| mesh.positions[v as usize]).sum::<Vec3>() / face.len() as f64;
-                    surface.closest_point(middle).map_or(0, |hit| groups[hit.triangle as usize])
-                })
-                .collect();
+            let group_at = |p: Vec3| surface.closest_point(p).map_or(0, |hit| groups[hit.triangle as usize]);
+            for face in &mesh.faces {
+                let middle = face.iter().map(|&v| mesh.positions[v as usize]).sum::<Vec3>() / face.len() as f64;
+                let group = group_at(middle);
+                let inside = |&v: &u32| group_at(middle.lerp(mesh.positions[v as usize], 0.8));
+                report.faces_across_groups += face.iter().any(|v| inside(v) != group) as usize;
+                report.face_groups.push(group);
+            }
         }
         Ok((mesh, report))
     }
@@ -531,6 +533,13 @@ impl QuadLayout {
         let layout = tmesh::create(tmesh::Kind::Motorcycle).build(&work, &field, &tmesh::Request { edge_length })?;
         report.map_inversions = layout.tmesh.report.map_inversions;
         report.guides_let_go = layout.map.report.guides_off_grid as usize;
+        if layout.map.report.guides_off_grid {
+            let whole = layout.map.report.loose_guides.len() == work.guide_edges.len();
+            report.line_causes = vec![(
+                if whole { "the map folds over with them, whole" } else { "the map folds over near part of them" },
+                1,
+            )];
+        }
         clock.lap(&mut report, "layout");
         recorder::show_layout(recorder, &work, &layout.tmesh);
         // A piece of surface with neither singularity nor border (a torus)
@@ -559,6 +568,7 @@ impl QuadLayout {
                 let free = Guides { curves: &[], lines: &[], ..*guides };
                 let (mesh, mut report) = self.remesh_piece(input, &free, config, least, recorder)?;
                 report.guides_let_go = 1;
+                report.line_causes = vec![(cause, 1)];
                 return Ok((mesh, report));
             }
             return fall_back(input, config, least, cause, recorder);
@@ -575,6 +585,7 @@ impl QuadLayout {
                 let free = Guides { curves: &[], lines: &[], ..*guides };
                 let (mesh, mut report) = self.remesh_piece(input, &free, config, least, recorder)?;
                 report.guides_let_go = 1;
+                report.line_causes = vec![("no sound whole lengths for the layout", 1)];
                 return Ok((mesh, report));
             }
             return fall_back(input, config, least, "no sound whole lengths for the layout", recorder);

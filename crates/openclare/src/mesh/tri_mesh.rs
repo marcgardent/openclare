@@ -89,6 +89,23 @@ impl TriMesh {
     /// need be, where the mesh as it was could not be worked on at all.
     pub fn stitched(&self) -> Option<(TriMesh, Vec<u32>, Vec<u32>)> {
         let key = |a: u32, b: u32| (a.min(b), a.max(b));
+        // A closed surface, every edge with its two faces and every vertex
+        // in use, is the common case and the largest meshes: told at once.
+        let mut edges: Vec<(u32, u32)> =
+            self.triangles.iter().flat_map(|&[a, b, c]| [key(a, b), key(b, c), key(c, a)]).collect();
+        edges.sort_unstable();
+        let in_pairs = edges.chunks(2).all(|pair| pair.len() == 2 && pair[0] == pair[1] && pair[0].0 != pair[0].1);
+        let no_third = edges.chunks(2).zip(edges.chunks(2).skip(1)).all(|(pair, next)| pair[0] != next[0]);
+        let mut used = vec![false; self.positions.len()];
+        for &(a, b) in &edges {
+            used[a as usize] = true;
+            used[b as usize] = true;
+        }
+        if in_pairs && no_third && used.iter().all(|&used| used) {
+            return None;
+        }
+        drop(edges);
+
         let uses = |remap: &[u32]| {
             let mut uses: HashMap<(u32, u32), u32> = HashMap::new();
             for tri in &self.triangles {

@@ -347,12 +347,16 @@ fn remesh(args: &[String]) -> Result<(), String> {
         }
         let counts: Vec<String> = faces.iter().map(|(group, count)| format!("{group}:{count}")).collect();
         println!(
-            "groups   {} edges along their borders; faces in each  {}",
+            "groups   {} edges along their borders, {} faces across a border; faces in each  {}",
             report.guide_edges.len(),
+            report.faces_across_groups,
             counts.join("  ")
         );
         if report.guides_let_go > 0 {
             println!("         the borders could not be kept as lines of edges on {} piece(s)", report.guides_let_go);
+            for (cause, count) in &report.line_causes {
+                println!("           {count} x {cause}");
+            }
         }
         if let Some(path) = output.strip_suffix(".obj") {
             let lines: Vec<String> = report.face_groups.iter().map(u32::to_string).collect();
