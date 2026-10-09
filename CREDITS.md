@@ -14,7 +14,7 @@ source and its licence. No model enters the bench without its line here.
 | Model | Author | Year | Source | Licence | Where |
 |---|---|---|---|---|---|
 | `ogre` | Marc Gardent | 2026 | original sculpt, 4.7 million triangles, brought down to 200,000 by `openclare preprocess`; the mascot of the project | © 2026 Marc Gardent, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.en) | in the repository; the original out of it |
-| `venturi` | Marc Gardent | 2026 | a car modelled in Blender after the Venturi 500 LM, exported as it is seen (mirror, one level of subdivision, edges split for shading, a boolean) by `bench/export_object.py`: 39,317 triangles in thirteen materials, listed in `venturi.groups` | © 2026 Marc Gardent, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.en) | in the repository |
+| `venturi` | Marc Gardent | 2026 | a car modelled in Blender after the Venturi 500 LM, exported by `bench/export_object.py` with its mirror and one level of subdivision applied, and without the two modifiers that split its edges for shading and cut it with a boolean (`--without EDGE_SPLIT,BOOLEAN`): a closed surface of 39,820 triangles in thirteen materials, listed in `venturi.groups` | © 2026 Marc Gardent, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.en) | in the repository |
 
 Convention for those to come: **Marc Gardent, 2026, CC BY-SA 4.0**.
 

@@ -851,6 +851,18 @@ track. "DT" stands for *dette technique*, technical debt.
   edges along borders are all on the small pieces. The open borders of the body, some of them
   made by taking faces apart along edges with three faces, are the first thing to look at in
   the recording.
+- **The car exported as its author meant it, the same day**: with the mirror and the
+  subdivision applied and without the two modifiers that tore it (one splits edges for
+  shading, the other is a boolean that leaves 66 edges with three or four faces), it is one
+  closed surface, and everything above reads differently. With the `organic` preset at 8000
+  quads: 17 pieces all through the main chain, 8789 quads and nothing else, 982 edges along
+  the borders between materials and 717 faces across one, in 39 seconds. Letting lines go
+  near the folds only is what does it: on the body 858 guide edges out of 3046 are let go,
+  where all of them were before. Left: those 858, a third of them at places where the lines
+  turn or meet; 1337 irregular vertices, many more than the shape asks for; and the
+  `hard-surface` preset, which finds creases all over a smooth subdivided body at 30 degrees
+  and sends most pieces to the fallback chain. The first export, torn, is no longer in the
+  corpus; what it showed of mending stays true (DT-034).
 - **Also left**: the bench passes the groups of a model to the chain but keeps nothing of what
   the report says about them; the command line writes the group of each face next to the
   mesh, not into it.

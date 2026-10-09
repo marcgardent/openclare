@@ -281,7 +281,8 @@ pub(crate) fn show_map(recorder: &mut dyn Recorder, work: &WorkMesh, map: &Param
     let edge = |&[a, b]: &[u32; 2]| vec![mesh.positions[a as usize], mesh.positions[b as usize]];
     let guides: std::collections::HashSet<[u32; 2]> = work.guide_edges.iter().copied().collect();
     let loose: std::collections::HashSet<[u32; 2]> = map.report.loose_guides.iter().copied().collect();
-    let layers: [(&str, Colour, &dyn Fn(&[u32; 2]) -> bool); 3] = [
+    type Kind<'a> = &'a dyn Fn(&[u32; 2]) -> bool;
+    let layers: [(&str, Colour, Kind); 3] = [
         ("creases-and-borders", HARD_EDGES, &|edge| !guides.contains(edge)),
         ("lines-kept", LINES_KEPT, &|edge| guides.contains(edge) && !loose.contains(edge)),
         ("lines-let-go", LINES_LET_GO, &|edge| loose.contains(edge)),
