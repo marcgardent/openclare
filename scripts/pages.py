@@ -14,7 +14,6 @@ while the first time.
 """
 
 import argparse
-import subprocess
 import sys
 from pathlib import Path
 
@@ -29,7 +28,9 @@ from run import (  # noqa: E402
     TOOLS,
     available_models,
     faces_of,
+    memory_cap,
     quadremesher_reference,
+    run,
     source_path,
 )
 from scores import MATCHED, load, rows_of, without_matched  # noqa: E402
@@ -49,6 +50,7 @@ EQUAL = ("openclare-matched", "openclare, as many quads")
 Y_UP = {"spot", "bob", "blub", "pig", "jerry", "rose", "bridge"}
 VIEWS = {
     "ogre": (-70, 10),
+    "ogre_hp": (-70, 10),
     "terrain": (-60, 38),
     "cube": (35, 28),
     "lblock": (35, 28),
@@ -63,12 +65,13 @@ DENSE = 20_000
 
 def render(mesh, picture, model, edges=True):
     azimuth, elevation = VIEWS.get(model, (-60, 20))
-    command = ["blender", "-b", "--python", str(ROOT / "scripts" / "render.py"), "--", str(mesh), str(picture)]
+    command = ["blender", "-b", "--factory-startup", "--python", str(ROOT / "scripts" / "render.py"), "--"]
+    command += [str(mesh), str(picture)]
     command += ["--up", "y" if model in Y_UP else "z", "--azimuth", str(azimuth), "--elevation", str(elevation)]
     command += ["--size", "600"]
     if not edges:
         command.append("--no-edges")
-    done = subprocess.run(command, capture_output=True, text=True)
+    done = run(command, memory=memory_cap(model))
     return done.returncode == 0 and picture.exists()
 
 

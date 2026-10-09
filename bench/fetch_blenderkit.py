@@ -4,9 +4,10 @@
     python3 bench/fetch_blenderkit.py [--models terrain,marine] [--refresh]
 
 They are listed in `BLENDERKIT` of run.py, by `asset_base_id`. Each is
-downloaded as its .blend into bench/corpus-large/blenderkit/ and exported to
-bench/corpus-large/<name>.obj by import_blenderkit.py; neither directory is
-tracked. Needs `blender` on the PATH for the export.
+downloaded as its .blend into bench/corpus-large/blenderkit/, and its scene
+for the bench is made from it by make_scenes.py, as
+bench/corpus-large/scenes/<name>.blend; neither directory is tracked. Needs
+`blender` on the PATH for the scene.
 
 Only free assets can be fetched this way, without an account. The licence of
 each is printed; BlenderKit's Royalty Free licence does not allow passing a
@@ -17,12 +18,11 @@ out of the repository. See CREDITS.md.
 import argparse
 import json
 import shutil
-import subprocess
 import sys
 import urllib.request
 import uuid
 
-from run import BENCH, BLENDERKIT, LOCAL, source_path
+from run import BENCH, BLENDERKIT, LOCAL, memory_cap, run, scene_path
 
 API = "https://www.blenderkit.com/api/v1/search/?query=asset_base_id:"
 AGENT = {"User-Agent": "openclare-bench"}
@@ -48,7 +48,7 @@ def download(url, path):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--models", default=",".join(BLENDERKIT))
-    parser.add_argument("--refresh", action="store_true", help="download and export again what is already there")
+    parser.add_argument("--refresh", action="store_true", help="download and make again what is already there")
     options = parser.parse_args()
 
     blends = LOCAL / "blenderkit"
@@ -74,17 +74,14 @@ def main():
         else:
             print(f"  {blend.relative_to(BENCH.parent)} is already there")
 
-        target = source_path(name)
+        target = scene_path(name)
         if options.refresh or not target.exists():
-            done = subprocess.run(
-                ["blender", "-b", str(blend), "--python", str(BENCH / "import_blenderkit.py"), "--", str(target)],
-                capture_output=True,
-                text=True,
-            )
-            summary = [line for line in done.stdout.splitlines() if line.startswith("BLENDERKIT wrote")]
+            done = run(["blender", "-b", "--factory-startup", "--python", BENCH / "make_scenes.py", "--",
+                        "--models", name, "--refresh"], memory=memory_cap(name))
+            summary = [line for line in done.stdout.splitlines() if line.startswith("SCENE wrote")]
             if done.returncode != 0 or not summary:
-                sys.exit(f"{name}: Blender could not export {blend}")
-            print("  " + summary[0].removeprefix("BLENDERKIT "))
+                sys.exit(f"{name}: Blender could not make a scene of {blend}")
+            print("  " + summary[0].removeprefix("SCENE "))
         else:
             print(f"  {target.relative_to(BENCH.parent)} is already there")
 

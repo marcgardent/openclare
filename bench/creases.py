@@ -11,7 +11,7 @@ bench/results/CREASES.md. Needs `make addon` and a release build.
 
 import argparse
 import json
-import subprocess
+import resource
 import sys
 from pathlib import Path
 
@@ -22,11 +22,15 @@ sys.path.insert(0, str(BENCH))
 sys.path.insert(0, str(BENCH.parent / "blender"))
 import openclare  # noqa: E402
 from blender_io import read_obj, write_obj  # noqa: E402
-from run import MODELS, OPENCLARE, OUTPUT, RESULTS, available_models, source_path  # noqa: E402
+from run import AUTHORED, MEMORY_CAP, MODELS, OPENCLARE, OUTPUT, RESULTS, available_models, run, source_path  # noqa: E402
+
+# The engine runs inside this Blender: the cap of the bench on the memory of
+# what it starts is put on this process itself.
+resource.setrlimit(resource.RLIMIT_AS, (MEMORY_CAP, resource.getrlimit(resource.RLIMIT_AS)[1]))
 
 
 def measured(source, mesh):
-    done = subprocess.run([str(OPENCLARE), "measure", str(source), str(mesh), "--json"], capture_output=True, text=True)
+    done = run([OPENCLARE, "measure", source, mesh, "--json"])
     return json.loads(done.stdout) if done.returncode == 0 else None
 
 
@@ -41,7 +45,10 @@ def subdivided(quads, levels, path):
 def main():
     arguments = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--models", default=",".join(m for m in available_models() if m not in ("mahaveer", "marine")))
+    # Not by default: two models of hundreds of pieces, and the scenes made by
+    # hand, which are more than a mesh (this script reads the mesh alone).
+    left_out = {"mahaveer", "marine"} | AUTHORED
+    parser.add_argument("--models", default=",".join(m for m in available_models() if m not in left_out))
     parser.add_argument("--targets", default="1000,3000")
     parser.add_argument("--levels", type=int, default=2)
     options = parser.parse_args(arguments)
