@@ -232,6 +232,10 @@ a grid line (`folded-with-every-line`), and the guide lines kept and let go. Wit
 `openclare remesh --notes` prints what the stages remark on: how many triangles folded and
 where, how many guide edges were let go, why a piece went to the other chain.
 
+A model that is very small or very large (less than 1 or more than 1000 across) is shown at a
+power of ten times its size, which a note of the recording gives: the viewer is awkward to
+move about in otherwise.
+
 This command builds what it takes, remeshes the model while recording, then opens the viewer.
 The first build is long (Rerun comes with several hundred dependencies) and needs Rust 1.95.
 
