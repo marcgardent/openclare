@@ -22,6 +22,7 @@ ADAPTIVE_SIZE = {"organic": 50.0, "animation": 50.0, "hard-surface": 0.0}
 # The two kinds of curves drawn on a model, each with its collection and the
 # colour its curves take in the viewport: name, label, what it does, colour
 # of the objects, colour tag of the collection (the nearest Blender has).
+# A run takes the curves of both; a curve is of one kind only.
 CATEGORIES = [
     (
         "guide",
@@ -84,12 +85,6 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         min=1.0,
         soft_max=16.0,
         max=100.0,
-    )
-    curve_category: bpy.props.EnumProperty(
-        name="Category",
-        description="Which kind of curves the buttons below act on",
-        items=[(name, label, description) for name, label, description, _, _ in CATEGORIES],
-        default="guide",
     )
     guide_curves: bpy.props.PointerProperty(
         name="Guide Curves",
@@ -470,11 +465,10 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
         return {"FINISHED"}
 
 
-def category_collection(context, create=False):
-    """The collection of the category the panel is on; made and put in the
-    scene if there is none yet and `create` says so."""
+def category_collection(context, name, create=False):
+    """The collection of the category `name`; made and put in the scene if
+    there is none yet and `create` says so."""
     settings = context.scene.openclare
-    name = settings.curve_category
     collection = getattr(settings, f"{name}_curves")
     if collection is None and create:
         label, _, tag = CATEGORY[name]
@@ -494,9 +488,16 @@ def show_object_colours(context):
 
 
 class CurvesOperator:
-    """What the four buttons of the curve categories have in common."""
+    """What the four buttons of a curve category have in common."""
 
     bl_options = {"REGISTER", "UNDO"}
+
+    category: bpy.props.EnumProperty(
+        name="Category",
+        items=[(name, label, description) for name, label, description, _, _ in CATEGORIES],
+        default="guide",
+        options={"HIDDEN"},
+    )
 
     @classmethod
     def poll(cls, context):
@@ -504,19 +505,18 @@ class CurvesOperator:
 
 
 class OPENCLARE_OT_curves_assign(CurvesOperator, bpy.types.Operator):
-    """Move the selected curves to the collection of this category, and give them its colour"""
+    """Move the selected curves to this category and give them its colour. A curve is in one category only"""
 
     bl_idname = "object.openclare_curves_assign"
     bl_label = "Assign"
 
     def execute(self, context):
-        settings = context.scene.openclare
         chosen = [drawn for drawn in context.selected_objects if drawn.type == "CURVE"]
         if not chosen:
             self.report({"WARNING"}, "openclare: no curve is selected")
             return {"CANCELLED"}
-        collection = category_collection(context, create=True)
-        label, colour, _ = CATEGORY[settings.curve_category]
+        collection = category_collection(context, self.category, create=True)
+        label, colour, _ = CATEGORY[self.category]
         for drawn in chosen:
             # Moved, not linked as well: a curve that stayed in another
             # collection too would still show when its category is hidden.
@@ -538,7 +538,7 @@ class OPENCLARE_OT_curves_remove(CurvesOperator, bpy.types.Operator):
     bl_label = "Remove"
 
     def execute(self, context):
-        collection = category_collection(context)
+        collection = category_collection(context, self.category)
         chosen = [drawn for drawn in context.selected_objects if drawn.type == "CURVE"]
         chosen = [drawn for drawn in chosen if collection is not None and drawn.name in collection.objects]
         for drawn in chosen:
@@ -564,7 +564,7 @@ class OPENCLARE_OT_curves_select(CurvesOperator, bpy.types.Operator):
         return "Select the curves of this category" if properties.select else "Deselect the curves of this category"
 
     def execute(self, context):
-        for drawn in curve_objects(category_collection(context)):
+        for drawn in curve_objects(category_collection(context, self.category)):
             # Only what this view layer shows can be selected.
             if drawn.name in context.view_layer.objects and (drawn.visible_get() or not self.select):
                 drawn.select_set(self.select)
@@ -610,19 +610,22 @@ class OPENCLARE_PT_curves(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         settings = context.scene.openclare
-        layout.row().prop(settings, "curve_category", expand=True)
-        name = settings.curve_category
-        column = layout.column()
-        column.use_property_split = True
-        column.prop(settings, f"{name}_curves", text="Collection")
-        count = len(curve_objects(getattr(settings, f"{name}_curves")))
-        column.label(text=f"{count} curve" + ("" if count == 1 else "s"), icon="OUTLINER_OB_CURVE")
-        row = layout.row(align=True)
-        row.operator(OPENCLARE_OT_curves_assign.bl_idname)
-        row.operator(OPENCLARE_OT_curves_remove.bl_idname)
-        row = layout.row(align=True)
-        row.operator(OPENCLARE_OT_curves_select.bl_idname, text="Select").select = True
-        row.operator(OPENCLARE_OT_curves_select.bl_idname, text="Deselect").select = False
+        # One box per category, both always there: a run takes the curves
+        # of both.
+        for name, label, _, _, tag in CATEGORIES:
+            box = layout.box()
+            count = len(curve_objects(getattr(settings, f"{name}_curves")))
+            curves = f"{count} curve" + ("" if count == 1 else "s")
+            box.label(text=f"{label}: {curves}", icon=tag.replace("COLOR", "COLLECTION_COLOR"))
+            box.prop(settings, f"{name}_curves", text="")
+            column = box.column(align=True)
+            row = column.row(align=True)
+            row.operator(OPENCLARE_OT_curves_assign.bl_idname).category = name
+            row.operator(OPENCLARE_OT_curves_remove.bl_idname).category = name
+            row = column.row(align=True)
+            for text, select in (("Select", True), ("Deselect", False)):
+                button = row.operator(OPENCLARE_OT_curves_select.bl_idname, text=text)
+                button.category, button.select = name, select
 
 
 class OPENCLARE_PT_export(bpy.types.Panel):
