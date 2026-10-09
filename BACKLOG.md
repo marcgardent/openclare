@@ -935,4 +935,62 @@ track. "DT" stands for *dette technique*, technical debt.
   from a collection of curves and a vertex group; a model of the corpus that has them, the
   ogre with its author's curves being the obvious one; and what the report says of lines and
   borders kept among what the bench stores.
+- **Done on 9 October 2026, another way than the sidecars**: the bench runs from scenes. A
+  model is a `.blend` that holds the object to remesh, with its modifiers, its materials, its
+  vertex groups and the curves drawn on it, and the settings of the add-on saved with the
+  scene; `openclare` and `openclare-matched` run on it through the add-on, in Blender, as its
+  button does (`bench/blender_run.py`), and the bench only sets the number of quads. Nothing is
+  copied out of Blender by hand any more: the file that is measured is the file that is kept.
+  - `ogre_hp` is a model of the bench: the sculpt of 4.7 million triangles with its author's
+    three guide curves, his sharp curve and his painted density (`bench/scenes/ogre_hp.blend`,
+    made by `bench/make_scene.py`). At 12,000 quads asked for: 12,110 quads, valid, 418
+    irregular vertices, 86 edges along the guide curves, 21 along the sharp one, no line let
+    go, in 86 seconds; Hausdorff distance 7.3 per mille, mean angle deviation 6.3 degrees.
+  - `venturi` is the car as it is in its file, modifiers and all, instead of an OBJ exported
+    without two of them and a `.groups` file beside it.
+  - The other models are scenes too, made from their OBJ file as it is
+    (`bench/make_scenes.py`, `make scenes`); the tools that do not read a scene are given the
+    object as the add-on sees it, exported by the same script (`bench/out/<model>/source.obj`).
+  - With each run of the add-on the bench stores what the engine says of its lines (`engine`
+    in `results*.json`): `guide_edges`, `sharp_curve_edges`, `faces_across_groups`,
+    `welded_vertices`, `edges_taken_apart`, `guides_let_go`.
+- **What the move showed: the chain is sensitive to the last digits of its input.** Blender
+  stores positions in single precision; the OBJ files of the corpus were in double. On the
+  same numbers the add-on and the command line make the same mesh, face for face (checked on
+  the cube, Suzanne, the pig and the ogre). But at 3000 quads the pig makes 3031 quads from
+  its OBJ in double precision, 3054 from the same positions rounded to single precision (a
+  move of 1.2e-7 at most), and 2943 from those written with nine digits and read back (a move
+  of a few billionths); the ogre 3019, 2949 and 3057; Suzanne 2986, 2986 and 2983. The irregular
+  vertices hardly move (102, 104, 104 on the pig; 155 each time on the ogre); the cube, whose
+  coordinates are exact either way, does not move at all. So two or three per cent on the
+  number of quads is noise, and what is stored in `bench/results` (measured from the OBJ
+  files, before this) will not come out the same to the unit from the scenes.
+- **The car cannot be run as it is.** On the scene with its four modifiers (40,764 triangles,
+  15,110 border edges where Edge Split tore it, 334 edges of three faces or more where the
+  boolean cut) a run of the add-on grew to 53 GB of memory and the system killed it. Since
+  then every process the bench starts is capped (`MEMORY_CAP` in `bench/run.py`, 12 GB, 24 for
+  `ogre_hp`), `bench/blender_run.py` caps itself, and a run that hits the cap is reported as
+  `out of memory`. No figure is stored for the car; where the memory goes is not known yet.
+- **Left**:
+  - The scenes are not in git: binary files, they wait for Git LFS. Until then the OBJ files
+    of `bench/corpus` stay, the scenes that are a plain mesh are made from them on each
+    machine, and `venturi` and `ogre_hp` exist on their author's machine only.
+  - The results stored were not measured again from the scenes, and neither `venturi` nor
+    `ogre_hp` has a Quad Remesher reference.
+  - The other tools get the object of a scene, not its curves nor its painted density:
+    `openclare-uniform` (the command line) is given the materials (`source.groups`) and
+    nothing else, QuadriFlow and Quad Remesher the triangles alone. On `ogre_hp` the comparison
+    is not on equal terms. The sidecars first thought of (`.curves`, `.density`) would give
+    the command line the rest.
+  - The scenes made from an OBJ file carry an adaptive size of 50 % whatever the preset,
+    which is what the bench always ran `openclare` with; the add-on, left to itself, sets 0 %
+    with *Hard surface*. On the models with hard edges the bench does not measure what the
+    preset gives out of the box.
+  - The BlenderKit scenes are one mesh, every object of the file merged with its modifiers
+    applied, as the OBJ files were: no materials, no modifiers, nothing of what a scene can
+    hold.
+  - What the engine says of its lines is stored with each run, not shown in `RESULTS.md` nor
+    marked in `SCORES.md`.
+  - The object as the add-on sees it is written as text: 255 MB and 21 seconds for
+    `ogre_hp`, and 94 seconds to measure a result against it.
 
