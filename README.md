@@ -223,7 +223,14 @@ Two timelines, to pick at the bottom of the window:
 
 ```bash
 make view MODEL=ogre
+make view FILE=bench/corpus/venturi.obj QUADS=8000 OPTIONS='--groups bench/corpus/venturi.groups'
 ```
+
+The stage `map` shows what the layout is cut from: its grid lines (`u-lines`, `v-lines`), the
+triangles it folds or flattens (`folded-or-flat`), those that folded when every line was put on
+a grid line (`folded-with-every-line`), and the guide lines kept and let go. Without a viewer,
+`openclare remesh --notes` prints what the stages remark on: how many triangles folded and
+where, how many guide edges were let go, why a piece went to the other chain.
 
 This command builds what it takes, remeshes the model while recording, then opens the viewer.
 The first build is long (Rerun comes with several hundred dependencies) and needs Rust 1.95.

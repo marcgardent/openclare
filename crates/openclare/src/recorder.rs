@@ -14,6 +14,7 @@ use crate::crossfield::{self, CrossField};
 use crate::error::Result;
 use crate::math::Vec3;
 use crate::mesh::{PolyMesh, TriMesh};
+use crate::parametrization::Parametrization;
 use crate::preprocess::WorkMesh;
 use crate::quantization::Quantization;
 use crate::tmesh::{NodeKind, TMesh};
@@ -111,6 +112,12 @@ const BORDERS: Colour = [80, 220, 255];
 const CUTS: Colour = [255, 225, 80];
 const CORNERS: Colour = [120, 230, 120];
 const JUNCTIONS: Colour = [245, 245, 245];
+const U_LINES: Colour = [255, 170, 70];
+const V_LINES: Colour = [90, 200, 255];
+const FOLDS: Colour = [255, 40, 40];
+const FIRST_FOLDS: Colour = [255, 0, 255];
+const LINES_KEPT: Colour = [90, 230, 110];
+const LINES_LET_GO: Colour = [150, 110, 255];
 
 /// The surface of the work mesh under `stage`, for what the stage draws to
 /// lie on.
@@ -202,6 +209,137 @@ fn show_cuts(recorder: &mut dyn Recorder, stage: &str, work: &WorkMesh, layout: 
         if !strips.is_empty() {
             recorder.record(&format!("{stage}/{name}"), Shape::Lines { strips: &strips, colour });
         }
+    }
+}
+
+/// The map the layout is cut from: its grid lines over the surface, the
+/// triangles it folds over, and what became of the lines it was to keep.
+pub(crate) fn show_map(recorder: &mut dyn Recorder, work: &WorkMesh, map: &Parametrization) {
+    if !recorder.is_listening() {
+        return;
+    }
+    let stage = "map";
+    show_surface(recorder, stage, work);
+    let mesh = &work.mesh;
+    let corners = |f: usize| mesh.triangles[f].map(|v| mesh.positions[v as usize]);
+
+    // The lines where u, then v, is a whole number: the edges of the quads
+    // to come, were the map already made of whole numbers.
+    for (axis, name, colour) in [(0, "u-lines", U_LINES), (1, "v-lines", V_LINES)] {
+        let mut strips: Vec<Vec<Vec3>> = Vec::new();
+        for f in 0..mesh.triangles.len() {
+            let (points, values) = (corners(f), [0, 1, 2].map(|k| map.uv[3 * f + k][axis]));
+            let (low, high) = (
+                values.iter().copied().fold(f64::INFINITY, f64::min),
+                values.iter().copied().fold(f64::NEG_INFINITY, f64::max),
+            );
+            // A triangle stretched over hundreds of lines is one the map
+            // lost; its lines would only hide the others.
+            if !(low.is_finite() && high.is_finite()) || high - low > 50.0 {
+                continue;
+            }
+            for level in low.ceil() as i64..=high.floor() as i64 {
+                let level = level as f64;
+                let crossings: Vec<Vec3> = (0..3)
+                    .filter_map(|k| {
+                        let (a, b) = (values[k], values[(k + 1) % 3]);
+                        let crosses = (a - level) * (b - level) < 0.0 || (a == level && b != level);
+                        crosses.then(|| points[k].lerp(points[(k + 1) % 3], (level - a) / (b - a)))
+                    })
+                    .collect();
+                if crossings.len() == 2 {
+                    strips.push(crossings);
+                }
+            }
+        }
+        if !strips.is_empty() {
+            recorder.record(&format!("{stage}/{name}"), Shape::Lines { strips: &strips, colour });
+        }
+    }
+
+    // The triangles the map turns over or squashes flat, at the end, and
+    // those that folded when every line was put on a grid line.
+    let outline = |f: usize| {
+        let [a, b, c] = corners(f);
+        vec![a, b, c, a]
+    };
+    let turned = |f: usize| {
+        let [a, b, c] = [0, 1, 2].map(|k| map.uv[3 * f + k]);
+        (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]) <= 0.0
+    };
+    let folds: Vec<Vec<Vec3>> = (0..mesh.triangles.len()).filter(|&f| turned(f)).map(outline).collect();
+    if !folds.is_empty() {
+        recorder.record(&format!("{stage}/folded-or-flat"), Shape::Lines { strips: &folds, colour: FOLDS });
+    }
+    let first: Vec<Vec<Vec3>> = map.report.folds_with_lines.iter().map(|&f| outline(f)).collect();
+    if !first.is_empty() {
+        let shape = Shape::Lines { strips: &first, colour: FIRST_FOLDS };
+        recorder.record(&format!("{stage}/folded-with-every-line"), shape);
+    }
+
+    // The lines: creases and borders, and the guide lines kept or let go.
+    let edge = |&[a, b]: &[u32; 2]| vec![mesh.positions[a as usize], mesh.positions[b as usize]];
+    let guides: std::collections::HashSet<[u32; 2]> = work.guide_edges.iter().copied().collect();
+    let loose: std::collections::HashSet<[u32; 2]> = map.report.loose_guides.iter().copied().collect();
+    let layers: [(&str, Colour, &dyn Fn(&[u32; 2]) -> bool); 3] = [
+        ("creases-and-borders", HARD_EDGES, &|edge| !guides.contains(edge)),
+        ("lines-kept", LINES_KEPT, &|edge| guides.contains(edge) && !loose.contains(edge)),
+        ("lines-let-go", LINES_LET_GO, &|edge| loose.contains(edge)),
+    ];
+    for (name, colour, test) in layers {
+        let strips: Vec<Vec<Vec3>> = work.feature_edges.iter().filter(|edge| test(edge)).map(edge).collect();
+        if !strips.is_empty() {
+            recorder.record(&format!("{stage}/{name}"), Shape::Lines { strips: &strips, colour });
+        }
+    }
+    let report = &map.report;
+    let note = format!(
+        "{} triangles folded at the first solve, {} at the end after {} stiffening rounds; {} folded with every \
+         line on a grid line; {} of {} guide edges let go{}",
+        report.flipped_first,
+        report.flipped,
+        report.rounds,
+        report.folds_with_lines.len(),
+        report.loose_guides.len(),
+        work.guide_edges.len(),
+        if report.features_off_grid { "; creases and borders off the grid lines too" } else { "" },
+    );
+    recorder.record("notes/map", Shape::Note(&note));
+    // Where the map folds with every line on a grid line: next to a place
+    // where the lines turn, meet or end, or along a plain stretch of them?
+    if !report.folds_with_lines.is_empty() {
+        let mut along: Vec<Vec<u32>> = vec![Vec::new(); mesh.positions.len()];
+        for &[a, b] in &work.feature_edges {
+            along[a as usize].push(b);
+            along[b as usize].push(a);
+        }
+        let turning = |v: usize| match along[v][..] {
+            [a, b] => {
+                let (here, a, b) = (mesh.positions[v], mesh.positions[a as usize], mesh.positions[b as usize]);
+                (a - here).normalize_or_zero().dot((b - here).normalize_or_zero()) > -0.87
+            }
+            [] => false,
+            _ => true,
+        };
+        let joints: Vec<Vec3> = (0..along.len()).filter(|&v| turning(v)).map(|v| mesh.positions[v]).collect();
+        let on_lines: Vec<Vec3> =
+            (0..along.len()).filter(|&v| !along[v].is_empty()).map(|v| mesh.positions[v]).collect();
+        let reach = 2.0 * mesh.edge_length_stats().1;
+        let near = |points: &[Vec3], f: usize| {
+            let middle = corners(f).iter().sum::<Vec3>() / 3.0;
+            points.iter().any(|p| p.distance(middle) <= reach)
+        };
+        let at_joints = report.folds_with_lines.iter().filter(|&&f| near(&joints, f)).count();
+        let at_lines = report.folds_with_lines.iter().filter(|&&f| near(&on_lines, f)).count();
+        let note = format!(
+            "of the {} triangles folded with every line on a grid line, {} are within two edges of a place where \
+             lines turn by more than 30 degrees, meet or end ({} such places), {} within two edges of a line at all",
+            report.folds_with_lines.len(),
+            at_joints,
+            joints.len(),
+            at_lines,
+        );
+        recorder.record("notes/map folds", Shape::Note(&note));
     }
 }
 

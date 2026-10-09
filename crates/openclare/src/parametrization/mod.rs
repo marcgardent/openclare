@@ -46,6 +46,10 @@ pub struct Report {
     /// The edges of the guide curves that were let go, as their two
     /// vertices.
     pub loose_guides: Vec<[u32; 2]>,
+    /// The triangles that folded over when every feature edge was put on a
+    /// grid line, if that was tried and failed: where to look for what the
+    /// map could not keep.
+    pub folds_with_lines: Vec<usize>,
     /// The same at the end; anything but 0 means no valid mesh can be read
     /// off the map.
     pub flipped: usize,

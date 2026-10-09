@@ -541,6 +541,7 @@ impl QuadLayout {
             )];
         }
         clock.lap(&mut report, "layout");
+        recorder::show_map(recorder, &work, &layout.map);
         recorder::show_layout(recorder, &work, &layout.tmesh);
         // A piece of surface with neither singularity nor border (a torus)
         // has no layout; a layout that went wrong cannot be meshed from, nor

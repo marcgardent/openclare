@@ -195,3 +195,26 @@ fn no_edge_along_a_guide_curve_is_taken_for_a_hard_edge() {
         assert!(report.creases.is_empty(), "at {z}: {} creases", report.creases.len());
     }
 }
+
+#[test]
+fn the_map_is_shown_to_whoever_listens() {
+    // What a viewer gets of the map: its grid lines over the surface, and
+    // the lines it kept.
+    struct Paths(Vec<String>);
+    impl openclare::recorder::Recorder for Paths {
+        fn record(&mut self, path: &str, _: openclare::recorder::Shape<'_>) {
+            self.0.push(path.to_string());
+        }
+    }
+    let source = primitives::icosphere(5);
+    let config = RemeshConfig { adaptivity: 0.0, ..RemeshConfig::for_organic(Target::QuadCount(600)) };
+    let mut paths = Paths(Vec::new());
+    config.remesh_recorded(&source, &Guides { curves: &[parallel(0.3)], ..Default::default() }, &mut paths).unwrap();
+    for layer in ["map/surface", "map/u-lines", "map/v-lines", "map/lines-kept", "notes/map"] {
+        assert!(paths.0.iter().any(|path| path == layer), "{layer} is missing from {:?}", paths.0);
+    }
+    // The map comes before the layout cut from it.
+    let first = |stage: &str| paths.0.iter().position(|path| path.starts_with(stage)).unwrap();
+    assert!(first("map/") < first("layout/"));
+    assert!(!paths.0.iter().any(|path| path == "map/lines-let-go" || path == "map/folded-with-every-line"));
+}
