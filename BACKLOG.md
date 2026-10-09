@@ -1,562 +1,562 @@
-# openclare — backlog de dette technique
+# openclare — backlog of technical debt
 
-Un ticket par raccourci, approximation, repli ou action du cahier des charges
-([ALGORITHM.md](ALGORITHM.md)) qui n'a pas été faite. Rien n'est supprimé : un ticket soldé
-passe à l'état *fermé*, avec le jalon qui l'a soldé. Les numéros ne sont jamais réutilisés.
+One ticket per shortcut, approximation, fallback or item of the specification
+([ALGORITHM.md](ALGORITHM.md)) that was not done. Nothing is deleted: a ticket that is settled
+becomes *closed*, with the milestone that settled it. Numbers are never used again.
 
-Ce fichier ne contient pas la feuille de route (les jalons à venir sont dans ALGORITHM.md,
-section 4), seulement ce qu'on a laissé derrière soi en avançant.
+This file does not hold the roadmap (the milestones are in ALGORITHM.md, section 4; what is left
+to do today is in [ROADMAP.md](ROADMAP.md)), only what was left behind on the way.
 
-**Gravité** : *haute* = limite un résultat visé par la règle d'acceptation ; *moyenne* = limite
-la qualité ou la robustesse hors du corpus ; *basse* = propreté, confort, garantie théorique.
+**Severity**: *high* = limits a result the acceptance rule is about; *medium* = limits quality
+or robustness outside the corpus; *low* = tidiness, comfort, theoretical guarantee.
 
-## Vue d'ensemble
+**Labels**: J*n* is milestone *n* (from the French *jalon*); Q*n* a quality track; T*n* a tools
+track. "DT" stands for *dette technique*, technical debt.
 
-| Ticket | Sujet | Né au | Gravité | État |
+## Overview
+
+| Ticket | Subject | Born at | Severity | State |
 |---|---|---|---|---|
-| DT-001 | Carte à grille entière contrainte et extraction exacte, écartées | J7 | moyenne | ouvert |
-| DT-002 | Arêtes vives absentes du T-mesh | J5 | haute (durci) | **fermé au J9** |
-| DT-003 | Pièce sans singularité ni bord : pas de T-mesh | J5 | moyenne | **fermé (Q1)** |
-| DT-004 | Solveur de quantification approché | J6 | basse | ouvert |
-| DT-005 | Arcs maintenus ouverts : bandes de quads étroites | J6 | moyenne | ouvert |
-| DT-006 | Budget de quads : pas plus fin qu'une bande | J6 | basse | ouvert |
-| DT-007 | Course du T-mesh approchée, T-mesh non simplifié | J5 | basse | ouvert |
-| DT-008 | Traçage en nombres flottants, sans garantie formelle | J5 | basse | ouvert |
-| DT-009 | Chaîne `integer-grid` provisoire encore dans le dépôt | J4 bis | basse | ouvert |
-| DT-010 | Lignes de défense 2 et 3 contre les inversions non écrites | J4 | moyenne | ouvert |
-| DT-011 | Faces très étirées dans la carte sans couture | J4 | basse | ouvert |
-| DT-012 | Préréglage `hard-surface` sur la chaîne organique | J4 bis | haute (durci) | **fermé au J9** |
-| DT-013 | Valeurs des préréglages non réglées sur le corpus | J4 bis | moyenne | ouvert |
-| DT-014 | Visualisation des champs et des structures | J2 | basse | **fermé (T1, T2)**, reste DT-035 |
-| DT-015 | Code encore nommé `retopo` | J4 bis | basse | **closed at J10** |
-| DT-016 | Documents en français, à traduire | J0 | basse | ouvert (new text in English since 8 October 2026; `CREDITS.md` translated) |
-| DT-017 | Corpus : sculptures de l'auteur à ajouter avant la fin de la licence d'essai | J0 | moyenne | ouvert |
-| DT-018 | Parties plus fines qu'un quad mal rendues à bas budget | J7 | haute | ouvert (doigts traités au Q2 ; restent les feuilles minces) |
-| DT-019 | Relaxation rudimentaire : la forme des quads plafonne | J7 | haute | **fermé au J8** |
-| DT-020 | Complexe de base doublé par les jonctions en T | J7 | moyenne | ouvert |
-| DT-021 | Scan bruité (rock) : le champ suit le bruit | J7 | moyenne | ouvert |
-| DT-022 | Mires de comparaison incomplètes à 1000 et 8000 quads | J7 | basse | **fermé au J8** |
-| DT-023 | Relaxation : coût et tailles de quads | J8 | basse | ouvert |
-| DT-024 | Courbes guides (rang 4) non commencées | J8 | moyenne | **closed (9 October 2026)**, DT-044 remains |
-| DT-025 | Densité : portée des singularités et lecture de la courbure encore à l'échelle nominale | J8 | basse | ouvert (portée locale faite au Q2 ; reste la courbure) |
-| DT-026 | Densité peinte : lecture du Weight Paint de Blender à faire (pont Blender) | J8 | moyenne | **closed at J10** |
-| DT-028 | Symétrie : absente, Quad Remesher l'a | J8 | basse | ouvert, après la qualité |
-| DT-029 | Quads étirés sur la paroi d'un cylindre | J9 | moyenne | ouvert |
-| DT-030 | Chaîne par patchs (QuadWild) non écrite | J9 | basse | ouvert |
-| DT-031 | Triangles d'aire quasi nulle laissés par le prétraitement | J9 | moyenne | ouvert |
-| DT-032 | Modèles faits de nombreuses pièces détachées : toute la chaîne se replie | J9 | haute | **fermé (Q1)**, reste DT-034 |
-| DT-034 | Petites pièces : quelques-unes passent encore par le repli, ou n'en sortent pas | Q1 | moyenne | ouvert |
-| DT-035 | Visualisation Rerun : ce qui n'est pas montré, version en retard | T2 | basse | ouvert |
-| DT-036 | Poches et cavités profondes refermées par le maillage | Q2 | moyenne | ouvert |
-| DT-037 | Volume : le maillage est inscrit dans la forme | Q2 | haute | **closed (Q2 bis)**, DT-039 remains |
-| DT-038 | Parties fines : limites de la borne de taille | Q2 | moyenne | ouvert |
+| DT-001 | Constrained integer-grid map and exact extraction, set aside | J7 | medium | open |
+| DT-002 | Hard edges missing from the T-mesh | J5 | high (hard surface) | **closed at J9** |
+| DT-003 | A piece with neither singularity nor border: no T-mesh | J5 | medium | **closed (Q1)** |
+| DT-004 | Approximate quantization solver | J6 | low | open |
+| DT-005 | Arcs kept open: narrow strips of quads | J6 | medium | open |
+| DT-006 | Quad budget: no finer than a strip | J6 | low | open |
+| DT-007 | Approximate race of the T-mesh, T-mesh not simplified | J5 | low | open |
+| DT-008 | Tracing in floating point, with no formal guarantee | J5 | low | open |
+| DT-009 | The provisional `integer-grid` chain still in the repository | J4 bis | low | open |
+| DT-010 | Lines of defence 2 and 3 against inversions not written | J4 | medium | open |
+| DT-011 | Very stretched faces in the seamless map | J4 | low | open |
+| DT-012 | The `hard-surface` preset on the organic chain | J4 bis | high (hard surface) | **closed at J9** |
+| DT-013 | Preset values not tuned on the corpus | J4 bis | medium | open |
+| DT-014 | Visualization of fields and structures | J2 | low | **closed (T1, T2)**, DT-035 remains |
+| DT-015 | Code still named `retopo` | J4 bis | low | **closed at J10** |
+| DT-016 | Documents in French, to translate | J0 | low | **closed (9 October 2026)** |
+| DT-017 | Corpus: the author's sculpts to add before the trial licence ends | J0 | medium | open |
+| DT-018 | Parts thinner than a quad poorly rendered at low budgets | J7 | high | open (fingers dealt with at Q2; thin sheets remain) |
+| DT-019 | Rudimentary relaxation: the shape of the quads levels off | J7 | high | **closed at J8** |
+| DT-020 | Base complex doubled by T-junctions | J7 | medium | open |
+| DT-021 | Noisy scan (rock): the field follows the noise | J7 | medium | open |
+| DT-022 | Comparison references incomplete at 1000 and 8000 quads | J7 | low | **closed at J8** |
+| DT-023 | Relaxation: cost, and sizes of quads | J8 | low | open |
+| DT-024 | Guide curves (rank 4) not started | J8 | medium | **closed (9 October 2026)**, DT-044 remains |
+| DT-025 | Density: reach of singularities and reading of curvature still at the nominal scale | J8 | low | open (local reach done at Q2; curvature remains) |
+| DT-026 | Painted density: reading Blender's Weight Paint to do (Blender bridge) | J8 | medium | **closed at J10** |
+| DT-028 | Symmetry: missing, Quad Remesher has it | J8 | low | open, after quality |
+| DT-029 | Stretched quads on the wall of a cylinder | J9 | medium | open |
+| DT-030 | Patch chain (QuadWild) not written | J9 | low | open |
+| DT-031 | Triangles of nearly no area left by preprocessing | J9 | medium | open |
+| DT-032 | Models made of many separate pieces: the whole chain falls back | J9 | high | **closed (Q1)**, DT-034 remains |
+| DT-034 | Small pieces: a few still go through the fallback, or do not come out of it | Q1 | medium | open |
+| DT-035 | Rerun visualization: what is not shown, version behind | T2 | low | open |
+| DT-036 | Deep pockets and cavities closed over by the mesh | Q2 | medium | open |
+| DT-037 | Volume: the mesh is inscribed in the shape | Q2 | high | **closed (Q2 bis)**, DT-039 remains |
+| DT-038 | Thin parts: limits of the bound on size | Q2 | medium | open |
 | DT-039 | Fitting: limits, and the volume after subdivision | Q2 bis | medium | open |
 | DT-040 | Improving a mesh from a dry run: tried for density, the rest to do | idea of the author | medium | open |
 | DT-041 | Blender add-on, first version: what it does not do | J10 | medium | open |
 | DT-042 | UV layers unfolded from the quad mesh: limits | J10 | medium | open |
 | DT-043 | Creases: limits | J12 | low | open |
 | DT-044 | Guide curves: not kept everywhere | guide curves | high | open |
-| DT-033 | Terrains et scans : aucun outil n'aligne, le champ n'a rien à suivre | J9 | moyenne | ouvert |
-| DT-027 | Garde-fous de temps de calcul sur les entrées pathologiques | J8 | basse | ouvert |
+| DT-033 | Terrains and scans: no tool aligns, the field has nothing to follow | J9 | medium | open |
+| DT-027 | Guards on computing time for pathological inputs | J8 | low | open |
 
 ## Tickets
 
-### DT-001 — Carte à grille entière contrainte et extraction exacte, écartées
+### DT-001 — Constrained integer-grid map and exact extraction, set aside
 
-- **Né au** jalon 7, par décision du 7 octobre 2026 (route « directe »).
-- **Ce qui était prévu** : M7 (résoudre une carte (u, v) à transitions entières, contrainte par
-  les longueurs quantifiées, sans triangle inversé) puis M8 (extraction exacte, principe de QEx).
-- **Ce qui est fait à la place** : la connectivité du maillage vient directement de la
-  quantification ; chaque sommet est placé en lisant la carte sans couture dans son rectangle,
-  puis relaxé.
-- **Ce qu'on y perd** : la carte entière répartit la déformation sur toute la surface ; la
-  route directe étire chaque rectangle séparément, ce qui laisse des cassures aux frontières
-  entre rectangles, que seule la relaxation atténue. Pas d'UV globales cohérentes avec le
-  maillage (utile pour J10).
-- **À reprendre si** la qualité mesurée au jalon 7 (métriques A et F) reste derrière Quad
-  Remesher à cause de ces cassures, ou au plus tard pour l'export des UV (J10).
+- **Born at** milestone 7, by decision of 7 October 2026 (the "direct" route).
+- **What was planned**: M7 (solve a (u, v) map with whole transitions, constrained by the
+  quantized lengths, with no inverted triangle) then M8 (exact extraction, on the principle of
+  QEx).
+- **What is done instead**: the connectivity of the mesh comes straight from the quantization;
+  each vertex is placed by reading the seamless map in its rectangle, then relaxed.
+- **What is lost**: the integer map spreads the distortion over the whole surface; the direct
+  route stretches each rectangle on its own, which leaves breaks at the borders between
+  rectangles that only relaxation softens. No global UVs consistent with the mesh (useful for
+  J10).
+- **To take up again if** the quality measured at milestone 7 (metrics A and F) stays behind
+  Quad Remesher because of those breaks, or for the export of UVs (J10) at the latest.
 
-### DT-002 — Arêtes vives absentes du T-mesh
+### DT-002 — Hard edges missing from the T-mesh
 
-- **Né au** jalon 5.
-- **Constat** : les arêtes vives sont tenues sur des isolignes de la carte, mais ne sont pas des
-  coupes du T-mesh. Rien n'oblige donc une arête vive à porter un arc, et la quantification ne
-  peut pas lui donner une coordonnée entière. Sur le cube, les traces les suivent d'elles-mêmes ;
-  ce n'est pas garanti ailleurs.
-- **Conséquence** : sur une pièce mécanique, des arêtes du maillage peuvent ne pas tomber sur
-  l'arête vive ; seule la relaxation les y ramène.
-- **À faire** : traiter les arêtes vives comme les bords ouverts (coupes présentes dès le
-  départ, coins qui émettent des traces). Au plus tard au jalon 9.
-- **Fermé au jalon 9** : bords et arêtes vives sont des « murs » du T-mesh. Le maillage a une
-  arête le long de chaque arête vive et un sommet sur chaque coin, vérifié à 1e-6 près sur un
-  bloc en L ; un cylindre garde ses deux bords circulaires.
+- **Born at** milestone 5.
+- **Finding**: hard edges are kept on isolines of the map, but they are not cuts of the T-mesh.
+  So nothing makes a hard edge carry an arc, and quantization cannot give it a whole
+  coordinate. On the cube the traces follow them by themselves; that is not guaranteed
+  elsewhere.
+- **Consequence**: on a mechanical part, edges of the mesh may not fall on the hard edge; only
+  relaxation brings them back to it.
+- **To do**: treat hard edges like open borders (cuts that are there from the start, corners
+  that send out traces). At milestone 9 at the latest.
+- **Closed at milestone 9**: borders and hard edges are "walls" of the T-mesh. The mesh has an
+  edge along every hard edge and a vertex on every corner, checked to 1e-6 on an L-shaped
+  block; a cylinder keeps its two circular rims.
 
-### DT-003 — Pièce sans singularité ni bord : pas de T-mesh
+### DT-003 — A piece with neither singularity nor border: no T-mesh
 
-- **Né au** jalon 5.
-- **Constat** : un tore dont le champ n'a pas de singularité n'a aucune trace, donc ni T-mesh
-  ni quantification.
-- **Repli actuel** (jalon 7) : dès qu'une pièce de la surface n'a ni singularité ni bord, toute
-  la chaîne `quad-layout` passe la main à `integer-grid` (DT-009), et le rapport le signale.
-  Un modèle à plusieurs pièces dont une seule est un tore perd donc tout le bénéfice.
-- **À faire** : quantifier les deux périodes à part, ou poser une coupe arbitraire ; traiter
-  chaque pièce séparément.
-- **Fermé au chantier Q1** : une pièce sans singularité ni mur est découpée à partir d'un de
-  ses sommets, pris au hasard, d'où partent quatre traces. Le tore ressort en une seule grille
-  régulière par la chaîne principale, sans repli. Ce cas, que je croyais marginal, est en
-  réalité courant : sur un personnage de jeu, 92 pièces sur 164 étaient des anneaux.
+- **Born at** milestone 5.
+- **Finding**: a torus whose field has no singularity has no trace, hence neither T-mesh nor
+  quantization.
+- **Fallback at the time** (milestone 7): as soon as one piece of the surface has neither
+  singularity nor border, the whole `quad-layout` chain hands over to `integer-grid` (DT-009),
+  and the report says so. A model in several pieces of which one is a torus thus loses all the
+  benefit.
+- **To do**: quantize the two periods apart, or lay an arbitrary cut; treat each piece on its
+  own.
+- **Closed at track Q1**: a piece with neither singularity nor wall is cut from one of its
+  vertices, any, from which four traces set off. The torus comes out as one regular grid from
+  the main chain, with no fallback. This case, which I took for marginal, is in fact common:
+  on a game character, 92 pieces out of 164 were rings.
 
-### DT-004 — Solveur de quantification approché
+### DT-004 — Approximate quantization solver
 
-- **Né au** jalon 6.
-- **Ce qui était prévu** : Bi-MDF avec raffinement exact par couplage.
-- **Ce qui est fait** : recherche locale par marches améliorantes. Sur de petits réseaux, elle
-  trouve l'optimum exact dans 58 cas sur 60.
-- **À reprendre si** des quantifications visiblement sous-optimales apparaissent.
+- **Born at** milestone 6.
+- **What was planned**: Bi-MDF with exact refinement by matching.
+- **What is done**: local search by improving walks. On small networks it finds the exact
+  optimum in 58 cases out of 60.
+- **To take up again if** visibly sub-optimal quantizations show up.
 
-### DT-005 — Arcs maintenus ouverts : bandes de quads étroites
+### DT-005 — Arcs kept open: narrow strips of quads
 
-- **Né au** jalon 6. Décision du 7 octobre 2026 : on garde les singularités séparées.
-- **Constat** : pour ne pas fusionner deux singularités, certains arcs reçoivent une longueur
-  minimale de 1 alors que leur longueur réelle est bien moindre (29 arcs sur les 12 modèles
-  organiques à 3000 quads). Il en sort des bandes d'un quad de large, trop étroites.
-- **Piste** : autoriser la fusion de deux singularités opposées proches (Lyon et al. 2021),
-  en option réglable par préréglage.
-- **Constaté au jalon 7** : ces bandes donnent des quads écrasés que deux passes de relaxation
-  n'ouvrent pas tout à fait (quelques quads non convexes sur jerry). Les mêmes bandes le long
-  des bords ont été supprimées en laissant une singularité devenir un coin de bord et deux
-  coins de bord voisins fusionner ; entre singularités, la règle reste.
+- **Born at** milestone 6. Decision of 7 October 2026: singularities are kept apart.
+- **Finding**: so as not to merge two singularities, some arcs get a minimum length of 1 when
+  their real length is far less (29 arcs over the 12 organic models at 3000 quads). The result
+  is strips one quad wide, too narrow.
+- **Lead**: allow two close opposite singularities to merge (Lyon et al. 2021), as an option a
+  preset can set.
+- **Seen at milestone 7**: these strips give squashed quads that two passes of relaxation do
+  not quite open (a few non-convex quads on jerry). The same strips along borders were removed
+  by letting a singularity become a border corner and two neighbouring border corners merge;
+  between singularities the rule stays.
 
-### DT-006 — Budget de quads : pas plus fin qu'une bande
+### DT-006 — Quad budget: no finer than a strip
 
-- **Né au** jalon 6.
-- **Constat** : le nombre de quads se règle par un facteur d'échelle commun ; le plus petit
-  changement possible est une bande entière, soit 2 à 4 % à 1000 quads. Écart médian 1,4 %,
-  pire cas 3,9 %.
-- **Piste** : terme de budget dans l'objectif (Marinov et al. 2026).
+- **Born at** milestone 6.
+- **Finding**: the number of quads is set by one common scale factor; the smallest possible
+  change is a whole strip, that is 2 to 4 % at 1000 quads. Median gap 1.4 %, worst case 3.9 %.
+- **Lead**: a budget term in the objective (Marinov et al. 2026).
 
-### DT-007 — Course du T-mesh approchée, T-mesh non simplifié
+### DT-007 — Approximate race of the T-mesh, T-mesh not simplified
 
-- **Né au** jalon 5.
-- **Constat** : les traces avancent triangle par triangle, la moins avancée d'abord ; l'ordre
-  des rencontres peut différer de la course idéale à un triangle près. Aucune trace n'est
-  raccourcie ni prolongée pour simplifier la partition.
-- **Conséquence** : partition valide mais pas la plus simple ; un quart des rectangles sont des
-  lamelles que la quantification referme.
-- **Piste** : choix des traces à prolonger (Lyon et al. 2021).
+- **Born at** milestone 5.
+- **Finding**: traces advance triangle by triangle, the least advanced first; the order of the
+  meetings may differ from the ideal race by a triangle. No trace is shortened or extended to
+  simplify the partition.
+- **Consequence**: a valid partition but not the simplest; a quarter of the rectangles are
+  slivers that quantization closes.
+- **Lead**: choosing which traces to extend (Lyon et al. 2021).
 
-### DT-008 — Traçage en nombres flottants, sans garantie formelle
+### DT-008 — Tracing in floating point, with no formal guarantee
 
-- **Né au** jalon 5.
-- **Ce qui était envisagé** : prédicats exacts ou rationnels.
-- **Ce qui est fait** : flottants et tolérance unique de 1e-6. Aucun échec sur le corpus (48 cas).
-  Une trace perdue rend la partition invalide, et c'est signalé.
-- **À reprendre si** un modèle hors corpus fait échouer le traçage.
+- **Born at** milestone 5.
+- **What was considered**: exact or rational predicates.
+- **What is done**: floating point and a single tolerance of 1e-6. No failure on the corpus (48
+  cases). A lost trace makes the partition invalid, and it is reported.
+- **To take up again if** a model outside the corpus makes tracing fail.
 
-### DT-009 — Chaîne `integer-grid` provisoire encore dans le dépôt
+### DT-009 — The provisional `integer-grid` chain still in the repository
 
-- **Né au** jalon 4 bis. Le cahier des charges prévoyait de retirer l'arrondi glouton au jalon 7.
-- **Constat** : elle sert encore de repli (DT-003) et de point de comparaison. Depuis le jalon 7
-  elle n'est plus la chaîne des préréglages.
-- **À faire** : la retirer, avec son extraction par cellules, quand la nouvelle chaîne la
-  remplace partout.
+- **Born at** milestone 4 bis. The specification planned to remove greedy rounding at
+  milestone 7.
+- **Finding**: it still serves as a fallback (DT-003) and as a point of comparison. Since
+  milestone 7 it is no longer the chain of the presets.
+- **To do**: remove it, with its extraction by cells, when the new chain replaces it
+  everywhere.
 
-### DT-010 — Lignes de défense 2 et 3 contre les inversions non écrites
+### DT-010 — Lines of defence 2 and 3 against inversions not written
 
-- **Né au** jalon 4.
-- **Ce qui était prévu** : contraintes de validité d'*Integer-Grid Maps*, puis construction à
-  garantie (Campen et al. 2019) en dernier recours.
-- **Ce qui est fait** : le raidissement seul. Zéro triangle inversé sur le corpus.
-- **Conséquence** : hors corpus, une inversion irréductible invaliderait le T-mesh sans repli.
+- **Born at** milestone 4.
+- **What was planned**: the validity constraints of *Integer-Grid Maps*, then a construction
+  with a guarantee (Campen et al. 2019) as a last resort.
+- **What is done**: stiffening alone. No inverted triangle on the corpus.
+- **Consequence**: outside the corpus, an inversion that cannot be undone would make the T-mesh
+  invalid with no fallback.
 
-### DT-011 — Faces très étirées dans la carte sans couture
+### DT-011 — Very stretched faces in the seamless map
 
-- **Né au** jalon 4.
-- **Constat** : près de certaines singularités, des triangles sont valides mais écrasés
-  (étirement jusqu'à 1000).
-- **Conséquence** : la carte y est lue avec peu de précision ; à surveiller dans le placement
-  des sommets (J7).
+- **Born at** milestone 4.
+- **Finding**: near some singularities, triangles are valid but squashed (stretch up to 1000).
+- **Consequence**: the map is read with little precision there; to watch in the placement of
+  vertices (J7).
 
-### DT-012 — Préréglage `hard-surface` sur la chaîne organique
+### DT-012 — The `hard-surface` preset on the organic chain
 
-- **Né au** jalon 4 bis.
-- **Constat** : le préréglage existe, mais il passe par la chaîne organique, faute de chaîne
-  durci. Voir aussi DT-002.
-- **Fermé au jalon 9** : la chaîne unique garantit maintenant les arêtes vives ; le préréglage
-  n'a plus besoin d'une autre chaîne. La chaîne par patchs prévue à l'origine est suivie à part
-  (DT-030).
+- **Born at** milestone 4 bis.
+- **Finding**: the preset exists, but it goes through the organic chain, for want of a chain
+  for hard surfaces. See also DT-002.
+- **Closed at milestone 9**: the one chain now guarantees hard edges; the preset no longer
+  needs another chain. The patch chain planned at first is followed apart (DT-030).
 
-### DT-013 — Valeurs des préréglages non réglées sur le corpus
+### DT-013 — Preset values not tuned on the corpus
 
-- **Né au** jalon 4 bis.
-- **Constat** : `organic`, `animation` et `hard-surface` ont des valeurs raisonnables, pas des
-  valeurs mesurées.
-- **À faire** : une campagne de réglage quand la chaîne complète sera stable.
+- **Born at** milestone 4 bis.
+- **Finding**: `organic`, `animation` and `hard-surface` have reasonable values, not measured
+  ones.
+- **To do**: a tuning campaign once the whole chain is stable.
 
-### DT-014 — Visualisation des champs et des structures
+### DT-014 — Visualization of fields and structures
 
-- **Né au** jalon 2. Reporté par décision (« nous verrons plus tard »).
-- **Constat** : les champs, traces et patchs ne se regardent que par des OBJ de lignes et des
-  rendus faits à la main.
-- **Chantier T1 (8 octobre 2026)** : les maillages finaux ont maintenant de vrais rendus
-  (Blender, `scripts/render.py`) et une page par modèle (`make pages`). Les étapes
-  intermédiaires (champ, traces, patchs) restent sans visualisation.
-- **Chantier T2 (8 octobre 2026)** : les étapes intermédiaires se regardent dans Rerun
-  (`make view MODEL=ogre`). **Fermé** ; ce qui manque encore est suivi par DT-035.
+- **Born at** milestone 2. Put off by decision ("we shall see later").
+- **Finding**: fields, traces and patches can only be looked at through OBJ files of lines and
+  renders made by hand.
+- **Track T1 (8 October 2026)**: the final meshes now have real renders (Blender,
+  `scripts/render.py`) and a page per model (`make pages`). The stages in between (field,
+  traces, patches) still have no visualization.
+- **Track T2 (8 October 2026)**: the stages in between can be looked at in Rerun
+  (`make view MODEL=ogre`). **Closed**; what is still missing is followed by DT-035.
 
-### DT-015 — Code encore nommé `retopo`
+### DT-015 — Code still named `retopo`
 
-- **Né au** jalon 4 bis. Décision du 7 octobre 2026 : renommage au jalon 10.
-- **Constat** : crates, exécutable et scripts du banc portent l'ancien nom.
+- **Born at** milestone 4 bis. Decision of 7 October 2026: renaming at milestone 10.
+- **Finding**: crates, executable and scripts of the bench carry the old name.
 - **Closed at milestone 10 (8 October 2026)**: crates, executable, scripts and documents are
   named `openclare`. The folder of the repository on the author's machine keeps its name.
 
-### DT-016 — Documents en français, à traduire
+### DT-016 — Documents in French, to translate
 
-- **Né au** jalon 0, par décision (« pour les docs on traduira à la fin »).
-- **Constat** : `ALGORITHM.md`, `BACKLOG.md`, les `README.md` et `docs/` sont en français ; le
-  code et ses commentaires sont en anglais.
+- **Born at** milestone 0, by decision ("for the docs we shall translate at the end").
+- **Finding**: `ALGORITHME.md`, `BACKLOG.md`, the `README.md` files and `docs/` are in French;
+  the code and its comments are in English.
 - **8 October 2026**: the author asks for documents to be written in English from now on, so
-  that there is less to translate at the end. `CREDITS.md` is translated. What is added to the
-  other documents is written in English; what they already hold in French (`ALGORITHM.md`,
-  this file, the `README.md` files) is still to translate.
+  that there is less to translate at the end. `CREDITS.md` is translated.
+- **Closed on 9 October 2026**, at the author's request: every document is in English.
+  `ALGORITHME.md` is now `ALGORITHM.md`, and the pictures named after French words are
+  renamed. The labels J*n* (for *jalon*, milestone) and DT (for *dette technique*) are kept:
+  tickets are never renumbered. The models generated by the bench (`docs/models`,
+  `bench/results`) were in English already.
 
-### DT-017 — Corpus : sculptures de l'auteur à ajouter
+### DT-017 — Corpus: the author's sculpts to add
 
-- **Né au** jalon 0. Réponse du moment : « oui, plus tard ».
-- **Constat** : les mires Quad Remesher ne peuvent être produites que tant que la licence d'essai
-  est valide. Tout modèle ajouté après son expiration n'aura pas de mire.
-- **À faire** : fournir les sculptures, puis lancer `bench/make_references.py`.
+- **Born at** milestone 0. The answer at the time: "yes, later".
+- **Finding**: the Quad Remesher references can only be made while the trial licence is valid.
+  Any model added after it expires will have no reference.
+- **To do**: provide the sculpts, then run `bench/make_references.py`.
 
-### DT-018 — Parties plus fines qu'un quad mal rendues à bas budget
+### DT-018 — Parts thinner than a quad poorly rendered at low budgets
 
-- **Né au** jalon 7.
-- **Constat** : quand une partie de la forme est plus mince que le quad demandé (oreilles du
-  cochon à 1000 quads), les sommets de ses deux faces se retrouvent presque au même endroit.
-  Deux faces du cochon sont comptées inversées à 1000 quads : c'est le seul cas non valide des
-  36 mesurés. L'ogre garde à 3000 quads un Hausdorff de 3 % de la diagonale (QuadriFlow : 3,7 %),
-  probablement pour la même raison ; à vérifier.
-- **Piste** : densité adaptative (rang 2 des contraintes, J8) ; à défaut, détection des parties
-  minces et placement des sommets sur leur ligne médiane.
-- **Remarque de l'auteur, 8 octobre 2026** : les doigts et les oreilles de l'ogre sont un vrai
-  problème pour tous les remailleurs. L'exigence à tenir : garder au moins le volume de ces
-  parties. C'est devenu le chantier de qualité Q2.
-- **Au chantier Q2 (8 octobre 2026)** : une mesure d'épaisseur borne maintenant la taille des
-  quads pour qu'il en passe six autour d'une partie fine (`quads_around`), et les singularités
-  d'un doigt ne sont plus annulées. Sur l'ogre à 3000 quads, l'écart sur les parties fines
-  passe de 30 à 9 % d'une arête de quad ; les mains ont des doigts. **Reste ouvert** : les
-  feuilles minces (oreilles, tissus), que la mesure du tour laisse de côté à dessein et dont
-  le bord reste grossier ; et les détails plus petits qu'un quad (la queue de `spot` à 1000
-  quads est moins bien rendue qu'avant).
-- **Au jalon 8** : avec la densité adaptative du préréglage, le cochon est valide à 1000 quads.
-  Mais les oreilles de l'ogre restent son plus grand écart à la source : la courbure seule ne
-  voit pas qu'une partie est mince. Il faudrait une mesure d'épaisseur locale dans le champ de
-  taille.
+- **Born at** milestone 7.
+- **Finding**: when a part of the shape is thinner than the quad asked for (the ears of the
+  pig at 1000 quads), the vertices of its two sides end up at nearly the same place. Two faces
+  of the pig are counted inverted at 1000 quads: it is the only invalid case of the 36
+  measured. The ogre keeps at 3000 quads a Hausdorff distance of 3 % of the diagonal
+  (QuadriFlow: 3.7 %), probably for the same reason; to check.
+- **Lead**: adaptive density (rank 2 of the constraints, J8); failing that, detection of thin
+  parts and placement of the vertices on their median line.
+- **Remark of the author, 8 October 2026**: the fingers and ears of the ogre are a real problem
+  for every remesher. The requirement to hold: keep at least the volume of those parts. It
+  became quality track Q2.
+- **At track Q2 (8 October 2026)**: a measure of thickness now bounds the size of the quads so
+  that six of them go round a thin part (`quads_around`), and the singularities of a finger
+  are no longer cancelled. On the ogre at 3000 quads the distance over the thin parts goes
+  from 30 to 9 % of a quad edge; the hands have fingers. **Still open**: thin sheets (ears,
+  cloth), which the measure of girth leaves aside on purpose and whose rim stays rough; and
+  details smaller than a quad (the tail of `spot` at 1000 quads is rendered less well than
+  before).
+- **At milestone 8**: with the adaptive density of the preset, the pig is valid at 1000 quads.
+  But the ears of the ogre stay its largest distance to the source: curvature alone does not
+  see that a part is thin. A measure of local thickness in the sizing field would be needed.
 
-### DT-019 — Relaxation rudimentaire : la forme des quads plafonne
+### DT-019 — Rudimentary relaxation: the shape of the quads levels off
 
-- **Né au** jalon 7.
-- **Constat** : la relaxation est un lissage laplacien suivi d'une projection. Deux passes
-  améliorent la forme ; davantage érode les détails fins (le Hausdorff de l'ogre passe de 27 à
-  46 ‰ entre 0 et 25 passes) et finit par inverser une face. La métrique F reste derrière
-  QuadriFlow sur rock, creature et spot, et derrière Quad Remesher partout.
-- **Conséquence** : c'était le premier frein à la qualité perçue.
-- **Fermé au jalon 8** : nouvelle relaxation `squaring` (chaque quad tiré vers son rectangle,
-  déplacement tangent, sommet tenu à une demi-arête de son point de départ, déplacements qui
-  retournent un quad refusés). À 3000 quads, l'écart d'angle moyen passe de 7,8° à 5,4°
-  (Quad Remesher : 7,2°) et le Hausdorff de 9,1 à 8,1 ‰. Le seuil F est tenu sur les 12 modèles.
-  L'ancien lissage reste disponible (`laplacian`) pour les deux autres chaînes.
+- **Born at** milestone 7.
+- **Finding**: relaxation is Laplacian smoothing followed by a projection. Two passes improve
+  the shape; more wears fine details away (the Hausdorff distance of the ogre goes from 27 to
+  46 per mille between 0 and 25 passes) and ends up inverting a face. Metric F stays behind
+  QuadriFlow on rock, creature and spot, and behind Quad Remesher everywhere.
+- **Consequence**: it was the first brake on perceived quality.
+- **Closed at milestone 8**: a new relaxation, `squaring` (each quad drawn towards its
+  rectangle, tangential moves, a vertex held within half an edge of where it started, moves
+  that turn a quad over refused). At 3000 quads the mean angle deviation goes from 7.8 to 5.4
+  degrees (Quad Remesher: 7.2) and the Hausdorff distance from 9.1 to 8.1 per mille. The F
+  threshold is met on the 12 models. The old smoothing stays available (`laplacian`) for the
+  two other chains.
 
-### DT-020 — Complexe de base doublé par les jonctions en T
+### DT-020 — Base complex doubled by T-junctions
 
-- **Né au** jalon 7.
-- **Constat** : 1886 patchs en médiane contre 951 pour l'arrondi glouton du jalon 4 bis. Deux
-  rectangles voisins du T-mesh n'ont pas forcément leurs lignes en face l'une de l'autre ; les
-  séparatrices du maillage final ne se rejoignent donc pas. Le seuil C reste tenu face à
-  QuadriFlow (sauf sur rock), pas la visée (la moitié de QuadriFlow).
-- **Piste** : simplification du T-mesh (DT-007), ou terme d'alignement des jonctions dans la
-  quantification.
+- **Born at** milestone 7.
+- **Finding**: 1886 patches in the median against 951 for the greedy rounding of milestone 4
+  bis. Two neighbouring rectangles of the T-mesh do not necessarily have their lines facing
+  each other; so the separatrices of the final mesh do not join up. The C threshold stays met
+  against QuadriFlow (except on rock), not the aim (half of QuadriFlow).
+- **Lead**: simplifying the T-mesh (DT-007), or a term aligning the junctions in the
+  quantization.
 
-### DT-021 — Scan bruité (rock) : le champ suit le bruit
+### DT-021 — Noisy scan (rock): the field follows the noise
 
-- **Né au** jalon 7 (visible depuis le jalon 2).
-- **Constat** : sur le scan brut, 50 sommets irréguliers contre 8 pour QuadriFlow, alignement à
-  16°, forme des quads moins bonne. Le champ s'aligne sur une courbure qui est en partie du bruit.
-- **Piste** : lire la courbure à une échelle plus large sur les surfaces bruitées, ou baisser
-  l'alignement là où la confiance est faible ; réglage des préréglages (DT-013).
+- **Born at** milestone 7 (visible since milestone 2).
+- **Finding**: on the raw scan, 50 irregular vertices against 8 for QuadriFlow, alignment at
+  16 degrees, quads of a poorer shape. The field aligns on a curvature that is partly noise.
+- **Lead**: read curvature at a wider scale on noisy surfaces, or lower the alignment where
+  confidence is weak; tuning of the presets (DT-013).
 
-### DT-022 — Mires de comparaison incomplètes à 1000 et 8000 quads
+### DT-022 — Comparison references incomplete at 1000 and 8000 quads
 
-- **Né au** jalon 7.
-- **Constat** : QuadriFlow n'a été lancé sur tout le corpus qu'à 3000 quads ; à 8000 il n'y a
-  qu'un modèle, à 1000 aucun. La règle d'acceptation n'est donc établie qu'à 3000 quads.
-- **Fermé au jalon 8** : tous les outils ont été lancés sur tout le corpus à 1000 et 8000
-  quads (les mires Quad Remesher existaient déjà). La règle d'acceptation est tenue en médiane
-  aux trois budgets ; le détail par modèle est dans `bench/results/ACCEPTANCE.md`. Réserve : ces
-  deux campagnes ont tourné pendant que je compilais et testais, leurs temps de calcul sont donc
-  un peu surestimés.
+- **Born at** milestone 7.
+- **Finding**: QuadriFlow was run on the whole corpus at 3000 quads only; at 8000 there is one
+  model, at 1000 none. So the acceptance rule is only established at 3000 quads.
+- **Closed at milestone 8**: every tool was run on the whole corpus at 1000 and 8000 quads
+  (the Quad Remesher references existed already). The acceptance rule is met in the median at
+  the three budgets; the detail per model is in `bench/results/ACCEPTANCE.md`. A reservation:
+  these two campaigns ran while I was compiling and testing, so their computing times are a
+  little overestimated.
 
-### DT-023 — Relaxation : coût et tailles de quads
+### DT-023 — Relaxation: cost, and sizes of quads
 
-- **Né au** jalon 8.
-- **Constat** : soixante passes, chacune avec une projection sur la source par sommet : 1,7 s
-  sur l'ogre à 8000 quads, un sixième du temps total. Par ailleurs les quads gardent les tailles
-  que la quantification leur donne ; la variation d'aire monte un peu (0,34 à 0,38 sur blob).
-- **Constaté aussi** : à 8000 quads les soixante passes ne suffisent plus tout à fait (écart
-  d'angle moyen de 6,1° contre 5,4° à 3000 quads), et openclare y est plus lent que QuadriFlow
-  (6,8 s contre 4,1 s en médiane).
-- **Pistes** : nombre de passes selon la taille du maillage, ou du grossier au fin ; ne
-  projeter qu'une passe sur plusieurs ; arrêt quand plus rien ne bouge ;
-  projection sur le maillage de calcul plutôt que sur la source ; part de lissage plus forte
-  là où deux rectangles voisins ont des densités différentes.
+- **Born at** milestone 8.
+- **Finding**: sixty passes, each with a projection onto the source per vertex: 1.7 s on the
+  ogre at 8000 quads, a sixth of the total time. Besides, the quads keep the sizes that
+  quantization gives them; the variation of area goes up a little (0.34 to 0.38 on blob).
+- **Seen too**: at 8000 quads the sixty passes are no longer quite enough (mean angle deviation
+  of 6.1 degrees against 5.4 at 3000 quads), and openclare is slower there than QuadriFlow
+  (6.8 s against 4.1 s in the median).
+- **Leads**: a number of passes that depends on the size of the mesh, or coarse to fine;
+  projecting only one pass in several; stopping when nothing moves any more; projecting onto
+  the work mesh rather than the source; a larger share of smoothing where two neighbouring
+  rectangles have different densities.
 
-### DT-024 — Courbes guides (rang 4) non commencées
+### DT-024 — Guide curves (rank 4) not started
 
-- **Né au** jalon 8 sous le titre « Densité adaptative et contraintes de rang 3 à 5 non
-  commencées » ; **réduit** dans le même jalon.
-- **Fait depuis** : la densité adaptative (rang 2) et la densité peinte (rang 5), par un même
-  champ de taille (fiche M1 bis). Quad Remesher par défaut garde un avantage sur la fidélité à
-  1000 et 3000 quads, mais il y dépasse le budget demandé de 71 % et 37 %.
-- **Reste** : le rang 4, les courbes guides tracées sur la surface. Le rang 3 (arêtes vives)
-  est suivi par DT-002 et DT-012.
-- **Piste** : une courbe guide est une arête caractéristique que l'utilisateur dessine ; elle
-  entrerait par `Guides`, comme la densité peinte, et serait traitée comme une arête vive.
-- **Closed on 9 October 2026**: this is what was done, with curves drawn in Blender and held on
-  the model by a Shrinkwrap, as the author proposed (fiche "Guide curves" of the
-  specification). What is not reliable yet is DT-044.
-- **Constat du 7 octobre 2026** : Quad Remesher (module Blender 1.4, vérifié) n'a pas de
-  courbes guides. Il guide les boucles d'arêtes par ce que le maillage porte déjà : frontières
-  entre matériaux, normales scindées, arêtes vives détectées par angle. Une variante bien moins
-  coûteuse du rang 4 serait donc des **arêtes marquées par l'utilisateur** dans Blender, qui
-  passeraient par le même mécanisme que les arêtes vives du jalon 9.
-- **Objection du 7 octobre 2026** : marquer des arêtes est à peu près impossible sur un
-  maillage à haute densité, et des courbes libres risquent de donner une interface lourde.
-  (Depuis le jalon 9 le mécanisme existe côté moteur : une ligne à suivre est un « mur ». Il
-  reste à faire entrer par `Guides` des murs désignés par l'utilisateur.)
-  La question est donc d'abord celle du geste dans Blender. Pistes à discuter, de la plus
-  naturelle sur une sculpture à la plus lourde : les frontières entre *Face Sets* du mode
-  Sculpt (on peint des zones, leurs frontières deviennent des boucles) ; un trait d'annotation
-  dessiné sur la surface ; des objets courbes. Rien n'est décidé.
+- **Born at** milestone 8 under the title "Adaptive density and constraints of rank 3 to 5 not
+  started"; **reduced** in the same milestone.
+- **Done since**: adaptive density (rank 2) and painted density (rank 5), by one sizing field
+  (sheet M1 bis). Quad Remesher by default keeps an edge on fidelity at 1000 and 3000 quads,
+  but it goes over the budget asked for by 71 % and 37 % there.
+- **Left**: rank 4, guide curves drawn on the surface. Rank 3 (hard edges) is followed by
+  DT-002 and DT-012.
+- **Lead**: a guide curve is a feature edge the user draws; it would come in through `Guides`,
+  like painted density, and be treated like a hard edge.
+- **Finding of 7 October 2026**: Quad Remesher (Blender add-on 1.4, checked) has no guide
+  curves. It guides edge loops by what the mesh already carries: borders between materials,
+  split normals, hard edges detected by angle. A far cheaper variant of rank 4 would then be
+  **edges marked by the user** in Blender, which would go through the same mechanism as the
+  hard edges of milestone 9.
+- **Objection of 7 October 2026**: marking edges is close to impossible on a mesh of high
+  density, and free curves may make for a heavy interface. (Since milestone 9 the mechanism
+  exists on the engine side: a line to follow is a "wall". What is left is to bring in through
+  `Guides` walls named by the user.) So the question is first that of the gesture in Blender.
+  Leads to discuss, from the most natural on a sculpt to the heaviest: the borders between
+  *Face Sets* of Sculpt mode (zones are painted, their borders become loops); an annotation
+  stroke drawn on the surface; curve objects. Nothing is decided.
+- **Closed on 9 October 2026**: curve objects it is, drawn in Blender and held on the model by
+  a Shrinkwrap, as the author proposed (sheet "Guide curves" of the specification). They come
+  in through `Guides` and are treated like hard edges. What is not reliable yet is DT-044.
 
-### DT-025 — Densité : portée des singularités et lecture de la courbure encore à l'échelle nominale
+### DT-025 — Density: reach of singularities and reading of curvature still at the nominal scale
 
-- **Né au** jalon 8.
-- **Constat** : là où les quads sont plus petits, deux réglages continuent de se compter en
-  arêtes nominales : la portée de l'annulation des paires de singularités (M3), qui annule donc
-  trop dans les zones denses et pas assez dans les zones lâches, et l'échelle à laquelle le
-  champ de croix lit la courbure (M2).
-- **Conséquence** : dans une zone peinte très dense, des détails que les quads pourraient suivre
-  ne sont pas vus par le champ.
-- **À faire** : rendre ces deux longueurs locales.
-- **Au chantier Q2** : la portée de l'annulation se compte maintenant en quads locaux (le
-  chemin entre deux singularités est mesuré dans la métrique du champ de taille). Reste
-  l'échelle de lecture de la courbure.
+- **Born at** milestone 8.
+- **Finding**: where quads are smaller, two settings are still counted in nominal edges: the
+  reach of the cancellation of pairs of singularities (M3), which thus cancels too much in
+  dense zones and not enough in loose ones, and the scale at which the cross field reads
+  curvature (M2).
+- **Consequence**: in a zone painted very dense, details the quads could follow are not seen
+  by the field.
+- **To do**: make these two lengths local.
+- **At track Q2**: the reach of the cancellation is now counted in local quads (the path
+  between two singularities is measured in the metric of the sizing field). The scale at which
+  curvature is read is left.
 
-### DT-026 — Densité peinte : lecture du Weight Paint de Blender à faire (pont Blender)
+### DT-026 — Painted density: reading Blender's Weight Paint to do (Blender bridge)
 
-- **Né au** jalon 8.
-- **Fait côté moteur** : la densité peinte est un poids par sommet, de 0 (densité minimale) à 1
-  (densité maximale), avec un réglage de contraste (`density_contrast`). Convention fixée le
-  7 octobre 2026 pour coller au Weight Paint : un sommet non peint vaut 0 et sert de niveau de
-  base, il n'y a pas de valeur neutre à connaître.
-- **Reste** : rien ne lit encore un groupe de sommets de Blender ; en ligne de commande, les
-  poids viennent d'un fichier texte (`--density`).
+- **Born at** milestone 8.
+- **Done on the engine side**: painted density is a weight per vertex, from 0 (lowest density)
+  to 1 (highest density), with a contrast setting (`density_contrast`). Convention set on
+  7 October 2026 to match Weight Paint: an unpainted vertex is worth 0 and serves as the base
+  level, there is no neutral value to know.
+- **Left at the time**: nothing read a vertex group of Blender yet; on the command line, the
+  weights come from a text file (`--density`).
 - **Closed at milestone 10 (8 October 2026)**: the add-on lets the user pick a vertex group of
   the object and a factor (how many times more quads a weight of 1 gets than a weight of 0),
   and hands its weights to the engine.
-- **À faire** au jalon 10, avec le pont Blender (pas commencé) : lire le groupe de sommets
-  choisi par l'utilisateur et le passer tel quel au moteur.
 
-### DT-027 — Garde-fous de temps de calcul sur les entrées pathologiques
+### DT-027 — Guards on computing time for pathological inputs
 
-- **Né au** jalon 8, sur Desert Rose (hors acceptation).
-- **Constat** : sur une surface où la carte ne se déplie pas, des traces tournaient sur place
-  pendant plus d'un quart d'heure ; leur nombre de pas est maintenant borné par leur longueur
-  permise, et une carte repliée renvoie directement à la chaîne de repli. Mais ce repli
-  (`integer-grid`) met encore plus de deux minutes sur ce modèle à 8000 quads, et la chaîne n'a
-  pas de limite de temps globale.
-- **À faire** : avec le prétraitement de réparation (J11) ; d'ici là, borner aussi le repli.
+- **Born at** milestone 8, on Desert Rose (outside acceptance).
+- **Finding**: on a surface where the map does not unfold, traces went round on the spot for
+  more than a quarter of an hour; their number of steps is now bounded by the length they are
+  allowed, and a folded map sends straight to the fallback chain. But this fallback
+  (`integer-grid`) still takes more than two minutes on this model at 8000 quads, and the chain
+  has no overall time limit.
+- **To do**: with the repair preprocessing (J11); until then, bound the fallback too.
 
-### DT-028 — Symétrie : absente, Quad Remesher l'a
+### DT-028 — Symmetry: missing, Quad Remesher has it
 
-- **Né au** jalon 8, en relisant les options du module Blender de Quad Remesher (1.4).
-- **Constat** : Quad Remesher propose une symétrie selon X, Y ou Z. Le cahier des charges
-  d'openclare ne la prévoit pas, et rien ne garantit aujourd'hui qu'un modèle symétrique
-  donne un maillage symétrique.
-- **Piste** : remailler une moitié avec un bord posé sur le plan de symétrie, puis la refléter ;
-  les bords ouverts sont déjà pris en charge.
-- **Décision du 7 octobre 2026** : voulue. Inscrite à la feuille de route comme jalon 9 bis.
-- **Décision du 8 octobre 2026** : c'est une fonctionnalité annexe, qui ne fait pas progresser
-  la qualité ; elle passe après les travaux de qualité.
+- **Born at** milestone 8, reading again the options of the Blender add-on of Quad Remesher
+  (1.4).
+- **Finding**: Quad Remesher offers a symmetry along X, Y or Z. The specification of openclare
+  does not plan for it, and nothing guarantees today that a symmetric model gives a symmetric
+  mesh.
+- **Lead**: remesh one half with a border laid on the plane of symmetry, then mirror it; open
+  borders are handled already.
+- **Decision of 7 October 2026**: wanted. Entered in the roadmap as milestone 9 bis.
+- **Decision of 8 October 2026**: it is a side feature, which does not move quality forward;
+  it comes after the work on quality.
 
-### DT-029 — Quads étirés sur la paroi d'un cylindre
+### DT-029 — Stretched quads on the wall of a cylinder
 
-- **Né au** jalon 9.
-- **Constat** : sur un cylindre à fonds plats, les quads de la paroi sont 1,3 fois plus larges
-  que hauts. Le nombre de lignes qui longent la paroi est celui qui sort des deux disques, et
-  un disque, dont les anneaux rétrécissent vers le centre, en veut moins que la paroi. La
-  carte tranche entre les deux.
-- **Pistes** : placer les quatre singularités de chaque disque plus près du bord (la zone en
-  anneaux est alors mince) ; ou pondérer la carte par l'aire concernée de chaque côté.
+- **Born at** milestone 9.
+- **Finding**: on a cylinder with flat ends, the quads of the wall are 1.3 times wider than
+  they are high. The number of lines that run along the wall is the one that comes out of the
+  two discs, and a disc, whose rings shrink towards the centre, wants fewer of them than the
+  wall. The map settles between the two.
+- **Leads**: place the four singularities of each disc closer to the rim (the zone in rings is
+  then thin); or weight the map by the area concerned on each side.
 
-### DT-030 — Chaîne par patchs (QuadWild) non écrite
+### DT-030 — Patch chain (QuadWild) not written
 
-- **Né au** jalon 9, par décision du 7 octobre 2026.
-- **Ce qui était prévu** : une seconde chaîne pour les surfaces dures, sur le principe de
-  QuadWild : tracer des patchs à partir du champ sans passer par une carte, puis les remplir
-  par des motifs.
-- **Ce qui est fait à la place** : les arêtes vives sont des coupes du T-mesh de la chaîne
-  existante (fiche M5). Sur les quatre pièces du corpus, arêtes et coins sont retrouvés
-  exactement.
-- **Ce qu'on y perd** : la chaîne par patchs ne dépend pas d'une carte sans triangle inversé ;
-  c'était aussi le repli prévu si la paramétrisation échouait (section 6). Ce repli n'existe
-  donc pas : aujourd'hui, c'est `integer-grid` qui en tient lieu (DT-009).
-- **À reprendre si** des pièces mécaniques réelles font échouer la carte ou le T-mesh.
+- **Born at** milestone 9, by decision of 7 October 2026.
+- **What was planned**: a second chain for hard surfaces, on the principle of QuadWild: trace
+  patches from the field without going through a map, then fill them with patterns.
+- **What is done instead**: hard edges are cuts of the T-mesh of the existing chain (sheet M5).
+  On the four parts of the corpus, edges and corners are recovered exactly.
+- **What is lost**: the patch chain does not depend on a map with no inverted triangle; it was
+  also the fallback planned if parametrization failed (section 6). So that fallback does not
+  exist: today `integer-grid` stands in for it (DT-009).
+- **To take up again if** real mechanical parts make the map or the T-mesh fail.
 
-### DT-031 — Triangles d'aire quasi nulle laissés par le prétraitement
+### DT-031 — Triangles of nearly no area left by preprocessing
 
-- **Né au** jalon 9 ; le défaut date du jalon 1.
-- **Constat** : pour ne pas ouvrir de fente, le remaillage isotrope garde des triangles plats
-  le long des arêtes vives (aire de l'ordre de 1e-18). Ils faisaient s'effondrer la carte sans
-  couture dans certaines configurations (cylindre, préréglage `hard-surface`).
-- **Même famille** : un triangle dont deux côtés sont sur la même arête vive (il coupe un
-  léger angle de la ligne) est forcément aplati dans la carte ; il faisait renoncer la carte à
-  tenir les arêtes vives, et faussait le décompte des angles autour des sommets.
-- **Traité en aval** au jalon 9 : la paramétrisation, le décompte des triangles inversés et le
-  calcul des angles autour d'un mur s'en accommodent.
-- **À faire** : les éliminer à la source, par bascule ou fusion d'arêtes qui respecte les
-  arêtes vives.
+- **Born at** milestone 9; the defect dates from milestone 1.
+- **Finding**: so as not to open a slit, isotropic remeshing keeps flat triangles along hard
+  edges (area of the order of 1e-18). They made the seamless map collapse in some
+  configurations (cylinder, `hard-surface` preset).
+- **Same family**: a triangle with two sides on the same hard edge (it cuts a slight angle of
+  the line) is bound to be flattened in the map; it made the map give up holding the hard
+  edges, and skewed the count of angles around vertices.
+- **Dealt with downstream** at milestone 9: parametrization, the count of inverted triangles
+  and the computation of angles around a wall put up with them.
+- **To do**: remove them at the source, by an edge flip or collapse that respects hard edges.
 
-### DT-032 — Modèles faits de nombreuses pièces détachées : toute la chaîne se replie
+### DT-032 — Models made of many separate pieces: the whole chain falls back
 
-- **Né au** jalon 9, sur deux personnages de jeu récupérés de BlenderKit (voir CREDITS.md).
-- **Constat** : `mahaveer` est fait de 164 pièces ouvertes détachées (vêtements, bijoux),
-  `marine` de 820, avec en plus 305 arêtes à trois faces. Le cahier des charges dit que
-  plusieurs pièces séparées sont « acceptées, chaque pièce est traitée seule » : ce n'est pas
-  ce que fait le code. Tout est traité d'un bloc ; il suffit qu'une pièce n'ait pas de T-mesh
-  valide pour que le modèle entier parte dans la chaîne de repli, qui met 84 secondes sur
-  `mahaveer` et rend un maillage non valide (17 pièces sur 164, budget manqué de 28 %).
-  `marine` est refusé d'emblée, avec un diagnostic clair, pour ses arêtes non variété : c'est
-  le comportement prévu en attendant la réparation (J11).
-- **Conséquence** : les modèles assemblés, courants dans la production, ne passent pas.
-- **À faire** : traiter chaque pièce pour elle-même (budget réparti au prorata de l'aire,
-  repli pièce par pièce), ignorer ou regrouper les pièces plus petites qu'un quad. La fusion
-  des pièces qui se traversent en une seule peau reste l'affaire du jalon 11.
-- **Fermé au chantier Q1** : chaque pièce est maillée pour elle-même, avec sa part des quads
-  (au prorata de l'aire, pondérée par la densité peinte, avec un minimum par pièce), un
-  maillage de calcul à sa mesure, et son propre repli si besoin. Sur `mahaveer` : 15 secondes
-  au lieu de 84, 150 pièces sur 164 par la chaîne principale, budget tenu à 1,8 %. Ce qui
-  reste est suivi par DT-034.
+- **Born at** milestone 9, on two game characters fetched from BlenderKit (see CREDITS.md).
+- **Finding**: `mahaveer` is made of 164 separate open pieces (clothes, jewels), `marine` of
+  820, with 305 edges of three faces besides. The specification says that several separate
+  pieces are "accepted, each piece is treated on its own": this is not what the code does.
+  Everything is treated as one block; one piece without a valid T-mesh is enough for the whole
+  model to go to the fallback chain, which takes 84 seconds on `mahaveer` and returns an
+  invalid mesh (17 pieces out of 164, budget missed by 28 %). `marine` is refused at once, with
+  a clear diagnosis, for its non-manifold edges: it is the behaviour planned until repair
+  (J11).
+- **Consequence**: assembled models, common in production, do not go through.
+- **To do**: treat each piece for itself (budget shared in proportion to area, fallback piece
+  by piece), ignore or group the pieces smaller than a quad. Merging pieces that go through
+  one another into one skin stays the business of milestone 11.
+- **Closed at track Q1**: each piece is meshed for itself, with its share of the quads (in
+  proportion to area, weighted by painted density, with a minimum per piece), a work mesh to
+  its measure, and its own fallback if needed. On `mahaveer`: 15 seconds instead of 84, 150
+  pieces out of 164 through the main chain, budget held to 1.8 %. What is left is followed by
+  DT-034.
 
-### DT-033 — Terrains et scans : aucun outil n'aligne, le champ n'a rien à suivre
+### DT-033 — Terrains and scans: no tool aligns, the field has nothing to follow
 
-- **Né au** jalon 9, sur un terrain de montagne de 543 557 triangles (BlenderKit).
-- **Constat** : openclare y donne un maillage valide, au budget, avec trois fois moins de
-  sommets irréguliers que Quad Remesher (56 contre 167) et une fidélité comparable. Mais
-  l'alignement est à 18,6°, proche du hasard (22,5°), comme pour tous les outils mesurés
-  (QuadriFlow 20,2°, Quad Remesher 18,6°) : un relief érodé n'a pas de directions de courbure
-  stables à l'échelle d'un quad. Même famille que le scan `rock` (DT-021).
-- **Piste** : sur ces surfaces, la métrique d'alignement ne dit pas grand-chose ; ce qui
-  compterait serait de suivre les lignes de crête et de vallée, à détecter comme des lignes à
-  suivre plutôt que par la courbure point par point.
+- **Born at** milestone 9, on a mountain terrain of 543,557 triangles (BlenderKit).
+- **Finding**: openclare gives a valid mesh there, on budget, with three times fewer irregular
+  vertices than Quad Remesher (56 against 167) and a comparable fidelity. But alignment is at
+  18.6 degrees, close to chance (22.5), as for every tool measured (QuadriFlow 20.2, Quad
+  Remesher 18.6): an eroded relief has no curvature directions that are stable at the scale of
+  a quad. Same family as the scan `rock` (DT-021).
+- **Lead**: on these surfaces the alignment metric does not say much; what would count would
+  be to follow ridge and valley lines, to be detected as lines to follow rather than by
+  curvature point by point.
 
-### DT-034 — Petites pièces : quelques-unes passent encore par le repli, ou n'en sortent pas
+### DT-034 — Small pieces: a few still go through the fallback, or do not come out of it
 
-- **Né au** chantier Q1, sur `mahaveer` (164 pièces) et sur Desert Rose (96 coques).
-- **Constat** : sur `mahaveer` à 8000 quads, 6 pièces passent encore par la chaîne de repli et
-  8 n'en sortent avec aucune face ; le maillage garde 9 faces qui ne sont pas des quads. Sur
-  la rose, 12 coques sur 96 passent par le repli. Les causes, que le rapport détaille
-  maintenant pièce par pièce : la carte se replie (le plus souvent), pas de longueurs entières
-  saines, un bord hors des isolignes, une trace perdue.
-- **Par ailleurs** : une pièce dont la juste part est inférieure à un quad reçoit quand même
-  le minimum (6 quads pour une boule, 16 pour un anneau). Sur un modèle à très nombreuses
-  petites pièces, ces minimums pèsent sur le budget. **Décidé le 8 octobre 2026** : on garde
-  ce minimum par défaut, et le réglage `skip_pieces_under` permet de laisser de côté les
-  pièces dont la part est inférieure à un seuil.
-- **À faire** : reprendre ces causes une à une ; rendre le repli lui-même plus sûr sur les
-  très petites pièces, ou s'en passer.
+- **Born at** track Q1, on `mahaveer` (164 pieces) and on Desert Rose (96 shells).
+- **Finding**: on `mahaveer` at 8000 quads, 6 pieces still go through the fallback chain and 8
+  come out of it with no face; the mesh keeps 9 faces that are not quads. On the rose, 12
+  shells out of 96 go through the fallback. The causes, which the report now details piece by
+  piece: the map folds (most often), no sound whole lengths, a border off the isolines, a lost
+  trace.
+- **Besides**: a piece whose fair share is less than a quad still gets the minimum (6 quads
+  for a ball, 16 for a ring). On a model with very many small pieces, these minimums weigh on
+  the budget. **Decided on 8 October 2026**: this minimum is kept by default, and the setting
+  `skip_pieces_under` lets one leave aside the pieces whose share is below a threshold.
+- **To do**: take these causes up one by one; make the fallback itself safer on very small
+  pieces, or do without it.
 
-### DT-035 — Visualisation Rerun : ce qui n'est pas montré, version en retard
+### DT-035 — Rerun visualization: what is not shown, version behind
 
-- **Né au** chantier T2.
-- **Ce qui n'est pas montré** :
-  - les patchs de la structure globale comme des régions colorées : on voit leurs bords (les
-    coupes), pas leur surface ;
-  - la carte sans couture (ses isolignes, ses triangles repliés), alors que « la carte se
-    replie » est la première cause de repli (DT-034) ;
-  - les traces perdues et les chevauchements, que le T-mesh compte sans garder leur position ;
-  - la comparaison entre remailleurs : un enregistrement montre une seule exécution.
-- **Approximations** : la longueur entière d'un arc est écrite au milieu de la corde entre ses
-  deux nœuds, pas au milieu de l'arc ; les quads sont affichés en ombrage lissé.
-- **Une étape à la fois** (demandé le 8 octobre 2026, fait) : le long de la ligne de temps
-  `step`, chaque étape efface la précédente ; la ligne `stack` garde tout. Reste que les
-  étapes d'un modèle en plusieurs pièces défilent pièce après pièce, sans vue d'ensemble
-  d'une même étape sur toutes les pièces.
-- **Version** : Rerun 0.36.3, la dernière qui se construit avec Rust 1.95 ; la plus récente
-  (0.38.1) demande Rust 1.96. La visionneuse de la 0.36 impose de plus des versions exactes
-  de `wasm-bindgen` et de ses voisines, fixées dans `Cargo.lock`.
-- **Poids** : `Cargo.lock` passe à un millier de paquets, que seules les deux crates Rerun
-  utilisent. Première construction en mode release : environ 5 minutes pour `openclare` avec
-  `--features rerun` (31 Mo au lieu de 17), environ 17 minutes pour `openclare-view` (265 Mo).
-  Les informations de débogage des dépendances ont été retirées du profil release pour
-  cela : avec elles, `openclare-view` pesait 1,5 Go.
-- **Visionneuse embarquée non vérifiée à l'œil** : `openclare-view` démarre et reste ouvert sans
-  erreur, mais c'est dans la visionneuse web de Rerun que l'enregistrement a été regardé.
-- **Temps mesurés** : pendant un enregistrement, le temps passé à écrire les calques d'une
-  étape est compté dans l'étape suivante.
+- **Born at** track T2.
+- **What is not shown**:
+  - the patches of the global structure as coloured regions: their borders (the cuts) are
+    seen, not their surface;
+  - the seamless map (its isolines, its folded triangles), although "the map folds" is the
+    first cause of fallback (DT-034);
+  - lost traces and overlaps, which the T-mesh counts without keeping their position;
+  - the comparison between remeshers: a recording shows one run only.
+- **Approximations**: the whole length of an arc is written at the middle of the chord between
+  its two nodes, not at the middle of the arc; quads are displayed with smooth shading.
+- **One stage at a time** (asked for on 8 October 2026, done): along the `step` timeline each
+  stage clears the one before; the `stack` timeline keeps everything. Still, the stages of a
+  model in several pieces go by piece after piece, with no overall view of one stage over all
+  the pieces.
+- **Version**: Rerun 0.36.3, the last that builds with Rust 1.95; the most recent (0.38.1) asks
+  for Rust 1.96. The viewer of 0.36 also demands exact versions of `wasm-bindgen` and its
+  neighbours, pinned in `Cargo.lock`.
+- **Weight**: `Cargo.lock` goes up to a thousand packages, which only the two Rerun crates
+  use. First build in release mode: about 5 minutes for `openclare` with `--features rerun`
+  (31 MB instead of 17), about 17 minutes for `openclare-view` (265 MB). The debug information
+  of the dependencies was removed from the release profile for that: with it, `openclare-view`
+  weighed 1.5 GB.
+- **Embedded viewer not checked by eye**: `openclare-view` starts and stays open without an
+  error, but it is in the web viewer of Rerun that the recording was looked at.
+- **Measured times**: during a recording, the time spent writing the layers of a stage is
+  counted in the next stage.
 
-### DT-036 — Poches et cavités profondes refermées par le maillage
+### DT-036 — Deep pockets and cavities closed over by the mesh
 
-- **Né au** chantier Q2, en cherchant d'où vient le Hausdorff de l'ogre.
-- **Constat** : à 3000 quads, le point de la source le plus éloigné du maillage (1,6 arête de
-  quad) n'est pas sur un doigt mais dans deux petites poches derrière les yeux, de 0,15 de
-  large et 0,35 de profondeur, que le maillage referme. Quad Remesher, au double du budget,
-  les suit (0,36 arête). Tant qu'elles sont là, le Hausdorff de l'ogre (27 ‰) ne dit rien de
-  ses mains.
-- **Piste** : c'est le pendant en creux des parties fines. La même mesure, rayons lancés vers
-  l'extérieur, donnerait la largeur d'une cavité ; reste à décider si on veut la suivre ou la
-  boucher proprement.
+- **Born at** track Q2, looking for where the Hausdorff distance of the ogre comes from.
+- **Finding**: at 3000 quads, the point of the source farthest from the mesh (1.6 quad edges)
+  is not on a finger but in two small pockets behind the eyes, 0.15 wide and 0.35 deep, which
+  the mesh closes over. Quad Remesher, at twice the budget, follows them (0.36 edge). As long
+  as they are there, the Hausdorff distance of the ogre (27 per mille) says nothing of its
+  hands.
+- **Lead**: it is the hollow counterpart of thin parts. The same measure, with rays cast
+  outwards, would give the width of a cavity; it is left to decide whether to follow it or to
+  plug it cleanly.
 
-### DT-037 — Volume : le maillage est inscrit dans la forme
+### DT-037 — Volume: the mesh is inscribed in the shape
 
-- **Né au** chantier Q2. Priorité haute : l'auteur tient la préservation des volumes pour très
-  importante.
-- **Constat** : les sommets du maillage sont posés sur la surface. Partout où elle est bombée,
-  les faces passent donc en dessous, et le volume baisse : 99,6 % du volume de l'ogre à 8000
-  quads, 98,8 % à 3000, 96,5 % à 1000 ; entre 97 et 98 % à 1000 quads sur les autres modèles
-  fermés. Sur une partie fine c'est bien plus : un doigt à six faces n'a que 83 % de la
-  section du doigt, à quatre faces 64 %. Une subdivision de Catmull-Clark, usage normal d'un
-  tel maillage, retire encore du volume.
-- **Piste** : après la relaxation, ajuster les sommets le long de la normale pour que le
-  maillage passe au milieu de la surface plutôt qu'en dessous (moindres carrés sur la distance
-  de la source au maillage, et non des sommets à la source) ; en option, viser la surface
-  limite de la subdivision. La mesure `volume_ratio` du banc est là pour le vérifier.
+- **Born at** track Q2. High priority: the author holds the preservation of volumes to be very
+  important.
+- **Finding**: the vertices of the mesh are laid on the surface. Wherever it bulges, the faces
+  then pass below it, and the volume goes down: 99.6 % of the volume of the ogre at 8000
+  quads, 98.8 % at 3000, 96.5 % at 1000; between 97 and 98 % at 1000 quads on the other closed
+  models. On a thin part it is far more: a finger with six faces has only 83 % of the section
+  of the finger, with four faces 64 %. A Catmull-Clark subdivision, the normal use of such a
+  mesh, takes away more volume still.
+- **Lead**: after relaxation, adjust the vertices along the normal so that the mesh passes
+  through the middle of the surface rather than below it (least squares on the distance from
+  the source to the mesh, not from the vertices to the source); as an option, aim at the limit
+  surface of the subdivision. The measure `volume_ratio` of the bench is there to check it.
 - **Closed at track Q2 bis (8 October 2026)**: a last stage, fitting, does this
   (`fitting.rs`, setting `volume_fit`). Median volume kept over the bench: 100.0 % at the three
   budgets; the ogre 99.8 % at 1000 quads and 100.0 % above. What it leaves open is DT-039.
 
-### DT-038 — Parties fines : limites de la borne de taille
+### DT-038 — Thin parts: limits of the bound on size
 
-- **Né au** chantier Q2.
-- **Pas de plafond sur la part du budget** que prennent les parties fines : sur un modèle fait
-  surtout de parties fines, le reste devient très grossier. Le seul garde-fou est le plancher
-  de taille (un quart de la taille demandée).
-- **Le plancher est réglé sur un cas** : à un sixième, une ou deux faces de `jerry` se
-  retournaient sur ses oreilles à 1000 quads ; à un quart, non. Rien ne garantit que ce soit
-  vrai partout.
-- **Plus de sommets irréguliers** : l'ogre passe de 88 à 155 à 3000 quads, `jerry` de 102 à
-  162. Le préréglage `animation`, qui veut peu de sommets irréguliers, garde pour l'instant le
-  même réglage que `organic` ; à revoir avec DT-013.
-- **Les notes ne comptent pas les parties fines** : le barème de `SCORES.md` voit ce qu'elles
-  coûtent (régularité) et pas ce qu'elles rapportent. Décision à prendre : ajouter un critère,
-  ou l'intégrer à la fidélité.
-- **L'épaisseur n'est pas montrée** dans l'enregistrement Rerun ; on n'y voit que son effet
-  sur le champ de taille.
-- **La mesure** : sept rayons en travers et quatre cordes par sommet, médiane sur le
-  voisinage. Elle coûte de 0,3 à 0,5 seconde. Au bout d'un doigt, l'épaisseur en travers est
-  surestimée d'un tiers environ (le rayon central file le long du doigt).
-- **Préréglage `hard-surface`** : la borne y est désactivée, sans essai. Une pièce mécanique
-  avec des tiges fines en aurait peut-être besoin.
+- **Born at** track Q2.
+- **No ceiling on the share of the budget** that thin parts take: on a model made mostly of
+  thin parts, the rest becomes very coarse. The only guard is the floor on size (a quarter of
+  the size asked for).
+- **The floor is tuned on one case**: at a sixth, one or two faces of `jerry` turned over on
+  its ears at 1000 quads; at a quarter, they do not. Nothing guarantees that this holds
+  everywhere.
+- **More irregular vertices**: the ogre goes from 88 to 155 at 3000 quads, `jerry` from 102 to
+  162. The `animation` preset, which wants few irregular vertices, keeps the same setting as
+  `organic` for now; to look at again with DT-013.
+- **The scores do not count thin parts**: the scale of `SCORES.md` sees what they cost
+  (regularity) and not what they bring. A decision to take: add a criterion, or make it part
+  of fidelity. (Decided since: part of fidelity.)
+- **Thickness is not shown** in the Rerun recording; only its effect on the sizing field is
+  seen there.
+- **The measure**: seven rays across and four chords per vertex, the median over the
+  neighbourhood. It costs 0.3 to 0.5 second. At the tip of a finger, the thickness across is
+  overestimated by about a third (the central ray runs along the finger).
+- **`hard-surface` preset**: the bound is switched off there, untried. A mechanical part with
+  thin rods might need it.
 
 ### DT-039 — Fitting: limits, and the volume after subdivision
 
