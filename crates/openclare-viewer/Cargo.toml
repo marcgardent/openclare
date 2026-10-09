@@ -16,3 +16,6 @@ doc = false
 # A tool for those who work on the chains: the whole viewer comes with it,
 # which is long to build. Nothing else in the workspace depends on it.
 rerun = { workspace = true, features = ["sdk", "rrd", "native_viewer"] }
+# The viewer runs its loaders on a runtime of its own, which starting it
+# ourselves (to ask for a picture) has us make; already among Rerun's own.
+tokio = { version = "1", features = ["rt-multi-thread"] }

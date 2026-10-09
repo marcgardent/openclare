@@ -44,6 +44,9 @@ pub struct RerunRecorder {
     /// the viewer is awkward to move about in when a model is very small or
     /// very large, so such a model is shown at a size it handles well.
     zoom: Option<f32>,
+    /// The one stage kept, when the recording is a still: that stage alone,
+    /// out of time, so that it is what a viewer shows whenever it is opened.
+    still: Option<String>,
     /// The first thing that went wrong: a recorder cannot stop the chain.
     failure: Option<String>,
 }
@@ -54,7 +57,13 @@ impl RerunRecorder {
         let stream = RecordingStreamBuilder::new("openclare")
             .save(path)
             .map_err(|error| format!("cannot record to {}: {error}", path.display()))?;
-        Ok(Self { stream, stage: String::new(), step: -1, zoom: None, failure: None })
+        Ok(Self { stream, stage: String::new(), step: -1, zoom: None, still: None, failure: None })
+    }
+
+    /// Starts a recording of the one stage `stage`, out of time: a still,
+    /// which is what a picture of a stage is taken from.
+    pub fn create_still(path: &Path, stage: &str) -> Result<Self, String> {
+        Ok(Self { still: Some(stage.to_string()), ..Self::create(path)? })
     }
 
     /// Writes what is left to write. Fails if anything could not be recorded.
@@ -74,7 +83,11 @@ impl RerunRecorder {
     }
 
     fn log(&mut self, path: &str, shape: &impl rerun::AsComponents) {
-        if let Err(error) = self.stream.log(path, shape) {
+        let logged = match self.still {
+            Some(_) => self.stream.log_static(path, shape),
+            None => self.stream.log(path, shape),
+        };
+        if let Err(error) = logged {
             self.failure.get_or_insert(format!("{path}: {error}"));
         }
     }
@@ -83,7 +96,13 @@ impl RerunRecorder {
 impl Recorder for RerunRecorder {
     fn record(&mut self, path: &str, shape: Shape<'_>) {
         let stage = path.split('/').next().unwrap_or(path);
-        if stage != self.stage && stage != NOTES {
+        if let Some(only) = &self.still {
+            // Of a still, the one stage and nothing said about it.
+            if stage != only {
+                return;
+            }
+            self.stage = stage.to_string();
+        } else if stage != self.stage && stage != NOTES {
             self.step += 1;
             self.stream.set_time_sequence(STEP, self.step);
             if !self.stage.is_empty() {
@@ -109,7 +128,7 @@ impl Recorder for RerunRecorder {
             let comfortable = (1.0..=1000.0).contains(&across) || !(across.is_finite() && across > 0.0);
             let zoom = if comfortable { 1.0 } else { 10f64.powf((10.0 / across).log10().round()) };
             self.zoom = Some(zoom as f32);
-            if zoom != 1.0 {
+            if zoom != 1.0 && self.still.is_none() {
                 let note = format!("the model is {across:.3e} across: it is shown {zoom:e} times its size");
                 self.log(&format!("{NOTES}/size"), &TextLog::new(note));
             }
