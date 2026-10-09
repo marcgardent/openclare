@@ -81,7 +81,7 @@ Later, and each to be confirmed when its turn comes: optimal normals per corner 
 | What | Why now or later | Tickets |
 |---|---|---|
 | **Sculpts of the author in the bench, with their Quad Remesher references** | The references can only be made while the trial licence of Quad Remesher lasts: this one has a deadline | DT-017 |
-| **Documents in English** | New text is in English since 8 October 2026; `ALGORITHM.md`, `BACKLOG.md` and the `README.md` files still hold French | DT-016 |
+| **Documents in English** | **Done on 9 October 2026**: every document is in English | DT-016 |
 | **Public release**: continuous integration, contribution guide, a tagged version | Before the add-on is announced, not before it exists | — |
 | **Rerun**: patches as coloured regions, the seamless map, comparison of two runs; move to the current version | As the quality tracks need them, the map first | DT-035 |
 
