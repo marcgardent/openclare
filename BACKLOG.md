@@ -64,6 +64,7 @@ track. "DT" stands for *dette technique*, technical debt.
 | DT-047 | Borders between materials: mostly let go on a real model | materials | high | open |
 | DT-048 | The work mesh has triangles of one size: what is finer is lost before anything else runs | materials | high | open |
 | DT-049 | The bench has no model with curves or a painted density | materials | medium | open |
+| DT-050 | A sliver with next to no area took all the memory of the machine | bench in Blender | high | **closed (9 October 2026)**; no guard on memory in the engine itself |
 | DT-033 | Terrains and scans: no tool aligns, the field has nothing to follow | J9 | medium | open |
 | DT-027 | Guards on computing time for pathological inputs | J8 | low | open |
 
@@ -993,4 +994,28 @@ track. "DT" stands for *dette technique*, technical debt.
     marked in `SCORES.md`.
   - The object as the add-on sees it is written as text: 255 MB and 21 seconds for
     `ogre_hp`, and 94 seconds to measure a result against it.
+
+### DT-050 — A sliver with next to no area took all the memory of the machine
+
+- **Born on** 9 October 2026, the hard way: a first run of the add-on on the author's car as
+  it is seen, its boolean included, grew to 53 GB in six minutes on a machine of 62 GB with no
+  swap, and the system killed Blender.
+- **Cause**: the boolean leaves, among the 23 pieces of the car, a sliver with a long outline
+  and next to no area. The work mesh of a piece is given triangles sized from its area: next
+  to no area, triangles of next to no size, and the splitting of the long edges towards that
+  size never ended. It did not show on the same car read from a file written with seven
+  digits: the sliver came out differently.
+- **Closed the same day**, twice over: the work mesh is never let grow beyond thirty-two times
+  the triangles asked for (or those it starts from; splitting comes before collapsing, so a
+  source of long thin triangles goes well above the count on its way to it), and a piece with less than a million
+  millionth of the area of the model is left out. The run that took 53 GB now takes 49
+  seconds and 2.2 GB, in Blender, on the same scene. A test has a strip of no area next to a
+  ball; it runs out of a 4 GB allowance without the fix.
+- **Around it**: every process the bench starts is now refused memory beyond 12 GB (24 for the
+  sculpt of 2.3 million vertices), and reports a run that hits that as out of memory instead
+  of taking the machine down.
+- **Left**: the engine itself has no such allowance, and an add-on running inside a user's
+  Blender is not protected by the bench's. A count of what a stage is about to allocate,
+  refused beyond a share of the memory there is, would be. And 2.2 GB for a car of 40,000
+  triangles is a lot: where it goes has not been looked at.
 

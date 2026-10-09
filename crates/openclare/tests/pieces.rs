@@ -115,3 +115,30 @@ fn painting_one_piece_denser_takes_quads_from_the_others() {
     // One weight too few is refused, whatever the number of pieces.
     assert!(config(2000).remesh_guided(&mesh, &Guides { density: Some(&weights[1..]), ..Default::default() }).is_err());
 }
+
+#[test]
+fn a_sliver_with_next_to_no_area_does_not_run_away() {
+    // Next to a ball, a strip ten units long and a millionth of one wide,
+    // then one with no width to speak of: what a boolean leaves between two
+    // parts. The size of triangle such a strip asks for is next to nothing,
+    // and tiling its length with it once took all the memory of a machine.
+    for (width, pieces) in [(1e-6, 2), (1e-14, 1)] {
+        let mut mesh = primitives::icosphere(4);
+        let first = mesh.positions.len() as u32;
+        mesh.positions.extend([
+            Vec3::new(-5.0, 0.0, 3.0),
+            Vec3::new(5.0, 0.0, 3.0),
+            Vec3::new(5.0, width, 3.0),
+            Vec3::new(-5.0, width, 3.0),
+        ]);
+        mesh.triangles.extend([[first, first + 1, first + 2], [first, first + 2, first + 3]]);
+        let (quads, report) = config(1000).remesh_guided(&mesh, &Guides::default()).unwrap();
+        // The narrower one is no surface at all once its two sides, which
+        // are at the same place for any purpose, are stitched.
+        assert_eq!(report.pieces, pieces, "width {width}");
+        // The ball is meshed as if it were alone; the strip takes next to
+        // nothing, whether it is left out or not.
+        assert!(quads.faces.len() >= 900 && quads.faces.len() <= 1100, "{} faces", quads.faces.len());
+        assert!(report.working_vertices < 200_000, "{} vertices in the work meshes", report.working_vertices);
+    }
+}

@@ -146,6 +146,13 @@ impl Default for Isotropic {
     }
 }
 
+/// The work mesh is never let grow beyond this many times the triangles
+/// asked for, or those it starts from if there are more. Splitting comes
+/// before collapsing, so a source of long thin triangles goes well above
+/// the count asked for on its way to it: the bound has to leave room for
+/// that, and only stop what would never come back down.
+const MOST_TRIANGLES: usize = 32;
+
 impl Preprocessor for Isotropic {
     fn kind(&self) -> Kind {
         Kind::Isotropic
@@ -186,7 +193,10 @@ impl Preprocessor for Isotropic {
         // shorter than asked (measured: about 13 % too many triangles without).
         let edge_length = 1.06 * (4.0 * source.surface_area() / (3.0f64.sqrt() * request.triangles as f64)).sqrt();
         let target = isotropic::Target { surface: &surface, face_normals: &face_normals, features: lines.as_ref() };
-        isotropic::remesh(&mut mesh, &target, edge_length, self.iterations);
+        // Remeshing settles within a few per cent of the size asked for;
+        // dozens of times that is a surface it cannot tile at that length.
+        let most = MOST_TRIANGLES * request.triangles.max(mesh.triangle_count());
+        isotropic::remesh(&mut mesh, &target, edge_length, self.iterations, most);
         if !laid.segments.is_empty() || !request.lines.is_empty() {
             imprint::unpinch(&mut mesh);
         }

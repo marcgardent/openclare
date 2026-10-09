@@ -20,11 +20,14 @@ pub(crate) struct Target<'a> {
     pub features: Option<&'a Bvh>,
 }
 
-/// Remeshes towards edges of length `edge_length`.
-pub(crate) fn remesh(mesh: &mut DynamicMesh, target: &Target, edge_length: f64, iterations: usize) {
+/// Remeshes towards edges of length `edge_length`, with no more than `most`
+/// triangles: a length that calls for more is not one the surface can be
+/// tiled with (a sliver with next to no area and a long outline asks for
+/// edges of next to no length, and splitting towards them never ends).
+pub(crate) fn remesh(mesh: &mut DynamicMesh, target: &Target, edge_length: f64, iterations: usize, most: usize) {
     let (low, high) = (0.8 * edge_length, 4.0 / 3.0 * edge_length);
     for _ in 0..iterations {
-        split_long_edges(mesh, high);
+        split_long_edges(mesh, high, most);
         collapse_short_edges(mesh, low, high);
         equalize_valences(mesh);
         relax(mesh, target, edge_length);
@@ -35,7 +38,7 @@ fn length(mesh: &DynamicMesh, a: u32, b: u32) -> f64 {
     mesh.positions[a as usize].distance(mesh.positions[b as usize])
 }
 
-fn split_long_edges(mesh: &mut DynamicMesh, high: f64) {
+fn split_long_edges(mesh: &mut DynamicMesh, high: f64, most: usize) {
     // A split halves an edge but creates two more across the neighbouring
     // triangles, which may be long too: go on until none is left.
     for _ in 0..16 {
@@ -44,6 +47,9 @@ fn split_long_edges(mesh: &mut DynamicMesh, high: f64) {
             break;
         }
         for (a, b) in long {
+            if mesh.triangle_count() >= most {
+                return;
+            }
             if mesh.has_edge(a, b) && length(mesh, a, b) > high {
                 let middle = 0.5 * (mesh.positions[a as usize] + mesh.positions[b as usize]);
                 mesh.split(a, b, middle);
