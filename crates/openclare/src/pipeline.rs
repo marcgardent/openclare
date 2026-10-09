@@ -89,6 +89,9 @@ pub struct Report {
     pub pieces_skipped: usize,
     /// Why pieces went to the other chain, with how many for each reason.
     pub fallback_causes: Vec<(&'static str, usize)>,
+    /// Why guide lines were let go, wholly or in part, with how many pieces
+    /// for each reason.
+    pub line_causes: Vec<(&'static str, usize)>,
     /// Edges of the output, as their two vertices, that run along a hard
     /// edge of the input, or along a curve drawn as one.
     pub hard_edges: Vec<[u32; 2]>,
@@ -110,6 +113,9 @@ pub struct Report {
     /// the input came with groups (see [`crate::Guides::groups`]); empty
     /// otherwise.
     pub face_groups: Vec<u32>,
+    /// How many faces of the output lie across a border between two groups
+    /// of the input: none where every border is a line of edges.
+    pub faces_across_groups: usize,
     pub stats: MeshStats,
     pub timings: Vec<(&'static str, Duration)>,
 }
@@ -130,6 +136,12 @@ impl Report {
         self.sharp_curve_edges.extend(piece.sharp_curve_edges);
         self.guide_gaps += piece.guide_gaps;
         self.guides_let_go += piece.guides_let_go;
+        for (cause, count) in piece.line_causes {
+            match self.line_causes.iter_mut().find(|(name, _)| *name == cause) {
+                Some((_, known)) => *known += count,
+                None => self.line_causes.push((cause, count)),
+            }
+        }
         for (cause, count) in piece.fallback_causes {
             match self.fallback_causes.iter_mut().find(|(name, _)| *name == cause) {
                 Some((_, total)) => *total += count,

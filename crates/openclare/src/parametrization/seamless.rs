@@ -9,6 +9,7 @@ use super::problem::{Constraint, Problem, Solver};
 use super::{Kind, Parametrization, Parametrizer, Report, Request};
 use crate::crossfield::CrossField;
 use crate::error::Result;
+use crate::mesh::Topology;
 use crate::preprocess::WorkMesh;
 
 #[derive(Clone, Debug, Default)]
@@ -20,6 +21,11 @@ pub struct Seamless {
 /// or not at all: trying each alone costs a solve of the map apiece, which
 /// the borders between the materials of a model can ask for by the hundred.
 const SINGLE_TRIALS: usize = 8;
+/// How many times guide lines are let go near the folds of the map before
+/// whole lines are, and how many edges away from a fold a line is let go
+/// the first time.
+const NEAR_ROUNDS: usize = 5;
+const NEAR_REACH: usize = 2;
 
 impl Parametrizer for Seamless {
     fn kind(&self) -> Kind {
@@ -30,13 +36,48 @@ impl Parametrizer for Seamless {
         // Feature edges are kept on grid lines (which one is left free), so
         // that borders, creases and guide curves bound the rectangles the
         // map is cut into.
-        if let Some(map) = self.solve(work, field, request, true)? {
-            return Ok(map);
-        }
-        // Where that folds the map, guide curves are let go first: a line
+        let mut folds = match self.solve_or_folds(work, field, request)? {
+            Ok(map) => return Ok(map),
+            Err(folds) => folds,
+        };
+        // Where that folds the map, guide lines are let go first: a line
         // drawn that cannot be kept should not cost the creases theirs, nor
-        // the other curves. Each curve is tried alone, then those that can
-        // be kept together, then none.
+        // the other lines. And of a line, only what is near a fold: the
+        // rest of it stays, as a line that stops there.
+        if !work.guide_edges.is_empty() {
+            let neighbors = Topology::build(&work.mesh).neighbors;
+            let mut lighter = work.clone();
+            let mut loose: Vec<[u32; 2]> = Vec::new();
+            for round in 0..NEAR_ROUNDS {
+                // The vertices within reach of a fold, a reach that doubles
+                // each time the folds do not go away.
+                let mut near: HashSet<u32> = folds.iter().flat_map(|&f| work.mesh.triangles[f]).collect();
+                for _ in 0..(NEAR_REACH << round) {
+                    let ring: Vec<u32> = near.iter().flat_map(|&v| neighbors[v as usize].iter().copied()).collect();
+                    near.extend(ring);
+                }
+                let dropped: HashSet<[u32; 2]> =
+                    lighter.guide_edges.iter().copied().filter(|edge| edge.iter().any(|v| near.contains(v))).collect();
+                if dropped.is_empty() {
+                    // The folds are not the doing of the lines left.
+                    break;
+                }
+                lighter.feature_edges.retain(|edge| !dropped.contains(edge));
+                lighter.guide_edges.retain(|edge| !dropped.contains(edge));
+                loose.extend(dropped);
+                match self.solve_or_folds(&lighter, field, request)? {
+                    Ok(mut map) => {
+                        loose.sort_unstable();
+                        map.report.guides_off_grid = true;
+                        map.report.loose_guides = loose;
+                        return Ok(map);
+                    }
+                    Err(still) => folds = still,
+                }
+            }
+        }
+        // Failing that, whole lines: each is tried alone, then those that
+        // can be kept together, then none.
         if !work.guide_edges.is_empty() {
             let curves = lines_of(&work.guide_edges);
             let without = |dropped: &[&Vec<[u32; 2]>]| {
@@ -104,6 +145,28 @@ impl Seamless {
             return Ok(None);
         }
         Ok(Some(Parametrization { cut: problem.cut, uv, report }))
+    }
+
+    /// The map of `work` with its feature edges on grid lines, or the
+    /// triangles that fold over in the best map found with them there.
+    fn solve_or_folds(
+        &self,
+        work: &WorkMesh,
+        field: &CrossField,
+        request: &Request,
+    ) -> Result<std::result::Result<Parametrization, Vec<usize>>> {
+        let problem = Problem::new(work, field, request.edge_length)?;
+        let mut constraints = problem.seam_constraints();
+        constraints.extend(problem.feature_conditions().0);
+        let mut weights = vec![1.0; work.mesh.triangles.len()];
+        let mut report =
+            Report { seam_edges: problem.cut.seam_edges(), wedges: problem.cut.wedge_count, ..Default::default() };
+        let uv = untangle(&problem, &constraints, &mut weights, &self.solver, request.stiffening_rounds, &mut report)?;
+        report.flipped_first = report.flipped_before_stiffening;
+        if report.flipped > 0 {
+            return Ok(Err(problem.quality(&uv).flipped));
+        }
+        Ok(Ok(Parametrization { cut: problem.cut, uv, report }))
     }
 }
 
