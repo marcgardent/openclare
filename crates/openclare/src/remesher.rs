@@ -52,6 +52,9 @@ pub struct Guides<'a> {
     pub groups: Option<&'a [u32]>,
 }
 
+/// A piece with less than this share of the area of the model is left out.
+const NEGLIGIBLE_AREA: f64 = 1e-12;
+
 /// The edges of `mesh` between two triangles of different `groups`, each by
 /// where its two ends are.
 fn group_borders(mesh: &TriMesh, groups: &[u32]) -> Vec<[Vec3; 2]> {
@@ -492,7 +495,14 @@ fn shares_of(pieces: &[(TriMesh, Vec<u32>)], guides: &Guides, config: &RemeshCon
         .collect();
     let total: f64 = weights.iter().sum();
     let fair: Vec<f64> = weights.iter().map(|weight| quads * weight / total.max(f64::MIN_POSITIVE)).collect();
-    let kept: Vec<bool> = fair.iter().map(|&share| share >= config.skip_pieces_under).collect();
+    // A piece with next to no area is no surface to mesh: the sliver two
+    // parts leave between them, say. It is left out whatever the setting.
+    let area: f64 = pieces.iter().map(|(piece, _)| piece.surface_area()).sum();
+    let kept: Vec<bool> = fair
+        .iter()
+        .zip(pieces)
+        .map(|(&share, (piece, _))| share >= config.skip_pieces_under && piece.surface_area() > NEGLIGIBLE_AREA * area)
+        .collect();
     // A piece left out has no floor and takes nothing.
     let floors: Vec<usize> =
         pieces.iter().zip(&kept).map(|((piece, _), &kept)| if kept { least_quads(piece) } else { 0 }).collect();
