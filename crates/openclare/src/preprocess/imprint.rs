@@ -35,8 +35,8 @@ pub(crate) struct Laid {
     /// The stretches of the curves, on the surface: what the vertices of
     /// the lines are held on from here on.
     pub segments: Vec<[Vec3; 2]>,
-    /// Those of the stretches that belong to curves drawn as hard edges.
-    pub sharp_segments: Vec<[Vec3; 2]>,
+    /// For each stretch, whether it belongs to a curve drawn as a hard edge.
+    pub sharp: Vec<bool>,
     /// Places where two points of a curve in a row ended up with no edge
     /// between them: the line is broken there.
     pub gaps: usize,
@@ -152,11 +152,8 @@ pub(crate) fn imprint(mesh: &mut DynamicMesh, surface: &Bvh, face_normals: &[Vec
         if stretches.is_empty() {
             continue;
         }
-        let segments = stretches.iter().map(|&(from, along, _, _, length)| [from, from + along * length]);
-        laid.segments.extend(segments.clone());
-        if curve.sharp {
-            laid.sharp_segments.extend(segments);
-        }
+        laid.segments.extend(stretches.iter().map(|&(from, along, _, _, length)| [from, from + along * length]));
+        laid.sharp.resize(laid.segments.len(), curve.sharp);
 
         let reach = 2.0 * spacing;
         let mut place: HashMap<u32, (f64, f64, f64)> = HashMap::new();
