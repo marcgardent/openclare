@@ -1,1350 +1,1345 @@
-# openclare — cahier des charges du moteur de retopologie quad
+# openclare — specification of the quad retopology engine
 
-**Statut : validé le 6 octobre 2026. Jalons 0 à 9 et chantier de qualité Q1 faits. Chantiers d'outils T1 (notes, rendus, pages par modèle) et T2 (enregistrement des étapes pour Rerun) réalisés et fusionnés. Chantier de qualité Q2 (parties fines) réalisé et fusionné. Track Q2 bis (keeping the volume) done, awaiting review. What is left: [ROADMAP.md](ROADMAP.md).**
-Ce qui a été écarté, approché ou reporté en chemin est suivi ticket par ticket dans [BACKLOG.md](BACKLOG.md).
-Le projet s'appelle **openclare**, et son code aussi depuis le jalon 10 (il s'appelait `retopo` avant). Les points marqués
-*à trancher* attendent une décision ; ils sont regroupés en section 7.
+**Status: validated on 6 October 2026. Milestones 0 to 9 and quality track Q1 done. Tools tracks T1 (scores, renders, pages per model) and T2 (recording of the stages for Rerun) done and merged. Quality track Q2 (thin parts) done and merged. Track Q2 bis (keeping the volume) done and merged. Milestone 10 (Blender add-on), milestone 12 (creases) and guide curves done, awaiting review. What is left: [ROADMAP.md](ROADMAP.md).**
+What was set aside, approximated or put off on the way is followed ticket by ticket in [BACKLOG.md](BACKLOG.md).
+The project is called **openclare**, and so is its code since milestone 10 (it was called `retopo` before). The points marked
+*to decide* await a decision; they are gathered in section 7.
 
-Première chaîne, pour l'organique : **champ de croix → paramétrisation sans couture → T-mesh →
-quantification entière → carte à grille entière → extraction**. C'est la lignée MIQ / Integer-Grid
-Maps / QGP, retenue parce qu'elle a le plafond de qualité le plus haut sur les formes organiques.
+A word on the labels, which come from the French this document was first written in: J*n* is
+milestone *n* (*jalon*), Q*n* a quality track, T*n* a tools track, M*n* a module of the
+pipeline, DT-*nnn* a ticket of the backlog (*dette technique*, technical debt). The description
+of a module is called its *sheet*.
 
-Seconde chaîne, pour le durci (hard-surface) : **champ de croix → patchs → quantification →
-remplissage par motifs**, la lignée QuadWild. Elle vient après la première, mais l'architecture la
-prévoit dès maintenant : les deux partagent leurs étapes communes (section 5).
+First chain, for organic shapes: **cross field → seamless parametrization → T-mesh → integer
+quantization → integer-grid map → extraction**. This is the MIQ / Integer-Grid Maps / QGP
+lineage, chosen because it has the highest quality ceiling on organic shapes.
+
+Second chain, for hard surfaces: **cross field → patches → quantization → filling by
+patterns**, the QuadWild lineage. It comes after the first, but the architecture plans for it
+from now: the two share their common stages (section 5).
 
 ---
 
-## 0. Objectif et critère d'acceptation
+## 0. Aim and acceptance criterion
 
-**Objectif : un résultat supérieur au remaillage quad de Blender.**
-**Priorité : formes organiques d'abord ;** arêtes vives, courbes guides et densité locale ensuite.
+**Aim: a result better than Blender's quad remesh.**
+**Priority: organic shapes first;** hard edges, guide curves and local density next.
 
-### L'adversaire
+### The opponent
 
-Le remaillage quad de Blender est QuadriFlow, exposé par l'opérateur
-`bpy.ops.object.quadriflow_remesh` (signature relevée sur Blender 5.2.2 LTS). QuadriFlow est
-lui-même Instant Meshes modifié pour produire beaucoup moins de singularités. La chaîne déjà
-écrite dans ce dépôt est un Instant Meshes : elle est donc attendue **en dessous** de l'adversaire,
-et sert de plancher mesurable.
+Blender's quad remesh is QuadriFlow, exposed by the operator
+`bpy.ops.object.quadriflow_remesh` (signature read on Blender 5.2.2 LTS). QuadriFlow is itself
+Instant Meshes modified to produce far fewer singularities. The chain already written in this
+repository is an Instant Meshes: so it is expected **below** the opponent, and serves as a
+floor that can be measured.
 
-### Protocole
+### Protocol
 
-- Mêmes maillages d'entrée, même nombre de faces demandé (`mode='FACES'`, `target_faces=N`).
-- `use_mesh_symmetry=False` : sa valeur par défaut est `True`, ce qui fausserait la comparaison.
-- `use_preserve_sharp` et `use_preserve_boundary` activés quand le modèle a des arêtes vives ou
-  des bords, pour comparer à l'adversaire dans sa meilleure configuration.
-- QuadriFlow dépend d'une graine (`seed`) : on compare la médiane sur 5 graines.
+- Same input meshes, same number of faces asked for (`mode='FACES'`, `target_faces=N`).
+- `use_mesh_symmetry=False`: its default is `True`, which would skew the comparison.
+- `use_preserve_sharp` and `use_preserve_boundary` switched on when the model has hard edges or
+  borders, to compare with the opponent in its best configuration.
+- QuadriFlow depends on a seed (`seed`): the median over 5 seeds is compared.
 
-### Métriques
+### Metrics
 
-| | Métrique | Définition | Rôle |
+| | Metric | Definition | Role |
 |---|---|---|---|
-| V | Validité | 100 % de quads, variété, fermé si l'entrée l'est, aucune face inversée | **bloquante** |
-| S | Sommets irréguliers | nombre de sommets intérieurs de valence ≠ 4, et excès sur le minimum topologique (4·\|χ\| pour une surface fermée) | qualité |
-| C | Complexité du complexe de base | nombre de patchs obtenus en prolongeant les arêtes depuis chaque sommet irrégulier ; une spirale le fait exploser | qualité |
-| A | Alignement | angle moyen entre arêtes et directions de courbure principale, pondéré par l'anisotropie \|k₁−k₂\| | qualité |
-| F | Forme des quads | écart des angles à 90° (moyenne, 95ᵉ centile), rapport d'aspect, dispersion des aires | qualité |
-| H | Fidélité | distance de Hausdorff et distance moyenne à la source, rapportées à la diagonale englobante | garde-fou |
-| N | Budget | écart relatif au nombre de faces demandé | garde-fou |
-| T | Temps | temps de calcul | information |
+| V | Validity | 100 % quads, manifold, closed if the input is, no inverted face | **blocking** |
+| S | Irregular vertices | number of interior vertices of valence ≠ 4, and excess over the topological minimum (4·\|χ\| for a closed surface) | quality |
+| C | Complexity of the base complex | number of patches obtained by extending the edges from each irregular vertex; a spiral makes it explode | quality |
+| A | Alignment | mean angle between edges and principal curvature directions, weighted by the anisotropy \|k₁−k₂\| | quality |
+| F | Shape of the quads | deviation of the angles from 90° (mean, 95th percentile), aspect ratio, spread of the areas | quality |
+| H | Fidelity | Hausdorff distance and mean distance to the source, relative to the bounding diagonal | guard |
+| N | Budget | relative gap to the number of faces asked for | guard |
+| T | Time | computing time | information |
 
-### Règle d'acceptation
+### Acceptance rule
 
-Sur les modèles organiques du corpus : **V jamais moins bon que QuadriFlow, et médiane meilleure
-sur S, C, A et F**, sans dégrader H ni N au-delà d'une marge.
+On the organic models of the corpus: **V never worse than QuadriFlow, and a better median on
+S, C, A and F**, without degrading H or N beyond a margin.
 
-### Résultats du jalon 0
+### Results of milestone 0
 
-Campagne complète dans [bench/results/RESULTS.md](bench/results/RESULTS.md) : 9 modèles,
-3000 quads demandés, médiane sur 5 graines. Mode d'emploi et limites dans
-[bench/README.md](bench/README.md).
+Full campaign in [bench/results/RESULTS.md](bench/results/RESULTS.md): 9 models, 3000 quads
+asked for, median over 5 seeds. Instructions and limits in [bench/README.md](bench/README.md).
 
-Quad Remesher (version d'essai 1.4.1) sert de **mire** : ce n'est pas l'adversaire à battre pour
-l'acceptation, mais le niveau visé à terme. Il est mesuré en réglage uniforme (taille de quad
-constante, pour comparer à armes égales) et n'a pas de graine, donc une seule exécution.
+Quad Remesher (trial version 1.4.1) serves as the **reference**: it is not the opponent to beat
+for acceptance, but the level aimed at in the end. It is measured with the uniform setting (a
+constant quad size, to compare on equal terms) and has no seed, hence a single run.
 
-Sur les cinq modèles organiques :
+On the five organic models:
 
-| | QuadriFlow (Blender) | Quad Remesher (uniforme) | Plancher (Instant Meshes) |
+| | QuadriFlow (Blender) | Quad Remesher (uniform) | Floor (Instant Meshes) |
 |---|---|---|---|
-| Maillages valides (V) | 18 sur 25 | 5 sur 5 | 22 sur 25 |
-| Alignement (A), degrés | 8,1 à 23,0 | 2,6 à 14,7 | 8,0 à 23,2 |
-| Sommets irréguliers (S) | 8 à 78 | 24 à 101 | 91 à 212 |
-| Patchs du complexe de base (C), pour 3000 faces | 1943 à 2884 | 1001 à 2531 | 2319 à 3048 |
-| Écart d'angle moyen (F), degrés | 5,8 à 8,7 | 4,3 à 10,6 | 4,7 à 7,1 |
-| Écart au budget (N) | 1 à 11 % | 7 à 16 % | 2 à 3 % |
-| Temps (T), secondes | 1,3 à 4,2 | 3 à 17 | 0,3 à 1,5 |
+| Valid meshes (V) | 18 out of 25 | 5 out of 5 | 22 out of 25 |
+| Alignment (A), degrees | 8.1 to 23.0 | 2.6 to 14.7 | 8.0 to 23.2 |
+| Irregular vertices (S) | 8 to 78 | 24 to 101 | 91 to 212 |
+| Patches of the base complex (C), for 3000 faces | 1943 to 2884 | 1001 to 2531 | 2319 to 3048 |
+| Mean angle deviation (F), degrees | 5.8 to 8.7 | 4.3 to 10.6 | 4.7 to 7.1 |
+| Gap to the budget (N) | 1 to 11 % | 7 to 16 % | 2 to 3 % |
+| Time (T), seconds | 1.3 to 4.2 | 3 to 17 | 0.3 to 1.5 |
 
-Ce que ces chiffres établissent :
+What these figures establish:
 
-- **Ce qui distingue Quad Remesher, c'est l'alignement.** Sur les formes lisses (blob, créature,
-  cage) ses arêtes sont à 2,6°, 4,6° et 5,3° des directions de courbure, contre 8,1° à 17,5° pour
-  QuadriFlow : environ trois fois mieux. Ses boucles d'arêtes font le tour des trous et des
-  membres ; celles de QuadriFlow forment une grille qui les ignore.
-- **Quad Remesher ne minimise pas les singularités.** Il en a autant que QuadriFlow sur les formes
-  lisses, et douze fois plus sur le rocher bruité (101 contre 8), où il suit le relief. Peu de
-  sommets irréguliers n'est donc pas l'objectif en soi : c'est le prix qu'on accepte de payer
-  pour l'alignement.
-- **Sa structure est meilleure sans être simple** : environ moitié moins de patchs que QuadriFlow
-  sur les formes lisses, mais encore un millier pour 3000 faces.
-- **Il tient mal le budget** : 7 à 16 % d'écart en réglage uniforme, et jusqu'à presque le double
-  de faces demandées en réglage par défaut (cage).
-- **QuadriFlow n'est pas toujours valide.** Faces repliées sur le tore (4 graines sur 5), sur
-  Suzanne (5 sur 5) et sur le blob (2 sur 5) ; une face d'aire nulle sur la pièce mécanique
-  (1 sur 5). Constat recoupé par un second test indépendant de la source.
-- **Le plancher est loin derrière sur les singularités** : 3 à 11 fois plus que QuadriFlow.
-- **Sur le durci**, QuadriFlow et Quad Remesher font jeu égal : 8 sommets irréguliers et 6 patchs
-  sur le cube (les minimums), 24 à 28 sommets irréguliers sur la pièce percée.
+- **What sets Quad Remesher apart is alignment.** On smooth shapes (blob, creature, cage) its
+  edges are at 2.6°, 4.6° and 5.3° from the curvature directions, against 8.1° to 17.5° for
+  QuadriFlow: about three times better. Its edge loops go round holes and limbs; those of
+  QuadriFlow form a grid that ignores them.
+- **Quad Remesher does not minimize singularities.** It has as many as QuadriFlow on smooth
+  shapes, and twelve times more on the noisy rock (101 against 8), where it follows the
+  relief. Few irregular vertices is thus not the aim in itself: it is the price one agrees to
+  pay for alignment.
+- **Its structure is better without being simple**: about half as many patches as QuadriFlow
+  on smooth shapes, but still a thousand for 3000 faces.
+- **It holds the budget poorly**: a gap of 7 to 16 % with the uniform setting, and up to
+  nearly twice the faces asked for with the default setting (cage).
+- **QuadriFlow is not always valid.** Folded faces on the torus (4 seeds out of 5), on Suzanne
+  (5 out of 5) and on the blob (2 out of 5); a face of zero area on the mechanical part (1 out
+  of 5). A finding cross-checked by a second test that does not depend on the source.
+- **The floor is far behind on singularities**: 3 to 11 times more than QuadriFlow.
+- **On hard surfaces**, QuadriFlow and Quad Remesher are level: 8 irregular vertices and 6
+  patches on the cube (the minimums), 24 to 28 irregular vertices on the part with holes.
 
-### Sur un vrai modèle : l'ogre
+### On a real model: the ogre
 
-L'ogre, mascotte du projet, est une vraie sculpture de 4,7 millions de triangles. Le banc la
-mesure à partir d'une source de 200 000 triangles produite par notre prétraitement. Résultats à
-8000 quads demandés ([RESULTS-8000.md](bench/results/RESULTS-8000.md) ; 3000 et 30 000 quads sont
-mesurés aussi) :
+The ogre, mascot of the project, is a real sculpt of 4.7 million triangles. The bench measures
+it from a source of 200,000 triangles made by our preprocessing. Results at 8000 quads asked
+for ([RESULTS-8000.md](bench/results/RESULTS-8000.md); 3000 and 30,000 quads are measured too):
 
-| | QuadriFlow | Quad Remesher (défaut) | Quad Remesher (uniforme) | Plancher |
+| | QuadriFlow | Quad Remesher (default) | Quad Remesher (uniform) | Floor |
 |---|---|---|---|---|
-| Maillages valides (V) | 0 sur 5 | 1 sur 1 | 0 sur 1 | 0 sur 5 |
-| Alignement (A), degrés | 17,8 | 8,5 | 9,8 | 17,7 |
-| Sommets irréguliers (S) | 162 | 338 | 322 | 455 |
-| Hausdorff (H), ‰ | 27,3 | 5,2 | 25,6 | 30,7 |
-| Écart au budget (N) | 3 % | 59 % | 16 % | 2 % |
-| Temps (T), secondes | 4,3 | 23,5 | 24,0 | 2,8 |
+| Valid meshes (V) | 0 out of 5 | 1 out of 1 | 0 out of 1 | 0 out of 5 |
+| Alignment (A), degrees | 17.8 | 8.5 | 9.8 | 17.7 |
+| Irregular vertices (S) | 162 | 338 | 322 | 455 |
+| Hausdorff (H), ‰ | 27.3 | 5.2 | 25.6 | 30.7 |
+| Gap to the budget (N) | 3 % | 59 % | 16 % | 2 % |
+| Time (T), seconds | 4.3 | 23.5 | 24.0 | 2.8 |
 
-- **La taille adaptative est ce qui sauve les détails fins.** En réglage par défaut, Quad Remesher
-  garde les doigts et les oreilles (Hausdorff 5,2 ‰) ; en taille uniforme il les perd comme les
-  autres (25,6 ‰). Le prix : 59 % de quads de plus que demandé.
-- **Tout le monde échoue quelque part.** QuadriFlow sort 9 à 14 faces repliées à chaque graine.
-  Notre plancher perd carrément les mains : les doigts se détachent en morceaux séparés. Quad
-  Remesher en taille uniforme rend 4 faces qui ne sont pas des quads.
-- **Un vrai modèle est bien plus dur que le corpus de synthèse** : même Quad Remesher y laisse
-  plus de 300 sommets irréguliers et n'aligne qu'à 9°. QuadriFlow et le plancher y sont proches du
-  hasard (22,5°).
+- **Adaptive size is what saves fine details.** With the default setting, Quad Remesher keeps
+  the fingers and the ears (Hausdorff 5.2 ‰); with a uniform size it loses them like the
+  others (25.6 ‰). The price: 59 % more quads than asked for.
+- **Everybody fails somewhere.** QuadriFlow returns 9 to 14 folded faces at every seed. Our
+  floor loses the hands outright: the fingers come off as separate pieces. Quad Remesher with
+  a uniform size returns 4 faces that are not quads.
+- **A real model is far harder than the synthetic corpus**: even Quad Remesher leaves more
+  than 300 irregular vertices on it and aligns only to 9°. QuadriFlow and the floor are close
+  to chance there (22.5°).
 
-Conséquence à trancher : la densité adaptative était au rang 4 des contraintes (section 2). Sur
-un personnage, c'est elle qui décide si les mains existent encore. Elle mérite sans doute de
-remonter, au moins comme réglage automatique piloté par la courbure.
+A consequence to decide: adaptive density was at rank 4 of the constraints (section 2). On a
+character, it is what decides whether the hands still exist. It probably deserves to move up,
+at least as an automatic setting driven by curvature.
 
-### Sur le corpus élargi
+### On the wider corpus
 
-Avec l'ogre et les sept modèles de Keenan Crane, le corpus compte 13 modèles organiques. À 3000
-quads demandés, nombre de modèles où chaque outil a la meilleure médiane :
+With the ogre and the seven models of Keenan Crane, the corpus has 13 organic models. At 3000
+quads asked for, the number of models where each tool has the best median:
 
-| | QuadriFlow | Plancher | Quad Remesher (défaut) | Quad Remesher (uniforme) |
+| | QuadriFlow | Floor | Quad Remesher (default) | Quad Remesher (uniform) |
 |---|---|---|---|---|
-| Alignement (A) | 0 | 0 | 13 | 0 |
-| Sommets irréguliers (S) | 5 | 1 | 1 | 6 |
-| Patchs du complexe de base (C) | 1 | 1 | 2 | 9 |
-| Maillages valides (V) | 36 sur 65 | 47 sur 65 | 8 sur 13 | 10 sur 13 |
+| Alignment (A) | 0 | 0 | 13 | 0 |
+| Irregular vertices (S) | 5 | 1 | 1 | 6 |
+| Patches of the base complex (C) | 1 | 1 | 2 | 9 |
+| Valid meshes (V) | 36 out of 65 | 47 out of 65 | 8 out of 13 | 10 out of 13 |
 
-- **Quad Remesher gagne l'alignement sur les 13 modèles**, sans exception : c'est bien là qu'est
-  l'écart à combler.
-- **Personne n'est valide partout.** QuadriFlow refuse purement le scan brut (Pittsburgh Bridge)
-  et replie des faces sur le cochon à chaque graine. Quad Remesher rend quelques faces non quads
-  sur le scan, sur Jerry et sur Desert Rose.
-- **Desert Rose (96 coques qui se traversent) met tout le monde en échec** ; nos métriques de
-  validité y sont elles-mêmes peu fiables. **Décidé : elle ne compte pas dans l'acceptation** ;
-  elle servira de cas de test au prétraitement de réparation (J11).
+- **Quad Remesher wins alignment on the 13 models**, without exception: that is indeed where
+  the gap to close lies.
+- **Nobody is valid everywhere.** QuadriFlow simply refuses the raw scan (Pittsburgh Bridge)
+  and folds faces on the pig at every seed. Quad Remesher returns a few faces that are not
+  quads on the scan, on Jerry and on Desert Rose.
+- **Desert Rose (96 shells that go through one another) defeats everybody**; our validity
+  metrics are themselves unreliable on it. **Decided: it does not count in acceptance**; it
+  will serve as a test case for the repair preprocessing (J11).
 
-Deux réserves sur les métriques elles-mêmes :
+Two reservations on the metrics themselves:
 
-- **C sature.** Près du nombre de faces, elle ne départage plus : un maillage avec davantage de
-  singularités peut même obtenir un C un peu plus bas, ses lignes s'arrêtant plus tôt. Elle ne
-  se lit qu'avec S.
-- **A dépend de l'échelle** à laquelle on lit la courbure (ici celle d'un quad). Sur le rocher
-  bruité, QuadriFlow et le plancher sont au niveau du hasard (22,5°).
+- **C saturates.** Close to the number of faces it no longer tells meshes apart: a mesh with
+  more singularities may even get a slightly lower C, its lines stopping earlier. It is only
+  read together with S.
+- **A depends on the scale** at which curvature is read (here that of a quad). On the noisy
+  rock, QuadriFlow and the floor are at the level of chance (22.5°).
 
-### Seuils d'acceptation (adoptés)
+### Acceptance thresholds (adopted)
 
-Sur chaque modèle organique, médiane sur 5 graines, à budget égal. Deux niveaux : l'acceptation
-(mieux que Blender) et la visée (le niveau de Quad Remesher). La visée est un palier, pas un
-plafond : si on peut faire mieux que Quad Remesher, on ne s'arrête pas là.
+On each organic model, median over 5 seeds, at equal budget. Two levels: acceptance (better
+than Blender) and the target (the level of Quad Remesher). The target is a milestone, not a
+ceiling: if one can do better than Quad Remesher, one does not stop there.
 
-| Métrique | Acceptation | Visée |
+| Metric | Acceptance | Target |
 |---|---|---|
-| V | 5 maillages valides sur 5 | idem |
-| A | au moins 2° de mieux que QuadriFlow, là où il fait mieux que 20° | 6° ou moins sur les formes lisses |
-| S | au plus 1,5 fois QuadriFlow | — |
-| C | pas plus que QuadriFlow | la moitié de QuadriFlow |
-| F | écart d'angle moyen pas plus élevé que QuadriFlow | idem |
-| H | Hausdorff au plus 1,2 fois celui de QuadriFlow | idem |
-| N | écart au budget d'au plus 5 % | idem |
+| V | 5 valid meshes out of 5 | same |
+| A | at least 2° better than QuadriFlow, where it does better than 20° | 6° or less on smooth shapes |
+| S | at most 1.5 times QuadriFlow | — |
+| C | no more than QuadriFlow | half of QuadriFlow |
+| F | mean angle deviation no higher than QuadriFlow | same |
+| H | Hausdorff at most 1.2 times that of QuadriFlow | same |
+| N | gap to the budget of at most 5 % | same |
 
-L'alignement est en tête et l'exigence sur les sommets irréguliers est souple : la mire montre que
-les deux se négocient l'un contre l'autre, et que c'est l'alignement qui fait la qualité perçue.
+Alignment comes first and the requirement on irregular vertices is loose: the reference shows
+that the two are traded against each other, and that alignment is what makes perceived
+quality.
 
 ### Corpus
 
-Le jalon 0 tourne sur un **corpus provisoire**, entièrement généré dans Blender pour ne rien
-télécharger, et versionné dans `bench/corpus/` avec les mires Quad Remesher correspondantes
-(`bench/reference/`, 3 budgets et 2 réglages par modèle) : cinq formes organiques (blob, rocher
-bruité, créature à pattes, cage de genre 5, Suzanne), deux mécaniques (pièce percée, cube) et deux
-étalons (sphère, tore). Elles couvrent les cas utiles, mais ce sont des formes de synthèse, pas de
-vraies sculptures.
+Milestone 0 runs on a **provisional corpus**, generated entirely in Blender so as to download
+nothing, and tracked in `bench/corpus/` with the matching Quad Remesher references
+(`bench/reference/`, 3 budgets and 2 settings per model): five organic shapes (blob, noisy
+rock, creature with legs, cage of genus 5, Suzanne), two mechanical ones (part with holes,
+cube) and two yardsticks (sphere, torus). They cover the useful cases, but they are synthetic
+shapes, not real sculpts.
 
-S'y ajoutent des modèles réels, détaillés dans [bench/corpus/README.md](bench/corpus/README.md) :
+Real models are added to them, detailed in [bench/corpus/README.md](bench/corpus/README.md):
 
-- **l'ogre**, mascotte du projet (voir plus haut). Son original de 4,7 millions de triangles pèse
-  200 Mo : trop pour git, il est gardé hors versionnement dans `bench/corpus-large/`. Seule sa
-  version à 200 000 triangles est versionnée ;
-- **sept modèles du dépôt de Keenan Crane**, libres de tout usage : quatre personnages (Spot, Bob,
-  Blub, le cochon), un visage ouvert (Jerry), une forme à 96 coques (Desert Rose) et un scan brut
+- **the ogre**, mascot of the project (see above). Its original of 4.7 million triangles
+  weighs 200 MB: too much for git, it is kept untracked in `bench/corpus-large/`. Only its
+  version of 200,000 triangles is tracked;
+- **seven models of Keenan Crane's repository**, free for any use: four characters (Spot, Bob,
+  Blub, the pig), an open face (Jerry), a shape of 96 shells (Desert Rose) and a raw scan
   (Pittsburgh Bridge).
 
-Le corpus compte ainsi 17 modèles, tous avec leurs mires Quad Remesher. Il manque encore de
-vraies sculptures denses autres que l'ogre : les scans classiques (Stanford) ont des conditions
-réservées à la recherche et ont été écartés.
+The corpus thus has 17 models, all with their Quad Remesher references. Real dense sculpts
+other than the ogre are still missing: the classic scans (Stanford) have terms restricted to
+research and were set aside.
 
-Depuis le jalon 9 : deux formes mécaniques de plus (bloc en L, cylindre), et trois **modèles
-locaux** récupérés de BlenderKit, un terrain et deux personnages de jeu. Leur licence (Royalty
-Free) n'autorise pas à remettre un modèle en circulation, même modifié : ils restent sous
-`bench/corpus-large/`, hors git, avec les maillages qui en sont tirés ; `make blenderkit` les
-retélécharge. Ils sont mesurés mais n'entrent pas dans les groupes de la règle d'acceptation,
-que chacun doit pouvoir reproduire. Auteurs, sources et licences de tous les modèles :
+Since milestone 9: two more mechanical shapes (L-shaped block, cylinder), and three **local
+models** fetched from BlenderKit, a terrain and two game characters. Their licence (Royalty
+Free) does not allow putting a model back into circulation, even modified: they stay under
+`bench/corpus-large/`, out of git, with the meshes made from them; `make blenderkit` downloads
+them again. They are measured but do not enter the groups of the acceptance rule, which
+everyone must be able to reproduce. Authors, sources and licences of all the models:
 [CREDITS.md](CREDITS.md).
 
 ---
 
-## 1. Références
+## 1. References
 
-Chaque entrée a été contrôlée sur la page de l'éditeur ou des auteurs (lien).
+Each entry was checked on the page of the publisher or of the authors (link).
 
-### L'adversaire et le plancher
+### The opponent and the floor
 
-| Référence | Rôle ici |
+| Reference | Role here |
 |---|---|
-| Huang, Zhou, Niessner, Shewchuk, Guibas, [*QuadriFlow: A Scalable and Robust Method for Quadrangulation*](https://onlinelibrary.wiley.com/doi/10.1111/cgf.13498), SGP 2018 | l'adversaire (Blender) |
-| Jakob, Tarini, Panozzo, Sorkine-Hornung, [*Instant Field-Aligned Meshes*](https://dl.acm.org/doi/10.1145/2816795.2818078), SIGGRAPH Asia 2015 | le plancher (chaîne déjà écrite) |
+| Huang, Zhou, Niessner, Shewchuk, Guibas, [*QuadriFlow: A Scalable and Robust Method for Quadrangulation*](https://onlinelibrary.wiley.com/doi/10.1111/cgf.13498), SGP 2018 | the opponent (Blender) |
+| Jakob, Tarini, Panozzo, Sorkine-Hornung, [*Instant Field-Aligned Meshes*](https://dl.acm.org/doi/10.1145/2816795.2818078), SIGGRAPH Asia 2015 | the floor (the chain already written) |
 
-### Champ de croix
+### Cross field
 
-| Référence | Rôle ici |
+| Reference | Role here |
 |---|---|
-| Knöppel, Crane, Pinkall, Schröder, [*Globally Optimal Direction Fields*](https://publications.ri.cmu.edu/globally-optimal-direction-fields), SIGGRAPH 2013 | formulation retenue : énergie quadratique, problème aux valeurs propres creux, alignement sur la courbure |
-| Bommes, Zimmer, Kobbelt, [*Mixed-Integer Quadrangulation*](https://cgg.unibe.ch/publication/031044/), SIGGRAPH 2009 | représentation angle + sauts de période ; les deux étapes (champ, puis paramétrisation) de la lignée |
-| Vaxman, Campen, Diamanti, Panozzo, Bommes, Hildebrandt, Ben-Chen, [*Directional Field Synthesis, Design, and Processing*](https://cgg.unibe.ch/publication/016/), Eurographics STAR 2016 | panorama des représentations |
+| Knöppel, Crane, Pinkall, Schröder, [*Globally Optimal Direction Fields*](https://publications.ri.cmu.edu/globally-optimal-direction-fields), SIGGRAPH 2013 | the formulation chosen: quadratic energy, sparse eigenvalue problem, alignment on curvature |
+| Bommes, Zimmer, Kobbelt, [*Mixed-Integer Quadrangulation*](https://cgg.unibe.ch/publication/031044/), SIGGRAPH 2009 | representation by angle + period jumps; the two stages (field, then parametrization) of the lineage |
+| Vaxman, Campen, Diamanti, Panozzo, Bommes, Hildebrandt, Ben-Chen, [*Directional Field Synthesis, Design, and Processing*](https://cgg.unibe.ch/publication/016/), Eurographics STAR 2016 | overview of the representations |
 
-### Paramétrisation et validité
+### Parametrization and validity
 
-| Référence | Rôle ici |
+| Reference | Role here |
 |---|---|
-| Bommes, Campen, Ebke, Alliez, Kobbelt, [*Integer-Grid Maps for Reliable Quad Meshing*](https://cgg.unibe.ch/publication/031197/), SIGGRAPH 2013 | définition de la carte à grille entière et conditions de validité |
-| Campen, Shen, Zhou, Zorin, *Seamless Parametrization with Arbitrary Cones for Arbitrary Genus*, ACM TOG 39(1), 2019 | repli avec garantie si les inversions locales résistent |
+| Bommes, Campen, Ebke, Alliez, Kobbelt, [*Integer-Grid Maps for Reliable Quad Meshing*](https://cgg.unibe.ch/publication/031197/), SIGGRAPH 2013 | definition of the integer-grid map and conditions of validity |
+| Campen, Shen, Zhou, Zorin, *Seamless Parametrization with Arbitrary Cones for Arbitrary Genus*, ACM TOG 39(1), 2019 | fallback with a guarantee if local inversions resist |
 
-### T-mesh et quantification
+### T-mesh and quantization
 
-| Référence | Rôle ici |
+| Reference | Role here |
 |---|---|
-| Campen, Bommes, Kobbelt, [*Quantized Global Parametrization*](https://cgg.unibe.ch/publication/031251/), SIGGRAPH Asia 2015 | colonne vertébrale : T-mesh, quantification, résultat valide garanti |
-| Eppstein, Goodrich, Kim, Tamstorf, [*Motorcycle Graphs: Canonical Quad Mesh Partitioning*](https://disneyanimation.com/publications/motorcycle-graphs-canonical-quad-mesh-partitioning/), SGP 2008 | principe du « motorcycle graph » |
-| Heistermann, Warnett, Bommes, [*Min-Deviation-Flow in Bi-directed Graphs for T-Mesh Quantization*](https://cgg.unibe.ch/publication/011282/), SIGGRAPH 2023 | solveur de quantification sans solveur commercial |
-| Marinov, Lyon, Born, [*Target face number for quantized global parameterization*](https://www.researchgate.net/publication/403764812_Target_face_number_for_quantized_global_parameterization), CAGD 2026 | tenir le budget de quads |
-| Lyon, Campen, Kobbelt, [*Simpler Quad Layouts using Relaxed Singularities*](https://onlinelibrary.wiley.com/doi/full/10.1111/cgf.14365), CGF 2021 | déplacer ou supprimer des singularités pendant la quantification |
+| Campen, Bommes, Kobbelt, [*Quantized Global Parametrization*](https://cgg.unibe.ch/publication/031251/), SIGGRAPH Asia 2015 | the backbone: T-mesh, quantization, a valid result guaranteed |
+| Eppstein, Goodrich, Kim, Tamstorf, [*Motorcycle Graphs: Canonical Quad Mesh Partitioning*](https://disneyanimation.com/publications/motorcycle-graphs-canonical-quad-mesh-partitioning/), SGP 2008 | principle of the motorcycle graph |
+| Heistermann, Warnett, Bommes, [*Min-Deviation-Flow in Bi-directed Graphs for T-Mesh Quantization*](https://cgg.unibe.ch/publication/011282/), SIGGRAPH 2023 | quantization solver without a commercial solver |
+| Marinov, Lyon, Born, [*Target face number for quantized global parameterization*](https://www.researchgate.net/publication/403764812_Target_face_number_for_quantized_global_parameterization), CAGD 2026 | holding the quad budget |
+| Lyon, Campen, Kobbelt, [*Simpler Quad Layouts using Relaxed Singularities*](https://onlinelibrary.wiley.com/doi/full/10.1111/cgf.14365), CGF 2021 | moving or removing singularities during quantization |
 
 ### Extraction
 
-| Référence | Rôle ici |
+| Reference | Role here |
 |---|---|
-| Ebke, Bommes, Campen, Kobbelt, [*QEx: Robust Quad Mesh Extraction*](https://cgg.unibe.ch/publication/031204/), SIGGRAPH Asia 2013 | extraction robuste aux imprécisions numériques |
-| Ray, [*On Quad Mesh Extraction From Messy Grid Preserving Maps*](https://arxiv.org/abs/2507.15404), 2025 | ce qui distingue une carte réelle d'une carte idéale |
+| Ebke, Bommes, Campen, Kobbelt, [*QEx: Robust Quad Mesh Extraction*](https://cgg.unibe.ch/publication/031204/), SIGGRAPH Asia 2013 | extraction robust to numerical imprecision |
+| Ray, [*On Quad Mesh Extraction From Messy Grid Preserving Maps*](https://arxiv.org/abs/2507.15404), 2025 | what tells a real map from an ideal one |
 
-### Prétraitement et passage à l'échelle
+### Preprocessing and scaling up
 
-| Référence | Rôle ici |
+| Reference | Role here |
 |---|---|
-| Garland, Heckbert, [*Surface Simplification Using Quadric Error Metrics*](https://dl.acm.org/doi/10.1145/258734.258849), SIGGRAPH 1997 | décimation |
-| Botsch, Kobbelt, [*A Remeshing Approach to Multiresolution Modeling*](https://dl.acm.org/doi/10.1145/1057432.1057457), SGP 2004 | remaillage isotrope |
-| Rusinkiewicz, [*Estimating Curvatures and Their Derivatives on Triangle Meshes*](https://gfx.cs.princeton.edu/pubs/Rusinkiewicz_2004_ECA/curvpaper.pdf), 3DPVT 2004 | courbures et directions principales (retenu) |
-| Meyer, Desbrun, Schröder, Barr, [*Discrete Differential-Geometry Operators for Triangulated 2-Manifolds*](https://multires.caltech.edu/pubs/diffGeoOps.pdf), VisMath 2002 | alternative pour les courbures |
-| Ebke, Schmidt, Campen, Kobbelt, [*Interactively Controlled Quad Remeshing of High Resolution 3D Models*](https://history.siggraph.org/learning/interactively-controlled-quad-remeshing-of-high-resolution-3d-models/), SIGGRAPH Asia 2016 | entrées de plusieurs millions de triangles, guides utilisateur |
+| Garland, Heckbert, [*Surface Simplification Using Quadric Error Metrics*](https://dl.acm.org/doi/10.1145/258734.258849), SIGGRAPH 1997 | decimation |
+| Botsch, Kobbelt, [*A Remeshing Approach to Multiresolution Modeling*](https://dl.acm.org/doi/10.1145/1057432.1057457), SGP 2004 | isotropic remeshing |
+| Rusinkiewicz, [*Estimating Curvatures and Their Derivatives on Triangle Meshes*](https://gfx.cs.princeton.edu/pubs/Rusinkiewicz_2004_ECA/curvpaper.pdf), 3DPVT 2004 | curvatures and principal directions (chosen) |
+| Meyer, Desbrun, Schröder, Barr, [*Discrete Differential-Geometry Operators for Triangulated 2-Manifolds*](https://multires.caltech.edu/pubs/diffGeoOps.pdf), VisMath 2002 | alternative for curvatures |
+| Ebke, Schmidt, Campen, Kobbelt, [*Interactively Controlled Quad Remeshing of High Resolution 3D Models*](https://history.siggraph.org/learning/interactively-controlled-quad-remeshing-of-high-resolution-3d-models/), SIGGRAPH Asia 2016 | inputs of several million triangles, user guides |
 
-### Seconde chaîne, pour le durci
+### Second chain, for hard surfaces
 
-| Référence | Rôle ici |
+| Reference | Role here |
 |---|---|
-| Pietroni, Nuvoli, Alderighi, Cignoni, Tarini, [*Reliable Feature-Line Driven Quad-Remeshing*](http://vcg.isti.cnr.it/publication/2021/PNACT21/) (QuadWild), SIGGRAPH 2021 | base de la chaîne durci : arêtes vives comme bords de patchs. Moins bonne sur l'organique, d'où son rang de seconde chaîne. Sert aussi de repli si la paramétrisation échoue (section 6). |
+| Pietroni, Nuvoli, Alderighi, Cignoni, Tarini, [*Reliable Feature-Line Driven Quad-Remeshing*](http://vcg.isti.cnr.it/publication/2021/PNACT21/) (QuadWild), SIGGRAPH 2021 | basis of the hard-surface chain: hard edges as borders of patches. Not as good on organic shapes, hence its rank of second chain. Also serves as a fallback if parametrization fails (section 6). |
 
-### Codes existants et licences
+### Existing code and licences
 
-| Code | Licence | Usage permis ici |
+| Code | Licence | Use allowed here |
 |---|---|---|
-| [`hjwdzh/QuadriFlow`](https://github.com/hjwdzh/QuadriFlow) | MIT | portage possible ; sert surtout d'adversaire |
-| [`wjakob/instant-meshes`](https://github.com/wjakob/instant-meshes) | BSD 3-Clause | portage possible |
-| [`cgg-bern/libSatsuma`](https://github.com/cgg-bern/libSatsuma) (Bi-MDF) | MIT ; son couplage optionnel Blossom-V n'est pas libre | portage possible, **sauf Blossom-V** |
-| [`komietty/metriko`](https://github.com/komietty/metriko) (chaîne QGP complète) | MPL-2.0 ; stade précoce, sans gestion des bords | portage possible |
-| [`nicopietroni/quadwild`](https://github.com/nicopietroni/quadwild), `cgg-bern/quadwild-bimdf` | GPL-3.0 | portage possible |
-| `libQEx` | GPL-3.0 | portage possible |
-| CoMISo | GPL (version à vérifier avant tout portage) | portage possible sous réserve de la version |
+| [`hjwdzh/QuadriFlow`](https://github.com/hjwdzh/QuadriFlow) | MIT | porting possible; serves mostly as the opponent |
+| [`wjakob/instant-meshes`](https://github.com/wjakob/instant-meshes) | BSD 3-Clause | porting possible |
+| [`cgg-bern/libSatsuma`](https://github.com/cgg-bern/libSatsuma) (Bi-MDF) | MIT; its optional matching Blossom-V is not free | porting possible, **except Blossom-V** |
+| [`komietty/metriko`](https://github.com/komietty/metriko) (full QGP chain) | MPL-2.0; early stage, no handling of borders | porting possible |
+| [`nicopietroni/quadwild`](https://github.com/nicopietroni/quadwild), `cgg-bern/quadwild-bimdf` | GPL-3.0 | porting possible |
+| `libQEx` | GPL-3.0 | porting possible |
+| CoMISo | GPL (version to check before any porting) | porting possible subject to the version |
 
-**Le projet est sous licence GPL-3.0-or-later.** Le but : ne pas être limité dans la
-réutilisation et la réécriture de code existant, tout en restant intégrable à Blender.
+**The project is under the GPL-3.0-or-later licence.** The aim: not to be limited in reusing
+and rewriting existing code, while staying fit for integration into Blender.
 
-- **Réutilisation** : tout le code libre de la lignée devient portable, y compris QuadWild et
-  libQEx (GPL-3.0), et metriko (la MPL-2.0 autorise la combinaison avec la GPL). CoMISo l'est
-  aussi si sa version de GPL est compatible, ce qui reste à vérifier. Porter (traduire du C++
-  vers Rust) crée une œuvre dérivée : on conserve les mentions de copyright d'origine et on cite
-  la source dans le fichier.
-- **Blender** : les binaires de Blender sont distribués en GPL v3 ou ultérieure, et sa plateforme
-  d'extensions exige précisément GPL-3.0-or-later pour un add-on. L'intégration dans l'arbre
-  source de Blender, dont le code propre est en GPL v2 ou ultérieure, reste une décision de la
-  fondation.
-- **Ce qui reste interdit** : le code non libre, soit Blossom-V et les solveurs commerciaux
-  (Gurobi).
-- **Contrepartie** : quiconque intègre cette bibliothèque dans un logiciel doit distribuer ce
-  logiciel sous GPL. Elle ne pourra donc pas être embarquée dans un outil propriétaire.
-- **Réversibilité** : tant qu'aucun code GPL n'a été porté, on peut encore changer de licence.
-  Après le premier portage, les parties dérivées resteront GPL.
+- **Reuse**: all the free code of the lineage becomes portable, including QuadWild and libQEx
+  (GPL-3.0), and metriko (the MPL-2.0 allows combination with the GPL). So is CoMISo if its
+  version of the GPL is compatible, which is still to check. Porting (translating from C++ to
+  Rust) creates a derived work: the original copyright notices are kept and the source is
+  cited in the file.
+- **Blender**: Blender's binaries are distributed under GPL v3 or later, and its extensions
+  platform demands precisely GPL-3.0-or-later for an add-on. Integration into Blender's source
+  tree, whose own code is under GPL v2 or later, stays a decision of the foundation.
+- **What stays forbidden**: non-free code, that is Blossom-V and commercial solvers (Gurobi).
+- **The other side of it**: whoever integrates this library into a piece of software must
+  distribute that software under the GPL. So it cannot be embedded in a proprietary tool.
+- **Reversibility**: as long as no GPL code has been ported, the licence can still be changed.
+  After the first port, the derived parts will stay GPL.
 
-### Écarts avec la compilation d'origine
+### Differences from the original compilation
 
-- QuadWild : le titre cité n'existait pas ; titre réel ci-dessus.
-- Bi-MDF : attribué à tort à Lyon et Campen ; les auteurs sont Heistermann, Warnett et Bommes.
-- « Le secret de ZRemesher » : ZRemesher et Quad Remesher sont propriétaires et non publiés. Toute
-  affirmation sur leur fonctionnement est une **hypothèse**, pas une référence.
-- « Lissage géodésique » (prétraitement) : terme non rattaché à une méthode ; retiré.
+- QuadWild: the title cited did not exist; the real title is above.
+- Bi-MDF: wrongly attributed to Lyon and Campen; the authors are Heistermann, Warnett and
+  Bommes.
+- "The secret of ZRemesher": ZRemesher and Quad Remesher are proprietary and unpublished. Any
+  claim about how they work is a **hypothesis**, not a reference.
+- "Geodesic smoothing" (preprocessing): a term not tied to a method; removed.
 
 ---
 
-## 2. Spécifications fonctionnelles
+## 2. Functional specification
 
-**Entrée.** Maillage triangulaire dense non structuré, 10⁵ à 10⁷ triangles, OBJ ou PLY.
+**Input.** A dense unstructured triangle mesh, 10⁵ to 10⁷ triangles, OBJ or PLY.
 
-**Entrées acceptées.** Le cœur (du champ de croix à l'extraction) exige une surface orientée où
-chaque arête a au plus deux faces, et le vérifie. La tolérance aux entrées sales est l'affaire du
-prétraitement, qui est interchangeable :
+**Inputs accepted.** The core (from the cross field to extraction) demands an oriented surface
+where each edge has at most two faces, and checks it. Tolerance to dirty inputs is the business
+of preprocessing, which can be swapped:
 
-| Situation | Traitement |
+| Situation | Treatment |
 |---|---|
-| Bords ouverts | acceptés |
-| Plusieurs pièces séparées | acceptées, chaque pièce est traitée seule (réellement depuis le chantier Q1 : avant, tout était traité d'un bloc) |
-| Pièces qui se traversent | aujourd'hui traitées coque par coque ; la fusion en une peau extérieure est un prétraitement de réparation à venir (J11) |
-| Arêtes à trois faces ou plus, orientation incohérente | refusées avec un diagnostic clair ; réparation à venir (J11) |
+| Open borders | accepted |
+| Several separate pieces | accepted, each piece is treated on its own (truly so since track Q1: before, everything was treated as one block) |
+| Pieces that go through one another | treated shell by shell today; merging them into one outer skin is a repair preprocessing to come (J11) |
+| Edges of three faces or more, inconsistent orientation | refused with a clear diagnosis; repair to come (J11) |
 
-**Contraintes utilisateur, par rang.**
+**User constraints, by rank.**
 
-1. Budget de quads cible.
-2. Densité adaptative automatique : quads plus petits là où la forme est fine ou très courbe.
-3. Préservation optionnelle des arêtes vives au-delà d'un angle.
-4. Courbes guides tracées sur la surface.
-5. Masque de densité locale peint sur les sommets.
-6. Symétrie par rapport à un plan (ajoutée le 7 octobre 2026 ; jalon 9 bis).
+1. Target quad budget.
+2. Automatic adaptive density: smaller quads where the shape is thin or strongly curved.
+3. Optional preservation of hard edges beyond an angle.
+4. Guide curves drawn on the surface.
+5. A mask of local density painted on the vertices.
+6. Symmetry about a plane (added on 7 October 2026; milestone 9 bis).
 
-Le rang 1 conditionne l'acceptation. La densité adaptative (rang 2) est **prévue par les
-interfaces dès maintenant** (un champ de taille accompagne le maillage de calcul, uniforme pour
-commencer) et **livrée juste après le premier résultat complet**, avant les rangs 3 à 5 : sur
-l'ogre, c'est elle qui décide si les mains existent encore.
+Rank 1 conditions acceptance. Adaptive density (rank 2) is **planned for by the interfaces from
+now** (a sizing field goes with the work mesh, uniform to begin with) and **delivered right
+after the first complete result**, before ranks 3 to 5: on the ogre, it is what decides whether
+the hands still exist.
 
-État au jalon 8 : les rangs 1, 2 et 5 sont livrés. Le rang 2 et le rang 5 passent par le même
-champ de taille (fiche M1 bis) ; la densité peinte est remontée devant les rangs 3 et 4 parce
-qu'elle ne demandait rien de plus. Le rang 3 existe dans la chaîne organique, sans garantie
-(DT-002) ; le rang 4 n'est pas commencé (DT-024).
+State at milestone 8: ranks 1, 2 and 5 are delivered. Rank 2 and rank 5 go through the same
+sizing field (sheet M1 bis); painted density moved ahead of ranks 3 and 4 because it asked for
+nothing more. Rank 3 exists in the organic chain, with no guarantee (DT-002); rank 4 is not
+started (DT-024).
 
-*(Depuis le jalon 9, une seule chaîne sert les deux usages : les arêtes vives y sont des coupes
-du T-mesh. Le paragraphe qui suit décrit le projet d'origine, conservé au backlog, DT-030.)*
+State on 9 October 2026: rank 3 is guaranteed since milestone 9, rank 4 is delivered (sheet
+"Guide curves"; what is not reliable yet is DT-044). Rank 6 is left.
 
-**Deux usages, deux chaînes.** L'organique (sculptures, personnages) est servi par la première
-chaîne. Le durci (pièces mécaniques, surfaces dures) le sera par la seconde. L'utilisateur choisit
-la chaîne ; le logiciel ne suppose jamais qu'il n'en existe qu'une.
+*(Since milestone 9, a single chain serves both uses: hard edges are cuts of its T-mesh. The
+paragraph that follows describes the original plan, kept in the backlog, DT-030.)*
 
-**Sortie.** Maillage 100 % quads, variété, fermé ou à bords nets, avec **le moins possible de
-sommets irréguliers**. (« 100 % de quads réguliers » est impossible hors du tore : la topologie
-impose des sommets irréguliers.)
+**Two uses, two chains.** Organic shapes (sculpts, characters) are served by the first chain.
+Hard surfaces (mechanical parts) will be by the second. The user chooses the chain; the
+software never assumes that only one exists.
 
-**Sorties complémentaires, en fin de projet.** Avec le maillage :
+**Output.** A mesh of 100 % quads, manifold, closed or with clean borders, with **as few
+irregular vertices as possible**. ("100 % regular quads" is impossible outside the torus:
+topology imposes irregular vertices.)
 
-- les **coutures** (seams), c'est-à-dire les arêtes le long desquelles la surface est découpée
-  pour être dépliée ;
-- les **coordonnées UV** par coin de face.
+**Further outputs, at the end of the project.** With the mesh:
 
-- les **plis** (creases) : un poids par arête, calculé automatiquement, pour qu'une subdivision
-  du maillage garde nettes les arêtes vives de la source ;
-- des **normales optimales** : les normales par coin qui reproduisent au mieux l'ombrage de la
-  source sur le maillage allégé ;
-- la **reconstitution Multires** : des niveaux de subdivision dont le déplacement est reprojeté
-  depuis la sculpture d'origine, pour retrouver tout son détail au-dessus du maillage quad.
+- the **seams**, that is the edges along which the surface is cut to be unfolded;
+- the **UV coordinates** per face corner;
+- the **creases**: a weight per edge, computed automatically, so that a subdivision of the mesh
+  keeps the hard edges of the source crisp;
+- **optimal normals**: the normals per corner that best reproduce the shading of the source on
+  the lighter mesh;
+- the **Multires reconstruction**: subdivision levels whose displacement is projected back from
+  the original sculpt, to recover all its detail above the quad mesh.
 
-La chaîne organique calcule déjà une paramétrisation et un graphe de coupe pour construire le
-maillage ; les UV et les coutures en découleront. Pour la chaîne durci, les bords de patchs
-jouent le même rôle.
+The organic chain already computes a parametrization and a cut graph to build the mesh; UVs and
+seams will follow from them. For the hard-surface chain, the borders of patches play the same
+role.
 
-**Forme finale du logiciel.** Une bibliothèque à interface C, chargée depuis un greffon Python
-(module `ctypes`), pour s'intégrer à Blender **sans copie de mémoire** : le greffon passe
-directement les tableaux de sommets et de faces de Blender, et relit les résultats dans des
-tableaux qu'il fournit.
+**Final form of the software.** A library with a C interface, loaded from a Python add-on
+(module `ctypes`), to fit into Blender **without copying memory**: the add-on hands over
+Blender's arrays of vertices and faces directly, and reads the results back into arrays it
+provides.
 
 ---
 
 ## 3. Pipeline
 
 ```
- source dense
+ dense source
      │
- M1  prétraitement ─────────────► maillage de calcul + courbures
+ M1  preprocessing ─────────────► work mesh + curvatures
      │
- M2  champ de croix ────────────► une croix par face, singularités aux sommets
+ M2  cross field ───────────────► one cross per face, singularities at vertices
      │
- M3  simplification des singularités
+ M3  simplification of singularities
      │
- M4  paramétrisation sans couture ► (u, v) par coin, transitions réelles
+ M4  seamless parametrization ──► (u, v) per corner, real transitions
      │
- M5  T-mesh ────────────────────► patchs rectangulaires, longueurs réelles
+ M5  T-mesh ────────────────────► rectangular patches, real lengths
      │
- M6  quantification ────────────► longueurs entières
+ M6  quantization ──────────────► whole lengths
      │
- M7  maillage par rectangle ────► connectivité de M6, sommets lus dans la carte de M4
-     │                            (route directe ; M8, l'extraction, n'a plus lieu d'être)
- M9  relaxation et projection ──► maillage quad final sur la source
+ M7  mesh per rectangle ────────► connectivity from M6, vertices read in the map of M4
+     │                            (direct route; M8, extraction, is no longer needed)
+ M9  relaxation and projection ─► final quad mesh on the source
 
- M0  banc de mesure : compare n'importe quel maillage quad à sa source
+ M0  bench: compares any quad mesh with its source
 ```
 
-### M0 — Banc de mesure
+Each module has a sheet below, in the same form: input, output, method, hard point, test; then
+what was done, measured and left open at the milestone that wrote it.
 
-- **Entrée** : un maillage source et un maillage quad, quel que soit l'outil qui l'a produit.
-- **Sortie** : le tableau des métriques de la section 0.
-- **Méthode** : Blender sans interface pour QuadriFlow ; l'exécutable `openclare` pour le plancher.
-- **Test** : valeurs connues sur primitives (grille parfaite sur un tore : S = 0, F idéale).
-- **Pourquoi en premier** : sans lui, « supérieur à Blender » n'est pas vérifiable.
+### M0 — Bench
 
-### M1 — Prétraitement
+- **Input**: a source mesh and a quad mesh, whatever tool made it.
+- **Output**: the table of the metrics of section 0.
+- **Method**: Blender without its interface for QuadriFlow; the executable `openclare` for the
+  floor.
+- **Test**: known values on primitives (a perfect grid on a torus: S = 0, ideal F).
+- **Why first**: without it, "better than Blender" cannot be checked.
 
-- **Entrée** : triangles bruts.
-- **Sortie** : un maillage de calcul variété, à triangles bien conformés ; par sommet, courbures
-  k₁, k₂, directions principales et un indice de confiance.
-- **Méthode** : nettoyage (soudure, triangles dégénérés) ; décimation QEM si l'entrée dépasse le
-  budget ; remaillage isotrope ; courbures par la méthode de Rusinkiewicz. La décimation seule ne
-  suffit pas : elle laisse des triangles effilés qui dégradent les solveurs des modules suivants.
-- **Taille du maillage de calcul** : de 50 000 à 200 000 triangles, et au moins plusieurs
-  triangles par quad demandé. *Le facteur exact est à mesurer.*
-- **Point dur** : l'échelle à laquelle mesurer la courbure sur une sculpture bruitée.
-- **Test** : angles minimaux des triangles ; distance à la source ; courbures comparées aux
-  valeurs exactes sur sphère, cylindre et tore.
+### M1 — Preprocessing
 
-**Réalisé au jalon 1** (`crates/openclare/src/preprocess/`, interface `Preprocessor` et sa fabrique).
-Mesuré sur le corpus pour un maillage de calcul de 50 000 triangles demandés :
+- **Input**: raw triangles.
+- **Output**: a manifold work mesh, with well-shaped triangles; per vertex, curvatures k₁, k₂,
+  principal directions and a confidence index.
+- **Method**: cleaning (welding, degenerate triangles); QEM decimation if the input exceeds the
+  budget; isotropic remeshing; curvatures by the method of Rusinkiewicz. Decimation alone is
+  not enough: it leaves sliver triangles that degrade the solvers of the next modules.
+- **Size of the work mesh**: from 50,000 to 200,000 triangles, and at least several triangles
+  per quad asked for. *The exact factor is to be measured.*
+- **Hard point**: the scale at which to measure curvature on a noisy sculpt.
+- **Test**: smallest angles of the triangles; distance to the source; curvatures compared with
+  the exact values on a sphere, a cylinder and a torus.
 
-| Modèle | Triangles | Plus petit angle, moyenne | … 1ᵉʳ centile | Hausdorff, ‰ | Temps |
+**Done at milestone 1** (`crates/openclare/src/preprocess/`, interface `Preprocessor` and its
+factory). Measured on the corpus for a work mesh of 50,000 triangles asked for:
+
+| Model | Triangles | Smallest angle, mean | … 1st percentile | Hausdorff, ‰ | Time |
 |---|---|---|---|---|---|
-| blob | 124 004 → 50 420 | 45,6° → 52,9° | 35,2° → 41,6° | 2,0 | 1,4 s |
-| rocher | 81 920 → 56 638 | 55,8° → 54,8° | 48,0° → 42,7° | 1,3 | 1,1 s |
-| créature | 78 124 → 51 162 | 43,3° → 53,3° | 32,3° → 42,0° | 0,6 | 1,1 s |
-| cage | 26 656 → 48 600 | 40,8° → 52,8° | 28,5° → 41,5° | 4,4 | 0,9 s |
-| Suzanne | 15 744 → 49 284 | 35,4° → 52,2° | 11,8° → 39,2° | 3,2 | 1,1 s |
-| pièce (arêtes vives) | 406 → 53 090 | 3,3° → 49,7° | 0,5° → 29,2° | 0,3 | 1,5 s |
-| cube (arêtes vives) | 3 072 → 50 592 | 45,0° → 46,7° | 45,0° → 39,0° | 0,0 | 0,8 s |
+| blob | 124,004 → 50,420 | 45.6° → 52.9° | 35.2° → 41.6° | 2.0 | 1.4 s |
+| rock | 81,920 → 56,638 | 55.8° → 54.8° | 48.0° → 42.7° | 1.3 | 1.1 s |
+| creature | 78,124 → 51,162 | 43.3° → 53.3° | 32.3° → 42.0° | 0.6 | 1.1 s |
+| cage | 26,656 → 48,600 | 40.8° → 52.8° | 28.5° → 41.5° | 4.4 | 0.9 s |
+| Suzanne | 15,744 → 49,284 | 35.4° → 52.2° | 11.8° → 39.2° | 3.2 | 1.1 s |
+| part (hard edges) | 406 → 53,090 | 3.3° → 49.7° | 0.5° → 29.2° | 0.3 | 1.5 s |
+| cube (hard edges) | 3,072 → 50,592 | 45.0° → 46.7° | 45.0° → 39.0° | 0.0 | 0.8 s |
 
-- Topologie conservée partout : même nombre de composantes, mêmes bords, aucune arête non variété.
-- Arêtes vives et coins conservés exactement (volume du cube exact, les 8 coins présents).
-- Passage à l'échelle : 1,3 million de triangles ramenés à 100 000 en 10 secondes.
-- Courbures vérifiées sur le tore remaillé : valeur et direction justes sur plus de 97 % des
-  sommets ; indice de confiance proche de zéro sur la sphère, comme attendu.
+- Topology kept everywhere: same number of components, same borders, no non-manifold edge.
+- Hard edges and corners kept exactly (the volume of the cube is exact, the 8 corners are
+  there).
+- Scaling up: 1.3 million triangles brought down to 100,000 in 10 seconds.
+- Curvatures checked on the remeshed torus: right value and direction on more than 97 % of the
+  vertices; confidence index close to zero on the sphere, as expected.
 
-Limites constatées :
+Limits found:
 
-- **Arêtes vives non déclarées.** Sans angle de pli fourni, une arête vive est traitée comme une
-  zone très courbe et s'érode d'environ une demi-longueur d'arête (c'est la cage, à 4,4 ‰).
-- **Taille du maillage de calcul** tenue à 13 % près, pas exactement.
-- **Entrées non variété** : laissées telles quelles, ni réparées ni refusées.
-- **Cylindre** : pas de test sur cylindre, faute de primitive ; le tore couvre le même cas.
+- **Hard edges that are not declared.** With no crease angle given, a hard edge is treated as a
+  strongly curved zone and wears away by about half an edge length (this is the cage, at
+  4.4 ‰).
+- **Size of the work mesh** held to within 13 %, not exactly.
+- **Non-manifold inputs**: left as they are, neither repaired nor refused.
+- **Cylinder**: no test on a cylinder, for want of a primitive; the torus covers the same case.
 
-### M1 bis — Champ de taille
+### M1 bis — Sizing field
 
-- **Entrée** : maillage de calcul ; réglage d'adaptivité (de 0 à 1) ; en option, une densité
-  peinte par sommet du maillage d'entrée.
-- **Sortie** : par sommet du maillage de calcul, un facteur sur la longueur d'arête demandée
-  (moins de 1 : quads plus petits). Il accompagne le maillage de calcul et vaut 1 partout tant
-  qu'on ne demande rien.
-- **Méthode** : deux sources qui se multiplient.
-  - *La forme* (rang 2). Une corde de longueur l sur une surface de courbure k s'en écarte de
-    k l² / 8 : pour une erreur égale partout, l varie comme 1/√k. L'adaptivité est la part de
-    cette loi qu'on applique (0 : taille unique ; 1 : erreur égalisée), dans la limite d'un
-    facteur 3 de part et d'autre.
-  - *La densité peinte* (rang 5). Un poids par sommet de l'entrée, de 0 (le moins dense) à 1
-    (le plus dense). Un seul réglage, le contraste, dit combien de fois plus de quads par unité
-    d'aire reçoit un poids de 1 qu'un poids de 0 (4 par défaut : arêtes deux fois plus courtes).
-    Seul l'écart entre les poids compte, puisque le nombre total de quads est fixé par
-    ailleurs : un sommet non peint vaut 0 et sert simplement de niveau de base. Convention
-    retenue le 7 octobre 2026 pour coller au Weight Paint de Blender. (Quad Remesher, lui, peint
-    en couleurs de sommets un facteur de ×0,25 à ×4 autour d'une valeur neutre : vérifié dans le
-    module installé, version 1.4.) Chaque sommet du maillage de calcul lit la peinture au point
-    le plus proche de l'entrée.
+- **Input**: the work mesh; the adaptivity setting (from 0 to 1); optionally, a density painted
+  per vertex of the input mesh.
+- **Output**: per vertex of the work mesh, a factor on the edge length asked for (less than 1:
+  smaller quads). It goes with the work mesh and is worth 1 everywhere as long as nothing is
+  asked for.
+- **Method**: two sources that multiply.
+  - *The shape* (rank 2). A chord of length l on a surface of curvature k departs from it by
+    k l² / 8: for an error equal everywhere, l varies as 1/√k. Adaptivity is the share of this
+    law that is applied (0: a single size; 1: equalized error), within a factor 3 either way.
+  - *Painted density* (rank 5). A weight per vertex of the input, from 0 (the least dense) to 1
+    (the most dense). A single setting, the contrast, says how many times more quads per unit
+    of area a weight of 1 gets than a weight of 0 (4 by default: edges twice as short). Only
+    the gap between the weights counts, since the total number of quads is set elsewhere: an
+    unpainted vertex is worth 0 and simply serves as the base level. Convention chosen on
+    7 October 2026 to match Blender's Weight Paint. (Quad Remesher, for its part, paints in
+    vertex colours a factor of ×0.25 to ×4 around a neutral value: checked in the installed
+    add-on, version 1.4.) Each vertex of the work mesh reads the paint at the closest point of
+    the input.
 
-  Le champ est ensuite lissé sur une arête et demie de quad, puis mis à l'échelle pour que le
-  nombre total de quads reste celui demandé.
-- **Comment il agit sur la chaîne** : à deux endroits, et il faut les deux.
-  - *La carte* (M4) avance plus vite là où les quads doivent être plus petits : l'unité de la
-    carte est la longueur d'arête locale. Tout l'aval (T-mesh, quantification, placement) vit
-    dans la carte et n'a pas à connaître la taille.
-  - *Le champ de croix* (M2) est calculé comme si les longueurs de la surface étaient divisées
-    par la taille locale. Sans cela la carte ne peut suivre la taille qu'à moitié : un maillage
-    quad ne change de densité qu'en créant des sommets irréguliers, et c'est le champ qui les
-    place. En pratique, le transport d'une direction d'une face à sa voisine reçoit un terme de
-    plus, proportionnel à la variation de la taille le long de l'arête traversée.
-- **Point dur** : plus la taille varie, plus il faut de sommets irréguliers ; et une partie plus
-  mince qu'un quad (une oreille) n'est pas vue par la courbure seule. C'est l'objet du
-  chantier Q2, qui ajoute une borne sur les parties fines (voir sa fiche).
-- **Test** : sans adaptivité ni peinture, facteur 1 partout ; le nombre de quads est conservé ;
-  le maillage est mesurablement plus fin là où on l'a demandé.
+  The field is then smoothed over a quad edge and a half, then scaled so that the total number
+  of quads stays the one asked for.
+- **How it acts on the chain**: in two places, and both are needed.
+  - *The map* (M4) advances faster where quads must be smaller: the unit of the map is the
+    local edge length. Everything downstream (T-mesh, quantization, placement) lives in the map
+    and does not need to know the size.
+  - *The cross field* (M2) is computed as if the lengths of the surface were divided by the
+    local size. Without that the map can only follow the size halfway: a quad mesh changes
+    density only by creating irregular vertices, and it is the field that places them. In
+    practice, the transport of a direction from a face to its neighbour gets one more term,
+    proportional to the variation of the size along the edge crossed.
+- **Hard point**: the more the size varies, the more irregular vertices are needed; and a part
+  thinner than a quad (an ear) is not seen by curvature alone. This is the subject of track Q2,
+  which adds a bound on thin parts (see its sheet).
+- **Test**: with neither adaptivity nor paint, a factor of 1 everywhere; the number of quads is
+  kept; the mesh is measurably finer where it was asked for.
 
-**Réalisé au jalon 8** (`crates/openclare/src/sizing.rs`, interface `Sizer` et sa fabrique ;
-terme de transport dans `crossfield/frames.rs` ; réglage `adaptivity` de la configuration ;
-données peintes passées par `Guides`, à côté du maillage, et non dans la configuration).
+**Done at milestone 8** (`crates/openclare/src/sizing.rs`, interface `Sizer` and its factory;
+transport term in `crossfield/frames.rs`; setting `adaptivity` of the configuration; painted
+data passed through `Guides`, beside the mesh, and not in the configuration).
 
-![L'ogre à 3000 quads : taille unique, densité adaptative, densité peinte](docs/images/milestone8_density.png)
+![The ogre at 3000 quads: single size, adaptive density, painted density](docs/images/milestone8_density.png)
 
-Sur l'image : taille unique ; densité adaptative à 0,5 (le préréglage `organic`) ; densité
-peinte, quatre fois plus de quads sur la tête et quatre fois moins sur les jambes que sur le
-tronc (poids 1, 0 et 0,5, contraste 16). Les trois
-maillages sont valides et tiennent leur budget à 2 % près.
+In the picture: a single size; adaptive density at 0.5 (the `organic` preset); painted density,
+four times more quads on the head and four times fewer on the legs than on the trunk (weights
+1, 0 and 0.5, contrast 16). The three meshes are valid and hold their budget to within 2 %.
 
-**Résultat.** Médianes sur les 12 modèles organiques, densité adaptative à 0,5 (tableaux
-complets dans `bench/results/ACCEPTANCE.md` ; dans le banc, `quad-layout` est la variante à
-taille unique et `quad-layout-adaptive` celle du préréglage) :
+**Result.** Medians over the 12 organic models, adaptive density at 0.5 (full tables in
+`bench/results/ACCEPTANCE.md`; in the bench, `quad-layout` is the variant with a single size
+and `quad-layout-adaptive` that of the preset):
 
 | | 1000 quads | 3000 quads | 8000 quads |
 |---|---|---|---|
-| Modèles toujours valides : taille unique / adaptative / Quad Remesher défaut | 11 / **12** / 11 | 12 / **12** / 8 | 12 / **12** / 11 |
-| Alignement (A) : taille unique / adaptative / Quad Remesher défaut | 9,1° / **8,4°** / 6,4° | 8,4° / **7,6°** / 6,4° | 8,7° / **7,8°** / 7,5° |
-| Écart d'angle moyen (F) | 5,3° / **5,4°** / 8,2° | 5,4° / **5,0°** / 6,5° | 6,1° / **5,6°** / 6,4° |
-| Hausdorff, ‰ (H) | 18,5 / **14,1** / 7,9 | 8,1 / **7,2** / 5,9 | 4,7 / **3,5** / 4,3 |
-| Sommets irréguliers (S) | 42 / **42** / 72 | 50 / **54** / 80 | 67 / **78** / 72 |
-| Écart au budget (N) | 0,8 % / **0,5 %** / 71 % | 1,4 % / **1,1 %** / 37 % | 0,8 % / **0,8 %** / 13 % |
+| Models always valid: single size / adaptive / Quad Remesher default | 11 / **12** / 11 | 12 / **12** / 8 | 12 / **12** / 11 |
+| Alignment (A): single size / adaptive / Quad Remesher default | 9.1° / **8.4°** / 6.4° | 8.4° / **7.6°** / 6.4° | 8.7° / **7.8°** / 7.5° |
+| Mean angle deviation (F) | 5.3° / **5.4°** / 8.2° | 5.4° / **5.0°** / 6.5° | 6.1° / **5.6°** / 6.4° |
+| Hausdorff, ‰ (H) | 18.5 / **14.1** / 7.9 | 8.1 / **7.2** / 5.9 | 4.7 / **3.5** / 4.3 |
+| Irregular vertices (S) | 42 / **42** / 72 | 50 / **54** / 80 | 67 / **78** / 72 |
+| Gap to the budget (N) | 0.8 % / **0.5 %** / 71 % | 1.4 % / **1.1 %** / 37 % | 0.8 % / **0.8 %** / 13 % |
 
-- La densité adaptative améliore l'alignement et la fidélité à tous les budgets, et rend
-  valide le dernier cas qui ne l'était pas (le cochon à 1000 quads).
-- **Face à Quad Remesher par défaut** (lui aussi à taille adaptative) : à 8000 quads openclare
-  est devant sur la fidélité et la forme, presque à égalité sur l'alignement. À 1000 et 3000
-  quads Quad Remesher reste devant sur l'alignement et la fidélité, mais il n'y tient pas le
-  budget demandé : il rend 71 % et 37 % de quads d'écart, là où openclare reste à 1 %.
-- **La règle d'acceptation face à QuadriFlow** reste tenue en médiane avec la densité
-  adaptative, à une exception : à 8000 quads, 78 sommets irréguliers contre 70 pour QuadriFlow.
-  La variante à taille unique la tient aux trois budgets.
+- Adaptive density improves alignment and fidelity at every budget, and makes valid the last
+  case that was not (the pig at 1000 quads).
+- **Against Quad Remesher by default** (adaptive in size too): at 8000 quads openclare is ahead
+  on fidelity and shape, nearly level on alignment. At 1000 and 3000 quads Quad Remesher stays
+  ahead on alignment and fidelity, but it does not hold the budget asked for there: it returns
+  71 % and 37 % of quads off, where openclare stays at 1 %.
+- **The acceptance rule against QuadriFlow** stays met in the median with adaptive density,
+  with one exception: at 8000 quads, 78 irregular vertices against 70 for QuadriFlow. The
+  variant with a single size meets it at the three budgets.
 
-Vérifié par les tests (`crates/openclare/tests/sizing.rs`) : facteur 1 partout par défaut ;
-sur un fuseau, pointes plus fines que la taille et d'autant plus que l'adaptivité est forte,
-nombre de quads conservé ; un hémisphère peint à 1 et l'autre laissé à 0, avec un contraste de
-16, donnent un champ de taille dans un rapport 4, sans saut à l'équateur ; peindre tout au même
-poids ne change rien ; avec un contraste de 9, le maillage obtenu a des arêtes trois fois plus
-courtes du côté peint, reste valide et tient son budget ; les entrées incohérentes sont
-refusées.
+Checked by the tests (`crates/openclare/tests/sizing.rs`): a factor of 1 everywhere by default;
+on a spindle, tips finer than the size and all the more so as adaptivity is strong, number of
+quads kept; one hemisphere painted at 1 and the other left at 0, with a contrast of 16, give a
+sizing field in a ratio of 4, with no jump at the equator; painting everything with the same
+weight changes nothing; with a contrast of 9, the mesh obtained has edges three times shorter
+on the painted side, stays valid and holds its budget; inconsistent inputs are refused.
 
-Ce qui reste ouvert :
+What stays open:
 
-- **Plus de sommets irréguliers** : c'est le prix de la variation de taille (54 en médiane
-  contre 50 à 3000 quads ; 88 contre 76 sur l'ogre).
-- **Les parties plus minces qu'un quad** restent mal rendues : les oreilles de l'ogre font
-  toujours son plus grand écart à la source. La courbure ne suffit pas à les voir (DT-018).
-- **La portée de l'annulation des singularités et l'échelle de lecture de la courbure** se
-  comptent encore en arêtes nominales, pas locales (DT-025).
-- **Format de la densité peinte** : un fichier texte, un poids par sommet. La lecture du
-  Weight Paint de Blender viendra avec le pont Blender (J10, DT-026).
-- **Pièces mécaniques** : le préréglage `hard-surface` garde une taille unique.
+- **More irregular vertices**: it is the price of the variation in size (54 in the median
+  against 50 at 3000 quads; 88 against 76 on the ogre).
+- **Parts thinner than a quad** are still poorly rendered: the ears of the ogre are still its
+  largest distance to the source. Curvature is not enough to see them (DT-018).
+- **The reach of the cancellation of singularities and the scale at which curvature is read**
+  are still counted in nominal edges, not local ones (DT-025).
+- **Format of painted density**: a text file, a weight per vertex. Reading Blender's Weight
+  Paint will come with the Blender bridge (J10, DT-026).
+- **Mechanical parts**: the `hard-surface` preset keeps a single size.
 
-### M2 — Champ de croix
+### M2 — Cross field
 
-- **Entrée** : maillage de calcul, courbures et confiance ; contraintes dures éventuelles (arêtes
-  vives, courbes guides).
-- **Sortie** : une croix par face, les correspondances entre faces voisines, et l'indice de
-  chaque sommet (singularités).
-- **Méthode** : représentation complexe d'ordre 4 (z = e^{4iθ}), qui masque la symétrie par quart
-  de tour ; énergie de lissage quadratique tenant compte du transport parallèle entre faces.
-  - sans contrainte ni alignement : plus petit vecteur propre d'une matrice creuse ;
-  - avec alignement souple sur la courbure, ou contraintes dures : système linéaire creux.
-  L'alignement est pondéré par l'anisotropie |k₁−k₂| et la confiance : là où k₁ ≈ k₂, la direction
-  de courbure n'a pas de sens et ne doit rien imposer.
-- **Point dur** : le bruit de courbure crée des singularités parasites ; réglage du poids
-  d'alignement.
-- **Test** : somme des indices égale à 4·χ ; 8 singularités sur une sphère, 0 sur un tore ; écart
-  angulaire à la direction de courbure sur un ellipsoïde ; déterminisme.
-- **Décidé : champ par face.** L'article de Knöppel et al. travaille par sommet ; on adapte sa
-  formulation aux faces, parce que la paramétrisation (M4) attend un champ par face avec les
-  singularités aux sommets.
+- **Input**: the work mesh, curvatures and confidence; hard constraints if any (hard edges,
+  guide curves).
+- **Output**: one cross per face, the matchings between neighbouring faces, and the index of
+  each vertex (singularities).
+- **Method**: complex representation of order 4 (z = e^{4iθ}), which hides the symmetry by
+  quarter turns; a quadratic smoothing energy that takes into account the parallel transport
+  between faces.
+  - with neither constraint nor alignment: smallest eigenvector of a sparse matrix;
+  - with soft alignment on curvature, or hard constraints: a sparse linear system.
+  Alignment is weighted by the anisotropy |k₁−k₂| and the confidence: where k₁ ≈ k₂, the
+  curvature direction has no meaning and must impose nothing.
+- **Hard point**: the noise of curvature creates spurious singularities; tuning of the
+  alignment weight.
+- **Test**: sum of the indices equal to 4·χ; 8 singularities on a sphere, 0 on a torus; angular
+  deviation from the curvature direction on an ellipsoid; determinism.
+- **Decided: a field per face.** The paper of Knöppel et al. works per vertex; its formulation
+  is adapted to faces, because parametrization (M4) expects a field per face with the
+  singularities at vertices.
 
-**Réalisé au jalon 2** (`crates/openclare/src/crossfield/`, interface `CrossFieldSolver` et sa
-fabrique ; deux solveurs : `power`, celui de cette fiche, et `extrinsic`, celui d'Instant Meshes
-lu par face, gardé comme point de comparaison).
+**Done at milestone 2** (`crates/openclare/src/crossfield/`, interface `CrossFieldSolver` and
+its factory; two solvers: `power`, that of this sheet, and `extrinsic`, that of Instant Meshes
+read per face, kept as a point of comparison).
 
-Mesuré sur un maillage de calcul de 50 000 triangles, courbure lue à l'échelle d'un maillage de
-3000 quads, poids d'alignement 0,05. Chaque case donne le nombre de singularités puis l'écart
-d'alignement en degrés :
+Measured on a work mesh of 50,000 triangles, curvature read at the scale of a mesh of 3000
+quads, alignment weight 0.05. Each cell gives the number of singularities then the alignment
+deviation in degrees:
 
-| Modèle | Notre champ | Quad Remesher (uniforme) | QuadriFlow |
+| Model | Our field | Quad Remesher (uniform) | QuadriFlow |
 |---|---|---|---|
-| blob | 28 / 1,7 | 24 / 4,6 | 38 / 17,5 |
-| créature | 38 / 3,4 | 46 / 5,3 | 24 / 12,9 |
-| cage | 48 / 2,3 | 43 / 2,6 | 66 / 8,1 |
-| rocher | 126 / 10,0 | 101 / 14,7 | 8 / 23,0 |
-| ogre | 203 / 8,0 | 228 / 10,8 | 106 / 19,3 |
-| Spot | 74 / 4,7 | 87 / 7,6 | 68 / 18,1 |
-| Bob | 20 / 1,9 | 30 / 5,1 | 32 / 19,4 |
-| Blub | 44 / 4,9 | 46 / 7,0 | 52 / 16,0 |
-| cochon | 90 / 5,9 | 96 / 9,4 | 122 / 17,4 |
+| blob | 28 / 1.7 | 24 / 4.6 | 38 / 17.5 |
+| creature | 38 / 3.4 | 46 / 5.3 | 24 / 12.9 |
+| cage | 48 / 2.3 | 43 / 2.6 | 66 / 8.1 |
+| rock | 126 / 10.0 | 101 / 14.7 | 8 / 23.0 |
+| ogre | 203 / 8.0 | 228 / 10.8 | 106 / 19.3 |
+| Spot | 74 / 4.7 | 87 / 7.6 | 68 / 18.1 |
+| Bob | 20 / 1.9 | 30 / 5.1 | 32 / 19.4 |
+| Blub | 44 / 4.9 | 46 / 7.0 | 52 / 16.0 |
+| pig | 90 / 5.9 | 96 / 9.4 | 122 / 17.4 |
 
-**Attention à ne pas surlire ce tableau.** Notre colonne mesure un *champ* ; les deux autres
-mesurent un *maillage fini*, dont les arêtes s'écartent toujours un peu du champ qui l'a guidé
-(distorsion de la paramétrisation, arrondi aux entiers). Le maillage qu'on tirera de ce champ
-fera donc moins bien que ces chiffres. Ce que le tableau établit : le champ a autant de
-singularités que Quad Remesher, pas davantage, et il suit la courbure de près. La matière
-première est au niveau.
+**Beware of reading too much into this table.** Our column measures a *field*; the two others
+measure a *finished mesh*, whose edges always depart a little from the field that guided it
+(distortion of the parametrization, rounding to integers). The mesh that will be drawn from
+this field will thus do less well than these figures. What the table establishes: the field has
+as many singularities as Quad Remesher, no more, and it follows curvature closely. The raw
+material is up to the level.
 
-- **Vitesse** : 0,2 à 0,5 seconde pour 50 000 triangles.
-- **Vérifié par les tests** : somme des indices égale à 4 χ pour les deux solveurs ; 8
-  singularités sur la sphère ; sur le cube, exactement une par coin et toutes les croix alignées
-  sur les axes ; champ parallèle aux bords sur une surface ouverte ; alignement sur l'ellipsoïde ;
-  déterminisme ; refus d'un maillage non variété.
-- **Solveur** : gradient conjugué appliqué directement depuis le maillage (chaque face a au plus
-  trois voisines), sans bibliothèque d'algèbre creuse. `faer` reste prévu pour la
-  paramétrisation (M4), dont le système est d'une autre nature.
+- **Speed**: 0.2 to 0.5 second for 50,000 triangles.
+- **Checked by the tests**: sum of the indices equal to 4 χ for the two solvers; 8
+  singularities on the sphere; on the cube, exactly one per corner and all the crosses aligned
+  on the axes; field parallel to the borders on an open surface; alignment on the ellipsoid;
+  determinism; refusal of a non-manifold mesh.
+- **Solver**: conjugate gradient applied straight from the mesh (each face has at most three
+  neighbours), with no sparse algebra library. `faer` stays planned for parametrization (M4),
+  whose system is of another nature.
 
-Constats utiles pour la suite :
+Findings useful for what follows:
 
-- **Le champ le plus lisse n'est pas celui qui a le moins de singularités.** Sur un tore épais,
-  le champ le plus lisse en porte 16 (8 de chaque signe), parce qu'elles absorbent la courbure à
-  moindre coût ; dès qu'on suit la courbure, elles disparaissent. C'est un levier pour M3.
-- **Le poids d'alignement règle le compromis** entre nombre de singularités et alignement. De 0
-  à 0,5, la créature passe de 18 singularités à 18° d'écart, à 44 singularités à 1,6°. La valeur
-  0,05 est un bon milieu sur tout le corpus.
-- **Singularités d'ordre supérieur** : sur l'ogre, 6 sommets ont un indice d'un demi-tour ou plus.
-  Rares, mais M3 devra les scinder ou les accepter.
+- **The smoothest field is not the one with the fewest singularities.** On a thick torus, the
+  smoothest field carries 16 of them (8 of each sign), because they absorb curvature at a lower
+  cost; as soon as curvature is followed, they disappear. This is a lever for M3.
+- **The alignment weight sets the trade-off** between the number of singularities and
+  alignment. From 0 to 0.5, the creature goes from 18 singularities at 18° of deviation to 44
+  singularities at 1.6°. The value 0.05 is a good middle over the whole corpus.
+- **Singularities of higher order**: on the ogre, 6 vertices have an index of half a turn or
+  more. Rare, but M3 will have to split them or accept them.
 
-### M3 — Simplification des singularités
+### M3 — Simplification of singularities
 
-- **Entrée** : champ et singularités de M2.
-- **Sortie** : un champ avec moins de singularités, mieux placées, vérifiant toujours 4·χ.
-- **État honnête** : c'est le module le moins établi. Il n'existe pas d'algorithme de référence
-  unique ; ce qui suit est une proposition à valider par l'expérience.
-- **Méthode proposée**, en deux niveaux :
-  1. *Réglage global* : plus le lissage domine l'alignement, moins il y a de singularités.
-  2. *Annulation de paires* : pour une singularité +¼ et une −¼ proches, transférer l'indice de
-     l'une à l'autre le long du plus court chemin d'arêtes (en modifiant les sauts de période le
-     long du chemin), relisser, et ne garder le changement que si l'énergie de lissage n'augmente
-     pas au-delà d'un seuil.
-- **Alternative plus tard dans la chaîne** : Lyon et al. 2021 déplacent ou suppriment des
-  singularités pendant la quantification.
-- **Valences** : les indices ±¼ (valences 3 et 5) sont le cas général visé. Les autres ne sont
-  pas interdits : coins concaves et bords en demandent.
-- **Critère de sortie** : réduction mesurable de S et C sur le corpus sans dégrader A. Si ce
-  n'est pas atteint dans le temps imparti, on garde le seul niveau 1 et on avance.
+- **Input**: field and singularities of M2.
+- **Output**: a field with fewer singularities, better placed, still satisfying 4·χ.
+- **Honest state**: this is the least established module. There is no single reference
+  algorithm; what follows is a proposal to validate by experiment.
+- **Method proposed**, in two levels:
+  1. *Global setting*: the more smoothing dominates alignment, the fewer singularities there
+     are.
+  2. *Cancellation of pairs*: for a +¼ and a −¼ singularity close to each other, transfer the
+     index of one to the other along the shortest path of edges (by changing the period jumps
+     along the path), smooth again, and keep the change only if the smoothing energy does not
+     rise beyond a threshold.
+- **Alternative later in the chain**: Lyon et al. 2021 move or remove singularities during
+  quantization.
+- **Valences**: the indices ±¼ (valences 3 and 5) are the general case aimed at. The others are
+  not forbidden: concave corners and borders call for them.
+- **Exit criterion**: a measurable reduction of S and C on the corpus without degrading A. If
+  it is not reached in the time allotted, level 1 alone is kept and we move on.
 
-**Réalisé au jalon 3** (`crates/openclare/src/singularity/`, interface `SingularityOptimizer` et sa
-fabrique ; deux implémentations : `pair-cancellation`, et `keep` qui ne touche à rien).
+**Done at milestone 3** (`crates/openclare/src/singularity/`, interface `SingularityOptimizer`
+and its factory; two implementations: `pair-cancellation`, and `keep` which touches nothing).
 
-La méthode retenue est le niveau 2 de la fiche, avec deux précisions venues de l'expérience :
+The method chosen is level 2 of the sheet, with two points that came from experiment:
 
-- **Le champ n'est relissé qu'autour de la paire annulée.** Relisser tout le champ à chaque
-  essai le dégradait partout (jusqu'à 1° d'alignement perdu sans rien annuler) et coûtait
-  plusieurs secondes. En local, le reste du champ reste exactement celui de M2.
-- **Le réglage principal est une distance**, pas un seuil d'énergie : on annule les paires plus
-  proches que quelques arêtes de quad. Une paire plus serrée qu'un ou deux quads est du bruit que
-  le maillage ne pourrait de toute façon pas exprimer ; une paire éloignée décrit en général une
-  vraie forme.
+- **The field is smoothed again only around the cancelled pair.** Smoothing the whole field at
+  each try degraded it everywhere (up to 1° of alignment lost without cancelling anything) and
+  cost several seconds. Done locally, the rest of the field stays exactly that of M2.
+- **The main setting is a distance**, not an energy threshold: pairs closer than a few quad
+  edges are cancelled. A pair tighter than one or two quads is noise that the mesh could not
+  express anyway; a distant pair generally describes a real shape.
 
-Les singularités d'ordre supérieur sont d'abord scindées en singularités simples.
+Singularities of higher order are first split into simple ones.
 
-Mesuré comme au jalon 2 (courbure lue à l'échelle de 3000 quads), paires annulées jusqu'à 2 arêtes
-de quad. Chaque case : singularités / écart d'alignement en degrés.
+Measured as at milestone 2 (curvature read at the scale of 3000 quads), pairs cancelled up to 2
+quad edges. Each cell: singularities / alignment deviation in degrees.
 
-| Modèle | Champ de M2 | Après M3 | Réglage global seul | Quad Remesher (uniforme) |
+| Model | Field of M2 | After M3 | Global setting alone | Quad Remesher (uniform) |
 |---|---|---|---|---|
-| ogre | 203 / 8,0 | **98 / 9,0** | 185 / 9,2 | 228 / 10,8 |
-| rocher | 126 / 10,0 | **74 / 10,9** | 90 / 11,4 | 101 / 14,7 |
-| cochon | 90 / 5,9 | **74 / 6,2** | 90 / 7,1 | 96 / 9,4 |
-| Spot | 74 / 4,7 | 70 / 4,9 | 74 / 6,3 | 87 / 7,6 |
-| blob | 28 / 1,7 | 26 / 1,8 | 28 / 1,9 | 24 / 4,6 |
-| créature, cage, Bob, Blub | inchangés | inchangés | — | — |
+| ogre | 203 / 8.0 | **98 / 9.0** | 185 / 9.2 | 228 / 10.8 |
+| rock | 126 / 10.0 | **74 / 10.9** | 90 / 11.4 | 101 / 14.7 |
+| pig | 90 / 5.9 | **74 / 6.2** | 90 / 7.1 | 96 / 9.4 |
+| Spot | 74 / 4.7 | 70 / 4.9 | 74 / 6.3 | 87 / 7.6 |
+| blob | 28 / 1.7 | 26 / 1.8 | 28 / 1.9 | 24 / 4.6 |
+| creature, cage, Bob, Blub | unchanged | unchanged | — | — |
 
-« Réglage global seul » est le niveau 1 de la fiche : le même champ calculé avec un poids
-d'alignement plus faible (0,02 au lieu de 0,05).
+"Global setting alone" is level 1 of the sheet: the same field computed with a weaker alignment
+weight (0.02 instead of 0.05).
 
-- **Critère de sortie atteint.** Sur les modèles chargés, M3 retire 18 à 52 % des singularités
-  pour 0,3° à 1° d'alignement, et fait mieux que le réglage global sur les deux tableaux à la fois
-  (ogre : moitié moins de singularités pour le même alignement).
-- **Les modèles propres ne sont pas touchés** : là où il n'y a rien à retirer, le champ ressort
-  identique, bit pour bit.
-- **Vitesse** : 0,1 à 0,2 seconde.
-- **Vérifié par les tests** : un tore épais perd ses 16 singularités inutiles ; une sphère garde
-  les 8 que sa topologie impose ; la somme des indices est conservée ; résultat déterministe.
+- **Exit criterion reached.** On the loaded models, M3 removes 18 to 52 % of the singularities
+  for 0.3° to 1° of alignment, and does better than the global setting on both counts at once
+  (ogre: half as many singularities for the same alignment).
+- **Clean models are not touched**: where there is nothing to remove, the field comes out
+  identical, bit for bit.
+- **Speed**: 0.1 to 0.2 second.
+- **Checked by the tests**: a thick torus loses its 16 needless singularities; a sphere keeps
+  the 8 its topology imposes; the sum of the indices is kept; the result is deterministic.
 
-Ce qui reste ouvert :
+What stays open:
 
-- **L'effet sur la structure (C) n'est pas mesuré** : il faut un maillage pour cela, donc le
-  jalon 4 bis.
-- **Mêmes réserves qu'au jalon 2** : ces chiffres décrivent un champ, pas un maillage fini.
-- **La portée est un réglage** : à 3 arêtes de quad l'ogre tombe à 58 singularités pour 9,7°. La
-  bonne valeur se décidera sur des maillages, pas sur des champs.
-- **L'ordre est glouton**, les paires les plus proches d'abord ; aucun déplacement de singularité
-  isolée n'est tenté.
+- **The effect on the structure (C) is not measured**: a mesh is needed for that, hence
+  milestone 4 bis.
+- **Same reservations as at milestone 2**: these figures describe a field, not a finished mesh.
+- **The reach is a setting**: at 3 quad edges the ogre falls to 58 singularities for 9.7°. The
+  right value will be decided on meshes, not on fields.
+- **The order is greedy**, the closest pairs first; no move of a lone singularity is tried.
 
-### M4 — Paramétrisation sans couture
+### M4 — Seamless parametrization
 
-- **Entrée** : maillage de calcul, champ de M3, taille cible h = √(aire / budget).
-- **Sortie** : des coordonnées (u, v) par coin de triangle, dont le gradient suit la croix,
-  dont les transitions à travers les coutures sont un quart de tour plus une translation (réelle à
-  ce stade), **sans triangle inversé**.
-- **Méthode** : graphe de coupe passant par les singularités ; mise en cohérence du champ sur le
-  maillage découpé ; minimisation quadratique de l'écart entre le gradient de (u, v) et la croix,
-  sous contraintes linéaires de transition. C'est un système linéaire creux.
-- **Point dur, le premier du projet** : les inversions locales. La minimisation ne les exclut
-  pas, et une seule suffit à invalider la suite.
-  - ligne de défense 1 : détection, puis repondération locale et nouvelle résolution ;
-  - ligne de défense 2 : contraintes de validité d'*Integer-Grid Maps* ;
-  - repli : construction à garantie de Campen et al. 2019, nettement plus lourde.
-- **Test** : zéro triangle inversé sur tout le corpus ; transitions exactes aux coutures ;
-  distorsion mesurée ; sur un tore, la paramétrisation est la grille attendue.
+- **Input**: the work mesh, the field of M3, the target size h = √(area / budget).
+- **Output**: coordinates (u, v) per triangle corner, whose gradient follows the cross, whose
+  transitions across the seams are a quarter turn plus a translation (real at this stage),
+  **with no inverted triangle**.
+- **Method**: a cut graph passing through the singularities; making the field consistent on the
+  cut mesh; quadratic minimization of the gap between the gradient of (u, v) and the cross,
+  under linear transition constraints. It is a sparse linear system.
+- **Hard point, the first of the project**: local inversions. The minimization does not exclude
+  them, and a single one is enough to invalidate what follows.
+  - line of defence 1: detection, then local reweighting and a new solve;
+  - line of defence 2: validity constraints of *Integer-Grid Maps*;
+  - fallback: the construction with a guarantee of Campen et al. 2019, clearly heavier.
+- **Test**: no inverted triangle on the whole corpus; exact transitions at the seams;
+  distortion measured; on a torus, the parametrization is the expected grid.
 
-**Réalisé au jalon 4** (`crates/openclare/src/parametrization/`, interface `Parametrizer` et sa
-fabrique).
+**Done at milestone 4** (`crates/openclare/src/parametrization/`, interface `Parametrizer` and
+its factory).
 
-- **Graphe de coupe** : arbre couvrant des faces, dont le complément est élagué jusqu'aux
-  singularités et aux bords. Le champ est peigné le long de l'arbre.
-- **Résolution** : les conditions de couture sont imposées par lagrangien augmenté, ce qui garde
-  un système symétrique défini positif. Une seule factorisation de Cholesky sert à toutes les
-  itérations, et les coutures finissent exactes (écart de l'ordre de 1e-10).
-- **Inversions** : première ligne de défense seulement, le raidissement. Les faces repliées et
-  leurs voisines sont alourdies, puis on résout de nouveau.
+- **Cut graph**: a spanning tree of the faces, whose complement is pruned down to the
+  singularities and the borders. The field is combed along the tree.
+- **Solve**: the seam conditions are imposed by an augmented Lagrangian, which keeps a
+  symmetric positive definite system. A single Cholesky factorization serves all the
+  iterations, and the seams end up exact (a gap of the order of 1e-10).
+- **Inversions**: first line of defence only, stiffening. Folded faces and their neighbours are
+  made heavier, then the system is solved again.
 
-**Jalon de vérité : passé.** Sur les 16 modèles du corpus, à 1000, 3000 et 8000 quads (champ
-simplifié par M3) :
+**Truth milestone: passed.** On the 16 models of the corpus, at 1000, 3000 and 8000 quads
+(field simplified by M3):
 
-| | Résultat |
+| | Result |
 |---|---|
-| Cas sans aucun triangle inversé | **48 sur 48** |
-| Triangles inversés à la première résolution | 0 à 146 selon le modèle |
-| Passes de raidissement nécessaires | 0 à 15 |
-| Distorsion moyenne | de 0,001 (cube) à 0,48 (ogre à 1000 quads) ; 0 = copie rigide de chaque face |
-| Temps, 50 000 triangles | 0,2 à 3,6 secondes |
+| Cases with no inverted triangle at all | **48 out of 48** |
+| Inverted triangles at the first solve | 0 to 146 depending on the model |
+| Stiffening passes needed | 0 to 15 |
+| Mean distortion | from 0.001 (cube) to 0.48 (ogre at 1000 quads); 0 = rigid copy of each face |
+| Time, 50,000 triangles | 0.2 to 3.6 seconds |
 
-Les cas les plus durs sont ceux où le quad demandé est gros devant les détails : l'ogre et la
-créature à 1000 quads (15 et 14 passes), et le scan brut à 3000 (11 passes).
+The hardest cases are those where the quad asked for is large compared with the details: the
+ogre and the creature at 1000 quads (15 and 14 passes), and the raw scan at 3000 (11 passes).
 
-Vérifié par les tests : un plan est déplié rigidement ; un cube se déplie sans aucune distorsion,
-ses 8 coins sur la coupe ; un tore se referme avec la bonne période (la circonférence du tube, à
-10 % près) ; la surface coupée est toujours un disque ; le champ est peigné partout hors de la
-coupe ; résultat déterministe.
+Checked by the tests: a plane is unfolded rigidly; a cube unfolds with no distortion at all,
+its 8 corners on the cut; a torus closes up with the right period (the circumference of the
+tube, to within 10 %); the cut surface is always a disc; the field is combed everywhere off the
+cut; the result is deterministic.
 
-Ce qui reste ouvert, et qu'il ne faut pas se cacher :
+What stays open, and should not be hidden:
 
-- **Ce jalon ne valide que la moitié du risque.** La carte est sans couture, mais ses
-  translations sont encore réelles. Les rendre entières (J4 bis, puis J7) ajoute des contraintes,
-  donc de la distorsion : des inversions peuvent revenir. Le verdict définitif sur la lignée
-  tombera là.
-- **Faces très étirées** : certaines ne sont pas inversées mais écrasées (étirement jusqu'à 1000
-  près de singularités). Elles sont valides, pas belles.
-- **La distorsion ne dépend pas du budget à ce stade** : la taille du quad ne fait que mettre la
-  carte à l'échelle. Elle n'entrera en jeu qu'avec les entiers.
-- **Bords et arêtes vives** : depuis le jalon 5, ils sont tenus sur des isolignes de la carte
-  (une coordonnée constante le long de chacun), sans inversion sur le corpus. Les placer sur des
-  lignes *entières* viendra avec la quantification.
-- **Lignes de défense 2 et 3** (contraintes d'*Integer-Grid Maps*, construction à garantie) non
-  écrites : le raidissement a suffi sur le corpus.
+- **This milestone validates only half of the risk.** The map is seamless, but its translations
+  are still real. Making them whole (J4 bis, then J7) adds constraints, hence distortion:
+  inversions may come back. The final verdict on the lineage will fall there.
+- **Very stretched faces**: some are not inverted but squashed (stretch up to 1000 near
+  singularities). They are valid, not pretty.
+- **Distortion does not depend on the budget at this stage**: the size of the quad only scales
+  the map. It will come into play only with the integers.
+- **Borders and hard edges**: since milestone 5, they are held on isolines of the map (one
+  coordinate constant along each), with no inversion on the corpus. Placing them on *whole*
+  lines will come with quantization.
+- **Lines of defence 2 and 3** (constraints of *Integer-Grid Maps*, construction with a
+  guarantee) not written: stiffening was enough on the corpus.
 
-### Jalon 4 bis — premier résultat complet (provisoire)
+### Milestone 4 bis — first complete result (provisional)
 
-La première chaîne complète existe : `integer-grid`. Elle enchaîne prétraitement, champ de
-croix, simplification des singularités, paramétrisation entière, extraction et relaxation.
+The first complete chain exists: `integer-grid`. It strings together preprocessing, cross
+field, simplification of singularities, integer parametrization, extraction and relaxation.
 
-- **Carte entière par arrondi glouton** (`parametrization/integer.rs`) : on résout sans entiers,
-  on arrondit les quantités les plus proches d'un entier, on résout de nouveau, jusqu'à
-  épuisement. Les quantités entières sont les coordonnées des singularités, les translations des
-  coutures qu'aucune singularité ne fixe, et la ligne de grille de chaque arête caractéristique.
-- **Extraction** (`extract/grid.rs`) : chaque point de la surface appartient au point de grille
-  le plus proche ; les triangles sont raffinés, les sommets d'une même cellule fusionnés, et deux
-  cellules voisines reliées. C'est l'extraction d'Instant Meshes nourrie d'une grille globalement
-  cohérente. Elle n'a jamais à suivre une ligne à travers une couture, et tolère quelques
-  triangles inversés ; ce n'est pas l'extraction exacte du module M8.
-- **Réparation locale** : les rares faces non quads sont fusionnées par paires ou recoupées.
+- **Integer map by greedy rounding** (`parametrization/integer.rs`): solve without integers,
+  round the quantities closest to an integer, solve again, until none is left. The whole
+  quantities are the coordinates of the singularities, the translations of the seams that no
+  singularity fixes, and the grid line of each feature edge.
+- **Extraction** (`extract/grid.rs`): each point of the surface belongs to the closest grid
+  point; the triangles are refined, the vertices of one cell merged, and two neighbouring cells
+  linked. It is the extraction of Instant Meshes fed with a globally consistent grid. It never
+  has to follow a line across a seam, and tolerates a few inverted triangles; it is not the
+  exact extraction of module M8.
+- **Local repair**: the rare faces that are not quads are merged in pairs or cut again.
 
-Mesuré à 3000 quads sur les 12 modèles organiques (Desert Rose hors acceptation) :
+Measured at 3000 quads on the 12 organic models (Desert Rose outside acceptance):
 
-| | QuadriFlow | Quad Remesher (uniforme) | **openclare** | Plancher |
+| | QuadriFlow | Quad Remesher (uniform) | **openclare** | Floor |
 |---|---|---|---|---|
-| Maillages valides (V) | 36 sur 60 | 10 sur 12 | **9 sur 12** | 47 sur 60 |
-| Alignement (A), médiane | 17,5° | 7,7° | **8,8°** | 16,6° |
-| Sommets irréguliers (S), médiane | 66 | 68 | **50** | 156 |
-| Écart d'angle moyen (F), médiane | 8,6° | 7,2° | **8,0°** | 6,0° |
-| Écart au budget (N), médiane | 4 % | 10 % | **11 %** | 2 % |
-| Temps, médiane | 1,9 s | 12 s | **6,5 s** | 1,2 s |
+| Valid meshes (V) | 36 out of 60 | 10 out of 12 | **9 out of 12** | 47 out of 60 |
+| Alignment (A), median | 17.5° | 7.7° | **8.8°** | 16.6° |
+| Irregular vertices (S), median | 66 | 68 | **50** | 156 |
+| Mean angle deviation (F), median | 8.6° | 7.2° | **8.0°** | 6.0° |
+| Gap to the budget (N), median | 4 % | 10 % | **11 %** | 2 % |
+| Time, median | 1.9 s | 12 s | **6.5 s** | 1.2 s |
 
-Structure (C), sur les modèles où notre maillage est valide : toujours moins de patchs que
-QuadriFlow, et le plus souvent moins que Quad Remesher (blob 951 contre 2697 et 1350 ; cage 427
-contre 1943 et 1001 ; Bob 714 contre 2903 et 2568). Le tore sort en grille parfaite : aucun
-sommet irrégulier, un seul patch.
+Structure (C), on the models where our mesh is valid: always fewer patches than QuadriFlow, and
+most often fewer than Quad Remesher (blob 951 against 2697 and 1350; cage 427 against 1943 and
+1001; Bob 714 against 2903 and 2568). The torus comes out as a perfect grid: no irregular
+vertex, a single patch.
 
-Face aux seuils d'acceptation :
+Against the acceptance thresholds:
 
-| Seuil | Verdict |
+| Threshold | Verdict |
 |---|---|
-| A : au moins 2° de mieux que QuadriFlow | **tenu sur les 11 modèles comparables** |
-| C : pas plus de patchs que QuadriFlow | **tenu partout où il est mesurable** (8 modèles) |
-| H : Hausdorff au plus 1,2 fois celui de QuadriFlow | tenu sur 10 modèles sur 11 |
-| S : au plus 1,5 fois QuadriFlow | tenu sur 9 sur 11 (pas sur le rocher ni la créature) |
-| F : écart d'angle pas plus élevé | tenu sur 8 sur 11 |
-| V : tous les maillages valides | **non tenu** : 9 sur 12 |
-| N : écart au budget d'au plus 5 % | **non tenu** : 1 sur 12, il manque 8 à 18 % des faces |
+| A: at least 2° better than QuadriFlow | **met on the 11 comparable models** |
+| C: no more patches than QuadriFlow | **met wherever it can be measured** (8 models) |
+| H: Hausdorff at most 1.2 times that of QuadriFlow | met on 10 models out of 11 |
+| S: at most 1.5 times QuadriFlow | met on 9 out of 11 (not on the rock nor the creature) |
+| F: angle deviation no higher | met on 8 out of 11 |
+| V: all the meshes valid | **not met**: 9 out of 12 |
+| N: gap to the budget of at most 5 % | **not met**: 1 out of 12, 8 to 18 % of the faces are missing |
 
-**Verdict sur la lignée.** Les deux jalons de vérité sont passés sur le fond : la chaîne produit
-de vrais maillages quad, structurés, mieux alignés que ceux de QuadriFlow sur tous les modèles
-et proches de ceux de Quad Remesher. Elle n'est pas encore acceptable : la validité et le budget
-ne sont pas tenus, et ce sont précisément les deux points que la quantification (J5, J6) est
-faite pour régler.
+**Verdict on the lineage.** The two truth milestones are passed in substance: the chain makes
+real quad meshes, structured, better aligned than those of QuadriFlow on every model and close
+to those of Quad Remesher. It is not acceptable yet: validity and budget are not held, and
+these are precisely the two points that quantization (J5, J6) is made to settle.
 
-Ce qui ne va pas, et pourquoi :
+What goes wrong, and why:
 
-- **Trois maillages invalides** (ogre, Blub, cochon) : il y reste 2 à 6 faces non quads, isolées,
-  que la réparation locale ne sait pas apparier. Aucun trou, aucune face inversée.
-- **La carte garde des triangles inversés après arrondi** (6 à 80 selon le modèle), que le
-  raidissement ne résout plus : l'arrondi glouton peut pousser deux singularités sur le même
-  point de grille. C'est la limite connue de cette méthode.
-- **Impasse de parité, contournée.** Arrondies dans le désordre, les dernières singularités se
-  retrouvent forcées sur des demi-entiers. La carte est donc calculée sur une grille deux fois
-  plus grossière puis doublée : les choix libres tombent sur des lignes paires. C'est moins fin,
-  et c'est une cause du budget non tenu et de quads étirés.
-- **Arêtes vives** : sur le cube, les contraintes de lignes de grille ne se concilient pas avec le
-  reste ; la chaîne se replie alors sur le champ seul (8 sommets irréguliers, mais des lignes
-  décalées des arêtes). La pièce percée, elle, passe.
-- **Vitesse** : 2 à 10 secondes, dominées par les résolutions répétées de l'arrondi.
+- **Three invalid meshes** (ogre, Blub, pig): 2 to 6 faces that are not quads are left in them,
+  isolated, which the local repair cannot pair up. No hole, no inverted face.
+- **The map keeps inverted triangles after rounding** (6 to 80 depending on the model), which
+  stiffening no longer resolves: greedy rounding may push two singularities onto the same grid
+  point. It is the known limit of this method.
+- **A parity dead end, worked around.** Rounded out of order, the last singularities end up
+  forced onto half-integers. So the map is computed on a grid twice as coarse and then doubled:
+  the free choices fall on even lines. It is less fine, and it is one cause of the budget not
+  being held and of stretched quads.
+- **Hard edges**: on the cube, the grid-line constraints cannot be reconciled with the rest;
+  the chain then falls back on the field alone (8 irregular vertices, but lines shifted from
+  the edges). The part with holes, for its part, goes through.
+- **Speed**: 2 to 10 seconds, dominated by the repeated solves of the rounding.
 
 ### M5 — T-mesh
 
-- **Entrée** : paramétrisation sans couture de M4.
-- **Sortie** : une partition de la surface en patchs rectangulaires dans le domaine paramétrique,
-  avec la longueur réelle de chaque arc.
-- **Méthode** : « motorcycle graph ». De chaque singularité partent des traces le long des
-  isolignes ; une trace s'arrête quand elle en rencontre une autre.
-- **Point dur** : la robustesse numérique du traçage (traces passant par un sommet, intersections
-  quasi simultanées).
-- **Test** : chaque patch est un rectangle ; la partition couvre toute la surface ; cohérence
-  avec la formule d'Euler.
-- **Arithmétique du traçage** : tranchée au jalon 5, voir ci-dessous.
+- **Input**: the seamless parametrization of M4.
+- **Output**: a partition of the surface into rectangular patches in the parametric domain,
+  with the real length of each arc.
+- **Method**: a motorcycle graph. From each singularity traces set off along the isolines; a
+  trace stops when it meets another.
+- **Hard point**: the numerical robustness of tracing (traces passing through a vertex,
+  intersections that are nearly simultaneous).
+- **Test**: each patch is a rectangle; the partition covers the whole surface; consistency with
+  Euler's formula.
+- **Arithmetic of tracing**: decided at milestone 5, see below.
 
-**Réalisé au jalon 5** (`crates/openclare/src/tmesh/`, interface `LayoutBuilder` et sa fabrique).
+**Done at milestone 5** (`crates/openclare/src/tmesh/`, interface `LayoutBuilder` and its
+factory).
 
-![Les coupes du T-mesh sur l'ogre et sur Suzanne, à 3000 quads](docs/images/tmesh.png)
+![The cuts of the T-mesh on the ogre and on Suzanne, at 3000 quads](docs/images/tmesh.png)
 
-- **Marche dans la carte** (`walk.rs`) : une trace avance triangle par triangle. Dans un
-  triangle la carte est linéaire, donc la trace est un segment ; en traversant une couture, sa
-  direction tourne de la transition de cette couture ; en passant par un sommet, elle continue
-  dans le triangle dont le secteur contient sa direction. Le partage des directions entre les
-  secteurs autour d'un sommet est décidé par des tests de signe exacts, un par arête : aucune
-  direction n'est comptée deux fois ni oubliée. Une singularité d'indice k émet bien 4 − k traces.
-- **Course** (`motorcycle.rs`) : toutes les traces partent en même temps ; à chaque pas, c'est
-  la moins avancée qui traverse son triangle. Elle s'arrête sur le premier tronçon déjà posé
-  dans ce triangle. C'est une approximation de la course idéale, à un triangle près : le
-  résultat peut différer du « motorcycle graph » exact, mais c'est toujours une partition
-  valide, et c'est tout ce que demande la suite.
-- **Rencontres** : en travers (jonction en T), nez à nez sur la même ligne (les deux traces
-  s'arrêtent, nœud de valence 2), ou exactement sur un sommet du maillage (chaque sommet retient
-  la première trace qui l'a traversé). Ce dernier cas n'est pas un détail : sur un cube, toutes
-  les traces courent le long d'arêtes du maillage.
-- **Bords ouverts** : un bord est une coupe présente dès le départ. Les traces s'y arrêtent ;
-  là où il tourne vers l'intérieur de la surface, il émet des traces comme une singularité.
-  Cela exige des bords posés sur des isolignes : la paramétrisation sans couture (M4) impose
-  désormais que chaque arête caractéristique, bord ou arête vive, garde une coordonnée
-  constante, sans la forcer à être entière. Si cela replie la carte, elle revient à la version
-  sans cette contrainte et le signale.
-- **Patchs** : chaque nœud ordonne ses arcs dans le sens trigonométrique ; un patch se lit en
-  suivant son contour, patch à gauche. Un angle intérieur d'un quart de tour est un coin, un
-  demi-tour est une jonction en T sur un côté. Un patch est accepté s'il a exactement quatre
-  coins et rien d'autre.
-- **Arithmétique** : nombres flottants ordinaires, avec une seule tolérance de 1e-6 unité de
-  grille (la carte est exacte à 1e-10 près, un triangle mesure quelques dixièmes d'unité). En
-  dessous, une trace qui frôle un sommet passe par ce sommet, et deux traces sur des lignes
-  voisines sont sur la même ligne. Ni prédicats exacts ni rationnels : sur le corpus, ce n'est
-  pas nécessaire.
+- **Walk in the map** (`walk.rs`): a trace advances triangle by triangle. In a triangle the map
+  is linear, so the trace is a segment; crossing a seam, its direction turns by the transition
+  of that seam; passing through a vertex, it goes on in the triangle whose sector contains its
+  direction. The sharing of directions between the sectors around a vertex is decided by exact
+  sign tests, one per edge: no direction is counted twice nor forgotten. A singularity of index
+  k does send out 4 − k traces.
+- **Race** (`motorcycle.rs`): all the traces set off at the same time; at each step, the least
+  advanced one crosses its triangle. It stops on the first stretch already laid in that
+  triangle. It is an approximation of the ideal race, to within a triangle: the result may
+  differ from the exact motorcycle graph, but it is always a valid partition, and that is all
+  the rest asks for.
+- **Meetings**: across (a T-junction), head on along the same line (both traces stop, a node of
+  valence 2), or exactly on a vertex of the mesh (each vertex remembers the first trace that
+  crossed it). This last case is no detail: on a cube, all the traces run along edges of the
+  mesh.
+- **Open borders**: a border is a cut that is there from the start. Traces stop on it; where it
+  turns towards the inside of the surface, it sends out traces like a singularity. This demands
+  borders laid on isolines: the seamless parametrization (M4) now imposes that each feature
+  edge, border or hard edge, keeps one coordinate constant, without forcing it to be whole. If
+  that folds the map, it goes back to the version without this constraint and says so.
+- **Patches**: each node orders its arcs counter-clockwise; a patch is read by following its
+  outline, patch on the left. An interior angle of a quarter turn is a corner, a half turn is a
+  T-junction on a side. A patch is accepted if it has exactly four corners and nothing else.
+- **Arithmetic**: ordinary floating point, with a single tolerance of 1e-6 grid unit (the map
+  is exact to within 1e-10, a triangle measures a few tenths of a unit). Below it, a trace that
+  grazes a vertex passes through that vertex, and two traces on neighbouring lines are on the
+  same line. Neither exact predicates nor rationals: on the corpus, it is not needed.
 
-**Résultat.** Sur les 16 modèles du corpus, à 1000, 3000 et 8000 quads (champ simplifié par M3,
-arêtes vives à 30° pour les deux pièces mécaniques ; tableau complet dans
-`bench/results/TMESH.md`, produit par `bench/tmesh.py`) :
+**Result.** On the 16 models of the corpus, at 1000, 3000 and 8000 quads (field simplified by
+M3, hard edges at 30° for the two mechanical parts; full table in `bench/results/TMESH.md`,
+made by `bench/tmesh.py`):
 
-| | Résultat |
+| | Result |
 |---|---|
-| Partitions valides (tous les patchs rectangulaires, aire couverte exacte, Euler) | **48 sur 48** |
-| Traces perdues, traces superposées | 0 |
-| Triangles inversés dans la carte, bords hors isolignes | 0 |
-| Écart d'aire entre les rectangles et la carte | de l'ordre de 1e-10 en valeur relative |
-| Patchs, 12 modèles organiques à 3000 quads | 60 à 340, médiane 185 (environ 3 par singularité) |
-| Patchs plus étroits qu'un demi-quad, mêmes modèles | 27 % (36 % à 1000 quads, 22 % à 8000) |
-| Temps du traçage, 50 000 triangles | moins de 0,15 seconde |
+| Valid partitions (all patches rectangular, exact area covered, Euler) | **48 out of 48** |
+| Lost traces, overlapping traces | 0 |
+| Inverted triangles in the map, borders off the isolines | 0 |
+| Gap in area between the rectangles and the map | of the order of 1e-10 in relative value |
+| Patches, 12 organic models at 3000 quads | 60 to 340, median 185 (about 3 per singularity) |
+| Patches narrower than half a quad, same models | 27 % (36 % at 1000 quads, 22 % at 8000) |
+| Time of tracing, 50,000 triangles | less than 0.15 second |
 
-Cas d'école : le cube donne ses 6 faces, 20 nœuds (8 coins, 12 milieux d'arêtes où les traces
-se rencontrent nez à nez) et 24 arcs ; le plan ouvert donne un seul rectangle bordé par son
-contour ; le tore, sans singularité, n'est pas découpé du tout.
+Textbook cases: the cube gives its 6 faces, 20 nodes (8 corners, 12 edge midpoints where the
+traces meet head on) and 24 arcs; the open plane gives a single rectangle bordered by its
+outline; the torus, with no singularity, is not cut at all.
 
-Vérifié par les tests (`crates/openclare/tests/tmesh.rs`) : sur une sphère, un cube à arêtes vives,
-un plan ouvert, un tore avec et sans singularités, chaque patch a quatre coins et des côtés
-opposés égaux, chaque demi-arc borde exactement un patch, les contours se referment, la somme
-des aires des rectangles est l'aire de la carte, et nœuds − arcs + patchs vaut la caractéristique
-d'Euler de la surface ; résultat déterministe.
+Checked by the tests (`crates/openclare/tests/tmesh.rs`): on a sphere, a cube with hard edges,
+an open plane, a torus with and without singularities, each patch has four corners and equal
+opposite sides, each half-arc borders exactly one patch, the outlines close up, the sum of the
+areas of the rectangles is the area of the map, and nodes − arcs + patches is worth the Euler
+characteristic of the surface; the result is deterministic.
 
-Ce qui reste ouvert :
+What stays open:
 
-- **Un quart des patchs sont des lamelles.** Deux singularités presque alignées laissent entre
-  leurs traces une bande plus étroite qu'un demi-quad. C'est attendu avec une carte à
-  translations réelles, et c'est précisément le travail de la quantification (M6) : donner à ces
-  bandes une largeur entière, zéro le plus souvent, ce qui les referme. Le nombre de patchs
-  d'aujourd'hui n'est donc pas celui du maillage final.
-- **Les arêtes vives ne sont pas des arcs.** Elles sont sur des isolignes de la carte, et sur
-  le cube les traces les suivent d'elles-mêmes, mais rien n'oblige en général une arête vive à
-  porter un arc, donc rien ne permettra à M6 de lui donner une coordonnée entière. *Résolu au
-  jalon 9 : voir ci-dessous.*
-- **Une pièce sans singularité ni bord** (un tore) n'a pas de T-mesh : la quantification devra
-  traiter ses deux périodes à part.
-- **La course est approchée** (à un triangle près) et les traces ne sont pas raccourcies : le
-  T-mesh n'est pas le plus simple possible. Lyon et al. 2021 montrent qu'on peut faire mieux en
-  choisissant quelles traces prolonger ; à regarder si M6 peine.
-- **Aucune garantie formelle** de terminaison ou de validité hors du corpus : une trace qui
-  dépasse 20 fois le côté de la carte est abandonnée et comptée, la partition est alors déclarée
-  non valide. Cela ne s'est jamais produit.
+- **A quarter of the patches are slivers.** Two singularities that are nearly aligned leave
+  between their traces a strip narrower than half a quad. It is expected with a map of real
+  translations, and it is precisely the work of quantization (M6): to give these strips a whole
+  width, zero most often, which closes them. So the number of patches of today is not that of
+  the final mesh.
+- **Hard edges are not arcs.** They are on isolines of the map, and on the cube the traces
+  follow them by themselves, but in general nothing makes a hard edge carry an arc, so nothing
+  will let M6 give it a whole coordinate. *Settled at milestone 9: see below.*
+- **A piece with neither singularity nor border** (a torus) has no T-mesh: quantization will
+  have to treat its two periods apart.
+- **The race is approximate** (to within a triangle) and traces are not shortened: the T-mesh
+  is not the simplest possible. Lyon et al. 2021 show that one can do better by choosing which
+  traces to extend; to look at if M6 struggles.
+- **No formal guarantee** of termination or validity outside the corpus: a trace that exceeds
+  20 times the side of the map is given up and counted, and the partition is then declared
+  invalid. It has never happened.
 
-**Complété au jalon 9 : bords et arêtes vives sont des « murs »** (`tmesh/walls.rs`, qui
-remplace le traitement des seuls bords). Décision du 7 octobre 2026 : plutôt que d'écrire la
-seconde chaîne prévue pour le durci (patchs à la QuadWild, ticket DT-030), les arêtes vives
-deviennent des coupes du T-mesh, comme les bords ouverts. Tout l'aval est inchangé.
+**Completed at milestone 9: borders and hard edges are "walls"** (`tmesh/walls.rs`, which
+replaces the handling of borders alone). Decision of 7 October 2026: rather than write the
+second chain planned for hard surfaces (patches in the manner of QuadWild, ticket DT-030), hard
+edges become cuts of the T-mesh, like open borders. Everything downstream is unchanged.
 
-- **Un mur** est une arête le long de laquelle le maillage doit avoir des arêtes : un bord
-  ouvert, ou une arête que le maillage de calcul marque comme caractéristique. Les murs sont
-  posés comme des traces avant la course, un par tronçon droit, entre les sommets où ils
-  tournent, s'arrêtent ou se rejoignent : les *coins*, qui deviennent des nœuds.
-- **Autour d'un sommet**, ses murs découpent la surface en secteurs. Dans la carte, chaque
-  secteur couvre un nombre entier de quarts de tour : deux là où un mur ne fait que passer, un à
-  un coin saillant, trois ou plus là où il rentre dans la surface. Un secteur de k quarts de
-  tour émet k − 1 traces, exactement comme une singularité le fait tout autour d'elle. Une
-  singularité posée sur un mur suit la même règle : ses secteurs ne font simplement pas quatre.
-- **Les traces s'arrêtent sur un mur** comme sur une autre trace, de l'un ou l'autre côté.
-- **Un mur fermé sans coin** (le bord d'un cylindre) reçoit un nœud sans rôle, pour porter son
-  arc unique.
-- **En aval** : deux murs ne peuvent pas se refermer l'un sur l'autre dans la quantification
-  (une bande mince entre deux arêtes vives garde au moins une rangée de quads) ; un sommet du
-  maillage né sur un mur y reste pendant la relaxation, et un sommet né sur un coin ne bouge
-  pas. Ces appartenances sont transmises par le maillage lui-même, plus devinées à la distance.
+- **A wall** is an edge along which the mesh must have edges: an open border, or an edge that
+  the work mesh marks as a feature. Walls are laid like traces before the race, one per
+  straight stretch, between the vertices where they turn, stop or join: the *corners*, which
+  become nodes.
+- **Around a vertex**, its walls cut the surface into sectors. In the map, each sector covers a
+  whole number of quarter turns: two where a wall merely passes, one at a salient corner, three
+  or more where it turns into the surface. A sector of k quarter turns sends out k − 1 traces,
+  exactly as a singularity does all around itself. A singularity laid on a wall follows the
+  same rule: its sectors simply do not add up to four.
+- **Traces stop on a wall** as on another trace, from either side.
+- **A closed wall with no corner** (the rim of a cylinder) gets a node with no role, to carry
+  its single arc.
+- **Downstream**: two walls cannot close onto each other in quantization (a thin strip between
+  two hard edges keeps at least one row of quads); a vertex of the mesh born on a wall stays on
+  it during relaxation, and a vertex born on a corner does not move. These memberships are
+  handed on by the mesh itself, no longer guessed from distance.
 
-**Résultat du jalon 9.** Avec le préréglage `hard-surface` (arêtes de plus de 30°, taille
-unique), sur les quatre pièces mécaniques du corpus (la pièce percée, le cube, et deux formes
-ajoutées pour ce jalon : un bloc en L, dont une arête rentre, et un cylindre, dont les arêtes
-vives sont des courbes fermées) :
+**Result of milestone 9.** With the `hard-surface` preset (edges of more than 30°, a single
+size), on the four mechanical parts of the corpus (the part with holes, the cube, and two
+shapes added for this milestone: an L-shaped block, one edge of which is re-entrant, and a
+cylinder, whose hard edges are closed curves):
 
-![Bloc en L, cylindre et pièce percée, préréglage hard-surface](docs/images/milestone9_hard_surface.png)
+![L-shaped block, cylinder and part with holes, hard-surface preset](docs/images/milestone9_hard_surface.png)
 
-| Médianes sur les 4 pièces, à 3000 quads | QuadriFlow | `integer-grid` | **openclare, J9** | Quad Remesher |
+| Medians over the 4 parts, at 3000 quads | QuadriFlow | `integer-grid` | **openclare, J9** | Quad Remesher |
 |---|---|---|---|---|
-| Pièces toujours valides | 2 sur 4 | 4 sur 4 | **4 sur 4** | 4 sur 4 |
-| Sommets irréguliers | 10 | 10 | **10** | 10 |
-| Patchs du complexe de base | 352 | 372 | **46** | 211 |
-| Alignement | 2,6° | 1,2° | **1,0°** | 1,1° |
-| Écart d'angle moyen | 1,7° | 1,7° | **0,7°** | 1,7° |
-| Hausdorff, ‰ de la diagonale | 5,2 | 1,0 | **0,5** | 0,4 |
-| Écart au budget | 3,3 % | 1,9 % | **0,8 %** | 4,5 % |
-| Temps | 1,2 s | 5,3 s | **1,4 s** | 2,9 s |
+| Parts always valid | 2 out of 4 | 4 out of 4 | **4 out of 4** | 4 out of 4 |
+| Irregular vertices | 10 | 10 | **10** | 10 |
+| Patches of the base complex | 352 | 372 | **46** | 211 |
+| Alignment | 2.6° | 1.2° | **1.0°** | 1.1° |
+| Mean angle deviation | 1.7° | 1.7° | **0.7°** | 1.7° |
+| Hausdorff, ‰ of the diagonal | 5.2 | 1.0 | **0.5** | 0.4 |
+| Gap to the budget | 3.3 % | 1.9 % | **0.8 %** | 4.5 % |
+| Time | 1.2 s | 5.3 s | **1.4 s** | 2.9 s |
 
-(`integer-grid` est notre chaîne provisoire, la seule à tenir à peu près les arêtes vives avant
-ce jalon.) Sur les pièces mécaniques, openclare est au niveau de Quad Remesher, et devant
-lui sur la simplicité de la structure et la forme des quads. Le cube et le bloc en L ressortent
-exacts : écart nul à la source, tous les angles à 90°. Même tableau à 1000 et 8000 quads dans
-`bench/results/ACCEPTANCE.md` ; les 4 pièces y sont valides aussi.
+(`integer-grid` is our provisional chain, the only one that more or less held hard edges before
+this milestone.) On mechanical parts, openclare is at the level of Quad Remesher, and ahead of
+it on the simplicity of the structure and the shape of the quads. The cube and the L-shaped
+block come out exact: no gap to the source, all the angles at 90°. The same table at 1000 and
+8000 quads is in `bench/results/ACCEPTANCE.md`; the 4 parts are valid there too.
 
-Trois réserves sur ces mesures. Le seuil d'alignement de la règle d'acceptation (« 2° de mieux
-que QuadriFlow ») n'a pas de sens ici : QuadriFlow est déjà à moins de 3°, on ne peut pas faire
-2° de mieux. À 1000 quads, la pièce percée s'écarte de sa source plus que celle de QuadriFlow
-(15 ‰ contre 8) : à ce budget un quad est plus gros que certains de ses détails, et deux coins
-voisins fusionnent. Enfin, à 8000 quads, QuadriFlow n'a pas terminé sur le bloc en L en dix
-minutes ; je l'ai arrêté, et il n'a pas été lancé sur le cylindre à ce budget.
+Three reservations on these measurements. The alignment threshold of the acceptance rule ("2°
+better than QuadriFlow") has no meaning here: QuadriFlow is already under 3°, one cannot do 2°
+better. At 1000 quads, the part with holes departs from its source more than that of
+QuadriFlow (15 ‰ against 8): at this budget a quad is larger than some of its details, and two
+neighbouring corners merge. Lastly, at 8000 quads, QuadriFlow did not finish on the L-shaped
+block in ten minutes; I stopped it, and it was not run on the cylinder at this budget.
 
-Vérifié par les tests (`crates/openclare/tests/hard_surface.rs`, `tmesh.rs`) : le T-mesh du cube
-est le cube lui-même (8 nœuds, 12 arcs, 6 patchs, aucune trace) ; sur le bloc en L, les deux
-coins rentrants émettent chacun deux traces et chaque face en L est coupée en trois rectangles ;
-les deux bords du cylindre sont des coupes entières de même longueur ; le maillage du bloc en L
-a un sommet sur chacun de ses 12 coins et une arête le long de chacune de ses 18 arêtes, à
-1e-6 près, sans autre sommet irrégulier que ces coins ; le cylindre garde une boucle d'arêtes
-fermée sur chaque bord ; une plaque épaisse d'un quart de quad garde ses deux contours et une
-rangée de quads sur sa tranche.
+Checked by the tests (`crates/openclare/tests/hard_surface.rs`, `tmesh.rs`): the T-mesh of the
+cube is the cube itself (8 nodes, 12 arcs, 6 patches, no trace); on the L-shaped block, the two
+re-entrant corners each send out two traces and each L-shaped face is cut into three
+rectangles; the two rims of the cylinder are whole cuts of the same length; the mesh of the
+L-shaped block has a vertex on each of its 12 corners and an edge along each of its 18 edges,
+to within 1e-6, with no irregular vertex other than these corners; the cylinder keeps a closed
+edge loop on each rim; a plate a quarter of a quad thick keeps its two outlines and a row of
+quads on its edge.
 
-Le cylindre a débusqué trois défauts anciens, tous liés aux triangles plats le long des arêtes
-vives, et tous corrigés :
+The cylinder flushed out three old defects, all linked to the flat triangles along hard edges,
+and all fixed:
 
-- le prétraitement laisse parfois des triangles d'aire quasi nulle, qui faisaient s'effondrer
-  la carte sans couture (déjà au jalon 7) : la paramétrisation les ignore maintenant ;
-- un triangle dont deux côtés sont sur la même arête vive (il coupe un léger angle de la ligne)
-  est forcément aplati dans la carte dès que cette ligne est une isoligne : il était compté
-  comme un triangle inversé, et la carte renonçait à tenir les arêtes vives ;
-- l'angle d'un tel triangle plat était lu avec un signe au hasard, ce qui faussait le décompte
-  des quarts de tour autour des sommets d'un mur.
+- preprocessing sometimes leaves triangles of nearly no area, which made the seamless map
+  collapse (already at milestone 7): parametrization now ignores them;
+- a triangle with two sides on the same hard edge (it cuts a slight angle of the line) is bound
+  to be flattened in the map as soon as that line is an isoline: it was counted as an inverted
+  triangle, and the map gave up holding the hard edges;
+- the angle of such a flat triangle was read with a sign at random, which skewed the count of
+  quarter turns around the vertices of a wall.
 
-Supprimer ces triangles à la source reste à faire (DT-031).
+Removing these triangles at the source is still to do (DT-031).
 
-Premiers modèles venus de l'extérieur, premiers enseignements (trois modèles de BlenderKit,
-voir CREDITS.md) :
+First models from outside, first lessons (three models from BlenderKit, see CREDITS.md):
 
-- un **terrain** de 543 557 triangles passe : maillage valide, budget tenu à 1 %, trois fois
-  moins de sommets irréguliers que Quad Remesher, fidélité comparable. Aucun outil n'y aligne
-  ses arêtes mieux que le hasard (DT-033) ;
-- un **personnage en 164 pièces détachées** a fait planter le traçage, sur un cas que le corpus
-  ne contenait pas : un sommet où deux nappes de surface se touchent en un point. Corrigé (un
-  tel sommet est traité comme autant de sommets qu'il a de nappes) et couvert par un test. Le
-  modèle entier, lui, ne passe toujours pas : faute de traiter chaque pièce pour elle-même,
-  toute la chaîne se replie (DT-032) ;
-- un **personnage à arêtes non variété** est refusé avec un diagnostic clair, comme prévu.
+- a **terrain** of 543,557 triangles goes through: a valid mesh, budget held to 1 %, three
+  times fewer irregular vertices than Quad Remesher, comparable fidelity. No tool aligns its
+  edges there better than chance (DT-033);
+- a **character in 164 separate pieces** made tracing crash, on a case the corpus did not
+  contain: a vertex where two sheets of surface touch at a point. Fixed (such a vertex is
+  treated as as many vertices as it has sheets) and covered by a test. The whole model, for its
+  part, still does not go through: for want of treating each piece for itself, the whole chain
+  falls back (DT-032);
+- a **character with non-manifold edges** is refused with a clear diagnosis, as planned.
 
-Ce qui reste ouvert :
+What stays open:
 
-- **Sur un cylindre, les quads de la paroi sont étirés** (rapport 1,3). Le nombre de lignes
-  qui descendent la paroi est celui qui sort des disques du haut et du bas, et ces disques,
-  dont les anneaux rétrécissent vers le centre, en veulent moins que la paroi (DT-029).
-- **Une arête vive que le champ ne suit pas** (elle n'est alors pas sur une isoligne) rend le
-  T-mesh invalide, et la chaîne se replie sur `integer-grid`. Cela ne s'est pas produit sur le
-  corpus.
-- **Seules les arêtes détectées par l'angle** sont des murs. Des arêtes ou des zones désignées
-  par l'utilisateur (Face Sets, traits dessinés) passeront par le même mécanisme, à brancher
-  (DT-024). La symétrie aussi (J9 bis).
+- **On a cylinder, the quads of the wall are stretched** (ratio 1.3). The number of lines that
+  go down the wall is the one that comes out of the top and bottom discs, and these discs,
+  whose rings shrink towards the centre, want fewer of them than the wall (DT-029).
+- **A hard edge that the field does not follow** (it is then not on an isoline) makes the
+  T-mesh invalid, and the chain falls back on `integer-grid`. It did not happen on the corpus.
+- **Only the edges detected by angle** are walls. Edges or zones named by the user (Face Sets,
+  strokes drawn) will go through the same mechanism, to be plugged in (DT-024). So will
+  symmetry (J9 bis).
 
-### M6 — Quantification
+### M6 — Quantization
 
-- **Entrée** : T-mesh et longueurs réelles.
-- **Sortie** : une longueur entière par arc, telle que les côtés opposés de chaque patch aient la
-  même somme, que la validité soit préservée, et que le total de quads approche le budget.
-- **Méthode** : Bi-MDF. Solveur approché d'abord, raffinement exact ensuite. Budget de quads
-  selon Marinov et al. 2026.
-- **Points durs** : le raffinement exact repose sur un couplage pondéré dans un graphe général,
-  à écrire en Rust. Bi-MDF a été évalué par ses auteurs sur QuadWild ; son application à notre
-  T-mesh est à confirmer.
-- **Test** : contraintes satisfaites exactement ; optimum retrouvé sur de petits T-mesh
-  construits à la main ; écart au budget mesuré (métrique N).
+- **Input**: T-mesh and real lengths.
+- **Output**: a whole length per arc, such that the opposite sides of each patch have the same
+  sum, that validity is preserved, and that the total of quads comes close to the budget.
+- **Method**: Bi-MDF. An approximate solver first, exact refinement next. Quad budget after
+  Marinov et al. 2026.
+- **Hard points**: the exact refinement rests on a weighted matching in a general graph, to be
+  written in Rust. Bi-MDF was evaluated by its authors on QuadWild; its application to our
+  T-mesh is to be confirmed.
+- **Test**: constraints satisfied exactly; the optimum recovered on small T-meshes built by
+  hand; gap to the budget measured (metric N).
 
-**Réalisé au jalon 6** (`crates/openclare/src/quantization/`, interface `Quantizer` et sa fabrique).
+**Done at milestone 6** (`crates/openclare/src/quantization/`, interface `Quantizer` and its
+factory).
 
-- **Le problème** (`flow.rs`) : une bande de quads traverse un rectangle d'un côté au côté
-  opposé. Les longueurs des arcs de deux côtés opposés doivent donc avoir la même somme : c'est
-  une conservation de flot, sur un réseau dont les arêtes n'ont pas de sens (une bande n'a ni
-  début ni fin). C'est exactement le flot bidirigé à déviation minimale de Bi-MDF. Sur un bord
-  ouvert, les bandes s'arrêtent librement.
-- **Le solveur, approché** : on part de zéro partout (équilibré) et on applique des marches
-  fermées qui gardent chaque rectangle équilibré : en traversant un rectangle, deux arcs
-  bougent dans le même sens ; en rebroussant chemin sur le même côté, ils bougent en sens
-  opposés. Une marche qui fait baisser le coût est appliquée, par pas de 32, 16, … puis 1,
-  jusqu'à ce qu'on n'en trouve plus. Les marches sont cherchées comme des cycles négatifs
-  (Bellman-Ford). Le coût d'un arc est l'écart au carré à sa longueur réelle, rapporté à cette
-  longueur : une arête de plus ou de moins compte sur un arc court, pas sur un long.
-- **Ce qui ne doit pas se refermer** (`lattice.rs`) : un arc de longueur zéro fusionne ses deux
-  bouts, un rectangle sans largeur replie ses deux grands côtés l'un sur l'autre. Pour savoir
-  si le résultat est sain, on **construit la connectivité du maillage quad** que ces longueurs
-  représentent, et on la vérifie : variété, même topologie que la surface, et pour seuls sommets
-  irréguliers les singularités du champ, chacune avec sa valence (règle assouplie au jalon 7
-  pour les bords, voir plus bas). Chaque
-  défaut est ramené à ce qui s'est refermé à cet endroit ; l'arc correspondant reçoit une
-  longueur minimale de 1, et on résout de nouveau.
-- **Le budget** : les longueurs réelles sont multipliées par un facteur commun, ajusté
-  (proportion, puis dichotomie) jusqu'à tomber à 2 % du nombre de quads demandé. Un léger
-  décalage fixe par arc évite que des arcs égaux basculent tous ensemble : sans lui, un cube
-  passe de 22 à 24 arêtes par côté d'un coup, soit 15 % de quads.
+- **The problem** (`flow.rs`): a strip of quads crosses a rectangle from one side to the
+  opposite side. So the lengths of the arcs of two opposite sides must have the same sum: it is
+  a conservation of flow, on a network whose edges have no direction (a strip has neither start
+  nor end). It is exactly the minimum-deviation bi-directed flow of Bi-MDF. On an open border,
+  strips stop freely.
+- **The solver, approximate**: start from zero everywhere (balanced) and apply closed walks
+  that keep each rectangle balanced: crossing a rectangle, two arcs move the same way; turning
+  back on the same side, they move in opposite ways. A walk that lowers the cost is applied, by
+  steps of 32, 16, … then 1, until none is found any more. The walks are looked for as negative
+  cycles (Bellman-Ford). The cost of an arc is the squared gap to its real length, relative to
+  that length: one edge more or less counts on a short arc, not on a long one.
+- **What must not close up** (`lattice.rs`): an arc of length zero merges its two ends, a
+  rectangle with no width folds its two long sides onto each other. To know whether the result
+  is sound, **the connectivity of the quad mesh** that these lengths represent **is built**,
+  and checked: manifold, same topology as the surface, and for only irregular vertices the
+  singularities of the field, each with its valence (a rule relaxed at milestone 7 for borders,
+  see below). Each defect is traced back to what closed up at that place; the matching arc gets
+  a minimum length of 1, and the problem is solved again.
+- **The budget**: the real lengths are multiplied by a common factor, adjusted (proportion,
+  then bisection) until it falls within 2 % of the number of quads asked for. A slight fixed
+  offset per arc keeps equal arcs from all tipping together: without it, a cube goes from 22 to
+  24 edges per side at once, that is 15 % of the quads.
 
-**Résultat.** Sur 15 modèles du corpus (le tore n'a pas de T-mesh), à 1000, 3000 et 8000 quads
-(tableau complet dans `bench/results/QUANTIZATION.md`, produit par `bench/quantize.py`) :
+**Result.** On 15 models of the corpus (the torus has no T-mesh), at 1000, 3000 and 8000 quads
+(full table in `bench/results/QUANTIZATION.md`, made by `bench/quantize.py`):
 
-| | Résultat |
+| | Result |
 |---|---|
-| Quantifications valides (côtés opposés égaux, maillage quad sain) | **45 sur 45** |
-| Écart au nombre de quads demandé | médiane 1,3 %, pire cas 3,9 % |
-| Arcs de longueur zéro, modèles organiques | 16 à 25 % selon le budget |
-| Rectangles refermés (sans aire), modèles organiques | 19 à 31 % : les lamelles du jalon 5 |
-| Arcs maintenus ouverts pour garder la structure saine | 29 au total sur les 12 modèles organiques à 3000 quads (39 avant l'assouplissement du jalon 7) |
-| Écart moyen à la longueur réelle | 0,3 arête |
-| Temps | moins de 0,15 s à 1000 et 3000 quads ; 1 s au pire à 8000 |
+| Valid quantizations (opposite sides equal, sound quad mesh) | **45 out of 45** |
+| Gap to the number of quads asked for | median 1.3 %, worst case 3.9 % |
+| Arcs of length zero, organic models | 16 to 25 % depending on the budget |
+| Rectangles closed up (with no area), organic models | 19 to 31 %: the slivers of milestone 5 |
+| Arcs kept open to keep the structure sound | 29 in total over the 12 organic models at 3000 quads (39 before the relaxing of milestone 7) |
+| Mean gap to the real length | 0.3 edge |
+| Time | less than 0.15 s at 1000 and 3000 quads; 1 s at worst at 8000 |
 
-Le seuil **N** (budget tenu à 5 % près), manqué au jalon 4 bis (11 %), est tenu ici. Et la
-connectivité obtenue est celle d'un maillage tout en quads, variété, sans autre sommet irrégulier
-que les singularités : le seuil **V** est tenu sur le papier, il reste à le confirmer avec des
-positions (J7).
+The threshold **N** (budget held to within 5 %), missed at milestone 4 bis (11 %), is met here.
+And the connectivity obtained is that of a mesh all in quads, manifold, with no irregular
+vertex other than the singularities: the threshold **V** is met on paper, it is left to confirm
+it with positions (J7).
 
-Vérifié par les tests : sur de petits réseaux, le solveur retrouve l'optimum exact (comparé à
-l'énumération complète) dans 58 cas tirés au hasard sur 60, et n'est jamais déséquilibré ; une
-borne inférieure est respectée ; les bandes s'arrêtent sur les bords. Sur une sphère, un cube,
-un plan ouvert et un tore à seize singularités : côtés opposés égaux, maillage quad sain, bon
-nombre de quads. Le plan à 400 quads donne exactement sa grille de 20 par 20. À très bas budget
-(60 quads), les lamelles se referment sans fusionner de singularités ni pincer le tube.
+Checked by the tests: on small networks, the solver recovers the exact optimum (compared with
+full enumeration) in 58 cases drawn at random out of 60, and is never unbalanced; a lower bound
+is respected; strips stop on borders. On a sphere, a cube, an open plane and a torus with
+sixteen singularities: opposite sides equal, sound quad mesh, right number of quads. The plane
+at 400 quads gives exactly its grid of 20 by 20. At a very low budget (60 quads), the slivers
+close up without merging singularities or pinching the tube.
 
-Ce qui reste ouvert :
+What stays open:
 
-- **Le solveur est approché.** Il juge chaque marche sur ses déplacements pris un à un, et peut
-  se tromper quand une marche repasse par le même arc : deux cas sur soixante au test. Le
-  raffinement exact de Bi-MDF (couplage) n'est pas écrit ; rien sur le corpus ne le réclame.
-- **Les arcs maintenus ouverts** donnent des bandes de quads étroites (un quad de large pour
-  une largeur réelle bien moindre). C'est le prix de la fidélité au champ : accepter au
-  contraire de fusionner deux singularités opposées proches (Lyon et al. 2021) donnerait un
-  maillage plus simple. À voir avec les résultats du jalon 7.
-- **Budget** : le pas le plus fin est une bande entière, soit 2 à 4 % des quads à 1000 quads.
-- **Une pièce sans singularité ni bord** (un tore) n'a pas de T-mesh, donc rien à quantifier :
-  ses deux périodes devront être arrondies à part.
-- **Arêtes vives** : toujours pas des arcs (voir M5), donc pas encore sur des lignes entières.
+- **The solver is approximate.** It judges each walk on its moves taken one by one, and may be
+  wrong when a walk passes again through the same arc: two cases out of sixty in the test. The
+  exact refinement of Bi-MDF (matching) is not written; nothing on the corpus calls for it.
+- **The arcs kept open** give narrow strips of quads (one quad wide for a real width that is
+  far less). It is the price of faithfulness to the field: agreeing instead to merge two close
+  opposite singularities (Lyon et al. 2021) would give a simpler mesh. To see with the results
+  of milestone 7.
+- **Budget**: the finest step is a whole strip, that is 2 to 4 % of the quads at 1000 quads.
+- **A piece with neither singularity nor border** (a torus) has no T-mesh, hence nothing to
+  quantize: its two periods will have to be rounded apart.
+- **Hard edges**: still not arcs (see M5), hence not yet on whole lines.
 
-### M7 et M8 — Du T-mesh quantifié au maillage quad
+### M7 and M8 — From the quantized T-mesh to the quad mesh
 
-Le cahier des charges prévoyait deux modules : M7, une carte à grille entière contrainte par les
-longueurs quantifiées, sans triangle inversé ; M8, l'extraction exacte de ses isolignes (principe
-de QEx). **Décision du 7 octobre 2026 : route directe.** Ces deux modules ne sont pas écrits
-(ticket DT-001) ; ils sont remplacés par ce qui suit.
+The specification planned two modules: M7, an integer-grid map constrained by the quantized
+lengths, with no inverted triangle; M8, the exact extraction of its isolines (the principle of
+QEx). **Decision of 7 October 2026: the direct route.** These two modules are not written
+(ticket DT-001); they are replaced by what follows.
 
-- **Entrée** : maillage de calcul, carte sans couture, T-mesh, quantification.
-- **Sortie** : le maillage quad, sommets posés sur le maillage de calcul.
-- **Méthode** : la connectivité est celle que la quantification a construite et vérifiée
-  (M6). Un sommet situé sur un arc est placé le long de la trace dont l'arc est un morceau. Un
-  sommet intérieur à un rectangle est placé en partant du bord du rectangle et en marchant dans
-  la carte sans couture vers l'intérieur. La grille entière de chaque rectangle est ainsi
-  étirée sur son étendue réelle.
-- **Point dur** : là où les longueurs entières s'écartent des réelles, les lignes de la grille
-  se brisent aux frontières entre rectangles ; la relaxation (M9) l'atténue.
-- **Test** : 100 % quads, variété ; nombre de faces égal à celui de la quantification ; sommets
-  sur la surface ; valences conformes aux indices du champ.
+- **Input**: the work mesh, the seamless map, the T-mesh, the quantization.
+- **Output**: the quad mesh, its vertices laid on the work mesh.
+- **Method**: the connectivity is the one that quantization built and checked (M6). A vertex
+  located on an arc is placed along the trace of which the arc is a piece. A vertex inside a
+  rectangle is placed by starting from the border of the rectangle and walking in the seamless
+  map towards the inside. The whole grid of each rectangle is thus stretched over its real
+  extent.
+- **Hard point**: where the whole lengths depart from the real ones, the lines of the grid
+  break at the borders between rectangles; relaxation (M9) softens it.
+- **Test**: 100 % quads, manifold; number of faces equal to that of the quantization; vertices
+  on the surface; valences in keeping with the indices of the field.
 
-**Réalisé au jalon 7** (`crates/openclare/src/meshing/`, interface `Mesher` et sa fabrique ; chaîne
-`quad-layout` dans `remesher.rs`, devenue celle des préréglages).
+**Done at milestone 7** (`crates/openclare/src/meshing/`, interface `Mesher` and its factory;
+chain `quad-layout` in `remesher.rs`, which became that of the presets).
 
-![L'ogre à 3000 quads : QuadriFlow, openclare, Quad Remesher](docs/images/milestone7_ogre.png)
+![The ogre at 3000 quads: QuadriFlow, openclare, Quad Remesher](docs/images/milestone7_ogre.png)
 
-- **Lecture de la carte** : le T-mesh garde, pour chaque trace, son chemin dans la carte
-  (triangle par triangle) et, pour chaque arc, la portion de trace qu'il couvre. Placer un point
-  revient à retrouver un point d'une trace, puis à marcher en ligne droite dans la carte, avec
-  la même mécanique que le traçage. Sur le corpus, aucun sommet n'a dû être placé autrement.
-- **Sommets fusionnés** : un sommet né de la fusion de plusieurs points (lamelle refermée) est
-  mis à leur moyenne, sauf s'il contient une singularité ou un coin de bord, qui ne bouge pas.
-- **Relaxation** : deux passes seulement. Le placement brut est déjà valide partout ; la
-  relaxation améliore la forme des quads, mais au-delà de quelques passes elle érode les
-  détails fins et dégrade la fidélité (ticket DT-019).
-- **Deux règles de la quantification assouplies** au vu des premiers maillages, toutes deux
-  pour les bords ouverts. Une singularité que les longueurs amènent sur un bord devient un coin
-  du bord, au lieu d'être tenue à une fraction d'arête de lui. Deux coins de bord presque
-  confondus (une marche d'escalier minuscule dans la carte) peuvent fusionner. Sans cela, des
-  rangées de quads écrasés longeaient les bords. La décision de garder séparées les
-  *singularités* entre elles est inchangée.
-- **Repli** : une surface dont une pièce n'a ni singularité ni bord (un tore) n'a pas de T-mesh
-  complet ; la chaîne passe alors la main à `integer-grid` et le signale (ticket DT-003).
+- **Reading the map**: the T-mesh keeps, for each trace, its path in the map (triangle by
+  triangle) and, for each arc, the portion of trace it covers. Placing a point comes down to
+  finding a point of a trace, then walking in a straight line in the map, with the same
+  mechanics as tracing. On the corpus, no vertex had to be placed otherwise.
+- **Merged vertices**: a vertex born of the merging of several points (a sliver closed up) is
+  put at their mean, unless it contains a singularity or a border corner, which does not move.
+- **Relaxation**: two passes only. The raw placement is already valid everywhere; relaxation
+  improves the shape of the quads, but beyond a few passes it wears fine details away and
+  degrades fidelity (ticket DT-019).
+- **Two rules of quantization relaxed** in view of the first meshes, both for open borders. A
+  singularity that the lengths bring onto a border becomes a corner of the border, instead of
+  being held a fraction of an edge away from it. Two border corners that nearly coincide (a
+  tiny stair step in the map) may merge. Without that, rows of squashed quads ran along the
+  borders. The decision to keep *singularities* apart from one another is unchanged.
+- **Fallback**: a surface of which one piece has neither singularity nor border (a torus) has
+  no complete T-mesh; the chain then hands over to `integer-grid` and says so (ticket DT-003).
 
-**Résultat.** Sur les 12 modèles organiques, à 3000 quads, médianes (tableaux complets dans
-`bench/results/RESULTS.md`) :
+**Result.** On the 12 organic models, at 3000 quads, medians (full tables in
+`bench/results/RESULTS.md`):
 
-| | QuadriFlow | openclare, J4 bis | **openclare, J7** | Quad Remesher, taille uniforme |
+| | QuadriFlow | openclare, J4 bis | **openclare, J7** | Quad Remesher, uniform size |
 |---|---|---|---|---|
-| Modèles toujours valides (V) | 5 sur 12 | 9 sur 12 | **12 sur 12** | 10 sur 12 |
-| Alignement (A) | 17,5° | 8,8° | **8,6°** | 7,8° |
-| Sommets irréguliers (S) | 66 | 50 | **50** | 67,5 |
-| Patchs du complexe de base (C) | 2697 | 951 | **1886** | 2009 |
-| Écart d'angle moyen (F) | 8,6° | 8,0° | **7,8°** | 7,2° |
-| Hausdorff, ‰ de la diagonale (H) | 17,7 | 9,3 | **9,1** | 9,6 |
-| Écart au budget (N) | 4,1 % | 11,1 % | **1,4 %** | 10,3 % |
-| Temps (T) | 1,9 s | 6,5 s | **2,2 s** | 12,3 s |
+| Models always valid (V) | 5 out of 12 | 9 out of 12 | **12 out of 12** | 10 out of 12 |
+| Alignment (A) | 17.5° | 8.8° | **8.6°** | 7.8° |
+| Irregular vertices (S) | 66 | 50 | **50** | 67.5 |
+| Patches of the base complex (C) | 2697 | 951 | **1886** | 2009 |
+| Mean angle deviation (F) | 8.6° | 8.0° | **7.8°** | 7.2° |
+| Hausdorff, ‰ of the diagonal (H) | 17.7 | 9.3 | **9.1** | 9.6 |
+| Gap to the budget (N) | 4.1 % | 11.1 % | **1.4 %** | 10.3 % |
+| Time (T) | 1.9 s | 6.5 s | **2.2 s** | 12.3 s |
 
-**La règle d'acceptation est tenue à 3000 quads** : validité jamais moins bonne que celle de
-QuadriFlow, médianes meilleures sur S, C, A et F, sans dégrader H ni N. Les deux seuils que le
-jalon 4 bis manquait, V et N, sont tenus.
+**The acceptance rule is met at 3000 quads**: validity never worse than that of QuadriFlow,
+better medians on S, C, A and F, without degrading H or N. The two thresholds that milestone 4
+bis missed, V and N, are met.
 
-Aux autres budgets : 12 modèles valides sur 12 à 8000 quads (budget tenu à 1,6 % près), 11 sur
-12 à 1000 quads. Les mires de comparaison n'y étaient pas complètes ; elles l'ont été au jalon 8
-(voir M9).
+At the other budgets: 12 models valid out of 12 at 8000 quads (budget held to within 1.6 %), 11
+out of 12 at 1000 quads. The comparison references were not complete there; they were completed
+at milestone 8 (see M9).
 
-Ce qu'il ne faut pas se cacher :
+What should not be hidden:
 
-- **Modèle par modèle, tout n'est pas tenu.** À 3000 quads, les seuils A, H, N et V sont tenus
-  sur les 11 modèles où QuadriFlow donne un maillage (il échoue sur bridge, où le nôtre est
-  valide). F (forme des quads) ne l'est pas sur rock, creature et spot ; S pas sur
-  rock et creature ; C pas sur rock. Le scan brut (rock) est notre plus mauvais cas : QuadriFlow
-  y ignore le bruit de surface, notre champ le suit.
-- **Quad Remesher reste devant** sur l'alignement (de 1° environ) et sur la forme des quads.
-- **Le complexe de base a doublé** par rapport au jalon 4 bis (1886 contre 951) : les jonctions
-  en T du T-mesh décalent les lignes de part et d'autre (ticket DT-020).
-- **Parties plus fines qu'un quad** : à 1000 quads, deux faces du cochon (oreilles) sont comptées
-  inversées, et les oreilles de l'ogre perdent leur volume (ticket DT-018).
-- **Bandes étroites** là où deux singularités proches sont tenues séparées (ticket DT-005).
+- **Model by model, not everything is met.** At 3000 quads, the thresholds A, H, N and V are
+  met on the 11 models where QuadriFlow gives a mesh (it fails on bridge, where ours is valid).
+  F (shape of the quads) is not on rock, creature and spot; S not on rock and creature; C not
+  on rock. The raw scan (rock) is our worst case: QuadriFlow ignores the surface noise there,
+  our field follows it.
+- **Quad Remesher stays ahead** on alignment (by about 1°) and on the shape of the quads.
+- **The base complex doubled** compared with milestone 4 bis (1886 against 951): the
+  T-junctions of the T-mesh shift the lines on either side (ticket DT-020).
+- **Parts thinner than a quad**: at 1000 quads, two faces of the pig (ears) are counted
+  inverted, and the ears of the ogre lose their volume (ticket DT-018).
+- **Narrow strips** where two close singularities are held apart (ticket DT-005).
 
-### M9 — Relaxation et projection
+### M9 — Relaxation and projection
 
-- **Entrée** : maillage quad, source dense d'origine.
-- **Sortie** : positions finales sur la source.
-- **Méthode** : lissage tangentiel et projection au point le plus proche, lignes caractéristiques
-  et coins préservés. Déjà en place et réutilisé tel quel. Le lancer de rayon le long de la
-  normale est écarté : il rate la surface ou touche la face arrière. Une optimisation de forme
-  plus poussée (type ARAP) est envisageable ensuite.
-- **Test** : métriques H et F ; aucune face inversée.
+- **Input**: the quad mesh, the original dense source.
+- **Output**: final positions on the source.
+- **Method**: tangential smoothing and projection to the closest point, feature lines and
+  corners preserved. Already in place and reused as it is. Ray casting along the normal is set
+  aside: it misses the surface or hits the back face. A more thorough shape optimization (of
+  the ARAP kind) can be considered next.
+- **Test**: metrics H and F; no inverted face.
 
-**Réalisé au jalon 8** (`crates/openclare/src/relax.rs`, interface `Relaxer` et sa fabrique : deux
-implémentations, `laplacian`, celle d'origine, et `squaring`, la nouvelle, qu'utilise la chaîne
-`quad-layout`).
+**Done at milestone 8** (`crates/openclare/src/relax.rs`, interface `Relaxer` and its factory:
+two implementations, `laplacian`, the original one, and `squaring`, the new one, which the
+`quad-layout` chain uses).
 
-![L'ogre à 3000 quads après le jalon 8 : QuadriFlow, openclare, Quad Remesher](docs/images/milestone8_ogre.png)
+![The ogre at 3000 quads after milestone 8: QuadriFlow, openclare, Quad Remesher](docs/images/milestone8_ogre.png)
 
-Le jalon 7 avait montré que le lissage d'origine (chaque sommet vers la moyenne de ses voisins)
-plafonnait : au-delà de deux passes il usait les parties fines et finissait par inverser une
-face. La nouvelle relaxation change trois choses.
+Milestone 7 had shown that the original smoothing (each vertex towards the mean of its
+neighbours) levelled off: beyond two passes it wore thin parts down and ended up inverting a
+face. The new relaxation changes three things.
 
-- **Ce vers quoi on tire.** Chaque quad propose, pour ses quatre coins, le rectangle qui lui
-  ressemble le plus : même centre, même plan, côtés égaux à la moyenne de ses côtés opposés. Un
-  sommet va vers la moyenne de ce que proposent ses quads, avec un quart de lissage ordinaire
-  pour égaliser les tailles. On corrige ainsi les angles sans toucher aux dimensions : rien ne
-  pousse le maillage à rétrécir.
-- **Comment on bouge.** Le déplacement est rendu tangent à la surface avant la projection au
-  point le plus proche : un sommet glisse, il ne s'enfonce pas.
-- **Deux garde-fous.** Un sommet ne s'éloigne jamais de plus d'une demi-arête de l'endroit où
-  la carte l'avait placé : c'est ce qui protège les pointes et les parties minces. Et un
-  déplacement qui aplatirait ou retournerait un quad n'est pas fait.
+- **What one pulls towards.** Each quad proposes, for its four corners, the rectangle that
+  resembles it most: same centre, same plane, sides equal to the mean of its opposite sides. A
+  vertex goes towards the mean of what its quads propose, with a quarter of ordinary smoothing
+  to even out the sizes. Angles are thus corrected without touching the dimensions: nothing
+  pushes the mesh to shrink.
+- **How one moves.** The move is made tangent to the surface before the projection to the
+  closest point: a vertex slides, it does not sink in.
+- **Two guards.** A vertex never goes farther than half an edge from the place where the map
+  had put it: this is what protects tips and thin parts. And a move that would flatten or turn
+  over a quad is not made.
 
-Avec ces garde-fous, soixante passes améliorent encore la forme sans rien abîmer, là où
-l'ancien lissage devait s'arrêter à deux.
+With these guards, sixty passes still improve the shape without damaging anything, where the
+old smoothing had to stop at two.
 
-**Résultat.** Médianes sur les 12 modèles organiques (tableaux complets et détail par modèle
-dans `bench/results/ACCEPTANCE.md`, produit par `bench/acceptance.py`) :
+**Result.** Medians over the 12 organic models (full tables and detail per model in
+`bench/results/ACCEPTANCE.md`, made by `bench/acceptance.py`):
 
-| À 3000 quads | QuadriFlow | openclare, J7 | **openclare, J8** | Quad Remesher, taille uniforme | Quad Remesher, défaut |
+| At 3000 quads | QuadriFlow | openclare, J7 | **openclare, J8** | Quad Remesher, uniform size | Quad Remesher, default |
 |---|---|---|---|---|---|
-| Modèles toujours valides (V) | 5 sur 12 | 12 sur 12 | **12 sur 12** | 10 sur 12 | 8 sur 12 |
-| Écart d'angle moyen (F) | 8,6° | 7,8° | **5,4°** | 7,2° | 6,5° |
-| Hausdorff, ‰ de la diagonale (H) | 17,7 | 9,1 | **8,1** | 9,6 | 5,9 |
-| Alignement (A) | 17,5° | 8,6° | **8,4°** | 7,7° | 6,4° |
-| Temps (T) | 1,9 s | 2,2 s | **2,2 s** | 12,3 s | 14,5 s |
+| Models always valid (V) | 5 out of 12 | 12 out of 12 | **12 out of 12** | 10 out of 12 | 8 out of 12 |
+| Mean angle deviation (F) | 8.6° | 7.8° | **5.4°** | 7.2° | 6.5° |
+| Hausdorff, ‰ of the diagonal (H) | 17.7 | 9.1 | **8.1** | 9.6 | 5.9 |
+| Alignment (A) | 17.5° | 8.6° | **8.4°** | 7.7° | 6.4° |
+| Time (T) | 1.9 s | 2.2 s | **2.2 s** | 12.3 s | 14.5 s |
 
-Sur la forme des quads, openclare passe devant Quad Remesher ; sur la fidélité, devant sa
-version à taille uniforme (sa version par défaut, à taille adaptative, reste devant). Les seuils
-F et H sont désormais tenus sur les 12 modèles, un par un, et non plus seulement en médiane.
+On the shape of the quads, openclare moves ahead of Quad Remesher; on fidelity, ahead of its
+version with a uniform size (its default version, adaptive in size, stays ahead). The
+thresholds F and H are now met on the 12 models, one by one, and no longer only in the median.
 
-**La règle d'acceptation est maintenant établie aux trois budgets**, QuadriFlow et Quad
-Remesher ayant été mesurés sur tout le corpus à 1000 et 8000 quads (ticket DT-022, fermé) :
+**The acceptance rule is now established at the three budgets**, QuadriFlow and Quad Remesher
+having been measured on the whole corpus at 1000 and 8000 quads (ticket DT-022, closed):
 
-| Médianes, 12 modèles organiques | 1000 quads | 3000 quads | 8000 quads |
+| Medians, 12 organic models | 1000 quads | 3000 quads | 8000 quads |
 |---|---|---|---|
-| Modèles toujours valides : openclare / QuadriFlow | 11 / 4 | 12 / 5 | 12 / 3 |
-| Alignement (A) : openclare / QuadriFlow / Quad Remesher uniforme | 9,1° / 18,0° / 8,1° | 8,4° / 17,5° / 7,7° | 8,7° / 15,8° / 8,6° |
-| Sommets irréguliers (S) : openclare / QuadriFlow | 42 / 62 | 50 / 66 | 67 / 70 |
-| Patchs du complexe de base (C) : openclare / QuadriFlow | 553 / 891 | 1886 / 2697 | 4436 / 7342 |
-| Écart d'angle moyen (F) : openclare / QuadriFlow / Quad Remesher uniforme | 5,3° / 9,7° / 8,8° | 5,4° / 8,6° / 7,2° | 6,1° / 6,4° / 6,8° |
-| Hausdorff, ‰ (H) : openclare / QuadriFlow | 18,5 / 38,9 | 8,1 / 17,7 | 4,7 / 6,9 |
-| Écart au budget (N) : openclare / QuadriFlow | 0,8 % / 5,9 % | 1,4 % / 4,1 % | 0,8 % / 3,0 % |
-| Temps (T) : openclare / QuadriFlow | 1,4 s / 1,3 s | 2,2 s / 1,9 s | 6,8 s / 4,1 s |
+| Models always valid: openclare / QuadriFlow | 11 / 4 | 12 / 5 | 12 / 3 |
+| Alignment (A): openclare / QuadriFlow / Quad Remesher uniform | 9.1° / 18.0° / 8.1° | 8.4° / 17.5° / 7.7° | 8.7° / 15.8° / 8.6° |
+| Irregular vertices (S): openclare / QuadriFlow | 42 / 62 | 50 / 66 | 67 / 70 |
+| Patches of the base complex (C): openclare / QuadriFlow | 553 / 891 | 1886 / 2697 | 4436 / 7342 |
+| Mean angle deviation (F): openclare / QuadriFlow / Quad Remesher uniform | 5.3° / 9.7° / 8.8° | 5.4° / 8.6° / 7.2° | 6.1° / 6.4° / 6.8° |
+| Hausdorff, ‰ (H): openclare / QuadriFlow | 18.5 / 38.9 | 8.1 / 17.7 | 4.7 / 6.9 |
+| Gap to the budget (N): openclare / QuadriFlow | 0.8 % / 5.9 % | 1.4 % / 4.1 % | 0.8 % / 3.0 % |
+| Time (T): openclare / QuadriFlow | 1.4 s / 1.3 s | 2.2 s / 1.9 s | 6.8 s / 4.1 s |
 
-En médiane, tout est meilleur que QuadriFlow aux trois budgets, sauf le temps. Modèle par
-modèle, les seuils manqués sont : à 1000 quads, S sur rock et creature, H sur cage, V sur pig
-(une face comptée inversée sur une oreille, DT-018) ; à 3000, S sur rock et creature, C sur
-rock ; à 8000, S et C sur rock, S et F sur creature, F sur spot, C sur jerry. À 8000 quads
-l'avance sur la forme des quads se réduit (6,1° contre 6,4°) : soixante passes ne suffisent
-plus tout à fait quand le maillage est plus fin (DT-023).
+In the median, everything is better than QuadriFlow at the three budgets, except time. Model by
+model, the thresholds missed are: at 1000 quads, S on rock and creature, H on cage, V on pig
+(one face counted inverted on an ear, DT-018); at 3000, S on rock and creature, C on rock; at
+8000, S and C on rock, S and F on creature, F on spot, C on jerry. At 8000 quads the lead on
+the shape of the quads shrinks (6.1° against 6.4°): sixty passes are no longer quite enough
+when the mesh is finer (DT-023).
 
-Ce qui reste ouvert :
+What stays open:
 
-- **L'alignement ne bouge presque pas** (8,4° contre 7,7° pour Quad Remesher) : il se joue en
-  amont, dans le champ et le T-mesh, pas dans la relaxation.
-- **Les tailles des quads sont un peu moins égales** qu'avec l'ancien lissage (variation d'aire
-  de 0,34 à 0,38 sur blob) : les rectangles gardent les tailles que la quantification leur donne.
-- **Coût** : 1,7 s sur l'ogre à 8000 quads, soit un sixième du temps total. À ce budget
-  openclare est plus lent que QuadriFlow (6,8 s contre 4,1 s) (ticket DT-023).
-- **Les seuils S et C** restent manqués sur rock et creature (DT-021) : la relaxation ne change
-  pas la connectivité.
-- **La seconde partie du jalon 8**, la densité adaptative, est faite depuis : voir M1 bis.
+- **Alignment hardly moves** (8.4° against 7.7° for Quad Remesher): it is played upstream, in
+  the field and the T-mesh, not in relaxation.
+- **The sizes of the quads are a little less equal** than with the old smoothing (variation of
+  area from 0.34 to 0.38 on blob): the rectangles keep the sizes that quantization gives them.
+- **Cost**: 1.7 s on the ogre at 8000 quads, that is a sixth of the total time. At this budget
+  openclare is slower than QuadriFlow (6.8 s against 4.1 s) (ticket DT-023).
+- **The thresholds S and C** stay missed on rock and creature (DT-021): relaxation does not
+  change the connectivity.
+- **The second part of milestone 8**, adaptive density, has been done since: see M1 bis.
 
-### Chantier Q1 — Modèles en plusieurs pièces
+### Track Q1 — Models in several pieces
 
-Né de deux personnages de jeu récupérés de BlenderKit (voir CREDITS.md), qui ont montré que le
-cahier des charges n'était pas respecté sur un point : « plusieurs pièces séparées : acceptées,
-chaque pièce est traitée seule ». Le code traitait tout d'un bloc.
+Born of two game characters fetched from BlenderKit (see CREDITS.md), which showed that the
+specification was not respected on one point: "several separate pieces: accepted, each piece is
+treated on its own". The code treated everything as one block.
 
-- **Chaque pièce pour elle-même** (`remesher.rs`). Le maillage d'entrée est séparé en pièces
-  connexes ; chacune passe seule par toute la chaîne, avec son maillage de calcul, à sa
-  mesure, et son propre repli si la chaîne principale ne peut pas la traiter. Une pièce
-  récalcitrante n'entraîne plus les autres.
-- **Le budget** est partagé au prorata de l'aire, pondérée par la densité peinte s'il y en a
-  une (une pièce peinte à 1 reçoit plus de quads qu'une pièce laissée à 0). Chaque pièce reçoit
-  au moins ce dont une forme ne peut se passer : 1 quad pour une nappe ouverte, 6 pour une
-  boule (un cube), 16 pour une forme percée (un anneau de 4 par 4). Ce que ces minimums
-  prennent est repris sur les grandes pièces.
-- **Pièce sans singularité ni mur** (un anneau, un tore) : elle n'avait rien d'où partir pour
-  être découpée (DT-003). Un de ses sommets, n'importe lequel, sert de point de départ et émet
-  une trace dans chacune de ses quatre directions ; elles font le tour de la pièce et
-  s'arrêtent les unes sur les autres. La quantification referme les lamelles, et le tore
-  ressort en une seule grille régulière.
-- **L'échelle de lecture de la courbure** est plafonnée au dixième de la taille de la pièce :
-  sur un anneau à qui on demande six quads, l'échelle d'un quad moyennait la courbure de tout
-  l'anneau, et la carte se repliait.
-- **Le rapport** dit combien de pièces sont passées par le repli, combien n'ont pas pu être
-  maillées, et pour quelles raisons.
+- **Each piece for itself** (`remesher.rs`). The input mesh is split into connected pieces;
+  each goes alone through the whole chain, with its work mesh, to its measure, and its own
+  fallback if the main chain cannot treat it. A stubborn piece no longer drags the others
+  along.
+- **The budget** is shared in proportion to area, weighted by painted density if there is one
+  (a piece painted at 1 gets more quads than a piece left at 0). Each piece gets at least what
+  a shape cannot do without: 1 quad for an open sheet, 6 for a ball (a cube), 16 for a shape
+  with a hole (a ring of 4 by 4). What these minimums take is taken back from the large pieces.
+- **A piece with neither singularity nor wall** (a ring, a torus): it had nothing to start
+  from to be cut (DT-003). One of its vertices, any, serves as the starting point and sends out
+  a trace in each of its four directions; they go round the piece and stop on one another.
+  Quantization closes the slivers, and the torus comes out as one regular grid.
+- **The scale at which curvature is read** is capped at a tenth of the size of the piece: on a
+  ring that is asked for six quads, the scale of a quad averaged the curvature of the whole
+  ring, and the map folded.
+- **The report** says how many pieces went through the fallback, how many could not be meshed,
+  and for what reasons.
 
-**Résultat.**
+**Result.**
 
-| | Avant | Après |
+| | Before | After |
 |---|---|---|
-| `mahaveer`, 164 pièces, 8000 quads : temps | 84 s | **15 s** |
-| … pièces par la chaîne principale | 0 | **150** (6 par le repli, 8 sans maillage) |
-| … écart au budget | 28 % | **1,8 %** |
-| … faces qui ne sont pas des quads | 18 sur 5779 | **9 sur 7854** |
-| Desert Rose, 96 coques, 3000 quads : temps | 137 s | **12 s** |
-| … coques par la chaîne principale | 0 | **84** |
-| Tore : chaîne utilisée | repli | **principale**, une seule grille régulière |
+| `mahaveer`, 164 pieces, 8000 quads: time | 84 s | **15 s** |
+| … pieces through the main chain | 0 | **150** (6 through the fallback, 8 with no mesh) |
+| … gap to the budget | 28 % | **1.8 %** |
+| … faces that are not quads | 18 out of 5779 | **9 out of 7854** |
+| Desert Rose, 96 shells, 3000 quads: time | 137 s | **12 s** |
+| … shells through the main chain | 0 | **84** |
+| Torus: chain used | fallback | **main**, one regular grid |
 
-Sur le corpus de la règle d'acceptation, rien n'a bougé : 12 modèles organiques valides sur 12
-aux trois budgets, 4 pièces mécaniques sur 4, mêmes médianes. Suzanne, faite de trois pièces,
-passe maintenant pièce par pièce. `marine`, auparavant refusé en bloc, donne un maillage
-partiel : ses pièces à arêtes non variété sont laissées de côté, les autres sont maillées.
+On the corpus of the acceptance rule, nothing moved: 12 organic models valid out of 12 at the
+three budgets, 4 mechanical parts out of 4, same medians. Suzanne, made of three pieces, now
+goes through piece by piece. `marine`, refused as a whole before, gives a partial mesh: its
+pieces with non-manifold edges are left aside, the others are meshed.
 
-Vérifié par les tests (`crates/openclare/tests/pieces.rs`) : un maillage est bien séparé en ses
-pièces, chaque sommet retrouvant son origine ; deux boules dont l'une a quatre fois l'aire de
-l'autre reçoivent des quads dans ce rapport ; un anneau posé à côté d'une boule passe, comme
-elle, par la chaîne principale ; une perle cent fois plus petite que la boule reçoit quand même
-de quoi exister ; peindre une pièce plus dense en retire aux autres.
+Checked by the tests (`crates/openclare/tests/pieces.rs`): a mesh is indeed split into its
+pieces, each vertex finding its origin again; two balls of which one has four times the area of
+the other get quads in that ratio; a ring laid beside a ball goes, like it, through the main
+chain; a bead a hundred times smaller than the ball still gets enough to exist; painting one
+piece denser takes quads away from the others.
 
-Ce qui reste ouvert :
+What stays open:
 
-- **Ces deux modèles ne sont toujours pas valides en entier** : quelques pièces passent encore
-  par le repli ou n'en sortent pas, et la rose garde ses coques qui se traversent (DT-034,
-  J11).
-- **Les arêtes non variété** (`marine`) restent refusées : c'est l'affaire du jalon 11.
+- **These two models are still not valid as a whole**: a few pieces still go through the
+  fallback or do not come out of it, and the rose keeps its shells that go through one another
+  (DT-034, J11).
+- **Non-manifold edges** (`marine`) stay refused: that is the business of milestone 11.
 
-### Chantier Q2 — Parties fines : garder le volume
+### Track Q2 — Thin parts: keeping the volume
 
-Né d'une remarque de l'auteur sur sa sculpture, le 8 octobre 2026 : les doigts et les oreilles
-de l'ogre sont un vrai problème pour tous les remailleurs, et il faut arriver à garder au moins
-leur volume.
+Born of a remark of the author on his sculpt, on 8 October 2026: the fingers and ears of the
+ogre are a real problem for every remesher, and one must manage to keep at least their volume.
 
-![La main de l'ogre à 3000 quads](docs/images/thin_parts_hand.png)
+![The hand of the ogre at 3000 quads](docs/images/thin_parts_hand.png)
 
-**Le diagnostic**, mesuré avant d'écrire quoi que ce soit :
+**The diagnosis**, measured before writing anything:
 
-- Une partie plus mince qu'un quad ne peut pas être rendue par des quads de cette taille : il
-  n'en passe qu'un ou deux autour, et elle ressort comme une lame. Sur l'ogre à 3000 quads, le
-  pouce était un seul quad plié.
-- La courbure ne suffit pas à le voir : elle est lue à l'échelle d'un demi-quad, exprès, pour
-  ne pas suivre le grain de la peau. Un doigt plus fin que cela passe inaperçu.
-- L'annulation des paires de singularités (M3) achevait le travail. Un doigt a besoin de
-  singularités à son bout et à sa base ; à moins de deux arêtes l'une de l'autre, elles
-  étaient prises pour du bruit et annulées.
-- Quad Remesher fait mieux sur ces parties, mais avec le double du budget demandé (6134 quads
-  pour 3000). À budget tenu (sa variante « uniforme »), il fait moins bien que nous.
+- A part thinner than a quad cannot be rendered by quads of that size: only one or two go
+  round it, and it comes out as a blade. On the ogre at 3000 quads, the thumb was a single
+  folded quad.
+- Curvature is not enough to see it: it is read at the scale of half a quad, on purpose, so as
+  not to follow the grain of the skin. A finger thinner than that goes unnoticed.
+- The cancellation of pairs of singularities (M3) finished the job. A finger needs
+  singularities at its tip and at its base; less than two edges from each other, they were
+  taken for noise and cancelled.
+- Quad Remesher does better on these parts, but with twice the budget asked for (6134 quads
+  for 3000). With the budget held (its "uniform" variant), it does less well than we do.
 
-**Ce qui a été fait** :
+**What was done**:
 
-- **Mesurer l'épaisseur** (`crates/openclare/src/thickness.rs`). Sous chaque sommet du maillage de
-  calcul, des rayons lancés à travers l'intérieur de la forme donnent deux longueurs :
-  l'épaisseur *en travers*, jusqu'à la face opposée (c'est la « shape diameter function » de
-  Shapira, Shamir et Cohen-Or, 2008, avec sept rayons au lieu de trente), et le *tour* de la
-  partie, à son plus étroit : à mi-épaisseur, la plus courte corde qui longe la surface donne
-  l'autre largeur. Un doigt est aussi large qu'épais ; une oreille ou un drap sont bien plus
-  larges, et ne sont pas pris pour des doigts. Les rayons passent par la structure spatiale
-  qui servait déjà à la projection, à laquelle il a fallu ajouter le lancer de rayon.
-- **Borner la taille** (M1 bis, `sizing.rs`). Là où le tour d'une partie ne laisse pas passer
-  `quads_around` quads de la taille prévue, la taille est abaissée pour qu'ils passent. Elle
-  remonte ensuite en s'éloignant, d'une demi-arête par arête parcourue : une moyenne, comme
-  pour le reste du champ, aurait noyé un doigt dans ce qui l'entoure. Le reste du maillage
-  grossit pour que le nombre de quads reste celui demandé ; quelques tours de boucle accordent
-  les deux. La taille ne descend pas sous le quart de la taille demandée : à un sixième, des
-  quads se retournaient sur les feuilles les plus fines (les oreilles de `jerry`).
-- **Compter la portée des singularités en quads locaux** (M3). Deux singularités sont proches
-  quand peu de quads les séparent, là où elles sont. Sur un doigt maillé fin, celles dont il a
-  besoin ne sont plus annulées. C'est la moitié de DT-025.
-- **Un réglage**, `quads_around` (`--quads-around`) : le nombre de quads qu'on veut au moins
-  autour d'une partie fine. 6 dans les préréglages `organic` et `animation` ; 0, c'est-à-dire
-  qu'on ne regarde pas l'épaisseur, dans `hard-surface`, où la taille est unique.
-- **Deux mesures de plus au banc** (`metrics.rs`, `openclare measure`) : l'écart moyen entre les
-  parties fines de la source (plus minces qu'une arête de quad) et le maillage, en arêtes de
-  quad ; et le volume gardé, pour les formes fermées.
+- **Measuring thickness** (`crates/openclare/src/thickness.rs`). Under each vertex of the work
+  mesh, rays cast through the inside of the shape give two lengths: the thickness *across*, to
+  the opposite face (it is the shape diameter function of Shapira, Shamir and Cohen-Or, 2008,
+  with seven rays instead of thirty), and the *girth* of the part, at its narrowest: at
+  mid-thickness, the shortest chord that runs along the surface gives the other width. A finger
+  is as wide as it is thick; an ear or a sheet are far wider, and are not taken for fingers.
+  The rays go through the spatial structure that already served projection, to which ray
+  casting had to be added.
+- **Bounding the size** (M1 bis, `sizing.rs`). Where the girth of a part does not let
+  `quads_around` quads of the planned size go round, the size is lowered so that they do. It
+  then goes up again moving away, by half an edge per edge travelled: an average, as for the
+  rest of the field, would have drowned a finger in what surrounds it. The rest of the mesh
+  grows coarser so that the number of quads stays the one asked for; a few rounds of the loop
+  bring the two into agreement. The size does not go below a quarter of the size asked for: at
+  a sixth, quads turned over on the thinnest sheets (the ears of `jerry`).
+- **Counting the reach of singularities in local quads** (M3). Two singularities are close
+  when few quads separate them, where they are. On a finger meshed finely, those it needs are
+  no longer cancelled. It is half of DT-025.
+- **A setting**, `quads_around` (`--quads-around`): the number of quads wanted at least around
+  a thin part. 6 in the `organic` and `animation` presets; 0, that is thickness is not looked
+  at, in `hard-surface`, where the size is single.
+- **Two more measures in the bench** (`metrics.rs`, `openclare measure`): the mean distance
+  between the thin parts of the source (thinner than a quad edge) and the mesh, in quad edges;
+  and the volume kept, for closed shapes.
 
-**Résultats**, variante adaptative, écart sur les parties fines en pourcentage d'une arête de
-quad (plus bas est mieux) :
+**Results**, adaptive variant, distance over the thin parts as a percentage of a quad edge
+(lower is better):
 
-| Modèle | 1000 quads, avant → après | 3000 quads, avant → après | 8000 quads, avant → après | QuadriFlow à 3000 | Quad Remesher à 3000, budget tenu | Quad Remesher à 3000, budget doublé |
+| Model | 1000 quads, before → after | 3000 quads, before → after | 8000 quads, before → after | QuadriFlow at 3000 | Quad Remesher at 3000, budget held | Quad Remesher at 3000, budget doubled |
 |---|---|---|---|---|---|---|
 | ogre | 20 → 8 | 30 → 9 | 15 → 6 | 54 | 75 | 7 |
 | pig | 17 → 7 | 19 → 5 | 21 → 8 | 68 | 16 | 4 |
@@ -1353,44 +1348,44 @@ quad (plus bas est mieux) :
 | suzanne | 12 → 7 | 13 → 11 | — | 16 | 17 | 5 |
 | spot | 14 → 21 | 7 → 7 | — | 56 | 21 | 9 |
 
-« Avant » est la variante à taille unique, qui n'a pas changé ; un tiret veut dire qu'à ce
-budget le modèle n'a plus rien de plus mince qu'un quad. Sur le reste :
+"Before" is the variant with a single size, which did not change; a dash means that at this
+budget the model no longer has anything thinner than a quad. On the rest:
 
-- **Validité** : les 12 modèles organiques restent valides aux trois budgets. La rose devient
-  valide à 8000 quads, ce qu'elle n'était pas.
-- **Les modèles sans partie fine ressortent identiques** (blob, rock, creature, cage, bob, et
-  les quatre mécaniques).
-- **Fidélité** : le Hausdorff du cochon est divisé par deux à 3000 quads (22 → 11 ‰) ; à 1000
-  quads, pig passe de 33 à 20 ‰, jerry de 34 à 26, bridge de 17 à 11.
-- **Notes** : la moyenne des modèles organiques passe de 71 à 70 à 1000 quads, reste à 76 à
-  3000 et monte de 79 à 81 à 8000.
+- **Validity**: the 12 organic models stay valid at the three budgets. The rose becomes valid
+  at 8000 quads, which it was not.
+- **The models with no thin part come out identical** (blob, rock, creature, cage, bob, and the
+  four mechanical ones).
+- **Fidelity**: the Hausdorff distance of the pig is halved at 3000 quads (22 → 11 ‰); at 1000
+  quads, pig goes from 33 to 20 ‰, jerry from 34 to 26, bridge from 17 to 11.
+- **Scores**: the mean of the organic models goes from 71 to 70 at 1000 quads, stays at 76 at
+  3000 and goes up from 79 to 81 at 8000.
 
-**Ce que ça coûte**, et qu'il faut dire :
+**What it costs**, and must be said:
 
-- **Plus de sommets irréguliers** là où il y a des parties fines : l'ogre passe de 88 à 155 à
-  3000 quads (44 → 102 à 1000), jerry de 102 à 162. Chaque doigt en demande à son bout et à sa
-  base, et la portée locale en laisse davantage dans les zones denses. La note de régularité
-  de l'ogre baisse (73 → 51 à 3000) et sa note globale avec (71 → 68) : le barème ne voit pas
-  les parties fines, il ne voit que leur prix.
-- **Le reste est un peu plus grossier** : sur l'ogre à 1000 quads, la distance moyenne à la
-  source passe de 2,2 à 2,5 ‰ et l'écart moyen des angles de 7,5° à 9,1°.
-- **Un détail plus petit qu'un quad reste hors de portée** : la queue de `spot` à 1000 quads,
-  un bouton plus petit qu'un quad, est moins bien rendue qu'avant (Hausdorff 10 → 16 ‰).
-- **Temps** : de 30 à 50 % de plus sur les modèles concernés.
+- **More irregular vertices** where there are thin parts: the ogre goes from 88 to 155 at 3000
+  quads (44 → 102 at 1000), jerry from 102 to 162. Each finger asks for some at its tip and at
+  its base, and the local reach leaves more of them in dense zones. The regularity score of the
+  ogre goes down (73 → 51 at 3000) and its overall score with it (71 → 68): the scale does not
+  see thin parts, it only sees their price.
+- **The rest is a little coarser**: on the ogre at 1000 quads, the mean distance to the source
+  goes from 2.2 to 2.5 ‰ and the mean angle deviation from 7.5° to 9.1°.
+- **A detail smaller than a quad stays out of reach**: the tail of `spot` at 1000 quads, a
+  button smaller than a quad, is rendered less well than before (Hausdorff 10 → 16 ‰).
+- **Time**: 30 to 50 % more on the models concerned.
 
-Ce qui reste ouvert :
+What stays open:
 
-- **Les oreilles et les feuilles minces** (DT-018) : la mesure du tour les laisse de côté à
-  dessein, et leur bord reste grossier.
-- **Le volume lui-même** (DT-037) : les sommets sont posés sur la surface, le maillage est donc
-  inscrit dans la forme et perd du volume partout où elle est bombée : 1,2 % sur l'ogre à
-  3000 quads, 3,5 % à 1000. Un doigt à six faces dont les sommets touchent la surface n'a que
-  83 % de la section du doigt. La suite naturelle est d'ajuster les sommets pour que le
-  maillage passe *au milieu* de la surface plutôt qu'en dessous.
-- **Les poches profondes** (DT-036) : le Hausdorff de l'ogre (27 ‰ à 3000 quads) ne vient pas
-  de ses doigts mais de deux petites poches derrière les yeux, que le maillage referme.
-- **Limites de la borne** (DT-038) : pas de plafond sur la part du budget que prennent les
-  parties fines ; l'épaisseur n'est pas montrée dans Rerun ; les notes ne la comptent pas.
+- **Ears and thin sheets** (DT-018): the measure of girth leaves them aside on purpose, and
+  their rim stays rough.
+- **The volume itself** (DT-037): the vertices are laid on the surface, so the mesh is
+  inscribed in the shape and loses volume wherever it bulges: 1.2 % on the ogre at 3000 quads,
+  3.5 % at 1000. A finger with six faces whose vertices touch the surface has only 83 % of the
+  section of the finger. The natural sequel is to adjust the vertices so that the mesh passes
+  *through the middle* of the surface rather than below it.
+- **Deep pockets** (DT-036): the Hausdorff distance of the ogre (27 ‰ at 3000 quads) does not
+  come from its fingers but from two small pockets behind the eyes, which the mesh closes over.
+- **Limits of the bound** (DT-038): no ceiling on the share of the budget that thin parts take;
+  thickness is not shown in Rerun; the scores do not count it.
 
 ### Track Q2 bis — Keeping the volume
 
@@ -1565,183 +1560,184 @@ What is left open is in DT-044.
 
 ---
 
-## 4. Jalons
+## 4. Milestones
 
-Chaque jalon produit quelque chose de vérifiable et se termine par **un arrêt pour revue**.
+Each milestone produces something that can be checked and ends with **a stop for review**.
 
 What is left to do, by order of importance, is in [ROADMAP.md](ROADMAP.md) since 8 October
 2026; the tables below record what each milestone was and what it delivered.
 
-| Jalon | Contenu | Ce qu'on peut vérifier à la fin |
+| Milestone | Content | What can be checked at the end |
 |---|---|---|
-| J0 | Banc de mesure, corpus, fabrique de chaînes | **Fait.** Chiffres de QuadriFlow, de Quad Remesher et du plancher ; seuils adoptés |
-| J1 | Prétraitement (M1) | **Fait.** Maillages de calcul et courbures, tests analytiques |
-| J2 | Champ de croix (M2) | **Fait.** Champs visualisés, singularités comptées |
-| J3 | Singularités (M3), durée bornée | **Fait.** Gain mesuré sur S : critère de sortie atteint |
-| J4 | Paramétrisation sans couture (M4) | **Fait.** Jalon de vérité passé : zéro inversion sur tout le corpus |
-| J4 bis | Arrondi glouton des translations (façon MIQ) et extraction ; configuration unique et préréglages | **Fait.** Premier résultat complet, provisoire, mesuré face à QuadriFlow et à Quad Remesher |
-| J5 | T-mesh (M5) | **Fait.** Partitions en rectangles valides sur tout le corpus, bords ouverts compris |
-| J6 | Quantification (M6) | **Fait.** Contraintes satisfaites, budget tenu à 4 % près, connectivité du maillage quad construite et saine sur tout le corpus |
-| J7 | Maillage quad depuis le T-mesh quantifié, par la route directe (à la place de M7 et M8) | **Fait.** Résultat complet ; règle d'acceptation tenue à 3000 quads. L'arrondi glouton reste comme repli (DT-009) |
-| J8 | Relaxation ; densité adaptative, puis contraintes de rang 3 à 5 | **Fait** : relaxation, densité adaptative (rang 2) et densité peinte (rang 5). Règle d'acceptation tenue aux trois budgets, forme des quads devant Quad Remesher. Reste le rang 4, les courbes guides (DT-024) ; le rang 3 relève du jalon 9 |
-| J9 | Surfaces dures : arêtes vives garanties, par des « murs » dans le T-mesh de la chaîne existante (à la place de la chaîne par patchs, DT-030) | **Fait.** Pièces mécaniques comparées à QuadriFlow et à Quad Remesher ; arêtes et coins retrouvés exactement |
-| J9 bis | Symétrie : un modèle symétrique par rapport à un plan donne un maillage symétrique (DT-028). **Reportée** : passe après les travaux de qualité (décision du 8 octobre 2026) | Écart entre le maillage et son reflet nul ; boucle d'arêtes sur le plan de symétrie |
-| J10 | Export des coutures et des UV ; bibliothèque à interface C et greffon Python sans copie mémoire | Remaillage lancé depuis Blender, UV et coutures relus dans la scène. **First step done, awaiting review**: code renamed to `openclare`, C library (`openclare-capi`), add-on with a preset, a number of quads and a button (`make addon`). Next step: Weight Paint, marked edges, UV layers |
-| J11 | Prétraitement de réparation : fusion des pièces qui se traversent, arêtes non variété | Desert Rose remaillée en une seule peau valide |
-| J12 | Plis automatiques : un poids de pli par arête de sortie | Après subdivision, le maillage plissé est plus proche de la source que le même sans plis. **Done, awaiting review**: yes on mechanical shapes (the subdivided cube is the cube again), little change on organic ones |
-| J13 | Normales optimales par coin | Écart angulaire entre l'ombrage du maillage allégé et celui de la source |
-| J14 | Reconstitution Multires : niveaux de subdivision avec déplacement reprojeté | À chaque niveau, l'écart à la sculpture d'origine diminue jusqu'à la retrouver |
+| J0 | Bench, corpus, factory of chains | **Done.** Figures of QuadriFlow, of Quad Remesher and of the floor; thresholds adopted |
+| J1 | Preprocessing (M1) | **Done.** Work meshes and curvatures, analytic tests |
+| J2 | Cross field (M2) | **Done.** Fields visualized, singularities counted |
+| J3 | Singularities (M3), bounded duration | **Done.** Gain measured on S: exit criterion reached |
+| J4 | Seamless parametrization (M4) | **Done.** Truth milestone passed: no inversion on the whole corpus |
+| J4 bis | Greedy rounding of the translations (in the manner of MIQ) and extraction; single configuration and presets | **Done.** First complete result, provisional, measured against QuadriFlow and Quad Remesher |
+| J5 | T-mesh (M5) | **Done.** Valid partitions into rectangles on the whole corpus, open borders included |
+| J6 | Quantization (M6) | **Done.** Constraints satisfied, budget held to within 4 %, connectivity of the quad mesh built and sound on the whole corpus |
+| J7 | Quad mesh from the quantized T-mesh, by the direct route (in place of M7 and M8) | **Done.** Complete result; acceptance rule met at 3000 quads. Greedy rounding stays as a fallback (DT-009) |
+| J8 | Relaxation; adaptive density, then constraints of rank 3 to 5 | **Done**: relaxation, adaptive density (rank 2) and painted density (rank 5). Acceptance rule met at the three budgets, shape of the quads ahead of Quad Remesher. Rank 4, guide curves, was left (DT-024, done since); rank 3 belongs to milestone 9 |
+| J9 | Hard surfaces: hard edges guaranteed, by "walls" in the T-mesh of the existing chain (in place of the patch chain, DT-030) | **Done.** Mechanical parts compared with QuadriFlow and Quad Remesher; edges and corners recovered exactly |
+| J9 bis | Symmetry: a model symmetric about a plane gives a symmetric mesh (DT-028). **Put off**: comes after the work on quality (decision of 8 October 2026) | No gap between the mesh and its mirror image; an edge loop on the plane of symmetry |
+| J10 | Export of seams and UVs; library with a C interface and Python add-on without copying memory | Remeshing run from Blender, UVs and seams read back in the scene. **Done, awaiting review**: code renamed to `openclare`, C library (`openclare-capi`), add-on (`make addon`) with a preset, a number of quads, a vertex group for density, guide curves, and the export of two UV layers, seams, sharp edges and creases. Left: edges marked in Blender as input, stopping a run (DT-041) |
+| J11 | Repair preprocessing: merging of pieces that go through one another, non-manifold edges | Desert Rose remeshed as one valid skin |
+| J12 | Automatic creases: a crease weight per output edge | After subdivision, the creased mesh is closer to the source than the same one without creases. **Done, awaiting review**: yes on mechanical shapes (the subdivided cube is the cube again), little change on organic ones |
+| J13 | Optimal normals per corner | Angular gap between the shading of the lighter mesh and that of the source |
+| J14 | Multires reconstruction: subdivision levels with displacement projected back | At each level, the gap to the original sculpt goes down until it is recovered |
 
-**Chantiers de qualité.** Depuis le 8 octobre 2026, ce qui fait progresser la qualité ou la
-robustesse du maillage passe avant les jalons de fonctionnalités (J9 bis, J10 et suivants). Ces
-chantiers sont numérotés à part et partent du backlog.
+**Quality tracks.** Since 8 October 2026, what moves the quality or the robustness of the mesh
+forward comes before the feature milestones (J9 bis, J10 and after). These tracks are numbered
+apart and start from the backlog.
 
-| Chantier | Contenu | Ce qu'on peut vérifier à la fin |
+| Track | Content | What can be checked at the end |
 |---|---|---|
-| Q1 | Modèles en plusieurs pièces (DT-032) et pièces sans singularité ni bord (DT-003) | **Fait.** Chaque pièce maillée pour elle-même ; un anneau passe par la chaîne principale |
-| Q2 | Parties plus minces qu'un quad : doigts, oreilles (DT-018). Garder au moins leur volume | **Fait pour les doigts, en attente de revue.** Assez de quads autour de chaque partie fine (`quads_around`) ; l'écart sur les parties fines de l'ogre passe de 30 à 9 % d'une arête à 3000 quads. Restent les feuilles minces et l'ajustement du volume (DT-018, DT-037) |
-| Q2 bis | Keeping the volume (DT-037): a last stage, fitting, moves the vertices off the surface for the faces to run through it rather than under it (`volume_fit`) | **Done, awaiting review.** Median volume kept 100.0 % at the three budgets (98.2 % at 1000 quads before); mean distance to the source halved; no model loses its validity |
-| Q3 | Alignement : champ de croix sur les surfaces bruitées, échelles locales, réglage des préréglages (DT-021, DT-025, DT-013) | Écart d'alignement avec Quad Remesher réduit |
-| Q4 | Structure globale : simplification du T-mesh, bandes étroites (DT-020, DT-007, DT-005) | Moins de patchs dans le complexe de base |
+| Q1 | Models in several pieces (DT-032) and pieces with neither singularity nor border (DT-003) | **Done.** Each piece meshed for itself; a ring goes through the main chain |
+| Q2 | Parts thinner than a quad: fingers, ears (DT-018). Keep at least their volume | **Done for the fingers, merged.** Enough quads around each thin part (`quads_around`); the distance over the thin parts of the ogre goes from 30 to 9 % of an edge at 3000 quads. Thin sheets are left (DT-018); the fitting of the volume became track Q2 bis |
+| Q2 bis | Keeping the volume (DT-037): a last stage, fitting, moves the vertices off the surface for the faces to run through it rather than under it (`volume_fit`) | **Done, merged.** Median volume kept 100.0 % at the three budgets (98.2 % at 1000 quads before); mean distance to the source halved; no model loses its validity |
+| Q3 | Alignment: cross field on noisy surfaces, local scales, tuning of the presets (DT-021, DT-025, DT-013) | Gap in alignment with Quad Remesher reduced |
+| Q4 | Global structure: simplification of the T-mesh, narrow strips (DT-020, DT-007, DT-005) | Fewer patches in the base complex |
 
-**Chantiers d'outils**, ouverts le 8 octobre 2026 : de quoi regarder et juger les résultats.
+**Tools tracks**, opened on 8 October 2026: what it takes to look at the results and judge
+them.
 
-| Chantier | Contenu | État |
+| Track | Content | State |
 |---|---|---|
-| T1 | Notes de 0 à 100 par modèle, remailleur et critère (`make scores`) ; rendus par Blender (`scripts/render.py`) ; une page par modèle avec images et notes (`make pages`, `docs/models/`) | **Fait, en attente de revue** |
-| T2 | Les étapes de la chaîne montrées à un `Recorder` (module `recorder`, sans dépendance ; `Silent` par défaut). Deux crates à part, construites sur demande : `openclare-rerun` écrit un fichier `.rrd` (`openclare remesh --record`), `openclare-viewer` embarque la visionneuse de Rerun (`openclare-view`). `make view MODEL=ogre` enchaîne le tout. Ce qui n'est pas montré est suivi par DT-035 | **Fait, en attente de revue** |
+| T1 | Scores from 0 to 100 per model, remesher and criterion (`make scores`); renders by Blender (`scripts/render.py`); a page per model with pictures and scores (`make pages`, `docs/models/`) | **Done, merged** |
+| T2 | The stages of the chain shown to a `Recorder` (module `recorder`, with no dependency; `Silent` by default). Two crates apart, built on demand: `openclare-rerun` writes a `.rrd` file (`openclare remesh --record`), `openclare-viewer` embeds the viewer of Rerun (`openclare-view`). `make view MODEL=ogre` strings it all together. What is not shown is followed by DT-035 | **Done, merged** |
 
-Le jalon 4 bis est un raccourci assumé : un arrondi glouton des translations, comme dans MIQ,
-donne un premier maillage complet bien avant le T-mesh et la quantification. Il est moins robuste
-et sera remplacé au jalon 7 ; son intérêt est de savoir tôt où on en est.
+Milestone 4 bis is a deliberate shortcut: a greedy rounding of the translations, as in MIQ,
+gives a first complete mesh well before the T-mesh and quantization. It is less robust and will
+be replaced at milestone 7; its point is to know early where we stand.
 
 ---
 
-## 5. Architecture et stack technique
+## 5. Architecture and technical stack
 
-### Architecture modulaire
+### Modular architecture
 
-Exigence : accueillir plusieurs chaînes (organique, durci, et le plancher actuel) sans réécrire
-ce qui leur est commun.
+Requirement: to host several chains (organic, hard surface, and the present floor) without
+rewriting what they have in common.
 
-**Une chaîne est un `Remesher`**, obtenu d'une fabrique à partir de son nom
-(`remesher::create(Method)`). L'exécutable (`--method`) et le banc de mesure ne passent que par
-elle : ajouter une chaîne revient à ajouter une variante de `Method` et une ligne dans le banc.
-En place : `instant-meshes`. À venir : la chaîne organique et la chaîne durci.
+**A chain is a `Remesher`**, obtained from a factory from its name
+(`remesher::create(Method)`). The executable (`--method`) and the bench go only through it:
+adding a chain comes down to adding a variant of `Method` and a line in the bench. In place:
+`instant-meshes`. To come: the organic chain and the hard-surface chain.
 
-**Une étape est une interface (trait)**, avec sa propre fabrique, pour que les chaînes se
-composent des mêmes briques :
+**A stage is an interface (trait)**, with its own factory, so that the chains are composed of
+the same bricks:
 
-| Étape | Rôle | Chaîne organique | Chaîne durci |
+| Stage | Role | Organic chain | Hard-surface chain |
 |---|---|---|---|
-| `Preprocessor` | maillage de calcul et courbures (M1) | commune | commune |
-| `CrossFieldSolver` | champ de croix (M2) | alignement souple sur la courbure | contraintes dures sur les arêtes vives |
-| `SingularityOptimizer` | simplification (M3) | commune | commune |
-| `LayoutBuilder` | structure globale à longueurs réelles | paramétrisation et T-mesh (M4, M5) | traçage et patchs |
-| `Quantizer` | longueurs entières (M6) | commune | commune |
-| `Mesher` | maillage quad depuis la structure quantifiée | une grille par rectangle, lue dans la carte (M7) | remplissage par motifs |
-| `Relaxer` | placement final (M9) | commune | commune |
+| `Preprocessor` | work mesh and curvatures (M1) | shared | shared |
+| `CrossFieldSolver` | cross field (M2) | soft alignment on curvature | hard constraints on hard edges |
+| `SingularityOptimizer` | simplification (M3) | shared | shared |
+| `LayoutBuilder` | global structure with real lengths | parametrization and T-mesh (M4, M5) | tracing and patches |
+| `Quantizer` | whole lengths (M6) | shared | shared |
+| `Mesher` | quad mesh from the quantized structure | a grid per rectangle, read in the map (M7) | filling by patterns |
+| `Relaxer` | final placement (M9) | shared | shared |
 
-Écrites à ce jour : `Remesher` (trois chaînes : `instant-meshes`, `integer-grid` et `quad-layout`),
-`Preprocessor`, `CrossFieldSolver`, `SingularityOptimizer`, `Parametrizer` (deux
-implémentations : `seamless` et `integer-grid`) et `LayoutBuilder` (une implémentation :
-`motorcycle`, qui enchaîne la paramétrisation sans couture et le traçage du T-mesh),
-`Quantizer` (une implémentation : `walk-cancelling`) et `Mesher` (une implémentation :
-`patch-grid`), `Relaxer` (deux implémentations : `laplacian` et `squaring`) et `Sizer` (une
-implémentation : `curvature`, pour le champ de taille). La chaîne
-`quad-layout` les enchaîne ; c'est celle des préréglages. Toutes les étapes du tableau ont
-maintenant leur interface.
+Written to date: `Remesher` (three chains: `instant-meshes`, `integer-grid` and `quad-layout`),
+`Preprocessor`, `CrossFieldSolver`, `SingularityOptimizer`, `Parametrizer` (two
+implementations: `seamless` and `integer-grid`) and `LayoutBuilder` (one implementation:
+`motorcycle`, which strings together the seamless parametrization and the tracing of the
+T-mesh), `Quantizer` (one implementation: `walk-cancelling`) and `Mesher` (one implementation:
+`patch-grid`), `Relaxer` (two implementations: `laplacian` and `squaring`), `Sizer` (one
+implementation: `curvature`, for the sizing field) and `Fitter` (one implementation:
+`least-squares`, for the volume). The `quad-layout` chain strings them together; it is that of
+the presets. All the stages of the table now have their interface.
 
-Les deux chaînes ne diffèrent donc que par deux étapes, `LayoutBuilder` et `Mesher`, plus le
-réglage du champ de croix. Les types échangés entre étapes (maillage de calcul, champ de croix,
-structure à longueurs réelles puis entières, maillage quad) sont ceux des fiches de la section 3.
+So the two chains differ only by two stages, `LayoutBuilder` and `Mesher`, plus the setting of
+the cross field. The types exchanged between stages (work mesh, cross field, structure with
+real then whole lengths, quad mesh) are those of the sheets of section 3.
 
-Règle de conduite : une interface est écrite avec sa première implémentation, pas avant, pour
-qu'elle soit dictée par un besoin réel. Son contrat, lui, est déjà fixé par les fiches.
+Rule of conduct: an interface is written with its first implementation, not before, so that it
+is dictated by a real need. Its contract, for its part, is already set by the sheets.
 
 ### Stack
 
-- **Langage** : Rust, dans l'espace de travail existant.
-- **Maillage** : tableaux plats et table des demi-arêtes opposées (`Topology`), à étendre avec
-  des données par coin pour (u, v).
-- **Algèbre linéaire creuse** : `faer` (Rust pur, licence MIT), enveloppé dans `linalg.rs` pour que
-  le reste du code ne le nomme jamais. Sa factorisation de Cholesky creuse sert à la
-  paramétrisation ; le champ de croix s'en passe (gradient conjugué). `faer` n'offre pas en haut
-  niveau de factorisation pour systèmes symétriques indéfinis, d'où la formulation retenue en M4.
-- **Requêtes spatiales** : le BVH existant.
-- **Blender** : utilisé seulement par le banc de mesure, jamais comme dépendance.
+- **Language**: Rust, in the existing workspace.
+- **Mesh**: flat arrays and a table of opposite half-edges (`Topology`), to be extended with
+  data per corner for (u, v).
+- **Sparse linear algebra**: `faer` (pure Rust, MIT licence), wrapped in `linalg.rs` so that
+  the rest of the code never names it. Its sparse Cholesky factorization serves
+  parametrization; the cross field does without it (conjugate gradient). `faer` offers no
+  high-level factorization for symmetric indefinite systems, hence the formulation chosen in
+  M4.
+- **Spatial queries**: the existing BVH.
+- **Blender**: used only by the bench, never as a dependency.
 
-### Configuration et préréglages
+### Configuration and presets
 
-Dans l'esprit de Blender : un préréglage n'est qu'un jeu de paramètres nommé. L'utilisateur garde
-la main sur chaque réglage, peut enregistrer les siens, et le projet en fournit quelques-uns,
-documentés.
+In the spirit of Blender: a preset is only a named set of parameters. The user keeps control of
+each setting, can save their own, and the project provides a few, documented.
 
-En place depuis le jalon 4 bis (`crates/openclare/src/config.rs`) :
+In place since milestone 4 bis (`crates/openclare/src/config.rs`):
 
 ```rust
 pub struct RemeshConfig {
-    pub method: Method,              // quelle chaîne
-    pub target: Target,              // nombre de quads ou longueur d'arête
-    pub alignment: f64,              // attraction vers la courbure (M2)
-    pub singularity_reach: f64,      // paires annulées en deçà de tant d'arêtes de quad (M3)
-    pub singularity_tolerance: f64,  // ce qu'une annulation a le droit de coûter (M3)
-    pub crease_angle: Option<f64>,   // arêtes vives : None, ou seuil dièdre en degrés
-    pub adaptivity: f64,             // taille des quads selon la forme : 0 unique, jusqu'à 1 (M1 bis)
-    pub quads_around: f64,           // quads au moins autour d'une partie fine ; 0 : sans objet (Q2)
-    pub volume_fit: f64,             // 0 : sommets sur la surface ; 1 : maillage ajusté au volume (Q2 bis)
-    pub density_contrast: f64,       // densité peinte : rapport entre un poids de 1 et un poids de 0
+    pub method: Method,              // which chain
+    pub target: Target,              // number of quads or edge length
+    pub alignment: f64,              // pull towards curvature (M2)
+    pub singularity_reach: f64,      // pairs cancelled within so many quad edges (M3)
+    pub singularity_tolerance: f64,  // what a cancellation is allowed to cost (M3)
+    pub crease_angle: Option<f64>,   // hard edges: None, or dihedral threshold in degrees
+    pub adaptivity: f64,             // size of the quads after the shape: 0 single, up to 1 (M1 bis)
+    pub quads_around: f64,           // quads at least around a thin part; 0: not looked at (Q2)
+    pub volume_fit: f64,             // 0: vertices on the surface; 1: mesh fitted to the volume (Q2 bis)
+    pub density_contrast: f64,       // painted density: ratio between a weight of 1 and a weight of 0
     pub seed: u64,
 }
 ```
 
-Ce que l'utilisateur dessine sur un modèle précis n'est pas un réglage et ne va pas dans la
-configuration : cela accompagne le maillage, dans `Guides` (aujourd'hui la densité peinte ;
-demain les courbes guides).
+What the user draws on a particular model is not a setting and does not go into the
+configuration: it goes with the mesh, in `Guides` (painted density and, since 9 October 2026,
+guide curves).
 
-- **Tous les champs sont publics** et modifiables un à un.
-- **Enregistrer un préréglage**, c'est écrire la configuration dans un petit fichier texte
-  (`clé = valeur`, une ligne par champ) ; le relire redonne la même configuration. Un fichier
-  peut être édité à la main, et ce qu'il ne mentionne pas garde sa valeur par défaut.
-- **Trois préréglages fournis**, listés par `openclare presets` :
+- **All the fields are public** and can be changed one by one.
+- **Saving a preset** is writing the configuration into a small text file (`key = value`, one
+  line per field); reading it back gives the same configuration again. A file can be edited by
+  hand, and what it does not mention keeps its default value.
+- **Three presets provided**, listed by `openclare presets`:
 
-| Préréglage | Ce qu'il privilégie | Réglages actuels |
+| Preset | What it favours | Present settings |
 |---|---|---|
-| `organic` | fidélité à la sculpture | alignement 0,05 ; annulation jusqu'à 2 arêtes de quad ; adaptivité 0,5 ; 6 quads autour des parties fines |
-| `animation` | peu de sommets irréguliers, pour bien se déformer | comme `organic`, annulation jusqu'à 3 arêtes |
-| `hard-surface` | arêtes vives | arêtes de plus de 30° préservées ; alignement 0,02 ; taille unique ; épaisseur non regardée |
+| `organic` | fidelity to the sculpt | alignment 0.05; cancellation up to 2 quad edges; adaptivity 0.5; 6 quads around thin parts |
+| `animation` | few irregular vertices, to deform well | like `organic`, cancellation up to 3 edges |
+| `hard-surface` | hard edges | edges of more than 30° preserved; alignment 0.02; single size; thickness not looked at |
 
-Ces valeurs sont un point de départ, à régler sur le corpus. `hard-surface` tourne pour
-l'instant sur la chaîne organique, en attendant la chaîne durci (J9).
+These values are a starting point, to be tuned on the corpus. (Written at milestone 4 bis:
+`hard-surface` ran on the organic chain for want of a hard-surface chain; since milestone 9 the
+one chain guarantees hard edges.)
 
-Écarts avec la proposition d'origine, et pourquoi :
+Differences from the original proposal, and why:
 
-- `f64` partout au lieu de `f32` : c'est le type de tout le cœur.
-- `preserve_sharp_edges` et `sharp_angle_threshold` fondus en `crease_angle: Option<f64>` : pas
-  de seuil sans préservation, ni l'inverse.
-- `singularity_reach` ajouté : le jalon 3 a montré que le réglage principal de l'annulation est
-  une distance, la tolérance n'étant qu'un garde-fou.
-- `method` ajouté : le durci aura sa propre chaîne.
-- `adaptivity` et `density_contrast` ajoutés au jalon 8 avec la densité ; les fichiers
-  enregistrés avant restent lisibles.
-- `quads_around` ajouté au chantier Q2 pour les parties fines, `volume_fit` au chantier Q2 bis
-  pour le volume ; ce dernier vaut 1 dans les trois préréglages.
+- `f64` everywhere instead of `f32`: it is the type of the whole core.
+- `preserve_sharp_edges` and `sharp_angle_threshold` merged into `crease_angle: Option<f64>`:
+  no threshold without preservation, nor the reverse.
+- `singularity_reach` added: milestone 3 showed that the main setting of cancellation is a
+  distance, the tolerance being only a guard.
+- `method` added: hard surfaces will have their own chain.
+- `adaptivity` and `density_contrast` added at milestone 8 with density; the files saved before
+  stay readable.
+- `quads_around` added at track Q2 for thin parts, `volume_fit` at track Q2 bis for the volume;
+  the latter is worth 1 in the three presets.
 
-### En vue de la bibliothèque C (J10)
+### With the C library in view (J10)
 
-Le passage en bibliothèque se fait à la fin, mais il coûtera peu si le cœur respecte dès
-maintenant quelques règles :
+The move to a library is made at the end, but it will cost little if the core respects a few
+rules from now:
 
-- **Données en tableaux plats et contigus** (positions, indices), comme aujourd'hui : ce sont
-  exactement les tampons que `ctypes` et Blender savent partager.
-- **Entrées empruntées, jamais possédées** : les étapes lisent des tranches et n'exigent pas de
-  prendre possession des données de l'appelant.
-- **Pas d'état global** ; tout passe par les paramètres, pour qu'une session Blender puisse lancer
-  plusieurs remaillages.
-- **Erreurs rendues en valeurs**, jamais par arrêt brutal : une erreur ne doit pas faire tomber
-  Blender.
-- **Interface C mince**, dans une crate à part, posée par-dessus `Remesher` ; le cœur n'en sait
-  rien.
+- **Data in flat contiguous arrays** (positions, indices), as today: these are exactly the
+  buffers that `ctypes` and Blender know how to share.
+- **Inputs borrowed, never owned**: the stages read slices and do not demand to take ownership
+  of the caller's data.
+- **No global state**; everything goes through the parameters, so that a Blender session can
+  run several remeshes.
+- **Errors returned as values**, never by an abrupt stop: an error must not bring Blender down.
+- **A thin C interface**, in a crate apart, laid on top of `Remesher`; the core knows nothing
+  of it.
 
 **Done at milestone 10, first step** (`crates/openclare-capi`, `blender/openclare`):
 
@@ -1762,80 +1758,80 @@ maintenant quelques règles :
   `make addon-test` runs it in a Blender without interface.
 - **What it does not do yet** is in DT-041.
 
-### Ce qui est réutilisé du code existant
+### What is reused from the existing code
 
-| Module existant | Réutilisé pour |
+| Existing module | Reused for |
 |---|---|
-| `crates/openclare/src/mesh/` | conteneurs, connectivité, OBJ, subdivision, primitives de test |
-| `crates/openclare/src/geometry.rs` | normales, aires, détection des arêtes vives |
-| `crates/openclare/src/spatial/bvh.rs` | projection sur la source (M1, M9) |
+| `crates/openclare/src/mesh/` | containers, connectivity, OBJ, subdivision, test primitives |
+| `crates/openclare/src/geometry.rs` | normals, areas, detection of hard edges |
+| `crates/openclare/src/spatial/bvh.rs` | projection onto the source (M1, M9) |
 | `crates/openclare/src/relax.rs` | M9 |
-| `crates/openclare/src/field/orientation.rs` | détection des singularités, à adapter au champ par face |
-| `crates/openclare/tests/pipeline.rs` | invariants : Poincaré-Hopf, Euler, variété, déterminisme |
+| `crates/openclare/src/field/orientation.rs` | detection of singularities, to adapt to the field per face |
+| `crates/openclare/tests/pipeline.rs` | invariants: Poincaré-Hopf, Euler, manifold, determinism |
 
-Conservés uniquement comme plancher de comparaison, hors de la chaîne cible :
-`field/position.rs`, `extract/`, `hierarchy.rs`, `pipeline.rs`.
+Kept only as a floor for comparison, outside the target chain: `field/position.rs`,
+`extract/`, `hierarchy.rs`, `pipeline.rs`.
 
 ---
 
-## 6. Risques
+## 6. Risks
 
-| Risque | Conséquence | Repli |
+| Risk | Consequence | Fallback |
 |---|---|---|
-| Inversions locales irréductibles (M4, M7) | pas de maillage valide | construction à garantie (Campen et al. 2019) ; en dernier recours, lignée par patchs à partir du champ de M3, puisque M1 à M3 et M6 sont communs aux deux, en portant QuadWild |
-| Traçage non robuste (M5, M8) | T-mesh ou maillage incohérent | pour le T-mesh, le risque ne s'est pas réalisé sur le corpus (J5) ; arithmétique exacte en réserve. Portage de libQEx pour l'extraction |
-| Solveur de couplage trop lourd à écrire (M6) | pas de quantification optimale | le solveur approché suffit sur le corpus (J6) ; le couplage reste en réserve |
-| Pas d'algorithme établi pour M3 | singularités en excès | réglage global seul ; simplification pendant la quantification (Lyon et al. 2021) |
-| Densité adaptative | distorsion, singularités supplémentaires | reportée au rang 4, hors critère d'acceptation |
-| Ne pas battre QuadriFlow | objectif non atteint | mesuré dès J7, pas découvert à la fin |
+| Local inversions that cannot be undone (M4, M7) | no valid mesh | construction with a guarantee (Campen et al. 2019); as a last resort, the patch lineage from the field of M3, since M1 to M3 and M6 are common to both, by porting QuadWild |
+| Tracing not robust (M5, M8) | inconsistent T-mesh or mesh | for the T-mesh, the risk did not materialize on the corpus (J5); exact arithmetic in reserve. Porting of libQEx for extraction |
+| Matching solver too heavy to write (M6) | no optimal quantization | the approximate solver is enough on the corpus (J6); matching stays in reserve |
+| No established algorithm for M3 | singularities in excess | global setting alone; simplification during quantization (Lyon et al. 2021) |
+| Adaptive density | distortion, more singularities | put off to rank 4, outside the acceptance criterion |
+| Not beating QuadriFlow | aim not reached | measured from J7, not discovered at the end |
 
-Deux points à ne pas se cacher. QuadriFlow est rapide et robuste (validé par ses auteurs sur
-17 791 objets, moins de dix secondes par modèle) : la cible est de le battre en **qualité**, pas
-d'emblée en vitesse ni en robustesse. Et le volume de travail se compte en mois ; je n'ai pas de
-base fiable pour le chiffrer plus finement.
+Two points that should not be hidden. QuadriFlow is fast and robust (validated by its authors
+on 17,791 objects, less than ten seconds per model): the target is to beat it in **quality**,
+not at once in speed or robustness. And the amount of work is counted in months; I have no
+reliable basis to estimate it more finely.
 
 ---
 
-## 7. Décisions
+## 7. Decisions
 
-En attente :
+Pending:
 
-1. **Corpus** : d'autres sculptures à ajouter plus tard, avant l'expiration de la licence d'essai
-   de Quad Remesher.
+1. **Corpus**: other sculpts to add later, before the trial licence of Quad Remesher expires.
 
-Prises :
+Taken:
 
-- objectif : mieux que le remaillage quad de Blender ; Quad Remesher est un palier, pas un plafond ;
-- priorité : organique d'abord, durci ensuite ;
-- lignées : paramétrisation et isolignes pour l'organique, patchs pour le durci ;
-- architecture modulaire à fabriques ;
-- arithmétique du traçage (M5) : nombres flottants et une tolérance unique, suffisants sur le corpus ;
-- route du jalon 7 : directe ; la carte à grille entière et l'extraction exacte sont mises au
-  backlog (DT-001) ;
-- deux singularités proches restent séparées (DT-005) ;
-- le code a été renommé `openclare` au jalon 10, le 8 octobre 2026 (DT-015) ; il s'appelait `retopo` ;
-- tout ce qui est écarté, approché ou reporté fait l'objet d'un ticket numéroté dans BACKLOG.md ;
-- densité : un seul champ de taille pour la densité adaptative et la densité peinte ; cette
-  dernière se donne en poids de 0 (densité minimale) à 1 (densité maximale), avec un contraste
-  réglable, et se peindra en Weight Paint dans Blender (DT-026) ;
-- symétrie : inscrite à la feuille de route (jalon 9 bis, DT-028) ;
-- ordre des travaux (8 octobre 2026) : ce qui fait progresser la qualité du maillage passe avant
-  les fonctionnalités annexes (symétrie, export, interface) ;
-- licence des modèles de l'auteur (8 octobre 2026) : CC BY-SA 4.0, l'équivalent de la GPL pour
-  une œuvre ; crédits de tous les modèles dans CREDITS.md ;
-- surfaces dures : pas de seconde chaîne pour l'instant ; les arêtes vives sont des coupes du
-  T-mesh de la chaîne existante, et la chaîne par patchs est mise au backlog (DT-030) ;
-- licence GPL-3.0-or-later ;
-- seuils d'acceptation de la section 0 ;
-- champ de croix par face ;
-- densité adaptative prévue d'emblée, livrée juste après le premier résultat complet ;
-- raccourci MIQ (jalon 4 bis) pour un premier résultat complet plus tôt ;
-- export des coutures et des UV, et forme finale en bibliothèque C pilotée par un greffon Python
-  sans copie mémoire ;
-- sources en anglais, documents traduits à la fin ;
-- cœur strict sur les entrées (surface orientée, deux faces par arête au plus), tolérance logée
-  dans le prétraitement ; Desert Rose hors acceptation ;
-- feuille de route étendue : plis automatiques, normales optimales, reconstitution Multires
-  (J12 à J14) ;
-- une configuration unique `RemeshConfig` et trois préréglages (animation, organique, durci),
-  introduits avec la première chaîne complète (J4 bis).
+- aim: better than Blender's quad remesh; Quad Remesher is a milestone, not a ceiling;
+- priority: organic shapes first, hard surfaces next;
+- lineages: parametrization and isolines for organic shapes, patches for hard surfaces;
+- modular architecture with factories;
+- arithmetic of tracing (M5): floating point and a single tolerance, enough on the corpus;
+- route of milestone 7: direct; the integer-grid map and the exact extraction are put in the
+  backlog (DT-001);
+- two close singularities stay apart (DT-005);
+- the code was renamed `openclare` at milestone 10, on 8 October 2026 (DT-015); it was called
+  `retopo`;
+- everything that is set aside, approximated or put off gets a numbered ticket in BACKLOG.md;
+- density: a single sizing field for adaptive density and painted density; the latter is given
+  as weights from 0 (lowest density) to 1 (highest density), with a contrast that can be set,
+  and is painted in Weight Paint in Blender (DT-026);
+- symmetry: entered in the roadmap (milestone 9 bis, DT-028);
+- order of the work (8 October 2026): what moves the quality of the mesh forward comes before
+  side features (symmetry, export, interface);
+- licence of the author's models (8 October 2026): CC BY-SA 4.0, the equivalent of the GPL for
+  a work; credits of all the models in CREDITS.md;
+- hard surfaces: no second chain for now; hard edges are cuts of the T-mesh of the existing
+  chain, and the patch chain is put in the backlog (DT-030);
+- GPL-3.0-or-later licence;
+- acceptance thresholds of section 0;
+- cross field per face;
+- adaptive density planned from the start, delivered right after the first complete result;
+- MIQ shortcut (milestone 4 bis) for a first complete result sooner;
+- export of seams and UVs, and final form as a C library driven by a Python add-on without
+  copying memory;
+- sources in English from the start; documents written in French first, in English since
+  8 October 2026 and all translated on 9 October 2026 (DT-016);
+- core strict on inputs (oriented surface, two faces per edge at most), tolerance housed in
+  preprocessing; Desert Rose outside acceptance;
+- roadmap extended: automatic creases, optimal normals, Multires reconstruction (J12 to J14);
+- a single configuration `RemeshConfig` and three presets (animation, organic, hard surface),
+  introduced with the first complete chain (J4 bis).
