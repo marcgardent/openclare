@@ -1535,6 +1535,17 @@ curve is made into one.
 - **Into the engine**: `Guides::curves` in the library; `--curves` on the command line; four
   arguments of `openclare_remesh` in the C interface; in the add-on, a collection of curve
   objects, read as they are seen, modifiers applied.
+- **Two categories of curves** (9 October 2026, at the author's request). A *guide* curve is
+  what is described above. A *sharp* curve (`GuideCurve::sharp`; a line `sharp` in the file of
+  `--curves`; the flag `OPENCLARE_CURVE_SHARP` in the C interface) goes through the chain the
+  same way, and differs at the very end: the edges along it are listed with the hard edges of
+  the result, so they are marked sharp and creased in full. It is the way to say where a
+  sculpt has a hard edge without marking edges of the dense mesh, which the author had found
+  close to impossible (DT-024). In the add-on each category has its collection and its colour
+  in the viewport, cyan for guides and violet for sharp curves, and four buttons: *Assign*
+  moves the selected curves to the category shown, *Remove* takes them out, *Select* and
+  *Deselect* act on all its curves. Checked by a test of the engine (a loop on a sphere, as a
+  guide then as a sharp curve) and by the test of the add-on.
 
 ![The ogre with and without guide curves](docs/images/guide_curves.png)
 

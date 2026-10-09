@@ -90,10 +90,13 @@ pub struct Report {
     /// Why pieces went to the other chain, with how many for each reason.
     pub fallback_causes: Vec<(&'static str, usize)>,
     /// Edges of the output, as their two vertices, that run along a hard
-    /// edge of the input.
+    /// edge of the input, or along a curve drawn as one.
     pub hard_edges: Vec<[u32; 2]>,
-    /// Edges of the output that run along a guide curve.
+    /// Edges of the output that run along a guide curve, those drawn as
+    /// hard edges left out.
     pub guide_edges: Vec<[u32; 2]>,
+    /// Those of the hard edges that run along a curve drawn as one.
+    pub sharp_curve_edges: Vec<[u32; 2]>,
     /// Places where a guide curve could not be laid as one unbroken line.
     pub guide_gaps: usize,
     /// Pieces on which the guide curves could not be kept as lines of edges:
@@ -120,6 +123,7 @@ impl Report {
         self.hard_edges.extend(piece.hard_edges);
         self.creases.extend(piece.creases);
         self.guide_edges.extend(piece.guide_edges);
+        self.sharp_curve_edges.extend(piece.sharp_curve_edges);
         self.guide_gaps += piece.guide_gaps;
         self.guides_let_go += piece.guides_let_go;
         for (cause, count) in piece.fallback_causes {

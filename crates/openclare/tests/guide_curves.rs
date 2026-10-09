@@ -33,7 +33,7 @@ fn parallel(z: f64) -> GuideCurve {
             Vec3::new(radius * turn.cos(), radius * turn.sin(), z)
         })
         .collect();
-    GuideCurve { points, closed: true }
+    GuideCurve { points, closed: true, sharp: false }
 }
 
 #[test]
@@ -87,7 +87,11 @@ fn the_quad_mesh_has_an_edge_loop_on_a_closed_curve() {
 fn an_open_curve_gives_a_line_of_edges_from_end_to_end() {
     // A line across a flat sheet, off its own grid.
     let source = primitives::plane(24);
-    let curve = GuideCurve { points: vec![Vec3::new(-0.61, 0.13, 0.0), Vec3::new(0.57, 0.13, 0.0)], closed: false };
+    let curve = GuideCurve {
+        points: vec![Vec3::new(-0.61, 0.13, 0.0), Vec3::new(0.57, 0.13, 0.0)],
+        closed: false,
+        sharp: false,
+    };
     let (mesh, report) = remesh(&source, 400, &[curve]);
     assert!(measure(&source, &mesh, Some(400)).is_valid());
     let line = joined(&report.guide_edges);
@@ -105,8 +109,13 @@ fn an_open_curve_gives_a_line_of_edges_from_end_to_end() {
 #[test]
 fn two_curves_that_cross_share_a_vertex() {
     let source = primitives::plane(24);
-    let across = GuideCurve { points: vec![Vec3::new(-0.8, 0.13, 0.0), Vec3::new(0.8, 0.13, 0.0)], closed: false };
-    let up = GuideCurve { points: vec![Vec3::new(-0.21, -0.8, 0.0), Vec3::new(-0.21, 0.8, 0.0)], closed: false };
+    let across =
+        GuideCurve { points: vec![Vec3::new(-0.8, 0.13, 0.0), Vec3::new(0.8, 0.13, 0.0)], closed: false, sharp: false };
+    let up = GuideCurve {
+        points: vec![Vec3::new(-0.21, -0.8, 0.0), Vec3::new(-0.21, 0.8, 0.0)],
+        closed: false,
+        sharp: false,
+    };
     let (mesh, report) = remesh(&source, 400, &[across, up]);
     assert!(measure(&source, &mesh, Some(400)).is_valid());
     let line = joined(&report.guide_edges);
@@ -119,9 +128,46 @@ fn two_curves_that_cross_share_a_vertex() {
 #[test]
 fn a_curve_away_from_the_surface_changes_nothing() {
     let source = primitives::icosphere(4);
-    let far = GuideCurve { points: vec![Vec3::new(5.0, 0.0, 0.0), Vec3::new(5.0, 1.0, 0.0)], closed: false };
+    let far =
+        GuideCurve { points: vec![Vec3::new(5.0, 0.0, 0.0), Vec3::new(5.0, 1.0, 0.0)], closed: false, sharp: false };
     // It is brought back onto the surface, where it is one short line.
     let (mesh, report) = remesh(&source, 300, &[far]);
     assert!(measure(&source, &mesh, Some(300)).is_valid());
     assert!(report.guide_edges.len() < 12);
+}
+
+#[test]
+fn a_curve_drawn_as_sharp_gives_hard_edges_creased_in_full() {
+    let source = primitives::icosphere(5);
+    // As a guide, the loop is a line of edges and nothing more.
+    let (_, soft) = remesh(&source, 600, &[parallel(0.3)]);
+    assert!(soft.hard_edges.is_empty() && soft.sharp_curve_edges.is_empty());
+    assert!(soft.creases.is_empty(), "{} creases on a sphere", soft.creases.len());
+
+    // Drawn as sharp, the same loop of edges is made of hard edges.
+    let (mesh, report) = remesh(&source, 600, &[GuideCurve { sharp: true, ..parallel(0.3) }]);
+    assert!(measure(&source, &mesh, Some(600)).is_valid());
+    assert!(report.guide_edges.is_empty());
+    assert_eq!(report.hard_edges, report.sharp_curve_edges);
+    assert_eq!(report.hard_edges.len(), soft.guide_edges.len());
+    let line = joined(&report.hard_edges);
+    assert!(line.len() >= 12, "{} vertices on the loop", line.len());
+    for (&v, neighbours) in &line {
+        let p = mesh.positions[v as usize];
+        assert_eq!(neighbours.len(), 2, "vertex {v} at {p:?}");
+        assert!((p.z - 0.3).abs() < 5e-3, "vertex {v} at {p:?}");
+    }
+    // And each is creased in full, to stay sharp when the mesh is subdivided.
+    for edge in &report.hard_edges {
+        let weight = report.creases.iter().find(|(creased, _)| creased == edge).map(|&(_, weight)| weight);
+        assert_eq!(weight, Some(1.0), "edge {edge:?}");
+    }
+
+    // One of each: the two loops are told apart.
+    let curves = [parallel(0.3), GuideCurve { sharp: true, ..parallel(-0.3) }];
+    let (mesh, report) = remesh(&source, 600, &curves);
+    assert!(!report.guide_edges.is_empty() && !report.hard_edges.is_empty());
+    let height = |edges: &[[u32; 2]]| edges.iter().map(|&[a, _]| mesh.positions[a as usize].z).collect::<Vec<_>>();
+    assert!(height(&report.guide_edges).iter().all(|z| (z - 0.3).abs() < 5e-3));
+    assert!(height(&report.hard_edges).iter().all(|z| (z + 0.3).abs() < 5e-3));
 }

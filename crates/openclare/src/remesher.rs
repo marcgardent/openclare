@@ -5,6 +5,7 @@
 //! [`Remesher`]. Callers pick one by [`Method`] and get it from [`create`];
 //! nothing outside this module names a concrete chain.
 
+use std::collections::HashSet;
 use std::fmt;
 use std::str::FromStr;
 use std::time::Instant;
@@ -15,6 +16,7 @@ use crate::crossfield;
 use crate::error::{Error, Result};
 use crate::extract::{extract_faces, grid::graph_from_parametrization};
 use crate::fitting;
+use crate::math::Vec3;
 use crate::mesh::{PolyMesh, TriMesh};
 use crate::meshing;
 use crate::parametrization;
@@ -340,6 +342,7 @@ impl Remesher for QuadLayout {
                 Ok((mesh, mut done)) => {
                     let offset = merged.positions.len() as u32;
                     let listed = done.hard_edges.iter_mut().chain(done.guide_edges.iter_mut());
+                    let listed = listed.chain(done.sharp_curve_edges.iter_mut());
                     for edge in listed.chain(done.creases.iter_mut().map(|(edge, _)| edge)) {
                         *edge = edge.map(|v| v + offset);
                     }
@@ -653,18 +656,28 @@ fn settle(
         recorder.begin("fitting")?;
         fitting::create(fitting::Kind::LeastSquares).fit(mesh, input, &surface, guide.as_ref(), volume_fit);
     }
-    // A line drawn by the user is a line of edges, not a hard edge: it is
-    // listed apart, and neither marked sharp nor creased for being there.
+    // A line drawn by the user is a line of edges, not a hard edge, unless
+    // it was drawn as one: it is listed apart, and neither marked sharp nor
+    // creased for being there.
     let mut hard_edges = guide.map_or_else(Vec::new, |features| features.edges_along(mesh));
-    let mut guide_edges = Vec::new();
+    let (mut guide_edges, mut sharp_curve_edges) = (Vec::new(), Vec::new());
     if !work.guide_lines.is_empty() {
-        let drawn = Bvh::from_triangles(work.guide_lines.iter().map(|&[a, b]| [a, b, b]).collect());
-        guide_edges = Features::edges_on(&drawn, mesh);
-        let drawn: std::collections::HashSet<[u32; 2]> = guide_edges.iter().copied().collect();
+        let along = |lines: &[[Vec3; 2]]| match lines {
+            [] => Vec::new(),
+            lines => Features::edges_on(&Bvh::from_triangles(lines.iter().map(|&[a, b]| [a, b, b]).collect()), mesh),
+        };
+        sharp_curve_edges = along(&work.sharp_lines);
+        let sharp: HashSet<[u32; 2]> = sharp_curve_edges.iter().copied().collect();
+        guide_edges = along(&work.guide_lines);
+        guide_edges.retain(|edge| !sharp.contains(edge));
+        let drawn: HashSet<[u32; 2]> = guide_edges.iter().copied().collect();
         hard_edges.retain(|edge| !drawn.contains(edge));
+        hard_edges.extend(&sharp_curve_edges);
+        hard_edges.sort_unstable();
+        hard_edges.dedup();
     }
     let creases = Creases::default().mark(mesh, input, &surface, &hard_edges);
-    Ok(Lines { hard_edges, creases, guide_edges })
+    Ok(Lines { hard_edges, creases, guide_edges, sharp_curve_edges })
 }
 
 /// The edges of a finished mesh that are worth telling apart.
@@ -673,13 +686,16 @@ struct Lines {
     hard_edges: Vec<[u32; 2]>,
     /// To keep sharp under subdivision, with their weights.
     creases: Vec<Crease>,
-    /// Along a guide curve.
+    /// Along a guide curve that is not drawn as a hard edge.
     guide_edges: Vec<[u32; 2]>,
+    /// Those of the hard edges that are along a curve drawn as one.
+    sharp_curve_edges: Vec<[u32; 2]>,
 }
 
 impl Lines {
     fn into_report(self, report: &mut Report) {
         (report.hard_edges, report.creases, report.guide_edges) = (self.hard_edges, self.creases, self.guide_edges);
+        report.sharp_curve_edges = self.sharp_curve_edges;
     }
 }
 

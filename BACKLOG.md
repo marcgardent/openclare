@@ -631,6 +631,18 @@ track. "DT" stands for *dette technique*, technical debt.
 - **Export, added on 8 October 2026** at the author's request: a section of the panel with
   boxes to tick for the two UV layers and for marking sharp the edges that follow a hard edge
   of the original. The limits of the UV layers are in DT-042.
+- **Curve categories, added on 9 October 2026** at the author's request: guide curves (cyan)
+  and sharp curves (violet), each in its collection, with buttons to assign, remove, select
+  and deselect. What it leaves aside:
+  - the two colours are fixed, and only *Assign* gives them: a curve dropped into one of the
+    two collections by hand is used but keeps its colour;
+  - *Assign* sets the 3D viewports of the screen to draw wires in the colour of their object
+    (*Wire Color: Object*), without which the colours would not show; it is not set back;
+  - a curve lying exactly on the surface is half hidden by it whatever its colour: an offset
+    on the Shrinkwrap, or *In Front* on the curve, is left to the user;
+  - *Remove* puts a curve back in the collection of the scene, not where it came from;
+  - a sharp curve is let go in the same cases as a guide curve (DT-044), and then leaves no
+    hard edge at all.
 - **Still to do**: reading the edges *marked* sharp in Blender as hard edges to keep. Today
   only the angle between faces makes a hard edge (preset *Hard surface*, 30 degrees); the
   engine has no way yet to be given a list of edges.

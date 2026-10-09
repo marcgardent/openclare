@@ -127,12 +127,13 @@ pub extern "C" fn openclare_version() -> *const c_char {
 ///   corners, which is how Blender stores faces.
 /// - `density`: null, or one weight per vertex from 0 (least dense) to 1
 ///   (most dense).
-/// - `curve_points`, `curve_sizes`, `curve_closed`, `curve_count`: guide
+/// - `curve_points`, `curve_sizes`, `curve_flags`, `curve_count`: guide
 ///   curves, lines drawn on the surface for the quad mesh to have edges
 ///   along. `curve_count` curves, one after the other in `curve_points`
 ///   (x y z per point), with as many points each as `curve_sizes` says, and
-///   in `curve_closed` 1 for a curve whose last point joins the first, 0
-///   otherwise. All null and 0 for none.
+///   in `curve_flags` what each is: [`OPENCLARE_CURVE_CLOSED`] if its last
+///   point joins the first, plus [`OPENCLARE_CURVE_SHARP`] if the edges
+///   along it are to be hard edges of the result. All null and 0 for none.
 /// - `preset`: null for the default one, or the name of a shipped preset
 ///   (`organic`, `animation`, `hard-surface`).
 /// - `settings`: null, or `key = value` lines that adjust the preset.
@@ -160,7 +161,7 @@ pub unsafe extern "C" fn openclare_remesh(
     density: *const f32,
     curve_points: *const f32,
     curve_sizes: *const u32,
-    curve_closed: *const u8,
+    curve_flags: *const u8,
     curve_count: usize,
     preset: *const c_char,
     settings: *const c_char,
@@ -173,7 +174,7 @@ pub unsafe extern "C" fn openclare_remesh(
         unsafe {
             let corners =
                 (!corner_vertices.is_null()).then(|| std::slice::from_raw_parts(corner_vertices, corner_count));
-            let curves = curves_of(curve_points, curve_sizes, curve_closed, curve_count);
+            let curves = curves_of(curve_points, curve_sizes, curve_flags, curve_count);
             remesh(
                 positions,
                 vertex_count,
@@ -283,7 +284,8 @@ unsafe fn remesh(
     let stats = &done.stats;
     let report = format!(
         "{asked}\nvertices = {}\nfaces = {}\nquads = {}\nirregular_vertices = {}\npieces = {}\n\
-         pieces_through_fallback = {}\npieces_failed = {}\npieces_skipped = {}\nguide_edges = {}\nguide_gaps = {}\nguides_let_go = {}\nseconds = {seconds:.3}\n",
+         pieces_through_fallback = {}\npieces_failed = {}\npieces_skipped = {}\nguide_edges = {}\nsharp_curve_edges = {}\nguide_gaps = {}\n\
+         guides_let_go = {}\nseconds = {seconds:.3}\n",
         stats.vertices,
         stats.faces,
         stats.quads,
@@ -293,6 +295,7 @@ unsafe fn remesh(
         done.pieces_failed,
         done.pieces_skipped,
         done.guide_edges.len(),
+        done.sharp_curve_edges.len(),
         done.guide_gaps,
         done.guides_let_go,
     );
@@ -306,12 +309,18 @@ unsafe fn remesh(
     })
 }
 
+/// In the flags of a guide curve: its last point joins the first.
+pub const OPENCLARE_CURVE_CLOSED: u8 = 1;
+/// In the flags of a guide curve: the edges along it are hard edges of the
+/// result, marked sharp and creased, and not only a line of edges.
+pub const OPENCLARE_CURVE_SHARP: u8 = 2;
+
 /// The guide curves a host gave as flat arrays.
 ///
 /// # Safety
 ///
 /// The arrays must hold what `count` and the sizes say, or be null.
-unsafe fn curves_of(points: *const f32, sizes: *const u32, closed: *const u8, count: usize) -> Vec<GuideCurve> {
+unsafe fn curves_of(points: *const f32, sizes: *const u32, flags: *const u8, count: usize) -> Vec<GuideCurve> {
     if points.is_null() || sizes.is_null() || count == 0 {
         return Vec::new();
     }
@@ -319,7 +328,7 @@ unsafe fn curves_of(points: *const f32, sizes: *const u32, closed: *const u8, co
     let sizes = unsafe { std::slice::from_raw_parts(sizes, count) };
     let total: usize = sizes.iter().map(|&size| size as usize).sum();
     let coordinates = unsafe { std::slice::from_raw_parts(points, 3 * total) };
-    let closed = (!closed.is_null()).then(|| unsafe { std::slice::from_raw_parts(closed, count) });
+    let flags = (!flags.is_null()).then(|| unsafe { std::slice::from_raw_parts(flags, count) });
     let mut next = 0;
     sizes
         .iter()
@@ -327,9 +336,11 @@ unsafe fn curves_of(points: *const f32, sizes: *const u32, closed: *const u8, co
         .map(|(index, &size)| {
             let slice = &coordinates[3 * next..3 * (next + size as usize)];
             next += size as usize;
+            let flags = flags.map_or(0, |flags| flags[index]);
             GuideCurve {
                 points: slice.chunks_exact(3).map(|p| Vec3::new(p[0] as f64, p[1] as f64, p[2] as f64)).collect(),
-                closed: closed.is_some_and(|closed| closed[index] != 0),
+                closed: flags & OPENCLARE_CURVE_CLOSED != 0,
+                sharp: flags & OPENCLARE_CURVE_SHARP != 0,
             }
         })
         .collect()
