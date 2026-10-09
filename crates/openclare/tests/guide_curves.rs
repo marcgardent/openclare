@@ -171,3 +171,27 @@ fn a_curve_drawn_as_sharp_gives_hard_edges_creased_in_full() {
     assert!(height(&report.guide_edges).iter().all(|z| (z - 0.3).abs() < 5e-3));
     assert!(height(&report.hard_edges).iter().all(|z| (z + 0.3).abs() < 5e-3));
 }
+
+#[test]
+fn no_edge_along_a_guide_curve_is_taken_for_a_hard_edge() {
+    // Small loops, drawn with few points: the line the mesh follows, on the
+    // surface, strays from the polygon that was drawn. The edges along it
+    // are still those of a guide curve, none of them a hard edge.
+    let source = primitives::icosphere(5);
+    for (z, points) in [(0.8, 10), (0.9, 8), (0.93, 6)] {
+        let radius = (1.0f64 - z * z).sqrt();
+        let loop_ = GuideCurve {
+            points: (0..points)
+                .map(|k| std::f64::consts::TAU * k as f64 / points as f64)
+                .map(|turn| Vec3::new(radius * turn.cos(), radius * turn.sin(), z))
+                .collect(),
+            closed: true,
+            sharp: false,
+        };
+        let (mesh, report) = remesh(&source, 2400, &[loop_]);
+        assert!(measure(&source, &mesh, Some(2400)).is_valid());
+        assert!(report.guide_edges.len() >= 6, "at {z}: {} edges along the loop", report.guide_edges.len());
+        assert!(report.hard_edges.is_empty(), "at {z}: {} hard edges", report.hard_edges.len());
+        assert!(report.creases.is_empty(), "at {z}: {} creases", report.creases.len());
+    }
+}

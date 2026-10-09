@@ -35,14 +35,15 @@ pub struct WorkMesh {
     /// The guide curves as they were laid on the surface, stretch by
     /// stretch: what tells a line drawn by the user from a hard edge.
     pub guide_lines: Vec<[Vec3; 2]>,
-    /// Those of the guide lines drawn as hard edges: the edges along them
-    /// are to come out as hard edges, not only as lines of edges.
-    pub sharp_lines: Vec<[Vec3; 2]>,
     /// Places where a guide curve could not be laid as one unbroken line.
     pub guide_gaps: usize,
     /// Those of the feature edges that are along a guide curve: lines to
     /// follow if they can be, where a crease or a border must be.
     pub guide_edges: Vec<[u32; 2]>,
+    /// Those of the guide edges that are along a curve drawn as a hard edge:
+    /// the edges of the output along them are to come out as hard edges,
+    /// not only as a line of edges.
+    pub sharp_guide_edges: Vec<[u32; 2]>,
     /// Principal curvatures per vertex, read at [`Request::curvature_scale`].
     pub curvature: Curvature,
     /// How much the principal directions can be trusted, per vertex: 0 where
@@ -210,8 +211,20 @@ impl Preprocessor for Isotropic {
                 })
                 .collect();
         }
+        if laid.sharp.contains(&true) {
+            // An edge is of the kind of the stretch nearest to its middle.
+            let stretches = Bvh::from_triangles(laid.segments.iter().map(|&[a, b]| [a, b, b]).collect());
+            let middle = |[a, b]: [u32; 2]| 0.5 * (work.mesh.positions[a as usize] + work.mesh.positions[b as usize]);
+            work.sharp_guide_edges = work
+                .guide_edges
+                .iter()
+                .copied()
+                .filter(|&edge| {
+                    stretches.closest_point(middle(edge)).is_some_and(|hit| laid.sharp[hit.triangle as usize])
+                })
+                .collect();
+        }
         work.guide_lines = laid.segments;
-        work.sharp_lines = laid.sharp_segments;
         work.guide_gaps = laid.gaps;
         Ok(work)
     }
@@ -323,9 +336,9 @@ fn work_mesh(mesh: TriMesh, feature_edges: Vec<[u32; 2]>, request: &Request) -> 
         areas,
         feature_edges,
         guide_lines: Vec::new(),
-        sharp_lines: Vec::new(),
         guide_gaps: 0,
         guide_edges: Vec::new(),
+        sharp_guide_edges: Vec::new(),
         curvature,
         confidence,
         sizing,

@@ -661,20 +661,34 @@ fn settle(
     // creased for being there.
     let mut hard_edges = guide.map_or_else(Vec::new, |features| features.edges_along(mesh));
     let (mut guide_edges, mut sharp_curve_edges) = (Vec::new(), Vec::new());
-    if !work.guide_lines.is_empty() {
-        let along = |lines: &[[Vec3; 2]]| match lines {
-            [] => Vec::new(),
-            lines => Features::edges_on(&Bvh::from_triangles(lines.iter().map(|&[a, b]| [a, b, b]).collect()), mesh),
-        };
-        sharp_curve_edges = along(&work.sharp_lines);
-        let sharp: HashSet<[u32; 2]> = sharp_curve_edges.iter().copied().collect();
-        guide_edges = along(&work.guide_lines);
-        guide_edges.retain(|edge| !sharp.contains(edge));
-        let drawn: HashSet<[u32; 2]> = guide_edges.iter().copied().collect();
-        hard_edges.retain(|edge| !drawn.contains(edge));
-        hard_edges.extend(&sharp_curve_edges);
-        hard_edges.sort_unstable();
-        hard_edges.dedup();
+    if !work.guide_edges.is_empty() {
+        // Each edge along a line is of the kind of the edge of the work
+        // mesh nearest to its middle: those lines are what the vertices
+        // were held on, where the curves as they were drawn are only near.
+        let positions = &work.mesh.positions;
+        let lines: Vec<[Vec3; 3]> = work
+            .feature_edges
+            .iter()
+            .map(|&[a, b]| [positions[a as usize], positions[b as usize]])
+            .map(|[a, b]| [a, b, b])
+            .collect();
+        let lines = Bvh::from_triangles(lines);
+        let drawn: HashSet<[u32; 2]> = work.guide_edges.iter().copied().collect();
+        let sharp: HashSet<[u32; 2]> = work.sharp_guide_edges.iter().copied().collect();
+        let mut kept = Vec::with_capacity(hard_edges.len());
+        for edge in hard_edges {
+            let middle = 0.5 * (mesh.positions[edge[0] as usize] + mesh.positions[edge[1] as usize]);
+            let nearest = lines.closest_point(middle).map(|hit| work.feature_edges[hit.triangle as usize]);
+            match nearest {
+                Some(line) if sharp.contains(&line) => {
+                    sharp_curve_edges.push(edge);
+                    kept.push(edge);
+                }
+                Some(line) if drawn.contains(&line) => guide_edges.push(edge),
+                _ => kept.push(edge),
+            }
+        }
+        hard_edges = kept;
     }
     let creases = Creases::default().mark(mesh, input, &surface, &hard_edges);
     Ok(Lines { hard_edges, creases, guide_edges, sharp_curve_edges })

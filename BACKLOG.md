@@ -59,6 +59,7 @@ track. "DT" stands for *dette technique*, technical debt.
 | DT-042 | UV layers unfolded from the quad mesh: limits | J10 | medium | open |
 | DT-043 | Creases: limits | J12 | low | open |
 | DT-044 | Guide curves: not kept everywhere | guide curves | high | open |
+| DT-045 | Sculpts of millions of triangles: most of the time goes to preprocessing | guide curves | medium | open |
 | DT-033 | Terrains and scans: no tool aligns, the field has nothing to follow | J9 | medium | open |
 | DT-027 | Guards on computing time for pathological inputs | J8 | low | open |
 
@@ -732,6 +733,15 @@ track. "DT" stands for *dette technique*, technical debt.
   that stiffening cannot undo is enough to let a curve go.
 - **Small loops need enough quads**: a loop under about nine quad edges round is let go (the
   eyes of the ogre at 3000 quads; kept at 8000).
+- **First try on the author's own scene (9 October 2026)**: the ogre as he sculpted it (2.3
+  million vertices), with a density painted on the head, three loops drawn round the eyes and
+  the mouth as guides and a line along the belt as a sharp curve, each held by a Shrinkwrap,
+  at 12,000 quads and adaptive size at 100 %. All four are kept, with no break: 86 edges
+  along the loops, 21 hard edges along the belt. That try showed a mistake in what the report
+  says, since put right: 30 of the edges along the loops were taken for hard edges, hence
+  marked sharp and creased. An edge was told to be along a guide curve by its distance to the
+  curve as it was drawn, and the line the mesh follows strays from that on a small loop; it is
+  now told by the line of the work mesh nearest to it.
 - **Curves that touch are one**: letting go is decided curve by curve, but two curves that
   cross hang together and go together. A long curve with one bad stretch is lost whole, where
   it could be kept up to that stretch.
@@ -751,3 +761,17 @@ track. "DT" stands for *dette technique*, technical debt.
 - **Where to look next**: the triangles along a laid line. Evening the mesh out again along
   the line (collapsing the short edges crossings leave), rather than making up for them in the
   map and in the layout as now, should make the outcome depend less on luck.
+
+### DT-045 — Sculpts of millions of triangles: most of the time goes to preprocessing
+
+- **Born on** 9 October 2026, on the author's own ogre: 4.7 million triangles, straight from
+  Blender through the add-on's library.
+- **Finding**: 72 seconds for 12,000 quads, of which 53 in preprocessing (bringing the sculpt
+  down to a work mesh), 6 in the layout, 3 each in sizing, quantization, relaxation and
+  fitting. The bench never sees this: its ogre is the same sculpt already brought down to
+  200,000 triangles. Blender is frozen for the whole of it (DT-041).
+- **Leads**: measure where the 53 seconds go (welding, decimation, the hierarchy over the
+  source for projections); decimate in a first coarse pass by clustering vertices before the
+  error-driven one; do the passes on several threads. Relaxation and fitting project onto the
+  full source too, and could project onto a lighter copy of it.
+
