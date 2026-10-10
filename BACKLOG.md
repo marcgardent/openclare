@@ -65,6 +65,7 @@ track. "DT" stands for *dette technique*, technical debt.
 | DT-048 | The work mesh has triangles of one size: what is finer is lost before anything else runs | materials | high | open |
 | DT-049 | The bench has no model with curves or a painted density | materials | medium | open |
 | DT-050 | A sliver with next to no area took all the memory of the machine | bench in Blender | high | **closed (9 October 2026)**; no guard on memory in the engine itself |
+| DT-051 | Baking the sculpt onto the result: normal map, height and ambient occlusion, read through the engine's own correspondence | idea of the author | medium | open, after the lines (DT-047, DT-048) |
 | DT-033 | Terrains and scans: no tool aligns, the field has nothing to follow | J9 | medium | open |
 | DT-027 | Guards on computing time for pathological inputs | J8 | low | open |
 
@@ -1072,3 +1073,39 @@ track. "DT" stands for *dette technique*, technical debt.
   refused beyond a share of the memory there is, would be. And 2.2 GB for a car of 40,000
   triangles is a lot: where it goes has not been looked at.
 
+### DT-051 — Baking the sculpt onto the result: normal map, height and ambient occlusion
+
+- **Born on** 10 October 2026, a request of the author: a "clever" algorithm that bakes a
+  normal map properly. Decided the same day: the engine does it, not Blender's baker set up
+  by the add-on; three maps come out (tangent-space normals, height, ambient occlusion); and
+  its turn comes after the lines on a real model (DT-047, DT-048).
+- **Why the engine**: the usual bake (*Selected to Active*) throws a ray from each texel of
+  the low-poly mesh and takes what it hits first within one distance, or within a cage, set
+  for the whole model. Too short and rays miss; too long and they go through to the other
+  side of a finger or into the next fold; a cage has to be made and mended by hand. The
+  engine has what those tools lack: every quad of its mesh was read from a map of the
+  surface, so it knows where on the sculpt each quad sits before any ray is thrown.
+- **What it takes**:
+  - For each texel of the atlas the add-on already exports (one island per rectangular
+    patch): its point on the quad, the point of the source that goes with it, and there the
+    normal of the source, its height above the quad and its occlusion. The correspondence is
+    exact on the work mesh before relaxation and fitting move the vertices; after them it is
+    a starting point, to be finished by a short search bounded by what is known locally, not
+    by one distance for the model. How good that starting point is has not been measured.
+  - The detail is on the source, not on the work mesh (DT-048): the 4.7 million triangles
+    have to be read, not their 200,000 triangle stand-in.
+  - Tangent space as the renderer builds it (MikkTSpace), from the shading normals of the
+    result as it is exported: sharp edges split, creases, and a choice to make on whether a
+    mesh meant to be subdivided is baked as it is or as its subdivided surface.
+  - Several samples per texel, and the islands grown by a few texels so that nothing bleeds
+    between patches; a resolution asked of the user.
+  - Height as a signed distance along the normal of the quad, written with the range that
+    turns it back into a length. Ambient occlusion on the source, which is the costly one:
+    many rays per texel against millions of triangles.
+  - No image library in the core: the maps leave the C interface as arrays of numbers, the
+    add-on makes Blender images of them; a format for the command line is to be chosen.
+- **Done when**: on `ogre_hp`, the result shaded with its normal map is closer to the sculpt
+  than with a bake by Blender at its default settings (mean angle between the two shadings,
+  measured texel by texel), no texel is left unfilled, and no seam shows between islands.
+- **Near it**: optimal normals per corner (milestone 13) and Multires levels with the detail
+  reprojected (milestone 14) need the same correspondence.

@@ -2,7 +2,8 @@
 
 What matters among what is left to do. Written on 8 October 2026 and reordered the same day:
 the author chose to start the Blender add-on now (section 3), with its UV layers, and to keep
-the quality tracks for after its first version.
+the quality tracks for after its first version. Brought up to date on 10 October 2026 (order
+12, and the baking of section 4).
 The full list of shortcuts and known limits is in [BACKLOG.md](BACKLOG.md) (tickets `DT-nnn`);
 the specification and what each finished milestone delivered are in
 [ALGORITHM.md](ALGORITHM.md).
@@ -67,11 +68,17 @@ islands that overlap) and an atlas where each rectangular patch is an island of 
 | 9 | **Rename** the crates and the executable from `retopo` to `openclare` | Done on 8 October 2026 | DT-015 (closed) |
 | 10 | **Symmetry**: a symmetric model gives a symmetric mesh, with an edge loop on the plane | Mesh and mirror image coincide on the symmetric models of the bench | J9 bis, DT-028 |
 | 11 | **Guide curves**: edge loops where the artist draws them, as curves held on the model by a Shrinkwrap | First version done and merged on 9 October 2026, with two categories of curves (guide and sharp): exact on simple shapes, kept on part of the curves tried on the ogre and let go on the others. Done when a curve drawn where a mesh of quads can follow it is kept, every time | DT-024 (closed), DT-044 |
+| 12 | **Lines on a real model**: the borders between materials and the sharp edges of a model as it is in its file (the author's car: Edge Split, Boolean, thirteen materials) | **In progress** since 9 October 2026: materials come out on the result, the car is meshed and in the bench, a setting keeps the sharp edges of the work mesh (`edge_angle`, off by default). Done when the body of the car stays in the main chain with its sharp edges kept, and the setting is on by default and in the add-on | DT-047, DT-048, DT-049 |
 
 ## 4. Beyond the quad mesh
 
 Done ahead of their turn, at the author's request: two UV layers and their seams (milestone
 10, DT-042) and crease weights for subdivision (milestone 12, DT-043).
+
+Asked for by the author on 10 October 2026, after the lines on a real model (order 12):
+**baking the sculpt onto the result** (DT-051), a tangent-space normal map, a height map and
+ambient occlusion on the atlas the add-on exports, read through the engine's own
+correspondence between its quads and the sculpt instead of rays and a cage.
 
 Later, and each to be confirmed when its turn comes: optimal normals per corner (milestone
 13), Multires levels with the detail of the sculpt reprojected (milestone 14).
