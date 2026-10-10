@@ -155,6 +155,6 @@ impl IntegerGrid {
             *point = [2.0 * point[0], 2.0 * point[1]];
         }
         report.seam_error *= 2.0;
-        Ok(Parametrization { cut: problem.cut, uv, report })
+        Ok(Parametrization { set_aside: problem.set_aside(), cut: problem.cut, uv, report })
     }
 }

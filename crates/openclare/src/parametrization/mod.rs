@@ -68,7 +68,53 @@ pub struct Parametrization {
     pub cut: CutMesh,
     /// Coordinates of corner `3 * f + k`.
     pub uv: Vec<[f64; 2]>,
+    /// The faces the map was not asked to copy: slivers, and triangles laid
+    /// along a feature line, which that line flattens. They weigh nothing in
+    /// the solve.
+    pub set_aside: Vec<bool>,
     pub report: Report,
+}
+
+impl Parametrization {
+    /// Signed area of face `f` in the map.
+    pub fn area(&self, f: usize) -> f64 {
+        let [a, b, c] = [self.uv[3 * f], self.uv[3 * f + 1], self.uv[3 * f + 2]];
+        0.5 * ((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]))
+    }
+
+    /// Those of `edges` of `mesh` that do not lie on a grid line of the map:
+    /// neither `u` nor `v` stays the same from one end to the other, in one
+    /// of the faces they border. Measured as the layout does of a wall.
+    pub fn off_grid(&self, mesh: &crate::mesh::TriMesh, edges: &[[u32; 2]]) -> Vec<[u32; 2]> {
+        let wanted: std::collections::HashSet<(u32, u32)> = edges.iter().map(|&[a, b]| (a.min(b), a.max(b))).collect();
+        let mut astray: std::collections::HashSet<(u32, u32)> = std::collections::HashSet::new();
+        for (f, tri) in mesh.triangles.iter().enumerate() {
+            for k in 0..3 {
+                let (a, b) = (tri[k], tri[(k + 1) % 3]);
+                let edge = (a.min(b), a.max(b));
+                if !wanted.contains(&edge) {
+                    continue;
+                }
+                let (from, to) = (self.uv[3 * f + k], self.uv[3 * f + (k + 1) % 3]);
+                let (du, dv) = ((to[0] - from[0]).abs(), (to[1] - from[1]).abs());
+                if du.min(dv) > (1e-3 * du.max(dv)).max(1e-6) {
+                    astray.insert(edge);
+                }
+            }
+        }
+        edges.iter().copied().filter(|&[a, b]| astray.contains(&(a.min(b), a.max(b)))).collect()
+    }
+
+    /// The faces turned over in the map: of negative area, beyond what a
+    /// flat face may be off by. A face that is merely flat is not one: a
+    /// trace of the layout crosses it in no distance. This is the one count
+    /// of folds, for the map that decides what lines to keep and for the
+    /// layout that is cut from it.
+    pub fn turned_over(&self) -> Vec<usize> {
+        let faces = self.uv.len() / 3;
+        let flat = 1e-9 * (0..faces).map(|f| self.area(f).abs()).sum::<f64>() / faces.max(1) as f64;
+        (0..faces).filter(|&f| self.area(f) < -flat).collect()
+    }
 }
 
 pub trait Parametrizer {

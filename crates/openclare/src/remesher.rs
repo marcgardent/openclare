@@ -584,6 +584,7 @@ impl QuadLayout {
             // the other chain.
             if !guides.curves.is_empty() || !guides.lines.is_empty() {
                 let free = Guides { curves: &[], lines: &[], ..*guides };
+                recorder.record("notes/lines", Shape::Note(&format!("done again without its lines: {cause}")));
                 let (mesh, mut report) = self.remesh_piece(input, &free, config, least, recorder)?;
                 report.guides_let_go = 1;
                 report.line_causes = vec![(cause, 1)];
@@ -601,6 +602,8 @@ impl QuadLayout {
         if !quantized.report.is_valid() || quantized.report.quads == 0 {
             if !guides.curves.is_empty() || !guides.lines.is_empty() {
                 let free = Guides { curves: &[], lines: &[], ..*guides };
+                let note = "done again without its lines: no sound whole lengths for the layout";
+                recorder.record("notes/lines", Shape::Note(note));
                 let (mesh, mut report) = self.remesh_piece(input, &free, config, least, recorder)?;
                 report.guides_let_go = 1;
                 report.line_causes = vec![("no sound whole lengths for the layout", 1)];

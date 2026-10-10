@@ -240,9 +240,7 @@ impl TMesh {
         // (Faces that are flat in the map do not count: slivers it was not
         // asked to copy, and triangles with two edges on one feature line,
         // which that line flattens. A trace crosses them in no distance.)
-        let in_map: Vec<f64> = (0..mesh.triangles.len()).map(|f| walk.area(f)).collect();
-        let flat = 1e-9 * in_map.iter().map(|area| area.abs()).sum::<f64>() / in_map.len().max(1) as f64;
-        report.map_inversions = in_map.iter().filter(|&&area| area < -flat).count();
+        report.map_inversions = map.turned_over().len();
         report.surface_euler = mesh.positions.len() as i64 - topology.edge_count() as i64 + mesh.triangles.len() as i64;
         for &seed in &seeds {
             cut[seed as usize] = true;

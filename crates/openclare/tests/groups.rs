@@ -117,3 +117,32 @@ fn faces_that_share_an_edge_in_threes_are_taken_apart() {
     fold.positions.truncate(6);
     assert!(fold.stitched().is_none());
 }
+
+#[test]
+fn two_sheets_that_cross_stay_two_sheets() {
+    // Two square sheets through one another along a line: four faces round
+    // each edge of that line, which are two sheets, not four half sheets.
+    let mut cross = TriMesh::default();
+    let spine = [Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0)];
+    cross.positions.extend(spine);
+    let wings = [Vec3::X, Vec3::Y, -Vec3::X, -Vec3::Y];
+    for (k, out) in wings.into_iter().enumerate() {
+        let first = cross.positions.len() as u32;
+        cross.positions.extend([spine[0] + out, spine[1] + out]);
+        // Each sheet runs one way through the line: its two halves turn
+        // round it in opposite senses.
+        cross.triangles.extend(if k < 2 {
+            [[0, first, first + 1], [0, first + 1, 1]]
+        } else {
+            [[0, first + 1, first], [0, 1, first + 1]]
+        });
+    }
+    let mended = cross.stitched().expect("four faces round an edge are sorted out");
+    assert_eq!(mended.mesh.pieces().len(), 2);
+    assert_eq!((mended.welded, mended.taken_apart), (0, 1));
+    // Each sheet is whole: six vertices, and no border along the line.
+    assert_eq!(mended.mesh.positions.len(), 12);
+    for (sheet, _) in mended.mesh.pieces() {
+        assert_eq!((sheet.positions.len(), sheet.triangles.len()), (6, 4));
+    }
+}
