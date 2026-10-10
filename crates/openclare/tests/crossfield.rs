@@ -154,7 +154,10 @@ fn solvers_are_reachable_by_name_deterministic_and_refuse_non_manifold_meshes() 
         positions: vec![Vec3::ZERO, Vec3::X, Vec3::Y, Vec3::Z, Vec3::new(0.0, -1.0, 0.0)],
         triangles: vec![[0, 1, 2], [0, 1, 3], [0, 1, 4]],
     };
-    let work = as_is(&fan);
+    // Preprocessing takes them apart, each with the edge as a border of its
+    // own; given as they are, no solver will have them.
+    assert_eq!(as_is(&fan).mesh.positions.len(), 9);
+    let work = WorkMesh { mesh: fan, ..work };
     for &kind in Kind::ALL {
         assert!(create(kind).solve(&work, &Request::default()).is_err());
     }
