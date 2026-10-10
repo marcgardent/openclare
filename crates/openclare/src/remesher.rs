@@ -429,7 +429,10 @@ impl QuadLayout {
             match self.remesh_piece(piece, &piece_guides, &piece_config, least, &mut recorder) {
                 // A piece that comes out with no face at all is as good as
                 // not meshed.
-                Ok((mesh, _)) if mesh.faces.is_empty() => report.pieces_failed += 1,
+                Ok((mesh, _)) if mesh.faces.is_empty() => {
+                    report.pieces_failed += 1;
+                    recorder.record("notes/not meshed", Shape::Note("came out with no face"));
+                }
                 Ok((mesh, mut done)) => {
                     let offset = merged.positions.len() as u32;
                     let listed = done.hard_edges.iter_mut().chain(done.guide_edges.iter_mut());
@@ -445,6 +448,7 @@ impl QuadLayout {
                 }
                 Err(error) => {
                     report.pieces_failed += 1;
+                    recorder.record("notes/not meshed", Shape::Note(&error.to_string()));
                     first_error.get_or_insert(error);
                 }
             }

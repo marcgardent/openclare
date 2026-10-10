@@ -324,53 +324,36 @@ impl Preprocessor for Passthrough {
 /// routinely split vertices along UV seams or hard edges, which would leave
 /// the surface in disconnected pieces.
 ///
-/// Only vertices on an open border are welded. Those are the ones a seam
-/// splits; inside a closed shell there is nothing to stitch, and merging
-/// two shells that merely touch would wreck both.
+/// It is the mending of the input ([`TriMesh::stitched`]), and nothing else:
+/// only vertices on an open border are welded, and never into an edge with
+/// more than two faces. A weld of its own here would join again the faces
+/// the mending took apart along such an edge, each of which has it as a
+/// border, and hand on a work mesh nothing can be done with.
+///
+/// Triangles that lose a corner to welding go; flat ones with three distinct
+/// corners stay, because removing them would open a slit in the surface
+/// (remeshing collapses them properly later).
 fn cleaned(source: &TriMesh) -> Result<TriMesh> {
     source.validate()?;
-    let mut on_border = vec![false; source.positions.len()];
-    for h in Topology::build(source).boundary_half_edges() {
-        let tri = source.triangles[h / 3];
-        on_border[tri[h % 3] as usize] = true;
-        on_border[tri[(h + 1) % 3] as usize] = true;
-    }
-
-    let (min, max) =
-        source.positions.iter().fold((Vec3::INFINITY, Vec3::NEG_INFINITY), |(lo, hi), &p| (lo.min(p), hi.max(p)));
-    let cell = ((max - min).length() * 1e-9).max(f64::MIN_POSITIVE);
-    let mut first_at: HashMap<[i64; 3], u32> = HashMap::new();
-    let remap: Vec<u32> = (0..source.positions.len())
-        .map(|v| {
-            if !on_border[v] {
-                return v as u32;
-            }
-            let cell_of = ((source.positions[v] - min) / cell).round().to_array().map(|c| c as i64);
-            *first_at.entry(cell_of).or_insert(v as u32)
-        })
-        .collect();
-    // Triangles that lost a corner to welding go; flat ones with three
-    // distinct corners stay, because removing them would open a slit in the
-    // surface (remeshing collapses them properly later).
+    let mended = source.stitched().map(|mended| mended.mesh);
+    let source = mended.as_ref().unwrap_or(source);
+    // Its vertices in the order its triangles come to them, whether it was
+    // mended or not: what follows depends on how they are numbered.
     let mut compact = vec![u32::MAX; source.positions.len()];
-    let mut welded = TriMesh::default();
+    let mut cleaned = TriMesh::default();
     for tri in &source.triangles {
-        let [a, b, c] = tri.map(|v| remap[v as usize]);
-        if a == b || b == c || c == a {
-            continue;
-        }
-        welded.triangles.push([a, b, c].map(|v| {
+        cleaned.triangles.push(tri.map(|v| {
             if compact[v as usize] == u32::MAX {
-                compact[v as usize] = welded.positions.len() as u32;
-                welded.positions.push(source.positions[v as usize]);
+                compact[v as usize] = cleaned.positions.len() as u32;
+                cleaned.positions.push(source.positions[v as usize]);
             }
             compact[v as usize]
         }));
     }
-    if welded.surface_area() == 0.0 {
+    if cleaned.surface_area() == 0.0 {
         return Err(Error::InvalidMesh("mesh has no non-degenerate triangle".into()));
     }
-    Ok(welded)
+    Ok(cleaned)
 }
 
 fn source_features(mesh: &TriMesh, request: &Request) -> Vec<[u32; 2]> {
