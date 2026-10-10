@@ -2419,6 +2419,116 @@
     "structure": 1.1673151750972721,
     "validity": 100.0
    }
+  },
+  "venturi": {
+   "instant-meshes": {
+    "alignment": 42.77350849878416,
+    "budget": 0.0,
+    "fidelity": 10.778580513968167,
+    "overall": 13.325872993358496,
+    "quads": 639,
+    "shape": 11.691721589437805,
+    "singularities": 0.0,
+    "speed": 100.0,
+    "structure": 28.012519561815342,
+    "validity": 0.0
+   },
+   "integer-grid": {
+    "alignment": null,
+    "budget": null,
+    "fidelity": null,
+    "overall": 0.0,
+    "quads": null,
+    "shape": null,
+    "singularities": null,
+    "speed": null,
+    "structure": null,
+    "validity": 0.0
+   },
+   "openclare": {
+    "alignment": 39.058835674499655,
+    "budget": 34.4,
+    "fidelity": 27.129166358928895,
+    "overall": 20.839322182377472,
+    "quads": 836,
+    "shape": 29.84142656346223,
+    "singularities": 0.0,
+    "speed": 41.29448143591807,
+    "structure": null,
+    "validity": 0.0
+   },
+   "openclare-matched": {
+    "alignment": 50.55574956977881,
+    "budget": 89.30657234515094,
+    "fidelity": 55.862658242314566,
+    "overall": 34.96368258433361,
+    "quads": 12482,
+    "shape": 61.254066742939436,
+    "singularities": 29.979170004806925,
+    "speed": 0.0,
+    "structure": 15.814773273513861,
+    "validity": 0.0
+   },
+   "openclare-uniform": {
+    "alignment": 49.67066487554015,
+    "budget": 2.8000000000000025,
+    "fidelity": 28.91366024810116,
+    "overall": 21.72285299796762,
+    "quads": 757,
+    "shape": 40.57018890497358,
+    "singularities": 0.0,
+    "speed": 65.24209644265378,
+    "structure": null,
+    "validity": 0.0
+   },
+   "quadremesher": {
+    "alignment": 69.16489457851455,
+    "budget": 0.0,
+    "fidelity": 83.7970229523277,
+    "overall": 40.95937375970172,
+    "quads": 12157,
+    "shape": 49.95770095360241,
+    "singularities": 50.152175701242086,
+    "speed": 52.56760835036125,
+    "structure": null,
+    "validity": 0.0
+   },
+   "quadremesher-as-made": {
+    "alignment": 62.80988566669284,
+    "budget": 100.0,
+    "fidelity": 81.85608256147314,
+    "overall": 43.94030850673425,
+    "quads": 12157,
+    "shape": 49.95770095360241,
+    "singularities": 50.152175701242086,
+    "speed": 52.56760835036125,
+    "structure": null,
+    "validity": 0.0
+   },
+   "quadremesher-uniform": {
+    "alignment": 70.83600034183813,
+    "budget": 0.0,
+    "fidelity": 70.28778810799311,
+    "overall": 36.932779226038384,
+    "quads": 8690,
+    "shape": 47.07745186626485,
+    "singularities": 33.14154200230149,
+    "speed": 66.79720315936946,
+    "structure": null,
+    "validity": 0.0
+   },
+   "quadriflow": {
+    "alignment": null,
+    "budget": null,
+    "fidelity": null,
+    "overall": 0.0,
+    "quads": null,
+    "shape": null,
+    "singularities": null,
+    "speed": null,
+    "structure": null,
+    "validity": 0.0
+   }
   }
  },
  "3000": {
@@ -4841,6 +4951,116 @@
     "structure": 0.0,
     "validity": 20.0
    }
+  },
+  "venturi": {
+   "instant-meshes": {
+    "alignment": 47.37857939072364,
+    "budget": 31.866666666666667,
+    "fidelity": 31.107666200792508,
+    "overall": 24.01054841663943,
+    "quads": 2489,
+    "shape": 30.819707188734704,
+    "singularities": 0.0,
+    "speed": 98.76187473855386,
+    "structure": 41.18119726797911,
+    "validity": 0.0
+   },
+   "integer-grid": {
+    "alignment": null,
+    "budget": null,
+    "fidelity": null,
+    "overall": 0.0,
+    "quads": null,
+    "shape": null,
+    "singularities": null,
+    "speed": null,
+    "structure": null,
+    "validity": 0.0
+   },
+   "openclare": {
+    "alignment": 39.882934816109454,
+    "budget": 93.46666666666667,
+    "fidelity": 28.589877382076608,
+    "overall": 29.53087821578754,
+    "quads": 3049,
+    "shape": 42.9506604519874,
+    "singularities": 0.0,
+    "speed": 23.793422744185055,
+    "structure": null,
+    "validity": 0.0
+   },
+   "openclare-matched": {
+    "alignment": 53.58755529927406,
+    "budget": 97.4917212710491,
+    "fidelity": 53.131594138087486,
+    "overall": 38.518468572106855,
+    "quads": 14282,
+    "shape": 66.23318202209511,
+    "singularities": 41.18470802408626,
+    "speed": 0.0,
+    "structure": null,
+    "validity": 0.0
+   },
+   "openclare-uniform": {
+    "alignment": 49.467715341755614,
+    "budget": 62.8,
+    "fidelity": 25.260701821408343,
+    "overall": 32.58814510761353,
+    "quads": 2721,
+    "shape": 57.11223706611387,
+    "singularities": 24.292539507533995,
+    "speed": 51.96221110834567,
+    "structure": null,
+    "validity": 0.0
+   },
+   "quadremesher": {
+    "alignment": 68.5455923284895,
+    "budget": 0.0,
+    "fidelity": 84.26419062932268,
+    "overall": 42.35210730526615,
+    "quads": 14193,
+    "shape": 54.698569252689616,
+    "singularities": 56.80969492003099,
+    "speed": 58.47461663607938,
+    "structure": null,
+    "validity": 0.0
+   },
+   "quadremesher-as-made": {
+    "alignment": 63.419836429256264,
+    "budget": 100.0,
+    "fidelity": 82.95361237215822,
+    "overall": 45.89736943715474,
+    "quads": 14193,
+    "shape": 54.698569252689616,
+    "singularities": 56.80969492003099,
+    "speed": 58.47461663607938,
+    "structure": null,
+    "validity": 0.0
+   },
+   "quadremesher-uniform": {
+    "alignment": 69.97190323289524,
+    "budget": 0.0,
+    "fidelity": 78.82315015754808,
+    "overall": 39.60267176974837,
+    "quads": 9910,
+    "shape": 53.26904033602585,
+    "singularities": 38.143289606458126,
+    "speed": 64.81042265719785,
+    "structure": null,
+    "validity": 0.0
+   },
+   "quadriflow": {
+    "alignment": null,
+    "budget": null,
+    "fidelity": null,
+    "overall": 0.0,
+    "quads": null,
+    "shape": null,
+    "singularities": null,
+    "speed": null,
+    "structure": null,
+    "validity": 0.0
+   }
   }
  },
  "8000": {
@@ -7238,6 +7458,116 @@
     "speed": 49.48200956497295,
     "structure": 0.8418060566305896,
     "validity": 40.0
+   }
+  },
+  "venturi": {
+   "instant-meshes": {
+    "alignment": 50.07112278232315,
+    "budget": 84.65,
+    "fidelity": 57.06406396338177,
+    "overall": 36.50052364968343,
+    "quads": 7693,
+    "shape": 48.18127069074731,
+    "singularities": 0.0,
+    "speed": 90.87447627062029,
+    "structure": 44.68997790198882,
+    "validity": 0.0
+   },
+   "integer-grid": {
+    "alignment": null,
+    "budget": null,
+    "fidelity": null,
+    "overall": 0.0,
+    "quads": null,
+    "shape": null,
+    "singularities": null,
+    "speed": null,
+    "structure": null,
+    "validity": 0.0
+   },
+   "openclare": {
+    "alignment": 46.82557033754192,
+    "budget": 82.4,
+    "fidelity": 37.73657665705151,
+    "overall": 33.01716618795253,
+    "quads": 8352,
+    "shape": 56.05050772189927,
+    "singularities": 0.0,
+    "speed": 7.993415359022027,
+    "structure": 26.879789272030653,
+    "validity": 0.0
+   },
+   "openclare-matched": {
+    "alignment": 57.281781890076054,
+    "budget": 86.72350791717417,
+    "fidelity": 59.094460838253354,
+    "overall": 70.42635712785076,
+    "quads": 19050,
+    "shape": 71.18421071233689,
+    "singularities": 61.364829396325455,
+    "speed": 0.0,
+    "structure": 24.981627296587927,
+    "validity": 100.0
+   },
+   "openclare-uniform": {
+    "alignment": 54.14610657696126,
+    "budget": 78.7,
+    "fidelity": 35.6824696009983,
+    "overall": 67.09255250036905,
+    "quads": 7574,
+    "shape": 68.1473784713671,
+    "singularities": 62.63533139688408,
+    "speed": 21.916726895750205,
+    "structure": 31.106416688671768,
+    "validity": 100.0
+   },
+   "quadremesher": {
+    "alignment": 66.6005740455911,
+    "budget": 0.0,
+    "fidelity": 84.11999588311022,
+    "overall": 43.55104090350817,
+    "quads": 19704,
+    "shape": 59.75051510136778,
+    "singularities": 64.72797401542834,
+    "speed": 59.865139928092084,
+    "structure": null,
+    "validity": 0.0
+   },
+   "quadremesher-as-made": {
+    "alignment": 63.47763278942547,
+    "budget": 100.0,
+    "fidelity": 83.4692742510005,
+    "overall": 47.8250498379802,
+    "quads": 19704,
+    "shape": 59.75051510136778,
+    "singularities": 64.72797401542834,
+    "speed": 59.865139928092084,
+    "structure": null,
+    "validity": 0.0
+   },
+   "quadremesher-uniform": {
+    "alignment": 68.88965978322045,
+    "budget": 0.0,
+    "fidelity": 81.90100288192555,
+    "overall": 42.233468527609915,
+    "quads": 14699,
+    "shape": 58.39808520218888,
+    "singularities": 52.9899993196816,
+    "speed": 56.723309110795704,
+    "structure": null,
+    "validity": 0.0
+   },
+   "quadriflow": {
+    "alignment": null,
+    "budget": null,
+    "fidelity": null,
+    "overall": 0.0,
+    "quads": null,
+    "shape": null,
+    "singularities": null,
+    "speed": null,
+    "structure": null,
+    "validity": 0.0
    }
   }
  }

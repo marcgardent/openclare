@@ -14,6 +14,7 @@ while the first time.
 """
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -25,6 +26,7 @@ from run import (  # noqa: E402
     LOCAL_MODELS,
     MODELS,
     OUTPUT,
+    RESULTS,
     TOOLS,
     available_models,
     faces_of,
@@ -52,6 +54,7 @@ VIEWS = {
     "ogre": (-70, 10),
     "ogre_hp": (-70, 10),
     "terrain": (-60, 38),
+    "venturi": (-125, 25),
     "cube": (35, 28),
     "lblock": (35, 28),
     "cylinder": (35, 28),
@@ -92,6 +95,24 @@ def mesh_of(tool, model, target, directory):
     return directory / f"{tool}_1.obj"
 
 
+def lines_kept(model, target):
+    """A sentence on what the engine says of the lines of the model (curves
+    drawn on it, borders between its materials), if its scene has any."""
+    path = RESULTS / ("results.json" if target == DEFAULT_TARGET else f"results-{target}.json")
+    runs = json.loads(path.read_text())["runs"].get(model, {}).get("openclare") if path.exists() else None
+    said = runs[0].get("engine") if runs else None
+    if not said or not (said.get("guide_edges") or said.get("sharp_curve_edges") or said.get("faces_across_groups")):
+        return []
+    parts = [f"{said.get('guide_edges', 0)} edges laid along the guide curves and the borders between materials"]
+    if said.get("sharp_curve_edges"):
+        parts.append(f"{said['sharp_curve_edges']} along the sharp curves")
+    if said.get("faces_across_groups"):
+        parts.append(f"{said['faces_across_groups']} faces left across a border")
+    if said.get("guides_let_go"):
+        parts.append(f"lines let go on {said['guides_let_go']} pieces")
+    return ["Lines of the scene, as openclare reports them: " + ", ".join(parts) + ".", ""]
+
+
 def gallery(shown):
     """Markdown: the pictures side by side, with what each is and how many
     faces it has."""
@@ -128,6 +149,9 @@ def main():
         if model not in available_models():
             continue
         table = marks[DEFAULT_TARGET].get(model, {})
+        # Not measured yet, and no page asked for: nothing to link to.
+        if not table and model not in wanted and not (PAGES / f"{model}.md").exists():
+            continue
         cells = [f"{table[tool]['overall']:.0f}" if tool in table else "—" for tool, _ in PICTURED]
         index.append(f"| [{model}]({model}.md) | {category} | " + " | ".join(cells) + " |")
         if model not in wanted:
@@ -189,6 +213,7 @@ def main():
             table = marks[target].get(model)
             if table:
                 lines += [f"### {target} quads", ""] + rows_of(without_matched(table), bold="openclare") + [""]
+                lines += lines_kept(model, target)
                 pair = {tool: table[tool] for tool in MATCHED if tool in table}
                 if len(pair) == len(MATCHED):
                     lines += ["At equal quad count: Quad Remesher's mesh as it is, and openclare asked for as many quads.", ""]

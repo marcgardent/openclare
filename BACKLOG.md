@@ -1015,11 +1015,22 @@ track. "DT" stands for *dette technique*, technical debt.
   then every process the bench starts is capped (`MEMORY_CAP` in `bench/run.py`, 12 GB, 24 for
   `ogre_hp`), `bench/blender_run.py` caps itself, and a run that hits the cap is reported as
   `out of memory`. No figure is stored for the car; where the memory goes is not known yet.
+- **The car is in the reports since 10 October 2026**, the memory having been found (DT-050):
+  measured at 1000, 3000 and 8000 quads with every tool, Quad Remesher references made, a
+  page with pictures (`docs/models/venturi.md`), and on that page what the engine says of
+  the lines of the scene. As the add-on runs it (*Organic*, sharp edges not kept as lines):
+  836, 3049 and 8352 faces, none valid, for two to five faces that are not quads or one that
+  is turned over; 16, 29 and 71 edges along the borders between materials, 348, 846 and 1470
+  faces across one; the blade of the spoiler is lost at 3000 quads. QuadriFlow gives up, the
+  fallback chain refuses the mesh, and Quad Remesher keeps the surface torn (11,146 border
+  edges, 379 parts, 14,193 faces for 3000 asked) but is by far the closest to the shape. The
+  only valid meshes of the three tables are ours at 8000 quads: with quads of one size, and
+  asked for as many quads as Quad Remesher made (19,050).
 - **Left**:
   - The scenes are in git since 9 October 2026, through Git LFS, and the OBJ files they were
     made from are gone. There is no remote yet: what LFS stores is on one machine.
-  - The results stored were not measured again from the scenes, and neither `venturi` nor
-    `ogre_hp` has a Quad Remesher reference.
+  - The results stored were not measured again from the scenes, and `ogre_hp`, `f16`,
+    `camera` and `wolf` have no figure stored, no Quad Remesher reference and no page.
   - The other tools get the object of a scene, not its curves nor its painted density:
     `openclare-uniform` (the command line) is given the materials (`source.groups`) and
     nothing else, QuadriFlow and Quad Remesher the triangles alone. On `ogre_hp` the comparison

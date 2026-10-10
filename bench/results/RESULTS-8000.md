@@ -361,6 +361,29 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Off budget, % (N) | 0.5 | 8.5 | 0.1 | 1.3 | 13.5 | 13.5 | 0.0 | 1.2 |
 | Time, seconds (T) | 0.57 | 8.05 | 5.47 | 6.17 | 4.42 | 4.47 | 4.42 | 4.04 |
 
+## venturi (extra)
+
+| | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
+|---|---|---|---|---|---|---|---|---|
+| **Valid meshes (V)** | 0/5 | 0/1 | 1/1 | 0/1 | 0/1 | 0/1 | 0/1 | 1/1 |
+| Quads made | 7693 | — | 7574 | 8352 | 19704 | 14699 | 19704 | 19050 |
+| Irregular vertices (S) | 977 | — | 283 | 884 | 695 | 691 | 695 | 736 |
+| … of which above the minimum | — | — | — | — | — | — | — | — |
+| Base complex patches (C) | 4255 | — | 5218 | 6107 | — | — | — | 14291 |
+| Alignment, degrees (A) | 11.23 | — | 10.32 | 11.96 | 7.51 | 7.00 | 8.22 | 9.61 |
+| Mean angle deviation, degrees (F) | 10.36 | — | 6.37 | 8.79 | 8.05 | 8.32 | 8.05 | 5.76 |
+| Angle deviation, 95th percentile (F) | 43.42 | — | 21.47 | 32.60 | 34.33 | 41.53 | 34.33 | 19.44 |
+| Mean aspect ratio (F) | 1.775 | — | 1.293 | 1.634 | 2.096 | 2.216 | 2.096 | 1.336 |
+| Area variation (F) | 0.455 | — | 0.299 | 0.425 | 1.067 | 0.959 | 1.067 | 0.296 |
+| Hausdorff, ‰ of the diagonal (H) | 24.82 | — | 36.17 | 36.17 | 14.05 | 15.28 | 14.05 | 15.92 |
+| Mean distance, ‰ (H) | 1.379 | — | 2.139 | 2.033 | 0.241 | 0.383 | 0.241 | 0.870 |
+| Thin parts: mean distance, % of a quad edge (V) | 18.1 | — | 28.1 | 26.1 | 1.8 | 2.8 | 2.5 | 25.0 |
+| Volume kept, % of the source (V) | — | — | — | — | — | — | — | — |
+| Off budget, % (N) | 3.8 | — | 5.3 | 4.4 | 146.3 | 83.7 | 0.0 | 3.3 |
+| Time, seconds (T) | 1.45 | — | 24.46 | 43.25 | 5.17 | 5.88 | 5.17 | 108.90 |
+
+Failures: integer-grid: error: invalid mesh: work mesh has 355 non-manifold or inconsistently oriented edges.
+
 ## terrain (extra)
 
 | | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
