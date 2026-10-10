@@ -33,6 +33,27 @@ impl Parametrizer for Seamless {
     }
 
     fn parametrize(&self, work: &WorkMesh, field: &CrossField, request: &Request) -> Result<Parametrization> {
+        let mut map = self.with_lines(work, field, request)?;
+        // A guide line asked to lie on a grid line does not always end up
+        // on one (where the field crosses it, the condition is left out):
+        // such an edge is let go like the others, rather than have the
+        // layout refuse the whole map for it.
+        let gone: HashSet<[u32; 2]> = map.report.loose_guides.iter().copied().collect();
+        let kept: Vec<[u32; 2]> = work.guide_edges.iter().copied().filter(|edge| !gone.contains(edge)).collect();
+        let astray = map.off_grid(&work.mesh, &kept);
+        if !astray.is_empty() {
+            map.report.guides_off_grid = true;
+            map.report.loose_guides.extend(astray);
+            map.report.loose_guides.sort_unstable();
+        }
+        Ok(map)
+    }
+}
+
+impl Seamless {
+    /// The map of `work`, with as many of its lines on grid lines as it can
+    /// keep without folding.
+    fn with_lines(&self, work: &WorkMesh, field: &CrossField, request: &Request) -> Result<Parametrization> {
         // Feature edges are kept on grid lines (which one is left free), so
         // that borders, creases and guide curves bound the rectangles the
         // map is cut into.
@@ -158,7 +179,7 @@ impl Seamless {
         if on_lines && report.flipped > 0 {
             return Ok(None);
         }
-        Ok(Some(Parametrization { cut: problem.cut, uv, report }))
+        Ok(Some(Parametrization { set_aside: problem.set_aside(), cut: problem.cut, uv, report }))
     }
 
     /// The map of `work` with its feature edges on grid lines, or the
@@ -180,7 +201,7 @@ impl Seamless {
         if report.flipped > 0 {
             return Ok(Err(problem.quality(&uv).flipped));
         }
-        Ok(Ok(Parametrization { cut: problem.cut, uv, report }))
+        Ok(Ok(Parametrization { set_aside: problem.set_aside(), cut: problem.cut, uv, report }))
     }
 }
 

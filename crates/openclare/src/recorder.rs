@@ -306,6 +306,36 @@ pub(crate) fn show_map(recorder: &mut dyn Recorder, work: &WorkMesh, map: &Param
         if report.features_off_grid { "; creases and borders off the grid lines too" } else { "" },
     );
     recorder.record("notes/map", Shape::Note(&note));
+    // The lines that are walls of the layout and do not lie on a grid line,
+    // by kind: guide lines still kept, and the others, creases and borders.
+    let walls: Vec<[u32; 2]> = work.feature_edges.iter().copied().filter(|edge| !loose.contains(edge)).collect();
+    let astray = map.off_grid(mesh, &walls);
+    if !astray.is_empty() {
+        let of_guides = astray.iter().filter(|edge| guides.contains(*edge)).count();
+        let strips: Vec<Vec<Vec3>> = astray.iter().map(edge).collect();
+        recorder.record(&format!("{stage}/off-the-grid"), Shape::Lines { strips: &strips, colour: [255, 255, 255] });
+        let note = format!(
+            "{} edges that are walls of the layout are off the grid lines of the map: {} of guide lines, {} of creases and borders",
+            astray.len(),
+            of_guides,
+            astray.len() - of_guides,
+        );
+        recorder.record("notes/map off the grid", Shape::Note(&note));
+    }
+    // What the layout will refuse the map for, and how much of it the map
+    // could not see: the faces it had set aside.
+    let turned = map.turned_over();
+    if !turned.is_empty() {
+        let aside = turned.iter().filter(|&&f| map.set_aside[f]).count();
+        let note = format!(
+            "{} triangles are turned over in the map as the layout counts them, {} of them among the {} the map \
+             had set aside",
+            turned.len(),
+            aside,
+            map.set_aside.iter().filter(|&&aside| aside).count(),
+        );
+        recorder.record("notes/map turned", Shape::Note(&note));
+    }
     // Where the map folds with every line on a grid line: next to a place
     // where the lines turn, meet or end, or along a plain stretch of them?
     if !report.folds_with_lines.is_empty() {

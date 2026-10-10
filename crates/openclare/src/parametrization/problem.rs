@@ -163,6 +163,11 @@ impl<'a> Problem<'a> {
         Ok(problem)
     }
 
+    /// The faces the map is not asked to copy: those given no area.
+    pub fn set_aside(&self) -> Vec<bool> {
+        self.frames.area.iter().map(|&area| area <= 0.0).collect()
+    }
+
     /// Index of the `u` unknown of a corner; its `v` follows.
     #[inline]
     pub fn u(&self, corner: usize) -> usize {
@@ -533,6 +538,22 @@ impl Quality {
             }
         }
         quality.distortion_mean /= total_area.max(f64::MIN_POSITIVE);
+        // The faces set aside above weigh nothing in the solve, so nothing
+        // keeps them from coming out turned over; and one that does is a
+        // fold all the same, for which the layout would refuse the map.
+        // Counted here, by the layout's own measure, it is something the
+        // map can answer: stiffen round it, let the line next to it go.
+        let area = |f: usize| {
+            let [a, b, c] = [uv[3 * f], uv[3 * f + 1], uv[3 * f + 2]];
+            0.5 * ((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]))
+        };
+        let flat = 1e-9 * (0..ideal.len()).map(|f| area(f).abs()).sum::<f64>() / ideal.len().max(1) as f64;
+        for (f, corners) in ideal.iter().enumerate() {
+            if (signed_area(corners) <= 0.0 || areas[f] <= 0.0) && area(f) < -flat {
+                quality.flipped.push(f);
+            }
+        }
+        quality.flipped.sort_unstable();
         quality
     }
 }

@@ -938,6 +938,26 @@ track. "DT" stands for *dette technique*, technical debt.
   through the fallback chain and 4 not meshed instead of 7 and 6. The body still ends in the
   fallback chain: its map has no fold by its own count, and the layout finds some. That
   disagreement between the two counts is the next thing to look at.
+- **One count of folds, 10 October 2026.** Measured first: on the body of the car the layout
+  found 4 triangles turned over in a map that counted none, and all 4 were among the 59 the
+  map had set aside (slivers, and triangles laid along a line), which weigh nothing in its
+  solve and which it did not look at. The map and the layout now share one count
+  (`Parametrization::turned_over`), so the map stiffens round such a triangle and lets the
+  line next to it go. That removed the reason the body was refused for, and showed the next:
+  2 edges of its borders are not on a grid line, and a wall off the grid lines is still all
+  or nothing. Two things done on the way: a guide edge that ends up off the grid lines is
+  let go like the others, and round an edge with more than two faces, the faces that go
+  straight on from one another stay joined (two sheets that cross stay two sheets; the car
+  goes from 23 pieces to 22).
+- **Where that leaves the car** with `edge_angle` at 60 degrees: 4 pieces through the
+  fallback chain and 3 not meshed, the body among the first; about 1000 edges along lines;
+  130 seconds, more than before, for the map now works harder on a piece the layout then
+  refuses for something else. The outcome is at least steady: 967 to 1005 edges along lines
+  and the same pieces lost when the car is scaled by 3, by 0.7 or by 1.0000001, where a
+  change in the last digits used to decide everything. The models of the bench and the
+  author's ogre with its curves come out as before.
+- **Next**: those 2 border edges. A border the map did not put on a grid line should cost the
+  stretch of border, not the piece.
 - **What the car asks for instead**: its hard edges kept. At 30 degrees they are 9058 edges of
   the source in 179 connected lines, 5577 quad edges long in all for a mesh of 8000 quads,
   with 1300 junctions and 246 loose ends. Short stray bits are not the trouble (33 quad edges

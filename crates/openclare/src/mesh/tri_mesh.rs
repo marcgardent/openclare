@@ -3,6 +3,11 @@ use std::collections::{HashMap, HashSet};
 use crate::error::{Error, Result};
 use crate::math::{INVALID, Vec3};
 
+/// Two faces round an edge that has more than two go on from one another,
+/// and stay joined, when they leave it in directions opposed to within the
+/// angle this is the cosine of (45 degrees).
+const STRAIGHT_ON: f64 = 0.7;
+
 /// A mesh mended by [`TriMesh::stitched`], and what was done to it.
 #[derive(Clone, Debug)]
 pub struct Mended {
@@ -99,10 +104,12 @@ impl TriMesh {
     /// more than two faces is not made: three sheets that meet along a line
     /// are better left as three.
     ///
-    /// Where the mesh itself has an edge with more than two faces, those
-    /// faces are taken apart along it, each keeping the edge as a border of
-    /// its own: what comes out is a surface everywhere, in more pieces if
-    /// need be, where the mesh as it was could not be worked on at all.
+    /// Where the mesh itself has an edge with more than two faces, the
+    /// faces that go straight on from one another across it stay joined, as
+    /// the one sheet they are, and the others are taken apart along it,
+    /// each keeping the edge as a border of its own: what comes out is a
+    /// surface everywhere, in more pieces if need be, where the mesh as it
+    /// was could not be worked on at all.
     pub fn stitched(&self) -> Option<Mended> {
         let key = |a: u32, b: u32| (a.min(b), a.max(b));
         // A closed surface, every edge with its two faces and every vertex
@@ -191,8 +198,45 @@ impl TriMesh {
             x
         }
         let vertex_at = |corner: u32| kept[corner as usize / 3].1[corner as usize % 3];
-        for faces in sides.values().filter(|faces| faces.len() == 2) {
-            let ((a, b), (c, d)) = (faces[0], faces[1]);
+        // Which way a face leaves an edge: towards its third corner, square
+        // to the edge.
+        let leaves = |(a, b): (u32, u32)| {
+            let third = 3 * (a / 3) + (3 - a % 3 - b % 3);
+            let [from, to, apex] = [a, b, third].map(|corner| self.positions[vertex_at(corner) as usize]);
+            let along = (to - from).normalize_or_zero();
+            let across = apex - from;
+            (across - along * across.dot(along)).normalize_or_zero()
+        };
+        let mut joined: Vec<[(u32, u32); 2]> = Vec::new();
+        for faces in sides.values() {
+            if faces.len() == 2 {
+                joined.push([faces[0], faces[1]]);
+            } else if faces.len() > 2 {
+                // More faces than two: those that go straight on from one
+                // another across the edge, and run round it the same way,
+                // are one sheet and stay joined, the straightest pair first.
+                // What is left over is taken apart there.
+                let mut pairs: Vec<(f64, usize, usize)> = Vec::new();
+                for i in 0..faces.len() {
+                    for j in i + 1..faces.len() {
+                        let opposed = vertex_at(faces[i].0) != vertex_at(faces[j].0);
+                        let straight = -leaves(faces[i]).dot(leaves(faces[j]));
+                        if opposed && straight >= STRAIGHT_ON {
+                            pairs.push((straight, i, j));
+                        }
+                    }
+                }
+                pairs.sort_by(|a, b| b.0.total_cmp(&a.0).then((a.1, a.2).cmp(&(b.1, b.2))));
+                let mut taken = vec![false; faces.len()];
+                for (_, i, j) in pairs {
+                    if !taken[i] && !taken[j] {
+                        (taken[i], taken[j]) = (true, true);
+                        joined.push([faces[i], faces[j]]);
+                    }
+                }
+            }
+        }
+        for [(a, b), (c, d)] in joined {
             // The same two vertices, whichever way round each face has them.
             let (c, d) = if vertex_at(a) == vertex_at(c) { (c, d) } else { (d, c) };
             for (one, other) in [(a, c), (b, d)] {
