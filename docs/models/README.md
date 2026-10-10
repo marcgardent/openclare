@@ -25,6 +25,7 @@ Overall mark at 3000 quads:
 | [cube](cube.md) | mechanical | 97 | 99 | 99 |
 | [lblock](lblock.md) | mechanical | 89 | 98 | 99 |
 | [cylinder](cylinder.md) | mechanical | 89 | 95 | 88 |
+| [venturi](venturi.md) | extra | 0 | 30 | 42 |
 | [terrain](terrain.md) | extra | 59 | 65 | 29 |
 | [mahaveer](mahaveer.md) | extra | 0 | 23 | 30 |
 | [marine](marine.md) | extra | 0 | 21 | 39 |

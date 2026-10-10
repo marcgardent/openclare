@@ -34,9 +34,10 @@ The overall mark is the weighted mean of the criteria that exist for the model (
 direction to align with; a mesh with open borders has no topological minimum). Speed is shown but
 does not count: it is not a matter of quality. A remesher that gave no mesh at all scores 0.
 
-Models of the *extra* group cannot be redistributed (see CREDITS.md): their marks are here, the
-models are not. Desert Rose and the two game characters are not clean surfaces; no remesher is
-expected to do well on them yet.
+The *extra* group is outside the acceptance rule. Its models from BlenderKit cannot be
+redistributed (see CREDITS.md): their marks are here, the models are not. Desert Rose, the two
+game characters and the car are not clean surfaces; no remesher is expected to do well on them
+yet. The car is run as it is in its file, torn along its sharp edges by an Edge Split modifier.
 
 ## 1000 quads
 
@@ -84,17 +85,17 @@ Over sphere, torus.
 
 ### Extra models: average
 
-Over terrain, mahaveer, marine.
+Over venturi, terrain, mahaveer, marine.
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| integer-grid | 774 | **38** | 67 | 44 | 50 | 33 | 47 | 73 | 27 | 37 |
-| quadremesher | 82849 | **37** | 33 | 35 | 43 | 81 | 25 | 6 | 0 | 31 |
-| openclare-uniform | 3185 | **29** | 33 | 22 | 24 | 46 | 22 | 36 | 31 | 37 |
-| openclare | 3126 | **29** | 33 | 22 | 23 | 46 | 21 | 36 | 32 | 31 |
-| instant-meshes | 447 | **28** | 33 | 26 | 27 | 15 | 69 | 19 | 0 | 58 |
-| quadriflow | 872 | **19** | 33 | 14 | 66 | 40 | 50 | 65 | 49 | 76 |
-| quadremesher-uniform | 4730 | **18** | 0 | 23 | 25 | 51 | 0 | — | 17 | 35 |
+| quadremesher | 65176 | **38** | 25 | 43 | 44 | 81 | 31 | 6 | 0 | 37 |
+| integer-grid | 774 | **29** | 50 | 44 | 50 | 33 | 47 | 73 | 27 | 37 |
+| openclare-uniform | 2578 | **27** | 25 | 31 | 28 | 42 | 16 | 36 | 24 | 44 |
+| openclare | 2554 | **27** | 25 | 27 | 25 | 41 | 15 | 36 | 33 | 33 |
+| instant-meshes | 495 | **24** | 25 | 30 | 23 | 14 | 52 | 21 | 0 | 69 |
+| quadremesher-uniform | 5720 | **23** | 0 | 39 | 30 | 56 | 8 | — | 13 | 43 |
+| quadriflow | 872 | **14** | 25 | 14 | 66 | 40 | 50 | 65 | 49 | 76 |
 
 ### Organic models at equal quad count
 
@@ -145,10 +146,11 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Model | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure |
 |---|---|---|---|---|---|---|---|---|
+| venturi | 12157 / 12482 | 44 / 35 | 0 / 0 | 63 / 51 | 50 / 61 | 82 / 56 | 50 / 30 | — / 16 |
 | terrain | 1541 / 1569 | 50 / 62 | 100 / 100 | 16 / 17 | 44 / 71 | 67 / 50 | 1 / 73 | 6 / 36 |
 | mahaveer | 41821 / 40442 | 24 / 43 | 0 / 0 | 37 / 58 | 35 / 64 | 36 / 58 | 26 / 69 | — / — |
 | marine | 205185 / 188593 | 33 / 45 | 0 / 0 | 42 / 63 | 49 / 74 | 48 / 67 | 48 / 41 | — / — |
-| **average** | 82849 / 76868 | 36 / 50 | 33 / 33 | 32 / 46 | 43 / 69 | 50 / 58 | 25 / 61 | 6 / 36 |
+| **average** | 65176 / 60772 | 38 / 46 | 25 / 25 | 39 / 47 | 44 / 67 | 58 / 58 | 31 / 54 | 6 / 26 |
 
 ### Model by model, 1000 quads
 
@@ -380,6 +382,18 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 | quadriflow | 1028 | **73** | 100 | 39 | 61 | 94 | 81 | 1 | 89 | 100 |
 | instant-meshes | 1054 | **70** | 100 | 61 | 57 | 92 | 15 | 12 | 78 | 100 |
 
+#### venturi (extra)
+
+| Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
+|---|---|---|---|---|---|---|---|---|---|---|
+| quadremesher | 12157 | **41** | 0 | 69 | 50 | 84 | 50 | — | 0 | 53 |
+| quadremesher-uniform | 8690 | **37** | 0 | 71 | 47 | 70 | 33 | — | 0 | 67 |
+| openclare-uniform | 757 | **22** | 0 | 50 | 41 | 29 | 0 | — | 3 | 65 |
+| openclare | 836 | **21** | 0 | 39 | 30 | 27 | 0 | — | 34 | 41 |
+| instant-meshes | 639 | **13** | 0 | 43 | 12 | 11 | 0 | 28 | 0 | 100 |
+| quadriflow | — | **0** | 0 | — | — | — | — | — | — | — |
+| integer-grid | — | **0** | 0 | — | — | — | — | — | — | — |
+
 #### terrain (extra)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
@@ -462,17 +476,17 @@ Over sphere, torus.
 
 ### Extra models: average
 
-Over terrain, mahaveer, marine.
+Over venturi, terrain, mahaveer, marine.
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| integer-grid | 2314 | **40** | 67 | 43 | 58 | 37 | 74 | 71 | 17 | 30 |
-| openclare-uniform | 4155 | **38** | 33 | 32 | 23 | 56 | 27 | 60 | 65 | 30 |
-| openclare | 4108 | **36** | 33 | 30 | 22 | 58 | 22 | 23 | 65 | 26 |
-| quadremesher-uniform | 6087 | **34** | 33 | 35 | 37 | 60 | 12 | 36 | 15 | 34 |
-| quadremesher | 88299 | **33** | 0 | 38 | 47 | 79 | 45 | — | 0 | 33 |
-| instant-meshes | 1559 | **24** | 33 | 28 | 37 | 19 | 11 | 22 | 0 | 55 |
-| quadriflow | 2717 | **20** | 33 | 10 | 68 | 43 | 59 | 70 | 62 | 74 |
+| openclare-uniform | 3796 | **37** | 25 | 36 | 31 | 48 | 26 | 60 | 64 | 35 |
+| quadremesher-uniform | 7043 | **35** | 25 | 44 | 41 | 64 | 18 | 36 | 12 | 42 |
+| quadremesher | 69772 | **35** | 0 | 45 | 49 | 81 | 48 | — | 0 | 40 |
+| openclare | 3844 | **35** | 25 | 33 | 27 | 50 | 17 | 23 | 72 | 26 |
+| integer-grid | 2314 | **30** | 50 | 43 | 58 | 37 | 74 | 71 | 17 | 30 |
+| instant-meshes | 1792 | **24** | 25 | 32 | 35 | 22 | 9 | 27 | 8 | 66 |
+| quadriflow | 2717 | **15** | 25 | 10 | 68 | 43 | 59 | 70 | 62 | 74 |
 
 ### Organic models at equal quad count
 
@@ -523,10 +537,11 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Model | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure |
 |---|---|---|---|---|---|---|---|---|
+| venturi | 14193 / 14282 | 46 / 39 | 0 / 0 | 63 / 54 | 55 / 66 | 83 / 53 | 57 / 41 | — / — |
 | terrain | 4677 / 4638 | 31 / 63 | 0 / 100 | 18 / 20 | 52 / 65 | 69 / 70 | 51 / 69 | — / 15 |
 | mahaveer | 46202 / 44276 | 27 / 43 | 0 / 0 | 40 / 59 | 38 / 65 | 37 / 54 | 33 / 73 | — / — |
 | marine | 214018 / 197141 | 34 / 45 | 0 / 0 | 46 / 63 | 51 / 74 | 48 / 67 | 52 / 45 | — / — |
-| **average** | 88299 / 82018 | 31 / 50 | 0 / 33 | 34 / 47 | 47 / 68 | 51 / 63 | 45 / 62 | — / 15 |
+| **average** | 69772 / 65084 | 35 / 47 | 0 / 25 | 42 / 49 | 49 / 67 | 59 / 61 | 48 / 57 | — / 15 |
 
 ### Model by model, 3000 quads
 
@@ -758,6 +773,18 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 | instant-meshes | 3078 | **73** | 100 | 37 | 72 | 97 | 59 | 0 | 90 | 100 |
 | quadriflow | 2976 | **56** | 20 | 55 | 49 | 96 | 90 | 0 | 97 | 89 |
 
+#### venturi (extra)
+
+| Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
+|---|---|---|---|---|---|---|---|---|---|---|
+| quadremesher | 14193 | **42** | 0 | 69 | 55 | 84 | 57 | — | 0 | 58 |
+| quadremesher-uniform | 9910 | **40** | 0 | 70 | 53 | 79 | 38 | — | 0 | 65 |
+| openclare-uniform | 2721 | **33** | 0 | 49 | 57 | 25 | 24 | — | 63 | 52 |
+| openclare | 3049 | **30** | 0 | 40 | 43 | 29 | 0 | — | 93 | 24 |
+| instant-meshes | 2489 | **24** | 0 | 47 | 31 | 31 | 0 | 41 | 32 | 99 |
+| quadriflow | — | **0** | 0 | — | — | — | — | — | — | — |
+| integer-grid | — | **0** | 0 | — | — | — | — | — | — | — |
+
 #### terrain (extra)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
@@ -842,17 +869,17 @@ Over sphere, torus.
 
 ### Extra models: average
 
-Over terrain, mahaveer, marine.
+Over venturi, terrain, mahaveer, marine.
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 8289 | **45** | 33 | 36 | 34 | 71 | 38 | 33 | 81 | 27 |
-| openclare | 8275 | **43** | 33 | 35 | 32 | 74 | 29 | 15 | 74 | 22 |
-| quadremesher-uniform | 10296 | **40** | 33 | 40 | 47 | 60 | 22 | 39 | 40 | 33 |
-| quadremesher | 104354 | **35** | 0 | 41 | 53 | 75 | 58 | 30 | 0 | 31 |
-| integer-grid | 6326 | **32** | 33 | 45 | 56 | 42 | 76 | 35 | 22 | 6 |
-| instant-meshes | 4766 | **25** | 27 | 27 | 40 | 23 | 22 | 21 | 0 | 53 |
-| quadriflow | 6963 | **20** | 33 | 7 | 71 | 49 | 73 | 70 | 48 | 74 |
+| openclare-uniform | 8110 | **50** | 50 | 41 | 42 | 62 | 44 | 32 | 80 | 26 |
+| quadremesher-uniform | 11397 | **41** | 25 | 47 | 50 | 66 | 29 | 39 | 30 | 39 |
+| openclare | 8294 | **40** | 25 | 38 | 38 | 65 | 22 | 21 | 76 | 18 |
+| quadremesher | 83192 | **37** | 0 | 47 | 54 | 77 | 60 | 30 | 0 | 38 |
+| instant-meshes | 5498 | **28** | 20 | 33 | 42 | 32 | 16 | 27 | 21 | 62 |
+| integer-grid | 6326 | **24** | 25 | 45 | 56 | 42 | 76 | 35 | 22 | 6 |
+| quadriflow | 6963 | **15** | 25 | 7 | 71 | 49 | 73 | 70 | 48 | 74 |
 
 ### Organic models at equal quad count
 
@@ -903,10 +930,11 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Model | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure |
 |---|---|---|---|---|---|---|---|---|
+| venturi | 19704 / 19050 | 48 / 70 | 0 / 100 | 63 / 57 | 60 / 71 | 83 / 59 | 65 / 61 | — / 25 |
 | terrain | 11819 / 11801 | 34 / 65 | 0 / 100 | 19 / 23 | 57 / 68 | 62 / 73 | 75 / 73 | 30 / 11 |
 | mahaveer | 55181 / 53000 | 30 / 44 | 0 / 0 | 46 / 60 | 44 / 65 | 38 / 50 | 43 / 78 | — / — |
 | marine | 246063 / 227098 | 37 / 46 | 0 / 0 | 49 / 64 | 57 / 75 | 48 / 64 | 58 / 51 | — / — |
-| **average** | 104354 / 97300 | 34 / 51 | 0 / 33 | 38 / 49 | 53 / 69 | 49 / 62 | 58 / 67 | 30 / 11 |
+| **average** | 83192 / 77737 | 37 / 56 | 0 / 50 | 44 / 51 | 54 / 70 | 58 / 62 | 60 / 66 | 30 / 18 |
 
 ### Model by model, 8000 quads
 
@@ -1135,6 +1163,18 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 | quadremesher-uniform | 7401 | **86** | 100 | 81 | 82 | 99 | 97 | 19 | 70 | 57 |
 | instant-meshes | 8038 | **82** | 100 | 72 | 74 | 99 | 67 | 1 | 98 | 100 |
 | quadriflow | 9147 | **58** | 40 | 49 | 63 | 99 | 98 | 1 | 43 | 49 |
+
+#### venturi (extra)
+
+| Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
+|---|---|---|---|---|---|---|---|---|---|---|
+| openclare-uniform | 7574 | **67** | 100 | 54 | 68 | 36 | 63 | 31 | 79 | 22 |
+| quadremesher | 19704 | **44** | 0 | 67 | 60 | 84 | 65 | — | 0 | 60 |
+| quadremesher-uniform | 14699 | **42** | 0 | 69 | 58 | 82 | 53 | — | 0 | 57 |
+| instant-meshes | 7693 | **37** | 0 | 50 | 48 | 57 | 0 | 45 | 85 | 91 |
+| openclare | 8352 | **33** | 0 | 47 | 56 | 38 | 0 | 27 | 82 | 8 |
+| quadriflow | — | **0** | 0 | — | — | — | — | — | — | — |
+| integer-grid | — | **0** | 0 | — | — | — | — | — | — | — |
 
 #### terrain (extra)
 

@@ -84,8 +84,7 @@ MODELS = [
     # for shading and a boolean cut into it, in thirteen materials whose
     # borders the quad mesh is to follow. A closed surface as it is meant;
     # as it is seen, torn along its sharp edges (15,110 border edges) and
-    # with 334 edges of three faces or more. The engine runs out of memory
-    # on it (see DT-049).
+    # with 334 edges of three faces or more.
     ("venturi", "extra", False, False),
     # The ogre before it was brought down: the sculpt of 4.7 million
     # triangles, with three guide curves and a sharp one drawn on it, and a

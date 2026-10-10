@@ -363,6 +363,29 @@ Failures: quadriflow: cancelled.
 | Off budget, % (N) | 1.8 | 1.0 | 10.8 | 1.0 | 3.2 | 21.8 | 21.8 | 0.0 | 2.3 |
 | Time, seconds (T) | 0.33 | 0.05 | 1.84 | 0.98 | 1.39 | 2.92 | 2.88 | 2.92 | 0.91 |
 
+## venturi (extra)
+
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
+|---|---|---|---|---|---|---|---|---|---|
+| **Valid meshes (V)** | 0/5 | 0/5 | 0/1 | 0/1 | 0/1 | 0/1 | 0/1 | 0/1 | 0/1 |
+| Quads made | — | 639 | — | 757 | 836 | 12157 | 8690 | 12157 | 12482 |
+| Irregular vertices (S) | — | 184 | — | 150 | 176 | 606 | 581 | 606 | 874 |
+| … of which above the minimum | — | — | — | — | — | — | — | — | — |
+| Base complex patches (C) | — | 460 | — | — | — | — | — | — | 10508 |
+| Alignment, degrees (A) | — | 12.88 | — | 11.32 | 13.71 | 6.94 | 6.56 | 8.37 | 11.12 |
+| Mean angle deviation, degrees (F) | — | 17.66 | — | 11.89 | 14.03 | 10.01 | 10.58 | 10.01 | 7.75 |
+| Angle deviation, 95th percentile (F) | — | 59.41 | — | 37.21 | 45.64 | 45.68 | 51.58 | 45.68 | 29.08 |
+| Mean aspect ratio (F) | — | 2.099 | — | 1.553 | 3.065 | 2.423 | 2.658 | 2.423 | 1.535 |
+| Area variation (F) | — | 0.480 | — | 0.486 | 0.595 | 2.342 | 2.356 | 2.342 | 0.384 |
+| Hausdorff, ‰ of the diagonal (H) | — | 68.00 | — | 82.83 | 82.83 | 14.79 | 27.48 | 14.79 | 21.31 |
+| Mean distance, ‰ (H) | — | 12.935 | — | 7.832 | 8.266 | 0.450 | 0.882 | 0.450 | 1.281 |
+| Thin parts: mean distance, % of a quad edge (V) | — | 39.2 | — | 21.1 | 22.9 | 1.4 | 2.2 | 3.4 | 22.8 |
+| Volume kept, % of the source (V) | — | — | — | — | — | — | — | — | — |
+| Off budget, % (N) | — | 36.1 | — | 24.3 | 16.4 | 1115.7 | 769.0 | 0.0 | 2.7 |
+| Time, seconds (T) | — | 0.60 | — | 4.15 | 11.06 | 6.97 | 3.89 | 6.97 | 87.42 |
+
+Failures: quadriflow: cancelled; integer-grid: error: invalid mesh: work mesh has 355 non-manifold or inconsistently oriented edges.
+
 ## terrain (extra)
 
 | | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |

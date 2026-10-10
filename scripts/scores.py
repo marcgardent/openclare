@@ -266,9 +266,10 @@ def write_report(targets):
         "direction to align with; a mesh with open borders has no topological minimum). Speed is shown but",
         "does not count: it is not a matter of quality. A remesher that gave no mesh at all scores 0.",
         "",
-        "Models of the *extra* group cannot be redistributed (see CREDITS.md): their marks are here, the",
-        "models are not. Desert Rose and the two game characters are not clean surfaces; no remesher is",
-        "expected to do well on them yet.",
+        "The *extra* group is outside the acceptance rule. Its models from BlenderKit cannot be",
+        "redistributed (see CREDITS.md): their marks are here, the models are not. Desert Rose, the two",
+        "game characters and the car are not clean surfaces; no remesher is expected to do well on them",
+        "yet. The car is run as it is in its file, torn along its sharp edges by an Edge Split modifier.",
         "",
     ]
     data = {}
