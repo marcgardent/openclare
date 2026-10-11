@@ -498,6 +498,19 @@ track. "DT" stands for *dette technique*, technical debt.
   of such models are thin plates, discs and rings with hard edges all round: the case to
   study first. Neither has Quad Remesher references nor a page yet.
 
+- **A piece far thinner than its quads, 11 October 2026** (shown by the author on `camera`:
+  the triangular ring a strap hangs from, which comes out as a crumpled flap). Taken out of
+  the model and run alone: its work mesh is sound (2196 triangles, still one closed ring,
+  1.6 per mille of its own diagonal away from it), so preprocessing is not what loses it.
+  The quads are. The ring has 0.2 % of the area of the camera, hence 6 quads of 3000, raised
+  to the floor of 16; it gets 27, with an edge four times the thickness of its wire, and is
+  185 per mille of its diagonal away from the shape. At 100 quads
+  it is a twisted ring (49 per mille), at 300 a clean one (6 per mille), which is where a
+  quad edge comes down to the thickness of the wire. The share of a piece goes by its area
+  and its floor by its topology; neither knows how thin it is. A floor from the thickness
+  (the quads it takes for an edge no longer than the piece is thick) would keep it, at the
+  price of the budget: two such rings would take 600 of the 3000 quads of the camera.
+
 ### DT-035 — Rerun visualization: what is not shown, version behind
 
 - **Born at** track T2.
