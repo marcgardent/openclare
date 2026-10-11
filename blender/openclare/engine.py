@@ -17,6 +17,46 @@ class EngineError(RuntimeError):
     """The engine could not be loaded, or gave no mesh."""
 
 
+def _own_copy(path):
+    """A copy of the library at `path` under a name made from what it holds,
+    in a folder of the user's own, which is what gets loaded.
+
+    A library is known to the system by the path it was loaded from. When the
+    add-on is updated in a Blender that has already used it, the file is
+    replaced but the path is not, and asking for it again gives back the one
+    already in memory: the new add-on then talks to the old engine, which
+    takes its arguments for something else and makes nonsense of them. A name
+    that changes with the contents is never taken for another. (And the file
+    in the add-on's folder is then never held open, which lets a system that
+    locks what it has loaded replace it.)"""
+    import hashlib
+    import os
+    import shutil
+    import tempfile
+
+    held = path.read_bytes()
+    digest = hashlib.sha256(held).hexdigest()[:16]
+    owner = os.getuid() if hasattr(os, "getuid") else os.environ.get("USERNAME", "user")
+    folder = Path(tempfile.gettempdir()) / f"openclare-engine-{owner}"
+    folder.mkdir(mode=0o700, exist_ok=True)
+    if hasattr(os, "getuid") and (folder.stat().st_uid != os.getuid() or folder.stat().st_mode & 0o077):
+        raise EngineError(f"{folder} is not a folder of this user alone: the engine is not loaded from it")
+    copy = folder / f"{digest}-{path.name}"
+    if not copy.exists() or hashlib.sha256(copy.read_bytes()).hexdigest()[:16] != digest:
+        # Written beside, then put in place at once: never half a library.
+        with tempfile.NamedTemporaryFile(dir=folder, delete=False) as fresh:
+            fresh.write(held)
+        os.replace(fresh.name, copy)
+    for other in folder.glob(f"*-{path.name}"):
+        if other != copy:
+            # Those of earlier versions; one still in use somewhere stays.
+            try:
+                other.unlink()
+            except OSError:
+                pass
+    return copy
+
+
 def library():
     """The native library, loaded on first use."""
     global _library
@@ -28,7 +68,7 @@ def library():
     path = Path(__file__).parent / "lib" / name
     if not path.exists():
         raise EngineError(f"the openclare engine is missing: {path}")
-    lib = ctypes.CDLL(str(path))
+    lib = ctypes.CDLL(str(_own_copy(path)))
 
     pointer, size, text = ctypes.c_void_p, ctypes.c_size_t, ctypes.c_char_p
     lib.openclare_version.restype = text
