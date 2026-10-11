@@ -163,6 +163,17 @@ pub fn unfold(mesh: &PolyMesh) -> Layers {
         let mut bounds = [0, 0, 0, 0];
         if mesh.faces[seed].len() == 4 {
             let mut taken: HashSet<[i64; 2]> = HashSet::from([[0, 0]]);
+            // Which vertex of the mesh sits at each corner of the paper. One
+            // place, one vertex: two quads side by side on the paper are
+            // then side by side on the surface, and four round a corner of
+            // the paper are round one vertex. Without it a quad can land
+            // next to one it has nothing to do with, round an irregular
+            // vertex say, with no room between them; and what is painted or
+            // baked there is read by both along the edge they seem to share.
+            let mut vertex_at: HashMap<[i64; 2], u32> = HashMap::new();
+            for k in 0..4 {
+                vertex_at.insert(place_in[seed].corner(k), mesh.faces[seed][k]);
+            }
             let mut queue = VecDeque::from([seed]);
             while let Some(f) = queue.pop_front() {
                 let place = place_in[f];
@@ -170,7 +181,12 @@ pub fn unfold(mesh: &PolyMesh) -> Layers {
                     let Some((g, j)) = neighbour(f, k) else { continue };
                     let there = place.across(k, j);
                     let within = there.cell.iter().all(|c| c.abs() <= reach);
-                    if island_of[g] == usize::MAX && within && taken.insert(there.cell) {
+                    let agrees =
+                        (0..4).all(|c| vertex_at.get(&there.corner(c)).is_none_or(|&vertex| vertex == mesh.faces[g][c]));
+                    if island_of[g] == usize::MAX && within && agrees && taken.insert(there.cell) {
+                        for c in 0..4 {
+                            vertex_at.insert(there.corner(c), mesh.faces[g][c]);
+                        }
                         island_of[g] = island;
                         place_in[g] = there;
                         let [x, y] = there.cell;
@@ -383,6 +399,43 @@ mod tests {
             }
             // The squares fill a fair share of the atlas.
             assert!(mesh.faces.len() as f64 * side * side > 0.3, "{name}: {} islands", layers.islands);
+        }
+    }
+
+    #[test]
+    fn one_place_of_the_atlas_is_one_vertex_of_the_mesh() {
+        // A ball of quads has eight vertices where three quads meet: the
+        // paper cannot lie flat round them, and must not close up on itself
+        // with a quad next to one it does not touch.
+        let ball = {
+            let mut mesh = primitives::cube_quads(6);
+            for p in &mut mesh.positions {
+                *p = p.normalize();
+            }
+            mesh
+        };
+        // Blocks in a cross with one on top: vertices of five and six quads
+        // along its inner edges, round which an unfolding comes back on
+        // itself.
+        let cross = primitives::blocks_quads(&[[0, 0, 0], [1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1]], 5);
+        let shapes = [
+            ("cube", primitives::cube_quads(5)),
+            ("ball", ball),
+            ("torus", primitives::torus_quads(1.0, 0.4, 12, 8)),
+            ("cross", cross),
+        ];
+        for (name, mesh) in shapes {
+            let layers = unfold(&mesh);
+            let side = (0.5 * turn_of(&layers.atlas[..4])).sqrt();
+            let mut vertex_at: HashMap<[i64; 2], u32> = HashMap::new();
+            let vertices = mesh.faces.iter().flatten();
+            for (uv, &vertex) in layers.atlas.iter().zip(vertices) {
+                // Corners are at whole and a half numbers of squares: twice
+                // that is a whole number.
+                let place = [0, 1].map(|c| (2.0 * uv[c] / side).round() as i64);
+                let there = *vertex_at.entry(place).or_insert(vertex);
+                assert_eq!(there, vertex, "{name}: two vertices at one place of the atlas");
+            }
         }
     }
 

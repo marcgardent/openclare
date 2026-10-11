@@ -60,6 +60,9 @@ struct Place {
     texel: usize,
     triangle: u32,
     weights: [f64; 2],
+    /// For a texel past the edge of a face: the point of that edge nearest
+    /// to it, likewise, and how far past it the texel is, in texels.
+    past: Option<([f64; 2], f64)>,
 }
 
 /// Bakes the height of `source` above `target` into a texture of `width` by
@@ -119,20 +122,23 @@ pub fn height_map(
                 // first: both would give it the same point.
                 if of_a >= -1e-9 && of_b >= -1e-9 && of_a + of_b <= 1.0 + 1e-9 && !taken[texel] {
                     taken[texel] = true;
-                    places.push(Place { texel, triangle: triangle as u32, weights: [of_a, of_b] });
+                    places.push(Place { texel, triangle: triangle as u32, weights: [of_a, of_b], past: None });
                 }
             }
         }
     }
 
-    // Round the faces, the texels within `padding` of one go on from it:
-    // each is given the point the nearest face would have there if it went
-    // on past its edge, and its height is measured from that point like any
-    // other. A renderer reads a texture between its texels: on the edge of
-    // an island, between one inside and one outside. With the outside one a
-    // mere copy of its neighbours, the two islands that meet along a seam
-    // give two heights for the same edge, and the surface cracks there;
-    // going on as the face does, both give the height of the edge itself.
+    // Round the faces, the texels within `padding` of one go on from it. A
+    // renderer reads a texture between its texels: on the edge of an island,
+    // between one inside and one outside, and the two islands that meet
+    // along a seam must both give there the height of the edge they share,
+    // or the surface cracks. So a texel past an edge is given what makes
+    // that so: the height at the nearest point of the edge, which is on the
+    // surface and the same seen from either island, and from it as much
+    // again as the height changes over the same way back inside the face.
+    // (Not the height where the face would be if it went on past its edge:
+    // where the surface bends that is nowhere near it, and what is found
+    // from there belongs to another part of the sculpt.)
     let inside = places.len();
     if padding > 0 {
         let reach_in_texels = padding as f64;
@@ -154,21 +160,28 @@ pub fn height_map(
                         continue;
                     }
                     let p = [column as f64 + 0.5, row as f64 + 0.5];
-                    let away = [(a, b), (b, c), (c, a)]
+                    // The nearest point of the outline of the triangle.
+                    let (away, on_edge) = [(a, b), (b, c), (c, a)]
                         .into_iter()
                         .map(|(from, to)| {
                             let (along, to_p) = ([to[0] - from[0], to[1] - from[1]], [p[0] - from[0], p[1] - from[1]]);
                             let length = along[0] * along[0] + along[1] * along[1];
                             let t = ((to_p[0] * along[0] + to_p[1] * along[1]) / length.max(1e-300)).clamp(0.0, 1.0);
-                            (to_p[0] - t * along[0]).hypot(to_p[1] - t * along[1])
+                            let nearest = [from[0] + t * along[0], from[1] + t * along[1]];
+                            ((p[0] - nearest[0]).hypot(p[1] - nearest[1]), nearest)
                         })
-                        .fold(f64::INFINITY, f64::min);
+                        .fold((f64::INFINITY, p), |best, found| if found.0 < best.0 { found } else { best });
                     if away > reach_in_texels || beyond.get(&texel).is_some_and(|&(nearest, _)| nearest <= away) {
                         continue;
                     }
-                    let of_a = ((b[0] - p[0]) * (c[1] - p[1]) - (b[1] - p[1]) * (c[0] - p[0])) / area;
-                    let of_b = ((c[0] - p[0]) * (a[1] - p[1]) - (c[1] - p[1]) * (a[0] - p[0])) / area;
-                    beyond.insert(texel, (away, Place { texel, triangle: triangle as u32, weights: [of_a, of_b] }));
+                    let shares = |q: [f64; 2]| {
+                        let of_a = ((b[0] - q[0]) * (c[1] - q[1]) - (b[1] - q[1]) * (c[0] - q[0])) / area;
+                        let of_b = ((c[0] - q[0]) * (a[1] - q[1]) - (c[1] - q[1]) * (a[0] - q[0])) / area;
+                        [of_a, of_b]
+                    };
+                    let place =
+                        Place { texel, triangle: triangle as u32, weights: shares(p), past: Some((shares(on_edge), away)) };
+                    beyond.insert(texel, (away, place));
                 }
             }
         }
@@ -178,9 +191,8 @@ pub fn height_map(
     }
 
     let surface = Bvh::build(source);
-    let measure = |place: &Place| -> (f32, bool) {
-        let [a, b, c] = target.triangles[place.triangle as usize].map(|v| v as usize);
-        let [of_a, of_b] = place.weights;
+    let at = |triangle: u32, [of_a, of_b]: [f64; 2]| -> (f32, bool) {
+        let [a, b, c] = target.triangles[triangle as usize].map(|v| v as usize);
         let of_c = 1.0 - of_a - of_b;
         let point = target.positions[a] * of_a + target.positions[b] * of_b + target.positions[c] * of_c;
         let normal = (target.normals[a] * of_a + target.normals[b] * of_b + target.normals[c] * of_c).normalize_or_zero();
@@ -200,6 +212,19 @@ pub fn height_map(
                 (nearest.clamp(-reach, reach) as f32, true)
             }
         }
+    };
+
+    let measure = |place: &Place| -> (f32, bool) {
+        let Some((on_edge, away)) = place.past else { return at(place.triangle, place.weights) };
+        // As far back inside the face as the texel is past its edge, a
+        // texel at most.
+        let back = away.min(1.0) / away.max(1e-12);
+        let inside = [0, 1].map(|k| on_edge[k] + (on_edge[k] - place.weights[k]) * back);
+        let ((edge, lost), (within, _)) = (at(place.triangle, on_edge), at(place.triangle, inside));
+        // Farther out than a texel the height goes on no more: nothing
+        // reads there but a filter, and a slope carried on over several
+        // texels stretches the range of the whole map.
+        (edge + (edge - within), lost)
     };
 
     // The texels are measured several at a time: they do not depend on one
@@ -314,12 +339,15 @@ mod tests {
         let baked = bake(&slope, 0.5, 2);
         let expected = |column: usize| 0.1 + 0.2 * (column as f64 + 0.5) / 8.0;
         for row in 0..16 {
-            // Under the face, and the two columns past its right edge: the
+            // Under the face, and the column past its right edge: the
             // height the slope has there, not a copy of the last column.
-            for column in 0..10 {
+            for column in 0..9 {
                 let found = baked.heights[row * 16 + column] as f64;
                 assert!((found - expected(column)).abs() < 1e-6, "column {column}: {found}");
             }
+            // The next one out goes on from the edge by a texel, no more.
+            let farther = baked.heights[row * 16 + 9] as f64;
+            assert!((farther - (0.3 + 0.2 / 8.0)).abs() < 1e-6, "{farther}");
             assert!(baked.heights[row * 16 + 10].is_nan());
         }
         // Read half way between the last texel inside and the first one
@@ -327,7 +355,7 @@ mod tests {
         let on_the_edge = 0.5 * (baked.heights[7] + baked.heights[8]);
         assert!((on_the_edge - 0.3).abs() < 1e-6, "{on_the_edge} on the edge");
         assert_eq!(baked.covered, 128);
-        assert!((baked.high as f64 - expected(9)).abs() < 1e-6);
+        assert!((baked.high as f64 - 0.325).abs() < 1e-6);
     }
 
     #[test]
