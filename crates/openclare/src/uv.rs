@@ -50,9 +50,14 @@ const ISLANDS_ACROSS: f64 = 6.0;
 /// However small the mesh, an island may reach this many quads: a mesh of
 /// a few hundred quads is not worth cutting up.
 const MIN_REACH: i64 = 16;
-/// Room left round the atlas, in quads. Between two islands there is always
-/// one quad's width.
+/// Room left round the atlas, in quads.
 const MARGIN: f64 = 0.5;
+/// How many lines of the sheet the islands are packed on go to a quad.
+/// Between two islands there is always one of them: a quarter of a quad,
+/// six texels in an image of 2048 for a mesh of 3000 quads.
+const FINER: usize = 4;
+/// Fewest quads of an island that is tried all four ways round.
+const TURNED_FROM: usize = 8;
 
 /// Where a quad sits in an unfolding: its cell, and which of the cell's
 /// corners its first corner is.
@@ -199,81 +204,149 @@ pub fn unfold(mesh: &PolyMesh) -> Layers {
         boxes.push(bounds);
     }
 
-    // Packing: the islands are fitted into one sheet of squared paper cell by
-    // cell, the largest first, each at the first place where none of its
-    // cells is taken or touches one that is. They are odd shapes, and boxes
-    // round them would leave most of the sheet empty.
+    // Packing: the islands are fitted into one sheet of squared paper, the
+    // largest first, each at the first place where none of its cells is
+    // taken or touches one that is. They are odd shapes, and boxes round
+    // them would leave most of the sheet empty. The sheet is ruled finer
+    // than the quads, `FINER` lines to a quad, and an island may sit on any
+    // of them: the room kept between two islands is one such line, a
+    // fraction of a quad, where a whole quad between them was most of what
+    // an atlas of few large islands lost.
     let mut cells_of: Vec<Vec<[usize; 2]>> = vec![Vec::new(); boxes.len()];
     for f in 0..mesh.faces.len() {
         let (island, low) = (island_of[f], boxes[island_of[f]]);
         let cell = place_in[f].cell;
         cells_of[island].push([(cell[0] - low[0]) as usize, (cell[1] - low[1]) as usize]);
     }
-    let width_of = |island: usize| (boxes[island][2] - boxes[island][0] + 1) as usize;
-    let total: usize = cells_of.iter().map(Vec::len).sum();
-    let widest = (0..boxes.len()).map(width_of).max().unwrap_or(1);
+    // An island may be laid any of the four ways round: turned by a quarter
+    // it is as good an island, and often fits where it did not.
+    let size_of = |island: usize| {
+        [(boxes[island][2] - boxes[island][0] + 1) as usize, (boxes[island][3] - boxes[island][1] + 1) as usize]
+    };
+    let turned = |[x, y]: [usize; 2], [wide, high]: [usize; 2], quarter: usize| match quarter {
+        0 => [x, y],
+        1 => [high - 1 - y, x],
+        2 => [wide - 1 - x, high - 1 - y],
+        _ => [y, wide - 1 - x],
+    };
+    let width_of = |island: usize, quarter: usize| FINER * size_of(island)[quarter % 2];
+    let total: usize = FINER * FINER * cells_of.iter().map(Vec::len).sum::<usize>();
+    let widest = (0..boxes.len()).map(|island| width_of(island, 0).min(width_of(island, 1))).max().unwrap_or(FINER);
     let mut order: Vec<usize> = (0..boxes.len()).collect();
     order.sort_by(|&a, &b| cells_of[b].len().cmp(&cells_of[a].len()).then(a.cmp(&b)));
     // How wide a sheet packs best is not known beforehand: a few are tried,
     // and the one that ends up nearest to a square is kept.
-    let pack = |sheet: usize| {
-        // Rows of the sheet, added as needed: true where a cell is taken or is
-        // next to one that is.
+    let pack = &|sheet: usize| {
+        // Rows of the sheet, added as needed: true where a square is taken
+        // or is next to one that is.
         let mut closed: Vec<Vec<bool>> = Vec::new();
-        let mut corner_of = vec![[0usize; 2]; boxes.len()];
+        let mut corner_of = vec![[0usize; 3]; boxes.len()];
         let mut first_free_row = 0;
+        // Where the last island of each shape went: nothing is ever given
+        // back, so the next one of that shape has no place before it. A
+        // model in thousands of pieces has thousands of islands of one quad.
+        let mut last_of: HashMap<Vec<[usize; 2]>, [usize; 2]> = HashMap::new();
+        // How many squares of each row are still free: a row with fewer
+        // than a quad takes is passed over without being looked at.
+        let mut free_in: Vec<usize> = Vec::new();
         for &island in &order {
-            let cells = &cells_of[island];
-            let fits = |closed: &Vec<Vec<bool>>, x: usize, y: usize| {
-                cells.iter().all(|&[cx, cy]| closed.get(y + cy).is_none_or(|row| !row[x + cx]))
-            };
-            let mut found = None;
-            'rows: for y in first_free_row.. {
-                for x in 0..=sheet - width_of(island) {
-                    if fits(&closed, x, y) {
-                        found = Some([x, y]);
-                        break 'rows;
+            // The first place that takes it, each way round; the lowest of
+            // them, then the leftmost, is where it goes.
+            let mut best: Option<([usize; 2], usize, Vec<[usize; 2]>)> = None;
+            // A few quads are not worth turning: there are thousands of
+            // such islands on a model in many pieces, and they fit anywhere.
+            let ways = if cells_of[island].len() < TURNED_FROM { 1 } else { 4 };
+            for quarter in 0..ways {
+                if width_of(island, quarter) > sheet {
+                    continue;
+                }
+                let cells: Vec<[usize; 2]> =
+                    cells_of[island].iter().map(|&cell| turned(cell, size_of(island), quarter)).collect();
+                let fits = |x: usize, y: usize| {
+                    cells.iter().all(|&[cx, cy]| {
+                        (0..FINER).all(|dy| {
+                            closed.get(y + FINER * cy + dy).is_none_or(|row| {
+                                let from = x + FINER * cx;
+                                !row[from..from + FINER].contains(&true)
+                            })
+                        })
+                    })
+                };
+                // No lower than the best found so far is worth looking at.
+                let last_row = best.as_ref().map_or(usize::MAX, |(at, _, _)| at[1]);
+                let [from_x, from_y] = last_of.get(&cells).copied().unwrap_or([0, 0]);
+                let mut found = None;
+                'rows: for y in from_y.max(first_free_row)..=last_row {
+                    if free_in.get(y).is_some_and(|&free| free < FINER) {
+                        continue;
+                    }
+                    for x in (if y == from_y { from_x } else { 0 })..=sheet - width_of(island, quarter) {
+                        if fits(x, y) {
+                            found = Some([x, y]);
+                            break 'rows;
+                        }
+                    }
+                }
+                if let Some([x, y]) = found {
+                    last_of.insert(cells.clone(), [x, y]);
+                    if best.as_ref().is_none_or(|(at, _, _)| (y, x) < (at[1], at[0])) {
+                        best = Some(([x, y], quarter, cells));
                     }
                 }
             }
-            let [x, y] = found.expect("a row past the last one is always free");
-            corner_of[island] = [x, y];
-            for &[cx, cy] in cells {
-                let (at_x, at_y) = (x + cx, y + cy);
-                while closed.len() < at_y + 2 {
+            let ([x, y], quarter, cells) = best.expect("a row past the last one is always free");
+            corner_of[island] = [x, y, quarter];
+            for &[cx, cy] in &cells {
+                let (at_x, at_y) = (x + FINER * cx, y + FINER * cy);
+                while closed.len() < at_y + FINER + 1 {
                     closed.push(vec![false; sheet]);
+                    free_in.push(sheet);
                 }
-                for row in &mut closed[at_y.saturating_sub(1)..=at_y + 1] {
-                    for taken in &mut row[at_x.saturating_sub(1)..=(at_x + 1).min(sheet - 1)] {
+                for at in at_y.saturating_sub(1)..=at_y + FINER {
+                    for taken in &mut closed[at][at_x.saturating_sub(1)..=(at_x + FINER).min(sheet - 1)] {
+                        free_in[at] -= !*taken as usize;
                         *taken = true;
                     }
                 }
             }
             // Rows that are full are not worth looking at again.
-            while closed.get(first_free_row).is_some_and(|row| row.iter().all(|&taken| taken)) {
+            while free_in.get(first_free_row).is_some_and(|&free| free < FINER) {
                 first_free_row += 1;
             }
         }
-        (corner_of, sheet.max(closed.len().saturating_sub(1)).max(1))
+        (corner_of, sheet.max(closed.len().saturating_sub(1)).max(FINER))
     };
-    let (corner_of, side) = [1.05, 1.2, 1.35, 1.5, 1.7]
-        .into_iter()
-        .map(|room: f64| pack(((room * total as f64).sqrt().ceil() as usize).max(widest)))
-        .min_by_key(|&(_, side)| side)
-        .expect("there are widths to try");
+    // Each on a thread of its own: a model in thousands of pieces has
+    // thousands of islands to place, five times over.
+    let sheets = [1.05, 1.2, 1.35, 1.5, 1.7].map(|room: f64| ((room * total as f64).sqrt().ceil() as usize).max(widest));
+    let packed: Vec<(Vec<[usize; 3]>, usize)> = std::thread::scope(|scope| {
+        let trials: Vec<_> = sheets.iter().map(|&sheet| scope.spawn(move || pack(sheet))).collect();
+        trials.into_iter().map(|trial| trial.join().expect("an atlas packed without a panic")).collect()
+    });
+    let (corner_of, side) = packed.into_iter().min_by_key(|&(_, side)| side).expect("there are widths to try");
     // Half a cell of margin round the sheet.
-    let extent = side as f64 + 2.0 * MARGIN;
-    let corner_of: Vec<[f64; 2]> = corner_of.iter().map(|c| [c[0] as f64 + MARGIN, c[1] as f64 + MARGIN]).collect();
+    let extent = side as f64 / FINER as f64 + 2.0 * MARGIN;
+    let quarter_of: Vec<usize> = corner_of.iter().map(|c| c[2]).collect();
+    let corner_of: Vec<[f64; 2]> =
+        corner_of.iter().map(|c| [c[0] as f64 / FINER as f64 + MARGIN, c[1] as f64 / FINER as f64 + MARGIN]).collect();
 
     let mut atlas = vec![[0.0; 2]; corners];
     for (f, face) in mesh.faces.iter().enumerate() {
         let (island, low) = (island_of[f], boxes[island_of[f]]);
         let origin = corner_of[island];
         if face.len() == 4 {
+            let [wide, high] = size_of(island).map(|cells| cells as f64);
             for k in 0..4 {
                 let [x, y] = place_in[f].corner(k);
-                atlas[first_corner[f] + k] =
-                    [(origin[0] + (x - low[0]) as f64) / extent, (origin[1] + (y - low[1]) as f64) / extent];
+                // A corner of the paper turns as the cells do.
+                let (x, y) = ((x - low[0]) as f64, (y - low[1]) as f64);
+                let [x, y] = match quarter_of[island] {
+                    0 => [x, y],
+                    1 => [high - y, x],
+                    2 => [wide - x, high - y],
+                    _ => [y, wide - x],
+                };
+                atlas[first_corner[f] + k] = [(origin[0] + x) / extent, (origin[1] + y) / extent];
             }
         } else {
             let slot = &mut atlas[first_corner[f]..][..face.len()];
@@ -430,9 +503,8 @@ mod tests {
             let mut vertex_at: HashMap<[i64; 2], u32> = HashMap::new();
             let vertices = mesh.faces.iter().flatten();
             for (uv, &vertex) in layers.atlas.iter().zip(vertices) {
-                // Corners are at whole and a half numbers of squares: twice
-                // that is a whole number.
-                let place = [0, 1].map(|c| (2.0 * uv[c] / side).round() as i64);
+                // Corners are on the lines the islands are packed on.
+                let place = [0, 1].map(|c| (FINER as f64 * uv[c] / side).round() as i64);
                 let there = *vertex_at.entry(place).or_insert(vertex);
                 assert_eq!(there, vertex, "{name}: two vertices at one place of the atlas");
             }
