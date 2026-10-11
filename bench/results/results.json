@@ -3022,7 +3022,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 1.665,
+     "seconds": 2.073,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -3060,7 +3060,7 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 2.27,
+     "seconds": 2.744,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -3099,7 +3099,9 @@
       "faces_across_groups": 0,
       "welded_vertices": 0,
       "edges_taken_apart": 0,
-      "guides_let_go": 0
+      "guides_let_go": 0,
+      "thin_pieces": 0,
+      "quads_for_thin_pieces": 0
      }
     }
    ],
@@ -3144,7 +3146,7 @@
    "openclare-matched": [
     {
      "seed": 1,
-     "seconds": 3.537,
+     "seconds": 3.061,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -3183,7 +3185,9 @@
       "faces_across_groups": 0,
       "welded_vertices": 0,
       "edges_taken_apart": 0,
-      "guides_let_go": 0
+      "guides_let_go": 0,
+      "thin_pieces": 0,
+      "quads_for_thin_pieces": 0
      }
     }
    ]
@@ -10018,13 +10022,13 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 8.701,
+     "seconds": 3.377,
      "failure": null,
      "metrics": {
       "valid": false,
-      "vertices": 3263,
-      "faces": 3111,
-      "quads": 3099,
+      "vertices": 3983,
+      "faces": 3831,
+      "quads": 3819,
       "non_manifold_edges": 1,
       "misoriented_edges": 0,
       "boundary_edges": 12,
@@ -10033,22 +10037,22 @@
       "degenerate_faces": 0,
       "components": 98,
       "source_components": 96,
-      "irregular_vertices": 903,
+      "irregular_vertices": 933,
       "topological_minimum": null,
       "irregular_excess": null,
       "base_complex_patches": null,
-      "alignment": 15.007089941649221,
-      "angle_deviation_mean": 19.29251417815924,
-      "angle_deviation_p95": 60.81976278618863,
-      "aspect_mean": 3.676266267528032,
-      "aspect_p95": 11.176202079130311,
-      "area_variation": 0.8950605001585501,
+      "alignment": 14.133550992164409,
+      "angle_deviation_mean": 18.548864617500897,
+      "angle_deviation_p95": 60.88394746153955,
+      "aspect_mean": 5.653256635481655,
+      "aspect_p95": 10.691855384402238,
+      "area_variation": 1.0919527664346118,
       "hausdorff": 0.039035620979094326,
-      "mean_distance": 0.002972027824225479,
+      "mean_distance": 0.00288024036251647,
       "thin_share": 0.4016045975703434,
-      "thin_distance": 0.27494048726462145,
+      "thin_distance": 0.2677123512264357,
       "volume_ratio": null,
-      "budget_error": 0.037
+      "budget_error": 0.277
      },
      "against": 3000
     }
@@ -10056,13 +10060,13 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 14.594,
+     "seconds": 4.286,
      "failure": null,
      "metrics": {
       "valid": false,
-      "vertices": 3716,
-      "faces": 3579,
-      "quads": 3578,
+      "vertices": 5809,
+      "faces": 5672,
+      "quads": 5671,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 7,
@@ -10071,22 +10075,22 @@
       "degenerate_faces": 0,
       "components": 97,
       "source_components": 96,
-      "irregular_vertices": 1116,
+      "irregular_vertices": 1232,
       "topological_minimum": null,
       "irregular_excess": null,
       "base_complex_patches": null,
-      "alignment": 14.717254203308793,
-      "angle_deviation_mean": 20.60762530548651,
-      "angle_deviation_p95": 64.86670321617274,
-      "aspect_mean": 3.856447142065867,
-      "aspect_p95": 12.047287331169267,
-      "area_variation": 0.9343852344357573,
+      "alignment": 14.302424004258356,
+      "angle_deviation_mean": 16.22186473354711,
+      "angle_deviation_p95": 49.80578075875076,
+      "aspect_mean": 2.715925170878506,
+      "aspect_p95": 5.593539280184964,
+      "area_variation": 1.3907756643516043,
       "hausdorff": 0.025084616073780618,
-      "mean_distance": 0.0020006168258954304,
+      "mean_distance": 0.0018641941564365662,
       "thin_share": 0.4016045975703434,
-      "thin_distance": 0.19450644741171955,
+      "thin_distance": 0.18717237701595485,
       "volume_ratio": null,
-      "budget_error": 0.193
+      "budget_error": 0.8906666666666667
      },
      "against": 3000,
      "engine": {
@@ -10095,7 +10099,9 @@
       "faces_across_groups": 0,
       "welded_vertices": 0,
       "edges_taken_apart": 0,
-      "guides_let_go": 0
+      "guides_let_go": 0,
+      "thin_pieces": 14,
+      "quads_for_thin_pieces": 2436
      }
     }
    ],
@@ -10140,37 +10146,37 @@
    "openclare-matched": [
     {
      "seed": 1,
-     "seconds": 36.112,
+     "seconds": 20.002,
      "failure": null,
      "metrics": {
       "valid": false,
-      "vertices": 36089,
-      "faces": 35959,
-      "quads": 35959,
+      "vertices": 37982,
+      "faces": 37852,
+      "quads": 37852,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 0,
       "source_boundary_edges": 0,
-      "inverted_faces": 2,
+      "inverted_faces": 1,
       "degenerate_faces": 0,
       "components": 96,
       "source_components": 96,
-      "irregular_vertices": 2319,
+      "irregular_vertices": 2409,
       "topological_minimum": 616,
-      "irregular_excess": 1703,
-      "base_complex_patches": 28193,
-      "alignment": 9.233888945230465,
-      "angle_deviation_mean": 6.803379398629959,
-      "angle_deviation_p95": 20.75648951362173,
-      "aspect_mean": 1.6979282078141065,
-      "aspect_p95": 1.9850643599068416,
-      "area_variation": 0.4553610747818136,
-      "hausdorff": 0.01265388331033601,
-      "mean_distance": 0.00016255365729422056,
+      "irregular_excess": 1793,
+      "base_complex_patches": 29294,
+      "alignment": 9.238296414547289,
+      "angle_deviation_mean": 6.874186401722032,
+      "angle_deviation_p95": 21.55620635594977,
+      "aspect_mean": 1.441010609916919,
+      "aspect_p95": 2.2000683146600744,
+      "area_variation": 0.5115380014260238,
+      "hausdorff": 0.007947252210934041,
+      "mean_distance": 0.00015373285757369891,
       "thin_share": 0.06617542462089959,
-      "thin_distance": 0.13108369062509984,
-      "volume_ratio": 0.995735993082097,
-      "budget_error": 0.0023694040251993087
+      "thin_distance": 0.09492823593710395,
+      "volume_ratio": 0.9966314977718983,
+      "budget_error": 0.05513742543346156
      },
      "against": 35874,
      "engine": {
@@ -10179,7 +10185,9 @@
       "faces_across_groups": 0,
       "welded_vertices": 0,
       "edges_taken_apart": 0,
-      "guides_let_go": 0
+      "guides_let_go": 0,
+      "thin_pieces": 14,
+      "quads_for_thin_pieces": 1929
      }
     }
    ]
@@ -12587,13 +12595,13 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 12.382,
+     "seconds": 10.64,
      "failure": null,
      "metrics": {
       "valid": false,
-      "vertices": 3257,
-      "faces": 3028,
-      "quads": 3026,
+      "vertices": 5336,
+      "faces": 5107,
+      "quads": 5105,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 234,
@@ -12606,18 +12614,18 @@
       "topological_minimum": null,
       "irregular_excess": null,
       "base_complex_patches": null,
-      "alignment": 15.268582828750539,
-      "angle_deviation_mean": 25.401946729801093,
-      "angle_deviation_p95": 77.04473406789963,
-      "aspect_mean": 76.16879484463306,
-      "aspect_p95": 289.7837577700594,
-      "area_variation": 1.6002092906217396,
+      "alignment": 14.641390843929319,
+      "angle_deviation_mean": 23.42834751478418,
+      "angle_deviation_p95": 69.77364253653136,
+      "aspect_mean": 44.66536669881815,
+      "aspect_p95": 23.92768980658863,
+      "area_variation": 2.231621698661247,
       "hausdorff": 0.04804671002196301,
-      "mean_distance": 0.003208992494315647,
+      "mean_distance": 0.0031360446669536674,
       "thin_share": 0.782173088530948,
-      "thin_distance": 0.2835366745856748,
+      "thin_distance": 0.2814620775046359,
       "volume_ratio": null,
-      "budget_error": 0.009333333333333334
+      "budget_error": 0.7023333333333334
      },
      "against": 3000
     }
@@ -12625,13 +12633,13 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 22.892,
+     "seconds": 7.308,
      "failure": null,
      "metrics": {
       "valid": false,
-      "vertices": 3211,
-      "faces": 2976,
-      "quads": 2974,
+      "vertices": 5648,
+      "faces": 5413,
+      "quads": 5411,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 246,
@@ -12644,18 +12652,18 @@
       "topological_minimum": null,
       "irregular_excess": null,
       "base_complex_patches": null,
-      "alignment": 15.360269734776615,
-      "angle_deviation_mean": 25.9373285122359,
-      "angle_deviation_p95": 82.6626278257001,
-      "aspect_mean": 120.06351484820988,
-      "aspect_p95": 503.83552456097055,
-      "area_variation": 1.592023054030153,
+      "alignment": 14.757217022058382,
+      "angle_deviation_mean": 19.640767961311024,
+      "angle_deviation_p95": 67.60308082711633,
+      "aspect_mean": 65.2466664392365,
+      "aspect_p95": 109.19932813040134,
+      "area_variation": 2.322991255492388,
       "hausdorff": 0.048046708313896284,
-      "mean_distance": 0.003226712996221874,
+      "mean_distance": 0.0031404187024691144,
       "thin_share": 0.782173088530948,
-      "thin_distance": 0.28332893249935187,
+      "thin_distance": 0.2811813320019467,
       "volume_ratio": null,
-      "budget_error": 0.008
+      "budget_error": 0.8043333333333333
      },
      "against": 3000,
      "engine": {
@@ -12664,7 +12672,9 @@
       "faces_across_groups": 0,
       "welded_vertices": 0,
       "edges_taken_apart": 0,
-      "guides_let_go": 0
+      "guides_let_go": 0,
+      "thin_pieces": 4,
+      "quads_for_thin_pieces": 2329
      }
     }
    ],
@@ -13030,37 +13040,37 @@
    "openclare-matched": [
     {
      "seed": 1,
-     "seconds": 127.649,
+     "seconds": 81.104,
      "failure": null,
      "metrics": {
       "valid": false,
-      "vertices": 45441,
-      "faces": 44429,
-      "quads": 44415,
+      "vertices": 56013,
+      "faces": 55017,
+      "quads": 55012,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
-      "boundary_edges": 1792,
+      "boundary_edges": 1765,
       "source_boundary_edges": 2130,
-      "inverted_faces": 10,
+      "inverted_faces": 6,
       "degenerate_faces": 11,
-      "components": 165,
+      "components": 159,
       "source_components": 164,
       "irregular_vertices": 1154,
       "topological_minimum": null,
       "irregular_excess": null,
       "base_complex_patches": null,
-      "alignment": 9.359292239316199,
-      "angle_deviation_mean": 7.294975789527672,
-      "angle_deviation_p95": 26.040777325343726,
-      "aspect_mean": 9.099167255437841,
-      "aspect_p95": 2.1635497668577326,
-      "area_variation": 0.4974663485167618,
+      "alignment": 6.11783925731032,
+      "angle_deviation_mean": 5.931933234156582,
+      "angle_deviation_p95": 22.412461711267156,
+      "aspect_mean": 7.54672558665687,
+      "aspect_p95": 2.0059830281376487,
+      "area_variation": 0.7321835147625902,
       "hausdorff": 0.01318568016170768,
-      "mean_distance": 0.000627752266095891,
+      "mean_distance": 0.0005728135846942546,
       "thin_share": 0.6843170897476722,
-      "thin_distance": 0.3669765595300463,
+      "thin_distance": 0.356539972588809,
       "volume_ratio": null,
-      "budget_error": 0.038374962122851825
+      "budget_error": 0.19079260638067616
      },
      "against": 46202,
      "engine": {
@@ -13069,7 +13079,9 @@
       "faces_across_groups": 0,
       "welded_vertices": 0,
       "edges_taken_apart": 0,
-      "guides_let_go": 0
+      "guides_let_go": 0,
+      "thin_pieces": 4,
+      "quads_for_thin_pieces": 10836
      }
     }
    ]
@@ -13078,37 +13090,37 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 41.976,
+     "seconds": 11.484,
      "failure": null,
      "metrics": {
       "valid": false,
-      "vertices": 9233,
-      "faces": 7648,
-      "quads": 7614,
+      "vertices": 12982,
+      "faces": 11397,
+      "quads": 11363,
       "non_manifold_edges": 4,
       "misoriented_edges": 0,
       "boundary_edges": 426,
       "source_boundary_edges": 3026,
       "inverted_faces": 9,
-      "degenerate_faces": 5,
+      "degenerate_faces": 4,
       "components": 789,
       "source_components": 820,
-      "irregular_vertices": 5951,
+      "irregular_vertices": 5967,
       "topological_minimum": null,
       "irregular_excess": null,
       "base_complex_patches": null,
-      "alignment": 12.526747374421436,
-      "angle_deviation_mean": 24.937865159992498,
-      "angle_deviation_p95": 72.67769858936852,
-      "aspect_mean": 6.78930516709816,
-      "aspect_p95": 12.968319866912623,
-      "area_variation": 2.836165476679727,
+      "alignment": 10.945142398130963,
+      "angle_deviation_mean": 17.521952440489645,
+      "angle_deviation_p95": 65.26114213659767,
+      "aspect_mean": 3.8531457981199995,
+      "aspect_p95": 8.569923091249867,
+      "area_variation": 3.4550119432385276,
       "hausdorff": 0.007060772201834569,
-      "mean_distance": 0.0004635810326097011,
+      "mean_distance": 0.00042956937913562516,
       "thin_share": 0.8928758310760896,
-      "thin_distance": 0.12964233361359195,
+      "thin_distance": 0.1254953751169047,
       "volume_ratio": null,
-      "budget_error": 1.5493333333333332
+      "budget_error": 2.799
      },
      "against": 3000
     }
@@ -13116,37 +13128,37 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 78.289,
+     "seconds": 18.786,
      "failure": null,
      "metrics": {
       "valid": false,
-      "vertices": 8946,
-      "faces": 7390,
-      "quads": 7373,
+      "vertices": 15180,
+      "faces": 13624,
+      "quads": 13607,
       "non_manifold_edges": 4,
       "misoriented_edges": 0,
       "boundary_edges": 323,
       "source_boundary_edges": 3026,
       "inverted_faces": 3,
-      "degenerate_faces": 3,
+      "degenerate_faces": 2,
       "components": 788,
       "source_components": 820,
-      "irregular_vertices": 5873,
+      "irregular_vertices": 5915,
       "topological_minimum": null,
       "irregular_excess": null,
       "base_complex_patches": null,
-      "alignment": 12.614595862320687,
-      "angle_deviation_mean": 24.946064845288827,
-      "angle_deviation_p95": 71.59450092740434,
-      "aspect_mean": 5.6705359390329795,
-      "aspect_p95": 12.136720456718933,
-      "area_variation": 2.876488218928515,
+      "alignment": 10.657296837930883,
+      "angle_deviation_mean": 14.382591162578818,
+      "angle_deviation_p95": 59.828595296834195,
+      "aspect_mean": 2.668184542233265,
+      "aspect_p95": 6.899685353835656,
+      "area_variation": 3.92227537113166,
       "hausdorff": 0.0066019916222376206,
-      "mean_distance": 0.0004873814732635199,
+      "mean_distance": 0.0004381298775000856,
       "thin_share": 0.8928758310760896,
-      "thin_distance": 0.13564417731956493,
+      "thin_distance": 0.13168424206121798,
       "volume_ratio": null,
-      "budget_error": 1.4633333333333334
+      "budget_error": 3.541333333333333
      },
      "against": 3000,
      "engine": {
@@ -13155,7 +13167,9 @@
       "faces_across_groups": 0,
       "welded_vertices": 0,
       "edges_taken_apart": 390,
-      "guides_let_go": 0
+      "guides_let_go": 0,
+      "thin_pieces": 44,
+      "quads_for_thin_pieces": 6496
      }
     }
    ],
@@ -13492,37 +13506,37 @@
    "openclare-matched": [
     {
      "seed": 1,
-     "seconds": 207.901,
+     "seconds": 48.242,
      "failure": null,
      "metrics": {
       "valid": false,
-      "vertices": 203055,
-      "faces": 199778,
-      "quads": 199697,
+      "vertices": 230051,
+      "faces": 226774,
+      "quads": 226693,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 3653,
       "source_boundary_edges": 3026,
-      "inverted_faces": 25,
+      "inverted_faces": 26,
       "degenerate_faces": 3,
       "components": 943,
       "source_components": 820,
-      "irregular_vertices": 11124,
+      "irregular_vertices": 11588,
       "topological_minimum": null,
       "irregular_excess": null,
       "base_complex_patches": null,
-      "alignment": 8.324234757746224,
-      "angle_deviation_mean": 5.2462875678561005,
-      "angle_deviation_p95": 19.244335773388812,
-      "aspect_mean": 1.3457726633887432,
-      "aspect_p95": 1.962346751396508,
-      "area_variation": 0.36397805300565195,
+      "alignment": 8.365531096520659,
+      "angle_deviation_mean": 4.900369711210717,
+      "angle_deviation_p95": 18.216997708815427,
+      "aspect_mean": 1.32329611514338,
+      "aspect_p95": 1.905787495094359,
+      "area_variation": 0.526194550869845,
       "hausdorff": 0.0030001697107532228,
-      "mean_distance": 3.682900335607204e-05,
+      "mean_distance": 3.327300812655856e-05,
       "thin_share": 0.38488057128786013,
-      "thin_distance": 0.17659023513973032,
+      "thin_distance": 0.16996731195676526,
       "volume_ratio": null,
-      "budget_error": 0.0665364595501313
+      "budget_error": 0.059602463344204694
      },
      "against": 214018,
      "engine": {
@@ -13531,7 +13545,9 @@
       "faces_across_groups": 0,
       "welded_vertices": 0,
       "edges_taken_apart": 390,
-      "guides_let_go": 0
+      "guides_let_go": 0,
+      "thin_pieces": 42,
+      "quads_for_thin_pieces": 27070
      }
     }
    ]
@@ -13797,7 +13813,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 8.573,
+     "seconds": 10.996,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -13835,7 +13851,7 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 21.937,
+     "seconds": 19.976,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -13874,7 +13890,9 @@
       "faces_across_groups": 846,
       "welded_vertices": 7766,
       "edges_taken_apart": 341,
-      "guides_let_go": 6
+      "guides_let_go": 6,
+      "thin_pieces": 0,
+      "quads_for_thin_pieces": 0
      }
     }
    ],
@@ -13995,7 +14013,7 @@
    "openclare-matched": [
     {
      "seed": 1,
-     "seconds": 111.524,
+     "seconds": 104.985,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -14034,7 +14052,9 @@
       "faces_across_groups": 2041,
       "welded_vertices": 7766,
       "edges_taken_apart": 341,
-      "guides_let_go": 6
+      "guides_let_go": 6,
+      "thin_pieces": 0,
+      "quads_for_thin_pieces": 0
      }
     }
    ]
@@ -14300,7 +14320,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 23.715,
+     "seconds": 23.856,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -14338,7 +14358,7 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 26.28,
+     "seconds": 30.741,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -14377,7 +14397,9 @@
       "faces_across_groups": 0,
       "welded_vertices": 0,
       "edges_taken_apart": 2,
-      "guides_let_go": 0
+      "guides_let_go": 0,
+      "thin_pieces": 0,
+      "quads_for_thin_pieces": 0
      }
     }
    ],
@@ -14498,7 +14520,7 @@
    "openclare-matched": [
     {
      "seed": 1,
-     "seconds": 457.466,
+     "seconds": 555.291,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -14537,7 +14559,9 @@
       "faces_across_groups": 0,
       "welded_vertices": 0,
       "edges_taken_apart": 2,
-      "guides_let_go": 0
+      "guides_let_go": 0,
+      "thin_pieces": 0,
+      "quads_for_thin_pieces": 0
      }
     }
    ]
@@ -14803,37 +14827,37 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 21.335,
+     "seconds": 16.541,
      "failure": null,
      "metrics": {
       "valid": false,
-      "vertices": 2178,
-      "faces": 1892,
-      "quads": 1770,
-      "non_manifold_edges": 2,
+      "vertices": 4019,
+      "faces": 3715,
+      "quads": 3593,
+      "non_manifold_edges": 7,
       "misoriented_edges": 0,
-      "boundary_edges": 346,
+      "boundary_edges": 356,
       "source_boundary_edges": 9178,
-      "inverted_faces": 2,
-      "degenerate_faces": 2,
-      "components": 105,
+      "inverted_faces": 4,
+      "degenerate_faces": 0,
+      "components": 114,
       "source_components": 296,
-      "irregular_vertices": 492,
+      "irregular_vertices": 581,
       "topological_minimum": null,
       "irregular_excess": null,
       "base_complex_patches": null,
-      "alignment": 5.336024767865494,
-      "angle_deviation_mean": 14.497091724477126,
-      "angle_deviation_p95": 48.72789210113333,
-      "aspect_mean": 164.53713251069573,
-      "aspect_p95": 44.39097947487532,
-      "area_variation": 0.8947336531983938,
-      "hausdorff": 0.048615082154758835,
-      "mean_distance": 0.005418948324619549,
+      "alignment": 4.845870807291941,
+      "angle_deviation_mean": 9.061394726091653,
+      "angle_deviation_p95": 37.49197896583249,
+      "aspect_mean": 81.49608618689257,
+      "aspect_p95": 5.298711997643657,
+      "area_variation": 1.448959863903501,
+      "hausdorff": 0.03900132982481208,
+      "mean_distance": 0.003178010668180968,
       "thin_share": 0.8875116275636009,
-      "thin_distance": 0.40447191565265184,
+      "thin_distance": 0.23868522033748157,
       "volume_ratio": null,
-      "budget_error": 0.36933333333333335
+      "budget_error": 0.23833333333333334
      },
      "against": 3000
     }
@@ -14841,37 +14865,37 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 82.041,
+     "seconds": 17.966,
      "failure": null,
      "metrics": {
       "valid": false,
-      "vertices": 2180,
-      "faces": 1843,
-      "quads": 1767,
-      "non_manifold_edges": 2,
+      "vertices": 4021,
+      "faces": 3665,
+      "quads": 3589,
+      "non_manifold_edges": 7,
       "misoriented_edges": 0,
-      "boundary_edges": 497,
+      "boundary_edges": 507,
       "source_boundary_edges": 9178,
       "inverted_faces": 1,
-      "degenerate_faces": 1,
-      "components": 105,
+      "degenerate_faces": 0,
+      "components": 114,
       "source_components": 296,
-      "irregular_vertices": 353,
+      "irregular_vertices": 442,
       "topological_minimum": null,
       "irregular_excess": null,
       "base_complex_patches": null,
-      "alignment": 5.268609126358898,
-      "angle_deviation_mean": 14.256717675349092,
-      "angle_deviation_p95": 47.70844668974209,
-      "aspect_mean": 271.4985297747223,
-      "aspect_p95": 44.29762194866094,
-      "area_variation": 0.876547045068451,
-      "hausdorff": 0.04861508458875774,
-      "mean_distance": 0.005435233457454097,
+      "alignment": 4.810434845310225,
+      "angle_deviation_mean": 8.938592410707054,
+      "angle_deviation_p95": 36.63385765108205,
+      "aspect_mean": 134.1101276087234,
+      "aspect_p95": 5.318119204521925,
+      "area_variation": 1.4420333758606152,
+      "hausdorff": 0.039001331228044514,
+      "mean_distance": 0.003177140425266444,
       "thin_share": 0.8875116275636009,
-      "thin_distance": 0.4056096250830912,
+      "thin_distance": 0.2385460526300225,
       "volume_ratio": null,
-      "budget_error": 0.38566666666666666
+      "budget_error": 0.22166666666666668
      },
      "against": 3000,
      "engine": {
@@ -14880,7 +14904,9 @@
       "faces_across_groups": 0,
       "welded_vertices": 0,
       "edges_taken_apart": 0,
-      "guides_let_go": 0
+      "guides_let_go": 0,
+      "thin_pieces": 43,
+      "quads_for_thin_pieces": 3378
      }
     }
    ],
@@ -15001,37 +15027,37 @@
    "openclare-matched": [
     {
      "seed": 1,
-     "seconds": 184.713,
+     "seconds": 123.385,
      "failure": null,
      "metrics": {
       "valid": false,
-      "vertices": 31136,
-      "faces": 30486,
-      "quads": 30365,
-      "non_manifold_edges": 10,
+      "vertices": 39376,
+      "faces": 38723,
+      "quads": 38604,
+      "non_manifold_edges": 9,
       "misoriented_edges": 0,
-      "boundary_edges": 1022,
+      "boundary_edges": 1023,
       "source_boundary_edges": 9178,
       "inverted_faces": 1,
       "degenerate_faces": 0,
-      "components": 135,
+      "components": 136,
       "source_components": 296,
-      "irregular_vertices": 916,
+      "irregular_vertices": 931,
       "topological_minimum": null,
       "irregular_excess": null,
       "base_complex_patches": null,
-      "alignment": 3.8760353610195013,
-      "angle_deviation_mean": 7.2642361783560485,
-      "angle_deviation_p95": 24.42507382566464,
-      "aspect_mean": 17.530540607431337,
-      "aspect_p95": 3.067597559851798,
-      "area_variation": 0.4727181609511725,
+      "alignment": 3.472528719243327,
+      "angle_deviation_mean": 5.848133461609139,
+      "angle_deviation_p95": 21.145288454479925,
+      "aspect_mean": 13.959583184049672,
+      "aspect_p95": 2.810242512972124,
+      "area_variation": 0.7398998958959593,
       "hausdorff": 0.02878400842678408,
-      "mean_distance": 0.0011001465186323298,
+      "mean_distance": 0.0009976901217570104,
       "thin_share": 0.7065719727730447,
-      "thin_distance": 0.4178427948005381,
+      "thin_distance": 0.4095741849800103,
       "volume_ratio": null,
-      "budget_error": 0.15405960375159553
+      "budget_error": 0.07450468949442256
      },
      "against": 36038,
      "engine": {
@@ -15040,7 +15066,9 @@
       "faces_across_groups": 0,
       "welded_vertices": 0,
       "edges_taken_apart": 0,
-      "guides_let_go": 0
+      "guides_let_go": 0,
+      "thin_pieces": 34,
+      "quads_for_thin_pieces": 9454
      }
     }
    ]
@@ -15306,13 +15334,13 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 13.295,
+     "seconds": 8.343,
      "failure": null,
      "metrics": {
       "valid": false,
-      "vertices": 2569,
-      "faces": 2347,
-      "quads": 2327,
+      "vertices": 3055,
+      "faces": 2833,
+      "quads": 2813,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 384,
@@ -15325,18 +15353,18 @@
       "topological_minimum": null,
       "irregular_excess": null,
       "base_complex_patches": null,
-      "alignment": 6.231364785884896,
-      "angle_deviation_mean": 9.477239854053133,
-      "angle_deviation_p95": 42.48093311044511,
-      "aspect_mean": 7.082854282329021,
-      "aspect_p95": 13.776051425667852,
-      "area_variation": 0.5139792705291033,
+      "alignment": 4.838516332077651,
+      "angle_deviation_mean": 8.272624976977033,
+      "angle_deviation_p95": 34.60930438488731,
+      "aspect_mean": 6.308342430537868,
+      "aspect_p95": 5.526971115886972,
+      "area_variation": 0.7299978782834176,
       "hausdorff": 0.03375249060354328,
-      "mean_distance": 0.003437978404230671,
+      "mean_distance": 0.0031406063451722157,
       "thin_share": 0.5625245662305576,
-      "thin_distance": 0.1675155861422194,
+      "thin_distance": 0.15565871610289805,
       "volume_ratio": null,
-      "budget_error": 0.21766666666666667
+      "budget_error": 0.05566666666666667
      },
      "against": 3000
     }
@@ -15344,13 +15372,13 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 22.14,
+     "seconds": 7.694,
      "failure": null,
      "metrics": {
       "valid": false,
-      "vertices": 2569,
-      "faces": 2338,
-      "quads": 2327,
+      "vertices": 3055,
+      "faces": 2824,
+      "quads": 2813,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 411,
@@ -15363,18 +15391,18 @@
       "topological_minimum": null,
       "irregular_excess": null,
       "base_complex_patches": null,
-      "alignment": 6.367569146870498,
-      "angle_deviation_mean": 9.448977904157612,
-      "angle_deviation_p95": 42.59723718956792,
-      "aspect_mean": 7.394367315426437,
-      "aspect_p95": 13.935703541344314,
-      "area_variation": 0.5199046350330601,
+      "alignment": 5.003969346506731,
+      "angle_deviation_mean": 8.271531570823983,
+      "angle_deviation_p95": 34.607748563512786,
+      "aspect_mean": 6.493597701342349,
+      "aspect_p95": 5.515032100319636,
+      "area_variation": 0.7355300661771673,
       "hausdorff": 0.033752487135518205,
-      "mean_distance": 0.003401056059257376,
+      "mean_distance": 0.0031208782730287425,
       "thin_share": 0.5625245662305576,
-      "thin_distance": 0.16578490493042153,
+      "thin_distance": 0.15525252148390128,
       "volume_ratio": null,
-      "budget_error": 0.22066666666666668
+      "budget_error": 0.058666666666666666
      },
      "against": 3000,
      "engine": {
@@ -15383,7 +15411,9 @@
       "faces_across_groups": 0,
       "welded_vertices": 0,
       "edges_taken_apart": 0,
-      "guides_let_go": 0
+      "guides_let_go": 0,
+      "thin_pieces": 2,
+      "quads_for_thin_pieces": 504
      }
     }
    ],
@@ -15504,13 +15534,13 @@
    "openclare-matched": [
     {
      "seed": 1,
-     "seconds": 38.757,
+     "seconds": 15.335,
      "failure": null,
      "metrics": {
       "valid": false,
-      "vertices": 11216,
-      "faces": 10798,
-      "quads": 10787,
+      "vertices": 11702,
+      "faces": 11284,
+      "quads": 11273,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 775,
@@ -15523,18 +15553,18 @@
       "topological_minimum": null,
       "irregular_excess": null,
       "base_complex_patches": null,
-      "alignment": 5.151193800193222,
-      "angle_deviation_mean": 6.693457842941619,
-      "angle_deviation_p95": 31.3839317800426,
-      "aspect_mean": 15.448593764935252,
-      "aspect_p95": 8.802329638893756,
-      "area_variation": 0.5327239821673067,
+      "alignment": 4.5709322117398345,
+      "angle_deviation_mean": 6.51909975196885,
+      "angle_deviation_p95": 28.761484401632586,
+      "aspect_mean": 14.881960673527805,
+      "aspect_p95": 8.164957952072138,
+      "area_variation": 0.5706851674999893,
       "hausdorff": 0.032148557826589645,
-      "mean_distance": 0.0009569550796470396,
+      "mean_distance": 0.0008639607719823612,
       "thin_share": 0.5007580436857768,
-      "thin_distance": 0.15331295255626207,
+      "thin_distance": 0.13265596957803716,
       "volume_ratio": null,
-      "budget_error": 0.14444180334363363
+      "budget_error": 0.10593455352190793
      },
      "against": 12621,
      "engine": {
@@ -15543,7 +15573,9 @@
       "faces_across_groups": 0,
       "welded_vertices": 0,
       "edges_taken_apart": 0,
-      "guides_let_go": 0
+      "guides_let_go": 0,
+      "thin_pieces": 2,
+      "quads_for_thin_pieces": 486
      }
     }
    ]
@@ -16900,7 +16932,7 @@
     "thin_distance": 0.08602121151677544,
     "volume_ratio": null,
     "budget_error": 0.006666666666666667,
-    "seconds": 1.665
+    "seconds": 2.073
    },
    "openclare": {
     "runs": 1,
@@ -16921,7 +16953,7 @@
     "thin_distance": 0.06807149724394543,
     "volume_ratio": null,
     "budget_error": 0.004666666666666667,
-    "seconds": 2.27
+    "seconds": 2.744
    },
    "quadremesher": {
     "runs": 1,
@@ -17005,7 +17037,7 @@
     "thin_distance": null,
     "volume_ratio": null,
     "budget_error": 0.0009280742459396752,
-    "seconds": 3.537
+    "seconds": 3.061
    }
   },
   "part": {
@@ -18987,42 +19019,42 @@
     "produced": 1,
     "valid": 0,
     "failures": [],
-    "faces": 3111,
-    "irregular_vertices": 903,
+    "faces": 3831,
+    "irregular_vertices": 933,
     "irregular_excess": null,
     "base_complex_patches": null,
-    "alignment": 15.007089941649221,
-    "angle_deviation_mean": 19.29251417815924,
-    "angle_deviation_p95": 60.81976278618863,
-    "aspect_mean": 3.676266267528032,
-    "area_variation": 0.8950605001585501,
+    "alignment": 14.133550992164409,
+    "angle_deviation_mean": 18.548864617500897,
+    "angle_deviation_p95": 60.88394746153955,
+    "aspect_mean": 5.653256635481655,
+    "area_variation": 1.0919527664346118,
     "hausdorff": 0.039035620979094326,
-    "mean_distance": 0.002972027824225479,
-    "thin_distance": 0.27494048726462145,
+    "mean_distance": 0.00288024036251647,
+    "thin_distance": 0.2677123512264357,
     "volume_ratio": null,
-    "budget_error": 0.037,
-    "seconds": 8.701
+    "budget_error": 0.277,
+    "seconds": 3.377
    },
    "openclare": {
     "runs": 1,
     "produced": 1,
     "valid": 0,
     "failures": [],
-    "faces": 3579,
-    "irregular_vertices": 1116,
+    "faces": 5672,
+    "irregular_vertices": 1232,
     "irregular_excess": null,
     "base_complex_patches": null,
-    "alignment": 14.717254203308793,
-    "angle_deviation_mean": 20.60762530548651,
-    "angle_deviation_p95": 64.86670321617274,
-    "aspect_mean": 3.856447142065867,
-    "area_variation": 0.9343852344357573,
+    "alignment": 14.302424004258356,
+    "angle_deviation_mean": 16.22186473354711,
+    "angle_deviation_p95": 49.80578075875076,
+    "aspect_mean": 2.715925170878506,
+    "area_variation": 1.3907756643516043,
     "hausdorff": 0.025084616073780618,
-    "mean_distance": 0.0020006168258954304,
-    "thin_distance": 0.19450644741171955,
+    "mean_distance": 0.0018641941564365662,
+    "thin_distance": 0.18717237701595485,
     "volume_ratio": null,
-    "budget_error": 0.193,
-    "seconds": 14.594
+    "budget_error": 0.8906666666666667,
+    "seconds": 4.286
    },
    "quadremesher": {
     "runs": 1,
@@ -19092,21 +19124,21 @@
     "produced": 1,
     "valid": 0,
     "failures": [],
-    "faces": 35959,
-    "irregular_vertices": 2319,
-    "irregular_excess": 1703,
-    "base_complex_patches": 28193,
-    "alignment": 9.233888945230465,
-    "angle_deviation_mean": 6.803379398629959,
-    "angle_deviation_p95": 20.75648951362173,
-    "aspect_mean": 1.6979282078141065,
-    "area_variation": 0.4553610747818136,
-    "hausdorff": 0.01265388331033601,
-    "mean_distance": 0.00016255365729422056,
-    "thin_distance": 0.13108369062509984,
-    "volume_ratio": 0.995735993082097,
-    "budget_error": 0.0023694040251993087,
-    "seconds": 36.112
+    "faces": 37852,
+    "irregular_vertices": 2409,
+    "irregular_excess": 1793,
+    "base_complex_patches": 29294,
+    "alignment": 9.238296414547289,
+    "angle_deviation_mean": 6.874186401722032,
+    "angle_deviation_p95": 21.55620635594977,
+    "aspect_mean": 1.441010609916919,
+    "area_variation": 0.5115380014260238,
+    "hausdorff": 0.007947252210934041,
+    "mean_distance": 0.00015373285757369891,
+    "thin_distance": 0.09492823593710395,
+    "volume_ratio": 0.9966314977718983,
+    "budget_error": 0.05513742543346156,
+    "seconds": 20.002
    }
   },
   "bridge": {
@@ -19946,42 +19978,42 @@
     "produced": 1,
     "valid": 0,
     "failures": [],
-    "faces": 3028,
+    "faces": 5107,
     "irregular_vertices": 453,
     "irregular_excess": null,
     "base_complex_patches": null,
-    "alignment": 15.268582828750539,
-    "angle_deviation_mean": 25.401946729801093,
-    "angle_deviation_p95": 77.04473406789963,
-    "aspect_mean": 76.16879484463306,
-    "area_variation": 1.6002092906217396,
+    "alignment": 14.641390843929319,
+    "angle_deviation_mean": 23.42834751478418,
+    "angle_deviation_p95": 69.77364253653136,
+    "aspect_mean": 44.66536669881815,
+    "area_variation": 2.231621698661247,
     "hausdorff": 0.04804671002196301,
-    "mean_distance": 0.003208992494315647,
-    "thin_distance": 0.2835366745856748,
+    "mean_distance": 0.0031360446669536674,
+    "thin_distance": 0.2814620775046359,
     "volume_ratio": null,
-    "budget_error": 0.009333333333333334,
-    "seconds": 12.382
+    "budget_error": 0.7023333333333334,
+    "seconds": 10.64
    },
    "openclare": {
     "runs": 1,
     "produced": 1,
     "valid": 0,
     "failures": [],
-    "faces": 2976,
+    "faces": 5413,
     "irregular_vertices": 455,
     "irregular_excess": null,
     "base_complex_patches": null,
-    "alignment": 15.360269734776615,
-    "angle_deviation_mean": 25.9373285122359,
-    "angle_deviation_p95": 82.6626278257001,
-    "aspect_mean": 120.06351484820988,
-    "area_variation": 1.592023054030153,
+    "alignment": 14.757217022058382,
+    "angle_deviation_mean": 19.640767961311024,
+    "angle_deviation_p95": 67.60308082711633,
+    "aspect_mean": 65.2466664392365,
+    "area_variation": 2.322991255492388,
     "hausdorff": 0.048046708313896284,
-    "mean_distance": 0.003226712996221874,
-    "thin_distance": 0.28332893249935187,
+    "mean_distance": 0.0031404187024691144,
+    "thin_distance": 0.2811813320019467,
     "volume_ratio": null,
-    "budget_error": 0.008,
-    "seconds": 22.892
+    "budget_error": 0.8043333333333333,
+    "seconds": 7.308
    },
    "quadremesher": {
     "runs": 1,
@@ -20051,21 +20083,21 @@
     "produced": 1,
     "valid": 0,
     "failures": [],
-    "faces": 44429,
+    "faces": 55017,
     "irregular_vertices": 1154,
     "irregular_excess": null,
     "base_complex_patches": null,
-    "alignment": 9.359292239316199,
-    "angle_deviation_mean": 7.294975789527672,
-    "angle_deviation_p95": 26.040777325343726,
-    "aspect_mean": 9.099167255437841,
-    "area_variation": 0.4974663485167618,
+    "alignment": 6.11783925731032,
+    "angle_deviation_mean": 5.931933234156582,
+    "angle_deviation_p95": 22.412461711267156,
+    "aspect_mean": 7.54672558665687,
+    "area_variation": 0.7321835147625902,
     "hausdorff": 0.01318568016170768,
-    "mean_distance": 0.000627752266095891,
-    "thin_distance": 0.3669765595300463,
+    "mean_distance": 0.0005728135846942546,
+    "thin_distance": 0.356539972588809,
     "volume_ratio": null,
-    "budget_error": 0.038374962122851825,
-    "seconds": 127.649
+    "budget_error": 0.19079260638067616,
+    "seconds": 81.104
    }
   },
   "marine": {
@@ -20141,42 +20173,42 @@
     "produced": 1,
     "valid": 0,
     "failures": [],
-    "faces": 7648,
-    "irregular_vertices": 5951,
+    "faces": 11397,
+    "irregular_vertices": 5967,
     "irregular_excess": null,
     "base_complex_patches": null,
-    "alignment": 12.526747374421436,
-    "angle_deviation_mean": 24.937865159992498,
-    "angle_deviation_p95": 72.67769858936852,
-    "aspect_mean": 6.78930516709816,
-    "area_variation": 2.836165476679727,
+    "alignment": 10.945142398130963,
+    "angle_deviation_mean": 17.521952440489645,
+    "angle_deviation_p95": 65.26114213659767,
+    "aspect_mean": 3.8531457981199995,
+    "area_variation": 3.4550119432385276,
     "hausdorff": 0.007060772201834569,
-    "mean_distance": 0.0004635810326097011,
-    "thin_distance": 0.12964233361359195,
+    "mean_distance": 0.00042956937913562516,
+    "thin_distance": 0.1254953751169047,
     "volume_ratio": null,
-    "budget_error": 1.5493333333333332,
-    "seconds": 41.976
+    "budget_error": 2.799,
+    "seconds": 11.484
    },
    "openclare": {
     "runs": 1,
     "produced": 1,
     "valid": 0,
     "failures": [],
-    "faces": 7390,
-    "irregular_vertices": 5873,
+    "faces": 13624,
+    "irregular_vertices": 5915,
     "irregular_excess": null,
     "base_complex_patches": null,
-    "alignment": 12.614595862320687,
-    "angle_deviation_mean": 24.946064845288827,
-    "angle_deviation_p95": 71.59450092740434,
-    "aspect_mean": 5.6705359390329795,
-    "area_variation": 2.876488218928515,
+    "alignment": 10.657296837930883,
+    "angle_deviation_mean": 14.382591162578818,
+    "angle_deviation_p95": 59.828595296834195,
+    "aspect_mean": 2.668184542233265,
+    "area_variation": 3.92227537113166,
     "hausdorff": 0.0066019916222376206,
-    "mean_distance": 0.0004873814732635199,
-    "thin_distance": 0.13564417731956493,
+    "mean_distance": 0.0004381298775000856,
+    "thin_distance": 0.13168424206121798,
     "volume_ratio": null,
-    "budget_error": 1.4633333333333334,
-    "seconds": 78.289
+    "budget_error": 3.541333333333333,
+    "seconds": 18.786
    },
    "quadremesher": {
     "runs": 1,
@@ -20246,21 +20278,21 @@
     "produced": 1,
     "valid": 0,
     "failures": [],
-    "faces": 199778,
-    "irregular_vertices": 11124,
+    "faces": 226774,
+    "irregular_vertices": 11588,
     "irregular_excess": null,
     "base_complex_patches": null,
-    "alignment": 8.324234757746224,
-    "angle_deviation_mean": 5.2462875678561005,
-    "angle_deviation_p95": 19.244335773388812,
-    "aspect_mean": 1.3457726633887432,
-    "area_variation": 0.36397805300565195,
+    "alignment": 8.365531096520659,
+    "angle_deviation_mean": 4.900369711210717,
+    "angle_deviation_p95": 18.216997708815427,
+    "aspect_mean": 1.32329611514338,
+    "area_variation": 0.526194550869845,
     "hausdorff": 0.0030001697107532228,
-    "mean_distance": 3.682900335607204e-05,
-    "thin_distance": 0.17659023513973032,
+    "mean_distance": 3.327300812655856e-05,
+    "thin_distance": 0.16996731195676526,
     "volume_ratio": null,
-    "budget_error": 0.0665364595501313,
-    "seconds": 207.901
+    "budget_error": 0.059602463344204694,
+    "seconds": 48.242
    }
   },
   "venturi": {
@@ -20348,7 +20380,7 @@
     "thin_distance": 0.29925149772645193,
     "volume_ratio": null,
     "budget_error": 0.093,
-    "seconds": 8.573
+    "seconds": 10.996
    },
    "openclare": {
     "runs": 1,
@@ -20369,7 +20401,7 @@
     "thin_distance": 0.2659598936161804,
     "volume_ratio": null,
     "budget_error": 0.01633333333333333,
-    "seconds": 21.937
+    "seconds": 19.976
    },
    "quadremesher": {
     "runs": 1,
@@ -20453,7 +20485,7 @@
     "thin_distance": 0.2352707550452587,
     "volume_ratio": null,
     "budget_error": 0.006270696822377228,
-    "seconds": 111.524
+    "seconds": 104.985
    }
   },
   "wolf": {
@@ -20541,7 +20573,7 @@
     "thin_distance": 0.5646380290847595,
     "volume_ratio": null,
     "budget_error": 0.19366666666666665,
-    "seconds": 23.715
+    "seconds": 23.856
    },
    "openclare": {
     "runs": 1,
@@ -20562,7 +20594,7 @@
     "thin_distance": 0.5418902240274582,
     "volume_ratio": null,
     "budget_error": 0.178,
-    "seconds": 26.28
+    "seconds": 30.741
    },
    "quadremesher": {
     "runs": 1,
@@ -20646,7 +20678,7 @@
     "thin_distance": 0.36090131256363567,
     "volume_ratio": null,
     "budget_error": 0.13167378537106247,
-    "seconds": 457.466
+    "seconds": 555.291
    }
   },
   "f16": {
@@ -20720,42 +20752,42 @@
     "produced": 1,
     "valid": 0,
     "failures": [],
-    "faces": 1892,
-    "irregular_vertices": 492,
+    "faces": 3715,
+    "irregular_vertices": 581,
     "irregular_excess": null,
     "base_complex_patches": null,
-    "alignment": 5.336024767865494,
-    "angle_deviation_mean": 14.497091724477126,
-    "angle_deviation_p95": 48.72789210113333,
-    "aspect_mean": 164.53713251069573,
-    "area_variation": 0.8947336531983938,
-    "hausdorff": 0.048615082154758835,
-    "mean_distance": 0.005418948324619549,
-    "thin_distance": 0.40447191565265184,
+    "alignment": 4.845870807291941,
+    "angle_deviation_mean": 9.061394726091653,
+    "angle_deviation_p95": 37.49197896583249,
+    "aspect_mean": 81.49608618689257,
+    "area_variation": 1.448959863903501,
+    "hausdorff": 0.03900132982481208,
+    "mean_distance": 0.003178010668180968,
+    "thin_distance": 0.23868522033748157,
     "volume_ratio": null,
-    "budget_error": 0.36933333333333335,
-    "seconds": 21.335
+    "budget_error": 0.23833333333333334,
+    "seconds": 16.541
    },
    "openclare": {
     "runs": 1,
     "produced": 1,
     "valid": 0,
     "failures": [],
-    "faces": 1843,
-    "irregular_vertices": 353,
+    "faces": 3665,
+    "irregular_vertices": 442,
     "irregular_excess": null,
     "base_complex_patches": null,
-    "alignment": 5.268609126358898,
-    "angle_deviation_mean": 14.256717675349092,
-    "angle_deviation_p95": 47.70844668974209,
-    "aspect_mean": 271.4985297747223,
-    "area_variation": 0.876547045068451,
-    "hausdorff": 0.04861508458875774,
-    "mean_distance": 0.005435233457454097,
-    "thin_distance": 0.4056096250830912,
+    "alignment": 4.810434845310225,
+    "angle_deviation_mean": 8.938592410707054,
+    "angle_deviation_p95": 36.63385765108205,
+    "aspect_mean": 134.1101276087234,
+    "area_variation": 1.4420333758606152,
+    "hausdorff": 0.039001331228044514,
+    "mean_distance": 0.003177140425266444,
+    "thin_distance": 0.2385460526300225,
     "volume_ratio": null,
-    "budget_error": 0.38566666666666666,
-    "seconds": 82.041
+    "budget_error": 0.22166666666666668,
+    "seconds": 17.966
    },
    "quadremesher": {
     "runs": 1,
@@ -20825,21 +20857,21 @@
     "produced": 1,
     "valid": 0,
     "failures": [],
-    "faces": 30486,
-    "irregular_vertices": 916,
+    "faces": 38723,
+    "irregular_vertices": 931,
     "irregular_excess": null,
     "base_complex_patches": null,
-    "alignment": 3.8760353610195013,
-    "angle_deviation_mean": 7.2642361783560485,
-    "angle_deviation_p95": 24.42507382566464,
-    "aspect_mean": 17.530540607431337,
-    "area_variation": 0.4727181609511725,
+    "alignment": 3.472528719243327,
+    "angle_deviation_mean": 5.848133461609139,
+    "angle_deviation_p95": 21.145288454479925,
+    "aspect_mean": 13.959583184049672,
+    "area_variation": 0.7398998958959593,
     "hausdorff": 0.02878400842678408,
-    "mean_distance": 0.0011001465186323298,
-    "thin_distance": 0.4178427948005381,
+    "mean_distance": 0.0009976901217570104,
+    "thin_distance": 0.4095741849800103,
     "volume_ratio": null,
-    "budget_error": 0.15405960375159553,
-    "seconds": 184.713
+    "budget_error": 0.07450468949442256,
+    "seconds": 123.385
    }
   },
   "camera": {
@@ -20913,42 +20945,42 @@
     "produced": 1,
     "valid": 0,
     "failures": [],
-    "faces": 2347,
+    "faces": 2833,
     "irregular_vertices": 130,
     "irregular_excess": null,
     "base_complex_patches": null,
-    "alignment": 6.231364785884896,
-    "angle_deviation_mean": 9.477239854053133,
-    "angle_deviation_p95": 42.48093311044511,
-    "aspect_mean": 7.082854282329021,
-    "area_variation": 0.5139792705291033,
+    "alignment": 4.838516332077651,
+    "angle_deviation_mean": 8.272624976977033,
+    "angle_deviation_p95": 34.60930438488731,
+    "aspect_mean": 6.308342430537868,
+    "area_variation": 0.7299978782834176,
     "hausdorff": 0.03375249060354328,
-    "mean_distance": 0.003437978404230671,
-    "thin_distance": 0.1675155861422194,
+    "mean_distance": 0.0031406063451722157,
+    "thin_distance": 0.15565871610289805,
     "volume_ratio": null,
-    "budget_error": 0.21766666666666667,
-    "seconds": 13.295
+    "budget_error": 0.05566666666666667,
+    "seconds": 8.343
    },
    "openclare": {
     "runs": 1,
     "produced": 1,
     "valid": 0,
     "failures": [],
-    "faces": 2338,
+    "faces": 2824,
     "irregular_vertices": 103,
     "irregular_excess": null,
     "base_complex_patches": null,
-    "alignment": 6.367569146870498,
-    "angle_deviation_mean": 9.448977904157612,
-    "angle_deviation_p95": 42.59723718956792,
-    "aspect_mean": 7.394367315426437,
-    "area_variation": 0.5199046350330601,
+    "alignment": 5.003969346506731,
+    "angle_deviation_mean": 8.271531570823983,
+    "angle_deviation_p95": 34.607748563512786,
+    "aspect_mean": 6.493597701342349,
+    "area_variation": 0.7355300661771673,
     "hausdorff": 0.033752487135518205,
-    "mean_distance": 0.003401056059257376,
-    "thin_distance": 0.16578490493042153,
+    "mean_distance": 0.0031208782730287425,
+    "thin_distance": 0.15525252148390128,
     "volume_ratio": null,
-    "budget_error": 0.22066666666666668,
-    "seconds": 22.14
+    "budget_error": 0.058666666666666666,
+    "seconds": 7.694
    },
    "quadremesher": {
     "runs": 1,
@@ -21018,21 +21050,21 @@
     "produced": 1,
     "valid": 0,
     "failures": [],
-    "faces": 10798,
+    "faces": 11284,
     "irregular_vertices": 234,
     "irregular_excess": null,
     "base_complex_patches": null,
-    "alignment": 5.151193800193222,
-    "angle_deviation_mean": 6.693457842941619,
-    "angle_deviation_p95": 31.3839317800426,
-    "aspect_mean": 15.448593764935252,
-    "area_variation": 0.5327239821673067,
+    "alignment": 4.5709322117398345,
+    "angle_deviation_mean": 6.51909975196885,
+    "angle_deviation_p95": 28.761484401632586,
+    "aspect_mean": 14.881960673527805,
+    "area_variation": 0.5706851674999893,
     "hausdorff": 0.032148557826589645,
-    "mean_distance": 0.0009569550796470396,
-    "thin_distance": 0.15331295255626207,
+    "mean_distance": 0.0008639607719823612,
+    "thin_distance": 0.13265596957803716,
     "volume_ratio": null,
-    "budget_error": 0.14444180334363363,
-    "seconds": 38.757
+    "budget_error": 0.10593455352190793,
+    "seconds": 15.335
    }
   },
   "ogre_hp": {
