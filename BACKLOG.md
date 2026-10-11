@@ -1081,7 +1081,8 @@ track. "DT" stands for *dette technique*, technical debt.
   asked for as many quads as Quad Remesher made (19,050).
 - **Left**:
   - The scenes are in git since 9 October 2026, through Git LFS, and the OBJ files they were
-    made from are gone. There is no remote yet: what LFS stores is on one machine.
+    made from are gone. Since 11 October 2026 the repository has a remote, private
+    (`github.com/marcgardent/openclare`), and what LFS stores is there too.
   - **Done on 11 October 2026**: `ogre_hp`, `f16`, `camera` and `wolf` are measured with
     every tool, with their Quad Remesher references and their pages, and the chains of this
     repository were measured again on every model from its scene, pictures included. The
