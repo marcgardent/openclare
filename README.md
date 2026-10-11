@@ -56,6 +56,13 @@ image and modifiers are brought up to date.
 |---|---|
 | Levels | How many times the result is subdivided under the relief: more of them carry finer detail, at four times the faces each |
 | Resolution | The size of the height map, from 512 to 4096 texels a side |
+| Apply As: Modifier | A Displace modifier after the Subdivision Surface. Shown in every view and by every renderer, applied or exported as geometry; the mesh is really subdivided, and carries no more detail than its vertices |
+| Apply As: Material | The displacement of the material, with adaptive subdivision on the Subdivision Surface: Cycles dices the surface to the size of a pixel when it renders, for more detail and less memory. Nothing moves in Solid view. A material shared with another object is copied for the result first; one that has a displacement of its own is left as it is. Never both ways at once: baking the other way takes the first away |
+| File | Writes the height map beside the model as well. OpenEXR, 32 or 16 bits: the heights themselves in the unit of the object, to read with midlevel 0 and scale 1. PNG, 16 bits: the heights between 0 and 1, to read with midlevel 0.5 and the scale the panel then shows |
+| Folder | Where the file goes (`//` is the folder of the `.blend`), as `<object>_height.exr` or `.png` |
+
+Along the seams of the atlas the two islands that meet do not give exactly the same height: with
+*Material* a thin line can show there.
 
 Blender waits while the engine runs (about eight seconds for the 200,000 triangles of the ogre
 at 3000 quads), and says where it is: the status bar shows each stage as it begins, the cursor
