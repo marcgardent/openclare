@@ -1012,6 +1012,24 @@ track. "DT" stands for *dette technique*, technical debt.
   author's ogre with its curves come out as before.
 - **Next**: those 2 border edges. A border the map did not put on a grid line should cost the
   stretch of border, not the piece.
+- **Where those border edges come from, 11 October 2026.** Counted on the sources: the
+  borders the map cannot put on a grid line are those the mending makes. Round an edge of
+  three faces none of which goes straight on from another, the three are taken apart, each
+  with the edge as a border of its own; two of them belong to the same surface all round,
+  which is left with a slit, two borders side by side with nothing between them. The wolf
+  has two edges of more than two faces, one of that kind and one with a pair kept joined:
+  four border edges made, and four edges off the grid lines on its body at 1000 quads. The
+  car has 346, nine of that kind, and 2 border edges off the grid lines on its body. The
+  camera and the jet have none: their pieces through the fallback have another cause, not
+  looked for yet.
+- **Tried and taken back the same day**: keeping the straightest pair joined even when it
+  bends (the threshold of 45 degrees lowered to 155). No slit is left, and the body of the
+  wolf is then not meshed at all, at any budget: its work mesh comes out of preprocessing
+  with 3 edges of more than two faces or of the wrong way round. The car hardly moves (21
+  pieces for 22, three through the fallback). Why preprocessing breaks a surface that bends
+  sharply along one edge, with a border of another face lying on it, is the thing to find
+  before trying again; or else a slit is to be told apart from a border and not made a
+  wall of the layout.
 - **What the car asks for instead**: its hard edges kept. At 30 degrees they are 9058 edges of
   the source in 179 connected lines, 5577 quad edges long in all for a mesh of 8000 quads,
   with 1300 junctions and 246 loose ends. Short stray bits are not the trouble (33 quad edges
