@@ -19,7 +19,7 @@ Overall mark at 3000 quads:
 | [blub](blub.md) | organic | 44 | 83 | 75 |
 | [pig](pig.md) | organic | 21 | 78 | 46 |
 | [jerry](jerry.md) | organic | 53 | 67 | 40 |
-| [rose](rose.md) | organic | 8 | 18 | 33 |
+| [rose](rose.md) | organic | 8 | 20 | 33 |
 | [bridge](bridge.md) | organic | 0 | 85 | 48 |
 | [part](part.md) | mechanical | 77 | 88 | 84 |
 | [cube](cube.md) | mechanical | 97 | 99 | 99 |
@@ -28,10 +28,10 @@ Overall mark at 3000 quads:
 | [venturi](venturi.md) | extra | 0 | 30 | 42 |
 | [ogre_hp](ogre_hp.md) | extra | 0 | 69 | 65 |
 | [terrain](terrain.md) | extra | 59 | 66 | 29 |
-| [mahaveer](mahaveer.md) | extra | 0 | 21 | 30 |
-| [marine](marine.md) | extra | 0 | 22 | 39 |
-| [f16](f16.md) | extra | 0 | 22 | 39 |
-| [camera](camera.md) | extra | 0 | 38 | 47 |
+| [mahaveer](mahaveer.md) | extra | 0 | 13 | 30 |
+| [marine](marine.md) | extra | 0 | 28 | 39 |
+| [f16](f16.md) | extra | 0 | 32 | 39 |
+| [camera](camera.md) | extra | 0 | 48 | 47 |
 | [wolf](wolf.md) | extra | 0 | 24 | 36 |
 | [sphere](sphere.md) | calibration | 88 | 95 | 85 |
 | [torus](torus.md) | calibration | 56 | 98 | 83 |
