@@ -67,6 +67,7 @@ track. "DT" stands for *dette technique*, technical debt.
 | DT-050 | A sliver with next to no area took all the memory of the machine | bench in Blender | high | **closed (9 October 2026)**; no guard on memory in the engine itself |
 | DT-051 | Baking the sculpt onto the result: normal map, height and ambient occlusion, read through the engine's own correspondence | idea of the author | medium | open, after the lines (DT-047, DT-048) |
 | DT-052 | Preprocessing welded back what the mending took apart: the body of a model not meshed, and the result passed for valid | bench | high | **closed (11 October 2026)**; a result that lacks most of its model still passes for valid |
+| DT-053 | The engine ran on one core: the pieces of a model were meshed one after the other | time | high | **closed (11 October 2026)** for models in several pieces; nothing runs in parallel within a piece |
 | DT-033 | Terrains and scans: no tool aligns, the field has nothing to follow | J9 | medium | open |
 | DT-027 | Guards on computing time for pathological inputs | J8 | low | open |
 
@@ -1202,3 +1203,44 @@ track. "DT" stands for *dette technique*, technical debt.
     nothing of it either; it now warns of the pieces that could not be meshed and are missing.
   - The body of the wolf goes through the fallback chain, and takes its time there: 457
     seconds for 13,000 quads (DT-027).
+
+### DT-053 — The engine ran on one core
+
+- **Born on** 11 October 2026, when the author said that computing time was becoming a
+  problem: thirty seconds at best on the models he tries. A model in one clean piece takes 1
+  to 5 seconds at 3000 quads, less than Quad Remesher (3 to 20); the long runs are the models
+  in many pieces, and the engine used one of the eight cores of the machine.
+- **Closed the same day for those**: the pieces of a model do not depend on one another and
+  are meshed several at a time, on as many threads as the machine has cores (`each_piece` in
+  `remesher.rs`; `OPENCLARE_THREADS` sets another number). No dependency: the threads of the
+  standard library. The mesh is the same, file for file, as with one thread (checked on the
+  seven models in several pieces of the bench, and by a test on twelve balls). The stages of
+  every piece still reach whoever follows the run, from the thread that asked for the mesh,
+  those of one piece now among those of the others; a host that stops the run stops every
+  piece at its next stage. A recorder that keeps what the stages show (Rerun, `--notes`)
+  gets the pieces one after the other, as before: shapes are not passed between threads.
+- **Measured**, through the add-on, 3000 quads asked for, seconds before and after:
+
+  | Model | Pieces | Before | After |
+  |---|---|---|---|
+  | `marine` | 872 | 78.3 | 16.4 |
+  | `f16` | 296 | 82.0 | 20.4 |
+  | `mahaveer` | 164 | 22.9 | 8.7 |
+  | `camera` | 42 | 22.1 | 6.6 |
+  | Desert Rose | 96 | 14.6 | 5.1 |
+  | `wolf` | 8 | 26.3 | 25.6 |
+  | `venturi` | 22 | 21.9 | 22.4 |
+
+  On the command line `marine` goes from 84 to 16 seconds with eight threads, 21 with four:
+  the machine has four cores, each counted twice.
+- **Left**:
+  - Nothing runs in parallel within a piece. The wolf and the car are one large piece and a
+    few small ones, and gain nothing; neither does a model in one piece, the sculpt of 4.7
+    million triangles first (82 seconds, 53 of them in preprocessing: DT-045).
+  - Where the time of the long pieces goes is known and not dealt with here: the fallback
+    chain (10 of the 15 seconds of the camera on one thread, 12 of the 22 of the jet), and a
+    work mesh of 1500 triangles at least for every piece, a rivet included.
+  - Several pieces at a time take the memory of several pieces at a time, and the engine
+    still has no allowance of its own (DT-050).
+  - The seconds the command line prints are now by the clock; the times of the stages it
+    lists are summed over the pieces and add up to more.

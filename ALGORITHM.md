@@ -1245,6 +1245,10 @@ treated on its own". The code treated everything as one block.
   each goes alone through the whole chain, with its work mesh, to its measure, and its own
   fallback if the main chain cannot treat it. A stubborn piece no longer drags the others
   along.
+- **Several at a time** (since 11 October 2026): the pieces do not depend on one another, and
+  are meshed on as many threads as the machine has cores, the largest first. The result is
+  the same as one after the other. A recorder that keeps what the stages show still gets
+  them one after the other.
 - **The budget** is shared in proportion to area, weighted by painted density if there is one
   (a piece painted at 1 gets more quads than a piece left at 0). Each piece gets at least what
   a shape cannot do without: 1 quad for an open sheet, 6 for a ball (a cube), 16 for a shape
