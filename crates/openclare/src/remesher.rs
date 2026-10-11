@@ -26,6 +26,7 @@ use crate::quantization;
 use crate::recorder::{self, Recorder, Shape, Silent};
 use crate::relax::{Features, Laplacian, Relaxer, Squaring};
 use crate::singularity;
+use crate::thickness;
 use crate::sizing;
 use crate::spatial::Bvh;
 use crate::tmesh;
@@ -381,9 +382,23 @@ impl QuadLayout {
     ) -> Result<(PolyMesh, Report)> {
         let pieces = input.pieces();
         if pieces.len() <= 1 {
+            // Thin all along, it gets the quads its thickness calls for.
+            let area = input.surface_area();
+            let share = match config.target {
+                Target::QuadCount(count) => count,
+                Target::EdgeLength(length) if length > 0.0 => (area / (length * length)).round() as usize,
+                Target::EdgeLength(_) => 0,
+            };
+            let nominal = (area / share.max(1) as f64).sqrt();
+            let needed = quads_for_thickness(input, share, nominal, config);
+            let thin = RemeshConfig { target: Target::QuadCount(needed.unwrap_or(share)), ..config.clone() };
+            let config = if needed.is_some() { &thin } else { config };
             let (mesh, mut report) = self.remesh_piece(input, guides, config, self.min_triangles, recorder)?;
             report.pieces = 1;
             report.pieces_fell_back = report.fell_back as usize;
+            if let Some(needed) = needed {
+                (report.thin_pieces, report.quads_for_thin_pieces) = (1, needed - share);
+            }
             return Ok((mesh, report));
         }
 
@@ -408,10 +423,25 @@ impl QuadLayout {
                 input.positions.len()
             )));
         }
-        let shares = shares_of(&pieces, guides, config, quads);
+        let mut shares = shares_of(&pieces, guides, config, quads);
+        // A piece thin all along gets the quads its thickness calls for,
+        // on top of the number asked for in all: nothing is taken from the
+        // others for it.
+        let (mut thin_pieces, mut quads_for_thin_pieces) = (0, 0);
+        for (index, ((piece, _), share)) in pieces.iter().zip(&mut shares).enumerate() {
+            let Some(share) = share else { continue };
+            if let Some(needed) = quads_for_thickness(piece, *share, edge_length, config) {
+                let note = format!("thin all along: {needed} quads for an edge no longer than it is thick, not {share}");
+                recorder::Piece::new(recorder, index, pieces.len()).record("notes/thin", Shape::Note(&note));
+                thin_pieces += 1;
+                quads_for_thin_pieces += needed - *share;
+                *share = needed;
+            }
+        }
 
         let mut merged = PolyMesh::default();
-        let mut report = Report { edge_length, pieces: pieces.len(), ..Default::default() };
+        let mut report =
+            Report { edge_length, pieces: pieces.len(), thin_pieces, quads_for_thin_pieces, ..Default::default() };
         let mut first_error = None;
         for (index, ((piece, origin), share)) in pieces.iter().zip(shares).enumerate() {
             let Some(share) = share else {
@@ -475,6 +505,36 @@ fn least_quads(piece: &TriMesh) -> usize {
     }
     let euler = piece.positions.len() as i64 - topology.edge_count() as i64 + piece.triangles.len() as i64;
     if euler >= 2 { 6 } else { 16 }
+}
+
+/// Fewest quads that go round a piece thin all along, whatever the preset
+/// says of thin parts: with fewer than four a wire has no section.
+const LEAST_AROUND: f64 = 4.0;
+
+/// How many times smaller than the size asked for the quads of a thin piece
+/// may get. Thinner than that, a piece keeps quads longer than it is thick:
+/// a guard on what a model of hairs would otherwise ask for.
+const THIN_PIECE_RANGE: f64 = 16.0;
+
+/// The quads a piece needs for an edge no longer than it is thick, when that
+/// is more than the `share` it has: `None` for a piece thick enough for its
+/// quads, which is every piece but a ring, a strap, a wire. `nominal` is the
+/// edge of the quads asked for over the whole model.
+fn quads_for_thickness(piece: &TriMesh, share: usize, nominal: f64, config: &RemeshConfig) -> Option<usize> {
+    if !config.preserve_volumes || share == 0 {
+        return None;
+    }
+    let area = piece.surface_area();
+    let around = config.quads_around.max(LEAST_AROUND);
+    let edge = (area / share as f64).sqrt();
+    let girth = thickness::typical_girth(piece, around * edge);
+    let wanted = (girth / around).max(nominal / THIN_PIECE_RANGE);
+    // Not thin, or thick beyond the reach (an infinite girth).
+    if wanted.is_nan() || wanted >= edge {
+        return None;
+    }
+    let needed = (area / (wanted * wanted)).ceil() as usize;
+    (needed > share).then_some(needed)
 }
 
 /// How many quads each piece is asked for, out of `quads` in all: in

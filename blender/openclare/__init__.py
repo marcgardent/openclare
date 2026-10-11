@@ -80,7 +80,21 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         name="Preset", description="What the mesh is for", items=PRESETS, default="organic", update=preset_changed
     )
     quads: bpy.props.IntProperty(
-        name="Quads", description="Number of quads asked for", default=3000, min=1, soft_min=100, soft_max=50_000
+        name="Quads",
+        description="Number of quads asked for: the least there will be, when Preserve Volumes is on",
+        default=3000,
+        min=1,
+        soft_min=100,
+        soft_max=50_000,
+    )
+    preserve_volumes: bpy.props.BoolProperty(
+        name="Preserve Volumes",
+        description=(
+            "The shape comes before the number of quads: a part that is thin all along, a ring, a strap, "
+            "a wire, is given the quads it takes to keep its shape, on top of the number asked for. "
+            "Off, the number is kept, and such a part comes out crumpled"
+        ),
+        default=True,
     )
     adaptive_size: bpy.props.FloatProperty(
         name="Adaptive Size",
@@ -472,6 +486,7 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
 
         try:
             engine_settings = {"quads": settings.quads, "adaptivity": settings.adaptive_size / 100.0}
+            engine_settings["preserve_volumes"] = "true" if settings.preserve_volumes else "false"
             density = None
             if settings.density_group:
                 density = weights_of(evaluated, source, settings.density_group)
@@ -519,6 +534,10 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
                 said += f", {report.get('sharp_curve_edges', '0')} along the sharp curves"
             if report.get("guide_gaps", "0") != "0":
                 said += f" ({report['guide_gaps']} breaks)"
+        thin, beyond = int(report.get("thin_pieces", 0)), int(report.get("quads_for_thin_pieces", 0))
+        if thin:
+            # Said, because the result then has more quads than were asked for.
+            said += f"; {beyond} quads more than asked for, to keep the shape of {thin} thin part(s)"
         # Said as a warning: the result then lacks part of the object.
         failed = int(report.get("pieces_failed", 0))
         if failed:
@@ -653,6 +672,7 @@ class OPENCLARE_PT_panel(bpy.types.Panel):
             layout.label(text=f"Active object: {active.name}" if active else "No mesh is active", icon="INFO")
         layout.prop(settings, "preset")
         layout.prop(settings, "quads")
+        layout.prop(settings, "preserve_volumes")
         layout.prop(settings, "adaptive_size", slider=True)
         chosen = object_to_remesh(context)
         if chosen is not None:

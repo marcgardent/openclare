@@ -44,7 +44,7 @@ import bpy
 
 ROOT = Path(__file__).resolve().parent.parent
 # The settings of the add-on a run depends on, written with its report.
-SETTINGS = ["preset", "quads", "adaptive_size", "density_group", "density_factor"]
+SETTINGS = ["preset", "quads", "preserve_volumes", "adaptive_size", "density_group", "density_factor"]
 EXPORTS = ["grid_uv", "atlas_uv", "sharp_edges", "materials", "creases"]
 # Lines written at a time: a sculpt has millions.
 CHUNK = 200_000

@@ -297,7 +297,7 @@ unsafe fn remesh(
     let stats = &done.stats;
     let report = format!(
         "{asked}\nvertices = {}\nfaces = {}\nquads = {}\nirregular_vertices = {}\npieces = {}\n\
-         pieces_through_fallback = {}\npieces_failed = {}\npieces_skipped = {}\nguide_edges = {}\nsharp_curve_edges = {}\nfaces_across_groups = {}\nwelded_vertices = {}\nedges_taken_apart = {}\nguide_gaps = {}\n\
+         pieces_through_fallback = {}\npieces_failed = {}\npieces_skipped = {}\nthin_pieces = {}\nquads_for_thin_pieces = {}\nguide_edges = {}\nsharp_curve_edges = {}\nfaces_across_groups = {}\nwelded_vertices = {}\nedges_taken_apart = {}\nguide_gaps = {}\n\
          guides_let_go = {}\nseconds = {seconds:.3}\n",
         stats.vertices,
         stats.faces,
@@ -307,6 +307,8 @@ unsafe fn remesh(
         done.pieces_fell_back,
         done.pieces_failed,
         done.pieces_skipped,
+        done.thin_pieces,
+        done.quads_for_thin_pieces,
         done.guide_edges.len(),
         done.sharp_curve_edges.len(),
         done.faces_across_groups,

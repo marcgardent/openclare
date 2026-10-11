@@ -285,6 +285,34 @@ assert len(bpy.context.active_object.data.materials) == 0
 settings.export_materials = True
 settings.quads, settings.adaptive_size = 800, 50.0
 
+# Preserve Volumes: a ring of wire beside a ball, in one object. The ring
+# is thin all along; it gets the quads its thickness calls for on top of the
+# number asked for, unless the box is unticked.
+bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=4, radius=1.0, location=(12.0, 0.0, 0.0))
+body = bpy.context.active_object
+bpy.ops.mesh.primitive_torus_add(
+    major_radius=0.5, minor_radius=0.01, major_segments=96, minor_segments=12, location=(15.0, 0.0, 0.0)
+)
+wire = bpy.context.active_object
+alone(body)
+wire.select_set(True)
+bpy.ops.object.join()
+body = bpy.context.active_object
+settings.quads, settings.adaptive_size = 600, 0.0
+assert settings.preserve_volumes, "Preserve Volumes is not on by default"
+alone(body)
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+kept = len(bpy.context.active_object.data.polygons)
+assert openclare.last_report["thin_pieces"] == "1", openclare.last_report
+assert kept > 900 and kept - 600 > 0.7 * int(openclare.last_report["quads_for_thin_pieces"]), kept
+settings.preserve_volumes = False
+alone(body)
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+assert openclare.last_report["thin_pieces"] == "0"
+assert len(bpy.context.active_object.data.polygons) < 700, len(bpy.context.active_object.data.polygons)
+settings.preserve_volumes = True
+settings.quads, settings.adaptive_size = 800, 50.0
+
 # Nothing to remesh: said, not crashed.
 bpy.ops.object.empty_add()
 assert not bpy.ops.object.openclare_remesh.poll()
