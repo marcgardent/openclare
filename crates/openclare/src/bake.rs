@@ -48,7 +48,7 @@ pub struct HeightMap {
     /// Of those, the texels where the source was not found along the normal
     /// within the reach: the nearest point of the source was taken instead.
     pub astray: usize,
-    /// The least and the greatest height among the texels covered.
+    /// The least and the greatest height among the texels written.
     pub low: f32,
     pub high: f32,
 }
@@ -64,9 +64,10 @@ struct Place {
 
 /// Bakes the height of `source` above `target` into a texture of `width` by
 /// `height` texels, looking for the source no farther than `reach` from the
-/// target along its normal. The texels round the faces are filled from
-/// their neighbours over `padding` texels, so that a renderer that reads
-/// between two texels at the rim of an island reads no hole.
+/// target along its normal. The texels within `padding` of a face go on
+/// from it, so that a renderer that reads between two texels on the edge of
+/// an island reads the height of that edge, the same from either side of a
+/// seam.
 pub fn height_map(
     target: &Target,
     source: &TriMesh,
@@ -124,6 +125,58 @@ pub fn height_map(
         }
     }
 
+    // Round the faces, the texels within `padding` of one go on from it:
+    // each is given the point the nearest face would have there if it went
+    // on past its edge, and its height is measured from that point like any
+    // other. A renderer reads a texture between its texels: on the edge of
+    // an island, between one inside and one outside. With the outside one a
+    // mere copy of its neighbours, the two islands that meet along a seam
+    // give two heights for the same edge, and the surface cracks there;
+    // going on as the face does, both give the height of the edge itself.
+    let inside = places.len();
+    if padding > 0 {
+        let reach_in_texels = padding as f64;
+        let mut beyond: std::collections::HashMap<usize, (f64, Place)> = std::collections::HashMap::new();
+        for (triangle, corners) in target.uvs.iter().enumerate() {
+            let [a, b, c] = corners.map(|[u, v]| [u * width as f64, v * height as f64]);
+            let area = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+            if !area.is_finite() || area.abs() < 1e-12 {
+                continue;
+            }
+            let low = [a[0].min(b[0]).min(c[0]) - reach_in_texels, a[1].min(b[1]).min(c[1]) - reach_in_texels];
+            let high = [a[0].max(b[0]).max(c[0]) + reach_in_texels, a[1].max(b[1]).max(c[1]) + reach_in_texels];
+            let columns = (low[0].floor().max(0.0) as usize)..(high[0].ceil().min(width as f64) as usize);
+            let rows = (low[1].floor().max(0.0) as usize)..(high[1].ceil().min(height as f64) as usize);
+            for row in rows {
+                for column in columns.clone() {
+                    let texel = row * width + column;
+                    if taken[texel] {
+                        continue;
+                    }
+                    let p = [column as f64 + 0.5, row as f64 + 0.5];
+                    let away = [(a, b), (b, c), (c, a)]
+                        .into_iter()
+                        .map(|(from, to)| {
+                            let (along, to_p) = ([to[0] - from[0], to[1] - from[1]], [p[0] - from[0], p[1] - from[1]]);
+                            let length = along[0] * along[0] + along[1] * along[1];
+                            let t = ((to_p[0] * along[0] + to_p[1] * along[1]) / length.max(1e-300)).clamp(0.0, 1.0);
+                            (to_p[0] - t * along[0]).hypot(to_p[1] - t * along[1])
+                        })
+                        .fold(f64::INFINITY, f64::min);
+                    if away > reach_in_texels || beyond.get(&texel).is_some_and(|&(nearest, _)| nearest <= away) {
+                        continue;
+                    }
+                    let of_a = ((b[0] - p[0]) * (c[1] - p[1]) - (b[1] - p[1]) * (c[0] - p[0])) / area;
+                    let of_b = ((c[0] - p[0]) * (a[1] - p[1]) - (c[1] - p[1]) * (a[0] - p[0])) / area;
+                    beyond.insert(texel, (away, Place { texel, triangle: triangle as u32, weights: [of_a, of_b] }));
+                }
+            }
+        }
+        let mut beyond: Vec<Place> = beyond.into_values().map(|(_, place)| place).collect();
+        beyond.sort_by_key(|place| place.texel);
+        places.extend(beyond);
+    }
+
     let surface = Bvh::build(source);
     let measure = |place: &Place| -> (f32, bool) {
         let [a, b, c] = target.triangles[place.triangle as usize].map(|v| v as usize);
@@ -164,43 +217,19 @@ pub fn height_map(
 
     let mut heights = vec![f32::NAN; width * height];
     let (mut low, mut high, mut astray) = (f32::INFINITY, f32::NEG_INFINITY, 0);
-    for (place, &(found, lost)) in places.iter().zip(&measured) {
+    for (index, (place, &(found, lost))) in places.iter().zip(&measured).enumerate() {
         heights[place.texel] = found;
+        // The least and the greatest are of every texel written, for an
+        // image scaled on them to hold them all; what went astray is
+        // counted under the faces only.
         (low, high) = (low.min(found), high.max(found));
-        astray += lost as usize;
+        astray += (lost && index < inside) as usize;
     }
     if places.is_empty() {
         (low, high) = (0.0, 0.0);
     }
 
-    // Round the faces, each texel takes the mean of its neighbours that
-    // have a height, one ring at a time.
-    for _ in 0..padding {
-        let before = heights.clone();
-        for row in 0..height {
-            for column in 0..width {
-                if !before[row * width + column].is_nan() {
-                    continue;
-                }
-                let (mut sum, mut count) = (0.0, 0);
-                for (across, up) in [(-1i64, 0i64), (1, 0), (0, -1), (0, 1), (-1, -1), (1, -1), (-1, 1), (1, 1)] {
-                    let (x, y) = (column as i64 + across, row as i64 + up);
-                    if x < 0 || y < 0 || x >= width as i64 || y >= height as i64 {
-                        continue;
-                    }
-                    let near = before[y as usize * width + x as usize];
-                    if !near.is_nan() {
-                        sum += near;
-                        count += 1;
-                    }
-                }
-                if count > 0 {
-                    heights[row * width + column] = sum / count as f32;
-                }
-            }
-        }
-    }
-    Ok(HeightMap { width, height, heights, covered: places.len(), astray, low, high })
+    Ok(HeightMap { width, height, heights, covered: inside, astray, low, high })
 }
 
 #[cfg(test)]
@@ -271,6 +300,34 @@ mod tests {
         // Two columns more, at the height of their neighbours.
         assert_eq!(padded.heights.iter().filter(|height| height.is_nan()).count(), 128 - 2 * 16);
         assert!(padded.heights.iter().filter(|height| !height.is_nan()).all(|height| (height - 0.2).abs() < 1e-6));
+    }
+
+    #[test]
+    fn round_a_face_the_heights_go_on_as_the_face_does() {
+        // A slope over the target, wider than it: 0.1 above its left edge,
+        // 0.3 above its right one. The texture is laid on its left half.
+        let mut slope = sheet(0.0, false);
+        for p in &mut slope.positions {
+            p.x = 3.0 * p.x - 1.0;
+            p.z = 0.1 + 0.2 * p.x;
+        }
+        let baked = bake(&slope, 0.5, 2);
+        let expected = |column: usize| 0.1 + 0.2 * (column as f64 + 0.5) / 8.0;
+        for row in 0..16 {
+            // Under the face, and the two columns past its right edge: the
+            // height the slope has there, not a copy of the last column.
+            for column in 0..10 {
+                let found = baked.heights[row * 16 + column] as f64;
+                assert!((found - expected(column)).abs() < 1e-6, "column {column}: {found}");
+            }
+            assert!(baked.heights[row * 16 + 10].is_nan());
+        }
+        // Read half way between the last texel inside and the first one
+        // outside, as a renderer does on the edge: the height of the edge.
+        let on_the_edge = 0.5 * (baked.heights[7] + baked.heights[8]);
+        assert!((on_the_edge - 0.3).abs() < 1e-6, "{on_the_edge} on the edge");
+        assert_eq!(baked.covered, 128);
+        assert!((baked.high as f64 - expected(9)).abs() < 1e-6);
     }
 
     #[test]

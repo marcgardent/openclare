@@ -752,8 +752,11 @@ def relief_in_materials(target, image, span):
         links.new(where.outputs["UV"], read.inputs["Vector"])
         links.new(read.outputs["Color"], move.inputs["Height"])
         links.new(move.outputs["Displacement"], socket)
-        # The surface is moved, and what is finer than its vertices shades it.
-        material.displacement_method = "BOTH"
+        # The surface itself is moved, and only moved: shading what is finer
+        # than its vertices on top ("Displacement and Bump") draws a dark
+        # line along every seam of the atlas, and a surface diced to the
+        # pixel has little left that is finer.
+        material.displacement_method = "DISPLACEMENT"
     return left_alone
 
 

@@ -370,7 +370,7 @@ assert quads.modifiers["openclare subdivision"].use_adaptive_subdivision
 material = quads.data.materials[0]
 nodes = material.node_tree.nodes
 moved = next(node for node in nodes if node.type == "OUTPUT_MATERIAL").inputs["Displacement"].links[0].from_node
-assert moved.name == "openclare displacement" and material.displacement_method == "BOTH"
+assert moved.name == "openclare displacement" and material.displacement_method == "DISPLACEMENT"
 assert moved.inputs["Midlevel"].default_value == 0.5
 assert abs(moved.inputs["Scale"].default_value - relief_strength) < 1e-6 * relief_strength, moved.inputs["Scale"].default_value
 read = moved.inputs["Height"].links[0].from_node
