@@ -1088,7 +1088,9 @@ track. "DT" stands for *dette technique*, technical debt.
 - **Born on** 10 October 2026, a request of the author: a "clever" algorithm that bakes a
   normal map properly. Decided the same day: the engine does it, not Blender's baker set up
   by the add-on; three maps come out (tangent-space normals, height, ambient occlusion); and
-  its turn comes after the lines on a real model (DT-047, DT-048).
+  its turn comes after the lines on a real model (DT-047, DT-048). Added on 11 October 2026:
+  the result being a new object, the add-on gives it a shader with the normal map plugged
+  in, so that the bake shows in the viewport at once.
 - **Why the engine**: the usual bake (*Selected to Active*) throws a ray from each texel of
   the low-poly mesh and takes what it hits first within one distance, or within a cage, set
   for the whole model. Too short and rays miss; too long and they go through to the other
@@ -1114,6 +1116,12 @@ track. "DT" stands for *dette technique*, technical debt.
     many rays per texel against millions of triangles.
   - No image library in the core: the maps leave the C interface as arrays of numbers, the
     add-on makes Blender images of them; a format for the command line is to be chosen.
+  - The shader of the result: an image node set to *Non-Color*, a *Normal Map* node in
+    tangent space on the atlas layer, into the normal of the surface shader. Where the result
+    carries the materials of the source (*Materials* in the export panel), those are shared
+    with the source object: each gets a copy of its own for the result before anything is
+    plugged into it, or the sculpt would be shaded with a map made for another mesh. The
+    height and the occlusion are images of the file, plugged into nothing unless asked.
 - **Done when**: on `ogre_hp`, the result shaded with its normal map is closer to the sculpt
   than with a bake by Blender at its default settings (mean angle between the two shadings,
   measured texel by texel), no texel is left unfilled, and no seam shows between islands.

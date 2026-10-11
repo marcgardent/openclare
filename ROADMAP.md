@@ -78,7 +78,8 @@ Done ahead of their turn, at the author's request: two UV layers and their seams
 Asked for by the author on 10 October 2026, after the lines on a real model (order 12):
 **baking the sculpt onto the result** (DT-051), a tangent-space normal map, a height map and
 ambient occlusion on the atlas the add-on exports, read through the engine's own
-correspondence between its quads and the sculpt instead of rays and a cage.
+correspondence between its quads and the sculpt instead of rays and a cage, the normal map
+plugged into a shader of the new object.
 
 Later, and each to be confirmed when its turn comes: optimal normals per corner (milestone
 13), Multires levels with the detail of the sculpt reprojected (milestone 14).
