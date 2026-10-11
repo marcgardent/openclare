@@ -66,6 +66,7 @@ track. "DT" stands for *dette technique*, technical debt.
 | DT-049 | The bench has no model with curves or a painted density | materials | medium | open |
 | DT-050 | A sliver with next to no area took all the memory of the machine | bench in Blender | high | **closed (9 October 2026)**; no guard on memory in the engine itself |
 | DT-051 | Baking the sculpt onto the result: normal map, height and ambient occlusion, read through the engine's own correspondence | idea of the author | medium | open, after the lines (DT-047, DT-048) |
+| DT-052 | Preprocessing welded back what the mending took apart: the body of a model not meshed, and the result passed for valid | bench | high | **closed (11 October 2026)**; a result that lacks most of its model still passes for valid |
 | DT-033 | Terrains and scans: no tool aligns, the field has nothing to follow | J9 | medium | open |
 | DT-027 | Guards on computing time for pathological inputs | J8 | low | open |
 
@@ -1030,8 +1031,17 @@ track. "DT" stands for *dette technique*, technical debt.
 - **Left**:
   - The scenes are in git since 9 October 2026, through Git LFS, and the OBJ files they were
     made from are gone. There is no remote yet: what LFS stores is on one machine.
-  - The results stored were not measured again from the scenes, and `ogre_hp`, `f16`,
-    `camera` and `wolf` have no figure stored, no Quad Remesher reference and no page.
+  - **Done on 11 October 2026**: `ogre_hp`, `f16`, `camera` and `wolf` are measured with
+    every tool, with their Quad Remesher references and their pages, and the chains of this
+    repository were measured again on every model from its scene, pictures included. The
+    marks hardly move (organic models: 71, 76 and 80 at the three budgets, for 70, 76 and
+    81). What the other tools gave on the models that were in the bench before the scenes
+    was not measured again: QuadriFlow and Instant Meshes ran on the OBJ files in double
+    precision, and the Quad Remesher references were made from them.
+  - What that run showed besides: on `ogre_hp` at 3000 quads the curves are let go, no edge
+    along them, where 11 and 5 are kept at 1000 quads and 70 and 14 at 8000 (DT-044); Desert
+    Rose at 8000 quads has two faces turned over out of 8484, where it had none; the body of
+    `wolf` was not meshed at all (DT-052, closed).
   - The other tools get the object of a scene, not its curves nor its painted density:
     `openclare-uniform` (the command line) is given the materials (`source.groups`) and
     nothing else, QuadriFlow and Quad Remesher the triangles alone. On `ogre_hp` the comparison
@@ -1109,3 +1119,28 @@ track. "DT" stands for *dette technique*, technical debt.
   measured texel by texel), no texel is left unfilled, and no seam shows between islands.
 - **Near it**: optimal normals per corner (milestone 13) and Multires levels with the detail
   reprojected (milestone 14) need the same correspondence.
+
+### DT-052 — Preprocessing welded back what the mending took apart
+
+- **Born on** 11 October 2026, from the bench: on `wolf` (a BlenderKit character of 14,797
+  triangles, in eight pieces) the add-on gave 145 quads for 3000 asked and 360 for 8000, and
+  the mesh was counted valid. The Hausdorff distance, 406 per mille of the diagonal, was the
+  only figure that said the body was not there.
+- **Cause**: the wolf has two edges with more than two faces, which the mending of the input
+  takes apart, each face keeping the edge as a border of its own. The cleaning at the start
+  of preprocessing then welded every pair of coincident border vertices, without the guard
+  the mending has, and joined them again. The work mesh came out with 3 to 9 edges of more
+  than two faces (more as it got finer), the cross field refused it, and the piece was
+  dropped without a word: an error of one piece among several is only told when every piece
+  fails. Below 2500 quads the coarser work mesh happened to lose those edges.
+- **Closed the same day**: the cleaning is the mending itself (`TriMesh::stitched`), and
+  nothing else. A piece that is not meshed says why in a note (`notes/not meshed`). The wolf
+  gives 752, 2466 and 6901 faces at the three budgets, its body through the fallback chain
+  for a border off the grid lines of the map, the blocker of the car (DT-047). The fallback
+  chain run on a whole model now mends it too: it meshes the car, which it refused.
+- **Left**:
+  - A result that lacks most of its model is still counted valid, by the engine and by the
+    bench alike: nothing compares the area meshed with the area asked for. The add-on said
+    nothing of it either; it now warns of the pieces that could not be meshed and are missing.
+  - The body of the wolf goes through the fallback chain, and takes its time there: 457
+    seconds for 13,000 quads (DT-027).

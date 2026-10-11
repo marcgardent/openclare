@@ -47,11 +47,11 @@ Over blob, rock, creature, cage, suzanne, ogre, spot, bob, blub, pig, jerry, ros
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 1019 | **71** | 92 | 59 | 63 | 74 | 50 | 43 | 88 | 77 |
-| openclare-uniform | 1056 | **71** | 92 | 56 | 66 | 65 | 62 | 47 | 88 | 80 |
+| openclare | 1025 | **71** | 92 | 58 | 63 | 74 | 50 | 40 | 89 | 77 |
+| openclare-uniform | 1042 | **71** | 92 | 55 | 65 | 65 | 62 | 46 | 87 | 86 |
 | quadremesher | 3797 | **65** | 85 | 69 | 60 | 81 | 59 | 40 | 8 | 39 |
-| integer-grid | 872 | **55** | 62 | 53 | 54 | 50 | 57 | 41 | 54 | 57 |
 | quadremesher-uniform | 915 | **54** | 62 | 61 | 52 | 51 | 35 | 45 | 50 | 42 |
+| integer-grid | 867 | **53** | 54 | 54 | 53 | 51 | 58 | 43 | 54 | 64 |
 | instant-meshes | 927 | **44** | 68 | 24 | 54 | 30 | 19 | 9 | 73 | 93 |
 | quadriflow | 895 | **41** | 58 | 23 | 46 | 38 | 51 | 6 | 61 | 92 |
 
@@ -61,12 +61,12 @@ Over part, cube, lblock, cylinder.
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 998 | **94** | 100 | 85 | 92 | 98 | 95 | 93 | 93 | 93 |
-| openclare-uniform | 994 | **94** | 100 | 84 | 94 | 92 | 95 | 97 | 95 | 98 |
+| openclare | 1007 | **94** | 100 | 85 | 92 | 98 | 95 | 93 | 96 | 97 |
+| openclare-uniform | 994 | **94** | 100 | 84 | 94 | 92 | 95 | 97 | 95 | 95 |
 | quadremesher | 955 | **91** | 100 | 85 | 89 | 98 | 95 | 86 | 74 | 75 |
 | quadremesher-uniform | 932 | **91** | 100 | 85 | 89 | 98 | 95 | 87 | 68 | 75 |
 | quadriflow | 970 | **89** | 100 | 79 | 88 | 88 | 93 | 82 | 84 | 100 |
-| integer-grid | 960 | **85** | 100 | 80 | 83 | 71 | 95 | 59 | 84 | 68 |
+| integer-grid | 962 | **85** | 100 | 80 | 83 | 71 | 95 | 63 | 85 | 56 |
 | instant-meshes | 958 | **80** | 95 | 76 | 79 | 82 | 63 | 63 | 76 | 100 |
 
 ### Calibration models: average
@@ -75,27 +75,27 @@ Over sphere, torus.
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 1009 | **93** | 100 | 99 | 82 | 98 | 100 | 50 | 96 | 97 |
+| openclare | 1009 | **93** | 100 | 99 | 82 | 98 | 100 | 50 | 96 | 99 |
 | openclare-uniform | 1009 | **93** | 100 | 99 | 82 | 98 | 100 | 50 | 96 | 100 |
 | quadremesher | 918 | **89** | 100 | 97 | 79 | 95 | 99 | 62 | 67 | 63 |
 | quadremesher-uniform | 918 | **89** | 100 | 97 | 79 | 95 | 99 | 62 | 67 | 72 |
-| integer-grid | 922 | **88** | 100 | 97 | 73 | 97 | 100 | 50 | 69 | 91 |
+| integer-grid | 922 | **88** | 100 | 97 | 73 | 97 | 100 | 50 | 69 | 93 |
 | quadriflow | 989 | **80** | 100 | 39 | 69 | 95 | 90 | 1 | 84 | 100 |
 | instant-meshes | 1060 | **75** | 100 | 61 | 66 | 94 | 40 | 6 | 76 | 100 |
 
 ### Extra models: average
 
-Over venturi, terrain, mahaveer, marine.
+Over venturi, ogre_hp, terrain, mahaveer, marine, f16, camera, wolf.
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| quadremesher | 65176 | **38** | 25 | 43 | 44 | 81 | 31 | 6 | 0 | 37 |
-| integer-grid | 774 | **29** | 50 | 44 | 50 | 33 | 47 | 73 | 27 | 37 |
-| openclare-uniform | 2578 | **27** | 25 | 31 | 28 | 42 | 16 | 36 | 24 | 44 |
-| openclare | 2554 | **27** | 25 | 27 | 25 | 41 | 15 | 36 | 33 | 33 |
-| instant-meshes | 495 | **24** | 25 | 30 | 23 | 14 | 52 | 21 | 0 | 69 |
-| quadremesher-uniform | 5720 | **23** | 0 | 39 | 30 | 56 | 8 | — | 13 | 43 |
-| quadriflow | 872 | **14** | 25 | 14 | 66 | 40 | 50 | 65 | 49 | 76 |
+| quadremesher | 38817 | **40** | 25 | 56 | 48 | 76 | 28 | 16 | 0 | 34 |
+| openclare-uniform | 1841 | **33** | 38 | 46 | 30 | 33 | 18 | 39 | 27 | 38 |
+| openclare | 1806 | **32** | 38 | 44 | 28 | 35 | 10 | 34 | 32 | 24 |
+| integer-grid | 729 | **27** | 25 | 46 | 41 | 22 | 19 | 57 | 14 | 31 |
+| instant-meshes | 595 | **24** | 30 | 33 | 22 | 11 | 26 | 14 | 15 | 68 |
+| quadremesher-uniform | 4029 | **23** | 0 | 50 | 33 | 40 | 5 | — | 12 | 38 |
+| quadriflow | 872 | **7** | 12 | 14 | 66 | 40 | 50 | 65 | 49 | 88 |
 
 ### Organic models at equal quad count
 
@@ -108,15 +108,15 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 | creature | 1208 / 1207 | 83 / 84 | 100 / 100 | 79 / 74 | 68 / 74 | 93 / 93 | 72 / 73 | 51 / 61 |
 | cage | 3224 / 3168 | 89 / 90 | 100 / 100 | 88 / 90 | 78 / 84 | 86 / 79 | 91 / 95 | 77 / 86 |
 | suzanne | 1790 / 1771 | 72 / 78 | 100 / 100 | 60 / 53 | 56 / 76 | 83 / 87 | 62 / 72 | 14 / 52 |
-| ogre | 2890 / 2887 | 64 / 66 | 100 / 100 | 58 / 47 | 53 / 68 | 63 / 62 | 18 / 50 | 24 / 12 |
+| ogre | 2890 / 2891 | 64 / 66 | 100 / 100 | 58 / 48 | 53 / 68 | 63 / 63 | 18 / 50 | 24 / 11 |
 | spot | 1497 / 1514 | 74 / 74 | 100 / 100 | 71 / 65 | 59 / 69 | 77 / 68 | 53 / 60 | 28 / 36 |
 | bob | 954 / 951 | 85 / 87 | 100 / 100 | 86 / 83 | 73 / 76 | 85 / 91 | 78 / 79 | 58 / 81 |
-| blub | 1638 / 1647 | 80 / 78 | 100 / 100 | 76 / 64 | 66 / 75 | 85 / 78 | 68 / 74 | 49 / 35 |
-| pig | 1975 / 1949 | 75 / 74 | 100 / 100 | 67 / 55 | 59 / 68 | 83 / 84 | 56 / 56 | 42 / 44 |
-| jerry | 3093 / 3071 | 38 / 62 | 0 / 100 | 43 / 37 | 46 / 65 | 83 / 57 | 41 / 44 | — / 13 |
-| rose | 26339 / 26548 | 24 / 41 | 0 / 0 | 44 / 56 | 55 / 62 | 0 / 77 | 36 / 41 | — / 19 |
+| blub | 1638 / 1663 | 80 / 78 | 100 / 100 | 76 / 64 | 66 / 75 | 85 / 80 | 68 / 75 | 49 / 36 |
+| pig | 1975 / 1953 | 75 / 72 | 100 / 100 | 67 / 55 | 59 / 70 | 83 / 71 | 56 / 56 | 42 / 40 |
+| jerry | 3093 / 3050 | 38 / 62 | 0 / 100 | 43 / 37 | 46 / 65 | 83 / 57 | 41 / 44 | — / 14 |
+| rose | 26339 / 26395 | 24 / 42 | 0 / 0 | 44 / 57 | 55 / 61 | 0 / 80 | 36 / 40 | — / 18 |
 | bridge | 2105 / 2120 | 77 / 83 | 100 / 100 | 68 / 67 | 60 / 78 | 89 / 84 | 64 / 83 | 36 / 72 |
-| **average** | 3797 / 3805 | 70 / 74 | 85 / 92 | 67 / 61 | 60 / 72 | 76 / 80 | 59 / 69 | 40 / 40 |
+| **average** | 3797 / 3794 | 70 / 74 | 85 / 92 | 67 / 61 | 60 / 72 | 76 / 79 | 59 / 69 | 40 / 40 |
 
 ### Mechanical models at equal quad count
 
@@ -147,10 +147,14 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 | Model | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure |
 |---|---|---|---|---|---|---|---|---|
 | venturi | 12157 / 12482 | 44 / 35 | 0 / 0 | 63 / 51 | 50 / 61 | 82 / 56 | 50 / 30 | — / 16 |
-| terrain | 1541 / 1569 | 50 / 62 | 100 / 100 | 16 / 17 | 44 / 71 | 67 / 50 | 1 / 73 | 6 / 36 |
-| mahaveer | 41821 / 40442 | 24 / 43 | 0 / 0 | 37 / 58 | 35 / 64 | 36 / 58 | 26 / 69 | — / — |
-| marine | 205185 / 188593 | 33 / 45 | 0 / 0 | 42 / 63 | 49 / 74 | 48 / 67 | 48 / 41 | — / — |
-| **average** | 65176 / 60772 | 38 / 46 | 25 / 25 | 39 / 47 | 44 / 67 | 58 / 58 | 31 / 54 | 6 / 26 |
+| ogre_hp | 2921 / 2887 | 63 / 64 | 100 / 100 | 53 / 42 | 51 / 65 | 64 / 72 | 24 / 30 | 26 / 18 |
+| terrain | 1541 / 1512 | 50 / 62 | 100 / 100 | 16 / 18 | 44 / 72 | 67 / 49 | 1 / 72 | 6 / 32 |
+| mahaveer | 41821 / 40296 | 24 / 42 | 0 / 0 | 37 / 58 | 35 / 64 | 36 / 52 | 26 / 71 | — / — |
+| marine | 205185 / 191140 | 33 / 46 | 0 / 0 | 42 / 63 | 49 / 73 | 48 / 79 | 48 / 41 | — / — |
+| f16 | 30430 / 25171 | 40 / 44 | 0 / 0 | 78 / 83 | 43 / 65 | 75 / 28 | 10 / 67 | — / — |
+| camera | 9385 / 8040 | 50 / 49 | 0 / 0 | 85 / 76 | 60 / 72 | 71 / 56 | 61 / 74 | — / — |
+| wolf | 7098 / 5955 | 25 / 32 | 0 / 0 | 53 / 53 | 50 / 52 | 22 / 41 | 0 / 30 | — / — |
+| **average** | 38817 / 35935 | 41 / 47 | 25 / 25 | 53 / 55 | 48 / 66 | 58 / 54 | 28 / 52 | 16 / 22 |
 
 ### Model by model, 1000 quads
 
@@ -158,11 +162,11 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 990 | **84** | 100 | 80 | 71 | 87 | 84 | 20 | 96 | 83 |
-| openclare-uniform | 1026 | **82** | 100 | 77 | 68 | 79 | 84 | 35 | 90 | 78 |
+| openclare | 990 | **84** | 100 | 80 | 71 | 87 | 84 | 20 | 96 | 77 |
+| openclare-uniform | 1026 | **82** | 100 | 77 | 68 | 79 | 84 | 35 | 90 | 91 |
 | quadremesher | 1362 | **76** | 100 | 85 | 66 | 85 | 87 | 62 | 0 | 36 |
 | quadremesher-uniform | 878 | **76** | 100 | 78 | 68 | 62 | 79 | 51 | 51 | 37 |
-| integer-grid | 867 | **70** | 100 | 67 | 52 | 65 | 82 | 31 | 47 | 63 |
+| integer-grid | 867 | **70** | 100 | 67 | 52 | 65 | 82 | 31 | 47 | 65 |
 | instant-meshes | 1036 | **61** | 100 | 21 | 62 | 70 | 34 | 0 | 86 | 87 |
 | quadriflow | 941 | **57** | 80 | 20 | 54 | 71 | 70 | 0 | 76 | 84 |
 
@@ -170,10 +174,10 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 981 | **71** | 100 | 25 | 75 | 85 | 82 | 0 | 92 | 83 |
-| openclare-uniform | 978 | **71** | 100 | 24 | 71 | 82 | 82 | 22 | 91 | 89 |
+| openclare | 981 | **71** | 100 | 25 | 75 | 85 | 82 | 0 | 92 | 92 |
+| openclare-uniform | 978 | **71** | 100 | 24 | 71 | 82 | 82 | 22 | 91 | 94 |
 | quadriflow | 947 | **65** | 100 | 0 | 69 | 81 | 100 | 1 | 79 | 99 |
-| integer-grid | 898 | **64** | 100 | 28 | 53 | 78 | 80 | 0 | 59 | 64 |
+| integer-grid | 898 | **64** | 100 | 28 | 53 | 78 | 80 | 0 | 59 | 59 |
 | instant-meshes | 966 | **63** | 100 | 0 | 70 | 79 | 67 | 6 | 86 | 96 |
 | quadremesher | 1290 | **55** | 100 | 40 | 45 | 80 | 36 | 0 | 0 | 19 |
 | quadremesher-uniform | 837 | **54** | 100 | 36 | 40 | 75 | 9 | 0 | 35 | 32 |
@@ -182,20 +186,20 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 1001 | **85** | 100 | 75 | 72 | 94 | 68 | 65 | 100 | 88 |
+| openclare | 1001 | **85** | 100 | 75 | 72 | 94 | 68 | 65 | 100 | 74 |
 | quadremesher-uniform | 928 | **80** | 100 | 79 | 65 | 87 | 67 | 63 | 71 | 47 |
-| openclare-uniform | 965 | **80** | 100 | 64 | 75 | 90 | 81 | 20 | 86 | 86 |
+| openclare-uniform | 965 | **80** | 100 | 64 | 75 | 90 | 81 | 20 | 86 | 84 |
 | quadremesher | 1208 | **76** | 100 | 79 | 68 | 93 | 72 | 51 | 17 | 39 |
 | instant-meshes | 994 | **70** | 100 | 47 | 69 | 62 | 57 | 17 | 94 | 99 |
-| integer-grid | 920 | **49** | 0 | 64 | 63 | 74 | 74 | 28 | 68 | 67 |
+| integer-grid | 920 | **49** | 0 | 64 | 63 | 74 | 74 | 28 | 68 | 62 |
 | quadriflow | 812 | **47** | 80 | 34 | 37 | 19 | 90 | 0 | 25 | 97 |
 
 #### cage (organic)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 1001 | **88** | 100 | 86 | 75 | 79 | 84 | 79 | 100 | 96 |
-| integer-grid | 970 | **86** | 100 | 87 | 75 | 65 | 92 | 90 | 88 | 62 |
+| openclare | 1001 | **88** | 100 | 86 | 75 | 79 | 84 | 79 | 100 | 88 |
+| integer-grid | 970 | **86** | 100 | 87 | 75 | 65 | 92 | 90 | 88 | 68 |
 | openclare-uniform | 1001 | **82** | 100 | 82 | 76 | 49 | 84 | 74 | 100 | 100 |
 | quadremesher | 3224 | **80** | 100 | 88 | 78 | 86 | 91 | 77 | 0 | 60 |
 | quadremesher-uniform | 934 | **77** | 100 | 86 | 70 | 36 | 82 | 77 | 74 | 66 |
@@ -206,11 +210,11 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 994 | **76** | 100 | 54 | 72 | 82 | 52 | 44 | 98 | 91 |
-| openclare-uniform | 1002 | **75** | 100 | 49 | 76 | 73 | 56 | 40 | 99 | 92 |
+| openclare | 994 | **76** | 100 | 54 | 72 | 82 | 52 | 44 | 98 | 86 |
+| openclare-uniform | 1002 | **75** | 100 | 49 | 76 | 73 | 56 | 40 | 99 | 99 |
 | quadremesher-uniform | 922 | **66** | 100 | 57 | 57 | 70 | 26 | 13 | 69 | 68 |
 | quadremesher | 1790 | **65** | 100 | 62 | 56 | 84 | 62 | 14 | 0 | 63 |
-| integer-grid | 976 | **41** | 0 | 48 | 55 | 51 | 48 | 25 | 90 | 64 |
+| integer-grid | 976 | **41** | 0 | 48 | 55 | 51 | 48 | 25 | 90 | 56 |
 | quadriflow | 1005 | **33** | 0 | 30 | 52 | 45 | 33 | 1 | 96 | 100 |
 | instant-meshes | 958 | **24** | 0 | 21 | 49 | 26 | 0 | 3 | 83 | 100 |
 
@@ -218,23 +222,23 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 1002 | **71** | 100 | 53 | 64 | 50 | 62 | 44 | 99 | 70 |
-| openclare | 963 | **64** | 100 | 50 | 53 | 64 | 2 | 45 | 85 | 64 |
+| openclare-uniform | 972 | **70** | 100 | 53 | 63 | 51 | 61 | 49 | 89 | 71 |
+| openclare | 1019 | **65** | 100 | 51 | 55 | 64 | 8 | 32 | 92 | 75 |
 | quadremesher | 2890 | **59** | 100 | 65 | 53 | 68 | 18 | 24 | 0 | 28 |
-| integer-grid | 783 | **53** | 100 | 48 | 45 | 27 | 49 | 29 | 13 | 60 |
 | instant-meshes | 932 | **39** | 80 | 16 | 52 | 0 | 0 | 8 | 73 | 76 |
 | quadriflow | 891 | **29** | 60 | 7 | 29 | 0 | 28 | 0 | 56 | 71 |
+| integer-grid | 802 | **28** | 0 | 47 | 42 | 31 | 41 | — | 21 | 62 |
 | quadremesher-uniform | 799 | **19** | 0 | 53 | 38 | 0 | 0 | — | 20 | 31 |
 
 #### spot (organic)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 991 | **73** | 100 | 66 | 65 | 66 | 39 | 27 | 96 | 78 |
-| openclare-uniform | 990 | **72** | 100 | 58 | 64 | 74 | 43 | 22 | 96 | 81 |
+| openclare | 986 | **73** | 100 | 67 | 65 | 69 | 39 | 24 | 94 | 84 |
+| openclare-uniform | 990 | **72** | 100 | 58 | 64 | 74 | 43 | 22 | 96 | 88 |
 | quadremesher | 1497 | **67** | 100 | 72 | 59 | 79 | 53 | 28 | 0 | 30 |
 | quadremesher-uniform | 882 | **66** | 100 | 68 | 55 | 70 | 23 | 29 | 53 | 36 |
-| integer-grid | 907 | **62** | 100 | 51 | 44 | 55 | 44 | 18 | 63 | 54 |
+| integer-grid | 910 | **62** | 100 | 53 | 44 | 57 | 40 | 24 | 64 | 63 |
 | quadriflow | 1024 | **60** | 100 | 19 | 62 | 50 | 47 | 6 | 89 | 89 |
 | instant-meshes | 1016 | **52** | 100 | 21 | 63 | 17 | 14 | 3 | 94 | 80 |
 
@@ -242,11 +246,11 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 993 | **88** | 100 | 81 | 78 | 90 | 82 | 76 | 97 | 72 |
-| openclare | 972 | **88** | 100 | 84 | 78 | 91 | 79 | 81 | 89 | 75 |
+| openclare-uniform | 993 | **88** | 100 | 81 | 78 | 90 | 82 | 76 | 97 | 94 |
+| openclare | 991 | **87** | 100 | 81 | 75 | 90 | 80 | 67 | 96 | 90 |
 | quadremesher | 954 | **85** | 100 | 86 | 73 | 85 | 78 | 58 | 82 | 38 |
 | quadremesher-uniform | 893 | **82** | 100 | 84 | 69 | 85 | 76 | 74 | 57 | 32 |
-| integer-grid | 861 | **78** | 100 | 81 | 73 | 62 | 79 | 79 | 44 | 70 |
+| integer-grid | 861 | **78** | 100 | 81 | 73 | 62 | 79 | 79 | 44 | 74 |
 | quadriflow | 972 | **64** | 100 | 11 | 60 | 75 | 71 | 1 | 89 | 91 |
 | instant-meshes | 1006 | **55** | 100 | 7 | 64 | 43 | 31 | 0 | 90 | 98 |
 
@@ -254,22 +258,22 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 983 | **77** | 100 | 62 | 76 | 59 | 67 | 67 | 93 | 89 |
-| openclare | 989 | **77** | 100 | 59 | 71 | 76 | 58 | 47 | 96 | 75 |
+| openclare-uniform | 1027 | **77** | 100 | 63 | 75 | 65 | 69 | 55 | 89 | 88 |
+| openclare | 984 | **76** | 100 | 60 | 72 | 76 | 57 | 46 | 94 | 77 |
 | quadremesher | 1638 | **73** | 100 | 78 | 66 | 88 | 68 | 49 | 0 | 35 |
 | quadremesher-uniform | 892 | **68** | 100 | 69 | 58 | 49 | 50 | 51 | 57 | 38 |
 | instant-meshes | 996 | **47** | 60 | 24 | 62 | 36 | 26 | 2 | 94 | 97 |
 | quadriflow | 847 | **43** | 60 | 27 | 50 | 31 | 62 | 7 | 39 | 90 |
-| integer-grid | 912 | **40** | 0 | 59 | 58 | 36 | 55 | — | 65 | 59 |
+| integer-grid | 888 | **41** | 0 | 59 | 57 | 48 | 61 | — | 55 | 73 |
 
 #### pig (organic)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 1009 | **71** | 100 | 59 | 64 | 77 | 17 | 40 | 96 | 77 |
-| openclare-uniform | 1009 | **71** | 100 | 46 | 69 | 64 | 48 | 46 | 96 | 73 |
+| openclare | 995 | **71** | 100 | 58 | 64 | 77 | 16 | 40 | 98 | 78 |
+| openclare-uniform | 989 | **69** | 100 | 45 | 64 | 59 | 47 | 41 | 96 | 80 |
 | quadremesher | 1975 | **68** | 100 | 67 | 59 | 85 | 56 | 42 | 0 | 31 |
-| integer-grid | 903 | **34** | 0 | 42 | 57 | 41 | 35 | — | 61 | 59 |
+| integer-grid | 877 | **36** | 0 | 42 | 56 | 44 | 49 | 48 | 51 | 62 |
 | quadremesher-uniform | 853 | **24** | 0 | 54 | 53 | 0 | 0 | — | 41 | 33 |
 | instant-meshes | 910 | **23** | 0 | 28 | 58 | 0 | 18 | 5 | 64 | 98 |
 | quadriflow | 861 | **14** | 0 | 23 | 23 | 0 | 12 | 2 | 44 | 89 |
@@ -278,9 +282,9 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 1000 | **64** | 100 | 34 | 61 | 41 | 49 | 40 | 100 | 85 |
-| openclare | 1005 | **61** | 100 | 32 | 55 | 61 | 17 | 12 | 98 | 81 |
-| integer-grid | 830 | **47** | 100 | 26 | 46 | 11 | 37 | 28 | 32 | 12 |
+| openclare-uniform | 1004 | **64** | 100 | 36 | 61 | 42 | 49 | 39 | 98 | 98 |
+| openclare | 999 | **61** | 100 | 31 | 54 | 61 | 17 | 9 | 100 | 82 |
+| integer-grid | 867 | **48** | 100 | 26 | 44 | 9 | 42 | 24 | 47 | 69 |
 | quadriflow | 900 | **43** | 80 | 18 | 49 | 22 | 23 | 20 | 60 | 100 |
 | quadremesher | 3093 | **35** | 0 | 46 | 46 | 88 | 41 | — | 0 | 54 |
 | instant-meshes | 886 | **31** | 60 | 14 | 45 | 8 | 0 | 4 | 54 | 100 |
@@ -292,9 +296,9 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 |---|---|---|---|---|---|---|---|---|---|---|
 | quadremesher | 26339 | **32** | 0 | 58 | 55 | 44 | 36 | — | 0 | 36 |
 | quadremesher-uniform | 1271 | **13** | 0 | 36 | 16 | 21 | 0 | — | 0 | 46 |
-| integer-grid | 596 | **9** | 0 | 25 | 20 | 7 | 0 | — | 0 | 53 |
-| openclare-uniform | 1773 | **8** | 0 | 23 | 0 | 20 | 0 | — | 0 | 46 |
-| openclare | 1343 | **6** | 0 | 23 | 0 | 9 | 0 | — | 0 | 41 |
+| integer-grid | 511 | **9** | 0 | 30 | 14 | 2 | 0 | — | 0 | 56 |
+| openclare-uniform | 1597 | **6** | 0 | 16 | 0 | 18 | 0 | — | 0 | 50 |
+| openclare | 1377 | **5** | 0 | 20 | 0 | 7 | 0 | — | 0 | 34 |
 | quadriflow | 494 | **5** | 0 | 18 | 6 | 0 | 0 | 8 | 0 | 82 |
 | instant-meshes | 530 | **4** | 0 | 17 | 0 | 0 | 0 | 6 | 0 | 88 |
 
@@ -302,9 +306,9 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 1003 | **82** | 100 | 69 | 79 | 78 | 64 | 72 | 99 | 76 |
-| openclare | 1008 | **82** | 100 | 70 | 72 | 88 | 64 | 55 | 97 | 68 |
-| integer-grid | 912 | **76** | 100 | 64 | 61 | 73 | 70 | 81 | 65 | 56 |
+| openclare-uniform | 1008 | **82** | 100 | 69 | 79 | 78 | 64 | 75 | 97 | 81 |
+| openclare | 1008 | **82** | 100 | 70 | 72 | 88 | 64 | 55 | 97 | 70 |
+| integer-grid | 919 | **77** | 100 | 65 | 64 | 80 | 70 | 81 | 68 | 60 |
 | quadremesher | 2105 | **70** | 100 | 71 | 60 | 91 | 64 | 36 | 0 | 37 |
 | quadremesher-uniform | 936 | **46** | 0 | 60 | 51 | 81 | 42 | — | 74 | 40 |
 | instant-meshes | 845 | **43** | 80 | 40 | 57 | 1 | 2 | 37 | 38 | 85 |
@@ -314,12 +318,12 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 1018 | **86** | 100 | 52 | 89 | 97 | 84 | 93 | 93 | 85 |
+| openclare | 1018 | **86** | 100 | 52 | 89 | 97 | 84 | 93 | 93 | 89 |
 | quadremesher | 1013 | **82** | 100 | 51 | 78 | 97 | 82 | 64 | 95 | 73 |
-| openclare-uniform | 976 | **80** | 100 | 45 | 90 | 71 | 84 | 91 | 90 | 97 |
+| openclare-uniform | 976 | **80** | 100 | 45 | 90 | 71 | 84 | 91 | 90 | 90 |
 | quadremesher-uniform | 924 | **80** | 100 | 51 | 77 | 95 | 83 | 68 | 70 | 76 |
 | quadriflow | 943 | **77** | 100 | 40 | 81 | 84 | 77 | 76 | 77 | 100 |
-| integer-grid | 959 | **74** | 100 | 43 | 76 | 66 | 83 | 60 | 84 | 45 |
+| integer-grid | 959 | **74** | 100 | 43 | 76 | 66 | 83 | 60 | 84 | 49 |
 | instant-meshes | 1036 | **60** | 100 | 35 | 57 | 59 | 0 | 39 | 86 | 100 |
 
 #### cube (mechanical)
@@ -329,31 +333,31 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 | quadremesher | 1014 | **99** | 100 | 100 | 100 | 100 | 100 | 99 | 94 | 79 |
 | quadremesher-uniform | 1014 | **99** | 100 | 100 | 100 | 100 | 100 | 99 | 94 | 73 |
 | openclare-uniform | 1014 | **99** | 100 | 100 | 100 | 100 | 100 | 99 | 94 | 100 |
-| openclare | 1014 | **99** | 100 | 99 | 98 | 100 | 100 | 99 | 94 | 98 |
+| openclare | 1014 | **99** | 100 | 99 | 98 | 100 | 100 | 99 | 94 | 99 |
 | quadriflow | 1014 | **99** | 100 | 99 | 100 | 95 | 100 | 99 | 94 | 100 |
 | instant-meshes | 900 | **91** | 100 | 94 | 90 | 100 | 91 | 81 | 60 | 100 |
-| integer-grid | 999 | **84** | 100 | 93 | 87 | 49 | 100 | 0 | 100 | 67 |
+| integer-grid | 999 | **84** | 100 | 93 | 87 | 49 | 100 | 0 | 100 | 74 |
 
 #### lblock (mechanical)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 994 | **99** | 100 | 98 | 100 | 100 | 96 | 99 | 98 | 93 |
-| openclare | 994 | **98** | 100 | 97 | 98 | 100 | 96 | 99 | 98 | 96 |
+| openclare-uniform | 994 | **99** | 100 | 98 | 100 | 100 | 96 | 99 | 98 | 100 |
+| openclare | 994 | **98** | 100 | 97 | 98 | 100 | 96 | 99 | 98 | 100 |
 | quadremesher | 1010 | **98** | 100 | 98 | 98 | 100 | 96 | 99 | 96 | 75 |
 | quadremesher-uniform | 1010 | **98** | 100 | 98 | 98 | 100 | 96 | 99 | 96 | 76 |
 | instant-meshes | 902 | **93** | 100 | 95 | 93 | 100 | 91 | 91 | 61 | 100 |
-| integer-grid | 992 | **92** | 100 | 92 | 90 | 73 | 96 | 97 | 97 | 73 |
+| integer-grid | 992 | **92** | 100 | 92 | 90 | 73 | 96 | 97 | 97 | 67 |
 | quadriflow | 930 | **91** | 100 | 94 | 94 | 81 | 96 | 91 | 72 | 100 |
 
 #### cylinder (mechanical)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 990 | **96** | 100 | 95 | 87 | 97 | 100 | 99 | 96 | 100 |
-| openclare | 968 | **93** | 100 | 92 | 81 | 97 | 100 | 81 | 87 | 92 |
+| openclare-uniform | 990 | **96** | 100 | 95 | 87 | 97 | 100 | 99 | 96 | 88 |
+| openclare | 1002 | **94** | 100 | 92 | 81 | 97 | 100 | 81 | 99 | 100 |
+| integer-grid | 900 | **91** | 100 | 93 | 82 | 97 | 100 | 95 | 60 | 33 |
 | quadriflow | 995 | **89** | 100 | 82 | 78 | 92 | 100 | 62 | 93 | 100 |
-| integer-grid | 892 | **89** | 100 | 91 | 78 | 97 | 100 | 80 | 57 | 85 |
 | quadremesher | 782 | **85** | 100 | 93 | 80 | 95 | 100 | 82 | 13 | 74 |
 | quadremesher-uniform | 782 | **85** | 100 | 93 | 80 | 95 | 100 | 82 | 13 | 74 |
 | instant-meshes | 994 | **76** | 80 | 78 | 75 | 69 | 68 | 42 | 96 | 100 |
@@ -362,19 +366,19 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 1010 | **89** | 100 | — | 77 | 98 | 100 | 0 | 96 | 94 |
+| openclare | 1010 | **89** | 100 | — | 77 | 98 | 100 | 0 | 96 | 100 |
 | openclare-uniform | 1010 | **89** | 100 | — | 77 | 98 | 100 | 0 | 96 | 100 |
 | quadriflow | 950 | **87** | 100 | — | 77 | 97 | 100 | 1 | 80 | 100 |
 | quadremesher | 915 | **84** | 100 | — | 70 | 96 | 98 | 24 | 66 | 62 |
 | quadremesher-uniform | 915 | **84** | 100 | — | 70 | 96 | 98 | 24 | 66 | 68 |
-| integer-grid | 923 | **82** | 100 | — | 58 | 98 | 100 | 0 | 69 | 83 |
+| integer-grid | 923 | **82** | 100 | — | 58 | 98 | 100 | 0 | 69 | 86 |
 | instant-meshes | 1066 | **81** | 100 | — | 74 | 97 | 66 | 0 | 74 | 100 |
 
 #### torus (calibration)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 1008 | **97** | 100 | 99 | 88 | 97 | 100 | 100 | 97 | 99 |
+| openclare | 1008 | **97** | 100 | 99 | 88 | 97 | 100 | 100 | 97 | 98 |
 | openclare-uniform | 1008 | **97** | 100 | 99 | 88 | 97 | 100 | 100 | 97 | 100 |
 | integer-grid | 920 | **94** | 100 | 97 | 87 | 97 | 100 | 100 | 68 | 100 |
 | quadremesher | 920 | **94** | 100 | 97 | 88 | 95 | 100 | 100 | 68 | 64 |
@@ -388,19 +392,31 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 |---|---|---|---|---|---|---|---|---|---|---|
 | quadremesher | 12157 | **41** | 0 | 69 | 50 | 84 | 50 | — | 0 | 53 |
 | quadremesher-uniform | 8690 | **37** | 0 | 71 | 47 | 70 | 33 | — | 0 | 67 |
-| openclare-uniform | 757 | **22** | 0 | 50 | 41 | 29 | 0 | — | 3 | 65 |
-| openclare | 836 | **21** | 0 | 39 | 30 | 27 | 0 | — | 34 | 41 |
+| openclare-uniform | 757 | **22** | 0 | 50 | 41 | 29 | 0 | — | 3 | 64 |
+| openclare | 836 | **21** | 0 | 39 | 30 | 27 | 0 | — | 34 | 38 |
+| integer-grid | 742 | **18** | 0 | 36 | 51 | 15 | 0 | — | 0 | 50 |
 | instant-meshes | 639 | **13** | 0 | 43 | 12 | 11 | 0 | 28 | 0 | 100 |
 | quadriflow | — | **0** | 0 | — | — | — | — | — | — | — |
-| integer-grid | — | **0** | 0 | — | — | — | — | — | — | — |
+
+#### ogre_hp (extra)
+
+| Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
+|---|---|---|---|---|---|---|---|---|---|---|
+| openclare-uniform | 1019 | **65** | 100 | 35 | 59 | 45 | 63 | 31 | 92 | 0 |
+| openclare | 1011 | **60** | 100 | 33 | 53 | 64 | 0 | 27 | 96 | 0 |
+| quadremesher | 2921 | **57** | 100 | 53 | 51 | 67 | 24 | 26 | 0 | 12 |
+| integer-grid | 743 | **51** | 100 | 36 | 47 | 23 | 52 | 51 | 0 | 0 |
+| instant-meshes | 940 | **38** | 80 | 13 | 48 | 0 | 0 | 3 | 76 | 0 |
+| quadremesher-uniform | 812 | **17** | 0 | 37 | 40 | 3 | 0 | — | 25 | 15 |
+| quadriflow | — | **0** | 0 | — | — | — | — | — | — | 100 |
 
 #### terrain (extra)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 1017 | **66** | 100 | 21 | 72 | 54 | 65 | 36 | 93 | 53 |
-| openclare | 993 | **66** | 100 | 22 | 70 | 54 | 62 | 36 | 97 | 51 |
-| integer-grid | 885 | **58** | 100 | 21 | 50 | 42 | 63 | 70 | 54 | 41 |
+| openclare | 1000 | **66** | 100 | 22 | 70 | 54 | 62 | 35 | 100 | 54 |
+| openclare-uniform | 980 | **66** | 100 | 20 | 71 | 53 | 65 | 49 | 92 | 51 |
+| integer-grid | 896 | **58** | 100 | 20 | 50 | 41 | 62 | 64 | 58 | 47 |
 | quadriflow | 872 | **57** | 100 | 14 | 66 | 40 | 50 | 65 | 49 | 27 |
 | quadremesher | 1541 | **46** | 100 | 16 | 44 | 70 | 1 | 6 | 0 | 27 |
 | instant-meshes | 574 | **42** | 100 | 16 | 57 | 5 | 30 | 31 | 0 | 47 |
@@ -410,12 +426,12 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| integer-grid | 662 | **57** | 100 | 67 | 51 | 24 | 32 | 76 | 0 | 32 |
 | quadremesher | 41821 | **28** | 0 | 33 | 35 | 79 | 26 | — | 0 | 31 |
+| integer-grid | 532 | **24** | 0 | 62 | 44 | 17 | 15 | — | 0 | 37 |
 | instant-meshes | 562 | **22** | 0 | 49 | 25 | 0 | 77 | 25 | 0 | 58 |
 | quadremesher-uniform | 2688 | **14** | 0 | 35 | 15 | 28 | 0 | — | 0 | 33 |
-| openclare-uniform | 2053 | **5** | 0 | 23 | 0 | 0 | 0 | — | 0 | 49 |
-| openclare | 2021 | **4** | 0 | 21 | 0 | 0 | 0 | — | 0 | 40 |
+| openclare-uniform | 2097 | **4** | 0 | 20 | 0 | 0 | 0 | — | 0 | 49 |
+| openclare | 2042 | **4** | 0 | 18 | 0 | 0 | 0 | — | 0 | 26 |
 | quadriflow | — | **0** | 0 | — | — | — | — | — | — | 100 |
 
 #### marine (extra)
@@ -425,10 +441,46 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 | quadremesher | 205185 | **39** | 0 | 55 | 49 | 93 | 48 | — | 0 | 36 |
 | quadremesher-uniform | 10623 | **19** | 0 | — | 12 | 84 | 0 | — | 0 | 47 |
 | instant-meshes | 204 | **19** | 0 | 14 | 0 | 39 | 100 | 0 | 0 | 70 |
-| openclare-uniform | 6485 | **17** | 0 | — | 0 | 84 | 0 | — | 0 | 9 |
-| openclare | 6364 | **17** | 0 | — | 0 | 84 | 0 | — | 0 | 1 |
+| openclare | 7390 | **17** | 0 | — | 0 | 85 | 0 | — | 0 | 0 |
+| openclare-uniform | 7648 | **17** | 0 | — | 0 | 85 | 0 | — | 0 | 9 |
 | integer-grid | — | **0** | 0 | — | — | — | — | — | — | — |
 | quadriflow | — | **0** | 0 | — | — | — | — | — | — | 100 |
+
+#### f16 (extra)
+
+| Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
+|---|---|---|---|---|---|---|---|---|---|---|
+| quadremesher | 30430 | **38** | 0 | 78 | 43 | 87 | 10 | — | 0 | 41 |
+| instant-meshes | 465 | **22** | 60 | 33 | 0 | 0 | 0 | 5 | 0 | 66 |
+| quadremesher-uniform | 4601 | **22** | 0 | 64 | 22 | 31 | 0 | — | 0 | 43 |
+| openclare | 607 | **16** | 0 | 72 | 7 | 0 | 0 | — | 0 | 0 |
+| openclare-uniform | 654 | **16** | 0 | 72 | 6 | 0 | 0 | — | 0 | 29 |
+| integer-grid | 603 | **13** | 0 | 52 | 11 | 0 | 0 | — | 0 | 1 |
+| quadriflow | — | **0** | 0 | — | — | — | — | — | — | 100 |
+
+#### camera (extra)
+
+| Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
+|---|---|---|---|---|---|---|---|---|---|---|
+| quadremesher | 9385 | **45** | 0 | 82 | 60 | 76 | 61 | — | 0 | 56 |
+| quadremesher-uniform | 3134 | **34** | 0 | 81 | 44 | 58 | 8 | — | 0 | 60 |
+| integer-grid | 843 | **34** | 0 | 63 | 50 | 54 | 3 | — | 37 | 25 |
+| openclare-uniform | 815 | **29** | 0 | 69 | 33 | 42 | 0 | — | 26 | 40 |
+| openclare | 807 | **29** | 0 | 70 | 34 | 42 | 0 | — | 23 | 25 |
+| instant-meshes | 508 | **18** | 0 | 58 | 8 | 29 | 0 | 16 | 0 | 100 |
+| quadriflow | — | **0** | 0 | — | — | — | — | — | — | 100 |
+
+#### wolf (extra)
+
+| Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
+|---|---|---|---|---|---|---|---|---|---|---|
+| openclare-uniform | 759 | **46** | 100 | 56 | 32 | 9 | 18 | 39 | 4 | 65 |
+| openclare | 752 | **46** | 100 | 55 | 34 | 9 | 18 | 39 | 1 | 50 |
+| quadremesher | 7098 | **29** | 0 | 60 | 50 | 55 | 0 | — | 0 | 19 |
+| quadremesher-uniform | 803 | **20** | 0 | 54 | 35 | 5 | 0 | — | 21 | 12 |
+| integer-grid | 744 | **18** | 0 | 55 | 37 | 2 | 1 | — | 0 | 57 |
+| instant-meshes | 866 | **16** | 0 | 37 | 26 | 0 | 0 | 6 | 46 | 100 |
+| quadriflow | — | **0** | 0 | — | — | — | — | — | — | — |
 
 ## 3000 quads
 
@@ -438,11 +490,11 @@ Over blob, rock, creature, cage, suzanne, ogre, spot, bob, blub, pig, jerry, ros
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 3033 | **76** | 92 | 61 | 69 | 83 | 73 | 39 | 91 | 69 |
-| openclare-uniform | 3033 | **75** | 92 | 58 | 69 | 76 | 78 | 38 | 93 | 71 |
+| openclare | 3032 | **76** | 92 | 61 | 69 | 82 | 73 | 43 | 89 | 69 |
+| openclare-uniform | 3017 | **76** | 92 | 58 | 69 | 75 | 78 | 40 | 95 | 75 |
 | quadremesher-uniform | 2651 | **64** | 77 | 61 | 60 | 69 | 65 | 28 | 53 | 43 |
+| integer-grid | 2601 | **64** | 77 | 57 | 59 | 64 | 75 | 53 | 50 | 50 |
 | quadremesher | 6797 | **63** | 62 | 68 | 64 | 85 | 79 | 37 | 23 | 41 |
-| integer-grid | 2610 | **62** | 69 | 56 | 60 | 64 | 76 | 50 | 50 | 46 |
 | instant-meshes | 2936 | **54** | 72 | 27 | 65 | 50 | 43 | 7 | 84 | 92 |
 | quadriflow | 2818 | **46** | 55 | 25 | 52 | 48 | 75 | 8 | 72 | 83 |
 
@@ -452,11 +504,11 @@ Over part, cube, lblock, cylinder.
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 2996 | **95** | 100 | 85 | 93 | 99 | 98 | 94 | 97 | 83 |
-| openclare-uniform | 3021 | **95** | 100 | 84 | 94 | 99 | 98 | 93 | 96 | 83 |
+| openclare-uniform | 3022 | **95** | 100 | 84 | 94 | 99 | 98 | 93 | 96 | 85 |
+| openclare | 3000 | **95** | 100 | 85 | 92 | 99 | 98 | 93 | 96 | 86 |
 | quadremesher | 2846 | **92** | 100 | 85 | 92 | 99 | 98 | 91 | 72 | 75 |
 | quadremesher-uniform | 2846 | **92** | 100 | 85 | 92 | 99 | 98 | 91 | 72 | 75 |
-| integer-grid | 2880 | **92** | 100 | 84 | 89 | 95 | 98 | 83 | 84 | 47 |
+| integer-grid | 2825 | **91** | 100 | 84 | 90 | 95 | 98 | 84 | 77 | 56 |
 | quadriflow | 2906 | **88** | 90 | 79 | 90 | 89 | 98 | 85 | 87 | 88 |
 | instant-meshes | 2948 | **85** | 100 | 75 | 83 | 93 | 74 | 54 | 86 | 100 |
 
@@ -466,9 +518,9 @@ Over sphere, torus.
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 2976 | **96** | 100 | 97 | 87 | 99 | 96 | 99 | 97 | 93 |
-| openclare | 2976 | **96** | 100 | 97 | 87 | 99 | 96 | 99 | 97 | 85 |
-| integer-grid | 2860 | **93** | 100 | 97 | 75 | 99 | 96 | 99 | 81 | 78 |
+| openclare-uniform | 2976 | **96** | 100 | 97 | 86 | 99 | 96 | 99 | 97 | 83 |
+| openclare | 2976 | **96** | 100 | 97 | 86 | 99 | 96 | 99 | 97 | 88 |
+| integer-grid | 2860 | **93** | 100 | 97 | 75 | 99 | 96 | 99 | 81 | 83 |
 | quadremesher | 2782 | **84** | 100 | 69 | 72 | 97 | 98 | 27 | 71 | 66 |
 | quadremesher-uniform | 2782 | **84** | 100 | 69 | 72 | 97 | 98 | 27 | 71 | 72 |
 | instant-meshes | 3084 | **79** | 100 | 37 | 76 | 98 | 65 | 0 | 89 | 100 |
@@ -476,17 +528,17 @@ Over sphere, torus.
 
 ### Extra models: average
 
-Over venturi, terrain, mahaveer, marine.
+Over venturi, ogre_hp, terrain, mahaveer, marine, f16, camera, wolf.
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 3796 | **37** | 25 | 36 | 31 | 48 | 26 | 60 | 64 | 35 |
-| quadremesher-uniform | 7043 | **35** | 25 | 44 | 41 | 64 | 18 | 36 | 12 | 42 |
-| quadremesher | 69772 | **35** | 0 | 45 | 49 | 81 | 48 | — | 0 | 40 |
-| openclare | 3844 | **35** | 25 | 33 | 27 | 50 | 17 | 23 | 72 | 26 |
-| integer-grid | 2314 | **30** | 50 | 43 | 58 | 37 | 74 | 71 | 17 | 30 |
-| instant-meshes | 1792 | **24** | 25 | 32 | 35 | 22 | 9 | 27 | 8 | 66 |
-| quadriflow | 2717 | **15** | 25 | 10 | 68 | 43 | 59 | 70 | 62 | 74 |
+| quadremesher | 43625 | **41** | 12 | 57 | 51 | 81 | 47 | 21 | 0 | 37 |
+| openclare-uniform | 3248 | **37** | 25 | 48 | 40 | 38 | 28 | 25 | 48 | 29 |
+| openclare | 3248 | **36** | 25 | 47 | 38 | 42 | 21 | 25 | 53 | 18 |
+| quadremesher-uniform | 5583 | **31** | 12 | 54 | 43 | 47 | 16 | 36 | 9 | 38 |
+| integer-grid | 2053 | **28** | 12 | 50 | 49 | 23 | 43 | 60 | 16 | 16 |
+| instant-meshes | 2062 | **25** | 25 | 36 | 36 | 17 | 7 | 20 | 22 | 65 |
+| quadriflow | 2717 | **7** | 12 | 10 | 68 | 43 | 59 | 70 | 62 | 87 |
 
 ### Organic models at equal quad count
 
@@ -499,15 +551,15 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 | creature | 2941 / 2894 | 85 / 85 | 100 / 100 | 77 / 75 | 69 / 74 | 95 / 96 | 88 / 89 | 50 / 37 |
 | cage | 5809 / 5890 | 91 / 94 | 100 / 100 | 91 / 91 | 80 / 87 | 89 / 94 | 98 / 97 | 81 / 92 |
 | suzanne | 4310 / 4306 | 49 / 81 | 0 / 100 | 60 / 56 | 61 / 78 | 86 / 89 | 81 / 87 | 42 / 56 |
-| ogre | 6134 / 6053 | 71 / 72 | 100 / 100 | 59 / 52 | 54 / 69 | 84 / 76 | 50 / 66 | 16 / 20 |
+| ogre | 6134 / 6179 | 71 / 72 | 100 / 100 | 59 / 52 | 54 / 70 | 84 / 75 | 50 / 67 | 16 / 21 |
 | spot | 3478 / 3436 | 80 / 81 | 100 / 100 | 72 / 65 | 68 / 72 | 87 / 93 | 79 / 82 | 30 / 46 |
 | bob | 2920 / 2947 | 84 / 90 | 100 / 100 | 79 / 82 | 72 / 82 | 96 / 96 | 90 / 93 | 18 / 69 |
 | blub | 3889 / 3911 | 82 / 83 | 100 / 100 | 76 / 67 | 68 / 74 | 84 / 91 | 88 / 89 | 48 / 50 |
-| pig | 4698 / 4615 | 50 / 79 | 0 / 100 | 67 / 61 | 64 / 74 | 83 / 85 | 79 / 79 | 36 / 37 |
-| jerry | 6872 / 6872 | 44 / 70 | 0 / 100 | 50 / 45 | 52 / 69 | 86 / 77 | 70 / 62 | — / 17 |
-| rose | 35874 / 36124 | 27 / 43 | 0 / 0 | 50 / 59 | 55 / 66 | 0 / 73 | 51 / 53 | — / 20 |
-| bridge | 4533 / 4537 | 53 / 83 | 0 / 100 | 67 / 64 | 67 / 77 | 88 / 87 | 82 / 88 | — / 64 |
-| **average** | 6797 / 6813 | 67 / 78 | 62 / 92 | 67 / 63 | 64 / 74 | 82 / 88 | 79 / 82 | 37 / 42 |
+| pig | 4698 / 4652 | 50 / 78 | 0 / 100 | 67 / 61 | 64 / 72 | 83 / 85 | 79 / 79 | 36 / 26 |
+| jerry | 6872 / 6903 | 44 / 70 | 0 / 100 | 50 / 45 | 52 / 69 | 86 / 77 | 70 / 61 | — / 18 |
+| rose | 35874 / 35959 | 27 / 44 | 0 / 0 | 50 / 59 | 55 / 66 | 0 / 74 | 51 / 53 | — / 22 |
+| bridge | 4533 / 4467 | 53 / 83 | 0 / 100 | 67 / 64 | 67 / 77 | 88 / 87 | 82 / 88 | — / 65 |
+| **average** | 6797 / 6810 | 67 / 78 | 62 / 92 | 67 / 64 | 64 / 74 | 82 / 88 | 79 / 82 | 37 / 41 |
 
 ### Mechanical models at equal quad count
 
@@ -518,8 +570,8 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 | part | 2815 / 2828 | 85 / 87 | 100 / 100 | 52 / 53 | 85 / 91 | 98 / 99 | 94 / 94 | 82 / 94 |
 | cube | 3082 / 3082 | 100 / 99 | 100 / 100 | 99 / 98 | 100 / 98 | 100 / 100 | 100 / 100 | 100 / 100 |
 | lblock | 3030 / 2972 | 99 / 99 | 100 / 100 | 97 / 96 | 98 / 97 | 100 / 100 | 99 / 99 | 100 / 100 |
-| cylinder | 2458 / 2494 | 94 / 94 | 100 / 100 | 93 / 92 | 84 / 83 | 97 / 98 | 100 / 100 | 83 / 81 |
-| **average** | 2846 / 2844 | 94 / 95 | 100 / 100 | 85 / 85 | 92 / 92 | 99 / 99 | 98 / 98 | 91 / 93 |
+| cylinder | 2458 / 2496 | 94 / 95 | 100 / 100 | 93 / 94 | 84 / 87 | 97 / 98 | 100 / 100 | 83 / 82 |
+| **average** | 2846 / 2844 | 94 / 95 | 100 / 100 | 85 / 85 | 92 / 93 | 99 / 99 | 98 / 98 | 91 / 94 |
 
 ### Calibration models at equal quad count
 
@@ -538,10 +590,14 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 | Model | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure |
 |---|---|---|---|---|---|---|---|---|
 | venturi | 14193 / 14282 | 46 / 39 | 0 / 0 | 63 / 54 | 55 / 66 | 83 / 53 | 57 / 41 | — / — |
-| terrain | 4677 / 4638 | 31 / 63 | 0 / 100 | 18 / 20 | 52 / 65 | 69 / 70 | 51 / 69 | — / 15 |
-| mahaveer | 46202 / 44276 | 27 / 43 | 0 / 0 | 40 / 59 | 38 / 65 | 37 / 54 | 33 / 73 | — / — |
-| marine | 214018 / 197141 | 34 / 45 | 0 / 0 | 46 / 63 | 51 / 74 | 48 / 67 | 52 / 45 | — / — |
-| **average** | 69772 / 65084 | 35 / 47 | 0 / 25 | 42 / 49 | 49 / 67 | 59 / 61 | 48 / 57 | — / 15 |
+| ogre_hp | 6269 / 6213 | 71 / 72 | 100 / 100 | 58 / 53 | 53 / 67 | 86 / 87 | 57 / 51 | 21 / 19 |
+| terrain | 4677 / 4619 | 31 / 63 | 0 / 100 | 18 / 19 | 52 / 65 | 69 / 68 | 51 / 69 | — / 16 |
+| mahaveer | 46202 / 44429 | 27 / 43 | 0 / 0 | 40 / 58 | 38 / 64 | 37 / 50 | 33 / 74 | — / — |
+| marine | 214018 / 199778 | 34 / 47 | 0 / 0 | 46 / 63 | 51 / 74 | 48 / 79 | 52 / 44 | — / — |
+| f16 | 36038 / 30486 | 42 / 44 | 0 / 0 | 78 / 83 | 45 / 64 | 80 / 29 | 15 / 70 | — / — |
+| camera | 12621 / 10798 | 53 / 48 | 0 / 0 | 84 / 77 | 64 / 67 | 82 / 53 | 65 / 78 | — / — |
+| wolf | 14984 / 13011 | 34 / 37 | 0 / 0 | 55 / 53 | 53 / 51 | 35 / 54 | 48 / 53 | — / — |
+| **average** | 43625 / 40452 | 42 / 49 | 12 / 25 | 55 / 57 | 51 / 65 | 65 / 59 | 47 / 60 | 21 / 17 |
 
 ### Model by model, 3000 quads
 
@@ -549,11 +605,11 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 3005 | **87** | 100 | 78 | 72 | 95 | 95 | 32 | 99 | 77 |
-| openclare-uniform | 3021 | **85** | 100 | 76 | 69 | 94 | 95 | 22 | 97 | 69 |
+| openclare | 3005 | **87** | 100 | 78 | 72 | 95 | 95 | 32 | 99 | 75 |
+| openclare-uniform | 3021 | **85** | 100 | 76 | 69 | 94 | 95 | 22 | 97 | 78 |
 | quadremesher-uniform | 2755 | **83** | 100 | 80 | 73 | 85 | 94 | 51 | 67 | 39 |
 | quadremesher | 3370 | **83** | 100 | 83 | 71 | 92 | 95 | 46 | 51 | 32 |
-| integer-grid | 2507 | **78** | 100 | 72 | 61 | 90 | 93 | 62 | 34 | 57 |
+| integer-grid | 2507 | **78** | 100 | 72 | 61 | 90 | 93 | 62 | 34 | 66 |
 | instant-meshes | 3090 | **68** | 100 | 30 | 71 | 80 | 56 | 1 | 88 | 87 |
 | quadriflow | 2781 | **57** | 60 | 22 | 56 | 83 | 89 | 3 | 71 | 76 |
 
@@ -561,10 +617,10 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 2984 | **74** | 100 | 30 | 75 | 91 | 81 | 0 | 98 | 78 |
-| openclare-uniform | 2968 | **73** | 100 | 27 | 73 | 91 | 86 | 0 | 96 | 75 |
+| openclare | 2984 | **74** | 100 | 30 | 75 | 91 | 81 | 0 | 98 | 80 |
+| openclare-uniform | 2968 | **73** | 100 | 27 | 73 | 91 | 86 | 0 | 96 | 85 |
 | quadriflow | 3036 | **68** | 100 | 0 | 71 | 89 | 100 | 6 | 91 | 92 |
-| integer-grid | 2687 | **67** | 100 | 30 | 56 | 91 | 84 | 0 | 58 | 49 |
+| integer-grid | 2687 | **67** | 100 | 30 | 56 | 91 | 84 | 0 | 58 | 53 |
 | instant-meshes | 2898 | **65** | 100 | 0 | 74 | 89 | 71 | 0 | 86 | 99 |
 | quadremesher | 3539 | **63** | 100 | 37 | 50 | 90 | 70 | 0 | 28 | 26 |
 | quadremesher-uniform | 2531 | **62** | 100 | 35 | 47 | 88 | 63 | 0 | 37 | 31 |
@@ -574,10 +630,10 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
 | quadremesher | 2941 | **86** | 100 | 77 | 69 | 95 | 88 | 50 | 92 | 41 |
-| openclare-uniform | 3041 | **85** | 100 | 69 | 71 | 96 | 89 | 57 | 95 | 66 |
-| openclare | 2955 | **84** | 100 | 74 | 75 | 96 | 89 | 4 | 94 | 79 |
+| openclare-uniform | 3041 | **85** | 100 | 69 | 71 | 96 | 89 | 57 | 95 | 75 |
+| openclare | 2955 | **84** | 100 | 74 | 75 | 96 | 89 | 4 | 94 | 76 |
 | quadremesher-uniform | 2719 | **82** | 100 | 76 | 67 | 95 | 86 | 52 | 63 | 46 |
-| integer-grid | 2597 | **79** | 100 | 69 | 59 | 96 | 87 | 65 | 46 | 51 |
+| integer-grid | 2597 | **79** | 100 | 69 | 59 | 96 | 87 | 65 | 46 | 56 |
 | instant-meshes | 3070 | **76** | 100 | 46 | 77 | 93 | 66 | 7 | 91 | 100 |
 | quadriflow | 2667 | **71** | 100 | 43 | 66 | 84 | 94 | 0 | 56 | 87 |
 
@@ -585,9 +641,9 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 2968 | **91** | 100 | 90 | 84 | 79 | 95 | 90 | 96 | 80 |
-| openclare-uniform | 3040 | **90** | 100 | 86 | 85 | 79 | 95 | 77 | 95 | 84 |
-| integer-grid | 2874 | **88** | 100 | 85 | 80 | 77 | 97 | 85 | 83 | 47 |
+| openclare | 2968 | **91** | 100 | 90 | 84 | 79 | 95 | 90 | 96 | 78 |
+| openclare-uniform | 3040 | **90** | 100 | 86 | 85 | 79 | 95 | 77 | 95 | 77 |
+| integer-grid | 2874 | **88** | 100 | 85 | 80 | 77 | 97 | 85 | 83 | 48 |
 | quadremesher-uniform | 2785 | **87** | 100 | 89 | 79 | 81 | 96 | 64 | 71 | 67 |
 | quadremesher | 5809 | **82** | 100 | 91 | 80 | 89 | 98 | 81 | 0 | 65 |
 | quadriflow | 2891 | **79** | 100 | 64 | 71 | 77 | 88 | 33 | 85 | 89 |
@@ -597,8 +653,8 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 2986 | **80** | 100 | 56 | 78 | 85 | 81 | 33 | 98 | 81 |
-| openclare-uniform | 2980 | **79** | 100 | 54 | 78 | 82 | 82 | 17 | 97 | 85 |
+| openclare | 2986 | **80** | 100 | 56 | 78 | 85 | 81 | 33 | 98 | 80 |
+| openclare-uniform | 2980 | **79** | 100 | 54 | 78 | 82 | 82 | 17 | 97 | 88 |
 | integer-grid | 2757 | **73** | 100 | 54 | 64 | 75 | 81 | 33 | 68 | 48 |
 | quadremesher-uniform | 2628 | **70** | 100 | 54 | 61 | 73 | 73 | 30 | 50 | 72 |
 | instant-meshes | 3070 | **46** | 40 | 24 | 65 | 58 | 31 | 2 | 91 | 100 |
@@ -609,23 +665,23 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 3019 | **70** | 100 | 48 | 68 | 65 | 51 | 18 | 97 | 63 |
-| openclare-uniform | 3059 | **68** | 100 | 45 | 67 | 45 | 78 | 11 | 92 | 62 |
+| openclare | 2949 | **70** | 100 | 49 | 68 | 64 | 50 | 18 | 93 | 60 |
+| openclare-uniform | 3001 | **69** | 100 | 46 | 67 | 45 | 77 | 10 | 100 | 70 |
 | quadremesher | 6134 | **65** | 100 | 63 | 54 | 87 | 50 | 16 | 0 | 28 |
 | instant-meshes | 2874 | **45** | 80 | 17 | 63 | 4 | 30 | 3 | 83 | 76 |
 | quadriflow | 2935 | **31** | 20 | 14 | 40 | 13 | 67 | 3 | 83 | 67 |
-| integer-grid | 2469 | **30** | 0 | 44 | 50 | 13 | 70 | — | 29 | 44 |
+| integer-grid | 2465 | **31** | 0 | 46 | 55 | 14 | 69 | — | 29 | 49 |
 | quadremesher-uniform | 2417 | **22** | 0 | 52 | 43 | 11 | 9 | 17 | 22 | 31 |
 
 #### spot (organic)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 2979 | **82** | 100 | 65 | 72 | 91 | 79 | 44 | 97 | 61 |
-| openclare-uniform | 3048 | **81** | 100 | 61 | 72 | 91 | 80 | 43 | 94 | 68 |
+| openclare | 2951 | **82** | 100 | 65 | 74 | 91 | 79 | 44 | 93 | 63 |
+| openclare-uniform | 2995 | **82** | 100 | 61 | 72 | 91 | 79 | 41 | 99 | 76 |
 | quadremesher | 3478 | **75** | 100 | 72 | 68 | 85 | 79 | 30 | 36 | 28 |
-| integer-grid | 2686 | **74** | 100 | 59 | 55 | 88 | 77 | 33 | 58 | 45 |
 | quadremesher-uniform | 2686 | **72** | 100 | 66 | 65 | 68 | 71 | 21 | 58 | 34 |
+| integer-grid | 2659 | **70** | 100 | 58 | 52 | 76 | 77 | 25 | 55 | 54 |
 | quadriflow | 2964 | **61** | 100 | 19 | 64 | 32 | 80 | 2 | 95 | 82 |
 | instant-meshes | 3044 | **60** | 100 | 24 | 72 | 31 | 52 | 2 | 94 | 95 |
 
@@ -633,9 +689,9 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 2950 | **92** | 100 | 84 | 84 | 97 | 93 | 92 | 93 | 75 |
-| openclare-uniform | 3042 | **90** | 100 | 82 | 84 | 96 | 93 | 58 | 94 | 75 |
-| integer-grid | 2642 | **85** | 100 | 81 | 76 | 95 | 92 | 73 | 52 | 50 |
+| openclare | 2950 | **92** | 100 | 84 | 84 | 97 | 93 | 92 | 93 | 79 |
+| openclare-uniform | 3042 | **90** | 100 | 82 | 84 | 96 | 93 | 58 | 94 | 79 |
+| integer-grid | 2642 | **85** | 100 | 81 | 76 | 95 | 92 | 73 | 52 | 55 |
 | quadremesher | 2920 | **85** | 100 | 78 | 72 | 96 | 90 | 18 | 89 | 30 |
 | quadremesher-uniform | 2696 | **80** | 100 | 77 | 70 | 95 | 89 | 5 | 59 | 30 |
 | quadriflow | 2928 | **69** | 100 | 14 | 68 | 86 | 89 | 1 | 90 | 83 |
@@ -645,23 +701,23 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 2973 | **83** | 100 | 67 | 76 | 85 | 83 | 55 | 96 | 69 |
-| openclare-uniform | 2993 | **83** | 100 | 66 | 74 | 82 | 88 | 57 | 99 | 76 |
+| openclare-uniform | 2948 | **83** | 100 | 65 | 74 | 82 | 88 | 70 | 93 | 74 |
+| openclare | 3030 | **83** | 100 | 65 | 75 | 84 | 83 | 58 | 96 | 66 |
+| integer-grid | 2680 | **75** | 100 | 66 | 60 | 68 | 87 | 66 | 57 | 56 |
 | quadremesher | 3889 | **75** | 100 | 77 | 68 | 87 | 88 | 48 | 0 | 35 |
 | quadremesher-uniform | 2703 | **74** | 100 | 69 | 64 | 69 | 86 | 24 | 60 | 39 |
 | instant-meshes | 3036 | **66** | 100 | 31 | 72 | 60 | 51 | 4 | 95 | 95 |
-| integer-grid | 2652 | **47** | 0 | 63 | 57 | 66 | 83 | — | 54 | 46 |
 | quadriflow | 2698 | **44** | 60 | 29 | 46 | 13 | 84 | 4 | 60 | 85 |
 
 #### pig (organic)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 3031 | **79** | 100 | 60 | 73 | 86 | 69 | 39 | 96 | 61 |
-| openclare-uniform | 3049 | **74** | 100 | 52 | 70 | 67 | 77 | 21 | 93 | 71 |
+| openclare | 3054 | **78** | 100 | 59 | 72 | 82 | 69 | 45 | 93 | 70 |
+| openclare-uniform | 3047 | **75** | 100 | 52 | 70 | 67 | 77 | 36 | 94 | 81 |
 | quadremesher-uniform | 2552 | **68** | 100 | 58 | 60 | 71 | 66 | 28 | 40 | 32 |
 | quadremesher | 4698 | **46** | 0 | 68 | 64 | 86 | 79 | 36 | 0 | 35 |
-| integer-grid | 2704 | **41** | 0 | 51 | 61 | 41 | 73 | — | 61 | 45 |
+| integer-grid | 2680 | **41** | 0 | 52 | 59 | 50 | 69 | — | 57 | 44 |
 | instant-meshes | 3016 | **33** | 0 | 28 | 66 | 25 | 37 | 3 | 96 | 97 |
 | quadriflow | 2675 | **21** | 0 | 23 | 28 | 5 | 57 | 2 | 57 | 84 |
 
@@ -669,11 +725,11 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 3055 | **67** | 100 | 40 | 66 | 63 | 47 | 18 | 93 | 69 |
-| openclare-uniform | 3000 | **67** | 100 | 37 | 68 | 38 | 71 | 32 | 100 | 86 |
+| openclare | 3049 | **67** | 100 | 40 | 67 | 63 | 47 | 18 | 93 | 72 |
+| openclare-uniform | 3014 | **67** | 100 | 38 | 69 | 38 | 72 | 33 | 98 | 84 |
 | quadremesher-uniform | 2573 | **58** | 100 | 40 | 50 | 66 | 30 | 19 | 43 | 53 |
-| integer-grid | 2617 | **53** | 100 | 34 | 52 | 7 | 64 | 25 | 49 | 45 |
 | quadriflow | 3122 | **53** | 80 | 20 | 44 | 38 | 67 | 29 | 84 | 82 |
+| integer-grid | 2595 | **53** | 100 | 34 | 52 | 2 | 63 | 40 | 46 | 51 |
 | quadremesher | 6872 | **40** | 0 | 51 | 52 | 88 | 70 | — | 0 | 53 |
 | instant-meshes | 2959 | **29** | 20 | 18 | 57 | 11 | 10 | 0 | 95 | 100 |
 
@@ -682,10 +738,10 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
 | quadremesher | 35874 | **33** | 0 | 60 | 55 | 38 | 51 | — | 0 | 45 |
+| openclare-uniform | 3111 | **22** | 0 | 33 | 4 | 33 | 0 | — | 85 | 47 |
 | quadremesher-uniform | 2689 | **21** | 0 | 37 | 32 | 15 | 0 | — | 59 | 42 |
-| openclare-uniform | 3242 | **21** | 0 | 32 | 3 | 39 | 0 | — | 68 | 47 |
-| openclare | 3568 | **18** | 0 | 34 | 0 | 55 | 0 | 9 | 24 | 38 |
-| integer-grid | 2060 | **14** | 0 | 29 | 39 | 12 | 0 | — | 0 | 26 |
+| openclare | 3579 | **18** | 0 | 35 | 0 | 55 | 0 | — | 23 | 35 |
+| integer-grid | 1923 | **13** | 0 | 28 | 34 | 10 | 0 | — | 0 | 32 |
 | quadriflow | 2085 | **8** | 0 | 18 | 18 | 11 | 0 | 10 | 0 | 75 |
 | instant-meshes | 2226 | **8** | 0 | 15 | 22 | 4 | 0 | 12 | 0 | 82 |
 
@@ -693,9 +749,9 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 2959 | **85** | 100 | 67 | 80 | 87 | 84 | 74 | 95 | 67 |
-| openclare-uniform | 2952 | **84** | 100 | 64 | 80 | 86 | 83 | 64 | 94 | 59 |
-| integer-grid | 2682 | **78** | 100 | 63 | 67 | 86 | 81 | 72 | 58 | 49 |
+| openclare | 2950 | **85** | 100 | 67 | 80 | 87 | 85 | 76 | 93 | 65 |
+| openclare-uniform | 3019 | **84** | 100 | 65 | 81 | 86 | 83 | 60 | 97 | 59 |
+| integer-grid | 2750 | **79** | 100 | 61 | 64 | 86 | 81 | 81 | 67 | 42 |
 | instant-meshes | 2903 | **66** | 100 | 44 | 69 | 44 | 48 | 35 | 87 | 73 |
 | quadremesher-uniform | 2726 | **52** | 0 | 65 | 64 | 86 | 77 | — | 63 | 40 |
 | quadremesher | 4533 | **48** | 0 | 71 | 67 | 88 | 82 | — | 0 | 41 |
@@ -705,7 +761,7 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 2978 | **88** | 100 | 53 | 89 | 99 | 95 | 90 | 97 | 79 |
+| openclare | 2978 | **88** | 100 | 53 | 89 | 99 | 95 | 90 | 97 | 76 |
 | openclare-uniform | 3049 | **87** | 100 | 47 | 93 | 98 | 95 | 97 | 93 | 77 |
 | integer-grid | 2976 | **86** | 100 | 48 | 87 | 98 | 95 | 97 | 97 | 66 |
 | quadremesher | 2815 | **84** | 100 | 52 | 85 | 98 | 94 | 82 | 75 | 75 |
@@ -717,13 +773,13 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 2992 | **100** | 100 | 99 | 100 | 100 | 100 | 100 | 99 | 84 |
-| openclare | 2992 | **99** | 100 | 98 | 98 | 100 | 100 | 100 | 99 | 86 |
+| openclare-uniform | 2992 | **100** | 100 | 99 | 100 | 100 | 100 | 100 | 99 | 87 |
+| openclare | 2992 | **99** | 100 | 98 | 98 | 100 | 100 | 100 | 99 | 82 |
 | quadremesher | 3082 | **99** | 100 | 99 | 100 | 100 | 100 | 100 | 89 | 73 |
 | quadremesher-uniform | 3082 | **99** | 100 | 99 | 100 | 100 | 100 | 100 | 89 | 73 |
 | quadriflow | 2904 | **97** | 100 | 99 | 99 | 90 | 100 | 100 | 87 | 100 |
 | instant-meshes | 2974 | **96** | 100 | 91 | 92 | 100 | 95 | 91 | 96 | 100 |
-| integer-grid | 2992 | **94** | 100 | 97 | 96 | 82 | 100 | 63 | 99 | 49 |
+| integer-grid | 2992 | **94** | 100 | 97 | 96 | 82 | 100 | 63 | 99 | 60 |
 
 #### lblock (mechanical)
 
@@ -731,9 +787,9 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 |---|---|---|---|---|---|---|---|---|---|---|
 | quadremesher | 3030 | **99** | 100 | 97 | 98 | 100 | 99 | 100 | 96 | 75 |
 | quadremesher-uniform | 3030 | **99** | 100 | 97 | 98 | 100 | 99 | 100 | 96 | 74 |
-| openclare-uniform | 3060 | **99** | 100 | 98 | 100 | 100 | 99 | 100 | 92 | 86 |
-| openclare | 2972 | **98** | 100 | 96 | 97 | 100 | 99 | 100 | 96 | 82 |
-| integer-grid | 2912 | **98** | 100 | 97 | 97 | 100 | 99 | 100 | 88 | 2 |
+| openclare-uniform | 3060 | **99** | 100 | 98 | 100 | 100 | 99 | 100 | 92 | 95 |
+| openclare | 2972 | **98** | 100 | 96 | 97 | 100 | 99 | 100 | 96 | 95 |
+| integer-grid | 2800 | **96** | 100 | 97 | 99 | 100 | 99 | 100 | 73 | 23 |
 | instant-meshes | 2780 | **93** | 100 | 93 | 92 | 100 | 94 | 83 | 71 | 100 |
 | quadriflow | 2928 | **89** | 80 | 95 | 96 | 79 | 99 | 97 | 90 | 92 |
 
@@ -741,21 +797,21 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 3040 | **95** | 100 | 93 | 86 | 98 | 100 | 85 | 95 | 83 |
-| openclare-uniform | 2984 | **94** | 100 | 93 | 82 | 98 | 100 | 76 | 98 | 87 |
+| openclare-uniform | 2988 | **94** | 100 | 93 | 82 | 98 | 100 | 76 | 98 | 79 |
+| openclare | 3059 | **94** | 100 | 92 | 83 | 98 | 100 | 83 | 92 | 91 |
 | quadriflow | 2900 | **89** | 100 | 81 | 78 | 96 | 100 | 65 | 87 | 86 |
-| integer-grid | 2640 | **88** | 100 | 93 | 76 | 98 | 98 | 72 | 52 | 72 |
 | quadremesher | 2458 | **88** | 100 | 93 | 84 | 97 | 100 | 83 | 28 | 76 |
 | quadremesher-uniform | 2458 | **88** | 100 | 93 | 84 | 97 | 100 | 83 | 28 | 78 |
+| integer-grid | 2533 | **88** | 100 | 93 | 79 | 98 | 100 | 75 | 38 | 74 |
 | instant-meshes | 3100 | **82** | 100 | 76 | 79 | 93 | 73 | 2 | 87 | 100 |
 
 #### sphere (calibration)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 3000 | **95** | 100 | — | 80 | 99 | 92 | 99 | 100 | 99 |
-| openclare | 3000 | **95** | 100 | — | 80 | 99 | 92 | 99 | 100 | 83 |
-| integer-grid | 3000 | **91** | 100 | — | 58 | 99 | 92 | 99 | 100 | 72 |
+| openclare-uniform | 3000 | **95** | 100 | — | 80 | 99 | 92 | 99 | 100 | 88 |
+| openclare | 3000 | **95** | 100 | — | 80 | 99 | 92 | 99 | 100 | 93 |
+| integer-grid | 3000 | **91** | 100 | — | 58 | 99 | 92 | 99 | 100 | 84 |
 | quadriflow | 3107 | **88** | 100 | — | 78 | 99 | 100 | 12 | 86 | 86 |
 | quadremesher | 2740 | **85** | 100 | — | 70 | 98 | 99 | 35 | 65 | 69 |
 | quadremesher-uniform | 2740 | **85** | 100 | — | 70 | 98 | 99 | 35 | 65 | 70 |
@@ -765,8 +821,8 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 2952 | **98** | 100 | 97 | 93 | 99 | 100 | 100 | 94 | 86 |
-| openclare-uniform | 2952 | **98** | 100 | 97 | 93 | 99 | 100 | 100 | 94 | 88 |
+| openclare | 2952 | **98** | 100 | 97 | 93 | 99 | 100 | 100 | 94 | 84 |
+| openclare-uniform | 2952 | **98** | 100 | 97 | 93 | 99 | 100 | 100 | 94 | 79 |
 | integer-grid | 2720 | **94** | 100 | 97 | 93 | 99 | 100 | 100 | 63 | 83 |
 | quadremesher | 2824 | **83** | 100 | 69 | 74 | 97 | 96 | 20 | 77 | 62 |
 | quadremesher-uniform | 2824 | **83** | 100 | 69 | 74 | 97 | 96 | 20 | 77 | 74 |
@@ -779,20 +835,32 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 |---|---|---|---|---|---|---|---|---|---|---|
 | quadremesher | 14193 | **42** | 0 | 69 | 55 | 84 | 57 | — | 0 | 58 |
 | quadremesher-uniform | 9910 | **40** | 0 | 70 | 53 | 79 | 38 | — | 0 | 65 |
-| openclare-uniform | 2721 | **33** | 0 | 49 | 57 | 25 | 24 | — | 63 | 52 |
-| openclare | 3049 | **30** | 0 | 40 | 43 | 29 | 0 | — | 93 | 24 |
+| openclare-uniform | 2721 | **33** | 0 | 49 | 57 | 25 | 24 | — | 63 | 48 |
+| openclare | 3049 | **30** | 0 | 40 | 43 | 29 | 0 | — | 93 | 25 |
+| integer-grid | 2412 | **29** | 0 | 49 | 59 | 25 | 30 | — | 22 | 24 |
 | instant-meshes | 2489 | **24** | 0 | 47 | 31 | 31 | 0 | 41 | 32 | 99 |
 | quadriflow | — | **0** | 0 | — | — | — | — | — | — | — |
-| integer-grid | — | **0** | 0 | — | — | — | — | — | — | — |
+
+#### ogre_hp (extra)
+
+| Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
+|---|---|---|---|---|---|---|---|---|---|---|
+| openclare | 2954 | **69** | 100 | 45 | 67 | 72 | 37 | 18 | 94 | 0 |
+| openclare-uniform | 2964 | **68** | 100 | 39 | 69 | 49 | 73 | 7 | 95 | 1 |
+| quadremesher | 6269 | **65** | 100 | 59 | 53 | 89 | 57 | 21 | 0 | 12 |
+| instant-meshes | 2836 | **38** | 60 | 18 | 61 | 0 | 23 | 4 | 78 | 0 |
+| integer-grid | 2515 | **29** | 0 | 39 | 54 | 11 | 66 | — | 35 | 1 |
+| quadremesher-uniform | 2409 | **22** | 0 | 47 | 47 | 8 | 13 | — | 21 | 12 |
+| quadriflow | — | **0** | 0 | — | — | — | — | — | — | 100 |
 
 #### terrain (extra)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 2968 | **67** | 100 | 17 | 69 | 54 | 81 | 43 | 96 | 44 |
-| openclare | 2965 | **65** | 100 | 17 | 66 | 61 | 67 | 23 | 95 | 45 |
+| openclare-uniform | 2968 | **67** | 100 | 17 | 69 | 54 | 81 | 43 | 96 | 51 |
+| openclare | 2967 | **66** | 100 | 17 | 67 | 61 | 67 | 32 | 96 | 49 |
 | quadriflow | 2717 | **59** | 100 | 10 | 68 | 43 | 59 | 70 | 62 | 23 |
-| integer-grid | 2502 | **56** | 100 | 17 | 53 | 40 | 78 | 60 | 34 | 38 |
+| integer-grid | 2502 | **56** | 100 | 17 | 53 | 40 | 78 | 60 | 34 | 35 |
 | quadremesher-uniform | 2597 | **54** | 100 | 17 | 59 | 43 | 36 | 36 | 46 | 27 |
 | instant-meshes | 1753 | **42** | 100 | 6 | 59 | 13 | 34 | 31 | 0 | 47 |
 | quadremesher | 4677 | **29** | 0 | 19 | 52 | 73 | 51 | — | 0 | 25 |
@@ -801,11 +869,11 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| integer-grid | 2127 | **64** | 100 | 68 | 62 | 34 | 69 | 82 | 0 | 22 |
+| integer-grid | 2080 | **37** | 0 | 68 | 62 | 38 | 69 | — | 0 | 28 |
 | quadremesher | 46202 | **30** | 0 | 40 | 38 | 75 | 33 | — | 0 | 35 |
-| openclare-uniform | 3011 | **26** | 0 | 33 | 0 | 35 | 0 | 76 | 99 | 35 |
 | quadremesher-uniform | 4324 | **25** | 0 | 48 | 37 | 54 | 0 | — | 0 | 34 |
-| openclare | 2996 | **23** | 0 | 34 | 0 | 33 | 0 | — | 99 | 31 |
+| openclare-uniform | 3028 | **21** | 0 | 32 | 0 | 24 | 0 | — | 96 | 39 |
+| openclare | 2976 | **21** | 0 | 32 | 0 | 24 | 0 | — | 97 | 24 |
 | instant-meshes | 1699 | **20** | 0 | 56 | 52 | 0 | 0 | 28 | 0 | 52 |
 | quadriflow | — | **0** | 0 | — | — | — | — | — | — | 100 |
 
@@ -815,11 +883,47 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 |---|---|---|---|---|---|---|---|---|---|---|
 | quadremesher | 214018 | **39** | 0 | 55 | 51 | 91 | 52 | — | 0 | 39 |
 | quadremesher-uniform | 11340 | **24** | 0 | 39 | 15 | 82 | 0 | — | 0 | 42 |
-| openclare-uniform | 6485 | **22** | 0 | 45 | 0 | 79 | 0 | — | 0 | 9 |
-| openclare | 6364 | **21** | 0 | 40 | 0 | 79 | 0 | — | 0 | 2 |
+| openclare-uniform | 7648 | **22** | 0 | 44 | 0 | 80 | 0 | — | 0 | 9 |
+| openclare | 7390 | **22** | 0 | 44 | 0 | 80 | 0 | — | 0 | 0 |
 | instant-meshes | 1225 | **11** | 0 | 21 | 0 | 43 | 0 | 7 | 0 | 66 |
 | integer-grid | — | **0** | 0 | — | — | — | — | — | — | — |
 | quadriflow | — | **0** | 0 | — | — | — | — | — | — | 100 |
+
+#### f16 (extra)
+
+| Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
+|---|---|---|---|---|---|---|---|---|---|---|
+| quadremesher | 36038 | **39** | 0 | 78 | 45 | 88 | 15 | — | 0 | 45 |
+| quadremesher-uniform | 6315 | **24** | 0 | 69 | 29 | 34 | 0 | — | 0 | 45 |
+| openclare | 1843 | **22** | 0 | 77 | 29 | 11 | 0 | — | 0 | 0 |
+| openclare-uniform | 1892 | **22** | 0 | 76 | 28 | 11 | 0 | — | 0 | 25 |
+| instant-meshes | 1500 | **20** | 40 | 44 | 1 | 0 | 0 | 11 | 0 | 60 |
+| integer-grid | 1333 | **17** | 0 | 61 | 23 | 0 | 0 | — | 0 | 0 |
+| quadriflow | — | **0** | 0 | — | — | — | — | — | — | 100 |
+
+#### camera (extra)
+
+| Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
+|---|---|---|---|---|---|---|---|---|---|---|
+| quadremesher | 12621 | **47** | 0 | 81 | 64 | 84 | 65 | — | 0 | 61 |
+| quadremesher-uniform | 5458 | **42** | 0 | 83 | 59 | 66 | 41 | — | 0 | 64 |
+| openclare | 2338 | **38** | 0 | 72 | 53 | 50 | 56 | — | 12 | 24 |
+| openclare-uniform | 2347 | **37** | 0 | 72 | 53 | 49 | 45 | — | 13 | 37 |
+| integer-grid | 1109 | **28** | 0 | 62 | 37 | 32 | 37 | — | 0 | 0 |
+| instant-meshes | 2216 | **27** | 0 | 62 | 40 | 45 | 0 | 24 | 0 | 97 |
+| quadriflow | — | **0** | 0 | — | — | — | — | — | — | 100 |
+
+#### wolf (extra)
+
+| Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
+|---|---|---|---|---|---|---|---|---|---|---|
+| quadremesher | 14984 | **36** | 0 | 59 | 53 | 61 | 48 | — | 0 | 20 |
+| integer-grid | 2420 | **27** | 0 | 55 | 51 | 16 | 24 | — | 23 | 24 |
+| openclare | 2466 | **24** | 0 | 51 | 45 | 13 | 9 | — | 29 | 20 |
+| openclare-uniform | 2419 | **24** | 0 | 53 | 48 | 13 | 5 | — | 23 | 23 |
+| instant-meshes | 2774 | **22** | 0 | 34 | 43 | 6 | 0 | 9 | 70 | 100 |
+| quadremesher-uniform | 2308 | **22** | 0 | 56 | 44 | 12 | 0 | — | 8 | 17 |
+| quadriflow | — | **0** | 0 | — | — | — | — | — | — | — |
 
 ## 8000 quads
 
@@ -829,11 +933,11 @@ Over blob, rock, creature, cage, suzanne, ogre, spot, bob, blub, pig, jerry, ros
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 8056 | **81** | 100 | 63 | 71 | 91 | 82 | 39 | 95 | 44 |
-| openclare-uniform | 8041 | **81** | 100 | 61 | 70 | 87 | 86 | 42 | 94 | 49 |
+| openclare-uniform | 8044 | **81** | 100 | 61 | 70 | 87 | 86 | 43 | 94 | 51 |
+| openclare | 8050 | **80** | 92 | 63 | 71 | 91 | 82 | 39 | 95 | 45 |
 | quadremesher | 12672 | **72** | 85 | 65 | 66 | 87 | 89 | 39 | 41 | 37 |
 | quadremesher-uniform | 7047 | **66** | 69 | 61 | 64 | 79 | 80 | 44 | 52 | 41 |
-| integer-grid | 7176 | **63** | 54 | 59 | 60 | 78 | 84 | 52 | 59 | 16 |
+| integer-grid | 7179 | **65** | 62 | 59 | 60 | 78 | 84 | 50 | 59 | 18 |
 | instant-meshes | 7953 | **62** | 77 | 28 | 73 | 72 | 59 | 6 | 90 | 91 |
 | quadriflow | 7638 | **50** | 51 | 29 | 58 | 65 | 84 | 8 | 78 | 66 |
 
@@ -843,11 +947,11 @@ Over part, cube, lblock, cylinder.
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 8054 | **96** | 100 | 85 | 95 | 100 | 99 | 98 | 97 | 59 |
-| openclare | 8032 | **96** | 100 | 86 | 95 | 100 | 99 | 95 | 96 | 58 |
+| openclare | 8032 | **96** | 100 | 86 | 95 | 100 | 99 | 95 | 96 | 63 |
+| openclare-uniform | 8047 | **96** | 100 | 85 | 96 | 100 | 99 | 94 | 97 | 63 |
 | quadremesher | 7565 | **93** | 100 | 85 | 90 | 99 | 99 | 94 | 77 | 70 |
 | quadremesher-uniform | 7565 | **93** | 100 | 85 | 90 | 99 | 99 | 94 | 77 | 71 |
-| integer-grid | 7810 | **93** | 100 | 84 | 94 | 97 | 99 | 70 | 88 | 35 |
+| integer-grid | 7798 | **93** | 100 | 84 | 94 | 97 | 99 | 70 | 88 | 38 |
 | instant-meshes | 7890 | **88** | 95 | 79 | 88 | 96 | 84 | 66 | 94 | 95 |
 | quadriflow | 7952 | **86** | 80 | 69 | 93 | 94 | 98 | 93 | 97 | 57 |
 
@@ -859,9 +963,9 @@ Over sphere, torus.
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 8030 | **93** | 100 | 97 | 85 | 99 | 99 | 50 | 99 | 62 |
-| openclare | 8028 | **93** | 100 | 97 | 85 | 99 | 99 | 50 | 99 | 59 |
-| integer-grid | 7404 | **89** | 100 | 97 | 80 | 99 | 99 | 50 | 70 | 43 |
+| openclare-uniform | 8004 | **94** | 100 | 97 | 87 | 99 | 99 | 50 | 99 | 61 |
+| openclare | 8049 | **94** | 100 | 97 | 86 | 99 | 99 | 50 | 98 | 60 |
+| integer-grid | 7424 | **90** | 100 | 97 | 83 | 99 | 99 | 50 | 71 | 46 |
 | quadremesher | 7244 | **84** | 100 | 81 | 72 | 99 | 99 | 24 | 62 | 60 |
 | quadremesher-uniform | 7244 | **84** | 100 | 81 | 72 | 99 | 99 | 24 | 62 | 61 |
 | instant-meshes | 8114 | **84** | 100 | 72 | 78 | 99 | 72 | 1 | 94 | 100 |
@@ -869,17 +973,17 @@ Over sphere, torus.
 
 ### Extra models: average
 
-Over venturi, terrain, mahaveer, marine.
+Over venturi, ogre_hp, terrain, mahaveer, marine, f16, camera, wolf.
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 8110 | **50** | 50 | 41 | 42 | 62 | 44 | 32 | 80 | 26 |
-| quadremesher-uniform | 11397 | **41** | 25 | 47 | 50 | 66 | 29 | 39 | 30 | 39 |
-| openclare | 8294 | **40** | 25 | 38 | 38 | 65 | 22 | 21 | 76 | 18 |
-| quadremesher | 83192 | **37** | 0 | 47 | 54 | 77 | 60 | 30 | 0 | 38 |
-| instant-meshes | 5498 | **28** | 20 | 33 | 42 | 32 | 16 | 27 | 21 | 62 |
-| integer-grid | 6326 | **24** | 25 | 45 | 56 | 42 | 76 | 35 | 22 | 6 |
-| quadriflow | 6963 | **15** | 25 | 7 | 71 | 49 | 73 | 70 | 48 | 74 |
+| openclare-uniform | 7738 | **48** | 38 | 53 | 48 | 59 | 46 | 27 | 59 | 15 |
+| openclare | 7769 | **44** | 25 | 52 | 50 | 62 | 32 | 20 | 58 | 8 |
+| quadremesher | 55250 | **41** | 0 | 59 | 57 | 81 | 63 | 26 | 0 | 33 |
+| quadremesher-uniform | 9994 | **38** | 12 | 57 | 53 | 56 | 29 | 39 | 20 | 34 |
+| integer-grid | 6711 | **36** | 12 | 58 | 59 | 41 | 59 | 37 | 36 | 1 |
+| instant-meshes | 6092 | **28** | 10 | 40 | 47 | 26 | 17 | 21 | 37 | 60 |
+| quadriflow | 6963 | **7** | 12 | 7 | 71 | 49 | 73 | 70 | 48 | 89 |
 
 ### Organic models at equal quad count
 
@@ -892,15 +996,15 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 | creature | 7186 / 7168 | 85 / 86 | 100 / 100 | 70 / 75 | 69 / 74 | 98 / 98 | 96 / 96 | 55 / 40 |
 | cage | 11009 / 11166 | 92 / 95 | 100 / 100 | 91 / 92 | 84 / 90 | 91 / 96 | 97 / 97 | 71 / 99 |
 | suzanne | 9246 / 9380 | 81 / 80 | 100 / 100 | 62 / 58 | 65 / 70 | 93 / 95 | 92 / 91 | 56 / 36 |
-| ogre | 12717 / 12832 | 75 / 77 | 100 / 100 | 61 / 55 | 60 / 71 | 86 / 93 | 74 / 79 | 22 / 18 |
+| ogre | 12717 / 12532 | 75 / 77 | 100 / 100 | 61 / 54 | 60 / 71 | 86 / 93 | 74 / 78 | 22 / 28 |
 | spot | 7965 / 8007 | 82 / 82 | 100 / 100 | 66 / 67 | 72 / 70 | 91 / 96 | 91 / 91 | 42 / 34 |
 | bob | 6896 / 6770 | 84 / 90 | 100 / 100 | 76 / 84 | 68 / 82 | 97 / 98 | 95 / 97 | 30 / 60 |
 | blub | 8513 / 8369 | 82 / 85 | 100 / 100 | 72 / 71 | 68 / 69 | 91 / 95 | 95 / 94 | 27 / 67 |
-| pig | 9824 / 9951 | 53 / 80 | 0 / 100 | 67 / 63 | 68 / 70 | 86 / 89 | 90 / 91 | — / 34 |
-| jerry | 13714 / 13810 | 74 / 45 | 100 / 0 | 52 / 48 | 59 / 72 | 91 / 80 | 82 / 74 | 15 / 14 |
-| rose | 53874 / 53646 | 29 / 46 | 0 / 0 | 50 / 59 | 57 / 69 | 0 / 77 | 65 / 65 | — / 20 |
-| bridge | 8805 / 8841 | 81 / 81 | 100 / 100 | 61 / 59 | 69 / 78 | 87 / 85 | 91 / 90 | 67 / 60 |
-| **average** | 12672 / 12688 | 75 / 77 | 85 / 85 | 64 / 64 | 66 / 74 | 84 / 92 | 89 / 88 | 39 / 38 |
+| pig | 9824 / 9900 | 53 / 80 | 0 / 100 | 67 / 62 | 68 / 70 | 86 / 89 | 90 / 91 | — / 38 |
+| jerry | 13714 / 13817 | 74 / 72 | 100 / 100 | 52 / 48 | 59 / 70 | 91 / 79 | 82 / 74 | 15 / 15 |
+| rose | 53874 / 54069 | 29 / 46 | 0 / 0 | 50 / 59 | 57 / 69 | 0 / 77 | 65 / 66 | — / 18 |
+| bridge | 8805 / 8799 | 81 / 81 | 100 / 100 | 61 / 59 | 69 / 78 | 87 / 86 | 91 / 90 | 67 / 59 |
+| **average** | 12672 / 12691 | 75 / 79 | 85 / 92 | 64 / 64 | 66 / 74 | 84 / 92 | 89 / 88 | 39 / 39 |
 
 ### Mechanical models at equal quad count
 
@@ -920,9 +1024,9 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Model | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure |
 |---|---|---|---|---|---|---|---|---|
-| sphere | 7088 / 7022 | 87 / 87 | 100 / 100 | — / — | 62 / 74 | 99 / 99 | 100 / 99 | 30 / 0 |
+| sphere | 7088 / 7223 | 87 / 86 | 100 / 100 | — / — | 62 / 70 | 99 / 99 | 100 / 99 | 30 / 0 |
 | torus | 7401 / 7467 | 88 / 99 | 100 / 100 | 81 / 97 | 82 / 95 | 99 / 99 | 97 / 100 | 19 / 100 |
-| **average** | 7244 / 7244 | 87 / 93 | 100 / 100 | 81 / 97 | 72 / 85 | 99 / 99 | 99 / 100 | 24 / 50 |
+| **average** | 7244 / 7345 | 87 / 92 | 100 / 100 | 81 / 97 | 72 / 83 | 99 / 99 | 99 / 99 | 24 / 50 |
 
 ### Extra models at equal quad count
 
@@ -931,10 +1035,14 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 | Model | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure |
 |---|---|---|---|---|---|---|---|---|
 | venturi | 19704 / 19050 | 48 / 70 | 0 / 100 | 63 / 57 | 60 / 71 | 83 / 59 | 65 / 61 | — / 25 |
-| terrain | 11819 / 11801 | 34 / 65 | 0 / 100 | 19 / 23 | 57 / 68 | 62 / 73 | 75 / 73 | 30 / 11 |
-| mahaveer | 55181 / 53000 | 30 / 44 | 0 / 0 | 46 / 60 | 44 / 65 | 38 / 50 | 43 / 78 | — / — |
-| marine | 246063 / 227098 | 37 / 46 | 0 / 0 | 49 / 64 | 57 / 75 | 48 / 64 | 58 / 51 | — / — |
-| **average** | 83192 / 77737 | 37 / 56 | 0 / 50 | 44 / 51 | 54 / 70 | 58 / 62 | 60 / 66 | 30 / 18 |
+| ogre_hp | 13801 / 13743 | 47 / 76 | 0 / 100 | 59 / 57 | 60 / 70 | 87 / 92 | 74 / 69 | 22 / 15 |
+| terrain | 11819 / 11855 | 34 / 65 | 0 / 100 | 19 / 22 | 57 / 68 | 62 / 73 | 75 / 73 | 30 / 11 |
+| mahaveer | 55181 / 52590 | 30 / 44 | 0 / 0 | 46 / 59 | 44 / 66 | 38 / 51 | 43 / 78 | — / — |
+| marine | 246063 / 229651 | 37 / 48 | 0 / 0 | 49 / 64 | 57 / 75 | 48 / 78 | 58 / 52 | — / — |
+| f16 | 46194 / 34351 | 48 / 45 | 0 / 0 | 79 / 84 | 54 / 67 | 85 / 31 | 42 / 70 | — / — |
+| camera | 20326 / 16600 | 57 / 49 | 0 / 0 | 85 / 75 | 71 / 77 | 88 / 45 | 77 / 86 | — / — |
+| wolf | 28909 / 25241 | 37 / 39 | 0 / 0 | 51 / 50 | 53 / 57 | 44 / 52 | 67 / 71 | — / — |
+| **average** | 55250 / 50385 | 42 / 55 | 0 / 38 | 56 / 59 | 57 / 69 | 67 / 60 | 63 / 70 | 26 / 17 |
 
 ### Model by model, 8000 quads
 
@@ -943,10 +1051,10 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
 | quadremesher | 7911 | **88** | 100 | 82 | 72 | 94 | 98 | 42 | 96 | 39 |
-| openclare | 7979 | **86** | 100 | 76 | 71 | 96 | 98 | 15 | 99 | 54 |
-| openclare-uniform | 8068 | **85** | 100 | 74 | 69 | 96 | 98 | 16 | 97 | 55 |
+| openclare | 7979 | **86** | 100 | 76 | 71 | 96 | 98 | 15 | 99 | 53 |
+| openclare-uniform | 8068 | **85** | 100 | 74 | 69 | 96 | 98 | 16 | 97 | 58 |
 | quadremesher-uniform | 7035 | **84** | 100 | 80 | 72 | 93 | 98 | 59 | 52 | 38 |
-| integer-grid | 7124 | **80** | 100 | 74 | 63 | 95 | 98 | 21 | 56 | 38 |
+| integer-grid | 7124 | **80** | 100 | 74 | 63 | 95 | 98 | 21 | 56 | 42 |
 | instant-meshes | 8164 | **72** | 100 | 33 | 76 | 90 | 67 | 0 | 92 | 85 |
 | quadriflow | 7590 | **62** | 60 | 34 | 61 | 90 | 96 | 2 | 80 | 65 |
 
@@ -954,9 +1062,9 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 7940 | **74** | 100 | 27 | 73 | 95 | 84 | 0 | 97 | 53 |
-| openclare-uniform | 7943 | **73** | 100 | 26 | 70 | 94 | 86 | 0 | 97 | 54 |
-| integer-grid | 7393 | **68** | 100 | 29 | 54 | 93 | 86 | 0 | 70 | 12 |
+| openclare | 7940 | **74** | 100 | 27 | 73 | 95 | 84 | 0 | 97 | 45 |
+| openclare-uniform | 7943 | **73** | 100 | 26 | 70 | 94 | 86 | 0 | 97 | 55 |
+| integer-grid | 7393 | **68** | 100 | 29 | 54 | 93 | 86 | 0 | 70 | 14 |
 | instant-meshes | 7792 | **68** | 100 | 0 | 79 | 94 | 80 | 0 | 90 | 91 |
 | quadremesher | 7071 | **66** | 100 | 23 | 51 | 92 | 92 | 0 | 54 | 29 |
 | quadriflow | 7342 | **65** | 100 | 1 | 69 | 86 | 100 | 0 | 67 | 62 |
@@ -966,21 +1074,21 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 7825 | **87** | 100 | 75 | 72 | 98 | 96 | 59 | 91 | 35 |
-| openclare-uniform | 7884 | **87** | 100 | 73 | 66 | 98 | 96 | 64 | 94 | 33 |
+| openclare | 7825 | **87** | 100 | 75 | 72 | 98 | 96 | 59 | 91 | 38 |
+| openclare-uniform | 7884 | **87** | 100 | 73 | 66 | 98 | 96 | 64 | 94 | 43 |
 | quadremesher | 7186 | **82** | 100 | 70 | 69 | 98 | 96 | 55 | 59 | 38 |
 | quadremesher-uniform | 7207 | **82** | 100 | 70 | 69 | 97 | 96 | 52 | 60 | 48 |
 | instant-meshes | 8234 | **78** | 100 | 47 | 80 | 97 | 75 | 9 | 88 | 89 |
 | quadriflow | 8170 | **71** | 80 | 39 | 70 | 94 | 98 | 0 | 92 | 59 |
-| integer-grid | 6922 | **54** | 0 | 72 | 56 | 95 | 94 | 64 | 46 | 19 |
+| integer-grid | 6922 | **54** | 0 | 72 | 56 | 95 | 94 | 64 | 46 | 22 |
 
 #### cage (organic)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 8057 | **95** | 100 | 91 | 89 | 94 | 97 | 97 | 97 | 46 |
-| openclare-uniform | 8112 | **94** | 100 | 89 | 89 | 94 | 98 | 80 | 94 | 59 |
-| integer-grid | 7765 | **92** | 100 | 88 | 82 | 90 | 99 | 90 | 88 | 16 |
+| openclare | 8057 | **95** | 100 | 91 | 89 | 94 | 97 | 97 | 97 | 56 |
+| openclare-uniform | 8112 | **94** | 100 | 89 | 89 | 94 | 98 | 80 | 94 | 62 |
+| integer-grid | 7765 | **92** | 100 | 88 | 82 | 90 | 99 | 90 | 88 | 20 |
 | quadremesher-uniform | 7510 | **89** | 100 | 90 | 83 | 88 | 96 | 74 | 76 | 61 |
 | quadremesher | 11009 | **83** | 100 | 91 | 84 | 91 | 97 | 71 | 0 | 57 |
 | quadriflow | 7932 | **81** | 100 | 63 | 71 | 87 | 95 | 8 | 97 | 61 |
@@ -990,7 +1098,7 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 8040 | **83** | 100 | 56 | 73 | 91 | 92 | 56 | 98 | 58 |
+| openclare-uniform | 8040 | **83** | 100 | 56 | 73 | 91 | 92 | 56 | 98 | 63 |
 | openclare | 8103 | **81** | 100 | 56 | 70 | 94 | 90 | 41 | 95 | 50 |
 | quadremesher-uniform | 7317 | **78** | 100 | 56 | 65 | 90 | 90 | 54 | 66 | 61 |
 | integer-grid | 7376 | **77** | 100 | 56 | 62 | 90 | 91 | 42 | 69 | 0 |
@@ -1002,10 +1110,10 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 7955 | **77** | 100 | 52 | 68 | 87 | 71 | 23 | 98 | 39 |
-| openclare-uniform | 7970 | **75** | 100 | 50 | 68 | 76 | 76 | 22 | 98 | 39 |
+| openclare | 7997 | **77** | 100 | 52 | 68 | 87 | 71 | 23 | 100 | 41 |
+| openclare-uniform | 8009 | **76** | 100 | 50 | 69 | 76 | 76 | 35 | 100 | 41 |
 | quadremesher | 12717 | **68** | 100 | 62 | 60 | 87 | 74 | 22 | 0 | 23 |
-| integer-grid | 7035 | **41** | 0 | 49 | 57 | 53 | 76 | — | 52 | 12 |
+| integer-grid | 6967 | **40** | 0 | 48 | 55 | 49 | 76 | — | 48 | 13 |
 | quadremesher-uniform | 6761 | **39** | 0 | 57 | 58 | 56 | 52 | — | 38 | 22 |
 | quadriflow | 7763 | **35** | 0 | 21 | 42 | 51 | 80 | 5 | 88 | 62 |
 | instant-meshes | 7836 | **33** | 0 | 21 | 69 | 34 | 45 | 2 | 92 | 77 |
@@ -1015,10 +1123,10 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
 | quadremesher | 7965 | **84** | 100 | 66 | 72 | 91 | 91 | 42 | 98 | 30 |
-| openclare | 8093 | **83** | 100 | 66 | 68 | 96 | 91 | 38 | 95 | 35 |
-| openclare-uniform | 7967 | **83** | 100 | 65 | 68 | 96 | 91 | 33 | 98 | 43 |
+| openclare | 8093 | **83** | 100 | 66 | 68 | 96 | 91 | 38 | 95 | 40 |
+| openclare-uniform | 7967 | **83** | 100 | 65 | 68 | 96 | 91 | 33 | 98 | 45 |
 | quadremesher-uniform | 7274 | **79** | 100 | 63 | 70 | 88 | 90 | 47 | 64 | 30 |
-| integer-grid | 7084 | **77** | 100 | 62 | 55 | 95 | 90 | 48 | 54 | 8 |
+| integer-grid | 7084 | **77** | 100 | 62 | 55 | 95 | 90 | 48 | 54 | 10 |
 | instant-meshes | 8098 | **71** | 100 | 25 | 78 | 86 | 66 | 2 | 95 | 95 |
 | quadriflow | 7874 | **67** | 80 | 25 | 69 | 89 | 91 | 1 | 94 | 69 |
 
@@ -1032,16 +1140,16 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 | quadremesher-uniform | 6832 | **80** | 100 | 74 | 66 | 97 | 96 | 45 | 42 | 31 |
 | instant-meshes | 8072 | **70** | 100 | 10 | 78 | 94 | 70 | 0 | 96 | 92 |
 | quadriflow | 8263 | **62** | 60 | 23 | 68 | 94 | 96 | 0 | 87 | 65 |
-| integer-grid | 7052 | **61** | 0 | 82 | 75 | 93 | 97 | 78 | 53 | 30 |
+| integer-grid | 7052 | **61** | 0 | 82 | 75 | 93 | 97 | 78 | 53 | 32 |
 
 #### blub (organic)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 7994 | **86** | 100 | 71 | 69 | 95 | 94 | 45 | 100 | 49 |
-| openclare-uniform | 7990 | **85** | 100 | 69 | 67 | 93 | 95 | 58 | 100 | 47 |
+| openclare | 7994 | **86** | 100 | 71 | 69 | 95 | 94 | 45 | 100 | 53 |
+| openclare-uniform | 7990 | **85** | 100 | 69 | 67 | 93 | 95 | 58 | 100 | 49 |
 | quadremesher | 8513 | **82** | 100 | 72 | 68 | 91 | 95 | 27 | 74 | 33 |
-| integer-grid | 7057 | **78** | 100 | 68 | 56 | 91 | 94 | 58 | 53 | 28 |
+| integer-grid | 7057 | **78** | 100 | 68 | 56 | 91 | 94 | 58 | 53 | 27 |
 | quadremesher-uniform | 6943 | **76** | 100 | 66 | 62 | 84 | 94 | 29 | 47 | 37 |
 | instant-meshes | 8100 | **73** | 100 | 35 | 78 | 88 | 66 | 2 | 95 | 96 |
 | quadriflow | 7229 | **38** | 0 | 32 | 48 | 56 | 91 | 13 | 61 | 68 |
@@ -1050,34 +1158,34 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 8141 | **82** | 100 | 64 | 71 | 88 | 89 | 34 | 93 | 32 |
-| openclare-uniform | 8093 | **78** | 100 | 58 | 65 | 77 | 90 | 26 | 95 | 48 |
+| openclare | 8108 | **82** | 100 | 64 | 72 | 88 | 89 | 34 | 95 | 35 |
+| openclare-uniform | 8093 | **78** | 100 | 58 | 65 | 77 | 90 | 26 | 95 | 51 |
 | quadremesher-uniform | 7070 | **74** | 100 | 61 | 67 | 74 | 87 | 39 | 53 | 32 |
 | instant-meshes | 8116 | **63** | 80 | 34 | 75 | 67 | 55 | 4 | 94 | 92 |
 | quadremesher | 9824 | **49** | 0 | 67 | 68 | 87 | 90 | — | 9 | 31 |
-| integer-grid | 7189 | **48** | 0 | 58 | 56 | 76 | 89 | 37 | 59 | 13 |
+| integer-grid | 7187 | **48** | 0 | 58 | 56 | 76 | 89 | 37 | 59 | 14 |
 | quadriflow | 6973 | **25** | 0 | 30 | 43 | 0 | 82 | 2 | 49 | 66 |
 
 #### jerry (organic)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 8102 | **73** | 100 | 45 | 70 | 81 | 66 | 13 | 95 | 51 |
-| openclare-uniform | 7873 | **73** | 100 | 42 | 73 | 62 | 79 | 32 | 94 | 57 |
+| openclare | 7951 | **74** | 100 | 45 | 71 | 80 | 65 | 14 | 98 | 50 |
+| openclare-uniform | 7903 | **73** | 100 | 43 | 74 | 61 | 79 | 31 | 95 | 54 |
 | quadremesher | 13714 | **67** | 100 | 53 | 59 | 92 | 82 | 15 | 0 | 45 |
+| integer-grid | 7345 | **64** | 100 | 41 | 57 | 44 | 76 | 29 | 67 | 12 |
 | quadriflow | 7781 | **59** | 80 | 22 | 61 | 44 | 86 | 36 | 89 | 56 |
 | quadremesher-uniform | 6947 | **42** | 0 | 44 | 58 | 75 | 64 | — | 47 | 48 |
-| integer-grid | 7340 | **40** | 0 | 41 | 57 | 45 | 77 | — | 67 | 12 |
 | instant-meshes | 7933 | **37** | 20 | 17 | 67 | 32 | 38 | 2 | 97 | 100 |
 
 #### rose (organic)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 8743 | **62** | 100 | 46 | 46 | 72 | 24 | 19 | 63 | 43 |
-| openclare | 8417 | **60** | 100 | 48 | 37 | 74 | 0 | 13 | 79 | 31 |
+| openclare-uniform | 8711 | **60** | 100 | 46 | 47 | 64 | 24 | 17 | 64 | 42 |
+| openclare | 8484 | **35** | 0 | 48 | 37 | 74 | 0 | 12 | 76 | 25 |
 | quadremesher | 53874 | **33** | 0 | 60 | 57 | 28 | 65 | — | 0 | 45 |
-| integer-grid | 6566 | **22** | 0 | 37 | 49 | 11 | 15 | — | 28 | 0 |
+| integer-grid | 6584 | **22** | 0 | 37 | 49 | 13 | 13 | — | 29 | 0 |
 | quadremesher-uniform | 6896 | **22** | 0 | 45 | 42 | 7 | 0 | — | 45 | 50 |
 | instant-meshes | 6932 | **15** | 0 | 18 | 40 | 2 | 0 | 7 | 47 | 86 |
 | quadriflow | 6758 | **13** | 0 | 19 | 26 | 6 | 0 | 3 | 38 | 71 |
@@ -1086,10 +1194,10 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 8109 | **83** | 100 | 60 | 77 | 87 | 90 | 66 | 95 | 51 |
-| openclare-uniform | 7880 | **82** | 100 | 56 | 76 | 86 | 91 | 62 | 94 | 57 |
+| openclare | 8109 | **83** | 100 | 60 | 77 | 87 | 90 | 66 | 95 | 54 |
+| openclare-uniform | 7880 | **82** | 100 | 56 | 76 | 86 | 91 | 62 | 94 | 54 |
 | quadremesher | 8805 | **79** | 100 | 63 | 69 | 87 | 91 | 67 | 60 | 33 |
-| integer-grid | 7388 | **79** | 100 | 56 | 65 | 86 | 91 | 78 | 69 | 18 |
+| integer-grid | 7468 | **79** | 100 | 56 | 65 | 86 | 91 | 78 | 73 | 23 |
 | instant-meshes | 7960 | **75** | 100 | 38 | 78 | 82 | 68 | 35 | 98 | 81 |
 | quadremesher-uniform | 7054 | **52** | 0 | 59 | 66 | 87 | 89 | — | 53 | 40 |
 | quadriflow | — | **0** | 0 | — | — | — | — | — | — | 100 |
@@ -1098,9 +1206,9 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 8098 | **89** | 100 | 54 | 95 | 99 | 98 | 99 | 95 | 51 |
-| openclare-uniform | 8078 | **88** | 100 | 47 | 94 | 99 | 98 | 95 | 96 | 53 |
-| integer-grid | 7824 | **87** | 100 | 47 | 92 | 99 | 98 | 98 | 91 | 42 |
+| openclare | 8098 | **89** | 100 | 54 | 95 | 99 | 98 | 99 | 95 | 56 |
+| openclare-uniform | 8078 | **88** | 100 | 47 | 94 | 99 | 98 | 95 | 96 | 59 |
+| integer-grid | 7824 | **87** | 100 | 47 | 92 | 99 | 98 | 98 | 91 | 43 |
 | quadremesher | 7353 | **83** | 100 | 52 | 82 | 99 | 98 | 90 | 68 | 76 |
 | quadremesher-uniform | 7353 | **83** | 100 | 52 | 82 | 99 | 98 | 90 | 68 | 76 |
 | instant-meshes | 7732 | **74** | 100 | 40 | 77 | 90 | 57 | 39 | 87 | 80 |
@@ -1110,10 +1218,10 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 8066 | **100** | 100 | 99 | 100 | 100 | 100 | 100 | 97 | 61 |
+| openclare-uniform | 8066 | **100** | 100 | 99 | 100 | 100 | 100 | 100 | 97 | 65 |
 | quadremesher | 7920 | **99** | 100 | 100 | 100 | 100 | 100 | 100 | 96 | 69 |
 | quadremesher-uniform | 7920 | **99** | 100 | 100 | 100 | 100 | 100 | 100 | 96 | 74 |
-| openclare | 8066 | **99** | 100 | 99 | 99 | 100 | 100 | 100 | 97 | 65 |
+| openclare | 8066 | **99** | 100 | 99 | 99 | 100 | 100 | 100 | 97 | 67 |
 | quadriflow | 7920 | **99** | 100 | 98 | 98 | 98 | 100 | 100 | 96 | 67 |
 | instant-meshes | 7802 | **97** | 100 | 96 | 95 | 100 | 99 | 95 | 90 | 100 |
 | integer-grid | 8028 | **92** | 100 | 97 | 95 | 89 | 100 | 0 | 99 | 0 |
@@ -1124,18 +1232,18 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 |---|---|---|---|---|---|---|---|---|---|---|
 | quadremesher | 8064 | **99** | 100 | 98 | 100 | 100 | 100 | 100 | 97 | 72 |
 | quadremesher-uniform | 8064 | **99** | 100 | 98 | 100 | 100 | 100 | 100 | 97 | 72 |
-| integer-grid | 8064 | **99** | 100 | 97 | 100 | 100 | 100 | 100 | 97 | 51 |
-| openclare-uniform | 8064 | **99** | 100 | 97 | 100 | 100 | 100 | 100 | 97 | 62 |
-| openclare | 8064 | **98** | 100 | 96 | 98 | 100 | 100 | 100 | 97 | 62 |
+| integer-grid | 8064 | **99** | 100 | 97 | 100 | 100 | 100 | 100 | 97 | 59 |
+| openclare-uniform | 8064 | **99** | 100 | 97 | 100 | 100 | 100 | 100 | 97 | 65 |
+| openclare | 8064 | **98** | 100 | 96 | 98 | 100 | 100 | 100 | 97 | 65 |
 | instant-meshes | 8000 | **98** | 100 | 95 | 96 | 100 | 98 | 91 | 100 | 100 |
 
 #### cylinder (mechanical)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 8006 | **97** | 100 | 94 | 88 | 99 | 100 | 98 | 100 | 59 |
-| openclare | 7899 | **96** | 100 | 94 | 89 | 99 | 100 | 82 | 95 | 56 |
-| integer-grid | 7324 | **93** | 100 | 94 | 87 | 99 | 100 | 82 | 66 | 49 |
+| openclare-uniform | 7980 | **96** | 100 | 94 | 88 | 99 | 100 | 82 | 99 | 63 |
+| openclare | 7899 | **96** | 100 | 94 | 88 | 99 | 100 | 82 | 95 | 64 |
+| integer-grid | 7276 | **92** | 100 | 94 | 87 | 99 | 100 | 82 | 64 | 50 |
 | quadremesher | 6922 | **89** | 100 | 92 | 78 | 99 | 100 | 88 | 46 | 64 |
 | quadremesher-uniform | 6922 | **89** | 100 | 92 | 78 | 99 | 100 | 88 | 46 | 63 |
 | instant-meshes | 8024 | **84** | 80 | 85 | 85 | 96 | 80 | 38 | 98 | 100 |
@@ -1144,10 +1252,10 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 8035 | **88** | 100 | — | 75 | 99 | 98 | 0 | 98 | 60 |
-| openclare | 8031 | **88** | 100 | — | 75 | 99 | 98 | 0 | 98 | 56 |
+| openclare-uniform | 7984 | **89** | 100 | — | 78 | 99 | 98 | 0 | 99 | 58 |
+| openclare | 8074 | **89** | 100 | — | 77 | 99 | 98 | 0 | 96 | 61 |
 | instant-meshes | 8190 | **86** | 100 | — | 83 | 99 | 77 | 0 | 90 | 100 |
-| integer-grid | 7528 | **84** | 100 | — | 65 | 99 | 98 | 0 | 76 | 29 |
+| integer-grid | 7568 | **85** | 100 | — | 70 | 99 | 98 | 0 | 78 | 37 |
 | quadremesher | 7088 | **83** | 100 | — | 62 | 99 | 100 | 30 | 54 | 65 |
 | quadremesher-uniform | 7088 | **83** | 100 | — | 62 | 99 | 100 | 30 | 54 | 65 |
 | quadriflow | 7736 | **75** | 60 | — | 75 | 99 | 99 | 0 | 87 | 58 |
@@ -1156,9 +1264,9 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare | 8024 | **99** | 100 | 97 | 95 | 99 | 100 | 100 | 99 | 61 |
-| openclare-uniform | 8024 | **99** | 100 | 97 | 95 | 99 | 100 | 100 | 99 | 64 |
-| integer-grid | 7280 | **95** | 100 | 97 | 95 | 99 | 100 | 100 | 64 | 57 |
+| openclare | 8024 | **99** | 100 | 97 | 95 | 99 | 100 | 100 | 99 | 60 |
+| openclare-uniform | 8024 | **99** | 100 | 97 | 95 | 99 | 100 | 100 | 99 | 65 |
+| integer-grid | 7280 | **95** | 100 | 97 | 95 | 99 | 100 | 100 | 64 | 54 |
 | quadremesher | 7401 | **86** | 100 | 81 | 82 | 99 | 97 | 19 | 70 | 55 |
 | quadremesher-uniform | 7401 | **86** | 100 | 81 | 82 | 99 | 97 | 19 | 70 | 57 |
 | instant-meshes | 8038 | **82** | 100 | 72 | 74 | 99 | 67 | 1 | 98 | 100 |
@@ -1171,20 +1279,32 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 | openclare-uniform | 7574 | **67** | 100 | 54 | 68 | 36 | 63 | 31 | 79 | 22 |
 | quadremesher | 19704 | **44** | 0 | 67 | 60 | 84 | 65 | — | 0 | 60 |
 | quadremesher-uniform | 14699 | **42** | 0 | 69 | 58 | 82 | 53 | — | 0 | 57 |
+| integer-grid | 6950 | **37** | 0 | 54 | 67 | 24 | 61 | — | 48 | 0 |
 | instant-meshes | 7693 | **37** | 0 | 50 | 48 | 57 | 0 | 45 | 85 | 91 |
 | openclare | 8352 | **33** | 0 | 47 | 56 | 38 | 0 | 27 | 82 | 8 |
 | quadriflow | — | **0** | 0 | — | — | — | — | — | — | — |
-| integer-grid | — | **0** | 0 | — | — | — | — | — | — | — |
+
+#### ogre_hp (extra)
+
+| Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
+|---|---|---|---|---|---|---|---|---|---|---|
+| openclare | 7952 | **76** | 100 | 55 | 67 | 91 | 56 | 23 | 98 | 0 |
+| openclare-uniform | 8133 | **75** | 100 | 46 | 70 | 81 | 77 | 19 | 93 | 0 |
+| quadremesher | 13801 | **43** | 0 | 61 | 60 | 89 | 74 | 22 | 0 | 7 |
+| integer-grid | 6805 | **40** | 0 | 45 | 56 | 59 | 76 | — | 40 | 0 |
+| quadremesher-uniform | 6640 | **37** | 0 | 53 | 56 | 54 | 48 | — | 32 | 7 |
+| instant-meshes | 7700 | **31** | 0 | 24 | 67 | 20 | 42 | 3 | 85 | 0 |
+| quadriflow | — | **0** | 0 | — | — | — | — | — | — | 100 |
 
 #### terrain (extra)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 8042 | **69** | 100 | 21 | 66 | 65 | 85 | 33 | 98 | 42 |
-| openclare | 7905 | **67** | 100 | 22 | 64 | 73 | 72 | 15 | 95 | 37 |
+| openclare-uniform | 7941 | **69** | 100 | 21 | 66 | 65 | 84 | 31 | 97 | 44 |
+| openclare | 8014 | **68** | 100 | 22 | 66 | 73 | 71 | 9 | 99 | 38 |
 | quadriflow | 6963 | **60** | 100 | 7 | 71 | 49 | 73 | 70 | 48 | 23 |
 | quadremesher-uniform | 7183 | **59** | 100 | 18 | 60 | 48 | 65 | 39 | 59 | 22 |
-| integer-grid | 6874 | **58** | 100 | 20 | 52 | 45 | 82 | 35 | 44 | 12 |
+| integer-grid | 6773 | **57** | 100 | 21 | 49 | 46 | 82 | 37 | 39 | 7 |
 | instant-meshes | 4807 | **37** | 80 | 5 | 63 | 8 | 43 | 25 | 0 | 44 |
 | quadremesher | 11819 | **32** | 0 | 20 | 57 | 68 | 75 | 30 | 0 | 21 |
 
@@ -1192,10 +1312,10 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 7854 | **38** | 0 | 45 | 35 | 66 | 30 | — | 93 | 32 |
-| integer-grid | 5779 | **38** | 0 | 70 | 60 | 39 | 70 | — | 0 | 0 |
+| integer-grid | 6148 | **40** | 0 | 73 | 63 | 40 | 73 | — | 7 | 0 |
+| openclare-uniform | 7883 | **38** | 0 | 44 | 35 | 66 | 29 | — | 94 | 33 |
 | quadremesher-uniform | 8791 | **37** | 0 | 60 | 56 | 55 | 0 | — | 60 | 40 |
-| openclare | 7714 | **36** | 0 | 46 | 33 | 67 | 16 | — | 86 | 28 |
+| openclare | 7762 | **36** | 0 | 45 | 33 | 67 | 15 | — | 88 | 22 |
 | quadremesher | 55181 | **33** | 0 | 49 | 44 | 69 | 43 | — | 0 | 36 |
 | instant-meshes | 5345 | **26** | 0 | 57 | 58 | 18 | 21 | 25 | 0 | 53 |
 | quadriflow | — | **0** | 0 | — | — | — | — | — | — | 100 |
@@ -1205,9 +1325,45 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
 | quadremesher | 246063 | **40** | 0 | 54 | 57 | 88 | 58 | — | 0 | 37 |
-| openclare-uniform | 8972 | **27** | 0 | 43 | 0 | 81 | 0 | — | 51 | 8 |
-| openclare | 9207 | **25** | 0 | 38 | 0 | 80 | 0 | — | 40 | 1 |
 | quadremesher-uniform | 14915 | **25** | 0 | 40 | 24 | 78 | 0 | — | 0 | 37 |
+| openclare-uniform | 10117 | **22** | 0 | 42 | 0 | 83 | 0 | — | 0 | 6 |
+| openclare | 10134 | **21** | 0 | 38 | 0 | 82 | 0 | — | 0 | 0 |
 | instant-meshes | 4146 | **11** | 0 | 20 | 0 | 44 | 0 | 11 | 0 | 61 |
 | integer-grid | — | **0** | 0 | — | — | — | — | — | — | — |
+| quadriflow | — | **0** | 0 | — | — | — | — | — | — | 100 |
+
+#### f16 (extra)
+
+| Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
+|---|---|---|---|---|---|---|---|---|---|---|
+| quadremesher | 46194 | **44** | 0 | 79 | 54 | 90 | 42 | — | 0 | 42 |
+| integer-grid | 6707 | **33** | 0 | 75 | 53 | 27 | 4 | — | 35 | 0 |
+| openclare | 6448 | **32** | 0 | 80 | 54 | 23 | 8 | — | 22 | 0 |
+| openclare-uniform | 6415 | **32** | 0 | 81 | 54 | 25 | 0 | — | 21 | 15 |
+| quadremesher-uniform | 10673 | **30** | 0 | 76 | 47 | 39 | 0 | — | 0 | 44 |
+| instant-meshes | 4548 | **18** | 0 | 64 | 28 | 0 | 0 | 22 | 0 | 57 |
+| quadriflow | — | **0** | 0 | — | — | — | — | — | — | 100 |
+
+#### camera (extra)
+
+| Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
+|---|---|---|---|---|---|---|---|---|---|---|
+| quadremesher | 20326 | **51** | 0 | 85 | 71 | 89 | 77 | — | 0 | 52 |
+| integer-grid | 7017 | **50** | 0 | 82 | 70 | 53 | 76 | — | 51 | 0 |
+| quadremesher-uniform | 10881 | **49** | 0 | 86 | 72 | 78 | 67 | — | 0 | 56 |
+| openclare | 6588 | **47** | 0 | 74 | 70 | 64 | 71 | — | 29 | 0 |
+| openclare-uniform | 7079 | **46** | 0 | 77 | 38 | 66 | 74 | — | 54 | 0 |
+| instant-meshes | 6839 | **37** | 0 | 71 | 53 | 42 | 22 | 35 | 42 | 75 |
+| quadriflow | — | **0** | 0 | — | — | — | — | — | — | 100 |
+
+#### wolf (extra)
+
+| Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
+|---|---|---|---|---|---|---|---|---|---|---|
+| quadremesher | 28909 | **38** | 0 | 56 | 53 | 70 | 67 | — | 0 | 9 |
+| openclare-uniform | 6760 | **36** | 0 | 54 | 53 | 53 | 38 | — | 38 | 0 |
+| openclare | 6901 | **36** | 0 | 51 | 51 | 54 | 34 | — | 45 | 0 |
+| integer-grid | 6579 | **33** | 0 | 55 | 54 | 37 | 42 | — | 29 | 0 |
+| instant-meshes | 7656 | **26** | 0 | 31 | 55 | 19 | 5 | 4 | 83 | 97 |
+| quadremesher-uniform | 6170 | **22** | 0 | 54 | 49 | 11 | 2 | — | 8 | 9 |
 | quadriflow | — | **0** | 0 | — | — | — | — | — | — | 100 |
