@@ -468,5 +468,22 @@ settings.source = None
 bpy.ops.object.empty_add()
 assert not bpy.ops.object.openclare_remesh.poll()
 
+# The engine is loaded from a copy named after what it holds: an add-on
+# updated in a Blender that has already used it does not get the engine it
+# had in memory back, by its path, in place of the new one.
+import tempfile
+from pathlib import Path
+
+with tempfile.TemporaryDirectory() as folder:
+    installed = Path(folder) / "libopenclare_test.so"
+    installed.write_bytes(b"the engine as it was")
+    before = openclare.engine._own_copy(installed)
+    assert before.read_bytes() == b"the engine as it was" and openclare.engine._own_copy(installed) == before
+    installed.write_bytes(b"the engine after an update")
+    after = openclare.engine._own_copy(installed)
+    assert after != before and after.read_bytes() == b"the engine after an update"
+    assert not before.exists(), "the copy of the version before is left behind"
+    after.unlink()
+
 openclare.unregister()
 print("ADD-ON OK")
