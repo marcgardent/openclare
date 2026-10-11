@@ -152,6 +152,22 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         ),
         default=True,
     )
+    relief_resolution: bpy.props.EnumProperty(
+        name="Resolution",
+        description="Width and height of the height map, in texels",
+        items=[(str(size), f"{size} x {size}", "") for size in (512, 1024, 2048, 4096)],
+        default="2048",
+    )
+    relief_levels: bpy.props.IntProperty(
+        name="Levels",
+        description=(
+            "How many times the quad mesh is subdivided under the relief: the height map is measured from "
+            "that surface, creases included, and moves its vertices"
+        ),
+        default=2,
+        min=0,
+        max=5,
+    )
     export_atlas_uv: bpy.props.BoolProperty(
         name="Atlas UV",
         description=(
@@ -511,6 +527,8 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
         mesh.name = f"{original.data.name}.quads"
         remeshed = bpy.data.objects.new(f"{original.name}.quads", mesh)
         remeshed.matrix_world = original.matrix_world
+        # Kept, for what is baked onto the result later to be read from it.
+        remeshed.openclare_source = original
         for collection in original.users_collection or [context.collection]:
             collection.objects.link(remeshed)
         for other in context.selected_objects:
@@ -569,6 +587,139 @@ def show_object_colours(context):
     for area in context.screen.areas if context.screen else ():
         if area.type == "VIEW_3D":
             area.spaces.active.shading.wireframe_color_type = "OBJECT"
+
+
+# The modifiers the relief is made of, by name: found again and updated when
+# it is baked again.
+SUBDIVISION, RELIEF = "openclare subdivision", "openclare relief"
+# How far from the subdivided result the sculpt is looked for, in mean edges
+# of the quad mesh: the result lies that close to it.
+RELIEF_REACH = 1.0
+
+
+def relief_of(context, target, source, levels, resolution):
+    """The height of `source` above `target` subdivided `levels` times, on
+    the atlas of `target`: an array of `resolution` rows of as many floats
+    from the bottom up, in the unit of `target`, and what the engine says
+    of the bake."""
+    import numpy
+
+    atlas = UV_NAMES["atlas"]
+    if atlas not in target.data.uv_layers:
+        raise engine.EngineError(f"'{target.name}' has no '{atlas}' UV layer: remesh with Export > UV Layers > Atlas")
+    subdivision = target.modifiers.get(SUBDIVISION) or target.modifiers.new(SUBDIVISION, "SUBSURF")
+    subdivision.levels = subdivision.render_levels = levels
+    subdivision.show_viewport = levels > 0
+    relief = target.modifiers.get(RELIEF)
+    shown = relief.show_viewport if relief else None
+    if relief:
+        # What is measured is the surface under the relief, not with it.
+        relief.show_viewport = False
+    try:
+        depsgraph = context.evaluated_depsgraph_get()
+        depsgraph.update()
+        surface = target.evaluated_get(depsgraph).to_mesh()
+        surface.calc_loop_triangles()
+        count, faces = len(surface.vertices), len(surface.loop_triangles)
+        positions, normals = numpy.empty(3 * count, numpy.float32), numpy.empty(3 * count, numpy.float32)
+        surface.vertices.foreach_get("co", positions)
+        surface.vertex_normals.foreach_get("vector", normals)
+        triangles, corners = numpy.empty(3 * faces, numpy.int32), numpy.empty(3 * faces, numpy.int32)
+        surface.loop_triangles.foreach_get("vertices", triangles)
+        surface.loop_triangles.foreach_get("loops", corners)
+        uvs = numpy.empty(2 * len(surface.loops), numpy.float32)
+        surface.uv_layers[atlas].data.foreach_get("uv", uvs)
+        uvs = uvs.reshape(-1, 2)[corners]
+        target.evaluated_get(depsgraph).to_mesh_clear()
+
+        sculpt = source.evaluated_get(depsgraph).to_mesh()
+        sculpt.calc_loop_triangles()
+        sculpt_positions = numpy.empty(3 * len(sculpt.vertices), numpy.float32)
+        sculpt.vertices.foreach_get("co", sculpt_positions)
+        sculpt_triangles = numpy.empty(3 * len(sculpt.loop_triangles), numpy.int32)
+        sculpt.loop_triangles.foreach_get("vertices", sculpt_triangles)
+        source.evaluated_get(depsgraph).to_mesh_clear()
+    finally:
+        if relief:
+            relief.show_viewport = shown
+    # The sculpt where the result is, should one have been moved since.
+    across = numpy.array(target.matrix_world.inverted() @ source.matrix_world, dtype=numpy.float64)
+    sculpt_positions = sculpt_positions.reshape(-1, 3).astype(numpy.float64) @ across[:3, :3].T + across[:3, 3]
+
+    edges = numpy.empty(2 * len(target.data.edges), numpy.int32)
+    target.data.edges.foreach_get("vertices", edges)
+    corners_of = numpy.empty(3 * len(target.data.vertices), numpy.float32)
+    target.data.vertices.foreach_get("co", corners_of)
+    ends = corners_of.reshape(-1, 3)[edges.reshape(-1, 2)]
+    reach = RELIEF_REACH * float(numpy.linalg.norm(ends[:, 0] - ends[:, 1], axis=1).mean())
+    return engine.bake_height(
+        positions, normals, triangles.astype(numpy.uint32), uvs, sculpt_positions.astype(numpy.float32),
+        sculpt_triangles.astype(numpy.uint32), resolution, resolution, reach,
+    )
+
+
+class OPENCLARE_OT_bake_relief(bpy.types.Operator):
+    """Bake the relief of the original onto the result, as a height map on its atlas that displaces it"""
+
+    bl_idname = "object.openclare_bake_relief"
+    bl_label = "Bake Height Map"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        target = context.active_object
+        return (
+            target is not None and target.type == "MESH" and context.mode == "OBJECT"
+            and target.openclare_source is not None and target.openclare_source.type == "MESH"
+        )
+
+    def execute(self, context):
+        import numpy
+
+        settings = context.scene.openclare
+        target, resolution = context.active_object, int(settings.relief_resolution)
+        try:
+            heights, report = relief_of(context, target, target.openclare_source, settings.relief_levels, resolution)
+        except engine.EngineError as error:
+            self.report({"ERROR"}, f"openclare: {error}")
+            return {"CANCELLED"}
+
+        # As an image: grey at half for no height, the greatest height either
+        # way at black or white, which is what a displacement reads.
+        span = max(abs(float(report["low"])), abs(float(report["high"])), 1e-12)
+        grey = numpy.where(numpy.isnan(heights), 0.5, 0.5 + heights / (2.0 * span)).astype(numpy.float32)
+        name = f"{target.name} height"
+        image = bpy.data.images.get(name)
+        if image is None or tuple(image.size) != (resolution, resolution):
+            if image is not None:
+                bpy.data.images.remove(image)
+            image = bpy.data.images.new(name, resolution, resolution, alpha=False, float_buffer=True, is_data=True)
+        pixels = numpy.ones((resolution, resolution, 4), numpy.float32)
+        pixels[..., :3] = grey[..., None]
+        image.pixels.foreach_set(pixels.reshape(-1))
+        image.update()
+        image.pack()
+
+        texture = bpy.data.textures.get(name) or bpy.data.textures.new(name, "IMAGE")
+        texture.image = image
+        texture.extension = "EXTEND"
+        relief = target.modifiers.get(RELIEF) or target.modifiers.new(RELIEF, "DISPLACE")
+        relief.texture, relief.texture_coords, relief.uv_layer = texture, "UV", UV_NAMES["atlas"]
+        relief.direction, relief.space = "NORMAL", "LOCAL"
+        relief.mid_level, relief.strength = 0.5, 2.0 * span
+        relief.show_viewport = True
+
+        last_report.clear()
+        last_report.update(report)
+        covered, astray = int(report["covered"]), int(report["astray"])
+        said = f"openclare: height map of {resolution} x {resolution} in {float(report['seconds']):.1f} s"
+        said += f", from {float(report['low']):.4g} to {float(report['high']):.4g}"
+        if astray:
+            # Said: there the relief is a guess, the sculpt being farther
+            # from the result than a quad is long.
+            said += f"; the original was out of reach under {100.0 * astray / max(covered, 1):.1f} % of the texels"
+        self.report({"WARNING"} if astray > covered // 20 else {"INFO"}, said)
+        return {"FINISHED"}
 
 
 class CurvesOperator:
@@ -742,15 +893,42 @@ class OPENCLARE_PT_export(bpy.types.Panel):
         column.prop(settings, "export_creases", text="Creases")
 
 
+class OPENCLARE_PT_relief(bpy.types.Panel):
+    """The relief of the original, baked onto the result"""
+
+    bl_label = "Relief"
+    bl_idname = "OPENCLARE_PT_relief"
+    bl_parent_id = "OPENCLARE_PT_panel"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "openclare"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        settings = context.scene.openclare
+        target = context.active_object
+        source = getattr(target, "openclare_source", None)
+        if source is None:
+            layout.label(text="Select a result of Remesh to Quads", icon="INFO")
+        else:
+            layout.label(text=f"From: {source.name}", icon="MESH_DATA")
+        layout.prop(settings, "relief_levels")
+        layout.prop(settings, "relief_resolution")
+        layout.operator(OPENCLARE_OT_bake_relief.bl_idname, icon="RNDCURVE")
+
+
 CLASSES = (
     OpenclareSettings,
     OPENCLARE_OT_remesh,
+    OPENCLARE_OT_bake_relief,
     OPENCLARE_OT_curves_assign,
     OPENCLARE_OT_curves_remove,
     OPENCLARE_OT_curves_select,
     OPENCLARE_PT_panel,
     OPENCLARE_PT_curves,
     OPENCLARE_PT_export,
+    OPENCLARE_PT_relief,
 )
 
 
@@ -758,9 +936,15 @@ def register():
     for cls in CLASSES:
         bpy.utils.register_class(cls)
     bpy.types.Scene.openclare = bpy.props.PointerProperty(type=OpenclareSettings)
+    bpy.types.Object.openclare_source = bpy.props.PointerProperty(
+        name="Original",
+        description="The object this one was remeshed from: what is baked onto it is read from there",
+        type=bpy.types.Object,
+    )
 
 
 def unregister():
+    del bpy.types.Object.openclare_source
     del bpy.types.Scene.openclare
     for cls in reversed(CLASSES):
         bpy.utils.unregister_class(cls)
