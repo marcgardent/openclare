@@ -13,14 +13,14 @@ the specification and what each finished milestone delivered are in
 The chain runs end to end: triangles in, quads out, with sizing by the shape, painted density,
 hard edges, separate pieces, thin parts and (being measured) volume fitting.
 
-Average mark of the organic models, out of 100 ([SCORES.md](bench/results/SCORES.md), before
-volume fitting):
+Average mark of the organic models, out of 100 ([SCORES.md](bench/results/SCORES.md), as
+measured on 11 October 2026 from the scenes of the bench):
 
 | Quads asked for | openclare | Quad Remesher | QuadriFlow (Blender) |
 |---|---|---|---|
-| 1000 | 70 | 64 | 40 |
+| 1000 | 71 | 65 | 41 |
 | 3000 | 76 | 63 | 46 |
-| 8000 | 81 | 72 | 50 |
+| 8000 | 80 | 72 | 50 |
 
 The goal "better than Blender's quad remesher" is met on the bench. Quad Remesher is ahead on
 three points, which are what the quality tracks below are about: **alignment** of the edges on

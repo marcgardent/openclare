@@ -519,7 +519,11 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
                 said += f", {report.get('sharp_curve_edges', '0')} along the sharp curves"
             if report.get("guide_gaps", "0") != "0":
                 said += f" ({report['guide_gaps']} breaks)"
-        self.report({"INFO"}, said)
+        # Said as a warning: the result then lacks part of the object.
+        failed = int(report.get("pieces_failed", 0))
+        if failed:
+            said += f"; {failed} of {report.get('pieces', '?')} pieces could not be meshed and are missing"
+        self.report({"WARNING"} if failed else {"INFO"}, said)
         return {"FINISHED"}
 
 
