@@ -686,9 +686,9 @@ def relief_of(context, target, source, levels, resolution):
     finally:
         if relief:
             relief.show_viewport = shown
-    # The sculpt where the result is, should one have been moved since.
-    across = numpy.array(target.matrix_world.inverted() @ source.matrix_world, dtype=numpy.float64)
-    sculpt_positions = sculpt_positions.reshape(-1, 3).astype(numpy.float64) @ across[:3, :3].T + across[:3, 3]
+    # Each in its own space, where the two lie on one another whatever was
+    # done to the objects since: the result was made in the space of the
+    # original, and the original is often moved aside to see them both.
 
     edges = numpy.empty(2 * len(target.data.edges), numpy.int32)
     target.data.edges.foreach_get("vertices", edges)
@@ -696,10 +696,18 @@ def relief_of(context, target, source, levels, resolution):
     target.data.vertices.foreach_get("co", corners_of)
     ends = corners_of.reshape(-1, 3)[edges.reshape(-1, 2)]
     reach = RELIEF_REACH * float(numpy.linalg.norm(ends[:, 0] - ends[:, 1], axis=1).mean())
-    return engine.bake_height(
-        positions, normals, triangles.astype(numpy.uint32), uvs, sculpt_positions.astype(numpy.float32),
+    heights, report = engine.bake_height(
+        positions, normals, triangles.astype(numpy.uint32), uvs, sculpt_positions,
         sculpt_triangles.astype(numpy.uint32), resolution, resolution, reach,
     )
+    covered, astray = int(report["covered"]), int(report["astray"])
+    if 2 * astray > covered:
+        # Nothing to make a relief of: better none than one made of guesses.
+        raise engine.EngineError(
+            f"'{source.name}' is out of reach under {100.0 * astray / max(covered, 1):.0f} % of '{target.name}': "
+            "the result no longer lies on its original (was the mesh of one of them edited, or its scale applied?)"
+        )
+    return heights, report
 
 
 # The nodes of a material that carry the relief, by name, likewise.
