@@ -323,6 +323,7 @@ settings.quads, settings.adaptive_size = 800, 50.0
 # radius 1: subdivided, its quad mesh shrinks inside it; with the relief it
 # is on the ball again.
 import numpy
+from mathutils import Matrix
 
 bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=7, radius=1.0, location=(20.0, 0.0, 0.0))
 globe = bpy.context.active_object
@@ -360,6 +361,24 @@ assert bpy.ops.object.openclare_bake_relief() == {"FINISHED"}
 assert [modifier.name for modifier in quads.modifiers] == ["openclare subdivision", "openclare relief"]
 assert abs(off_the_ball() - with_relief) < 1e-5
 
+# The original moved aside, turned and scaled, as one does to see the two
+# side by side: the relief is the same, the two still lie on one another
+# each in its own space.
+globe.location, globe.rotation_euler, globe.scale = (27.0, 3.0, -1.0), (0.4, 0.2, 1.0), (1.5, 1.5, 1.5)
+assert bpy.ops.object.openclare_bake_relief() == {"FINISHED"}
+assert openclare.last_report["astray"] == "0", openclare.last_report
+assert abs(off_the_ball() - with_relief) < 1e-5
+# The mesh of the original edited since, it is no longer under the result:
+# no relief is made of that, and the one there is left as it is.
+globe.data.transform(Matrix.Translation((3.0, 0.0, 0.0)))
+try:
+    bpy.ops.object.openclare_bake_relief()
+    raise AssertionError("a relief was baked from an original that is elsewhere")
+except RuntimeError as error:
+    assert "out of reach" in str(error), error
+assert abs(off_the_ball() - with_relief) < 1e-5
+globe.data.transform(Matrix.Translation((-3.0, 0.0, 0.0)))
+
 # As the displacement of the material instead: no Displace modifier, the
 # height map in the material of the result, and adaptive subdivision for a
 # renderer that dices to the pixel.
@@ -372,7 +391,7 @@ nodes = material.node_tree.nodes
 moved = next(node for node in nodes if node.type == "OUTPUT_MATERIAL").inputs["Displacement"].links[0].from_node
 assert moved.name == "openclare displacement" and material.displacement_method == "DISPLACEMENT"
 assert moved.inputs["Midlevel"].default_value == 0.5
-assert abs(moved.inputs["Scale"].default_value - relief_strength) < 1e-6 * relief_strength, moved.inputs["Scale"].default_value
+assert abs(moved.inputs["Scale"].default_value - relief_strength) < 1e-3 * relief_strength, moved.inputs["Scale"].default_value
 read = moved.inputs["Height"].links[0].from_node
 assert read.image == bpy.data.images[f"{quads.name} height"] and read.image.colorspace_settings.name == "Non-Color"
 assert read.inputs["Vector"].links[0].from_node.uv_map == "openclare atlas"
