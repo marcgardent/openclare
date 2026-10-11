@@ -538,6 +538,9 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
         if thin:
             # Said, because the result then has more quads than were asked for.
             said += f"; {beyond} quads more than asked for, to keep the shape of {thin} thin part(s)"
+        boxed = int(report.get("pieces_boxed", 0))
+        if boxed:
+            said += f"; {boxed} part(s) smaller than a quad could not be meshed and are boxes"
         # Said as a warning: the result then lacks part of the object.
         failed = int(report.get("pieces_failed", 0))
         if failed:

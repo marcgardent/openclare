@@ -140,10 +140,11 @@ fn the_report_lists_the_edges_that_follow_a_hard_edge() {
 }
 
 #[test]
-fn edges_kept_for_the_shape_are_followed_without_being_hard_edges() {
+fn edges_kept_for_the_shape_are_followed_and_come_out_as_hard_edges() {
     // A cube under the organic preset, which keeps no crease: its edges are
     // rounded off. With an edge angle they keep the work mesh crisp and the
-    // quads follow them, as lines, not as hard edges of the result.
+    // quads follow them, as lines that may be let go; where they are kept,
+    // as they all are here, they are hard edges of the result like any.
     let source = primitives::cube(12);
     let round = RemeshConfig::for_organic(Target::QuadCount(600));
     let crisp = RemeshConfig { edge_angle: Some(30.0), ..round.clone() };
@@ -151,8 +152,8 @@ fn edges_kept_for_the_shape_are_followed_without_being_hard_edges() {
     let (mesh, report) = crisp.remesh_guided(&source, &Guides::default()).unwrap();
     assert!(measure(&source, &mesh, Some(600)).is_valid());
     assert!(!report.fell_back && report.guides_let_go == 0);
-    assert!(report.hard_edges.is_empty(), "{} hard edges", report.hard_edges.len());
-    assert!(report.guide_edges.len() >= 100, "{} edges along the edges of the cube", report.guide_edges.len());
+    assert!(report.hard_edges.len() >= 100, "{} hard edges", report.hard_edges.len());
+    assert!(report.guide_edges.is_empty() && report.creases.len() >= 100, "{} creases", report.creases.len());
     let off = |mesh: &PolyMesh| measure(&source, mesh, Some(600)).hausdorff;
     assert!(off(&mesh) < 1e-6, "the cube is {} away", off(&mesh));
     assert!(off(&rounded) > 100.0 * off(&mesh).max(1e-9), "rounded {} against crisp {}", off(&rounded), off(&mesh));

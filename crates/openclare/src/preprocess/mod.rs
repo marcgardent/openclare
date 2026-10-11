@@ -44,6 +44,10 @@ pub struct WorkMesh {
     /// the edges of the output along them are to come out as hard edges,
     /// not only as a line of edges.
     pub sharp_guide_edges: Vec<[u32; 2]>,
+    /// Those of the guide edges that are edges of the shape itself, sharper
+    /// than [`Request::edge_angle`]: the edges of the output along them come
+    /// out as hard edges too, as the creases they are where they are kept.
+    pub shape_guide_edges: Vec<[u32; 2]>,
     /// Principal curvatures per vertex, read at [`Request::curvature_scale`].
     pub curvature: Curvature,
     /// How much the principal directions can be trusted, per vertex: 0 where
@@ -234,6 +238,17 @@ impl Preprocessor for Isotropic {
                     _ => false,
                 })
                 .collect();
+            if let Some(cos) = request.edge_angle.map(|degrees| degrees.to_radians().cos()) {
+                work.shape_guide_edges = work
+                    .guide_edges
+                    .iter()
+                    .copied()
+                    .filter(|&[a, b]| match sides.get(&(a.min(b), a.max(b))).map(Vec::as_slice) {
+                        Some([one, other]) => one.dot(*other) < cos,
+                        _ => false,
+                    })
+                    .collect();
+            }
         }
         if laid.sharp.contains(&true) {
             // An edge is of the kind of the stretch nearest to its middle.
@@ -299,7 +314,8 @@ fn blunt_acute_tips(work: &mut WorkMesh, reach: f64) {
         .copied()
         .filter(|&[a, b]| near(positions[a as usize]) || near(positions[b as usize]))
         .collect();
-    for edges in [&mut work.feature_edges, &mut work.guide_edges, &mut work.sharp_guide_edges] {
+    let lists = [&mut work.feature_edges, &mut work.guide_edges, &mut work.sharp_guide_edges, &mut work.shape_guide_edges];
+    for edges in lists {
         edges.retain(|edge| !gone.contains(edge));
     }
 }
@@ -424,6 +440,7 @@ fn work_mesh(mesh: TriMesh, feature_edges: Vec<[u32; 2]>, request: &Request) -> 
         guide_gaps: 0,
         guide_edges: Vec::new(),
         sharp_guide_edges: Vec::new(),
+        shape_guide_edges: Vec::new(),
         curvature,
         confidence,
         sizing,
