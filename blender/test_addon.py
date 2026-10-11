@@ -47,8 +47,13 @@ source = evaluated.to_mesh()
 stages = []
 openclare.quads_of(source, "organic", {"quads": 800}, on_stage=lambda stage: stages.append(stage))
 print("STAGES", ", ".join(stages))
-# Suzanne is a head and two eyes: three pieces, each with its stages.
-assert stages[0] == "piece 1 of 3: preprocessing" and stages[-1] == "piece 3 of 3: fitting", stages
+# Suzanne is a head and two eyes: three pieces, each with its stages in
+# their order, those of one piece among those of the others when the pieces
+# are meshed at the same time.
+for piece in ("piece 1 of 3", "piece 2 of 3", "piece 3 of 3"):
+    own = [stage for stage in stages if stage.startswith(piece)]
+    assert own[0] == f"{piece}: preprocessing" and own[-1] == f"{piece}: fitting" and len(own) >= 8, stages
+assert len(stages) == sum(stage.startswith("piece ") for stage in stages), stages
 assert "piece 2 of 3: cross field" in stages
 assert openclare.worth_a_line("cross field") and openclare.worth_a_line("piece 2 of 3: layout")
 assert openclare.worth_a_line("piece 42 of 820: preprocessing") and not openclare.worth_a_line("piece 42 of 820: layout")

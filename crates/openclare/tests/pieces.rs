@@ -170,3 +170,52 @@ fn a_piece_thin_all_along_gets_the_quads_its_thickness_calls_for() {
     let stats = quads.stats();
     assert_eq!((stats.quads, stats.non_manifold_edges, stats.boundary_edges), (stats.faces, 0, 0));
 }
+
+/// Listens to what the stages show, and keeps none of it.
+struct Keeps;
+
+impl openclare::recorder::Recorder for Keeps {
+    fn record(&mut self, _: &str, _: openclare::recorder::Shape<'_>) {}
+}
+
+/// Follows a run, and stops it at the stage of that number.
+struct StopAt {
+    stages: usize,
+    stop: usize,
+}
+
+impl openclare::recorder::Recorder for StopAt {
+    fn is_listening(&self) -> bool {
+        false
+    }
+
+    fn record(&mut self, _: &str, _: openclare::recorder::Shape<'_>) {}
+
+    fn begin(&mut self, _: &str) -> openclare::Result<()> {
+        self.stages += 1;
+        if self.stages == self.stop { Err(openclare::Error::Cancelled) } else { Ok(()) }
+    }
+}
+
+#[test]
+fn pieces_meshed_at_the_same_time_give_the_same_mesh_and_stop_when_told() {
+    // Twelve balls of several sizes in a row.
+    let balls: Vec<(TriMesh, Vec3, f64)> = (0..12)
+        .map(|k| (primitives::icosphere(3), Vec3::new(4.0 * k as f64, 0.0, 0.0), 0.5 + 0.1 * (k % 4) as f64))
+        .collect();
+    let mesh = assembly(&balls);
+    // One after the other is what a recorder that keeps shapes gets; several
+    // at a time is what the others get on a machine with more than one core.
+    let (apart, _) = config(1500).remesh_recorded(&mesh, &Guides::default(), &mut Keeps).unwrap();
+    let mut follower = StopAt { stages: 0, stop: usize::MAX };
+    let (together, report) = config(1500).remesh_recorded(&mesh, &Guides::default(), &mut follower).unwrap();
+    assert_eq!((report.pieces, report.pieces_failed), (12, 0));
+    assert_eq!((&together.positions, &together.faces), (&apart.positions, &apart.faces));
+    // Every stage of every piece was told, from the thread that asked.
+    assert!(follower.stages >= 12 * 8, "{} stages told", follower.stages);
+
+    // Stopped half way: no mesh, and the run says it was stopped.
+    let mut follower = StopAt { stages: 0, stop: 40 };
+    let stopped = config(1500).remesh_recorded(&mesh, &Guides::default(), &mut follower);
+    assert!(matches!(stopped, Err(openclare::Error::Cancelled)));
+}

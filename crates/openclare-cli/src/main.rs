@@ -342,11 +342,15 @@ fn remesh(args: &[String]) -> Result<(), String> {
         None => None,
     };
     let guides = Guides { density: density.as_deref(), curves: &curves, groups: groups.as_deref(), lines: &[] };
+    let start = std::time::Instant::now();
     let (result, report) = match &record_path {
         Some(path) => remesh_recorded(path, record_still.as_deref(), &config, &mesh, &guides)?,
         None if notes => config.remesh_recorded(&mesh, &guides, &mut Notes).map_err(|e| e.to_string())?,
         None => config.remesh_guided(&mesh, &guides).map_err(|e| e.to_string())?,
     };
+    // By the clock: the stages of pieces meshed at the same time add up to
+    // more than the time the run took.
+    let seconds = start.elapsed().as_secs_f64();
     obj::write_obj_poly(output, &result).map_err(|e| format!("{output}: {e}"))?;
 
     let stats = &report.stats;
@@ -431,9 +435,9 @@ fn remesh(args: &[String]) -> Result<(), String> {
     println!("valence  {}", valences.join("  "));
     let timings: Vec<String> =
         report.timings.iter().map(|(stage, t)| format!("{stage} {:.0} ms", t.as_secs_f64() * 1e3)).collect();
-    println!("timing   {}", timings.join(", "));
-    let total: f64 = report.timings.iter().map(|(_, t)| t.as_secs_f64()).sum();
-    println!("seconds  {total:.3}");
+    let summed = if report.pieces > 1 { " (summed over the pieces)" } else { "" };
+    println!("timing   {}{summed}", timings.join(", "));
+    println!("seconds  {seconds:.3}");
     Ok(())
 }
 

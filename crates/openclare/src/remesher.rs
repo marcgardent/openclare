@@ -8,6 +8,8 @@
 use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::str::FromStr;
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::sync::{Mutex, mpsc};
 use std::time::Instant;
 
 use crate::config::RemeshConfig;
@@ -442,12 +444,9 @@ impl QuadLayout {
         let mut merged = PolyMesh::default();
         let mut report =
             Report { edge_length, pieces: pieces.len(), thin_pieces, quads_for_thin_pieces, ..Default::default() };
-        let mut first_error = None;
-        for (index, ((piece, origin), share)) in pieces.iter().zip(shares).enumerate() {
-            let Some(share) = share else {
-                report.pieces_skipped += 1;
-                continue;
-            };
+        // One piece through the chain, told to `recorder` under its name.
+        let one = |index: usize, share: usize, recorder: &mut dyn Recorder| {
+            let (piece, origin) = &pieces[index];
             let density: Option<Vec<f64>> =
                 guides.density.map(|density| origin.iter().map(|&v| density[v as usize]).collect());
             let piece_guides = Guides { density: density.as_deref(), ..*guides };
@@ -456,7 +455,17 @@ impl QuadLayout {
             // triangles a body does.
             let least = ((self.min_triangles as f64 * piece.surface_area() / area) as usize).max(MIN_PIECE_TRIANGLES);
             let mut recorder = recorder::Piece::new(recorder, index, pieces.len());
-            match self.remesh_piece(piece, &piece_guides, &piece_config, least, &mut recorder) {
+            self.remesh_piece(piece, &piece_guides, &piece_config, least, &mut recorder)
+        };
+        let asked: Vec<(usize, usize)> =
+            shares.iter().enumerate().filter_map(|(index, share)| share.map(|share| (index, share))).collect();
+        report.pieces_skipped = pieces.len() - asked.len();
+        let meshed = each_piece(&asked, recorder, one)?;
+
+        let mut first_error = None;
+        for (&(index, _), done) in asked.iter().zip(meshed) {
+            let mut recorder = recorder::Piece::new(recorder, index, pieces.len());
+            match done {
                 // A piece that comes out with no face at all is as good as
                 // not meshed.
                 Ok((mesh, _)) if mesh.faces.is_empty() => {
@@ -505,6 +514,107 @@ fn least_quads(piece: &TriMesh) -> usize {
     }
     let euler = piece.positions.len() as i64 - topology.edge_count() as i64 + piece.triangles.len() as i64;
     if euler >= 2 { 6 } else { 16 }
+}
+
+/// How many pieces are meshed at a time: as many as the machine has cores,
+/// or what `OPENCLARE_THREADS` says.
+fn threads() -> usize {
+    let asked = std::env::var("OPENCLARE_THREADS").ok().and_then(|text| text.parse::<usize>().ok());
+    asked.unwrap_or_else(|| std::thread::available_parallelism().map_or(1, |count| count.get())).max(1)
+}
+
+/// What a piece meshed on another thread tells of its stages: passed on to
+/// the thread that was asked for the mesh, which alone speaks to whoever
+/// follows the run, and which says back when the run is to stop.
+struct Relay<'a> {
+    stages: mpsc::Sender<String>,
+    stopped: &'a AtomicBool,
+}
+
+impl Recorder for Relay<'_> {
+    fn is_listening(&self) -> bool {
+        false
+    }
+
+    fn record(&mut self, _: &str, _: Shape<'_>) {}
+
+    fn begin(&mut self, stage: &str) -> Result<()> {
+        if self.stopped.load(Ordering::Relaxed) {
+            return Err(Error::Cancelled);
+        }
+        // Nobody to tell any more: the run is ending.
+        let _ = self.stages.send(stage.to_string());
+        Ok(())
+    }
+}
+
+/// What the chain makes of one piece.
+type Meshed = Result<(PolyMesh, Report)>;
+
+/// Runs `one` on each of the pieces `asked` for (its index and its share of
+/// the quads) and gives what each made, in their order. The pieces do not
+/// depend on one another: they are meshed several at a time, on as many
+/// threads as [`threads`] says, and the result is the same as one after the
+/// other. They are taken one after the other when the recorder keeps what
+/// the stages show (shapes cannot be passed from a thread to another), and
+/// when there is one thread or one piece.
+///
+/// The stages of every piece are told to `recorder` from this thread, as
+/// they come. An error from it stops the run: the pieces under way end at
+/// their next stage, and the error is what is given back.
+fn each_piece<F>(asked: &[(usize, usize)], recorder: &mut dyn Recorder, one: F) -> Result<Vec<Meshed>>
+where
+    F: Fn(usize, usize, &mut dyn Recorder) -> Meshed + Sync,
+{
+    let threads = threads().min(asked.len());
+    if threads <= 1 || recorder.is_listening() {
+        let mut meshed = Vec::with_capacity(asked.len());
+        for &(index, share) in asked {
+            let done = one(index, share, recorder);
+            if matches!(done, Err(Error::Cancelled)) {
+                return Err(Error::Cancelled);
+            }
+            meshed.push(done);
+        }
+        return Ok(meshed);
+    }
+
+    let slots: Vec<Mutex<Option<Meshed>>> = asked.iter().map(|_| Mutex::new(None)).collect();
+    let (next, stopped) = (AtomicUsize::new(0), AtomicBool::new(false));
+    let (stages, told) = mpsc::channel();
+    let mut refused = None;
+    std::thread::scope(|scope| {
+        for _ in 0..threads {
+            let mut relay = Relay { stages: stages.clone(), stopped: &stopped };
+            let (slots, next, one) = (&slots, &next, &one);
+            scope.spawn(move || {
+                loop {
+                    // The largest pieces first: `asked` is in that order.
+                    let turn = next.fetch_add(1, Ordering::Relaxed);
+                    let Some(&(index, share)) = asked.get(turn) else { break };
+                    let done = one(index, share, &mut relay);
+                    *slots[turn].lock().unwrap_or_else(|poisoned| poisoned.into_inner()) = Some(done);
+                }
+            });
+        }
+        // Only the threads at work hold the channel now: it ends with them.
+        drop(stages);
+        for stage in told {
+            if refused.is_none()
+                && let Err(error) = recorder.begin(&stage)
+            {
+                stopped.store(true, Ordering::Relaxed);
+                refused = Some(error);
+            }
+        }
+    });
+    if let Some(error) = refused {
+        return Err(error);
+    }
+    Ok(slots
+        .into_iter()
+        .map(|slot| slot.into_inner().unwrap_or_else(|poisoned| poisoned.into_inner()).unwrap_or(Err(Error::Cancelled)))
+        .collect())
 }
 
 /// Fewest quads that go round a piece thin all along, whatever the preset
