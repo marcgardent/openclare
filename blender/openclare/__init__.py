@@ -168,6 +168,50 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         min=0,
         max=5,
     )
+    relief_apply: bpy.props.EnumProperty(
+        name="Apply As",
+        description="How the height map moves the surface",
+        items=[
+            (
+                "MODIFIER", "Modifier",
+                "A Displace modifier after the Subdivision Surface: shown in every view and by every renderer, "
+                "and applied or exported as geometry; the mesh is really subdivided, and carries no more "
+                "detail than its vertices allow",
+            ),
+            (
+                "MATERIAL", "Material",
+                "The displacement of the material, with adaptive subdivision: Cycles dices the surface to the "
+                "size of a pixel when it renders, for more detail and less memory; nothing moves in Solid view",
+            ),
+        ],
+        default="MODIFIER",
+    )
+    relief_format: bpy.props.EnumProperty(
+        name="File",
+        description="Write the height map as a file too, to use it elsewhere",
+        items=[
+            ("NONE", "None", "The image is kept in the .blend file only"),
+            (
+                "EXR32", "OpenEXR 32-bit",
+                "The heights themselves, in the unit of the object, as 32-bit floats: midlevel 0, scale 1",
+            ),
+            (
+                "EXR16", "OpenEXR 16-bit",
+                "The heights themselves, in the unit of the object, as half floats: midlevel 0, scale 1",
+            ),
+            (
+                "PNG16", "PNG 16-bit",
+                "The heights brought between 0 and 1: midlevel 0.5, and the scale that the report gives",
+            ),
+        ],
+        default="NONE",
+    )
+    relief_directory: bpy.props.StringProperty(
+        name="Folder",
+        description="Where the file is written; // is the folder of the .blend file",
+        subtype="DIR_PATH",
+        default="//textures/",
+    )
     export_atlas_uv: bpy.props.BoolProperty(
         name="Atlas UV",
         description=(
@@ -658,6 +702,114 @@ def relief_of(context, target, source, levels, resolution):
     )
 
 
+# The nodes of a material that carry the relief, by name, likewise.
+HEIGHT_NODES = ("openclare atlas", "openclare height", "openclare displacement")
+# What a height map written as a file holds, and how it is to be read: the
+# format and depth Blender is asked for, the extension, the midlevel.
+RELIEF_FILES = {"EXR32": ("OPEN_EXR", "32", "exr", 0.0), "EXR16": ("OPEN_EXR", "16", "exr", 0.0), "PNG16": ("PNG", "16", "png", 0.5)}
+
+
+def relief_in_materials(target, image, span):
+    """Plugs `image`, a height map with no height at one half and `span`
+    either way, into the displacement of the materials of `target`. Returns
+    how many materials were left alone because they have a displacement of
+    their own."""
+    atlas, height, displacement = HEIGHT_NODES
+    mesh = target.data
+    if not any(mesh.materials):
+        made = bpy.data.materials.new(f"{target.name} relief")
+        if len(mesh.materials):
+            mesh.materials[0] = made
+        else:
+            mesh.materials.append(made)
+    left_alone = 0
+    for index, material in enumerate(mesh.materials):
+        if material is None:
+            continue
+        if material.users > 1 and height not in (material.node_tree.nodes if material.node_tree else ()):
+            # Shared with another object, the original most likely: the
+            # result gets a copy of its own, or the other would be moved by a
+            # map made for this mesh.
+            material = material.copy()
+            mesh.materials[index] = material
+        material.use_nodes = True
+        nodes, links = material.node_tree.nodes, material.node_tree.links
+        output = next((node for node in nodes if node.type == "OUTPUT_MATERIAL" and node.is_active_output), None)
+        if output is None:
+            output = nodes.new("ShaderNodeOutputMaterial")
+        socket = output.inputs["Displacement"]
+        if socket.is_linked and socket.links[0].from_node.name != displacement:
+            left_alone += 1
+            continue
+        where = nodes.get(atlas) or nodes.new("ShaderNodeUVMap")
+        where.name, where.uv_map = atlas, UV_NAMES["atlas"]
+        read = nodes.get(height) or nodes.new("ShaderNodeTexImage")
+        read.name, read.image, read.extension = height, image, "EXTEND"
+        move = nodes.get(displacement) or nodes.new("ShaderNodeDisplacement")
+        move.name, move.space = displacement, "OBJECT"
+        move.inputs["Midlevel"].default_value, move.inputs["Scale"].default_value = 0.5, 2.0 * span
+        where.location, read.location, move.location = (-700, -400), (-500, -400), (-200, -400)
+        links.new(where.outputs["UV"], read.inputs["Vector"])
+        links.new(read.outputs["Color"], move.inputs["Height"])
+        links.new(move.outputs["Displacement"], socket)
+        # The surface is moved, and what is finer than its vertices shades it.
+        material.displacement_method = "BOTH"
+    return left_alone
+
+
+def relief_out_of_materials(target):
+    """Takes out of the materials of `target` what `relief_in_materials` put
+    there."""
+    for material in target.data.materials:
+        if material is None or material.node_tree is None:
+            continue
+        nodes = material.node_tree.nodes
+        ours = [nodes[name] for name in HEIGHT_NODES if name in nodes]
+        if ours:
+            for node in ours:
+                nodes.remove(node)
+            material.displacement_method = "BUMP"
+
+
+def write_relief(heights, span, target, kind, directory):
+    """Writes the height map as a file: the heights as they are for a float
+    format, brought between 0 and 1 for an integer one. Returns the path,
+    the midlevel and the scale it is to be read with."""
+    import os
+
+    import numpy
+
+    file_format, depth, extension, midlevel = RELIEF_FILES[kind]
+    if directory.startswith("//") and not bpy.data.filepath:
+        raise engine.EngineError("save the .blend file first, or choose a folder that is not beside it (//)")
+    folder = bpy.path.abspath(directory)
+    os.makedirs(folder, exist_ok=True)
+    path = os.path.join(folder, f"{bpy.path.clean_name(target.name)}_height.{extension}")
+    if midlevel == 0.0:
+        values, scale = numpy.nan_to_num(heights, nan=0.0), 1.0
+    else:
+        values, scale = numpy.where(numpy.isnan(heights), 0.5, 0.5 + heights / (2.0 * span)), 2.0 * span
+    rows, columns = heights.shape
+    pixels = numpy.ones((rows, columns, 4), numpy.float32)
+    pixels[..., :3] = values.astype(numpy.float32)[..., None]
+    # Written by Blender, as numbers and not as colours: one channel, at the
+    # depth asked for, through a scene of its own so that the settings of
+    # the user's are not touched.
+    image = bpy.data.images.new("openclare height file", columns, rows, alpha=False, float_buffer=True, is_data=True)
+    scene = bpy.data.scenes.new("openclare height file")
+    try:
+        image.pixels.foreach_set(pixels.reshape(-1))
+        wanted = scene.render.image_settings
+        wanted.file_format, wanted.color_mode, wanted.color_depth = file_format, "BW", depth
+        if file_format == "OPEN_EXR":
+            wanted.exr_codec = "ZIP"
+        image.save_render(path, scene=scene)
+    finally:
+        bpy.data.images.remove(image)
+        bpy.data.scenes.remove(scene)
+    return path, midlevel, scale
+
+
 class OPENCLARE_OT_bake_relief(bpy.types.Operator):
     """Bake the relief of the original onto the result, as a height map on its atlas that displaces it"""
 
@@ -700,20 +852,43 @@ class OPENCLARE_OT_bake_relief(bpy.types.Operator):
         image.update()
         image.pack()
 
-        texture = bpy.data.textures.get(name) or bpy.data.textures.new(name, "IMAGE")
-        texture.image = image
-        texture.extension = "EXTEND"
-        relief = target.modifiers.get(RELIEF) or target.modifiers.new(RELIEF, "DISPLACE")
-        relief.texture, relief.texture_coords, relief.uv_layer = texture, "UV", UV_NAMES["atlas"]
-        relief.direction, relief.space = "NORMAL", "LOCAL"
-        relief.mid_level, relief.strength = 0.5, 2.0 * span
-        relief.show_viewport = True
+        # One way of moving the surface at a time: both would move it twice.
+        subdivision, left_alone = target.modifiers[SUBDIVISION], 0
+        if settings.relief_apply == "MODIFIER":
+            relief_out_of_materials(target)
+            subdivision.use_adaptive_subdivision = False
+            texture = bpy.data.textures.get(name) or bpy.data.textures.new(name, "IMAGE")
+            texture.image = image
+            texture.extension = "EXTEND"
+            relief = target.modifiers.get(RELIEF) or target.modifiers.new(RELIEF, "DISPLACE")
+            relief.texture, relief.texture_coords, relief.uv_layer = texture, "UV", UV_NAMES["atlas"]
+            relief.direction, relief.space = "NORMAL", "LOCAL"
+            relief.mid_level, relief.strength = 0.5, 2.0 * span
+            relief.show_viewport = True
+        else:
+            if RELIEF in target.modifiers:
+                target.modifiers.remove(target.modifiers[RELIEF])
+            # Diced to the size of a pixel by a renderer that can.
+            subdivision.use_adaptive_subdivision = True
+            left_alone = relief_in_materials(target, image, span)
 
         last_report.clear()
         last_report.update(report)
+        last_report.update(applied_as=settings.relief_apply, materials_left_alone=str(left_alone))
         covered, astray = int(report["covered"]), int(report["astray"])
         said = f"openclare: height map of {resolution} x {resolution} in {float(report['seconds']):.1f} s"
         said += f", from {float(report['low']):.4g} to {float(report['high']):.4g}"
+        if left_alone:
+            said += f"; {left_alone} material(s) have a displacement of their own and were left as they are"
+        if settings.relief_format != "NONE":
+            try:
+                path, midlevel, scale = write_relief(heights, span, target, settings.relief_format, settings.relief_directory)
+            except (engine.EngineError, OSError, RuntimeError) as error:
+                self.report({"ERROR"}, f"openclare: the height map is baked, but its file could not be written: {error}")
+                return {"CANCELLED"}
+            last_report.update(file=path, file_midlevel=str(midlevel), file_scale=repr(scale))
+            target["openclare_height_file"] = f"{bpy.path.basename(path)}: midlevel {midlevel:g}, scale {scale:.6g}"
+            said += f"; written to {path}, to read with midlevel {midlevel:g} and scale {scale:.6g}"
         if astray:
             # Said: there the relief is a guess, the sculpt being farther
             # from the result than a quad is long.
@@ -915,7 +1090,16 @@ class OPENCLARE_PT_relief(bpy.types.Panel):
             layout.label(text=f"From: {source.name}", icon="MESH_DATA")
         layout.prop(settings, "relief_levels")
         layout.prop(settings, "relief_resolution")
+        layout.prop(settings, "relief_apply")
+        layout.prop(settings, "relief_format")
+        folder = layout.row()
+        folder.enabled = settings.relief_format != "NONE"
+        folder.prop(settings, "relief_directory")
         layout.operator(OPENCLARE_OT_bake_relief.bl_idname, icon="RNDCURVE")
+        written = target.get("openclare_height_file") if target is not None else None
+        if written:
+            # How the file last written is to be read, where it is used.
+            layout.label(text=written, icon="FILE_IMAGE")
 
 
 CLASSES = (

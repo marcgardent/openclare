@@ -337,6 +337,7 @@ assert bpy.ops.object.openclare_bake_relief() == {"FINISHED"}
 assert int(openclare.last_report["covered"]) > 50_000 and openclare.last_report["astray"] == "0", openclare.last_report
 relief = quads.modifiers["openclare relief"]
 assert quads.modifiers["openclare subdivision"].levels == 2 and relief.texture.image.size[0] == 512
+relief_strength = relief.strength
 
 
 def off_the_ball():
@@ -358,6 +359,98 @@ assert without > 0.01 and with_relief < 0.2 * without, (without, with_relief)
 assert bpy.ops.object.openclare_bake_relief() == {"FINISHED"}
 assert [modifier.name for modifier in quads.modifiers] == ["openclare subdivision", "openclare relief"]
 assert abs(off_the_ball() - with_relief) < 1e-5
+
+# As the displacement of the material instead: no Displace modifier, the
+# height map in the material of the result, and adaptive subdivision for a
+# renderer that dices to the pixel.
+settings.relief_apply = "MATERIAL"
+assert bpy.ops.object.openclare_bake_relief() == {"FINISHED"}
+assert [modifier.name for modifier in quads.modifiers] == ["openclare subdivision"]
+assert quads.modifiers["openclare subdivision"].use_adaptive_subdivision
+material = quads.data.materials[0]
+nodes = material.node_tree.nodes
+moved = next(node for node in nodes if node.type == "OUTPUT_MATERIAL").inputs["Displacement"].links[0].from_node
+assert moved.name == "openclare displacement" and material.displacement_method == "BOTH"
+assert moved.inputs["Midlevel"].default_value == 0.5
+assert abs(moved.inputs["Scale"].default_value - relief_strength) < 1e-6 * relief_strength, moved.inputs["Scale"].default_value
+read = moved.inputs["Height"].links[0].from_node
+assert read.image == bpy.data.images[f"{quads.name} height"] and read.image.colorspace_settings.name == "Non-Color"
+assert read.inputs["Vector"].links[0].from_node.uv_map == "openclare atlas"
+assert abs(off_the_ball() - without) < 1e-6, "nothing but the material moves the surface now"
+# Baked again: the same three nodes, brought up to date.
+assert bpy.ops.object.openclare_bake_relief() == {"FINISHED"}
+assert sorted(node.name for node in nodes if node.name.startswith("openclare")) == [
+    "openclare atlas", "openclare displacement", "openclare height"
+]
+
+# A material the result shares with another object is copied first, and one
+# that has a displacement of its own is left as it is.
+shared = bpy.data.materials.new("shared")
+globe.data.materials.append(shared)
+quads.data.materials[0] = shared
+assert bpy.ops.object.openclare_bake_relief() == {"FINISHED"}
+assert quads.data.materials[0] != shared and globe.data.materials[0] == shared
+assert shared.node_tree is None or "openclare height" not in shared.node_tree.nodes
+own = bpy.data.materials.new("own")
+own.use_nodes = True
+bump = own.node_tree.nodes.new("ShaderNodeDisplacement")
+out = next(node for node in own.node_tree.nodes if node.type == "OUTPUT_MATERIAL")
+own.node_tree.links.new(bump.outputs["Displacement"], out.inputs["Displacement"])
+quads.data.materials[0] = own
+assert bpy.ops.object.openclare_bake_relief() == {"FINISHED"}
+assert openclare.last_report["materials_left_alone"] == "1"
+assert out.inputs["Displacement"].links[0].from_node == bump and "openclare height" not in own.node_tree.nodes
+
+# Back to the modifier: the material is given back what it had, the surface
+# is on the ball again.
+quads.data.materials[0] = material
+assert bpy.ops.object.openclare_bake_relief() == {"FINISHED"}
+settings.relief_apply = "MODIFIER"
+assert bpy.ops.object.openclare_bake_relief() == {"FINISHED"}
+assert not any(node.name.startswith("openclare") for node in nodes) and material.displacement_method == "BUMP"
+assert not quads.modifiers["openclare subdivision"].use_adaptive_subdivision
+assert abs(off_the_ball() - with_relief) < 1e-5
+
+# Written as a file too: read back, it holds the heights themselves in a
+# float format, and the heights between 0 and 1 in an integer one.
+import tempfile
+
+heights, said = openclare.relief_of(bpy.context, quads, globe, 2, 512)
+span = max(abs(float(said["low"])), abs(float(said["high"])))
+
+
+def read_back(path):
+    image = bpy.data.images.load(path)
+    image.colorspace_settings.name = "Non-Color"
+    values = numpy.empty(512 * 512 * image.channels, numpy.float32)
+    image.pixels.foreach_get(values)
+    bpy.data.images.remove(image)
+    return values.reshape(512, 512, -1)[..., 0]
+
+
+with tempfile.TemporaryDirectory() as folder:
+    settings.relief_directory = folder
+    for kind, extension, tolerance in (("EXR32", "exr", 1e-7), ("EXR16", "exr", 1e-3 * span), ("PNG16", "png", 1.0 / 65535)):
+        settings.relief_format = kind
+        assert bpy.ops.object.openclare_bake_relief() == {"FINISHED"}
+        path = openclare.last_report["file"]
+        assert path.startswith(folder) and path.endswith(f"_height.{extension}"), path
+        midlevel, scale = float(openclare.last_report["file_midlevel"]), float(openclare.last_report["file_scale"])
+        expected = numpy.nan_to_num(heights, nan=0.0) if midlevel == 0.0 else numpy.where(
+            numpy.isnan(heights), 0.5, 0.5 + heights / (2.0 * span)
+        )
+        assert (midlevel, abs(scale - (1.0 if midlevel == 0.0 else 2.0 * span)) < 1e-9) in ((0.0, True), (0.5, True))
+        worst = float(numpy.abs(read_back(path) - expected).max())
+        assert worst <= tolerance, (kind, worst, tolerance)
+        assert kind[:3].lower() in quads["openclare_height_file"]
+# Beside a .blend that was never saved there is nowhere to write: said.
+settings.relief_directory = "//textures/"
+try:
+    bpy.ops.object.openclare_bake_relief()
+    raise AssertionError("a file was written beside a .blend that has no place")
+except RuntimeError as error:
+    assert "save the .blend file first" in str(error), error
+settings.relief_format, settings.relief_directory = "NONE", "//textures/"
 settings.quads, settings.adaptive_size = 800, 50.0
 
 # Nothing to remesh: said, not crashed.
