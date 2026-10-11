@@ -587,7 +587,7 @@ fn box_of(piece: &TriMesh, edge: f64) -> Option<PolyMesh> {
 
 /// How many pieces are meshed at a time: as many as the machine has cores,
 /// or what `OPENCLARE_THREADS` says.
-fn threads() -> usize {
+pub(crate) fn threads() -> usize {
     let asked = std::env::var("OPENCLARE_THREADS").ok().and_then(|text| text.parse::<usize>().ok());
     asked.unwrap_or_else(|| std::thread::available_parallelism().map_or(1, |count| count.get())).max(1)
 }

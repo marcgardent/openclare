@@ -43,6 +43,20 @@ A section *Export* says what the result carries besides its quads, each with its
 | Edges: Creases | The edges that should stay sharp when the result is subdivided get a crease weight, which a Subdivision Surface modifier reads: 1 along a hard edge of the original, less where the original folds without being marked hard |
 | Surface: Materials | Each quad gets the material of the surface it lies on, and the borders between materials are kept as lines of edges where that can be done (on a model of many materials they often cannot yet). No effect on an object of one material |
 
+**Relief.** With a result selected, *Bake Height Map* reads the relief of the original onto it:
+a height map on its atlas, measured from the result subdivided (*Levels*, creases included), and
+the two modifiers that show it, a Subdivision Surface and a Displace. What is shown then lies
+on the original: on the ogre at 3000 quads the surface is 0.12 per mille of the size of the
+model away on average, for 0.92 subdivided without the relief, and the bake takes a second.
+The image is kept in the file, 32 bits per channel, grey at one half where the height is none;
+the strength of the Displace modifier is the height from black to white. Baked again, the same
+image and modifiers are brought up to date.
+
+| Relief | |
+|---|---|
+| Levels | How many times the result is subdivided under the relief: more of them carry finer detail, at four times the faces each |
+| Resolution | The size of the height map, from 512 to 4096 texels a side |
+
 Blender waits while the engine runs (about eight seconds for the 200,000 triangles of the ogre
 at 3000 quads), and says where it is: the status bar shows each stage as it begins, the cursor
 counts them, and they are written to the Info log. Reading the edges marked sharp in Blender

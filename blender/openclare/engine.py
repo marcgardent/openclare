@@ -61,6 +61,17 @@ def library():
     lib.openclare_result_copy_face_groups.restype = ctypes.c_int32
     lib.openclare_result_copy_face_groups.argtypes = [pointer, pointer]
     lib.openclare_result_free.restype = None
+    lib.openclare_bake_height.restype = pointer
+    lib.openclare_bake_height.argtypes = [
+        pointer, pointer, size, pointer, pointer, size, pointer, size, pointer, size,
+        ctypes.c_uint32, ctypes.c_uint32, ctypes.c_float, ctypes.c_uint32,
+    ]
+    lib.openclare_baked_ok.restype = ctypes.c_int32
+    lib.openclare_baked_error.restype = lib.openclare_baked_report.restype = text
+    lib.openclare_baked_ok.argtypes = lib.openclare_baked_error.argtypes = [pointer]
+    lib.openclare_baked_report.argtypes = lib.openclare_baked_free.argtypes = [pointer]
+    lib.openclare_baked_copy.restype = lib.openclare_baked_free.restype = None
+    lib.openclare_baked_copy.argtypes = [pointer, pointer]
     _library = lib
     return lib
 
@@ -200,3 +211,52 @@ def remesh(
         return out
     finally:
         lib.openclare_result_free(result)
+
+
+def bake_height(positions, normals, triangles, uvs, source_positions, source_triangles, width, height, reach, padding=4):
+    """Bakes the relief of a detailed surface onto the texture of a plainer
+    one: how far the source is from the target along the normal of the
+    target, signed, for each texel.
+
+    The target is numpy arrays: `positions` and `normals` (three 32-bit
+    floats per vertex), `triangles` (three unsigned 32-bit vertices per
+    triangle) and `uvs` (two 32-bit floats per corner of each triangle,
+    (0, 0) at the bottom left of the texture). The source is
+    `source_positions` and `source_triangles`, likewise. The source is
+    looked for no farther than `reach`; `padding` texels round the faces
+    are filled from their neighbours.
+
+    Returns the heights, a numpy array of `height` rows of `width` 32-bit
+    floats from the bottom row up (not a number where no face lies), and
+    what the engine says of the bake, as a dictionary.
+    """
+    import numpy
+
+    def flat(array, kind, per, count):
+        array = numpy.ascontiguousarray(array, dtype=kind).reshape(-1)
+        if len(array) != per * count:
+            raise EngineError(f"{len(array)} numbers where {per} for each of {count} were expected")
+        return array
+
+    vertices, faces = len(positions.reshape(-1)) // 3, len(triangles.reshape(-1)) // 3
+    source_vertices, source_faces = len(source_positions.reshape(-1)) // 3, len(source_triangles.reshape(-1)) // 3
+    arrays = [
+        flat(positions, numpy.float32, 3, vertices), flat(normals, numpy.float32, 3, vertices),
+        flat(triangles, numpy.uint32, 3, faces), flat(uvs, numpy.float32, 6, faces),
+        flat(source_positions, numpy.float32, 3, source_vertices), flat(source_triangles, numpy.uint32, 3, source_faces),
+    ]
+    at = [array.ctypes.data for array in arrays]
+    lib = library()
+    baked = lib.openclare_bake_height(
+        at[0], at[1], vertices, at[2], at[3], faces, at[4], source_vertices, at[5], source_faces,
+        int(width), int(height), float(reach), int(padding),
+    )
+    try:
+        if not lib.openclare_baked_ok(baked):
+            raise EngineError(lib.openclare_baked_error(baked).decode())
+        report = dict(line.split(" = ", 1) for line in lib.openclare_baked_report(baked).decode().splitlines())
+        heights = numpy.empty(int(width) * int(height), dtype=numpy.float32)
+        lib.openclare_baked_copy(baked, heights.ctypes.data)
+    finally:
+        lib.openclare_baked_free(baked)
+    return heights.reshape(int(height), int(width)), report

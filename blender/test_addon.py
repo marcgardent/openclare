@@ -318,6 +318,48 @@ assert len(bpy.context.active_object.data.polygons) < 700, len(bpy.context.activ
 settings.preserve_volumes = True
 settings.quads, settings.adaptive_size = 800, 50.0
 
+# Relief: the height of the original above the result subdivided, baked on
+# its atlas, moves the subdivided surface back onto the original. A ball of
+# radius 1: subdivided, its quad mesh shrinks inside it; with the relief it
+# is on the ball again.
+import numpy
+
+bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=7, radius=1.0, location=(20.0, 0.0, 0.0))
+globe = bpy.context.active_object
+settings.quads, settings.adaptive_size = 300, 0.0
+alone(globe)
+assert not bpy.ops.object.openclare_bake_relief.poll(), "nothing was remeshed from the ball itself"
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+quads = bpy.context.active_object
+assert quads.openclare_source == globe and bpy.ops.object.openclare_bake_relief.poll()
+settings.relief_levels, settings.relief_resolution = 2, "512"
+assert bpy.ops.object.openclare_bake_relief() == {"FINISHED"}
+assert int(openclare.last_report["covered"]) > 50_000 and openclare.last_report["astray"] == "0", openclare.last_report
+relief = quads.modifiers["openclare relief"]
+assert quads.modifiers["openclare subdivision"].levels == 2 and relief.texture.image.size[0] == 512
+
+
+def off_the_ball():
+    """How far the vertices of the result, as it is shown, are from the ball at most."""
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    depsgraph.update()
+    shown = quads.evaluated_get(depsgraph).to_mesh()
+    radii = numpy.array([vertex.co.length for vertex in shown.vertices])
+    quads.evaluated_get(depsgraph).to_mesh_clear()
+    return float(numpy.abs(radii - 1.0).max())
+
+
+with_relief = off_the_ball()
+relief.show_viewport = False
+without = off_the_ball()
+relief.show_viewport = True
+assert without > 0.01 and with_relief < 0.2 * without, (without, with_relief)
+# Baked again, it is the same relief updated, not another on top.
+assert bpy.ops.object.openclare_bake_relief() == {"FINISHED"}
+assert [modifier.name for modifier in quads.modifiers] == ["openclare subdivision", "openclare relief"]
+assert abs(off_the_ball() - with_relief) < 1e-5
+settings.quads, settings.adaptive_size = 800, 50.0
+
 # Nothing to remesh: said, not crashed.
 bpy.ops.object.empty_add()
 assert not bpy.ops.object.openclare_remesh.poll()

@@ -658,3 +658,181 @@ pub unsafe extern "C" fn openclare_result_free(result: *mut OpenclareResult) {
         drop(unsafe { Box::from_raw(result) });
     }
 }
+
+/// What a call to [`openclare_bake_height`] gives back.
+pub struct OpenclareBaked {
+    heights: Vec<f32>,
+    /// Empty when all went well.
+    error: CString,
+    /// What happened, as `key = value` lines.
+    report: CString,
+}
+
+/// Bakes the height of a detailed surface above a plainer one into a
+/// texture: for each texel, how far the source is from the target along the
+/// normal of the target, signed, in the unit of the meshes.
+///
+/// - `positions`, `normals`: `3 * vertex_count` numbers each, the target.
+/// - `triangles`: `3 * triangle_count` indices of its vertices.
+/// - `uvs`: `6 * triangle_count` numbers, u and v for each corner of each
+///   triangle, (0, 0) at the bottom left of the texture.
+/// - `source_positions`, `source_triangles`: the detailed surface.
+/// - `width`, `height`: the size of the texture in texels.
+/// - `reach`: how far from the target the source is looked for.
+/// - `padding`: texels filled round the faces from their neighbours.
+///
+/// Returns a handle to free with [`openclare_baked_free`], never null.
+///
+/// # Safety
+///
+/// Each pointer must be valid for the number of elements said of it, for
+/// the time of the call.
+#[unsafe(no_mangle)]
+#[allow(clippy::too_many_arguments)]
+pub unsafe extern "C" fn openclare_bake_height(
+    positions: *const f32,
+    normals: *const f32,
+    vertex_count: usize,
+    triangles: *const u32,
+    uvs: *const f32,
+    triangle_count: usize,
+    source_positions: *const f32,
+    source_vertex_count: usize,
+    source_triangles: *const u32,
+    source_triangle_count: usize,
+    width: u32,
+    height: u32,
+    reach: f32,
+    padding: u32,
+) -> *mut OpenclareBaked {
+    let outcome = catch_unwind(AssertUnwindSafe(|| -> Result<OpenclareBaked, String> {
+        let missing = positions.is_null() || normals.is_null() || triangles.is_null() || uvs.is_null();
+        if missing || source_positions.is_null() || source_triangles.is_null() {
+            return Err("the mesh arrays are missing".into());
+        }
+        let points = |at: *const f32, count: usize| -> Vec<Vec3> {
+            // SAFETY: not null, and as long as the caller says.
+            let numbers = unsafe { std::slice::from_raw_parts(at, 3 * count) };
+            numbers.chunks_exact(3).map(|p| Vec3::new(p[0] as f64, p[1] as f64, p[2] as f64)).collect()
+        };
+        let faces = |at: *const u32, count: usize, vertices: usize| -> Result<Vec<[u32; 3]>, String> {
+            // SAFETY: not null, and as long as the caller says.
+            let indices = unsafe { std::slice::from_raw_parts(at, 3 * count) };
+            match indices.iter().find(|&&v| v as usize >= vertices) {
+                Some(beyond) => Err(format!("a triangle names vertex {beyond}, of {vertices} vertices")),
+                None => Ok(indices.chunks_exact(3).map(|t| [t[0], t[1], t[2]]).collect()),
+            }
+        };
+        let (target_positions, target_normals) = (points(positions, vertex_count), points(normals, vertex_count));
+        let target_triangles = faces(triangles, triangle_count, vertex_count)?;
+        // SAFETY: not null, and as long as the caller says.
+        let coordinates = unsafe { std::slice::from_raw_parts(uvs, 6 * triangle_count) };
+        let target_uvs: Vec<[[f64; 2]; 3]> = coordinates
+            .chunks_exact(6)
+            .map(|c| [[c[0] as f64, c[1] as f64], [c[2] as f64, c[3] as f64], [c[4] as f64, c[5] as f64]])
+            .collect();
+        let source = TriMesh {
+            positions: points(source_positions, source_vertex_count),
+            triangles: faces(source_triangles, source_triangle_count, source_vertex_count)?,
+        };
+        let target = openclare::bake::Target {
+            positions: &target_positions,
+            normals: &target_normals,
+            triangles: &target_triangles,
+            uvs: &target_uvs,
+        };
+        let clock = Instant::now();
+        let baked =
+            openclare::bake::height_map(&target, &source, width as usize, height as usize, reach as f64, padding as usize)
+                .map_err(|error| error.to_string())?;
+        let report = format!(
+            "width = {}\nheight = {}\ncovered = {}\nastray = {}\nlow = {}\nhigh = {}\nseconds = {:.3}\n",
+            baked.width,
+            baked.height,
+            baked.covered,
+            baked.astray,
+            baked.low,
+            baked.high,
+            clock.elapsed().as_secs_f64()
+        );
+        Ok(OpenclareBaked { heights: baked.heights, error: CString::default(), report: text(report) })
+    }));
+    let failed = |message: String| OpenclareBaked { heights: Vec::new(), error: text(message), report: CString::default() };
+    let baked = match outcome {
+        Ok(Ok(baked)) => baked,
+        Ok(Err(message)) => failed(message),
+        Err(_) => failed("openclare failed unexpectedly while baking".into()),
+    };
+    Box::into_raw(Box::new(baked))
+}
+
+/// 1 if there is a texture, 0 if not or if `baked` is null.
+///
+/// # Safety
+///
+/// `baked` must be null or a handle from [`openclare_bake_height`] not yet
+/// freed; the same goes for every function below.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_baked_ok(baked: *const OpenclareBaked) -> i32 {
+    // SAFETY: null or a live handle, by contract.
+    unsafe { baked.as_ref() }.is_some_and(|baked| baked.error.as_bytes().is_empty()) as i32
+}
+
+/// Why there is no texture; empty if there is one. Valid until freed.
+///
+/// # Safety
+///
+/// See [`openclare_baked_ok`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_baked_error(baked: *const OpenclareBaked) -> *const c_char {
+    // SAFETY: null or a live handle, by contract.
+    match unsafe { baked.as_ref() } {
+        Some(baked) => baked.error.as_ptr(),
+        None => c"no result".as_ptr(),
+    }
+}
+
+/// What happened, as `key = value` lines: texels covered, texels where the
+/// source was not found along the normal, least and greatest height,
+/// seconds. Valid until freed.
+///
+/// # Safety
+///
+/// See [`openclare_baked_ok`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_baked_report(baked: *const OpenclareBaked) -> *const c_char {
+    // SAFETY: null or a live handle, by contract.
+    match unsafe { baked.as_ref() } {
+        Some(baked) => baked.report.as_ptr(),
+        None => c"".as_ptr(),
+    }
+}
+
+/// Copies the heights, `width * height` numbers, row after row from the
+/// bottom: not a number where no face of the target lies.
+///
+/// # Safety
+///
+/// See [`openclare_baked_ok`]; `heights` must have room for them.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_baked_copy(baked: *const OpenclareBaked, heights: *mut f32) {
+    // SAFETY: null or a live handle, by contract.
+    let Some(baked) = (unsafe { baked.as_ref() }) else { return };
+    if heights.is_null() {
+        return;
+    }
+    // SAFETY: room for as many as the texture has, by contract.
+    unsafe { std::slice::from_raw_parts_mut(heights, baked.heights.len()) }.copy_from_slice(&baked.heights);
+}
+
+/// # Safety
+///
+/// `baked` must be null or a handle from [`openclare_bake_height`] not yet
+/// freed.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_baked_free(baked: *mut OpenclareBaked) {
+    if !baked.is_null() {
+        // SAFETY: made by `Box::into_raw` in `openclare_bake_height`.
+        drop(unsafe { Box::from_raw(baked) });
+    }
+}
