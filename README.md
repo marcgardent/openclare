@@ -16,6 +16,11 @@ or AMD). Build its archive:
 make addon
 ```
 
+That is the add-on for the system it is built on. For Windows, from Linux (with the Rust target
+`x86_64-pc-windows-gnu` and MinGW-w64 installed), `make addon-windows` writes
+`dist/openclare-0.1.0-windows-x64.zip`; it is built and checked for what it holds, not yet run
+on Windows.
+
 Then, in Blender: *Edit > Preferences > Get Extensions*, the arrow at the top right, *Install
 from Disk*, and pick `dist/openclare-0.1.0-linux-x64.zip`. A tab named *openclare* appears in
 the sidebar of the 3D viewport (key N): select a mesh, set what follows, press *Remesh to
