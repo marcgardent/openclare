@@ -103,7 +103,7 @@ pub const PRESETS: &[Preset] = &[
     },
     Preset {
         name: "hard-surface",
-        summary: "mechanical parts: edges sharper than 30 degrees are kept exactly",
+        summary: "mechanical parts: edges sharper than 30 degrees are kept, exactly, wherever the mesh can",
         build: RemeshConfig::for_hard_surface,
     },
 ];
@@ -135,10 +135,14 @@ impl RemeshConfig {
     pub fn for_hard_surface(target: Target) -> Self {
         // Hard edges lead; curvature only settles what they leave open. And
         // a part is cut to one size: its edges, sharp as they are, call for
-        // no smaller quads.
+        // no smaller quads. Those edges are lines to follow wherever the map
+        // can, and hard edges of the mesh where it does; not creases that
+        // must be kept, which cost the whole piece where one cannot be: an
+        // assembled model has bevels and facets closer than its quads.
         Self {
             alignment: 0.02,
-            crease_angle: Some(30.0),
+            crease_angle: None,
+            edge_angle: Some(30.0),
             adaptivity: 0.0,
             quads_around: 0.0,
             ..Self::for_organic(target)
@@ -341,7 +345,7 @@ mod tests {
         assert_eq!(config.target, Target::QuadCount(4000));
         assert_eq!(config.volume_fit, 0.5);
         // What the text does not mention is still the preset's.
-        assert_eq!(config.crease_angle, Some(30.0));
+        assert_eq!((config.crease_angle, config.edge_angle), (None, Some(30.0)));
         // A text that is wrong changes nothing at all.
         let before = config.clone();
         assert!(config.apply_text("quads = 10\nadaptivity = 7\n").is_err());

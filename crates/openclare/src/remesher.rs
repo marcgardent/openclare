@@ -465,6 +465,24 @@ impl QuadLayout {
         let mut first_error = None;
         for (&(index, _), done) in asked.iter().zip(meshed) {
             let mut recorder = recorder::Piece::new(recorder, index, pieces.len());
+            // A piece no chain made anything of, and smaller than a quad of
+            // the mesh asked for: a screw, a rivet. Its box stands for it,
+            // where it would otherwise be missing.
+            let failed = match &done {
+                Ok((mesh, _)) if mesh.faces.is_empty() => Some("came out with no face".to_string()),
+                Err(error) => Some(error.to_string()),
+                Ok(_) => None,
+            };
+            if let Some(why) = &failed
+                && let Some(stand_in) = box_of(&pieces[index].0, edge_length)
+            {
+                let offset = merged.positions.len() as u32;
+                merged.positions.extend(stand_in.positions);
+                merged.faces.extend(stand_in.faces.into_iter().map(|face| face.into_iter().map(|v| v + offset).collect()));
+                report.pieces_boxed += 1;
+                recorder.record("notes/boxed", Shape::Note(&format!("its box stands for it: {why}")));
+                continue;
+            }
             match done {
                 // A piece that comes out with no face at all is as good as
                 // not meshed.
@@ -514,6 +532,57 @@ fn least_quads(piece: &TriMesh) -> usize {
     }
     let euler = piece.positions.len() as i64 - topology.edge_count() as i64 + piece.triangles.len() as i64;
     if euler >= 2 { 6 } else { 16 }
+}
+
+/// The bounding box of a piece as a mesh of six quads, facing out, if the
+/// piece is smaller than `edge` from corner to corner: what stands for a
+/// piece that small when nothing else could be made of it. A flat piece
+/// gives the one quad it lies in, facing the way the piece does.
+fn box_of(piece: &TriMesh, edge: f64) -> Option<PolyMesh> {
+    let (low, high) =
+        piece.positions.iter().fold((Vec3::INFINITY, Vec3::NEG_INFINITY), |(low, high), &p| (low.min(p), high.max(p)));
+    let size = high - low;
+    if piece.positions.is_empty() || size.length() >= edge || size.length() <= 0.0 {
+        return None;
+    }
+    let corner = |k: usize| Vec3::new(
+        if k & 1 == 0 { low.x } else { high.x },
+        if k & 2 == 0 { low.y } else { high.y },
+        if k & 4 == 0 { low.z } else { high.z },
+    );
+    // Each face with its normal pointing out: the corners are numbered by
+    // which side they are on along x (1), y (2) and z (4).
+    const FACES: [[u32; 4]; 6] =
+        [[0, 4, 6, 2], [1, 3, 7, 5], [0, 1, 5, 4], [2, 6, 7, 3], [0, 2, 3, 1], [4, 5, 7, 6]];
+    let flat = (0..3).find(|&axis| size.to_array()[axis] <= 1e-9 * size.length());
+    let faces: Vec<Vec<u32>> = match flat {
+        None => FACES.iter().map(|face| face.to_vec()).collect(),
+        Some(axis) => {
+            // Its two faces across that axis are one and the same: the one
+            // that faces as the piece does is kept.
+            let facing: Vec3 = (0..piece.triangles.len()).map(|f| piece.area_vector(f)).fold(Vec3::ZERO, |a, b| a + b);
+            let side = if facing.to_array()[axis] < 0.0 { 2 * axis } else { 2 * axis + 1 };
+            vec![FACES[side].to_vec()]
+        }
+    };
+    let mut made = PolyMesh::default();
+    let mut number = [u32::MAX; 8];
+    for face in faces {
+        let face = face
+            .into_iter()
+            .map(|k| {
+                // On a flat piece the two sides are at the same place.
+                let k = flat.map_or(k, |axis| k & !(1 << axis)) as usize;
+                if number[k] == u32::MAX {
+                    number[k] = made.positions.len() as u32;
+                    made.positions.push(corner(k));
+                }
+                number[k]
+            })
+            .collect();
+        made.faces.push(face);
+    }
+    Some(made)
 }
 
 /// How many pieces are meshed at a time: as many as the machine has cores,
@@ -962,6 +1031,7 @@ fn settle(
         let lines = Bvh::from_triangles(lines);
         let drawn: HashSet<[u32; 2]> = work.guide_edges.iter().copied().collect();
         let sharp: HashSet<[u32; 2]> = work.sharp_guide_edges.iter().copied().collect();
+        let of_the_shape: HashSet<[u32; 2]> = work.shape_guide_edges.iter().copied().collect();
         let mut kept = Vec::with_capacity(hard_edges.len());
         for edge in hard_edges {
             let middle = 0.5 * (mesh.positions[edge[0] as usize] + mesh.positions[edge[1] as usize]);
@@ -971,6 +1041,9 @@ fn settle(
                     sharp_curve_edges.push(edge);
                     kept.push(edge);
                 }
+                // A sharp edge of the shape that could be followed is as
+                // hard an edge as one that had to be.
+                Some(line) if of_the_shape.contains(&line) => kept.push(edge),
                 Some(line) if drawn.contains(&line) => guide_edges.push(edge),
                 _ => kept.push(edge),
             }
@@ -1018,6 +1091,35 @@ impl Stopwatch {
 mod tests {
     use super::*;
     use crate::mesh::primitives;
+
+    #[test]
+    fn the_box_of_a_small_piece_faces_out_and_a_flat_one_gives_one_quad() {
+        use crate::mesh::primitives;
+        // A cube two across, squashed to 2 by 1 by 0.5.
+        let mut piece = primitives::cube(2);
+        for p in &mut piece.positions {
+            *p = Vec3::new(p.x, 0.5 * p.y, 0.25 * p.z);
+        }
+        assert!(box_of(&piece, 2.0).is_none(), "larger than a quad: no box stands for it");
+        let stand_in = box_of(&piece, 3.0).unwrap();
+        assert_eq!((stand_in.positions.len(), stand_in.faces.len()), (8, 6));
+        // Facing out: the volume its faces enclose is that of the box.
+        let volume: f64 = (stand_in.faces.iter())
+            .map(|face| {
+                let [a, b, c, d] = [0, 1, 2, 3].map(|k| stand_in.positions[face[k] as usize]);
+                (a.dot(b.cross(c)) + a.dot(c.cross(d))) / 6.0
+            })
+            .sum();
+        assert!((volume - 2.0 * 1.0 * 0.5).abs() < 1e-9, "volume {volume}");
+
+        // A flat sheet facing up: the one quad it lies in, facing up.
+        let sheet = primitives::plane(2);
+        let stand_in = box_of(&sheet, 10.0).unwrap();
+        assert_eq!((stand_in.positions.len(), stand_in.faces.len()), (4, 1));
+        let [a, b, c] = [0, 1, 2].map(|k| stand_in.positions[stand_in.faces[0][k] as usize]);
+        let up = sheet.area_vector(0).normalize();
+        assert!((b - a).cross(c - a).normalize().dot(up) > 0.99);
+    }
 
     #[test]
     fn every_method_round_trips_through_its_name() {

@@ -87,6 +87,9 @@ pub struct Report {
     /// Pieces left out because their share of the quads was too small (see
     /// [`crate::RemeshConfig::skip_pieces_under`]).
     pub pieces_skipped: usize,
+    /// Pieces smaller than a quad that no chain made anything of, and whose
+    /// bounding box stands for them in the mesh.
+    pub pieces_boxed: usize,
     /// Pieces thin all along that were given more quads than their share,
     /// for an edge no longer than they are thick, and how many quads that
     /// asks for beyond the number asked for in all (see

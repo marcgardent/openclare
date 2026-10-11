@@ -422,6 +422,12 @@ fn remesh(args: &[String]) -> Result<(), String> {
     } else if report.fell_back {
         println!("note     the integer-grid chain did the job");
     }
+    if report.pieces_boxed > 0 {
+        println!(
+            "boxed    {} piece(s) smaller than a quad that could not be meshed: their bounding boxes stand for them",
+            report.pieces_boxed
+        );
+    }
     if report.thin_pieces > 0 {
         println!(
             "thin     {} piece(s) thin all along, given {} quads beyond the number asked for to keep their shape",

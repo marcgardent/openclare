@@ -922,6 +922,16 @@ edges become cuts of the T-mesh, like open borders. Everything downstream is unc
   it during relaxation, and a vertex born on a corner does not move. These memberships are
   handed on by the mesh itself, no longer guessed from distance.
 
+**Since 11 October 2026 the hard edges of the `hard-surface` preset are lines that may be let
+go**, as guide curves are (`edge_angle` at 30 degrees, `crease_angle` at none), and hard edges
+of the mesh, sharp and creased, wherever they are kept. On the four mechanical parts below
+every one is kept and the meshes are those of milestone 9 (the cylinder has 3040 quads for
+3059). On an assembled model every edge sharper than 30 degrees could not be on a grid line:
+the body of a film camera has 2014 of them, bevels and facets closer together than a triangle
+of the work mesh, the map folded, and the whole piece went to the fallback chain, which gave
+nothing for half of them. And a piece smaller than a quad of the mesh asked for, which no
+chain makes anything of, comes out as its bounding box, six quads, instead of being missing.
+
 **Result of milestone 9.** With the `hard-surface` preset (edges of more than 30°, a single
 size), on the four mechanical parts of the corpus (the part with holes, the cube, and two
 shapes added for this milestone: an L-shaped block, one edge of which is re-entrant, and a

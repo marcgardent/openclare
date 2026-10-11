@@ -77,7 +77,10 @@ painting a density on the model. The marks of every remesher on every model are 
 [bench/results/SCORES.md](bench/results/SCORES.md).
 
 **Hard edges** are followed exactly: with the `hard-surface` preset, the mesh has an edge along
-every hard edge of the part and a vertex on every corner.
+every hard edge of the part and a vertex on every corner, wherever a mesh of quads of that
+size can. On an assembled model, with bevels and facets closer together than its quads, the
+edges that cannot be followed are let go one by one, and the others kept; a part smaller than
+a quad that nothing can be made of comes out as its bounding box.
 
 Two other chains stay in the repository: `integer-grid`, the provisional one, which serves as
 a fallback where the main chain gives up, and `instant-meshes`, the floor the others are

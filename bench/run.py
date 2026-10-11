@@ -337,7 +337,8 @@ def openclare(method, seeded=True, name=None, options=(), sharp_preset=None):
             if method == "quad-layout" and groups.exists():
                 command += ["--groups", groups]
             command += list(options)
-            if sharp:
+            # A chain that starts from a preset has its sharp edges from it.
+            if sharp and not sharp_preset:
                 command += ["--crease-angle", CREASE_ANGLE]
             done = run(command, memory=memory_cap(model))
             seconds = next((float(l.split()[1]) for l in done.stdout.splitlines() if l.startswith("seconds")), 0.0)
