@@ -536,9 +536,10 @@ track. "DT" stands for *dette technique*, technical debt.
   curves. On open pieces it took the sashes of `mahaveer`, which have no inside, for wires.
   Hence: closed, slender, not a sheet.
 - **Left**:
-  - The stored results and the pages are those of before the rule on the five models above
-    (`openclare`, `openclare-uniform`, `openclare-matched`): to measure again at the three
-    budgets before the next release of the reports.
+  - The results stored and the pages were measured again the same day on the eight models
+    in several pieces, at the three budgets. A mesh with more quads than asked for loses on
+    the budget mark what it gains on fidelity: the organic models average 72, 76 and 79 at
+    the three budgets, for 71, 76 and 80, Desert Rose alone being concerned among them.
   - Quads on a wire are as long as they are wide: the engine has one size per place, not
     one per direction. A ring takes 270 quads where 60, four round and long ones along,
     would draw it as well. Quad Remesher has sizes by direction.

@@ -18,9 +18,9 @@ measured on 11 October 2026 from the scenes of the bench):
 
 | Quads asked for | openclare | Quad Remesher | QuadriFlow (Blender) |
 |---|---|---|---|
-| 1000 | 71 | 65 | 41 |
+| 1000 | 72 | 65 | 41 |
 | 3000 | 76 | 63 | 46 |
-| 8000 | 80 | 72 | 50 |
+| 8000 | 79 | 72 | 50 |
 
 The goal "better than Blender's quad remesher" is met on the bench. Quad Remesher is ahead on
 three points, which are what the quality tracks below are about: **alignment** of the edges on
