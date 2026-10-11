@@ -1249,6 +1249,30 @@ treated on its own". The code treated everything as one block.
   (a piece painted at 1 gets more quads than a piece left at 0). Each piece gets at least what
   a shape cannot do without: 1 quad for an open sheet, 6 for a ball (a cube), 16 for a shape
   with a hole (a ring of 4 by 4). What these minimums take is taken back from the large pieces.
+- **A piece thin all along comes before the budget** (`preserve_volumes`, on by default, since
+  11 October 2026). A ring of wire with a five-hundredth of the area of its model gets its
+  floor of 16 quads, with edges four times longer than the wire is thick, and comes out
+  crumpled: its work mesh is sound, the quads cannot go round it. Such a piece is given the
+  quads it takes for an edge no longer than a quarter of its girth (a sixth with the
+  `organic` preset, which asks for six quads round a thin part), on top of the number asked
+  for: nothing is taken from the other pieces, and the number asked for becomes the least
+  the mesh will have. No edge gets shorter than a sixteenth of the edge asked for over the
+  whole model.
+- **What is thin all along** (`thickness.rs`, `typical_girth`) is told in four steps, the
+  cheap ones first, each of which most pieces fail:
+  - *slender*: little surface for the room it takes, less than half the square of the
+    diagonal of its bounding box. A ring thirty times its wire across has 0.16, a rod ten
+    times its width long 0.3; a ball has 1, a disc 1.5, a cube 2. A rivet is small, not
+    slender, and six quads make a rivet;
+  - *closed*: what follows is about the inside of the piece, and a sash of cloth open all
+    round has none to speak of;
+  - *not thick*: at least twice its volume over its area across, which spares a sculpt of
+    millions of triangles its rays;
+  - *not a sheet*: how far across it is under half of its surface (rays, as for thin parts),
+    and how much inside it has for its surface in parts of that, a quarter for a wire and a
+    half for a sheet. Beyond 0.35 it is a sheet, however thin: a band round a lens, a plate.
+    Its other width comes from that same figure, not from a chord through it: a chord
+    through a thin wall that curves leaves it at once.
 - **A piece with neither singularity nor wall** (a ring, a torus): it had nothing to start
   from to be cut (DT-003). One of its vertices, any, serves as the starting point and sends out
   a trace in each of its four directions; they go round the piece and stop on one another.

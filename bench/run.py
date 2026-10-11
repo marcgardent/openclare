@@ -354,7 +354,7 @@ def openclare(method, seeded=True, name=None, options=(), sharp_preset=None):
 # the borders between materials), the faces left across such a border, what
 # it mended in the input, and on how many pieces the lines were let go.
 ENGINE = ["guide_edges", "sharp_curve_edges", "faces_across_groups", "welded_vertices", "edges_taken_apart",
-          "guides_let_go"]
+          "guides_let_go", "thin_pieces", "quads_for_thin_pieces"]
 
 
 def addon(name):

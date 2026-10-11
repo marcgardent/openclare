@@ -510,6 +510,43 @@ track. "DT" stands for *dette technique*, technical debt.
   and its floor by its topology; neither knows how thin it is. A floor from the thickness
   (the quads it takes for an edge no longer than the piece is thick) would keep it, at the
   price of the budget: two such rings would take 600 of the 3000 quads of the camera.
+- **Done on 11 October 2026, by decision of the author** (the shape before the budget): a
+  piece thin all along is given the quads its thickness calls for, on top of the number asked
+  for (`preserve_volumes`, on by default; *Preserve Volumes* in the add-on, `--keep-budget`
+  on the command line; see "A piece thin all along" in ALGORITHM.md). The ring alone, 16
+  quads asked for: 270 quads, 9 per mille away where it was 185. At 3000 quads asked for,
+  what the add-on gives where it changes:
+
+  | Model | Thin pieces | Quads added | Faces | Mean distance, per mille |
+  |---|---|---|---|---|
+  | `camera` | 2 (the two rings) | 504 | 2338 → 2824 | 3.40 → 3.12 |
+  | `mahaveer` | 4 | 2329 | 2976 → 5413 | 3.23 → 3.14 |
+  | Desert Rose | 14 | 2436 | 3579 → 5672 | 2.00 → 1.86 |
+  | `f16` | 43 | 3378 | 1843 → 3665 | 5.44 → 3.18 |
+  | `marine` | 44 | 6496 | 7390 → 13,624 | 0.49 → 0.44 |
+
+  The other 22 models of the bench give the same mesh, face for face, and time moves by a
+  few seconds at most. The Hausdorff distance only moves on `f16` (48.6 → 39.0 per mille):
+  elsewhere it comes from pieces that are not meshed at all, or through the fallback.
+- **How the rule was narrowed**, each time by a measure. Asking only for a girth under the
+  quads round it, it took 727 of the 820 pieces of `marine` for thin and made 97,173 quads
+  of 3000: rivets and balls, which six quads make well enough. With chords for the other
+  width it asked 12,973 quads for the band round the lens of the camera, a thin wall that
+  curves. On open pieces it took the sashes of `mahaveer`, which have no inside, for wires.
+  Hence: closed, slender, not a sheet.
+- **Left**:
+  - The stored results and the pages are those of before the rule on the five models above
+    (`openclare`, `openclare-uniform`, `openclare-matched`): to measure again at the three
+    budgets before the next release of the reports.
+  - Quads on a wire are as long as they are wide: the engine has one size per place, not
+    one per direction. A ring takes 270 quads where 60, four round and long ones along,
+    would draw it as well. Quad Remesher has sizes by direction.
+  - Small flat pieces (the hot shoe, the levers of the camera) and open ones (a hose with no
+    caps) are left as they were. So is a ring with its quads asked for by hand too low: the
+    cause of the crumpling itself, vertices of long quads fitted to a thin wire, is not
+    looked into.
+  - No ceiling on what thin pieces add: a model of a thousand wires would ask for as many
+    times a few hundred quads.
 
 ### DT-035 — Rerun visualization: what is not shown, version behind
 

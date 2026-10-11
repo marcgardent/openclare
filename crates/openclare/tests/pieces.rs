@@ -142,3 +142,31 @@ fn a_sliver_with_next_to_no_area_does_not_run_away() {
         assert!(report.working_vertices < 200_000, "{} vertices in the work meshes", report.working_vertices);
     }
 }
+
+#[test]
+fn a_piece_thin_all_along_gets_the_quads_its_thickness_calls_for() {
+    // A ball, and beside it a ring of wire with a hundredth of its area.
+    let aside = Vec3::new(4.0, 0.0, 0.0);
+    let ring = primitives::torus(0.5, 0.01, 96, 12);
+    let mesh = assembly(&[(primitives::icosphere(4), Vec3::ZERO, 1.0), (ring, aside, 1.0)]);
+    let ring_faces = |quads: &PolyMesh| faces_where(quads, |p| p.x > 2.0);
+
+    // The number asked for comes first: the ring has the least a ring can
+    // be made of, with edges several times longer than the wire is thick.
+    let kept = RemeshConfig { preserve_volumes: false, ..config(600) };
+    let (quads, report) = kept.remesh(&mesh).unwrap();
+    assert_eq!((report.thin_pieces, report.quads_for_thin_pieces), (0, 0));
+    assert!(ring_faces(&quads) < 40, "{} faces on the ring", ring_faces(&quads));
+
+    // The shape comes first: quads no longer than the wire is thick, on top
+    // of the number asked for, and nothing taken from the ball for it.
+    let (quads, report) = config(600).remesh(&mesh).unwrap();
+    assert_eq!(report.thin_pieces, 1);
+    let on_ring = ring_faces(&quads);
+    assert!(on_ring > 300, "{on_ring} faces on the ring");
+    assert!((report.quads_for_thin_pieces as f64 - on_ring as f64).abs() < 0.2 * on_ring as f64);
+    let on_ball = quads.faces.len() - on_ring;
+    assert!((on_ball as f64 - 600.0).abs() < 60.0, "{on_ball} faces on the ball");
+    let stats = quads.stats();
+    assert_eq!((stats.quads, stats.non_manifold_edges, stats.boundary_edges), (stats.faces, 0, 0));
+}

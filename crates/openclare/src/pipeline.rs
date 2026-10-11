@@ -87,6 +87,12 @@ pub struct Report {
     /// Pieces left out because their share of the quads was too small (see
     /// [`crate::RemeshConfig::skip_pieces_under`]).
     pub pieces_skipped: usize,
+    /// Pieces thin all along that were given more quads than their share,
+    /// for an edge no longer than they are thick, and how many quads that
+    /// asks for beyond the number asked for in all (see
+    /// [`crate::RemeshConfig::preserve_volumes`]).
+    pub thin_pieces: usize,
+    pub quads_for_thin_pieces: usize,
     /// Why pieces went to the other chain, with how many for each reason.
     pub fallback_causes: Vec<(&'static str, usize)>,
     /// Why guide lines were let go, wholly or in part, with how many pieces

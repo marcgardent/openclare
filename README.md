@@ -26,7 +26,8 @@ is left as it is. What is remeshed is the object as it is seen, modifiers applie
 |---|---|
 | Object | The object to remesh. Left empty, it is the active object, and the panel says which that is |
 | Preset | What the mesh is for: organic, animation, hard surface |
-| Quads | The number of quads asked for |
+| Quads | The number of quads asked for: the least there will be, when Preserve Volumes is on |
+| Preserve Volumes | The shape comes before the number of quads: a part that is thin all along (a ring, a strap, a wire) is given the quads it takes to keep its shape, on top of the number asked for, and the report says how many. Off, the number is kept and such a part comes out crumpled. On by default |
 | Adaptive Size | How much the size of the quads follows the curvature: at 0 % they are all the same size; towards 100 % they get smaller where the shape bends and larger where it is flat, for the same number in total. Each preset brings its own value (50 %, or 0 % for hard surfaces) |
 | Density | A vertex group of the object, painted in Weight Paint: quads are smallest where the weight is 1, largest where it is 0 |
 | Factor | How many times more quads a weight of 1 gets than a weight of 0, for the same area |
@@ -157,6 +158,15 @@ the `organic` and `animation` presets, 0 (thickness is not looked at) in `hard-s
 ```
 
 ![The hand of the ogre at 3000 quads](docs/images/thin_parts_hand.png)
+
+A separate piece that is thin all along (a ring, a strap, a wire) is another matter: no share
+of the quads asked for is enough for it, and it is given those its thickness calls for on top
+of that number, which is then the least the mesh will have. The run says how many were added.
+`--keep-budget` keeps to the number asked for instead, and such a piece comes out crumpled.
+
+```bash
+./target/release/openclare remesh input.obj output.obj --quads 3000 --keep-budget
+```
 
 The mesh also keeps the volume of the shape. Vertices sitting on the surface give faces that
 run under it wherever it bulges; a last stage therefore moves them a little off the surface,

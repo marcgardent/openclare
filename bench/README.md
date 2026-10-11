@@ -16,6 +16,14 @@ make scenes
 python3 bench/run.py
 ```
 
+That runs every tool at one budget, and takes the better part of an hour. For the work in hand
+there is a quick look, one run of the add-on per model, four at a time, next to what is stored
+and without touching it: five minutes for the whole corpus, one for a few models.
+
+```bash
+make quick MODELS=camera,wolf
+```
+
 It needs `blender` on the `PATH`: `openclare` runs in it, through the add-on, and so do
 QuadriFlow and Quad Remesher. `cargo build --release` builds the command line, `make addon` the
 engine the add-on loads (`blender/openclare/lib/`): do both again before measuring, after any

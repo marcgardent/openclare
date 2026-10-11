@@ -1,6 +1,6 @@
 # Shortcuts for the common tasks. `make help` lists them.
 
-.PHONY: help build test scenes blenderkit scores pages view addon addon-test
+.PHONY: help build test scenes blenderkit scores quick pages view addon addon-test
 
 help:
 	@echo "make build       build the openclare binary (release)"
@@ -18,6 +18,8 @@ help:
 	@echo "                 and remesher (bench/results/SCORES.md)"
 	@echo "make scores MODEL=ogre [TARGET=8000]"
 	@echo "                 print the marks of one model instead"
+	@echo "make quick       one run of the add-on per model next to what the bench stored, in a"
+	@echo "                 couple of minutes. MODELS=camera,wolf TARGET=8000 to choose"
 	@echo "make pages       write one page per model, with rendered pictures and marks"
 	@echo "                 (docs/models; needs blender). MODELS=ogre,blob for some only"
 	@echo "make view MODEL=ogre [QUADS=3000] [OPTIONS='--preset hard-surface']"
@@ -54,6 +56,11 @@ ifdef MODEL
 else
 	python3 scripts/scores.py report
 endif
+
+# What the engine as it is built gives next to what the bench has stored: one
+# run of the add-on per model, several at a time, in a couple of minutes.
+quick: addon
+	python3 bench/quick.py $(if $(MODELS),--models $(MODELS)) $(if $(TARGET),--target $(TARGET))
 
 # One page per model: pictures of what each remesher makes of it, and its marks.
 pages: scores
