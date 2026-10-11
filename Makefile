@@ -1,12 +1,15 @@
 # Shortcuts for the common tasks. `make help` lists them.
 
-.PHONY: help build test scenes blenderkit scores quick pages view addon addon-test
+.PHONY: help build test scenes blenderkit scores quick pages view addon addon-windows addon-test
 
 help:
 	@echo "make build       build the openclare binary (release)"
 	@echo "make test        run the test suite"
 	@echo "make addon       build the Blender add-on: dist/openclare-<version>-<system>.zip, to install"
 	@echo "                 from Blender (Preferences, Get Extensions, Install from Disk)"
+	@echo "make addon-windows  build the same add-on for Windows, from here:"
+	@echo "                 dist/openclare-<version>-windows-x64.zip (needs the Rust target"
+	@echo "                 x86_64-pc-windows-gnu and MinGW-w64)"
 	@echo "make addon-test  run the add-on in a Blender without interface (needs blender)"
 	@echo "make scenes      make the scenes of the bench that are made from a file as it is"
 	@echo "                 (bench/scenes; needs blender). MODELS=cube,pig for some only,"
@@ -94,6 +97,29 @@ addon:
 	rm -f dist/openclare-$(ADDON_VERSION)-$(ADDON_SYSTEM).zip
 	cd blender/openclare && zip -q -r ../../dist/openclare-$(ADDON_VERSION)-$(ADDON_SYSTEM).zip . -x '__pycache__/*' '*.pyc'
 	@echo "written: dist/openclare-$(ADDON_VERSION)-$(ADDON_SYSTEM).zip"
+
+# The same add-on for Windows, built here: the engine for that system (the
+# Rust target x86_64-pc-windows-gnu and the MinGW-w64 linker are needed:
+# `rustup target add x86_64-pc-windows-gnu`, and the package mingw-w64),
+# with the files of the add-on and a manifest that says windows-x64, put
+# together in a folder of their own. blender/openclare/lib keeps the engine
+# of this system, which the tests load. Nothing here runs the result: it has
+# to be tried on Windows.
+WINDOWS_TARGET = x86_64-pc-windows-gnu
+WINDOWS_STAGE = dist/stage-windows-x64
+addon-windows:
+	CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=x86_64-w64-mingw32-gcc \
+		cargo build --release -p openclare-capi --target $(WINDOWS_TARGET)
+	rm -rf $(WINDOWS_STAGE)
+	mkdir -p $(WINDOWS_STAGE)/lib
+	cp blender/openclare/__init__.py blender/openclare/engine.py $(WINDOWS_STAGE)/
+	sed 's/^platforms = .*/platforms = ["windows-x64"]/' blender/openclare/blender_manifest.toml \
+		> $(WINDOWS_STAGE)/blender_manifest.toml
+	cp target/$(WINDOWS_TARGET)/release/openclare_capi.dll $(WINDOWS_STAGE)/lib/
+	x86_64-w64-mingw32-strip $(WINDOWS_STAGE)/lib/openclare_capi.dll
+	rm -f dist/openclare-$(ADDON_VERSION)-windows-x64.zip
+	cd $(WINDOWS_STAGE) && zip -q -r ../openclare-$(ADDON_VERSION)-windows-x64.zip .
+	@echo "written: dist/openclare-$(ADDON_VERSION)-windows-x64.zip"
 
 addon-test: addon
 	ulimit -v $(MEMORY_CAP); blender -b --factory-startup --python blender/test_addon.py
