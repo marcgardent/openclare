@@ -18,12 +18,18 @@ make addon
 
 That is the add-on for the system it is built on. For Windows, from Linux (with the Rust target
 `x86_64-pc-windows-gnu` and MinGW-w64 installed), `make addon-windows` writes
-`dist/openclare-0.1.0-windows-x64.zip`. The engine built that way passes its tests under Wine
-(`make test-windows WINE=/path/to/wine64`); the add-on itself has not been run in a Blender for
-Windows yet.
+`dist/openclare-<version>-windows-x64.zip`. The engine built that way passes its tests under
+Wine (`make test-windows WINE=/path/to/wine64`); the add-on itself has not been run in a Blender
+for Windows yet.
+
+A version is made with `make release version=FIX` (or `MINOR`, or `MAJOR`: the number of the
+version that is raised): the new number is written in the sources, committed on `main` and tagged
+`v<version>`. Once the tag is pushed (`PUSH=1` does it), GitHub builds the two archives, the one
+for Linux against glibc 2.28 as Blender itself, and attaches them to a release of that tag
+(`.github/workflows/release.yml`).
 
 Then, in Blender: *Edit > Preferences > Get Extensions*, the arrow at the top right, *Install
-from Disk*, and pick `dist/openclare-0.1.0-linux-x64.zip`. A tab named *openclare* appears in
+from Disk*, and pick `dist/openclare-<version>-linux-x64.zip`. A tab named *openclare* appears in
 the sidebar of the 3D viewport (key N): select a mesh, set what follows, press *Remesh to
 Quads*. The result is a new object, `<name>.quads`, at the same place as the original, which
 is left as it is. What is remeshed is the object as it is seen, modifiers applied.
