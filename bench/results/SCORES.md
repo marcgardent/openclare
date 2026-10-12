@@ -528,17 +528,17 @@ Over sphere, torus.
 
 ### Extra models: average
 
-Over venturi, ogre_hp, terrain, mahaveer, marine, f16, camera, wolf.
+Over venturi, ogre_hp, watermill, towermill, stonemill, windmill, terrain, mahaveer, marine, f16, camera, wolf.
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| quadremesher | 43625 | **41** | 12 | 57 | 51 | 81 | 47 | 21 | 0 | 37 |
-| openclare | 5149 | **38** | 25 | 50 | 42 | 51 | 20 | 25 | 45 | 30 |
-| openclare-uniform | 4861 | **37** | 25 | 50 | 39 | 48 | 29 | 25 | 38 | 39 |
-| quadremesher-uniform | 5583 | **31** | 12 | 54 | 43 | 47 | 16 | 36 | 9 | 38 |
-| integer-grid | 2053 | **28** | 12 | 50 | 49 | 23 | 43 | 60 | 16 | 16 |
-| instant-meshes | 2062 | **25** | 25 | 36 | 36 | 17 | 7 | 20 | 22 | 65 |
-| quadriflow | 2717 | **7** | 12 | 10 | 68 | 43 | 59 | 70 | 62 | 87 |
+| quadremesher | 34877 | **39** | 8 | 56 | 54 | 76 | 47 | 21 | 0 | 26 |
+| openclare-uniform | 3954 | **36** | 25 | 44 | 38 | 40 | 42 | 13 | 41 | 44 |
+| openclare | 4089 | **33** | 17 | 44 | 41 | 42 | 22 | 14 | 38 | 33 |
+| quadremesher-uniform | 4664 | **31** | 8 | 50 | 46 | 41 | 11 | 36 | 32 | 26 |
+| integer-grid | 2152 | **25** | 8 | 46 | 50 | 19 | 42 | 60 | 17 | 22 |
+| instant-meshes | 2052 | **21** | 17 | 34 | 31 | 15 | 5 | 15 | 19 | 77 |
+| quadriflow | 2633 | **11** | 8 | 32 | 51 | 36 | 17 | 20 | 51 | 83 |
 
 ### Organic models at equal quad count
 
@@ -591,13 +591,17 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 |---|---|---|---|---|---|---|---|---|
 | venturi | 14193 / 14282 | 46 / 39 | 0 / 0 | 63 / 54 | 55 / 66 | 83 / 53 | 57 / 41 | — / — |
 | ogre_hp | 6269 / 6213 | 71 / 72 | 100 / 100 | 58 / 53 | 53 / 67 | 86 / 87 | 57 / 51 | 21 / 19 |
+| watermill | 22120 / 21992 | 33 / 27 | 0 / 0 | 46 / 37 | 59 / 48 | 40 / 63 | 43 / 0 | — / 8 |
+| towermill | 16264 / 13210 | 36 / 38 | 0 / 0 | 47 / 47 | 56 / 62 | 51 / 44 | 50 / 69 | — / — |
+| stonemill | 14154 / 14264 | 32 / 71 | 0 / 100 | 43 / 46 | 61 / 75 | 31 / 69 | 47 / 78 | — / 5 |
+| windmill | 16985 / 599 | 38 / 33 | 0 / 100 | 48 / 22 | 59 / 2 | 63 / 0 | 47 / 0 | — / 1 |
 | terrain | 4677 / 4619 | 31 / 63 | 0 / 100 | 18 / 19 | 52 / 65 | 69 / 68 | 51 / 69 | — / 16 |
 | mahaveer | 46202 / 55041 | 27 / 48 | 0 / 0 | 40 / 73 | 38 / 70 | 37 / 51 | 33 / 78 | — / — |
 | marine | 214018 / 226774 | 34 / 48 | 0 / 0 | 46 / 63 | 51 / 75 | 48 / 80 | 52 / 49 | — / — |
 | f16 | 36038 / 43487 | 42 / 52 | 0 / 0 | 78 / 82 | 45 / 70 | 80 / 83 | 15 / 45 | — / — |
 | camera | 12621 / 12776 | 53 / 50 | 0 / 0 | 84 / 85 | 64 / 58 | 82 / 67 | 65 / 69 | — / — |
 | wolf | 14984 / 13011 | 34 / 37 | 0 / 0 | 55 / 53 | 53 / 51 | 35 / 54 | 48 / 53 | — / — |
-| **average** | 43625 / 47025 | 42 / 51 | 12 / 25 | 55 / 60 | 51 / 65 | 65 / 68 | 47 / 57 | 21 / 17 |
+| **average** | 34877 / 35522 | 40 / 48 | 8 / 33 | 52 / 53 | 54 / 59 | 59 / 60 | 47 / 50 | 21 / 10 |
 
 ### Model by model, 3000 quads
 
@@ -852,6 +856,54 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 | integer-grid | 2515 | **29** | 0 | 39 | 54 | 11 | 66 | — | 35 | 1 |
 | quadremesher-uniform | 2409 | **22** | 0 | 47 | 47 | 8 | 13 | — | 21 | 12 |
 | quadriflow | — | **0** | 0 | — | — | — | — | — | — | 100 |
+
+#### watermill (extra)
+
+| Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
+|---|---|---|---|---|---|---|---|---|---|---|
+| quadremesher | 22120 | **34** | 0 | 51 | 59 | 62 | 43 | — | 0 | 0 |
+| quadremesher-uniform | 2829 | **26** | 0 | 34 | 44 | 24 | 0 | — | 77 | 0 |
+| quadriflow | 2553 | **21** | 0 | 36 | 43 | 20 | 0 | 3 | 40 | 65 |
+| openclare | 2243 | **17** | 0 | 31 | 46 | 11 | 18 | — | 0 | 0 |
+| integer-grid | 2269 | **17** | 0 | 29 | 47 | 10 | 19 | — | 3 | 24 |
+| openclare-uniform | 2241 | **17** | 0 | 31 | 46 | 11 | 16 | — | 0 | 0 |
+| instant-meshes | 1736 | **10** | 0 | 28 | 15 | 13 | 0 | 9 | 0 | 100 |
+
+#### towermill (extra)
+
+| Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
+|---|---|---|---|---|---|---|---|---|---|---|
+| openclare-uniform | 3060 | **35** | 0 | 37 | 33 | 30 | 92 | 5 | 92 | 40 |
+| quadremesher | 16264 | **35** | 0 | 53 | 56 | 64 | 50 | — | 0 | 0 |
+| quadremesher-uniform | 2891 | **33** | 0 | 47 | 53 | 35 | 0 | — | 85 | 0 |
+| quadriflow | 2796 | **27** | 0 | 42 | 43 | 34 | 0 | 3 | 73 | 78 |
+| openclare | 2285 | **25** | 0 | 43 | 50 | 22 | 38 | — | 5 | 0 |
+| integer-grid | 2285 | **25** | 0 | 43 | 50 | 22 | 38 | — | 5 | 41 |
+| instant-meshes | 1850 | **9** | 0 | 29 | 0 | 18 | 0 | 6 | 0 | 100 |
+
+#### stonemill (extra)
+
+| Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
+|---|---|---|---|---|---|---|---|---|---|---|
+| openclare-uniform | 3053 | **70** | 100 | 42 | 73 | 56 | 79 | 6 | 93 | 73 |
+| openclare | 3017 | **42** | 0 | 41 | 64 | 63 | 47 | 4 | 98 | 69 |
+| quadremesher | 14154 | **35** | 0 | 49 | 61 | 63 | 47 | — | 0 | 15 |
+| integer-grid | 2592 | **29** | 0 | 41 | 59 | 0 | 61 | — | 46 | 44 |
+| quadremesher-uniform | 2831 | **28** | 0 | 41 | 60 | 10 | 0 | — | 77 | 11 |
+| quadriflow | 2465 | **26** | 0 | 39 | 52 | 46 | 8 | 4 | 29 | 82 |
+| instant-meshes | 2638 | **21** | 0 | 36 | 53 | 0 | 7 | 4 | 52 | 100 |
+
+#### windmill (extra)
+
+| Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
+|---|---|---|---|---|---|---|---|---|---|---|
+| quadremesher | 16985 | **38** | 0 | 57 | 59 | 73 | 47 | — | 0 | 0 |
+| quadremesher-uniform | 2759 | **32** | 0 | 49 | 47 | 45 | 0 | — | 68 | 0 |
+| openclare-uniform | 207 | **11** | 0 | 15 | 0 | 0 | 81 | 4 | 0 | 100 |
+| instant-meshes | 1911 | **10** | 0 | 32 | 13 | 7 | 0 | 4 | 0 | 100 |
+| openclare | 332 | **4** | 0 | 18 | 0 | 0 | 0 | 0 | 0 | 84 |
+| quadriflow | — | **0** | 0 | — | — | — | — | — | — | — |
+| integer-grid | — | **0** | 0 | — | — | — | — | — | — | — |
 
 #### terrain (extra)
 

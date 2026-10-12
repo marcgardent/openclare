@@ -27,6 +27,10 @@ Overall mark at 3000 quads:
 | [cylinder](cylinder.md) | mechanical | 89 | 95 | 88 |
 | [venturi](venturi.md) | extra | 0 | 30 | 42 |
 | [ogre_hp](ogre_hp.md) | extra | 0 | 69 | 65 |
+| [watermill](watermill.md) | extra | 21 | 17 | 34 |
+| [towermill](towermill.md) | extra | 27 | 25 | 35 |
+| [stonemill](stonemill.md) | extra | 26 | 42 | 35 |
+| [windmill](windmill.md) | extra | 0 | 4 | 38 |
 | [terrain](terrain.md) | extra | 59 | 66 | 29 |
 | [mahaveer](mahaveer.md) | extra | 0 | 12 | 30 |
 | [marine](marine.md) | extra | 0 | 28 | 39 |
