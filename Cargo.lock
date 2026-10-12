@@ -5864,7 +5864,7 @@ dependencies = [
 
 [[package]]
 name = "openclare"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "faer",
  "glam 0.34.1",
@@ -5872,14 +5872,14 @@ dependencies = [
 
 [[package]]
 name = "openclare-capi"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "openclare",
 ]
 
 [[package]]
 name = "openclare-cli"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "openclare",
  "openclare-rerun",
@@ -5887,7 +5887,7 @@ dependencies = [
 
 [[package]]
 name = "openclare-rerun"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "openclare",
  "rerun",
@@ -5895,7 +5895,7 @@ dependencies = [
 
 [[package]]
 name = "openclare-viewer"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "rerun",
  "tokio",
