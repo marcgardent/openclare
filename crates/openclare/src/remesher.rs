@@ -975,13 +975,14 @@ fn fields(
                 quads_around: config.quads_around,
             };
             let demand = sizing::Demand::measure(&sizing::Curvature::default(), &looked_at, &asked)?;
-            let wanted = demand.quads(largest, largest, smallest).max(1.0);
+            let reading = sizing::Reading::between(largest, smallest);
+            let wanted = demand.quads(&reading).max(1.0);
             // More than may be made: every quad larger, by as much as it takes.
             let most = (config.most_quads.max(1)) as f64;
             let larger = if wanted > most { (wanted / most).sqrt() } else { 1.0 };
             let quads = wanted.min(most);
             (report.largest_edge, report.smallest_edge) = (largest * larger, smallest * larger);
-            (report.quads_wanted, report.below_smallest) = (wanted, demand.below(largest, smallest));
+            (report.quads_wanted, report.below_smallest) = (wanted, demand.below(&reading));
             clock.lap(report, "analysis");
             (quads, (area / quads).sqrt(), Some((largest * larger, smallest * larger)))
         }

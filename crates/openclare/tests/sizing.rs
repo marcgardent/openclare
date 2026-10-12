@@ -154,15 +154,17 @@ fn the_mesh_is_finer_at_the_tips_of_a_spindle_when_adaptive() {
 // The size asked for, between a largest and a smallest quad, and the number
 // of quads as what that makes.
 
-use openclare::sizing::{Curvature, Demand};
+use openclare::sizing::{Curvature, Demand, Reading};
 
 #[test]
 fn a_ball_calls_for_the_same_number_of_quads_whatever_its_size() {
     // The largest quad as long as the radius. Twelve of them would go round
     // a ball of radius 1.9: this one bends more, and for an even error gets
     // an edge half way, as a logarithm, between the largest and a twelfth of
-    // its great circle. That is 0.72 of its radius, and 24 quads over it,
-    // be it a pea or a planet.
+    // its great circle (of a circle a twentieth tighter: what is added to
+    // every curvature for the flat not to be flatter than quads can feel).
+    // That is 0.71 of its radius, and 25 quads over it, be it a pea or a
+    // planet.
     for radius in [0.5, 1.0, 4.0] {
         let mut ball = primitives::icosphere(4);
         for p in &mut ball.positions {
@@ -180,19 +182,20 @@ fn a_ball_calls_for_the_same_number_of_quads_whatever_its_size() {
         let tuning = Curvature::default();
         assert_eq!(tuning.quads_a_turn, 12.0);
         let demand = Demand::measure(&tuning, &work, &request).unwrap();
-        let wanted = radius * (std::f64::consts::TAU / 12.0).sqrt();
-        for size in demand.sizes(largest, largest, smallest) {
+        let wanted = radius * (std::f64::consts::TAU / 12.0 / (1.0 + tuning.felt)).sqrt();
+        for size in demand.sizes(&Reading::between(largest, smallest)) {
             assert!((size / wanted - 1.0).abs() < 0.03, "radius {radius}: an edge of {size} for {wanted}");
         }
-        let quads = demand.quads(largest, largest, smallest);
-        assert!((quads / 24.0 - 1.0).abs() < 0.05, "radius {radius}: {quads} quads for 24");
+        let quads = demand.quads(&Reading::between(largest, smallest));
+        let expected = 24.0 * (1.0 + tuning.felt);
+        assert!((quads / expected - 1.0).abs() < 0.05, "radius {radius}: {quads} quads for {expected}");
         // Nothing of it asks for less than the smallest; all of it asks for
         // less than a smallest set above that edge.
-        assert_eq!(demand.below(largest, smallest), 0.0);
-        assert_eq!(demand.below(largest, 1.1 * wanted), 1.0);
+        assert_eq!(demand.below(&Reading::between(largest, smallest)), 0.0);
+        assert_eq!(demand.below(&Reading::between(largest, 1.1 * wanted)), 1.0);
         // Without adaptivity it does not ask: the largest quad everywhere.
         let deaf = Demand::measure(&tuning, &work, &Request { adaptivity: 0.0, ..request }).unwrap();
-        assert!(deaf.sizes(largest, largest, smallest).iter().all(|&size| size == largest));
+        assert!(deaf.sizes(&Reading::between(largest, smallest)).iter().all(|&size| size == largest));
     }
 }
 
@@ -207,23 +210,23 @@ fn the_bounds_are_kept_and_tighter_ones_make_more_quads() {
     // even error, and more a little way off, where it bends less already.
     // The waist bends along a circle of radius 1, which the largest goes
     // round in more than twelve: flat.
-    let sizes = demand.sizes(0.4, 0.4, 0.05);
+    let sizes = demand.sizes(&Reading::between(0.4, 0.05));
     assert!(sizes.iter().all(|&size| (0.05..=0.4).contains(&size)));
     let (tips, waist) = (mean_where(&work, &sizes, |p| p.z.abs() > 2.9), mean_where(&work, &sizes, |p| p.z.abs() < 0.3));
     let least = sizes.iter().copied().fold(f64::INFINITY, f64::min);
     assert!(least > 0.26 && least <= tips && tips < 0.36, "an edge of {least} at the very tips, {tips} round them");
     assert!((waist - 0.4).abs() < 1e-9, "an edge of {waist} at the waist");
     // A smallest quad above what the tips ask is what they get.
-    let floored = demand.sizes(0.4, 0.4, 0.35);
+    let floored = demand.sizes(&Reading::between(0.4, 0.35));
     assert!(floored.iter().all(|&size| (0.35..=0.4).contains(&size)));
     assert!((mean_where(&work, &floored, |p| p.z.abs() > 2.9) - 0.35).abs() < 1e-9);
-    let below = demand.below(0.4, 0.35);
+    let below = demand.below(&Reading::between(0.4, 0.35));
     assert!(below > 0.01 && below < 0.5, "{below}");
 
     // The number of quads: more with a smaller largest quad, fewer with a
     // larger smallest one, and what quads of one size make when the two
     // are the same.
-    let quads = |largest: f64, smallest: f64| demand.quads(largest, largest, smallest);
+    let quads = |largest: f64, smallest: f64| demand.quads(&Reading::between(largest, smallest));
     assert!(quads(0.3, 0.05) > 1.2 * quads(0.4, 0.05));
     assert!(quads(0.4, 0.35) < quads(0.4, 0.05) && quads(0.4, 0.05) <= quads(0.4, 0.01));
     let area: f64 = work.areas.iter().sum();
