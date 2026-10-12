@@ -90,6 +90,14 @@ MODELS = [
     # triangles, with three guide curves and a sharp one drawn on it, and a
     # painted density.
     ("ogre_hp", "extra", False, False),
+    # Four small buildings by LapaModels, made with a generative model:
+    # 15,000 triangles each, closed, with dozens of holes through them
+    # (railings, sails, eaves), two of them in several pieces, and a
+    # surface that is all planks, tiles and stones. Free to pass on.
+    ("watermill", "extra", False, False),
+    ("towermill", "extra", False, False),
+    ("stonemill", "extra", False, False),
+    ("windmill", "extra", False, False),
     # Not redistributable (see LOCAL_MODELS): measured, but kept out of the
     # acceptance groups, which anyone must be able to reproduce.
     # A landscape from BlenderKit: half a million triangles, open, rugged.

@@ -409,6 +409,92 @@ Failures: quadriflow: cancelled.
 
 Failures: quadriflow: cancelled.
 
+## watermill (extra)
+
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
+|---|---|---|---|---|---|---|---|---|---|
+| **Valid meshes (V)** | 0/5 | 0/5 | 0/1 | 0/1 | 0/1 | 0/1 | 0/1 | 0/1 | 0/1 |
+| Quads made | 2553 | 1736 | 2269 | 2241 | 2243 | 22120 | 2829 | 22120 | 21992 |
+| Irregular vertices (S) | 292 | 283 | 184 | 189 | 183 | 1268 | 446 | 1268 | 3272 |
+| … of which above the minimum | — | — | — | — | — | — | — | — | 2704 |
+| Base complex patches (C) | 2474 | 1580 | — | — | — | — | — | — | 20249 |
+| Alignment, degrees (A) | 14.38 | 16.31 | 16.06 | 15.42 | 15.52 | 11.01 | 14.87 | 12.20 | 14.20 |
+| Mean angle deviation, degrees (F) | 11.32 | 17.04 | 10.64 | 10.81 | 10.82 | 8.11 | 11.21 | 8.11 | 10.49 |
+| Angle deviation, 95th percentile (F) | 38.54 | 57.27 | 40.86 | 39.48 | 39.55 | 25.12 | 42.43 | 25.12 | 32.43 |
+| Mean aspect ratio (F) | 1.461 | 1.893 | 1.720 | 1.537 | 1.543 | 1.721 | 1.616 | 1.721 | 1.562 |
+| Area variation (F) | 0.333 | 0.484 | 0.507 | 0.530 | 0.531 | 0.834 | 0.365 | 0.834 | 1.610 |
+| Hausdorff, ‰ of the diagonal (H) | 88.18 | 59.41 | 78.69 | 73.14 | 73.14 | 25.17 | 67.40 | 25.17 | 20.47 |
+| Mean distance, ‰ (H) | 5.200 | 7.305 | 6.795 | 6.770 | 6.772 | 1.288 | 4.352 | 1.288 | 0.645 |
+| Thin parts: mean distance, % of a quad edge (V) | 30.5 | 36.7 | 40.0 | 39.1 | 39.2 | 12.5 | 25.6 | 35.2 | 16.3 |
+| Volume kept, % of the source (V) | — | — | — | — | — | — | — | — | 99.37 |
+| Off budget, % (N) | 14.9 | 42.1 | 24.4 | 25.3 | 25.2 | 637.3 | 5.7 | 0.0 | 0.6 |
+| Time, seconds (T) | 4.16 | 0.59 | 22.31 | 144.93 | 796.62 | 326.75 | 313.32 | 326.75 | 1422.07 |
+
+## towermill (extra)
+
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
+|---|---|---|---|---|---|---|---|---|---|
+| **Valid meshes (V)** | 0/5 | 0/5 | 0/1 | 0/1 | 0/1 | 0/1 | 0/1 | 0/1 | 0/1 |
+| Quads made | 2796 | 1850 | 2285 | 3060 | 2285 | 16264 | 2891 | 16264 | 13210 |
+| Irregular vertices (S) | 375 | 334 | 142 | 329 | 142 | 821 | 399 | 821 | 404 |
+| … of which above the minimum | — | — | — | 25 | — | — | — | — | — |
+| Base complex patches (C) | 2724 | 1730 | — | 2915 | — | — | — | — | — |
+| Alignment, degrees (A) | 13.12 | 15.94 | 12.83 | 14.09 | 12.82 | 10.54 | 11.84 | 11.82 | 11.94 |
+| Mean angle deviation, degrees (F) | 11.41 | 20.39 | 10.09 | 13.43 | 10.09 | 8.82 | 9.43 | 8.82 | 7.59 |
+| Angle deviation, 95th percentile (F) | 35.34 | 62.15 | 36.45 | 43.46 | 36.45 | 26.50 | 34.11 | 26.50 | 24.20 |
+| Mean aspect ratio (F) | 1.454 | 2.039 | 1.455 | 2.317 | 1.455 | 2.127 | 1.534 | 2.127 | 1.308 |
+| Area variation (F) | 0.322 | 0.523 | 0.311 | 0.654 | 0.311 | 0.722 | 0.324 | 0.722 | 0.294 |
+| Hausdorff, ‰ of the diagonal (H) | 58.59 | 68.43 | 62.04 | 61.10 | 62.04 | 24.29 | 46.72 | 24.29 | 28.27 |
+| Mean distance, ‰ (H) | 3.298 | 5.961 | 4.934 | 3.322 | 4.934 | 1.548 | 3.430 | 1.548 | 1.156 |
+| Thin parts: mean distance, % of a quad edge (V) | 16.1 | 32.1 | 28.1 | 20.4 | 28.1 | 11.3 | 17.9 | 25.1 | 27.6 |
+| Volume kept, % of the source (V) | — | — | — | 94.81 | — | 100.09 | — | 100.09 | — |
+| Off budget, % (N) | 6.8 | 38.3 | 23.8 | 2.0 | 23.8 | 442.1 | 3.6 | 0.0 | 18.8 |
+| Time, seconds (T) | 2.46 | 0.60 | 11.20 | 11.61 | 627.11 | 142.41 | 172.84 | 142.41 | 120.16 |
+
+## stonemill (extra)
+
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
+|---|---|---|---|---|---|---|---|---|---|
+| **Valid meshes (V)** | 0/5 | 0/5 | 0/1 | 1/1 | 0/1 | 0/1 | 0/1 | 0/1 | 1/1 |
+| Quads made | 2465 | 2638 | 2592 | 3053 | 3017 | 14154 | 2831 | 14154 | 14264 |
+| Irregular vertices (S) | 226 | 277 | 100 | 128 | 225 | 752 | 331 | 752 | 384 |
+| … of which above the minimum | — | 245 | — | 64 | 161 | — | — | — | 320 |
+| Base complex patches (C) | 2373 | 2546 | — | 2875 | 2905 | — | — | — | 13605 |
+| Alignment, degrees (A) | 13.68 | 14.32 | 13.29 | 12.94 | 13.25 | 11.45 | 13.28 | 12.80 | 12.16 |
+| Mean angle deviation, degrees (F) | 9.68 | 9.41 | 8.13 | 5.49 | 7.10 | 7.82 | 7.97 | 7.82 | 4.94 |
+| Angle deviation, 95th percentile (F) | 30.09 | 32.87 | 23.34 | 17.60 | 23.17 | 23.86 | 27.48 | 23.86 | 15.62 |
+| Mean aspect ratio (F) | 1.326 | 1.434 | 1.250 | 1.262 | 1.407 | 1.799 | 1.382 | 1.799 | 1.217 |
+| Area variation (F) | 0.263 | 0.291 | 0.232 | 0.271 | 0.441 | 0.709 | 0.255 | 0.709 | 0.330 |
+| Hausdorff, ‰ of the diagonal (H) | 29.33 | 69.81 | 62.89 | 23.40 | 20.02 | 18.72 | 43.71 | 18.72 | 9.36 |
+| Mean distance, ‰ (H) | 2.292 | 2.846 | 2.606 | 1.881 | 1.842 | 1.214 | 2.538 | 1.214 | 0.698 |
+| Thin parts: mean distance, % of a quad edge (V) | 24.6 | 82.2 | 79.4 | 20.3 | 16.5 | 18.6 | 46.4 | 61.9 | 21.1 |
+| Volume kept, % of the source (V) | — | 98.61 | — | 99.84 | 99.97 | 98.93 | 98.15 | 98.93 | 100.02 |
+| Off budget, % (N) | 17.8 | 12.1 | 13.6 | 1.8 | 0.6 | 371.8 | 5.6 | 0.0 | 0.8 |
+| Time, seconds (T) | 2.06 | 0.50 | 9.93 | 3.02 | 3.55 | 32.14 | 37.90 | 32.14 | 13.80 |
+
+## windmill (extra)
+
+| | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
+|---|---|---|---|---|---|---|---|---|---|
+| **Valid meshes (V)** | 0/5 | 0/5 | 0/1 | 0/1 | 0/1 | 0/1 | 0/1 | 0/1 | 1/1 |
+| Quads made | — | 1911 | — | 207 | 332 | 16985 | 2759 | 16985 | 599 |
+| Irregular vertices (S) | — | 336 | — | 28 | 79 | 900 | 364 | 900 | 188 |
+| … of which above the minimum | — | — | — | 4 | 55 | — | — | — | 164 |
+| Base complex patches (C) | — | 1842 | — | 199 | 332 | — | — | — | 591 |
+| Alignment, degrees (A) | — | 15.29 | — | 19.16 | 18.48 | 9.61 | 11.54 | 11.76 | 17.45 |
+| Mean angle deviation, degrees (F) | — | 17.38 | — | 29.41 | 21.62 | 8.13 | 10.67 | 8.13 | 19.65 |
+| Angle deviation, 95th percentile (F) | — | 56.08 | — | 68.85 | 56.98 | 25.86 | 37.13 | 25.86 | 56.38 |
+| Mean aspect ratio (F) | — | 1.826 | — | 8.010 | 2.961 | 1.900 | 1.552 | 1.900 | 2.876 |
+| Area variation (F) | — | 0.478 | — | 1.419 | 1.250 | 0.775 | 0.333 | 0.775 | 1.303 |
+| Hausdorff, ‰ of the diagonal (H) | — | 77.91 | — | 532.08 | 530.83 | 17.41 | 35.77 | 17.41 | 528.86 |
+| Mean distance, ‰ (H) | — | 5.742 | — | 248.299 | 238.929 | 0.929 | 2.760 | 0.929 | 225.549 |
+| Thin parts: mean distance, % of a quad edge (V) | — | 42.7 | — | 1177.1 | 1168.3 | 9.2 | 18.7 | 19.2 | 2473.4 |
+| Volume kept, % of the source (V) | — | — | — | 1.41 | 1.39 | 99.29 | — | 99.29 | 1.15 |
+| Off budget, % (N) | — | 36.3 | — | 93.1 | 88.9 | 466.2 | 8.0 | 0.0 | 96.5 |
+| Time, seconds (T) | — | 0.42 | — | 0.85 | 1.90 | 138.49 | 193.05 | 138.49 | 8.02 |
+
+Failures: quadriflow: cancelled; integer-grid: error: invalid mesh: work mesh has 2 non-manifold or inconsistently oriented edges.
+
 ## terrain (extra)
 
 | | quadriflow | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched |
