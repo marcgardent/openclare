@@ -18,8 +18,9 @@ make addon
 
 That is the add-on for the system it is built on. For Windows, from Linux (with the Rust target
 `x86_64-pc-windows-gnu` and MinGW-w64 installed), `make addon-windows` writes
-`dist/openclare-0.1.0-windows-x64.zip`; it is built and checked for what it holds, not yet run
-on Windows.
+`dist/openclare-0.1.0-windows-x64.zip`. The engine built that way passes its tests under Wine
+(`make test-windows WINE=/path/to/wine64`); the add-on itself has not been run in a Blender for
+Windows yet.
 
 Then, in Blender: *Edit > Preferences > Get Extensions*, the arrow at the top right, *Install
 from Disk*, and pick `dist/openclare-0.1.0-linux-x64.zip`. A tab named *openclare* appears in
