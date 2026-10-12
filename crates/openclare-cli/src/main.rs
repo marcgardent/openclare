@@ -45,8 +45,6 @@ OPTIONS (remesh):
     --crease-angle <DEG|none>    follow input edges sharper than this dihedral angle
     --adaptivity <A>             0 for quads of one size, up to 1 for quads as small as the shape bends
     --quads-around <N>           fewest quads round a thin part, so that it keeps its volume (0: do not look at thickness)
-    --keep-budget                never make more quads than asked for: a piece thin all along (a ring, a strap)
-                                 is otherwise given the quads its thickness calls for, beyond that number
     --volume-fit <F>             0 leaves every vertex on the surface; 1 moves them off it for the mesh to keep the volume
     --density <FILE>             painted density: one weight per input vertex, one per line, from 0 (least dense) to 1 (most)
     --density-contrast <F>       how many times denser a weight of 1 is than a weight of 0 (default 4)
@@ -325,7 +323,6 @@ fn remesh(args: &[String]) -> Result<(), String> {
             "--singularity-reach" => config.singularity_reach = parse(arg, value(arg)?)?,
             "--singularity-tolerance" => config.singularity_tolerance = parse(arg, value(arg)?)?,
             "--edge-angle" => config.edge_angle = Some(parse(arg, value(arg)?)?),
-            "--keep-budget" => config.preserve_volumes = false,
             "--crease-angle" => {
                 let text = value(arg)?;
                 config.crease_angle = if text == "none" { None } else { Some(parse(arg, text)?) };
@@ -494,7 +491,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
     }
     if report.thin_pieces > 0 {
         println!(
-            "thin     {} piece(s) thin all along, given {} quads beyond the number asked for to keep their shape",
+            "thin     {} piece(s) thin all along, given {} quads of the others to keep their shape",
             report.thin_pieces, report.quads_for_thin_pieces
         );
     }

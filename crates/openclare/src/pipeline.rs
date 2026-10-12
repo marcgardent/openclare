@@ -94,10 +94,10 @@ pub struct Report {
     /// Pieces smaller than a quad that no chain made anything of, and whose
     /// bounding box stands for them in the mesh.
     pub pieces_boxed: usize,
-    /// Pieces thin all along that were given more quads than their share,
-    /// for an edge no longer than they are thick, and how many quads that
-    /// asks for beyond the number asked for in all (see
-    /// [`crate::RemeshConfig::preserve_volumes`]).
+    /// Pieces thin all along that were given more quads than their share
+    /// by area, for an edge no longer than they are thick, and how many
+    /// quads that moved to them from the other pieces: the number asked
+    /// for in all is kept.
     pub thin_pieces: usize,
     pub quads_for_thin_pieces: usize,
     /// When the size of the quads was asked for, between a largest and a

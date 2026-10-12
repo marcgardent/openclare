@@ -6,6 +6,7 @@ which is left as it is.
 """
 
 import bpy
+import mathutils
 
 from . import engine
 
@@ -66,6 +67,31 @@ def object_to_remesh(context):
     return chosen if chosen is not None and chosen.type == "MESH" else None
 
 
+
+# How many of its largest quads go along the diagonal of the box of an object
+# when the sizes are set from it, and how many times smaller the smallest is.
+QUADS_ALONG = 40.0
+SIZE_RANGE = 8.0
+
+
+def sizes_from(owner):
+    """The largest and the smallest quad to start from for an object, in the
+    units of the scene: by its size alone."""
+    corners = [owner.matrix_world @ mathutils.Vector(corner) for corner in owner.bound_box]
+    diagonal = max((a - b).length for a in corners for b in corners)
+    largest = diagonal / QUADS_ALONG
+    return largest, largest / SIZE_RANGE
+
+
+def target_changed(settings, context):
+    """Sizes asked for and none set: those the object gives."""
+    if settings.target != "SIZE" or settings.largest_quad > 0.0:
+        return
+    owner = settings.source or object_to_remesh(context)
+    if owner is not None:
+        settings.largest_quad, settings.smallest_quad = sizes_from(owner)
+
+
 class OpenclareSettings(bpy.types.PropertyGroup):
     source: bpy.props.PointerProperty(
         name="Object",
@@ -79,22 +105,54 @@ class OpenclareSettings(bpy.types.PropertyGroup):
     preset: bpy.props.EnumProperty(
         name="Preset", description="What the mesh is for", items=PRESETS, default="organic", update=preset_changed
     )
+    target: bpy.props.EnumProperty(
+        name="Ask For",
+        description="What says how dense the mesh is",
+        items=[
+            (
+                "COUNT",
+                "Number",
+                "A number of quads: the shape says where they are smaller, and the number is kept",
+            ),
+            (
+                "SIZE",
+                "Sizes",
+                "The largest and the smallest quad: the shape says which where, and the number of quads is "
+                "what that makes",
+            ),
+        ],
+        default="COUNT",
+        update=target_changed,
+    )
     quads: bpy.props.IntProperty(
         name="Quads",
-        description="Number of quads asked for: the least there will be, when Preserve Volumes is on",
+        description="Number of quads asked for",
         default=3000,
         min=1,
         soft_min=100,
         soft_max=50_000,
     )
-    preserve_volumes: bpy.props.BoolProperty(
-        name="Preserve Volumes",
+    largest_quad: bpy.props.FloatProperty(
+        name="Largest",
         description=(
-            "The shape comes before the number of quads: a part that is thin all along, a ring, a strap, "
-            "a wire, is given the quads it takes to keep its shape, on top of the number asked for. "
-            "Off, the number is kept, and such a part comes out crumpled"
+            "Edge of the largest quads, in the units of the scene: what the shape is meshed with wherever "
+            "it asks for nothing smaller. 0 to have it set from the size of the object"
         ),
-        default=True,
+        default=0.0,
+        min=0.0,
+        subtype="DISTANCE",
+        precision=4,
+    )
+    smallest_quad: bpy.props.FloatProperty(
+        name="Smallest",
+        description=(
+            "Edge of the smallest quads, in the units of the scene: thin parts and tight bends get quads "
+            "down to that size, and what would call for smaller comes out coarser than its shape asks"
+        ),
+        default=0.0,
+        min=0.0,
+        subtype="DISTANCE",
+        precision=4,
     )
     adaptive_size: bpy.props.FloatProperty(
         name="Adaptive Size",
@@ -546,7 +604,16 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
 
         try:
             engine_settings = {"quads": settings.quads, "adaptivity": settings.adaptive_size / 100.0}
-            engine_settings["preserve_volumes"] = "true" if settings.preserve_volumes else "false"
+            if settings.target == "SIZE":
+                # Lengths of the scene, where the engine is given the mesh
+                # as the object holds it: before its scale.
+                if settings.largest_quad <= 0.0:
+                    settings.largest_quad, settings.smallest_quad = sizes_from(original)
+                scale = sum(abs(factor) for factor in original.matrix_world.to_scale()) / 3.0 or 1.0
+                smallest = min(settings.smallest_quad, settings.largest_quad) or settings.largest_quad / SIZE_RANGE
+                del engine_settings["quads"]
+                engine_settings["largest_quad"] = settings.largest_quad / scale
+                engine_settings["smallest_quad"] = smallest / scale
             density = None
             if settings.density_group:
                 density = weights_of(evaluated, source, settings.density_group)
@@ -596,10 +663,14 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
                 said += f", {report.get('sharp_curve_edges', '0')} along the sharp curves"
             if report.get("guide_gaps", "0") != "0":
                 said += f" ({report['guide_gaps']} breaks)"
-        thin, beyond = int(report.get("thin_pieces", 0)), int(report.get("quads_for_thin_pieces", 0))
+        thin, moved = int(report.get("thin_pieces", 0)), int(report.get("quads_for_thin_pieces", 0))
         if thin:
-            # Said, because the result then has more quads than were asked for.
-            said += f"; {beyond} quads more than asked for, to keep the shape of {thin} thin part(s)"
+            said += f"; {moved} of them moved to {thin} thin part(s), to keep their shape"
+        wanted, below = float(report.get("quads_wanted", 0.0)), float(report.get("below_smallest", 0.0))
+        if wanted > 0.0:
+            said += f"; the shape called for {wanted:.0f}"
+            if below >= 0.005:
+                said += f", and {100.0 * below:.0f} % of it for quads smaller than the smallest"
         boxed = int(report.get("pieces_boxed", 0))
         if boxed:
             said += f"; {boxed} part(s) smaller than a quad could not be meshed and are boxes"
@@ -1011,8 +1082,13 @@ class OPENCLARE_PT_panel(bpy.types.Panel):
             active = object_to_remesh(context)
             layout.label(text=f"Active object: {active.name}" if active else "No mesh is active", icon="INFO")
         layout.prop(settings, "preset")
-        layout.prop(settings, "quads")
-        layout.prop(settings, "preserve_volumes")
+        layout.prop(settings, "target", expand=True)
+        if settings.target == "SIZE":
+            sizes = layout.column(align=True)
+            sizes.prop(settings, "largest_quad")
+            sizes.prop(settings, "smallest_quad")
+        else:
+            layout.prop(settings, "quads")
         layout.prop(settings, "adaptive_size", slider=True)
         chosen = object_to_remesh(context)
         if chosen is not None:

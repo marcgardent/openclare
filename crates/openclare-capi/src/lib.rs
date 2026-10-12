@@ -299,7 +299,7 @@ unsafe fn remesh(
     let report = format!(
         "{asked}\nvertices = {}\nfaces = {}\nquads = {}\nirregular_vertices = {}\npieces = {}\n\
          pieces_through_fallback = {}\npieces_failed = {}\npieces_skipped = {}\npieces_boxed = {}\nthin_pieces = {}\nquads_for_thin_pieces = {}\nguide_edges = {}\nsharp_curve_edges = {}\nfaces_across_groups = {}\nwelded_vertices = {}\nedges_taken_apart = {}\nguide_gaps = {}\n\
-         guides_let_go = {}\nseconds = {seconds:.3}\n",
+         guides_let_go = {}\nquads_wanted = {}\nbelow_smallest = {}\nlargest_edge = {}\nsmallest_edge = {}\nseconds = {seconds:.3}\n",
         stats.vertices,
         stats.faces,
         stats.quads,
@@ -318,6 +318,10 @@ unsafe fn remesh(
         done.edges_taken_apart,
         done.guide_gaps,
         done.guides_let_go,
+        done.quads_wanted,
+        done.below_smallest,
+        done.largest_edge,
+        done.smallest_edge,
     );
     Ok(OpenclareResult {
         mesh,

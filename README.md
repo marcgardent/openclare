@@ -38,8 +38,9 @@ is left as it is. What is remeshed is the object as it is seen, modifiers applie
 |---|---|
 | Object | The object to remesh. Left empty, it is the active object, and the panel says which that is |
 | Preset | What the mesh is for: organic, animation, hard surface |
-| Quads | The number of quads asked for: the least there will be, when Preserve Volumes is on |
-| Preserve Volumes | The shape comes before the number of quads: a part that is thin all along (a ring, a strap, a wire) is given the quads it takes to keep its shape, on top of the number asked for, and the report says how many. Off, the number is kept and such a part comes out crumpled. On by default |
+| Ask For | *Number*: a number of quads, kept; the shape says where they are smaller. *Sizes*: the largest and the smallest quad; the shape says which where, and the number of quads is what that makes |
+| Quads | With *Number*: the number of quads asked for. A part that is thin all along (a ring, a strap, a wire) is given the quads its thickness calls for out of that number, the other parts having that many fewer |
+| Largest, Smallest | With *Sizes*: the edges of the largest and of the smallest quads, in the units of the scene. Flat and thick parts get the largest; thin parts and tight bends get smaller ones, down to the smallest. Set from the size of the object when left at 0. The run says how many quads the shape called for, and how much of it would call for quads smaller than the smallest |
 | Adaptive Size | How much the size of the quads follows the curvature: at 0 % they are all the same size; towards 100 % they get smaller where the shape bends and larger where it is flat, for the same number in total. Each preset brings its own value (50 %, or 0 % for hard surfaces) |
 | Density | A vertex group of the object, painted in Weight Paint: quads are smallest where the weight is 1, largest where it is 0 |
 | Factor | How many times more quads a weight of 1 gets than a weight of 0, for the same area |
@@ -195,14 +196,26 @@ the `organic` and `animation` presets, 0 (thickness is not looked at) in `hard-s
 
 ![The hand of the ogre at 3000 quads](docs/images/thin_parts_hand.png)
 
-A separate piece that is thin all along (a ring, a strap, a wire) is another matter: no share
-of the quads asked for is enough for it, and it is given those its thickness calls for on top
-of that number, which is then the least the mesh will have. The run says how many were added.
-`--keep-budget` keeps to the number asked for instead, and such a piece comes out crumpled.
+A separate piece that is thin all along (a ring, a strap, a wire) is another matter: its share
+of the quads by area is far too few for it. It is given those its thickness calls for out of the
+number asked for, the other pieces having that many fewer and keeping half of the number between
+them whatever is called for. The run says how many were moved.
+
+### Asking for sizes instead of a number
+
+The number of quads is a consequence: what one means is how coarse the mesh may be where
+nothing happens, and how fine where the shape is thin or bends. `--largest` and `--smallest`
+ask for that, as edge lengths in the units of the mesh. Each point gets the size its shape calls
+for between the two (see [ALGORITHM.md](ALGORITHM.md)), and the run says how many quads that
+made and how much of the surface would call for quads smaller than the smallest.
 
 ```bash
-./target/release/openclare remesh input.obj output.obj --quads 3000 --keep-budget
+./target/release/openclare remesh input.obj output.obj --largest 0.25 --smallest 0.05
 ```
+
+`openclare analyse input.obj` measures the shape once and prints, for a range of smallest
+quads, how many quads each would make: what a pair of sizes costs is known before anything is
+meshed.
 
 The mesh also keeps the volume of the shape. Vertices sitting on the surface give faces that
 run under it wherever it bulges; a last stage therefore moves them a little off the surface,
