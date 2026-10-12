@@ -44,7 +44,7 @@ def main():
         path, seconds, failure, _, engine = TOOLS["openclare"](model, sharp, boundary, options.target, [1], directory)[1]
         before = (stored.get(model, {}).get("openclare") or [{}])[0]
         now = shown(measure(model, path, options.target)) if path else failure
-        added = f", {engine['quads_for_thin_pieces']} quads for {engine['thin_pieces']} thin pieces" if engine else ""
+        added = f", {engine['quads_for_thin_pieces']} quads moved to {engine['thin_pieces']} thin pieces" if engine else ""
         return (f"{model:10} stored {shown(before.get('metrics'))}, {before.get('seconds', 0):5.1f} s\n"
                 f"{'':10} now    {now}, {seconds:5.1f} s{added}")
 

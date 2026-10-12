@@ -47,12 +47,6 @@ pub struct RemeshConfig {
     /// keeps its volume instead of coming out flat. 0 does not look at
     /// thickness.
     pub quads_around: f64,
-    /// Whether the shape comes before the number of quads asked for: a
-    /// piece that is thin all along, a ring, a strap, a wire, is given the
-    /// quads it takes for an edge no longer than it is thick, beyond the
-    /// number asked for, which is then the least the mesh will have. Without
-    /// it the number is kept, and such a piece comes out crumpled.
-    pub preserve_volumes: bool,
     /// Most quads made when the size of the quads is asked for and not
     /// their number (see [`Target::SizeRange`]): where the shape calls for
     /// more, every quad is made larger, by as much as it takes.
@@ -124,7 +118,6 @@ impl RemeshConfig {
             edge_angle: None,
             adaptivity: 0.5,
             quads_around: 6.0,
-            preserve_volumes: true,
             most_quads: 200_000,
             volume_fit: 1.0,
             density_contrast: 4.0,
@@ -251,7 +244,6 @@ impl RemeshConfig {
         .unwrap();
         writeln!(text, "adaptivity = {}", self.adaptivity).unwrap();
         writeln!(text, "quads_around = {}", self.quads_around).unwrap();
-        writeln!(text, "preserve_volumes = {}", self.preserve_volumes).unwrap();
         writeln!(text, "most_quads = {}", self.most_quads).unwrap();
         writeln!(text, "volume_fit = {}", self.volume_fit).unwrap();
         writeln!(text, "density_contrast = {}", self.density_contrast).unwrap();
@@ -314,13 +306,9 @@ impl RemeshConfig {
                 "crease_angle" => config.crease_angle = Some(number_of("number of degrees, nor 'none'")?),
                 "adaptivity" => config.adaptivity = number_of("number")?,
                 "quads_around" => config.quads_around = number_of("number")?,
-                "preserve_volumes" => {
-                    config.preserve_volumes = match value.to_ascii_lowercase().as_str() {
-                        "true" | "on" | "yes" | "1" => true,
-                        "false" | "off" | "no" | "0" => false,
-                        _ => return Err(error(format!("'{value}' is neither true nor false"))),
-                    }
-                }
+                // A setting there was until sizes could be asked for: read,
+                // for the files that have it, and no longer used.
+                "preserve_volumes" => {}
                 "volume_fit" => config.volume_fit = number_of("number")?,
                 "density_contrast" => config.density_contrast = number_of("number")?,
                 "skip_pieces_under" => config.skip_pieces_under = number_of("number")?,

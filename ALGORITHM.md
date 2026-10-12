@@ -480,8 +480,31 @@ Limits found:
     add-on, version 1.4.) Each vertex of the work mesh reads the paint at the closest point of
     the input.
 
-  The field is then smoothed over a quad edge and a half, then scaled so that the total number
-  of quads stays the one asked for.
+  The field is then smoothed over a quad edge and a half.
+- **One rule, read two ways** (12 October 2026, DT-056). What the shape calls for is measured
+  once, as lengths (`sizing::Demand`): where it bends, the largest quad that goes round the
+  bend in twelve; where it is thin, its girth over the quads wanted round it (track Q2); and
+  what the paint multiplies by. A `Reading` then makes sizes of it: the edge of what counts as
+  flat, the level that goes with it, how far a bend may take a quad from that level, and a
+  largest and a smallest quad. Thin parts are a bound that is not smoothed away; the sizes come
+  down to them gently (`grade`).
+  - *Sizes asked for* (`Target::SizeRange`, `--largest` and `--smallest`): flat is the largest
+    quad, and the two bounds tell. The number of quads is what that makes: a region of area A
+    holds A / s² of them. The chain looks at the shape first, on a work mesh of its own, for
+    that number, then runs as for a number. `Analysis` does the looking alone: 1.5 to 2.5 s
+    once, then 5 ms for the number of quads of any pair of bounds, which is what lets an
+    interface show it while a slider moves. `most_quads` (200,000) is the most made: beyond,
+    every quad is larger by as much as it takes, and the report says what was called for.
+  - *A number asked for*: flat is how the surface typically bends, a bend may take a quad a
+    factor 3 either way from the level, no quad is more than 4 times smaller than the edge of
+    as many quads of one size, and the level is looked for that gives the number. This is what
+    the sizing did before, by rounds of bounding the thin parts and scaling the rest back to
+    the number: the meshes of the 17 models of the organic and mechanical groups come out the
+    same, face for face, at 1,000, 3,000 and 8,000 quads.
+  - What a largest quad is not: a promise on every edge. The mesh follows the sizes as far as
+    its layout lets it. On a spindle, with its eight irregular vertices at the tips and as many
+    quads round its waist as round its ends, the edges of the waist are a quarter longer than
+    asked. The number of quads, for its part, is within 1 % of what the analysis counts.
 - **How it acts on the chain**: in two places, and both are needed.
   - *The map* (M4) advances faster where quads must be smaller: the unit of the map is the
     local edge length. Everything downstream (T-mesh, quantization, placement) lives in the map
@@ -1263,15 +1286,17 @@ treated on its own". The code treated everything as one block.
   (a piece painted at 1 gets more quads than a piece left at 0). Each piece gets at least what
   a shape cannot do without: 1 quad for an open sheet, 6 for a ball (a cube), 16 for a shape
   with a hole (a ring of 4 by 4). What these minimums take is taken back from the large pieces.
-- **A piece thin all along comes before the budget** (`preserve_volumes`, on by default, since
-  11 October 2026). A ring of wire with a five-hundredth of the area of its model gets its
-  floor of 16 quads, with edges four times longer than the wire is thick, and comes out
-  crumpled: its work mesh is sound, the quads cannot go round it. Such a piece is given the
-  quads it takes for an edge no longer than a quarter of its girth (a sixth with the
-  `organic` preset, which asks for six quads round a thin part), on top of the number asked
-  for: nothing is taken from the other pieces, and the number asked for becomes the least
-  the mesh will have. No edge gets shorter than a sixteenth of the edge asked for over the
-  whole model.
+- **A piece thin all along is given the quads its thickness calls for.** A ring of wire with
+  a five-hundredth of the area of its model gets its floor of 16 quads, with edges four times
+  longer than the wire is thick, and comes out crumpled: its work mesh is sound, the quads
+  cannot go round it. Such a piece is given the quads it takes for an edge no longer than a
+  quarter of its girth (a sixth with the `organic` preset, which asks for six quads round a
+  thin part), no shorter than a sixteenth of the edge asked for over the whole model. Since
+  12 October 2026 they come out of the number asked for, which is kept: the other pieces have
+  that many fewer, and keep half of the number between them whatever is called for. (From 11
+  to 12 October they were added on top of it, under a setting, `preserve_volumes`: asking for
+  sizes, where the number is a result, is what that was for.) With sizes asked for there is
+  nothing to share: each piece makes the quads its shape calls for.
 - **What is thin all along** (`thickness.rs`, `typical_girth`) is told in four steps, the
   cheap ones first, each of which most pieces fail:
   - *slender*: little surface for the room it takes, less than half the square of the

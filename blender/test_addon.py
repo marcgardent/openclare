@@ -290,9 +290,9 @@ assert len(bpy.context.active_object.data.materials) == 0
 settings.export_materials = True
 settings.quads, settings.adaptive_size = 800, 50.0
 
-# Preserve Volumes: a ring of wire beside a ball, in one object. The ring
-# is thin all along; it gets the quads its thickness calls for on top of the
-# number asked for, unless the box is unticked.
+# A ring of wire beside a ball, in one object. The ring is thin all along:
+# asked for a number of quads, the engine gives it those its thickness
+# calls for out of that number.
 bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=4, radius=1.0, location=(12.0, 0.0, 0.0))
 body = bpy.context.active_object
 bpy.ops.mesh.primitive_torus_add(
@@ -304,18 +304,49 @@ wire.select_set(True)
 bpy.ops.object.join()
 body = bpy.context.active_object
 settings.quads, settings.adaptive_size = 600, 0.0
-assert settings.preserve_volumes, "Preserve Volumes is not on by default"
 alone(body)
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 kept = len(bpy.context.active_object.data.polygons)
+# The number asked for is kept; the wire has the quads its thickness calls
+# for, taken from the ball, which keeps half of the number.
 assert openclare.last_report["thin_pieces"] == "1", openclare.last_report
-assert kept > 900 and kept - 600 > 0.7 * int(openclare.last_report["quads_for_thin_pieces"]), kept
-settings.preserve_volumes = False
+assert 540 <= kept <= 660, kept
+assert 250 <= int(openclare.last_report["quads_for_thin_pieces"]) <= 330, openclare.last_report
+on_the_wire = sum(1 for polygon in bpy.context.active_object.data.polygons if polygon.center.x > 2.0)
+assert on_the_wire > 250, on_the_wire
+
+# Sizes asked for instead of a number: set from the object when none is,
+# given to the engine as lengths of the mesh, and the number of quads is
+# what the shape calls for.
+alone(body)
+assert settings.target == "COUNT" and settings.largest_quad == 0.0
+settings.target = "SIZE"
+largest, smallest = openclare.sizes_from(body)
+assert abs(settings.largest_quad - largest) < 1e-6 and abs(settings.smallest_quad - smallest) < 1e-6
+assert abs(largest / smallest - 8.0) < 1e-6 and 0.05 < largest < 0.2, (largest, smallest)
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+sized = bpy.context.active_object
+report = dict(openclare.last_report)
+assert "quads_asked" not in report, report
+assert abs(float(report["largest_asked"]) - largest) < 1e-6, report
+made, wanted = len(sized.data.polygons), float(report["quads_wanted"])
+assert wanted > 1000 and abs(made / wanted - 1.0) < 0.15, (made, wanted)
+# Twice the size, the object scaled by two: the same mesh is asked for.
+body.scale = (2.0, 2.0, 2.0)
+bpy.context.view_layer.update()
+settings.largest_quad, settings.smallest_quad = 2.0 * largest, 2.0 * smallest
 alone(body)
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
-assert openclare.last_report["thin_pieces"] == "0"
-assert len(bpy.context.active_object.data.polygons) < 700, len(bpy.context.active_object.data.polygons)
-settings.preserve_volumes = True
+assert abs(float(openclare.last_report["largest_asked"]) - largest) < 1e-6, openclare.last_report
+assert len(bpy.context.active_object.data.polygons) == made
+body.scale = (1.0, 1.0, 1.0)
+bpy.context.view_layer.update()
+# Larger quads make fewer of them.
+settings.largest_quad, settings.smallest_quad = 2.0 * largest, 2.0 * smallest
+alone(body)
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+assert len(bpy.context.active_object.data.polygons) < 0.5 * made
+settings.target, settings.largest_quad, settings.smallest_quad = "COUNT", 0.0, 0.0
 settings.quads, settings.adaptive_size = 800, 50.0
 
 # Relief: the height of the original above the result subdivided, baked on
