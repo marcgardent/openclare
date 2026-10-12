@@ -14,20 +14,25 @@ permissions:
 
 jobs:
   linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # The engine asks for the C library of the system it is built on, or a
     # later one. Blender runs on Linux from glibc 2.28: this image has that
     # one, so the add-on loads wherever Blender does.
     container: quay.io/pypa/manylinux_2_28_x86_64
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Rust and zip
         run: |
           yum install -y zip
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - run: make addon
-      - uses: actions/upload-artifact@v4
+      - name: The glibc the engine asks for
+        run: |
+          asked=$(objdump -T blender/openclare/lib/libopenclare_capi.so | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -1)
+          echo "$asked"
+          test "$(printf '%s\n' GLIBC_2.28 "$asked" | sort -V | tail -1)" = GLIBC_2.28
+      - uses: actions/upload-artifact@v7
         with:
           name: linux-x64
           path: dist/*.zip
@@ -36,35 +41,38 @@ jobs:
   # Built from Linux with MinGW-w64, as `make addon-windows` does anywhere:
   # it is the build whose tests pass under Wine.
   windows:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Rust for Windows and MinGW-w64
         run: |
           sudo apt-get update
           sudo apt-get install -y mingw-w64 zip
           rustup target add x86_64-pc-windows-gnu
       - run: make addon-windows
-      - uses: actions/upload-artifact@v4
+      - name: The libraries the engine asks for
+        run: x86_64-w64-mingw32-objdump -p dist/stage-windows-x64/lib/openclare_capi.dll | grep "DLL Name"
+      - uses: actions/upload-artifact@v7
         with:
           name: windows-x64
           path: dist/*.zip
           if-no-files-found: error
 
   release:
-    if: github.ref_type == 'tag'
     needs: [linux, windows]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true
+      - run: ls -l dist
       # The archives are named after the version written in the sources: a
       # tag that says another one finds no file, and there is no release.
       - name: Release
+        if: github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
