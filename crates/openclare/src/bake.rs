@@ -358,6 +358,315 @@ mod tests {
         assert!((baked.high as f64 - 0.325).abs() < 1e-6);
     }
 
+    /// The unit square at z = 0 with the texture laid on the texels from
+    /// `low` to `high` of an image of 16 by 16, with normals all `normal`.
+    fn bake_in_the_middle(source: &TriMesh, low: f64, high: f64, normal: Vec3, padding: usize) -> HeightMap {
+        let flat = sheet(0.0, false);
+        let normals = vec![normal; 4];
+        let across = (high - low) / 16.0;
+        let uv = |v: u32| [low / 16.0 + flat.positions[v as usize].x * across, low / 16.0 + flat.positions[v as usize].y * across];
+        let uvs: Vec<[[f64; 2]; 3]> = flat.triangles.iter().map(|tri| tri.map(uv)).collect();
+        let target = Target { positions: &flat.positions, normals: &normals, triangles: &flat.triangles, uvs: &uvs };
+        height_map(&target, source, 16, 16, 0.5, padding).unwrap()
+    }
+
+    /// A plane much wider than the unit square, at `height(x, y)` above it.
+    fn wide(height: impl Fn(f64, f64) -> f64) -> TriMesh {
+        let mut plane = sheet(0.0, false);
+        for p in &mut plane.positions {
+            (p.x, p.y) = (5.0 * p.x - 2.0, 5.0 * p.y - 2.0);
+            p.z = height(p.x, p.y);
+        }
+        plane
+    }
+
+    #[test]
+    fn of_a_surface_above_and_one_below_the_nearer_is_taken() {
+        let below = bake(&together(&sheet(0.3, false), &sheet(-0.1, false)), 1.0, 0);
+        assert_eq!(below.astray, 0);
+        assert!(below.heights.iter().all(|height| (height + 0.1).abs() < 1e-6), "{:?}", &below.heights[..4]);
+        let above = bake(&together(&sheet(0.1, false), &sheet(-0.3, false)), 1.0, 0);
+        assert!(above.heights.iter().all(|height| (height - 0.1).abs() < 1e-6), "{:?}", &above.heights[..4]);
+    }
+
+    #[test]
+    fn below_too_a_surface_that_looks_the_other_way_is_not_the_one() {
+        let source = together(&sheet(-0.05, true), &sheet(-0.2, false));
+        let baked = bake(&source, 1.0, 0);
+        assert_eq!(baked.astray, 0);
+        assert!(baked.heights.iter().all(|height| (height + 0.2).abs() < 1e-6), "{:?}", &baked.heights[..4]);
+    }
+
+    #[test]
+    fn below_as_above_nothing_is_taken_farther_than_the_reach() {
+        let baked = bake(&sheet(-2.0, false), 1.0, 0);
+        assert_eq!((baked.covered, baked.astray), (256, 256));
+        assert!(baked.heights.iter().all(|height| (height + 0.5).abs() < 1e-6));
+        assert!((baked.low + 0.5).abs() < 1e-6 && (baked.high + 0.5).abs() < 1e-6);
+    }
+
+    #[test]
+    fn the_height_is_measured_along_the_normal_given_whatever_its_length() {
+        // Normals leaning at 45 degrees: the plane 0.2 above is 0.2 times
+        // the square root of two away that way.
+        let leaning = Vec3::new(2.0, 0.0, 2.0);
+        let baked = bake_in_the_middle(&wide(|_, _| 0.2), 0.0, 16.0, leaning, 0);
+        assert_eq!((baked.covered, baked.astray), (256, 0));
+        let expected = 0.2 * std::f64::consts::SQRT_2;
+        assert!(baked.heights.iter().all(|&height| (height as f64 - expected).abs() < 1e-6), "{:?}", &baked.heights[..4]);
+        // Without a normal there is no way to look: no height, and counted.
+        let none = bake_in_the_middle(&wide(|_, _| 0.2), 0.0, 16.0, Vec3::ZERO, 0);
+        assert_eq!((none.covered, none.astray), (256, 256));
+        assert!(none.heights.iter().all(|&height| height == 0.0));
+    }
+
+    #[test]
+    fn an_island_in_the_middle_goes_on_from_its_four_edges_and_its_corners() {
+        // The texture on the texels 4 to 12 both ways; a slope both ways
+        // over it. A texel is an eighth of the square.
+        let slope = |x: f64, y: f64| 0.1 + 0.2 * x + 0.1 * y;
+        // And on the texels 1 to 15: what goes on from it is the first and
+        // the last row and column of the image.
+        for (low, high, padding) in [(4.0, 12.0, 2), (1.0, 15.0, 1)] {
+            let baked = bake_in_the_middle(&wide(slope), low, high, Vec3::Z, padding);
+            let side = (high - low) as usize;
+            assert_eq!((baked.covered, baked.astray), (side * side, 0));
+            // Where a texel centre is on the square, texels as the unit.
+            let on_the_square = |texel: f64| (texel - low) / (high - low);
+            let mut round = 0;
+            for row in 0..16 {
+                for column in 0..16 {
+                    let found = baked.heights[row * 16 + column] as f64;
+                    let (x, y) = (column as f64 + 0.5, row as f64 + 0.5);
+                    // How far past the square the texel is, each way.
+                    let past = |t: f64| (low - t).max(t - high).max(0.0);
+                    let away = past(x).hypot(past(y));
+                    if away > padding as f64 {
+                        assert!(found.is_nan(), "column {column}, row {row}: {found} so far from the island");
+                        continue;
+                    }
+                    // Under the square and one texel out, the slope itself;
+                    // farther out it goes on by one texel from the edge, no
+                    // more: the height one texel past the nearest point of
+                    // the outline, away from the square.
+                    let nearest = (x.clamp(low, high), y.clamp(low, high));
+                    let onward = if away > 1.0 { 1.0 / away } else { 1.0 };
+                    let (at_x, at_y) = (nearest.0 + (x - nearest.0) * onward, nearest.1 + (y - nearest.1) * onward);
+                    let expected = slope(on_the_square(at_x), on_the_square(at_y));
+                    assert!((found - expected).abs() < 1e-6, "column {column}, row {row}: {found} for {expected}");
+                    round += (away > 0.0) as usize;
+                }
+            }
+            // All round: the rows and columns past each side, and the
+            // corners but for what is farther than the padding.
+            assert_eq!(round, if padding == 2 { 4 * 2 * 8 + 4 * 3 } else { 4 * 14 + 4 });
+        }
+    }
+
+    #[test]
+    fn an_island_larger_than_the_image_is_read_where_the_image_is() {
+        // The texture laid from 4 texels before the image to 4 past it.
+        let slope = |x: f64, y: f64| 0.1 + 0.2 * x + 0.1 * y;
+        let baked = bake_in_the_middle(&wide(slope), -4.0, 20.0, Vec3::Z, 2);
+        assert_eq!((baked.covered, baked.astray), (256, 0));
+        for row in 0..16 {
+            for column in 0..16 {
+                let expected = slope((column as f64 + 4.5) / 24.0, (row as f64 + 4.5) / 24.0);
+                let found = baked.heights[row * 16 + column] as f64;
+                assert!((found - expected).abs() < 1e-6, "column {column}, row {row}: {found} for {expected}");
+            }
+        }
+    }
+
+    #[test]
+    fn each_texel_is_read_from_the_face_it_is_under() {
+        // The square laid as a trapezium: its two triangles are not laid
+        // the same way, and a texel read from the wrong one is read from
+        // another point of the square.
+        let corners = [[2.0, 2.0], [14.0, 2.0], [10.0, 14.0], [2.0, 14.0]];
+        let slope = |x: f64, y: f64| 0.1 + 0.2 * x + 0.1 * y;
+        let flat = sheet(0.0, false);
+        let normals = vec![Vec3::Z; 4];
+        let uvs: Vec<[[f64; 2]; 3]> =
+            flat.triangles.iter().map(|tri| tri.map(|v| corners[v as usize].map(|c| c / 16.0))).collect();
+        let target = Target { positions: &flat.positions, normals: &normals, triangles: &flat.triangles, uvs: &uvs };
+        let baked = height_map(&target, &wide(slope), 16, 16, 0.5, 0).unwrap();
+        // How much of each corner of a triangle a point of the texture is
+        // made of, by the areas of the triangles it makes with the others.
+        let twice = |p: [f64; 2], q: [f64; 2], r: [f64; 2]| (q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]);
+        let mut under = 0;
+        for row in 0..16 {
+            for column in 0..16 {
+                let p = [column as f64 + 0.5, row as f64 + 0.5];
+                let found = baked.heights[row * 16 + column] as f64;
+                let mut expected = None;
+                for tri in &flat.triangles {
+                    let [a, b, c] = tri.map(|v| corners[v as usize]);
+                    let whole = twice(a, b, c);
+                    let shares = [twice(p, b, c) / whole, twice(a, p, c) / whole, twice(a, b, p) / whole];
+                    if shares.iter().all(|&share| share >= 0.0) {
+                        let point: Vec3 = (0..3).map(|k| flat.positions[tri[k] as usize] * shares[k]).sum();
+                        expected = Some(slope(point.x, point.y));
+                    }
+                }
+                match expected {
+                    Some(expected) => {
+                        assert!((found - expected).abs() < 1e-6, "column {column}, row {row}: {found} for {expected}");
+                        under += 1;
+                    }
+                    None => assert!(found.is_nan(), "column {column}, row {row}: {found} under no face"),
+                }
+            }
+        }
+        assert_eq!(baked.covered, under);
+        assert!(under > 100, "{under} texels under the trapezium");
+    }
+
+    #[test]
+    fn a_face_with_no_area_in_the_texture_writes_nothing() {
+        // Its three corners on one line of the texture.
+        let flat = sheet(0.0, false);
+        let normals = vec![Vec3::Z; 4];
+        let uvs = vec![[[0.25, 0.25], [0.5, 0.5], [0.75, 0.75]]; 2];
+        let target = Target { positions: &flat.positions, normals: &normals, triangles: &flat.triangles, uvs: &uvs };
+        for padding in [0, 2] {
+            let baked = height_map(&target, &sheet(0.2, false), 16, 16, 0.5, padding).unwrap();
+            assert_eq!(baked.covered, 0);
+            assert!(baked.heights.iter().all(|height| height.is_nan()), "padding {padding}");
+        }
+    }
+
+    #[test]
+    fn where_the_normal_misses_the_height_is_to_the_nearest_point_along_the_normal() {
+        // Normals leaning at 45 degrees towards x, and a source 0.2 above
+        // that stops half way across: its left half only.
+        let mut source = sheet(0.2, false);
+        for p in &mut source.positions {
+            p.x *= 0.5;
+        }
+        let leaning = Vec3::new(1.0, 0.0, 1.0);
+        let baked = bake_in_the_middle(&source, 0.0, 16.0, leaning, 0);
+        let root = std::f64::consts::SQRT_2;
+        let mut astray = 0;
+        for row in 0..16 {
+            for column in 0..16 {
+                let x = (column as f64 + 0.5) / 16.0;
+                // The normal meets the source 0.2 farther along x.
+                let expected = if x + 0.2 <= 0.5 {
+                    0.2 * root
+                } else {
+                    astray += 1;
+                    // The nearest point is straight above, or on the edge
+                    // of the source, behind.
+                    ((x.min(0.5) - x) + 0.2) / root
+                };
+                let found = baked.heights[row * 16 + column] as f64;
+                assert!((found - expected).abs() < 1e-6, "column {column}, row {row}: {found} for {expected}");
+            }
+        }
+        assert_eq!((baked.covered, baked.astray), (256, astray));
+        assert_eq!(astray, 11 * 16);
+    }
+
+    #[test]
+    fn an_island_laid_askew_is_read_as_it_lies() {
+        // The square laid on the texture turned and sheared: its corner at
+        // the texel `origin`, its sides `along` and `up`. A slope both ways
+        // over it.
+        let (origin, along, up) = ([5.0, 3.0], [8.0, 3.0], [-2.0, 7.0]);
+        let slope = |x: f64, y: f64| 0.1 + 0.2 * x + 0.1 * y;
+        let flat = sheet(0.0, false);
+        let normals = vec![Vec3::Z; 4];
+        let uv = |v: u32| {
+            let p = flat.positions[v as usize];
+            [(origin[0] + along[0] * p.x + up[0] * p.y) / 16.0, (origin[1] + along[1] * p.x + up[1] * p.y) / 16.0]
+        };
+        let uvs: Vec<[[f64; 2]; 3]> = flat.triangles.iter().map(|tri| tri.map(uv)).collect();
+        let target = Target { positions: &flat.positions, normals: &normals, triangles: &flat.triangles, uvs: &uvs };
+        let baked = height_map(&target, &wide(slope), 16, 16, 0.5, 1).unwrap();
+
+        // Where a point of the texture is on the square, and how far it is
+        // from the outline of the island, in texels.
+        let det = along[0] * up[1] - along[1] * up[0];
+        let on_the_square = |x: f64, y: f64| {
+            let (dx, dy) = (x - origin[0], y - origin[1]);
+            ((dx * up[1] - dy * up[0]) / det, (along[0] * dy - along[1] * dx) / det)
+        };
+        let corner = |k: usize| uv([0, 1, 2, 3][k % 4]).map(|c| c * 16.0);
+        let from_the_outline = |x: f64, y: f64| {
+            (0..4)
+                .map(|k| {
+                    let (from, to) = (corner(k), corner(k + 1));
+                    let (side, to_p) = ([to[0] - from[0], to[1] - from[1]], [x - from[0], y - from[1]]);
+                    let t = ((to_p[0] * side[0] + to_p[1] * side[1]) / (side[0] * side[0] + side[1] * side[1])).clamp(0.0, 1.0);
+                    (x - from[0] - t * side[0]).hypot(y - from[1] - t * side[1])
+                })
+                .fold(f64::INFINITY, f64::min)
+        };
+        let (mut under, mut round) = (0, 0);
+        for row in 0..16 {
+            for column in 0..16 {
+                let (x, y) = (column as f64 + 0.5, row as f64 + 0.5);
+                let (on_x, on_y) = on_the_square(x, y);
+                let inside = (0.0..=1.0).contains(&on_x) && (0.0..=1.0).contains(&on_y);
+                let found = baked.heights[row * 16 + column] as f64;
+                if inside || from_the_outline(x, y) < 1.0 {
+                    // The slope where the texel is, going on past the edge.
+                    let expected = slope(on_x, on_y);
+                    assert!((found - expected).abs() < 1e-6, "column {column}, row {row}: {found} for {expected}");
+                    under += inside as usize;
+                    round += !inside as usize;
+                } else {
+                    assert!(found.is_nan(), "column {column}, row {row}: {found} away from the island");
+                }
+            }
+        }
+        assert_eq!(baked.covered, under);
+        assert!(under > 50 && round > 25, "{under} texels under the island, {round} round it");
+    }
+
+    #[test]
+    fn between_two_islands_a_texel_goes_on_from_the_nearer_one() {
+        // Two squares, one 0.2 under the source and one 0.1 under it, each
+        // with its island: columns 0 to 6 and 10 to 16. The four columns
+        // between them are shared out, two each, whichever comes first.
+        let source = wide(|_, _| 0.2);
+        for swapped in [false, true] {
+            let (first, second) = (sheet(0.0, false), sheet(0.1, false));
+            let both = together(&first, &second);
+            let normals = vec![Vec3::Z; 8];
+            let left = |v: u32| [both.positions[v as usize].x * 6.0 / 16.0, both.positions[v as usize].y];
+            let right = |v: u32| [(10.0 + both.positions[v as usize].x * 6.0) / 16.0, both.positions[v as usize].y];
+            let mut triangles = both.triangles.clone();
+            let mut uvs: Vec<[[f64; 2]; 3]> =
+                triangles.iter().enumerate().map(|(k, tri)| if k < 2 { tri.map(left) } else { tri.map(right) }).collect();
+            if swapped {
+                triangles.reverse();
+                uvs.reverse();
+            }
+            let target = Target { positions: &both.positions, normals: &normals, triangles: &triangles, uvs: &uvs };
+            let baked = height_map(&target, &source, 16, 16, 0.5, 3).unwrap();
+            assert_eq!(baked.covered, 2 * 6 * 16);
+            for row in 0..16 {
+                for column in 0..16 {
+                    let expected = if column < 8 { 0.2 } else { 0.1 };
+                    let found = baked.heights[row * 16 + column];
+                    assert!((found - expected).abs() < 1e-6, "column {column}, row {row}, swapped {swapped}: {found}");
+                }
+            }
+            assert!((baked.low - 0.1).abs() < 1e-6 && (baked.high - 0.2).abs() < 1e-6);
+        }
+    }
+
+    #[test]
+    fn a_target_without_a_face_gives_an_empty_map() {
+        let flat = sheet(0.0, false);
+        let target = Target { positions: &flat.positions, normals: &[Vec3::Z; 4], triangles: &[], uvs: &[] };
+        let baked = height_map(&target, &flat, 4, 4, 0.5, 2).unwrap();
+        assert_eq!((baked.covered, baked.astray, baked.low, baked.high), (0, 0, 0.0, 0.0));
+        assert!(baked.heights.len() == 16 && baked.heights.iter().all(|height| height.is_nan()));
+    }
+
     #[test]
     fn what_cannot_be_baked_is_refused() {
         let flat = sheet(0.0, false);

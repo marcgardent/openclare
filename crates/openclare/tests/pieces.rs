@@ -219,3 +219,50 @@ fn pieces_meshed_at_the_same_time_give_the_same_mesh_and_stop_when_told() {
     let stopped = config(1500).remesh_recorded(&mesh, &Guides::default(), &mut follower);
     assert!(matches!(stopped, Err(openclare::Error::Cancelled)));
 }
+
+/// A band with a half turn in it, round the z axis: one side only, which no
+/// chain can lay a grid on.
+fn one_sided_band(around: u32, across: u32) -> TriMesh {
+    let mut mesh = TriMesh::default();
+    for i in 0..around {
+        let turn = i as f64 / around as f64 * std::f64::consts::TAU;
+        for j in 0..=across {
+            let off = (j as f64 / across as f64 - 0.5) * 0.8;
+            let radius = 1.0 + off * (turn / 2.0).cos();
+            mesh.positions.push(Vec3::new(radius * turn.cos(), radius * turn.sin(), off * (turn / 2.0).sin()));
+        }
+    }
+    let row = across + 1;
+    for i in 0..around {
+        for j in 0..across {
+            let (a, b) = (i * row + j, i * row + j + 1);
+            // The last row meets the first one the other way up.
+            let (c, d) = if i + 1 < around { ((i + 1) * row + j, (i + 1) * row + j + 1) } else { (across - j, across - j - 1) };
+            mesh.triangles.push([a, c, b]);
+            mesh.triangles.push([b, c, d]);
+        }
+    }
+    mesh
+}
+
+#[test]
+fn a_piece_that_cannot_be_meshed_is_counted_and_the_others_are_meshed() {
+    let band = one_sided_band(96, 12);
+    assert_eq!(band.pieces().len(), 1);
+    // On its own there is nothing to give back: an error.
+    assert!(config(600).remesh(&band).is_err());
+
+    // Next to a ball, the ball is meshed and the band counted as missing.
+    let far = Vec3::new(4.0, 0.0, 0.0);
+    let mesh = assembly(&[(primitives::icosphere(4), Vec3::ZERO, 1.0), (band, far, 1.0)]);
+    let (quads, report) = config(1200).remesh(&mesh).unwrap();
+    assert_eq!((report.pieces, report.pieces_failed, report.pieces_boxed, report.pieces_skipped), (2, 1, 0, 0));
+    let stats = quads.stats();
+    assert_eq!((stats.quads, stats.boundary_edges, stats.non_manifold_edges), (stats.faces, 0, 0));
+    assert_eq!(stats.euler_characteristic(), 2);
+    assert!(quads.positions.iter().all(|p| (p.length() - 1.0).abs() < 0.02), "a vertex away from the ball");
+    // The ball has its share of the quads, by its area, and no more.
+    let ball = 4.0 * std::f64::consts::PI;
+    let share = 1200.0 * ball / mesh.surface_area();
+    assert!((stats.faces as f64 - share).abs() < 0.1 * share, "{} quads for a share of {share}", stats.faces);
+}

@@ -75,6 +75,58 @@ fn a_twelve_triangle_cube_keeps_its_edges_and_corners() {
 }
 
 #[test]
+fn a_dense_cube_keeps_its_edges_and_corners_through_decimation() {
+    // 27 648 triangles for a request of 2 000: decimated first, its edges
+    // held as lines and its corners as points.
+    let source = primitives::cube(48);
+    assert_eq!(source.triangles.len(), 27_648);
+    let work = isotropic(&source, 2000, Some(30.0));
+    assert!(within(work.mesh.triangles.len(), 2000, 0.3), "{} triangles", work.mesh.triangles.len());
+    assert_closed_manifold(&work.mesh, 2);
+    assert!((work.mesh.signed_volume() - 8.0).abs() < 1e-9, "volume {}", work.mesh.signed_volume());
+    let at_unit = |p: &Vec3| p.abs().to_array().iter().filter(|c| (**c - 1.0).abs() < 1e-12).count();
+    assert_eq!(work.mesh.positions.iter().filter(|p| at_unit(p) == 3).count(), 8, "corners");
+    assert!(work.mesh.positions.iter().all(|p| at_unit(p) >= 1), "a vertex left the surface");
+    assert!(work.feature_edges.iter().all(|&[a, b]| {
+        at_unit(&work.mesh.positions[a as usize]) >= 2 && at_unit(&work.mesh.positions[b as usize]) >= 2
+    }));
+    let crease_length: f64 = work
+        .feature_edges
+        .iter()
+        .map(|&[a, b]| work.mesh.positions[a as usize].distance(work.mesh.positions[b as usize]))
+        .sum();
+    assert!((crease_length - 24.0).abs() < 1e-9, "{crease_length}");
+}
+
+#[test]
+fn a_dense_cylinder_keeps_its_rims_through_decimation() {
+    // Rims of 384 sides, 61 440 triangles, for a request of 3 000.
+    let source = primitives::cylinder(96);
+    let work = isotropic(&source, 3000, Some(30.0));
+    assert!(source.triangles.len() > 4 * 3000, "{} triangles", source.triangles.len());
+    assert!(within(work.mesh.triangles.len(), 3000, 0.3), "{} triangles", work.mesh.triangles.len());
+    assert_closed_manifold(&work.mesh, 2);
+    // Each rim is one closed line of marked edges, on the circle.
+    let mut ends = vec![0; work.mesh.positions.len()];
+    for &[a, b] in &work.feature_edges {
+        for v in [a, b] {
+            let p = work.mesh.positions[v as usize];
+            assert!((p.z.abs() - 1.0).abs() < 1e-9 && (p.x.hypot(p.y) - 1.0).abs() < 1e-3, "a rim vertex at {p}");
+            ends[v as usize] += 1;
+        }
+    }
+    assert!(ends.iter().all(|&count| count == 0 || count == 2), "a rim that is not a closed line");
+    let rim_length: f64 = work
+        .feature_edges
+        .iter()
+        .map(|&[a, b]| work.mesh.positions[a as usize].distance(work.mesh.positions[b as usize]))
+        .sum();
+    let two_circles = 4.0 * std::f64::consts::PI;
+    assert!((rim_length / two_circles - 1.0).abs() < 0.005, "rims {rim_length} long for {two_circles}");
+    assert!((work.mesh.signed_volume() / source.signed_volume() - 1.0).abs() < 0.005);
+}
+
+#[test]
 fn an_open_surface_keeps_its_border() {
     let work = isotropic(&primitives::plane(6), 2000, None);
     assert!((work.mesh.surface_area() - 4.0).abs() < 1e-9);
