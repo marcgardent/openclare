@@ -32,6 +32,11 @@ OPTIONS (remesh):
     --save-config <FILE>         write the configuration used, to reuse it as a preset
     --quads <N>                  target number of quads (default 2000)
     --edge-length <L>            target edge length, instead of a number of quads
+    --largest <L>                edge of the largest quads, instead of a number of quads: the shape says where
+                                 smaller ones are called for, and the number of quads is what that makes
+    --smallest <L>               edge of the smallest quads, after --largest (an eighth of it if not given)
+    --most-quads <N>             with --largest: the most quads made; where the shape calls for more, every
+                                 quad is made larger (default 200000)
     --method <NAME>              remeshing chain: quad-layout, integer-grid or instant-meshes
     --alignment <A>              pull of the edges towards curvature directions
     --singularity-reach <R>      cancel opposite singularities closer than R quad edges
@@ -266,6 +271,17 @@ fn remesh(args: &[String]) -> Result<(), String> {
             "--method" => config.method = value(arg)?.parse().map_err(|e: openclare::Error| e.to_string())?,
             "--quads" => config.target = Target::QuadCount(parse(arg, value(arg)?)?),
             "--edge-length" => config.target = Target::EdgeLength(parse(arg, value(arg)?)?),
+            "--largest" => {
+                let largest: f64 = parse(arg, value(arg)?)?;
+                config.target = Target::SizeRange { largest, smallest: largest / 8.0 };
+            }
+            "--smallest" => match config.target {
+                Target::SizeRange { largest, .. } => {
+                    config.target = Target::SizeRange { largest, smallest: parse(arg, value(arg)?)? };
+                }
+                _ => return Err("--smallest comes after --largest".into()),
+            },
+            "--most-quads" => config.most_quads = parse(arg, value(arg)?)?,
             "--alignment" => config.alignment = parse(arg, value(arg)?)?,
             "--singularity-reach" => config.singularity_reach = parse(arg, value(arg)?)?,
             "--singularity-tolerance" => config.singularity_tolerance = parse(arg, value(arg)?)?,
@@ -413,6 +429,15 @@ fn remesh(args: &[String]) -> Result<(), String> {
         if report.guides_let_go > 0 {
             println!("         could not be kept as lines of edges on {} piece(s)", report.guides_let_go);
         }
+    }
+    if report.quads_wanted > 0.0 {
+        println!(
+            "sizes    quads from {:.4} to {:.4}: the shape calls for {:.0} of them; {:.1} % of it would call for smaller",
+            report.smallest_edge,
+            report.largest_edge,
+            report.quads_wanted,
+            100.0 * report.below_smallest
+        );
     }
     if report.pieces > 1 {
         println!(

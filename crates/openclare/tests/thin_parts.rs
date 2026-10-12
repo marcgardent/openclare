@@ -97,7 +97,7 @@ fn a_thin_part_gets_quads_small_enough_to_go_round_it() {
     let sizer = sizing::create(Kind::Curvature);
     let edge_length = 0.2;
     let at = |quads_around: f64| {
-        let request = Request { edge_length, adaptivity: 0.0, painted: None, quads_around };
+        let request = Request { edge_length, adaptivity: 0.0, painted: None, quads_around, bounds: None };
         let scale = sizer.size(&work, &request).unwrap();
         // The number of quads is unchanged: on average, 1 / s² is 1.
         let density: Vec<f64> = scale.iter().map(|s| 1.0 / (s * s)).collect();
@@ -118,7 +118,7 @@ fn a_thin_part_gets_quads_small_enough_to_go_round_it() {
 #[test]
 fn a_shape_with_nothing_thin_is_left_alone() {
     let work = work_mesh(&openclare::mesh::primitives::icosphere(4));
-    let request = Request { edge_length: 0.15, adaptivity: 0.0, painted: None, quads_around: 6.0 };
+    let request = Request { edge_length: 0.15, adaptivity: 0.0, painted: None, quads_around: 6.0, bounds: None };
     let scale = sizing::create(Kind::Curvature).size(&work, &request).unwrap();
     assert!(scale.iter().all(|&s| (s - 1.0).abs() < 1e-9));
 }

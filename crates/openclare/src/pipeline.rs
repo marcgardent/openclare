@@ -20,6 +20,10 @@ pub enum Target {
     QuadCount(usize),
     /// Edge length, in the units of the input mesh.
     EdgeLength(f64),
+    /// The largest and the smallest edge a quad may have, in the units of
+    /// the input mesh: the shape says which where, and the number of quads
+    /// is what that makes (see [`crate::sizing`]).
+    SizeRange { largest: f64, smallest: f64 },
 }
 
 #[derive(Clone, Debug)]
@@ -96,6 +100,16 @@ pub struct Report {
     /// [`crate::RemeshConfig::preserve_volumes`]).
     pub thin_pieces: usize,
     pub quads_for_thin_pieces: usize,
+    /// When the size of the quads was asked for, between a largest and a
+    /// smallest (see [`Target::SizeRange`]): the two edges as they were
+    /// used, how many quads the shape calls for between them, and the share
+    /// of the surface that would call for quads smaller than the smallest.
+    /// The edges are larger than asked when that number is more than
+    /// [`crate::RemeshConfig::most_quads`].
+    pub largest_edge: f64,
+    pub smallest_edge: f64,
+    pub quads_wanted: f64,
+    pub below_smallest: f64,
     /// Why pieces went to the other chain, with how many for each reason.
     pub fallback_causes: Vec<(&'static str, usize)>,
     /// Why guide lines were let go, wholly or in part, with how many pieces
@@ -151,6 +165,18 @@ impl Report {
         self.sharp_curve_edges.extend(piece.sharp_curve_edges);
         self.guide_gaps += piece.guide_gaps;
         self.guides_let_go += piece.guides_let_go;
+        // Sizes asked for: the same for every piece unless one had to make
+        // its quads larger; the share below the smallest is of all the
+        // quads called for.
+        if piece.quads_wanted > 0.0 {
+            let together = self.quads_wanted + piece.quads_wanted;
+            self.below_smallest =
+                (self.below_smallest * self.quads_wanted + piece.below_smallest * piece.quads_wanted) / together;
+            self.quads_wanted = together;
+            self.largest_edge = self.largest_edge.max(piece.largest_edge);
+            self.smallest_edge =
+                if self.smallest_edge > 0.0 { self.smallest_edge.min(piece.smallest_edge) } else { piece.smallest_edge };
+        }
         for (cause, count) in piece.line_causes {
             match self.line_causes.iter_mut().find(|(name, _)| *name == cause) {
                 Some((_, known)) => *known += count,
@@ -182,6 +208,8 @@ pub fn remesh(input: &TriMesh, params: &Params) -> Result<(PolyMesh, Report)> {
 
     let edge_length = match params.target {
         Target::EdgeLength(length) => length,
+        // This chain makes quads of one size: between the two.
+        Target::SizeRange { largest, smallest } => (largest * smallest).sqrt(),
         Target::QuadCount(0) => return Err(Error::InvalidParams("target quad count is zero".into())),
         Target::QuadCount(count) => (source.surface_area() / count as f64).sqrt(),
     };
