@@ -1,6 +1,6 @@
 # Shortcuts for the common tasks. `make help` lists them.
 
-.PHONY: help build test scenes blenderkit scores quick pages view addon addon-windows addon-test
+.PHONY: help build test scenes blenderkit scores quick pages view addon addon-windows test-windows addon-test
 
 help:
 	@echo "make build       build the openclare binary (release)"
@@ -10,6 +10,8 @@ help:
 	@echo "make addon-windows  build the same add-on for Windows, from here:"
 	@echo "                 dist/openclare-<version>-windows-x64.zip (needs the Rust target"
 	@echo "                 x86_64-pc-windows-gnu and MinGW-w64)"
+	@echo "make test-windows WINE=/path/to/wine64"
+	@echo "                 run the tests of the engine built for Windows, under Wine"
 	@echo "make addon-test  run the add-on in a Blender without interface (needs blender)"
 	@echo "make scenes      make the scenes of the bench that are made from a file as it is"
 	@echo "                 (bench/scenes; needs blender). MODELS=cube,pig for some only,"
@@ -120,6 +122,15 @@ addon-windows:
 	rm -f dist/openclare-$(ADDON_VERSION)-windows-x64.zip
 	cd $(WINDOWS_STAGE) && zip -q -r ../openclare-$(ADDON_VERSION)-windows-x64.zip .
 	@echo "written: dist/openclare-$(ADDON_VERSION)-windows-x64.zip"
+
+# The tests of the engine and of its C interface, built for Windows and run
+# under Wine: `make test-windows WINE=/path/to/wine64`. It says nothing of
+# the Python of the add-on, which needs a Blender for Windows.
+WINE ?= wine64
+test-windows:
+	CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=x86_64-w64-mingw32-gcc \
+	CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUNNER="$(WINE)" WINEDEBUG=-all \
+		cargo test --release --target $(WINDOWS_TARGET) -p openclare -p openclare-capi
 
 addon-test: addon
 	ulimit -v $(MEMORY_CAP); blender -b --factory-startup --python blender/test_addon.py
