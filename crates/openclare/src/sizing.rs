@@ -12,9 +12,9 @@
 //! changes gently.
 //!
 //! The number of quads is what that makes, and no setting of its own. Asked
-//! for a number, the sizer sets the bounds from the edge of as many quads of
-//! one size and looks for how much a bend may ask, that gives the number:
-//! the same rule, read the other way.
+//! for a number, the sizer measures the bends against the typical one and
+//! looks for the size that goes with it, that gives the number: the same
+//! rule, read the other way.
 //!
 //! What a chain is given is one factor per vertex of the work mesh, by which
 //! the edge length of as many quads of one size is multiplied there.
@@ -53,9 +53,8 @@ pub struct Request<'a> {
     /// the factors are of, and what sets the number of quads.
     pub edge_length: f64,
     /// The largest and the smallest edge a quad may have, in that order.
-    /// Without, they are set from `edge_length`, and what a bend may ask is
-    /// looked for that makes the number of quads it stands for (see
-    /// [`Curvature::coarsest`]).
+    /// Without, the sizes are read for the number of quads `edge_length`
+    /// stands for (see [`Demand::for_as_many`]).
     pub bounds: Option<(f64, f64)>,
     /// How much the size follows the way the surface bends: 0 not at all;
     /// at 1 the error to the surface is evened out, quads being as small
@@ -119,12 +118,18 @@ pub struct Curvature {
     /// that the largest quad goes round in that many. Tighter, a bend gets
     /// smaller quads.
     pub quads_a_turn: f64,
-    /// When a number of quads is asked for and not their size: how many
-    /// times larger than the edge of as many quads of one size the largest
-    /// may be, and how many times smaller the smallest. Thinner than that
-    /// last one allows, a part is beyond what the number can render.
-    pub coarsest: f64,
+    /// When a number of quads is asked for and not their size: the largest
+    /// factor the bends alone may put between the size of a quad and that
+    /// of the surface that bends as it typically does, either way; and how
+    /// many times smaller than the edge of as many quads of one size the
+    /// smallest quad may be. Thinner than that last one allows, a part is
+    /// beyond what the number can render.
+    pub shape_range: f64,
     pub finest: f64,
+    /// Curvature below this over the edge asked for (the largest, when
+    /// sizes are asked for) is not felt at that size: it is added to the
+    /// curvature read everywhere, and the flat is not flatter than that.
+    pub felt: f64,
     /// Length, in edges asked for, over which curvature is read: details
     /// smaller than that do not call for smaller quads.
     pub reading_scale: f64,
@@ -141,7 +146,31 @@ pub struct Curvature {
 
 impl Default for Curvature {
     fn default() -> Self {
-        Self { quads_a_turn: 12.0, coarsest: 3.0, finest: 4.0, reading_scale: 0.5, smoothing_scale: 1.5, thin_reach: 3.0, gradation: 0.5 }
+        Self { quads_a_turn: 12.0, shape_range: 3.0, finest: 4.0, felt: 0.05, reading_scale: 0.5, smoothing_scale: 1.5, thin_reach: 3.0, gradation: 0.5 }
+    }
+}
+
+/// How what the shape calls for is read into sizes.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Reading {
+    /// The edge a bend is measured against: one that the quads of that
+    /// edge go round in [`Curvature::quads_a_turn`] is given `level`.
+    pub flat: f64,
+    /// The edge of the quads where the surface bends as `flat` says.
+    pub level: f64,
+    /// How many times larger or smaller than `level` a bend may make a
+    /// quad. Infinite for the bounds alone to tell.
+    pub range: f64,
+    /// The largest and the smallest edge a quad may have.
+    pub largest: f64,
+    pub smallest: f64,
+}
+
+impl Reading {
+    /// Sizes asked for: what calls for the largest quad or more is flat and
+    /// gets it, the rest what it calls for, down to the smallest.
+    pub fn between(largest: f64, smallest: f64) -> Self {
+        Self { flat: largest, level: largest, range: f64::INFINITY, largest, smallest }
     }
 }
 
@@ -152,8 +181,8 @@ pub struct Demand<'a> {
     work: &'a WorkMesh,
     topology: Topology,
     /// The circle the surface bends along, over the quads to a turn: the
-    /// largest quad that goes round it in that many. Infinite where
-    /// nothing bends.
+    /// largest quad that goes round it in that many. Where nothing bends
+    /// it is some ten edges of the size asked for.
     bend: Vec<f64>,
     /// The edge a thin part calls for: its girth over the quads wanted
     /// round it. Infinite where nothing is thin.
@@ -200,8 +229,11 @@ impl<'a> Demand<'a> {
                     passes_over(tuning.reading_scale * request.edge_length),
                 )
                 .principal(&work.normals);
+            // Curvature below what the quads can feel does not count: the
+            // largest of them, when sizes are asked for.
+            let floor = tuning.felt / request.bounds.map_or(request.edge_length, |(largest, _)| largest);
             for v in 0..vertices {
-                let strongest = bending.k1[v].abs().max(bending.k2[v].abs());
+                let strongest = bending.k1[v].abs().max(bending.k2[v].abs()) + floor;
                 // A circle of radius 1 / k, in so many quads.
                 bend[v] = std::f64::consts::TAU / (strongest * tuning.quads_a_turn);
             }
@@ -260,20 +292,23 @@ impl<'a> Demand<'a> {
         })
     }
 
-    /// The edge length at each vertex for quads between `smallest` and
-    /// `largest`. `flat` is the edge a bend is measured against: one that
-    /// calls for that much gets it, a tighter one an edge between the two,
-    /// by the adaptivity. With sizes asked for it is the largest quad: what
-    /// calls for that much or more is flat.
-    pub fn sizes(&self, flat: f64, largest: f64, smallest: f64) -> Vec<f64> {
+    /// The edge length at each vertex under `reading`.
+    pub fn sizes(&self, reading: &Reading) -> Vec<f64> {
+        self.sizes_at(&self.asked(reading), reading)
+    }
+
+    /// What the bend and the paint ask at each vertex, as the logarithm of a
+    /// part of the level of `reading`, smoothed: the map can only follow a
+    /// size that changes gently. The level itself does not come into it,
+    /// but for how far under it the largest quad is.
+    fn asked(&self, reading: &Reading) -> Vec<f64> {
         let (mesh, areas) = (&self.work.mesh, &self.work.areas);
         let vertices = mesh.positions.len();
-        // What the bend and the paint ask, as a logarithm, smoothed: the map
-        // can only follow a size that changes gently.
+        let most = (reading.largest / reading.level).ln();
         let mut asked: Vec<f64> =
-            (0..vertices).map(|v| self.by_bend(v, flat).min(largest).ln() + self.paint[v].ln()).collect();
-        let level = asked.first().copied().unwrap_or(0.0);
-        if asked.iter().any(|&a| a != level) {
+            (0..vertices).map(|v| self.by_bend(v, reading).ln().min(most) + self.paint[v].ln()).collect();
+        let first = asked.first().copied().unwrap_or(0.0);
+        if asked.iter().any(|&a| a != first) {
             for _ in 0..self.passes {
                 let previous = asked.clone();
                 for v in 0..vertices {
@@ -288,59 +323,90 @@ impl<'a> Demand<'a> {
                 }
             }
         }
+        asked
+    }
+
+    /// The sizes that go with what is `asked`, at the level of `reading`.
+    fn sizes_at(&self, asked: &[f64], reading: &Reading) -> Vec<f64> {
         // A thin part is not smoothed away: its size is a bound, and the
         // others come down to it gently.
-        let mut sizes: Vec<f64> =
-            (0..vertices).map(|v| asked[v].exp().min(self.thin[v]).clamp(smallest, largest)).collect();
+        let mut sizes: Vec<f64> = asked
+            .iter()
+            .zip(&self.thin)
+            .map(|(asked, thin)| (reading.level * asked.exp()).min(*thin).clamp(reading.smallest, reading.largest))
+            .collect();
         let least = sizes.iter().copied().fold(f64::INFINITY, f64::min);
         if sizes.iter().any(|&size| size > least) {
-            grade(&mut sizes, mesh, &self.topology, self.gradation);
+            grade(&mut sizes, &self.work.mesh, &self.topology, self.gradation);
         }
         sizes
     }
 
-    /// The edge the bend at `v` calls for, measured against `flat`. A chord
-    /// of length l on a circle of radius r strays from it by l² / 8r: for
-    /// the same error everywhere l goes as √r, which is half way, as a
-    /// logarithm, between `flat` and the edge of so many quads to a turn.
-    /// That is an adaptivity of 1; less is nearer `flat`. A bend that asks
-    /// for `flat` gets it; a gentler one more, as far as the largest quad
-    /// allows.
-    fn by_bend(&self, v: usize, flat: f64) -> f64 {
-        if self.adaptivity == 0.0 { flat } else { flat * (self.bend[v] / flat).powf(0.5 * self.adaptivity) }
+    /// The edge the bend at `v` calls for, as a part of the level. A chord of length l on a circle
+    /// of radius r strays from it by l² / 8r: for the same error everywhere
+    /// l goes as √r, which is half way, as a logarithm, between the edge of
+    /// what is flat and that of so many quads to a turn. That is an
+    /// adaptivity of 1; less is nearer flat.
+    fn by_bend(&self, v: usize, reading: &Reading) -> f64 {
+        if self.adaptivity == 0.0 {
+            return 1.0;
+        }
+        let asked = (self.bend[v] / reading.flat).powf(0.5 * self.adaptivity);
+        if reading.range.is_finite() { asked.clamp(1.0 / reading.range, reading.range) } else { asked }
     }
 
     /// How many quads that makes: a region of area A holds A / s² of them.
-    pub fn quads(&self, flat: f64, largest: f64, smallest: f64) -> f64 {
-        self.sizes(flat, largest, smallest).iter().zip(&self.work.areas).map(|(size, area)| area / (size * size)).sum()
+    pub fn quads(&self, reading: &Reading) -> f64 {
+        self.sizes(reading).iter().zip(&self.work.areas).map(|(size, area)| area / (size * size)).sum()
     }
 
-    /// The share of the surface that calls for quads smaller than
-    /// `smallest`: what comes out coarser than its shape asks.
-    pub fn below(&self, flat: f64, smallest: f64) -> f64 {
+    /// The share of the surface that calls for quads smaller than the
+    /// smallest: what comes out coarser than its shape asks.
+    pub fn below(&self, reading: &Reading) -> f64 {
         let (mut under, mut all) = (0.0, 0.0);
         for (v, &area) in self.work.areas.iter().enumerate() {
-            let wanted = self.by_bend(v, flat).min(self.thin[v]) * self.paint[v];
-            under += if wanted < smallest { area } else { 0.0 };
+            let wanted = (reading.level * self.by_bend(v, reading)).min(self.thin[v]) * self.paint[v];
+            under += if wanted < reading.smallest { area } else { 0.0 };
             all += area;
         }
         if all > 0.0 { under / all } else { 0.0 }
     }
 
-    /// The edge a bend is to be measured against for quads between
-    /// `smallest` and `largest` to be `quads` in all, or as near as those
-    /// bounds allow: the tighter the measure, the more quads.
-    pub fn flat_for(&self, quads: f64, largest: f64, smallest: f64) -> f64 {
-        let (mut low, mut high) = (smallest.ln() - 12.0, largest.ln() + 12.0);
-        for _ in 0..48 {
+    /// The reading that makes as many quads as quads of the edge
+    /// `edge_length`, all alike, would: flat is how the surface typically
+    /// bends, a bend may take the size `tuning.shape_range` times either
+    /// way from there, and the level is looked for that gives the number.
+    /// Thin parts keep what they call for, down to `tuning.finest` times
+    /// less than `edge_length`: the others make up for them.
+    pub fn for_as_many(&self, tuning: &Curvature, edge_length: f64) -> Reading {
+        let logarithms: Vec<f64> = self.bend.iter().map(|bend| bend.ln()).collect();
+        let flat = if self.adaptivity > 0.0 { weighted_mean(&logarithms, &self.work.areas).exp() } else { edge_length };
+        let mut reading = Reading {
+            flat,
+            level: edge_length,
+            range: tuning.shape_range,
+            largest: f64::INFINITY,
+            smallest: edge_length / tuning.finest.max(1.0),
+        };
+        let area: f64 = self.work.areas.iter().sum();
+        let quads = area / (edge_length * edge_length);
+        // The higher the level, the larger the quads, the fewer. With no
+        // largest quad, what is asked is the same at every level.
+        let asked = self.asked(&reading);
+        let (mut low, mut high) = ((edge_length / 64.0).ln(), (edge_length * 64.0).ln());
+        for _ in 0..40 {
             let middle = 0.5 * (low + high);
-            if self.quads(middle.exp(), largest, smallest) > quads {
+            reading.level = middle.exp();
+            let made: f64 =
+                self.sizes_at(&asked, &reading).iter().zip(&self.work.areas).map(|(size, area)| area / (size * size)).sum();
+            if made > quads {
                 low = middle;
             } else {
                 high = middle;
             }
         }
-        (0.5 * (low + high)).exp()
+        reading.level = (0.5 * (low + high)).exp();
+        reading
     }
 }
 
@@ -352,31 +418,23 @@ impl Sizer for Curvature {
     fn size(&self, work: &WorkMesh, request: &Request) -> Result<Vec<f64>> {
         let demand = Demand::measure(self, work, request)?;
         let vertices = work.mesh.positions.len();
-        let (largest, smallest) = match request.bounds {
+        let reading = match request.bounds {
             Some((largest, smallest)) => {
                 if !(smallest.is_finite() && smallest > 0.0 && largest.is_finite() && largest >= smallest) {
                     return Err(Error::InvalidParams(format!(
                         "quads from {smallest} to {largest}: not a smallest and a largest size"
                     )));
                 }
-                (largest, smallest)
+                Reading::between(largest, smallest)
             }
             None => {
                 if request.adaptivity == 0.0 && request.painted.is_none() && request.quads_around == 0.0 {
                     return Ok(vec![1.0; vertices]);
                 }
-                (request.edge_length * self.coarsest, request.edge_length / self.finest)
+                demand.for_as_many(self, request.edge_length)
             }
         };
-        let flat = match request.bounds {
-            Some(_) => largest,
-            None => {
-                let area: f64 = work.areas.iter().sum();
-                demand.flat_for(area / (request.edge_length * request.edge_length), largest, smallest)
-            }
-        };
-        let mut scale: Vec<f64> =
-            demand.sizes(flat, largest, smallest).into_iter().map(|size| size / request.edge_length).collect();
+        let mut scale: Vec<f64> = demand.sizes(&reading).into_iter().map(|size| size / request.edge_length).collect();
         // The factors are of the edge of as many quads of one size: what is
         // left of a difference is taken out, the work mesh being another
         // than the one the number was counted on, or the bounds too tight
