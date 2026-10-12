@@ -52,7 +52,7 @@ fn mean_edge(mesh: &PolyMesh, keep: impl Fn(Vec3) -> bool) -> f64 {
 fn without_adaptivity_or_paint_every_quad_is_the_size_asked_for() {
     let work = work_mesh(&spindle());
     assert!(work.sizing.iter().all(|&s| s == 1.0));
-    let request = Request { edge_length: 0.15, adaptivity: 0.0, painted: None, quads_around: 0.0 };
+    let request = Request { edge_length: 0.15, adaptivity: 0.0, painted: None, quads_around: 0.0, bounds: None };
     let scale = sizing::create(Kind::Curvature).size(&work, &request).unwrap();
     assert!(scale.iter().all(|&s| s == 1.0));
 }
@@ -63,7 +63,7 @@ fn quads_get_smaller_where_the_surface_bends_more() {
     let sizer = sizing::create(Kind::Curvature);
     let at = |adaptivity: f64| {
         let scale =
-            sizer.size(&work, &Request { edge_length: 0.15, adaptivity, painted: None, quads_around: 0.0 }).unwrap();
+            sizer.size(&work, &Request { edge_length: 0.15, adaptivity, painted: None, quads_around: 0.0, bounds: None }).unwrap();
         // The number of quads is unchanged: on average, 1 / s² is 1.
         let density: Vec<f64> = scale.iter().map(|s| 1.0 / (s * s)).collect();
         assert!((mean_where(&work, &density, |_| true) - 1.0).abs() < 1e-9);
@@ -83,7 +83,7 @@ fn painted_density_sets_the_size_and_blends_across_its_border() {
     let work = work_mesh(&source);
     let sizer = sizing::create(Kind::Curvature);
     let sized = |painted: Painted| {
-        sizer.size(&work, &Request { edge_length: 0.1, adaptivity: 0.0, painted: Some(painted), quads_around: 0.0 })
+        sizer.size(&work, &Request { edge_length: 0.1, adaptivity: 0.0, painted: Some(painted), quads_around: 0.0, bounds: None })
     };
     // The northern half painted at 1, the southern left at 0, sixteen times
     // the quads per area between the two: edges four times shorter.
@@ -107,7 +107,7 @@ fn painted_density_sets_the_size_and_blends_across_its_border() {
     assert!(sized(Painted { source: &source, weights: &vec![1.5; weights.len()], contrast: 16.0 }).is_err());
     assert!(sized(Painted { source: &source, weights: &weights, contrast: 0.5 }).is_err());
     assert!(
-        sizer.size(&work, &Request { edge_length: 0.1, adaptivity: 2.0, painted: None, quads_around: 0.0 }).is_err()
+        sizer.size(&work, &Request { edge_length: 0.1, adaptivity: 2.0, painted: None, quads_around: 0.0, bounds: None }).is_err()
     );
 }
 
@@ -149,4 +149,130 @@ fn the_mesh_is_finer_at_the_tips_of_a_spindle_when_adaptive() {
     assert!(adaptive < 0.9 * uniform, "tips over waist: {uniform} uniform, {adaptive} adaptive");
     // Smaller quads where it bends: the tips are followed more closely.
     assert!(fine_error < coarse_error, "{coarse_error} uniform, {fine_error} adaptive");
+}
+
+// The size asked for, between a largest and a smallest quad, and the number
+// of quads as what that makes.
+
+use openclare::sizing::{Curvature, Demand};
+
+#[test]
+fn a_ball_calls_for_the_same_number_of_quads_whatever_its_size() {
+    // The largest quad as long as the radius. Twelve of them would go round
+    // a ball of radius 1.9: this one bends more, and for an even error gets
+    // an edge half way, as a logarithm, between the largest and a twelfth of
+    // its great circle. That is 0.72 of its radius, and 24 quads over it,
+    // be it a pea or a planet.
+    for radius in [0.5, 1.0, 4.0] {
+        let mut ball = primitives::icosphere(4);
+        for p in &mut ball.positions {
+            *p *= radius;
+        }
+        let work = work_mesh(&ball);
+        let (largest, smallest) = (radius, 0.001 * radius);
+        let request = Request {
+            edge_length: 0.1 * radius,
+            bounds: Some((largest, smallest)),
+            adaptivity: 1.0,
+            painted: None,
+            quads_around: 0.0,
+        };
+        let tuning = Curvature::default();
+        assert_eq!(tuning.quads_a_turn, 12.0);
+        let demand = Demand::measure(&tuning, &work, &request).unwrap();
+        let wanted = radius * (std::f64::consts::TAU / 12.0).sqrt();
+        for size in demand.sizes(largest, largest, smallest) {
+            assert!((size / wanted - 1.0).abs() < 0.03, "radius {radius}: an edge of {size} for {wanted}");
+        }
+        let quads = demand.quads(largest, largest, smallest);
+        assert!((quads / 24.0 - 1.0).abs() < 0.05, "radius {radius}: {quads} quads for 24");
+        // Nothing of it asks for less than the smallest; all of it asks for
+        // less than a smallest set above that edge.
+        assert_eq!(demand.below(largest, smallest), 0.0);
+        assert_eq!(demand.below(largest, 1.1 * wanted), 1.0);
+        // Without adaptivity it does not ask: the largest quad everywhere.
+        let deaf = Demand::measure(&tuning, &work, &Request { adaptivity: 0.0, ..request }).unwrap();
+        assert!(deaf.sizes(largest, largest, smallest).iter().all(|&size| size == largest));
+    }
+}
+
+#[test]
+fn the_bounds_are_kept_and_tighter_ones_make_more_quads() {
+    let work = work_mesh(&spindle());
+    let request =
+        Request { edge_length: 0.15, bounds: Some((0.4, 0.05)), adaptivity: 1.0, painted: None, quads_around: 0.0 };
+    let demand = Demand::measure(&Curvature::default(), &work, &request).unwrap();
+    // The very tips bend along a circle of radius a third, which the
+    // largest quad would go round in five: an edge of 0.26 there for an
+    // even error, and more a little way off, where it bends less already.
+    // The waist bends along a circle of radius 1, which the largest goes
+    // round in more than twelve: flat.
+    let sizes = demand.sizes(0.4, 0.4, 0.05);
+    assert!(sizes.iter().all(|&size| (0.05..=0.4).contains(&size)));
+    let (tips, waist) = (mean_where(&work, &sizes, |p| p.z.abs() > 2.9), mean_where(&work, &sizes, |p| p.z.abs() < 0.3));
+    let least = sizes.iter().copied().fold(f64::INFINITY, f64::min);
+    assert!(least > 0.26 && least <= tips && tips < 0.36, "an edge of {least} at the very tips, {tips} round them");
+    assert!((waist - 0.4).abs() < 1e-9, "an edge of {waist} at the waist");
+    // A smallest quad above what the tips ask is what they get.
+    let floored = demand.sizes(0.4, 0.4, 0.35);
+    assert!(floored.iter().all(|&size| (0.35..=0.4).contains(&size)));
+    assert!((mean_where(&work, &floored, |p| p.z.abs() > 2.9) - 0.35).abs() < 1e-9);
+    let below = demand.below(0.4, 0.35);
+    assert!(below > 0.01 && below < 0.5, "{below}");
+
+    // The number of quads: more with a smaller largest quad, fewer with a
+    // larger smallest one, and what quads of one size make when the two
+    // are the same.
+    let quads = |largest: f64, smallest: f64| demand.quads(largest, largest, smallest);
+    assert!(quads(0.3, 0.05) > 1.2 * quads(0.4, 0.05));
+    assert!(quads(0.4, 0.35) < quads(0.4, 0.05) && quads(0.4, 0.05) <= quads(0.4, 0.01));
+    let area: f64 = work.areas.iter().sum();
+    assert!((quads(0.2, 0.2) - area / 0.04).abs() < 1e-6 * area);
+}
+
+#[test]
+fn asked_for_sizes_the_mesh_has_them_and_the_report_says_how_many_quads_that_made() {
+    let source = spindle();
+    let config = RemeshConfig {
+        adaptivity: 1.0,
+        quads_around: 0.0,
+        ..RemeshConfig::for_organic(Target::SizeRange { largest: 0.3, smallest: 0.1 })
+    };
+    let (mesh, report) = config.remesh(&source).unwrap();
+    assert!(measure(&source, &mesh, None).is_valid());
+    assert_eq!((report.largest_edge, report.smallest_edge), (0.3, 0.1));
+    // The quads the shape was found to call for are the quads made.
+    let made = mesh.faces.len() as f64;
+    assert!((made / report.quads_wanted - 1.0).abs() < 0.1, "{made} quads for {} called for", report.quads_wanted);
+    assert_eq!(report.below_smallest, 0.0);
+    // The edges of the mesh follow, as far as its layout lets them: a
+    // spindle has its eight singularities at its tips, and as many quads
+    // round its waist as round its ends, which makes those of the waist
+    // longer than asked and those of the tips shorter.
+    let (tips, waist) = (mean_edge(&mesh, |p| p.z.abs() > 2.7), mean_edge(&mesh, |p| p.z.abs() < 0.8));
+    assert!(tips < 0.7 * waist && tips > 0.1, "edges of {tips} at the tips");
+    assert!(waist > 0.3 && waist < 0.4, "edges of {waist} at the waist");
+
+    // Quads of one size when the two bounds are the same.
+    let even = RemeshConfig { target: Target::SizeRange { largest: 0.2, smallest: 0.2 }, ..config.clone() };
+    let (mesh, report) = even.remesh(&source).unwrap();
+    let (tips, waist) = (mean_edge(&mesh, |p| p.z.abs() > 2.5), mean_edge(&mesh, |p| p.z.abs() < 0.8));
+    assert!(waist > 0.2 && waist < 0.27, "edges of {waist} at the waist");
+    assert!(tips > 0.1 && tips < 0.2, "edges of {tips} at the tips");
+    assert!((mesh.faces.len() as f64 / (source.surface_area() / 0.04) - 1.0).abs() < 0.1);
+    assert!((report.quads_wanted / (source.surface_area() / 0.04) - 1.0).abs() < 0.05);
+
+    // More quads called for than may be made: every quad larger, and said.
+    let capped = RemeshConfig { most_quads: 150, ..config.clone() };
+    let (mesh, report) = capped.remesh(&source).unwrap();
+    assert!(report.quads_wanted > 300.0, "{} quads called for", report.quads_wanted);
+    assert!((mesh.faces.len() as f64 / 150.0 - 1.0).abs() < 0.1, "{} quads", mesh.faces.len());
+    let larger = (report.quads_wanted / 150.0).sqrt();
+    assert!((report.largest_edge - 0.3 * larger).abs() < 1e-9 && (report.smallest_edge - 0.1 * larger).abs() < 1e-9);
+
+    // Sizes that are not sizes.
+    for (largest, smallest) in [(0.1, 0.3), (0.3, 0.0), (0.3, -0.1), (f64::NAN, 0.1), (f64::INFINITY, 0.1)] {
+        let wrong = RemeshConfig { target: Target::SizeRange { largest, smallest }, ..config.clone() };
+        assert!(wrong.remesh(&source).is_err(), "quads from {smallest} to {largest}");
+    }
 }

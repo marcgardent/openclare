@@ -53,6 +53,10 @@ pub struct RemeshConfig {
     /// number asked for, which is then the least the mesh will have. Without
     /// it the number is kept, and such a piece comes out crumpled.
     pub preserve_volumes: bool,
+    /// Most quads made when the size of the quads is asked for and not
+    /// their number (see [`Target::SizeRange`]): where the shape calls for
+    /// more, every quad is made larger, by as much as it takes.
+    pub most_quads: usize,
     /// How far the vertices are moved off the surface, at the very end, for
     /// the mesh to keep the volume of the shape: with every vertex on the
     /// surface the faces run under it wherever it bulges. 0 leaves the
@@ -121,6 +125,7 @@ impl RemeshConfig {
             adaptivity: 0.5,
             quads_around: 6.0,
             preserve_volumes: true,
+            most_quads: 200_000,
             volume_fit: 1.0,
             density_contrast: 4.0,
             skip_pieces_under: 0.0,
@@ -226,6 +231,9 @@ impl RemeshConfig {
         match self.target {
             Target::QuadCount(count) => writeln!(text, "quads = {count}"),
             Target::EdgeLength(length) => writeln!(text, "edge_length = {length}"),
+            Target::SizeRange { largest, smallest } => {
+                writeln!(text, "largest_quad = {largest}\nsmallest_quad = {smallest}")
+            }
         }
         .unwrap();
         writeln!(text, "alignment = {}", self.alignment).unwrap();
@@ -244,6 +252,7 @@ impl RemeshConfig {
         writeln!(text, "adaptivity = {}", self.adaptivity).unwrap();
         writeln!(text, "quads_around = {}", self.quads_around).unwrap();
         writeln!(text, "preserve_volumes = {}", self.preserve_volumes).unwrap();
+        writeln!(text, "most_quads = {}", self.most_quads).unwrap();
         writeln!(text, "volume_fit = {}", self.volume_fit).unwrap();
         writeln!(text, "density_contrast = {}", self.density_contrast).unwrap();
         writeln!(text, "skip_pieces_under = {}", self.skip_pieces_under).unwrap();
@@ -281,6 +290,21 @@ impl RemeshConfig {
                     config.target = Target::QuadCount(count);
                 }
                 "edge_length" => config.target = Target::EdgeLength(number_of("length")?),
+                // The largest first; the smallest is an eighth of it until
+                // it is said.
+                "largest_quad" => {
+                    let largest = number_of("length")?;
+                    config.target = Target::SizeRange { largest, smallest: largest / 8.0 };
+                }
+                "smallest_quad" => match config.target {
+                    Target::SizeRange { largest, .. } => {
+                        config.target = Target::SizeRange { largest, smallest: number_of("length")? };
+                    }
+                    _ => return Err(error("smallest_quad comes after largest_quad".to_string())),
+                },
+                "most_quads" => {
+                    config.most_quads = value.parse().map_err(|_| error(format!("'{value}' is not a quad count")))?;
+                }
                 "alignment" => config.alignment = number_of("number")?,
                 "singularity_reach" => config.singularity_reach = number_of("number")?,
                 "singularity_tolerance" => config.singularity_tolerance = number_of("number")?,

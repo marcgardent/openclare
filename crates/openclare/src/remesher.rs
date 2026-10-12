@@ -390,6 +390,8 @@ impl QuadLayout {
                 Target::QuadCount(count) => count,
                 Target::EdgeLength(length) if length > 0.0 => (area / (length * length)).round() as usize,
                 Target::EdgeLength(_) => 0,
+                // The shape says how many: nothing to add for a thin piece.
+                Target::SizeRange { .. } => 0,
             };
             let nominal = (area / share.max(1) as f64).sqrt();
             let needed = quads_for_thickness(input, share, nominal, config);
@@ -408,12 +410,20 @@ impl QuadLayout {
         // that one piece the layout cannot handle does not drag the others
         // to the other chain with it.
         let area = input.surface_area();
+        // With sizes asked for, each piece is given them as they are and
+        // makes the quads its shape calls for: the shares only tell which
+        // pieces are too small to be meshed at all.
+        let sized = matches!(config.target, Target::SizeRange { .. });
         let (quads, edge_length) = match config.target {
             Target::QuadCount(0) => return Err(Error::InvalidParams("target quad count is zero".into())),
             Target::QuadCount(count) => (count as f64, (area / count as f64).sqrt()),
             Target::EdgeLength(length) if length.is_finite() && length > 0.0 => (area / (length * length), length),
             Target::EdgeLength(length) => {
                 return Err(Error::InvalidParams(format!("edge length {length} is not positive")));
+            }
+            Target::SizeRange { largest, smallest } => {
+                check_sizes(largest, smallest)?;
+                (area / (largest * smallest), (largest * smallest).sqrt())
             }
         };
         if let Some(density) = guides.density
@@ -432,6 +442,9 @@ impl QuadLayout {
         let (mut thin_pieces, mut quads_for_thin_pieces) = (0, 0);
         for (index, ((piece, _), share)) in pieces.iter().zip(&mut shares).enumerate() {
             let Some(share) = share else { continue };
+            if sized {
+                break;
+            }
             if let Some(needed) = quads_for_thickness(piece, *share, edge_length, config) {
                 let note = format!("thin all along: {needed} quads for an edge no longer than it is thick, not {share}");
                 recorder::Piece::new(recorder, index, pieces.len()).record("notes/thin", Shape::Note(&note));
@@ -450,7 +463,8 @@ impl QuadLayout {
             let density: Option<Vec<f64>> =
                 guides.density.map(|density| origin.iter().map(|&v| density[v as usize]).collect());
             let piece_guides = Guides { density: density.as_deref(), ..*guides };
-            let piece_config = RemeshConfig { target: Target::QuadCount(share), ..config.clone() };
+            let target = if sized { config.target } else { Target::QuadCount(share) };
+            let piece_config = RemeshConfig { target, ..config.clone() };
             // A work mesh in proportion: a button does not need the
             // triangles a body does.
             let least = ((self.min_triangles as f64 * piece.surface_area() / area) as usize).max(MIN_PIECE_TRIANGLES);
@@ -894,6 +908,19 @@ struct WorkSize {
     most: usize,
 }
 
+/// The density painted on `input`, if any, as the sizer takes it.
+fn painted_of<'a>(input: &'a TriMesh, guides: &Guides<'a>, contrast: f64) -> Option<sizing::Painted<'a>> {
+    guides.density.map(|weights| sizing::Painted { source: input, weights, contrast })
+}
+
+/// Whether `largest` and `smallest` are the sizes of quads they are given as.
+fn check_sizes(largest: f64, smallest: f64) -> Result<()> {
+    if smallest.is_finite() && smallest > 0.0 && largest.is_finite() && largest >= smallest {
+        return Ok(());
+    }
+    Err(Error::InvalidParams(format!("quads from {smallest} to {largest}: not a smallest and a largest size")))
+}
+
 /// What the stages common to the field-based chains produce.
 struct Fields {
     work: WorkMesh,
@@ -917,12 +944,46 @@ fn fields(
     config.validate()?;
     input.validate()?;
     let area = input.surface_area();
-    let (quads, edge_length) = match config.target {
+    let (quads, edge_length, bounds) = match config.target {
         Target::QuadCount(0) => return Err(Error::InvalidParams("target quad count is zero".into())),
-        Target::QuadCount(count) => (count as f64, (area / count as f64).sqrt()),
-        Target::EdgeLength(length) if length.is_finite() && length > 0.0 => (area / (length * length), length),
+        Target::QuadCount(count) => (count as f64, (area / count as f64).sqrt(), None),
+        Target::EdgeLength(length) if length.is_finite() && length > 0.0 => (area / (length * length), length, None),
         Target::EdgeLength(length) => {
             return Err(Error::InvalidParams(format!("edge length {length} is not positive")));
+        }
+        // The size is asked for: the shape is looked at first, on a work
+        // mesh of its own, for the number of quads that makes. The rest is
+        // then done as for that number.
+        Target::SizeRange { largest, smallest } => {
+            check_sizes(largest, smallest)?;
+            recorder.begin("analysis")?;
+            let between = (largest * smallest).sqrt();
+            let triangles = ((size.per_quad * area / (between * between)) as usize).clamp(size.least, size.most);
+            let request = preprocess::Request {
+                triangles,
+                crease_angle: config.crease_angle,
+                curvature_scale: Some(between),
+                edge_angle: config.edge_angle,
+                ..Default::default()
+            };
+            let looked_at = preprocess::create(preprocess::Kind::Isotropic).preprocess(input, &request)?;
+            let asked = sizing::Request {
+                edge_length: between,
+                bounds: Some((largest, smallest)),
+                adaptivity: config.adaptivity,
+                painted: guides.and_then(|guides| painted_of(input, guides, config.density_contrast)),
+                quads_around: config.quads_around,
+            };
+            let demand = sizing::Demand::measure(&sizing::Curvature::default(), &looked_at, &asked)?;
+            let wanted = demand.quads(largest, largest, smallest).max(1.0);
+            // More than may be made: every quad larger, by as much as it takes.
+            let most = (config.most_quads.max(1)) as f64;
+            let larger = if wanted > most { (wanted / most).sqrt() } else { 1.0 };
+            let quads = wanted.min(most);
+            (report.largest_edge, report.smallest_edge) = (largest * larger, smallest * larger);
+            (report.quads_wanted, report.below_smallest) = (wanted, demand.below(largest, smallest));
+            clock.lap(report, "analysis");
+            (quads, (area / quads).sqrt(), Some((largest * larger, smallest * larger)))
         }
     };
     report.edge_length = edge_length;
@@ -946,10 +1007,13 @@ fn fields(
 
     if let Some(guides) = guides {
         recorder.begin("sizing")?;
-        let painted =
-            guides.density.map(|weights| sizing::Painted { source: input, weights, contrast: config.density_contrast });
-        let request =
-            sizing::Request { edge_length, adaptivity: config.adaptivity, painted, quads_around: config.quads_around };
+        let request = sizing::Request {
+            edge_length,
+            bounds,
+            adaptivity: config.adaptivity,
+            painted: painted_of(input, guides, config.density_contrast),
+            quads_around: config.quads_around,
+        };
         work.sizing = sizing::create(sizing::Kind::Curvature).size(&work, &request)?;
         clock.lap(report, "sizing");
         recorder::show_sizing(recorder, &work);

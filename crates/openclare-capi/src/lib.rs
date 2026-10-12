@@ -293,6 +293,7 @@ unsafe fn remesh(
     let asked = match config.target {
         Target::QuadCount(count) => format!("quads_asked = {count}"),
         Target::EdgeLength(length) => format!("edge_length_asked = {length}"),
+        Target::SizeRange { largest, smallest } => format!("largest_asked = {largest}\nsmallest_asked = {smallest}"),
     };
     let stats = &done.stats;
     let report = format!(
