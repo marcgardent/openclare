@@ -1,0 +1,74 @@
+name: release
+
+# The Blender add-on built for Linux and for Windows when a version is tagged
+# (`make release version=...`, then the tag pushed), and attached to a release
+# of that tag. Started by hand from the Actions tab, it builds the two
+# archives and keeps them with the run, without a release.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    # The engine asks for the C library of the system it is built on, or a
+    # later one. Blender runs on Linux from glibc 2.28: this image has that
+    # one, so the add-on loads wherever Blender does.
+    container: quay.io/pypa/manylinux_2_28_x86_64
+    steps:
+      - uses: actions/checkout@v5
+      - name: Rust and zip
+        run: |
+          yum install -y zip
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+      - run: make addon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-x64
+          path: dist/*.zip
+          if-no-files-found: error
+
+  # Built from Linux with MinGW-w64, as `make addon-windows` does anywhere:
+  # it is the build whose tests pass under Wine.
+  windows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Rust for Windows and MinGW-w64
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mingw-w64 zip
+          rustup target add x86_64-pc-windows-gnu
+      - run: make addon-windows
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64
+          path: dist/*.zip
+          if-no-files-found: error
+
+  release:
+    if: github.ref_type == 'tag'
+    needs: [linux, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      # The archives are named after the version written in the sources: a
+      # tag that says another one finds no file, and there is no release.
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          gh release create "$GITHUB_REF_NAME" \
+            "dist/openclare-$version-linux-x64.zip" "dist/openclare-$version-windows-x64.zip" \
+            --repo "$GITHUB_REPOSITORY" --title "openclare $version" --generate-notes

@@ -1,6 +1,6 @@
 # Shortcuts for the common tasks. `make help` lists them.
 
-.PHONY: help build test scenes blenderkit scores quick pages view addon addon-windows test-windows addon-test
+.PHONY: help build test scenes blenderkit scores quick pages view addon addon-windows test-windows addon-test release
 
 help:
 	@echo "make build       build the openclare binary (release)"
@@ -13,6 +13,10 @@ help:
 	@echo "make test-windows WINE=/path/to/wine64"
 	@echo "                 run the tests of the engine built for Windows, under Wine"
 	@echo "make addon-test  run the add-on in a Blender without interface (needs blender)"
+	@echo "make release version=MAJOR|MINOR|FIX"
+	@echo "                 raise that number of the version, commit and tag it on main; PUSH=1"
+	@echo "                 to send the tag, from which GitHub builds the add-on for Linux and"
+	@echo "                 for Windows"
 	@echo "make scenes      make the scenes of the bench that are made from a file as it is"
 	@echo "                 (bench/scenes; needs blender). MODELS=cube,pig for some only,"
 	@echo "                 REFRESH=1 to make again those already there"
@@ -134,3 +138,11 @@ test-windows:
 
 addon-test: addon
 	ulimit -v $(MEMORY_CAP); blender -b --factory-startup --python blender/test_addon.py
+
+# The next version: MAJOR, MINOR or FIX says which of its three numbers is
+# raised. Committed and tagged here; the tag pushed (PUSH=1, or by hand
+# afterwards), the add-on is built on GitHub for Linux and for Windows and
+# attached to a release (.github/workflows/release.yml).
+release:
+	@test -n "$(version)" || { echo "which number? make release version=MAJOR, MINOR or FIX"; exit 2; }
+	python3 scripts/release.py $(version) $(if $(PUSH),--push)
