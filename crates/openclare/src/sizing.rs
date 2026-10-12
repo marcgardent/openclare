@@ -177,8 +177,11 @@ impl Reading {
 /// What the shape calls for at each vertex of a work mesh, before any bound
 /// on the size of the quads. Measuring it is the long part; what a pair of
 /// bounds makes of it is then told at once.
-pub struct Demand<'a> {
-    work: &'a WorkMesh,
+pub struct Demand {
+    /// The vertices of the work mesh, the area each stands for, and which
+    /// are joined by an edge.
+    positions: Vec<crate::math::Vec3>,
+    areas: Vec<f64>,
     topology: Topology,
     /// The circle the surface bends along, over the quads to a turn: the
     /// largest quad that goes round it in that many. Where nothing bends
@@ -195,11 +198,11 @@ pub struct Demand<'a> {
     gradation: f64,
 }
 
-impl<'a> Demand<'a> {
+impl Demand {
     /// Measures what `work` calls for under `request`, whose `edge_length`
     /// says about how large the quads are to be: curvature is read, the
     /// size smoothed and thin parts looked for at that scale.
-    pub fn measure(tuning: &Curvature, work: &'a WorkMesh, request: &Request) -> Result<Self> {
+    pub fn measure(tuning: &Curvature, work: &WorkMesh, request: &Request) -> Result<Self> {
         if !(0.0..=1.0).contains(&request.adaptivity) {
             return Err(Error::InvalidParams(format!("adaptivity {} is not between 0 and 1", request.adaptivity)));
         }
@@ -281,7 +284,8 @@ impl<'a> Demand<'a> {
         }
 
         Ok(Self {
-            work,
+            positions: mesh.positions.clone(),
+            areas: work.areas.clone(),
             topology,
             bend,
             thin,
@@ -302,8 +306,8 @@ impl<'a> Demand<'a> {
     /// size that changes gently. The level itself does not come into it,
     /// but for how far under it the largest quad is.
     fn asked(&self, reading: &Reading) -> Vec<f64> {
-        let (mesh, areas) = (&self.work.mesh, &self.work.areas);
-        let vertices = mesh.positions.len();
+        let areas = &self.areas;
+        let vertices = self.positions.len();
         let most = (reading.largest / reading.level).ln();
         let mut asked: Vec<f64> =
             (0..vertices).map(|v| self.by_bend(v, reading).ln().min(most) + self.paint[v].ln()).collect();
@@ -337,7 +341,7 @@ impl<'a> Demand<'a> {
             .collect();
         let least = sizes.iter().copied().fold(f64::INFINITY, f64::min);
         if sizes.iter().any(|&size| size > least) {
-            grade(&mut sizes, &self.work.mesh, &self.topology, self.gradation);
+            grade(&mut sizes, &self.positions, &self.topology, self.gradation);
         }
         sizes
     }
@@ -357,19 +361,34 @@ impl<'a> Demand<'a> {
 
     /// How many quads that makes: a region of area A holds A / s² of them.
     pub fn quads(&self, reading: &Reading) -> f64 {
-        self.sizes(reading).iter().zip(&self.work.areas).map(|(size, area)| area / (size * size)).sum()
+        self.sizes(reading).iter().zip(&self.areas).map(|(size, area)| area / (size * size)).sum()
     }
 
     /// The share of the surface that calls for quads smaller than the
     /// smallest: what comes out coarser than its shape asks.
     pub fn below(&self, reading: &Reading) -> f64 {
         let (mut under, mut all) = (0.0, 0.0);
-        for (v, &area) in self.work.areas.iter().enumerate() {
+        for (v, &area) in self.areas.iter().enumerate() {
             let wanted = (reading.level * self.by_bend(v, reading)).min(self.thin[v]) * self.paint[v];
             under += if wanted < reading.smallest { area } else { 0.0 };
             all += area;
         }
         if all > 0.0 { under / all } else { 0.0 }
+    }
+
+    /// The area of the surface measured.
+    pub fn area(&self) -> f64 {
+        self.areas.iter().sum()
+    }
+
+    /// The edge the shape calls for at each vertex with `largest` for the
+    /// largest quad and no smallest, and the area each vertex stands for:
+    /// what tells how much of the surface asks for how small a quad.
+    pub fn wanted(&self, largest: f64) -> Vec<(f64, f64)> {
+        let reading = Reading::between(largest, f64::MIN_POSITIVE);
+        (0..self.areas.len())
+            .map(|v| ((reading.level * self.by_bend(v, &reading)).min(self.thin[v]).min(largest) * self.paint[v], self.areas[v]))
+            .collect()
     }
 
     /// The reading that makes as many quads as quads of the edge
@@ -380,7 +399,7 @@ impl<'a> Demand<'a> {
     /// less than `edge_length`: the others make up for them.
     pub fn for_as_many(&self, tuning: &Curvature, edge_length: f64) -> Reading {
         let logarithms: Vec<f64> = self.bend.iter().map(|bend| bend.ln()).collect();
-        let flat = if self.adaptivity > 0.0 { weighted_mean(&logarithms, &self.work.areas).exp() } else { edge_length };
+        let flat = if self.adaptivity > 0.0 { weighted_mean(&logarithms, &self.areas).exp() } else { edge_length };
         let mut reading = Reading {
             flat,
             level: edge_length,
@@ -388,7 +407,7 @@ impl<'a> Demand<'a> {
             largest: f64::INFINITY,
             smallest: edge_length / tuning.finest.max(1.0),
         };
-        let area: f64 = self.work.areas.iter().sum();
+        let area: f64 = self.areas.iter().sum();
         let quads = area / (edge_length * edge_length);
         // The higher the level, the larger the quads, the fewer. With no
         // largest quad, what is asked is the same at every level.
@@ -398,7 +417,7 @@ impl<'a> Demand<'a> {
             let middle = 0.5 * (low + high);
             reading.level = middle.exp();
             let made: f64 =
-                self.sizes_at(&asked, &reading).iter().zip(&self.work.areas).map(|(size, area)| area / (size * size)).sum();
+                self.sizes_at(&asked, &reading).iter().zip(&self.areas).map(|(size, area)| area / (size * size)).sum();
             if made > quads {
                 low = middle;
             } else {
@@ -459,7 +478,7 @@ fn keep_the_count(scale: &mut [f64], areas: &[f64]) {
 /// Lowers the sizes so that none grows faster than `rate` per unit of
 /// length away from a smaller one: the small ones are kept as they are and
 /// the others follow, where smoothing would wash a small part out.
-fn grade(scale: &mut [f64], mesh: &TriMesh, topology: &Topology, rate: f64) {
+fn grade(scale: &mut [f64], positions: &[crate::math::Vec3], topology: &Topology, rate: f64) {
     // Factors are positive, so their bit patterns order like they do.
     let mut queue: BinaryHeap<Reverse<(u64, u32)>> =
         (0..scale.len()).map(|v| Reverse((scale[v].to_bits(), v as u32))).collect();
@@ -469,7 +488,7 @@ fn grade(scale: &mut [f64], mesh: &TriMesh, topology: &Topology, rate: f64) {
             continue;
         }
         for &next in &topology.neighbors[v as usize] {
-            let allowed = here + rate * mesh.positions[v as usize].distance(mesh.positions[next as usize]);
+            let allowed = here + rate * positions[v as usize].distance(positions[next as usize]);
             if allowed < scale[next as usize] {
                 scale[next as usize] = allowed;
                 queue.push(Reverse((allowed.to_bits(), next)));

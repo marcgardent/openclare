@@ -908,6 +908,121 @@ struct WorkSize {
     most: usize,
 }
 
+/// What a shape calls for, measured once: how many quads any largest and
+/// smallest quad make of it is then told at once, without meshing anything.
+pub struct Analysis {
+    /// One for each piece of the shape.
+    pieces: Vec<sizing::Demand>,
+}
+
+impl Analysis {
+    /// Measures `input` under `config`, of which the adaptivity, the quads
+    /// round a thin part and the contrast of the paint count, and not the
+    /// target: no size is set yet. Curvature and thickness are read at the
+    /// scale of the quads of a mesh of a few thousand.
+    pub fn of(input: &TriMesh, guides: &Guides, config: &RemeshConfig) -> Result<Self> {
+        config.validate()?;
+        input.validate()?;
+        // (As it is given: borders that the chain would stitch are borders
+        // here, which makes a torn shell thinner than it is.)
+        let chain = QuadLayout::default();
+        let all = input.surface_area();
+        let reference = (all / REFERENCE_QUADS).sqrt();
+        if !(reference.is_finite() && reference > 0.0) {
+            return Err(Error::InvalidMesh("a shape without a surface".into()));
+        }
+        let mut pieces = Vec::new();
+        for (piece, origin) in input.pieces() {
+            let area = piece.surface_area();
+            let triangles = ((chain.triangles_per_quad * area / (reference * reference)) as usize)
+                .clamp(MIN_PIECE_TRIANGLES, chain.max_triangles);
+            let request = preprocess::Request {
+                triangles,
+                crease_angle: config.crease_angle,
+                curvature_scale: Some(reference),
+                edge_angle: config.edge_angle,
+                ..Default::default()
+            };
+            // A piece no work mesh can be made of asks for nothing: it will
+            // not be meshed either.
+            let Ok(work) = preprocess::create(preprocess::Kind::Isotropic).preprocess(&piece, &request) else {
+                continue;
+            };
+            let density: Option<Vec<f64>> = guides
+                .density
+                .filter(|density| density.len() == input.positions.len())
+                .map(|density| origin.iter().map(|&v| density[v as usize]).collect());
+            let painted = density.as_deref().map(|weights| sizing::Painted {
+                source: &piece,
+                weights,
+                contrast: config.density_contrast,
+            });
+            let request = sizing::Request {
+                edge_length: reference,
+                bounds: None,
+                adaptivity: config.adaptivity,
+                painted,
+                quads_around: config.quads_around,
+            };
+            pieces.push(sizing::Demand::measure(&sizing::Curvature::default(), &work, &request)?);
+        }
+        if pieces.is_empty() {
+            return Err(Error::InvalidMesh("no piece of the shape could be looked at".into()));
+        }
+        Ok(Self { pieces })
+    }
+
+    /// The area of the surface.
+    pub fn area(&self) -> f64 {
+        self.pieces.iter().map(sizing::Demand::area).sum()
+    }
+
+    /// How many quads there would be with quads between `smallest` and
+    /// `largest`.
+    pub fn quads(&self, largest: f64, smallest: f64) -> f64 {
+        let reading = sizing::Reading::between(largest, smallest);
+        self.pieces.iter().map(|piece| piece.quads(&reading)).sum()
+    }
+
+    /// The share of the surface that calls for quads smaller than
+    /// `smallest`, with `largest` for the largest.
+    pub fn below(&self, largest: f64, smallest: f64) -> f64 {
+        let reading = sizing::Reading::between(largest, smallest);
+        let under: f64 = self.pieces.iter().map(|piece| piece.below(&reading) * piece.area()).sum();
+        under / self.area().max(f64::MIN_POSITIVE)
+    }
+
+    /// A largest and a smallest quad to start from. The largest is that of
+    /// a mesh of [`PROPOSED_QUADS`] quads of one size: how coarse the whole
+    /// is to be is a matter of taste, and of what the mesh is for. The
+    /// smallest is the largest one that leaves no more than
+    /// [`PROPOSED_BELOW`] of the surface asking for less, no smaller than
+    /// [`PROPOSED_RANGE`] times less than the largest.
+    pub fn proposal(&self) -> (f64, f64) {
+        let largest = (self.area() / PROPOSED_QUADS).sqrt();
+        let mut wanted: Vec<(f64, f64)> = self.pieces.iter().flat_map(|piece| piece.wanted(largest)).collect();
+        wanted.sort_by(|a, b| a.0.total_cmp(&b.0));
+        let all: f64 = wanted.iter().map(|&(_, area)| area).sum();
+        let (mut under, mut smallest) = (0.0, largest);
+        for (size, area) in wanted {
+            under += area;
+            if under > PROPOSED_BELOW * all {
+                smallest = size;
+                break;
+            }
+        }
+        (largest, smallest.clamp(largest / PROPOSED_RANGE, largest))
+    }
+}
+
+/// Quads of the mesh at whose scale a shape is looked at before any size is
+/// set.
+const REFERENCE_QUADS: f64 = 4000.0;
+/// What [`Analysis::proposal`] starts from.
+pub const PROPOSED_QUADS: f64 = 1500.0;
+pub const PROPOSED_BELOW: f64 = 0.05;
+pub const PROPOSED_RANGE: f64 = 16.0;
+
 /// The density painted on `input`, if any, as the sizer takes it.
 fn painted_of<'a>(input: &'a TriMesh, guides: &Guides<'a>, contrast: f64) -> Option<sizing::Painted<'a>> {
     guides.density.map(|weights| sizing::Painted { source: input, weights, contrast })

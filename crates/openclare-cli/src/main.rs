@@ -19,6 +19,7 @@ USAGE:
     openclare remesh <input.obj> <output.obj> [options]
     openclare presets
     openclare measure <source.obj> <quads.obj> [--target <N>] [--json]
+    openclare analyse <input.obj> [--preset <NAME>] [--largest <L>]
     openclare preprocess <input.obj> <output.obj> [options]
     openclare field <input.obj> [options]
     openclare parametrize <input.obj> --quads <N> [options]
@@ -130,6 +131,7 @@ fn run(args: &[String]) -> Result<(), String> {
             Ok(())
         }
         Some("measure") => measure_command(&args[1..]),
+        Some("analyse") => analyse_command(&args[1..]),
         Some("preprocess") => preprocess_command(&args[1..]),
         Some("field") => field_command(&args[1..]),
         Some("parametrize") => parametrize_command(&args[1..]),
@@ -142,6 +144,43 @@ fn run(args: &[String]) -> Result<(), String> {
         }
         _ => Err("expected a subcommand".into()),
     }
+}
+
+/// What a shape calls for, and how many quads that makes for a range of
+/// smallest quads: what the add-on is to show while its sliders move.
+fn analyse_command(args: &[String]) -> Result<(), String> {
+    let input = args.first().ok_or("analyse takes a mesh")?;
+    let (mut preset, mut asked) = ("organic".to_string(), None);
+    let mut rest = args[1..].iter();
+    while let Some(arg) = rest.next() {
+        let mut value = || rest.next().ok_or(format!("{arg} takes a value"));
+        match arg.as_str() {
+            "--preset" => preset = value()?.clone(),
+            "--largest" => asked = Some(value()?.parse::<f64>().map_err(|_| "--largest takes a length".to_string())?),
+            other => return Err(format!("unknown option '{other}'")),
+        }
+    }
+    let mesh = obj::read_obj(input).map_err(|e| format!("{input}: {e}"))?;
+    let config = RemeshConfig::preset(&preset, Target::QuadCount(1)).map_err(|e| e.to_string())?;
+    let started = std::time::Instant::now();
+    let analysis = openclare::Analysis::of(&mesh, &Default::default(), &config).map_err(|e| e.to_string())?;
+    println!("analysis {:.2} s, once", started.elapsed().as_secs_f64());
+    let (proposed, smallest) = analysis.proposal();
+    println!("proposal quads from {smallest:.4} to {proposed:.4}");
+    let largest = asked.unwrap_or(proposed);
+    println!("largest  {largest:.4}; for a smallest of:");
+    let started = std::time::Instant::now();
+    let steps = [1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0, 12.0, 16.0, 24.0, 32.0];
+    for over in steps {
+        let smallest = largest / over;
+        println!(
+            "         {smallest:>9.4} (1/{over:<4}) {:>8.0} quads, {:>5.1} % of the surface would call for smaller",
+            analysis.quads(largest, smallest),
+            100.0 * analysis.below(largest, smallest)
+        );
+    }
+    println!("each     {:.1} ms", 1000.0 * started.elapsed().as_secs_f64() / steps.len() as f64);
+    Ok(())
 }
 
 fn primitive(args: &[String]) -> Result<(), String> {
