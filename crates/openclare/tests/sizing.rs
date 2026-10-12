@@ -279,3 +279,38 @@ fn asked_for_sizes_the_mesh_has_them_and_the_report_says_how_many_quads_that_mad
         assert!(wrong.remesh(&source).is_err(), "quads from {smallest} to {largest}");
     }
 }
+
+#[test]
+fn a_shape_is_analysed_once_and_any_bounds_are_then_counted() {
+    use openclare::Analysis;
+    let source = spindle();
+    let config = RemeshConfig { adaptivity: 1.0, quads_around: 0.0, ..RemeshConfig::for_organic(Target::QuadCount(1)) };
+    let analysis = Analysis::of(&source, &Guides::default(), &config).unwrap();
+    assert!((analysis.area() / source.surface_area() - 1.0).abs() < 0.01);
+    // Quads of one size: the area over their own.
+    assert!((analysis.quads(0.2, 0.2) / (source.surface_area() / 0.04) - 1.0).abs() < 0.01);
+    // What the analysis counts is what the chain then makes.
+    let wanted = analysis.quads(0.3, 0.1);
+    let sized = RemeshConfig { target: Target::SizeRange { largest: 0.3, smallest: 0.1 }, ..config.clone() };
+    let (mesh, _) = sized.remesh(&source).unwrap();
+    assert!((mesh.faces.len() as f64 / wanted - 1.0).abs() < 0.1, "{} quads for {wanted} counted", mesh.faces.len());
+    // A lower smallest quad never makes fewer quads, nor leaves more of
+    // the surface asking for less.
+    let mut before = (0.0, 1.0);
+    for over in [1.0, 1.5, 2.0, 3.0, 4.0, 8.0] {
+        let now = (analysis.quads(0.4, 0.4 / over), analysis.below(0.4, 0.4 / over));
+        assert!(now.0 >= before.0 && now.1 <= before.1, "1/{over}: {now:?} after {before:?}");
+        before = now;
+    }
+    assert!(analysis.below(0.4, 0.4) > 0.02 && before.1 == 0.0);
+    // The proposal: the largest quad of a mesh of 1,500, and a smallest
+    // that leaves no more than a twentieth of the surface asking for less.
+    let (largest, smallest) = analysis.proposal();
+    assert!((largest - (analysis.area() / 1500.0).sqrt()).abs() < 1e-12);
+    assert!(smallest <= largest && smallest >= largest / 16.0);
+    assert!(analysis.below(largest, smallest) <= 0.05 + 1e-9);
+    assert!(analysis.below(largest, 1.02 * smallest) > 0.05 || smallest == largest);
+
+    // What cannot be analysed.
+    assert!(Analysis::of(&TriMesh::default(), &Guides::default(), &config).is_err());
+}
