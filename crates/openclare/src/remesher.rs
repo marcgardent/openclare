@@ -915,6 +915,10 @@ struct WorkSize {
 pub struct Analysis {
     /// One for each piece of the shape.
     pieces: Vec<sizing::Demand>,
+    /// For each vertex of the shape, where it lies on the work mesh of its
+    /// piece: the piece, a triangle of its work mesh and how much of each
+    /// corner. None for a vertex of a piece that was not looked at.
+    at_input: Vec<Option<(u32, [u32; 3], [f64; 3])>>,
 }
 
 impl Analysis {
@@ -934,6 +938,7 @@ impl Analysis {
             return Err(Error::InvalidMesh("a shape without a surface".into()));
         }
         let mut pieces = Vec::new();
+        let mut at_input = vec![None; input.positions.len()];
         for (piece, origin) in input.pieces() {
             let area = piece.surface_area();
             let triangles = ((chain.triangles_per_quad * area / (reference * reference)) as usize)
@@ -966,12 +971,42 @@ impl Analysis {
                 painted,
                 quads_around: config.quads_around,
             };
-            pieces.push(sizing::Demand::measure(&sizing::Curvature::default(), &work, &request)?);
+            let demand = sizing::Demand::measure(&sizing::Curvature::default(), &work, &request)?;
+            // Each vertex of the piece reads the work mesh where it is nearest.
+            let surface = Bvh::build(&work.mesh);
+            let index = pieces.len() as u32;
+            for (v, &at) in origin.iter().enumerate() {
+                let Some(hit) = surface.closest_point(piece.positions[v]) else { continue };
+                let corners = work.mesh.triangles[hit.triangle as usize];
+                let shares = barycentric_of(corners.map(|c| work.mesh.positions[c as usize]), hit.point);
+                at_input[at as usize] = Some((index, corners, shares));
+            }
+            pieces.push(demand);
         }
         if pieces.is_empty() {
             return Err(Error::InvalidMesh("no piece of the shape could be looked at".into()));
         }
-        Ok(Self { pieces })
+        Ok(Self { pieces, at_input })
+    }
+
+    /// For each vertex of the shape, the edge its quads would have with
+    /// quads between `smallest` and `largest`, and whether its shape calls
+    /// for smaller ones than the smallest there. A vertex of a piece that
+    /// was not looked at has no size (not a number).
+    pub fn at_vertices(&self, largest: f64, smallest: f64) -> (Vec<f64>, Vec<bool>) {
+        let reading = sizing::Reading::between(largest, smallest);
+        let sizes: Vec<Vec<f64>> = self.pieces.iter().map(|piece| piece.sizes(&reading)).collect();
+        let asked: Vec<Vec<f64>> = self.pieces.iter().map(|piece| piece.asks_at_vertices(&reading)).collect();
+        let read = |values: &[Vec<f64>], (piece, corners, shares): &(u32, [u32; 3], [f64; 3])| -> f64 {
+            (0..3).map(|k| shares[k] * values[*piece as usize][corners[k] as usize]).sum()
+        };
+        self.at_input
+            .iter()
+            .map(|at| match at {
+                Some(at) => (read(&sizes, at), read(&asked, at) < smallest),
+                None => (f64::NAN, false),
+            })
+            .unzip()
     }
 
     /// The area of the surface.
@@ -1038,6 +1073,19 @@ impl Analysis {
         }
         (largest, smallest.clamp(floor, largest))
     }
+}
+
+/// How much of each corner of a triangle a point of it is made of.
+fn barycentric_of([a, b, c]: [Vec3; 3], p: Vec3) -> [f64; 3] {
+    let (ab, ac, ap) = (b - a, c - a, p - a);
+    let (d00, d01, d11, d20, d21) = (ab.dot(ab), ab.dot(ac), ac.dot(ac), ap.dot(ab), ap.dot(ac));
+    let det = d00 * d11 - d01 * d01;
+    if det.abs() < 1e-300 {
+        return [1.0, 0.0, 0.0];
+    }
+    let v = (d11 * d20 - d01 * d21) / det;
+    let w = (d00 * d21 - d01 * d20) / det;
+    [1.0 - v - w, v, w]
 }
 
 /// Quads of the mesh at whose scale a shape is looked at before any size is

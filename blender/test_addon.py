@@ -8,6 +8,8 @@ Exits with an error if anything is not as it should be.
 import sys
 from pathlib import Path
 
+import time
+
 import bpy
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -347,6 +349,62 @@ alone(body)
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 assert len(bpy.context.active_object.data.polygons) < 0.5 * made
 settings.target, settings.largest_quad, settings.smallest_quad = "COUNT", 0.0, 0.0
+
+# Analysed: sizes proposed, the number of quads they make told at once, and
+# the sizes shown in colour on a copy while the object is hidden.
+alone(body)
+assert openclare.analysis_of(bpy.context, settings, body) is None
+assert bpy.ops.object.openclare_analyse() == {"FINISHED"}
+assert settings.target == "SIZE" and 0.0 < settings.smallest_quad <= settings.largest_quad, (
+    settings.smallest_quad, settings.largest_quad)
+held = openclare.analysis_of(bpy.context, settings, body)
+assert held is not None
+analysis, scale = held
+quads, below = openclare.counted(analysis, scale, settings.largest_quad, settings.smallest_quad)
+assert quads > 300 and 0.0 <= below <= 1.0, (quads, below)
+# Smaller quads, more of them, told without meshing anything. Not four
+# times as many: where the surface bends, the size follows the bounds only
+# by the part the adaptivity leaves them (twice as many, measured).
+started = time.perf_counter()
+finer, _ = openclare.counted(analysis, scale, settings.largest_quad / 2.0, settings.smallest_quad / 2.0)
+assert finer > 1.5 * quads and time.perf_counter() - started < 0.5, (finer, quads)
+# The colours of the sizes, on a copy.
+settings.show_sizes = True
+shown = bpy.data.objects.get(f"{body.name}.sizes")
+assert shown is not None and body.hide_get(), "no preview of the sizes"
+colours = shown.data.color_attributes["openclare sizes"]
+before = [tuple(colours.data[k].color) for k in range(0, len(colours.data), 97)]
+settings.largest_quad, settings.smallest_quad = settings.largest_quad / 3.0, settings.smallest_quad / 3.0
+after = [tuple(colours.data[k].color) for k in range(0, len(colours.data), 97)]
+assert before != after, "the colours did not follow the sizes"
+# The wire was proposed what its thickness calls for. With no quad smaller
+# than the largest, it is shown as coarser than its shape asks, in red.
+red = openclare.linear(openclare.COARSER)
+
+
+def wire_in_red():
+    return [
+        all(abs(a - b) < 1e-4 for a, b in zip(colours.data[v.index].color, red))
+        for v in shown.data.vertices if v.co.x > 2.0
+    ]
+
+
+assert sum(wire_in_red()) < 0.1 * len(wire_in_red()), "the wire in red with the sizes proposed"
+settings.smallest_quad = settings.largest_quad
+wire_red = wire_in_red()
+assert sum(wire_red) > 0.5 * len(wire_red), f"{sum(wire_red)} of {len(wire_red)} vertices of the wire in red"
+# Remeshing takes the preview away and shows the object again.
+bpy.context.view_layer.objects.active = body
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+assert f"{body.name}.sizes" not in bpy.data.objects and not body.hide_get() and not settings.show_sizes
+# Changed, the object asks to be analysed again.
+body.data.vertices[0].co.x += 0.01
+body.data.update()
+assert openclare.analysis_of(bpy.context, settings, body) is None
+settings.show_sizes = True
+assert not settings.show_sizes, "a preview without an analysis that holds"
+settings.target, settings.largest_quad, settings.smallest_quad = "COUNT", 0.0, 0.0
+print("SIZES", round(quads), "quads proposed,", round(100 * below), "% coarser than asked")
 settings.quads, settings.adaptive_size = 800, 50.0
 
 # Relief: the height of the original above the result subdivided, baked on
