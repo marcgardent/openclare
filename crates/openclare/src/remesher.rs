@@ -997,23 +997,46 @@ impl Analysis {
     /// A largest and a smallest quad to start from. The largest is that of
     /// a mesh of [`PROPOSED_QUADS`] quads of one size: how coarse the whole
     /// is to be is a matter of taste, and of what the mesh is for. The
-    /// smallest is the largest one that leaves no more than
-    /// [`PROPOSED_BELOW`] of the surface asking for less, no smaller than
-    /// [`PROPOSED_RANGE`] times less than the largest.
+    /// smallest comes down by steps of [`PROPOSED_STEP`] as long as each
+    /// is worth it: as long as it gives what it calls for to at least
+    /// [`PROPOSED_YIELD`] of a point of the surface for each per cent of
+    /// quads it adds. A surface bumpy all over stops early, a smooth one
+    /// with a few tight bends goes down to them. Thin parts come first, when
+    /// they are parts: fingers, a wire, under [`PROPOSED_THIN`] of the
+    /// surface. The smallest is then no larger than what nineteen twentieths
+    /// of their surface calls for. A shape thin over much more of it (a
+    /// shell full of beams and rims) is thin by nature, and that is left to
+    /// the steps. The smallest is never less than [`PROPOSED_RANGE`] times
+    /// less than the largest.
     pub fn proposal(&self) -> (f64, f64) {
         let largest = (self.area() / PROPOSED_QUADS).sqrt();
-        let mut wanted: Vec<(f64, f64)> = self.pieces.iter().flat_map(|piece| piece.wanted(largest)).collect();
-        wanted.sort_by(|a, b| a.0.total_cmp(&b.0));
-        let all: f64 = wanted.iter().map(|&(_, area)| area).sum();
-        let (mut under, mut smallest) = (0.0, largest);
-        for (size, area) in wanted {
+        let floor = largest / PROPOSED_RANGE;
+        let mut smallest = largest;
+        let (mut quads, mut below) = (self.quads(largest, smallest), self.below(largest, smallest));
+        while smallest / PROPOSED_STEP >= floor {
+            let finer = smallest / PROPOSED_STEP;
+            let (more, less) = (self.quads(largest, finer), self.below(largest, finer));
+            let (gained, cost) = (100.0 * (below - less), 100.0 * (more / quads - 1.0));
+            if gained < PROPOSED_YIELD * cost {
+                break;
+            }
+            (smallest, quads, below) = (finer, more, less);
+        }
+        let mut thin: Vec<(f64, f64)> = self.pieces.iter().flat_map(|piece| piece.thin_parts()).collect();
+        thin.sort_by(|a, b| a.0.total_cmp(&b.0));
+        let all: f64 = thin.iter().map(|&(_, area)| area).sum();
+        if all > PROPOSED_THIN * self.area() {
+            thin.clear();
+        }
+        let mut under = 0.0;
+        for (size, area) in thin {
             under += area;
-            if under > PROPOSED_BELOW * all {
-                smallest = size;
+            if under > 0.05 * all {
+                smallest = smallest.min(size);
                 break;
             }
         }
-        (largest, smallest.clamp(largest / PROPOSED_RANGE, largest))
+        (largest, smallest.clamp(floor, largest))
     }
 }
 
@@ -1022,7 +1045,9 @@ impl Analysis {
 const REFERENCE_QUADS: f64 = 4000.0;
 /// What [`Analysis::proposal`] starts from.
 pub const PROPOSED_QUADS: f64 = 1500.0;
-pub const PROPOSED_BELOW: f64 = 0.05;
+pub const PROPOSED_STEP: f64 = 1.5;
+pub const PROPOSED_YIELD: f64 = 0.25;
+pub const PROPOSED_THIN: f64 = 0.1;
 pub const PROPOSED_RANGE: f64 = 16.0;
 
 /// The density painted on `input`, if any, as the sizer takes it.
