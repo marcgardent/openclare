@@ -642,6 +642,44 @@
       "guides_let_go": 0
      }
     }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 0.942,
+     "failure": null,
+     "metrics": {
+      "valid": false,
+      "vertices": 1167,
+      "faces": 1165,
+      "quads": 1163,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 26,
+      "topological_minimum": null,
+      "irregular_excess": null,
+      "base_complex_patches": null,
+      "alignment": 6.271836469561475,
+      "angle_deviation_mean": 9.451735687134148,
+      "angle_deviation_p95": 30.578422141965177,
+      "aspect_mean": 1.9342261079581953,
+      "aspect_p95": 3.956306624919061,
+      "area_variation": 0.5746769211101217,
+      "hausdorff": 0.00634724756892091,
+      "mean_distance": 0.0018851524146767668,
+      "thin_share": 0,
+      "thin_distance": null,
+      "volume_ratio": 0.9690234336033668,
+      "budget_error": 0.6116666666666667
+     },
+     "against": 3000
+    }
    ]
   },
   "rock": {
@@ -1277,6 +1315,44 @@
       "edges_taken_apart": 0,
       "guides_let_go": 0
      }
+    }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 0.851,
+     "failure": null,
+     "metrics": {
+      "valid": true,
+      "vertices": 2414,
+      "faces": 2412,
+      "quads": 2412,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 20,
+      "topological_minimum": 8,
+      "irregular_excess": 12,
+      "base_complex_patches": 2412,
+      "alignment": 18.776333641694357,
+      "angle_deviation_mean": 7.483151440788127,
+      "angle_deviation_p95": 17.91320644392202,
+      "aspect_mean": 1.4087303424279163,
+      "aspect_p95": 2.0281224568402476,
+      "area_variation": 0.33149629118694973,
+      "hausdorff": 0.007638010348319668,
+      "mean_distance": 0.0011573151207829434,
+      "thin_share": 0,
+      "thin_distance": null,
+      "volume_ratio": 0.994918758437241,
+      "budget_error": 0.196
+     },
+     "against": 3000
     }
    ]
   },
@@ -1914,6 +1990,44 @@
       "guides_let_go": 0
      }
     }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 1.188,
+     "failure": null,
+     "metrics": {
+      "valid": true,
+      "vertices": 1993,
+      "faces": 1991,
+      "quads": 1991,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 20,
+      "topological_minimum": 8,
+      "irregular_excess": 12,
+      "base_complex_patches": 747,
+      "alignment": 9.576809267255442,
+      "angle_deviation_mean": 4.749940426599215,
+      "angle_deviation_p95": 13.44292978605111,
+      "aspect_mean": 1.839132525145703,
+      "aspect_p95": 3.1054453334861125,
+      "area_variation": 0.5494833943795698,
+      "hausdorff": 0.002387819845987825,
+      "mean_distance": 0.000536790258832657,
+      "thin_share": 0,
+      "thin_distance": null,
+      "volume_ratio": 0.9896841428489397,
+      "budget_error": 0.3363333333333333
+     },
+     "against": 3000
+    }
    ]
   },
   "cage": {
@@ -2549,6 +2663,44 @@
       "edges_taken_apart": 0,
       "guides_let_go": 0
      }
+    }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 2.532,
+     "failure": null,
+     "metrics": {
+      "valid": false,
+      "vertices": 4038,
+      "faces": 4039,
+      "quads": 4019,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 2,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 97,
+      "topological_minimum": null,
+      "irregular_excess": null,
+      "base_complex_patches": null,
+      "alignment": 8.915544714337386,
+      "angle_deviation_mean": 9.01576902883627,
+      "angle_deviation_p95": 28.245598887925425,
+      "aspect_mean": 2.0298463458574365,
+      "aspect_p95": 3.520694325297293,
+      "area_variation": 0.4963415517282042,
+      "hausdorff": 0.013319003500685383,
+      "mean_distance": 0.0007998330646453779,
+      "thin_share": 0,
+      "thin_distance": null,
+      "volume_ratio": 0.9962671145756009,
+      "budget_error": 0.3463333333333333
+     },
+     "against": 3000
     }
    ]
   },
@@ -3190,6 +3342,44 @@
       "quads_for_thin_pieces": 0
      }
     }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 0.838,
+     "failure": null,
+     "metrics": {
+      "valid": false,
+      "vertices": 1261,
+      "faces": 1255,
+      "quads": 1253,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 168,
+      "inverted_faces": 27,
+      "degenerate_faces": 0,
+      "components": 3,
+      "source_components": 3,
+      "irregular_vertices": 69,
+      "topological_minimum": null,
+      "irregular_excess": null,
+      "base_complex_patches": null,
+      "alignment": 13.192249763900406,
+      "angle_deviation_mean": 11.125142442253065,
+      "angle_deviation_p95": 41.630205043985455,
+      "aspect_mean": 1.871494614737627,
+      "aspect_p95": 3.6001287374111324,
+      "area_variation": 0.6105983035600872,
+      "hausdorff": 0.03303908293623859,
+      "mean_distance": 0.0021670514935329477,
+      "thin_share": 0.013822568484543855,
+      "thin_distance": 0.2885305501526204,
+      "volume_ratio": null,
+      "budget_error": 0.5816666666666667
+     },
+     "against": 3000
+    }
    ]
   },
   "part": {
@@ -3829,6 +4019,44 @@
       "thin_pieces": 0,
       "quads_for_thin_pieces": 0
      }
+    }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 1.623,
+     "failure": null,
+     "metrics": {
+      "valid": false,
+      "vertices": 1856,
+      "faces": 1855,
+      "quads": 1835,
+      "non_manifold_edges": 8,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 3,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 117,
+      "topological_minimum": null,
+      "irregular_excess": null,
+      "base_complex_patches": null,
+      "alignment": 15.74700266614076,
+      "angle_deviation_mean": 12.326560803114722,
+      "angle_deviation_p95": 37.420029514930434,
+      "aspect_mean": 2.476209980949298,
+      "aspect_p95": 5.0724623808658444,
+      "area_variation": 0.672196017463125,
+      "hausdorff": 0.01776407206294459,
+      "mean_distance": 0.0012293271045914294,
+      "thin_share": 0,
+      "thin_distance": null,
+      "volume_ratio": null,
+      "budget_error": 0.38166666666666665
+     },
+     "against": 3000
     }
    ]
   },
@@ -4470,6 +4698,44 @@
       "quads_for_thin_pieces": 0
      }
     }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 0.495,
+     "failure": null,
+     "metrics": {
+      "valid": true,
+      "vertices": 1262,
+      "faces": 1260,
+      "quads": 1260,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 8,
+      "topological_minimum": 8,
+      "irregular_excess": 0,
+      "base_complex_patches": 36,
+      "alignment": 2.291128480296764,
+      "angle_deviation_mean": 3.605841060231516,
+      "angle_deviation_p95": 11.70962114846067,
+      "aspect_mean": 2.1744152402915944,
+      "aspect_p95": 4.560456404744344,
+      "area_variation": 0.6621891296873458,
+      "hausdorff": 0.010765529580915133,
+      "mean_distance": 0.0004389281008292503,
+      "thin_share": 0,
+      "thin_distance": null,
+      "volume_ratio": 0.9989097766787791,
+      "budget_error": 0.58
+     },
+     "against": 3000
+    }
    ]
   },
   "sphere": {
@@ -5105,6 +5371,44 @@
       "edges_taken_apart": 0,
       "guides_let_go": 0
      }
+    }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 0.631,
+     "failure": null,
+     "metrics": {
+      "valid": true,
+      "vertices": 2088,
+      "faces": 2086,
+      "quads": 2086,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 10,
+      "topological_minimum": 8,
+      "irregular_excess": 2,
+      "base_complex_patches": 2004,
+      "alignment": null,
+      "angle_deviation_mean": 7.653296709454566,
+      "angle_deviation_p95": 19.875637951209484,
+      "aspect_mean": 1.326338759734792,
+      "aspect_p95": 1.7442368261985184,
+      "area_variation": 0.34084296008106874,
+      "hausdorff": 0.001541437063510274,
+      "mean_distance": 0.0004083255293325005,
+      "thin_share": 0,
+      "thin_distance": null,
+      "volume_ratio": 0.9958567724081941,
+      "budget_error": 0.30466666666666664
+     },
+     "against": 3000
     }
    ]
   },
@@ -5742,6 +6046,44 @@
       "guides_let_go": 0
      }
     }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 0.947,
+     "failure": null,
+     "metrics": {
+      "valid": true,
+      "vertices": 2672,
+      "faces": 2672,
+      "quads": 2672,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 0,
+      "topological_minimum": 0,
+      "irregular_excess": 0,
+      "base_complex_patches": 1,
+      "alignment": 10.37366983819414,
+      "angle_deviation_mean": 4.172631564750825,
+      "angle_deviation_p95": 11.065266149268965,
+      "aspect_mean": 2.5448566858766637,
+      "aspect_p95": 4.534676938991663,
+      "area_variation": 0.25600506528307587,
+      "hausdorff": 0.0014994289866374932,
+      "mean_distance": 0.0004650376004740381,
+      "thin_share": 0,
+      "thin_distance": null,
+      "volume_ratio": 0.9908511000357627,
+      "budget_error": 0.10933333333333334
+     },
+     "against": 3000
+    }
    ]
   },
   "ogre": {
@@ -6377,6 +6719,44 @@
       "edges_taken_apart": 0,
       "guides_let_go": 0
      }
+    }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 1.513,
+     "failure": null,
+     "metrics": {
+      "valid": false,
+      "vertices": 1086,
+      "faces": 1081,
+      "quads": 1071,
+      "non_manifold_edges": 4,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 1,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 84,
+      "topological_minimum": null,
+      "irregular_excess": null,
+      "base_complex_patches": null,
+      "alignment": 16.236024159759207,
+      "angle_deviation_mean": 10.367793532754625,
+      "angle_deviation_p95": 32.56010730028763,
+      "aspect_mean": 1.8260026424657632,
+      "aspect_p95": 2.956028432483652,
+      "area_variation": 0.5896577967654189,
+      "hausdorff": 0.03105106607858558,
+      "mean_distance": 0.0030415156228365686,
+      "thin_share": 0.025699811781666734,
+      "thin_distance": 0.6662025731496724,
+      "volume_ratio": null,
+      "budget_error": 0.6396666666666667
+     },
+     "against": 3000
     }
    ]
   },
@@ -7014,6 +7394,44 @@
       "guides_let_go": 0
      }
     }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 1.303,
+     "failure": null,
+     "metrics": {
+      "valid": true,
+      "vertices": 1286,
+      "faces": 1284,
+      "quads": 1284,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 68,
+      "topological_minimum": 8,
+      "irregular_excess": 60,
+      "base_complex_patches": 1022,
+      "alignment": 12.077105924882044,
+      "angle_deviation_mean": 8.868464827236288,
+      "angle_deviation_p95": 24.76828456297858,
+      "aspect_mean": 1.4507907113477552,
+      "aspect_p95": 1.988660592450458,
+      "area_variation": 0.6660494309731013,
+      "hausdorff": 0.017262362752568084,
+      "mean_distance": 0.0015883367648042604,
+      "thin_share": 0.0005984798611526722,
+      "thin_distance": 0.5457158478230504,
+      "volume_ratio": 0.9744068093261762,
+      "budget_error": 0.572
+     },
+     "against": 3000
+    }
    ]
   },
   "bob": {
@@ -7649,6 +8067,44 @@
       "edges_taken_apart": 0,
       "guides_let_go": 0
      }
+    }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 1.075,
+     "failure": null,
+     "metrics": {
+      "valid": true,
+      "vertices": 1583,
+      "faces": 1583,
+      "quads": 1583,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 18,
+      "topological_minimum": 0,
+      "irregular_excess": 18,
+      "base_complex_patches": 533,
+      "alignment": 6.64075537838191,
+      "angle_deviation_mean": 7.069108788945875,
+      "angle_deviation_p95": 21.035684441333842,
+      "aspect_mean": 2.0904354547512063,
+      "aspect_p95": 3.9166315420031315,
+      "area_variation": 0.4738086771998176,
+      "hausdorff": 0.0040271804922265226,
+      "mean_distance": 0.0009604221807234674,
+      "thin_share": 0,
+      "thin_distance": null,
+      "volume_ratio": 0.9809729794603461,
+      "budget_error": 0.4723333333333333
+     },
+     "against": 3000
     }
    ]
   },
@@ -8286,6 +8742,44 @@
       "guides_let_go": 0
      }
     }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 0.93,
+     "failure": null,
+     "metrics": {
+      "valid": false,
+      "vertices": 1344,
+      "faces": 1343,
+      "quads": 1339,
+      "non_manifold_edges": 4,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 1,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 47,
+      "topological_minimum": null,
+      "irregular_excess": null,
+      "base_complex_patches": null,
+      "alignment": 10.62065656901133,
+      "angle_deviation_mean": 9.13810863176731,
+      "angle_deviation_p95": 28.420651792963916,
+      "aspect_mean": 2.046035314073609,
+      "aspect_p95": 4.199493115165084,
+      "area_variation": 0.5216997029400001,
+      "hausdorff": 0.01770709297863878,
+      "mean_distance": 0.001082409723688892,
+      "thin_share": 0.007820411837515471,
+      "thin_distance": 0.17739002886941724,
+      "volume_ratio": null,
+      "budget_error": 0.5523333333333333
+     },
+     "against": 3000
+    }
    ]
   },
   "pig": {
@@ -8922,6 +9416,44 @@
       "guides_let_go": 0
      }
     }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 2.147,
+     "failure": null,
+     "metrics": {
+      "valid": false,
+      "vertices": 1816,
+      "faces": 1808,
+      "quads": 1794,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 99,
+      "topological_minimum": null,
+      "irregular_excess": null,
+      "base_complex_patches": null,
+      "alignment": 11.384811656681908,
+      "angle_deviation_mean": 8.901298700997867,
+      "angle_deviation_p95": 29.127515434868187,
+      "aspect_mean": 1.8037133590239667,
+      "aspect_p95": 3.0285059454536416,
+      "area_variation": 0.7128071570021131,
+      "hausdorff": 0.05249748623175466,
+      "mean_distance": 0.002185028218872422,
+      "thin_share": 0.0278616113365179,
+      "thin_distance": 0.2909558506845162,
+      "volume_ratio": 0.9753627934083557,
+      "budget_error": 0.3973333333333333
+     },
+     "against": 3000
+    }
    ]
   },
   "jerry": {
@@ -9557,6 +10089,44 @@
       "edges_taken_apart": 0,
       "guides_let_go": 0
      }
+    }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 1.29,
+     "failure": null,
+     "metrics": {
+      "valid": false,
+      "vertices": 1112,
+      "faces": 1102,
+      "quads": 1086,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 112,
+      "inverted_faces": 2,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 84,
+      "topological_minimum": null,
+      "irregular_excess": null,
+      "base_complex_patches": null,
+      "alignment": 17.975861728552715,
+      "angle_deviation_mean": 15.26013291906036,
+      "angle_deviation_p95": 53.905464954993505,
+      "aspect_mean": 2.330431363618541,
+      "aspect_p95": 3.709235694511576,
+      "area_variation": 2.551315304963211,
+      "hausdorff": 0.2006894845873082,
+      "mean_distance": 0.005546461225924912,
+      "thin_share": 0.0668001000750563,
+      "thin_distance": 0.7608397084439567,
+      "volume_ratio": null,
+      "budget_error": 0.6326666666666667
+     },
+     "against": 3000
     }
    ]
   },
@@ -10198,6 +10768,44 @@
       "quads_for_thin_pieces": 1929
      }
     }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 1.324,
+     "failure": null,
+     "metrics": {
+      "valid": false,
+      "vertices": 686,
+      "faces": 636,
+      "quads": 604,
+      "non_manifold_edges": 24,
+      "misoriented_edges": 0,
+      "boundary_edges": 12,
+      "source_boundary_edges": 0,
+      "inverted_faces": 49,
+      "degenerate_faces": 17,
+      "components": 28,
+      "source_components": 96,
+      "irregular_vertices": 243,
+      "topological_minimum": null,
+      "irregular_excess": null,
+      "base_complex_patches": null,
+      "alignment": 19.3910546766351,
+      "angle_deviation_mean": 31.060678589746274,
+      "angle_deviation_p95": 82.38225258453772,
+      "aspect_mean": 5.54113897464085,
+      "aspect_p95": 12.570015023882226,
+      "area_variation": 1.1929897024904241,
+      "hausdorff": 0.10828365675450737,
+      "mean_distance": 0.02196877955156619,
+      "thin_share": 0.4016045975703434,
+      "thin_distance": 1.5741577100531086,
+      "volume_ratio": null,
+      "budget_error": 0.788
+     },
+     "against": 3000
+    }
    ]
   },
   "bridge": {
@@ -10688,6 +11296,44 @@
       "edges_taken_apart": 0,
       "guides_let_go": 0
      }
+    }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 1.4,
+     "failure": null,
+     "metrics": {
+      "valid": false,
+      "vertices": 1936,
+      "faces": 1893,
+      "quads": 1886,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 91,
+      "source_boundary_edges": 254,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 63,
+      "topological_minimum": null,
+      "irregular_excess": null,
+      "base_complex_patches": null,
+      "alignment": 9.168204033677739,
+      "angle_deviation_mean": 7.603814406986998,
+      "angle_deviation_p95": 22.56249724985939,
+      "aspect_mean": 1.7784568540802312,
+      "aspect_p95": 2.7120433214069153,
+      "area_variation": 0.7654802615065195,
+      "hausdorff": 0.014762881408597614,
+      "mean_distance": 0.0010419660833324111,
+      "thin_share": 8.520583294787838e-05,
+      "thin_distance": null,
+      "volume_ratio": null,
+      "budget_error": 0.369
+     },
+     "against": 3000
     }
    ]
   },
@@ -11329,6 +11975,44 @@
       "quads_for_thin_pieces": 0
      }
     }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 0.399,
+     "failure": null,
+     "metrics": {
+      "valid": true,
+      "vertices": 1330,
+      "faces": 1328,
+      "quads": 1328,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 12,
+      "topological_minimum": 8,
+      "irregular_excess": 4,
+      "base_complex_patches": 628,
+      "alignment": 3.783352708171299,
+      "angle_deviation_mean": 5.827784636562913,
+      "angle_deviation_p95": 18.793003833693447,
+      "aspect_mean": 1.9942849067750918,
+      "aspect_p95": 3.8156083827886738,
+      "area_variation": 0.5720034234941179,
+      "hausdorff": 0.011650234763555473,
+      "mean_distance": 0.0004541465222070526,
+      "thin_share": 0,
+      "thin_distance": null,
+      "volume_ratio": 0.9983078561968811,
+      "budget_error": 0.5573333333333333
+     },
+     "against": 3000
+    }
    ]
   },
   "cylinder": {
@@ -11969,6 +12653,44 @@
       "quads_for_thin_pieces": 0
      }
     }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 0.986,
+     "failure": null,
+     "metrics": {
+      "valid": true,
+      "vertices": 1308,
+      "faces": 1306,
+      "quads": 1306,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 8,
+      "topological_minimum": 8,
+      "irregular_excess": 0,
+      "base_complex_patches": 68,
+      "alignment": 4.718151954641688,
+      "angle_deviation_mean": 8.13045039598464,
+      "angle_deviation_p95": 26.1316887606612,
+      "aspect_mean": 2.0189231111419135,
+      "aspect_p95": 4.772612670467072,
+      "area_variation": 0.6404574626070142,
+      "hausdorff": 0.009505101371936421,
+      "mean_distance": 0.0007899375836870492,
+      "thin_share": 0,
+      "thin_distance": null,
+      "volume_ratio": 0.9921464761556286,
+      "budget_error": 0.5646666666666667
+     },
+     "against": 3000
+    }
    ]
   },
   "terrain": {
@@ -12605,6 +13327,44 @@
       "guides_let_go": 0
      }
     }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 2.338,
+     "failure": null,
+     "metrics": {
+      "valid": false,
+      "vertices": 971,
+      "faces": 919,
+      "quads": 912,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 95,
+      "source_boundary_edges": 129,
+      "inverted_faces": 0,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 45,
+      "topological_minimum": null,
+      "irregular_excess": null,
+      "base_complex_patches": null,
+      "alignment": 20.271988664675554,
+      "angle_deviation_mean": 6.6997908002501125,
+      "angle_deviation_p95": 24.555330538069512,
+      "aspect_mean": 1.423378778981883,
+      "aspect_p95": 2.1881770700840835,
+      "area_variation": 0.41273660926193806,
+      "hausdorff": 0.03494515452222988,
+      "mean_distance": 0.003050821153890671,
+      "thin_share": 0.16123217727814482,
+      "thin_distance": 0.5682243567221693,
+      "volume_ratio": null,
+      "budget_error": 0.6936666666666667
+     },
+     "against": 3000
+    }
    ]
   },
   "mahaveer": {
@@ -13100,6 +13860,44 @@
       "quads_for_thin_pieces": 10836
      }
     }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 1.334,
+     "failure": null,
+     "metrics": {
+      "valid": false,
+      "vertices": 1401,
+      "faces": 1325,
+      "quads": 1259,
+      "non_manifold_edges": 56,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 2130,
+      "inverted_faces": 101,
+      "degenerate_faces": 46,
+      "components": 48,
+      "source_components": 164,
+      "irregular_vertices": 422,
+      "topological_minimum": null,
+      "irregular_excess": null,
+      "base_complex_patches": null,
+      "alignment": 9.342576072586212,
+      "angle_deviation_mean": 32.26499925316488,
+      "angle_deviation_p95": 85.28076572444328,
+      "aspect_mean": 5.234793019601749,
+      "aspect_p95": 13.610638988543108,
+      "area_variation": 1.4433650080203155,
+      "hausdorff": 0.04466285438691324,
+      "mean_distance": 0.005890337040293245,
+      "thin_share": 0.782173088530948,
+      "thin_distance": 0.46822059249295317,
+      "volume_ratio": null,
+      "budget_error": 0.5583333333333333
+     },
+     "against": 3000
+    }
    ]
   },
   "marine": {
@@ -13565,6 +14363,44 @@
       "thin_pieces": 42,
       "quads_for_thin_pieces": 27070
      }
+    }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 1.327,
+     "failure": null,
+     "metrics": {
+      "valid": false,
+      "vertices": 1122,
+      "faces": 870,
+      "quads": 682,
+      "non_manifold_edges": 76,
+      "misoriented_edges": 0,
+      "boundary_edges": 8,
+      "source_boundary_edges": 3026,
+      "inverted_faces": 217,
+      "degenerate_faces": 122,
+      "components": 159,
+      "source_components": 820,
+      "irregular_vertices": 858,
+      "topological_minimum": null,
+      "irregular_excess": null,
+      "base_complex_patches": null,
+      "alignment": 18.060185241666066,
+      "angle_deviation_mean": 52.533457939180096,
+      "angle_deviation_p95": 89.72295450705684,
+      "aspect_mean": 14.155034856042281,
+      "aspect_p95": 18.632326216824275,
+      "area_variation": 7.747763523756778,
+      "hausdorff": 0.009988067310170908,
+      "mean_distance": 0.002873068951194375,
+      "thin_share": 0.8928758310760896,
+      "thin_distance": 0.87085537735738,
+      "volume_ratio": null,
+      "budget_error": 0.71
+     },
+     "against": 3000
     }
    ]
   },
@@ -14073,6 +14909,44 @@
       "quads_for_thin_pieces": 0
      }
     }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 1.107,
+     "failure": null,
+     "metrics": {
+      "valid": false,
+      "vertices": 4748,
+      "faces": 4046,
+      "quads": 3714,
+      "non_manifold_edges": 52,
+      "misoriented_edges": 0,
+      "boundary_edges": 854,
+      "source_boundary_edges": 15110,
+      "inverted_faces": 715,
+      "degenerate_faces": 11,
+      "components": 179,
+      "source_components": 373,
+      "irregular_vertices": 1527,
+      "topological_minimum": null,
+      "irregular_excess": null,
+      "base_complex_patches": null,
+      "alignment": 11.83640504265463,
+      "angle_deviation_mean": 48.87484730672298,
+      "angle_deviation_p95": 89.70001519102591,
+      "aspect_mean": 12.800839514823467,
+      "aspect_p95": 21.19074475252526,
+      "area_variation": 2.37294061840233,
+      "hausdorff": 0.07110326257302385,
+      "mean_distance": 0.00523278275849646,
+      "thin_share": 0.4930019994287346,
+      "thin_distance": 0.2449742724927084,
+      "volume_ratio": null,
+      "budget_error": 0.3486666666666667
+     },
+     "against": 3000
+    }
    ]
   },
   "wolf": {
@@ -14579,6 +15453,44 @@
       "thin_pieces": 0,
       "quads_for_thin_pieces": 0
      }
+    }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 1.051,
+     "failure": null,
+     "metrics": {
+      "valid": false,
+      "vertices": 637,
+      "faces": 625,
+      "quads": 605,
+      "non_manifold_edges": 4,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 1,
+      "inverted_faces": 9,
+      "degenerate_faces": 0,
+      "components": 2,
+      "source_components": 8,
+      "irregular_vertices": 125,
+      "topological_minimum": null,
+      "irregular_excess": null,
+      "base_complex_patches": null,
+      "alignment": 14.566231458084635,
+      "angle_deviation_mean": 16.080737719489672,
+      "angle_deviation_p95": 44.8616797784315,
+      "aspect_mean": 2.516163018233589,
+      "aspect_p95": 6.923586239155308,
+      "area_variation": 0.9328792664851183,
+      "hausdorff": 0.08972095616095285,
+      "mean_distance": 0.009164712682340143,
+      "thin_share": 0.27369826435246997,
+      "thin_distance": 1.2544264170950328,
+      "volume_ratio": null,
+      "budget_error": 0.7916666666666666
+     },
+     "against": 3000
     }
    ]
   },
@@ -15087,6 +15999,44 @@
       "quads_for_thin_pieces": 9454
      }
     }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 2.612,
+     "failure": null,
+     "metrics": {
+      "valid": false,
+      "vertices": 4555,
+      "faces": 4122,
+      "quads": 3737,
+      "non_manifold_edges": 240,
+      "misoriented_edges": 0,
+      "boundary_edges": 113,
+      "source_boundary_edges": 9178,
+      "inverted_faces": 784,
+      "degenerate_faces": 208,
+      "components": 230,
+      "source_components": 296,
+      "irregular_vertices": 2217,
+      "topological_minimum": null,
+      "irregular_excess": null,
+      "base_complex_patches": null,
+      "alignment": 14.849570598181302,
+      "angle_deviation_mean": 41.315903297304494,
+      "angle_deviation_p95": 87.06899687000723,
+      "aspect_mean": 7.957019476988495,
+      "aspect_p95": 22.95468113133533,
+      "area_variation": 2.5470768956214345,
+      "hausdorff": 0.08783082902211264,
+      "mean_distance": 0.009066889125958587,
+      "thin_share": 0.8875116275636009,
+      "thin_distance": 0.6259925264803219,
+      "volume_ratio": null,
+      "budget_error": 0.374
+     },
+     "against": 3000
+    }
    ]
   },
   "camera": {
@@ -15594,6 +16544,44 @@
       "quads_for_thin_pieces": 486
      }
     }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 0.623,
+     "failure": null,
+     "metrics": {
+      "valid": false,
+      "vertices": 2280,
+      "faces": 2222,
+      "quads": 2180,
+      "non_manifold_edges": 32,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 952,
+      "inverted_faces": 174,
+      "degenerate_faces": 1,
+      "components": 38,
+      "source_components": 42,
+      "irregular_vertices": 338,
+      "topological_minimum": null,
+      "irregular_excess": null,
+      "base_complex_patches": null,
+      "alignment": 7.280948956750457,
+      "angle_deviation_mean": 22.14262486321899,
+      "angle_deviation_p95": 84.37351721864385,
+      "aspect_mean": 4.205169866709538,
+      "aspect_p95": 7.7707853419075885,
+      "area_variation": 2.439024761888952,
+      "hausdorff": 0.05021113841083951,
+      "mean_distance": 0.005701267855745675,
+      "thin_share": 0.5625245662305576,
+      "thin_distance": 0.25004992635868367,
+      "volume_ratio": null,
+      "budget_error": 0.25933333333333336
+     },
+     "against": 3000
+    }
    ]
   },
   "ogre_hp": {
@@ -16097,6 +17085,44 @@
       "guides_let_go": 0
      }
     }
+   ],
+   "autoremesher": [
+    {
+     "seed": 1,
+     "seconds": 16.398,
+     "failure": null,
+     "metrics": {
+      "valid": false,
+      "vertices": 1289,
+      "faces": 1283,
+      "quads": 1273,
+      "non_manifold_edges": 0,
+      "misoriented_edges": 0,
+      "boundary_edges": 0,
+      "source_boundary_edges": 0,
+      "inverted_faces": 1,
+      "degenerate_faces": 0,
+      "components": 1,
+      "source_components": 1,
+      "irregular_vertices": 87,
+      "topological_minimum": null,
+      "irregular_excess": null,
+      "base_complex_patches": null,
+      "alignment": 16.859334315212806,
+      "angle_deviation_mean": 10.340617484869595,
+      "angle_deviation_p95": 29.59912369112854,
+      "aspect_mean": 1.7855747824210841,
+      "aspect_p95": 2.9710528208310256,
+      "area_variation": 0.6539935350292022,
+      "hausdorff": 0.030783688375742968,
+      "mean_distance": 0.0029023566449503995,
+      "thin_share": 0.026559417275271967,
+      "thin_distance": 0.5762384590978678,
+      "volume_ratio": 0.9587115777623372,
+      "budget_error": 0.5723333333333334
+     },
+     "against": 3000
+    }
    ]
   }
  },
@@ -16122,6 +17148,27 @@
     "volume_ratio": 0.995554578177419,
     "budget_error": 0.073,
     "seconds": 2.633
+   },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 0,
+    "failures": [],
+    "faces": 1165,
+    "irregular_vertices": 26,
+    "irregular_excess": null,
+    "base_complex_patches": null,
+    "alignment": 6.271836469561475,
+    "angle_deviation_mean": 9.451735687134148,
+    "angle_deviation_p95": 30.578422141965177,
+    "aspect_mean": 1.9342261079581953,
+    "area_variation": 0.5746769211101217,
+    "hausdorff": 0.00634724756892091,
+    "mean_distance": 0.0018851524146767668,
+    "thin_distance": null,
+    "volume_ratio": 0.9690234336033668,
+    "budget_error": 0.6116666666666667,
+    "seconds": 0.942
    },
    "instant-meshes": {
     "runs": 5,
@@ -16314,6 +17361,27 @@
     "budget_error": 0.022333333333333334,
     "seconds": 1.413
    },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 1,
+    "failures": [],
+    "faces": 2412,
+    "irregular_vertices": 20,
+    "irregular_excess": 12,
+    "base_complex_patches": 2412,
+    "alignment": 18.776333641694357,
+    "angle_deviation_mean": 7.483151440788127,
+    "angle_deviation_p95": 17.91320644392202,
+    "aspect_mean": 1.4087303424279163,
+    "area_variation": 0.33149629118694973,
+    "hausdorff": 0.007638010348319668,
+    "mean_distance": 0.0011573151207829434,
+    "thin_distance": null,
+    "volume_ratio": 0.994918758437241,
+    "budget_error": 0.196,
+    "seconds": 0.851
+   },
    "instant-meshes": {
     "runs": 5,
     "produced": 5,
@@ -16504,6 +17572,27 @@
     "volume_ratio": 0.9941319462109733,
     "budget_error": 0.111,
     "seconds": 1.694
+   },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 1,
+    "failures": [],
+    "faces": 1991,
+    "irregular_vertices": 20,
+    "irregular_excess": 12,
+    "base_complex_patches": 747,
+    "alignment": 9.576809267255442,
+    "angle_deviation_mean": 4.749940426599215,
+    "angle_deviation_p95": 13.44292978605111,
+    "aspect_mean": 1.839132525145703,
+    "area_variation": 0.5494833943795698,
+    "hausdorff": 0.002387819845987825,
+    "mean_distance": 0.000536790258832657,
+    "thin_distance": null,
+    "volume_ratio": 0.9896841428489397,
+    "budget_error": 0.3363333333333333,
+    "seconds": 1.188
    },
    "instant-meshes": {
     "runs": 5,
@@ -16696,6 +17785,27 @@
     "budget_error": 0.036333333333333336,
     "seconds": 1.568
    },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 0,
+    "failures": [],
+    "faces": 4039,
+    "irregular_vertices": 97,
+    "irregular_excess": null,
+    "base_complex_patches": null,
+    "alignment": 8.915544714337386,
+    "angle_deviation_mean": 9.01576902883627,
+    "angle_deviation_p95": 28.245598887925425,
+    "aspect_mean": 2.0298463458574365,
+    "area_variation": 0.4963415517282042,
+    "hausdorff": 0.013319003500685383,
+    "mean_distance": 0.0007998330646453779,
+    "thin_distance": null,
+    "volume_ratio": 0.9962671145756009,
+    "budget_error": 0.3463333333333333,
+    "seconds": 2.532
+   },
    "instant-meshes": {
     "runs": 5,
     "produced": 5,
@@ -16886,6 +17996,27 @@
     "volume_ratio": null,
     "budget_error": 0.01,
     "seconds": 3.224
+   },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 0,
+    "failures": [],
+    "faces": 1255,
+    "irregular_vertices": 69,
+    "irregular_excess": null,
+    "base_complex_patches": null,
+    "alignment": 13.192249763900406,
+    "angle_deviation_mean": 11.125142442253065,
+    "angle_deviation_p95": 41.630205043985455,
+    "aspect_mean": 1.871494614737627,
+    "area_variation": 0.6105983035600872,
+    "hausdorff": 0.03303908293623859,
+    "mean_distance": 0.0021670514935329477,
+    "thin_distance": 0.2885305501526204,
+    "volume_ratio": null,
+    "budget_error": 0.5816666666666667,
+    "seconds": 0.838
    },
    "instant-meshes": {
     "runs": 5,
@@ -17078,6 +18209,27 @@
     "budget_error": 0.03666666666666667,
     "seconds": 2.912
    },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 0,
+    "failures": [],
+    "faces": 1855,
+    "irregular_vertices": 117,
+    "irregular_excess": null,
+    "base_complex_patches": null,
+    "alignment": 15.74700266614076,
+    "angle_deviation_mean": 12.326560803114722,
+    "angle_deviation_p95": 37.420029514930434,
+    "aspect_mean": 2.476209980949298,
+    "area_variation": 0.672196017463125,
+    "hausdorff": 0.01776407206294459,
+    "mean_distance": 0.0012293271045914294,
+    "thin_distance": null,
+    "volume_ratio": null,
+    "budget_error": 0.38166666666666665,
+    "seconds": 1.623
+   },
    "instant-meshes": {
     "runs": 5,
     "produced": 5,
@@ -17268,6 +18420,27 @@
     "volume_ratio": 0.9999693498796378,
     "budget_error": 0.032,
     "seconds": 0.774
+   },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 1,
+    "failures": [],
+    "faces": 1260,
+    "irregular_vertices": 8,
+    "irregular_excess": 0,
+    "base_complex_patches": 36,
+    "alignment": 2.291128480296764,
+    "angle_deviation_mean": 3.605841060231516,
+    "angle_deviation_p95": 11.70962114846067,
+    "aspect_mean": 2.1744152402915944,
+    "area_variation": 0.6621891296873458,
+    "hausdorff": 0.010765529580915133,
+    "mean_distance": 0.0004389281008292503,
+    "thin_distance": null,
+    "volume_ratio": 0.9989097766787791,
+    "budget_error": 0.58,
+    "seconds": 0.495
    },
    "instant-meshes": {
     "runs": 5,
@@ -17460,6 +18633,27 @@
     "budget_error": 0.035666666666666666,
     "seconds": 1.804
    },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 1,
+    "failures": [],
+    "faces": 2086,
+    "irregular_vertices": 10,
+    "irregular_excess": 2,
+    "base_complex_patches": 2004,
+    "alignment": null,
+    "angle_deviation_mean": 7.653296709454566,
+    "angle_deviation_p95": 19.875637951209484,
+    "aspect_mean": 1.326338759734792,
+    "area_variation": 0.34084296008106874,
+    "hausdorff": 0.001541437063510274,
+    "mean_distance": 0.0004083255293325005,
+    "thin_distance": null,
+    "volume_ratio": 0.9958567724081941,
+    "budget_error": 0.30466666666666664,
+    "seconds": 0.631
+   },
    "instant-meshes": {
     "runs": 5,
     "produced": 5,
@@ -17650,6 +18844,27 @@
     "volume_ratio": 0.994648386386981,
     "budget_error": 0.008,
     "seconds": 1.547
+   },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 1,
+    "failures": [],
+    "faces": 2672,
+    "irregular_vertices": 0,
+    "irregular_excess": 0,
+    "base_complex_patches": 1,
+    "alignment": 10.37366983819414,
+    "angle_deviation_mean": 4.172631564750825,
+    "angle_deviation_p95": 11.065266149268965,
+    "aspect_mean": 2.5448566858766637,
+    "area_variation": 0.25600506528307587,
+    "hausdorff": 0.0014994289866374932,
+    "mean_distance": 0.0004650376004740381,
+    "thin_distance": null,
+    "volume_ratio": 0.9908511000357627,
+    "budget_error": 0.10933333333333334,
+    "seconds": 0.947
    },
    "instant-meshes": {
     "runs": 5,
@@ -17842,6 +19057,27 @@
     "budget_error": 0.042666666666666665,
     "seconds": 3.935
    },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 0,
+    "failures": [],
+    "faces": 1081,
+    "irregular_vertices": 84,
+    "irregular_excess": null,
+    "base_complex_patches": null,
+    "alignment": 16.236024159759207,
+    "angle_deviation_mean": 10.367793532754625,
+    "angle_deviation_p95": 32.56010730028763,
+    "aspect_mean": 1.8260026424657632,
+    "area_variation": 0.5896577967654189,
+    "hausdorff": 0.03105106607858558,
+    "mean_distance": 0.0030415156228365686,
+    "thin_distance": 0.6662025731496724,
+    "volume_ratio": null,
+    "budget_error": 0.6396666666666667,
+    "seconds": 1.513
+   },
    "instant-meshes": {
     "runs": 5,
     "produced": 5,
@@ -18032,6 +19268,27 @@
     "volume_ratio": 0.9936603798096936,
     "budget_error": 0.012,
     "seconds": 2.063
+   },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 1,
+    "failures": [],
+    "faces": 1284,
+    "irregular_vertices": 68,
+    "irregular_excess": 60,
+    "base_complex_patches": 1022,
+    "alignment": 12.077105924882044,
+    "angle_deviation_mean": 8.868464827236288,
+    "angle_deviation_p95": 24.76828456297858,
+    "aspect_mean": 1.4507907113477552,
+    "area_variation": 0.6660494309731013,
+    "hausdorff": 0.017262362752568084,
+    "mean_distance": 0.0015883367648042604,
+    "thin_distance": 0.5457158478230504,
+    "volume_ratio": 0.9744068093261762,
+    "budget_error": 0.572,
+    "seconds": 1.303
    },
    "instant-meshes": {
     "runs": 5,
@@ -18224,6 +19481,27 @@
     "budget_error": 0.024,
     "seconds": 2.034
    },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 1,
+    "failures": [],
+    "faces": 1583,
+    "irregular_vertices": 18,
+    "irregular_excess": 18,
+    "base_complex_patches": 533,
+    "alignment": 6.64075537838191,
+    "angle_deviation_mean": 7.069108788945875,
+    "angle_deviation_p95": 21.035684441333842,
+    "aspect_mean": 2.0904354547512063,
+    "area_variation": 0.4738086771998176,
+    "hausdorff": 0.0040271804922265226,
+    "mean_distance": 0.0009604221807234674,
+    "thin_distance": null,
+    "volume_ratio": 0.9809729794603461,
+    "budget_error": 0.4723333333333333,
+    "seconds": 1.075
+   },
    "instant-meshes": {
     "runs": 5,
     "produced": 5,
@@ -18414,6 +19692,27 @@
     "volume_ratio": 0.989284151693408,
     "budget_error": 0.10066666666666667,
     "seconds": 1.82
+   },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 0,
+    "failures": [],
+    "faces": 1343,
+    "irregular_vertices": 47,
+    "irregular_excess": null,
+    "base_complex_patches": null,
+    "alignment": 10.62065656901133,
+    "angle_deviation_mean": 9.13810863176731,
+    "angle_deviation_p95": 28.420651792963916,
+    "aspect_mean": 2.046035314073609,
+    "area_variation": 0.5216997029400001,
+    "hausdorff": 0.01770709297863878,
+    "mean_distance": 0.001082409723688892,
+    "thin_distance": 0.17739002886941724,
+    "volume_ratio": null,
+    "budget_error": 0.5523333333333333,
+    "seconds": 0.93
    },
    "instant-meshes": {
     "runs": 5,
@@ -18606,6 +19905,27 @@
     "budget_error": 0.10833333333333334,
     "seconds": 1.938
    },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 0,
+    "failures": [],
+    "faces": 1808,
+    "irregular_vertices": 99,
+    "irregular_excess": null,
+    "base_complex_patches": null,
+    "alignment": 11.384811656681908,
+    "angle_deviation_mean": 8.901298700997867,
+    "angle_deviation_p95": 29.127515434868187,
+    "aspect_mean": 1.8037133590239667,
+    "area_variation": 0.7128071570021131,
+    "hausdorff": 0.05249748623175466,
+    "mean_distance": 0.002185028218872422,
+    "thin_distance": 0.2909558506845162,
+    "volume_ratio": 0.9753627934083557,
+    "budget_error": 0.3973333333333333,
+    "seconds": 2.147
+   },
    "instant-meshes": {
     "runs": 5,
     "produced": 5,
@@ -18797,6 +20117,27 @@
     "budget_error": 0.04066666666666666,
     "seconds": 2.098
    },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 0,
+    "failures": [],
+    "faces": 1102,
+    "irregular_vertices": 84,
+    "irregular_excess": null,
+    "base_complex_patches": null,
+    "alignment": 17.975861728552715,
+    "angle_deviation_mean": 15.26013291906036,
+    "angle_deviation_p95": 53.905464954993505,
+    "aspect_mean": 2.330431363618541,
+    "area_variation": 2.551315304963211,
+    "hausdorff": 0.2006894845873082,
+    "mean_distance": 0.005546461225924912,
+    "thin_distance": 0.7608397084439567,
+    "volume_ratio": null,
+    "budget_error": 0.6326666666666667,
+    "seconds": 1.29
+   },
    "instant-meshes": {
     "runs": 5,
     "produced": 5,
@@ -18987,6 +20328,27 @@
     "volume_ratio": null,
     "budget_error": 0.305,
     "seconds": 2.766
+   },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 0,
+    "failures": [],
+    "faces": 636,
+    "irregular_vertices": 243,
+    "irregular_excess": null,
+    "base_complex_patches": null,
+    "alignment": 19.3910546766351,
+    "angle_deviation_mean": 31.060678589746274,
+    "angle_deviation_p95": 82.38225258453772,
+    "aspect_mean": 5.54113897464085,
+    "area_variation": 1.1929897024904241,
+    "hausdorff": 0.10828365675450737,
+    "mean_distance": 0.02196877955156619,
+    "thin_distance": 1.5741577100531086,
+    "volume_ratio": null,
+    "budget_error": 0.788,
+    "seconds": 1.324
    },
    "instant-meshes": {
     "runs": 5,
@@ -19181,6 +20543,27 @@
     "budget_error": null,
     "seconds": null
    },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 0,
+    "failures": [],
+    "faces": 1893,
+    "irregular_vertices": 63,
+    "irregular_excess": null,
+    "base_complex_patches": null,
+    "alignment": 9.168204033677739,
+    "angle_deviation_mean": 7.603814406986998,
+    "angle_deviation_p95": 22.56249724985939,
+    "aspect_mean": 1.7784568540802312,
+    "area_variation": 0.7654802615065195,
+    "hausdorff": 0.014762881408597614,
+    "mean_distance": 0.0010419660833324111,
+    "thin_distance": null,
+    "volume_ratio": null,
+    "budget_error": 0.369,
+    "seconds": 1.4
+   },
    "instant-meshes": {
     "runs": 5,
     "produced": 5,
@@ -19371,6 +20754,27 @@
     "volume_ratio": 0.9999734571440914,
     "budget_error": 0.024,
     "seconds": 1.394
+   },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 1,
+    "failures": [],
+    "faces": 1328,
+    "irregular_vertices": 12,
+    "irregular_excess": 4,
+    "base_complex_patches": 628,
+    "alignment": 3.783352708171299,
+    "angle_deviation_mean": 5.827784636562913,
+    "angle_deviation_p95": 18.793003833693447,
+    "aspect_mean": 1.9942849067750918,
+    "area_variation": 0.5720034234941179,
+    "hausdorff": 0.011650234763555473,
+    "mean_distance": 0.0004541465222070526,
+    "thin_distance": null,
+    "volume_ratio": 0.9983078561968811,
+    "budget_error": 0.5573333333333333,
+    "seconds": 0.399
    },
    "instant-meshes": {
     "runs": 5,
@@ -19563,6 +20967,27 @@
     "budget_error": 0.03333333333333333,
     "seconds": 1.787
    },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 1,
+    "failures": [],
+    "faces": 1306,
+    "irregular_vertices": 8,
+    "irregular_excess": 0,
+    "base_complex_patches": 68,
+    "alignment": 4.718151954641688,
+    "angle_deviation_mean": 8.13045039598464,
+    "angle_deviation_p95": 26.1316887606612,
+    "aspect_mean": 2.0189231111419135,
+    "area_variation": 0.6404574626070142,
+    "hausdorff": 0.009505101371936421,
+    "mean_distance": 0.0007899375836870492,
+    "thin_distance": null,
+    "volume_ratio": 0.9921464761556286,
+    "budget_error": 0.5646666666666667,
+    "seconds": 0.986
+   },
    "instant-meshes": {
     "runs": 5,
     "produced": 5,
@@ -19753,6 +21178,27 @@
     "volume_ratio": null,
     "budget_error": 0.09433333333333334,
     "seconds": 22.934
+   },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 0,
+    "failures": [],
+    "faces": 919,
+    "irregular_vertices": 45,
+    "irregular_excess": null,
+    "base_complex_patches": null,
+    "alignment": 20.271988664675554,
+    "angle_deviation_mean": 6.6997908002501125,
+    "angle_deviation_p95": 24.555330538069512,
+    "aspect_mean": 1.423378778981883,
+    "area_variation": 0.41273660926193806,
+    "hausdorff": 0.03494515452222988,
+    "mean_distance": 0.003050821153890671,
+    "thin_distance": 0.5682243567221693,
+    "volume_ratio": null,
+    "budget_error": 0.6936666666666667,
+    "seconds": 2.338
    },
    "instant-meshes": {
     "runs": 5,
@@ -19947,6 +21393,27 @@
     "budget_error": null,
     "seconds": null
    },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 0,
+    "failures": [],
+    "faces": 1325,
+    "irregular_vertices": 422,
+    "irregular_excess": null,
+    "base_complex_patches": null,
+    "alignment": 9.342576072586212,
+    "angle_deviation_mean": 32.26499925316488,
+    "angle_deviation_p95": 85.28076572444328,
+    "aspect_mean": 5.234793019601749,
+    "area_variation": 1.4433650080203155,
+    "hausdorff": 0.04466285438691324,
+    "mean_distance": 0.005890337040293245,
+    "thin_distance": 0.46822059249295317,
+    "volume_ratio": null,
+    "budget_error": 0.5583333333333333,
+    "seconds": 1.334
+   },
    "instant-meshes": {
     "runs": 5,
     "produced": 5,
@@ -20139,6 +21606,27 @@
     "volume_ratio": null,
     "budget_error": null,
     "seconds": null
+   },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 0,
+    "failures": [],
+    "faces": 870,
+    "irregular_vertices": 858,
+    "irregular_excess": null,
+    "base_complex_patches": null,
+    "alignment": 18.060185241666066,
+    "angle_deviation_mean": 52.533457939180096,
+    "angle_deviation_p95": 89.72295450705684,
+    "aspect_mean": 14.155034856042281,
+    "area_variation": 7.747763523756778,
+    "hausdorff": 0.009988067310170908,
+    "mean_distance": 0.002873068951194375,
+    "thin_distance": 0.87085537735738,
+    "volume_ratio": null,
+    "budget_error": 0.71,
+    "seconds": 1.327
    },
    "instant-meshes": {
     "runs": 5,
@@ -20335,6 +21823,27 @@
     "budget_error": null,
     "seconds": null
    },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 0,
+    "failures": [],
+    "faces": 4046,
+    "irregular_vertices": 1527,
+    "irregular_excess": null,
+    "base_complex_patches": null,
+    "alignment": 11.83640504265463,
+    "angle_deviation_mean": 48.87484730672298,
+    "angle_deviation_p95": 89.70001519102591,
+    "aspect_mean": 12.800839514823467,
+    "area_variation": 2.37294061840233,
+    "hausdorff": 0.07110326257302385,
+    "mean_distance": 0.00523278275849646,
+    "thin_distance": 0.2449742724927084,
+    "volume_ratio": null,
+    "budget_error": 0.3486666666666667,
+    "seconds": 1.107
+   },
    "instant-meshes": {
     "runs": 5,
     "produced": 5,
@@ -20527,6 +22036,27 @@
     "volume_ratio": null,
     "budget_error": null,
     "seconds": null
+   },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 0,
+    "failures": [],
+    "faces": 625,
+    "irregular_vertices": 125,
+    "irregular_excess": null,
+    "base_complex_patches": null,
+    "alignment": 14.566231458084635,
+    "angle_deviation_mean": 16.080737719489672,
+    "angle_deviation_p95": 44.8616797784315,
+    "aspect_mean": 2.516163018233589,
+    "area_variation": 0.9328792664851183,
+    "hausdorff": 0.08972095616095285,
+    "mean_distance": 0.009164712682340143,
+    "thin_distance": 1.2544264170950328,
+    "volume_ratio": null,
+    "budget_error": 0.7916666666666666,
+    "seconds": 1.051
    },
    "instant-meshes": {
     "runs": 5,
@@ -20721,6 +22251,27 @@
     "budget_error": null,
     "seconds": null
    },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 0,
+    "failures": [],
+    "faces": 4122,
+    "irregular_vertices": 2217,
+    "irregular_excess": null,
+    "base_complex_patches": null,
+    "alignment": 14.849570598181302,
+    "angle_deviation_mean": 41.315903297304494,
+    "angle_deviation_p95": 87.06899687000723,
+    "aspect_mean": 7.957019476988495,
+    "area_variation": 2.5470768956214345,
+    "hausdorff": 0.08783082902211264,
+    "mean_distance": 0.009066889125958587,
+    "thin_distance": 0.6259925264803219,
+    "volume_ratio": null,
+    "budget_error": 0.374,
+    "seconds": 2.612
+   },
    "instant-meshes": {
     "runs": 5,
     "produced": 5,
@@ -20914,6 +22465,27 @@
     "budget_error": null,
     "seconds": null
    },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 0,
+    "failures": [],
+    "faces": 2222,
+    "irregular_vertices": 338,
+    "irregular_excess": null,
+    "base_complex_patches": null,
+    "alignment": 7.280948956750457,
+    "angle_deviation_mean": 22.14262486321899,
+    "angle_deviation_p95": 84.37351721864385,
+    "aspect_mean": 4.205169866709538,
+    "area_variation": 2.439024761888952,
+    "hausdorff": 0.05021113841083951,
+    "mean_distance": 0.005701267855745675,
+    "thin_distance": 0.25004992635868367,
+    "volume_ratio": null,
+    "budget_error": 0.25933333333333336,
+    "seconds": 0.623
+   },
    "instant-meshes": {
     "runs": 5,
     "produced": 5,
@@ -21106,6 +22678,27 @@
     "volume_ratio": null,
     "budget_error": null,
     "seconds": null
+   },
+   "autoremesher": {
+    "runs": 1,
+    "produced": 1,
+    "valid": 0,
+    "failures": [],
+    "faces": 1283,
+    "irregular_vertices": 87,
+    "irregular_excess": null,
+    "base_complex_patches": null,
+    "alignment": 16.859334315212806,
+    "angle_deviation_mean": 10.340617484869595,
+    "angle_deviation_p95": 29.59912369112854,
+    "aspect_mean": 1.7855747824210841,
+    "area_variation": 0.6539935350292022,
+    "hausdorff": 0.030783688375742968,
+    "mean_distance": 0.0029023566449503995,
+    "thin_distance": 0.5762384590978678,
+    "volume_ratio": 0.9587115777623372,
+    "budget_error": 0.5723333333333334,
+    "seconds": 16.398
    },
    "instant-meshes": {
     "runs": 5,

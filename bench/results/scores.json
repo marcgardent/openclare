@@ -1,6 +1,18 @@
 {
  "1000": {
   "blob": {
+   "autoremesher": {
+    "alignment": 60.738998394810764,
+    "budget": 0.0,
+    "fidelity": 66.09199163291667,
+    "overall": 59.79030511709206,
+    "quads": 400,
+    "shape": 37.691377954616016,
+    "singularities": 60.0,
+    "speed": 100.0,
+    "structure": 21.499999999999996,
+    "validity": 100.0
+   },
    "instant-meshes": {
     "alignment": 20.55042219141683,
     "budget": 85.6,
@@ -111,6 +123,18 @@
    }
   },
   "blub": {
+   "autoremesher": {
+    "alignment": 35.13185970945479,
+    "budget": 0.0,
+    "fidelity": 18.23947599439802,
+    "overall": 18.26370253584867,
+    "quads": 604,
+    "shape": 47.939153830853954,
+    "singularities": 3.973509933774828,
+    "speed": 100.0,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 23.636092195532587,
     "budget": 94.0,
@@ -221,6 +245,18 @@
    }
   },
   "bob": {
+   "autoremesher": {
+    "alignment": 65.00355065398561,
+    "budget": 0.0,
+    "fidelity": 77.69239193301783,
+    "overall": 69.3329859608502,
+    "quads": 576,
+    "shape": 52.31213211918789,
+    "singularities": 79.16666666666666,
+    "speed": 100.0,
+    "structure": 78.29861111111111,
+    "validity": 100.0
+   },
    "instant-meshes": {
     "alignment": 7.220819415254012,
     "budget": 90.4,
@@ -331,6 +367,18 @@
    }
   },
   "bridge": {
+   "autoremesher": {
+    "alignment": 50.67361044136769,
+    "budget": 0.0,
+    "fidelity": 34.798921002851394,
+    "overall": 21.507324274652394,
+    "quads": 748,
+    "shape": 15.310994394112816,
+    "singularities": 27.807486631016037,
+    "speed": 100.0,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 40.25373655476249,
     "budget": 38.0,
@@ -441,6 +489,18 @@
    }
   },
   "cage": {
+   "autoremesher": {
+    "alignment": 60.89690351728466,
+    "budget": 0.0,
+    "fidelity": 0.0,
+    "overall": 27.587038440172748,
+    "quads": 1720,
+    "shape": 47.010410857737774,
+    "singularities": 69.76744186046511,
+    "speed": 100.0,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 54.70157031321008,
     "budget": 89.60000000000001,
@@ -551,6 +611,18 @@
    }
   },
   "camera": {
+   "autoremesher": {
+    "alignment": 58.18488661468219,
+    "budget": 95.19999999999999,
+    "fidelity": 32.05098879624536,
+    "overall": 27.331184886708677,
+    "quads": 988,
+    "shape": 0.0,
+    "singularities": 0.0,
+    "speed": 100.0,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 58.29695901410803,
     "budget": 0.0,
@@ -661,6 +733,18 @@
    }
   },
   "creature": {
+   "autoremesher": {
+    "alignment": 50.772491321915176,
+    "budget": 0.0,
+    "fidelity": 82.44542496123383,
+    "overall": 69.22587956762821,
+    "quads": 604,
+    "shape": 66.10992059240957,
+    "singularities": 93.3774834437086,
+    "speed": 100.0,
+    "structure": 49.006622516556284,
+    "validity": 100.0
+   },
    "instant-meshes": {
     "alignment": 46.990965657157226,
     "budget": 94.39999999999999,
@@ -771,6 +855,18 @@
    }
   },
   "cube": {
+   "autoremesher": {
+    "alignment": 85.55188671917631,
+    "budget": 0.0,
+    "fidelity": 53.307872576051466,
+    "overall": 46.71237248243301,
+    "quads": 573,
+    "shape": 76.92637690381825,
+    "singularities": 77.31239092495636,
+    "speed": 100.0,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 94.26142032146959,
     "budget": 60.0,
@@ -881,6 +977,18 @@
    }
   },
   "cylinder": {
+   "autoremesher": {
+    "alignment": 75.99726988534745,
+    "budget": 0.0,
+    "fidelity": 71.46183427293913,
+    "overall": 72.90634849123303,
+    "quads": 612,
+    "shape": 55.51659102845615,
+    "singularities": 100.0,
+    "speed": 100.0,
+    "structure": 73.20261437908498,
+    "validity": 100.0
+   },
    "instant-meshes": {
     "alignment": 78.38455748370207,
     "budget": 96.0,
@@ -991,6 +1099,18 @@
    }
   },
   "f16": {
+   "autoremesher": {
+    "alignment": 24.440834156656702,
+    "budget": 0.0,
+    "fidelity": 0.0,
+    "overall": 5.145438769822464,
+    "quads": 3146,
+    "shape": 0.0,
+    "singularities": 0.0,
+    "speed": 91.50447672428554,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 33.205617827752,
     "budget": 0.0,
@@ -1101,6 +1221,18 @@
    }
   },
   "jerry": {
+   "autoremesher": {
+    "alignment": 8.794292500499349,
+    "budget": 0.0,
+    "fidelity": 0.0,
+    "overall": 3.014528086061031,
+    "quads": 305,
+    "shape": 7.36628787772073,
+    "singularities": 0.0,
+    "speed": 100.0,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 14.381881839796351,
     "budget": 54.400000000000006,
@@ -1211,6 +1343,18 @@
    }
   },
   "lblock": {
+   "autoremesher": {
+    "alignment": 80.68551494698622,
+    "budget": 0.0,
+    "fidelity": 41.78566907527903,
+    "overall": 71.59204830885048,
+    "quads": 588,
+    "shape": 75.53301400679014,
+    "singularities": 89.79591836734693,
+    "speed": 100.0,
+    "structure": 77.55102040816327,
+    "validity": 100.0
+   },
    "instant-meshes": {
     "alignment": 95.31294131342962,
     "budget": 60.8,
@@ -1321,6 +1465,18 @@
    }
   },
   "mahaveer": {
+   "autoremesher": {
+    "alignment": 60.54508011269227,
+    "budget": 0.0,
+    "fidelity": 0.0,
+    "overall": 12.746332655303636,
+    "quads": 636,
+    "shape": 0.0,
+    "singularities": 0.0,
+    "speed": 91.78202441177542,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 48.797285780464456,
     "budget": 0.0,
@@ -1431,6 +1587,18 @@
    }
   },
   "marine": {
+   "autoremesher": {
+    "alignment": null,
+    "budget": 56.00000000000001,
+    "fidelity": 38.788035309219126,
+    "overall": 15.224273728510495,
+    "quads": 1110,
+    "shape": 0.0,
+    "singularities": 0.0,
+    "speed": 92.97977889187287,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 14.14572456936911,
     "budget": 0.0,
@@ -1541,6 +1709,18 @@
    }
   },
   "ogre": {
+   "autoremesher": {
+    "alignment": 24.008264760577575,
+    "budget": 0.0,
+    "fidelity": 0.0,
+    "overall": 10.433025536816508,
+    "quads": 311,
+    "shape": 34.064808719067784,
+    "singularities": 0.0,
+    "speed": 98.90157350073335,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 16.120111348807598,
     "budget": 72.8,
@@ -1651,6 +1831,18 @@
    }
   },
   "ogre_hp": {
+   "autoremesher": {
+    "alignment": 15.881445879343548,
+    "budget": 0.0,
+    "fidelity": 0.0,
+    "overall": 7.30334471899807,
+    "quads": 334,
+    "shape": 25.07925538119638,
+    "singularities": 0.0,
+    "speed": 32.9133657301542,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 13.01377730722087,
     "budget": 76.0,
@@ -1761,6 +1953,18 @@
    }
   },
   "part": {
+   "autoremesher": {
+    "alignment": 13.57769909866925,
+    "budget": 0.0,
+    "fidelity": 0.0,
+    "overall": 3.169667719000095,
+    "quads": 348,
+    "shape": 1.9709634221082695,
+    "singularities": 0.0,
+    "speed": 100.0,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 35.107770894488574,
     "budget": 85.6,
@@ -1871,6 +2075,18 @@
    }
   },
   "pig": {
+   "autoremesher": {
+    "alignment": 35.14571152889626,
+    "budget": 0.0,
+    "fidelity": 5.127473893436485,
+    "overall": 14.42309110825132,
+    "quads": 548,
+    "shape": 39.3578210869602,
+    "singularities": 0.0,
+    "speed": 100.0,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 28.40121542717482,
     "budget": 64.0,
@@ -1981,6 +2197,18 @@
    }
   },
   "rock": {
+   "autoremesher": {
+    "alignment": 14.395628380203236,
+    "budget": 11.2,
+    "fidelity": 71.81152491015332,
+    "overall": 60.66784170675756,
+    "quads": 778,
+    "shape": 62.70656482333211,
+    "singularities": 97.42930591259639,
+    "speed": 100.0,
+    "structure": 34.96143958868895,
+    "validity": 100.0
+   },
    "instant-meshes": {
     "alignment": 0.0,
     "budget": 86.4,
@@ -2091,6 +2319,18 @@
    }
   },
   "rose": {
+   "autoremesher": {
+    "alignment": 18.90362054842034,
+    "budget": 0.0,
+    "fidelity": 0.0,
+    "overall": 3.9797095891411236,
+    "quads": 157,
+    "shape": 0.0,
+    "singularities": 0.0,
+    "speed": 100.0,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 17.395702824048918,
     "budget": 0.0,
@@ -2201,6 +2441,18 @@
    }
   },
   "sphere": {
+   "autoremesher": {
+    "alignment": null,
+    "budget": 7.199999999999996,
+    "fidelity": 93.88003921818483,
+    "overall": 76.19044055960198,
+    "quads": 768,
+    "shape": 74.3356437663591,
+    "singularities": 100.0,
+    "speed": 100.0,
+    "structure": 0.0,
+    "validity": 100.0
+   },
    "instant-meshes": {
     "alignment": null,
     "budget": 73.6,
@@ -2311,6 +2563,18 @@
    }
   },
   "spot": {
+   "autoremesher": {
+    "alignment": 24.526305372166856,
+    "budget": 0.0,
+    "fidelity": 8.34404030627603,
+    "overall": 15.302116029138931,
+    "quads": 404,
+    "shape": 53.557389692279095,
+    "singularities": 3.4653465346534595,
+    "speed": 100.0,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 20.722595486507785,
     "budget": 93.6,
@@ -2421,6 +2685,18 @@
    }
   },
   "suzanne": {
+   "autoremesher": {
+    "alignment": 18.7950088297709,
+    "budget": 0.0,
+    "fidelity": 0.0,
+    "overall": 10.163020226976936,
+    "quads": 357,
+    "shape": 20.844716911020054,
+    "singularities": 32.773109243697476,
+    "speed": 100.0,
+    "structure": 0.0,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 20.7186299577075,
     "budget": 83.2,
@@ -2531,6 +2807,18 @@
    }
   },
   "terrain": {
+   "autoremesher": {
+    "alignment": 0.36427580053725706,
+    "budget": 0.0,
+    "fidelity": 0.0,
+    "overall": 0.35010044194495965,
+    "quads": 308,
+    "shape": 0.0,
+    "singularities": 2.5974025974026027,
+    "speed": 85.36064096129297,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 15.58130577335553,
     "budget": 0.0,
@@ -2641,6 +2929,18 @@
    }
   },
   "torus": {
+   "autoremesher": {
+    "alignment": 91.39277287561963,
+    "budget": 0.0,
+    "fidelity": 89.16458649959023,
+    "overall": 83.2194052467134,
+    "quads": 728,
+    "shape": 77.15353885679384,
+    "singularities": 100.0,
+    "speed": 100.0,
+    "structure": 99.86263736263736,
+    "validity": 100.0
+   },
    "instant-meshes": {
     "alignment": 60.987191087591334,
     "budget": 78.4,
@@ -2751,6 +3051,18 @@
    }
   },
   "venturi": {
+   "autoremesher": {
+    "alignment": 61.60446361116156,
+    "budget": 0.0,
+    "fidelity": 18.103207153290807,
+    "overall": 15.827761889711509,
+    "quads": 2390,
+    "shape": 0.0,
+    "singularities": 0.0,
+    "speed": 100.0,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 42.77350849878416,
     "budget": 0.0,
@@ -2861,6 +3173,18 @@
    }
   },
   "wolf": {
+   "autoremesher": {
+    "alignment": 35.90002793290317,
+    "budget": 0.0,
+    "fidelity": 0.0,
+    "overall": 7.5579006174533,
+    "quads": 180,
+    "shape": 0.0,
+    "singularities": 0.0,
+    "speed": 100.0,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 37.33992717986595,
     "budget": 46.4,
@@ -2973,6 +3297,18 @@
  },
  "3000": {
   "blob": {
+   "autoremesher": {
+    "alignment": 72.12517124639345,
+    "budget": 0.0,
+    "fidelity": 87.30550486215819,
+    "overall": 45.473998480630996,
+    "quads": 1165,
+    "shape": 52.741321564329255,
+    "singularities": 77.6824034334764,
+    "speed": 100.0,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 30.046958750155166,
     "budget": 88.0,
@@ -3083,6 +3419,18 @@
    }
   },
   "blub": {
+   "autoremesher": {
+    "alignment": 52.797081915505196,
+    "budget": 0.0,
+    "fidelity": 64.5539041344195,
+    "overall": 36.72557140027109,
+    "quads": 1343,
+    "shape": 54.30945684116345,
+    "singularities": 65.00372300819062,
+    "speed": 100.0,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 31.354836234060148,
     "budget": 95.19999999999999,
@@ -3193,6 +3541,18 @@
    }
   },
   "bob": {
+   "autoremesher": {
+    "alignment": 70.48553165163595,
+    "budget": 0.0,
+    "fidelity": 91.94563901554696,
+    "overall": 74.76652678172684,
+    "quads": 1583,
+    "shape": 64.65445605527063,
+    "singularities": 88.62918509159822,
+    "speed": 98.23364495878246,
+    "structure": 66.32975363234365,
+    "validity": 100.0
+   },
    "instant-meshes": {
     "alignment": 7.544580639731464,
     "budget": 94.66666666666667,
@@ -3303,6 +3663,18 @@
    }
   },
   "bridge": {
+   "autoremesher": {
+    "alignment": 59.252426516987825,
+    "budget": 0.0,
+    "fidelity": 70.47423718280477,
+    "overall": 40.41127301307822,
+    "quads": 1893,
+    "shape": 61.98092796506501,
+    "singularities": 66.71949286846277,
+    "speed": 91.78202441177542,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 44.10920794885077,
     "budget": 87.06666666666666,
@@ -3413,6 +3785,18 @@
    }
   },
   "cage": {
+   "autoremesher": {
+    "alignment": 60.375356825167174,
+    "budget": 0.0,
+    "fidelity": 73.36199299862923,
+    "overall": 40.964167360599234,
+    "quads": 4039,
+    "shape": 54.92115485581864,
+    "singularities": 75.98415449368655,
+    "speed": 77.30993349085075,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 64.561429192447,
     "budget": 92.53333333333333,
@@ -3523,6 +3907,18 @@
    }
   },
   "camera": {
+   "autoremesher": {
+    "alignment": 67.64022685888685,
+    "budget": 0.0,
+    "fidelity": 24.995007364131634,
+    "overall": 18.1866278698917,
+    "quads": 2222,
+    "shape": 0.0,
+    "singularities": 0.0,
+    "speed": 100.0,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 62.48974544760786,
     "budget": 0.0,
@@ -3633,6 +4029,18 @@
    }
   },
   "creature": {
+   "autoremesher": {
+    "alignment": 57.43640325664248,
+    "budget": 0.0,
+    "fidelity": 95.22436030802434,
+    "overall": 74.7298254348404,
+    "quads": 1991,
+    "shape": 76.25029786700392,
+    "singularities": 93.97287795077851,
+    "speed": 95.79245912691438,
+    "structure": 62.48116524359618,
+    "validity": 100.0
+   },
    "instant-meshes": {
     "alignment": 46.26131486916076,
     "budget": 90.66666666666666,
@@ -3743,6 +4151,18 @@
    }
   },
   "cube": {
+   "autoremesher": {
+    "alignment": 89.81720675423661,
+    "budget": 0.0,
+    "fidelity": 78.46894083816974,
+    "overall": 81.886544538542,
+    "quads": 1260,
+    "shape": 81.97079469884241,
+    "singularities": 100.0,
+    "speed": 100.0,
+    "structure": 97.14285714285714,
+    "validity": 100.0
+   },
    "instant-meshes": {
     "alignment": 91.25638440119627,
     "budget": 96.0,
@@ -3853,6 +4273,18 @@
    }
   },
   "cylinder": {
+   "autoremesher": {
+    "alignment": 79.03043575714806,
+    "budget": 0.0,
+    "fidelity": 80.98979725612716,
+    "overall": 76.5963820362752,
+    "quads": 1306,
+    "shape": 59.3477480200768,
+    "singularities": 100.0,
+    "speed": 100.0,
+    "structure": 94.79326186830015,
+    "validity": 100.0
+   },
    "instant-meshes": {
     "alignment": 75.74712158656278,
     "budget": 86.66666666666667,
@@ -3963,6 +4395,18 @@
    }
   },
   "f16": {
+   "autoremesher": {
+    "alignment": 34.00190845252755,
+    "budget": 0.0,
+    "fidelity": 0.0,
+    "overall": 7.15829651632159,
+    "quads": 4122,
+    "shape": 0.0,
+    "singularities": 0.0,
+    "speed": 76.55018533923518,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 43.955517644497526,
     "budget": 0.0,
@@ -4073,6 +4517,18 @@
    }
   },
   "jerry": {
+   "autoremesher": {
+    "alignment": 20.107281206432376,
+    "budget": 0.0,
+    "fidelity": 0.0,
+    "overall": 10.477738962932762,
+    "quads": 1102,
+    "shape": 23.699335404698196,
+    "singularities": 23.774954627949185,
+    "speed": 93.78063534947385,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 18.463440805990498,
     "budget": 94.53333333333333,
@@ -4183,6 +4639,18 @@
    }
   },
   "lblock": {
+   "autoremesher": {
+    "alignment": 83.18509907479422,
+    "budget": 0.0,
+    "fidelity": 76.69953047288907,
+    "overall": 76.10544825786761,
+    "quads": 1328,
+    "shape": 70.86107681718542,
+    "singularities": 96.98795180722891,
+    "speed": 100.0,
+    "structure": 52.71084337349398,
+    "validity": 100.0
+   },
    "instant-meshes": {
     "alignment": 93.16208497371414,
     "budget": 70.66666666666667,
@@ -4293,6 +4761,18 @@
    }
   },
   "mahaveer": {
+   "autoremesher": {
+    "alignment": 58.477439677394614,
+    "budget": 0.0,
+    "fidelity": 8.515086363791447,
+    "overall": 13.655527252681726,
+    "quads": 1325,
+    "shape": 0.0,
+    "singularities": 0.0,
+    "speed": 92.96146323022143,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 55.70058292146118,
     "budget": 0.0,
@@ -4403,6 +4883,18 @@
    }
   },
   "marine": {
+   "autoremesher": {
+    "alignment": 19.73251003703971,
+    "budget": 0.0,
+    "fidelity": 40.011932689829095,
+    "overall": 10.471886221981375,
+    "quads": 870,
+    "shape": 0.0,
+    "singularities": 0.0,
+    "speed": 93.08996223814337,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 20.970685835487473,
     "budget": 0.0,
@@ -4513,6 +5005,18 @@
    }
   },
   "ogre": {
+   "autoremesher": {
+    "alignment": 27.83989262329241,
+    "budget": 0.0,
+    "fidelity": 18.94893392141442,
+    "overall": 18.804095441679102,
+    "quads": 1081,
+    "shape": 48.161032336226874,
+    "singularities": 22.294172062904714,
+    "speed": 89.88618499217175,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 17.47426311232199,
     "budget": 83.2,
@@ -4623,6 +5127,18 @@
    }
   },
   "ogre_hp": {
+   "autoremesher": {
+    "alignment": 25.069625265720862,
+    "budget": 0.0,
+    "fidelity": 19.216311624257035,
+    "overall": 19.326238536699734,
+    "quads": 1283,
+    "shape": 48.29691257565203,
+    "singularities": 32.19017926734217,
+    "speed": 31.682364938628915,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 18.056534208474694,
     "budget": 78.13333333333333,
@@ -4733,6 +5249,18 @@
    }
   },
   "part": {
+   "autoremesher": {
+    "alignment": 30.01332148381884,
+    "budget": 0.0,
+    "fidelity": 64.47185587411083,
+    "overall": 26.44341520790737,
+    "quads": 1855,
+    "shape": 38.36719598442639,
+    "singularities": 36.92722371967655,
+    "speed": 88.17206805209317,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 37.96352366555788,
     "budget": 91.73333333333333,
@@ -4843,6 +5371,18 @@
    }
   },
   "pig": {
+   "autoremesher": {
+    "alignment": 49.40083708141374,
+    "budget": 0.0,
+    "fidelity": 20.90441493154838,
+    "overall": 27.225465172055205,
+    "quads": 1808,
+    "shape": 55.49350649501067,
+    "singularities": 45.24336283185841,
+    "speed": 81.33836790516811,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 27.810059950787494,
     "budget": 95.73333333333333,
@@ -4953,6 +5493,18 @@
    }
   },
   "rock": {
+   "autoremesher": {
+    "alignment": 16.549628259136192,
+    "budget": 21.599999999999998,
+    "fidelity": 84.72397930336066,
+    "overall": 62.06864652892929,
+    "quads": 2412,
+    "shape": 62.58424279605937,
+    "singularities": 95.02487562189054,
+    "speed": 100.0,
+    "structure": 0.0,
+    "validity": 100.0
+   },
    "instant-meshes": {
     "alignment": 0.0,
     "budget": 86.4,
@@ -5063,6 +5615,18 @@
    }
   },
   "rose": {
+   "autoremesher": {
+    "alignment": 13.817534770510665,
+    "budget": 0.0,
+    "fidelity": 0.0,
+    "overall": 2.908954688528561,
+    "quads": 636,
+    "shape": 0.0,
+    "singularities": 0.0,
+    "speed": 93.14524087434164,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 15.259748942946125,
     "budget": 0.0,
@@ -5173,6 +5737,18 @@
    }
   },
   "sphere": {
+   "autoremesher": {
+    "alignment": null,
+    "budget": 0.0,
+    "fidelity": 96.91712587297945,
+    "overall": 73.62283436224449,
+    "quads": 2086,
+    "shape": 61.733516452727166,
+    "singularities": 99.0412272291467,
+    "speed": 100.0,
+    "structure": 3.9309683604985657,
+    "validity": 100.0
+   },
    "instant-meshes": {
     "alignment": null,
     "budget": 88.0,
@@ -5283,6 +5859,18 @@
    }
   },
   "spot": {
+   "autoremesher": {
+    "alignment": 46.32397366719091,
+    "budget": 0.0,
+    "fidelity": 32.73763724743192,
+    "overall": 53.871443725047875,
+    "quads": 1284,
+    "shape": 55.65767586381857,
+    "singularities": 53.271028037383175,
+    "speed": 93.53573461831299,
+    "structure": 20.40498442367601,
+    "validity": 100.0
+   },
    "instant-meshes": {
     "alignment": 23.707488993763537,
     "budget": 94.13333333333334,
@@ -5393,6 +5981,18 @@
    }
   },
   "suzanne": {
+   "autoremesher": {
+    "alignment": 41.367778827109305,
+    "budget": 0.0,
+    "fidelity": 38.10786204849937,
+    "overall": 26.471442392504713,
+    "quads": 1255,
+    "shape": 44.37428778873468,
+    "singularities": 45.019920318725106,
+    "speed": 100.0,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 24.335135019749305,
     "budget": 90.66666666666666,
@@ -5503,6 +6103,18 @@
    }
   },
   "terrain": {
+   "autoremesher": {
+    "alignment": 9.902272601441982,
+    "budget": 0.0,
+    "fidelity": 15.054845477770119,
+    "overall": 20.33390681425263,
+    "quads": 919,
+    "shape": 66.50104599874943,
+    "singularities": 51.03373231773667,
+    "speed": 79.25685417670508,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 5.919991200279924,
     "budget": 0.0,
@@ -5613,6 +6225,18 @@
    }
   },
   "torus": {
+   "autoremesher": {
+    "alignment": 53.89480071913716,
+    "budget": 56.266666666666666,
+    "fidelity": 97.00114202672502,
+    "overall": 82.8244531834547,
+    "quads": 2672,
+    "shape": 79.13684217624588,
+    "singularities": 100.0,
+    "speed": 100.0,
+    "structure": 99.9625748502994,
+    "validity": 100.0
+   },
    "instant-meshes": {
     "alignment": 36.51805937975145,
     "budget": 89.60000000000001,
@@ -5723,6 +6347,18 @@
    }
   },
   "venturi": {
+   "autoremesher": {
+    "alignment": 47.39375536597943,
+    "budget": 0.0,
+    "fidelity": 25.502572750729158,
+    "overall": 14.004354721900274,
+    "quads": 4046,
+    "shape": 0.0,
+    "singularities": 0.0,
+    "speed": 97.51721790431506,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 47.37857939072364,
     "budget": 31.866666666666667,
@@ -5833,6 +6469,18 @@
    }
   },
   "wolf": {
+   "autoremesher": {
+    "alignment": 35.261193519623845,
+    "budget": 0.0,
+    "fidelity": 0.0,
+    "overall": 10.51756359400791,
+    "quads": 625,
+    "shape": 19.59631140255164,
+    "singularities": 0.0,
+    "speed": 98.78510244707354,
+    "structure": null,
+    "validity": 0.0
+   },
    "instant-meshes": {
     "alignment": 34.07160302649571,
     "budget": 69.86666666666666,
