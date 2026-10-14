@@ -5,6 +5,8 @@ active object into quads. The result is a new object, next to the original,
 which is left as it is.
 """
 
+import time
+
 import bpy
 import mathutils
 
@@ -92,6 +94,153 @@ def target_changed(settings, context):
         settings.largest_quad, settings.smallest_quad = sizes_from(owner)
 
 
+# Shapes analysed: by object name, the engine's analysis, what it was made
+# from (to tell when it no longer holds), and the scale of the object then.
+ANALYSES = {}
+# The last count asked of an analysis, which the panel draws again and again.
+COUNTED = {}
+# The preview of the sizes: the copy shown, the object hidden for it, and how
+# the 3D views coloured their objects before.
+PREVIEW = {}
+# Sequential colours of the sizes, light for the largest quads to dark for the
+# smallest, and the colour of what is coarser than its shape asks.
+SIZE_RAMP = ["#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b"]
+COARSER = "#e34948"
+
+
+def analysis_key(settings, owner, evaluated_mesh):
+    """What an analysis depends on: the mesh as seen and the settings that
+    say what the shape calls for."""
+    vertices = len(evaluated_mesh.vertices)
+    corner = tuple(round(c, 5) for c in evaluated_mesh.vertices[0].co) if vertices else ()
+    return (owner.name, vertices, len(evaluated_mesh.polygons), corner, settings.preset,
+            round(settings.adaptive_size, 3), settings.density_group, round(settings.density_factor, 3))
+
+
+def scale_of(owner):
+    """How long a unit of the mesh is in the scene."""
+    return sum(abs(factor) for factor in owner.matrix_world.to_scale()) / 3.0 or 1.0
+
+
+def analysis_of(context, settings, owner):
+    """The analysis of `owner` as it is now, if it was made: (analysis,
+    scale), or None."""
+    held = ANALYSES.get(owner.name)
+    if held is None:
+        return None
+    evaluated = owner.evaluated_get(context.evaluated_depsgraph_get())
+    mesh = evaluated.to_mesh()
+    try:
+        current = analysis_key(settings, owner, mesh)
+    finally:
+        evaluated.to_mesh_clear()
+    return (held["analysis"], scale_of(owner)) if held["key"] == current else None
+
+
+def counted(analysis, scale, largest, smallest):
+    """How many quads and how much is coarser than asked, for sizes in the
+    units of the scene; the last answer is kept."""
+    asked = (id(analysis), round(largest, 9), round(smallest, 9), scale)
+    if COUNTED.get("asked") != asked:
+        COUNTED["asked"], COUNTED["answer"] = asked, analysis.count(largest / scale, smallest / scale)
+    return COUNTED["answer"]
+
+
+def linear(hex_colour):
+    """A colour written as #rrggbb, in the linear values Blender keeps."""
+    channels = [int(hex_colour[k : k + 2], 16) / 255.0 for k in (1, 3, 5)]
+    return [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in channels] + [1.0]
+
+
+def colour_sizes(settings):
+    """Colours the preview with the sizes asked for now."""
+    import numpy
+
+    shown = PREVIEW.get("object")
+    held = ANALYSES.get(PREVIEW.get("of", ""))
+    if shown is None or held is None or shown.name not in bpy.data.objects:
+        return
+    scale = PREVIEW["scale"]
+    largest = settings.largest_quad / scale
+    smallest = min(settings.smallest_quad / scale, largest) or largest / SIZE_RANGE
+    sizes, coarser = held["analysis"].at_vertices(largest, smallest)
+    ramp = numpy.array([linear(colour) for colour in SIZE_RAMP], numpy.float32)
+    span = max(numpy.log(largest / smallest), 1e-9)
+    # From light (largest) to dark (smallest), as a logarithm of the size.
+    t = numpy.clip(numpy.log(largest / numpy.nan_to_num(sizes, nan=largest)) / span, 0.0, 1.0) * (len(ramp) - 1)
+    low = numpy.floor(t).astype(int).clip(0, len(ramp) - 2)
+    part = (t - low)[:, None]
+    colours = ramp[low] * (1.0 - part) + ramp[low + 1] * part
+    colours[coarser] = linear(COARSER)
+    mesh = shown.data
+    attribute = mesh.color_attributes.get("openclare sizes") or mesh.color_attributes.new(
+        "openclare sizes", "FLOAT_COLOR", "POINT"
+    )
+    attribute.data.foreach_set("color", colours.astype(numpy.float32).ravel())
+    mesh.color_attributes.active_color = attribute
+    mesh.update()
+
+
+def stop_preview(context):
+    """Takes the preview away and shows the object again."""
+    shown, hidden = PREVIEW.pop("object", None), PREVIEW.pop("hidden", None)
+    PREVIEW.pop("of", None)
+    if shown is not None and shown.name in bpy.data.objects:
+        mesh = shown.data
+        bpy.data.objects.remove(shown)
+        if mesh.users == 0:
+            bpy.data.meshes.remove(mesh)
+    if hidden is not None and hidden.name in bpy.data.objects:
+        hidden.hide_set(False)
+    for space, colour_type in PREVIEW.pop("views", []):
+        try:
+            space.shading.color_type = colour_type
+        except ReferenceError:
+            pass
+
+
+def start_preview(context, settings, owner):
+    """Shows a copy of the object as seen, coloured with its sizes, in its
+    place, and hides the object meanwhile."""
+    stop_preview(context)
+    evaluated = owner.evaluated_get(context.evaluated_depsgraph_get())
+    mesh = bpy.data.meshes.new_from_object(evaluated)
+    mesh.name = f"{owner.data.name}.sizes"
+    shown = bpy.data.objects.new(f"{owner.name}.sizes", mesh)
+    shown.matrix_world = owner.matrix_world
+    for collection in owner.users_collection:
+        collection.objects.link(shown)
+    owner.hide_set(True)
+    PREVIEW.update(object=shown, hidden=owner, of=owner.name, scale=scale_of(owner))
+    # The 3D views show the colour attribute meanwhile ("VERTEX", shown as
+    # Attribute).
+    PREVIEW["views"] = []
+    for area in context.screen.areas if context.screen else []:
+        if area.type == "VIEW_3D":
+            space = area.spaces.active
+            PREVIEW["views"].append((space, space.shading.color_type))
+            space.shading.color_type = "VERTEX"
+    colour_sizes(settings)
+
+
+def sizes_changed(settings, context):
+    """The sizes moved: the preview follows."""
+    if PREVIEW.get("object") is not None:
+        colour_sizes(settings)
+
+
+def show_sizes_changed(settings, context):
+    if not settings.show_sizes:
+        stop_preview(context)
+        return
+    owner = object_to_remesh(context)
+    if owner is None or analysis_of(context, settings, owner) is None:
+        # Nothing to show before the object is analysed as it is.
+        settings.show_sizes = False
+        return
+    start_preview(context, settings, owner)
+
+
 class OpenclareSettings(bpy.types.PropertyGroup):
     source: bpy.props.PointerProperty(
         name="Object",
@@ -142,6 +291,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         min=0.0,
         subtype="DISTANCE",
         precision=4,
+        update=sizes_changed,
     )
     smallest_quad: bpy.props.FloatProperty(
         name="Smallest",
@@ -153,6 +303,17 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         min=0.0,
         subtype="DISTANCE",
         precision=4,
+        update=sizes_changed,
+    )
+    show_sizes: bpy.props.BoolProperty(
+        name="Show Sizes",
+        description=(
+            "Colour the object with the size its quads will have: light where they are largest, dark where "
+            "they are smallest, red where its shape calls for quads smaller than the smallest. Shown on a "
+            "copy, in Solid view by attribute; the object itself is hidden meanwhile and left as it is"
+        ),
+        default=False,
+        update=show_sizes_changed,
     )
     adaptive_size: bpy.props.FloatProperty(
         name="Adaptive Size",
@@ -557,6 +718,61 @@ def worth_a_line(message):
 STAGES = 9
 
 
+class OPENCLARE_OT_analyse(bpy.types.Operator):
+    """Measure what the shape asks for, and propose a largest and a smallest quad: how many quads any sizes
+    make is then shown at once"""
+
+    bl_idname = "object.openclare_analyse"
+    bl_label = "Analyse"
+    bl_options = {"REGISTER"}
+
+    @classmethod
+    def poll(cls, context):
+        return object_to_remesh(context) is not None
+
+    def execute(self, context):
+        import numpy
+
+        settings = context.scene.openclare
+        owner = object_to_remesh(context)
+        evaluated = owner.evaluated_get(context.evaluated_depsgraph_get())
+        mesh = evaluated.to_mesh()
+        try:
+            mesh.calc_loop_triangles()
+            positions = numpy.empty(3 * len(mesh.vertices), numpy.float32)
+            mesh.vertices.foreach_get("co", positions)
+            triangles = numpy.empty(3 * len(mesh.loop_triangles), numpy.uint32)
+            mesh.loop_triangles.foreach_get("vertices", triangles)
+            engine_settings = {"adaptivity": settings.adaptive_size / 100.0}
+            density = None
+            if settings.density_group:
+                density = weights_of(evaluated, mesh, settings.density_group)
+                engine_settings["density_contrast"] = settings.density_factor
+            key = analysis_key(settings, owner, mesh)
+            started = time.perf_counter()
+            analysis = engine.Analysis(positions, triangles, settings.preset, engine_settings, density)
+            seconds = time.perf_counter() - started
+        except engine.EngineError as error:
+            self.report({"ERROR"}, f"openclare: {error}")
+            return {"CANCELLED"}
+        finally:
+            evaluated.to_mesh_clear()
+        stop_preview(context)
+        settings.show_sizes = False
+        ANALYSES[owner.name] = {"analysis": analysis, "key": key}
+        scale = scale_of(owner)
+        largest, smallest = analysis.proposal()
+        settings.target = "SIZE"
+        settings.largest_quad, settings.smallest_quad = largest * scale, smallest * scale
+        quads, below = analysis.count(largest, smallest)
+        self.report(
+            {"INFO"},
+            f"openclare: '{owner.name}' analysed in {seconds:.1f} s; proposed: about {quads:.0f} quads, "
+            f"{100.0 * below:.0f} % of it coarser than its shape asks",
+        )
+        return {"FINISHED"}
+
+
 class OPENCLARE_OT_remesh(bpy.types.Operator):
     """Remesh the active object into quads, as a new object next to it"""
 
@@ -588,6 +804,8 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
 
     def execute(self, context):
         settings = context.scene.openclare
+        if PREVIEW.get("object") is not None:
+            settings.show_sizes = False
         original = object_to_remesh(context)
         self.drawn, self.stages = 0.0, []
         last_report.clear()
@@ -1084,9 +1302,31 @@ class OPENCLARE_PT_panel(bpy.types.Panel):
         layout.prop(settings, "preset")
         layout.prop(settings, "target", expand=True)
         if settings.target == "SIZE":
+            layout.operator(OPENCLARE_OT_analyse.bl_idname, icon="VIEWZOOM")
             sizes = layout.column(align=True)
             sizes.prop(settings, "largest_quad")
             sizes.prop(settings, "smallest_quad")
+            owner = object_to_remesh(context)
+            held = analysis_of(context, settings, owner) if owner is not None else None
+            if held is None:
+                note = "Analyse to see how many quads these sizes make" if owner is not None else ""
+                if owner is not None and owner.name in ANALYSES:
+                    note = "The object or its settings changed: analyse again"
+                if note:
+                    layout.label(text=note, icon="INFO")
+            elif settings.largest_quad > 0.0:
+                analysis, scale = held
+                smallest = min(settings.smallest_quad, settings.largest_quad) or settings.largest_quad / SIZE_RANGE
+                try:
+                    quads, below = counted(analysis, scale, settings.largest_quad, smallest)
+                except engine.EngineError:
+                    quads, below = None, None
+                if quads is not None:
+                    column = layout.column(align=True)
+                    column.label(text=f"About {quads:,.0f} quads".replace(",", " "), icon="MESH_GRID")
+                    if below >= 0.005:
+                        column.label(text=f"{100.0 * below:.0f} % coarser than its shape asks", icon="ERROR")
+                layout.prop(settings, "show_sizes")
         else:
             layout.prop(settings, "quads")
         layout.prop(settings, "adaptive_size", slider=True)
@@ -1191,6 +1431,7 @@ class OPENCLARE_PT_relief(bpy.types.Panel):
 
 CLASSES = (
     OpenclareSettings,
+    OPENCLARE_OT_analyse,
     OPENCLARE_OT_remesh,
     OPENCLARE_OT_bake_relief,
     OPENCLARE_OT_curves_assign,
@@ -1215,6 +1456,9 @@ def register():
 
 
 def unregister():
+    if bpy.context.screen is not None:
+        stop_preview(bpy.context)
+    ANALYSES.clear()
     del bpy.types.Object.openclare_source
     del bpy.types.Scene.openclare
     for cls in reversed(CLASSES):

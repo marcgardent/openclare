@@ -418,6 +418,12 @@ impl Demand {
         (0..self.areas.len()).map(|v| (self.asks(v, &reading), self.areas[v])).collect()
     }
 
+    /// The edge each vertex asks for under `reading`, before the smallest
+    /// quad and any smoothing.
+    pub fn asks_at_vertices(&self, reading: &Reading) -> Vec<f64> {
+        (0..self.areas.len()).map(|v| self.asks(v, reading)).collect()
+    }
+
     /// The edge the thin parts call for, at each of their vertices, and the
     /// area each stands for: what is found thin and is not a sheet.
     pub fn thin_parts(&self) -> Vec<(f64, f64)> {
