@@ -8,9 +8,10 @@
     --size N          width and height of the image in pixels (default 900)
     --samples N       rendering samples (default 24)
     --no-edges        the surface alone, for a dense source
+    --opaque          on the light grey of its background rather than transparent
 
 The mesh is read as it is, faces of any size, framed to fill the image, on a
-transparent background. Edges are real geometry (thin dark tubes), so a quad
+transparent background (or the light grey one around it, with --opaque). Edges are real geometry (thin dark tubes), so a quad
 shows as a quad, without the diagonal a triangulating renderer would add.
 """
 
@@ -108,12 +109,12 @@ scene.render.engine = "CYCLES"
 scene.cycles.device = "CPU"
 scene.cycles.samples = int(options["samples"])
 scene.cycles.use_denoising = False
-scene.render.film_transparent = True
+scene.render.film_transparent = "opaque" not in flags
 scene.render.resolution_x = scene.render.resolution_y = int(options["size"])
 scene.render.resolution_percentage = 100
 # By the extension asked for: WebP keeps a page of pictures light.
 scene.render.image_settings.file_format = "WEBP" if target.lower().endswith(".webp") else "PNG"
-scene.render.image_settings.color_mode = "RGBA"
+scene.render.image_settings.color_mode = "RGB" if "opaque" in flags else "RGBA"
 scene.render.image_settings.quality = 88
 scene.render.filepath = os.path.abspath(target)
 scene.view_settings.view_transform = "Standard"

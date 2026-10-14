@@ -406,84 +406,84 @@ Requested budget: 1000 quads. Median over 5 seeds; Quad Remesher, AutoRemesher a
 | | autoremesher |
 |---|---|
 | **Valid meshes (V)** | 0/1 |
-| Quads made | 185 |
-| Irregular vertices (S) | 33 |
+| Quads made | 225 |
+| Irregular vertices (S) | 79 |
 | … of which above the minimum | — |
 | Base complex patches (C) | — |
-| Alignment, degrees (A) | 18.67 |
-| Mean angle deviation, degrees (F) | 22.07 |
-| Angle deviation, 95th percentile (F) | 66.55 |
-| Mean aspect ratio (F) | 2.604 |
-| Area variation (F) | 0.646 |
-| Hausdorff, ‰ of the diagonal (H) | 175.37 |
-| Mean distance, ‰ (H) | 45.037 |
-| Thin parts: mean distance, % of a quad edge (V) | 103.7 |
+| Alignment, degrees (A) | 19.32 |
+| Mean angle deviation, degrees (F) | 26.39 |
+| Angle deviation, 95th percentile (F) | 82.13 |
+| Mean aspect ratio (F) | 4.170 |
+| Area variation (F) | 1.055 |
+| Hausdorff, ‰ of the diagonal (H) | 298.17 |
+| Mean distance, ‰ (H) | 82.620 |
+| Thin parts: mean distance, % of a quad edge (V) | 197.5 |
 | Volume kept, % of the source (V) | — |
-| Off budget, % (N) | 81.5 |
-| Time, seconds (T) | 1.31 |
+| Off budget, % (N) | 77.5 |
+| Time, seconds (T) | 1.40 |
 
 ## towermill (extra)
 
 | | autoremesher |
 |---|---|
 | **Valid meshes (V)** | 0/1 |
-| Quads made | 392 |
-| Irregular vertices (S) | 109 |
+| Quads made | 405 |
+| Irregular vertices (S) | 121 |
 | … of which above the minimum | — |
 | Base complex patches (C) | — |
-| Alignment, degrees (A) | 18.00 |
-| Mean angle deviation, degrees (F) | 27.28 |
-| Angle deviation, 95th percentile (F) | 75.04 |
-| Mean aspect ratio (F) | 3.990 |
-| Area variation (F) | 0.922 |
-| Hausdorff, ‰ of the diagonal (H) | 143.98 |
-| Mean distance, ‰ (H) | 32.474 |
-| Thin parts: mean distance, % of a quad edge (V) | 75.1 |
+| Alignment, degrees (A) | 18.17 |
+| Mean angle deviation, degrees (F) | 27.63 |
+| Angle deviation, 95th percentile (F) | 75.88 |
+| Mean aspect ratio (F) | 16.899 |
+| Area variation (F) | 0.903 |
+| Hausdorff, ‰ of the diagonal (H) | 138.78 |
+| Mean distance, ‰ (H) | 32.456 |
+| Thin parts: mean distance, % of a quad edge (V) | 75.3 |
 | Volume kept, % of the source (V) | — |
-| Off budget, % (N) | 60.8 |
-| Time, seconds (T) | 1.16 |
+| Off budget, % (N) | 59.5 |
+| Time, seconds (T) | 1.28 |
 
 ## stonemill (extra)
 
 | | autoremesher |
 |---|---|
 | **Valid meshes (V)** | 0/1 |
-| Quads made | 724 |
-| Irregular vertices (S) | 83 |
+| Quads made | 703 |
+| Irregular vertices (S) | 73 |
 | … of which above the minimum | — |
 | Base complex patches (C) | — |
-| Alignment, degrees (A) | 17.18 |
-| Mean angle deviation, degrees (F) | 13.40 |
-| Angle deviation, 95th percentile (F) | 44.24 |
-| Mean aspect ratio (F) | 1.965 |
-| Area variation (F) | 0.769 |
-| Hausdorff, ‰ of the diagonal (H) | 194.58 |
-| Mean distance, ‰ (H) | 9.494 |
-| Thin parts: mean distance, % of a quad edge (V) | 76.8 |
+| Alignment, degrees (A) | 17.16 |
+| Mean angle deviation, degrees (F) | 11.97 |
+| Angle deviation, 95th percentile (F) | 36.94 |
+| Mean aspect ratio (F) | 1.994 |
+| Area variation (F) | 0.656 |
+| Hausdorff, ‰ of the diagonal (H) | 186.96 |
+| Mean distance, ‰ (H) | 9.114 |
+| Thin parts: mean distance, % of a quad edge (V) | 76.4 |
 | Volume kept, % of the source (V) | — |
-| Off budget, % (N) | 27.6 |
-| Time, seconds (T) | 0.95 |
+| Off budget, % (N) | 29.7 |
+| Time, seconds (T) | 0.53 |
 
 ## windmill (extra)
 
 | | autoremesher |
 |---|---|
 | **Valid meshes (V)** | 0/1 |
-| Quads made | 366 |
-| Irregular vertices (S) | 70 |
+| Quads made | 370 |
+| Irregular vertices (S) | 75 |
 | … of which above the minimum | — |
 | Base complex patches (C) | — |
-| Alignment, degrees (A) | 14.57 |
-| Mean angle deviation, degrees (F) | 27.82 |
-| Angle deviation, 95th percentile (F) | 82.86 |
-| Mean aspect ratio (F) | 3.981 |
-| Area variation (F) | 0.912 |
+| Alignment, degrees (A) | 14.45 |
+| Mean angle deviation, degrees (F) | 28.12 |
+| Angle deviation, 95th percentile (F) | 83.45 |
+| Mean aspect ratio (F) | 3.970 |
+| Area variation (F) | 0.923 |
 | Hausdorff, ‰ of the diagonal (H) | 203.64 |
-| Mean distance, ‰ (H) | 39.718 |
-| Thin parts: mean distance, % of a quad edge (V) | 118.6 |
+| Mean distance, ‰ (H) | 36.911 |
+| Thin parts: mean distance, % of a quad edge (V) | 110.1 |
 | Volume kept, % of the source (V) | — |
-| Off budget, % (N) | 63.4 |
-| Time, seconds (T) | 0.86 |
+| Off budget, % (N) | 63.0 |
+| Time, seconds (T) | 0.77 |
 
 ## terrain (extra)
 
