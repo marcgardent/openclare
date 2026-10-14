@@ -154,7 +154,7 @@ fn the_mesh_is_finer_at_the_tips_of_a_spindle_when_adaptive() {
 // The size asked for, between a largest and a smallest quad, and the number
 // of quads as what that makes.
 
-use openclare::sizing::{Curvature, Demand, Reading};
+use openclare::sizing::{Curvature, Demand, Reading, Sizer};
 
 #[test]
 fn a_ball_calls_for_the_same_number_of_quads_whatever_its_size() {
@@ -284,7 +284,7 @@ fn asked_for_sizes_the_mesh_has_them_and_the_report_says_how_many_quads_that_mad
 fn a_shape_is_analysed_once_and_any_bounds_are_then_counted() {
     use openclare::Analysis;
     let source = spindle();
-    let config = RemeshConfig { adaptivity: 1.0, quads_around: 0.0, ..RemeshConfig::for_organic(Target::QuadCount(1)) };
+    let config = RemeshConfig { adaptivity: 1.0, quads_around: 6.0, ..RemeshConfig::for_organic(Target::QuadCount(1)) };
     let analysis = Analysis::of(&source, &Guides::default(), &config).unwrap();
     assert!((analysis.area() / source.surface_area() - 1.0).abs() < 0.01);
     // Quads of one size: the area over their own.
@@ -311,6 +311,87 @@ fn a_shape_is_analysed_once_and_any_bounds_are_then_counted() {
     assert!(analysis.below(largest, smallest) <= 0.05 + 1e-9);
     assert!(analysis.below(largest, 1.02 * smallest) > 0.05 || smallest == largest);
 
+    // Painted, the same: what the analysis counts as below the smallest is
+    // what the proposal leaves there. The tips painted densest.
+    let weights: Vec<f64> = source.positions.iter().map(|p| (p.z.abs() / 3.0).clamp(0.0, 1.0)).collect();
+    let painted = RemeshConfig { density_contrast: 16.0, ..config.clone() };
+    let analysis = Analysis::of(&source, &Guides { density: Some(&weights), ..Default::default() }, &painted).unwrap();
+    let (largest, smallest) = analysis.proposal();
+    assert!(smallest < 0.8 * largest, "quads from {smallest} to {largest}");
+    assert!(analysis.below(largest, smallest) <= 0.05 + 1e-9 && analysis.below(largest, 1.02 * smallest) > 0.05);
+
     // What cannot be analysed.
     assert!(Analysis::of(&TriMesh::default(), &Guides::default(), &config).is_err());
+}
+
+#[test]
+fn what_the_sizer_cannot_size_is_refused() {
+    let work = work_mesh(&spindle());
+    let fine = Request { edge_length: 0.15, bounds: Some((0.3, 0.1)), adaptivity: 0.5, painted: None, quads_around: 6.0 };
+    let tuning = Curvature::default();
+    assert!(Demand::measure(&tuning, &work, &fine).is_ok() && tuning.size(&work, &fine).is_ok());
+    for quads_around in [f64::NAN, -1.0, f64::INFINITY] {
+        assert!(Demand::measure(&tuning, &work, &Request { quads_around, ..fine }).is_err(), "{quads_around} round");
+    }
+    for edge_length in [0.0, -0.1, f64::NAN, f64::INFINITY] {
+        assert!(Demand::measure(&tuning, &work, &Request { edge_length, ..fine }).is_err(), "an edge of {edge_length}");
+    }
+    let nan = f64::NAN;
+    for bounds in [(nan, 0.1), (0.3, nan), (0.1, 0.3), (f64::INFINITY, 0.1), (0.3, 0.0), (0.3, -0.1)] {
+        assert!(tuning.size(&work, &Request { bounds: Some(bounds), ..fine }).is_err(), "bounds {bounds:?}");
+    }
+}
+
+#[test]
+fn painted_with_sizes_asked_for_the_paint_is_read_where_each_point_is() {
+    // A coarse ball, painted from 0 at its bottom to 1 at its top, linearly
+    // in z: between two of its vertices the paint is read across the
+    // triangle, as a linear weight is, and a point of the work mesh at
+    // height z has the weight (z + 1) / 2. Sixteen times the quads at the
+    // top: an edge four times shorter, a factor 4 to the power of the
+    // weight in between.
+    let source = primitives::icosphere(2);
+    let work = work_mesh(&source);
+    let weights: Vec<f64> = source.positions.iter().map(|p| 0.5 * (p.z + 1.0)).collect();
+    let painted = Painted { source: &source, weights: &weights, contrast: 16.0 };
+    let request =
+        Request { edge_length: 0.1, bounds: Some((0.4, 0.01)), adaptivity: 0.0, painted: Some(painted), quads_around: 0.0 };
+    let demand = Demand::measure(&Curvature::default(), &work, &request).unwrap();
+    let sizes = demand.sizes(&Reading::between(0.4, 0.01));
+    let mut worst = 0.0f64;
+    for (v, p) in work.mesh.positions.iter().enumerate() {
+        if p.z.abs() < 0.8 {
+            let expected = 0.4 * 4f64.powf(-0.5 * (p.z + 1.0));
+            worst = worst.max((sizes[v] / expected - 1.0).abs());
+        }
+    }
+    assert!(worst < 0.05, "an edge {worst} off what the paint asks");
+
+    // Painted all alike, the paint asks for nothing: the largest quad.
+    let even = vec![0.7; weights.len()];
+    let request = Request { painted: Some(Painted { weights: &even, ..painted }), ..request };
+    let demand = Demand::measure(&Curvature::default(), &work, &request).unwrap();
+    assert!(demand.sizes(&Reading::between(0.4, 0.01)).iter().all(|&size| (size - 0.4).abs() < 1e-9));
+}
+
+#[test]
+fn asked_for_a_number_a_bend_takes_a_quad_no_farther_than_the_range_from_the_level() {
+    // The rims of a cylinder bend as sharply as can be, its caps not at
+    // all: with a range of 1.5 either way, the sizes span no more than 1.5
+    // squared.
+    let work = work_mesh(&primitives::cylinder(12));
+    let tuning = Curvature { shape_range: 1.5, ..Default::default() };
+    let request = Request { edge_length: 0.15, bounds: None, adaptivity: 1.0, painted: None, quads_around: 0.0 };
+    let span = |tuning: &Curvature| {
+        let scale = tuning.size(&work, &request).unwrap();
+        let (least, most) = scale.iter().fold((f64::INFINITY, 0.0f64), |(least, most), &s| (least.min(s), most.max(s)));
+        most / least
+    };
+    // 1.92 measured on 14 October 2026, and 2.90 with a range of 3: the
+    // bends reach the range, and the smoothing takes a little off.
+    let narrow = span(&tuning);
+    assert!(narrow > 1.7 && narrow <= 2.25 + 1e-9, "sizes over a span of {narrow}");
+    // Wider with a wider range.
+    let wide = span(&Curvature::default());
+    assert!(wide > narrow + 0.2, "sizes over a span of {wide} with a range of 3, {narrow} with 1.5");
 }
