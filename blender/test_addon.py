@@ -355,6 +355,7 @@ settings.target, settings.largest_quad, settings.smallest_quad = "COUNT", 0.0, 0
 alone(body)
 assert openclare.analysis_of(bpy.context, settings, body) is None
 assert bpy.ops.object.openclare_analyse() == {"FINISHED"}
+objects_before = len(bpy.data.objects)
 assert settings.target == "SIZE" and 0.0 < settings.smallest_quad <= settings.largest_quad, (
     settings.smallest_quad, settings.largest_quad)
 held = openclare.analysis_of(bpy.context, settings, body)
@@ -368,35 +369,72 @@ assert quads > 300 and 0.0 <= below <= 1.0, (quads, below)
 started = time.perf_counter()
 finer, _ = openclare.counted(analysis, scale, settings.largest_quad / 2.0, settings.smallest_quad / 2.0)
 assert finer > 1.5 * quads and time.perf_counter() - started < 0.5, (finer, quads)
-# The colours of the sizes, on a copy.
+# The colours of the sizes, on the object itself, in an attribute of their
+# own made the active and rendered one; those that were are given back.
+painted = body.data.color_attributes.new("painted", "BYTE_COLOR", "CORNER")
+body.data.color_attributes.active_color_name = body.data.color_attributes.default_color_name = "painted"
 settings.show_sizes = True
-shown = bpy.data.objects.get(f"{body.name}.sizes")
-assert shown is not None and body.hide_get(), "no preview of the sizes"
-colours = shown.data.color_attributes["openclare sizes"]
+colours = body.data.color_attributes.get("openclare sizes")
+assert colours is not None and not body.hide_get(), "no colours of the sizes on the object"
+assert len(bpy.data.objects) == objects_before, "a copy was made"
+assert body.data.color_attributes.active_color_name == "openclare sizes"
+assert body.data.color_attributes.default_color_name == "openclare sizes"
 before = [tuple(colours.data[k].color) for k in range(0, len(colours.data), 97)]
 settings.largest_quad, settings.smallest_quad = settings.largest_quad / 3.0, settings.smallest_quad / 3.0
 after = [tuple(colours.data[k].color) for k in range(0, len(colours.data), 97)]
 assert before != after, "the colours did not follow the sizes"
-# The wire was proposed what its thickness calls for. With no quad smaller
-# than the largest, it is shown as coarser than its shape asks, in red.
 red = openclare.linear(openclare.COARSER)
 
 
 def wire_in_red():
     return [
         all(abs(a - b) < 1e-4 for a, b in zip(colours.data[v.index].color, red))
-        for v in shown.data.vertices if v.co.x > 2.0
+        for v in body.data.vertices if v.co.x > 2.0
     ]
 
 
+# The wire was proposed what its thickness calls for. With no quad smaller
+# than the largest, it is shown as coarser than its shape asks, in red.
 assert sum(wire_in_red()) < 0.1 * len(wire_in_red()), "the wire in red with the sizes proposed"
 settings.smallest_quad = settings.largest_quad
 wire_red = wire_in_red()
 assert sum(wire_red) > 0.5 * len(wire_red), f"{sum(wire_red)} of {len(wire_red)} vertices of the wire in red"
-# Remeshing takes the preview away and shows the object again.
+# Unticked: the attribute goes, the painted one is active and rendered again.
+settings.show_sizes = False
+assert "openclare sizes" not in body.data.color_attributes
+assert body.data.color_attributes.active_color_name == "painted"
+assert body.data.color_attributes.default_color_name == "painted"
+# A subdivided object: its own vertices take the sizes of the nearest seen.
+subdivided = body.modifiers.new("subdivided", "SUBSURF")
+subdivided.levels = 1
+bpy.context.view_layer.update()
+assert bpy.ops.object.openclare_analyse() == {"FINISHED"}
+settings.show_sizes = True
+assert "openclare sizes" in body.data.color_attributes, "no colours on a subdivided object"
+settings.show_sizes = False
+body.modifiers.remove(subdivided)
+bpy.context.view_layer.update()
+assert bpy.ops.object.openclare_analyse() == {"FINISHED"}
+settings.show_sizes = True
+# Saved, the file holds no colours of the sizes; they are back after.
+import tempfile
+
+with tempfile.TemporaryDirectory() as folder:
+    saved_to = f"{folder}/saved.blend"
+    bpy.ops.wm.save_as_mainfile(filepath=saved_to, copy=True)
+    with bpy.data.libraries.load(saved_to) as (there, here):
+        here.meshes = [body.data.name]
+    kept = here.meshes[0]
+    assert "openclare sizes" not in kept.color_attributes and "painted" in kept.color_attributes
+    assert kept.color_attributes.active_color_name == "painted"
+    bpy.data.meshes.remove(kept)
+assert "openclare sizes" in body.data.color_attributes, "the colours did not come back after saving"
+# Remeshing takes the colours away.
 bpy.context.view_layer.objects.active = body
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
-assert f"{body.name}.sizes" not in bpy.data.objects and not body.hide_get() and not settings.show_sizes
+assert "openclare sizes" not in body.data.color_attributes and not settings.show_sizes
+assert body.data.color_attributes.active_color_name == "painted"
+body.data.color_attributes.remove(body.data.color_attributes["painted"])
 # Changed, the object asks to be analysed again.
 body.data.vertices[0].co.x += 0.01
 body.data.update()

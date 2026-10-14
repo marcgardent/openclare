@@ -99,9 +99,10 @@ def target_changed(settings, context):
 ANALYSES = {}
 # The last count asked of an analysis, which the panel draws again and again.
 COUNTED = {}
-# The preview of the sizes: the copy shown, the object hidden for it, and how
-# the 3D views coloured their objects before.
+# The preview of the sizes: the object coloured, the colour attributes that
+# were its active and rendered ones, and how the 3D views coloured objects.
 PREVIEW = {}
+SIZES_ATTRIBUTE = "openclare sizes"
 # Sequential colours of the sizes, light for the largest quads to dark for the
 # smallest, and the colour of what is coarser than its shape asks.
 SIZE_RAMP = ["#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b"]
@@ -153,12 +154,12 @@ def linear(hex_colour):
 
 
 def colour_sizes(settings):
-    """Colours the preview with the sizes asked for now."""
+    """Colours the object with the sizes asked for now."""
     import numpy
 
-    shown = PREVIEW.get("object")
+    owner = bpy.data.objects.get(PREVIEW.get("of", ""))
     held = ANALYSES.get(PREVIEW.get("of", ""))
-    if shown is None or held is None or shown.name not in bpy.data.objects:
+    if owner is None or held is None or owner.type != "MESH":
         return
     scale = PREVIEW["scale"]
     largest = settings.largest_quad / scale
@@ -172,26 +173,35 @@ def colour_sizes(settings):
     part = (t - low)[:, None]
     colours = ramp[low] * (1.0 - part) + ramp[low + 1] * part
     colours[coarser] = linear(COARSER)
-    mesh = shown.data
-    attribute = mesh.color_attributes.get("openclare sizes") or mesh.color_attributes.new(
-        "openclare sizes", "FLOAT_COLOR", "POINT"
+    if PREVIEW.get("nearest") is not None:
+        colours = colours[PREVIEW["nearest"]]
+    mesh = owner.data
+    if len(colours) != len(mesh.vertices):
+        return
+    attribute = mesh.color_attributes.get(SIZES_ATTRIBUTE) or mesh.color_attributes.new(
+        SIZES_ATTRIBUTE, "FLOAT_COLOR", "POINT"
     )
     attribute.data.foreach_set("color", colours.astype(numpy.float32).ravel())
-    mesh.color_attributes.active_color = attribute
+    mesh.color_attributes.active_color_name = SIZES_ATTRIBUTE
+    mesh.color_attributes.default_color_name = SIZES_ATTRIBUTE
     mesh.update()
 
 
 def stop_preview(context):
-    """Takes the preview away and shows the object again."""
-    shown, hidden = PREVIEW.pop("object", None), PREVIEW.pop("hidden", None)
-    PREVIEW.pop("of", None)
-    if shown is not None and shown.name in bpy.data.objects:
-        mesh = shown.data
-        bpy.data.objects.remove(shown)
-        if mesh.users == 0:
-            bpy.data.meshes.remove(mesh)
-    if hidden is not None and hidden.name in bpy.data.objects:
-        hidden.hide_set(False)
+    """Takes the colours of the sizes away: the colour attributes of the
+    object are as they were, and the 3D views colour as they did."""
+    owner = bpy.data.objects.get(PREVIEW.pop("of", ""))
+    active, default = PREVIEW.pop("active", ""), PREVIEW.pop("default", "")
+    PREVIEW.pop("nearest", None)
+    if owner is not None and owner.type == "MESH":
+        colours = owner.data.color_attributes
+        if SIZES_ATTRIBUTE in colours:
+            colours.remove(colours[SIZES_ATTRIBUTE])
+        if active in colours:
+            colours.active_color_name = active
+        if default in colours:
+            colours.default_color_name = default
+        owner.data.update()
     for space, colour_type in PREVIEW.pop("views", []):
         try:
             space.shading.color_type = colour_type
@@ -200,18 +210,31 @@ def stop_preview(context):
 
 
 def start_preview(context, settings, owner):
-    """Shows a copy of the object as seen, coloured with its sizes, in its
-    place, and hides the object meanwhile."""
+    """Colours the object with its sizes, in a colour attribute of its own
+    made the active and the rendered one; those that were are kept to be
+    given back."""
+    import numpy
+    from mathutils.kdtree import KDTree
+
     stop_preview(context)
+    colours = owner.data.color_attributes
+    PREVIEW.update(
+        of=owner.name, scale=scale_of(owner), active=colours.active_color_name or "",
+        default=colours.default_color_name or "", nearest=None,
+    )
+    # The sizes are known at the vertices of the mesh as seen. Where its
+    # modifiers make other vertices, each of the object takes the nearest.
     evaluated = owner.evaluated_get(context.evaluated_depsgraph_get())
-    mesh = bpy.data.meshes.new_from_object(evaluated)
-    mesh.name = f"{owner.data.name}.sizes"
-    shown = bpy.data.objects.new(f"{owner.name}.sizes", mesh)
-    shown.matrix_world = owner.matrix_world
-    for collection in owner.users_collection:
-        collection.objects.link(shown)
-    owner.hide_set(True)
-    PREVIEW.update(object=shown, hidden=owner, of=owner.name, scale=scale_of(owner))
+    seen = evaluated.to_mesh()
+    try:
+        if len(seen.vertices) != len(owner.data.vertices):
+            tree = KDTree(len(seen.vertices))
+            for vertex in seen.vertices:
+                tree.insert(vertex.co, vertex.index)
+            tree.balance()
+            PREVIEW["nearest"] = numpy.array([tree.find(vertex.co)[1] for vertex in owner.data.vertices])
+    finally:
+        evaluated.to_mesh_clear()
     # The 3D views show the colour attribute meanwhile ("VERTEX", shown as
     # Attribute).
     PREVIEW["views"] = []
@@ -223,9 +246,40 @@ def start_preview(context, settings, owner):
     colour_sizes(settings)
 
 
+@bpy.app.handlers.persistent
+def before_saving(*_):
+    """No colours of the sizes in the file saved: taken away, then put back."""
+    PREVIEW["saved"] = PREVIEW.get("of")
+    if PREVIEW["saved"]:
+        views = PREVIEW.get("views", [])
+        stop_preview(bpy.context)
+        PREVIEW["views_saved"] = views
+
+
+@bpy.app.handlers.persistent
+def after_saving(*_):
+    owner = bpy.data.objects.get(PREVIEW.pop("saved", None) or "")
+    views = PREVIEW.pop("views_saved", [])
+    if owner is not None:
+        start_preview(bpy.context, bpy.context.scene.openclare, owner)
+        # The views were given back their colouring before saving: what they
+        # had before the preview is what to give back at the end.
+        PREVIEW["views"] = views
+
+
+@bpy.app.handlers.persistent
+def after_loading(*_):
+    """Another file: what was analysed and shown belonged to the last one."""
+    PREVIEW.clear()
+    ANALYSES.clear()
+    COUNTED.clear()
+    for scene in bpy.data.scenes:
+        scene.openclare.show_sizes = False
+
+
 def sizes_changed(settings, context):
     """The sizes moved: the preview follows."""
-    if PREVIEW.get("object") is not None:
+    if PREVIEW.get("of"):
         colour_sizes(settings)
 
 
@@ -234,8 +288,9 @@ def show_sizes_changed(settings, context):
         stop_preview(context)
         return
     owner = object_to_remesh(context)
-    if owner is None or analysis_of(context, settings, owner) is None:
-        # Nothing to show before the object is analysed as it is.
+    if owner is None or owner.mode == "EDIT" or analysis_of(context, settings, owner) is None:
+        # Nothing to show before the object is analysed as it is, nor while
+        # it is edited.
         settings.show_sizes = False
         return
     start_preview(context, settings, owner)
@@ -309,8 +364,9 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         name="Show Sizes",
         description=(
             "Colour the object with the size its quads will have: light where they are largest, dark where "
-            "they are smallest, red where its shape calls for quads smaller than the smallest. Shown on a "
-            "copy, in Solid view by attribute; the object itself is hidden meanwhile and left as it is"
+            "they are smallest, red where its shape calls for quads smaller than the smallest. A colour "
+            "attribute of its own, made the active and rendered one meanwhile, shown in Solid view by "
+            "attribute; taken away when unticked, the colour attributes of the object as they were"
         ),
         default=False,
         update=show_sizes_changed,
@@ -804,7 +860,7 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
 
     def execute(self, context):
         settings = context.scene.openclare
-        if PREVIEW.get("object") is not None:
+        if PREVIEW.get("of"):
             settings.show_sizes = False
         original = object_to_remesh(context)
         self.drawn, self.stages = 0.0, []
@@ -1444,6 +1500,13 @@ CLASSES = (
 )
 
 
+HANDLERS = (
+    (bpy.app.handlers.save_pre, before_saving),
+    (bpy.app.handlers.save_post, after_saving),
+    (bpy.app.handlers.load_post, after_loading),
+)
+
+
 def register():
     for cls in CLASSES:
         bpy.utils.register_class(cls)
@@ -1453,11 +1516,15 @@ def register():
         description="The object this one was remeshed from: what is baked onto it is read from there",
         type=bpy.types.Object,
     )
+    for handlers, handler in HANDLERS:
+        handlers.append(handler)
 
 
 def unregister():
-    if bpy.context.screen is not None:
-        stop_preview(bpy.context)
+    for handlers, handler in HANDLERS:
+        if handler in handlers:
+            handlers.remove(handler)
+    stop_preview(bpy.context)
     ANALYSES.clear()
     del bpy.types.Object.openclare_source
     del bpy.types.Scene.openclare
