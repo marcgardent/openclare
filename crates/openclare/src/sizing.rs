@@ -3,7 +3,9 @@
 //! The shape says it. At each point it calls for a size, by one rule: so
 //! many quads to go round. Round a thin part, a finger say, that is its
 //! girth over that number, without which it comes out flat and its volume
-//! is lost. Where the surface bends more tightly than the largest quad goes
+//! is lost. A part much wider than it is thick (a wall, a plate, a shell) is
+//! a sheet and not a finger: its thickness asks for nothing, what it needs
+//! being at its rim, where it bends tightly. Where the surface bends more tightly than the largest quad goes
 //! round in a given number, quads get smaller for the error to the surface
 //! to stay even. What the user painted multiplies it. The size is that, kept
 //! between a smallest and a largest quad: the largest wherever the shape
@@ -139,6 +141,13 @@ pub struct Curvature {
     /// for and for each quad wanted round it: thicker than that, a part is
     /// thick enough whatever the size there.
     pub thin_reach: f64,
+    /// How many times wider than it is thick a part is when it is a sheet,
+    /// whose thickness asks for nothing: a finger is as wide as it is
+    /// thick, a wall or the shell of a building many times wider. Measured
+    /// on the ogre, 4 leaves its thin parts as they were; on the shell of
+    /// a generated building it takes the share of the surface found thin
+    /// from 78 % to 33 %, the beams, the railings and the rims of slabs.
+    pub sheet: f64,
     /// How fast the size may grow away from a smaller one: by this much of
     /// a length, per length travelled.
     pub gradation: f64,
@@ -146,7 +155,17 @@ pub struct Curvature {
 
 impl Default for Curvature {
     fn default() -> Self {
-        Self { quads_a_turn: 12.0, shape_range: 3.0, finest: 4.0, felt: 0.05, reading_scale: 0.5, smoothing_scale: 1.5, thin_reach: 3.0, gradation: 0.5 }
+        Self {
+            quads_a_turn: 12.0,
+            shape_range: 3.0,
+            finest: 4.0,
+            felt: 0.05,
+            reading_scale: 0.5,
+            smoothing_scale: 1.5,
+            thin_reach: 3.0,
+            sheet: 4.0,
+            gradation: 0.5,
+        }
     }
 }
 
@@ -188,7 +207,7 @@ pub struct Demand {
     /// it is some ten edges of the size asked for.
     bend: Vec<f64>,
     /// The edge a thin part calls for: its girth over the quads wanted
-    /// round it. Infinite where nothing is thin.
+    /// round it. Infinite where nothing is thin, and on a sheet.
     thin: Vec<f64>,
     /// What the paint multiplies the size by, the weight 0 being 1.
     paint: Vec<f64>,
@@ -245,9 +264,11 @@ impl Demand {
         let mut thin = vec![f64::INFINITY; vertices];
         if request.quads_around > 0.0 {
             let reach = request.quads_around * request.edge_length * tuning.thin_reach;
-            let girth = thickness::measure(mesh, &work.normals, reach).girth;
+            let measured = thickness::measure(mesh, &work.normals, reach);
             for v in 0..vertices {
-                thin[v] = girth[v] / request.quads_around;
+                if measured.width[v] <= tuning.sheet * measured.across[v] {
+                    thin[v] = measured.girth[v] / request.quads_around;
+                }
             }
         }
 
@@ -394,9 +415,13 @@ impl Demand {
     /// what tells how much of the surface asks for how small a quad.
     pub fn wanted(&self, largest: f64) -> Vec<(f64, f64)> {
         let reading = Reading::between(largest, f64::MIN_POSITIVE);
-        (0..self.areas.len())
-            .map(|v| (self.asks(v, &reading), self.areas[v]))
-            .collect()
+        (0..self.areas.len()).map(|v| (self.asks(v, &reading), self.areas[v])).collect()
+    }
+
+    /// The edge the thin parts call for, at each of their vertices, and the
+    /// area each stands for: what is found thin and is not a sheet.
+    pub fn thin_parts(&self) -> Vec<(f64, f64)> {
+        (0..self.areas.len()).filter(|&v| self.thin[v].is_finite()).map(|v| (self.thin[v], self.areas[v])).collect()
     }
 
     /// The reading that makes as many quads as quads of the edge
