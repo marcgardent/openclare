@@ -67,7 +67,7 @@ UNPICTURED = set()
 DENSE = 20_000
 
 
-def render(mesh, picture, model, edges=True):
+def render(mesh, picture, model, edges=True, opaque=False):
     azimuth, elevation = VIEWS.get(model, (-60, 20))
     command = ["blender", "-b", "--factory-startup", "--python", str(ROOT / "scripts" / "render.py"), "--"]
     command += [str(mesh), str(picture)]
@@ -75,6 +75,8 @@ def render(mesh, picture, model, edges=True):
     command += ["--size", "600"]
     if not edges:
         command.append("--no-edges")
+    if opaque:
+        command.append("--opaque")
     done = run(command, memory=memory_cap(model))
     return done.returncode == 0 and picture.exists()
 

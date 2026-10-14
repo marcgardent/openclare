@@ -98,7 +98,7 @@ Over venturi, ogre_hp, watermill, towermill, stonemill, windmill, terrain, mahav
 | integer-grid | 729 | **27** | 25 | 46 | 41 | 22 | 19 | 57 | 14 | 31 |
 | instant-meshes | 595 | **24** | 30 | 33 | 22 | 11 | 26 | 14 | 15 | 68 |
 | quadremesher-uniform | 4029 | **23** | 0 | 50 | 33 | 40 | 5 | — | 12 | 38 |
-| autoremesher | 897 | **10** | 0 | 32 | 5 | 7 | 0 | — | 13 | 90 |
+| autoremesher | 900 | **10** | 0 | 32 | 5 | 7 | 0 | — | 13 | 90 |
 | quadriflow | 872 | **7** | 12 | 14 | 66 | 40 | 50 | 65 | 49 | 88 |
 
 Not run on every model: instant-meshes (8 of 12), integer-grid (8 of 12), openclare (8 of 12), openclare-matched (8 of 12), openclare-uniform (8 of 12), quadremesher (8 of 12), quadremesher-as-made (8 of 12), quadremesher-uniform (8 of 12), quadriflow (8 of 12).
@@ -441,25 +441,25 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| autoremesher | 185 | **4** | 0 | 17 | 0 | 0 | 0 | — | 0 | 93 |
+| autoremesher | 225 | **3** | 0 | 14 | 0 | 0 | 0 | — | 0 | 92 |
 
 #### towermill (extra)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| autoremesher | 392 | **4** | 0 | 20 | 0 | 0 | 0 | — | 0 | 96 |
+| autoremesher | 405 | **4** | 0 | 19 | 0 | 0 | 0 | — | 0 | 94 |
 
 #### stonemill (extra)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| autoremesher | 724 | **10** | 0 | 24 | 33 | 0 | 0 | — | 0 | 100 |
+| autoremesher | 703 | **11** | 0 | 24 | 40 | 0 | 0 | — | 0 | 100 |
 
 #### windmill (extra)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| autoremesher | 366 | **7** | 0 | 35 | 0 | 0 | 0 | — | 0 | 100 |
+| autoremesher | 370 | **8** | 0 | 36 | 0 | 0 | 0 | — | 0 | 100 |
 
 #### terrain (extra)
 
@@ -592,14 +592,14 @@ Over venturi, ogre_hp, watermill, towermill, stonemill, windmill, terrain, mahav
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| quadremesher | 34877 | **39** | 8 | 56 | 54 | 76 | 47 | 21 | 0 | 26 |
-| openclare-uniform | 3954 | **36** | 25 | 44 | 38 | 40 | 42 | 13 | 41 | 44 |
-| openclare | 4089 | **33** | 17 | 44 | 41 | 42 | 22 | 14 | 38 | 33 |
-| quadremesher-uniform | 4664 | **31** | 8 | 50 | 46 | 41 | 11 | 36 | 32 | 26 |
-| integer-grid | 2152 | **25** | 8 | 46 | 50 | 19 | 42 | 60 | 17 | 22 |
-| instant-meshes | 2052 | **21** | 17 | 34 | 31 | 15 | 5 | 15 | 19 | 77 |
-| autoremesher | 1672 | **12** | 0 | 34 | 15 | 11 | 11 | — | 0 | 85 |
-| quadriflow | 2633 | **11** | 8 | 32 | 51 | 36 | 17 | 20 | 51 | 83 |
+| quadremesher | 34887 | **39** | 8 | 56 | 54 | 75 | 47 | 21 | 0 | 26 |
+| openclare-uniform | 3938 | **36** | 25 | 44 | 38 | 40 | 42 | 12 | 42 | 44 |
+| openclare | 4092 | **33** | 17 | 44 | 41 | 42 | 22 | 13 | 39 | 35 |
+| quadremesher-uniform | 4671 | **31** | 8 | 50 | 45 | 42 | 11 | 36 | 33 | 27 |
+| integer-grid | 2156 | **24** | 8 | 46 | 49 | 19 | 40 | 60 | 17 | 22 |
+| instant-meshes | 2061 | **21** | 18 | 34 | 32 | 14 | 5 | 14 | 20 | 77 |
+| autoremesher | 1668 | **12** | 0 | 34 | 15 | 11 | 11 | — | 0 | 86 |
+| quadriflow | 2688 | **12** | 12 | 31 | 51 | 28 | 20 | 19 | 58 | 84 |
 
 ### Organic models at equal quad count
 
@@ -652,17 +652,17 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 |---|---|---|---|---|---|---|---|---|
 | venturi | 14193 / 14282 | 46 / 39 | 0 / 0 | 63 / 54 | 55 / 66 | 83 / 53 | 57 / 41 | — / — |
 | ogre_hp | 6269 / 6213 | 71 / 72 | 100 / 100 | 58 / 53 | 53 / 67 | 86 / 87 | 57 / 51 | 21 / 19 |
-| watermill | 22120 / 21992 | 33 / 27 | 0 / 0 | 46 / 37 | 59 / 48 | 40 / 63 | 43 / 0 | — / 8 |
-| towermill | 16264 / 13210 | 36 / 38 | 0 / 0 | 47 / 47 | 56 / 62 | 51 / 44 | 50 / 69 | — / — |
-| stonemill | 14154 / 14264 | 32 / 71 | 0 / 100 | 43 / 46 | 61 / 75 | 31 / 69 | 47 / 78 | — / 5 |
-| windmill | 16985 / 599 | 38 / 33 | 0 / 100 | 48 / 22 | 59 / 2 | 63 / 0 | 47 / 0 | — / 1 |
+| watermill | 22110 / — | 32 / 0 | 0 / 0 | 46 / — | 60 / — | 31 / — | 43 / — | — / — |
+| towermill | 16107 / 12835 | 35 / 37 | 0 / 0 | 48 / 46 | 55 / 63 | 47 / 43 | 50 / 68 | — / — |
+| stonemill | 14140 / 14370 | 31 / 71 | 0 / 100 | 43 / 46 | 60 / 75 | 29 / 70 | 45 / 77 | — / 5 |
+| windmill | 17287 / 753 | 39 / 6 | 0 / 0 | 48 / 24 | 58 / 4 | 65 / 0 | 48 / 0 | — / 1 |
 | terrain | 4677 / 4619 | 31 / 63 | 0 / 100 | 18 / 19 | 52 / 65 | 69 / 68 | 51 / 69 | — / 16 |
 | mahaveer | 46202 / 55041 | 27 / 48 | 0 / 0 | 40 / 73 | 38 / 70 | 37 / 51 | 33 / 78 | — / — |
 | marine | 214018 / 226774 | 34 / 48 | 0 / 0 | 46 / 63 | 51 / 75 | 48 / 80 | 52 / 49 | — / — |
 | f16 | 36038 / 43487 | 42 / 52 | 0 / 0 | 78 / 82 | 45 / 70 | 80 / 83 | 15 / 45 | — / — |
 | camera | 12621 / 12776 | 53 / 50 | 0 / 0 | 84 / 85 | 64 / 58 | 82 / 67 | 65 / 69 | — / — |
 | wolf | 14984 / 13011 | 34 / 37 | 0 / 0 | 55 / 53 | 53 / 51 | 35 / 54 | 48 / 53 | — / — |
-| **average** | 34877 / 35522 | 40 / 48 | 8 / 33 | 52 / 53 | 54 / 59 | 59 / 60 | 47 / 50 | 21 / 10 |
+| **average** | 34887 / 36742 | 40 / 44 | 8 / 25 | 52 / 54 | 54 / 60 | 58 / 60 | 47 / 55 | 21 / 10 |
 
 ### Model by model, 3000 quads
 
@@ -943,51 +943,51 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| quadremesher | 22120 | **34** | 0 | 51 | 59 | 62 | 43 | — | 0 | 0 |
-| quadremesher-uniform | 2829 | **26** | 0 | 34 | 44 | 24 | 0 | — | 77 | 0 |
-| quadriflow | 2553 | **21** | 0 | 36 | 43 | 20 | 0 | 3 | 40 | 65 |
-| openclare | 2243 | **17** | 0 | 31 | 46 | 11 | 18 | — | 0 | 0 |
-| integer-grid | 2269 | **17** | 0 | 29 | 47 | 10 | 19 | — | 3 | 24 |
-| openclare-uniform | 2241 | **17** | 0 | 31 | 46 | 11 | 16 | — | 0 | 0 |
-| instant-meshes | 1736 | **10** | 0 | 28 | 15 | 13 | 0 | 9 | 0 | 100 |
-| autoremesher | 706 | **3** | 0 | 13 | 0 | 0 | 0 | — | 0 | 83 |
+| quadremesher | 22110 | **33** | 0 | 52 | 60 | 54 | 43 | — | 0 | 0 |
+| quadremesher-uniform | 2850 | **26** | 0 | 33 | 42 | 24 | 0 | — | 80 | 0 |
+| quadriflow | 2675 | **22** | 0 | 35 | 42 | 19 | 0 | 3 | 57 | 72 |
+| openclare | 2193 | **19** | 0 | 34 | 47 | 10 | 26 | — | 0 | 0 |
+| openclare-uniform | 2189 | **19** | 0 | 35 | 47 | 10 | 23 | — | 0 | 0 |
+| integer-grid | 2260 | **14** | 0 | 30 | 40 | 10 | 0 | — | 1 | 23 |
+| instant-meshes | 1784 | **9** | 0 | 27 | 14 | 7 | 0 | 6 | 0 | 100 |
+| autoremesher | 709 | **3** | 0 | 12 | 0 | 0 | 0 | — | 0 | 85 |
 
 #### towermill (extra)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 3060 | **35** | 0 | 37 | 33 | 30 | 92 | 5 | 92 | 40 |
-| quadremesher | 16264 | **35** | 0 | 53 | 56 | 64 | 50 | — | 0 | 0 |
-| quadremesher-uniform | 2891 | **33** | 0 | 47 | 53 | 35 | 0 | — | 85 | 0 |
-| quadriflow | 2796 | **27** | 0 | 42 | 43 | 34 | 0 | 3 | 73 | 78 |
-| openclare | 2285 | **25** | 0 | 43 | 50 | 22 | 38 | — | 5 | 0 |
-| integer-grid | 2285 | **25** | 0 | 43 | 50 | 22 | 38 | — | 5 | 41 |
-| instant-meshes | 1850 | **9** | 0 | 29 | 0 | 18 | 0 | 6 | 0 | 100 |
-| autoremesher | 1089 | **7** | 0 | 30 | 3 | 0 | 0 | — | 0 | 81 |
+| openclare-uniform | 2969 | **35** | 0 | 36 | 29 | 29 | 92 | 4 | 96 | 38 |
+| quadremesher | 16107 | **35** | 0 | 53 | 55 | 61 | 50 | — | 0 | 0 |
+| quadremesher-uniform | 2897 | **34** | 0 | 48 | 53 | 37 | 0 | — | 86 | 0 |
+| openclare | 2393 | **27** | 0 | 43 | 51 | 22 | 41 | — | 19 | 24 |
+| integer-grid | 2395 | **27** | 0 | 43 | 51 | 22 | 39 | — | 19 | 38 |
+| quadriflow | 2724 | **26** | 0 | 41 | 40 | 34 | 0 | 2 | 63 | 78 |
+| instant-meshes | 1904 | **8** | 0 | 28 | 3 | 16 | 0 | 0 | 0 | 100 |
+| autoremesher | 1088 | **6** | 0 | 28 | 3 | 0 | 0 | — | 0 | 90 |
 
 #### stonemill (extra)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 3053 | **70** | 100 | 42 | 73 | 56 | 79 | 6 | 93 | 73 |
-| openclare | 3017 | **42** | 0 | 41 | 64 | 63 | 47 | 4 | 98 | 69 |
-| quadremesher | 14154 | **35** | 0 | 49 | 61 | 63 | 47 | — | 0 | 15 |
-| integer-grid | 2592 | **29** | 0 | 41 | 59 | 0 | 61 | — | 46 | 44 |
-| quadremesher-uniform | 2831 | **28** | 0 | 41 | 60 | 10 | 0 | — | 77 | 11 |
-| quadriflow | 2465 | **26** | 0 | 39 | 52 | 46 | 8 | 4 | 29 | 82 |
-| instant-meshes | 2638 | **21** | 0 | 36 | 53 | 0 | 7 | 4 | 52 | 100 |
-| autoremesher | 1869 | **19** | 0 | 34 | 45 | 0 | 45 | — | 0 | 90 |
+| openclare-uniform | 3008 | **71** | 100 | 42 | 73 | 59 | 79 | 3 | 99 | 77 |
+| openclare | 2974 | **42** | 0 | 42 | 64 | 64 | 45 | 3 | 97 | 67 |
+| quadriflow | 2635 | **36** | 40 | 39 | 53 | 16 | 22 | 1 | 51 | 79 |
+| quadremesher | 14140 | **34** | 0 | 49 | 60 | 60 | 45 | — | 0 | 11 |
+| quadremesher-uniform | 2859 | **29** | 0 | 41 | 57 | 15 | 0 | — | 81 | 14 |
+| integer-grid | 2538 | **27** | 0 | 38 | 56 | 0 | 59 | — | 38 | 45 |
+| instant-meshes | 2664 | **27** | 20 | 36 | 52 | 0 | 7 | 3 | 55 | 100 |
+| autoremesher | 1809 | **19** | 0 | 34 | 44 | 0 | 45 | — | 0 | 99 |
 
 #### windmill (extra)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| quadremesher | 16985 | **38** | 0 | 57 | 59 | 73 | 47 | — | 0 | 0 |
-| quadremesher-uniform | 2759 | **32** | 0 | 49 | 47 | 45 | 0 | — | 68 | 0 |
-| openclare-uniform | 207 | **11** | 0 | 15 | 0 | 0 | 81 | 4 | 0 | 100 |
-| instant-meshes | 1911 | **10** | 0 | 32 | 13 | 7 | 0 | 4 | 0 | 100 |
-| autoremesher | 993 | **8** | 0 | 36 | 0 | 0 | 0 | — | 0 | 94 |
-| openclare | 332 | **4** | 0 | 18 | 0 | 0 | 0 | 0 | 0 | 84 |
+| quadremesher | 17287 | **38** | 0 | 58 | 58 | 75 | 48 | — | 0 | 0 |
+| quadremesher-uniform | 2787 | **32** | 0 | 48 | 47 | 46 | 0 | — | 72 | 0 |
+| openclare-uniform | 207 | **11** | 0 | 15 | 0 | 0 | 81 | 4 | 0 | 99 |
+| instant-meshes | 1886 | **11** | 0 | 31 | 24 | 7 | 0 | 6 | 0 | 100 |
+| autoremesher | 1003 | **8** | 0 | 36 | 0 | 0 | 0 | — | 0 | 93 |
+| openclare | 349 | **3** | 0 | 16 | 0 | 0 | 0 | 0 | 0 | 88 |
 | quadriflow | — | **0** | 0 | — | — | — | — | — | — | — |
 | integer-grid | — | **0** | 0 | — | — | — | — | — | — | — |
 
@@ -1130,7 +1130,7 @@ Over venturi, ogre_hp, watermill, towermill, stonemill, windmill, terrain, mahav
 | quadremesher-uniform | 9994 | **38** | 12 | 57 | 53 | 56 | 29 | 39 | 20 | 34 |
 | integer-grid | 6711 | **36** | 12 | 58 | 59 | 41 | 59 | 37 | 36 | 1 |
 | instant-meshes | 6092 | **28** | 10 | 40 | 47 | 26 | 17 | 21 | 37 | 60 |
-| autoremesher | 3717 | **17** | 0 | 41 | 22 | 16 | 17 | — | 6 | 68 |
+| autoremesher | 3693 | **17** | 0 | 41 | 22 | 16 | 17 | — | 6 | 69 |
 | quadriflow | 6963 | **7** | 12 | 7 | 71 | 49 | 73 | 70 | 48 | 89 |
 
 Not run on every model: instant-meshes (8 of 12), integer-grid (8 of 12), openclare (8 of 12), openclare-matched (8 of 12), openclare-uniform (8 of 12), quadremesher (8 of 12), quadremesher-as-made (8 of 12), quadremesher-uniform (8 of 12), quadriflow (8 of 12).
@@ -1471,25 +1471,25 @@ Quad Remesher as it is / openclare asked for as many quads; the last line is the
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| autoremesher | 2639 | **5** | 0 | 24 | 0 | 0 | 0 | — | 0 | 59 |
+| autoremesher | 2507 | **5** | 0 | 26 | 0 | 0 | 0 | — | 0 | 60 |
 
 #### towermill (extra)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| autoremesher | 2687 | **12** | 0 | 37 | 13 | 12 | 0 | — | 0 | 64 |
+| autoremesher | 2664 | **11** | 0 | 36 | 9 | 10 | 0 | — | 0 | 68 |
 
 #### stonemill (extra)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| autoremesher | 4380 | **24** | 0 | 41 | 49 | 0 | 73 | — | 0 | 75 |
+| autoremesher | 4327 | **23** | 0 | 39 | 46 | 0 | 72 | — | 0 | 76 |
 
 #### windmill (extra)
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| autoremesher | 2441 | **13** | 0 | 41 | 27 | 0 | 0 | — | 0 | 68 |
+| autoremesher | 2364 | **13** | 0 | 41 | 30 | 0 | 1 | — | 0 | 73 |
 
 #### terrain (extra)
 

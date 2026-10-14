@@ -1,6 +1,6 @@
 # Shortcuts for the common tasks. `make help` lists them.
 
-.PHONY: help build test scenes blenderkit autoremesher scores quick pages view addon addon-windows test-windows addon-test release
+.PHONY: help build test scenes blenderkit autoremesher scores quick pages dashboard view addon addon-windows test-windows addon-test release
 
 help:
 	@echo "make build       build the openclare binary (release)"
@@ -32,6 +32,8 @@ help:
 	@echo "                 couple of minutes. MODELS=camera,wolf TARGET=8000 to choose"
 	@echo "make pages       write one page per model, with rendered pictures and marks"
 	@echo "                 (docs/models; needs blender). MODELS=ogre,blob for some only"
+	@echo "make dashboard   the pictures and the chart of the README (docs/images/dashboard; needs"
+	@echo "                 blender, Quad Remesher's references and AutoRemesher)"
 	@echo "make view MODEL=ogre [QUADS=3000] [OPTIONS='--preset hard-surface']"
 	@echo "                 remesh a model of the bench, recording what each stage makes, and"
 	@echo "                 open the recording in the Rerun viewer (long to build the first"
@@ -82,6 +84,12 @@ quick: addon
 # One page per model: pictures of what each remesher makes of it, and its marks.
 pages: scores
 	python3 scripts/pages.py $(if $(MODELS),--models $(MODELS))
+
+# The dashboard of the README: four remeshers at the same number of quads on
+# a few models, in pictures, and the average marks of the bench as a chart.
+dashboard:
+	python3 scripts/gallery.py $(if $(MODELS),--models $(MODELS))
+	python3 scripts/dashboard.py --gallery
 
 # What each stage of the chain makes of a model, in the Rerun viewer. Both the
 # recorder and the viewer are built on demand only: nothing else needs Rerun.
