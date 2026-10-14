@@ -75,8 +75,7 @@ def make(model, sharp):
         empty_file()
         made = read_obj(obj_path(model), model)
     activate(made)
-    settings = bpy.context.scene.openclare
-    settings.source = made
+    settings = made.openclare
     settings.preset = "hard-surface" if sharp else "organic"
     settings.quads = DEFAULT_TARGET
     settings.adaptive_size = ADAPTIVE_SIZE

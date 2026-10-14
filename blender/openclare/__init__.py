@@ -1,8 +1,10 @@
 """openclare: automatic quad retopology, as a Blender add-on.
 
-A panel in the sidebar of the 3D viewport (tab "openclare") remeshes the
-active object into quads. The result is a new object, next to the original,
-which is left as it is.
+A panel in the Properties editor, on the tab of the mesh of an object
+(Object Data), remeshes the object into quads with the settings it keeps.
+The result is a new object, next to the original, which is left as it is;
+shown, the same panel says what it was made from and how, remeshes it again
+and bakes the relief of the original onto it.
 """
 
 import time
@@ -62,12 +64,61 @@ def is_a_mesh(settings, candidate):
     return candidate.type == "MESH"
 
 
+def shown_object(context):
+    """The object the panel and its buttons are about: the one the
+    Properties editor shows, or the active one where there is no such
+    editor."""
+    return getattr(context, "object", None) or context.active_object
+
+
 def object_to_remesh(context):
-    """The object the panel is about: the one chosen in it, or failing that
-    the active object, if it is a mesh; None otherwise."""
-    chosen = context.scene.openclare.source or context.active_object
+    """The object the panel is about, if it is a mesh; None otherwise."""
+    chosen = shown_object(context)
     return chosen if chosen is not None and chosen.type == "MESH" else None
 
+
+def source_of(owner):
+    """What `owner` was remeshed from, if it is a result of the add-on whose
+    original is still there; None otherwise."""
+    source = getattr(owner, "openclare_source", None) if owner is not None else None
+    return source if source is not None and source.type == "MESH" else None
+
+
+# Settings that are not copied from one object to another: what is shown,
+# and the object files of 0.1 named in the settings of their scene.
+NOT_COPIED = {"rna_type", "name", "source", "show_sizes"}
+
+
+def copy_settings(given, taken):
+    """Gives `taken` the settings of `given`: the preset first, for what it
+    sets to be overwritten by what `given` says."""
+    names = [p.identifier for p in given.bl_rna.properties if p.identifier not in NOT_COPIED]
+    names.sort(key=lambda name: name != "preset")
+    for name in names:
+        setattr(taken, name, getattr(given, name))
+
+
+def adopt_scene_settings(scene):
+    """Files of 0.1 kept one set of settings in the scene: the object it
+    named, or failing that each mesh object that has none of its own and is
+    not a result, takes them. Done once: the scene then keeps nothing."""
+    legacy = scene.openclare
+    names = [p.identifier for p in legacy.bl_rna.properties if p.identifier not in {"rna_type", "name"}]
+    if not any(legacy.is_property_set(name) for name in names):
+        return
+    named = legacy.source if legacy.source is not None and legacy.source.type == "MESH" else None
+    takers = [named] if named is not None else [
+        candidate for candidate in scene.objects
+        if candidate.type == "MESH" and source_of(candidate) is None
+        and not any(candidate.openclare.is_property_set(name) for name in names)
+    ]
+    for taker in takers:
+        copy_settings(legacy, taker.openclare)
+    if named is not None and scene.view_layers:
+        # What was remeshed whichever object was active: made so.
+        scene.view_layers[0].objects.active = named
+    for name in names:
+        legacy.property_unset(name)
 
 
 # How many of its largest quads go along the diagonal of the box of an object
@@ -89,8 +140,8 @@ def target_changed(settings, context):
     """Sizes asked for and none set: those the object gives."""
     if settings.target != "SIZE" or settings.largest_quad > 0.0:
         return
-    owner = settings.source or object_to_remesh(context)
-    if owner is not None:
+    owner = settings.id_data
+    if isinstance(owner, bpy.types.Object) and owner.type == "MESH":
         settings.largest_quad, settings.smallest_quad = sizes_from(owner)
 
 
@@ -187,9 +238,10 @@ def colour_sizes(settings):
     mesh.update()
 
 
-def stop_preview(context):
+def stop_preview(context, untick=True):
     """Takes the colours of the sizes away: the colour attributes of the
-    object are as they were, and the 3D views colour as they did."""
+    object are as they were, and the 3D views colour as they did. Its box
+    Show Sizes is unticked, unless `untick` says not to."""
     owner = bpy.data.objects.get(PREVIEW.pop("of", ""))
     active, default = PREVIEW.pop("active", ""), PREVIEW.pop("default", "")
     PREVIEW.pop("nearest", None)
@@ -202,6 +254,8 @@ def stop_preview(context):
         if default in colours:
             colours.default_color_name = default
         owner.data.update()
+        if untick and owner.openclare.show_sizes:
+            owner.openclare.show_sizes = False
     for space, colour_type in PREVIEW.pop("views", []):
         try:
             space.shading.color_type = colour_type
@@ -252,7 +306,7 @@ def before_saving(*_):
     PREVIEW["saved"] = PREVIEW.get("of")
     if PREVIEW["saved"]:
         views = PREVIEW.get("views", [])
-        stop_preview(bpy.context)
+        stop_preview(bpy.context, untick=False)
         PREVIEW["views_saved"] = views
 
 
@@ -261,7 +315,7 @@ def after_saving(*_):
     owner = bpy.data.objects.get(PREVIEW.pop("saved", None) or "")
     views = PREVIEW.pop("views_saved", [])
     if owner is not None:
-        start_preview(bpy.context, bpy.context.scene.openclare, owner)
+        start_preview(bpy.context, owner.openclare, owner)
         # The views were given back their colouring before saving: what they
         # had before the preview is what to give back at the end.
         PREVIEW["views"] = views
@@ -274,12 +328,15 @@ def after_loading(*_):
     ANALYSES.clear()
     COUNTED.clear()
     for scene in bpy.data.scenes:
-        scene.openclare.show_sizes = False
+        adopt_scene_settings(scene)
+    for owner in bpy.data.objects:
+        if owner.openclare.show_sizes:
+            owner.openclare.show_sizes = False
 
 
 def sizes_changed(settings, context):
     """The sizes moved: the preview follows."""
-    if PREVIEW.get("of"):
+    if PREVIEW.get("of") and PREVIEW["of"] == settings.id_data.name:
         colour_sizes(settings)
 
 
@@ -287,8 +344,9 @@ def show_sizes_changed(settings, context):
     if not settings.show_sizes:
         stop_preview(context)
         return
-    owner = object_to_remesh(context)
-    if owner is None or owner.mode == "EDIT" or analysis_of(context, settings, owner) is None:
+    owner = settings.id_data
+    if not isinstance(owner, bpy.types.Object) or owner.type != "MESH" or owner.mode == "EDIT" \
+            or analysis_of(context, settings, owner) is None:
         # Nothing to show before the object is analysed as it is, nor while
         # it is edited.
         settings.show_sizes = False
@@ -302,8 +360,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         type=bpy.types.Object,
         poll=is_a_mesh,
         description=(
-            "The object to remesh, taken as it is seen, modifiers applied. "
-            "Leave empty to remesh the active object, whichever it is at the time"
+            "Read only in the settings of a scene saved by openclare 0.1: the object those settings are given to"
         ),
     )
     preset: bpy.props.EnumProperty(
@@ -789,8 +846,9 @@ class OPENCLARE_OT_analyse(bpy.types.Operator):
     def execute(self, context):
         import numpy
 
-        settings = context.scene.openclare
         owner = object_to_remesh(context)
+        adopt_scene_settings(context.scene)
+        settings = owner.openclare
         evaluated = owner.evaluated_get(context.evaluated_depsgraph_get())
         mesh = evaluated.to_mesh()
         try:
@@ -814,7 +872,6 @@ class OPENCLARE_OT_analyse(bpy.types.Operator):
         finally:
             evaluated.to_mesh_clear()
         stop_preview(context)
-        settings.show_sizes = False
         ANALYSES[owner.name] = {"analysis": analysis, "key": key}
         scale = scale_of(owner)
         largest, smallest = analysis.proposal()
@@ -829,16 +886,13 @@ class OPENCLARE_OT_analyse(bpy.types.Operator):
         return {"FINISHED"}
 
 
-class OPENCLARE_OT_remesh(bpy.types.Operator):
-    """Remesh the active object into quads, as a new object next to it"""
+# The custom property of a result where what the engine said of it is kept.
+REPORT = "openclare_report"
 
-    bl_idname = "object.openclare_remesh"
-    bl_label = "Remesh to Quads"
-    bl_options = {"REGISTER", "UNDO"}
 
-    @classmethod
-    def poll(cls, context):
-        return object_to_remesh(context) is not None and context.mode == "OBJECT"
+class Remeshing:
+    """What the two buttons that remesh have in common: the run, and what
+    is said of it while it goes."""
 
     def say(self, context, message, done=0):
         """Shows where the run is: in the status bar and in the Info log, and
@@ -858,11 +912,13 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
             except RuntimeError:
                 pass
 
-    def execute(self, context):
-        settings = context.scene.openclare
-        if PREVIEW.get("of"):
-            settings.show_sizes = False
-        original = object_to_remesh(context)
+    def run(self, context, original):
+        """Remeshes `original` with its settings into a new object next to
+        it, made the active one, and says how it went. Returns the new
+        object, or None if it could not be made."""
+        adopt_scene_settings(context.scene)
+        settings = original.openclare
+        stop_preview(context)
         self.drawn, self.stages = 0.0, []
         last_report.clear()
         context.window_manager.progress_begin(0, STAGES)
@@ -903,7 +959,7 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
             )
         except engine.EngineError as error:
             self.report({"ERROR"}, f"openclare: {error}")
-            return {"CANCELLED"}
+            return None
         finally:
             evaluated.to_mesh_clear()
             context.window_manager.progress_end()
@@ -914,6 +970,8 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
         remeshed.matrix_world = original.matrix_world
         # Kept, for what is baked onto the result later to be read from it.
         remeshed.openclare_source = original
+        # And how it went, for the panel of the result to tell.
+        remeshed[REPORT] = {key: str(value) for key, value in report.items()}
         for collection in original.users_collection or [context.collection]:
             collection.objects.link(remeshed)
         for other in context.selected_objects:
@@ -953,13 +1011,69 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
         if failed:
             said += f"; {failed} of {report.get('pieces', '?')} pieces could not be meshed and are missing"
         self.report({"WARNING"} if failed else {"INFO"}, said)
+        return remeshed
+
+
+class OPENCLARE_OT_remesh(Remeshing, bpy.types.Operator):
+    """Remesh the object into quads, as a new object next to it"""
+
+    bl_idname = "object.openclare_remesh"
+    bl_label = "Remesh to Quads"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return object_to_remesh(context) is not None and context.mode == "OBJECT"
+
+    def execute(self, context):
+        return {"FINISHED"} if self.run(context, object_to_remesh(context)) is not None else {"CANCELLED"}
+
+
+class OPENCLARE_OT_remesh_again(Remeshing, bpy.types.Operator):
+    """Remesh the original of this result again, with the settings it has now, in place of this result. Its
+    relief goes: bake it again"""
+
+    bl_idname = "object.openclare_remesh_again"
+    bl_label = "Remesh Again"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return source_of(object_to_remesh(context)) is not None and context.mode == "OBJECT"
+
+    def execute(self, context):
+        result = object_to_remesh(context)
+        made = self.run(context, source_of(result))
+        if made is None:
+            return {"CANCELLED"}
+        # The new mesh goes into the result, which keeps its name, place,
+        # settings and what else it was given; the new object goes.
+        previous, mesh = result.data, made.data
+        result.data = mesh
+        result[REPORT] = made[REPORT]
+        bpy.data.objects.remove(made)
+        if previous.users == 0:
+            name = previous.name
+            bpy.data.meshes.remove(previous)
+            mesh.name = name
+        # The relief was baked on the atlas of the mesh that went.
+        for name in (RELIEF, SUBDIVISION):
+            if name in result.modifiers:
+                result.modifiers.remove(result.modifiers[name])
+        if "openclare_height_file" in result:
+            del result["openclare_height_file"]
+        for other in context.selected_objects:
+            other.select_set(False)
+        result.select_set(True)
+        context.view_layer.objects.active = result
         return {"FINISHED"}
 
 
 def category_collection(context, name, create=False):
-    """The collection of the category `name`; made and put in the scene if
-    there is none yet and `create` says so."""
-    settings = context.scene.openclare
+    """The collection of the category `name` of the object the panel is
+    about; made and put in the scene if there is none yet and `create` says
+    so."""
+    settings = object_to_remesh(context).openclare
     collection = getattr(settings, f"{name}_curves")
     if collection is None and create:
         label, _, tag = CATEGORY[name]
@@ -1175,17 +1289,14 @@ class OPENCLARE_OT_bake_relief(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        target = context.active_object
-        return (
-            target is not None and target.type == "MESH" and context.mode == "OBJECT"
-            and target.openclare_source is not None and target.openclare_source.type == "MESH"
-        )
+        return source_of(object_to_remesh(context)) is not None and context.mode == "OBJECT"
 
     def execute(self, context):
         import numpy
 
-        settings = context.scene.openclare
-        target, resolution = context.active_object, int(settings.relief_resolution)
+        target = object_to_remesh(context)
+        settings = target.openclare
+        resolution = int(settings.relief_resolution)
         try:
             heights, report = relief_of(context, target, target.openclare_source, settings.relief_levels, resolution)
         except engine.EngineError as error:
@@ -1267,11 +1378,12 @@ class CurvesOperator:
 
     @classmethod
     def poll(cls, context):
-        return context.mode == "OBJECT"
+        return object_to_remesh(context) is not None and context.mode == "OBJECT"
 
 
 class OPENCLARE_OT_curves_assign(CurvesOperator, bpy.types.Operator):
-    """Move the selected curves to this category and give them its colour. A curve is in one category only"""
+    """Move the selected curves to this category of the object and give them its colour. A curve is in one category
+    only"""
 
     bl_idname = "object.openclare_curves_assign"
     bl_label = "Assign"
@@ -1332,29 +1444,56 @@ class OPENCLARE_OT_curves_select(CurvesOperator, bpy.types.Operator):
     def execute(self, context):
         for drawn in curve_objects(category_collection(context, self.category)):
             # Only what this view layer shows can be selected.
+            # The object stays the active one: its panel stays shown.
             if drawn.name in context.view_layer.objects and (drawn.visible_get() or not self.select):
                 drawn.select_set(self.select)
-                if self.select:
-                    context.view_layer.objects.active = drawn
         return {"FINISHED"}
 
 
-class OPENCLARE_PT_panel(bpy.types.Panel):
+class DataPanel:
+    """Where the panels are: in the Properties editor, on the tab of the
+    mesh of the object."""
+
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "data"
+
+
+def is_source(context):
+    """The object shown is one to remesh: a mesh that is not a result."""
+    owner = object_to_remesh(context)
+    return owner is not None and source_of(owner) is None
+
+
+class OPENCLARE_PT_panel(DataPanel, bpy.types.Panel):
+    """For an object to remesh: how; for a result: what it was made from
+    and how it went"""
+
     bl_label = "openclare"
     bl_idname = "OPENCLARE_PT_panel"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "openclare"
+    # Before Animation and Custom Properties. Blender keeps the order a file
+    # saved for the panels it knew, and puts the others after: dragged up
+    # by its handle, the panel stays there.
+    bl_order = -1
+
+    @classmethod
+    def poll(cls, context):
+        return object_to_remesh(context) is not None
+
+    def draw_header(self, context):
+        self.layout.label(text="", icon="MOD_REMESH")
 
     def draw(self, context):
+        owner = object_to_remesh(context)
+        if source_of(owner) is None:
+            self.draw_source(context, owner)
+        else:
+            self.draw_result(context, owner)
+
+    def draw_source(self, context, owner):
         layout = self.layout
         layout.use_property_split = True
-        settings = context.scene.openclare
-        layout.prop(settings, "source")
-        if settings.source is None:
-            # Said, so that it is plain what the button will act on.
-            active = object_to_remesh(context)
-            layout.label(text=f"Active object: {active.name}" if active else "No mesh is active", icon="INFO")
+        settings = owner.openclare
         layout.prop(settings, "preset")
         layout.prop(settings, "target", expand=True)
         if settings.target == "SIZE":
@@ -1362,14 +1501,12 @@ class OPENCLARE_PT_panel(bpy.types.Panel):
             sizes = layout.column(align=True)
             sizes.prop(settings, "largest_quad")
             sizes.prop(settings, "smallest_quad")
-            owner = object_to_remesh(context)
-            held = analysis_of(context, settings, owner) if owner is not None else None
+            held = analysis_of(context, settings, owner)
             if held is None:
-                note = "Analyse to see how many quads these sizes make" if owner is not None else ""
-                if owner is not None and owner.name in ANALYSES:
+                note = "Analyse to see how many quads these sizes make"
+                if owner.name in ANALYSES:
                     note = "The object or its settings changed: analyse again"
-                if note:
-                    layout.label(text=note, icon="INFO")
+                layout.label(text=note, icon="INFO")
             elif settings.largest_quad > 0.0:
                 analysis, scale = held
                 smallest = min(settings.smallest_quad, settings.largest_quad) or settings.largest_quad / SIZE_RANGE
@@ -1386,29 +1523,88 @@ class OPENCLARE_PT_panel(bpy.types.Panel):
         else:
             layout.prop(settings, "quads")
         layout.prop(settings, "adaptive_size", slider=True)
-        chosen = object_to_remesh(context)
-        if chosen is not None:
-            column = layout.column(align=True)
-            column.prop_search(settings, "density_group", chosen, "vertex_groups", icon="GROUP_VERTEX")
-            factor = column.row()
-            factor.enabled = bool(settings.density_group)
-            factor.prop(settings, "density_factor")
+        column = layout.column(align=True)
+        column.prop_search(settings, "density_group", owner, "vertex_groups", icon="GROUP_VERTEX")
+        factor = column.row()
+        factor.enabled = bool(settings.density_group)
+        factor.prop(settings, "density_factor")
         layout.operator(OPENCLARE_OT_remesh.bl_idname, icon="MOD_REMESH")
 
+    def draw_result(self, context, owner):
+        layout = self.layout
+        source = source_of(owner)
+        row = layout.row(align=True)
+        row.label(text=f"Remeshed from {source.name}", icon="MESH_DATA")
+        row.operator(OPENCLARE_OT_select_original.bl_idname, text="", icon="RESTRICT_SELECT_OFF")
+        told = owner.get(REPORT)
+        if told:
+            box = layout.box().column(align=True)
+            for line, icon in report_lines(told):
+                box.label(text=line, icon=icon)
+        layout.operator(OPENCLARE_OT_remesh_again.bl_idname, icon="FILE_REFRESH")
 
-class OPENCLARE_PT_curves(bpy.types.Panel):
+
+def report_lines(told):
+    """What the panel of a result says of how it was made: lines of text,
+    each with its icon."""
+    told = {key: told[key] for key in told.keys()}
+    lines = []
+    quads, seconds = told.get("quads", "?"), float(told.get("seconds", 0.0))
+    lines.append((f"{quads} quads in {seconds:.1f} s", "MESH_GRID"))
+    wanted, below = float(told.get("quads_wanted", 0.0)), float(told.get("below_smallest", 0.0))
+    if wanted > 0.0:
+        lines.append((f"The shape called for {wanted:,.0f}".replace(",", " "), "INFO"))
+        if below >= 0.005:
+            lines.append((f"{100.0 * below:.0f} % coarser than its shape asks", "ERROR"))
+    failed, boxed = int(told.get("pieces_failed", 0)), int(told.get("pieces_boxed", 0))
+    if failed:
+        lines.append((f"{failed} of {told.get('pieces', '?')} pieces could not be meshed", "ERROR"))
+    if boxed:
+        lines.append((f"{boxed} part(s) smaller than a quad are boxes", "ERROR"))
+    welded, apart = int(told.get("welded_vertices", 0)), int(told.get("edges_taken_apart", 0))
+    if welded or apart:
+        lines.append((f"Mended: {welded} vertices welded, {apart} edges taken apart", "ERROR"))
+    return lines
+
+
+class OPENCLARE_OT_select_original(bpy.types.Operator):
+    """Select the object this result was remeshed from, and make it the active one"""
+
+    bl_idname = "object.openclare_select_original"
+    bl_label = "Select Original"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        source = source_of(object_to_remesh(context))
+        return source is not None and source.name in context.view_layer.objects and context.mode == "OBJECT"
+
+    def execute(self, context):
+        source = source_of(object_to_remesh(context))
+        for other in context.selected_objects:
+            other.select_set(False)
+        source.hide_set(False)
+        source.select_set(True)
+        context.view_layer.objects.active = source
+        return {"FINISHED"}
+
+
+class OPENCLARE_PT_curves(DataPanel, bpy.types.Panel):
     """Curves drawn on the model for the result to have edges along"""
 
     bl_label = "Curves"
     bl_idname = "OPENCLARE_PT_curves"
     bl_parent_id = "OPENCLARE_PT_panel"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "openclare"
+    bl_options = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(cls, context):
+        return is_source(context)
 
     def draw(self, context):
         layout = self.layout
-        settings = context.scene.openclare
+        settings = object_to_remesh(context).openclare
+        layout.label(text="Select curves, then this object last", icon="INFO")
         # One box per category, both always there: a run takes the curves
         # of both.
         for name, label, _, _, tag in CATEGORIES:
@@ -1427,20 +1623,22 @@ class OPENCLARE_PT_curves(bpy.types.Panel):
                 button.category, button.select = name, select
 
 
-class OPENCLARE_PT_export(bpy.types.Panel):
+class OPENCLARE_PT_export(DataPanel, bpy.types.Panel):
     """What the result carries besides its quads"""
 
     bl_label = "Export"
     bl_idname = "OPENCLARE_PT_export"
     bl_parent_id = "OPENCLARE_PT_panel"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "openclare"
+    bl_options = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(cls, context):
+        return is_source(context)
 
     def draw(self, context):
         layout = self.layout
         layout.use_property_split = True
-        settings = context.scene.openclare
+        settings = object_to_remesh(context).openclare
         column = layout.column(heading="UV Layers")
         column.prop(settings, "export_grid_uv", text="Grid")
         column.prop(settings, "export_atlas_uv", text="Atlas")
@@ -1451,26 +1649,22 @@ class OPENCLARE_PT_export(bpy.types.Panel):
         column.prop(settings, "export_creases", text="Creases")
 
 
-class OPENCLARE_PT_relief(bpy.types.Panel):
+class OPENCLARE_PT_relief(DataPanel, bpy.types.Panel):
     """The relief of the original, baked onto the result"""
 
     bl_label = "Relief"
     bl_idname = "OPENCLARE_PT_relief"
     bl_parent_id = "OPENCLARE_PT_panel"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "openclare"
+
+    @classmethod
+    def poll(cls, context):
+        return source_of(object_to_remesh(context)) is not None
 
     def draw(self, context):
         layout = self.layout
         layout.use_property_split = True
-        settings = context.scene.openclare
-        target = context.active_object
-        source = getattr(target, "openclare_source", None)
-        if source is None:
-            layout.label(text="Select a result of Remesh to Quads", icon="INFO")
-        else:
-            layout.label(text=f"From: {source.name}", icon="MESH_DATA")
+        target = object_to_remesh(context)
+        settings = target.openclare
         layout.prop(settings, "relief_levels")
         layout.prop(settings, "relief_resolution")
         layout.prop(settings, "relief_apply")
@@ -1479,7 +1673,7 @@ class OPENCLARE_PT_relief(bpy.types.Panel):
         folder.enabled = settings.relief_format != "NONE"
         folder.prop(settings, "relief_directory")
         layout.operator(OPENCLARE_OT_bake_relief.bl_idname, icon="RNDCURVE")
-        written = target.get("openclare_height_file") if target is not None else None
+        written = target.get("openclare_height_file")
         if written:
             # How the file last written is to be read, where it is used.
             layout.label(text=written, icon="FILE_IMAGE")
@@ -1489,6 +1683,8 @@ CLASSES = (
     OpenclareSettings,
     OPENCLARE_OT_analyse,
     OPENCLARE_OT_remesh,
+    OPENCLARE_OT_remesh_again,
+    OPENCLARE_OT_select_original,
     OPENCLARE_OT_bake_relief,
     OPENCLARE_OT_curves_assign,
     OPENCLARE_OT_curves_remove,
@@ -1510,6 +1706,8 @@ HANDLERS = (
 def register():
     for cls in CLASSES:
         bpy.utils.register_class(cls)
+    bpy.types.Object.openclare = bpy.props.PointerProperty(type=OpenclareSettings)
+    # Where files of 0.1 kept the settings: read once, then given to objects.
     bpy.types.Scene.openclare = bpy.props.PointerProperty(type=OpenclareSettings)
     bpy.types.Object.openclare_source = bpy.props.PointerProperty(
         name="Original",
@@ -1518,6 +1716,14 @@ def register():
     )
     for handlers, handler in HANDLERS:
         handlers.append(handler)
+    # The file open now, when Blender lets it be read (a script, not the
+    # start of Blender: there, the file is read after, and the handler does
+    # it).
+    try:
+        for scene in bpy.data.scenes:
+            adopt_scene_settings(scene)
+    except AttributeError:
+        pass
 
 
 def unregister():
@@ -1527,6 +1733,7 @@ def unregister():
     stop_preview(bpy.context)
     ANALYSES.clear()
     del bpy.types.Object.openclare_source
+    del bpy.types.Object.openclare
     del bpy.types.Scene.openclare
     for cls in reversed(CLASSES):
         bpy.utils.unregister_class(cls)

@@ -54,8 +54,9 @@ for modifier in taken.modifiers:
     if used is not None and used.name not in scene.collection.all_objects:
         scene.collection.objects.link(used)
         used.hide_render = True
-settings = scene.openclare
-settings.source = taken
+# The object is the active one, and keeps its settings.
+bpy.context.view_layer.objects.active = taken
+settings = taken.openclare
 for kind in ("guides", "sharp"):
     if options.get(kind):
         collection = bpy.data.collections[options[kind]]
