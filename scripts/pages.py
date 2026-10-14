@@ -41,6 +41,7 @@ PAGES = ROOT / "docs" / "models"
 # The remeshers pictured, with the name they go by on the page.
 PICTURED = [
     ("quadriflow", "QuadriFlow (Blender)"),
+    ("autoremesher", "AutoRemesher"),
     ("openclare", "openclare"),
     ("quadremesher", "Quad Remesher"),
 ]
