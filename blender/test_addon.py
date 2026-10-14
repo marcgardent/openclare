@@ -25,8 +25,8 @@ modifier = original.modifiers.new("subdivide", "SUBSURF")
 modifier.levels = 2
 triangles_before = len(original.data.polygons)
 
-bpy.context.scene.openclare.preset = "organic"
-bpy.context.scene.openclare.quads = 800
+original.openclare.preset = "organic"
+original.openclare.quads = 800
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 
 remeshed = bpy.context.active_object
@@ -95,7 +95,7 @@ bpy.context.view_layer.objects.active = original
 original.select_set(True)
 group = original.vertex_groups.new(name="more here")
 group.add([vertex.index for vertex in original.data.vertices if vertex.co.z > 0.0], 1.0, "REPLACE")
-settings = bpy.context.scene.openclare
+settings = original.openclare
 settings.adaptive_size = 0.0
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 unpainted = share_on_top(bpy.context.active_object)
@@ -130,10 +130,18 @@ assert settings.adaptive_size == 50.0
 # Export: the result carries its two UV layers, the seams of the atlas and,
 # on a shape with hard edges, those edges marked sharp.
 def alone(target):
+    """Makes `target` the one selected and active object. A mesh is given
+    the settings of the last one: the sections below go on from what was
+    set before, each object keeping its own being checked apart."""
+    global settings
     for other in bpy.context.selected_objects:
         other.select_set(False)
     bpy.context.view_layer.objects.active = target
     target.select_set(True)
+    if target.type == "MESH":
+        if settings.id_data != target:
+            openclare.copy_settings(settings, target.openclare)
+        settings = target.openclare
 
 alone(original)
 settings.preset = "organic"
@@ -193,12 +201,23 @@ def circle_at(height):
     return circle
 
 
+def with_the_ball(circle):
+    """The circle selected, and the ball last: the active object, whose
+    panel the buttons are on."""
+    for other in bpy.context.selected_objects:
+        other.select_set(False)
+    circle.select_set(True)
+    ball.select_set(True)
+    bpy.context.view_layer.objects.active = ball
+
+
 def assign(circle, category):
-    alone(circle)
+    with_the_ball(circle)
     assert bpy.ops.object.openclare_curves_assign(category=category) == {"FINISHED"}
 
 
 loop, ridge = circle_at(0.3), circle_at(-0.3)
+alone(ball)
 assign(loop, "guide")
 assign(ridge, "sharp")
 guides, sharps = settings.guide_curves, settings.sharp_curves
@@ -223,6 +242,7 @@ assert list(guides.objects) == [loop] and list(sharps.objects) == [ridge]
 alone(ball)
 assert bpy.ops.object.openclare_curves_select(category="sharp", select=True) == {"FINISHED"}
 assert ridge.select_get() and not loop.select_get()
+assert bpy.context.view_layer.objects.active == ball, "the ball is no longer active: its panel would go"
 assert bpy.ops.object.openclare_curves_select(category="sharp", select=False) == {"FINISHED"}
 assert not ridge.select_get()
 
@@ -250,7 +270,7 @@ assert all(weights[edge.index].value == 1.0 for edge in sharp), "a sharp edge is
 assert sum(1 for weight in weights if weight.value > 0) == len(sharp)
 
 # Remove takes a curve out of its category and gives it back its colour.
-alone(ridge)
+with_the_ball(ridge)
 assert bpy.ops.object.openclare_curves_remove(category="guide") == {"FINISHED"}
 assert list(sharps.objects) == [ridge], "taken out of a category it was not in"
 assert bpy.ops.object.openclare_curves_remove(category="sharp") == {"FINISHED"}
@@ -459,6 +479,7 @@ alone(globe)
 assert not bpy.ops.object.openclare_bake_relief.poll(), "nothing was remeshed from the ball itself"
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 quads = bpy.context.active_object
+alone(quads)
 assert quads.openclare_source == globe and bpy.ops.object.openclare_bake_relief.poll()
 settings.relief_levels, settings.relief_resolution = 2, "512"
 assert bpy.ops.object.openclare_bake_relief() == {"FINISHED"}
@@ -603,16 +624,69 @@ settings.quads, settings.adaptive_size = 800, 50.0
 bpy.ops.object.empty_add()
 assert not bpy.ops.object.openclare_remesh.poll()
 
-# Unless an object is chosen in the panel: it is the one remeshed, whatever
-# is active, and only a mesh can be chosen.
-settings.source = sheet
-assert bpy.ops.object.openclare_remesh.poll()
+# Each object keeps its own settings.
+bpy.ops.mesh.primitive_cube_add(location=(30.0, 0.0, 0.0))
+first = bpy.context.active_object
+bpy.ops.mesh.primitive_cube_add(location=(33.0, 0.0, 0.0))
+second = bpy.context.active_object
+first.openclare.quads, second.openclare.quads = 200, 500
+first.openclare.preset = "hard-surface"
+assert second.openclare.preset == "organic" and first.openclare.quads == 200
+
+# The panel is in the Properties editor, on the tab of the mesh: for an
+# object to remesh, its settings; for a result, what it comes from.
+panels = (openclare.OPENCLARE_PT_panel, openclare.OPENCLARE_PT_curves, openclare.OPENCLARE_PT_export,
+          openclare.OPENCLARE_PT_relief)
+assert all((p.bl_space_type, p.bl_context) == ("PROPERTIES", "data") for p in panels)
+assert not hasattr(bpy.types, "VIEW3D_PT_openclare") and all(p.bl_region_type == "WINDOW" for p in panels)
+alone(second)
+second.openclare.quads = 500
+assert openclare.is_source(bpy.context) and openclare.OPENCLARE_PT_export.poll(bpy.context)
+assert not openclare.OPENCLARE_PT_relief.poll(bpy.context)
+assert not bpy.ops.object.openclare_remesh_again.poll()
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
-assert bpy.context.active_object.name.startswith(sheet.name) and bpy.context.active_object != sheet
-assert len(bpy.context.active_object.data.polygons) > 300
-settings.source = None
-bpy.ops.object.empty_add()
-assert not bpy.ops.object.openclare_remesh.poll()
+result = bpy.context.active_object
+assert openclare.source_of(result) == second and not openclare.is_source(bpy.context)
+assert openclare.OPENCLARE_PT_relief.poll(bpy.context) and not openclare.OPENCLARE_PT_export.poll(bpy.context)
+# How it went is kept on the result, and said by its panel.
+told = result[openclare.REPORT]
+assert int(told["quads"]) == len(result.data.polygons), dict(told)
+lines = openclare.report_lines(told)
+assert lines[0][0].startswith(f"{len(result.data.polygons)} quads in "), lines
+
+# Remeshed again, with the settings the original has now, in place: the
+# same object, name and place, a new mesh, its relief gone.
+made_before = len(result.data.polygons)
+result.modifiers.new(openclare.SUBDIVISION, "SUBSURF")
+result.location.x += 1.0
+second.openclare.quads = 1500
+objects_before = len(bpy.data.objects)
+assert bpy.ops.object.openclare_remesh_again() == {"FINISHED"}
+assert bpy.context.active_object == result and len(bpy.data.objects) == objects_before
+assert len(result.data.polygons) > 2 * made_before and int(result[openclare.REPORT]["quads"]) == len(result.data.polygons)
+assert result.location.x == 34.0 and openclare.SUBDIVISION not in result.modifiers
+assert result.data.name == f"{second.data.name}.quads", result.data.name
+# And its original selected from it.
+assert bpy.ops.object.openclare_select_original() == {"FINISHED"}
+assert bpy.context.active_object == second and not result.select_get()
+
+# A scene of openclare 0.1 kept the settings in the scene, naming the
+# object: on opening, that object takes them, and the scene keeps nothing.
+legacy = bpy.context.scene.openclare
+legacy.source, legacy.quads, legacy.preset, legacy.adaptive_size = first, 1234, "animation", 20.0
+openclare.adopt_scene_settings(bpy.context.scene)
+assert (first.openclare.quads, first.openclare.preset, first.openclare.adaptive_size) == (1234, "animation", 20.0)
+assert second.openclare.quads == 1500, "an object not named took the settings"
+assert not legacy.is_property_set("quads") and legacy.source is None
+assert bpy.context.view_layer.objects.active == first
+# Naming none: each mesh that has no settings of its own takes them.
+bpy.ops.mesh.primitive_cube_add(location=(36.0, 0.0, 0.0))
+plain = bpy.context.active_object
+legacy.quads = 4321
+openclare.adopt_scene_settings(bpy.context.scene)
+assert plain.openclare.quads == 4321 and first.openclare.quads == 1234 and second.openclare.quads == 1500
+assert result.openclare.quads != 4321, "a result took settings to remesh"
+print("PANEL OK")
 
 # The engine is loaded from a copy named after what it holds: an add-on
 # updated in a Blender that has already used it does not get the engine it

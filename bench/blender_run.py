@@ -148,16 +148,18 @@ def write_source(original, settings, directory):
 def main(options):
     openclare = the_addon()
     scene = bpy.context.scene
-    settings = scene.openclare
     if bpy.context.mode != "OBJECT":
         bpy.ops.object.mode_set(mode="OBJECT")
     original = openclare.object_to_remesh(bpy.context)
     if original is None:
         meshes = sorted(o.name for o in scene.objects if o.type == "MESH")
         raise Failure(
-            f"{bpy.data.filepath or 'the scene'} has no object to remesh: none is chosen in the openclare panel "
-            f"and no mesh is active (meshes of the scene: {', '.join(meshes) or 'none'})"
+            f"{bpy.data.filepath or 'the scene'} has no object to remesh: no mesh is active "
+            f"(meshes of the scene: {', '.join(meshes) or 'none'})"
         )
+    # The settings of the object (those its scene kept, for a scene of 0.1,
+    # given to it when the add-on was registered).
+    settings = original.openclare
     if options.quads is not None:
         settings.quads = options.quads
     directory = Path(options.out).resolve()
