@@ -359,6 +359,14 @@ impl Demand {
         if reading.range.is_finite() { asked.clamp(1.0 / reading.range, reading.range) } else { asked }
     }
 
+    /// The edge vertex `v` asks for under `reading`, before the smallest
+    /// quad and any smoothing: what the bend asks, as far as the largest
+    /// quad allows, by the paint, and no more than a thin part allows. As
+    /// [`Demand::sizes`] has it.
+    fn asks(&self, v: usize, reading: &Reading) -> f64 {
+        ((reading.level * self.by_bend(v, reading)).min(reading.largest) * self.paint[v]).min(self.thin[v])
+    }
+
     /// How many quads that makes: a region of area A holds A / s² of them.
     pub fn quads(&self, reading: &Reading) -> f64 {
         self.sizes(reading).iter().zip(&self.areas).map(|(size, area)| area / (size * size)).sum()
@@ -369,7 +377,7 @@ impl Demand {
     pub fn below(&self, reading: &Reading) -> f64 {
         let (mut under, mut all) = (0.0, 0.0);
         for (v, &area) in self.areas.iter().enumerate() {
-            let wanted = (reading.level * self.by_bend(v, reading)).min(self.thin[v]) * self.paint[v];
+            let wanted = self.asks(v, reading);
             under += if wanted < reading.smallest { area } else { 0.0 };
             all += area;
         }
@@ -387,7 +395,7 @@ impl Demand {
     pub fn wanted(&self, largest: f64) -> Vec<(f64, f64)> {
         let reading = Reading::between(largest, f64::MIN_POSITIVE);
         (0..self.areas.len())
-            .map(|v| ((reading.level * self.by_bend(v, &reading)).min(self.thin[v]).min(largest) * self.paint[v], self.areas[v]))
+            .map(|v| (self.asks(v, &reading), self.areas[v]))
             .collect()
     }
 

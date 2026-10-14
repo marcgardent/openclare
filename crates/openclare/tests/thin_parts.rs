@@ -141,3 +141,32 @@ fn a_finger_keeps_its_volume() {
     assert!(enough >= 5 && enough > few, "{few} quads round the finger without, {enough} with");
     assert!(near < 0.6 * far, "thin parts {far} quad edges away without, {near} with");
 }
+
+#[test]
+fn asked_for_sizes_the_finger_gets_its_quads_and_the_ball_comes_down_to_them_gently() {
+    let work = work_mesh(&ball_with_a_finger());
+    let request = Request { edge_length: 0.2, bounds: Some((0.3, 0.02)), adaptivity: 0.0, painted: None, quads_around: 6.0 };
+    let tuning = sizing::Curvature::default();
+    let demand = sizing::Demand::measure(&tuning, &work, &request).unwrap();
+    let sizes = demand.sizes(&sizing::Reading::between(0.3, 0.02));
+    // Round the finger, a sixth of its girth of 0.63; under the ball, far
+    // from it and thick, the largest quad.
+    let finger = mean_where(&work, &sizes, |p| on_the_finger(p) && p.z > 1.5 && p.z < 2.0);
+    let bottom = mean_where(&work, &sizes, |p| p.z < -0.5);
+    assert!((finger - 0.105).abs() < 0.015, "an edge of {finger} round the finger");
+    assert!((bottom - 0.3).abs() < 1e-9, "an edge of {bottom} under the ball");
+    // From the finger down the ball, no size grows faster than the
+    // gradation lets it, and somewhere it grows that fast.
+    let (mut steepest, mut at_the_limit) = (0.0f64, 0);
+    for tri in &work.mesh.triangles {
+        for k in 0..3 {
+            let (a, b) = (tri[k] as usize, tri[(k + 1) % 3] as usize);
+            let length = work.mesh.positions[a].distance(work.mesh.positions[b]);
+            let rate = (sizes[a] - sizes[b]).abs() / length;
+            steepest = steepest.max(rate);
+            at_the_limit += (rate > 0.9 * tuning.gradation) as usize;
+        }
+    }
+    assert!(steepest <= tuning.gradation + 1e-9, "the size grows by {steepest} per length");
+    assert!(at_the_limit > 10, "{at_the_limit} edges where it grows as fast as allowed");
+}
