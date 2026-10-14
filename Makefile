@@ -1,6 +1,6 @@
 # Shortcuts for the common tasks. `make help` lists them.
 
-.PHONY: help build test scenes blenderkit scores quick pages view addon addon-windows test-windows addon-test release
+.PHONY: help build test scenes blenderkit autoremesher scores quick pages view addon addon-windows test-windows addon-test release
 
 help:
 	@echo "make build       build the openclare binary (release)"
@@ -13,6 +13,7 @@ help:
 	@echo "make test-windows WINE=/path/to/wine64"
 	@echo "                 run the tests of the engine built for Windows, under Wine"
 	@echo "make addon-test  run the add-on in a Blender without interface (needs blender)"
+	@echo "make autoremesher download and install the AutoRemesher challenger into ~/.local/bin"
 	@echo "make release version=MAJOR|MINOR|FIX"
 	@echo "                 raise that number of the version, commit and tag it on main; PUSH=1"
 	@echo "                 to send the tag, from which GitHub builds the add-on for Linux and"
@@ -53,6 +54,13 @@ test:
 scenes:
 	ulimit -v $(MEMORY_CAP); blender -b --factory-startup --python bench/make_scenes.py -- \
 		$(if $(MODELS),--models $(MODELS)) $(if $(REFRESH),--refresh)
+
+# Download and install AutoRemesher (huxingyi/autoremesher) into ~/.local/bin
+autoremesher:
+	@mkdir -p $(HOME)/.local/bin
+	curl -sL https://github.com/huxingyi/autoremesher/releases/download/1.2.0/autoremesher-1.2.0.AppImage -o $(HOME)/.local/bin/autoremesher
+	chmod +x $(HOME)/.local/bin/autoremesher
+	@echo "installed: $(HOME)/.local/bin/autoremesher"
 
 # Their licence does not allow keeping them in the repository: see CREDITS.md.
 blenderkit:

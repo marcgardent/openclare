@@ -66,6 +66,7 @@ the same faces.
 |---|---|---|
 | `bench/reference/quadremesher/` | Quad Remesher 1.4.1, Exoside | trial licence, non-commercial use; run from Blender 5.2.2 on 6, 7 and 8 October 2026 |
 | "quadriflow" results | QuadriFlow, built into Blender | run again at every measurement, nothing is kept |
+| "autoremesher" results | AutoRemesher 1.2.0, Jeremy Hu ([huxingyi/autoremesher](https://github.com/huxingyi/autoremesher)) | open source (GPL-3.0); run via CLI |
 
 ## Pictures
 
