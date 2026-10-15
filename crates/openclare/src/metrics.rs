@@ -48,6 +48,9 @@ pub struct Metrics {
     /// up. `None` unless the mesh is a consistently oriented pure quad
     /// manifold.
     pub base_complex_patches: Option<usize>,
+    /// The edge loops: how many close, stop, or spiral. `None` unless the
+    /// mesh is a consistently oriented pure quad manifold.
+    pub edge_loops: Option<EdgeLoops>,
 
     // Alignment.
     /// Mean angle between edges and the nearest principal curvature
@@ -139,6 +142,21 @@ impl Metrics {
         for (name, value) in &fields {
             write!(json, "\"{name}\": {value}, ").unwrap();
         }
+        let loops = self.edge_loops.as_ref();
+        let loop_fields: [(&str, String); 9] = [
+            ("loops_closed", optional(loops.map(|l| l.closed))),
+            ("loops_spiral", optional(loops.map(|l| l.spiral))),
+            ("loops_open", optional(loops.map(|l| l.open))),
+            ("loops_border", optional(loops.map(|l| l.border))),
+            ("loop_edges_closed", optional(loops.map(|l| l.closed_share))),
+            ("loop_edges_spiral", optional(loops.map(|l| l.spiral_share))),
+            ("loop_edges_open", optional(loops.map(|l| l.open_share))),
+            ("loop_edges_border", optional(loops.map(|l| l.border_share))),
+            ("longest_open_loop", optional(loops.map(|l| l.longest_open))),
+        ];
+        for (name, value) in &loop_fields {
+            write!(json, "\"{name}\": {value}, ").unwrap();
+        }
         write!(json, "\"budget_error\": {}}}", optional(self.budget_error)).unwrap();
         json
     }
@@ -172,6 +190,7 @@ pub fn measure(source: &TriMesh, mesh: &PolyMesh, target_faces: Option<usize>) -
     connectivity.singularities(mesh, &mut metrics);
     if metrics.quads == metrics.faces && metrics.non_manifold_edges == 0 && metrics.misoriented_edges == 0 {
         metrics.base_complex_patches = Some(connectivity.base_complex_patches(mesh));
+        metrics.edge_loops = Some(connectivity.edge_loops());
     }
 
     orientation(source, &surface, mesh, diagonal, &mut metrics);
@@ -190,6 +209,31 @@ pub fn measure(source: &TriMesh, mesh: &PolyMesh, target_faces: Option<usize>) -
         }
     }
     metrics
+}
+
+/// The edge loops of a quad mesh, each followed straight on through every
+/// regular vertex. Each edge is on one loop; the edges of a border are on
+/// none.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct EdgeLoops {
+    /// Loops that come back to where they started: rings.
+    pub closed: usize,
+    /// Loops that are their own neighbour, a quad having two opposite
+    /// edges on them: a helix goes round and comes back beside itself one
+    /// quad further, where a ring has another ring. Whether they close or
+    /// stop, they are counted here only.
+    pub spiral: usize,
+    /// Loops that stop, at an irregular vertex at one end at least.
+    pub open: usize,
+    /// Loops that run from a border to a border.
+    pub border: usize,
+    /// The share of the edges, those of borders left out, on each kind.
+    pub closed_share: f64,
+    pub spiral_share: f64,
+    pub open_share: f64,
+    pub border_share: f64,
+    /// Edges of the longest loop that stops at an irregular vertex.
+    pub longest_open: usize,
 }
 
 /// Fewest thin vertices for their mean distance to mean something.
@@ -318,6 +362,94 @@ impl Connectivity {
             *euler.entry(sets.find(polygon[0])).or_insert(0) += 1;
         }
         metrics.topological_minimum = Some(euler.values().map(|chi| 4 * chi.unsigned_abs() as usize).sum());
+    }
+
+    /// The half-edge straight on from `h`, through its head: across the
+    /// edge between the two faces ahead. None at an irregular vertex or on
+    /// a border, where a loop stops.
+    fn straight_on(&self, h: u32) -> Option<u32> {
+        let v = self.head(h) as usize;
+        if self.is_irregular(v) || self.on_boundary[v] {
+            return None;
+        }
+        let across = self.twin[self.next[h as usize] as usize];
+        (across != INVALID).then(|| self.next[across as usize])
+    }
+
+    /// Follows every edge loop and sorts them: closed, spiral, open (at an
+    /// irregular vertex) or from border to border.
+    fn edge_loops(&self) -> EdgeLoops {
+        let halves = self.origin.len();
+        let mut loop_of = vec![INVALID; halves];
+        // Per loop: its edges, whether it closed, and whether an end is on
+        // an irregular vertex.
+        let mut loops: Vec<(usize, bool, bool)> = Vec::new();
+        let end_on_pole = |h: u32| !self.on_boundary[self.head(h) as usize];
+        for start in 0..halves as u32 {
+            if loop_of[start as usize] != INVALID || self.twin[start as usize] == INVALID {
+                continue;
+            }
+            let id = loops.len() as u32;
+            let (mut edges, mut closed, mut pole) = (0usize, false, false);
+            // Forward from the start; then, if it did not close, backward
+            // from beyond its other end.
+            let backward = self.twin[start as usize];
+            for first in [Some(start), None] {
+                let mut h = match first {
+                    Some(h) => h,
+                    None if closed => break,
+                    None => match self.straight_on(backward) {
+                        Some(on) => on,
+                        None => {
+                            pole |= end_on_pole(backward);
+                            break;
+                        }
+                    },
+                };
+                loop {
+                    if loop_of[h as usize] == id {
+                        closed = true;
+                        break;
+                    }
+                    loop_of[h as usize] = id;
+                    loop_of[self.twin[h as usize] as usize] = id;
+                    edges += 1;
+                    match self.straight_on(h) {
+                        Some(on) => h = on,
+                        None => {
+                            pole |= end_on_pole(h);
+                            break;
+                        }
+                    }
+                }
+            }
+            loops.push((edges, closed, pole));
+        }
+        // A quad with two opposite edges on one loop: that loop spirals.
+        let mut spiral = vec![false; loops.len()];
+        for h in 0..halves {
+            let opposite = self.next[self.next[h] as usize] as usize;
+            if loop_of[h] != INVALID && loop_of[h] == loop_of[opposite] {
+                spiral[loop_of[h] as usize] = true;
+            }
+        }
+        let mut counted = EdgeLoops::default();
+        let all: usize = loops.iter().map(|l| l.0).sum();
+        for (k, &(edges, closed, pole)) in loops.iter().enumerate() {
+            let (count, share) = if spiral[k] {
+                (&mut counted.spiral, &mut counted.spiral_share)
+            } else if closed {
+                (&mut counted.closed, &mut counted.closed_share)
+            } else if pole {
+                counted.longest_open = counted.longest_open.max(edges);
+                (&mut counted.open, &mut counted.open_share)
+            } else {
+                (&mut counted.border, &mut counted.border_share)
+            };
+            *count += 1;
+            *share += edges as f64 / all.max(1) as f64;
+        }
+        counted
     }
 
     /// Traces a separatrix out of every irregular vertex along each of its

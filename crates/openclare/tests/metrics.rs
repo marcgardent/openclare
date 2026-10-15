@@ -155,3 +155,55 @@ fn the_baseline_passes_validity_and_reports_its_excess() {
     assert!(metrics.budget_error.unwrap() < 0.25);
     assert!(metrics.to_json().contains("\"valid\": true"));
 }
+
+#[test]
+fn edge_loops_of_a_torus_grid_all_close() {
+    // 48 rings one way, 24 the other, each its own loop.
+    let metrics = measure(&primitives::torus(1.0, 0.4, 96, 48), &primitives::torus_quads(1.0, 0.4, 48, 24), None);
+    let loops = metrics.edge_loops.expect("a pure quad manifold");
+    assert_eq!((loops.closed, loops.spiral, loops.open, loops.border), (48 + 24, 0, 0, 0), "{loops:?}");
+    assert!((loops.closed_share - 1.0).abs() < 1e-12);
+}
+
+#[test]
+fn edge_loops_of_a_cube_grid_close_but_along_its_edges() {
+    // Round the cube, 3 x 7 rings; along its 12 edges, loops from corner to
+    // corner, which are irregular.
+    let metrics = measure(&primitives::cube(8), &primitives::cube_quads(8), None);
+    let loops = metrics.edge_loops.expect("a pure quad manifold");
+    assert_eq!((loops.closed, loops.spiral, loops.open, loops.border), (21, 0, 12, 0), "{loops:?}");
+    assert_eq!(loops.longest_open, 8);
+    assert!((loops.open_share - 12.0 * 8.0 / (12.0 * 8.0 * 8.0)).abs() < 1e-12, "{loops:?}");
+}
+
+#[test]
+fn edge_loops_of_a_twisted_torus_spiral() {
+    // The torus closed with a shift of one ring: the loops that went round
+    // the tube now go round it and on to the next ring, a helix, beside
+    // itself a quad further. Those round the axis still close.
+    let (nu, nv) = (24u32, 12u32);
+    let mut twisted = primitives::torus_quads(1.0, 0.4, nu, nv);
+    let index = |i: u32, j: u32| (i % nu) * nv + (j % nv);
+    twisted.faces.clear();
+    for i in 0..nu {
+        for j in 0..nv {
+            // Across the seam j = nv - 1 to 0, one ring further along u.
+            let (up_i, up_j) = if j + 1 == nv { (i + 1, 0) } else { (i, j + 1) };
+            twisted.faces.push(vec![index(i, j), index(i + 1, j), index(up_i + 1, up_j), index(up_i, up_j)]);
+        }
+    }
+    let metrics = measure(&twisted.triangulated(), &twisted, None);
+    assert!(metrics.is_valid(), "{metrics:?}");
+    let loops = metrics.edge_loops.expect("a pure quad manifold");
+    assert_eq!(loops.spiral, 1, "{loops:?}");
+    assert_eq!(loops.closed, nv as usize, "{loops:?}");
+    assert!((loops.spiral_share - 0.5).abs() < 1e-12, "{loops:?}");
+}
+
+#[test]
+fn edge_loops_of_a_grid_run_from_border_to_border() {
+    let metrics = measure(&primitives::plane(24), &primitives::plane_quads(12), None);
+    let loops = metrics.edge_loops.expect("a pure quad manifold");
+    // 11 inner lines each way; the border itself is on no loop.
+    assert_eq!((loops.closed, loops.spiral, loops.open, loops.border), (0, 0, 0, 22), "{loops:?}");
+}
