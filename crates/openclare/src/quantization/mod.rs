@@ -29,11 +29,14 @@ pub struct Request {
     pub quads: Option<usize>,
     /// How far from that number is close enough, as a fraction of it.
     pub tolerance: f64,
+    /// Lengths that close the ways round a part into rings are looked for,
+    /// and kept where they make fewer spirals (DT-062).
+    pub close_turns: bool,
 }
 
 impl Default for Request {
     fn default() -> Self {
-        Self { quads: None, tolerance: 0.02 }
+        Self { quads: None, tolerance: 0.02, close_turns: true }
     }
 }
 
@@ -388,7 +391,7 @@ impl Quantizer for WalkCancelling {
         // than one way; where the spirals end up is sensitive to every
         // length, so each way's quad mesh is built and its spirals counted,
         // and the one with the fewest kept, the plain search among them.
-        let close = std::env::var_os("OPENCLARE_CLOSE_TURNS").is_some();
+        let close = request.close_turns;
         let clock = std::time::Instant::now();
         let plain = self.search(tmesh, &network, &real, request, &mut report);
         if std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some() {
@@ -404,6 +407,10 @@ impl Quantizer for WalkCancelling {
                 };
                 crate::metrics::edge_loops(&mesh).map_or(f64::INFINITY, |loops| loops.spiral_share)
             };
+            // As near the number of quads asked for as the plain search, or
+            // within the tolerance: fewer spirals do not buy a different mesh.
+            let wanted = request.quads.unwrap_or(plain.2);
+            let allowed = plain.2.abs_diff(wanted).max((request.tolerance * wanted as f64) as usize);
             let mut best = (spirals_of(&plain.0), plain);
             for offsets in CLOSE_WAYS {
                 let clock = std::time::Instant::now();
@@ -420,7 +427,7 @@ impl Quantizer for WalkCancelling {
                 if std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some() {
                     eprintln!("closing from {offsets:?}: spirals {:.3} (best so far {:.3})", spirals, best.0);
                 }
-                if spirals < best.0 - 1e-9 {
+                if spirals < best.0 - 1e-9 && tried.2.abs_diff(wanted) <= allowed {
                     report.turns_held = held.len();
                     best = (spirals, tried);
                 }

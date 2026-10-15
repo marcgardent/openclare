@@ -853,8 +853,11 @@ impl QuadLayout {
         }
 
         recorder.begin("quantization")?;
-        let request =
-            quantization::Request { quads: Some((quads.round() as usize).max(1)), tolerance: self.budget_tolerance };
+        let request = quantization::Request {
+            quads: Some((quads.round() as usize).max(1)),
+            tolerance: self.budget_tolerance,
+            close_turns: config.close_loops,
+        };
         let quantized = quantization::create(quantization::Kind::WalkCancelling).quantize(&layout.tmesh, &request)?;
         clock.lap(&mut report, "quantization");
         recorder::show_lengths(recorder, &work, &layout.tmesh, &quantized);
