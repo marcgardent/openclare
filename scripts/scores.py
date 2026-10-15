@@ -30,7 +30,7 @@ from run import DEFAULT_TARGET, MATCHED, MODELS, RESULTS, OPENCLARE  # noqa: E40
 
 # Criteria, in the order they are shown: key, title, what a full mark means.
 CRITERIA = [
-    ("validity", "Validity", "all quads, manifold, no flipped or collapsed face, no hole the source lacks"),
+    ("validity", "Validity", "manifold, no flipped or collapsed face, no hole the source lacks; all quads, or nearly"),
     ("alignment", "Alignment", "edges along the principal curvature directions"),
     ("shape", "Quad shape", "corners at right angles"),
     ("fidelity", "Fidelity", "no point of the source far from the mesh, thin parts kept"),
@@ -49,7 +49,7 @@ WEIGHTS = {
     "fidelity": 15,
     "singularities": 10,
     "structure": 5,
-    "loops": 10,
+    "loops": 15,
     "budget": 10,
     "speed": 0,
 }
@@ -71,20 +71,42 @@ def fidelity(metrics):
 
 
 def loops(metrics):
-    """The edge loops (DT-062): none on a spiral, which is 0 from a fifth of
-    the edges on spirals; and loops that close, which is 100 from half of
-    them, those from a border to a border left out (an open sheet has
-    nothing else). The two count the same. `None` where the loops could not
-    be followed: a mesh that is not a manifold."""
+    """The edge loops (DT-062): next to none on a spiral, 100 up to 2 % of
+    the edges (2.5 % by hand), 0 from a fifth; and loops that close, 100
+    from a quarter of them (a quarter by hand), those from a border to a
+    border left out (an open sheet has nothing else). The two count the
+    same. `None` where the loops could not be followed: a mesh that is not
+    a manifold."""
     spiral = metrics.get("loop_edges_spiral")
     if spiral is None:
         return None
-    no_spiral = linear(spiral, 0.0, 0.20)
+    no_spiral = linear(spiral, 0.02, 0.20)
     counted = sum(metrics.get(key) or 0 for key in ("loops_closed", "loops_spiral", "loops_open"))
     if counted == 0:
         return no_spiral
-    closing = linear(-(metrics.get("loops_closed") or 0) / counted, -0.5, 0.0)
+    closing = linear(-(metrics.get("loops_closed") or 0) / counted, -0.25, 0.0)
     return 0.5 * (no_spiral + closing)
+
+
+def validity(metrics):
+    """100 for a sound mesh of quads only. A defect of structure (an edge of
+    three faces, faces turned the wrong way, flipped or collapsed, a hole the
+    source has not) is 0; faces that are not quads take off as their share
+    asks, all of it from one in twenty: a mesh modelled by hand has its few
+    triangles where a quad would not do (20 of 10,590 on the human bodies of
+    Blender's Essentials library, 96)."""
+    if metrics.get("valid"):
+        return 100.0
+    sound = (
+        metrics.get("non_manifold_edges", 1) == 0
+        and metrics.get("misoriented_edges", 1) == 0
+        and metrics.get("inverted_faces", 1) == 0
+        and metrics.get("degenerate_faces", 1) == 0
+        and (metrics.get("source_boundary_edges", 0) > 0 or metrics.get("boundary_edges", 1) == 0)
+    )
+    if not sound or not metrics.get("faces"):
+        return 0.0
+    return linear((metrics["faces"] - metrics["quads"]) / metrics["faces"], 0.0, 0.05)
 
 
 def per_100_quads(count, metrics):
@@ -94,17 +116,22 @@ def per_100_quads(count, metrics):
 # How a criterion is marked from the metrics of a mesh (the median over the
 # seeds of a remesher). `None` when the metric does not exist for the model.
 SCALES = {
-    # Edges at random are 22.5 degrees off on average.
-    "alignment": lambda m: None if m.get("alignment") is None else linear(m["alignment"], 0.0, 22.5),
-    # Mean distance of the corners from a right angle, in degrees.
-    "shape": lambda m: linear(m["angle_deviation_mean"], 0.0, 20.0),
+    # Edges at random are 22.5 degrees off on average. The full mark is
+    # where a mesh modelled by hand is (the human bodies of Blender's
+    # Essentials library: 9.4 to 9.8 degrees, 57 on the old scale): following
+    # the anatomy, its edges leave the principal directions here and there.
+    "alignment": lambda m: None if m.get("alignment") is None else linear(m["alignment"], 8.0, 22.5),
+    # Mean distance of the corners from a right angle, in degrees: 8.8 to
+    # 9.2 by hand.
+    "shape": lambda m: linear(m["angle_deviation_mean"], 8.0, 25.0),
     "fidelity": lambda m: fidelity(m),
     # Irregular vertices beyond the topological minimum (or all of them
-    # where that minimum is not known), per 100 quads.
+    # where that minimum is not known), per 100 quads: 4.5 by hand, the
+    # poles a modeller places for the loops to flow.
     "singularities": lambda m: linear(
         per_100_quads(m["irregular_excess"] if m.get("irregular_excess") is not None else m["irregular_vertices"], m),
-        0.0,
-        10.0,
+        5.0,
+        15.0,
     ),
     # Patches of the base complex per quad: 1 means no structure at all.
     "structure": lambda m: (
@@ -136,7 +163,7 @@ def scores_of(measured, runs, seconds, budget_counts=True):
     quads = None
     if runs == 0:
         return None
-    marks["validity"] = 100.0 * sum(1 for m in measured if m.get("valid")) / runs
+    marks["validity"] = sum(validity(m) for m in measured) / runs
     if measured:
         keys = set().union(*(m.keys() for m in measured))
         typical = {key: median([m.get(key) for m in measured]) for key in keys}

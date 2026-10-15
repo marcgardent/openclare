@@ -56,7 +56,11 @@ BLENDERKIT = {
     "camera": "3ef12fa4-29a0-463f-b338-7ad3f81b654b",
     "wolf": "c63283ec-7419-4bff-8f6f-13cf70bd1b14",
 }
-LOCAL_MODELS = set(BLENDERKIT)
+# The human bodies of Blender's Essentials library (CC0): a sculpt and the
+# mesh modelled by hand on it, `make essentials` (bench/fetch_essentials.py)
+# takes them from Blender's cache. Their sculpts are large: local too.
+ESSENTIALS = {"human_male", "human_female"}
+LOCAL_MODELS = set(BLENDERKIT) | ESSENTIALS
 # Scenes made by hand with bench/make_scene.py from files of the author of
 # the project: an object with its modifiers and materials, curves drawn on
 # it, a painted density. No OBJ makes them again.
@@ -72,6 +76,11 @@ MODELS = [
     # The project mascot: a real 4.7 million triangle sculpt, brought down to
     # 200 000 triangles by `openclare preprocess` (see bench/README.md).
     ("ogre", "organic", False, False),
+    # The human bodies of Blender's Essentials library: sculpts of 1.35 million
+    # triangles, with the mesh of 10,590 faces modelled on them by hand (the
+    # base level of their Multires), what the remeshers are held up against.
+    ("human_male", "organic", False, False),
+    ("human_female", "organic", False, False),
     # From Keenan Crane's model repository (see bench/import_crane.py).
     ("spot", "organic", False, False),
     ("bob", "organic", False, False),
@@ -452,6 +461,27 @@ def faces_of(path):
 # it is, and ours asked for as many quads as that mesh has. Both are measured
 # against that number, not against the budget of the bench.
 MATCHED = ("quadremesher-as-made", "openclare-matched")
+# The meshes modelled by hand, for the models that have one.
+HANDMADE = REFERENCE / "handmade"
+
+
+def handmade(model, sharp, boundary, target, seeds, directory):
+    """The mesh modelled by hand on the model, measured against its own
+    number of quads: none for the models that have none."""
+    path = HANDMADE / f"{model}.obj"
+    if not path.exists():
+        return {}
+    return {seeds[0]: (path, None, None, faces_of(path))}
+
+
+def openclare_as_handmade(model, sharp, boundary, target, seeds, directory):
+    """openclare asked for as many quads as the mesh modelled by hand has."""
+    path = HANDMADE / f"{model}.obj"
+    if not path.exists():
+        return {}
+    count = faces_of(path)
+    made = addon("openclare-as-handmade")(model, sharp, boundary, count, seeds, directory)
+    return {seed: (path, seconds, failure, count, engine) for seed, (path, seconds, failure, _, engine) in made.items()}
 
 
 def quadremesher_as_made(model, sharp, boundary, target, seeds, directory):
@@ -498,6 +528,10 @@ TOOLS = {
     "quadremesher-uniform": quadremesher(uniform=True),
     "quadremesher-as-made": quadremesher_as_made,
     "openclare-matched": openclare_matched,
+    # What a modeller made by hand, where there is such a mesh, and openclare
+    # at its number of quads.
+    "handmade": handmade,
+    "openclare-as-handmade": openclare_as_handmade,
 }
 
 
