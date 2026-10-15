@@ -27,6 +27,8 @@ From 0 to 100; how they are made is in [SCORES.md](../../bench/results/SCORES.md
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
+| openclare-uniform | 592 | **10** | 0 | 27 | 17 | 10 | 0 | — | 0 | 43 |
+| **openclare** | 592 | **10** | 0 | 27 | 16 | 10 | 0 | — | 0 | 37 |
 | autoremesher | 225 | **3** | 0 | 14 | 0 | 0 | 0 | — | 0 | 92 |
 
 ### 3000 quads
@@ -53,4 +55,6 @@ At equal quad count: Quad Remesher's mesh as it is, and openclare asked for as m
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
+| openclare-uniform | 6743 | **29** | 0 | 42 | 60 | 17 | 37 | — | 37 | 0 |
+| **openclare** | 6739 | **29** | 0 | 42 | 59 | 17 | 37 | — | 37 | 0 |
 | autoremesher | 2507 | **5** | 0 | 26 | 0 | 0 | 0 | — | 0 | 60 |
