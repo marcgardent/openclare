@@ -106,7 +106,7 @@ def edge_loops(model):
     if not path.exists():
         return []
     summary = json.loads(path.read_text()).get("summary", {}).get(model, {})
-    tools = [(tool, label) for tool, label in [("quadremesher", "Quad Remesher")] + PICTURED if tool in summary]
+    tools = [(tool, label) for tool, label in PICTURED if tool in summary]
     if not any(summary[tool].get("loop_edges_closed") is not None for tool, _ in tools):
         return []
     lines = [
@@ -114,7 +114,8 @@ def edge_loops(model):
         "",
         f"At {DEFAULT_TARGET} quads asked for. Each loop is followed straight on through every regular vertex: it "
         "closes, comes back beside itself a quad further (a spiral), stops at an irregular vertex, or runs "
-        "from a border to a border. Share of the edges on each; a mesh that is not all quads has none.",
+        "from a border to a border. Share of the edges on each, those of borders and of faces that are not "
+        "quads left out; \"—\" where the mesh is not a manifold.",
         "",
         "| | closed | spiral | stops | border to border | spirals | longest that stops |",
         "|---|---|---|---|---|---|---|",

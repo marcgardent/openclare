@@ -50,10 +50,10 @@ At equal quad count: Quad Remesher's mesh as it is, and openclare asked for as m
 |---|---|---|---|---|---|---|---|---|---|---|
 | quadremesher | 214018 | **39** | 0 | 55 | 51 | 91 | 52 | — | 0 | 39 |
 | quadremesher-uniform | 11340 | **24** | 0 | 39 | 15 | 82 | 0 | — | 0 | 42 |
-| **openclare** | 8922 | **22** | 0 | 45 | 0 | 81 | 0 | — | 0 | 28 |
+| **openclare** | 8922 | **22** | 0 | 45 | 0 | 81 | 0 | — | 0 | 32 |
 | openclare-uniform | 9111 | **22** | 0 | 45 | 0 | 80 | 0 | — | 0 | 40 |
 | instant-meshes | 1225 | **11** | 0 | 21 | 0 | 43 | 0 | 7 | 0 | 66 |
-| autoremesher | 870 | **10** | 0 | 20 | 0 | 40 | 0 | — | 0 | 93 |
+| autoremesher | 870 | **10** | 0 | 20 | 0 | 40 | 0 | — | 0 | 95 |
 | integer-grid | — | **0** | 0 | — | — | — | — | — | — | — |
 | quadriflow | — | **0** | 0 | — | — | — | — | — | — | 100 |
 
