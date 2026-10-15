@@ -23,6 +23,7 @@ sys.path.insert(0, str(ROOT / "bench"))
 sys.path.insert(0, str(ROOT / "scripts"))
 from run import (  # noqa: E402
     DEFAULT_TARGET,
+    HANDMADE,
     LOCAL_MODELS,
     MODELS,
     OUTPUT,
@@ -40,6 +41,8 @@ from scores import MATCHED, load, rows_of, without_matched  # noqa: E402
 PAGES = ROOT / "docs" / "models"
 # The remeshers pictured, with the name they go by on the page.
 PICTURED = [
+    # Only the models that have a mesh modelled by hand (see bench/run.py).
+    ("handmade", "Modelled by hand"),
     ("quadriflow", "QuadriFlow (Blender)"),
     ("autoremesher", "AutoRemesher"),
     ("openclare", "openclare"),
@@ -95,6 +98,8 @@ def mesh_of(tool, model, target, directory):
     quads when the pictures are not made again."""
     if tool == "quadremesher":
         return quadremesher_reference(model, target, uniform=False)
+    if tool == "handmade":
+        return HANDMADE / f"{model}.obj"
     return directory / f"{tool}_1.obj"
 
 
@@ -206,7 +211,11 @@ def main():
                 shown.append(("Source", picture, triangles))
             directory.mkdir(parents=True, exist_ok=True)
             for tool, label in PICTURED + [EQUAL]:
-                path, _, failure, *_ = TOOLS[tool](model, sharp, boundary, options.target, [1], directory)[1]
+                runs = TOOLS[tool](model, sharp, boundary, options.target, [1], directory)
+                if 1 not in runs:
+                    # A tool with nothing for this model (no mesh modelled by hand).
+                    continue
+                path, _, failure, *_ = runs[1]
                 picture = pictures / f"{model}__{tool}.webp"
                 if path and render(path, picture, model):
                     (equal if tool == EQUAL[0] else shown).append((label, picture, f"{spaced(faces_of(path))} quads"))

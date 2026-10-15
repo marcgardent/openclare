@@ -190,8 +190,18 @@ fn turns_of(tmesh: &TMesh, real: &[f64], offsets: &[f64]) -> (Vec<tubes::Turn>, 
     let (mut every, mut held) = (Vec::new(), Vec::new());
     let mut same_way: std::collections::HashSet<Vec<(usize, i64)>> = std::collections::HashSet::new();
     let mut same_shift = std::collections::HashSet::new();
+    let debug = std::env::var_os("OPENCLARE_DEBUG_TURNS").is_some();
     for turn in found {
         let shift = tubes::value(&turn.shift, real);
+        if debug {
+            eprintln!(
+                "turn: round {:7.1} shift {:+7.2} lean {:.3}{}",
+                turn.around,
+                shift,
+                shift.abs() / turn.around,
+                if turn.around > TURN_LONGEST * side { " too long" } else if shift.abs() > TURN_LEAN * turn.around { " leans too much" } else { "" }
+            );
+        }
         if turn.around > TURN_LONGEST * side || shift.abs() > TURN_LEAN * turn.around {
             continue;
         }
