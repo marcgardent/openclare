@@ -11,6 +11,7 @@
 
 mod flow;
 mod lattice;
+mod tubes;
 
 use std::fmt;
 use std::str::FromStr;
@@ -64,6 +65,12 @@ pub struct Report {
     pub separated: bool,
     /// Improving moves made by the solver, over all its runs.
     pub moves: usize,
+    /// Ways round a part found in the T-mesh that came back shifted, those
+    /// held to come back onto themselves, and those whose whole lengths
+    /// still shift them: their loops spiral (DT-062).
+    pub turns: usize,
+    pub turns_held: usize,
+    pub turns_left: usize,
 }
 
 impl Report {
@@ -172,33 +179,21 @@ impl Default for WalkCancelling {
     }
 }
 
-impl Quantizer for WalkCancelling {
-    fn kind(&self) -> Kind {
-        Kind::WalkCancelling
-    }
-
-    fn quantize(&self, tmesh: &TMesh, request: &Request) -> Result<Quantization> {
-        if tmesh.patches.iter().any(|patch| patch.sides.is_none()) {
-            return Err(Error::InvalidMesh("the T-mesh is not a partition into rectangles".into()));
-        }
-        if request.quads == Some(0) || !(request.tolerance.is_finite() && request.tolerance >= 0.0) {
-            return Err(Error::InvalidParams("quantization needs a positive number of quads and tolerance".into()));
-        }
-        let arcs = tmesh.arcs.len();
-        let network = strip_network(tmesh);
-        let exact: Vec<f64> = tmesh.arcs.iter().map(|arc| arc.length).collect();
-        // Arcs of equal length (a cube has nothing else) would all gain or
-        // lose an edge at the same scale, and the number of quads would jump
-        // by whole layers. A slight, fixed preference per arc spreads them out.
-        let real: Vec<f64> = exact
-            .iter()
-            .enumerate()
-            .map(|(arc, length)| length * (1.0 + self.jitter * (Rng::new(arc as u64).next_f64() - 0.5)))
-            .collect();
-
+impl WalkCancelling {
+    /// Whole lengths near `real` at the scale that gives the number of quads
+    /// asked for, balanced and leaving the structure intact: the lengths,
+    /// the scale, the quads they make, and the arcs held from vanishing.
+    fn search(
+        &self,
+        tmesh: &TMesh,
+        network: &Network,
+        real: &[f64],
+        request: &Request,
+        report: &mut Report,
+    ) -> (Vec<i64>, f64, usize, Vec<i64>) {
+        let arcs = real.len();
         let mut x = vec![0i64; arcs];
         let mut lower = vec![0i64; arcs];
-        let mut report = Report { arcs, scale: 1.0, separated: true, ..Default::default() };
         // The best assignment seen: lengths, scale, quads.
         let mut best: Option<(Vec<i64>, f64, usize)> = None;
         let mut scale = 1.0;
@@ -251,6 +246,114 @@ impl Quantizer for WalkCancelling {
         }
 
         let (x, scale, quads) = best.unwrap_or((x, 1.0, 0));
+        (x, scale, quads, lower)
+    }
+}
+
+impl Quantizer for WalkCancelling {
+    fn kind(&self) -> Kind {
+        Kind::WalkCancelling
+    }
+
+    fn quantize(&self, tmesh: &TMesh, request: &Request) -> Result<Quantization> {
+        if tmesh.patches.iter().any(|patch| patch.sides.is_none()) {
+            return Err(Error::InvalidMesh("the T-mesh is not a partition into rectangles".into()));
+        }
+        if request.quads == Some(0) || !(request.tolerance.is_finite() && request.tolerance >= 0.0) {
+            return Err(Error::InvalidParams("quantization needs a positive number of quads and tolerance".into()));
+        }
+        let arcs = tmesh.arcs.len();
+        let network = strip_network(tmesh);
+        let exact: Vec<f64> = tmesh.arcs.iter().map(|arc| arc.length).collect();
+        // Arcs of equal length (a cube has nothing else) would all gain or
+        // lose an edge at the same scale, and the number of quads would jump
+        // by whole layers. A slight, fixed preference per arc spreads them out.
+        let real: Vec<f64> = exact
+            .iter()
+            .enumerate()
+            .map(|(arc, length)| length * (1.0 + self.jitter * (Rng::new(arc as u64).next_f64() - 0.5)))
+            .collect();
+
+        // Ways round a part that come back shifted wind their loops into
+        // helices: the lengths aimed at are changed, as little as can be,
+        // for them to come back onto themselves (DT-062).
+        let mut real = real;
+        let mut held_turns: Vec<tubes::Turn> = Vec::new();
+        let close = std::env::var_os("OPENCLARE_CLOSE_TURNS").is_some();
+        let debug = std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some();
+        let mut found_turns = 0;
+        if close {
+            let found = tubes::turns(tmesh, 4);
+            let area: f64 = tmesh.patches.iter().filter_map(|patch| patch.sides).map(|sides| sides[0] * sides[1]).sum();
+            let side = area.sqrt().max(1.0);
+            found_turns = found.len();
+            let mut seen = std::collections::HashSet::new();
+            for turn in found {
+                let shift = tubes::value(&turn.shift, &real);
+                if debug {
+                    eprintln!("found: round {:8.2}, shift {:+9.3}, measured {:+9.3}", turn.around, shift, turn.measured);
+                }
+                let short = turn.around <= TURN_LONGEST * side;
+                if short && shift.abs() > TURN_SHIFT && shift.abs() <= TURN_LEAN * turn.around && seen.insert((shift.abs() * 1e4).round() as i64) {
+                    held_turns.push(turn);
+                }
+            }
+            // Turns that cannot all come back onto themselves (round
+            // singularities whose places decide their shift) are let go, the
+            // worst first, until those left can.
+            let weight: Vec<f64> = real.iter().map(|length| 1.0 / (length + 1.0)).collect();
+            while !held_turns.is_empty() {
+                let held: Vec<&tubes::Turn> = held_turns.iter().collect();
+                let Some(closed) = tubes::closed(tmesh, &real, &weight, &held, &vec![0.0; held.len()]) else { break };
+                let left: Vec<f64> = held.iter().map(|turn| tubes::value(&turn.shift, &closed).abs()).collect();
+                let (worst, at) = left.iter().enumerate().fold((0.0, 0), |(w, a), (k, &v)| if v > w { (v, k) } else { (w, a) });
+                if debug {
+                    let moved = real.iter().zip(&closed).map(|(a, b)| (a - b).abs()).fold(0.0, f64::max);
+                    eprintln!("turns: {} held, worst shift left {worst:.2e}, largest change {moved:.3}", held.len());
+                }
+                if worst <= 1e-3 {
+                    real = closed;
+                    break;
+                }
+                held_turns.remove(at);
+            }
+        }
+
+        let mut report = Report { arcs, scale: 1.0, separated: true, ..Default::default() };
+        let weight: Vec<f64> = real.iter().map(|length| 1.0 / (length + 1.0)).collect();
+        let held: Vec<&tubes::Turn> = held_turns.iter().collect();
+        // Whole lengths can still shift a turn by one where the real ones do
+        // not: the lengths aimed at then lean the other way, and again.
+        let mut aimed: Vec<f64> = vec![0.0; held.len()];
+        let mut attempt_real = real.clone();
+        // The attempt that leaves the least shift, all turns together.
+        let mut kept: Option<(f64, (Vec<i64>, f64, usize, Vec<i64>))> = None;
+        let mut attempt = 0;
+        loop {
+            let found = self.search(tmesh, &network, &attempt_real, request, &mut report);
+            attempt += 1;
+            let lengths: Vec<f64> = found.0.iter().map(|&length| length as f64).collect();
+            let whole: Vec<f64> = held.iter().map(|turn| tubes::value(&turn.shift, &lengths)).collect();
+            let left: f64 = whole.iter().map(|w| w.abs()).sum();
+            if debug {
+                eprintln!("attempt {attempt}: whole shifts {whole:?}");
+            }
+            let scale = found.1;
+            if kept.as_ref().is_none_or(|(least, _)| left < *least) {
+                kept = Some((left, found));
+            }
+            if held.is_empty() || attempt >= CLOSE_ATTEMPTS || left < 0.5 {
+                break;
+            }
+            for (target, w) in aimed.iter_mut().zip(&whole) {
+                *target -= CLOSE_GAIN * w / scale;
+            }
+            match tubes::closed(tmesh, &real, &weight, &held, &aimed) {
+                Some(next) => attempt_real = next,
+                None => break,
+            }
+        }
+        let (_, (x, scale, quads, lower)) = kept.expect("searched at least once");
         report.scale = scale;
         report.quads = quads;
         report.budget_error = request.quads.map(|wanted| quads.abs_diff(wanted) as f64 / wanted as f64);
@@ -263,12 +366,30 @@ impl Quantizer for WalkCancelling {
             x.iter().zip(&exact).map(|(&length, real)| (length as f64 - scale * real).abs()).collect();
         report.deviation_mean = deviations.iter().sum::<f64>() / arcs.max(1) as f64;
         report.deviation_max = deviations.iter().fold(0.0, |a, &b| a.max(b));
+        report.turns = found_turns;
+        report.turns_held = held_turns.len();
+        let lengths: Vec<f64> = x.iter().map(|&length| length as f64).collect();
+        report.turns_left = held_turns.iter().filter(|turn| tubes::value(&turn.shift, &lengths).abs() > 0.5).count();
 
         let quantization = Quantization { lengths: x.iter().map(|&length| length as u32).collect(), report };
         let collapsed = quantization.patch_sizes(tmesh).iter().filter(|size| size[0] == 0 || size[1] == 0).count();
         Ok(Quantization { report: Report { collapsed_patches: collapsed, ..quantization.report }, ..quantization })
     }
 }
+
+/// A way round that comes back more than this beside itself, in quad edges,
+/// and no more than this share of its way round (beyond, it goes round
+/// singularities rather than a part), is held to come back onto itself.
+const TURN_SHIFT: f64 = 0.05;
+const TURN_LEAN: f64 = 0.05;
+/// Times the lengths are searched for again for the turns held to come back
+/// onto themselves in whole numbers too.
+const CLOSE_ATTEMPTS: usize = 6;
+/// How much of a whole shift left the next attempt leans the other way.
+const CLOSE_GAIN: f64 = 0.3;
+/// Ways round longer than this many times the side of the T-mesh (the side
+/// of a square of its area) wander round more than one part.
+const TURN_LONGEST: f64 = 2.0;
 
 /// The strip network of `tmesh`: one station per pair of opposite sides of
 /// each patch, each arc tied to the side it lies on in the patch on its
