@@ -19,6 +19,17 @@ Quad Remesher makes more quads than the 3000 it is asked for. Next to its mesh, 
 | ![Quad Remesher](img/lblock__quadremesher.webp) | ![openclare, as many quads](img/lblock__openclare-matched.webp) |
 | 3 030 quads | 2 972 quads |
 
+## Edge loops
+
+At 3000 quads asked for. Each loop is followed straight on through every regular vertex: it closes, comes back beside itself a quad further (a spiral), stops at an irregular vertex, or runs from a border to a border. Share of the edges on each, those of borders and of faces that are not quads left out; "—" where the mesh is not a manifold.
+
+| | closed | spiral | stops | border to border | spirals | longest that stops |
+|---|---|---|---|---|---|---|
+| QuadriFlow (Blender) | 78 % | 14 % | 8 % | 0 % | 1 | 86 |
+| AutoRemesher | 26 % | 0 % | 74 % | 0 % | 0 | 432 |
+| openclare | 93 % | 0 % | 7 % | 0 % | 0 | 43 |
+| Quad Remesher | 93 % | 0 % | 7 % | 0 % | 0 | 45 |
+
 ## Marks
 
 From 0 to 100; how they are made is in [SCORES.md](../../bench/results/SCORES.md).
@@ -47,13 +58,13 @@ At equal quad count: Quad Remesher's mesh as it is, and openclare asked for as m
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| quadremesher | 3030 | **99** | 100 | 97 | 98 | 100 | 99 | 100 | 96 | 75 |
 | quadremesher-uniform | 3030 | **99** | 100 | 97 | 98 | 100 | 99 | 100 | 96 | 74 |
+| quadremesher | 3030 | **99** | 100 | 97 | 98 | 100 | 99 | 100 | 96 | 75 |
 | openclare-uniform | 3060 | **99** | 100 | 98 | 100 | 100 | 99 | 100 | 92 | 93 |
-| **openclare** | 2972 | **98** | 100 | 96 | 97 | 100 | 99 | 100 | 96 | 86 |
+| **openclare** | 2972 | **98** | 100 | 96 | 97 | 100 | 99 | 100 | 96 | 87 |
 | integer-grid | 2800 | **96** | 100 | 97 | 99 | 100 | 99 | 100 | 73 | 23 |
 | instant-meshes | 2780 | **93** | 100 | 93 | 92 | 100 | 94 | 83 | 71 | 100 |
-| quadriflow | 2928 | **89** | 80 | 95 | 96 | 79 | 99 | 97 | 90 | 92 |
+| quadriflow | 2928 | **89** | 80 | 95 | 96 | 79 | 99 | 97 | 90 | 94 |
 | autoremesher | 1328 | **76** | 100 | 83 | 71 | 77 | 97 | 53 | 0 | 100 |
 
 At equal quad count: Quad Remesher's mesh as it is, and openclare asked for as many quads.

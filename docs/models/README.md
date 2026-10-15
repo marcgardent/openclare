@@ -19,7 +19,7 @@ Overall mark at 3000 quads:
 | [blub](blub.md) | organic | 44 | 37 | 83 | 75 |
 | [pig](pig.md) | organic | 21 | 27 | 78 | 46 |
 | [jerry](jerry.md) | organic | 53 | 10 | 67 | 40 |
-| [rose](rose.md) | organic | 8 | 3 | 15 | 33 |
+| [rose](rose.md) | organic | 9 | 3 | 15 | 33 |
 | [bridge](bridge.md) | organic | 0 | 40 | 85 | 48 |
 | [part](part.md) | mechanical | 77 | 26 | 88 | 84 |
 | [cube](cube.md) | mechanical | 97 | 82 | 99 | 99 |

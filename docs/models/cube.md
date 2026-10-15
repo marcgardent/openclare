@@ -19,6 +19,17 @@ Quad Remesher makes more quads than the 3000 it is asked for. Next to its mesh, 
 | ![Quad Remesher](img/cube__quadremesher.webp) | ![openclare, as many quads](img/cube__openclare-matched.webp) |
 | 3 082 quads | 3 082 quads |
 
+## Edge loops
+
+At 3000 quads asked for. Each loop is followed straight on through every regular vertex: it closes, comes back beside itself a quad further (a spiral), stops at an irregular vertex, or runs from a border to a border. Share of the edges on each, those of borders and of faces that are not quads left out; "—" where the mesh is not a manifold.
+
+| | closed | spiral | stops | border to border | spirals | longest that stops |
+|---|---|---|---|---|---|---|
+| QuadriFlow (Blender) | 95 % | 0 % | 5 % | 0 % | 0 | 22 |
+| AutoRemesher | 83 % | 0 % | 17 % | 0 % | 0 | 58 |
+| openclare | 96 % | 0 % | 4 % | 0 % | 0 | 23 |
+| Quad Remesher | 96 % | 0 % | 4 % | 0 % | 0 | 23 |
+
 ## Marks
 
 From 0 to 100; how they are made is in [SCORES.md](../../bench/results/SCORES.md).
@@ -48,7 +59,7 @@ At equal quad count: Quad Remesher's mesh as it is, and openclare asked for as m
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
 | openclare-uniform | 2992 | **100** | 100 | 99 | 100 | 100 | 100 | 100 | 99 | 90 |
-| **openclare** | 2992 | **99** | 100 | 98 | 98 | 100 | 100 | 100 | 99 | 88 |
+| **openclare** | 2992 | **99** | 100 | 98 | 98 | 100 | 100 | 100 | 99 | 71 |
 | quadremesher | 3082 | **99** | 100 | 99 | 100 | 100 | 100 | 100 | 89 | 73 |
 | quadremesher-uniform | 3082 | **99** | 100 | 99 | 100 | 100 | 100 | 100 | 89 | 73 |
 | quadriflow | 2904 | **97** | 100 | 99 | 99 | 90 | 100 | 100 | 87 | 100 |
