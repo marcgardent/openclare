@@ -38,6 +38,9 @@ pub(super) struct Cost<'a> {
     pub target: &'a [f64],
     pub weight: &'a [f64],
     pub lower: &'a [i64],
+    /// Per arc, a price per unit of its length on top (none if empty): a
+    /// lean given to the search.
+    pub bias: &'a [f64],
 }
 
 /// Price of one unit below a lower bound: more than any walk could save.
@@ -53,7 +56,7 @@ impl Cost<'_> {
         }
         let off = x as f64 - self.target[arc];
         let missing = (self.lower[arc] - x).max(0) as f64;
-        self.weight[arc] * off * off + SHORTFALL * missing * missing
+        self.weight[arc] * off * off + SHORTFALL * missing * missing + self.bias.get(arc).map_or(0.0, |b| b * x as f64)
     }
 
     #[cfg(test)]
@@ -119,6 +122,28 @@ impl Network {
     }
 
     fn improve_by(&self, x: &mut [i64], cost: &Cost, step: i64, effort: &mut Effort) {
+        self.improve_judged(x, cost, step, effort, &mut |x: &[i64], change: &[i64]| {
+            let saved: f64 = change
+                .iter()
+                .enumerate()
+                .filter(|&(_, &delta)| delta != 0)
+                .map(|(arc, &delta)| cost.of(arc, x[arc] + delta) - cost.of(arc, x[arc]))
+                .sum();
+            saved < -NOISE
+        });
+    }
+
+    /// Walks of `step` found with `cost` as the guide, each applied if
+    /// `judge` (given the lengths and the change) says it helps, until no
+    /// walk is left that it would take.
+    pub fn improve_judged(
+        &self,
+        x: &mut [i64],
+        cost: &Cost,
+        step: i64,
+        effort: &mut Effort,
+        judge: &mut dyn FnMut(&[i64], &[i64]) -> bool,
+    ) {
         let hub = 4 * self.arcs();
         // Moves that were tried in a walk and found wanting, set aside so
         // that the search does not come back to the same walk forever.
@@ -142,15 +167,7 @@ impl Network {
             for &state in walk.iter().filter(|&&state| state != hub) {
                 change[state / 4] += if state / 2 % 2 == 1 { step } else { -step };
             }
-            let saved: f64 = walk
-                .iter()
-                .filter(|&&state| state != hub)
-                .map(|&state| state / 4)
-                .collect::<std::collections::BTreeSet<_>>()
-                .into_iter()
-                .map(|arc| cost.of(arc, x[arc] + change[arc]) - cost.of(arc, x[arc]))
-                .sum();
-            if saved < -NOISE {
+            if judge(x, &change) {
                 for (arc, delta) in change.into_iter().enumerate() {
                     x[arc] += delta;
                 }
@@ -300,7 +317,7 @@ mod tests {
         // i to the near side of station i + 1.
         let network = Network::new(vec![[Some(1), Some(2)], [Some(3), Some(4)], [Some(5), Some(0)]]);
         let (target, weight, lower) = ([2.6, 3.4, 2.9], [1.0; 3], [0; 3]);
-        let x = solve(&network, &Cost { target: &target, weight: &weight, lower: &lower });
+        let x = solve(&network, &Cost { target: &target, weight: &weight, lower: &lower, bias: &[] });
         assert_eq!(x, [3, 3, 3]);
     }
 
@@ -308,9 +325,9 @@ mod tests {
     fn a_lower_bound_is_met_whatever_the_targets_say() {
         let network = Network::new(vec![[Some(1), Some(2)], [Some(3), Some(4)], [Some(5), Some(0)]]);
         let (target, weight) = ([0.2, 0.1, 0.3], [1.0; 3]);
-        let free = solve(&network, &Cost { target: &target, weight: &weight, lower: &[0; 3] });
+        let free = solve(&network, &Cost { target: &target, weight: &weight, lower: &[0; 3], bias: &[] });
         assert_eq!(free, [0, 0, 0]);
-        let held = solve(&network, &Cost { target: &target, weight: &weight, lower: &[0, 1, 0] });
+        let held = solve(&network, &Cost { target: &target, weight: &weight, lower: &[0, 1, 0], bias: &[] });
         assert_eq!(held, [1, 1, 1]);
     }
 
@@ -320,7 +337,7 @@ mod tests {
         // arcs carry the same number, anything else being free.
         let network = Network::new(vec![[None, Some(0)], [Some(1), None]]);
         let (target, weight, lower) = ([4.4, 4.9], [1.0; 2], [0; 2]);
-        let x = solve(&network, &Cost { target: &target, weight: &weight, lower: &lower });
+        let x = solve(&network, &Cost { target: &target, weight: &weight, lower: &lower, bias: &[] });
         assert_eq!(x, [5, 5]);
     }
 
@@ -330,7 +347,7 @@ mod tests {
         // (a T-junction); all three end on borders.
         let network = Network::new(vec![[None, Some(0)], [Some(1), None], [Some(1), None]]);
         let (target, weight, lower) = ([5.2, 1.7, 3.5], [1.0; 3], [0; 3]);
-        let x = solve(&network, &Cost { target: &target, weight: &weight, lower: &lower });
+        let x = solve(&network, &Cost { target: &target, weight: &weight, lower: &lower, bias: &[] });
         assert_eq!(x[0], x[1] + x[2]);
         assert_eq!(x, [5, 2, 3]);
     }
@@ -354,7 +371,7 @@ mod tests {
             let target: Vec<f64> = (0..7).map(|_| 3.0 * rng.next_f64()).collect();
             let weight: Vec<f64> = (0..7).map(|_| 0.5 + rng.next_f64()).collect();
             let lower = vec![0; 7];
-            let cost = Cost { target: &target, weight: &weight, lower: &lower };
+            let cost = Cost { target: &target, weight: &weight, lower: &lower, bias: &[] };
             let x = solve(&network, &cost);
             let best = brute_force(&network, &cost, 5);
             total += 1;

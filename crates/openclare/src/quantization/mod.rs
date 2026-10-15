@@ -207,7 +207,7 @@ impl WalkCancelling {
             let weight: Vec<f64> = target.iter().map(|length| 1.0 / (length + 1.0)).collect();
             let mut separated = false;
             for _ in 0..self.separation_rounds {
-                let cost = Cost { target: &target, weight: &weight, lower: &lower };
+                let cost = Cost { target: &target, weight: &weight, lower: &lower, bias: &[] };
                 report.moves += network.improve(&mut x, &cost).moves;
                 // The lengths are sound if the quad mesh they stand for is;
                 // where it is not, something closed up that must not.
@@ -279,6 +279,9 @@ impl Quantizer for WalkCancelling {
         // for them to come back onto themselves (DT-062).
         let mut real = real;
         let mut held_turns: Vec<tubes::Turn> = Vec::new();
+        // Every way round a part, shifted or not: the whole lengths are not
+        // to shift those that are not.
+        let mut every_turn: Vec<tubes::Turn> = Vec::new();
         let close = std::env::var_os("OPENCLARE_CLOSE_TURNS").is_some();
         let debug = std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some();
         let mut found_turns = 0;
@@ -288,6 +291,15 @@ impl Quantizer for WalkCancelling {
             let side = area.sqrt().max(1.0);
             found_turns = found.len();
             let mut seen = std::collections::HashSet::new();
+            let mut same_way: std::collections::HashSet<Vec<(usize, i64)>> = std::collections::HashSet::new();
+            for turn in &found {
+                let short = turn.around <= TURN_LONGEST * side;
+                let shift = tubes::value(&turn.shift, &real);
+                let key: Vec<(usize, i64)> = turn.shift.iter().map(|&(arc, c)| (arc, c.round() as i64)).collect();
+                if short && shift.abs() <= TURN_LEAN * turn.around && same_way.insert(key) {
+                    every_turn.push(turn.clone());
+                }
+            }
             for turn in found {
                 let shift = tubes::value(&turn.shift, &real);
                 if debug {
@@ -353,7 +365,51 @@ impl Quantizer for WalkCancelling {
                 None => break,
             }
         }
-        let (_, (x, scale, quads, lower)) = kept.expect("searched at least once");
+        let (_, (mut x, scale, mut quads, lower)) = kept.expect("searched at least once");
+        // Turns the whole lengths still shift: the search is leant, harder
+        // each time it does not help, towards lengths that shift them less,
+        // all turns together, and the structure intact.
+        if !every_turn.is_empty() && std::env::var_os("OPENCLARE_NO_REPAIR").is_none() {
+            let target: Vec<f64> = real.iter().map(|length| scale * length).collect();
+            let weight: Vec<f64> = target.iter().map(|length| 1.0 / (length + 1.0)).collect();
+            let left_by = |x: &[i64]| -> Vec<f64> {
+                let lengths: Vec<f64> = x.iter().map(|&length| length as f64).collect();
+                every_turn.iter().map(|turn| tubes::value(&turn.shift, &lengths)).collect()
+            };
+            // One walk at a time, guided by a lean towards less shift, taken
+            // only if it shifts the turns less in all, costs little, and
+            // leaves the structure intact.
+            let mut bias = vec![0.0; arcs];
+            for (turn, shift) in every_turn.iter().zip(left_by(&x)) {
+                if shift.abs() >= 0.5 {
+                    for &(arc, c) in &turn.shift {
+                        bias[arc] += REPAIR_LEAN * shift.signum() * c;
+                    }
+                }
+            }
+            let plain = Cost { target: &target, weight: &weight, lower: &lower, bias: &[] };
+            let leant = Cost { target: &target, weight: &weight, lower: &lower, bias: &bias };
+            let mut effort = flow::Effort::default();
+            let before: f64 = left_by(&x).iter().map(|w| w.abs()).sum();
+            let mut judge = |x: &[i64], change: &[i64]| -> bool {
+                let moved: Vec<i64> = x.iter().zip(change).map(|(a, b)| a + b).collect();
+                let now: f64 = left_by(x).iter().map(|w| w.abs()).sum();
+                let then: f64 = left_by(&moved).iter().map(|w| w.abs()).sum();
+                let cost: f64 = change
+                    .iter()
+                    .enumerate()
+                    .filter(|&(_, &delta)| delta != 0)
+                    .map(|(arc, &delta)| plain.of(arc, x[arc] + delta) - plain.of(arc, x[arc]))
+                    .sum();
+                then < now - 0.5 && cost < REPAIR_PRICE * (now - then) && lattice::build(tmesh, &moved).defects(tmesh).is_empty()
+            };
+            network.improve_judged(&mut x, &leant, 1, &mut effort, &mut judge);
+            if debug {
+                let after: f64 = left_by(&x).iter().map(|w| w.abs()).sum();
+                eprintln!("repair: shifts left {before} -> {after}, {} walks, {} turned down", effort.moves, effort.misjudged);
+            }
+            quads = count_quads(tmesh, &x);
+        }
         report.scale = scale;
         report.quads = quads;
         report.budget_error = request.quads.map(|wanted| quads.abs_diff(wanted) as f64 / wanted as f64);
@@ -368,6 +424,7 @@ impl Quantizer for WalkCancelling {
         report.deviation_max = deviations.iter().fold(0.0, |a, &b| a.max(b));
         report.turns = found_turns;
         report.turns_held = held_turns.len();
+        let _ = &every_turn;
         let lengths: Vec<f64> = x.iter().map(|&length| length as f64).collect();
         report.turns_left = held_turns.iter().filter(|turn| tubes::value(&turn.shift, &lengths).abs() > 0.5).count();
 
@@ -384,7 +441,11 @@ const TURN_SHIFT: f64 = 0.05;
 const TURN_LEAN: f64 = 0.05;
 /// Times the lengths are searched for again for the turns held to come back
 /// onto themselves in whole numbers too.
-const CLOSE_ATTEMPTS: usize = 6;
+const CLOSE_ATTEMPTS: usize = 1;
+/// The lean given to the search for turns still shifted, per unit of shift.
+const REPAIR_LEAN: f64 = 0.5;
+/// Most the cost of the lengths may grow per unit of shift taken away.
+const REPAIR_PRICE: f64 = 2.0;
 /// How much of a whole shift left the next attempt leans the other way.
 const CLOSE_GAIN: f64 = 0.3;
 /// Ways round longer than this many times the side of the T-mesh (the side
