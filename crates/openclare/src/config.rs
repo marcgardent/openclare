@@ -65,6 +65,9 @@ pub struct RemeshConfig {
     /// of the quads is below this is left out, instead of getting the few
     /// quads no shape can do without. 0 keeps every piece.
     pub skip_pieces_under: f64,
+    /// Lines of quads that go round a part are closed into rings where the
+    /// whole lengths would wind them into helices (DT-062).
+    pub close_loops: bool,
     pub seed: u64,
 }
 
@@ -122,6 +125,7 @@ impl RemeshConfig {
             volume_fit: 1.0,
             density_contrast: 4.0,
             skip_pieces_under: 0.0,
+            close_loops: true,
             seed: 1,
         }
     }
@@ -248,6 +252,7 @@ impl RemeshConfig {
         writeln!(text, "volume_fit = {}", self.volume_fit).unwrap();
         writeln!(text, "density_contrast = {}", self.density_contrast).unwrap();
         writeln!(text, "skip_pieces_under = {}", self.skip_pieces_under).unwrap();
+        writeln!(text, "close_loops = {}", self.close_loops).unwrap();
         writeln!(text, "seed = {}", self.seed).unwrap();
         text
     }
@@ -312,6 +317,9 @@ impl RemeshConfig {
                 "volume_fit" => config.volume_fit = number_of("number")?,
                 "density_contrast" => config.density_contrast = number_of("number")?,
                 "skip_pieces_under" => config.skip_pieces_under = number_of("number")?,
+                "close_loops" => {
+                    config.close_loops = value.parse().map_err(|_| error(format!("'{value}' is not true or false")))?
+                }
                 "seed" => config.seed = value.parse().map_err(|_| error(format!("'{value}' is not a seed")))?,
                 other => return Err(error(format!("unknown setting '{other}'"))),
             }
