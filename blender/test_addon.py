@@ -6,6 +6,7 @@ Exits with an error if anything is not as it should be.
 """
 
 import sys
+import tempfile
 from pathlib import Path
 
 import time
@@ -25,8 +26,15 @@ modifier = original.modifiers.new("subdivide", "SUBSURF")
 modifier.levels = 2
 triangles_before = len(original.data.polygons)
 
-original.openclare.preset = "organic"
 original.openclare.quads = 800
+
+
+def shape(settings, name):
+    """Gives `settings` the values of the shape `name` the add-on ships."""
+    for key, value in openclare.SHAPES[name].items():
+        setattr(settings, key, value)
+
+
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 
 remeshed = bpy.context.active_object
@@ -110,7 +118,7 @@ print("DENSITY share of the quads on top: %.2f unpainted, %.2f painted" % (unpai
 assert share_on_top(painted) > unpainted + 0.1, "the painted weights changed nothing"
 assert abs(len(painted.data.polygons) - 800) < 80, "the paint changed the number of quads"
 
-# A group that is not there is said, and a preset brings its own adaptive size.
+# A group that is not there is said.
 bpy.context.active_object.select_set(False)
 bpy.context.view_layer.objects.active = original
 original.select_set(True)
@@ -122,10 +130,48 @@ except RuntimeError as error:
     assert "no such group" in str(error)
 assert not openclare.last_report, "a run that failed left a report"
 settings.density_group = ""
-settings.preset = "hard-surface"
-assert settings.adaptive_size == 0.0
-settings.preset = "organic"
-assert settings.adaptive_size == 50.0
+
+# The presets of the shape: those the add-on ships set what the engine's
+# presets of the same names are, and are applied the way the menu of the
+# panel applies them.
+import math
+import os
+
+shipped = os.path.join(openclare.ADDON_FOLDER, "presets", openclare.SHAPE_PRESETS)
+assert shipped in bpy.utils.preset_paths(openclare.SHAPE_PRESETS), bpy.utils.preset_paths(openclare.SHAPE_PRESETS)
+files = {"organic": "Organic.py", "animation": "Animation.py", "hard-surface": "Hard_Surface.py"}
+assert sorted(f for f in os.listdir(shipped) if f.endswith(".py")) == sorted(files.values()), os.listdir(shipped)
+for name, file in files.items():
+    with bpy.context.temp_override(object=original):
+        assert bpy.ops.script.execute_preset(
+            filepath=os.path.join(shipped, file), menu_idname="OPENCLARE_PT_shape_presets"
+        ) == {"FINISHED"}
+    for key, value in openclare.SHAPES[name].items():
+        assert abs(getattr(settings, key) - value) < 1e-6, (name, key, getattr(settings, key), value)
+# What the engine is given: the hard edges at 30 degrees, or none.
+shape(settings, "organic")
+assert openclare.shape_of(settings)["edge_angle"] == "none" and openclare.shape_of(settings)["alignment"] == 0.05
+shape(settings, "hard-surface")
+assert openclare.shape_of(settings)["edge_angle"] == 30.0 and openclare.shape_of(settings)["quads_around"] == 0
+# Saved, removed; those of the add-on cannot be.
+with tempfile.TemporaryDirectory() as folder:
+    saved = os.path.join(folder, "presets", openclare.SHAPE_PRESETS)
+    real_resource = bpy.utils.user_resource
+    bpy.utils.user_resource = lambda kind, path="", create=False: (
+        os.makedirs(os.path.join(folder, path), exist_ok=True) or os.path.join(folder, path)
+    )
+    try:
+        settings.quads_around = 11
+        with bpy.context.temp_override(object=original):
+            assert bpy.ops.object.openclare_shape_preset_add(name="Eleven Around") == {"FINISHED"}
+        written = open(os.path.join(saved, "Eleven_Around.py")).read()
+        assert "settings.quads_around = 11" in written and "settings = bpy.context.object.openclare" in written
+        assert "settings.quads " not in written and "settings.export" not in written, written
+    finally:
+        bpy.utils.user_resource = real_resource
+# No setting takes keyframes.
+assert not any(p.is_animatable for p in openclare.OpenclareSettings.bl_rna.properties if p.identifier != "rna_type")
+shape(settings, "organic")
 
 # Export: the result carries its two UV layers, the seams of the atlas and,
 # on a shape with hard edges, those edges marked sharp.
@@ -144,7 +190,7 @@ def alone(target):
         settings = target.openclare
 
 alone(original)
-settings.preset = "organic"
+shape(settings, "organic")
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 mesh = bpy.context.active_object.data
 assert [layer.name for layer in mesh.uv_layers] == ["openclare grid", "openclare atlas"], list(mesh.uv_layers.keys())
@@ -163,7 +209,8 @@ cube = bpy.context.active_object
 cube.modifiers.new("subdivide", "SUBSURF").subdivision_type = "SIMPLE"
 cube.modifiers["subdivide"].levels = 4
 alone(cube)
-settings.preset, settings.quads = "hard-surface", 600
+shape(settings, "hard-surface")
+settings.quads = 600
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 mesh = bpy.context.active_object.data
 sharp = sum(edge.use_edge_sharp for edge in mesh.edges)
@@ -183,7 +230,8 @@ mesh = bpy.context.active_object.data
 assert len(mesh.uv_layers) == 0 and not any(edge.use_seam or edge.use_edge_sharp for edge in mesh.edges)
 assert "crease_edge" not in mesh.attributes
 settings.export_grid_uv = settings.export_atlas_uv = settings.export_sharp_edges = settings.export_creases = True
-settings.preset, settings.quads = "organic", 800
+shape(settings, "organic")
+settings.quads = 800
 
 # Curves: two circles drawn round a ball, each held on it by a Shrinkwrap.
 # One is put in the Guide category and the other in the Sharp one, with the
@@ -630,8 +678,8 @@ first = bpy.context.active_object
 bpy.ops.mesh.primitive_cube_add(location=(33.0, 0.0, 0.0))
 second = bpy.context.active_object
 first.openclare.quads, second.openclare.quads = 200, 500
-first.openclare.preset = "hard-surface"
-assert second.openclare.preset == "organic" and first.openclare.quads == 200
+shape(first.openclare, "hard-surface")
+assert not second.openclare.use_hard_edges and first.openclare.quads == 200
 
 # The panel is in the Properties editor, on the tab of the mesh: for an
 # object to remesh, its settings; for a result, what it comes from.
@@ -675,7 +723,9 @@ assert bpy.context.active_object == second and not result.select_get()
 legacy = bpy.context.scene.openclare
 legacy.source, legacy.quads, legacy.preset, legacy.adaptive_size = first, 1234, "animation", 20.0
 openclare.adopt_scene_settings(bpy.context.scene)
-assert (first.openclare.quads, first.openclare.preset, first.openclare.adaptive_size) == (1234, "animation", 20.0)
+# The preset it named is turned into its values; its adaptive size is its own.
+assert (first.openclare.quads, first.openclare.fewer_irregular, first.openclare.adaptive_size) == (1234, 3.0, 20.0)
+assert not first.openclare.is_property_set("preset")
 assert second.openclare.quads == 1500, "an object not named took the settings"
 assert not legacy.is_property_set("quads") and legacy.source is None
 assert bpy.context.view_layer.objects.active == first

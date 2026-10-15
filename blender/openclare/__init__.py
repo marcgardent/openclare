@@ -7,10 +7,15 @@ shown, the same panel says what it was made from and how, remeshes it again
 and bakes the relief of the original onto it.
 """
 
+import math
 import time
+
+import os
 
 import bpy
 import mathutils
+from bl_operators.presets import AddPresetBase
+from bl_ui.utils import PresetPanel
 
 from . import engine
 
@@ -22,6 +27,25 @@ PRESETS = [
 # How much the size of the quads follows the curvature in each preset, in
 # per cent: what the slider goes back to when the preset changes.
 ADAPTIVE_SIZE = {"organic": 50.0, "animation": 50.0, "hard-surface": 0.0}
+# The shapes the add-on ships, as the values of the settings they set: what
+# the engine's presets of the same names are. The preset files of the add-on
+# (presets/openclare_shape) say the same; files of 0.1, which named one of
+# these, are given its values.
+SHAPES = {
+    "organic": dict(adaptive_size=50.0, quads_around=6, use_hard_edges=False, hard_edge_angle=math.radians(30.0),
+                    follow_curvature=0.05, fewer_irregular=2.0, volume_fit=1.0),
+    "animation": dict(adaptive_size=50.0, quads_around=6, use_hard_edges=False, hard_edge_angle=math.radians(30.0),
+                      follow_curvature=0.05, fewer_irregular=3.0, volume_fit=1.0),
+    "hard-surface": dict(adaptive_size=0.0, quads_around=0, use_hard_edges=True, hard_edge_angle=math.radians(30.0),
+                         follow_curvature=0.02, fewer_irregular=2.0, volume_fit=1.0),
+}
+# The settings a preset of the shape holds, in the order of the panel.
+SHAPE_NAMES = list(SHAPES["organic"])
+# Where the presets of the shape are, under presets/: those of the add-on,
+# which cannot be removed, and those saved in Blender's own folder.
+SHAPE_PRESETS = "openclare_shape"
+# What the engine is given under these values: the shapes are said in full.
+BASE_PRESET = "organic"
 
 
 # The two kinds of curves drawn on a model, each with its collection and the
@@ -56,10 +80,6 @@ PLAIN = (1.0, 1.0, 1.0, 1.0)
 last_report = {}
 
 
-def preset_changed(settings, context):
-    settings.adaptive_size = ADAPTIVE_SIZE[settings.preset]
-
-
 def is_a_mesh(settings, candidate):
     return candidate.type == "MESH"
 
@@ -90,12 +110,13 @@ NOT_COPIED = {"rna_type", "name", "source", "show_sizes"}
 
 
 def copy_settings(given, taken):
-    """Gives `taken` the settings of `given`: the preset first, for what it
-    sets to be overwritten by what `given` says."""
+    """Gives `taken` the settings of `given`. The preset named by settings
+    of 0.1 goes with them, and is turned into its values."""
     names = [p.identifier for p in given.bl_rna.properties if p.identifier not in NOT_COPIED]
-    names.sort(key=lambda name: name != "preset")
     for name in names:
-        setattr(taken, name, getattr(given, name))
+        if name != "preset" or given.is_property_set("preset"):
+            setattr(taken, name, getattr(given, name))
+    adopt_preset(taken)
 
 
 def adopt_scene_settings(scene):
@@ -165,8 +186,32 @@ def analysis_key(settings, owner, evaluated_mesh):
     say what the shape calls for."""
     vertices = len(evaluated_mesh.vertices)
     corner = tuple(round(c, 5) for c in evaluated_mesh.vertices[0].co) if vertices else ()
-    return (owner.name, vertices, len(evaluated_mesh.polygons), corner, settings.preset,
-            round(settings.adaptive_size, 3), settings.density_group, round(settings.density_factor, 3))
+    return (owner.name, vertices, len(evaluated_mesh.polygons), corner, tuple(shape_of(settings).items()),
+            settings.density_group, round(settings.density_factor, 3))
+
+
+def shape_of(settings):
+    """The settings of the shape as the engine takes them."""
+    return {
+        "adaptivity": round(settings.adaptive_size / 100.0, 6),
+        "quads_around": settings.quads_around,
+        "edge_angle": round(math.degrees(settings.hard_edge_angle), 4) if settings.use_hard_edges else "none",
+        "alignment": round(settings.follow_curvature, 6),
+        "singularity_reach": round(settings.fewer_irregular, 6),
+        "volume_fit": round(settings.volume_fit, 6),
+    }
+
+
+def adopt_preset(settings):
+    """Settings of 0.1 that named a preset: given the values of its shape,
+    but for the adaptive size, which they kept of their own; the name is
+    then forgotten."""
+    if not settings.is_property_set("preset"):
+        return
+    for name, value in SHAPES[settings.preset].items():
+        if name != "adaptive_size":
+            setattr(settings, name, value)
+    settings.property_unset("preset")
 
 
 def scale_of(owner):
@@ -330,6 +375,7 @@ def after_loading(*_):
     for scene in bpy.data.scenes:
         adopt_scene_settings(scene)
     for owner in bpy.data.objects:
+        adopt_preset(owner.openclare)
         if owner.openclare.show_sizes:
             owner.openclare.show_sizes = False
 
@@ -356,6 +402,7 @@ def show_sizes_changed(settings, context):
 
 class OpenclareSettings(bpy.types.PropertyGroup):
     source: bpy.props.PointerProperty(
+        options=set(),
         name="Object",
         type=bpy.types.Object,
         poll=is_a_mesh,
@@ -363,10 +410,14 @@ class OpenclareSettings(bpy.types.PropertyGroup):
             "Read only in the settings of a scene saved by openclare 0.1: the object those settings are given to"
         ),
     )
+    # Read only in files of 0.1, which named a preset of the engine: turned
+    # into the values of the shape it stood for (see `adopt_preset`).
     preset: bpy.props.EnumProperty(
-        name="Preset", description="What the mesh is for", items=PRESETS, default="organic", update=preset_changed
+        options=set(),
+        name="Preset", description="The preset of files saved by openclare 0.1", items=PRESETS, default="organic"
     )
     target: bpy.props.EnumProperty(
+        options=set(),
         name="Ask For",
         description="What says how dense the mesh is",
         items=[
@@ -386,6 +437,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         update=target_changed,
     )
     quads: bpy.props.IntProperty(
+        options=set(),
         name="Quads",
         description="Number of quads asked for",
         default=3000,
@@ -394,6 +446,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         soft_max=50_000,
     )
     largest_quad: bpy.props.FloatProperty(
+        options=set(),
         name="Largest",
         description=(
             "Edge of the largest quads, in the units of the scene: what the shape is meshed with wherever "
@@ -406,6 +459,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         update=sizes_changed,
     )
     smallest_quad: bpy.props.FloatProperty(
+        options=set(),
         name="Smallest",
         description=(
             "Edge of the smallest quads, in the units of the scene: thin parts and tight bends get quads "
@@ -418,6 +472,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         update=sizes_changed,
     )
     show_sizes: bpy.props.BoolProperty(
+        options=set(),
         name="Show Sizes",
         description=(
             "Colour the object with the size its quads will have: light where they are largest, dark where "
@@ -429,6 +484,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         update=show_sizes_changed,
     )
     adaptive_size: bpy.props.FloatProperty(
+        options=set(),
         name="Adaptive Size",
         description=(
             "How much the size of the quads follows the curvature: at 0 % they are all the same size; "
@@ -440,7 +496,79 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         min=0.0,
         max=100.0,
     )
+    quads_around: bpy.props.IntProperty(
+        options=set(),
+        name="Quads Around Thin Parts",
+        description=(
+            "Fewest quads that go round a thin part, a finger or the tip of an ear: smaller quads there and "
+            "larger elsewhere, for the part to keep its volume instead of coming out flat. 0 does not look "
+            "at thickness"
+        ),
+        default=6,
+        min=0,
+        soft_max=16,
+    )
+    use_hard_edges: bpy.props.BoolProperty(
+        options=set(),
+        name="Hard Edges",
+        description=(
+            "Edges of the object sharper than the angle are followed by the quads wherever they can, and "
+            "kept crisp: for mechanical parts"
+        ),
+        default=False,
+    )
+    hard_edge_angle: bpy.props.FloatProperty(
+        options=set(),
+        name="Angle",
+        description="How sharp an edge of the object must be to be followed",
+        subtype="ANGLE",
+        default=math.radians(30.0),
+        min=0.0,
+        max=math.pi,
+    )
+    follow_curvature: bpy.props.FloatProperty(
+        options=set(),
+        name="Follow Curvature",
+        description=(
+            "How strongly the edges are drawn along the directions in which the shape bends, against how "
+            "smoothly they flow. 0 ignores the curvature; higher follows the shape more closely, with more "
+            "irregular vertices"
+        ),
+        default=0.05,
+        min=0.0,
+        soft_max=0.2,
+        step=0.1,
+        precision=3,
+    )
+    fewer_irregular: bpy.props.FloatProperty(
+        options=set(),
+        name="Fewer Irregular Vertices",
+        description=(
+            "Irregular vertices closer than this many quads to one of the opposite kind are cancelled with "
+            "it. 0 keeps them all; higher gives fewer, and edges that follow the shape a little less: for "
+            "meshes meant to deform"
+        ),
+        default=2.0,
+        min=0.0,
+        soft_max=6.0,
+        step=50,
+        precision=1,
+    )
+    volume_fit: bpy.props.FloatProperty(
+        options=set(),
+        name="Volume Fit",
+        description=(
+            "How far the vertices leave the surface, at the very end, for the mesh to keep the volume of the "
+            "shape. 0 leaves them on the surface, where the faces run under it wherever it bulges; 1 puts "
+            "as much of the mesh above the surface as below"
+        ),
+        subtype="FACTOR",
+        default=1.0,
+        min=0.0,
+        max=1.0,
+    )
     density_group: bpy.props.StringProperty(
+        options=set(),
         name="Density",
         description=(
             "Vertex group painted with the density wanted (Weight Paint): quads are smallest where the weight "
@@ -448,6 +576,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         ),
     )
     density_factor: bpy.props.FloatProperty(
+        options=set(),
         name="Factor",
         description=(
             "How many times more quads a weight of 1 gets than a weight of 0, for the same area. "
@@ -459,6 +588,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         max=100.0,
     )
     guide_curves: bpy.props.PointerProperty(
+        options=set(),
         name="Guide Curves",
         type=bpy.types.Collection,
         description=(
@@ -468,6 +598,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         ),
     )
     sharp_curves: bpy.props.PointerProperty(
+        options=set(),
         name="Sharp Curves",
         type=bpy.types.Collection,
         description=(
@@ -477,6 +608,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         ),
     )
     export_grid_uv: bpy.props.BoolProperty(
+        options=set(),
         name="Grid UV",
         description=(
             "Give the result a UV layer where every quad is a unit square: stripes and checkers follow the "
@@ -485,12 +617,14 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         default=True,
     )
     relief_resolution: bpy.props.EnumProperty(
+        options=set(),
         name="Resolution",
         description="Width and height of the height map, in texels",
         items=[(str(size), f"{size} x {size}", "") for size in (512, 1024, 2048, 4096)],
         default="2048",
     )
     relief_levels: bpy.props.IntProperty(
+        options=set(),
         name="Levels",
         description=(
             "How many times the quad mesh is subdivided under the relief: the height map is measured from "
@@ -501,6 +635,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         max=5,
     )
     relief_apply: bpy.props.EnumProperty(
+        options=set(),
         name="Apply As",
         description="How the height map moves the surface",
         items=[
@@ -519,6 +654,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         default="MODIFIER",
     )
     relief_format: bpy.props.EnumProperty(
+        options=set(),
         name="File",
         description="Write the height map as a file too, to use it elsewhere",
         items=[
@@ -539,12 +675,14 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         default="NONE",
     )
     relief_directory: bpy.props.StringProperty(
+        options=set(),
         name="Folder",
         description="Where the file is written; // is the folder of the .blend file",
         subtype="DIR_PATH",
         default="//textures/",
     )
     export_atlas_uv: bpy.props.BoolProperty(
+        options=set(),
         name="Atlas UV",
         description=(
             "Give the result a UV layer made of islands that never overlap, packed into the unit square, "
@@ -553,6 +691,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         default=True,
     )
     export_sharp_edges: bpy.props.BoolProperty(
+        options=set(),
         name="Sharp Edges",
         description=(
             "Mark as sharp the edges of the result that follow a hard edge of the original "
@@ -561,6 +700,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         default=True,
     )
     export_materials: bpy.props.BoolProperty(
+        options=set(),
         name="Materials",
         description=(
             "Give each quad of the result the material of the surface it lies on, and keep the borders "
@@ -570,6 +710,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         default=True,
     )
     export_creases: bpy.props.BoolProperty(
+        options=set(),
         name="Creases",
         description=(
             "Give a crease weight to the edges that should stay sharp when the result is subdivided: "
@@ -849,6 +990,7 @@ class OPENCLARE_OT_analyse(bpy.types.Operator):
         owner = object_to_remesh(context)
         adopt_scene_settings(context.scene)
         settings = owner.openclare
+        adopt_preset(settings)
         evaluated = owner.evaluated_get(context.evaluated_depsgraph_get())
         mesh = evaluated.to_mesh()
         try:
@@ -857,14 +999,14 @@ class OPENCLARE_OT_analyse(bpy.types.Operator):
             mesh.vertices.foreach_get("co", positions)
             triangles = numpy.empty(3 * len(mesh.loop_triangles), numpy.uint32)
             mesh.loop_triangles.foreach_get("vertices", triangles)
-            engine_settings = {"adaptivity": settings.adaptive_size / 100.0}
+            engine_settings = shape_of(settings)
             density = None
             if settings.density_group:
                 density = weights_of(evaluated, mesh, settings.density_group)
                 engine_settings["density_contrast"] = settings.density_factor
             key = analysis_key(settings, owner, mesh)
             started = time.perf_counter()
-            analysis = engine.Analysis(positions, triangles, settings.preset, engine_settings, density)
+            analysis = engine.Analysis(positions, triangles, BASE_PRESET, engine_settings, density)
             seconds = time.perf_counter() - started
         except engine.EngineError as error:
             self.report({"ERROR"}, f"openclare: {error}")
@@ -918,6 +1060,7 @@ class Remeshing:
         object, or None if it could not be made."""
         adopt_scene_settings(context.scene)
         settings = original.openclare
+        adopt_preset(settings)
         stop_preview(context)
         self.drawn, self.stages = 0.0, []
         last_report.clear()
@@ -933,7 +1076,7 @@ class Remeshing:
             return False
 
         try:
-            engine_settings = {"quads": settings.quads, "adaptivity": settings.adaptive_size / 100.0}
+            engine_settings = {"quads": settings.quads, **shape_of(settings)}
             if settings.target == "SIZE":
                 # Lengths of the scene, where the engine is given the mesh
                 # as the object holds it: before its scale.
@@ -954,7 +1097,7 @@ class Remeshing:
             curves = curves_of(settings.sharp_curves, original, sharp=True)
             curves += curves_of(settings.guide_curves, original, but=sharp)
             mesh, report = quads_of(
-                source, settings.preset, engine_settings, density, on_stage, layers,
+                source, BASE_PRESET, engine_settings, density, on_stage, layers,
                 settings.export_sharp_edges, settings.export_creases, curves, settings.export_materials,
             )
         except engine.EngineError as error:
@@ -1493,8 +1636,8 @@ class OPENCLARE_PT_panel(DataPanel, bpy.types.Panel):
     def draw_source(self, context, owner):
         layout = self.layout
         layout.use_property_split = True
+        layout.use_property_decorate = False
         settings = owner.openclare
-        layout.prop(settings, "preset")
         layout.prop(settings, "target", expand=True)
         if settings.target == "SIZE":
             layout.operator(OPENCLARE_OT_analyse.bl_idname, icon="VIEWZOOM")
@@ -1522,7 +1665,6 @@ class OPENCLARE_PT_panel(DataPanel, bpy.types.Panel):
                 layout.prop(settings, "show_sizes")
         else:
             layout.prop(settings, "quads")
-        layout.prop(settings, "adaptive_size", slider=True)
         column = layout.column(align=True)
         column.prop_search(settings, "density_group", owner, "vertex_groups", icon="GROUP_VERTEX")
         factor = column.row()
@@ -1589,6 +1731,58 @@ class OPENCLARE_OT_select_original(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class OPENCLARE_OT_shape_preset_add(AddPresetBase, bpy.types.Operator):
+    """Save the settings of the shape as a preset, or remove a preset that was saved"""
+
+    bl_idname = "object.openclare_shape_preset_add"
+    bl_label = "Add Shape Preset"
+    preset_menu = "OPENCLARE_PT_shape_presets"
+    preset_subdir = SHAPE_PRESETS
+    preset_defines = ["settings = bpy.context.object.openclare"]
+    preset_values = [f"settings.{name}" for name in SHAPE_NAMES]
+
+
+class OPENCLARE_PT_shape_presets(PresetPanel, bpy.types.Panel):
+    """The presets of the shape, in the header of its block"""
+
+    bl_label = "Shape Presets"
+    preset_subdir = SHAPE_PRESETS
+    preset_operator = "script.execute_preset"
+    preset_add_operator = OPENCLARE_OT_shape_preset_add.bl_idname
+
+
+class OPENCLARE_PT_shape(DataPanel, bpy.types.Panel):
+    """How the quads follow the shape: what a preset sets"""
+
+    bl_label = "Shape"
+    bl_idname = "OPENCLARE_PT_shape"
+    bl_parent_id = "OPENCLARE_PT_panel"
+
+    @classmethod
+    def poll(cls, context):
+        return is_source(context)
+
+    def draw_header_preset(self, context):
+        OPENCLARE_PT_shape_presets.draw_panel_header(self.layout)
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        settings = object_to_remesh(context).openclare
+        layout.prop(settings, "adaptive_size", slider=True)
+        layout.prop(settings, "quads_around")
+        column = layout.column(heading="Hard Edges")
+        row = column.row(align=True)
+        row.prop(settings, "use_hard_edges", text="")
+        angle = row.row(align=True)
+        angle.active = settings.use_hard_edges
+        angle.prop(settings, "hard_edge_angle", text="")
+        layout.prop(settings, "follow_curvature")
+        layout.prop(settings, "fewer_irregular")
+        layout.prop(settings, "volume_fit", slider=True)
+
+
 class OPENCLARE_PT_curves(DataPanel, bpy.types.Panel):
     """Curves drawn on the model for the result to have edges along"""
 
@@ -1638,6 +1832,7 @@ class OPENCLARE_PT_export(DataPanel, bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         layout.use_property_split = True
+        layout.use_property_decorate = False
         settings = object_to_remesh(context).openclare
         column = layout.column(heading="UV Layers")
         column.prop(settings, "export_grid_uv", text="Grid")
@@ -1663,6 +1858,7 @@ class OPENCLARE_PT_relief(DataPanel, bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         layout.use_property_split = True
+        layout.use_property_decorate = False
         target = object_to_remesh(context)
         settings = target.openclare
         layout.prop(settings, "relief_levels")
@@ -1689,13 +1885,18 @@ CLASSES = (
     OPENCLARE_OT_curves_assign,
     OPENCLARE_OT_curves_remove,
     OPENCLARE_OT_curves_select,
+    OPENCLARE_OT_shape_preset_add,
+    OPENCLARE_PT_shape_presets,
     OPENCLARE_PT_panel,
+    OPENCLARE_PT_shape,
     OPENCLARE_PT_curves,
     OPENCLARE_PT_export,
     OPENCLARE_PT_relief,
 )
 
 
+# The add-on's own presets are in presets/ here.
+ADDON_FOLDER = os.path.dirname(os.path.abspath(__file__))
 HANDLERS = (
     (bpy.app.handlers.save_pre, before_saving),
     (bpy.app.handlers.save_post, after_saving),
@@ -1716,17 +1917,21 @@ def register():
     )
     for handlers, handler in HANDLERS:
         handlers.append(handler)
+    bpy.utils.register_preset_path(ADDON_FOLDER)
     # The file open now, when Blender lets it be read (a script, not the
     # start of Blender: there, the file is read after, and the handler does
     # it).
     try:
         for scene in bpy.data.scenes:
             adopt_scene_settings(scene)
+        for owner in bpy.data.objects:
+            adopt_preset(owner.openclare)
     except AttributeError:
         pass
 
 
 def unregister():
+    bpy.utils.unregister_preset_path(ADDON_FOLDER)
     for handlers, handler in HANDLERS:
         if handler in handlers:
             handlers.remove(handler)

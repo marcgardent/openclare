@@ -14,7 +14,7 @@ Here the object is a plain mesh, named after the model:
   in triangles, all in one mesh, into bench/corpus-large/scenes/<model>.blend.
   Neither is tracked: mind the licence of the asset (see CREDITS.md).
 
-The settings: the object, 3000 quads, the preset `hard-surface` for the
+The settings: the object, 3000 quads, the shape `hard-surface` (openclare.SHAPES) for the
 models `MODELS` of run.py says have hard edges, `organic` for the others.
 A scene that is there and newer than its file is left alone, unless
 `--refresh` is given. The scenes made by hand (`AUTHORED` in run.py) are not
@@ -76,14 +76,16 @@ def make(model, sharp):
         made = read_obj(obj_path(model), model)
     activate(made)
     settings = made.openclare
-    settings.preset = "hard-surface" if sharp else "organic"
+    shape = "hard-surface" if sharp else "organic"
+    for name, value in openclare.SHAPES[shape].items():
+        setattr(settings, name, value)
     settings.quads = DEFAULT_TARGET
     settings.adaptive_size = ADAPTIVE_SIZE
     target.parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=str(target), compress=True)
     mesh = made.data
     print(f"SCENE wrote {target.relative_to(BENCH.parent)}: {len(mesh.vertices)} vertices, "
-          f"{len(mesh.polygons)} faces, preset {settings.preset}", flush=True)
+          f"{len(mesh.polygons)} faces, shape {shape}", flush=True)
 
 
 def main():
