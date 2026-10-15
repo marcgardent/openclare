@@ -122,7 +122,7 @@ impl Network {
     }
 
     fn improve_by(&self, x: &mut [i64], cost: &Cost, step: i64, effort: &mut Effort) {
-        self.improve_judged(x, cost, step, effort, &mut |x: &[i64], change: &[i64]| {
+        self.improve_judged(x, cost, step, usize::MAX, effort, &mut |x: &[i64], change: &[i64]| {
             let saved: f64 = change
                 .iter()
                 .enumerate()
@@ -135,15 +135,17 @@ impl Network {
 
     /// Walks of `step` found with `cost` as the guide, each applied if
     /// `judge` (given the lengths and the change) says it helps, until no
-    /// walk is left that it would take.
+    /// walk is left that it would take or `limit` walks have been judged.
     pub fn improve_judged(
         &self,
         x: &mut [i64],
         cost: &Cost,
         step: i64,
+        limit: usize,
         effort: &mut Effort,
         judge: &mut dyn FnMut(&[i64], &[i64]) -> bool,
     ) {
+        let start = effort.moves + effort.misjudged;
         let hub = 4 * self.arcs();
         // Moves that were tried in a walk and found wanting, set aside so
         // that the search does not come back to the same walk forever.
@@ -160,6 +162,9 @@ impl Network {
                         entry[state] = if barred[state] { f64::INFINITY } else { moved };
                     }
                 }
+            }
+            if effort.moves + effort.misjudged - start >= limit {
+                return;
             }
             let Some(walk) = self.negative_walk(&entry) else { return };
 
