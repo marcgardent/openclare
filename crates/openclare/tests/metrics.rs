@@ -207,3 +207,17 @@ fn edge_loops_of_a_grid_run_from_border_to_border() {
     // 11 inner lines each way; the border itself is on no loop.
     assert_eq!((loops.closed, loops.spiral, loops.open, loops.border), (0, 0, 0, 22), "{loops:?}");
 }
+
+#[test]
+fn edge_loops_stop_at_a_face_that_is_not_a_quad() {
+    // The torus grid with one quad split in two triangles: the four loops
+    // through its corners now stop there, its edges and the diagonal on none.
+    let mut grid = primitives::torus_quads(1.0, 0.4, 48, 24);
+    let split = grid.faces.swap_remove(0);
+    grid.faces.push(vec![split[0], split[1], split[2]]);
+    grid.faces.push(vec![split[0], split[2], split[3]]);
+    let metrics = measure(&primitives::torus(1.0, 0.4, 96, 48), &grid, None);
+    assert!(!metrics.is_valid());
+    let loops = metrics.edge_loops.expect("still a manifold");
+    assert_eq!((loops.closed, loops.spiral, loops.open, loops.border), (48 + 24 - 4, 0, 4, 0), "{loops:?}");
+}
