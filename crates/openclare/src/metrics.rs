@@ -221,10 +221,11 @@ pub fn measure(source: &TriMesh, mesh: &PolyMesh, target_faces: Option<usize>) -
 pub struct EdgeLoops {
     /// Loops that come back to where they started: rings.
     pub closed: usize,
-    /// Loops that are their own neighbour, a quad having two opposite
-    /// edges on them: a helix goes round and comes back beside itself one
-    /// quad further, where a ring has another ring. Whether they close or
-    /// stop, they are counted here only.
+    /// Loops met again, the same way round, by a strip of quads that leaves
+    /// them across, within [`SPIRAL_ORDER`] quads: a helix goes round and
+    /// comes back beside itself a few quads further (two or more helices
+    /// wound together come back beside one another), where a ring has
+    /// another ring. Whether they close or stop, they are counted here only.
     pub spiral: usize,
     /// Loops that stop, at an irregular vertex at one end at least.
     pub open: usize,
@@ -238,6 +239,11 @@ pub struct EdgeLoops {
     /// Edges of the longest loop that stops at an irregular vertex.
     pub longest_open: usize,
 }
+
+/// Most quads a strip leaving a loop across may cross to meet it again for
+/// the loop to be a spiral: as many helices wound together. Rings are met
+/// again only round a whole torus, or over a cap the other way round.
+pub const SPIRAL_ORDER: usize = 4;
 
 /// Fewest thin vertices for their mean distance to mean something.
 const THIN_SAMPLES: usize = 20;
@@ -393,6 +399,9 @@ impl Connectivity {
         let quad_on_both_sides =
             |h: usize| is_quad[self.face[h] as usize] && is_quad[self.face[self.twin[h] as usize] as usize];
         let mut loop_of = vec![INVALID; halves];
+        // Of the two halves of each edge on a loop, the one that runs the
+        // way the loop was first followed.
+        let mut forward = vec![false; halves];
         // Per loop: its edges, whether it closed, and whether an end is on
         // an irregular vertex.
         let mut loops: Vec<(usize, bool, bool)> = Vec::new();
@@ -428,6 +437,8 @@ impl Connectivity {
                     }
                     loop_of[h as usize] = id;
                     loop_of[self.twin[h as usize] as usize] = id;
+                    let along = if first.is_some() { h } else { self.twin[h as usize] };
+                    forward[along as usize] = true;
                     edges += 1;
                     match self.straight_on(h, &odd) {
                         Some(on) => h = on,
@@ -440,12 +451,28 @@ impl Connectivity {
             }
             loops.push((edges, closed, pole));
         }
-        // A quad with two opposite edges on one loop: that loop spirals.
+        // A strip of quads leaving a loop across that meets it again the
+        // same way round, within a few quads: that loop spirals. (The edge
+        // across a quad from `e` is next(next(e)), running back; its twin
+        // runs the same way as `e`.)
         let mut spiral = vec![false; loops.len()];
         for h in 0..halves {
-            let opposite = self.next[self.next[h] as usize] as usize;
-            if is_quad[self.face[h] as usize] && loop_of[h] != INVALID && loop_of[h] == loop_of[opposite] {
-                spiral[loop_of[h] as usize] = true;
+            let id = loop_of[h];
+            if id == INVALID || !is_quad[self.face[h] as usize] {
+                continue;
+            }
+            let mut e = h;
+            for _ in 0..SPIRAL_ORDER {
+                let opposite = self.next[self.next[e] as usize] as usize;
+                let beyond = self.twin[opposite];
+                if loop_of[opposite] == id {
+                    spiral[id as usize] |= beyond != INVALID && forward[beyond as usize] == forward[h];
+                    break;
+                }
+                if beyond == INVALID || !is_quad[self.face[beyond as usize] as usize] {
+                    break;
+                }
+                e = beyond as usize;
             }
         }
         let mut counted = EdgeLoops::default();
