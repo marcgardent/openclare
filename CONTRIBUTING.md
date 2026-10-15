@@ -58,6 +58,7 @@ added (one function and one line in `bench/run.py`) and how a model is. The shor
 |---|---|
 | `make quick MODELS=ogre,camera` | one run of the add-on per model, next to what the bench stored, in a few minutes |
 | `python3 bench/run.py` | the full bench at one budget (`--target`, `--models`, `--tools`) |
+| `make remeasure` | the meshes of the results measured again, without remeshing: after a change to the measures |
 | `make scores` | the marks from 0 to 100 of every remesher on every model ([SCORES.md](bench/results/SCORES.md)) |
 | `make pages` | one page of pictures and marks per model ([docs/models](docs/models/README.md)) |
 | `make dashboard` | the pictures and the chart at the top of the README (`docs/images/dashboard`) |
