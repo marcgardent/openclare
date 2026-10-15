@@ -46,8 +46,9 @@ evaluated = body.evaluated_get(depsgraph)
 mesh = evaluated.to_mesh()
 with open(path, "w") as out:
     out.write("# " + name + ", base mesh of Blender's Essentials (Human Base Meshes), CC0\\n")
+    # In the frame of the object, as the add-on hands the sculpt over.
     for vertex in mesh.vertices:
-        co = body.matrix_world @ vertex.co
+        co = vertex.co
         out.write(f"v {co.x:.9g} {co.y:.9g} {co.z:.9g}\\n")
     for polygon in mesh.polygons:
         out.write("f " + " ".join(str(v + 1) for v in polygon.vertices) + "\\n")
