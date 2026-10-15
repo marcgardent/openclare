@@ -10,6 +10,7 @@
 //! The stage is a [`LayoutBuilder`]; chains get one from [`create`].
 
 mod motorcycle;
+pub mod tubes;
 pub(crate) mod walk;
 mod walls;
 
@@ -539,11 +540,18 @@ pub struct Motorcycle {
     /// How far a trace may go before it is given up, in times the side of a
     /// square with the area of the map.
     pub max_trace_length: f64,
+    /// Whether the map is held to close the lines that go round a part
+    /// (DT-062). Off unless OPENCLARE_CLOSE_LOOPS is set, while it is tried.
+    pub close_tubes: bool,
 }
 
 impl Default for Motorcycle {
     fn default() -> Self {
-        Self { stiffening_rounds: 40, max_trace_length: 20.0 }
+        Self {
+            stiffening_rounds: 40,
+            max_trace_length: 20.0,
+            close_tubes: std::env::var_os("OPENCLARE_CLOSE_LOOPS").is_some(),
+        }
     }
 }
 
@@ -553,8 +561,11 @@ impl LayoutBuilder for Motorcycle {
     }
 
     fn build(&self, work: &WorkMesh, field: &CrossField, request: &Request) -> Result<Layout> {
-        let map_request =
-            parametrization::Request { edge_length: request.edge_length, stiffening_rounds: self.stiffening_rounds };
+        let map_request = parametrization::Request {
+            edge_length: request.edge_length,
+            stiffening_rounds: self.stiffening_rounds,
+            close_tubes: self.close_tubes,
+        };
         let map = parametrization::create(parametrization::Kind::Seamless).parametrize(work, field, &map_request)?;
         let side = (work.mesh.surface_area().sqrt() / request.edge_length).max(1.0);
         let tmesh = TMesh::trace(work, field, &map, self.max_trace_length * side);

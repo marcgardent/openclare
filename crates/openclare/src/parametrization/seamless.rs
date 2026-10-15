@@ -176,6 +176,7 @@ impl Seamless {
             Report { seam_edges: problem.cut.seam_edges(), wedges: problem.cut.wedge_count, ..Default::default() };
         let uv = untangle(&problem, &constraints, &mut weights, &self.solver, request.stiffening_rounds, &mut report)?;
         report.flipped_first = report.flipped_before_stiffening;
+        let uv = self.closing(&problem, &mut constraints, &mut weights, request, &mut report, uv)?;
         if on_lines && report.flipped > 0 {
             return Ok(None);
         }
@@ -198,10 +199,125 @@ impl Seamless {
             Report { seam_edges: problem.cut.seam_edges(), wedges: problem.cut.wedge_count, ..Default::default() };
         let uv = untangle(&problem, &constraints, &mut weights, &self.solver, request.stiffening_rounds, &mut report)?;
         report.flipped_first = report.flipped_before_stiffening;
+        let uv = self.closing(&problem, &mut constraints, &mut weights, request, &mut report, uv)?;
         if report.flipped > 0 {
             return Ok(Err(problem.quality(&uv).flipped));
         }
         Ok(Ok(Parametrization { set_aside: problem.set_aside(), cut: problem.cut, uv, report }))
+    }
+}
+
+/// Lines started from about this many points are followed to find the
+/// turns of the map; one that comes back within the gate, in quad edges,
+/// across its way, has made a turn, and shifted if by more than the least.
+const TUBE_SAMPLES: usize = 600;
+const TUBE_GATE: f64 = 3.0;
+const TUBE_SHIFT: f64 = 0.05;
+/// A turn whose shift is more than this share of its way round leans too
+/// much to be a part the lines go round (some 3 degrees): it goes round
+/// singularities, whose places decide its shift, and holding it fights them.
+const TUBE_LEAN: f64 = 0.05;
+/// Turns held at a time, the least leaning first, and rounds of finding
+/// them: a map held on some may shift on others.
+const TUBES_AT_ONCE: usize = 16;
+const TUBE_ROUNDS: usize = 4;
+/// Seconds the closing may take, at most, beyond the first solve.
+const TUBE_SECONDS: f64 = 20.0;
+
+impl Seamless {
+    /// The map solved again with the turns it makes held closed, if the
+    /// request asks for it: where a grid line goes round a part and comes
+    /// back beside itself, its shift once round is held at nothing, and the
+    /// lines close into rings (DT-062). Turns are held a few at a time; a
+    /// batch that folds the map is given up, and so is what is left once
+    /// the time is out.
+    fn closing(
+        &self,
+        problem: &Problem,
+        constraints: &mut Vec<Constraint>,
+        weights: &mut [f64],
+        request: &Request,
+        report: &mut Report,
+        mut uv: Vec<[f64; 2]>,
+    ) -> Result<Vec<[f64; 2]>> {
+        if !request.close_tubes {
+            return Ok(uv);
+        }
+        let started = std::time::Instant::now();
+        let set_aside = problem.set_aside();
+        let faces = problem.work.mesh.triangles.len();
+        let area: f64 = (0..faces)
+            .map(|f| {
+                let [a, b, c] = [uv[3 * f], uv[3 * f + 1], uv[3 * f + 2]];
+                0.5 * ((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])).abs()
+            })
+            .sum();
+        let longest = 4.0 * area.sqrt();
+        let debug = std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some();
+        let gate = std::env::var("OPENCLARE_TUBE_GATE").ok().and_then(|g| g.parse().ok()).unwrap_or(TUBE_GATE);
+        let samples = std::env::var("OPENCLARE_TUBE_SAMPLES").ok().and_then(|g| g.parse().ok()).unwrap_or(TUBE_SAMPLES);
+        let lean = std::env::var("OPENCLARE_TUBE_LEAN").ok().and_then(|g| g.parse().ok()).unwrap_or(TUBE_LEAN);
+        // Lines that went round the same part came back shifted by the same
+        // amount: one condition holds them all. Those tried and given up are
+        // not tried again.
+        let mut tried: HashSet<(u8, i64)> = HashSet::new();
+        for round in 0..TUBE_ROUNDS {
+            if started.elapsed().as_secs_f64() > TUBE_SECONDS {
+                break;
+            }
+            let clock = std::time::Instant::now();
+            let found = crate::tmesh::tubes::tubes_of(
+                &problem.work.mesh, &uv, &problem.cut, &set_aside, samples, longest, gate,
+            );
+            let traced = clock.elapsed().as_secs_f64();
+            let mut candidates: Vec<&crate::tmesh::tubes::Tube> = found
+                .iter()
+                .filter(|tube| {
+                    tube.shift.abs() > TUBE_SHIFT && tube.shift.abs() <= lean * tube.around && !tube.crossings.is_empty()
+                })
+                .collect();
+            candidates.sort_by(|a, b| (a.shift.abs() / a.around).total_cmp(&(b.shift.abs() / b.around)));
+            let mut batch = Vec::new();
+            for tube in candidates {
+                let same = (tube.axis % 2, (tube.shift.abs() * 1e4).round() as i64);
+                if !tried.insert(same) {
+                    continue;
+                }
+                report.tube_shift = report.tube_shift.max(tube.shift.abs());
+                let [u_shift, v_shift] = problem.period(&tube.crossings);
+                batch.push(Constraint::zero(if tube.axis % 2 == 0 { v_shift } else { u_shift }));
+                if batch.len() == TUBES_AT_ONCE {
+                    break;
+                }
+            }
+            if batch.is_empty() {
+                break;
+            }
+            let (folds_before, kept_report, kept_weights) = (report.flipped, report.clone(), weights.to_vec());
+            let added = batch.len();
+            constraints.extend(batch);
+            let clock = std::time::Instant::now();
+            let held = untangle(problem, constraints, weights, &self.solver, request.stiffening_rounds, report)?;
+            if debug {
+                eprintln!(
+                    "tubes round {round}: {} turns, {added} held; traced in {traced:.1} s, solved in {:.1} s, \
+                     {} folds (were {folds_before})",
+                    found.len(),
+                    clock.elapsed().as_secs_f64(),
+                    report.flipped,
+                );
+            }
+            if report.flipped > folds_before {
+                // That batch folds the map: given up, and the map as it was.
+                constraints.truncate(constraints.len() - added);
+                *report = kept_report;
+                weights.copy_from_slice(&kept_weights);
+                continue;
+            }
+            report.tubes_closed += added;
+            uv = held;
+        }
+        Ok(uv)
     }
 }
 

@@ -21,7 +21,7 @@ fn field(work: &WorkMesh, alignment: f64) -> CrossField {
 }
 
 fn integer_map(work: &WorkMesh, field: &CrossField, edge_length: f64) -> Parametrization {
-    let request = Request { edge_length, stiffening_rounds: 40 };
+    let request = Request { edge_length, stiffening_rounds: 40, close_tubes: false };
     create(Kind::IntegerGrid).parametrize(work, field, &request).unwrap()
 }
 

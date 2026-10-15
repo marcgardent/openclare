@@ -747,6 +747,7 @@ fn parametrize_command(args: &[String]) -> Result<(), String> {
     let mut field_request = crossfield::Request::default();
     let (mut quads, mut simplify, mut rounds, mut paths) = (None::<usize>, None::<f64>, 40usize, Vec::new());
     let mut kind = parametrization::Kind::Seamless;
+    let mut close_tubes = false;
     let mut args = args.iter();
     while let Some(arg) = args.next() {
         let mut value = |name: &str| args.next().ok_or(format!("{name} expects a value"));
@@ -758,6 +759,7 @@ fn parametrize_command(args: &[String]) -> Result<(), String> {
             "--crease-angle" => work_request.crease_angle = Some(parse(arg, value(arg)?)?),
             "--rounds" => rounds = parse(arg, value(arg)?)?,
             "--kind" => kind = value(arg)?.parse().map_err(|e: openclare::Error| e.to_string())?,
+            "--close-tubes" => close_tubes = true,
             flag if flag.starts_with("--") => return Err(format!("unknown option '{flag}'")),
             path => paths.push(path),
         }
@@ -789,7 +791,7 @@ fn parametrize_command(args: &[String]) -> Result<(), String> {
     let (positive, negative, other) = field.singularities();
 
     let start = std::time::Instant::now();
-    let request = parametrization::Request { edge_length, stiffening_rounds: rounds };
+    let request = parametrization::Request { edge_length, stiffening_rounds: rounds, close_tubes };
     let map = parametrization::create(kind).parametrize(&work, &field, &request).map_err(|e| e.to_string())?;
     let seconds = start.elapsed().as_secs_f64();
 
@@ -803,6 +805,21 @@ fn parametrize_command(args: &[String]) -> Result<(), String> {
     println!("distortion     mean {:.4}, worst stretch {:.2}", report.distortion_mean, report.stretch_max);
     println!("conditions     worst mismatch {:.2e}, {} whole numbers imposed", report.seam_error, report.integers);
     println!("seconds        {seconds:.3}");
+    println!("tubes          {} held closed, the largest shift {:.3}", report.tubes_closed, report.tube_shift);
+
+    // Where a grid line goes round a part and comes back beside itself:
+    // shifted, its loops spiral (DT-062).
+    let found = openclare::tmesh::tubes::tubes(&work, &map, 600, 4.0 * (quads as f64).sqrt(), 3.0);
+    let shifted: Vec<&openclare::tmesh::tubes::Tube> = found.iter().filter(|t| t.shift.abs() > 0.05).collect();
+    println!("turns          {} lines came back round, {} shifted by more than 0.05 quad", found.len(), shifted.len());
+    let mut by_shift = found.clone();
+    by_shift.sort_by(|a, b| b.shift.abs().total_cmp(&a.shift.abs()));
+    for tube in by_shift.iter().take(12) {
+        println!(
+            "  face {:6} axis {} round {:7.2} shift {:+.3}",
+            tube.face, tube.axis, tube.around, tube.shift
+        );
+    }
     Ok(())
 }
 
@@ -870,7 +887,7 @@ impl LayoutOptions {
                 .map_err(|e| e.to_string())?
                 .0;
         }
-        let request = parametrization::Request { edge_length, stiffening_rounds: self.rounds };
+        let request = parametrization::Request { edge_length, stiffening_rounds: self.rounds, close_tubes: false };
         let map = parametrization::create(parametrization::Kind::Seamless)
             .parametrize(&work, &field, &request)
             .map_err(|e| e.to_string())?;

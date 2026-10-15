@@ -22,6 +22,10 @@ pub struct Request {
     pub edge_length: f64,
     /// How many times to stiffen the faces that folded over and solve again.
     pub stiffening_rounds: usize,
+    /// Where a grid line goes round a part of the shape and comes back
+    /// beside itself, the map is held to bring it back onto itself: its
+    /// lines close into rings instead of winding round as helices (DT-062).
+    pub close_tubes: bool,
 }
 
 /// What a parametrizer achieved.
@@ -31,6 +35,11 @@ pub struct Report {
     pub seam_edges: usize,
     /// Vertices of the cut-open mesh.
     pub wedges: usize,
+    /// Turns of the map that came back shifted (the lines round a part
+    /// that spiral) and were held to close, and the largest shift there was,
+    /// in quad edges.
+    pub tubes_closed: usize,
+    pub tube_shift: f64,
     /// Faces folded over or squashed flat after the first solve.
     pub flipped_first: usize,
     /// The same at the start of the latest series of stiffening rounds.

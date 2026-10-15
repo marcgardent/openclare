@@ -15,7 +15,7 @@ fn field(work: &WorkMesh, alignment: f64) -> CrossField {
 }
 
 fn parametrize(work: &WorkMesh, field: &CrossField, edge_length: f64) -> Parametrization {
-    let request = Request { edge_length, stiffening_rounds: 40 };
+    let request = Request { edge_length, stiffening_rounds: 40, close_tubes: false };
     create(Kind::Seamless).parametrize(work, field, &request).unwrap()
 }
 
@@ -191,7 +191,7 @@ fn parametrizers_are_reachable_by_name_deterministic_and_check_their_input() {
     let (first, second) = (parametrize(&work, &cross, 0.15), parametrize(&work, &cross, 0.15));
     assert_eq!(first.uv, second.uv);
     for edge_length in [0.0, -1.0, f64::NAN] {
-        let request = Request { edge_length, stiffening_rounds: 0 };
+        let request = Request { edge_length, stiffening_rounds: 0, close_tubes: false };
         assert!(create(Kind::Seamless).parametrize(&work, &cross, &request).is_err());
     }
 }

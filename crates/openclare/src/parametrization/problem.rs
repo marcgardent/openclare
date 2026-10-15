@@ -195,6 +195,31 @@ impl<'a> Problem<'a> {
         [merged(vec![(self.u(in_g), 1.0), negated(real)]), merged(vec![(self.v(in_g), 1.0), negated(imaginary)])]
     }
 
+    /// How far the map is shifted once round a closed way that crosses the
+    /// seam half-edges `crossings` in that order and comes back to its
+    /// start: `(u, v)` in the coordinates it started in, as expressions in
+    /// the unknowns. Across each seam the map turns and shifts; composed
+    /// all the way round, the turns cancel on a way that comes back going
+    /// the same way, and the shifts add up to this (DT-062).
+    pub fn period(&self, crossings: &[usize]) -> [Row; 2] {
+        let negated = |row: &Row| -> Row { row.iter().map(|&(i, c)| (i, -c)).collect() };
+        let mut shift: [Row; 2] = [Vec::new(), Vec::new()];
+        for &h in crossings {
+            let t = self.topology.opposite[h] as usize;
+            let [real, imaginary] = self.across(h, h, next_corner(t));
+            let [a, b] = shift;
+            // (-i)^j (a + i b), as across() turns the coordinates.
+            let [a, b] = match self.cut.transition[h] % 4 {
+                0 => [a, b],
+                1 => [b.clone(), negated(&a)],
+                2 => [negated(&a), negated(&b)],
+                _ => [negated(&b), a.clone()],
+            };
+            shift = [merged(a.into_iter().chain(real).collect()), merged(b.into_iter().chain(imaginary).collect())];
+        }
+        shift
+    }
+
     /// The seam conditions (across a seam the map may only turn by the
     /// transition and shift), plus one pinned corner per connected piece to
     /// remove the freedom of translating the whole map.

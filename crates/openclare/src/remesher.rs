@@ -255,7 +255,8 @@ impl Remesher for IntegerGrid {
             fields(input, config, &size, None, &mut report, &mut clock, recorder)?;
 
         recorder.begin("parametrization")?;
-        let map_request = parametrization::Request { edge_length, stiffening_rounds: self.stiffening_rounds };
+        let map_request =
+            parametrization::Request { edge_length, stiffening_rounds: self.stiffening_rounds, close_tubes: false };
         let map =
             parametrization::create(parametrization::Kind::IntegerGrid).parametrize(&work, &field, &map_request)?;
         report.map_inversions = map.report.flipped;

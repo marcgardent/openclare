@@ -211,7 +211,7 @@ impl<'a> Map<'a> {
 
     /// The corner sector counter-clockwise of `(f, corner)` round their
     /// vertex, and `axis` carried to it. `None` at a border.
-    fn next_around(&self, f: usize, corner: usize, axis: Axis) -> Option<Departure> {
+    pub(crate) fn next_around(&self, f: usize, corner: usize, axis: Axis) -> Option<Departure> {
         // Counter-clockwise round the vertex is across the edge arriving at it.
         let h = 3 * f + (corner + 2) % 3;
         let twin = self.topology.opposite[h];
