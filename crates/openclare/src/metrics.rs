@@ -162,6 +162,15 @@ impl Metrics {
     }
 }
 
+/// The edge loops of `mesh` alone, without a surface to measure it against:
+/// `None` unless it is a consistently oriented manifold. Only its
+/// connectivity is read.
+pub fn edge_loops(mesh: &PolyMesh) -> Option<EdgeLoops> {
+    let connectivity = Connectivity::build(mesh);
+    let manifold = connectivity.uses.iter().all(|&(_, count)| count <= 2) && connectivity.misoriented == 0;
+    manifold.then(|| connectivity.edge_loops(mesh))
+}
+
 /// Measures `mesh` against the `source` surface it approximates.
 /// `target_faces` is the face count that was asked for, when known.
 pub fn measure(source: &TriMesh, mesh: &PolyMesh, target_faces: Option<usize>) -> Metrics {

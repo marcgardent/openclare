@@ -24,8 +24,6 @@ pub(super) struct Turn {
     pub shift: Expression,
     /// Its length on the way, with the real lengths of the arcs.
     pub around: f64,
-    /// How far beside its start it came back, measured on the way.
-    pub measured: f64,
 }
 
 /// The direction of each side of a rectangle, counter-clockwise from the
@@ -102,10 +100,10 @@ fn rims(tmesh: &TMesh) -> Vec<Option<Rim>> {
         .collect()
 }
 
-/// Turns found by going straight across the rectangles, from the middle of
-/// each side of each, at most `steps_per_patch` times the number of
+/// Turns found by going straight across the rectangles, from each of the
+/// places `offsets` (shares of its length) along each side of each, at most `steps_per_patch` times the number of
 /// rectangles before giving up.
-pub(super) fn turns(tmesh: &TMesh, steps_per_patch: usize) -> Vec<Turn> {
+pub(super) fn turns(tmesh: &TMesh, steps_per_patch: usize, offsets: &[f64], longest: f64) -> Vec<Turn> {
     let rims = rims(tmesh);
     // Where each half-arc is on a rim: the rectangle and the place.
     let mut place = vec![None; 2 * tmesh.arcs.len()];
@@ -128,8 +126,10 @@ pub(super) fn turns(tmesh: &TMesh, steps_per_patch: usize) -> Vec<Turn> {
             if side_length <= 0.0 {
                 continue;
             }
-            if let Some(turn) = go_round(tmesh, &rims, &place, start_patch, start_side, 0.5 * side_length, steps) {
-                found.push(turn);
+            for &share in offsets {
+                if let Some(turn) = go_round(tmesh, &rims, &place, start_patch, start_side, share * side_length, steps, longest) {
+                    found.push(turn);
+                }
             }
         }
     }
@@ -137,7 +137,9 @@ pub(super) fn turns(tmesh: &TMesh, steps_per_patch: usize) -> Vec<Turn> {
 }
 
 /// Goes straight across from side `side` of rectangle `patch`, `offset`
-/// along it, until it comes back in through that side going the same way.
+/// along it, until it comes back in through that side going the same way,
+/// or has gone further than `longest`.
+#[allow(clippy::too_many_arguments)]
 fn go_round(
     tmesh: &TMesh,
     rims: &[Option<Rim>],
@@ -146,35 +148,38 @@ fn go_round(
     side: usize,
     offset: f64,
     steps: usize,
+    longest: f64,
 ) -> Option<Turn> {
-    let (start_patch, start_side, start_offset) = (patch, side, offset);
+    let (start_patch, start_side) = (patch, side);
     let (mut patch, mut side, mut offset) = (patch, side, offset);
-    // How the coordinates of the start rectangle have turned and shifted to
-    // reach those of the one the way is in.
     let mut quarter_turns = 0usize;
-    let mut shift: [Expression; 2] = [Vec::new(), Vec::new()];
     let mut around = 0.0;
+    let side_length = |rim: &Rim, side: usize| -> f64 {
+        let begin = rim.side_start[side];
+        let end = if side == 3 { rim.halves.len() } else { rim.side_start[side + 1] };
+        (begin..end).map(|k| tmesh.arcs[rim.halves[k].0 as usize / 2].length).sum()
+    };
+    // The way: per crossing, the rectangle left and the place on its rim,
+    // the one entered and the place on its rim.
+    let mut crossings: Vec<(usize, usize, usize, usize)> = Vec::new();
     for _ in 0..steps {
         let rim = rims[patch].as_ref()?;
         // Across to the opposite side, the same distance from its end.
         let opposite = (side + 2) % 4;
         let begin = rim.side_start[opposite];
-        let end = if opposite == 3 { rim.halves.len() } else { rim.side_start[opposite + 1] };
-        let lengths: Vec<f64> = (begin..end).map(|k| tmesh.arcs[rim.halves[k].0 as usize / 2].length).collect();
-        let opposite_length: f64 = lengths.iter().sum();
-        let across_rim = {
-            let b = rim.side_start[(side + 1) % 4];
-            let e = if (side + 1) % 4 == 3 { rim.halves.len() } else { rim.side_start[(side + 1) % 4 + 1] };
-            (b..e).map(|k| tmesh.arcs[rim.halves[k].0 as usize / 2].length).sum::<f64>()
-        };
-        around += across_rim;
+        let opposite_length = side_length(rim, opposite);
+        around += side_length(rim, (side + 1) % 4);
+        if around > longest {
+            return None;
+        }
         let along = (opposite_length - offset).clamp(0.0, opposite_length);
-        // The half-arc of the opposite side the way leaves through.
+        let end = if opposite == 3 { rim.halves.len() } else { rim.side_start[opposite + 1] };
         let mut before = 0.0;
         let mut leaving = None;
-        for (k, &length) in lengths.iter().enumerate() {
-            if along < before + length || k + 1 == lengths.len() {
-                leaving = Some((begin + k, along - before));
+        for k in begin..end {
+            let length = tmesh.arcs[rim.halves[k].0 as usize / 2].length;
+            if along < before + length || k + 1 == end {
+                leaving = Some((k, along - before));
                 break;
             }
             before += length;
@@ -185,48 +190,60 @@ fn go_round(
         if arc.border {
             return None;
         }
-        let twin = half ^ 1;
-        let (next, k_next) = place[twin as usize]?;
+        let (next, k_next) = place[(half ^ 1) as usize]?;
         let next_rim = rims[next].as_ref()?;
         let next_side = next_rim.halves[k_next].1;
-        // Into the next rectangle: the twin runs the other way.
-        let length = arc.length;
         let next_begin = next_rim.side_start[next_side];
         let before_twin: f64 =
             (next_begin..k_next).map(|m| tmesh.arcs[next_rim.halves[m].0 as usize / 2].length).sum();
-        let next_offset = before_twin + (length - into);
-        // The coordinates of the next rectangle from those of this one: the
-        // node where `half` starts is where its twin ends.
-        let turn = (next_side + 2 + 4 - opposite) % 4;
-        let here = &rim.start_expression[k];
-        let mut there = next_rim.start_expression[k_next].clone();
-        let d = DIRECTION[next_side];
-        let arc_index = half as usize / 2;
-        if d[0] != 0.0 {
-            there[0].push((arc_index, d[0]));
-        }
-        if d[1] != 0.0 {
-            there[1].push((arc_index, d[1]));
-        }
-        let turned_here = turn_expression(turn, here);
-        let step: [Expression; 2] = [
-            merged(there[0].iter().copied().chain(turned_here[0].iter().map(|&(i, c)| (i, -c))).collect()),
-            merged(there[1].iter().copied().chain(turned_here[1].iter().map(|&(i, c)| (i, -c))).collect()),
-        ];
-        let turned = turn_expression(turn, &shift);
-        shift = [
-            merged(turned[0].iter().copied().chain(step[0].iter().copied()).collect()),
-            merged(turned[1].iter().copied().chain(step[1].iter().copied()).collect()),
-        ];
-        quarter_turns = (quarter_turns + turn) % 4;
-        (patch, side, offset) = (next, next_side, next_offset);
+        crossings.push((patch, k, next, k_next));
+        quarter_turns = (quarter_turns + (next_side + 2 + 4 - opposite) % 4) % 4;
+        (patch, side, offset) = (next, next_side, before_twin + (arc.length - into));
         if patch == start_patch && side == start_side && quarter_turns == 0 {
-            // Across the way is along the side it went in through.
             let across = if DIRECTION[start_side][0] != 0.0 { 0 } else { 1 };
-            return Some(Turn { shift: std::mem::take(&mut shift[across]), around, measured: offset - start_offset });
+            let mut shift = shift_along(tmesh, rims, &crossings);
+            return Some(Turn { shift: std::mem::take(&mut shift[across]), around });
         }
     }
     None
+}
+
+/// How the coordinates of the first rectangle of a way turn and shift to
+/// reach those of the last, crossing after crossing: the shift, in the
+/// lengths of the arcs.
+fn shift_along(tmesh: &TMesh, rims: &[Option<Rim>], crossings: &[(usize, usize, usize, usize)]) -> [Expression; 2] {
+    let mut shift: [Expression; 2] = [Vec::new(), Vec::new()];
+    for &(patch, k, next, k_next) in crossings {
+        let (rim, next_rim) = (rims[patch].as_ref().unwrap(), rims[next].as_ref().unwrap());
+        let (half, opposite) = rim.halves[k];
+        let next_side = next_rim.halves[k_next].1;
+        let turn = (next_side + 2 + 4 - opposite) % 4;
+        // The node where `half` starts is where its twin ends.
+        let here = &rim.start_expression[k];
+        let mut there = next_rim.start_expression[k_next].clone();
+        let d = DIRECTION[next_side];
+        let arc = half as usize / 2;
+        if d[0] != 0.0 {
+            there[0].push((arc, d[0]));
+        }
+        if d[1] != 0.0 {
+            there[1].push((arc, d[1]));
+        }
+        let turned_here = turn_expression(turn, here);
+        let turned = turn_expression(turn, &shift);
+        shift = [0, 1].map(|c| {
+            merged(
+                turned[c]
+                    .iter()
+                    .copied()
+                    .chain(there[c].iter().copied())
+                    .chain(turned_here[c].iter().map(|&(i, v)| (i, -v)))
+                    .collect(),
+            )
+        });
+    }
+    let _ = tmesh;
+    shift
 }
 
 /// The value of `expression` for the lengths `x`.
