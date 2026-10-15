@@ -27,14 +27,16 @@ From 0 to 100; how they are made is in [SCORES.md](../../bench/results/SCORES.md
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
+| openclare-uniform | 1013 | **65** | 100 | 41 | 55 | 42 | 72 | 5 | 95 | 90 |
+| **openclare** | 1003 | **31** | 0 | 35 | 33 | 56 | 9 | 2 | 99 | 63 |
 | autoremesher | 703 | **11** | 0 | 24 | 40 | 0 | 0 | — | 0 | 100 |
 
 ### 3000 quads
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 3008 | **71** | 100 | 42 | 73 | 59 | 79 | 3 | 99 | 77 |
-| **openclare** | 2974 | **42** | 0 | 42 | 64 | 64 | 45 | 3 | 97 | 67 |
+| openclare-uniform | 3008 | **71** | 100 | 42 | 73 | 59 | 79 | 3 | 99 | 76 |
+| **openclare** | 2974 | **42** | 0 | 42 | 64 | 64 | 45 | 3 | 97 | 68 |
 | quadriflow | 2635 | **36** | 40 | 39 | 53 | 16 | 22 | 1 | 51 | 79 |
 | quadremesher | 14140 | **34** | 0 | 49 | 60 | 60 | 45 | — | 0 | 11 |
 | quadremesher-uniform | 2859 | **29** | 0 | 41 | 57 | 15 | 0 | — | 81 | 14 |
@@ -46,11 +48,13 @@ At equal quad count: Quad Remesher's mesh as it is, and openclare asked for as m
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| openclare-matched | 14370 | **71** | 100 | 46 | 75 | 70 | 77 | 5 | 93 | 35 |
+| openclare-matched | 14370 | **71** | 100 | 46 | 75 | 70 | 77 | 5 | 93 | 34 |
 | quadremesher-as-made | 14140 | **31** | 0 | 43 | 60 | 29 | 45 | — | 100 | 11 |
 
 ### 8000 quads
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|
+| openclare-uniform | 7867 | **75** | 100 | 50 | 78 | 66 | 84 | 20 | 93 | 48 |
+| **openclare** | 8182 | **72** | 100 | 50 | 74 | 63 | 74 | 7 | 91 | 44 |
 | autoremesher | 4327 | **23** | 0 | 39 | 46 | 0 | 72 | — | 0 | 76 |

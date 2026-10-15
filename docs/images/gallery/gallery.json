@@ -6,7 +6,7 @@
     "quads": 6179,
     "valid": true,
     "overall": 75,
-    "seconds": 9.8,
+    "seconds": 7.9,
     "picture": "docs/images/gallery/ogre__openclare.webp",
     "mesh": "/home/marcgardent/retopology/bench/out/gallery/ogre/gallery_1.obj"
    },
@@ -22,7 +22,7 @@
     "quads": 5906,
     "valid": false,
     "overall": 32,
-    "seconds": 3.9,
+    "seconds": 4.0,
     "picture": "docs/images/gallery/ogre__quadriflow.webp",
     "mesh": "/home/marcgardent/retopology/bench/out/gallery/ogre/quadriflow_1.obj"
    },
@@ -30,7 +30,7 @@
     "quads": 6291,
     "valid": false,
     "overall": 43,
-    "seconds": 5.0,
+    "seconds": 4.1,
     "picture": "docs/images/gallery/ogre__autoremesher.webp",
     "mesh": "/home/marcgardent/retopology/bench/out/gallery/ogre/autoremesher_11070.obj"
    }
@@ -43,7 +43,7 @@
     "quads": 4652,
     "valid": true,
     "overall": 80,
-    "seconds": 6.5,
+    "seconds": 5.7,
     "picture": "docs/images/gallery/pig__openclare.webp",
     "mesh": "/home/marcgardent/retopology/bench/out/gallery/pig/gallery_1.obj"
    },
@@ -59,7 +59,7 @@
     "quads": 4217,
     "valid": false,
     "overall": 22,
-    "seconds": 2.1,
+    "seconds": 2.0,
     "picture": "docs/images/gallery/pig__quadriflow.webp",
     "mesh": "/home/marcgardent/retopology/bench/out/gallery/pig/quadriflow_1.obj"
    },
@@ -67,7 +67,7 @@
     "quads": 4611,
     "valid": false,
     "overall": 48,
-    "seconds": 3.9,
+    "seconds": 3.5,
     "picture": "docs/images/gallery/pig__autoremesher.webp",
     "mesh": "/home/marcgardent/retopology/bench/out/gallery/pig/autoremesher_7791.obj"
    }
@@ -80,7 +80,7 @@
     "quads": 2828,
     "valid": true,
     "overall": 88,
-    "seconds": 1.9,
+    "seconds": 1.8,
     "picture": "docs/images/gallery/part__openclare.webp",
     "mesh": "/home/marcgardent/retopology/bench/out/gallery/part/gallery_1.obj"
    },
@@ -96,7 +96,7 @@
     "quads": 2835,
     "valid": false,
     "overall": 57,
-    "seconds": 3.0,
+    "seconds": 2.6,
     "picture": "docs/images/gallery/part__quadriflow.webp",
     "mesh": "/home/marcgardent/retopology/bench/out/gallery/part/quadriflow_1.obj"
    },
@@ -104,7 +104,7 @@
     "quads": 2808,
     "valid": false,
     "overall": 43,
-    "seconds": 2.6,
+    "seconds": 1.5,
     "picture": "docs/images/gallery/part__autoremesher.webp",
     "mesh": "/home/marcgardent/retopology/bench/out/gallery/part/autoremesher_4607.obj"
    }
@@ -117,7 +117,7 @@
     "quads": 14370,
     "valid": true,
     "overall": 73,
-    "seconds": 13.2,
+    "seconds": 11.7,
     "picture": "docs/images/gallery/stonemill__openclare.webp",
     "mesh": "/home/marcgardent/retopology/bench/out/gallery/stonemill/gallery_1.obj"
    },
@@ -133,7 +133,7 @@
     "quads": 13118,
     "valid": true,
     "overall": 66,
-    "seconds": 14.2,
+    "seconds": 12.0,
     "picture": "docs/images/gallery/stonemill__quadriflow.webp",
     "mesh": "/home/marcgardent/retopology/bench/out/gallery/stonemill/quadriflow_1.obj"
    },
@@ -141,7 +141,7 @@
     "quads": 13149,
     "valid": false,
     "overall": 38,
-    "seconds": 14.2,
+    "seconds": 11.1,
     "picture": "docs/images/gallery/stonemill__autoremesher.webp",
     "mesh": "/home/marcgardent/retopology/bench/out/gallery/stonemill/autoremesher_28952.obj"
    }
