@@ -23,13 +23,13 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — | — | — |
 | Volume kept, % of the source (V) | 99.56 | 96.90 | 99.63 | 100.03 | 100.02 | 100.02 | 99.40 | 99.52 | 99.40 | 100.01 |
 | Edges on closed loops, % (L) | 0.0 | 17.2 | — | — | — | 16.8 | 22.9 | — | — | — |
-| Edges on spiralling loops, % (L) | 3.2 | 0.0 | — | — | — | 22.0 | 0.0 | — | — | — |
-| Spiralling loops (L) | 1 | 0 | — | — | — | 3 | 0 | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 96.8 | 82.8 | — | — | — | 61.2 | 77.1 | — | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 410 | 222 | — | — | — | 560 | 655 | — | — | — |
+| Edges on spiralling loops, % (L) | 14.7 | 31.9 | — | — | — | 61.8 | 34.1 | — | — | — |
+| Spiralling loops (L) | 3 | 7 | — | — | — | 10 | 7 | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 85.3 | 50.9 | — | — | — | 21.4 | 43.0 | — | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 321 | 120 | — | — | — | 226 | 274 | — | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | — | — | — | 0.0 | 0.0 | — | — | — |
 | Off budget, % (N) | 7.3 | 61.2 | 3.0 | 16.4 | 0.7 | 0.2 | 12.3 | 8.2 | 0.0 | 0.7 |
-| Time, seconds (T) | 1.97 | 1.10 | 1.71 | 4.09 | 3.90 | 2.96 | 16.38 | 12.28 | 16.38 | 3.04 |
+| Time, seconds (T) | 2.17 | 0.74 | 1.71 | 4.09 | 3.90 | 2.74 | 16.38 | 12.28 | 16.38 | 3.04 |
 
 ## rock (organic)
 
@@ -49,14 +49,14 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Mean distance, ‰ (H) | 0.788 | 1.157 | 0.820 | 0.740 | 0.698 | 0.695 | 0.731 | 0.889 | 0.731 | 0.626 |
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — | — | — |
 | Volume kept, % of the source (V) | 99.78 | 99.49 | 99.70 | 100.01 | 100.00 | 100.00 | 99.73 | 99.62 | 99.73 | 100.00 |
-| Edges on closed loops, % (L) | 3.5 | 0.0 | — | — | — | 0.0 | 0.0 | — | — | — |
-| Edges on spiralling loops, % (L) | 9.7 | 0.0 | — | — | — | 0.0 | 0.0 | — | — | — |
-| Spiralling loops (L) | 1 | 0 | — | — | — | 0 | 0 | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 77.2 | 100.0 | — | — | — | 100.0 | 100.0 | — | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 1302 | 510 | — | — | — | 222 | 145 | — | — | — |
+| Edges on closed loops, % (L) | 0.0 | 0.0 | — | — | — | 0.0 | 0.0 | — | — | — |
+| Edges on spiralling loops, % (L) | 56.9 | 27.1 | — | — | — | 2.5 | 10.3 | — | — | — |
+| Spiralling loops (L) | 5 | 4 | — | — | — | 1 | 6 | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 43.1 | 72.9 | — | — | — | 97.5 | 89.7 | — | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 528 | 317 | — | — | — | 222 | 145 | — | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | — | — | — | 0.0 | 0.0 | — | — | — |
 | Off budget, % (N) | 2.2 | 19.6 | 3.4 | 10.4 | 1.1 | 0.5 | 18.0 | 15.6 | 0.0 | 1.4 |
-| Time, seconds (T) | 1.57 | 1.13 | 1.03 | 6.92 | 2.73 | 3.71 | 20.49 | 16.98 | 20.49 | 3.29 |
+| Time, seconds (T) | 1.22 | 1.86 | 1.03 | 6.92 | 2.73 | 2.89 | 20.49 | 16.98 | 20.49 | 3.29 |
 
 ## creature (organic)
 
@@ -77,13 +77,13 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — | — | — |
 | Volume kept, % of the source (V) | 99.41 | 98.97 | 99.47 | 100.00 | 100.02 | 100.03 | 99.39 | 99.28 | 99.39 | 100.02 |
 | Edges on closed loops, % (L) | 0.0 | 31.2 | — | — | — | 2.0 | 25.1 | — | — | — |
-| Edges on spiralling loops, % (L) | 4.1 | 4.1 | — | — | — | 35.2 | 6.7 | — | — | — |
-| Spiralling loops (L) | 1 | 1 | — | — | — | 6 | 3 | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 95.9 | 64.6 | — | — | — | 62.8 | 68.2 | — | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 716 | 427 | — | — | — | 286 | 331 | — | — | — |
+| Edges on spiralling loops, % (L) | 30.9 | 33.6 | — | — | — | 45.7 | 18.9 | — | — | — |
+| Spiralling loops (L) | 4 | 6 | — | — | — | 10 | 8 | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 69.1 | 35.2 | — | — | — | 52.3 | 56.0 | — | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 377 | 166 | — | — | — | 191 | 331 | — | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | — | — | — | 0.0 | 0.0 | — | — | — |
 | Off budget, % (N) | 11.1 | 33.6 | 2.3 | 13.4 | 1.4 | 1.5 | 2.0 | 9.4 | 0.0 | 1.6 |
-| Time, seconds (T) | 1.69 | 1.31 | 0.93 | 6.08 | 4.48 | 2.55 | 11.24 | 9.11 | 11.24 | 3.19 |
+| Time, seconds (T) | 1.35 | 1.49 | 0.93 | 6.08 | 4.48 | 2.92 | 11.24 | 9.11 | 11.24 | 3.19 |
 
 ## cage (organic)
 
@@ -104,13 +104,13 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — | — | — |
 | Volume kept, % of the source (V) | 98.99 | 99.63 | 98.70 | 99.89 | 99.93 | 99.98 | 99.00 | 97.85 | 99.00 | 100.00 |
 | Edges on closed loops, % (L) | 18.2 | 4.2 | — | — | — | 61.6 | 55.0 | — | — | — |
-| Edges on spiralling loops, % (L) | 21.7 | 0.0 | — | — | — | 12.7 | 17.1 | — | — | — |
-| Spiralling loops (L) | 8 | 0 | — | — | — | 3 | 4 | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 58.6 | 95.8 | — | — | — | 25.7 | 27.9 | — | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 172 | 217 | — | — | — | 166 | 251 | — | — | — |
+| Edges on spiralling loops, % (L) | 38.5 | 29.9 | — | — | — | 18.3 | 28.2 | — | — | — |
+| Spiralling loops (L) | 20 | 24 | — | — | — | 5 | 10 | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 41.8 | 65.8 | — | — | — | 20.1 | 16.8 | — | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 86 | 110 | — | — | — | 69 | 92 | — | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | — | — | — | 0.0 | 0.0 | — | — | — |
 | Off budget, % (N) | 3.6 | 34.6 | 1.9 | 4.2 | 1.3 | 1.1 | 93.6 | 7.2 | 0.0 | 1.4 |
-| Time, seconds (T) | 1.78 | 3.33 | 0.34 | 8.42 | 1.75 | 3.20 | 4.21 | 3.92 | 4.21 | 5.17 |
+| Time, seconds (T) | 1.26 | 2.38 | 0.34 | 8.42 | 1.75 | 2.46 | 4.21 | 3.92 | 4.21 | 5.17 |
 
 ## suzanne (organic)
 
@@ -130,14 +130,14 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Mean distance, ‰ (H) | 0.834 | 2.167 | 0.906 | 0.738 | 0.575 | 0.477 | 0.603 | 1.053 | 0.603 | 0.338 |
 | Thin parts: mean distance, % of a quad edge (V) | 16.4 | 28.9 | 21.4 | 16.0 | 8.6 | 6.8 | 5.1 | 17.1 | — | — |
 | Volume kept, % of the source (V) | — | — | — | — | — | — | — | — | — | — |
-| Edges on closed loops, % (L) | 2.5 | 8.6 | — | — | — | 10.0 | 15.9 | — | — | — |
-| Edges on spiralling loops, % (L) | 1.8 | 3.5 | — | — | — | 12.9 | 4.7 | — | — | — |
-| Spiralling loops (L) | 2 | 2 | — | — | — | 4 | 2 | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 95.3 | 87.8 | — | — | — | 68.7 | 72.0 | — | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 239 | 82 | — | — | — | 238 | 207 | — | — | — |
+| Edges on closed loops, % (L) | 1.9 | 8.6 | — | — | — | 10.0 | 15.9 | — | — | — |
+| Edges on spiralling loops, % (L) | 15.3 | 14.6 | — | — | — | 20.7 | 11.8 | — | — | — |
+| Spiralling loops (L) | 12 | 8 | — | — | — | 7 | 7 | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 80.2 | 76.8 | — | — | — | 60.9 | 64.9 | — | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 233 | 82 | — | — | — | 126 | 207 | — | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | — | — | — | 8.4 | 7.4 | — | — | — |
 | Off budget, % (N) | 1.0 | 58.2 | 2.3 | 8.1 | 0.7 | 0.5 | 43.7 | 12.4 | 0.0 | 0.1 |
-| Time, seconds (T) | 3.12 | 1.14 | 0.28 | 8.24 | 2.11 | 3.48 | 3.44 | 3.21 | 3.44 | 5.40 |
+| Time, seconds (T) | 3.31 | 0.83 | 0.28 | 8.24 | 2.11 | 2.36 | 3.44 | 3.21 | 3.44 | 5.40 |
 
 ## ogre (organic)
 
@@ -158,13 +158,13 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Thin parts: mean distance, % of a quad edge (V) | 54.0 | 66.6 | 99.5 | 66.0 | 28.7 | 6.9 | 6.7 | 75.2 | 9.8 | 4.9 |
 | Volume kept, % of the source (V) | 98.56 | — | 98.55 | 99.78 | 99.93 | 100.01 | 99.24 | 98.42 | 99.24 | 100.00 |
 | Edges on closed loops, % (L) | 1.7 | — | — | — | — | 9.2 | 7.9 | — | — | — |
-| Edges on spiralling loops, % (L) | 3.5 | — | — | — | — | 9.7 | 4.0 | — | — | — |
-| Spiralling loops (L) | 2 | — | — | — | — | 10 | 9 | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 94.8 | — | — | — | — | 81.0 | 88.2 | — | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 250 | — | — | — | — | 136 | 351 | — | — | — |
+| Edges on spiralling loops, % (L) | 9.6 | — | — | — | — | 18.4 | 15.1 | — | — | — |
+| Spiralling loops (L) | 14 | — | — | — | — | 29 | 20 | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 88.6 | — | — | — | — | 72.4 | 77.1 | — | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 250 | — | — | — | — | 105 | 199 | — | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | — | — | — | — | 0.0 | 0.0 | — | — | — |
 | Off budget, % (N) | 4.3 | 64.0 | 4.2 | 17.8 | 0.0 | 1.7 | 104.5 | 19.4 | 0.0 | 0.7 |
-| Time, seconds (T) | 3.85 | 1.53 | 2.70 | 8.13 | 3.91 | 5.62 | 19.04 | 17.16 | 19.04 | 8.16 |
+| Time, seconds (T) | 3.31 | 1.22 | 2.70 | 8.13 | 3.91 | 4.89 | 19.04 | 17.16 | 19.04 | 8.16 |
 
 ## spot (organic)
 
@@ -185,13 +185,13 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Thin parts: mean distance, % of a quad edge (V) | 56.3 | 54.6 | 53.8 | 14.8 | 4.1 | 3.5 | 8.5 | 21.2 | — | — |
 | Volume kept, % of the source (V) | 99.37 | 97.44 | 99.35 | 100.00 | 100.03 | 100.01 | 99.35 | 99.27 | 99.35 | 100.01 |
 | Edges on closed loops, % (L) | 0.0 | 10.2 | — | — | — | 22.2 | 15.5 | — | — | — |
-| Edges on spiralling loops, % (L) | 2.0 | 0.0 | — | — | — | 12.2 | 15.3 | — | — | — |
-| Spiralling loops (L) | 1 | 0 | — | — | — | 4 | 6 | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 95.4 | 89.8 | — | — | — | 65.6 | 69.2 | — | — | — |
+| Edges on spiralling loops, % (L) | 22.5 | 5.6 | — | — | — | 15.0 | 16.7 | — | — | — |
+| Spiralling loops (L) | 10 | 3 | — | — | — | 5 | 7 | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 77.5 | 84.2 | — | — | — | 62.8 | 67.8 | — | — | — |
 | Longest loop that stops at an irregular vertex, edges (L) | 299 | 90 | — | — | — | 176 | 156 | — | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | — | — | — | 0.0 | 0.0 | — | — | — |
 | Off budget, % (N) | 1.2 | 57.2 | 1.5 | 11.4 | 0.2 | 1.6 | 15.9 | 10.5 | 0.0 | 1.2 |
-| Time, seconds (T) | 2.00 | 1.20 | 1.23 | 6.69 | 3.03 | 5.70 | 19.14 | 15.16 | 19.14 | 4.49 |
+| Time, seconds (T) | 1.80 | 0.94 | 1.23 | 6.69 | 3.03 | 4.15 | 19.14 | 15.16 | 19.14 | 4.49 |
 
 ## bob (organic)
 
@@ -211,14 +211,14 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Mean distance, ‰ (H) | 0.309 | 0.960 | 0.325 | 0.152 | 0.131 | 0.132 | 0.322 | 0.355 | 0.322 | 0.132 |
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — | — | — |
 | Volume kept, % of the source (V) | 99.48 | 98.10 | 99.44 | 100.01 | 100.02 | 100.02 | 99.37 | 99.31 | 99.37 | 100.02 |
-| Edges on closed loops, % (L) | 0.6 | 45.2 | — | — | — | 74.8 | 9.3 | — | — | — |
-| Edges on spiralling loops, % (L) | 0.7 | 2.3 | — | — | — | 0.0 | 34.1 | — | — | — |
-| Spiralling loops (L) | 1 | 1 | — | — | — | 0 | 7 | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 97.0 | 52.6 | — | — | — | 25.2 | 56.6 | — | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 496 | 180 | — | — | — | 118 | 247 | — | — | — |
+| Edges on closed loops, % (L) | 0.6 | 45.2 | — | — | — | 71.1 | 9.3 | — | — | — |
+| Edges on spiralling loops, % (L) | 35.4 | 11.1 | — | — | — | 3.7 | 45.9 | — | — | — |
+| Spiralling loops (L) | 9 | 3 | — | — | — | 1 | 12 | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 64.6 | 43.7 | — | — | — | 25.2 | 44.8 | — | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 309 | 172 | — | — | — | 118 | 218 | — | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | — | — | — | 0.0 | 0.0 | — | — | — |
 | Off budget, % (N) | 2.4 | 47.2 | 1.3 | 11.9 | 1.4 | 1.7 | 2.7 | 10.1 | 0.0 | 0.9 |
-| Time, seconds (T) | 2.08 | 0.84 | 1.45 | 6.22 | 2.90 | 3.50 | 17.24 | 17.35 | 17.24 | 2.79 |
+| Time, seconds (T) | 1.72 | 1.14 | 1.45 | 6.22 | 2.90 | 2.83 | 17.24 | 17.35 | 17.24 | 2.79 |
 
 ## blub (organic)
 
@@ -239,13 +239,13 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Thin parts: mean distance, % of a quad edge (V) | 46.5 | 17.7 | 24.8 | 19.4 | 9.5 | 7.9 | 7.7 | 20.0 | 10.8 | 4.4 |
 | Volume kept, % of the source (V) | 98.93 | — | 99.17 | 99.88 | 99.96 | 99.96 | 99.55 | 99.13 | 99.55 | 99.99 |
 | Edges on closed loops, % (L) | 0.0 | — | — | — | — | 35.8 | 25.2 | — | — | — |
-| Edges on spiralling loops, % (L) | 7.4 | — | — | — | — | 12.0 | 2.2 | — | — | — |
-| Spiralling loops (L) | 2 | — | — | — | — | 7 | 1 | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 90.3 | — | — | — | — | 52.2 | 72.7 | — | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 314 | — | — | — | — | 170 | 404 | — | — | — |
+| Edges on spiralling loops, % (L) | 32.5 | — | — | — | — | 12.9 | 20.5 | — | — | — |
+| Spiralling loops (L) | 13 | — | — | — | — | 8 | 6 | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 64.2 | — | — | — | — | 51.3 | 54.3 | — | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 225 | — | — | — | — | 170 | 201 | — | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | — | — | — | — | 0.0 | 0.0 | — | — | — |
 | Off budget, % (N) | 10.1 | 55.2 | 1.2 | 10.7 | 1.7 | 1.0 | 29.6 | 9.9 | 0.0 | 0.6 |
-| Time, seconds (T) | 1.60 | 1.11 | 1.25 | 6.03 | 2.50 | 2.68 | 14.34 | 12.32 | 14.34 | 3.78 |
+| Time, seconds (T) | 1.68 | 1.23 | 1.25 | 6.03 | 2.50 | 3.03 | 14.34 | 12.32 | 14.34 | 3.78 |
 
 ## pig (organic)
 
@@ -266,13 +266,13 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Thin parts: mean distance, % of a quad edge (V) | 67.8 | 29.1 | 26.2 | 25.0 | 16.6 | 5.5 | 3.7 | 16.4 | 6.3 | 7.0 |
 | Volume kept, % of the source (V) | 98.78 | 97.54 | 98.84 | 99.69 | 99.84 | 99.97 | 99.54 | 98.93 | 99.54 | 99.98 |
 | Edges on closed loops, % (L) | 0.4 | 10.6 | — | — | — | 24.8 | 18.0 | — | — | — |
-| Edges on spiralling loops, % (L) | 0.7 | 0.8 | — | — | — | 2.6 | 2.6 | — | — | — |
-| Spiralling loops (L) | 2 | 1 | — | — | — | 4 | 6 | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 98.5 | 88.6 | — | — | — | 72.5 | 79.4 | — | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 243 | 113 | — | — | — | 261 | 293 | — | — | — |
+| Edges on spiralling loops, % (L) | 9.5 | 5.7 | — | — | — | 9.0 | 24.2 | — | — | — |
+| Spiralling loops (L) | 12 | 5 | — | — | — | 9 | 20 | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 90.5 | 83.7 | — | — | — | 66.2 | 57.8 | — | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 218 | 113 | — | — | — | 145 | 191 | — | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | — | — | — | 0.0 | 0.0 | — | — | — |
 | Off budget, % (N) | 10.8 | 39.7 | 1.1 | 10.7 | 1.6 | 1.8 | 56.6 | 14.9 | 0.0 | 1.0 |
-| Time, seconds (T) | 1.99 | 1.46 | 1.15 | 9.77 | 2.90 | 4.80 | 14.59 | 16.02 | 14.59 | 6.90 |
+| Time, seconds (T) | 1.65 | 1.53 | 1.15 | 9.77 | 2.90 | 2.91 | 14.59 | 16.02 | 14.59 | 6.90 |
 
 ## jerry (organic)
 
@@ -293,13 +293,13 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Thin parts: mean distance, % of a quad edge (V) | 23.4 | 76.1 | 40.3 | 57.3 | 29.9 | 15.3 | 4.8 | 19.2 | 6.8 | 9.7 |
 | Volume kept, % of the source (V) | — | — | — | — | — | — | — | — | — | — |
 | Edges on closed loops, % (L) | 0.0 | 0.0 | — | — | — | 2.1 | 3.3 | — | — | — |
-| Edges on spiralling loops, % (L) | 0.0 | 3.6 | — | — | — | 0.7 | 4.6 | — | — | — |
-| Spiralling loops (L) | 0 | 1 | — | — | — | 2 | 7 | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 82.0 | 96.4 | — | — | — | 90.2 | 86.7 | — | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 155 | 123 | — | — | — | 132 | 282 | — | — | — |
+| Edges on spiralling loops, % (L) | 0.7 | 13.4 | — | — | — | 2.6 | 6.4 | — | — | — |
+| Spiralling loops (L) | 1 | 6 | — | — | — | 5 | 10 | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 82.0 | 86.6 | — | — | — | 88.4 | 85.0 | — | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 155 | 64 | — | — | — | 132 | 282 | — | — | — |
 | Edges on loops from a border to a border, % (L) | 17.0 | 0.0 | — | — | — | 7.0 | 5.3 | — | — | — |
 | Off budget, % (N) | 4.1 | 63.3 | 1.4 | 13.5 | 0.5 | 1.6 | 129.1 | 14.2 | 0.0 | 0.5 |
-| Time, seconds (T) | 1.78 | 0.98 | 0.59 | 7.59 | 2.70 | 3.77 | 6.74 | 6.79 | 6.74 | 8.47 |
+| Time, seconds (T) | 1.74 | 1.38 | 0.59 | 7.59 | 2.70 | 3.26 | 6.74 | 6.79 | 6.74 | 8.47 |
 
 ## rose (organic)
 
@@ -320,13 +320,13 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Thin parts: mean distance, % of a quad edge (V) | 39.1 | 157.4 | 46.1 | 40.1 | 27.0 | 35.8 | 11.9 | 35.3 | 116.7 | 9.6 |
 | Volume kept, % of the source (V) | — | — | — | — | 78.80 | — | — | — | — | 99.65 |
 | Edges on closed loops, % (L) | 3.2 | — | — | — | — | — | — | — | — | — |
-| Edges on spiralling loops, % (L) | 4.8 | — | — | — | — | — | — | — | — | — |
-| Spiralling loops (L) | 8 | — | — | — | — | — | — | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 89.9 | — | — | — | — | — | — | — | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 43 | — | — | — | — | — | — | — | — | — |
+| Edges on spiralling loops, % (L) | 17.6 | — | — | — | — | — | — | — | — | — |
+| Spiralling loops (L) | 82 | — | — | — | — | — | — | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 79.7 | — | — | — | — | — | — | — | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 38 | — | — | — | — | — | — | — | — | — |
 | Edges on loops from a border to a border, % (L) | 0.5 | — | — | — | — | — | — | — | — | — |
 | Off budget, % (N) | 30.5 | 78.8 | 25.8 | 35.9 | 11.9 | 19.5 | 1095.8 | 10.4 | 0.0 | 0.4 |
-| Time, seconds (T) | 2.22 | 1.74 | 2.12 | 16.37 | 1.98 | 4.15 | 9.53 | 10.86 | 9.53 | 17.48 |
+| Time, seconds (T) | 2.21 | 1.16 | 2.12 | 16.37 | 1.98 | 4.75 | 9.53 | 10.86 | 9.53 | 17.48 |
 
 ## bridge (organic)
 
@@ -347,13 +347,13 @@ The last two columns compare at equal quad count: `quadremesher-as-made` is the 
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — | — | — |
 | Volume kept, % of the source (V) | — | — | — | — | — | — | — | — | — | — |
 | Edges on closed loops, % (L) | — | 19.4 | — | — | — | 24.7 | 15.1 | — | — | — |
-| Edges on spiralling loops, % (L) | — | 0.0 | — | — | — | 1.2 | 5.9 | — | — | — |
-| Spiralling loops (L) | — | 0 | — | — | — | 1 | 4 | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | — | 70.3 | — | — | — | 52.3 | 61.9 | — | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | — | 109 | — | — | — | 146 | 145 | — | — | — |
+| Edges on spiralling loops, % (L) | — | 8.2 | — | — | — | 5.9 | 7.8 | — | — | — |
+| Spiralling loops (L) | — | 4 | — | — | — | 3 | 7 | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | — | 62.1 | — | — | — | 47.7 | 60.0 | — | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | — | 70 | — | — | — | 119 | 145 | — | — | — |
 | Edges on loops from a border to a border, % (L) | — | 10.3 | — | — | — | 21.7 | 17.1 | — | — | — |
 | Off budget, % (N) | — | 36.9 | 3.2 | 8.3 | 0.6 | 1.7 | 51.1 | 9.1 | 0.0 | 1.5 |
-| Time, seconds (T) | — | 1.00 | 2.98 | 10.79 | 3.39 | 5.23 | 11.41 | 11.88 | 11.41 | 5.59 |
+| Time, seconds (T) | — | 1.21 | 2.98 | 10.79 | 3.39 | 3.24 | 11.41 | 11.88 | 11.41 | 5.59 |
 
 Failures: quadriflow: cancelled.
 
@@ -376,13 +376,13 @@ Failures: quadriflow: cancelled.
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — | — | — |
 | Volume kept, % of the source (V) | 100.15 | — | 100.14 | 100.00 | 100.00 | 100.00 | 100.12 | 100.12 | 100.12 | 100.00 |
 | Edges on closed loops, % (L) | 51.3 | — | — | — | — | 61.3 | 55.7 | — | — | — |
-| Edges on spiralling loops, % (L) | 24.4 | — | — | — | — | 22.2 | 16.0 | — | — | — |
-| Spiralling loops (L) | 6 | — | — | — | — | 4 | 5 | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 25.6 | — | — | — | — | 16.5 | 28.3 | — | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 120 | — | — | — | — | 52 | 229 | — | — | — |
+| Edges on spiralling loops, % (L) | 26.0 | — | — | — | — | 22.2 | 24.0 | — | — | — |
+| Spiralling loops (L) | 7 | — | — | — | — | 4 | 7 | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 21.7 | — | — | — | — | 16.5 | 20.3 | — | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 90 | — | — | — | — | 52 | 91 | — | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | — | — | — | — | 0.0 | 0.0 | — | — | — |
 | Off budget, % (N) | 3.7 | 38.2 | 2.1 | 0.8 | 1.6 | 0.7 | 6.2 | 6.2 | 0.0 | 0.5 |
-| Time, seconds (T) | 2.28 | 1.79 | 0.71 | 4.01 | 3.35 | 2.78 | 2.83 | 2.88 | 2.83 | 2.92 |
+| Time, seconds (T) | 2.72 | 1.14 | 0.71 | 4.01 | 3.35 | 1.92 | 2.83 | 2.88 | 2.83 | 2.92 |
 
 ## cube (mechanical)
 
@@ -409,7 +409,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | 22 | 58 | — | — | — | 23 | 23 | — | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | — | — | — | 0.0 | 0.0 | — | — | — |
 | Off budget, % (N) | 3.2 | 58.0 | 1.0 | 0.3 | 0.3 | 0.3 | 2.7 | 2.7 | 0.0 | 0.0 |
-| Time, seconds (T) | 0.81 | 0.84 | 0.20 | 5.18 | 1.51 | 3.23 | 2.97 | 3.00 | 2.97 | 2.62 |
+| Time, seconds (T) | 1.21 | 0.63 | 0.20 | 5.18 | 1.51 | 1.49 | 2.97 | 3.00 | 2.97 | 2.62 |
 
 ## lblock (mechanical)
 
@@ -430,13 +430,13 @@ Failures: quadriflow: cancelled.
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — | — | — |
 | Volume kept, % of the source (V) | 100.00 | 99.83 | 100.00 | 100.00 | 100.00 | 100.00 | 100.00 | 100.00 | 100.00 | 100.00 |
 | Edges on closed loops, % (L) | 78.3 | 26.4 | — | — | — | 93.1 | 93.2 | — | — | — |
-| Edges on spiralling loops, % (L) | 13.8 | 0.0 | — | — | — | 0.0 | 0.0 | — | — | — |
-| Spiralling loops (L) | 1 | 0 | — | — | — | 0 | 0 | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 7.9 | 73.6 | — | — | — | 6.9 | 6.8 | — | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 86 | 432 | — | — | — | 43 | 45 | — | — | — |
+| Edges on spiralling loops, % (L) | 13.8 | 62.2 | — | — | — | 0.0 | 0.0 | — | — | — |
+| Spiralling loops (L) | 1 | 5 | — | — | — | 0 | 0 | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 7.9 | 11.4 | — | — | — | 6.9 | 6.8 | — | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 86 | 58 | — | — | — | 43 | 45 | — | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | — | — | — | 0.0 | 0.0 | — | — | — |
 | Off budget, % (N) | 2.4 | 55.7 | 7.3 | 6.7 | 2.0 | 0.9 | 1.0 | 1.0 | 0.0 | 1.9 |
-| Time, seconds (T) | 1.27 | 0.75 | 0.36 | 23.07 | 1.32 | 1.70 | 2.73 | 2.90 | 2.73 | 1.65 |
+| Time, seconds (T) | 1.19 | 0.82 | 0.36 | 23.07 | 1.32 | 1.36 | 2.73 | 2.90 | 2.73 | 1.65 |
 
 ## cylinder (mechanical)
 
@@ -457,13 +457,13 @@ Failures: quadriflow: cancelled.
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — | — | — |
 | Volume kept, % of the source (V) | 99.91 | 99.21 | 99.90 | 100.00 | 100.00 | 100.00 | 99.56 | 99.56 | 99.56 | 100.00 |
 | Edges on closed loops, % (L) | 33.0 | 74.5 | — | — | — | 41.0 | 41.7 | — | — | — |
-| Edges on spiralling loops, % (L) | 17.5 | 0.0 | — | — | — | 0.0 | 39.4 | — | — | — |
-| Spiralling loops (L) | 2 | 0 | — | — | — | 0 | 2 | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 48.9 | 25.5 | — | — | — | 59.0 | 18.9 | — | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 769 | 178 | — | — | — | 737 | 345 | — | — | — |
+| Edges on spiralling loops, % (L) | 55.4 | 0.0 | — | — | — | 49.1 | 39.4 | — | — | — |
+| Spiralling loops (L) | 6 | 0 | — | — | — | 5 | 2 | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 11.6 | 25.5 | — | — | — | 9.9 | 18.9 | — | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 207 | 178 | — | — | — | 180 | 345 | — | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | — | — | — | 0.0 | 0.0 | — | — | — |
 | Off budget, % (N) | 3.3 | 56.5 | 3.3 | 15.6 | 0.4 | 1.3 | 18.1 | 18.1 | 0.0 | 1.5 |
-| Time, seconds (T) | 1.43 | 0.39 | 0.17 | 2.92 | 1.84 | 1.91 | 2.68 | 2.49 | 2.68 | 1.90 |
+| Time, seconds (T) | 1.05 | 0.65 | 0.17 | 2.92 | 1.84 | 1.88 | 2.68 | 2.49 | 2.68 | 1.90 |
 
 ## venturi (extra)
 
@@ -484,13 +484,13 @@ Failures: quadriflow: cancelled.
 | Thin parts: mean distance, % of a quad edge (V) | — | 24.5 | 28.2 | 36.2 | 29.9 | 26.6 | 1.7 | 2.6 | 3.0 | 23.9 |
 | Volume kept, % of the source (V) | — | — | — | — | — | — | — | — | — | — |
 | Edges on closed loops, % (L) | — | — | — | — | — | 9.5 | 5.9 | — | — | — |
-| Edges on spiralling loops, % (L) | — | — | — | — | — | 9.9 | 0.4 | — | — | — |
-| Spiralling loops (L) | — | — | — | — | — | 12 | 2 | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | — | — | — | — | — | 80.7 | 32.4 | — | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | — | — | — | — | — | 312 | 129 | — | — | — |
+| Edges on spiralling loops, % (L) | — | — | — | — | — | 26.2 | 3.4 | — | — | — |
+| Spiralling loops (L) | — | — | — | — | — | 72 | 18 | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | — | — | — | — | — | 64.4 | 29.5 | — | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | — | — | — | — | — | 119 | 112 | — | — | — |
 | Edges on loops from a border to a border, % (L) | — | — | — | — | — | 0.0 | 61.3 | — | — | — |
 | Off budget, % (N) | — | 34.9 | 17.0 | 19.6 | 9.3 | 1.6 | 373.1 | 230.3 | 0.0 | 0.3 |
-| Time, seconds (T) | — | 1.12 | 1.05 | 22.47 | 11.71 | 20.62 | 5.47 | 4.22 | 5.47 | 117.47 |
+| Time, seconds (T) | — | 1.67 | 1.05 | 22.47 | 11.71 | 16.88 | 5.47 | 4.22 | 5.47 | 117.47 |
 
 Failures: quadriflow: cancelled.
 
@@ -513,13 +513,13 @@ Failures: quadriflow: cancelled.
 | Thin parts: mean distance, % of a quad edge (V) | — | 57.6 | 145.0 | 75.2 | 24.5 | 5.4 | 4.0 | 74.8 | 6.9 | 1.9 |
 | Volume kept, % of the source (V) | — | 95.87 | 98.43 | 99.70 | 99.92 | 100.02 | 99.17 | — | 99.17 | 100.02 |
 | Edges on closed loops, % (L) | — | 10.2 | — | — | — | 9.3 | 10.7 | — | — | — |
-| Edges on spiralling loops, % (L) | — | 0.6 | — | — | — | 14.6 | 8.8 | — | — | — |
-| Spiralling loops (L) | — | 1 | — | — | — | 14 | 10 | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | — | 89.2 | — | — | — | 76.2 | 80.4 | — | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | — | 82 | — | — | — | 135 | 215 | — | — | — |
+| Edges on spiralling loops, % (L) | — | 16.6 | — | — | — | 17.5 | 13.9 | — | — | — |
+| Spiralling loops (L) | — | 12 | — | — | — | 19 | 18 | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | — | 73.3 | — | — | — | 73.3 | 75.3 | — | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | — | 51 | — | — | — | 135 | 182 | — | — | — |
 | Edges on loops from a border to a border, % (L) | — | 0.0 | — | — | — | 0.0 | 0.0 | — | — | — |
 | Off budget, % (N) | — | 57.2 | 5.5 | 16.2 | 1.2 | 1.5 | 109.0 | 19.7 | 0.0 | 0.9 |
-| Time, seconds (T) | — | 13.88 | 89.83 | 57.56 | 57.07 | 111.76 | 36.00 | 36.17 | 36.00 | 64.20 |
+| Time, seconds (T) | — | 13.40 | 89.83 | 57.56 | 57.07 | 121.04 | 36.00 | 36.17 | 36.00 | 64.20 |
 
 Failures: quadriflow: cancelled.
 
@@ -542,13 +542,13 @@ Failures: quadriflow: cancelled.
 | Thin parts: mean distance, % of a quad edge (V) | 31.4 | 104.7 | 43.1 | 39.8 | 40.1 | 40.1 | 12.7 | 26.0 | 35.7 | — |
 | Volume kept, % of the source (V) | — | — | — | — | — | — | 99.75 | — | 99.75 | — |
 | Edges on closed loops, % (L) | 2.2 | — | — | — | — | — | 5.2 | — | — | — |
-| Edges on spiralling loops, % (L) | 3.3 | — | — | — | — | — | 4.6 | — | — | — |
-| Spiralling loops (L) | 4 | — | — | — | — | — | 22 | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 92.2 | — | — | — | — | — | 90.2 | — | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 85 | — | — | — | — | — | 228 | — | — | — |
+| Edges on spiralling loops, % (L) | 6.9 | — | — | — | — | — | 9.1 | — | — | — |
+| Spiralling loops (L) | 27 | — | — | — | — | — | 75 | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 89.4 | — | — | — | — | — | 85.7 | — | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 76 | — | — | — | — | — | 228 | — | — | — |
 | Edges on loops from a border to a border, % (L) | 2.6 | — | — | — | — | — | 0.0 | — | — | — |
 | Off budget, % (N) | 10.8 | 76.4 | 40.5 | 24.7 | 27.0 | 26.9 | 637.0 | 5.0 | 0.0 | — |
-| Time, seconds (T) | 2.87 | 2.47 | 0.55 | 23.13 | 131.33 | 708.27 | 413.72 | 382.00 | 413.72 | — |
+| Time, seconds (T) | 2.98 | 1.89 | 0.55 | 23.13 | 131.33 | 750.48 | 413.72 | 382.00 | 413.72 | — |
 
 Failures: openclare-matched: timed out after 1800 s.
 
@@ -571,13 +571,13 @@ Failures: openclare-matched: timed out after 1800 s.
 | Thin parts: mean distance, % of a quad edge (V) | 16.0 | 56.9 | 34.1 | 27.6 | 21.1 | 27.6 | 11.3 | 17.6 | 25.1 | 27.6 |
 | Volume kept, % of the source (V) | — | — | — | — | 93.99 | — | — | — | — | — |
 | Edges on closed loops, % (L) | 0.6 | — | — | — | — | — | — | — | — | — |
-| Edges on spiralling loops, % (L) | 0.9 | — | — | — | — | — | — | — | — | — |
-| Spiralling loops (L) | 1 | — | — | — | — | — | — | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 97.9 | — | — | — | — | — | — | — | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 93 | — | — | — | — | — | — | — | — | — |
-| Edges on loops from a border to a border, % (L) | 0.5 | — | — | — | — | — | — | — | — | — |
+| Edges on spiralling loops, % (L) | 10.8 | — | — | — | — | — | — | — | — | — |
+| Spiralling loops (L) | 20 | — | — | — | — | — | — | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 88.2 | — | — | — | — | — | — | — | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 61 | — | — | — | — | — | — | — | — | — |
+| Edges on loops from a border to a border, % (L) | 0.4 | — | — | — | — | — | — | — | — | — |
 | Off budget, % (N) | 9.2 | 63.7 | 36.5 | 20.2 | 1.0 | 20.2 | 436.9 | 3.4 | 0.0 | 20.3 |
-| Time, seconds (T) | 2.70 | 2.10 | 0.47 | 12.81 | 11.29 | 23.43 | 106.09 | 101.48 | 106.09 | 147.37 |
+| Time, seconds (T) | 3.14 | 1.83 | 0.47 | 12.81 | 11.29 | 27.33 | 106.09 | 101.48 | 106.09 | 147.37 |
 
 ## stonemill (extra)
 
@@ -598,13 +598,13 @@ Failures: openclare-matched: timed out after 1800 s.
 | Thin parts: mean distance, % of a quad edge (V) | 40.9 | 155.1 | 65.7 | 77.5 | 20.5 | 16.0 | 19.0 | 45.6 | 62.7 | 19.2 |
 | Volume kept, % of the source (V) | 98.96 | — | 98.49 | — | 99.86 | 99.98 | 98.92 | — | 98.92 | 100.02 |
 | Edges on closed loops, % (L) | 2.5 | — | — | — | — | 1.9 | 1.8 | — | — | — |
-| Edges on spiralling loops, % (L) | 2.6 | — | — | — | — | 1.0 | 4.0 | — | — | — |
-| Spiralling loops (L) | 5 | — | — | — | — | 3 | 12 | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 96.0 | — | — | — | — | 97.1 | 94.2 | — | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 123 | — | — | — | — | 122 | 189 | — | — | — |
+| Edges on spiralling loops, % (L) | 5.2 | — | — | — | — | 7.7 | 11.3 | — | — | — |
+| Spiralling loops (L) | 12 | — | — | — | — | 12 | 37 | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 92.4 | — | — | — | — | 90.4 | 86.8 | — | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 92 | — | — | — | — | 105 | 189 | — | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | — | — | — | — | 0.0 | 0.0 | — | — | — |
 | Off budget, % (N) | 12.2 | 39.7 | 11.2 | 15.4 | 0.3 | 0.9 | 371.3 | 4.7 | 0.0 | 1.6 |
-| Time, seconds (T) | 2.51 | 1.38 | 0.53 | 9.68 | 2.71 | 5.46 | 37.80 | 33.37 | 37.80 | 14.66 |
+| Time, seconds (T) | 2.73 | 0.95 | 0.53 | 9.68 | 2.71 | 4.27 | 37.80 | 33.37 | 37.80 | 14.66 |
 
 ## windmill (extra)
 
@@ -625,13 +625,13 @@ Failures: openclare-matched: timed out after 1800 s.
 | Thin parts: mean distance, % of a quad edge (V) | — | 122.8 | 42.9 | — | 1176.4 | 1162.3 | 9.2 | 17.8 | 19.1 | 2478.2 |
 | Volume kept, % of the source (V) | — | — | — | — | 1.41 | 1.39 | 99.26 | — | 99.26 | 1.49 |
 | Edges on closed loops, % (L) | — | — | — | — | — | 0.0 | 7.5 | — | — | — |
-| Edges on spiralling loops, % (L) | — | — | — | — | — | 1.3 | 2.8 | — | — | — |
-| Spiralling loops (L) | — | — | — | — | — | 1 | 11 | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | — | — | — | — | — | 98.7 | 89.7 | — | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | — | — | — | — | — | 25 | 387 | — | — | — |
+| Edges on spiralling loops, % (L) | — | — | — | — | — | 11.0 | 10.7 | — | — | — |
+| Spiralling loops (L) | — | — | — | — | — | 8 | 46 | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | — | — | — | — | — | 89.0 | 81.8 | — | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | — | — | — | — | — | 18 | 180 | — | — | — |
 | Edges on loops from a border to a border, % (L) | — | — | — | — | — | 0.0 | 0.0 | — | — | — |
 | Off budget, % (N) | — | 66.6 | 37.1 | — | 93.1 | 88.4 | 476.2 | 7.1 | 0.0 | 95.6 |
-| Time, seconds (T) | — | 1.28 | 0.52 | — | 1.50 | 1.53 | 171.59 | 233.11 | 171.59 | 8.33 |
+| Time, seconds (T) | — | 1.35 | 0.52 | — | 1.50 | 2.10 | 171.59 | 233.11 | 171.59 | 8.33 |
 
 Failures: quadriflow: cancelled; integer-grid: error: invalid mesh: work mesh has 2 non-manifold or inconsistently oriented edges.
 
@@ -654,13 +654,13 @@ Failures: quadriflow: cancelled; integer-grid: error: invalid mesh: work mesh ha
 | Thin parts: mean distance, % of a quad edge (V) | 32.8 | 56.8 | 36.9 | 35.4 | 26.3 | 20.3 | 14.4 | 32.3 | 18.9 | 19.3 |
 | Volume kept, % of the source (V) | — | — | — | — | — | — | — | — | — | — |
 | Edges on closed loops, % (L) | 0.0 | 0.0 | — | — | — | 0.0 | 0.0 | — | — | — |
-| Edges on spiralling loops, % (L) | 0.0 | 0.0 | — | — | — | 1.6 | 0.0 | — | — | — |
-| Spiralling loops (L) | 0 | 0 | — | — | — | 1 | 0 | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 53.0 | 67.6 | — | — | — | 80.5 | 84.8 | — | — | — |
+| Edges on spiralling loops, % (L) | 0.0 | 0.0 | — | — | — | 4.7 | 0.0 | — | — | — |
+| Spiralling loops (L) | 0 | 0 | — | — | — | 3 | 0 | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 53.0 | 67.6 | — | — | — | 79.2 | 84.8 | — | — | — |
 | Longest loop that stops at an irregular vertex, edges (L) | 46 | 27 | — | — | — | 108 | 105 | — | — | — |
-| Edges on loops from a border to a border, % (L) | 47.0 | 32.4 | — | — | — | 17.9 | 15.2 | — | — | — |
+| Edges on loops from a border to a border, % (L) | 47.0 | 32.4 | — | — | — | 16.1 | 15.2 | — | — | — |
 | Off budget, % (N) | 9.4 | 69.4 | 41.6 | 16.6 | 1.1 | 1.1 | 55.9 | 13.4 | 0.0 | 1.2 |
-| Time, seconds (T) | 19.87 | 2.64 | 8.92 | 14.15 | 8.50 | 9.15 | 21.17 | 19.56 | 21.17 | 12.22 |
+| Time, seconds (T) | 19.92 | 1.90 | 8.92 | 14.15 | 8.50 | 10.14 | 21.17 | 19.56 | 21.17 | 12.22 |
 
 ## mahaveer (extra)
 
@@ -680,14 +680,14 @@ Failures: quadriflow: cancelled; integer-grid: error: invalid mesh: work mesh ha
 | Mean distance, ‰ (H) | — | 5.890 | 7.890 | 3.785 | 4.084 | 4.040 | 0.929 | 2.320 | 0.929 | 0.612 |
 | Thin parts: mean distance, % of a quad edge (V) | — | 46.8 | 75.1 | 35.8 | 34.7 | 34.5 | 11.6 | 21.9 | 49.3 | 35.5 |
 | Volume kept, % of the source (V) | — | — | — | — | — | — | — | — | — | — |
-| Edges on closed loops, % (L) | — | — | — | — | — | 34.7 | — | — | — | — |
-| Edges on spiralling loops, % (L) | — | — | — | — | — | 30.3 | — | — | — | — |
-| Spiralling loops (L) | — | — | — | — | — | 181 | — | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | — | — | — | — | — | 31.7 | — | — | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | — | — | — | — | — | 120 | — | — | — | — |
+| Edges on closed loops, % (L) | — | — | — | — | — | 20.1 | — | — | — | — |
+| Edges on spiralling loops, % (L) | — | — | — | — | — | 64.6 | — | — | — | — |
+| Spiralling loops (L) | — | — | — | — | — | 591 | — | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | — | — | — | — | — | 12.0 | — | — | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | — | — | — | — | — | 66 | — | — | — | — |
 | Edges on loops from a border to a border, % (L) | — | — | — | — | — | 3.3 | — | — | — | — |
 | Off budget, % (N) | — | 55.8 | 43.4 | 30.7 | 9.3 | 7.9 | 1440.1 | 44.1 | 0.0 | 1.6 |
-| Time, seconds (T) | — | 1.26 | 7.16 | 18.77 | 7.30 | 7.55 | 14.10 | 14.84 | 14.10 | 25.72 |
+| Time, seconds (T) | — | 1.33 | 7.16 | 18.77 | 7.30 | 9.26 | 14.10 | 14.84 | 14.10 | 25.72 |
 
 Failures: quadriflow: cancelled.
 
@@ -716,7 +716,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | — | — | — | — | — | — | — | — | — | — |
 | Edges on loops from a border to a border, % (L) | — | — | — | — | — | — | — | — | — | — |
 | Off budget, % (N) | — | 71.0 | 59.2 | — | 203.7 | 197.4 | 7033.9 | 278.0 | 0.0 | 5.8 |
-| Time, seconds (T) | — | 1.23 | 4.00 | — | 11.81 | 16.38 | 12.21 | 10.92 | 12.21 | 41.66 |
+| Time, seconds (T) | — | 0.99 | 4.00 | — | 11.81 | 21.16 | 12.21 | 10.92 | 12.21 | 41.66 |
 
 Failures: quadriflow: cancelled; integer-grid: error: invalid mesh: work mesh has 8 non-manifold or inconsistently oriented edges.
 
@@ -745,7 +745,7 @@ Failures: quadriflow: cancelled; integer-grid: error: invalid mesh: work mesh ha
 | Longest loop that stops at an irregular vertex, edges (L) | — | — | — | — | — | — | — | — | — | — |
 | Edges on loops from a border to a border, % (L) | — | — | — | — | — | — | — | — | — | — |
 | Off budget, % (N) | — | 37.4 | 50.0 | 55.6 | 47.2 | 44.0 | 1101.3 | 110.5 | 0.0 | 7.0 |
-| Time, seconds (T) | — | 2.41 | 5.15 | 88.05 | 10.68 | 11.18 | 9.36 | 9.51 | 9.36 | 115.74 |
+| Time, seconds (T) | — | 2.15 | 5.15 | 88.05 | 10.68 | 13.27 | 9.36 | 9.51 | 9.36 | 115.74 |
 
 Failures: quadriflow: cancelled.
 
@@ -767,14 +767,14 @@ Failures: quadriflow: cancelled.
 | Mean distance, ‰ (H) | — | 5.701 | 4.253 | 5.359 | 2.526 | 2.306 | 0.560 | 1.134 | 0.560 | 0.632 |
 | Thin parts: mean distance, % of a quad edge (V) | — | 25.0 | 19.2 | 22.4 | 11.8 | 11.6 | 2.4 | 5.0 | 4.6 | 11.7 |
 | Volume kept, % of the source (V) | — | — | — | — | — | — | — | — | — | — |
-| Edges on closed loops, % (L) | — | — | — | — | — | 42.1 | — | — | — | — |
-| Edges on spiralling loops, % (L) | — | — | — | — | — | 10.3 | — | — | — | — |
-| Spiralling loops (L) | — | — | — | — | — | 3 | — | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | — | — | — | — | — | 35.8 | — | — | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | — | — | — | — | — | 90 | — | — | — | — |
-| Edges on loops from a border to a border, % (L) | — | — | — | — | — | 11.8 | — | — | — | — |
+| Edges on closed loops, % (L) | — | — | — | — | — | 40.6 | — | — | — | — |
+| Edges on spiralling loops, % (L) | — | — | — | — | — | 18.3 | — | — | — | — |
+| Spiralling loops (L) | — | — | — | — | — | 97 | — | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | — | — | — | — | — | 30.2 | — | — | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | — | — | — | — | — | 53 | — | — | — | — |
+| Edges on loops from a border to a border, % (L) | — | — | — | — | — | 10.9 | — | — | — | — |
 | Off budget, % (N) | — | 25.9 | 26.1 | 63.0 | 3.5 | 14.8 | 320.7 | 81.9 | 0.0 | 0.3 |
-| Time, seconds (T) | — | 0.41 | 1.12 | 70.22 | 8.66 | 3.04 | 5.03 | 4.34 | 5.03 | 6.97 |
+| Time, seconds (T) | — | 0.92 | 1.12 | 70.22 | 8.66 | 5.54 | 5.03 | 4.34 | 5.03 | 6.97 |
 
 Failures: quadriflow: cancelled.
 
@@ -797,13 +797,13 @@ Failures: quadriflow: cancelled.
 | Thin parts: mean distance, % of a quad edge (V) | — | 125.4 | 88.0 | 69.3 | 56.5 | 54.2 | 17.5 | 65.3 | 44.1 | 36.1 |
 | Volume kept, % of the source (V) | — | — | — | — | — | — | — | — | — | — |
 | Edges on closed loops, % (L) | — | — | — | — | — | 16.9 | 15.8 | — | — | — |
-| Edges on spiralling loops, % (L) | — | — | — | — | — | 1.8 | 2.4 | — | — | — |
-| Spiralling loops (L) | — | — | — | — | — | 2 | 17 | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | — | — | — | — | — | 81.3 | 81.7 | — | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | — | — | — | — | — | 83 | 170 | — | — | — |
+| Edges on spiralling loops, % (L) | — | — | — | — | — | 12.9 | 7.2 | — | — | — |
+| Spiralling loops (L) | — | — | — | — | — | 52 | 70 | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | — | — | — | — | — | 70.2 | 76.9 | — | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | — | — | — | — | — | 82 | 170 | — | — | — |
 | Edges on loops from a border to a border, % (L) | — | — | — | — | — | 0.0 | 0.0 | — | — | — |
 | Off budget, % (N) | — | 79.2 | 7.5 | 19.3 | 19.4 | 17.8 | 399.5 | 23.1 | 0.0 | 13.2 |
-| Time, seconds (T) | — | 1.82 | 0.34 | 22.46 | 23.62 | 24.96 | 26.98 | 30.23 | 26.98 | 484.91 |
+| Time, seconds (T) | — | 0.74 | 0.34 | 22.46 | 23.62 | 25.80 | 26.98 | 30.23 | 26.98 | 484.91 |
 
 Failures: quadriflow: cancelled.
 
@@ -826,13 +826,13 @@ Failures: quadriflow: cancelled.
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — | — | — |
 | Volume kept, % of the source (V) | 99.81 | 99.59 | 99.79 | 100.01 | 100.01 | 100.01 | 99.74 | 99.74 | 99.74 | 100.01 |
 | Edges on closed loops, % (L) | 6.1 | 2.0 | — | — | — | 90.0 | 17.3 | — | — | — |
-| Edges on spiralling loops, % (L) | 27.1 | 0.0 | — | — | — | 0.0 | 25.4 | — | — | — |
-| Spiralling loops (L) | 1 | 0 | — | — | — | 0 | 2 | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 66.9 | 98.0 | — | — | — | 10.0 | 57.4 | — | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 1288 | 846 | — | — | — | 10 | 965 | — | — | — |
+| Edges on spiralling loops, % (L) | 70.1 | 74.4 | — | — | — | 0.0 | 69.2 | — | — | — |
+| Spiralling loops (L) | 5 | 6 | — | — | — | 0 | 6 | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 15.4 | 23.6 | — | — | — | 10.0 | 13.5 | — | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 276 | 298 | — | — | — | 10 | 158 | — | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | — | — | — | 0.0 | 0.0 | — | — | — |
 | Off budget, % (N) | 3.6 | 30.5 | 3.0 | 0.0 | 0.0 | 0.0 | 8.7 | 8.7 | 0.0 | 1.2 |
-| Time, seconds (T) | 2.14 | 1.32 | 0.34 | 1.94 | 1.77 | 1.77 | 3.56 | 3.39 | 3.56 | 1.53 |
+| Time, seconds (T) | 1.81 | 0.40 | 0.34 | 1.94 | 1.77 | 1.26 | 3.56 | 3.39 | 3.56 | 1.53 |
 
 ## torus (calibration)
 
@@ -852,14 +852,14 @@ Failures: quadriflow: cancelled.
 | Mean distance, ‰ (H) | 0.299 | 0.465 | 0.298 | 0.208 | 0.191 | 0.191 | 0.518 | 0.518 | 0.518 | 0.202 |
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — | — | — |
 | Volume kept, % of the source (V) | 99.46 | 99.09 | 99.44 | 100.02 | 100.02 | 100.02 | 98.94 | 98.94 | 98.94 | 100.02 |
-| Edges on closed loops, % (L) | 0.0 | 100.0 | — | — | — | 100.0 | 9.9 | — | — | — |
-| Edges on spiralling loops, % (L) | 9.7 | 0.0 | — | — | — | 0.0 | 30.5 | — | — | — |
-| Spiralling loops (L) | 1 | 0 | — | — | — | 0 | 2 | — | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 90.3 | 0.0 | — | — | — | 0.0 | 59.6 | — | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 544 | 0 | — | — | — | 0 | 851 | — | — | — |
+| Edges on closed loops, % (L) | 0.0 | 0.0 | — | — | — | 100.0 | 9.9 | — | — | — |
+| Edges on spiralling loops, % (L) | 43.5 | 100.0 | — | — | — | 0.0 | 80.9 | — | — | — |
+| Spiralling loops (L) | 7 | 6 | — | — | — | 0 | 10 | — | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 56.5 | 0.0 | — | — | — | 0.0 | 9.2 | — | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 411 | 0 | — | — | — | 0 | 108 | — | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | — | — | — | 0.0 | 0.0 | — | — | — |
 | Off budget, % (N) | 0.8 | 10.9 | 2.6 | 9.3 | 1.6 | 1.6 | 5.9 | 5.9 | 0.0 | 0.8 |
-| Time, seconds (T) | 1.60 | 0.54 | 0.22 | 2.01 | 2.34 | 1.85 | 4.71 | 2.89 | 4.71 | 1.92 |
+| Time, seconds (T) | 1.56 | 0.53 | 0.22 | 2.01 | 2.34 | 2.78 | 4.71 | 2.89 | 4.71 | 1.92 |
 
 ## Summary
 
