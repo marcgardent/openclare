@@ -49,7 +49,7 @@ pub struct Metrics {
     /// manifold.
     pub base_complex_patches: Option<usize>,
     /// The edge loops: how many close, stop, or spiral. `None` unless the
-    /// mesh is a consistently oriented pure quad manifold.
+    /// mesh is a consistently oriented manifold.
     pub edge_loops: Option<EdgeLoops>,
 
     // Alignment.
@@ -190,7 +190,9 @@ pub fn measure(source: &TriMesh, mesh: &PolyMesh, target_faces: Option<usize>) -
     connectivity.singularities(mesh, &mut metrics);
     if metrics.quads == metrics.faces && metrics.non_manifold_edges == 0 && metrics.misoriented_edges == 0 {
         metrics.base_complex_patches = Some(connectivity.base_complex_patches(mesh));
-        metrics.edge_loops = Some(connectivity.edge_loops());
+    }
+    if metrics.non_manifold_edges == 0 && metrics.misoriented_edges == 0 {
+        metrics.edge_loops = Some(connectivity.edge_loops(mesh));
     }
 
     orientation(source, &surface, mesh, diagonal, &mut metrics);
@@ -211,9 +213,10 @@ pub fn measure(source: &TriMesh, mesh: &PolyMesh, target_faces: Option<usize>) -
     metrics
 }
 
-/// The edge loops of a quad mesh, each followed straight on through every
+/// The edge loops of a mesh, each followed straight on through every
 /// regular vertex. Each edge is on one loop; the edges of a border are on
-/// none.
+/// none. Where the mesh has other faces than quads, a vertex on one stops
+/// the loops, and the edges of those faces are on none.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct EdgeLoops {
     /// Loops that come back to where they started: rings.
@@ -365,11 +368,11 @@ impl Connectivity {
     }
 
     /// The half-edge straight on from `h`, through its head: across the
-    /// edge between the two faces ahead. None at an irregular vertex or on
-    /// a border, where a loop stops.
-    fn straight_on(&self, h: u32) -> Option<u32> {
+    /// edge between the two faces ahead. None at an irregular vertex, on a
+    /// border or on a face that is not a quad (`odd`), where a loop stops.
+    fn straight_on(&self, h: u32, odd: &[bool]) -> Option<u32> {
         let v = self.head(h) as usize;
-        if self.is_irregular(v) || self.on_boundary[v] {
+        if self.is_irregular(v) || self.on_boundary[v] || odd[v] {
             return None;
         }
         let across = self.twin[self.next[h as usize] as usize];
@@ -378,15 +381,27 @@ impl Connectivity {
 
     /// Follows every edge loop and sorts them: closed, spiral, open (at an
     /// irregular vertex) or from border to border.
-    fn edge_loops(&self) -> EdgeLoops {
+    fn edge_loops(&self, mesh: &PolyMesh) -> EdgeLoops {
         let halves = self.origin.len();
+        let is_quad: Vec<bool> = mesh.faces.iter().map(|polygon| polygon.len() == 4).collect();
+        let mut odd = vec![false; mesh.positions.len()];
+        for polygon in mesh.faces.iter().filter(|polygon| polygon.len() != 4) {
+            for &v in polygon {
+                odd[v as usize] = true;
+            }
+        }
+        let quad_on_both_sides =
+            |h: usize| is_quad[self.face[h] as usize] && is_quad[self.face[self.twin[h] as usize] as usize];
         let mut loop_of = vec![INVALID; halves];
         // Per loop: its edges, whether it closed, and whether an end is on
         // an irregular vertex.
         let mut loops: Vec<(usize, bool, bool)> = Vec::new();
         let end_on_pole = |h: u32| !self.on_boundary[self.head(h) as usize];
         for start in 0..halves as u32 {
-            if loop_of[start as usize] != INVALID || self.twin[start as usize] == INVALID {
+            if loop_of[start as usize] != INVALID
+                || self.twin[start as usize] == INVALID
+                || !quad_on_both_sides(start as usize)
+            {
                 continue;
             }
             let id = loops.len() as u32;
@@ -398,7 +413,7 @@ impl Connectivity {
                 let mut h = match first {
                     Some(h) => h,
                     None if closed => break,
-                    None => match self.straight_on(backward) {
+                    None => match self.straight_on(backward, &odd) {
                         Some(on) => on,
                         None => {
                             pole |= end_on_pole(backward);
@@ -414,7 +429,7 @@ impl Connectivity {
                     loop_of[h as usize] = id;
                     loop_of[self.twin[h as usize] as usize] = id;
                     edges += 1;
-                    match self.straight_on(h) {
+                    match self.straight_on(h, &odd) {
                         Some(on) => h = on,
                         None => {
                             pole |= end_on_pole(h);
@@ -429,7 +444,7 @@ impl Connectivity {
         let mut spiral = vec![false; loops.len()];
         for h in 0..halves {
             let opposite = self.next[self.next[h] as usize] as usize;
-            if loop_of[h] != INVALID && loop_of[h] == loop_of[opposite] {
+            if is_quad[self.face[h] as usize] && loop_of[h] != INVALID && loop_of[h] == loop_of[opposite] {
                 spiral[loop_of[h] as usize] = true;
             }
         }
