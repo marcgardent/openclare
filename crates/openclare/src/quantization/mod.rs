@@ -20,6 +20,7 @@ use crate::error::{Error, Result};
 use crate::math::Rng;
 use crate::tmesh::TMesh;
 use flow::{Cost, Network};
+use rayon::prelude::*;
 pub use lattice::{Lattice, Source};
 
 #[derive(Clone, Debug)]
@@ -547,7 +548,9 @@ impl Quantizer for WalkCancelling {
             // Lengths that leave the structure broken are not mended by
             // closing loops, and each way would cost as long a search again.
             let sound = best.0.is_finite() && lattice::build(tmesh, &best.1.0).defects(tmesh).is_empty();
-            // The same turns held twice would give the same lengths.
+            // The ways, each with the turns it holds; the same turns held
+            // twice would give the same lengths.
+            let mut ways = Vec::new();
             let mut tried_held: Vec<Vec<Vec<(usize, i64)>>> = Vec::new();
             for &(offsets, lean, longest) in CLOSE_WAYS.iter().filter(|_| sound) {
                 let clock = std::time::Instant::now();
@@ -569,8 +572,20 @@ impl Quantizer for WalkCancelling {
                 }
                 tried_held.push(key);
                 report.turns = report.turns.max(found.len());
-                let tried = self.closed_search(tmesh, &network, &real, request, &mut report, &found, &held);
-                let spirals = spirals_of(&tried.0);
+                ways.push(((offsets, lean, longest), found, held));
+            }
+            // Each way searched on a core of its own; the one kept is the
+            // same as if they had been searched in turn.
+            let tried: Vec<_> = ways
+                .par_iter()
+                .map(|(_, found, held)| {
+                    let mut own = Report::default();
+                    let tried = self.closed_search(tmesh, &network, &real, request, &mut own, found, held);
+                    (spirals_of(&tried.0), tried, own.moves)
+                })
+                .collect();
+            for (((offsets, lean, longest), _, held), (spirals, tried, moves)) in ways.iter().zip(tried) {
+                report.moves += moves;
                 if std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some() {
                     eprintln!(
                         "closing from {offsets:?} leaning up to {lean}, {longest} long: spirals {:.3} deviation {:.3} (best so far {:.3})",
