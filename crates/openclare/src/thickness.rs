@@ -18,6 +18,8 @@
 //! Both are infinite where no opposite side is found: on an open sheet, or
 //! farther than the reach given.
 
+use rayon::prelude::*;
+
 use crate::math::Vec3;
 use crate::mesh::{Topology, TriMesh};
 use crate::spatial::Bvh;
@@ -52,52 +54,57 @@ pub fn measure(mesh: &TriMesh, normals: &[Vec3], reach: f64) -> Thickness {
     };
     let step_in = 1e-7 * reach;
 
-    let mut across = vec![f64::INFINITY; vertices];
-    for v in 0..vertices {
-        let inward = -normals[v];
-        if inward.length_squared() < 0.5 {
-            continue;
-        }
-        let (side, other) = tangents(inward);
-        let origin = mesh.positions[v] + inward * step_in;
-        let mut found = vec![out(origin, inward, reach)];
-        for k in 0..CONE_RAYS {
-            let turn = std::f64::consts::TAU * k as f64 / CONE_RAYS as f64;
-            let aside = side * turn.cos() + other * turn.sin();
-            let direction = inward * CONE.cos() + aside * CONE.sin();
-            found.push(out(origin, direction, reach));
-        }
-        across[v] = median(&mut found);
-    }
+    // Every vertex on its own: they are done side by side.
+    let raw: Vec<f64> = (0..vertices)
+        .into_par_iter()
+        .map(|v| {
+            let inward = -normals[v];
+            if inward.length_squared() < 0.5 {
+                return f64::INFINITY;
+            }
+            let (side, other) = tangents(inward);
+            let origin = mesh.positions[v] + inward * step_in;
+            let mut found = vec![out(origin, inward, reach)];
+            for k in 0..CONE_RAYS {
+                let turn = std::f64::consts::TAU * k as f64 / CONE_RAYS as f64;
+                let aside = side * turn.cos() + other * turn.sin();
+                let direction = inward * CONE.cos() + aside * CONE.sin();
+                found.push(out(origin, direction, reach));
+            }
+            median(&mut found)
+        })
+        .collect();
     // One vertex alone can be fooled by a fold of the surface next to it.
     let topology = Topology::build(mesh);
-    let raw = across.clone();
-    for v in 0..vertices {
-        let mut around: Vec<f64> = topology.neighbors[v].iter().map(|&nb| raw[nb as usize]).collect();
-        around.push(raw[v]);
-        across[v] = median(&mut around);
-    }
+    let across: Vec<f64> = (0..vertices)
+        .into_par_iter()
+        .map(|v| {
+            let mut around: Vec<f64> = topology.neighbors[v].iter().map(|&nb| raw[nb as usize]).collect();
+            around.push(raw[v]);
+            median(&mut around)
+        })
+        .collect();
 
-    let mut girth = vec![f64::INFINITY; vertices];
-    let mut widths = vec![f64::INFINITY; vertices];
-    for v in 0..vertices {
-        if !across[v].is_finite() {
-            continue;
-        }
-        let inward = -normals[v];
-        let (side, other) = tangents(inward);
-        let middle = mesh.positions[v] + inward * (0.5 * across[v]);
-        let width = (0..CHORDS)
-            .map(|k| {
-                let turn = std::f64::consts::PI * k as f64 / CHORDS as f64;
-                let along = side * turn.cos() + other * turn.sin();
-                out(middle, along, reach) + out(middle, -along, reach)
-            })
-            .fold(f64::INFINITY, f64::min);
-        // Round an ellipse of those two widths, near enough.
-        widths[v] = width;
-        girth[v] = std::f64::consts::FRAC_PI_2 * (across[v] + width);
-    }
+    let (widths, girth): (Vec<f64>, Vec<f64>) = (0..vertices)
+        .into_par_iter()
+        .map(|v| {
+            if !across[v].is_finite() {
+                return (f64::INFINITY, f64::INFINITY);
+            }
+            let inward = -normals[v];
+            let (side, other) = tangents(inward);
+            let middle = mesh.positions[v] + inward * (0.5 * across[v]);
+            let width = (0..CHORDS)
+                .map(|k| {
+                    let turn = std::f64::consts::PI * k as f64 / CHORDS as f64;
+                    let along = side * turn.cos() + other * turn.sin();
+                    out(middle, along, reach) + out(middle, -along, reach)
+                })
+                .fold(f64::INFINITY, f64::min);
+            // Round an ellipse of those two widths, near enough.
+            (width, std::f64::consts::FRAC_PI_2 * (across[v] + width))
+        })
+        .unzip();
     Thickness { across, width: widths, girth }
 }
 
@@ -143,8 +150,8 @@ pub fn typical_girth(mesh: &TriMesh, reach: f64) -> f64 {
         })
         .sum::<f64>()
         .abs();
-    let (low, high) = (mesh.positions.iter())
-        .fold((Vec3::INFINITY, Vec3::NEG_INFINITY), |(low, high), &p| (low.min(p), high.max(p)));
+    let (low, high) =
+        (mesh.positions.iter()).fold((Vec3::INFINITY, Vec3::NEG_INFINITY), |(low, high), &p| (low.min(p), high.max(p)));
     if area >= SLENDER * (high - low).length_squared() {
         return f64::INFINITY;
     }

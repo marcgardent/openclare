@@ -7,6 +7,7 @@
 //! them (onto vertices, or over a neighbourhood) needs no frame alignment.
 
 use glam::{DMat3, DQuat};
+use rayon::prelude::*;
 
 use crate::math::{Vec3, tangent_frame};
 use crate::mesh::TriMesh;
@@ -94,6 +95,7 @@ impl TensorField {
     pub fn smoothed(&self, neighbors: &[Vec<u32>], normals: &[Vec3], areas: &[f64], iterations: usize) -> Self {
         // The rotations only depend on the normals: compute them once.
         let transports: Vec<Vec<DMat3>> = (0..self.tensors.len())
+            .into_par_iter()
             .map(|v| {
                 let rotate = |nb: &u32| DMat3::from_quat(DQuat::from_rotation_arc(normals[*nb as usize], normals[v]));
                 let usable =
@@ -106,10 +108,12 @@ impl TensorField {
             })
             .collect();
 
+        // Each vertex from the tensors of the pass before: the vertices of
+        // a pass are independent and done side by side.
         let mut tensors = self.tensors.clone();
         for _ in 0..iterations {
             let previous = tensors.clone();
-            for v in 0..tensors.len() {
+            tensors.par_iter_mut().enumerate().for_each(|(v, tensor)| {
                 let mut sum = previous[v] * areas[v];
                 let mut weight = areas[v];
                 for (&nb, rotation) in neighbors[v].iter().zip(&transports[v]) {
@@ -117,9 +121,9 @@ impl TensorField {
                     weight += areas[nb as usize];
                 }
                 if weight > 0.0 {
-                    tensors[v] = sum * (1.0 / weight);
+                    *tensor = sum * (1.0 / weight);
                 }
-            }
+            });
         }
         Self { tensors }
     }
@@ -127,26 +131,32 @@ impl TensorField {
     /// Diagonalises each tensor in the tangent plane of its vertex.
     pub fn principal(&self, normals: &[Vec3]) -> Curvature {
         let n = self.tensors.len();
+        let each: Vec<(f64, f64, Vec3, Vec3)> = (0..n)
+            .into_par_iter()
+            .map(|v| {
+                let normal = normals[v];
+                if normal == Vec3::ZERO {
+                    return (0.0, 0.0, Vec3::ZERO, Vec3::ZERO);
+                }
+                let (s, t) = tangent_frame(normal);
+                let tensor = self.tensors[v];
+                let (ku, kuv, kv) = (s.dot(tensor * s), s.dot(tensor * t), t.dot(tensor * t));
+                let angle = 0.5 * (2.0 * kuv).atan2(ku - kv);
+                let (sin, cos) = angle.sin_cos();
+                let dir = s * cos + t * sin;
+                let ka = ku * cos * cos + 2.0 * kuv * sin * cos + kv * sin * sin;
+                let kb = ku + kv - ka;
+                let (k1, k2, dir1) = if ka.abs() >= kb.abs() { (ka, kb, dir) } else { (kb, ka, normal.cross(dir)) };
+                (k1, k2, dir1, normal.cross(dir1))
+            })
+            .collect();
         let mut out =
             Curvature { k1: vec![0.0; n], k2: vec![0.0; n], dir1: vec![Vec3::ZERO; n], dir2: vec![Vec3::ZERO; n] };
-        for v in 0..n {
-            let normal = normals[v];
-            if normal == Vec3::ZERO {
-                continue;
-            }
-            let (s, t) = tangent_frame(normal);
-            let tensor = self.tensors[v];
-            let (ku, kuv, kv) = (s.dot(tensor * s), s.dot(tensor * t), t.dot(tensor * t));
-            let angle = 0.5 * (2.0 * kuv).atan2(ku - kv);
-            let (sin, cos) = angle.sin_cos();
-            let dir = s * cos + t * sin;
-            let ka = ku * cos * cos + 2.0 * kuv * sin * cos + kv * sin * sin;
-            let kb = ku + kv - ka;
-            let (k1, k2, dir1) = if ka.abs() >= kb.abs() { (ka, kb, dir) } else { (kb, ka, normal.cross(dir)) };
+        for (v, (k1, k2, dir1, dir2)) in each.into_iter().enumerate() {
             out.k1[v] = k1;
             out.k2[v] = k2;
             out.dir1[v] = dir1;
-            out.dir2[v] = normal.cross(dir1);
+            out.dir2[v] = dir2;
         }
         out
     }

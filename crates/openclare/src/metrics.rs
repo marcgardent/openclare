@@ -7,6 +7,8 @@
 use std::collections::HashMap;
 use std::fmt::Write;
 
+use rayon::prelude::*;
+
 use crate::curvature::TensorField;
 use crate::geometry::{vertex_areas, vertex_normals};
 use crate::math::{INVALID, Vec3};
@@ -265,14 +267,23 @@ fn thin_parts(source: &TriMesh, mesh: &PolyMesh, quad_edge: f64, metrics: &mut M
     let normals = crate::geometry::vertex_normals(source);
     let across = crate::thickness::measure(source, &normals, quad_edge).across;
     let output = Bvh::build(&mesh.triangulated());
+    let distances: Vec<Option<f64>> =
+        source
+            .positions
+            .par_iter()
+            .enumerate()
+            .map(|(v, &p)| {
+                if across[v] < quad_edge {
+                    output.closest_point(p).map(|hit| hit.distance_squared.sqrt())
+                } else {
+                    None
+                }
+            })
+            .collect();
     let (mut sum, mut count) = (0.0, 0usize);
-    for (v, &p) in source.positions.iter().enumerate() {
-        if across[v] < quad_edge
-            && let Some(hit) = output.closest_point(p)
-        {
-            sum += hit.distance_squared.sqrt();
-            count += 1;
-        }
+    for distance in distances.into_iter().flatten() {
+        sum += distance;
+        count += 1;
     }
     metrics.thin_share = count as f64 / source.positions.len().max(1) as f64;
     if count >= THIN_SAMPLES {
@@ -770,12 +781,13 @@ fn fidelity(source: &TriMesh, surface: &Bvh, mesh: &PolyMesh, diagonal: f64, met
     };
 
     // From the quad mesh to the source ...
-    let samples = mesh.positions.iter().copied().chain(mesh.faces.iter().map(|face| centroid(mesh, face)));
-    for sample in samples {
-        if let Some(hit) = surface.closest_point(sample) {
-            record(hit.distance_squared);
-        }
-    }
+    // (The queries side by side, the distances added up in order: the same
+    // sums as one at a time.)
+    let samples: Vec<Vec3> =
+        mesh.positions.iter().copied().chain(mesh.faces.iter().map(|face| centroid(mesh, face))).collect();
+    let there: Vec<Option<f64>> =
+        samples.par_iter().map(|&sample| surface.closest_point(sample).map(|hit| hit.distance_squared)).collect();
+    there.into_iter().flatten().for_each(&mut record);
     // ... and back, which is what catches a missing piece.
     let output = Bvh::build(&mesh.triangulated());
     let mut referenced = vec![false; source.positions.len()];
@@ -784,13 +796,13 @@ fn fidelity(source: &TriMesh, surface: &Bvh, mesh: &PolyMesh, diagonal: f64, met
             referenced[v as usize] = true;
         }
     }
-    for (v, &p) in source.positions.iter().enumerate() {
-        if referenced[v]
-            && let Some(hit) = output.closest_point(p)
-        {
-            record(hit.distance_squared);
-        }
-    }
+    let back: Vec<Option<f64>> = source
+        .positions
+        .par_iter()
+        .enumerate()
+        .map(|(v, &p)| if referenced[v] { output.closest_point(p).map(|hit| hit.distance_squared) } else { None })
+        .collect();
+    back.into_iter().flatten().for_each(&mut record);
 
     metrics.hausdorff = worst / diagonal;
     metrics.mean_distance = sum / count.max(1) as f64 / diagonal;
