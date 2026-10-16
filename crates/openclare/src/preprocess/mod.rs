@@ -430,8 +430,23 @@ fn work_mesh(mesh: TriMesh, feature_edges: Vec<[u32; 2]>, request: &Request) -> 
     // and a power.)
     let knob = |name: &str, default: f64| std::env::var(name).ok().and_then(|v| v.parse().ok()).unwrap_or(default);
     let (floor, power) = (knob("OPENCLARE_CONFIDENCE_FLOOR", 0.0), knob("OPENCLARE_CONFIDENCE_POWER", 1.0));
+    let relative = |curvature: &crate::curvature::Curvature, v: usize| {
+        curvature.anisotropy(v) / (curvature.k1[v].abs() + curvature.k2[v].abs() + negligible)
+    };
+    // (Experiment: a direction trusted only as far as it also holds at a
+    // scale this many times larger.)
+    let coarse_factor = knob("OPENCLARE_CONFIDENCE_COARSE", 0.0);
+    let coarse = (coarse_factor > 1.0 && passes > 0).then(|| {
+        let coarse_passes = ((passes as f64) * coarse_factor * coarse_factor).round().min(1600.0) as usize;
+        TensorField::estimate(&mesh, &normals, &areas)
+            .smoothed(&topology.neighbors, &normals, &areas, coarse_passes)
+            .principal(&normals)
+    });
     let confidence = (0..mesh.positions.len())
-        .map(|v| curvature.anisotropy(v) / (curvature.k1[v].abs() + curvature.k2[v].abs() + negligible))
+        .map(|v| {
+            let fine = relative(&curvature, v);
+            coarse.as_ref().map_or(fine, |coarse| fine.min(relative(coarse, v)))
+        })
         .map(|c: f64| ((c - floor).max(0.0) / (1.0 - floor)).powf(power))
         .collect();
 
