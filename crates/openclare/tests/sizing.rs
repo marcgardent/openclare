@@ -135,7 +135,10 @@ fn the_mesh_follows_the_painted_density_and_keeps_its_budget() {
 fn the_mesh_is_finer_at_the_tips_of_a_spindle_when_adaptive() {
     let source = spindle();
     let ratio = |adaptivity: f64| {
-        let config = RemeshConfig { adaptivity, ..RemeshConfig::for_organic(Target::QuadCount(1500)) };
+        // Sizes alone: closing the loops round the spindle may stretch
+        // the lengths a little, which is not what is looked at here.
+        let config =
+            RemeshConfig { adaptivity, close_loops: false, ..RemeshConfig::for_organic(Target::QuadCount(1500)) };
         let (mesh, _) = config.remesh(&source).unwrap();
         let metrics = measure(&source, &mesh, Some(1500));
         assert!(metrics.is_valid(), "{metrics:?}");
