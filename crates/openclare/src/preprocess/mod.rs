@@ -168,6 +168,10 @@ impl Default for Isotropic {
 /// that, and only stop what would never come back down.
 const MOST_TRIANGLES: usize = 32;
 
+/// Share of the curvature that must differ between the two principal
+/// directions for them to be followed at all.
+const CONFIDENCE_FLOOR: f64 = 0.1;
+
 impl Preprocessor for Isotropic {
     fn kind(&self) -> Kind {
         Kind::Isotropic
@@ -314,7 +318,8 @@ fn blunt_acute_tips(work: &mut WorkMesh, reach: f64) {
         .copied()
         .filter(|&[a, b]| near(positions[a as usize]) || near(positions[b as usize]))
         .collect();
-    let lists = [&mut work.feature_edges, &mut work.guide_edges, &mut work.sharp_guide_edges, &mut work.shape_guide_edges];
+    let lists =
+        [&mut work.feature_edges, &mut work.guide_edges, &mut work.sharp_guide_edges, &mut work.shape_guide_edges];
     for edges in lists {
         edges.retain(|edge| !gone.contains(edge));
     }
@@ -426,28 +431,13 @@ fn work_mesh(mesh: TriMesh, feature_edges: Vec<[u32; 2]>, request: &Request) -> 
     // a whole does (a sphere of its size): flatter regions have no direction
     // worth following, whatever the ratio of their two tiny curvatures.
     let negligible = 2.0 / (max - min).length().max(f64::MIN_POSITIVE);
-    // (Experiment: a floor under which a direction is not trusted at all,
-    // and a power.)
-    let knob = |name: &str, default: f64| std::env::var(name).ok().and_then(|v| v.parse().ok()).unwrap_or(default);
-    let (floor, power) = (knob("OPENCLARE_CONFIDENCE_FLOOR", 0.0), knob("OPENCLARE_CONFIDENCE_POWER", 1.0));
-    let relative = |curvature: &crate::curvature::Curvature, v: usize| {
-        curvature.anisotropy(v) / (curvature.k1[v].abs() + curvature.k2[v].abs() + negligible)
-    };
-    // (Experiment: a direction trusted only as far as it also holds at a
-    // scale this many times larger.)
-    let coarse_factor = knob("OPENCLARE_CONFIDENCE_COARSE", 0.0);
-    let coarse = (coarse_factor > 1.0 && passes > 0).then(|| {
-        let coarse_passes = ((passes as f64) * coarse_factor * coarse_factor).round().min(1600.0) as usize;
-        TensorField::estimate(&mesh, &normals, &areas)
-            .smoothed(&topology.neighbors, &normals, &areas, coarse_passes)
-            .principal(&normals)
-    });
+    // Below CONFIDENCE_FLOOR the two curvatures are too near one another
+    // for their directions to mean anything: a sphere bends the same way
+    // everywhere, and a field pulled towards the facets of its tessellation
+    // gets their pattern instead of the eight poles of a cube.
     let confidence = (0..mesh.positions.len())
-        .map(|v| {
-            let fine = relative(&curvature, v);
-            coarse.as_ref().map_or(fine, |coarse| fine.min(relative(coarse, v)))
-        })
-        .map(|c: f64| ((c - floor).max(0.0) / (1.0 - floor)).powf(power))
+        .map(|v| curvature.anisotropy(v) / (curvature.k1[v].abs() + curvature.k2[v].abs() + negligible))
+        .map(|c| (c - CONFIDENCE_FLOOR).max(0.0) / (1.0 - CONFIDENCE_FLOOR))
         .collect();
 
     let sizing = vec![1.0; mesh.positions.len()];
