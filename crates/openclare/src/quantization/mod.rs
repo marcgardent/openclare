@@ -422,7 +422,10 @@ impl Quantizer for WalkCancelling {
             let wanted = request.quads.unwrap_or(plain.2);
             let allowed = plain.2.abs_diff(wanted).max((request.tolerance * wanted as f64) as usize);
             let mut best = (spirals_of(&plain.0), plain);
-            for offsets in CLOSE_WAYS {
+            // Lengths that leave the structure broken are not mended by
+            // closing loops, and each way would cost as long a search again.
+            let sound = best.0.is_finite() && lattice::build(tmesh, &best.1.0).defects(tmesh).is_empty();
+            for offsets in CLOSE_WAYS.iter().filter(|_| sound) {
                 let clock = std::time::Instant::now();
                 let (found, held) = turns_of(tmesh, &real, offsets);
                 if std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some() {
