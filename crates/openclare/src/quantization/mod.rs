@@ -20,8 +20,8 @@ use crate::error::{Error, Result};
 use crate::math::Rng;
 use crate::tmesh::TMesh;
 use flow::{Cost, Network};
-use rayon::prelude::*;
 pub use lattice::{Lattice, Source};
+use rayon::prelude::*;
 
 #[derive(Clone, Debug)]
 pub struct Request {
@@ -431,12 +431,7 @@ impl WalkCancelling {
         let (mut too_small, mut too_large) = (None::<f64>, None::<f64>);
         let rounds = if request.quads.is_some() { self.scale_rounds } else { 1 };
         for _ in 0..rounds {
-            // (Experiment: arcs shorter than this many quad edges aimed at
-            // nothing, so that the lines on either side merge and the
-            // singularities they come from face one another.)
-            let short: f64 = std::env::var("OPENCLARE_SHORT_ARC").ok().and_then(|v| v.parse().ok()).unwrap_or(0.0);
-            let target: Vec<f64> =
-                real.iter().map(|length| scale * length).map(|length| if length < short { 0.0 } else { length }).collect();
+            let target: Vec<f64> = real.iter().map(|length| scale * length).collect();
             // Relative to the length: one edge more or less matters on a
             // short arc, not on a long one.
             let weight: Vec<f64> = target.iter().map(|length| 1.0 / (length + 1.0)).collect();
@@ -538,8 +533,7 @@ impl Quantizer for WalkCancelling {
             // As near the number of quads asked for as the plain search, or
             // within the tolerance: fewer spirals do not buy a different mesh.
             let wanted = request.quads.unwrap_or(plain.2);
-            let close_tolerance = std::env::var("OPENCLARE_CLOSE_TOLERANCE").ok().and_then(|v| v.parse().ok()).unwrap_or(request.tolerance);
-            let allowed = plain.2.abs_diff(wanted).max((close_tolerance * wanted as f64) as usize);
+            let allowed = plain.2.abs_diff(wanted).max((request.tolerance * wanted as f64) as usize);
             // How far whole lengths are from the real ones at their scale,
             // in quad edges, on average.
             let deviation = |(x, scale, ..): &(Vec<i64>, f64, usize, Vec<i64>)| -> f64 {
@@ -549,8 +543,7 @@ impl Quantizer for WalkCancelling {
             if std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some() {
                 eprintln!("plain lengths: deviation {:.3}", deviation(&plain));
             }
-            let growth = std::env::var("OPENCLARE_DEVIATION_GROWTH").ok().and_then(|v| v.parse().ok()).unwrap_or(DEVIATION_GROWTH);
-            let most_deviation = growth * deviation(&plain);
+            let most_deviation = DEVIATION_GROWTH * deviation(&plain);
             let mut best = (spirals_of(&plain.0), plain);
             // Lengths that leave the structure broken are not mended by
             // closing loops, and each way would cost as long a search again.
