@@ -139,7 +139,8 @@ fn the_stages_of_a_piece_say_which_piece() {
     }
     let mut stages = Stages::default();
     config(600).remesh_recorded(&mesh, &Guides::default(), &mut stages).unwrap();
-    assert_eq!(stages.begun.first().map(String::as_str), Some("piece 1 of 2: preprocessing"));
+    // The pieces run side by side: either may begin first.
+    assert!(stages.begun.contains(&"piece 1 of 2: preprocessing".to_string()), "{:?}", stages.begun);
     assert!(stages.begun.contains(&"piece 2 of 2: fitting".to_string()), "{:?}", stages.begun);
 }
 
