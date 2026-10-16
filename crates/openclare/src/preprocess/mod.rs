@@ -426,8 +426,13 @@ fn work_mesh(mesh: TriMesh, feature_edges: Vec<[u32; 2]>, request: &Request) -> 
     // a whole does (a sphere of its size): flatter regions have no direction
     // worth following, whatever the ratio of their two tiny curvatures.
     let negligible = 2.0 / (max - min).length().max(f64::MIN_POSITIVE);
+    // (Experiment: a floor under which a direction is not trusted at all,
+    // and a power.)
+    let knob = |name: &str, default: f64| std::env::var(name).ok().and_then(|v| v.parse().ok()).unwrap_or(default);
+    let (floor, power) = (knob("OPENCLARE_CONFIDENCE_FLOOR", 0.0), knob("OPENCLARE_CONFIDENCE_POWER", 1.0));
     let confidence = (0..mesh.positions.len())
         .map(|v| curvature.anisotropy(v) / (curvature.k1[v].abs() + curvature.k2[v].abs() + negligible))
+        .map(|c: f64| ((c - floor).max(0.0) / (1.0 - floor)).powf(power))
         .collect();
 
     let sizing = vec![1.0; mesh.positions.len()];
