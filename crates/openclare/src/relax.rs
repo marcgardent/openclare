@@ -7,6 +7,8 @@
 use std::fmt;
 use std::str::FromStr;
 
+use rayon::prelude::*;
+
 use crate::error::{Error, Result};
 use crate::field::Constraints;
 use crate::math::Vec3;
@@ -249,6 +251,7 @@ pub fn relax(mesh: &mut PolyMesh, surface: &Bvh, features: Option<&Features>, it
 
     for _ in 0..iterations {
         let smoothed: Vec<Vec3> = (0..n)
+            .into_par_iter()
             .map(|v| {
                 let p = mesh.positions[v];
                 let mean_of = |keep: &dyn Fn(u32) -> bool| {
@@ -277,11 +280,9 @@ pub fn relax(mesh: &mut PolyMesh, surface: &Bvh, features: Option<&Features>, it
         mesh.positions = smoothed;
     }
 
-    for v in 0..n {
-        if kind[v] == Hold::Free {
-            mesh.positions[v] = on_surface(mesh.positions[v]);
-        }
-    }
+    mesh.positions.par_iter_mut().enumerate().filter(|&(v, _)| kind[v] == Hold::Free).for_each(|(_, p)| {
+        *p = on_surface(*p);
+    });
 }
 
 /// Tuning of [`square_up`].
@@ -367,6 +368,7 @@ pub fn square_up(mesh: &mut PolyMesh, surface: &Bvh, features: Option<&Features>
         }
 
         let goals: Vec<Option<Vec3>> = (0..n)
+            .into_par_iter()
             .map(|v| {
                 let p = mesh.positions[v];
                 if kind[v] == Hold::Pinned || proposed[v].1 == 0.0 {
