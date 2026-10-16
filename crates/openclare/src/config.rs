@@ -10,6 +10,7 @@ use std::fmt::Write;
 use crate::error::{Error, Result};
 use crate::pipeline::Target;
 use crate::remesher::{Guides, Method};
+use crate::symmetry::{self, Axis};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct RemeshConfig {
@@ -68,8 +69,16 @@ pub struct RemeshConfig {
     /// Lines of quads that go round a part are closed into rings where the
     /// whole lengths would wind them into helices (DT-062).
     pub close_loops: bool,
+    /// The plane through the origin of the model across this axis is a
+    /// plane of symmetry: one half is remeshed and mirrored, so that the
+    /// quad mesh is the same on both sides of it.
+    pub symmetry: Option<Axis>,
     pub seed: u64,
 }
+
+/// Vertices of the input closer to the plane of symmetry than this share of
+/// its diagonal are taken to be on it.
+const SYMMETRY_SNAP: f64 = 1e-6;
 
 impl Default for RemeshConfig {
     /// The `organic` preset at 2000 quads.
@@ -126,6 +135,7 @@ impl RemeshConfig {
             density_contrast: 4.0,
             skip_pieces_under: 0.0,
             close_loops: true,
+            symmetry: None,
             seed: 1,
         }
     }
@@ -182,9 +192,48 @@ impl RemeshConfig {
         recorder: &mut dyn crate::recorder::Recorder,
     ) -> Result<(crate::PolyMesh, crate::pipeline::Report)> {
         use crate::recorder::Shape;
+        if let Some(axis) = self.symmetry {
+            return self.remesh_symmetric(input, guides, axis, recorder);
+        }
         recorder.record("input/surface", Shape::Surface { mesh: input, values: guides.density });
         let (mesh, report) = crate::remesher::create(self.method).remesh_recorded(input, guides, self, recorder)?;
         recorder.record("result/quads", Shape::Polygons(&mesh));
+        Ok((mesh, report))
+    }
+
+    /// One half of `input`, on the positive side of the plane across
+    /// `axis`, remeshed for half the quads and mirrored.
+    fn remesh_symmetric(
+        &self,
+        input: &crate::TriMesh,
+        guides: &Guides,
+        axis: Axis,
+        recorder: &mut dyn crate::recorder::Recorder,
+    ) -> Result<(crate::PolyMesh, crate::pipeline::Report)> {
+        if guides.density.is_some() || !guides.curves.is_empty() || !guides.lines.is_empty() || guides.groups.is_some()
+        {
+            return Err(Error::InvalidParams("symmetry does not take curves, painted density or groups yet".into()));
+        }
+        symmetry::check(input, axis)?;
+        let (low, high) = input
+            .positions
+            .iter()
+            .fold((crate::math::Vec3::INFINITY, crate::math::Vec3::NEG_INFINITY), |(lo, hi), &p| {
+                (lo.min(p), hi.max(p))
+            });
+        let diagonal = (high - low).length();
+        let half = symmetry::half(input, axis, SYMMETRY_SNAP * diagonal);
+        let target = match self.target {
+            Target::QuadCount(count) => Target::QuadCount(count.div_ceil(2).max(1)),
+            other => other,
+        };
+        let config = Self { symmetry: None, target, most_quads: self.most_quads.div_ceil(2), ..self.clone() };
+        let (mesh, mut report) = config.remesh_recorded(&half, guides, recorder)?;
+        // The cut is a border of the half, held on the plane all the way;
+        // its vertices are put exactly on it, a fraction of an edge away.
+        let edge = diagonal / (mesh.faces.len().max(1) as f64).sqrt();
+        let mesh = symmetry::mirrored(&mesh, axis, 0.25 * edge);
+        report.stats = mesh.stats();
         Ok((mesh, report))
     }
 
@@ -253,6 +302,7 @@ impl RemeshConfig {
         writeln!(text, "density_contrast = {}", self.density_contrast).unwrap();
         writeln!(text, "skip_pieces_under = {}", self.skip_pieces_under).unwrap();
         writeln!(text, "close_loops = {}", self.close_loops).unwrap();
+        writeln!(text, "symmetry = {}", self.symmetry.map_or("none", Axis::name)).unwrap();
         writeln!(text, "seed = {}", self.seed).unwrap();
         text
     }
@@ -320,6 +370,8 @@ impl RemeshConfig {
                 "close_loops" => {
                     config.close_loops = value.parse().map_err(|_| error(format!("'{value}' is not true or false")))?
                 }
+                "symmetry" if value == "none" => config.symmetry = None,
+                "symmetry" => config.symmetry = Some(value.parse().map_err(|e: Error| error(e.to_string()))?),
                 "seed" => config.seed = value.parse().map_err(|_| error(format!("'{value}' is not a seed")))?,
                 other => return Err(error(format!("unknown setting '{other}'"))),
             }

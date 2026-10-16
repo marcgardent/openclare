@@ -56,6 +56,8 @@ OPTIONS (remesh):
                                  of its faces is written next to it, as <output>.groups
     --skip-pieces-under <Q>      leave out the separate pieces whose share of the quads is below Q (default 0: keep all)
     --no-close-loops             leave the lines of quads round a part as the lengths make them, helices or not
+    --symmetry <x|y|z>           the plane through the origin across that axis is a plane of symmetry: one half is
+                                 remeshed and mirrored, the same quads on both sides
     --notes                      print what the stages remark on: why a piece went to the other chain, what the
                                  map folded on, how many guide lines were let go
     --record-still <STAGE>       with --record: keep that one stage (map, layout, cross-field...), out of time,
@@ -337,6 +339,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
             "--density-contrast" => config.density_contrast = parse(arg, value(arg)?)?,
             "--skip-pieces-under" => config.skip_pieces_under = parse(arg, value(arg)?)?,
             "--no-close-loops" => config.close_loops = false,
+            "--symmetry" => config.symmetry = Some(value(arg)?.parse().map_err(|e: openclare::Error| e.to_string())?),
             "--record" => record_path = Some(value(arg)?.clone()),
             "--record-still" => record_still = Some(value(arg)?.clone()),
             "--notes" => notes = true,
