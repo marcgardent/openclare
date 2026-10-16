@@ -201,8 +201,8 @@ impl RemeshConfig {
         Ok((mesh, report))
     }
 
-    /// One half of `input`, on the positive side of the plane across
-    /// `axis`, remeshed for half the quads and mirrored.
+    /// `input` remeshed with the plane across `axis` drawn into it, the
+    /// half on its positive side kept and mirrored.
     fn remesh_symmetric(
         &self,
         input: &crate::TriMesh,
@@ -222,17 +222,11 @@ impl RemeshConfig {
                 (lo.min(p), hi.max(p))
             });
         let diagonal = (high - low).length();
-        let half = symmetry::half(input, axis, SYMMETRY_SNAP * diagonal);
-        let target = match self.target {
-            Target::QuadCount(count) => Target::QuadCount(count.div_ceil(2).max(1)),
-            other => other,
-        };
-        let config = Self { symmetry: None, target, most_quads: self.most_quads.div_ceil(2), ..self.clone() };
-        let (mesh, mut report) = config.remesh_recorded(&half, guides, recorder)?;
-        // The cut is a border of the half, held on the plane all the way;
-        // its vertices are put exactly on it, a fraction of an edge away.
-        let edge = diagonal / (mesh.faces.len().max(1) as f64).sqrt();
-        let mesh = symmetry::mirrored(&mesh, axis, 0.25 * edge);
+        let snap = SYMMETRY_SNAP * diagonal;
+        let (drawn, lines) = symmetry::split(input, axis, snap);
+        let config = Self { symmetry: None, ..self.clone() };
+        let (mesh, mut report) = config.remesh_recorded(&drawn, &Guides { lines: &lines, ..*guides }, recorder)?;
+        let mesh = symmetry::mirrored(&symmetry::positive_side(&mesh, axis), axis, snap);
         report.stats = mesh.stats();
         Ok((mesh, report))
     }

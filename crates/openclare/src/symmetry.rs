@@ -2,9 +2,15 @@
 //! same on both sides of it.
 //!
 //! The plane goes through the origin of the model, across one of its axes.
-//! The model is cut along it, the half on the positive side is remeshed with
-//! the cut as an open border, and the quad mesh is mirrored across the
-//! plane, the vertices on the plane shared by both halves (DT-028).
+//! It is drawn into the model, as a line of edges for the quads to follow;
+//! the whole model is remeshed, the faces on the positive side kept, and
+//! mirrored across the plane, the vertices on it shared by both halves
+//! (DT-028).
+//!
+//! Remeshing only the half, with the cut as an open border, takes half the
+//! work but fails on a detailed sculpt: where the plane runs through the
+//! lips or a nostril, the border turns back on itself, and no layout of
+//! rectangles follows it.
 
 use std::collections::HashMap;
 use std::fmt;
@@ -77,49 +83,104 @@ impl FromStr for Axis {
     }
 }
 
-/// The part of `mesh` on the positive side of the plane across `axis`: the
-/// triangles that cross it cut along it, the vertices on it exactly on it.
-/// A vertex closer to the plane than `snap` is taken to be on it, so that a
-/// model built on the plane is not cut into slivers next to it.
-pub fn half(mesh: &TriMesh, axis: Axis, snap: f64) -> TriMesh {
+/// `mesh` with the plane drawn into it: every triangle across it cut in two
+/// along it, both sides kept, and the edges that now lie on the plane, each
+/// by where its two ends are. A vertex closer to the plane than `snap` is
+/// put on it.
+pub fn split(mesh: &TriMesh, axis: Axis, snap: f64) -> (TriMesh, Vec<[Vec3; 2]>) {
     let side: Vec<f64> =
         mesh.positions.iter().map(|&p| axis.side(p)).map(|d| if d.abs() <= snap { 0.0 } else { d }).collect();
-    let mut out = TriMesh::default();
-    // Each kept vertex of the input, and each cut edge, once.
-    let mut kept: HashMap<u32, u32> = HashMap::new();
-    let mut cuts: HashMap<(u32, u32), u32> = HashMap::new();
-    let mut vertex = |out: &mut TriMesh, v: u32| -> u32 {
-        *kept.entry(v).or_insert_with(|| {
-            let p = mesh.positions[v as usize];
-            out.positions.push(if side[v as usize] == 0.0 { axis.onto(p) } else { p });
-            out.positions.len() as u32 - 1
-        })
+    let mut out = TriMesh {
+        positions: mesh.positions.iter().zip(&side).map(|(&p, &d)| if d == 0.0 { axis.onto(p) } else { p }).collect(),
+        triangles: Vec::with_capacity(mesh.triangles.len()),
     };
+    let mut cuts: HashMap<(u32, u32), u32> = HashMap::new();
+    let mut on_plane: Vec<[u32; 2]> = Vec::new();
     for tri in &mesh.triangles {
-        let mut polygon: Vec<u32> = Vec::with_capacity(4);
+        // The corners in order, cut edges given their point on the plane.
+        let mut ring: Vec<(u32, f64)> = Vec::with_capacity(5);
         for k in 0..3 {
             let (a, b) = (tri[k], tri[(k + 1) % 3]);
             let (da, db) = (side[a as usize], side[b as usize]);
-            if da >= 0.0 {
-                polygon.push(vertex(&mut out, a));
-            }
+            ring.push((a, da));
             if (da > 0.0 && db < 0.0) || (da < 0.0 && db > 0.0) {
-                let key = (a.min(b), a.max(b));
-                let at = *cuts.entry(key).or_insert_with(|| {
+                let at = *cuts.entry((a.min(b), a.max(b))).or_insert_with(|| {
                     let (pa, pb) = (mesh.positions[a as usize], mesh.positions[b as usize]);
-                    let t = da / (da - db);
-                    out.positions.push(axis.onto(pa + (pb - pa) * t));
+                    out.positions.push(axis.onto(pa + (pb - pa) * (da / (da - db))));
                     out.positions.len() as u32 - 1
                 });
-                polygon.push(at);
+                ring.push((at, 0.0));
             }
         }
-        // A triangle that only touches the plane is on the other side.
-        if polygon.len() < 3 || tri.iter().all(|&v| side[v as usize] <= 0.0) {
+        let ends: Vec<u32> = ring.iter().filter(|&&(_, d)| d == 0.0).map(|&(v, _)| v).collect();
+        if ring.len() == 3 {
+            out.triangles.push(*tri);
+            // An edge of the triangle may lie on the plane already.
+            for k in 0..3 {
+                let (a, b) = (tri[k], tri[(k + 1) % 3]);
+                if side[a as usize] == 0.0 && side[b as usize] == 0.0 && a < b {
+                    on_plane.push([a, b]);
+                }
+            }
             continue;
         }
-        for k in 1..polygon.len() - 1 {
-            out.triangles.push([polygon[0], polygon[k], polygon[k + 1]]);
+        // Each side is the run of the ring from one point on the plane to
+        // the other, fanned from its first point.
+        let n = ring.len();
+        let starts: Vec<usize> = (0..n).filter(|&k| ring[k].1 == 0.0).collect();
+        for (s, &start) in starts.iter().enumerate() {
+            let end = starts[(s + 1) % starts.len()];
+            let mut polygon = vec![ring[start].0];
+            let mut k = (start + 1) % n;
+            while k != end {
+                polygon.push(ring[k].0);
+                k = (k + 1) % n;
+            }
+            polygon.push(ring[end].0);
+            for k in 1..polygon.len().saturating_sub(1) {
+                out.triangles.push([polygon[0], polygon[k], polygon[k + 1]]);
+            }
+        }
+        if let [a, b] = ends[..] {
+            on_plane.push([a.min(b), a.max(b)]);
+        }
+    }
+    on_plane.sort_unstable();
+    on_plane.dedup();
+    let lines = on_plane.iter().map(|&[a, b]| [out.positions[a as usize], out.positions[b as usize]]).collect();
+    (out, lines)
+}
+
+/// The faces of `mesh` whose middle is on the positive side of the plane;
+/// the vertices they share with the faces left out, and those on the
+/// negative side, are put on the plane.
+pub fn positive_side(mesh: &PolyMesh, axis: Axis) -> PolyMesh {
+    let middle = |face: &Vec<u32>| face.iter().map(|&v| mesh.positions[v as usize]).sum::<Vec3>() / face.len() as f64;
+    let keep: Vec<bool> = mesh.faces.iter().map(|face| axis.side(middle(face)) >= 0.0).collect();
+    let mut in_kept = vec![false; mesh.positions.len()];
+    let mut in_dropped = vec![false; mesh.positions.len()];
+    for (face, &kept) in mesh.faces.iter().zip(&keep) {
+        for &v in face {
+            if kept {
+                in_kept[v as usize] = true;
+            } else {
+                in_dropped[v as usize] = true;
+            }
+        }
+    }
+    let mut index = vec![u32::MAX; mesh.positions.len()];
+    let mut out = PolyMesh::default();
+    for (v, &p) in mesh.positions.iter().enumerate() {
+        if in_kept[v] {
+            index[v] = out.positions.len() as u32;
+            out.positions.push(if in_dropped[v] || axis.side(p) < 0.0 { axis.onto(p) } else { p });
+        }
+    }
+    for (face, &kept) in mesh.faces.iter().zip(&keep) {
+        let corners: Vec<u32> = face.iter().map(|&v| index[v as usize]).collect();
+        // A face all on the plane has no side.
+        if kept && corners.iter().any(|&v| axis.side(out.positions[v as usize]) != 0.0) {
+            out.faces.push(corners);
         }
     }
     out

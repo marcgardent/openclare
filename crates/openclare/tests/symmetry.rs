@@ -1,6 +1,6 @@
 //! Symmetry: a model the same on both sides of a plane through its origin
 //! gets a quad mesh the same on both sides of it, closed where the model
-//! is, without a seam (DT-028).
+//! is, the quads along the plane as good as the others (DT-028).
 
 use openclare::math::Vec3;
 use openclare::mesh::primitives;
@@ -28,7 +28,9 @@ fn symmetric(source: &TriMesh, axis: Axis, quads: usize) {
     assert_eq!(metrics.boundary_edges, 0, "{axis}: the halves are not sewn together");
     let off = symmetry::asymmetry(&mesh, axis);
     assert!(off <= 1e-9 * diagonal(source), "{axis}: a vertex has no image, {off} away");
-    assert!(metrics.budget_error.unwrap() <= 0.06, "{axis}: {} faces for {quads}", metrics.faces);
+    // The whole model is meshed for that number; its positive side need not
+    // hold exactly half.
+    assert!(metrics.budget_error.unwrap() <= 0.08, "{axis}: {} faces for {quads}", metrics.faces);
 }
 
 #[test]
@@ -48,27 +50,24 @@ fn primitives_come_out_symmetric_across_each_axis() {
 }
 
 #[test]
-fn half_keeps_the_positive_side_cut_exactly_on_the_plane() {
+fn the_plane_is_drawn_into_the_model_as_a_ring_of_edges() {
     let cube = primitives::cube(5);
-    let half = symmetry::half(&cube, Axis::X, 0.0);
-    assert!(half.positions.iter().all(|p| p.x >= 0.0));
-    // Half the surface: the cut falls in the middle of a row of triangles.
-    let ratio = half.surface_area() / cube.surface_area();
-    assert!((ratio - 0.5).abs() < 1e-9, "{ratio}");
-    // Its border is the square of the cut, on the plane.
-    let mut uses = std::collections::HashMap::new();
-    for tri in &half.triangles {
-        for k in 0..3 {
-            let (a, b) = (tri[k], tri[(k + 1) % 3]);
-            *uses.entry((a.min(b), a.max(b))).or_insert(0) += 1;
-        }
-    }
-    let border: Vec<Vec3> = uses
+    let (drawn, lines) = symmetry::split(&cube, Axis::X, 0.0);
+    // Nothing added nor taken away: the same surface, cut into more pieces.
+    let ratio = drawn.surface_area() / cube.surface_area();
+    assert!((ratio - 1.0).abs() < 1e-9, "{ratio}");
+    // The plane meets the cube in a square of side 2: its edges are drawn.
+    let length: f64 = lines.iter().map(|[a, b]| a.distance(*b)).sum();
+    assert!((length - 8.0).abs() < 1e-9, "{length}");
+    assert!(lines.iter().flatten().all(|p| p.x == 0.0));
+    // And each is an edge of the drawn mesh.
+    let edges: std::collections::HashSet<(u32, u32)> = drawn
+        .triangles
         .iter()
-        .filter(|&(_, &count)| count == 1)
-        .flat_map(|(&(a, b), _)| [half.positions[a as usize], half.positions[b as usize]])
+        .flat_map(|tri| (0..3).map(move |k| (tri[k].min(tri[(k + 1) % 3]), tri[k].max(tri[(k + 1) % 3]))))
         .collect();
-    assert!(!border.is_empty() && border.iter().all(|p| p.x == 0.0));
+    let at = |p: Vec3| drawn.positions.iter().position(|&q| q == p).unwrap() as u32;
+    assert!(lines.iter().all(|&[a, b]| edges.contains(&(at(a).min(at(b)), at(a).max(at(b))))));
 }
 
 #[test]
