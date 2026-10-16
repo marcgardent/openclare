@@ -24,6 +24,8 @@ pub(super) struct Turn {
     pub shift: Expression,
     /// Its length on the way, with the real lengths of the arcs.
     pub around: f64,
+    /// The rectangle it starts from.
+    pub patch: usize,
 }
 
 /// The direction of each side of a rectangle, counter-clockwise from the
@@ -202,7 +204,7 @@ fn go_round(
         if patch == start_patch && side == start_side && quarter_turns == 0 {
             let across = if DIRECTION[start_side][0] != 0.0 { 0 } else { 1 };
             let mut shift = shift_along(tmesh, rims, &crossings);
-            return Some(Turn { shift: std::mem::take(&mut shift[across]), around });
+            return Some(Turn { shift: std::mem::take(&mut shift[across]), around, patch: start_patch });
         }
     }
     None

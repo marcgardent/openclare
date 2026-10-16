@@ -183,7 +183,7 @@ impl Default for WalkCancelling {
 /// The ways round a part of `tmesh`, from these places along the sides of
 /// its rectangles: every one short enough to go round one part (none is to
 /// be shifted by the lengths), and those of them the real lengths shift.
-fn turns_of(tmesh: &TMesh, real: &[f64], offsets: &[f64]) -> (Vec<tubes::Turn>, Vec<tubes::Turn>) {
+fn turns_of(tmesh: &TMesh, real: &[f64], offsets: &[f64], lean: f64) -> (Vec<tubes::Turn>, Vec<tubes::Turn>) {
     let area: f64 = tmesh.patches.iter().filter_map(|patch| patch.sides).map(|sides| sides[0] * sides[1]).sum();
     let side = area.sqrt().max(1.0);
     let found = tubes::turns(tmesh, 4, offsets, TURN_LONGEST * side);
@@ -194,15 +194,20 @@ fn turns_of(tmesh: &TMesh, real: &[f64], offsets: &[f64]) -> (Vec<tubes::Turn>, 
     for turn in found {
         let shift = tubes::value(&turn.shift, real);
         if debug {
+            let first = tmesh.patches[turn.patch].boundary[0] as usize / 2;
+            let at = tmesh.nodes[tmesh.arcs[first].nodes[0] as usize].position;
             eprintln!(
-                "turn: round {:7.1} shift {:+7.2} lean {:.3}{}",
+                "turn: round {:7.1} shift {:+7.2} lean {:.3} at ({:+.3}, {:+.3}, {:+.3}){}",
                 turn.around,
                 shift,
                 shift.abs() / turn.around,
-                if turn.around > TURN_LONGEST * side { " too long" } else if shift.abs() > TURN_LEAN * turn.around { " leans too much" } else { "" }
+                at.x,
+                at.y,
+                at.z,
+                if turn.around > TURN_LONGEST * side { " too long" } else if shift.abs() > lean * turn.around { " leans too much" } else { "" }
             );
         }
-        if turn.around > TURN_LONGEST * side || shift.abs() > TURN_LEAN * turn.around {
+        if turn.around > TURN_LONGEST * side || shift.abs() > lean * turn.around {
             continue;
         }
         let key: Vec<(usize, i64)> = turn.shift.iter().map(|&(arc, c)| (arc, c.round() as i64)).collect();
@@ -215,6 +220,31 @@ fn turns_of(tmesh: &TMesh, real: &[f64], offsets: &[f64]) -> (Vec<tubes::Turn>, 
         every.push(turn);
     }
     (every, held)
+}
+
+/// Prints where each turn of `every` that `x` leaves shifted starts, and
+/// how far it was shifted by the real lengths.
+fn debug_turns(tmesh: &TMesh, every: &[tubes::Turn], x: &[i64], real: &[f64], scale: f64, held: &[&tubes::Turn]) {
+    let lengths: Vec<f64> = x.iter().map(|&length| length as f64).collect();
+    for turn in every {
+        let left = tubes::value(&turn.shift, &lengths);
+        if left.abs() < 0.5 {
+            continue;
+        }
+        let first = tmesh.patches[turn.patch].boundary[0] as usize / 2;
+        let at = tmesh.nodes[tmesh.arcs[first].nodes[0] as usize].position;
+        let kept = held.iter().any(|h| std::ptr::eq(*h, turn) || h.shift == turn.shift);
+        eprintln!(
+            "  shifted {:+3.0}: round {:6.1} real shift {:+6.2} at ({:+.3}, {:+.3}, {:+.3}){}",
+            left,
+            scale * turn.around,
+            scale * tubes::value(&turn.shift, real),
+            at.x,
+            at.y,
+            at.z,
+            if kept { " held" } else { "" }
+        );
+    }
 }
 
 impl WalkCancelling {
@@ -296,6 +326,9 @@ impl WalkCancelling {
         report.moves += effort.moves;
         if debug {
             eprintln!("  repaired in {:.1} s: {} walks taken, {} turned down", clock.elapsed().as_secs_f64(), effort.moves, effort.misjudged);
+        }
+        if std::env::var_os("OPENCLARE_DEBUG_TURNS").is_some() {
+            debug_turns(tmesh, every, &x, real, scale, &held);
         }
         let quads = count_quads(tmesh, &x);
         (x, scale, quads, lower)
@@ -425,20 +458,25 @@ impl Quantizer for WalkCancelling {
             // Lengths that leave the structure broken are not mended by
             // closing loops, and each way would cost as long a search again.
             let sound = best.0.is_finite() && lattice::build(tmesh, &best.1.0).defects(tmesh).is_empty();
-            for offsets in CLOSE_WAYS.iter().filter(|_| sound) {
+            // The same turns held twice would give the same lengths.
+            let mut tried_held: Vec<Vec<Vec<(usize, i64)>>> = Vec::new();
+            for &(offsets, lean) in CLOSE_WAYS.iter().filter(|_| sound) {
                 let clock = std::time::Instant::now();
-                let (found, held) = turns_of(tmesh, &real, offsets);
+                let (found, held) = turns_of(tmesh, &real, offsets, lean);
                 if std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some() {
-                    eprintln!("turns from {offsets:?}: {} found, {} held, {:.1} s", found.len(), held.len(), clock.elapsed().as_secs_f64());
+                    eprintln!("turns from {offsets:?} leaning up to {lean}: {} found, {} held, {:.1} s", found.len(), held.len(), clock.elapsed().as_secs_f64());
                 }
-                if held.is_empty() {
+                let key: Vec<Vec<(usize, i64)>> =
+                    held.iter().map(|turn| turn.shift.iter().map(|&(arc, c)| (arc, c.round() as i64)).collect()).collect();
+                if held.is_empty() || tried_held.contains(&key) {
                     continue;
                 }
+                tried_held.push(key);
                 report.turns = report.turns.max(found.len());
                 let tried = self.closed_search(tmesh, &network, &real, request, &mut report, &found, &held);
                 let spirals = spirals_of(&tried.0);
                 if std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some() {
-                    eprintln!("closing from {offsets:?}: spirals {:.3} (best so far {:.3})", spirals, best.0);
+                    eprintln!("closing from {offsets:?} leaning up to {lean}: spirals {:.3} (best so far {:.3})", spirals, best.0);
                 }
                 if spirals < best.0 - 1e-9 && tried.2.abs_diff(wanted) <= allowed {
                     report.turns_held = held.len();
@@ -469,13 +507,16 @@ impl Quantizer for WalkCancelling {
 }
 
 /// A way round that comes back more than this beside itself, in quad edges,
-/// and no more than this share of its way round (beyond, it goes round
+/// and no more than a share of its way round (beyond, it goes round
 /// singularities rather than a part), is held to come back onto itself.
 const TURN_SHIFT: f64 = 0.05;
-const TURN_LEAN: f64 = 0.05;
-/// The places along the sides of the rectangles the ways round are looked
-/// for from, in each of the ways of closing them tried.
-const CLOSE_WAYS: &[&[f64]] = &[&[0.5], &[0.2, 0.5, 0.8]];
+/// The ways of closing them tried: the places along the sides of the
+/// rectangles the ways round are looked for from, and that share. A limb
+/// whose field twists leans more than a body whose field is merely tilted;
+/// the larger share holds more turns, which helps on some shapes and not
+/// on others, so both are tried.
+const CLOSE_WAYS: &[(&[f64], f64)] =
+    &[(&[0.5], 0.05), (&[0.2, 0.5, 0.8], 0.05), (&[0.5], 0.12), (&[0.2, 0.5, 0.8], 0.12)];
 /// The lean given to the search for turns still shifted, per unit of shift.
 const REPAIR_LEAN: f64 = 0.5;
 /// Most walks judged in the repair: each costs building the quad mesh.
