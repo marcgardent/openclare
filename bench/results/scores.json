@@ -8255,15 +8255,15 @@
     "validity": 0.0
    },
    "openclare": {
-    "alignment": null,
-    "budget": null,
-    "fidelity": null,
+    "alignment": 53.46411467348056,
+    "budget": 0.0,
+    "fidelity": 9.86633176618072,
     "loops": null,
-    "overall": 0.0,
-    "quads": null,
-    "shape": null,
-    "singularities": null,
-    "speed": null,
+    "overall": 34.20912541341817,
+    "quads": 2193,
+    "shape": 85.05757987466492,
+    "singularities": 75.67259461924304,
+    "speed": 0.0,
     "structure": null,
     "validity": 0.0
    },
@@ -10289,17 +10289,17 @@
     "validity": 100.0
    },
    "openclare": {
-    "alignment": 70.48125809917565,
-    "budget": 93.45,
-    "fidelity": 80.26129526458422,
-    "loops": 54.842343820491486,
-    "overall": 60.48818858708656,
-    "quads": 7869,
+    "alignment": 69.85252658714026,
+    "budget": 97.55,
+    "fidelity": 79.93065391111554,
+    "loops": 49.400407068276195,
+    "overall": 81.59686587478107,
+    "quads": 7951,
     "shape": 100.0,
     "singularities": 100.0,
-    "speed": 47.03713682334353,
-    "structure": 17.09238785106113,
-    "validity": 0.0
+    "speed": 42.656383977496084,
+    "structure": 14.224625833228522,
+    "validity": 100.0
    },
    "openclare-matched": {
     "alignment": 74.42752225718665,
@@ -10310,7 +10310,7 @@
     "quads": 13817,
     "shape": 100.0,
     "singularities": 100.0,
-    "speed": 30.90544743648691,
+    "speed": 27.068036138083016,
     "structure": 14.605196497068828,
     "validity": 100.0
    },
@@ -10323,7 +10323,7 @@
     "quads": 7846,
     "shape": 100.0,
     "singularities": 100.0,
-    "speed": 51.72080881037985,
+    "speed": 51.55558794842998,
     "structure": 30.945704817741525,
     "validity": 100.0
    },

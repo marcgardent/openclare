@@ -336,28 +336,28 @@ Failures: quadriflow: cancelled.
 
 | | quadriflow | autoremesher | instant-meshes | integer-grid | openclare-uniform | openclare | quadremesher | quadremesher-uniform | quadremesher-as-made | openclare-matched | handmade | openclare-as-handmade |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| **Valid meshes (V)** | 4/5 | 0/1 | 1/5 | 1/1 | 1/1 | 0/1 | 1/1 | 0/1 | 1/1 | 1/1 | 0/0 | 0/0 |
-| Quads made | 7781 | 2740 | 7933 | 7345 | 7846 | 7869 | 13714 | 6947 | 13714 | 13817 | — | — |
+| **Valid meshes (V)** | 4/5 | 0/1 | 1/5 | 1/1 | 1/1 | 1/1 | 1/1 | 0/1 | 1/1 | 1/1 | 0/0 | 0/0 |
+| Quads made | 7781 | 2740 | 7933 | 7345 | 7846 | 7951 | 13714 | 6947 | 13714 | 13817 | — | — |
 | Irregular vertices (S) | 112 | 109 | 490 | 173 | 168 | 279 | 244 | 247 | 244 | 355 | — | — |
 | … of which above the minimum | — | — | — | — | — | — | — | — | — | — | — | — |
-| Base complex patches (C) | 4991 | — | 7797 | 5208 | 5418 | 6524 | 11709 | — | 11709 | 11799 | — | — |
-| Alignment, degrees (A) | 17.56 | 15.73 | 18.65 | 13.30 | 12.80 | 12.28 | 10.64 | 12.69 | 10.91 | 11.71 | — | — |
-| Mean angle deviation, degrees (F) | 7.80 | 10.26 | 6.63 | 8.59 | 5.29 | 6.04 | 8.15 | 8.38 | 8.15 | 5.90 | — | — |
-| Angle deviation, 95th percentile (F) | 22.58 | 29.98 | 23.27 | 23.17 | 14.86 | 16.59 | 22.38 | 23.18 | 22.38 | 15.73 | — | — |
-| Mean aspect ratio (F) | 1.257 | 1.889 | 1.241 | 1.297 | 1.254 | 1.282 | 1.879 | 1.380 | 1.879 | 1.284 | — | — |
-| Area variation (F) | 0.245 | 0.652 | 0.210 | 0.264 | 0.314 | 0.512 | 0.651 | 0.279 | 0.651 | 0.462 | — | — |
-| Hausdorff, ‰ of the diagonal (H) | 31.29 | 25.08 | 29.67 | 21.23 | 15.24 | 10.46 | 4.22 | 10.31 | 4.22 | 10.37 | — | — |
-| Mean distance, ‰ (H) | 0.581 | 2.010 | 0.629 | 0.483 | 0.352 | 0.282 | 0.310 | 0.598 | 0.310 | 0.170 | — | — |
-| Thin parts: mean distance, % of a quad edge (V) | 24.5 | 54.4 | 38.5 | 34.4 | 22.8 | 9.3 | 3.9 | 14.2 | 5.1 | 11.0 | — | — |
+| Base complex patches (C) | 4991 | — | 7797 | 5208 | 5418 | 6820 | 11709 | — | 11709 | 11799 | — | — |
+| Alignment, degrees (A) | 17.56 | 15.73 | 18.65 | 13.30 | 12.80 | 12.37 | 10.64 | 12.69 | 10.91 | 11.71 | — | — |
+| Mean angle deviation, degrees (F) | 7.80 | 10.26 | 6.63 | 8.59 | 5.29 | 5.71 | 8.15 | 8.38 | 8.15 | 5.90 | — | — |
+| Angle deviation, 95th percentile (F) | 22.58 | 29.98 | 23.27 | 23.17 | 14.86 | 16.65 | 22.38 | 23.18 | 22.38 | 15.73 | — | — |
+| Mean aspect ratio (F) | 1.257 | 1.889 | 1.241 | 1.297 | 1.254 | 1.266 | 1.879 | 1.380 | 1.879 | 1.284 | — | — |
+| Area variation (F) | 0.245 | 0.652 | 0.210 | 0.264 | 0.314 | 0.526 | 0.651 | 0.279 | 0.651 | 0.462 | — | — |
+| Hausdorff, ‰ of the diagonal (H) | 31.29 | 25.08 | 29.67 | 21.23 | 15.24 | 10.48 | 4.22 | 10.31 | 4.22 | 10.37 | — | — |
+| Mean distance, ‰ (H) | 0.581 | 2.010 | 0.629 | 0.483 | 0.352 | 0.279 | 0.310 | 0.598 | 0.310 | 0.170 | — | — |
+| Thin parts: mean distance, % of a quad edge (V) | 24.5 | 54.4 | 38.5 | 34.4 | 22.8 | 9.6 | 3.9 | 14.2 | 5.1 | 11.0 | — | — |
 | Volume kept, % of the source (V) | — | — | — | — | — | — | — | — | — | — | — | — |
-| Edges on closed loops, % (L) | 0.0 | — | — | — | 5.3 | 3.0 | 3.3 | — | — | 0.7 | — | — |
-| Edges on spiralling loops, % (L) | 3.1 | — | — | — | 3.9 | 2.2 | 9.1 | — | — | 5.5 | — | — |
-| Spiralling loops (L) | 5 | — | — | — | 6 | 4 | 17 | — | — | 15 | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 74.6 | — | — | — | 79.3 | 88.6 | 83.4 | — | — | 86.8 | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 404 | — | — | — | 197 | 183 | 467 | — | — | 365 | — | — |
+| Edges on closed loops, % (L) | 0.0 | — | — | — | 5.3 | 1.1 | 3.3 | — | — | 0.7 | — | — |
+| Edges on spiralling loops, % (L) | 3.1 | — | — | — | 3.9 | 3.5 | 9.1 | — | — | 5.5 | — | — |
+| Spiralling loops (L) | 5 | — | — | — | 6 | 8 | 17 | — | — | 15 | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 74.6 | — | — | — | 79.3 | 89.2 | 83.4 | — | — | 86.8 | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 404 | — | — | — | 197 | 276 | 467 | — | — | 365 | — | — |
 | Edges on loops from a border to a border, % (L) | 19.8 | — | — | — | 11.4 | 6.2 | 4.2 | — | — | 7.0 | — | — |
-| Off budget, % (N) | 2.7 | 65.8 | 0.8 | 8.2 | 1.9 | 1.6 | 71.4 | 13.2 | 0.0 | 0.8 | — | — |
-| Time, seconds (T) | 6.02 | 2.44 | 0.92 | 36.84 | 7.22 | 8.74 | 9.49 | 8.46 | 9.49 | 16.93 | — | — |
+| Off budget, % (N) | 2.7 | 65.8 | 0.8 | 8.2 | 1.9 | 0.6 | 71.4 | 13.2 | 0.0 | 0.8 | — | — |
+| Time, seconds (T) | 6.02 | 2.44 | 0.92 | 36.84 | 7.27 | 10.46 | 9.49 | 8.46 | 9.49 | 19.81 | — | — |
 
 ## rose (organic)
 
@@ -936,7 +936,7 @@ Number of models on which each tool has the best median, calibration shapes excl
 | Alignment, degrees (A) | 0 | 0 | 0 | 0 | 0 | 1 | 10 | 0 | 2 | 4 | 0 | 0 |
 | Mean angle deviation, degrees (F) | 0 | 1 | 6 | 0 | 1 | 2 | 0 | 0 | 0 | 5 | 0 | 0 |
 | Mean aspect ratio (F) | 1 | 0 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
-| Valid meshes (V) | 33/75 | 4/15 | 50/75 | 8/15 | 14/15 | 13/15 | 12/15 | 9/15 | 12/15 | 14/15 | 0/2 | 2/2 |
+| Valid meshes (V) | 33/75 | 4/15 | 50/75 | 8/15 | 14/15 | 14/15 | 12/15 | 9/15 | 12/15 | 14/15 | 0/2 | 2/2 |
 
 ### mechanical (4 models)
 
