@@ -623,6 +623,17 @@ fn centroid(mesh: &PolyMesh, face: &[u32]) -> Vec3 {
     face.iter().map(|&v| mesh.positions[v as usize]).sum::<Vec3>() / face.len() as f64
 }
 
+/// Faces of `mesh` that face away from `source` all round them, or have no
+/// area: the ones [`measure`] counts as inverted or degenerate.
+pub fn folded_faces(source: &TriMesh, surface: &Bvh, mesh: &PolyMesh) -> usize {
+    let (min, max) =
+        source.positions.iter().fold((Vec3::INFINITY, Vec3::NEG_INFINITY), |(lo, hi), &p| (lo.min(p), hi.max(p)));
+    let diagonal = (max - min).length().max(f64::MIN_POSITIVE);
+    let mut metrics = Metrics::default();
+    orientation(source, surface, mesh, diagonal, &mut metrics);
+    metrics.inverted_faces + metrics.degenerate_faces
+}
+
 fn orientation(source: &TriMesh, surface: &Bvh, mesh: &PolyMesh, diagonal: f64, metrics: &mut Metrics) {
     let negligible = 1e-12 * diagonal * diagonal;
     for face in &mesh.faces {
