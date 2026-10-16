@@ -319,13 +319,57 @@ impl WalkCancelling {
                 .filter(|&(_, &delta)| delta != 0)
                 .map(|(arc, &delta)| plain.of(arc, x[arc] + delta) - plain.of(arc, x[arc]))
                 .sum();
-            then < now - 0.5 && cost < REPAIR_PRICE * (now - then) && lattice::build(tmesh, &moved).defects(tmesh).is_empty()
+            let sound = lattice::build(tmesh, &moved).defects(tmesh).is_empty();
+            if std::env::var_os("OPENCLARE_DEBUG_REPAIR").is_some() {
+                let size = change.iter().filter(|&&d| d != 0).count();
+                eprintln!("    walk of {size} arcs: shift {now:.1} -> {then:.1}, cost {cost:.2}, sound {sound}");
+            }
+            then < now - 0.5 && cost < REPAIR_PRICE * (now - then) && sound
         };
         let mut effort = flow::Effort::default();
         network.improve_judged(&mut x, &leant, 1, REPAIR_WALKS, &mut effort, &mut judge);
         report.moves += effort.moves;
         if debug {
             eprintln!("  repaired in {:.1} s: {} walks taken, {} turned down", clock.elapsed().as_secs_f64(), effort.moves, effort.misjudged);
+        }
+        // Then each turn held that is still shifted, one at a time: a lean
+        // on its arcs alone, a walk taken if it shifts that turn less and
+        // the others not more.
+        let clock = std::time::Instant::now();
+        let mut effort = flow::Effort::default();
+        for turn in &held {
+            let shift_of = |x: &[i64]| -> f64 { turn.shift.iter().map(|&(arc, c)| c * x[arc] as f64).sum() };
+            let left = shift_of(&x);
+            if left.abs() < 0.5 {
+                continue;
+            }
+            let mut bias = vec![0.0; real.len()];
+            for &(arc, c) in &turn.shift {
+                bias[arc] += AIMED_LEAN * left.signum() * c;
+            }
+            let leant = Cost { target: &target, weight: &weight, lower: &lower, bias: &bias };
+            let mut judge = |x: &[i64], change: &[i64]| -> bool {
+                let moved: Vec<i64> = x.iter().zip(change).map(|(a, b)| a + b).collect();
+                let now: f64 = left_by(x).iter().map(|w| w.abs()).sum();
+                let then: f64 = left_by(&moved).iter().map(|w| w.abs()).sum();
+                let cost: f64 = change
+                    .iter()
+                    .enumerate()
+                    .filter(|&(_, &delta)| delta != 0)
+                    .map(|(arc, &delta)| plain.of(arc, x[arc] + delta) - plain.of(arc, x[arc]))
+                    .sum();
+                let better = shift_of(&moved).abs() < shift_of(x).abs() - 0.5 && then <= now;
+                let sound = better && lattice::build(tmesh, &moved).defects(tmesh).is_empty();
+                if std::env::var_os("OPENCLARE_DEBUG_REPAIR").is_some() {
+                    eprintln!("    aimed walk: turn {:.0} -> {:.0}, all {now:.0} -> {then:.0}, cost {cost:.2}, sound {sound}", shift_of(x), shift_of(&moved));
+                }
+                better && cost < REPAIR_PRICE * (now - then).max(1.0) && sound
+            };
+            network.improve_judged(&mut x, &leant, 1, AIMED_WALKS, &mut effort, &mut judge);
+        }
+        report.moves += effort.moves;
+        if debug {
+            eprintln!("  aimed in {:.1} s: {} walks taken, {} turned down", clock.elapsed().as_secs_f64(), effort.moves, effort.misjudged);
         }
         if std::env::var_os("OPENCLARE_DEBUG_TURNS").is_some() {
             debug_turns(tmesh, every, &x, real, scale, &held);
@@ -446,7 +490,6 @@ impl Quantizer for WalkCancelling {
                 let mesh = crate::mesh::PolyMesh {
                     positions: vec![crate::math::Vec3::ZERO; lattice.sources.len()],
                     faces: lattice.quads.iter().map(|quad| quad.to_vec()).collect(),
-                    ..Default::default()
                 };
                 crate::metrics::edge_loops(&mesh).map_or(f64::INFINITY, |loops| loops.spiral_share)
             };
@@ -521,6 +564,10 @@ const CLOSE_WAYS: &[(&[f64], f64)] =
 const REPAIR_LEAN: f64 = 0.5;
 /// Most walks judged in the repair: each costs building the quad mesh.
 const REPAIR_WALKS: usize = 40;
+/// The lean given to the search for one turn held and still shifted, per
+/// unit of its shift, and the most walks tried for it.
+const AIMED_LEAN: f64 = 3.0;
+const AIMED_WALKS: usize = 8;
 /// Most the cost of the lengths may grow per unit of shift taken away.
 const REPAIR_PRICE: f64 = 2.0;
 
