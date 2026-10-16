@@ -204,7 +204,13 @@ fn turns_of(tmesh: &TMesh, real: &[f64], offsets: &[f64], lean: f64) -> (Vec<tub
                 at.x,
                 at.y,
                 at.z,
-                if turn.around > TURN_LONGEST * side { " too long" } else if shift.abs() > lean * turn.around { " leans too much" } else { "" }
+                if turn.around > TURN_LONGEST * side {
+                    " too long"
+                } else if shift.abs() > lean * turn.around {
+                    " leans too much"
+                } else {
+                    ""
+                }
             );
         }
         if turn.around > TURN_LONGEST * side || shift.abs() > lean * turn.around {
@@ -273,7 +279,8 @@ impl WalkCancelling {
             projections += 1;
             let Some(closed) = tubes::closed(tmesh, real, &weight, &held, &vec![0.0; held.len()]) else { break };
             let left: Vec<f64> = held.iter().map(|turn| tubes::value(&turn.shift, &closed).abs()).collect();
-            let (worst, at) = left.iter().enumerate().fold((0.0, 0), |(w, a), (k, &v)| if v > w { (v, k) } else { (w, a) });
+            let (worst, at) =
+                left.iter().enumerate().fold((0.0, 0), |(w, a), (k, &v)| if v > w { (v, k) } else { (w, a) });
             if worst <= 1e-3 {
                 aimed = closed;
                 break;
@@ -281,7 +288,11 @@ impl WalkCancelling {
             held.remove(at);
         }
         if debug {
-            eprintln!("  projected {projections} times, {} turns kept, {:.1} s", held.len(), clock.elapsed().as_secs_f64());
+            eprintln!(
+                "  projected {projections} times, {} turns kept, {:.1} s",
+                held.len(),
+                clock.elapsed().as_secs_f64()
+            );
         }
         let clock = std::time::Instant::now();
         let (mut x, scale, _, lower) = self.search(tmesh, network, &aimed, request, report);
@@ -330,7 +341,12 @@ impl WalkCancelling {
         network.improve_judged(&mut x, &leant, 1, REPAIR_WALKS, &mut effort, &mut judge);
         report.moves += effort.moves;
         if debug {
-            eprintln!("  repaired in {:.1} s: {} walks taken, {} turned down", clock.elapsed().as_secs_f64(), effort.moves, effort.misjudged);
+            eprintln!(
+                "  repaired in {:.1} s: {} walks taken, {} turned down",
+                clock.elapsed().as_secs_f64(),
+                effort.moves,
+                effort.misjudged
+            );
         }
         // Then each turn held that is still shifted, one at a time: a lean
         // on its arcs alone, a walk taken if it shifts that turn less and
@@ -361,7 +377,11 @@ impl WalkCancelling {
                 let better = shift_of(&moved).abs() < shift_of(x).abs() - 0.5 && then <= now;
                 let sound = better && lattice::build(tmesh, &moved).defects(tmesh).is_empty();
                 if std::env::var_os("OPENCLARE_DEBUG_REPAIR").is_some() {
-                    eprintln!("    aimed walk: turn {:.0} -> {:.0}, all {now:.0} -> {then:.0}, cost {cost:.2}, sound {sound}", shift_of(x), shift_of(&moved));
+                    eprintln!(
+                        "    aimed walk: turn {:.0} -> {:.0}, all {now:.0} -> {then:.0}, cost {cost:.2}, sound {sound}",
+                        shift_of(x),
+                        shift_of(&moved)
+                    );
                 }
                 better && cost < REPAIR_PRICE * (now - then).max(1.0) && sound
             };
@@ -369,7 +389,12 @@ impl WalkCancelling {
         }
         report.moves += effort.moves;
         if debug {
-            eprintln!("  aimed in {:.1} s: {} walks taken, {} turned down", clock.elapsed().as_secs_f64(), effort.moves, effort.misjudged);
+            eprintln!(
+                "  aimed in {:.1} s: {} walks taken, {} turned down",
+                clock.elapsed().as_secs_f64(),
+                effort.moves,
+                effort.misjudged
+            );
         }
         if std::env::var_os("OPENCLARE_DEBUG_TURNS").is_some() {
             debug_turns(tmesh, every, &x, real, scale, &held);
@@ -482,7 +507,12 @@ impl Quantizer for WalkCancelling {
         let clock = std::time::Instant::now();
         let plain = self.search(tmesh, &network, &real, request, &mut report);
         if std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some() {
-            eprintln!("plain search {:.1} s, {} arcs, {} patches", clock.elapsed().as_secs_f64(), arcs, tmesh.patches.len());
+            eprintln!(
+                "plain search {:.1} s, {} arcs, {} patches",
+                clock.elapsed().as_secs_f64(),
+                arcs,
+                tmesh.patches.len()
+            );
         }
         let (x, scale, quads, lower) = if close {
             let spirals_of = |x: &[i64]| -> f64 {
@@ -507,10 +537,17 @@ impl Quantizer for WalkCancelling {
                 let clock = std::time::Instant::now();
                 let (found, held) = turns_of(tmesh, &real, offsets, lean);
                 if std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some() {
-                    eprintln!("turns from {offsets:?} leaning up to {lean}: {} found, {} held, {:.1} s", found.len(), held.len(), clock.elapsed().as_secs_f64());
+                    eprintln!(
+                        "turns from {offsets:?} leaning up to {lean}: {} found, {} held, {:.1} s",
+                        found.len(),
+                        held.len(),
+                        clock.elapsed().as_secs_f64()
+                    );
                 }
-                let key: Vec<Vec<(usize, i64)>> =
-                    held.iter().map(|turn| turn.shift.iter().map(|&(arc, c)| (arc, c.round() as i64)).collect()).collect();
+                let key: Vec<Vec<(usize, i64)>> = held
+                    .iter()
+                    .map(|turn| turn.shift.iter().map(|&(arc, c)| (arc, c.round() as i64)).collect())
+                    .collect();
                 if held.is_empty() || tried_held.contains(&key) {
                     continue;
                 }
@@ -519,7 +556,10 @@ impl Quantizer for WalkCancelling {
                 let tried = self.closed_search(tmesh, &network, &real, request, &mut report, &found, &held);
                 let spirals = spirals_of(&tried.0);
                 if std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some() {
-                    eprintln!("closing from {offsets:?} leaning up to {lean}: spirals {:.3} (best so far {:.3})", spirals, best.0);
+                    eprintln!(
+                        "closing from {offsets:?} leaning up to {lean}: spirals {:.3} (best so far {:.3})",
+                        spirals, best.0
+                    );
                 }
                 if spirals < best.0 - 1e-9 && tried.2.abs_diff(wanted) <= allowed {
                     report.turns_held = held.len();

@@ -71,9 +71,11 @@ fn rims(tmesh: &TMesh) -> Vec<Option<Rim>> {
         .iter()
         .map(|patch| {
             let side_of = patch.side_of_each()?;
-            let first = (0..patch.boundary.len()).find(|&k| side_of[k] == 0 && side_of[(k + side_of.len() - 1) % side_of.len()] == 3)?;
+            let first = (0..patch.boundary.len())
+                .find(|&k| side_of[k] == 0 && side_of[(k + side_of.len() - 1) % side_of.len()] == 3)?;
             let count = patch.boundary.len();
-            let mut rim = Rim { halves: Vec::new(), start: Vec::new(), start_expression: Vec::new(), side_start: [0; 4] };
+            let mut rim =
+                Rim { halves: Vec::new(), start: Vec::new(), start_expression: Vec::new(), side_start: [0; 4] };
             let (mut at, mut at_expression) = ([0.0, 0.0], [Vec::new(), Vec::new()]);
             for step in 0..count {
                 let k = (first + step) % count;
@@ -129,7 +131,9 @@ pub(super) fn turns(tmesh: &TMesh, steps_per_patch: usize, offsets: &[f64], long
                 continue;
             }
             for &share in offsets {
-                if let Some(turn) = go_round(tmesh, &rims, &place, start_patch, start_side, share * side_length, steps, longest) {
+                if let Some(turn) =
+                    go_round(tmesh, &rims, &place, start_patch, start_side, share * side_length, steps, longest)
+                {
                     found.push(turn);
                 }
             }
@@ -196,8 +200,7 @@ fn go_round(
         let next_rim = rims[next].as_ref()?;
         let next_side = next_rim.halves[k_next].1;
         let next_begin = next_rim.side_start[next_side];
-        let before_twin: f64 =
-            (next_begin..k_next).map(|m| tmesh.arcs[next_rim.halves[m].0 as usize / 2].length).sum();
+        let before_twin: f64 = (next_begin..k_next).map(|m| tmesh.arcs[next_rim.halves[m].0 as usize / 2].length).sum();
         crossings.push((patch, k, next, k_next));
         quarter_turns = (quarter_turns + (next_side + 2 + 4 - opposite) % 4) % 4;
         (patch, side, offset) = (next, next_side, before_twin + (arc.length - into));
