@@ -44,7 +44,8 @@ import bpy
 
 ROOT = Path(__file__).resolve().parent.parent
 # The settings of the add-on a run depends on, written with its report.
-SETTINGS = ["preset", "target", "quads", "largest_quad", "smallest_quad", "adaptive_size", "density_group", "density_factor"]
+SETTINGS = ["target", "quads", "largest_quad", "smallest_quad", "adaptive_size", "quads_around", "use_hard_edges",
+            "hard_edge_angle", "follow_curvature", "fewer_irregular", "volume_fit", "density_group", "density_factor"]
 EXPORTS = ["grid_uv", "atlas_uv", "sharp_edges", "materials", "creases"]
 # Lines written at a time: a sculpt has millions.
 CHUNK = 200_000
@@ -148,16 +149,18 @@ def write_source(original, settings, directory):
 def main(options):
     openclare = the_addon()
     scene = bpy.context.scene
-    settings = scene.openclare
     if bpy.context.mode != "OBJECT":
         bpy.ops.object.mode_set(mode="OBJECT")
     original = openclare.object_to_remesh(bpy.context)
     if original is None:
         meshes = sorted(o.name for o in scene.objects if o.type == "MESH")
         raise Failure(
-            f"{bpy.data.filepath or 'the scene'} has no object to remesh: none is chosen in the openclare panel "
-            f"and no mesh is active (meshes of the scene: {', '.join(meshes) or 'none'})"
+            f"{bpy.data.filepath or 'the scene'} has no object to remesh: no mesh is active "
+            f"(meshes of the scene: {', '.join(meshes) or 'none'})"
         )
+    # The settings of the object (those its scene kept, for a scene of 0.1,
+    # given to it when the add-on was registered).
+    settings = original.openclare
     if options.quads is not None:
         settings.quads = options.quads
     directory = Path(options.out).resolve()

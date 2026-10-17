@@ -6,7 +6,10 @@ Exits with an error if anything is not as it should be.
 """
 
 import sys
+import tempfile
 from pathlib import Path
+
+import time
 
 import bpy
 
@@ -23,8 +26,15 @@ modifier = original.modifiers.new("subdivide", "SUBSURF")
 modifier.levels = 2
 triangles_before = len(original.data.polygons)
 
-bpy.context.scene.openclare.preset = "organic"
-bpy.context.scene.openclare.quads = 800
+original.openclare.quads = 800
+
+
+def shape(settings, name):
+    """Gives `settings` the values of the shape `name` the add-on ships."""
+    for key, value in openclare.SHAPES[name].items():
+        setattr(settings, key, value)
+
+
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 
 remeshed = bpy.context.active_object
@@ -93,7 +103,7 @@ bpy.context.view_layer.objects.active = original
 original.select_set(True)
 group = original.vertex_groups.new(name="more here")
 group.add([vertex.index for vertex in original.data.vertices if vertex.co.z > 0.0], 1.0, "REPLACE")
-settings = bpy.context.scene.openclare
+settings = original.openclare
 settings.adaptive_size = 0.0
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 unpainted = share_on_top(bpy.context.active_object)
@@ -108,7 +118,7 @@ print("DENSITY share of the quads on top: %.2f unpainted, %.2f painted" % (unpai
 assert share_on_top(painted) > unpainted + 0.1, "the painted weights changed nothing"
 assert abs(len(painted.data.polygons) - 800) < 80, "the paint changed the number of quads"
 
-# A group that is not there is said, and a preset brings its own adaptive size.
+# A group that is not there is said.
 bpy.context.active_object.select_set(False)
 bpy.context.view_layer.objects.active = original
 original.select_set(True)
@@ -120,21 +130,67 @@ except RuntimeError as error:
     assert "no such group" in str(error)
 assert not openclare.last_report, "a run that failed left a report"
 settings.density_group = ""
-settings.preset = "hard-surface"
-assert settings.adaptive_size == 0.0
-settings.preset = "organic"
-assert settings.adaptive_size == 50.0
+
+# The presets of the shape: those the add-on ships set what the engine's
+# presets of the same names are, and are applied the way the menu of the
+# panel applies them.
+import math
+import os
+
+shipped = os.path.join(openclare.ADDON_FOLDER, "presets", openclare.SHAPE_PRESETS)
+assert shipped in bpy.utils.preset_paths(openclare.SHAPE_PRESETS), bpy.utils.preset_paths(openclare.SHAPE_PRESETS)
+files = {"organic": "Organic.py", "animation": "Animation.py", "hard-surface": "Hard_Surface.py"}
+assert sorted(f for f in os.listdir(shipped) if f.endswith(".py")) == sorted(files.values()), os.listdir(shipped)
+for name, file in files.items():
+    with bpy.context.temp_override(object=original):
+        assert bpy.ops.script.execute_preset(
+            filepath=os.path.join(shipped, file), menu_idname="OPENCLARE_PT_shape_presets"
+        ) == {"FINISHED"}
+    for key, value in openclare.SHAPES[name].items():
+        assert abs(getattr(settings, key) - value) < 1e-6, (name, key, getattr(settings, key), value)
+# What the engine is given: the hard edges at 30 degrees, or none.
+shape(settings, "organic")
+assert openclare.shape_of(settings)["edge_angle"] == "none" and openclare.shape_of(settings)["alignment"] == 0.05
+shape(settings, "hard-surface")
+assert openclare.shape_of(settings)["edge_angle"] == 30.0 and openclare.shape_of(settings)["quads_around"] == 0
+# Saved, removed; those of the add-on cannot be.
+with tempfile.TemporaryDirectory() as folder:
+    saved = os.path.join(folder, "presets", openclare.SHAPE_PRESETS)
+    real_resource = bpy.utils.user_resource
+    bpy.utils.user_resource = lambda kind, path="", create=False: (
+        os.makedirs(os.path.join(folder, path), exist_ok=True) or os.path.join(folder, path)
+    )
+    try:
+        settings.quads_around = 11
+        with bpy.context.temp_override(object=original):
+            assert bpy.ops.object.openclare_shape_preset_add(name="Eleven Around") == {"FINISHED"}
+        written = open(os.path.join(saved, "Eleven_Around.py")).read()
+        assert "settings.quads_around = 11" in written and "settings = bpy.context.object.openclare" in written
+        assert "settings.quads " not in written and "settings.export" not in written, written
+    finally:
+        bpy.utils.user_resource = real_resource
+# No setting takes keyframes.
+assert not any(p.is_animatable for p in openclare.OpenclareSettings.bl_rna.properties if p.identifier != "rna_type")
+shape(settings, "organic")
 
 # Export: the result carries its two UV layers, the seams of the atlas and,
 # on a shape with hard edges, those edges marked sharp.
 def alone(target):
+    """Makes `target` the one selected and active object. A mesh is given
+    the settings of the last one: the sections below go on from what was
+    set before, each object keeping its own being checked apart."""
+    global settings
     for other in bpy.context.selected_objects:
         other.select_set(False)
     bpy.context.view_layer.objects.active = target
     target.select_set(True)
+    if target.type == "MESH":
+        if settings.id_data != target:
+            openclare.copy_settings(settings, target.openclare)
+        settings = target.openclare
 
 alone(original)
-settings.preset = "organic"
+shape(settings, "organic")
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 mesh = bpy.context.active_object.data
 assert [layer.name for layer in mesh.uv_layers] == ["openclare grid", "openclare atlas"], list(mesh.uv_layers.keys())
@@ -153,7 +209,8 @@ cube = bpy.context.active_object
 cube.modifiers.new("subdivide", "SUBSURF").subdivision_type = "SIMPLE"
 cube.modifiers["subdivide"].levels = 4
 alone(cube)
-settings.preset, settings.quads = "hard-surface", 600
+shape(settings, "hard-surface")
+settings.quads = 600
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 mesh = bpy.context.active_object.data
 sharp = sum(edge.use_edge_sharp for edge in mesh.edges)
@@ -173,7 +230,8 @@ mesh = bpy.context.active_object.data
 assert len(mesh.uv_layers) == 0 and not any(edge.use_seam or edge.use_edge_sharp for edge in mesh.edges)
 assert "crease_edge" not in mesh.attributes
 settings.export_grid_uv = settings.export_atlas_uv = settings.export_sharp_edges = settings.export_creases = True
-settings.preset, settings.quads = "organic", 800
+shape(settings, "organic")
+settings.quads = 800
 
 # Curves: two circles drawn round a ball, each held on it by a Shrinkwrap.
 # One is put in the Guide category and the other in the Sharp one, with the
@@ -191,12 +249,23 @@ def circle_at(height):
     return circle
 
 
+def with_the_ball(circle):
+    """The circle selected, and the ball last: the active object, whose
+    panel the buttons are on."""
+    for other in bpy.context.selected_objects:
+        other.select_set(False)
+    circle.select_set(True)
+    ball.select_set(True)
+    bpy.context.view_layer.objects.active = ball
+
+
 def assign(circle, category):
-    alone(circle)
+    with_the_ball(circle)
     assert bpy.ops.object.openclare_curves_assign(category=category) == {"FINISHED"}
 
 
 loop, ridge = circle_at(0.3), circle_at(-0.3)
+alone(ball)
 assign(loop, "guide")
 assign(ridge, "sharp")
 guides, sharps = settings.guide_curves, settings.sharp_curves
@@ -221,6 +290,7 @@ assert list(guides.objects) == [loop] and list(sharps.objects) == [ridge]
 alone(ball)
 assert bpy.ops.object.openclare_curves_select(category="sharp", select=True) == {"FINISHED"}
 assert ridge.select_get() and not loop.select_get()
+assert bpy.context.view_layer.objects.active == ball, "the ball is no longer active: its panel would go"
 assert bpy.ops.object.openclare_curves_select(category="sharp", select=False) == {"FINISHED"}
 assert not ridge.select_get()
 
@@ -248,7 +318,7 @@ assert all(weights[edge.index].value == 1.0 for edge in sharp), "a sharp edge is
 assert sum(1 for weight in weights if weight.value > 0) == len(sharp)
 
 # Remove takes a curve out of its category and gives it back its colour.
-alone(ridge)
+with_the_ball(ridge)
 assert bpy.ops.object.openclare_curves_remove(category="guide") == {"FINISHED"}
 assert list(sharps.objects) == [ridge], "taken out of a category it was not in"
 assert bpy.ops.object.openclare_curves_remove(category="sharp") == {"FINISHED"}
@@ -347,6 +417,100 @@ alone(body)
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 assert len(bpy.context.active_object.data.polygons) < 0.5 * made
 settings.target, settings.largest_quad, settings.smallest_quad = "COUNT", 0.0, 0.0
+
+# Analysed: sizes proposed, the number of quads they make told at once, and
+# the sizes shown in colour on a copy while the object is hidden.
+alone(body)
+assert openclare.analysis_of(bpy.context, settings, body) is None
+assert bpy.ops.object.openclare_analyse() == {"FINISHED"}
+objects_before = len(bpy.data.objects)
+assert settings.target == "SIZE" and 0.0 < settings.smallest_quad <= settings.largest_quad, (
+    settings.smallest_quad, settings.largest_quad)
+held = openclare.analysis_of(bpy.context, settings, body)
+assert held is not None
+analysis, scale = held
+quads, below = openclare.counted(analysis, scale, settings.largest_quad, settings.smallest_quad)
+assert quads > 300 and 0.0 <= below <= 1.0, (quads, below)
+# Smaller quads, more of them, told without meshing anything. Not four
+# times as many: where the surface bends, the size follows the bounds only
+# by the part the adaptivity leaves them (twice as many, measured).
+started = time.perf_counter()
+finer, _ = openclare.counted(analysis, scale, settings.largest_quad / 2.0, settings.smallest_quad / 2.0)
+assert finer > 1.5 * quads and time.perf_counter() - started < 0.5, (finer, quads)
+# The colours of the sizes, on the object itself, in an attribute of their
+# own made the active and rendered one; those that were are given back.
+painted = body.data.color_attributes.new("painted", "BYTE_COLOR", "CORNER")
+body.data.color_attributes.active_color_name = body.data.color_attributes.default_color_name = "painted"
+settings.show_sizes = True
+colours = body.data.color_attributes.get("openclare sizes")
+assert colours is not None and not body.hide_get(), "no colours of the sizes on the object"
+assert len(bpy.data.objects) == objects_before, "a copy was made"
+assert body.data.color_attributes.active_color_name == "openclare sizes"
+assert body.data.color_attributes.default_color_name == "openclare sizes"
+before = [tuple(colours.data[k].color) for k in range(0, len(colours.data), 97)]
+settings.largest_quad, settings.smallest_quad = settings.largest_quad / 3.0, settings.smallest_quad / 3.0
+after = [tuple(colours.data[k].color) for k in range(0, len(colours.data), 97)]
+assert before != after, "the colours did not follow the sizes"
+red = openclare.linear(openclare.COARSER)
+
+
+def wire_in_red():
+    return [
+        all(abs(a - b) < 1e-4 for a, b in zip(colours.data[v.index].color, red))
+        for v in body.data.vertices if v.co.x > 2.0
+    ]
+
+
+# The wire was proposed what its thickness calls for. With no quad smaller
+# than the largest, it is shown as coarser than its shape asks, in red.
+assert sum(wire_in_red()) < 0.1 * len(wire_in_red()), "the wire in red with the sizes proposed"
+settings.smallest_quad = settings.largest_quad
+wire_red = wire_in_red()
+assert sum(wire_red) > 0.5 * len(wire_red), f"{sum(wire_red)} of {len(wire_red)} vertices of the wire in red"
+# Unticked: the attribute goes, the painted one is active and rendered again.
+settings.show_sizes = False
+assert "openclare sizes" not in body.data.color_attributes
+assert body.data.color_attributes.active_color_name == "painted"
+assert body.data.color_attributes.default_color_name == "painted"
+# A subdivided object: its own vertices take the sizes of the nearest seen.
+subdivided = body.modifiers.new("subdivided", "SUBSURF")
+subdivided.levels = 1
+bpy.context.view_layer.update()
+assert bpy.ops.object.openclare_analyse() == {"FINISHED"}
+settings.show_sizes = True
+assert "openclare sizes" in body.data.color_attributes, "no colours on a subdivided object"
+settings.show_sizes = False
+body.modifiers.remove(subdivided)
+bpy.context.view_layer.update()
+assert bpy.ops.object.openclare_analyse() == {"FINISHED"}
+settings.show_sizes = True
+# Saved, the file holds no colours of the sizes; they are back after.
+import tempfile
+
+with tempfile.TemporaryDirectory() as folder:
+    saved_to = f"{folder}/saved.blend"
+    bpy.ops.wm.save_as_mainfile(filepath=saved_to, copy=True)
+    with bpy.data.libraries.load(saved_to) as (there, here):
+        here.meshes = [body.data.name]
+    kept = here.meshes[0]
+    assert "openclare sizes" not in kept.color_attributes and "painted" in kept.color_attributes
+    assert kept.color_attributes.active_color_name == "painted"
+    bpy.data.meshes.remove(kept)
+assert "openclare sizes" in body.data.color_attributes, "the colours did not come back after saving"
+# Remeshing takes the colours away.
+bpy.context.view_layer.objects.active = body
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+assert "openclare sizes" not in body.data.color_attributes and not settings.show_sizes
+assert body.data.color_attributes.active_color_name == "painted"
+body.data.color_attributes.remove(body.data.color_attributes["painted"])
+# Changed, the object asks to be analysed again.
+body.data.vertices[0].co.x += 0.01
+body.data.update()
+assert openclare.analysis_of(bpy.context, settings, body) is None
+settings.show_sizes = True
+assert not settings.show_sizes, "a preview without an analysis that holds"
+settings.target, settings.largest_quad, settings.smallest_quad = "COUNT", 0.0, 0.0
+print("SIZES", round(quads), "quads proposed,", round(100 * below), "% coarser than asked")
 settings.quads, settings.adaptive_size = 800, 50.0
 
 # Relief: the height of the original above the result subdivided, baked on
@@ -363,6 +527,7 @@ alone(globe)
 assert not bpy.ops.object.openclare_bake_relief.poll(), "nothing was remeshed from the ball itself"
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 quads = bpy.context.active_object
+alone(quads)
 assert quads.openclare_source == globe and bpy.ops.object.openclare_bake_relief.poll()
 settings.relief_levels, settings.relief_resolution = 2, "512"
 assert bpy.ops.object.openclare_bake_relief() == {"FINISHED"}
@@ -507,16 +672,71 @@ settings.quads, settings.adaptive_size = 800, 50.0
 bpy.ops.object.empty_add()
 assert not bpy.ops.object.openclare_remesh.poll()
 
-# Unless an object is chosen in the panel: it is the one remeshed, whatever
-# is active, and only a mesh can be chosen.
-settings.source = sheet
-assert bpy.ops.object.openclare_remesh.poll()
+# Each object keeps its own settings.
+bpy.ops.mesh.primitive_cube_add(location=(30.0, 0.0, 0.0))
+first = bpy.context.active_object
+bpy.ops.mesh.primitive_cube_add(location=(33.0, 0.0, 0.0))
+second = bpy.context.active_object
+first.openclare.quads, second.openclare.quads = 200, 500
+shape(first.openclare, "hard-surface")
+assert not second.openclare.use_hard_edges and first.openclare.quads == 200
+
+# The panel is in the Properties editor, on the tab of the mesh: for an
+# object to remesh, its settings; for a result, what it comes from.
+panels = (openclare.OPENCLARE_PT_panel, openclare.OPENCLARE_PT_curves, openclare.OPENCLARE_PT_export,
+          openclare.OPENCLARE_PT_relief)
+assert all((p.bl_space_type, p.bl_context) == ("PROPERTIES", "data") for p in panels)
+assert not hasattr(bpy.types, "VIEW3D_PT_openclare") and all(p.bl_region_type == "WINDOW" for p in panels)
+alone(second)
+second.openclare.quads = 500
+assert openclare.is_source(bpy.context) and openclare.OPENCLARE_PT_export.poll(bpy.context)
+assert not openclare.OPENCLARE_PT_relief.poll(bpy.context)
+assert not bpy.ops.object.openclare_remesh_again.poll()
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
-assert bpy.context.active_object.name.startswith(sheet.name) and bpy.context.active_object != sheet
-assert len(bpy.context.active_object.data.polygons) > 300
-settings.source = None
-bpy.ops.object.empty_add()
-assert not bpy.ops.object.openclare_remesh.poll()
+result = bpy.context.active_object
+assert openclare.source_of(result) == second and not openclare.is_source(bpy.context)
+assert openclare.OPENCLARE_PT_relief.poll(bpy.context) and not openclare.OPENCLARE_PT_export.poll(bpy.context)
+# How it went is kept on the result, and said by its panel.
+told = result[openclare.REPORT]
+assert int(told["quads"]) == len(result.data.polygons), dict(told)
+lines = openclare.report_lines(told)
+assert lines[0][0].startswith(f"{len(result.data.polygons)} quads in "), lines
+
+# Remeshed again, with the settings the original has now, in place: the
+# same object, name and place, a new mesh, its relief gone.
+made_before = len(result.data.polygons)
+result.modifiers.new(openclare.SUBDIVISION, "SUBSURF")
+result.location.x += 1.0
+second.openclare.quads = 1500
+objects_before = len(bpy.data.objects)
+assert bpy.ops.object.openclare_remesh_again() == {"FINISHED"}
+assert bpy.context.active_object == result and len(bpy.data.objects) == objects_before
+assert len(result.data.polygons) > 2 * made_before and int(result[openclare.REPORT]["quads"]) == len(result.data.polygons)
+assert result.location.x == 34.0 and openclare.SUBDIVISION not in result.modifiers
+assert result.data.name == f"{second.data.name}.quads", result.data.name
+# And its original selected from it.
+assert bpy.ops.object.openclare_select_original() == {"FINISHED"}
+assert bpy.context.active_object == second and not result.select_get()
+
+# A scene of openclare 0.1 kept the settings in the scene, naming the
+# object: on opening, that object takes them, and the scene keeps nothing.
+legacy = bpy.context.scene.openclare
+legacy.source, legacy.quads, legacy.preset, legacy.adaptive_size = first, 1234, "animation", 20.0
+openclare.adopt_scene_settings(bpy.context.scene)
+# The preset it named is turned into its values; its adaptive size is its own.
+assert (first.openclare.quads, first.openclare.fewer_irregular, first.openclare.adaptive_size) == (1234, 3.0, 20.0)
+assert not first.openclare.is_property_set("preset")
+assert second.openclare.quads == 1500, "an object not named took the settings"
+assert not legacy.is_property_set("quads") and legacy.source is None
+assert bpy.context.view_layer.objects.active == first
+# Naming none: each mesh that has no settings of its own takes them.
+bpy.ops.mesh.primitive_cube_add(location=(36.0, 0.0, 0.0))
+plain = bpy.context.active_object
+legacy.quads = 4321
+openclare.adopt_scene_settings(bpy.context.scene)
+assert plain.openclare.quads == 4321 and first.openclare.quads == 1234 and second.openclare.quads == 1500
+assert result.openclare.quads != 4321, "a result took settings to remesh"
+print("PANEL OK")
 
 # The engine is loaded from a copy named after what it holds: an add-on
 # updated in a Blender that has already used it does not get the engine it

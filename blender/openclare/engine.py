@@ -112,6 +112,20 @@ def library():
     lib.openclare_baked_report.argtypes = lib.openclare_baked_free.argtypes = [pointer]
     lib.openclare_baked_copy.restype = lib.openclare_baked_free.restype = None
     lib.openclare_baked_copy.argtypes = [pointer, pointer]
+    lib.openclare_analyse.restype = pointer
+    lib.openclare_analyse.argtypes = [pointer, size, pointer, size, ctypes.c_char_p, ctypes.c_char_p, pointer]
+    lib.openclare_analysis_ok.restype = ctypes.c_int32
+    lib.openclare_analysis_error.restype = text
+    lib.openclare_analysis_ok.argtypes = lib.openclare_analysis_error.argtypes = [pointer]
+    double = ctypes.POINTER(ctypes.c_double)
+    lib.openclare_analysis_proposal.restype = ctypes.c_int32
+    lib.openclare_analysis_proposal.argtypes = [pointer, double, double]
+    lib.openclare_analysis_count.restype = ctypes.c_int32
+    lib.openclare_analysis_count.argtypes = [pointer, ctypes.c_double, ctypes.c_double, double, double]
+    lib.openclare_analysis_vertices.restype = ctypes.c_int32
+    lib.openclare_analysis_vertices.argtypes = [pointer, ctypes.c_double, ctypes.c_double, pointer, pointer]
+    lib.openclare_analysis_free.restype = None
+    lib.openclare_analysis_free.argtypes = [pointer]
     _library = lib
     return lib
 
@@ -300,3 +314,69 @@ def bake_height(positions, normals, triangles, uvs, source_positions, source_tri
     finally:
         lib.openclare_baked_free(baked)
     return heights.reshape(int(height), int(width)), report
+
+
+class Analysis:
+    """What a shape calls for, measured once by the engine: how many quads a
+    largest and a smallest quad make of it is then told at once, as often as
+    wanted, in the units of the arrays it was given."""
+
+    def __init__(self, positions, triangles, preset, settings, density=None):
+        """`positions`: a numpy array of three 32-bit floats per vertex;
+        `triangles`: three unsigned 32-bit vertices per triangle; `settings`
+        maps setting names to values, on top of the `preset`; `density` is
+        None or one 32-bit float per vertex."""
+        import numpy
+
+        self._lib = library()
+        self._positions = numpy.ascontiguousarray(positions, dtype=numpy.float32).reshape(-1)
+        self._triangles = numpy.ascontiguousarray(triangles, dtype=numpy.uint32).reshape(-1)
+        self.vertices = len(self._positions) // 3
+        if density is not None and (density.dtype != numpy.float32 or len(density) != self.vertices):
+            raise EngineError(f"{len(density)} weights of type {density.dtype} for {self.vertices} vertices")
+        lines = "".join(f"{key} = {value}\n" for key, value in settings.items())
+        self._handle = self._lib.openclare_analyse(
+            self._positions.ctypes.data, self.vertices, self._triangles.ctypes.data, len(self._triangles) // 3,
+            preset.encode(), lines.encode(), None if density is None else density.ctypes.data,
+        )
+        if not self._lib.openclare_analysis_ok(self._handle):
+            error = self._lib.openclare_analysis_error(self._handle).decode()
+            self._lib.openclare_analysis_free(self._handle)
+            self._handle = None
+            raise EngineError(error)
+
+    def __del__(self):
+        if getattr(self, "_handle", None):
+            self._lib.openclare_analysis_free(self._handle)
+            self._handle = None
+
+    def proposal(self):
+        """A largest and a smallest quad to start from."""
+        largest, smallest = ctypes.c_double(), ctypes.c_double()
+        if not self._lib.openclare_analysis_proposal(self._handle, ctypes.byref(largest), ctypes.byref(smallest)):
+            raise EngineError("no proposal")
+        return largest.value, smallest.value
+
+    def count(self, largest, smallest):
+        """How many quads, and the share of the surface (0 to 1) that calls
+        for quads smaller than the smallest."""
+        quads, below = ctypes.c_double(), ctypes.c_double()
+        if not self._lib.openclare_analysis_count(
+            self._handle, float(largest), float(smallest), ctypes.byref(quads), ctypes.byref(below)
+        ):
+            raise EngineError(f"quads from {smallest} to {largest} cannot be counted")
+        return quads.value, below.value
+
+    def at_vertices(self, largest, smallest):
+        """For each vertex: the edge its quads would have (not a number where
+        nothing could be measured), and whether its shape calls for smaller
+        ones than the smallest. Two numpy arrays."""
+        import numpy
+
+        sizes = numpy.empty(self.vertices, numpy.float32)
+        coarser = numpy.empty(self.vertices, numpy.uint8)
+        if not self._lib.openclare_analysis_vertices(
+            self._handle, float(largest), float(smallest), sizes.ctypes.data, coarser.ctypes.data
+        ):
+            raise EngineError(f"quads from {smallest} to {largest} cannot be sized")
+        return sizes, coarser.astype(bool)
