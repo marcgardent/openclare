@@ -1,12 +1,21 @@
 """openclare: automatic quad retopology, as a Blender add-on.
 
-A panel in the sidebar of the 3D viewport (tab "openclare") remeshes the
-active object into quads. The result is a new object, next to the original,
-which is left as it is.
+A panel in the Properties editor, on the tab of the mesh of an object
+(Object Data), remeshes the object into quads with the settings it keeps.
+The result is a new object, next to the original, which is left as it is;
+shown, the same panel says what it was made from and how, remeshes it again
+and bakes the relief of the original onto it.
 """
+
+import math
+import time
+
+import os
 
 import bpy
 import mathutils
+from bl_operators.presets import AddPresetBase
+from bl_ui.utils import PresetPanel
 
 from . import engine
 
@@ -18,6 +27,25 @@ PRESETS = [
 # How much the size of the quads follows the curvature in each preset, in
 # per cent: what the slider goes back to when the preset changes.
 ADAPTIVE_SIZE = {"organic": 50.0, "animation": 50.0, "hard-surface": 0.0}
+# The shapes the add-on ships, as the values of the settings they set: what
+# the engine's presets of the same names are. The preset files of the add-on
+# (presets/openclare_shape) say the same; files of 0.1, which named one of
+# these, are given its values.
+SHAPES = {
+    "organic": dict(adaptive_size=50.0, quads_around=6, use_hard_edges=False, hard_edge_angle=math.radians(30.0),
+                    follow_curvature=0.05, fewer_irregular=2.0, volume_fit=1.0),
+    "animation": dict(adaptive_size=50.0, quads_around=6, use_hard_edges=False, hard_edge_angle=math.radians(30.0),
+                      follow_curvature=0.05, fewer_irregular=3.0, volume_fit=1.0),
+    "hard-surface": dict(adaptive_size=0.0, quads_around=0, use_hard_edges=True, hard_edge_angle=math.radians(30.0),
+                         follow_curvature=0.02, fewer_irregular=2.0, volume_fit=1.0),
+}
+# The settings a preset of the shape holds, in the order of the panel.
+SHAPE_NAMES = list(SHAPES["organic"])
+# Where the presets of the shape are, under presets/: those of the add-on,
+# which cannot be removed, and those saved in Blender's own folder.
+SHAPE_PRESETS = "openclare_shape"
+# What the engine is given under these values: the shapes are said in full.
+BASE_PRESET = "organic"
 
 
 # The two kinds of curves drawn on a model, each with its collection and the
@@ -52,20 +80,66 @@ PLAIN = (1.0, 1.0, 1.0, 1.0)
 last_report = {}
 
 
-def preset_changed(settings, context):
-    settings.adaptive_size = ADAPTIVE_SIZE[settings.preset]
-
-
 def is_a_mesh(settings, candidate):
     return candidate.type == "MESH"
 
 
+def shown_object(context):
+    """The object the panel and its buttons are about: the one the
+    Properties editor shows, or the active one where there is no such
+    editor."""
+    return getattr(context, "object", None) or context.active_object
+
+
 def object_to_remesh(context):
-    """The object the panel is about: the one chosen in it, or failing that
-    the active object, if it is a mesh; None otherwise."""
-    chosen = context.scene.openclare.source or context.active_object
+    """The object the panel is about, if it is a mesh; None otherwise."""
+    chosen = shown_object(context)
     return chosen if chosen is not None and chosen.type == "MESH" else None
 
+
+def source_of(owner):
+    """What `owner` was remeshed from, if it is a result of the add-on whose
+    original is still there; None otherwise."""
+    source = getattr(owner, "openclare_source", None) if owner is not None else None
+    return source if source is not None and source.type == "MESH" else None
+
+
+# Settings that are not copied from one object to another: what is shown,
+# and the object files of 0.1 named in the settings of their scene.
+NOT_COPIED = {"rna_type", "name", "source", "show_sizes"}
+
+
+def copy_settings(given, taken):
+    """Gives `taken` the settings of `given`. The preset named by settings
+    of 0.1 goes with them, and is turned into its values."""
+    names = [p.identifier for p in given.bl_rna.properties if p.identifier not in NOT_COPIED]
+    for name in names:
+        if name != "preset" or given.is_property_set("preset"):
+            setattr(taken, name, getattr(given, name))
+    adopt_preset(taken)
+
+
+def adopt_scene_settings(scene):
+    """Files of 0.1 kept one set of settings in the scene: the object it
+    named, or failing that each mesh object that has none of its own and is
+    not a result, takes them. Done once: the scene then keeps nothing."""
+    legacy = scene.openclare
+    names = [p.identifier for p in legacy.bl_rna.properties if p.identifier not in {"rna_type", "name"}]
+    if not any(legacy.is_property_set(name) for name in names):
+        return
+    named = legacy.source if legacy.source is not None and legacy.source.type == "MESH" else None
+    takers = [named] if named is not None else [
+        candidate for candidate in scene.objects
+        if candidate.type == "MESH" and source_of(candidate) is None
+        and not any(candidate.openclare.is_property_set(name) for name in names)
+    ]
+    for taker in takers:
+        copy_settings(legacy, taker.openclare)
+    if named is not None and scene.view_layers:
+        # What was remeshed whichever object was active: made so.
+        scene.view_layers[0].objects.active = named
+    for name in names:
+        legacy.property_unset(name)
 
 
 # How many of its largest quads go along the diagonal of the box of an object
@@ -87,25 +161,263 @@ def target_changed(settings, context):
     """Sizes asked for and none set: those the object gives."""
     if settings.target != "SIZE" or settings.largest_quad > 0.0:
         return
-    owner = settings.source or object_to_remesh(context)
-    if owner is not None:
+    owner = settings.id_data
+    if isinstance(owner, bpy.types.Object) and owner.type == "MESH":
         settings.largest_quad, settings.smallest_quad = sizes_from(owner)
+
+
+# Shapes analysed: by object name, the engine's analysis, what it was made
+# from (to tell when it no longer holds), and the scale of the object then.
+ANALYSES = {}
+# The last count asked of an analysis, which the panel draws again and again.
+COUNTED = {}
+# The preview of the sizes: the object coloured, the colour attributes that
+# were its active and rendered ones, and how the 3D views coloured objects.
+PREVIEW = {}
+SIZES_ATTRIBUTE = "openclare sizes"
+# Sequential colours of the sizes, light for the largest quads to dark for the
+# smallest, and the colour of what is coarser than its shape asks.
+SIZE_RAMP = ["#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b"]
+COARSER = "#e34948"
+
+
+def analysis_key(settings, owner, evaluated_mesh):
+    """What an analysis depends on: the mesh as seen and the settings that
+    say what the shape calls for."""
+    vertices = len(evaluated_mesh.vertices)
+    corner = tuple(round(c, 5) for c in evaluated_mesh.vertices[0].co) if vertices else ()
+    return (owner.name, vertices, len(evaluated_mesh.polygons), corner, tuple(shape_of(settings).items()),
+            settings.density_group, round(settings.density_factor, 3))
+
+
+def shape_of(settings):
+    """The settings of the shape as the engine takes them."""
+    return {
+        "adaptivity": round(settings.adaptive_size / 100.0, 6),
+        "quads_around": settings.quads_around,
+        "edge_angle": round(math.degrees(settings.hard_edge_angle), 4) if settings.use_hard_edges else "none",
+        "alignment": round(settings.follow_curvature, 6),
+        "singularity_reach": round(settings.fewer_irregular, 6),
+        "volume_fit": round(settings.volume_fit, 6),
+    }
+
+
+def adopt_preset(settings):
+    """Settings of 0.1 that named a preset: given the values of its shape,
+    but for the adaptive size, which they kept of their own; the name is
+    then forgotten."""
+    if not settings.is_property_set("preset"):
+        return
+    for name, value in SHAPES[settings.preset].items():
+        if name != "adaptive_size":
+            setattr(settings, name, value)
+    settings.property_unset("preset")
+
+
+def scale_of(owner):
+    """How long a unit of the mesh is in the scene."""
+    return sum(abs(factor) for factor in owner.matrix_world.to_scale()) / 3.0 or 1.0
+
+
+def analysis_of(context, settings, owner):
+    """The analysis of `owner` as it is now, if it was made: (analysis,
+    scale), or None."""
+    held = ANALYSES.get(owner.name)
+    if held is None:
+        return None
+    evaluated = owner.evaluated_get(context.evaluated_depsgraph_get())
+    mesh = evaluated.to_mesh()
+    try:
+        current = analysis_key(settings, owner, mesh)
+    finally:
+        evaluated.to_mesh_clear()
+    return (held["analysis"], scale_of(owner)) if held["key"] == current else None
+
+
+def counted(analysis, scale, largest, smallest):
+    """How many quads and how much is coarser than asked, for sizes in the
+    units of the scene; the last answer is kept."""
+    asked = (id(analysis), round(largest, 9), round(smallest, 9), scale)
+    if COUNTED.get("asked") != asked:
+        COUNTED["asked"], COUNTED["answer"] = asked, analysis.count(largest / scale, smallest / scale)
+    return COUNTED["answer"]
+
+
+def linear(hex_colour):
+    """A colour written as #rrggbb, in the linear values Blender keeps."""
+    channels = [int(hex_colour[k : k + 2], 16) / 255.0 for k in (1, 3, 5)]
+    return [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in channels] + [1.0]
+
+
+def colour_sizes(settings):
+    """Colours the object with the sizes asked for now."""
+    import numpy
+
+    owner = bpy.data.objects.get(PREVIEW.get("of", ""))
+    held = ANALYSES.get(PREVIEW.get("of", ""))
+    if owner is None or held is None or owner.type != "MESH":
+        return
+    scale = PREVIEW["scale"]
+    largest = settings.largest_quad / scale
+    smallest = min(settings.smallest_quad / scale, largest) or largest / SIZE_RANGE
+    sizes, coarser = held["analysis"].at_vertices(largest, smallest)
+    ramp = numpy.array([linear(colour) for colour in SIZE_RAMP], numpy.float32)
+    span = max(numpy.log(largest / smallest), 1e-9)
+    # From light (largest) to dark (smallest), as a logarithm of the size.
+    t = numpy.clip(numpy.log(largest / numpy.nan_to_num(sizes, nan=largest)) / span, 0.0, 1.0) * (len(ramp) - 1)
+    low = numpy.floor(t).astype(int).clip(0, len(ramp) - 2)
+    part = (t - low)[:, None]
+    colours = ramp[low] * (1.0 - part) + ramp[low + 1] * part
+    colours[coarser] = linear(COARSER)
+    if PREVIEW.get("nearest") is not None:
+        colours = colours[PREVIEW["nearest"]]
+    mesh = owner.data
+    if len(colours) != len(mesh.vertices):
+        return
+    attribute = mesh.color_attributes.get(SIZES_ATTRIBUTE) or mesh.color_attributes.new(
+        SIZES_ATTRIBUTE, "FLOAT_COLOR", "POINT"
+    )
+    attribute.data.foreach_set("color", colours.astype(numpy.float32).ravel())
+    mesh.color_attributes.active_color_name = SIZES_ATTRIBUTE
+    mesh.color_attributes.default_color_name = SIZES_ATTRIBUTE
+    mesh.update()
+
+
+def stop_preview(context, untick=True):
+    """Takes the colours of the sizes away: the colour attributes of the
+    object are as they were, and the 3D views colour as they did. Its box
+    Show Sizes is unticked, unless `untick` says not to."""
+    owner = bpy.data.objects.get(PREVIEW.pop("of", ""))
+    active, default = PREVIEW.pop("active", ""), PREVIEW.pop("default", "")
+    PREVIEW.pop("nearest", None)
+    if owner is not None and owner.type == "MESH":
+        colours = owner.data.color_attributes
+        if SIZES_ATTRIBUTE in colours:
+            colours.remove(colours[SIZES_ATTRIBUTE])
+        if active in colours:
+            colours.active_color_name = active
+        if default in colours:
+            colours.default_color_name = default
+        owner.data.update()
+        if untick and owner.openclare.show_sizes:
+            owner.openclare.show_sizes = False
+    for space, colour_type in PREVIEW.pop("views", []):
+        try:
+            space.shading.color_type = colour_type
+        except ReferenceError:
+            pass
+
+
+def start_preview(context, settings, owner):
+    """Colours the object with its sizes, in a colour attribute of its own
+    made the active and the rendered one; those that were are kept to be
+    given back."""
+    import numpy
+    from mathutils.kdtree import KDTree
+
+    stop_preview(context)
+    colours = owner.data.color_attributes
+    PREVIEW.update(
+        of=owner.name, scale=scale_of(owner), active=colours.active_color_name or "",
+        default=colours.default_color_name or "", nearest=None,
+    )
+    # The sizes are known at the vertices of the mesh as seen. Where its
+    # modifiers make other vertices, each of the object takes the nearest.
+    evaluated = owner.evaluated_get(context.evaluated_depsgraph_get())
+    seen = evaluated.to_mesh()
+    try:
+        if len(seen.vertices) != len(owner.data.vertices):
+            tree = KDTree(len(seen.vertices))
+            for vertex in seen.vertices:
+                tree.insert(vertex.co, vertex.index)
+            tree.balance()
+            PREVIEW["nearest"] = numpy.array([tree.find(vertex.co)[1] for vertex in owner.data.vertices])
+    finally:
+        evaluated.to_mesh_clear()
+    # The 3D views show the colour attribute meanwhile ("VERTEX", shown as
+    # Attribute).
+    PREVIEW["views"] = []
+    for area in context.screen.areas if context.screen else []:
+        if area.type == "VIEW_3D":
+            space = area.spaces.active
+            PREVIEW["views"].append((space, space.shading.color_type))
+            space.shading.color_type = "VERTEX"
+    colour_sizes(settings)
+
+
+@bpy.app.handlers.persistent
+def before_saving(*_):
+    """No colours of the sizes in the file saved: taken away, then put back."""
+    PREVIEW["saved"] = PREVIEW.get("of")
+    if PREVIEW["saved"]:
+        views = PREVIEW.get("views", [])
+        stop_preview(bpy.context, untick=False)
+        PREVIEW["views_saved"] = views
+
+
+@bpy.app.handlers.persistent
+def after_saving(*_):
+    owner = bpy.data.objects.get(PREVIEW.pop("saved", None) or "")
+    views = PREVIEW.pop("views_saved", [])
+    if owner is not None:
+        start_preview(bpy.context, owner.openclare, owner)
+        # The views were given back their colouring before saving: what they
+        # had before the preview is what to give back at the end.
+        PREVIEW["views"] = views
+
+
+@bpy.app.handlers.persistent
+def after_loading(*_):
+    """Another file: what was analysed and shown belonged to the last one."""
+    PREVIEW.clear()
+    ANALYSES.clear()
+    COUNTED.clear()
+    for scene in bpy.data.scenes:
+        adopt_scene_settings(scene)
+    for owner in bpy.data.objects:
+        adopt_preset(owner.openclare)
+        if owner.openclare.show_sizes:
+            owner.openclare.show_sizes = False
+
+
+def sizes_changed(settings, context):
+    """The sizes moved: the preview follows."""
+    if PREVIEW.get("of") and PREVIEW["of"] == settings.id_data.name:
+        colour_sizes(settings)
+
+
+def show_sizes_changed(settings, context):
+    if not settings.show_sizes:
+        stop_preview(context)
+        return
+    owner = settings.id_data
+    if not isinstance(owner, bpy.types.Object) or owner.type != "MESH" or owner.mode == "EDIT" \
+            or analysis_of(context, settings, owner) is None:
+        # Nothing to show before the object is analysed as it is, nor while
+        # it is edited.
+        settings.show_sizes = False
+        return
+    start_preview(context, settings, owner)
 
 
 class OpenclareSettings(bpy.types.PropertyGroup):
     source: bpy.props.PointerProperty(
+        options=set(),
         name="Object",
         type=bpy.types.Object,
         poll=is_a_mesh,
         description=(
-            "The object to remesh, taken as it is seen, modifiers applied. "
-            "Leave empty to remesh the active object, whichever it is at the time"
+            "Read only in the settings of a scene saved by openclare 0.1: the object those settings are given to"
         ),
     )
+    # Read only in files of 0.1, which named a preset of the engine: turned
+    # into the values of the shape it stood for (see `adopt_preset`).
     preset: bpy.props.EnumProperty(
-        name="Preset", description="What the mesh is for", items=PRESETS, default="organic", update=preset_changed
+        options=set(),
+        name="Preset", description="The preset of files saved by openclare 0.1", items=PRESETS, default="organic"
     )
     target: bpy.props.EnumProperty(
+        options=set(),
         name="Ask For",
         description="What says how dense the mesh is",
         items=[
@@ -125,6 +437,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         update=target_changed,
     )
     quads: bpy.props.IntProperty(
+        options=set(),
         name="Quads",
         description="Number of quads asked for",
         default=3000,
@@ -133,6 +446,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         soft_max=50_000,
     )
     largest_quad: bpy.props.FloatProperty(
+        options=set(),
         name="Largest",
         description=(
             "Edge of the largest quads, in the units of the scene: what the shape is meshed with wherever "
@@ -142,8 +456,10 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         min=0.0,
         subtype="DISTANCE",
         precision=4,
+        update=sizes_changed,
     )
     smallest_quad: bpy.props.FloatProperty(
+        options=set(),
         name="Smallest",
         description=(
             "Edge of the smallest quads, in the units of the scene: thin parts and tight bends get quads "
@@ -153,8 +469,22 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         min=0.0,
         subtype="DISTANCE",
         precision=4,
+        update=sizes_changed,
+    )
+    show_sizes: bpy.props.BoolProperty(
+        options=set(),
+        name="Show Sizes",
+        description=(
+            "Colour the object with the size its quads will have: light where they are largest, dark where "
+            "they are smallest, red where its shape calls for quads smaller than the smallest. A colour "
+            "attribute of its own, made the active and rendered one meanwhile, shown in Solid view by "
+            "attribute; taken away when unticked, the colour attributes of the object as they were"
+        ),
+        default=False,
+        update=show_sizes_changed,
     )
     adaptive_size: bpy.props.FloatProperty(
+        options=set(),
         name="Adaptive Size",
         description=(
             "How much the size of the quads follows the curvature: at 0 % they are all the same size; "
@@ -166,7 +496,79 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         min=0.0,
         max=100.0,
     )
+    quads_around: bpy.props.IntProperty(
+        options=set(),
+        name="Quads Around Thin Parts",
+        description=(
+            "Fewest quads that go round a thin part, a finger or the tip of an ear: smaller quads there and "
+            "larger elsewhere, for the part to keep its volume instead of coming out flat. 0 does not look "
+            "at thickness"
+        ),
+        default=6,
+        min=0,
+        soft_max=16,
+    )
+    use_hard_edges: bpy.props.BoolProperty(
+        options=set(),
+        name="Hard Edges",
+        description=(
+            "Edges of the object sharper than the angle are followed by the quads wherever they can, and "
+            "kept crisp: for mechanical parts"
+        ),
+        default=False,
+    )
+    hard_edge_angle: bpy.props.FloatProperty(
+        options=set(),
+        name="Angle",
+        description="How sharp an edge of the object must be to be followed",
+        subtype="ANGLE",
+        default=math.radians(30.0),
+        min=0.0,
+        max=math.pi,
+    )
+    follow_curvature: bpy.props.FloatProperty(
+        options=set(),
+        name="Follow Curvature",
+        description=(
+            "How strongly the edges are drawn along the directions in which the shape bends, against how "
+            "smoothly they flow. 0 ignores the curvature; higher follows the shape more closely, with more "
+            "irregular vertices"
+        ),
+        default=0.05,
+        min=0.0,
+        soft_max=0.2,
+        step=0.1,
+        precision=3,
+    )
+    fewer_irregular: bpy.props.FloatProperty(
+        options=set(),
+        name="Fewer Irregular Vertices",
+        description=(
+            "Irregular vertices closer than this many quads to one of the opposite kind are cancelled with "
+            "it. 0 keeps them all; higher gives fewer, and edges that follow the shape a little less: for "
+            "meshes meant to deform"
+        ),
+        default=2.0,
+        min=0.0,
+        soft_max=6.0,
+        step=50,
+        precision=1,
+    )
+    volume_fit: bpy.props.FloatProperty(
+        options=set(),
+        name="Volume Fit",
+        description=(
+            "How far the vertices leave the surface, at the very end, for the mesh to keep the volume of the "
+            "shape. 0 leaves them on the surface, where the faces run under it wherever it bulges; 1 puts "
+            "as much of the mesh above the surface as below"
+        ),
+        subtype="FACTOR",
+        default=1.0,
+        min=0.0,
+        max=1.0,
+    )
     density_group: bpy.props.StringProperty(
+        options=set(),
         name="Density",
         description=(
             "Vertex group painted with the density wanted (Weight Paint): quads are smallest where the weight "
@@ -174,6 +576,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         ),
     )
     density_factor: bpy.props.FloatProperty(
+        options=set(),
         name="Factor",
         description=(
             "How many times more quads a weight of 1 gets than a weight of 0, for the same area. "
@@ -185,6 +588,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         max=100.0,
     )
     guide_curves: bpy.props.PointerProperty(
+        options=set(),
         name="Guide Curves",
         type=bpy.types.Collection,
         description=(
@@ -194,6 +598,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         ),
     )
     sharp_curves: bpy.props.PointerProperty(
+        options=set(),
         name="Sharp Curves",
         type=bpy.types.Collection,
         description=(
@@ -203,6 +608,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         ),
     )
     export_grid_uv: bpy.props.BoolProperty(
+        options=set(),
         name="Grid UV",
         description=(
             "Give the result a UV layer where every quad is a unit square: stripes and checkers follow the "
@@ -211,12 +617,14 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         default=True,
     )
     relief_resolution: bpy.props.EnumProperty(
+        options=set(),
         name="Resolution",
         description="Width and height of the height map, in texels",
         items=[(str(size), f"{size} x {size}", "") for size in (512, 1024, 2048, 4096)],
         default="2048",
     )
     relief_levels: bpy.props.IntProperty(
+        options=set(),
         name="Levels",
         description=(
             "How many times the quad mesh is subdivided under the relief: the height map is measured from "
@@ -227,6 +635,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         max=5,
     )
     relief_apply: bpy.props.EnumProperty(
+        options=set(),
         name="Apply As",
         description="How the height map moves the surface",
         items=[
@@ -245,6 +654,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         default="MODIFIER",
     )
     relief_format: bpy.props.EnumProperty(
+        options=set(),
         name="File",
         description="Write the height map as a file too, to use it elsewhere",
         items=[
@@ -265,12 +675,14 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         default="NONE",
     )
     relief_directory: bpy.props.StringProperty(
+        options=set(),
         name="Folder",
         description="Where the file is written; // is the folder of the .blend file",
         subtype="DIR_PATH",
         default="//textures/",
     )
     export_atlas_uv: bpy.props.BoolProperty(
+        options=set(),
         name="Atlas UV",
         description=(
             "Give the result a UV layer made of islands that never overlap, packed into the unit square, "
@@ -279,6 +691,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         default=True,
     )
     export_sharp_edges: bpy.props.BoolProperty(
+        options=set(),
         name="Sharp Edges",
         description=(
             "Mark as sharp the edges of the result that follow a hard edge of the original "
@@ -287,6 +700,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         default=True,
     )
     export_materials: bpy.props.BoolProperty(
+        options=set(),
         name="Materials",
         description=(
             "Give each quad of the result the material of the surface it lies on, and keep the borders "
@@ -296,6 +710,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         default=True,
     )
     export_creases: bpy.props.BoolProperty(
+        options=set(),
         name="Creases",
         description=(
             "Give a crease weight to the edges that should stay sharp when the result is subdivided: "
@@ -557,16 +972,69 @@ def worth_a_line(message):
 STAGES = 9
 
 
-class OPENCLARE_OT_remesh(bpy.types.Operator):
-    """Remesh the active object into quads, as a new object next to it"""
+class OPENCLARE_OT_analyse(bpy.types.Operator):
+    """Measure what the shape asks for, and propose a largest and a smallest quad: how many quads any sizes
+    make is then shown at once"""
 
-    bl_idname = "object.openclare_remesh"
-    bl_label = "Remesh to Quads"
-    bl_options = {"REGISTER", "UNDO"}
+    bl_idname = "object.openclare_analyse"
+    bl_label = "Analyse"
+    bl_options = {"REGISTER"}
 
     @classmethod
     def poll(cls, context):
-        return object_to_remesh(context) is not None and context.mode == "OBJECT"
+        return object_to_remesh(context) is not None
+
+    def execute(self, context):
+        import numpy
+
+        owner = object_to_remesh(context)
+        adopt_scene_settings(context.scene)
+        settings = owner.openclare
+        adopt_preset(settings)
+        evaluated = owner.evaluated_get(context.evaluated_depsgraph_get())
+        mesh = evaluated.to_mesh()
+        try:
+            mesh.calc_loop_triangles()
+            positions = numpy.empty(3 * len(mesh.vertices), numpy.float32)
+            mesh.vertices.foreach_get("co", positions)
+            triangles = numpy.empty(3 * len(mesh.loop_triangles), numpy.uint32)
+            mesh.loop_triangles.foreach_get("vertices", triangles)
+            engine_settings = shape_of(settings)
+            density = None
+            if settings.density_group:
+                density = weights_of(evaluated, mesh, settings.density_group)
+                engine_settings["density_contrast"] = settings.density_factor
+            key = analysis_key(settings, owner, mesh)
+            started = time.perf_counter()
+            analysis = engine.Analysis(positions, triangles, BASE_PRESET, engine_settings, density)
+            seconds = time.perf_counter() - started
+        except engine.EngineError as error:
+            self.report({"ERROR"}, f"openclare: {error}")
+            return {"CANCELLED"}
+        finally:
+            evaluated.to_mesh_clear()
+        stop_preview(context)
+        ANALYSES[owner.name] = {"analysis": analysis, "key": key}
+        scale = scale_of(owner)
+        largest, smallest = analysis.proposal()
+        settings.target = "SIZE"
+        settings.largest_quad, settings.smallest_quad = largest * scale, smallest * scale
+        quads, below = analysis.count(largest, smallest)
+        self.report(
+            {"INFO"},
+            f"openclare: '{owner.name}' analysed in {seconds:.1f} s; proposed: about {quads:.0f} quads, "
+            f"{100.0 * below:.0f} % of it coarser than its shape asks",
+        )
+        return {"FINISHED"}
+
+
+# The custom property of a result where what the engine said of it is kept.
+REPORT = "openclare_report"
+
+
+class Remeshing:
+    """What the two buttons that remesh have in common: the run, and what
+    is said of it while it goes."""
 
     def say(self, context, message, done=0):
         """Shows where the run is: in the status bar and in the Info log, and
@@ -586,9 +1054,14 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
             except RuntimeError:
                 pass
 
-    def execute(self, context):
-        settings = context.scene.openclare
-        original = object_to_remesh(context)
+    def run(self, context, original):
+        """Remeshes `original` with its settings into a new object next to
+        it, made the active one, and says how it went. Returns the new
+        object, or None if it could not be made."""
+        adopt_scene_settings(context.scene)
+        settings = original.openclare
+        adopt_preset(settings)
+        stop_preview(context)
         self.drawn, self.stages = 0.0, []
         last_report.clear()
         context.window_manager.progress_begin(0, STAGES)
@@ -603,7 +1076,7 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
             return False
 
         try:
-            engine_settings = {"quads": settings.quads, "adaptivity": settings.adaptive_size / 100.0}
+            engine_settings = {"quads": settings.quads, **shape_of(settings)}
             if settings.target == "SIZE":
                 # Lengths of the scene, where the engine is given the mesh
                 # as the object holds it: before its scale.
@@ -624,12 +1097,12 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
             curves = curves_of(settings.sharp_curves, original, sharp=True)
             curves += curves_of(settings.guide_curves, original, but=sharp)
             mesh, report = quads_of(
-                source, settings.preset, engine_settings, density, on_stage, layers,
+                source, BASE_PRESET, engine_settings, density, on_stage, layers,
                 settings.export_sharp_edges, settings.export_creases, curves, settings.export_materials,
             )
         except engine.EngineError as error:
             self.report({"ERROR"}, f"openclare: {error}")
-            return {"CANCELLED"}
+            return None
         finally:
             evaluated.to_mesh_clear()
             context.window_manager.progress_end()
@@ -640,6 +1113,8 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
         remeshed.matrix_world = original.matrix_world
         # Kept, for what is baked onto the result later to be read from it.
         remeshed.openclare_source = original
+        # And how it went, for the panel of the result to tell.
+        remeshed[REPORT] = {key: str(value) for key, value in report.items()}
         for collection in original.users_collection or [context.collection]:
             collection.objects.link(remeshed)
         for other in context.selected_objects:
@@ -679,13 +1154,69 @@ class OPENCLARE_OT_remesh(bpy.types.Operator):
         if failed:
             said += f"; {failed} of {report.get('pieces', '?')} pieces could not be meshed and are missing"
         self.report({"WARNING"} if failed else {"INFO"}, said)
+        return remeshed
+
+
+class OPENCLARE_OT_remesh(Remeshing, bpy.types.Operator):
+    """Remesh the object into quads, as a new object next to it"""
+
+    bl_idname = "object.openclare_remesh"
+    bl_label = "Remesh to Quads"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return object_to_remesh(context) is not None and context.mode == "OBJECT"
+
+    def execute(self, context):
+        return {"FINISHED"} if self.run(context, object_to_remesh(context)) is not None else {"CANCELLED"}
+
+
+class OPENCLARE_OT_remesh_again(Remeshing, bpy.types.Operator):
+    """Remesh the original of this result again, with the settings it has now, in place of this result. Its
+    relief goes: bake it again"""
+
+    bl_idname = "object.openclare_remesh_again"
+    bl_label = "Remesh Again"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return source_of(object_to_remesh(context)) is not None and context.mode == "OBJECT"
+
+    def execute(self, context):
+        result = object_to_remesh(context)
+        made = self.run(context, source_of(result))
+        if made is None:
+            return {"CANCELLED"}
+        # The new mesh goes into the result, which keeps its name, place,
+        # settings and what else it was given; the new object goes.
+        previous, mesh = result.data, made.data
+        result.data = mesh
+        result[REPORT] = made[REPORT]
+        bpy.data.objects.remove(made)
+        if previous.users == 0:
+            name = previous.name
+            bpy.data.meshes.remove(previous)
+            mesh.name = name
+        # The relief was baked on the atlas of the mesh that went.
+        for name in (RELIEF, SUBDIVISION):
+            if name in result.modifiers:
+                result.modifiers.remove(result.modifiers[name])
+        if "openclare_height_file" in result:
+            del result["openclare_height_file"]
+        for other in context.selected_objects:
+            other.select_set(False)
+        result.select_set(True)
+        context.view_layer.objects.active = result
         return {"FINISHED"}
 
 
 def category_collection(context, name, create=False):
-    """The collection of the category `name`; made and put in the scene if
-    there is none yet and `create` says so."""
-    settings = context.scene.openclare
+    """The collection of the category `name` of the object the panel is
+    about; made and put in the scene if there is none yet and `create` says
+    so."""
+    settings = object_to_remesh(context).openclare
     collection = getattr(settings, f"{name}_curves")
     if collection is None and create:
         label, _, tag = CATEGORY[name]
@@ -901,17 +1432,14 @@ class OPENCLARE_OT_bake_relief(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        target = context.active_object
-        return (
-            target is not None and target.type == "MESH" and context.mode == "OBJECT"
-            and target.openclare_source is not None and target.openclare_source.type == "MESH"
-        )
+        return source_of(object_to_remesh(context)) is not None and context.mode == "OBJECT"
 
     def execute(self, context):
         import numpy
 
-        settings = context.scene.openclare
-        target, resolution = context.active_object, int(settings.relief_resolution)
+        target = object_to_remesh(context)
+        settings = target.openclare
+        resolution = int(settings.relief_resolution)
         try:
             heights, report = relief_of(context, target, target.openclare_source, settings.relief_levels, resolution)
         except engine.EngineError as error:
@@ -993,11 +1521,12 @@ class CurvesOperator:
 
     @classmethod
     def poll(cls, context):
-        return context.mode == "OBJECT"
+        return object_to_remesh(context) is not None and context.mode == "OBJECT"
 
 
 class OPENCLARE_OT_curves_assign(CurvesOperator, bpy.types.Operator):
-    """Move the selected curves to this category and give them its colour. A curve is in one category only"""
+    """Move the selected curves to this category of the object and give them its colour. A curve is in one category
+    only"""
 
     bl_idname = "object.openclare_curves_assign"
     bl_label = "Assign"
@@ -1058,61 +1587,218 @@ class OPENCLARE_OT_curves_select(CurvesOperator, bpy.types.Operator):
     def execute(self, context):
         for drawn in curve_objects(category_collection(context, self.category)):
             # Only what this view layer shows can be selected.
+            # The object stays the active one: its panel stays shown.
             if drawn.name in context.view_layer.objects and (drawn.visible_get() or not self.select):
                 drawn.select_set(self.select)
-                if self.select:
-                    context.view_layer.objects.active = drawn
         return {"FINISHED"}
 
 
-class OPENCLARE_PT_panel(bpy.types.Panel):
+class DataPanel:
+    """Where the panels are: in the Properties editor, on the tab of the
+    mesh of the object."""
+
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "data"
+
+
+def is_source(context):
+    """The object shown is one to remesh: a mesh that is not a result."""
+    owner = object_to_remesh(context)
+    return owner is not None and source_of(owner) is None
+
+
+class OPENCLARE_PT_panel(DataPanel, bpy.types.Panel):
+    """For an object to remesh: how; for a result: what it was made from
+    and how it went"""
+
     bl_label = "openclare"
     bl_idname = "OPENCLARE_PT_panel"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "openclare"
+    # Before Animation and Custom Properties. Blender keeps the order a file
+    # saved for the panels it knew, and puts the others after: dragged up
+    # by its handle, the panel stays there.
+    bl_order = -1
+
+    @classmethod
+    def poll(cls, context):
+        return object_to_remesh(context) is not None
+
+    def draw_header(self, context):
+        self.layout.label(text="", icon="MOD_REMESH")
+
+    def draw(self, context):
+        owner = object_to_remesh(context)
+        if source_of(owner) is None:
+            self.draw_source(context, owner)
+        else:
+            self.draw_result(context, owner)
+
+    def draw_source(self, context, owner):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        settings = owner.openclare
+        layout.prop(settings, "target", expand=True)
+        if settings.target == "SIZE":
+            layout.operator(OPENCLARE_OT_analyse.bl_idname, icon="VIEWZOOM")
+            sizes = layout.column(align=True)
+            sizes.prop(settings, "largest_quad")
+            sizes.prop(settings, "smallest_quad")
+            held = analysis_of(context, settings, owner)
+            if held is None:
+                note = "Analyse to see how many quads these sizes make"
+                if owner.name in ANALYSES:
+                    note = "The object or its settings changed: analyse again"
+                layout.label(text=note, icon="INFO")
+            elif settings.largest_quad > 0.0:
+                analysis, scale = held
+                smallest = min(settings.smallest_quad, settings.largest_quad) or settings.largest_quad / SIZE_RANGE
+                try:
+                    quads, below = counted(analysis, scale, settings.largest_quad, smallest)
+                except engine.EngineError:
+                    quads, below = None, None
+                if quads is not None:
+                    column = layout.column(align=True)
+                    column.label(text=f"About {quads:,.0f} quads".replace(",", " "), icon="MESH_GRID")
+                    if below >= 0.005:
+                        column.label(text=f"{100.0 * below:.0f} % coarser than its shape asks", icon="ERROR")
+                layout.prop(settings, "show_sizes")
+        else:
+            layout.prop(settings, "quads")
+        column = layout.column(align=True)
+        column.prop_search(settings, "density_group", owner, "vertex_groups", icon="GROUP_VERTEX")
+        factor = column.row()
+        factor.enabled = bool(settings.density_group)
+        factor.prop(settings, "density_factor")
+        layout.operator(OPENCLARE_OT_remesh.bl_idname, icon="MOD_REMESH")
+
+    def draw_result(self, context, owner):
+        layout = self.layout
+        source = source_of(owner)
+        row = layout.row(align=True)
+        row.label(text=f"Remeshed from {source.name}", icon="MESH_DATA")
+        row.operator(OPENCLARE_OT_select_original.bl_idname, text="", icon="RESTRICT_SELECT_OFF")
+        told = owner.get(REPORT)
+        if told:
+            box = layout.box().column(align=True)
+            for line, icon in report_lines(told):
+                box.label(text=line, icon=icon)
+        layout.operator(OPENCLARE_OT_remesh_again.bl_idname, icon="FILE_REFRESH")
+
+
+def report_lines(told):
+    """What the panel of a result says of how it was made: lines of text,
+    each with its icon."""
+    told = {key: told[key] for key in told.keys()}
+    lines = []
+    quads, seconds = told.get("quads", "?"), float(told.get("seconds", 0.0))
+    lines.append((f"{quads} quads in {seconds:.1f} s", "MESH_GRID"))
+    wanted, below = float(told.get("quads_wanted", 0.0)), float(told.get("below_smallest", 0.0))
+    if wanted > 0.0:
+        lines.append((f"The shape called for {wanted:,.0f}".replace(",", " "), "INFO"))
+        if below >= 0.005:
+            lines.append((f"{100.0 * below:.0f} % coarser than its shape asks", "ERROR"))
+    failed, boxed = int(told.get("pieces_failed", 0)), int(told.get("pieces_boxed", 0))
+    if failed:
+        lines.append((f"{failed} of {told.get('pieces', '?')} pieces could not be meshed", "ERROR"))
+    if boxed:
+        lines.append((f"{boxed} part(s) smaller than a quad are boxes", "ERROR"))
+    welded, apart = int(told.get("welded_vertices", 0)), int(told.get("edges_taken_apart", 0))
+    if welded or apart:
+        lines.append((f"Mended: {welded} vertices welded, {apart} edges taken apart", "ERROR"))
+    return lines
+
+
+class OPENCLARE_OT_select_original(bpy.types.Operator):
+    """Select the object this result was remeshed from, and make it the active one"""
+
+    bl_idname = "object.openclare_select_original"
+    bl_label = "Select Original"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        source = source_of(object_to_remesh(context))
+        return source is not None and source.name in context.view_layer.objects and context.mode == "OBJECT"
+
+    def execute(self, context):
+        source = source_of(object_to_remesh(context))
+        for other in context.selected_objects:
+            other.select_set(False)
+        source.hide_set(False)
+        source.select_set(True)
+        context.view_layer.objects.active = source
+        return {"FINISHED"}
+
+
+class OPENCLARE_OT_shape_preset_add(AddPresetBase, bpy.types.Operator):
+    """Save the settings of the shape as a preset, or remove a preset that was saved"""
+
+    bl_idname = "object.openclare_shape_preset_add"
+    bl_label = "Add Shape Preset"
+    preset_menu = "OPENCLARE_PT_shape_presets"
+    preset_subdir = SHAPE_PRESETS
+    preset_defines = ["settings = bpy.context.object.openclare"]
+    preset_values = [f"settings.{name}" for name in SHAPE_NAMES]
+
+
+class OPENCLARE_PT_shape_presets(PresetPanel, bpy.types.Panel):
+    """The presets of the shape, in the header of its block"""
+
+    bl_label = "Shape Presets"
+    preset_subdir = SHAPE_PRESETS
+    preset_operator = "script.execute_preset"
+    preset_add_operator = OPENCLARE_OT_shape_preset_add.bl_idname
+
+
+class OPENCLARE_PT_shape(DataPanel, bpy.types.Panel):
+    """How the quads follow the shape: what a preset sets"""
+
+    bl_label = "Shape"
+    bl_idname = "OPENCLARE_PT_shape"
+    bl_parent_id = "OPENCLARE_PT_panel"
+
+    @classmethod
+    def poll(cls, context):
+        return is_source(context)
+
+    def draw_header_preset(self, context):
+        OPENCLARE_PT_shape_presets.draw_panel_header(self.layout)
 
     def draw(self, context):
         layout = self.layout
         layout.use_property_split = True
-        settings = context.scene.openclare
-        layout.prop(settings, "source")
-        if settings.source is None:
-            # Said, so that it is plain what the button will act on.
-            active = object_to_remesh(context)
-            layout.label(text=f"Active object: {active.name}" if active else "No mesh is active", icon="INFO")
-        layout.prop(settings, "preset")
-        layout.prop(settings, "target", expand=True)
-        if settings.target == "SIZE":
-            sizes = layout.column(align=True)
-            sizes.prop(settings, "largest_quad")
-            sizes.prop(settings, "smallest_quad")
-        else:
-            layout.prop(settings, "quads")
+        layout.use_property_decorate = False
+        settings = object_to_remesh(context).openclare
         layout.prop(settings, "adaptive_size", slider=True)
-        chosen = object_to_remesh(context)
-        if chosen is not None:
-            column = layout.column(align=True)
-            column.prop_search(settings, "density_group", chosen, "vertex_groups", icon="GROUP_VERTEX")
-            factor = column.row()
-            factor.enabled = bool(settings.density_group)
-            factor.prop(settings, "density_factor")
-        layout.operator(OPENCLARE_OT_remesh.bl_idname, icon="MOD_REMESH")
+        layout.prop(settings, "quads_around")
+        column = layout.column(heading="Hard Edges")
+        row = column.row(align=True)
+        row.prop(settings, "use_hard_edges", text="")
+        angle = row.row(align=True)
+        angle.active = settings.use_hard_edges
+        angle.prop(settings, "hard_edge_angle", text="")
+        layout.prop(settings, "follow_curvature")
+        layout.prop(settings, "fewer_irregular")
+        layout.prop(settings, "volume_fit", slider=True)
 
 
-class OPENCLARE_PT_curves(bpy.types.Panel):
+class OPENCLARE_PT_curves(DataPanel, bpy.types.Panel):
     """Curves drawn on the model for the result to have edges along"""
 
     bl_label = "Curves"
     bl_idname = "OPENCLARE_PT_curves"
     bl_parent_id = "OPENCLARE_PT_panel"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "openclare"
+    bl_options = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(cls, context):
+        return is_source(context)
 
     def draw(self, context):
         layout = self.layout
-        settings = context.scene.openclare
+        settings = object_to_remesh(context).openclare
+        layout.label(text="Select curves, then this object last", icon="INFO")
         # One box per category, both always there: a run takes the curves
         # of both.
         for name, label, _, _, tag in CATEGORIES:
@@ -1131,20 +1817,23 @@ class OPENCLARE_PT_curves(bpy.types.Panel):
                 button.category, button.select = name, select
 
 
-class OPENCLARE_PT_export(bpy.types.Panel):
+class OPENCLARE_PT_export(DataPanel, bpy.types.Panel):
     """What the result carries besides its quads"""
 
     bl_label = "Export"
     bl_idname = "OPENCLARE_PT_export"
     bl_parent_id = "OPENCLARE_PT_panel"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "openclare"
+    bl_options = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(cls, context):
+        return is_source(context)
 
     def draw(self, context):
         layout = self.layout
         layout.use_property_split = True
-        settings = context.scene.openclare
+        layout.use_property_decorate = False
+        settings = object_to_remesh(context).openclare
         column = layout.column(heading="UV Layers")
         column.prop(settings, "export_grid_uv", text="Grid")
         column.prop(settings, "export_atlas_uv", text="Atlas")
@@ -1155,26 +1844,23 @@ class OPENCLARE_PT_export(bpy.types.Panel):
         column.prop(settings, "export_creases", text="Creases")
 
 
-class OPENCLARE_PT_relief(bpy.types.Panel):
+class OPENCLARE_PT_relief(DataPanel, bpy.types.Panel):
     """The relief of the original, baked onto the result"""
 
     bl_label = "Relief"
     bl_idname = "OPENCLARE_PT_relief"
     bl_parent_id = "OPENCLARE_PT_panel"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "openclare"
+
+    @classmethod
+    def poll(cls, context):
+        return source_of(object_to_remesh(context)) is not None
 
     def draw(self, context):
         layout = self.layout
         layout.use_property_split = True
-        settings = context.scene.openclare
-        target = context.active_object
-        source = getattr(target, "openclare_source", None)
-        if source is None:
-            layout.label(text="Select a result of Remesh to Quads", icon="INFO")
-        else:
-            layout.label(text=f"From: {source.name}", icon="MESH_DATA")
+        layout.use_property_decorate = False
+        target = object_to_remesh(context)
+        settings = target.openclare
         layout.prop(settings, "relief_levels")
         layout.prop(settings, "relief_resolution")
         layout.prop(settings, "relief_apply")
@@ -1183,7 +1869,7 @@ class OPENCLARE_PT_relief(bpy.types.Panel):
         folder.enabled = settings.relief_format != "NONE"
         folder.prop(settings, "relief_directory")
         layout.operator(OPENCLARE_OT_bake_relief.bl_idname, icon="RNDCURVE")
-        written = target.get("openclare_height_file") if target is not None else None
+        written = target.get("openclare_height_file")
         if written:
             # How the file last written is to be read, where it is used.
             layout.label(text=written, icon="FILE_IMAGE")
@@ -1191,31 +1877,68 @@ class OPENCLARE_PT_relief(bpy.types.Panel):
 
 CLASSES = (
     OpenclareSettings,
+    OPENCLARE_OT_analyse,
     OPENCLARE_OT_remesh,
+    OPENCLARE_OT_remesh_again,
+    OPENCLARE_OT_select_original,
     OPENCLARE_OT_bake_relief,
     OPENCLARE_OT_curves_assign,
     OPENCLARE_OT_curves_remove,
     OPENCLARE_OT_curves_select,
+    OPENCLARE_OT_shape_preset_add,
+    OPENCLARE_PT_shape_presets,
     OPENCLARE_PT_panel,
+    OPENCLARE_PT_shape,
     OPENCLARE_PT_curves,
     OPENCLARE_PT_export,
     OPENCLARE_PT_relief,
 )
 
 
+# The add-on's own presets are in presets/ here.
+ADDON_FOLDER = os.path.dirname(os.path.abspath(__file__))
+HANDLERS = (
+    (bpy.app.handlers.save_pre, before_saving),
+    (bpy.app.handlers.save_post, after_saving),
+    (bpy.app.handlers.load_post, after_loading),
+)
+
+
 def register():
     for cls in CLASSES:
         bpy.utils.register_class(cls)
+    bpy.types.Object.openclare = bpy.props.PointerProperty(type=OpenclareSettings)
+    # Where files of 0.1 kept the settings: read once, then given to objects.
     bpy.types.Scene.openclare = bpy.props.PointerProperty(type=OpenclareSettings)
     bpy.types.Object.openclare_source = bpy.props.PointerProperty(
         name="Original",
         description="The object this one was remeshed from: what is baked onto it is read from there",
         type=bpy.types.Object,
     )
+    for handlers, handler in HANDLERS:
+        handlers.append(handler)
+    bpy.utils.register_preset_path(ADDON_FOLDER)
+    # The file open now, when Blender lets it be read (a script, not the
+    # start of Blender: there, the file is read after, and the handler does
+    # it).
+    try:
+        for scene in bpy.data.scenes:
+            adopt_scene_settings(scene)
+        for owner in bpy.data.objects:
+            adopt_preset(owner.openclare)
+    except AttributeError:
+        pass
 
 
 def unregister():
+    bpy.utils.unregister_preset_path(ADDON_FOLDER)
+    for handlers, handler in HANDLERS:
+        if handler in handlers:
+            handlers.remove(handler)
+    stop_preview(bpy.context)
+    ANALYSES.clear()
     del bpy.types.Object.openclare_source
+    del bpy.types.Object.openclare
     del bpy.types.Scene.openclare
     for cls in reversed(CLASSES):
         bpy.utils.unregister_class(cls)

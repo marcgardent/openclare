@@ -54,8 +54,9 @@ for modifier in taken.modifiers:
     if used is not None and used.name not in scene.collection.all_objects:
         scene.collection.objects.link(used)
         used.hide_render = True
-settings = scene.openclare
-settings.source = taken
+# The object is the active one, and keeps its settings.
+bpy.context.view_layer.objects.active = taken
+settings = taken.openclare
 for kind in ("guides", "sharp"):
     if options.get(kind):
         collection = bpy.data.collections[options[kind]]
@@ -66,7 +67,8 @@ if options.get("density"):
         sys.exit(f"{options['object']} has no vertex group {options['density']}")
     settings.density_group = options["density"]
     settings.density_factor = float(options.get("factor", 4.0))
-settings.preset = options.get("preset", "organic")
+for name, value in openclare.SHAPES[options.get("preset", "organic")].items():
+    setattr(settings, name, value)
 settings.quads = int(options.get("quads", 3000))
 if "adaptive" in options:
     settings.adaptive_size = float(options["adaptive"])
