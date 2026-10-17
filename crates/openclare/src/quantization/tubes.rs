@@ -289,14 +289,43 @@ pub(super) fn value(expression: &Expression, x: &[f64]) -> f64 {
 
 /// `lengths` changed as little as can be, each by its `weight`, for every
 /// rectangle to keep its opposite sides equal and every turn in `held` to
-/// come back `aimed` beside itself: onto itself at 0.
+/// come back `aimed` beside itself: onto itself at 0. If `pin`, arcs it
+/// would shorten below nothing are held at nothing instead of cut off there.
 pub(super) fn closed(
     tmesh: &TMesh,
     lengths: &[f64],
     weight: &[f64],
     held: &[&Turn],
     aimed: &[f64],
+    pin: bool,
 ) -> Option<Vec<f64>> {
+    // The least change may ask some arcs for less than nothing; cut off at
+    // zero, the turns are no longer closed. Those arcs are held at zero and
+    // the change looked for again, until none is asked for less.
+    let mut pinned: Vec<usize> = Vec::new();
+    for _ in 0..if pin { PIN_ROUNDS } else { 0 } {
+        let (out, below) = closed_pinned(tmesh, lengths, weight, held, aimed, &pinned)?;
+        if below.is_empty() {
+            return Some(out);
+        }
+        pinned.extend(below);
+    }
+    closed_pinned(tmesh, lengths, weight, held, aimed, &pinned).map(|(out, _)| out)
+}
+
+/// Most rounds of holding at zero the arcs the least change shortens below.
+const PIN_ROUNDS: usize = 20;
+
+/// The least change of [`closed`] with the arcs `pinned` brought to zero,
+/// and the arcs it asks for less than nothing.
+fn closed_pinned(
+    tmesh: &TMesh,
+    lengths: &[f64],
+    weight: &[f64],
+    held: &[&Turn],
+    aimed: &[f64],
+    pinned: &[usize],
+) -> Option<(Vec<f64>, Vec<usize>)> {
     // The conditions, one per row: the two pairs of opposite sides of each
     // rectangle, then the turns.
     let mut rows: Vec<Expression> = Vec::new();
@@ -314,6 +343,8 @@ pub(super) fn closed(
         }
     }
     rows.extend(held.iter().map(|turn| turn.shift.clone()));
+    let turn_rows = rows.len();
+    rows.extend(pinned.iter().map(|&arc| vec![(arc, 1.0)]));
     // Least change: delta = W^-1 A^T y with (A W^-1 A^T) y = -A lengths.
     let mut columns: Vec<Vec<(usize, f64)>> = vec![Vec::new(); lengths.len()];
     for (r, row) in rows.iter().enumerate() {
@@ -329,17 +360,21 @@ pub(super) fn closed(
         // Rows that say the same are allowed: a little on the diagonal.
         system.add(r, r, 1e-9);
     }
-    let stations = rows.len() - held.len();
+    let stations = turn_rows - held.len();
     let rhs: Vec<f64> = rows
         .iter()
         .enumerate()
-        .map(|(r, row)| if r < stations { 0.0 } else { aimed[r - stations] } - value(row, lengths))
+        .map(|(r, row)| if r < stations || r >= turn_rows { 0.0 } else { aimed[r - stations] } - value(row, lengths))
         .collect();
     let y = system.factorize().ok()?.solve(&rhs);
     let mut out = lengths.to_vec();
+    let mut below = Vec::new();
     for (arc, column) in columns.iter().enumerate() {
         let change: f64 = column.iter().map(|&(r, c)| c * y[r]).sum::<f64>() / weight[arc];
+        if out[arc] + change < -1e-9 {
+            below.push(arc);
+        }
         out[arc] = (out[arc] + change).max(0.0);
     }
-    Some(out)
+    Some((out, below))
 }

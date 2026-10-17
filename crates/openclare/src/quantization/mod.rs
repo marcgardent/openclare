@@ -389,8 +389,9 @@ impl WalkCancelling {
     /// themselves: the lengths aimed at changed as little as can be for
     /// that (turns that cannot all be are let go, the worst first), the
     /// search, then walks taken one at a time that shift `every` turn less.
-    /// In a round of `cut`s, the walks keep to the budget and none is aimed
-    /// at a turn alone.
+    /// Outside the rounds of `cut`s, arcs the least change would shorten
+    /// below nothing are held at nothing so that the turns stay closed; in
+    /// them, the walks keep to the budget and none is aimed at a turn alone.
     #[allow(clippy::too_many_arguments)]
     fn closed_search(
         &self,
@@ -411,7 +412,7 @@ impl WalkCancelling {
         let mut projections = 0;
         while !held.is_empty() {
             projections += 1;
-            let Some(closed) = tubes::closed(tmesh, real, &weight, &held, &vec![0.0; held.len()]) else { break };
+            let Some(closed) = tubes::closed(tmesh, real, &weight, &held, &vec![0.0; held.len()], !cut) else { break };
             let left: Vec<f64> = held.iter().map(|turn| tubes::value(&turn.shift, &closed).abs()).collect();
             let (worst, at) =
                 left.iter().enumerate().fold((0.0, 0), |(w, a), (k, &v)| if v > w { (v, k) } else { (w, a) });
@@ -647,7 +648,7 @@ impl Quantizer for WalkCancelling {
             if std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some() {
                 eprintln!("plain lengths: deviation {:.3}", deviation(&plain));
             }
-            let most_deviation = DEVIATION_GROWTH * deviation(&plain);
+            let most_deviation = (DEVIATION_GROWTH * deviation(&plain)).max(deviation(&plain) + DEVIATION_SLACK);
             let mut best = (spirals_of(&plain.0), plain);
             // Lengths that leave the structure broken are not mended by
             // closing loops, and each way would cost as long a search again.
@@ -678,15 +679,21 @@ impl Quantizer for WalkCancelling {
                 report.turns = report.turns.max(found.len());
                 ways.push(((offsets, lean, longest), found, held));
             }
-            // Each way searched on a core of its own, then closed by cuts a
-            // few rounds; the one kept is the same as if they had been
-            // searched in turn.
+            // Each way searched on a core of its own, then, if its lengths
+            // could be kept, closed by cuts a few rounds; the one kept is the
+            // same as if they had been searched in turn.
             let tried: Vec<_> = ways
                 .par_iter()
                 .map(|(_, found, held)| {
                     let mut own = Report::default();
                     let tried = self.closed_search(tmesh, &network, &real, request, &mut own, found, held, false);
-                    let cut = self.cut_rounds(tmesh, &network, &real, request, &mut own, found, held, &tried);
+                    // Only lengths that could be kept are refined by cuts.
+                    let admissible = tried.2.abs_diff(wanted) <= allowed && deviation(&tried) <= most_deviation;
+                    let cut = if admissible {
+                        self.cut_rounds(tmesh, &network, &real, request, &mut own, found, held, &tried)
+                    } else {
+                        Vec::new()
+                    };
                     let candidates: Vec<_> = std::iter::once((tried, held.len()))
                         .chain(cut)
                         .map(|(tried, held)| (spirals_of(&tried.0), tried, held))
@@ -761,8 +768,11 @@ const CLOSE_WAYS: &[(&[f64], f64, f64)] = &[
 ];
 /// How many times further from the real lengths than the plain search's
 /// the lengths closing loops may be: beyond, the quads are stretched and
-/// the surface followed less closely for it.
+/// the surface followed less closely for it. On a T-mesh whose plain lengths
+/// are already close, a share of so little is too tight: they may always be
+/// that much further, in quad edges.
 const DEVIATION_GROWTH: f64 = 1.5;
+const DEVIATION_SLACK: f64 = 0.2;
 /// The lean given to the search for turns still shifted, per unit of shift.
 const REPAIR_LEAN: f64 = 0.5;
 /// Most walks judged in the repair: each costs building the quad mesh.
