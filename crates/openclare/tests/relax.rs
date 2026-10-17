@@ -61,6 +61,21 @@ fn a_shaken_grid_is_squared_up_without_leaving_its_plane() {
 }
 
 #[test]
+fn quads_turned_over_are_turned_back() {
+    // A column of inner vertices pushed past the next one: the quads between
+    // the two columns are turned over whole, each a proper rectangle seen
+    // from below, which the quads round them must bring back.
+    let surface = Bvh::build(&primitives::plane(4));
+    let mut mesh = primitives::plane_quads(10);
+    for j in 1..10 {
+        mesh.positions[j * 11 + 4].x += 1.2 * 0.2;
+    }
+    assert!(folds(&mesh));
+    Squaring::default().relax(&mut mesh, &surface, None);
+    assert!(!folds(&mesh));
+}
+
+#[test]
 fn a_perfect_grid_is_left_alone() {
     let surface = Bvh::build(&primitives::plane(4));
     let mut mesh = primitives::plane_quads(10);
