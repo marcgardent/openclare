@@ -1,6 +1,6 @@
 # Shortcuts for the common tasks. `make help` lists them.
 
-.PHONY: help build test scenes blenderkit scores quick pages view addon addon-windows test-windows addon-test release
+.PHONY: help build test scenes blenderkit scores quick pages view addon addon-windows test-windows addon-test release paper paper-clean
 
 help:
 	@echo "make build       build the openclare binary (release)"
@@ -35,6 +35,9 @@ help:
 	@echo "                 remesh a model of the bench, recording what each stage makes, and"
 	@echo "                 open the recording in the Rerun viewer (long to build the first"
 	@echo "                 time). FILE=path/to/mesh.obj for a mesh of your own"
+	@echo "make paper       compile the research notes (docs/research/*/paper.tex) into PDFs"
+	@echo "                 next to them (needs latexmk and TeX Live). NOTE=closing-helices for one"
+	@echo "make paper-clean remove what LaTeX leaves next to them, the PDFs kept"
 
 # The most memory, in kilobytes, a run of the engine started from here may
 # ask for (`ulimit -v`): beyond it the run fails instead of taking the
@@ -57,6 +60,20 @@ scenes:
 # Their licence does not allow keeping them in the repository: see CREDITS.md.
 blenderkit:
 	python3 bench/fetch_blenderkit.py
+
+# The research notes: LaTeX sources in docs/research/<note>/paper.tex, their
+# bibliography next to them, the PDF written beside.
+NOTES = $(if $(NOTE),docs/research/$(NOTE),$(patsubst %/paper.tex,%,$(wildcard docs/research/*/paper.tex)))
+paper:
+	@for note in $(NOTES); do \
+		echo "== $$note"; \
+		(cd $$note && latexmk -pdf -interaction=nonstopmode -halt-on-error paper.tex >/dev/null) \
+			|| { echo "failed: see $$note/paper.log"; exit 1; }; \
+		echo "written: $$note/paper.pdf"; \
+	done
+
+paper-clean:
+	@for note in $(NOTES); do (cd $$note && latexmk -c paper.tex >/dev/null); done
 
 # Marks from 0 to 100, overall and per criterion, from what the bench measured.
 scores:
