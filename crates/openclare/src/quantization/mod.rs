@@ -286,6 +286,68 @@ fn export_turns(
         }
         write!(out, "[{},{},{}]", middle.x, middle.y, middle.z).unwrap();
     }
+    // (Experiment.) The T-mesh itself, for the geometry of the turns: each
+    // node with its place, its kind, the half-arcs leaving it and the angle
+    // round it in quarter turns (its index is 4 less that); each arc with
+    // its nodes, the trace it lies on, its patches and the side of each it
+    // runs along; each patch's rim from its first corner, as the turns read
+    // it.
+    let mut angle = vec![0u32; tmesh.nodes.len()];
+    for patch in &tmesh.patches {
+        for (&half, &quarter) in patch.boundary.iter().zip(&patch.angles) {
+            let arc = &tmesh.arcs[half as usize / 2];
+            angle[arc.nodes[1 - (half as usize % 2)] as usize] += quarter as u32;
+        }
+    }
+    out.push_str("],\"nodes\":[");
+    for (k, node) in tmesh.nodes.iter().enumerate() {
+        let (kind, vertex) = match node.kind {
+            crate::tmesh::NodeKind::Singularity { vertex } => ("singularity", vertex as i64),
+            crate::tmesh::NodeKind::Corner => ("corner", -1),
+            crate::tmesh::NodeKind::Junction => ("junction", -1),
+        };
+        if k > 0 {
+            out.push(',');
+        }
+        write!(
+            out,
+            "{{\"at\":[{},{},{}],\"kind\":\"{kind}\",\"vertex\":{vertex},\"halves\":{:?},\"angle\":{}}}",
+            node.position.x, node.position.y, node.position.z, node.arcs, angle[k]
+        )
+        .unwrap();
+    }
+    let rims = tubes::rim_halves(tmesh);
+    let mut side_in = vec![[-1i64; 2]; tmesh.arcs.len()];
+    for rim in rims.iter().flatten() {
+        for &(half, side) in rim {
+            side_in[half as usize / 2][half as usize % 2] = side as i64;
+        }
+    }
+    out.push_str("],\"arcs\":[");
+    for (k, arc) in tmesh.arcs.iter().enumerate() {
+        if k > 0 {
+            out.push(',');
+        }
+        write!(
+            out,
+            "{{\"nodes\":{:?},\"length\":{},\"patches\":{:?},\"border\":{},\"feature\":{},\"trace\":{},\"span\":{:?},\"sides\":{:?}}}",
+            arc.nodes, arc.length, arc.patches, arc.border, arc.feature, arc.trace, arc.span, side_in[k]
+        )
+        .unwrap();
+    }
+    out.push_str("],\"patches\":[");
+    for (k, rim) in rims.iter().enumerate() {
+        if k > 0 {
+            out.push(',');
+        }
+        match rim {
+            Some(rim) => {
+                let halves: Vec<String> = rim.iter().map(|&(half, side)| format!("[{half},{side}]")).collect();
+                write!(out, "[{}]", halves.join(",")).unwrap();
+            }
+            None => out.push_str("null"),
+        }
+    }
     out.push_str("],\"turns\":[");
     for (k, turn) in every.iter().enumerate() {
         let first_arc = tmesh.patches[turn.patch].boundary[0] as usize / 2;
@@ -297,7 +359,7 @@ fn export_turns(
         }
         write!(
             out,
-            "{{\"shift\":{},\"around\":{},\"patch\":{},\"at\":[{},{},{}],\"held\":{},\"held_index\":{held},\"kept\":{kept}}}",
+            "{{\"shift\":{},\"around\":{},\"patch\":{},\"at\":[{},{},{}],\"held\":{},\"held_index\":{held},\"kept\":{kept}",
             expression(&turn.shift),
             turn.around,
             turn.patch,
@@ -307,6 +369,10 @@ fn export_turns(
             held >= 0
         )
         .unwrap();
+        let crossings: Vec<String> =
+            turn.crossings.iter().map(|&(patch, half, next, into)| format!("[{patch},{half},{next},{into}]")).collect();
+        write!(out, ",\"side\":{},\"offset\":{},\"crossings\":[{}]}}", turn.side, turn.offset, crossings.join(","))
+            .unwrap();
     }
     out.push_str("]}");
     let _ = std::fs::create_dir_all(directory);
@@ -407,9 +473,11 @@ impl WalkCancelling {
         // (Experiment: whole lengths worked out outside the engine, taken as
         // they are, with neither search nor repair.)
         if let Some(directory) = std::env::var_os("OPENCLARE_LENGTHS")
-            && let Ok(text) = std::fs::read_to_string(std::path::Path::new(&directory).join(format!("way-{way}-integer.txt")))
+            && let Ok(text) =
+                std::fs::read_to_string(std::path::Path::new(&directory).join(format!("way-{way}-integer.txt")))
         {
-            let values: Vec<i64> = text.split_whitespace().filter_map(|v| v.parse::<f64>().ok()).map(|v| v.round() as i64).collect();
+            let values: Vec<i64> =
+                text.split_whitespace().filter_map(|v| v.parse::<f64>().ok()).map(|v| v.round() as i64).collect();
             if values.len() == x.len() {
                 x = values;
                 imported = true;
@@ -558,7 +626,12 @@ impl WalkCancelling {
                     .iter()
                     .map(|turn| {
                         let terms: Vec<String> = turn.shift.iter().map(|&(arc, c)| format!("[{arc},{c}]")).collect();
-                        format!("{{\"shift\":[{}],\"around\":{},\"pitch\":{}}}", terms.join(","), turn.around, tubes::value(&turn.shift, &lengths))
+                        format!(
+                            "{{\"shift\":[{}],\"around\":{},\"pitch\":{}}}",
+                            terms.join(","),
+                            turn.around,
+                            tubes::value(&turn.shift, &lengths)
+                        )
                     })
                     .collect();
                 let _ = std::fs::write(

@@ -26,6 +26,13 @@ pub(super) struct Turn {
     pub around: f64,
     /// The rectangle it starts from.
     pub patch: usize,
+    /// (Experiment: the way itself, for export_turns.) The side of the
+    /// first rectangle it starts from and how far along that side, then
+    /// each crossing: the rectangle left, the half-arc of its rim crossed,
+    /// the rectangle entered, and how far along that half-arc.
+    pub side: usize,
+    pub offset: f64,
+    pub crossings: Vec<(usize, HalfArc, usize, f64)>,
 }
 
 /// The direction of each side of a rectangle, counter-clockwise from the
@@ -104,12 +111,25 @@ fn rims(tmesh: &TMesh, lengths: &[f64]) -> Vec<Option<Rim>> {
         .collect()
 }
 
+/// (Experiment, for export_turns.) Each rectangle's rim from its first
+/// corner, as the turns read it: the half-arcs and their sides.
+pub(super) fn rim_halves(tmesh: &TMesh) -> Vec<Option<Vec<(HalfArc, usize)>>> {
+    let lengths: Vec<f64> = tmesh.arcs.iter().map(|arc| arc.length).collect();
+    rims(tmesh, &lengths).into_iter().map(|rim| rim.map(|rim| rim.halves)).collect()
+}
+
 /// Turns found by going straight across the rectangles, from each of the
 /// places `offsets` (shares of its length) along each side of each, at most `steps_per_patch` times the number of
 /// rectangles before giving up.
 pub(super) fn turns(tmesh: &TMesh, steps_per_patch: usize, offsets: &[f64], longest: f64) -> Vec<Turn> {
     let lengths: Vec<f64> = tmesh.arcs.iter().map(|arc| arc.length).collect();
-    turns_with(tmesh, &lengths, steps_per_patch, &|side_length| offsets.iter().map(|share| share * side_length).collect(), longest)
+    turns_with(
+        tmesh,
+        &lengths,
+        steps_per_patch,
+        &|side_length| offsets.iter().map(|share| share * side_length).collect(),
+        longest,
+    )
 }
 
 /// Every turn of the quad mesh that whole `lengths` make: from the middle of
@@ -193,6 +213,8 @@ fn go_round(
     // The way: per crossing, the rectangle left and the place on its rim,
     // the one entered and the place on its rim.
     let mut crossings: Vec<(usize, usize, usize, usize)> = Vec::new();
+    let mut walked: Vec<(usize, HalfArc, usize, f64)> = Vec::new();
+    let start_offset = offset;
     for _ in 0..steps {
         let rim = rims[patch].as_ref()?;
         // Across to the opposite side, the same distance from its end.
@@ -227,12 +249,20 @@ fn go_round(
         let next_begin = next_rim.side_start[next_side];
         let before_twin: f64 = (next_begin..k_next).map(|m| lengths[next_rim.halves[m].0 as usize / 2]).sum();
         crossings.push((patch, k, next, k_next));
+        walked.push((patch, half, next, into));
         quarter_turns = (quarter_turns + (next_side + 2 + 4 - opposite) % 4) % 4;
         (patch, side, offset) = (next, next_side, before_twin + (lengths[half as usize / 2] - into));
         if patch == start_patch && side == start_side && quarter_turns == 0 {
             let across = if DIRECTION[start_side][0] != 0.0 { 0 } else { 1 };
             let mut shift = shift_along(tmesh, rims, &crossings);
-            return Some(Turn { shift: std::mem::take(&mut shift[across]), around, patch: start_patch });
+            return Some(Turn {
+                shift: std::mem::take(&mut shift[across]),
+                around,
+                patch: start_patch,
+                side: start_side,
+                offset: start_offset,
+                crossings: walked,
+            });
         }
     }
     None
