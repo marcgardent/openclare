@@ -841,3 +841,208 @@ pub unsafe extern "C" fn openclare_baked_free(baked: *mut OpenclareBaked) {
         drop(unsafe { Box::from_raw(baked) });
     }
 }
+
+/// What a call to [`openclare_analyse`] gives back: a shape measured once,
+/// to be asked as often as wanted how many quads a largest and a smallest
+/// quad make of it.
+pub struct OpenclareAnalysis {
+    analysis: Option<openclare::Analysis>,
+    vertices: usize,
+    /// Empty when all went well.
+    error: CString,
+}
+
+/// Measures what a shape calls for, without meshing it.
+///
+/// - `positions`: `3 * vertex_count` numbers; `triangles`: `3 *
+///   triangle_count` indices of vertices.
+/// - `preset`, `settings`: as for [`openclare_remesh`], null for none. The
+///   adaptivity, the quads round a thin part and the contrast of the paint
+///   count; the target does not.
+/// - `density`: null, or one weight per vertex, from 0 to 1.
+///
+/// Returns a handle to free with [`openclare_analysis_free`], never null.
+///
+/// # Safety
+///
+/// Each pointer must be null where allowed, or valid for the number of
+/// elements said of it, for the time of the call; text NUL-terminated.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_analyse(
+    positions: *const f32,
+    vertex_count: usize,
+    triangles: *const u32,
+    triangle_count: usize,
+    preset: *const c_char,
+    settings: *const c_char,
+    density: *const f32,
+) -> *mut OpenclareAnalysis {
+    let outcome = catch_unwind(AssertUnwindSafe(|| -> Result<openclare::Analysis, String> {
+        if positions.is_null() || triangles.is_null() {
+            return Err("the mesh arrays are missing".into());
+        }
+        // SAFETY: not null, and as long as the caller says.
+        let coordinates = unsafe { std::slice::from_raw_parts(positions, 3 * vertex_count) };
+        // SAFETY: likewise.
+        let indices = unsafe { std::slice::from_raw_parts(triangles, 3 * triangle_count) };
+        if let Some(&beyond) = indices.iter().find(|&&v| v as usize >= vertex_count) {
+            return Err(format!("a triangle names vertex {beyond}, of {vertex_count} vertices"));
+        }
+        let input = TriMesh {
+            positions: coordinates.chunks_exact(3).map(|p| Vec3::new(p[0] as f64, p[1] as f64, p[2] as f64)).collect(),
+            triangles: indices.chunks_exact(3).map(|t| [t[0], t[1], t[2]]).collect(),
+        };
+        let painted: Option<Vec<f64>> = (!density.is_null()).then(|| {
+            // SAFETY: one weight per vertex, as documented.
+            unsafe { std::slice::from_raw_parts(density, vertex_count) }.iter().map(|&weight| weight as f64).collect()
+        });
+        let read = |pointer: *const c_char, what: &str| -> Result<Option<String>, String> {
+            if pointer.is_null() {
+                return Ok(None);
+            }
+            // SAFETY: NUL-terminated, as documented.
+            let text = unsafe { CStr::from_ptr(pointer) };
+            text.to_str().map(|text| Some(text.to_string())).map_err(|_| format!("the {what} is not valid UTF-8"))
+        };
+        let mut config = match read(preset, "preset name")? {
+            Some(name) if !name.is_empty() => {
+                RemeshConfig::preset(&name, RemeshConfig::default().target).map_err(|error| error.to_string())?
+            }
+            _ => RemeshConfig::default(),
+        };
+        if let Some(lines) = read(settings, "settings")? {
+            config.apply_text(&lines).map_err(|error| error.to_string())?;
+        }
+        let guides = Guides { density: painted.as_deref(), ..Default::default() };
+        openclare::Analysis::of(&input, &guides, &config).map_err(|error| error.to_string())
+    }));
+    let (analysis, error) = match outcome {
+        Ok(Ok(analysis)) => (Some(analysis), CString::default()),
+        Ok(Err(message)) => (None, text(message)),
+        Err(_) => (None, text("openclare failed unexpectedly while analysing".to_string())),
+    };
+    Box::into_raw(Box::new(OpenclareAnalysis { analysis, vertices: vertex_count, error }))
+}
+
+/// 1 if the shape was analysed, 0 if not or if `analysis` is null.
+///
+/// # Safety
+///
+/// `analysis` must be null or a handle from [`openclare_analyse`] not yet
+/// freed; the same goes for every function below.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_analysis_ok(analysis: *const OpenclareAnalysis) -> i32 {
+    // SAFETY: null or a live handle, by contract.
+    unsafe { analysis.as_ref() }.is_some_and(|analysis| analysis.analysis.is_some()) as i32
+}
+
+/// Why the shape could not be analysed; empty if it was. Valid until freed.
+///
+/// # Safety
+///
+/// See [`openclare_analysis_ok`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_analysis_error(analysis: *const OpenclareAnalysis) -> *const c_char {
+    // SAFETY: null or a live handle, by contract.
+    match unsafe { analysis.as_ref() } {
+        Some(analysis) => analysis.error.as_ptr(),
+        None => c"no analysis".as_ptr(),
+    }
+}
+
+/// A largest and a smallest quad to start from, written to `largest` and
+/// `smallest`. Returns 1, or 0 when there is no analysis.
+///
+/// # Safety
+///
+/// See [`openclare_analysis_ok`]; `largest` and `smallest` must be valid.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_analysis_proposal(
+    analysis: *const OpenclareAnalysis,
+    largest: *mut f64,
+    smallest: *mut f64,
+) -> i32 {
+    // SAFETY: null or a live handle, by contract.
+    let Some(analysis) = (unsafe { analysis.as_ref() }).and_then(|analysis| analysis.analysis.as_ref()) else { return 0 };
+    if largest.is_null() || smallest.is_null() {
+        return 0;
+    }
+    let (proposed, least) = analysis.proposal();
+    // SAFETY: valid, by contract.
+    unsafe { (*largest, *smallest) = (proposed, least) };
+    1
+}
+
+/// How many quads quads between `smallest` and `largest` make, written to
+/// `quads`, and the share of the surface that calls for smaller ones, from
+/// 0 to 1, to `below`. Returns 1, or 0 when there is no analysis.
+///
+/// # Safety
+///
+/// See [`openclare_analysis_ok`]; `quads` and `below` must be valid.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_analysis_count(
+    analysis: *const OpenclareAnalysis,
+    largest: f64,
+    smallest: f64,
+    quads: *mut f64,
+    below: *mut f64,
+) -> i32 {
+    // SAFETY: null or a live handle, by contract.
+    let Some(analysis) = (unsafe { analysis.as_ref() }).and_then(|analysis| analysis.analysis.as_ref()) else { return 0 };
+    if quads.is_null() || below.is_null() || !(smallest > 0.0 && largest >= smallest && largest.is_finite()) {
+        return 0;
+    }
+    let made = catch_unwind(AssertUnwindSafe(|| (analysis.quads(largest, smallest), analysis.below(largest, smallest))));
+    let Ok((made, under)) = made else { return 0 };
+    // SAFETY: valid, by contract.
+    unsafe { (*quads, *below) = (made, under) };
+    1
+}
+
+/// For each vertex of the shape, the edge its quads would have with quads
+/// between `smallest` and `largest`, to `sizes` (not a number for a piece
+/// that could not be looked at), and 1 in `coarser` where its shape calls
+/// for smaller quads than the smallest, 0 elsewhere. Returns 1, or 0 when
+/// there is no analysis.
+///
+/// # Safety
+///
+/// See [`openclare_analysis_ok`]; `sizes` and `coarser` must have room for
+/// one number per vertex given to [`openclare_analyse`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_analysis_vertices(
+    analysis: *const OpenclareAnalysis,
+    largest: f64,
+    smallest: f64,
+    sizes: *mut f32,
+    coarser: *mut u8,
+) -> i32 {
+    // SAFETY: null or a live handle, by contract.
+    let Some(handle) = (unsafe { analysis.as_ref() }) else { return 0 };
+    let Some(analysis) = handle.analysis.as_ref() else { return 0 };
+    if sizes.is_null() || coarser.is_null() || !(smallest > 0.0 && largest >= smallest && largest.is_finite()) {
+        return 0;
+    }
+    let Ok((at, under)) = catch_unwind(AssertUnwindSafe(|| analysis.at_vertices(largest, smallest))) else { return 0 };
+    // SAFETY: room for one per vertex, by contract.
+    let (sizes, coarser) = unsafe {
+        (std::slice::from_raw_parts_mut(sizes, handle.vertices), std::slice::from_raw_parts_mut(coarser, handle.vertices))
+    };
+    for (v, (size, below)) in at.into_iter().zip(under).enumerate().take(handle.vertices) {
+        (sizes[v], coarser[v]) = (size as f32, below as u8);
+    }
+    1
+}
+
+/// # Safety
+///
+/// `analysis` must be null or a handle from [`openclare_analyse`] not yet
+/// freed.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_analysis_free(analysis: *mut OpenclareAnalysis) {
+    if !analysis.is_null() {
+        // SAFETY: made by `Box::into_raw` in `openclare_analyse`.
+        drop(unsafe { Box::from_raw(analysis) });
+    }
+}

@@ -309,21 +309,30 @@ fn a_shape_is_analysed_once_and_any_bounds_are_then_counted() {
     }
     assert!(analysis.below(0.4, 0.4) > 0.02 && before.1 == 0.0);
     // The proposal: the largest quad of a mesh of 1,500, and a smallest
-    // that leaves no more than a twentieth of the surface asking for less.
+    // between it and a sixteenth of it, where coming down one more step
+    // would not be worth it.
     let (largest, smallest) = analysis.proposal();
     assert!((largest - (analysis.area() / 1500.0).sqrt()).abs() < 1e-12);
     assert!(smallest <= largest && smallest >= largest / 16.0);
-    assert!(analysis.below(largest, smallest) <= 0.05 + 1e-9);
-    assert!(analysis.below(largest, 1.02 * smallest) > 0.05 || smallest == largest);
+    let finer = smallest / 1.5;
+    if finer >= largest / 16.0 {
+        let gained = 100.0 * (analysis.below(largest, smallest) - analysis.below(largest, finer));
+        let cost = 100.0 * (analysis.quads(largest, finer) / analysis.quads(largest, smallest) - 1.0);
+        assert!(gained < 0.25 * cost, "one more step: {gained} points of the surface for {cost} % of quads");
+    }
 
-    // Painted, the same: what the analysis counts as below the smallest is
-    // what the proposal leaves there. The tips painted densest.
-    let weights: Vec<f64> = source.positions.iter().map(|p| (p.z.abs() / 3.0).clamp(0.0, 1.0)).collect();
-    let painted = RemeshConfig { density_contrast: 16.0, ..config.clone() };
-    let analysis = Analysis::of(&source, &Guides { density: Some(&weights), ..Default::default() }, &painted).unwrap();
+    // A ring of wire beside a ball: thin all along, a sixth of its girth is
+    // far under the largest quad, and on a twentieth of the surface: a part,
+    // which the proposal comes down to whatever it costs.
+    let mut both = primitives::icosphere(4);
+    let first = both.positions.len() as u32;
+    let ring = primitives::torus(0.6, 0.02, 96, 12);
+    both.positions.extend(ring.positions.iter().map(|&p| p + Vec3::new(4.0, 0.0, 0.0)));
+    both.triangles.extend(ring.triangles.iter().map(|t| t.map(|v| v + first)));
+    let analysis = Analysis::of(&both, &Guides::default(), &config).unwrap();
     let (largest, smallest) = analysis.proposal();
-    assert!(smallest < 0.8 * largest, "quads from {smallest} to {largest}");
-    assert!(analysis.below(largest, smallest) <= 0.05 + 1e-9 && analysis.below(largest, 1.02 * smallest) > 0.05);
+    let wire = std::f64::consts::TAU * 0.02 / 6.0;
+    assert!(smallest <= 1.1 * wire && wire < 0.5 * largest, "quads from {smallest} to {largest} for a wire asking {wire}");
 
     // What cannot be analysed.
     assert!(Analysis::of(&TriMesh::default(), &Guides::default(), &config).is_err());
