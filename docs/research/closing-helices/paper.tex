@@ -8,6 +8,7 @@
 \usepackage[margin=2.5cm]{geometry}
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{booktabs}
+\usepackage{array}
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage[hidelinks]{hyperref}
 
@@ -53,14 +54,19 @@ on a human body remeshed at the face count of the hand-made base mesh it
 drops from 12.1\% to 1.1\%, below the 2.5\% of the hand-made mesh. We relate
 turns to the twist of flat cylinders in the theory of Jenkins--Strebel
 differentials~\cite{strebel1984quadratic}, show with the holonomy of the
-flat metric that a pair of singularities of valences three and five lying on
-one trace between two turns forbids closing both, and prove that on a sphere
-the shift of a turn has the parity of its length, so that a helix of odd
-pitch closes only if its length changes. Exact computations on the lattice of
-closed quantizations of the human body show that whole lengths closing
-nearly every ring exist, but not at the size asked for, and that conflicts
-between turns are local without always being pairs. We list the open
-problems that a complete treatment would need to solve.
+flat metric that a pair of singularities of valences three and five joined
+by a staircase of arcs between two turns forbids closing both, and prove that
+on a sphere the shift of a turn has the parity of its length, so that a helix
+of odd pitch closes only if its length changes. Exact computations on the
+lattice of closed quantizations of the human body show that whole lengths
+closing nearly every ring exist, but not at the size asked for. Tested on the
+T-mesh of that body, the propositions hold on every turn and annulus they
+apply to; the conflicts between two turns are not, as we had guessed, pairs
+on one trace, but staircases between a pair of valences three and five,
+exchanges of two vertices of valence three, or caps, and the one turn that
+cannot close on its own is held open by a separatrix that winds round a
+wrist. We list the open problems that a complete treatment would need to
+solve.
 \end{abstract}
 
 \section{Introduction}
@@ -91,12 +97,18 @@ contributions are:
   (Section~\ref{sec:measure}), and a bench that holds automatic remeshers
   against meshes modelled by hand (Section~\ref{sec:experiments}).
 \item Obstructions to closing: the shift of a turn is the Burgers vector of
-  the singularities on one side; a pair of valences three and five joined by
-  a trace between two turns forces one of them to be a helix; and a
-  checkerboard rule gives the parity of the shift between two turns; on a
-  sphere the shift of every turn has the parity of its length; and a turn
-  whose shift is a non-negative form in the lengths can never close
+  the singularities on one side, composed in the order in which a walk round
+  a cutting tree first meets them; a pair of valences three and five, or two
+  vertices of equal valence exchanged between two turns, joined by a
+  staircase of arcs, forces one of the turns to be a helix; a separatrix that
+  winds once round and lands beside its own vertex does the same to a single
+  turn; a checkerboard rule gives the parity of the shift between two turns;
+  on a sphere the shift of every turn has the parity of its length; and a
+  turn whose shift is a non-negative form in the lengths can never close
   (Section~\ref{sec:obstructions}).
+\item A test of these statements on the T-mesh of a human body, and a
+  description of its conflicts between turns
+  (Sections~\ref{sec:measured} and~\ref{sec:conflicts}).
 \item An exact look at whole lengths: the balances are the incidence matrix
   of a bidirected graph, whose free arcs parametrize the lattice of balanced
   lengths; whole lengths closing nearly all rings exist but cost too much
@@ -595,6 +607,10 @@ few arcs. This section gives a mechanism for such conflicts, with proofs. The
 tool is the holonomy of the flat metric, as used by Izmestiev et
 al.~\cite{izmestiev2013torus}; its ingredients are classical, and we know of
 no earlier statement of the propositions below in terms of helices.
+Section~\ref{sec:measured} tests them on the male body, and
+Section~\ref{sec:conflicts} describes its conflicts.
+
+\subsection{Turns and singularities}\label{sec:holonomy}
 
 \paragraph{Flat metric and holonomy.}
 Lengths $\ell > 0$ balancing every patch make each patch a Euclidean
@@ -603,15 +619,22 @@ rectangles give the surface $\Sigma$ a flat metric with cone points at the
 singular vertices: a vertex of valence $k$ has angle $k\pi/2$ and curvature
 $(4-k)\pi/2$; a T-junction has angle $2\pi$ and is not a cone point. Let
 $\Sigma^\circ$ be $\Sigma$ without its singular vertices, $x_0$ a point inside
-a patch, and $R$ the quarter-turn. Developing a loop $\gamma$ of $\Sigma^\circ$
+a patch, and $R$ the quarter-turn in the positive sense of the orientation of
+$\Sigma$. Developing a loop $\gamma$ of $\Sigma^\circ$
 based at $x_0$ patch after patch, as in the proof of
 Proposition~\ref{prop:linear}, gives a motion $\hat h(\gamma)\colon x \mapsto
-R^j x + t$ of the coordinates of the first patch, its \emph{holonomy}. It
+R^j x + t$ of the coordinates of the first patch, its \emph{holonomy}: the
+chart $\varphi$ of $x_0$, continued along $\gamma$, comes back as
+$\hat h(\gamma) \circ \varphi$. It
 depends only on the homotopy class of $\gamma$ in $\Sigma^\circ$, and $\hat h$
 is a homomorphism of the fundamental group into the group of such
-motions~\cite{izmestiev2013torus}. A small loop round a singular vertex $c$
-of valence $k$, reached along a path that develops it at the point $p$, has
-holonomy $x \mapsto R^{4-k}(x - p) + p$. When the rotation of $\hat h(\gamma)$
+motions~\cite{izmestiev2013torus}, $\hat h(\alpha\beta) = \hat h(\alpha) \circ
+\hat h(\beta)$. A small loop round a singular vertex $c$
+of valence $k$, run with $c$ on its right and reached along a path that
+develops it at the point $p$, has
+holonomy $x \mapsto R^{4-k}(x - p) + p$: turning clockwise round a cone
+point of angle $k\pi/2$ rotates the chart by $-k\pi/2$, which is
+$(4-k)\pi/2$ modulo a full turn. When the rotation of $\hat h(\gamma)$
 is the identity, its translation is the \emph{Burgers vector} of $\gamma$.
 
 For a turn $\gamma$, let $\bar\gamma$ be the closed curve that follows the
@@ -656,20 +679,68 @@ a group of singularities whose indices do not add up to four is never a
 turn, whatever the lengths. A side holding at most one singular vertex has
 total index $0$ or $4 - k \neq 4$, so each side of a turn holds at least two.
 
+Curves of turns need not be simple, and on the male body most of those held
+for closing are not (Section~\ref{sec:measured}). The first case beyond simple
+curves is still determined.
+
+\begin{lemma}[One self-crossing]\label{lem:eight}
+Let the surface have genus zero, and let the curve $\bar\gamma$ of a turn
+cross itself exactly once, transversally, with no singular vertex on it.
+It cuts the surface into three discs: two \emph{lobes}, each bounded by one
+of the two loops of $\bar\gamma$, and a third region bounded by both. If the
+crossing lies on the walk, the totals of $4 - k$ over the singular vertices of
+the lobes and the third region are $3$, $3$ and $2$; if it lies on the
+closing segment, they are $2$, $2$ and $4$.
+\end{lemma}
+
+\begin{proof}
+A walk follows the two directions of the field, so it crosses itself at a
+right angle. Each loop leaves the crossing point $X$ along one passage and
+comes back along the other, so its two rays at $X$ are a quarter-turn apart.
+A loop is simple; it bounds on one side a disc containing the quadrant
+between its two rays, and the other loop, which meets it only at $X$, lies in
+the closure of the other side. That disc is a lobe, with a corner of angle
+$\pi/2$ at $X$; the two lobes take opposite quadrants, and the third region
+has the other two. The curve is a connected graph on the sphere with one
+vertex and two edges, so its three faces are discs. By Gauss--Bonnet as in
+Lemma~\ref{lem:gauss}, a disc whose border turns by the angles $\theta_i$ at
+its corners holds singular vertices of total index $4 - \sum_i
+\theta_i/(\pi/2)$. A corner of angle $\pi/2$ turns by $\pi/2$, which gives
+$3$, $3$ and $2$ before the corners of the closing segment, at which the
+curve turns by $+\pi/2$ and $-\pi/2$ in succession. If the crossing lies on
+the walk, both of these corners are on one loop, every region sees both, and
+they cancel. Otherwise let the walk start at $A$ along $e_1$ and come back at
+$Z$, and let it cross the closing segment between them. It crosses walking
+along $-e_1$: walking along $e_1$, it would enter the first patch through its
+first side there, and the turn would have ended. The loop through $A$ then
+turns the same way at $A$ as at $X$, and so does the loop through $Z$ at $Z$
+and at $X$ (a direct check of the four directions). Each lobe lies on the
+side of its corner of angle $\pi/2$ at $X$, so it sees a second convex
+corner and holds $4 - 2 = 2$; the third region holds the rest of the total
+$8$, that is $4$.
+\end{proof}
+
 \begin{proposition}[The shift is set by the singularities]\label{prop:burgers}
 Let $\gamma$, $\gamma_1$, $\gamma_2$ be turns with simple curves.
 \begin{enumerate}
-\item[(a)] If $\bar\gamma$ bounds a disc $D$ holding the singular vertices
-  $c_1, \dots, c_m$, then $\shift_\gamma(\ell) = \langle e_2, B_D \rangle$
-  where $B_D$, the Burgers vector of $\bar\gamma$, is the translation of the
-  product of the holonomies of small loops round $c_1, \dots, c_m$, taken in
-  a suitable order along paths inside $D$:
+\item[(a)] Let $\bar\gamma$ bound a disc $D$ holding the singular vertices
+  $c_1, \dots, c_m$, and let $x_0$ be a point of $\bar\gamma$, the start of the
+  walk for instance. Let $T \subset D$
+  be a tree whose vertices include $c_1, \dots, c_m$ and which meets
+  $\bar\gamma$ only at $x_0$. Cut along $T$, the disc $D$ becomes a disc
+  $\Omega$ without cone point, which develops into the plane, with the frame
+  $(e_1, e_2)$ at $x_0$. Number the $c_i$ in the order in which a walk round
+  $T$ from $x_0$, keeping $T$ on its right, first reaches them, and let $p_i$
+  be the developed position of $c_i$ at that first visit. Then
+  $\shift_\gamma(\ell) = \pm\langle e_2, B_D \rangle$, with
   \[
     B_D = \sum_{i=1}^m Q_i\,(I - R_i)\,p_i ,
     \qquad R_i = R^{4 - k(c_i)},
+    \qquad Q_i = R_m R_{m-1} \cdots R_{i+1},
   \]
-  with $p_i$ the developed position of $c_i$ and $Q_i$ the product of the
-  rotations $R_j$ of the vertices that come after $c_i$ in that order.
+  the translation of $\rho_m \circ \dots \circ \rho_1$, where $\rho_i(x) =
+  R_i(x - p_i) + p_i$; the sign is $+$ if $D$ lies on the right of
+  $\bar\gamma$, and $-$ otherwise.
 \item[(b)] Let $\bar\gamma_1$ and $\bar\gamma_2$ be disjoint and bound an
   annulus $A$, round which the two turns go the same way, and let a path
   $\kappa$ inside $A$ from $\bar\gamma_1$ to $\bar\gamma_2$ carry the walking
@@ -689,13 +760,34 @@ Let $\gamma$, $\gamma_1$, $\gamma_2$ be turns with simple curves.
 \end{proposition}
 
 \begin{proof}
-(a) Choose disjoint paths inside $D$ from $x_0 \in \bar\gamma$ to each
-$c_i$. The curve $\bar\gamma$ is homotopic in $\Sigma^\circ$ to the product of
-the small loops round the $c_i$ along these paths, in the order in which the
-paths leave $x_0$. The holonomy being a homomorphism, $\hat h(\bar\gamma)$ is
-the composition of the motions $x \mapsto R_i(x - p_i) + p_i$; its rotation is
-$R^{\sum_i(4 - k(c_i))} = R^4 = I$ by Lemma~\ref{lem:gauss}, and expanding
-the composition gives the sum. The shift is its component along $e_2$.
+(a) Orient each edge $f$ of $T$ away from $x_0$. Its two sides on the border
+of $\Omega$ are glued by a motion $G_f$: a point of $f$ that develops at $u$
+on the side the walk round $T$ follows first develops at $G_f(u)$ on the
+other. Let $f$ end at the vertex $v$, from which the edges $f_1, \dots, f_r$
+leave in the order of the walk. Keeping $T$ on its right, the walk turns
+clockwise round $v$, so a small arc round $v$ from the first side of $f$ to
+the second turns clockwise through the whole angle at $v$ and crosses $f_1,
+\dots, f_r$ on its way. Continuing the chart of $\Omega$ along this arc
+composes it with $G_{f_1}^{-1}, \dots, G_{f_r}^{-1}$ at the crossings, and
+turning once round $v$ composes it with the rotation $\rho_v(x) =
+R^{4-k(v)}(x - p_v) + p_v$, where $p_v$ is the position of $v$ at the first
+visit, the one the arc starts from. Comparing the two at the second side of
+$f$,
+\[
+  G_f = G_{f_r} \circ \dots \circ G_{f_1} \circ \rho_v ,
+\]
+with $\rho_v$ the identity if $v$ is not singular. The same comparison at
+$x_0$, with the edges $f_1, \dots, f_r$ leaving $x_0$ and the arc round $v$
+replaced by $\bar\gamma$ run with $D$ on its right, gives $\hat
+h(\bar\gamma) = G_{f_r} \circ \dots \circ G_{f_1}$. Unfolding the recursion,
+$\hat h(\bar\gamma)$ is the composition of the $\rho_{c_i}$, each vertex
+before the vertices below it and the branches in the order of the walk: the
+order of first visit. Its rotation is $R^{\sum_i(4 - k(c_i))} = R^4 = I$ by
+Lemma~\ref{lem:gauss}, and expanding the composition gives $B_D$; run with
+$D$ on its left, $\bar\gamma$ has the inverse holonomy, the translation by
+$-B_D$. The shift is the component along $e_2$. When $T$ is a star of
+disjoint paths from $x_0$, the order is the one in which the paths leave
+$x_0$, as the walk meets them.
 (b) Take $x_0$ on $\bar\gamma_1$ at the start of $\kappa$. The loop $\lambda
 = \bar\gamma_1\, \kappa\, \bar\gamma_2^{-1} \kappa^{-1}$ is the border of
 the disc obtained by cutting $A$ along $\kappa$. Developing along $\kappa$ is
@@ -764,15 +856,13 @@ of edges round them, of the parity of $d_1 + d_2$; but an annulus made of
 quads has an even number of edges on its border, since $4F = 2E_{\text{inside}}
 + E_{\text{border}}$, so $n_1 + n_2$ is even. Proposition~\ref{prop:parity}
 below makes this a statement about each turn. Part (ii) is the mechanism the
-problem of feasibility in Section~\ref{sec:open} guessed. An earlier draft
-suggested that it explains the conflict found on the male body at a single
-arc of the left wrist (Section~\ref{sec:exact}). We checked, and it does
-not: that conflict involves a single turn, not two
-(Remark~\ref{rem:definite}), and in the quad mesh the arc lies between two
-vertices of valence \emph{five}, $0.37$ edge apart, with a third of valence
-five about two edges away and no vertex of valence three nearby. The export
-does not include the nodes of the T-mesh, so these valences are read off the
-quad mesh made from the lengths, not off the T-mesh itself.
+problem of feasibility in Section~\ref{sec:open} guessed, and
+Proposition~\ref{prop:staircase} extends it from straight chains to
+staircases. An earlier draft suggested that it explains the conflict found
+on the male body at a single arc of the left wrist
+(Section~\ref{sec:exact}). It does not: that conflict involves a single
+turn, not two (Remark~\ref{rem:definite}), and
+Proposition~\ref{prop:winding} gives its mechanism.
 
 For more singular vertices between two turns, the parity part generalizes
 into a checkerboard rule.
@@ -941,7 +1031,8 @@ has a shift equal, modulo the balances, to $-(\ell_{1921} + \ell_{1937})$,
 where arc 1937, $0.08$ edges long, is held at length at least one. That turn
 cannot be closed on its own. A sentence of an earlier draft of
 Section~\ref{sec:exact} stated that every held turn can be closed on its
-own; it is false for this body.
+own; it is false for this body. Section~\ref{sec:conflicts} shows where this
+form comes from.
 
 \begin{remark}[Whole solutions exist at some size]\label{rem:exist}
 The balance and closing constraints are homogeneous and the bounds of
@@ -953,6 +1044,60 @@ never impossible in itself; what can fail is closing \emph{at a given size}
 (number of quads) or within a given deviation from the targets.
 Section~\ref{sec:whole} measures this on the male body.
 \end{remark}
+
+\subsection{Measured on the male body}\label{sec:measured}
+
+The statements above concern the T-mesh, which the export of
+Section~\ref{sec:exact} first lacked. We exported it with every turn, for
+the eight ways of the male body at 10{,}590 quads: its $1{,}295$ nodes
+($1{,}034$ T-junctions and $261$ singular vertices, $133$ of valence three,
+$127$ of valence five and one of valence two, of total index $8$) with their
+corner angles, its $2{,}069$ arcs with their traces, its $776$ patches, and
+for each turn the arcs it crosses. A turn is drawn as a curve by straight
+chords across the patches it crosses, and the regions its curve cuts the
+surface into are found from the chords. Identities between quantities of
+this section are identities between linear forms in the arc lengths modulo
+the balances, checked on a basis of the balanced lengths in floating point;
+parities are evaluated at the whole lengths the engine found. Counts are
+summed over the eight ways, a turn found in several ways counting once in
+each (measured throughout).
+
+\paragraph{What holds.}
+For each of the $1{,}299$ turns, the crossing maps composed along the walk
+give a translation whose component across is the exported shift
+(Proposition~\ref{prop:linear}). Of these turns, $718$ have a simple curve;
+each splits the $261$ singular vertices into two groups of total index $4$
+(Lemma~\ref{lem:gauss}). On each side of each of them, with a tree of cuts
+found by breadth-first search, the holonomy of the curve equals the
+composition of Proposition~\ref{prop:burgers}(a), in the order of first visit,
+in both components: $1{,}436$ discs holding $4$ to $257$ singular vertices,
+no exception. The order matters: taking the vertices in the order of their
+last visit fails on $150$ of the $158$ discs of way~2. The checkerboard rule
+(Proposition~\ref{prop:checkerboard}) holds on the $1{,}436$ discs, in the
+form given after Corollary~\ref{cor:parity}, and on the $30{,}148$ annuli
+between two disjoint simple turns, whose singular vertices have total index
+$0$ in every case, as Lemma~\ref{lem:gauss} says. The $294$ pairs of
+disjoint turns with no singular vertex between them have equal shifts
+(Proposition~\ref{prop:burgers}(c)). Ten annuli hold exactly one vertex of
+valence three and one of valence five; on all ten the identity of
+Proposition~\ref{prop:dislocation}(i) holds, and in none of them do the two
+vertices lie on one trace, so part (ii) never applies at the real lengths.
+The parity of Proposition~\ref{prop:parity} holds for the $1{,}299$ turns.
+
+\paragraph{Most held turns are not simple.}
+Of the $1{,}299$ turns, $101$ cross themselves once, as in
+Lemma~\ref{lem:eight}: $97$ split the singular vertices as $(3, 3, 2)$, and
+$4$ as $(2, 2, 4)$, all four crossing their closing segment. The other $480$
+cross themselves at least twice, up to $107$ times. Of the $765$ turns held
+for closing, only $356$ are simple: long turns cross themselves many times,
+and the statements about simple curves and annuli say nothing about them.
+For such curves we use winding numbers: a combination $\sum_\gamma u_\gamma
+\bar\gamma$ of curves winds round each region of their union a whole number
+of times. This is its class in the homology of $\Sigma^\circ$; it tells round
+which singular vertices the combination goes, but not its holonomy, which
+is not commutative.
+
+\subsection{Conflicts between turns}\label{sec:conflicts}
 
 \paragraph{Conflicts are local, but not always pairs.}
 An earlier draft conjectured that whenever a set of turns, each closable on
@@ -1008,21 +1153,271 @@ of lengths $54.9$, $52.8$ and $108.1$:
   + \ell_{637} \quad\text{modulo the balances},
 \]
 with $\ell_{619} \ge 1$ imposed, so no lengths meeting the bounds close all
-three, while every two of them close together in whole numbers. The length
-of turn 39 is about the sum of the other two, as for the three borders of a
-pair of pants round two groups of singularities, whose holonomies are related
-as in Proposition~\ref{prop:burgers}; we have not checked this picture on the
-T-mesh. Sets of four and seven turns behave alike, with the same signature: a
-combination of the shifts equals a non-negative form containing a bounded
-arc. Every set found is infeasible in real numbers already: none of these
-obstructions is one of parity. The conflicts between two turns in the table all have
-the form of Proposition~\ref{prop:dislocation}(ii): the sum or difference of
-the shifts equals a sum of two to eight arc lengths with coefficient one, one
-of them bounded; the two turns have nearly equal lengths ($39.7$ and $40.0$,
+three, while every two of them close together in whole numbers. Sets of four
+and seven turns behave alike, with the same signature: a combination of the
+shifts equals a non-negative form containing a bounded arc. Every set found
+is infeasible in real numbers already: none of these obstructions is one of
+parity. In the conflicts between two turns, the sum or difference of the
+shifts equals a sum of two to eight arc lengths with coefficient one, one of
+them bounded; the two turns have nearly equal lengths ($39.7$ and $40.0$,
 $52.4$ and $52.8$, $277.5$ and $278.0$, \dots) and lie in clusters of
-singularities, at the eyes, the hands and the feet. Whether the arcs join a
-vertex of valence three to one of valence five along one trace cannot be
-decided from the export, which lacks the nodes of the T-mesh.
+singularities, at the eyes, the hands and the feet. An earlier draft read
+this as Proposition~\ref{prop:dislocation}(ii): a vertex of valence three and
+one of valence five joined along one trace by a chain holding the bounded
+arc. The T-mesh refutes it: we examined $13$ conflicts between two turns
+(every row of two turns in Table~\ref{tab:iis} except the pair $49$, $71$ of
+way~5), and in none of them are the turns separated by such a pair on one
+trace. What separates them is a staircase.
+
+\begin{proposition}[Staircases]\label{prop:staircase}
+Let $\gamma_1$, $\gamma_2$ be turns and $c$, $c'$ singular vertices such that
+\[
+  \shift_{\gamma_1}(\ell) - \shift_{\gamma_2}(\ell) = \varepsilon_1 d_1 +
+  \varepsilon_2 d_2
+\]
+for all balanced $\ell$, with $\varepsilon_1, \varepsilon_2 \in \{+1, -1\}$
+and $d = p_{c'} - p_c = d_1 e_1 + d_2 e_2$ the separation of $c'$ from $c$
+developed along a path $\pi$ from $c$ to $c'$
+(Propositions~\ref{prop:dislocation}(i) and~\ref{prop:swap} give such
+identities). Let $\sigma$ be a path from $c$ to $c'$ along arcs $a_1, \dots,
+a_r$, through no other singular vertex, and homotopic to $\pi$ with its ends
+fixed in $\Sigma$ without the other singular vertices. Developed along
+$\sigma$, each arc $a_i$ runs along a direction $v_i \in \{\pm e_1, \pm
+e_2\}$. If $\varepsilon_1 v_{i,1} + \varepsilon_2 v_{i,2} = 1$ for every $i$,
+so that $\sigma$ is a \emph{staircase}, using two directions a quarter-turn
+apart and climbing across the diagonal on which the two turns could close,
+then
+\[
+  \shift_{\gamma_1}(\ell) - \shift_{\gamma_2}(\ell) = \sum_{i=1}^r \ell_{a_i}
+\]
+for all balanced $\ell$. Both turns are rings only if every arc of $\sigma$
+has length zero. If this sum equals, modulo the balances, a form with
+non-negative coefficients containing an arc held at length at least one, one
+of the two turns is a helix under every quantization meeting the bounds.
+\end{proposition}
+
+\begin{proof}
+Developing along $\sigma$ adds, arc after arc, the vector $\ell_{a_i} v_i$:
+the nodes $\sigma$ passes are T-junctions, where the flat metric has no cone
+point. As $\sigma$ and $\pi$ are homotopic with fixed ends away from the
+other cone points, they develop $c'$ at the same place relative to $c$, so
+$d = \sum_i \ell_{a_i} v_i$ and $\varepsilon_1 d_1 + \varepsilon_2 d_2 =
+\sum_i \ell_{a_i}$, first for positive balanced lengths, then for all by
+linearity. If both shifts vanish, this sum of non-negative lengths is zero.
+\end{proof}
+
+Proposition~\ref{prop:dislocation}(ii) is the case of a straight $\sigma$,
+along one direction. The second source of such identities is an exchange of
+two vertices of equal valence.
+
+\begin{proposition}[Exchanging two vertices]\label{prop:swap}
+Let $\gamma_1$, $\gamma_2$ be turns, and $\kappa$ a path from the start of
+$\bar\gamma_1$ to that of $\bar\gamma_2$ that carries the walking direction
+of $\gamma_2$ onto that of $\gamma_1$, as in
+Proposition~\ref{prop:burgers}(b); let $\lambda = \bar\gamma_1\, \kappa\,
+\bar\gamma_2^{-1} \kappa^{-1}$. Suppose that $\lambda$ is homotopic in
+$\Sigma^\circ$ to $\lambda_c \lambda_{c'}^{-1}$, where $\lambda_c$ and
+$\lambda_{c'}$ are small loops run with $c$, $c'$ on their right round two
+singular vertices of the same valence $k$, reached along paths that develop
+them at $p_c$ and $p_{c'}$. Then
+\[
+  \shift_{\gamma_1}(\ell) - \shift_{\gamma_2}(\ell) = \bigl\langle e_2,\
+  (I - R^{4-k})(p_c - p_{c'}) \bigr\rangle .
+\]
+For valence three or five this is $\pm d_1 \pm d_2$ with $d = p_c - p_{c'}$,
+as for a dislocation, and Proposition~\ref{prop:staircase} applies.
+\end{proposition}
+
+\begin{proof}
+As in the proof of Proposition~\ref{prop:burgers}(b), $\hat h(\lambda)$ is
+the translation by $\hat h(\bar\gamma_1) - \hat h(\bar\gamma_2)$, read in the
+coordinates at the start of $\gamma_1$. With $j = 4 - k$,
+\[
+  \hat h(\lambda_c) \circ \hat h(\lambda_{c'})^{-1}(x) =
+  R^j\bigl(R^{-j}(x - p_{c'}) + p_{c'} - p_c\bigr) + p_c
+  = x + (I - R^j)(p_c - p_{c'}),
+\]
+and the shifts are the components along $e_2$. For $j = \pm1$ both
+components of $(I - R^j)d$ are of the form $\pm d_1 \pm d_2$, as in the proof
+of Proposition~\ref{prop:dislocation}.
+\end{proof}
+
+Table~\ref{tab:pairs} lists the six configurations the $13$ conflicts between
+two turns fall into. Configuration~A is a dislocation: the two turns are
+simple and disjoint, and the annulus between them holds one vertex of
+valence three and one of valence five, $0.270$ and $0.720$ edges apart across
+and along, developed in the cut annulus. The difference of the shifts is
+$d_1 - d_2$ up to sign, as Proposition~\ref{prop:dislocation}(i) says, and
+the staircase of two arcs joining the pair has length $0.990$, the
+difference of the real shifts $-0.955$ and $-1.945$ of the two turns,
+identically on balanced lengths; modulo the balances it is a non-negative
+form containing the held arc $619$. At the whole lengths the engine found,
+the two vertices are one edge apart on one grid line, the case of
+Proposition~\ref{prop:dislocation}(ii) with $\delta = 1$. In
+configurations B, C and D the two turns cross. The combination of their
+curves winds $+1$ round a region holding one vertex of valence three, $-1$
+round another holding another such vertex, and round no other singular
+vertex: in homology, an exchange of two vertices of valence three. The
+combination of the shifts is the length of a staircase joining them, and the
+held arc lies on it (D) or follows from it by the balances (B, C). The
+homotopy that Proposition~\ref{prop:swap} assumes was not checked; the
+identity it leads to with Proposition~\ref{prop:staircase} was. In configurations E and F, the combination
+winds once round singular vertices of total index four, like a turn round a
+cap; a bounded search found no staircase, nor sum of two, equal to the
+combination, and we leave them undecided.
+
+\begin{table}[h]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\begin{tabular}{@{}lL{2.75cm}L{3.1cm}L{2.6cm}L{2.5cm}L{2.25cm}@{}}
+\toprule
+& conflict & curves & between the turns & staircase & mechanism \\
+\midrule
+A & $\shift_{37} - \shift_{26}$, ways 1, 3, 7; right eye
+  & disjoint, simple; $52.4$ and $52.8$
+  & annulus: 78 (val.\ 3), 76 (val.\ 5)
+  & 2 arcs, $0.990$; held arc 619 by the balances
+  & dislocation \\
+B & $\shift_{45} - \shift_{49}$, ways 1, 3; right hand
+  & simple; $39.7$ and $40.0$; 2 crossings
+  & lenses: 102, 103 (val.\ 3)
+  & 4 arcs, $1.731$; held arc 1069 by the balances
+  & exchange \\
+C & $\shift_{58} - \shift_{94}$, ways 5, 7; right hand
+  & 2 self-crossings each; $278.0$ and $277.5$; 6 crossings
+  & 109, 118 (val.\ 3)
+  & 3 arcs, $2.203$; held arc 858 by the balances
+  & exchange \\
+D & $\shift_{57} + \shift_{58}$, way 6; left foot
+  & figure-eights; $236.4$ and $236.9$; 4 crossings
+  & 155, 156 (val.\ 3)
+  & 2 arcs, $1.452$, one of them held
+  & exchange \\
+E & $\shift_{54} - \shift_{61}$, ways 1, 3, 5, 7; left eye
+  & simple and figure-eight; $59.5$ and $71.9$; 2 crossings
+  & 11 vertices of index 3, and 207 (val.\ 3)
+  & none found
+  & cap of index 4, undecided \\
+F & $\shift_{8} + \shift_{15}$, way 7; right foot
+  & 2 and 1 self-crossings; $251.5$ and $247.4$; 4 crossings
+  & 14, 23, 24, and 15 (val.\ 3)
+  & none found
+  & cap of index 4, undecided \\
+\bottomrule
+\end{tabular}
+\caption{The conflicts between two turns on the male body, by configuration
+(measured). Turn numbers are those of the first way listed, signs those of
+the exported shifts; ``between the turns'': the singular vertices round
+which the combination of the two curves winds, numbered as nodes of the
+T-mesh; ``staircase'': a staircase between them whose length equals the
+combination of the shifts modulo the balances, and where the held arc of
+the certificate lies. A: Proposition~\ref{prop:dislocation}(i) with
+Proposition~\ref{prop:staircase}; B--D: Proposition~\ref{prop:swap} with
+Proposition~\ref{prop:staircase}.}
+\label{tab:pairs}
+\end{table}
+
+\paragraph{A separatrix that winds.}
+The one turn that cannot be closed on its own is of another kind.
+
+\begin{proposition}[A separatrix that winds]\label{prop:winding}
+Let $\sigma$ and $\tau$ be separatrices of a singular vertex $v$ such that
+$\sigma$, followed from $v$, stops on $\tau$ at a point $q$ at distance
+$\delta(\ell)$ from $v$ along $\tau$, a sum of arc lengths. Let $\lambda$ be
+the loop that runs along $\sigma$ from $v$ to $q$ and back along $\tau$ to
+$v$, pushed off $v$ into the sector it turns through. If $\lambda$ is freely
+homotopic in $\Sigma^\circ$ to the curve $\bar\gamma$ of a turn $\gamma$, the
+walking direction of $\gamma$ going to that of $\sigma$, then
+$\shift_\gamma(\ell) = \pm\delta(\ell)$ for all balanced $\ell$. The turn is
+a ring only if $\delta = 0$, that is if $\sigma$ comes back onto its own
+vertex; if $\delta$ equals, modulo the balances, a non-negative form
+containing an arc held at length at least one, $\gamma$ is a helix under
+every quantization meeting the bounds.
+\end{proposition}
+
+\begin{proof}
+Develop $\lambda$ from a point of $\sigma$ next to $v$, with $v$ at the
+origin and $\sigma$ along $e_1$. The separatrix $\sigma$ is straight and
+stops on $\tau$ at a right angle, so the return along $\tau$ is a segment of
+length $\delta$ along $\pm e_2$, like the closing segment of a turn. Being
+homotopic to the curve of a turn, $\lambda$ has a translation as holonomy;
+it maps $v$, developed at the start, onto $v$ developed at the end, which
+lies at distance $\delta$ from $q$ across $\sigma$. Its component across is
+thus $\pm\delta$. A free homotopy conjugates the holonomy by a motion; the
+conjugate of a translation is the translation by the rotated vector, and the
+rotation is the identity since it carries the walking direction of $\gamma$
+onto that of $\sigma$.
+\end{proof}
+
+At the left wrist the held turn (42 in way 0, length $6.99$, real shift
+$-0.305$, whole shift $-1$) is simple, and its small side holds four
+vertices of valence three, $226$, $243$, $244$ and $245$, of total index
+$4$: a cap. Proposition~\ref{prop:burgers}(a) on that side gives the shift
+$-0.305$ from their four positions, but as a form in the lengths of the arcs
+inside the cap it has no sign. The sign comes from outside. The vertex $246$,
+of valence five, lies beyond the cap; one of its separatrices, the trace
+$964$, runs $0.066 + 6.928 = 6.994$ edges once round the wrist, parallel to
+the turn, and stops on another of its separatrices, the trace $966$, at the
+T-junction $1099$, at the distance $\delta = \ell_{1920} + \ell_{1921} = 0.075
++ 0.230 = 0.305$ from $246$. The shift of the turn is $-\delta$ modulo the
+balances, and $\ell_{1920}$ equals, modulo the balances, the length of arc
+$1937$, which starts at the vertex $248$ of valence five and is held at
+length at least one: whence the certificate $-(\ell_{1921} + \ell_{1937})$ of
+Remark~\ref{rem:definite}, and $\shift \le -1$ at every admissible whole
+length (measured). A ring would need the separatrix to come back onto its
+own vertex, which the bounds of separation forbid. We checked the identity,
+not the homotopy that Proposition~\ref{prop:winding} assumes.
+
+\paragraph{Conflicts of more than two turns.}
+The three turns at the right eye are a dislocation between three turns. The
+turns $36$ and $37$ are simple; $39$ is a figure-eight; each two of them
+cross twice, and together they cut the surface into five regions. The cycle
+$\bar\gamma_{36} + \bar\gamma_{37} - \bar\gamma_{39}$ winds $-1$ round the
+one region bordered by all three curves, which holds the vertices $79$ of
+valence three and $77$ of valence five, and round no other singular vertex:
+in homology, $39$ is the sum of $36$ and $37$ and a loop round the pair. The
+combination $\shift_{36} + \shift_{37} - \shift_{39}$ is the length of a
+staircase of three arcs from $79$ to $77$ that includes the held arc $619$,
+$1.367 = 1.712 - 0.955 + 0.610$ at the real lengths (measured). The set of
+four turns at the eyes ($40$, $56$, $59$, $61$ of way 1, $72$ to $167$ long,
+crossing themselves up to $17$ times and each other up to $28$ times) winds
+$+1$ round the region holding $198$ (valence three) and $199$ (valence five),
+$-1$ round $207$ and $+1$ round $202$ (both valence three), and round no
+other singular vertex: in homology, a dislocation and an exchange, the held
+arc $1587$ starting at $199$; a bounded search did not write the combination
+as a sum of two staircases.
+
+The other sets are not described. At the left
+hand ($66$, $71$, $75$, $76$ of way 1, the same curves as $73$, $78$, $82$,
+$83$ of way 3), $76$ is a figure-eight round three vertices of valence three,
+$29.9$ long, and the others are $96$ to $140$ long, crossing themselves $13$
+to $28$ times and each other $10$ to $46$ times; relative to the rest of the
+body, the weighted cycle winds round $18$ of the $22$ regions, with windings
+from $-\tfrac12$ to $\tfrac43$ in the normalization of
+Table~\ref{tab:iis}. The set of seven in
+way 5 contains the two turns of configuration B and winds $\pm4$ round the
+two vertices they exchange; its other turns, up to $398$ long, go round
+parts of both hands. The set of seven in way 7, at the left foot, contains a
+turn of length $4.92$ round a cap of four vertices of valence three, whose
+multiplier is $16$ against $\pm1$ or $2$ for the six others, once scaled to
+whole numbers.
+
+The fractional multipliers are an artefact of normalization. The linear
+program that finds the certificate asks the bounded arcs to weigh one in
+total: at the left hand the form has three bounded arcs of coefficient
+$\tfrac13$ in way 1 and two of coefficient $\tfrac12$ in way 3. Scaled to
+whole numbers, both ways give the same primitive multipliers,
+\[
+  7\,\shift_{66} + 5\,\shift_{71} + 2\,\shift_{75} + 3\,\shift_{76}
+  = -2F \quad\text{modulo the balances},
+\]
+with $F$ a form of non-negative whole coefficients $1$, $2$ and $5$
+containing the bounded arcs (measured). With these weights the weighted
+cycle winds alike round the rest of the body ($236$ singular vertices) and
+round the region of ten singular vertices of total index $-2$; why the
+conflict takes these weights, we do not know.
 
 \begin{conjecture}[Conflicts are round a cluster]\label{conj:region}
 On a surface of genus zero, let $H$ be an irreducible set of turns that
@@ -1034,12 +1429,42 @@ certifies the conflict is given by the holonomy relation of these borders: a
 form with non-negative coefficients containing an arc held open.
 \end{conjecture}
 
-The cases $k = 1$ (a sign-definite turn, the wrist), $k = 2$ (an annulus,
-Proposition~\ref{prop:dislocation}) and $k = 3$ (a pair of pants, the eye)
-fit it, with multipliers $\pm1$. The fractional multipliers at the left hand
-($\tfrac76, \tfrac56, \tfrac13, \tfrac12$ up to sign, and their analogue in
-way 3), and the larger ones of the sets of seven turns, are not explained by
-it; they are the cases to examine first, and could refute it.
+An earlier draft proposed Conjecture~\ref{conj:region} on the evidence of the
+certificates alone. The T-mesh confirms it for one turn (the wrist, a cap,
+though the form comes from a separatrix outside the region) and for the
+annulus of configuration~A. It holds in a modified form for the three turns at
+the right eye: the curves are not the borders of a pair of pants, $39$ being
+a figure-eight, but their combination winds round one region holding one
+pair of valences three and five, and the certificate is the staircase of
+that pair. As stated, it is refuted by the conflicts made of crossing turns:
+configurations B to F, and the sets of four and seven turns, whose curves
+cross each other up to tens of times and bound no single planar region. What the confirmed cases share is local, and suggests
+a refined statement, which we leave as a conjecture.
+
+\begin{conjecture}[Conflicts are sums of local dislocations]\label{conj:local}
+On a surface of genus zero, let $H$ be an irreducible set of turns that
+cannot be closed together within the bounds of separation. Then some
+combination $\sum_{\gamma \in H} u_\gamma \shift_\gamma$ with whole
+multipliers that certifies the conflict (Remark~\ref{rem:definite}) equals,
+modulo the balances, a sum with non-negative whole weights of
+\begin{enumerate}
+\item[(i)] lengths of staircases (Proposition~\ref{prop:staircase}) between a
+  vertex of valence three and one of valence five, or between two vertices of
+  equal valence exchanged as in Proposition~\ref{prop:swap}, and
+\item[(ii)] shifts of caps: sign-definite forms carried by curves that wind
+  once round singular vertices of total index four, as the wrist turn and its
+  separatrix (Proposition~\ref{prop:winding}),
+\end{enumerate}
+one term at least containing an arc held open.
+\end{conjecture}
+
+It holds, with a single term and up to the homotopies we did not check, for
+the wrist, configurations A to D and the three turns at the right eye. The set of four at the eyes fits it in homology
+(a dislocation and an exchange), and the set of seven at the left foot
+gives most of its weight to a turn round a cap. Configurations E and F, the left hand and
+the set of seven of way 5 are not yet written in this form; they, and the
+set of fifteen turns of way 5, which we did not examine, are the cases that
+could refute it.
 
 \section{Whole lengths}\label{sec:whole}
 
@@ -1215,14 +1640,26 @@ it is the choice of the turns to
 close, at the lengths where they are the strips of the mesh, that decides how
 much the mesh spirals.
 
-\paragraph{Status.}
-\emph{Proved:} Propositions~\ref{prop:parity} and~\ref{prop:free},
-Lemma~\ref{lem:handshake}, Remark~\ref{rem:definite}, and the existence of
-whole solutions when real ones exist. \emph{Measured:} the structure and ranks
-of the eight systems, the 171 implicit zeros and their certificates, the
-bounds $0.817$, $0.758$ and $0.536$, the infeasible sets of
-Table~\ref{tab:iis} (exactly where marked), the meshes. \emph{Conjectured:}
-Conjecture~\ref{conj:region}.
+\paragraph{Status of Sections~\ref{sec:obstructions} and~\ref{sec:whole}.}
+\emph{Proved:} Lemmas~\ref{lem:gauss}, \ref{lem:eight}
+and~\ref{lem:handshake}; Propositions~\ref{prop:burgers} (with the order of
+first visit made precise), \ref{prop:dislocation}, \ref{prop:checkerboard},
+\ref{prop:parity}, \ref{prop:staircase}, \ref{prop:swap},
+\ref{prop:winding} and~\ref{prop:free}, each under its hypotheses;
+Remark~\ref{rem:definite}, and the existence
+of whole solutions when real ones exist. \emph{Measured:} on the T-mesh of
+the male body, every statement of Section~\ref{sec:holonomy} wherever it
+applies (Section~\ref{sec:measured}); the configurations of the conflicts
+(Table~\ref{tab:pairs}), the staircases, the separatrix at the wrist and the
+windings of the larger sets, as identities modulo the balances, without the
+homotopies; the structure and ranks of the eight systems, the 171 implicit
+zeros and their certificates, the bounds $0.817$, $0.758$ and $0.536$, the
+infeasible sets of Table~\ref{tab:iis} (exactly where marked), the meshes.
+\emph{Refuted:} that the conflicts between two turns are pairs of valences
+three and five on one trace ($0$ of $13$), and
+Conjecture~\ref{conj:region} as stated. \emph{Conjectured:}
+Conjecture~\ref{conj:local}; the left hand, the sets of seven and
+configurations E and F are not described.
 
 \section{Open problems}\label{sec:open}
 
@@ -1259,19 +1696,21 @@ the T-mesh and its lengths directly, so that every one is accounted for?
 
 \begin{problem}[Feasibility]
 On a human torso, some held turns cannot be closed together: the projection
-lets them go. Our hypothesis is that pairs of singularities between two
+lets them go. Our hypothesis was that pairs of singularities between two
 rings force a dislocation, and that closing all rings needs the poles to
 face one another, which the separation of singularities forbids at the
-scale of the T-mesh; Proposition~\ref{prop:dislocation} proves this for a
-single pair on a trace. A capped cylinder shows the same conflict: its
+scale of the T-mesh; Propositions~\ref{prop:dislocation}
+and~\ref{prop:staircase} prove this for a single pair joined by a straight
+chain or a staircase. A capped cylinder shows the same conflict: its
 layout of six patches exists, but only with arcs our quantizer will not
 bring to zero. On the male body the conflict comes down to one arc in four
 of the eight ways, to 9 to 30 arcs in the others (Section~\ref{sec:exact}),
-and to irreducible sets of one to fifteen turns
-(Section~\ref{sec:obstructions}). When is a set of turns simultaneously
+and to irreducible sets of one to fifteen turns; the smallest are
+dislocations, exchanges of two vertices, caps and a winding separatrix
+(Section~\ref{sec:conflicts}). When is a set of turns simultaneously
 closable, in terms of the singularity configuration?
-Conjecture~\ref{conj:region} proposes that the obstructions are always
-round one cluster of singularities.
+Conjecture~\ref{conj:local} proposes that the obstructions are always sums
+of such local ones.
 \end{problem}
 
 \begin{problem}[Finite trajectories]
@@ -1292,7 +1731,9 @@ second problem for special classes of layouts.
 The method is implemented in openclare, Rust, branches
 \texttt{close-quantized} (closing, measure) and \texttt{quadsphere}
 (confidence floor, merged traces); the bench is driven by
-\texttt{bench/run.py} and the marks by \texttt{scripts/scores.py}.
+\texttt{bench/run.py} and the marks by \texttt{scripts/scores.py}. The
+export of the T-mesh used in Section~\ref{sec:measured} is an experimental
+hook of the branch \texttt{rd-exact}, not part of the engine.
 
 \bibliographystyle{plainnat}
 \bibliography{refs}
