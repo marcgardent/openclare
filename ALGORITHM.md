@@ -1212,7 +1212,11 @@ face. The new relaxation changes three things.
   to even out the sizes. Angles are thus corrected without touching the dimensions: nothing
   pushes the mesh to shrink.
 - **How one moves.** The move is made tangent to the surface before the projection to the
-  closest point: a vertex slides, it does not sink in.
+  closest point: a vertex slides, it does not sink in. The closest point is looked for on the
+  side of the source the mesh faces there: the meshing reads its vertices off the work mesh,
+  which may be coarser than a thin wall is thick and cut through it, and the nearest side is
+  then as often as not the back one (jerry at 3,030 quads had one quad turned over that way,
+  on a wall about a fifth of the edge asked for thick, before this was so).
 - **Guards.** A vertex never goes farther than half an edge from the place where the map
   had put it: this is what protects tips and thin parts. And a move that would flatten or turn
   over a quad is not made. Turned over means against the way the mesh round the quad faces, not
