@@ -282,33 +282,61 @@ pub(super) fn closed(
             rows.push(merged(row));
         }
     }
+    let stations = rows.len();
     rows.extend(held.iter().map(|turn| turn.shift.clone()));
-    // Least change: delta = W^-1 A^T y with (A W^-1 A^T) y = -A lengths.
-    let mut columns: Vec<Vec<(usize, f64)>> = vec![Vec::new(); lengths.len()];
-    for (r, row) in rows.iter().enumerate() {
-        for &(arc, c) in row {
-            columns[arc].push((r, c));
+    let conditions = rows.len();
+    // (Experiment: lengths that would go below a floor are held at it and
+    // the projection made again, until none does: the least change with
+    // the bound, where clamping afterwards breaks the conditions.)
+    let floor_share: Option<f64> = std::env::var("OPENCLARE_ACTIVE_SET").ok().and_then(|v| v.parse().ok());
+    let floor: Vec<f64> = lengths.iter().map(|&length| floor_share.map_or(0.0, |share| share * length)).collect();
+    let mut held_at: Vec<usize> = Vec::new();
+    for _ in 0..ACTIVE_ROUNDS {
+        let mut rows = rows.clone();
+        rows.extend(held_at.iter().map(|&arc| vec![(arc, 1.0)]));
+        // Least change: delta = W^-1 A^T y with (A W^-1 A^T) y = -A lengths.
+        let mut columns: Vec<Vec<(usize, f64)>> = vec![Vec::new(); lengths.len()];
+        for (r, row) in rows.iter().enumerate() {
+            for &(arc, c) in row {
+                columns[arc].push((r, c));
+            }
         }
+        let mut system = SymmetricBuilder::new(rows.len());
+        for (arc, column) in columns.iter().enumerate() {
+            system.add_squared(column, 1.0 / weight[arc]);
+        }
+        for r in 0..rows.len() {
+            // Rows that say the same are allowed: a little on the diagonal.
+            system.add(r, r, 1e-9);
+        }
+        let rhs: Vec<f64> = rows
+            .iter()
+            .enumerate()
+            .map(|(r, row)| {
+                let wanted = if r < stations {
+                    0.0
+                } else if r < conditions {
+                    aimed[r - stations]
+                } else {
+                    floor[held_at[r - conditions]]
+                };
+                wanted - value(row, lengths)
+            })
+            .collect();
+        let y = system.factorize().ok()?.solve(&rhs);
+        let mut out = lengths.to_vec();
+        for (arc, column) in columns.iter().enumerate() {
+            out[arc] += column.iter().map(|&(r, c)| c * y[r]).sum::<f64>() / weight[arc];
+        }
+        let below: Vec<usize> =
+            (0..out.len()).filter(|&arc| out[arc] < floor[arc] - 1e-9 && !held_at.contains(&arc)).collect();
+        if floor_share.is_none() || below.is_empty() {
+            return Some(out.iter().zip(&floor).map(|(&length, &least)| length.max(least)).collect());
+        }
+        held_at.extend(below);
     }
-    let mut system = SymmetricBuilder::new(rows.len());
-    for (arc, column) in columns.iter().enumerate() {
-        system.add_squared(column, 1.0 / weight[arc]);
-    }
-    for r in 0..rows.len() {
-        // Rows that say the same are allowed: a little on the diagonal.
-        system.add(r, r, 1e-9);
-    }
-    let stations = rows.len() - held.len();
-    let rhs: Vec<f64> = rows
-        .iter()
-        .enumerate()
-        .map(|(r, row)| if r < stations { 0.0 } else { aimed[r - stations] } - value(row, lengths))
-        .collect();
-    let y = system.factorize().ok()?.solve(&rhs);
-    let mut out = lengths.to_vec();
-    for (arc, column) in columns.iter().enumerate() {
-        let change: f64 = column.iter().map(|&(r, c)| c * y[r]).sum::<f64>() / weight[arc];
-        out[arc] = (out[arc] + change).max(0.0);
-    }
-    Some(out)
+    None
 }
+
+/// Most rounds of holding lengths at their floor in [`closed`].
+const ACTIVE_ROUNDS: usize = 30;

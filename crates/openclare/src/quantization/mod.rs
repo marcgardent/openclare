@@ -235,6 +235,84 @@ fn turns_of(
     (every, held)
 }
 
+/// Writes, for analysis outside the engine, the system a way of closing
+/// turns works on: the real lengths of the arcs and the whole ones found,
+/// the balance of each patch, and every turn found with its shift, whether
+/// it was held and whether the projection kept it. One JSON file per way,
+/// numbered as the ways are tried.
+#[allow(clippy::too_many_arguments)]
+fn export_turns(
+    directory: &std::path::Path,
+    way: usize,
+    tmesh: &TMesh,
+    real: &[f64],
+    scale: f64,
+    x: &[i64],
+    lower: &[i64],
+    every: &[tubes::Turn],
+    asked: &[tubes::Turn],
+    kept: &[&tubes::Turn],
+) {
+    use std::fmt::Write;
+    let expression = |row: &[(usize, f64)]| {
+        let terms: Vec<String> = row.iter().map(|&(arc, c)| format!("[{arc},{c}]")).collect();
+        format!("[{}]", terms.join(","))
+    };
+    let mut out = String::new();
+    write!(out, "{{\"scale\":{scale},\"real\":{real:?},\"lengths\":{x:?},\"lower\":{lower:?},\"stations\":[").unwrap();
+    let mut first = true;
+    for patch in &tmesh.patches {
+        let Some(side_of) = patch.side_of_each() else { continue };
+        for pair in 0..2 {
+            let mut row: Vec<(usize, f64)> = Vec::new();
+            for (&half, &side) in patch.boundary.iter().zip(&side_of) {
+                if side as usize % 2 == pair {
+                    row.push((half as usize / 2, if side < 2 { 1.0 } else { -1.0 }));
+                }
+            }
+            if !first {
+                out.push(',');
+            }
+            first = false;
+            out.push_str(&expression(&row));
+        }
+    }
+    out.push_str("],\"arcs_at\":[");
+    for (k, arc) in tmesh.arcs.iter().enumerate() {
+        let (a, b) = (tmesh.nodes[arc.nodes[0] as usize].position, tmesh.nodes[arc.nodes[1] as usize].position);
+        let middle = 0.5 * (a + b);
+        if k > 0 {
+            out.push(',');
+        }
+        write!(out, "[{},{},{}]", middle.x, middle.y, middle.z).unwrap();
+    }
+    out.push_str("],\"turns\":[");
+    for (k, turn) in every.iter().enumerate() {
+        let first_arc = tmesh.patches[turn.patch].boundary[0] as usize / 2;
+        let at = tmesh.nodes[tmesh.arcs[first_arc].nodes[0] as usize].position;
+        let held = asked.iter().position(|h| h.shift == turn.shift).map_or(-1, |k| k as i64);
+        let kept = kept.iter().any(|h| h.shift == turn.shift);
+        if k > 0 {
+            out.push(',');
+        }
+        write!(
+            out,
+            "{{\"shift\":{},\"around\":{},\"patch\":{},\"at\":[{},{},{}],\"held\":{},\"held_index\":{held},\"kept\":{kept}}}",
+            expression(&turn.shift),
+            turn.around,
+            turn.patch,
+            at.x,
+            at.y,
+            at.z,
+            held >= 0
+        )
+        .unwrap();
+    }
+    out.push_str("]}");
+    let _ = std::fs::create_dir_all(directory);
+    let _ = std::fs::write(directory.join(format!("way-{way}.json")), out);
+}
+
 /// Prints where each turn of `every` that `x` leaves shifted starts, and
 /// how far it was shifted by the real lengths.
 fn debug_turns(tmesh: &TMesh, every: &[tubes::Turn], x: &[i64], real: &[f64], scale: f64, held: &[&tubes::Turn]) {
@@ -275,14 +353,36 @@ impl WalkCancelling {
         report: &mut Report,
         every: &[tubes::Turn],
         held: &[tubes::Turn],
+        way: usize,
     ) -> (Vec<i64>, f64, usize, Vec<i64>) {
         let weight: Vec<f64> = real.iter().map(|length| 1.0 / (length + 1.0)).collect();
         let debug = std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some();
         let clock = std::time::Instant::now();
+        let asked = held;
         let mut held: Vec<&tubes::Turn> = held.iter().collect();
         let mut aimed = real.to_vec();
         let mut projections = 0;
-        while !held.is_empty() {
+        // (Experiment: the lengths aimed at and the turns closed, worked
+        // out outside the engine for this way; see export_turns.)
+        if let Some(directory) = std::env::var_os("OPENCLARE_AIMED")
+            && let Ok(text) = std::fs::read_to_string(std::path::Path::new(&directory).join(format!("aimed-{way}.txt")))
+        {
+            let mut lines = text.lines();
+            let values: Vec<f64> =
+                lines.next().unwrap_or("").split_whitespace().filter_map(|v| v.parse().ok()).collect();
+            let closed: Vec<usize> =
+                lines.next().unwrap_or("").split_whitespace().filter_map(|v| v.parse().ok()).collect();
+            if values.len() == real.len() {
+                aimed = values;
+                held = closed.into_iter().filter_map(|k| asked.get(k)).collect();
+                // Nothing left for the projection to do.
+                projections = usize::MAX;
+            } else if values.is_empty() {
+                // Only the turns: the projection runs on those.
+                held = closed.into_iter().filter_map(|k| asked.get(k)).collect();
+            }
+        }
+        while !held.is_empty() && projections != usize::MAX {
             projections += 1;
             let Some(closed) = tubes::closed(tmesh, real, &weight, &held, &vec![0.0; held.len()]) else { break };
             let left: Vec<f64> = held.iter().map(|turn| tubes::value(&turn.shift, &closed).abs()).collect();
@@ -405,6 +505,24 @@ impl WalkCancelling {
         }
         if std::env::var_os("OPENCLARE_DEBUG_TURNS").is_some() {
             debug_turns(tmesh, every, &x, real, scale, &held);
+        }
+        if debug {
+            let lengths: Vec<f64> = x.iter().map(|&length| length as f64).collect();
+            let open = |turns: &mut dyn Iterator<Item = &tubes::Turn>| {
+                turns.filter(|turn| tubes::value(&turn.shift, &lengths).abs() >= 0.5).count()
+            };
+            eprintln!(
+                "  after the integer search: {} of {} kept turns, {} of {} held, {} of {} found still shifted",
+                open(&mut held.iter().copied()),
+                held.len(),
+                open(&mut asked.iter()),
+                asked.len(),
+                open(&mut every.iter()),
+                every.len()
+            );
+        }
+        if let Some(directory) = std::env::var_os("OPENCLARE_EXPORT_TURNS") {
+            export_turns(std::path::Path::new(&directory), way, tmesh, real, scale, &x, &lower, every, asked, &held);
         }
         let quads = count_quads(tmesh, &x);
         (x, scale, quads, lower)
@@ -578,9 +696,10 @@ impl Quantizer for WalkCancelling {
             // same as if they had been searched in turn.
             let tried: Vec<_> = ways
                 .par_iter()
-                .map(|(_, found, held)| {
+                .enumerate()
+                .map(|(way, (_, found, held))| {
                     let mut own = Report::default();
-                    let tried = self.closed_search(tmesh, &network, &real, request, &mut own, found, held);
+                    let tried = self.closed_search(tmesh, &network, &real, request, &mut own, found, held, way);
                     (spirals_of(&tried.0), tried, own.moves)
                 })
                 .collect();
