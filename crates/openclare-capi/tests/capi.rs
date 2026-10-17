@@ -372,3 +372,52 @@ fn a_null_result_is_harmless() {
     }
     assert_eq!(text(openclare_version()), env!("CARGO_PKG_VERSION"));
 }
+
+#[test]
+fn a_shape_is_analysed_once_and_asked_as_often_as_wanted() {
+    let (positions, triangles) = ball();
+    let vertices = positions.len() / 3;
+    let settings = CString::new("adaptivity = 0\n").unwrap();
+    unsafe {
+        let analysis = openclare_analyse(
+            positions.as_ptr(),
+            vertices,
+            triangles.as_ptr(),
+            triangles.len() / 3,
+            null(),
+            settings.as_ptr(),
+            null(),
+        );
+        assert_eq!(openclare_analysis_ok(analysis), 1, "{}", text(openclare_analysis_error(analysis)));
+        assert_eq!(text(openclare_analysis_error(analysis)), "");
+
+        // A ball of radius 1 with quads of one size: its area over theirs.
+        let (mut quads, mut below) = (0.0, 0.0);
+        assert_eq!(openclare_analysis_count(analysis, 0.2, 0.2, &mut quads, &mut below), 1);
+        let area = 4.0 * std::f64::consts::PI;
+        assert!((quads / (area / 0.04) - 1.0).abs() < 0.03, "{quads} quads");
+        assert!((0.0..=1.0).contains(&below));
+        let (mut largest, mut smallest) = (0.0, 0.0);
+        assert_eq!(openclare_analysis_proposal(analysis, &mut largest, &mut smallest), 1);
+        assert!(largest > 0.0 && smallest > 0.0 && smallest <= largest, "{smallest} to {largest}");
+
+        // At each vertex: the size, and whether it is coarser than asked.
+        let (mut sizes, mut coarser) = (vec![0f32; vertices], vec![9u8; vertices]);
+        assert_eq!(openclare_analysis_vertices(analysis, 0.2, 0.2, sizes.as_mut_ptr(), coarser.as_mut_ptr()), 1);
+        assert!(sizes.iter().all(|&size| (size - 0.2).abs() < 1e-5), "{:?}", &sizes[..4]);
+        assert!(coarser.iter().all(|&flag| flag <= 1));
+
+        // Bounds that are not bounds are refused, and said by the return.
+        assert_eq!(openclare_analysis_count(analysis, 0.1, 0.2, &mut quads, &mut below), 0);
+        assert_eq!(openclare_analysis_vertices(analysis, 0.2, 0.0, sizes.as_mut_ptr(), coarser.as_mut_ptr()), 0);
+        openclare_analysis_free(analysis);
+
+        // A shape that cannot be analysed is said so.
+        let none = openclare_analyse(positions.as_ptr(), vertices, triangles.as_ptr(), 0, null(), null(), null());
+        assert_eq!(openclare_analysis_ok(none), 0);
+        assert!(!text(openclare_analysis_error(none)).is_empty());
+        assert_eq!(openclare_analysis_count(none, 0.2, 0.2, &mut quads, &mut below), 0);
+        openclare_analysis_free(none);
+        openclare_analysis_free(null_mut());
+    }
+}
