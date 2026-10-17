@@ -399,10 +399,38 @@ ways is the order in which they finished.}
 \end{table}
 
 In whole numbers, the same mixed-integer program did not finish within
-fifteen minutes on the smallest system; the integer search of the
-quantizer remains needed, but it can be given the targets of the linear
-program instead of those of the projection. Whether the turns closed in
-real numbers survive the integer search is the next measurement.
+fifteen minutes on the two systems tried.
+
+\paragraph{From reals to whole numbers.}
+We then fed the engine better targets and measured what survives its
+integer search (Table~\ref{tab:rounding}). Aiming at the lengths of the
+linear program closes fewer loops in the end: the weighted $L^1$ objective
+puts the changes on few arcs, the deviation from the real lengths grows,
+and the variants with the fewest spirals are refused by the deviation cap.
+A projection that holds lengths at a floor instead of clamping them (an
+active-set method on the same Cholesky solver) keeps every held turn closed
+in real numbers; yet after the integer search 117 of 169 are shifted again,
+and the mesh spirals more. With the current projection, too, about 40\% of
+the turns it kept are shifted after the integer search. The bottleneck is
+not the projection but the rounding: the integer search follows the targets
+but ignores the shifts.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+targets of the integer search & turns closed in reals & still shifted after & spiral edges (mesh) \\
+\midrule
+projection, clamped (current) & about 50 & 10--23 of them & 1.1\% \\
+linear program, $L^1$ & up to 160 & --- & 11.9\% \\
+active set, floor 0 & all held (up to 169) & 117 of 169 & 3.3\% \\
+active set, floor half the real length & 36--72 & --- & 9.8\% \\
+\bottomrule
+\end{tabular}
+\caption{Male body at 10{,}590 quads, one run each; the mesh keeps the way
+with the fewest spirals, so its share is that of a single way.}
+\label{tab:rounding}
+\end{table}
 
 \section{Open problems}\label{sec:open}
 
@@ -412,6 +440,14 @@ $\shift_\gamma(\ell)=0$ for a set of turns. This is a minimum-deviation flow
 with linear side constraints; how much of the exact machinery
 of~\cite{heistermann2023bimdf} carries over is open. Section~\ref{sec:exact}
 shows that the linear relaxation already closes almost all held turns.
+\end{problem}
+
+\begin{problem}[Closing in whole numbers]
+The solutions of the balance and shift equations in whole numbers form a
+lattice. Can the integer search move within it, for instance from a
+reduced basis (Hermite normal form, LLL) and a nearest-plane rounding of
+the targets, instead of rounding first and repairing after? The
+measurements above say this is where the loops are lost.
 \end{problem}
 
 \begin{problem}[Which turns]
