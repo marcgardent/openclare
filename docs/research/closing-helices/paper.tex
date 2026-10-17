@@ -442,6 +442,19 @@ of~\cite{heistermann2023bimdf} carries over is open. Section~\ref{sec:exact}
 shows that the linear relaxation already closes almost all held turns.
 \end{problem}
 
+\paragraph{Exact whole lengths.}
+Closing exactly, in whole numbers, the turns found closable together with
+the bounds kept is feasible: HiGHS solves it in about two minutes for
+three of the four ways tried (the fourth, with 87 turns, runs out of ten
+minutes). The solutions leave 1 to 4 held turns shifted where the engine
+leaves 13 to 44, and fewer of the turns not held as well (5 against 9, 5
+against 11, 0 against 27), at a deviation from the real lengths 4\% to 62\%
+higher. Yet the quad meshes they make spiral \emph{more}: 12.2\% of their
+edges against 8.8\% for the first way, 3.7\% against 1.1\% for the second,
+and the third breaks the structure. Most of the loops that spiral are thus
+not turns our search finds: closing every turn it finds is not enough,
+which makes the second open problem below the central one.
+
 \begin{problem}[Closing in whole numbers]
 The solutions of the balance and shift equations in whole numbers form a
 lattice. Can the integer search move within it, for instance from a
@@ -451,10 +464,12 @@ measurements above say this is where the loops are lost.
 \end{problem}
 
 \begin{problem}[Which turns]
-The straight walks that return are infinite in number; we sample them. Is
-there a finite set of turns, a basis in some homological sense of the
-regular region of the T-mesh, whose closing implies that every loop of the
-quad mesh closes?
+The straight walks that return are infinite in number; we sample them, and
+Section~\ref{sec:exact} shows the sample misses most of the loops that
+spiral. Is there a finite set of turns, a basis in some homological sense
+of the regular region of the T-mesh, whose closing implies that every loop
+of the quad mesh closes? Can the loops of the quad mesh to be be read off
+the T-mesh and its lengths directly, so that every one is accounted for?
 \end{problem}
 
 \begin{problem}[Feasibility]
