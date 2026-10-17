@@ -189,6 +189,7 @@ files.)
 
 - QuadriFlow: `use_mesh_symmetry=False` (on by default, it would distort everything),
   `use_preserve_sharp` on models with hard edges, `use_preserve_boundary` on open models.
+- AutoRemesher: standalone CLI ([huxingyi/autoremesher](https://github.com/huxingyi/autoremesher)), `--sharp-edge 90.0` on models with hard edges, `--sharp-edge 180.0` on organic models.
 - The floor: `--crease-angle 30` on models with hard edges.
 - Quad Remesher: detection of hard edges on models with hard edges only, symmetry off.
 - The same face budget and the same seeds for all, and the same input: the object of the scene

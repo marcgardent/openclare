@@ -1,6 +1,6 @@
 # Shortcuts for the common tasks. `make help` lists them.
 
-.PHONY: help build test scenes blenderkit scores quick pages view addon install addon-windows test-windows addon-test release
+.PHONY: help build test scenes blenderkit autoremesher scores quick pages dashboard view addon install addon-windows test-windows addon-test release
 
 help:
 	@echo "make build       build the openclare binary (release)"
@@ -16,6 +16,7 @@ help:
 	@echo "make test-windows WINE=/path/to/wine64"
 	@echo "                 run the tests of the engine built for Windows, under Wine"
 	@echo "make addon-test  run the add-on in a Blender without interface (needs blender)"
+	@echo "make autoremesher download and install the AutoRemesher challenger into ~/.local/bin"
 	@echo "make release version=MAJOR|MINOR|FIX"
 	@echo "                 raise that number of the version, commit and tag it on main; PUSH=1"
 	@echo "                 to send the tag, from which GitHub builds the add-on for Linux and"
@@ -34,6 +35,8 @@ help:
 	@echo "                 couple of minutes. MODELS=camera,wolf TARGET=8000 to choose"
 	@echo "make pages       write one page per model, with rendered pictures and marks"
 	@echo "                 (docs/models; needs blender). MODELS=ogre,blob for some only"
+	@echo "make dashboard   the pictures and the chart of the README (docs/images/dashboard; needs"
+	@echo "                 blender, Quad Remesher's references and AutoRemesher)"
 	@echo "make view MODEL=ogre [QUADS=3000] [OPTIONS='--preset hard-surface']"
 	@echo "                 remesh a model of the bench, recording what each stage makes, and"
 	@echo "                 open the recording in the Rerun viewer (long to build the first"
@@ -57,6 +60,13 @@ scenes:
 	ulimit -v $(MEMORY_CAP); blender -b --factory-startup --python bench/make_scenes.py -- \
 		$(if $(MODELS),--models $(MODELS)) $(if $(REFRESH),--refresh)
 
+# Download and install AutoRemesher (huxingyi/autoremesher) into ~/.local/bin
+autoremesher:
+	@mkdir -p $(HOME)/.local/bin
+	curl -sL https://github.com/huxingyi/autoremesher/releases/download/1.2.0/autoremesher-1.2.0.AppImage -o $(HOME)/.local/bin/autoremesher
+	chmod +x $(HOME)/.local/bin/autoremesher
+	@echo "installed: $(HOME)/.local/bin/autoremesher"
+
 # Their licence does not allow keeping them in the repository: see CREDITS.md.
 blenderkit:
 	python3 bench/fetch_blenderkit.py
@@ -77,6 +87,12 @@ quick: addon
 # One page per model: pictures of what each remesher makes of it, and its marks.
 pages: scores
 	python3 scripts/pages.py $(if $(MODELS),--models $(MODELS))
+
+# The dashboard of the README: four remeshers at the same number of quads on
+# a few models, in pictures, and the average marks of the bench as a chart.
+dashboard:
+	python3 scripts/gallery.py $(if $(MODELS),--models $(MODELS))
+	python3 scripts/dashboard.py --gallery
 
 # What each stage of the chain makes of a model, in the Rerun viewer. Both the
 # recorder and the viewer are built on demand only: nothing else needs Rerun.

@@ -17,7 +17,9 @@ bench/results/.
 
 import argparse
 import json
+import os
 import resource
+import shutil
 import statistics
 import subprocess
 import sys
@@ -26,6 +28,10 @@ from pathlib import Path
 BENCH = Path(__file__).resolve().parent
 ROOT = BENCH.parent
 OPENCLARE = ROOT / "target" / "release" / "openclare"
+AUTOREMESHER = (
+    shutil.which("autoremesher")
+    or (Path.home() / ".local" / "bin" / "autoremesher" if (Path.home() / ".local" / "bin" / "autoremesher").exists() else None)
+)
 # The scenes: what the bench runs on.
 SCENES = BENCH / "scenes"
 # The models that are a plain mesh, as OBJ files: what bench/make_scenes.py
@@ -285,6 +291,47 @@ def quadriflow(model, sharp, boundary, target, seeds, directory):
     return runs
 
 
+def autoremesher(model, sharp, boundary, target, seeds, directory):
+    """AutoRemesher (huxingyi/autoremesher): open-source automatic quad remeshing.
+    Deterministic (no seed): one run. Returns {seed: (path or None, seconds, failure)}."""
+    if not AUTOREMESHER:
+        return {seeds[0]: (None, 0.0, "autoremesher not found (install AutoRemesher)")}
+    path = directory / f"autoremesher_{seeds[0]}.obj"
+    report_file = directory / f"autoremesher_{seeds[0]}_report.txt"
+    path.unlink(missing_ok=True)
+    report_file.unlink(missing_ok=True)
+    cmd = []
+    if not os.environ.get("DISPLAY") and shutil.which("xvfb-run"):
+        cmd += ["xvfb-run", "-a"]
+    cmd += [
+        str(AUTOREMESHER),
+        "--input", source_path(model),
+        "--output", path,
+        "--target-quads", target,
+        "--sharp-edge", "90.0" if sharp else "180.0",
+        "--report", report_file,
+    ]
+    done = run(cmd, memory=memory_cap(model))
+    seconds = 0.0
+    if report_file.exists():
+        for line in report_file.read_text().splitlines():
+            if "time:" in line.lower():
+                try:
+                    seconds = float(line.split(":")[-1].replace("seconds", "").strip())
+                except ValueError:
+                    pass
+    if seconds == 0.0:
+        for line in done.stdout.splitlines():
+            if line.startswith("Total:") and "ms" in line:
+                try:
+                    seconds = float(line.removeprefix("Total:").replace("ms", "").strip()) / 1000.0
+                except ValueError:
+                    pass
+    if path.exists() and path.stat().st_size > 0:
+        return {seeds[0]: (path, seconds, None)}
+    return {seeds[0]: (None, seconds, failure_of(done, "no mesh produced"))}
+
+
 def quadremesher_reference(model, target, uniform):
     setting = "uniform" if uniform else "default"
     kept = LOCAL / "reference" if model in LOCAL_MODELS else REFERENCE
@@ -421,6 +468,7 @@ def openclare_matched(model, sharp, boundary, target, seeds, directory):
 # Every remesher under test. A new chain only needs a line here.
 TOOLS = {
     "quadriflow": quadriflow,
+    "autoremesher": autoremesher,
     "instant-meshes": openclare("instant-meshes"),
     "integer-grid": openclare("integer-grid", seeded=False),
     # The chain the project is about (`quad-layout` in the engine), under
@@ -480,7 +528,7 @@ def report(results, target, seeds, tools):
     lines = [
         "# Bench results",
         "",
-        f"Requested budget: {target} quads. Median over {len(seeds)} seeds; Quad Remesher and integer-grid have "
+        f"Requested budget: {target} quads. Median over {len(seeds)} seeds; Quad Remesher, AutoRemesher and integer-grid have "
         "no seed and run once. The first row is how many quads each tool made; below it, lower is better "
         "for every metric. \"—\" means it could not be measured.",
         "",
