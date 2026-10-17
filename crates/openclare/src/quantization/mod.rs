@@ -403,6 +403,17 @@ impl WalkCancelling {
         }
         let clock = std::time::Instant::now();
         let (mut x, scale, _, lower) = self.search(tmesh, network, &aimed, request, report);
+        // (Experiment: whole lengths worked out outside the engine, taken as
+        // they are, with neither search nor repair.)
+        if let Some(directory) = std::env::var_os("OPENCLARE_LENGTHS")
+            && let Ok(text) = std::fs::read_to_string(std::path::Path::new(&directory).join(format!("way-{way}-integer.txt")))
+        {
+            let values: Vec<i64> = text.split_whitespace().filter_map(|v| v.parse::<f64>().ok()).map(|v| v.round() as i64).collect();
+            if values.len() == x.len() {
+                let quads = count_quads(tmesh, &values);
+                return (values, scale, quads, lower);
+            }
+        }
         if debug {
             eprintln!("  searched in {:.1} s", clock.elapsed().as_secs_f64());
         }
