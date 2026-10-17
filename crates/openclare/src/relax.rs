@@ -325,8 +325,10 @@ impl Relaxer for Squaring {
 /// Each quad proposes, for its four corners, the rectangle that fits it
 /// best: same centre, same plane, sides the mean of its opposite sides. A
 /// vertex goes towards the mean of what its quads propose, sliding on the
-/// surface (the move is made tangent, then projected), and never further
-/// than [`Squaring::reach`] from where it started. A move that would flatten
+/// surface (the move is made tangent, then projected onto the side of the
+/// source the mesh faces, which on a thin wall need not be the nearest
+/// one), and never further than [`Squaring::reach`] from where it started.
+/// A move that would flatten
 /// or fold a quad is not made, nor one that would turn over a quad facing
 /// the way the mesh round it faces. A quad facing the other way, as the
 /// meshing may leave one, proposes nothing and is unfolded by the quads
@@ -337,13 +339,25 @@ pub fn square_up(mesh: &mut PolyMesh, surface: &Bvh, features: Option<&Features>
     let on_surface = |p: Vec3| surface.closest_point(p).map_or(p, |hit| hit.point);
     let on_line = |p: Vec3| features.and_then(|f| f.lines.closest_point(p)).map_or(p, |hit| hit.point);
 
+    // The sheet of the source that faces the way the mesh faces: on a thin
+    // wall the nearest point may be on the other side, where a vertex read
+    // off a work mesh coarser than the wall is thick lands as often as not.
+    let on_sheet = |p: Vec3, out: Vec3, reach: f64| {
+        surface
+            .closest_point_where(p, reach, |t| surface.area_vector(t).dot(out) > 0.0)
+            .map_or_else(|| on_surface(p), |hit| hit.point)
+    };
+
     let origin = mesh.positions.clone();
-    let radius: Vec<f64> = (0..n)
+    let mean_edge: Vec<f64> = (0..n)
         .map(|v| {
             let total: f64 = neighbors[v].iter().map(|&nb| origin[v].distance(origin[nb as usize])).sum();
-            tuning.reach * total / neighbors[v].len().max(1) as f64
+            total / neighbors[v].len().max(1) as f64
         })
         .collect();
+    let radius: Vec<f64> = mean_edge.iter().map(|edge| tuning.reach * edge).collect();
+    // How far the sheet facing the right way is looked for.
+    let reach: Vec<f64> = mean_edge.iter().map(|edge| 2.0 * edge).collect();
     let mut faces_of = vec![Vec::new(); n];
     for (face, corners) in mesh.faces.iter().enumerate() {
         for &v in corners {
@@ -411,7 +425,7 @@ pub fn square_up(mesh: &mut PolyMesh, surface: &Bvh, features: Option<&Features>
                 if from_start.length() > radius[v] {
                     moved = origin[v] + from_start * (radius[v] / from_start.length());
                 }
-                Some(if kind[v] == Hold::Line { on_line(moved) } else { on_surface(moved) })
+                Some(if kind[v] == Hold::Line { on_line(moved) } else { on_sheet(moved, out, reach[v]) })
             })
             .collect();
 

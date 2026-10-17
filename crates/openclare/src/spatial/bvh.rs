@@ -79,6 +79,12 @@ impl Bvh {
         self.build_node(left + 1, middle, end, centroids);
     }
 
+    /// Area-weighted normal of triangle `t`, the way its corners turn.
+    pub fn area_vector(&self, t: u32) -> Vec3 {
+        let [a, b, c] = self.corners[t as usize];
+        0.5 * (b - a).cross(c - a)
+    }
+
     /// Closest point of the surface to `p`; `None` for an empty mesh.
     pub fn closest_point(&self, p: Vec3) -> Option<Hit> {
         self.closest_point_where(p, f64::INFINITY, |_| true)
