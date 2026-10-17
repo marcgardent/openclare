@@ -36,6 +36,7 @@ CRITERIA = [
     ("fidelity", "Fidelity", "no point of the source far from the mesh, thin parts kept"),
     ("singularities", "Regularity", "no irregular vertex beyond what the topology imposes"),
     ("structure", "Structure", "few patches in the base complex: edge loops that run long"),
+    ("loops", "Edge loops", "loops that close round the shape, none that spiral round it"),
     ("budget", "Budget", "the number of quads asked for"),
     ("speed", "Speed", "an answer within a second"),
 ]
@@ -48,6 +49,7 @@ WEIGHTS = {
     "fidelity": 15,
     "singularities": 10,
     "structure": 5,
+    "loops": 10,
     "budget": 10,
     "speed": 0,
 }
@@ -66,6 +68,23 @@ def fidelity(metrics):
     whole = linear(metrics["hausdorff"], 0.0, 0.05)
     thin = metrics.get("thin_distance")
     return whole if thin is None else 0.5 * (whole + linear(thin, 0.0, 0.5))
+
+
+def loops(metrics):
+    """The edge loops (DT-062): none on a spiral, which is 0 from a fifth of
+    the edges on spirals; and loops that close, which is 100 from half of
+    them, those from a border to a border left out (an open sheet has
+    nothing else). The two count the same. `None` where the loops could not
+    be followed: a mesh that is not a manifold."""
+    spiral = metrics.get("loop_edges_spiral")
+    if spiral is None:
+        return None
+    no_spiral = linear(spiral, 0.0, 0.20)
+    counted = sum(metrics.get(key) or 0 for key in ("loops_closed", "loops_spiral", "loops_open"))
+    if counted == 0:
+        return no_spiral
+    closing = linear(-(metrics.get("loops_closed") or 0) / counted, -0.5, 0.0)
+    return 0.5 * (no_spiral + closing)
 
 
 def per_100_quads(count, metrics):
@@ -91,6 +110,7 @@ SCALES = {
     "structure": lambda m: (
         None if m.get("base_complex_patches") is None else linear(m["base_complex_patches"] / max(m["faces"], 1), 0.0, 1.0)
     ),
+    "loops": lambda m: loops(m),
     # Distance to the number of quads asked for, as a share of it.
     "budget": lambda m: None if m.get("budget_error") is None else linear(m["budget_error"], 0.0, 0.25),
 }
