@@ -403,6 +403,7 @@ impl WalkCancelling {
         }
         let clock = std::time::Instant::now();
         let (mut x, scale, _, lower) = self.search(tmesh, network, &aimed, request, report);
+        let mut imported = false;
         // (Experiment: whole lengths worked out outside the engine, taken as
         // they are, with neither search nor repair.)
         if let Some(directory) = std::env::var_os("OPENCLARE_LENGTHS")
@@ -410,8 +411,8 @@ impl WalkCancelling {
         {
             let values: Vec<i64> = text.split_whitespace().filter_map(|v| v.parse::<f64>().ok()).map(|v| v.round() as i64).collect();
             if values.len() == x.len() {
-                let quads = count_quads(tmesh, &values);
-                return (values, scale, quads, lower);
+                x = values;
+                imported = true;
             }
         }
         if debug {
@@ -456,7 +457,9 @@ impl WalkCancelling {
             then < now - 0.5 && cost < REPAIR_PRICE * (now - then) && sound
         };
         let mut effort = flow::Effort::default();
-        network.improve_judged(&mut x, &leant, 1, REPAIR_WALKS, &mut effort, &mut judge);
+        if !imported {
+            network.improve_judged(&mut x, &leant, 1, REPAIR_WALKS, &mut effort, &mut judge);
+        }
         report.moves += effort.moves;
         if debug {
             eprintln!(
@@ -471,7 +474,7 @@ impl WalkCancelling {
         // the others not more.
         let clock = std::time::Instant::now();
         let mut effort = flow::Effort::default();
-        for turn in &held {
+        for turn in held.iter().filter(|_| !imported) {
             let shift_of = |x: &[i64]| -> f64 { turn.shift.iter().map(|&(arc, c)| c * x[arc] as f64).sum() };
             let left = shift_of(&x);
             if left.abs() < 0.5 {
@@ -534,6 +537,35 @@ impl WalkCancelling {
         }
         if let Some(directory) = std::env::var_os("OPENCLARE_EXPORT_TURNS") {
             export_turns(std::path::Path::new(&directory), way, tmesh, real, scale, &x, &lower, every, asked, &held);
+        }
+        if debug || std::env::var_os("OPENCLARE_EXPORT_TURNS").is_some() {
+            // Every strip of quads the whole lengths make, walked through
+            // the rectangles: the helices among them, and their pitch.
+            let clock = std::time::Instant::now();
+            let lengths: Vec<f64> = x.iter().map(|&length| length as f64).collect();
+            let side = (count_quads(tmesh, &x) as f64).sqrt().max(1.0);
+            let all = tubes::lattice_turns(tmesh, &lengths, 4, 6.0 * side);
+            let helices: Vec<&tubes::Turn> =
+                all.iter().filter(|turn| tubes::value(&turn.shift, &lengths).abs() >= 0.5).collect();
+            eprintln!(
+                "  lattice: {} ways round, {} of them helices, {:.1} s",
+                all.len(),
+                helices.len(),
+                clock.elapsed().as_secs_f64()
+            );
+            if let Some(directory) = std::env::var_os("OPENCLARE_EXPORT_TURNS") {
+                let rows: Vec<String> = all
+                    .iter()
+                    .map(|turn| {
+                        let terms: Vec<String> = turn.shift.iter().map(|&(arc, c)| format!("[{arc},{c}]")).collect();
+                        format!("{{\"shift\":[{}],\"around\":{},\"pitch\":{}}}", terms.join(","), turn.around, tubes::value(&turn.shift, &lengths))
+                    })
+                    .collect();
+                let _ = std::fs::write(
+                    std::path::Path::new(&directory).join(format!("way-{way}-helices.json")),
+                    format!("[{}]", rows.join(",")),
+                );
+            }
         }
         let quads = count_quads(tmesh, &x);
         (x, scale, quads, lower)

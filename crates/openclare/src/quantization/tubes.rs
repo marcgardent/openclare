@@ -65,7 +65,7 @@ struct Rim {
     side_start: [usize; 4],
 }
 
-fn rims(tmesh: &TMesh) -> Vec<Option<Rim>> {
+fn rims(tmesh: &TMesh, lengths: &[f64]) -> Vec<Option<Rim>> {
     tmesh
         .patches
         .iter()
@@ -87,7 +87,7 @@ fn rims(tmesh: &TMesh) -> Vec<Option<Rim>> {
                 rim.start.push(at);
                 rim.start_expression.push(at_expression.clone());
                 let arc = half as usize / 2;
-                let length = tmesh.arcs[arc].length;
+                let length = lengths[arc];
                 let d = DIRECTION[side];
                 at = [at[0] + d[0] * length, at[1] + d[1] * length];
                 let [mut u, mut v] = at_expression;
@@ -108,7 +108,31 @@ fn rims(tmesh: &TMesh) -> Vec<Option<Rim>> {
 /// places `offsets` (shares of its length) along each side of each, at most `steps_per_patch` times the number of
 /// rectangles before giving up.
 pub(super) fn turns(tmesh: &TMesh, steps_per_patch: usize, offsets: &[f64], longest: f64) -> Vec<Turn> {
-    let rims = rims(tmesh);
+    let lengths: Vec<f64> = tmesh.arcs.iter().map(|arc| arc.length).collect();
+    turns_with(tmesh, &lengths, steps_per_patch, &|side_length| offsets.iter().map(|share| share * side_length).collect(), longest)
+}
+
+/// Every turn of the quad mesh that whole `lengths` make: from the middle of
+/// every quad edge along every side of every rectangle, at the lengths
+/// themselves, so that each way is a strip of quads of that mesh and none
+/// is missed. Each way found once.
+pub(super) fn lattice_turns(tmesh: &TMesh, lengths: &[f64], steps_per_patch: usize, longest: f64) -> Vec<Turn> {
+    let middles = |side_length: f64| (0..side_length.round() as usize).map(|k| k as f64 + 0.5).collect();
+    let mut found = turns_with(tmesh, lengths, steps_per_patch, &middles, longest);
+    let mut seen = std::collections::HashSet::new();
+    found.retain(|turn| seen.insert(turn.shift.iter().map(|&(arc, c)| (arc, c.round() as i64)).collect::<Vec<_>>()));
+    found
+}
+
+/// Turns from the places `starts` gives along each side, from its length.
+fn turns_with(
+    tmesh: &TMesh,
+    lengths: &[f64],
+    steps_per_patch: usize,
+    starts: &dyn Fn(f64) -> Vec<f64>,
+    longest: f64,
+) -> Vec<Turn> {
+    let rims = rims(tmesh, lengths);
     // Where each half-arc is on a rim: the rectangle and the place.
     let mut place = vec![None; 2 * tmesh.arcs.len()];
     for (patch, rim) in rims.iter().enumerate() {
@@ -126,13 +150,13 @@ pub(super) fn turns(tmesh: &TMesh, steps_per_patch: usize, offsets: &[f64], long
             // From the middle of that side, inwards.
             let begin = rim.side_start[start_side];
             let end = if start_side == 3 { rim.halves.len() } else { rim.side_start[start_side + 1] };
-            let side_length: f64 = (begin..end).map(|k| tmesh.arcs[rim.halves[k].0 as usize / 2].length).sum();
+            let side_length: f64 = (begin..end).map(|k| lengths[rim.halves[k].0 as usize / 2]).sum();
             if side_length <= 0.0 {
                 continue;
             }
-            for &share in offsets {
+            for offset in starts(side_length) {
                 if let Some(turn) =
-                    go_round(tmesh, &rims, &place, start_patch, start_side, share * side_length, steps, longest)
+                    go_round(tmesh, lengths, &rims, &place, start_patch, start_side, offset, steps, longest)
                 {
                     found.push(turn);
                 }
@@ -148,6 +172,7 @@ pub(super) fn turns(tmesh: &TMesh, steps_per_patch: usize, offsets: &[f64], long
 #[allow(clippy::too_many_arguments)]
 fn go_round(
     tmesh: &TMesh,
+    lengths: &[f64],
     rims: &[Option<Rim>],
     place: &[Option<(usize, usize)>],
     patch: usize,
@@ -163,7 +188,7 @@ fn go_round(
     let side_length = |rim: &Rim, side: usize| -> f64 {
         let begin = rim.side_start[side];
         let end = if side == 3 { rim.halves.len() } else { rim.side_start[side + 1] };
-        (begin..end).map(|k| tmesh.arcs[rim.halves[k].0 as usize / 2].length).sum()
+        (begin..end).map(|k| lengths[rim.halves[k].0 as usize / 2]).sum()
     };
     // The way: per crossing, the rectangle left and the place on its rim,
     // the one entered and the place on its rim.
@@ -183,7 +208,7 @@ fn go_round(
         let mut before = 0.0;
         let mut leaving = None;
         for k in begin..end {
-            let length = tmesh.arcs[rim.halves[k].0 as usize / 2].length;
+            let length = lengths[rim.halves[k].0 as usize / 2];
             if along < before + length || k + 1 == end {
                 leaving = Some((k, along - before));
                 break;
@@ -200,10 +225,10 @@ fn go_round(
         let next_rim = rims[next].as_ref()?;
         let next_side = next_rim.halves[k_next].1;
         let next_begin = next_rim.side_start[next_side];
-        let before_twin: f64 = (next_begin..k_next).map(|m| tmesh.arcs[next_rim.halves[m].0 as usize / 2].length).sum();
+        let before_twin: f64 = (next_begin..k_next).map(|m| lengths[next_rim.halves[m].0 as usize / 2]).sum();
         crossings.push((patch, k, next, k_next));
         quarter_turns = (quarter_turns + (next_side + 2 + 4 - opposite) % 4) % 4;
-        (patch, side, offset) = (next, next_side, before_twin + (arc.length - into));
+        (patch, side, offset) = (next, next_side, before_twin + (lengths[half as usize / 2] - into));
         if patch == start_patch && side == start_side && quarter_turns == 0 {
             let across = if DIRECTION[start_side][0] != 0.0 { 0 } else { 1 };
             let mut shift = shift_along(tmesh, rims, &crossings);
