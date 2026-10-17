@@ -1,12 +1,15 @@
 # Shortcuts for the common tasks. `make help` lists them.
 
-.PHONY: help build test scenes blenderkit autoremesher scores quick pages dashboard view addon addon-windows test-windows addon-test release
+.PHONY: help build test scenes blenderkit autoremesher scores quick pages dashboard view addon install addon-windows test-windows addon-test release
 
 help:
 	@echo "make build       build the openclare binary (release)"
 	@echo "make test        run the test suite"
 	@echo "make addon       build the Blender add-on: dist/openclare-<version>-<system>.zip, to install"
 	@echo "                 from Blender (Preferences, Get Extensions, Install from Disk)"
+	@echo "make install     build the add-on and put it straight into the extensions of the"
+	@echo "                 Blender on the PATH (~/.config/blender/<version>/extensions/user_default);"
+	@echo "                 BLENDER_VERSION=5.2 for another, EXTENSIONS=<dir> for another place"
 	@echo "make addon-windows  build the same add-on for Windows, from here:"
 	@echo "                 dist/openclare-<version>-windows-x64.zip (needs the Rust target"
 	@echo "                 x86_64-pc-windows-gnu and MinGW-w64)"
@@ -119,6 +122,19 @@ addon:
 	rm -f dist/openclare-$(ADDON_VERSION)-$(ADDON_SYSTEM).zip
 	cd blender/openclare && zip -q -r ../../dist/openclare-$(ADDON_VERSION)-$(ADDON_SYSTEM).zip . -x '__pycache__/*' '*.pyc'
 	@echo "written: dist/openclare-$(ADDON_VERSION)-$(ADDON_SYSTEM).zip"
+
+# Where Blender keeps the extensions installed by hand, for the version of the
+# blender on the PATH. Only the folder openclare there is replaced.
+BLENDER_VERSION ?= $(shell blender --version 2>/dev/null | sed -n '1s/^Blender \([0-9]*\.[0-9]*\).*/\1/p')
+EXTENSIONS ?= $(or $(XDG_CONFIG_HOME),$(HOME)/.config)/blender/$(BLENDER_VERSION)/extensions/user_default
+
+install: addon
+	@test -n "$(BLENDER_VERSION)" || { echo "no blender on the PATH: say which, BLENDER_VERSION=5.2"; exit 1; }
+	mkdir -p "$(EXTENSIONS)"
+	rm -rf "$(EXTENSIONS)/openclare"
+	mkdir "$(EXTENSIONS)/openclare"
+	cd "$(EXTENSIONS)/openclare" && unzip -q "$(CURDIR)/dist/openclare-$(ADDON_VERSION)-$(ADDON_SYSTEM).zip"
+	@echo "installed: $(EXTENSIONS)/openclare (restart Blender, or disable and enable the add-on)"
 
 # The same add-on for Windows, built here: the engine for that system (the
 # Rust target x86_64-pc-windows-gnu and the MinGW-w64 linker are needed:
