@@ -260,6 +260,9 @@ impl TMesh {
         let mut around: Vec<Vec<(f64, HalfArc)>> = vec![Vec::new(); outcome.junctions.len()];
         let mut longest_trace = 0.0f64;
         for (index, trace) in outcome.traces.iter().enumerate() {
+            if trace.merged.is_some() {
+                continue;
+            }
             // Stops along the trace: length there, node, key of the arc
             // towards the next stop, key of the arc towards the previous one.
             let mut stops = vec![(0.0, trace.start.0, trace.start.1, f64::NAN)];
