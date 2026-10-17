@@ -98,6 +98,40 @@ def mesh_of(tool, model, target, directory):
     return directory / f"{tool}_1.obj"
 
 
+def edge_loops(model):
+    """A table of the edge loops of each remesher's mesh at the budget of
+    the bench: the share of the edges on loops that close, spiral, stop at
+    an irregular vertex, or run from border to border (DT-062)."""
+    path = RESULTS / "results.json"
+    if not path.exists():
+        return []
+    summary = json.loads(path.read_text()).get("summary", {}).get(model, {})
+    tools = [(tool, label) for tool, label in PICTURED if tool in summary]
+    if not any(summary[tool].get("loop_edges_closed") is not None for tool, _ in tools):
+        return []
+    lines = [
+        "## Edge loops",
+        "",
+        f"At {DEFAULT_TARGET} quads asked for. Each loop is followed straight on through every regular vertex: it "
+        "closes, comes back beside itself a quad further (a spiral), stops at an irregular vertex, or runs "
+        "from a border to a border. Share of the edges on each, those of borders and of faces that are not "
+        "quads left out; \"—\" where the mesh is not a manifold.",
+        "",
+        "| | closed | spiral | stops | border to border | spirals | longest that stops |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    for tool, label in tools:
+        row = summary[tool]
+        if row.get("loop_edges_closed") is None:
+            lines.append(f"| {label} | — | — | — | — | — | — |")
+            continue
+        shares = [f"{100.0 * (row.get(key) or 0.0):.0f} %" for key in
+                  ("loop_edges_closed", "loop_edges_spiral", "loop_edges_open", "loop_edges_border")]
+        lines.append(f"| {label} | " + " | ".join(shares)
+                     + f" | {row.get('loops_spiral') or 0:.0f} | {row.get('longest_open_loop') or 0:.0f} |")
+    return lines + [""]
+
+
 def lines_kept(model, target):
     """A sentence on what the engine says of the lines of the model (curves
     drawn on it, borders between its materials), if its scene has any."""
@@ -211,6 +245,7 @@ def main():
             ] + gallery(equal)
         if not shown and model in UNPICTURED:
             lines += ["No picture of this one is published.", ""]
+        lines += edge_loops(model)
         lines += ["## Marks", "", "From 0 to 100; how they are made is in [SCORES.md](../../bench/results/SCORES.md).", ""]
         for target in (1000, 3000, 8000):
             table = marks[target].get(model)
