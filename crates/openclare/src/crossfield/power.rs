@@ -28,11 +28,25 @@ pub struct Power {
     pub max_iterations: usize,
     /// Most rounds of inverse iteration when there is nothing to align to.
     pub eigen_rounds: usize,
+    /// Rounds of pulling the field back towards crosses of unit size, where
+    /// hard constraints lead it (see [`System::towards_unit_crosses`]), how
+    /// hard each pulls, per face of mean area, and the relative residual at
+    /// which each round's solve stops.
+    pub unit_rounds: usize,
+    pub unit_pull: f64,
+    pub unit_tolerance: f64,
 }
 
 impl Default for Power {
     fn default() -> Self {
-        Self { tolerance: 1e-7, max_iterations: 20_000, eigen_rounds: 200 }
+        Self {
+            tolerance: 1e-7,
+            max_iterations: 20_000,
+            eigen_rounds: 200,
+            unit_rounds: 5,
+            unit_pull: 0.01,
+            unit_tolerance: 1e-3,
+        }
     }
 }
 
@@ -48,7 +62,16 @@ impl CrossFieldSolver for Power {
         let system = System::new(&frames, &strength);
         let u = if strength.iter().any(|&s| s > 0.0) {
             let rhs: Vec<Complex> = strength.iter().zip(&target).map(|(&s, &t)| t * s).collect();
-            system.solve(&rhs, &target, self.tolerance, self.max_iterations)
+            let mut u = system.solve(&rhs, &target, self.tolerance, self.max_iterations);
+            // Only where hard edges lead the field. Soft alignment keeps it
+            // near unit size wherever the shape bends; pulled back there too,
+            // the singularities of organic shapes moved, and their loops
+            // spiralled more (12 models at 3000 quads: 9.8 % of the loop
+            // edges on spirals against 7.2 %, over three budgets).
+            if strength.iter().any(|&s| s >= HARD) {
+                system.towards_unit_crosses(&mut u, &rhs, self);
+            }
+            u
         } else {
             system.smoothest(self)
         };
@@ -197,6 +220,38 @@ impl<'a> System<'a> {
     fn solve(&self, rhs: &[Complex], start: &[Complex], tolerance: f64, max_iterations: usize) -> Vec<Complex> {
         let no_shift = vec![0.0; rhs.len()];
         self.conjugate_gradients(rhs, &no_shift, start, tolerance, max_iterations)
+    }
+
+    /// Pulls the solution `u` of `(A + S) u = rhs` back towards crosses of
+    /// unit size, a few times over: each round solves
+    /// `(A + S + p M) u' = rhs + p M u/|u|`, an implicit step of a
+    /// Ginzburg-Landau flow (diffusion, then back to unit size, as in the
+    /// MBO schemes for cross fields of Viertel and Osting, 2019).
+    ///
+    /// Hard constraints are unit crosses held on lines, and the least-squares
+    /// field between them is their harmonic extension: across a face whose
+    /// hard edges wind round it, it shrinks towards the middle. On the flat
+    /// cap of a cylinder it is `z⁴`, one zero of order four at the centre,
+    /// and where it is that small its angle is decided by whatever else is
+    /// left, the unevenness of the mesh: the four singularities scatter
+    /// anywhere, and the lines out of them miss one another by several quads.
+    /// Back at unit size, the field has them where the smoothest field of
+    /// unit crosses does: on a square whose sides are lines of the field.
+    fn towards_unit_crosses(&self, u: &mut Vec<Complex>, rhs: &[Complex], settings: &Power) {
+        let n = self.frames.len();
+        let mean_area = self.frames.area.iter().sum::<f64>() / n as f64;
+        let pull: Vec<f64> = self.frames.area.iter().map(|a| settings.unit_pull * a / mean_area).collect();
+        for _ in 0..settings.unit_rounds {
+            let pulled: Vec<Complex> = (0..n)
+                .map(|f| {
+                    let size = u[f].abs();
+                    let unit = if size > 0.0 { u[f] * (1.0 / size) } else { Complex::ZERO };
+                    rhs[f] + unit * pull[f]
+                })
+                .collect();
+            // Each round is a step on the way, not an end: solved roughly.
+            *u = self.conjugate_gradients(&pulled, &pull, u, settings.unit_tolerance, settings.max_iterations);
+        }
     }
 
     /// Eigenvector of `A u = λ M u` for the smallest `λ`, by inverse
