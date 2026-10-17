@@ -915,6 +915,10 @@ struct WorkSize {
 pub struct Analysis {
     /// One for each piece of the shape.
     pieces: Vec<sizing::Demand>,
+    /// For each vertex of the shape, where it lies on the work mesh of its
+    /// piece: the piece, a triangle of its work mesh and how much of each
+    /// corner. None for a vertex of a piece that was not looked at.
+    at_input: Vec<Option<(u32, [u32; 3], [f64; 3])>>,
 }
 
 impl Analysis {
@@ -934,6 +938,7 @@ impl Analysis {
             return Err(Error::InvalidMesh("a shape without a surface".into()));
         }
         let mut pieces = Vec::new();
+        let mut at_input = vec![None; input.positions.len()];
         for (piece, origin) in input.pieces() {
             let area = piece.surface_area();
             let triangles = ((chain.triangles_per_quad * area / (reference * reference)) as usize)
@@ -966,12 +971,42 @@ impl Analysis {
                 painted,
                 quads_around: config.quads_around,
             };
-            pieces.push(sizing::Demand::measure(&sizing::Curvature::default(), &work, &request)?);
+            let demand = sizing::Demand::measure(&sizing::Curvature::default(), &work, &request)?;
+            // Each vertex of the piece reads the work mesh where it is nearest.
+            let surface = Bvh::build(&work.mesh);
+            let index = pieces.len() as u32;
+            for (v, &at) in origin.iter().enumerate() {
+                let Some(hit) = surface.closest_point(piece.positions[v]) else { continue };
+                let corners = work.mesh.triangles[hit.triangle as usize];
+                let shares = barycentric_of(corners.map(|c| work.mesh.positions[c as usize]), hit.point);
+                at_input[at as usize] = Some((index, corners, shares));
+            }
+            pieces.push(demand);
         }
         if pieces.is_empty() {
             return Err(Error::InvalidMesh("no piece of the shape could be looked at".into()));
         }
-        Ok(Self { pieces })
+        Ok(Self { pieces, at_input })
+    }
+
+    /// For each vertex of the shape, the edge its quads would have with
+    /// quads between `smallest` and `largest`, and whether its shape calls
+    /// for smaller ones than the smallest there. A vertex of a piece that
+    /// was not looked at has no size (not a number).
+    pub fn at_vertices(&self, largest: f64, smallest: f64) -> (Vec<f64>, Vec<bool>) {
+        let reading = sizing::Reading::between(largest, smallest);
+        let sizes: Vec<Vec<f64>> = self.pieces.iter().map(|piece| piece.sizes(&reading)).collect();
+        let asked: Vec<Vec<f64>> = self.pieces.iter().map(|piece| piece.asks_at_vertices(&reading)).collect();
+        let read = |values: &[Vec<f64>], (piece, corners, shares): &(u32, [u32; 3], [f64; 3])| -> f64 {
+            (0..3).map(|k| shares[k] * values[*piece as usize][corners[k] as usize]).sum()
+        };
+        self.at_input
+            .iter()
+            .map(|at| match at {
+                Some(at) => (read(&sizes, at), read(&asked, at) < smallest),
+                None => (f64::NAN, false),
+            })
+            .unzip()
     }
 
     /// The area of the surface.
@@ -997,24 +1032,60 @@ impl Analysis {
     /// A largest and a smallest quad to start from. The largest is that of
     /// a mesh of [`PROPOSED_QUADS`] quads of one size: how coarse the whole
     /// is to be is a matter of taste, and of what the mesh is for. The
-    /// smallest is the largest one that leaves no more than
-    /// [`PROPOSED_BELOW`] of the surface asking for less, no smaller than
-    /// [`PROPOSED_RANGE`] times less than the largest.
+    /// smallest comes down by steps of [`PROPOSED_STEP`] as long as each
+    /// is worth it: as long as it gives what it calls for to at least
+    /// [`PROPOSED_YIELD`] of a point of the surface for each per cent of
+    /// quads it adds. A surface bumpy all over stops early, a smooth one
+    /// with a few tight bends goes down to them. Thin parts come first, when
+    /// they are parts: fingers, a wire, under [`PROPOSED_THIN`] of the
+    /// surface. The smallest is then no larger than what nineteen twentieths
+    /// of their surface calls for. A shape thin over much more of it (a
+    /// shell full of beams and rims) is thin by nature, and that is left to
+    /// the steps. The smallest is never less than [`PROPOSED_RANGE`] times
+    /// less than the largest.
     pub fn proposal(&self) -> (f64, f64) {
         let largest = (self.area() / PROPOSED_QUADS).sqrt();
-        let mut wanted: Vec<(f64, f64)> = self.pieces.iter().flat_map(|piece| piece.wanted(largest)).collect();
-        wanted.sort_by(|a, b| a.0.total_cmp(&b.0));
-        let all: f64 = wanted.iter().map(|&(_, area)| area).sum();
-        let (mut under, mut smallest) = (0.0, largest);
-        for (size, area) in wanted {
+        let floor = largest / PROPOSED_RANGE;
+        let mut smallest = largest;
+        let (mut quads, mut below) = (self.quads(largest, smallest), self.below(largest, smallest));
+        while smallest / PROPOSED_STEP >= floor {
+            let finer = smallest / PROPOSED_STEP;
+            let (more, less) = (self.quads(largest, finer), self.below(largest, finer));
+            let (gained, cost) = (100.0 * (below - less), 100.0 * (more / quads - 1.0));
+            if gained < PROPOSED_YIELD * cost {
+                break;
+            }
+            (smallest, quads, below) = (finer, more, less);
+        }
+        let mut thin: Vec<(f64, f64)> = self.pieces.iter().flat_map(|piece| piece.thin_parts()).collect();
+        thin.sort_by(|a, b| a.0.total_cmp(&b.0));
+        let all: f64 = thin.iter().map(|&(_, area)| area).sum();
+        if all > PROPOSED_THIN * self.area() {
+            thin.clear();
+        }
+        let mut under = 0.0;
+        for (size, area) in thin {
             under += area;
-            if under > PROPOSED_BELOW * all {
-                smallest = size;
+            if under > 0.05 * all {
+                smallest = smallest.min(size);
                 break;
             }
         }
-        (largest, smallest.clamp(largest / PROPOSED_RANGE, largest))
+        (largest, smallest.clamp(floor, largest))
     }
+}
+
+/// How much of each corner of a triangle a point of it is made of.
+fn barycentric_of([a, b, c]: [Vec3; 3], p: Vec3) -> [f64; 3] {
+    let (ab, ac, ap) = (b - a, c - a, p - a);
+    let (d00, d01, d11, d20, d21) = (ab.dot(ab), ab.dot(ac), ac.dot(ac), ap.dot(ab), ap.dot(ac));
+    let det = d00 * d11 - d01 * d01;
+    if det.abs() < 1e-300 {
+        return [1.0, 0.0, 0.0];
+    }
+    let v = (d11 * d20 - d01 * d21) / det;
+    let w = (d00 * d21 - d01 * d20) / det;
+    [1.0 - v - w, v, w]
 }
 
 /// Quads of the mesh at whose scale a shape is looked at before any size is
@@ -1022,7 +1093,9 @@ impl Analysis {
 const REFERENCE_QUADS: f64 = 4000.0;
 /// What [`Analysis::proposal`] starts from.
 pub const PROPOSED_QUADS: f64 = 1500.0;
-pub const PROPOSED_BELOW: f64 = 0.05;
+pub const PROPOSED_STEP: f64 = 1.5;
+pub const PROPOSED_YIELD: f64 = 0.25;
+pub const PROPOSED_THIN: f64 = 0.1;
 pub const PROPOSED_RANGE: f64 = 16.0;
 
 /// The density painted on `input`, if any, as the sizer takes it.
