@@ -41,10 +41,19 @@ pub(super) struct Cost<'a> {
     /// Per arc, a price per unit of its length on top (none if empty): a
     /// lean given to the search.
     pub bias: &'a [f64],
+    /// Per arc (none if empty), places along it, as shares of its length,
+    /// where a vertex is wanted, and how much: the price of missing one is
+    /// that times the square of how far off the nearest vertex is, at the
+    /// weight of the arc.
+    pub folds: &'a [Vec<(f64, f64)>],
 }
 
 /// Price of one unit below a lower bound: more than any walk could save.
 const SHORTFALL: f64 = 1.0e7;
+
+/// How much a vertex off a place it is wanted at costs, against the same
+/// distance off the target.
+pub(super) const FOLD_PULL: f64 = 4.0;
 
 /// Cost differences below this are rounding noise.
 const NOISE: f64 = 1.0e-9;
@@ -56,7 +65,18 @@ impl Cost<'_> {
         }
         let off = x as f64 - self.target[arc];
         let missing = (self.lower[arc] - x).max(0) as f64;
-        self.weight[arc] * off * off + SHORTFALL * missing * missing + self.bias.get(arc).map_or(0.0, |b| b * x as f64)
+        let folds: f64 = self.folds.get(arc).map_or(0.0, |folds| {
+            folds
+                .iter()
+                .map(|&(share, strength)| {
+                    let at = share * x as f64;
+                    strength * (at - at.round()).powi(2)
+                })
+                .sum()
+        });
+        self.weight[arc] * (off * off + FOLD_PULL * folds)
+            + SHORTFALL * missing * missing
+            + self.bias.get(arc).map_or(0.0, |b| b * x as f64)
     }
 
     #[cfg(test)]
@@ -71,6 +91,9 @@ pub(super) struct Effort {
     pub moves: usize,
     /// Walks found that turned out not to lower the cost.
     pub misjudged: usize,
+    /// States looked at in the searches for walks: the work done, whatever
+    /// the load of the machine.
+    pub scans: usize,
 }
 
 impl Network {
@@ -166,7 +189,7 @@ impl Network {
             if effort.moves + effort.misjudged - start >= limit {
                 return;
             }
-            let Some(walk) = self.negative_walk(&entry) else { return };
+            let Some(walk) = self.negative_walk(&entry, &mut effort.scans) else { return };
 
             let mut change = vec![0i64; self.arcs()];
             for &state in walk.iter().filter(|&&state| state != hub) {
@@ -221,14 +244,18 @@ impl Network {
 
     /// A closed walk whose entry costs add up to less than zero, if the
     /// search finds one (Bellman-Ford from everywhere at once).
-    fn negative_walk(&self, entry: &[f64]) -> Option<Vec<usize>> {
+    fn negative_walk(&self, entry: &[f64], scans: &mut usize) -> Option<Vec<usize>> {
         let states = entry.len();
         let mut distance = vec![0.0f64; states];
         let mut previous = vec![usize::MAX; states];
         let mut active: Vec<usize> = (0..states).collect();
         let mut queued = vec![false; states];
+        // Which search for a cycle saw each state last, counted over all of
+        // them: no clearing between passes.
+        let (mut seen, mut searches) = (vec![0u64; states], 0u64);
         for _ in 0..=states {
             let mut next_active = Vec::new();
+            *scans += active.len();
             for &state in &active {
                 let base = distance[state];
                 self.for_each_next(state, |next| {
@@ -249,7 +276,7 @@ impl Network {
             for &state in &next_active {
                 queued[state] = false;
             }
-            if let Some(walk) = cycle_among(&previous, &next_active) {
+            if let Some(walk) = cycle_among(&previous, &next_active, &mut seen, &mut searches) {
                 return Some(walk);
             }
             active = next_active;
@@ -259,13 +286,16 @@ impl Network {
 }
 
 /// A cycle in the `previous` links, looked for from the states in `from`.
-fn cycle_among(previous: &[usize], from: &[usize]) -> Option<Vec<usize>> {
-    // 0: not seen; otherwise the number of the search that reached it.
-    let mut seen = vec![0u32; previous.len()];
-    for (search, &start) in from.iter().enumerate() {
-        let search = search as u32 + 1;
+/// `seen` holds, per state, the number of the last search that reached it,
+/// and `searches` how many there have been: those of earlier calls count as
+/// not seen.
+fn cycle_among(previous: &[usize], from: &[usize], seen: &mut [u64], searches: &mut u64) -> Option<Vec<usize>> {
+    let first = *searches + 1;
+    for &start in from {
+        *searches += 1;
+        let search = *searches;
         let mut state = start;
-        while state != usize::MAX && seen[state] == 0 {
+        while state != usize::MAX && seen[state] < first {
             seen[state] = search;
             state = previous[state];
         }
@@ -322,7 +352,7 @@ mod tests {
         // i to the near side of station i + 1.
         let network = Network::new(vec![[Some(1), Some(2)], [Some(3), Some(4)], [Some(5), Some(0)]]);
         let (target, weight, lower) = ([2.6, 3.4, 2.9], [1.0; 3], [0; 3]);
-        let x = solve(&network, &Cost { target: &target, weight: &weight, lower: &lower, bias: &[] });
+        let x = solve(&network, &Cost { target: &target, weight: &weight, lower: &lower, bias: &[], folds: &[] });
         assert_eq!(x, [3, 3, 3]);
     }
 
@@ -330,9 +360,10 @@ mod tests {
     fn a_lower_bound_is_met_whatever_the_targets_say() {
         let network = Network::new(vec![[Some(1), Some(2)], [Some(3), Some(4)], [Some(5), Some(0)]]);
         let (target, weight) = ([0.2, 0.1, 0.3], [1.0; 3]);
-        let free = solve(&network, &Cost { target: &target, weight: &weight, lower: &[0; 3], bias: &[] });
+        let free = solve(&network, &Cost { target: &target, weight: &weight, lower: &[0; 3], bias: &[], folds: &[] });
         assert_eq!(free, [0, 0, 0]);
-        let held = solve(&network, &Cost { target: &target, weight: &weight, lower: &[0, 1, 0], bias: &[] });
+        let held =
+            solve(&network, &Cost { target: &target, weight: &weight, lower: &[0, 1, 0], bias: &[], folds: &[] });
         assert_eq!(held, [1, 1, 1]);
     }
 
@@ -342,7 +373,7 @@ mod tests {
         // arcs carry the same number, anything else being free.
         let network = Network::new(vec![[None, Some(0)], [Some(1), None]]);
         let (target, weight, lower) = ([4.4, 4.9], [1.0; 2], [0; 2]);
-        let x = solve(&network, &Cost { target: &target, weight: &weight, lower: &lower, bias: &[] });
+        let x = solve(&network, &Cost { target: &target, weight: &weight, lower: &lower, bias: &[], folds: &[] });
         assert_eq!(x, [5, 5]);
     }
 
@@ -352,7 +383,7 @@ mod tests {
         // (a T-junction); all three end on borders.
         let network = Network::new(vec![[None, Some(0)], [Some(1), None], [Some(1), None]]);
         let (target, weight, lower) = ([5.2, 1.7, 3.5], [1.0; 3], [0; 3]);
-        let x = solve(&network, &Cost { target: &target, weight: &weight, lower: &lower, bias: &[] });
+        let x = solve(&network, &Cost { target: &target, weight: &weight, lower: &lower, bias: &[], folds: &[] });
         assert_eq!(x[0], x[1] + x[2]);
         assert_eq!(x, [5, 2, 3]);
     }
@@ -376,7 +407,7 @@ mod tests {
             let target: Vec<f64> = (0..7).map(|_| 3.0 * rng.next_f64()).collect();
             let weight: Vec<f64> = (0..7).map(|_| 0.5 + rng.next_f64()).collect();
             let lower = vec![0; 7];
-            let cost = Cost { target: &target, weight: &weight, lower: &lower, bias: &[] };
+            let cost = Cost { target: &target, weight: &weight, lower: &lower, bias: &[], folds: &[] };
             let x = solve(&network, &cost);
             let best = brute_force(&network, &cost, 5);
             total += 1;
