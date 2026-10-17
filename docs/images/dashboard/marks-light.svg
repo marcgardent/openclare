@@ -18,20 +18,20 @@
 <line x1="42" x2="300" y1="146.0" y2="146.0" stroke="#e4e3df" stroke-width="1"/>
 <line x1="42" x2="300" y1="96.0" y2="96.0" stroke="#e4e3df" stroke-width="1"/>
 <text x="38" y="100.0" font-size="11" text-anchor="end" fill="#52514e">100</text>
-<path d="M46.0,296.0 V138.9 Q46.0,134.9 50.0,134.9 H58.0 Q62.0,134.9 62.0,138.9 V296.0 Z" fill="#2a78d6"/>
-<text x="54.0" y="128.9" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">81</text>
+<path d="M46.0,296.0 V137.5 Q46.0,133.5 50.0,133.5 H58.0 Q62.0,133.5 62.0,137.5 V296.0 Z" fill="#2a78d6"/>
+<text x="54.0" y="127.5" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">81</text>
 <path d="M64.0,296.0 V146.0 Q64.0,142.0 68.0,142.0 H76.0 Q80.0,142.0 80.0,146.0 V296.0 Z" fill="#eb6834"/>
 <path d="M82.0,296.0 V219.2 Q82.0,215.2 86.0,215.2 H94.0 Q98.0,215.2 98.0,219.2 V296.0 Z" fill="#1baf7a"/>
 <path d="M100.0,296.0 V216.9 Q100.0,212.9 104.0,212.9 H112.0 Q116.0,212.9 116.0,216.9 V296.0 Z" fill="#eda100"/>
 <text x="81.0" y="316" font-size="12" text-anchor="middle" fill="#52514e">1 000</text>
-<path d="M138.0,296.0 V130.5 Q138.0,126.5 142.0,126.5 H150.0 Q154.0,126.5 154.0,130.5 V296.0 Z" fill="#2a78d6"/>
-<text x="146.0" y="120.5" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">85</text>
+<path d="M138.0,296.0 V128.0 Q138.0,124.0 142.0,124.0 H150.0 Q154.0,124.0 154.0,128.0 V296.0 Z" fill="#2a78d6"/>
+<text x="146.0" y="118.0" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">86</text>
 <path d="M156.0,296.0 V148.0 Q156.0,144.0 160.0,144.0 H168.0 Q172.0,144.0 172.0,148.0 V296.0 Z" fill="#eb6834"/>
 <path d="M174.0,296.0 V213.4 Q174.0,209.4 178.0,209.4 H186.0 Q190.0,209.4 190.0,213.4 V296.0 Z" fill="#1baf7a"/>
 <path d="M192.0,296.0 V193.8 Q192.0,189.8 196.0,189.8 H204.0 Q208.0,189.8 208.0,193.8 V296.0 Z" fill="#eda100"/>
 <text x="173.0" y="316" font-size="12" text-anchor="middle" fill="#52514e">3 000</text>
-<path d="M230.0,296.0 V125.3 Q230.0,121.3 234.0,121.3 H242.0 Q246.0,121.3 246.0,125.3 V296.0 Z" fill="#2a78d6"/>
-<text x="238.0" y="115.3" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">87</text>
+<path d="M230.0,296.0 V123.4 Q230.0,119.4 234.0,119.4 H242.0 Q246.0,119.4 246.0,123.4 V296.0 Z" fill="#2a78d6"/>
+<text x="238.0" y="113.4" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">88</text>
 <path d="M248.0,296.0 V141.7 Q248.0,137.7 252.0,137.7 H260.0 Q264.0,137.7 264.0,141.7 V296.0 Z" fill="#eb6834"/>
 <path d="M266.0,296.0 V208.4 Q266.0,204.4 270.0,204.4 H278.0 Q282.0,204.4 282.0,208.4 V296.0 Z" fill="#1baf7a"/>
 <path d="M284.0,296.0 V177.7 Q284.0,173.7 288.0,173.7 H296.0 Q300.0,173.7 300.0,177.7 V296.0 Z" fill="#eda100"/>
@@ -46,20 +46,20 @@
 <line x1="354" x2="612" y1="146.0" y2="146.0" stroke="#e4e3df" stroke-width="1"/>
 <line x1="354" x2="612" y1="96.0" y2="96.0" stroke="#e4e3df" stroke-width="1"/>
 <text x="350" y="100.0" font-size="11" text-anchor="end" fill="#52514e">100</text>
-<path d="M358.0,296.0 V106.6 Q358.0,102.6 362.0,102.6 H370.0 Q374.0,102.6 374.0,106.6 V296.0 Z" fill="#2a78d6"/>
-<text x="366.0" y="96.6" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">97</text>
+<path d="M358.0,296.0 V103.4 Q358.0,99.4 362.0,99.4 H370.0 Q374.0,99.4 374.0,103.4 V296.0 Z" fill="#2a78d6"/>
+<text x="366.0" y="93.4" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">98</text>
 <path d="M376.0,296.0 V114.6 Q376.0,110.6 380.0,110.6 H388.0 Q392.0,110.6 392.0,114.6 V296.0 Z" fill="#eb6834"/>
 <path d="M394.0,296.0 V118.2 Q394.0,114.2 398.0,114.2 H406.0 Q410.0,114.2 410.0,118.2 V296.0 Z" fill="#1baf7a"/>
 <path d="M412.0,296.0 V174.5 Q412.0,170.5 416.0,170.5 H424.0 Q428.0,170.5 428.0,174.5 V296.0 Z" fill="#eda100"/>
 <text x="393.0" y="316" font-size="12" text-anchor="middle" fill="#52514e">1 000</text>
-<path d="M450.0,296.0 V106.0 Q450.0,102.0 454.0,102.0 H462.0 Q466.0,102.0 466.0,106.0 V296.0 Z" fill="#2a78d6"/>
-<text x="458.0" y="96.0" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">97</text>
+<path d="M450.0,296.0 V105.9 Q450.0,101.9 454.0,101.9 H462.0 Q466.0,101.9 466.0,105.9 V296.0 Z" fill="#2a78d6"/>
+<text x="458.0" y="95.9" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">97</text>
 <path d="M468.0,296.0 V114.2 Q468.0,110.2 472.0,110.2 H480.0 Q484.0,110.2 484.0,114.2 V296.0 Z" fill="#eb6834"/>
 <path d="M486.0,296.0 V122.4 Q486.0,118.4 490.0,118.4 H498.0 Q502.0,118.4 502.0,122.4 V296.0 Z" fill="#1baf7a"/>
 <path d="M504.0,296.0 V151.3 Q504.0,147.3 508.0,147.3 H516.0 Q520.0,147.3 520.0,151.3 V296.0 Z" fill="#eda100"/>
 <text x="485.0" y="316" font-size="12" text-anchor="middle" fill="#52514e">3 000</text>
-<path d="M542.0,296.0 V105.9 Q542.0,101.9 546.0,101.9 H554.0 Q558.0,101.9 558.0,105.9 V296.0 Z" fill="#2a78d6"/>
-<text x="550.0" y="95.9" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">97</text>
+<path d="M542.0,296.0 V102.4 Q542.0,98.4 546.0,98.4 H554.0 Q558.0,98.4 558.0,102.4 V296.0 Z" fill="#2a78d6"/>
+<text x="550.0" y="92.4" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">99</text>
 <path d="M560.0,296.0 V112.7 Q560.0,108.7 564.0,108.7 H572.0 Q576.0,108.7 576.0,112.7 V296.0 Z" fill="#eb6834"/>
 <path d="M578.0,296.0 V127.2 Q578.0,123.2 582.0,123.2 H590.0 Q594.0,123.2 594.0,127.2 V296.0 Z" fill="#1baf7a"/>
 <path d="M596.0,296.0 V153.8 Q596.0,149.8 600.0,149.8 H608.0 Q612.0,149.8 612.0,153.8 V296.0 Z" fill="#eda100"/>
@@ -74,20 +74,20 @@
 <line x1="666" x2="924" y1="146.0" y2="146.0" stroke="#e4e3df" stroke-width="1"/>
 <line x1="666" x2="924" y1="96.0" y2="96.0" stroke="#e4e3df" stroke-width="1"/>
 <text x="662" y="100.0" font-size="11" text-anchor="end" fill="#52514e">100</text>
-<path d="M670.0,296.0 V230.1 Q670.0,226.1 674.0,226.1 H682.0 Q686.0,226.1 686.0,230.1 V296.0 Z" fill="#2a78d6"/>
-<text x="678.0" y="220.1" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">35</text>
+<path d="M670.0,296.0 V224.2 Q670.0,220.2 674.0,220.2 H682.0 Q686.0,220.2 686.0,224.2 V296.0 Z" fill="#2a78d6"/>
+<text x="678.0" y="214.2" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">38</text>
 <path d="M688.0,296.0 V193.9 Q688.0,189.9 692.0,189.9 H700.0 Q704.0,189.9 704.0,193.9 V296.0 Z" fill="#eb6834"/>
 <path d="M706.0,296.0 V274.8 Q706.0,270.8 710.0,270.8 H718.0 Q722.0,270.8 722.0,274.8 V296.0 Z" fill="#1baf7a"/>
 <path d="M724.0,296.0 V268.5 Q724.0,264.5 728.0,264.5 H736.0 Q740.0,264.5 740.0,268.5 V296.0 Z" fill="#eda100"/>
 <text x="705.0" y="316" font-size="12" text-anchor="middle" fill="#52514e">1 000</text>
-<path d="M762.0,296.0 V208.3 Q762.0,204.3 766.0,204.3 H774.0 Q778.0,204.3 778.0,208.3 V296.0 Z" fill="#2a78d6"/>
-<text x="770.0" y="198.3" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">46</text>
+<path d="M762.0,296.0 V203.1 Q762.0,199.1 766.0,199.1 H774.0 Q778.0,199.1 778.0,203.1 V296.0 Z" fill="#2a78d6"/>
+<text x="770.0" y="193.1" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">48</text>
 <path d="M780.0,296.0 V186.9 Q780.0,182.9 784.0,182.9 H792.0 Q796.0,182.9 796.0,186.9 V296.0 Z" fill="#eb6834"/>
 <path d="M798.0,296.0 V268.7 Q798.0,264.7 802.0,264.7 H810.0 Q814.0,264.7 814.0,268.7 V296.0 Z" fill="#1baf7a"/>
 <path d="M816.0,296.0 V255.1 Q816.0,251.1 820.0,251.1 H828.0 Q832.0,251.1 832.0,255.1 V296.0 Z" fill="#eda100"/>
 <text x="797.0" y="316" font-size="12" text-anchor="middle" fill="#52514e">3 000</text>
-<path d="M854.0,296.0 V197.3 Q854.0,193.3 858.0,193.3 H866.0 Q870.0,193.3 870.0,197.3 V296.0 Z" fill="#2a78d6"/>
-<text x="862.0" y="187.3" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">51</text>
+<path d="M854.0,296.0 V190.4 Q854.0,186.4 858.0,186.4 H866.0 Q870.0,186.4 870.0,190.4 V296.0 Z" fill="#2a78d6"/>
+<text x="862.0" y="180.4" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">55</text>
 <path d="M872.0,296.0 V190.1 Q872.0,186.1 876.0,186.1 H884.0 Q888.0,186.1 888.0,190.1 V296.0 Z" fill="#eb6834"/>
 <path d="M890.0,296.0 V265.7 Q890.0,261.7 894.0,261.7 H902.0 Q906.0,261.7 906.0,265.7 V296.0 Z" fill="#1baf7a"/>
 <path d="M908.0,296.0 V239.7 Q908.0,235.7 912.0,235.7 H920.0 Q924.0,235.7 924.0,239.7 V296.0 Z" fill="#eda100"/>
