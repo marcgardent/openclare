@@ -1213,9 +1213,14 @@ face. The new relaxation changes three things.
   pushes the mesh to shrink.
 - **How one moves.** The move is made tangent to the surface before the projection to the
   closest point: a vertex slides, it does not sink in.
-- **Two guards.** A vertex never goes farther than half an edge from the place where the map
+- **Guards.** A vertex never goes farther than half an edge from the place where the map
   had put it: this is what protects tips and thin parts. And a move that would flatten or turn
-  over a quad is not made.
+  over a quad is not made. Turned over means against the way the mesh round the quad faces, not
+  against the quad's own normal: a quad the meshing left turned over whole is a proper rectangle
+  seen from its own side. Such a quad proposes no rectangle, and the quads round it bring it
+  back (jerry at 8,000 quads had one, on a thin part, before this was so). And a quad that
+  faces the right way may not be turned over, even when no corner of it gets flatter than one
+  that was already bent inwards.
 
 With these guards, sixty passes still improve the shape without damaging anything, where the
 old smoothing had to stop at two.
