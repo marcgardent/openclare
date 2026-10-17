@@ -22,6 +22,7 @@ GROUPS = [
 ]
 TOOLS = [
     "quadriflow",
+    "autoremesher",
     "instant-meshes",
     "integer-grid",
     "openclare-uniform",
