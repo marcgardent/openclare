@@ -260,11 +260,137 @@ fn debug_turns(tmesh: &TMesh, every: &[tubes::Turn], x: &[i64], real: &[f64], sc
     }
 }
 
+/// Whole lengths, their scale, the quads they make, and the arcs held from
+/// vanishing.
+type Lengths = (Vec<i64>, f64, usize, Vec<i64>);
+
+/// Walks taken one at a time on `x`, guided by a lean towards less shift,
+/// taken only if they shift the turns of `every` less in all, cost little
+/// away from `target`, keep the number of quads within `budget` if there is
+/// one (the number asked for, and how far from it is close enough) and
+/// leave the structure intact; then for each turn of `held` still shifted,
+/// one at a time.
+#[allow(clippy::too_many_arguments)]
+fn repair(
+    tmesh: &TMesh,
+    network: &Network,
+    target: &[f64],
+    lower: &[i64],
+    x: &mut [i64],
+    every: &[tubes::Turn],
+    held: &[&tubes::Turn],
+    budget: Option<(usize, usize)>,
+    report: &mut Report,
+) {
+    let clock = std::time::Instant::now();
+    let weight: Vec<f64> = target.iter().map(|length| 1.0 / (length + 1.0)).collect();
+    let left_by = |x: &[i64]| -> Vec<f64> {
+        let lengths: Vec<f64> = x.iter().map(|&length| length as f64).collect();
+        every.iter().map(|turn| tubes::value(&turn.shift, &lengths)).collect()
+    };
+    let mut bias = vec![0.0; target.len()];
+    for (turn, shift) in every.iter().zip(left_by(x)) {
+        if shift.abs() >= 0.5 {
+            for &(arc, c) in &turn.shift {
+                bias[arc] += REPAIR_LEAN * shift.signum() * c;
+            }
+        }
+    }
+    let plain = Cost { target, weight: &weight, lower, bias: &[] };
+    let leant = Cost { target, weight: &weight, lower, bias: &bias };
+    // Fewer quads shift every turn less: a walk may not take the number of
+    // quads further from the budget than it allows, or than it already is.
+    let within = |x: &[i64], moved: &[i64]| -> bool {
+        budget.is_none_or(|(wanted, allowed)| {
+            count_quads(tmesh, moved).abs_diff(wanted) <= allowed.max(count_quads(tmesh, x).abs_diff(wanted))
+        })
+    };
+    let mut judge = |x: &[i64], change: &[i64]| -> bool {
+        let moved: Vec<i64> = x.iter().zip(change).map(|(a, b)| a + b).collect();
+        let now: f64 = left_by(x).iter().map(|w| w.abs()).sum();
+        let then: f64 = left_by(&moved).iter().map(|w| w.abs()).sum();
+        let cost: f64 = change
+            .iter()
+            .enumerate()
+            .filter(|&(_, &delta)| delta != 0)
+            .map(|(arc, &delta)| plain.of(arc, x[arc] + delta) - plain.of(arc, x[arc]))
+            .sum();
+        let sound = within(x, &moved) && lattice::build(tmesh, &moved).defects(tmesh).is_empty();
+        if std::env::var_os("OPENCLARE_DEBUG_REPAIR").is_some() {
+            let size = change.iter().filter(|&&d| d != 0).count();
+            eprintln!("    walk of {size} arcs: shift {now:.1} -> {then:.1}, cost {cost:.2}, sound {sound}");
+        }
+        then < now - 0.5 && cost < REPAIR_PRICE * (now - then) && sound
+    };
+    let mut effort = flow::Effort::default();
+    network.improve_judged(x, &leant, 1, REPAIR_WALKS, &mut effort, &mut judge);
+    report.moves += effort.moves;
+    if std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some() {
+        eprintln!(
+            "  repaired in {:.1} s: {} walks taken, {} turned down",
+            clock.elapsed().as_secs_f64(),
+            effort.moves,
+            effort.misjudged
+        );
+    }
+    // Then each turn held that is still shifted, one at a time: a lean on
+    // its arcs alone, a walk taken if it shifts that turn less and the
+    // others not more.
+    let clock = std::time::Instant::now();
+    let mut effort = flow::Effort::default();
+    for turn in held {
+        let shift_of = |x: &[i64]| -> f64 { turn.shift.iter().map(|&(arc, c)| c * x[arc] as f64).sum() };
+        let left = shift_of(x);
+        if left.abs() < 0.5 {
+            continue;
+        }
+        let mut bias = vec![0.0; target.len()];
+        for &(arc, c) in &turn.shift {
+            bias[arc] += AIMED_LEAN * left.signum() * c;
+        }
+        let leant = Cost { target, weight: &weight, lower, bias: &bias };
+        let mut judge = |x: &[i64], change: &[i64]| -> bool {
+            let moved: Vec<i64> = x.iter().zip(change).map(|(a, b)| a + b).collect();
+            let now: f64 = left_by(x).iter().map(|w| w.abs()).sum();
+            let then: f64 = left_by(&moved).iter().map(|w| w.abs()).sum();
+            let cost: f64 = change
+                .iter()
+                .enumerate()
+                .filter(|&(_, &delta)| delta != 0)
+                .map(|(arc, &delta)| plain.of(arc, x[arc] + delta) - plain.of(arc, x[arc]))
+                .sum();
+            let better = shift_of(&moved).abs() < shift_of(x).abs() - 0.5 && then <= now;
+            let sound = better && within(x, &moved) && lattice::build(tmesh, &moved).defects(tmesh).is_empty();
+            if std::env::var_os("OPENCLARE_DEBUG_REPAIR").is_some() {
+                eprintln!(
+                    "    aimed walk: turn {:.0} -> {:.0}, all {now:.0} -> {then:.0}, cost {cost:.2}, sound {sound}",
+                    shift_of(x),
+                    shift_of(&moved)
+                );
+            }
+            better && cost < REPAIR_PRICE * (now - then).max(1.0) && sound
+        };
+        network.improve_judged(x, &leant, 1, AIMED_WALKS, &mut effort, &mut judge);
+    }
+    report.moves += effort.moves;
+    if std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some() {
+        eprintln!(
+            "  aimed in {:.1} s: {} walks taken, {} turned down, {} quads",
+            clock.elapsed().as_secs_f64(),
+            effort.moves,
+            effort.misjudged,
+            count_quads(tmesh, x)
+        );
+    }
+}
+
 impl WalkCancelling {
     /// Whole lengths for `tmesh` with the turns `held` brought back onto
     /// themselves: the lengths aimed at changed as little as can be for
     /// that (turns that cannot all be are let go, the worst first), the
     /// search, then walks taken one at a time that shift `every` turn less.
+    /// In a round of `cut`s, the walks keep to the budget and none is aimed
+    /// at a turn alone.
     #[allow(clippy::too_many_arguments)]
     fn closed_search(
         &self,
@@ -275,7 +401,8 @@ impl WalkCancelling {
         report: &mut Report,
         every: &[tubes::Turn],
         held: &[tubes::Turn],
-    ) -> (Vec<i64>, f64, usize, Vec<i64>) {
+        cut: bool,
+    ) -> Lengths {
         let weight: Vec<f64> = real.iter().map(|length| 1.0 / (length + 1.0)).collect();
         let debug = std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some();
         let clock = std::time::Instant::now();
@@ -306,108 +433,85 @@ impl WalkCancelling {
         if debug {
             eprintln!("  searched in {:.1} s", clock.elapsed().as_secs_f64());
         }
-        let clock = std::time::Instant::now();
-
-        // One walk at a time, guided by a lean towards less shift, taken
-        // only if it shifts the turns less in all, costs little, and leaves
-        // the structure intact.
         let target: Vec<f64> = aimed.iter().map(|length| scale * length).collect();
-        let weight: Vec<f64> = target.iter().map(|length| 1.0 / (length + 1.0)).collect();
-        let left_by = |x: &[i64]| -> Vec<f64> {
-            let lengths: Vec<f64> = x.iter().map(|&length| length as f64).collect();
-            every.iter().map(|turn| tubes::value(&turn.shift, &lengths)).collect()
+        let (budget, aimed_at): (_, &[&tubes::Turn]) = if cut {
+            let wanted = request.quads.unwrap_or_else(|| count_quads(tmesh, &x));
+            (Some((wanted, (request.tolerance * wanted as f64) as usize)), &[])
+        } else {
+            (None, &held)
         };
-        let mut bias = vec![0.0; real.len()];
-        for (turn, shift) in every.iter().zip(left_by(&x)) {
-            if shift.abs() >= 0.5 {
-                for &(arc, c) in &turn.shift {
-                    bias[arc] += REPAIR_LEAN * shift.signum() * c;
-                }
-            }
-        }
-        let plain = Cost { target: &target, weight: &weight, lower: &lower, bias: &[] };
-        let leant = Cost { target: &target, weight: &weight, lower: &lower, bias: &bias };
-        let mut judge = |x: &[i64], change: &[i64]| -> bool {
-            let moved: Vec<i64> = x.iter().zip(change).map(|(a, b)| a + b).collect();
-            let now: f64 = left_by(x).iter().map(|w| w.abs()).sum();
-            let then: f64 = left_by(&moved).iter().map(|w| w.abs()).sum();
-            let cost: f64 = change
-                .iter()
-                .enumerate()
-                .filter(|&(_, &delta)| delta != 0)
-                .map(|(arc, &delta)| plain.of(arc, x[arc] + delta) - plain.of(arc, x[arc]))
-                .sum();
-            let sound = lattice::build(tmesh, &moved).defects(tmesh).is_empty();
-            if std::env::var_os("OPENCLARE_DEBUG_REPAIR").is_some() {
-                let size = change.iter().filter(|&&d| d != 0).count();
-                eprintln!("    walk of {size} arcs: shift {now:.1} -> {then:.1}, cost {cost:.2}, sound {sound}");
-            }
-            then < now - 0.5 && cost < REPAIR_PRICE * (now - then) && sound
-        };
-        let mut effort = flow::Effort::default();
-        network.improve_judged(&mut x, &leant, 1, REPAIR_WALKS, &mut effort, &mut judge);
-        report.moves += effort.moves;
-        if debug {
-            eprintln!(
-                "  repaired in {:.1} s: {} walks taken, {} turned down",
-                clock.elapsed().as_secs_f64(),
-                effort.moves,
-                effort.misjudged
-            );
-        }
-        // Then each turn held that is still shifted, one at a time: a lean
-        // on its arcs alone, a walk taken if it shifts that turn less and
-        // the others not more.
-        let clock = std::time::Instant::now();
-        let mut effort = flow::Effort::default();
-        for turn in &held {
-            let shift_of = |x: &[i64]| -> f64 { turn.shift.iter().map(|&(arc, c)| c * x[arc] as f64).sum() };
-            let left = shift_of(&x);
-            if left.abs() < 0.5 {
-                continue;
-            }
-            let mut bias = vec![0.0; real.len()];
-            for &(arc, c) in &turn.shift {
-                bias[arc] += AIMED_LEAN * left.signum() * c;
-            }
-            let leant = Cost { target: &target, weight: &weight, lower: &lower, bias: &bias };
-            let mut judge = |x: &[i64], change: &[i64]| -> bool {
-                let moved: Vec<i64> = x.iter().zip(change).map(|(a, b)| a + b).collect();
-                let now: f64 = left_by(x).iter().map(|w| w.abs()).sum();
-                let then: f64 = left_by(&moved).iter().map(|w| w.abs()).sum();
-                let cost: f64 = change
-                    .iter()
-                    .enumerate()
-                    .filter(|&(_, &delta)| delta != 0)
-                    .map(|(arc, &delta)| plain.of(arc, x[arc] + delta) - plain.of(arc, x[arc]))
-                    .sum();
-                let better = shift_of(&moved).abs() < shift_of(x).abs() - 0.5 && then <= now;
-                let sound = better && lattice::build(tmesh, &moved).defects(tmesh).is_empty();
-                if std::env::var_os("OPENCLARE_DEBUG_REPAIR").is_some() {
-                    eprintln!(
-                        "    aimed walk: turn {:.0} -> {:.0}, all {now:.0} -> {then:.0}, cost {cost:.2}, sound {sound}",
-                        shift_of(x),
-                        shift_of(&moved)
-                    );
-                }
-                better && cost < REPAIR_PRICE * (now - then).max(1.0) && sound
-            };
-            network.improve_judged(&mut x, &leant, 1, AIMED_WALKS, &mut effort, &mut judge);
-        }
-        report.moves += effort.moves;
-        if debug {
-            eprintln!(
-                "  aimed in {:.1} s: {} walks taken, {} turned down",
-                clock.elapsed().as_secs_f64(),
-                effort.moves,
-                effort.misjudged
-            );
-        }
+        repair(tmesh, network, &target, &lower, &mut x, every, aimed_at, budget, report);
         if std::env::var_os("OPENCLARE_DEBUG_TURNS").is_some() {
             debug_turns(tmesh, every, &x, real, scale, &held);
         }
         let quads = count_quads(tmesh, &x);
         (x, scale, quads, lower)
+    }
+
+    /// Closing by cuts: every strip of quads the lengths of `first` make is
+    /// walked, from the middle of every quad edge along the sides of the
+    /// rectangles, which finds every one that comes back; those that come
+    /// back beside themselves although the real lengths bring them back to
+    /// within [`CUT_LEAN`] of their way round are held as well, and the
+    /// lengths looked for again. A few rounds, each giving lengths to
+    /// choose from, with the number of turns held.
+    #[allow(clippy::too_many_arguments)]
+    fn cut_rounds(
+        &self,
+        tmesh: &TMesh,
+        network: &Network,
+        real: &[f64],
+        request: &Request,
+        report: &mut Report,
+        every: &[tubes::Turn],
+        held: &[tubes::Turn],
+        first: &Lengths,
+    ) -> Vec<(Lengths, usize)> {
+        // A way and the same way taken the other way round are one ring.
+        let key = |turn: &tubes::Turn| -> Vec<(usize, i64)> {
+            let sign = turn.shift.first().map_or(1.0, |&(_, c)| c.signum());
+            turn.shift.iter().map(|&(arc, c)| (arc, (sign * c).round() as i64)).collect()
+        };
+        let (mut every, mut held) = (every.to_vec(), held.to_vec());
+        let mut known_every: std::collections::HashSet<_> = every.iter().map(key).collect();
+        let mut known_held: std::collections::HashSet<_> = held.iter().map(key).collect();
+        let mut out = Vec::new();
+        let mut current = first.clone();
+        for round in 0..CUT_ROUNDS {
+            let (x, scale, quads, _) = &current;
+            let lengths: Vec<f64> = x.iter().map(|&length| length as f64).collect();
+            let side = (*quads as f64).sqrt().max(1.0);
+            let mut undue = 0;
+            for strip in tubes::lattice_turns(tmesh, &lengths, 4, CUT_LONGEST * side) {
+                // How far the real lengths bring it back beside itself, in
+                // quad edges: beyond the lean, it winds round as the field
+                // does, and is not held.
+                let field = scale * tubes::value(&strip.shift, real);
+                if field.abs() > CUT_LEAN * strip.around {
+                    continue;
+                }
+                if tubes::value(&strip.shift, &lengths).abs() >= 0.5 && known_held.insert(key(&strip)) {
+                    undue += 1;
+                    held.push(strip.clone());
+                }
+                if known_every.insert(key(&strip)) {
+                    every.push(strip);
+                }
+            }
+            if std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some() {
+                eprintln!("  cut round {round}: {undue} strips more held, {} in all", held.len());
+            }
+            if undue == 0 {
+                break;
+            }
+            let next = self.closed_search(tmesh, network, real, request, report, &every, &held, true);
+            if next.0 == current.0 {
+                break;
+            }
+            out.push((next.clone(), held.len()));
+            current = next;
+        }
+        out
     }
 
     /// Whole lengths near `real` at the scale that gives the number of quads
@@ -420,7 +524,7 @@ impl WalkCancelling {
         real: &[f64],
         request: &Request,
         report: &mut Report,
-    ) -> (Vec<i64>, f64, usize, Vec<i64>) {
+    ) -> Lengths {
         let arcs = real.len();
         let mut x = vec![0i64; arcs];
         let mut lower = vec![0i64; arcs];
@@ -574,31 +678,41 @@ impl Quantizer for WalkCancelling {
                 report.turns = report.turns.max(found.len());
                 ways.push(((offsets, lean, longest), found, held));
             }
-            // Each way searched on a core of its own; the one kept is the
-            // same as if they had been searched in turn.
+            // Each way searched on a core of its own, then closed by cuts a
+            // few rounds; the one kept is the same as if they had been
+            // searched in turn.
             let tried: Vec<_> = ways
                 .par_iter()
                 .map(|(_, found, held)| {
                     let mut own = Report::default();
-                    let tried = self.closed_search(tmesh, &network, &real, request, &mut own, found, held);
-                    (spirals_of(&tried.0), tried, own.moves)
+                    let tried = self.closed_search(tmesh, &network, &real, request, &mut own, found, held, false);
+                    let cut = self.cut_rounds(tmesh, &network, &real, request, &mut own, found, held, &tried);
+                    let candidates: Vec<_> = std::iter::once((tried, held.len()))
+                        .chain(cut)
+                        .map(|(tried, held)| (spirals_of(&tried.0), tried, held))
+                        .collect();
+                    (candidates, own.moves)
                 })
                 .collect();
-            for (((offsets, lean, longest), _, held), (spirals, tried, moves)) in ways.iter().zip(tried) {
+            for (((offsets, lean, longest), ..), (candidates, moves)) in ways.iter().zip(tried) {
                 report.moves += moves;
-                if std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some() {
-                    eprintln!(
-                        "closing from {offsets:?} leaning up to {lean}, {longest} long: spirals {:.3} deviation {:.3} quads {} (best so far {:.3})",
-                        spirals,
-                        deviation(&tried),
-                        tried.2,
-                        best.0
-                    );
-                }
-                if spirals < best.0 - 1e-9 && tried.2.abs_diff(wanted) <= allowed && deviation(&tried) <= most_deviation
-                {
-                    report.turns_held = held.len();
-                    best = (spirals, tried);
+                for (round, (spirals, tried, held)) in candidates.into_iter().enumerate() {
+                    if std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some() {
+                        eprintln!(
+                            "closing from {offsets:?} leaning up to {lean}, {longest} long, round {round}: spirals {:.3} deviation {:.3} quads {} (best so far {:.3})",
+                            spirals,
+                            deviation(&tried),
+                            tried.2,
+                            best.0
+                        );
+                    }
+                    if spirals < best.0 - 1e-9
+                        && tried.2.abs_diff(wanted) <= allowed
+                        && deviation(&tried) <= most_deviation
+                    {
+                        report.turns_held = held;
+                        best = (spirals, tried);
+                    }
                 }
             }
             best.1
@@ -657,6 +771,15 @@ const REPAIR_WALKS: usize = 40;
 /// unit of its shift, and the most walks tried for it.
 const AIMED_LEAN: f64 = 3.0;
 const AIMED_WALKS: usize = 8;
+/// Rounds of closing by cuts after each way: every strip of the quad mesh
+/// walked, those the real lengths would close held as well.
+const CUT_ROUNDS: usize = 3;
+/// How far beside itself, as a share of its way round, the real lengths may
+/// bring a strip back for it to be held as a ring.
+const CUT_LEAN: f64 = 0.12;
+/// How many times the side of the quad mesh (the side of a square of its
+/// quads) a strip walked for the cuts may go before it is given up.
+const CUT_LONGEST: f64 = 6.0;
 /// Most the cost of the lengths may grow per unit of shift taken away.
 const REPAIR_PRICE: f64 = 2.0;
 
