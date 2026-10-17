@@ -348,13 +348,70 @@ the eight poles but no structure (a base complex of 1{,}010 patches) and
 curvatures are within 10\% of one another, both give the layout of a cube:
 eight poles of valence three, six patches, no spiral.
 
+\section{An exact look at the closing system}\label{sec:exact}
+
+To see how far the projection of Section~\ref{sec:closing} is from what
+the constraints allow, openclare exports, for each way of finding turns,
+the system it works on: the real lengths of the 2{,}069 arcs of the T-mesh
+of the male body at 10{,}590 quads, the 1{,}552 balance equations of its
+patches, every turn found with its shift, and the lower bounds the integer
+search placed on arcs to keep singularities apart (30 to 36 arcs held at
+length one). We solve it with HiGHS through SciPy, in real numbers.
+
+\paragraph{Where the conflict lies.}
+Every held turn can be closed on its own with all bounds kept. All held
+turns can be closed together if the lengths are only asked to be
+non-negative. With the bounds of separation, they cannot. Giving up the
+least total amount of those bounds needed to close all held turns, a
+linear program, shows that for three of the four ways examined a
+\emph{single} arc must collapse, in two of them the same arc, $0.08$ quad
+edges long, at the left wrist; the fourth needs eleven, round the eyes and
+the hands. The conflict between closing loops and keeping singularities apart
+is thus real, but very local.
+
+\paragraph{How far the heuristic is.}
+With every bound kept, the largest set of held turns that can be closed
+together is found by a mixed-integer program with one binary per turn
+(Table~\ref{tab:exact}). The projection keeps far fewer: it removes, one at
+a time, the turn left most shifted by a least-squares projection whose
+negative lengths are clamped to zero, and a single clamped arc can make it
+drop dozens of turns that conflict with nothing.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+way & held & kept by the projection & closable together, bounds kept \\
+\midrule
+7 & 169 & 49 & 160 \\
+4 & 160 & 48 & 154 \\
+5 & 78 & 46 & 73 \\
+1 & 88 & 53 & 87 \\
+0 & 84 & 49 & 83 \\
+2 & 86 & 47 & 82 \\
+3 & 52 & 46 & 51 \\
+6 & 48 & 42 & 47 \\
+\bottomrule
+\end{tabular}
+\caption{Male body at 10{,}590 quads. Real numbers; the numbering of the
+ways is the order in which they finished.}
+\label{tab:exact}
+\end{table}
+
+In whole numbers, the same mixed-integer program did not finish within
+fifteen minutes on the smallest system; the integer search of the
+quantizer remains needed, but it can be given the targets of the linear
+program instead of those of the projection. Whether the turns closed in
+real numbers survive the integer search is the next measurement.
+
 \section{Open problems}\label{sec:open}
 
 \begin{problem}[Exact formulation]
 Minimize the deviation of the quantization subject to balance, validity and
 $\shift_\gamma(\ell)=0$ for a set of turns. This is a minimum-deviation flow
 with linear side constraints; how much of the exact machinery
-of~\cite{heistermann2023bimdf} carries over is open.
+of~\cite{heistermann2023bimdf} carries over is open. Section~\ref{sec:exact}
+shows that the linear relaxation already closes almost all held turns.
 \end{problem}
 
 \begin{problem}[Which turns]
@@ -371,8 +428,9 @@ rings force a dislocation, and that closing all rings needs the poles to
 face one another, which the separation of singularities forbids at the
 scale of the T-mesh. A capped cylinder shows the same conflict: its
 layout of six patches exists, but only with arcs our quantizer will not
-bring to zero. When is a set of turns simultaneously closable, in terms of
-the singularity configuration?
+bring to zero. On the male body the conflict comes down to one or a few
+arcs (Section~\ref{sec:exact}). When is a set of turns simultaneously
+closable, in terms of the singularity configuration?
 \end{problem}
 
 \begin{problem}[Finite trajectories]
