@@ -327,8 +327,10 @@ impl Relaxer for Squaring {
 /// vertex goes towards the mean of what its quads propose, sliding on the
 /// surface (the move is made tangent, then projected), and never further
 /// than [`Squaring::reach`] from where it started. A move that would flatten
-/// or fold a quad is not made. Feature lines and corners hold their vertices
-/// as in [`relax`].
+/// or fold a quad is not made, nor one that would turn over a quad facing
+/// the way the mesh round it faces. A quad facing the other way, as the
+/// meshing may leave one, proposes nothing and is unfolded by the quads
+/// round it. Feature lines and corners hold their vertices as in [`relax`].
 pub fn square_up(mesh: &mut PolyMesh, surface: &Bvh, features: Option<&Features>, tuning: &Squaring) {
     let n = mesh.positions.len();
     let (kind, neighbors) = classify(mesh, features);
@@ -354,12 +356,31 @@ pub fn square_up(mesh: &mut PolyMesh, surface: &Bvh, features: Option<&Features>
         // and the normal of the mesh at each vertex.
         let mut proposed = vec![(Vec3::ZERO, 0.0); n];
         let mut normal = vec![Vec3::ZERO; n];
-        for corners in &mesh.faces {
-            let points: Vec<Vec3> = corners.iter().map(|&v| mesh.positions[v as usize]).collect();
-            let face_normal = polygon_normal(&points);
+        let face_normals: Vec<Vec3> = mesh
+            .faces
+            .iter()
+            .map(|corners| polygon_normal(&corners.iter().map(|&v| mesh.positions[v as usize]).collect::<Vec<_>>()))
+            .collect();
+        for (corners, &face_normal) in mesh.faces.iter().zip(&face_normals) {
             for &v in corners {
                 normal[v as usize] += face_normal;
             }
+        }
+        // Which way each quad ought to face: the way the mesh round it
+        // faces. A quad turned over against it is a fold, which its own
+        // normal cannot tell.
+        let up: Vec<Vec3> = mesh
+            .faces
+            .iter()
+            .map(|corners| corners.iter().map(|&v| normal[v as usize]).sum::<Vec3>().normalize_or_zero())
+            .collect();
+        for ((corners, &face_normal), &up) in mesh.faces.iter().zip(&face_normals).zip(&up) {
+            // A quad folded over would only ask for the rectangle folded
+            // over too: its corners follow the quads round it instead.
+            if face_normal.dot(up) < 0.0 {
+                continue;
+            }
+            let points: Vec<Vec3> = corners.iter().map(|&v| mesh.positions[v as usize]).collect();
             let Some(rectangle) = fitted_rectangle(&points) else { continue };
             for (&v, corner) in corners.iter().zip(rectangle) {
                 proposed[v as usize].0 += corner;
@@ -398,12 +419,22 @@ pub fn square_up(mesh: &mut PolyMesh, surface: &Bvh, features: Option<&Features>
         // quads as they now are.
         for v in 0..n {
             let Some(goal) = goals[v] else { continue };
-            let worst = |mesh: &PolyMesh| {
-                faces_of[v].iter().map(|&face| flattest_corner(mesh, face as usize)).fold(f64::INFINITY, f64::min)
+            // The flattest corner of the quads round the vertex, and which
+            // of those quads face the right way: a quad with a corner already
+            // bent inwards could otherwise be turned over whole, its other
+            // corners never bending further than that one.
+            let judge = |mesh: &PolyMesh| {
+                faces_of[v].iter().take(64).enumerate().fold((f64::INFINITY, 0u64), |(worst, facing), (k, &face)| {
+                    let face = face as usize;
+                    let flattest = flattest_corner(mesh, face, up[face]);
+                    let faces_up = area_vector(mesh, face).dot(up[face]) > 0.0;
+                    (worst.min(flattest), facing | (u64::from(faces_up) << k))
+                })
             };
-            let before = worst(mesh);
+            let (before, was_facing) = judge(mesh);
             let kept = std::mem::replace(&mut mesh.positions[v], goal);
-            if worst(mesh) < before.min(tuning.flattest) {
+            let (after, facing) = judge(mesh);
+            if was_facing & !facing != 0 || after < before.min(tuning.flattest) {
                 mesh.positions[v] = kept;
             }
         }
@@ -441,17 +472,27 @@ fn fitted_rectangle(points: &[Vec3]) -> Option<[Vec3; 4]> {
     ])
 }
 
-/// The sine of the flattest corner of a face, negative if it folds over.
-fn flattest_corner(mesh: &PolyMesh, face: usize) -> f64 {
+/// Area-weighted normal of a face: half the sum of the cross products of
+/// consecutive corners, taken from the first.
+fn area_vector(mesh: &PolyMesh, face: usize) -> Vec3 {
+    let corners = &mesh.faces[face];
+    let count = corners.len();
+    let first = mesh.positions[corners[0] as usize];
+    let at = |k: usize| mesh.positions[corners[k % count] as usize] - first;
+    0.5 * (1..count).map(|k| at(k).cross(at(k + 1))).sum::<Vec3>()
+}
+
+/// The sine of the flattest corner of a face seen from the side `up` points
+/// to: negative if it folds over, or if the whole face is turned over.
+fn flattest_corner(mesh: &PolyMesh, face: usize, up: Vec3) -> f64 {
     let corners = &mesh.faces[face];
     let points: Vec<Vec3> = corners.iter().map(|&v| mesh.positions[v as usize]).collect();
-    let normal = polygon_normal(&points);
     let count = points.len();
     (0..count)
         .map(|k| {
             let (next, previous) = (points[(k + 1) % count] - points[k], points[(k + count - 1) % count] - points[k]);
             let scale = next.length() * previous.length();
-            if scale > 0.0 { next.cross(previous).dot(normal) / scale } else { -1.0 }
+            if scale > 0.0 { next.cross(previous).dot(up) / scale } else { -1.0 }
         })
         .fold(f64::INFINITY, f64::min)
 }
