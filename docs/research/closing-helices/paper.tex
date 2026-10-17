@@ -54,8 +54,13 @@ drops from 12.1\% to 1.1\%, below the 2.5\% of the hand-made mesh. We relate
 turns to the twist of flat cylinders in the theory of Jenkins--Strebel
 differentials~\cite{strebel1984quadratic}, show with the holonomy of the
 flat metric that a pair of singularities of valences three and five lying on
-one trace between two turns forbids closing both, and list the open problems
-that a complete treatment would need to solve.
+one trace between two turns forbids closing both, and prove that on a sphere
+the shift of a turn has the parity of its length, so that a helix of odd
+pitch closes only if its length changes. Exact computations on the lattice of
+closed quantizations of the human body show that whole lengths closing
+nearly every ring exist, but not at the size asked for, and that conflicts
+between turns are local without always being pairs. We list the open
+problems that a complete treatment would need to solve.
 \end{abstract}
 
 \section{Introduction}
@@ -88,12 +93,22 @@ contributions are:
 \item Obstructions to closing: the shift of a turn is the Burgers vector of
   the singularities on one side; a pair of valences three and five joined by
   a trace between two turns forces one of them to be a helix; and a
-  checkerboard rule gives the parity of the shift between two turns
+  checkerboard rule gives the parity of the shift between two turns; on a
+  sphere the shift of every turn has the parity of its length; and a turn
+  whose shift is a non-negative form in the lengths can never close
   (Section~\ref{sec:obstructions}).
+\item An exact look at whole lengths: the balances are the incidence matrix
+  of a bidirected graph, whose free arcs parametrize the lattice of balanced
+  lengths; whole lengths closing nearly all rings exist but cost too much
+  deviation, and the turns, not the rounding, decide what closes
+  (Section~\ref{sec:whole}).
 \end{enumerate}
 The results are preliminary: one seed per model, one implementation, and
 heuristics where an exact formulation is still missing
-(Section~\ref{sec:open}).
+(Section~\ref{sec:open}). Statements are \emph{proved} when they come with a
+proof, \emph{measured} when they come from exact arithmetic or solver output
+on the systems openclare exports, and \emph{conjectured} otherwise; we say
+which.
 
 \section{Background and related work}\label{sec:related}
 
@@ -283,6 +298,12 @@ no singularity (singularities are nodes, never inside a patch), so the
 quad mesh is a regular grid along it, and a dual line at distance $o$ from
 the first corner comes back at distance $o + \shift_\gamma(\ell)$.
 \end{proof}
+
+The component of $T_\gamma(\ell)$ along the walking direction is the
+\emph{length} $\alpha_\gamma(\ell)$ of the turn, the distance walked before
+coming back to the first side; it is also a linear form in $\ell$ with
+integer coefficients, and for whole lengths it is the number of quads of the
+strip in one turn.
 
 In openclare (\texttt{quantization/tubes.rs}) the shift is built once per
 turn as an expression in the arc lengths, by composing the rim expressions
@@ -478,18 +499,25 @@ the system it works on: the real lengths of the 2{,}069 arcs of the T-mesh
 of the male body at 10{,}590 quads, the 1{,}552 balance equations of its
 patches, every turn found with its shift, and the lower bounds the integer
 search placed on arcs to keep singularities apart (30 to 36 arcs held at
-length one). We solve it with HiGHS through SciPy, in real numbers.
+length one). We solve it with HiGHS through SciPy, in real numbers. The ways
+are numbered as exported: way $m + 2j + 4i$ starts from the shares $\{0.5\}$
+($m = 0$) or $\{0.2, 0.5, 0.8\}$ ($m = 1$), with the lean bound $0.05$
+($j = 0$) or $0.12$ ($j = 1$) and the length bound $2$ ($i = 0$) or $6$
+($i = 1$) sides. Way~2 is the one the engine keeps for this body.
 
-\paragraph{Where the conflict lies.}
-Every held turn can be closed on its own with all bounds kept. All held
-turns can be closed together if the lengths are only asked to be
-non-negative. With the bounds of separation, they cannot. Giving up the
-least total amount of those bounds needed to close all held turns, a
-linear program, shows that for three of the four ways examined a
-\emph{single} arc must collapse, in two of them the same arc, $0.08$ quad
-edges long, at the left wrist; the fourth needs eleven, round the eyes and
-the hands. The conflict between closing loops and keeping singularities apart
-is thus real, but very local.
+\paragraph{Where the conflict lies (measured).}
+All held turns can be closed together if the lengths are only asked to be
+non-negative. With the bounds of separation, they cannot. In four ways (0,
+1, 2 and 4) one held turn cannot even be closed on its own: the same turn
+round the left wrist, of length $7.0$, whose shift is a sign-definite form
+in two arc lengths (Section~\ref{sec:obstructions},
+Remark~\ref{rem:definite}). Giving up the least total amount of the bounds
+needed to close all held turns, a linear program, shows that in ways 0, 2
+and 4 a \emph{single} arc must collapse, the arc of that wrist turn, $0.08$
+quad edges long; in way 6 a single other arc, at a foot; ways 1 and 3 need
+9 and 11 arcs, round the eyes and the hands, and ways 5 and 7, which hold
+the most turns, 22 and 30, most of them at the feet. The conflict between
+closing loops and keeping singularities apart is thus real, but local.
 
 \paragraph{How far the heuristic is.}
 With every bound kept, the largest set of held turns that can be closed
@@ -501,27 +529,31 @@ drop dozens of turns that conflict with nothing.
 
 \begin{table}[h]
 \centering
-\begin{tabular}{lrrr}
+\begin{tabular}{lrrrr}
 \toprule
-way & held & kept by the projection & closable together, bounds kept \\
+way & held & kept by the projection & closable together & arcs to collapse \\
 \midrule
-7 & 169 & 49 & 160 \\
-4 & 160 & 48 & 154 \\
-5 & 78 & 46 & 73 \\
-1 & 88 & 53 & 87 \\
-0 & 84 & 49 & 83 \\
-2 & 86 & 47 & 82 \\
-3 & 52 & 46 & 51 \\
-6 & 48 & 42 & 47 \\
+0 & 48 & 42 & 47 & 1 \\
+1 & 78 & 46 & 73 & 9 \\
+2 & 52 & 46 & 51 & 1 \\
+3 & 86 & 47 & 82 & 11 \\
+4 & 84 & 49 & 83 & 1 \\
+5 & 160 & 48 & 154 & 22 \\
+6 & 88 & 53 & 87 & 1 \\
+7 & 169 & 49 & 160 & 30 \\
 \bottomrule
 \end{tabular}
-\caption{Male body at 10{,}590 quads. Real numbers; the numbering of the
-ways is the order in which they finished.}
+\caption{Male body at 10{,}590 quads, real numbers. ``Closable together'':
+the largest set of held turns closable with every bound of separation kept;
+``arcs to collapse'': the arcs whose bound must be given up to close all
+held turns, for the least total amount given up.}
 \label{tab:exact}
 \end{table}
 
 In whole numbers, the same mixed-integer program did not finish within
-fifteen minutes on the two systems tried.
+fifteen minutes on the two systems tried. Section~\ref{sec:whole} shows that a
+similar failure, on a larger set of rings, came from the way the problem was
+posed to the solver and not from an absence of whole solutions.
 
 \paragraph{From reals to whole numbers.}
 We then fed the engine better targets and measured what survives its
@@ -539,6 +571,7 @@ but ignores the shifts.
 
 \begin{table}[h]
 \centering
+\small
 \begin{tabular}{lrrr}
 \toprule
 targets of the integer search & turns closed in reals & still shifted after & spiral edges (mesh) \\
@@ -729,11 +762,17 @@ Plain counting confirms (iii) independently. If both turns were rings, the
 along component of $B_A$ would be the difference $n_1 - n_2$ of the numbers
 of edges round them, of the parity of $d_1 + d_2$; but an annulus made of
 quads has an even number of edges on its border, since $4F = 2E_{\text{inside}}
-+ E_{\text{border}}$, so $n_1 + n_2$ is even. Part (ii) is the mechanism the
-problem of feasibility in Section~\ref{sec:open} guessed: the conflict found on the male
-body at a single arc of the left wrist would be explained if that arc joins
-a vertex of valence three to one of valence five between two held rings. We
-have not checked it.
++ E_{\text{border}}$, so $n_1 + n_2$ is even. Proposition~\ref{prop:parity}
+below makes this a statement about each turn. Part (ii) is the mechanism the
+problem of feasibility in Section~\ref{sec:open} guessed. An earlier draft
+suggested that it explains the conflict found on the male body at a single
+arc of the left wrist (Section~\ref{sec:exact}). We checked, and it does
+not: that conflict involves a single turn, not two
+(Remark~\ref{rem:definite}), and in the quad mesh the arc lies between two
+vertices of valence \emph{five}, $0.37$ edge apart, with a third of valence
+five about two edges away and no vertex of valence three nearby. The export
+does not include the nodes of the T-mesh, so these valences are read off the
+quad mesh made from the lengths, not off the T-mesh itself.
 
 For more singular vertices between two turns, the parity part generalizes
 into a checkerboard rule.
@@ -765,6 +804,96 @@ singular vertex, which keeps its colour. We checked the rule on 13{,}000 random
 configurations with sympy.
 \end{proof}
 
+\paragraph{Parity on a sphere.}
+The checkerboard rule compares two turns. On a surface of genus zero each
+turn carries its own parity condition, which needs neither a simple curve
+nor the holonomy. Let $B$ be the matrix of the balances of the patches, so
+that the balanced lengths are the solutions of $B\ell = 0$.
+
+\begin{proposition}[Parity of a turn on a sphere]\label{prop:parity}
+Let the surface have genus zero and the T-mesh admit lengths that are
+positive and balance every patch (its real lengths do). For every turn
+$\gamma$ and all whole lengths $\ell$ balancing every patch, of any sign,
+\[
+  \alpha_\gamma(\ell) \equiv \shift_\gamma(\ell) \pmod 2 .
+\]
+\end{proposition}
+
+\begin{proof}
+First let $\ell$ be whole, balanced, and positive on every arc. The patches
+are then grids of unit squares glued along their arcs, a quad mesh of the
+sphere. Its graph is bipartite: over $\Z/2$, the cycles of a graph embedded
+in a sphere are sums of face boundaries, since $H_1(S^2; \Z/2) = 0$, and every
+face boundary has four edges, so every cycle has an even length. Fix a
+colouring of the vertices in two colours, adjacent vertices differing. In
+each patch $P$ the grid is connected, so the colour of its point of local
+coordinates $(i, j)$ is $i + j + \kappa_P \bmod 2$ for a constant $\kappa_P$.
+For a motion $M(x) = R^k x + t$ with $t \in \Z^2$, write $\pi(M) = t_1 + t_2
+\bmod 2$; since a quarter-turn keeps the parity of $i + j$, the sum of the
+coordinates of $M(x)$ has the parity of that of $x$ plus $\pi(M)$.
+
+Let $P_0, P_1, \dots, P_N = P_0$ be the patches crossed by $\gamma$ and $D_k$
+the motion that develops the coordinates of $P_k$ into those of $P_0$, as in
+the proof of Proposition~\ref{prop:linear}; $D_0$ is the identity and $D_N$
+the translation $T_\gamma(\ell)$. We show $\kappa_{P_k} \equiv \kappa_{P_0} +
+\pi(D_k)$ by induction. A vertex $w$ of the arc crossed from $P_k$ to
+$P_{k+1}$ has coordinates $y$ in $P_k$ and $y'$ in $P_{k+1}$ with $D_k(y) =
+D_{k+1}(y')$; its colour is $y_1 + y_2 + \kappa_{P_k} \equiv (D_k y)_1 + (D_k
+y)_2 + \kappa_{P_0}$ by the induction hypothesis, and also $y'_1 + y'_2 +
+\kappa_{P_{k+1}}$; as $(D_{k+1} y')_1 + (D_{k+1} y')_2 \equiv y'_1 + y'_2 +
+\pi(D_{k+1})$, this gives $\kappa_{P_{k+1}} \equiv \kappa_{P_0} +
+\pi(D_{k+1})$. For $k = N$ the patch is $P_0$ again, so $\pi(T_\gamma(\ell))
+\equiv 0$. In the frame $(e_1, e_2)$ of the first side, which is that of $P_0$
+up to signs, $T_\gamma(\ell) = (\alpha_\gamma(\ell), \pm\shift_\gamma(\ell))$, hence
+$\alpha_\gamma(\ell) + \shift_\gamma(\ell)$ is even.
+
+For general whole balanced $\ell$: the balanced lengths form a rational
+subspace, positive real balanced lengths exist, and positivity is an open
+condition, so there are positive rational balanced lengths, and, multiplying
+by a common denominator, positive whole ones $p$. For $N$ large, $\ell + Np$
+is whole, balanced and positive, and $\alpha_\gamma + \shift_\gamma$, being
+linear, takes at $\ell = (\ell + Np) - Np$ the difference of two even values.
+\end{proof}
+
+The proof uses only that the quad graph is bipartite, so it fails in higher
+genus: on a torus, a $3 \times 3$ grid of quads has rings of three quads. On a
+sphere it gives at once:
+
+\begin{corollary}\label{cor:parity}
+On a surface of genus zero:
+\begin{enumerate}
+\item[(a)] every ring of quads has an even number of quads;
+\item[(b)] a helix of odd pitch winds round an odd number of quads per turn;
+\item[(c)] closing a helix of odd pitch changes the length of its walk by an
+  odd number of edges: a repair that keeps the length of a turn cannot close
+  it if its pitch is odd, and changing the pitch by an odd amount always
+  changes the length.
+\end{enumerate}
+\end{corollary}
+
+\begin{proof}
+(a) By Proposition~\ref{prop:complete} a ring is the strip of a walk with
+$\shift = 0$, so $\alpha$ is even. (b) and (c) are the proposition read
+before and after the change.
+\end{proof}
+
+Part (a) also follows directly from the bipartite graph: either border of a
+ring is a cycle of the quad graph with as many edges as the ring has quads.
+The proposition is consistent with the earlier statements and refines them.
+For a turn whose curve bounds a disc $D$, the argument of the checkerboard
+rule applied to Proposition~\ref{prop:burgers}(a) shows that both components
+of $B_D = (\alpha_\gamma, \shift_\gamma)$ have the parity of the number of
+vertices of odd valence of $D$ on white points: they are equal, which is
+Proposition~\ref{prop:parity} for that turn. For two parallel turns, the
+proposition applied to each gives $\shift_{\gamma_1} - \shift_{\gamma_2} \equiv
+\alpha_{\gamma_1} - \alpha_{\gamma_2}$, the two components of $B_A$, which the
+checkerboard rule and Proposition~\ref{prop:dislocation}(iii) evaluate from
+the singularities: two rings ($\shift_{\gamma_1} = \shift_{\gamma_2} = 0$) have
+even lengths, so no 3--5 pair at odd separation, and no odd number of odd
+vertices on white points, lies between them. On the eight systems exported for
+the male body (Section~\ref{sec:exact}), the proposition holds on all 1{,}838
+ways round found by walking every strip of the meshes (measured).
+
 \paragraph{How many independent rings.}
 Rings that do not cross one another are disjoint simple closed curves of
 $\Sigma^\circ$, none bounding a disc with fewer than two singular vertices
@@ -786,41 +915,139 @@ parametrization is the twist of the field's cylinder; it tells which whole
 value rounding is likely to pick, not whether zero is reachable.
 \end{remark}
 
-\begin{remark}[Whole solutions exist at some size]
+\begin{remark}[Sign-definite turns; Farkas certificates]\label{rem:definite}
+Say that a linear form $f$ in the lengths equals $g$ \emph{modulo the
+balances} if $f - g$ is a combination of the rows of $B$, so that $f(\ell) =
+g(\ell)$ for every balanced $\ell$. If the shift of a turn equals, modulo the
+balances, a form $\sum_a c_a \ell_a$ with every $c_a \ge 0$, then for all
+balanced $\ell \ge 0$ the shift $\shift_\gamma(\ell)$ is never negative,
+and it is zero only if every arc with $c_a > 0$ has length zero. If one
+of those arcs is held open by a bound of separation, the turn is a helix under
+every quantization meeting the bounds; it should never be held, and one linear
+program per turn finds such turns. More generally, by Farkas' lemma (with
+$x = b + z$, $z \ge 0$), the system $B\ell = 0$, $\shift_\gamma(\ell) = 0$ for
+$\gamma \in H$, $\ell \ge b$ has no solution exactly when some combination
+$\sum_{\gamma \in H} u_\gamma \shift_\gamma$ equals, modulo the balances, a form
+$\sum_a c_a \ell_a$ with $c \ge 0$ and $\sum_a c_a b_a > 0$; and an arc $a$
+has length zero in every solution with $\ell \ge 0$ exactly when some such
+combination has $c_a > 0$. The data being integral, the multipliers
+$u_\gamma$ can be taken whole.
+\end{remark}
+
+On the male body this is what happens at the left wrist (measured; the
+certificate checked in exact rational arithmetic for way 0): in ways 0, 1, 2
+and 4 one held turn, of length $7.0$,
+has a shift equal, modulo the balances, to $-(\ell_{1921} + \ell_{1937})$,
+where arc 1937, $0.08$ edges long, is held at length at least one. That turn
+cannot be closed on its own. A sentence of an earlier draft of
+Section~\ref{sec:exact} stated that every held turn can be closed on its
+own; it is false for this body.
+
+\begin{remark}[Whole solutions exist at some size]\label{rem:exist}
 The balance and closing constraints are homogeneous and the bounds of
 separation are lower bounds $\ell \ge b$ with $b \ge 0$. If they have a
 real solution they have a rational one, a vertex of a rational polyhedron,
 and multiplying it by the common denominator $N$ gives whole lengths
 $N\ell \ge Nb \ge b$ that satisfy them all. Closing in whole numbers is thus
 never impossible in itself; what can fail is closing \emph{at a given size}
-(number of quads) or within a given deviation from the targets. The search for
-integer solutions of Section~\ref{sec:open} should be read in that light.
+(number of quads) or within a given deviation from the targets.
+Section~\ref{sec:whole} measures this on the male body.
 \end{remark}
 
-\begin{conjecture}[Conflicts are between neighbouring turns]\label{conj:local}
-On a surface of genus zero, let $H$ be a set of turns each of which can be
-closed on its own within the bounds of separation. If $H$ cannot be closed
-together within those bounds, then $H$ contains two parallel turns whose
-annulus has a Burgers vector with a component along $e_2$ that does not
-vanish for any lengths balancing the patches and meeting the bounds.
+\paragraph{Conflicts are local, but not always pairs.}
+An earlier draft conjectured that whenever a set of turns, each closable on
+its own, cannot be closed together within the bounds of separation, it
+contains two parallel turns whose annulus forbids it, as in
+Proposition~\ref{prop:dislocation}. This is false. We searched the held turns
+of the eight exported systems for \emph{irreducible} infeasible sets: sets
+that cannot be closed together within the bounds while every proper subset
+can (Table~\ref{tab:iis}). For each, the Farkas multipliers of
+Remark~\ref{rem:definite} were made rational and the identity checked in exact
+arithmetic, and for each turn left out, whole lengths closing the others
+within the bounds were found by HiGHS and checked in exact integer arithmetic
+(measured).
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{llllll}
+\toprule
+ways & size & turns & multipliers & bounded arcs & exact check \\
+\midrule
+0, 1, 2, 4 & 1 & 42 (way 0) & $-1$ & 1937 & way 0 \\
+1, 3, 5, 7 & 2 & 54, 61 (way 1) & $1, -1$ & 1587 & --- \\
+1, 3 & 2 & 45, 49 (way 1) & $1, -1$ & 1069 & --- \\
+1, 3, 7 & 2 & 26, 37 (way 1) & $-1, 1$ & 619 & --- \\
+5, 7 & 2 & 58, 94 (way 5) & $1, -1$ & 858 & --- \\
+5 & 2 & 49, 71 & $-1, 1$ & 619, 625 & --- \\
+6 & 2 & 57, 58 & $1, 1$ & 1241 & --- \\
+7 & 2 & 8, 15 & $1, 1$ & 191 & --- \\
+1 & 3 & 36, 37, 39 & $1, 1, -1$ & 619 & yes \\
+1 & 4 & 40, 56, 59, 61 & $1, 1, -1, -1$ & 1587 & yes \\
+1 & 4 & 66, 71, 75, 76 & $-\tfrac76, -\tfrac56, -\tfrac13, -\tfrac12$ & 1967, 1980, 1998 & yes \\
+3 & 4 & 73, 78, 82, 83 & $-\tfrac74, -\tfrac54, -\tfrac12, -\tfrac34$ & 1980, 1998 & yes \\
+5 & 7 & 59, 91, 96, 98, 99, 157, 158 & $2, 4, 1, -4, -1, 1, -1$ & 1036 & yes \\
+7 & 7 & 112--116, 145, 147 & $8, \tfrac12, 1, \tfrac12, \tfrac12, -\tfrac12, \tfrac12$ & 1157 & yes \\
+5 & 15 & 0, 2--9, 11, 14, 16--18, 64 & whole, up to 23 & 17 & 14 of 15 \\
+\bottomrule
+\end{tabular}
+\caption{Irreducible infeasible sets of held turns on the male body, bounds of
+separation kept. Turn numbers are those of the first way listed; ``bounded
+arcs'': arcs held at length at least one in the support of the non-negative
+form. Rows without an exact check come from the floating-point linear
+program; their turns are each closable alone, so a pair is irreducible. In
+the last row, the whole lengths closing the set without turn 3 were not found
+within the time limit.}
+\label{tab:iis}
+\end{table}
+
+The smallest counterexample has three turns, in way 1 near the right eye,
+of lengths $54.9$, $52.8$ and $108.1$:
+\[
+  \shift_{36} + \shift_{37} - \shift_{39} = \ell_{604} + \ell_{619} + \ell_{620}
+  + \ell_{637} \quad\text{modulo the balances},
+\]
+with $\ell_{619} \ge 1$ imposed, so no lengths meeting the bounds close all
+three, while every two of them close together in whole numbers. The length
+of turn 39 is about the sum of the other two, as for the three borders of a
+pair of pants round two groups of singularities, whose holonomies are related
+as in Proposition~\ref{prop:burgers}; we have not checked this picture on the
+T-mesh. Sets of four and seven turns behave alike, with the same signature: a
+combination of the shifts equals a non-negative form containing a bounded
+arc. Every set found is infeasible in real numbers already: none of these
+obstructions is one of parity. The conflicts between two turns in the table all have
+the form of Proposition~\ref{prop:dislocation}(ii): the sum or difference of
+the shifts equals a sum of two to eight arc lengths with coefficient one, one
+of them bounded; the two turns have nearly equal lengths ($39.7$ and $40.0$,
+$52.4$ and $52.8$, $277.5$ and $278.0$, \dots) and lie in clusters of
+singularities, at the eyes, the hands and the feet. Whether the arcs join a
+vertex of valence three to one of valence five along one trace cannot be
+decided from the export, which lacks the nodes of the T-mesh.
+
+\begin{conjecture}[Conflicts are round a cluster]\label{conj:region}
+On a surface of genus zero, let $H$ be an irreducible set of turns that
+cannot be closed together within the bounds of separation. Then the curves
+of the turns of $H$ are, up to the cylinders of
+Proposition~\ref{prop:burgers}(c), the $k \ge 1$ borders of one planar region
+round a cluster of singularities, and a combination of their shifts that
+certifies the conflict is given by the holonomy relation of these borders: a
+form with non-negative coefficients containing an arc held open.
 \end{conjecture}
 
-The converse holds by Proposition~\ref{prop:burgers}(b). The conjecture
-says that the certificates of infeasibility given by linear programming
-duality can always be taken of this local form. It is supported only by the
-observation that the conflicts of Section~\ref{sec:exact} are local; it would
-be refuted by an irreducible infeasible subset of the closing constraints
-with more than two turns, which the exported system allows to search for.
+The cases $k = 1$ (a sign-definite turn, the wrist), $k = 2$ (an annulus,
+Proposition~\ref{prop:dislocation}) and $k = 3$ (a pair of pants, the eye)
+fit it, with multipliers $\pm1$. The fractional multipliers at the left hand
+($\tfrac76, \tfrac56, \tfrac13, \tfrac12$ up to sign, and their analogue in
+way 3), and the larger ones of the sets of seven turns, are not explained by
+it; they are the cases to examine first, and could refute it.
 
-\section{Open problems}\label{sec:open}
+\section{Whole lengths}\label{sec:whole}
 
-\begin{problem}[Exact formulation]
-Minimize the deviation of the quantization subject to balance, validity and
-$\shift_\gamma(\ell)=0$ for a set of turns. This is a minimum-deviation flow
-with linear side constraints; how much of the exact machinery
-of~\cite{heistermann2023bimdf} carries over is open. Section~\ref{sec:exact}
-shows that the linear relaxation already closes almost all held turns.
-\end{problem}
+This section returns to the male body of Section~\ref{sec:exact}, now in
+whole numbers. The propositions are proved; the numbers are measured, with
+exact integer or rational arithmetic where we say so, and otherwise from
+HiGHS through SciPy, stopped at a time limit (best solution found and proven
+bound).
 
 \paragraph{Exact whole lengths.}
 Closing exactly, in whole numbers, the turns found closable together with
@@ -832,40 +1059,201 @@ against 11, 0 against 27), at a deviation from the real lengths 4\% to 62\%
 higher. Yet the quad meshes they make spiral \emph{more}: 12.2\% of their
 edges against 8.8\% for the first way, 3.7\% against 1.1\% for the second,
 and the third breaks the structure. Most of the loops that spiral are thus
-not turns our search finds: closing every turn it finds is not enough,
-which makes the second open problem below the central one.
+not turns our search finds: closing every turn it finds is not enough.
 
 \paragraph{Closing by cuts.}
-On the same body, walking every strip of the mesh the engine makes
+Walking every strip of the mesh the engine makes
 (Proposition~\ref{prop:complete}) finds about 220 ways round per way of
-closing, of which 12 to 24 come back shifted although the field itself
-shifts them by less than half a row: the sampled walks of
+closing; each strip is found twice, once in each direction, with opposite
+shift expressions. Of these, 12 to 24 come back shifted although the field
+itself shifts them by less than half a row: the sampled walks of
 Section~\ref{sec:closing} had found only 4 to 10 of those, and held 1 to 5.
 A first selection of rings by that criterion (the field's shift under half
 a row) proved too narrow: the twisted thigh, shifted 1.65 rows a turn by the
 field, is a ring a modeller wants closed. Closing those rings by cuts
 converges (12, then 14, then 6 shifted over three rounds) but leaves the
 others free, and the mesh spirals more than with the engine (18\% of the
-edges of that way against 1.1\%). Selecting rings by their lean instead, as
-the engine does, gives 222 of the 230 ways round; 218 of them can be closed
-together in real numbers with every bound of separation kept. In whole
-numbers HiGHS found no solution within ten minutes. On this body, nearly
-every loop could thus be a ring; what remains is integer.
+edges of way 2 against 1.1\%). Selecting rings by their lean instead, as
+the engine does, gives 222 of the 230 ways round of way 2; 218 of them (109
+strips) can be closed together in real numbers with every bound of
+separation kept. Posed directly, HiGHS found no whole solution within ten
+minutes, nor in a later run of thirty. The rest of this section explains why, and what that set of rings
+really costs.
+
+\paragraph{The balances form a bidirected graph.}
+The matrix $B$ has two rows per patch, one per direction, 1{,}552 rows for
+the 776 patches, and one column per arc. An arc lies on a side of each of
+the two patches it borders, so its column has exactly two non-zero entries,
+each $+1$ or $-1$ according to the side of the patch it lies on (measured on
+all eight systems; in way 2, 958 arcs have signs $+/-$, 557 have $-/-$ and
+554 have $+/+$). In the language of signed graphs, $B$ is the incidence
+matrix of a \emph{bidirected graph} $G$ whose nodes are the balance equations
+and whose edges are the arcs. Call a cycle of $G$ \emph{balanced} if values
+$\pm1$ on its edges have a zero balance at each of its nodes, and
+\emph{unbalanced} otherwise.
+
+\begin{lemma}[Handshake]\label{lem:handshake}
+For every $x \in \Z^n$, $\sum_r (Bx)_r$ is even.
+\end{lemma}
+
+\begin{proof}
+It is $\sum_a x_a \sum_r B_{ra}$, and each column sums to $0$ or $\pm2$.
+\end{proof}
+
+So the rows of $B$ are dependent modulo $2$, although they are independent
+over the reals: a system $Bx = d$ with $\sum_r d_r$ odd has real solutions
+but no whole one. Consistently, integer elimination of $B$ ends with one row
+whose entries have greatest common divisor $2$, all other pivots being units
+(measured in all eight ways). This does not affect the balanced lengths:
+
+\begin{proposition}[Free arcs]\label{prop:free}
+Let $G$ be connected and contain an unbalanced cycle. Let $T$ be the edges
+of a spanning tree of $G$ and one more edge closing an unbalanced cycle, and
+$F$ the other edges. Then $B$ has full row rank, and every $x_F \in \Z^F$
+extends to exactly one $x \in \Z^n$ with $Bx = 0$. The whole balanced lengths
+thus form a lattice isomorphic to $\Z^F$, of dimension $n - m$ for $m$
+balances, with a basis of vectors $z_f$, $f \in F$, each supported on
+$T \cup \{f\}$ with $z_f(f) = 1$ and entries in $\{0, \pm1, \pm2\}$.
+\end{proposition}
+
+\begin{proof}
+$T$ has $m$ edges. If $B_T y = 0$, a node met by a single edge of $T$ forces
+that edge to zero; removing such edges repeatedly leaves the unbalanced
+cycle, on which each value fixes the next up to sign, and going round, since
+the cycle is unbalanced, forces them all to zero. So the square matrix $B_T$
+is invertible, $B$ has full row rank, and $x_F$ has exactly one real
+extension; it remains to see that it is whole. For $f \in F$, the graph $T
+\cup \{f\}$ has a one-dimensional space of balanced values. Removing the edges
+met at a node of degree one leaves either three paths between two nodes,
+whose three cycles are the unbalanced cycle of $T$, one more unbalanced and
+one balanced (the number of unbalanced cycles of such a graph is even), or
+two cycles joined by a path, possibly of length zero. In the first case the
+balanced cycle contains $f$, since the cycle of $T$ does not, and carries
+values $\pm1$. In the second, the cycle through $f$ either is balanced and
+carries values $\pm1$, or is unbalanced, and then values $\pm1$ on both cycles
+and $\pm2$ on the joining path are balanced. Either way there is a whole
+balanced $z_f$ supported on $T \cup \{f\}$ with $z_f(f) = \pm1$; changing its
+sign if needed, $x = \sum_{f \in F} x_f z_f$ is the whole extension.
+\end{proof}
+
+On the male body $G$ is connected with an unbalanced cycle, $B$ has rank
+1{,}552, and the lattice of balanced lengths has dimension $2{,}069 - 1{,}552
+= 517$ (measured in all eight ways). Balances alone thus never obstruct whole
+lengths: 517 arcs can be given any whole lengths and the others follow. With
+the shifts of the 218 rings of way 2 the rank grows by 105 and the lattice of
+closed quantizations has dimension 412; integer elimination still uses unit
+pivots only, with one row of greatest common divisor $2$ (the shift of one
+ring is even as soon as the balances and the rings before it hold). Adding
+the shifts of the held turns instead gives dimensions 469, 439, 465, 431, 435,
+363 and 431 in ways 0 to 6; in ways 4, 5 and 6 elimination needs steps of
+Euclid's algorithm, so turn rows can destroy the free-arc structure.
+
+\paragraph{Integer solutions exist.}
+By Remark~\ref{rem:exist}, whole lengths closing the 218
+rings within the bounds exist. HiGHS finds some in one second once it is
+told which arcs are zero in \emph{every} real solution: closing the 218
+rings with $\ell \ge 0$ forces 171 arcs to zero (measured), the implicit
+equalities of the cone, each certified by a non-negative combination of
+shifts as in Remark~\ref{rem:definite}. There are 23 distinct certificates:
+13 single rings whose shift is sign-definite (round fingers and toes), 4
+pairs with multipliers $(1, 1)$ (left foot, right foot, head, top of the
+head), and 6 combinations of four to six rings (torso, neck). Given as upper
+bounds, these zeros make the problem easy; left implicit, the solver works on
+a face of lower dimension than the problem without knowing it, which is what
+the ten- and thirty-minute failures were. They are not an integer
+obstruction.
+
+\paragraph{The difficulty is their size.}
+The 171 arcs forced to zero carry 350.8 quad edges of target length, the
+longest 10.1. The real lengths closing the 218 rings nearest the targets, in
+the weighted deviation, make 3{,}960 quads instead of the 10{,}496 of the
+targets. With the deviation the engine measures, the mean of
+$|\ell_a - \lambda r_a|$, a linear program shows that no real lengths closing
+the 218 rings have a mean deviation below $0.817$, nor, after dropping 7
+strips (14 ways round) so that every arc with a target of at least $1.5$
+stays open, below $0.758$; balanced lengths without rings reach $0.085$. A
+lower bound in real numbers holds for whole numbers too. The engine refuses
+quantizations whose deviation exceeds $1.5$ times that of the plain search,
+$1.5 \times 0.316 = 0.474$. So the 218 rings cannot close at the size asked
+for within the engine's tolerance, whatever the rounding: the obstruction is
+in the reals.
+
+\paragraph{The 190 rings that fit.}
+A subset of 190 of the 218 ways round (chosen greedily, so 190 is only a
+lower bound on what fits) closes in real numbers at a mean
+deviation of $0.399$, keeping the number of quads (10{,}502) at that of the
+targets to first order: the linear form $\nabla q(t) \cdot \ell \ge \nabla
+q(t) \cdot t$, where $q(\ell)$ is the number of quads, a quadratic function of
+the lengths, and $t$ the targets. In whole numbers we followed the
+reformulation of Aardal, Hurkens and Lenstra~\cite{aardal2000diophantine}:
+a basis $M$ of the lattice of closed quantizations, with the 74 implicit
+zeros of this set imposed first (dimension 407), reduced by
+LLL~\cite{lenstra1982lll} for a weighted inner product, which leaves entries
+in $[-2, 2]$; then $\ell = My$ with $y$ whole, so that no equation is left,
+and a mixed-integer program over $y$. Babai's nearest plane~\cite{babai1986nearest}
+from the real solution gives a mean deviation of $0.586$ but 10 arcs below
+their bounds. HiGHS, stopped after 1{,}200 seconds, gives whole lengths
+closing all 190 rings within every bound, with a mean deviation of $0.619$
+and 10{,}568 quads, and proves that no whole lengths do better than $0.536$
+under the same constraints, the first-order proxy of the number of quads
+included. Against $0.399$ in real numbers, this rounding gap is the one
+integer obstruction we found, and it is not a parity condition: every
+infeasible set of Table~\ref{tab:iis} is infeasible in real numbers already.
+
+\paragraph{Which turns, not rounding.}
+Given to the engine in place of the lengths of way 2, these whole lengths
+close all 190 rings, with 10{,}568 quads and 2.5\% of spiral edges against
+1.1\% for the engine's own lengths (the share of that way alone: the
+deviation cap would refuse it). At the new lengths the strips are
+different walks: walking all of them finds 230 ways round, 156 of them
+shifted (168 at the engine's lengths), and of the 214 that lean less than
+$0.12$, 142 are shifted (162 of 222 at the engine's lengths). Closing the
+rings of one set of lengths moves the strips, and other loops spiral. On this
+body, then, whole lengths are not what is missing: rounding costs between $0.137$
+(proven) and $0.220$ (found) of mean deviation above the real optimum, and
+it is the choice of the turns to
+close, at the lengths where they are the strips of the mesh, that decides how
+much the mesh spirals.
+
+\paragraph{Status.}
+\emph{Proved:} Propositions~\ref{prop:parity} and~\ref{prop:free},
+Lemma~\ref{lem:handshake}, Remark~\ref{rem:definite}, and the existence of
+whole solutions when real ones exist. \emph{Measured:} the structure and ranks
+of the eight systems, the 171 implicit zeros and their certificates, the
+bounds $0.817$, $0.758$ and $0.536$, the infeasible sets of
+Table~\ref{tab:iis} (exactly where marked), the meshes. \emph{Conjectured:}
+Conjecture~\ref{conj:region}.
+
+\section{Open problems}\label{sec:open}
+
+\begin{problem}[Exact formulation]
+Minimize the deviation of the quantization subject to balance, validity and
+$\shift_\gamma(\ell)=0$ for a set of turns. This is a minimum-deviation flow
+with linear side constraints; how much of the exact machinery
+of~\cite{heistermann2023bimdf} carries over is open. Section~\ref{sec:exact}
+shows that the linear relaxation already closes almost all held turns.
+\end{problem}
 
 \begin{problem}[Closing in whole numbers]
 The solutions of the balance and shift equations in whole numbers form a
-lattice. Can the integer search move within it, for instance from a
-reduced basis (Hermite normal form, LLL) and a nearest-plane rounding of
-the targets, instead of rounding first and repairing after? The
-measurements above say this is where the loops are lost.
+lattice, and Section~\ref{sec:whole} searched it through a reduced basis
+and the reformulation of~\cite{aardal2000diophantine}: whole lengths closing
+every ring asked for are found, but in minutes, with the number of quads
+held only to first order, and at a deviation $0.14$ to $0.22$ above the real
+optimum. Can the integer search of the quantizer move within this lattice at
+the speed of a flow solver, with the number of quads held exactly? This
+matters once the right turns are chosen; Section~\ref{sec:whole} suggests it
+is not, on its own, where the loops are lost.
 \end{problem}
 
 \begin{problem}[Which turns]
-The straight walks that return are infinite in number; we sample them, and
-Section~\ref{sec:exact} shows the sample misses most of the loops that
-spiral. Is there a finite set of turns, a basis in some homological sense
+This is, on the evidence of Section~\ref{sec:whole}, the central problem:
+closing rings changes the lengths, the lengths change the strips, and the
+strips of the new mesh are other walks. The straight walks that return are
+infinite in number; we sample them, and Section~\ref{sec:whole} shows the
+sample misses most of the loops that spiral. Is there a finite set of turns, a basis in some homological sense
 of the regular region of the T-mesh, whose closing implies that every loop
-of the quad mesh closes? Can the loops of the quad mesh to be read off
+of the quad mesh closes? Can the loops of the quad mesh be read off
 the T-mesh and its lengths directly, so that every one is accounted for?
 \end{problem}
 
@@ -877,11 +1265,13 @@ face one another, which the separation of singularities forbids at the
 scale of the T-mesh; Proposition~\ref{prop:dislocation} proves this for a
 single pair on a trace. A capped cylinder shows the same conflict: its
 layout of six patches exists, but only with arcs our quantizer will not
-bring to zero. On the male body the conflict comes down to one or a few
-arcs (Section~\ref{sec:exact}). When is a set of turns simultaneously
+bring to zero. On the male body the conflict comes down to one arc in four
+of the eight ways, to 9 to 30 arcs in the others (Section~\ref{sec:exact}),
+and to irreducible sets of one to fifteen turns
+(Section~\ref{sec:obstructions}). When is a set of turns simultaneously
 closable, in terms of the singularity configuration?
-Conjecture~\ref{conj:local} proposes that the obstructions are always
-between two parallel turns.
+Conjecture~\ref{conj:region} proposes that the obstructions are always
+round one cluster of singularities.
 \end{problem}
 
 \begin{problem}[Finite trajectories]
