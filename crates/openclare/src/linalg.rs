@@ -69,9 +69,59 @@ impl Factorization {
     }
 }
 
+/// Solves a small dense symmetric positive definite system, `matrix` given
+/// row after row, by Cholesky factorization.
+pub fn solve_dense(size: usize, matrix: &[f64], rhs: &[f64]) -> Result<Vec<f64>> {
+    assert_eq!(matrix.len(), size * size);
+    assert_eq!(rhs.len(), size);
+    // The lower triangle, row after row.
+    let mut lower = vec![0.0; size * size];
+    for i in 0..size {
+        for j in 0..=i {
+            let mut sum = matrix[i * size + j];
+            for k in 0..j {
+                sum -= lower[i * size + k] * lower[j * size + k];
+            }
+            if i == j {
+                if sum.is_nan() || sum <= 0.0 {
+                    return Err(Error::Numerical("the dense system is not positive definite".into()));
+                }
+                lower[i * size + i] = sum.sqrt();
+            } else {
+                lower[i * size + j] = sum / lower[j * size + j];
+            }
+        }
+    }
+    let mut x = rhs.to_vec();
+    for i in 0..size {
+        for k in 0..i {
+            x[i] -= lower[i * size + k] * x[k];
+        }
+        x[i] /= lower[i * size + i];
+    }
+    for i in (0..size).rev() {
+        for k in i + 1..size {
+            x[i] -= lower[k * size + i] * x[k];
+        }
+        x[i] /= lower[i * size + i];
+    }
+    Ok(x)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_dense_system_is_solved() {
+        let matrix = [4.0, 2.0, 0.6, 2.0, 5.0, 1.0, 0.6, 1.0, 3.0];
+        let x = solve_dense(3, &matrix, &[1.0, 2.0, 3.0]).unwrap();
+        for i in 0..3 {
+            let row: f64 = (0..3).map(|j| matrix[i * 3 + j] * x[j]).sum();
+            assert!((row - (i + 1) as f64).abs() < 1e-12);
+        }
+        assert!(solve_dense(2, &[1.0, 2.0, 2.0, 1.0], &[1.0, 1.0]).is_err());
+    }
 
     #[test]
     fn solves_a_small_laplacian() {

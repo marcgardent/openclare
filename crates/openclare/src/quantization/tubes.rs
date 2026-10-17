@@ -11,7 +11,7 @@
 //! that part come back beside themselves. Not nothing, they wind round as
 //! helices (DT-062).
 
-use crate::linalg::SymmetricBuilder;
+use crate::linalg::{Factorization, SymmetricBuilder, solve_dense};
 use crate::tmesh::{HalfArc, TMesh};
 
 /// A linear expression in the lengths of the arcs: `(arc, coefficient)`.
@@ -288,93 +288,222 @@ pub(super) fn value(expression: &Expression, x: &[f64]) -> f64 {
 }
 
 /// `lengths` changed as little as can be, each by its `weight`, for every
-/// rectangle to keep its opposite sides equal and every turn in `held` to
-/// come back `aimed` beside itself: onto itself at 0. If `pin`, arcs it
-/// would shorten below nothing are held at nothing instead of cut off there.
-pub(super) fn closed(
-    tmesh: &TMesh,
-    lengths: &[f64],
-    weight: &[f64],
-    held: &[&Turn],
-    aimed: &[f64],
-    pin: bool,
-) -> Option<Vec<f64>> {
-    // The least change may ask some arcs for less than nothing; cut off at
-    // zero, the turns are no longer closed. Those arcs are held at zero and
-    // the change looked for again, until none is asked for less.
-    let mut pinned: Vec<usize> = Vec::new();
-    for _ in 0..if pin { PIN_ROUNDS } else { 0 } {
-        let (out, below) = closed_pinned(tmesh, lengths, weight, held, aimed, &pinned)?;
-        if below.is_empty() {
-            return Some(out);
+/// rectangle to keep its opposite sides equal and every turn held to come
+/// back where it is aimed beside itself: onto itself at 0.
+///
+/// The least change is `W^-1 A^T y` with `(A W^-1 A^T) y = -A lengths`, one
+/// row of `A` per condition. The rows of the rectangles are the same for
+/// every set of turns held, and the most of them: their part of the system
+/// is factorized once, and the rows of the turns are reduced against it into
+/// a small dense system of their own, the Schur complement, solved anew for
+/// each set. Arcs held at nothing are no longer free: they are taken out of
+/// the system, which is factorized again without them.
+pub(super) struct Closing {
+    /// The rows of the rectangles: two pairs of opposite sides each.
+    stations: Vec<Expression>,
+    /// The lengths, those of the arcs held at nothing at nothing.
+    lengths: Vec<f64>,
+    weight: Vec<f64>,
+    /// Per arc, how freely it changes: the inverse of its weight, nothing
+    /// for an arc held.
+    spread: Vec<f64>,
+    /// Per arc, the rows of the rectangles it is on, with its coefficient.
+    columns: Vec<Vec<(usize, f64)>>,
+    factorization: Factorization,
+    /// The multipliers of the rectangles alone: `S^-1 (-A_s lengths)`.
+    base: Vec<f64>,
+}
+
+/// A row added to those of the rectangles, reduced against them.
+struct Reduced {
+    row: Expression,
+    /// `A_s W^-1 row^T`, over the rows of the rectangles.
+    coupling: Expression,
+    /// `S^-1` of that.
+    solved: Vec<f64>,
+}
+
+/// The rows of turns added to those of the rectangles, each reduced once,
+/// and what each pair of them gives in the small system.
+pub(super) struct Rows<'a> {
+    closing: &'a Closing,
+    rows: Vec<Reduced>,
+    /// Row after row, the entries of the small system between them.
+    gram: Vec<Vec<f64>>,
+}
+
+impl Closing {
+    pub fn new(tmesh: &TMesh, lengths: &[f64], weight: &[f64]) -> Option<Self> {
+        let mut stations: Vec<Expression> = Vec::new();
+        for patch in &tmesh.patches {
+            let Some(side_of) = patch.side_of_each() else { continue };
+            for pair in 0..2 {
+                let row: Expression = patch
+                    .boundary
+                    .iter()
+                    .zip(&side_of)
+                    .filter(|&(_, &side)| side as usize % 2 == pair)
+                    .map(|(&half, &side)| (half as usize / 2, if side < 2 { 1.0 } else { -1.0 }))
+                    .collect();
+                stations.push(merged(row));
+            }
         }
-        pinned.extend(below);
+        Self::with_held(stations, lengths, weight, &[])
     }
-    closed_pinned(tmesh, lengths, weight, held, aimed, &pinned).map(|(out, _)| out)
+
+    /// The same with the arcs `held` at nothing as well.
+    fn with_held(stations: Vec<Expression>, lengths: &[f64], weight: &[f64], held: &[usize]) -> Option<Self> {
+        let mut lengths = lengths.to_vec();
+        let mut spread: Vec<f64> = weight.iter().map(|w| 1.0 / w).collect();
+        for &arc in held {
+            lengths[arc] = 0.0;
+            spread[arc] = 0.0;
+        }
+        let mut columns: Vec<Vec<(usize, f64)>> = vec![Vec::new(); lengths.len()];
+        for (r, row) in stations.iter().enumerate() {
+            for &(arc, c) in row {
+                columns[arc].push((r, c));
+            }
+        }
+        let mut system = SymmetricBuilder::new(stations.len());
+        for (arc, column) in columns.iter().enumerate() {
+            system.add_squared(column, spread[arc]);
+        }
+        for r in 0..stations.len() {
+            // Rows that say the same are allowed: a little on the diagonal.
+            system.add(r, r, 1e-9);
+        }
+        let factorization = system.factorize().ok()?;
+        let base = factorization.solve(&stations.iter().map(|row| -value(row, &lengths)).collect::<Vec<_>>());
+        Some(Self { stations, lengths, weight: weight.to_vec(), spread, columns, factorization, base })
+    }
+
+    fn reduce(&self, row: Expression) -> Reduced {
+        let mut coupling = Vec::new();
+        for &(arc, c) in &row {
+            coupling.extend(self.columns[arc].iter().map(|&(r, d)| (r, c * d * self.spread[arc])));
+        }
+        let coupling = merged(coupling);
+        let mut dense = vec![0.0; self.base.len()];
+        for &(r, v) in &coupling {
+            dense[r] = v;
+        }
+        let solved = self.factorization.solve(&dense);
+        Reduced { row, coupling, solved }
+    }
+}
+
+impl<'a> Rows<'a> {
+    pub fn new(closing: &'a Closing) -> Self {
+        Self { closing, rows: Vec::new(), gram: Vec::new() }
+    }
+
+    /// Adds a row, reduced; its index.
+    pub fn push(&mut self, row: Expression) -> usize {
+        let closing = self.closing;
+        let reduced = closing.reduce(merged(row));
+        let entry = |other: &Reduced| -> f64 {
+            sparse_dot(&reduced.row, &other.row, &closing.spread)
+                - reduced.coupling.iter().map(|&(r, v)| v * other.solved[r]).sum::<f64>()
+        };
+        let mut entries: Vec<f64> = self.rows.iter().map(entry).collect();
+        entries.push(entry(&reduced) + 1e-9);
+        self.rows.push(reduced);
+        self.gram.push(entries);
+        self.rows.len() - 1
+    }
+
+    fn entry(&self, i: usize, j: usize) -> f64 {
+        if j <= i { self.gram[i][j] } else { self.gram[j][i] }
+    }
+
+    /// The lengths changed as little as can be for the rows `active` to
+    /// come back to `aimed`. If `pin`, arcs it would shorten below nothing
+    /// are held at nothing and the change looked for again, until none is
+    /// asked for less; otherwise they are cut off there.
+    pub fn closed(&self, active: &[usize], aimed: &[f64], pin: bool) -> Option<Vec<f64>> {
+        let (mut out, mut below) = self.solve(active, aimed)?;
+        let mut held: Vec<usize> = Vec::new();
+        let closing = self.closing;
+        for _ in 0..if pin { PIN_ROUNDS } else { 0 } {
+            if below.is_empty() {
+                break;
+            }
+            held.extend(below);
+            let Some(pinned) = Closing::with_held(closing.stations.clone(), &closing.lengths, &closing.weight, &held)
+            else {
+                break;
+            };
+            let mut rows = Rows::new(&pinned);
+            let again: Vec<usize> = active.iter().map(|&i| rows.push(self.rows[i].row.clone())).collect();
+            (out, below) = rows.solve(&again, aimed)?;
+        }
+        Some(out)
+    }
+
+    /// The least change for the rows `active`, and the arcs it asks for
+    /// less than nothing.
+    fn solve(&self, active: &[usize], aimed: &[f64]) -> Option<(Vec<f64>, Vec<usize>)> {
+        let closing = self.closing;
+        let size = active.len();
+        let mut matrix = vec![0.0; size * size];
+        for (a, &i) in active.iter().enumerate() {
+            for (b, &j) in active.iter().enumerate() {
+                matrix[a * size + b] = self.entry(i, j);
+            }
+        }
+        let rhs: Vec<f64> = active
+            .iter()
+            .zip(aimed)
+            .map(|(&i, &aim)| {
+                let row = &self.rows[i];
+                aim - value(&row.row, &closing.lengths)
+                    - row.coupling.iter().map(|&(r, v)| v * closing.base[r]).sum::<f64>()
+            })
+            .collect();
+        let y = solve_dense(size, &matrix, &rhs).ok()?;
+        let mut stations = closing.base.clone();
+        for (&i, &multiplier) in active.iter().zip(&y) {
+            for (s, &v) in stations.iter_mut().zip(&self.rows[i].solved) {
+                *s -= multiplier * v;
+            }
+        }
+        let mut change: Vec<f64> =
+            closing.columns.iter().map(|column| column.iter().map(|&(r, c)| c * stations[r]).sum::<f64>()).collect();
+        for (&i, &multiplier) in active.iter().zip(&y) {
+            for &(arc, c) in &self.rows[i].row {
+                change[arc] += c * multiplier;
+            }
+        }
+        let mut out = closing.lengths.clone();
+        let mut below = Vec::new();
+        for (arc, change) in change.iter().enumerate() {
+            let change = change * closing.spread[arc];
+            if out[arc] + change < -1e-9 {
+                below.push(arc);
+            }
+            out[arc] = (out[arc] + change).max(0.0);
+        }
+        Some((out, below))
+    }
+}
+
+/// `a W^-1 b^T` for two rows sorted by arc, `W^-1` given as `spread`.
+fn sparse_dot(a: &Expression, b: &Expression, spread: &[f64]) -> f64 {
+    let (mut i, mut j, mut sum) = (0, 0, 0.0);
+    while i < a.len() && j < b.len() {
+        match a[i].0.cmp(&b[j].0) {
+            std::cmp::Ordering::Less => i += 1,
+            std::cmp::Ordering::Greater => j += 1,
+            std::cmp::Ordering::Equal => {
+                sum += a[i].1 * b[j].1 * spread[a[i].0];
+                i += 1;
+                j += 1;
+            }
+        }
+    }
+    sum
 }
 
 /// Most rounds of holding at zero the arcs the least change shortens below.
 const PIN_ROUNDS: usize = 20;
-
-/// The least change of [`closed`] with the arcs `pinned` brought to zero,
-/// and the arcs it asks for less than nothing.
-fn closed_pinned(
-    tmesh: &TMesh,
-    lengths: &[f64],
-    weight: &[f64],
-    held: &[&Turn],
-    aimed: &[f64],
-    pinned: &[usize],
-) -> Option<(Vec<f64>, Vec<usize>)> {
-    // The conditions, one per row: the two pairs of opposite sides of each
-    // rectangle, then the turns.
-    let mut rows: Vec<Expression> = Vec::new();
-    for patch in &tmesh.patches {
-        let Some(side_of) = patch.side_of_each() else { continue };
-        for pair in 0..2 {
-            let row: Expression = patch
-                .boundary
-                .iter()
-                .zip(&side_of)
-                .filter(|&(_, &side)| side as usize % 2 == pair)
-                .map(|(&half, &side)| (half as usize / 2, if side < 2 { 1.0 } else { -1.0 }))
-                .collect();
-            rows.push(merged(row));
-        }
-    }
-    rows.extend(held.iter().map(|turn| turn.shift.clone()));
-    let turn_rows = rows.len();
-    rows.extend(pinned.iter().map(|&arc| vec![(arc, 1.0)]));
-    // Least change: delta = W^-1 A^T y with (A W^-1 A^T) y = -A lengths.
-    let mut columns: Vec<Vec<(usize, f64)>> = vec![Vec::new(); lengths.len()];
-    for (r, row) in rows.iter().enumerate() {
-        for &(arc, c) in row {
-            columns[arc].push((r, c));
-        }
-    }
-    let mut system = SymmetricBuilder::new(rows.len());
-    for (arc, column) in columns.iter().enumerate() {
-        system.add_squared(column, 1.0 / weight[arc]);
-    }
-    for r in 0..rows.len() {
-        // Rows that say the same are allowed: a little on the diagonal.
-        system.add(r, r, 1e-9);
-    }
-    let stations = turn_rows - held.len();
-    let rhs: Vec<f64> = rows
-        .iter()
-        .enumerate()
-        .map(|(r, row)| if r < stations || r >= turn_rows { 0.0 } else { aimed[r - stations] } - value(row, lengths))
-        .collect();
-    let y = system.factorize().ok()?.solve(&rhs);
-    let mut out = lengths.to_vec();
-    let mut below = Vec::new();
-    for (arc, column) in columns.iter().enumerate() {
-        let change: f64 = column.iter().map(|&(r, c)| c * y[r]).sum::<f64>() / weight[arc];
-        if out[arc] + change < -1e-9 {
-            below.push(arc);
-        }
-        out[arc] = (out[arc] + change).max(0.0);
-    }
-    Some((out, below))
-}
