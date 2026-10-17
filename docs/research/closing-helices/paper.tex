@@ -13,6 +13,8 @@
 
 \newtheorem{definition}{Definition}
 \newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
 \newtheorem{remark}{Remark}
 \newtheorem{conjecture}{Conjecture}
 \newtheorem{problem}{Open problem}
@@ -50,8 +52,10 @@ spiral loops at 3{,}000 quads drops from 16.7\% to 6.0\% on twelve models;
 on a human body remeshed at the face count of the hand-made base mesh it
 drops from 12.1\% to 1.1\%, below the 2.5\% of the hand-made mesh. We relate
 turns to the twist of flat cylinders in the theory of Jenkins--Strebel
-differentials~\cite{strebel1984quadratic} and list the open problems that a
-complete treatment would need to solve.
+differentials~\cite{strebel1984quadratic}, show with the holonomy of the
+flat metric that a pair of singularities of valences three and five lying on
+one trace between two turns forbids closing both, and list the open problems
+that a complete treatment would need to solve.
 \end{abstract}
 
 \section{Introduction}
@@ -81,6 +85,11 @@ contributions are:
   spiral, open and border loops, with spirals of order up to four
   (Section~\ref{sec:measure}), and a bench that holds automatic remeshers
   against meshes modelled by hand (Section~\ref{sec:experiments}).
+\item Obstructions to closing: the shift of a turn is the Burgers vector of
+  the singularities on one side; a pair of valences three and five joined by
+  a trace between two turns forces one of them to be a helix; and a
+  checkerboard rule gives the parity of the shift between two turns
+  (Section~\ref{sec:obstructions}).
 \end{enumerate}
 The results are preliminary: one seed per model, one implementation, and
 heuristics where an exact formulation is still missing
@@ -122,6 +131,33 @@ such a cylinder; a helix is a cylinder whose gluing is shifted by a whole
 number of rows. Section~\ref{sec:turns} makes this precise at the level of a
 T-mesh.
 
+\paragraph{Quad meshes as flat metrics.}
+Declaring every quad a unit square turns a quad mesh into a flat metric
+with cone points at its irregular vertices. Chen et al.~\cite{chen2019metric}
+characterize the metrics that arise this way by four conditions:
+Gauss--Bonnet, rotational holonomy in multiples of a quarter-turn,
+alignment with the border, and a \emph{finite geodesic lamination}: the
+straight lines of the field are finite loops. On a surface of genus zero
+the holonomy condition follows from Gauss--Bonnet (their Lemma~3.9). The
+translational part of the holonomy is not discussed, and the finiteness
+condition is assumed, not constructed. Lei et
+al.~\cite{lei2023crossfields} show that the singularity configurations of
+quad meshes are a strict subset of those of cross fields, and explain in
+this way why no quad mesh of the torus has exactly one vertex of valence
+three and one of valence five.
+
+\paragraph{Dislocations.}
+Izmestiev et al.~\cite{izmestiev2013torus} give geometric proofs of such
+non-existence results, among them the torus with one vertex of valence three
+and one of valence five, first proved combinatorially by Barnette, Jucovi\v{c}
+and Trenkler in 1971 (as cited there). Their tool is the holonomy of the
+developing map of the flat metric, a rigid motion per loop. When the
+rotation of a loop is the identity, its translation is the \emph{Burgers
+vector} of crystallography; two opposite cone points at distinct positions
+always have a non-zero one, which is the dislocation a pair of valences three
+and five makes in the square grid. Section~\ref{sec:obstructions} uses this
+tool for the shifts of turns.
+
 \paragraph{Helices in quad meshes.}
 Bommes et al.~\cite{bommes2011structure} define a \emph{q-helix} as a dual
 parametric line of a quad mesh with an integer \emph{pitch} $h$ and
@@ -151,6 +187,40 @@ solver and an exact refinement~\cite{heistermann2023bimdf}; openclare
 follows their formulation. To our knowledge none of these constrains the
 helices: the lengths are chosen for consistency, validity and closeness to
 the parametrization, and the loops close or spiral as a side effect.
+
+\paragraph{Periods round a tube.}
+QuadCover~\cite{kalberer2007quadcover} lifts the cross field to a branched
+covering where it becomes a vector field, and integrates it there. The
+stripe parameterization of tubular surfaces~\cite{kalberer2011stripe}, built
+on it, measures the jump (``gap'') of the parameter across each cut path,
+which is constant along the path, and rounds it to the nearest whole number;
+the grid lines are continuous exactly when every gap is whole. The gap of
+the coordinate across a loop round a tube is what we call the shift of a
+turn: rounded to zero it gives rings, rounded to a non-zero whole number a
+helix of that pitch. That paper treats stripes spiralling round the tube as
+a legitimate outcome, and notes that rounding the gaps for least distortion
+is a hard combinatorial problem that it does not solve exactly.
+
+\paragraph{Layouts traced from the field.}
+Myles et al.~\cite{myles2014robust} trace the field into a partition into
+quadrilateral patches and adjust the layout until its lengths are
+consistent; Pietroni et al.~\cite{pietroni2016tracing} select traced
+separatrices by a binary linear program; Razafindrazaka et
+al.~\cite{razafindrazaka2015perfect,razafindrazaka2017optimal} obtain a
+layout as a minimum-weight perfect matching on a graph of the singularities.
+Campen surveys these methods~\cite{campen2017survey}. They build coarse
+layouts; whether the dense mesh made from the layout spirals is, as far as
+the abstracts we read state, not among their criteria.
+
+\paragraph{Lower bounds.}
+We found no result that bounds from below the number of helices of a quad
+mesh, or the number of its loops that do not close, for a given singularity
+configuration. The nearest results are existence and non-existence theorems:
+Strebel's existence of Jenkins--Strebel differentials with prescribed
+cylinders on a fixed Riemann surface~\cite{strebel1984quadratic}, the
+non-existence results above~\cite{izmestiev2013torus,lei2023crossfields},
+and the finiteness condition of~\cite{chen2019metric}, which the open
+problem of~\cite{lei2020quartic} asks to guarantee.
 
 \paragraph{Loops by construction.}
 Dual loops meshing~\cite{campen2012dual} builds a layout from loops traced
@@ -484,6 +554,264 @@ with the fewest spirals, so its share is that of a single way.}
 \label{tab:rounding}
 \end{table}
 
+\section{When rings cannot all close}\label{sec:obstructions}
+
+Section~\ref{sec:exact} found that closing all held turns conflicts with
+keeping singularities apart, and that the conflict comes down to one or a
+few arcs. This section gives a mechanism for such conflicts, with proofs. The
+tool is the holonomy of the flat metric, as used by Izmestiev et
+al.~\cite{izmestiev2013torus}; its ingredients are classical, and we know of
+no earlier statement of the propositions below in terms of helices.
+
+\paragraph{Flat metric and holonomy.}
+Lengths $\ell > 0$ balancing every patch make each patch a Euclidean
+rectangle. Glued along their arcs, whose lengths agree on both sides, the
+rectangles give the surface $\Sigma$ a flat metric with cone points at the
+singular vertices: a vertex of valence $k$ has angle $k\pi/2$ and curvature
+$(4-k)\pi/2$; a T-junction has angle $2\pi$ and is not a cone point. Let
+$\Sigma^\circ$ be $\Sigma$ without its singular vertices, $x_0$ a point inside
+a patch, and $R$ the quarter-turn. Developing a loop $\gamma$ of $\Sigma^\circ$
+based at $x_0$ patch after patch, as in the proof of
+Proposition~\ref{prop:linear}, gives a motion $\hat h(\gamma)\colon x \mapsto
+R^j x + t$ of the coordinates of the first patch, its \emph{holonomy}. It
+depends only on the homotopy class of $\gamma$ in $\Sigma^\circ$, and $\hat h$
+is a homomorphism of the fundamental group into the group of such
+motions~\cite{izmestiev2013torus}. A small loop round a singular vertex $c$
+of valence $k$, reached along a path that develops it at the point $p$, has
+holonomy $x \mapsto R^{4-k}(x - p) + p$. When the rotation of $\hat h(\gamma)$
+is the identity, its translation is the \emph{Burgers vector} of $\gamma$.
+
+For a turn $\gamma$, let $\bar\gamma$ be the closed curve that follows the
+walk and, back in its first patch, returns to its starting point along a
+segment parallel to the first side, just inside the patch. Let $e_1$ be the
+walking direction and $e_2$ the direction along the first side. By the proof
+of Proposition~\ref{prop:linear}, $\hat h(\bar\gamma)$ is a translation and
+\[
+  \shift_\gamma(\ell) = \langle e_2,\ \hat h(\bar\gamma) \rangle .
+\]
+Shifts, developed positions and Burgers vectors are linear forms in $\ell$
+with integer coefficients, as long as the walks and paths cross the same
+patches. An identity between them that holds on an open set of balanced
+positive lengths therefore holds for all balanced lengths, and for whole
+lengths the developed positions of the nodes are points of $\Z^2$.
+
+\begin{lemma}[Gauss--Bonnet for turns]\label{lem:gauss}
+Let $\gamma$ be a turn whose curve $\bar\gamma$ is simple. If $\bar\gamma$
+bounds a disc $D \subset \Sigma$, the singular vertices inside $D$ satisfy
+$\sum_{c \in D} (4 - k(c)) = 4$. If the curves of two turns are disjoint and
+bound an annulus $A$, then $\sum_{c \in A} (4 - k(c)) = 0$.
+\end{lemma}
+
+\begin{proof}
+For a region of a flat surface with cone points, bounded by straight
+segments, Gauss--Bonnet reads $\sum_c \kappa_c + \sum_i \theta_i =
+2\pi\chi$, where $\kappa_c$ are the curvatures of the cone points inside and
+$\theta_i$ the turning angles at the corners of the border. The curve
+$\bar\gamma$ is straight except at the two ends of its closing segment, where
+it turns by $+\pi/2$ and $-\pi/2$ (or not at all if the shift is zero); the
+turning angles sum to zero on each curve, seen from either side. With
+$\kappa_c = (4 - k(c))\pi/2$, $\chi(D) = 1$ and $\chi(A) = 0$ the two
+statements follow.
+\end{proof}
+
+On a surface of genus zero, such as a body, every simple closed curve
+bounds a disc on each side. Every turn with a simple curve thus splits the
+singular vertices into two groups of total index four each, consistently
+with the total $8(1-g) = 8$ of Section~\ref{sec:related}: a fingertip beyond
+a ring holds the equivalent of four vertices of valence three. A loop round
+a group of singularities whose indices do not add up to four is never a
+turn, whatever the lengths. A side holding at most one singular vertex has
+total index $0$ or $4 - k \neq 4$, so each side of a turn holds at least two.
+
+\begin{proposition}[The shift is set by the singularities]\label{prop:burgers}
+Let $\gamma$, $\gamma_1$, $\gamma_2$ be turns with simple curves.
+\begin{enumerate}
+\item[(a)] If $\bar\gamma$ bounds a disc $D$ holding the singular vertices
+  $c_1, \dots, c_m$, then $\shift_\gamma(\ell) = \langle e_2, B_D \rangle$
+  where $B_D$, the Burgers vector of $\bar\gamma$, is the translation of the
+  product of the holonomies of small loops round $c_1, \dots, c_m$, taken in
+  a suitable order along paths inside $D$:
+  \[
+    B_D = \sum_{i=1}^m Q_i\,(I - R_i)\,p_i ,
+    \qquad R_i = R^{4 - k(c_i)},
+  \]
+  with $p_i$ the developed position of $c_i$ and $Q_i$ the product of the
+  rotations $R_j$ of the vertices that come after $c_i$ in that order.
+\item[(b)] Let $\bar\gamma_1$ and $\bar\gamma_2$ be disjoint and bound an
+  annulus $A$, round which the two turns go the same way, and let a path
+  $\kappa$ inside $A$ from $\bar\gamma_1$ to $\bar\gamma_2$ carry the walking
+  direction of $\gamma_2$ onto that of $\gamma_1$ (the turns are
+  \emph{parallel}); measure both shifts along the direction $e_2$ carried
+  by $\kappa$. Then
+  \(
+    \shift_{\gamma_1}(\ell) - \shift_{\gamma_2}(\ell) = \langle e_2, B_A \rangle,
+  \)
+  where $B_A$ is the Burgers vector of the border of the disc $A$ cut along
+  $\kappa$, given by the same sum over the singular vertices inside $A$,
+  developed inside the cut disc.
+\item[(c)] In particular, parallel turns bounding an annulus without
+  singular vertex have the same shift for every $\ell$: a helix is a
+  property of a whole cylinder of parallel turns, not of one of them.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+(a) Choose disjoint paths inside $D$ from $x_0 \in \bar\gamma$ to each
+$c_i$. The curve $\bar\gamma$ is homotopic in $\Sigma^\circ$ to the product of
+the small loops round the $c_i$ along these paths, in the order in which the
+paths leave $x_0$. The holonomy being a homomorphism, $\hat h(\bar\gamma)$ is
+the composition of the motions $x \mapsto R_i(x - p_i) + p_i$; its rotation is
+$R^{\sum_i(4 - k(c_i))} = R^4 = I$ by Lemma~\ref{lem:gauss}, and expanding
+the composition gives the sum. The shift is its component along $e_2$.
+(b) Take $x_0$ on $\bar\gamma_1$ at the start of $\kappa$. The loop $\lambda
+= \bar\gamma_1\, \kappa\, \bar\gamma_2^{-1} \kappa^{-1}$ is the border of
+the disc obtained by cutting $A$ along $\kappa$. Developing along $\kappa$ is
+a change of coordinates; conjugating the translation $\hat h(\bar\gamma_2)$
+by it gives that translation read in the coordinates at $x_0$, where the walk
+of $\gamma_2$ runs along $e_1$ by hypothesis. Hence $\hat h(\lambda)$ is the
+translation by $\hat h(\bar\gamma_1) - \hat h(\bar\gamma_2)$, both read in
+the same coordinates, whose component along $e_2$ is the difference of the
+shifts, and part~(a) applied to this disc, whose singular
+vertices have total index zero by Lemma~\ref{lem:gauss}, gives the sum.
+(c) Without singular vertex the sum is empty.
+\end{proof}
+
+The simplest configuration between two parallel turns is a pair of
+singular vertices of valences three and five, the defect that lets the number
+of edges round a limb change. It is a dislocation of the grid.
+
+\begin{proposition}[A dislocation between two turns]\label{prop:dislocation}
+In the setting of Proposition~\ref{prop:burgers}(b), let the annulus $A$ hold
+exactly two singular vertices, $c_3$ of valence three and $c_5$ of valence
+five, and let $d = p_5 - p_3 = d_1 e_1 + d_2 e_2$ be their separation,
+developed inside the cut disc. Then:
+\begin{enumerate}
+\item[(i)] $\shift_{\gamma_1}(\ell) - \shift_{\gamma_2}(\ell) =
+  \varepsilon_1 d_1 + \varepsilon_2 d_2$ with signs $\varepsilon_1,
+  \varepsilon_2 \in \{+1, -1\}$ that depend on the configuration but not on
+  $\ell$, and $|B_A| = \sqrt2\,|d|$. The two turns can close together only
+  if $c_5$ lies, as seen from $c_3$, on one particular diagonal of the field.
+\item[(ii)] If $c_3$ and $c_5$ lie on one straight line of the field inside
+  $A$, of length $\delta$ (in a T-mesh: they are joined by a chain of arcs
+  along one trace, and $\delta$ is the sum of their lengths), then
+  $|\shift_{\gamma_1}(\ell) - \shift_{\gamma_2}(\ell)| = \delta$. The two
+  turns can both be rings only if $\delta = 0$, that is if the two
+  singularities merge; as long as the bounds of separation keep
+  $\delta \ge 1$, one of them at least is a helix.
+\item[(iii)] For whole lengths, $\shift_{\gamma_1}(\ell) -
+  \shift_{\gamma_2}(\ell) \equiv d_1 + d_2 \pmod 2$: a pair at an odd
+  number of edges from one another, counted along the two directions of the
+  field, never lies between two rings.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+With $R_3 = R$ and $R_5 = R^{-1}$, the sum of
+Proposition~\ref{prop:burgers} for the two possible orders is
+$B_A = R^{-1}(I - R)\,p_3 + (I - R^{-1})\,p_5 = (I - R^{-1})\,d$ or
+$B_A = R\,(I - R^{-1})\,p_5 + (I - R)\,p_3 = (I - R)(-d)$. In coordinates
+$(e_1, e_2)$, $R(a, b) = (-b, a)$, so
+$(I - R^{-1})(d_1, d_2) = (d_1 - d_2,\ d_1 + d_2)$ and
+$(I - R)(-d_1, -d_2) = (-d_1 - d_2,\ d_1 - d_2)$; reversing the
+orientation of the border, which inverts the rotations, gives the two other
+sign patterns. (We checked the
+four cases symbolically.) In all of them both components of $B_A$ are of
+the form $\pm d_1 \pm d_2$ and $|B_A|^2 = 2|d|^2$, which is (i); the
+component along $e_2$ vanishes exactly on the line $\varepsilon_1 d_1 +
+\varepsilon_2 d_2 = 0$, a diagonal. For (ii), choose $\kappa$ away from the
+straight segment joining $c_3$ to $c_5$, which does not separate the two
+borders of $A$, and develop $c_5$ from $c_3$ along it: $d$ is $\delta$ times
+one of $\pm e_1$, $\pm e_2$, so $|\varepsilon_1 d_1 + \varepsilon_2 d_2| =
+\delta$. For (iii), $d \in \Z^2$ and $\pm d_1 \pm d_2 \equiv d_1 + d_2$.
+\end{proof}
+
+Plain counting confirms (iii) independently. If both turns were rings, the
+along component of $B_A$ would be the difference $n_1 - n_2$ of the numbers
+of edges round them, of the parity of $d_1 + d_2$; but an annulus made of
+quads has an even number of edges on its border, since $4F = 2E_{\text{inside}}
++ E_{\text{border}}$, so $n_1 + n_2$ is even. Part (ii) is the mechanism the
+problem of feasibility in Section~\ref{sec:open} guessed: the conflict found on the male
+body at a single arc of the left wrist would be explained if that arc joins
+a vertex of valence three to one of valence five between two held rings. We
+have not checked it.
+
+For more singular vertices between two turns, the parity part generalizes
+into a checkerboard rule.
+
+\begin{proposition}[Checkerboard rule]\label{prop:checkerboard}
+In the setting of Proposition~\ref{prop:burgers}(b), with whole lengths,
+colour the points $p \in \Z^2$ of the cut disc black or white by the parity
+of $p_1 + p_2$. Then $\shift_{\gamma_1}(\ell) - \shift_{\gamma_2}(\ell)$ has
+the parity of the number of singular vertices of odd valence inside $A$
+that develop onto white points. In particular, two rings bound an annulus
+only if that number is even.
+\end{proposition}
+
+\begin{proof}
+In the sum of Proposition~\ref{prop:burgers}, a vertex of even valence has
+$R_i = I$ or $R_i = -I$, and $(I - R_i)p_i \in \{0, 2p_i\}$ is even. A vertex
+of odd valence has $R_i = R^{\pm1}$, and both components of $(I - R^{\pm1})
+(a, b) = (a \pm b,\ b \mp a)$ have the parity of $a + b$. Quarter-turns keep
+the property ``both components have the parity $\sigma$'', and sums add the
+$\sigma$. So both components of $B_A$ have the parity of the number of odd
+vertices on white points. The count does not depend on the coordinates: a
+quarter-turn keeps colours, and a whole translation $t$ changes the colour of
+every point if $t_1 + t_2$ is odd, which keeps the parity of the count
+because the number of odd vertices inside $A$ is even, their indices
+$4 - k$ being odd and summing to zero with the even ones
+(Lemma~\ref{lem:gauss}). Developing a vertex along another path inside the
+cut disc moves it by a rotation $x \mapsto R_j(x - p_j) + p_j$ about another
+singular vertex, which keeps its colour. We checked the rule on 13{,}000 random
+configurations with sympy.
+\end{proof}
+
+\paragraph{How many independent rings.}
+Rings that do not cross one another are disjoint simple closed curves of
+$\Sigma^\circ$, none bounding a disc with fewer than two singular vertices
+(Lemma~\ref{lem:gauss}). On a surface of genus zero with $n$ singular
+vertices there are at most $n - 3$ such curves pairwise non-homotopic, the
+number of curves of a decomposition of the $n$-punctured sphere into pairs of
+pants; disjoint homotopic ones bound an annulus without singular vertex and
+share their shift by Proposition~\ref{prop:burgers}(c). The rings of a
+quad mesh that do not cross therefore fall into at most $n - 3$ cylinders,
+the cylinders of the Jenkins--Strebel picture, and their closing conditions
+have rank at most $n - 3$.
+
+\begin{remark}[Whole periods are automatic; rings need zero]
+For whole lengths, every shift is a whole number: the period of the integer
+grid along a loop is always whole, which is what quantization guarantees and
+what~\cite{kalberer2011stripe} enforces by rounding. Closing a ring is the
+stronger requirement that this period be zero. The real shift of the
+parametrization is the twist of the field's cylinder; it tells which whole
+value rounding is likely to pick, not whether zero is reachable.
+\end{remark}
+
+\begin{remark}[Whole solutions exist at some size]
+The balance and closing constraints are homogeneous and the bounds of
+separation are lower bounds $\ell \ge b$ with $b \ge 0$. If they have a
+real solution they have a rational one, a vertex of a rational polyhedron,
+and multiplying it by the common denominator $N$ gives whole lengths
+$N\ell \ge Nb \ge b$ that satisfy them all. Closing in whole numbers is thus
+never impossible in itself; what can fail is closing \emph{at a given size}
+(number of quads) or within a given deviation from the targets. The search for
+integer solutions of Section~\ref{sec:open} should be read in that light.
+\end{remark}
+
+\begin{conjecture}[Conflicts are between neighbouring turns]\label{conj:local}
+On a surface of genus zero, let $H$ be a set of turns each of which can be
+closed on its own within the bounds of separation. If $H$ cannot be closed
+together within those bounds, then $H$ contains two parallel turns whose
+annulus has a Burgers vector with a component along $e_2$ that does not
+vanish for any lengths balancing the patches and meeting the bounds.
+\end{conjecture}
+
+The converse holds by Proposition~\ref{prop:burgers}(b). The conjecture
+says that the certificates of infeasibility given by linear programming
+duality can always be taken of this local form. It is supported only by the
+observation that the conflicts of Section~\ref{sec:exact} are local; it would
+be refuted by an irreducible infeasible subset of the closing constraints
+with more than two turns, which the exported system allows to search for.
+
 \section{Open problems}\label{sec:open}
 
 \begin{problem}[Exact formulation]
@@ -546,11 +874,14 @@ On a human torso, some held turns cannot be closed together: the projection
 lets them go. Our hypothesis is that pairs of singularities between two
 rings force a dislocation, and that closing all rings needs the poles to
 face one another, which the separation of singularities forbids at the
-scale of the T-mesh. A capped cylinder shows the same conflict: its
+scale of the T-mesh; Proposition~\ref{prop:dislocation} proves this for a
+single pair on a trace. A capped cylinder shows the same conflict: its
 layout of six patches exists, but only with arcs our quantizer will not
 bring to zero. On the male body the conflict comes down to one or a few
 arcs (Section~\ref{sec:exact}). When is a set of turns simultaneously
 closable, in terms of the singularity configuration?
+Conjecture~\ref{conj:local} proposes that the obstructions are always
+between two parallel turns.
 \end{problem}
 
 \begin{problem}[Finite trajectories]
