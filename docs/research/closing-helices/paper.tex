@@ -220,6 +220,58 @@ of the crossed patches; evaluating it with the real lengths of the
 parametrization gives the \emph{real shift}, the twist the field itself
 would give the cylinder.
 
+\begin{definition}[Strip]
+For whole lengths $\ell$ balancing every patch, the quad mesh is, in each
+patch, the integer grid of its sides. A \emph{strip} is a maximal sequence
+of quads, each sharing with the next the edge opposite the one it shares
+with the previous.
+\end{definition}
+
+\begin{proposition}[Completeness at given lengths]\label{prop:complete}
+Let $\ell$ be whole lengths balancing every patch. Every strip of the quad
+mesh that crosses a side $\sigma$ of a patch $P$ at the quad edge
+$[k, k+1]$ of $\sigma$ is, as long as it stays in the regular region, the
+walk of Definition~1 taken \emph{with the lengths $\ell$} from $\sigma$ at
+offset $k + \tfrac12$. In particular, walking from every half-integer of
+every side finds every strip of the quad mesh that comes back to the side
+it left; by Proposition~\ref{prop:linear} it is a helix exactly when
+$\shift_\gamma(\ell) \neq 0$.
+\end{proposition}
+
+\begin{proof}
+Inside $P$, the quads of the strip are the unit squares between the grid
+lines at $k$ and $k+1$ across $\sigma$; their dual line is the straight
+line at $k + \tfrac12$, which reaches the opposite side at the same distance
+from the corresponding corner, which is the move of the walk. At the arc
+where it leaves $P$, the crossing map to the neighbouring patch is a
+quarter-turn followed by a translation whose components are sums of
+$\pm\ell_a$, hence integers: it maps the grid of $P$ onto the grid of the
+neighbour, and the midpoint of a quad edge onto the midpoint of a quad
+edge. Every node lies at a whole distance along the sides, so a walk at a
+half-integer offset never meets a node, and the arc it crosses is
+determined. The strip and the walk thus continue together, patch after
+patch. A
+strip only meets singular vertices at its sides, never inside, since they
+are corners of patches; the regular region is where the grid coordinates
+of the patches glue by such maps.
+\end{proof}
+
+The sampled walks of Section~\ref{sec:closing} start at fixed shares of
+the real side lengths. Proposition~\ref{prop:complete} says where the
+helices of a given mesh are \emph{all} found: at the half-integers of the
+whole lengths. This suggests closing by \emph{cuts}, in the sense of
+cutting planes:
+
+\begin{enumerate}
+\item quantize; let $\ell$ be the whole lengths;
+\item walk every strip at $\ell$ (Proposition~\ref{prop:complete}); among
+  the ways round that come back, select those meant to be rings;
+\item add their shift expressions to the closing constraints, keeping those
+  already closed, as long as the bounds of separation allow it;
+\item solve again in whole numbers; repeat until no selected way is a
+  helix.
+\end{enumerate}
+
 \begin{remark}
 A turn round a part of the shape whose real shift is far from zero is not a
 rounding artefact: the field winds round the part. We only hold turns whose
@@ -454,6 +506,23 @@ edges against 8.8\% for the first way, 3.7\% against 1.1\% for the second,
 and the third breaks the structure. Most of the loops that spiral are thus
 not turns our search finds: closing every turn it finds is not enough,
 which makes the second open problem below the central one.
+
+\paragraph{Closing by cuts.}
+On the same body, walking every strip of the mesh the engine makes
+(Proposition~\ref{prop:complete}) finds about 220 ways round per way of
+closing, of which 12 to 24 come back shifted although the field itself
+shifts them by less than half a row: the sampled walks of
+Section~\ref{sec:closing} had found only 4 to 10 of those, and held 1 to 5.
+A first selection of rings by that criterion (the field's shift under half
+a row) proved too narrow: the twisted thigh, shifted 1.65 rows a turn by the
+field, is a ring a modeller wants closed. Closing those rings by cuts
+converges (12, then 14, then 6 shifted over three rounds) but leaves the
+others free, and the mesh spirals more than with the engine (18\% of the
+edges of that way against 1.1\%). Selecting rings by their lean instead, as
+the engine does, gives 222 of the 230 ways round; 218 of them can be closed
+together in real numbers with every bound of separation kept. In whole
+numbers HiGHS found no solution within ten minutes. On this body, nearly
+every loop could thus be a ring; what remains is integer.
 
 \begin{problem}[Closing in whole numbers]
 The solutions of the balance and shift equations in whole numbers form a
