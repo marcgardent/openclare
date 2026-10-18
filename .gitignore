@@ -12,3 +12,5 @@ __pycache__
 # The engine built into the Blender add-on, and the archives made of it.
 /blender/openclare/lib
 /dist
+# The website as built by site/build.py.
+/site/_build
