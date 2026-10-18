@@ -514,6 +514,29 @@ Limits found:
     density only by creating irregular vertices, and it is the field that places them. In
     practice, the transport of a direction from a face to its neighbour gets one more term,
     proportional to the variation of the size along the edge crossed.
+- **The work mesh follows the smallest quads** (18 October 2026, DT-067, issue #68). The
+  quads are read off the triangles of the work mesh, which is made at one size, about half the
+  edge of as many quads of one size. Where the sizing asks for quads smaller than its triangles
+  (a thin wall, whose quads are as small as it is thick, down to a quarter of that edge) the
+  triangles cut through the wall at its rim, and what is read off them lands inside it (jerry
+  at 3,030 quads: a wall 0.007 thick, triangles of 0.015). The chain then makes the work mesh
+  again, with edges no longer than the quads asked for there (`preprocess::Refinement`, read
+  off the first work mesh by the nearest point), and reads the sizes again on it. The
+  isotropic remeshing takes an edge length per vertex: an edge is asked the shorter of its
+  two ends, so that a place made finer is not worn away from its rim, and the relaxation
+  weighs each neighbour by the inverse of the edge asked at it. At most twice the triangles
+  asked for; past that the finest edges are let grow, all alike. Models with no part that
+  thin are not touched (8 of the 12 of the batch, face for face).
+  Measured on 12 models at 2,970, 3,000 and 3,030 quads: 0 invalid as before; mean distance
+  0.3853 → 0.3772 ‰, Hausdorff 10.01 → 9.07 ‰; the distance of the thin parts of the source
+  to the mesh (`thin_distance`, in quad edges, mean over the 6 models that have any) 0.0816 →
+  0.0628, with jerry 0.158 → 0.080, the ogre 0.077 → 0.052, blub 0.088 → 0.070 and the pig
+  0.045 → 0.053; closed loops 36.34 → 36.60 %, spiral 4.54 → 4.65 % (within the noise of a 1 %
+  change of budget). The work meshes of the models made finer have 1 to 4 % more vertices;
+  the second preprocessing and sizing cost about as much as the first ones. Refining the
+  first work mesh in place, without making it again, was tried and is worse: the place made
+  finer wears away round its rim through the rounds, and the thin parts were no better kept
+  (0.112, and the ogre at 3,000 quads invalid).
 - **Hard point**: the more the size varies, the more irregular vertices are needed; and a part
   thinner than a quad (an ear) is not seen by curvature alone. This is the subject of track Q2,
   which adds a bound on thin parts (see its sheet).

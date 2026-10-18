@@ -8,6 +8,7 @@
 
 use rayon::prelude::*;
 
+use super::Refinement;
 use super::dynamic_mesh::DynamicMesh;
 use crate::math::Vec3;
 use crate::spatial::Bvh;
@@ -26,13 +27,29 @@ pub(crate) struct Target<'a> {
 /// triangles: a length that calls for more is not one the surface can be
 /// tiled with (a sliver with next to no area and a long outline asks for
 /// edges of next to no length, and splitting towards them never ends).
-pub(crate) fn remesh(mesh: &mut DynamicMesh, target: &Target, edge_length: f64, iterations: usize, most: usize) {
-    let (low, high) = (0.8 * edge_length, 4.0 / 3.0 * edge_length);
+/// Where `refinement` asks for it, the edges are shorter than that.
+pub(crate) fn remesh(
+    mesh: &mut DynamicMesh,
+    target: &Target,
+    edge_length: f64,
+    iterations: usize,
+    most: usize,
+    refinement: Option<&Refinement>,
+) {
     for _ in 0..iterations {
-        split_long_edges(mesh, high, most);
-        collapse_short_edges(mesh, low, high);
+        // The edge asked for at each vertex, read again as they have moved;
+        // a vertex a split makes takes what its edge asked for.
+        let mut lengths: Vec<f64> = match refinement {
+            Some(refinement) => (0..mesh.vertex_count())
+                .into_par_iter()
+                .map(|v| edge_length * refinement.factor(mesh.positions[v]))
+                .collect(),
+            None => vec![edge_length; mesh.vertex_count()],
+        };
+        split_long_edges(mesh, &mut lengths, most);
+        collapse_short_edges(mesh, &lengths);
         equalize_valences(mesh);
-        relax(mesh, target, edge_length);
+        relax(mesh, target, edge_length, refinement.is_some().then_some(&lengths[..]));
     }
 }
 
@@ -40,11 +57,20 @@ fn length(mesh: &DynamicMesh, a: u32, b: u32) -> f64 {
     mesh.positions[a as usize].distance(mesh.positions[b as usize])
 }
 
-fn split_long_edges(mesh: &mut DynamicMesh, high: f64, most: usize) {
+/// The edge asked for between `a` and `b`: the shorter of what is asked at
+/// its ends, so that the edges round a place made finer are not collapsed
+/// into the coarser ones, which would wear it away from its rim.
+fn asked(lengths: &[f64], a: u32, b: u32) -> f64 {
+    lengths[a as usize].min(lengths[b as usize])
+}
+
+fn split_long_edges(mesh: &mut DynamicMesh, lengths: &mut Vec<f64>, most: usize) {
+    let high = |lengths: &[f64], a: u32, b: u32| 4.0 / 3.0 * asked(lengths, a, b);
     // A split halves an edge but creates two more across the neighbouring
     // triangles, which may be long too: go on until none is left.
     for _ in 0..16 {
-        let long: Vec<(u32, u32)> = mesh.edges().into_iter().filter(|&(a, b)| length(mesh, a, b) > high).collect();
+        let long: Vec<(u32, u32)> =
+            mesh.edges().into_iter().filter(|&(a, b)| length(mesh, a, b) > high(lengths, a, b)).collect();
         if long.is_empty() {
             break;
         }
@@ -52,24 +78,31 @@ fn split_long_edges(mesh: &mut DynamicMesh, high: f64, most: usize) {
             if mesh.triangle_count() >= most {
                 return;
             }
-            if mesh.has_edge(a, b) && length(mesh, a, b) > high {
+            if mesh.has_edge(a, b) && length(mesh, a, b) > high(lengths, a, b) {
                 let middle = 0.5 * (mesh.positions[a as usize] + mesh.positions[b as usize]);
-                mesh.split(a, b, middle);
+                let between = asked(lengths, a, b);
+                let new = mesh.split(a, b, middle) as usize;
+                if lengths.len() <= new {
+                    lengths.resize(new + 1, between);
+                }
+                lengths[new] = between;
             }
         }
     }
 }
 
-fn collapse_short_edges(mesh: &mut DynamicMesh, low: f64, high: f64) {
+fn collapse_short_edges(mesh: &mut DynamicMesh, lengths: &[f64]) {
     for (a, b) in mesh.edges() {
-        if !mesh.has_edge(a, b) || length(mesh, a, b) >= low {
+        if !mesh.has_edge(a, b) || length(mesh, a, b) >= 0.8 * asked(lengths, a, b) {
             continue;
         }
         // Either end may go, as long as the survivor gets no long edge out of it.
         for (from, to) in [(a, b), (b, a)] {
             let position = mesh.positions[to as usize];
-            let stays_short =
-                mesh.neighbors(from).into_iter().all(|n| mesh.positions[n as usize].distance(position) <= high);
+            let stays_short = mesh
+                .neighbors(from)
+                .into_iter()
+                .all(|n| mesh.positions[n as usize].distance(position) <= 4.0 / 3.0 * asked(lengths, n, to));
             if stays_short && mesh.can_collapse(from, to, position) {
                 mesh.collapse(from, to, position);
                 break;
@@ -103,7 +136,11 @@ fn equalize_valences(mesh: &mut DynamicMesh) {
 /// Moves every vertex towards the centre of its neighbours, within its
 /// tangent plane, then back onto the source. Vertices of a feature line only
 /// move along it, corners not at all.
-fn relax(mesh: &mut DynamicMesh, target: &Target, edge_length: f64) {
+///
+/// Where the edges asked for vary (`lengths`), each neighbour counts for the
+/// inverse of the edge asked for at it: the vertices then settle as far
+/// apart as asked, where plain centres would even the edges out.
+fn relax(mesh: &mut DynamicMesh, target: &Target, edge_length: f64, lengths: Option<&[f64]>) {
     // Where each vertex would go, side by side; the moves are then made in
     // turn.
     let moved: Vec<Option<Vec3>> = (0..mesh.vertex_count() as u32)
@@ -117,8 +154,16 @@ fn relax(mesh: &mut DynamicMesh, target: &Target, edge_length: f64) {
             match line[..] {
                 [] => {
                     let neighbors = mesh.neighbors(v);
-                    let center =
-                        neighbors.iter().map(|&n| mesh.positions[n as usize]).sum::<Vec3>() / neighbors.len() as f64;
+                    let center = match lengths {
+                        None => {
+                            neighbors.iter().map(|&n| mesh.positions[n as usize]).sum::<Vec3>() / neighbors.len() as f64
+                        }
+                        Some(lengths) => {
+                            let weight = |n: u32| 1.0 / lengths[n as usize];
+                            neighbors.iter().map(|&n| mesh.positions[n as usize] * weight(n)).sum::<Vec3>()
+                                / neighbors.iter().map(|&n| weight(n)).sum::<f64>()
+                        }
+                    };
                     let normal = mesh.normal(v);
                     let tangential = center + normal * normal.dot(p - center);
                     Some(project(target, tangential, normal, edge_length))
