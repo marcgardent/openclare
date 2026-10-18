@@ -2363,7 +2363,46 @@ The method is implemented in openclare, Rust, branches
 (confidence floor, merged traces); the bench is driven by
 \texttt{bench/run.py} and the marks by \texttt{scripts/scores.py}. The
 export of the T-mesh used in Section~\ref{sec:measured} is an experimental
-hook of the branch \texttt{rd-exact}, not part of the engine.
+hook of the branch \texttt{rd-exact}, not part of the engine. The complete
+walk of the strips and the cut rounds are on the branch
+\texttt{complete-helices}; the Lean proofs are in
+\texttt{docs/research/closing-helices/lean} and replay with
+\texttt{make proofs}.
+
+\section*{AI assistance}
+This note and the software it describes were made by a human author working
+with an AI system. Following the practice recommended by ACM and by Nature,
+we state how the work was divided. No AI system is an author of this note.
+
+\paragraph{The human author} chose the problem and its aims: edge loops that
+close into rings, the quad sphere with the eight poles of a cube as a target,
+and, as an artist, a mesh with few singular vertices and few spirals rather
+than perfectly square quads, always made of quads only. He set the direction
+of the research and the order of the work, decided which results to pursue,
+which changes to merge into the engine and which to drop, authorized the
+tools (\LaTeX, Lean and Mathlib), and judged the results through the
+measurements, pictures and drafts presented to him.
+
+\paragraph{The AI system}, Claude Opus 5.5 (Anthropic), used through Claude
+Code in October 2026, with several sub-agents of the same model working in
+parallel, did the rest. It wrote the changes to the engine and the
+experiment scripts, ran the experiments and the bench, carried out the exact
+computations (SymPy, HiGHS through SciPy), searched the literature, stated
+and proved the propositions, wrote the Lean formalization and drafted the
+text of this note. References were checked for existence, and the note
+attached to each entry of the bibliography says how much of the work was
+read: the abstract only, a part, or all of it.
+
+\paragraph{What was checked, and how.} The algebraic cores of
+Sections~\ref{sec:obstructions} to~\ref{sec:forced} are machine-checked in
+Lean (Section~\ref{sec:lean}), using only Lean's standard axioms. The
+topological statements that Lean takes as hypotheses, and the proofs given
+only on paper, were checked by AI agents rereading them and testing them
+numerically on the data (Section~\ref{sec:measured}), not by a human expert.
+Every measured figure can be reproduced from the scripts and branches named
+above. The note is a draft and has not been peer reviewed. Errors remain
+possible, and the human author, who publishes the note, is responsible for
+its content.
 
 \bibliographystyle{plainnat}
 \bibliography{refs}
