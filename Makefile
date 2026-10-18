@@ -1,6 +1,6 @@
 # Shortcuts for the common tasks. `make help` lists them.
 
-.PHONY: help build test scenes blenderkit essentials remeasure autoremesher scores quick pages dashboard view addon install addon-windows test-windows addon-test release paper paper-clean proofs
+.PHONY: help build test scenes blenderkit essentials remeasure autoremesher scores quick pages dashboard view addon install addon-windows test-windows addon-test release paper paper-clean proofs site site-serve
 
 help:
 	@echo "make build       build the openclare binary (release)"
@@ -52,6 +52,10 @@ help:
 	@echo "                 (docs/research/*/lean, Lean and Mathlib; the first run downloads"
 	@echo "                 the toolchain and Mathlib's compiled cache, about 10 GB in all)."
 	@echo "                 NOTE=closing-helices for one"
+	@echo "make site        build the website, English and French, into site/_build (plain"
+	@echo "                 Python; Pillow, if installed, makes the pictures WebP), then check"
+	@echo "                 its links"
+	@echo "make site-serve  build it and serve it on http://localhost:8000 (PORT=8001 for another)"
 
 # The most memory, in kilobytes, a run of the engine started from here may
 # ask for (`ulimit -v`): beyond it the run fails instead of taking the
@@ -226,3 +230,15 @@ addon-test: addon
 release:
 	@test -n "$(version)" || { echo "which number? make release version=MAJOR, MINOR or FIX"; exit 2; }
 	python3 scripts/release.py $(version) $(if $(PUSH),--push)
+
+# The website: site/content and the documents of the repository, made into
+# static pages by site/build.py, its links checked. GitHub Pages publishes it
+# from main (.github/workflows/pages.yml), once Pages is turned on.
+PORT ?= 8000
+site:
+	python3 site/build.py
+	python3 site/check_links.py
+
+site-serve: site
+	@echo "serving site/_build on http://localhost:$(PORT) (Ctrl+C to stop)"
+	python3 -m http.server $(PORT) --bind 127.0.0.1 --directory site/_build

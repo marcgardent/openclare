@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="{lang}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{title}</title>
+<meta name="description" content="{description}">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="{root}assets/style.css">
+<link rel="icon" href="{root}assets/icon.svg" type="image/svg+xml">
+<link rel="alternate" hreflang="{other_lang}" href="{other_href}">
+</head>
+<body class="page-{kind}">
+<a class="skip" href="#content">{skip}</a>
+<header class="site-header">
+<div class="bar">
+<a class="brand" href="{home}"><img src="{root}assets/icon.svg" alt="" width="28" height="28"><span>openclare</span></a>
+<nav class="site-nav" aria-label="{nav_label}">
+{nav}
+</nav>
+<a class="language" href="{other_href}" hreflang="{other_lang}" lang="{other_lang}" title="{other_title}">{other_name}</a>
+</div>
+</header>
+<div class="layout{layout_class}">
+{toc}
+<main id="content" class="prose">
+{breadcrumb}
+{body}
+</main>
+</div>
+<footer class="site-footer">
+<div class="bar">
+{footer}
+</div>
+</footer>
+</body>
+</html>
