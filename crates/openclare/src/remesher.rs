@@ -270,6 +270,7 @@ impl Remesher for IntegerGrid {
         report.open_loops = extraction.open_loops;
         let mut mesh = extraction.mesh;
         mesh.dissolve_valence_two();
+        mesh.drop_back_to_back();
         mesh.repair_to_quads();
         clock.lap(&mut report, "extraction");
         recorder.record("extraction/quads", Shape::Polygons(&mesh));
@@ -469,9 +470,35 @@ impl QuadLayout {
             let piece_config = RemeshConfig { target, ..config.clone() };
             // A work mesh in proportion: a button does not need the
             // triangles a body does.
-            let least = ((self.min_triangles as f64 * piece.surface_area() / area) as usize).max(MIN_PIECE_TRIANGLES);
+            let mut least =
+                ((self.min_triangles as f64 * piece.surface_area() / area) as usize).max(MIN_PIECE_TRIANGLES);
             let mut recorder = recorder::Piece::new(recorder, index, pieces.len());
-            self.remesh_piece(piece, &piece_guides, &piece_config, least, &mut recorder)
+            let mut done = self.remesh_piece(piece, &piece_guides, &piece_config, least, &mut recorder);
+            // That work mesh may be too coarse for a small piece full of
+            // detail, the rim of a wheel: its sizes then change by several
+            // times within a few triangles, the field follows them with
+            // singularities that cannot be cancelled, and the layout has more
+            // patches than the piece has quads to give. Many times its share
+            // comes out. It is done again on finer work meshes, up to the one
+            // a piece alone is given, and what comes nearest its share is kept.
+            let mut made = match &done {
+                Ok((mesh, _)) if !sized => mesh.faces.len(),
+                _ => 0,
+            };
+            while made as f64 > OVERSHOOT * share.max(4) as f64 && least < self.min_triangles {
+                least = (least * 4).min(self.min_triangles);
+                let note = format!("{made} quads for {share}: done again on a work mesh of {least} triangles");
+                recorder.record("notes/work mesh", Shape::Note(&note));
+                let again = self.remesh_piece(piece, &piece_guides, &piece_config, least, &mut recorder);
+                let Ok((mesh, _)) = &again else { break };
+                let off = |quads: usize| quads.abs_diff(share);
+                let nearest = done.as_ref().map_or(usize::MAX, |(mesh, _)| off(mesh.faces.len()));
+                made = mesh.faces.len();
+                if off(made) < nearest {
+                    done = again;
+                }
+            }
+            done
         };
         let asked: Vec<(usize, usize)> =
             shares.iter().enumerate().filter_map(|(index, share)| share.map(|share| (index, share))).collect();
@@ -537,6 +564,10 @@ impl QuadLayout {
 
 /// Fewest triangles the work mesh of one piece among several is given.
 const MIN_PIECE_TRIANGLES: usize = 1500;
+
+/// How many times its share of the quads a piece among several may come out
+/// with before it is done again on a finer work mesh.
+const OVERSHOOT: f64 = 1.5;
 
 /// Fewest quads a piece is asked for: one for an open sheet; for a closed
 /// shape, what it cannot do without, a cube for a ball and four rings of
