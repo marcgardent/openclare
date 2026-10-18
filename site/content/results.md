@@ -36,8 +36,6 @@ Quad Remesher, left to itself, makes about twice the quads it is asked for, and 
 
 {{models}}
 
-## Models shown without pictures
-
 {{withheld}}
 
 The full report, with every criterion for every model and remesher, is [bench/results/SCORES.md](../../bench/results/SCORES.md) in the repository; the authors, sources and licences of the models are in [CREDITS.md](../../CREDITS.md).
