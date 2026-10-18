@@ -168,6 +168,10 @@ impl Default for Isotropic {
 /// that, and only stop what would never come back down.
 const MOST_TRIANGLES: usize = 32;
 
+/// Share of the curvature that must differ between the two principal
+/// directions for them to be followed at all.
+const CONFIDENCE_FLOOR: f64 = 0.1;
+
 impl Preprocessor for Isotropic {
     fn kind(&self) -> Kind {
         Kind::Isotropic
@@ -314,7 +318,8 @@ fn blunt_acute_tips(work: &mut WorkMesh, reach: f64) {
         .copied()
         .filter(|&[a, b]| near(positions[a as usize]) || near(positions[b as usize]))
         .collect();
-    let lists = [&mut work.feature_edges, &mut work.guide_edges, &mut work.sharp_guide_edges, &mut work.shape_guide_edges];
+    let lists =
+        [&mut work.feature_edges, &mut work.guide_edges, &mut work.sharp_guide_edges, &mut work.shape_guide_edges];
     for edges in lists {
         edges.retain(|edge| !gone.contains(edge));
     }
@@ -426,8 +431,13 @@ fn work_mesh(mesh: TriMesh, feature_edges: Vec<[u32; 2]>, request: &Request) -> 
     // a whole does (a sphere of its size): flatter regions have no direction
     // worth following, whatever the ratio of their two tiny curvatures.
     let negligible = 2.0 / (max - min).length().max(f64::MIN_POSITIVE);
+    // Below CONFIDENCE_FLOOR the two curvatures are too near one another
+    // for their directions to mean anything: a sphere bends the same way
+    // everywhere, and a field pulled towards the facets of its tessellation
+    // gets their pattern instead of the eight poles of a cube.
     let confidence = (0..mesh.positions.len())
         .map(|v| curvature.anisotropy(v) / (curvature.k1[v].abs() + curvature.k2[v].abs() + negligible))
+        .map(|c| (c - CONFIDENCE_FLOOR).max(0.0) / (1.0 - CONFIDENCE_FLOOR))
         .collect();
 
     let sizing = vec![1.0; mesh.positions.len()];

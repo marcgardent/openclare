@@ -56,7 +56,11 @@ BLENDERKIT = {
     "camera": "3ef12fa4-29a0-463f-b338-7ad3f81b654b",
     "wolf": "c63283ec-7419-4bff-8f6f-13cf70bd1b14",
 }
-LOCAL_MODELS = set(BLENDERKIT)
+# The human bodies of Blender's Essentials library (CC0): a sculpt and the
+# mesh modelled by hand on it, `make essentials` (bench/fetch_essentials.py)
+# takes them from Blender's cache. Their sculpts are large: local too.
+ESSENTIALS = {"human_male", "human_female"}
+LOCAL_MODELS = set(BLENDERKIT) | ESSENTIALS
 # Scenes made by hand with bench/make_scene.py from files of the author of
 # the project: an object with its modifiers and materials, curves drawn on
 # it, a painted density. No OBJ makes them again.
@@ -72,6 +76,11 @@ MODELS = [
     # The project mascot: a real 4.7 million triangle sculpt, brought down to
     # 200 000 triangles by `openclare preprocess` (see bench/README.md).
     ("ogre", "organic", False, False),
+    # The human bodies of Blender's Essentials library: sculpts of 1.35 million
+    # triangles, with the mesh of 10,590 faces modelled on them by hand (the
+    # base level of their Multires), what the remeshers are held up against.
+    ("human_male", "organic", False, False),
+    ("human_female", "organic", False, False),
     # From Keenan Crane's model repository (see bench/import_crane.py).
     ("spot", "organic", False, False),
     ("bob", "organic", False, False),
@@ -452,6 +461,27 @@ def faces_of(path):
 # it is, and ours asked for as many quads as that mesh has. Both are measured
 # against that number, not against the budget of the bench.
 MATCHED = ("quadremesher-as-made", "openclare-matched")
+# The meshes modelled by hand, for the models that have one.
+HANDMADE = REFERENCE / "handmade"
+
+
+def handmade(model, sharp, boundary, target, seeds, directory):
+    """The mesh modelled by hand on the model, measured against its own
+    number of quads: none for the models that have none."""
+    path = HANDMADE / f"{model}.obj"
+    if not path.exists():
+        return {}
+    return {seeds[0]: (path, None, None, faces_of(path))}
+
+
+def openclare_as_handmade(model, sharp, boundary, target, seeds, directory):
+    """openclare asked for as many quads as the mesh modelled by hand has."""
+    path = HANDMADE / f"{model}.obj"
+    if not path.exists():
+        return {}
+    count = faces_of(path)
+    made = addon("openclare-as-handmade")(model, sharp, boundary, count, seeds, directory)
+    return {seed: (path, seconds, failure, count, engine) for seed, (path, seconds, failure, _, engine) in made.items()}
 
 
 def quadremesher_as_made(model, sharp, boundary, target, seeds, directory):
@@ -498,7 +528,62 @@ TOOLS = {
     "quadremesher-uniform": quadremesher(uniform=True),
     "quadremesher-as-made": quadremesher_as_made,
     "openclare-matched": openclare_matched,
+    # What a modeller made by hand, where there is such a mesh, and openclare
+    # at its number of quads.
+    "handmade": handmade,
+    "openclare-as-handmade": openclare_as_handmade,
 }
+
+
+def kept_as(path):
+    """How a mesh is named in the results: from the root of the repository
+    where it is under it."""
+    path = Path(path).resolve()
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+
+def mesh_of_run(model, tool, run, target):
+    """The mesh a run of the results was made of, if it is still there: where
+    the results say, or for those older than that, where it is always kept
+    (Quad Remesher's, the hand-made ones) or was last left, if it has the
+    number of faces measured then."""
+    if run.get("mesh"):
+        path = Path(run["mesh"])
+        path = path if path.is_absolute() else ROOT / path
+        return path if path.exists() else None
+    if tool in ("quadremesher", "quadremesher-as-made"):
+        path = quadremesher_reference(model, target, uniform=False)
+    elif tool == "quadremesher-uniform":
+        path = quadremesher_reference(model, target, uniform=True)
+    elif tool == "handmade":
+        path = HANDMADE / f"{model}.obj"
+    else:
+        path = OUTPUT / model / f"{tool}_{run['seed']}.obj"
+    faces = (run.get("metrics") or {}).get("faces")
+    if not path.exists() or faces is None or faces_of(path) != faces:
+        return None
+    return path
+
+
+def remeasure(raw, models, tools, target):
+    """Measures again, in place, the meshes of the runs of `raw` that are
+    still there; the others keep what was measured of them."""
+    again = left = 0
+    for model in models:
+        for tool in tools:
+            for run in raw.get(model, {}).get(tool, []):
+                path = mesh_of_run(model, tool, run, target)
+                if path is None:
+                    left += run.get("metrics") is not None
+                    continue
+                run["metrics"] = measure(model, path, run.get("against") or target)
+                run["mesh"] = kept_as(path)
+                again += 1
+        print(f"{model:10} measured again", flush=True)
+    print(f"{again} meshes measured again, {left} no longer there and left as they were")
 
 
 def measure(model, path, target):
@@ -592,6 +677,11 @@ def main():
     parser.add_argument("--target", type=int, default=DEFAULT_TARGET)
     parser.add_argument("--seeds", default="1,2,3,4,5")
     parser.add_argument("--source", metavar="MODEL", help="print where the OBJ of that model is, and run nothing")
+    parser.add_argument(
+        "--remeasure",
+        action="store_true",
+        help="run no remesher: measure again the meshes the results of this budget were made of, where they are kept",
+    )
     options = parser.parse_args()
     if options.source:
         if options.source not in [name for name, *_ in MODELS]:
@@ -620,10 +710,14 @@ def main():
         if previous.get("seeds") == seeds:
             raw = previous["runs"]
 
+    if options.remeasure:
+        remeasure(raw, models, tools, options.target)
     for model, _, sharp, boundary in MODELS:
-        if model not in models:
+        if model not in models or options.remeasure:
             continue
-        directory = OUTPUT / model
+        # One directory per budget: the meshes of each are kept, to be
+        # measured again without being made again.
+        directory = OUTPUT / model / str(options.target)
         directory.mkdir(parents=True, exist_ok=True)
         raw.setdefault(model, {})
         for tool in tools:
@@ -634,6 +728,8 @@ def main():
                 against = own[0] if own and own[0] else options.target
                 metrics = measure(model, path, against) if path else None
                 runs.append({"seed": seed, "seconds": seconds, "failure": failure, "metrics": metrics, "against": against})
+                if path:
+                    runs[-1]["mesh"] = kept_as(path)
                 # And what the engine says of the run, if it is ours.
                 if len(own) > 1 and own[1]:
                     runs[-1]["engine"] = own[1]
@@ -644,9 +740,10 @@ def main():
                   f"patches {cell(summary, 'base_complex_patches', '{:.0f}'):>6}  "
                   f"alignment {cell(summary, 'alignment', '{:.2f}'):>6}", flush=True)
 
-    # Report every tool that has results, in the order they are declared.
-    reported = [t for t in TOOLS if all(t in by_tool for by_tool in raw.values())]
-    results = {model: {t: summarize(raw[model][t]) for t in reported} for model in raw}
+    # Report every tool that has results, in the order they are declared;
+    # where a tool has none for a model, its column says so.
+    reported = [t for t in TOOLS if any(t in by_tool for by_tool in raw.values())]
+    results = {model: {t: summarize(raw[model].get(t, [])) for t in reported} for model in raw}
     data_path.write_text(json.dumps({"target": options.target, "seeds": seeds, "runs": raw, "summary": results}, indent=1))
     report_path.write_text(report(results, options.target, seeds, reported))
     print(f"\nwritten: {report_path}")
