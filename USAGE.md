@@ -113,6 +113,20 @@ curves, and a line saying `closed` for one that joins its first point.
 
 ![The ogre with and without guide curves](docs/images/guide_curves.png)
 
+## Symmetry
+
+`--symmetry x` (or `y`, `z`; `symmetry = x` in a saved configuration) says that the plane through
+the origin of the model, across that axis, is a plane of symmetry. The plane is drawn into the
+model as a line of edges, the whole model is remeshed, and the half on the positive side is kept
+and mirrored: the result is its own mirror image, with a loop of edges on the plane. A model that
+is not on both sides of the plane, or whose mirror image is more than 2 % of its size away from
+it somewhere, is refused. Guide curves, a painted density and groups are not taken with symmetry
+yet.
+
+```bash
+./target/release/openclare remesh head.obj quads.obj --preset organic --quads 3000 --symmetry x
+```
+
 ## Inside the chain
 
 To see the T-mesh of a model, its cuts written as lines on the surface:

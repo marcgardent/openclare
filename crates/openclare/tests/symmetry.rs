@@ -78,3 +78,46 @@ fn a_model_on_one_side_of_the_plane_is_refused() {
     }
     assert!(config(500, Axis::X).remesh(&sphere).is_err());
 }
+
+#[test]
+fn a_model_not_the_same_on_both_sides_is_refused() {
+    // A ball with a bump on its negative side only.
+    let mut sphere = primitives::icosphere(3);
+    for p in &mut sphere.positions {
+        if p.x < -0.5 && p.y.abs() < 0.4 && p.z.abs() < 0.4 {
+            p.x -= 0.2;
+        }
+    }
+    let error = config(500, Axis::X).remesh(&sphere).unwrap_err().to_string();
+    assert!(error.contains("not the same on both sides"), "{error}");
+    // Across the other axes it is the same on both sides.
+    assert!(config(500, Axis::Y).remesh(&sphere).is_ok());
+}
+
+#[test]
+fn hard_edges_and_creases_are_said_of_the_mirrored_mesh() {
+    let cube = primitives::cube(16);
+    for &axis in Axis::ALL {
+        let config = RemeshConfig { symmetry: Some(axis), ..RemeshConfig::for_hard_surface(Target::QuadCount(600)) };
+        let (mesh, report) = config.remesh(&cube).unwrap();
+        let edges: std::collections::HashSet<(u32, u32)> = mesh
+            .faces
+            .iter()
+            .flat_map(|face| (0..face.len()).map(move |k| (face[k], face[(k + 1) % face.len()])))
+            .map(|(a, b)| (a.min(b), a.max(b)))
+            .collect();
+        let key = |[a, b]: [u32; 2]| (a.min(b), a.max(b));
+        let hard: std::collections::HashSet<(u32, u32)> = report.hard_edges.iter().map(|&e| key(e)).collect();
+        assert!(hard.len() >= 12, "{axis}: {} hard edges", hard.len());
+        assert_eq!(hard.len(), report.hard_edges.len(), "{axis}: an edge said twice");
+        assert!(hard.iter().all(|e| edges.contains(e)), "{axis}: a hard edge that is not an edge of the mesh");
+        // Along the edges of the cube, and each with its mirror image.
+        let corner = |v: u32| mesh.positions[v as usize];
+        let on_the_cube_edges = |p: Vec3| (0..3).filter(|&k| (p[k].abs() - 1.0).abs() < 1e-4).count() >= 2;
+        assert!(hard.iter().all(|&(a, b)| on_the_cube_edges(corner(a)) && on_the_cube_edges(corner(b))), "{axis}");
+        let at = |p: Vec3| mesh.positions.iter().position(|&q| q.distance(p) < 1e-9).unwrap() as u32;
+        let image = |v: u32| at(axis.mirror(corner(v)));
+        assert!(hard.iter().all(|&(a, b)| hard.contains(&key([image(a), image(b)]))), "{axis}: no image");
+        assert!(report.creases.iter().all(|&(e, _)| edges.contains(&key(e))), "{axis}: a crease off the mesh");
+    }
+}

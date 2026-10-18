@@ -80,6 +80,13 @@ pub struct RemeshConfig {
 /// its diagonal are taken to be on it.
 const SYMMETRY_SNAP: f64 = 1e-6;
 
+/// A model whose mirror image is farther from its surface than this share
+/// of its diagonal, somewhere, is not taken to be symmetric: its negative
+/// side would be replaced by something else. Models of the bench meant to
+/// be symmetric measure up to 1.5 % (the ogre, a sculpt); a wrong axis, or
+/// an origin off the plane, 8 % and more.
+const SYMMETRY_TOLERANCE: f64 = 0.02;
+
 impl Default for RemeshConfig {
     /// The `organic` preset at 2000 quads.
     fn default() -> Self {
@@ -214,7 +221,7 @@ impl RemeshConfig {
         {
             return Err(Error::InvalidParams("symmetry does not take curves, painted density or groups yet".into()));
         }
-        symmetry::check(input, axis)?;
+        symmetry::check(input, axis, SYMMETRY_TOLERANCE)?;
         let (low, high) = input
             .positions
             .iter()
@@ -226,7 +233,13 @@ impl RemeshConfig {
         let (drawn, lines) = symmetry::split(input, axis, snap);
         let config = Self { symmetry: None, ..self.clone() };
         let (mesh, mut report) = config.remesh_recorded(&drawn, &Guides { lines: &lines, ..*guides }, recorder)?;
-        let mesh = symmetry::mirrored(&symmetry::positive_side(&mesh, axis), axis, snap);
+        let (mesh, carried) = symmetry::symmetric(&mesh, axis, snap);
+        // What the report says of edges, by their vertices, said of the
+        // result: those of the half kept, and their images.
+        report.hard_edges = carried.edges(&report.hard_edges);
+        report.guide_edges = carried.edges(&report.guide_edges);
+        report.sharp_curve_edges = carried.edges(&report.sharp_curve_edges);
+        report.creases = carried.carry(report.creases.iter().copied());
         report.stats = mesh.stats();
         Ok((mesh, report))
     }

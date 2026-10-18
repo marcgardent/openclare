@@ -155,6 +155,12 @@ pub fn split(mesh: &TriMesh, axis: Axis, snap: f64) -> (TriMesh, Vec<[Vec3; 2]>)
 /// the vertices they share with the faces left out, and those on the
 /// negative side, are put on the plane.
 pub fn positive_side(mesh: &PolyMesh, axis: Axis) -> PolyMesh {
+    positive_side_kept(mesh, axis).0
+}
+
+/// The same, and the vertex of the half each vertex of `mesh` became
+/// (`u32::MAX` for those left out).
+fn positive_side_kept(mesh: &PolyMesh, axis: Axis) -> (PolyMesh, Vec<u32>) {
     let middle = |face: &Vec<u32>| face.iter().map(|&v| mesh.positions[v as usize]).sum::<Vec3>() / face.len() as f64;
     let keep: Vec<bool> = mesh.faces.iter().map(|face| axis.side(middle(face)) >= 0.0).collect();
     let mut in_kept = vec![false; mesh.positions.len()];
@@ -183,7 +189,7 @@ pub fn positive_side(mesh: &PolyMesh, axis: Axis) -> PolyMesh {
             out.faces.push(corners);
         }
     }
-    out
+    (out, index)
 }
 
 /// `mesh` and its mirror image across the plane, as one mesh: the vertices
@@ -191,6 +197,12 @@ pub fn positive_side(mesh: &PolyMesh, axis: Axis) -> PolyMesh {
 /// both halves. (Only those: a vertex inside the mesh near the plane is
 /// mirrored like any other.)
 pub fn mirrored(mesh: &PolyMesh, axis: Axis, snap: f64) -> PolyMesh {
+    mirrored_images(mesh, axis, snap).0
+}
+
+/// The same, and the vertex of the result that is the image of each vertex
+/// of `mesh` (itself for those shared by both halves).
+fn mirrored_images(mesh: &PolyMesh, axis: Axis, snap: f64) -> (PolyMesh, Vec<u32>) {
     let count = mesh.positions.len();
     let mut uses: HashMap<(u32, u32), u32> = HashMap::new();
     for face in &mesh.faces {
@@ -222,7 +234,65 @@ pub fn mirrored(mesh: &PolyMesh, axis: Axis, snap: f64) -> PolyMesh {
     let mut faces = mesh.faces.clone();
     // A mirror turns the faces over: their corners go the other way round.
     faces.extend(mesh.faces.iter().map(|face| face.iter().rev().map(|&v| image[v as usize]).collect()));
-    PolyMesh { positions, faces }
+    (PolyMesh { positions, faces }, image)
+}
+
+/// The half on the positive side of `mesh` and its mirror image, as one
+/// mesh ([`positive_side`], then [`mirrored`]), and where the vertices of
+/// `mesh` went, for what was said of its edges to be said of the result.
+pub fn symmetric(mesh: &PolyMesh, axis: Axis, snap: f64) -> (PolyMesh, Carried) {
+    let (half, kept) = positive_side_kept(mesh, axis);
+    let (whole, image) = mirrored_images(&half, axis, snap);
+    let edges = whole
+        .faces
+        .iter()
+        .flat_map(|face| (0..face.len()).map(move |k| ordered([face[k], face[(k + 1) % face.len()]])))
+        .collect();
+    (whole, Carried { kept, image, edges })
+}
+
+fn ordered([a, b]: [u32; 2]) -> (u32, u32) {
+    (a.min(b), a.max(b))
+}
+
+/// Where the vertices of a mesh went in [`symmetric`]: edges given by their
+/// two vertices (hard edges, creases, edges along guides) are found again
+/// in the result, each with its mirror image.
+pub struct Carried {
+    /// The vertex of the half each vertex of the mesh became, `u32::MAX`
+    /// for those left out.
+    kept: Vec<u32>,
+    /// The image of each vertex of the half in the result.
+    image: Vec<u32>,
+    /// The edges of the result.
+    edges: std::collections::HashSet<(u32, u32)>,
+}
+
+impl Carried {
+    /// The edges of the result that `edges` of the mesh became, with their
+    /// mirror images: those left out with the negative side are gone, those
+    /// on the plane are their own image, none comes twice.
+    pub fn edges(&self, edges: &[[u32; 2]]) -> Vec<[u32; 2]> {
+        self.carry(edges.iter().map(|&edge| (edge, ()))).into_iter().map(|(edge, ())| edge).collect()
+    }
+
+    /// The same for edges that carry a value, a crease weight say.
+    pub fn carry<T: Copy>(&self, edges: impl IntoIterator<Item = ([u32; 2], T)>) -> Vec<([u32; 2], T)> {
+        let mut seen = std::collections::HashSet::new();
+        let mut out = Vec::new();
+        for ([a, b], value) in edges {
+            let (a, b) = (self.kept[a as usize], self.kept[b as usize]);
+            if a == u32::MAX || b == u32::MAX {
+                continue;
+            }
+            for edge in [[a, b], [self.image[a as usize], self.image[b as usize]]] {
+                if self.edges.contains(&ordered(edge)) && seen.insert(ordered(edge)) {
+                    out.push((edge, value));
+                }
+            }
+        }
+        out
+    }
 }
 
 /// How far `mesh` is from its own mirror image across the plane: the
@@ -236,8 +306,22 @@ pub fn asymmetry(mesh: &PolyMesh, axis: Axis) -> f64 {
         .fold(0.0, f64::max)
 }
 
-/// Checks that `mesh` has something on both sides of the plane.
-pub(crate) fn check(mesh: &TriMesh, axis: Axis) -> Result<()> {
+/// How far `mesh` is from being the same on both sides of the plane: the
+/// largest distance from the mirror image of one of its vertices to its
+/// surface.
+pub fn surface_asymmetry(mesh: &TriMesh, axis: Axis) -> f64 {
+    let surface = crate::spatial::Bvh::build(mesh);
+    mesh.positions
+        .iter()
+        .map(|&p| surface.closest_point(axis.mirror(p)).map_or(f64::INFINITY, |hit| hit.distance_squared.sqrt()))
+        .fold(0.0, f64::max)
+}
+
+/// Checks that `mesh` has something on both sides of the plane, and is the
+/// same on both sides to within `tolerance` of its diagonal: the negative
+/// side is replaced by the image of the positive one, and what differs
+/// would be lost.
+pub(crate) fn check(mesh: &TriMesh, axis: Axis, tolerance: f64) -> Result<()> {
     let (low, high) = mesh
         .positions
         .iter()
@@ -246,6 +330,18 @@ pub(crate) fn check(mesh: &TriMesh, axis: Axis) -> Result<()> {
     if !(low < 0.0 && high > 0.0) {
         return Err(Error::InvalidParams(format!(
             "symmetry across {axis}: the model is not on both sides of the plane through its origin"
+        )));
+    }
+    let (low, high) =
+        mesh.positions.iter().fold((Vec3::INFINITY, Vec3::NEG_INFINITY), |(lo, hi), &p| (lo.min(p), hi.max(p)));
+    let diagonal = (high - low).length();
+    let off = surface_asymmetry(mesh, axis);
+    if off > tolerance * diagonal {
+        return Err(Error::InvalidParams(format!(
+            "symmetry across {axis}: the model is not the same on both sides of the plane through its origin \
+             (a point is {:.2} % of its size away from the mirror image, {:.2} % allowed)",
+            100.0 * off / diagonal,
+            100.0 * tolerance
         )));
     }
     Ok(())
