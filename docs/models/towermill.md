@@ -39,21 +39,21 @@ From 0 to 100; how they are made is in [SCORES.md](../../bench/results/SCORES.md
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Edge loops | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|---|
+| openclare-uniform | 1930 | **47** | 100 | 39 | 2 | 34 | 100 | 0 | 40 | 0 | 0 |
 | quadremesher | 6083 | **45** | 0 | 88 | 88 | 64 | 67 | — | 16 | 0 | 0 |
 | quadriflow | 866 | **31** | 0 | 63 | 62 | 27 | 0 | 2 | 33 | 46 | 100 |
-| openclare-uniform | 1923 | **23** | 0 | 34 | 0 | 32 | 100 | 0 | 35 | 0 | 1 |
-| **openclare** | 2493 | **21** | 0 | 33 | 5 | 34 | 56 | 0 | 39 | 0 | 0 |
+| **openclare** | 3818 | **19** | 0 | 26 | 25 | 37 | 0 | 0 | 47 | 0 | 0 |
 | autoremesher | 405 | **6** | 0 | 30 | 0 | 0 | 0 | — | — | 0 | 96 |
 
 ### 3000 quads
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Edge loops | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| openclare-uniform | 3036 | **66** | 100 | 58 | 65 | 30 | 100 | 7 | 33 | 95 | 16 |
+| openclare-uniform | 3060 | **65** | 100 | 55 | 67 | 32 | 100 | 6 | 32 | 92 | 12 |
 | quadremesher | 16107 | **52** | 0 | 82 | 94 | 61 | 100 | — | — | 0 | 0 |
 | quadremesher-uniform | 2897 | **47** | 0 | 74 | 92 | 37 | 21 | — | — | 86 | 0 |
 | integer-grid | 2395 | **43** | 0 | 67 | 89 | 22 | 89 | — | — | 19 | 38 |
-| **openclare** | 2304 | **41** | 0 | 68 | 87 | 22 | 81 | — | — | 7 | 23 |
+| **openclare** | 2304 | **41** | 0 | 68 | 87 | 22 | 81 | — | — | 7 | 20 |
 | quadriflow | 2724 | **36** | 0 | 64 | 77 | 34 | 11 | 2 | 26 | 63 | 72 |
 | instant-meshes | 1904 | **16** | 0 | 43 | 33 | 16 | 0 | 0 | — | 0 | 100 |
 | autoremesher | 1088 | **14** | 0 | 43 | 33 | 0 | 0 | — | — | 0 | 85 |
