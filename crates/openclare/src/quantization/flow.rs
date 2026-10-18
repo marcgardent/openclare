@@ -49,7 +49,7 @@ pub(super) struct Cost<'a> {
 }
 
 /// Price of one unit below a lower bound: more than any walk could save.
-const SHORTFALL: f64 = 1.0e7;
+pub(super) const SHORTFALL: f64 = 1.0e7;
 
 /// How much a vertex off a place it is wanted at costs, against the same
 /// distance off the target.

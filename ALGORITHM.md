@@ -1132,6 +1132,34 @@ What stays open:
   quantize: its two periods will have to be rounded apart.
 - **Hard edges**: still not arcs (see M5), hence not yet on whole lines.
 
+**Proven statements, checked and used** (`quantization/tubes.rs`, `quantization/mod.rs`). The
+research note on closing helices (`docs/research/closing-helices`, its cores machine-checked in
+Lean) proves statements about the turns the closing of loops works with. A turn keeps both
+components of its motion: `shift` (across) and `along`. In builds with debug assertions the
+engine checks, and panics with the place if one breaks: every coefficient of a turn is whole;
+each arc's column of the balances has an entry `±1` per half on a rim (handshake); at the whole
+lengths of every search, on a piece that is a closed sphere (no border, Euler characteristic 2,
+computed per piece of the T-mesh), `along + shift` of every turn is even; and the strips walked
+at whole lengths have their way round as length along. The tests check the same in release on
+a cube, a sphere, the ogre, and (ignored, from the bench) suzanne and jerry; they show that a
+torus and an open tube do have rings of an odd number of quads, so the parity check must be,
+and is, skipped there. **The parity is false on a surface with borders** (an open cylinder three
+quads round is a ring of three quads; Remark "Borders" of the note): it is applied only to
+pieces found to be closed spheres, never to suzanne or jerry, which have borders. The other
+parity in the engine, the doubled grid of the integer-grid parametrization (M4), is local to
+each cone point and holds with borders. Two prunings follow, both leaving the meshes as they
+were: in the repair aimed at one turn shifted by one, on a sphere, a walk that changes its
+length along by an even number cannot close it and is turned down unjudged (Corollary "Parity"
+(c)); a turn whose shift has coefficients of one sign, already at the least the bounds allow,
+is not aimed at (Remark "Sign-definite turns"; twice on the ogre at 3000 quads, 0.14 % of its
+states scanned). The parity turns down about 2 000 walks on the male body, but each was cheap
+to judge: the time goes into finding walks, which it does not change. The repair also builds
+the quad mesh only for a walk it would otherwise take (no theorem needed): on the 12-model
+batch at 3000 quads the processor time of quantization goes from 72.0 s to 63.5 s, on the
+male body from 63 s to 54 s, with byte-identical meshes (36 of 36 on the batch). A balance
+system with an odd right-hand side has no whole solution (handshake), but the search only ever
+keeps `B x = 0`: nothing to prune there.
+
 ### M7 and M8 — From the quantized T-mesh to the quad mesh
 
 The specification planned two modules: M7, an integer-grid map constrained by the quantized
