@@ -1,6 +1,6 @@
 # Shortcuts for the common tasks. `make help` lists them.
 
-.PHONY: help build test scenes blenderkit essentials remeasure autoremesher scores quick pages dashboard view addon install addon-windows test-windows addon-test release paper paper-clean proofs site site-serve
+.PHONY: help build test scenes blenderkit essentials remeasure autoremesher scores quick pages dashboard view addon install addon-windows test-windows addon-test release paper paper-version paper-clean proofs site site-serve
 
 help:
 	@echo "make build       build the openclare binary (release)"
@@ -47,6 +47,7 @@ help:
 	@echo "                 time). FILE=path/to/mesh.obj for a mesh of your own"
 	@echo "make paper       compile the research notes (docs/research/*/paper.tex) into PDFs"
 	@echo "                 next to them (needs latexmk and TeX Live). NOTE=closing-helices for one"
+	@echo "                 Each PDF names the commit it describes (HEAD, \"-dirty\" if changed)"
 	@echo "make paper-clean remove what LaTeX leaves next to them, the PDFs kept"
 	@echo "make proofs      check the machine-checked proofs of the research notes"
 	@echo "                 (docs/research/*/lean, Lean and Mathlib; the first run downloads"
@@ -98,7 +99,22 @@ remeasure:
 # The research notes: LaTeX sources in docs/research/<note>/paper.tex, their
 # bibliography next to them, the PDF written beside.
 NOTES = $(if $(NOTE),docs/research/$(NOTE),$(patsubst %/paper.tex,%,$(wildcard docs/research/*/paper.tex)))
-paper:
+# The commit a note describes, its \enginecommit: the short hash of HEAD, with
+# "-dirty" when tracked files other than the PDFs differ from it. Written into
+# version.tex beside each note (ignored by git), and only when it changes, so
+# that latexmk does not compile again for nothing. For a PDF that names a
+# commit holding its sources: commit them, `make paper`, then commit the PDF.
+PAPER_COMMIT = $(or $(shell git rev-parse --short=12 HEAD 2>/dev/null),unknown)$(shell \
+	git status --porcelain --untracked-files=no -- . ':(exclude,glob)docs/research/*/paper.pdf' \
+	2>/dev/null | grep -q . && echo -dirty)
+paper-version:
+	@for note in $(NOTES); do \
+		printf '%s\n' '\newcommand{\enginecommit}{$(PAPER_COMMIT)}' > $$note/version.tex.new; \
+		if cmp -s $$note/version.tex.new $$note/version.tex; then rm $$note/version.tex.new; \
+		else mv $$note/version.tex.new $$note/version.tex; fi; \
+	done
+
+paper: paper-version
 	@for note in $(NOTES); do \
 		echo "== $$note"; \
 		(cd $$note && latexmk -pdf -interaction=nonstopmode -halt-on-error paper.tex >/dev/null) \
@@ -107,7 +123,7 @@ paper:
 	done
 
 paper-clean:
-	@for note in $(NOTES); do (cd $$note && latexmk -c paper.tex >/dev/null); done
+	@for note in $(NOTES); do (cd $$note && latexmk -c paper.tex >/dev/null && rm -f version.tex); done
 
 # The proofs checked by Lean: a Lake project per note in docs/research/<note>/lean,
 # on the Mathlib release its lakefile pins. elan installs the toolchain the project

@@ -1,0 +1,28 @@
+{
+  "title": "openclare: automatic quad retopology",
+  "description": "<p>Automatic quad retopology for Blender: a mesh of triangles in, a mesh of quads out, its edges following the shape. An open-source engine written in Rust, with a Blender add-on and a bench comparing it with other remeshers.</p><p>The release includes the research note <em>Closing Edge Loops at Quantization Time: Helix Constraints for T-Mesh Quantization</em> (docs/research/closing-helices: LaTeX source and PDF, under CC BY 4.0) and the Lean 4 proofs of its algebraic cores (docs/research/closing-helices/lean, under GPL-3.0-or-later). The note is not peer reviewed.</p>",
+  "upload_type": "software",
+  "creators": [
+    {
+      "name": "Gardent, Marc",
+      "affiliation": "Independent researcher",
+      "orcid": "0009-0000-6466-3098"
+    }
+  ],
+  "license": "gpl-3.0-or-later",
+  "access_right": "open",
+  "keywords": [
+    "quad meshing",
+    "retopology",
+    "quantization",
+    "T-mesh",
+    "Lean"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://marcgardent.github.io/openclare/",
+      "relation": "isDocumentedBy",
+      "scheme": "url"
+    }
+  ]
+}

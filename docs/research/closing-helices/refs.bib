@@ -1,6 +1,13 @@
-% References of the research note. Each was checked against its publisher
-% or arXiv page on 2026-10-17; "note" says when only the abstract was read.
+% Bibliography of the research note "Closing Edge Loops at Quantization Time".
+% Checked on 2026-10-18: the DOIs were resolved on Crossref, and each note
+% says how much of the work was read. Marks "% FIX:" and "% NEW:" come from
+% that check.
+%
+% Style note: plainnat prints doi and note but NOT eprint/archivePrefix, so an
+% entry known only by its arXiv number must carry it in howpublished or note
+% (see liu2025quadgpt).
 
+% FIX: doi added. Text read in full by the reviewer (author PDF, RWTH).
 @article{bommes2011structure,
   author  = {Bommes, David and Lempfer, Timm and Kobbelt, Leif},
   title   = {Global Structure Optimization of Quadrilateral Meshes},
@@ -9,20 +16,25 @@
   number  = {2},
   pages   = {375--384},
   year    = {2011},
+  doi     = {10.1111/j.1467-8659.2011.01868.x},
   note    = {Proc.\ Eurographics 2011. Read in full.}
 }
 
+% FIX: article number added (110:1--110:11, as cited in Lyon et al. 2021).
 @article{campen2012dual,
   author  = {Campen, Marcel and Bommes, David and Kobbelt, Leif},
   title   = {Dual Loops Meshing: Quality Quad Layouts on Manifolds},
   journal = {ACM Transactions on Graphics},
   volume  = {31},
   number  = {4},
+  pages   = {110:1--110:11},
   year    = {2012},
   doi     = {10.1145/2185520.2185606},
   note    = {Proc.\ SIGGRAPH 2012. Abstract read.}
 }
 
+% Unchanged. Crossref gives pages 1--12; the ACM article number (192, from
+% memory) should be confirmed on the ACM DL before writing 192:1--192:12.
 @article{campen2015qgp,
   author  = {Campen, Marcel and Bommes, David and Kobbelt, Leif},
   title   = {Quantized Global Parametrization},
@@ -35,6 +47,8 @@
   note    = {Proc.\ SIGGRAPH Asia 2015. Abstract read.}
 }
 
+% FIX: note. The full text IS openly accessible on the Eurographics Digital
+% Library (diglib.eg.org, v40i2pp305-314.pdf); the reviewer read it.
 @article{lyon2021constrained,
   author  = {Lyon, Max and Campen, Marcel and Kobbelt, Leif},
   title   = {Quad Layouts via Constrained {T}-Mesh Quantization},
@@ -44,9 +58,11 @@
   pages   = {305--314},
   year    = {2021},
   doi     = {10.1111/cgf.142634},
-  note    = {Proc.\ Eurographics 2021. Abstract read; the full text was not openly accessible.}
+  note    = {Proc.\ Eurographics 2021. Read.}
 }
 
+% Unchanged except note. 25 pages; the ACM article number should be taken
+% from the ACM DL (not confirmed by the reviewer).
 @article{heistermann2023bimdf,
   author  = {Heistermann, Martin and Warnett, Jethro and Bommes, David},
   title   = {Min-Deviation-Flow in Bi-directed Graphs for {T}-Mesh Quantization},
@@ -55,9 +71,12 @@
   number  = {4},
   year    = {2023},
   doi     = {10.1145/3592437},
-  note    = {Proc.\ SIGGRAPH 2023. Abstract read; our quantizer follows its formulation.}
+  note    = {Proc.\ SIGGRAPH 2023. Objective (sum of absolute deviations,
+             Eq.~2) and solvers read; our quantizer follows its formulation.}
 }
 
+% FIX: doi added; the \cite inside the note replaced by plain text (a
+% citation inside the bibliography is fragile and reads oddly).
 @article{myles2010feature,
   author  = {Myles, Ashish and Pietroni, Nico and Kovacs, Denis and Zorin, Denis},
   title   = {Feature-Aligned {T}-Meshes},
@@ -66,58 +85,110 @@
   number  = {4},
   pages   = {1--11},
   year    = {2010},
-  note    = {As cited by \cite{bommes2011structure}.}
+  doi     = {10.1145/1778765.1778854},
+  note    = {Proc.\ SIGGRAPH 2010. Cited for the remark of Bommes et
+             al.\ (2011) about it; not read.}
 }
 
+% FIX: pages (article 77) and doi added.
 @article{bommes2009miq,
   author  = {Bommes, David and Zimmer, Henrik and Kobbelt, Leif},
   title   = {Mixed-Integer Quadrangulation},
   journal = {ACM Transactions on Graphics},
   volume  = {28},
   number  = {3},
+  pages   = {77:1--77:10},
   year    = {2009},
+  doi     = {10.1145/1531326.1531383},
   note    = {Proc.\ SIGGRAPH 2009.}
 }
 
-@article{lei2020quartic,
-  author  = {Lei, Na and Zheng, Xiaopeng and Luo, Zhongxuan and Luo, Feng and Gu, Xianfeng},
-  title   = {Quadrilateral Mesh Generation {II}: Meromorphic Quartic Differentials and {Abel-Jacobi} Condition},
-  journal = {Computer Methods in Applied Mechanics and Engineering},
-  volume  = {366},
-  year    = {2020},
-  eprint  = {1907.00216},
-  archivePrefix = {arXiv},
-  note    = {Main theorems read (Thm.~4.7--4.13).}
+% NEW (optional): the term "integer-grid map" comes from this paper, not
+% from bommes2009miq.
+@article{bommes2013igm,
+  author  = {Bommes, David and Campen, Marcel and Ebke, Hans-Christian and Alliez, Pierre and Kobbelt, Leif},
+  title   = {Integer-Grid Maps for Reliable Quad Meshing},
+  journal = {ACM Transactions on Graphics},
+  volume  = {32},
+  number  = {4},
+  pages   = {1--12},
+  year    = {2013},
+  doi     = {10.1145/2461912.2462014},
+  note    = {Proc.\ SIGGRAPH 2013.}
 }
 
-@misc{zheng2020abeljacobi,
-  author  = {Zheng, Xiaopeng and Zhu, Yiming and Lei, Na and Luo, Zhongxuan and Gu, Xianfeng},
-  title   = {Quadrilateral Mesh Generation {III}: Optimizing Singularity Configuration Based on {Abel-Jacobi} Theory},
+% FIX: article number and doi added.
+@article{lei2020quartic,
+  author  = {Lei, Na and Zheng, Xiaopeng and Luo, Zhongxuan and Luo, Feng and Gu, Xianfeng},
+  title   = {Quadrilateral Mesh Generation {II}: Meromorphic Quartic Differentials and {Abel--Jacobi} Condition},
+  journal = {Computer Methods in Applied Mechanics and Engineering},
+  volume  = {366},
+  pages   = {112980},
   year    = {2020},
+  doi     = {10.1016/j.cma.2020.112980},
+  eprint  = {1907.00216},
+  archivePrefix = {arXiv},
+  note    = {Main theorems read (Thm.~4.7--4.13 of the arXiv version).}
+}
+
+% FIX: published version. The journal version has SIX authors (Wei Chen
+% third), the arXiv preprint five. Cite the journal version.
+@article{zheng2020abeljacobi,
+  author  = {Zheng, Xiaopeng and Zhu, Yiming and Chen, Wei and Lei, Na and Luo, Zhongxuan and Gu, Xianfeng},
+  title   = {Quadrilateral Mesh Generation {III}: Optimizing Singularity Configuration Based on {Abel--Jacobi} Theory},
+  journal = {Computer Methods in Applied Mechanics and Engineering},
+  volume  = {387},
+  pages   = {114146},
+  year    = {2021},
+  doi     = {10.1016/j.cma.2021.114146},
   eprint  = {2007.07334},
   archivePrefix = {arXiv},
   note    = {Abstract read.}
 }
+% Key kept as "zheng2020abeljacobi" so paper.tex needs no change, although the
+% journal year is 2021.
 
+% FIX: volume and doi added.
 @book{strebel1984quadratic,
   author    = {Strebel, Kurt},
   title     = {Quadratic Differentials},
-  series    = {Ergebnisse der Mathematik und ihrer Grenzgebiete},
+  series    = {Ergebnisse der Mathematik und ihrer Grenzgebiete (3)},
+  volume    = {5},
   publisher = {Springer},
-  year      = {1984}
+  address   = {Berlin},
+  year      = {1984},
+  doi       = {10.1007/978-3-662-02414-0},
+  note      = {Not read; cited for the definition of Jenkins--Strebel
+               differentials and the existence theorem with prescribed heights.}
 }
 
+% FIX: number added (Crossref 166(1)).
 @article{izmestiev2013torus,
   author  = {Izmestiev, Ivan and Kusner, Robert B. and Rote, G{\"u}nter and Springborn, Boris and Sullivan, John M.},
   title   = {There is no triangulation of the torus with vertex degrees 5, 6, \ldots, 6, 7 and related results: geometric proofs for combinatorial theorems},
   journal = {Geometriae Dedicata},
   volume  = {166},
+  number  = {1},
   pages   = {15--29},
   year    = {2013},
   doi     = {10.1007/s10711-012-9782-5},
   eprint  = {1207.3605},
   archivePrefix = {arXiv},
   note    = {Read in full (arXiv v2): holonomy of the developing map, Burgers vector, no 3,5-quadrangulation of the torus.}
+}
+
+% NEW: named in the related work ("Barnette, Jucovic and Trenkler in 1971")
+% without a citation; this is the reference Izmestiev et al. give.
+@article{barnette1971toroidal,
+  author  = {Barnette, David and Jucovi{\v{c}}, Ernest and Trenkler, Mari{\'a}n},
+  title   = {Toroidal Maps with Prescribed Types of Vertices and Faces},
+  journal = {Mathematika},
+  volume  = {18},
+  number  = {1},
+  pages   = {82--90},
+  year    = {1971},
+  doi     = {10.1112/S0025579300008408},
+  note    = {As cited by Izmestiev et al.; not read.}
 }
 
 @article{lei2023crossfields,
@@ -131,6 +202,9 @@
   note    = {Abstract read.}
 }
 
+% FIX: doi added. Note: the arXiv preprint is titled "Metric Based
+% Quadrilateral Mesh Generation"; the theorem numbers quoted in the paper are
+% those of the arXiv version.
 @article{chen2019metric,
   author  = {Chen, Wei and Zheng, Xiaopeng and Ke, Jingyao and Lei, Na and Luo, Zhongxuan and Gu, Xianfeng},
   title   = {Quadrilateral Mesh Generation {I}: Metric Based Method},
@@ -138,6 +212,7 @@
   volume  = {356},
   pages   = {652--668},
   year    = {2019},
+  doi     = {10.1016/j.cma.2019.07.023},
   eprint  = {1811.12604},
   archivePrefix = {arXiv},
   note    = {Theorems 3.7, 3.8 and Lemma 3.9 of the arXiv version read.}
@@ -203,6 +278,8 @@
   note    = {Proc.\ SGP 2015. Abstract read.}
 }
 
+% FIX: doi added; note updated (abstract and introduction of the authors'
+% version read: it optimizes the base complex of a given quad mesh).
 @article{razafindrazaka2017optimal,
   author  = {Razafindrazaka, Faniry H. and Polthier, Konrad},
   title   = {Optimal Base Complexes for Quadrilateral Meshes},
@@ -210,7 +287,8 @@
   volume  = {52--53},
   pages   = {63--74},
   year    = {2017},
-  note    = {Bibliographic data checked (DBLP); text not read.}
+  doi     = {10.1016/j.cagd.2017.02.012},
+  note    = {Proc.\ GMP 2017. Abstract and introduction read.}
 }
 
 @article{campen2017survey,
@@ -225,18 +303,18 @@
   note    = {Abstract read.}
 }
 
+% FIX: plainnat does not print eprint, so the arXiv number must be in
+% howpublished, otherwise the entry prints with no identifier at all.
 @misc{liu2025quadgpt,
-  author  = {Liu, Jian and Wang, Chunshi and Guo, Song and Weng, Haohan and Zhou, Zhen and Li, Zhiqi and Yu, Jiaao and Zhu, Yiling and Xu, Jing and Lei, Biwen and Chen, Zhuo and Guo, Chunchao},
-  title   = {{QuadGPT}: Native Quadrilateral Mesh Generation with Autoregressive Models},
-  year    = {2025},
-  eprint  = {2509.21420},
+  author       = {Liu, Jian and Wang, Chunshi and Guo, Song and Weng, Haohan and Zhou, Zhen and Li, Zhiqi and Yu, Jiaao and Zhu, Yiling and Xu, Jing and Lei, Biwen and Chen, Zhuo and Guo, Chunchao},
+  title        = {{QuadGPT}: Native Quadrilateral Mesh Generation with Autoregressive Models},
+  howpublished = {arXiv:2509.21420},
+  year         = {2025},
+  eprint       = {2509.21420},
   archivePrefix = {arXiv},
-  note    = {Appendix~B.2 read: quad rings and quad lines as reward signals.}
+  note         = {Version 2 (February 2026). Appendix~B.2 read: quad rings and quad lines as reward signals.}
 }
 
-% Checked on Crossref (DOI 10.1287/moor.25.3.427.12219) on 2026-10-17;
-% abstract read: lattice basis reduction gives a short solution and short
-% null-space vectors, then branching on combinations of the latter.
 @article{aardal2000diophantine,
   author  = {Aardal, Karen and Hurkens, Cor A. J. and Lenstra, Arjen K.},
   title   = {Solving a System of Linear {D}iophantine Equations with Lower
@@ -250,22 +328,19 @@
   note    = {Abstract read.}
 }
 
-% Checked on Springer (DOI 10.1007/BF01457454) on 2026-10-17: the LLL
-% lattice basis reduction algorithm.
+% FIX: number added.
 @article{lenstra1982lll,
   author  = {Lenstra, Arjen K. and Lenstra, Jr., Hendrik W. and Lov{\'a}sz, L{\'a}szl{\'o}},
   title   = {Factoring Polynomials with Rational Coefficients},
   journal = {Mathematische Annalen},
   volume  = {261},
+  number  = {4},
   pages   = {515--534},
   year    = {1982},
   doi     = {10.1007/BF01457454},
   note    = {Bibliographic record checked.}
 }
 
-% Checked on Springer and Crossref (DOI 10.1007/BF02579403) on 2026-10-17;
-% abstract read: nearest lattice point within a factor c^d from an
-% LLL-reduced basis, the nearest plane method.
 @article{babai1986nearest,
   author  = {Babai, L{\'a}szl{\'o}},
   title   = {On {L}ov{\'a}sz' Lattice Reduction and the Nearest Lattice Point
@@ -293,16 +368,7 @@
              fundamental formula, which are standard.}
 }
 
-% References of the complexity results (Section "Choosing the turns"), checked
-% on 2026-10-18 against the publisher, DBLP-like institutional records or the
-% authors' pages found by web search. Only the abstracts were read; they are
-% cited for their main theorems, which are standard.
-
-% Checked on the Tel Aviv University repository (FOCS 2018, pp. 592--601) and
-% the Annals of Mathematics page of the journal version (vol. 198, 2023,
-% pp. 1--92, DOI 10.4007/annals.2023.198.1.1): completes the proof of the
-% 2-to-2 games theorem, whence vertex cover is NP-hard to approximate within
-% sqrt(2) - epsilon, with the reduction of khot2017independent.
+% FIX: doi added.
 @inproceedings{khot2018grassmann,
   author    = {Khot, Subhash and Minzer, Dor and Safra, Muli},
   title     = {Pseudorandom Sets in {G}rassmann Graph Have Near-Perfect
@@ -311,13 +377,12 @@
                (FOCS 2018)},
   pages     = {592--601},
   year      = {2018},
-  note      = {Journal version: Annals of Mathematics 198 (2023), 1--92.
-               Abstract read.}
+  doi       = {10.1109/FOCS.2018.00062},
+  note      = {Journal version: Annals of Mathematics 198(1) (2023), 1--92,
+               doi:10.4007/annals.2023.198.1.1. Abstract read.}
 }
 
-% Checked on ECCC (TR16-124) and the Tel Aviv University repository: STOC
-% 2017, pp. 576--589; a hypothesis on Grassmann graphs implies that vertex
-% cover is NP-hard to approximate within sqrt(2) - o(1).
+% FIX: doi added.
 @inproceedings{khot2017independent,
   author    = {Khot, Subhash and Minzer, Dor and Safra, Muli},
   title     = {On Independent Sets, 2-to-2 Games, and {G}rassmann Graphs},
@@ -325,15 +390,42 @@
                Computing (STOC 2017)},
   pages     = {576--589},
   year      = {2017},
+  doi       = {10.1145/3055399.3055432},
   note      = {Abstract read.}
 }
 
-% Checked on the Annals of Mathematics page (DOI
-% 10.4007/annals.2005.162.439): vertex cover NP-hard to approximate within
-% 1.3606.
+% NEW: the 2-to-2 theorem (hence vertex cover within sqrt(2) - epsilon) is
+% proved by the four papers KMS17, DKKMS18a, DKKMS18b, KMS18 together; the
+% usual citation includes these two.
+@inproceedings{dinur2018towards,
+  author    = {Dinur, Irit and Khot, Subhash and Kindler, Guy and Minzer, Dor and Safra, Muli},
+  title     = {Towards a Proof of the 2-to-1 Games Conjecture?},
+  booktitle = {Proceedings of the 50th Annual ACM Symposium on Theory of
+               Computing (STOC 2018)},
+  pages     = {376--389},
+  year      = {2018},
+  doi       = {10.1145/3188745.3188804},
+  note      = {Not read.}
+}
+
+@inproceedings{dinur2018nonoptimally,
+  author    = {Dinur, Irit and Khot, Subhash and Kindler, Guy and Minzer, Dor and Safra, Muli},
+  title     = {On Non-Optimally Expanding Sets in {G}rassmann Graphs},
+  booktitle = {Proceedings of the 50th Annual ACM Symposium on Theory of
+               Computing (STOC 2018)},
+  pages     = {940--951},
+  year      = {2018},
+  doi       = {10.1145/3188745.3188806},
+  note      = {Journal version: Israel Journal of Mathematics 243 (2021),
+               377--420. Not read.}
+}
+
+% FIX: TITLE. The Annals title is "On the hardness of approximating vertex
+% cover" (checked on annals.math.princeton.edu and Crossref), not "... minimum
+% vertex cover".
 @article{dinur2005hardness,
   author  = {Dinur, Irit and Safra, Samuel},
-  title   = {On the Hardness of Approximating Minimum Vertex Cover},
+  title   = {On the Hardness of Approximating Vertex Cover},
   journal = {Annals of Mathematics},
   volume  = {162},
   number  = {1},
@@ -343,9 +435,7 @@
   note    = {Abstract read.}
 }
 
-% Checked on the author's page (NYU) and the journal record: JCSS 74(3),
-% 335--349; under the unique games conjecture, vertex cover is hard to
-% approximate within 2 - epsilon.
+% FIX: doi added.
 @article{khot2008vertex,
   author  = {Khot, Subhash and Regev, Oded},
   title   = {Vertex Cover Might Be Hard to Approximate to within
@@ -355,11 +445,11 @@
   number  = {3},
   pages   = {335--349},
   year    = {2008},
+  doi     = {10.1016/j.jcss.2007.06.019},
   note    = {Abstract read.}
 }
 
-% Checked on the author's page (KTH) and an archive record: Acta Mathematica
-% 182(1), 105--142; clique within n^(1-epsilon) unless NP = ZPP.
+% FIX: doi added.
 @article{hastad1999clique,
   author  = {H{\aa}stad, Johan},
   title   = {Clique is Hard to Approximate within $n^{1-\varepsilon}$},
@@ -368,11 +458,11 @@
   number  = {1},
   pages   = {105--142},
   year    = {1999},
+  doi     = {10.1007/BF02392825},
   note    = {Abstract read.}
 }
 
-% Checked on Theory of Computing (DOI 10.4086/toc.2007.v003a006):
-% derandomizes the previous result, clique within n^(1-epsilon) unless P = NP.
+% Unchanged: Theory of Computing numbers its articles; volume 3, article 6.
 @article{zuckerman2007linear,
   author  = {Zuckerman, David},
   title   = {Linear Degree Extractors and the Inapproximability of Max Clique
@@ -386,49 +476,334 @@
   note    = {Abstract read.}
 }
 
-% Checked through citing papers (Springer reference lists); the report itself
-% was not found online. Proves the integer knapsack with unbounded
-% multiplicities NP-complete.
+% Unchanged. Exists (cited as "Report No. 178, Computer Science Laboratory,
+% Princeton University, 1975" in Garey and Johnson and later knapsack papers);
+% not online.
 @techreport{lueker1975two,
   author      = {Lueker, George S.},
   title       = {Two {NP}-Complete Problems in Nonnegative Integer
                  Programming},
   institution = {Computer Science Laboratory, Department of Electrical
                  Engineering, Princeton University},
-  number      = {TR-178},
+  number      = {178},
   month       = mar,
   year        = {1975},
   note        = {As cited; not read.}
 }
 
-% Checked on the reprint (Springer, LNCS 2570, DOI 10.1007/3-540-36478-1_3),
-% whose first page was read: matching problems are integer programs whose
-% columns have absolute sums at most 2, solved by a good algorithm. First
-% published in 1970 in the proceedings of the Calgary conference
-% "Combinatorial Structures and their Applications" (Gordon and Breach), as
-% widely cited; that edition was not checked.
+% Optional FIX: cite the original 1970 paper (as Heistermann et al. do) and
+% give the reprint in the note. The reprint entry of refs.bib is also correct.
 @incollection{edmonds1970matching,
   author    = {Edmonds, Jack and Johnson, Ellis L.},
   title     = {Matching: A Well-Solved Class of Integer Linear Programs},
-  booktitle = {Combinatorial Optimization --- Eureka, You Shrink!},
-  series    = {Lecture Notes in Computer Science},
-  volume    = {2570},
-  publisher = {Springer},
-  pages     = {27--30},
-  year      = {2003},
-  doi       = {10.1007/3-540-36478-1_3},
-  note      = {Reprint of the 1970 paper. First page read.}
+  booktitle = {Combinatorial Structures and Their Applications (Proc.\ Calgary
+               International Conference, 1969)},
+  editor    = {Guy, Richard and Hanani, Haim and Sauer, Norbert and
+               Sch{\"o}nheim, Johanan},
+  publisher = {Gordon and Breach},
+  address   = {New York},
+  pages     = {89--92},
+  year      = {1970},
+  note      = {Reprinted in Combinatorial Optimization --- Eureka, You
+               Shrink!, LNCS 2570, Springer, 2003, pp.~27--30,
+               doi:10.1007/3-540-36478-1\_3, whose first page was read.}
 }
 
-% Checked on the journal record cited by the authors' pages and on a copy of
-% the abstract: Theoretical Computer Science 1 (1976), 237--267; node cover
-% stays NP-complete on planar graphs and on graphs of small degree.
+% FIX: number and doi added.
 @article{garey1976simplified,
   author  = {Garey, Michael R. and Johnson, David S. and Stockmeyer, Larry},
   title   = {Some Simplified {NP}-Complete Graph Problems},
   journal = {Theoretical Computer Science},
   volume  = {1},
+  number  = {3},
   pages   = {237--267},
   year    = {1976},
+  doi     = {10.1016/0304-3975(76)90059-1},
   note    = {Abstract read.}
+}
+
+% NEW (optional): planar vertex cover with maximum degree 3 is usually
+% credited to this paper (its Lemma 1), if the conjecture's evidence wants
+% "degree three".
+@article{garey1977rectilinear,
+  author  = {Garey, Michael R. and Johnson, David S.},
+  title   = {The Rectilinear {S}teiner Tree Problem is {NP}-Complete},
+  journal = {SIAM Journal on Applied Mathematics},
+  volume  = {32},
+  number  = {4},
+  pages   = {826--834},
+  year    = {1977},
+  doi     = {10.1137/0132071},
+  note    = {Not read.}
+}
+
+% ---------------------------------------------------------------------------
+% NEW (recommended): works and tools named in the text without a citation.
+
+@article{huang2018quadriflow,
+  author  = {Huang, Jingwei and Zhou, Yichao and Nie{\ss}ner, Matthias and Shewchuk, Jonathan Richard and Guibas, Leonidas J.},
+  title   = {{QuadriFlow}: A Scalable and Robust Method for Quadrangulation},
+  journal = {Computer Graphics Forum},
+  volume  = {37},
+  number  = {5},
+  pages   = {147--160},
+  year    = {2018},
+  doi     = {10.1111/cgf.13498},
+  note    = {Proc.\ SGP 2018. Used as a baseline.}
+}
+
+@article{bommes2013survey,
+  author  = {Bommes, David and L{\'e}vy, Bruno and Pietroni, Nico and Puppo, Enrico and Silva, Claudio and Tarini, Marco and Zorin, Denis},
+  title   = {Quad-Mesh Generation and Processing: A Survey},
+  journal = {Computer Graphics Forum},
+  volume  = {32},
+  number  = {6},
+  pages   = {51--76},
+  year    = {2013},
+  doi     = {10.1111/cgf.12014}
+}
+
+@inproceedings{demoura2021lean4,
+  author    = {de Moura, Leonardo and Ullrich, Sebastian},
+  title     = {The {Lean} 4 Theorem Prover and Programming Language},
+  booktitle = {Automated Deduction -- CADE 28},
+  series    = {Lecture Notes in Computer Science},
+  volume    = {12699},
+  publisher = {Springer},
+  pages     = {625--635},
+  year      = {2021},
+  doi       = {10.1007/978-3-030-79876-5_37}
+}
+
+@inproceedings{mathlib2020,
+  author    = {{The mathlib Community}},
+  title     = {The {Lean} Mathematical Library},
+  booktitle = {Proceedings of the 9th ACM SIGPLAN International Conference on
+               Certified Programs and Proofs (CPP 2020)},
+  pages     = {367--381},
+  year      = {2020},
+  doi       = {10.1145/3372885.3373824}
+}
+
+@article{huangfu2018highs,
+  author  = {Huangfu, Qi and Hall, J. A. Julian},
+  title   = {Parallelizing the Dual Revised Simplex Method},
+  journal = {Mathematical Programming Computation},
+  volume  = {10},
+  number  = {1},
+  pages   = {119--142},
+  year    = {2018},
+  doi     = {10.1007/s12532-017-0130-5},
+  note    = {The usual citation for the HiGHS solver.}
+}
+
+@article{virtanen2020scipy,
+  author  = {Virtanen, Pauli and Gommers, Ralf and Oliphant, Travis E. and others},
+  title   = {{SciPy} 1.0: Fundamental Algorithms for Scientific Computing in {Python}},
+  journal = {Nature Methods},
+  volume  = {17},
+  number  = {3},
+  pages   = {261--272},
+  year    = {2020},
+  doi     = {10.1038/s41592-019-0686-2}
+}
+
+@misc{autoremesher,
+  author       = {{Dust3D project}},
+  title        = {{AutoRemesher}: Automatic Quad Remeshing},
+  howpublished = {\url{https://github.com/huxingyi/autoremesher}},
+  year         = {2026},
+  note         = {Open-source software (MIT licence), the version installed on the bench machine in October 2026. Used as a baseline in the bench.}
+}
+
+% ---------------------------------------------------------------------------
+% NEW: attributions from the prior-art check of 2026-10-18.
+
+@misc{kong2026squadgen,
+  author       = {Kong, Youkang and Liu, Yang and Dong, Yue and Tong, Xin and Shum, Heung-Yeung},
+  title        = {{SQuadGen}: Generating Simple Quad Layouts via Chart Distance Fields},
+  year         = {2026},
+  howpublished = {arXiv:2604.27329},
+  note         = {Section~4.2 read: loop simplicity metrics.}
+}
+
+@article{kleman2008disclinations,
+  author  = {Kl{\'e}man, Maurice and Friedel, Jacques},
+  title   = {Disclinations, Dislocations, and Continuous Defects: A Reappraisal},
+  journal = {Reviews of Modern Physics},
+  volume  = {80},
+  number  = {1},
+  pages   = {61--115},
+  year    = {2008},
+  note    = {Section~II.5.1, Eq.~(5) read (arXiv:0704.3055).}
+}
+
+@article{yazyev2010graphene,
+  author  = {Yazyev, Oleg V. and Louie, Steven G.},
+  title   = {Topological Defects in Graphene: Dislocations and Grain Boundaries},
+  journal = {Physical Review B},
+  volume  = {81},
+  number  = {19},
+  pages   = {195420},
+  year    = {2010},
+  doi     = {10.1103/PhysRevB.81.195420},
+  note    = {Abstract read.}
+}
+
+@article{kaiser2015colouring,
+  author  = {Kaiser, Tom{\'a}{\v s} and Stehl{\'i}k, Mat{\v e}j},
+  title   = {Colouring Quadrangulations of Projective Spaces},
+  journal = {Journal of Combinatorial Theory, Series B},
+  volume  = {113},
+  pages   = {1--17},
+  year    = {2015},
+  doi     = {10.1016/j.jctb.2014.12.007},
+  note    = {Lemma~3.1 read (arXiv:1310.5875v2).}
+}
+
+@article{archdeacon2001chromatic,
+  author  = {Archdeacon, Dan and Hutchinson, Joan and Nakamoto, Atsuhiro and Negami, Seiya and Ota, Katsuhiro},
+  title   = {Chromatic Numbers of Quadrangulations on Closed Surfaces},
+  journal = {Journal of Graph Theory},
+  volume  = {37},
+  number  = {2},
+  pages   = {100--114},
+  year    = {2001},
+  doi     = {10.1002/jgt.1005},
+  note    = {Abstract read.}
+}
+
+@article{zaslavsky1982signed,
+  author  = {Zaslavsky, Thomas},
+  title   = {Signed Graphs},
+  journal = {Discrete Applied Mathematics},
+  volume  = {4},
+  number  = {1},
+  pages   = {47--74},
+  year    = {1982},
+  note    = {Bibliographic data checked; not read.}
+}
+
+@article{chen2009flow,
+  author  = {Chen, Beifang and Wang, Jue},
+  title   = {The Flow and Tension Spaces and Lattices of Signed Graphs},
+  journal = {European Journal of Combinatorics},
+  volume  = {30},
+  number  = {1},
+  pages   = {263--279},
+  year    = {2009},
+  note    = {Abstract read.}
+}
+
+@article{parker1996iis,
+  author  = {Parker, Mark and Ryan, Jennifer},
+  title   = {Finding the Minimum Weight {IIS} Cover of an Infeasible System of Linear Inequalities},
+  journal = {Annals of Mathematics and Artificial Intelligence},
+  volume  = {17},
+  number  = {1},
+  pages   = {107--126},
+  year    = {1996},
+  note    = {As described by citing works; not read.}
+}
+
+@article{amaldi2003maxfs,
+  author  = {Amaldi, Edoardo and Pfetsch, Marc E. and Trotter, Jr., Leslie E.},
+  title   = {On the Maximum Feasible Subsystem Problem, {IIS}s and {IIS}-Hypergraphs},
+  journal = {Mathematical Programming},
+  volume  = {95},
+  number  = {3},
+  pages   = {533--554},
+  year    = {2003},
+  doi     = {10.1007/s10107-002-0363-5},
+  note    = {Abstract read.}
+}
+
+@article{chinneck1991locating,
+  author  = {Chinneck, John W. and Dravnieks, Erik W.},
+  title   = {Locating Minimal Infeasible Constraint Sets in Linear Programs},
+  journal = {ORSA Journal on Computing},
+  volume  = {3},
+  number  = {2},
+  pages   = {157--168},
+  year    = {1991},
+  doi     = {10.1287/ijoc.3.2.157},
+  note    = {Abstract read.}
+}
+
+@article{morenocenteno2013implicit,
+  author  = {Moreno-Centeno, Erick and Karp, Richard M.},
+  title   = {The Implicit Hitting Set Approach to Solve Combinatorial Optimization Problems with an Application to Multigenome Alignment},
+  journal = {Operations Research},
+  volume  = {61},
+  number  = {2},
+  pages   = {453--468},
+  year    = {2013},
+  doi     = {10.1287/opre.1120.1139},
+  note    = {Abstract read.}
+}
+
+@article{amaldi1995complexity,
+  author  = {Amaldi, Edoardo and Kann, Viggo},
+  title   = {The Complexity and Approximability of Finding Maximum Feasible Subsystems of Linear Relations},
+  journal = {Theoretical Computer Science},
+  volume  = {147},
+  number  = {1--2},
+  pages   = {181--210},
+  year    = {1995},
+  note    = {Abstract read.}
+}
+
+@misc{joormann2015flowiis,
+  author       = {Joormann, Imke and Pfetsch, Marc E.},
+  title        = {Complexity of Minimum Irreducible Infeasible Subsystem Covers for Flow Networks},
+  year         = {2015},
+  howpublished = {Optimization Online preprint 4809, \url{https://optimization-online.org/2015/03/4809/}},
+  note         = {Abstract and introduction read; a journal version was not found.}
+}
+
+@article{lei2017foliation,
+  author  = {Lei, Na and Zheng, Xiaopeng and Jiang, Jian and Lin, Yu-Yao and Gu, David Xianfeng},
+  title   = {Quadrilateral and Hexahedral Mesh Generation Based on Surface Foliation Theory},
+  journal = {Computer Methods in Applied Mechanics and Engineering},
+  volume  = {316},
+  pages   = {758--781},
+  year    = {2017},
+  doi     = {10.1016/j.cma.2016.09.044},
+  note    = {Abstract read.}
+}
+
+@article{usai2015skeleton,
+  author  = {Usai, Francesco and Livesu, Marco and Puppo, Enrico and Tarini, Marco and Scateni, Riccardo},
+  title   = {Extraction of the Quad Layout of a Triangle Mesh Guided by its Curve Skeleton},
+  journal = {ACM Transactions on Graphics},
+  volume  = {35},
+  number  = {1},
+  pages   = {6:1--6:13},
+  year    = {2015},
+  doi     = {10.1145/2809785},
+  note    = {Abstract read.}
+}
+
+@incollection{thurston1998shapes,
+  author    = {Thurston, William P.},
+  title     = {Shapes of Polyhedra and Triangulations of the Sphere},
+  booktitle = {The Epstein Birthday Schrift},
+  series    = {Geometry \& Topology Monographs},
+  volume    = {1},
+  publisher = {Geometry \& Topology Publications},
+  address   = {Coventry},
+  pages     = {511--549},
+  year      = {1998},
+  note      = {Abstract read (arXiv:math/9801088).}
+}
+
+@article{veech1993flat,
+  author  = {Veech, William A.},
+  title   = {Flat Surfaces},
+  journal = {American Journal of Mathematics},
+  volume  = {115},
+  number  = {3},
+  pages   = {589--689},
+  year    = {1993},
+  note    = {Bibliographic data checked; not read.}
 }

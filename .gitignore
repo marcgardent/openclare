@@ -14,6 +14,8 @@ __pycache__
 /dist
 # The website as built by site/build.py.
 /site/_build
+# The commit a research note describes, written by `make paper`.
+/docs/research/*/version.tex
 # What is not to be published: local challengers, their meshes and results
 # (see bench/README.md).
 /local
