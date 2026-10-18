@@ -886,25 +886,34 @@ impl QuadLayout {
 
         // Closing the loops round a part may ask a strip for a row of quads
         // it has no room for, which folds over. Where the mesh has a fold,
-        // the lengths the plain search found are meshed too, and the mesh
-        // with fewer folds kept.
+        // the other lengths the quantization could have kept are meshed in
+        // turn, the plain lengths last, until one does not fold; of those
+        // meshed, the one with the fewest folds is kept, then the fewest
+        // spirals.
         if quantized.report.turns_held > 0 {
             let surface = Bvh::build(input);
-            let folded = crate::metrics::folded_faces(input, &surface, &mesh);
-            let plain = quantization::Request { close_turns: false, ..request };
-            let plain = match folded {
-                0 => None,
-                _ => Some(quantization::create(quantization::Kind::WalkCancelling).quantize(&layout.tmesh, &plain)?),
-            };
-            if let Some(plain) = plain.filter(|plain| plain.report.is_valid() && plain.report.quads > 0) {
-                let (mut other, meshed) = meshing::create(meshing::Kind::PatchGrid).mesh(&work, &layout, &plain)?;
+            let spirals = |quantized: &quantization::Quantization| quantized.report.spirals.unwrap_or(f64::INFINITY);
+            let mut kept = (crate::metrics::folded_faces(input, &surface, &mesh), spirals(&quantized));
+            for candidate in &quantized.candidates {
+                if kept.0 == 0 {
+                    break;
+                }
+                if !candidate.report.is_valid() || candidate.report.quads == 0 {
+                    continue;
+                }
+                let (mut other, meshed) = meshing::create(meshing::Kind::PatchGrid).mesh(&work, &layout, candidate)?;
                 let held = Some((meshed.on_feature, meshed.on_corner));
                 let other_lines =
                     settle(&mut other, input, &work, edge_length, held, &self.relaxer, config.volume_fit, recorder)?;
-                if crate::metrics::folded_faces(input, &surface, &other) < folded {
-                    let note = format!("loops left as they were: closing them folded {folded} quads over");
+                let other_kept = (crate::metrics::folded_faces(input, &surface, &other), spirals(candidate));
+                if other_kept < kept {
+                    let note = if candidate.report.turns_held == 0 {
+                        format!("loops left as they were: closing them folded {} quads over", kept.0)
+                    } else {
+                        format!("other loops closed: the first ones folded {} quads over", kept.0)
+                    };
                     recorder.record("notes/loops", Shape::Note(&note));
-                    (mesh, lines) = (other, other_lines);
+                    (mesh, lines, kept) = (other, other_lines, other_kept);
                 }
             }
             clock.lap(&mut report, "folds");

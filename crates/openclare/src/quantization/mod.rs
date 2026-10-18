@@ -75,6 +75,9 @@ pub struct Report {
     /// were looked for to bring back onto themselves (DT-062).
     pub turns: usize,
     pub turns_held: usize,
+    /// Share of the edges of the loops of the quad mesh the lengths stand
+    /// for that wind as spirals, where it was counted: when loops are closed.
+    pub spirals: Option<f64>,
 }
 
 impl Report {
@@ -89,6 +92,10 @@ pub struct Quantization {
     /// Per arc of the T-mesh, in quad edges.
     pub lengths: Vec<u32>,
     pub report: Report,
+    /// Where loops were closed, the other lengths that could have been kept,
+    /// the best first (the fewest spirals), and last the lengths found
+    /// without closing any: what to mesh instead if these fold over.
+    pub candidates: Vec<Quantization>,
 }
 
 impl Quantization {
@@ -692,7 +699,9 @@ impl Quantizer for WalkCancelling {
                 tmesh.patches.len()
             );
         }
-        let (x, scale, quads, lower) = if close {
+        // The lengths kept, the fewest spirals first, each with its spirals
+        // and the turns it held; the plain lengths last.
+        let kept: Vec<(Lengths, Option<f64>, usize)> = if close {
             let spirals_of = |x: &[i64]| -> f64 {
                 let lattice = lattice::build(tmesh, x).lattice;
                 let mesh = crate::mesh::PolyMesh {
@@ -735,10 +744,10 @@ impl Quantizer for WalkCancelling {
             if std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some() {
                 eprintln!("plain lengths: {} folds crossed, off them by {:.2}", folds.len(), off_folds(&plain.0));
             }
-            let mut best = (spirals_of(&plain.0), plain);
+            let plain_spirals = spirals_of(&plain.0);
             // Lengths that leave the structure broken are not mended by
             // closing loops, and each way would cost as long a search again.
-            let sound = best.0.is_finite() && lattice::build(tmesh, &best.1.0).defects(tmesh).is_empty();
+            let sound = plain_spirals.is_finite() && lattice::build(tmesh, &plain.0).defects(tmesh).is_empty();
             // The least change of the real lengths that closes turns, its
             // part for the rectangles solved once for every way.
             let weight: Vec<f64> = real.iter().map(|length| 1.0 / (length + 1.0)).collect();
@@ -770,8 +779,8 @@ impl Quantizer for WalkCancelling {
                 ways.push(((offsets, lean, longest), found, held));
             }
             // Each way searched on a core of its own, then, if its lengths
-            // could be kept, closed by cuts a few rounds; the one kept is the
-            // same as if they had been searched in turn.
+            // could be kept, closed by cuts a few rounds; the ones kept are
+            // the same as if they had been searched in turn.
             let closing = closing.as_ref();
             let tried: Vec<_> = ways
                 .par_iter()
@@ -815,33 +824,40 @@ impl Quantizer for WalkCancelling {
                     (candidates, own.moves, own.scans)
                 })
                 .collect();
+            // All the lengths with fewer spirals than the plain ones, within the
+            // budget, not too far from the real lengths nor off the folds.
+            let mut kept: Vec<(Lengths, Option<f64>, usize)> = Vec::new();
             for (((offsets, lean, longest), ..), (candidates, moves, scans)) in ways.iter().zip(tried) {
                 report.moves += moves;
                 report.scans += scans;
                 for (round, (spirals, tried, held)) in candidates.into_iter().enumerate() {
                     if std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some() {
                         eprintln!(
-                            "closing from {offsets:?} leaning up to {lean}, {longest} long, round {round}: spirals {:.3} deviation {:.3} quads {} off folds {:.2} (best so far {:.3})",
+                            "closing from {offsets:?} leaning up to {lean}, {longest} long, round {round}: spirals {:.3} deviation {:.3} quads {} off folds {:.2} (plain {:.3})",
                             spirals,
                             deviation(&tried),
                             tried.2,
                             off_folds(&tried.0),
-                            best.0
+                            plain_spirals
                         );
                     }
-                    if spirals < best.0 - 1e-9
+                    if spirals < plain_spirals - 1e-9
                         && tried.2.abs_diff(wanted) <= allowed
                         && deviation(&tried) <= most_deviation
                         && off_folds(&tried.0) <= most_off_folds
+                        && kept.iter().all(|(other, ..)| other.0 != tried.0)
                     {
-                        report.turns_held = held;
-                        best = (spirals, tried);
+                        kept.push((tried, Some(spirals), held));
                     }
                 }
             }
-            best.1
+            // The fewest spirals first; of equal ones, the way tried first.
+            kept.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+            kept.truncate(1 + MORE_CANDIDATES);
+            kept.push((plain, Some(plain_spirals), 0));
+            kept
         } else {
-            plain
+            vec![(plain, None, 0)]
         };
         if std::env::var_os("OPENCLARE_DEBUG_WORK").is_some() {
             eprintln!(
@@ -851,25 +867,52 @@ impl Quantizer for WalkCancelling {
                 process_cpu_seconds() - cpu_start
             );
         }
-        report.scale = scale;
-        report.quads = quads;
-        report.budget_error = request.quads.map(|wanted| quads.abs_diff(wanted) as f64 / wanted as f64);
-        report.balanced = network.is_balanced(&x);
-        let built = lattice::build(tmesh, &x);
-        report.separated &= built.defects(tmesh).is_empty() && built.euler() == tmesh.report.euler;
-        report.zero_arcs = x.iter().filter(|&&length| length == 0).count();
-        report.held_arcs = lower.iter().zip(&x).filter(|&(&bound, &length)| bound > 0 && length == bound).count();
-        let deviations: Vec<f64> =
-            x.iter().zip(&exact).map(|(&length, real)| (length as f64 - scale * real).abs()).collect();
-        report.deviation_mean = deviations.iter().sum::<f64>() / arcs.max(1) as f64;
-        report.deviation_max = deviations.iter().fold(0.0, |a, &b| a.max(b));
-
-        let quantization = Quantization { lengths: x.iter().map(|&length| length as u32).collect(), report };
-        let collapsed = quantization.patch_sizes(tmesh).iter().filter(|size| size[0] == 0 || size[1] == 0).count();
-        Ok(Quantization { report: Report { collapsed_patches: collapsed, ..quantization.report }, ..quantization })
+        let mut kept = kept.into_iter().map(|((x, scale, quads, lower), spirals, held)| {
+            let report = Report { turns_held: held, spirals, ..report.clone() };
+            finished(tmesh, &network, &exact, request, &x, scale, quads, &lower, report)
+        });
+        let first = kept.next().expect("the plain lengths are always kept");
+        Ok(Quantization { candidates: kept.collect(), ..first })
     }
 }
 
+/// The lengths `x` at `scale`, making `quads`, with the arcs `lower` held
+/// from vanishing, and what they achieve added to `report`.
+#[allow(clippy::too_many_arguments)]
+fn finished(
+    tmesh: &TMesh,
+    network: &Network,
+    exact: &[f64],
+    request: &Request,
+    x: &[i64],
+    scale: f64,
+    quads: usize,
+    lower: &[i64],
+    mut report: Report,
+) -> Quantization {
+    let arcs = x.len();
+    report.scale = scale;
+    report.quads = quads;
+    report.budget_error = request.quads.map(|wanted| quads.abs_diff(wanted) as f64 / wanted as f64);
+    report.balanced = network.is_balanced(x);
+    let built = lattice::build(tmesh, x);
+    report.separated &= built.defects(tmesh).is_empty() && built.euler() == tmesh.report.euler;
+    report.zero_arcs = x.iter().filter(|&&length| length == 0).count();
+    report.held_arcs = lower.iter().zip(x).filter(|&(&bound, &length)| bound > 0 && length == bound).count();
+    let deviations: Vec<f64> =
+        x.iter().zip(exact).map(|(&length, real)| (length as f64 - scale * real).abs()).collect();
+    report.deviation_mean = deviations.iter().sum::<f64>() / arcs.max(1) as f64;
+    report.deviation_max = deviations.iter().fold(0.0, |a, &b| a.max(b));
+
+    let quantization =
+        Quantization { lengths: x.iter().map(|&length| length as u32).collect(), report, candidates: Vec::new() };
+    let collapsed = quantization.patch_sizes(tmesh).iter().filter(|size| size[0] == 0 || size[1] == 0).count();
+    Quantization { report: Report { collapsed_patches: collapsed, ..quantization.report }, ..quantization }
+}
+
+/// Lengths kept besides those with the fewest spirals, to mesh instead if
+/// those fold over (before the plain lengths, always kept last).
+const MORE_CANDIDATES: usize = 2;
 /// A way round that comes back more than this beside itself, in quad edges,
 /// and no more than a share of its way round (beyond, it goes round
 /// singularities rather than a part), is held to come back onto itself.
