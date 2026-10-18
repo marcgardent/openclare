@@ -130,6 +130,58 @@ pub(super) fn lattice_turns(tmesh: &TMesh, lengths: &[f64], steps_per_patch: usi
     found
 }
 
+/// (Experiment.) Every strip of quads whole `lengths` make, as
+/// [`lattice_turns`] finds them, each with the conditions on the lengths
+/// under which it is the same walk: `expression . x + constant >= 0`.
+pub(super) fn lattice_walks(
+    tmesh: &TMesh,
+    lengths: &[f64],
+    steps_per_patch: usize,
+    longest: f64,
+) -> Vec<(Turn, Vec<(Expression, f64)>)> {
+    let rims = rims(tmesh, lengths);
+    let mut place = vec![None; 2 * tmesh.arcs.len()];
+    for (patch, rim) in rims.iter().enumerate() {
+        if let Some(rim) = rim {
+            for (k, &(half, _)) in rim.halves.iter().enumerate() {
+                place[half as usize] = Some((patch, k));
+            }
+        }
+    }
+    let steps = steps_per_patch * tmesh.patches.len().max(1);
+    let mut seen = std::collections::HashSet::new();
+    let mut found = Vec::new();
+    for (start_patch, rim) in rims.iter().enumerate() {
+        let Some(rim) = rim else { continue };
+        for start_side in 0..4 {
+            let begin = rim.side_start[start_side];
+            let end = if start_side == 3 { rim.halves.len() } else { rim.side_start[start_side + 1] };
+            let side_length: f64 = (begin..end).map(|k| lengths[rim.halves[k].0 as usize / 2]).sum();
+            for k in 0..side_length.round().max(0.0) as usize {
+                let mut conditions = Vec::new();
+                let Some(turn) = go_round(
+                    tmesh,
+                    lengths,
+                    &rims,
+                    &place,
+                    start_patch,
+                    start_side,
+                    k as f64 + 0.5,
+                    steps,
+                    longest,
+                    Some(&mut conditions),
+                ) else {
+                    continue;
+                };
+                if seen.insert(turn.shift.iter().map(|&(arc, c)| (arc, c.round() as i64)).collect::<Vec<_>>()) {
+                    found.push((turn, conditions));
+                }
+            }
+        }
+    }
+    found
+}
+
 /// Turns from the places `starts` gives along each side, from its length.
 fn turns_with(
     tmesh: &TMesh,
@@ -162,7 +214,7 @@ fn turns_with(
             }
             for offset in starts(side_length) {
                 if let Some(turn) =
-                    go_round(tmesh, lengths, &rims, &place, start_patch, start_side, offset, steps, longest)
+                    go_round(tmesh, lengths, &rims, &place, start_patch, start_side, offset, steps, longest, None)
                 {
                     found.push(turn);
                 }
@@ -186,8 +238,15 @@ fn go_round(
     offset: f64,
     steps: usize,
     longest: f64,
+    mut conditions: Option<&mut Vec<(Expression, f64)>>,
 ) -> Option<Turn> {
     let (start_patch, start_side) = (patch, side);
+    // (Experiment.) The offset as an expression of the lengths and a
+    // constant, and the arcs of a run of the rim from `begin` to `end`.
+    let mut offset_expression: (Expression, f64) = (Vec::new(), offset);
+    let run = |rim: &Rim, begin: usize, end: usize| -> Expression {
+        merged((begin..end).map(|m| (rim.halves[m].0 as usize / 2, 1.0)).collect())
+    };
     let (mut patch, mut side, mut offset) = (patch, side, offset);
     let mut quarter_turns = 0usize;
     let mut around = 0.0;
@@ -223,6 +282,25 @@ fn go_round(
         }
         let (k, into) = leaving?;
         let (half, _) = rim.halves[k];
+        if let Some(conditions) = conditions.as_deref_mut() {
+            // Along = opposite side - offset; it must stay inside the
+            // half-arc it leaves by, half a quad edge from either end:
+            // along - before - 1/2 >= 0, before + length - along - 1/2 >= 0.
+            let along: Vec<(usize, f64)> =
+                run(rim, begin, end).into_iter().chain(offset_expression.0.iter().map(|&(i, c)| (i, -c))).collect();
+            let before = run(rim, begin, k);
+            let low = merged(along.iter().copied().chain(before.iter().map(|&(i, c)| (i, -c))).collect());
+            conditions.push((low, -offset_expression.1 - 0.5));
+            let high = merged(
+                before
+                    .iter()
+                    .copied()
+                    .chain(std::iter::once((half as usize / 2, 1.0)))
+                    .chain(along.iter().map(|&(i, c)| (i, -c)))
+                    .collect(),
+            );
+            conditions.push((high, offset_expression.1 - 0.5));
+        }
         let arc = &tmesh.arcs[half as usize / 2];
         if arc.border {
             return None;
@@ -232,6 +310,18 @@ fn go_round(
         let next_side = next_rim.halves[k_next].1;
         let next_begin = next_rim.side_start[next_side];
         let before_twin: f64 = (next_begin..k_next).map(|m| lengths[next_rim.halves[m].0 as usize / 2]).sum();
+        if conditions.is_some() {
+            // Next offset = before twin + length - (along - before).
+            let along: Vec<(usize, f64)> =
+                run(rim, begin, end).into_iter().chain(offset_expression.0.iter().map(|&(i, c)| (i, -c))).collect();
+            let next_offset: Expression = run(next_rim, next_begin, k_next)
+                .into_iter()
+                .chain(std::iter::once((half as usize / 2, 1.0)))
+                .chain(along.iter().map(|&(i, c)| (i, -c)))
+                .chain(run(rim, begin, k))
+                .collect();
+            offset_expression = (merged(next_offset), offset_expression.1);
+        }
         crossings.push((patch, k, next, k_next));
         quarter_turns = (quarter_turns + (next_side + 2 + 4 - opposite) % 4) % 4;
         (patch, side, offset) = (next, next_side, before_twin + (lengths[half as usize / 2] - into));
