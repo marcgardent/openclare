@@ -1,6 +1,6 @@
 # Obtenir openclare
 
-<p class="subtitle">Le code source est sur GitHub, à <a href="https://github.com/marcgardent/openclare">marcgardent/openclare</a>. Le dépôt est privé pour l'instant : les liens vers lui sur ce site fonctionnent pour ceux avec qui il est partagé. Sa documentation est en anglais.</p>
+<p class="subtitle">Le code source est sur GitHub, à <a href="https://github.com/marcgardent/openclare">marcgardent/openclare</a>. Sa documentation est en anglais.</p>
 
 ## L'extension Blender
 
