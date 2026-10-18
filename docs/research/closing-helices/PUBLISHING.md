@@ -30,10 +30,9 @@ decision are for the author to take; the rest is already in the repository.
 1. **Confirm** the licence (CC BY 4.0) and the author block. Choosing another
    licence means changing the footnote of `paper.tex`, `LICENSE.md`, and
    `license` in the reference of `CITATION.cff`.
-2. **ORCID (optional)**: create one at <https://orcid.org/register>. Then add
-   `orcid: "https://orcid.org/0000-..."` under the author in `CITATION.cff`,
-   `"orcid": "0000-..."` in the creator of `.zenodo.json`, and the iD under the
-   name in `paper.tex`. Zenodo, HAL and arXiv all link it.
+2. **ORCID**: done, 0009-0000-6466-3098 (<https://orcid.org/0009-0000-6466-3098>), in `CITATION.cff`,
+   `.zenodo.json` and under the name in `paper.tex`. Zenodo, HAL and arXiv all
+   link it. On the ORCID record, the published name is "Marc Gardent".
 3. **Once the reviews are merged**, change "draft" in the title block to
    "preprint v1", and the date. Commit the sources, then run `make paper` on a
    clean working tree and commit the PDF on its own: the PDF then names the

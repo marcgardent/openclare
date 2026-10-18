@@ -17,6 +17,7 @@ authors:
   - family-names: Gardent
     given-names: Marc
     affiliation: Independent researcher
+    orcid: "https://orcid.org/0009-0000-6466-3098"
 license: GPL-3.0-or-later
 repository-code: "https://github.com/marcgardent/openclare"
 url: "https://marcgardent.github.io/openclare/"
@@ -36,6 +37,7 @@ references:
       - family-names: Gardent
         given-names: Marc
         affiliation: Independent researcher
+        orcid: "https://orcid.org/0009-0000-6466-3098"
     year: 2026
     month: 10
     status: preprint
