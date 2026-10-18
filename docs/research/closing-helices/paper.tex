@@ -83,72 +83,63 @@ NP-hard. The algebraic cores of the proofs are checked in Lean.
 \section{Introduction}
 
 Field-aligned quad remeshing has reached a level where element shape and
-alignment are rarely the limiting factor. What remains is structure: the
+alignment are rarely the limiting factor~\cite{bommes2013survey,campen2017survey}. What remains is structure: the
 way edge loops run across the surface. Artists expect a loop round an arm,
 a leg or a neck to be a ring. Automatic methods often produce a helix
 instead: the loop goes round, comes back one or a few rows further, and
 winds along the whole part. The problem is old and well identified:
-Bommes et al.\ showed in 2011 that helical configurations are what keeps
-the base complex of an otherwise good quad mesh dense~\cite{bommes2011structure}.
+Bommes et al.\ showed in 2011 that helical configurations are a main reason why
+the base complex of an otherwise good quad mesh stays dense~\cite{bommes2011structure}.
 
 This note documents an approach developed in the open-source remesher
-openclare, and positions it against the literature we could check. Our
-contributions are:
+openclare, and positions it against the literature we could check. What we
+claim as new, as far as we found, is listed first; the known results it
+builds on are attributed where they are used.
 \begin{enumerate}
-\item \emph{Turns} of a T-mesh and their \emph{shift}: a straight walk
-  across the rectangles of a T-mesh that returns to its starting side,
-  and a linear form in the arc lengths whose integer value is the pitch of
-  the helix the walk becomes in the quad mesh (Section~\ref{sec:turns}).
+\item \emph{Turns} of a T-mesh and their \emph{shift}, a linear form in the
+  arc lengths of the T-mesh that gives, at integer lengths and within the
+  corridor of the turn, the pitch of the dual line that follows it
+  (Section~\ref{sec:turns}). That a translational period of a flat metric is
+  linear in the lengths is classical; its form on a T-mesh, as a constraint
+  of the quantization, is what is new.
 \item Closing turns within T-mesh quantization: a least-change projection
-  of the target lengths, an integer search, and repair walks judged on the
-  turns, with safeguards on folds, distortion and budget
-  (Section~\ref{sec:closing}).
-\item A classification of the edge loops of a quad mesh into closed,
-  spiral, open and border loops, with spirals of order up to four
-  (Section~\ref{sec:measure}), and a bench that holds automatic remeshers
-  against meshes modelled by hand (Section~\ref{sec:experiments}).
-\item Obstructions to closing: the shift of a turn is the Burgers vector of
-  the singularities on one side, composed in the order in which a walk round
-  a cutting tree first meets them; a pair of valences three and five, or two
-  vertices of equal valence exchanged between two turns, joined by a
-  staircase of arcs, forces one of the turns to be a helix; a separatrix that
-  winds once round and lands beside its own vertex does the same to a single
-  turn; a checkerboard rule gives the parity of the shift between two turns;
-  on a closed sphere the shift of every turn has the parity of its length; and a
-  turn whose shift is a non-negative form in the lengths can never close
-  (Section~\ref{sec:obstructions}).
-\item The same tools on surfaces with borders and handles: Gauss--Bonnet
-  with border terms, a parity of every turn given by a homomorphism on the
-  homology modulo two, collars round borders, the Burgers sum with border
-  and period terms, and two crossing turns on a torus; and on triangle and
-  hexagonal meshes (Section~\ref{sec:beyond}).
-\item A test of these statements on the T-mesh of a human body, and a
-  description of its conflicts between turns
-  (Sections~\ref{sec:measured} and~\ref{sec:conflicts}); a test of the
-  Burgers sum on seven other models, and why moving singularities in the
-  parametrization does not set the shifts (Section~\ref{sec:move}).
-\item A formula for any combination of shifts, by Fox calculus, with twisted
-  winding numbers in place of winding numbers, a checkerboard rule for any
-  combination, and a proof that winding numbers alone do not determine the
-  shifts (Section~\ref{sec:fox}); \emph{combs}, which make every certificate
-  of a conflict a sum of local dislocations and settle a conjecture of an
-  earlier draft (Section~\ref{sec:combs}).
-\item A lower bound on the number of helices any quantization leaves among a
-  set of turns, the transversal number of its minimal conflicting sets, with
-  chains of dislocations as a corollary, computed exactly or within
-  certified intervals on the human body and compared with the engine; and a
-  proof that choosing the turns to close is NP-hard, with the approximation
-  bounds of vertex cover (Section~\ref{sec:forced}).
-\item An exact look at whole lengths: the balances are the incidence matrix
-  of a bidirected graph, whose free arcs parametrize the lattice of balanced
-  lengths; whole lengths closing nearly all rings exist but cost too much
-  deviation, and the turns, not the rounding, decide what closes
-  (Section~\ref{sec:whole}).
-\item Machine-checked proofs, in Lean with Mathlib, of the algebraic and
-  combinatorial cores of Sections~\ref{sec:turns} and~\ref{sec:obstructions}
-  to~\ref{sec:forced},
-  with the topological facts as explicit hypotheses; they found a few gaps,
-  corrected here, and show what holds for other rotation orders
+  of the target lengths, an integer search, repair walks judged on the
+  turns, rounds of cuts on the strips of the mesh, and a choice among
+  candidates by the share of spiral edges, with safeguards on folds,
+  distortion and budget (Section~\ref{sec:closing}); measured on a bench
+  that holds the result against open-source remeshers and a mesh modelled by
+  hand (Section~\ref{sec:experiments}).
+\item A share of spiral edges that tells helices of pitch up to four from
+  closed, open and border loops (Section~\ref{sec:measure}); loop counts and
+  loop simplicity scores exist~\cite{liu2025quadgpt,kong2026squadgen}, but
+  they do not separate helices from open loops.
+\item Obstructions to closing, read on turns: the shift of a turn is the
+  Burgers vector of the singularities on one side, in the order of first
+  visit of a cutting tree; a pair of valences three and five, or two
+  vertices of equal valence exchanged, joined by a staircase of arcs between
+  two turns, forces one of them to be shifted; a separatrix that winds once
+  round and stops beside its own vertex does the same to a single turn; a
+  checkerboard rule gives the parity of the shift between two turns, and on a
+  closed sphere the shift of every turn has the parity of its length, at all
+  balanced lengths; \emph{combs} write every certificate of a conflict on
+  the body as local dislocations (Section~\ref{sec:obstructions}). Holonomy,
+  Burgers vectors, dislocations as pairs of disclinations, the parity of
+  cycles of quadrangulations and the Fox calculus are classical; their
+  statements in terms of turns, staircases and combs are ours.
+\item A lower bound on the number of turns of a family that every
+  quantization within given bounds leaves shifted, by disjoint infeasible
+  sets, with chains of dislocations as a corollary, computed exactly or
+  within certified intervals on a human body and compared with the engine
+  (Section~\ref{sec:forced}). The bound is the packing bound of a minimum
+  cover of irreducible infeasible subsystems, a known notion; its use for
+  helices is new. Choosing the turns to close is NP-hard: known for maximum
+  feasible subsystems in general, shown here for the restricted instances of
+  quantization (bidirected balances, bounds $0$ and $1$).
+\item An exact look at whole lengths on the same body: the turns, not the
+  rounding, decide what closes (Section~\ref{sec:whole}).
+\item Machine-checked proofs, in Lean~4~\cite{demoura2021lean4} with
+  Mathlib~\cite{mathlib2020}, of the algebraic and combinatorial cores of
+  the proofs, with the topological facts as explicit hypotheses
   (Section~\ref{sec:lean}).
 \end{enumerate}
 The results are preliminary: single runs except where three budgets are
@@ -188,9 +179,9 @@ precisely an edge loop that does not close: the helices of this note.
 \paragraph{Closed trajectories.}
 A quadratic differential all of whose non-critical horizontal trajectories
 are closed is a Jenkins--Strebel differential~\cite{strebel1984quadratic};
-the complement of its critical graph is a union of flat cylinders, each
-with a height and a \emph{twist}, the shift with which the cylinder is glued
-back after a cut along its core curve. In a quad mesh, a ring of quads is
+the complement of its critical graph is a union of flat cylinders (ring
+domains), each with a circumference and a height; we call \emph{twist} the
+shift with which a cylinder is glued back after a cut along its core curve. In a quad mesh, a ring of quads is
 such a cylinder; a helix is a cylinder whose gluing is shifted by a whole
 number of rows. Section~\ref{sec:turns} makes this precise at the level of a
 T-mesh.
@@ -202,7 +193,7 @@ characterize the metrics that arise this way by four conditions:
 Gauss--Bonnet, rotational holonomy in multiples of a quarter-turn,
 alignment with the border, and a \emph{finite geodesic lamination}: the
 straight lines of the field are finite loops. On a surface of genus zero
-the holonomy condition follows from Gauss--Bonnet (their Lemma~3.9). The
+the holonomy condition follows from Gauss--Bonnet (Lemma~3.9 of the arXiv version of~\cite{chen2019metric}). The
 translational part of the holonomy is not discussed, and the finiteness
 condition is assumed, not constructed. Lei et
 al.~\cite{lei2023crossfields} show that the singularity configurations of
@@ -213,8 +204,8 @@ three and one of valence five.
 \paragraph{Dislocations.}
 Izmestiev et al.~\cite{izmestiev2013torus} give geometric proofs of such
 non-existence results, among them the torus with one vertex of valence three
-and one of valence five, first proved combinatorially by Barnette, Jucovi\v{c}
-and Trenkler in 1971 (as cited there). Their tool is the holonomy of the
+and one of valence five, proved combinatorially by Barnette, Jucovi\v{c}
+and Trenkler~\cite{barnette1971toroidal}. Their tool is the holonomy of the
 developing map of the flat metric, a rigid motion per loop. When the
 rotation of a loop is the identity, its translation is the \emph{Burgers
 vector} of crystallography; two opposite cone points at distinct positions
@@ -232,20 +223,29 @@ remove them greedily with \emph{grid-preserving operators}: closed dual
 paths of shift and collapse steps, found by a graph search, that keep the
 mesh all-quad and its singularities in place. Tangential smoothing then
 repairs the distortion the shifts introduce. Their experiments remove most
-helices (from 19--52 down to 1--23 per model) and coarsen the base complex
-accordingly. They note that aligning pairs of singularities directly in the
-parametrization, as Myles et al.\ do for T-meshes~\cite{myles2010feature},
-is ambiguous to automate. The approach works on a finished mesh; it does not
-touch the parametrization or its quantization.
+helices (from 17--52 down to 1--23 per model) and coarsen the base complex
+accordingly. They note that choosing the pairs of singularities to align
+directly in the parametrization, as Myles et al.\ do for
+T-meshes~\cite{myles2010feature}, is often complicated or even ambiguous to
+automate. The approach works on a finished mesh; it does not
+touch the parametrization or its quantization. The closest prior work after
+it is that of Razafindrazaka and Polthier~\cite{razafindrazaka2017optimal},
+who start from a finished quad mesh and replace its base complex by an
+optimal one, found as a perfect matching on a graph over its singular
+vertices; they note that the operators of~\cite{bommes2011structure} leave
+some spirals. Like those operators, this works after meshing, not in the
+quantization.
 
 \paragraph{T-mesh quantization.}
-Integer-grid maps~\cite{bommes2009miq} and their quantization decide the
-integer structure of a quad mesh. Campen et al.\ quantize via the
+Mixed-integer quadrangulation~\cite{bommes2009miq} and integer-grid
+maps~\cite{bommes2013igm} decide the integer structure of a quad mesh in
+their quantization. Campen et al.\ quantize via the
 integer lengths of the arcs of a T-mesh traced in a seamless
 parametrization~\cite{campen2015qgp}. Lyon et al.\ solve a constrained
 version as an integer linear program, bounding the directional deviation of
-the separatrices of the resulting layout~\cite{lyon2021constrained} (we
-could only read the abstract). Heistermann et al.\ cast quantization as a
+the separatrices of the resulting layout~\cite{lyon2021constrained}, and
+require, as openclare does, that the quantization keep singularities apart.
+Heistermann et al.\ cast quantization as a
 minimum-deviation flow on a bi-directed graph and give a fast approximate
 solver and an exact refinement~\cite{heistermann2023bimdf}; openclare
 follows their formulation. To our knowledge none of these constrains the
@@ -270,11 +270,12 @@ Myles et al.~\cite{myles2014robust} trace the field into a partition into
 quadrilateral patches and adjust the layout until its lengths are
 consistent; Pietroni et al.~\cite{pietroni2016tracing} select traced
 separatrices by a binary linear program; Razafindrazaka et
-al.~\cite{razafindrazaka2015perfect,razafindrazaka2017optimal} obtain a
-layout as a minimum-weight perfect matching on a graph of the singularities.
-Campen surveys these methods~\cite{campen2017survey}. They build coarse
-layouts; whether the dense mesh made from the layout spirals is, as far as
-the abstracts we read state, not among their criteria.
+al.~\cite{razafindrazaka2015perfect} obtain a layout as a minimum-weight
+perfect matching on a graph of the singularities. Campen surveys these
+methods~\cite{campen2017survey}. Except for the parametrization
+of~\cite{myles2014robust}, they build coarse layouts; whether a dense mesh
+made from the layout spirals is, as far as we read, not among their
+criteria.
 
 \paragraph{Lower bounds.}
 We found no result that bounds from below the number of helices of a quad
@@ -284,19 +285,31 @@ Strebel's existence of Jenkins--Strebel differentials with prescribed
 cylinders on a fixed Riemann surface~\cite{strebel1984quadratic}, the
 non-existence results above~\cite{izmestiev2013torus,lei2023crossfields},
 and the finiteness condition of~\cite{chen2019metric}, which the open
-problem of~\cite{lei2020quartic} asks to guarantee.
+problem of~\cite{lei2020quartic} asks to guarantee. Our bound is a minimum
+cover of irreducible infeasible subsystems, a classical notion of linear
+feasibility~\cite{parker1996iis,amaldi2003maxfs}, applied to the shifts of
+turns (Section~\ref{sec:forced}).
 
 \paragraph{Loops by construction.}
 Dual loops meshing~\cite{campen2012dual} builds a layout from loops traced
 on the surface, which close by construction; it produces coarse layouts
-rather than dense field-aligned meshes.
+rather than dense field-aligned meshes. Lei et al.~\cite{lei2017foliation}
+build quad meshes from a Strebel differential with prescribed cylinders, so
+that every trajectory closes, and skeleton-guided
+layouts~\cite{usai2015skeleton} close the loops round limbs by design. Both
+produce coarse layouts, and neither starts from a given cross field and
+singularity configuration.
 
 \paragraph{Measuring loops.}
 QuadGPT~\cite{liu2025quadgpt} counts \emph{quad rings} (closed loops of
 faces) and \emph{quad lines} (open strips) and uses the share of faces in
 rings and the mean length of lines as reward signals for preference
 optimization; it does not report them as evaluation metrics, nor does it
-tell spirals from open lines.
+tell spirals from open lines. SQuadGen~\cite{kong2026squadgen} scores the
+face loops and edge loops of a layout by their self-intersections and their
+rotation index (the total curvature of the loop, projected on a best-fit
+plane, over $2\pi$), and reports the area share of simple loops; it does not
+tell helices from open loops either.
 
 \section{Turns of a T-mesh}\label{sec:turns}
 
@@ -366,6 +379,13 @@ patches. Closing constraints $\shift_\gamma(\ell) = 0$ describe the strips
 of the mesh only together with the corridor inequalities of $\gamma$, which
 the engine of Section~\ref{sec:closing} does not impose
 (Sections~\ref{sec:whole} and~\ref{sec:choosing} measure what this costs).
+
+The shift is the across component of the translational holonomy of the
+flat metric along the turn (Section~\ref{sec:holonomy}), which is linear in
+the lengths as any period of a flat cone
+metric~\cite{thurston1998shapes,veech1993flat}, and for a ring of quads it
+is the twist of a cylinder. What is specific here is its expression in the
+arc lengths of a T-mesh, as a constraint of the quantization.
 
 The component of $T_\gamma(\ell)$ along the walking direction is the
 \emph{length} $\alpha_\gamma(\ell)$ of the turn, the distance walked before
@@ -817,7 +837,9 @@ bound an annulus $A$, then $\sum_{c \in A} (4 - k(c)) = 0$.
 \end{lemma}
 
 \begin{proof}
-For a region of a flat surface with cone points, bounded by straight
+This is the discrete Gauss--Bonnet count, standard in quad
+meshing~\cite{bommes2013survey}, applied to the curve of a turn. For a
+region of a flat surface with cone points, bounded by straight
 segments, Gauss--Bonnet reads $\sum_c \kappa_c + \sum_i \theta_i =
 2\pi\chi$, where $\kappa_c$ are the curvatures of the cone points inside and
 $\theta_i$ the turning angles at the corners of the border. The curve
@@ -970,7 +992,14 @@ vertices have total index zero by Lemma~\ref{lem:gauss}, gives the sum.
 
 The simplest configuration between two parallel turns is a pair of
 singular vertices of valences three and five, the defect that lets the number
-of edges round a limb change. It is a dislocation of the grid.
+of edges round a limb change. It is a dislocation of the grid. That a pair
+of opposite disclinations is a dislocation, with a Burgers vector of length
+$2\sin(\Omega/2)$ times their separation for a rotation $\Omega$, is
+classical in the theory of crystal
+defects~\cite[Eq.~(5)]{kleman2008disclinations}; on a quad mesh $\Omega =
+\pi/2$, and on a triangle mesh a pair of valences five and seven is the
+elementary dislocation of graphene~\cite{yazyev2010graphene}. What follows
+reads it on the shifts of two turns.
 
 \begin{proposition}[A dislocation between two turns]\label{prop:dislocation}
 In the setting of Proposition~\ref{prop:burgers}(b), let the annulus $A$ hold
@@ -1140,6 +1169,9 @@ before and after the change.
 
 Part (a) also follows directly from the bipartite graph: either border of a
 ring is a cycle of the quad graph with as many edges as the ring has quads.
+It is the classical bipartiteness of quadrangulations of the sphere; more
+generally, homologous cycles of a quadrangulation have the same
+parity~\cite[Lemma~3.1]{kaiser2015colouring}.
 The proposition is consistent with the earlier statements and refines them.
 For a turn whose curve bounds a disc $D$, the argument of the checkerboard
 rule applied to Proposition~\ref{prop:burgers}(a) shows that both components
@@ -1178,7 +1210,8 @@ $\Sigma^\circ$, none bounding a disc with fewer than two singular vertices
 (Lemma~\ref{lem:gauss}). On a closed surface of genus zero with $n$ singular
 vertices there are at most $n - 3$ such curves pairwise non-homotopic, the
 number of curves of a decomposition of the $n$-punctured sphere into pairs of
-pants; disjoint homotopic ones bound an annulus without singular vertex and
+pants, the classical bound on the number of cylinders of a Jenkins--Strebel
+differential~\cite{strebel1984quadratic}; disjoint homotopic ones bound an annulus without singular vertex and
 share their shift by Proposition~\ref{prop:burgers}(c). The rings of a
 quad mesh that do not cross therefore fall into at most $n - 3$ cylinders,
 the cylinders of the Jenkins--Strebel picture, and their closing conditions
@@ -1699,6 +1732,14 @@ linearly to the group ring; its values are the integer matrices $a_0 I + a_1 R
 + a_2 R^2 + a_3 R^3$, and the augmentation $\epsilon$ maps such an element to
 $a_0 + a_1 + a_2 + a_3$, the sum of the coefficients of the group ring element.
 
+The first identity below is the defining property of the Fox derivatives
+for a crossed homomorphism of the free group~\cite{fox1953free}, applied to
+the translation part of the holonomy, with $\tau(\lambda_i) = (I -
+R_i)p_i$; the developed positions of the cone points are, up to a common
+motion, the twisted-cohomology coordinates of the flat
+metric~\cite{thurston1998shapes,veech1993flat}. What is new is its reading
+on combinations of turns.
+
 \begin{proposition}[Fox--Burgers formula]\label{prop:fox}
 For every word $w$ of $F$,
 \[
@@ -1810,6 +1851,11 @@ points still gives the parity when every curve lies in a planar region
 without border, and in general $\sum_r u_r(\alpha_{\gamma_r} +
 \shift_{\gamma_r}) \equiv \sum_r u_r\, \Omega_\ell([\bar\gamma_r])$
 (Theorem~\ref{thm:parity-any}).
+
+As in the theory of crystal defects, whose group of defects is not
+commutative~\cite{kleman2008disclinations}, and as in the commutator
+argument of Izmestiev et al.~\cite[\S7]{izmestiev2013torus}, winding numbers
+do not determine the holonomy:
 
 \begin{proposition}[Winding numbers do not suffice]\label{prop:commutator}
 Let $c_a$, $c_b$ be singular vertices of odd valence developed at distinct
@@ -2191,6 +2237,12 @@ Jerry; the sides that are not discs have total index $0$ (one border) or $-4$
 vertex; on Bob those holding the handle have $-4$, on part $-4$ and $-12$
 (measured).
 
+For positive lengths the homomorphism of the next theorem is the cycle
+parity of the quad graph, a $\Z/2$-homology invariant of any
+quadrangulation~\cite[Lemma~3.1]{kaiser2015colouring} (see
+also~\cite{archdeacon2001chromatic}); the theorem extends it to the shifts
+and lengths of turns at all balanced lengths, borders included.
+
 \begin{theorem}[Parity of a turn on any surface]\label{thm:parity-any}
 Let $\ell$ be whole and balanced. There is a homomorphism
 $\Omega_\ell\colon H_1(\Sigma; \Z/2) \to \Z/2$ such that for every turn
@@ -2319,12 +2371,15 @@ pairs of simple turns crossing once, and in none of $90$ trials with the order
 shuffled (measured). With a single pair of valences three and five the sum is
 $(I - R^{\pm1})(p_5 - p_3)$: a torus with two turns crossing once must develop
 the two cone points onto one point. That no such torus exists at all is the
-theorem of Barnette, Jucovi\v{c} and Trenkler (Section~\ref{sec:related}); it
+theorem of Barnette, Jucovi\v{c} and
+Trenkler~\cite{barnette1971toroidal}; it
 also follows from Abel's theorem, the quartic differential $(dz)^4$ of the
 flat metric having the divisor $c_5 - c_3$, which is principal on an elliptic
-curve only if $c_5 = c_3$. The obstruction is to existence, not to closing,
-and we did not complete an elementary proof of it from
-Proposition~\ref{prop:torus}. The conflict actually met on Bob is of another
+curve only if $c_5 = c_3$. The obstruction is to existence, not to closing.
+Proposition~\ref{prop:torus} with $j = 0$ is the commutator argument
+discussed by Izmestiev et al.~\cite[\S7]{izmestiev2013torus}: it excludes a
+3,5-quadrangulation of the torus with two turns crossing once, but not one
+whose handle loops rotate, which their Holonomy Theorem handles. The conflict actually met on Bob is of another
 kind: two turns that wind three and two times round the same handle, whose
 shifts carry its period with the coefficients $3$ and $2$; the combination
 $3\shift_{33} - 2\shift_{31}$ cancels the period and equals, modulo the
@@ -2363,7 +2418,9 @@ a pair joined along a line parallel to the turns always forces a helix.
 Staircases have three directions, two that climb and one along which the form
 of the shift difference vanishes. There is no parity: $1 - \zeta$ is a unit.
 When every singular vertex has even valence the rotations have order three and
-the congruence modulo $(1 - \omega)^2 = -3\omega$ gives, on a closed sphere,
+the congruence modulo $(1 - \omega)^2 = -3\omega$ (compare Lemma~11
+of~\cite{izmestiev2013torus}, on holonomy of order three) gives, on a closed
+sphere,
 $\alpha \equiv \shift \pmod 3$; every ring has a length divisible by three, as on
 subdivided octahedra (rings of $3n$ edges), while on subdivided icosahedra rings
 of $5n$ edges take every residue (measured). Whether a rule modulo three holds
@@ -2413,7 +2470,12 @@ all eight systems; in way 2, 958 arcs have signs $+/-$, 557 have $-/-$ and
 554 have $+/+$). In the language of signed graphs, $B$ is the incidence
 matrix of a \emph{bidirected graph} $G$ whose nodes are the balance equations
 and whose edges are the arcs; an arc on a border of the surface has a single
-entry, a half-edge of $G$. Call a cycle of $G$ \emph{balanced} if values
+entry, a half-edge of $G$. Bidirected graphs are the setting
+of~\cite{heistermann2023bimdf}; the rank of their incidence matrices and the
+circuits of the associated matroid are due to
+Zaslavsky~\cite{zaslavsky1982signed}, and integer flows are generated by
+circuits~\cite{chen2009flow}. Proposition~\ref{prop:free} below makes a
+lattice basis explicit. Call a cycle of $G$ \emph{balanced} if values
 $\pm1$ on its edges have a zero balance at each of its nodes, and
 \emph{unbalanced} otherwise.
 
@@ -2837,6 +2899,15 @@ enough for the engine; in general there is none, unless P${}={}$NP. Call
 \RC{} the problem: given the balances $B$, bounds $b$, a set
 $H$ of linear forms (the shifts) and a number $k$, are there lengths in $P =
 \{\ell : B\ell = 0,\ \ell \ge b\}$ that close at least $k$ forms of $H$?
+Choosing the most equations of a linear system that hold together, some
+constraints being mandatory, is the maximum feasible subsystem problem,
+NP-hard and hard to approximate in general~\cite{amaldi1995complexity};
+minimum covers of irreducible infeasible subsystems are strongly NP-hard
+already for network flow systems~\cite{joormann2015flowiis}. The theorem
+shows that the hardness survives the special structure of quantization:
+balances of a bidirected graph, bounds $0$ and $1$, forms with coefficients
+$0$ and $1$; the general case is known, this restricted case is new as far
+as we found.
 
 \begin{theorem}[Choosing the turns is NP-hard]\label{thm:nphard}
 \RC{} is NP-complete, in real or in whole lengths, already when
@@ -2845,7 +2916,7 @@ and the forms have coefficients $0$ or $1$; it is strongly NP-hard, and stays
 NP-hard with a cap on the deviation, which may be loose. Moreover
 $\tau_P(H)$ can equal the vertex cover number of any graph, with $|H|$ its
 number of vertices. So it cannot be approximated within $\sqrt2 - \varepsilon$
-unless P${}={}$NP~\cite{khot2017independent,khot2018grassmann}, nor within
+unless P${}={}$NP~\cite{khot2017independent,dinur2018towards,dinur2018nonoptimally,khot2018grassmann}, nor within
 $2 - \varepsilon$ if the unique games conjecture holds~\cite{khot2008vertex},
 and the largest closable subset of $H$ cannot be approximated within
 $|H|^{1-\varepsilon}$ unless P${}={}$NP~\cite{hastad1999clique,zuckerman2007linear}.
@@ -3280,8 +3351,8 @@ but not rerun as they stand. The Lean proofs are in
 
 \section*{AI assistance}
 This note and the software it describes were made by a human author working
-with an AI system. Following the practice recommended by ACM and by Nature,
-we state how the work was divided. No AI system is an author of this note.
+with an AI system. We state how the work was divided. No AI system is an
+author of this note.
 
 \paragraph{The human author} chose the problem and its aims: edge loops that
 close into rings, the quad sphere with the eight poles of a cube as a target,
