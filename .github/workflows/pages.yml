@@ -1,0 +1,45 @@
+name: pages
+
+# The website (site/): built by site/build.py, its links checked, and
+# published by GitHub Pages (Settings › Pages › Source: GitHub Actions) on
+# every push to main.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deployment at a time; a newer push waits for the one under way.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      # Plain Python, nothing installed: without Pillow the pictures are
+      # copied as they are rather than made WebP, a few hundred kilobytes more.
+      - name: Build
+        run: python3 site/build.py
+      - name: Check the links
+        run: python3 site/check_links.py
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site/_build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
