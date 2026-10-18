@@ -1180,6 +1180,13 @@ struct Fields {
     quads: f64,
 }
 
+/// Longest edge of the work mesh for the edge of a quad, where the quads are
+/// smaller than its triangles.
+const WORK_EDGE_PER_QUAD: f64 = 1.0;
+/// How many times the triangles it is asked for a work mesh made finer may
+/// have.
+const REFINED_MOST: usize = 2;
+
 /// Preprocessing, sizing, cross field and singularity simplification.
 /// `guides` is given by the chains whose quads may vary in size.
 fn fields(
@@ -1248,6 +1255,7 @@ fn fields(
         curves: guides.map_or(&[], |guides| guides.curves),
         lines: guides.map_or(&[], |guides| guides.lines),
         edge_angle: config.edge_angle,
+        refinement: None,
     };
     let mut work = preprocess::create(preprocess::Kind::Isotropic).preprocess(input, &work_request)?;
     report.working_vertices = work.mesh.positions.len();
@@ -1265,8 +1273,26 @@ fn fields(
             painted: painted_of(input, guides, config.density_contrast),
             quads_around: config.quads_around,
         };
-        work.sizing = sizing::create(sizing::Kind::Curvature).size(&work, &request)?;
+        let sizer = sizing::create(sizing::Kind::Curvature);
+        work.sizing = sizer.size(&work, &request)?;
         clock.lap(report, "sizing");
+        // Where the quads are to be smaller than the triangles of the work
+        // mesh (a thin wall, whose quads are as small as it is thick), the
+        // work mesh is made again, finer there, and the sizes read again on
+        // it: the quads are read off its triangles, which would otherwise
+        // cut through the wall.
+        let lengths: Vec<f64> = work.sizing.iter().map(|factor| WORK_EDGE_PER_QUAD * factor * edge_length).collect();
+        if let Some(refinement) = preprocess::Refinement::new(&work, &lengths, triangles, REFINED_MOST * triangles) {
+            recorder.begin("refinement")?;
+            let finer = preprocess::Request { refinement: Some(&refinement), ..work_request };
+            work = preprocess::create(preprocess::Kind::Isotropic).preprocess(input, &finer)?;
+            report.working_vertices = work.mesh.positions.len();
+            report.feature_edges = work.feature_edges.len();
+            report.guide_gaps = work.guide_gaps;
+            recorder::show_work(recorder, &work);
+            work.sizing = sizer.size(&work, &request)?;
+            clock.lap(report, "refinement");
+        }
         recorder::show_sizing(recorder, &work);
     }
 
