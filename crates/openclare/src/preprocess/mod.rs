@@ -80,6 +80,9 @@ pub struct Request<'a> {
     /// the work mesh, for its shape to stay crisp, without being a crease
     /// to keep at any cost: a line the chain follows if it can.
     pub edge_angle: Option<f64>,
+    /// Where the work mesh is to be finer than `triangles` makes it: see
+    /// [`Refinement`].
+    pub refinement: Option<&'a Refinement>,
 }
 
 impl Default for Request<'_> {
@@ -91,7 +94,93 @@ impl Default for Request<'_> {
             curves: &[],
             lines: &[],
             edge_angle: None,
+            refinement: None,
         }
+    }
+}
+
+/// Where the work mesh is to be finer than the triangles asked for make it,
+/// read off a work mesh made before: a factor, at most 1, on the edge length
+/// of the uniform work mesh.
+///
+/// The quads cannot be smaller than the triangles they are read off: where
+/// the sizing asks for quads as small as a thin wall is thick, triangles
+/// as long as the wall is thick twice over cut through it, and what is
+/// read off them lands inside it.
+pub struct Refinement {
+    mesh: TriMesh,
+    surface: Bvh,
+    factors: Vec<f64>,
+}
+
+impl fmt::Debug for Refinement {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let finer = self.factors.iter().filter(|&&factor| factor < NO_REFINEMENT).count();
+        f.debug_struct("Refinement").field("vertices", &self.factors.len()).field("finer", &finer).finish()
+    }
+}
+
+/// A factor above this changes nothing: an edge is split only once a third
+/// longer than asked, and the uniform edges are about as long as asked.
+const NO_REFINEMENT: f64 = 0.75;
+
+impl Refinement {
+    /// What makes the work mesh `work`, of `triangles` asked for, finer:
+    /// edges no longer than `lengths` at its vertices where that is shorter
+    /// than its own edges, and never more triangles than `most`, past which
+    /// the finest edges are let grow, all alike. `None` where nothing would
+    /// change.
+    pub fn new(work: &WorkMesh, lengths: &[f64], triangles: usize, most: usize) -> Option<Self> {
+        let edge = work.mesh.edge_length_stats().1;
+        if !edge.is_finite() || edge <= 0.0 || lengths.len() != work.mesh.positions.len() {
+            return None;
+        }
+        let factors: Vec<f64> = lengths.iter().map(|&length| (length / edge).clamp(f64::MIN_POSITIVE, 1.0)).collect();
+        if factors.iter().all(|&factor| factor >= NO_REFINEMENT) {
+            return None;
+        }
+        // Triangles go as the inverse square of the edge.
+        let area: f64 = work.areas.iter().sum();
+        let count = |floor: f64| {
+            triangles as f64 * factors.iter().zip(&work.areas).map(|(f, a)| a / f.max(floor).powi(2)).sum::<f64>()
+                / area
+        };
+        let finest = factors.iter().copied().fold(1.0, f64::min);
+        let floor = if count(finest) <= most as f64 {
+            finest
+        } else {
+            let (mut low, mut high) = (finest, 1.0);
+            for _ in 0..40 {
+                let middle = 0.5 * (low + high);
+                if count(middle) > most as f64 { low = middle } else { high = middle }
+            }
+            high
+        };
+        if floor >= NO_REFINEMENT {
+            return None;
+        }
+        let factors = factors.into_iter().map(|factor| factor.max(floor)).collect();
+        Some(Self { mesh: work.mesh.clone(), surface: Bvh::build(&work.mesh), factors })
+    }
+
+    /// The factor at `p`, from the nearest point of the work mesh it was
+    /// read off.
+    pub(crate) fn factor(&self, p: Vec3) -> f64 {
+        let Some(hit) = self.surface.closest_point(p) else { return 1.0 };
+        let corners = self.mesh.triangles[hit.triangle as usize];
+        let [a, b, c] = corners.map(|v| self.mesh.positions[v as usize]);
+        let (ab, ac, ap) = (b - a, c - a, hit.point - a);
+        let (d00, d01, d11, d20, d21) = (ab.dot(ab), ab.dot(ac), ac.dot(ac), ap.dot(ab), ap.dot(ac));
+        let det = d00 * d11 - d01 * d01;
+        let share = if det.abs() < 1e-300 {
+            [1.0, 0.0, 0.0]
+        } else {
+            let v = (d11 * d20 - d01 * d21) / det;
+            let w = (d00 * d21 - d01 * d20) / det;
+            [1.0 - v - w, v, w]
+        };
+        (0..3).map(|k| share[k].clamp(0.0, 1.0) * self.factors[corners[k] as usize]).sum::<f64>()
+            / share.iter().map(|s| s.clamp(0.0, 1.0)).sum::<f64>().max(f64::MIN_POSITIVE)
     }
 }
 
@@ -215,7 +304,7 @@ impl Preprocessor for Isotropic {
         // Remeshing settles within a few per cent of the size asked for;
         // dozens of times that is a surface it cannot tile at that length.
         let most = MOST_TRIANGLES * request.triangles.max(mesh.triangle_count());
-        isotropic::remesh(&mut mesh, &target, edge_length, self.iterations, most);
+        isotropic::remesh(&mut mesh, &target, edge_length, self.iterations, most, request.refinement);
         if !laid.segments.is_empty() || !request.lines.is_empty() || request.edge_angle.is_some() {
             imprint::unpinch(&mut mesh);
         }
