@@ -75,6 +75,9 @@ pub struct Report {
     /// were looked for to bring back onto themselves (DT-062).
     pub turns: usize,
     pub turns_held: usize,
+    /// Share of the edges of the loops of the quad mesh the lengths stand
+    /// for that wind as spirals, where it was counted: when loops are closed.
+    pub spirals: Option<f64>,
 }
 
 impl Report {
@@ -89,6 +92,10 @@ pub struct Quantization {
     /// Per arc of the T-mesh, in quad edges.
     pub lengths: Vec<u32>,
     pub report: Report,
+    /// Where loops were closed, the other lengths that could have been kept,
+    /// the best first (the fewest spirals), and last the lengths found
+    /// without closing any: what to mesh instead if these fold over.
+    pub candidates: Vec<Quantization>,
 }
 
 impl Quantization {
@@ -198,7 +205,7 @@ fn turns_of(
     let found = tubes::turns(tmesh, 4, offsets, longest * side);
     let (mut every, mut held) = (Vec::new(), Vec::new());
     let mut same_way: std::collections::HashSet<Vec<(usize, i64)>> = std::collections::HashSet::new();
-    let mut same_shift = std::collections::HashSet::new();
+    let mut same_ring = std::collections::HashSet::new();
     let debug = std::env::var_os("OPENCLARE_DEBUG_TURNS").is_some();
     for turn in found {
         let shift = tubes::value(&turn.shift, real);
@@ -229,12 +236,22 @@ fn turns_of(
         if !same_way.insert(key) {
             continue;
         }
-        if shift.abs() > TURN_SHIFT && same_shift.insert((shift.abs() * 1e4).round() as i64) {
+        // The same ring found again, from another rectangle or the other
+        // way round, has the same shift up to its sign; two rings that merely
+        // shift as much (a left and a right limb) are both held (DT-065).
+        if shift.abs() > TURN_SHIFT && same_ring.insert(ring(&turn.shift)) {
             held.push(turn.clone());
         }
         every.push(turn);
     }
     (every, held)
+}
+
+/// A shift as a key that is the same for the shift taken the other way:
+/// its whole coefficients, the first made positive.
+fn ring(shift: &tubes::Expression) -> Vec<(usize, i64)> {
+    let sign = shift.first().map_or(1.0, |&(_, c)| c.signum());
+    shift.iter().map(|&(arc, c)| (arc, (sign * c).round() as i64)).collect()
 }
 
 /// Prints where each turn of `every` that `x` leaves shifted starts, and
@@ -682,7 +699,9 @@ impl Quantizer for WalkCancelling {
                 tmesh.patches.len()
             );
         }
-        let (x, scale, quads, lower) = if close {
+        // The lengths kept, the fewest spirals first, each with its spirals
+        // and the turns it held; the plain lengths last.
+        let kept: Vec<(Lengths, Option<f64>, usize)> = if close {
             let spirals_of = |x: &[i64]| -> f64 {
                 let lattice = lattice::build(tmesh, x).lattice;
                 let mesh = crate::mesh::PolyMesh {
@@ -725,10 +744,10 @@ impl Quantizer for WalkCancelling {
             if std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some() {
                 eprintln!("plain lengths: {} folds crossed, off them by {:.2}", folds.len(), off_folds(&plain.0));
             }
-            let mut best = (spirals_of(&plain.0), plain);
+            let plain_spirals = spirals_of(&plain.0);
             // Lengths that leave the structure broken are not mended by
             // closing loops, and each way would cost as long a search again.
-            let sound = best.0.is_finite() && lattice::build(tmesh, &best.1.0).defects(tmesh).is_empty();
+            let sound = plain_spirals.is_finite() && lattice::build(tmesh, &plain.0).defects(tmesh).is_empty();
             // The least change of the real lengths that closes turns, its
             // part for the rectangles solved once for every way.
             let weight: Vec<f64> = real.iter().map(|length| 1.0 / (length + 1.0)).collect();
@@ -760,8 +779,8 @@ impl Quantizer for WalkCancelling {
                 ways.push(((offsets, lean, longest), found, held));
             }
             // Each way searched on a core of its own, then, if its lengths
-            // could be kept, closed by cuts a few rounds; the one kept is the
-            // same as if they had been searched in turn.
+            // could be kept, closed by cuts a few rounds; the ones kept are
+            // the same as if they had been searched in turn.
             let closing = closing.as_ref();
             let tried: Vec<_> = ways
                 .par_iter()
@@ -805,33 +824,40 @@ impl Quantizer for WalkCancelling {
                     (candidates, own.moves, own.scans)
                 })
                 .collect();
+            // All the lengths with fewer spirals than the plain ones, within the
+            // budget, not too far from the real lengths nor off the folds.
+            let mut kept: Vec<(Lengths, Option<f64>, usize)> = Vec::new();
             for (((offsets, lean, longest), ..), (candidates, moves, scans)) in ways.iter().zip(tried) {
                 report.moves += moves;
                 report.scans += scans;
                 for (round, (spirals, tried, held)) in candidates.into_iter().enumerate() {
                     if std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some() {
                         eprintln!(
-                            "closing from {offsets:?} leaning up to {lean}, {longest} long, round {round}: spirals {:.3} deviation {:.3} quads {} off folds {:.2} (best so far {:.3})",
+                            "closing from {offsets:?} leaning up to {lean}, {longest} long, round {round}: spirals {:.3} deviation {:.3} quads {} off folds {:.2} (plain {:.3})",
                             spirals,
                             deviation(&tried),
                             tried.2,
                             off_folds(&tried.0),
-                            best.0
+                            plain_spirals
                         );
                     }
-                    if spirals < best.0 - 1e-9
+                    if spirals < plain_spirals - 1e-9
                         && tried.2.abs_diff(wanted) <= allowed
                         && deviation(&tried) <= most_deviation
                         && off_folds(&tried.0) <= most_off_folds
+                        && kept.iter().all(|(other, ..)| other.0 != tried.0)
                     {
-                        report.turns_held = held;
-                        best = (spirals, tried);
+                        kept.push((tried, Some(spirals), held));
                     }
                 }
             }
-            best.1
+            // The fewest spirals first; of equal ones, the way tried first.
+            kept.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+            kept.truncate(1 + MORE_CANDIDATES);
+            kept.push((plain, Some(plain_spirals), 0));
+            kept
         } else {
-            plain
+            vec![(plain, None, 0)]
         };
         if std::env::var_os("OPENCLARE_DEBUG_WORK").is_some() {
             eprintln!(
@@ -841,25 +867,52 @@ impl Quantizer for WalkCancelling {
                 process_cpu_seconds() - cpu_start
             );
         }
-        report.scale = scale;
-        report.quads = quads;
-        report.budget_error = request.quads.map(|wanted| quads.abs_diff(wanted) as f64 / wanted as f64);
-        report.balanced = network.is_balanced(&x);
-        let built = lattice::build(tmesh, &x);
-        report.separated &= built.defects(tmesh).is_empty() && built.euler() == tmesh.report.euler;
-        report.zero_arcs = x.iter().filter(|&&length| length == 0).count();
-        report.held_arcs = lower.iter().zip(&x).filter(|&(&bound, &length)| bound > 0 && length == bound).count();
-        let deviations: Vec<f64> =
-            x.iter().zip(&exact).map(|(&length, real)| (length as f64 - scale * real).abs()).collect();
-        report.deviation_mean = deviations.iter().sum::<f64>() / arcs.max(1) as f64;
-        report.deviation_max = deviations.iter().fold(0.0, |a, &b| a.max(b));
-
-        let quantization = Quantization { lengths: x.iter().map(|&length| length as u32).collect(), report };
-        let collapsed = quantization.patch_sizes(tmesh).iter().filter(|size| size[0] == 0 || size[1] == 0).count();
-        Ok(Quantization { report: Report { collapsed_patches: collapsed, ..quantization.report }, ..quantization })
+        let mut kept = kept.into_iter().map(|((x, scale, quads, lower), spirals, held)| {
+            let report = Report { turns_held: held, spirals, ..report.clone() };
+            finished(tmesh, &network, &exact, request, &x, scale, quads, &lower, report)
+        });
+        let first = kept.next().expect("the plain lengths are always kept");
+        Ok(Quantization { candidates: kept.collect(), ..first })
     }
 }
 
+/// The lengths `x` at `scale`, making `quads`, with the arcs `lower` held
+/// from vanishing, and what they achieve added to `report`.
+#[allow(clippy::too_many_arguments)]
+fn finished(
+    tmesh: &TMesh,
+    network: &Network,
+    exact: &[f64],
+    request: &Request,
+    x: &[i64],
+    scale: f64,
+    quads: usize,
+    lower: &[i64],
+    mut report: Report,
+) -> Quantization {
+    let arcs = x.len();
+    report.scale = scale;
+    report.quads = quads;
+    report.budget_error = request.quads.map(|wanted| quads.abs_diff(wanted) as f64 / wanted as f64);
+    report.balanced = network.is_balanced(x);
+    let built = lattice::build(tmesh, x);
+    report.separated &= built.defects(tmesh).is_empty() && built.euler() == tmesh.report.euler;
+    report.zero_arcs = x.iter().filter(|&&length| length == 0).count();
+    report.held_arcs = lower.iter().zip(x).filter(|&(&bound, &length)| bound > 0 && length == bound).count();
+    let deviations: Vec<f64> =
+        x.iter().zip(exact).map(|(&length, real)| (length as f64 - scale * real).abs()).collect();
+    report.deviation_mean = deviations.iter().sum::<f64>() / arcs.max(1) as f64;
+    report.deviation_max = deviations.iter().fold(0.0, |a, &b| a.max(b));
+
+    let quantization =
+        Quantization { lengths: x.iter().map(|&length| length as u32).collect(), report, candidates: Vec::new() };
+    let collapsed = quantization.patch_sizes(tmesh).iter().filter(|size| size[0] == 0 || size[1] == 0).count();
+    Quantization { report: Report { collapsed_patches: collapsed, ..quantization.report }, ..quantization }
+}
+
+/// Lengths kept besides those with the fewest spirals, to mesh instead if
+/// those fold over (before the plain lengths, always kept last).
+const MORE_CANDIDATES: usize = 2;
 /// A way round that comes back more than this beside itself, in quad edges,
 /// and no more than a share of its way round (beyond, it goes round
 /// singularities rather than a part), is held to come back onto itself.
@@ -975,4 +1028,69 @@ fn count_quads(tmesh: &TMesh, x: &[i64]) -> usize {
             (size[0] * size[1]) as usize
         })
         .sum()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::mesh::primitives;
+    use crate::{crossfield, preprocess, tmesh};
+
+    /// The T-mesh of a cube with quads of side 0.1.
+    fn cube() -> TMesh {
+        let request = preprocess::Request { triangles: 8000, crease_angle: Some(30.0), ..Default::default() };
+        let work = preprocess::create(preprocess::Kind::Isotropic).preprocess(&primitives::cube(8), &request).unwrap();
+        let field = crossfield::create(crossfield::Kind::Power)
+            .solve(&work, &crossfield::Request { alignment: 0.0, ..Default::default() })
+            .unwrap();
+        let request = tmesh::Request { edge_length: 0.1 };
+        tmesh::create(tmesh::Kind::Motorcycle).build(&work, &field, &request).unwrap().tmesh
+    }
+
+    /// Two copies of `one` side by side in one T-mesh, exactly alike.
+    fn twice(one: &TMesh) -> TMesh {
+        let (nodes, arcs, patches, traces) =
+            (one.nodes.len() as u32, one.arcs.len() as u32, one.patches.len() as u32, one.traces.len() as u32);
+        let mut out = one.clone();
+        out.nodes.extend(
+            one.nodes.iter().map(|node| tmesh::Node {
+                arcs: node.arcs.iter().map(|half| half + 2 * arcs).collect(),
+                ..node.clone()
+            }),
+        );
+        out.arcs.extend(one.arcs.iter().map(|arc| tmesh::Arc {
+            nodes: arc.nodes.map(|node| node + nodes),
+            patches: arc.patches.map(|patch| patch + patches),
+            trace: arc.trace + traces,
+            ..arc.clone()
+        }));
+        out.patches.extend(one.patches.iter().map(|patch| tmesh::Patch {
+            boundary: patch.boundary.iter().map(|half| half + 2 * arcs).collect(),
+            ..patch.clone()
+        }));
+        out.traces.extend(one.traces.iter().cloned());
+        out
+    }
+
+    #[test]
+    fn two_rings_alike_are_both_held() {
+        let one = cube();
+        let both = twice(&one);
+        // Lengths a little off, the same on both copies, for the belts
+        // round each cube to come back beside themselves by as much.
+        let real: Vec<f64> = both
+            .arcs
+            .iter()
+            .enumerate()
+            .map(|(arc, a)| a.length * (1.0 + 0.02 * (Rng::new((arc % one.arcs.len()) as u64).next_f64() - 0.5)))
+            .collect();
+        let (_, held) = turns_of(&both, &real, &[0.5], 0.05, 6.0);
+        let first = held.iter().filter(|turn| turn.patch < one.patches.len()).count();
+        let second = held.len() - first;
+        assert!(first > 0, "no belt round the cube held");
+        assert_eq!(first, second, "the belts of one cube crowd out those of the other");
+        // The same belt from another face, or the other way round, is the
+        // same ring: three belts round a cube.
+        assert_eq!(first, 3);
+    }
 }
