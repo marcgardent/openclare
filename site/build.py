@@ -16,6 +16,9 @@ Sources:
 - CREDITS.md: who made each model, and which licences forbid passing a model
   on. The pictures of those models are left out of the site.
 
+Every page but the glossary links the first use of each term of the
+glossary to its entry, the definition in the link's title.
+
     python3 site/build.py [--out DIR]
 """
 
@@ -27,6 +30,7 @@ import posixpath
 import re
 import shutil
 import sys
+import unicodedata
 from pathlib import Path
 
 SITE = Path(__file__).resolve().parent
@@ -279,6 +283,239 @@ MODEL_PATTERNS_FR = [
 KINDS_FR = {"organic": "organique", "mechanical": "mécanique", "calibration": "d'étalonnage", "extra": "extra"}
 
 
+# ---------------------------------------------------------------- glossary terms
+
+# Every page but the glossary links the first time it uses a term of the
+# glossary to that term's entry. The terms are the bold names of the entries,
+# split at their commas ("Spiral, helix"), with their plurals.
+#
+# Words of the glossary too common to link wherever they stand: either
+# everyday words the pages also use in their everyday sense, or words so
+# general that a link on them would say nothing.
+GENERIC_TERMS = {
+    "en": {
+        "mesh", "meshes", "quad", "quads", "edge", "edges", "vertex", "vertices", "face", "faces", "map", "maps",
+        "field", "fields", "loop", "loops", "way", "ways", "around", "piece", "pieces", "border", "borders",
+        "index", "indices", "cap", "caps", "lean", "wall", "walls", "node", "nodes", "trace", "traces",
+        "station", "stations", "candidate", "candidates", "projection", "projections", "balance", "balances",
+        "confidence", "aspect", "fold", "folds", "seam", "seams", "deviation", "deviations",
+    },
+    "fr": {
+        "maillage", "maillages", "quad", "quads", "arête", "arêtes", "sommet", "sommets", "face", "faces",
+        "champ", "champs", "boucle", "boucles", "variante", "variantes", "pièce", "pièces", "bord", "bords",
+        "indice", "indices", "calotte", "calottes", "inclinaison", "mur", "murs", "nœud", "nœuds", "trace",
+        "traces", "station", "stations", "candidat", "candidats", "projection", "projections", "équilibre",
+        "équilibres", "confiance", "pli", "plis", "couture", "coutures", "écart", "écarts", "portée", "portées",
+        "pas", "genre", "genres", "à grille entière",
+    },
+}
+# Phrases that hold a term in another sense: they are read before the term
+# inside them, and never linked.
+NOT_TERMS = {
+    "en": ["quarter turn", "quarter turns", "half turn", "in turn", "turn into", "turns into", "turn out", "turns out",
+           "turned out", "can turn", "to turn", "will turn", "it turns", "flow turns", "cross turns", "turns by"],
+    "fr": ["quart de tour", "quarts de tour", "demi-tour", "à son tour", "à leur tour", "tour à tour", "le tour",
+           "un tour de", "un tour autour", "fait le tour", "faire le tour", "fait une fois le tour",
+           "tour complet"],
+}
+# Forms the plain rule gets wrong or misses, by the English name of the entry.
+TERM_FORMS = {
+    "en": {},
+    "fr": {
+        "seamless-map": ["paramétrisation à grille entière", "paramétrisations à grille entière"],
+        "t-mesh": ["T-meshes"],
+    },
+}
+PLURALS = {
+    "en": {"helix": "helices", "vertex": "vertices", "separatrix": "separatrices", "index": "indices"},
+    "fr": {"anneau": "anneaux", "patch": "patchs", "t-mesh": "t-mesh", "nœud": "nœuds"},
+}
+FRENCH_LINKS = {"de", "du", "des", "en", "à", "au", "aux", "pour", "qui", "sans"}
+
+
+def term_slug(text):
+    """The anchor of a glossary entry: its first English name, plain ASCII,
+    the same in both languages."""
+    text = re.sub(r"[–—‑]", "-", text)
+    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode().lower()
+    return re.sub(r"[^a-z0-9]+", "-", text).strip("-")
+
+
+def plain_text(markdown):
+    """Markdown of a sentence as plain text, for a title attribute."""
+    text = re.sub(r"!\[[^\]]*\]\([^)]*\)", "", markdown)
+    text = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", text)
+    text = re.sub(r"[*`]", "", text)
+    return " ".join(text.split())
+
+
+def first_sentence(text):
+    """The first sentence of a definition, and the second too when the first
+    says too little alone ("One rectangle of the T-mesh.")."""
+    sentences = re.split(r"(?<=[.!?])\s+(?=[A-ZÀ-ÖØ-Ý«]|openclare\b)", text)
+    short = len(sentences[0]) < 40
+    return " ".join(sentences[:2] if short else sentences[:1])
+
+
+def word_plural(word, language):
+    """The plural of one word, or the word itself where it already reads as
+    one."""
+    lower = word.lower()
+    if lower in PLURALS[language]:
+        return PLURALS[language][lower]
+    if not re.fullmatch(r"[^\W\d_]+(?:[-–][^\W\d_]+)*", word):
+        return word  # LLL, 3/5 and the like
+    if language == "en":
+        if lower.endswith(("ss", "sh", "ch", "x")):
+            return word + "es"
+        if lower.endswith("s"):
+            return word
+        if re.search(r"[^aeiou]y$", lower):
+            return word[:-1] + "ies"
+        return word + "s"
+    if lower.endswith(("s", "x", "z")):
+        return word
+    if lower.endswith(("au", "eu")):
+        return word + "x"
+    return word + "s"
+
+
+def word_singular(word, language):
+    lower = word.lower()
+    for singular, plural in PLURALS[language].items():
+        if lower == plural and singular != plural:
+            return singular
+    if lower.endswith("ss") or not lower.endswith("s") or len(lower) < 4:
+        return word
+    return word[:-1]
+
+
+def phrase_forms(phrase, language):
+    """A name of the glossary, its plural and, for a plural name of several
+    words, its singular. In English only the head noun changes ("ring of the
+    field", "rings of the field"); in French the noun and its adjectives,
+    up to the first preposition."""
+    words = phrase.split(" ")
+    if language == "en":
+        if "for" in words:
+            return [phrase]
+        head = words.index("of") - 1 if "of" in words else len(words) - 1
+        changed = [head]
+    else:
+        changed = []
+        for position, word in enumerate(words):
+            if word.lower() in FRENCH_LINKS or re.match(r"(?i)d['’]", word):
+                break
+            changed.append(position)
+    forms = [phrase]
+    for change in (word_plural, word_singular):
+        if change is word_singular and len(words) == 1:
+            continue
+        other = list(words)
+        for position in changed:
+            other[position] = change(other[position], language)
+        forms.append(" ".join(other))
+    return list(dict.fromkeys(forms))
+
+
+def glossary_entries(text, language):
+    """The entries of a glossary: (anchor, name, names a page may use,
+    first sentence of the definition as plain text), in order."""
+    entries = []
+    for paragraph in re.split(r"\n\s*\n", text):
+        paragraph = " ".join(paragraph.split())
+        match = re.match(r"\*\*(.+?)\*\*(?: \(\*(.+?)\*\))?\. (.+)", paragraph)
+        if not match:
+            continue
+        name, english, definition = match.groups()
+        if language == "en":
+            english = name
+        elif not english:
+            raise SystemExit(f"glossary: the French entry {name!r} gives no English name in (*...*)")
+        anchor = term_slug(english.split(", ")[0])
+        forms = []
+        for variant in name.split(", "):
+            forms += phrase_forms(variant, language)
+        forms += TERM_FORMS[language].get(anchor, [])
+        generic = GENERIC_TERMS[language]
+        forms = [form for form in dict.fromkeys(forms) if form.lower() not in generic]
+        entries.append((anchor, name, forms, first_sentence(plain_text(definition))))
+    return entries
+
+
+def term_pattern(form):
+    """A regular expression for a name as a page may write it: any space,
+    either dash, either apostrophe."""
+    parts = []
+    for character in html.escape(form, quote=False):
+        if character == " ":
+            parts.append(r"(?:\s|&nbsp;| )+")
+        elif character in "-–‑":
+            parts.append("[-–‑]")
+        elif character in "'’":
+            parts.append("(?:'|’|&#x27;|&#39;)")
+        else:
+            parts.append(re.escape(character))
+    return "".join(parts)
+
+
+def term_key(text):
+    text = html.unescape(text).replace(" ", " ").replace("’", "'")
+    text = re.sub(r"[–‑]", "-", text)
+    return " ".join(text.lower().split())
+
+
+class Terms:
+    """The glossary of one language, ready to link the pages."""
+
+    # Text inside these is never linked: headings and the page's own links,
+    # code, the headers of tables, the folded titles, the table of contents.
+    SKIPPED = {"a", "code", "pre", "kbd", "h1", "h2", "h3", "h4", "h5", "h6", "th", "summary", "nav", "aside",
+               "script", "style", "title"}
+
+    def __init__(self, entries, language):
+        self.language = language
+        self.entries = entries
+        self.anchor = {}  # name as matched -> anchor, or None for a phrase never linked
+        self.definition = {}
+        for anchor, name, forms, definition in entries:
+            self.definition[anchor] = definition
+            for form in forms:
+                self.anchor.setdefault(term_key(form), anchor)
+        for phrase in NOT_TERMS[language]:
+            self.anchor[term_key(phrase)] = None
+        names = sorted(self.anchor, key=len, reverse=True)
+        self.pattern = re.compile(
+            r"(?<![\w\-–‑/])(?:" + "|".join(term_pattern(name) for name in names) + r")(?![\w\-–‑/])", re.IGNORECASE
+        )
+
+    def link(self, body, glossary):
+        """`body` with the first use of each term linked to `glossary`#its
+        anchor; the anchors linked, in order."""
+        linked = []
+        parts = re.split(r"(<!--.*?-->|<[^>]+>)", body, flags=re.S)
+        depth = 0
+        for position, part in enumerate(parts):
+            if part.startswith("<"):
+                tag = re.match(r"<(/?)([a-zA-Z][a-zA-Z0-9]*)", part)
+                if tag and tag.group(2).lower() in self.SKIPPED and not part.endswith("/>"):
+                    depth += -1 if tag.group(1) else 1
+                continue
+            if depth > 0 or not part.strip():
+                continue
+
+            def replace(match):
+                anchor = self.anchor.get(term_key(match.group(0)))
+                if anchor is None or anchor in linked:
+                    return match.group(0)
+                linked.append(anchor)
+                title = html.escape(self.definition[anchor])
+                return f'<a class="term" href="{glossary}#{anchor}" title="{title}">{match.group(0)}</a>'
+
+            parts[position] = self.pattern.sub(replace, part)
+        return "".join(parts), linked
+
+
 # ---------------------------------------------------------------- data
 
 def read(path):
@@ -379,6 +616,20 @@ class Site:
         )
         self.pages = []  # (key, language, output path)
         self.warnings = []
+        self.terms = {}
+        for language in LANGUAGES:
+            entries = glossary_entries(read(ROOT / self.glossary_source(language)), language)
+            self.terms[language] = Terms(entries, language)
+        english = [entry[0] for entry in self.terms["en"].entries]
+        french = [entry[0] for entry in self.terms["fr"].entries]
+        if len(set(english)) != len(english):
+            raise SystemExit("glossary: two English entries share an anchor")
+        if english != french:
+            self.warnings.append(
+                "the English and French glossaries do not have the same entries: "
+                + ", ".join(sorted(set(english) ^ set(french)) or ["(same entries, other order)"])
+            )
+        self.linked = {}  # output path -> anchors of the glossary linked on it
 
     def model_order(self, name):
         order = list(GROUPS)
@@ -541,6 +792,10 @@ class Site:
                 credits=f"{REPOSITORY}/blob/{REF}/CREDITS.md", repository=REPOSITORY
             ),
         }
+        if kind != "glossary":
+            glossary = posixpath.relpath(self.page_path("glossary", language), here)
+            body, self.linked[page] = self.terms[language].link(body, glossary)
+            values["body"] = body
         if language == "fr":
             values["body"] = french_spaces(body)
         template = read(SITE / "template.html")
@@ -620,12 +875,39 @@ class Site:
                 key, language, self.title_of(text), body, headings, kind, self.description_of(text), toc=key not in ("index", "results")
             )
 
+    @staticmethod
+    def glossary_source(language):
+        return "docs/GLOSSARY.md" if language == "en" else "docs/GLOSSARY.fr.md"
+
     def glossary(self):
         for language in LANGUAGES:
-            source = "docs/GLOSSARY.md" if language == "en" else "docs/GLOSSARY.fr.md"
+            source = self.glossary_source(language)
             text = self.drop_language_link(read(ROOT / source))
             body, headings = self.render(text, source, self.page_path("glossary", language), language)
+            body = self.entry_anchors(body, language, {identifier for _, _, identifier in headings})
             self.write("glossary", language, self.title_of(text), body, headings, "glossary", self.description_of(text))
+
+    def entry_anchors(self, body, language, taken):
+        """Every entry of the glossary page gets the anchor the other pages
+        link to: the same in English and in French."""
+        entries = iter(self.terms[language].entries)
+        missing = []
+
+        def anchor(match):
+            name = html.unescape(re.sub(r"<[^>]+>", "", match.group(1)))
+            for entry in entries:
+                if entry[1] == name:
+                    if entry[0] in taken:
+                        raise SystemExit(f"glossary: the anchor {entry[0]} of {name!r} is also a heading's")
+                    return f'<p id="{entry[0]}" class="entry"><strong>{match.group(1)}</strong>'
+                missing.append(entry[1])
+            return match.group(0)
+
+        body = re.sub(r"<p><strong>(.+?)</strong>", anchor, body)
+        missing += [entry[1] for entry in entries]
+        if missing:
+            raise SystemExit(f"glossary: no paragraph found for the entries {', '.join(missing)}")
+        return body
 
     # ---- results
 
