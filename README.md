@@ -1,23 +1,23 @@
 # openclare
 
 Automatic quad retopology for Blender: a mesh of triangles in, a mesh of quads out, its edges
-following the shape. Open source, written in Rust. The aim: an open alternative to Quad Remesher,
-better than Blender's own quad remesher.
+following the shape. Open source, written in Rust. The aim: an open alternative to the commercial
+remeshers, better than QuadriFlow, the one built into Blender.
 
-## Four remeshers side by side
+## Three remeshers side by side
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/dashboard/gallery-dark.webp">
-  <img alt="openclare, Quad Remesher, QuadriFlow and AutoRemesher on the ogre, the pig, a mechanical part and a generated building, each with its number of quads and its mark out of 100" src="docs/images/dashboard/gallery-light.webp">
+  <img alt="openclare, QuadriFlow and AutoRemesher on the ogre, the pig, a mechanical part and a generated building, each with its number of quads and its mark out of 100" src="docs/images/dashboard/gallery-light.webp">
 </picture>
 
-Each row at the same number of quads: the one Quad Remesher picks by itself. The mark weighs
+Each row at the same number of quads, asked of every remesher. The mark weighs
 validity, alignment on the shape, the shape of the quads, the distance to the model, the
 irregular vertices and the speed.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/dashboard/marks-dark.svg">
-  <img alt="Average mark out of 100 of the four remeshers over the organic models, the mechanical parts and the assembled and generated models, at 1,000, 3,000 and 8,000 quads asked for" src="docs/images/dashboard/marks-light.svg">
+  <img alt="Average mark out of 100 of the three remeshers over the organic models, the mechanical parts and the assembled and generated models, at 1,000, 3,000 and 8,000 quads asked for" src="docs/images/dashboard/marks-light.svg">
 </picture>
 
 Every model, every remesher, in pictures: [docs/models](docs/models/README.md). The marks in

@@ -64,42 +64,26 @@ S, C, A and F**, without degrading H or N beyond a margin.
 Full campaign in [bench/results/RESULTS.md](bench/results/RESULTS.md): 9 models, 3000 quads
 asked for, median over 5 seeds. Instructions and limits in [bench/README.md](bench/README.md).
 
-Quad Remesher (trial version 1.4.1) serves as the **reference**: it is not the opponent to beat
-for acceptance, but the level aimed at in the end. It is measured with the uniform setting (a
-constant quad size, to compare on equal terms) and has no seed, hence a single run.
-
 On the five organic models:
 
-| | QuadriFlow (Blender) | Quad Remesher (uniform) | Floor (Instant Meshes) |
-|---|---|---|---|
-| Valid meshes (V) | 18 out of 25 | 5 out of 5 | 22 out of 25 |
-| Alignment (A), degrees | 8.1 to 23.0 | 2.6 to 14.7 | 8.0 to 23.2 |
-| Irregular vertices (S) | 8 to 78 | 24 to 101 | 91 to 212 |
-| Patches of the base complex (C), for 3000 faces | 1943 to 2884 | 1001 to 2531 | 2319 to 3048 |
-| Mean angle deviation (F), degrees | 5.8 to 8.7 | 4.3 to 10.6 | 4.7 to 7.1 |
-| Gap to the budget (N) | 1 to 11 % | 7 to 16 % | 2 to 3 % |
-| Time (T), seconds | 1.3 to 4.2 | 3 to 17 | 0.3 to 1.5 |
+| | QuadriFlow (Blender) | Floor (Instant Meshes) |
+|---|---|---|
+| Valid meshes (V) | 18 out of 25 | 22 out of 25 |
+| Alignment (A), degrees | 8.1 to 23.0 | 8.0 to 23.2 |
+| Irregular vertices (S) | 8 to 78 | 91 to 212 |
+| Patches of the base complex (C), for 3000 faces | 1943 to 2884 | 2319 to 3048 |
+| Mean angle deviation (F), degrees | 5.8 to 8.7 | 4.7 to 7.1 |
+| Gap to the budget (N) | 1 to 11 % | 2 to 3 % |
+| Time (T), seconds | 1.3 to 4.2 | 0.3 to 1.5 |
 
 What these figures establish:
 
-- **What sets Quad Remesher apart is alignment.** On smooth shapes (blob, creature, cage) its
-  edges are at 2.6°, 4.6° and 5.3° from the curvature directions, against 8.1° to 17.5° for
-  QuadriFlow: about three times better. Its edge loops go round holes and limbs; those of
-  QuadriFlow form a grid that ignores them.
-- **Quad Remesher does not minimize singularities.** It has as many as QuadriFlow on smooth
-  shapes, and twelve times more on the noisy rock (101 against 8), where it follows the
-  relief. Few irregular vertices is thus not the aim in itself: it is the price one agrees to
-  pay for alignment.
-- **Its structure is better without being simple**: about half as many patches as QuadriFlow
-  on smooth shapes, but still a thousand for 3000 faces.
-- **It holds the budget poorly**: a gap of 7 to 16 % with the uniform setting, and up to
-  nearly twice the faces asked for with the default setting (cage).
 - **QuadriFlow is not always valid.** Folded faces on the torus (4 seeds out of 5), on Suzanne
   (5 out of 5) and on the blob (2 out of 5); a face of zero area on the mechanical part (1 out
   of 5). A finding cross-checked by a second test that does not depend on the source.
 - **The floor is far behind on singularities**: 3 to 11 times more than QuadriFlow.
-- **On hard surfaces**, QuadriFlow and Quad Remesher are level: 8 irregular vertices and 6
-  patches on the cube (the minimums), 24 to 28 irregular vertices on the part with holes.
+- **On hard surfaces**, QuadriFlow reaches the minimums on the cube: 8 irregular vertices and 6
+  patches.
 
 ### On a real model: the ogre
 
@@ -107,24 +91,22 @@ The ogre, mascot of the project, is a real sculpt of 4.7 million triangles. The 
 it from a source of 200,000 triangles made by our preprocessing. Results at 8000 quads asked
 for ([RESULTS-8000.md](bench/results/RESULTS-8000.md); 3000 and 30,000 quads are measured too):
 
-| | QuadriFlow | Quad Remesher (default) | Quad Remesher (uniform) | Floor |
-|---|---|---|---|---|
-| Valid meshes (V) | 0 out of 5 | 1 out of 1 | 0 out of 1 | 0 out of 5 |
-| Alignment (A), degrees | 17.8 | 8.5 | 9.8 | 17.7 |
-| Irregular vertices (S) | 162 | 338 | 322 | 455 |
-| Hausdorff (H), ‰ | 27.3 | 5.2 | 25.6 | 30.7 |
-| Gap to the budget (N) | 3 % | 59 % | 16 % | 2 % |
-| Time (T), seconds | 4.3 | 23.5 | 24.0 | 2.8 |
+| | QuadriFlow | Floor |
+|---|---|---|
+| Valid meshes (V) | 0 out of 5 | 0 out of 5 |
+| Alignment (A), degrees | 17.8 | 17.7 |
+| Irregular vertices (S) | 162 | 455 |
+| Hausdorff (H), ‰ | 27.3 | 30.7 |
+| Gap to the budget (N) | 3 % | 2 % |
+| Time (T), seconds | 4.3 | 2.8 |
 
-- **Adaptive size is what saves fine details.** With the default setting, Quad Remesher keeps
-  the fingers and the ears (Hausdorff 5.2 ‰); with a uniform size it loses them like the
-  others (25.6 ‰). The price: 59 % more quads than asked for.
+- **A single quad size loses fine details.** The fingers and the ears do not survive it
+  (Hausdorff 27.3 ‰ for QuadriFlow, 30.7 ‰ for the floor): only a size adapted to the detail
+  can keep them.
 - **Everybody fails somewhere.** QuadriFlow returns 9 to 14 folded faces at every seed. Our
-  floor loses the hands outright: the fingers come off as separate pieces. Quad Remesher with
-  a uniform size returns 4 faces that are not quads.
-- **A real model is far harder than the synthetic corpus**: even Quad Remesher leaves more
-  than 300 irregular vertices on it and aligns only to 9°. QuadriFlow and the floor are close
-  to chance there (22.5°).
+  floor loses the hands outright: the fingers come off as separate pieces.
+- **A real model is far harder than the synthetic corpus**: on alignment, QuadriFlow and the
+  floor are close to chance there (22.5°).
 
 A consequence to decide: adaptive density was at rank 4 of the constraints (section 2). On a
 character, it is what decides whether the hands still exist. It probably deserves to move up,
@@ -133,20 +115,10 @@ at least as an automatic setting driven by curvature.
 ### On the wider corpus
 
 With the ogre and the seven models of Keenan Crane, the corpus has 13 organic models. At 3000
-quads asked for, the number of models where each tool has the best median:
+quads asked for, QuadriFlow gives a valid mesh in 36 runs out of 65, the floor in 47 out of 65.
 
-| | QuadriFlow | Floor | Quad Remesher (default) | Quad Remesher (uniform) |
-|---|---|---|---|---|
-| Alignment (A) | 0 | 0 | 13 | 0 |
-| Irregular vertices (S) | 5 | 1 | 1 | 6 |
-| Patches of the base complex (C) | 1 | 1 | 2 | 9 |
-| Valid meshes (V) | 36 out of 65 | 47 out of 65 | 8 out of 13 | 10 out of 13 |
-
-- **Quad Remesher wins alignment on the 13 models**, without exception: that is indeed where
-  the gap to close lies.
 - **Nobody is valid everywhere.** QuadriFlow simply refuses the raw scan (Pittsburgh Bridge)
-  and folds faces on the pig at every seed. Quad Remesher returns a few faces that are not
-  quads on the scan, on Jerry and on Desert Rose.
+  and folds faces on the pig at every seed.
 - **Desert Rose (96 shells that go through one another) defeats everybody**; our validity
   metrics are themselves unreliable on it. **Decided: it does not count in acceptance**; it
   will serve as a test case for the repair preprocessing (J11).
@@ -162,8 +134,10 @@ Two reservations on the metrics themselves:
 ### Acceptance thresholds (adopted)
 
 On each organic model, median over 5 seeds, at equal budget. Two levels: acceptance (better
-than Blender) and the target (the level of Quad Remesher). The target is a milestone, not a
-ceiling: if one can do better than Quad Remesher, one does not stop there.
+than Blender) and the target, more demanding on alignment and structure. The target is a
+milestone, not a ceiling: if one can do better, one does not stop there. For comparison, the
+marks of the bench, set later, give full marks for alignment at 8°; meshes modelled by hand
+(the human bodies of Blender's Essentials library) sit at 9.4° to 9.8°.
 
 | Metric | Acceptance | Target |
 |---|---|---|
@@ -175,15 +149,13 @@ ceiling: if one can do better than Quad Remesher, one does not stop there.
 | H | Hausdorff at most 1.2 times that of QuadriFlow | same |
 | N | gap to the budget of at most 5 % | same |
 
-Alignment comes first and the requirement on irregular vertices is loose: the reference shows
-that the two are traded against each other, and that alignment is what makes perceived
-quality.
+Alignment comes first and the requirement on irregular vertices is loose: the two are traded
+against each other, and alignment is what makes perceived quality.
 
 ### Corpus
 
 Milestone 0 runs on a **provisional corpus**, generated entirely in Blender so as to download
-nothing, and tracked in `bench/corpus/` (as scenes under `bench/scenes/` since 9 October 2026) with the matching Quad Remesher references
-(`bench/reference/`, 3 budgets and 2 settings per model): five organic shapes (blob, noisy
+nothing, and tracked in `bench/corpus/` (as scenes under `bench/scenes/` since 9 October 2026): five organic shapes (blob, noisy
 rock, creature with legs, cage of genus 5, Suzanne), two mechanical ones (part with holes,
 cube) and two yardsticks (sphere, torus). They cover the useful cases, but they are synthetic
 shapes, not real sculpts.
@@ -197,7 +169,7 @@ Real models are added to them, detailed in [bench/scenes/README.md](bench/scenes
   Blub, the pig), an open face (Jerry), a shape of 96 shells (Desert Rose) and a raw scan
   (Pittsburgh Bridge).
 
-The corpus thus has 17 models, all with their Quad Remesher references. Real dense sculpts
+The corpus thus has 17 models. Real dense sculpts
 other than the ogre are still missing: the classic scans (Stanford) have terms restricted to
 research and were set aside.
 
@@ -304,8 +276,8 @@ and rewriting existing code, while staying fit for integration into Blender.
 - QuadWild: the title cited did not exist; the real title is above.
 - Bi-MDF: wrongly attributed to Lyon and Campen; the authors are Heistermann, Warnett and
   Bommes.
-- "The secret of ZRemesher": ZRemesher and Quad Remesher are proprietary and unpublished. Any
-  claim about how they work is a **hypothesis**, not a reference.
+- "The secret of ZRemesher": commercial remeshers such as ZRemesher are proprietary and
+  unpublished. Any claim about how they work is a **hypothesis**, not a reference.
 - "Geodesic smoothing" (preprocessing): a term not tied to a method; removed.
 
 ---
@@ -475,10 +447,8 @@ Limits found:
     of area a weight of 1 gets than a weight of 0 (4 by default: edges twice as short). Only
     the gap between the weights counts, since the total number of quads is set elsewhere: an
     unpainted vertex is worth 0 and simply serves as the base level. Convention chosen on
-    7 October 2026 to match Blender's Weight Paint. (Quad Remesher, for its part, paints in
-    vertex colours a factor of ×0.25 to ×4 around a neutral value: checked in the installed
-    add-on, version 1.4.) Each vertex of the work mesh reads the paint at the closest point of
-    the input.
+    7 October 2026 to match Blender's Weight Paint. Each vertex of the work mesh reads the
+    paint at the closest point of the input.
 
   The field is then smoothed over a quad edge and a half.
 - **One rule, read two ways** (12 October 2026, DT-056). What the shape calls for is measured
@@ -559,19 +529,15 @@ size and `openclare` that of the preset):
 
 | | 1000 quads | 3000 quads | 8000 quads |
 |---|---|---|---|
-| Models always valid: single size / adaptive / Quad Remesher default | 11 / **12** / 11 | 12 / **12** / 8 | 12 / **12** / 11 |
-| Alignment (A): single size / adaptive / Quad Remesher default | 9.1° / **8.4°** / 6.4° | 8.4° / **7.6°** / 6.4° | 8.7° / **7.8°** / 7.5° |
-| Mean angle deviation (F) | 5.3° / **5.4°** / 8.2° | 5.4° / **5.0°** / 6.5° | 6.1° / **5.6°** / 6.4° |
-| Hausdorff, ‰ (H) | 18.5 / **14.1** / 7.9 | 8.1 / **7.2** / 5.9 | 4.7 / **3.5** / 4.3 |
-| Irregular vertices (S) | 42 / **42** / 72 | 50 / **54** / 80 | 67 / **78** / 72 |
-| Gap to the budget (N) | 0.8 % / **0.5 %** / 71 % | 1.4 % / **1.1 %** / 37 % | 0.8 % / **0.8 %** / 13 % |
+| Models always valid: single size / adaptive | 11 / **12** | 12 / **12** | 12 / **12** |
+| Alignment (A): single size / adaptive | 9.1° / **8.4°** | 8.4° / **7.6°** | 8.7° / **7.8°** |
+| Mean angle deviation (F) | 5.3° / **5.4°** | 5.4° / **5.0°** | 6.1° / **5.6°** |
+| Hausdorff, ‰ (H) | 18.5 / **14.1** | 8.1 / **7.2** | 4.7 / **3.5** |
+| Irregular vertices (S) | 42 / **42** | 50 / **54** | 67 / **78** |
+| Gap to the budget (N) | 0.8 % / **0.5 %** | 1.4 % / **1.1 %** | 0.8 % / **0.8 %** |
 
 - Adaptive density improves alignment and fidelity at every budget, and makes valid the last
   case that was not (the pig at 1000 quads).
-- **Against Quad Remesher by default** (adaptive in size too): at 8000 quads openclare is ahead
-  on fidelity and shape, nearly level on alignment. At 1000 and 3000 quads Quad Remesher stays
-  ahead on alignment and fidelity, but it does not hold the budget asked for there: it returns
-  71 % and 37 % of quads off, where openclare stays at 1 %.
 - **The acceptance rule against QuadriFlow** stays met in the median with adaptive density,
   with one exception: at 8000 quads, 78 irregular vertices against 70 for QuadriFlow. The
   variant with a single size meets it at the three budgets.
@@ -624,24 +590,24 @@ Measured on a work mesh of 50,000 triangles, curvature read at the scale of a me
 quads, alignment weight 0.05. Each cell gives the number of singularities then the alignment
 deviation in degrees:
 
-| Model | Our field | Quad Remesher (uniform) | QuadriFlow |
-|---|---|---|---|
-| blob | 28 / 1.7 | 24 / 4.6 | 38 / 17.5 |
-| creature | 38 / 3.4 | 46 / 5.3 | 24 / 12.9 |
-| cage | 48 / 2.3 | 43 / 2.6 | 66 / 8.1 |
-| rock | 126 / 10.0 | 101 / 14.7 | 8 / 23.0 |
-| ogre | 203 / 8.0 | 228 / 10.8 | 106 / 19.3 |
-| Spot | 74 / 4.7 | 87 / 7.6 | 68 / 18.1 |
-| Bob | 20 / 1.9 | 30 / 5.1 | 32 / 19.4 |
-| Blub | 44 / 4.9 | 46 / 7.0 | 52 / 16.0 |
-| pig | 90 / 5.9 | 96 / 9.4 | 122 / 17.4 |
+| Model | Our field | QuadriFlow |
+|---|---|---|
+| blob | 28 / 1.7 | 38 / 17.5 |
+| creature | 38 / 3.4 | 24 / 12.9 |
+| cage | 48 / 2.3 | 66 / 8.1 |
+| rock | 126 / 10.0 | 8 / 23.0 |
+| ogre | 203 / 8.0 | 106 / 19.3 |
+| Spot | 74 / 4.7 | 68 / 18.1 |
+| Bob | 20 / 1.9 | 32 / 19.4 |
+| Blub | 44 / 4.9 | 52 / 16.0 |
+| pig | 90 / 5.9 | 122 / 17.4 |
 
-**Beware of reading too much into this table.** Our column measures a *field*; the two others
-measure a *finished mesh*, whose edges always depart a little from the field that guided it
+**Beware of reading too much into this table.** Our column measures a *field*; the other
+measures a *finished mesh*, whose edges always depart a little from the field that guided it
 (distortion of the parametrization, rounding to integers). The mesh that will be drawn from
-this field will thus do less well than these figures. What the table establishes: the field has
-as many singularities as Quad Remesher, no more, and it follows curvature closely. The raw
-material is up to the level.
+this field will thus do less well than these figures. What the table establishes: the field
+follows curvature closely, at the price of more singularities than QuadriFlow on the noisy
+shapes (rock, ogre). The raw material is up to the level.
 
 - **Speed**: 0.2 to 0.5 second for 50,000 triangles.
 - **Checked by the tests**: sum of the indices equal to 4 χ for the two solvers; 8
@@ -700,14 +666,14 @@ Singularities of higher order are first split into simple ones.
 Measured as at milestone 2 (curvature read at the scale of 3000 quads), pairs cancelled up to 2
 quad edges. Each cell: singularities / alignment deviation in degrees.
 
-| Model | Field of M2 | After M3 | Global setting alone | Quad Remesher (uniform) |
-|---|---|---|---|---|
-| ogre | 203 / 8.0 | **98 / 9.0** | 185 / 9.2 | 228 / 10.8 |
-| rock | 126 / 10.0 | **74 / 10.9** | 90 / 11.4 | 101 / 14.7 |
-| pig | 90 / 5.9 | **74 / 6.2** | 90 / 7.1 | 96 / 9.4 |
-| Spot | 74 / 4.7 | 70 / 4.9 | 74 / 6.3 | 87 / 7.6 |
-| blob | 28 / 1.7 | 26 / 1.8 | 28 / 1.9 | 24 / 4.6 |
-| creature, cage, Bob, Blub | unchanged | unchanged | — | — |
+| Model | Field of M2 | After M3 | Global setting alone |
+|---|---|---|---|
+| ogre | 203 / 8.0 | **98 / 9.0** | 185 / 9.2 |
+| rock | 126 / 10.0 | **74 / 10.9** | 90 / 11.4 |
+| pig | 90 / 5.9 | **74 / 6.2** | 90 / 7.1 |
+| Spot | 74 / 4.7 | 70 / 4.9 | 74 / 6.3 |
+| blob | 28 / 1.7 | 26 / 1.8 | 28 / 1.9 |
+| creature, cage, Bob, Blub | unchanged | unchanged | — |
 
 "Global setting alone" is level 1 of the sheet: the same field computed with a weaker alignment
 weight (0.02 instead of 0.05).
@@ -810,19 +776,18 @@ field, simplification of singularities, integer parametrization, extraction and 
 
 Measured at 3000 quads on the 12 organic models (Desert Rose outside acceptance):
 
-| | QuadriFlow | Quad Remesher (uniform) | **openclare** | Floor |
-|---|---|---|---|---|
-| Valid meshes (V) | 36 out of 60 | 10 out of 12 | **9 out of 12** | 47 out of 60 |
-| Alignment (A), median | 17.5° | 7.7° | **8.8°** | 16.6° |
-| Irregular vertices (S), median | 66 | 68 | **50** | 156 |
-| Mean angle deviation (F), median | 8.6° | 7.2° | **8.0°** | 6.0° |
-| Gap to the budget (N), median | 4 % | 10 % | **11 %** | 2 % |
-| Time, median | 1.9 s | 12 s | **6.5 s** | 1.2 s |
+| | QuadriFlow | **openclare** | Floor |
+|---|---|---|---|
+| Valid meshes (V) | 36 out of 60 | **9 out of 12** | 47 out of 60 |
+| Alignment (A), median | 17.5° | **8.8°** | 16.6° |
+| Irregular vertices (S), median | 66 | **50** | 156 |
+| Mean angle deviation (F), median | 8.6° | **8.0°** | 6.0° |
+| Gap to the budget (N), median | 4 % | **11 %** | 2 % |
+| Time, median | 1.9 s | **6.5 s** | 1.2 s |
 
-Structure (C), on the models where our mesh is valid: always fewer patches than QuadriFlow, and
-most often fewer than Quad Remesher (blob 951 against 2697 and 1350; cage 427 against 1943 and
-1001; Bob 714 against 2903 and 2568). The torus comes out as a perfect grid: no irregular
-vertex, a single patch.
+Structure (C), on the models where our mesh is valid: always fewer patches than QuadriFlow (blob
+951 against 2697; cage 427 against 1943; Bob 714 against 2903). The torus comes out as a
+perfect grid: no irregular vertex, a single patch.
 
 Against the acceptance thresholds:
 
@@ -837,9 +802,9 @@ Against the acceptance thresholds:
 | N: gap to the budget of at most 5 % | **not met**: 1 out of 12, 8 to 18 % of the faces are missing |
 
 **Verdict on the lineage.** The two truth milestones are passed in substance: the chain makes
-real quad meshes, structured, better aligned than those of QuadriFlow on every model and close
-to those of Quad Remesher. It is not acceptable yet: validity and budget are not held, and
-these are precisely the two points that quantization (J5, J6) is made to settle.
+real quad meshes, structured, better aligned than those of QuadriFlow on every model. It is
+not acceptable yet: validity and budget are not held, and these are precisely the two points
+that quantization (J5, J6) is made to settle.
 
 What goes wrong, and why:
 
@@ -985,20 +950,20 @@ cylinder, whose hard edges are closed curves):
 
 ![L-shaped block, cylinder and part with holes, hard-surface preset](docs/images/milestone9_hard_surface.png)
 
-| Medians over the 4 parts, at 3000 quads | QuadriFlow | `integer-grid` | **openclare, J9** | Quad Remesher |
-|---|---|---|---|---|
-| Parts always valid | 2 out of 4 | 4 out of 4 | **4 out of 4** | 4 out of 4 |
-| Irregular vertices | 10 | 10 | **10** | 10 |
-| Patches of the base complex | 352 | 372 | **46** | 211 |
-| Alignment | 2.6° | 1.2° | **1.0°** | 1.1° |
-| Mean angle deviation | 1.7° | 1.7° | **0.7°** | 1.7° |
-| Hausdorff, ‰ of the diagonal | 5.2 | 1.0 | **0.5** | 0.4 |
-| Gap to the budget | 3.3 % | 1.9 % | **0.8 %** | 4.5 % |
-| Time | 1.2 s | 5.3 s | **1.4 s** | 2.9 s |
+| Medians over the 4 parts, at 3000 quads | QuadriFlow | `integer-grid` | **openclare, J9** |
+|---|---|---|---|
+| Parts always valid | 2 out of 4 | 4 out of 4 | **4 out of 4** |
+| Irregular vertices | 10 | 10 | **10** |
+| Patches of the base complex | 352 | 372 | **46** |
+| Alignment | 2.6° | 1.2° | **1.0°** |
+| Mean angle deviation | 1.7° | 1.7° | **0.7°** |
+| Hausdorff, ‰ of the diagonal | 5.2 | 1.0 | **0.5** |
+| Gap to the budget | 3.3 % | 1.9 % | **0.8 %** |
+| Time | 1.2 s | 5.3 s | **1.4 s** |
 
 (`integer-grid` is our provisional chain, the only one that more or less held hard edges before
-this milestone.) On mechanical parts, openclare is at the level of Quad Remesher, and ahead of
-it on the simplicity of the structure and the shape of the quads. The cube and the L-shaped
+this milestone.) On mechanical parts, openclare is ahead of QuadriFlow and of `integer-grid` on
+the simplicity of the structure and the shape of the quads. The cube and the L-shaped
 block come out exact: no gap to the source, all the angles at 90°. The same table at 1000 and
 8000 quads is in `bench/results/ACCEPTANCE.md`; the 4 parts are valid there too.
 
@@ -1033,8 +998,7 @@ Removing these triangles at the source is still to do (DT-031).
 
 First models from outside, first lessons (three models from BlenderKit, see CREDITS.md):
 
-- a **terrain** of 543,557 triangles goes through: a valid mesh, budget held to 1 %, three
-  times fewer irregular vertices than Quad Remesher, comparable fidelity. No tool aligns its
+- a **terrain** of 543,557 triangles goes through: a valid mesh, budget held to 1 %. No tool aligns its
   edges there better than chance (DT-033);
 - a **character in 164 separate pieces** made tracing crash, on a case the corpus did not
   contain: a vertex where two sheets of surface touch at a point. Fixed (such a vertex is
@@ -1182,7 +1146,7 @@ QEx). **Decision of 7 October 2026: the direct route.** These two modules are no
 **Done at milestone 7** (`crates/openclare/src/meshing/`, interface `Mesher` and its factory;
 chain `quad-layout` in `remesher.rs`, which became that of the presets).
 
-![The ogre at 3000 quads: QuadriFlow, openclare, Quad Remesher](docs/images/milestone7_ogre.png)
+![The ogre at 3000 quads: QuadriFlow, openclare](docs/images/milestone7_ogre.png)
 
 - **Reading the map**: the T-mesh keeps, for each trace, its path in the map (triangle by
   triangle) and, for each arc, the portion of trace it covers. Placing a point comes down to
@@ -1204,16 +1168,16 @@ chain `quad-layout` in `remesher.rs`, which became that of the presets).
 **Result.** On the 12 organic models, at 3000 quads, medians (full tables in
 `bench/results/RESULTS.md`):
 
-| | QuadriFlow | openclare, J4 bis | **openclare, J7** | Quad Remesher, uniform size |
-|---|---|---|---|---|
-| Models always valid (V) | 5 out of 12 | 9 out of 12 | **12 out of 12** | 10 out of 12 |
-| Alignment (A) | 17.5° | 8.8° | **8.6°** | 7.8° |
-| Irregular vertices (S) | 66 | 50 | **50** | 67.5 |
-| Patches of the base complex (C) | 2697 | 951 | **1886** | 2009 |
-| Mean angle deviation (F) | 8.6° | 8.0° | **7.8°** | 7.2° |
-| Hausdorff, ‰ of the diagonal (H) | 17.7 | 9.3 | **9.1** | 9.6 |
-| Gap to the budget (N) | 4.1 % | 11.1 % | **1.4 %** | 10.3 % |
-| Time (T) | 1.9 s | 6.5 s | **2.2 s** | 12.3 s |
+| | QuadriFlow | openclare, J4 bis | **openclare, J7** |
+|---|---|---|---|
+| Models always valid (V) | 5 out of 12 | 9 out of 12 | **12 out of 12** |
+| Alignment (A) | 17.5° | 8.8° | **8.6°** |
+| Irregular vertices (S) | 66 | 50 | **50** |
+| Patches of the base complex (C) | 2697 | 951 | **1886** |
+| Mean angle deviation (F) | 8.6° | 8.0° | **7.8°** |
+| Hausdorff, ‰ of the diagonal (H) | 17.7 | 9.3 | **9.1** |
+| Gap to the budget (N) | 4.1 % | 11.1 % | **1.4 %** |
+| Time (T) | 1.9 s | 6.5 s | **2.2 s** |
 
 **The acceptance rule is met at 3000 quads**: validity never worse than that of QuadriFlow,
 better medians on S, C, A and F, without degrading H or N. The two thresholds that milestone 4
@@ -1230,7 +1194,6 @@ What should not be hidden:
   F (shape of the quads) is not on rock, creature and spot; S not on rock and creature; C not
   on rock. The raw scan (rock) is our worst case: QuadriFlow ignores the surface noise there,
   our field follows it.
-- **Quad Remesher stays ahead** on alignment (by about 1°) and on the shape of the quads.
 - **The base complex doubled** compared with milestone 4 bis (1886 against 951): the
   T-junctions of the T-mesh shift the lines on either side (ticket DT-020).
 - **Parts thinner than a quad**: at 1000 quads, two faces of the pig (ears) are counted
@@ -1251,7 +1214,7 @@ What should not be hidden:
 two implementations, `laplacian`, the original one, and `squaring`, the new one, which the
 `quad-layout` chain uses).
 
-![The ogre at 3000 quads after milestone 8: QuadriFlow, openclare, Quad Remesher](docs/images/milestone8_ogre.png)
+![The ogre at 3000 quads after milestone 8: QuadriFlow, openclare](docs/images/milestone8_ogre.png)
 
 Milestone 7 had shown that the original smoothing (each vertex towards the mean of its
 neighbours) levelled off: beyond two passes it wore thin parts down and ended up inverting a
@@ -1283,28 +1246,28 @@ old smoothing had to stop at two.
 **Result.** Medians over the 12 organic models (full tables and detail per model in
 `bench/results/ACCEPTANCE.md`, made by `bench/acceptance.py`):
 
-| At 3000 quads | QuadriFlow | openclare, J7 | **openclare, J8** | Quad Remesher, uniform size | Quad Remesher, default |
-|---|---|---|---|---|---|
-| Models always valid (V) | 5 out of 12 | 12 out of 12 | **12 out of 12** | 10 out of 12 | 8 out of 12 |
-| Mean angle deviation (F) | 8.6° | 7.8° | **5.4°** | 7.2° | 6.5° |
-| Hausdorff, ‰ of the diagonal (H) | 17.7 | 9.1 | **8.1** | 9.6 | 5.9 |
-| Alignment (A) | 17.5° | 8.6° | **8.4°** | 7.7° | 6.4° |
-| Time (T) | 1.9 s | 2.2 s | **2.2 s** | 12.3 s | 14.5 s |
+| At 3000 quads | QuadriFlow | openclare, J7 | **openclare, J8** |
+|---|---|---|---|
+| Models always valid (V) | 5 out of 12 | 12 out of 12 | **12 out of 12** |
+| Mean angle deviation (F) | 8.6° | 7.8° | **5.4°** |
+| Hausdorff, ‰ of the diagonal (H) | 17.7 | 9.1 | **8.1** |
+| Alignment (A) | 17.5° | 8.6° | **8.4°** |
+| Time (T) | 1.9 s | 2.2 s | **2.2 s** |
 
-On the shape of the quads, openclare moves ahead of Quad Remesher; on fidelity, ahead of its
-version with a uniform size (its default version, adaptive in size, stays ahead). The
-thresholds F and H are now met on the 12 models, one by one, and no longer only in the median.
+Relaxation gains most on the shape of the quads (7.8° to 5.4°), and a little on fidelity (9.1
+to 8.1 ‰). The thresholds F and H are now met on the 12 models, one by one, and no longer only
+in the median.
 
-**The acceptance rule is now established at the three budgets**, QuadriFlow and Quad Remesher
-having been measured on the whole corpus at 1000 and 8000 quads (ticket DT-022, closed):
+**The acceptance rule is now established at the three budgets**, QuadriFlow having been
+measured on the whole corpus at 1000 and 8000 quads (ticket DT-022, closed):
 
 | Medians, 12 organic models | 1000 quads | 3000 quads | 8000 quads |
 |---|---|---|---|
 | Models always valid: openclare / QuadriFlow | 11 / 4 | 12 / 5 | 12 / 3 |
-| Alignment (A): openclare / QuadriFlow / Quad Remesher uniform | 9.1° / 18.0° / 8.1° | 8.4° / 17.5° / 7.7° | 8.7° / 15.8° / 8.6° |
+| Alignment (A): openclare / QuadriFlow | 9.1° / 18.0° | 8.4° / 17.5° | 8.7° / 15.8° |
 | Irregular vertices (S): openclare / QuadriFlow | 42 / 62 | 50 / 66 | 67 / 70 |
 | Patches of the base complex (C): openclare / QuadriFlow | 553 / 891 | 1886 / 2697 | 4436 / 7342 |
-| Mean angle deviation (F): openclare / QuadriFlow / Quad Remesher uniform | 5.3° / 9.7° / 8.8° | 5.4° / 8.6° / 7.2° | 6.1° / 6.4° / 6.8° |
+| Mean angle deviation (F): openclare / QuadriFlow | 5.3° / 9.7° | 5.4° / 8.6° | 6.1° / 6.4° |
 | Hausdorff, ‰ (H): openclare / QuadriFlow | 18.5 / 38.9 | 8.1 / 17.7 | 4.7 / 6.9 |
 | Gap to the budget (N): openclare / QuadriFlow | 0.8 % / 5.9 % | 1.4 % / 4.1 % | 0.8 % / 3.0 % |
 | Time (T): openclare / QuadriFlow | 1.4 s / 1.3 s | 2.2 s / 1.9 s | 6.8 s / 4.1 s |
@@ -1318,7 +1281,7 @@ when the mesh is finer (DT-023).
 
 What stays open:
 
-- **Alignment hardly moves** (8.4° against 7.7° for Quad Remesher): it is played upstream, in
+- **Alignment hardly moves** (8.6° to 8.4° at 3000 quads): it is played upstream, in
   the field and the T-mesh, not in relaxation.
 - **The sizes of the quads are a little less equal** than with the old smoothing (variation of
   area from 0.34 to 0.38 on blob): the rectangles keep the sizes that quantization gives them.
@@ -1429,8 +1392,6 @@ ogre are a real problem for every remesher, and one must manage to keep at least
 - The cancellation of pairs of singularities (M3) finished the job. A finger needs
   singularities at its tip and at its base; less than two edges from each other, they were
   taken for noise and cancelled.
-- Quad Remesher does better on these parts, but with twice the budget asked for (6134 quads
-  for 3000). With the budget held (its "uniform" variant), it does less well than we do.
 
 **What was done**:
 
@@ -1462,14 +1423,14 @@ ogre are a real problem for every remesher, and one must manage to keep at least
 **Results**, adaptive variant, distance over the thin parts as a percentage of a quad edge
 (lower is better):
 
-| Model | 1000 quads, before → after | 3000 quads, before → after | 8000 quads, before → after | QuadriFlow at 3000 | Quad Remesher at 3000, budget held | Quad Remesher at 3000, budget doubled |
-|---|---|---|---|---|---|---|
-| ogre | 20 → 8 | 30 → 9 | 15 → 6 | 54 | 75 | 7 |
-| pig | 17 → 7 | 19 → 5 | 21 → 8 | 68 | 16 | 4 |
-| jerry | 22 → 16 | 31 → 17 | 25 → 11 | 23 | 19 | 5 |
-| blub | 22 → 9 | 14 → 11 | — | 46 | 20 | 8 |
-| suzanne | 12 → 7 | 13 → 11 | — | 16 | 17 | 5 |
-| spot | 14 → 21 | 7 → 7 | — | 56 | 21 | 9 |
+| Model | 1000 quads, before → after | 3000 quads, before → after | 8000 quads, before → after | QuadriFlow at 3000 |
+|---|---|---|---|---|
+| ogre | 20 → 8 | 30 → 9 | 15 → 6 | 54 |
+| pig | 17 → 7 | 19 → 5 | 21 → 8 | 68 |
+| jerry | 22 → 16 | 31 → 17 | 25 → 11 | 23 |
+| blub | 22 → 9 | 14 → 11 | — | 46 |
+| suzanne | 12 → 7 | 13 → 11 | — | 16 |
+| spot | 14 → 21 | 7 → 7 | — | 56 |
 
 "Before" is the variant with a single size, which did not change; a dash means that at this
 budget the model no longer has anything thinner than a quad. On the rest:
@@ -1738,17 +1699,17 @@ What is left to do, by order of importance, is in [ROADMAP.md](ROADMAP.md) since
 
 | Milestone | Content | What can be checked at the end |
 |---|---|---|
-| J0 | Bench, corpus, factory of chains | **Done.** Figures of QuadriFlow, of Quad Remesher and of the floor; thresholds adopted |
+| J0 | Bench, corpus, factory of chains | **Done.** Figures of QuadriFlow and of the floor; thresholds adopted |
 | J1 | Preprocessing (M1) | **Done.** Work meshes and curvatures, analytic tests |
 | J2 | Cross field (M2) | **Done.** Fields visualized, singularities counted |
 | J3 | Singularities (M3), bounded duration | **Done.** Gain measured on S: exit criterion reached |
 | J4 | Seamless parametrization (M4) | **Done.** Truth milestone passed: no inversion on the whole corpus |
-| J4 bis | Greedy rounding of the translations (in the manner of MIQ) and extraction; single configuration and presets | **Done.** First complete result, provisional, measured against QuadriFlow and Quad Remesher |
+| J4 bis | Greedy rounding of the translations (in the manner of MIQ) and extraction; single configuration and presets | **Done.** First complete result, provisional, measured against QuadriFlow |
 | J5 | T-mesh (M5) | **Done.** Valid partitions into rectangles on the whole corpus, open borders included |
 | J6 | Quantization (M6) | **Done.** Constraints satisfied, budget held to within 4 %, connectivity of the quad mesh built and sound on the whole corpus |
 | J7 | Quad mesh from the quantized T-mesh, by the direct route (in place of M7 and M8) | **Done.** Complete result; acceptance rule met at 3000 quads. Greedy rounding stays as a fallback (DT-009) |
-| J8 | Relaxation; adaptive density, then constraints of rank 3 to 5 | **Done**: relaxation, adaptive density (rank 2) and painted density (rank 5). Acceptance rule met at the three budgets, shape of the quads ahead of Quad Remesher. Rank 4, guide curves, was left (DT-024, done since); rank 3 belongs to milestone 9 |
-| J9 | Hard surfaces: hard edges guaranteed, by "walls" in the T-mesh of the existing chain (in place of the patch chain, DT-030) | **Done.** Mechanical parts compared with QuadriFlow and Quad Remesher; edges and corners recovered exactly |
+| J8 | Relaxation; adaptive density, then constraints of rank 3 to 5 | **Done**: relaxation, adaptive density (rank 2) and painted density (rank 5). Acceptance rule met at the three budgets, shape of the quads well ahead of QuadriFlow. Rank 4, guide curves, was left (DT-024, done since); rank 3 belongs to milestone 9 |
+| J9 | Hard surfaces: hard edges guaranteed, by "walls" in the T-mesh of the existing chain (in place of the patch chain, DT-030) | **Done.** Mechanical parts compared with QuadriFlow; edges and corners recovered exactly |
 | J9 bis | Symmetry: a model symmetric about a plane gives a symmetric mesh (DT-028). **Put off**: comes after the work on quality (decision of 8 October 2026) | No gap between the mesh and its mirror image; an edge loop on the plane of symmetry |
 | J10 | Export of seams and UVs; library with a C interface and Python add-on without copying memory | Remeshing run from Blender, UVs and seams read back in the scene. **Done, merged**: code renamed to `openclare`, C library (`openclare-capi`), add-on (`make addon`) with a preset, a number of quads, a vertex group for density, guide curves, and the export of two UV layers, seams, sharp edges and creases. Left: edges marked in Blender as input, stopping a run (DT-041) |
 | J11 | Repair preprocessing: merging of pieces that go through one another, non-manifold edges | Desert Rose remeshed as one valid skin |
@@ -1765,7 +1726,7 @@ apart and start from the backlog.
 | Q1 | Models in several pieces (DT-032) and pieces with neither singularity nor border (DT-003) | **Done.** Each piece meshed for itself; a ring goes through the main chain |
 | Q2 | Parts thinner than a quad: fingers, ears (DT-018). Keep at least their volume | **Done for the fingers, merged.** Enough quads around each thin part (`quads_around`); the distance over the thin parts of the ogre goes from 30 to 9 % of an edge at 3000 quads. Thin sheets are left (DT-018); the fitting of the volume became track Q2 bis |
 | Q2 bis | Keeping the volume (DT-037): a last stage, fitting, moves the vertices off the surface for the faces to run through it rather than under it (`volume_fit`) | **Done, merged.** Median volume kept 100.0 % at the three budgets (98.2 % at 1000 quads before); mean distance to the source halved; no model loses its validity |
-| Q3 | Alignment: cross field on noisy surfaces, local scales, tuning of the presets (DT-021, DT-025, DT-013) | Gap in alignment with Quad Remesher reduced |
+| Q3 | Alignment: cross field on noisy surfaces, local scales, tuning of the presets (DT-021, DT-025, DT-013) | Alignment gap reduced: median alignment better at the three budgets, noisy surfaces included |
 | Q4 | Global structure: simplification of the T-mesh, narrow strips (DT-020, DT-007, DT-005) | Fewer patches in the base complex |
 
 **Tools tracks**, opened on 8 October 2026: what it takes to look at the results and judge
@@ -1965,11 +1926,12 @@ reliable basis to estimate it more finely.
 
 Pending:
 
-1. **Corpus**: other sculpts to add later, before the trial licence of Quad Remesher expires.
+1. **Corpus**: other sculpts to add later.
 
 Taken:
 
-- aim: better than Blender's quad remesh; Quad Remesher is a milestone, not a ceiling;
+- aim: better than QuadriFlow, Blender's built-in remesher; the target is a milestone, not a
+  ceiling;
 - priority: organic shapes first, hard surfaces next;
 - lineages: parametrization and isolines for organic shapes, patches for hard surfaces;
 - modular architecture with factories;

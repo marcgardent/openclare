@@ -1,7 +1,7 @@
 /target
 *.obj
 !assets/**/*.obj
-# The kept references are data, not build products.
+# The meshes kept (made by hand) are data, not build products.
 !bench/reference/**/*.obj
 /bench/out
 # The copy Blender keeps of a file it saves over.
@@ -14,3 +14,6 @@ __pycache__
 /dist
 # The website as built by site/build.py.
 /site/_build
+# What is not to be published: local challengers, their meshes and results
+# (see bench/README.md).
+/local

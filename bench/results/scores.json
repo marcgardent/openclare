@@ -53,19 +53,6 @@
     "structure": 61.18811881188119,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 95.59471365638767,
-    "fidelity": 91.92997989114441,
-    "loops": 50.0,
-    "overall": 89.04494750251816,
-    "quads": 1377,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 76.39173911579282,
-    "structure": 44.15395787944808,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 99.2,
@@ -77,45 +64,6 @@
     "singularities": 100.0,
     "speed": 78.58709877904082,
     "structure": 71.05788423153693,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 84.51557568984768,
-    "loops": 54.97634198074727,
-    "overall": 81.75202629132512,
-    "quads": 1362,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 35.5229130031378,
-    "structure": 61.82085168869309,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 84.51557568984768,
-    "loops": null,
-    "overall": 95.298198819902,
-    "quads": 1362,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 35.5229130031378,
-    "structure": 61.82085168869309,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 51.2,
-    "fidelity": 61.54299714703189,
-    "loops": null,
-    "overall": 86.879923376155,
-    "quads": 878,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 36.883085860853384,
-    "structure": 50.56947608200455,
     "validity": 100.0
    },
    "quadriflow": {
@@ -185,19 +133,6 @@
     "structure": 63.902932254802835,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 97.06959706959707,
-    "fidelity": 85.0087698880863,
-    "loops": 100.0,
-    "overall": 96.55809698102516,
-    "quads": 1626,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 69.92452928207827,
-    "structure": 72.69372693726936,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 93.73546116739927,
     "budget": 96.0,
@@ -209,45 +144,6 @@
     "singularities": 100.0,
     "speed": 76.87967103685892,
     "structure": 67.27272727272727,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 87.95336605147895,
-    "loops": 48.99633699633699,
-    "overall": 80.86135904806943,
-    "quads": 1638,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 34.85409915848317,
-    "structure": 48.962148962148966,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 85.10781209710703,
-    "loops": null,
-    "overall": 94.68253251408167,
-    "quads": 1638,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 34.85409915848317,
-    "structure": 48.962148962148966,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 56.800000000000004,
-    "fidelity": 49.25030311754231,
-    "loops": null,
-    "overall": 85.21465294025029,
-    "quads": 892,
-    "shape": 97.7221215663385,
-    "singularities": 99.55156950672645,
-    "speed": 38.4037782015522,
-    "structure": 50.672645739910315,
     "validity": 100.0
    },
    "quadriflow": {
@@ -317,19 +213,6 @@
     "structure": 82.25966303270565,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 92.45283018867924,
-    "fidelity": 92.99053345099722,
-    "loops": 96.35565052231719,
-    "overall": 97.24685005072584,
-    "quads": 936,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 72.58036625674083,
-    "structure": 74.14529914529915,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 92.4,
@@ -341,45 +224,6 @@
     "singularities": 100.0,
     "speed": 75.32827801875207,
     "structure": 85.77036310107948,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 81.60000000000001,
-    "fidelity": 84.91371034582788,
-    "loops": 50.0,
-    "overall": 88.0966110204065,
-    "quads": 954,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 37.599315768836284,
-    "structure": 58.280922431865825,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 84.91370408831393,
-    "loops": null,
-    "overall": 95.1678908164893,
-    "quads": 954,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 37.599315768836284,
-    "structure": 58.280922431865825,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 57.2,
-    "fidelity": 85.49358049145671,
-    "loops": null,
-    "overall": 92.22824760003431,
-    "quads": 893,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 31.81378913752788,
-    "structure": 73.6842105263158,
     "validity": 100.0
    },
    "quadriflow": {
@@ -449,19 +293,6 @@
     "structure": 73.6788617886179,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 98.09976247030879,
-    "fidelity": 85.96855480862689,
-    "loops": 100.0,
-    "overall": 96.77519937545283,
-    "quads": 2115,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 61.8567232803898,
-    "structure": 74.37352245862886,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 95.6,
@@ -474,45 +305,6 @@
     "speed": 68.13133092677835,
     "structure": 76.4589515331355,
     "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 90.83801774244446,
-    "loops": 31.798620692959258,
-    "overall": 78.37450653002657,
-    "quads": 2105,
-    "shape": 99.54890925283631,
-    "singularities": 100.0,
-    "speed": 37.22642404224202,
-    "structure": 36.05700712589074,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 88.5737041803134,
-    "loops": null,
-    "overall": 94.46804707918555,
-    "quads": 2105,
-    "shape": 99.54890925283631,
-    "singularities": 100.0,
-    "speed": 37.22642404224202,
-    "structure": 36.05700712589074,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 93.00904259463368,
-    "budget": 74.4,
-    "fidelity": 80.7828808083147,
-    "loops": null,
-    "overall": 88.56173596935642,
-    "quads": 936,
-    "shape": 88.97468935006361,
-    "singularities": 92.30769230769229,
-    "speed": 39.744151294963245,
-    "structure": null,
-    "validity": 93.58974358974359
    },
    "quadriflow": {
     "alignment": null,
@@ -581,19 +373,6 @@
     "structure": 84.92063492063492,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 96.6501240694789,
-    "fidelity": 79.84371496648652,
-    "loops": 54.90042748409967,
-    "overall": 90.04470069028362,
-    "quads": 3197,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 66.90406393268067,
-    "structure": 86.70628714419767,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 92.4,
@@ -605,45 +384,6 @@
     "singularities": 100.0,
     "speed": 97.56138416168064,
     "structure": 83.0225711481845,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 85.78346330620249,
-    "loops": 50.0,
-    "overall": 81.92897908482024,
-    "quads": 3224,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 60.298698169911916,
-    "structure": 77.01612903225806,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 85.78346330620249,
-    "loops": null,
-    "overall": 96.35369549727031,
-    "quads": 3224,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 60.298698169911916,
-    "structure": 77.01612903225806,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 73.6,
-    "fidelity": 36.20870011783471,
-    "loops": null,
-    "overall": 86.66175469647605,
-    "quads": 934,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 66.11682675040774,
-    "structure": 77.40899357601712,
     "validity": 100.0
    },
    "quadriflow": {
@@ -713,19 +453,6 @@
     "structure": 74.32675044883304,
     "validity": 0.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 75.83377730420884,
-    "fidelity": 68.63487460319881,
-    "loops": null,
-    "overall": 64.72570865522492,
-    "quads": 8818,
-    "shape": 98.14414110974238,
-    "singularities": 100.0,
-    "speed": 16.336617776599404,
-    "structure": null,
-    "validity": 0.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 0.0,
@@ -737,45 +464,6 @@
     "singularities": 49.1389913899139,
     "speed": 77.33888895798562,
     "structure": 75.09225092250922,
-    "validity": 0.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 75.75349556261443,
-    "loops": 91.68126309837687,
-    "overall": 63.741103453771544,
-    "quads": 9385,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 56.319734678316344,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 71.13274226698906,
-    "loops": null,
-    "overall": 65.49401334123336,
-    "quads": 9385,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 56.319734678316344,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 58.306269753444774,
-    "loops": null,
-    "overall": 49.19811068155341,
-    "quads": 3134,
-    "shape": 81.42471287193061,
-    "singularities": 57.78557753669431,
-    "speed": 60.19317433320055,
-    "structure": null,
     "validity": 0.0
    },
    "quadriflow": {
@@ -845,19 +533,6 @@
     "structure": 62.31454005934718,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 96.68874172185431,
-    "fidelity": 93.13089954713907,
-    "loops": 100.0,
-    "overall": 97.34925085350258,
-    "quads": 1198,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 76.71907990623714,
-    "structure": 64.9415692821369,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 96.39999999999999,
@@ -869,45 +544,6 @@
     "singularities": 100.0,
     "speed": 71.34069981383155,
     "structure": 68.97918731417245,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 16.800000000000004,
-    "fidelity": 92.52814753420562,
-    "loops": 56.92144959529066,
-    "overall": 84.05536063911944,
-    "quads": 1208,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 39.402609802445944,
-    "structure": 51.32450331125828,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 92.52814753420562,
-    "loops": null,
-    "overall": 96.05049699521528,
-    "quads": 1208,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 39.402609802445944,
-    "structure": 51.32450331125828,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 71.2,
-    "fidelity": 86.84272715825604,
-    "loops": null,
-    "overall": 93.28218493580736,
-    "quads": 928,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 47.09585831330718,
-    "structure": 62.71551724137932,
     "validity": 100.0
    },
    "quadriflow": {
@@ -977,19 +613,6 @@
     "structure": 99.40828402366864,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 99.9999999999999,
-    "loops": 100.0,
-    "overall": 99.9718230487461,
-    "quads": 1014,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 89.01409211920117,
-    "structure": 99.40828402366864,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 94.39999999999999,
@@ -1000,45 +623,6 @@
     "shape": 100.0,
     "singularities": 100.0,
     "speed": 92.52595807494953,
-    "structure": 99.40828402366864,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 94.39999999999999,
-    "fidelity": 99.99999999999993,
-    "loops": 100.0,
-    "overall": 99.48731669668123,
-    "quads": 1014,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 79.09027938837052,
-    "structure": 99.40828402366864,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 99.99999999999993,
-    "loops": null,
-    "overall": 99.96712689020379,
-    "quads": 1014,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 79.09027938837052,
-    "structure": 99.40828402366864,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 94.39999999999999,
-    "fidelity": 99.99999999999993,
-    "loops": null,
-    "overall": 99.41041420118341,
-    "quads": 1014,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 73.05385310303407,
     "structure": 99.40828402366864,
     "validity": 100.0
    },
@@ -1109,19 +693,6 @@
     "structure": 99.4,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 99.48849104859335,
-    "fidelity": 96.8170700246538,
-    "loops": 50.0,
-    "overall": 92.01831565561636,
-    "quads": 781,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 88.58179882218089,
-    "structure": 91.93341869398208,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 100.0,
@@ -1133,45 +704,6 @@
     "singularities": 100.0,
     "speed": 87.76909758565345,
     "structure": 99.4,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 12.8,
-    "fidelity": 94.81658394695937,
-    "loops": 50.0,
-    "overall": 84.4522910007543,
-    "quads": 782,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 73.84444729001041,
-    "structure": 82.35294117647058,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 94.8165896179383,
-    "loops": null,
-    "overall": 98.15570611279364,
-    "quads": 782,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 73.84444729001041,
-    "structure": 82.35294117647058,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 12.8,
-    "fidelity": 94.8165896179383,
-    "loops": null,
-    "overall": 89.62013550151427,
-    "quads": 782,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 74.13917166557151,
-    "structure": 82.35294117647058,
     "validity": 100.0
    },
    "quadriflow": {
@@ -1241,19 +773,6 @@
     "structure": null,
     "validity": 0.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 70.25303976339139,
-    "fidelity": 78.89099500920993,
-    "loops": null,
-    "overall": 64.65506771435336,
-    "quads": 28167,
-    "shape": 100.0,
-    "singularities": 81.23158305818865,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 0.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 0.0,
@@ -1264,45 +783,6 @@
     "shape": 19.898966223311525,
     "singularities": 0.0,
     "speed": 43.00196154589039,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 86.64331202817974,
-    "loops": null,
-    "overall": 53.674472867320084,
-    "quads": 30430,
-    "shape": 79.7491732133413,
-    "singularities": 60.318764377259285,
-    "speed": 40.852545820669974,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 75.39835022878256,
-    "loops": null,
-    "overall": 58.00471171064059,
-    "quads": 30430,
-    "shape": 79.7491732133413,
-    "singularities": 60.318764377259285,
-    "speed": 40.852545820669974,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 98.56252643060427,
-    "budget": 0.0,
-    "fidelity": 31.459394689849248,
-    "loops": null,
-    "overall": 34.455368946401215,
-    "quads": 4601,
-    "shape": 55.34124006321941,
-    "singularities": 0.0,
-    "speed": 43.36931741003377,
     "structure": null,
     "validity": 0.0
    },
@@ -1399,19 +879,6 @@
     "structure": 63.176759102056224,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 92.02563189747241,
-    "fidelity": 72.31215663600398,
-    "loops": 88.60435080921823,
-    "overall": 92.02617810855845,
-    "quads": 2753,
-    "shape": 100.0,
-    "singularities": 95.51398474391571,
-    "speed": 30.537431154590735,
-    "structure": 58.77224845622957,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 98.8,
@@ -1424,45 +891,6 @@
     "speed": 36.51181370480894,
     "structure": 69.59122632103688,
     "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 82.14239051334947,
-    "loops": 63.240314212496514,
-    "overall": 79.49513014538826,
-    "quads": 2809,
-    "shape": 100.0,
-    "singularities": 70.61231755072978,
-    "speed": 22.846906612542185,
-    "structure": null,
-    "validity": 94.30402278390886
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 77.52192453364688,
-    "loops": 63.240314212496514,
-    "overall": 86.7515732629717,
-    "quads": 2809,
-    "shape": 100.0,
-    "singularities": 70.61231755072978,
-    "speed": 22.846906612542185,
-    "structure": null,
-    "validity": 94.30402278390886
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 38.0,
-    "fidelity": 0.0,
-    "loops": 82.07434052757793,
-    "overall": 67.98162739308285,
-    "quads": 845,
-    "shape": 100.0,
-    "singularities": 34.02366863905325,
-    "speed": 24.507914918961383,
-    "structure": null,
-    "validity": 81.06508875739645
    },
    "quadriflow": {
     "alignment": null,
@@ -1557,19 +985,6 @@
     "structure": 42.90260980267345,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 99.25149700598801,
-    "fidelity": 71.40805977724492,
-    "loops": 90.81781443986168,
-    "overall": 92.55395253470226,
-    "quads": 2667,
-    "shape": 100.0,
-    "singularities": 97.88151481064867,
-    "speed": 32.12726858607159,
-    "structure": 61.19235095613048,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 98.62295642508876,
     "budget": 0.0,
@@ -1582,45 +997,6 @@
     "speed": 17.29025135485649,
     "structure": 59.25925925925925,
     "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 85.39514871629808,
-    "loops": 53.263694711556724,
-    "overall": 79.19653798512664,
-    "quads": 2672,
-    "shape": 100.0,
-    "singularities": 70.65868263473054,
-    "speed": 24.000255048568874,
-    "structure": null,
-    "validity": 97.0059880239521
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 82.05406536891772,
-    "loops": 53.263694711556724,
-    "overall": 86.61502928153224,
-    "quads": 2672,
-    "shape": 100.0,
-    "singularities": 70.65868263473054,
-    "speed": 24.000255048568874,
-    "structure": null,
-    "validity": 97.0059880239521
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 68.0,
-    "fidelity": 2.5995694186455096,
-    "loops": null,
-    "overall": 50.30314505855399,
-    "quads": 920,
-    "shape": 99.63918986523991,
-    "singularities": 56.52173913043479,
-    "speed": 22.003757039610427,
-    "structure": null,
-    "validity": 0.0
    },
    "quadriflow": {
     "alignment": null,
@@ -1689,19 +1065,6 @@
     "structure": 2.1847070506454846,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 53.87300700467283,
-    "budget": 92.49919172324604,
-    "fidelity": 61.147277093564966,
-    "loops": 51.42857142857143,
-    "overall": 73.3917220652825,
-    "quads": 3035,
-    "shape": 100.0,
-    "singularities": 89.37397034596377,
-    "speed": 58.77986366921901,
-    "structure": 9.258649093904447,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 51.81474949033145,
     "budget": 92.0,
@@ -1714,45 +1077,6 @@
     "speed": 86.98257021832418,
     "structure": 52.058823529411754,
     "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 70.6218940046087,
-    "budget": 0.0,
-    "fidelity": 87.57400449001581,
-    "loops": 37.899110337527034,
-    "overall": 72.28514201460983,
-    "quads": 3093,
-    "shape": 84.09480207095079,
-    "singularities": 91.1574523116715,
-    "speed": 53.64533599423302,
-    "structure": null,
-    "validity": 99.35337859683155
-   },
-   "quadremesher-as-made": {
-    "alignment": 66.98656631557746,
-    "budget": 100.0,
-    "fidelity": 82.58690458203704,
-    "loops": null,
-    "overall": 85.12195193110435,
-    "quads": 3093,
-    "shape": 84.09480207095079,
-    "singularities": 91.1574523116715,
-    "speed": 53.64533599423302,
-    "structure": null,
-    "validity": 99.35337859683155
-   },
-   "quadremesher-uniform": {
-    "alignment": 55.77439418669617,
-    "budget": 50.4,
-    "fidelity": 31.84444181603126,
-    "loops": null,
-    "overall": 59.52437700759267,
-    "quads": 876,
-    "shape": 74.31592868784588,
-    "singularities": 0.0,
-    "speed": 42.3686307417025,
-    "structure": null,
-    "validity": 97.71689497716895
    },
    "quadriflow": {
     "alignment": 27.66235523359964,
@@ -1821,19 +1145,6 @@
     "structure": 98.59154929577466,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 92.87128712871288,
-    "fidelity": 99.99999999999986,
-    "loops": 100.0,
-    "overall": 99.93514915693902,
-    "quads": 1028,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 97.18849243508636,
-    "structure": 98.63813229571986,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 97.6,
@@ -1845,45 +1156,6 @@
     "singularities": 100.0,
     "speed": 99.92683788737672,
     "structure": 98.59154929577466,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 96.0,
-    "fidelity": 99.99999999999983,
-    "loops": 100.0,
-    "overall": 99.59190701678861,
-    "quads": 1010,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 74.91377993830596,
-    "structure": 98.61386138613861,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 99.99999999999986,
-    "loops": null,
-    "overall": 99.9229922992299,
-    "quads": 1010,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 74.91377993830596,
-    "structure": 98.61386138613861,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 96.0,
-    "fidelity": 99.99999999999986,
-    "loops": null,
-    "overall": 99.5306930693069,
-    "quads": 1010,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 76.02292978758015,
-    "structure": 98.61386138613861,
     "validity": 100.0
    },
    "quadriflow": {
@@ -1953,19 +1225,6 @@
     "structure": null,
     "validity": 0.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 96.39415604600559,
-    "fidelity": 50.15387221290273,
-    "loops": 50.0,
-    "overall": 60.02308083193541,
-    "quads": 41444,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 14.05337939266833,
-    "structure": null,
-    "validity": 0.0
-   },
    "openclare-uniform": {
     "alignment": 70.35981358710033,
     "budget": 0.0,
@@ -1976,45 +1235,6 @@
     "shape": 0.0,
     "singularities": 0.0,
     "speed": 38.52765302500399,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher": {
-    "alignment": 51.6595659996296,
-    "budget": 0.0,
-    "fidelity": 78.76525152615422,
-    "loops": null,
-    "overall": 42.4130897249959,
-    "quads": 41821,
-    "shape": 70.53199024002367,
-    "singularities": 75.65935773893497,
-    "speed": 31.36421523157823,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 57.263860361161655,
-    "budget": 100.0,
-    "fidelity": 36.15037101769644,
-    "loops": null,
-    "overall": 41.201249452686874,
-    "quads": 41821,
-    "shape": 70.53199024002367,
-    "singularities": 75.65935773893497,
-    "speed": 31.36421523157823,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 53.94520271077341,
-    "budget": 0.0,
-    "fidelity": 28.270240248506752,
-    "loops": null,
-    "overall": 23.273307431162834,
-    "quads": 2688,
-    "shape": 47.200436534493306,
-    "singularities": 0.0,
-    "speed": 33.32248112082168,
     "structure": null,
     "validity": 0.0
    },
@@ -2085,19 +1305,6 @@
     "structure": null,
     "validity": 0.0
    },
-   "openclare-matched": {
-    "alignment": 95.91579446645818,
-    "budget": 79.76655213587738,
-    "fidelity": 78.20521413823221,
-    "loops": 70.98814204823047,
-    "overall": 65.39910779521975,
-    "quads": 194806,
-    "shape": 100.0,
-    "singularities": 88.36945473958707,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 0.0
-   },
    "openclare-uniform": {
     "alignment": null,
     "budget": 0.0,
@@ -2108,45 +1315,6 @@
     "shape": 5.5423951619881,
     "singularities": 0.0,
     "speed": 33.901133070742084,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher": {
-    "alignment": 85.56320896227152,
-    "budget": 0.0,
-    "fidelity": 92.7269851990842,
-    "loops": null,
-    "overall": 56.74518752979879,
-    "quads": 205185,
-    "shape": 87.09661567986049,
-    "singularities": 98.21746229012841,
-    "speed": 35.52639939721518,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 65.11273150323797,
-    "budget": 100.0,
-    "fidelity": 47.94292613656811,
-    "loops": null,
-    "overall": 50.70614564955851,
-    "quads": 205185,
-    "shape": 87.09661567986049,
-    "singularities": 98.21746229012841,
-    "speed": 35.52639939721518,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": null,
-    "budget": 0.0,
-    "fidelity": 83.71998574834791,
-    "loops": null,
-    "overall": 25.471774668106335,
-    "quads": 10623,
-    "shape": 43.63888759218376,
-    "singularities": 0.0,
-    "speed": 46.745628613228575,
     "structure": null,
     "validity": 0.0
    },
@@ -2217,19 +1385,6 @@
     "structure": 46.77898909811695,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 74.50642373629003,
-    "budget": 98.47750865051903,
-    "fidelity": 61.32159696283658,
-    "loops": 15.673981191222571,
-    "overall": 73.35836669967148,
-    "quads": 2901,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 44.153275398104796,
-    "structure": 11.513271285763526,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 82.22110590772411,
     "budget": 92.4,
@@ -2242,45 +1397,6 @@
     "speed": 57.0619841645716,
     "structure": 62.21786064769381,
     "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 67.69961559337517,
-    "loops": 45.163770758145134,
-    "overall": 72.8406373119925,
-    "quads": 2890,
-    "shape": 92.13282612000685,
-    "singularities": 67.99307958477507,
-    "speed": 28.172786453323596,
-    "structure": 24.3598615916955,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 90.70832612502369,
-    "budget": 100.0,
-    "fidelity": 63.37516446353966,
-    "loops": null,
-    "overall": 82.76129427844333,
-    "quads": 2890,
-    "shape": 92.13282612000685,
-    "singularities": 67.99307958477507,
-    "speed": 28.172786453323596,
-    "structure": 24.3598615916955,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 82.84330022682661,
-    "budget": 19.599999999999994,
-    "fidelity": 0.0,
-    "loops": null,
-    "overall": 31.271158848479995,
-    "quads": 799,
-    "shape": 74.52627240460448,
-    "singularities": 0.0,
-    "speed": 31.283489437604707,
-    "structure": null,
-    "validity": 0.0
    },
    "quadriflow": {
     "alignment": 11.30718674666217,
@@ -2349,19 +1465,6 @@
     "structure": 31.631631631631627,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 63.108713378389105,
-    "budget": 92.60527216706608,
-    "fidelity": 73.0938820109928,
-    "loops": 73.61464060103752,
-    "overall": 80.69278867921403,
-    "quads": 2867,
-    "shape": 100.0,
-    "singularities": 84.07743285664458,
-    "speed": 0.0,
-    "structure": 33.83327520055808,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 55.68045766922237,
     "budget": 93.19999999999999,
@@ -2374,45 +1477,6 @@
     "speed": 0.0,
     "structure": 65.68338249754179,
     "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 82.47089139252857,
-    "budget": 0.0,
-    "fidelity": 66.83337394423711,
-    "loops": 44.66573852181521,
-    "overall": 69.9424949296739,
-    "quads": 2921,
-    "shape": 89.84252188633586,
-    "singularities": 74.34097911674084,
-    "speed": 11.85475438034559,
-    "structure": 26.086956521739136,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 82.47089139252857,
-    "budget": 100.0,
-    "fidelity": 63.69774198699045,
-    "loops": null,
-    "overall": 81.40407066362856,
-    "quads": 2921,
-    "shape": 89.84252188633586,
-    "singularities": 74.34097911674084,
-    "speed": 11.85475438034559,
-    "structure": 26.086956521739136,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 57.977775576323076,
-    "budget": 24.8,
-    "fidelity": 2.8198971487417013,
-    "loops": null,
-    "overall": 27.355006061201593,
-    "quads": 812,
-    "shape": 76.59144047043762,
-    "singularities": 0.0,
-    "speed": 14.926373909739777,
-    "structure": null,
-    "validity": 0.0
    },
    "quadriflow": {
     "alignment": null,
@@ -2481,19 +1545,6 @@
     "structure": 93.14516129032258,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 80.44492002011417,
-    "budget": 98.02566633761106,
-    "fidelity": 97.04549741674018,
-    "loops": 100.0,
-    "overall": 95.53191145641169,
-    "quads": 1008,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 84.69906384840384,
-    "structure": 93.25396825396825,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 59.220732621686736,
     "budget": 95.19999999999999,
@@ -2505,45 +1556,6 @@
     "singularities": 100.0,
     "speed": 91.66020902874541,
     "structure": 93.31983805668015,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 78.62595246543725,
-    "budget": 94.8,
-    "fidelity": 96.72084376845372,
-    "loops": 50.0,
-    "overall": 87.30597036792491,
-    "quads": 1013,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 72.66795013880936,
-    "structure": 63.77097729516288,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 78.62595246543725,
-    "budget": 100.0,
-    "fidelity": 96.72084376845372,
-    "loops": null,
-    "overall": 92.69096213679295,
-    "quads": 1013,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 72.66795013880936,
-    "structure": 63.77097729516288,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 79.77410419063317,
-    "budget": 69.6,
-    "fidelity": 95.42572783860929,
-    "loops": null,
-    "overall": 90.64318217842019,
-    "quads": 924,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 76.243546420471,
-    "structure": 68.29004329004329,
     "validity": 100.0
    },
    "quadriflow": {
@@ -2613,19 +1625,6 @@
     "structure": 46.27606752730884,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 86.16512130365828,
-    "budget": 94.53164556962025,
-    "fidelity": 83.163314671501,
-    "loops": 90.53521807759094,
-    "overall": 90.8102297486024,
-    "quads": 2002,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 63.880090697340755,
-    "structure": 41.25874125874126,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 72.1579380471497,
     "budget": 92.0,
@@ -2638,45 +1637,6 @@
     "speed": 73.96191061203805,
     "structure": 43.673469387755105,
     "validity": 0.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 85.03847744099866,
-    "loops": 81.71910289405957,
-    "overall": 84.23503249540735,
-    "quads": 1975,
-    "shape": 98.43674052635603,
-    "singularities": 100.0,
-    "speed": 30.662821206717627,
-    "structure": 41.82278481012658,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 82.58077643983455,
-    "loops": null,
-    "overall": 93.6041853171499,
-    "quads": 1975,
-    "shape": 98.43674052635603,
-    "singularities": 100.0,
-    "speed": 30.662821206717627,
-    "structure": 41.82278481012658,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 83.69998978169743,
-    "budget": 41.2,
-    "fidelity": 0.04281447367353586,
-    "loops": null,
-    "overall": 65.66805827439028,
-    "quads": 853,
-    "shape": 92.18487420076636,
-    "singularities": 50.35169988276671,
-    "speed": 33.171622496251565,
-    "structure": null,
-    "validity": 90.62133645955451
    },
    "quadriflow": {
     "alignment": 35.67867202422864,
@@ -2745,19 +1705,6 @@
     "structure": 10.627530364372472,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 41.34160880508027,
-    "budget": 96.58914728682171,
-    "fidelity": 87.7113870318288,
-    "loops": 50.0,
-    "overall": 75.1666950626575,
-    "quads": 1279,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 77.64012291123522,
-    "structure": 0.0,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 40.199245801357094,
     "budget": 95.6,
@@ -2768,45 +1715,6 @@
     "shape": 100.0,
     "singularities": 100.0,
     "speed": 81.94885405425599,
-    "structure": 0.0,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 61.95030510489733,
-    "budget": 0.0,
-    "fidelity": 80.24879903011485,
-    "loops": 45.004306632213606,
-    "overall": 67.0979936039151,
-    "quads": 1290,
-    "shape": 82.27503280973635,
-    "singularities": 86.43410852713177,
-    "speed": 18.610969192431494,
-    "structure": 0.0,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 58.57328733169188,
-    "budget": 100.0,
-    "fidelity": 80.24879903011485,
-    "loops": null,
-    "overall": 77.48515899447692,
-    "quads": 1290,
-    "shape": 82.27503280973635,
-    "singularities": 86.43410852713177,
-    "speed": 18.610969192431494,
-    "structure": 0.0,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 56.31411049260821,
-    "budget": 34.8,
-    "fidelity": 74.51973993273886,
-    "loops": null,
-    "overall": 68.37574003689706,
-    "quads": 837,
-    "shape": 76.90003158793202,
-    "singularities": 59.19952210274791,
-    "speed": 32.288583707279486,
     "structure": 0.0,
     "validity": 100.0
    },
@@ -2877,19 +1785,6 @@
     "structure": null,
     "validity": 0.0
    },
-   "openclare-matched": {
-    "alignment": 86.10951286543194,
-    "budget": 99.60514825923535,
-    "fidelity": 82.74640315648529,
-    "loops": 59.450112130506824,
-    "overall": 84.47792133801157,
-    "quads": 26365,
-    "shape": 99.53506181423703,
-    "singularities": 87.26531386307606,
-    "speed": 5.542826724094551,
-    "structure": 29.87293760667552,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 62.486759732853955,
     "budget": 0.0,
@@ -2900,45 +1795,6 @@
     "shape": 0.0,
     "singularities": 0.0,
     "speed": 64.3181495374007,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher": {
-    "alignment": 89.89654965618955,
-    "budget": 0.0,
-    "fidelity": 44.23544287796687,
-    "loops": null,
-    "overall": 49.81307206113992,
-    "quads": 26339,
-    "shape": 93.95839781164943,
-    "singularities": 86.1403242340256,
-    "speed": 35.50026356415125,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 69.0289583473369,
-    "budget": 100.0,
-    "fidelity": 0.0,
-    "loops": null,
-    "overall": 42.95715737013806,
-    "quads": 26339,
-    "shape": 93.95839781164943,
-    "singularities": 86.1403242340256,
-    "speed": 35.50026356415125,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 56.10094357979672,
-    "budget": 0.0,
-    "fidelity": 21.237441753509973,
-    "loops": null,
-    "overall": 22.747707561769392,
-    "quads": 1271,
-    "shape": 48.030114697967235,
-    "singularities": 0.0,
-    "speed": 45.60792155634298,
     "structure": null,
     "validity": 0.0
    },
@@ -3009,19 +1865,6 @@
     "structure": 99.40828402366864,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": null,
-    "budget": 98.68852459016394,
-    "fidelity": 98.22004890327217,
-    "loops": 100.0,
-    "overall": 99.6471912925279,
-    "quads": 912,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 28.00949245578871,
-    "structure": 99.3421052631579,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": null,
     "budget": 95.19999999999999,
@@ -3033,45 +1876,6 @@
     "singularities": 100.0,
     "speed": 73.48715935792389,
     "structure": 99.40711462450594,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": null,
-    "budget": 65.99999999999999,
-    "fidelity": 96.1759057463824,
-    "loops": 22.22222222222222,
-    "overall": 79.51583901488753,
-    "quads": 915,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 61.820884779949736,
-    "structure": 23.606557377049175,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": null,
-    "budget": 100.0,
-    "fidelity": 96.17589340691076,
-    "loops": null,
-    "overall": 93.72387411412724,
-    "quads": 915,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 61.820884779949736,
-    "structure": 23.606557377049175,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": null,
-    "budget": 65.99999999999999,
-    "fidelity": 96.17589340691076,
-    "loops": null,
-    "overall": 90.25838984986135,
-    "quads": 915,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 67.70450041394807,
-    "structure": 23.606557377049175,
     "validity": 100.0
    },
    "quadriflow": {
@@ -3141,19 +1945,6 @@
     "structure": 45.48223350253807,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 97.68259121869642,
-    "budget": 97.59519038076152,
-    "fidelity": 65.8983062063272,
-    "loops": 96.51162790697674,
-    "overall": 91.75002332358774,
-    "quads": 1488,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 65.56795120975558,
-    "structure": 48.79032258064516,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 87.70947420461779,
     "budget": 96.8,
@@ -3165,45 +1956,6 @@
     "singularities": 96.42857142857142,
     "speed": 78.07416223412555,
     "structure": 27.976190476190478,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 79.44739674674273,
-    "loops": 66.68488492135786,
-    "overall": 80.96327528288695,
-    "quads": 1497,
-    "shape": 98.6119916040171,
-    "singularities": 100.0,
-    "speed": 29.733594868658685,
-    "structure": 27.922511690046758,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 77.02375495776973,
-    "loops": null,
-    "overall": 91.93498618752261,
-    "quads": 1497,
-    "shape": 98.6119916040171,
-    "singularities": 100.0,
-    "speed": 29.733594868658685,
-    "structure": 27.922511690046758,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 52.800000000000004,
-    "fidelity": 69.75229250174695,
-    "loops": null,
-    "overall": 83.59694291982619,
-    "quads": 882,
-    "shape": 94.23518788590766,
-    "singularities": 72.90249433106575,
-    "speed": 35.62772191951995,
-    "structure": 28.57142857142857,
     "validity": 100.0
    },
    "quadriflow": {
@@ -3247,19 +1999,6 @@
     "structure": 2.228976697061802,
     "validity": 0.0
    },
-   "openclare-matched": {
-    "alignment": 72.1532596381604,
-    "budget": 99.26430016553246,
-    "fidelity": 62.743442486729,
-    "loops": 53.43739395052043,
-    "overall": 78.62594760958265,
-    "quads": 5447,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 42.60741249911221,
-    "structure": 13.989351936845972,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 61.06552653639589,
     "budget": 100.0,
@@ -3272,19 +2011,6 @@
     "speed": 70.2980790785285,
     "structure": 11.6,
     "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 78.998241676438,
-    "budget": 0.0,
-    "fidelity": 67.20673593759881,
-    "loops": 43.0454126350436,
-    "overall": 47.41698163620868,
-    "quads": 5437,
-    "shape": 91.02228037778113,
-    "singularities": 80.8442155600515,
-    "speed": 16.04358234649648,
-    "structure": 9.08589295567408,
-    "validity": 0.0
    },
    "quadriflow": {
     "alignment": 50.95175292501763,
@@ -3353,19 +2079,6 @@
     "structure": 40.91370558375635,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 78.96801897289589,
-    "budget": 98.43575418994413,
-    "fidelity": 83.82383565239869,
-    "loops": 87.99959164922669,
-    "overall": 89.70300280786067,
-    "quads": 1797,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 77.42596189750786,
-    "structure": 52.42070116861436,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 75.05093475336054,
     "budget": 98.0,
@@ -3377,45 +2090,6 @@
     "singularities": 100.0,
     "speed": 78.64815864501185,
     "structure": 41.59203980099503,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 96.01576393777212,
-    "budget": 0.0,
-    "fidelity": 84.4615539105702,
-    "loops": 22.624795225414427,
-    "overall": 74.19094045915547,
-    "quads": 1790,
-    "shape": 95.66377170367693,
-    "singularities": 100.0,
-    "speed": 63.49901989798996,
-    "structure": 14.07821229050279,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 93.73326089996957,
-    "budget": 100.0,
-    "fidelity": 82.88278663163703,
-    "loops": null,
-    "overall": 90.25838504979572,
-    "quads": 1790,
-    "shape": 95.66377170367693,
-    "singularities": 100.0,
-    "speed": 63.49901989798996,
-    "structure": 14.07821229050279,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 88.667731972999,
-    "budget": 68.8,
-    "fidelity": 69.87497293546568,
-    "loops": null,
-    "overall": 82.80641918727667,
-    "quads": 922,
-    "shape": 96.24092521961803,
-    "singularities": 76.24728850325378,
-    "speed": 67.58113055448757,
-    "structure": 13.015184381778743,
     "validity": 100.0
    },
    "quadriflow": {
@@ -3485,19 +2159,6 @@
     "structure": 41.246290801186944,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 26.786616088939823,
-    "budget": 94.28942245295264,
-    "fidelity": 52.24797691854654,
-    "loops": 39.51422874750771,
-    "overall": 67.82874527484326,
-    "quads": 1563,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 46.95906047615045,
-    "structure": 41.97056941778631,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 30.812055238993608,
     "budget": 98.4,
@@ -3510,45 +2171,6 @@
     "speed": 49.83334965746978,
     "structure": 54.482071713147405,
     "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 24.83392203681479,
-    "budget": 0.0,
-    "fidelity": 70.3322202410506,
-    "loops": 50.0,
-    "overall": 57.03260733633954,
-    "quads": 1541,
-    "shape": 80.84242963715744,
-    "singularities": 51.36275146009085,
-    "speed": 27.264879611919824,
-    "structure": 6.164828033744318,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 24.92414377081828,
-    "budget": 100.0,
-    "fidelity": 67.33731768193681,
-    "loops": null,
-    "overall": 64.06256377747121,
-    "quads": 1541,
-    "shape": 80.84242963715744,
-    "singularities": 51.36275146009085,
-    "speed": 27.264879611919824,
-    "structure": 6.164828033744318,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 17.06466832904668,
-    "budget": 51.2,
-    "fidelity": 41.61996186278496,
-    "loops": null,
-    "overall": 55.559694946014375,
-    "quads": 878,
-    "shape": 83.89579968535467,
-    "singularities": 49.772209567198175,
-    "speed": 24.652686060357055,
-    "structure": null,
-    "validity": 81.77676537585423
    },
    "quadriflow": {
     "alignment": 22.586862382524007,
@@ -3617,19 +2239,6 @@
     "structure": 99.90079365079364,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 96.65341670883238,
-    "loops": 100.0,
-    "overall": 99.5167406892535,
-    "quads": 920,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 100.0,
-    "structure": 99.89130434782608,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 96.8,
@@ -3641,45 +2250,6 @@
     "singularities": 100.0,
     "speed": 96.43824680616538,
     "structure": 99.90079365079364,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 68.0,
-    "fidelity": 94.80283562464628,
-    "loops": 100.0,
-    "overall": 96.5347744009463,
-    "quads": 920,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 63.77456358839315,
-    "structure": 99.89130434782608,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 94.80282388206562,
-    "loops": null,
-    "overall": 99.12776533300128,
-    "quads": 920,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 63.77456358839315,
-    "structure": 99.89130434782608,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 68.0,
-    "fidelity": 94.80282388206562,
-    "loops": null,
-    "overall": 96.01498879970114,
-    "quads": 920,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 76.55018533923518,
-    "structure": 99.89130434782608,
     "validity": 100.0
    },
    "quadriflow": {
@@ -3723,19 +2293,6 @@
     "structure": 0.0,
     "validity": 0.0
    },
-   "openclare-matched": {
-    "alignment": 78.2371152244308,
-    "budget": 33.45388788426763,
-    "fidelity": 21.260353455086246,
-    "loops": null,
-    "overall": 51.57232478017541,
-    "quads": 5071,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 3.3957134428398206,
-    "structure": null,
-    "validity": 0.0
-   },
    "openclare-uniform": {
     "alignment": 38.51408772291585,
     "budget": 0.0,
@@ -3748,19 +2305,6 @@
     "speed": 0.0,
     "structure": 0.0,
     "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 87.81632917991102,
-    "budget": 0.0,
-    "fidelity": 63.628694423543365,
-    "loops": 15.730372180907516,
-    "overall": 44.85042140731883,
-    "quads": 6083,
-    "shape": 87.80108319281223,
-    "singularities": 66.98175242479041,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 0.0
    },
    "quadriflow": {
     "alignment": 62.84470028694263,
@@ -3829,19 +2373,6 @@
     "structure": null,
     "validity": 0.0
    },
-   "openclare-matched": {
-    "alignment": 76.71801481293281,
-    "budget": 90.06333799457103,
-    "fidelity": 52.04606229080109,
-    "loops": 13.484205563413484,
-    "overall": 71.97826393693032,
-    "quads": 12459,
-    "shape": 100.0,
-    "singularities": 68.85384059715868,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 99.67894694598282
-   },
    "openclare-uniform": {
     "alignment": 64.22368732585245,
     "budget": 0.0,
@@ -3852,45 +2383,6 @@
     "shape": 51.52756986963034,
     "singularities": 0.0,
     "speed": 46.88955973587233,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 83.7970229523277,
-    "loops": null,
-    "overall": 58.734087392522774,
-    "quads": 12157,
-    "shape": 88.18553053364991,
-    "singularities": 100.0,
-    "speed": 52.56760835036125,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 97.46361568969579,
-    "budget": 100.0,
-    "fidelity": 81.85608256147314,
-    "loops": null,
-    "overall": 64.7046648261266,
-    "quads": 12157,
-    "shape": 88.18553053364991,
-    "singularities": 100.0,
-    "speed": 52.56760835036125,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 70.28778810799311,
-    "loops": null,
-    "overall": 54.29144499554734,
-    "quads": 8690,
-    "shape": 84.7970021956057,
-    "singularities": 83.14154200230149,
-    "speed": 66.79720315936946,
     "structure": null,
     "validity": 0.0
    },
@@ -3935,19 +2427,6 @@
     "structure": null,
     "validity": 0.0
    },
-   "openclare-matched": {
-    "alignment": null,
-    "budget": null,
-    "fidelity": null,
-    "loops": null,
-    "overall": 0.0,
-    "quads": null,
-    "shape": null,
-    "singularities": null,
-    "speed": null,
-    "structure": null,
-    "validity": 0.0
-   },
    "openclare-uniform": {
     "alignment": 32.40004708357964,
     "budget": 0.0,
@@ -3958,19 +2437,6 @@
     "shape": 26.593897167571004,
     "singularities": 0.0,
     "speed": 41.99773148300792,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher": {
-    "alignment": 73.81896157074192,
-    "budget": 0.0,
-    "fidelity": 51.540275117032195,
-    "loops": null,
-    "overall": 43.476477155429556,
-    "quads": 9441,
-    "shape": 87.59638875707368,
-    "singularities": 56.68361402393814,
-    "speed": 0.0,
     "structure": null,
     "validity": 0.0
    },
@@ -4015,19 +2481,6 @@
     "structure": 0.0,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 13.959679411490468,
-    "budget": 0.0,
-    "fidelity": 0.0,
-    "loops": 51.13636363636363,
-    "overall": 38.17498736907618,
-    "quads": 595,
-    "shape": 29.91261685509832,
-    "singularities": 0.0,
-    "speed": 41.98410205538436,
-    "structure": 2.6890756302521024,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 32.25885616645983,
     "budget": 0.0,
@@ -4039,19 +2492,6 @@
     "singularities": 100.0,
     "speed": 100.0,
     "structure": 0.0,
-    "validity": 0.0
-   },
-   "quadremesher": {
-    "alignment": 88.41466278200541,
-    "budget": 0.0,
-    "fidelity": 69.26459933373664,
-    "loops": null,
-    "overall": 50.647592129949174,
-    "quads": 6933,
-    "shape": 91.21619013841307,
-    "singularities": 63.60161546228185,
-    "speed": 0.0,
-    "structure": null,
     "validity": 0.0
    },
    "quadriflow": {
@@ -4121,19 +2561,6 @@
     "structure": 40.37940379403794,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 80.88740377606827,
-    "budget": 39.02507748661594,
-    "fidelity": 43.5191599459305,
-    "loops": 39.195934994849466,
-    "overall": 74.87408247340346,
-    "quads": 6016,
-    "shape": 90.24451935069825,
-    "singularities": 80.01994680851064,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 99.00265957446808
-   },
    "openclare-uniform": {
     "alignment": 83.93850264592474,
     "budget": 0.0,
@@ -4146,45 +2573,6 @@
     "speed": 55.89059435450581,
     "structure": 40.37940379403794,
     "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 92.38695110472922,
-    "budget": 0.0,
-    "fidelity": 54.608816937545235,
-    "loops": 51.664306484549215,
-    "overall": 47.696010974173895,
-    "quads": 7098,
-    "shape": 88.40932111240477,
-    "singularities": 47.85855170470555,
-    "speed": 19.20956871980868,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 81.65520230974204,
-    "budget": 100.0,
-    "fidelity": 21.618043547602376,
-    "loops": null,
-    "overall": 44.26000038990592,
-    "quads": 7098,
-    "shape": 88.40932111240477,
-    "singularities": 47.85855170470555,
-    "speed": 19.20956871980868,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 84.43033789140677,
-    "budget": 21.199999999999996,
-    "fidelity": 4.97993363798787,
-    "loops": null,
-    "overall": 31.91894850534961,
-    "quads": 803,
-    "shape": 70.46628970735065,
-    "singularities": 0.0,
-    "speed": 11.928279600617731,
-    "structure": null,
-    "validity": 0.0
    },
    "quadriflow": {
     "alignment": null,
@@ -4255,19 +2643,6 @@
     "structure": 72.13652773219562,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 93.82789317507418,
-    "fidelity": 95.35432725129874,
-    "loops": 50.0,
-    "overall": 90.90756011164827,
-    "quads": 3318,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 63.05375132733466,
-    "structure": 72.9957805907173,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 96.8,
@@ -4279,45 +2654,6 @@
     "singularities": 100.0,
     "speed": 69.62693197850022,
     "structure": 63.575268817204304,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 50.66666666666666,
-    "fidelity": 91.57527836546788,
-    "loops": 50.0,
-    "overall": 85.73370400733084,
-    "quads": 3370,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 31.707698652871297,
-    "structure": 45.8160237388724,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 91.57527836546788,
-    "loops": null,
-    "overall": 95.585658824182,
-    "quads": 3370,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 31.707698652871297,
-    "structure": 45.8160237388724,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 67.33333333333333,
-    "fidelity": 85.44715047780909,
-    "loops": null,
-    "overall": 92.10031516090307,
-    "quads": 2755,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 38.74148260384852,
-    "structure": 50.99818511796733,
     "validity": 100.0
    },
    "quadriflow": {
@@ -4387,19 +2723,6 @@
     "structure": 62.193894666219386,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 95.26870660838262,
-    "fidelity": 88.2324861092766,
-    "loops": 100.0,
-    "overall": 97.50208142457808,
-    "quads": 3935,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 57.53814904075965,
-    "structure": 82.84625158831004,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 95.06666666666666,
@@ -4411,45 +2734,6 @@
     "singularities": 100.0,
     "speed": 56.619721146254854,
     "structure": 76.40904488693891,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 87.12847904673612,
-    "loops": 50.0,
-    "overall": 80.8643997567081,
-    "quads": 3889,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 34.95607105666423,
-    "structure": 48.495757264078165,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 84.02052136299983,
-    "loops": null,
-    "overall": 94.47540674183765,
-    "quads": 3889,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 34.95607105666423,
-    "structure": 48.495757264078165,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 60.4,
-    "fidelity": 68.6455045944021,
-    "loops": null,
-    "overall": 87.53179424261944,
-    "quads": 2703,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 38.660085960304436,
-    "structure": 23.899371069182386,
     "validity": 100.0
    },
    "quadriflow": {
@@ -4519,19 +2803,6 @@
     "structure": 92.21698113207547,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 98.76712328767124,
-    "fidelity": 96.05751060875095,
-    "loops": 100.0,
-    "overall": 99.14739868505575,
-    "quads": 2929,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 73.93669229935094,
-    "structure": 93.92284055991806,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 95.6,
@@ -4543,45 +2814,6 @@
     "singularities": 100.0,
     "speed": 77.71846759322332,
     "structure": 92.61880687563195,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 89.33333333333333,
-    "fidelity": 96.07575219597331,
-    "loops": 40.0,
-    "overall": 87.17585252983014,
-    "quads": 2920,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 30.460804760222448,
-    "structure": 18.150684931506845,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 96.07574184769372,
-    "loops": null,
-    "overall": 94.79877280414378,
-    "quads": 2920,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 30.460804760222448,
-    "structure": 18.150684931506845,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 59.46666666666667,
-    "fidelity": 95.46122940691329,
-    "loops": null,
-    "overall": 90.50323980173927,
-    "quads": 2696,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 30.305453669597647,
-    "structure": 4.747774480712163,
     "validity": 100.0
    },
    "quadriflow": {
@@ -4651,19 +2883,6 @@
     "structure": 83.17064961292495,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 98.50882811859566,
-    "budget": 98.6763732627399,
-    "fidelity": 86.48719781870473,
-    "loops": 100.0,
-    "overall": 96.73434610893223,
-    "quads": 4548,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 53.4230502445022,
-    "structure": 77.92436235708003,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 97.90878451108584,
     "budget": 99.6,
@@ -4676,45 +2895,6 @@
     "speed": 57.7580888367328,
     "structure": 80.91424758091425,
     "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 87.8916331434229,
-    "loops": 80.1685069658007,
-    "overall": 86.45338071661685,
-    "quads": 4533,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 40.53589295303711,
-    "structure": null,
-    "validity": 99.55879108757998
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 87.89163164240108,
-    "loops": null,
-    "overall": 97.73346178618254,
-    "quads": 4533,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 40.53589295303711,
-    "structure": null,
-    "validity": 99.55879108757998
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 63.46666666666667,
-    "fidelity": 86.00978090857545,
-    "loops": null,
-    "overall": 93.7523314464416,
-    "quads": 2726,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 39.55838567112204,
-    "structure": null,
-    "validity": 99.26632428466618
    },
    "quadriflow": {
     "alignment": null,
@@ -4783,19 +2963,6 @@
     "structure": 81.09897384971863,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 97.24565329660871,
-    "fidelity": 93.80437753067515,
-    "loops": 100.0,
-    "overall": 98.9613811250889,
-    "quads": 5769,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 60.50142763703397,
-    "structure": 96.7758710348414,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 97.46666666666667,
@@ -4807,45 +2974,6 @@
     "singularities": 100.0,
     "speed": 78.78098103371165,
     "structure": 92.45219724924522,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 88.5162738113301,
-    "loops": 50.0,
-    "overall": 82.46740892101498,
-    "quads": 5809,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 64.86251780741608,
-    "structure": 81.20158374935444,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 88.5162738113301,
-    "loops": null,
-    "overall": 97.04168917685249,
-    "quads": 5809,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 64.86251780741608,
-    "structure": 81.20158374935444,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 71.33333333333334,
-    "fidelity": 80.68910650032358,
-    "loops": null,
-    "overall": 92.4395718398002,
-    "quads": 2785,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 66.62221005082027,
-    "structure": 64.05745062836625,
     "validity": 100.0
    },
    "quadriflow": {
@@ -4915,19 +3043,6 @@
     "structure": null,
     "validity": 0.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 99.74645432216148,
-    "fidelity": 68.18658725788919,
-    "loops": 99.8685009103783,
-    "overall": 68.16666230946623,
-    "quads": 12629,
-    "shape": 86.38932722817408,
-    "singularities": 100.0,
-    "speed": 52.86716255072361,
-    "structure": null,
-    "validity": 0.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 63.2,
@@ -4938,45 +3053,6 @@
     "shape": 40.82162811507541,
     "singularities": 87.72893772893774,
     "speed": 44.21291266529999,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 83.95785912528171,
-    "loops": null,
-    "overall": 60.624925125044484,
-    "quads": 12621,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 60.54508946274615,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 81.73654301547664,
-    "loops": null,
-    "overall": 67.36527229684881,
-    "quads": 12621,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 60.54508946274615,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 66.17063927628455,
-    "loops": null,
-    "overall": 56.6567891294318,
-    "quads": 5458,
-    "shape": 98.65300468977972,
-    "singularities": 91.00403078050569,
-    "speed": 64.12623411854514,
     "structure": null,
     "validity": 0.0
    },
@@ -5047,19 +3123,6 @@
     "structure": 70.7661953304834,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 97.14382862971779,
-    "fidelity": 96.27698278290237,
-    "loops": 93.97366644159351,
-    "overall": 97.27608869503987,
-    "quads": 2962,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 70.0962272381595,
-    "structure": 72.04591492234977,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 92.80000000000001,
@@ -5071,45 +3134,6 @@
     "singularities": 100.0,
     "speed": 67.39402249995779,
     "structure": 61.84657162253904,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 92.13333333333334,
-    "fidelity": 94.98824807662125,
-    "loops": 53.04129358872643,
-    "overall": 90.37140447319057,
-    "quads": 2941,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 40.91115547498051,
-    "structure": 50.18701122067324,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 94.98824807662125,
-    "loops": null,
-    "overall": 96.39731974725207,
-    "quads": 2941,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 40.91115547498051,
-    "structure": 50.18701122067324,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 62.53333333333333,
-    "fidelity": 95.26114231563791,
-    "loops": null,
-    "overall": 93.15008099550064,
-    "quads": 2719,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 46.0303857691271,
-    "structure": 52.151526296432515,
     "validity": 100.0
    },
    "quadriflow": {
@@ -5179,19 +3203,6 @@
     "structure": 99.79946524064172,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 99.99999999999993,
-    "loops": 100.0,
-    "overall": 99.99072958190413,
-    "quads": 3082,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 74.60961743116886,
-    "structure": 99.80532121998702,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 98.93333333333332,
@@ -5203,45 +3214,6 @@
     "singularities": 100.0,
     "speed": 75.17753988468183,
     "structure": 99.79946524064172,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 89.06666666666668,
-    "fidelity": 99.99999999999993,
-    "loops": 100.0,
-    "overall": 99.04081106753566,
-    "quads": 3082,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 73.42948770499397,
-    "structure": 99.80532121998702,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 99.99999999999993,
-    "loops": null,
-    "overall": 99.9891845122215,
-    "quads": 3082,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 73.42948770499397,
-    "structure": 99.80532121998702,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 89.06666666666668,
-    "fidelity": 99.99999999999993,
-    "loops": null,
-    "overall": 98.89693272766601,
-    "quads": 3082,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 73.19200248894477,
-    "structure": 99.80532121998702,
     "validity": 100.0
    },
    "quadriflow": {
@@ -5311,19 +3283,6 @@
     "structure": 99.79674796747967,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 99.18633034987795,
-    "fidelity": 98.21758116706641,
-    "loops": 50.0,
-    "overall": 91.42895244366053,
-    "quads": 2463,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 75.36388142690454,
-    "structure": 75.35525781567193,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 98.93333333333332,
@@ -5335,45 +3294,6 @@
     "singularities": 100.0,
     "speed": 76.86072306564668,
     "structure": 99.79946524064172,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 27.73333333333333,
-    "fidelity": 97.14063091213782,
-    "loops": 50.0,
-    "overall": 86.09955211046045,
-    "quads": 2458,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 75.8951510688721,
-    "structure": 83.40113913751017,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 97.14062092829624,
-    "loops": null,
-    "overall": 98.60127788457771,
-    "quads": 2458,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 75.8951510688721,
-    "structure": 83.40113913751017,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 27.73333333333333,
-    "fidelity": 97.14062092829624,
-    "loops": null,
-    "overall": 91.51448342945328,
-    "quads": 2458,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 77.67926383895117,
-    "structure": 83.40113913751017,
     "validity": 100.0
    },
    "quadriflow": {
@@ -5443,19 +3363,6 @@
     "structure": null,
     "validity": 0.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 75.25944836006437,
-    "fidelity": 41.50880402172913,
-    "loops": null,
-    "overall": 59.40136626605154,
-    "quads": 33809,
-    "shape": 100.0,
-    "singularities": 92.64840722884439,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 0.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 0.0,
@@ -5466,45 +3373,6 @@
     "shape": 40.47181854207312,
     "singularities": 0.0,
     "speed": 40.91550253090862,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 88.37997032767296,
-    "loops": null,
-    "overall": 54.86888498376077,
-    "quads": 36038,
-    "shape": 82.43354747622516,
-    "singularities": 65.03413063988013,
-    "speed": 45.37459931863241,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 80.14982944316195,
-    "loops": null,
-    "overall": 59.871670119877734,
-    "quads": 36038,
-    "shape": 82.43354747622516,
-    "singularities": 65.03413063988013,
-    "speed": 45.37459931863241,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 34.371339286793685,
-    "loops": null,
-    "overall": 36.48632653929419,
-    "quads": 6315,
-    "shape": 63.375395462069505,
-    "singularities": 0.0,
-    "speed": 44.99660848879161,
     "structure": null,
     "validity": 0.0
    },
@@ -5601,19 +3469,6 @@
     "structure": 63.176759102056224,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 93.91578556854016,
-    "fidelity": 83.60173989701855,
-    "loops": 92.73665264435654,
-    "overall": 94.5648591162041,
-    "quads": 5309,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 18.409461911036573,
-    "structure": 56.84686381616124,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 97.46666666666667,
@@ -5626,45 +3481,6 @@
     "speed": 29.883955896469715,
     "structure": 53.06943978530694,
     "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 87.25051778295489,
-    "loops": 100.0,
-    "overall": 89.00189393183699,
-    "quads": 5391,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 24.917714563012726,
-    "structure": null,
-    "validity": 99.25802263030977
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 85.05581515020495,
-    "loops": 100.0,
-    "overall": 97.57287793010819,
-    "quads": 5391,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 24.917714563012726,
-    "structure": null,
-    "validity": 99.25802263030977
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 51.33333333333333,
-    "fidelity": 6.36145287864126,
-    "loops": 95.55365043076989,
-    "overall": 80.8118950893145,
-    "quads": 2635,
-    "shape": 100.0,
-    "singularities": 96.1100569259962,
-    "speed": 27.261150861956974,
-    "structure": null,
-    "validity": 95.44592030360533
    },
    "quadriflow": {
     "alignment": null,
@@ -5759,19 +3575,6 @@
     "structure": 42.90260980267345,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 93.53626456219466,
-    "fidelity": 76.4175810269125,
-    "loops": 90.32606015779092,
-    "overall": 93.5267754524217,
-    "quads": 5408,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 25.099044772133304,
-    "structure": 63.83136094674556,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 98.26666666666667,
@@ -5784,45 +3587,6 @@
     "speed": 31.773390549028246,
     "structure": 66.64454032525722,
     "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 89.39654336114276,
-    "loops": 86.18075842795955,
-    "overall": 87.40790543852967,
-    "quads": 5322,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 29.86873978461101,
-    "structure": null,
-    "validity": 99.24840285606913
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 87.38433007494572,
-    "loops": 86.18075842795955,
-    "overall": 95.84686398945307,
-    "quads": 5322,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 29.86873978461101,
-    "structure": null,
-    "validity": 99.24840285606913
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 46.4,
-    "fidelity": 1.9188348164860742,
-    "loops": null,
-    "overall": 52.555605497339904,
-    "quads": 2598,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 30.598620870967373,
-    "structure": null,
-    "validity": 0.0
    },
    "quadriflow": {
     "alignment": null,
@@ -5891,19 +3655,6 @@
     "structure": 24.63479415670651,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 65.46978524685657,
-    "budget": 95.11059371362049,
-    "fidelity": 78.28566166801225,
-    "loops": 52.99850074962519,
-    "overall": 79.71308911826581,
-    "quads": 6956,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 26.760489126613585,
-    "structure": 18.243243243243246,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 55.788649993054094,
     "budget": 94.0,
@@ -5915,45 +3666,6 @@
     "singularities": 100.0,
     "speed": 72.2959044155042,
     "structure": 43.41543513957306,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 79.1517349313222,
-    "budget": 0.0,
-    "fidelity": 88.43053448499609,
-    "loops": 48.265676295427426,
-    "overall": 54.419288958189775,
-    "quads": 6872,
-    "shape": 90.17626167120525,
-    "singularities": 100.0,
-    "speed": 53.40491949341528,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 77.33811306572126,
-    "budget": 100.0,
-    "fidelity": 86.45012542653211,
-    "loops": null,
-    "overall": 61.13127138565277,
-    "quads": 6872,
-    "shape": 90.17626167120525,
-    "singularities": 100.0,
-    "speed": 53.40491949341528,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 61.52892324245613,
-    "budget": 43.06666666666666,
-    "fidelity": 65.71668429988155,
-    "loops": null,
-    "overall": 73.5880513025731,
-    "quads": 2573,
-    "shape": 88.06805146283216,
-    "singularities": 79.65410027205596,
-    "speed": 53.22075056916977,
-    "structure": 18.8495919160513,
     "validity": 100.0
    },
    "quadriflow": {
@@ -6023,19 +3735,6 @@
     "structure": 99.52893674293405,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 92.34323432343234,
-    "fidelity": 99.99999999999986,
-    "loops": 100.0,
-    "overall": 99.97756841633017,
-    "quads": 2972,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 77.51334636878309,
-    "structure": 99.52893674293405,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 92.0,
@@ -6047,45 +3746,6 @@
     "singularities": 100.0,
     "speed": 70.95842390595362,
     "structure": 99.54248366013073,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 96.0,
-    "fidelity": 99.99996000000003,
-    "loops": 100.0,
-    "overall": 99.6320797302339,
-    "quads": 3030,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 75.47995224951607,
-    "structure": 99.53795379537954,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 99.99996000000003,
-    "loops": null,
-    "overall": 99.97432409974331,
-    "quads": 3030,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 75.47995224951607,
-    "structure": 99.53795379537954,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 96.0,
-    "fidelity": 99.99996000000003,
-    "loops": null,
-    "overall": 99.57689168976898,
-    "quads": 3030,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 73.97032250592785,
-    "structure": 99.53795379537954,
     "validity": 100.0
    },
    "quadriflow": {
@@ -6155,19 +3815,6 @@
     "structure": null,
     "validity": 0.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 97.42868274100688,
-    "fidelity": 48.362646054576174,
-    "loops": 50.0,
-    "overall": 59.75439690818643,
-    "quads": 45905,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 11.712309606991667,
-    "structure": null,
-    "validity": 0.0
-   },
    "openclare-uniform": {
     "alignment": 91.39203098217867,
     "budget": 78.4,
@@ -6179,45 +3826,6 @@
     "singularities": 0.0,
     "speed": 45.135732537759154,
     "structure": 71.67019027484145,
-    "validity": 0.0
-   },
-   "quadremesher": {
-    "alignment": 61.79032749648035,
-    "budget": 0.0,
-    "fidelity": 74.78970351310143,
-    "loops": null,
-    "overall": 45.335818905153104,
-    "quads": 46202,
-    "shape": 74.33484919091029,
-    "singularities": 83.4227955499762,
-    "speed": 35.36827014336793,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 62.04135348417865,
-    "budget": 100.0,
-    "fidelity": 37.07731088669701,
-    "loops": null,
-    "overall": 44.073381486440525,
-    "quads": 46202,
-    "shape": 74.33484919091029,
-    "singularities": 83.4227955499762,
-    "speed": 35.36827014336793,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 75.04587303715383,
-    "budget": 0.0,
-    "fidelity": 54.30561006584027,
-    "loops": null,
-    "overall": 35.93037642154727,
-    "quads": 4324,
-    "shape": 73.19227655442069,
-    "singularities": 0.0,
-    "speed": 34.12726704751039,
-    "structure": null,
     "validity": 0.0
    },
    "quadriflow": {
@@ -6287,19 +3895,6 @@
     "structure": null,
     "validity": 0.0
    },
-   "openclare-matched": {
-    "alignment": 96.59527063895872,
-    "budget": 77.29723668102683,
-    "fidelity": 78.52376969658816,
-    "loops": 70.95879204625562,
-    "overall": 65.8198349890271,
-    "quads": 201871,
-    "shape": 100.0,
-    "singularities": 90.7839659980879,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 0.0
-   },
    "openclare-uniform": {
     "alignment": 67.31640481644554,
     "budget": 0.0,
@@ -6310,45 +3905,6 @@
     "shape": 19.09271209707536,
     "singularities": 0.0,
     "speed": 34.392099500410346,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher": {
-    "alignment": 84.9861909051809,
-    "budget": 0.0,
-    "fidelity": 90.59808060547184,
-    "loops": null,
-    "overall": 56.78551475593568,
-    "quads": 214018,
-    "shape": 89.06192497521295,
-    "singularities": 100.0,
-    "speed": 38.89108452734224,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 70.65914244242755,
-    "budget": 100.0,
-    "fidelity": 48.202594888911854,
-    "loops": null,
-    "overall": 52.61353702129909,
-    "quads": 214018,
-    "shape": 89.06192497521295,
-    "singularities": 100.0,
-    "speed": 38.89108452734224,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 61.18620844748058,
-    "budget": 0.0,
-    "fidelity": 82.33438025490386,
-    "loops": null,
-    "overall": 33.28144169634911,
-    "quads": 11340,
-    "shape": 46.86647255866642,
-    "singularities": 0.0,
-    "speed": 41.61895338869949,
     "structure": null,
     "validity": 0.0
    },
@@ -6419,19 +3975,6 @@
     "structure": 31.838111298482296,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 80.3462116247016,
-    "budget": 100.0,
-    "fidelity": 76.16076387908898,
-    "loops": 76.52632468756573,
-    "overall": 86.38286562196079,
-    "quads": 6134,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 29.60876923603979,
-    "structure": 34.59406586240627,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 69.1773023657234,
     "budget": 92.93333333333334,
@@ -6444,45 +3987,6 @@
     "speed": 45.192640691093345,
     "structure": 45.85653455617425,
     "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 97.09368290829205,
-    "budget": 0.0,
-    "fidelity": 87.33965822211351,
-    "loops": 29.844644802594242,
-    "overall": 75.4873899604154,
-    "quads": 6134,
-    "shape": 93.52221510144551,
-    "singularities": 100.0,
-    "speed": 28.04026761647429,
-    "structure": 15.715683077926313,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 92.13166161619237,
-    "budget": 100.0,
-    "fidelity": 84.2454337691107,
-    "loops": null,
-    "overall": 89.86362645302026,
-    "quads": 6134,
-    "shape": 93.52221510144551,
-    "singularities": 100.0,
-    "speed": 28.04026761647429,
-    "structure": 15.715683077926313,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 80.58876965839511,
-    "budget": 22.26666666666667,
-    "fidelity": 10.652959385437448,
-    "loops": null,
-    "overall": 38.637184335114675,
-    "quads": 2417,
-    "shape": 79.68660743781628,
-    "singularities": 58.97807199007034,
-    "speed": 30.565872419717422,
-    "structure": 16.880430285477864,
-    "validity": 0.0
    },
    "quadriflow": {
     "alignment": 21.99573715896334,
@@ -6551,19 +4055,6 @@
     "structure": 39.17322834645669,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 78.09379849942478,
-    "budget": 98.53246131759451,
-    "fidelity": 88.4598209272335,
-    "loops": 59.10234837877941,
-    "overall": 84.87043433638061,
-    "quads": 6246,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 0.0,
-    "structure": 27.217419148254884,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 62.198974727437594,
     "budget": 97.2,
@@ -6576,45 +4067,6 @@
     "speed": 0.6739515976999844,
     "structure": 37.79791876468613,
     "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 91.0654443372173,
-    "budget": 0.0,
-    "fidelity": 89.16424565276364,
-    "loops": 39.578267924096615,
-    "overall": 76.00413399853849,
-    "quads": 6269,
-    "shape": 92.04501163434873,
-    "singularities": 100.0,
-    "speed": 12.478406563185196,
-    "structure": 21.470728983888975,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 89.61909903386841,
-    "budget": 100.0,
-    "fidelity": 86.26031173060883,
-    "loops": null,
-    "overall": 89.71461640079086,
-    "quads": 6269,
-    "shape": 92.04501163434873,
-    "singularities": 100.0,
-    "speed": 12.478406563185196,
-    "structure": 21.470728983888975,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 73.07915368484859,
-    "budget": 21.199999999999996,
-    "fidelity": 7.673855892513175,
-    "loops": null,
-    "overall": 38.72362838984226,
-    "quads": 2409,
-    "shape": 84.11898624451034,
-    "singularities": 62.826899128269,
-    "speed": 12.364008538269477,
-    "structure": null,
-    "validity": 0.0
    },
    "quadriflow": {
     "alignment": null,
@@ -6683,19 +4135,6 @@
     "structure": 97.39913304434812,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 82.0822586349946,
-    "budget": 95.31083481349911,
-    "fidelity": 98.90786488477633,
-    "loops": 90.17892802939531,
-    "overall": 94.81239512087735,
-    "quads": 2782,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 74.55785351140212,
-    "structure": 95.47088425593098,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 70.42430580177425,
     "budget": 92.66666666666666,
@@ -6707,45 +4146,6 @@
     "singularities": 100.0,
     "speed": 72.31948343616185,
     "structure": 97.35144312393888,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 79.98584356360146,
-    "budget": 75.33333333333333,
-    "fidelity": 98.22170734547697,
-    "loops": 50.0,
-    "overall": 86.8468543320005,
-    "quads": 2815,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 74.54923684746811,
-    "structure": 82.202486678508,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 79.98584356360146,
-    "budget": 100.0,
-    "fidelity": 98.22170734547697,
-    "loops": null,
-    "overall": 94.26727683163026,
-    "quads": 2815,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 74.54923684746811,
-    "structure": 82.202486678508,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 79.98584356360146,
-    "budget": 75.33333333333333,
-    "fidelity": 98.22170734547697,
-    "loops": null,
-    "overall": 92.37388248180058,
-    "quads": 2815,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 74.15612096095512,
-    "structure": 82.202486678508,
     "validity": 100.0
    },
    "quadriflow": {
@@ -6815,19 +4215,6 @@
     "structure": 38.65213082259663,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 93.3405111028403,
-    "budget": 93.86973180076629,
-    "fidelity": 85.65722070881336,
-    "loops": 71.20862756401019,
-    "overall": 89.8395925697116,
-    "quads": 4626,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 46.867361203403426,
-    "structure": 42.67185473411155,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 80.46911828104037,
     "budget": 98.66666666666667,
@@ -6839,45 +4226,6 @@
     "singularities": 100.0,
     "speed": 62.83945792658901,
     "structure": 57.12374581939799,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 86.09214605241401,
-    "loops": 50.0,
-    "overall": 58.4493189188991,
-    "quads": 4698,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 34.52894731730649,
-    "structure": 36.05789697743721,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 83.46383340900888,
-    "loops": null,
-    "overall": 65.913855400248,
-    "quads": 4698,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 34.52894731730649,
-    "structure": 36.05789697743721,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 90.61030874776517,
-    "budget": 40.26666666666666,
-    "fidelity": 70.83780481177112,
-    "loops": null,
-    "overall": 84.16938346400418,
-    "quads": 2552,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 32.2504415661804,
-    "structure": 27.89968652037618,
     "validity": 100.0
    },
    "quadriflow": {
@@ -6947,19 +4295,6 @@
     "structure": 0.0,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 46.0423708745624,
-    "budget": 96.6092116417067,
-    "fidelity": 92.49834786838171,
-    "loops": 50.0,
-    "overall": 76.74592986206642,
-    "quads": 3569,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 63.65294121378506,
-    "structure": 0.0,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 43.27122658087243,
     "budget": 94.8,
@@ -6970,45 +4305,6 @@
     "shape": 100.0,
     "singularities": 100.0,
     "speed": 60.31793340120154,
-    "structure": 0.0,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 57.45013807303536,
-    "budget": 28.133333333333333,
-    "fidelity": 89.73335261176787,
-    "loops": 26.86728831119902,
-    "overall": 69.53288666598044,
-    "quads": 3539,
-    "shape": 87.79575052994718,
-    "singularities": 100.0,
-    "speed": 26.246028390550112,
-    "structure": 0.0,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 54.309328010808485,
-    "budget": 100.0,
-    "fidelity": 89.73335261176787,
-    "loops": null,
-    "overall": 80.54581230379884,
-    "quads": 3539,
-    "shape": 87.79575052994718,
-    "singularities": 100.0,
-    "speed": 26.246028390550112,
-    "structure": 0.0,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 53.94343539280122,
-    "budget": 37.46666666666667,
-    "fidelity": 88.42357053421833,
-    "loops": null,
-    "overall": 75.49675082808983,
-    "quads": 2531,
-    "shape": 84.65241001820114,
-    "singularities": 100.0,
-    "speed": 30.83341313172663,
     "structure": 0.0,
     "validity": 100.0
    },
@@ -7079,19 +4375,6 @@
     "structure": null,
     "validity": 0.0
    },
-   "openclare-matched": {
-    "alignment": 91.34593637768313,
-    "budget": 97.06751407704745,
-    "fidelity": 82.38136915096558,
-    "loops": 73.28531895133048,
-    "overall": 88.94979520446576,
-    "quads": 36137,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 1.0360753233414122,
-    "structure": 35.56188947616017,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 52.2072371268341,
     "budget": 64.26666666666667,
@@ -7102,45 +4385,6 @@
     "shape": 36.982585110965445,
     "singularities": 0.0,
     "speed": 64.96122396157483,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher": {
-    "alignment": 93.25286106902331,
-    "budget": 0.0,
-    "fidelity": 38.11380845810831,
-    "loops": null,
-    "overall": 50.97770444163137,
-    "quads": 35874,
-    "shape": 93.74117158019261,
-    "singularities": 100.0,
-    "speed": 44.92990442680944,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 78.17776079575698,
-    "budget": 100.0,
-    "fidelity": 0.0,
-    "loops": null,
-    "overall": 46.70203281903563,
-    "quads": 35874,
-    "shape": 93.74117158019261,
-    "singularities": 100.0,
-    "speed": 44.92990442680944,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 57.825707483881665,
-    "budget": 58.533333333333324,
-    "fidelity": 14.684173905984272,
-    "loops": null,
-    "overall": 31.21675962970322,
-    "quads": 2689,
-    "shape": 66.89880488140501,
-    "singularities": 0.0,
-    "speed": 41.75580764413429,
     "structure": null,
     "validity": 0.0
    },
@@ -7211,19 +4455,6 @@
     "structure": 99.79933110367894,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": null,
-    "budget": 98.24817518248176,
-    "fidelity": 99.31480684693985,
-    "loops": 100.0,
-    "overall": 99.86614583481447,
-    "quads": 2728,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 76.94610493663856,
-    "structure": 99.7800586510264,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": null,
     "budget": 98.66666666666667,
@@ -7235,45 +4466,6 @@
     "singularities": 100.0,
     "speed": 70.16812582899075,
     "structure": 99.79933110367894,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": null,
-    "budget": 65.33333333333333,
-    "fidelity": 98.36281299601036,
-    "loops": 50.0,
-    "overall": 84.75161332105017,
-    "quads": 2740,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 68.98745267851103,
-    "structure": 34.52554744525548,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": null,
-    "budget": 100.0,
-    "fidelity": 98.36279756626926,
-    "loops": null,
-    "overall": 94.97242429600452,
-    "quads": 2740,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 68.98745267851103,
-    "structure": 34.52554744525548,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": null,
-    "budget": 65.33333333333333,
-    "fidelity": 98.36279756626926,
-    "loops": null,
-    "overall": 91.26753792567061,
-    "quads": 2740,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 70.19694463312209,
-    "structure": 34.52554744525548,
     "validity": 100.0
    },
    "quadriflow": {
@@ -7343,19 +4535,6 @@
     "structure": 59.773936170212764,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 99.42495687176537,
-    "fidelity": 93.11386711032367,
-    "loops": 100.0,
-    "overall": 97.133716992616,
-    "quads": 3473,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 60.04525125845505,
-    "structure": 60.46645551396488,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 92.74243176882905,
     "budget": 96.8,
@@ -7367,45 +4546,6 @@
     "singularities": 100.0,
     "speed": 64.93215130766285,
     "structure": 56.98924731182795,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 36.266666666666666,
-    "fidelity": 84.84234534037643,
-    "loops": 51.47736826020025,
-    "overall": 83.11661905945134,
-    "quads": 3478,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 27.90591165041554,
-    "structure": 30.18976423231743,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 86.7180370920276,
-    "loops": null,
-    "overall": 93.90799308380002,
-    "quads": 3478,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 27.90591165041554,
-    "structure": 30.18976423231743,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 58.133333333333326,
-    "fidelity": 68.18546523221681,
-    "loops": null,
-    "overall": 87.09848744430137,
-    "quads": 2686,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 33.596397266610175,
-    "structure": 21.146686522710347,
     "validity": 100.0
    },
    "quadriflow": {
@@ -7475,19 +4615,6 @@
     "structure": 6.183510638297873,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 70.00069192613363,
-    "budget": 94.96463932107496,
-    "fidelity": 69.9306840009517,
-    "loops": 42.07762769437975,
-    "overall": 77.53006421671952,
-    "quads": 14318,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 20.71837542294077,
-    "structure": 12.103645760581083,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 64.36953611058922,
     "budget": 96.8,
@@ -7500,45 +4627,6 @@
     "speed": 61.64247687441373,
     "structure": 30.745967741935488,
     "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 76.28791758322669,
-    "budget": 0.0,
-    "fidelity": 59.61214652934106,
-    "loops": 27.350998472146195,
-    "overall": 47.99351044577083,
-    "quads": 14140,
-    "shape": 100.0,
-    "singularities": 94.90806223479493,
-    "speed": 11.287954310008796,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 66.96918561218045,
-    "budget": 100.0,
-    "fidelity": 28.58064367155955,
-    "loops": null,
-    "overall": 49.613811643117074,
-    "quads": 14140,
-    "shape": 100.0,
-    "singularities": 94.90806223479493,
-    "speed": 11.287954310008796,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 63.94172277364026,
-    "budget": 81.2,
-    "fidelity": 14.747667096492169,
-    "loops": null,
-    "overall": 41.900593957263816,
-    "quads": 2859,
-    "shape": 97.0446871897592,
-    "singularities": 21.283665617348717,
-    "speed": 14.326283476714641,
-    "structure": null,
-    "validity": 0.0
    },
    "quadriflow": {
     "alignment": 60.1294838415162,
@@ -7607,19 +4695,6 @@
     "structure": 49.54804151322397,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 85.39785836294085,
-    "budget": 98.97911832946636,
-    "fidelity": 88.7727343903938,
-    "loops": 96.47193452034603,
-    "overall": 93.26923030421739,
-    "quads": 4321,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 60.64239610009257,
-    "structure": 61.32839620458228,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 82.87589766763587,
     "budget": 97.6,
@@ -7631,45 +4706,6 @@
     "singularities": 100.0,
     "speed": 66.56622749657417,
     "structure": 51.27431254191818,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 94.79640187928602,
-    "budget": 0.0,
-    "fidelity": 88.10307996963454,
-    "loops": 52.334609116475995,
-    "overall": 58.3561917510572,
-    "quads": 4310,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 69.81073089953837,
-    "structure": 41.693735498839914,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 93.6699589969744,
-    "budget": 100.0,
-    "fidelity": 86.45343309786145,
-    "loops": null,
-    "overall": 65.31854837668455,
-    "quads": 4310,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 69.81073089953837,
-    "structure": 41.693735498839914,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 84.51899228036513,
-    "budget": 50.4,
-    "fidelity": 73.39165976042021,
-    "loops": null,
-    "overall": 84.45559156016651,
-    "quads": 2628,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 71.55314916289029,
-    "structure": 30.060882800608823,
     "validity": 100.0
    },
    "quadriflow": {
@@ -7739,19 +4775,6 @@
     "structure": 26.484168865435354,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 30.44922092970935,
-    "budget": 99.91447509087021,
-    "fidelity": 68.9651359291058,
-    "loops": 50.975408163618184,
-    "overall": 71.34148214593279,
-    "quads": 4676,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 37.01057803089666,
-    "structure": 16.552609067579127,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 30.117077074456798,
     "budget": 96.13333333333334,
@@ -7763,45 +4786,6 @@
     "singularities": 100.0,
     "speed": 43.55024519923823,
     "structure": 50.544734235721364,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 28.98251491923722,
-    "budget": 0.0,
-    "fidelity": 73.08410457092548,
-    "loops": 50.0,
-    "overall": 65.86242346502877,
-    "quads": 4677,
-    "shape": 90.78114458462866,
-    "singularities": 100.0,
-    "speed": 25.44155706477772,
-    "structure": null,
-    "validity": 98.28950181740433
-   },
-   "quadremesher-as-made": {
-    "alignment": 27.520862639383235,
-    "budget": 100.0,
-    "fidelity": 68.56768366476369,
-    "loops": null,
-    "overall": 75.26926143486656,
-    "quads": 4677,
-    "shape": 90.78114458462866,
-    "singularities": 100.0,
-    "speed": 25.44155706477772,
-    "structure": null,
-    "validity": 98.28950181740433
-   },
-   "quadremesher-uniform": {
-    "alignment": 26.8059224468078,
-    "budget": 46.266666666666666,
-    "fidelity": 42.50524781682341,
-    "loops": null,
-    "overall": 66.61857892479789,
-    "quads": 2597,
-    "shape": 99.23522199576757,
-    "singularities": 85.69503273007317,
-    "speed": 27.37326173509779,
-    "structure": 36.003080477474,
     "validity": 100.0
    },
    "quadriflow": {
@@ -7871,19 +4855,6 @@
     "structure": 99.96612466124661,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 96.60056657223795,
-    "fidelity": 98.76689647754661,
-    "loops": 100.0,
-    "overall": 99.82214167366313,
-    "quads": 2800,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 67.23386498398652,
-    "structure": 99.96428571428572,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 93.6,
@@ -7895,45 +4866,6 @@
     "singularities": 100.0,
     "speed": 78.26399945070676,
     "structure": 99.96612466124661,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 76.53333333333333,
-    "fidelity": 96.57842992831158,
-    "loops": 50.0,
-    "overall": 87.50573846870493,
-    "quads": 2824,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 62.14534033069421,
-    "structure": 19.830028328611892,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 96.5784356528441,
-    "loops": null,
-    "overall": 94.97585196039691,
-    "quads": 2824,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 62.14534033069421,
-    "structure": 19.830028328611892,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 76.53333333333333,
-    "fidelity": 96.5784356528441,
-    "loops": null,
-    "overall": 93.13160009769055,
-    "quads": 2824,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 74.05460117363778,
-    "structure": 19.830028328611892,
     "validity": 100.0
    },
    "quadriflow": {
@@ -8003,19 +4935,6 @@
     "structure": null,
     "validity": 0.0
    },
-   "openclare-matched": {
-    "alignment": 71.8453505718156,
-    "budget": 11.169056931768795,
-    "fidelity": 36.25016894061479,
-    "loops": null,
-    "overall": 52.713641712300394,
-    "quads": 12530,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 0.0
-   },
    "openclare-uniform": {
     "alignment": 54.5158277323325,
     "budget": 92.0,
@@ -8028,45 +4947,6 @@
     "speed": 11.87328041858262,
     "structure": 6.2745098039215685,
     "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 82.18257641981866,
-    "budget": 0.0,
-    "fidelity": 61.15469139473757,
-    "loops": null,
-    "overall": 52.32246641721887,
-    "quads": 16107,
-    "shape": 94.29412654124606,
-    "singularities": 99.52505121996647,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 73.99386628021303,
-    "budget": 100.0,
-    "fidelity": 47.35771539590685,
-    "loops": null,
-    "overall": 54.11653490424963,
-    "quads": 16107,
-    "shape": 94.29412654124606,
-    "singularities": 99.52505121996647,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 74.30468010796872,
-    "budget": 86.26666666666667,
-    "fidelity": 37.405991602993055,
-    "loops": null,
-    "overall": 47.373052248451785,
-    "quads": 2897,
-    "shape": 92.33548983225297,
-    "singularities": 20.55574732481878,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 0.0
    },
    "quadriflow": {
     "alignment": 63.5591414414276,
@@ -8135,19 +5015,6 @@
     "structure": null,
     "validity": 98.43260188087775
    },
-   "openclare-matched": {
-    "alignment": 79.11725730410329,
-    "budget": 92.98245614035088,
-    "fidelity": 49.92389443324103,
-    "loops": null,
-    "overall": 54.720498098511854,
-    "quads": 14442,
-    "shape": 100.0,
-    "singularities": 82.00387757928266,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 0.0
-   },
    "openclare-uniform": {
     "alignment": 76.41226115529692,
     "budget": 60.0,
@@ -8160,45 +5027,6 @@
     "speed": 32.67641991484225,
     "structure": null,
     "validity": 97.03703703703704
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 84.26419062932268,
-    "loops": 56.18912724669681,
-    "overall": 59.21131916266944,
-    "quads": 14193,
-    "shape": 93.76302265022308,
-    "singularities": 100.0,
-    "speed": 58.47461663607938,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 98.4100910109149,
-    "budget": 100.0,
-    "fidelity": 82.95361237215822,
-    "loops": null,
-    "overall": 66.10530994769432,
-    "quads": 14193,
-    "shape": 93.76302265022308,
-    "singularities": 100.0,
-    "speed": 58.47461663607938,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 78.82315015754808,
-    "loops": null,
-    "overall": 57.31577376104049,
-    "quads": 9910,
-    "shape": 92.08122392473629,
-    "singularities": 88.14328960645813,
-    "speed": 64.81042265719785,
-    "structure": null,
-    "validity": 0.0
    },
    "quadriflow": {
     "alignment": null,
@@ -8267,19 +5095,6 @@
     "structure": null,
     "validity": 0.0
    },
-   "openclare-matched": {
-    "alignment": null,
-    "budget": null,
-    "fidelity": null,
-    "loops": null,
-    "overall": 0.0,
-    "quads": null,
-    "shape": null,
-    "singularities": null,
-    "speed": null,
-    "structure": null,
-    "validity": 0.0
-   },
    "openclare-uniform": {
     "alignment": 47.13212540810425,
     "budget": 0.0,
@@ -8289,45 +5104,6 @@
     "quads": 2249,
     "shape": 80.48783117841498,
     "singularities": 57.06980880391285,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher": {
-    "alignment": 80.25358825176968,
-    "budget": 0.0,
-    "fidelity": 53.607374513561595,
-    "loops": 44.510108786442444,
-    "overall": 50.100131161821274,
-    "quads": 22110,
-    "shape": 99.96903041545791,
-    "singularities": 93.4644957033017,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 71.78713063994502,
-    "budget": 100.0,
-    "fidelity": 30.647729931730076,
-    "loops": null,
-    "overall": 50.936929118114556,
-    "quads": 22110,
-    "shape": 99.96903041545791,
-    "singularities": 93.4644957033017,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 50.823177320038006,
-    "budget": 80.0,
-    "fidelity": 24.013277346373545,
-    "loops": null,
-    "overall": 35.31903901713592,
-    "quads": 2850,
-    "shape": 78.57640000210324,
-    "singularities": 0.0,
     "speed": 0.0,
     "structure": null,
     "validity": 0.0
@@ -8399,19 +5175,6 @@
     "structure": 0.0,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 32.685722873294694,
-    "budget": 0.0,
-    "fidelity": 0.0,
-    "loops": 49.641619425420366,
-    "overall": 42.521387430248545,
-    "quads": 818,
-    "shape": 37.434463718585064,
-    "singularities": 0.0,
-    "speed": 17.41865696625985,
-    "structure": 0.9779951100244544,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 30.14886379505736,
     "budget": 0.0,
@@ -8424,45 +5187,6 @@
     "speed": 90.70695892210189,
     "structure": 0.0,
     "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 89.72492264443781,
-    "budget": 0.0,
-    "fidelity": 74.82382067109748,
-    "loops": 38.83717517264442,
-    "overall": 54.0830977336175,
-    "quads": 17287,
-    "shape": 98.2161426696963,
-    "singularities": 97.64852201075954,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 74.25720004800672,
-    "budget": 100.0,
-    "fidelity": 64.90925190937702,
-    "loops": null,
-    "overall": 57.74717811475093,
-    "quads": 17287,
-    "shape": 98.2161426696963,
-    "singularities": 97.64852201075954,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 74.97278344804286,
-    "budget": 71.6,
-    "fidelity": 45.680499173210805,
-    "loops": null,
-    "overall": 45.24976333082467,
-    "quads": 2787,
-    "shape": 84.58092024771693,
-    "singularities": 12.935055615357012,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 0.0
    },
    "quadriflow": {
     "alignment": null,
@@ -8531,19 +5255,6 @@
     "structure": null,
     "validity": 94.9874686716792
    },
-   "openclare-matched": {
-    "alignment": 83.85483364036277,
-    "budget": 50.13347570742125,
-    "fidelity": 50.22824725069175,
-    "loops": 30.378006872852232,
-    "overall": 76.94594040156917,
-    "quads": 13116,
-    "shape": 90.78489902354433,
-    "singularities": 100.0,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 97.86520280573346
-   },
    "openclare-uniform": {
     "alignment": 79.0253235528389,
     "budget": 18.666666666666664,
@@ -8554,45 +5265,6 @@
     "shape": 87.01520718273258,
     "singularities": 57.53138075313808,
     "speed": 22.787850261243637,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher": {
-    "alignment": 91.78915390968288,
-    "budget": 0.0,
-    "fidelity": 61.162593316352414,
-    "loops": 65.07624759788358,
-    "overall": 55.35044265118231,
-    "quads": 14984,
-    "shape": 91.76009106534651,
-    "singularities": 98.27816337426589,
-    "speed": 19.516271628048408,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 84.8302732178918,
-    "budget": 100.0,
-    "fidelity": 34.56240393140618,
-    "loops": null,
-    "overall": 53.81440615355042,
-    "quads": 14984,
-    "shape": 91.76009106534651,
-    "singularities": 98.27816337426589,
-    "speed": 19.516271628048408,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 86.95370492019346,
-    "budget": 7.733333333333336,
-    "fidelity": 12.340379630008815,
-    "loops": null,
-    "overall": 34.60371865727289,
-    "quads": 2308,
-    "shape": 81.33215070922259,
-    "singularities": 6.585788561525128,
-    "speed": 16.742036822706996,
     "structure": null,
     "validity": 0.0
    },
@@ -8665,19 +5337,6 @@
     "structure": 70.05293672800606,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 99.89887498419921,
-    "fidelity": 97.08064766161058,
-    "loops": 50.0,
-    "overall": 88.6258724362663,
-    "quads": 7909,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 51.26496259097306,
-    "structure": 19.90137817676065,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 99.0,
@@ -8689,45 +5348,6 @@
     "singularities": 100.0,
     "speed": 52.237103528089236,
     "structure": 5.361596009975067,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 95.55,
-    "fidelity": 93.9945814027816,
-    "loops": 50.0,
-    "overall": 89.80019840525968,
-    "quads": 7911,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 38.57698435598936,
-    "structure": 42.32081911262798,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 93.9945814027816,
-    "loops": null,
-    "overall": 95.79469796227626,
-    "quads": 7911,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 38.57698435598936,
-    "structure": 42.32081911262798,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 51.75000000000001,
-    "fidelity": 92.67670257902853,
-    "loops": null,
-    "overall": 92.00187852118265,
-    "quads": 7035,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 38.10165474348647,
-    "structure": 58.507462686567166,
     "validity": 100.0
    },
    "quadriflow": {
@@ -8797,19 +5417,6 @@
     "structure": 74.96194824961948,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 95.8651474215905,
-    "fidelity": 93.23465773579956,
-    "loops": 81.64037773385523,
-    "overall": 95.67381722071909,
-    "quads": 8601,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 41.100971270614586,
-    "structure": 84.52505522613649,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 92.0,
@@ -8821,45 +5428,6 @@
     "singularities": 100.0,
     "speed": 45.753231774755434,
     "structure": 92.05882352941177,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 74.35000000000001,
-    "fidelity": 91.41383946229266,
-    "loops": 50.0,
-    "overall": 86.95371858910154,
-    "quads": 8513,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 32.9682527594729,
-    "structure": 26.994009162457424,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 91.41383550065798,
-    "loops": null,
-    "overall": 94.51308420357951,
-    "quads": 8513,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 32.9682527594729,
-    "structure": 26.994009162457424,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 47.150000000000006,
-    "fidelity": 83.91572929950674,
-    "loops": null,
-    "overall": 88.76714407013846,
-    "quads": 6943,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 36.690344036491155,
-    "structure": 29.295693504248888,
     "validity": 100.0
    },
    "quadriflow": {
@@ -8929,19 +5497,6 @@
     "structure": 96.82598954443614,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 99.76798143851508,
-    "fidelity": 98.34923815204101,
-    "loops": 50.0,
-    "overall": 91.09820034332125,
-    "quads": 6900,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 51.274926798767865,
-    "structure": 68.01449275362319,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 94.45,
@@ -8953,45 +5508,6 @@
     "singularities": 100.0,
     "speed": 45.7585321076034,
     "structure": 82.38195043767723,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 44.8,
-    "fidelity": 97.00513636086012,
-    "loops": 47.19101123595505,
-    "overall": 84.85770895215192,
-    "quads": 6896,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 26.37872525581999,
-    "structure": 29.53886310904872,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 97.00513865653416,
-    "loops": null,
-    "overall": 95.58634883770284,
-    "quads": 6896,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 26.37872525581999,
-    "structure": 29.53886310904872,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 41.6,
-    "fidelity": 97.40329552199145,
-    "loops": null,
-    "overall": 90.9975142346219,
-    "quads": 6832,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 30.83197461043944,
-    "structure": 44.5403981264637,
     "validity": 100.0
    },
    "quadriflow": {
@@ -9061,19 +5577,6 @@
     "structure": 76.72304973491542,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 89.46299057179613,
-    "budget": 93.8671209540034,
-    "fidelity": 85.64996241315379,
-    "loops": 100.0,
-    "overall": 94.90433369251397,
-    "quads": 8670,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 39.08190532597893,
-    "structure": 78.18915801614763,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 85.71696813540959,
     "budget": 97.95,
@@ -9086,45 +5589,6 @@
     "speed": 33.16054336987987,
     "structure": 80.02735978112176,
     "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 97.69913073814081,
-    "budget": 59.74999999999999,
-    "fidelity": 86.62731351059587,
-    "loops": 84.37490076529802,
-    "overall": 90.86479705056443,
-    "quads": 8805,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 33.03585469170505,
-    "structure": 66.58716638273707,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 95.34695489939274,
-    "budget": 100.0,
-    "fidelity": 86.62731249050006,
-    "loops": null,
-    "overall": 94.88094019176712,
-    "quads": 8805,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 33.03585469170505,
-    "structure": 66.58716638273707,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 92.0317367062749,
-    "budget": 52.7,
-    "fidelity": 87.09826810162198,
-    "loops": null,
-    "overall": 91.23179556556771,
-    "quads": 7054,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 39.81054327242061,
-    "structure": null,
-    "validity": 99.71647292316416
    },
    "quadriflow": {
     "alignment": null,
@@ -9193,19 +5657,6 @@
     "structure": 97.61637339323599,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 96.47561086383868,
-    "fidelity": 95.5837571756341,
-    "loops": 100.0,
-    "overall": 99.31674118009687,
-    "quads": 10912,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 43.22553402578062,
-    "structure": 98.90029325513197,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 93.8,
@@ -9217,45 +5668,6 @@
     "singularities": 100.0,
     "speed": 59.43914389388032,
     "structure": 95.01477104874446,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 90.94467694552382,
-    "loops": 50.0,
-    "overall": 82.32702826335692,
-    "quads": 11009,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 57.252186218660064,
-    "structure": 70.68761922063767,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 90.94467694552382,
-    "loops": null,
-    "overall": 96.86231389206718,
-    "quads": 11009,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 57.252186218660064,
-    "structure": 70.68761922063767,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 75.5,
-    "fidelity": 88.14575294376226,
-    "loops": null,
-    "overall": 94.47093085101841,
-    "quads": 7510,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 61.07025003506287,
-    "structure": 73.98135818908122,
     "validity": 100.0
    },
    "quadriflow": {
@@ -9325,19 +5737,6 @@
     "structure": null,
     "validity": 0.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 88.19246285545607,
-    "fidelity": 69.699461704899,
-    "loops": null,
-    "overall": 65.20478635857944,
-    "quads": 19726,
-    "shape": 99.7943276603845,
-    "singularities": 100.0,
-    "speed": 24.055780096088185,
-    "structure": null,
-    "validity": 0.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 86.0,
@@ -9348,45 +5747,6 @@
     "shape": 70.86866024327912,
     "singularities": 100.0,
     "speed": 41.429524603767796,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 89.28648738694588,
-    "loops": 82.6549842995473,
-    "overall": 64.35565522997635,
-    "quads": 20326,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 51.626260075868366,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 88.19018444935253,
-    "loops": null,
-    "overall": 68.50415019694456,
-    "quads": 20326,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 51.626260075868366,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 78.12951521241148,
-    "loops": null,
-    "overall": 59.704660296696545,
-    "quads": 10881,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 55.67881904251609,
     "structure": null,
     "validity": 0.0
    },
@@ -9457,19 +5817,6 @@
     "structure": 73.04259117572047,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 98.71973281380461,
-    "fidelity": 97.9935687659476,
-    "loops": 50.0,
-    "overall": 91.49022289949973,
-    "quads": 7163,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 39.929252883137124,
-    "structure": 77.31397459165154,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 92.9,
@@ -9481,45 +5828,6 @@
     "singularities": 100.0,
     "speed": 33.58834426984508,
     "structure": 73.63196742173581,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 59.3,
-    "fidelity": 97.51427495638478,
-    "loops": 50.0,
-    "overall": 87.65699209519562,
-    "quads": 7186,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 38.325452363021896,
-    "structure": 54.96799332034512,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 97.51427495638478,
-    "loops": null,
-    "overall": 97.08393434386107,
-    "quads": 7186,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 38.325452363021896,
-    "structure": 54.96799332034512,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 60.349999999999994,
-    "fidelity": 97.32726236250959,
-    "loops": null,
-    "overall": 93.22878895198987,
-    "quads": 7207,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 47.67663223004305,
-    "structure": 51.89399195226863,
     "validity": 100.0
    },
    "quadriflow": {
@@ -9589,19 +5897,6 @@
     "structure": 99.92561368708157,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 92.72727272727272,
-    "fidelity": 99.99999999999993,
-    "loops": 100.0,
-    "overall": 99.99632569077013,
-    "quads": 7776,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 54.494561046333835,
-    "structure": 99.92283950617285,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 96.7,
@@ -9613,45 +5908,6 @@
     "singularities": 100.0,
     "speed": 58.089561595654246,
     "structure": 99.92561368708157,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 96.0,
-    "fidelity": 99.99996558724229,
-    "loops": 100.0,
-    "overall": 99.64887561678128,
-    "quads": 7920,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 69.38167452289409,
-    "structure": 99.92424242424242,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 99.99996558724229,
-    "loops": null,
-    "overall": 99.99578551033163,
-    "quads": 7920,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 69.38167452289409,
-    "structure": 99.92424242424242,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 96.0,
-    "fidelity": 99.99996558724229,
-    "loops": null,
-    "overall": 99.59620695929847,
-    "quads": 7920,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 74.01242548768244,
-    "structure": 99.92424242424242,
     "validity": 100.0
    },
    "quadriflow": {
@@ -9721,19 +5977,6 @@
     "structure": 99.92462311557789,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 94.79919098526437,
-    "fidelity": 99.11947028609627,
-    "loops": 100.0,
-    "overall": 99.87002804020177,
-    "quads": 6832,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 57.44815813150874,
-    "structure": 99.91217798594847,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 97.3,
@@ -9745,45 +5988,6 @@
     "singularities": 100.0,
     "speed": 54.711562585902705,
     "structure": 99.92449030958973,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 46.099999999999994,
-    "fidelity": 98.53692724165313,
-    "loops": 50.0,
-    "overall": 88.0665692945,
-    "quads": 6922,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 63.71920560080577,
-    "structure": 87.72031204854088,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 98.53691736094498,
-    "loops": null,
-    "overall": 99.07394800729865,
-    "quads": 6922,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 63.71920560080577,
-    "structure": 87.72031204854088,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 46.099999999999994,
-    "fidelity": 98.53691736094498,
-    "loops": null,
-    "overall": 93.77655320656879,
-    "quads": 6922,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 63.41149842949032,
-    "structure": 87.72031204854088,
     "validity": 100.0
    },
    "quadriflow": {
@@ -9853,19 +6057,6 @@
     "structure": null,
     "validity": 0.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 74.55080746417283,
-    "fidelity": 80.15336324983338,
-    "loops": null,
-    "overall": 67.08588763232353,
-    "quads": 43255,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 0.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 41.949999999999996,
@@ -9876,45 +6067,6 @@
     "shape": 82.23684169875666,
     "singularities": 0.0,
     "speed": 31.314280533204364,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 89.63981005393981,
-    "loops": null,
-    "overall": 59.58240290287139,
-    "quads": 46194,
-    "shape": 92.79976272037128,
-    "singularities": 92.37346841581157,
-    "speed": 41.85500042228588,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 84.58940062457634,
-    "loops": null,
-    "overall": 65.70084863920388,
-    "quads": 46194,
-    "shape": 92.79976272037128,
-    "singularities": 92.37346841581157,
-    "speed": 41.85500042228588,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 39.02317430013212,
-    "loops": null,
-    "overall": 42.38584891853836,
-    "quads": 10673,
-    "shape": 85.28424144188473,
-    "singularities": 16.204441113089096,
-    "speed": 44.495678438739226,
     "structure": null,
     "validity": 0.0
    },
@@ -10011,19 +6163,6 @@
     "structure": 63.176759102056224,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 95.19133706524731,
-    "fidelity": 87.18442156938525,
-    "loops": 93.91912811938819,
-    "overall": 95.38265283055122,
-    "quads": 10766,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 12.49877002415104,
-    "structure": 59.72506037525543,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 93.5,
@@ -10036,45 +6175,6 @@
     "speed": 22.265710823399644,
     "structure": 64.4599745870394,
     "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 89.08093750642524,
-    "loops": 96.54441079603968,
-    "overall": 87.48988856668122,
-    "quads": 10897,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 24.965183583694937,
-    "structure": 55.39139212627329,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 87.72689435132887,
-    "loops": 96.54441079603968,
-    "overall": 95.62882416992281,
-    "quads": 10897,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 24.965183583694937,
-    "structure": 55.39139212627329,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 66.10000000000001,
-    "fidelity": 45.46776251395552,
-    "loops": 57.82643680778547,
-    "overall": 83.6068683562698,
-    "quads": 7322,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 24.403766250678625,
-    "structure": null,
-    "validity": 99.45370117454247
    },
    "quadriflow": {
     "alignment": null,
@@ -10169,19 +6269,6 @@
     "structure": 42.90260980267345,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 99.33531305377343,
-    "budget": 92.52977264525441,
-    "fidelity": 86.60872600016276,
-    "loops": 95.51908716660027,
-    "overall": 95.75860584714894,
-    "quads": 10877,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 18.319667936117344,
-    "structure": 67.20603107474487,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 97.95066763620574,
     "budget": 93.25,
@@ -10194,45 +6281,6 @@
     "speed": 22.609478506817247,
     "structure": 63.60172095881991,
     "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 90.63438779890495,
-    "loops": 84.31623160511649,
-    "overall": 64.43858753088087,
-    "quads": 11084,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 25.47156899139338,
-    "structure": 57.23565499819559,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 89.72035498991728,
-    "loops": 84.31623160511649,
-    "overall": 70.44501975158556,
-    "quads": 11084,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 25.47156899139338,
-    "structure": 57.23565499819559,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 52.25,
-    "fidelity": 66.01823799251571,
-    "loops": 57.51508545793447,
-    "overall": 84.71565450109856,
-    "quads": 7045,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 26.42552016159091,
-    "structure": null,
-    "validity": 97.72888573456352
    },
    "quadriflow": {
     "alignment": null,
@@ -10301,19 +6349,6 @@
     "structure": 12.756236107680907,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 69.52734050588953,
-    "budget": 95.68324340090419,
-    "fidelity": 80.79881436116537,
-    "loops": 53.74707259953161,
-    "overall": 80.96529879579214,
-    "quads": 13566,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 22.719647144274525,
-    "structure": 18.524251805985546,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 63.249568446064735,
     "budget": 98.5,
@@ -10326,45 +6361,6 @@
     "speed": 47.60220387013,
     "structure": 31.606022584692596,
     "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 81.80992163456384,
-    "budget": 0.0,
-    "fidelity": 91.83761090052559,
-    "loops": 39.628853758903865,
-    "overall": 75.37333286342131,
-    "quads": 13714,
-    "shape": 99.10915969671377,
-    "singularities": 100.0,
-    "speed": 45.04032138905825,
-    "structure": 14.620096252005254,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 79.93126956207027,
-    "budget": 100.0,
-    "fidelity": 90.68075144063394,
-    "loops": null,
-    "overall": 89.09527266179609,
-    "quads": 13714,
-    "shape": 99.10915969671377,
-    "singularities": 100.0,
-    "speed": 45.04032138905825,
-    "structure": 14.620096252005254,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 67.661046152773,
-    "budget": 47.35,
-    "fidelity": 75.47011369819171,
-    "loops": null,
-    "overall": 83.27341226693784,
-    "quads": 6947,
-    "shape": 97.77308263867644,
-    "singularities": 100.0,
-    "speed": 47.837713992276456,
-    "structure": null,
-    "validity": 99.42421189002448
    },
    "quadriflow": {
     "alignment": 34.06453541089348,
@@ -10433,19 +6429,6 @@
     "structure": 99.82638888888889,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 99.99999999999986,
-    "loops": 100.0,
-    "overall": 99.99173280423278,
-    "quads": 8064,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 52.22673903242443,
-    "structure": 99.82638888888889,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 96.8,
@@ -10456,45 +6439,6 @@
     "shape": 100.0,
     "singularities": 100.0,
     "speed": 54.74600292110547,
-    "structure": 99.82638888888889,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 96.8,
-    "fidelity": 99.99999999999986,
-    "loops": 100.0,
-    "overall": 99.71419082125601,
-    "quads": 8064,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 72.33521543906815,
-    "structure": 99.82638888888889,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 99.99999999999986,
-    "loops": null,
-    "overall": 99.99035493827158,
-    "quads": 8064,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 72.33521543906815,
-    "structure": 99.82638888888889,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 96.8,
-    "fidelity": 99.99999999999986,
-    "loops": null,
-    "overall": 99.67131944444442,
-    "quads": 8064,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 71.75209207842124,
     "structure": 99.82638888888889,
     "validity": 100.0
    },
@@ -10565,19 +6509,6 @@
     "structure": null,
     "validity": 0.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 89.75734401333793,
-    "fidelity": 45.530203103622185,
-    "loops": 50.0,
-    "overall": 59.32953046554333,
-    "quads": 53768,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 0.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 28.849999999999998,
@@ -10588,45 +6519,6 @@
     "shape": 85.37806416905578,
     "singularities": 68.19978713699255,
     "speed": 41.72882483859011,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher": {
-    "alignment": 75.46830768534926,
-    "budget": 0.0,
-    "fidelity": 69.4448696568719,
-    "loops": null,
-    "overall": 49.50690126786661,
-    "quads": 55181,
-    "shape": 81.59141283673866,
-    "singularities": 92.82452293361845,
-    "speed": 35.67854124378186,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 71.6830770367758,
-    "budget": 100.0,
-    "fidelity": 37.57023327451561,
-    "loops": null,
-    "overall": 48.815664255770756,
-    "quads": 55181,
-    "shape": 81.59141283673866,
-    "singularities": 92.82452293361845,
-    "speed": 35.67854124378186,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 93.20208047430825,
-    "budget": 60.45,
-    "fidelity": 55.254062535126835,
-    "loops": null,
-    "overall": 51.75178753854766,
-    "quads": 8791,
-    "shape": 94.84488195270168,
-    "singularities": 19.639403935843482,
-    "speed": 39.91047085948259,
     "structure": null,
     "validity": 0.0
    },
@@ -10697,19 +6589,6 @@
     "structure": null,
     "validity": 0.0
    },
-   "openclare-matched": {
-    "alignment": 97.3836818764008,
-    "budget": 76.75879754371849,
-    "fidelity": 78.08206135032259,
-    "loops": 72.31454565846461,
-    "overall": 66.78610445774171,
-    "quads": 231766,
-    "shape": 100.0,
-    "singularities": 97.49877031143481,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 0.0
-   },
    "openclare-uniform": {
     "alignment": 75.01127612898452,
     "budget": 0.0,
@@ -10720,45 +6599,6 @@
     "shape": 45.51568665017435,
     "singularities": 0.0,
     "speed": 34.27256940702205,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher": {
-    "alignment": 84.14283090777649,
-    "budget": 0.0,
-    "fidelity": 87.84764937038109,
-    "loops": null,
-    "overall": 57.36286183831747,
-    "quads": 246063,
-    "shape": 96.5933677285942,
-    "singularities": 100.0,
-    "speed": 36.94767262950691,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 76.42265702090964,
-    "budget": 100.0,
-    "fidelity": 47.91509771644632,
-    "loops": null,
-    "overall": 55.24800143639766,
-    "quads": 246063,
-    "shape": 96.5933677285942,
-    "singularities": 100.0,
-    "speed": 36.94767262950691,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 62.62923463588367,
-    "budget": 0.0,
-    "fidelity": 77.68948289591933,
-    "loops": null,
-    "overall": 34.61878978655504,
-    "quads": 14915,
-    "shape": 58.05720623775104,
-    "singularities": 0.0,
-    "speed": 36.61002609554702,
     "structure": null,
     "validity": 0.0
    },
@@ -10829,19 +6669,6 @@
     "structure": 32.23461586664995,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 83.64251579946318,
-    "budget": 99.40237477392468,
-    "fidelity": 91.98205936033276,
-    "loops": 64.51264420520008,
-    "overall": 87.23690610313372,
-    "quads": 12736,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 20.38879581482599,
-    "structure": 27.920854271356788,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 75.6358795752333,
     "budget": 99.5,
@@ -10854,45 +6681,6 @@
     "speed": 31.352456702775513,
     "structure": 33.55805243445693,
     "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 96.51959382191282,
-    "budget": 0.0,
-    "fidelity": 87.35134081476436,
-    "loops": 38.406002756612224,
-    "overall": 77.6294898411392,
-    "quads": 12717,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 22.894670463693135,
-    "structure": 22.127860344420856,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 93.89957861723164,
-    "budget": 100.0,
-    "fidelity": 85.64486437370843,
-    "loops": null,
-    "overall": 91.92559821858183,
-    "quads": 12717,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 22.894670463693135,
-    "structure": 22.127860344420856,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 87.67558634161036,
-    "budget": 38.05,
-    "fidelity": 55.77813334538895,
-    "loops": null,
-    "overall": 83.2325145433872,
-    "quads": 6761,
-    "shape": 97.73243849834547,
-    "singularities": 100.0,
-    "speed": 22.347896831492832,
-    "structure": null,
-    "validity": 98.81674308534241
    },
    "quadriflow": {
     "alignment": 32.53692261673324,
@@ -10961,19 +6749,6 @@
     "structure": 20.754012691302727,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 86.6968841661199,
-    "budget": 97.27555974204768,
-    "fidelity": 93.36447640456755,
-    "loops": 24.369747899159663,
-    "overall": 81.57906736597205,
-    "quads": 13895,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 0.0,
-    "structure": 13.17020510975171,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 72.36745751898079,
     "budget": 97.3,
@@ -10986,45 +6761,6 @@
     "speed": 0.0,
     "structure": 38.50994210923735,
     "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 94.75570202637303,
-    "budget": 0.0,
-    "fidelity": 88.92599833567023,
-    "loops": 50.17225056495532,
-    "overall": 57.33257695219469,
-    "quads": 13801,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 7.244947767930943,
-    "structure": 22.331715093109196,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 92.22620680449067,
-    "budget": 100.0,
-    "fidelity": 86.64949648283522,
-    "loops": null,
-    "overall": 63.9547239866432,
-    "quads": 13801,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 7.244947767930943,
-    "structure": 22.331715093109196,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 82.55678243633976,
-    "budget": 31.999999999999996,
-    "fidelity": 54.35938562922531,
-    "loops": null,
-    "overall": 80.93772693276385,
-    "quads": 6640,
-    "shape": 95.71267703785828,
-    "singularities": 98.19277108433735,
-    "speed": 6.6980072777864885,
-    "structure": null,
-    "validity": 99.39759036144576
    },
    "quadriflow": {
     "alignment": null,
@@ -11093,19 +6829,6 @@
     "structure": 99.18103983124456,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 80.3351811965532,
-    "budget": 93.41765265877872,
-    "fidelity": 99.44045396695745,
-    "loops": 100.0,
-    "overall": 96.13233454323735,
-    "quads": 7474,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 50.67442904750558,
-    "structure": 99.11693872089911,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 71.030645326604,
     "budget": 95.19999999999999,
@@ -11117,45 +6840,6 @@
     "singularities": 100.0,
     "speed": 50.677670660579246,
     "structure": 99.16497975708502,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 80.21574683896603,
-    "budget": 67.65,
-    "fidelity": 98.64960045314974,
-    "loops": 54.763739667860435,
-    "overall": 87.23804726705474,
-    "quads": 7353,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 76.17899379249387,
-    "structure": 90.07207942336461,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 80.21574683896603,
-    "budget": 100.0,
-    "fidelity": 98.64960045314974,
-    "loops": null,
-    "overall": 94.82688156325989,
-    "quads": 7353,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 76.17899379249387,
-    "structure": 90.07207942336461,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 80.21574683896603,
-    "budget": 67.65,
-    "fidelity": 98.64960045314974,
-    "loops": null,
-    "overall": 92.1091934069339,
-    "quads": 7353,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 75.56063332967662,
-    "structure": 90.07207942336461,
     "validity": 100.0
    },
    "quadriflow": {
@@ -11225,19 +6909,6 @@
     "structure": 52.60950030845157,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 97.76992680053218,
-    "budget": 97.71986970684038,
-    "fidelity": 90.18447625019516,
-    "loops": 70.07422402159244,
-    "overall": 91.38006257573173,
-    "quads": 9880,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 30.349134527214837,
-    "structure": 47.12550607287449,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 91.26814402524526,
     "budget": 96.95,
@@ -11249,45 +6920,6 @@
     "singularities": 100.0,
     "speed": 37.56518028645569,
     "structure": 49.89455402555514,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 8.799999999999997,
-    "fidelity": 87.21509041711523,
-    "loops": 63.10117774836235,
-    "overall": 62.206763840746945,
-    "quads": 9824,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 31.03419651872966,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 85.99516880066211,
-    "loops": null,
-    "overall": 68.11679449423448,
-    "quads": 9824,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 31.03419651872966,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 94.20018009524685,
-    "budget": 53.49999999999999,
-    "fidelity": 74.46524175043083,
-    "loops": null,
-    "overall": 87.33011931131696,
-    "quads": 7070,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 32.07877831841527,
-    "structure": 39.40594059405941,
     "validity": 100.0
    },
    "quadriflow": {
@@ -11357,19 +6989,6 @@
     "structure": 0.0,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 43.93865164539214,
-    "budget": 95.24819686041577,
-    "fidelity": 94.10334438855139,
-    "loops": 50.0,
-    "overall": 76.57450665462966,
-    "quads": 6987,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 48.77913593703958,
-    "structure": 0.0,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 41.32649436626296,
     "budget": 98.15,
@@ -11380,45 +6999,6 @@
     "shape": 100.0,
     "singularities": 100.0,
     "speed": 51.16885091577457,
-    "structure": 0.0,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 35.977793782741465,
-    "budget": 53.55,
-    "fidelity": 91.63528431393192,
-    "loops": 32.69221703672277,
-    "overall": 69.22760700779419,
-    "quads": 7071,
-    "shape": 89.41376066544551,
-    "singularities": 100.0,
-    "speed": 28.994034801390434,
-    "structure": 0.0,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 39.872497083816924,
-    "budget": 100.0,
-    "fidelity": 91.63528431393192,
-    "loops": null,
-    "overall": 77.9242846263,
-    "quads": 7071,
-    "shape": 89.41376066544551,
-    "singularities": 100.0,
-    "speed": 28.994034801390434,
-    "structure": 0.0,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 35.69078174660557,
-    "budget": 38.349999999999994,
-    "fidelity": 91.28066211291004,
-    "loops": null,
-    "overall": 73.00135549759958,
-    "quads": 6767,
-    "shape": 88.90733220894633,
-    "singularities": 100.0,
-    "speed": 29.403038290794026,
     "structure": 0.0,
     "validity": 100.0
    },
@@ -11489,19 +7069,6 @@
     "structure": 26.45452386606507,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 90.95117610494789,
-    "budget": 99.62133867914021,
-    "fidelity": 81.56078250425954,
-    "loops": 54.367279646574204,
-    "overall": 61.861523948798144,
-    "quads": 53823,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 0.0,
-    "structure": 27.50311205246827,
-    "validity": 0.0
-   },
    "openclare-uniform": {
     "alignment": 65.51128490960303,
     "budget": 88.7,
@@ -11512,45 +7079,6 @@
     "shape": 75.17331769790589,
     "singularities": 1.446632628251887,
     "speed": 49.60269823792135,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher": {
-    "alignment": 92.75848162713763,
-    "budget": 0.0,
-    "fidelity": 27.778586771809305,
-    "loops": null,
-    "overall": 49.665913147308196,
-    "quads": 53874,
-    "shape": 96.42755432495909,
-    "singularities": 100.0,
-    "speed": 44.5814030797216,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 77.12821389441619,
-    "budget": 100.0,
-    "fidelity": 0.0,
-    "loops": null,
-    "overall": 46.92914815014953,
-    "quads": 53874,
-    "shape": 96.42755432495909,
-    "singularities": 100.0,
-    "speed": 44.5814030797216,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 69.64262682740515,
-    "budget": 44.8,
-    "fidelity": 7.054839056908224,
-    "loops": null,
-    "overall": 32.93203642050954,
-    "quads": 6896,
-    "shape": 78.79122250311202,
-    "singularities": 0.0,
-    "speed": 49.6648219739904,
     "structure": null,
     "validity": 0.0
    },
@@ -11621,19 +7149,6 @@
     "structure": 0.0,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": null,
-    "budget": 99.09706546275395,
-    "fidelity": 99.38596886750989,
-    "loops": 100.0,
-    "overall": 99.88665088079824,
-    "quads": 7072,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 0.0,
-    "structure": 99.91515837104072,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": null,
     "budget": 97.2,
@@ -11645,45 +7160,6 @@
     "singularities": 100.0,
     "speed": 37.698198226442706,
     "structure": 99.92552135054618,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": null,
-    "budget": 54.400000000000006,
-    "fidelity": 98.89366949910507,
-    "loops": 50.0,
-    "overall": 83.4237955048486,
-    "quads": 7088,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 65.03697521821356,
-    "structure": 29.57110609480813,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": null,
-    "budget": 100.0,
-    "fidelity": 98.8936767473387,
-    "loops": null,
-    "overall": 94.7322954526303,
-    "quads": 7088,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 65.03697521821356,
-    "structure": 29.57110609480813,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": null,
-    "budget": 54.400000000000006,
-    "fidelity": 98.8936767473387,
-    "loops": null,
-    "overall": 89.6907585210515,
-    "quads": 7088,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 64.92634092731724,
-    "structure": 29.57110609480813,
     "validity": 100.0
    },
    "quadriflow": {
@@ -11753,19 +7229,6 @@
     "structure": 67.39972510308634,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 95.9322033898305,
-    "fidelity": 96.44895522409814,
-    "loops": 69.14214442753256,
-    "overall": 93.31231843251172,
-    "quads": 7884,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 38.26492213707721,
-    "structure": 62.78538812785388,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 98.01298428332701,
     "budget": 97.5,
@@ -11777,45 +7240,6 @@
     "singularities": 100.0,
     "speed": 43.61085353265668,
     "structure": 64.62111801242236,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 98.25,
-    "fidelity": 90.53359107644476,
-    "loops": 50.0,
-    "overall": 89.57762307252735,
-    "quads": 7965,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 29.807969956756153,
-    "structure": 42.18455743879473,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 90.53360955457852,
-    "loops": null,
-    "overall": 95.21029922791834,
-    "quads": 7965,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 29.807969956756153,
-    "structure": 42.18455743879473,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 97.0943693190204,
-    "budget": 63.7,
-    "fidelity": 88.24018219511288,
-    "loops": null,
-    "overall": 91.37024075864703,
-    "quads": 7274,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 30.254825355733693,
-    "structure": 46.90679131152048,
     "validity": 100.0
    },
    "quadriflow": {
@@ -11859,19 +7283,6 @@
     "structure": 17.865457664501903,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 73.35818622708221,
-    "budget": 99.30136175251629,
-    "fidelity": 82.61171210894008,
-    "loops": 48.522926968952774,
-    "overall": 81.43374411635966,
-    "quads": 33839,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 17.602077026346073,
-    "structure": 23.271964301545555,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 76.2230109468686,
     "budget": 97.39999999999999,
@@ -11884,19 +7295,6 @@
     "speed": 43.2303131929356,
     "structure": 39.506794162053346,
     "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 77.79481985999604,
-    "budget": 0.0,
-    "fidelity": 76.90866031599646,
-    "loops": 45.69987720106133,
-    "overall": 51.56316478938052,
-    "quads": 33780,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 0.0,
-    "structure": 6.947898164594434,
-    "validity": 0.0
    },
    "quadriflow": {
     "alignment": 63.4831977484385,
@@ -11965,19 +7363,6 @@
     "structure": 63.51882367853974,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 86.35358794466902,
-    "budget": 98.09647415098422,
-    "fidelity": 94.58377038149507,
-    "loops": 86.10023664561191,
-    "overall": 93.21268442190463,
-    "quads": 9290,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 43.576894338453386,
-    "structure": 70.0,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 84.38625072122703,
     "budget": 94.19999999999999,
@@ -11989,45 +7374,6 @@
     "singularities": 100.0,
     "speed": 53.25675283640157,
     "structure": 54.667681380010144,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 96.0344469302669,
-    "budget": 37.7,
-    "fidelity": 92.85480699845266,
-    "loops": 84.74524606866372,
-    "overall": 89.04887969060493,
-    "quads": 9246,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 50.218433869679856,
-    "structure": 55.78628596149686,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 96.0344469302669,
-    "budget": 100.0,
-    "fidelity": 92.85480699845266,
-    "loops": null,
-    "overall": 95.47158303766236,
-    "quads": 9246,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 50.218433869679856,
-    "structure": 55.78628596149686,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 87.20323607593826,
-    "budget": 65.85,
-    "fidelity": 90.02356526817405,
-    "loops": null,
-    "overall": 90.24682584851885,
-    "quads": 7317,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 60.990999724467045,
-    "structure": 54.35287686210195,
     "validity": 100.0
    },
    "quadriflow": {
@@ -12097,19 +7443,6 @@
     "structure": 10.581553278182486,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 35.02129448996483,
-    "budget": 99.86462475674762,
-    "fidelity": 72.82798889905925,
-    "loops": 51.0498687664042,
-    "overall": 72.7068377266513,
-    "quads": 11815,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 27.420752385038227,
-    "structure": 15.12484130342785,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 32.815678294575385,
     "budget": 95.15,
@@ -12121,45 +7454,6 @@
     "singularities": 100.0,
     "speed": 39.769027141962674,
     "structure": 30.646589902568643,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 30.311180827723486,
-    "budget": 0.0,
-    "fidelity": 68.45976116074573,
-    "loops": 50.0,
-    "overall": 43.25583615287696,
-    "quads": 11819,
-    "shape": 95.95898118852689,
-    "singularities": 100.0,
-    "speed": 21.420521455694697,
-    "structure": 30.38328115745833,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 28.733770709064853,
-    "budget": 100.0,
-    "fidelity": 61.89297512705282,
-    "loops": null,
-    "overall": 45.49301294113649,
-    "quads": 11819,
-    "shape": 95.95898118852689,
-    "singularities": 100.0,
-    "speed": 21.420521455694697,
-    "structure": 30.38328115745833,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 28.37441375650401,
-    "budget": 59.150000000000006,
-    "fidelity": 48.37012211237311,
-    "loops": null,
-    "overall": 70.8167222431533,
-    "quads": 7183,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 22.14748381862296,
-    "structure": 39.426423499930394,
     "validity": 100.0
    },
    "quadriflow": {
@@ -12229,19 +7523,6 @@
     "structure": 99.98753738783648,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 100.0,
-    "budget": 96.43291447101743,
-    "fidelity": 99.31556320202682,
-    "loops": 100.0,
-    "overall": 99.90158558794316,
-    "quads": 7467,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 62.01607182914613,
-    "structure": 99.98660774072586,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 100.0,
     "budget": 98.8,
@@ -12253,45 +7534,6 @@
     "singularities": 100.0,
     "speed": 62.228432679322324,
     "structure": 99.98753738783648,
-    "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 70.05,
-    "fidelity": 98.62233382218686,
-    "loops": 50.0,
-    "overall": 87.17941628248835,
-    "quads": 7401,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 55.421576821963534,
-    "structure": 19.159573030671528,
-    "validity": 100.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 100.0,
-    "budget": 100.0,
-    "fidelity": 98.62234558842829,
-    "loops": null,
-    "overall": 95.27925609977535,
-    "quads": 7401,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 55.421576821963534,
-    "structure": 19.159573030671528,
-    "validity": 100.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 70.05,
-    "fidelity": 98.62234558842829,
-    "loops": null,
-    "overall": 92.75633048979782,
-    "quads": 7401,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 57.349975621531,
-    "structure": 19.159573030671528,
     "validity": 100.0
    },
    "quadriflow": {
@@ -12335,19 +7577,6 @@
     "structure": null,
     "validity": 0.0
    },
-   "openclare-matched": {
-    "alignment": 78.55084753431782,
-    "budget": 61.000949561526,
-    "fidelity": 50.84496471232096,
-    "loops": null,
-    "overall": 56.86695789848436,
-    "quads": 32315,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 0.0
-   },
    "openclare-uniform": {
     "alignment": 74.27165543284836,
     "budget": 0.0,
@@ -12356,19 +7585,6 @@
     "overall": 44.54592064971932,
     "quads": 5861,
     "shape": 95.39616815041461,
-    "singularities": 100.0,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher": {
-    "alignment": 85.0145063650422,
-    "budget": 0.0,
-    "fidelity": 72.67118556343638,
-    "loops": 17.409358525251537,
-    "overall": 50.4681662602833,
-    "quads": 35806,
-    "shape": 100.0,
     "singularities": 100.0,
     "speed": 0.0,
     "structure": null,
@@ -12441,19 +7657,6 @@
     "structure": null,
     "validity": 99.5528228060369
    },
-   "openclare-matched": {
-    "alignment": 87.54621725008884,
-    "budget": 86.19569630531872,
-    "fidelity": 68.3682616202791,
-    "loops": 16.13995485327314,
-    "overall": 55.1854759210506,
-    "quads": 19024,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 0.0
-   },
    "openclare-uniform": {
     "alignment": 87.39784030398373,
     "budget": 81.2,
@@ -12466,45 +7669,6 @@
     "speed": 2.335218507590431,
     "structure": null,
     "validity": 99.4753410283316
-   },
-   "quadremesher": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 84.11999588311022,
-    "loops": 63.31186258722491,
-    "overall": 60.9734109306662,
-    "quads": 19704,
-    "shape": 99.70648835455034,
-    "singularities": 100.0,
-    "speed": 59.865139928092084,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 98.499775018074,
-    "budget": 100.0,
-    "fidelity": 83.4692742510005,
-    "loops": null,
-    "overall": 67.26625811111462,
-    "quads": 19704,
-    "shape": 99.70648835455034,
-    "singularities": 100.0,
-    "speed": 59.865139928092084,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 100.0,
-    "budget": 0.0,
-    "fidelity": 81.90100288192555,
-    "loops": null,
-    "overall": 60.00258903749082,
-    "quads": 14699,
-    "shape": 98.11539435551633,
-    "singularities": 100.0,
-    "speed": 56.723309110795704,
-    "structure": null,
-    "validity": 0.0
    },
    "quadriflow": {
     "alignment": null,
@@ -12547,19 +7711,6 @@
     "structure": null,
     "validity": 0.0
    },
-   "openclare-matched": {
-    "alignment": null,
-    "budget": null,
-    "fidelity": null,
-    "loops": null,
-    "overall": 0.0,
-    "quads": null,
-    "shape": null,
-    "singularities": null,
-    "speed": null,
-    "structure": null,
-    "validity": 0.0
-   },
    "openclare-uniform": {
     "alignment": 63.962605692666614,
     "budget": 31.100000000000005,
@@ -12569,19 +7720,6 @@
     "quads": 6622,
     "shape": 98.72894844355922,
     "singularities": 89.14225309574145,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher": {
-    "alignment": 84.66236185170547,
-    "budget": 0.0,
-    "fidelity": 56.95494055595164,
-    "loops": null,
-    "overall": 53.13232995129878,
-    "quads": 42790,
-    "shape": 100.0,
-    "singularities": 100.0,
     "speed": 0.0,
     "structure": null,
     "validity": 0.0
@@ -12627,19 +7765,6 @@
     "structure": 0.0,
     "validity": 100.0
    },
-   "openclare-matched": {
-    "alignment": 56.97903906126908,
-    "budget": 0.0,
-    "fidelity": 0.0,
-    "loops": 45.25288204734816,
-    "overall": 51.71981460898022,
-    "quads": 1177,
-    "shape": 70.06893664132623,
-    "singularities": 0.0,
-    "speed": 41.84596623181203,
-    "structure": 12.234494477485136,
-    "validity": 100.0
-   },
    "openclare-uniform": {
     "alignment": 49.61609889613364,
     "budget": 0.0,
@@ -12652,19 +7777,6 @@
     "speed": 69.85334318193972,
     "structure": 11.857707509881422,
     "validity": 100.0
-   },
-   "quadremesher": {
-    "alignment": 89.36861439057591,
-    "budget": 0.0,
-    "fidelity": 79.1255415800769,
-    "loops": null,
-    "overall": 57.62374117381759,
-    "quads": 36766,
-    "shape": 100.0,
-    "singularities": 100.0,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 0.0
    },
    "quadriflow": {
     "alignment": null,
@@ -12733,19 +7845,6 @@
     "structure": null,
     "validity": 97.65739385065885
    },
-   "openclare-matched": {
-    "alignment": 76.4290366519534,
-    "budget": 49.81493652495762,
-    "fidelity": 55.660397930098384,
-    "loops": 34.54702019000758,
-    "overall": 77.86360389845171,
-    "quads": 25282,
-    "shape": 97.59994227694047,
-    "singularities": 100.0,
-    "speed": 0.0,
-    "structure": null,
-    "validity": 97.6267700340163
-   },
    "openclare-uniform": {
     "alignment": 83.20657298860878,
     "budget": 37.5,
@@ -12758,45 +7857,6 @@
     "speed": 0.0,
     "structure": null,
     "validity": 97.62962962962963
-   },
-   "quadremesher": {
-    "alignment": 87.11069367023487,
-    "budget": 0.0,
-    "fidelity": 69.57353633359111,
-    "loops": null,
-    "overall": 54.301793395676775,
-    "quads": 28909,
-    "shape": 91.52356361204868,
-    "singularities": 100.0,
-    "speed": 9.293410289152671,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-as-made": {
-    "alignment": 79.04325533098945,
-    "budget": 100.0,
-    "fidelity": 43.85875942348171,
-    "loops": null,
-    "overall": 54.25411708414994,
-    "quads": 28909,
-    "shape": 91.52356361204868,
-    "singularities": 100.0,
-    "speed": 9.293410289152671,
-    "structure": null,
-    "validity": 0.0
-   },
-   "quadremesher-uniform": {
-    "alignment": 83.12966180122395,
-    "budget": 8.499999999999996,
-    "fidelity": 10.60935177907346,
-    "loops": null,
-    "overall": 39.352584704338625,
-    "quads": 6170,
-    "shape": 87.2714397733528,
-    "singularities": 52.26904376012966,
-    "speed": 8.905823827929439,
-    "structure": null,
-    "validity": 0.0
    },
    "quadriflow": {
     "alignment": null,

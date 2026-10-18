@@ -4,8 +4,7 @@ Every 3D model the project uses for its measurements and its pictures, with its 
 source and its licence. No model enters the bench without its line here.
 
 - **In the repository**: the model is under `bench/scenes/`, as the scene the bench runs it
-  from (a `.blend`, tracked through Git LFS; see [bench/README.md](bench/README.md#scenes)),
-  and the comparison meshes made from it under `bench/reference/`.
+  from (a `.blend`, tracked through Git LFS; see [bench/README.md](bench/README.md#scenes)).
 - **Out of the repository**: the licence does not allow passing the model on. It is kept under
   `bench/corpus-large/`, which is not tracked, with its scene and everything made from it. The
   figures measured on it are in the results. The "Source" column says how to get it again.
@@ -65,7 +64,6 @@ the same faces.
 
 | What | Tool | Terms |
 |---|---|---|
-| `bench/reference/quadremesher/` | Quad Remesher 1.4.1, Exoside | trial licence, non-commercial use; run from Blender 5.2.2 on 6, 7 and 8 October 2026 |
 | "quadriflow" results | QuadriFlow, built into Blender | run again at every measurement, nothing is kept |
 | "autoremesher" results | AutoRemesher 1.2.0, Jeremy Hu ([huxingyi/autoremesher](https://github.com/huxingyi/autoremesher)) | open source (GPL-3.0); run via CLI |
 

@@ -2,7 +2,7 @@
 
 <div class="hero">
 <p class="lede">Automatic quad retopology for Blender. A mesh of triangles in, a mesh of quads out, its edges following the shape and its edge loops closing round it.</p>
-<p>openclare is a field-aligned quad remesher: a cross field follows the curvature, a T-mesh lays out the patches, and an integer quantization decides how many quads go where. The engine is written in Rust; it ships as a Blender add-on with the engine inside, and as a command-line tool. Open source, GPL-3.0-or-later.</p>
+<p>openclare is a field-aligned quad remeshing engine: a cross field follows the curvature, a T-mesh lays out the patches, and an integer quantization decides how many quads go where. The engine is written in Rust; it ships as a Blender add-on with the engine inside, and as a command-line tool. Open source, GPL-3.0-or-later.</p>
 <p class="actions"><a class="button primary" href="get.md">Get it</a> <a class="button" href="results.md">See the results</a> <a class="button" href="theory.md">How it works</a></p>
 </div>
 
@@ -23,19 +23,18 @@ An artist selects an edge loop with one Alt-click and expects it to go round an 
 <div class="stats">
 <div class="stat"><span class="value">4.5%</span><span class="label">of the edges on spiral loops, 12 models at three budgets near 3,000 quads; 16.7% with no closing</span></div>
 <div class="stat"><span class="value">1.2–1.6%</span><span class="label">spiral edges on the male body, against 2.5% for the mesh made by hand (12.1% before closing)</span></div>
-<div class="stat"><span class="value">{{mark:3000:organic:openclare}} / 100</span><span class="label">average mark on {{count:organic}} organic models at 3,000 quads; Quad Remesher {{mark:3000:organic:quadremesher}}, AutoRemesher {{mark:3000:organic:autoremesher}}, QuadriFlow {{mark:3000:organic:quadriflow}}</span></div>
-<div class="stat"><span class="value">{{equal:3000:organic:openclare}} vs {{equal:3000:organic:quadremesher}}</span><span class="label">openclare against Quad Remesher on the organic models at the same number of quads</span></div>
+<div class="stat"><span class="value">{{mark:3000:organic:openclare}} / 100</span><span class="label">average mark on {{count:organic}} organic models at 3,000 quads; AutoRemesher {{mark:3000:organic:autoremesher}}, QuadriFlow {{mark:3000:organic:quadriflow}}</span></div>
 <div class="stat"><span class="value">{{mark:3000:mechanical:openclare}} / 100</span><span class="label">average mark on the mechanical parts at 3,000 quads</span></div>
 <div class="stat"><span class="value">187</span><span class="label">theorems of the research note checked by the Lean proof assistant</span></div>
 </div>
 
 Measured by the project's bench, the night of 18 October 2026, on {{count:all}} models; how the marks are made is on the [results](results.md) page. The marks weigh validity, alignment on the shape, the shape of the quads, the distance to the model, irregular vertices, the structure of the layout, closed edge loops and the number of quads asked for.
 
-## Four remeshers side by side
+## Three remeshers side by side
 
-<figure class="wide"><picture><source media="(prefers-color-scheme: dark)" srcset="../../docs/images/dashboard/gallery-dark.webp"><img src="../../docs/images/dashboard/gallery-light.webp" alt="openclare, Quad Remesher, QuadriFlow and AutoRemesher on the ogre, the pig, a mechanical part and a generated building, each with its number of quads and its mark out of 100" loading="lazy"></picture><figcaption>Each row at the same number of quads: the one Quad Remesher picks by itself. The stone mill is from the <em>Free Windmills Set</em> by LapaModels, CC BY 4.0.</figcaption></figure>
+<figure class="wide"><picture><source media="(prefers-color-scheme: dark)" srcset="../../docs/images/dashboard/gallery-dark.webp"><img src="../../docs/images/dashboard/gallery-light.webp" alt="openclare, QuadriFlow and AutoRemesher on the ogre, the pig, a mechanical part and a generated building, each with its number of quads and its mark out of 100" loading="lazy"></picture><figcaption>Each row at the same number of quads, asked of every remesher. The stone mill is from the <em>Free Windmills Set</em> by LapaModels, CC BY 4.0.</figcaption></figure>
 
-<figure class="wide"><picture><source media="(prefers-color-scheme: dark)" srcset="../../docs/images/dashboard/marks-dark.svg"><img src="../../docs/images/dashboard/marks-light.svg" alt="Average mark out of 100 of the four remeshers over the organic models, the mechanical parts and the assembled and generated models, at 1,000, 3,000 and 8,000 quads asked for" loading="lazy"></picture><figcaption>Average marks over the bench at 1,000, 3,000 and 8,000 quads asked for.</figcaption></figure>
+<figure class="wide"><picture><source media="(prefers-color-scheme: dark)" srcset="../../docs/images/dashboard/marks-dark.svg"><img src="../../docs/images/dashboard/marks-light.svg" alt="Average mark out of 100 of the three remeshers over the organic models, the mechanical parts and the assembled and generated models, at 1,000, 3,000 and 8,000 quads asked for" loading="lazy"></picture><figcaption>Average marks over the bench at 1,000, 3,000 and 8,000 quads asked for.</figcaption></figure>
 
 ## Simple rather than regular
 
