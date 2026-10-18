@@ -270,6 +270,7 @@ impl Remesher for IntegerGrid {
         report.open_loops = extraction.open_loops;
         let mut mesh = extraction.mesh;
         mesh.dissolve_valence_two();
+        mesh.drop_back_to_back();
         mesh.repair_to_quads();
         clock.lap(&mut report, "extraction");
         recorder.record("extraction/quads", Shape::Polygons(&mesh));
@@ -469,9 +470,35 @@ impl QuadLayout {
             let piece_config = RemeshConfig { target, ..config.clone() };
             // A work mesh in proportion: a button does not need the
             // triangles a body does.
-            let least = ((self.min_triangles as f64 * piece.surface_area() / area) as usize).max(MIN_PIECE_TRIANGLES);
+            let mut least =
+                ((self.min_triangles as f64 * piece.surface_area() / area) as usize).max(MIN_PIECE_TRIANGLES);
             let mut recorder = recorder::Piece::new(recorder, index, pieces.len());
-            self.remesh_piece(piece, &piece_guides, &piece_config, least, &mut recorder)
+            let mut done = self.remesh_piece(piece, &piece_guides, &piece_config, least, &mut recorder);
+            // That work mesh may be too coarse for a small piece full of
+            // detail, the rim of a wheel: its sizes then change by several
+            // times within a few triangles, the field follows them with
+            // singularities that cannot be cancelled, and the layout has more
+            // patches than the piece has quads to give. Many times its share
+            // comes out. It is done again on finer work meshes, up to the one
+            // a piece alone is given, and what comes nearest its share is kept.
+            let mut made = match &done {
+                Ok((mesh, _)) if !sized => mesh.faces.len(),
+                _ => 0,
+            };
+            while made as f64 > OVERSHOOT * share.max(4) as f64 && least < self.min_triangles {
+                least = (least * 4).min(self.min_triangles);
+                let note = format!("{made} quads for {share}: done again on a work mesh of {least} triangles");
+                recorder.record("notes/work mesh", Shape::Note(&note));
+                let again = self.remesh_piece(piece, &piece_guides, &piece_config, least, &mut recorder);
+                let Ok((mesh, _)) = &again else { break };
+                let off = |quads: usize| quads.abs_diff(share);
+                let nearest = done.as_ref().map_or(usize::MAX, |(mesh, _)| off(mesh.faces.len()));
+                made = mesh.faces.len();
+                if off(made) < nearest {
+                    done = again;
+                }
+            }
+            done
         };
         let asked: Vec<(usize, usize)> =
             shares.iter().enumerate().filter_map(|(index, share)| share.map(|share| (index, share))).collect();
@@ -537,6 +564,10 @@ impl QuadLayout {
 
 /// Fewest triangles the work mesh of one piece among several is given.
 const MIN_PIECE_TRIANGLES: usize = 1500;
+
+/// How many times its share of the quads a piece among several may come out
+/// with before it is done again on a finer work mesh.
+const OVERSHOOT: f64 = 1.5;
 
 /// Fewest quads a piece is asked for: one for an open sheet; for a closed
 /// shape, what it cannot do without, a cube for a ball and four rings of
@@ -886,25 +917,34 @@ impl QuadLayout {
 
         // Closing the loops round a part may ask a strip for a row of quads
         // it has no room for, which folds over. Where the mesh has a fold,
-        // the lengths the plain search found are meshed too, and the mesh
-        // with fewer folds kept.
+        // the other lengths the quantization could have kept are meshed in
+        // turn, the plain lengths last, until one does not fold; of those
+        // meshed, the one with the fewest folds is kept, then the fewest
+        // spirals.
         if quantized.report.turns_held > 0 {
             let surface = Bvh::build(input);
-            let folded = crate::metrics::folded_faces(input, &surface, &mesh);
-            let plain = quantization::Request { close_turns: false, ..request };
-            let plain = match folded {
-                0 => None,
-                _ => Some(quantization::create(quantization::Kind::WalkCancelling).quantize(&layout.tmesh, &plain)?),
-            };
-            if let Some(plain) = plain.filter(|plain| plain.report.is_valid() && plain.report.quads > 0) {
-                let (mut other, meshed) = meshing::create(meshing::Kind::PatchGrid).mesh(&work, &layout, &plain)?;
+            let spirals = |quantized: &quantization::Quantization| quantized.report.spirals.unwrap_or(f64::INFINITY);
+            let mut kept = (crate::metrics::folded_faces(input, &surface, &mesh), spirals(&quantized));
+            for candidate in &quantized.candidates {
+                if kept.0 == 0 {
+                    break;
+                }
+                if !candidate.report.is_valid() || candidate.report.quads == 0 {
+                    continue;
+                }
+                let (mut other, meshed) = meshing::create(meshing::Kind::PatchGrid).mesh(&work, &layout, candidate)?;
                 let held = Some((meshed.on_feature, meshed.on_corner));
                 let other_lines =
                     settle(&mut other, input, &work, edge_length, held, &self.relaxer, config.volume_fit, recorder)?;
-                if crate::metrics::folded_faces(input, &surface, &other) < folded {
-                    let note = format!("loops left as they were: closing them folded {folded} quads over");
+                let other_kept = (crate::metrics::folded_faces(input, &surface, &other), spirals(candidate));
+                if other_kept < kept {
+                    let note = if candidate.report.turns_held == 0 {
+                        format!("loops left as they were: closing them folded {} quads over", kept.0)
+                    } else {
+                        format!("other loops closed: the first ones folded {} quads over", kept.0)
+                    };
                     recorder.record("notes/loops", Shape::Note(&note));
-                    (mesh, lines) = (other, other_lines);
+                    (mesh, lines, kept) = (other, other_lines, other_kept);
                 }
             }
             clock.lap(&mut report, "folds");
@@ -1149,6 +1189,13 @@ struct Fields {
     quads: f64,
 }
 
+/// Longest edge of the work mesh for the edge of a quad, where the quads are
+/// smaller than its triangles.
+const WORK_EDGE_PER_QUAD: f64 = 1.0;
+/// How many times the triangles it is asked for a work mesh made finer may
+/// have.
+const REFINED_MOST: usize = 2;
+
 /// Preprocessing, sizing, cross field and singularity simplification.
 /// `guides` is given by the chains whose quads may vary in size.
 fn fields(
@@ -1217,6 +1264,7 @@ fn fields(
         curves: guides.map_or(&[], |guides| guides.curves),
         lines: guides.map_or(&[], |guides| guides.lines),
         edge_angle: config.edge_angle,
+        refinement: None,
     };
     let mut work = preprocess::create(preprocess::Kind::Isotropic).preprocess(input, &work_request)?;
     report.working_vertices = work.mesh.positions.len();
@@ -1234,8 +1282,26 @@ fn fields(
             painted: painted_of(input, guides, config.density_contrast),
             quads_around: config.quads_around,
         };
-        work.sizing = sizing::create(sizing::Kind::Curvature).size(&work, &request)?;
+        let sizer = sizing::create(sizing::Kind::Curvature);
+        work.sizing = sizer.size(&work, &request)?;
         clock.lap(report, "sizing");
+        // Where the quads are to be smaller than the triangles of the work
+        // mesh (a thin wall, whose quads are as small as it is thick), the
+        // work mesh is made again, finer there, and the sizes read again on
+        // it: the quads are read off its triangles, which would otherwise
+        // cut through the wall.
+        let lengths: Vec<f64> = work.sizing.iter().map(|factor| WORK_EDGE_PER_QUAD * factor * edge_length).collect();
+        if let Some(refinement) = preprocess::Refinement::new(&work, &lengths, triangles, REFINED_MOST * triangles) {
+            recorder.begin("refinement")?;
+            let finer = preprocess::Request { refinement: Some(&refinement), ..work_request };
+            work = preprocess::create(preprocess::Kind::Isotropic).preprocess(input, &finer)?;
+            report.working_vertices = work.mesh.positions.len();
+            report.feature_edges = work.feature_edges.len();
+            report.guide_gaps = work.guide_gaps;
+            recorder::show_work(recorder, &work);
+            work.sizing = sizer.size(&work, &request)?;
+            clock.lap(report, "refinement");
+        }
         recorder::show_sizing(recorder, &work);
     }
 

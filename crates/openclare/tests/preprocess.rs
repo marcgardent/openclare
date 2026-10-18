@@ -1,7 +1,7 @@
 use openclare::math::Vec3;
 use openclare::mesh::{Topology, primitives};
 use openclare::metrics::measure;
-use openclare::preprocess::{Kind, Request, WorkMesh, create, quality};
+use openclare::preprocess::{Kind, Refinement, Request, WorkMesh, create, quality};
 use openclare::{PolyMesh, TriMesh};
 
 fn isotropic(source: &TriMesh, triangles: usize, crease_angle: Option<f64>) -> WorkMesh {
@@ -48,6 +48,51 @@ fn slivers_become_well_shaped_triangles_on_the_same_surface() {
     assert_closed_manifold(&work.mesh, 0);
     assert!(hausdorff(&source, &work.mesh) < 0.01);
     assert!((work.mesh.signed_volume() / source.signed_volume() - 1.0).abs() < 0.02);
+}
+
+#[test]
+fn a_work_mesh_is_made_finer_only_where_asked() {
+    let source = primitives::icosphere(4);
+    let work = isotropic(&source, 4000, None);
+    let edge = work.mesh.edge_length_stats().1;
+    // Nothing shorter than its edges asked: nothing to do.
+    let as_long = vec![1.5 * edge; work.mesh.positions.len()];
+    assert!(Refinement::new(&work, &as_long, 4000, 8000).is_none());
+
+    // Edges half as long on the upper cap, a quarter of the sphere.
+    let lengths: Vec<f64> =
+        work.mesh.positions.iter().map(|p| if p.z > 0.5 { 0.5 * edge } else { 1.5 * edge }).collect();
+    let refinement = Refinement::new(&work, &lengths, 4000, 16_000).unwrap();
+    let request = Request { triangles: 4000, refinement: Some(&refinement), ..Default::default() };
+    let finer = create(Kind::Isotropic).preprocess(&source, &request).unwrap();
+    assert_closed_manifold(&finer.mesh, 2);
+    let mean_edge = |mesh: &TriMesh, cap: bool| {
+        let (mut sum, mut count) = (0.0, 0);
+        for tri in &mesh.triangles {
+            for k in 0..3 {
+                let (a, b) = (mesh.positions[tri[k] as usize], mesh.positions[tri[(k + 1) % 3] as usize]);
+                // Well inside or well outside the cap, away from the grading.
+                if (cap && a.z > 0.7 && b.z > 0.7) || (!cap && a.z < 0.2 && b.z < 0.2) {
+                    sum += a.distance(b);
+                    count += 1;
+                }
+            }
+        }
+        sum / count as f64
+    };
+    let (cap, rest) = (mean_edge(&finer.mesh, true), mean_edge(&finer.mesh, false));
+    assert!(cap < 0.65 * edge, "cap edges {cap}, uniform {edge}");
+    assert!((rest / mean_edge(&work.mesh, false) - 1.0).abs() < 0.1, "other edges {rest}, uniform {edge}");
+    // About four times the triangles on a quarter of the surface.
+    let count = finer.mesh.triangles.len() as f64 / work.mesh.triangles.len() as f64;
+    assert!((1.5..2.5).contains(&count), "{count} times the triangles");
+
+    // Bounded: no more than asked, the finest edges let grow.
+    let bounded = Refinement::new(&work, &lengths, 4000, 6000).unwrap();
+    let request = Request { triangles: 4000, refinement: Some(&bounded), ..Default::default() };
+    let fewer = create(Kind::Isotropic).preprocess(&source, &request).unwrap();
+    assert!(fewer.mesh.triangles.len() < finer.mesh.triangles.len());
+    assert!(fewer.mesh.triangles.len() as f64 <= 1.15 * 6000.0, "{} triangles", fewer.mesh.triangles.len());
 }
 
 #[test]

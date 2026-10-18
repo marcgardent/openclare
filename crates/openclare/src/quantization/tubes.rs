@@ -22,6 +22,10 @@ pub(super) type Expression = Vec<(usize, f64)>;
 pub(super) struct Turn {
     /// The shift across, in the lengths of the arcs.
     pub shift: Expression,
+    /// The other component of the same motion: how far along the way it
+    /// comes back, in the lengths of the arcs. With lengths that balance
+    /// every rectangle, it is `around` up to its sign.
+    pub along: Expression,
     /// Its length on the way, with the real lengths of the arcs.
     pub around: f64,
     /// The rectangle it starts from.
@@ -237,8 +241,16 @@ fn go_round(
         (patch, side, offset) = (next, next_side, before_twin + (lengths[half as usize / 2] - into));
         if patch == start_patch && side == start_side && quarter_turns == 0 {
             let across = if DIRECTION[start_side][0] != 0.0 { 0 } else { 1 };
-            let mut shift = shift_along(tmesh, rims, &crossings);
-            return Some(Turn { shift: std::mem::take(&mut shift[across]), around, patch: start_patch });
+            let [first, second] = shift_along(tmesh, rims, &crossings);
+            let (shift, along) = if across == 0 { (first, second) } else { (second, first) };
+            // Each crossing turns by quarter turns and shifts by sums of
+            // lengths, so every coefficient is a whole number (the shift of a
+            // turn is linear, proven in the research note).
+            debug_assert!(
+                shift.iter().chain(&along).all(|&(_, c)| c.fract() == 0.0),
+                "a turn from rectangle {start_patch} has a coefficient that is not whole: {shift:?} / {along:?}"
+            );
+            return Some(Turn { shift, along, around, patch: start_patch });
         }
     }
     None
@@ -285,6 +297,91 @@ fn shift_along(tmesh: &TMesh, rims: &[Option<Rim>], crossings: &[(usize, usize, 
 /// The value of `expression` for the lengths `x`.
 pub(super) fn value(expression: &Expression, x: &[f64]) -> f64 {
     expression.iter().map(|&(i, c)| c * x[i]).sum()
+}
+
+/// Per rectangle, whether the piece of surface it is on is a sphere: closed,
+/// with no border, and of genus zero. The pieces are the rectangles joined
+/// across their arcs; each has the Euler characteristic of its nodes, arcs
+/// and rectangles, 2 for a closed sphere. Only there does the parity of
+/// turns hold: an open cylinder three quads round has a ring of three quads,
+/// and so does a torus (the research note, Remark "Borders").
+pub(super) fn on_spheres(tmesh: &TMesh) -> Vec<bool> {
+    let patches = tmesh.patches.len();
+    let mut parent: Vec<usize> = (0..patches).collect();
+    fn root(parent: &mut [usize], mut at: usize) -> usize {
+        while parent[at] != at {
+            parent[at] = parent[parent[at]];
+            at = parent[at];
+        }
+        at
+    }
+    // The rectangle on each side of each arc, where there is one.
+    let mut sides = vec![[None::<usize>; 2]; tmesh.arcs.len()];
+    for (index, patch) in tmesh.patches.iter().enumerate() {
+        for &half in &patch.boundary {
+            sides[half as usize / 2][half as usize % 2] = Some(index);
+        }
+    }
+    for pair in &sides {
+        if let [Some(a), Some(b)] = *pair {
+            let (a, b) = (root(&mut parent, a), root(&mut parent, b));
+            parent[a] = b;
+        }
+    }
+    let piece: Vec<usize> = (0..patches).map(|index| root(&mut parent, index)).collect();
+    let mut euler = vec![0i64; patches];
+    let mut open = vec![false; patches];
+    let mut nodes = std::collections::HashSet::new();
+    for &index in &piece {
+        euler[index] += 1;
+    }
+    for (arc, pair) in sides.iter().enumerate() {
+        let Some(index) = pair[0].or(pair[1]) else { continue };
+        let index = piece[index];
+        euler[index] -= 1;
+        if pair[0].is_none() || pair[1].is_none() || tmesh.arcs[arc].border {
+            open[index] = true;
+        }
+        for node in tmesh.arcs[arc].nodes {
+            if nodes.insert(node) {
+                euler[index] += 1;
+            }
+        }
+    }
+    piece.iter().map(|&index| !open[index] && euler[index] == 2).collect()
+}
+
+/// What breaks a statement proven for turns, at the whole lengths `x`
+/// balancing every rectangle: on a sphere (`sphere`, per rectangle, from
+/// [`on_spheres`]), the two components of a turn add up to an even number
+/// (the research note, Proposition "Parity of a turn on a sphere"); if
+/// `walked`, the turns were found at `x` itself, and the length along each
+/// is its way round. Each turn that breaks one, and what. Empty when all
+/// hold.
+pub(super) fn broken_by(turns: &[Turn], sphere: &[bool], x: &[f64], walked: bool) -> Vec<(usize, String)> {
+    let mut broken = Vec::new();
+    for (index, turn) in turns.iter().enumerate() {
+        let (shift, along) = (value(&turn.shift, x), value(&turn.along, x));
+        if sphere[turn.patch] && (shift + along).rem_euclid(2.0) != 0.0 {
+            broken.push((
+                index,
+                format!(
+                    "turn {index} from rectangle {}: shift {shift} and along {along} add up to an odd number on a sphere",
+                    turn.patch
+                ),
+            ));
+        }
+        if walked && along.abs() != turn.around {
+            broken.push((
+                index,
+                format!(
+                    "turn {index} from rectangle {}: along {along} is not its way round {}",
+                    turn.patch, turn.around
+                ),
+            ));
+        }
+    }
+    broken
 }
 
 /// `lengths` changed as little as can be, each by its `weight`, for every
@@ -347,6 +444,10 @@ impl Closing {
                     .collect();
                 stations.push(merged(row));
             }
+        }
+        if cfg!(debug_assertions) {
+            let broken = unbalanced_columns(tmesh, &stations);
+            assert!(broken.is_empty(), "the balances break the handshake: {broken:?}");
         }
         Self::with_held(stations, lengths, weight, &[])
     }
@@ -486,6 +587,35 @@ impl<'a> Rows<'a> {
         }
         Some((out, below))
     }
+}
+
+/// Arcs whose column in the balances `stations` of the rectangles of `tmesh`
+/// is not what the handshake needs (the research note, Lemma "Handshake"):
+/// each half of the arc on a rim gives one entry `+1` or `-1`, two of them
+/// on one row merged, so its whole entries have a size of at most the
+/// number of its halves on rims and a sum of the same parity. An arc with
+/// both halves on rims, every arc of a closed surface, has an even sum:
+/// `B x` then adds up to an even number for every whole `x`, and a balance
+/// system whose right-hand side adds up to an odd number has no whole
+/// solution. Empty when all hold.
+pub(super) fn unbalanced_columns(tmesh: &TMesh, stations: &[Expression]) -> Vec<usize> {
+    let mut halves = vec![0i64; tmesh.arcs.len()];
+    for patch in tmesh.patches.iter().filter(|patch| patch.side_of_each().is_some()) {
+        for &half in &patch.boundary {
+            halves[half as usize / 2] += 1;
+        }
+    }
+    let (mut sum, mut size, mut whole) = (vec![0i64; halves.len()], vec![0i64; halves.len()], vec![true; halves.len()]);
+    for row in stations {
+        for &(arc, c) in row {
+            whole[arc] &= c.fract() == 0.0;
+            sum[arc] += c as i64;
+            size[arc] += c.abs() as i64;
+        }
+    }
+    (0..halves.len())
+        .filter(|&arc| !whole[arc] || size[arc] > halves[arc] || (sum[arc] - halves[arc]).rem_euclid(2) != 0)
+        .collect()
 }
 
 /// `a W^-1 b^T` for two rows sorted by arc, `W^-1` given as `spread`.

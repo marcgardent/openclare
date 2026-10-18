@@ -262,6 +262,47 @@ impl PolyMesh {
         removed
     }
 
+    /// Removes the pairs of faces with the same corners the other way round:
+    /// a lone loop of edges traced as a face from either side, two faces
+    /// back to back that enclose nothing, one of which faces against the
+    /// surface whatever is done. Returns how many pairs went.
+    pub fn drop_back_to_back(&mut self) -> usize {
+        let reversed = |face: &[u32], other: &[u32]| {
+            let n = face.len();
+            other.len() == n
+                && other
+                    .iter()
+                    .position(|&v| v == face[0])
+                    .is_some_and(|at| (0..n).all(|i| other[(at + n - i) % n] == face[i]))
+        };
+        let mut seen: HashMap<Vec<u32>, usize> = HashMap::new();
+        let mut dropped = vec![false; self.faces.len()];
+        let mut pairs = 0;
+        for (f, face) in self.faces.iter().enumerate() {
+            let mut corners = face.clone();
+            corners.sort_unstable();
+            match seen.get(&corners) {
+                Some(&g) if reversed(face, &self.faces[g]) => {
+                    (dropped[f], dropped[g]) = (true, true);
+                    seen.remove(&corners);
+                    pairs += 1;
+                }
+                _ => {
+                    seen.insert(corners, f);
+                }
+            }
+        }
+        if pairs > 0 {
+            let mut f = 0;
+            self.faces.retain(|_| {
+                f += 1;
+                !dropped[f - 1]
+            });
+            self.compact();
+        }
+        pairs
+    }
+
     /// Drops the vertices no face references.
     pub fn compact(&mut self) {
         let mut remap = vec![INVALID; self.positions.len()];
@@ -333,6 +374,20 @@ mod tests {
         // A lone triangle has nothing to pair with.
         let mut lone = PolyMesh { positions: mesh.positions.clone(), faces: vec![vec![0, 1, 2], vec![2, 1, 3, 4]] };
         assert_eq!(lone.repair_to_quads(), 1);
+    }
+
+    #[test]
+    fn faces_back_to_back_go_and_the_rest_stays() {
+        let positions = (0..6).map(|i| Vec3::new(i as f64, (i * i) as f64, 0.0)).collect();
+        // A triangle traced from both sides, and a quad next to its twin
+        // with the same corners in another order, which is not its back.
+        let mut mesh = PolyMesh {
+            positions,
+            faces: vec![vec![0, 1, 2], vec![3, 2, 4, 5], vec![1, 0, 2], vec![3, 5, 2, 4], vec![2, 1, 0]],
+        };
+        assert_eq!(mesh.drop_back_to_back(), 1);
+        assert_eq!(mesh.faces.len(), 3);
+        assert_eq!(mesh.positions.len(), 6);
     }
 
     #[test]
