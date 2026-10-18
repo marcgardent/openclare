@@ -567,6 +567,21 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         min=0.0,
         max=1.0,
     )
+    symmetry: bpy.props.EnumProperty(
+        options=set(),
+        name="Symmetry",
+        description=(
+            "Plane the object is the same on both sides of, in its own axes and through its origin: the "
+            "result is then exactly the same on both sides of it too, half of it the mirror image of the other"
+        ),
+        items=[
+            ("NONE", "None", "The object is remeshed as it is"),
+            ("X", "X", "Mirrored across the plane of the object's Y and Z axes, through its origin"),
+            ("Y", "Y", "Mirrored across the plane of the object's X and Z axes, through its origin"),
+            ("Z", "Z", "Mirrored across the plane of the object's X and Y axes, through its origin"),
+        ],
+        default="NONE",
+    )
     density_group: bpy.props.StringProperty(
         options=set(),
         name="Density",
@@ -953,6 +968,32 @@ def quads_of(
     return mesh, report
 
 
+def symmetry_refused(settings, source, curves):
+    """Why the object cannot be remeshed with its symmetry, for what the
+    engine does not keep on both sides of the plane yet: guide curves, a
+    painted density, materials; None if it can be. `source` is the mesh as
+    seen, `curves` those `curves_of` gives."""
+    import numpy
+
+    axis = settings.symmetry
+    if curves:
+        return (
+            f"Symmetry {axis} does not work with guide or sharp curves yet: take the curves out of their "
+            "categories (Curves), or set Symmetry to None"
+        )
+    if settings.density_group:
+        return f"Symmetry {axis} does not work with a painted density yet: clear Density, or set Symmetry to None"
+    if settings.export_materials and len(source.materials) > 1 and len(source.polygons):
+        used = numpy.empty(len(source.polygons), numpy.int32)
+        source.polygons.foreach_get("material_index", used)
+        if used.min() != used.max():
+            return (
+                f"Symmetry {axis} does not work with several materials yet: untick Export > Materials, "
+                "or set Symmetry to None"
+            )
+    return None
+
+
 def worth_a_line(message):
     """Whether a stage goes to the Info log as well as to the status bar. The
     stages of a model in a few pieces all do; of hundreds of pieces, only
@@ -1087,21 +1128,31 @@ class Remeshing:
                 del engine_settings["quads"]
                 engine_settings["largest_quad"] = settings.largest_quad / scale
                 engine_settings["smallest_quad"] = smallest / scale
-            density = None
-            if settings.density_group:
-                density = weights_of(evaluated, source, settings.density_group)
-                engine_settings["density_contrast"] = settings.density_factor
             layers = [name for name in ("grid", "atlas") if getattr(settings, f"export_{name}_uv")]
             # A curve put in both collections by hand is a sharp one.
             sharp = curve_objects(settings.sharp_curves)
             curves = curves_of(settings.sharp_curves, original, sharp=True)
             curves += curves_of(settings.guide_curves, original, but=sharp)
+            if settings.symmetry != "NONE":
+                refused = symmetry_refused(settings, source, curves)
+                if refused:
+                    raise engine.EngineError(refused)
+                # The mesh is given in the space of the object: the plane is
+                # that of its own axes, through its origin.
+                engine_settings["symmetry"] = settings.symmetry.lower()
+            density = None
+            if settings.density_group:
+                density = weights_of(evaluated, source, settings.density_group)
+                engine_settings["density_contrast"] = settings.density_factor
             mesh, report = quads_of(
                 source, BASE_PRESET, engine_settings, density, on_stage, layers,
                 settings.export_sharp_edges, settings.export_creases, curves, settings.export_materials,
             )
         except engine.EngineError as error:
-            self.report({"ERROR"}, f"openclare: {error}")
+            said = f"openclare: {error}"
+            if "symmetry across" in said:
+                said += "; the plane is that of the object's own axes, through its origin"
+            self.report({"ERROR"}, said)
             return None
         finally:
             evaluated.to_mesh_clear()
@@ -1125,6 +1176,8 @@ class Remeshing:
         last_report.update(report)
         seconds = float(report.get("seconds", 0.0))
         said = f"openclare: {report.get('quads', '?')} quads in {seconds:.1f} s"
+        if settings.symmetry != "NONE":
+            said += f", mirrored across {settings.symmetry}"
         if "materials" in report:
             said += f", {report['materials']} materials"
         welded, apart = int(report.get("welded_vertices", 0)), int(report.get("edges_taken_apart", 0))
@@ -1739,7 +1792,7 @@ class OPENCLARE_OT_shape_preset_add(AddPresetBase, bpy.types.Operator):
     preset_menu = "OPENCLARE_PT_shape_presets"
     preset_subdir = SHAPE_PRESETS
     preset_defines = ["settings = bpy.context.object.openclare"]
-    preset_values = [f"settings.{name}" for name in SHAPE_NAMES]
+    preset_values = [f"settings.{name}" for name in SHAPE_NAMES + ["symmetry"]]
 
 
 class OPENCLARE_PT_shape_presets(PresetPanel, bpy.types.Panel):
@@ -1770,6 +1823,7 @@ class OPENCLARE_PT_shape(DataPanel, bpy.types.Panel):
         layout.use_property_split = True
         layout.use_property_decorate = False
         settings = object_to_remesh(context).openclare
+        layout.prop(settings, "symmetry", expand=True)
         layout.prop(settings, "adaptive_size", slider=True)
         layout.prop(settings, "quads_around")
         column = layout.column(heading="Hard Edges")

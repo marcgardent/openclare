@@ -167,6 +167,8 @@ with tempfile.TemporaryDirectory() as folder:
         written = open(os.path.join(saved, "Eleven_Around.py")).read()
         assert "settings.quads_around = 11" in written and "settings = bpy.context.object.openclare" in written
         assert "settings.quads " not in written and "settings.export" not in written, written
+        # The symmetry goes with the shape.
+        assert "settings.symmetry = 'NONE'" in written, written
     finally:
         bpy.utils.user_resource = real_resource
 # No setting takes keyframes.
@@ -551,7 +553,10 @@ with_relief = off_the_ball()
 relief.show_viewport = False
 without = off_the_ball()
 relief.show_viewport = True
-assert without > 0.01 and with_relief < 0.2 * without, (without, with_relief)
+# (Subdivided without the relief, the result is under the ball by about 0.9 %
+# of its radius since the fitting of complete-helices: 0.5 % is enough to
+# tell the relief at work.)
+assert without > 0.005 and with_relief < 0.2 * without, (without, with_relief)
 # Baked again, it is the same relief updated, not another on top.
 assert bpy.ops.object.openclare_bake_relief() == {"FINISHED"}
 assert [modifier.name for modifier in quads.modifiers] == ["openclare subdivision", "openclare relief"]
@@ -737,6 +742,136 @@ openclare.adopt_scene_settings(bpy.context.scene)
 assert plain.openclare.quads == 4321 and first.openclare.quads == 1234 and second.openclare.quads == 1500
 assert result.openclare.quads != 4321, "a result took settings to remesh"
 print("PANEL OK")
+
+# Symmetry: a monkey turned, scaled and moved is the same on both sides of
+# the plane of its own X axis through its origin. The result is its own
+# mirror image across that plane, in the space of the object, to a millionth
+# of its size, with a loop of edges on the plane.
+from mathutils.kdtree import KDTree
+
+
+def mirror_gap(mesh, axis, pairs=None):
+    """The largest distance from the mirror image of a vertex of `mesh`
+    across the plane of `axis` (0, 1, 2) to the nearest vertex, as a share
+    of the diagonal of its box; and, for `pairs` of vertices, how many of
+    their mirror images are not among them."""
+    points = [vertex.co.copy() for vertex in mesh.vertices]
+    tree = KDTree(len(points))
+    for index, point in enumerate(points):
+        tree.insert(point, index)
+    tree.balance()
+    low = [min(p[k] for p in points) for k in range(3)]
+    high = [max(p[k] for p in points) for k in range(3)]
+    diagonal = math.dist(low, high)
+    image = []
+    gap = 0.0
+    for point in points:
+        mirrored = point.copy()
+        mirrored[axis] = -mirrored[axis]
+        _, index, distance = tree.find(mirrored)
+        image.append(index)
+        gap = max(gap, distance)
+    unmatched = 0
+    if pairs is not None:
+        kept = {frozenset(pair) for pair in pairs}
+        unmatched = sum(frozenset((image[a], image[b])) not in kept for a, b in pairs)
+    return gap / diagonal, unmatched
+
+
+bpy.ops.mesh.primitive_monkey_add(location=(44.0, 1.0, -2.0), rotation=(0.3, -0.2, 0.7))
+monkey = bpy.context.active_object
+monkey.scale = (1.5, 1.5, 1.5)
+monkey.modifiers.new("subdivide", "SUBSURF").levels = 2
+alone(monkey)
+shape(settings, "organic")
+settings.target, settings.quads, settings.density_group = "COUNT", 1200, ""
+settings.guide_curves = settings.sharp_curves = None
+settings.symmetry = "X"
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+mirrored = bpy.context.active_object
+mesh = mirrored.data
+gap, _ = mirror_gap(mesh, 0)
+on_plane = sum(1 for vertex in mesh.vertices if vertex.co.x == 0.0)
+print("SYMMETRY X:", len(mesh.polygons), "quads,", on_plane, "vertices on the plane, mirror gap %.2e" % gap)
+assert gap <= 1e-6, f"the result is not its own mirror image: {gap} of its size apart"
+assert on_plane >= 20 and abs(len(mesh.polygons) - 1200) < 120, (on_plane, len(mesh.polygons))
+assert all(len(polygon.vertices) == 4 for polygon in mesh.polygons), "not all quads"
+bpy.context.view_layer.update()
+placed = zip(mirrored.matrix_world, monkey.matrix_world)
+assert all(abs(a - b) < 1e-6 for rows in placed for a, b in zip(*rows)), "the result is not where the original is"
+
+# Across Y the monkey is not the same on both sides: refused, and said why.
+alone(monkey)
+settings.symmetry = "Y"
+try:
+    bpy.ops.object.openclare_remesh()
+    raise AssertionError("a model that is not symmetric was remeshed as if it were")
+except RuntimeError as error:
+    print("SYMMETRY Y refused:", error)
+    assert "not the same on both sides" in str(error) and "own axes" in str(error), error
+
+# Curves, a painted density, several materials: refused with symmetry.
+alone(monkey)
+settings.symmetry = "X"
+bpy.ops.curve.primitive_bezier_circle_add(location=(44.0, 1.0, -2.0))
+circle = bpy.context.active_object
+held = bpy.data.collections.new("symmetry guides")
+bpy.context.scene.collection.children.link(held)
+for collection in circle.users_collection:
+    collection.objects.unlink(circle)
+held.objects.link(circle)
+alone(monkey)
+settings.guide_curves = held
+try:
+    bpy.ops.object.openclare_remesh()
+    raise AssertionError("guide curves went with symmetry")
+except RuntimeError as error:
+    assert "does not work with guide or sharp curves" in str(error), error
+settings.guide_curves = None
+settings.density_group = "more here"
+try:
+    bpy.ops.object.openclare_remesh()
+    raise AssertionError("a painted density went with symmetry")
+except RuntimeError as error:
+    assert "does not work with a painted density" in str(error), error
+settings.density_group = ""
+for name in ("skin", "eyes"):
+    monkey.data.materials.append(bpy.data.materials.new(name))
+for polygon in monkey.data.polygons:
+    polygon.material_index = int(polygon.center.y < -0.5)
+try:
+    bpy.ops.object.openclare_remesh()
+    raise AssertionError("several materials went with symmetry")
+except RuntimeError as error:
+    assert "does not work with several materials" in str(error), error
+settings.export_materials = False
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}, "materials not exported still refused"
+
+# A cube, hard surface, across each axis: its hard edges come out marked
+# sharp on both sides, each the mirror image of another.
+bpy.ops.mesh.primitive_cube_add(location=(48.0, 0.0, 0.0))
+block = bpy.context.active_object
+block.modifiers.new("subdivide", "SUBSURF").subdivision_type = "SIMPLE"
+block.modifiers["subdivide"].levels = 4
+alone(block)
+shape(settings, "hard-surface")
+settings.quads = 600
+settings.export_sharp_edges = settings.export_creases = True
+for axis, name in enumerate("XYZ"):
+    alone(block)
+    settings.symmetry = name
+    assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+    mesh = bpy.context.active_object.data
+    sharp = [tuple(edge.vertices) for edge in mesh.edges if edge.use_edge_sharp]
+    gap, unmatched = mirror_gap(mesh, axis, sharp)
+    # Along the edges of the cube: both ends on two of its faces.
+    along = all(
+        sum(abs(abs(mesh.vertices[v].co[k]) - 1.0) < 1e-4 for k in range(3)) >= 2 for edge in sharp for v in edge
+    )
+    print(f"SYMMETRY cube {name}:", len(mesh.polygons), "quads,", len(sharp), "sharp edges, mirror gap %.2e" % gap)
+    assert gap <= 1e-6 and unmatched == 0 and along and len(sharp) >= 12, (gap, unmatched, along, len(sharp))
+settings.symmetry = "NONE"
+print("SYMMETRY OK")
 
 # The engine is loaded from a copy named after what it holds: an add-on
 # updated in a Blender that has already used it does not get the engine it
