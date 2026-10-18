@@ -207,6 +207,22 @@ main.prose { max-width: var(--measure); min-width: 0; margin: 0 auto; width: 100
 .prose li + li { margin-top: 0.35rem; }
 .prose li > ul, .prose li > ol { margin: 0.35rem 0 0; }
 .prose strong { font-weight: 650; }
+
+/* A term of the glossary, linked the first time a page uses it: the text
+   keeps its colour, a dotted line says there is more, the title its
+   definition. */
+.prose a.term {
+  color: inherit;
+  text-decoration: underline dotted;
+  text-decoration-color: var(--faint);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+}
+.prose a.term:hover { color: var(--accent-strong); text-decoration-color: currentColor; }
+
+/* An entry of the glossary reached from such a link. */
+.prose p.entry { scroll-margin-top: 5rem; border-radius: 4px; transition: background-color 0.4s; }
+.prose p.entry:target { background: var(--accent-soft); box-shadow: 0 0 0 0.45rem var(--accent-soft); }
 .prose hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
 
 .prose blockquote {
