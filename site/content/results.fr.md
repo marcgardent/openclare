@@ -36,8 +36,6 @@ Quad Remesher, laissé à lui-même, fait environ deux fois les quads qu'on lui 
 
 {{models}}
 
-## Modèles montrés sans images
-
 {{withheld}}
 
 Le rapport complet, avec chaque critère pour chaque modèle et chaque remailleur, est [bench/results/SCORES.md](../../bench/results/SCORES.md) dans le dépôt (en anglais) ; les auteurs, sources et licences des modèles sont dans [CREDITS.md](../../CREDITS.md).

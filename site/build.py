@@ -287,8 +287,9 @@ def credits():
             continue
         for name in names:
             credit[name] = entry
-            if "BlenderKit Royalty Free" in entry["licence"]:
-                withheld[name] = entry
+            # CREDITS.md, "Pictures": pictures of every model are allowed, the
+            # BlenderKit ones included; only passing those models on is not.
+            # A model whose pictures must not be shown would go here.
     return credit, withheld
 
 
@@ -745,6 +746,8 @@ class Site:
         words = RESULT_WORDS[language]
         resolve = self.resolver("CREDITS.md", page, language)
         converter = md.Converter(resolve)
+        if not self.withheld:
+            return ""
         items = []
         for name in sorted(self.withheld):
             entry = self.withheld[name]
