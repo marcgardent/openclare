@@ -167,7 +167,11 @@ fn analyse_command(args: &[String]) -> Result<(), String> {
     let analysis = openclare::Analysis::of(&mesh, &Default::default(), &config).map_err(|e| e.to_string())?;
     println!("analysis {:.2} s, once", started.elapsed().as_secs_f64());
     let (proposed, smallest) = analysis.proposal();
-    println!("proposal quads from {smallest:.4} to {proposed:.4}");
+    println!(
+        "proposal quads from {smallest:.4} to {proposed:.4}: {:.0} quads, {:.1} % of the surface would call for smaller",
+        analysis.quads(proposed, smallest),
+        100.0 * analysis.below(proposed, smallest)
+    );
     let largest = asked.unwrap_or(proposed);
     println!("largest  {largest:.4}; for a smallest of:");
     let started = std::time::Instant::now();

@@ -93,6 +93,9 @@ pub struct Trace {
     pub feature: bool,
     /// It is a run of open border.
     pub border: bool,
+    /// Where it crosses a fold of the surface: its length there and how
+    /// sharply the surface turns across it, in degrees.
+    pub folds: Vec<(f64, f64)>,
 }
 
 impl Trace {
@@ -236,6 +239,9 @@ impl TMesh {
         let outcome = motorcycle::race(&walk, &is_singular, &is_wall, &seeds, max_trace_length);
 
         let mut tmesh = TMesh::assemble(&outcome);
+        for trace in tmesh.traces.iter_mut().filter(|trace| !trace.feature) {
+            trace.folds = folds_crossed(mesh, &trace.stretches);
+        }
         let report = &mut tmesh.report;
         // (Faces that are flat in the map do not count: slivers it was not
         // asked to copy, and triangles with two edges on one feature line,
@@ -260,6 +266,9 @@ impl TMesh {
         let mut around: Vec<Vec<(f64, HalfArc)>> = vec![Vec::new(); outcome.junctions.len()];
         let mut longest_trace = 0.0f64;
         for (index, trace) in outcome.traces.iter().enumerate() {
+            if trace.merged.is_some() {
+                continue;
+            }
             // Stops along the trace: length there, node, key of the arc
             // towards the next stop, key of the arc towards the previous one.
             let mut stops = vec![(0.0, trace.start.0, trace.start.1, f64::NAN)];
@@ -395,11 +404,80 @@ impl TMesh {
                 stretches: trace.stretches.clone(),
                 feature: trace.wall,
                 border: trace.border,
+                folds: Vec::new(),
             })
             .collect();
         TMesh { nodes, arcs, patches, traces, report }
     }
 }
+
+/// Where a trace running through `stretches` crosses a fold of the surface:
+/// its length there and how sharply the surface turns, in degrees. Sharp
+/// turns from one triangle to the next, of [`FOLD_STEP`] or more and closer
+/// together than [`FOLD_WIDTH`], are one place where it may fold (a fold the
+/// work mesh rounds over two or three triangles). It does if the way the
+/// surface faces, on average over [`FOLD_REACH`] before that place and over
+/// as much after, turns by [`FOLD_ANGLE`] or more: a bumpy surface turns
+/// sharply from one triangle to the next as well, but not on average.
+fn folds_crossed(mesh: &crate::mesh::TriMesh, stretches: &[Stretch]) -> Vec<(f64, f64)> {
+    let normal = |face: usize| mesh.area_vector(face).normalize_or_zero();
+    // The places where it may fold: first and last crossing, and the turn
+    // times length added up for where it is.
+    let mut places: Vec<(f64, f64, f64, f64)> = Vec::new();
+    for pair in stretches.windows(2) {
+        let (from, to) = (pair[0].face as usize, pair[1].face as usize);
+        let angle = normal(from).angle_between(normal(to)).to_degrees();
+        if from == to || !angle.is_finite() || angle < FOLD_STEP {
+            continue;
+        }
+        let time = pair[1].time;
+        match places.last_mut() {
+            Some((_, last, turn, moment)) if time - *last <= FOLD_WIDTH => {
+                (*last, *turn, *moment) = (time, *turn + angle, *moment + angle * time);
+            }
+            _ => places.push((time, time, angle, angle * time)),
+        }
+    }
+    // The way the surface faces on average between two lengths of the
+    // trace, and over how many triangles.
+    let facing = |from: f64, to: f64| -> (Vec3, usize) {
+        let (mut sum, mut faces) = (Vec3::ZERO, 0);
+        for stretch in stretches {
+            let overlap = (stretch.time + stretch.length).min(to) - stretch.time.max(from);
+            if overlap > 0.0 {
+                sum += normal(stretch.face as usize) * overlap;
+                faces += 1;
+            }
+        }
+        (sum.normalize_or_zero(), faces)
+    };
+    places
+        .into_iter()
+        .filter_map(|(first, last, turn, moment)| {
+            let ((before, faces_before), (after, faces_after)) =
+                (facing(first - FOLD_REACH, first), facing(last, last + FOLD_REACH));
+            // Over a triangle or two, the work mesh tells a fold from a
+            // curve too coarse for it no better than from one triangle to
+            // the next.
+            let angle = if faces_before.min(faces_after) >= FOLD_FACES {
+                before.angle_between(after).to_degrees()
+            } else {
+                0.0
+            };
+            (turn >= FOLD_ANGLE && angle >= FOLD_ANGLE).then_some((moment / turn, angle))
+        })
+        .collect()
+}
+
+/// Least turn from one triangle to the next that may be part of a fold, how
+/// far apart, in quad edges, the crossings of one fold may be, how far on
+/// either side the way the surface faces is looked at, and how sharply it
+/// must turn for a fold.
+const FOLD_STEP: f64 = 10.0;
+const FOLD_WIDTH: f64 = 0.25;
+const FOLD_REACH: f64 = 0.5;
+const FOLD_FACES: usize = 3;
+const FOLD_ANGLE: f64 = 30.0;
 
 /// Marks the half-arcs that face a hole of the surface.
 const OUTSIDE: u32 = INVALID - 1;

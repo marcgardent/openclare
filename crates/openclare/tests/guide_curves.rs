@@ -61,8 +61,11 @@ fn a_curve_is_laid_into_the_work_mesh_as_one_unbroken_line() {
 #[test]
 fn the_quad_mesh_has_an_edge_loop_on_a_closed_curve() {
     let source = primitives::icosphere(5);
+    // Not at 0.3: the sphere has the layout of a cube, and one of its rings
+    // runs there of itself.
+    let height = 0.35;
     let (free, _) = remesh(&source, 600, &[]);
-    let (mesh, report) = remesh(&source, 600, &[parallel(0.3)]);
+    let (mesh, report) = remesh(&source, 600, &[parallel(height)]);
     assert!(!report.fell_back, "the layout chain gave up: {:?}", report.fallback_causes);
     assert!(measure(&source, &mesh, Some(600)).is_valid());
     assert_eq!(report.guide_gaps, 0);
@@ -73,10 +76,10 @@ fn the_quad_mesh_has_an_edge_loop_on_a_closed_curve() {
     for (&v, neighbours) in &line {
         let p = mesh.positions[v as usize];
         assert_eq!(neighbours.len(), 2, "vertex {v} at {p:?}");
-        assert!((p.z - 0.3).abs() < 5e-3, "vertex {v} at {p:?}");
+        assert!((p.z - height).abs() < 5e-3, "vertex {v} at {p:?}");
     }
     // Without the curve nothing of the sort is there.
-    let on_the_circle = |mesh: &PolyMesh| mesh.positions.iter().filter(|p| (p.z - 0.3).abs() < 5e-3).count();
+    let on_the_circle = |mesh: &PolyMesh| mesh.positions.iter().filter(|p| (p.z - height).abs() < 5e-3).count();
     assert!(on_the_circle(&free) < line.len() / 2);
     assert_eq!(on_the_circle(&mesh), line.len());
     // A line drawn is not a hard edge: nothing to mark sharp or to crease.
