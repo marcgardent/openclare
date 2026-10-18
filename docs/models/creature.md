@@ -8,7 +8,7 @@ Author, source and licence: [CREDITS.md](../../CREDITS.md).
 | Source | QuadriFlow (Blender) | AutoRemesher | openclare | Quad Remesher |
 |---|---|---|---|---|
 | ![Source](img/creature__source.webp) | ![QuadriFlow (Blender)](img/creature__quadriflow.webp) | ![AutoRemesher](img/creature__autoremesher.webp) | ![openclare](img/creature__openclare.webp) | ![Quad Remesher](img/creature__quadremesher.webp) |
-| 78 124 triangles | 2 779 quads | 1 991 quads | 2 952 quads | 2 941 quads |
+| 78 124 triangles | 2 779 quads | 1 991 quads | 3 041 quads | 2 941 quads |
 
 ## At equal quad count
 
@@ -17,7 +17,7 @@ Quad Remesher makes more quads than the 3000 it is asked for. Next to its mesh, 
 | Quad Remesher | openclare, as many quads |
 |---|---|
 | ![Quad Remesher](img/creature__quadremesher.webp) | ![openclare, as many quads](img/creature__openclare-matched.webp) |
-| 2 941 quads | 2 945 quads |
+| 2 941 quads | 2 962 quads |
 
 ## Edge loops
 
@@ -28,7 +28,7 @@ At 3000 quads asked for. Each loop is followed straight on through every regular
 | Modelled by hand | — | — | — | — | — | — |
 | QuadriFlow (Blender) | 0 % | 31 % | 69 % | 0 % | 4 | 377 |
 | AutoRemesher | 31 % | 34 % | 35 % | 0 % | 6 | 166 |
-| openclare | 38 % | 6 % | 56 % | 0 % | 3 | 321 |
+| openclare | 38 % | 3 % | 58 % | 0 % | 2 | 275 |
 | Quad Remesher | 25 % | 19 % | 56 % | 0 % | 8 | 331 |
 
 ## Marks
@@ -39,9 +39,9 @@ From 0 to 100; how they are made is in [SCORES.md](../../bench/results/SCORES.md
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Edge loops | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| **openclare** | 1007 | **97** | 100 | 100 | 100 | 93 | 100 | 63 | 100 | 97 | 77 |
+| **openclare** | 1011 | **97** | 100 | 100 | 100 | 92 | 100 | 62 | 100 | 96 | 77 |
+| openclare-uniform | 1009 | **96** | 100 | 100 | 100 | 91 | 100 | 69 | 94 | 96 | 71 |
 | quadremesher-uniform | 928 | **93** | 100 | 100 | 100 | 87 | 100 | 63 | — | 71 | 47 |
-| openclare-uniform | 1025 | **90** | 100 | 100 | 100 | 91 | 100 | 63 | 50 | 90 | 75 |
 | instant-meshes | 994 | **84** | 100 | 73 | 100 | 62 | 100 | 17 | — | 94 | 99 |
 | quadremesher | 1208 | **84** | 100 | 100 | 100 | 93 | 100 | 51 | 57 | 17 | 39 |
 | autoremesher | 604 | **77** | 100 | 79 | 100 | 82 | 100 | 49 | 50 | 0 | 100 |
@@ -52,16 +52,16 @@ At equal quad count: Quad Remesher's mesh as it is, and openclare asked for as m
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Edge loops | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| openclare-matched | 1215 | **98** | 100 | 100 | 100 | 94 | 100 | 67 | 100 | 98 | 83 |
+| openclare-matched | 1198 | **97** | 100 | 100 | 100 | 93 | 100 | 65 | 100 | 97 | 77 |
 | quadremesher-as-made | 1208 | **96** | 100 | 100 | 100 | 93 | 100 | 51 | — | 100 | 39 |
 
 ### 3000 quads
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Edge loops | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| **openclare** | 2952 | **96** | 100 | 100 | 100 | 96 | 100 | 71 | 89 | 94 | 78 |
+| **openclare** | 3041 | **97** | 100 | 100 | 100 | 96 | 100 | 71 | 97 | 95 | 68 |
+| openclare-uniform | 2946 | **96** | 100 | 100 | 100 | 96 | 100 | 62 | 92 | 93 | 67 |
 | quadremesher-uniform | 2719 | **93** | 100 | 100 | 100 | 95 | 100 | 52 | — | 63 | 46 |
-| openclare-uniform | 3041 | **93** | 100 | 100 | 100 | 96 | 100 | 59 | 64 | 95 | 76 |
 | integer-grid | 2597 | **92** | 100 | 100 | 99 | 96 | 100 | 65 | — | 46 | 56 |
 | quadremesher | 2941 | **90** | 100 | 100 | 100 | 95 | 100 | 50 | 53 | 92 | 41 |
 | instant-meshes | 3070 | **88** | 100 | 72 | 100 | 93 | 100 | 7 | — | 91 | 100 |
@@ -72,16 +72,16 @@ At equal quad count: Quad Remesher's mesh as it is, and openclare asked for as m
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Edge loops | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| openclare-matched | 2945 | **98** | 100 | 100 | 100 | 96 | 100 | 69 | 100 | 99 | 61 |
+| openclare-matched | 2962 | **97** | 100 | 100 | 100 | 96 | 100 | 72 | 94 | 97 | 70 |
 | quadremesher-as-made | 2941 | **96** | 100 | 100 | 100 | 95 | 100 | 50 | — | 100 | 41 |
 
 ### 8000 quads
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Edge loops | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| **openclare** | 7870 | **95** | 100 | 100 | 100 | 98 | 100 | 74 | 73 | 94 | 38 |
+| **openclare** | 7842 | **94** | 100 | 100 | 100 | 98 | 100 | 73 | 72 | 92 | 35 |
+| openclare-uniform | 7858 | **94** | 100 | 100 | 100 | 98 | 100 | 74 | 66 | 93 | 34 |
 | quadremesher-uniform | 7207 | **93** | 100 | 100 | 100 | 97 | 100 | 52 | — | 60 | 48 |
-| openclare-uniform | 7840 | **93** | 100 | 100 | 100 | 98 | 100 | 73 | 64 | 92 | 33 |
 | instant-meshes | 8234 | **88** | 100 | 74 | 100 | 97 | 100 | 9 | — | 88 | 89 |
 | quadremesher | 7186 | **88** | 100 | 100 | 100 | 98 | 100 | 55 | 50 | 59 | 38 |
 | autoremesher | 6819 | **84** | 100 | 88 | 100 | 98 | 100 | 46 | 50 | 41 | 70 |
@@ -93,4 +93,4 @@ At equal quad count: Quad Remesher's mesh as it is, and openclare asked for as m
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Edge loops | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | quadremesher-as-made | 7186 | **97** | 100 | 100 | 100 | 98 | 100 | 55 | — | 100 | 38 |
-| openclare-matched | 7298 | **94** | 100 | 100 | 100 | 98 | 100 | 74 | 68 | 94 | 38 |
+| openclare-matched | 7163 | **91** | 100 | 100 | 100 | 98 | 100 | 77 | 50 | 99 | 40 |

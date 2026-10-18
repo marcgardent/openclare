@@ -8,7 +8,7 @@ Author, source and licence: [CREDITS.md](../../CREDITS.md).
 | Source | AutoRemesher | openclare | Quad Remesher |
 |---|---|---|---|
 | ![Source](img/windmill__source.webp) | ![AutoRemesher](img/windmill__autoremesher.webp) | ![openclare](img/windmill__openclare.webp) | ![Quad Remesher](img/windmill__quadremesher.webp) |
-| 14 962 triangles | 1 003 quads | 294 quads | 17 287 quads |
+| 14 962 triangles | 1 003 quads | 432 quads | 17 287 quads |
 
 ## At equal quad count
 
@@ -17,7 +17,7 @@ Quad Remesher makes more quads than the 3000 it is asked for. Next to its mesh, 
 | Quad Remesher | openclare, as many quads |
 |---|---|
 | ![Quad Remesher](img/windmill__quadremesher.webp) | ![openclare, as many quads](img/windmill__openclare-matched.webp) |
-| 17 287 quads | 751 quads |
+| 17 287 quads | 818 quads |
 
 ## Edge loops
 
@@ -28,7 +28,7 @@ At 3000 quads asked for. Each loop is followed straight on through every regular
 | Modelled by hand | — | — | — | — | — | — |
 | QuadriFlow (Blender) | — | — | — | — | — | — |
 | AutoRemesher | — | — | — | — | — | — |
-| openclare | 0 % | 5 % | 95 % | 0 % | 4 | 17 |
+| openclare | 0 % | 4 % | 96 % | 0 % | 8 | 17 |
 | Quad Remesher | 8 % | 11 % | 82 % | 0 % | 46 | 180 |
 
 ## Marks
@@ -40,8 +40,8 @@ From 0 to 100; how they are made is in [SCORES.md](../../bench/results/SCORES.md
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Edge loops | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | quadremesher | 6933 | **51** | 0 | 88 | 91 | 69 | 64 | — | — | 0 | 0 |
-| openclare-uniform | 121 | **37** | 100 | 27 | 0 | 0 | 100 | 0 | 17 | 0 | 96 |
-| **openclare** | 139 | **33** | 100 | 22 | 0 | 0 | 64 | 0 | 15 | 0 | 100 |
+| **openclare** | 207 | **33** | 100 | 12 | 0 | 0 | 44 | 0 | 37 | 0 | 100 |
+| openclare-uniform | 136 | **17** | 0 | 32 | 0 | 0 | 100 | 0 | 23 | 0 | 100 |
 | autoremesher | 370 | **12** | 0 | 55 | 0 | 0 | 0 | — | — | 0 | 92 |
 | quadriflow | — | **0** | 0 | — | — | — | — | — | — | — | — |
 
@@ -51,10 +51,10 @@ From 0 to 100; how they are made is in [SCORES.md](../../bench/results/SCORES.md
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | quadremesher | 17287 | **54** | 0 | 90 | 98 | 75 | 98 | — | 39 | 0 | 0 |
 | quadremesher-uniform | 2787 | **45** | 0 | 75 | 85 | 46 | 13 | — | — | 72 | 0 |
+| **openclare** | 432 | **37** | 100 | 27 | 34 | 0 | 0 | 0 | 45 | 0 | 60 |
+| openclare-uniform | 135 | **36** | 100 | 30 | 0 | 0 | 100 | 0 | 0 | 0 | 91 |
 | instant-meshes | 1886 | **20** | 0 | 48 | 58 | 7 | 0 | 6 | — | 0 | 100 |
-| openclare-uniform | 207 | **19** | 0 | 24 | 0 | 0 | 100 | 4 | 44 | 0 | 99 |
 | autoremesher | 1003 | **17** | 0 | 56 | 28 | 0 | 5 | — | — | 0 | 93 |
-| **openclare** | 294 | **9** | 0 | 21 | 0 | 0 | 0 | 0 | 42 | 0 | 86 |
 | quadriflow | — | **0** | 0 | — | — | — | — | — | — | — | — |
 | integer-grid | — | **0** | 0 | — | — | — | — | — | — | — | — |
 
@@ -63,14 +63,14 @@ At equal quad count: Quad Remesher's mesh as it is, and openclare asked for as m
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Edge loops | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | quadremesher-as-made | 17287 | **58** | 0 | 74 | 98 | 65 | 98 | — | — | 100 | 0 |
-| openclare-matched | 751 | **42** | 100 | 37 | 32 | 0 | 0 | 1 | 49 | 0 | 30 |
+| openclare-matched | 818 | **43** | 100 | 33 | 37 | 0 | 0 | 1 | 50 | 0 | 17 |
 
 ### 8000 quads
 
 | Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Edge loops | Budget | Speed |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | quadremesher | 36766 | **58** | 0 | 89 | 100 | 79 | 100 | — | — | 0 | 0 |
-| openclare-uniform | 260 | **41** | 100 | 53 | 0 | 0 | 100 | 9 | 10 | 0 | 82 |
-| **openclare** | 414 | **31** | 100 | 19 | 11 | 0 | 0 | 0 | 30 | 0 | 67 |
+| openclare-uniform | 253 | **42** | 100 | 50 | 5 | 0 | 100 | 12 | 12 | 0 | 70 |
+| **openclare** | 646 | **34** | 100 | 16 | 30 | 0 | 0 | 0 | 41 | 0 | 50 |
 | autoremesher | 2364 | **29** | 0 | 63 | 65 | 0 | 51 | — | — | 0 | 71 |
 | quadriflow | — | **0** | 0 | — | — | — | — | — | — | — | 100 |
