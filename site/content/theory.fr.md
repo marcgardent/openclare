@@ -189,8 +189,16 @@ Quand deux tours du corps masculin ne peuvent pas se fermer ensemble, nous avion
 serait toujours une paire 3/5 posée sur une même ligne entre eux. Cette hypothèse est
 **réfutée** : elle tenait dans 0 des 13 conflits examinés. Ils se rangent en six configurations :
 un escalier entre une paire 3/5, trois échanges de deux pôles de valence 3 entre des tours qui se
-croisent, et deux qui s'enroulent autour d'une calotte, comme un bout de doigt, et ne sont pas
-encore expliqués.
+croisent, et deux boucles plus longues, dont une autour d'une calotte comme un bout de doigt.
+
+**Les peignes.** Il existe une façon plus simple de lire chaque conflit. Prenez n'importe quel arc
+du patchwork : les deux lignes qui le bornent partent chacune d'un pôle. Ensemble, elles forment
+un *peigne*, d'un pôle, à travers l'arc, jusqu'à l'autre. La longueur de l'arc est exactement
+l'écart entre ces deux pôles, mesuré en travers de la direction de l'arc (**démontré**,
+**mesuré** sur les 2 069 arcs du corps masculin). Presque chaque arc est donc une minuscule paire
+3/5 ou un échange de deux pôles, et toute preuve que des tours ne peuvent pas se fermer ensemble
+est une somme de peignes (**démontré**). Les deux boucles plus longues ci-dessus sont des chaînes
+fermées de six et de quatre peignes.
 
 ## 5. Des règles que personne ne peut enfreindre
 
@@ -203,6 +211,10 @@ quads a besoin d'au moins huit pôles de valence 3, les coins d'un cube (**démo
 Le corps masculin a 133 pôles de valence 3, 127 de valence 5 et un de valence 2 (indice +2) :
 133 − 127 + 2 = 8. Et un anneau coupe toujours une telle surface en deux moitiés d'indice 4
 chacune : un bout de doigt au-delà d'un anneau contient l'équivalent de quatre pôles de valence 3.
+Les trous changent le compte : le côté d'un anneau qui contient un trou compte 4 de moins par
+trou, si bien qu'un anneau qui longe un trou peut n'avoir aucun pôle de son côté. Un tel *collier*
+autour d'un trou aux bords droits se ferme toujours (**démontré** ; **mesuré** sur les 40
+colliers autour des yeux de Suzanne).
 
 ![La QuadSphere : un cube gonflé en sphère](../../docs/glossary/quadsphere.png)
 
@@ -254,7 +266,8 @@ parmi ses quatre tours (**démontré**).
 seul des quatre tours au plus peut être un anneau.*
 
 Nous ne connaissons pas de borne inférieure antérieure de ce genre. Sur le corps masculin
-(**mesuré**, avec un solveur d'optimisation), les pôles n'imposent que **1 à 9 hélices** parmi les
+(**mesuré**, calculé exactement avec un solveur d'optimisation), les pôles n'imposent que **1 à 9
+hélices** parmi les
 tours retenus pour la fermeture, selon la variante, là où le moteur en laissait **13 à 123**. L'une
 des hélices forcées est celle du poignet ; les autres sont aux yeux, aux mains et aux pieds.
 
@@ -375,8 +388,9 @@ d'hexagones.
 une sphère la coupe en deux disques, comment une boucle se déplie sur le plan, comment les boucles
 autour des pôles engendrent toutes les autres. Chacun de ces faits est écrit comme une hypothèse
 explicite du théorème qui l'utilise. Les formaliser prendrait des semaines, et une bonne part
-manque à Mathlib. Les résultats les plus récents, sur les surfaces à bords et à anses, sont
-démontrés sur papier et mesurés, pas encore en Lean.
+manque à Mathlib. Les résultats les plus récents, sur les surfaces à bords et à anses, sur les
+peignes et sur la difficulté de choisir les anneaux, sont démontrés sur papier (et les deux
+premiers mesurés), pas encore en Lean.
 
 **Les failles trouvées par l'ordinateur.** Aucune erreur de signe, mais plusieurs failles,
 désormais corrigées :
@@ -411,12 +425,24 @@ données, ce qui n'est pas la même chose.
   le faire en une fraction de seconde, en tenant exactement le nombre de quads ?
 - **Des planchers à taille donnée.** Le théorème des hélices forcées vaut quand le nombre de quads
   est fixé, mais nous ne savons pas encore calculer le plancher dans ce cas.
-- **Quand un groupe de tours peut-il se fermer ensemble**, lu directement sur les pôles ? Deux
-  conflits du corps masculin (l'œil gauche et le pied droit) ne sont toujours pas expliqués.
-- **Existe-t-il un algorithme parfait et rapide ?** Choisir les longueurs entières qui ferment le
-  plus d'anneaux, à taille donnée, pourrait être un problème pour lequel aucune méthode exacte
-  rapide n'existe (NP-difficile, dans le langage de la théorie de la complexité). Cette question
-  est à l'étude ; ce paragraphe sera mis à jour.
+- **Quand un groupe de tours peut-il se fermer ensemble**, lu directement sur les pôles ? Tout
+  conflit est une somme de peignes, mais presque tout l'est, ce qui en dit peu ; et deux conflits
+  du corps masculin (l'œil gauche et le pied droit) ne sont prouvablement pas faits d'escaliers et
+  de calottes seulement. La réponse utile se trouve quelque part entre les deux.
+- **Existe-t-il un algorithme parfait et rapide ? Non** (**démontré**, sauf si P = NP). Choisir
+  quels anneaux fermer est au moins aussi difficile qu'une énigme célèbre : dans un réseau de
+  personnes, trouver le plus grand groupe dont personne ne connaît personne. Pour tout réseau de
+  ce genre, on sait construire un petit patchwork de rectangles dans lequel les groupes d'anneaux
+  qui peuvent se fermer ensemble sont exactement ces groupes. Aucune méthode ne peut donc toujours
+  trouver le meilleur choix rapidement, sauf si P = NP, une question ouverte depuis 1971 dont la
+  plupart des chercheurs pensent que la réponse est non. On ne peut même pas bien l'approcher :
+  aucune méthode rapide ne peut promettre de laisser moins d'environ 1,4 fois le plus petit nombre
+  possible d'hélices, sauf si P = NP. C'est le pire des cas, sur des patchworks construits exprès ;
+  que les patchworks des vrais maillages soient aussi difficiles est une **conjecture**. Sur le
+  corps masculin, des solveurs exacts trouvent encore le plus petit nombre d'hélices forcées en
+  moins d'une demi-minute quand seul l'écartement des pôles compte ; avec les limites du moteur
+  sur la déformation et la taille, ils ne donnent que des fourchettes. Le choix du moteur restera
+  une heuristique, et la recherche doit viser de bons choix, pas des choix parfaits.
 
 ## 10. Qui a fait quoi
 

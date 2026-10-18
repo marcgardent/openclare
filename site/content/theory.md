@@ -179,8 +179,16 @@ round the wrist inherits the gap.*
 When two turns of the male body cannot close together, we had guessed it would always be a 3/5
 pair sitting on one line between them. That guess was **refuted**: it held in 0 of the 13
 conflicts we examined. They fall into six configurations: one staircase between a 3/5 pair,
-three swaps of two poles of valence 3 between turns that cross, and two that wind round a cap,
-like a fingertip, and are still not explained.
+three swaps of two poles of valence 3 between turns that cross, and two longer loops, one round
+a cap like a fingertip.
+
+**Combs.** There is a simpler way to read every conflict. Take any arc of the patchwork: the
+two lines that end it each start from a pole. Together they make a *comb*, from one pole,
+across the arc, to the other. The length of the arc is exactly how far apart those two poles
+sit across the arc's direction (**proved**, **measured** on all 2,069 arcs of the male body). So
+nearly every arc is a tiny 3/5 pair or a swap of two poles, and every proof that some turns
+cannot close together is a sum of combs (**proved**). The two longer loops above are closed
+chains of six and of four combs.
 
 ## 5. Rules nobody can break
 
@@ -191,7 +199,10 @@ closed surface shaped like a ball, the indices add up to 8: a quad sphere needs 
 poles of valence 3, the corners of a cube (**proved**, classical). The male body has 133 poles
 of valence 3, 127 of valence 5 and one of valence 2 (index +2): 133 − 127 + 2 = 8. And a ring
 always cuts such a surface into two halves whose indices are 4 each: a fingertip beyond a ring
-holds the equivalent of four poles of valence 3.
+holds the equivalent of four poles of valence 3. Holes change the count: the side of a ring
+that contains a hole holds 4 less per hole, so a ring hugging a hole can have no pole at all on
+its side. Such a *collar* round a hole with straight edges always closes (**proved**;
+**measured** on all 40 collars round Suzanne's eyes).
 
 ![The QuadSphere: a cube pushed onto a sphere](../../docs/glossary/quadsphere.png)
 
@@ -239,9 +250,9 @@ kept apart. With several separate groups, the helices add up. For instance, a li
 *Each 3/5 pair adds the length of its staircase to the shift, always the same way: at most one
 of the four turns can be a ring.*
 
-We know of no earlier lower bound of this kind. On the male body (**measured**, with an
-optimization solver), the poles force only **1 to 9 helices** among the turns held for closing, depending on
-the run, where the engine left **13 to 123**. One forced helix is the wrist; the others sit at
+We know of no earlier lower bound of this kind. On the male body (**measured**, computed exactly
+with an optimization solver), the poles force only **1 to 9 helices** among the turns held for
+closing, depending on the run, where the engine left **13 to 123**. One forced helix is the wrist; the others sit at
 the eyes, the hands and the feet.
 
 ![Forced helices against those the engine leaves, for the eight ways of the male body](../../docs/glossary/forced_vs_engine.png)
@@ -351,7 +362,8 @@ Several of them also hold beyond quads, for triangle and hexagon meshes.
 cuts it into two discs, how a loop unfolds onto the plane, how the loops round the poles
 generate all the others. Each is written as an explicit hypothesis of the theorem that uses it.
 Formalizing it would take weeks, much of it missing from Mathlib. The newest results, on
-surfaces with borders and handles, are proved on paper and measured, not yet in Lean.
+surfaces with borders and handles, on combs and on how hard it is to choose the rings, are
+proved on paper (and the first two measured), not yet in Lean.
 
 **Gaps the computer found.** It found no wrong sign, but several gaps, now corrected:
 
@@ -384,11 +396,23 @@ same thing.
   number of quads held exactly?
 - **Floors at a given size.** The forced-helices theorem holds when the number of quads is fixed,
   but we do not yet know how to compute the floor in that case.
-- **When can a group of turns close together**, read directly from the poles? Two conflicts of
-  the male body (the left eye and the right foot) are still not explained.
-- **Is there a fast perfect algorithm?** Choosing whole lengths that close the most rings, at a
-  given size, may be a problem for which no fast exact method exists (NP-hard, in the language
-  of complexity theory). This question is being studied; this paragraph will be updated.
+- **When can a group of turns close together**, read directly from the poles? Every conflict
+  is a sum of combs, but so is almost anything, so that says little; and two conflicts of the
+  male body (the left eye and the right foot) are provably not made of staircases and caps
+  alone. The useful answer lies somewhere in between.
+- **Is there a fast perfect algorithm? No** (**proved**, unless P = NP). Choosing which rings
+  to close is at least as hard as a famous puzzle: in a network of people, find the largest
+  group in which nobody knows anybody else. For any such network we can build a small patchwork
+  of rectangles in which the groups of rings that can close together are exactly those groups.
+  So no method can always find the best choice quickly, unless P = NP, a question open since
+  1971 that most researchers expect to be answered no. It cannot even be approximated well: no
+  fast method can promise to leave fewer than about 1.4 times the least possible number of
+  helices, unless P = NP. This is the worst case, on patchworks built on purpose; that the
+  patchworks of real meshes are just as hard is a **conjecture**. On the male body, exact
+  solvers still find the least number of forced helices in under half a minute when only the
+  spacing of the poles counts; with the engine's limits on distortion and size they only give
+  ranges. The engine's choice will stay a heuristic, and research should look for good choices,
+  not perfect ones.
 
 ## 10. Who did what
 
