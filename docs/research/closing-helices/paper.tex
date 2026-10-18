@@ -21,6 +21,7 @@
 \newtheorem{corollary}{Corollary}
 \newtheorem{remark}{Remark}
 \newtheorem{conjecture}{Conjecture}
+\newtheorem{question}{Question}
 \newtheorem{problem}{Open problem}
 
 \newcommand{\Z}{\mathbb{Z}}
@@ -35,7 +36,7 @@
 
 \title{Closing Edge Loops at Quantization Time:\\
 Helix Constraints for T-Mesh Quantization\\[0.5em]
-\large Research note --- draft, not peer reviewed}
+\large Research note --- preprint, version 1, not peer reviewed}
 \author{Marc Gardent%
 \thanks{This note is distributed under the Creative Commons Attribution
 4.0 International licence (CC BY 4.0). The code of openclare and the Lean
@@ -136,7 +137,7 @@ builds on are attributed where they are used.
   feasible subsystems in general, shown here for the restricted instances of
   quantization (bidirected balances, bounds $0$ and $1$).
 \item An exact look at whole lengths on the same body: the turns, not the
-  rounding, decide what closes (Section~\ref{sec:whole}).
+  rounding, decide what closes (Appendix~\ref{sec:whole}).
 \item Machine-checked proofs, in Lean~4~\cite{demoura2021lean4} with
   Mathlib~\cite{mathlib2020}, of the algebraic and combinatorial cores of
   the proofs, with the topological facts as explicit hypotheses
@@ -378,7 +379,7 @@ The shift form is thus a statement about a fixed sequence of crossed
 patches. Closing constraints $\shift_\gamma(\ell) = 0$ describe the strips
 of the mesh only together with the corridor inequalities of $\gamma$, which
 the engine of Section~\ref{sec:closing} does not impose
-(Sections~\ref{sec:whole} and~\ref{sec:choosing} measure what this costs).
+(Appendices~\ref{sec:whole} and~\ref{app:endtoend} measure what this costs).
 
 The shift is the across component of the translational holonomy of the
 flat metric along the turn (Section~\ref{sec:holonomy}), which is linear in
@@ -449,8 +450,8 @@ whole lengths. The engine uses this to close by cuts
 
 \section{Closing turns in quantization}\label{sec:closing}
 
-This section describes the engine at commit \texttt{\enginecommit}
-(\texttt{crates/openclare/src/quantization/}). Some experiments of later
+This section describes the engine at commit \texttt{\enginecommit}, in
+\nolinkurl{crates/openclare/src/quantization/}. Some experiments of later
 sections used earlier versions; each says which.
 
 The quantizer of openclare minimizes a separable convex cost of the integer
@@ -734,7 +735,7 @@ bound of separation kept.}
 \end{table}
 
 In whole numbers, the same mixed-integer program did not finish within
-fifteen minutes on the two systems tried. Section~\ref{sec:whole} shows that a
+fifteen minutes on the two systems tried. Appendix~\ref{sec:whole} shows that a
 similar failure, on a larger set of rings, came from the way the problem was
 posed to the solver and not from an absence of whole solutions.
 
@@ -773,6 +774,22 @@ deviation cap, which this table does not include.}
 \label{tab:rounding}
 \end{table}
 
+\paragraph{Whole lengths.}
+Appendix~\ref{sec:whole} looks at the same body in whole numbers. The
+balances are the incidence matrix of a bidirected graph, whose free arcs
+parametrize the lattice of whole balanced lengths
+(Proposition~\ref{prop:free}): balances alone never obstruct whole lengths.
+Solver failures in whole numbers came from implicit zeros, arcs that every
+real solution sets to zero, not from an absence of whole solutions. The
+obstruction that remains is the size: closing the $218$ ways round of the
+mesh of way~2 that lean like rings needs a mean deviation from the targets
+of at least $0.817$, far above the engine's cap; a subset of $190$ closes at
+$0.399$ in real numbers and needs at least $0.536$ in whole numbers (proven
+by the solver), and the whole lengths found close all $190$ but make a mesh
+that spirals more than the engine's, because the strips move with the
+lengths. On this body the choice of the turns, not the rounding, decides how
+much the mesh spirals.
+
 \section{When rings cannot all close}\label{sec:obstructions}
 
 Section~\ref{sec:exact} found that closing all held turns conflicts with
@@ -781,13 +798,13 @@ few arcs. This section gives a mechanism for such conflicts, with proofs. The
 tool is the holonomy of the flat metric, as used by Izmestiev et
 al.~\cite{izmestiev2013torus}; its ingredients are classical, and we know of
 no earlier statement of the propositions below in terms of helices.
-Section~\ref{sec:measured} tests them on the male body, and
+Appendix~\ref{sec:measured} tests them on the male body, and
 Section~\ref{sec:conflicts} describes its conflicts.
 
 \subsection{Turns and singularities}\label{sec:holonomy}
 
 \paragraph{Flat metric and holonomy.}
-In Sections~\ref{sec:holonomy} to~\ref{sec:move} the surface $\Sigma$ is
+In Sections~\ref{sec:holonomy} to~\ref{sec:combs} and Appendices~\ref{sec:measured} to~\ref{sec:move} the surface $\Sigma$ is
 closed, without border, and \emph{genus zero} means a closed sphere. Several
 statements fail with borders or handles; Section~\ref{sec:beyond} gives
 their general form.
@@ -859,11 +876,11 @@ a group of singularities whose indices do not add up to four is never a
 turn, whatever the lengths. A side holding at most one singular vertex has
 total index $0$ or $4 - k \neq 4$, so each side of a turn holds at least two.
 None of this holds with borders or handles: a side holding $b$ border
-components and $h$ handles has total index $4(1 - b - 2h)$, and may hold no
+components without corners and $h$ handles has total index $4(1 - b - 2h)$, and may hold no
 singular vertex at all (Lemma~\ref{lem:gauss-border}).
 
 Curves of turns need not be simple, and on the male body most of those held
-for closing are not (Section~\ref{sec:measured}). The first case beyond simple
+for closing are not (Appendix~\ref{sec:measured}). The first case beyond simple
 curves is still determined.
 
 \begin{lemma}[One self-crossing]\label{lem:eight}
@@ -1041,7 +1058,9 @@ the form $\pm d_1 \pm d_2$ and $|B_A|^2 = 2|d|^2$, which is (i); the
 component along $e_2$ vanishes exactly on the line $\varepsilon_1 d_1 +
 \varepsilon_2 d_2 = 0$, a diagonal. For (ii), choose $\kappa$ away from the
 straight segment joining $c_3$ to $c_5$, which does not separate the two
-borders of $A$, and develop $c_5$ from $c_3$ along it: $d$ is $\delta$ times
+borders of $A$, take the tree of part~(a) to contain that segment so that
+the positions of~(i) are those of the first visit, and develop $c_5$ from
+$c_3$ along the segment: $d$ is $\delta$ times
 one of $\pm e_1$, $\pm e_2$, so $|\varepsilon_1 d_1 + \varepsilon_2 d_2| =
 \delta$. For (iii), $d \in \Z^2$ and $\pm d_1 \pm d_2 \equiv d_1 + d_2$.
 \end{proof}
@@ -1054,10 +1073,9 @@ quads has an even number of edges on its border, since $4F = 2E_{\text{inside}}
 below makes this a statement about each turn. Part (ii) is the mechanism the
 problem of feasibility in Section~\ref{sec:open} guessed, and
 Proposition~\ref{prop:staircase} extends it from straight chains to
-staircases. An earlier draft suggested that it explains the conflict found
-on the male body at a single arc of the left wrist
-(Section~\ref{sec:exact}). It does not: that conflict involves a single
-turn, not two (Remark~\ref{rem:definite}), and
+staircases. It does not explain the conflict found on the male body at a
+single arc of the left wrist (Section~\ref{sec:exact}): that conflict
+involves a single turn, not two (Remark~\ref{rem:definite}), and
 Proposition~\ref{prop:winding} gives its mechanism.
 
 For more singular vertices between two turns, the parity part generalizes
@@ -1087,9 +1105,9 @@ $4 - k$ being odd and summing to zero with the even ones
 (Lemma~\ref{lem:gauss}); for the same reason the two colours give counts of
 the same parity. Developing a vertex along another path inside the
 cut disc moves it by a rotation $x \mapsto R_j(x - p_j) + p_j$ about another
-singular vertex, which keeps its colour. We checked the rule on 13{,}000 random
-configurations with sympy.
+singular vertex, which keeps its colour.
 \end{proof}
+We also checked the rule on $13{,}000$ random configurations with SymPy.
 
 \paragraph{Parity on a sphere.}
 The checkerboard rule compares two turns. On a closed surface of genus zero
@@ -1205,10 +1223,11 @@ sockets of Suzanne a case met in practice: a ring of $23$ quads.
 \end{remark}
 
 \paragraph{How many independent rings.}
-Rings that do not cross one another are disjoint simple closed curves of
+Rings that cross neither one another nor themselves are disjoint simple
+closed curves of
 $\Sigma^\circ$, none bounding a disc with fewer than two singular vertices
-(Lemma~\ref{lem:gauss}). On a closed surface of genus zero with $n$ singular
-vertices there are at most $n - 3$ such curves pairwise non-homotopic, the
+(Lemma~\ref{lem:gauss}). On a closed surface of genus zero with $n \ge 3$
+singular vertices there are at most $n - 3$ such curves pairwise non-homotopic, the
 number of curves of a decomposition of the $n$-punctured sphere into pairs of
 pants, the classical bound on the number of cylinders of a Jenkins--Strebel
 differential~\cite{strebel1984quadratic}; disjoint homotopic ones bound an annulus without singular vertex and
@@ -1254,10 +1273,10 @@ certificate checked in exact rational arithmetic for way 0): in ways 0, 1, 2
 and 4 one held turn, of length $7.0$,
 has a shift equal, modulo the balances, to $-(\ell_{1921} + \ell_{1937})$,
 where arc 1937, $0.08$ edges long, is held at length at least one. That turn
-cannot be closed on its own. A sentence of an earlier draft of
-Section~\ref{sec:exact} stated that every held turn can be closed on its
-own; it is false for this body. Section~\ref{sec:conflicts} shows where this
-form comes from.
+cannot be closed on its own, within the engine's bounds of separation.
+Whether $\ell_{1937} = 0$ would merge two singular vertices, that is whether
+every valid quantization meets this bound, we did not check.
+Section~\ref{sec:conflicts} shows where this form comes from.
 
 \begin{remark}[Whole solutions exist at some size]\label{rem:exist}
 The balance and closing constraints are homogeneous and the bounds of
@@ -1267,68 +1286,23 @@ and multiplying it by the common denominator $N$ gives whole lengths
 $N\ell \ge Nb \ge b$ that satisfy them all. Closing in whole numbers is thus
 never impossible in itself; what can fail is closing \emph{at a given size}
 (number of quads) or within a given deviation from the targets.
-Section~\ref{sec:whole} measures this on the male body.
+Appendix~\ref{sec:whole} measures this on the male body.
 \end{remark}
 
-\subsection{Measured on the male body}\label{sec:measured}
-
-The statements above concern the T-mesh, which the export of
-Section~\ref{sec:exact} first lacked. We exported it with every turn, for
-the eight ways of the male body at 10{,}590 quads: its $1{,}295$ nodes
-($1{,}034$ T-junctions and $261$ singular vertices, $133$ of valence three,
-$127$ of valence five and one of valence two, of total index $8$) with their
-corner angles, its $2{,}069$ arcs with their traces, its $776$ patches, and
-for each turn the arcs it crosses. A turn is drawn as a curve by straight
-chords across the patches it crosses, and the regions its curve cuts the
-surface into are found from the chords. Identities between quantities of
-this section are identities between linear forms in the arc lengths modulo
-the balances, checked on a basis of the balanced lengths in floating point;
-parities are evaluated at the whole lengths the engine found. Counts are
-summed over the eight ways, a turn found in several ways counting once in
-each (measured throughout).
-
-\paragraph{What holds.}
-For each of the $1{,}299$ turns, the crossing maps composed along the walk
-give a translation whose component across is the exported shift
-(Proposition~\ref{prop:linear}). Of these turns, $718$ have a simple curve;
-each splits the $261$ singular vertices into two groups of total index $4$
-(Lemma~\ref{lem:gauss}). On each side of each of them, with a tree of cuts
-found by breadth-first search, the holonomy of the curve equals the
-composition of Proposition~\ref{prop:burgers}(a), in the order of first visit,
-in both components: $1{,}436$ discs holding $4$ to $257$ singular vertices,
-no exception. The order matters: taking the vertices in the order of their
-last visit fails on $150$ of the $158$ discs of way~2. The checkerboard rule
-(Proposition~\ref{prop:checkerboard}) holds on the $1{,}436$ discs, in the
-form given after Corollary~\ref{cor:parity}, and on the $30{,}148$ annuli
-between two disjoint simple turns, whose singular vertices have total index
-$0$ in every case, as Lemma~\ref{lem:gauss} says. The $294$ pairs of
-disjoint turns with no singular vertex between them have equal shifts
-(Proposition~\ref{prop:burgers}(c)). Ten annuli hold exactly one vertex of
-valence three and one of valence five; on all ten the identity of
-Proposition~\ref{prop:dislocation}(i) holds, and in none of them do the two
-vertices lie on one trace, so part (ii) never applies at the real lengths.
-The parity of Proposition~\ref{prop:parity} holds for the $1{,}299$ turns.
-
-\paragraph{Most held turns are not simple.}
-Of the $1{,}299$ turns, $101$ cross themselves once, as in
-Lemma~\ref{lem:eight}: $97$ split the singular vertices as $(3, 3, 2)$, and
-$4$ as $(2, 2, 4)$, all four crossing their closing segment. The other $480$
-cross themselves at least twice, up to $107$ times. Of the $765$ turns held
-for closing, only $356$ are simple: long turns cross themselves many times,
-and the statements about simple curves and annuli say nothing about them.
-For such curves we use winding numbers: a combination $\sum_\gamma u_\gamma
-\bar\gamma$ of curves winds round each region of their union a whole number
-of times. This is its class in the homology of $\Sigma^\circ$; it tells round
-which singular vertices the combination goes, but not its holonomy, which
-is not commutative.
+\paragraph{On the male body.}
+Appendix~\ref{sec:measured} tests the statements above on the T-mesh of the
+male body exported in Section~\ref{sec:exact}: they hold on every turn and
+annulus they apply to. It also shows that most of the turns held for closing
+have curves that cross themselves, so that the statements on simple curves
+say nothing about them; Section~\ref{sec:fox} handles any curve.
 
 \subsection{Conflicts between turns}\label{sec:conflicts}
 
 \paragraph{Conflicts are local, but not always pairs.}
-An earlier draft conjectured that whenever a set of turns, each closable on
-its own, cannot be closed together within the bounds of separation, it
-contains two parallel turns whose annulus forbids it, as in
-Proposition~\ref{prop:dislocation}. This is false. We searched the held turns
+One may hope that whenever a set of turns, each closable on its own, cannot
+be closed together within the bounds of separation, it contains two parallel
+turns whose annulus forbids it, as in Proposition~\ref{prop:dislocation}.
+This is false. We searched the held turns
 of the eight exported systems for \emph{irreducible} infeasible sets: sets
 that cannot be closed together within the bounds while every proper subset
 can (Table~\ref{tab:iis}). For each, the Farkas multipliers of
@@ -1386,10 +1360,10 @@ parity. In the conflicts between two turns, the sum or difference of the
 shifts equals a sum of two to eight arc lengths with coefficient one, one of
 them bounded; the two turns have nearly equal lengths ($39.7$ and $40.0$,
 $52.4$ and $52.8$, $277.5$ and $278.0$, \dots) and lie in clusters of
-singularities, at the eyes, the hands and the feet. An earlier draft read
-this as Proposition~\ref{prop:dislocation}(ii): a vertex of valence three and
+singularities, at the eyes, the hands and the feet. One may read this as
+Proposition~\ref{prop:dislocation}(ii): a vertex of valence three and
 one of valence five joined along one trace by a chain holding the bounded
-arc. The T-mesh refutes it: we examined $13$ conflicts between two turns
+arc. The T-mesh refutes that reading: we examined $13$ conflicts between two turns
 (every row of two turns in Table~\ref{tab:iis} except the pair $49$, $71$ of
 way~5), and in none of them are the turns separated by such a pair on one
 trace. What separates them is a staircase.
@@ -1599,7 +1573,9 @@ $1937$, which starts at the vertex $248$ of valence five and is held at
 length at least one: whence the certificate $-(\ell_{1921} + \ell_{1937})$ of
 Remark~\ref{rem:definite}, and $\shift \le -1$ at every admissible whole
 length (measured). A ring would need the separatrix to come back onto its
-own vertex, which the bounds of separation forbid. We checked the identity,
+own vertex, which the engine's bounds of separation forbid. As a check, the
+along component of the holonomy is the length of $\sigma$, $6.994$, and
+that of the turn is $6.99$. We checked the identity,
 not the homotopy that Proposition~\ref{prop:winding} assumes.
 
 \paragraph{Conflicts of more than two turns.}
@@ -1623,21 +1599,6 @@ as a sum of two staircases, and a floating-point test of
 Section~\ref{sec:combs} separates its certificate from the non-negative
 combinations of staircases, caps and winding separatrices.
 
-The other sets are not described. At the left
-hand ($66$, $71$, $75$, $76$ of way 1, the same curves as $73$, $78$, $82$,
-$83$ of way 3), $76$ is a figure-eight round three vertices of valence three,
-$29.9$ long, and the others are $96$ to $140$ long, crossing themselves $13$
-to $28$ times and each other $10$ to $46$ times; relative to the rest of the
-body, the weighted cycle winds round $18$ of the $22$ regions, with windings
-from $-\tfrac12$ to $\tfrac43$ in the normalization of
-Table~\ref{tab:iis}. The set of seven in
-way 5 contains the two turns of configuration B and winds $\pm4$ round the
-two vertices they exchange; its other turns, up to $398$ long, go round
-parts of both hands. The set of seven in way 7, at the left foot, contains a
-turn of length $4.92$ round a cap of four vertices of valence three, whose
-multiplier is $16$ against $\pm1$ or $2$ for the six others, once scaled to
-whole numbers.
-
 The fractional multipliers are an artefact of normalization. The linear
 program that finds the certificate asks the bounded arcs to weigh one in
 total: at the left hand the form has three bounded arcs of coefficient
@@ -1654,18 +1615,18 @@ round the region of ten singular vertices of total index $-2$.
 Section~\ref{sec:fox} explains part of these weights: why $-2F$ is even, and
 which dislocation carries the coefficient $5$.
 
-\begin{conjecture}[Conflicts are round a cluster]\label{conj:region}
+\begin{question}[Are conflicts round a cluster?]\label{conj:region}
 On a closed surface of genus zero, let $H$ be an irreducible set of turns that
-cannot be closed together within the bounds of separation. Then the curves
-of the turns of $H$ are, up to the cylinders of
+cannot be closed together within the bounds of separation. Are the curves
+of the turns of $H$, up to the cylinders of
 Proposition~\ref{prop:burgers}(c), the $k \ge 1$ borders of one planar region
-round a cluster of singularities, and a combination of their shifts that
-certifies the conflict is given by the holonomy relation of these borders: a
-form with non-negative coefficients containing an arc held open.
-\end{conjecture}
+round a cluster of singularities, and is a combination of their shifts that
+certifies the conflict given by the holonomy relation of these borders: a
+form with non-negative coefficients containing an arc held open?
+\end{question}
 
-An earlier draft proposed Conjecture~\ref{conj:region} on the evidence of the
-certificates alone. The T-mesh confirms it for one turn (the wrist, a cap,
+\emph{Answer: no.} The certificates alone suggest it, and the T-mesh
+confirms it for one turn (the wrist, a cap,
 though the form comes from a separatrix outside the region) and for the
 annulus of configuration~A. It holds in a modified form for the three turns at
 the right eye: the curves are not the borders of a pair of pants, $39$ being
@@ -1673,14 +1634,14 @@ a figure-eight, but their combination winds round one region holding one
 pair of valences three and five, and the certificate is the staircase of
 that pair. As stated, it is refuted by the conflicts made of crossing turns:
 configurations B to F, and the sets of four and seven turns, whose curves
-cross each other up to tens of times and bound no single planar region. What the confirmed cases share is local, and
-suggested to an earlier draft a refined statement.
+cross each other up to tens of times and bound no single planar region. What
+the confirmed cases share is local, which suggests a refined question.
 
-\begin{conjecture}[Conflicts are sums of local dislocations; earlier draft]\label{conj:local}
+\begin{question}[Are conflicts sums of local dislocations?]\label{conj:local}
 On a closed surface of genus zero, let $H$ be an irreducible set of turns that
-cannot be closed together within the bounds of separation. Then some
+cannot be closed together within the bounds of separation. Does some
 combination $\sum_{\gamma \in H} u_\gamma \shift_\gamma$ with whole
-multipliers that certifies the conflict (Remark~\ref{rem:definite}) equals,
+multipliers that certifies the conflict (Remark~\ref{rem:definite}) equal,
 modulo the balances, a sum with non-negative whole weights of
 \begin{enumerate}
 \item[(i)] lengths of staircases (Proposition~\ref{prop:staircase}) between a
@@ -1690,11 +1651,12 @@ modulo the balances, a sum with non-negative whole weights of
   once round singular vertices of total index four, as the wrist turn and its
   separatrix (Proposition~\ref{prop:winding}),
 \end{enumerate}
-one term at least containing an arc held open.
-\end{conjecture}
+one term at least containing an arc held open?
+\end{question}
 
-It holds, with a single term and up to the homotopies we did not check, for
-the wrist, configurations A to D and the three turns at the right eye.
+\emph{Answer: no as stated, yes and empty when read loosely.} It holds, with
+a single term and up to the homotopies we did not check, for the wrist,
+configurations A to D and the three turns at the right eye.
 Section~\ref{sec:combs} settles it on the male body: read strictly, with
 staircases of weight one, monotone caps and winding separatrices only, it
 is false (configurations E and F, in exact arithmetic); read loosely, with
@@ -1836,8 +1798,9 @@ because the rotation of the cycle is trivial ($\sum_i w_i (4 - k(c_i))
 \equiv 0 \pmod 4$). Adding a constant $q$ to all $w_i$ adds $q
 \sum_{k(c_i)\text{ odd}} \chi_i$, which is even: it is the value modulo $2$
 of the relation, a loop with zero translation. Reversing a turn changes the
-sign of its winding numbers, which does not matter modulo $2$. For positive
-whole lengths the developed parity is a proper colouring of the quad graph,
+sign of its winding numbers, which does not matter modulo $2$. For whole
+lengths with every patch side positive the developed parity is a proper
+colouring of the quad graph,
 as in the proof of Proposition~\ref{prop:parity}.
 \end{proof}
 
@@ -1877,7 +1840,7 @@ rotation. The exponent sums of $w$ are zero.
 
 \paragraph{Measured on the male body.}
 We implemented Proposition~\ref{prop:fox} on the T-mesh of
-Section~\ref{sec:measured}. The patches are developed along a breadth-first
+Appendix~\ref{sec:measured}. The patches are developed along a breadth-first
 tree of patches; the arcs this tree does not cross form a spanning tree of the
 $1{,}295$ nodes, and the surface cut along it is a disc with one chart.
 Crossing an arc of the tree changes the chart by a motion; rooted at a singular
@@ -1906,60 +1869,6 @@ $0.25$ on an orthonormal basis of the balanced lengths). A ``winding Burgers
 formula'' with numbers for weights is thus false, on the body as in principle;
 it holds modulo $2$ (Corollary~\ref{cor:checker}), and over the reals with the
 twisted windings.
-
-\paragraph{The conjecture in these terms.}
-Since $\sum_i (I - R_i)^\top W_i = 0$, the vertices with non-zero twisted
-winding can be grouped so that $\sum_{i \in G} (I - R_i)^\top W_i = 0$ in each
-group $G$; each group then contributes a combination of separations of its own
-vertices. A group of a vertex of valence three and one of valence five
-contributes $\langle V, p_c - p_{c'}\rangle$ with $V = (I - R_c)^\top W_c$, a
-vector whose coordinates have equal parity, that is $a(d_1 + d_2) + b(d_1 -
-d_2)$ with $a$, $b$ whole and $d = p_c - p_{c'}$: the diagonal forms of
-Proposition~\ref{prop:dislocation}, which a staircase makes sign-definite
-(Proposition~\ref{prop:staircase}). An exchange is a group of two vertices of
-equal valence, a cap a group of total index four. So
-Conjecture~\ref{conj:local} says that the twisted windings of an irreducible
-certificate, in a suitable development, split into such groups, each with a
-form of the sign of the certificate. At the left hand, developed from the
-patch of turn $76$, twelve vertices have a non-zero twisted winding. The
-vertices $231$ (valence three) and $228$ (valence five) have $W = (-5, -5)$
-and $(-5, 5)$; their group contributes, modulo the balances, exactly
-$10\,\ell_{1805}$ to $-(7\shift_{66} + 5\shift_{71} + 2\shift_{75} +
-3\shift_{76}) = 10\,\ell_{1805} + 2\ell_{1817} + 4\ell_{1853} + 2(\ell_{1870}
-+ \ell_{1879} + \ell_{1969} + \ell_{1998} + \ell_{2029})$. A separatrix of
-$231$ (trace $915$, $7.76$ edges) stops on a separatrix of $228$ at the
-T-junction $1142$, and arc $1805$ joins that junction to $228$, $0.063$ edges
-long: $\ell_{1805}$ is the offset of the pair across the line of the field
-that nearly joins them, the case of Proposition~\ref{prop:dislocation}(ii)
-with $\delta = \ell_{1805}$. The coefficient $5$ of $F$ is this dislocation,
-round which the weighted cycle goes five times in the twisted sense. An
-earlier draft found the ten other vertices, six of valence three and four of
-valence five, to form a group of total index $2$ that no search could split.
-That group is an artefact of the development: the twisted windings are
-defined only up to the relation, and their support depends on the chart.
-Developed from another patch, eleven vertices have a non-zero twisted
-winding, among them $225$, $234$ and $236$, and $229$ is missing. The
-intrinsic reading is by combs (Section~\ref{sec:combs}): the rest of the
-certificate is $2\ell_{1817} + 4\ell_{1853} + 2(\ell_{1870} + \ell_{1879} +
-\ell_{1969} + \ell_{1998} + \ell_{2029})$, eight comb readings on seven arcs
-forming a tree on the vertices $229$, $235$, $238$, $239$ (valence three) and
-$250$ to $253$ (valence five), of total index $0$, the groups sharing
-vertices (measured).
-The sets of seven behave alike. In way~5, $24$ vertices have a non-zero
-twisted winding in our chart; the pair $102$, $103$ exchanged in
-configuration~B has $W = \pm(4, -4)$ and a form of the sign of the
-certificate, the pair $109$, $118$ of configuration~C has $W = \pm(4, 0)$ and
-a form of the opposite sign; read by combs, the certificate is $13$ comb
-readings on $11$ vertices, whose odd part is a closed chain of three combs
-round $111$, $112$ and $128$. In way~7 an earlier draft computed twisted
-windings non-zero at $257$ of the $261$ vertices, nearly all $\pm2$ in one
-coordinate; that came from the part that is a multiple of the relation.
-Removed, $16$ vertices remain ($141$ to $151$, $154$ to $156$, $165$ and
-$169$), and the certificate, with the primitive multipliers $(16, 1, 2, 1, 1,
--1, 1)$, is $2(\ell_{1112} + \ell_{1165} + \ell_{1181} + \ell_{1201} +
-\ell_{1208} + \ell_{1232} + \ell_{1234})$: a tree of seven combs on the eight
-vertices $144$ to $147$, $150$, $151$, $155$ and $156$, of total index $-2$
-(measured).
 
 \subsection{Combs}\label{sec:combs}
 
@@ -2122,7 +2031,7 @@ $11$ vertices, that of way~7 a tree of seven combs on eight vertices, and the
 set of fifteen $40$ arcs, a component of $26$ vertices of total index $-8$ and
 a walk of four combs through $0$, $17$, $18$ and $20$ (measured).
 
-\paragraph{Conjecture~\ref{conj:local}, read loosely, is true and empty.}
+\paragraph{Question~\ref{conj:local}, read loosely, is true and empty.}
 Allowing every local dislocation and exchange, that is every comb reading
 $2\ell_a$ and every closed walk of combs, Proposition~\ref{thm:combs} proves the
 conjecture for every certificate whose odd part is a cycle of the graph of
@@ -2134,8 +2043,8 @@ singularities conflict.
 
 \paragraph{Read strictly, it is false.}
 Restricted to staircases of weight one between vertices of odd valence,
-monotone closed walks round a cap and winding separatrices, as an earlier
-draft meant it, the certificates of configurations E and F are not
+monotone closed walks round a cap and winding separatrices, as
+Question~\ref{conj:local} states it, the certificates of configurations E and F are not
 non-negative combinations modulo the balances: exact rational balanced
 lengths make every such form non-negative and the certificate negative,
 $-2.9967$ for E and $-1.9973$ for F (measured, checked in integer
@@ -2152,61 +2061,11 @@ Whether every certificate splits into combs on disjoint sets of vertices, each
 of the sign of the certificate, is open: the trees of the left hand and of
 way~7 share vertices between their combs.
 
-\subsection{Moving singularities in the parametrization}\label{sec:move}
+Appendix~\ref{sec:move} tests a lever before quantization suggested by
+Proposition~\ref{prop:burgers}, moving the singular vertices in the
+parametrization: in a map of fixed scale it barely moves the shifts.
 
-Proposition~\ref{prop:burgers} suggests a lever before quantization: move
-the singular vertices so that the Burgers sum of each ring vanishes. We tested
-it on the seamless maps of the development models (measured throughout this
-subsection; the experiment is a patch of the engine, not part of it).
-
-\paragraph{The Burgers sum on other models.} For every ring of the seamless
-map that leans by at most $0.12$, we computed the sum of
-Proposition~\ref{prop:burgers}(a) over the singular vertices of its smaller
-side, cut open along a tree of faces and ordered by first visit along its
-border. On seven closed surfaces of genus zero (blob, rock, creature, spot,
-pig, ogre, blub), $3{,}600$ of the $3{,}604$ rings that bound a disc are
-reproduced to $10^{-5}(1+L)$, $L$ the length of the ring; the reading fails
-only where a side is not a disc (borders on suzanne, handles on bob, part and
-cage). With the border and period terms of
-Proposition~\ref{prop:burgers-any} it holds there too
-(Section~\ref{sec:beyond}).
-
-\paragraph{Moving a singularity does not move the shift.} The linearization
-$\delta \shift = \langle e_2, Q_i(I-R_i)\,\delta p_i\rangle$ assumes the other
-singular vertices keep their developed positions. They do not: on the blob
-at $3{,}000$ quads, moving one pole of a cap one edge changes the shift of
-the cap ring (length $30.7$, shift $-1.065$) by $-0.13$ with a local re-solve
-of the map, where the sum predicts $-0.60$; with a global re-solve it moved
-by $+0.14$, the other way, against a prediction of $-0.58$: the other poles
-of the cap move in the map and absorb the change. Over twelve moves per
-model, the measured change is $0.12$, $0.03$ and $0.01$ of the predicted one
-on the blob, the creature and the pig. Rotating the field rigidly by $\alpha
-= |\shift|/L$ on the smaller side instead moves the shift by $26\%$, $36\%$,
-$46\%$, $64\%$ and $87\%$ of $\alpha L$ as the rotated region grows by $0$,
-$5$, $10$, $20$ and $40$ rings of vertices, at almost no cost in distortion
-($0.3362$ to $0.3371$). By Proposition~\ref{prop:burgers}(c) the shift is a property of
-the whole cylinder: shearing a long cylinder is expensive in the
-least-squares map, displacing a cone point in it is not, so the map keeps the
-shift the field gives the cylinder and moves its cone points instead. The
-identity holds exactly; it is the developed positions of the cone points that
-the field sets, not their places on the surface.
-
-\paragraph{A lever that fails.} Cancelling the pairs of valences three and
-five of a twisted annulus would change the shift by its $\pm d_1 \pm d_2$
-(Proposition~\ref{prop:dislocation}); its effect on the spirals of the
-meshes was not recorded, and we do not report it. Rotating the field
-cylinder by cylinder to bring the shifts to zero reduced the shifts of the
-map but moved the twist onto rings of $90$ to $200$ edges, whose sensitivity
-grows with their length: over $36$ runs ($12$ models, $3$ sizes), $2$
-improved and $4$ regressed, the mean gain coming from a single run, which we
-read as chaos rather than progress. Our reading, a conjecture: moving
-singularities would act through the Burgers sum only in a map whose scale is
-free to follow them, a cone metric; with a map of fixed scale the lever is
-the orientation of the field along whole cylinders, long rings must be
-handled jointly, and the conflicts are better attacked in quantization,
-where the staircases and dislocations of this section live.
-
-\subsection{Borders, handles and other rotation orders}\label{sec:beyond}
+\subsection{Borders and handles}\label{sec:beyond}
 
 The bench holds models with borders (the eye sockets of Suzanne, the mouth of
 Jerry) and with handles (Bob, a torus; part and cage, of higher genus). This
@@ -2398,232 +2257,11 @@ Theorem~\ref{thm:forced} and Corollary~\ref{cor:chain} need no closed sphere.
 Lemma~\ref{lem:eight}, Proposition~\ref{prop:parity}, Corollary~\ref{cor:parity},
 the count of independent rings, the setting of Proposition~\ref{prop:fox} and
 Corollary~\ref{cor:checker} do, and are replaced by the statements above;
-Conjectures~\ref{conj:region} and~\ref{conj:local} were stated for a closed
-sphere.
+Questions~\ref{conj:region} and~\ref{conj:local} were stated for a closed
+sphere. Appendix~\ref{app:orders} carries the note to the rotations of order
+six and three of triangle and hexagonal meshes.
 
-\paragraph{Rotations of order six.}
-On triangle and hexagonal meshes the rotations are powers of $\zeta = e^{i\pi/3}$
-and whole lengths develop nodes onto the Eisenstein integers; a vertex of
-valence $k$ has index $6 - k$, in sixths of a turn, and the indices add up to
-$6\chi$. A turn walks along
-one of six directions $u$ and comes back translated by $T = \alpha u + \shift\,
-\zeta u$: $\shift$ counts the rows of the family of lines along $u$, $\alpha$
-depends on the oblique basis chosen, and the strip has $2\alpha + \shift$
-triangles per turn. The Burgers sum, the order of first visit and the
-Fox--Burgers formula hold unchanged. A pair of valences five and seven has
-$B = \pm\zeta^{\pm1} d$, of length $|d|$, and the difference of the shifts is
-$\pm d_1$ or $\pm(d_1 + d_2)$ with $d = d_1 u + d_2 \zeta u$: the two turns close
-together only if the pair lies along one of the two other line directions, and
-a pair joined along a line parallel to the turns always forces a helix.
-Staircases have three directions, two that climb and one along which the form
-of the shift difference vanishes. There is no parity: $1 - \zeta$ is a unit.
-When every singular vertex has even valence the rotations have order three and
-the congruence modulo $(1 - \omega)^2 = -3\omega$ (compare Lemma~11
-of~\cite{izmestiev2013torus}, on holonomy of order three) gives, on a closed
-sphere,
-$\alpha \equiv \shift \pmod 3$; every ring has a length divisible by three, as on
-subdivided octahedra (rings of $3n$ edges), while on subdivided icosahedra rings
-of $5n$ edges take every residue (measured). Whether a rule modulo three holds
-with borders or handles is a conjecture we leave open.
-
-\section{Whole lengths}\label{sec:whole}
-
-This section returns to the male body of Section~\ref{sec:exact}, now in
-whole numbers. The propositions are proved; the numbers are measured, with
-exact integer or rational arithmetic where we say so, and otherwise from
-HiGHS through SciPy, stopped at a time limit (best solution found and proven
-bound).
-
-\paragraph{Exact whole lengths.}
-Closing exactly, in whole numbers, the turns found closable together with
-the bounds kept is feasible: HiGHS solves it in about two minutes a way for
-three of the four ways tried (the fourth, with 87 turns, did not finish
-within ten minutes). The solutions leave 1 to 4 held turns shifted where the engine
-leaves 13 to 44, and fewer of the turns not held as well (5 against 9, 5
-against 11, 0 against 27), at a deviation from the real lengths 4\% to 62\%
-higher. Yet the quad meshes they make spiral \emph{more}: 12.2\% of their
-edges against 8.8\% for the first way, 3.7\% against 1.1\% for the second,
-and the third breaks the structure. Most of the loops that spiral are thus
-not turns our search finds: closing every turn it finds is not enough.
-
-\paragraph{All the strips of a mesh.}
-Walking every strip of the mesh the engine of the export makes for way~2
-(Proposition~\ref{prop:complete}) finds 230 ways round; each strip is found
-twice, once in each direction, with opposite shift expressions (the surface
-being oriented), and 168 of them come back shifted. A selection of rings by
-the field's shift alone (under half a row) is too narrow: the twisted thigh,
-shifted 1.65 rows a turn by the field, is a ring a modeller wants closed.
-Selecting rings by their lean, as the cut rounds of the engine now do
-(Section~\ref{sec:closing}), gives 222 of the 230 ways round; 218 of them
-(109 strips) can be closed together in real numbers with every bound of
-separation kept. Posed directly, HiGHS found no whole solution within ten
-minutes, nor in a later run of thirty. The rest of this section explains why, and what that set of rings
-really costs.
-
-\paragraph{The balances form a bidirected graph.}
-The matrix $B$ has two rows per patch, one per direction, 1{,}552 rows for
-the 776 patches, and one column per arc. On a closed surface an arc lies on a
-side of each of the two patches it borders, so its column has exactly two
-non-zero entries,
-each $+1$ or $-1$ according to the side of the patch it lies on (measured on
-all eight systems; in way 2, 958 arcs have signs $+/-$, 557 have $-/-$ and
-554 have $+/+$). In the language of signed graphs, $B$ is the incidence
-matrix of a \emph{bidirected graph} $G$ whose nodes are the balance equations
-and whose edges are the arcs; an arc on a border of the surface has a single
-entry, a half-edge of $G$. Bidirected graphs are the setting
-of~\cite{heistermann2023bimdf}; the rank of their incidence matrices and the
-circuits of the associated matroid are due to
-Zaslavsky~\cite{zaslavsky1982signed}, and integer flows are generated by
-circuits~\cite{chen2009flow}. Proposition~\ref{prop:free} below makes a
-lattice basis explicit. Call a cycle of $G$ \emph{balanced} if values
-$\pm1$ on its edges have a zero balance at each of its nodes, and
-\emph{unbalanced} otherwise.
-
-\begin{lemma}[Handshake]\label{lem:handshake}
-Let $x \in \Z^n$ and $C$ be a connected component of $G$. Then
-$\sum_{r \in C} (Bx)_r \equiv \sum_{a} x_a \pmod 2$, the second sum running
-over the border arcs of $C$. On a closed surface, $\sum_r (Bx)_r$ is even.
-\end{lemma}
-
-\begin{proof}
-It is $\sum_a x_a \sum_{r \in C} B_{ra}$, and each column sums to $0$ or
-$\pm2$, or to $\pm1$ for a border arc.
-\end{proof}
-
-So on a closed surface the rows of $B$ are dependent modulo $2$, although they
-are independent over the reals: a system $Bx = d$ with $\sum_r d_r$ odd has
-real solutions but no whole one; and, $G$ being connected with an unbalanced
-cycle, one with an even sum always has whole solutions
-(on the edges $T$ of Proposition~\ref{prop:free}, the whole image of $B$ is
-exactly the lattice of vectors of even sum; Section~\ref{sec:lean}). Consistently, integer elimination of $B$ ends on the male
-body with one row whose entries have greatest common divisor $2$, all other
-pivots being units (measured in all eight ways). In general the number of such
-rows is the number of components of $G$ with an unbalanced cycle and no
-half-edge: none on Suzanne and Jerry, whose borders give half-edges, one on
-Bob, part, cage and a cylinder (measured). This does not affect the balanced
-lengths:
-
-\begin{proposition}[Free arcs]\label{prop:free}
-Let $G$ be connected and contain an unbalanced cycle. Let $T$ be the edges
-of a spanning tree of $G$ and one more edge closing an unbalanced cycle, and
-$F$ the other edges. Then $B$ has full row rank, and every $x_F \in \Z^F$
-extends to exactly one $x \in \Z^n$ with $Bx = 0$. The whole balanced lengths
-thus form a lattice isomorphic to $\Z^F$, of dimension $n - m$ for $m$
-balances, with a basis of vectors $z_f$, $f \in F$, each supported on
-$T \cup \{f\}$ with $z_f(f) = 1$ and entries in $\{0, \pm1, \pm2\}$.
-\end{proposition}
-
-\begin{proof}
-Such a $T$ exists: the sign of a cycle is a homomorphism from the cycle space
-of $G$ over $\Z/2$, of which the fundamental cycles of a spanning tree are a
-basis, so if all of them were balanced every cycle would be. $T$ has $m$
-edges. If $B_T y = 0$, a node met by a single edge of $T$ forces
-that edge to zero; removing such edges repeatedly leaves the unbalanced
-cycle, on which each value fixes the next up to sign, and going round, since
-the cycle is unbalanced, forces them all to zero. So the square matrix $B_T$
-is invertible, $B$ has full row rank, and $x_F$ has exactly one real
-extension; it remains to see that it is whole. For $f \in F$, the graph $T
-\cup \{f\}$ has a one-dimensional space of balanced values. Removing the edges
-met at a node of degree one leaves either three paths between two nodes,
-whose three cycles are the unbalanced cycle of $T$, one more unbalanced and
-one balanced (the number of unbalanced cycles of such a graph is even), or
-two cycles joined by a path, possibly of length zero. In the first case the
-balanced cycle contains $f$, since the cycle of $T$ does not, and carries
-values $\pm1$. In the second, the cycle through $f$ either is balanced and
-carries values $\pm1$, or is unbalanced, and then values $\pm1$ on both cycles
-and $\pm2$ on the joining path are balanced. Either way there is a whole
-balanced $z_f$ supported on $T \cup \{f\}$ with $z_f(f) = \pm1$; changing its
-sign if needed, $x = \sum_{f \in F} x_f z_f$ is the whole extension.
-\end{proof}
-
-The hypothesis can fail beyond the closed sphere: on a torus without
-singular vertex and on part, $B$ does not have full row rank ($4$ of $6$ and
-$145$ of $148$, measured). The proposition extends with a spanning forest of
-$G$ and, in each component with an unbalanced cycle, one edge closing such a
-cycle or one half-edge; the whole balanced lengths then form a lattice of
-dimension $n - m$ plus the number of balanced components without half-edge.
-
-On the male body $G$ is connected with an unbalanced cycle, $B$ has rank
-1{,}552, and the lattice of balanced lengths has dimension $2{,}069 - 1{,}552
-= 517$ (measured in all eight ways). Balances alone thus never obstruct whole
-lengths: 517 arcs can be given any whole lengths and the others follow. With
-the shifts of the 218 rings of way 2 the rank grows by 105 and the lattice of
-closed quantizations has dimension 412; integer elimination still uses unit
-pivots only, with one row of greatest common divisor $2$ (the shift of one
-ring is even as soon as the balances and the rings before it hold). Adding
-the shifts of the held turns instead gives dimensions 469, 439, 465, 431, 435,
-363 and 431 in ways 0 to 6; in ways 4, 5 and 6 elimination needs steps of
-Euclid's algorithm, so turn rows can destroy the free-arc structure.
-
-\paragraph{Integer solutions exist.}
-By Remark~\ref{rem:exist}, whole lengths closing the 218
-rings within the bounds exist. HiGHS finds some in one second once it is
-told which arcs are zero in \emph{every} real solution: closing the 218
-rings with $\ell \ge 0$ forces 171 arcs to zero (measured), the implicit
-equalities of the cone, each certified by a non-negative combination of
-shifts as in Remark~\ref{rem:definite}. There are 23 distinct certificates:
-13 single rings whose shift is sign-definite (round fingers and toes), 4
-pairs with multipliers $(1, 1)$ (left foot, right foot, head, top of the
-head), and 6 combinations of four to six rings (torso, neck). Given as upper
-bounds, these zeros make the problem easy; left implicit, the solver works on
-a face of lower dimension than the problem without knowing it, which is what
-the ten- and thirty-minute failures were. They are not an integer
-obstruction.
-
-\paragraph{The difficulty is their size.}
-The 171 arcs forced to zero carry 350.8 quad edges of target length, the
-longest 10.1. The real lengths closing the 218 rings nearest the targets, in
-the weighted deviation, make 3{,}960 quads instead of the 10{,}496 of the
-targets. With the deviation the engine measures, the mean of
-$|\ell_a - \lambda r_a|$, a linear program shows that no real lengths closing
-the 218 rings have a mean deviation below $0.817$, nor, after dropping 7
-strips (14 ways round) so that every arc with a target of at least $1.5$
-stays open, below $0.758$; balanced lengths without rings reach $0.085$. A
-lower bound in real numbers holds for whole numbers too. The engine version
-that made the export refused quantizations whose deviation exceeded $1.5$
-times that of the plain search, $1.5 \times 0.316 = 0.474$; the engine at
-the cited commit allows $\max(1.5 \times 0.316,\ 0.316 + 0.2) = 0.516$. Either
-way the 218 rings cannot close at the size asked for within the engine's
-tolerance, whatever the rounding: the obstruction is in the reals.
-
-\paragraph{The 190 rings that fit.}
-A subset of 190 of the 218 ways round (chosen greedily, so 190 is only a
-lower bound on what fits) closes in real numbers at a mean
-deviation of $0.399$, keeping the number of quads (10{,}502) at that of the
-targets to first order: the linear form $\nabla q(t) \cdot \ell \ge \nabla
-q(t) \cdot t$, where $q(\ell)$ is the number of quads, a quadratic function of
-the lengths, and $t$ the targets. In whole numbers we followed the
-reformulation of Aardal, Hurkens and Lenstra~\cite{aardal2000diophantine}:
-a basis $M$ of the lattice of closed quantizations, with the 74 implicit
-zeros of this set imposed first (dimension 407), reduced by
-LLL~\cite{lenstra1982lll} for a weighted inner product, which leaves entries
-in $[-2, 2]$; then $\ell = My$ with $y$ whole, so that no equation is left,
-and a mixed-integer program over $y$. Babai's nearest plane~\cite{babai1986nearest}
-from the real solution gives a mean deviation of $0.586$ but 10 arcs below
-their bounds. HiGHS, stopped after 1{,}200 seconds, gives whole lengths
-closing all 190 rings within every bound, with a mean deviation of $0.619$
-and 10{,}568 quads, and proves that no whole lengths do better than $0.536$
-under the same constraints, the first-order proxy of the number of quads
-included. Against $0.399$ in real numbers, this rounding gap is the one
-integer obstruction we found, and it is not a parity condition: every
-infeasible set of Table~\ref{tab:iis} is infeasible in real numbers already.
-
-\paragraph{Which turns, not rounding.}
-Given to the engine in place of the lengths of way 2, these whole lengths
-close all 190 rings, with 10{,}568 quads and 2.5\% of spiral edges against
-1.1\% for the engine's own lengths (the share of that way alone: the
-deviation cap would refuse it). At the new lengths the strips are
-different walks: walking all of them finds 230 ways round, 156 of them
-shifted (168 at the engine's lengths), and of the 214 that lean less than
-$0.12$, 142 are shifted (162 of 222 at the engine's lengths). Closing the
-rings of one set of lengths moves the strips, and other loops spiral. On this
-body, then, whole lengths are not what is missing: rounding costs between $0.137$
-(proven) and $0.220$ (found) of mean deviation above the real optimum, and
-it is the choice of the turns to
-close, at the lengths where they are the strips of the mesh, that decides how
-much the mesh spirals.
-
-\section{Turns that every quantization within the bounds leaves shifted}\label{sec:forced}
+\section{Turns every quantization within bounds leaves shifted}\label{sec:forced}
 
 The obstructions of Section~\ref{sec:obstructions} say that a set of turns
 cannot close together. Turned around, they bound from below the number of
@@ -2790,7 +2428,7 @@ of that way; then also whole lengths and the engine's window of sizes, from
 $10{,}379$ to $10{,}801$ quads, with $Q$ counted exactly as the sum over the
 patches of the products of their sides. We also took for $H$ the strips of
 the engine's own mesh for way~2 (the way it keeps) whose real shift leans
-less than $0.12$, the rings of Section~\ref{sec:whole}: $222$ ways round,
+less than $0.12$, the rings of Appendix~\ref{sec:whole}: $222$ ways round,
 $111$ strips. With the bounds alone the implicit hitting-set loop computes
 $\tau_P(H)$ exactly in every family of held turns, in at most $66$ seconds of
 wall-clock time each (between $0$ and $66$; hardware in
@@ -2890,7 +2528,7 @@ the held turns of way~2 give $0.003$, $0.058$, $0.005$ and $0.027$, and,
 meshed by the engine, two of them $0.52\%$ and $28.1\%$ of spiral edges
 (measured). The number of
 turns closed is thus not what the measure of spirals sees: the strips move
-with the lengths (Section~\ref{sec:whole}).
+with the lengths (Appendix~\ref{sec:whole}).
 
 \subsection{Choosing the turns}\label{sec:choosing}
 
@@ -2985,7 +2623,7 @@ and fast when the cores are small, as with the bounds alone ($66$ seconds at
 most per family); with the cap the problem is a budgeted maximum feasible
 subsystem with a lattice on top, and the cores grow.
 
-\paragraph{The window of sizes.}
+\begin{remark}[The window of sizes; a sketch]
 The window on the number of quads makes even closing nothing hard in the weak
 sense. Take a disjoint union of tori, each of two patches whose sides have
 the targets $N v_i$ and $1$, so that $Q = \sum_i 2 a_i c_i$, and a cap that
@@ -2993,68 +2631,19 @@ lets the short sides $c_i$ grow by $T_0$ edges in all. For $N$ large, the
 window $Q = 2N(\sum_i v_i + T_0)$ is met exactly when $\sum_i v_i(c_i - 1) =
 T_0$ with whole $c_i \ge 1$: unbounded subset sum, which is
 NP-complete~\cite{lueker1975two}, with numbers exponential in the size of the
-instance (a sketch; the gadgets are of genus one and disconnected). Whether the window alone is strongly NP-hard,
-with $Q$ polynomial in the size, is open, as is the complexity of maximizing
-$Q$ over a polytope of lengths in reals.
+instance (the gadgets are of genus one and disconnected). Whether the
+window alone is strongly NP-hard, with $Q$ polynomial in the size, is open,
+as is the complexity of maximizing $Q$ over a polytope of lengths in reals.
+\end{remark}
 
-\paragraph{Most rings closable, end to end.}
-Hardness is a statement about the worst case; we also measured what an exact
-selection buys on the bench, with the engine of branch
-\texttt{complete-helices} (the cut rounds without the finer work mesh of the
-cited commit: $4.54\%$ of spiral edges over the $36$ runs, against $4.65\%$).
-We posed, for the lengths the engine keeps, the
-mixed-integer program that closes as many of its strips leaning less than
-$0.12$ as it can (weighted by their length round), within the balances, the
-bounds of separation, the engine's cap on the mean deviation and its quad
-budget, and meshed the result with the engine itself; then walked the strips
-at the new lengths and solved again, three rounds. Posed with the shift
-expressions alone, the program closes $27.3$ of the $38.2$ such strips of a
-model (12 models, three budgets each), but at the new lengths only $22.1$ are
-closed strips, against $21.8$ for the engine: the strips have become other
-walks. Each walk stays the same where the place it crosses every arc stays
-inside that arc, half a quad edge from either end, two linear inequalities per
-crossing; required for the rings counted as closed, they make the count exact
-($24.6$ closed by the program, $24.0$ found closed by walking the mesh) and
-show that, within the engine's cap and budget, it closes only about three
-strips fewer than can be closed together without changing walk (measured).
-
-\paragraph{What it buys.}
-In place of the engine's lengths, these lengths do not spiral less: $4.77\%$
-and $5.08\%$ of spiral edges in two runs against $4.54\%$, better on 13 and 10
-runs of 36, worse on 10 and 13. Added to the lengths the engine chooses among,
-by its own count of spirals (which equals the measured share on every run
-checked), they lower the mean to $2.32\%$ and $2.70\%$, never higher. Three
-other draws of the engine's per-arc preferences, added the same way, give
-$4.12\%$, and three lengths drawn at random within the same cap and budget
-$4.34\%$; without the conditions on the walks, the rounds give $3.15\%$, no
-better than the other draws (better on 7 runs, worse on 7). The other measures
-barely move (closed loops $38.0\%$ against $36.3\%$ of edges, mean distance
-$0.383$ against $0.385$, all $36$ meshes valid). On the male body every round
-spiralled more than the engine (from $3.45\%$ to $5.59\%$ against $1.59\%$);
-there, within the time allowed, the program closed only 35 to 38 of 107
-strips (the engine 33), and in 600 seconds at most 48 that keep their walk, 65
-that do not, its bound remaining far above (measured). Closing the most rings
-is thus not, on its own, the way to fewer helices: the shifted strips the
-measure does not see as spirals are among those closed, and others take their
-place; it is a source of good candidates, valuable only where the strips
-closed stay the strips of the mesh.
-
-\paragraph{Only when the solver finishes.}
-The engine can afford a few seconds per solve. With a limit of $5$ seconds the
-gain vanishes (an outcome that depends on the hardware and its load,
-Section~\ref{sec:experiments}; the distribution of solve times was not
-recorded): the engine with three rounds as candidates gives $4.10\%$,
-against $4.12\%$ for three other draws (run by run, 2 better and 10 worse than
-those draws); $63$ of the $126$ pieces get no solution in $5$ seconds, $21$
-more stop at the limit, and $68$ of $108$ rounds return the engine's own
-lengths (measured). A local search inside the engine, walks of its strip
-network biased by Lagrange multipliers with the conditions on the walks kept,
-costs $0.1$ to $0.25$ seconds per model but closes no more rings than the
-engine (6 of 30 on the blob, 12 of 26 on the creature, unchanged): a single
-walk almost always changes the shift of a ring already closed, and closing
-needs combinations of walks. The gain comes from a solver that finishes, and
-Theorem~\ref{thm:nphard} says that no exact method finishes fast on every
-instance.
+\paragraph{An exact selection, end to end.}
+Appendix~\ref{app:endtoend} measures what an exact selection buys on the
+bench: a mixed-integer program that closes as many strips as it can, within
+the engine's cap and budget, gives lengths that do not spiral less than the
+engine's, but good extra candidates for the engine to choose among (from
+$4.54\%$ to $2.32\%$ and $2.70\%$ of spiral edges over $36$ runs), and only
+when the solver finishes: with a limit of $5$ seconds per solve the gain
+vanishes.
 
 \paragraph{Status of Sections~\ref{sec:obstructions} to~\ref{sec:forced}.}
 \emph{Proved:} Lemmas~\ref{lem:gauss}, \ref{lem:eight}, \ref{lem:comb},
@@ -3062,20 +2651,18 @@ instance.
 (with the order of first visit made precise), \ref{prop:dislocation},
 \ref{prop:checkerboard}, \ref{prop:parity}, \ref{prop:staircase},
 \ref{prop:swap}, \ref{prop:winding}, \ref{prop:fox}, \ref{prop:commutator},
-\ref{prop:pairing}, \ref{prop:collar}, \ref{prop:burgers-any},
-\ref{prop:torus}, \ref{prop:free} and~\ref{prop:whole-size},
-Corollary~\ref{cor:checker}, Theorems~\ref{thm:combs}, \ref{thm:parity-any},
-\ref{thm:forced}, \ref{thm:transversal} and~\ref{thm:nphard}, and
-Corollary~\ref{cor:chain}, each under its hypotheses; Remark~\ref{rem:definite},
-and the existence of whole solutions when real ones exist. \emph{Machine-checked:}
-the algebraic and combinatorial cores of the statements of
-Sections~\ref{sec:turns} and~\ref{sec:holonomy} to~\ref{sec:fox}, of
-Section~\ref{sec:whole} and of Theorem~\ref{thm:forced}, with the topological
-steps as hypotheses (Section~\ref{sec:lean}); not those of
-Sections~\ref{sec:combs} and~\ref{sec:beyond}, nor Theorems~\ref{thm:transversal}
-and~\ref{thm:nphard}. \emph{Measured:} on the T-mesh of the male body, every
-statement of Section~\ref{sec:holonomy} wherever it applies
-(Section~\ref{sec:measured}); the configurations of the conflicts
+\ref{prop:pairing} (on a closed sphere without vertex of valence divisible by
+four), \ref{thm:combs} (the reading of closed walks as twisted cycles is only
+a remark), \ref{prop:collar}, \ref{prop:burgers-any}, \ref{prop:torus},
+\ref{prop:free} and~\ref{prop:whole-size}, Corollary~\ref{cor:checker},
+Theorems~\ref{thm:parity-any}, \ref{thm:forced}, \ref{thm:transversal}
+and~\ref{thm:nphard}, and Corollary~\ref{cor:chain}, each under its
+hypotheses; Remark~\ref{rem:definite}, and the existence of whole solutions
+when real ones exist. \emph{Machine-checked:} the algebraic and combinatorial
+cores listed in Section~\ref{sec:lean}; the other statements, listed there
+too, are proved on paper only. \emph{Measured:} on the T-mesh of the male
+body, every statement of Section~\ref{sec:holonomy} wherever it applies
+(Appendix~\ref{sec:measured}); the configurations of the conflicts
 (Table~\ref{tab:pairs}), the staircases, the separatrix at the wrist and the
 windings of the larger sets, as identities modulo the balances, without the
 homotopies; the Fox--Burgers formula on all $1{,}299$ turns and the
@@ -3083,154 +2670,93 @@ checkerboard rule for combinations on all of them and on $14$ infeasible sets;
 the combs of all $2{,}069$ arcs, the rank of the Burgers pairing and the comb
 readings of all $25$ certificates; the Burgers sum on $3{,}600$ of $3{,}604$
 disc-bounding rings of seven other models, and the response of the shift to
-moving a singular vertex or rotating the field (Section~\ref{sec:move}); the
+moving a singular vertex or rotating the field (Appendix~\ref{sec:move}); the
 parity, collars, border and period terms on Suzanne, Jerry, Bob, part, cage
 and simple shapes (Section~\ref{sec:beyond}); the four turns whose winding
 numbers are related while their translations are not; the dislocation of
 weight $5$ at the left hand; the structure and ranks of the eight systems,
 the 171 implicit zeros and their certificates, the bounds $0.817$, $0.758$ and
 $0.536$, the infeasible sets of Table~\ref{tab:iis} (exactly where marked),
-the forced helices of Table~\ref{tab:forced}, the end-to-end selection and the
+the forced shifts of Table~\ref{tab:forced}, the end-to-end selection and the
 meshes. \emph{Refuted:} that the conflicts between two turns are pairs of
 valences three and five on one trace ($0$ of $13$);
-Conjecture~\ref{conj:region} as stated; Conjecture~\ref{conj:local} read
+Question~\ref{conj:region} as stated; Question~\ref{conj:local} read
 strictly (configurations E and F, exactly); a formula for combinations of
 shifts in the winding numbers alone (in principle and on the body); the
 parity of Proposition~\ref{prop:parity} beyond the closed sphere (Suzanne).
 \emph{Conjectured:} that the kernel of the Burgers pairing is spanned by the
-connections; that \RC{} stays NP-hard on the instances of
-T-meshes (Conjecture~\ref{conj:realize}); a rule modulo three with borders on
-meshes of order three; that moving singularities in a map of fixed scale
-cannot set the shifts (Section~\ref{sec:move}), a reading of measurements.
-Conjecture~\ref{conj:local} read loosely is proved (Proposition~\ref{thm:combs})
-and empty.
+connections; that the readings of closed walks of combs are Burgers forms of
+twisted cycles; that \RC{} stays NP-hard on the instances of T-meshes
+(Conjecture~\ref{conj:realize}); a rule modulo three with borders on meshes
+of order three; that moving singularities in a map of fixed scale cannot set
+the shifts (Appendix~\ref{sec:move}), a reading of measurements.
+Question~\ref{conj:local} read loosely is proved
+(Proposition~\ref{thm:combs}) and empty.
 
-\subsection{What is machine-checked}\label{sec:lean}
+\section{What is machine-checked}\label{sec:lean}
 
-The algebraic and combinatorial cores of Sections~\ref{sec:turns}
-and~\ref{sec:obstructions} to~\ref{sec:forced}, $187$ theorems, are proved in
-Lean~4 with Mathlib, in the folder
-\texttt{docs/research/closing-helices/lean} of the repository, pinned to Mathlib
-\texttt{v4.35.0} and the toolchain \texttt{leanprover/lean4:v4.35.0};
-\texttt{make proofs} fetches Mathlib compiled and checks them, in about forty
-seconds once the cache is there. The topological facts the proofs use, that a
-loop develops into a given motion, that a curve bounds a disc, that the
-fundamental group of $\Sigma^\circ$ is presented by the loops $\lambda_i$, that
-the quad graph of a sphere is bipartite, are not formalized: each is an
-explicit hypothesis of the theorem that uses it, and no proof is left open.
-The folder's \texttt{README.md} maps each statement to its Lean theorems. The
-results on combs (Section~\ref{sec:combs}), on borders and handles
-(Section~\ref{sec:beyond}), Theorems~\ref{thm:transversal}
-and~\ref{thm:nphard} are proved on paper only.
+The folder \texttt{docs/research/closing-helices/lean} of the repository is
+a Lean~4~\cite{demoura2021lean4} project on Mathlib~\cite{mathlib2020},
+pinned to Mathlib \texttt{v4.35.0} and the toolchain
+\texttt{leanprover/lean4:v4.35.0}; \texttt{make proofs} fetches Mathlib
+compiled and checks it. It holds $187$ theorem declarations, many of them
+small lemmas, a few of them tautologies that only restate a hypothesis (such
+as \texttt{dislocation\_closes\_iff} or \texttt{staircase\_rings}); the count is
+not evidence, and the folder's \texttt{README.md} maps each statement of the
+note to its main Lean theorems. Every theorem depends only on Lean's
+standard axioms. What Lean checks is the algebraic and combinatorial core of
+each statement below, with the topological facts it uses (that a loop
+develops into a given motion, that a curve bounds a disc, that the
+fundamental group of $\Sigma^\circ$ is presented by the loops $\lambda_i$,
+that the quad graph of a sphere is bipartite) as explicit hypotheses of the
+theorem that uses them.
 
-\paragraph{What is checked.}
 \begin{itemize}
-\item For motions whose linear parts lie in any ring acting on any module: the
-  translation of $\rho_m \circ \dots \circ \rho_1$ is $\sum_i Q_i(I - R_i)p_i$
-  with $Q_i = R_m \cdots R_{i+1}$ (Proposition~\ref{prop:burgers}(a)); the
-  recursion of the gluing maps of a tree of cuts unfolds into the order of
-  first visit, and the order of last visit gives another vector already for
-  two vertices; the holonomy of the border of a cut annulus
-  (Proposition~\ref{prop:burgers}(b)); exchanges
-  (Proposition~\ref{prop:swap}); the conjugation of
-  Proposition~\ref{prop:winding}; the linearity of
-  Proposition~\ref{prop:linear}.
-\item Over the reals: the four orders and orientations of a dislocation, the
-  forms $\pm d_1 \pm d_2$ and $|B_A|^2 = 2|d|^2$, straight chains
-  (Proposition~\ref{prop:dislocation}(i), (ii)); staircases
-  (Proposition~\ref{prop:staircase}); the positivity of a non-negative form
-  with a held arc (Remark~\ref{rem:definite}).
-\item At whole lengths: the parities of $(I - R^{\pm1})p$ and $(I - R^2)p$; the
-  checkerboard rule (Proposition~\ref{prop:checkerboard}); the induction of the
-  proof of Proposition~\ref{prop:parity}, given a 2-colouring of the quad graph,
-  and the second proof of Remark~\ref{rem:borders}.
-\item The Fox--Burgers formula on words, which is well defined on the free
-  group, the fundamental formula, the twisted windings and $\sum_i (I -
-  R_i)^\top W_i = 0$, the insertion of the relation
-  (Proposition~\ref{prop:fox}); the commutator
-  (Proposition~\ref{prop:commutator}); Corollary~\ref{cor:checker}, with the
-  two arguments of its proof on the colour of the origin and the constant of
-  the winding numbers.
-\item Lemma~\ref{lem:handshake} on a closed surface, Theorem~\ref{thm:forced}
-  and Corollary~\ref{cor:chain}.
-\item Proposition~\ref{prop:free}, with switchings and spanning trees grown by
-  leaves, and stronger: on its edges $T$, the whole image of $B$ is the
-  lattice of vectors of even sum.
-\item Remarks~\ref{rem:definite} and~\ref{rem:exist}: Farkas' lemma by
-  Fourier--Motzkin elimination over any ordered field, the arcs forced to zero,
-  whole multipliers and whole solutions.
-\item Proposition~\ref{prop:complete}, in a discrete model of patches glued
-  along their arcs: the strips of the quad mesh are in bijection with the
-  cycles of the walk on the half-integer stations.
-\item Lemmas~\ref{lem:gauss} and~\ref{lem:eight}, as counts by the Euler
-  formula on the grid refined by two.
+\item Checked as algebra: the Burgers sum and the order of first visit
+  (Proposition~\ref{prop:burgers}), dislocations, staircases, exchanges and
+  the conjugation step of Proposition~\ref{prop:winding}; the checkerboard
+  rules, the induction of the proof of Proposition~\ref{prop:parity} given a
+  2-colouring, and the second proof of Remark~\ref{rem:borders}; the
+  Fox--Burgers formula, its corollary and the commutator; the handshake on a
+  closed surface, Proposition~\ref{prop:free} (stronger than stated), the
+  Farkas certificates of Remarks~\ref{rem:definite} and~\ref{rem:exist},
+  Theorem~\ref{thm:forced} and Corollary~\ref{cor:chain}; for fields of any
+  order, the rotation part of Gauss--Bonnet, the Gauss--Bonnet counts of
+  triangle and hexagonal meshes, the lengths of dislocations and the
+  congruences of Section~\ref{sec:beyond}.
+\item Checked in a weaker form than the statement:
+  Proposition~\ref{prop:linear}, only the additivity of the composed
+  translation given additive crossings (the integer coefficients and the
+  reading as a helix are not formalized); Lemmas~\ref{lem:gauss}
+  and~\ref{lem:eight}, only the Euler-characteristic count they use (which
+  corners are convex, that the regions are discs, and the case analysis of
+  the crossing are hypotheses); Proposition~\ref{prop:complete}, only in a
+  model where the strips are \emph{defined} as the cycles of a successor map
+  built from a permutation of the half-integer stations, so that the
+  bijection holds by construction, together with the fact that the real walk
+  from $k + \frac12$ follows the unit edges in a one-dimensional model of
+  the gluing; that the station walk of the gluing data is a permutation
+  (a closed surface, an injective gluing), that every patch side is
+  positive, and that the model is the quad mesh, are assumptions.
+\item Proved on paper only, without a human or Lean check:
+  Propositions~\ref{prop:pairing}, \ref{thm:combs}, \ref{prop:collar},
+  \ref{prop:burgers-any}, \ref{prop:torus} and~\ref{prop:whole-size},
+  Lemmas~\ref{lem:comb} and~\ref{lem:gauss-border},
+  Theorems~\ref{thm:parity-any}, \ref{thm:transversal} and~\ref{thm:nphard},
+  the case of Lemma~\ref{lem:handshake} with borders, and the statements on
+  rotations of order six other than those above. An independent referee
+  pass found errors among these (Propositions~\ref{prop:pairing}
+  and~\ref{thm:combs}, Theorem~\ref{thm:nphard}), and in two statements whose
+  Lean check is weaker than the statement (Propositions~\ref{prop:linear}
+  and~\ref{prop:complete}); all are corrected here.
 \end{itemize}
-Not checked: the topology the discrete statements take as hypotheses (that a
-simple closed curve bounds a disc, the developing map and the presentation of
-$\pi_1(\Sigma^\circ)$), which corners of the regions of Lemma~\ref{lem:eight}
-are convex, strips on surfaces with borders, and every measured statement.
 
-\paragraph{Gaps found.}
-Formalizing found no error of sign or convention, but a few gaps, corrected in
-this version: \emph{genus zero} must mean a closed sphere in
-Section~\ref{sec:obstructions}, and the parity of a turn fails with borders
-(Remark~\ref{rem:borders}, Theorem~\ref{thm:parity-any}); inserting the relation in a word after a prefix
-$a$ brings $\rho(a)$ into the change of the twisted windings
-(Proposition~\ref{prop:fox}); Theorem~\ref{thm:forced} needs $P$ non-empty,
-for $\tau_P(H)$ to be defined, but neither convex nor of whole lengths, so it
-holds for quantizations of a given size; the frame of the first side is that
-of the first patch up to a quarter-turn, not only up to signs
-(Proposition~\ref{prop:parity}); the edge closing an unbalanced cycle of
-Proposition~\ref{prop:free} exists, which the proof did not say;
-Proposition~\ref{prop:staircase} holds for any path on whose steps the form
-of the shift difference is one; Lemma~\ref{lem:handshake} is the only
-obstruction to whole solutions of $Bx = d$ when $G$ is connected with an
-unbalanced cycle, not only a sufficient one; Proposition~\ref{prop:complete}
-needs the surface closed, and its orientation for each strip to be found
-twice; whole multipliers in Remark~\ref{rem:definite} need whole bounds.
-
-\paragraph{Other rotation orders.}
-Nothing in the Burgers sum, the order of first visit or the Fox--Burgers
-formula uses that $R$ has order four: they hold for the rotations of order
-six of triangle and hexagonal meshes, for cone metrics of any angles, and for
-motions of space. What changes is parity. When every rotation is a power
-$z^{j_i}$ of one rotation $z$, every Fox derivative is congruent to its
-exponent sum modulo $1 - z$, and $1 - z^j$ to $j(1 - z)$ modulo $(1 - z)^2$, so
-\[
-  \tau(w) \equiv (1 - z) \sum_i \epsilon\Bigl(\frac{\partial w}{\partial
-  x_i}\Bigr) j_i\, p_i \pmod{(1 - z)^2},
-\]
-proved in any commutative ring. For quarter-turns, $(1 - z)^2 = -2z$, and this
-is Corollary~\ref{cor:checker}, with $j_i = 4 - k(c_i)$. For rotations of order
-three, $(1 - z)^2 = -3z$: a rule modulo three, with three colours. For
-rotations of order six, $1 - z$ is a unit: there is no colouring rule on
-triangle or hexagonal meshes. A dislocation of order $n$ has $|B| = 2\sin(\pi
-/ n)\,|d|$: $\sqrt2\,|d|$ for quads, $|d|$ for a pair of valences five and
-seven on a triangle mesh, $\sqrt3\,|d|$ for rotations of order three; the
-forms $\pm d_1 \pm d_2$ are particular to quads. Discrete Gauss--Bonnet reads
-$\sum (4 - k) = 4\chi$ on quad meshes, $\sum (6 - k) = 6\chi$ on triangle
-meshes and $\sum (3 - k) = 3\chi$ on hexagonal ones.
-Section~\ref{sec:beyond} carries the rest of this note to order six.
-Theorem~\ref{thm:forced}, Corollary~\ref{cor:chain} and
-Lemma~\ref{lem:handshake} do not depend on the geometry at all.
-
-\paragraph{Invariants for the engine.}
-The checked identities give tests the engine can run on its own quantities:
-on a closed surface of genus zero, the two components of the translation of
-every turn, its length and its shift, have the same parity at the whole lengths
-of the integer search, so every ring has an even number of quads round it; the
-coefficients of every shift expression are whole; every column of the balances
-has two entries $\pm1$, or one for an arc on a border, so on a closed surface a
-balance system with an odd total right-hand side has no whole solution, and in
-general the sum over a component has the parity of the sum of the values on
-its border arcs; where the developed cone points are known, the
-translation of a turn bounding a disc is the Burgers sum in the order of first
-visit, and its two components have the parity of the number of vertices of odd
-valence on points of odd colour; a turn whose shift is a non-negative form with
-a held arc, or both turns of a staircase with a held arc, are never closed; and
-the number of held turns left shifted is at least the number of disjoint
-infeasible sets found. The README of the folder lists them with the engine's
-names.
+Formalizing found no error of sign or convention; it sharpened the
+hypotheses of Propositions~\ref{prop:parity}, \ref{prop:free},
+\ref{prop:complete} and~\ref{prop:staircase} and of
+Remark~\ref{rem:definite}, which are stated here in their sharpened form (the
+\texttt{README.md} lists the changes). Appendix~\ref{app:lean} lists what is
+checked statement by statement.
 
 \section{Open problems}\label{sec:open}
 
@@ -3246,26 +2772,26 @@ the number of turns closed as the objective, the problem is NP-hard
 
 \begin{problem}[Closing in whole numbers]
 The solutions of the balance and shift equations in whole numbers form a
-lattice, and Section~\ref{sec:whole} searched it through a reduced basis
+lattice, and Appendix~\ref{sec:whole} searched it through a reduced basis
 and the reformulation of~\cite{aardal2000diophantine}: whole lengths closing
 every ring asked for are found, but in minutes, with the number of quads
 held only to first order, and at a deviation $0.14$ to $0.22$ above the real
 optimum. Can the integer search of the quantizer move within this lattice at
 the speed of a flow solver, with the number of quads held exactly? This
-matters once the right turns are chosen; Section~\ref{sec:whole} suggests it
+matters once the right turns are chosen; Appendix~\ref{sec:whole} suggests it
 is not, on its own, where the loops are lost.
 \end{problem}
 
 \begin{problem}[Which turns]
-This is, on the evidence of Section~\ref{sec:whole}, the central problem:
+This is, on the evidence of Appendix~\ref{sec:whole}, the central problem:
 closing rings changes the lengths, the lengths change the strips, and the
 strips of the new mesh are other walks. The straight walks that return are
-infinite in number; we sample them, and Section~\ref{sec:whole} shows the
+infinite in number; we sample them, and Appendix~\ref{sec:whole} shows the
 sample misses most of the loops that spiral. Choosing the most turns to
 close is NP-hard (Theorem~\ref{thm:nphard}), and closing the most rings, even
 exactly and keeping each ring the same walk, gives good candidates only when
 the solver finishes, and does not by itself make fewer spirals
-(Section~\ref{sec:choosing}). Is there a finite set of turns, a basis in
+(Section~\ref{sec:choosing}, Appendix~\ref{app:endtoend}). Is there a finite set of turns, a basis in
 some homological sense of the regular region of the T-mesh, whose closing
 implies that every loop of the quad mesh closes? Can the loops of the quad
 mesh be read off the T-mesh and its lengths directly, so that every one is
@@ -3337,9 +2863,9 @@ sufficiency question of the third problem for special classes of layouts.
 The method is implemented in openclare (Rust), in the main branch of the
 repository at the cited commit; the bench is driven by \texttt{bench/run.py}
 and the marks by \texttt{scripts/scores.py}. The export of the T-mesh used
-in Sections~\ref{sec:exact} to~\ref{sec:forced} is an experimental hook of
+in Sections~\ref{sec:exact} to~\ref{sec:forced} and the appendices is an experimental hook of
 the branch \texttt{rd-exact}, and the end-to-end selection of
-Section~\ref{sec:choosing} is on the experimental branch
+Appendix~\ref{app:endtoend} is on the experimental branch
 \texttt{maxclose-rd}; neither is part of the engine, and neither is tagged
 yet. The scripts and logs of the exact experiments are not in the
 repository (Appendix~\ref{app:provenance}): until they are published, the
@@ -3366,24 +2892,27 @@ measurements, pictures and drafts presented to him.
 \paragraph{The AI system}, Claude Opus 5.5 (Anthropic), used through Claude
 Code in October 2026, with several sub-agents of the same model working in
 parallel, did the rest. It wrote the changes to the engine and the
-experiment scripts, ran the experiments and the bench, carried out the exact
-computations (SymPy, HiGHS through SciPy), searched the literature, stated
-and proved the propositions, wrote the Lean formalization and drafted the
-text of this note. References were checked for existence, and the note
-attached to each entry of the bibliography says how much of the work was
-read: the abstract only, a part, or all of it.
+experiment scripts, ran all the experiments, the bench, the solver runs and
+the exports of the T-mesh, carried out the exact computations (SymPy, HiGHS
+through SciPy), searched the literature, stated and proved the propositions,
+wrote the Lean formalization and drafted the text of this note. References
+were checked for existence, and the note attached to each entry of the
+bibliography says how much of the work was read: the abstract only, a part,
+or all of it. The novelty of the results was assessed by AI agents, for
+several of the closest works from their abstracts only.
 
 \paragraph{What was checked, and how.} The algebraic and combinatorial cores
-of Sections~\ref{sec:turns} and~\ref{sec:obstructions} to~\ref{sec:forced}
-are machine-checked in
-Lean (Section~\ref{sec:lean}), using only Lean's standard axioms. The
-topological statements that Lean takes as hypotheses, and the proofs given
-only on paper, were checked by AI agents rereading them and testing them
-numerically on the data (Section~\ref{sec:measured}), not by a human expert.
-Every measured figure can be reproduced from the scripts and branches named
-above. The note is a draft and has not been peer reviewed. Errors remain
-possible, and the human author, who publishes the note, is responsible for
-its content.
+listed in Section~\ref{sec:lean} are machine-checked in Lean, using only
+Lean's standard axioms. The topological statements that Lean takes as
+hypotheses, and the statements proved on paper only (listed in
+Section~\ref{sec:lean}), were checked by AI agents rereading them and
+testing them numerically on the data, not by a human expert; three AI review
+passes (bibliography, prior art, a referee report) preceded this version and
+found errors among the paper-only proofs, now corrected. Appendix~\ref{app:provenance}
+says where the raw output of each experiment is, and the paragraph
+``Reproducibility'' what can be rerun today. The note has not been peer
+reviewed. Errors remain possible, and the human author, who publishes the
+note, is responsible for its content.
 
 \bibliographystyle{plainnat}
 \bibliography{refs}
@@ -3425,16 +2954,17 @@ male body, openclare
 quad sphere
   & \texttt{18bc18c}
   & commit message and working logs \\
-Sections~\ref{sec:exact}, \ref{sec:measured}, \ref{sec:conflicts},
-\ref{sec:fox}, \ref{sec:combs}, \ref{sec:whole}, \ref{sec:forced}
+Sections~\ref{sec:exact}, \ref{sec:conflicts} to~\ref{sec:combs},
+\ref{sec:forced}; Appendices~\ref{sec:measured}, \ref{app:conflicts},
+\ref{sec:whole}
   & branch \texttt{rd-exact} (export hook), engine before \texttt{3b3122d}
   & working logs, scripts and the exported systems; some summary figures of
-  Sections~\ref{sec:exact} and~\ref{sec:whole} also in commit messages
+  Section~\ref{sec:exact} and Appendix~\ref{sec:whole} also in commit messages
   (\texttt{6374097}, \texttt{38b9fb3}) \\
-Section~\ref{sec:choosing}, end-to-end selection
+Appendix~\ref{app:endtoend}
   & branch \texttt{maxclose-rd}, engine of branch \texttt{complete-helices}
   & working logs; some figures only in the experiment's summary \\
-Section~\ref{sec:move}
+Appendix~\ref{sec:move}
   & a patch of the engine of commit \texttt{83f0967}
   & working logs; the ratios over twelve moves, the $36$ runs and the
   $3{,}600$ of $3{,}604$ rings only in the experiment's summary \\
@@ -3457,5 +2987,573 @@ figures are the means of \texttt{loop\_edges\_spiral},
 \texttt{loop\_edges\_closed}, \texttt{loops\_spiral},
 \texttt{mean\_distance} and \texttt{angle\_deviation\_mean} over the $36$
 runs.
+
+
+\section{Measured on the male body}\label{sec:measured}
+
+The statements of Section~\ref{sec:obstructions} concern the T-mesh. We
+exported it with every turn, for
+the eight ways of the male body at 10{,}590 quads: its $1{,}295$ nodes
+($1{,}034$ T-junctions and $261$ singular vertices, $133$ of valence three,
+$127$ of valence five and one of valence two, of total index $8$) with their
+corner angles, its $2{,}069$ arcs with their traces, its $776$ patches, and
+for each turn the arcs it crosses. A turn is drawn as a curve by straight
+chords across the patches it crosses, and the regions its curve cuts the
+surface into are found from the chords. Identities between quantities of
+this appendix are identities between linear forms in the arc lengths modulo
+the balances, checked on a basis of the balanced lengths in floating point;
+parities are evaluated at the whole lengths the engine found. Counts are
+summed over the eight ways, a turn found in several ways counting once in
+each (measured throughout).
+
+\paragraph{What holds.}
+For each of the $1{,}299$ turns, the crossing maps composed along the walk
+give a translation whose component across is the exported shift
+(Proposition~\ref{prop:linear}). Of these turns, $718$ have a simple curve;
+each splits the $261$ singular vertices into two groups of total index $4$
+(Lemma~\ref{lem:gauss}). On each side of each of them, with a tree of cuts
+found by breadth-first search, the holonomy of the curve equals the
+composition of Proposition~\ref{prop:burgers}(a), in the order of first visit,
+in both components: $1{,}436$ discs holding $4$ to $257$ singular vertices,
+no exception. The order matters: taking the vertices in the order of their
+last visit fails on $150$ of the $158$ discs of way~2. The checkerboard rule
+(Proposition~\ref{prop:checkerboard}) holds on the $1{,}436$ discs, in the
+form given after Corollary~\ref{cor:parity}, and on the $30{,}148$ annuli
+between two disjoint simple turns, whose singular vertices have total index
+$0$ in every case, as Lemma~\ref{lem:gauss} says. The $294$ pairs of
+disjoint turns with no singular vertex between them have equal shifts
+(Proposition~\ref{prop:burgers}(c)). Ten annuli hold exactly one vertex of
+valence three and one of valence five; on all ten the identity of
+Proposition~\ref{prop:dislocation}(i) holds, and in none of them do the two
+vertices lie on one trace, so part (ii) never applies at the real lengths.
+The parity of Proposition~\ref{prop:parity} holds for the $1{,}299$ turns.
+
+\paragraph{Most held turns are not simple.}
+Of the $1{,}299$ turns, $101$ cross themselves once, as in
+Lemma~\ref{lem:eight}: $97$ split the singular vertices as $(3, 3, 2)$, and
+$4$ as $(2, 2, 4)$, all four crossing their closing segment. The other $480$
+cross themselves at least twice, up to $107$ times. Of the $765$ turns held
+for closing, only $356$ are simple: long turns cross themselves many times,
+and the statements about simple curves and annuli say nothing about them.
+For such curves we use winding numbers: a combination $\sum_\gamma u_\gamma
+\bar\gamma$ of curves winds round each region of their union a whole number
+of times. This is its class in the homology of $\Sigma^\circ$; it tells round
+which singular vertices the combination goes, but not its holonomy, which
+is not commutative.
+
+
+\section{More on the conflicts of the male body}\label{app:conflicts}
+
+\paragraph{The larger sets.}
+Section~\ref{sec:conflicts} describes the smaller sets. At the left
+hand ($66$, $71$, $75$, $76$ of way 1, the same curves as $73$, $78$, $82$,
+$83$ of way 3), $76$ is a figure-eight round three vertices of valence three,
+$29.9$ long, and the others are $96$ to $140$ long, crossing themselves $13$
+to $28$ times and each other $10$ to $46$ times; relative to the rest of the
+body, the weighted cycle winds round $18$ of the $22$ regions, with windings
+from $-\tfrac12$ to $\tfrac43$ in the normalization of
+Table~\ref{tab:iis}. The set of seven in
+way 5 contains the two turns of configuration B and winds $\pm4$ round the
+two vertices they exchange; its other turns, up to $398$ long, go round
+parts of both hands. The set of seven in way 7, at the left foot, contains a
+turn of length $4.92$ round a cap of four vertices of valence three, whose
+multiplier is $16$ against $\pm1$ or $2$ for the six others, once scaled to
+whole numbers.
+
+
+\paragraph{The conjecture in these terms.}
+Since $\sum_i (I - R_i)^\top W_i = 0$, the vertices with non-zero twisted
+winding can be grouped so that $\sum_{i \in G} (I - R_i)^\top W_i = 0$ in each
+group $G$; each group then contributes a combination of separations of its own
+vertices. A group of a vertex of valence three and one of valence five
+contributes $\langle V, p_c - p_{c'}\rangle$ with $V = (I - R_c)^\top W_c$, a
+vector whose coordinates have equal parity, that is $a(d_1 + d_2) + b(d_1 -
+d_2)$ with $a$, $b$ whole and $d = p_c - p_{c'}$: the diagonal forms of
+Proposition~\ref{prop:dislocation}, which a staircase makes sign-definite
+(Proposition~\ref{prop:staircase}). An exchange is a group of two vertices of
+equal valence, a cap a group of total index four. So
+Question~\ref{conj:local} says that the twisted windings of an irreducible
+certificate, in a suitable development, split into such groups, each with a
+form of the sign of the certificate. At the left hand, developed from the
+patch of turn $76$, twelve vertices have a non-zero twisted winding. The
+vertices $231$ (valence three) and $228$ (valence five) have $W = (-5, -5)$
+and $(-5, 5)$; their group contributes, modulo the balances, exactly
+$10\,\ell_{1805}$ to $-(7\shift_{66} + 5\shift_{71} + 2\shift_{75} +
+3\shift_{76}) = 10\,\ell_{1805} + 2\ell_{1817} + 4\ell_{1853} + 2(\ell_{1870}
++ \ell_{1879} + \ell_{1969} + \ell_{1998} + \ell_{2029})$. A separatrix of
+$231$ (trace $915$, $7.76$ edges) stops on a separatrix of $228$ at the
+T-junction $1142$, and arc $1805$ joins that junction to $228$, $0.063$ edges
+long: $\ell_{1805}$ is the offset of the pair across the line of the field
+that nearly joins them, the case of Proposition~\ref{prop:dislocation}(ii)
+with $\delta = \ell_{1805}$. The coefficient $5$ of $F$ is this dislocation,
+round which the weighted cycle goes five times in the twisted sense. In
+this chart the ten other vertices, six of valence three and four of valence
+five, form a group of total index $2$ that no search could split. That group
+is an artefact of the development: the twisted windings are
+defined only up to the relation, and their support depends on the chart.
+Developed from another patch, eleven vertices have a non-zero twisted
+winding, among them $225$, $234$ and $236$, and $229$ is missing. The
+intrinsic reading is by combs (Section~\ref{sec:combs}): the rest of the
+certificate is $2\ell_{1817} + 4\ell_{1853} + 2(\ell_{1870} + \ell_{1879} +
+\ell_{1969} + \ell_{1998} + \ell_{2029})$, eight comb readings on seven arcs
+forming a tree on the vertices $229$, $235$, $238$, $239$ (valence three) and
+$250$ to $253$ (valence five), of total index $0$, the groups sharing
+vertices (measured).
+The sets of seven behave alike. In way~5, $24$ vertices have a non-zero
+twisted winding in our chart; the pair $102$, $103$ exchanged in
+configuration~B has $W = \pm(4, -4)$ and a form of the sign of the
+certificate, the pair $109$, $118$ of configuration~C has $W = \pm(4, 0)$ and
+a form of the opposite sign; read by combs, the certificate is $13$ comb
+readings on $11$ vertices, whose odd part is a closed chain of three combs
+round $111$, $112$ and $128$. In way~7, once the part of the words that is a
+multiple of the relation is removed, $16$ vertices remain ($141$ to $151$, $154$ to $156$, $165$ and
+$169$), and the certificate, with the primitive multipliers $(16, 1, 2, 1, 1,
+-1, 1)$, is $2(\ell_{1112} + \ell_{1165} + \ell_{1181} + \ell_{1201} +
+\ell_{1208} + \ell_{1232} + \ell_{1234})$: a tree of seven combs on the eight
+vertices $144$ to $147$, $150$, $151$, $155$ and $156$, of total index $-2$
+(measured).
+
+
+\section{Moving singularities in the parametrization}\label{sec:move}
+
+Proposition~\ref{prop:burgers} suggests a lever before quantization: move
+the singular vertices so that the Burgers sum of each ring vanishes. We tested
+it on the seamless maps of the development models (measured throughout this
+appendix; the experiment is a patch of the engine, not part of it).
+
+\paragraph{The Burgers sum on other models.} For every ring of the seamless
+map that leans by at most $0.12$, we computed the sum of
+Proposition~\ref{prop:burgers}(a) over the singular vertices of its smaller
+side, cut open along a tree of faces and ordered by first visit along its
+border. On seven closed surfaces of genus zero (blob, rock, creature, spot,
+pig, ogre, blub), $3{,}600$ of the $3{,}604$ rings that bound a disc are
+reproduced to $10^{-5}(1+L)$, $L$ the length of the ring; the reading fails
+only where a side is not a disc (borders on suzanne, handles on bob, part and
+cage). With the border and period terms of
+Proposition~\ref{prop:burgers-any} it holds there too
+(Section~\ref{sec:beyond}).
+
+\paragraph{Moving a singularity does not move the shift.} The linearization
+$\delta \shift = \langle e_2, Q_i(I-R_i)\,\delta p_i\rangle$ assumes the other
+singular vertices keep their developed positions. They do not: on the blob
+at $3{,}000$ quads, moving one pole of a cap one edge changes the shift of
+the cap ring (length $30.7$, shift $-1.065$) by $-0.13$ with a local re-solve
+of the map, where the sum predicts $-0.60$; with a global re-solve it moved
+by $+0.14$, the other way, against a prediction of $-0.58$: the other poles
+of the cap move in the map and absorb the change. Over twelve moves per
+model, the measured change is $0.12$, $0.03$ and $0.01$ of the predicted one
+on the blob, the creature and the pig. Rotating the field rigidly by $\alpha
+= |\shift|/L$ on the smaller side instead moves the shift by $26\%$, $36\%$,
+$46\%$, $64\%$ and $87\%$ of $\alpha L$ as the rotated region grows by $0$,
+$5$, $10$, $20$ and $40$ rings of vertices, at almost no cost in distortion
+($0.3362$ to $0.3371$). By Proposition~\ref{prop:burgers}(c) the shift is a property of
+the whole cylinder: shearing a long cylinder is expensive in the
+least-squares map, displacing a cone point in it is not, so the map keeps the
+shift the field gives the cylinder and moves its cone points instead. The
+identity holds exactly; it is the developed positions of the cone points that
+the field sets, not their places on the surface.
+
+\paragraph{A lever that fails.} Cancelling the pairs of valences three and
+five of a twisted annulus would change the shift by its $\pm d_1 \pm d_2$
+(Proposition~\ref{prop:dislocation}); its effect on the spirals of the
+meshes was not recorded, and we do not report it. Rotating the field
+cylinder by cylinder to bring the shifts to zero reduced the shifts of the
+map but moved the twist onto rings of $90$ to $200$ edges, whose sensitivity
+grows with their length: over $36$ runs ($12$ models, $3$ sizes), $2$
+improved and $4$ regressed, the mean gain coming from a single run, which we
+read as chaos rather than progress. Our reading, a conjecture: moving
+singularities would act through the Burgers sum only in a map whose scale is
+free to follow them, a cone metric; with a map of fixed scale the lever is
+the orientation of the field along whole cylinders, long rings must be
+handled jointly, and the conflicts are better attacked in quantization,
+where the staircases and dislocations of Section~\ref{sec:obstructions} live.
+
+
+\section{Rotations of other orders}\label{app:orders}
+
+\paragraph{Rotations of order six.}
+On triangle and hexagonal meshes the rotations are powers of $\zeta = e^{i\pi/3}$
+and whole lengths develop nodes onto the Eisenstein integers; a vertex of
+valence $k$ has index $6 - k$, in sixths of a turn, and the indices add up to
+$6\chi$. A turn walks along
+one of six directions $u$ and comes back translated by $T = \alpha u + \shift\,
+\zeta u$: $\shift$ counts the rows of the family of lines along $u$, $\alpha$
+depends on the oblique basis chosen, and in the basis $(u, \zeta u)$ the
+strip has $2\alpha + \shift$ triangles per turn. The Burgers sum, the order of first visit and the
+Fox--Burgers formula hold unchanged. A pair of valences five and seven has
+$B = \pm\zeta^{\pm1} d$, of length $|d|$, and the difference of the shifts is
+$\pm d_1$ or $\pm(d_1 + d_2)$ with $d = d_1 u + d_2 \zeta u$: the two turns close
+together only if the pair lies along one of the two other line directions, and
+a pair joined along a line parallel to the turns always forces a helix.
+Staircases have three directions, two that climb and one along which the form
+of the shift difference vanishes. There is no parity: $1 - \zeta$ is a unit.
+When every singular vertex has even valence the rotations have order three and
+the congruence modulo $(1 - \omega)^2 = -3\omega$ (compare Lemma~11
+of~\cite{izmestiev2013torus}, on holonomy of order three) gives, on a closed
+sphere,
+$\alpha \equiv \shift \pmod 3$; every ring has a length divisible by three, as on
+subdivided octahedra (rings of $3n$ edges), while on subdivided icosahedra rings
+of $5n$ edges take every residue (measured on subdivided octahedra and
+icosahedra). Whether a rule modulo three holds
+with borders or handles is a conjecture we leave open.
+
+\paragraph{Other rotation orders.}
+Nothing in the Burgers sum, the order of first visit or the Fox--Burgers
+formula uses that $R$ has order four: they hold for the rotations of order
+six of triangle and hexagonal meshes, for cone metrics of any angles, and for
+motions of space. What changes is parity. When every rotation is a power
+$z^{j_i}$ of one rotation $z$, every Fox derivative is congruent to its
+exponent sum modulo $1 - z$, and $1 - z^j$ to $j(1 - z)$ modulo $(1 - z)^2$, so
+\[
+  \tau(w) \equiv (1 - z) \sum_i \epsilon\Bigl(\frac{\partial w}{\partial
+  x_i}\Bigr) j_i\, p_i \pmod{(1 - z)^2},
+\]
+proved in any commutative ring. For quarter-turns, $(1 - z)^2 = -2z$, and this
+is Corollary~\ref{cor:checker}, with $j_i = 4 - k(c_i)$. For rotations of order
+three, $(1 - z)^2 = -3z$: a rule modulo three, with three colours. For
+rotations of order six, $1 - z$ is a unit: there is no colouring rule on
+triangle or hexagonal meshes. A dislocation of order $n$ has $|B| = 2\sin(\pi
+/ n)\,|d|$: $\sqrt2\,|d|$ for quads, $|d|$ for a pair of valences five and
+seven on a triangle mesh, $\sqrt3\,|d|$ for rotations of order three; the
+forms $\pm d_1 \pm d_2$ are particular to quads. Discrete Gauss--Bonnet reads
+$\sum (4 - k) = 4\chi$ on quad meshes, $\sum (6 - k) = 6\chi$ on triangle
+meshes and $\sum (3 - k) = 3\chi$ on hexagonal ones.
+Theorem~\ref{thm:forced}, Corollary~\ref{cor:chain} and
+Lemma~\ref{lem:handshake} do not depend on the geometry at all.
+
+
+\section{Whole lengths}\label{sec:whole}
+
+This appendix returns to the male body of Section~\ref{sec:exact}, now in
+whole numbers. The propositions are proved; the numbers are measured, with
+exact integer or rational arithmetic where we say so, and otherwise from
+HiGHS through SciPy, stopped at a time limit (best solution found and proven
+bound).
+
+\paragraph{Exact whole lengths.}
+Closing exactly, in whole numbers, the turns found closable together with
+the bounds kept is feasible: HiGHS solves it in about two minutes a way for
+three of the four ways tried (the fourth, with 87 turns, did not finish
+within ten minutes). The solutions leave 1 to 4 held turns shifted where the engine
+leaves 13 to 44, and fewer of the turns not held as well (5 against 9, 5
+against 11, 0 against 27), at a deviation from the real lengths 4\% to 62\%
+higher. Yet the quad meshes they make spiral \emph{more}: 12.2\% of their
+edges against 8.8\% for the first way, 3.7\% against 1.1\% for the second,
+and the third breaks the structure. Most of the loops that spiral are thus
+not turns our search finds: closing every turn it finds is not enough.
+
+\paragraph{All the strips of a mesh.}
+Walking every strip of the mesh the engine of the export makes for way~2
+(Proposition~\ref{prop:complete}) finds 230 ways round; each strip is found
+twice, once in each direction, with opposite shift expressions (the surface
+being oriented), and 168 of them come back shifted. A selection of rings by
+the field's shift alone (under half a row) is too narrow: the twisted thigh,
+shifted 1.65 rows a turn by the field, is a ring a modeller wants closed.
+Selecting rings by their lean, as the cut rounds of the engine now do
+(Section~\ref{sec:closing}), gives 222 of the 230 ways round; 218 of them
+(109 strips) can be closed together in real numbers with every bound of
+separation kept. Posed directly, HiGHS found no whole solution within ten
+minutes, nor in a later run of thirty. The rest of this appendix explains why, and what that set of rings
+really costs.
+
+\paragraph{The balances form a bidirected graph.}
+The matrix $B$ has two rows per patch, one per direction, 1{,}552 rows for
+the 776 patches, and one column per arc. On a closed surface where no patch
+borders itself across an arc, an arc lies on a side of each of the two
+patches it borders, so its column has exactly two non-zero entries,
+each $+1$ or $-1$ according to the side of the patch it lies on (measured on
+all eight systems; in way 2, 958 arcs have signs $+/-$, 557 have $-/-$ and
+554 have $+/+$). In the language of signed graphs, $B$ is the incidence
+matrix of a \emph{bidirected graph} $G$ whose nodes are the balance equations
+and whose edges are the arcs; an arc on a border of the surface has a single
+entry, a half-edge of $G$. Bidirected graphs are the setting
+of~\cite{heistermann2023bimdf}; the rank of their incidence matrices and the
+circuits of the associated matroid are due to
+Zaslavsky~\cite{zaslavsky1982signed}, and integer flows are generated by
+circuits~\cite{chen2009flow}. Proposition~\ref{prop:free} below makes a
+lattice basis explicit. Call a cycle of $G$ \emph{balanced} if values
+$\pm1$ on its edges have a zero balance at each of its nodes, and
+\emph{unbalanced} otherwise.
+
+\begin{lemma}[Handshake]\label{lem:handshake}
+Let $x \in \Z^n$ and $C$ be a connected component of $G$. Then
+$\sum_{r \in C} (Bx)_r \equiv \sum_{a} x_a \pmod 2$, the second sum running
+over the border arcs of $C$. On a closed surface, $\sum_r (Bx)_r$ is even.
+\end{lemma}
+
+\begin{proof}
+It is $\sum_a x_a \sum_{r \in C} B_{ra}$, and each column sums to $0$ or
+$\pm2$, or to $\pm1$ for a border arc.
+\end{proof}
+
+So on a closed surface the rows of $B$ are dependent modulo $2$, although they
+are independent over the reals: a system $Bx = d$ with $\sum_r d_r$ odd has
+real solutions but no whole one; and, $G$ being connected with an unbalanced
+cycle, one with an even sum always has whole solutions
+(on the edges $T$ of Proposition~\ref{prop:free}, the whole image of $B$ is
+exactly the lattice of vectors of even sum; Section~\ref{sec:lean}). Consistently, integer elimination of $B$ ends on the male
+body with one row whose entries have greatest common divisor $2$, all other
+pivots being units (measured in all eight ways). In general the number of such
+rows is the number of components of $G$ with an unbalanced cycle and no
+half-edge: none on Suzanne and Jerry, whose borders give half-edges, one on
+Bob, part, cage and a cylinder (measured). This does not affect the balanced
+lengths:
+
+\begin{proposition}[Free arcs]\label{prop:free}
+Let $G$ be connected and contain an unbalanced cycle. Let $T$ be the edges
+of a spanning tree of $G$ and one more edge closing an unbalanced cycle, and
+$F$ the other edges. Then $B$ has full row rank, and every $x_F \in \Z^F$
+extends to exactly one $x \in \Z^n$ with $Bx = 0$. The whole balanced lengths
+thus form a lattice isomorphic to $\Z^F$, of dimension $n - m$ for $m$
+balances, with a basis of vectors $z_f$, $f \in F$, each supported on
+$T \cup \{f\}$ with $z_f(f) = 1$ and entries in $\{0, \pm1, \pm2\}$.
+\end{proposition}
+
+\begin{proof}
+Such a $T$ exists: the sign of a cycle is a homomorphism from the cycle space
+of $G$ over $\Z/2$, of which the fundamental cycles of a spanning tree are a
+basis, so if all of them were balanced every cycle would be. $T$ has $m$
+edges. If $B_T y = 0$, a node met by a single edge of $T$ forces
+that edge to zero; removing such edges repeatedly leaves the unbalanced
+cycle, on which each value fixes the next up to sign, and going round, since
+the cycle is unbalanced, forces them all to zero. So the square matrix $B_T$
+is invertible, $B$ has full row rank, and $x_F$ has exactly one real
+extension; it remains to see that it is whole. For $f \in F$, the graph $T
+\cup \{f\}$ has a one-dimensional space of balanced values. Removing the edges
+met at a node of degree one leaves either three paths between two nodes,
+whose three cycles are the unbalanced cycle of $T$, one more unbalanced and
+one balanced (the number of unbalanced cycles of such a graph is even), or
+two cycles joined by a path, possibly of length zero. In the first case the
+balanced cycle contains $f$, since the cycle of $T$ does not, and carries
+values $\pm1$. In the second, the cycle through $f$ either is balanced and
+carries values $\pm1$, or is unbalanced, and then values $\pm1$ on both cycles
+and $\pm2$ on the joining path are balanced. Either way there is a whole
+balanced $z_f$ supported on $T \cup \{f\}$ with $z_f(f) = \pm1$; changing its
+sign if needed, $x = \sum_{f \in F} x_f z_f$ is the whole extension.
+\end{proof}
+
+The hypothesis can fail beyond the closed sphere: on a torus without
+singular vertex and on part, $B$ does not have full row rank ($4$ of $6$ and
+$145$ of $148$, measured). The proposition extends with a spanning forest of
+$G$ and, in each component with an unbalanced cycle, one edge closing such a
+cycle or one half-edge; the whole balanced lengths then form a lattice of
+dimension $n - m$ plus the number of balanced components without half-edge.
+
+On the male body $G$ is connected with an unbalanced cycle, $B$ has rank
+1{,}552, and the lattice of balanced lengths has dimension $2{,}069 - 1{,}552
+= 517$ (measured in all eight ways). Balances alone thus never obstruct whole
+lengths: 517 arcs can be given any whole lengths and the others follow. With
+the shifts of the 218 rings of way 2 the rank grows by 105 and the lattice of
+closed quantizations has dimension 412; integer elimination still uses unit
+pivots only, with one row of greatest common divisor $2$ (the shift of one
+ring is even as soon as the balances and the rings before it hold). Adding
+the shifts of the held turns instead gives dimensions 469, 439, 465, 431, 435,
+363 and 431 in ways 0 to 6; in ways 4, 5 and 6 elimination needs steps of
+Euclid's algorithm, so turn rows can destroy the free-arc structure.
+
+\paragraph{Integer solutions exist.}
+By Remark~\ref{rem:exist}, whole lengths closing the 218
+rings within the bounds exist. HiGHS finds some in one second once it is
+told which arcs are zero in \emph{every} real solution: closing the 218
+rings with $\ell \ge 0$ forces 171 arcs to zero (measured), the implicit
+equalities of the cone, each certified by a non-negative combination of
+shifts as in Remark~\ref{rem:definite}. There are 23 distinct certificates:
+13 single rings whose shift is sign-definite (round fingers and toes), 4
+pairs with multipliers $(1, 1)$ (left foot, right foot, head, top of the
+head), and 6 combinations of four to six rings (torso, neck). Given as upper
+bounds, these zeros make the problem easy; left implicit, the solver works on
+a face of lower dimension than the problem without knowing it, which is what
+the ten- and thirty-minute failures were. They are not an integer
+obstruction.
+
+\paragraph{The difficulty is their size.}
+The 171 arcs forced to zero carry 350.8 quad edges of target length, the
+longest 10.1. The real lengths closing the 218 rings nearest the targets, in
+the weighted deviation, make 3{,}960 quads instead of the 10{,}496 of the
+targets. With the deviation the engine measures, the mean of
+$|\ell_a - \lambda r_a|$, a linear program shows that no real lengths closing
+the 218 rings have a mean deviation below $0.817$, nor, after dropping 7
+strips (14 ways round) so that every arc with a target of at least $1.5$
+stays open, below $0.758$; balanced lengths without rings reach $0.085$. A
+lower bound in real numbers holds for whole numbers too. The engine version
+that made the export refused quantizations whose deviation exceeded $1.5$
+times that of the plain search, $1.5 \times 0.316 = 0.474$; the engine at
+the cited commit allows $\max(1.5 \times 0.316,\ 0.316 + 0.2) = 0.516$. Either
+way the 218 rings cannot close at the size asked for within the engine's
+tolerance, whatever the rounding: the obstruction is in the reals.
+
+\paragraph{The 190 rings that fit.}
+A subset of 190 of the 218 ways round (chosen greedily, so 190 is only a
+lower bound on what fits) closes in real numbers at a mean
+deviation of $0.399$, keeping the number of quads (10{,}502) at that of the
+targets to first order: the linear form $\nabla q(t) \cdot \ell \ge \nabla
+q(t) \cdot t$, where $q(\ell)$ is the number of quads, a quadratic function of
+the lengths, and $t$ the targets. In whole numbers we followed the
+reformulation of Aardal, Hurkens and Lenstra~\cite{aardal2000diophantine}:
+a basis $M$ of the lattice of closed quantizations, with the 74 implicit
+zeros of this set imposed first (dimension 407), reduced by
+LLL~\cite{lenstra1982lll} for a weighted inner product, which leaves entries
+in $[-2, 2]$; then $\ell = My$ with $y$ whole, so that no equation is left,
+and a mixed-integer program over $y$. Babai's nearest plane~\cite{babai1986nearest}
+from the real solution gives a mean deviation of $0.586$ but 10 arcs below
+their bounds. HiGHS, stopped after 1{,}200 seconds, gives whole lengths
+closing all 190 rings within every bound, with a mean deviation of $0.619$
+and 10{,}568 quads, and proves that no whole lengths do better than $0.536$
+under the same constraints, the first-order proxy of the number of quads
+included. Against $0.399$ in real numbers, this rounding gap is the one
+integer obstruction we found, and it is not a parity condition: every
+infeasible set of Table~\ref{tab:iis} is infeasible in real numbers already.
+
+\paragraph{Which turns, not rounding.}
+Given to the engine in place of the lengths of way 2, these whole lengths
+close all 190 rings, with 10{,}568 quads and 2.5\% of spiral edges against
+1.1\% for the engine's own lengths (the share of that way alone: the
+deviation cap would refuse it). At the new lengths the strips are
+different walks: walking all of them finds 230 ways round, 156 of them
+shifted (168 at the engine's lengths), and of the 214 that lean less than
+$0.12$, 142 are shifted (162 of 222 at the engine's lengths). Closing the
+rings of one set of lengths moves the strips, and other loops spiral. On this
+body, then, whole lengths are not what is missing: rounding costs between $0.137$
+(proven) and $0.220$ (found) of mean deviation above the real optimum, and
+it is the choice of the turns to
+close, at the lengths where they are the strips of the mesh, that decides how
+much the mesh spirals.
+
+
+\section{Closing the most rings, end to end}\label{app:endtoend}
+
+\paragraph{Most rings closable, end to end.}
+Hardness is a statement about the worst case; we also measured what an exact
+selection buys on the bench, with the engine of branch
+\texttt{complete-helices} (the cut rounds without the finer work mesh of the
+cited commit: $4.54\%$ of spiral edges over the $36$ runs, against $4.65\%$).
+We posed, for the lengths the engine keeps, the
+mixed-integer program that closes as many of its strips leaning less than
+$0.12$ as it can (weighted by their length round), within the balances, the
+bounds of separation, the engine's cap on the mean deviation and its quad
+budget, and meshed the result with the engine itself; then walked the strips
+at the new lengths and solved again, three rounds. Posed with the shift
+expressions alone, the program closes $27.3$ of the $38.2$ such strips of a
+model (12 models, three budgets each), but at the new lengths only $22.1$ are
+closed strips, against $21.8$ for the engine: the strips have become other
+walks. Each walk stays the same where the place it crosses every arc stays
+inside that arc, half a quad edge from either end, two linear inequalities per
+crossing; required for the rings counted as closed, they make the count exact
+($24.6$ closed by the program, $24.0$ found closed by walking the mesh) and
+show that, within the engine's cap and budget, it closes only about three
+strips fewer than can be closed together without changing walk (measured).
+
+\paragraph{What it buys.}
+In place of the engine's lengths, these lengths do not spiral less: $4.77\%$
+and $5.08\%$ of spiral edges in two runs against $4.54\%$, better on 13 and 10
+runs of 36, worse on 10 and 13. Added to the lengths the engine chooses among,
+by its own count of spirals (which equals the measured share on every run
+checked), they lower the mean to $2.32\%$ and $2.70\%$, never higher. Three
+other draws of the engine's per-arc preferences, added the same way, give
+$4.12\%$, and three lengths drawn at random within the same cap and budget
+$4.34\%$; without the conditions on the walks, the rounds give $3.15\%$, no
+better than the other draws (better on 7 runs, worse on 7). The other measures
+barely move (closed loops $38.0\%$ against $36.3\%$ of edges, mean distance
+$0.383$ against $0.385$, all $36$ meshes valid). On the male body every round
+spiralled more than the engine (from $3.45\%$ to $5.59\%$ against $1.59\%$);
+there, within the time allowed, the program closed only 35 to 38 of 107
+strips (the engine 33), and in 600 seconds at most 48 that keep their walk, 65
+that do not, its bound remaining far above (measured). Closing the most rings
+is thus not, on its own, the way to fewer helices: the shifted strips the
+measure does not see as spirals are among those closed, and others take their
+place; it is a source of good candidates, valuable only where the strips
+closed stay the strips of the mesh.
+
+\paragraph{Only when the solver finishes.}
+The engine can afford a few seconds per solve. With a limit of $5$ seconds the
+gain vanishes (an outcome that depends on the hardware and its load,
+Section~\ref{sec:experiments}; the distribution of solve times was not
+recorded): the engine with three rounds as candidates gives $4.10\%$,
+against $4.12\%$ for three other draws (run by run, 2 better and 10 worse than
+those draws); $63$ of the $126$ pieces get no solution in $5$ seconds, $21$
+more stop at the limit, and $68$ of $108$ rounds return the engine's own
+lengths (measured). A local search inside the engine, walks of its strip
+network biased by Lagrange multipliers with the conditions on the walks kept,
+costs $0.1$ to $0.25$ seconds per model but closes no more rings than the
+engine (6 of 30 on the blob, 12 of 26 on the creature, unchanged): a single
+walk almost always changes the shift of a ring already closed, and closing
+needs combinations of walks. The gain comes from a solver that finishes, and
+Theorem~\ref{thm:nphard} says that no exact method finishes fast on every
+instance.
+
+
+\section{What Lean checks, statement by statement}\label{app:lean}
+
+\begin{itemize}
+\item For motions whose linear parts lie in any ring acting on any module: the
+  translation of $\rho_m \circ \dots \circ \rho_1$ is $\sum_i Q_i(I - R_i)p_i$
+  with $Q_i = R_m \cdots R_{i+1}$ (Proposition~\ref{prop:burgers}(a)); the
+  recursion of the gluing maps of a tree of cuts unfolds into the order of
+  first visit, and the order of last visit gives another vector already for
+  two vertices; the holonomy of the border of a cut annulus
+  (Proposition~\ref{prop:burgers}(b)); exchanges
+  (Proposition~\ref{prop:swap}); the conjugation of
+  Proposition~\ref{prop:winding}; the additivity behind
+  Proposition~\ref{prop:linear}.
+\item Over the reals: the four orders and orientations of a dislocation, the
+  forms $\pm d_1 \pm d_2$ and $|B_A|^2 = 2|d|^2$, straight chains
+  (Proposition~\ref{prop:dislocation}(i), (ii)); staircases
+  (Proposition~\ref{prop:staircase}); the positivity of a non-negative form
+  with a held arc (Remark~\ref{rem:definite}).
+\item At whole lengths: the parities of $(I - R^{\pm1})p$ and $(I - R^2)p$; the
+  checkerboard rule (Proposition~\ref{prop:checkerboard}); the induction of the
+  proof of Proposition~\ref{prop:parity}, given a 2-colouring of the quad graph
+  (the extension from positive to all whole lengths is on paper),
+  and the second proof of Remark~\ref{rem:borders}.
+\item The Fox--Burgers formula on words, which is well defined on the free
+  group, the fundamental formula, the twisted windings and $\sum_i (I -
+  R_i)^\top W_i = 0$, the insertion of the relation
+  (Proposition~\ref{prop:fox}); the commutator
+  (Proposition~\ref{prop:commutator}); Corollary~\ref{cor:checker}, with the
+  two arguments of its proof on the colour of the origin and the constant of
+  the winding numbers.
+\item Lemma~\ref{lem:handshake} on a closed surface, Theorem~\ref{thm:forced}
+  and Corollary~\ref{cor:chain}.
+\item Proposition~\ref{prop:free}, with switchings and spanning trees grown by
+  leaves, and stronger: on its edges $T$, the whole image of $B$ is the
+  lattice of vectors of even sum.
+\item Remarks~\ref{rem:definite} and~\ref{rem:exist}: Farkas' lemma by
+  Fourier--Motzkin elimination over any ordered field, the arcs forced to zero,
+  whole multipliers and whole solutions.
+\item Proposition~\ref{prop:complete}, in a model only: there the strips are
+  defined as the cycles of a successor map built from a permutation of the
+  half-integer stations, so the bijection holds by construction; separately,
+  the real walk from $k + \frac12$ follows the unit edges in a
+  one-dimensional model of the gluing. That the station walk of the gluing
+  data is a permutation and that the model is the quad mesh are assumptions.
+\item The Euler-characteristic count used in Lemmas~\ref{lem:gauss}
+  and~\ref{lem:eight}, on the grid refined by two.
+\end{itemize}
+Not checked: the topology the discrete statements take as hypotheses (that a
+simple closed curve bounds a disc, the developing map and the presentation of
+$\pi_1(\Sigma^\circ)$), which corners of the regions of Lemma~\ref{lem:eight}
+are convex, strips on surfaces with borders, and every measured statement.
+
+
+\paragraph{Invariants for the engine.}
+The checked identities give tests on the engine's own quantities; since
+commit \texttt{3bcbd20} its debug builds check the first three below, and it
+uses the parity and the sign-definite turns to spare work
+(Section~\ref{sec:closing}):
+on a closed surface of genus zero, the two components of the translation of
+every turn, its length and its shift, have the same parity at the whole lengths
+of the integer search, so every ring has an even number of quads round it; the
+coefficients of every shift expression are whole; every column of the balances
+has two entries $\pm1$, or one for an arc on a border, so on a closed surface a
+balance system with an odd total right-hand side has no whole solution, and in
+general the sum over a component has the parity of the sum of the values on
+its border arcs; where the developed cone points are known, the
+translation of a turn bounding a disc is the Burgers sum in the order of first
+visit, and its two components have the parity of the number of vertices of odd
+valence on points of odd colour; a turn whose shift is a non-negative form with
+a held arc, or both turns of a staircase with a held arc, are never closed; and
+the number of held turns left shifted is at least the number of disjoint
+infeasible sets found. The README of the folder lists them with the engine's
+names.
 
 \end{document}

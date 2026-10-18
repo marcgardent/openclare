@@ -1,8 +1,10 @@
 # Machine-checked cores of "Closing Edge Loops at Quantization Time"
 
 This Lake project checks with Lean 4 and Mathlib the **algebraic cores** of the
-results of the research note `../paper.tex` (Sections 3 and 8 to 10): 187
-theorems. The topological facts the note uses (that a loop develops into a given
+results of the research note `../paper.tex` (Sections 3, 7 and 9, and
+Appendix F): 187 `theorem` declarations, many of them small lemmas and a few
+restating a hypothesis (`dislocation_closes_iff`, `staircase_rings`); the
+count is not evidence, the table below names the main ones. The topological facts the note uses (that a loop develops into a given
 motion, that a curve bounds a disc, that the quad graph of a sphere is
 bipartite, ...) are not formalized: each one is an explicit hypothesis of the
 theorem that uses it, never a hidden `sorry`. Every theorem depends only on
@@ -32,8 +34,8 @@ quarter-turn `R(a, b) = (-b, a)` the multiplication by `i`, as in
 
 | Statement of the note | Lean | Assumed (hypotheses) |
 |---|---|---|
-| Prop. "The shift of a turn is linear" | `Motion.composeAll_trans_add`, `Motion.composeAll_trans` | the crossing maps have linear parts independent of the lengths and translations additive in them |
-| Prop. "Completeness at given lengths" | `stripsEquiv` (the strips of the quad mesh are the cycles of the walk on the half-integer stations), `exists_station`, `sameCycle_station_iff`; `realWalk_iterate_half`, `realWalk_iterate_open` (the walk from `k + ½`, or from any point of `(k, k + 1)`, follows the unit edges); `glueLine_half`, `glueLine_open`, `oddCount_motion` (a quarter-turn with a whole translation keeps nodes, edge midpoints and quad centres apart) | the patches are integer rectangles glued along their arcs by `t ↦ ±t + c`, `c` whole, mapping the unit edges of the sides one to one (a closed surface) |
+| Prop. "The shift of a turn is linear", the additivity only | `Motion.composeAll_trans_add`, `Motion.composeAll_trans` | the crossing maps have linear parts independent of the lengths and translations additive in them; the integer coefficients and the reading as a helix (with its corridor) are not formalized |
+| Prop. "Completeness at given lengths", in a model only | `stripsEquiv` (in a model where the strips are *defined* as the cycles of a successor map built from a permutation `walk` of the stations, so the bijection holds by construction; the station walk of the gluing data, `stationWalk`, is not shown to be that permutation), `exists_station`, `sameCycle_station_iff`; `realWalk_iterate_half`, `realWalk_iterate_open` (the walk from `k + ½`, or from any point of `(k, k + 1)`, follows the unit edges); `glueLine_half`, `glueLine_open`, `oddCount_motion` (a quarter-turn with a whole translation keeps nodes, edge midpoints and quad centres apart) | the patches are integer rectangles with positive sides (`hdepth`) glued along their arcs by `t ↦ ±t + c`, `c` whole, mapping the unit edges of the sides one to one (a closed surface); that the station walk is a permutation and that the model is the quad mesh |
 | Lemma "Gauss–Bonnet for turns" | `gauss_bonnet_turn` (`∑ (4 - k) = 4 χ` inside a region whose border turns by zero), `gauss_bonnet`, `turn_border_sum`, `sum_deg`, `sum_corners` | that `γ̄`, on the grid refined by two, bounds a disc (or an annulus): a complex of quads with Euler characteristic `χ` whose interior vertices have a cycle as link and border vertices a path (`IsRegion`) |
 | … the rotation part | `quarter_turns_prod_eq_one_iff` (`R^{j₁}⋯R^{jₘ} = I ⇔ 4 ∣ ∑ jᵢ`) | — |
 | Lemma "One self-crossing" | `gauss_bonnet_corners` (`4 χ - a + b` with `a` convex and `b` concave corners on the border) | the regions cut open at the crossing are discs; which of their corners are convex |
@@ -55,7 +57,7 @@ quarter-turn `R(a, b) = (-b, a)` the multiplication by `i`, as in
 | … bidirected graphs | `IsTree.exists_switching`, `IsTree.eq_zero`, `IsTree.solve`, `closesUnbalanced_of_pair`, `pair_ne_zero`, `balanced_cycle_of_not_closesUnbalanced`, `Cycle.isBalanced_of_graph` (a cycle of a balanced graph is balanced) | — |
 | Remark "Sign-definite turns", Farkas certificates | `sign_definite_certificate` (`B ℓ = 0`, `shift_γ(ℓ) = 0`, `ℓ ≥ b` infeasible ⇔ `∑ u_γ shift_γ + λᵀ B = c ≥ 0` with `c ⬝ b > 0`), `forced_zero_iff` (arcs zero in every solution), `farkas_int` (whole multipliers), `farkas`, `farkas_bounds` (any linearly ordered field, by Fourier–Motzkin) | — |
 | Remark "Whole solutions exist at some size" | `whole_solution_of_real`, `clear_denominators` | — |
-| Theorem "Forced helices" | `forced_helices`, `meets_infeasible`, `card_ge_of_disjoint`, `tauP_ge_of_disjoint` | — |
+| Theorem "Forced shifts" | `forced_helices`, `meets_infeasible`, `card_ge_of_disjoint`, `tauP_ge_of_disjoint` | — |
 | Corollary "Chains of dislocations" | `sign_change_between`, `chain_of_dislocations` | the identities `s_{i-1} - s_i = εᵢ Fᵢ` with `Fᵢ > 0` |
 
 Not formalized: the topology behind the hypotheses, weeks of work with much of
@@ -78,7 +80,7 @@ measured statement.
    not `ρ(g ∂ϱ/∂xᵢ)ᵀ f_r`; the note's formula is the case of an insertion at
    the front (`insert_relation`). The conclusion (the sum does not change) is
    right.
-2. **Theorem "Forced helices" needs neither convexity nor whole lengths.** The
+2. **Theorem "Forced shifts" needs neither convexity nor whole lengths.** The
    proof holds for any set `P` of lengths and any `ℓ ∈ P`
    (`forced_helices`); convexity only makes `τ_P` computable by linear
    programming. So the theorem applies verbatim to the non-convex set of

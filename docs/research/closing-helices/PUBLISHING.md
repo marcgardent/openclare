@@ -33,8 +33,8 @@ decision are for the author to take; the rest is already in the repository.
 2. **ORCID**: done, 0009-0000-6466-3098 (<https://orcid.org/0009-0000-6466-3098>), in `CITATION.cff`,
    `.zenodo.json` and under the name in `paper.tex`. Zenodo, HAL and arXiv all
    link it. On the ORCID record, the published name is "Marc Gardent".
-3. **Once the reviews are merged**, change "draft" in the title block to
-   "preprint v1", and the date. Commit the sources, then run `make paper` on a
+3. **Title block**: it reads "preprint, version 1" since the three reviews
+   were applied; set the date at release. Commit the sources, then run `make paper` on a
    clean working tree and commit the PDF on its own: the PDF then names the
    commit that holds its sources, without `-dirty`.
 
