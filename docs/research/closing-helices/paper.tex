@@ -331,11 +331,13 @@ have equal length; the quad mesh is then read off as the integer grid of
 each patch.
 
 \begin{definition}[Turn]
-A \emph{turn} $\gamma$ is a straight walk across patches: it enters a patch
-through a side, leaves through the opposite side at the same distance from
-the corresponding corner, enters the neighbouring patch across the arc it
-reaches, and so on, until it comes back into its first patch through its
-first side, with the four quarter-turns of the crossings summing to zero.
+A \emph{turn} $\gamma$ is a straight walk across patches, from an offset of
+its first side that meets no node: it enters a patch through a side, leaves
+through the opposite side at the same distance from the corresponding
+corner, enters the neighbouring patch across the arc it reaches, and so on,
+until it comes back into its first patch through its first side. The
+rotation of the composed crossings is then the identity, since the walk
+re-enters its first side inward.
 \end{definition}
 
 Crossing from patch $P$ to patch $Q$ across an arc composes a quarter-turn
@@ -350,23 +352,40 @@ moved across the walking direction by
 \[
   \shift_\gamma(\ell) = \sum_a c_a\, \ell_a .
 \]
-For integer lengths, the dual line of the quad mesh that follows $\gamma$
-comes back $\shift_\gamma(\ell)$ rows beside itself: it closes into a ring
-if and only if $\shift_\gamma(\ell) = 0$, and is otherwise a helix of pitch
-$|\shift_\gamma(\ell)|$ in the sense of~\cite{bommes2011structure}.
+For integer lengths $\ell$, let $o$ be a half-integer offset of the first
+side whose walk at the lengths $\ell$ crosses the same patches as $\gamma$
+(we call the set of such offsets the \emph{corridor} of $\gamma$ at $\ell$).
+Then the dual line of the quad mesh at $o$ comes back at $o +
+\shift_\gamma(\ell)$: it closes after one round if and only if
+$\shift_\gamma(\ell) = 0$. If moreover $o + j\,\shift_\gamma(\ell)$ lies in
+the corridor for $j = 1, \dots, t$, it winds $t$ times round as a helix of
+pitch $|\shift_\gamma(\ell)|$ in the sense of~\cite{bommes2011structure}. If
+the corridor holds no half-integer, no strip of the mesh follows $\gamma$.
 \end{proposition}
 
 \begin{proof}[Sketch]
 Each crossing is a map $x \mapsto R_k x + t$ with $R_k$ a rotation by $k$
 quarter-turns and $t$ a vector whose entries are sums of $\pm\ell_a$. The
-composition along $\gamma$ has total rotation zero, hence is a translation
+composition along $\gamma$ has trivial rotation, hence is a translation
 $T_\gamma(\ell)$, linear in $\ell$ with integer coefficients. Its component
 along the walking direction does not move a point of the first side off
 that side; its component across is $\shift_\gamma(\ell)$. The walk crosses
 no singularity (singularities are nodes, never inside a patch), so the
 quad mesh is a regular grid along it, and a dual line at distance $o$ from
-the first corner comes back at distance $o + \shift_\gamma(\ell)$.
+the first corner, as long as it crosses the same patches as $\gamma$, comes
+back at distance $o + \shift_\gamma(\ell)$. The corridor is cut out by two
+inequalities per crossing (the walk must cross each arc strictly between its
+ends), so it may contain $o$ but not $o + \shift_\gamma(\ell)$: the line then
+comes back $\shift_\gamma(\ell)$ rows beside itself, but its next round
+follows other patches, and on a closed surface it may close after visiting
+them (Proposition~\ref{prop:complete}).
 \end{proof}
+
+The shift form is thus a statement about a fixed sequence of crossed
+patches. Closing constraints $\shift_\gamma(\ell) = 0$ describe the strips
+of the mesh only together with the corridor inequalities of $\gamma$, which
+the engine of Section~\ref{sec:closing} does not impose
+(Sections~\ref{sec:whole} and~\ref{sec:choosing} measure what this costs).
 
 The component of $T_\gamma(\ell)$ along the walking direction is the
 \emph{length} $\alpha_\gamma(\ell)$ of the turn, the distance walked before
@@ -381,23 +400,26 @@ parametrization gives the \emph{real shift}, the twist the field itself
 would give the cylinder.
 
 \begin{definition}[Strip]
-For whole lengths $\ell$ balancing every patch, the quad mesh is, in each
-patch, the integer grid of its sides. A \emph{strip} is a maximal sequence
+For whole lengths $\ell$ balancing every patch, with every patch side
+positive and no two singular vertices at the same point, the quad mesh is,
+in each patch, the integer grid of its sides. A \emph{strip} is a maximal sequence
 of quads, each sharing with the next the edge opposite the one it shares
 with the previous.
 \end{definition}
 
 \begin{proposition}[Completeness at given lengths]\label{prop:complete}
-Let $\ell$ be whole lengths balancing every patch. Every strip of the quad
-mesh that crosses a side $\sigma$ of a patch $P$ at the quad edge
-$[k, k+1]$ of $\sigma$ is, as long as it stays in the regular region, the
-walk of Definition~1 taken \emph{with the lengths $\ell$} from $\sigma$ at
-offset $k + \tfrac12$. In particular, on a closed surface, walking from
-every half-integer of every side finds every strip of the quad mesh: the
-strips are the cycles of the walk on the half-integer stations, each
-oriented strip one cycle; by Proposition~\ref{prop:linear} a strip is a
-helix exactly when $\shift_\gamma(\ell) \neq 0$. With borders, the strips
-that reach a border are open paths of the walk.
+Let $\ell$ be whole lengths balancing every patch, with every patch side
+positive and no two singular vertices at the same point. Every strip of the
+quad mesh that crosses a side $\sigma$ of a patch $P$ at the quad edge
+$[k, k+1]$ of $\sigma$ is the walk of Definition~1 taken \emph{with the
+lengths $\ell$} from $\sigma$ at offset $k + \tfrac12$. In particular, on a
+closed surface, walking from every half-integer of every side finds every
+strip of the quad mesh: the strips are the cycles of the walk on the
+half-integer stations, each oriented strip one cycle; by
+Proposition~\ref{prop:linear}, with $\gamma$ the turn the strip follows from
+a station, the strip closes after one round exactly when
+$\shift_\gamma(\ell) = 0$. With borders, the strips that reach a border are
+open paths of the walk.
 \end{proposition}
 
 \begin{proof}
@@ -414,51 +436,46 @@ half-integer offset never meets a node, and the arc it crosses is
 determined. The strip and the walk thus continue together, patch after
 patch. A
 strip only meets singular vertices at its sides, never inside, since they
-are corners of patches; the regular region is where the grid coordinates
-of the patches glue by such maps.
+are corners of patches. Positive sides make each patch a grid with at
+least one quad in each direction, so that every station lies on a quad edge
+of the mesh.
 \end{proof}
 
 The sampled walks of Section~\ref{sec:closing} start at fixed shares of
 the real side lengths. Proposition~\ref{prop:complete} says where the
 helices of a given mesh are \emph{all} found: at the half-integers of the
-whole lengths. This suggests closing by \emph{cuts}, in the sense of
-cutting planes:
-
-\begin{enumerate}
-\item quantize; let $\ell$ be the whole lengths;
-\item walk every strip at $\ell$ (Proposition~\ref{prop:complete}); among
-  the ways round that come back, select those meant to be rings;
-\item add their shift expressions to the closing constraints, keeping those
-  already closed, as long as the bounds of separation allow it;
-\item solve again in whole numbers; repeat until no selected way is a
-  helix.
-\end{enumerate}
-
-\begin{remark}
-A turn round a part of the shape whose real shift is far from zero is not a
-rounding artefact: the field winds round the part. We only hold turns whose
-real shift is a small share of their length, the \emph{lean}; a turn round
-a group of singularities, by contrast, may legitimately come back shifted.
-\end{remark}
+whole lengths. The engine uses this to close by cuts
+(Section~\ref{sec:closing}).
 
 \section{Closing turns in quantization}\label{sec:closing}
 
-The quantizer of openclare minimizes, as in~\cite{heistermann2023bimdf}, a
-weighted deviation $\sum_a w_a\,|\ell_a - \lambda\, r_a|$ of the integer
-lengths from the scaled real lengths $\lambda r_a$, subject to the balance of
-each patch, by cancelling improving walks in a strip network; the scale
-$\lambda$ is searched for the number of quads asked for, and arcs that would
-merge two singularities are held open. Closing turns is a side constraint
-that is not a flow constraint. We handle it in three steps.
+This section describes the engine at commit \texttt{\enginecommit}
+(\texttt{crates/openclare/src/quantization/}). Some experiments of later
+sections used earlier versions; each says which.
+
+The quantizer of openclare minimizes a separable convex cost of the integer
+lengths, in the minimum-deviation-flow formulation
+of~\cite{heistermann2023bimdf}, subject to the balance of each patch, by
+cancelling improving walks in a strip network (a simpler solver than their
+matching-based one). The cost of arc $a$ is $w_a(\ell_a - \lambda r_a)^2$ with
+$w_a = 1/(\lambda r_a + 1)$, plus a term that draws a vertex onto each fold
+of the surface the arc crosses, and a penalty for going below a lower bound;
+the real lengths $r_a$ carry a fixed per-arc perturbation of at most
+$0.5\%$, so that arcs of equal length do not all change at the same scale.
+The scale $\lambda$ is searched for the number of quads asked for, and arcs
+whose zero length would break the structure of the mesh are held at length
+at least one. Closing turns is a side constraint that is not a flow
+constraint. We handle it in four steps.
 
 \paragraph{Finding turns.}
 From points at given shares along each side of each patch, we walk straight
 across patches and keep the walks that return. A turn is \emph{held} if its
-real shift is above a small threshold and its lean below a bound, and if
-its length is below a multiple of the side of the T-mesh (the side of a
-square of its area). Several \emph{ways} are tried: starting shares
-$\{0.5\}$ or $\{0.2, 0.5, 0.8\}$, lean bounds $0.05$ or $0.12$, length
-bounds $2$ or $6$ sides.
+real shift is above $0.05$ and its lean below a bound, and if its length is
+below a multiple of the side of the T-mesh (the side of a square of its
+area). Two turns with the same shift expression up to sign are one ring and
+held once. Eight \emph{ways} are tried: starting shares $\{0.5\}$ or $\{0.2,
+0.5, 0.8\}$, lean bounds $0.05$ or $0.12$, length bounds $2$ or $6$ sides; a
+way that holds the same turns as an earlier one is skipped.
 
 \paragraph{Least-change projection.}
 The target lengths are changed as little as possible, in the weighted least
@@ -468,9 +485,11 @@ stay balanced:
   \min_{x}\ \sum_a \frac{(x_a - r_a)^2}{w_a}
   \quad\text{s.t.}\quad A x = 0,\quad \shift_\gamma(x) = 0\ \ \forall\gamma\in H,
 \]
-solved by a sparse Cholesky factorization of $A W^{-1} A^\top$. If the
-system cannot be met, the held turn left with the largest shift is let go
-and the projection repeated.
+solved with a sparse Cholesky factorization of the balances, computed once
+per quantization, and a small dense Schur complement for the turns. Arcs the
+solution would make negative are held at zero and the system solved again
+(an active set). If the system cannot be met, the held turn left with the
+largest shift is let go and the projection repeated.
 
 \paragraph{Integer search and repair.}
 The integer search of the quantizer runs on the projected targets. Rounding
@@ -480,16 +499,47 @@ turns, and accepted if it reduces the total shift, costs little in
 deviation, keeps the structure intact and the number of quads within
 tolerance. A second, \emph{aimed} repair treats each held turn still shifted
 on its own: the bias is put on its arcs alone, and a walk is accepted if it
-shifts that turn less and the others no more.
+shifts that turn less and the others no more. On the pieces that are closed
+spheres, walks that cannot close a turn by the parity of
+Corollary~\ref{cor:parity}(c) are turned down without being judged, and a
+turn whose shift is a non-negative form already at its least
+(Remark~\ref{rem:definite}) is not aimed at; the engine also checks, in its
+debug builds, the integer coefficients of the shifts, the handshake of
+Lemma~\ref{lem:handshake} and the parity of Proposition~\ref{prop:parity}.
+
+\paragraph{Closing by cuts.}
+Proposition~\ref{prop:complete} says where the strips of a given mesh are
+\emph{all} found: at the half-integers of the whole lengths. After a way
+whose lengths are admissible (within the budget and the deviation cap
+below), up to three rounds follow, in the sense of cutting planes: every
+strip of the whole lengths is walked (up to $6$ times the side of the mesh),
+those that come back shifted although the real lengths bring them back
+within $0.12$ of their length are held as well, and the projection and the
+integer search are run again from the lengths of the round before. In these
+rounds the projection does not use the active set and the repair is not
+aimed. Each round gives one more candidate.
 
 \paragraph{Selection and safeguards.}
-Each way gives a quantization. Its quad mesh connectivity is built and the
-share of edges on spiral loops measured (Section~\ref{sec:measure}); the
-way with the fewest spirals is kept, provided its number of quads is within
-tolerance and its mean deviation from the real lengths at most $1.5$ times
-that of the plain search. The ways are independent and run in parallel.
-After meshing, if the kept quantization makes a face fold over the surface,
-the plain quantization is meshed as well and the mesh with fewer folds kept.
+For every candidate, the quad mesh connectivity is built and the share of
+edges on spiral loops measured (Section~\ref{sec:measure}). A candidate is
+kept if it spirals less than the plain search (without closing), its number
+of quads is within the tolerance (or no further from the budget than that of
+the plain search), its mean deviation from the real lengths
+is at most $\max(1.5\,d_0,\ d_0 + 0.2)$ with $d_0$ that of the plain search,
+and it leaves the vertices no further from the folds of the surface than the
+plain search did, by more than chance would. The three with the fewest
+spirals are kept, in that order, then the plain lengths. The ways are
+independent and run in parallel. After meshing, if the first candidate
+makes a face fold over the surface, the others are meshed in turn until one
+does not, and the mesh with the fewest folds, then the fewest spirals, is
+kept.
+
+\begin{remark}
+A turn round a part of the shape whose real shift is far from zero is not a
+rounding artefact: the field winds round the part. We only hold turns whose
+real shift is a small share of their length, the \emph{lean}; a turn round
+a group of singularities, by contrast, may legitimately come back shifted.
+\end{remark}
 
 \section{Measuring loops}\label{sec:measure}
 
@@ -565,12 +615,23 @@ eight poles of valence three, six patches, no spiral.
 \section{An exact look at the closing system}\label{sec:exact}
 
 To see how far the projection of Section~\ref{sec:closing} is from what
-the constraints allow, openclare exports, for each way of finding turns,
-the system it works on: the real lengths of the 2{,}069 arcs of the T-mesh
+the constraints allow, an experimental hook of openclare (branch
+\texttt{rd-exact}, on an engine before the cut rounds and the floor of the
+deviation cap of Section~\ref{sec:closing}: commit \texttt{3b3122d} and later
+are not in it) exports, for each way of finding turns, the system it works
+on: the real lengths of the 2{,}069 arcs of the T-mesh
 of the male body at 10{,}590 quads, the 1{,}552 balance equations of its
 patches, every turn found with its shift, and the lower bounds the integer
-search placed on arcs to keep singularities apart (30 to 36 arcs held at
-length one). We solve it with HiGHS through SciPy, in real numbers. The ways
+search placed on arcs to keep singularities apart (28 to 36 arcs held at
+length one). These bounds are the engine's choice of \emph{which} arc of a
+chain between two singular vertices carries their separation: validity asks
+a chain to keep a positive total length, not a given arc. Every statement
+below that uses them is relative to them; we call them the \emph{engine's
+bounds of separation}, and $P_{\mathrm{eng}}$ the balanced lengths that meet
+them. $P_{\mathrm{eng}}$ is neither a subset nor a superset of the valid
+quantizations: it excludes valid lengths that put the separation on another
+arc of the chain, and it allows lengths that bring other arcs to zero and
+break the mesh. We solve it with HiGHS through SciPy, in real numbers. The ways
 are numbered as exported: way $m + 2j + 4i$ starts from the shares $\{0.5\}$
 ($m = 0$) or $\{0.2, 0.5, 0.8\}$ ($m = 1$), with the lean bound $0.05$
 ($j = 0$) or $0.12$ ($j = 1$) and the length bound $2$ ($i = 0$) or $6$
@@ -584,40 +645,43 @@ round the left wrist, of length $7.0$, whose shift is a sign-definite form
 in two arc lengths (Section~\ref{sec:obstructions},
 Remark~\ref{rem:definite}). Giving up the least total amount of the bounds
 needed to close all held turns, a linear program, shows that in ways 0, 2
-and 4 a \emph{single} arc must collapse, the arc of that wrist turn, $0.08$
-quad edges long; in way 6 a single other arc, at a foot; ways 1 and 3 need
-9 and 11 arcs, round the eyes and the hands, and ways 5 and 7, which hold
-the most turns, 22 and 30, most of them at the feet. The conflict between
-closing loops and keeping singularities apart is thus real, but local.
+and 4 the bound of a \emph{single} arc stands in the way, the arc of that
+wrist turn, $0.08$ quad edges long; Section~\ref{sec:forced} shows that in
+ways 0, 2, 4 and 6 letting go of a single turn is enough, and in the others
+of four to nine (Table~\ref{tab:forced}). The conflict between closing loops
+and keeping singularities apart is thus real, but local.
 
 \paragraph{How far the heuristic is.}
 With every bound kept, the largest set of held turns that can be closed
 together is found by a mixed-integer program with one binary per turn
-(Table~\ref{tab:exact}). The projection keeps far fewer: it removes, one at
-a time, the turn left most shifted by a least-squares projection whose
-negative lengths are clamped to zero, and a single clamped arc can make it
-drop dozens of turns that conflict with nothing.
+(Table~\ref{tab:exact}). The projection of the engine of the export keeps
+far fewer: it removed, one at a time, the turn left most shifted by a
+least-squares projection whose negative lengths were clamped to zero, and a
+single clamped arc could make it drop dozens of turns that conflict with
+nothing. The engine at the cited commit holds such arcs at zero instead (the
+active set of Section~\ref{sec:closing}), the variant tested in
+Table~\ref{tab:rounding}.
 
 \begin{table}[h]
 \centering
-\begin{tabular}{lrrrr}
+\begin{tabular}{lrrr}
 \toprule
-way & held & kept by the projection & closable together & arcs to collapse \\
+way & held & kept by the projection & closable together \\
 \midrule
-0 & 48 & 42 & 47 & 1 \\
-1 & 78 & 46 & 73 & 9 \\
-2 & 52 & 46 & 51 & 1 \\
-3 & 86 & 47 & 82 & 11 \\
-4 & 84 & 49 & 83 & 1 \\
-5 & 160 & 48 & 154 & 22 \\
-6 & 88 & 53 & 87 & 1 \\
-7 & 169 & 49 & 160 & 30 \\
+0 & 48 & 42 & 47 \\
+1 & 78 & 46 & 73 \\
+2 & 52 & 46 & 51 \\
+3 & 86 & 47 & 82 \\
+4 & 84 & 49 & 83 \\
+5 & 160 & 48 & 154 \\
+6 & 88 & 53 & 87 \\
+7 & 169 & 49 & 160 \\
 \bottomrule
 \end{tabular}
-\caption{Male body at 10{,}590 quads, real numbers. ``Closable together'':
-the largest set of held turns closable with every bound of separation kept;
-``arcs to collapse'': the arcs whose bound must be given up to close all
-held turns, for the least total amount given up.}
+\caption{Male body at 10{,}590 quads, real numbers, engine of the export.
+``Kept by the projection'': by the clamped projection of that engine;
+``closable together'': the largest set of held turns closable with every
+bound of separation kept.}
 \label{tab:exact}
 \end{table}
 
@@ -635,7 +699,7 @@ and the variants with the fewest spirals are refused by the deviation cap.
 A projection that holds lengths at a floor instead of clamping them (an
 active-set method on the same Cholesky solver) keeps every held turn closed
 in real numbers; yet after the integer search 117 of 169 are shifted again,
-and the mesh spirals more. With the current projection, too, about 40\% of
+and the mesh spirals more. With the clamped projection, too, about 40\% of
 the turns it kept are shifted after the integer search. The bottleneck is
 not the projection but the rounding: the integer search follows the targets
 but ignores the shifts.
@@ -647,14 +711,17 @@ but ignores the shifts.
 \toprule
 targets of the integer search & turns closed in reals & still shifted after & spiral edges (mesh) \\
 \midrule
-projection, clamped (current) & about 50 & 10--23 of them & 1.1\% \\
+projection, clamped & about 50 & 10--23 of them & 1.1\% \\
 linear program, $L^1$ & up to 160 & --- & 11.9\% \\
 active set, floor 0 & all held (up to 169) & 117 of 169 & 3.3\% \\
 active set, floor half the real length & 36--72 & --- & 9.8\% \\
 \bottomrule
 \end{tabular}
-\caption{Male body at 10{,}590 quads, one run each; the mesh keeps the way
-with the fewest spirals, so its share is that of a single way.}
+\caption{Male body at 10{,}590 quads, engine of the export, one run each;
+the mesh keeps the way with the fewest spirals, so its share is that of a
+single way. The engine at the cited commit uses the active set with floor $0$
+for the turns of each way, together with the cut rounds and the floor of the
+deviation cap, which this table does not include.}
 \label{tab:rounding}
 \end{table}
 
@@ -1833,7 +1900,9 @@ reading of a certificate is intrinsic, and turns every arc into a local
 dislocation.
 
 \paragraph{Feet and combs.}
-On a closed surface every trace of the T-mesh starts at a singular vertex. For
+In the T-meshes of openclare, traced from the separatrices of the singular
+vertices only, every trace of a closed surface starts at a singular vertex
+(feature lines or seeded traces would break this; we assume it below). For
 an arc $a$, along the direction $e_a$ from the node $n_0$ to the node $n_1$,
 call \emph{foot} of $n_j$ the node itself if it is singular, and otherwise the
 singular vertex where the trace through $n_j$ perpendicular to $a$ starts. The
@@ -1881,49 +1950,78 @@ separatrix, a walk of length two between a vertex of valence three and one of
 valence five the staircase of Proposition~\ref{prop:staircase}, and a walk
 round four vertices of valence three a cap.
 
-\begin{theorem}[Conflicts are sums of combs]\label{thm:combs}
+\begin{proposition}[Certificates are sums of combs]\label{thm:combs}
 Let $c = \sum_a c_a\ell_a$, $c_a \in \Z_{\ge0}$, be a certificate
 (Remark~\ref{rem:definite}) whose arcs have feet of odd valence and whose odd
 part, the arcs with $c_a$ odd, is a cycle modulo~$2$ of the graph of feet.
-Then $c$ is a sum with whole non-negative weights of comb readings $2\ell_a$
-and readings of closed walks of combs, each the Burgers form of a twisted
-cycle supported near its combs. With real weights, every non-negative form is
-such a sum, without condition of parity.
-\end{theorem}
+Then $c$ is a sum with whole non-negative weights of comb readings $2\ell_a$,
+each the form of a dislocation or an exchange (Lemma~\ref{lem:comb}), and of
+readings of closed walks of combs. With real weights, every non-negative form
+supported on arcs whose two feet are of odd valence, distinct or equal, is a
+non-negative combination of comb readings $2\ell_a$ and of winding
+separatrices $\ell_a$, without condition of parity.
+\end{proposition}
 
 \begin{proof}
 The odd part, a cycle modulo $2$, splits into closed walks along its edges
 (Veblen); what remains is $\sum_a k_a\,2\ell_a$ with $k_a = \lfloor c_a/2
-\rfloor$. Along a closed walk, Lemma~\ref{lem:comb} and a summation by parts
-write the reading as $\sum_i \langle e_{a_i} - e_{a_{i+1}},\ p_{c_i}\rangle$;
-two unit vectors differ by an element of $L$, the image of $(I -
-R_{c_i})^\top$, so each term is $\langle W_i, (I - R_{c_i})p_{c_i}\rangle$ with
-$W_i$ whole, a twisted winding round $c_i$. With real weights,
-$c = \sum_a \tfrac{c_a}{2}\,(2\ell_a)$.
+\rfloor$. With real weights, $c = \sum_a \tfrac{c_a}{2}\,(2\ell_a)$ on the
+arcs with two distinct feet, and $c_a\,\ell_a$, a walk of length one, on the
+arcs whose two feet are one vertex.
 \end{proof}
 
+\begin{remark}[Closed walks as twisted cycles]
+We expect the reading of a closed walk of combs to be the Burgers form of a
+twisted cycle supported near its combs: by Lemma~\ref{lem:comb} and a
+summation by parts the reading is $\sum_i \langle e_{a_i} - e_{a_{i+1}},\
+p_{c_i}\rangle$, and two unit vectors differ by an element of the image of
+$(I - R_{c_i})^\top$. But each $p_{c_i}$ of Lemma~\ref{lem:comb} is developed
+along its own comb, and the two combs through $c_i$ develop it in charts that
+differ by the rotation of the sector between them; a proof must develop the
+whole walk in one chart, insert these rotations, and account for the
+holonomy of the loop of the walk at its closing. We have not written it, and
+we use closed walks below only as forms in the lengths.
+\end{remark}
+
 \begin{proposition}[The Burgers pairing]\label{prop:pairing}
-On a closed surface, the map that sends a class of the twisted homology
+Let the surface be closed of genus zero, with no singular vertex of valence
+divisible by four, and let every trace of the T-mesh start at a singular
+vertex. Then the map that sends a class of the twisted homology
 $H_1(\Sigma^\circ; \R^2_\rho)$ to its form $\sum_i \langle W_i, (I - R_i)p_i
 \rangle$ on the balanced lengths is onto the dual of the balanced lengths. Its
-kernel contains the class across each separatrix connection.
+kernel contains the class across each separatrix connection. If some
+singular vertices have valence divisible by four, no form depends on their
+developed positions, and the map need not be onto.
 \end{proposition}
 
 \begin{proof}
 If every such form vanishes at balanced lengths $\ell$, every loop of
 $\Sigma^\circ$ with trivial rotation has a holonomy without translation, since
 the components of its translation are such forms
-(Proposition~\ref{prop:fox}). The loops $\lambda_i\lambda_j^{\pm1}$ of two
-vertices of odd valence and the commutators of
-Proposition~\ref{prop:commutator} then give $(I - R_j)(p_i - p_j) = 0$, so
-every singular vertex develops at one point $q$; every $\rho_i$ fixes $q$,
-hence so does every holonomy, and developed along any path every singular
-vertex lands at $q$. Every comb offset of Lemma~\ref{lem:comb} is then zero,
-and $\ell = 0$. Across a connection,
-a separatrix joins two singular vertices, whose separation along it is the
-length of the connection in the direction of the trace and zero across; the
-twisted class pairing the across direction with it has the zero form.
+(Proposition~\ref{prop:fox}). For two singular vertices $a$, $b$, the
+commutator of $\lambda_a$ and $\lambda_b$ has trivial rotation, the rotations
+commuting, and by the computation of Proposition~\ref{prop:commutator} its
+translation is $(I - R_a)(I - R_b)(p_a - p_b)$. No $R_i$ is the identity, so
+$I - R_i$ is invertible ($I - R^{\pm1}$ is $\sqrt2$ times a rotation, $I - R^2
+= 2I$), and $p_a = p_b$: every singular vertex develops at one point $q$.
+Every $\rho_i$ fixes $q$; on a closed sphere the $\lambda_i$ generate the
+fundamental group of $\Sigma^\circ$, so every holonomy fixes $q$, and
+developed along any path every singular vertex lands at $q$. Every arc has
+feet, since every trace starts at a singular vertex, so every comb offset of
+Lemma~\ref{lem:comb} is zero, and $\ell = 0$. The image of the map is thus a
+subspace of the dual with no common zero but $0$: the whole dual. Across a
+connection, a separatrix joins two singular vertices, whose separation along
+it is the length of the connection in the direction of the trace and zero
+across; the twisted class pairing the across direction with it has the zero
+form. A vertex of valence divisible by four has $R_i = I$, so $(I - R_i)p_i =
+0$ and no form depends on $p_i$: its developed position is a relative period,
+which deformations of the lengths can move without changing the holonomy of
+any loop of $\Sigma^\circ$.
 \end{proof}
+
+The pairing is the T-mesh form of a classical fact: the developed positions
+of the cone points are local coordinates of flat cone metrics, as twisted
+(co)homology classes~\cite{thurston1998shapes,veech1993flat}.
 
 \paragraph{Measured on the male body.}
 The T-mesh has $1{,}035$ traces; $1{,}034$ end at T-junctions and one is a
@@ -1934,10 +2032,11 @@ $905$ of valences five and five), $14$ have a single foot of valence five,
 and $9$ meet the vertex of valence two. Nearly every arc is thus a local
 dislocation or exchange. The twisted homology has dimension $518 = 2(n - 2)$, the pairing
 has rank $517$, the dimension of the balanced lengths, and its kernel is the
-class across the connection; we conjecture that in general the kernel is
-spanned by the classes across the connections. All $25$ certificates of the
+class across the connection; we conjecture that on a closed sphere without
+singular vertex of valence divisible by four the kernel is spanned by the
+classes across the connections. All $25$ certificates of the
 conflicts examined have a representative, modulo the balances, whose odd part
-is a cycle of the graph of feet (exact), so Theorem~\ref{thm:combs} applies
+is a cycle of the graph of feet (exact), so Proposition~\ref{thm:combs} applies
 to all of them. The wrist certificate is, modulo the balances, the reading
 $\ell_{1902}$ of a comb whose two feet are the vertex $246$: the winding
 separatrix. Configuration~A is a closed walk of two combs between $76$ and
@@ -1956,12 +2055,13 @@ a walk of four combs through $0$, $17$, $18$ and $20$ (measured).
 
 \paragraph{Conjecture~\ref{conj:local}, read loosely, is true and empty.}
 Allowing every local dislocation and exchange, that is every comb reading
-$2\ell_a$ and every closed walk of combs, Theorem~\ref{thm:combs} proves the
+$2\ell_a$ and every closed walk of combs, Proposition~\ref{thm:combs} proves the
 conjecture for every certificate whose odd part is a cycle of the graph of
 feet, which is all those of the male body. But it follows from Farkas' lemma
-and a parity: nearly every arc is a comb, so every non-negative form is a sum
-of local dislocations, and the conjecture in this reading says nothing about
-which configurations of singularities conflict.
+and a parity: nearly every arc is a comb, so every non-negative form on arcs
+whose feet are of odd valence is a sum of local dislocations, and the
+conjecture in this reading says nothing about which configurations of
+singularities conflict.
 
 \paragraph{Read strictly, it is false.}
 Restricted to staircases of weight one between vertices of odd valence,
@@ -1970,7 +2070,10 @@ draft meant it, the certificates of configurations E and F are not
 non-negative combinations modulo the balances: exact rational balanced
 lengths make every such form non-negative and the certificate negative,
 $-2.9967$ for E and $-1.9973$ for F (measured, checked in integer
-arithmetic). The same test in floating point separates the set of four turns
+arithmetic). These forms are infinitely many, but each is the length of a
+walk on a graph whose steps carry the arc lengths, so a negative one, if any,
+is a negative cycle or path, which a shortest-path search finds: the
+separation covers them all. The same test in floating point separates the set of four turns
 at the eyes (optimum $-2$, over $3{,}146$ generators; not checked exactly)
 and finds the left hand inside the cone; the sets of seven and fifteen were
 not tested. The test is membership of the certificate in the cone of these
@@ -2253,9 +2356,9 @@ bound).
 
 \paragraph{Exact whole lengths.}
 Closing exactly, in whole numbers, the turns found closable together with
-the bounds kept is feasible: HiGHS solves it in about two minutes for
-three of the four ways tried (the fourth, with 87 turns, runs out of ten
-minutes). The solutions leave 1 to 4 held turns shifted where the engine
+the bounds kept is feasible: HiGHS solves it in about two minutes a way for
+three of the four ways tried (the fourth, with 87 turns, did not finish
+within ten minutes). The solutions leave 1 to 4 held turns shifted where the engine
 leaves 13 to 44, and fewer of the turns not held as well (5 against 9, 5
 against 11, 0 against 27), at a deviation from the real lengths 4\% to 62\%
 higher. Yet the quad meshes they make spiral \emph{more}: 12.2\% of their
@@ -2263,21 +2366,16 @@ edges against 8.8\% for the first way, 3.7\% against 1.1\% for the second,
 and the third breaks the structure. Most of the loops that spiral are thus
 not turns our search finds: closing every turn it finds is not enough.
 
-\paragraph{Closing by cuts.}
-Walking every strip of the mesh the engine makes
-(Proposition~\ref{prop:complete}) finds about 220 ways round per way of
-closing; each strip is found twice, once in each direction, with opposite
-shift expressions (the surface being oriented). Of these, 12 to 24 come back shifted although the field
-itself shifts them by less than half a row: the sampled walks of
-Section~\ref{sec:closing} had found only 4 to 10 of those, and held 1 to 5.
-A first selection of rings by that criterion (the field's shift under half
-a row) proved too narrow: the twisted thigh, shifted 1.65 rows a turn by the
-field, is a ring a modeller wants closed. Closing those rings by cuts
-converges (12, then 14, then 6 shifted over three rounds) but leaves the
-others free, and the mesh spirals more than with the engine (18\% of the
-edges of way 2 against 1.1\%). Selecting rings by their lean instead, as
-the engine does, gives 222 of the 230 ways round of way 2; 218 of them (109
-strips) can be closed together in real numbers with every bound of
+\paragraph{All the strips of a mesh.}
+Walking every strip of the mesh the engine of the export makes for way~2
+(Proposition~\ref{prop:complete}) finds 230 ways round; each strip is found
+twice, once in each direction, with opposite shift expressions (the surface
+being oriented), and 168 of them come back shifted. A selection of rings by
+the field's shift alone (under half a row) is too narrow: the twisted thigh,
+shifted 1.65 rows a turn by the field, is a ring a modeller wants closed.
+Selecting rings by their lean, as the cut rounds of the engine now do
+(Section~\ref{sec:closing}), gives 222 of the 230 ways round; 218 of them
+(109 strips) can be closed together in real numbers with every bound of
 separation kept. Posed directly, HiGHS found no whole solution within ten
 minutes, nor in a later run of thirty. The rest of this section explains why, and what that set of rings
 really costs.
@@ -2396,11 +2494,12 @@ $|\ell_a - \lambda r_a|$, a linear program shows that no real lengths closing
 the 218 rings have a mean deviation below $0.817$, nor, after dropping 7
 strips (14 ways round) so that every arc with a target of at least $1.5$
 stays open, below $0.758$; balanced lengths without rings reach $0.085$. A
-lower bound in real numbers holds for whole numbers too. The engine refuses
-quantizations whose deviation exceeds $1.5$ times that of the plain search,
-$1.5 \times 0.316 = 0.474$. So the 218 rings cannot close at the size asked
-for within the engine's tolerance, whatever the rounding: the obstruction is
-in the reals.
+lower bound in real numbers holds for whole numbers too. The engine version
+that made the export refused quantizations whose deviation exceeded $1.5$
+times that of the plain search, $1.5 \times 0.316 = 0.474$; the engine at
+the cited commit allows $\max(1.5 \times 0.316,\ 0.316 + 0.2) = 0.516$. Either
+way the 218 rings cannot close at the size asked for within the engine's
+tolerance, whatever the rounding: the obstruction is in the reals.
 
 \paragraph{The 190 rings that fit.}
 A subset of 190 of the 218 ways round (chosen greedily, so 190 is only a
@@ -2439,18 +2538,22 @@ it is the choice of the turns to
 close, at the lengths where they are the strips of the mesh, that decides how
 much the mesh spirals.
 
-\section{Helices that every quantization keeps}\label{sec:forced}
+\section{Turns that every quantization within the bounds leaves shifted}\label{sec:forced}
 
 The obstructions of Section~\ref{sec:obstructions} say that a set of turns
 cannot close together. Turned around, they bound from below the number of
-helices that any quantization must leave, and so tell how far a heuristic such
-as the one of Section~\ref{sec:closing} is from the best possible. We are not
-aware of an earlier lower bound of this kind (Section~\ref{sec:related}).
+turns of a given family that any quantization in a set $P$ of lengths leaves
+shifted, and so tell how far a heuristic such as the one of
+Section~\ref{sec:closing} is from the best possible within $P$. On the male
+body, $P$ is defined by the engine's bounds of separation
+(Section~\ref{sec:exact}), so the measured bounds are relative to them, not
+to the singularity configuration alone. We are not aware of an earlier lower
+bound of this kind for helices (Section~\ref{sec:related}).
 
-\begin{theorem}[Forced helices]\label{thm:forced}
+\begin{theorem}[Forced shifts]\label{thm:forced}
 Let $H$ be a finite set of turns of a T-mesh and $P$ a non-empty set of
 lengths containing every quantization considered: for instance the balanced
-lengths meeting the bounds of separation, $\ell \ge b$, possibly with a cap
+lengths meeting given bounds of separation, $\ell \ge b$, possibly with a cap
 $\frac1n \sum_a |\ell_a - t_a| \le D$ on the mean deviation from the targets
 $t$, or with a given number of quads. Let
 \[
@@ -2474,8 +2577,11 @@ The theorem is elementary; its content is in what makes subsets infeasible,
 which Section~\ref{sec:obstructions} relates to the singularities. The proof
 uses neither convexity, nor linearity of the shifts, nor whole lengths;
 convexity is what lets $\tau_P(H)$ be bounded by linear programs, as below.
-An earlier draft asked $P$ to be convex. The bounds
-of separation are what make the shifts of a dislocation non-zero, and the
+In the language of linear feasibility, the minimal non-closable sets are
+irreducible infeasible subsystems (IIS) and $\tau_P(H)$ is a minimum IIS
+cover~\cite{parker1996iis,amaldi2003maxfs}; the theorem is the packing bound
+of that covering problem, applied to the shifts of turns. The bounds of
+separation are what make the shifts of a dislocation non-zero, and the
 statement becomes one about parallel rings.
 
 \begin{corollary}[Chains of dislocations]\label{cor:chain}
@@ -2529,9 +2635,11 @@ compared below with the turns the engine leaves shifted.
 
 \paragraph{The bound is a transversal number.}
 The least number of turns left shifted is a covering number of the minimal
-conflicting sets, and it is attained.
+conflicting sets, and it is attained. This is the standard correspondence
+between minimum IIS covers and maximum feasible
+subsystems~\cite{amaldi2003maxfs,parker1996iis}, stated here for turns.
 
-\begin{theorem}[Forced helices as a transversal number]\label{thm:transversal}
+\begin{theorem}[Forced shifts as a transversal number; standard]\label{thm:transversal}
 Call $Y \subseteq H$ \emph{closable} in $P$ if some $\ell \in P$ has
 $\shift_\gamma(\ell) = 0$ for all $\gamma \in Y$, and a \emph{core} a set that
 is not closable while all its proper subsets are. For any $P$:
@@ -2555,19 +2663,24 @@ Part (iv) is immediate.
 So $\tau_P(H)$ lies between the largest number of disjoint cores, the lower
 bound of Theorem~\ref{thm:forced}, and the least hitting set of the cores
 found so far, which is exact as soon as its complement is closable: an
-\emph{implicit hitting-set} loop alternates the two.
+\emph{implicit hitting-set} loop alternates the two. It is the algorithm of
+Parker and Ryan~\cite{parker1996iis}, an instance of the implicit
+hitting-set approach~\cite{morenocenteno2013implicit}; we find cores by the
+deletion filter of Chinneck and Dravnieks~\cite{chinneck1991locating}.
 
 \begin{proposition}[Whole lengths and size without a cap]\label{prop:whole-size}
 If $P$ is given by the balances and bounds $\ell \ge b \ge 0$, a set closable
 in real lengths is closable in whole lengths, and closable in real lengths at
-any number of quads at least $\inf_{P_Y} Q$, where $P_Y$ is the set of lengths of $P$ closing
+any number of quads greater than $\inf_{P_Y} Q$, and at $\inf_{P_Y} Q$ itself
+when the infimum is attained, where $P_Y$ is the set of lengths of $P$ closing
 $Y$ and $Q(\ell)$ the number of quads.
 \end{proposition}
 
 \begin{proof}
 Scale a rational point of $P_Y$ by its denominator
-(Remark~\ref{rem:exist}). For $c \ge 1$, $c\ell \in P_Y$ and $Q(c\ell) =
-c^2 Q(\ell)$, a continuous function of $c$.
+(Remark~\ref{rem:exist}). For a number of quads $q$, take $\ell \in P_Y$
+with $0 < Q(\ell) \le q$; for $c \ge 1$, $c\ell \in P_Y$ and $Q(c\ell) =
+c^2 Q(\ell)$, a continuous function of $c$ that reaches $q$.
 \end{proof}
 
 With a cap on the deviation, $P_Y$ is a polytope and $Q(P_Y)$ an interval,
@@ -2585,8 +2698,9 @@ of closing several turns are not additive (measured).
 \paragraph{Measured on the male body.}
 For each way of Section~\ref{sec:exact} we took for $H$ its held turns, each
 up to sign once, and for $P$ the balanced lengths meeting the bounds of
-separation; then also the cap $D = 0.474$ on the mean deviation, the
-engine's own ($1.5$ times the $0.316$ of its plain search), with the targets
+separation; then also the cap $D = 0.474$ on the mean deviation, that of
+the engine version that made the export ($1.5$ times the $0.316$ of its
+plain search; the engine at the cited commit allows $0.516$), with the targets
 of that way; then also whole lengths and the engine's window of sizes, from
 $10{,}379$ to $10{,}801$ quads, with $Q$ counted exactly as the sum over the
 patches of the products of their sides. We also took for $H$ the strips of
@@ -2622,7 +2736,8 @@ way & turns & bounds & bounds, cap & cap, size, whole & left shifted by the engi
 \end{tabular}
 \caption{Male body at 10{,}590 quads: turns of each family that every
 quantization in $P$ leaves shifted (Theorems~\ref{thm:forced}
-and~\ref{thm:transversal}), with $P$ given by the bounds of separation, then
+and~\ref{thm:transversal}), with $P$ given by the engine's bounds of
+separation (Section~\ref{sec:exact}), then
 also by the engine's cap on the mean deviation (real lengths), then also by
 whole lengths and the engine's window of sizes. A single number is exact; a
 range is certified: the solver's proven bound or the disjoint cores below, a
@@ -2634,20 +2749,20 @@ strip.}
 \label{tab:forced}
 \end{table}
 
-With the bounds alone, the forced helices are few and exactly known: $1$, $5$,
+With the engine's bounds alone, the forced turns are few and exactly known: $1$, $5$,
 $1$, $4$, $1$, $6$, $1$ and $9$ held turns in ways 0 to 7, and $2$ strips. In
 ways 0, 2, 4 and 6 the one forced turn is the turn round the left wrist of
 Section~\ref{sec:conflicts}; in the other ways the cores are the irreducible
 sets of Table~\ref{tab:iis} and their like, and in way~7 nine turns are needed
 although no more than eight of its $21$ cores are disjoint, so the packing
-bound of Theorem~\ref{thm:forced} is not always attained. An earlier version of
-this table gave $8$ to $9$ for way~7, from the packing alone. By
+bound of Theorem~\ref{thm:forced} is not always attained. By
 Theorem~\ref{thm:transversal}(iii) each value is the number of turns left
 shifted by some lengths in $P$. Of the $111$ strips of the engine's own mesh
-that lean like rings, $2$ must be helices, one of them round the wrist; the
-engine leaves $81$ shifted, and the measure of Section~\ref{sec:measure}
-counts on that mesh $1.1\%$ of spiral edges ($1.15\%$ to $1.59\%$, in $8$ to
-$9$ spiral loops, over recent runs of the engine).
+that lean like rings, $2$ must stay shifted within $P$, one of them round the
+wrist; the engine leaves $81$ shifted, and the measure of
+Section~\ref{sec:measure} counts on that mesh $1.1\%$ of spiral edges (a
+single run of the engine version that made the export; later versions give
+$1.15\%$ to $1.59\%$, in $8$ to $9$ spiral loops).
 
 With the engine's cap and its window, at whole lengths, the exact value is
 still $1$ in ways 0 and 2, against $13$ and $16$ left shifted by the engine:
@@ -2665,15 +2780,15 @@ arcs to zero can break the mesh (one made $9{,}426$ quads with $90$ inverted
 faces). Keeping open every arc the engine keeps open gives a \emph{sound}
 subset of $P$, and upper bounds.
 
-\paragraph{Where the helices come from.}
+\paragraph{Where the shifted turns come from.}
 For the held turns of way~2 the gap between the engine and the optimum splits
-exactly: of the $16$ turns the engine leaves shifted, the singular
-configuration forces $1$, the cap $0$ more, the size $0$, whole lengths $0$,
+exactly: of the $16$ turns the engine leaves shifted, its bounds of
+separation force $1$, the cap $0$ more, the size $0$, whole lengths $0$,
 and the heuristic $15$; in the sound subset the optimum is $4$, the
 heuristic's share $12$. In the other ways the heuristic leaves at least $12$,
 $33$, $26$, $37$, $29$, $27$ and $33$ turns more than the best lengths found
 (ways 0, 1 and 3 to 7). On the strips of the mesh the engine keeps, the
-singular configuration forces $2$ helices, the cap between $1$ and $9$ more in
+bounds of separation force $2$ shifted strips, the cap between $1$ and $9$ more in
 real lengths, the size at most $2$ more (not certified); integrality is not
 resolved (between $0$ and $32$ more). A local search over whole lengths within
 the same cap and size closes $38$ more strips than the engine ($43$ shifted, at
@@ -2727,8 +2842,10 @@ bounds $d_e, d'_e \ge 1$ and $y \ge 0$, and for each vertex $u$ the form
 $\shift_u = \sum_{e \ni u} y_{u,e}$. With $y \ge 0$, $\shift_u = 0$ forces
 $y_{u,e} = 0$ on every edge at $u$. If two adjacent vertices $u$, $v$ are
 closed, the edge $uv$ gets $d_e = y_{u,e} + y_{v,e} = 0 < 1$. Conversely, for
-an independent set $Y$, put on each edge $y = 0$ on the side of $Y$, if any,
-$1$ on the other side, and $d_e = d'_e = 1$: whole lengths in $P$ closing $Y$.
+an independent set $Y$, every edge has at most one end in $Y$: put $y = 0$ on
+the side of that end and $1$ on the other side, and on an edge with no end in
+$Y$ put $y_{u,e} = 1$ and $y_{v,e} = 0$ (either way); then $d_e = d'_e = 1$ on
+every edge, and these are whole lengths in $P$ closing $Y$.
 So the closable sets are exactly the independent sets of $G$, the largest has
 the size of the independence number, and $\tau_P(H) = |V| - \alpha(G)$ is the
 vertex cover number. The instance has size linear in $G$ and numbers $0$ and
@@ -2884,7 +3001,7 @@ connections; that \RC{} stays NP-hard on the instances of
 T-meshes (Conjecture~\ref{conj:realize}); a rule modulo three with borders on
 meshes of order three; that moving singularities in a map of fixed scale
 cannot set the shifts (Section~\ref{sec:move}), a reading of measurements.
-Conjecture~\ref{conj:local} read loosely is proved (Theorem~\ref{thm:combs})
+Conjecture~\ref{conj:local} read loosely is proved (Proposition~\ref{thm:combs})
 and empty.
 
 \subsection{What is machine-checked}\label{sec:lean}
@@ -3070,7 +3187,7 @@ and to irreducible sets of one to fifteen turns; the smallest are
 dislocations, exchanges of two vertices, caps and a winding separatrix
 (Section~\ref{sec:conflicts}). When is a set of turns simultaneously
 closable, in terms of the singularity configuration?
-Every certificate is a sum of combs (Theorem~\ref{thm:combs}), which says
+Every certificate is a sum of combs (Proposition~\ref{thm:combs}), which says
 nothing about the singularities; restricted to staircases, caps and winding
 separatrices it is not (Section~\ref{sec:combs}). A useful answer must lie
 between: for instance a decomposition into combs on disjoint sets of
@@ -3078,9 +3195,9 @@ vertices, each of the sign of the certificate.
 \end{problem}
 
 \begin{problem}[Lower bounds with the size]
-Theorem~\ref{thm:forced} bounds the helices any quantization leaves within a
-set of lengths, and on the male body the bounds of separation force exactly
-one to nine turns. With the cap and the window of sizes the values are known
+Theorem~\ref{thm:forced} bounds the shifted turns any quantization leaves
+within a set of lengths, and on the male body the engine's bounds of
+separation force exactly one to nine held turns. With the cap and the window of sizes the values are known
 only within wide intervals (Table~\ref{tab:forced}): a closable set at a size
 is certified by two exact points, but its absence needs the extremes of the
 number of quads, an indefinite quadratic function, over a polytope. How can
