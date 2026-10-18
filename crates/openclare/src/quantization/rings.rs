@@ -63,8 +63,14 @@ pub struct RingProblem {
     pub quads: usize,
     pub quads_allowed: usize,
     pub rings: Vec<Ring>,
-    /// Time each solve may take.
+    /// Time each solve may take: a bound for safety, which depends on the
+    /// load of the machine.
     pub time_limit: Duration,
+    /// Most work each solve may do, in a unit the selector defines (for
+    /// `openclare-highs`, millions of simplex iterations times arcs): a
+    /// bound that does not depend on the load, so that the same problem
+    /// gets the same answer. `None` for the time alone.
+    pub work_limit: Option<f64>,
 }
 
 impl RingProblem {
@@ -119,7 +125,8 @@ pub trait RingSelector: Send + Sync {
     /// closing as much weight of its rings as can be found in the time
     /// given (each counted only where its walk holds), then, with those
     /// closed, as near their targets as can be, and near the reference.
-    /// `None` when none was found.
+    /// `None` when none was found. The same problem is asked only once in
+    /// a piece: the answer is taken to be the same the second time.
     fn select(&self, problem: &RingProblem) -> Option<Vec<i64>>;
 }
 
@@ -170,12 +177,14 @@ impl PartialEq for Selector {
     }
 }
 
-/// What the slow quality mode asks of the quantization: the selector and
-/// the time each of its solves may take.
+/// What the slow quality mode asks of the quantization: the selector, and
+/// the time and the nodes each of its solves may take
+/// ([`RingProblem::time_limit`], [`RingProblem::work_limit`]).
 #[derive(Clone, Debug, PartialEq)]
 pub struct Slow {
     pub selector: Selector,
     pub time_limit: Duration,
+    pub work_limit: Option<f64>,
 }
 
 /// Rounds of rings chosen by the selector, after the lengths the engine
@@ -246,6 +255,7 @@ pub(super) fn rounds(
     let mut reference = x.clone();
     let mut lower: Vec<i64> = lower.iter().map(|&bound| bound.max(0)).collect();
     let mut out = Vec::new();
+    let mut asked: Vec<(RingProblem, Option<Vec<i64>>)> = Vec::new();
     for round in 0..ROUNDS {
         let mut tries = 0;
         let chosen = loop {
@@ -271,9 +281,19 @@ pub(super) fn rounds(
                 quads_allowed: allowed,
                 rings: rings.clone(),
                 time_limit: slow.time_limit,
+                work_limit: slow.work_limit,
             };
             let clock = std::time::Instant::now();
-            let chosen = slow.selector.0.select(&problem).filter(|x| problem.admits(x));
+            // A round that starts where the round before ended, with no
+            // new ring, asks the same problem again: its answer is known.
+            let chosen = match asked.iter().find(|(known, _)| *known == problem) {
+                Some((_, answer)) => answer.clone(),
+                None => {
+                    let answer = slow.selector.0.select(&problem).filter(|x| problem.admits(x));
+                    asked.push((problem.clone(), answer.clone()));
+                    answer
+                }
+            };
             if debug {
                 let closed = chosen.as_ref().map(|x| rings.iter().filter(|ring| ring.closed_by(x)).count());
                 eprintln!(

@@ -994,8 +994,12 @@ impl Quantizer for WalkCancelling {
             // The slow quality mode: rounds of rings chosen by the selector
             // from the lengths with the fewest spirals, each round's lengths
             // kept on the same terms as the engine's own, after them where
-            // they spiral as much.
-            if let Some(slow) = request.slow.as_ref().filter(|slow| sound && !slow.selector.0.is_mute()) {
+            // they spiral as much. Where the engine's lengths already wind no
+            // loop into a spiral, the rounds cannot make fewer, and are not
+            // posed: the piece is then the standard quality's to the byte.
+            let fewest = kept.first().map_or(plain_spirals, |first| first.1.unwrap_or(plain_spirals));
+            if let Some(slow) = request.slow.as_ref().filter(|slow| sound && fewest > 0.0 && !slow.selector.0.is_mute())
+            {
                 let (clock, cpu) = (std::time::Instant::now(), process_cpu_seconds());
                 let start = kept.first().map_or(&plain, |(lengths, ..)| lengths).clone();
                 let found = rings::rounds(tmesh, &real, &start, wanted, allowed, most_deviation, slow);
@@ -1027,6 +1031,8 @@ impl Quantizer for WalkCancelling {
                         if kept.first().is_some_and(|first| first.3) { "the selector's" } else { "the engine's" }
                     );
                 }
+            } else if request.slow.is_some() && std::env::var_os("OPENCLARE_DEBUG_WORK").is_some() {
+                eprintln!("slow quality: not posed, the engine's lengths spiral {fewest:.4}, sound {sound}");
             }
             kept.truncate(1 + MORE_CANDIDATES);
             kept.push((plain, Some(plain_spirals), 0, false));
@@ -1489,12 +1495,18 @@ mod tests {
     fn slow(answer: fn(&RingProblem) -> Option<Vec<i64>>) -> (std::sync::Arc<Recording>, Slow) {
         let recording = std::sync::Arc::new(Recording { problems: Default::default(), answer });
         let selector = Selector(recording.clone());
-        (recording, Slow { selector, time_limit: std::time::Duration::from_secs(1) })
+        (recording, Slow { selector, time_limit: std::time::Duration::from_secs(1), work_limit: None })
     }
 
     /// The T-mesh of a sphere, whose loops the engine closes, some of them.
     fn ball() -> TMesh {
         layout(&primitives::icosphere(4), None, 0.0, 0.15)
+    }
+
+    /// The T-mesh of a thick torus, whose loops the engine leaves winding
+    /// as spirals, some of them, at most numbers of quads.
+    fn ring() -> TMesh {
+        layout(&primitives::torus(1.0, 0.5, 64, 32), None, 0.0, 0.1)
     }
 
     #[test]
@@ -1522,7 +1534,8 @@ mod tests {
         let tmesh = ball();
         for quads in [400, 600] {
             let standard = quantized(&tmesh, Some(quads));
-            let mute = Slow { selector: Selector::default(), time_limit: std::time::Duration::from_secs(1) };
+            let mute =
+                Slow { selector: Selector::default(), time_limit: std::time::Duration::from_secs(1), work_limit: None };
             let request = Request { quads: Some(quads), slow: Some(mute), ..Default::default() };
             let slow = WalkCancelling::default().quantize(&tmesh, &request).unwrap();
             assert_eq!(slow.lengths, standard.lengths);
@@ -1533,10 +1546,39 @@ mod tests {
     }
 
     #[test]
+    fn where_the_engine_leaves_no_spiral_the_selector_is_not_asked() {
+        let mut without_spirals = 0;
+        let mut with_spirals = 0;
+        for (tmesh, quads) in [(cube(), 300), (ball(), 400), (ball(), 600), (ring(), 400)] {
+            let standard = quantized(&tmesh, Some(quads));
+            let (recording, same) = slow(|problem| Some(problem.reference.clone()));
+            let request = Request { quads: Some(quads), slow: Some(same), ..Default::default() };
+            let quantized = WalkCancelling::default().quantize(&tmesh, &request).unwrap();
+            let asked = recording.problems.lock().unwrap().len();
+            if standard.report.spirals == Some(0.0) {
+                without_spirals += 1;
+                assert_eq!(asked, 0, "{quads} quads");
+                assert_eq!(quantized.lengths, standard.lengths);
+                assert_eq!(quantized.report, standard.report);
+            } else {
+                with_spirals += 1;
+                assert!(asked > 0, "{quads} quads");
+            }
+        }
+        assert!(
+            without_spirals > 0 && with_spirals > 0,
+            "{without_spirals} cases without spirals, {with_spirals} with"
+        );
+    }
+
+    #[test]
     fn the_selector_is_asked_from_the_engine_lengths_and_what_it_gives_is_kept_only_if_it_spirals_less() {
-        let tmesh = ball();
-        let quads = 600;
+        // Where the engine leaves spirals: elsewhere the selector is not
+        // asked.
+        let tmesh = ring();
+        let quads = 400;
         let standard = quantized(&tmesh, Some(quads));
+        assert!(standard.report.spirals.is_some_and(|spirals| spirals > 0.0));
         // A selector that finds nothing: the rounds stay on the engine's
         // lengths, which the problem admits, and nothing changes.
         let (recording, nothing) = slow(|_| None);
@@ -1544,7 +1586,9 @@ mod tests {
         let quantized = WalkCancelling::default().quantize(&tmesh, &request).unwrap();
         assert_eq!(quantized.lengths, standard.lengths);
         let problems = recording.problems.lock().unwrap();
-        assert_eq!(problems.len(), rings::ROUNDS);
+        // Each round then starts where the one before ended, with no new
+        // ring: the same problem, asked only once.
+        assert_eq!(problems.len(), 1);
         let first = &problems[0];
         assert_eq!(first.reference, standard.lengths.iter().map(|&length| length as i64).collect::<Vec<_>>());
         assert!(first.admits(&first.reference));

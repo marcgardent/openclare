@@ -59,7 +59,12 @@ OPTIONS (remesh):
     --quality <standard|slow>    slow: after the engine, an exact solver (HiGHS) chooses which loops to close
                                  together, in three rounds; kept only where it makes fewer spirals. Seconds to
                                  minutes more per piece (default standard)
-    --slow-time-limit <S>        with --quality slow: seconds each solve may take (default 20)
+    --slow-work-limit <W>        with --quality slow: work each solve may do, in millions of simplex iterations times
+                                 arcs (default 15: up to about 100 s on a 2017 desktop processor); it does not
+                                 depend on the load, so a slow run gives the same mesh each time. 0: the time
+                                 limit alone
+    --slow-time-limit <S>        with --quality slow: seconds each solve may take at most, a bound for safety
+                                 (default 300); where it stops a solve, the result depends on the load
     --notes                      print what the stages remark on: why a piece went to the other chain, what the
                                  map folded on, how many guide lines were let go
     --record-still <STAGE>       with --record: keep that one stage (map, layout, cross-field...), out of time,
@@ -365,6 +370,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
             "--no-close-loops" => config.close_loops = false,
             "--quality" => config.quality = value(arg)?.parse().map_err(|e: openclare::Error| e.to_string())?,
             "--slow-time-limit" => config.slow_time_limit = parse(arg, value(arg)?)?,
+            "--slow-work-limit" => config.slow_work_limit = parse(arg, value(arg)?)?,
             "--record" => record_path = Some(value(arg)?.clone()),
             "--record-still" => record_still = Some(value(arg)?.clone()),
             "--notes" => notes = true,
@@ -388,8 +394,13 @@ fn remesh(args: &[String]) -> Result<(), String> {
     let mesh = obj::read_obj(input).map_err(|e| format!("{input}: {e}"))?;
     println!("input    {} vertices, {} triangles", mesh.positions.len(), mesh.triangles.len());
     if config.quality == Quality::Slow {
+        let work = if config.slow_work_limit > 0.0 {
+            format!("{} million iterations times arcs or ", config.slow_work_limit)
+        } else {
+            String::new()
+        };
         println!(
-            "quality  slow: rings chosen by {}, each solve up to {} s",
+            "quality  slow: rings chosen by {}, each solve up to {work}{} s",
             config.ring_selector.0.name(),
             config.slow_time_limit
         );

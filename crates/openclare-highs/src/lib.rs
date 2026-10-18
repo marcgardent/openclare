@@ -21,11 +21,23 @@
 //! broken by staying near the targets and the reference), then, with those
 //! rings kept closed, for the least deviation. Each solve starts from the
 //! lengths of the reference (or of the first solve) where HiGHS can take
-//! them, and stops at the time limit with the best found.
+//! them, and stops with the best found at the work limit, or at the time
+//! limit if that comes first.
+//!
+//! The work is counted in simplex iterations of HiGHS's relaxations (those
+//! of its heuristics included) times the number of arcs, a rough measure of
+//! what an iteration costs. HiGHS reports it each time it checks its limits,
+//! and is interrupted at the first check past the limit: these checks fall
+//! at the same places of the search on every run, and the branch and bound
+//! of HiGHS runs on one thread unless asked otherwise, so the same problem
+//! gets the same answer whatever the load. HiGHS does not stop at every
+//! check it is told to, and may go well past the limit (up to twelve times
+//! as far, at the root node of a large piece). Where the time limit stops a
+//! solve, the answer depends on the load.
 
 use std::ffi::CString;
 
-use highs::{HighsModelStatus, RowProblem, Sense};
+use highs::{RowProblem, Sense};
 use openclare::quantization::{RingProblem, RingSelector};
 
 /// The ring selector that solves the slow quality mode's program with
@@ -211,16 +223,49 @@ impl HighsSelector {
         columns.extend(start_closed.iter().map(|&on| if on { 1.0 } else { 0.0 }));
         // A start HiGHS cannot use is set aside by it, not an error.
         let _ = model.try_set_solution(Some(&columns), None, None, None);
+        // The work done, counted as HiGHS checks its limits; the solve is
+        // interrupted there once the work allowed is done.
+        let limit = problem.work_limit.map_or(i64::MAX, |work| (work * 1e6 / n.max(1) as f64).ceil() as i64);
+        let mut work = Box::new(Work { limit, ..Default::default() });
+        // SAFETY: the callback reads the data HiGHS hands it and writes the
+        // interrupt flag; `work` is boxed and outlives the solve.
+        unsafe {
+            let highs = model.as_mut_ptr();
+            highs_sys::Highs_setCallback(highs, Some(on_work), (&mut *work as *mut Work).cast());
+            highs_sys::Highs_startCallback(highs, highs_sys::kHighsCallbackMipInterrupt);
+        }
+        let clock = std::time::Instant::now();
         let solved = model.try_solve().ok()?;
-        let usable = matches!(
-            solved.status(),
-            HighsModelStatus::Optimal
-                | HighsModelStatus::ReachedTimeLimit
-                | HighsModelStatus::ReachedIterationLimit
-                | HighsModelStatus::ObjectiveBound
-                | HighsModelStatus::ObjectiveTarget
-                | HighsModelStatus::Unknown
-        );
+        // Read as a number: the bindings know no status for an interrupt.
+        // SAFETY: the pointer is that of the live model.
+        let status = unsafe { highs_sys::Highs_getModelStatus(solved.as_ptr()) };
+        // What each solve did, to set the work limit by.
+        if std::env::var_os("OPENCLARE_DEBUG_HIGHS").is_some() {
+            eprintln!(
+                "    highs {} rings {} arcs: status {status}, {} nodes, {:.2} s, objective {:.4}, gap {:.2e}, \
+                 {} lp iterations, {} checks, longest {:.2} s between",
+                m,
+                n,
+                int64_info(&solved, "mip_node_count"),
+                clock.elapsed().as_secs_f64(),
+                double_info(&solved, "objective_function_value"),
+                double_info(&solved, "mip_gap"),
+                work.iterations,
+                work.checks,
+                work.longest,
+            );
+        }
+        let usable = [
+            highs_sys::MODEL_STATUS_OPTIMAL,
+            highs_sys::MODEL_STATUS_REACHED_TIME_LIMIT,
+            highs_sys::MODEL_STATUS_REACHED_ITERATION_LIMIT,
+            highs_sys::MODEL_STATUS_REACHED_SOLUTION_LIMIT,
+            highs_sys::MODEL_STATUS_REACHED_INTERRUPT,
+            highs_sys::MODEL_STATUS_OBJECTIVE_BOUND,
+            highs_sys::MODEL_STATUS_OBJECTIVE_TARGET,
+            highs_sys::MODEL_STATUS_UNKNOWN,
+        ]
+        .contains(&status);
         if !usable || !has_solution(&solved) {
             return None;
         }
@@ -230,6 +275,55 @@ impl HighsSelector {
         let closed = columns[5 * n..5 * n + m].iter().map(|&value| value > 0.5).collect();
         Some(Found { x, closed })
     }
+}
+
+/// The work of a solve so far, and how much it may do.
+#[derive(Default)]
+struct Work {
+    limit: i64,
+    iterations: i64,
+    checks: usize,
+    time: f64,
+    longest: f64,
+}
+
+/// Called by HiGHS each time it checks its limits during a solve.
+unsafe extern "C" fn on_work(
+    _kind: std::ffi::c_int,
+    _message: *const std::ffi::c_char,
+    out: *const highs_sys::HighsCallbackDataOut,
+    input: *mut highs_sys::HighsCallbackDataIn,
+    data: *mut std::ffi::c_void,
+) {
+    // SAFETY: HiGHS hands valid pointers for the length of the call, and
+    // `data` is the `Work` given with the callback.
+    let (work, out) = unsafe { (&mut *data.cast::<Work>(), &*out) };
+    work.iterations = out.mip_total_lp_iterations;
+    work.checks += 1;
+    work.longest = work.longest.max(out.running_time - work.time);
+    work.time = out.running_time;
+    if work.iterations >= work.limit {
+        // SAFETY: as above.
+        unsafe { (*input).user_interrupt = 1 };
+    }
+}
+
+/// An information value of HiGHS after a solve, -1 where it has none.
+fn int64_info(solved: &highs::SolvedModel, name: &str) -> i64 {
+    let name = CString::new(name).unwrap();
+    let mut value: i64 = -1;
+    // SAFETY: as in `has_solution`.
+    unsafe { highs_sys::Highs_getInt64InfoValue(solved.as_ptr(), name.as_ptr(), &mut value) };
+    value
+}
+
+/// An information value of HiGHS after a solve, NaN where it has none.
+fn double_info(solved: &highs::SolvedModel, name: &str) -> f64 {
+    let name = CString::new(name).unwrap();
+    let mut value = f64::NAN;
+    // SAFETY: as in `has_solution`.
+    unsafe { highs_sys::Highs_getDoubleInfoValue(solved.as_ptr(), name.as_ptr(), &mut value) };
+    value
 }
 
 /// Whether HiGHS holds a feasible solution after a solve, whatever stopped
@@ -265,6 +359,7 @@ mod tests {
             quads_allowed: 8,
             rings,
             time_limit: Duration::from_secs(10),
+            work_limit: None,
         }
     }
 

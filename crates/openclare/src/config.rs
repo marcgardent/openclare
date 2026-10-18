@@ -73,13 +73,28 @@ pub struct RemeshConfig {
     /// an exact solver as well (see [`Quality`]).
     pub quality: Quality,
     /// In the slow quality mode, the time each solve may take, in seconds:
-    /// a piece takes a few times this.
+    /// a bound for safety, which depends on the load of the machine.
     pub slow_time_limit: f64,
+    /// In the slow quality mode, the work each solve may do, in millions of
+    /// simplex iterations times arcs: the bound that holds first in
+    /// general, which does not depend on the load, so that a slow run gives
+    /// the same mesh each time. 0 for the time limit alone.
+    pub slow_work_limit: f64,
     /// The solver of the slow quality mode, injected by the caller: the
     /// core has none of its own. Not a setting written to text.
     pub ring_selector: Selector,
     pub seed: u64,
 }
+
+/// Default of [`RemeshConfig::slow_time_limit`], in seconds: a bound for
+/// safety, well above what the work limit takes.
+pub const SLOW_TIME_LIMIT: f64 = 300.0;
+/// Default of [`RemeshConfig::slow_work_limit`]. On an Intel Core i7-7700K
+/// (2017) under a load of 5 to 9, HiGHS does 0.6 to 6 million iterations
+/// times arcs a second, and stops some way past the limit: a solve takes
+/// from a fraction of a second to about 100 seconds, and the whole mode
+/// less processor time than 20 seconds per solve took.
+pub const SLOW_WORK_LIMIT: f64 = 15.0;
 
 /// How hard the loops round the parts are closed.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -176,7 +191,8 @@ impl RemeshConfig {
             skip_pieces_under: 0.0,
             close_loops: true,
             quality: Quality::Standard,
-            slow_time_limit: 20.0,
+            slow_time_limit: SLOW_TIME_LIMIT,
+            slow_work_limit: SLOW_WORK_LIMIT,
             ring_selector: Selector::default(),
             seed: 1,
         }
@@ -243,6 +259,7 @@ impl RemeshConfig {
     pub fn validate(&self) -> Result<()> {
         let non_negative = [
             ("skip_pieces_under", self.skip_pieces_under),
+            ("slow_work_limit", self.slow_work_limit),
             ("quads_around", self.quads_around),
             ("alignment", self.alignment),
             ("singularity_reach", self.singularity_reach),
@@ -313,6 +330,7 @@ impl RemeshConfig {
         writeln!(text, "close_loops = {}", self.close_loops).unwrap();
         writeln!(text, "quality = {}", self.quality).unwrap();
         writeln!(text, "slow_time_limit = {}", self.slow_time_limit).unwrap();
+        writeln!(text, "slow_work_limit = {}", self.slow_work_limit).unwrap();
         writeln!(text, "seed = {}", self.seed).unwrap();
         text
     }
@@ -382,6 +400,7 @@ impl RemeshConfig {
                 }
                 "quality" => config.quality = value.parse().map_err(|e: Error| error(e.to_string()))?,
                 "slow_time_limit" => config.slow_time_limit = number_of("number of seconds")?,
+                "slow_work_limit" => config.slow_work_limit = number_of("number")?,
                 "seed" => config.seed = value.parse().map_err(|_| error(format!("'{value}' is not a seed")))?,
                 other => return Err(error(format!("unknown setting '{other}'"))),
             }
@@ -418,8 +437,8 @@ mod tests {
         assert_eq!(config.crease_angle, Some(45.0));
         // What the file does not mention keeps its default.
         assert_eq!(config.alignment, RemeshConfig::default().alignment);
-        let slow = RemeshConfig::from_text("quality = slow\nslow_time_limit = 20\n").unwrap();
-        assert_eq!((slow.quality, slow.slow_time_limit), (Quality::Slow, 20.0));
+        let slow = RemeshConfig::from_text("quality = slow\nslow_time_limit = 20\nslow_work_limit = 10\n").unwrap();
+        assert_eq!((slow.quality, slow.slow_time_limit, slow.slow_work_limit), (Quality::Slow, 20.0, 10.0));
     }
 
     #[test]
@@ -450,5 +469,6 @@ mod tests {
         assert!(RemeshConfig::from_text("density_contrast = 0.5").is_err());
         assert!(RemeshConfig::from_text("quality = fast").is_err());
         assert!(RemeshConfig::from_text("slow_time_limit = 0").is_err());
+        assert!(RemeshConfig::from_text("slow_work_limit = -1").is_err());
     }
 }

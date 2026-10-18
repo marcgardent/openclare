@@ -128,13 +128,21 @@ spirals than its own.
 ```
 
 On the 12 models of the quick batch, at 2970, 3000 and 3030 quads, the edges of spiral loops go
-from 4.6 % to 2.9 % of the loop edges (better on 13 runs of 36, worse on none), for about a
-minute more per model at 3000 quads. `--slow-time-limit` is the time each solve may take, 20
-seconds by default; a piece takes a few times that (three rounds of two solves, more where
-lengths have to be solved again). At 10 seconds the gain is nearly the same for half the time;
-at 5 seconds the solver rarely finishes and the gain is no longer clear. The result depends on
-how far the solver gets in that time, hence on the load of the machine: two slow runs are not
-always the same to the byte; the standard quality is.
+from 4.6 % to 2.9 % of the loop edges (better on 13 runs of 36, worse on none), for 60 s of
+processor time per model instead of 9 s (Intel Core i7-7700K of 2017, 4 cores, 8 threads, three
+runs at a time, load average 6 to 9). A piece where the engine's lengths leave no loop winding
+as a spiral is not handed to the solver: the mesh is then the standard one to the byte, at no cost
+(14 of the 36 runs).
+
+Each solve stops at a **work limit**, `--slow-work-limit` (15 by default), counted in millions
+of simplex iterations of the solver times arcs of the layout. It does not depend on the load of
+the machine: two slow runs give the same mesh to the byte (checked on 8 models run one at a
+time and three at a time, load average 4 to 9). It is not a time either: on the machine above, a
+solve takes from a fraction of a second to about 100 seconds, a piece from a few seconds to a
+few minutes. `--slow-time-limit` (300 seconds by default) is a bound for safety only: where it
+stops a solve, the result depends on the load again. `--slow-work-limit 0` stops on the time
+alone, as before. In a saved configuration: `quality = slow`, `slow_work_limit = 15`,
+`slow_time_limit = 300`.
 
 The solver is in a crate of its own (`crates/openclare-highs`), built from its sources with
 cmake and a C++ compiler; `cargo build --release --no-default-features` builds the command line

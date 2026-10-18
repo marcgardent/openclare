@@ -1143,29 +1143,65 @@ join the engine's own candidates on the same terms (budget, cap, folds, fewer sp
 plain lengths) and the fewest spirals by the engine's own count go first: never more spirals
 than the engine by that count. The core poses the problem through a trait, `RingSelector`, and
 has a mute implementation; the solver, HiGHS, is in a crate of its own, which the command line
-tool injects (`--quality slow`). Each solve stops at `slow_time_limit` seconds, with the
-engine's lengths as a start. On the 12-model batch at three budgets (36 runs; Intel Core
-i7-7700K, 4 cores at 4.2 GHz, three runs at a time, load average 5 to 7), share of spiral loop
-edges, runs better / worse than the engine and than the best of the engine and three other draws
-of its per-arc preferences (4.18 %), and time per model:
+tool injects (`--quality slow`). Each solve starts from the engine's lengths and stops at a
+**work limit** that does not depend on the load (`slow_work_limit`, 15 by default): simplex
+iterations of HiGHS's relaxations (its heuristics' included) times the number of arcs, in
+millions, read through HiGHS's callback each time it checks its limits, which it does at the
+same places of the search on every run; its branch and bound runs on one thread. The same
+problem then gets the same answer, and a slow run the same mesh to the byte whatever the load
+(8 models at 3000 quads, run three at a time at load 5.5 to 8.8, one at a time at 3.8 to 5.2,
+and in the batch below: 8 of 8 identical). HiGHS 1.15 (bundled by `highs-sys` 1.15) has no
+deterministic clock of its own; its node limit does not bound the work at the root node, where
+the large pieces spend all their time (the ogre's first solve, 1,280 arcs, had not left it after
+20 s). The iterations are a rough measure: from 0.6 to 6 million iterations times arcs a
+second on the machine below (2 at the median), and HiGHS does not stop at every check it is
+told to: in the batch below, the solves interrupted had done 1.5 times the limit at the median,
+6 times at the 90th percentile and 12 times at most (the ogre, at its root node); a time limit (`slow_time_limit`, 300 s by default) remains for safety, and where it
+stops a solve the result depends on the load again. A piece whose engine lengths wind no loop
+into a spiral is not posed (the rounds can only make fewer spirals, and there are none): it is
+the standard quality's to the byte. A round that would ask the solver the very problem it asked
+before (it starts where that one ended and finds no new ring) is answered from memory.
 
-| | Spiral edges | vs engine | vs other draws | Wall | Processor |
-|---|---|---|---|---|---|
-| Engine (standard quality) | 4.65 % | | 0 / 8 | 6 s | 9 s |
-| Slow, 5 s per solve | 3.13 % | 10 / 0 | 8 / 6 | 26 s | 30 s |
-| Slow, 10 s per solve | 2.98 % | 12 / 0 | 10 / 5 | 46 s | 52 s |
-| Slow, 20 s per solve (default) | 2.86 % | 13 / 0 | 11 / 5 | 76 s | 82 s |
+On the 12-model batch at three budgets (36 runs; Intel Core i7-7700K of 2017, 4 cores and 8
+threads at 4.2 GHz, 62 GB; three runs at a time under nice beside other work, load average 5 to
+9), share of spiral loop edges, runs better / worse than the engine and than the best of the
+engine and three other draws of its per-arc preferences (4.18 %), and time per model:
 
-Other measures barely move (36 of 36 valid, mean distance 0.378 against 0.377 thousandths of
-the size, angle deviation 4.94° against 4.90°, the same irregular vertices); the closed loop
-edges go from 36.7 % to 37.9 %. The standard quality
-is byte for byte what it was (36 of 36 meshes).
-The gain needs a solver that finishes: at 5 s per solve, on a loaded machine, half the pieces
-had no solution in time and the rounds were no better than other draws of the engine's per-arc
-preferences. Closing the most rings is not on its own the way to fewer helices (in place of the
-engine's lengths, the rounds spiral as much); it is a source of candidates, kept by the count of
-spirals. Results depend on how far the solver got, so on the load: the slow quality is not
-reproducible to the byte.
+| | Spiral edges | vs engine | vs other draws | Wall | Processor | Load |
+|---|---|---|---|---|---|---|
+| Engine (standard quality) | 4.65 % | | 0 / 8 | 6.0 s | 8.7 s | 3.4 to 9.5 |
+| Slow, 5 s per solve, every piece | 3.13 % | 10 / 0 | 8 / 6 | 26 s | 30 s | 5 to 7 |
+| Slow, 10 s per solve, every piece | 2.98 % | 12 / 0 | 10 / 5 | 46 s | 52 s | 5 to 7 |
+| Slow, 20 s per solve, every piece | 2.86 % | 13 / 0 | 11 / 5 | 75.7 s | 81.6 s | 5 to 7 |
+| Slow, 20 s per solve, pieces without spirals skipped | 2.82 % | 13 / 0 | 11 / 5 | 64.7 s | 68.4 s | 4.9 to 8.9 |
+| **Slow, work limit 15 (default)** | **2.90 %** | **13 / 0** | **11 / 5** | **55.7 s** | **60.0 s** | 5.6 to 9.0 |
+
+(Loads are the 1-minute load average at the end of each run.) Skipping the pieces without
+spirals leaves 14 of the 36 runs the standard meshes to the byte, at 5.8 s of processor time
+instead of 44.8 s; 20 of 42 pieces are skipped. Other measures barely move (36 of 36 valid,
+mean distance 0.378 against 0.377 thousandths of the size, angle deviation 4.91° against
+4.90°, the same irregular vertices); the closed loop edges go from 36.7 % to 37.8 %. The
+standard quality is byte for byte what it was (36 of 36 meshes).
+The gain needs a solver that gets far enough: at 5 s per solve, on a loaded machine, half the
+pieces had no solution in time and the rounds were no better than other draws of the engine's
+per-arc preferences. Closing the most rings is not on its own the way to fewer helices (in
+place of the engine's lengths, the rounds spiral as much); it is a source of candidates, kept
+by the count of spirals.
+
+The witnesses, on the same machine (three runs at a time, load average 10 to 14):
+
+| | Quads asked | Spiral edges, engine → slow | Processor, engine → slow |
+|---|---|---|---|
+| Male body (organic) | 10,484 (−1 %) | 2.41 % → 2.41 % | 113 s → 137 s |
+| | 10,590 | 1.95 % → 1.95 % | 114 s → 133 s |
+| | 10,696 (+1 %) | 1.09 % → 1.09 % | 113 s → 135 s |
+| Cylinder (hard-surface) | 2,990 | 51.2 % → 0 % | 2.9 s → 6.0 s |
+| | 3,000 | 51.0 % → 0 % | 2.8 s → 5.3 s |
+| | 5,000 | 0 % → 0 % (skipped) | 4.3 s → 4.3 s |
+
+On the male body the rounds find nothing better than the engine's lengths at any of the three
+budgets: the mesh is the engine's to the byte, for about 20 s more (it was 134 s more with
+20 s per solve).
 
 ### M7 and M8 — From the quantized T-mesh to the quad mesh
 
