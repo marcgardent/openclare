@@ -292,8 +292,8 @@ male body.*
 - **Cylinder.** **No spiral and 6 patches** at 2,990, 3,000 and 5,000 quads, against 26% to
   32% of spiral edges and about 700 patches before.
 - **Against other remeshers** (full bench of 31 models at 3,000 quads, first version of
-  closing): 12.3% of spiral edges for openclare (17.3% without closing), 19.1% for Quad
-  Remesher, 21.9% for QuadriFlow, 25.3% for AutoRemesher.
+  closing): 12.3% of spiral edges for openclare (17.3% without closing), 21.9% for QuadriFlow,
+  25.3% for AutoRemesher.
 - **Night bench of 18 October**, organic models, marks out of 100 (before closing, first
   version, today): overall 72.9 → 86.0 → **86.2** at 3,000 quads; the loops mark 43 → 76 →
   **77** at 3,000 and 33 → 68 → **74** at 1,000. The large models lost a little at 1,000 and

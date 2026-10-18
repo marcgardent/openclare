@@ -16,15 +16,15 @@ hard edges, separate pieces, thin parts and (being measured) volume fitting.
 Average mark of the organic models, out of 100 ([SCORES.md](bench/results/SCORES.md), as
 measured on 11 October 2026 from the scenes of the bench):
 
-| Quads asked for | openclare | Quad Remesher | QuadriFlow (Blender) |
-|---|---|---|---|
-| 1000 | 72 | 65 | 41 |
-| 3000 | 76 | 63 | 46 |
-| 8000 | 79 | 72 | 50 |
+| Quads asked for | openclare | QuadriFlow (Blender) |
+|---|---|---|
+| 1000 | 72 | 41 |
+| 3000 | 76 | 46 |
+| 8000 | 79 | 50 |
 
-The goal "better than Blender's quad remesher" is met on the bench. Quad Remesher is ahead on
-three points, which are what the quality tracks below are about: **alignment** of the edges on
-the shape, **regularity** at low budgets, and **fidelity** when it is allowed twice the quads.
+The goal "better than QuadriFlow, Blender's built-in remesher" is met on the bench. Three
+points are left, which are what the quality tracks below are about: **alignment** of the edges
+on the shape, **regularity** at low budgets, and **fidelity**.
 And nobody can use openclare yet without a command line.
 
 The rule since 8 October 2026: what improves the mesh comes before side features.
@@ -36,7 +36,7 @@ Each track ends with the bench run at 1000, 3000 and 8000 quads and a stop for r
 | Order | Track | Why it matters | Done when | Tickets |
 |---|---|---|---|---|
 | 1 | **Volume fitting** (done, merged) | With its vertices on the surface a mesh is inscribed in the shape: the ogre lost 3.5 % of its volume at 1000 quads | Done: median volume kept 100.0 % at the three budgets, the ogre 99.8 % at 1000 quads, no model losing its validity. Left: the volume after subdivision | DT-037 (closed), DT-039 |
-| 2 | **Alignment** | The largest gap left with Quad Remesher: edges are 7.7 to 8.4 degrees off the curvature directions, against 6.4 to 7.5. It is what an artist sees first in an edge flow | Median alignment at or under Quad Remesher's at the three budgets, validity untouched | DT-021, DT-025, DT-013, DT-033 |
+| 2 | **Alignment** | Edges are 7.7 to 8.4 degrees off the curvature directions in the median (the meshes modelled by hand in the bench: 9.4 to 9.8). It is what an artist sees first in an edge flow | Median alignment better at the three budgets, noisy surfaces included, validity untouched | DT-021, DT-025, DT-013, DT-033 |
 | 3 | **Fewer irregular vertices, longer edge loops** | The weakest marks of the chain (structure about 40 out of 100; regularity 50 at 1000 quads), and thin parts made it worse: 155 irregular vertices on the ogre at 3000 quads for 88 before | Irregular vertices back to what they were before the thin-part work, with the fingers kept; fewer patches in the base complex | DT-020, DT-007, DT-005, DT-038 |
 | 3 bis | **Improving a mesh from a dry run**: mark a first run, keep the best of several, run again where one went wrong, and weigh alignment where it is poor | Density driven by the error was tried and gains little (10 to 15 % on the worst distances); the other uses are not tried | A run that gives an invalid mesh is caught and corrected without the user; the best of three runs beats one on the marks | DT-040 |
 | 4 | **What a mesh still loses of the shape** | Ears and thin sheets stay rough at their rim; deep pockets are closed over (the Hausdorff distance of the ogre comes from two pockets behind its eyes, not from its hands) | Thin-part distance of `jerry` under 10 % of a quad edge; Hausdorff of the ogre at 3000 quads under 10 per mille | DT-018, DT-036 |
@@ -95,7 +95,7 @@ cover this case too. It comes after the quality of the quads.
 
 | What | Why now or later | Tickets |
 |---|---|---|
-| **Sculpts of the author in the bench, with their Quad Remesher references** | The references can only be made while the trial licence of Quad Remesher lasts: this one has a deadline | DT-017 |
+| **Sculpts of the author in the bench** | Real dense sculpts other than the ogre are still missing from the corpus | DT-017 |
 | **Documents in English** | **Done on 9 October 2026**: every document is in English | DT-016 |
 | **Public release**: continuous integration, contribution guide, a tagged version | Before the add-on is announced, not before it exists | — |
 | **Rerun**: patches as coloured regions, the seamless map, comparison of two runs; move to the current version | As the quality tracks need them, the map first | DT-035 |

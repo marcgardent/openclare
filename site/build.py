@@ -136,21 +136,19 @@ WORDS = {
 NAVIGATION = ("index", "theory", "glossary", "results", "research", "get")
 
 # Display names of the remeshers of the bench, and what the rows that are
-# not one of the four remeshers compared are.
+# not one of the remeshers compared are.
 TOOLS = {
     "openclare": ("openclare", "openclare"),
-    "quadremesher": ("Quad Remesher", "Quad Remesher"),
     "quadriflow": ("QuadriFlow (Blender)", "QuadriFlow (Blender)"),
     "autoremesher": ("AutoRemesher", "AutoRemesher"),
     "openclare-uniform": ("openclare, quads of one size", "openclare, quads d'une seule taille"),
     "integer-grid": ("openclare, integer-grid chain", "openclare, chaîne integer-grid"),
     "instant-meshes": ("openclare, Instant Meshes chain", "openclare, chaîne Instant Meshes"),
-    "quadremesher-uniform": ("Quad Remesher, uniform setting", "Quad Remesher, réglage uniforme"),
     "handmade": ("Modelled by hand", "Modélisé à la main"),
     "openclare-as-handmade": ("openclare at the hand-made count", "openclare au nombre du fait main"),
 }
-COMPARED = ("openclare", "quadremesher", "quadriflow", "autoremesher")
-VARIANTS = ("openclare-uniform", "integer-grid", "instant-meshes", "quadremesher-uniform", "handmade", "openclare-as-handmade")
+COMPARED = ("openclare", "quadriflow", "autoremesher")
+VARIANTS = ("openclare-uniform", "integer-grid", "instant-meshes", "handmade", "openclare-as-handmade")
 
 GROUPS = {
     "organic": ("Organic models", "Modèles organiques"),
@@ -176,7 +174,7 @@ RESULT_WORDS = {
         "budget": "{n} quads asked for",
         "over": "Over {count} models: {names}.",
         "remesher": "Remesher",
-        "compared": "The four remeshers compared",
+        "compared": "The three remeshers compared",
         "variants": "Other settings and chains, for reference",
         "not_everywhere": "Not run on every model: {list}.",
         "of": "{name} ({done} of {total})",
@@ -185,16 +183,9 @@ RESULT_WORDS = {
             "<dl class=\"legend\">"
             "<dt>openclare, quads of one size</dt><dd>openclare from the command line, every quad the same size: like with like against the remeshers that have nothing else.</dd>"
             "<dt>openclare, integer-grid and Instant Meshes chains</dt><dd>earlier chains of openclare's own engine, kept as yardsticks. The Instant Meshes chain is the project's port of that method; the Instant Meshes program itself is not run.</dd>"
-            "<dt>Quad Remesher, uniform setting</dt><dd>Quad Remesher with its adaptive size turned off.</dd>"
             "<dt>Modelled by hand</dt><dd>the base meshes an artist made for the two human bodies, the only models that have one; openclare is also run at their number of quads.</dd>"
             "</dl>"
         ),
-        "equal_intro": (
-            "Quad Remesher's mesh as it is, marked against the number of quads it has, next to openclare asked for "
-            "that same number. Budget does not count here. Average over the models of each group."
-        ),
-        "group": "Group",
-        "quads_pair": "Quads (Quad Remesher / openclare)",
         "model": "Model",
         "kind": "Kind",
         "models_intro": "Overall mark of each remesher on each model. A name links to the model's page, with pictures.",
@@ -210,7 +201,7 @@ RESULT_WORDS = {
         "budget": "{n} quads demandés",
         "over": "Sur {count} modèles : {names}.",
         "remesher": "Remailleur",
-        "compared": "Les quatre remailleurs comparés",
+        "compared": "Les trois remailleurs comparés",
         "variants": "Autres réglages et chaînes, pour référence",
         "not_everywhere": "Pas lancé sur tous les modèles : {list}.",
         "of": "{name} ({done} sur {total})",
@@ -219,16 +210,9 @@ RESULT_WORDS = {
             "<dl class=\"legend\">"
             "<dt>openclare, quads d'une seule taille</dt><dd>openclare en ligne de commande, tous les quads de la même taille : à armes égales face aux remailleurs qui n'ont rien d'autre.</dd>"
             "<dt>openclare, chaînes integer-grid et Instant Meshes</dt><dd>des chaînes antérieures du moteur d'openclare lui-même, gardées comme étalons. La chaîne Instant Meshes est le portage de cette méthode par le projet ; le programme Instant Meshes lui-même n'est pas lancé.</dd>"
-            "<dt>Quad Remesher, réglage uniforme</dt><dd>Quad Remesher avec sa taille adaptative désactivée.</dd>"
             "<dt>Modélisé à la main</dt><dd>les maillages de base qu'un artiste a faits pour les deux corps humains, les seuls modèles qui en ont un ; openclare est aussi lancé à leur nombre de quads.</dd>"
             "</dl>"
         ),
-        "equal_intro": (
-            "Le maillage de Quad Remesher tel quel, noté au nombre de quads qu'il a, à côté d'openclare à qui l'on "
-            "demande ce même nombre. Le budget ne compte pas ici. Moyenne sur les modèles de chaque groupe."
-        ),
-        "group": "Groupe",
-        "quads_pair": "Quads (Quad Remesher / openclare)",
         "model": "Modèle",
         "kind": "Type",
         "models_intro": "La note globale de chaque remailleur sur chaque modèle. Un nom mène à la page du modèle, avec ses images.",
@@ -245,10 +229,6 @@ RESULT_WORDS = {
 # The fixed sentences of the model pages (scripts/pages.py), in French. The
 # regular expressions come after the plain phrases.
 MODEL_PHRASES_FR = [
-    ("At equal quad count: Quad Remesher's mesh as it is, and openclare asked for as many quads.",
-     "À nombre de quads égal : le maillage de Quad Remesher tel quel, et openclare à qui l'on demande autant de quads."),
-    ("Quad Remesher makes more quads than the 3000 it is asked for. Next to its mesh, openclare asked for as many quads as that mesh has.",
-     "Quad Remesher fait plus que les 3000 quads qu'on lui demande. À côté de son maillage, openclare à qui l'on a demandé autant de quads que ce maillage en a."),
     ("At 3000 quads asked for. Each loop is followed straight on through every regular vertex: it closes, comes back beside "
      "itself a quad further (a spiral), stops at an irregular vertex, or runs from a border to a border. Share of the edges on "
      "each, those of borders and of faces that are not quads left out; \"—\" where the mesh is not a manifold.",
@@ -257,13 +237,10 @@ MODEL_PHRASES_FR = [
      "arêtes sur chacune, celles des bords et des faces qui ne sont pas des quads laissées de côté ; « — » là où le maillage "
      "n'est pas une variété."),
     ("## At 3000 quads asked for", "## À 3000 quads demandés"),
-    ("## At equal quad count", "## À nombre de quads égal"),
     ("## Edge loops", "## Boucles d'arêtes"),
     ("## Marks", "## Notes"),
     ("| | closed | spiral | stops | border to border | spirals | longest that stops |",
      "| | fermées | en spirale | s'arrêtent | de bord à bord | spirales | plus longue qui s'arrête |"),
-    ("| Quad Remesher | openclare, as many quads |", "| Quad Remesher | openclare, autant de quads |"),
-    ("![openclare, as many quads]", "![openclare, autant de quads]"),
     ("| Modelled by hand |", "| Modélisé à la main |"),
     ("![Modelled by hand]", "![Modélisé à la main]"),
     ("| Remesher | Quads | Overall | Validity | Alignment | Quad shape | Fidelity | Regularity | Structure | Edge loops | Budget | Speed |",
@@ -558,10 +535,10 @@ def number(value, language):
 
 
 def scores():
-    """The tables of bench/results/SCORES.md: averages and equal-count
-    averages per budget and group, the group of every model, and the
-    per-model marks of scores.json."""
-    averages, equal, kinds, over, notes = {}, {}, {}, {}, {}
+    """The tables of bench/results/SCORES.md: averages per budget and
+    group, the group of every model, and the per-model marks of
+    scores.json."""
+    averages, kinds, over, notes = {}, {}, {}, {}
     budget = group = mode = None
     header = []
     for line in read(ROOT / "bench/results/SCORES.md").splitlines():
@@ -572,10 +549,6 @@ def scores():
         heading = re.match(r"### (\w+) models: average$", line)
         if heading:
             group, mode = heading.group(1).lower(), "average"
-            continue
-        heading = re.match(r"### (\w+) models at equal quad count$", line)
-        if heading:
-            group, mode = heading.group(1).lower(), "equal"
             continue
         if line.startswith("### "):
             mode = None
@@ -596,10 +569,8 @@ def scores():
             continue
         if mode == "average":
             averages.setdefault((budget, group), {})[cells[0]] = dict(zip(header[1:], cells[1:]))
-        elif mode == "equal" and cells[0] == "average":
-            equal[(budget, group)] = dict(zip(header[1:], cells[1:]))
     per_model = json.loads(read(ROOT / "bench/results/scores.json"))
-    return {"averages": averages, "equal": equal, "kinds": kinds, "over": over, "notes": notes, "models": per_model}
+    return {"averages": averages, "kinds": kinds, "over": over, "notes": notes, "models": per_model}
 
 
 # ---------------------------------------------------------------- output
@@ -836,23 +807,20 @@ class Site:
         return ""
 
     def tokens(self, text, language):
-        """{{mark:3000:organic:openclare}}, {{equal:3000:organic:openclare}},
-        {{count:organic}}, {{count:all}} in a source."""
+        """{{mark:3000:organic:openclare}}, {{count:organic}}, {{count:all}}
+        in a source."""
 
         def value(match):
             parts = match.group(1).split(":")
             if parts[0] == "mark":
                 return self.data["averages"][(int(parts[1]), parts[2])][parts[3]]["Overall"]
-            if parts[0] == "equal":
-                pair = self.data["equal"][(int(parts[1]), parts[2])]["Overall"].split(" / ")
-                return pair[0] if parts[3] == "quadremesher" else pair[1]
             if parts[0] == "count":
                 if parts[1] == "all":
                     return str(len(self.data["models"]["3000"]))
                 return str(len(self.data["over"][(3000, parts[1])]))
             return match.group(0)
 
-        return re.sub(r"\{\{((?:mark|equal|count):[\w:-]+)\}\}", value, text)
+        return re.sub(r"\{\{((?:mark|count):[\w:-]+)\}\}", value, text)
 
     def content_page(self, key, language, kind, fallback=None):
         name = key if language == "en" else f"{key}.fr"
@@ -978,36 +946,6 @@ class Site:
         parts.append(f'<p class="note">{words["legend_intro"]}</p>' + words["legend"])
         return "\n".join(parts)
 
-    def equal_html(self, language):
-        words = RESULT_WORDS[language]
-        index = 0 if language == "en" else 1
-        head = (
-            f'<th>{words["group"]}</th><th>{words["quads_pair"]}</th>'
-            f'<th>Quad Remesher</th><th>openclare</th>'
-        )
-        parts = [f'<p>{words["equal_intro"]}</p>']
-        for budget in (1000, 3000, 8000):
-            rows = []
-            for group in GROUPS:
-                average = self.data["equal"].get((budget, group))
-                if not average:
-                    continue
-                quads = " / ".join(number(int(q), language) if q.isdigit() else q for q in average["Quads"].split(" / "))
-                theirs, ours = average["Overall"].split(" / ")
-                best_theirs = ' class="overall best"' if int(theirs) > int(ours) else ' class="overall"'
-                best_ours = ' class="overall best"' if int(ours) > int(theirs) else ' class="overall"'
-                rows.append(
-                    f"<tr><td>{GROUPS[group][index]}</td><td>{quads}</td>"
-                    f"<td{best_theirs}>{theirs}</td><td{best_ours}>{ours}</td></tr>"
-                )
-            title = words["budget"].format(n=number(budget, language))
-            parts.append(f"<h4>{title}</h4>")
-            parts.append(
-                f'<div class="table-wrap"><table class="marks"><thead><tr>{head}</tr></thead>'
-                f'<tbody>{"".join(rows)}</tbody></table></div>'
-            )
-        return "\n".join(parts)
-
     def models_html(self, language, page):
         words = RESULT_WORDS[language]
         index = 0 if language == "en" else 1
@@ -1064,7 +1002,6 @@ class Site:
             page = self.page_path("results", language)
             for token, make in (
                 ("averages", lambda: self.averages_html(language)),
-                ("equal", lambda: self.equal_html(language)),
                 ("models", lambda: self.models_html(language, page)),
                 ("withheld", lambda: self.withheld_html(language, page)),
             ):

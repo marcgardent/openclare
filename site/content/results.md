@@ -2,9 +2,9 @@
 
 <p class="subtitle">Marks from 0 to 100 for every remesher on every model of the bench, at 1,000, 3,000 and 8,000 quads asked for. From the night bench of 18 October 2026.</p>
 
-The bench runs openclare and three other remeshers on {{count:all}} models: organic shapes (sculpts, scans, characters), mechanical parts, two calibration shapes, and an *extra* group of assembled and generated models that are not clean surfaces. Every model has its page, with pictures of what each remesher makes of it, where its licence allows.
+The bench runs openclare and two other remeshers on {{count:all}} models: organic shapes (sculpts, scans, characters), mechanical parts, two calibration shapes, and an *extra* group of assembled and generated models that are not clean surfaces. Every model has its page, with pictures of what each remesher makes of it, where its licence allows.
 
-The remeshers: **openclare** as the Blender add-on runs it; **Quad Remesher** 1.4.1 by Exoside, the commercial reference (trial licence, non-commercial use); **QuadriFlow**, built into Blender; **AutoRemesher** 1.2.0 by Jeremy Hu. Marks are absolute: a remesher keeps its mark whichever others it is compared with.
+The remeshers: **openclare** as the Blender add-on runs it; **QuadriFlow**, built into Blender; **AutoRemesher** 1.2.0 by Jeremy Hu. Marks are absolute: a remesher keeps its mark whichever others it is compared with.
 
 ## How the marks are made
 
@@ -22,15 +22,9 @@ The remeshers: **openclare** as the Blender add-on runs it; **Quad Remesher** 1.
 
 The overall mark is the weighted mean of the criteria that exist for the model: a sphere has no direction to align with, a mesh with open borders has no topological minimum. Edge loops averages its two halves, and is left out where the mesh is not a manifold. Speed is shown in the full report but does not count: it is not a matter of quality, and the timings were taken on a loaded machine. A remesher that gave no mesh at all scores 0. The *Quads* column is not a mark: it is how many quads the mesh has, the mean over the models.
 
-Quad Remesher, left to itself, makes about twice the quads it is asked for, and its Budget mark says so. To compare like with like, a second set of marks puts openclare at the number of quads Quad Remesher made.
-
 ## Average marks
 
 {{averages}}
-
-## At equal quad count
-
-{{equal}}
 
 ## Model by model
 

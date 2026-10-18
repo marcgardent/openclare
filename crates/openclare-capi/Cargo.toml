@@ -1,6 +1,6 @@
 [package]
 name = "openclare-capi"
-description = "C interface of the openclare quad remesher, for Blender and other hosts"
+description = "C interface of the openclare quad remeshing engine, for Blender and other hosts"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

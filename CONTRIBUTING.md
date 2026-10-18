@@ -50,8 +50,8 @@ test is worth its place when it notices a change the others let through.
 
 ## The bench
 
-What each change does to the meshes is measured on a corpus of models against QuadriFlow, Quad
-Remesher and AutoRemesher: [bench/README.md](bench/README.md) says how to run it, how a tool is
+What each change does to the meshes is measured on a corpus of models against QuadriFlow and
+AutoRemesher: [bench/README.md](bench/README.md) says how to run it, how a tool is
 added (one function and one line in `bench/run.py`) and how a model is. The shortcuts:
 
 | Command | What it does |
