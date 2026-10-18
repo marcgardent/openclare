@@ -91,7 +91,9 @@ measured statement.
    border loops: an open cylinder of three quads round has a ring of three
    quads. The proofs use `H₁(S²; ℤ/2) = 0` and the presentation of `π₁(Σ°)` by
    the `λᵢ` with one relation, both of a closed sphere. On the bench, this
-   matters for models with borders (suzanne).
+   matters for models with borders (suzanne, whose eye sockets carry rings of
+   23 quads) and with handles (bob, part, cage). The note now gives the rule on
+   any surface (Theorem "Parity of a turn on any surface", proved on paper).
 4. **Prop. "Parity of a turn on a sphere", frame.** The frame `(e₁, e₂)` of the
    first side is that of the first patch up to a quarter-turn, not only up to
    signs (when the first side is horizontal the coordinates swap). Harmless for
@@ -208,12 +210,23 @@ the whole lengths of the integer search, `B` the balance matrix.
    `ℓ`, of any sign): with `along` the other component of `shift_along`,
    `(value(along, ℓ) + value(shift, ℓ)) % 2 == 0`. In particular a ring has an
    even number of quads round it, and every closed edge loop of the output mesh
-   of a closed genus-zero surface has an even length.
-3. **Handshake.** Each column of `B` has two entries `±1` (or none), so
-   `∑_r (B x)_r` is even for every whole `x`; a balance system with an odd total
-   right-hand side has no whole solution. Conversely, when the graph of the
-   balances is connected with an unbalanced cycle (as on the male body), one
-   with an even total always has one (`solve_unicyclic`).
+   of a closed genus-zero surface has an even length. With borders or handles
+   the sum has instead the parity `Ω_ℓ([γ̄])` of the note's Theorem "Parity of
+   a turn on any surface" (on a surface of genus zero, the total length of the
+   borders on one side of the turn); a ring of 23 quads round an eye socket of
+   Suzanne is correct, not a bug. That theorem is proved on paper, not here.
+3. **Handshake.** Each column of `B` has two entries `±1`, or a single one for
+   an arc on a border of the surface (one half of the arc lies on a patch rim),
+   or none. So for every whole `x` and every connected component `C` of the
+   graph of the balances, `∑_{r ∈ C} (B x)_r` has the parity of the sum of `x`
+   over the border arcs of `C`; on a closed surface `∑_r (B x)_r` is even, and a
+   balance system with an odd total right-hand side has no whole solution.
+   Conversely, when the graph of the balances is connected with an unbalanced
+   cycle (as on the male body), one with an even total always has one
+   (`solve_unicyclic`). An assertion that counts the halves of each arc on the
+   patch rims, as the engine's does, is right with borders too. Only the
+   closed case is proved here (`handshake`); the case with borders is the
+   note's Lemma "Handshake", proved on paper.
 4. **Burgers sum** (where the developed cone points are known, as in the
    research export): for a turn whose curve bounds a disc,
    `T = ∑ᵢ Qᵢ (I - Rᵢ) pᵢ` in the order of first visit, `Qᵢ = Rₘ⋯Rᵢ₊₁`,
@@ -233,9 +246,13 @@ the whole lengths of the integer search, `B` the balance matrix.
    (`forced_helices`, `card_ge_of_disjoint`); along a chain of `m + 1` parallel
    turns separated by dislocations with `q` changes of sign, at least `m - q`
    are left shifted (`chain_of_dislocations`).
-9. **Combinations.** For whole multipliers, `∑ᵣ uᵣ sᵣ(ℓ) ≡ ∑ᵢ wᵢ jᵢ χᵢ (mod 2)`,
-   `wᵢ` the winding numbers of the weighted cycle round the cone points,
-   `jᵢ = 4 - k(cᵢ)`, `χᵢ` their colours (`checkerboard_combination`).
+9. **Combinations** (closed surfaces of genus zero, or curves that all lie in
+   one planar region without border). For whole multipliers,
+   `∑ᵣ uᵣ sᵣ(ℓ) ≡ ∑ᵢ wᵢ jᵢ χᵢ (mod 2)`, `wᵢ` the winding numbers of the weighted
+   cycle round the cone points, `jᵢ = 4 - k(cᵢ)`, `χᵢ` their colours
+   (`checkerboard_combination`). With borders or handles the colours may depend
+   on the paths; the general rule is `∑ᵣ uᵣ (αᵣ + sᵣ) ≡ ∑ᵣ uᵣ Ω_ℓ([γ̄ᵣ]) (mod 2)`
+   (the note's Theorem "Parity of a turn on any surface").
 
 ## Files
 
