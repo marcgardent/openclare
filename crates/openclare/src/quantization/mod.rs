@@ -198,7 +198,7 @@ fn turns_of(
     let found = tubes::turns(tmesh, 4, offsets, longest * side);
     let (mut every, mut held) = (Vec::new(), Vec::new());
     let mut same_way: std::collections::HashSet<Vec<(usize, i64)>> = std::collections::HashSet::new();
-    let mut same_shift = std::collections::HashSet::new();
+    let mut same_ring = std::collections::HashSet::new();
     let debug = std::env::var_os("OPENCLARE_DEBUG_TURNS").is_some();
     for turn in found {
         let shift = tubes::value(&turn.shift, real);
@@ -229,12 +229,22 @@ fn turns_of(
         if !same_way.insert(key) {
             continue;
         }
-        if shift.abs() > TURN_SHIFT && same_shift.insert((shift.abs() * 1e4).round() as i64) {
+        // The same ring found again, from another rectangle or the other
+        // way round, has the same shift up to its sign; two rings that merely
+        // shift as much (a left and a right limb) are both held (DT-065).
+        if shift.abs() > TURN_SHIFT && same_ring.insert(ring(&turn.shift)) {
             held.push(turn.clone());
         }
         every.push(turn);
     }
     (every, held)
+}
+
+/// A shift as a key that is the same for the shift taken the other way:
+/// its whole coefficients, the first made positive.
+fn ring(shift: &tubes::Expression) -> Vec<(usize, i64)> {
+    let sign = shift.first().map_or(1.0, |&(_, c)| c.signum());
+    shift.iter().map(|&(arc, c)| (arc, (sign * c).round() as i64)).collect()
 }
 
 /// Prints where each turn of `every` that `x` leaves shifted starts, and
@@ -975,4 +985,69 @@ fn count_quads(tmesh: &TMesh, x: &[i64]) -> usize {
             (size[0] * size[1]) as usize
         })
         .sum()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::mesh::primitives;
+    use crate::{crossfield, preprocess, tmesh};
+
+    /// The T-mesh of a cube with quads of side 0.1.
+    fn cube() -> TMesh {
+        let request = preprocess::Request { triangles: 8000, crease_angle: Some(30.0), ..Default::default() };
+        let work = preprocess::create(preprocess::Kind::Isotropic).preprocess(&primitives::cube(8), &request).unwrap();
+        let field = crossfield::create(crossfield::Kind::Power)
+            .solve(&work, &crossfield::Request { alignment: 0.0, ..Default::default() })
+            .unwrap();
+        let request = tmesh::Request { edge_length: 0.1 };
+        tmesh::create(tmesh::Kind::Motorcycle).build(&work, &field, &request).unwrap().tmesh
+    }
+
+    /// Two copies of `one` side by side in one T-mesh, exactly alike.
+    fn twice(one: &TMesh) -> TMesh {
+        let (nodes, arcs, patches, traces) =
+            (one.nodes.len() as u32, one.arcs.len() as u32, one.patches.len() as u32, one.traces.len() as u32);
+        let mut out = one.clone();
+        out.nodes.extend(
+            one.nodes.iter().map(|node| tmesh::Node {
+                arcs: node.arcs.iter().map(|half| half + 2 * arcs).collect(),
+                ..node.clone()
+            }),
+        );
+        out.arcs.extend(one.arcs.iter().map(|arc| tmesh::Arc {
+            nodes: arc.nodes.map(|node| node + nodes),
+            patches: arc.patches.map(|patch| patch + patches),
+            trace: arc.trace + traces,
+            ..arc.clone()
+        }));
+        out.patches.extend(one.patches.iter().map(|patch| tmesh::Patch {
+            boundary: patch.boundary.iter().map(|half| half + 2 * arcs).collect(),
+            ..patch.clone()
+        }));
+        out.traces.extend(one.traces.iter().cloned());
+        out
+    }
+
+    #[test]
+    fn two_rings_alike_are_both_held() {
+        let one = cube();
+        let both = twice(&one);
+        // Lengths a little off, the same on both copies, for the belts
+        // round each cube to come back beside themselves by as much.
+        let real: Vec<f64> = both
+            .arcs
+            .iter()
+            .enumerate()
+            .map(|(arc, a)| a.length * (1.0 + 0.02 * (Rng::new((arc % one.arcs.len()) as u64).next_f64() - 0.5)))
+            .collect();
+        let (_, held) = turns_of(&both, &real, &[0.5], 0.05, 6.0);
+        let first = held.iter().filter(|turn| turn.patch < one.patches.len()).count();
+        let second = held.len() - first;
+        assert!(first > 0, "no belt round the cube held");
+        assert_eq!(first, second, "the belts of one cube crowd out those of the other");
+        // The same belt from another face, or the other way round, is the
+        // same ring: three belts round a cube.
+        assert_eq!(first, 3);
+    }
 }
