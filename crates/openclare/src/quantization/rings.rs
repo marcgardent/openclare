@@ -208,38 +208,16 @@ pub(super) fn rounds(
     let debug = std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some();
     let (x, scale, _, lower) = start;
     let target: Vec<f64> = real.iter().map(|length| scale * length).collect();
-    let mut balances = Vec::new();
-    let mut sides = Vec::new();
-    for patch in &tmesh.patches {
-        let Some(side_of) = patch.side_of_each() else { continue };
-        let mut first_two = [Vec::new(), Vec::new()];
-        for pair in 0..2 {
-            let mut row = Vec::new();
-            for (&half, &side) in patch.boundary.iter().zip(&side_of) {
-                if side as usize % 2 == pair {
-                    row.push((half as usize / 2, if side < 2 { 1.0 } else { -1.0 }));
-                }
-                if side as usize == pair {
-                    first_two[pair].push(half as usize / 2);
-                }
-            }
-            balances.push(row);
-        }
-        sides.push(first_two);
-    }
+    let (balances, sides) = balances_and_sides(tmesh);
     // The rings, each once whichever way round, with the walk it had where
     // it was first found.
     let mut rings: Vec<Ring> = Vec::new();
     let mut known = std::collections::HashSet::new();
     let mut add_strips = |rings: &mut Vec<Ring>, x: &[i64]| {
-        let lengths: Vec<f64> = x.iter().map(|&length| length as f64).collect();
-        let side = (count_quads(tmesh, x) as f64).sqrt().max(1.0);
-        for (strip, walk) in tubes::lattice_walks(tmesh, &lengths, 4, CUT_LONGEST * side) {
-            let field = scale * tubes::value(&strip.shift, real);
-            if field.abs() > CUT_LEAN * strip.around || !known.insert(super::ring(&strip.shift)) {
-                continue;
+        for (ring, _) in strips(tmesh, real, *scale, x) {
+            if known.insert(super::ring(&ring.shift)) {
+                rings.push(ring);
             }
-            rings.push(Ring { shift: strip.shift, weight: strip.around, walk });
         }
     };
     add_strips(&mut rings, x);
@@ -250,15 +228,7 @@ pub(super) fn rounds(
         let mut tries = 0;
         let chosen = loop {
             tries += 1;
-            let (low, high): (Vec<i64>, Vec<i64>) = target
-                .iter()
-                .zip(&reference)
-                .zip(&lower)
-                .map(|((&target, &reference), &bound)| {
-                    let low = bound.max(((target.floor() - SLACK) as i64).min(reference)).max(0);
-                    (low, ((target.ceil() + SLACK) as i64).max(reference).max(low))
-                })
-                .unzip();
+            let (low, high) = bounds(&target, &reference, &lower);
             let problem = RingProblem {
                 balances: balances.clone(),
                 sides: sides.clone(),
@@ -299,4 +269,139 @@ pub(super) fn rounds(
         reference = chosen;
     }
     out
+}
+
+/// The rows that whole lengths bring to nothing, the opposite sides of
+/// every rectangle adding up to the same, and per rectangle the arcs of its
+/// first side and of its second.
+fn balances_and_sides(tmesh: &TMesh) -> (Vec<Vec<(usize, f64)>>, Vec<[Vec<usize>; 2]>) {
+    let mut balances = Vec::new();
+    let mut sides = Vec::new();
+    for patch in &tmesh.patches {
+        let Some(side_of) = patch.side_of_each() else { continue };
+        let mut first_two = [Vec::new(), Vec::new()];
+        for pair in 0..2 {
+            let mut row = Vec::new();
+            for (&half, &side) in patch.boundary.iter().zip(&side_of) {
+                if side as usize % 2 == pair {
+                    row.push((half as usize / 2, if side < 2 { 1.0 } else { -1.0 }));
+                }
+                if side as usize == pair {
+                    first_two[pair].push(half as usize / 2);
+                }
+            }
+            balances.push(row);
+        }
+        sides.push(first_two);
+    }
+    (balances, sides)
+}
+
+/// The strips of quads the whole lengths `x` make that the real lengths
+/// at `scale` would close (leaning less than [`CUT_LEAN`]), as rings, each
+/// with the walk it has at `x` and the rectangle it starts from.
+fn strips(tmesh: &TMesh, real: &[f64], scale: f64, x: &[i64]) -> Vec<(Ring, usize)> {
+    let lengths: Vec<f64> = x.iter().map(|&length| length as f64).collect();
+    let side = (count_quads(tmesh, x) as f64).sqrt().max(1.0);
+    tubes::lattice_walks(tmesh, &lengths, 4, CUT_LONGEST * side)
+        .into_iter()
+        .filter(|(strip, _)| (scale * tubes::value(&strip.shift, real)).abs() <= CUT_LEAN * strip.around)
+        .map(|(strip, walk)| (Ring { shift: strip.shift, weight: strip.around, walk }, strip.patch))
+        .collect()
+}
+
+/// The least and the most length of each arc in a round: within
+/// [`SLACK`] of its target, or as far as the reference already is, and
+/// never below the bound `lower` holds it at.
+fn bounds(target: &[f64], reference: &[i64], lower: &[i64]) -> (Vec<i64>, Vec<i64>) {
+    target
+        .iter()
+        .zip(reference)
+        .zip(lower)
+        .map(|((&target, &reference), &bound)| {
+            let low = bound.max(((target.floor() - SLACK) as i64).min(reference)).max(0);
+            (low, ((target.ceil() + SLACK) as i64).max(reference).max(low))
+        })
+        .unzip()
+}
+
+/// Pieces exported so far by [`export`], to name their files.
+static EXPORTED: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+
+/// Writes, for the research on conflicts between rings, the problem of
+/// the first round of the slow quality mode from the lengths `start`, as
+/// JSON, to `<prefix>-<n>.json`, `n` counting the pieces quantized by the
+/// process. Each ring is given where it starts on the surface; each arc
+/// where its middle is, and the bound of separation the engine put on it.
+/// For `OPENCLARE_EXPORT_RINGS`: off unless that variable names a prefix.
+pub(super) fn export(
+    tmesh: &TMesh,
+    real: &[f64],
+    start: &Lengths,
+    wanted: usize,
+    allowed: usize,
+    most_deviation: f64,
+    prefix: &std::ffi::OsStr,
+) {
+    use std::fmt::Write as _;
+    let (x, scale, _, separation) = start;
+    let target: Vec<f64> = real.iter().map(|length| scale * length).collect();
+    let (balances, sides) = balances_and_sides(tmesh);
+    let lower: Vec<i64> = separation.iter().map(|&bound| bound.max(0)).collect();
+    let (low, high) = bounds(&target, x, &lower);
+    let mut known = std::collections::HashSet::new();
+    let rings: Vec<(Ring, usize)> =
+        strips(tmesh, real, *scale, x).into_iter().filter(|(ring, _)| known.insert(super::ring(&ring.shift))).collect();
+    let row = |row: &[(usize, f64)]| -> String {
+        let terms: Vec<String> = row.iter().map(|&(arc, c)| format!("[{arc},{c}]")).collect();
+        format!("[{}]", terms.join(","))
+    };
+    let list =
+        |values: &mut dyn Iterator<Item = String>| -> String { format!("[{}]", values.collect::<Vec<_>>().join(",")) };
+    let at = |node: u32| tmesh.nodes[node as usize].position;
+    let mut json = String::from("{");
+    let _ = write!(json, "\"arcs\":{},\"scale\":{},", x.len(), scale);
+    let _ = write!(json, "\"target\":{},", list(&mut target.iter().map(|t| t.to_string())));
+    let _ = write!(json, "\"real\":{},", list(&mut real.iter().map(|t| t.to_string())));
+    let _ = write!(json, "\"reference\":{},", list(&mut x.iter().map(|t| t.to_string())));
+    let _ = write!(json, "\"separation\":{},", list(&mut lower.iter().map(|t| t.to_string())));
+    let _ = write!(json, "\"lower\":{},", list(&mut low.iter().map(|t| t.to_string())));
+    let _ = write!(json, "\"upper\":{},", list(&mut high.iter().map(|t| t.to_string())));
+    let _ = write!(json, "\"balances\":{},", list(&mut balances.iter().map(|r| row(r))));
+    let _ = write!(json, "\"sides\":{},", list(&mut sides.iter().map(|[a, b]| format!("[{:?},{:?}]", a, b))));
+    let _ = write!(
+        json,
+        "\"arc_middles\":{},",
+        list(&mut tmesh.arcs.iter().map(|arc| {
+            let middle = (at(arc.nodes[0]) + at(arc.nodes[1])) * 0.5;
+            format!("[{},{},{}]", middle.x, middle.y, middle.z)
+        }))
+    );
+    let _ = write!(
+        json,
+        "\"most_deviation\":{most_deviation},\"quads\":{wanted},\"quads_allowed\":{allowed},\"rings\":{}",
+        list(&mut rings.iter().map(|(ring, patch)| {
+            let first = tmesh.patches[*patch].boundary[0] as usize / 2;
+            let start = at(tmesh.arcs[first].nodes[0]);
+            let walk = list(&mut ring.walk.iter().map(|(r, constant)| format!("[{},{}]", row(r), constant)));
+            format!(
+                "{{\"shift\":{},\"weight\":{},\"walk\":{},\"patch\":{},\"at\":[{},{},{}],\"real_shift\":{}}}",
+                row(&ring.shift),
+                ring.weight,
+                walk,
+                patch,
+                start.x,
+                start.y,
+                start.z,
+                scale * tubes::value(&ring.shift, real)
+            )
+        }))
+    );
+    json.push('}');
+    let n = EXPORTED.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+    let mut path = prefix.to_os_string();
+    path.push(format!("-{n}.json"));
+    if let Err(error) = std::fs::write(&path, json) {
+        eprintln!("could not export the rings to {}: {error}", path.to_string_lossy());
+    }
 }
