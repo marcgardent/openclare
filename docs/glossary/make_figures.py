@@ -1425,6 +1425,85 @@ def checkerboard():
 
 
 # ----------------------------------------------------------------------------
+# 8. Charts of the popular summary of the research note
+# ----------------------------------------------------------------------------
+
+
+@figure
+def forced_vs_engine():
+    """Turns held for closing on the male body at 10,590 quads, per way: those the
+    singularities force to stay helices (note, table "forced helices", bounds of
+    separation) against those the engine leaves shifted."""
+    ways = list(range(8))
+    held = [48, 78, 52, 86, 84, 160, 88, 169]
+    forced = [1, 5, 1, 4, 1, 6, 1, 9]
+    forced_text = ["1", "5", "1", "4", "1", "6", "1", "8-9"]
+    engine = [13, 39, 16, 44, 49, 115, 44, 123]
+    fig, ax = plt.subplots(figsize=(12, 6.2))
+    height = 0.36
+    for k, way in enumerate(ways):
+        y = len(ways) - 1 - k
+        ax.barh(y, held[k], height=0.86, color=LIGHT, edgecolor="none", zorder=1)
+        ax.barh(y + height / 2 + 0.02, engine[k], height=height, color=RED_LIGHT, edgecolor=RED, lw=1.0, zorder=2)
+        ax.barh(y - height / 2 - 0.02, forced[k], height=height, color=RED, edgecolor="none", zorder=2)
+        ax.text(engine[k] + 1.5, y + height / 2 + 0.02, str(engine[k]), va="center", fontsize=12, color=INK)
+        ax.text(forced[k] + 1.5, y - height / 2 - 0.02, forced_text[k], va="center", fontsize=12, color=INK,
+                fontweight="bold")
+        ax.text(held[k] + 1.5, y, f"of {held[k]} held", va="center", fontsize=11, color=MUTED)
+    ax.set_yticks(range(len(ways)))
+    ax.set_yticklabels([f"way {w}" for w in reversed(ways)], fontsize=13)
+    ax.set_xlim(0, 190)
+    ax.set_xlabel("number of turns", fontsize=13, color=MUTED)
+    for side in ("top", "right", "left"):
+        ax.spines[side].set_visible(False)
+    ax.spines["bottom"].set_color(GRID)
+    ax.tick_params(axis="x", colors=MUTED, labelsize=12)
+    ax.tick_params(axis="y", length=0)
+    handles = [
+        Rectangle((0, 0), 1, 1, color=RED),
+        Rectangle((0, 0), 1, 1, facecolor=RED_LIGHT, edgecolor=RED),
+        Rectangle((0, 0), 1, 1, color=LIGHT),
+    ]
+    ax.legend(handles, ["helices forced by the singularities", "helices left by the engine",
+                        "turns held for closing"], loc="upper right", fontsize=12, frameon=False)
+    ax.set_title("Male body, 10,590 quads: forced helices against those the engine leaves",
+                 fontsize=15, pad=12)
+    fig.subplots_adjust(left=0.09, right=0.98, top=0.91, bottom=0.10)
+    save(fig, "forced_vs_engine.png")
+
+
+@figure
+def spiral_results():
+    """Share of edges on spiral loops: the 12-model batch over three budgets
+    (PR #69) and the male body (note and PR #69)."""
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4.6), gridspec_kw={"width_ratios": [1, 1.25]})
+
+    def bars(ax, names, values, colours, texts, title, top):
+        x = np.arange(len(names))
+        ax.bar(x, values, width=0.58, color=colours, edgecolor="none", zorder=2)
+        for k, value in enumerate(values):
+            ax.text(x[k], value + top * 0.02, texts[k], ha="center", va="bottom", fontsize=14,
+                    fontweight="bold", color=INK)
+        ax.set_xticks(x)
+        ax.set_xticklabels(names, fontsize=12)
+        ax.set_ylim(0, top)
+        ax.set_title(title, fontsize=14, pad=10)
+        for side in ("top", "right", "left"):
+            ax.spines[side].set_visible(False)
+        ax.spines["bottom"].set_color(GRID)
+        ax.set_yticks([])
+        ax.tick_params(axis="x", length=0)
+
+    bars(axes[0], ["first version\nof closing", "today"], [7.55, 4.54], [RED_LIGHT, BLUE],
+         ["7.55%", "4.54%"], "12 models, 2,970 / 3,000 / 3,030 quads", 9.0)
+    bars(axes[1], ["first version\nof closing", "today", "made by hand"], [2.47, 1.59, 2.5],
+         [RED_LIGHT, BLUE, GRID], ["2.47%", "1.15-1.59%", "2.5%"], "Male body, 10,590 quads", 3.0)
+    fig.suptitle("Share of edges on spiral loops (lower is better)", fontsize=15, y=0.99)
+    fig.subplots_adjust(left=0.02, right=0.99, top=0.80, bottom=0.16, wspace=0.12)
+    save(fig, "spiral_results.png")
+
+
+# ----------------------------------------------------------------------------
 # Main
 # ----------------------------------------------------------------------------
 
