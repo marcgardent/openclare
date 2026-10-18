@@ -2,10 +2,10 @@ name: pages
 
 # The website (site/): built by site/build.py, its links checked, and
 # published by GitHub Pages (Settings › Pages › Source: GitHub Actions) on
-# every push to main, and to website until that branch is merged.
+# every push to main.
 on:
   push:
-    branches: [main, website]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
