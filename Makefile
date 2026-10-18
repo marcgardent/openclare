@@ -1,6 +1,6 @@
 # Shortcuts for the common tasks. `make help` lists them.
 
-.PHONY: help build test scenes blenderkit essentials remeasure autoremesher scores quick pages dashboard view addon install addon-windows test-windows addon-test release
+.PHONY: help build test scenes blenderkit essentials remeasure autoremesher scores quick pages dashboard view addon install addon-windows test-windows addon-test release paper paper-clean proofs
 
 help:
 	@echo "make build       build the openclare binary (release)"
@@ -45,6 +45,13 @@ help:
 	@echo "                 remesh a model of the bench, recording what each stage makes, and"
 	@echo "                 open the recording in the Rerun viewer (long to build the first"
 	@echo "                 time). FILE=path/to/mesh.obj for a mesh of your own"
+	@echo "make paper       compile the research notes (docs/research/*/paper.tex) into PDFs"
+	@echo "                 next to them (needs latexmk and TeX Live). NOTE=closing-helices for one"
+	@echo "make paper-clean remove what LaTeX leaves next to them, the PDFs kept"
+	@echo "make proofs      check the machine-checked proofs of the research notes"
+	@echo "                 (docs/research/*/lean, Lean and Mathlib; the first run downloads"
+	@echo "                 the toolchain and Mathlib's compiled cache, about 10 GB in all)."
+	@echo "                 NOTE=closing-helices for one"
 
 # The most memory, in kilobytes, a run of the engine started from here may
 # ask for (`ulimit -v`): beyond it the run fails instead of taking the
@@ -83,6 +90,34 @@ essentials:
 # without remeshing (after a change to the measures).
 remeasure:
 	for target in 3000 1000 8000; do python3 bench/run.py --remeasure --target $$target; done
+
+# The research notes: LaTeX sources in docs/research/<note>/paper.tex, their
+# bibliography next to them, the PDF written beside.
+NOTES = $(if $(NOTE),docs/research/$(NOTE),$(patsubst %/paper.tex,%,$(wildcard docs/research/*/paper.tex)))
+paper:
+	@for note in $(NOTES); do \
+		echo "== $$note"; \
+		(cd $$note && latexmk -pdf -interaction=nonstopmode -halt-on-error paper.tex >/dev/null) \
+			|| { echo "failed: see $$note/paper.log"; exit 1; }; \
+		echo "written: $$note/paper.pdf"; \
+	done
+
+paper-clean:
+	@for note in $(NOTES); do (cd $$note && latexmk -c paper.tex >/dev/null); done
+
+# The proofs checked by Lean: a Lake project per note in docs/research/<note>/lean,
+# on the Mathlib release its lakefile pins. elan installs the toolchain the project
+# names; `lake exe cache get` fetches Mathlib compiled, so that only the note's own
+# files are built.
+LAKE = $(or $(shell command -v lake 2>/dev/null),$(HOME)/.elan/bin/lake)
+PROOFS = $(if $(NOTE),docs/research/$(NOTE)/lean,$(patsubst %/lakefile.toml,%,$(wildcard docs/research/*/lean/lakefile.toml)))
+proofs:
+	@for project in $(PROOFS); do \
+		echo "== $$project"; \
+		(cd $$project && PATH="$(dir $(LAKE)):$$PATH" && export PATH && \
+			$(LAKE) exe cache get && $(LAKE) build) || { echo "failed: $$project"; exit 1; }; \
+		echo "checked: $$project"; \
+	done
 
 # Marks from 0 to 100, overall and per criterion, from what the bench measured.
 scores:

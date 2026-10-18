@@ -1,0 +1,352 @@
+/-
+Proposition "Completeness at given lengths", in a discrete model of the T-mesh.
+
+At whole lengths `ℓ` balancing every patch, each patch is an integer rectangle and
+the quad mesh is its unit grid. The model has two layers.
+
+* **Along a side.** An arc is glued to the arc across it by a quarter-turn and a
+  whole translation; restricted to the line of the side, that is `t ↦ ε t + c`
+  with `ε = ±1` and `c` whole (`glueLine`), the same map on every unit edge
+  `[k, k + 1]` of the arc since nodes sit at whole positions. Such a map sends
+  the midpoint `k + ½` of a unit edge to the midpoint of a unit edge
+  (`glueLine_half`) and the open unit edge onto an open unit edge
+  (`glueLine_open`). In the plane, a quarter-turn with a whole translation keeps
+  nodes, midpoints of edges and centres of quads apart (`oddCount_motion`). So the
+  walk of Definition "Turn" from a half-integer `k + ½`, taken with the lengths
+  `ℓ`, crosses the sides exactly at the midpoints the discrete walk on unit
+  edges gives (`realWalk_iterate_half`), and so does the walk from any point of
+  the open unit edge (`realWalk_iterate_open`): the walk is the strip's.
+
+* **Strips.** A station is a unit edge of a side, entered from that side; the walk
+  `walk` crosses the patch to the opposite side at the same offset and passes the
+  arc to the next station. A quad crossed by a strip is a dart: a station and the
+  row `m < depth` of the quad in the column above it. The strip moves to the next
+  quad of the column, or at the last row through the opposite side to the next
+  station (`next`). The strips of the quad mesh are the cycles of `next`. Every
+  strip meets a station (`exists_station`), two stations lie on the same strip
+  exactly when the walk takes one to the other (`sameCycle_station_iff`), so the
+  strips are the cycles of the walk (`stripsEquiv`): walking from every
+  half-integer of every side finds every strip, each as one cycle of the walk.
+-/
+module
+
+public import Mathlib.GroupTheory.Perm.Cycle.Basic
+public import Mathlib.Algebra.Order.Floor.Ring
+public import Mathlib.Basic.Real.Basic
+public import Mathlib.Algebra.Order.Archimedean.Real.Basic
+public import Mathlib.Data.Fintype.Sigma
+public import Mathlib.Algebra.Ring.Parity
+public import Mathlib.Algebra.Group.Int.Even
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.Positivity
+
+@[expose] public section
+
+set_option linter.unusedSectionVars false
+
+namespace ClosingHelices
+
+namespace Completeness
+
+/-! ### In the plane: nodes, midpoints and centres -/
+
+/-- The doubled coordinates of a point of the grid: a node has both even, the
+midpoint of a quad edge exactly one odd, the centre of a quad both odd. -/
+def oddCount (p : ℤ × ℤ) : ℕ := (if Odd p.1 then 1 else 0) + (if Odd p.2 then 1 else 0)
+
+/-- The quarter-turn `R(a, b) = (-b, a)`. -/
+def quarter (p : ℤ × ℤ) : ℤ × ℤ := (-p.2, p.1)
+
+/-- The translation by a whole vector `τ`, in doubled coordinates. -/
+def translate2 (τ p : ℤ × ℤ) : ℤ × ℤ := (p.1 + 2 * τ.1, p.2 + 2 * τ.2)
+
+/-- A quarter-turn power followed by a whole translation (`2τ` in doubled
+coordinates) keeps nodes, midpoints of quad edges and centres of quads apart. -/
+theorem oddCount_motion (j : ℕ) (τ p : ℤ × ℤ) :
+    oddCount (translate2 τ (quarter^[j] p)) = oddCount p := by
+  have hq : ∀ p, oddCount (quarter p) = oddCount p := by
+    intro p
+    simp only [oddCount, quarter, odd_neg]
+    by_cases h1 : Odd p.1 <;> by_cases h2 : Odd p.2 <;> simp [h1, h2]
+  have hodd : ∀ a b : ℤ, Odd (a + 2 * b) ↔ Odd a := fun a b => by
+    constructor
+    · rintro ⟨m, hm⟩; exact ⟨m - b, by linarith⟩
+    · rintro ⟨m, hm⟩; exact ⟨m + b, by linarith⟩
+  have ht : ∀ p, oddCount (translate2 τ p) = oddCount p := by
+    intro p
+    simp only [oddCount, translate2, hodd]
+  rw [ht]
+  induction j generalizing p with
+  | zero => rfl
+  | succ j ih => rw [Function.iterate_succ_apply, ih, hq]
+
+/-! ### Along a side: half-integers and unit edges -/
+
+/-- The gluing of an arc on the line of a side: `t ↦ ε t + c`. -/
+def glueLine (ε c : ℤ) (t : ℝ) : ℝ := ε * t + c
+
+/-- The unit edge `[k, k + 1]` is glued onto the unit edge `[k', k' + 1]`. -/
+def glueEdge (ε c k : ℤ) : ℤ := if ε = 1 then k + c else c - 1 - k
+
+/-- The midpoint of a unit edge goes to the midpoint of a unit edge. -/
+theorem glueLine_half {ε : ℤ} (hε : ε = 1 ∨ ε = -1) (c k : ℤ) :
+    glueLine ε c (k + 1 / 2) = glueEdge ε c k + 1 / 2 := by
+  rcases hε with rfl | rfl
+  · simp [glueLine, glueEdge]; ring
+  · simp [glueLine, glueEdge]; ring
+
+/-- The open unit edge goes onto an open unit edge: a point at a non-whole offset
+never meets a node, and the unit edge it reaches does not depend on the point. -/
+theorem glueLine_open {ε : ℤ} (hε : ε = 1 ∨ ε = -1) (c k : ℤ) {t : ℝ}
+    (h₁ : (k : ℝ) < t) (h₂ : t < k + 1) :
+    (glueEdge ε c k : ℝ) < glueLine ε c t ∧ glueLine ε c t < glueEdge ε c k + 1 := by
+  rcases hε with rfl | rfl
+  · simp only [glueLine, glueEdge, ↓reduceIte, Int.cast_add, Int.cast_one, one_mul]
+    constructor <;> linarith
+  · rw [glueLine, glueEdge, ite_eq_right (by decide : ¬ ((-1 : ℤ) = 1))]
+    push_cast
+    constructor <;> linarith
+
+variable {Side : Type*} (opp : Side → Side) (target : Side → ℤ → Side) (sign shift : Side → ℤ → ℤ)
+
+/-- One move of the walk of Definition "Turn" at whole lengths: from the side `σ` at
+offset `t`, across the patch to the opposite side at the same offset, then across
+the arc holding the unit edge `⌊t⌋` of that side. -/
+noncomputable def realWalk (p : Side × ℝ) : Side × ℝ :=
+  (target (opp p.1) ⌊p.2⌋, glueLine (sign (opp p.1) ⌊p.2⌋) (shift (opp p.1) ⌊p.2⌋) p.2)
+
+/-- The same move on unit edges. -/
+def edgeWalk (p : Side × ℤ) : Side × ℤ :=
+  (target (opp p.1) p.2, glueEdge (sign (opp p.1) p.2) (shift (opp p.1) p.2) p.2)
+
+variable {opp target sign shift}
+
+/-- **The walk from a half-integer is the walk on unit edges**, at every step. -/
+theorem realWalk_iterate_half (hs : ∀ σ k, sign σ k = 1 ∨ sign σ k = -1) (n : ℕ) (σ : Side)
+    (k : ℤ) : (realWalk opp target sign shift)^[n] (σ, (k : ℝ) + 1 / 2) =
+      (((edgeWalk opp target sign shift)^[n] (σ, k)).1,
+        (((edgeWalk opp target sign shift)^[n] (σ, k)).2 : ℝ) + 1 / 2) := by
+  induction n generalizing σ k with
+  | zero => rfl
+  | succ n ih =>
+    rw [Function.iterate_succ_apply, Function.iterate_succ_apply]
+    have hfl : ⌊(k : ℝ) + 1 / 2⌋ = k := by
+      rw [Int.floor_eq_iff]; constructor <;> linarith
+    have : realWalk opp target sign shift (σ, (k : ℝ) + 1 / 2) =
+        ((edgeWalk opp target sign shift (σ, k)).1,
+          ((edgeWalk opp target sign shift (σ, k)).2 : ℝ) + 1 / 2) := by
+      simp only [realWalk, edgeWalk, hfl, glueLine_half (hs _ _)]
+    rw [this, ih]
+
+/-- **Any point of the open unit edge follows the same strip**: the walk from
+`t ∈ (k, k + 1)` stays inside the open unit edges the walk on unit edges gives. -/
+theorem realWalk_iterate_open (hs : ∀ σ k, sign σ k = 1 ∨ sign σ k = -1) (n : ℕ) (σ : Side)
+    (k : ℤ) (t : ℝ) (h₁ : (k : ℝ) < t) (h₂ : t < k + 1) :
+    ((realWalk opp target sign shift)^[n] (σ, t)).1 =
+        ((edgeWalk opp target sign shift)^[n] (σ, k)).1 ∧
+      (((edgeWalk opp target sign shift)^[n] (σ, k)).2 : ℝ) <
+        ((realWalk opp target sign shift)^[n] (σ, t)).2 ∧
+      ((realWalk opp target sign shift)^[n] (σ, t)).2 <
+        ((edgeWalk opp target sign shift)^[n] (σ, k)).2 + 1 := by
+  induction n generalizing σ k t with
+  | zero => exact ⟨rfl, h₁, h₂⟩
+  | succ n ih =>
+    rw [Function.iterate_succ_apply, Function.iterate_succ_apply]
+    have hfl : ⌊t⌋ = k := by rw [Int.floor_eq_iff]; exact ⟨h₁.le, h₂⟩
+    have h := glueLine_open (hs (opp σ) k) (shift (opp σ) k) k h₁ h₂
+    simp only [realWalk, edgeWalk, hfl]
+    exact ih _ _ _ h.1 h.2
+
+/-! ### Strips -/
+
+section Strips
+
+variable {St : Type*} [Fintype St] [DecidableEq St] (walk : Equiv.Perm St)
+  (depth : St → ℕ) (hdepth : ∀ s, 0 < depth s)
+
+/-- A quad crossed by a strip: a station and the row of the quad above it. -/
+abbrev Dart := Σ s : St, Fin (depth s)
+
+/-- The quad of row `0` above a station. -/
+def station (s : St) : Dart depth := ⟨s, ⟨0, hdepth s⟩⟩
+
+/-- The next quad of the strip: the next row of the column, or after the last row,
+through the opposite side, the first row above the next station. -/
+def next (d : Dart depth) : Dart depth :=
+  if h : d.2.val + 1 < depth d.1 then ⟨d.1, ⟨d.2.val + 1, h⟩⟩ else station depth hdepth (walk d.1)
+
+variable {walk depth hdepth}
+
+theorem next_iterate_lt (s : St) (i : ℕ) (hi : i < depth s) :
+    (next walk depth hdepth)^[i] (station depth hdepth s) = ⟨s, ⟨i, hi⟩⟩ := by
+  induction i with
+  | zero => rfl
+  | succ i ih =>
+    rw [Function.iterate_succ_apply', ih (by omega)]
+    simp [next, hi]
+
+theorem next_iterate_depth (s : St) :
+    (next walk depth hdepth)^[depth s] (station depth hdepth s) =
+      station depth hdepth (walk s) := by
+  obtain ⟨i, hi⟩ : ∃ i, depth s = i + 1 := ⟨depth s - 1, by have := hdepth s; omega⟩
+  rw [hi, Function.iterate_succ_apply', next_iterate_lt s i (by omega)]
+  simp [next, hi]
+
+theorem next_injective : Function.Injective (next walk depth hdepth) := by
+  rintro ⟨s, m⟩ ⟨s', m'⟩ h
+  simp only [next] at h
+  split_ifs at h with h1 h2 h2
+  · simp only [Sigma.mk.injEq] at h
+    obtain ⟨rfl, h⟩ := h
+    simp only [heq_eq_eq, Fin.mk.injEq] at h
+    congr; exact Fin.ext (by omega)
+  · simp only [station, Sigma.mk.injEq] at h
+    obtain ⟨rfl, h⟩ := h
+    simp at h
+  · simp only [station, Sigma.mk.injEq] at h
+    obtain ⟨rfl, h⟩ := h
+    simp at h
+  · simp only [station, Sigma.mk.injEq, EmbeddingLike.apply_eq_iff_eq] at h
+    obtain ⟨rfl, -⟩ := h
+    congr; exact Fin.ext (by omega)
+
+variable (walk depth hdepth)
+
+/-- The strips: `next` is a permutation of the darts. -/
+noncomputable def nextPerm : Equiv.Perm (Dart depth) :=
+  Equiv.ofBijective _ (Finite.injective_iff_bijective.mp (next_injective (walk := walk)
+    (hdepth := hdepth)))
+
+variable {walk depth hdepth}
+
+theorem nextPerm_pow (n : ℕ) (d : Dart depth) :
+    (nextPerm walk depth hdepth ^ n) d = (next walk depth hdepth)^[n] d := by
+  rw [Equiv.Perm.coe_pow]; rfl
+
+/-- Every quad of a strip lies above a station: every strip meets a side. -/
+theorem exists_station (d : Dart depth) :
+    ∃ s, (nextPerm walk depth hdepth).SameCycle (station depth hdepth s) d :=
+  ⟨d.1, d.2.val, by
+    rw [zpow_natCast, nextPerm_pow, next_iterate_lt d.1 d.2.val d.2.isLt]⟩
+
+theorem walk_iterate_to_next (n : ℕ) (s : St) :
+    ∃ N, (next walk depth hdepth)^[N] (station depth hdepth s) =
+      station depth hdepth ((walk : St → St)^[n] s) := by
+  induction n generalizing s with
+  | zero => exact ⟨0, rfl⟩
+  | succ n ih =>
+    obtain ⟨N, hN⟩ := ih (walk s)
+    refine ⟨N + depth s, ?_⟩
+    rw [Function.iterate_add_apply, next_iterate_depth, hN, Function.iterate_succ_apply]
+
+theorem next_iterate_to_walk (N : ℕ) : ∀ s s' : St,
+    (next walk depth hdepth)^[N] (station depth hdepth s) = station depth hdepth s' →
+      ∃ n, (walk : St → St)^[n] s = s' := by
+  induction N using Nat.strong_induction_on with
+  | _ N ih =>
+    intro s s' h
+    by_cases hN : N < depth s
+    · rw [next_iterate_lt s N hN] at h
+      simp only [station, Sigma.mk.injEq] at h
+      obtain ⟨rfl, h⟩ := h
+      simp only [heq_eq_eq, Fin.mk.injEq] at h
+      exact ⟨0, rfl⟩
+    · obtain ⟨M, rfl⟩ : ∃ M, N = M + depth s := ⟨N - depth s, by omega⟩
+      rw [Function.iterate_add_apply, next_iterate_depth] at h
+      obtain ⟨n, hn⟩ := ih M (by have := hdepth s; omega) (walk s) s' h
+      exact ⟨n + 1, by rw [Function.iterate_succ_apply, hn]⟩
+
+/-- **Two stations lie on the same strip exactly when the walk takes one to the
+other.** -/
+theorem sameCycle_station_iff (s s' : St) :
+    (nextPerm walk depth hdepth).SameCycle (station depth hdepth s) (station depth hdepth s') ↔
+      walk.SameCycle s s' := by
+  constructor
+  · intro h
+    obtain ⟨N, hN⟩ := h.exists_nat_pow_eq
+    rw [nextPerm_pow] at hN
+    obtain ⟨n, hn⟩ := next_iterate_to_walk N s s' hN
+    exact ⟨n, by rw [zpow_natCast, Equiv.Perm.coe_pow, hn]⟩
+  · intro h
+    obtain ⟨n, hn⟩ := h.exists_nat_pow_eq
+    rw [Equiv.Perm.coe_pow] at hn
+    obtain ⟨N, hN⟩ := walk_iterate_to_next (walk := walk) (hdepth := hdepth) n s
+    exact ⟨N, by rw [zpow_natCast, nextPerm_pow, hN, hn]⟩
+
+/-- **Proposition "Completeness at given lengths".** The strips of the quad mesh (the
+cycles of `next`) are in bijection with the cycles of the walk on the stations,
+the half-integers of the sides. -/
+noncomputable def stripsEquiv :
+    Quotient (Equiv.Perm.SameCycle.setoid walk) ≃
+      Quotient (Equiv.Perm.SameCycle.setoid (nextPerm walk depth hdepth)) :=
+  Equiv.ofBijective
+    (Quotient.map (station depth hdepth) fun s s' h => (sameCycle_station_iff s s').mpr h)
+    ⟨by
+      rintro ⟨s⟩ ⟨s'⟩ h
+      exact Quotient.sound ((sameCycle_station_iff s s').mp (Quotient.exact h)),
+    by
+      rintro ⟨d⟩
+      obtain ⟨s, hs⟩ := exists_station (walk := walk) (hdepth := hdepth) d
+      exact ⟨⟦s⟧, Quotient.sound hs⟩⟩
+
+end Strips
+
+/-! ### The two layers together -/
+
+section TMesh
+
+variable {Side : Type*} [Fintype Side] [DecidableEq Side] {len : Side → ℕ}
+  {opp : Side → Side} {target : Side → ℤ → Side} {sign shift : Side → ℤ → ℤ}
+
+/-- The walk on unit edges maps a station (a unit edge `k < len σ` of a side) to a
+station: the gluing maps the unit edges of the sides onto one another. -/
+def MapsStations (len : Side → ℕ) (opp : Side → Side) (target : Side → ℤ → Side)
+    (sign shift : Side → ℤ → ℤ) : Prop :=
+  ∀ σ (k : ℤ), 0 ≤ k → k < len σ →
+    0 ≤ (edgeWalk opp target sign shift (σ, k)).2 ∧
+      (edgeWalk opp target sign shift (σ, k)).2 < len (edgeWalk opp target sign shift (σ, k)).1
+
+/-- The walk on the stations `Σ σ, Fin (len σ)`. -/
+def stationWalk (h : MapsStations len opp target sign shift) :
+    (Σ σ : Side, Fin (len σ)) → Σ σ : Side, Fin (len σ) := fun s =>
+  ⟨(edgeWalk opp target sign shift (s.1, s.2.val)).1,
+    ⟨(edgeWalk opp target sign shift (s.1, s.2.val)).2.toNat, by
+      have := h s.1 s.2.val (by positivity) (by exact_mod_cast s.2.isLt)
+      omega⟩⟩
+
+theorem stationWalk_iterate (h : MapsStations len opp target sign shift) (n : ℕ)
+    (s : Σ σ : Side, Fin (len σ)) :
+    ((((stationWalk h)^[n] s).1, (((stationWalk h)^[n] s).2.val : ℤ)) : Side × ℤ) =
+      (edgeWalk opp target sign shift)^[n] (s.1, s.2.val) := by
+  induction n generalizing s with
+  | zero => rfl
+  | succ n ih =>
+    rw [Function.iterate_succ_apply, Function.iterate_succ_apply, ih]
+    congr 1
+    have := h s.1 s.2.val (by positivity) (by exact_mod_cast s.2.isLt)
+    simp only [stationWalk]
+    ext
+    · rfl
+    · simp only; omega
+
+/-- **The real walk from the half-integer `k + ½` of a station visits the sides at
+the midpoints of the stations of the walk**, step after step. Together with
+`stripsEquiv`, walking with the lengths `ℓ` from every half-integer of every side
+finds every strip of the quad mesh, each as one cycle. -/
+theorem realWalk_stations (hs : ∀ σ k, sign σ k = 1 ∨ sign σ k = -1)
+    (h : MapsStations len opp target sign shift) (n : ℕ) (s : Σ σ : Side, Fin (len σ)) :
+    (realWalk opp target sign shift)^[n] (s.1, (s.2.val : ℝ) + 1 / 2) =
+      (((stationWalk h)^[n] s).1, (((stationWalk h)^[n] s).2.val : ℝ) + 1 / 2) := by
+  have h1 := realWalk_iterate_half (opp := opp) (target := target) (shift := shift) hs n s.1
+    s.2.val
+  have h2 := stationWalk_iterate h n s
+  push_cast at h1
+  rw [h1, ← h2]
+  simp
+
+end TMesh
+
+end Completeness
+
+end ClosingHelices
