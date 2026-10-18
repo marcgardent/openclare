@@ -40,7 +40,7 @@ help:
 	@echo "make pages       write one page per model, with rendered pictures and marks"
 	@echo "                 (docs/models; needs blender). MODELS=ogre,blob for some only"
 	@echo "make dashboard   the pictures and the chart of the README (docs/images/dashboard; needs"
-	@echo "                 blender, Quad Remesher's references and AutoRemesher)"
+	@echo "                 blender and AutoRemesher)"
 	@echo "make view MODEL=ogre [QUADS=3000] [OPTIONS='--preset hard-surface']"
 	@echo "                 remesh a model of the bench, recording what each stage makes, and"
 	@echo "                 open the recording in the Rerun viewer (long to build the first"
@@ -156,7 +156,7 @@ quick: addon
 pages: scores
 	python3 scripts/pages.py $(if $(MODELS),--models $(MODELS))
 
-# The dashboard of the README: four remeshers at the same number of quads on
+# The dashboard of the README: the remeshers at the same number of quads on
 # a few models, in pictures, and the average marks of the bench as a chart.
 dashboard:
 	python3 scripts/gallery.py $(if $(MODELS),--models $(MODELS))

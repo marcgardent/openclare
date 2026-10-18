@@ -1,6 +1,6 @@
 [package]
 name = "openclare-cli"
-description = "Command line front-end for the openclare quad remesher"
+description = "Command line front-end for the openclare quad remeshing engine"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

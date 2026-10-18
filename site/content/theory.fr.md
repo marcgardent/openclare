@@ -311,8 +311,8 @@ sur le corps masculin.*
 - **Cylindre.** **Aucune spirale et 6 patchs** à 2 990, 3 000 et 5 000 quads, contre 26 % à 32 %
   d'arêtes en spirale et environ 700 patchs auparavant.
 - **Face aux autres remailleurs** (banc complet de 31 modèles à 3 000 quads, première version de
-  la fermeture) : 12,3 % d'arêtes en spirale pour openclare (17,3 % sans fermeture), 19,1 % pour
-  Quad Remesher, 21,9 % pour QuadriFlow, 25,3 % pour AutoRemesher.
+  la fermeture) : 12,3 % d'arêtes en spirale pour openclare (17,3 % sans fermeture), 21,9 % pour
+  QuadriFlow, 25,3 % pour AutoRemesher.
 - **Banc de nuit du 18 octobre**, modèles organiques, notes sur 100 (avant fermeture, première
   version, aujourd'hui) : globalement 72,9 → 86,0 → **86,2** à 3 000 quads ; la note des boucles
   43 → 76 → **77** à 3 000 et 33 → 68 → **74** à 1 000. Les grands modèles ont un peu reculé à

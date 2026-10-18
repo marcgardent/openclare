@@ -8,7 +8,9 @@
                                                    the scores of any quad mesh against its source
 
 The first two read what the bench measured (bench/results/results*.json, see
-bench/run.py); the last one measures the mesh with `openclare measure`.
+bench/run.py); the last one measures the mesh with `openclare measure`. The
+local, unpublished challengers (see bench/README.md) are shown by `model`,
+and by the report with `--local`, which then goes to local/results/ instead.
 
 Every score is an absolute mark, not a rank: a remesher keeps its score
 whichever others it is compared with. `SCALES` below says how each metric
@@ -26,7 +28,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "bench"))
-from run import DEFAULT_TARGET, MATCHED, MODELS, RESULTS, OPENCLARE  # noqa: E402
+from run import DEFAULT_TARGET, MODELS, OPENCLARE, RESULTS, UNPUBLISHED_RESULTS  # noqa: E402
 
 # Criteria, in the order they are shown: key, title, what a full mark means.
 CRITERIA = [
@@ -155,10 +157,9 @@ def median(values):
     return statistics.median(values) if values else None
 
 
-def scores_of(measured, runs, seconds, budget_counts=True):
+def scores_of(measured, runs, seconds):
     """Marks of a remesher on a model. `measured` holds the metrics of the
-    runs that gave a mesh, `runs` is how many were launched. Without
-    `budget_counts`, the number of quads is left out of the overall mark."""
+    runs that gave a mesh, `runs` is how many were launched."""
     marks = {key: None for key, *_ in CRITERIA}
     quads = None
     if runs == 0:
@@ -177,7 +178,7 @@ def scores_of(measured, runs, seconds, budget_counts=True):
     counted = [
         (marks[key], WEIGHTS[key])
         for key in marks
-        if marks[key] is not None and WEIGHTS[key] > 0 and (budget_counts or key != "budget")
+        if marks[key] is not None and WEIGHTS[key] > 0
     ]
     weight = sum(w for _, w in counted)
     marks["overall"] = sum(mark * w for mark, w in counted) / weight if measured and weight else 0.0
@@ -186,23 +187,25 @@ def scores_of(measured, runs, seconds, budget_counts=True):
     return marks
 
 
-def results_path(target):
-    return RESULTS / ("results.json" if target == DEFAULT_TARGET else f"results-{target}.json")
+def results_path(target, directory=RESULTS):
+    return directory / ("results.json" if target == DEFAULT_TARGET else f"results-{target}.json")
 
 
-def load(target):
-    """{model: {tool: marks}} for one budget, from the bench results."""
-    path = results_path(target)
-    if not path.exists():
-        return {}
+def load(target, local=False):
+    """{model: {tool: marks}} for one budget, from the bench results; with
+    `local`, those of the local, unpublished challengers too."""
     table = {}
-    for model, tools in json.loads(path.read_text())["runs"].items():
-        for tool, runs in tools.items():
-            measured = [run["metrics"] for run in runs if run.get("metrics")]
-            seconds = median([run.get("seconds") for run in runs])
-            marks = scores_of(measured, len(runs), seconds, budget_counts=tool not in MATCHED)
-            if marks:
-                table.setdefault(model, {})[tool] = marks
+    for directory in [RESULTS, UNPUBLISHED_RESULTS] if local else [RESULTS]:
+        path = results_path(target, directory)
+        if not path.exists():
+            continue
+        for model, tools in json.loads(path.read_text())["runs"].items():
+            for tool, runs in tools.items():
+                measured = [run["metrics"] for run in runs if run.get("metrics")]
+                seconds = median([run.get("seconds") for run in runs])
+                marks = scores_of(measured, len(runs), seconds)
+                if marks:
+                    table.setdefault(model, {})[tool] = marks
     return table
 
 
@@ -220,26 +223,6 @@ def rows_of(tools, bold=None):
         name = f"**{tool}**" if tool == bold else tool
         cells = [show(marks[key]) for key, *_ in CRITERIA]
         lines.append(f"| {name} | {show(marks.get('quads'))} | **{marks['overall']:.0f}** | " + " | ".join(cells) + " |")
-    return lines
-
-
-def without_matched(tools):
-    """The remeshers run at the budget of the bench."""
-    return {tool: marks for tool, marks in tools.items() if tool not in MATCHED}
-
-
-def matched_rows(table, models):
-    """Markdown rows: one model per line, Quad Remesher as it is against
-    openclare at the same number of quads, as `theirs / ours`."""
-    theirs, ours = MATCHED
-    shown = [("quads", "Quads"), ("overall", "Overall")] + [(key, title) for key, title, _ in CRITERIA if WEIGHTS[key] > 0 and key != "budget"]
-    lines = ["| Model | " + " | ".join(title for _, title in shown) + " |", "|---|" + "---|" * len(shown)]
-    for model in models:
-        pair = table.get(model, {})
-        if theirs not in pair or ours not in pair:
-            continue
-        cells = [f"{show(pair[theirs].get(key))} / {show(pair[ours].get(key))}" for key, _ in shown]
-        lines.append(f"| {model} | " + " | ".join(cells) + " |")
     return lines
 
 
@@ -268,7 +251,7 @@ def averages(table, models):
     return out
 
 
-def write_report(targets):
+def write_report(targets, local=False):
     groups = []
     for category in ["organic", "mechanical", "calibration", "extra"]:
         names = [name for name, kind, *_ in MODELS if kind == category]
@@ -299,11 +282,7 @@ def write_report(targets):
         "| Speed | " + CRITERIA[7][2] + " | 1 s | 60 s (logarithmic) | 0 |",
         "",
         "The *Quads* column is not a mark: it is how many quads the mesh has (the mean over the models, in",
-        "the averages). Quad Remesher, left to itself, makes about twice the quads it is asked for, and its",
-        "Budget mark says so. To compare at equal quad count, two more rows are set apart under each",
-        "budget: `quadremesher-as-made` is the mesh of `quadremesher` marked against the number of quads",
-        "it has, and `openclare-matched` is `openclare` asked for that same number.",
-        "Budget does not count there.",
+        "the averages).",
         "",
         "Fidelity is two marks that count the same where the source has parts thinner than a quad edge",
         "(fingers, ears): one for the Hausdorff distance, one for how far those parts are from the mesh",
@@ -321,7 +300,7 @@ def write_report(targets):
     ]
     data = {}
     for target in targets:
-        table = load(target)
+        table = load(target, local)
         if not table:
             continue
         data[str(target)] = table
@@ -333,33 +312,24 @@ def write_report(targets):
             lines += [f"### {category.capitalize()} models: average", ""]
             lines += [f"Over {', '.join(present)}.", ""]
             mean = averages(table, present)
-            lines += rows_of(without_matched({tool: marks for tool, (marks, _) in mean.items()}))
+            lines += rows_of({tool: marks for tool, (marks, _) in mean.items()})
             partial = [f"{tool} ({count} of {len(present)})" for tool, (_, count) in mean.items() if count < len(present)]
             if partial:
                 lines += ["", "Not run on every model: " + ", ".join(partial) + "."]
             lines.append("")
-        for category, names in groups:
-            present = [name for name in names if all(tool in table.get(name, {}) for tool in MATCHED)]
-            if not present:
-                continue
-            lines += [f"### {category.capitalize()} models at equal quad count", ""]
-            lines += ["Quad Remesher as it is / openclare asked for as many quads; the last line is the average.", ""]
-            rows = matched_rows(table, present)
-            mean = {tool: marks for tool, (marks, _) in averages(table, present).items()}
-            rows += matched_rows({"**average**": mean}, ["**average**"])[2:]
-            lines += rows + [""]
         lines += [f"### Model by model, {target} quads", ""]
         for category, names in groups:
             for name in names:
                 if name not in table:
                     continue
                 lines += [f"#### {name} ({category})", ""]
-                lines += rows_of(without_matched(table[name]))
+                lines += rows_of(table[name])
                 lines.append("")
-    RESULTS.mkdir(exist_ok=True)
-    (RESULTS / "SCORES.md").write_text("\n".join(lines))
-    (RESULTS / "scores.json").write_text(json.dumps(data, indent=1, sort_keys=True))
-    return data, groups
+    directory = UNPUBLISHED_RESULTS if local else RESULTS
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / "SCORES.md").write_text("\n".join(lines))
+    (directory / "scores.json").write_text(json.dumps(data, indent=1, sort_keys=True))
+    return data, groups, directory
 
 
 def main():
@@ -367,6 +337,8 @@ def main():
     commands = parser.add_subparsers(dest="command")
     report = commands.add_parser("report", help="write bench/results/SCORES.md and scores.json (the default)")
     report.add_argument("--targets", default="1000,3000,8000")
+    report.add_argument("--local", action="store_true",
+                        help="the local, unpublished challengers too, into local/results/ (not published)")
     model = commands.add_parser("model", help="print the scores of one model")
     model.add_argument("name")
     model.add_argument("--target", type=int, default=DEFAULT_TARGET)
@@ -380,7 +352,7 @@ def main():
     options = parser.parse_args()
 
     if options.command == "model":
-        table = load(options.target).get(options.name)
+        table = load(options.target, local=True).get(options.name)
         if not table:
             sys.exit(f"no measurement of '{options.name}' at {options.target} quads (see bench/run.py)")
         if options.tool:
@@ -409,14 +381,14 @@ def main():
         return
 
     targets = [int(t) for t in getattr(options, "targets", "1000,3000,8000").split(",")]
-    data, groups = write_report(targets)
-    print(f"written: {RESULTS / 'SCORES.md'}")
+    data, groups, directory = write_report(targets, getattr(options, "local", False))
+    print(f"written: {directory / 'SCORES.md'}")
     # The headline: organic models at the reference budget.
     table = data.get(str(DEFAULT_TARGET), {})
     organic = [name for name in dict(groups).get("organic", []) if name in table]
     if organic:
         print(f"\norganic models, {DEFAULT_TARGET} quads, average\n")
-        print(text_table(without_matched({tool: marks for tool, (marks, _) in averages(table, organic).items()})))
+        print(text_table({tool: marks for tool, (marks, _) in averages(table, organic).items()}))
 
 
 if __name__ == "__main__":

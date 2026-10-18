@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""The meshes and pictures of the dashboard of the README: four remeshers at the same number of quads.
+"""The meshes and pictures of the dashboard of the README: the remeshers at the same number of quads.
 
     python3 scripts/gallery.py [--models ogre,pig] [--target 3000] [--no-render]
 
-For each model Quad Remesher is left to choose its number of quads, as it does
-by default from the budget of the bench (`--target`); openclare and QuadriFlow
-are then asked for that number, and AutoRemesher, which does not keep to a
-number, is asked again until it comes within a tenth of it (three tries at
-most). Each mesh is measured against the model, marked (scripts/scores.py)
+Every remesher is asked for the same number of quads (`--target`, or
+`--quads ogre=6000,pig=4500` for some models): openclare and QuadriFlow once,
+and AutoRemesher, which does not keep to a number, again until it comes
+within a tenth of it (three tries at most). Each mesh is measured against the model, marked (scripts/scores.py)
 and rendered from the same point of view as its page (scripts/pages.py), into
 docs/images/gallery/, with what was found in gallery.json.
 scripts/dashboard.py then puts them on one sheet (`make dashboard` does both).
@@ -30,7 +29,6 @@ from run import (  # noqa: E402
     ensure_corpus,
     faces_of,
     measure,
-    quadremesher_reference,
     quadriflow,
 )
 from scores import scores_of  # noqa: E402
@@ -41,7 +39,6 @@ MODELS_SHOWN = ["ogre", "pig", "part", "stonemill"]
 # The remeshers, in the order of the columns, with the name they go by.
 SHOWN = [
     ("openclare", "openclare"),
-    ("quadremesher", "Quad Remesher"),
     ("quadriflow", "QuadriFlow (Blender)"),
     ("autoremesher", "AutoRemesher"),
 ]
@@ -82,7 +79,8 @@ def made_by(tool, model, sharp, boundary, count, directory):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--models", default=",".join(MODELS_SHOWN))
-    parser.add_argument("--target", type=int, default=3000)
+    parser.add_argument("--target", type=int, default=3000, help="quads asked of every remesher")
+    parser.add_argument("--quads", default="", help="another number for some models: ogre=6000,pig=4500")
     parser.add_argument("--no-render", action="store_true", help="measure and write the table, with the pictures there")
     options = parser.parse_args()
     wanted = options.models.split(",")
@@ -92,22 +90,15 @@ def main():
     # The models not asked for keep what they had.
     record = GALLERY / "gallery.json"
     shown = json.loads(record.read_text()) if record.exists() else {}
+    asked = {name: int(count) for name, count in (pair.split("=") for pair in options.quads.split(",") if pair)}
     for model in wanted:
         sharp, boundary = kind[model]
-        reference = quadremesher_reference(model, options.target, uniform=False)
-        count = quads_in(reference)
-        if count is None:
-            print(f"{model}: no Quad Remesher reference at {options.target} quads, left out")
-            continue
+        count = asked.get(model, options.target)
         directory = OUTPUT / "gallery" / model
         directory.mkdir(parents=True, exist_ok=True)
         row = {"quads": count, "tools": {}}
         for tool, _ in SHOWN:
-            if tool == "quadremesher":
-                record = reference.with_suffix(".seconds")
-                path, seconds, failure = reference, float(record.read_text()) if record.exists() else 0.0, None
-            else:
-                path, seconds, failure = made_by(tool, model, sharp, boundary, count, directory)
+            path, seconds, failure = made_by(tool, model, sharp, boundary, count, directory)
             if path is None:
                 print(f"{model} {tool}: {failure}")
                 row["tools"][tool] = {"failure": failure}

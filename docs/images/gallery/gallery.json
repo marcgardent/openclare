@@ -10,14 +10,6 @@
     "picture": "docs/images/gallery/ogre__openclare.webp",
     "mesh": "/home/marcgardent/retopology/scratch/complete-helices/bench/out/gallery/ogre/gallery_1.obj"
    },
-   "quadremesher": {
-    "quads": 6134,
-    "valid": true,
-    "overall": 83,
-    "seconds": 19.0,
-    "picture": "docs/images/gallery/ogre__quadremesher.webp",
-    "mesh": "/home/marcgardent/retopology/scratch/complete-helices/bench/reference/quadremesher/ogre__3000__default.obj"
-   },
    "quadriflow": {
     "quads": 5906,
     "valid": false,
@@ -46,14 +38,6 @@
     "seconds": 7.3,
     "picture": "docs/images/gallery/pig__openclare.webp",
     "mesh": "/home/marcgardent/retopology/scratch/complete-helices/bench/out/gallery/pig/gallery_1.obj"
-   },
-   "quadremesher": {
-    "quads": 4698,
-    "valid": false,
-    "overall": 67,
-    "seconds": 14.6,
-    "picture": "docs/images/gallery/pig__quadremesher.webp",
-    "mesh": "/home/marcgardent/retopology/scratch/complete-helices/bench/reference/quadremesher/pig__3000__default.obj"
    },
    "quadriflow": {
     "quads": 4217,
@@ -84,14 +68,6 @@
     "picture": "docs/images/gallery/part__openclare.webp",
     "mesh": "/home/marcgardent/retopology/scratch/complete-helices/bench/out/gallery/part/gallery_1.obj"
    },
-   "quadremesher": {
-    "quads": 2815,
-    "valid": true,
-    "overall": 89,
-    "seconds": 2.8,
-    "picture": "docs/images/gallery/part__quadremesher.webp",
-    "mesh": "/home/marcgardent/retopology/scratch/complete-helices/bench/reference/quadremesher/part__3000__default.obj"
-   },
    "quadriflow": {
     "quads": 2835,
     "valid": false,
@@ -120,14 +96,6 @@
     "seconds": 19.8,
     "picture": "docs/images/gallery/stonemill__openclare.webp",
     "mesh": "/home/marcgardent/retopology/scratch/complete-helices/bench/out/gallery/stonemill/gallery_1.obj"
-   },
-   "quadremesher": {
-    "quads": 14140,
-    "valid": false,
-    "overall": 51,
-    "seconds": 37.8,
-    "picture": "docs/images/gallery/stonemill__quadremesher.webp",
-    "mesh": "/home/marcgardent/retopology/scratch/complete-helices/bench/reference/quadremesher/stonemill__3000__default.obj"
    },
    "quadriflow": {
     "quads": 13118,
