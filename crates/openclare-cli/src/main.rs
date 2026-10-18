@@ -55,6 +55,7 @@ OPTIONS (remesh):
                                  the quad mesh has a line of edges where two groups meet, and the group of each
                                  of its faces is written next to it, as <output>.groups
     --skip-pieces-under <Q>      leave out the separate pieces whose share of the quads is below Q (default 0: keep all)
+    --no-close-loops             leave the lines of quads round a part as the lengths make them, helices or not
     --notes                      print what the stages remark on: why a piece went to the other chain, what the
                                  map folded on, how many guide lines were let go
     --record-still <STAGE>       with --record: keep that one stage (map, layout, cross-field...), out of time,
@@ -339,6 +340,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
             "--groups" => groups_path = Some(value(arg)?.clone()),
             "--density-contrast" => config.density_contrast = parse(arg, value(arg)?)?,
             "--skip-pieces-under" => config.skip_pieces_under = parse(arg, value(arg)?)?,
+            "--no-close-loops" => config.close_loops = false,
             "--record" => record_path = Some(value(arg)?.clone()),
             "--record-still" => record_still = Some(value(arg)?.clone()),
             "--notes" => notes = true,

@@ -853,8 +853,11 @@ impl QuadLayout {
         }
 
         recorder.begin("quantization")?;
-        let request =
-            quantization::Request { quads: Some((quads.round() as usize).max(1)), tolerance: self.budget_tolerance };
+        let request = quantization::Request {
+            quads: Some((quads.round() as usize).max(1)),
+            tolerance: self.budget_tolerance,
+            close_turns: config.close_loops,
+        };
         let quantized = quantization::create(quantization::Kind::WalkCancelling).quantize(&layout.tmesh, &request)?;
         clock.lap(&mut report, "quantization");
         recorder::show_lengths(recorder, &work, &layout.tmesh, &quantized);
@@ -878,9 +881,35 @@ impl QuadLayout {
 
         // The layout knows which vertices lie on a border or a hard edge.
         let held = Some((meshed.on_feature, meshed.on_corner));
-        settle(&mut mesh, input, &work, edge_length, held, &self.relaxer, config.volume_fit, recorder)?
-            .into_report(&mut report);
+        let mut lines = settle(&mut mesh, input, &work, edge_length, held, &self.relaxer, config.volume_fit, recorder)?;
         clock.lap(&mut report, "relaxation");
+
+        // Closing the loops round a part may ask a strip for a row of quads
+        // it has no room for, which folds over. Where the mesh has a fold,
+        // the lengths the plain search found are meshed too, and the mesh
+        // with fewer folds kept.
+        if quantized.report.turns_held > 0 {
+            let surface = Bvh::build(input);
+            let folded = crate::metrics::folded_faces(input, &surface, &mesh);
+            let plain = quantization::Request { close_turns: false, ..request };
+            let plain = match folded {
+                0 => None,
+                _ => Some(quantization::create(quantization::Kind::WalkCancelling).quantize(&layout.tmesh, &plain)?),
+            };
+            if let Some(plain) = plain.filter(|plain| plain.report.is_valid() && plain.report.quads > 0) {
+                let (mut other, meshed) = meshing::create(meshing::Kind::PatchGrid).mesh(&work, &layout, &plain)?;
+                let held = Some((meshed.on_feature, meshed.on_corner));
+                let other_lines =
+                    settle(&mut other, input, &work, edge_length, held, &self.relaxer, config.volume_fit, recorder)?;
+                if crate::metrics::folded_faces(input, &surface, &other) < folded {
+                    let note = format!("loops left as they were: closing them folded {folded} quads over");
+                    recorder.record("notes/loops", Shape::Note(&note));
+                    (mesh, lines) = (other, other_lines);
+                }
+            }
+            clock.lap(&mut report, "folds");
+        }
+        lines.into_report(&mut report);
 
         report.stats = mesh.stats();
         Ok((mesh, report))

@@ -23,6 +23,9 @@ glam = "0.34"
 # Sparse direct solvers, for the constrained least-squares systems of the
 # parametrization. Pure Rust, MIT.
 faer = { version = "0.24", default-features = false, features = ["std", "sparse-linalg"] }
+# Work spread over the cores within a piece. Pure Rust, MIT or Apache-2.0;
+# faer already depends on it.
+rayon = "1.12"
 
 # One version for the recorder and for the viewer: a recording is read by the
 # viewer of the version that wrote it. 0.36 is the last to build with Rust

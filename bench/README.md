@@ -24,6 +24,19 @@ and without touching it: five minutes for the whole corpus, one for a few models
 make quick MODELS=camera,wolf
 ```
 
+Each mesh made is kept, one directory per budget (`bench/out/<model>/<budget>/`), and the
+results say where. When only the measures change, they are measured again without remeshing
+anything, in a few minutes:
+
+```bash
+make remeasure
+```
+
+(`python3 bench/run.py --remeasure --target 8000` for one budget.) Results older than that do
+not say where their meshes are: Quad Remesher's and the meshes modelled by hand are found where
+they are always kept, the others where they were last left if they have the number of faces
+measured then, and those that were made again since keep what was measured of them.
+
 It needs `blender` on the `PATH`: `openclare` runs in it, through the add-on, and so do
 QuadriFlow and Quad Remesher. `cargo build --release` builds the command line, `make addon` the
 engine the add-on loads (`blender/openclare/lib/`): do both again before measuring, after any

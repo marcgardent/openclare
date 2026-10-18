@@ -9,7 +9,7 @@
 <text x="264.8" y="62.5" font-size="13" fill="#0b0b0b">QuadriFlow (Blender)</text>
 <rect x="424.8" y="52" width="12" height="12" rx="3" fill="#eda100"/>
 <text x="442.8" y="62.5" font-size="13" fill="#0b0b0b">AutoRemesher</text>
-<text x="46" y="82" font-size="14" font-weight="600" fill="#0b0b0b">Organic models<tspan font-weight="400" fill="#52514e">&#160;&#160;·&#160;&#160;13 models</tspan></text>
+<text x="46" y="82" font-size="14" font-weight="600" fill="#0b0b0b">Organic models<tspan font-weight="400" fill="#52514e">&#160;&#160;·&#160;&#160;15 models</tspan></text>
 <line x1="42" x2="300" y1="296.0" y2="296.0" stroke="#52514e" stroke-width="1"/>
 <text x="38" y="300.0" font-size="11" text-anchor="end" fill="#52514e">0</text>
 <line x1="42" x2="300" y1="246.0" y2="246.0" stroke="#e4e3df" stroke-width="1"/>
@@ -18,26 +18,26 @@
 <line x1="42" x2="300" y1="146.0" y2="146.0" stroke="#e4e3df" stroke-width="1"/>
 <line x1="42" x2="300" y1="96.0" y2="96.0" stroke="#e4e3df" stroke-width="1"/>
 <text x="38" y="100.0" font-size="11" text-anchor="end" fill="#52514e">100</text>
-<path d="M46.0,296.0 V158.6 Q46.0,154.6 50.0,154.6 H58.0 Q62.0,154.6 62.0,158.6 V296.0 Z" fill="#2a78d6"/>
-<text x="54.0" y="148.6" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">71</text>
-<path d="M64.0,296.0 V170.5 Q64.0,166.5 68.0,166.5 H76.0 Q80.0,166.5 80.0,170.5 V296.0 Z" fill="#eb6834"/>
-<path d="M82.0,296.0 V217.9 Q82.0,213.9 86.0,213.9 H94.0 Q98.0,213.9 98.0,217.9 V296.0 Z" fill="#1baf7a"/>
-<path d="M100.0,296.0 V241.0 Q100.0,237.0 104.0,237.0 H112.0 Q116.0,237.0 116.0,241.0 V296.0 Z" fill="#eda100"/>
+<path d="M46.0,296.0 V136.2 Q46.0,132.2 50.0,132.2 H58.0 Q62.0,132.2 62.0,136.2 V296.0 Z" fill="#2a78d6"/>
+<text x="54.0" y="126.2" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">82</text>
+<path d="M64.0,296.0 V146.0 Q64.0,142.0 68.0,142.0 H76.0 Q80.0,142.0 80.0,146.0 V296.0 Z" fill="#eb6834"/>
+<path d="M82.0,296.0 V219.2 Q82.0,215.2 86.0,215.2 H94.0 Q98.0,215.2 98.0,219.2 V296.0 Z" fill="#1baf7a"/>
+<path d="M100.0,296.0 V216.9 Q100.0,212.9 104.0,212.9 H112.0 Q116.0,212.9 116.0,216.9 V296.0 Z" fill="#eda100"/>
 <text x="81.0" y="316" font-size="12" text-anchor="middle" fill="#52514e">1 000</text>
-<path d="M138.0,296.0 V147.9 Q138.0,143.9 142.0,143.9 H150.0 Q154.0,143.9 154.0,147.9 V296.0 Z" fill="#2a78d6"/>
-<text x="146.0" y="137.9" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">76</text>
-<path d="M156.0,296.0 V173.1 Q156.0,169.1 160.0,169.1 H168.0 Q172.0,169.1 172.0,173.1 V296.0 Z" fill="#eb6834"/>
-<path d="M174.0,296.0 V207.5 Q174.0,203.5 178.0,203.5 H186.0 Q190.0,203.5 190.0,207.5 V296.0 Z" fill="#1baf7a"/>
-<path d="M192.0,296.0 V220.8 Q192.0,216.8 196.0,216.8 H204.0 Q208.0,216.8 208.0,220.8 V296.0 Z" fill="#eda100"/>
+<path d="M138.0,296.0 V127.5 Q138.0,123.5 142.0,123.5 H150.0 Q154.0,123.5 154.0,127.5 V296.0 Z" fill="#2a78d6"/>
+<text x="146.0" y="117.5" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">86</text>
+<path d="M156.0,296.0 V148.0 Q156.0,144.0 160.0,144.0 H168.0 Q172.0,144.0 172.0,148.0 V296.0 Z" fill="#eb6834"/>
+<path d="M174.0,296.0 V213.4 Q174.0,209.4 178.0,209.4 H186.0 Q190.0,209.4 190.0,213.4 V296.0 Z" fill="#1baf7a"/>
+<path d="M192.0,296.0 V193.8 Q192.0,189.8 196.0,189.8 H204.0 Q208.0,189.8 208.0,193.8 V296.0 Z" fill="#eda100"/>
 <text x="173.0" y="316" font-size="12" text-anchor="middle" fill="#52514e">3 000</text>
-<path d="M230.0,296.0 V141.1 Q230.0,137.1 234.0,137.1 H242.0 Q246.0,137.1 246.0,141.1 V296.0 Z" fill="#2a78d6"/>
-<text x="238.0" y="131.1" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">79</text>
-<path d="M248.0,296.0 V155.8 Q248.0,151.8 252.0,151.8 H260.0 Q264.0,151.8 264.0,155.8 V296.0 Z" fill="#eb6834"/>
-<path d="M266.0,296.0 V199.2 Q266.0,195.2 270.0,195.2 H278.0 Q282.0,195.2 282.0,199.2 V296.0 Z" fill="#1baf7a"/>
-<path d="M284.0,296.0 V206.3 Q284.0,202.3 288.0,202.3 H296.0 Q300.0,202.3 300.0,206.3 V296.0 Z" fill="#eda100"/>
+<path d="M230.0,296.0 V119.7 Q230.0,115.7 234.0,115.7 H242.0 Q246.0,115.7 246.0,119.7 V296.0 Z" fill="#2a78d6"/>
+<text x="238.0" y="109.7" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">90</text>
+<path d="M248.0,296.0 V141.7 Q248.0,137.7 252.0,137.7 H260.0 Q264.0,137.7 264.0,141.7 V296.0 Z" fill="#eb6834"/>
+<path d="M266.0,296.0 V208.4 Q266.0,204.4 270.0,204.4 H278.0 Q282.0,204.4 282.0,208.4 V296.0 Z" fill="#1baf7a"/>
+<path d="M284.0,296.0 V177.7 Q284.0,173.7 288.0,173.7 H296.0 Q300.0,173.7 300.0,177.7 V296.0 Z" fill="#eda100"/>
 <text x="265.0" y="316" font-size="12" text-anchor="middle" fill="#52514e">8 000</text>
 <text x="173.0" y="336" font-size="11" text-anchor="middle" fill="#52514e">quads asked for</text>
-<text x="358" y="82" font-size="14" font-weight="600" fill="#0b0b0b">Mechanical parts<tspan font-weight="400" fill="#52514e">&#160;&#160;·&#160;&#160;2 to 4 models</tspan></text>
+<text x="358" y="82" font-size="14" font-weight="600" fill="#0b0b0b">Mechanical parts<tspan font-weight="400" fill="#52514e">&#160;&#160;·&#160;&#160;4 models</tspan></text>
 <line x1="354" x2="612" y1="296.0" y2="296.0" stroke="#52514e" stroke-width="1"/>
 <text x="350" y="300.0" font-size="11" text-anchor="end" fill="#52514e">0</text>
 <line x1="354" x2="612" y1="246.0" y2="246.0" stroke="#e4e3df" stroke-width="1"/>
@@ -46,26 +46,26 @@
 <line x1="354" x2="612" y1="146.0" y2="146.0" stroke="#e4e3df" stroke-width="1"/>
 <line x1="354" x2="612" y1="96.0" y2="96.0" stroke="#e4e3df" stroke-width="1"/>
 <text x="350" y="100.0" font-size="11" text-anchor="end" fill="#52514e">100</text>
-<path d="M358.0,296.0 V111.4 Q358.0,107.4 362.0,107.4 H370.0 Q374.0,107.4 374.0,111.4 V296.0 Z" fill="#2a78d6"/>
-<text x="366.0" y="101.4" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">94</text>
-<path d="M376.0,296.0 V117.4 Q376.0,113.4 380.0,113.4 H388.0 Q392.0,113.4 392.0,117.4 V296.0 Z" fill="#eb6834"/>
-<path d="M394.0,296.0 V122.0 Q394.0,118.0 398.0,118.0 H406.0 Q410.0,118.0 410.0,122.0 V296.0 Z" fill="#1baf7a"/>
-<path d="M412.0,296.0 V202.8 Q412.0,198.8 416.0,198.8 H424.0 Q428.0,198.8 428.0,202.8 V296.0 Z" fill="#eda100"/>
+<path d="M358.0,296.0 V102.8 Q358.0,98.8 362.0,98.8 H370.0 Q374.0,98.8 374.0,102.8 V296.0 Z" fill="#2a78d6"/>
+<text x="366.0" y="92.8" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">99</text>
+<path d="M376.0,296.0 V114.6 Q376.0,110.6 380.0,110.6 H388.0 Q392.0,110.6 392.0,114.6 V296.0 Z" fill="#eb6834"/>
+<path d="M394.0,296.0 V118.2 Q394.0,114.2 398.0,114.2 H406.0 Q410.0,114.2 410.0,118.2 V296.0 Z" fill="#1baf7a"/>
+<path d="M412.0,296.0 V174.5 Q412.0,170.5 416.0,170.5 H424.0 Q428.0,170.5 428.0,174.5 V296.0 Z" fill="#eda100"/>
 <text x="393.0" y="316" font-size="12" text-anchor="middle" fill="#52514e">1 000</text>
-<path d="M450.0,296.0 V110.1 Q450.0,106.1 454.0,106.1 H462.0 Q466.0,106.1 466.0,110.1 V296.0 Z" fill="#2a78d6"/>
-<text x="458.0" y="100.1" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">95</text>
-<path d="M468.0,296.0 V115.5 Q468.0,111.5 472.0,111.5 H480.0 Q484.0,111.5 484.0,115.5 V296.0 Z" fill="#eb6834"/>
-<path d="M486.0,296.0 V124.0 Q486.0,120.0 490.0,120.0 H498.0 Q502.0,120.0 502.0,124.0 V296.0 Z" fill="#1baf7a"/>
-<path d="M504.0,296.0 V169.5 Q504.0,165.5 508.0,165.5 H516.0 Q520.0,165.5 520.0,169.5 V296.0 Z" fill="#eda100"/>
+<path d="M450.0,296.0 V102.3 Q450.0,98.3 454.0,98.3 H462.0 Q466.0,98.3 466.0,102.3 V296.0 Z" fill="#2a78d6"/>
+<text x="458.0" y="92.3" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">99</text>
+<path d="M468.0,296.0 V114.2 Q468.0,110.2 472.0,110.2 H480.0 Q484.0,110.2 484.0,114.2 V296.0 Z" fill="#eb6834"/>
+<path d="M486.0,296.0 V122.4 Q486.0,118.4 490.0,118.4 H498.0 Q502.0,118.4 502.0,122.4 V296.0 Z" fill="#1baf7a"/>
+<path d="M504.0,296.0 V151.3 Q504.0,147.3 508.0,147.3 H516.0 Q520.0,147.3 520.0,151.3 V296.0 Z" fill="#eda100"/>
 <text x="485.0" y="316" font-size="12" text-anchor="middle" fill="#52514e">3 000</text>
-<path d="M542.0,296.0 V111.5 Q542.0,107.5 546.0,107.5 H554.0 Q558.0,107.5 558.0,111.5 V296.0 Z" fill="#2a78d6"/>
-<text x="550.0" y="101.5" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">94</text>
-<path d="M560.0,296.0 V117.0 Q560.0,113.0 564.0,113.0 H572.0 Q576.0,113.0 576.0,117.0 V296.0 Z" fill="#eb6834"/>
-<path d="M578.0,296.0 V127.8 Q578.0,123.8 582.0,123.8 H590.0 Q594.0,123.8 594.0,127.8 V296.0 Z" fill="#1baf7a"/>
-<path d="M596.0,296.0 V212.3 Q596.0,208.3 600.0,208.3 H608.0 Q612.0,208.3 612.0,212.3 V296.0 Z" fill="#eda100"/>
+<path d="M542.0,296.0 V102.3 Q542.0,98.3 546.0,98.3 H554.0 Q558.0,98.3 558.0,102.3 V296.0 Z" fill="#2a78d6"/>
+<text x="550.0" y="92.3" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">99</text>
+<path d="M560.0,296.0 V112.7 Q560.0,108.7 564.0,108.7 H572.0 Q576.0,108.7 576.0,112.7 V296.0 Z" fill="#eb6834"/>
+<path d="M578.0,296.0 V127.2 Q578.0,123.2 582.0,123.2 H590.0 Q594.0,123.2 594.0,127.2 V296.0 Z" fill="#1baf7a"/>
+<path d="M596.0,296.0 V153.8 Q596.0,149.8 600.0,149.8 H608.0 Q612.0,149.8 612.0,153.8 V296.0 Z" fill="#eda100"/>
 <text x="577.0" y="316" font-size="12" text-anchor="middle" fill="#52514e">8 000</text>
 <text x="485.0" y="336" font-size="11" text-anchor="middle" fill="#52514e">quads asked for</text>
-<text x="670" y="82" font-size="14" font-weight="600" fill="#0b0b0b">Assembled and generated<tspan font-weight="400" fill="#52514e">&#160;&#160;·&#160;&#160;8 to 12 models</tspan></text>
+<text x="670" y="82" font-size="14" font-weight="600" fill="#0b0b0b">Assembled and generated<tspan font-weight="400" fill="#52514e">&#160;&#160;·&#160;&#160;12 models</tspan></text>
 <line x1="666" x2="924" y1="296.0" y2="296.0" stroke="#52514e" stroke-width="1"/>
 <text x="662" y="300.0" font-size="11" text-anchor="end" fill="#52514e">0</text>
 <line x1="666" x2="924" y1="246.0" y2="246.0" stroke="#e4e3df" stroke-width="1"/>
@@ -74,23 +74,23 @@
 <line x1="666" x2="924" y1="146.0" y2="146.0" stroke="#e4e3df" stroke-width="1"/>
 <line x1="666" x2="924" y1="96.0" y2="96.0" stroke="#e4e3df" stroke-width="1"/>
 <text x="662" y="100.0" font-size="11" text-anchor="end" fill="#52514e">100</text>
-<path d="M670.0,296.0 V234.5 Q670.0,230.5 674.0,230.5 H682.0 Q686.0,230.5 686.0,234.5 V296.0 Z" fill="#2a78d6"/>
-<text x="678.0" y="224.5" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">33</text>
-<path d="M688.0,296.0 V219.4 Q688.0,215.4 692.0,215.4 H700.0 Q704.0,215.4 704.0,219.4 V296.0 Z" fill="#eb6834"/>
-<path d="M706.0,296.0 V285.8 Q706.0,281.8 710.0,281.8 H718.0 Q722.0,281.8 722.0,285.8 V296.0 Z" fill="#1baf7a"/>
-<path d="M724.0,296.0 V277.1 Q724.0,273.1 728.0,273.1 H736.0 Q740.0,273.1 740.0,277.1 V296.0 Z" fill="#eda100"/>
+<path d="M670.0,296.0 V229.1 Q670.0,225.1 674.0,225.1 H682.0 Q686.0,225.1 686.0,229.1 V296.0 Z" fill="#2a78d6"/>
+<text x="678.0" y="219.1" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">35</text>
+<path d="M688.0,296.0 V193.9 Q688.0,189.9 692.0,189.9 H700.0 Q704.0,189.9 704.0,193.9 V296.0 Z" fill="#eb6834"/>
+<path d="M706.0,296.0 V274.8 Q706.0,270.8 710.0,270.8 H718.0 Q722.0,270.8 722.0,274.8 V296.0 Z" fill="#1baf7a"/>
+<path d="M724.0,296.0 V268.5 Q724.0,264.5 728.0,264.5 H736.0 Q740.0,264.5 740.0,268.5 V296.0 Z" fill="#eda100"/>
 <text x="705.0" y="316" font-size="12" text-anchor="middle" fill="#52514e">1 000</text>
-<path d="M762.0,296.0 V235.9 Q762.0,231.9 766.0,231.9 H774.0 Q778.0,231.9 778.0,235.9 V296.0 Z" fill="#2a78d6"/>
-<text x="770.0" y="225.9" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">32</text>
-<path d="M780.0,296.0 V222.1 Q780.0,218.1 784.0,218.1 H792.0 Q796.0,218.1 796.0,222.1 V296.0 Z" fill="#eb6834"/>
-<path d="M798.0,296.0 V276.2 Q798.0,272.2 802.0,272.2 H810.0 Q814.0,272.2 814.0,276.2 V296.0 Z" fill="#1baf7a"/>
-<path d="M816.0,296.0 V275.1 Q816.0,271.1 820.0,271.1 H828.0 Q832.0,271.1 832.0,275.1 V296.0 Z" fill="#eda100"/>
+<path d="M762.0,296.0 V197.9 Q762.0,193.9 766.0,193.9 H774.0 Q778.0,193.9 778.0,197.9 V296.0 Z" fill="#2a78d6"/>
+<text x="770.0" y="187.9" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">51</text>
+<path d="M780.0,296.0 V186.9 Q780.0,182.9 784.0,182.9 H792.0 Q796.0,182.9 796.0,186.9 V296.0 Z" fill="#eb6834"/>
+<path d="M798.0,296.0 V268.7 Q798.0,264.7 802.0,264.7 H810.0 Q814.0,264.7 814.0,268.7 V296.0 Z" fill="#1baf7a"/>
+<path d="M816.0,296.0 V255.1 Q816.0,251.1 820.0,251.1 H828.0 Q832.0,251.1 832.0,255.1 V296.0 Z" fill="#eda100"/>
 <text x="797.0" y="316" font-size="12" text-anchor="middle" fill="#52514e">3 000</text>
-<path d="M854.0,296.0 V207.9 Q854.0,203.9 858.0,203.9 H866.0 Q870.0,203.9 870.0,207.9 V296.0 Z" fill="#2a78d6"/>
-<text x="862.0" y="197.9" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">46</text>
-<path d="M872.0,296.0 V218.8 Q872.0,214.8 876.0,214.8 H884.0 Q888.0,214.8 888.0,218.8 V296.0 Z" fill="#eb6834"/>
-<path d="M890.0,296.0 V285.0 Q890.0,281.0 894.0,281.0 H902.0 Q906.0,281.0 906.0,285.0 V296.0 Z" fill="#1baf7a"/>
-<path d="M908.0,296.0 V262.0 Q908.0,258.0 912.0,258.0 H920.0 Q924.0,258.0 924.0,262.0 V296.0 Z" fill="#eda100"/>
+<path d="M854.0,296.0 V191.0 Q854.0,187.0 858.0,187.0 H866.0 Q870.0,187.0 870.0,191.0 V296.0 Z" fill="#2a78d6"/>
+<text x="862.0" y="181.0" font-size="11" font-weight="600" text-anchor="middle" fill="#0b0b0b">55</text>
+<path d="M872.0,296.0 V190.1 Q872.0,186.1 876.0,186.1 H884.0 Q888.0,186.1 888.0,190.1 V296.0 Z" fill="#eb6834"/>
+<path d="M890.0,296.0 V265.7 Q890.0,261.7 894.0,261.7 H902.0 Q906.0,261.7 906.0,265.7 V296.0 Z" fill="#1baf7a"/>
+<path d="M908.0,296.0 V239.7 Q908.0,235.7 912.0,235.7 H920.0 Q924.0,235.7 924.0,239.7 V296.0 Z" fill="#eda100"/>
 <text x="889.0" y="316" font-size="12" text-anchor="middle" fill="#52514e">8 000</text>
 <text x="797.0" y="336" font-size="11" text-anchor="middle" fill="#52514e">quads asked for</text>
 </svg>

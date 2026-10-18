@@ -5868,6 +5868,7 @@ version = "0.1.1"
 dependencies = [
  "faer",
  "glam 0.34.1",
+ "rayon",
 ]
 
 [[package]]

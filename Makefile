@@ -1,6 +1,6 @@
 # Shortcuts for the common tasks. `make help` lists them.
 
-.PHONY: help build test scenes blenderkit autoremesher scores quick pages dashboard view addon install addon-windows test-windows addon-test release
+.PHONY: help build test scenes blenderkit essentials remeasure autoremesher scores quick pages dashboard view addon install addon-windows test-windows addon-test release
 
 help:
 	@echo "make build       build the openclare binary (release)"
@@ -27,6 +27,10 @@ help:
 	@echo "make blenderkit  download the BlenderKit models of the bench that cannot be"
 	@echo "                 redistributed, into bench/corpus-large, and make their scenes"
 	@echo "                 (needs blender)"
+	@echo "make remeasure   measure again the meshes of the results at the three budgets, without"
+	@echo "                 remeshing: after a change to the measures"
+	@echo "make essentials  the human bodies of Blender's Essentials library, sculpt and mesh made by"
+	@echo "                 hand, from Blender's cache (add them once from the Asset Browser)"
 	@echo "make scores      write the comparative report, marks from 0 to 100 for every model"
 	@echo "                 and remesher (bench/results/SCORES.md)"
 	@echo "make scores MODEL=ogre [TARGET=8000]"
@@ -70,6 +74,15 @@ autoremesher:
 # Their licence does not allow keeping them in the repository: see CREDITS.md.
 blenderkit:
 	python3 bench/fetch_blenderkit.py
+
+# The human bodies of Blender's Essentials library, from Blender's cache.
+essentials:
+	python3 bench/fetch_essentials.py
+
+# Measure again the meshes the results were made of, at the three budgets,
+# without remeshing (after a change to the measures).
+remeasure:
+	for target in 3000 1000 8000; do python3 bench/run.py --remeasure --target $$target; done
 
 # Marks from 0 to 100, overall and per criterion, from what the bench measured.
 scores:

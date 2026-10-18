@@ -6,6 +6,8 @@
 //! The solvers downstream discretise differential operators on this mesh;
 //! slivers and wild size variations are what make them inaccurate.
 
+use rayon::prelude::*;
+
 use super::dynamic_mesh::DynamicMesh;
 use crate::math::Vec3;
 use crate::spatial::Bvh;
@@ -102,7 +104,10 @@ fn equalize_valences(mesh: &mut DynamicMesh) {
 /// tangent plane, then back onto the source. Vertices of a feature line only
 /// move along it, corners not at all.
 fn relax(mesh: &mut DynamicMesh, target: &Target, edge_length: f64) {
+    // Where each vertex would go, side by side; the moves are then made in
+    // turn.
     let moved: Vec<Option<Vec3>> = (0..mesh.vertex_count() as u32)
+        .into_par_iter()
         .map(|v| {
             if !mesh.is_live_vertex(v) || mesh.is_corner(v) {
                 return None;

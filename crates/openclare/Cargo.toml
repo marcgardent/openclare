@@ -9,3 +9,4 @@ license.workspace = true
 [dependencies]
 glam.workspace = true
 faer.workspace = true
+rayon.workspace = true

@@ -61,6 +61,48 @@ fn a_shaken_grid_is_squared_up_without_leaving_its_plane() {
 }
 
 #[test]
+fn quads_turned_over_are_turned_back() {
+    // A column of inner vertices pushed past the next one: the quads between
+    // the two columns are turned over whole, each a proper rectangle seen
+    // from below, which the quads round them must bring back.
+    let surface = Bvh::build(&primitives::plane(4));
+    let mut mesh = primitives::plane_quads(10);
+    for j in 1..10 {
+        mesh.positions[j * 11 + 4].x += 1.2 * 0.2;
+    }
+    assert!(folds(&mesh));
+    Squaring::default().relax(&mut mesh, &surface, None);
+    assert!(!folds(&mesh));
+}
+
+#[test]
+fn a_grid_inside_a_thin_wall_goes_onto_the_side_it_faces() {
+    // A slab thinner than the quads are wide: its top faces up, its bottom
+    // down. A grid facing up, read off a mesh coarser than the slab is thick,
+    // lies inside it nearer the bottom; the nearest side is the wrong one.
+    let thickness = 0.05;
+    let plane = primitives::plane(4);
+    let mut sides = Vec::new();
+    for tri in &plane.triangles {
+        let [a, b, c] = tri.map(|v| plane.positions[v as usize]);
+        let up = Vec3::new(0.0, 0.0, thickness);
+        sides.push([a + up, b + up, c + up]);
+        sides.push([a, c, b]);
+    }
+    let surface = Bvh::from_triangles(sides);
+    let mut mesh = primitives::plane_quads(10);
+    for p in &mut mesh.positions {
+        p.z = 0.3 * thickness;
+    }
+    Squaring::default().relax(&mut mesh, &surface, None);
+    // The border holds still; every other vertex is on the top.
+    let inner = mesh.positions.iter().filter(|p| p.x.abs() < 1.0 - 1e-9 && p.y.abs() < 1.0 - 1e-9);
+    for p in inner {
+        assert!((p.z - thickness).abs() < 1e-9, "a vertex at height {}", p.z);
+    }
+}
+
+#[test]
 fn a_perfect_grid_is_left_alone() {
     let surface = Bvh::build(&primitives::plane(4));
     let mut mesh = primitives::plane_quads(10);

@@ -77,6 +77,9 @@ pub(super) struct Trace {
     pub(super) axis: Axis,
     pub(super) running: bool,
     pub(super) steps: usize,
+    /// It ran along the same line as this other trace, from the other end:
+    /// the two are one arc, kept on the other.
+    pub(super) merged: Option<u32>,
 }
 
 impl Trace {
@@ -103,6 +106,7 @@ impl Trace {
             axis: 0,
             running: false,
             steps: 0,
+            merged: None,
         }
     }
 }
@@ -238,7 +242,19 @@ pub(super) fn race(map: &Map, is_singular: &[bool], is_wall: &[bool], seeds: &[u
             queue.push(Reverse((Time(race.outcome.traces[id as usize].length), id)));
         }
     }
-    race.outcome.lost = race.outcome.traces.iter().filter(|trace| trace.end.is_none()).count();
+    race.outcome.lost =
+        race.outcome.traces.iter().filter(|trace| trace.end.is_none() && trace.merged.is_none()).count();
+    if std::env::var_os("OPENCLARE_DEBUG_LOST").is_some() {
+        for (id, trace) in
+            race.outcome.traces.iter().enumerate().filter(|(_, trace)| trace.end.is_none() && trace.merged.is_none())
+        {
+            let at = trace.path.last().copied().unwrap_or_default();
+            eprintln!(
+                "no end: trace {id}, running {}, wall {}, length {:.1}, {} steps, at ({:+.3}, {:+.3}, {:+.3})",
+                trace.running, trace.wall, trace.length, trace.steps, at.x, at.y, at.z
+            );
+        }
+    }
     race.outcome
 }
 
@@ -259,6 +275,7 @@ impl Race<'_> {
             axis,
             running: true,
             steps: 0,
+            merged: None,
         });
     }
 
@@ -277,10 +294,10 @@ impl Race<'_> {
         // that takes many more steps is not getting anywhere.)
         let budget = 1024 + (64.0 * self.max_length) as usize;
         if length > self.max_length || self.outcome.traces[id].steps > budget {
-            return self.lose(id);
+            return self.lose(id, "too long");
         }
         let Some((exit, target, distance)) = map.exit(face, point, axis) else {
-            return self.lose(id);
+            return self.lose(id, "no way out of the triangle");
         };
 
         if let Some(hit) = self.first_hit(id, face, point, axis, distance, first) {
@@ -314,7 +331,7 @@ impl Race<'_> {
                         (trace.face, trace.point, trace.axis) = (next, point, axis);
                         true
                     }
-                    None => self.lose(id),
+                    None => self.lose(id, "no triangle across the edge"),
                 }
             }
             Exit::Vertex { corner } => self.reach_vertex(id, face, corner, axis),
@@ -348,7 +365,15 @@ impl Race<'_> {
         trace.path.push(position);
     }
 
-    fn lose(&mut self, id: usize) -> bool {
+    fn lose(&mut self, id: usize, why: &str) -> bool {
+        if std::env::var_os("OPENCLARE_DEBUG_LOST").is_some() {
+            let trace = &self.outcome.traces[id];
+            let at = trace.path.last().copied().unwrap_or_default();
+            eprintln!(
+                "lost trace {id}: {why}, length {:.1}, {} steps, at ({:+.3}, {:+.3}, {:+.3})",
+                trace.length, trace.steps, at.x, at.y, at.z
+            );
+        }
         self.outcome.traces[id].running = false;
         false
     }
@@ -419,6 +444,9 @@ impl Race<'_> {
         let vertex = map.mesh.triangles[face][corner];
         let node = self.singular[vertex as usize];
         if node != INVALID {
+            if self.meet_head_on(id, node, face, corner, axis) {
+                return false;
+            }
             let key = self.key_at_singularity(node, face, corner, axis);
             self.finish(id, node, key);
             return false;
@@ -428,7 +456,7 @@ impl Race<'_> {
             // has: this one stops on it.
             let (theirs, _, their_axis) = passage.departure;
             let Some(carried) = map.carry_around(face, corner, axis, theirs) else {
-                return self.lose(id);
+                return self.lose(id, "vertex A");
             };
             let turn = (carried + 4 - their_axis) % 4;
             let position = map.mesh.positions[vertex as usize];
@@ -436,7 +464,7 @@ impl Race<'_> {
             return false;
         }
         let Some(departure) = map.enter_from_vertex(face, corner, axis) else {
-            return self.lose(id);
+            return self.lose(id, "vertex B");
         };
         let trace = &mut self.outcome.traces[id];
         self.passages[vertex as usize] = Some(Passage { trace: id as u32, time: trace.length, departure });
@@ -449,6 +477,7 @@ impl Race<'_> {
     /// had length `time`. `turn` is the direction of `id` counted in quarter
     /// turns from that of `other`.
     fn stop_on(&mut self, id: usize, other: usize, time: f64, turn: u8, face: usize, at: [f64; 2]) {
+        let (other, time, turn) = self.kept(other, time, turn);
         // The ends of a trace may be singularities, where directions are not
         // numbered from the trace but round the vertex.
         if let Some(node) = self.singular_end(other, time) {
@@ -492,12 +521,20 @@ impl Race<'_> {
         // A trace leaves along every direction of a singularity; one coming
         // in along the same line should have met it head-on.
         self.outcome.overlaps += 1;
+        if std::env::var_os("OPENCLARE_DEBUG_LOST").is_some() {
+            let at = self.outcome.junctions[node as usize].position;
+            eprintln!(
+                "overlap A: a trace runs into singularity {node} at ({:+.4}, {:+.4}, {:+.4}), rank {rank:?}",
+                at.x, at.y, at.z
+            );
+        }
         rank.map_or(-0.5, |rank| rank as f64 + 0.25)
     }
 
     /// Trace `id` stops on a regular point of trace `other`, where that one
     /// had length `time`.
     fn stop_at(&mut self, id: usize, other: usize, time: f64, turn: u8, position: Vec3) {
+        let (other, time, turn) = self.kept(other, time, turn);
         let found = {
             let trace = &self.outcome.traces[other];
             let through = trace.through.iter().find(|&&(at, _, _)| (at - time).abs() <= MERGE);
@@ -531,9 +568,61 @@ impl Race<'_> {
         let used = &mut self.outcome.junctions[node as usize].used[key as usize];
         if *used {
             self.outcome.overlaps += 1;
+            if std::env::var_os("OPENCLARE_DEBUG_LOST").is_some() {
+                eprintln!(
+                    "overlap B: trace {id} stops on trace {other} at ({:+.4}, {:+.4}, {:+.4}) where key {key} is taken",
+                    position.x, position.y, position.z
+                );
+            }
         }
         *used = true;
         self.finish(id, node, key as f64);
+    }
+
+    /// Trace `id`, arriving at singular node `node`, came along the line
+    /// that one of the node's own traces left by, and that one is still
+    /// running towards where `id` set out from: the same line walked from
+    /// both ends, which a hair's breadth kept from meeting head-on. They are
+    /// made one: `id` ends at the node in the slot of the other, which
+    /// stops, and what was laid on the other moves onto `id`.
+    fn meet_head_on(&mut self, id: usize, node: u32, face: usize, corner: usize, axis: Axis) -> bool {
+        let Some(vertex) = self.outcome.junctions[node as usize].vertex else { return false };
+        let Some(rank) = self
+            .map
+            .canonical(face, corner, (axis + 2) % 4)
+            .and_then(|departure| self.map.departures(vertex).into_iter().position(|candidate| candidate == departure))
+        else {
+            return false;
+        };
+        let key = rank as f64;
+        let Some(other) = self.outcome.traces.iter().position(|trace| !trace.wall && trace.start == (node, key)) else {
+            return false;
+        };
+        if other == id || !self.outcome.traces[other].running {
+            return false;
+        }
+        let length = self.outcome.traces[id].length;
+        let laid = std::mem::take(&mut self.outcome.traces[other].through);
+        self.outcome.traces[id].through.extend(
+            laid.into_iter().map(|(time, at, forward)| ((length - time).clamp(0.0, length), at, (forward + 2) % 4)),
+        );
+        let trace = &mut self.outcome.traces[other];
+        trace.running = false;
+        trace.merged = Some(id as u32);
+        self.finish(id, node, key);
+        true
+    }
+
+    /// Where on a kept trace a stop on trace `other` at length `time`, at
+    /// `turn` from it, is: on the trace it was merged into, if it was.
+    fn kept(&self, other: usize, time: f64, turn: u8) -> (usize, f64, u8) {
+        match self.outcome.traces[other].merged {
+            Some(into) => {
+                let length = self.outcome.traces[into as usize].length;
+                (into as usize, (length - time).clamp(0.0, length), (turn + 2) % 4)
+            }
+            None => (other, time, turn),
+        }
     }
 
     fn finish(&mut self, id: usize, node: u32, key: f64) {
