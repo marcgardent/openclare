@@ -1,4 +1,4 @@
-"""Runs Blender's quad remesher (QuadriFlow) on an OBJ, once per seed.
+"""Runs QuadriFlow, the remesher built into Blender, on an OBJ, once per seed.
 
     blender -b --python bench/quadriflow.py -- <in.obj> <out prefix> <faces> <sharp 0|1> <boundary 0|1> <seed>...
 

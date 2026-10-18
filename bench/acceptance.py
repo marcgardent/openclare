@@ -27,8 +27,6 @@ TOOLS = [
     "integer-grid",
     "openclare-uniform",
     "openclare",
-    "quadremesher",
-    "quadremesher-uniform",
 ]
 # key, letter, label, factor applied for display
 METRICS = [
