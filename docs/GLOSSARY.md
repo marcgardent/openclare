@@ -1,5 +1,7 @@
 # Glossary
 
+*[Version française](GLOSSARY.fr.md)*
+
 The geometric objects and terms used by openclare, its bench and the research note [Closing
 Edge Loops at Quantization Time](research/closing-helices/paper.tex). Names in `code` are those
 of the engine's source.
