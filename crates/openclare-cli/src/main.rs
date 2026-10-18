@@ -1,6 +1,6 @@
 use std::process::ExitCode;
 
-use openclare::config::{PRESETS, RemeshConfig};
+use openclare::config::{PRESETS, Quality, RemeshConfig};
 use openclare::crossfield;
 use openclare::math::{Vec3, tangent_frame};
 use openclare::mesh::{Topology, obj, primitives};
@@ -56,6 +56,10 @@ OPTIONS (remesh):
                                  of its faces is written next to it, as <output>.groups
     --skip-pieces-under <Q>      leave out the separate pieces whose share of the quads is below Q (default 0: keep all)
     --no-close-loops             leave the lines of quads round a part as the lengths make them, helices or not
+    --quality <standard|slow>    slow: after the engine, an exact solver (HiGHS) chooses which loops to close
+                                 together, in three rounds; kept only where it makes fewer spirals. Seconds to
+                                 minutes more per piece (default standard)
+    --slow-time-limit <S>        with --quality slow: seconds each solve may take (default 20)
     --notes                      print what the stages remark on: why a piece went to the other chain, what the
                                  map folded on, how many guide lines were let go
     --record-still <STAGE>       with --record: keep that one stage (map, layout, cross-field...), out of time,
@@ -280,6 +284,24 @@ fn remesh_recorded(
     Err("this build cannot record".into())
 }
 
+/// The exact solver of the slow quality, handed to the engine, which has
+/// none of its own.
+#[cfg(feature = "highs")]
+fn inject_ring_selector(config: &mut RemeshConfig) -> Result<(), String> {
+    if config.quality == Quality::Slow {
+        config.ring_selector = quantization::Selector::new(openclare_highs::HighsSelector::default());
+    }
+    Ok(())
+}
+
+#[cfg(not(feature = "highs"))]
+fn inject_ring_selector(config: &mut RemeshConfig) -> Result<(), String> {
+    if config.quality == Quality::Slow {
+        return Err("this build has no exact solver for --quality slow: build it with the `highs` feature".into());
+    }
+    Ok(())
+}
+
 fn parse<T: std::str::FromStr>(name: &str, text: &str) -> Result<T, String> {
     text.parse().map_err(|_| format!("invalid value '{text}' for {name}"))
 }
@@ -341,6 +363,8 @@ fn remesh(args: &[String]) -> Result<(), String> {
             "--density-contrast" => config.density_contrast = parse(arg, value(arg)?)?,
             "--skip-pieces-under" => config.skip_pieces_under = parse(arg, value(arg)?)?,
             "--no-close-loops" => config.close_loops = false,
+            "--quality" => config.quality = value(arg)?.parse().map_err(|e: openclare::Error| e.to_string())?,
+            "--slow-time-limit" => config.slow_time_limit = parse(arg, value(arg)?)?,
             "--record" => record_path = Some(value(arg)?.clone()),
             "--record-still" => record_still = Some(value(arg)?.clone()),
             "--notes" => notes = true,
@@ -350,6 +374,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
         }
     }
     config.validate().map_err(|e| e.to_string())?;
+    inject_ring_selector(&mut config)?;
     if record_path.is_some() && !cfg!(feature = "rerun") {
         return Err("this build cannot record: build it with `cargo build --release --features rerun`".into());
     }
@@ -362,6 +387,13 @@ fn remesh(args: &[String]) -> Result<(), String> {
 
     let mesh = obj::read_obj(input).map_err(|e| format!("{input}: {e}"))?;
     println!("input    {} vertices, {} triangles", mesh.positions.len(), mesh.triangles.len());
+    if config.quality == Quality::Slow {
+        println!(
+            "quality  slow: rings chosen by {}, each solve up to {} s",
+            config.ring_selector.0.name(),
+            config.slow_time_limit
+        );
+    }
 
     let density = match &density_path {
         Some(path) => {

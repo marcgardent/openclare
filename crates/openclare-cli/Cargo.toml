@@ -15,8 +15,16 @@ doc = false
 openclare = { path = "../openclare" }
 # Only with the `rerun` feature: see below.
 openclare-rerun = { path = "../openclare-rerun", optional = true }
+# The exact solver of `--quality slow`: see below.
+openclare-highs = { path = "../openclare-highs", optional = true }
 
 [features]
+default = ["highs"]
+# `openclare remesh --quality slow`: rings chosen by HiGHS, a mixed-integer
+# solver built from its sources (cmake and a C++ compiler). On by default;
+# `--no-default-features` builds without it, and the slow quality is then
+# refused.
+highs = ["dep:openclare-highs"]
 # `openclare remesh --record file.rrd`: records what each stage makes, for the
 # Rerun viewer. Off by default: it brings a few hundred crates with it and
 # asks for Rust 1.95.

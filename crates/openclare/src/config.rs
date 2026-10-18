@@ -9,6 +9,7 @@ use std::fmt::Write;
 
 use crate::error::{Error, Result};
 use crate::pipeline::Target;
+use crate::quantization::Selector;
 use crate::remesher::{Guides, Method};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -68,7 +69,55 @@ pub struct RemeshConfig {
     /// Lines of quads that go round a part are closed into rings where the
     /// whole lengths would wind them into helices (DT-062).
     pub close_loops: bool,
+    /// How hard the loops are closed: by the engine alone, or, slowly, by
+    /// an exact solver as well (see [`Quality`]).
+    pub quality: Quality,
+    /// In the slow quality mode, the time each solve may take, in seconds:
+    /// a piece takes a few times this.
+    pub slow_time_limit: f64,
+    /// The solver of the slow quality mode, injected by the caller: the
+    /// core has none of its own. Not a setting written to text.
+    pub ring_selector: Selector,
     pub seed: u64,
+}
+
+/// How hard the loops round the parts are closed.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Quality {
+    /// The engine's own search.
+    #[default]
+    Standard,
+    /// The engine's search, then rounds of rings chosen by an exact solver
+    /// ([`RemeshConfig::ring_selector`]), whose lengths are kept where they
+    /// make fewer spirals. Seconds to minutes more per piece; without a
+    /// solver injected, the same as the standard quality.
+    Slow,
+}
+
+impl Quality {
+    pub fn name(self) -> &'static str {
+        match self {
+            Quality::Standard => "standard",
+            Quality::Slow => "slow",
+        }
+    }
+}
+
+impl std::fmt::Display for Quality {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl std::str::FromStr for Quality {
+    type Err = Error;
+
+    fn from_str(name: &str) -> Result<Self> {
+        [Quality::Standard, Quality::Slow]
+            .into_iter()
+            .find(|quality| quality.name() == name)
+            .ok_or_else(|| Error::InvalidParams(format!("unknown quality '{name}' (known: standard, slow)")))
+    }
 }
 
 impl Default for RemeshConfig {
@@ -126,6 +175,9 @@ impl RemeshConfig {
             density_contrast: 4.0,
             skip_pieces_under: 0.0,
             close_loops: true,
+            quality: Quality::Standard,
+            slow_time_limit: 20.0,
+            ring_selector: Selector::default(),
             seed: 1,
         }
     }
@@ -196,6 +248,12 @@ impl RemeshConfig {
             ("singularity_reach", self.singularity_reach),
             ("singularity_tolerance", self.singularity_tolerance),
         ];
+        if !(self.slow_time_limit.is_finite() && self.slow_time_limit > 0.0) {
+            return Err(Error::InvalidParams(format!(
+                "slow_time_limit must be a positive number of seconds, not {}",
+                self.slow_time_limit
+            )));
+        }
         for (name, value) in non_negative {
             if !(value.is_finite() && value >= 0.0) {
                 return Err(Error::InvalidParams(format!("{name} must be a non-negative number, not {value}")));
@@ -253,6 +311,8 @@ impl RemeshConfig {
         writeln!(text, "density_contrast = {}", self.density_contrast).unwrap();
         writeln!(text, "skip_pieces_under = {}", self.skip_pieces_under).unwrap();
         writeln!(text, "close_loops = {}", self.close_loops).unwrap();
+        writeln!(text, "quality = {}", self.quality).unwrap();
+        writeln!(text, "slow_time_limit = {}", self.slow_time_limit).unwrap();
         writeln!(text, "seed = {}", self.seed).unwrap();
         text
     }
@@ -320,6 +380,8 @@ impl RemeshConfig {
                 "close_loops" => {
                     config.close_loops = value.parse().map_err(|_| error(format!("'{value}' is not true or false")))?
                 }
+                "quality" => config.quality = value.parse().map_err(|e: Error| error(e.to_string()))?,
+                "slow_time_limit" => config.slow_time_limit = number_of("number of seconds")?,
                 "seed" => config.seed = value.parse().map_err(|_| error(format!("'{value}' is not a seed")))?,
                 other => return Err(error(format!("unknown setting '{other}'"))),
             }
@@ -356,6 +418,8 @@ mod tests {
         assert_eq!(config.crease_angle, Some(45.0));
         // What the file does not mention keeps its default.
         assert_eq!(config.alignment, RemeshConfig::default().alignment);
+        let slow = RemeshConfig::from_text("quality = slow\nslow_time_limit = 20\n").unwrap();
+        assert_eq!((slow.quality, slow.slow_time_limit), (Quality::Slow, 20.0));
     }
 
     #[test]
@@ -384,5 +448,7 @@ mod tests {
         assert!(RemeshConfig::from_text("crease_angle = 200").is_err());
         assert!(RemeshConfig::from_text("adaptivity = 1.5").is_err());
         assert!(RemeshConfig::from_text("density_contrast = 0.5").is_err());
+        assert!(RemeshConfig::from_text("quality = fast").is_err());
+        assert!(RemeshConfig::from_text("slow_time_limit = 0").is_err());
     }
 }

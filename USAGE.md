@@ -113,6 +113,33 @@ curves, and a line saying `closed` for one that joins its first point.
 
 ![The ogre with and without guide curves](docs/images/guide_curves.png)
 
+## Slow quality: loops closed by an exact solver
+
+Lines of quads that go round a part (a limb, a neck, a finger) are closed into rings where the
+whole lengths would wind them into spirals. Which of them to close together is a hard choice,
+and the engine makes it quickly, a few rings at a time. `--quality slow` adds, after the engine,
+three rounds in which an exact solver ([HiGHS](https://highs.dev), a mixed-integer solver)
+chooses lengths that close as many of those rings as it can, within the same budget of quads
+and the same distance from the real lengths; the engine keeps them only where they make fewer
+spirals than its own.
+
+```bash
+./target/release/openclare remesh input.obj output.obj --quads 3000 --quality slow
+```
+
+On the 12 models of the quick batch, at 2970, 3000 and 3030 quads, the edges of spiral loops go
+from 4.6 % to 2.9 % of the loop edges (better on 13 runs of 36, worse on none), for about a
+minute more per model at 3000 quads. `--slow-time-limit` is the time each solve may take, 20
+seconds by default; a piece takes a few times that (three rounds of two solves, more where
+lengths have to be solved again). At 10 seconds the gain is nearly the same for half the time;
+at 5 seconds the solver rarely finishes and the gain is no longer clear. The result depends on
+how far the solver gets in that time, hence on the load of the machine: two slow runs are not
+always the same to the byte; the standard quality is.
+
+The solver is in a crate of its own (`crates/openclare-highs`), built from its sources with
+cmake and a C++ compiler; `cargo build --release --no-default-features` builds the command line
+tool without it, and `--quality slow` is then refused.
+
 ## Inside the chain
 
 To see the T-mesh of a model, its cuts written as lines on the surface:
@@ -201,9 +228,22 @@ let (quads, report) = config.remesh(&triangles)?;
 Sizes instead of a number: `Target::SizeRange { largest, smallest }`. `openclare::Analysis::of`
 measures a shape once, then `quads`, `below` and `proposal` answer at once for any pair of sizes.
 
+The core depends on no solver: the slow quality asks one through the trait
+`openclare::quantization::RingSelector`, injected in the configuration. Without one, the slow
+quality is the standard one.
+
+```rust
+use openclare::config::Quality;
+use openclare::quantization::Selector;
+
+config.quality = Quality::Slow;
+config.ring_selector = Selector::new(openclare_highs::HighsSelector::default());
+```
+
 ## From another host
 
 The add-on calls the engine through a C interface (`crates/openclare-capi`), which any other host
 can use: one call, flat arrays in, quads out, settings as the text of a saved configuration, and a
 function of the host's called as each stage begins, which can stop the run. Blender's own arrays
-are read where they are, without a copy on the Python side.
+are read where they are, without a copy on the Python side. The C interface and the add-on do not inject a solver yet: through
+them, `quality = slow` is the standard quality.

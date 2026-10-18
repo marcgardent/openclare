@@ -1124,6 +1124,49 @@ male body from 63 s to 54 s, with byte-identical meshes (36 of 36 on the batch).
 system with an odd right-hand side has no whole solution (handshake), but the search only ever
 keeps `B x = 0`: nothing to prune there.
 
+**Slow quality: rings chosen by an exact solver** (`quantization/rings.rs`,
+`crates/openclare-highs`). Choosing which turns to close together is NP-hard (the research
+note); the engine chooses by walks, a few rings at a time. With `quality = slow`, three rounds
+follow the engine. Each poses, for the lengths the engine kept (the fewest spirals), a
+mixed-integer program: whole lengths that balance every rectangle, keep within the bounds of
+separation and four quad edges of their targets, the engine's cap on the mean deviation and its
+quad budget (taken to first order with 80 % of the room, counted exactly after, linearized
+again where it misses), and close as much as can be of the strips of quads those lengths make
+that the real lengths would close (leaning less than 0.12), each weighted by its length round.
+A strip counts as closed only where it **keeps its walk**: where it crosses each arc it stays
+inside that arc, half a quad edge from either end, two linear inequalities per crossing
+(`tubes::lattice_walks`); without them the program closes strips that the new lengths turn into
+other walks, and the count means nothing. A second solve keeps those rings closed and lowers the
+deviation. The lengths are meshed (as a lattice), arcs that pinch are held open and the round
+solved again; the strips of the new lengths join the rings; three rounds. Each round's lengths
+join the engine's own candidates on the same terms (budget, cap, folds, fewer spirals than the
+plain lengths) and the fewest spirals by the engine's own count go first: never more spirals
+than the engine by that count. The core poses the problem through a trait, `RingSelector`, and
+has a mute implementation; the solver, HiGHS, is in a crate of its own, which the command line
+tool injects (`--quality slow`). Each solve stops at `slow_time_limit` seconds, with the
+engine's lengths as a start. On the 12-model batch at three budgets (36 runs; Intel Core
+i7-7700K, 4 cores at 4.2 GHz, three runs at a time, load average 5 to 7), share of spiral loop
+edges, runs better / worse than the engine and than the best of the engine and three other draws
+of its per-arc preferences (4.18 %), and time per model:
+
+| | Spiral edges | vs engine | vs other draws | Wall | Processor |
+|---|---|---|---|---|---|
+| Engine (standard quality) | 4.65 % | | 0 / 8 | 6 s | 9 s |
+| Slow, 5 s per solve | 3.13 % | 10 / 0 | 8 / 6 | 26 s | 30 s |
+| Slow, 10 s per solve | 2.98 % | 12 / 0 | 10 / 5 | 46 s | 52 s |
+| Slow, 20 s per solve (default) | 2.86 % | 13 / 0 | 11 / 5 | 76 s | 82 s |
+
+Other measures barely move (36 of 36 valid, mean distance 0.378 against 0.377 thousandths of
+the size, angle deviation 4.94° against 4.90°, the same irregular vertices); the closed loop
+edges go from 36.7 % to 37.9 %. The standard quality
+is byte for byte what it was (36 of 36 meshes).
+The gain needs a solver that finishes: at 5 s per solve, on a loaded machine, half the pieces
+had no solution in time and the rounds were no better than other draws of the engine's per-arc
+preferences. Closing the most rings is not on its own the way to fewer helices (in place of the
+engine's lengths, the rounds spiral as much); it is a source of candidates, kept by the count of
+spirals. Results depend on how far the solver got, so on the load: the slow quality is not
+reproducible to the byte.
+
 ### M7 and M8 — From the quantized T-mesh to the quad mesh
 
 The specification planned two modules: M7, an integer-grid map constrained by the quantized

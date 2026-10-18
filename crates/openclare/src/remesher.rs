@@ -888,6 +888,10 @@ impl QuadLayout {
             quads: Some((quads.round() as usize).max(1)),
             tolerance: self.budget_tolerance,
             close_turns: config.close_loops,
+            slow: (config.quality == crate::config::Quality::Slow).then(|| quantization::Slow {
+                selector: config.ring_selector.clone(),
+                time_limit: std::time::Duration::from_secs_f64(config.slow_time_limit),
+            }),
         };
         let quantized = quantization::create(quantization::Kind::WalkCancelling).quantize(&layout.tmesh, &request)?;
         clock.lap(&mut report, "quantization");
