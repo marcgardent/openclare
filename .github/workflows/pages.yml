@@ -1,13 +1,11 @@
 name: pages
 
-# The website (site/): built by site/build.py and its links checked on every
-# push to main. Published by GitHub Pages only once both are set by hand:
-#   1. Settings › Pages › Build and deployment › Source: GitHub Actions;
-#   2. Settings › Secrets and variables › Actions › Variables: PAGES = enabled.
-# Until then the deploy job is skipped and nothing is published.
+# The website (site/): built by site/build.py, its links checked, and
+# published by GitHub Pages (Settings › Pages › Source: GitHub Actions) on
+# every push to main, and to website until that branch is merged.
 on:
   push:
-    branches: [main]
+    branches: [main, website]
   workflow_dispatch:
 
 permissions:
@@ -29,13 +27,12 @@ jobs:
         run: python3 site/build.py
       - name: Check the links
         run: python3 site/check_links.py
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: site/_build
 
   deploy:
     needs: build
-    if: vars.PAGES == 'enabled'
     runs-on: ubuntu-24.04
     permissions:
       pages: write
@@ -45,4 +42,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
