@@ -74,3 +74,24 @@ fn the_ogre_keeps_its_thin_parts_when_asked_to() {
         assert!(with.mean_distance < 1.35 * without.mean_distance, "{quads}: {} then {}", without.mean_distance, with.mean_distance);
     }
 }
+
+#[test]
+fn a_simpler_ogre_has_no_more_irregular_vertices_and_is_still_all_quads() {
+    // Simplicity from the regular end to the simple one, the presets' in
+    // between: never more irregular vertices, and as sound a mesh of quads.
+    // Measured on 18 October 2026 at 1 000 quads: 142, 104, 86 and 62.
+    let source = ogre();
+    let mut counts = Vec::new();
+    for simplicity in [0.0, openclare::config::SIMPLICITY, 0.5, 1.0] {
+        let config = RemeshConfig { simplicity, ..RemeshConfig::for_organic(Target::QuadCount(1000)) };
+        let (mesh, report) = config.remesh(&source).unwrap();
+        let metrics = measure(&source, &mesh, Some(1000));
+        assert!(metrics.is_valid(), "{simplicity}: {metrics:?}");
+        assert!(!report.fell_back, "{simplicity}: through the fallback chain");
+        assert_eq!(metrics.quads, metrics.faces, "{simplicity}");
+        counts.push(metrics.irregular_vertices);
+    }
+    eprintln!("irregular vertices: {counts:?}");
+    assert!(counts.windows(2).all(|pair| pair[1] <= pair[0]), "irregular vertices {counts:?}");
+    assert!(counts[3] < counts[0], "irregular vertices {counts:?}");
+}

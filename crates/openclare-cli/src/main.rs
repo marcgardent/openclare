@@ -56,6 +56,9 @@ OPTIONS (remesh):
                                  of its faces is written next to it, as <output>.groups
     --skip-pieces-under <Q>      leave out the separate pieces whose share of the quads is below Q (default 0: keep all)
     --no-close-loops             leave the lines of quads round a part as the lengths make them, helices or not
+    --simplicity <S>             0 to 1: towards 1, fewer irregular vertices and helices, more closed loops, for
+                                 quads less square and less close to the surface; towards 0, the reverse
+                                 (default 0.25, the balance of the presets)
     --notes                      print what the stages remark on: why a piece went to the other chain, what the
                                  map folded on, how many guide lines were let go
     --record-still <STAGE>       with --record: keep that one stage (map, layout, cross-field...), out of time,
@@ -341,6 +344,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
             "--density-contrast" => config.density_contrast = parse(arg, value(arg)?)?,
             "--skip-pieces-under" => config.skip_pieces_under = parse(arg, value(arg)?)?,
             "--no-close-loops" => config.close_loops = false,
+            "--simplicity" => config.simplicity = parse(arg, value(arg)?)?,
             "--record" => record_path = Some(value(arg)?.clone()),
             "--record-still" => record_still = Some(value(arg)?.clone()),
             "--notes" => notes = true,

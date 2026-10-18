@@ -33,11 +33,23 @@ pub struct Request {
     /// Lengths that close the ways round a part into rings are looked for,
     /// and kept where they make fewer spirals (DT-062).
     pub close_turns: bool,
+    /// How much further from the real lengths than the plain search's the
+    /// lengths that close turns may be: this many times as far, or this
+    /// much further in quad edges, whichever is more. Beyond, the quads are
+    /// stretched and the surface followed less closely for it.
+    pub deviation_growth: f64,
+    pub deviation_slack: f64,
 }
 
 impl Default for Request {
     fn default() -> Self {
-        Self { quads: None, tolerance: 0.02, close_turns: true }
+        Self {
+            quads: None,
+            tolerance: 0.02,
+            close_turns: true,
+            deviation_growth: DEVIATION_GROWTH,
+            deviation_slack: DEVIATION_SLACK,
+        }
     }
 }
 
@@ -704,7 +716,8 @@ impl Quantizer for WalkCancelling {
             if std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some() {
                 eprintln!("plain lengths: deviation {:.3}", deviation(&plain));
             }
-            let most_deviation = (DEVIATION_GROWTH * deviation(&plain)).max(deviation(&plain) + DEVIATION_SLACK);
+            let most_deviation =
+                (request.deviation_growth * deviation(&plain)).max(deviation(&plain) + request.deviation_slack);
             // How far the vertices along the arcs are from the folds of the
             // surface they cross, in quad edges, each by how sharp the fold
             // is, all added up. Closing loops may not take them further off
@@ -882,12 +895,12 @@ const CLOSE_WAYS: &[(&[f64], f64, f64)] = &[
     (&[0.2, 0.5, 0.8], 0.12, 6.0),
 ];
 /// How many times further from the real lengths than the plain search's
-/// the lengths closing loops may be: beyond, the quads are stretched and
-/// the surface followed less closely for it. On a T-mesh whose plain lengths
-/// are already close, a share of so little is too tight: they may always be
-/// that much further, in quad edges.
-const DEVIATION_GROWTH: f64 = 1.5;
-const DEVIATION_SLACK: f64 = 0.2;
+/// the lengths closing loops may be, by default: beyond, the quads are
+/// stretched and the surface followed less closely for it. On a T-mesh whose
+/// plain lengths are already close, a share of so little is too tight: they
+/// may always be that much further, in quad edges.
+pub const DEVIATION_GROWTH: f64 = 1.5;
+pub const DEVIATION_SLACK: f64 = 0.2;
 /// The lean given to the search for turns still shifted, per unit of shift.
 const REPAIR_LEAN: f64 = 0.5;
 /// Most walks judged in the repair: each costs building the quad mesh.

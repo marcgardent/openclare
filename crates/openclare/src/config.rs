@@ -68,7 +68,32 @@ pub struct RemeshConfig {
     /// Lines of quads that go round a part are closed into rings where the
     /// whole lengths would wind them into helices (DT-062).
     pub close_loops: bool,
+    /// Between 0 and 1, how much of the regularity of the quads is given up
+    /// for a simpler mesh: towards 1, fewer irregular vertices, fewer loops
+    /// of edges winding into helices and more closing round the shape, with
+    /// quads less square, further from the size they should have and from
+    /// the surface; towards 0, the reverse. It moves the reach of the
+    /// singularities and how far whole lengths may stray to close loops
+    /// together (see [`Self::levers`]); at [`SIMPLICITY`], it leaves them
+    /// as they are. Every face stays a quad whatever it is.
+    pub simplicity: f64,
     pub seed: u64,
+}
+
+/// The simplicity of the shipped presets: the balance the engine kept before
+/// it could be chosen.
+pub const SIMPLICITY: f64 = 0.25;
+
+/// What a run takes from the configuration once [`RemeshConfig::simplicity`]
+/// has had its say.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Levers {
+    /// As [`RemeshConfig::singularity_reach`].
+    pub singularity_reach: f64,
+    /// How far the whole lengths that close loops may stray from the real
+    /// ones (see [`crate::quantization::Request::deviation_growth`]).
+    pub deviation_growth: f64,
+    pub deviation_slack: f64,
 }
 
 impl Default for RemeshConfig {
@@ -109,6 +134,34 @@ pub const PRESETS: &[Preset] = &[
     },
 ];
 
+/// The settings at either end of simplicity: at 0 and at 1.
+///
+/// Measured on the twelve models of the quick batch at three budgets (18
+/// October 2026). Cancelling singularities twice as far apart as the
+/// presets do takes a quarter of them away, and leaves more loops winding
+/// into helices, which lengths free to stray three times as far as the
+/// plain ones close again: fewer singularities, fewer helices, more closed
+/// loops, for corners a little further from square. Further than 4 quad
+/// edges, the cancellations break the mesh of some models (a pig at 5 and
+/// 6); lengths with no bound at all stretch the quads (their longest side
+/// four times the shortest on one in twenty). The other way, a reach of one
+/// edge and lengths held closer give squarer quads, closer to the surface
+/// and to the curvature, for more singularities and helices.
+///
+/// Neither the alignment nor the tolerance of the cancellations is moved:
+/// following the curvature less gives a few fewer singularities, but more
+/// helices and edges further off the shape; the tolerance does not bind at
+/// these reaches.
+struct End {
+    /// In quad edges.
+    singularity_reach: f64,
+    deviation_growth: f64,
+    deviation_slack: f64,
+}
+
+const REGULAR: End = End { singularity_reach: 1.0, deviation_growth: 1.2, deviation_slack: 0.1 };
+const SIMPLE: End = End { singularity_reach: 4.0, deviation_growth: 3.0, deviation_slack: 1.0 };
+
 impl RemeshConfig {
     pub fn for_organic(target: Target) -> Self {
         Self {
@@ -126,6 +179,7 @@ impl RemeshConfig {
             density_contrast: 4.0,
             skip_pieces_under: 0.0,
             close_loops: true,
+            simplicity: SIMPLICITY,
             seed: 1,
         }
     }
@@ -188,6 +242,31 @@ impl RemeshConfig {
         Ok((mesh, report))
     }
 
+    /// The settings the run uses: those of the configuration, moved by its
+    /// simplicity. At [`SIMPLICITY`] they are exactly the configuration's.
+    pub fn levers(&self) -> Levers {
+        // How far from the presets' simplicity, as a share of the way to the
+        // end it is moving towards, and the settings at that end.
+        let simpler = self.simplicity >= SIMPLICITY;
+        let (toward, end) = if simpler {
+            ((self.simplicity - SIMPLICITY) / (1.0 - SIMPLICITY), &SIMPLE)
+        } else {
+            ((SIMPLICITY - self.simplicity) / SIMPLICITY, &REGULAR)
+        };
+        // Written so that a share of 0 gives back the value itself, to the
+        // last bit.
+        let between = |today: f64, end: f64| today + (end - today) * toward;
+        // A reach set beyond that of the end it moves towards is kept: the
+        // ends bound the configuration's own, they never turn it back.
+        let reach = self.singularity_reach;
+        let reach_end = if simpler { reach.max(end.singularity_reach) } else { reach.min(end.singularity_reach) };
+        Levers {
+            singularity_reach: between(reach, reach_end),
+            deviation_growth: between(crate::quantization::DEVIATION_GROWTH, end.deviation_growth),
+            deviation_slack: between(crate::quantization::DEVIATION_SLACK, end.deviation_slack),
+        }
+    }
+
     pub fn validate(&self) -> Result<()> {
         let non_negative = [
             ("skip_pieces_under", self.skip_pieces_under),
@@ -203,6 +282,9 @@ impl RemeshConfig {
         }
         if !(0.0..=1.0).contains(&self.volume_fit) {
             return Err(Error::InvalidParams(format!("volume_fit must be between 0 and 1, not {}", self.volume_fit)));
+        }
+        if !(0.0..=1.0).contains(&self.simplicity) {
+            return Err(Error::InvalidParams(format!("simplicity must be between 0 and 1, not {}", self.simplicity)));
         }
         if !(0.0..=1.0).contains(&self.adaptivity) {
             return Err(Error::InvalidParams(format!("adaptivity must be between 0 and 1, not {}", self.adaptivity)));
@@ -253,6 +335,7 @@ impl RemeshConfig {
         writeln!(text, "density_contrast = {}", self.density_contrast).unwrap();
         writeln!(text, "skip_pieces_under = {}", self.skip_pieces_under).unwrap();
         writeln!(text, "close_loops = {}", self.close_loops).unwrap();
+        writeln!(text, "simplicity = {}", self.simplicity).unwrap();
         writeln!(text, "seed = {}", self.seed).unwrap();
         text
     }
@@ -320,6 +403,7 @@ impl RemeshConfig {
                 "close_loops" => {
                     config.close_loops = value.parse().map_err(|_| error(format!("'{value}' is not true or false")))?
                 }
+                "simplicity" => config.simplicity = number_of("number")?,
                 "seed" => config.seed = value.parse().map_err(|_| error(format!("'{value}' is not a seed")))?,
                 other => return Err(error(format!("unknown setting '{other}'"))),
             }
@@ -384,5 +468,53 @@ mod tests {
         assert!(RemeshConfig::from_text("crease_angle = 200").is_err());
         assert!(RemeshConfig::from_text("adaptivity = 1.5").is_err());
         assert!(RemeshConfig::from_text("density_contrast = 0.5").is_err());
+        assert!(RemeshConfig::from_text("simplicity = 1.5").is_err());
+    }
+
+    #[test]
+    fn the_presets_keep_the_settings_they_had_before_simplicity() {
+        // What the engine ran with before the setting was there, preset by
+        // preset: the reach of the singularities, and the lengths that close
+        // loops at most one and a half times as far from the real ones as
+        // the plain lengths, or a fifth of an edge further.
+        for (name, reach) in [("organic", 2.0f64), ("animation", 3.0), ("hard-surface", 2.0)] {
+            let config = RemeshConfig::preset(name, Target::QuadCount(3000)).unwrap();
+            assert_eq!(config.simplicity, SIMPLICITY, "{name}");
+            let levers = config.levers();
+            // To the last bit.
+            assert_eq!(levers.singularity_reach.to_bits(), reach.to_bits(), "{name}");
+            assert_eq!(levers.deviation_growth.to_bits(), 1.5f64.to_bits(), "{name}");
+            assert_eq!(levers.deviation_slack.to_bits(), 0.2f64.to_bits(), "{name}");
+        }
+        // A file saved before the setting was there reads as the preset.
+        let text = RemeshConfig::default().to_text().replace(&format!("simplicity = {SIMPLICITY}\n"), "");
+        assert!(!text.contains("simplicity"));
+        assert_eq!(RemeshConfig::from_text(&text).unwrap(), RemeshConfig::default());
+    }
+
+    #[test]
+    fn simplicity_moves_every_lever_one_way() {
+        // Towards simplicity, singularities are cancelled further apart and
+        // the lengths may stray further for loops to close: never the
+        // reverse, whatever reach the configuration has of its own.
+        for reach in [0.0, 1.0, 2.0, 3.0, 6.0] {
+            let mut config = RemeshConfig { singularity_reach: reach, ..RemeshConfig::default() };
+            let mut last: Option<Levers> = None;
+            for step in 0..=20 {
+                config.simplicity = step as f64 / 20.0;
+                config.validate().unwrap();
+                let levers = config.levers();
+                if let Some(last) = last {
+                    assert!(levers.singularity_reach >= last.singularity_reach, "{reach} {step}");
+                    assert!(levers.deviation_growth > last.deviation_growth, "{reach} {step}");
+                    assert!(levers.deviation_slack > last.deviation_slack, "{reach} {step}");
+                }
+                last = Some(levers);
+            }
+            // At the ends: up to 4 edges of reach, and back to 1.
+            assert_eq!(last.unwrap().singularity_reach, reach.max(4.0));
+            config.simplicity = 0.0;
+            assert_eq!(config.levers().singularity_reach, reach.min(1.0));
+        }
     }
 }

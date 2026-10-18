@@ -799,6 +799,40 @@ impl QuadLayout {
         least: usize,
         recorder: &mut dyn Recorder,
     ) -> Result<(PolyMesh, Report)> {
+        let (mesh, report) = self.remesh_piece_once(input, guides, config, least, recorder)?;
+        if config.simplicity == crate::config::SIMPLICITY {
+            return Ok((mesh, report));
+        }
+        // Singularities cancelled from further or closer than the presets
+        // do give another layout, and one of them now and then folds a quad
+        // over (the body of a man at 10 695 quads, with a reach anywhere
+        // from 3.2 to 3.7 edges, and not at 3, 3.5 or 4). Where the mesh
+        // has a fold, the presets' balance is meshed too, and the mesh with
+        // fewer folds kept: simplicity never costs the soundness of the mesh.
+        let surface = Bvh::build(input);
+        let folded = crate::metrics::folded_faces(input, &surface, &mesh);
+        if folded == 0 {
+            return Ok((mesh, report));
+        }
+        let balanced = RemeshConfig { simplicity: crate::config::SIMPLICITY, ..config.clone() };
+        let (other, other_report) = self.remesh_piece_once(input, guides, &balanced, least, recorder)?;
+        if crate::metrics::folded_faces(input, &surface, &other) < folded {
+            let note = format!("simplicity left as the presets have it: it folded {folded} quads over");
+            recorder.record("notes/simplicity", Shape::Note(&note));
+            return Ok((other, other_report));
+        }
+        Ok((mesh, report))
+    }
+
+    /// The chain on one connected piece, once.
+    fn remesh_piece_once(
+        &self,
+        input: &TriMesh,
+        guides: &Guides,
+        config: &RemeshConfig,
+        least: usize,
+        recorder: &mut dyn Recorder,
+    ) -> Result<(PolyMesh, Report)> {
         let mut clock = Stopwatch::start();
         let mut report = Report::default();
         let size = WorkSize { per_quad: self.triangles_per_quad, least, most: self.max_triangles };
@@ -853,10 +887,13 @@ impl QuadLayout {
         }
 
         recorder.begin("quantization")?;
+        let levers = config.levers();
         let request = quantization::Request {
             quads: Some((quads.round() as usize).max(1)),
             tolerance: self.budget_tolerance,
             close_turns: config.close_loops,
+            deviation_growth: levers.deviation_growth,
+            deviation_slack: levers.deviation_slack,
         };
         let quantized = quantization::create(quantization::Kind::WalkCancelling).quantize(&layout.tmesh, &request)?;
         clock.lap(&mut report, "quantization");
@@ -1245,12 +1282,13 @@ fn fields(
     clock.lap(report, "cross field");
     recorder::show_field(recorder, "cross-field", &work, &field);
 
-    if config.singularity_reach > 0.0 {
+    let reach = config.levers().singularity_reach;
+    if reach > 0.0 {
         recorder.begin("singularities")?;
         let request = singularity::Request {
             alignment: config.alignment,
             tolerance: config.singularity_tolerance,
-            reach: Some(config.singularity_reach * edge_length),
+            reach: Some(reach * edge_length),
         };
         field = singularity::create(singularity::Kind::PairCancellation).optimize(&work, &field, &request)?.0;
     }
