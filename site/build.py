@@ -36,6 +36,28 @@ import md  # noqa: E402
 
 CONTENT = SITE / "content"
 REPOSITORY = "https://github.com/marcgardent/openclare"
+
+
+def source_ref():
+    """The branch the site is built from, so that links to the repository's
+    files point at the same content as the pages: GitHub Actions names it,
+    a local build asks git, and main is the fallback."""
+    import os
+    import subprocess
+
+    name = os.environ.get("GITHUB_REF_NAME")
+    if name:
+        return name
+    try:
+        name = subprocess.run(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"], capture_output=True, text=True, check=True
+        ).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return "main"
+    return name if name and name != "HEAD" else "main"
+
+
+REF = source_ref()
 LANGUAGES = ("en", "fr")
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif"}
 # The widest a picture is kept, in pixels; wider ones are scaled down.
@@ -71,7 +93,7 @@ WORDS = {
             "the pictures of each model under the licence of that model, listed in "
             '<a href="{credits}">CREDITS.md</a>.</p>'
             "<p>No cookies, no trackers, no scripts. Built from the repository by <code>site/build.py</code>"
-            ' (<a href="{repository}">GitHub</a>, private for now).</p>'
+            ' (<a href="{repository}">GitHub</a>).</p>'
         ),
         "placeholder_theory": (
             "# Theory\n\nThis page, the theory of openclare in plain words, is being written. Meanwhile, the "
@@ -97,7 +119,7 @@ WORDS = {
             "ultérieure ; les images de chaque modèle sous la licence de ce modèle, listée dans "
             '<a href="{credits}">CREDITS.md</a>.</p>'
             "<p>Ni cookies, ni pisteurs, ni scripts. Construit depuis le dépôt par <code>site/build.py</code>"
-            ' (<a href="{repository}">GitHub</a>, privé pour l\'instant).</p>'
+            ' (<a href="{repository}">GitHub</a>).</p>'
         ),
         "placeholder_theory": (
             "# Théorie\n\nCette page, la théorie d'openclare en mots simples, est en cours d'écriture. En attendant, "
@@ -455,7 +477,7 @@ class Site:
             if page_of:
                 return relative(self.page_path(*page_of)) + fragment
             kind = "tree" if (ROOT / path).is_dir() else "blob"
-            return f"{REPOSITORY}/{kind}/main/{path}{fragment}"
+            return f"{REPOSITORY}/{kind}/{REF}/{path}{fragment}"
 
         return resolve
 
@@ -516,7 +538,7 @@ class Site:
             "breadcrumb": breadcrumb,
             "body": body,
             "footer": words["footer"].format(
-                credits=f"{REPOSITORY}/blob/main/CREDITS.md", repository=REPOSITORY
+                credits=f"{REPOSITORY}/blob/{REF}/CREDITS.md", repository=REPOSITORY
             ),
         }
         if language == "fr":

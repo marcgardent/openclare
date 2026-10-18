@@ -1,6 +1,6 @@
 # Get openclare
 
-<p class="subtitle">The source is on GitHub, at <a href="https://github.com/marcgardent/openclare">marcgardent/openclare</a>. The repository is private for now: the links to it on this site work for those it is shared with.</p>
+<p class="subtitle">The source is on GitHub, at <a href="https://github.com/marcgardent/openclare">marcgardent/openclare</a>.</p>
 
 ## The Blender add-on
 
