@@ -106,7 +106,8 @@ makes hard edges crisp in the result.
 - **Position singularities.** The position field is solved locally: nothing guarantees that it
   is globally consistent. Where it is not, triangle and pentagon pairs appear, hence pairs of
   valence 3 and valence 5 vertices that serve no purpose (3 to 6 % of the vertices today). This
-  is the structural limit of Instant Meshes and the main gap with Quad Remesher.
+  is the structural limit of Instant Meshes and the main gap with remeshers built on a global
+  parametrization, such as QuadriFlow.
 - **Hard edges.** Normals are averaged across a fold: the field is less reliable there than
   elsewhere, and a defect sometimes stays along an edge.
 - **Uniform density.** No size adapted to curvature.

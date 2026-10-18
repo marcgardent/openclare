@@ -2,9 +2,9 @@
 
 <p class="subtitle">Des notes de 0 à 100 pour chaque remailleur sur chaque modèle du banc, à 1 000, 3 000 et 8 000 quads demandés. D'après le banc de la nuit du 18 octobre 2026.</p>
 
-Le banc fait tourner openclare et trois autres remailleurs sur {{count:all}} modèles : des formes organiques (sculptures, numérisations, personnages), des pièces mécaniques, deux formes d'étalonnage, et un groupe *extra* de modèles assemblés et générés qui ne sont pas des surfaces propres. Chaque modèle a sa page, avec les images de ce que chaque remailleur en fait, là où sa licence le permet.
+Le banc fait tourner openclare et deux autres remailleurs sur {{count:all}} modèles : des formes organiques (sculptures, numérisations, personnages), des pièces mécaniques, deux formes d'étalonnage, et un groupe *extra* de modèles assemblés et générés qui ne sont pas des surfaces propres. Chaque modèle a sa page, avec les images de ce que chaque remailleur en fait, là où sa licence le permet.
 
-Les remailleurs : **openclare** tel que l'extension Blender le lance ; **Quad Remesher** 1.4.1 d'Exoside, la référence commerciale (licence d'essai, usage non commercial) ; **QuadriFlow**, intégré à Blender ; **AutoRemesher** 1.2.0 de Jeremy Hu. Les notes sont absolues : un remailleur garde sa note quels que soient ceux auxquels on le compare.
+Les remailleurs : **openclare** tel que l'extension Blender le lance ; **QuadriFlow**, intégré à Blender ; **AutoRemesher** 1.2.0 de Jeremy Hu. Les notes sont absolues : un remailleur garde sa note quels que soient ceux auxquels on le compare.
 
 ## Comment les notes sont faites
 
@@ -22,15 +22,9 @@ Les remailleurs : **openclare** tel que l'extension Blender le lance ; **Quad Re
 
 La note globale est la moyenne pondérée des critères qui existent pour le modèle : une sphère n'a pas de direction à suivre, un maillage à bords ouverts n'a pas de minimum topologique. Le critère des boucles fait la moyenne de ses deux moitiés, et il est laissé de côté là où le maillage n'est pas une variété. La vitesse figure dans le rapport complet mais ne compte pas : ce n'est pas une question de qualité, et les temps ont été pris sur une machine chargée. Un remailleur qui n'a rendu aucun maillage a 0. La colonne *Quads* n'est pas une note : c'est le nombre de quads du maillage, en moyenne sur les modèles.
 
-Quad Remesher, laissé à lui-même, fait environ deux fois les quads qu'on lui demande, et sa note de budget le dit. Pour comparer à armes égales, une seconde série de notes met openclare au nombre de quads que Quad Remesher a faits.
-
 ## Notes moyennes
 
 {{averages}}
-
-## À nombre de quads égal
-
-{{equal}}
 
 ## Modèle par modèle
 

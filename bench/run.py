@@ -10,6 +10,9 @@ through the add-on, in Blender; the other tools are given the same object as
 the add-on sees it, exported as an OBJ. `--source` prints where that OBJ is,
 after making it if need be.
 
+Remeshers whose results are not to be published can be run too, on this
+machine only: see `UNPUBLISHED` below.
+
 Needs `blender` on the PATH, a release build of `openclare` and the add-on
 built from it (`cargo build --release`, then `make addon`). Results go to
 bench/results/.
@@ -39,13 +42,27 @@ SCENES = BENCH / "scenes"
 CORPUS = BENCH / "corpus"
 OUTPUT = BENCH / "out"
 RESULTS = BENCH / "results"
-# Outputs of tools that cannot be re-run at will (a licence that expires).
+# Meshes that are not made by the bench: those modelled by hand.
 REFERENCE = BENCH / "reference"
 # Models whose licence does not allow passing them on: they, their scenes
 # (in `scenes` there) and what is remeshed from them stay in this directory,
 # which is not tracked. See CREDITS.md for where each one comes from and how
 # to fetch it again.
 LOCAL = BENCH / "corpus-large"
+# Local, unpublished challengers: remeshers whose licence does not allow
+# passing on what they make. Each is a Blender script,
+# `local/challengers/<name>.py`, called as bench/quadriflow.py is (source OBJ,
+# prefix of the output, quads, sharp 0|1, boundary 0|1, seeds) and printing a
+# line "CHALLENGER <seed> <status> <seconds>" per mesh, written to
+# `<prefix>_<seed>.obj`. It runs once per model and budget; its mesh is kept
+# in `local/reference/<name>/<model>__<budget>.obj` (and its time next to
+# it, `.seconds`) and read back from there afterwards, with or without the
+# software. A directory of meshes there without a script is a challenger
+# too. None of this is tracked, and their results go to `local/results/`,
+# never to bench/results: nothing is published of a remesher that is not
+# installed here.
+UNPUBLISHED = ROOT / "local"
+UNPUBLISHED_RESULTS = UNPUBLISHED / "results"
 # Those that come from BlenderKit, by their `asset_base_id`: `make blenderkit`
 # (bench/fetch_blenderkit.py) downloads them again and makes their scenes.
 BLENDERKIT = {
@@ -349,45 +366,41 @@ def autoremesher(model, sharp, boundary, target, seeds, directory):
     return {seeds[0]: (None, seconds, failure_of(done, "no mesh produced"))}
 
 
-def quadremesher_reference(model, target, uniform):
-    setting = "uniform" if uniform else "default"
-    kept = LOCAL / "reference" if model in LOCAL_MODELS else REFERENCE
-    return kept / "quadremesher" / f"{model}__{target}__{setting}.obj"
+def challenger_reference(name, model, target):
+    """Where the mesh of a local challenger is kept (see UNPUBLISHED)."""
+    return UNPUBLISHED / "reference" / name / f"{model}__{target}.obj"
 
 
-def quadremesher(uniform, refresh=False):
-    """Quad Remesher is deterministic (no seed) and needs a licence, so each
-    result is computed once and kept in bench/reference; later runs read it
-    back, with or without the software installed."""
+def challenger(name, refresh=False):
+    """A local challenger (see UNPUBLISHED), run once and kept: the seed is
+    the first one of the bench. Returns {seed: (path or None, seconds,
+    failure reason)}."""
+    script = UNPUBLISHED / "challengers" / f"{name}.py"
 
     def tool(model, sharp, boundary, target, seeds, directory):
-        path = quadremesher_reference(model, target, uniform)
-        if path.exists() and not refresh:
-            return {seeds[0]: (path, None, None)}
-        path.parent.mkdir(parents=True, exist_ok=True)
-        fresh = directory / path.name
-        fresh.unlink(missing_ok=True)
-        done = run(["blender", "-b", "--factory-startup", "--python", BENCH / "quadremesher.py", "--",
-                    source_path(model), fresh, target, int(uniform), int(sharp)], memory=memory_cap(model))
-        line = next((l for l in done.stdout.splitlines() if l.startswith("QUADREMESHER ")), None)
-        if line is None:
-            return {seeds[0]: (None, None, failure_of(done, "no output from Blender"))}
-        _, status, seconds = line.split()
-        if status != "ok":
-            return {seeds[0]: (None, None, status)}
-        fresh.replace(path)
-        path.with_suffix(".seconds").write_text(seconds + "\n")
-        return {seeds[0]: (path, None, None)}
+        path = challenger_reference(name, model, target)
+        record = path.with_suffix(".seconds")
+        if refresh or not path.exists():
+            if not script.exists():
+                return {seeds[0]: (None, 0.0, f"no mesh kept and no script for {name}")}
+            prefix = directory / name
+            fresh = Path(f"{prefix}_{seeds[0]}.obj")
+            fresh.unlink(missing_ok=True)
+            done = run(["blender", "-b", "--factory-startup", "--python", script, "--", source_path(model), prefix,
+                        target, int(sharp), int(boundary), seeds[0]], memory=memory_cap(model))
+            line = next((l for l in done.stdout.splitlines() if l.startswith("CHALLENGER ")), None)
+            if line is None:
+                return {seeds[0]: (None, 0.0, failure_of(done, "no output from Blender"))}
+            _, _, status, seconds = line.split()
+            if status != "ok" or not fresh.exists():
+                return {seeds[0]: (None, float(seconds), status)}
+            path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(fresh, path)
+            record.write_text(seconds + "\n")
+        seconds = float(record.read_text()) if record.exists() else 0.0
+        return {seeds[0]: (path, seconds, None)}
 
-    def timed(*arguments):
-        runs = tool(*arguments)
-        for seed, (path, _, failure) in runs.items():
-            record = path.with_suffix(".seconds") if path else None
-            seconds = float(record.read_text()) if record and record.exists() else 0.0
-            runs[seed] = (path, seconds, failure)
-        return runs
-
-    return timed
+    return tool
 
 
 def openclare(method, seeded=True, name=None, options=(), sharp_preset=None):
@@ -456,11 +469,6 @@ def faces_of(path):
         return sum(1 for line in lines if line.startswith("f "))
 
 
-# Quad Remesher, left to itself, makes about twice the quads it is asked for.
-# These two set the budget aside to compare at equal quad count: its mesh as
-# it is, and ours asked for as many quads as that mesh has. Both are measured
-# against that number, not against the budget of the bench.
-MATCHED = ("quadremesher-as-made", "openclare-matched")
 # The meshes modelled by hand, for the models that have one.
 HANDMADE = REFERENCE / "handmade"
 
@@ -484,25 +492,6 @@ def openclare_as_handmade(model, sharp, boundary, target, seeds, directory):
     return {seed: (path, seconds, failure, count, engine) for seed, (path, seconds, failure, _, engine) in made.items()}
 
 
-def quadremesher_as_made(model, sharp, boundary, target, seeds, directory):
-    """Returns {seed: (path or None, seconds, failure reason, quads to measure against)}."""
-    path = quadremesher_reference(model, target, uniform=False)
-    if not path.exists():
-        return {seeds[0]: (None, 0.0, "no Quad Remesher reference", None)}
-    record = path.with_suffix(".seconds")
-    seconds = float(record.read_text()) if record.exists() else 0.0
-    return {seeds[0]: (path, seconds, None, faces_of(path))}
-
-
-def openclare_matched(model, sharp, boundary, target, seeds, directory):
-    reference = quadremesher_reference(model, target, uniform=False)
-    if not reference.exists():
-        return {seeds[0]: (None, 0.0, "no Quad Remesher reference to match", None)}
-    count = faces_of(reference)
-    made = addon("openclare-matched")(model, sharp, boundary, count, seeds, directory)
-    return {seed: (path, seconds, failure, count, engine) for seed, (path, seconds, failure, _, engine) in made.items()}
-
-
 # Every remesher under test. A new chain only needs a line here.
 TOOLS = {
     "quadriflow": quadriflow,
@@ -513,8 +502,8 @@ TOOLS = {
     # two settings: quads of one size, from the command line, to compare like
     # with like against the tools that have nothing else; then as the add-on
     # runs it on the scene, with what the scene says: quads sized by the
-    # shape, as Quad Remesher does by default, and the curves, the painted
-    # density and the materials of the scenes that have them.
+    # shape, and the curves, the painted density and the materials of the
+    # scenes that have them.
     "openclare-uniform": openclare(
         "quad-layout",
         seeded=False,
@@ -523,16 +512,24 @@ TOOLS = {
         sharp_preset="hard-surface",
     ),
     "openclare": addon("openclare"),
-    # Commercial yardstick; needs the add-on and a licence (see bench/README.md).
-    "quadremesher": quadremesher(uniform=False),
-    "quadremesher-uniform": quadremesher(uniform=True),
-    "quadremesher-as-made": quadremesher_as_made,
-    "openclare-matched": openclare_matched,
     # What a modeller made by hand, where there is such a mesh, and openclare
     # at its number of quads.
     "handmade": handmade,
     "openclare-as-handmade": openclare_as_handmade,
 }
+
+
+def local_challengers():
+    """The local, unpublished challengers there are on this machine (see
+    UNPUBLISHED), by name: a script, or meshes kept, or both."""
+    names = {path.stem for path in (UNPUBLISHED / "challengers").glob("*.py")}
+    reference = UNPUBLISHED / "reference"
+    if reference.is_dir():
+        names |= {path.name for path in reference.iterdir() if path.is_dir()}
+    return {name: challenger(name) for name in sorted(names) if name not in TOOLS}
+
+
+CHALLENGERS = local_challengers()
 
 
 def kept_as(path):
@@ -548,16 +545,14 @@ def kept_as(path):
 def mesh_of_run(model, tool, run, target):
     """The mesh a run of the results was made of, if it is still there: where
     the results say, or for those older than that, where it is always kept
-    (Quad Remesher's, the hand-made ones) or was last left, if it has the
-    number of faces measured then."""
+    (the hand-made ones, those of the local challengers) or was last left, if
+    it has the number of faces measured then."""
     if run.get("mesh"):
         path = Path(run["mesh"])
         path = path if path.is_absolute() else ROOT / path
         return path if path.exists() else None
-    if tool in ("quadremesher", "quadremesher-as-made"):
-        path = quadremesher_reference(model, target, uniform=False)
-    elif tool == "quadremesher-uniform":
-        path = quadremesher_reference(model, target, uniform=True)
+    if tool in CHALLENGERS:
+        path = challenger_reference(tool, model, target)
     elif tool == "handmade":
         path = HANDMADE / f"{model}.obj"
     else:
@@ -621,18 +616,11 @@ def report(results, target, seeds, tools):
     lines = [
         "# Bench results",
         "",
-        f"Requested budget: {target} quads. Median over {len(seeds)} seeds; Quad Remesher, AutoRemesher and integer-grid have "
+        f"Requested budget: {target} quads. Median over {len(seeds)} seeds; AutoRemesher and integer-grid have "
         "no seed and run once. The first row is how many quads each tool made; below it, lower is better "
         "for every metric. \"—\" means it could not be measured.",
         "",
     ]
-    if all(tool in tools for tool in MATCHED):
-        lines += [
-            "The last two columns compare at equal quad count: `quadremesher-as-made` is the mesh of "
-            "`quadremesher` measured against the number of quads it has rather than the budget, and "
-            "`openclare-matched` is `openclare` asked for that same number.",
-            "",
-        ]
     for model, category, *_ in MODELS:
         if model not in results:
             continue
@@ -673,7 +661,7 @@ def report(results, target, seeds, tools):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--models", default=",".join(available_models()))
-    parser.add_argument("--tools", default=",".join(TOOLS))
+    parser.add_argument("--tools", default=",".join([*TOOLS, *CHALLENGERS]))
     parser.add_argument("--target", type=int, default=DEFAULT_TARGET)
     parser.add_argument("--seeds", default="1,2,3,4,5")
     parser.add_argument("--source", metavar="MODEL", help="print where the OBJ of that model is, and run nothing")
@@ -700,15 +688,27 @@ def main():
     ensure_corpus(models)
     RESULTS.mkdir(exist_ok=True)
 
+    every = {**TOOLS, **CHALLENGERS}
+    unknown = [tool for tool in tools if tool not in every]
+    if unknown:
+        sys.exit(f"unknown tool: {', '.join(unknown)} (known: {', '.join(every)})")
+
     # One pair of files per budget; a partial run (some models, some tools)
     # updates them in place instead of discarding what was measured before.
+    # The runs of the local challengers are kept apart, in local/results.
     suffix = "" if options.target == DEFAULT_TARGET else f"-{options.target}"
-    data_path, report_path = RESULTS / f"results{suffix}.json", RESULTS / f"RESULTS{suffix}.md"
-    raw = {}
-    if data_path.exists():
-        previous = json.loads(data_path.read_text())
-        if previous.get("seeds") == seeds:
-            raw = previous["runs"]
+
+    def stored(directory):
+        path = directory / f"results{suffix}.json"
+        if path.exists():
+            previous = json.loads(path.read_text())
+            if previous.get("seeds") == seeds:
+                return previous["runs"]
+        return {}
+
+    raw = stored(RESULTS)
+    for model, by_tool in stored(UNPUBLISHED_RESULTS).items():
+        raw.setdefault(model, {}).update(by_tool)
 
     if options.remeasure:
         remeasure(raw, models, tools, options.target)
@@ -722,7 +722,7 @@ def main():
         raw.setdefault(model, {})
         for tool in tools:
             runs = []
-            for seed, (path, seconds, failure, *own) in sorted(TOOLS[tool](model, sharp, boundary, options.target, seeds, directory).items()):
+            for seed, (path, seconds, failure, *own) in sorted(every[tool](model, sharp, boundary, options.target, seeds, directory).items()):
                 # A tool may say what number of quads its mesh is to be
                 # measured against, instead of the budget of the bench.
                 against = own[0] if own and own[0] else options.target
@@ -740,13 +740,24 @@ def main():
                   f"patches {cell(summary, 'base_complex_patches', '{:.0f}'):>6}  "
                   f"alignment {cell(summary, 'alignment', '{:.2f}'):>6}", flush=True)
 
-    # Report every tool that has results, in the order they are declared;
-    # where a tool has none for a model, its column says so.
-    reported = [t for t in TOOLS if any(t in by_tool for by_tool in raw.values())]
-    results = {model: {t: summarize(raw[model].get(t, [])) for t in reported} for model in raw}
-    data_path.write_text(json.dumps({"target": options.target, "seeds": seeds, "runs": raw, "summary": results}, indent=1))
-    report_path.write_text(report(results, options.target, seeds, reported))
-    print(f"\nwritten: {report_path}")
+    def write(directory, kept, shown):
+        """The runs of the tools `kept` into the data file of `directory`,
+        and the report of the tools `shown` next to it. Every tool that has
+        results is reported, in the order they are declared; where a tool
+        has none for a model, its column says so."""
+        runs = {model: {t: by_tool[t] for t in kept if t in by_tool} for model, by_tool in raw.items()}
+        reported = [t for t in shown if any(t in by_tool for by_tool in raw.values())]
+        results = {model: {t: summarize(raw[model].get(t, [])) for t in reported} for model in raw}
+        directory.mkdir(parents=True, exist_ok=True)
+        (directory / f"results{suffix}.json").write_text(
+            json.dumps({"target": options.target, "seeds": seeds, "runs": runs, "summary": results}, indent=1))
+        report_path = directory / f"RESULTS{suffix}.md"
+        report_path.write_text(report(results, options.target, seeds, reported))
+        print(f"\nwritten: {report_path}")
+
+    write(RESULTS, list(TOOLS), list(TOOLS))
+    if any(tool in by_tool for tool in CHALLENGERS for by_tool in raw.values()):
+        write(UNPUBLISHED_RESULTS, list(CHALLENGERS), list(every))
 
 
 if __name__ == "__main__":

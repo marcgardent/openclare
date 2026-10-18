@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The dashboard of the README: pictures of four remeshers side by side, and their marks.
+"""The dashboard of the README: pictures of the remeshers side by side, and their marks.
 
     python3 scripts/dashboard.py              the chart of the marks, from bench/results/scores.json
     python3 scripts/dashboard.py --gallery    and the sheet of pictures, from docs/images/gallery/
@@ -22,22 +22,21 @@ OUT = ROOT / "docs" / "images" / "dashboard"
 SCORES = ROOT / "bench" / "results" / "scores.json"
 GALLERY = ROOT / "docs" / "images" / "gallery"
 
-# The four remeshers, in a fixed order with a fixed colour each, validated
+# The remeshers, in a fixed order with a fixed colour each, validated
 # (scripts of the dataviz guidance) for both themes.
 TOOLS = [
     ("openclare", "openclare"),
-    ("quadremesher", "Quad Remesher"),
     ("quadriflow", "QuadriFlow (Blender)"),
     ("autoremesher", "AutoRemesher"),
 ]
 THEMES = {
     "light": {
         "surface": "#fcfcfb", "text": "#0b0b0b", "muted": "#52514e", "grid": "#e4e3df",
-        "series": ["#2a78d6", "#eb6834", "#1baf7a", "#eda100"],
+        "series": ["#2a78d6", "#1baf7a", "#eda100"],
     },
     "dark": {
         "surface": "#1a1a19", "text": "#ffffff", "muted": "#c3c2b7", "grid": "#3a3a37",
-        "series": ["#3987e5", "#d95926", "#199e70", "#c98500"],
+        "series": ["#3987e5", "#199e70", "#c98500"],
     },
 }
 GROUPS = [("organic", "Organic models"), ("mechanical", "Mechanical parts"), ("extra", "Assembled and generated")]
@@ -48,7 +47,7 @@ RENDER_BACKGROUND = (203, 203, 203)
 
 def averages():
     """{group: {budget: (models, {tool: mark})}}: the average overall mark of
-    each remesher over the models of a group that all four were measured on."""
+    each remesher over the models of a group that all of them were measured on."""
     scores = json.loads(SCORES.read_text())
     group_of = {name: group for name, group, *_ in MODELS}
     table = {}

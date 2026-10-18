@@ -332,74 +332,6 @@
       "budget_error": 0.008266666666666667
      }
     }
-   ],
-   "quadremesher": [
-    {
-     "seed": 1,
-     "seconds": 31.853,
-     "failure": null,
-     "metrics": {
-      "valid": false,
-      "vertices": 31693,
-      "faces": 31691,
-      "quads": 31691,
-      "non_manifold_edges": 0,
-      "misoriented_edges": 0,
-      "boundary_edges": 0,
-      "source_boundary_edges": 0,
-      "inverted_faces": 3,
-      "degenerate_faces": 0,
-      "components": 1,
-      "source_components": 1,
-      "irregular_vertices": 351,
-      "topological_minimum": 8,
-      "irregular_excess": 343,
-      "base_complex_patches": 21045,
-      "alignment": 9.803521741221765,
-      "angle_deviation_mean": 7.417758730311503,
-      "angle_deviation_p95": 20.0735104422414,
-      "aspect_mean": 1.5595643311387146,
-      "aspect_p95": 2.787885304230644,
-      "area_variation": 0.4628511705143377,
-      "hausdorff": 0.004218368220065618,
-      "mean_distance": 0.00022394430719854726,
-      "budget_error": 0.05636666666666667
-     }
-    }
-   ],
-   "quadremesher-uniform": [
-    {
-     "seed": 1,
-     "seconds": 22.309,
-     "failure": null,
-     "metrics": {
-      "valid": true,
-      "vertices": 25365,
-      "faces": 25363,
-      "quads": 25363,
-      "non_manifold_edges": 0,
-      "misoriented_edges": 0,
-      "boundary_edges": 0,
-      "source_boundary_edges": 0,
-      "inverted_faces": 0,
-      "degenerate_faces": 0,
-      "components": 1,
-      "source_components": 1,
-      "irregular_vertices": 345,
-      "topological_minimum": 8,
-      "irregular_excess": 337,
-      "base_complex_patches": 17385,
-      "alignment": 10.516394247691776,
-      "angle_deviation_mean": 7.717340761831821,
-      "angle_deviation_p95": 20.272053592204742,
-      "aspect_mean": 1.4067902088708222,
-      "aspect_p95": 2.1863762704026217,
-      "area_variation": 0.34544756942295407,
-      "hausdorff": 0.007447259675190181,
-      "mean_distance": 0.00023765143747673628,
-      "budget_error": 0.15456666666666666
-     }
-    }
    ]
   }
  },
@@ -440,42 +372,6 @@
     "mean_distance": 0.0001516184297016868,
     "budget_error": 0.009733333333333333,
     "seconds": 2.538
-   },
-   "quadremesher": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 0,
-    "failures": [],
-    "irregular_vertices": 351,
-    "irregular_excess": 343,
-    "base_complex_patches": 21045,
-    "alignment": 9.803521741221765,
-    "angle_deviation_mean": 7.417758730311503,
-    "angle_deviation_p95": 20.0735104422414,
-    "aspect_mean": 1.5595643311387146,
-    "area_variation": 0.4628511705143377,
-    "hausdorff": 0.004218368220065618,
-    "mean_distance": 0.00022394430719854726,
-    "budget_error": 0.05636666666666667,
-    "seconds": 31.853
-   },
-   "quadremesher-uniform": {
-    "runs": 1,
-    "produced": 1,
-    "valid": 1,
-    "failures": [],
-    "irregular_vertices": 345,
-    "irregular_excess": 337,
-    "base_complex_patches": 17385,
-    "alignment": 10.516394247691776,
-    "angle_deviation_mean": 7.717340761831821,
-    "angle_deviation_p95": 20.272053592204742,
-    "aspect_mean": 1.4067902088708222,
-    "area_variation": 0.34544756942295407,
-    "hausdorff": 0.007447259675190181,
-    "mean_distance": 0.00023765143747673628,
-    "budget_error": 0.15456666666666666,
-    "seconds": 22.309
    }
   }
  }

@@ -1,6 +1,6 @@
 # The bench
 
-Compares any quad remesher with its source, with the metrics of the specification
+Compares the mesh of any quad remeshing tool with its source, with the metrics of the specification
 ([ALGORITHM.md](../ALGORITHM.md), section 0). The latest figures are in
 [results/RESULTS.md](results/RESULTS.md).
 
@@ -33,12 +33,11 @@ make remeasure
 ```
 
 (`python3 bench/run.py --remeasure --target 8000` for one budget.) Results older than that do
-not say where their meshes are: Quad Remesher's and the meshes modelled by hand are found where
-they are always kept, the others where they were last left if they have the number of faces
+not say where their meshes are: the meshes modelled by hand are found where they are always kept, the others where they were last left if they have the number of faces
 measured then, and those that were made again since keep what was measured of them.
 
-It needs `blender` on the `PATH`: `openclare` runs in it, through the add-on, and so do
-QuadriFlow and Quad Remesher. `cargo build --release` builds the command line, `make addon` the
+It needs `blender` on the `PATH`: `openclare` runs in it, through the add-on, and so does
+QuadriFlow. `cargo build --release` builds the command line, `make addon` the
 engine the add-on loads (`blender/openclare/lib/`): do both again before measuring, after any
 change to the engine. `make scenes` makes the scenes that are missing (see below); the bench
 does it too when it finds one missing. A full campaign takes a quarter of an hour or so per
@@ -140,13 +139,12 @@ To measure one mesh, whatever made it:
 | `acceptance.py` | checks the results against the acceptance thresholds, writes `results/ACCEPTANCE.md` |
 | `quantize.py` | quantizes the T-mesh of each model and writes `results/QUANTIZATION.md` |
 | `quadriflow.py` | Blender script: QuadriFlow on an OBJ (`out/<model>/source.obj`), once per seed |
-| `quadremesher.py` | Blender script: Quad Remesher on an OBJ |
-| `make_references.py` | makes and stores the Quad Remesher references while a licence is available |
+| `make_references.py` | makes and keeps the meshes of the local, unpublished challengers (see below) |
 | `scenes/` | the scenes the bench runs on (see above) |
 | `scenes/` | [where each model comes from](scenes/README.md) |
 | `corpus/` | not tracked: where an OBJ file is put for `make scenes` to make its scene |
 | `corpus-large/` | the models whose licence forbids passing them on, and their scenes; not tracked |
-| `reference/` | the references kept, tracked ([notice](reference/README.md)) |
+| `reference/` | the meshes modelled by hand, tracked ([notice](reference/README.md)) |
 | `make_corpus.py` | Blender script: makes the synthetic shapes of the corpus |
 | `import_crane.py`, `subdivide.py` | turn the models downloaded from Keenan Crane's repository into sources of the corpus |
 | `blender_io.py` | OBJ in and out without axis conversion, so that every tool sees the same coordinates |
@@ -154,23 +152,14 @@ To measure one mesh, whatever made it:
 The metrics are in `crates/openclare/src/metrics.rs`, each tested on a mesh whose score is known
 (`crates/openclare/tests/metrics.rs`).
 
-## Quad Remesher
+## Local, unpublished challengers
 
-Quad Remesher (Exoside) is commercial software. Its results are computed once, with the Blender
-add-on and a valid licence (the bench works round neither), then stored in `reference/`. The
-bench reads these references back from then on, whether the software is still installed or
-not. For a model or a budget with no reference and no licence, the columns stay empty.
-
-- `quadremesher`: default settings (adaptive size at 50 %, quad count adjusted).
-- `quadremesher-uniform`: constant size and exact quad count, to compare on equal terms with
-  remeshers of one size.
-- `quadremesher-as-made`: the mesh of `quadremesher`, measured against the number of quads it
-  has rather than the budget. Left to itself it makes about twice the quads asked for;
-  `openclare-matched` is openclare asked for that same number, to compare at equal quad
-  count.
-
-It has no seed: one run per model. The references come from a trial licence: non-commercial
-use.
+A remesher whose licence does not allow passing its results on can still be compared, on one
+machine only: its Blender script goes in `local/challengers/<name>.py` (called as
+`quadriflow.py` is, printing `CHALLENGER <seed> <status> <seconds>`), its meshes are kept in
+`local/reference/<name>/`, and its results go to `local/results/` (`scripts/scores.py report
+--local` for its marks). `local/` is not tracked, and nothing of such a tool reaches
+`results/` or the pictures of the documentation. The details are in `UNPUBLISHED`, in `run.py`.
 
 ## Adding a tool
 
@@ -183,7 +172,7 @@ The three chains of the repository are there: `instant-meshes` (the floor), `int
 (the provisional one) and `quad-layout`, the one the project is about. That last one goes by
 the name of the project in the reports, under two settings:
 
-- `openclare` (and `openclare-matched`): the add-on, in Blender, on the scene, with the
+- `openclare`: the add-on, in Blender, on the scene, with the
   settings saved in it; the bench only sets the number of quads. On the scenes that are a
   plain mesh that is quads sized by the shape (adaptive size 50 %); on the others it is what
   their author set, curves, painted density and materials included. With each run the bench
@@ -194,9 +183,8 @@ the name of the project in the reports, under two settings:
 - `openclare-uniform`: the command line, quads of one size. It is given the materials of the
   scene, not its curves nor its painted density.
 
-(Until 9 October 2026 they were called `quad-layout-adaptive` and `quad-layout`, and
-`openclare-matched` was `quad-layout-matched`; and both ran from the command line on OBJ
-files.)
+(Until 9 October 2026 they were called `quad-layout-adaptive` and `quad-layout`, and both ran
+from the command line on OBJ files.)
 
 ## Settings of the comparison
 
@@ -204,7 +192,6 @@ files.)
   `use_preserve_sharp` on models with hard edges, `use_preserve_boundary` on open models.
 - AutoRemesher: standalone CLI ([huxingyi/autoremesher](https://github.com/huxingyi/autoremesher)), `--sharp-edge 90.0` on models with hard edges, `--sharp-edge 180.0` on organic models.
 - The floor: `--crease-angle 30` on models with hard edges.
-- Quad Remesher: detection of hard edges on models with hard edges only, symmetry off.
 - The same face budget and the same seeds for all, and the same input: the object of the scene
   as the add-on sees it. Only `openclare` takes more from the scene (curves, density).
 - Blender is started with `--factory-startup` everywhere: none of the add-ons installed on the
@@ -231,10 +218,9 @@ the density its author drew on it.
   structure; to be read with the number of irregular vertices.
 - **Alignment (A).** Curvature is read at the scale of a quad. On a noisy shape it has no
   stable direction and the metric stays at the level of chance (22.5 degrees).
-- **Time.** QuadriFlow's includes Blender's internal mesh conversion, Quad Remesher's a round
-  trip through FBX and its licence manager, `openclare`'s is the engine's alone, as the add-on
-  reports it: without the modifiers Blender applies first, nor the mesh it builds after. An
-  order of magnitude only.
+- **Time.** QuadriFlow's includes Blender's internal mesh conversion, `openclare`'s is the
+  engine's alone, as the add-on reports it: without the modifiers Blender applies first, nor
+  the mesh it builds after. An order of magnitude only.
 - **Scenes made by hand.** The other tools are given their object, not their curves nor their
   painted density: on those models the comparison is not on equal terms.
 - **Open source, closed result.** If a tool fills borders in, validity does not say so; the
