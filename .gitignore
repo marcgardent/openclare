@@ -14,3 +14,5 @@ __pycache__
 /dist
 # The website as built by site/build.py.
 /site/_build
+# The commit a research note describes, written by `make paper`.
+/docs/research/*/version.tex

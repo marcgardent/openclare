@@ -1,0 +1,47 @@
+# Citation metadata (Citation File Format 1.2.0, https://citation-file-format.github.io/).
+# GitHub shows it as "Cite this repository". Zenodo reads .zenodo.json instead
+# when both are present: keep the two in step.
+cff-version: 1.2.0
+message: >-
+  If you use openclare, please cite it as below. If you use the results of the
+  research note on closing edge loops, please cite the note as well (listed
+  under references).
+type: software
+title: "openclare: automatic quad retopology"
+abstract: >-
+  Automatic quad retopology for Blender: a mesh of triangles in, a mesh of
+  quads out, its edges following the shape. An open-source engine written in
+  Rust, with a Blender add-on, a bench comparing it with other remeshers, and
+  research notes with machine-checked proofs in Lean.
+authors:
+  - family-names: Gardent
+    given-names: Marc
+    affiliation: Independent researcher
+license: GPL-3.0-or-later
+repository-code: "https://github.com/marcgardent/openclare"
+url: "https://marcgardent.github.io/openclare/"
+keywords:
+  - quad meshing
+  - retopology
+  - quantization
+  - T-mesh
+  - Lean
+  - Blender
+references:
+  - type: report
+    title: >-
+      Closing Edge Loops at Quantization Time: Helix Constraints for T-Mesh
+      Quantization
+    authors:
+      - family-names: Gardent
+        given-names: Marc
+        affiliation: Independent researcher
+    year: 2026
+    month: 10
+    status: preprint
+    license: CC-BY-4.0
+    repository-code: "https://github.com/marcgardent/openclare"
+    url: "https://github.com/marcgardent/openclare/blob/main/docs/research/closing-helices/paper.pdf"
+    notes: >-
+      Research note, not peer reviewed. LaTeX source and Lean proofs in
+      docs/research/closing-helices of the repository.

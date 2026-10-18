@@ -1,5 +1,7 @@
 % Research note: closing helices at quantization time.
-% Build: pdflatex paper && bibtex paper && pdflatex paper && pdflatex paper
+% Build: `make paper` from the root of the repository, which first writes
+% version.tex (the commit described, \enginecommit); without it, or by hand:
+% pdflatex paper && bibtex paper && pdflatex paper && pdflatex paper
 \documentclass[11pt,a4paper]{article}
 
 \usepackage[T1]{fontenc}
@@ -26,10 +28,23 @@
 \newcommand{\shift}{s}
 \newcommand{\RC}{\textup{\textsc{Ring-Closing}}}
 
+% The commit of the engine and of the Lean proofs described, written by
+% `make paper` into version.tex (ignored by git).
+\IfFileExists{version.tex}{\input{version.tex}}{}
+\providecommand{\enginecommit}{unknown}
+
 \title{Closing Edge Loops at Quantization Time:\\
 Helix Constraints for T-Mesh Quantization\\[0.5em]
 \large Research note --- draft, not peer reviewed}
-\author{openclare project}
+\author{Marc Gardent%
+\thanks{This note is distributed under the Creative Commons Attribution
+4.0 International licence (CC BY 4.0). The code of openclare and the Lean
+proofs are under the GPL-3.0-or-later of the repository. The note describes
+the engine and the Lean proofs at commit \texttt{\enginecommit} of
+\url{https://github.com/marcgardent/openclare}.}\\
+\normalsize Independent researcher\\
+\normalsize Contact: through the repository,
+\url{https://github.com/marcgardent/openclare}}
 \date{18 October 2026}
 
 \begin{document}
@@ -3111,6 +3126,7 @@ walk of the strips and the cut rounds are on the branch
 Section~\ref{sec:choosing} on the experimental branch \texttt{maxclose-rd}; the Lean proofs are in
 \texttt{docs/research/closing-helices/lean} and replay with
 \texttt{make proofs}.
+This version of the note was built from commit \texttt{\enginecommit}.
 
 \section*{AI assistance}
 This note and the software it describes were made by a human author working
