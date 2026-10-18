@@ -13,3 +13,8 @@ public import ClosingHelices.Congruence
 public import ClosingHelices.Checkerboard
 public import ClosingHelices.Balances
 public import ClosingHelices.Forced
+public import ClosingHelices.Bidirected
+public import ClosingHelices.Farkas
+public import ClosingHelices.Completeness
+public import ClosingHelices.GaussBonnet
+public import ClosingHelices.BeyondQuads
