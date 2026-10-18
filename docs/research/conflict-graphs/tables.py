@@ -147,3 +147,42 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+def by_length(results, directory, bounds=(1.0, 1.5, 2.0, 3.0, 6.0)):
+    """The conflict graph of level W restricted to the rings at most so many
+    sides of the mesh round (the side: the square root of the quads asked
+    for), as limb rings are short and whole-body strips long."""
+    import graphs
+
+    print("\n### Level W restricted to short rings (round at most k sides of the mesh)\n")
+    print("| piece | " + " | ".join(f"k = {k}: rings / pairs / classes" for k in bounds) + " |")
+    print("|---|" + "---|" * len(bounds))
+    for r in results:
+        w = level(r, "W")
+        if w is None or not w["pairs"]:
+            continue
+        with open(os.path.join(directory, r["instance"] + ".json")) as f:
+            side = np.sqrt(json.load(f)["quads"])
+        cells = []
+        for k in bounds:
+            keep = [i for i in range(r["rings"]) if r["weights"][i] <= k * side and i not in w["forced"]]
+            pairs = [(a, b) for a, b in w["pairs"] if a in keep and b in keep]
+            graph = {i: set() for i in keep}
+            for a, b in pairs:
+                graph[a].add(b)
+                graph[b].add(a)
+            touched = sorted({i for e in pairs for i in e})
+            if not pairs:
+                cells.append(f"{len(keep)} / 0 / empty")
+                continue
+            c = graphs.classes(graphs.induced(graph, touched))
+            names = [s for key, s in (("bipartite", "Bip"), ("chordal", "Ch"), ("interval", "Int"), ("comparability", "Co"), ("perfect", "Perf")) if c[key]]
+            if c["perfect"] is False:
+                names.append(f"C{len(c['odd_hole'] or c['odd_antihole'])} {'hole' if c['odd_hole'] else 'antihole'}")
+            cells.append(f"{len(keep)} / {len(pairs)} / {','.join(names) or 'none'}")
+        print(f"| {r['instance']} | " + " | ".join(cells) + " |")
+
+
+if __name__ == "__main__" and len(sys.argv) > 4 and sys.argv[4] == "--by-length":
+    by_length(json.load(open(sys.argv[1])), sys.argv[3])

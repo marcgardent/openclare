@@ -991,16 +991,16 @@ impl Quantizer for WalkCancelling {
                 a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal)
             };
             kept.sort_by(fewest_first);
-            // The slow quality mode: rounds of rings chosen by the selector
-            // from the lengths with the fewest spirals, each round's lengths
-            // kept on the same terms as the engine's own, after them where
-            // they spiral as much.
             // For research only: the problem the slow quality mode would pose
             // first, written out whatever the quality asked for.
             if let Some(prefix) = std::env::var_os("OPENCLARE_EXPORT_RINGS").filter(|_| sound) {
                 let start = kept.first().map_or(&plain, |(lengths, ..)| lengths);
                 rings::export(tmesh, &real, start, wanted, allowed, most_deviation, &prefix);
             }
+            // The slow quality mode: rounds of rings chosen by the selector
+            // from the lengths with the fewest spirals, each round's lengths
+            // kept on the same terms as the engine's own, after them where
+            // they spiral as much.
             if let Some(slow) = request.slow.as_ref().filter(|slow| sound && !slow.selector.0.is_mute()) {
                 let (clock, cpu) = (std::time::Instant::now(), process_cpu_seconds());
                 let start = kept.first().map_or(&plain, |(lengths, ..)| lengths).clone();
