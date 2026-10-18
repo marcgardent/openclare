@@ -134,6 +134,11 @@ contributions are:
   lengths; whole lengths closing nearly all rings exist but cost too much
   deviation, and the turns, not the rounding, decide what closes
   (Section~\ref{sec:whole}).
+\item Machine-checked proofs, in Lean with Mathlib, of the algebraic cores of
+  the propositions of Sections~\ref{sec:obstructions} to~\ref{sec:forced},
+  with the topological facts as explicit hypotheses; they found a few gaps,
+  corrected here, and show what holds for other rotation orders
+  (Section~\ref{sec:lean}).
 \end{enumerate}
 The results are preliminary: one seed per model, one implementation, and
 heuristics where an exact formulation is still missing
@@ -633,6 +638,9 @@ Section~\ref{sec:conflicts} describes its conflicts.
 \subsection{Turns and singularities}\label{sec:holonomy}
 
 \paragraph{Flat metric and holonomy.}
+In this section the surface $\Sigma$ is closed, without border; a surface of
+genus zero is then a sphere. Several statements below fail on a sphere with
+borders (Remark~\ref{rem:borders}).
 Lengths $\ell > 0$ balancing every patch make each patch a Euclidean
 rectangle. Glued along their arcs, whose lengths agree on both sides, the
 rectangles give the surface $\Sigma$ a flat metric with cone points at the
@@ -890,7 +898,7 @@ into a checkerboard rule.
 \begin{proposition}[Checkerboard rule]\label{prop:checkerboard}
 In the setting of Proposition~\ref{prop:burgers}(b), with whole lengths,
 colour the points $p \in \Z^2$ of the cut disc black or white by the parity
-of $p_1 + p_2$. Then $\shift_{\gamma_1}(\ell) - \shift_{\gamma_2}(\ell)$ has
+of $p_1 + p_2$ (either colour may be called white). Then $\shift_{\gamma_1}(\ell) - \shift_{\gamma_2}(\ell)$ has
 the parity of the number of singular vertices of odd valence inside $A$
 that develop onto white points. In particular, two rings bound an annulus
 only if that number is even.
@@ -908,7 +916,8 @@ quarter-turn keeps colours, and a whole translation $t$ changes the colour of
 every point if $t_1 + t_2$ is odd, which keeps the parity of the count
 because the number of odd vertices inside $A$ is even, their indices
 $4 - k$ being odd and summing to zero with the even ones
-(Lemma~\ref{lem:gauss}). Developing a vertex along another path inside the
+(Lemma~\ref{lem:gauss}); for the same reason the two colours give counts of
+the same parity. Developing a vertex along another path inside the
 cut disc moves it by a rotation $x \mapsto R_j(x - p_j) + p_j$ about another
 singular vertex, which keeps its colour. We checked the rule on 13{,}000 random
 configurations with sympy.
@@ -954,8 +963,10 @@ y)_2 + \kappa_{P_0}$ by the induction hypothesis, and also $y'_1 + y'_2 +
 \pi(D_{k+1})$, this gives $\kappa_{P_{k+1}} \equiv \kappa_{P_0} +
 \pi(D_{k+1})$. For $k = N$ the patch is $P_0$ again, so $\pi(T_\gamma(\ell))
 \equiv 0$. In the frame $(e_1, e_2)$ of the first side, which is that of $P_0$
-up to signs, $T_\gamma(\ell) = (\alpha_\gamma(\ell), \pm\shift_\gamma(\ell))$, hence
-$\alpha_\gamma(\ell) + \shift_\gamma(\ell)$ is even.
+up to a quarter-turn and signs (the coordinates swap when the first side is
+along the first axis of $P_0$), $T_\gamma(\ell) = (\alpha_\gamma(\ell),
+\pm\shift_\gamma(\ell))$; a quarter-turn keeps the parity of the sum of the
+coordinates, hence $\alpha_\gamma(\ell) + \shift_\gamma(\ell)$ is even.
 
 For general whole balanced $\ell$: the balanced lengths form a rational
 subspace, positive real balanced lengths exist, and positivity is an open
@@ -1003,6 +1014,21 @@ even lengths, so no 3--5 pair at odd separation, and no odd number of odd
 vertices on white points, lies between them. On the eight systems exported for
 the male body (Section~\ref{sec:exact}), the proposition holds on all 1{,}838
 ways round found by walking every strip of the meshes (measured).
+
+\begin{remark}[Borders; a second proof]\label{rem:borders}
+The proposition and part (a) of the corollary need the surface to be closed:
+on a sphere with two border loops, an open cylinder of three quads round has
+a ring of three quads. The proof uses $H_1(S^2; \Z/2) = 0$, which borders
+break. On a closed sphere there is a second proof, which needs neither the
+bipartite graph nor positive lengths, and which the formalization of
+Section~\ref{sec:lean} found. Every loop of $\Sigma^\circ$ is a product of
+the loops $\lambda_i$ round the singular vertices (Section~\ref{sec:fox}),
+whose holonomies are quarter-turns about the points $p_i$. For whole lengths
+these are points of $\Z^2$, and a quarter-turn about a whole point keeps the
+parity of $p_1 + p_2$. So the holonomy of every loop keeps that parity, and
+its translation, the image of the origin, has an even sum of coordinates:
+for a turn, $\alpha_\gamma + \shift_\gamma$ is even.
+\end{remark}
 
 \paragraph{How many independent rings.}
 Rings that do not cross one another are disjoint simple closed curves of
@@ -1225,6 +1251,11 @@ $d = \sum_i \ell_{a_i} v_i$ and $\varepsilon_1 d_1 + \varepsilon_2 d_2 =
 \sum_i \ell_{a_i}$, first for positive balanced lengths, then for all by
 linearity. If both shifts vanish, this sum of non-negative lengths is zero.
 \end{proof}
+
+The proof uses only $\varepsilon_1 v_{i,1} + \varepsilon_2 v_{i,2} = 1$ for
+each step: neither that the steps run along the axes nor that $\varepsilon_1,
+\varepsilon_2 = \pm1$, so it applies to any path on whose steps the linear
+form of the shift difference is one.
 
 Proposition~\ref{prop:dislocation}(ii) is the case of a straight $\sigma$,
 along one direction. The second source of such identities is an exchange of
@@ -1544,9 +1575,10 @@ it is a combination of separations $p_i - p_j$. The ordinary winding number of
 $\sum_r u_r \bar\gamma_r$ round $c_i$ is, up to a constant common to all $i$,
 $w_i = \sum_r u_r\, \epsilon(\partial w_r/\partial x_i)$. The words $w_r$
 are defined up to the relation, and the $W_i$ accordingly: inserting a
-conjugate $g\varrho g^{-1}$ of the relation $\varrho$ in $w_r$ adds $u_r
-\rho(g\, \partial \varrho/\partial x_i)^\top f_r$ to every $W_i$, and leaves the
-sum unchanged.
+conjugate $g\varrho g^{-1}$ of the relation $\varrho$ in $w_r$, after a
+prefix $a$ of $w_r$, adds $u_r \rho(a g\, \partial \varrho/\partial x_i)^\top
+f_r$ to every $W_i$ (with $a$ empty, $u_r \rho(g\, \partial
+\varrho/\partial x_i)^\top f_r$), and leaves the sum unchanged.
 \end{proposition}
 
 \begin{proof}
@@ -1847,7 +1879,10 @@ $T \cup \{f\}$ with $z_f(f) = 1$ and entries in $\{0, \pm1, \pm2\}$.
 \end{proposition}
 
 \begin{proof}
-$T$ has $m$ edges. If $B_T y = 0$, a node met by a single edge of $T$ forces
+Such a $T$ exists: the sign of a cycle is a homomorphism from the cycle space
+of $G$ over $\Z/2$, of which the fundamental cycles of a spanning tree are a
+basis, so if all of them were balanced every cycle would be. $T$ has $m$
+edges. If $B_T y = 0$, a node met by a single edge of $T$ forces
 that edge to zero; removing such edges repeatedly leaves the unbalanced
 cycle, on which each value fixes the next up to sign, and going round, since
 the cycle is unbalanced, forces them all to zero. So the square matrix $B_T$
@@ -1954,16 +1989,17 @@ as the one of Section~\ref{sec:closing} is from the best possible. We are not
 aware of an earlier lower bound of this kind (Section~\ref{sec:related}).
 
 \begin{theorem}[Forced helices]\label{thm:forced}
-Let $H$ be a finite set of turns of a T-mesh and $P$ a convex set of lengths
-containing every quantization considered: for instance the balanced lengths
-meeting the bounds of separation, $\ell \ge b$, possibly with a cap $\frac1n
-\sum_a |\ell_a - t_a| \le D$ on the mean deviation from the targets $t$. Let
+Let $H$ be a finite set of turns of a T-mesh and $P$ a non-empty set of
+lengths containing every quantization considered: for instance the balanced
+lengths meeting the bounds of separation, $\ell \ge b$, possibly with a cap
+$\frac1n \sum_a |\ell_a - t_a| \le D$ on the mean deviation from the targets
+$t$, or with a given number of quads. Let
 \[
   \tau_P(H) = \min\bigl\{\, |X| : X \subseteq H,\ \text{the turns of } H
   \setminus X \text{ can be closed together by real lengths in } P \,\bigr\}.
 \]
-Then for every whole $\ell \in P$, at least $\tau_P(H)$ turns of $H$ have
-$\shift_\gamma(\ell) \neq 0$. If $H$ contains $k$ pairwise disjoint subsets
+Then for every $\ell \in P$, whole or not, at least $\tau_P(H)$ turns of $H$
+have $\shift_\gamma(\ell) \neq 0$. If $H$ contains $k$ pairwise disjoint subsets
 none of which can be closed within $P$, then $\tau_P(H) \ge k$.
 \end{theorem}
 
@@ -1976,7 +2012,10 @@ k$.
 \end{proof}
 
 The theorem is elementary; its content is in what makes subsets infeasible,
-which Section~\ref{sec:obstructions} relates to the singularities. The bounds
+which Section~\ref{sec:obstructions} relates to the singularities. The proof
+uses neither convexity, nor linearity of the shifts, nor whole lengths;
+convexity is what lets $\tau_P(H)$ be bounded by linear programs, as below.
+An earlier draft asked $P$ to be convex. The bounds
 of separation are what make the shifts of a dislocation non-zero, and the
 statement becomes one about parallel rings.
 
@@ -2099,9 +2138,9 @@ small part of the helices the engine leaves: the turns the theorem forces are
 one to a few per way, and most of the shifted turns of the engine could be
 closed by other lengths in $P$. What keeps them open in practice is the size
 and the deviation, as Section~\ref{sec:whole} found, and the heuristic, which
-keeps far fewer turns than can be closed (Table~\ref{tab:exact}). A lower
-bound that accounts for the number of quads, a non-convex constraint, is
-left open.
+keeps far fewer turns than can be closed (Table~\ref{tab:exact}). The
+theorem holds with the number of quads fixed, a non-convex constraint; how
+to compute or certify $\tau_P(H)$ for such a $P$ is left open.
 
 \paragraph{Status of Sections~\ref{sec:obstructions} to~\ref{sec:forced}.}
 \emph{Proved:} Lemmas~\ref{lem:gauss}, \ref{lem:eight}
@@ -2112,7 +2151,8 @@ first visit made precise), \ref{prop:dislocation}, \ref{prop:checkerboard},
 Corollary~\ref{cor:checker}, Theorem~\ref{thm:forced} and
 Corollary~\ref{cor:chain}, each under its hypotheses;
 Remark~\ref{rem:definite}, and the existence of whole solutions when real ones
-exist. \emph{Measured:} on the T-mesh of the male body, every statement of
+exist. \emph{Machine-checked:} the algebraic cores of most of these, with the
+topological steps as hypotheses (Section~\ref{sec:lean}). \emph{Measured:} on the T-mesh of the male body, every statement of
 Section~\ref{sec:holonomy} wherever it applies (Section~\ref{sec:measured});
 the configurations of the conflicts (Table~\ref{tab:pairs}), the staircases,
 the separatrix at the wrist and the windings of the larger sets, as
@@ -2135,6 +2175,108 @@ Proposition~\ref{prop:fox} to the grouping of twisted windings; the left
 hand is half explained, the sets of seven and configurations E and F are not
 described; that moving singularities in a map of fixed scale cannot set the
 shifts (Section~\ref{sec:move}) is a reading of measurements.
+
+\subsection{What is machine-checked}\label{sec:lean}
+
+The algebraic cores of the propositions of Sections~\ref{sec:obstructions}
+to~\ref{sec:forced} are proved in Lean~4 with Mathlib, in the folder
+\texttt{docs/research/closing-helices/lean} of the repository, pinned to Mathlib
+\texttt{v4.35.0} and the toolchain \texttt{leanprover/lean4:v4.35.0};
+\texttt{make proofs} fetches Mathlib compiled and checks them, in about thirty
+seconds once the cache is there. The topological facts the proofs use, that a
+loop develops into a given motion, that a curve bounds a disc, that the
+fundamental group of $\Sigma^\circ$ is presented by the loops $\lambda_i$, that
+the quad graph of a sphere is bipartite, are not formalized: each is an
+explicit hypothesis of the theorem that uses it, and no proof is left open.
+The folder's \texttt{README.md} maps each statement to its Lean theorems.
+
+\paragraph{What is checked.}
+\begin{itemize}
+\item For motions whose linear parts lie in any ring acting on any module: the
+  translation of $\rho_m \circ \dots \circ \rho_1$ is $\sum_i Q_i(I - R_i)p_i$
+  with $Q_i = R_m \cdots R_{i+1}$ (Proposition~\ref{prop:burgers}(a)); the
+  recursion of the gluing maps of a tree of cuts unfolds into the order of
+  first visit, and the order of last visit gives another vector already for
+  two vertices; the holonomy of the border of a cut annulus
+  (Proposition~\ref{prop:burgers}(b)); exchanges
+  (Proposition~\ref{prop:swap}); the conjugation of
+  Proposition~\ref{prop:winding}; the linearity of
+  Proposition~\ref{prop:linear}.
+\item Over the reals: the four orders and orientations of a dislocation, the
+  forms $\pm d_1 \pm d_2$ and $|B_A|^2 = 2|d|^2$, straight chains
+  (Proposition~\ref{prop:dislocation}(i), (ii)); staircases
+  (Proposition~\ref{prop:staircase}); the positivity of a non-negative form
+  with a held arc (Remark~\ref{rem:definite}, first part).
+\item At whole lengths: the parities of $(I - R^{\pm1})p$ and $(I - R^2)p$; the
+  checkerboard rule (Proposition~\ref{prop:checkerboard}); the induction of the
+  proof of Proposition~\ref{prop:parity}, given a 2-colouring of the quad graph,
+  and the second proof of Remark~\ref{rem:borders}.
+\item The Fox--Burgers formula on words, which is well defined on the free
+  group, the fundamental formula, the twisted windings and $\sum_i (I -
+  R_i)^\top W_i = 0$, the insertion of the relation
+  (Proposition~\ref{prop:fox}); the commutator
+  (Proposition~\ref{prop:commutator}); Corollary~\ref{cor:checker}, with the
+  two arguments of its proof on the colour of the origin and the constant of
+  the winding numbers.
+\item Lemma~\ref{lem:handshake}, Theorem~\ref{thm:forced} and
+  Corollary~\ref{cor:chain}.
+\end{itemize}
+Not checked: Lemmas~\ref{lem:gauss} and~\ref{lem:eight},
+Proposition~\ref{prop:complete}, Proposition~\ref{prop:free}, which needs a
+theory of bidirected graphs, Farkas' lemma in Remark~\ref{rem:definite}, and
+every measured statement.
+
+\paragraph{Gaps found.}
+Formalizing found no error of sign or convention, but a few gaps, corrected in
+this version: \emph{genus zero} must mean a closed sphere in
+Section~\ref{sec:obstructions}, and the parity of a turn fails with borders
+(Remark~\ref{rem:borders}); inserting the relation in a word after a prefix
+$a$ brings $\rho(a)$ into the change of the twisted windings
+(Proposition~\ref{prop:fox}); Theorem~\ref{thm:forced} needs $P$ non-empty,
+for $\tau_P(H)$ to be defined, but neither convex nor of whole lengths, so it
+holds for quantizations of a given size; the frame of the first side is that
+of the first patch up to a quarter-turn, not only up to signs
+(Proposition~\ref{prop:parity}); the edge closing an unbalanced cycle of
+Proposition~\ref{prop:free} exists, which the proof did not say;
+Proposition~\ref{prop:staircase} holds for any path on whose steps the form
+of the shift difference is one.
+
+\paragraph{Other rotation orders.}
+Nothing in the Burgers sum, the order of first visit or the Fox--Burgers
+formula uses that $R$ has order four: they hold for the rotations of order
+six of triangle and hexagonal meshes, for cone metrics of any angles, and for
+motions of space. What changes is parity. When every rotation is a power
+$z^{j_i}$ of one rotation $z$, every Fox derivative is congruent to its
+exponent sum modulo $1 - z$, and $1 - z^j$ to $j(1 - z)$ modulo $(1 - z)^2$, so
+\[
+  \tau(w) \equiv (1 - z) \sum_i \epsilon\Bigl(\frac{\partial w}{\partial
+  x_i}\Bigr) j_i\, p_i \pmod{(1 - z)^2},
+\]
+proved in any commutative ring. For quarter-turns, $(1 - z)^2 = -2z$, and this
+is Corollary~\ref{cor:checker}, with $j_i = 4 - k(c_i)$. For rotations of order
+three, $(1 - z)^2 = -3z$: a rule modulo three, with three colours. For
+rotations of order six, $1 - z$ is a unit: there is no colouring rule on
+triangle or hexagonal meshes. A dislocation of order $n$ has $|B| = 2\sin(\pi
+/ n)\,|d|$: $\sqrt2\,|d|$ for quads, $|d|$ for a pair of valences five and
+seven on a triangle mesh; the forms $\pm d_1 \pm d_2$ are particular to quads.
+Theorem~\ref{thm:forced}, Corollary~\ref{cor:chain} and
+Lemma~\ref{lem:handshake} do not depend on the geometry at all.
+
+\paragraph{Invariants for the engine.}
+The checked identities give tests the engine can run on its own quantities:
+on a closed surface of genus zero, the two components of the translation of
+every turn, its length and its shift, have the same parity at the whole lengths
+of the integer search, so every ring has an even number of quads round it; the
+coefficients of every shift expression are whole; every column of the balances
+has two entries $\pm1$, so a balance system with an odd total right-hand side
+has no whole solution; where the developed cone points are known, the
+translation of a turn bounding a disc is the Burgers sum in the order of first
+visit, and its two components have the parity of the number of vertices of odd
+valence on points of odd colour; a turn whose shift is a non-negative form with
+a held arc, or both turns of a staircase with a held arc, are never closed; and
+the number of held turns left shifted is at least the number of disjoint
+infeasible sets found. The README of the folder lists them with the engine's
+names.
 
 \section{Open problems}\label{sec:open}
 
@@ -2191,11 +2333,12 @@ windings of a certificate group into clusters.
 
 \begin{problem}[Lower bounds with the size]
 Theorem~\ref{thm:forced} bounds the helices any quantization leaves within a
-convex set of lengths, and on the male body the bounds of separation force
-only one to nine turns. The number of quads is a quadratic, not convex,
-function of the lengths. Is there a lower bound on the helices of
-quantizations of a given size, and how close does it come to what the engine
-leaves?
+set of lengths, and on the male body the bounds of separation force only one
+to nine turns. The theorem holds for quantizations of a given size, but the
+number of quads is a quadratic, not convex, function of the lengths, and the
+linear programs that bound $\tau_P(H)$ no longer apply. How can $\tau_P(H)$ be
+bounded for quantizations of a given size, and how close does it come to what
+the engine leaves?
 \end{problem}
 
 \begin{problem}[Finite trajectories]
@@ -2206,11 +2349,13 @@ chosen? Our turns are its discrete, integer version.
 \end{problem}
 
 \paragraph{Towards proofs.}
-Proposition~\ref{prop:linear} is elementary but its statement over a
-T-mesh with T-junctions is easy to get wrong. A formal proof in a proof
-assistant, over an abstract complex of rectangles with integer side
-lengths, would settle it and could carry the sufficiency question of the
-second problem for special classes of layouts.
+The algebraic cores of Sections~\ref{sec:obstructions} to~\ref{sec:forced}
+are machine-checked (Section~\ref{sec:lean}); their topological hypotheses
+are not. Proposition~\ref{prop:linear} is elementary but its statement over a
+T-mesh with T-junctions is easy to get wrong. A formal model of an abstract
+complex of rectangles with integer side lengths, its turns and its developing
+map would turn those hypotheses into theorems, and could carry the
+sufficiency question of the third problem for special classes of layouts.
 
 \paragraph{Reproducibility.}
 The method is implemented in openclare, Rust, branches
