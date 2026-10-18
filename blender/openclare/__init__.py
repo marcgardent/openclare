@@ -27,17 +27,20 @@ PRESETS = [
 # How much the size of the quads follows the curvature in each preset, in
 # per cent: what the slider goes back to when the preset changes.
 ADAPTIVE_SIZE = {"organic": 50.0, "animation": 50.0, "hard-surface": 0.0}
+# The simplicity of the engine's presets, the balance it kept before it could
+# be chosen: what every shape below has, and what a report leaves unsaid.
+SIMPLICITY = 0.25
 # The shapes the add-on ships, as the values of the settings they set: what
 # the engine's presets of the same names are. The preset files of the add-on
 # (presets/openclare_shape) say the same; files of 0.1, which named one of
 # these, are given its values.
 SHAPES = {
     "organic": dict(adaptive_size=50.0, quads_around=6, use_hard_edges=False, hard_edge_angle=math.radians(30.0),
-                    follow_curvature=0.05, fewer_irregular=2.0, volume_fit=1.0),
+                    follow_curvature=0.05, fewer_irregular=2.0, volume_fit=1.0, simplicity=SIMPLICITY),
     "animation": dict(adaptive_size=50.0, quads_around=6, use_hard_edges=False, hard_edge_angle=math.radians(30.0),
-                      follow_curvature=0.05, fewer_irregular=3.0, volume_fit=1.0),
+                      follow_curvature=0.05, fewer_irregular=3.0, volume_fit=1.0, simplicity=SIMPLICITY),
     "hard-surface": dict(adaptive_size=0.0, quads_around=0, use_hard_edges=True, hard_edge_angle=math.radians(30.0),
-                         follow_curvature=0.02, fewer_irregular=2.0, volume_fit=1.0),
+                         follow_curvature=0.02, fewer_irregular=2.0, volume_fit=1.0, simplicity=SIMPLICITY),
 }
 # The settings a preset of the shape holds, in the order of the panel.
 SHAPE_NAMES = list(SHAPES["organic"])
@@ -567,6 +570,22 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         min=0.0,
         max=1.0,
     )
+    simplicity: bpy.props.FloatProperty(
+        options=set(),
+        name="Simplicity",
+        description=(
+            "What the mesh trades between regular quads and a simpler layout. Towards 1: fewer irregular "
+            "vertices (poles) and more edge loops that close round the shape instead of winding into "
+            "spirals, for quads a little less square and a little further from the surface. Towards 0: the "
+            "squarest quads, closest to the surface, with more poles and spirals. Always quads. 0.25 is the "
+            "balance of the presets"
+        ),
+        default=SIMPLICITY,
+        min=0.0,
+        max=1.0,
+        step=5,
+        precision=2,
+    )
     density_group: bpy.props.StringProperty(
         options=set(),
         name="Density",
@@ -1076,7 +1095,10 @@ class Remeshing:
             return False
 
         try:
-            engine_settings = {"quads": settings.quads, **shape_of(settings)}
+            # Not in `shape_of`: what the shape calls for, which an analysis
+            # measures, does not depend on it.
+            engine_settings = {"quads": settings.quads, **shape_of(settings),
+                               "simplicity": round(settings.simplicity, 6)}
             if settings.target == "SIZE":
                 # Lengths of the scene, where the engine is given the mesh
                 # as the object holds it: before its scale.
@@ -1113,6 +1135,7 @@ class Remeshing:
         remeshed.matrix_world = original.matrix_world
         # Kept, for what is baked onto the result later to be read from it.
         remeshed.openclare_source = original
+        report["simplicity"] = str(engine_settings["simplicity"])
         # And how it went, for the panel of the result to tell.
         remeshed[REPORT] = {key: str(value) for key, value in report.items()}
         for collection in original.users_collection or [context.collection]:
@@ -1127,6 +1150,14 @@ class Remeshing:
         said = f"openclare: {report.get('quads', '?')} quads in {seconds:.1f} s"
         if "materials" in report:
             said += f", {report['materials']} materials"
+        simplicity = float(report["simplicity"])
+        if simplicity != SIMPLICITY:
+            said += f", at simplicity {simplicity:.2f}"
+        balanced = int(report.get("pieces_at_preset_simplicity", 0))
+        if balanced:
+            # Said, because the result is then less simple than asked there.
+            said += f"; that simplicity folded quads over on {balanced} of {report.get('pieces', '?')} piece(s)"
+            said += f", meshed at {SIMPLICITY} instead"
         welded, apart = int(report.get("welded_vertices", 0)), int(report.get("edges_taken_apart", 0))
         if welded or apart:
             # Said, because the result then has borders the object did not show.
@@ -1698,6 +1729,13 @@ def report_lines(told):
         lines.append((f"The shape called for {wanted:,.0f}".replace(",", " "), "INFO"))
         if below >= 0.005:
             lines.append((f"{100.0 * below:.0f} % coarser than its shape asks", "ERROR"))
+    simplicity = float(told.get("simplicity", SIMPLICITY))
+    if simplicity != SIMPLICITY:
+        lines.append((f"Simplicity {simplicity:.2f}", "INFO"))
+    balanced = int(told.get("pieces_at_preset_simplicity", 0))
+    if balanced:
+        pieces = told.get("pieces", "?")
+        lines.append((f"Simplicity {SIMPLICITY} on {balanced} of {pieces} piece(s): it folded quads", "INFO"))
     failed, boxed = int(told.get("pieces_failed", 0)), int(told.get("pieces_boxed", 0))
     if failed:
         lines.append((f"{failed} of {told.get('pieces', '?')} pieces could not be meshed", "ERROR"))
@@ -1781,6 +1819,17 @@ class OPENCLARE_PT_shape(DataPanel, bpy.types.Panel):
         layout.prop(settings, "follow_curvature")
         layout.prop(settings, "fewer_irregular")
         layout.prop(settings, "volume_fit", slider=True)
+        layout.prop(settings, "simplicity", slider=True)
+        # What either end of the slider gives, under it: the column of the
+        # names of a split layout left empty.
+        ends = layout.split(factor=0.4)
+        ends.label(text="")
+        ends = ends.row()
+        ends.scale_y = 0.7
+        ends.label(text="Regular quads")
+        right = ends.row()
+        right.alignment = "RIGHT"
+        right.label(text="Fewer poles")
 
 
 class OPENCLARE_PT_curves(DataPanel, bpy.types.Panel):

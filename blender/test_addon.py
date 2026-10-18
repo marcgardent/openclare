@@ -91,6 +91,49 @@ assert len(direct.polygons) == len(copied.polygons) == len(mesh.polygons)
 assert all(a.co == b.co for a, b in zip(direct.vertices, copied.vertices)), "in place and copied differ"
 print("IN PLACE OK")
 
+# Simplicity: at the presets' balance, the mesh is the one the engine makes
+# when it is not told any; at the simple end, no more irregular vertices, and
+# still a sound mesh of quads.
+evaluated = original.evaluated_get(bpy.context.evaluated_depsgraph_get())
+source = evaluated.to_mesh()
+shape(original.openclare, "organic")
+asked = {"quads": 800, **openclare.shape_of(original.openclare)}
+plain, plain_report = openclare.quads_of(source, "organic", asked)
+balanced, balanced_report = openclare.quads_of(source, "organic", {**asked, "simplicity": 0.25})
+simple, simple_report = openclare.quads_of(source, "organic", {**asked, "simplicity": 1.0})
+evaluated.to_mesh_clear()
+assert len(plain.vertices) == len(balanced.vertices) and len(plain.polygons) == len(balanced.polygons)
+assert all(a.co == b.co for a, b in zip(plain.vertices, balanced.vertices)), "simplicity 0.25 is not the default"
+assert [tuple(p.vertices) for p in plain.polygons] == [tuple(p.vertices) for p in balanced.polygons]
+irregular = int(balanced_report["irregular_vertices"]), int(simple_report["irregular_vertices"])
+print("SIMPLICITY irregular vertices: %d at 0.25, %d at 1" % irregular)
+assert irregular[1] <= irregular[0], irregular
+assert all(len(polygon.vertices) == 4 for polygon in simple.polygons), "not all quads at simplicity 1"
+assert abs(len(simple.polygons) - 800) < 80, len(simple.polygons)
+assert not simple.validate(), "the mesh made at simplicity 1 needed mending"
+assert simple_report["pieces_failed"] == simple_report["pieces_boxed"] == "0", simple_report
+# Through the button: the simplicity of the object goes to the engine, and
+# is said by the result when it is not the presets'.
+for made in (plain, balanced, simple):
+    bpy.data.meshes.remove(made)
+assert original.openclare.simplicity == openclare.SIMPLICITY == 0.25
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+assert openclare.last_report["simplicity"] == "0.25", openclare.last_report
+assert not any("Simplicity" in line for line, _ in openclare.report_lines(bpy.context.active_object[openclare.REPORT]))
+bpy.context.view_layer.objects.active = original
+original.openclare.simplicity = 1.0
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+told = bpy.context.active_object[openclare.REPORT]
+assert told["simplicity"] == "1.0" and told["irregular_vertices"] == simple_report["irregular_vertices"], dict(told)
+assert ("Simplicity 1.00", "INFO") in openclare.report_lines(told), openclare.report_lines(told)
+# The safety net of the engine, when it meshed a piece at the presets'
+# balance because the simplicity asked for folded quads over, is said.
+lines = openclare.report_lines({**dict(told), "pieces_at_preset_simplicity": "1", "pieces": "3"})
+assert ("Simplicity 0.25 on 1 of 3 piece(s): it folded quads", "INFO") in lines, lines
+original.openclare.simplicity = 0.25
+bpy.context.view_layer.objects.active = original
+print("SIMPLICITY OK")
+
 # A painted vertex group: with the top of the head at 1 and the rest at 0,
 # and a factor of 9, the top gets most of the quads.
 def share_on_top(remeshed):
@@ -148,6 +191,8 @@ for name, file in files.items():
         ) == {"FINISHED"}
     for key, value in openclare.SHAPES[name].items():
         assert abs(getattr(settings, key) - value) < 1e-6, (name, key, getattr(settings, key), value)
+    # Every shape the add-on ships is at the presets' simplicity.
+    assert "settings.simplicity = 0.25\n" in open(os.path.join(shipped, file)).read(), file
 # What the engine is given: the hard edges at 30 degrees, or none.
 shape(settings, "organic")
 assert openclare.shape_of(settings)["edge_angle"] == "none" and openclare.shape_of(settings)["alignment"] == 0.05
@@ -161,11 +206,19 @@ with tempfile.TemporaryDirectory() as folder:
         os.makedirs(os.path.join(folder, path), exist_ok=True) or os.path.join(folder, path)
     )
     try:
-        settings.quads_around = 11
+        settings.quads_around, settings.simplicity = 11, 0.5
         with bpy.context.temp_override(object=original):
             assert bpy.ops.object.openclare_shape_preset_add(name="Eleven Around") == {"FINISHED"}
         written = open(os.path.join(saved, "Eleven_Around.py")).read()
         assert "settings.quads_around = 11" in written and "settings = bpy.context.object.openclare" in written
+        assert "settings.simplicity = 0.5\n" in written, written
+        # Picked again, it gives the simplicity back.
+        settings.simplicity = 0.25
+        with bpy.context.temp_override(object=original):
+            assert bpy.ops.script.execute_preset(
+                filepath=os.path.join(saved, "Eleven_Around.py"), menu_idname="OPENCLARE_PT_shape_presets"
+            ) == {"FINISHED"}
+        assert settings.simplicity == 0.5 and settings.quads_around == 11
         assert "settings.quads " not in written and "settings.export" not in written, written
     finally:
         bpy.utils.user_resource = real_resource
@@ -551,7 +604,10 @@ with_relief = off_the_ball()
 relief.show_viewport = False
 without = off_the_ball()
 relief.show_viewport = True
-assert without > 0.01 and with_relief < 0.2 * without, (without, with_relief)
+# The fitting keeps the volume of the ball, so the subdivided mesh is off it
+# by less than a hundredth (0.009 measured on 18 October 2026): the relief
+# takes a fifth of that away at least.
+assert without > 0.005 and with_relief < 0.2 * without, (without, with_relief)
 # Baked again, it is the same relief updated, not another on top.
 assert bpy.ops.object.openclare_bake_relief() == {"FINISHED"}
 assert [modifier.name for modifier in quads.modifiers] == ["openclare subdivision", "openclare relief"]

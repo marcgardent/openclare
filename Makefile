@@ -182,7 +182,7 @@ test-windows:
 		cargo test --release --target $(WINDOWS_TARGET) -p openclare -p openclare-capi
 
 addon-test: addon
-	ulimit -v $(MEMORY_CAP); blender -b --factory-startup --python blender/test_addon.py
+	ulimit -v $(MEMORY_CAP); blender -b --factory-startup --python-exit-code 1 --python blender/test_addon.py
 
 # The next version: MAJOR, MINOR or FIX says which of its three numbers is
 # raised. Committed and tagged here; the tag pushed (PUSH=1, or by hand

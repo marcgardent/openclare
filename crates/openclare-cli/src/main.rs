@@ -499,6 +499,12 @@ fn remesh(args: &[String]) -> Result<(), String> {
             report.pieces_boxed
         );
     }
+    if report.pieces_at_preset_simplicity > 0 {
+        println!(
+            "simple   the simplicity asked for folded quads over on {} piece(s): meshed at the presets' balance",
+            report.pieces_at_preset_simplicity
+        );
+    }
     if report.thin_pieces > 0 {
         println!(
             "thin     {} piece(s) thin all along, given {} quads of the others to keep their shape",

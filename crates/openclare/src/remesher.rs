@@ -815,10 +815,11 @@ impl QuadLayout {
             return Ok((mesh, report));
         }
         let balanced = RemeshConfig { simplicity: crate::config::SIMPLICITY, ..config.clone() };
-        let (other, other_report) = self.remesh_piece_once(input, guides, &balanced, least, recorder)?;
+        let (other, mut other_report) = self.remesh_piece_once(input, guides, &balanced, least, recorder)?;
         if crate::metrics::folded_faces(input, &surface, &other) < folded {
             let note = format!("simplicity left as the presets have it: it folded {folded} quads over");
             recorder.record("notes/simplicity", Shape::Note(&note));
+            other_report.pieces_at_preset_simplicity = 1;
             return Ok((other, other_report));
         }
         Ok((mesh, report))

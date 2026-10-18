@@ -94,6 +94,10 @@ pub struct Report {
     /// Pieces smaller than a quad that no chain made anything of, and whose
     /// bounding box stands for them in the mesh.
     pub pieces_boxed: usize,
+    /// Pieces where the simplicity asked for folded quads over, and that
+    /// were meshed at the presets' balance instead (see
+    /// [`crate::RemeshConfig::simplicity`]).
+    pub pieces_at_preset_simplicity: usize,
     /// Pieces thin all along that were given more quads than their share
     /// by area, for an edge no longer than they are thick, and how many
     /// quads that moved to them from the other pieces: the number asked
@@ -159,6 +163,7 @@ impl Report {
         self.open_loops += piece.open_loops;
         self.map_inversions += piece.map_inversions;
         self.pieces_fell_back += piece.fell_back as usize;
+        self.pieces_at_preset_simplicity += piece.pieces_at_preset_simplicity;
         self.hard_edges.extend(piece.hard_edges);
         self.creases.extend(piece.creases);
         self.guide_edges.extend(piece.guide_edges);

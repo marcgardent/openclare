@@ -105,6 +105,29 @@ normals, for the faces to run through it rather than under it. `--volume-fit` se
 ./target/release/openclare remesh input.obj output.obj --quads 3000 --volume-fit 0
 ```
 
+## Regular quads or a simpler mesh
+
+`--simplicity`, from 0 to 1, trades the regularity of the quads for a simpler mesh. Towards 1:
+fewer irregular vertices (poles), fewer edge loops winding into spirals and more closing round the
+shape, for quads a little less square and a little further from the surface. Towards 0: the
+squarest quads, closest to the surface, with more poles and spirals. Every face is a quad whatever
+the value. The presets are at 0.25, the balance the engine kept before it could be chosen, and a
+run at 0.25 gives the same mesh as one that does not say. In the Blender add-on it is the
+*Simplicity* slider of the *Shape* panel, from *Regular quads* to *Fewer poles*; the shapes the
+add-on ships set it to 0.25, and a shape saved as a preset keeps its own.
+
+```bash
+./target/release/openclare remesh input.obj output.obj --quads 3000 --simplicity 1
+```
+
+On the twelve models of the quick batch (about 3000 quads), simplicity 0 / 0.25 / 0.5 / 1 gives
+80 / 69 / 63 / 53 irregular vertices on average, a mean distance to the surface of 0.377 / 0.385 /
+0.401 / 0.428 per mille of the diagonal, and corners 4.80 / 4.93 / 5.15 / 5.57 degrees off square.
+
+Where the simplicity asked for folds a quad over on a piece, that piece is meshed again at 0.25
+and the mesh with fewer folds kept; the run says so, on the command line and in the report of the
+result in Blender.
+
 ## Guide curves
 
 Curves drawn on the model become lines of edges of the result. From the command line they go in

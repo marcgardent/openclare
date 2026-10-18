@@ -74,6 +74,8 @@ fn a_mesh_goes_in_as_arrays_and_quads_come_out() {
             report.contains("quads_asked = 600\n") && report.contains(&format!("quads = {}\n", sizes.len())),
             "{report}"
         );
+        // A sphere at the presets' simplicity: the safety net had nothing to do.
+        assert!(report.contains("pieces_at_preset_simplicity = 0\n"), "{report}");
         openclare_result_free(result);
     }
 }
