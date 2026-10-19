@@ -1,0 +1,144 @@
+% A separatrix that winds round a cylinder, and the turn it keeps shifted
+% (Proposition 8, the mechanism of the left wrist of the male body).
+% \input inside a figure; needs \usepackage{tikz} and
+% \usetikzlibrary{arrows.meta,decorations.pathreplacing}.
+%
+% (b) is the upper part of the band of dislocation.tex (b), the same T-mesh
+% (check.py checks its numbers):
+% cut open along the trace tau of the vertex v of valence five, the right side
+% glued to the left side two units higher, (10,y) ~ (0,y+2) for y > 3; v is at
+% (10,3) and (0,5) (and at (0,3), out of the picture with the lower band),
+% the vertex c_3 of valence three at (1,4), its corner glued by a quarter-turn
+% (see dislocation.tex). Traces: tau = the side x = 10 from v upwards (and its
+% copy x = 0 from v upwards); sigma = the separatrix of v that leaves it to the
+% right along y = 5; the separatrix of c_3 along y = 4, which stops on tau at
+% n = (10,4); the separatrix of c_3 upwards, which stops on sigma at (1,5).
+%   sigma goes once round, 10 units, and stops on tau at q = (10,5), at the
+%   distance delta = l_e + l_f = 1 + 1 = 2 from v along tau, with
+%   e = [v, n] and f = [n, q].
+%   The turn gamma at o = 5.5, just above sigma, crosses tau at (10,5.5) =
+%   (0,7.5): it comes back 2 higher, s_gamma = 2 = delta, length 10 = the
+%   length of sigma (the along component of the holonomy of the loop lambda:
+%   sigma from v to q, then tau back to v). gamma is a ring only if delta = 0,
+%   that is if sigma comes back onto v.
+%   By the balances of the two patches between y = 3, 4 and 5 (right of
+%   x = 1), l_e equals the arc of c_3 downwards and l_f its arc upwards: if a
+%   bound of separation holds either at length at least one, gamma is a helix
+%   under every quantization meeting the bounds.
+%   Parity (Proposition 5): 10 = 2 = 0 mod 2.
+% (a) is a sketch of the same band on the cylinder, not to scale: sigma and
+% gamma rise by delta = 2 rows in one round (the twist of the band above v).
+\begin{tikzpicture}[x=0.46cm, y=0.46cm, font=\footnotesize,
+    side/.style={draw=black, line width=0.5pt},
+    quadgrid/.style={draw=black!18, line width=0.25pt, step={(1,1)}},
+    surface/.style={fill=black!3},
+    node dot/.style={circle, fill=black, inner sep=0pt, minimum size=2.6pt},
+    separatrix/.style={draw=valfive, line width=1.1pt},
+    gap/.style={draw=measured, line width=2pt},
+    turn/.style={line width=1pt, -{Stealth[length=5pt]}},
+    brace/.style={decorate, decoration={brace, amplitude=3pt}, line width=0.5pt},
+    val3/.pic={\fill[valthree, draw=black, line width=0.3pt]
+      (90:3.4pt) -- (210:3.4pt) -- (330:3.4pt) -- cycle;},
+    val5/.pic={\fill[valfive, draw=black, line width=0.3pt]
+      (90:3.4pt) -- (162:3.4pt) -- (234:3.4pt) -- (306:3.4pt) -- (18:3.4pt) -- cycle;}]
+  \definecolor{loopspiral}{HTML}{D55E00}
+  \definecolor{valthree}{HTML}{E8890C}
+  \definecolor{valfive}{HTML}{7C3AAD}
+  \definecolor{measured}{HTML}{14934A}
+
+  % ---------------------------------------------------------------- (a)
+  % The cylinder; a point (x, y) of the band above v sits at the angle
+  % 90 - 36 x degrees (v and tau in front) and the height y + 2x/10 - 5.
+  \begin{scope}[shift={(-7.5,1.4)}]
+    \pgfmathsetmacro{\R}{2.4}
+    \pgfmathsetmacro{\k}{0.22}
+    \pgfmathsetmacro{\H}{6.6}
+    % Back halves of sigma and gamma (x from 2.5 to 7.5), through the cylinder.
+    \draw[valfive!70, dashed, line width=0.7pt]
+      plot[domain=2.5:7.5, samples=40, variable=\x]
+        ({\R*cos(90-36*\x)}, {1.6 + 0.2*\x - \k*\R*sin(90-36*\x)});
+    \draw[loopspiral!70, dashed, line width=0.7pt]
+      plot[domain=2.5:7.5, samples=40, variable=\x]
+        ({\R*cos(90-36*\x)}, {2.1 + 0.2*\x - \k*\R*sin(90-36*\x)});
+    % The cylinder, translucent.
+    \fill[black!25, fill opacity=0.18] (-\R,0) -- (-\R,\H) arc[start angle=180, end angle=360,
+      x radius=\R, y radius=\k*\R] -- (\R,0) arc[start angle=0, end angle=-180,
+      x radius=\R, y radius=\k*\R] -- cycle;
+    \draw[line width=0.5pt] (-\R,0) -- (-\R,\H) (\R,0) -- (\R,\H);
+    \draw[line width=0.5pt] (0,\H) ellipse[x radius=\R, y radius=\k*\R];
+    \draw[line width=0.5pt] (\R,0) arc[start angle=0, end angle=-180,
+      x radius=\R, y radius=\k*\R];
+    \draw[line width=0.35pt, black!40, dashed] (\R,0) arc[start angle=0, end angle=180,
+      x radius=\R, y radius=\k*\R];
+    % tau, in front, from v upwards.
+    \draw[separatrix] (0,1.6-\k*\R) -- (0,\H-\k*\R);
+    % Front halves of sigma (from v) and gamma.
+    \draw[separatrix]
+      plot[domain=0:2.5, samples=20, variable=\x]
+        ({\R*cos(90-36*\x)}, {1.6 + 0.2*\x - \k*\R*sin(90-36*\x)});
+    \draw[separatrix]
+      plot[domain=7.5:10, samples=20, variable=\x]
+        ({\R*cos(90-36*\x)}, {1.6 + 0.2*\x - \k*\R*sin(90-36*\x)});
+    \draw[loopspiral, line width=1pt]
+      plot[domain=0:2.5, samples=20, variable=\x]
+        ({\R*cos(90-36*\x)}, {2.1 + 0.2*\x - \k*\R*sin(90-36*\x)});
+    \draw[loopspiral, line width=1pt, -{Stealth[length=5pt]}]
+      plot[domain=7.5:9.9, samples=20, variable=\x]
+        ({\R*cos(90-36*\x)}, {2.1 + 0.2*\x - \k*\R*sin(90-36*\x)});
+    % The other separatrices of v, started, and c_3 next to it.
+    \foreach \a in {162, 234, 306}
+      \draw[valfive!55, line width=0.8pt] (0,1.6-\k*\R) -- ++(\a:0.55);
+    \pic at ({\R*cos(54)}, {0.8 - \k*\R*sin(54)}) {val3};
+    % The gap delta on tau, from v to q.
+    \draw[gap] (0,1.6-\k*\R) -- (0,3.6-\k*\R);
+    \pic at (0,1.6-\k*\R) {val5};
+    \node[node dot] at (0,3.6-\k*\R) {};
+    \node[left=3pt] at (0,1.6-\k*\R) {$v$};
+    \node[right=1pt] at (0,3.6-\k*\R) {$q$};
+    \node[valfive, left] at (0,4.8-\k*\R) {$\tau$};
+    \node[valfive, right] at (\R,1.95) {$\sigma$};
+    \node[loopspiral, right] at (\R,2.75) {$\gamma$};
+    \node[anchor=north] at (0,-2.0) {\small (a) the cylinder};
+  \end{scope}
+
+  % ---------------------------------------------------------------- (b)
+  \begin{scope}
+    \fill[surface] (0,1.6) rectangle (10,3) (1,3) rectangle (10,4) (0,4) rectangle (10,8.6);
+    \draw[quadgrid] (0,1.6) grid (10,3);
+    \draw[quadgrid] (1,3) grid (10,4);
+    \draw[quadgrid] (0,4) grid (10,8.6);
+    % Traces: the loop of v at y = 3, the separatrices of c_3, and the cut
+    % edges of the corner of c_3; then tau and sigma.
+    \draw[side] (0,1.6) -- (0,3) (10,1.6) -- (10,3);
+    \draw[side] (0,3) -- (10,3) (1,4) -- (10,4) (1,4) -- (1,5);
+    \draw[side] (1,4) -- (1,3) (1,4) -- (0,4) -- (0,5);
+    \draw[separatrix] (10,3) -- (10,8.6) (0,5) -- (0,8.6);
+    \draw[separatrix] (0,5) -- (10,5);
+    \draw[gap] (10,3) -- (10,5);
+    \foreach \p in {(1,3), (0,4), (10,4), (0,6), (1,5), (10,5), (0,7)}
+      \node[node dot] at \p {};
+    % The turn gamma, and where it comes back.
+    \draw[turn, loopspiral] (0,5.5) -- (10.1,5.5);
+    \draw[loopspiral, line width=0.5pt, fill=white] (0,5.5) circle (1.8pt);
+    \draw[loopspiral, dashed, line width=0.8pt, -{Stealth[length=4pt]}] (0,7.5) -- (2,7.5);
+    \draw[loopspiral, line width=0.5pt, fill=white] (0,7.5) circle (1.8pt);
+    \node[above, loopspiral] at (5,5.5) {$\gamma$};
+    \draw[brace] (-0.3,5.5) -- (-0.3,7.5) node[midway, left=3pt] {$s_\gamma = 2$};
+    % Singular vertices and names.
+    \pic at (1,4) {val3};
+    \foreach \p in {(0,3), (10,3), (0,5)} \pic at \p {val5};
+    \node[above right=-1pt] at (1,4) {$c_3$};
+    \node[left=1pt] at (0,4.9) {$v$};
+    \node[right=1pt] at (10,3) {$v$};
+    \node[right=1pt] at (10,4) {$n$};
+    \node[right=1pt] at (10,5) {$q$};
+    \node[valfive, below] at (5,5) {$\sigma$};
+    \node[valfive, right] at (10,8) {$\tau$};
+    \node[measured, left] at (10,3.5) {$e$};
+    \node[measured, left] at (10,4.5) {$f$};
+    \draw[brace, decoration={mirror}] (11.3,3) -- (11.3,5)
+      node[midway, right=3pt] {$\delta = \ell_e + \ell_f = 2$};
+  \end{scope}
+  \node[anchor=north] at (5,0.9) {$s_\gamma = \delta = 2$: a ring only if $\sigma$ comes back onto $v$};
+  \node[anchor=north] at (5,-0.6) {\small (b) cut open along $\tau$};
+\end{tikzpicture}

@@ -1,0 +1,122 @@
+% The shift of a turn is set by the singular vertices on one side of it
+% (Proposition 2, "The shift is set by the singularities").
+% \input inside a figure; needs \usepackage{tikz} and
+% \usetikzlibrary{arrows.meta,decorations.pathreplacing}.
+%
+% A cap D of a T-mesh (a fingertip, say), cut along a tree T into a disc
+% Omega that develops into the plane; every node is at a whole position and the
+% faint grid is the quad mesh at these lengths. Omega is the band [0,11]x[.,4]
+% (it goes on below), the block [3,11]x[4,5] and the top, the L-shaped
+% [0,3]x[4,6] + [0,2]x[6,7]. T runs from x_0 up the left side to c_1 and then
+% round the border of the top: c_1, c_2, ..., c_6, which are the six singular
+% vertices of D. The cut sides are glued in pairs: the right side x = 11 to the
+% left side one unit lower, (11,y) ~ (0,y-1); and the top of the block, from
+% c_6 = (3,5) rightwards, onto the border of the top, turning round it:
+% [3,4] onto [(3,5),(3,6)], [4,5] onto [(3,6),(2,6)], [5,6] onto [(2,6),(2,7)],
+% [6,8] onto [(2,7),(0,7)], [8,11] onto [(0,7),(0,4)]. So c_1 = (11,5) = (0,4),
+% c_2 = (8,5) = (0,7), c_3 = (6,5) = (2,7), c_4 = (5,5) = (2,6), c_5 = (4,5) =
+% (3,6), c_6 = (3,5). Angles: 90 + 90 + 90 at c_1; 90 + 180 at c_2, c_3, c_5;
+% 180 + 90 at c_6; 270 + 180 at c_4. Valences 3, 3, 3, 5, 3, 3; total index
+% 5 - 1 = 4 (Lemma 1, a disc).
+%
+% Traces besides the cut: c_1 to the right (stops at (2,4)), c_4 to the left
+% (stops on the cut at (0,6) = (9,5)) and downwards (x = 2), c_6 to the left
+% (stops at (2,5)) and downwards (x = 3), and the separatrices downwards from
+% c_5, c_4, c_3, c_2 at x = 4, 5, 6, 8.
+%
+% The turn gamma from x_0 = (0, 3.5) crosses x = 2, 3, 4, 5, 6, 8, 11 and comes
+% back at (0, 2.5): length 11, s = -1 (one row lower; offsets measured
+% upwards). The closing segment of its curve runs up the first side from 2.5
+% to 3.5; continued along the walk, the chart brings x_0 back at x_0' =
+% (11, 4.5), where the walk round T (keeping T on its right) starts.
+% First visits on that walk, with R the quarter-turn x -> (-y, x), R_i = R for
+% valence 3 and R^{-1} for valence 5, Q_i = R_6 ... R_{i+1}:
+%   p_1 = (11,5) v3  (I-R)p = (16,-6)  Q_1 = R^3  -> ( -6,-16)
+%   p_2 = ( 8,5) v3  (I-R)p = (13,-3)  Q_2 = R^2  -> (-13,  3)
+%   p_3 = ( 6,5) v3  (I-R)p = (11,-1)  Q_3 = R    -> (  1, 11)
+%   p_4 = ( 5,5) v5  (I-R^-1)p = (0,10) Q_4 = R^2 -> (  0,-10)
+%   p_5 = ( 4,5) v3  (I-R)p = ( 9, 1)  Q_5 = R    -> ( -1,  9)
+%   p_6 = ( 3,5) v3  (I-R)p = ( 8, 2)  Q_6 = I    -> (  8,  2)
+%   B_D = sum = (-11, -1) = x_0 - x_0'.
+% Its along component is the length 11, its across component the shift -1:
+% |s_gamma| = |<e_2, B_D>| (Proposition 2(a)). The other order of visit gives
+% (1,1), which is not a translation of x_0: the order matters.
+% gamma' from (0, 1.5) comes back at (0, 0.5): s = -1, length 11. The curves of
+% gamma and gamma' bound an annulus without singular vertex (shaded), and the
+% shifts agree (Proposition 2(c)).
+% Parity on a sphere (Proposition 5): 11 = -1 mod 2.
+% check.py builds this surface and checks these numbers by walking the strips
+% of the quad mesh: the valences above, every other vertex of valence 4,
+% s = -1 and length 11 from o = 1.5, 2.5, 3.5, and the sum B_D.
+\begin{tikzpicture}[x=0.55cm, y=0.55cm, font=\footnotesize,
+    side/.style={draw=black, line width=0.5pt},
+    quadgrid/.style={draw=black!18, line width=0.25pt, step={(1,1)}},
+    surface/.style={fill=black!3},
+    node dot/.style={circle, fill=black, inner sep=0pt, minimum size=2.6pt},
+    turn/.style={line width=1pt, -{Stealth[length=5pt]}},
+    closing/.style={line width=0.7pt, densely dotted},
+    cut/.style={draw=black, line width=1.1pt, line join=round},
+    brace/.style={decorate, decoration={brace, amplitude=3pt}, line width=0.5pt},
+    burgers/.style={draw=measured, line width=1.1pt, -{Stealth[length=6pt]}},
+    val3/.pic={\fill[valthree, draw=black, line width=0.3pt]
+      (90:3.4pt) -- (210:3.4pt) -- (330:3.4pt) -- cycle;},
+    val5/.pic={\fill[valfive, draw=black, line width=0.3pt]
+      (90:3.4pt) -- (162:3.4pt) -- (234:3.4pt) -- (306:3.4pt) -- (18:3.4pt) -- cycle;}]
+  \definecolor{loopspiral}{HTML}{D55E00}
+  \definecolor{annulus}{HTML}{CFE0F3}
+  \definecolor{valthree}{HTML}{E8890C}
+  \definecolor{valfive}{HTML}{7C3AAD}
+  \definecolor{measured}{HTML}{14934A}
+
+  % The disc Omega: band, block, top.
+  \fill[surface] (0,-0.6) rectangle (11,4) (3,4) rectangle (11,5)
+    (0,4) rectangle (3,6) (0,6) rectangle (2,7);
+  % The annulus between the curves of gamma' and gamma.
+  \fill[annulus] (0,0.5) -- (0.15,0.5) -- (0.15,1.5) -- (11,1.5) -- (11,3.5)
+    -- (0.15,3.5) -- (0.15,2.5) -- (0,2.5) -- cycle;
+  \draw[quadgrid] (0,-0.6) grid (11,4);
+  \draw[quadgrid] (3,4) grid (11,5);
+  \draw[quadgrid] (0,4) grid (3,6);
+  \draw[quadgrid] (0,6) grid (2,7);
+  % Traces. The cut T: the left side up to c_1 and the border of the top; its
+  % other side: the right side and the top of the block.
+  \draw[side] (0,-0.6) -- (0,3.5) (11,-0.6) -- (11,4.5);
+  \draw[cut] (0,3.5) -- (0,7) -- (2,7) -- (2,6) -- (3,6) -- (3,5) -- (11,5) -- (11,4.5);
+  \draw[side] (0,4) -- (2,4) (2,6) -- (2,-0.6) (3,5) -- (2,5) (3,5) -- (3,-0.6) (2,6) -- (0,6);
+  \foreach \x in {4,5,6,8} \draw[side] (\x,5) -- (\x,-0.6);
+  \foreach \p in {(2,4), (2,5), (0,6), (9,5)} \node[node dot] at \p {};
+  % The turns, their closing segments and where they come back.
+  \foreach \o/\name in {3.5/{\gamma}, 1.5/{\gamma'}} {
+    \draw[turn, loopspiral] (0,\o) -- (11.1,\o);
+    \draw[closing, loopspiral] (0.15,\o-1) -- (0.15,\o);
+    \draw[loopspiral, line width=0.5pt, fill=white] (0,\o-1) circle (1.8pt);
+    \draw[loopspiral, line width=0.5pt, fill=white] (0,\o) circle (1.8pt);
+    \node[above, loopspiral] at (9.6,\o) {$\name$};
+    \node[right, loopspiral] at (11.2,\o) {$s = -1$};
+  }
+  \draw[loopspiral, line width=0.5pt, fill=white] (11,4.5) circle (1.8pt);
+  \node[left=1pt] at (0,3.5) {$x_0$};
+  \node[right=1pt] at (11,4.5) {$x_0'$};
+  % The singular vertices: first visits p_i on the top of the block, and
+  % the other copies on the border of the top.
+  \pic at (3,5) {val3};
+  \foreach \p in {(0,4), (11,5), (0,7), (8,5), (2,7), (6,5), (3,6), (4,5)} \pic at \p {val3};
+  \foreach \p in {(2,6), (5,5)} \pic at \p {val5};
+  \begin{scope}[font=\scriptsize, inner sep=1pt]
+    \foreach \i/\x in {1/11, 2/8, 3/6, 4/5, 5/4} \node[above=2pt] at (\x,5) {$p_{\i}$};
+    \node[above right=1pt] at (3,5) {$p_6$};
+    \node[left=2pt] at (0,4) {$c_1$};
+    \node[left=2pt] at (0,7) {$c_2$};
+    \node[above=2pt] at (2,7) {$c_3$};
+    \node[above left=0pt] at (2,6) {$c_4$};
+    \node[right=2pt] at (3,6) {$c_5$};
+  \end{scope}
+  \draw[brace] (-1.5,3.5) -- (-1.5,7) node[midway, left=3pt] {$D$};
+  \node[above] at (1,7) {$T$};
+  % The Burgers vector of D, from x_0' to x_0, and its two components.
+  \draw[burgers] (11,-1.6) -- (0,-2.6);
+  \draw[measured, dashed, line width=0.5pt] (11,-1.6) -- (0,-1.6) -- (0,-2.6);
+  \node[measured, above] at (5.5,-1.6) {along: $\alpha_\gamma = 11$};
+  \node[measured, left] at (0,-2.1) {across: $s_\gamma = -1$};
+  \node[measured, below] at (6.5,-2.3) {$B_D = \sum_i Q_i (I - R_i)\, p_i = (-11, -1)$};
+\end{tikzpicture}
