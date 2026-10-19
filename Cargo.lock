@@ -5958,7 +5958,7 @@ dependencies = [
 
 [[package]]
 name = "openclare"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "faer",
  "glam 0.34.1",
@@ -5967,14 +5967,14 @@ dependencies = [
 
 [[package]]
 name = "openclare-capi"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "openclare",
 ]
 
 [[package]]
 name = "openclare-cli"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "openclare",
  "openclare-highs",
@@ -5983,7 +5983,7 @@ dependencies = [
 
 [[package]]
 name = "openclare-highs"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "highs",
  "highs-sys",
@@ -5992,7 +5992,7 @@ dependencies = [
 
 [[package]]
 name = "openclare-rerun"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "openclare",
  "rerun",
@@ -6000,7 +6000,7 @@ dependencies = [
 
 [[package]]
 name = "openclare-viewer"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "rerun",
  "tokio",
