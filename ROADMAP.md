@@ -88,7 +88,7 @@ Asked for by the author on 18 October 2026, for 3D printing: **a mode of clean t
 (DT-068). It is the same chain with a field of six-fold stars instead of crosses: nearly
 equilateral triangles, six round each regular vertex, aligned on the shape, with poles of
 valence five and seven. The theory of turns of the research note
-(docs/research/closing-helices) is being checked for rotations of any order, which would
+(docs/research/turns-of-a-t-mesh) is being checked for rotations of any order, which would
 cover this case too. It comes after the quality of the quads.
 
 ## 5. The project itself

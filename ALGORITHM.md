@@ -1097,8 +1097,8 @@ What stays open:
 - **Hard edges**: still not arcs (see M5), hence not yet on whole lines.
 
 **Proven statements, checked and used** (`quantization/tubes.rs`, `quantization/mod.rs`). The
-research note on closing helices (`docs/research/closing-helices`, its cores machine-checked in
-Lean) proves statements about the turns the closing of loops works with. A turn keeps both
+research paper on the turns of a T-mesh (`docs/research/turns-of-a-t-mesh`, its cores machine-checked
+in Lean) proves statements about the turns the closing of loops works with. A turn keeps both
 components of its motion: `shift` (across) and `along`. In builds with debug assertions the
 engine checks, and panics with the place if one breaks: every coefficient of a turn is whole;
 each arc's column of the balances has an entry `±1` per half on a rim (handshake); at the whole

@@ -17,7 +17,7 @@ Lean's standard axioms (`propext`, `Classical.choice`, `Quot.sound`).
 ## Replay
 
 ```sh
-make proofs NOTE=closing-helices      # from the root of the repository
+make proofs NOTE=turns-of-a-t-mesh      # from the root of the repository
 ```
 
 or, in this folder, `lake exe cache get && lake build` (with `~/.elan/bin` on

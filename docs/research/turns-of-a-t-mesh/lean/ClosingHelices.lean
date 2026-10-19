@@ -1,6 +1,6 @@
 /-
-Machine-checked algebraic cores of the research note
-"Closing Edge Loops at Quantization Time" (docs/research/closing-helices/paper.tex).
+Machine-checked algebraic cores of the research paper
+"Turns of a T-Mesh: Obstructions to Closing Edge Loops" (docs/research/turns-of-a-t-mesh/paper.tex).
 See README.md for what is proved and what is assumed.
 -/
 module
