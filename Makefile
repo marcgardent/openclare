@@ -1,6 +1,6 @@
 # Shortcuts for the common tasks. `make help` lists them.
 
-.PHONY: help build test scenes blenderkit essentials remeasure autoremesher scores quick pages dashboard view addon install addon-windows test-windows addon-test release paper paper-version paper-clean proofs site site-serve
+.PHONY: help build test scenes blenderkit essentials remeasure autoremesher scores quick pages dashboard view addon install addon-windows test-windows addon-test release paper paper-version paper-arxiv paper-clean proofs site site-serve
 
 help:
 	@echo "make build       build the openclare binary (release)"
@@ -48,6 +48,8 @@ help:
 	@echo "make paper       compile the research notes (docs/research/*/paper.tex) into PDFs"
 	@echo "                 next to them (needs latexmk and TeX Live). NOTE=closing-helices for one"
 	@echo "                 Each PDF names the commit it describes (HEAD, \"-dirty\" if changed)"
+	@echo "make paper-arxiv the bundle arXiv compiles, beside each note: paper.tex, paper.bbl and"
+	@echo "                 version.tex (arxiv.tar.gz), so that the PDF arXiv builds names the commit"
 	@echo "make paper-clean remove what LaTeX leaves next to them, the PDFs kept"
 	@echo "make proofs      check the machine-checked proofs of the research notes"
 	@echo "                 (docs/research/*/lean, Lean and Mathlib; the first run downloads"
@@ -122,8 +124,16 @@ paper: paper-version
 		echo "written: $$note/paper.pdf"; \
 	done
 
+# arXiv compiles paper.tex itself and runs no BibTeX: it needs the .bbl, and
+# version.tex, without which \enginecommit reads "unknown".
+paper-arxiv: paper
+	@for note in $(NOTES); do \
+		tar -czf $$note/arxiv.tar.gz -C $$note paper.tex paper.bbl version.tex \
+			&& echo "written: $$note/arxiv.tar.gz, commit $$(sed 's/.*{\(.*\)}$$/\1/' $$note/version.tex)"; \
+	done
+
 paper-clean:
-	@for note in $(NOTES); do (cd $$note && latexmk -c paper.tex >/dev/null && rm -f version.tex); done
+	@for note in $(NOTES); do (cd $$note && latexmk -c paper.tex >/dev/null && rm -f version.tex arxiv.tar.gz); done
 
 # The proofs checked by Lean: a Lake project per note in docs/research/<note>/lean,
 # on the Mathlib release its lakefile pins. elan installs the toolchain the project

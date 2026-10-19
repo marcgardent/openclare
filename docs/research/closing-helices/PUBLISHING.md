@@ -68,9 +68,11 @@ Zenodo, linked to the software record by "is supplemented by".
   Geometry), cross-listed to `cs.GR` (Graphics); licence CC BY 4.0. A first
   submission to a `cs` category needs an **endorsement**: an author already
   established in that category endorses the new submitter through the code
-  arXiv sends. arXiv compiles the LaTeX itself: upload `paper.tex`, the
-  `paper.bbl` that `make paper` leaves beside it (arXiv does not run BibTeX on
-  `refs.bib`), and `version.tex`, or `\enginecommit` reads "unknown". The note
+  arXiv sends. arXiv compiles the LaTeX itself: upload the bundle that
+  `make paper-arxiv NOTE=closing-helices` writes, `arxiv.tar.gz` beside the
+  note. It holds `paper.tex`, the `paper.bbl` (arXiv does not run BibTeX on
+  `refs.bib`) and `version.tex`, without which `\enginecommit` reads
+  "unknown". Make it on a clean tree at the commit the PDF names. The note
   states the use of AI in its section "AI assistance", as arXiv's policy asks;
   no AI system is listed as an author.
 - Each new version (v2, ...) on arXiv or HAL: a new commit, `make paper`, a new
