@@ -119,16 +119,23 @@ left to do, in [ROADMAP.md](ROADMAP.md). The chain the project started from is d
 - **One change at a time**, on a branch, merged once reviewed, with what was measured in its
   description.
 
-## Releasing
+## Versions and releases
 
 ```bash
-make release version=FIX
+make version INCREMENT=FIX
 ```
 
-`MINOR` or `MAJOR` instead raise that number of the version. The new number is written in the
-sources, committed on `main` and tagged `v<version>`; `PUSH=1` sends the tag too. Once the tag is
-on GitHub, the add-on is built for Linux (against glibc 2.28, as Blender itself) and for Windows,
-and attached to a release of that tag (`.github/workflows/release.yml`).
+raises the last number of the version in the sources (`MINOR` or `MAJOR` raise the others): in
+`Cargo.toml`, `Cargo.lock` and the manifest of the add-on. It is done on the branch of a change,
+and committed with it: every change of the add-on raises it, so that Blender sees a new version.
+
+```bash
+make release PUSH=1
+```
+
+tags `main`, once the change is merged, with the version it holds (`v<version>`); `PUSH=1` sends
+the tag. Once the tag is on GitHub, the add-on is built for Linux (against glibc 2.28, as Blender
+itself) and for Windows, and attached to a release of that tag (`.github/workflows/release.yml`).
 
 ## Licence
 

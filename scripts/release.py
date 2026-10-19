@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
-"""A release: the next version number, written where it is kept, committed and tagged.
+"""The version of openclare: raised in a change, tagged on `main` for a release.
 
-    python3 scripts/release.py fix           0.1.0 becomes 0.1.1
-    python3 scripts/release.py minor         0.1.0 becomes 0.2.0
-    python3 scripts/release.py major         0.1.0 becomes 1.0.0
-    python3 scripts/release.py minor --push  and send the commit and the tag to `origin`
+    python3 scripts/release.py version fix      0.1.0 becomes 0.1.1
+    python3 scripts/release.py version minor    0.1.0 becomes 0.2.0
+    python3 scripts/release.py version major    0.1.0 becomes 1.0.0
+    python3 scripts/release.py tag              tag `main` with the version it holds
+    python3 scripts/release.py tag --push       and send the tag to `origin`
 
 The number is kept in Cargo.toml (every crate takes it from the workspace), in
-Cargo.lock and in the manifest of the Blender add-on. The commit is made on
-`main`, from a working tree without changes, and tagged `v<version>`. Nothing
-leaves this machine without `--push`; once the tag is on GitHub, the add-on is
+Cargo.lock and in the manifest of the Blender add-on. `main` changes only
+through pull requests: the number is raised on the branch of a change, with
+the change (a change of the add-on raises it, so that Blender sees a new
+version), and goes to `main` when it is merged. A release is then a tag
+`v<version>` on `main`, made from a working tree without changes; nothing
+leaves this machine without `--push`. Once the tag is on GitHub, the add-on is
 built there for Linux and for Windows (.github/workflows/release.yml).
 """
 
@@ -52,43 +56,58 @@ def next_of(version, part):
     return f"{major}.{minor}.{fix + 1}"
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("part", type=str.lower, choices=PARTS, help="the number to raise; those after it go back to 0")
-    parser.add_argument("--push", action="store_true", help="send the commit and the tag to `origin`")
-    asked = parser.parse_args()
-
-    if git("rev-parse", "--abbrev-ref", "HEAD") != BRANCH:
-        sys.exit(f"a release is made from `{BRANCH}`: this is `{git('rev-parse', '--abbrev-ref', 'HEAD')}`")
-    if git("status", "--porcelain"):
-        sys.exit("a release is made from a working tree without changes: commit or put them aside first")
-
+def raise_version(part):
     current = version_in(CARGO, IN_CARGO)
     if version_in(MANIFEST, IN_MANIFEST) != current:
         sys.exit(f"Cargo.toml says {current}, the manifest of the add-on {version_in(MANIFEST, IN_MANIFEST)}")
-    version = next_of(current, asked.part)
-    tag = f"v{version}"
-    if git("tag", "--list", tag):
-        sys.exit(f"the tag {tag} is already there")
-
+    version = next_of(current, part)
     for path, pattern in ((CARGO, IN_CARGO), (MANIFEST, IN_MANIFEST)):
         path.write_text(pattern.sub(rf"\g<1>{version}\g<3>", path.read_text(), count=1))
     # Cargo.lock names the crates of the workspace with their version. Nothing
     # else in it moves, and nothing is fetched.
     locked = subprocess.run(["cargo", "update", "--workspace", "--offline", "--quiet"], cwd=ROOT)
     if locked.returncode != 0:
-        git("checkout", "--", ".")
+        git("checkout", "--", str(CARGO), str(MANIFEST))
         sys.exit("cargo could not write Cargo.lock again: nothing was changed")
+    print(f"{current} -> {version}, in Cargo.toml, Cargo.lock and the manifest of the add-on: commit it with the change")
 
-    git("commit", "--all", "--message", f"Release {tag}")
-    git("tag", "--annotate", tag, "--message", f"openclare {version}")
-    print(f"{current} -> {version}: committed on `{BRANCH}` and tagged {tag}")
-    if asked.push:
-        subprocess.run(["git", "push", "--atomic", "origin", BRANCH, tag], cwd=ROOT, check=True)
-        print(f"sent to `origin`: the add-on of {tag} is being built on GitHub")
+
+def tag(push):
+    if git("rev-parse", "--abbrev-ref", "HEAD") != BRANCH:
+        sys.exit(f"a release is tagged on `{BRANCH}`: this is `{git('rev-parse', '--abbrev-ref', 'HEAD')}`")
+    if git("status", "--porcelain", "--untracked-files=no"):
+        sys.exit("a release is tagged from a working tree without changes: commit or put them aside first")
+    git("fetch", "--quiet", "origin", BRANCH)
+    if git("rev-parse", "HEAD") != git("rev-parse", f"origin/{BRANCH}"):
+        sys.exit(f"`{BRANCH}` here is not `origin/{BRANCH}`: pull first")
+    version = version_in(CARGO, IN_CARGO)
+    if version_in(MANIFEST, IN_MANIFEST) != version:
+        sys.exit(f"Cargo.toml says {version}, the manifest of the add-on {version_in(MANIFEST, IN_MANIFEST)}")
+    name = f"v{version}"
+    if git("tag", "--list", name):
+        sys.exit(f"the tag {name} is already there: raise the version in a change first (make version)")
+    git("tag", "--annotate", name, "--message", f"openclare {version}")
+    print(f"{BRANCH} tagged {name}")
+    if push:
+        subprocess.run(["git", "push", "origin", name], cwd=ROOT, check=True)
+        print(f"sent to `origin`: the add-on of {name} is being built on GitHub")
     else:
-        print(f"to have it built on GitHub:  git push --atomic origin {BRANCH} {tag}")
-        print(f"to take it back:             git tag -d {tag} && git reset --hard HEAD~1")
+        print(f"to have it built on GitHub:  git push origin {name}")
+        print(f"to take it back:             git tag -d {name}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    asked = parser.add_subparsers(dest="action", required=True)
+    raising = asked.add_parser("version", help="raise the version in the sources")
+    raising.add_argument("part", type=str.lower, choices=PARTS, help="the number to raise; those after it go back to 0")
+    tagging = asked.add_parser("tag", help="tag main with its version")
+    tagging.add_argument("--push", action="store_true", help="send the tag to `origin`")
+    asked = parser.parse_args()
+    if asked.action == "version":
+        raise_version(asked.part)
+    else:
+        tag(asked.push)
 
 
 if __name__ == "__main__":
