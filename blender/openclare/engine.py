@@ -124,6 +124,8 @@ def library():
     lib.openclare_analysis_count.argtypes = [pointer, ctypes.c_double, ctypes.c_double, double, double]
     lib.openclare_analysis_vertices.restype = ctypes.c_int32
     lib.openclare_analysis_vertices.argtypes = [pointer, ctypes.c_double, ctypes.c_double, pointer, pointer]
+    lib.openclare_analysis_vertices_for.restype = ctypes.c_int32
+    lib.openclare_analysis_vertices_for.argtypes = [pointer, ctypes.c_double, pointer]
     lib.openclare_analysis_free.restype = None
     lib.openclare_analysis_free.argtypes = [pointer]
     _library = lib
@@ -380,3 +382,14 @@ class Analysis:
         ):
             raise EngineError(f"quads from {smallest} to {largest} cannot be sized")
         return sizes, coarser.astype(bool)
+
+    def at_vertices_for(self, quads):
+        """For each vertex: the edge its quads would have with `quads` quads
+        asked for, as a number and not as sizes (not a number where nothing
+        could be measured). A numpy array."""
+        import numpy
+
+        sizes = numpy.empty(self.vertices, numpy.float32)
+        if not self._lib.openclare_analysis_vertices_for(self._handle, float(quads), sizes.ctypes.data):
+            raise EngineError(f"{quads} quads cannot be sized")
+        return sizes

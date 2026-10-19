@@ -1035,6 +1035,36 @@ pub unsafe extern "C" fn openclare_analysis_vertices(
     1
 }
 
+/// For each vertex of the shape, the edge its quads would have with `quads`
+/// quads asked for, as a number and not as sizes, to `sizes` (not a number
+/// for a piece that could not be looked at). Returns 1, or 0 when there is
+/// no analysis or `quads` is not a number of quads.
+///
+/// # Safety
+///
+/// See [`openclare_analysis_ok`]; `sizes` must have room for one number per
+/// vertex given to [`openclare_analyse`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_analysis_vertices_for(
+    analysis: *const OpenclareAnalysis,
+    quads: f64,
+    sizes: *mut f32,
+) -> i32 {
+    // SAFETY: null or a live handle, by contract.
+    let Some(handle) = (unsafe { analysis.as_ref() }) else { return 0 };
+    let Some(analysis) = handle.analysis.as_ref() else { return 0 };
+    if sizes.is_null() || !(quads.is_finite() && quads > 0.0) {
+        return 0;
+    }
+    let Ok(at) = catch_unwind(AssertUnwindSafe(|| analysis.at_vertices_for(quads))) else { return 0 };
+    // SAFETY: room for one per vertex, by contract.
+    let sizes = unsafe { std::slice::from_raw_parts_mut(sizes, handle.vertices) };
+    for (v, size) in at.into_iter().enumerate().take(handle.vertices) {
+        sizes[v] = size as f32;
+    }
+    1
+}
+
 /// # Safety
 ///
 /// `analysis` must be null or a handle from [`openclare_analyse`] not yet

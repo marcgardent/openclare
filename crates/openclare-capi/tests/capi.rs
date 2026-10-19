@@ -406,6 +406,13 @@ fn a_shape_is_analysed_once_and_asked_as_often_as_wanted() {
         assert_eq!(openclare_analysis_vertices(analysis, 0.2, 0.2, sizes.as_mut_ptr(), coarser.as_mut_ptr()), 1);
         assert!(sizes.iter().all(|&size| (size - 0.2).abs() < 1e-5), "{:?}", &sizes[..4]);
         assert!(coarser.iter().all(|&flag| flag <= 1));
+        // For a number of quads: those of one size, their area over the
+        // number, with no curvature asked to count.
+        let mut for_count = vec![0f32; vertices];
+        assert_eq!(openclare_analysis_vertices_for(analysis, 1000.0, for_count.as_mut_ptr()), 1);
+        let edge = (area / 1000.0).sqrt() as f32;
+        assert!(for_count.iter().all(|&size| (size / edge - 1.0).abs() < 0.03), "{:?} for {edge}", &for_count[..4]);
+        assert_eq!(openclare_analysis_vertices_for(analysis, 0.0, for_count.as_mut_ptr()), 0);
 
         // Bounds that are not bounds are refused, and said by the return.
         assert_eq!(openclare_analysis_count(analysis, 0.1, 0.2, &mut quads, &mut below), 0);

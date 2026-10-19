@@ -321,6 +321,21 @@ fn a_shape_is_analysed_once_and_any_bounds_are_then_counted() {
         assert!(gained < 0.25 * cost, "one more step: {gained} points of the surface for {cost} % of quads");
     }
 
+    // Asked for a number instead: the sizes the chain gives them, smaller
+    // at the tips of the spindle, where it bends, than round its middle,
+    // and of about the edge of as many quads of one size.
+    let sizes = analysis.at_vertices_for(800.0);
+    assert_eq!(sizes.len(), source.positions.len());
+    assert!(sizes.iter().all(|size| size.is_finite() && *size > 0.0));
+    let mean_of = |keep: &dyn Fn(Vec3) -> bool| {
+        let kept: Vec<f64> = (0..sizes.len()).filter(|&v| keep(source.positions[v])).map(|v| sizes[v]).collect();
+        kept.iter().sum::<f64>() / kept.len() as f64
+    };
+    let (tips, middle) = (mean_of(&|p: Vec3| p.z.abs() > 2.7), mean_of(&|p: Vec3| p.z.abs() < 0.5));
+    let edge = (analysis.area() / 800.0).sqrt();
+    assert!(tips < 0.8 * middle, "{tips} at the tips, {middle} round the middle");
+    assert!(middle > 0.7 * edge && tips < 1.4 * edge, "{tips} and {middle} for {edge}");
+
     // A ring of wire beside a ball: thin all along, a sixth of its girth is
     // far under the largest quad, and on a twentieth of the surface: a part,
     // which the proposal comes down to whatever it costs.
