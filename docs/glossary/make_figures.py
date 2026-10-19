@@ -24,7 +24,8 @@ from matplotlib.patches import Polygon, FancyArrowPatch, Circle, Rectangle
 from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SCRATCH = "/home/marcgardent/retopology/scratch"
+# Meshes and exports read from the working files of the clone (scratch/, kept out of git).
+SCRATCH = os.environ.get("OPENCLARE_SCRATCH", os.path.join(HERE, "..", "..", "scratch"))
 
 # One palette for every picture.
 INK = "#1f2933"

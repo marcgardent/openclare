@@ -51,6 +51,13 @@ def quads_in(path):
     return faces_of(path) if path and Path(path).exists() else None
 
 
+def relative(path):
+    """`path` from the root of the clone, so that no file written to git names the home folder of
+    whoever ran the script; the bare file name for a mesh outside the clone."""
+    path = Path(path).resolve()
+    return path.relative_to(ROOT).as_posix() if path.is_relative_to(ROOT) else path.name
+
+
 def made_by(tool, model, sharp, boundary, count, directory):
     """(mesh or None, seconds, why not) of `tool` asked for `count` quads."""
     if tool == "openclare":
@@ -114,7 +121,7 @@ def main():
                 "overall": round(marks["overall"]),
                 "seconds": round(seconds, 1),
                 "picture": picture.relative_to(ROOT).as_posix(),
-                "mesh": str(path),
+                "mesh": relative(path),
             }
             print(f"{model:10} {tool:13} {metrics.get('faces'):>6} quads  mark {marks['overall']:5.1f}  {seconds:7.1f} s")
         shown[model] = row

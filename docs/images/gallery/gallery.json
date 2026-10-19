@@ -8,7 +8,7 @@
     "overall": 88,
     "seconds": 15.4,
     "picture": "docs/images/gallery/ogre__openclare.webp",
-    "mesh": "/home/marcgardent/retopology/scratch/complete-helices/bench/out/gallery/ogre/gallery_1.obj"
+    "mesh": "bench/out/gallery/ogre/gallery_1.obj"
    },
    "quadriflow": {
     "quads": 5906,
@@ -16,7 +16,7 @@
     "overall": 37,
     "seconds": 3.4,
     "picture": "docs/images/gallery/ogre__quadriflow.webp",
-    "mesh": "/home/marcgardent/retopology/scratch/complete-helices/bench/out/gallery/ogre/quadriflow_1.obj"
+    "mesh": "bench/out/gallery/ogre/quadriflow_1.obj"
    },
    "autoremesher": {
     "quads": 6291,
@@ -24,7 +24,7 @@
     "overall": 53,
     "seconds": 5.0,
     "picture": "docs/images/gallery/ogre__autoremesher.webp",
-    "mesh": "/home/marcgardent/retopology/scratch/complete-helices/bench/out/gallery/ogre/autoremesher_11070.obj"
+    "mesh": "bench/out/gallery/ogre/autoremesher_11070.obj"
    }
   }
  },
@@ -37,7 +37,7 @@
     "overall": 90,
     "seconds": 7.3,
     "picture": "docs/images/gallery/pig__openclare.webp",
-    "mesh": "/home/marcgardent/retopology/scratch/complete-helices/bench/out/gallery/pig/gallery_1.obj"
+    "mesh": "bench/out/gallery/pig/gallery_1.obj"
    },
    "quadriflow": {
     "quads": 4217,
@@ -45,7 +45,7 @@
     "overall": 29,
     "seconds": 1.9,
     "picture": "docs/images/gallery/pig__quadriflow.webp",
-    "mesh": "/home/marcgardent/retopology/scratch/complete-helices/bench/out/gallery/pig/quadriflow_1.obj"
+    "mesh": "bench/out/gallery/pig/quadriflow_1.obj"
    },
    "autoremesher": {
     "quads": 4611,
@@ -53,7 +53,7 @@
     "overall": 62,
     "seconds": 4.1,
     "picture": "docs/images/gallery/pig__autoremesher.webp",
-    "mesh": "/home/marcgardent/retopology/scratch/complete-helices/bench/out/gallery/pig/autoremesher_7791.obj"
+    "mesh": "bench/out/gallery/pig/autoremesher_7791.obj"
    }
   }
  },
@@ -66,7 +66,7 @@
     "overall": 95,
     "seconds": 2.4,
     "picture": "docs/images/gallery/part__openclare.webp",
-    "mesh": "/home/marcgardent/retopology/scratch/complete-helices/bench/out/gallery/part/gallery_1.obj"
+    "mesh": "bench/out/gallery/part/gallery_1.obj"
    },
    "quadriflow": {
     "quads": 2835,
@@ -74,7 +74,7 @@
     "overall": 63,
     "seconds": 2.9,
     "picture": "docs/images/gallery/part__quadriflow.webp",
-    "mesh": "/home/marcgardent/retopology/scratch/complete-helices/bench/out/gallery/part/quadriflow_1.obj"
+    "mesh": "bench/out/gallery/part/quadriflow_1.obj"
    },
    "autoremesher": {
     "quads": 2808,
@@ -82,7 +82,7 @@
     "overall": 57,
     "seconds": 2.8,
     "picture": "docs/images/gallery/part__autoremesher.webp",
-    "mesh": "/home/marcgardent/retopology/scratch/complete-helices/bench/out/gallery/part/autoremesher_4607.obj"
+    "mesh": "bench/out/gallery/part/autoremesher_4607.obj"
    }
   }
  },
@@ -95,7 +95,7 @@
     "overall": 79,
     "seconds": 19.8,
     "picture": "docs/images/gallery/stonemill__openclare.webp",
-    "mesh": "/home/marcgardent/retopology/scratch/complete-helices/bench/out/gallery/stonemill/gallery_1.obj"
+    "mesh": "bench/out/gallery/stonemill/gallery_1.obj"
    },
    "quadriflow": {
     "quads": 13118,
@@ -103,7 +103,7 @@
     "overall": 73,
     "seconds": 12.9,
     "picture": "docs/images/gallery/stonemill__quadriflow.webp",
-    "mesh": "/home/marcgardent/retopology/scratch/complete-helices/bench/out/gallery/stonemill/quadriflow_1.obj"
+    "mesh": "bench/out/gallery/stonemill/quadriflow_1.obj"
    },
    "autoremesher": {
     "quads": 13149,
@@ -111,7 +111,7 @@
     "overall": 68,
     "seconds": 11.5,
     "picture": "docs/images/gallery/stonemill__autoremesher.webp",
-    "mesh": "/home/marcgardent/retopology/scratch/complete-helices/bench/out/gallery/stonemill/autoremesher_28952.obj"
+    "mesh": "bench/out/gallery/stonemill/autoremesher_28952.obj"
    }
   }
  }
