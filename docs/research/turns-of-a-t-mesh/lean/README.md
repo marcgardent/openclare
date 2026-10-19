@@ -6,7 +6,7 @@ Section 10 there lists what is checked, statement by statement), and of the
 two propositions of its applied companion,
 [`../../closing-loops/paper.tex`](../../closing-loops/paper.tex), "The shift of
 a turn is linear" (also stated in `../paper.tex`) and "Completeness at given
-lengths": 228 `theorem` declarations, many of them small lemmas and a few
+lengths": 235 `theorem` declarations, many of them small lemmas and a few
 restating a hypothesis (`dislocation_closes_iff`, `staircase_rings`); the
 count is not evidence, the table below names the main ones. The topological facts the note uses (that a loop develops into a given
 motion, that a curve bounds a disc, that the quad graph of a sphere is
@@ -39,7 +39,7 @@ quarter-turn `R(a, b) = (-b, a)` the multiplication by `i`, as in
 | Statement of the note | Lean | Assumed (hypotheses) |
 |---|---|---|
 | Prop. "The shift of a turn is linear", the additivity only | `Motion.composeAll_trans_add`, `Motion.composeAll_trans` | the crossing maps have linear parts independent of the lengths and translations additive in them; the integer coefficients and the reading as a helix (with its corridor) are not formalized |
-| Prop. "Completeness at given lengths", in a model only | `stripsEquiv` (in a model where the strips are *defined* as the cycles of a successor map built from a permutation `walk` of the stations, so the bijection holds by construction; the station walk of the gluing data, `stationWalk`, is not shown to be that permutation), `exists_station`, `sameCycle_station_iff`; `realWalk_iterate_half`, `realWalk_iterate_open` (the walk from `k + ½`, or from any point of `(k, k + 1)`, follows the unit edges); `glueLine_half`, `glueLine_open`, `oddCount_motion` (a quarter-turn with a whole translation keeps nodes, edge midpoints and quad centres apart) | the patches are integer rectangles with positive sides (`hdepth`) glued along their arcs by `t ↦ ±t + c`, `c` whole, mapping the unit edges of the sides one to one (a closed surface); that the station walk is a permutation and that the model is the quad mesh |
+| Prop. "Completeness at given lengths", in a model only | `completeness_at_given_lengths` (on a closed surface the strips are in bijection with the cycles of the station walk, and two stations lie on one cycle exactly when the real walk from the half-integer of one reaches that of the other), from `stationWalk_injective` and `stationPerm` (the walk on unit edges of the gluing data is a permutation of the stations), `sameCycle_stationPerm_iff` (with `realWalk_stations`) and `stripsEquiv` (strips *defined* as the cycles of a successor map built from a permutation `walk` of the stations), `exists_station`, `sameCycle_station_iff`; `realWalk_iterate_half`, `realWalk_iterate_open` (the walk from `k + ½`, or from any point of `(k, k + 1)`, follows the unit edges); `glueLine_half`, `glueLine_open`, `oddCount_motion` (a quarter-turn with a whole translation keeps nodes, edge midpoints and quad centres apart) | the patches are integer rectangles glued along their arcs by `t ↦ ±t + c`, `c` whole; a closed surface (`ClosedGluing`): opposite sides of a patch have the same length, `opp` is one to one, crossing an arc takes a unit edge of a side to a unit edge of a side and no two onto the same one (`ClosedGluing.of_involutive`: both hold when the opposite of the opposite side is the side and crossing an arc back returns to the start); columns of positive depth (`hdepth`); that crossing a patch keeps the offset and that the darts and `next` are the quads and strips of the mesh |
 | Lemma "Gauss–Bonnet for turns" | `gauss_bonnet_turn` (`∑ (4 - k) = 4 χ` inside a region whose border turns by zero), `gauss_bonnet`, `turn_border_sum`, `sum_deg`, `sum_corners` | that `γ̄`, on the grid refined by two, bounds a disc (or an annulus): a complex of quads with Euler characteristic `χ` whose interior vertices have a cycle as link and border vertices a path (`IsRegion`) |
 | … the rotation part | `quarter_turns_prod_eq_one_iff` (`R^{j₁}⋯R^{jₘ} = I ⇔ 4 ∣ ∑ jᵢ`) | — |
 | Lemma "One self-crossing" | `one_crossing_on_walk` (totals `3, 3, 2`), `one_crossing_on_segment` (totals `2, 2, 4`), from `gauss_bonnet_corners` (`4 χ - a + b` with `a` convex and `b` concave corners on the border) | the regions cut open at the crossing are discs, the crossing doubled on the border of the third; how many convex and concave corners each region has (`a - b = 1, 1, 2` on the walk, `2, 2, 0` on the closing segment), the note's case analysis |
@@ -76,7 +76,10 @@ convex (the totals are proved from them). Two standard graph facts, days of work
 exactly when it has a spanning tree grown by leaves, and Harary's converse (a
 graph all of whose cycles are balanced has a switching; only the direction the
 proposition needs is proved). Strips on surfaces with borders (the walk is then
-a partial bijection, whose open paths `stripsEquiv` does not cover). And every
+a partial bijection, whose open paths `stripsEquiv` does not cover), and a model
+of the quad mesh from which the stations, the depths of the columns and the
+gluing data of `completeness_at_given_lengths` would be read rather than
+assumed. And every
 measured statement.
 
 ## Gaps and corrections found in the note
@@ -133,7 +136,8 @@ measured statement.
    scales.
 10. **Prop. "Completeness at given lengths": "that comes back to the side it
    left" is always true on a closed surface.** The walk on the half-integer
-   stations is a permutation (the gluing maps unit edges one to one), so every
+   stations is a permutation (the gluing maps unit edges one to one:
+   `stationWalk_injective`, `stationPerm`), so every
    strip is a cycle of it and comes back to every station it crosses; every
    strip meets a side of a patch (`exists_station`), and two stations lie on
    the same strip exactly when the walk takes one to the other
