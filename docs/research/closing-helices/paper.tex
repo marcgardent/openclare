@@ -38,9 +38,6 @@
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\shift}{s}
 \newcommand{\RC}{\textup{\textsc{Ring-Closing}}}
-% A figure drawn in figures/<name>.tex, with a frame in its place until the
-% file exists.
-\newcommand{\figurefile}[1]{\IfFileExists{figures/#1.tex}{\input{figures/#1.tex}}{\fbox{figure: #1}}}
 
 % The commit of the Lean proofs described, written by `make paper` into
 % version.tex (ignored by git).
@@ -231,8 +228,14 @@ rotation of $\hat h(\gamma)$ is the identity, its translation is the
 the closed curve that follows the walk and, back in its first patch, returns
 to its start along a segment parallel to the first side; with $e_1$ the
 walking direction and $e_2$ the direction along the first side, $\hat
-h(\bar\gamma)$ is a translation and $\shift_\gamma(\ell) = \langle e_2, \hat
-h(\bar\gamma) \rangle$. Shifts, developed positions and Burgers vectors are
+h(\bar\gamma)$ is a translation. It continues the chart along the loop,
+while the crossings of Proposition~\ref{prop:linear} develop the last patch
+into the first: $\hat h(\bar\gamma)$ is the inverse of $T_\gamma(\ell)$. From
+here on we read shifts in the convention of the holonomy, $\shift_\gamma(\ell)
+= \langle e_2, \hat h(\bar\gamma) \rangle$, the opposite of the shift of
+Proposition~\ref{prop:linear}; changing the sign of every shift changes no
+statement about rings, parities or the existence of certificates, and the
+signs of measured identities are those of the exported shifts. Shifts, developed positions and Burgers vectors are
 integer linear forms in $\ell$ as long as the paths cross the same patches, so
 an identity between them that holds on an open set of balanced positive
 lengths holds for all balanced lengths; for whole lengths the nodes develop
@@ -353,16 +356,23 @@ Let $\gamma$, $\gamma_1$, $\gamma_2$ be turns with simple curves.
 
 \begin{figure}[t]
 \centering
-\figurefile{holonomy}
+\input{figures/holonomy.tex}
 \caption{The shift read on the singularities
-(Proposition~\ref{prop:burgers}). Cut along a tree, the side of a turn
-develops into the plane, and the translation of its curve is the Burgers
-vector of the singular vertices on that side, their rotations composed in the
-order of first visit; the shift is its component across the walk. Two
-parallel turns that bound an annulus without singular vertex share their
-shift: the helix belongs to the whole cylinder.}
+(Proposition~\ref{prop:burgers}). A cap $D$ with six singular vertices
+(valences $3, 3, 3, 5, 3, 3$, total index $4$), cut along a tree $T$ and
+developed; each $c_i$ is drawn at its first visit $p_i$ on the walk round $T$.
+The turn $\gamma$, of length $11$, comes back one row lower, and $B_D =
+\sum_i Q_i (I - R_i) p_i = (-11, -1)$: its along component is the length,
+its across component the shift. The turn $\gamma'$ bounds with $\gamma$ an
+annulus without singular vertex (shaded) and has the same shift (part~(c));
+$11 \equiv -1 \pmod 2$ (Proposition~\ref{prop:parity}). In all figures the shifts
+are labelled in the convention of Proposition~\ref{prop:linear}, offsets
+measured upwards.}
 \label{fig:holonomy}
 \end{figure}
+
+The order matters: on Figure~\ref{fig:holonomy}, walking round $T$ the other
+way gives $(1, 1)$ in place of $B_D = (-11, -1)$.
 
 \begin{proof}
 (a) Orient each edge $f$ of $T$ away from $x_0$; its two sides on the border of
@@ -386,6 +396,11 @@ h(\bar\gamma_1) - \hat h(\bar\gamma_2)$, and part~(a) applies to the cut disc,
 whose singular vertices have total index zero. (c) The sum is empty.
 \end{proof}
 
+In the T-meshes of openclare, whose traces start at singular vertices, an
+annulus without singular vertex holds no node unless a trace winding round
+enters it through a closing segment, so two turns as in (c) usually lie in
+one corridor.
+
 The simplest configuration between two parallel turns is a pair of valences
 three and five, which lets the number of edges round a limb change. A pair of
 opposite disclinations of rotation $\Omega$ is a dislocation with a Burgers
@@ -407,7 +422,9 @@ developed inside the cut disc. Then:
   from $c_3$, on one particular diagonal of the field.
 \item[(ii)] If $c_3$ and $c_5$ lie on one straight line of the field inside
   $A$, of length $\delta$ (in a T-mesh: they are joined by a chain of arcs
-  along one trace, and $\delta$ is the sum of their lengths), then
+  along one trace, and $\delta$ is the sum of their lengths), and some path
+  $\kappa$ as in Proposition~\ref{prop:burgers}(b) does not cross that line,
+  then
   $|\shift_{\gamma_1}(\ell) - \shift_{\gamma_2}(\ell)| = \delta$. The two turns
   can both be rings only if $\delta = 0$, that is if the two singularities
   merge; as long as the bounds of separation keep $\delta \ge 1$, one of them at
@@ -426,23 +443,27 @@ R)p_3 = (I - R)(-d)$. With $R(a, b) = (-b, a)$, $(I - R^{-1})(d_1, d_2) = (d_1 -
 d_2,\ d_1 + d_2)$ and $(I - R)(-d_1, -d_2) = (-d_1 - d_2,\ d_1 - d_2)$;
 reversing the orientation of the border inverts the rotations and gives the
 two other sign patterns (checked symbolically). In all four both components
-are $\pm d_1 \pm d_2$ and $|B_A|^2 = 2|d|^2$, which is (i). For (ii), choose
-$\kappa$ away from the segment joining $c_3$ to $c_5$, which does not separate
-the borders of $A$, and a tree containing that segment, and develop $c_5$ from
+are $\pm d_1 \pm d_2$ and $|B_A|^2 = 2|d|^2$, which is (i). For (ii), take
+$\kappa$ not crossing the segment joining $c_3$ to $c_5$ (crossing it would
+turn the frame by a quarter-turn round $c_3$) and a tree containing that
+segment, and develop $c_5$ from
 $c_3$ along it: $d$ is $\delta$ times one of $\pm e_1$, $\pm e_2$. For (iii), $d
 \in \Z^2$ and $\pm d_1 \pm d_2 \equiv d_1 + d_2$.
 \end{proof}
 
 \begin{figure}[t]
 \centering
-\figurefile{dislocation}
-\caption{A 3--5 dislocation between two parallel turns. Joined by a straight
-chain of arcs of length $\delta$ along one trace, the vertices of valence
-three and five make the shifts of the turns differ by $\delta$
-(Proposition~\ref{prop:dislocation}(ii)); joined by a staircase that climbs
-across the diagonal on which the turns could close, by the length of the
-staircase (Proposition~\ref{prop:staircase}). While a bound of separation
-keeps an arc of it open, the two turns cannot both close.}
+\input{figures/dislocation.tex}
+\caption{A 3--5 dislocation between a ring $\gamma_1$ and a helix $\gamma_2$
+of a band, cut open along a trace of the vertex of valence five, which is
+drawn three times. (a)~The pair is joined along one trace by two arcs, $\delta
+= \ell_b + \ell_c = 2$: $\gamma_2$ comes back $2$ rows higher, with $8$
+quads per turn, and the Burgers vector of the pair is $(2, 2)$
+(Proposition~\ref{prop:dislocation}). (b)~The pair is joined by a staircase of
+two arcs, $d = \varepsilon = (-1, -1)$: $\gamma_2$ comes back $2$ rows higher,
+with $10$ quads (Proposition~\ref{prop:staircase}). In both, the shifts differ
+by $\ell_b + \ell_c = 2$, and both turns are rings only if the two vertices
+merge.}
 \label{fig:dislocation}
 \end{figure}
 
@@ -724,7 +745,8 @@ The $13$ conflicts fall into six configurations (Table~\ref{tab:pairs},
 measured). In A the annulus between two simple turns holds a 3--5 pair, and the
 staircase joining them, $0.990$ long, is the difference of the real shifts;
 at the engine's whole lengths the pair is one edge apart on one grid line,
-Proposition~\ref{prop:dislocation}(ii) with $\delta = 1$. In B, C and D
+Proposition~\ref{prop:dislocation}(ii) with $\delta = 1$ (its hypothesis on
+$\kappa$ not checked). In B, C and D
 the turns cross and their combination winds $+1$ and $-1$ round two vertices
 of valence three, an exchange in homology (the homotopy of
 Proposition~\ref{prop:swap} was not checked, the staircase identity was). In E
@@ -810,14 +832,15 @@ $\sigma$, here the identity.
 
 \begin{figure}[t]
 \centering
-\figurefile{separatrix}
-\caption{A separatrix that winds (Proposition~\ref{prop:winding}). A
-separatrix $\sigma$ of the singular vertex $v$ goes once round a part of the
-shape and stops on another separatrix $\tau$ of $v$, at the distance $\delta$
-from $v$. A turn homotopic to the loop along $\sigma$ and back along $\tau$
-has shift $\pm\delta$: it closes only if $\sigma$ comes back onto its own
-vertex. At the left wrist of the male body $\delta = \ell_{1920} +
-\ell_{1921}$, and a bound of separation keeps it at least one.}
+\input{figures/separatrix.tex}
+\caption{A separatrix that winds (Proposition~\ref{prop:winding}). (a)~On
+a cylinder such as a wrist, the separatrix $\sigma$ of the vertex $v$ of
+valence five goes once round and stops on another separatrix $\tau$ of $v$.
+(b)~Cut open along $\tau$: $\sigma$, of length $10$, stops at $q$, at
+$\delta = \ell_e + \ell_f = 2$ from $v$, and the turn $\gamma$ beside
+$\sigma$ comes back $2 = \delta$ rows higher; it is a ring only if $\sigma$
+comes back onto $v$. At the left wrist of the male body $\delta = \ell_{1920}
++ \ell_{1921}$, kept positive by a bound of separation.}
 \label{fig:separatrix}
 \end{figure}
 
@@ -847,7 +870,8 @@ modulo the balances. The coefficient $5$ is a dislocation: a separatrix of the
 vertex $231$ (valence three) stops on one of $228$ (valence five), and arc
 $1805$, $0.063$ edges long, joins that junction to $228$, so $\ell_{1805}$ is
 the offset of the pair across the line of the field that nearly joins them,
-Proposition~\ref{prop:dislocation}(ii) with $\delta = \ell_{1805}$; their
+Proposition~\ref{prop:dislocation}(ii) with $\delta = \ell_{1805}$ (hypothesis
+on $\kappa$ not checked); their
 twisted windings (Section~\ref{sec:fox}) contribute exactly $10\,\ell_{1805}$
 (measured).
 
@@ -1033,7 +1057,10 @@ trace of a closed surface starts at a singular vertex (feature lines or seeded
 traces would break this; we assume it). For an arc $a$, along $e_a$ from the node $n_0$
 to the node $n_1$, the \emph{foot} of $n_j$ is the node itself if it is
 singular, and otherwise the singular vertex where the trace through $n_j$
-perpendicular to $a$ starts. The \emph{comb} $\sigma_a$ of $a$ runs from the
+perpendicular to $a$ starts. We assume this vertex unique: a single trace
+perpendicular to $a$ meets $n_j$ (not two, from opposite sides), and it is neither a separatrix
+connection nor a loop; otherwise a foot must be chosen, and different choices
+give different dislocations. The \emph{comb} $\sigma_a$ of $a$ runs from the
 foot $c_0$ of $n_0$ along its trace to $n_0$, along $a$ to $n_1$, and along the
 other trace to the foot $c_1$ of $n_1$, through T-junctions only
 (Figure~\ref{fig:comb}). The \emph{graph of feet} has the singular vertices of
@@ -1042,12 +1069,15 @@ odd valence as edges.
 
 \begin{figure}[t]
 \centering
-\figurefile{comb}
-\caption{The comb $\sigma_a$ of an arc $a$ (Lemma~\ref{lem:comb}): from the
-foot $c_0$ of its first node along the perpendicular trace, along $a$, and
-along the other perpendicular trace to the foot $c_1$. Every step but $a$ is
-orthogonal to $a$, so the feet, developed along the comb, are $\ell_a$ apart
-along $a$.}
+\input{figures/comb.tex}
+\caption{The comb $\sigma_a$ of an arc $a$ (Lemma~\ref{lem:comb}), $\ell_a =
+9$: from the foot $c_0$ of one end of $a$, of valence three, up its trace,
+along $a$, and down the other perpendicular trace to the foot $c_1$, of
+valence five. Every step but $a$ is orthogonal to $a$, so $\langle e_a,
+p_{c_1} - p_{c_0} \rangle = 9 = \ell_a$. This T-mesh is that of
+Figures~\ref{fig:dislocation}(b) and~\ref{fig:separatrix}(b): the staircase,
+the winding separatrix and the comb are three readings of the same shift
+$2$.}
 \label{fig:comb}
 \end{figure}
 
