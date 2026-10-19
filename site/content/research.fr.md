@@ -18,7 +18,7 @@
 <p class="tags"><span class="tag tag-ink">Article B · théorie</span> <span class="tag tag-teal">Brouillon · non relu par des pairs</span></p>
 <h2 id="paper-b">Les tours d'un T-mesh : obstructions à la fermeture des boucles d'arêtes</h2>
 <p>Dans la quantification d'un T-mesh, une boucle d'arêtes se ferme en anneau quand un <em>tour</em>, une marche droite à travers les patchs qui revient sur son premier côté, a un <em>décalage</em> nul, une forme linéaire entière en les longueurs des arcs ; sinon elle s'enroule en hélice. Nous étudions pourquoi les tours ne peuvent pas tous être fermés.</p>
-<p class="actions"><a class="button primary" href="../../docs/research/closing-helices/paper.fr.pdf">PDF · français · 29 p.</a> <a class="button" href="../../docs/research/closing-helices/paper.pdf" hreflang="en" lang="en">PDF · English · 26 p.</a> <a class="button plain" href="../../docs/research/closing-helices/paper.fr.tex">Source LaTeX</a></p>
+<p class="actions"><a class="button primary" href="../../docs/research/turns-of-a-t-mesh/paper.fr.pdf">PDF · français · 29 p.</a> <a class="button" href="../../docs/research/turns-of-a-t-mesh/paper.pdf" hreflang="en" lang="en">PDF · English · 26 p.</a> <a class="button plain" href="../../docs/research/turns-of-a-t-mesh/paper.fr.tex">Source LaTeX</a></p>
 <p class="note">La version française est une traduction faite au mieux ; la version anglaise fait foi. Son titre anglais : <em lang="en">Turns of a T-Mesh: Obstructions to Closing Edge Loops</em>.</p>
 </div>
 </article>
@@ -35,12 +35,12 @@ Les cœurs algébriques des résultats de la note (ses sections 3 et 8 à 10) so
 
 **Ce qui est supposé.** Les faits topologiques sur lesquels la note s'appuie ne sont pas formalisés ; chacun est une hypothèse explicite du théorème qui l'utilise, jamais cachée. Parmi eux : qu'une courbe fermée simple sur une sphère borde un disque (Jordan–Schoenflies), l'application développante et l'holonomie comme morphisme du groupe fondamental, et deux faits classiques sur les graphes. Les bandes sur les surfaces à bords, et tout énoncé *mesuré*, sont hors de la formalisation.
 
-**Ce qu'elle a trouvé.** Formaliser la note a trouvé onze lacunes ou corrections, dont aucune erreur de signe ou de convention : un facteur mal placé dans une étape du calcul de Fox (la conclusion restant juste), un théorème qui n'a besoin ni de convexité ni de longueurs entières, un énoncé de parité qui ne vaut que sur une sphère fermée (il tombe en défaut avec deux bords ou plus), et des propositions plus fortes qu'énoncées. Elles sont listées dans le [README des preuves](../../docs/research/closing-helices/lean/README.md) (en anglais).
+**Ce qu'elle a trouvé.** Formaliser la note a trouvé onze lacunes ou corrections, dont aucune erreur de signe ou de convention : un facteur mal placé dans une étape du calcul de Fox (la conclusion restant juste), un théorème qui n'a besoin ni de convexité ni de longueurs entières, un énoncé de parité qui ne vaut que sur une sphère fermée (il tombe en défaut avec deux bords ou plus), et des propositions plus fortes qu'énoncées. Elles sont listées dans le [README des preuves](../../docs/research/turns-of-a-t-mesh/lean/README.md) (en anglais).
 
 Pour vérifier les preuves vous-même, depuis la racine du dépôt :
 
 ```sh
-make proofs NOTE=closing-helices
+make proofs NOTE=turns-of-a-t-mesh
 ```
 
 Le premier lancement télécharge la chaîne d'outils de Lean et Mathlib déjà compilée, environ 10 Go en tout ; ensuite, construire les fichiers propres à la note prend environ 40 secondes et 1,3 Go de mémoire.

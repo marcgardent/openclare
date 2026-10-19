@@ -4,7 +4,7 @@
 
 This page tells, for 3D artists and curious developers, what the two research papers,
 [Closing Edge Loops at Quantization Time](../../docs/research/closing-loops/paper.pdf) (applied) and
-[Turns of a T-Mesh](../../docs/research/closing-helices/paper.pdf) (theory), found while
+[Turns of a T-Mesh](../../docs/research/turns-of-a-t-mesh/paper.pdf) (theory), found while
 teaching openclare to close its edge loops: the idea, the rules that came out of it, what it
 changed in the engine, and what did not work. It takes about fifteen minutes to read. Words in
 *italics* are defined, with more pictures, in the [glossary](../../docs/GLOSSARY.md).
@@ -350,7 +350,7 @@ Research is mostly ideas that fail. These did, and the note says why.
 ## 8. How we know it is true
 
 **Machine-checked proofs.** The algebraic heart of every result above is proved in
-[Lean](../../docs/research/closing-helices/lean/README.md), a proof assistant: a program that accepts a proof only if every step
+[Lean](../../docs/research/turns-of-a-t-mesh/lean/README.md), a proof assistant: a program that accepts a proof only if every step
 follows from the previous ones. There are **187 theorems**, built on the Mathlib library, using
 only Lean's standard axioms and no unfinished proof. They replay in about 40 seconds with
 `make proofs`. They cover the shift as a sum of lengths, the completeness of the walk, the
@@ -431,7 +431,7 @@ its content.
 ## Read more
 
 - Paper A, applied: [paper.pdf](../../docs/research/closing-loops/paper.pdf) (in French: [paper.fr.pdf](../../docs/research/closing-loops/paper.fr.pdf)), source [paper.tex](../../docs/research/closing-loops/paper.tex).
-- Paper B, theory: [paper.pdf](../../docs/research/closing-helices/paper.pdf), source [paper.tex](../../docs/research/closing-helices/paper.tex).
-- The machine-checked proofs: [lean/README.md](../../docs/research/closing-helices/lean/README.md).
+- Paper B, theory: [paper.pdf](../../docs/research/turns-of-a-t-mesh/paper.pdf), source [paper.tex](../../docs/research/turns-of-a-t-mesh/paper.tex).
+- The machine-checked proofs: [lean/README.md](../../docs/research/turns-of-a-t-mesh/lean/README.md).
 - The glossary, with all the pictures: [GLOSSARY.md](../../docs/GLOSSARY.md).
 - The pictures are drawn by [make_figures.py](../../docs/glossary/make_figures.py).

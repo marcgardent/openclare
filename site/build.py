@@ -67,8 +67,8 @@ REF = source_ref()
 PAPERS = {
     "docs/research/closing-loops/paper.pdf": "files/closing-edge-loops.pdf",
     "docs/research/closing-loops/paper.fr.pdf": "files/closing-edge-loops.fr.pdf",
-    "docs/research/closing-helices/paper.pdf": "files/turns-of-a-t-mesh.pdf",
-    "docs/research/closing-helices/paper.fr.pdf": "files/turns-of-a-t-mesh.fr.pdf",
+    "docs/research/turns-of-a-t-mesh/paper.pdf": "files/turns-of-a-t-mesh.pdf",
+    "docs/research/turns-of-a-t-mesh/paper.fr.pdf": "files/turns-of-a-t-mesh.fr.pdf",
 }
 LANGUAGES = ("en", "fr")
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif"}
@@ -907,7 +907,7 @@ class Site:
         """The `theorem` declarations of the Lean proofs, outside comments,
         as the proofs' README counts them; a warning when the README says
         another number."""
-        folder = ROOT / "docs/research/closing-helices/lean"
+        folder = ROOT / "docs/research/turns-of-a-t-mesh/lean"
         total = 0
         for path in sorted(folder.rglob("*.lean")):
             if ".lake" in path.parts:

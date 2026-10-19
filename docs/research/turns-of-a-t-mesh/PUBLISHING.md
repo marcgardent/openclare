@@ -71,7 +71,7 @@ Zenodo, linked to the software record by "is supplemented by".
   submission to a `cs` category needs an **endorsement**: an author already
   established in that category endorses the new submitter through the code
   arXiv sends. arXiv compiles the LaTeX itself: upload the bundle that
-  `make paper-arxiv NOTE=closing-helices` writes, `arxiv.tar.gz` beside the
+  `make paper-arxiv NOTE=turns-of-a-t-mesh` writes, `arxiv.tar.gz` beside the
   note. It holds `paper.tex`, the `paper.bbl` (arXiv does not run BibTeX on
   `refs.bib`) and `version.tex`, without which `\enginecommit` reads
   "unknown". Make it on a clean tree at the commit the PDF names. The note

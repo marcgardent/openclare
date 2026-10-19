@@ -2,7 +2,7 @@ name: proofs
 
 # The research notes: "Closing Edge Loops at Quantization Time"
 # (docs/research/closing-loops) and its companion on the theory of turns
-# (docs/research/closing-helices). The Lean proofs of the companion checked,
+# (docs/research/turns-of-a-t-mesh). The Lean proofs of the companion checked,
 # and the PDF of each note built and kept with the run. On every push to main
 # and every pull request that touches a note, and by hand from the Actions tab.
 # A note's French translation, paper.fr.tex, is built beside it when present.
@@ -10,12 +10,12 @@ on:
   push:
     branches: [main]
     paths:
-      - "docs/research/closing-helices/**"
+      - "docs/research/turns-of-a-t-mesh/**"
       - "docs/research/closing-loops/**"
       - ".github/workflows/proofs.yml"
   pull_request:
     paths:
-      - "docs/research/closing-helices/**"
+      - "docs/research/turns-of-a-t-mesh/**"
       - "docs/research/closing-loops/**"
       - ".github/workflows/proofs.yml"
   workflow_dispatch:
@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-24.04
     defaults:
       run:
-        working-directory: docs/research/closing-helices/lean
+        working-directory: docs/research/turns-of-a-t-mesh/lean
     steps:
       - uses: actions/checkout@v7
       # A proof left open, or a statement taken for granted: `sorry` and
@@ -69,7 +69,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        note: [closing-helices, closing-loops]
+        note: [turns-of-a-t-mesh, closing-loops]
     steps:
       # The commit of the branch rather than the merge GitHub makes for a pull
       # request: it is the one the PDF names.

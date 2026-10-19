@@ -50,5 +50,5 @@ lengths and shifts of the turns (by walking the strips of the quad mesh), the Bu
 staircase, the winding separatrix and the comb identity:
 
 ```sh
-python3 docs/research/closing-helices/figures/check.py
+python3 docs/research/turns-of-a-t-mesh/figures/check.py
 ```

@@ -4,7 +4,7 @@
 
 Cette page raconte, pour les artistes 3D et les développeurs curieux, ce que les deux articles de recherche,
 [Closing Edge Loops at Quantization Time](../../docs/research/closing-loops/paper.fr.pdf) (appliqué) et
-[Turns of a T-Mesh](../../docs/research/closing-helices/paper.pdf) (théorie, en anglais), ont trouvé en apprenant
+[Turns of a T-Mesh](../../docs/research/turns-of-a-t-mesh/paper.pdf) (théorie, en anglais), ont trouvé en apprenant
 à openclare à fermer ses boucles d'arêtes : l'idée, les règles qui en sont sorties, ce que cela a
 changé dans le moteur, et ce qui n'a pas marché. Elle se lit en un quart d'heure environ. Les
 mots en *italique* sont définis, avec d'autres images, dans le [glossaire](../../docs/GLOSSARY.fr.md).
@@ -374,7 +374,7 @@ La recherche, c'est surtout des idées qui échouent. Celles-ci ont échoué, et
 ## 8. Comment savons-nous que c'est vrai
 
 **Des preuves vérifiées par la machine.** Le cœur algébrique de chaque résultat ci-dessus est
-démontré en [Lean](../../docs/research/closing-helices/lean/README.md), un assistant de preuve : un programme qui n'accepte une preuve
+démontré en [Lean](../../docs/research/turns-of-a-t-mesh/lean/README.md), un assistant de preuve : un programme qui n'accepte une preuve
 que si chaque étape découle des précédentes. Il y a **187 théorèmes**, construits sur la
 bibliothèque Mathlib, qui n'utilisent que les axiomes standard de Lean et aucune preuve
 inachevée. Ils se rejouent en une quarantaine de secondes avec `make proofs`. Ils couvrent le
@@ -461,7 +461,7 @@ note ; l'auteur humain, qui la publie, est responsable de son contenu.
 ## Pour aller plus loin
 
 - L'article A, appliqué : [paper.fr.pdf](../../docs/research/closing-loops/paper.fr.pdf) (en anglais : [paper.pdf](../../docs/research/closing-loops/paper.pdf)), source [paper.fr.tex](../../docs/research/closing-loops/paper.fr.tex).
-- L'article B, théorie (en anglais) : [paper.pdf](../../docs/research/closing-helices/paper.pdf), source [paper.tex](../../docs/research/closing-helices/paper.tex).
-- Les preuves vérifiées par la machine : [lean/README.md](../../docs/research/closing-helices/lean/README.md).
+- L'article B, théorie (en anglais) : [paper.pdf](../../docs/research/turns-of-a-t-mesh/paper.pdf), source [paper.tex](../../docs/research/turns-of-a-t-mesh/paper.tex).
+- Les preuves vérifiées par la machine : [lean/README.md](../../docs/research/turns-of-a-t-mesh/lean/README.md).
 - Le glossaire, avec toutes les images : [GLOSSARY.fr.md](../../docs/GLOSSARY.fr.md).
 - Les images sont dessinées par [make_figures.py](../../docs/glossary/make_figures.py).

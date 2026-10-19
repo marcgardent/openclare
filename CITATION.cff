@@ -61,7 +61,7 @@ references:
     status: preprint
     license: CC-BY-4.0
     repository-code: "https://github.com/marcgardent/openclare"
-    url: "https://github.com/marcgardent/openclare/blob/main/docs/research/closing-helices/paper.pdf"
+    url: "https://github.com/marcgardent/openclare/blob/main/docs/research/turns-of-a-t-mesh/paper.pdf"
     notes: >-
       Research paper B (theory), not peer reviewed. LaTeX source, figures and
-      Lean proofs in docs/research/closing-helices of the repository.
+      Lean proofs in docs/research/turns-of-a-t-mesh of the repository.
