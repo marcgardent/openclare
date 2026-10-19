@@ -1,6 +1,7 @@
 # Publishing the note
 
-How "Closing Edge Loops at Quantization Time" goes from the repository to a
+How "Turns of a T-mesh: obstructions to closing edge loops", the theory half
+of the research note (its applied companion is `../closing-loops`), goes from the repository to a
 citable preprint: first a DOI from Zenodo for a release of the repository,
 then, if wanted, HAL and arXiv. The steps below that need an account or a
 decision are for the author to take; the rest is already in the repository.
@@ -15,7 +16,7 @@ decision are for the author to take; the rest is already in the repository.
 - **The commit described**: `make paper` writes `version.tex` (ignored by git)
   with `\enginecommit`, the short hash of `HEAD`, followed by `-dirty` when
   tracked files other than the PDFs differ from it. The first page and the
-  paragraph "Reproducibility" name it.
+  paragraph "Limitations and reproducibility" name it.
 - **Proofs and PDF on GitHub**: [`.github/workflows/proofs.yml`](../../../.github/workflows/proofs.yml)
   checks the Lean proofs (no `sorry`, `admit` or `axiom`, then `lake build` on
   the pinned Mathlib) and builds `paper.pdf`, kept with the run as an
@@ -33,8 +34,8 @@ decision are for the author to take; the rest is already in the repository.
 2. **ORCID**: done, 0009-0000-6466-3098 (<https://orcid.org/0009-0000-6466-3098>), in `CITATION.cff`,
    `.zenodo.json` and under the name in `paper.tex`. Zenodo, HAL and arXiv all
    link it. On the ORCID record, the published name is "Marc Gardent".
-3. **Title block**: it reads "preprint, version 1" since the three reviews
-   were applied; set the date at release. Commit the sources, then run `make paper` on a
+3. **Title block**: it reads "draft, not peer reviewed", like its companion;
+   at release make it "preprint" and set the date. Commit the sources, then run `make paper` on a
    clean working tree and commit the PDF on its own: the PDF then names the
    commit that holds its sources, without `-dirty`.
 
@@ -51,7 +52,8 @@ decision are for the author to take; the rest is already in the repository.
 3. Zenodo gives two DOIs: one for this version, and a "concept" DOI that always
    resolves to the latest. Add the concept DOI to `CITATION.cff`
    (`doi: 10.5281/zenodo.N`, or under `identifiers`) and, if wanted, as a badge
-   in the README and a line in the paragraph "Reproducibility" of the note.
+   in the README and a line in the paragraph "Limitations and reproducibility"
+   of the note.
 
 The Zenodo record archives the software with the note in it; it is not a
 separate record for the note. A record of its own for the PDF (upload type

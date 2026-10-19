@@ -1,8 +1,12 @@
-# Machine-checked cores of "Closing Edge Loops at Quantization Time"
+# Machine-checked cores of "Turns of a T-mesh: obstructions to closing edge loops"
 
 This Lake project checks with Lean 4 and Mathlib the **algebraic cores** of the
-results of the research note `../paper.tex` (Sections 3, 7 and 9, and
-Appendix F): 228 `theorem` declarations, many of them small lemmas and a few
+results of the research note `../paper.tex` (Sections 3 to 8 and Appendix A;
+Section 10 there lists what is checked, statement by statement), and of the
+two propositions of its applied companion,
+[`../../closing-loops/paper.tex`](../../closing-loops/paper.tex), "The shift of
+a turn is linear" (also stated in `../paper.tex`) and "Completeness at given
+lengths": 228 `theorem` declarations, many of them small lemmas and a few
 restating a hypothesis (`dislocation_closes_iff`, `staircase_rings`); the
 count is not evidence, the table below names the main ones. The topological facts the note uses (that a loop develops into a given
 motion, that a curve bounds a disc, that the quad graph of a sphere is
@@ -86,8 +90,8 @@ measured statement.
    proof holds for any set `P` of lengths and any `ℓ ∈ P`
    (`forced_helices`); convexity only makes `τ_P` computable by linear
    programming. So the theorem applies verbatim to the non-convex set of
-   lengths with a given number of quads, the open problem "Lower bounds with
-   the size": what is open there is computing or certifying `τ_P`, not the
+   lengths with a given number of quads, an open problem of the note: what is
+   open there is computing or certifying `τ_P`, not the
    bound. Also, `τ_P(H)` is a minimum over an empty set when `P` is empty;
    the bound `τ_P(H) ≥ k` needs `P` non-empty (`tauP_ge_of_disjoint`).
 3. **"Genus zero" must mean closed (a sphere).** Prop. "Parity of a turn on a
@@ -273,7 +277,8 @@ the whole lengths of the integer search, `B` the balance matrix.
   graph; Proposition "Free arcs".
 * `Farkas.lean`: Farkas' lemma by Fourier–Motzkin elimination; Remarks
   "Sign-definite turns" and "Whole solutions exist at some size".
-* `Completeness.lean`: Proposition "Completeness at given lengths".
+* `Completeness.lean`: Proposition "Completeness at given lengths" (of the
+  companion note, `../../closing-loops`).
 * `GaussBonnet.lean`: discrete Gauss–Bonnet for quads, triangles and hexagons;
   Lemmas "Gauss–Bonnet for turns" and "One self-crossing" (the counts).
 * `BeyondQuads.lean`: fields of any order: rotations and dislocations.
