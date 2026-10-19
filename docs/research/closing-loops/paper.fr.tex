@@ -147,7 +147,9 @@ l'heuristique~: le conflit entre fermer les tours et garder les singularités
 séparées est local, l'heuristique laisse la plupart des tours décalés
 qu'aucune contrainte n'impose, et pourtant fermer davantage de tours ne
 réduit pas à lui seul les spirales, car les bandes du maillage bougent avec
-les longueurs. La section~\ref{sec:limits} expose les limites et les
+les longueurs\,; ajouter les inégalités du corridor rend exact le compte des
+bandes fermées, un couplage du décalage et du corridor que nous n'avons trouvé
+dans aucun quantificateur antérieur. La section~\ref{sec:limits} expose les limites et les
 problèmes ouverts.
 
 Ce travail est né d'un projet de programmation, openclare, un remailleur en
@@ -159,7 +161,7 @@ arcs, si bien que fermer une boucle devient une contrainte linéaire du
 quantificateur plutôt qu'un test après coup\,; sa parité suit la longueur
 du tour, si bien que certaines réparations sont connues impossibles avant
 d'être tentées\,; et choisir le plus grand ensemble de tours à fermer est
-NP-difficile, ce qui justifie que le moteur s'en tienne à une heuristique,
+NP-difficile sous la forme algébrique que prend la quantification, ce qui justifie que le moteur s'en tienne à une heuristique,
 avec un solveur exact seulement sur demande.
 
 La théorie des conflits, qui lit le décalage comme l'holonomie de
@@ -443,15 +445,25 @@ section~\ref{sec:closing} s'en servent.
 
 Cette section décrit le moteur au commit \texttt{\enginecommit}, dans
 \nolinkurl{crates/openclare/src/quantization/}. Le quantificateur minimise un
-coût convexe séparable des longueurs entières, dans la formulation par flot
-d'écart minimal de~\cite{heistermann2023bimdf}, sous les équilibres, en
-annulant des marches améliorantes dans un réseau de bandes (un solveur plus
-simple que le leur, fondé sur des couplages). Seule la structure est la
-leur~: leur objectif est une somme d'écarts absolus, le nôtre est
-quadratique. Le coût de l'arc $a$ est $w_a(\ell_a - \lambda r_a)^2$ avec
-$w_a = 1/(\lambda r_a + 1)$, plus un terme qui attire un sommet sur chaque
-arête vive (\emph{fold}) de la surface que l'arc traverse et une pénalité
-pour qui descend sous une borne inférieure. Les longueurs réelles $r_a$
+coût séparable des longueurs entières, sous les équilibres, en annulant des
+marches améliorantes dans un réseau de bandes. Ce réseau est la formulation
+par flot d'écart minimal de~\cite{heistermann2023bimdf}\,; leur objectif est
+une somme d'écarts absolus et leur solveur est fondé sur des couplages. Le
+coût de l'arc $a$ à la longueur $x$ est
+\[
+  w_a \Bigl[(x - \lambda r_a)^2 + 4 \sum_f s_f\, \bigl(\sigma_f x - \lfloor
+  \sigma_f x \rceil\bigr)^2\Bigr] + 10^7 \max(0,\, b_a - x)^2,
+  \qquad w_a = \frac{1}{\lambda r_a + 1},
+\]
+où $f$ parcourt les arêtes vives (\emph{folds}) de la surface que l'arc
+traverse, $\sigma_f$ est la part de l'arc où se trouve $f$, $s_f \in [0, 1]$
+sa netteté et $\lfloor \cdot \rceil$ l'entier le plus proche~: le deuxième
+terme attire un sommet sur chaque arête vive, et le dernier fait coûter à une
+longueur sous la borne inférieure $b_a$ plus que ce qu'une marche peut
+gagner. Le terme des arêtes vives est périodique en $x$, si bien que le coût
+n'est convexe que sur les arcs qui n'en traversent aucune\,; ailleurs,
+l'annulation des marches atteint un optimum local, non l'optimum d'un flot
+convexe. Les longueurs réelles $r_a$
 portent une perturbation fixe par arc d'au plus $0,5\,\%$, afin que des arcs
 de même longueur ne changent pas tous au même facteur d'échelle\,; l'échelle
 $\lambda$ est cherchée pour le nombre de quads demandé, et les arcs dont la
@@ -513,11 +525,15 @@ $\lambda$ est cherché sur elles.
 La recherche entière du quantificateur s'exécute sur les cibles projetées.
 L'arrondi laisse certains tours décalés d'une ou de quelques rangées. Des
 marches de réparation (\emph{repair walks}) sont alors effectuées une à
-une~: une marche est guidée par un biais le long des arcs des tours décalés,
-et acceptée si elle réduit le décalage total, coûte peu en écart, garde la
+une~: une marche est guidée par un terme linéaire $\beta_a x$ ajouté au coût
+de chaque arc, avec $\beta_a = 0,5 \sum_\gamma \operatorname{sign}(\shift_\gamma)
+c_{\gamma, a}$ sur les tours décalés d'au moins une demie, $c_{\gamma, a}$ le
+coefficient de l'arc $a$ dans le décalage de $\gamma$
+(proposition~\ref{prop:linear}), et acceptée si elle réduit le décalage total, coûte peu en écart, garde la
 structure intacte et le nombre de quads dans la tolérance. Une seconde
 réparation, \emph{visée} (\emph{aimed}), traite séparément chaque tour retenu
-encore décalé~: le biais est placé sur ses seuls arcs, et une marche est
+encore décalé~: le terme est placé sur ses seuls arcs, avec $3$ au lieu de
+$0,5$, et une marche est
 acceptée si elle décale moins ce tour et pas davantage les autres. Deux
 résultats de l'article compagnon~\cite{gardent2026turns} élaguent ces
 marches. Sur une sphère fermée, le décalage de tout tour a, pour toutes les
@@ -655,7 +671,11 @@ d'arêtes en spirale est de $1,8\,\%$ pour openclare, $38,8\,\%$ pour
 QuadriFlow et $21,7\,\%$ pour AutoRemesher\,; sur les $15$ modèles où les
 trois produisent un maillage, valide ou non, $4,2\,\%$, $27,2\,\%$ et
 $27,3\,\%$. Sans fermeture (commit \texttt{4e9620c}), openclare avait
-$16,6\,\%$ et $15,5\,\%$ sur les mêmes sous-ensembles.
+$16,6\,\%$ et $15,5\,\%$ sur les mêmes sous-ensembles. La comparaison
+favorise aussi openclare par construction~: le moteur choisit parmi ses
+candidats selon cette même part (section~\ref{sec:closing}), que les deux
+autres n'optimisent pas, et la part ne voit aucune hélice de pas supérieur à
+quatre. Une mesure de structure que la sélection n'utilise pas reste à faire.
 
 \paragraph{Face au maillage fait à la main.}
 Le corps masculin de la bibliothèque Essentials a un maillage de base de
@@ -698,7 +718,10 @@ la fermeture change en anneau une boucle qui traverse le front.
 \caption{Le corps masculin de la bibliothèque Essentials, $10\,590$ quads
 demandés~: (a)~openclare sans fermeture, (b)~openclare avec la fermeture de
 la section~\ref{sec:closing}, (c)~le maillage de base modélisé à la main,
-(d)~QuadriFlow lancé via Blender. Les boucles d'arêtes sont colorées selon
+(d)~QuadriFlow lancé via Blender, sur la source agrandie $100$ fois puis
+ramenée à sa taille\,: Blender refuse la sculpture telle quelle, certaines de
+ses arêtes étant plus courtes que son seuil de $10^{-4}$, et QuadriFlow ne
+dépend pas de l'échelle. Les boucles d'arêtes sont colorées selon
 leur sorte dans la mesure de la section~\ref{sec:measure}~: boucles fermées
 en bleu foncé, boucles en spirale en vermillon (plus larges, avec un liseré
 sombre), boucles qui s'arrêtent à un sommet irrégulier en gris. Les
@@ -934,8 +957,10 @@ taille, ferme $38$ bandes de plus du maillage du moteur que le moteur
 lui-même, mais à ses longueurs, qui de plus cassent le maillage, les bandes
 sont de nouveau d'autres marches, et la part de bandes en spirale est de
 $0,020$ contre $0,011$ pour le moteur. Choisir le plus grand nombre de tours
-à fermer est NP-difficile en général, déjà pour les équilibres bidirigés et
-les bornes $0$--$1$ de la quantification~\cite{gardent2026turns}.
+à fermer est NP-difficile pour des équilibres bidirigés avec des bornes
+$0$--$1$, la forme algébrique de la quantification~\cite{gardent2026turns}\,;
+savoir si les équilibres et les tours d'un vrai T-mesh restent difficiles est
+une question ouverte.
 
 \paragraph{Fermer le plus d'anneaux, de bout en bout.}
 Nous avons mesuré ce qu'une sélection exacte apporte sur le banc, avec le
@@ -995,9 +1020,15 @@ tournée grandit de $0$ à $40$ couronnes de sommets), pour un coût en
 distorsion presque nul\,; mais faire tourner le champ cylindre par cylindre
 pour ramener les décalages à zéro a reporté la torsion sur des anneaux de
 $90$ à $200$ arêtes, et sur $36$ exécutions, $2$ se sont améliorées et $4$
-ont régressé, ce que nous lisons comme du chaos plutôt qu'un progrès. Nous
-y lisons, à titre de conjecture, qu'avec une application d'échelle fixée le
-levier est l'orientation du champ le long de cylindres entiers, et que les
+ont régressé, ce que nous lisons comme du chaos plutôt qu'un progrès. La
+somme de Burgers de l'article compagnon~\cite{gardent2026turns} l'explique~:
+les décalages de deux tours parallèles, un court autour d'un membre et un long
+autour du torse, diffèrent de la composante transverse du vecteur de Burgers
+des sommets singuliers situés entre eux, qui ne dépend que de leurs positions
+développées, et une application d'échelle fixée les déplace à peine (plus
+haut~: de $0,01$ à $0,12$ du changement prévu). Tourner le champ pour fermer
+le tour court reporte donc son décalage sur le long, et les tours qui
+traversent la région tournée voient leurs longueurs réelles changer. Les
 conflits sont mieux attaqués dans la quantification.
 
 \section{Limites et problèmes ouverts}\label{sec:limits}
