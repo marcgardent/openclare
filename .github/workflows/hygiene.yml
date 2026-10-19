@@ -1,0 +1,24 @@
+# Checks every change for local paths that would leak the home folder, and with
+# it the user name, of whoever made a file: /home/<name>, /Users/<name>,
+# C:\Users\<name>. Scripts write paths relative to the root of the clone.
+name: hygiene
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  local-paths:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: No home folder in the tracked files
+        run: |
+          if git grep -nI -E '/home/[a-z]|/Users/[A-Za-z]|C:\\Users' -- . ':!.github/workflows/hygiene.yml'; then
+            echo "::error::a tracked file names a home folder: write the path relative to the root of the clone"
+            exit 1
+          fi
