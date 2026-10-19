@@ -2741,11 +2741,16 @@ each statement below, with the topological facts it uses (that a loop
 develops into a given motion, that a curve bounds a disc, that the
 fundamental group of $\Sigma^\circ$ is presented by the loops $\lambda_i$,
 that the quad graph of a sphere is bipartite) as explicit hypotheses of the
-theorem that uses them.
+theorem that uses them. Each statement is formalized on its own abstraction
+(a turn as a list of motions, a region as finite sets with counts, a system
+as a pair of matrices); the files share no type of T-mesh and are not
+composed into one model of it.
 
 \begin{itemize}
-\item Checked as algebra: the Burgers sum and the order of first visit
-  (Proposition~\ref{prop:burgers}), dislocations, staircases, exchanges and
+\item Checked as algebra: the Burgers sum (Proposition~\ref{prop:burgers}),
+  and that the recursion of the gluing maps of a tree of cuts unfolds into
+  the order of first visit (the recursion itself, read off the tree, is a
+  hypothesis built into the definition), dislocations, staircases, exchanges and
   the conjugation step of Proposition~\ref{prop:winding}; the checkerboard
   rules, the induction of the proof of Proposition~\ref{prop:parity} given a
   2-colouring, and the second proof of Remark~\ref{rem:borders}; the
