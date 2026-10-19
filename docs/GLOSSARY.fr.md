@@ -3,8 +3,9 @@
 *[English version](GLOSSARY.md)*
 
 Traduction française de [GLOSSARY.md](GLOSSARY.md). Les
-objets géométriques et les termes d'openclare, de son banc d'essai et de la note de recherche
-[Closing Edge Loops at Quantization Time](research/closing-helices/paper.tex). Le terme anglais suit chaque entrée entre parenthèses.
+objets géométriques et les termes d'openclare, de son banc d'essai et des deux articles de recherche,
+[Closing Edge Loops at Quantization Time](research/closing-loops/paper.fr.tex) et
+[Turns of a T-Mesh](research/closing-helices/paper.tex). Le terme anglais suit chaque entrée entre parenthèses.
 Les noms en `code` sont ceux du code source du moteur.
 
 Les entrées suivent la chaîne : le maillage, le champ, la paramétrisation, le découpage, la

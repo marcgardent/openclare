@@ -43,7 +43,25 @@ references:
     status: preprint
     license: CC-BY-4.0
     repository-code: "https://github.com/marcgardent/openclare"
+    url: "https://github.com/marcgardent/openclare/blob/main/docs/research/closing-loops/paper.pdf"
+    notes: >-
+      Research paper A (applied), not peer reviewed. LaTeX source, figures and a
+      best-effort French translation in docs/research/closing-loops of the
+      repository.
+  - type: report
+    title: >-
+      Turns of a T-Mesh: Obstructions to Closing Edge Loops
+    authors:
+      - family-names: Gardent
+        given-names: Marc
+        affiliation: Independent researcher
+        orcid: "https://orcid.org/0009-0000-6466-3098"
+    year: 2026
+    month: 10
+    status: preprint
+    license: CC-BY-4.0
+    repository-code: "https://github.com/marcgardent/openclare"
     url: "https://github.com/marcgardent/openclare/blob/main/docs/research/closing-helices/paper.pdf"
     notes: >-
-      Research note, not peer reviewed. LaTeX source and Lean proofs in
-      docs/research/closing-helices of the repository.
+      Research paper B (theory), not peer reviewed. LaTeX source, figures and
+      Lean proofs in docs/research/closing-helices of the repository.

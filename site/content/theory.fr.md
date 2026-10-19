@@ -2,8 +2,9 @@
 
 *[English version](theory.md)*
 
-Cette page raconte, pour les artistes 3D et les développeurs curieux, ce que la note de recherche
-[Closing Edge Loops at Quantization Time](../../docs/research/closing-helices/paper.pdf) ([source](../../docs/research/closing-helices/paper.tex)) a trouvé en apprenant
+Cette page raconte, pour les artistes 3D et les développeurs curieux, ce que les deux articles de recherche,
+[Closing Edge Loops at Quantization Time](../../docs/research/closing-loops/paper.fr.pdf) (appliqué) et
+[Turns of a T-Mesh](../../docs/research/closing-helices/paper.pdf) (théorie, en anglais), ont trouvé en apprenant
 à openclare à fermer ses boucles d'arêtes : l'idée, les règles qui en sont sorties, ce que cela a
 changé dans le moteur, et ce qui n'a pas marché. Elle se lit en un quart d'heure environ. Les
 mots en *italique* sont définis, avec d'autres images, dans le [glossaire](../../docs/GLOSSARY.fr.md).
@@ -459,7 +460,8 @@ note ; l'auteur humain, qui la publie, est responsable de son contenu.
 
 ## Pour aller plus loin
 
-- La note (en anglais) : [paper.pdf](../../docs/research/closing-helices/paper.pdf), source [paper.tex](../../docs/research/closing-helices/paper.tex).
+- L'article A, appliqué : [paper.fr.pdf](../../docs/research/closing-loops/paper.fr.pdf) (en anglais : [paper.pdf](../../docs/research/closing-loops/paper.pdf)), source [paper.fr.tex](../../docs/research/closing-loops/paper.fr.tex).
+- L'article B, théorie (en anglais) : [paper.pdf](../../docs/research/closing-helices/paper.pdf), source [paper.tex](../../docs/research/closing-helices/paper.tex).
 - Les preuves vérifiées par la machine : [lean/README.md](../../docs/research/closing-helices/lean/README.md).
 - Le glossaire, avec toutes les images : [GLOSSARY.fr.md](../../docs/GLOSSARY.fr.md).
 - Les images sont dessinées par [make_figures.py](../../docs/glossary/make_figures.py).

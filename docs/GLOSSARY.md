@@ -2,8 +2,9 @@
 
 *[Version française](GLOSSARY.fr.md)*
 
-The geometric objects and terms used by openclare, its bench and the research note [Closing
-Edge Loops at Quantization Time](research/closing-helices/paper.tex). Names in `code` are those
+The geometric objects and terms used by openclare, its bench and the two research papers,
+[Closing Edge Loops at Quantization Time](research/closing-loops/paper.tex) and
+[Turns of a T-Mesh](research/closing-helices/paper.tex). Names in `code` are those
 of the engine's source.
 
 The entries follow the chain: the mesh, the field, the map, the layout, the quantization, the

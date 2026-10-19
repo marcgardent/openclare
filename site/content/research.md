@@ -15,11 +15,11 @@
 
 <article class="paper" aria-labelledby="paper-b">
 <div class="paper-text">
-<p class="tags"><span class="tag tag-ink">Paper B · theory</span> <span class="tag tag-hot">In preparation</span></p>
-<h2 id="paper-b">Turns of a T-mesh: obstructions to closing edge loops</h2>
-<p>The shift of a turn read as translational holonomy; the conflicts the singularities impose; the turns every quantization within bounds leaves shifted; and why choosing the turns to close is NP-hard.</p>
-<p>Its draft is the first research note of the project, which carries the title of paper A and is being rewritten into this paper.</p>
-<p class="actions"><a class="button" href="../../docs/research/closing-helices/paper.pdf">Draft · PDF · English · 51 p.</a> <a class="button plain" href="../../docs/research/closing-helices/paper.tex">LaTeX source</a></p>
+<p class="tags"><span class="tag tag-ink">Paper B · theory</span> <span class="tag tag-teal">Draft · not peer reviewed</span></p>
+<h2 id="paper-b">Turns of a T-Mesh: Obstructions to Closing Edge Loops</h2>
+<p>In the quantization of a T-mesh, an edge loop closes into a ring when a <em>turn</em>, a straight walk across the patches that returns to its first side, has zero <em>shift</em>, an integer linear form in the arc lengths; otherwise it winds as a helix. We study why turns cannot all be closed.</p>
+<p class="actions"><a class="button primary" href="../../docs/research/closing-helices/paper.pdf">PDF · English · 25 p.</a> <a class="button plain" href="../../docs/research/closing-helices/paper.tex">LaTeX source</a></p>
+<p class="note">A French translation will follow, as for paper A.</p>
 </div>
 </article>
 

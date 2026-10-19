@@ -67,7 +67,7 @@ REF = source_ref()
 PAPERS = {
     "docs/research/closing-loops/paper.pdf": "files/closing-edge-loops.pdf",
     "docs/research/closing-loops/paper.fr.pdf": "files/closing-edge-loops.fr.pdf",
-    "docs/research/closing-helices/paper.pdf": "files/turns-of-a-t-mesh-draft.pdf",
+    "docs/research/closing-helices/paper.pdf": "files/turns-of-a-t-mesh.pdf",
 }
 LANGUAGES = ("en", "fr")
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif"}

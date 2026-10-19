@@ -15,11 +15,11 @@
 
 <article class="paper" aria-labelledby="paper-b">
 <div class="paper-text">
-<p class="tags"><span class="tag tag-ink">Article B · théorie</span> <span class="tag tag-hot">En préparation</span></p>
+<p class="tags"><span class="tag tag-ink">Article B · théorie</span> <span class="tag tag-teal">Brouillon · non relu par des pairs</span></p>
 <h2 id="paper-b">Les tours d'un T-mesh : obstructions à la fermeture des boucles d'arêtes</h2>
-<p>Le décalage d'un tour lu comme une holonomie de translation ; les conflits qu'imposent les singularités ; les tours que toute quantification dans des bornes laisse décalés ; et pourquoi choisir les tours à fermer est NP-difficile.</p>
-<p>Son brouillon est la première note de recherche du projet, qui porte le titre de l'article A et est en cours de réécriture pour devenir cet article. Titre anglais prévu : <em lang="en">Turns of a T-mesh: obstructions to closing edge loops</em>.</p>
-<p class="actions"><a class="button" href="../../docs/research/closing-helices/paper.pdf" hreflang="en" lang="en">Brouillon · PDF · anglais · 51 p.</a> <a class="button plain" href="../../docs/research/closing-helices/paper.tex">Source LaTeX</a></p>
+<p>Dans la quantification d'un T-mesh, une boucle d'arêtes se ferme en anneau quand un <em>tour</em>, une marche droite à travers les patchs qui revient sur son premier côté, a un <em>décalage</em> nul, une forme linéaire entière en les longueurs des arcs ; sinon elle s'enroule en hélice. Nous étudions pourquoi les tours ne peuvent pas tous être fermés.</p>
+<p class="actions"><a class="button primary" href="../../docs/research/closing-helices/paper.pdf" hreflang="en" lang="en">PDF · anglais · 25 p.</a> <a class="button plain" href="../../docs/research/closing-helices/paper.tex">Source LaTeX</a></p>
+<p class="note">Titre anglais : <em lang="en">Turns of a T-Mesh: Obstructions to Closing Edge Loops</em>. Une traduction française suivra, comme pour l'article A.</p>
 </div>
 </article>
 
