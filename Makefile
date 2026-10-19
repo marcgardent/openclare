@@ -1,6 +1,6 @@
 # Shortcuts for the common tasks. `make help` lists them.
 
-.PHONY: help build test scenes blenderkit essentials remeasure autoremesher scores quick pages dashboard view addon install addon-windows test-windows addon-test release paper paper-version paper-arxiv paper-clean proofs site site-serve
+.PHONY: help build test scenes blenderkit essentials remeasure autoremesher scores quick pages dashboard view addon install addon-windows test-windows addon-test version release paper paper-version paper-arxiv paper-clean proofs site site-serve
 
 help:
 	@echo "make build       build the openclare binary (release)"
@@ -17,10 +17,11 @@ help:
 	@echo "                 run the tests of the engine built for Windows, under Wine"
 	@echo "make addon-test  run the add-on in a Blender without interface (needs blender)"
 	@echo "make autoremesher download and install the AutoRemesher challenger into ~/.local/bin"
-	@echo "make release version=MAJOR|MINOR|FIX"
-	@echo "                 raise that number of the version, commit and tag it on main; PUSH=1"
-	@echo "                 to send the tag, from which GitHub builds the add-on for Linux and"
-	@echo "                 for Windows"
+	@echo "make version INCREMENT=MAJOR|MINOR|FIX"
+	@echo "                 raise that number of the version in the sources, on the branch of a"
+	@echo "                 change (every change of the add-on raises it)"
+	@echo "make release     tag main with its version; PUSH=1 to send the tag, from which GitHub"
+	@echo "                 builds the add-on for Linux and for Windows"
 	@echo "make scenes      make the scenes of the bench that are made from a file as it is"
 	@echo "                 (bench/scenes; needs blender). MODELS=cube,pig for some only,"
 	@echo "                 REFRESH=1 to make again those already there"
@@ -250,12 +251,17 @@ addon-test: addon
 	ulimit -v $(MEMORY_CAP); blender -b --factory-startup --python-exit-code 1 --python blender/test_addon.py
 
 # The next version: MAJOR, MINOR or FIX says which of its three numbers is
-# raised. Committed and tagged here; the tag pushed (PUSH=1, or by hand
-# afterwards), the add-on is built on GitHub for Linux and for Windows and
-# attached to a release (.github/workflows/release.yml).
+# raised, in the sources, on the branch of a change: main changes only through
+# pull requests.
+version:
+	@test -n "$(INCREMENT)" || { echo "which number? make version INCREMENT=MAJOR, MINOR or FIX"; exit 2; }
+	python3 scripts/release.py version $(INCREMENT)
+
+# A release: main tagged with the version it holds. The tag pushed (PUSH=1, or
+# by hand afterwards), the add-on is built on GitHub for Linux and for Windows
+# and attached to a release (.github/workflows/release.yml).
 release:
-	@test -n "$(version)" || { echo "which number? make release version=MAJOR, MINOR or FIX"; exit 2; }
-	python3 scripts/release.py $(version) $(if $(PUSH),--push)
+	python3 scripts/release.py tag $(if $(PUSH),--push)
 
 # The website: site/content and the documents of the repository, made into
 # static pages by site/build.py, its links checked. GitHub Pages publishes it
