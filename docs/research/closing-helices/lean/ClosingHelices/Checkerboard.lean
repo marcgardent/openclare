@@ -8,6 +8,7 @@ colour of a point `p` is the parity of `p₁ + p₂`, an element of `ZMod 2`.
 module
 
 public import ClosingHelices.Congruence
+public import ClosingHelices.Farkas
 public import Mathlib.NumberTheory.Zsqrtd.GaussianInt
 public import Mathlib.Data.ZMod.Basic
 public import Mathlib.Algebra.CharP.Two
@@ -15,11 +16,6 @@ public import Mathlib.Algebra.CharP.Two
 @[expose] public section
 
 set_option linter.unusedSectionVars false
--- Some case splits close a branch earlier than the others; keep one script for all.
-set_option linter.unusedTactic false
-set_option linter.unreachableTactic false
-set_option linter.unusedSimpArgs false
-set_option linter.extra.unnecessarySeqFocus false
 
 namespace ClosingHelices
 
@@ -72,15 +68,14 @@ theorem one_sub_gi_mul (p : GaussianInt) :
 the parity of `p₁ + p₂` (proof of Proposition "Checkerboard rule"). -/
 theorem parity_one_sub_quarter (p : GaussianInt) (r : GaussianInt) (hr : r = gi ∨ r = -gi) :
     (((1 - r) * p).re : ZMod 2) = colour p ∧ (((1 - r) * p).im : ZMod 2) = colour p := by
-  rcases hr with rfl | rfl <;> constructor <;> simp [colour, gi] <;> push_cast <;>
-    simp [zmod_two_neg, sub_eq_add_neg, add_comm]
+  rcases hr with rfl | rfl <;> constructor <;> simp [colour, gi] <;> simp [add_comm]
 
 /-- `(1 - R²) p = 2 p` is even. -/
 theorem one_sub_half_turn (p : GaussianInt) :
     (1 - gi * gi) * p = 2 * p ∧ (((1 - gi * gi) * p).re : ZMod 2) = 0 ∧
       (((1 - gi * gi) * p).im : ZMod 2) = 0 := by
   rw [gi_mul_gi]
-  refine ⟨by ring, ?_, ?_⟩ <;> simp <;> push_cast <;> ring_nf <;> simp [zmod_two_two]
+  refine ⟨by ring, ?_, ?_⟩ <;> simp <;> ring_nf <;> simp [zmod_two_two]
 
 /-! ### Quarter-turns keep colours -/
 
@@ -106,16 +101,14 @@ theorem IsQuarter.list_prod (l : List GaussianInt) (h : ∀ a ∈ l, IsQuarter a
 theorem colour_quarter_mul {a : GaussianInt} (ha : IsQuarter a) (x : GaussianInt) :
     colour (a * x) = colour x := by
   unfold IsQuarter at ha
-  rcases ha with rfl | rfl | rfl | rfl <;> simp [colour, gi] <;> push_cast <;>
-    simp [zmod_two_neg, sub_eq_add_neg, add_comm]
+  rcases ha with rfl | rfl | rfl | rfl <;> simp [colour, gi] <;> simp [add_comm]
 
 /-- Quarter-turns keep the property "both components have parity `σ`". -/
 theorem quarter_mul_parity {a : GaussianInt} (ha : IsQuarter a) (x : GaussianInt) (σ : ZMod 2)
     (hre : (x.re : ZMod 2) = σ) (him : (x.im : ZMod 2) = σ) :
     ((a * x).re : ZMod 2) = σ ∧ ((a * x).im : ZMod 2) = σ := by
   unfold IsQuarter at ha
-  rcases ha with rfl | rfl | rfl | rfl <;> simp [gi] <;> push_cast <;>
-    simp [zmod_two_neg, hre, him]
+  rcases ha with rfl | rfl | rfl | rfl <;> simp [gi] <;> simp [hre, him]
 
 /-- A rotation by a quarter-turn about a whole point keeps the colour: the colour
 of a vertex does not depend on the path it is developed along. -/
@@ -165,7 +158,7 @@ theorem checkerboard (cs : List (GaussianInt × GaussianInt)) (hq : ∀ c ∈ cs
           rcases hc with h | h | h | h
           · simp [h]
           · exact absurd (Or.inl h) hodd
-          · rw [h]; simp; push_cast; ring_nf; simp [zmod_two_two]
+          · rw [h]; simp; ring_nf; simp [zmod_two_two]
           · exact absurd (Or.inr h) hodd
       · have hc := hq c (by simp)
         have e : c.2 - c.1 * c.2 = (1 - c.1) * c.2 := by ring
@@ -177,7 +170,7 @@ theorem checkerboard (cs : List (GaussianInt × GaussianInt)) (hq : ∀ c ∈ cs
           rcases hc with h | h | h | h
           · simp [h]
           · exact absurd (Or.inl h) hodd
-          · rw [h]; simp; push_cast; ring_nf; simp [zmod_two_two]
+          · rw [h]; simp; ring_nf; simp [zmod_two_two]
           · exact absurd (Or.inr h) hodd
     simp only [burgers, oddColours, smul_eq_mul, Zsqrtd.re_add, Zsqrtd.im_add, Int.cast_add,
       hterm.1, hterm.2, ihre, ihim]
@@ -245,6 +238,102 @@ theorem parity_of_turn (N : ℕ) (D : ℕ → Motion GaussianInt GaussianInt) (�
   push_cast at this
   rw [← sub_eq_zero, sub_eq_add_neg, zmod_two_neg]
   exact this
+
+/-! ### Proposition "Parity of a turn on a sphere", lengths of any sign -/
+
+section AnySign
+
+variable {Arc Row : Type*} [Fintype Arc] [DecidableEq Arc] [Fintype Row] [DecidableEq Row]
+
+open Matrix
+
+/-- **From positive lengths to all.** Let `S` be a group of whole length vectors
+(the balanced ones) holding a vector `p` positive on every arc. A whole linear
+form even on every vector of `S` positive on every arc is even on all of `S`:
+`ℓ = (ℓ + N p) - N p`, with `ℓ + N p` positive for `N` large. -/
+theorem even_of_even_on_positive (S : AddSubgroup (Arc → ℤ)) (f : (Arc → ℤ) →+ ℤ)
+    (p : Arc → ℤ) (hpS : p ∈ S) (hp : ∀ e, 0 < p e)
+    (hf : ∀ ℓ ∈ S, (∀ e, 0 < ℓ e) → Even (f ℓ)) :
+    ∀ ℓ ∈ S, Even (f ℓ) := by
+  intro ℓ hℓ
+  set N : ℕ := ∑ e, (ℓ e).natAbs + 1 with hNdef
+  have hN : ∀ e, 0 < (ℓ + N • p) e := by
+    intro e
+    have h1 : (ℓ e).natAbs ≤ ∑ e, (ℓ e).natAbs :=
+      Finset.single_le_sum (f := fun e => (ℓ e).natAbs) (fun _ _ => Nat.zero_le _)
+        (Finset.mem_univ e)
+    have h2 : ((ℓ e).natAbs : ℤ) = |ℓ e| := Int.natCast_natAbs _
+    have h3 : -|ℓ e| ≤ ℓ e := neg_abs_le _
+    have h4 : (N : ℤ) ≤ N * p e := le_mul_of_one_le_right (by positivity) (hp e)
+    have h5 : ((∑ e, (ℓ e).natAbs : ℕ) : ℤ) + 1 = N := by rw [hNdef]; push_cast; ring
+    have h6 : ((ℓ e).natAbs : ℤ) ≤ ((∑ e, (ℓ e).natAbs : ℕ) : ℤ) := by exact_mod_cast h1
+    rw [Pi.add_apply, Pi.smul_apply, nsmul_eq_mul]
+    linarith
+  have hpos := hf _ (S.add_mem hℓ (S.nsmul_mem hpS N)) hN
+  have hp' := hf p hpS hp
+  have e : f ℓ = f (ℓ + N • p) - N * f p := by rw [map_add, map_nsmul, nsmul_eq_mul]; ring
+  rw [e]
+  exact hpos.sub (hp'.mul_left _)
+
+/-- A whole vector balancing every patch and positive on every arc exists as soon
+as a real one does (by Farkas' lemma over the rationals, `Farkas.whole_solution_of_real`,
+after scaling the real one to lengths at least one). -/
+theorem exists_positive_whole (B : Matrix Row Arc ℤ)
+    (hreal : ∃ ℓ : Arc → ℝ, B.map (Int.cast : ℤ → ℝ) *ᵥ ℓ = 0 ∧ ∀ e, 0 < ℓ e) :
+    ∃ p : Arc → ℤ, B *ᵥ p = 0 ∧ ∀ e, 0 < p e := by
+  obtain ⟨ℓ, hB, hpos⟩ := hreal
+  set c : ℝ := ∑ e, (ℓ e)⁻¹
+  have hge : ∀ e, (1 : ℝ) ≤ (c • ℓ) e := by
+    intro e
+    have h1 : (ℓ e)⁻¹ ≤ c :=
+      Finset.single_le_sum (fun e _ => (inv_pos.mpr (hpos e)).le) (Finset.mem_univ e)
+    have h2 : (ℓ e)⁻¹ * ℓ e = 1 := inv_mul_cancel₀ (hpos e).ne'
+    rw [Pi.smul_apply, smul_eq_mul]
+    nlinarith [hpos e]
+  obtain ⟨L, hL, hLge⟩ := Farkas.whole_solution_of_real B (fun _ => 1) (fun _ => zero_le_one)
+    ⟨c • ℓ, by rw [Matrix.mulVec_smul, hB, smul_zero], fun e => by simpa using hge e⟩
+  exact ⟨L, hL, fun e => lt_of_lt_of_le one_pos (hLge e)⟩
+
+theorem even_sub_iff_zmod_two (x y : ℤ) : Even (x - y) ↔ (x : ZMod 2) = y := by
+  rw [ZMod.intCast_eq_intCast_iff_dvd_sub, even_iff_two_dvd, ← dvd_neg, neg_sub]
+  rfl
+
+/-- **Proposition "Parity of a turn on a sphere"**, for whole balanced lengths of
+any sign. The balances are `B ℓ = 0`, `B` whole, and some real lengths positive
+on every arc balance every patch. The length `α` and the shift `s` of the turn
+are whole linear forms in `ℓ` (Proposition "The shift of a turn is linear",
+assumed: the turn crosses the same patches at every `ℓ`). The hypothesis
+`hcolour` is the first step of the note's proof, taken from the topology: at
+every whole balanced `ℓ` positive on every arc, the quad graph has a proper
+2-colouring (a sphere), giving the development `D`, the constants `κ` and the
+frame `a` of `parity_of_turn`. Then `α ≡ s (mod 2)` at every whole balanced `ℓ`. -/
+theorem parity_of_turn_any_sign (B : Matrix Row Arc ℤ)
+    (hreal : ∃ ℓ : Arc → ℝ, B.map (Int.cast : ℤ → ℝ) *ᵥ ℓ = 0 ∧ ∀ e, 0 < ℓ e)
+    (α s : (Arc → ℤ) →+ ℤ)
+    (hcolour : ∀ ℓ : Arc → ℤ, B *ᵥ ℓ = 0 → (∀ e, 0 < ℓ e) →
+      ∃ (N : ℕ) (D : ℕ → Motion GaussianInt GaussianInt) (κ : ℕ → ZMod 2) (a : GaussianInt),
+        (∀ k, IsQuarter (D k).lin) ∧ (D 0).trans = 0 ∧
+        (∀ k < N, ∃ y y', (D k).apply y = (D (k + 1)).apply y' ∧
+          colour y + κ k = colour y' + κ (k + 1)) ∧
+        κ N = κ 0 ∧ IsQuarter a ∧ a * (D N).trans = ⟨α ℓ, s ℓ⟩) :
+    ∀ ℓ : Arc → ℤ, B *ᵥ ℓ = 0 → (α ℓ : ZMod 2) = s ℓ := by
+  let S : AddSubgroup (Arc → ℤ) :=
+    { carrier := {ℓ | B *ᵥ ℓ = 0}
+      add_mem' := fun {x y} (hx : B *ᵥ x = 0) (hy : B *ᵥ y = 0) => by
+        simp [Matrix.mulVec_add, hx, hy]
+      zero_mem' := Matrix.mulVec_zero B
+      neg_mem' := fun {x} (hx : B *ᵥ x = 0) => by simp [Matrix.mulVec_neg, hx] }
+  have hS : ∀ ℓ, ℓ ∈ S ↔ B *ᵥ ℓ = 0 := fun _ => Iff.rfl
+  obtain ⟨p, hpB, hp⟩ := exists_positive_whole B hreal
+  intro ℓ hℓ
+  rw [← even_sub_iff_zmod_two, ← AddMonoidHom.sub_apply]
+  refine even_of_even_on_positive S (α - s) p ((hS p).mpr hpB) hp (fun m hm hmpos => ?_) ℓ
+    ((hS ℓ).mpr hℓ)
+  obtain ⟨N, D, κ, a, hq, h0, hstep, hback, ha, hframe⟩ := hcolour m ((hS m).mp hm) hmpos
+  rw [AddMonoidHom.sub_apply, even_sub_iff_zmod_two]
+  exact parity_of_turn N D κ hq h0 hstep hback a ha (α m) (s m) hframe
+
+end AnySign
 
 /-! ### Parity of every loop, from the colours -/
 
@@ -322,11 +411,9 @@ theorem checkerboard_word (j : ι → ℤ) (p : ι → GaussianInt) (w : List (�
     simp [colour]
     ring
   constructor
-  · rw [← hqre]; simp [gi]; push_cast; ring_nf; try simp [zmod_two_two]
-  · rw [← hqre]; simp [gi]; push_cast; ring_nf
-    (try simp only [zmod_two_two, zero_mul, add_zero, mul_zero])
-    (try rw [show (-1 : ZMod 2) = 1 from rfl])
-    (try ring)
+  · rw [← hqre]; simp [gi]; ring_nf; try simp [zmod_two_two]
+  · rw [← hqre]; simp [gi]; ring_nf
+    (try simp only [zmod_two_two, add_zero, mul_zero])
 
 /-- A component `±τ₁` or `±τ₂` of a translation, chosen by `k : Fin 4`. -/
 def component (k : Fin 4) (t : GaussianInt) : ℤ :=

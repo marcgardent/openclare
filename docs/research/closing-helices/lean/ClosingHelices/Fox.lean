@@ -24,11 +24,6 @@ public import Mathlib.Basic.Complex.BigOperators
 @[expose] public section
 
 set_option linter.unusedSectionVars false
--- Some case splits close a branch earlier than the others; keep one script for all.
-set_option linter.unusedTactic false
-set_option linter.unreachableTactic false
-set_option linter.unusedSimpArgs false
-set_option linter.extra.unnecessarySeqFocus false
 
 namespace ClosingHelices
 
@@ -86,6 +81,53 @@ theorem hol_append (w w' : List (ι × Bool)) :
   induction w with
   | nil => ext <;> simp [comp, Motion.id]
   | cons x w ih => simp [ih, comp_assoc]
+
+/-! ### Words and compositions of rotations
+
+`hol (x :: w)` applies the head `x` last, `composeAll (f :: fs)` applies it first:
+the holonomy of a word is the composition of the rotations of its letters taken
+from the right. -/
+
+/-- The holonomy of a word is `composeAll` of the rotations of its letters,
+reversed. -/
+theorem hol_eq_composeAll (w : List (ι × Bool)) :
+    hol u p w = composeAll ((w.map fun x => rotAbout (letterLin u x) (p x.1)).reverse) := by
+  induction w with
+  | nil => rfl
+  | cons x w ih => simp [ih, composeAll_append]
+
+/-- The same with the cone points `(Rᵢ, pᵢ)` of the letters, read from the right:
+the word `xₘ ⋯ x₁` is `ρₘ ∘ ⋯ ∘ ρ₁`. -/
+theorem hol_eq_rotations (w : List (ι × Bool)) :
+    hol u p w = composeAll (rotations ((w.map fun x => (letterLin u x, p x.1)).reverse)) := by
+  rw [hol_eq_composeAll, rotations, List.map_reverse, List.map_map]
+  rfl
+
+/-- The translation of the holonomy of a word is the Burgers sum of its letters,
+read from the right. -/
+theorem hol_trans_eq_burgers (w : List (ι × Bool)) :
+    (hol u p w).trans = burgers ((w.map fun x => (letterLin u x, p x.1)).reverse) := by
+  rw [hol_eq_rotations, composeAll_rotations]
+
+/-- The word `xₘ ⋯ x₁` of a list `[i₁, …, iₘ]` of indices, each letter positive: its
+head is the last element of the list. -/
+def simpleWord (l : List ι) : List (ι × Bool) := (l.map fun i => (i, true)).reverse
+
+/-- The holonomy of `xₘ ⋯ x₁` is `ρₘ ∘ ⋯ ∘ ρ₁`, the composition of Proposition "The
+shift is set by the singularities" (a) with the cone points `(Rᵢ, pᵢ)` in the
+order of the list. -/
+theorem hol_simpleWord (l : List ι) :
+    hol u p (simpleWord l) = composeAll (rotations (l.map fun i => ((u i : A), p i))) := by
+  rw [hol_eq_rotations, simpleWord, List.map_reverse, List.reverse_reverse, List.map_map]
+  rfl
+
+theorem rhoW_simpleWord (l : List ι) :
+    rhoW u (simpleWord l) = (l.map fun i => (u i : A)).reverse.prod := by
+  simp [rhoW, simpleWord, List.map_reverse, Function.comp_def, letterLin]
+
+theorem simpleWord_append (a b : List ι) :
+    simpleWord (a ++ b) = simpleWord b ++ simpleWord a := by
+  simp [simpleWord]
 
 section Fox
 
@@ -212,6 +254,70 @@ theorem fox_mul_invWord (i : ι) (g w : List (ι × Bool)) :
     rw [ih]
     exact h1
 
+/-! ### The Fox–Burgers formula is the Burgers sum -/
+
+/-- The Fox–Burgers sum of a word is the Burgers sum of its letters, read from the
+right: both are the translation of its holonomy. -/
+theorem fox_burgers_eq_burgers [Fintype ι] (w : List (ι × Bool)) :
+    ∑ i, fox u i w • (p i - (u i : A) • p i) =
+      burgers ((w.map fun x => (letterLin u x, p x.1)).reverse) := by
+  rw [← fox_burgers, hol_trans_eq_burgers]
+
+theorem fox_eq_zero_of_forall_ne (i : ι) (w : List (ι × Bool)) (h : ∀ x ∈ w, x.1 ≠ i) :
+    fox u i w = 0 := by
+  induction w with
+  | nil => rfl
+  | cons x w ih =>
+    obtain ⟨j, b⟩ := x
+    have hj : j ≠ i := h (j, b) (by simp)
+    simp [fox, hj, ih fun y hy => h y (by simp [hy])]
+
+/-- In `xₘ ⋯ x₁`, with `i` once in the list, `ρ(∂w/∂xᵢ)` is the rotation of the
+letters left of `xᵢ`, `Rₘ ⋯ Rₖ₊₁`. -/
+theorem fox_simpleWord_split (a b : List ι) (i : ι) (ha : i ∉ a) (hb : i ∉ b) :
+    fox u i (simpleWord (a ++ i :: b)) = (b.map fun j => (u j : A)).reverse.prod := by
+  have hzero : ∀ l : List ι, i ∉ l → fox u i (simpleWord l) = 0 := fun l hl =>
+    fox_eq_zero_of_forall_ne i _ fun x hx => by
+      simp only [simpleWord, List.mem_reverse, List.mem_map] at hx
+      obtain ⟨j, hj, rfl⟩ := hx
+      exact fun h => hl (h ▸ hj)
+  rw [show a ++ i :: b = a ++ [i] ++ b by simp, simpleWord_append, simpleWord_append,
+    fox_append, fox_append, hzero b hb, hzero a ha, rhoW_simpleWord]
+  simp [simpleWord, fox]
+
+/-- **The Fox–Burgers formula on `xₘ ⋯ x₁`, the coefficients.** For a list
+`[i₁, …, iₘ]` of distinct indices, `ρ(∂(xₘ ⋯ x₁)/∂x_{iₖ}) = Qₖ = Rₘ ⋯ Rₖ₊₁`, the
+coefficient of the `k`-th cone point in `Motion.burgers_eq_sum`. -/
+theorem fox_simpleWord (l : List ι) (hl : l.Nodup) (k : ℕ) (hk : k < l.length) :
+    fox u l[k] (simpleWord l) = ((l.drop (k + 1)).map fun i => (u i : A)).reverse.prod := by
+  have hsplit : l = l.take k ++ l[k] :: l.drop (k + 1) := by
+    rw [← List.drop_eq_getElem_cons hk, List.take_append_drop]
+  have hnd := hl
+  rw [hsplit, List.nodup_append, List.nodup_cons] at hnd
+  have ha : l[k] ∉ l.take k := fun h => hnd.2.2 _ h _ (List.mem_cons_self) rfl
+  have h := fox_simpleWord_split (u := u) _ _ _ ha hnd.2.1.1
+  rwa [← hsplit] at h
+
+/-- **The Fox–Burgers formula on `xₘ ⋯ x₁` is Proposition "The shift is set by the
+singularities" (a).** The Fox–Burgers sum of the word is the Burgers sum
+`∑ₖ Qₖ (pₖ - Rₖ pₖ)` of the cone points in the order of the list (`Motion.burgers_map`),
+`Qₖ = Rₘ ⋯ Rₖ₊₁`; by `fox_simpleWord`, `Qₖ` is the image of the Fox derivative
+when the indices are distinct. -/
+theorem fox_burgers_simple [Fintype ι] (l : List ι) :
+    ∑ i, fox u i (simpleWord l) • (p i - (u i : A) • p i) =
+      ∑ k : Fin l.length, ((l.drop (k + 1)).map fun i => (u i : A)).reverse.prod •
+        (p l[k] - (u l[k] : A) • p l[k]) := by
+  rw [← fox_burgers, hol_simpleWord, composeAll_rotations, burgers_map]
+
+/-- Inserting a conjugate `g ϱ g⁻¹` of a relation with trivial holonomy does not
+change the holonomy. -/
+theorem hol_insert_relation (a g ϱ b : List (ι × Bool)) (hϱ : hol u p ϱ = Motion.id) :
+    hol u p (a ++ (g ++ ϱ ++ invWord g) ++ b) = hol u p (a ++ b) := by
+  have hgg : comp (hol u p g) (hol u p (invWord g)) = Motion.id := by
+    have := hol_mul_invWord (u := u) (p := p) g []
+    rwa [List.append_nil, hol_append] at this
+  simp only [hol_append, hϱ, comp_id, hgg]
+
 /-- **Inserting a conjugate `g ϱ g⁻¹` of a relation `ϱ` with trivial holonomy**
 (the paragraph after the Fox–Burgers formula). Inserted after a prefix `a` of the
 word, it leaves the holonomy unchanged and adds `ρ(a) ρ(g) ρ(∂ϱ/∂xᵢ)` to the image
@@ -223,21 +329,26 @@ theorem insert_relation (i : ι) (a g ϱ b : List (ι × Bool)) (hϱ : hol u p �
       fox u i (a ++ (g ++ ϱ ++ invWord g) ++ b) =
         fox u i (a ++ b) + rhoW u a * rhoW u g * fox u i ϱ := by
   have hrϱ : rhoW u ϱ = 1 := by rw [← hol_lin (p := p), hϱ]; rfl
-  have hgg : comp (hol u p g) (hol u p (invWord g)) = Motion.id := by
-    have := hol_mul_invWord (u := u) (p := p) g []
-    rwa [List.append_nil, hol_append] at this
   have hfg : fox u i g + rhoW u g * fox u i (invWord g) = 0 := by
     have := fox_mul_invWord (u := u) i g []
     rwa [List.append_nil, fox_append] at this
   have hrg := rhoW_mul_invWord (u := u) g
-  refine ⟨?_, ?_⟩
-  · simp only [hol_append, hϱ, comp_id, hgg]
-  · simp only [fox_append, rhoW_append, hrϱ, mul_one, hrg]
-    have : fox u i g + rhoW u g * fox u i ϱ + rhoW u g * fox u i (invWord g) =
-        rhoW u g * fox u i ϱ := by
-      rw [add_right_comm, hfg, zero_add]
-    rw [this, mul_assoc]
-    abel
+  refine ⟨hol_insert_relation a g ϱ b hϱ, ?_⟩
+  simp only [fox_append, rhoW_append, hrϱ, mul_one, hrg]
+  have : fox u i g + rhoW u g * fox u i ϱ + rhoW u g * fox u i (invWord g) =
+      rhoW u g * fox u i ϱ := by
+    rw [add_right_comm, hfg, zero_add]
+  rw [this, mul_assoc]
+  abel
+
+/-- **The Fox–Burgers sum does not change** when a conjugate of a relation with
+trivial holonomy is inserted, although the Fox derivatives do (`insert_relation`):
+both sums are the translation of the same holonomy. -/
+theorem fox_sum_insert_relation [Fintype ι] (a g ϱ b : List (ι × Bool))
+    (hϱ : hol u p ϱ = Motion.id) :
+    ∑ i, fox u i (a ++ (g ++ ϱ ++ invWord g) ++ b) • (p i - (u i : A) • p i) =
+      ∑ i, fox u i (a ++ b) • (p i - (u i : A) • p i) := by
+  rw [← fox_burgers, ← fox_burgers, hol_insert_relation a g ϱ b hϱ]
 
 /-! ### Proposition "Winding numbers do not suffice" -/
 
@@ -264,8 +375,8 @@ theorem commutator_holonomy {A V : Type*} [CommRing A] [AddCommGroup V] [Module 
     calc (u a : A) * (u b * (↑(u a)⁻¹ * ↑(u b)⁻¹))
         = ((u a : A) * ↑(u a)⁻¹) * ((u b : A) * ↑(u b)⁻¹) := by ring
       _ = 1 := by rw [ha, hb, one_mul]
-  · simp only [commutatorWord, hol_cons, hol_nil, comp_trans, comp_lin, rotAbout_lin,
-      rotAbout_trans, letterLin, Motion.id_trans, translation_trans, smul_zero, add_zero]
+  · simp only [commutatorWord, hol_cons, hol_nil, comp_trans, rotAbout_lin, rotAbout_trans,
+      letterLin, Motion.id_trans, translation_trans, smul_zero, add_zero]
     have e1 : (u a : A) * (u b * ↑(u a)⁻¹) = u b := by
       rw [mul_left_comm, ha, mul_one]
     have e2 : (u a : A) * (u b * (↑(u a)⁻¹ * ↑(u b)⁻¹)) = 1 := by
@@ -322,6 +433,22 @@ theorem fox_burgers_combination {κ : Type*} (s : Finset κ) (u : ι → ℂˣ) 
   rw [← re_ofReal_mul]
   congr 1
   ring
+
+/-- **Inserting the relation in one word of a combination.** Replacing the word
+`a b` of the turn `r₀` by `a g ϱ g⁻¹ b`, `ϱ` with trivial holonomy, changes the
+twisted windings `Wᵢ` but not `∑ᵢ ⟨Wᵢ, (1 - Rᵢ) pᵢ⟩`. -/
+theorem combination_insert_relation {κ : Type*} [DecidableEq κ] (s : Finset κ) (u : ι → ℂˣ)
+    (p : ι → ℂ) (c : κ → ℝ) (f : κ → ℂ) (w : κ → List (ι × Bool)) (r₀ : κ)
+    (a g ϱ b : List (ι × Bool)) (hw : w r₀ = a ++ b) (hϱ : hol u p ϱ = Motion.id) :
+    ∑ i, dotC (twistedWinding s u c f (Function.update w r₀ (a ++ (g ++ ϱ ++ invWord g) ++ b)) i)
+        (p i - (u i : ℂ) * p i) =
+      ∑ i, dotC (twistedWinding s u c f w i) (p i - (u i : ℂ) * p i) := by
+  rw [← fox_burgers_combination, ← fox_burgers_combination]
+  refine Finset.sum_congr rfl fun r _ => ?_
+  by_cases h : r = r₀
+  · subst h
+    rw [Function.update_self, hol_insert_relation a g ϱ b hϱ, hw]
+  · rw [Function.update_of_ne h]
 
 /-- **Proposition "Fox–Burgers formula", second identity.** If every word has
 trivial rotation, `∑ᵢ (1 - Rᵢ)ᵀ Wᵢ = 0`. -/

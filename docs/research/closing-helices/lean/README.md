@@ -2,7 +2,7 @@
 
 This Lake project checks with Lean 4 and Mathlib the **algebraic cores** of the
 results of the research note `../paper.tex` (Sections 3, 7 and 9, and
-Appendix F): 187 `theorem` declarations, many of them small lemmas and a few
+Appendix F): 228 `theorem` declarations, many of them small lemmas and a few
 restating a hypothesis (`dislocation_closes_iff`, `staircase_rings`); the
 count is not evidence, the table below names the main ones. The topological facts the note uses (that a loop develops into a given
 motion, that a curve bounds a disc, that the quad graph of a sphere is
@@ -38,9 +38,9 @@ quarter-turn `R(a, b) = (-b, a)` the multiplication by `i`, as in
 | Prop. "Completeness at given lengths", in a model only | `stripsEquiv` (in a model where the strips are *defined* as the cycles of a successor map built from a permutation `walk` of the stations, so the bijection holds by construction; the station walk of the gluing data, `stationWalk`, is not shown to be that permutation), `exists_station`, `sameCycle_station_iff`; `realWalk_iterate_half`, `realWalk_iterate_open` (the walk from `k + ½`, or from any point of `(k, k + 1)`, follows the unit edges); `glueLine_half`, `glueLine_open`, `oddCount_motion` (a quarter-turn with a whole translation keeps nodes, edge midpoints and quad centres apart) | the patches are integer rectangles with positive sides (`hdepth`) glued along their arcs by `t ↦ ±t + c`, `c` whole, mapping the unit edges of the sides one to one (a closed surface); that the station walk is a permutation and that the model is the quad mesh |
 | Lemma "Gauss–Bonnet for turns" | `gauss_bonnet_turn` (`∑ (4 - k) = 4 χ` inside a region whose border turns by zero), `gauss_bonnet`, `turn_border_sum`, `sum_deg`, `sum_corners` | that `γ̄`, on the grid refined by two, bounds a disc (or an annulus): a complex of quads with Euler characteristic `χ` whose interior vertices have a cycle as link and border vertices a path (`IsRegion`) |
 | … the rotation part | `quarter_turns_prod_eq_one_iff` (`R^{j₁}⋯R^{jₘ} = I ⇔ 4 ∣ ∑ jᵢ`) | — |
-| Lemma "One self-crossing" | `gauss_bonnet_corners` (`4 χ - a + b` with `a` convex and `b` concave corners on the border) | the regions cut open at the crossing are discs; which of their corners are convex |
+| Lemma "One self-crossing" | `one_crossing_on_walk` (totals `3, 3, 2`), `one_crossing_on_segment` (totals `2, 2, 4`), from `gauss_bonnet_corners` (`4 χ - a + b` with `a` convex and `b` concave corners on the border) | the regions cut open at the crossing are discs, the crossing doubled on the border of the third; how many convex and concave corners each region has (`a - b = 1, 1, 2` on the walk, `2, 2, 0` on the closing segment), the note's case analysis |
 | Prop. "The shift is set by the singularities" (a) | `Motion.composeAll_rotations`, `Motion.burgers_eq_sum` (`B = ∑ Qᵢ (I - Rᵢ) pᵢ`, `Qᵢ = Rₘ⋯Rᵢ₊₁`), `Motion.translation_inv` (the sign) | that `ĥ(γ̄)` is the composition of the rotations round the cone points |
-| … the order of first visit | `Forest.glue_eq_preorder`, `Forest.glue_rotations`; `Forest.order_of_first_visit_matters` (last visit gives another vector) | the recursion `G_f = G_{f_r} ∘ ⋯ ∘ G_{f_1} ∘ ρ_v` read off the cut tree |
+| … the order of first visit | `Forest.glue_eq_preorder`, `Forest.glue_rotations`; `Forest.order_of_first_visit_matters` (last visit gives another vector); all in `FirstVisit.lean`, namespace `Forest` | the recursion `G_f = G_{f_r} ∘ ⋯ ∘ G_{f_1} ∘ ρ_v` read off the cut tree |
 | Prop. (b), annuli | `Motion.annulus_holonomy` (`ĥ(γ̄₁ κ γ̄₂⁻¹ κ⁻¹)` is the translation by `T₁ - M T₂`), `Motion.conj_translation` | the homomorphism `ĥ` and the holonomies of the two turns |
 | Prop. "A dislocation between two turns" (i), (ii) | `dislocation_burgers` (the four orders and orientations), `dislocation` (`±d₁ ± d₂`, `‖B‖² = 2‖d‖²`), `dislocation_closes_iff`, `dislocation_straight` | as in (b) |
 | Prop. "Staircases" | `staircase`, `staircase_rings`, `nonneg_form_pos` | `d = ∑ ℓᵢ vᵢ` along the staircase (development along homotopic paths) |
@@ -48,8 +48,10 @@ quarter-turn `R(a, b) = (-b, a)` the multiplication by `i`, as in
 | Prop. "A separatrix that winds", the conjugation step | `Motion.conj_translation` | the free homotopy |
 | Parity of `(I - R^{±1}) p`, `(I - R²) p` | `parity_one_sub_quarter`, `one_sub_half_turn`, `quarter_mul_parity`, `colour_rotAbout` | — |
 | Prop. "Checkerboard rule" | `checkerboard`, `oddColours_translate` | the Burgers sum of Prop. (b) |
-| Prop. "Parity of a turn on a sphere" | `parity_chain`, `parity_of_turn` (the induction of the note's proof); `colour_hol_trans` (a second proof) | a proper 2-colouring of the quad graph; for the second proof, that the turn is a word in the loops round the cone points (closed genus-zero surface) |
+| Prop. "Parity of a turn on a sphere" | `parity_of_turn_any_sign` (whole balanced lengths of any sign), from `parity_chain`, `parity_of_turn` (the induction of the note's proof at positive lengths), `even_of_even_on_positive` (`ℓ = (ℓ + N p) - N p`) and `exists_positive_whole` (positive whole balanced lengths from real ones, by `Farkas.whole_solution_of_real`); `colour_hol_trans` (a second proof) | at every positive whole balanced `ℓ`, a proper 2-colouring of the quad graph with the development of the turn (`parity_of_turn`'s hypotheses); that the length and the shift of the turn are whole linear forms in `ℓ` (the turn crosses the same patches); real positive balanced lengths; for the second proof, that the turn is a word in the loops round the cone points (closed genus-zero surface) |
 | Prop. "Fox–Burgers formula" | `fox_burgers`, `fox_fundamental`, `fox_burgers_combination`, `twisted_relation`, `combination_translate`, `insert_relation`; on the free group: `holFG`, `foxFG` | the presentation of `π₁(Σ°)` by the loops `λᵢ` |
+| … inserting the relation leaves the sum unchanged | `fox_sum_insert_relation`, `combination_insert_relation` (the `Wᵢ` change, `∑ᵢ ⟨Wᵢ, (I - Rᵢ) pᵢ⟩` does not), `hol_insert_relation` | as above |
+| … for a simple turn it is Prop. "The shift is set by the singularities" (a) | `hol_eq_composeAll` (`Fox.hol` applies the head of the word last, `composeAll` first: the list is reversed), `hol_trans_eq_burgers`, `fox_burgers_eq_burgers` (any word); on `simpleWord l = xₘ ⋯ x₁`: `hol_simpleWord`, `fox_burgers_simple` (the Fox–Burgers sum is `∑ₖ Qₖ (pₖ - Rₖ pₖ)`, `Motion.burgers_map`), `fox_simpleWord` (`ρ(∂w/∂x_{iₖ}) = Qₖ = Rₘ⋯Rₖ₊₁` when the indices are distinct) | as above; the letters are the rotations about the developed cone points |
 | Corollary "Checkerboard rule for any combination" | `checkerboard_word`, `checkerboard_combination`, `colours_flip`, `relation_colours`, `winding_constant` | as above; the relation `ϱ = λ₁⋯λₙ` has trivial holonomy |
 | Prop. "Winding numbers do not suffice" | `commutator_holonomy`, `winding_numbers_do_not_suffice` | — |
 | Lemma "Handshake" | `handshake`, `column_even`, `no_whole_solution` | — |
@@ -66,7 +68,7 @@ each side (Jordan–Schoenflies) and that the refined quads inside form a disc i
 the combinatorial sense (`IsRegion`); the developing map, holonomy as a
 homomorphism of the fundamental group and its presentation by the loops round
 the cone points; which corners of the regions of Lemma "One self-crossing" are
-convex. Two standard graph facts, days of work: a finite graph is connected
+convex (the totals are proved from them). Two standard graph facts, days of work: a finite graph is connected
 exactly when it has a spanning tree grown by leaves, and Harary's converse (a
 graph all of whose cycles are balanced has a switching; only the direction the
 proposition needs is proved). Strips on surfaces with borders (the walk is then
@@ -79,7 +81,7 @@ measured statement.
    the relation in `w_r` *after a prefix `a`* adds `ρ(a g ∂ϱ/∂xᵢ)ᵀ f_r` to `Wᵢ`,
    not `ρ(g ∂ϱ/∂xᵢ)ᵀ f_r`; the note's formula is the case of an insertion at
    the front (`insert_relation`). The conclusion (the sum does not change) is
-   right.
+   right (`fox_sum_insert_relation`, `combination_insert_relation`).
 2. **Theorem "Forced shifts" needs neither convexity nor whole lengths.** The
    proof holds for any set `P` of lengths and any `ℓ ∈ P`
    (`forced_helices`); convexity only makes `τ_P` computable by linear
@@ -261,9 +263,11 @@ the whole lengths of the integer search, `B` the balance matrix.
 * `Motion.lean`: motions, compositions, the Burgers sum, annuli, exchanges.
 * `FirstVisit.lean`: the cut tree and the order of first visit.
 * `QuarterTurn.lean`: quarter-turns of `ℂ`; dislocations, staircases.
-* `Fox.lean`: words, holonomy, Fox derivatives, twisted windings, commutators.
+* `Fox.lean`: words, holonomy, Fox derivatives, twisted windings, commutators;
+  the Fox–Burgers sum as the Burgers sum of `Motion.lean`.
 * `Congruence.lean`: the Fox–Burgers formula modulo `(1 - z)²`; orders 2, 3, 4, 6.
-* `Checkerboard.lean`: colours in `ℤ[i]`, the checkerboard rules, parity of a turn.
+* `Checkerboard.lean`: colours in `ℤ[i]`, the checkerboard rules, parity of a turn
+  at lengths of any sign.
 * `Balances.lean`: the handshake lemma.
 * `Bidirected.lean`: trees, switchings and unbalanced cycles of a bidirected
   graph; Proposition "Free arcs".
@@ -271,6 +275,6 @@ the whole lengths of the integer search, `B` the balance matrix.
   "Sign-definite turns" and "Whole solutions exist at some size".
 * `Completeness.lean`: Proposition "Completeness at given lengths".
 * `GaussBonnet.lean`: discrete Gauss–Bonnet for quads, triangles and hexagons;
-  Lemmas "Gauss–Bonnet for turns" and "One self-crossing" (the count).
+  Lemmas "Gauss–Bonnet for turns" and "One self-crossing" (the counts).
 * `BeyondQuads.lean`: fields of any order: rotations and dislocations.
 * `Forced.lean`: forced helices and chains of dislocations.

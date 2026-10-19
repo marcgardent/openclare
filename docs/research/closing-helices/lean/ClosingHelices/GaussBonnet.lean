@@ -28,7 +28,8 @@ The counting holds for any faces with `p` corners and regular valence `q` with
 the plane, so for the fields of order 4, 6 and 3.
 
 The count with convex and concave corners (`gauss_bonnet_corners`) gives the
-totals of Lemma "One self-crossing" from the corners of its three regions.
+totals of Lemma "One self-crossing" from the corners of its three regions
+(`one_crossing_on_walk`, `one_crossing_on_segment`).
 
 Not formalized: that a simple closed curve on a sphere bounds a disc on each side
 (Jordan–Schoenflies), that the refined quads inside form a complex with the local
@@ -154,9 +155,10 @@ inside (a convex corner, straight, a concave corner), with `a` convex and `b`
 concave corners, the indices inside add up to `4 χ - a + b`. Lemma "One
 self-crossing" is this count on the three regions of the curve cut open at the
 crossing (each a disc, the crossing doubled on the border of the third region),
-once the corners are known: `(a, b) = (1, 0), (1, 0), (2, 0)` when the crossing is
-on the walk, giving `3, 3, 2`; on the closing segment, `(2, 0)` for each lobe and
-`(2, 2)` for the third region, giving `2, 2, 4`. -/
+once the corners are known: `a - b = 1, 1, 2` when the crossing is on the walk,
+giving `3, 3, 2`; on the closing segment, `(a, b) = (2, 0)` for each lobe and
+`(2, 2)` for the third region, giving `2, 2, 4` (`one_crossing_on_walk`,
+`one_crossing_on_segment`). -/
 theorem gauss_bonnet_corners (ends : Ed → Fin 2 → Vx) (corner : Fc → Fin 4 → Vx)
     (border : Finset Vx) (χ : ℤ) (h : IsRegion ends corner border χ)
     (hc : ∀ v ∈ border, corners corner v = 1 ∨ corners corner v = 2 ∨ corners corner v = 3) :
@@ -170,6 +172,82 @@ theorem gauss_bonnet_corners (ends : Ed → Fin 2 → Vx) (corner : Fc → Fin 4
   have := gauss_bonnet ends corner border χ h
   rw [hb] at this
   linarith
+
+/-- One region of Lemma "One self-crossing": a disc (`χ = 1`) whose border vertices
+have one, two or three corners inside, with `e` more convex corners (one corner
+inside) than concave ones (three corners inside), holds total index `4 - e`. -/
+theorem disc_index_of_excess (ends : Ed → Fin 2 → Vx) (corner : Fc → Fin 4 → Vx)
+    (border : Finset Vx) (h : IsRegion ends corner border 1)
+    (hc : ∀ v ∈ border, corners corner v = 1 ∨ corners corner v = 2 ∨ corners corner v = 3)
+    (e : ℕ) (he : #{v ∈ border | corners corner v = 1} = #{v ∈ border | corners corner v = 3} + e) :
+    ∑ v ∈ borderᶜ, ((4 : ℤ) - deg ends v) = 4 - e := by
+  rw [gauss_bonnet_corners ends corner border 1 h hc, he]
+  push_cast
+  ring
+
+section OneCrossing
+
+variable {Vx₁ Ed₁ Fc₁ Vx₂ Ed₂ Fc₂ Vx₃ Ed₃ Fc₃ : Type*}
+  [Fintype Vx₁] [DecidableEq Vx₁] [Fintype Ed₁] [Fintype Fc₁]
+  [Fintype Vx₂] [DecidableEq Vx₂] [Fintype Ed₂] [Fintype Fc₂]
+  [Fintype Vx₃] [DecidableEq Vx₃] [Fintype Ed₃] [Fintype Fc₃]
+
+/-- **Lemma "One self-crossing", the crossing on the walk.** Two lobes and a third
+region, each a disc of quads of the refined mesh (`IsRegion` with `χ = 1`), whose
+border vertices have one (convex), two (straight) or three (concave) corners
+inside; the border of the third region passes the crossing twice and holds it
+as two vertices. If each lobe has one convex corner more than concave ones and
+the third region two more, the indices `4 - k` inside add up to `3`, `3` and `2`.
+In the note, the excess is the convex corner at the crossing (one per lobe, two
+for the third region); the two corners of the closing segment, one convex and
+one concave on each region that sees them, cancel. Which corners are convex is
+the hypothesis. -/
+theorem one_crossing_on_walk
+    (ends₁ : Ed₁ → Fin 2 → Vx₁) (corner₁ : Fc₁ → Fin 4 → Vx₁) (border₁ : Finset Vx₁)
+    (ends₂ : Ed₂ → Fin 2 → Vx₂) (corner₂ : Fc₂ → Fin 4 → Vx₂) (border₂ : Finset Vx₂)
+    (ends₃ : Ed₃ → Fin 2 → Vx₃) (corner₃ : Fc₃ → Fin 4 → Vx₃) (border₃ : Finset Vx₃)
+    (h₁ : IsRegion ends₁ corner₁ border₁ 1) (h₂ : IsRegion ends₂ corner₂ border₂ 1)
+    (h₃ : IsRegion ends₃ corner₃ border₃ 1)
+    (hc₁ : ∀ v ∈ border₁, corners corner₁ v = 1 ∨ corners corner₁ v = 2 ∨ corners corner₁ v = 3)
+    (hc₂ : ∀ v ∈ border₂, corners corner₂ v = 1 ∨ corners corner₂ v = 2 ∨ corners corner₂ v = 3)
+    (hc₃ : ∀ v ∈ border₃, corners corner₃ v = 1 ∨ corners corner₃ v = 2 ∨ corners corner₃ v = 3)
+    (he₁ : #{v ∈ border₁ | corners corner₁ v = 1} = #{v ∈ border₁ | corners corner₁ v = 3} + 1)
+    (he₂ : #{v ∈ border₂ | corners corner₂ v = 1} = #{v ∈ border₂ | corners corner₂ v = 3} + 1)
+    (he₃ : #{v ∈ border₃ | corners corner₃ v = 1} = #{v ∈ border₃ | corners corner₃ v = 3} + 2) :
+    ∑ v ∈ border₁ᶜ, ((4 : ℤ) - deg ends₁ v) = 3 ∧ ∑ v ∈ border₂ᶜ, ((4 : ℤ) - deg ends₂ v) = 3 ∧
+      ∑ v ∈ border₃ᶜ, ((4 : ℤ) - deg ends₃ v) = 2 := by
+  refine ⟨?_, ?_, ?_⟩
+  · rw [disc_index_of_excess ends₁ corner₁ border₁ h₁ hc₁ 1 he₁]; norm_num
+  · rw [disc_index_of_excess ends₂ corner₂ border₂ h₂ hc₂ 1 he₂]; norm_num
+  · rw [disc_index_of_excess ends₃ corner₃ border₃ h₃ hc₃ 2 he₃]; norm_num
+
+/-- **Lemma "One self-crossing", the crossing on the closing segment.** As
+`one_crossing_on_walk`, with two convex corners more than concave ones on each
+lobe and as many of each on the third region: the indices inside add up to `2`,
+`2` and `4`. In the note, a lobe has two convex corners, at the crossing and at
+an end of the closing segment, and the third region two convex corners (the
+crossing, doubled) and two concave ones (the ends of the segment, seen from the
+other side). -/
+theorem one_crossing_on_segment
+    (ends₁ : Ed₁ → Fin 2 → Vx₁) (corner₁ : Fc₁ → Fin 4 → Vx₁) (border₁ : Finset Vx₁)
+    (ends₂ : Ed₂ → Fin 2 → Vx₂) (corner₂ : Fc₂ → Fin 4 → Vx₂) (border₂ : Finset Vx₂)
+    (ends₃ : Ed₃ → Fin 2 → Vx₃) (corner₃ : Fc₃ → Fin 4 → Vx₃) (border₃ : Finset Vx₃)
+    (h₁ : IsRegion ends₁ corner₁ border₁ 1) (h₂ : IsRegion ends₂ corner₂ border₂ 1)
+    (h₃ : IsRegion ends₃ corner₃ border₃ 1)
+    (hc₁ : ∀ v ∈ border₁, corners corner₁ v = 1 ∨ corners corner₁ v = 2 ∨ corners corner₁ v = 3)
+    (hc₂ : ∀ v ∈ border₂, corners corner₂ v = 1 ∨ corners corner₂ v = 2 ∨ corners corner₂ v = 3)
+    (hc₃ : ∀ v ∈ border₃, corners corner₃ v = 1 ∨ corners corner₃ v = 2 ∨ corners corner₃ v = 3)
+    (he₁ : #{v ∈ border₁ | corners corner₁ v = 1} = #{v ∈ border₁ | corners corner₁ v = 3} + 2)
+    (he₂ : #{v ∈ border₂ | corners corner₂ v = 1} = #{v ∈ border₂ | corners corner₂ v = 3} + 2)
+    (he₃ : #{v ∈ border₃ | corners corner₃ v = 1} = #{v ∈ border₃ | corners corner₃ v = 3}) :
+    ∑ v ∈ border₁ᶜ, ((4 : ℤ) - deg ends₁ v) = 2 ∧ ∑ v ∈ border₂ᶜ, ((4 : ℤ) - deg ends₂ v) = 2 ∧
+      ∑ v ∈ border₃ᶜ, ((4 : ℤ) - deg ends₃ v) = 4 := by
+  refine ⟨?_, ?_, ?_⟩
+  · rw [disc_index_of_excess ends₁ corner₁ border₁ h₁ hc₁ 2 he₁]; norm_num
+  · rw [disc_index_of_excess ends₂ corner₂ border₂ h₂ hc₂ 2 he₂]; norm_num
+  · rw [disc_index_of_excess ends₃ corner₃ border₃ h₃ hc₃ 0 he₃]; norm_num
+
+end OneCrossing
 
 /-- **Triangles**, fields of order 6: `∑_{inside} (6 - deg v) + ∑_{border} (3 - corners v) = 6 χ`. -/
 theorem gauss_bonnet_triangles (ends : Ed → Fin 2 → Vx) (corner : Fc → Fin 3 → Vx)
