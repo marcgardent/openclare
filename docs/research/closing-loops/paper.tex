@@ -42,7 +42,8 @@ Helix Constraints for T-Mesh Quantization\\[0.5em]
 \thanks{This note is distributed under the Creative Commons Attribution
 4.0 International licence (CC BY 4.0). The code of openclare is under the
 GPL-3.0-or-later of the repository. The note describes the engine at commit
-\texttt{\enginecommit} of \url{https://github.com/marcgardent/openclare}.}\\
+\texttt{\enginecommit} of \url{https://github.com/marcgardent/openclare}.
+A French translation is in \texttt{paper.fr.pdf}, beside this note.}\\
 \normalsize Independent researcher\\
 \normalsize ORCID: \href{https://orcid.org/0009-0000-6466-3098}{0009-0000-6466-3098}\\
 \normalsize Contact: through the repository,
@@ -117,6 +118,16 @@ heuristic leaves most of the shifted turns that no constraint forces, and
 yet closing more turns does not by itself reduce the spirals, because the
 strips of the mesh move with the lengths. Section~\ref{sec:limits} states
 the limitations and the open problems.
+
+This work began as a programming project, openclare, an open-source quad
+remesher, and became research when engineering alone could no longer tell
+which results could be guaranteed and which computations could be saved.
+Each result used here answers such a question. The shift of a turn is linear
+in the arc lengths, so closing a loop becomes a linear constraint of the
+quantizer rather than a test after the fact; its parity follows the length
+of the turn, so some repairs are known to be impossible before they are
+tried; and choosing the largest set of turns to close is NP-hard, which is
+why the engine keeps to a heuristic, with an exact solver only on demand.
 
 The theory behind the conflicts, which reads the shift as translational
 holonomy of the flat metric and derives obstructions to closing from the

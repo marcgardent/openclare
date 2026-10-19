@@ -9,6 +9,8 @@ What each figure shows, how to make it again, and the numbers measured on it.
 | `male-overview.png` | the male body at 10,590 quads asked for, four meshes, edge loops coloured by kind | `make_figures.sh` |
 | `male-wrist.png` | close-up of the left wrist and hand (the body's left, +X), same four meshes | `make_figures.sh` |
 | `male-eye.png` | close-up of the right eye (the body's right, −X), same four meshes | `make_figures.sh` |
+| `turn.fr.tex`, `closing.fr.tex` | `turn.tex` and `closing.tex` with French labels, for `paper.fr.tex` | hand (TikZ) |
+| `male-*.fr.png` | the three renders with French labels and legend, for `paper.fr.tex` | `make_figures.sh` (`compose.py --lang fr`) |
 
 ## The TikZ figures
 
@@ -103,7 +105,8 @@ docs/research/closing-loops/figures/make_figures.sh
 `make_figures.sh` builds the engine (`cargo build --release`), makes the four meshes into
 `target/figures/` (or `$WORK`; meshes already there are reused), measures them, renders twelve
 panels (`render_loops.py`, Blender 5.2.2, Workbench, in the background) and puts them together
-(`compose.py`, Python with Pillow; Latin Modern Roman for the labels). The source used for these
+(`compose.py`, Python with Pillow; Latin Modern Roman for the labels), once with English labels and
+once with French ones (`--lang fr`, into `male-*.fr.png`). The source used for these
 figures had MD5 `f1fe33002b731d1d41846daed6c59f5e` (1,354,880 triangles); `SOURCE=<path>` picks
 another copy.
 

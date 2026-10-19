@@ -100,7 +100,8 @@ remeasure:
 	for target in 3000 1000 8000; do python3 bench/run.py --remeasure --target $$target; done
 
 # The research notes: LaTeX sources in docs/research/<note>/paper.tex, their
-# bibliography next to them, the PDF written beside.
+# bibliography next to them, the PDF written beside; a French translation,
+# paper.fr.tex, when the note has one, built the same way into paper.fr.pdf.
 NOTES = $(if $(NOTE),docs/research/$(NOTE),$(patsubst %/paper.tex,%,$(wildcard docs/research/*/paper.tex)))
 # The commit a note describes, its \enginecommit: the short hash of HEAD, with
 # "-dirty" when tracked files other than the PDFs differ from it. Written into
@@ -108,7 +109,7 @@ NOTES = $(if $(NOTE),docs/research/$(NOTE),$(patsubst %/paper.tex,%,$(wildcard d
 # that latexmk does not compile again for nothing. For a PDF that names a
 # commit holding its sources: commit them, `make paper`, then commit the PDF.
 PAPER_COMMIT = $(or $(shell git rev-parse --short=12 HEAD 2>/dev/null),unknown)$(shell \
-	git status --porcelain --untracked-files=no -- . ':(exclude,glob)docs/research/*/paper.pdf' \
+	git status --porcelain --untracked-files=no -- . ':(exclude,glob)docs/research/*/paper*.pdf' \
 	2>/dev/null | grep -q . && echo -dirty)
 paper-version:
 	@for note in $(NOTES); do \
@@ -120,9 +121,11 @@ paper-version:
 paper: paper-version
 	@for note in $(NOTES); do \
 		echo "== $$note"; \
-		(cd $$note && latexmk -pdf -interaction=nonstopmode -halt-on-error paper.tex >/dev/null) \
-			|| { echo "failed: see $$note/paper.log"; exit 1; }; \
-		echo "written: $$note/paper.pdf"; \
+		for paper in paper $$(test -f $$note/paper.fr.tex && echo paper.fr); do \
+			(cd $$note && latexmk -pdf -interaction=nonstopmode -halt-on-error $$paper.tex >/dev/null) \
+				|| { echo "failed: see $$note/$$paper.log"; exit 1; }; \
+			echo "written: $$note/$$paper.pdf"; \
+		done; \
 	done
 
 # arXiv compiles paper.tex itself and runs no BibTeX: it needs the .bbl, and
@@ -134,7 +137,9 @@ paper-arxiv: paper
 	done
 
 paper-clean:
-	@for note in $(NOTES); do (cd $$note && latexmk -c paper.tex >/dev/null && rm -f version.tex arxiv.tar.gz); done
+	@for note in $(NOTES); do (cd $$note && latexmk -c paper.tex >/dev/null \
+		&& { test ! -f paper.fr.tex || latexmk -c paper.fr.tex >/dev/null; } \
+		&& rm -f version.tex arxiv.tar.gz); done
 
 # The proofs checked by Lean: a Lake project per note in docs/research/<note>/lean,
 # on the Mathlib release its lakefile pins. elan installs the toolchain the project

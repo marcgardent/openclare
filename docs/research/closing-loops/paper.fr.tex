@@ -1,0 +1,1154 @@
+% French translation of paper.tex (best effort, made with AI help; the English
+% version is authoritative). Same structure, numbering and labels as paper.tex.
+% Build: `make paper NOTE=closing-loops` from the root of the repository, which
+% compiles paper.tex and this file and first writes version.tex; or by hand:
+% pdflatex paper.fr && bibtex paper.fr && pdflatex paper.fr && pdflatex paper.fr
+%
+% French typography by hand: babel loads French from its .ini locale, the same
+% with or without the babel-french package, and that locale does not space the
+% punctuation under pdflatex. So the source writes the spaces itself: `~:`
+% before a colon, `\,;` `\,?` `\,!` before the others, `«~...~»`, and `\,\%`.
+% Decimal comma in math through icomma: `$4,65$`, but `$1, \dots$` stays a list.
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{babel}
+\babelprovide[main,import]{french}
+\usepackage{icomma}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,decorations.pathreplacing}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[hidelinks]{hyperref}
+\setlength{\emergencystretch}{2em}
+% Room for the full-width figures of Section 6 at the top of a page.
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\dbltopfraction}{0.9}
+\renewcommand{\floatpagefraction}{0.8}
+\renewcommand{\dblfloatpagefraction}{0.8}
+\setlocalecaption{french}{table}{Tableau}
+
+\newtheorem{definition}{Définition}
+\newtheorem{proposition}{Proposition}
+
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\shift}{s}
+
+% The commit of the engine described, written by `make paper` into
+% version.tex (ignored by git).
+\IfFileExists{version.tex}{\input{version.tex}}{}
+\providecommand{\enginecommit}{unknown}
+
+\title{Fermer les boucles d'arêtes à la quantification~:\\
+contraintes d'hélice pour la quantification d'un T-mesh\\[0.5em]
+\large Note de recherche --- brouillon, non relue par des pairs}
+\author{Marc Gardent%
+\thanks{Cette note est diffusée sous la licence Creative Commons Attribution
+4.0 International (CC BY 4.0). Le code d'openclare est sous la licence
+GPL-3.0-or-later du dépôt. La note décrit le moteur au commit
+\texttt{\enginecommit} de \url{https://github.com/marcgardent/openclare}.}\\
+\normalsize Chercheur indépendant\\
+\normalsize ORCID~: \href{https://orcid.org/0009-0000-6466-3098}{0009-0000-6466-3098}\\
+\normalsize Contact~: par le dépôt,
+\url{https://github.com/marcgardent/openclare}}
+\date{Octobre 2026}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\fbox{\parbox{0.9\textwidth}{\small\textbf{Avertissement.} Ce texte est une
+traduction française, faite au mieux (\emph{best effort}) et avec l'aide
+d'une IA, de la version anglaise de la note. En cas de différence, c'est la
+version anglaise qui fait foi~: \emph{Closing Edge Loops at Quantization
+Time: Helix Constraints for T-Mesh Quantization}, dans le même dépôt,
+\nolinkurl{docs/research/closing-loops/paper.pdf}.}}
+\end{center}
+
+\begin{abstract}
+Le remaillage automatique en quads produit souvent des boucles d'arêtes qui
+s'enroulent en hélice autour d'une partie de la forme au lieu de se refermer
+en anneaux. Bommes et al.~\cite{bommes2011structure} retirent ces
+\emph{q-hélices} d'un maillage fini\,; nous les empêchons là où se décide la
+structure entière du maillage, dans la quantification d'un T-mesh. Une marche
+en ligne droite à travers les patchs d'un T-mesh qui revient à son premier
+côté, un \emph{tour}, a un \emph{décalage} qui est une forme linéaire à
+coefficients entiers des longueurs des arcs\,; aux longueurs entières, il
+mesure de combien la bande de quads qui suit le tour revient à côté
+d'elle-même, et toute bande du maillage est une telle marche. Nous ajoutons
+les contraintes qui ferment les tours à un quantificateur d'écart
+minimal~\cite{heistermann2023bimdf}, au moyen d'une projection de moindre
+changement, de marches de réparation et de passes de génération de
+contraintes sur les bandes du maillage, et gardons le candidat qui a le moins
+d'arêtes en spirale, comptées par un test qui distingue les hélices des
+boucles fermées, ouvertes et de bord. Sur douze modèles, à trois budgets
+voisins de 3\,000 quads, le moteur laisse 4,65\,\% des arêtes sur des boucles
+en spirale (16,7\,\% sans fermeture, en exécutions uniques d'un moteur
+antérieur)\,; sur les sept modèles que deux autres remailleurs libres
+maillent aussi de façon valide, 1,8\,\% contre 38,8\,\% et 21,7\,\%\,; sur un
+corps humain, des exécutions uniques donnent 1,6\,\%, contre 2,5\,\% pour le
+maillage fait à la main. Une analyse exacte du système de fermeture de ce
+corps montre que le conflit entre fermer les tours et garder les
+singularités séparées est réel mais local, que c'est l'heuristique plutôt
+que les contraintes qui laisse la plupart des tours décalés, et que fermer
+davantage de tours ne réduit pas à lui seul les spirales~: les bandes
+bougent avec les longueurs, et c'est le choix des tours à fermer qui décide.
+\end{abstract}
+
+\section{Introduction}
+
+Le remaillage en quads aligné sur un champ (\emph{field-aligned quad
+remeshing}) a atteint un niveau où la forme et l'alignement des éléments
+sont rarement le facteur
+limitant~\cite{bommes2013survey,campen2017survey}. Reste la structure~: la
+façon dont les boucles d'arêtes (\emph{edge loops}) courent sur la surface.
+Les artistes attendent d'une boucle qui fait le tour d'un bras, d'une jambe
+ou d'un cou qu'elle soit un anneau (\emph{ring}). Les méthodes automatiques
+produisent souvent une hélice (\emph{helix}) à la place~: la boucle fait le
+tour, revient une ou quelques rangées plus loin, et s'enroule le long de
+toute la partie (figure~\ref{fig:overview}). Bommes et al.\ ont montré que
+les configurations hélicoïdales sont une raison majeure pour laquelle le
+complexe de base (\emph{base complex}) d'un maillage de quads par ailleurs
+bon reste dense~\cite{bommes2011structure}, et les ont retirées du maillage
+fini.
+
+Qu'une boucle se ferme ou non se décide en amont, lorsqu'un quantificateur
+attribue des longueurs entières aux arcs d'un T-mesh (maillage en T) tracé
+dans une paramétrisation sans couture (\emph{seamless
+parametrization})~\cite{campen2015qgp,lyon2021constrained,heistermann2023bimdf}.
+Les quantificateurs choisissent ces longueurs pour la cohérence, la validité
+et la proximité à la paramétrisation\,; les boucles se ferment ou spiralent
+par effet de bord. Cet article contraint les boucles dans la quantification
+elle-même. La section~\ref{sec:turns} définit les \emph{tours}
+(\emph{turns}), marches en ligne droite à travers les patchs d'un T-mesh qui
+reviennent à leur premier côté, et montre que le \emph{décalage}
+(\emph{shift}) d'un tour est une forme linéaire à coefficients entiers des
+longueurs des arcs qui donne, aux longueurs entières, le pas de la bande de
+quads qui le suit, et que toute bande du maillage est une telle marche. La
+section~\ref{sec:closing} ajoute la fermeture des tours à un quantificateur
+d'écart minimal par une projection de moindre changement, des marches de
+réparation et des passes de génération de contraintes sur les bandes, avec
+des garde-fous sur les plis, la distorsion et le budget. La
+section~\ref{sec:measure} donne une part d'arêtes en spirale qui distingue
+les hélices de pas au plus quatre des boucles fermées, ouvertes et de
+bord\,; il existe des comptes de boucles et des scores de simplicité des
+boucles~\cite{liu2025quadgpt,kong2026squadgen}, mais ils ne séparent pas les
+hélices des boucles ouvertes. La section~\ref{sec:experiments} mesure la
+méthode dans le remailleur libre openclare face à deux remailleurs libres et
+à un maillage modélisé à la main, et la section~\ref{sec:exact} résout
+exactement le système de fermeture d'un corps humain pour situer
+l'heuristique~: le conflit entre fermer les tours et garder les singularités
+séparées est local, l'heuristique laisse la plupart des tours décalés
+qu'aucune contrainte n'impose, et pourtant fermer davantage de tours ne
+réduit pas à lui seul les spirales, car les bandes du maillage bougent avec
+les longueurs. La section~\ref{sec:limits} expose les limites et les
+problèmes ouverts.
+
+Ce travail est né d'un projet de programmation, openclare, un remailleur en
+quads libre, et il est devenu une recherche quand l'ingénierie seule ne
+suffisait plus à dire quels résultats pouvaient être garantis et quels
+calculs pouvaient être épargnés. Chaque résultat utilisé ici répond à une
+telle question. Le décalage d'un tour est linéaire en les longueurs des
+arcs, si bien que fermer une boucle devient une contrainte linéaire du
+quantificateur plutôt qu'un test après coup\,; sa parité suit la longueur
+du tour, si bien que certaines réparations sont connues impossibles avant
+d'être tentées\,; et choisir le plus grand ensemble de tours à fermer est
+NP-difficile, ce qui justifie que le moteur s'en tienne à une heuristique,
+avec un solveur exact seulement sur demande.
+
+La théorie des conflits, qui lit le décalage comme l'holonomie de
+translation de la métrique plate et déduit des singularités des obstructions
+à la fermeture, un minorant du nombre de tours que toute quantification
+laisse décalés, et la NP-difficulté du choix des tours à fermer, fait l'objet
+d'un article compagnon~\cite{gardent2026turns}\,; nous en énonçons les
+résultats en une phrase là où nous en avons besoin, sans démonstration. Un
+énoncé est dit ici \emph{prouvé} lorsqu'il est accompagné d'une
+démonstration, \emph{mesuré} lorsqu'il provient d'un calcul en arithmétique
+exacte ou de la sortie d'un solveur sur les systèmes qu'exporte openclare, et
+\emph{conjecturé} sinon.
+
+\section{Contexte et travaux antérieurs}\label{sec:related}
+
+\paragraph{Quantification d'un T-mesh.}
+La quadrangulation mixte-entière (\emph{mixed-integer
+quadrangulation})~\cite{bommes2009miq} et les applications à grille entière
+(\emph{integer-grid maps})~\cite{bommes2013igm} décident de la structure
+entière d'un maillage de quads dans leur quantification. Campen et al.\
+quantifient au moyen des longueurs entières des arcs d'un T-mesh tracé dans
+une paramétrisation sans couture~\cite{campen2015qgp}. Lyon et al.\ résolvent
+une version contrainte comme un programme linéaire en nombres entiers, en
+bornant l'écart de direction des séparatrices du découpage obtenu, et
+exigent, comme openclare, que la quantification garde les singularités
+séparées~\cite{lyon2021constrained}. Heistermann et al.\ formulent la
+quantification comme un flot d'écart minimal (\emph{minimum-deviation flow})
+sur un graphe bidirigé, et donnent un solveur approché rapide et un
+raffinement exact~\cite{heistermann2023bimdf}\,; openclare suit leur
+formulation. À notre connaissance, aucune de ces méthodes ne contraint les
+hélices.
+
+\paragraph{Les hélices après le maillage.}
+Bommes et al.~\cite{bommes2011structure} définissent une \emph{q-hélice}
+(\emph{q-helix}) comme une ligne paramétrique duale de \emph{pas}
+(\emph{pitch}) entier $h$ et de \emph{longueur de tour} (\emph{turn length})
+$\tau$~: faire $\tau$ pas le long d'elle équivaut à $h$ pas de côté. Ils
+détectent les q-hélices minimales par les auto-intersections de lignes
+duales orthogonales et les retirent de façon gloutonne par des opérateurs
+qui préservent la grille, des chemins duaux fermés d'étapes de glissement
+et d'effondrement qui gardent le maillage entièrement en quads et ses
+singularités en place, suivis d'un lissage tangentiel\,; leurs expériences
+retirent la plupart des hélices (de 17 à 52 jusqu'à 1 à 23 par modèle). Ils
+notent que choisir directement dans la paramétrisation les paires de
+singularités à aligner, comme le font Myles et al.\ pour les
+T-meshes~\cite{myles2010feature}, est souvent compliqué, voire ambigu, à
+automatiser. Razafindrazaka et Polthier~\cite{razafindrazaka2017optimal}
+remplacent le complexe de base d'un maillage fini par un complexe optimal,
+trouvé comme un couplage parfait sur un graphe construit sur ses sommets
+singuliers, et notent que les opérateurs de~\cite{bommes2011structure}
+laissent des spirales. Les deux travaillent après le maillage, pas dans la
+quantification.
+
+\paragraph{Les périodes autour d'un tube.}
+QuadCover~\cite{kalberer2007quadcover} relève le champ de croix (\emph{cross
+field}) sur un revêtement ramifié où il devient un champ de vecteurs. La
+paramétrisation en bandes des surfaces tubulaires (\emph{stripe
+parameterization})~\cite{kalberer2011stripe}, construite sur lui, mesure le
+saut («~\emph{gap}~») du paramètre à travers chaque chemin de coupure et
+l'arrondit au nombre entier le plus proche\,; le saut à travers une boucle
+qui fait le tour d'un tube est ce que nous appelons le décalage d'un tour,
+et, arrondi à un entier non nul, il donne une hélice de ce pas. Cet article
+traite les bandes qui spiralent comme un résultat légitime, et note
+qu'arrondir les sauts au moindre coût de distorsion est un problème
+combinatoire difficile, qu'il ne résout pas exactement.
+
+\paragraph{Métriques plates et trajectoires finies.}
+Déclarer chaque quad carré unité fait d'un maillage de quads une métrique
+plate à singularités coniques en ses sommets irréguliers. Chen et
+al.~\cite{chen2019metric} caractérisent les métriques qui apparaissent ainsi\,;
+l'une de leurs conditions est une \emph{lamination géodésique finie}
+(\emph{finite geodesic lamination}), les lignes droites du champ étant des
+boucles finies, qu'ils supposent plutôt qu'ils ne la construisent. Lei et
+al.~\cite{lei2020quartic} montrent qu'un maillage de quads fermé induit une
+différentielle quartique méromorphe, et citent comme problème ouvert la
+garantie que toutes ses trajectoires soient finies. Une trajectoire qui
+n'est pas finie est précisément une boucle d'arêtes qui ne se ferme pas. Une
+différentielle quadratique dont toutes les trajectoires non critiques se
+ferment est une différentielle de
+Jenkins--Strebel~\cite{strebel1984quadratic}\,; le complémentaire de son
+graphe critique est une réunion de cylindres plats, et une hélice est un
+cylindre recollé avec un décalage d'un nombre entier de rangées. Sur une
+surface fermée, les valences $k(v)$ d'un maillage de quads vérifient
+$\sum_v (4 - k(v)) = 4\chi$~: avec des valences trois et cinq seulement, un
+corps humain fermé demande au moins huit sommets de valence trois, mais un
+maillage de base fait à la main en a des centaines, et leur nombre ne dit
+rien de l'endroit où vont les boucles.
+
+\paragraph{Des boucles par construction.}
+Le maillage par boucles duales (\emph{dual loops
+meshing})~\cite{campen2012dual} construit un découpage à partir de boucles
+tracées sur la surface, qui se ferment par construction\,; Lei et
+al.~\cite{lei2017foliation} construisent des maillages de quads à partir
+d'une différentielle de Strebel à cylindres prescrits, et les découpages
+guidés par un squelette~\cite{usai2015skeleton} ferment par conception les
+boucles autour des membres. Myles et al.~\cite{myles2014robust} tracent le
+champ pour obtenir une partition en patchs, Pietroni et
+al.~\cite{pietroni2016tracing} choisissent des séparatrices tracées par un
+programme linéaire binaire, et Razafindrazaka et
+al.~\cite{razafindrazaka2015perfect} obtiennent un découpage comme un
+couplage parfait de poids minimal. Ces méthodes construisent des découpages
+grossiers, et aucune ne part d'un champ de croix et d'une configuration de
+singularités donnés pour produire un maillage dense dont les boucles se
+ferment.
+
+\paragraph{Mesurer les boucles.}
+QuadGPT~\cite{liu2025quadgpt} compte les \emph{anneaux de quads}
+(\emph{quad rings}, boucles fermées de faces) et les \emph{lignes de quads}
+(\emph{quad lines}, bandes ouvertes) et s'en sert comme signaux de
+récompense pour l'optimisation des préférences, sans distinguer les spirales
+des lignes ouvertes. SQuadGen~\cite{kong2026squadgen} note les boucles d'un
+découpage par leurs auto-intersections et leur indice de rotation, et
+rapporte la part d'aire des boucles simples\,; il ne distingue pas non plus
+les hélices des boucles ouvertes.
+
+\section{Les tours d'un T-mesh}\label{sec:turns}
+
+Un T-mesh est une partition de la surface en rectangles, les \emph{patchs},
+dont les côtés sont faits d'\emph{arcs}\,; les nœuds où une trace s'arrête
+sur une autre sont des jonctions en T (\emph{T-junctions}), et les sommets
+singuliers du champ sont des nœuds. Chaque patch $P$ a des coordonnées
+locales dont l'origine est son premier coin et dont les axes portent ses
+côtés. Une quantification attribue à chaque arc $a$ une longueur $\ell_a \in
+\Z_{\ge 0}$ telle que les côtés opposés de chaque patch aient la même
+longueur, ce sont les \emph{équilibres} (\emph{balances}) $B\ell = 0$\,; le
+maillage de quads se lit alors comme la grille entière de chaque patch.
+
+\begin{definition}[Tour]
+Un \emph{tour} $\gamma$ est une marche en ligne droite à travers les patchs,
+partant d'une abscisse de son premier côté qui ne rencontre aucun nœud~: elle
+entre dans un patch par un côté, en sort par le côté opposé à la même
+distance du coin correspondant, entre dans le patch voisin à travers l'arc
+qu'elle atteint, et ainsi de suite, jusqu'à revenir dans son premier patch
+par son premier côté.
+\end{definition}
+
+\begin{figure}[t]
+\centering
+\input{figures/turn.fr.tex}
+\caption{Un tour et l'hélice qu'il produit. (a)~Une bande d'un T-mesh sur un
+cylindre, ouverte le long du premier côté de $P_1$, qui est redessiné en
+tirets au-delà de $P_4$, où il est recollé\,; chaque nœud est à une position
+entière et la grille pâle est le maillage de quads à ces longueurs. Le tour
+$\gamma$ quitte le premier côté à l'abscisse $o$ et traverse $P_1$ à $P_4$\,;
+mesurée depuis le premier coin de chaque patch, son abscisse augmente de
+$\ell_b$, diminue de $\ell_c$ et augmente de $\ell_d$, si bien qu'il revient
+en $o + \shift_\gamma(\ell)$ avec $\shift_\gamma(\ell) = \ell_b - \ell_c +
+\ell_d = 1$. Le couloir (en grisé), l'ensemble des abscisses dont la marche
+traverse les mêmes arcs, est $1 < o < 4$. (b)~La bande de quads en $o = 2,5$
+sur le cylindre~: à chaque révolution elle revient une rangée à côté
+d'elle-même, en passant par $o = 1,5$\,; $2,5$ et $3,5$, puis quitte le
+couloir~: une hélice de pas $1$ (proposition~\ref{prop:linear}).}
+\label{fig:turn}
+\end{figure}
+
+Passer du patch $P$ au patch $Q$ à travers un arc compose une rotation d'un
+quart de tour du repère local avec une translation dont les composantes sont
+des sommes signées de longueurs d'arcs le long des bords de $P$ et de $Q$,
+la position d'un point du bord étant la somme des longueurs des arcs qui le
+séparent du premier coin.
+
+\begin{proposition}[Le décalage d'un tour est linéaire]\label{prop:linear}
+Pour un tour $\gamma$, il existe des coefficients entiers $c_a$,
+indépendants des longueurs, tels qu'après un tour complet un point du
+premier côté s'est déplacé transversalement à la direction de marche de
+\[
+  \shift_\gamma(\ell) = \sum_a c_a\, \ell_a .
+\]
+Pour des longueurs entières $\ell$, soit $o$ une abscisse demi-entière du
+premier côté dont la marche aux longueurs $\ell$ traverse les mêmes patchs
+que $\gamma$ (l'ensemble de ces abscisses est le \emph{couloir}
+(\emph{corridor}) de $\gamma$ en $\ell$). Alors la ligne duale du maillage
+de quads en $o$ revient en $o + \shift_\gamma(\ell)$~: elle se ferme après
+une révolution si et seulement si $\shift_\gamma(\ell) = 0$. Si de plus $o +
+j\,\shift_\gamma(\ell)$ appartient au couloir pour $j = 1, \dots, t - 1$,
+elle fait $t$ fois le tour en hélice de pas $|\shift_\gamma(\ell)|$ au sens
+de~\cite{bommes2011structure}.
+\end{proposition}
+
+\begin{proof}[Esquisse de démonstration]
+Chaque passage est une application $x \mapsto R^k x + t$, où $R$ est le
+quart de tour et $t$ un vecteur dont les composantes sont des sommes de
+$\pm\ell_a$. La marche rentre dans son premier côté vers l'intérieur, donc la
+composée le long de $\gamma$ a une rotation triviale et est une translation
+$T_\gamma(\ell)$, linéaire en $\ell$ à coefficients entiers. Sa composante
+le long de la direction de marche ne fait pas sortir un point du premier
+côté de ce côté\,; sa composante transverse est $\shift_\gamma(\ell)$. Les
+singularités sont des nœuds, jamais à l'intérieur d'un patch, donc le
+maillage de quads est une grille régulière le long de la marche, et une
+ligne duale à la distance $o$ du premier coin, tant qu'elle traverse les
+mêmes patchs que $\gamma$, revient à la distance $o + \shift_\gamma(\ell)$.
+\end{proof}
+
+La composante de $T_\gamma(\ell)$ le long de la direction de marche est la
+\emph{longueur} $\alpha_\gamma(\ell)$ du tour, elle aussi une forme linéaire
+à coefficients entiers, qui, aux longueurs entières, est le nombre de quads
+de la bande en un tour. Le décalage est la composante transverse de
+l'holonomie de translation (\emph{translational holonomy}) de la métrique
+plate le long du tour, linéaire en les longueurs comme toute période d'une
+métrique plate à singularités
+coniques~\cite{thurston1998shapes,veech1993flat}\,; pour un anneau de quads,
+c'est la torsion d'un cylindre. Ce qui est propre à ce travail est son
+expression en les longueurs des arcs d'un T-mesh, comme contrainte de la
+quantification. L'article compagnon~\cite{gardent2026turns} montre qu'il est
+fixé par les singularités~: pour un tour dont la courbe est simple, il est
+égal, au signe près, à la composante transverse du vecteur de Burgers
+(\emph{Burgers vector}) des sommets singuliers situés d'un côté, si bien que
+deux tours parallèles qui bordent un anneau (une couronne) sans sommet
+singulier ont le même décalage, et qu'une hélice est une propriété de tout
+un cylindre de tours, non de l'un d'eux. Dans openclare
+(\texttt{quantization/tubes.rs}), le décalage est construit une fois par
+tour comme une expression en les longueurs des arcs, en composant les
+expressions des bords des patchs traversés\,; évalué aux longueurs réelles
+de la paramétrisation, il donne le \emph{décalage réel}, la torsion que le
+champ lui-même donne au cylindre. La figure~\ref{fig:turn} montre un tour,
+son couloir et l'hélice que produit son décalage.
+
+La contrainte de fermeture $\shift_\gamma(\ell) = 0$ porte donc sur une
+suite fixée de patchs traversés, et ne décrit une bande du maillage
+qu'accompagnée du couloir. Explicitement, supposons que $\gamma$ traverse
+successivement les arcs $a_1, \dots, a_m$\,; la marche partie de l'abscisse
+$o$ traverse le côté qui porte $a_j$ à la distance $\epsilon_j o +
+q_j(\ell)$ de son premier coin, avec $\epsilon_j = \pm 1$ et $q_j$ une forme
+linéaire à coefficients entiers, et $a_j$ commence à la distance
+$e_j(\ell)$, une somme de longueurs d'arcs. Aux longueurs entières et pour
+$o$ demi-entier, le couloir est découpé par les inégalités
+\begin{equation}\label{eq:corridor}
+  e_j(\ell) + \tfrac12 \;\le\; \epsilon_j\, o + q_j(\ell) \;\le\; e_j(\ell) +
+  \ell_{a_j} - \tfrac12, \qquad j = 1, \dots, m,
+\end{equation}
+deux par passage. Les étapes de fermeture de la section~\ref{sec:closing}
+imposent les décalages mais pas ces inégalités\,; la
+section~\ref{sec:exact} mesure ce que cela coûte. Les bandes elles-mêmes
+sont toutes des marches de ce type.
+
+\begin{definition}[Bande]
+Pour des longueurs entières $\ell$ qui équilibrent chaque patch, avec tout
+côté de patch strictement positif et sans deux sommets singuliers au même
+point, le maillage de quads est, dans chaque patch, la grille entière de ses
+côtés. Une \emph{bande} (\emph{strip}) est une suite maximale de quads dont
+chacun partage avec le suivant l'arête opposée à celle qu'il partage avec le
+précédent.
+\end{definition}
+
+\begin{proposition}[Complétude à longueurs données]\label{prop:complete}
+Soit $\ell$ comme dans la définition. Toute bande du maillage de quads qui
+traverse un côté $\sigma$ d'un patch $P$ en l'arête de quad $[k, k+1]$ de
+$\sigma$ est la marche effectuée \emph{avec les longueurs $\ell$} depuis
+$\sigma$ à l'abscisse $k + \tfrac12$. Sur une surface fermée, les bandes
+sont donc les cycles de la marche sur les stations demi-entières de tous les
+côtés, chaque bande orientée formant un cycle, et une bande se ferme après
+une révolution exactement lorsque le tour qu'elle suit a
+$\shift_\gamma(\ell) = 0$. Avec des bords, les bandes qui atteignent un bord
+sont des chemins ouverts de la marche.
+\end{proposition}
+
+\begin{proof}
+Dans $P$, les quads de la bande sont les carrés unité situés entre les
+lignes de la grille en $k$ et en $k+1$ transversalement à $\sigma$\,; leur
+ligne duale est la droite en $k + \tfrac12$, qui atteint le côté opposé à la
+même distance du coin correspondant, ce qui est le pas de la marche.
+L'application de passage vers le patch voisin est un quart de tour suivi
+d'une translation à composantes entières~: elle envoie la grille de $P$ sur
+la grille du voisin et le milieu d'une arête de quad sur le milieu d'une
+arête de quad. Chaque nœud est à une distance entière le long des côtés,
+donc une marche à une abscisse demi-entière ne rencontre jamais de nœud et
+l'arc qu'elle traverse est déterminé\,; un arc de longueur nulle ne contient
+aucun demi-entier et aucune marche ne le traverse. La bande et la marche se
+poursuivent donc ensemble, patch après patch\,; des côtés strictement
+positifs garantissent que chaque station se trouve sur une arête de quad du
+maillage.
+\end{proof}
+
+Une marche partie d'une fraction fixée des longueurs réelles des côtés
+échantillonne les tours\,; la proposition~\ref{prop:complete} dit où l'on
+trouve \emph{tous} les tours d'un maillage donné~: aux demi-entiers de ses
+longueurs entières. Les passes de contraintes de la
+section~\ref{sec:closing} s'en servent.
+
+\section{Fermer les tours dans la quantification}\label{sec:closing}
+
+Cette section décrit le moteur au commit \texttt{\enginecommit}, dans
+\nolinkurl{crates/openclare/src/quantization/}. Le quantificateur minimise un
+coût convexe séparable des longueurs entières, dans la formulation par flot
+d'écart minimal de~\cite{heistermann2023bimdf}, sous les équilibres, en
+annulant des marches améliorantes dans un réseau de bandes (un solveur plus
+simple que le leur, fondé sur des couplages). Seule la structure est la
+leur~: leur objectif est une somme d'écarts absolus, le nôtre est
+quadratique. Le coût de l'arc $a$ est $w_a(\ell_a - \lambda r_a)^2$ avec
+$w_a = 1/(\lambda r_a + 1)$, plus un terme qui attire un sommet sur chaque
+arête vive (\emph{fold}) de la surface que l'arc traverse et une pénalité
+pour qui descend sous une borne inférieure. Les longueurs réelles $r_a$
+portent une perturbation fixe par arc d'au plus $0,5\,\%$, afin que des arcs
+de même longueur ne changent pas tous au même facteur d'échelle\,; l'échelle
+$\lambda$ est cherchée pour le nombre de quads demandé, et les arcs dont la
+longueur nulle casserait la structure du maillage, en réunissant deux
+sommets singuliers, sont maintenus à une longueur d'au moins un, ce sont les
+\emph{bornes de séparation} (\emph{bounds of separation}). Fermer des tours
+est une contrainte annexe qui n'est pas une contrainte de flot\,; la
+figure~\ref{fig:closing} montre son effet sur un tour.
+
+\begin{figure}[t]
+\centering
+\input{figures/closing.fr.tex}
+\caption{Le tour de la figure~\ref{fig:turn} avant et après fermeture, sur
+le même T-mesh. (a)~Avec $\ell_d = 2$, $\shift_\gamma(\ell) = 1$~: les bandes
+du couloir forment une seule hélice. (b)~La colonne de $P_4$ est remontée
+d'une unité~: $\ell_d$ et l'arc situé au-dessus de $P_4$ sur le même côté
+sont plus courts d'une unité, aucun nœud n'en dépasse un autre, et seules
+les longueurs ont changé. Désormais $\shift_\gamma(\ell) = 1 - 2 + 1 = 0$, et
+le couloir contient trois anneaux fermés, en $o = 1,5$\,; $2,5$ et $3,5$.}
+\label{fig:closing}
+\end{figure}
+
+\paragraph{Trouver les tours.}
+Depuis des points situés à des fractions données le long de chaque côté de
+chaque patch, nous marchons en ligne droite à travers les patchs et gardons
+les marches qui reviennent. Tout tour décalé ne doit pas être fermé~: un
+tour autour d'une partie de la forme dont le décalage réel est loin de zéro
+n'est pas un artefact d'arrondi, le champ s'enroule autour de la partie, et
+un tour autour d'un groupe de singularités peut légitimement revenir
+décalé. Un tour est donc \emph{retenu} (\emph{held}) si son décalage réel
+dépasse $0,05$, si son \emph{inclinaison} (\emph{lean}), le décalage réel
+rapporté à sa longueur, est sous une borne, et si sa longueur est sous un
+multiple du côté du T-mesh (le côté d'un carré de même aire). Deux tours qui
+ont la même expression du décalage au signe près forment un seul anneau et
+ne sont retenus qu'une fois. Huit \emph{variantes} (\emph{ways}) sont
+essayées~: fractions de départ $\{0,5\}$ ou $\{0,2 ; 0,5 ; 0,8\}$, bornes
+d'inclinaison $0,05$ ou $0,12$, bornes de longueur de $2$ ou $6$ côtés\,; une
+variante qui retient les mêmes tours qu'une autre est sautée.
+
+\paragraph{Projection de moindre changement.}
+Les longueurs réelles $r_a$, à l'échelle un, sont modifiées le moins
+possible, au sens des moindres carrés pondérés, pour que tout tour retenu
+$\gamma \in H$ ait un décalage nul et que chaque patch reste équilibré~:
+\[
+  \min_{x}\ \sum_a v_a\,(x_a - r_a)^2
+  \quad\text{s.c.}\quad B x = 0,\quad \shift_\gamma(x) = 0\ \ \forall\gamma\in H,
+  \qquad v_a = \frac{1}{r_a + 1},
+\]
+problème résolu par une factorisation de Cholesky creuse des équilibres,
+calculée une fois par quantification, et un petit complément de Schur dense
+pour les tours. Les arcs que la solution rendrait négatifs sont maintenus à
+zéro et le système est résolu de nouveau (un ensemble actif, \emph{active
+set}). Si le système ne peut être satisfait, le tour retenu qui reste le
+plus décalé est abandonné et la projection recommencée. Les longueurs
+projetées $x$ prennent alors la place de $r$ dans le coût ci-dessus, et
+$\lambda$ est cherché sur elles.
+
+\paragraph{Recherche entière et réparation.}
+La recherche entière du quantificateur s'exécute sur les cibles projetées.
+L'arrondi laisse certains tours décalés d'une ou de quelques rangées. Des
+marches de réparation (\emph{repair walks}) sont alors effectuées une à
+une~: une marche est guidée par un biais le long des arcs des tours décalés,
+et acceptée si elle réduit le décalage total, coûte peu en écart, garde la
+structure intacte et le nombre de quads dans la tolérance. Une seconde
+réparation, \emph{visée} (\emph{aimed}), traite séparément chaque tour retenu
+encore décalé~: le biais est placé sur ses seuls arcs, et une marche est
+acceptée si elle décale moins ce tour et pas davantage les autres. Deux
+résultats de l'article compagnon~\cite{gardent2026turns} élaguent ces
+marches. Sur une sphère fermée, le décalage de tout tour a, pour toutes les
+longueurs entières équilibrées, la parité de sa longueur, $\alpha_\gamma(\ell)
+\equiv \shift_\gamma(\ell) \pmod 2$, si bien qu'une marche qui garde la
+longueur d'un tour de décalage impair ne peut pas le fermer\,; sur les pièces
+qui sont des sphères fermées, de telles marches sont refusées sans être
+évaluées. Et un tour dont le décalage est égal, modulo les équilibres, à une
+combinaison positive de longueurs d'arcs n'est jamais négatif et ne
+s'annule que si ces arcs s'annulent\,; un tel tour déjà à son minimum n'est
+pas visé. Les versions de débogage du moteur vérifient les coefficients
+entiers des décalages et la parité.
+
+\paragraph{Passes de génération de contraintes.}
+Après une variante dont les longueurs sont admissibles (dans le budget et
+sous le plafond d'écart ci-dessous), suivent jusqu'à trois passes de
+génération paresseuse de contraintes (\emph{lazy constraint generation})\,;
+les contraintes ajoutées sont des égalités sur les décalages, non des coupes
+d'intégrité. Chaque bande des longueurs entières est parcourue
+(proposition~\ref{prop:complete}\,; jusqu'à $6$ fois le côté du maillage)\,;
+celles qui reviennent décalées alors que leurs longueurs réelles les
+ramènent à moins de $0,12$ de leur longueur sont retenues à leur tour, et la
+projection et la recherche entière sont relancées à partir des longueurs de
+la passe précédente. Dans ces passes, la projection n'utilise pas
+l'ensemble actif et la réparation n'est pas visée. Chaque passe donne un
+candidat de plus.
+
+\paragraph{Sélection et garde-fous.}
+Pour chaque candidat, la connectivité du maillage de quads est construite
+et sa part d'arêtes sur des boucles en spirale mesurée
+(section~\ref{sec:measure}). Un candidat est gardé s'il spirale moins que la
+recherche simple (\emph{plain search}, sans fermeture), si son nombre de
+quads est dans la tolérance (ou pas plus loin du budget que celui de la
+recherche simple), si son écart absolu moyen aux longueurs réelles est d'au
+plus $\max(1,5\,d_0 ;\ d_0 + 0,2)$, où $d_0$ est celui de la recherche
+simple, et s'il n'éloigne pas les sommets des arêtes vives de la surface
+plus que la recherche simple, au-delà de ce que ferait le hasard. Les trois
+qui ont le moins de spirales sont gardés, dans cet ordre, puis les longueurs
+simples. Les variantes sont indépendantes et s'exécutent en parallèle. Après
+le maillage, si le premier candidat retourne une face par rapport à la
+surface, les autres sont maillés tour à tour jusqu'à ce que l'un ne le fasse
+pas, et le maillage qui a le moins de faces retournées, puis le moins de
+spirales, est gardé.
+
+\section{Mesurer les boucles}\label{sec:measure}
+
+Une boucle d'arêtes est suivie tout droit à travers chaque sommet régulier
+(intérieur de valence quatre), chaque arête appartenant à une seule boucle.
+Une boucle est \emph{fermée} si elle revient à son départ\,; \emph{de bord}
+si elle va d'un bord à un bord\,; \emph{ouverte} si elle s'arrête à un
+sommet irrégulier ou à une face qui n'est pas un quad\,; et \emph{en
+spirale}, quelles que soient ses extrémités, si une bande de quads qui en
+part transversalement la rencontre de nouveau, dans le même sens, à moins de
+$k_{\max} = 4$ quads. Ce dernier test détecte les hélices de pas au plus
+quatre, y compris les faisceaux d'hélices
+entrelacées~\cite{bommes2011structure}, tandis qu'un anneau n'est rencontré
+de nouveau qu'en faisant le tour d'un tore entier ou en passant par-dessus
+une calotte dans l'autre sens. Nous rapportons la part des arêtes sur chaque
+sorte de boucle, arêtes de bord exclues. Le même compte choisit parmi les
+candidats de la section~\ref{sec:closing} et colore les boucles en spirale
+dans les figures.
+
+\section{Expériences}\label{sec:experiments}
+
+Tous les nombres viennent du banc d'essai d'openclare, mesurés sur les
+maillages produits par rapport à leurs sources\,;
+l'annexe~\ref{app:provenance} donne la version du moteur et la source de
+chaque chiffre. Le moteur est déterministe~: une exécution par modèle et par
+budget. Modèles~: douze modèles organiques et mécaniques pour le
+développement, et un corpus de $33$ modèles pour le banc complet, parmi
+lesquels deux corps humains de la bibliothèque Essentials de Blender (CC0)
+dont les maillages de base, modélisés à la main, servent de référence. Les
+temps ont été mesurés sur une seule machine, un Intel Core i7-7700K
+(4~cœurs, 8~threads, 4,2\,GHz, 2017) avec 62\,Go de mémoire, partagée avec
+d'autres tâches dont la charge n'a pas été relevée~: ce sont des temps
+écoulés (\emph{wall-clock}), qui ne donnent que des ordres de grandeur. Les
+programmes linéaires et mixtes-entiers ont été résolus avec HiGHS
+1.8.0~\cite{huangfu2018highs} via SciPy 1.16.3~\cite{virtanen2020scipy}
+(\texttt{linprog} et \texttt{milp}), avec les options par défaut sauf les
+limites de temps indiquées.
+
+\paragraph{Les spirales sur les douze modèles de développement.}
+La part d'arêtes sur des boucles en spirale est chaotique sur un modèle
+isolé~: un changement d'un pour cent du budget la déplace autant qu'un vrai
+changement de la méthode. Nous jugeons donc le moteur sur sa moyenne sur
+les douze modèles à trois budgets, $2\,970$, $3\,000$ et $3\,030$ quads ($36$
+exécutions). Au commit cité, le moteur laisse $4,65\,\%$ des arêtes sur des
+boucles en spirale ($2,89\,\%$, $4,97\,\%$ et $6,09\,\%$ aux trois budgets\,;
+$102$ boucles en spirale dans les $36$ maillages, tous valides), avec
+$36,7\,\%$ des arêtes sur des boucles fermées, une distance moyenne à la
+source de $0,377$\,\textperthousand\ de la diagonale et un écart d'angle
+moyen aux coins de $4,90$ degrés. Le tableau~\ref{tab:dev} montre la
+contribution des parties de la méthode, mesurée avec les versions du moteur
+qui les ont introduites, en exécutions uniques à $3\,000$ quads~: de
+$16,7\,\%$ d'arêtes en spirale sans fermeture à $6,0\,\%$. Au fil de ces
+versions, la distance de Hausdorff reste à environ $2\,\%$ près et l'écart
+d'angle moyen aux coins à environ $6\,\%$ près\,; les tours plus longs et le
+plafond d'écart cèdent un peu des deux contre un tiers d'arêtes en spirale
+en moins.
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+& arêtes en spirale & Hausdorff (\textperthousand) & écart d'angle (degrés) \\
+\midrule
+sans fermeture & 16,7\,\% & 8,77 & 4,75 \\
+fermeture, une variante choisie par les spirales & 9,7\,\% & 8,57 & 4,85 \\
++ variantes inclinées, réparation visée & 9,1\,\% & 8,58 & 4,91 \\
++ tours plus longs, plafond d'écart & 6,0\,\% & 8,68 & 5,01 \\
+\bottomrule
+\end{tabular}
+\caption{Les parties de la méthode~: moyenne sur les douze modèles à
+$3\,000$ quads, une exécution par modèle, moteurs des commits
+\texttt{7dc1727}, \texttt{c86740f} et \texttt{cf4a82c}. Chaque ligne ne
+s'ajoute à celle du dessus qu'approximativement~: entre la deuxième et la
+troisième ligne, la référence a bougé (commit \texttt{ab8d89c}, de
+$10,1\,\%$ à $9,5\,\%$). Les passes de contraintes, l'ensemble actif et le
+plancher du plafond ne figurent pas dans le tableau\,; le moteur au commit
+cité donne $4,65\,\%$ sur trois budgets.}
+\label{tab:dev}
+\end{table}
+
+\paragraph{Face à d'autres remailleurs.}
+Le dernier banc complet enregistré dans le dépôt (commit \texttt{83f0967},
+$3\,000$ quads\,; une exécution par modèle pour openclare et
+AutoRemesher~\cite{autoremesher}, la médiane de cinq graines pour
+QuadriFlow~\cite{huang2018quadriflow}, lancé via Blender) a utilisé un
+moteur à quelques changements du moteur cité, changements qui donnent
+$4,54\,\%$ au lieu de $4,65\,\%$ sur les douze modèles à trois budgets. Les
+outils ne maillent pas les mêmes modèles~: QuadriFlow produit un maillage
+pour $22$ des $33$ modèles, AutoRemesher pour $18$. Sur les $7$ modèles que
+les trois maillent de façon valide à chaque exécution, la part moyenne
+d'arêtes en spirale est de $1,8\,\%$ pour openclare, $38,8\,\%$ pour
+QuadriFlow et $21,7\,\%$ pour AutoRemesher\,; sur les $15$ modèles où les
+trois produisent un maillage, valide ou non, $4,2\,\%$, $27,2\,\%$ et
+$27,3\,\%$. Sans fermeture (commit \texttt{4e9620c}), openclare avait
+$16,6\,\%$ et $15,5\,\%$ sur les mêmes sous-ensembles.
+
+\paragraph{Face au maillage fait à la main.}
+Le corps masculin de la bibliothèque Essentials a un maillage de base de
+$10\,590$ quads modélisé à la main, avec $2,5\,\%$ d'arêtes en spirale en
+$3$ boucles en spirale et $31,6\,\%$ de ses arêtes sur des boucles fermées.
+Remaillé par openclare à ce nombre de quads avec la fermeture de la
+section~\ref{sec:closing}, des exécutions uniques des moteurs des commits
+\texttt{b0d37fa} à \texttt{8fd1932} donnent $1,6\,\%$ d'arêtes en spirale,
+en $9$ boucles en spirale~: moins que le maillage fait à la main, mais de
+quelques boucles seulement. L'une de ces exécutions a $33,2\,\%$ de ses
+arêtes sur des boucles fermées, une distance moyenne à la source de
+$0,19$\,\textperthousand\ de la diagonale et un écart d'angle moyen aux coins
+de $4,1$ degrés, contre $0,17$\,\textperthousand\ et $9,2$ degrés pour le
+maillage fait à la main\,; ces chiffres de fidélité comparent des maillages
+faits à des fins différentes, celui fait à la main étant un maillage de base
+dont la distance et les angles sont des choix de son modeleur. La borne
+d'inclinaison compte sur ce corps~: avec la seule borne d'inclinaison $0,05$
+(commit \texttt{ab8d89c}), une jambe était une seule hélice de la hanche à
+la cheville, ses tours s'inclinant plus que cette borne ne le permet, et le
+maillage avait $12,1\,\%$ d'arêtes en spirale.
+
+La figure~\ref{fig:overview} montre le corps maillé par openclare avec et
+sans fermeture, à côté du maillage fait à la main et de celui de QuadriFlow,
+avec un moteur plus récent que les exécutions ci-dessus (commit
+\texttt{89232b0}\,; ses chiffres sont dans la légende). Sans fermeture, des
+hélices s'enroulent autour du torse, des deux jambes et du cou. Avec
+fermeture, les boucles autour des membres et du torse sont des anneaux,
+comme sur le maillage fait à la main, et les boucles en spirale qui restent
+sont courtes, à la bouche, au front et aux doigts. QuadriFlow enroule des
+hélices autour du torse, des épaules, des jambes et d'un bras. La fermeture
+n'est pas meilleure partout (figure~\ref{fig:closeups})~: au poignet gauche,
+elle laisse des boucles en spirale sur le pouce et le dos de la main là où le
+maillage sans fermeture a des boucles fermées, et près de l'œil droit les
+deux maillages d'openclare gardent de courtes boucles en spirale, tandis que
+la fermeture change en anneau une boucle qui traverse le front.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/male-overview.fr.png}
+\caption{Le corps masculin de la bibliothèque Essentials, $10\,590$ quads
+demandés~: (a)~openclare sans fermeture, (b)~openclare avec la fermeture de
+la section~\ref{sec:closing}, (c)~le maillage de base modélisé à la main,
+(d)~QuadriFlow lancé via Blender. Les boucles d'arêtes sont colorées selon
+leur sorte dans la mesure de la section~\ref{sec:measure}~: boucles fermées
+en bleu foncé, boucles en spirale en vermillon (plus larges, avec un liseré
+sombre), boucles qui s'arrêtent à un sommet irrégulier en gris. Les
+maillages (a) et (b) viennent du moteur au commit \texttt{89232b0}, une
+exécution déterministe chacun, et non des exécutions citées dans le texte
+(annexe~\ref{app:provenance}). Mesurés sur les maillages entiers, ils ont
+$10\,485$, $10\,748$, $10\,570$ (plus $20$ triangles) et $8\,844$ quads,
+$26,8\,\%$ ($18$ boucles), $1,95\,\%$ ($15$), $2,55\,\%$ ($3$) et $35,7\,\%$
+($43$) de leurs arêtes sur des boucles en spirale, que les panneaux
+arrondissent à une décimale, et $10,2\,\%$, $32,6\,\%$, $31,6\,\%$ et
+$2,7\,\%$ sur des boucles fermées. Le maillage de QuadriFlow a $3$ faces
+retournées et une distance de Hausdorff de $31$\,\textperthousand\ de la
+diagonale.}
+\label{fig:overview}
+\end{figure*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/male-wrist.fr.png}\\[0.6em]
+\includegraphics[width=\textwidth]{figures/male-eye.fr.png}
+\caption{Vues rapprochées des quatre maillages de la
+figure~\ref{fig:overview}, dans le même ordre et les mêmes couleurs~: le
+poignet et la main gauches (en haut\,; la gauche du corps, à droite pour qui
+regarde la figure~\ref{fig:overview}) et l'œil droit (en bas). Au poignet,
+la fermeture n'aide pas localement~: le maillage~(b) a des boucles en
+spirale sur le pouce et le dos de la main là où le maillage~(a) a des
+boucles fermées, bien que sur le corps entier la fermeture retire la plupart
+des arêtes en spirale. À l'œil, la fermeture change en anneau une boucle qui
+traverse le front, et de courtes boucles en spirale restent près de l'œil
+sur les deux maillages d'openclare\,; la boucle qui fait le tour de l'œil du
+maillage fait à la main est elle-même comptée en spirale. Dans le T-mesh
+exporté à la section~\ref{sec:exact}, issu d'un moteur antérieur, le poignet
+gauche porte le tour que, dans quatre des huit variantes, aucunes longueurs
+respectant les bornes de séparation ne peuvent fermer, même seul.}
+\label{fig:closeups}
+\end{figure*}
+
+\section{Un regard exact sur le système de fermeture}\label{sec:exact}
+
+À quelle distance l'heuristique de la section~\ref{sec:closing} est-elle de
+ce que permettent les contraintes\,? Un point d'accroche expérimental
+d'openclare (branche \texttt{rd-exact}, sur un moteur sans les passes de
+contraintes ni le plancher du plafond d'écart, c'est-à-dire antérieur au
+commit \texttt{3b3122d}) exporte, pour chaque variante de recherche des
+tours, le système sur lequel elle travaille, pour le corps masculin à
+$10\,590$ quads. Son T-mesh a $1\,295$ nœuds ($1\,034$ jonctions en T et
+$261$ sommets singuliers~: $133$ de valence trois, $127$ de valence cinq et
+un de valence deux), $2\,069$ arcs et $776$ patchs, d'où $1\,552$ équations
+d'équilibre, une par patch et par direction. L'export donne les longueurs
+réelles, chaque tour trouvé avec son décalage (sur les $1\,299$ tours, la
+composition des applications de passage le long de la marche redonne le
+décalage exporté), et les bornes inférieures que la recherche entière a
+placées sur des arcs pour garder les singularités séparées (de $28$ à $36$
+arcs maintenus à la longueur un). Ces bornes sont le choix, par le moteur,
+de \emph{l'arc} d'une chaîne entre deux sommets singuliers qui porte leur
+séparation~: la validité demande qu'une chaîne garde une longueur totale
+strictement positive, non un arc donné. Tous les énoncés qui suivent sont
+relatifs à ces bornes. Nous notons $P_{\mathrm{eng}}$ l'ensemble des
+longueurs équilibrées qui les respectent\,; ce n'est ni un sous-ensemble ni
+un sur-ensemble des quantifications valides, puisqu'il exclut des longueurs
+valides qui placent la séparation sur un autre arc de la chaîne et admet des
+longueurs qui annulent d'autres arcs. Les variantes sont numérotées comme à
+l'export~: la variante $m + 2j + 4i$ part des fractions $\{0,5\}$ ($m = 0$)
+ou $\{0,2 ; 0,5 ; 0,8\}$ ($m = 1$), avec la borne d'inclinaison $0,05$ ($j =
+0$) ou $0,12$ ($j = 1$) et la borne de longueur de $2$ ($i = 0$) ou $6$ ($i =
+1$) côtés. La variante~2 est celle que le moteur garde pour ce corps.
+
+\paragraph{Le conflit est réel mais local.}
+Tous les tours retenus peuvent être fermés ensemble si l'on demande
+seulement aux longueurs d'être positives ou nulles\,; avec les bornes de
+séparation, ils ne le peuvent pas. D'après le lemme de Farkas, il est
+impossible de fermer un ensemble de tours en respectant les bornes si et
+seulement si une combinaison de leurs décalages est égale, modulo les
+équilibres, à une combinaison positive de longueurs d'arcs qui charge un arc
+maintenu ouvert, et l'article compagnon~\cite{gardent2026turns} lit ces
+certificats sur les singularités. Dans quatre variantes (0, 1, 2 et 4), un
+tour retenu ne peut même pas être fermé seul~: le même tour autour du
+poignet gauche, de longueur $7,0$, dont le décalage est égal, modulo les
+équilibres, à $-(\ell_{1921} + \ell_{1937})$, où l'arc $1937$, long de $0,08$
+arête de quad dans la paramétrisation, est maintenu à une longueur d'au
+moins un (certificat vérifié en arithmétique rationnelle exacte pour la
+variante~0). Nous n'avons pas vérifié si $\ell_{1937} = 0$ réunirait deux
+sommets singuliers, c'est-à-dire si toute quantification valide respecte
+cette borne. Renoncer à la plus petite quantité totale de bornes nécessaire
+pour fermer tous les tours retenus, un programme linéaire, montre que dans
+les variantes 0, 2 et 4 c'est la borne de ce seul arc qui fait obstacle. Les
+autres conflits se regroupent en amas de singularités aux yeux, aux mains et
+aux pieds.
+
+\paragraph{L'écart de la projection.}
+Toutes bornes gardées, le plus grand ensemble de tours retenus qui peuvent
+être fermés ensemble est trouvé par un programme mixte-entier à une variable
+binaire par tour (tableau~\ref{tab:exact}). La projection du moteur de
+l'export en garde bien moins~: elle retirait, un à un, le tour laissé le
+plus décalé par une projection aux moindres carrés dont les longueurs
+négatives étaient ramenées à zéro, et un seul arc ainsi tronqué pouvait lui
+faire abandonner des dizaines de tours qui n'entrent en conflit avec rien.
+Le moteur au commit cité maintient plutôt de tels arcs à zéro (l'ensemble
+actif de la section~\ref{sec:closing}). En nombres entiers, le même
+programme mixte-entier n'a pas abouti en quinze minutes sur les deux systèmes
+essayés.
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+variante & retenus & gardés par la projection & fermables ensemble \\
+\midrule
+0 & 48 & 42 & 47 \\
+1 & 78 & 46 & 73 \\
+2 & 52 & 46 & 51 \\
+3 & 86 & 47 & 82 \\
+4 & 84 & 49 & 83 \\
+5 & 160 & 48 & 154 \\
+6 & 88 & 53 & 87 \\
+7 & 169 & 49 & 160 \\
+\bottomrule
+\end{tabular}
+\caption{Corps masculin à $10\,590$ quads, nombres réels, moteur de l'export.
+«~Gardés par la projection~»~: par la projection tronquée de ce moteur\,;
+«~fermables ensemble~»~: le plus grand ensemble de tours retenus qui peuvent
+être fermés en gardant toutes les bornes de séparation.}
+\label{tab:exact}
+\end{table}
+
+\paragraph{L'arrondi ignore les décalages.}
+Donner de meilleures cibles à la recherche entière du moteur montre ce qui
+lui survit (tableau~\ref{tab:rounding}). Viser les longueurs du programme
+linéaire ferme au bout du compte moins de boucles~: son objectif $L^1$
+pondéré concentre les changements sur peu d'arcs, l'écart aux longueurs
+réelles augmente, et les variantes qui ont le moins de spirales sont
+refusées par le plafond d'écart. La projection avec ensemble actif garde
+fermés en nombres réels tous les tours retenus, et pourtant, après la
+recherche entière, $117$ sur $169$ sont de nouveau décalés et le maillage
+spirale davantage\,; avec la projection tronquée aussi, environ $40\,\%$ des
+tours qu'elle gardait sont décalés après la recherche entière. La recherche
+entière suit les cibles, mais pas les décalages.
+
+\begin{table}[t]
+\centering
+\small
+\newcommand{\head}[1]{\begin{tabular}[b]{@{}r@{}}#1\end{tabular}}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.4cm}rrr@{}}
+\toprule
+cibles de la recherche entière & \head{tours fermés\\ en réels} &
+\head{encore décalés\\ après} & \head{arêtes en spirale\\ (maillage)} \\
+\midrule
+projection tronquée & environ 50 & 10 à 23 d'entre eux & 1,1\,\% \\
+programme linéaire, $L^1$ & jusqu'à 160 & --- & 11,9\,\% \\
+ensemble actif, plancher 0 & tous les retenus (jusqu'à 169) & 117 sur 169 & 3,3\,\% \\
+ensemble actif, plancher à la moitié de la longueur réelle & 36 à 72 & --- & 9,8\,\% \\
+\bottomrule
+\end{tabular}
+\caption{Corps masculin à $10\,590$ quads, moteur de l'export, une exécution
+chacun\,; le maillage garde la variante qui a le moins de spirales, si bien
+que sa part est celle d'une seule variante. Le moteur au commit cité utilise
+l'ensemble actif avec le plancher $0$, ainsi que les passes de contraintes
+et le plancher du plafond d'écart, que ce tableau n'inclut pas.}
+\label{tab:rounding}
+\end{table}
+
+\paragraph{Ce ne sont pas les longueurs entières qui manquent.}
+Les équilibres forment la matrice d'incidence d'un graphe bidirigé dont les
+sommets sont les équations d'équilibre et dont les arêtes sont les arcs
+(chaque arc se trouve sur un côté de chacun des deux patchs qu'il borde).
+Lorsque ce graphe est connexe et possède un cycle que des valeurs $\pm1$ ne
+peuvent équilibrer, comme sur le corps, l'article compagnon montre qu'un
+ensemble d'arcs libres paramètre le réseau des longueurs entières
+équilibrées~: ici $2\,069 - 1\,552 = 517$ arcs peuvent recevoir des longueurs
+entières quelconques et les autres s'en déduisent, si bien que les
+équilibres seuls ne font jamais obstacle aux longueurs entières. Fermer
+exactement, en nombres entiers, les tours trouvés fermables ensemble est
+réalisable~: HiGHS le résout en environ deux minutes par variante pour trois
+des quatre variantes essayées (la quatrième, à $87$ tours, n'a pas abouti en
+dix minutes). Les solutions laissent de $1$ à $4$ tours retenus décalés là
+où le moteur en laisse de $13$ à $44$, et moins de tours non retenus
+décalés aussi ($5$ contre $9$, $5$ contre $11$, $0$ contre $27$), pour un
+écart aux longueurs réelles plus élevé de $4\,\%$ à $62\,\%$. Pourtant, les
+maillages de quads qu'elles produisent spiralent \emph{davantage}~:
+$12,2\,\%$ de leurs arêtes contre $8,8\,\%$ pour la première variante,
+$3,7\,\%$ contre $1,1\,\%$ pour la deuxième, et la troisième casse la
+structure. La plupart des boucles qui spiralent ne sont pas des tours que
+trouvent les marches échantillonnées.
+
+Parcourir plutôt chaque bande du maillage de la variante~2
+(proposition~\ref{prop:complete}) donne $230$ parcours, chaque bande deux
+fois, une fois dans chaque sens\,; $168$ reviennent décalés. Les
+sélectionner par l'inclinaison, comme le font les passes de contraintes, en
+garde $222$, dont $218$ ($109$ bandes) peuvent être fermés ensemble en
+nombres réels toutes bornes gardées. Posés directement à HiGHS, ils n'ont
+donné aucune solution entière en dix ni en trente minutes\,; si on lui donne
+les $171$ arcs que toute solution réelle met à zéro (chacun certifié par une
+combinaison positive de décalages, $23$ certificats distincts autour des
+doigts, des orteils, des pieds, de la tête, du torse et du cou), il en
+trouve une en une seconde. L'obstacle est la taille~: aucunes longueurs
+réelles fermant les $218$ anneaux n'ont un écart moyen aux cibles inférieur
+à $0,817$, quand le moteur de l'export refusait $0,474$ ($1,5$ fois les
+$0,316$ de sa recherche simple\,; le moteur au commit cité admet $0,516$). Un
+sous-ensemble de $190$, choisi de façon gloutonne, se ferme à $0,399$ en
+nombres réels, en conservant le nombre de quads au premier ordre. En nombres
+entiers, avec la reformulation d'Aardal, Hurkens et
+Lenstra~\cite{aardal2000diophantine} sur une base
+LLL-réduite~\cite{lenstra1982lll} du réseau des quantifications fermées,
+HiGHS, arrêté après $1\,200$ secondes, trouve des longueurs entières qui
+ferment les $190$ en respectant toutes les bornes, à un écart moyen de
+$0,619$ et $10\,568$ quads, et prouve qu'aucune ne fait mieux que $0,536$.
+Données au moteur à la place de ses longueurs, elles ferment les $190$
+anneaux mais produisent $2,5\,\%$ d'arêtes en spirale contre $1,1\,\%$~: aux
+nouvelles longueurs, les bandes sont d'autres marches, $156$ des $230$
+parcours étant décalés. L'arrondi coûte entre $0,137$ (prouvé) et $0,220$
+(trouvé) d'écart moyen au-dessus de l'optimum réel\,; c'est le choix des
+tours à fermer, aux longueurs où ils sont les bandes du maillage, qui décide
+de combien le maillage spirale.
+
+\paragraph{L'heuristique laisse l'essentiel de l'écart.}
+L'article compagnon~\cite{gardent2026turns} calcule le plus petit nombre de
+tours retenus que toutes longueurs de $P_{\mathrm{eng}}$ laissent décalés,
+une couverture minimale des sous-systèmes infaisables irréductibles
+(\emph{irreducible infeasible subsystems})~\cite{parker1996iis}~:
+exactement $1$, $5$, $1$, $4$, $1$, $6$, $1$ et $9$ dans les variantes 0 à
+7, contre $13$, $39$, $16$, $44$, $49$, $115$, $44$ et $123$ laissés décalés
+par le moteur. Si l'on ajoute le plafond d'écart du moteur et sa fenêtre de
+tailles (de $10\,379$ à $10\,801$ quads), en longueurs entières, le plus
+petit nombre vaut encore exactement un dans les variantes 0 et 2~: des
+longueurs entières qui ferment tous les tours retenus sauf celui du poignet
+existent à $10\,439$ et $10\,436$ quads, à des écarts moyens de $0,442$ et
+$0,469$. Des $16$ tours de la variante~2 que le moteur laisse décalés, les
+bornes de séparation en imposent un, et le plafond, la taille et
+l'intégrité aucun\,; l'heuristique est responsable des $15$ autres. Fermer
+davantage de tours n'est cependant pas ce que voit la mesure des spirales~:
+une recherche locale sur les longueurs entières, sous les mêmes plafond et
+taille, ferme $38$ bandes de plus du maillage du moteur que le moteur
+lui-même, mais à ses longueurs, qui de plus cassent le maillage, les bandes
+sont de nouveau d'autres marches, et la part de bandes en spirale est de
+$0,020$ contre $0,011$ pour le moteur. Choisir le plus grand nombre de tours
+à fermer est NP-difficile en général, déjà pour les équilibres bidirigés et
+les bornes $0$--$1$ de la quantification~\cite{gardent2026turns}.
+
+\paragraph{Fermer le plus d'anneaux, de bout en bout.}
+Nous avons mesuré ce qu'une sélection exacte apporte sur le banc, avec le
+moteur de la branche \texttt{complete-helices} (les passes de contraintes,
+sans le maillage de travail plus fin aux parois minces du commit cité~:
+$4,54\,\%$ d'arêtes en spirale sur les $36$ exécutions). Pour les longueurs
+que garde le moteur, un programme mixte-entier ferme autant qu'il le peut de
+ses bandes d'inclinaison inférieure à $0,12$, pondérées par leur longueur de
+révolution, sous les équilibres, les bornes de séparation, le plafond et le
+budget de quads\,; le moteur maille le résultat, les bandes sont parcourues
+de nouveau aux nouvelles longueurs, et le programme est résolu de nouveau,
+en trois passes. Avec les seules expressions des décalages, le programme
+ferme $27,3$ des $38,2$ bandes de ce type d'un modèle (moyenne sur les $36$
+exécutions), mais aux nouvelles longueurs seules $22,1$ sont des bandes
+fermées, contre $21,8$ pour le moteur. Exigées pour chaque bande comptée
+comme fermée, les inégalités de couloir~\eqref{eq:corridor} rendent le
+compte exact ($24,6$ fermées par le programme, $24,0$ trouvées fermées en
+parcourant le maillage). À la place des longueurs du moteur, les longueurs
+trouvées ne spiralent pas moins~: $4,77\,\%$ et $5,08\,\%$ d'arêtes en spirale
+en deux exécutions, contre $4,54\,\%$. Ajoutées aux candidats parmi lesquels
+le moteur choisit selon son propre compte des spirales, elles abaissent la
+moyenne à $2,32\,\%$ et $2,70\,\%$, jamais au-dessus\,; trois autres tirages
+de la perturbation par arc du moteur, ajoutés de la même façon, donnent
+$4,12\,\%$, trois jeux de longueurs tirés au hasard sous les mêmes plafond et
+budget $4,34\,\%$, et les passes sans les inégalités de couloir $3,15\,\%$,
+mieux que les autres tirages sur $7$ exécutions et moins bien sur $7$. Les
+boucles fermées ($38,0\,\%$ contre $36,3\,\%$ des arêtes) et la distance
+moyenne ($0,383$ contre $0,385$) bougent à peine, et les $36$ maillages sont
+tous valides. Sur le corps masculin, chaque passe a spiralé davantage que le
+moteur (de $3,45\,\%$ à $5,59\,\%$ contre $1,59\,\%$). Le gain exige un
+solveur qui aboutit~: avec une limite de $5$ secondes par résolution, il
+disparaît ($4,10\,\%$ contre $4,12\,\%$ pour les autres tirages), car $63$
+des $126$ pièces n'obtiennent pas de solution à temps et $68$ des $108$
+passes rendent les longueurs mêmes du moteur. Une recherche locale à
+l'intérieur du moteur, des marches de son réseau de bandes biaisées par des
+multiplicateurs de Lagrange avec les inégalités de couloir gardées, coûte de
+$0,1$ à $0,25$ seconde par modèle mais ne ferme pas plus d'anneaux que le
+moteur~: une marche seule décale presque toujours un anneau déjà fermé, et
+fermer demande des combinaisons de marches.
+
+\paragraph{Agir avant la quantification.}
+Puisque le décalage d'un anneau qui borde un disque est, au signe près, la
+composante transverse du vecteur de Burgers des sommets singuliers qu'il
+contient~\cite{gardent2026turns}, déplacer les sommets singuliers dans la
+paramétrisation est un levier naturel. Sur sept modèles fermés de genre zéro
+(blob, rock, creature, spot, pig, ogre, blub), la somme de Burgers reproduit
+le décalage de $3\,600$ des $3\,604$ anneaux de l'application sans couture
+qui bordent un disque et s'inclinent d'au plus $0,12$, à $10^{-5}(1+L)$ près
+pour un anneau de longueur $L$. Pourtant, déplacer un sommet singulier ne
+déplace presque pas le décalage~: les autres points coniques se déplacent
+dans l'application et absorbent le changement, et sur douze déplacements par
+modèle, le changement mesuré vaut $0,12$, $0,03$ et $0,01$ du changement
+prédit sur le blob, la créature et le cochon. Faire tourner rigidement le
+champ du côté le plus petit d'un anneau le déplace bel et bien (de $26\,\%$
+à $87\,\%$ de la rotation multipliée par la longueur, à mesure que la région
+tournée grandit de $0$ à $40$ couronnes de sommets), pour un coût en
+distorsion presque nul\,; mais faire tourner le champ cylindre par cylindre
+pour ramener les décalages à zéro a reporté la torsion sur des anneaux de
+$90$ à $200$ arêtes, et sur $36$ exécutions, $2$ se sont améliorées et $4$
+ont régressé, ce que nous lisons comme du chaos plutôt qu'un progrès. Nous
+y lisons, à titre de conjecture, qu'avec une application d'échelle fixée le
+levier est l'orientation du champ le long de cylindres entiers, et que les
+conflits sont mieux attaqués dans la quantification.
+
+\section{Limites et problèmes ouverts}\label{sec:limits}
+
+Les résultats viennent d'une seule implémentation et sont préliminaires. La
+part de spirales d'un modèle isolé est chaotique, si bien que seules les
+moyennes sur trois budgets sont robustes\,; les autres chiffres viennent
+d'exécutions uniques. La mesure ne voit que les hélices de pas au plus
+quatre. La comparaison avec d'autres remailleurs et les expériences de la
+section~\ref{sec:exact} ont utilisé des moteurs antérieurs
+(annexe~\ref{app:provenance}), et le corps masculin n'a pas été remaillé avec
+le commit cité. Le regard exact porte sur un seul corps, avec un moteur sans
+les passes de contraintes, et vaut relativement aux bornes de séparation du
+moteur, qui sont son choix d'arcs et ne sont ni un sous-ensemble ni un
+sur-ensemble des quantifications valides\,; le plafond qui y est imposé
+n'est celui du moteur qu'approximativement (une quantification à $0,4737$ a
+été refusée par lui). Les temps ont été pris sur une machine partagée, et
+les résultats qui dépendent d'une limite de temps dépendent de sa charge.
+Les scripts et les journaux des expériences exactes ne sont pas encore
+publiés (annexe~\ref{app:provenance}).
+
+Trois problèmes restent ouverts. \emph{Une formulation exacte}~: minimiser
+l'écart sous les équilibres, les bornes et $\shift_\gamma(\ell) = 0$ pour un
+ensemble de tours est un flot d'écart minimal avec des contraintes annexes
+linéaires\,; on ne sait pas quelle part de l'appareil exact
+de~\cite{heistermann2023bimdf} s'y transpose, et la relaxation linéaire
+ferme déjà presque tous les tours retenus. \emph{Fermer en nombres
+entiers}~: des longueurs entières fermant chaque anneau demandé se trouvent
+au moyen d'une base réduite du réseau, mais en quelques minutes, avec un
+nombre de quads tenu seulement au premier ordre et un écart supérieur de
+$0,14$ à $0,22$ à l'optimum réel\,; la recherche entière peut-elle se
+déplacer dans ce réseau à la vitesse d'un solveur de flot\,? \emph{Quels
+tours}, le problème central au vu de la section~\ref{sec:exact}~: fermer
+des anneaux change les longueurs, les longueurs changent les bandes, et les
+bandes du nouveau maillage sont d'autres marches. Existe-t-il un ensemble
+fini de tours dont la fermeture implique que toute boucle du maillage de
+quads se ferme\,? Peut-on lire les boucles du maillage de quads directement
+sur le T-mesh et ses longueurs, de sorte que chacune soit prise en
+compte\,? Quel objectif, à défaut de toutes les boucles, prédit les spirales
+que voit la mesure\,?
+
+\section*{Assistance par IA}
+Cette note et le logiciel qu'elle décrit ont été faits par un auteur humain
+travaillant avec un système d'IA, qui n'est pas un auteur. L'auteur a choisi
+le problème et ses objectifs (des boucles d'arêtes qui se ferment en anneaux
+et, en artiste, peu de sommets singuliers et peu de spirales plutôt que des
+quads parfaitement carrés, des quads seulement), a fixé la direction et
+l'ordre du travail, a décidé quels résultats poursuivre et quels changements
+fusionner, et a jugé les résultats au travers des mesures, des images et des
+brouillons qui lui ont été présentés. Claude Opus 5.5 (Anthropic), utilisé
+via Claude Code en octobre 2026 avec plusieurs sous-agents en parallèle, a
+écrit les changements du moteur et les scripts d'expérience, a mené toutes
+les expériences et tous les calculs exacts, a fait la recherche
+bibliographique, a énoncé et démontré les propositions, et a rédigé le
+texte. L'existence des références a été vérifiée, et la note de chaque
+entrée de la bibliographie dit quelle part de l'œuvre a été lue. Des formes
+plus faibles des propositions~\ref{prop:linear} et~\ref{prop:complete} sont
+vérifiées en Lean~4~\cite{demoura2021lean4} dans l'article compagnon\,; tout
+le reste de ce qui n'est pas vérifié ici par machine a été écrit avec l'aide
+de l'IA et vérifié par des agents d'IA qui l'ont relu et testé sur les
+données, non par un expert humain. La note n'a pas été relue par des
+pairs\,; l'auteur, qui la publie, est responsable de son contenu. La présente
+traduction française a elle aussi été faite avec l'aide de l'IA\,; la
+version anglaise fait foi.
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\appendix
+
+\section{Provenance des chiffres}\label{app:provenance}
+
+Le moteur a changé pendant que les expériences étaient menées. Le tableau
+indique, pour chaque groupe de chiffres, quelle version l'a produit et où se
+trouve sa sortie brute. «~Message de commit~»~: les chiffres sont donnés
+dans le message de ce commit du dépôt\,; «~journaux de travail~»~: les
+fichiers de sortie et les scripts de l'expérience, conservés par l'auteur
+hors du dépôt et pas encore publiés.
+
+\begin{center}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{5.6cm}@{}}
+\toprule
+chiffres & moteur & source \\
+\midrule
+douze modèles, trois budgets, $4,65\,\%$ (section~\ref{sec:experiments})
+  & le commit cité & journaux de travail du protocole ci-dessous\,; une
+  seconde exécution du même moteur a donné les mêmes chiffres pour les $36$
+  maillages \\
+tableau~\ref{tab:dev}
+  & commits \texttt{7dc1727}, \texttt{c86740f}, \texttt{cf4a82c}
+  & messages de commit (aussi \texttt{ab8d89c}) \\
+face à d'autres remailleurs
+  & commits \texttt{83f0967}, \texttt{4e9620c}
+  & \texttt{bench/results/results.json} à ces commits \\
+corps masculin fait à la main
+  & ---
+  & \texttt{bench/results/RESULTS.md} \\
+corps masculin, openclare
+  & \texttt{ab8d89c}\,; \texttt{b0d37fa} à \texttt{8fd1932}
+  & messages de commit\,; boucles fermées, distance et angles~: journaux de
+  travail \\
+figures~\ref{fig:overview} et~\ref{fig:closeups}, leurs chiffres
+  & commit \texttt{89232b0}, une exécution par maillage\,; QuadriFlow via
+  Blender, sur la source mise à l'échelle $100$ puis ramenée
+  & \texttt{figures/README.md} (commandes, chiffres, somme de contrôle de
+  la source) et \texttt{figures/make\_figures.sh}, qui les refait \\
+section~\ref{sec:exact}, jusqu'à «~L'heuristique laisse l'essentiel de
+l'écart~»
+  & branche \texttt{rd-exact} (point d'accroche d'export), moteur antérieur à
+  \texttt{3b3122d}
+  & journaux de travail, scripts et systèmes exportés\,; certains chiffres de
+  synthèse aussi dans des messages de commit (\texttt{6374097},
+  \texttt{38b9fb3}) \\
+fermer le plus d'anneaux, de bout en bout
+  & branche \texttt{maxclose-rd}, moteur de la branche
+  \texttt{complete-helices}
+  & journaux de travail\,; certains chiffres seulement dans la synthèse de
+  l'expérience \\
+agir avant la quantification
+  & un correctif du moteur du commit \texttt{83f0967}
+  & journaux de travail\,; les rapports sur douze déplacements, les $36$
+  exécutions et les $3\,600$ des $3\,604$ anneaux seulement dans la synthèse
+  de l'expérience \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Le protocole des douze modèles.} Pour chaque modèle $m$
+(creature, blob, suzanne, spot, pig, ogre, bob, jerry, blub, rock avec le
+préréglage \texttt{organic}\,; cage et part avec \texttt{hard-surface}) et
+chaque budget $Q \in \{2\,970 ; 3\,000 ; 3\,030\}$~: \texttt{openclare remesh}
+\texttt{bench/out/}$m$\texttt{/source.obj} \textit{out.obj}
+\texttt{--preset} $P$ \texttt{--quads} $Q$, puis \texttt{openclare measure}
+sur la source et la sortie avec \texttt{--target} $Q$ \texttt{--json}\,; les
+chiffres sont les moyennes de \texttt{loop\_edges\_spiral},
+\texttt{loop\_edges\_closed}, \texttt{loops\_spiral},
+\texttt{mean\_distance} et \texttt{angle\_deviation\_mean} sur les $36$
+exécutions.
+
+\paragraph{Reproductibilité.} La méthode est implémentée dans openclare
+(Rust), dans la branche principale du dépôt au commit cité\,; le banc est
+piloté par \texttt{bench/run.py}. L'export du T-mesh utilisé à la
+section~\ref{sec:exact} est un point d'accroche expérimental de la branche
+\texttt{rd-exact}, et la sélection de bout en bout se trouve sur la branche
+expérimentale \texttt{maxclose-rd}\,; aucune des deux ne fait partie du
+moteur, et aucune n'est encore étiquetée. Tant que les scripts et les
+journaux des expériences exactes ne sont pas publiés, les énoncés mesurés de
+la section~\ref{sec:exact} peuvent être confrontés à ces branches mais pas
+réexécutés tels quels. Cette version de la note a été construite à partir
+du commit \texttt{\enginecommit}.
+
+\end{document}

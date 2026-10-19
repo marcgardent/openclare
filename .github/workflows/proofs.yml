@@ -5,6 +5,7 @@ name: proofs
 # (docs/research/closing-helices). The Lean proofs of the companion checked,
 # and the PDF of each note built and kept with the run. On every push to main
 # and every pull request that touches a note, and by hand from the Actions tab.
+# A note's French translation, paper.fr.tex, is built beside it when present.
 on:
   push:
     branches: [main]
@@ -85,4 +86,22 @@ jobs:
         with:
           name: ${{ matrix.note }}-paper
           path: docs/research/${{ matrix.note }}/paper.pdf
+          if-no-files-found: error
+      # The French translation, when the note has one.
+      - name: Has a French translation
+        id: french
+        run: |
+          if [ -f docs/research/${{ matrix.note }}/paper.fr.tex ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.french.outputs.present == 'true'
+        uses: xu-cheng/latex-action@4.1.0
+        with:
+          working_directory: docs/research/${{ matrix.note }}
+          root_file: paper.fr.tex
+      - if: steps.french.outputs.present == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.note }}-paper-fr
+          path: docs/research/${{ matrix.note }}/paper.fr.pdf
           if-no-files-found: error
