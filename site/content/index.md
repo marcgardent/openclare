@@ -1,9 +1,12 @@
-# openclare
-
 <div class="hero">
-<p class="lede">Automatic quad retopology for Blender. A mesh of triangles in, a mesh of quads out, its edges following the shape and its edge loops closing round it.</p>
-<p>openclare is a field-aligned quad remeshing engine: a cross field follows the curvature, a T-mesh lays out the patches, and an integer quantization decides how many quads go where. The engine is written in Rust; it ships as a Blender add-on with the engine inside, and as a command-line tool. Open source, GPL-3.0-or-later.</p>
-<p class="actions"><a class="button primary" href="get.md">Get it</a> <a class="button" href="results.md">See the results</a> <a class="button" href="theory.md">How it works</a></p>
+<div class="hero-text">
+<p class="kicker">Blender add-on · command line · GPL-3.0</p>
+<h1>Automatic quad retopology, with edge loops that close.</h1>
+<p class="lede">A mesh of triangles in, a mesh of quads out, its edges following the shape and its edge loops closing round it.</p>
+<p class="more">openclare is a field-aligned quad remeshing engine: a cross field follows the curvature, a T-mesh lays out the patches, and an integer quantization decides how many quads go where. The engine is written in Rust; it ships as a Blender add-on with the engine inside, and as a command-line tool. Open source, GPL-3.0-or-later.</p>
+<p class="actions"><a class="button primary" href="get.md">Get the add-on</a> <a class="button" href="results.md">See the results</a> <a class="button" href="theory.md">How it works</a></p>
+</div>
+<figure class="pair"><div class="pair-images"><img src="../../docs/models/img/human_male__source.webp" alt="A sculpted human body, {{shot:human_male:Source}}" width="600" height="600"><img src="../../docs/models/img/human_male__openclare.webp" alt="The same body remeshed by openclare, {{shot:human_male:openclare}}" width="600" height="600"></div><figcaption><span>{{shot:human_male:Source}}</span><span class="to">→ {{shot:human_male:openclare}}</span></figcaption></figure>
 </div>
 
 ## Loops that close
@@ -20,12 +23,14 @@ An artist selects an edge loop with one Alt-click and expects it to go round an 
 
 ## The numbers
 
+<!-- section: night -->
+
 <div class="stats">
 <div class="stat"><span class="value">4.5%</span><span class="label">of the edges on spiral loops, 12 models at three budgets near 3,000 quads; 16.7% with no closing</span></div>
 <div class="stat"><span class="value">1.2–1.6%</span><span class="label">spiral edges on the male body, against 2.5% for the mesh made by hand (12.1% before closing)</span></div>
-<div class="stat"><span class="value">{{mark:3000:organic:openclare}} / 100</span><span class="label">average mark on {{count:organic}} organic models at 3,000 quads; AutoRemesher {{mark:3000:organic:autoremesher}}, QuadriFlow {{mark:3000:organic:quadriflow}}</span></div>
-<div class="stat"><span class="value">{{mark:3000:mechanical:openclare}} / 100</span><span class="label">average mark on the mechanical parts at 3,000 quads</span></div>
-<div class="stat"><span class="value">187</span><span class="label">theorems of the research note checked by the Lean proof assistant</span></div>
+<div class="stat"><span class="value">{{mark:3000:organic:openclare}}<small> / 100</small></span><span class="label">average mark on {{count:organic}} organic models at 3,000 quads; AutoRemesher {{mark:3000:organic:autoremesher}}, QuadriFlow {{mark:3000:organic:quadriflow}}</span></div>
+<div class="stat"><span class="value">{{mark:3000:mechanical:openclare}}<small> / 100</small></span><span class="label">average mark on the mechanical parts at 3,000 quads</span></div>
+<div class="stat"><span class="value">{{theorems}}</span><span class="label">theorems of the research note checked by the Lean proof assistant</span></div>
 </div>
 
 Measured by the project's bench, the night of 18 October 2026, on {{count:all}} models; how the marks are made is on the [results](results.md) page. The marks weigh validity, alignment on the shape, the shape of the quads, the distance to the model, irregular vertices, the structure of the layout, closed edge loops and the number of quads asked for.
@@ -50,6 +55,6 @@ An artist would rather have few poles and few spirals than perfectly square quad
 <a class="card" href="theory.md"><strong>Theory</strong><span>Why edge loops spiral, and the rules that close them, in plain words.</span></a>
 <a class="card" href="../../docs/GLOSSARY.md"><strong>Glossary</strong><span>Poles, cross fields, T-meshes, turns and shifts, with pictures.</span></a>
 <a class="card" href="results.md"><strong>Results</strong><span>Marks per budget and per kind of model, and one page per model.</span></a>
-<a class="card" href="research.md"><strong>Research note</strong><span>The paper, its machine-checked proofs, and how the work was done.</span></a>
+<a class="card" href="research.md"><strong>Research</strong><span>Two papers, in English and in French, and their machine-checked proofs.</span></a>
 <a class="card" href="get.md"><strong>Get it</strong><span>The Blender add-on and the command line.</span></a>
 </div>

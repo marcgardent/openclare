@@ -1,9 +1,12 @@
-# openclare
-
 <div class="hero">
-<p class="lede">La retopologie automatique en quads pour Blender. Un maillage de triangles en entrée, un maillage de quads en sortie, dont les arêtes suivent la forme et dont les boucles d'arêtes se referment autour d'elle.</p>
-<p>openclare est un remailleur en quads guidé par un champ : un champ de croix suit la courbure, un T-mesh dispose les patchs, et une quantification entière décide combien de quads vont où. Le moteur est écrit en Rust ; il est livré comme extension Blender, moteur compris, et comme outil en ligne de commande. Logiciel libre, GPL-3.0-or-later.</p>
-<p class="actions"><a class="button primary" href="get.fr.md">L'obtenir</a> <a class="button" href="results.fr.md">Voir les résultats</a> <a class="button" href="theory.fr.md">Comment ça marche</a></p>
+<div class="hero-text">
+<p class="kicker">Extension Blender · ligne de commande · GPL-3.0</p>
+<h1>La retopologie automatique en quads, avec des boucles d'arêtes qui se ferment.</h1>
+<p class="lede">Un maillage de triangles en entrée, un maillage de quads en sortie, dont les arêtes suivent la forme et dont les boucles d'arêtes se referment autour d'elle.</p>
+<p class="more">openclare est un remailleur en quads guidé par un champ : un champ de croix suit la courbure, un T-mesh dispose les patchs, et une quantification entière décide combien de quads vont où. Le moteur est écrit en Rust ; il est livré comme extension Blender, moteur compris, et comme outil en ligne de commande. Logiciel libre, GPL-3.0-or-later.</p>
+<p class="actions"><a class="button primary" href="get.fr.md">Obtenir l'extension</a> <a class="button" href="results.fr.md">Voir les résultats</a> <a class="button" href="theory.fr.md">Comment ça marche</a></p>
+</div>
+<figure class="pair"><div class="pair-images"><img src="../../docs/models/img/human_male__source.webp" alt="Un corps humain sculpté, {{shot:human_male:Source}}" width="600" height="600"><img src="../../docs/models/img/human_male__openclare.webp" alt="Le même corps remaillé par openclare, {{shot:human_male:openclare}}" width="600" height="600"></div><figcaption><span>{{shot:human_male:Source}}</span><span class="to">→ {{shot:human_male:openclare}}</span></figcaption></figure>
 </div>
 
 ## Des boucles qui se ferment
@@ -20,12 +23,14 @@ Un artiste sélectionne une boucle d'arêtes d'un Alt-clic et s'attend à ce qu'
 
 ## Les chiffres
 
+<!-- section: night -->
+
 <div class="stats">
 <div class="stat"><span class="value">4,5 %</span><span class="label">des arêtes sur des boucles en spirale, 12 modèles à trois budgets autour de 3 000 quads ; 16,7 % sans fermeture</span></div>
 <div class="stat"><span class="value">1,2–1,6 %</span><span class="label">d'arêtes en spirale sur le corps masculin, contre 2,5 % pour le maillage fait à la main (12,1 % avant fermeture)</span></div>
-<div class="stat"><span class="value">{{mark:3000:organic:openclare}} / 100</span><span class="label">note moyenne sur {{count:organic}} modèles organiques à 3 000 quads ; AutoRemesher {{mark:3000:organic:autoremesher}}, QuadriFlow {{mark:3000:organic:quadriflow}}</span></div>
-<div class="stat"><span class="value">{{mark:3000:mechanical:openclare}} / 100</span><span class="label">note moyenne sur les pièces mécaniques à 3 000 quads</span></div>
-<div class="stat"><span class="value">187</span><span class="label">théorèmes de la note de recherche vérifiés par l'assistant de preuve Lean</span></div>
+<div class="stat"><span class="value">{{mark:3000:organic:openclare}}<small> / 100</small></span><span class="label">note moyenne sur {{count:organic}} modèles organiques à 3 000 quads ; AutoRemesher {{mark:3000:organic:autoremesher}}, QuadriFlow {{mark:3000:organic:quadriflow}}</span></div>
+<div class="stat"><span class="value">{{mark:3000:mechanical:openclare}}<small> / 100</small></span><span class="label">note moyenne sur les pièces mécaniques à 3 000 quads</span></div>
+<div class="stat"><span class="value">{{theorems}}</span><span class="label">théorèmes de la note de recherche vérifiés par l'assistant de preuve Lean</span></div>
 </div>
 
 Mesuré par le banc d'essai du projet, la nuit du 18 octobre 2026, sur {{count:all}} modèles ; la façon dont les notes sont faites est sur la page des [résultats](results.fr.md). Les notes pèsent la validité, l'alignement sur la forme, la forme des quads, la distance au modèle, les sommets irréguliers, la structure de la disposition, les boucles d'arêtes fermées et le nombre de quads demandé.
@@ -50,6 +55,6 @@ Un artiste préfère peu de pôles et peu de spirales à des quads parfaitement 
 <a class="card" href="theory.fr.md"><strong>Théorie</strong><span>Pourquoi les boucles d'arêtes spiralent, et les règles qui les ferment, en mots simples.</span></a>
 <a class="card" href="../../docs/GLOSSARY.fr.md"><strong>Glossaire</strong><span>Pôles, champs de croix, T-mesh, tours et décalages, en images.</span></a>
 <a class="card" href="results.fr.md"><strong>Résultats</strong><span>Les notes par budget et par type de modèle, et une page par modèle.</span></a>
-<a class="card" href="research.fr.md"><strong>Note de recherche</strong><span>L'article, ses preuves vérifiées par machine, et la façon dont le travail a été fait.</span></a>
+<a class="card" href="research.fr.md"><strong>Recherche</strong><span>Deux articles, en anglais et en français, et leurs preuves vérifiées par machine.</span></a>
 <a class="card" href="get.fr.md"><strong>L'obtenir</strong><span>L'extension Blender et la ligne de commande.</span></a>
 </div>

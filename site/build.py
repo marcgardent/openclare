@@ -62,6 +62,13 @@ def source_ref():
 
 
 REF = source_ref()
+
+# The papers the site serves itself, and their names in it.
+PAPERS = {
+    "docs/research/closing-loops/paper.pdf": "files/closing-edge-loops.pdf",
+    "docs/research/closing-loops/paper.fr.pdf": "files/closing-edge-loops.fr.pdf",
+    "docs/research/closing-helices/paper.pdf": "files/turns-of-a-t-mesh-draft.pdf",
+}
 LANGUAGES = ("en", "fr")
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif"}
 # The widest a picture is kept, in pixels; wider ones are scaled down.
@@ -88,10 +95,17 @@ WORDS = {
         "theory": "Theory",
         "glossary": "Glossary",
         "results": "Results",
-        "research": "Research note",
+        "research": "Research",
         "get": "Get it",
+        "github": "GitHub ↗",
         "models": "Model by model",
         "other_title": "Lire cette page en français",
+        "language_label": "Language",
+        "language_names": {"en": "English", "fr": "Français"},
+        "repository_label": "Repository",
+        "releases": "Releases",
+        "issues": "Issues",
+        "glossary_sections": "Sections of the glossary",
         "footer": (
             "<p><strong>openclare</strong>: automatic quad retopology. Code under the GNU GPL, version 3 or later; "
             "the pictures of each model under the licence of that model, listed in "
@@ -114,10 +128,17 @@ WORDS = {
         "theory": "Théorie",
         "glossary": "Glossaire",
         "results": "Résultats",
-        "research": "Note de recherche",
+        "research": "Recherche",
         "get": "L'obtenir",
+        "github": "GitHub ↗",
         "models": "Modèle par modèle",
         "other_title": "Read this page in English",
+        "language_label": "Langue",
+        "language_names": {"en": "English", "fr": "Français"},
+        "repository_label": "Dépôt",
+        "releases": "Versions",
+        "issues": "Tickets",
+        "glossary_sections": "Sections du glossaire",
         "footer": (
             "<p><strong>openclare</strong> : la retopologie automatique en quads. Code sous GNU GPL, version 3 ou "
             "ultérieure ; les images de chaque modèle sous la licence de ce modèle, listée dans "
@@ -133,7 +154,8 @@ WORDS = {
     },
 }
 
-NAVIGATION = ("index", "theory", "glossary", "results", "research", "get")
+# The logo leads home; the navigation lists the other pages.
+NAVIGATION = ("theory", "results", "glossary", "research", "get")
 
 # Display names of the remeshers of the bench, and what the rows that are
 # not one of the remeshers compared are.
@@ -148,6 +170,7 @@ TOOLS = {
     "openclare-as-handmade": ("openclare at the hand-made count", "openclare au nombre du fait main"),
 }
 COMPARED = ("openclare", "quadriflow", "autoremesher")
+BUDGETS = (1000, 3000, 8000)
 VARIANTS = ("openclare-uniform", "integer-grid", "instant-meshes", "handmade", "openclare-as-handmade")
 
 GROUPS = {
@@ -196,6 +219,10 @@ RESULT_WORDS = {
             "marks, in the tables above."
         ),
         "best": "The best mark of each row is highlighted.",
+        "asked_for": "Quads asked for",
+        "models_in_group": "{n} models",
+        "all_criteria": "Every criterion, with the other settings and chains",
+        "loops_label": "{name}: {parts}",
     },
     "fr": {
         "budget": "{n} quads demandés",
@@ -223,6 +250,10 @@ RESULT_WORDS = {
             "notes, dans les tableaux ci-dessus."
         ),
         "best": "La meilleure note de chaque ligne est surlignée.",
+        "asked_for": "Quads demandés",
+        "models_in_group": "{n} modèles",
+        "all_criteria": "Tous les critères, avec les autres réglages et chaînes",
+        "loops_label": "{name} : {parts}",
     },
 }
 
@@ -645,8 +676,10 @@ class Site:
             target = "img/glossary/" + source.name
         elif repository_path.startswith("docs/images/"):
             target = "img/" + repository_path[len("docs/images/"):]
-        elif repository_path == "docs/research/closing-helices/paper.pdf":
-            target = "files/closing-edge-loops.pdf"
+        elif repository_path.startswith("docs/research/") and suffix in IMAGE_SUFFIXES:
+            target = "img/research/" + source.name
+        elif repository_path in PAPERS:
+            target = PAPERS[repository_path]
         else:
             target = "files/" + repository_path.replace("/", "-")
         convert = WEBP and suffix in (".png", ".jpg", ".jpeg")
@@ -693,7 +726,7 @@ class Site:
                 if self.is_withheld(path):
                     return None if image else relative(self.page_path("results", language)) + "#withheld"
                 return relative(self.asset(path)) + fragment
-            if path == "docs/research/closing-helices/paper.pdf":
+            if path in PAPERS:
                 return relative(self.asset(path))
             page_of = self.page_of_source(path, language)
             if page_of:
@@ -720,7 +753,11 @@ class Site:
         text = re.sub(r'\b(src|href|srcset)="([^"]+)"', attributes, text)
         return md.render(text, resolve)
 
-    def write(self, key, language, title, body, headings, kind, description="", breadcrumb="", toc=True):
+    def write(self, key, language, title, body, headings, kind, description="", breadcrumb="", toc=True, extra=""):
+        """Write one page. Its body loses its title (and subtitle), which go
+        into the band at the top of the page with `breadcrumb` or a kicker,
+        and `extra` (a switch, the sections of the glossary). The home page
+        is cut into bands instead, one per section."""
         page = self.page_path(key, language)
         root = posixpath.relpath(".", posixpath.dirname(page) or ".")
         root = "" if root == "." else root + "/"
@@ -731,16 +768,41 @@ class Site:
         for item in NAVIGATION:
             target = posixpath.relpath(self.page_path(item, language), here)
             current = ' aria-current="page"' if item == key or (item == "results" and key.startswith("models/")) else ""
-            nav.append(f'<li><a href="{target}"{current}>{words["home" if item == "index" else item]}</a></li>')
+            nav.append(f'<li><a href="{target}"{current}>{words[item]}</a></li>')
+        nav.append(f'<li><a href="{REPOSITORY}" rel="noopener">{words["github"]}</a></li>')
+        other_href = posixpath.relpath(self.page_path(key, other), here)
+        cells = []
+        for code in LANGUAGES:
+            name = words["language_names"][code]
+            if code == language:
+                cells.append(f'<span class="current" lang="{code}"><span aria-hidden="true">{code.upper()}</span><span class="visually-hidden">{name}</span></span>')
+            else:
+                cells.append(
+                    f'<a href="{other_href}" hreflang="{code}" lang="{code}" title="{words["other_title"]}">'
+                    f'<span aria-hidden="true">{code.upper()}</span><span class="visually-hidden">{name}</span></a>'
+                )
+        language_switch = f'<nav class="language" aria-label="{words["language_label"]}">{"".join(cells)}</nav>'
+        body = number_headings(body)
+        body = shell_prompts(body)
+        if kind != "home":
+            body = night_sections(body)
         sections = [h for h in headings if h[0] == 2]
         toc_html = ""
         if toc and len(sections) >= 3:
-            items = "".join(f'<li><a href="#{identifier}">{re.sub(r"<[^>]+>", "", text)}</a></li>' for _, text, identifier in sections)
-            # Beside the text on a wide screen; folded under the title on a
-            # narrow one.
+            items = "".join(f'<li><a href="#{identifier}">{heading_label(text)}</a></li>' for _, text, identifier in sections)
+            # Beside the text on a wide screen; folded above it on a narrow one.
             toc_html = f'<aside class="toc toc-side"><p>{words["on_this_page"]}</p><ol>{items}</ol></aside>'
-            inline = f'<details class="toc toc-inline"><summary>{words["on_this_page"]}</summary><ol>{items}</ol></details>'
-            body = re.sub(r"(</h1>\n(?:<p class=\"subtitle\">.*?</p>\n)?)", lambda m: m.group(1) + inline + "\n", body, count=1)
+            body = f'<details class="toc toc-inline"><summary>{words["on_this_page"]}</summary><ol>{items}</ol></details>\n' + body
+        if kind != "glossary":
+            glossary = posixpath.relpath(self.page_path("glossary", language), here)
+            body, self.linked[page] = self.terms[language].link(body, glossary)
+        if language == "fr":
+            body = french_spaces(body)
+        if kind == "home":
+            intro, body = home_bands(self.mark_strips(body, here))
+        else:
+            kicker = breadcrumb or f'<p class="kicker">{words.get(kind if kind in words else key, "")}</p>'
+            intro, body = page_intro(body, kicker, extra)
         values = {
             "lang": language,
             "title": html.escape(title if key == "index" else f"{title} · openclare"),
@@ -748,33 +810,46 @@ class Site:
             "root": root,
             "home": posixpath.relpath(self.page_path("index", language), here),
             "other_lang": other,
-            "other_href": posixpath.relpath(self.page_path(key, other), here),
-            "other_name": other.upper(),
-            "other_title": words["other_title"],
+            "other_href": other_href,
+            "language": language_switch,
             "skip": words["skip"],
             "nav_label": words["nav_label"],
             "nav": "<ul>" + "".join(nav) + "</ul>",
             "kind": kind,
-            "layout_class": " with-toc" if toc_html else "",
+            "intro": intro,
+            "layout_class": " full" if kind == "home" else " with-toc" if toc_html else "",
             "toc": toc_html,
-            "breadcrumb": breadcrumb,
             "body": body,
             "footer": words["footer"].format(
                 credits=f"{REPOSITORY}/blob/{REF}/CREDITS.md", repository=REPOSITORY
             ),
+            "repository_label": words["repository_label"],
+            "releases": words["releases"],
+            "issues": words["issues"],
         }
-        if kind != "glossary":
-            glossary = posixpath.relpath(self.page_path("glossary", language), here)
-            body, self.linked[page] = self.terms[language].link(body, glossary)
-            values["body"] = body
-        if language == "fr":
-            values["body"] = french_spaces(body)
         template = read(SITE / "template.html")
         output = re.sub(r"\{(\w+)\}", lambda m: values[m.group(1)], template)
         destination = self.out / page
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_text(output, encoding="utf-8")
         self.pages.append((key, language, page))
+
+    def mark_strips(self, body, here):
+        """A figure whose picture is a long strip (at least twice as wide as
+        high) gets the class "strip": it keeps the whole width of a band."""
+
+        def figure(match):
+            if Image is None:
+                return match.group(0)
+            path = self.out / posixpath.normpath(posixpath.join(here, html.unescape(match.group(1))))
+            try:
+                with Image.open(path) as picture:
+                    wide = picture.width >= 2 * picture.height
+            except OSError:
+                return match.group(0)
+            return match.group(0).replace("<figure>", '<figure class="strip">', 1) if wide else match.group(0)
+
+        return re.sub(r'<figure><img src="([^"]+)"', figure, body)
 
     @staticmethod
     def title_of(text):
@@ -807,8 +882,9 @@ class Site:
         return ""
 
     def tokens(self, text, language):
-        """{{mark:3000:organic:openclare}}, {{count:organic}}, {{count:all}}
-        in a source."""
+        """{{mark:3000:organic:openclare}}, {{count:organic}}, {{count:all}},
+        {{theorems}} and {{shot:human_male:openclare}} (the caption of a
+        picture of a model page) in a source."""
 
         def value(match):
             parts = match.group(1).split(":")
@@ -818,9 +894,41 @@ class Site:
                 if parts[1] == "all":
                     return str(len(self.data["models"]["3000"]))
                 return str(len(self.data["over"][(3000, parts[1])]))
+            if parts[0] == "theorems":
+                return str(self.theorems())
+            if parts[0] == "shot":
+                return self.shot_caption(parts[1], parts[2], language)
             return match.group(0)
 
-        return re.sub(r"\{\{((?:mark|count):[\w:-]+)\}\}", value, text)
+        return re.sub(r"\{\{((?:mark|count|shot):[\w:-]+|theorems)\}\}", value, text)
+
+    def theorems(self):
+        """The `theorem` declarations of the Lean proofs, outside comments,
+        as the proofs' README counts them; a warning when the README says
+        another number."""
+        folder = ROOT / "docs/research/closing-helices/lean"
+        total = 0
+        for path in sorted(folder.rglob("*.lean")):
+            if ".lake" in path.parts:
+                continue
+            text = re.sub(r"--.*", "", strip_block_comments(read(path)))
+            declaration = r"(?m)^\s*(?:@\[[^\]]*\]\s*)?(?:(?:private|protected|noncomputable|nonrec)\s+)*theorem\b"
+            total += len(re.findall(declaration, text))
+        stated = re.search(r"(\d+) `theorem` declarations", read(folder / "README.md"))
+        if stated and int(stated.group(1)) != total:
+            self.warnings.append(f"the Lean README says {stated.group(1)} theorems, the sources have {total}")
+        return total
+
+    def shot_caption(self, name, column, language):
+        """The caption under one picture of a model page ("2 979 quads"),
+        its number written for `language`."""
+        lines = read(ROOT / f"docs/models/{name}.md").splitlines()
+        for position, line in enumerate(lines):
+            if line.startswith("| Source |"):
+                header = md.Converter.cells(line)
+                caption = md.Converter.cells(lines[position + 3])[header.index(column)]
+                return re.sub(r"\d[\d ]*\d|\d", lambda m: number(int(m.group(0).replace(" ", "")), language), caption)
+        raise SystemExit(f"docs/models/{name}.md: no pictures")
 
     def content_page(self, key, language, kind, fallback=None):
         name = key if language == "en" else f"{key}.fr"
@@ -839,9 +947,9 @@ class Site:
     def simple(self, key, kind, fallback=None):
         for language in LANGUAGES:
             text, body, headings = self.content_page(key, language, kind, fallback and fallback[language])
-            self.write(
-                key, language, self.title_of(text), body, headings, kind, self.description_of(text), toc=key not in ("index", "results")
-            )
+            if kind == "theory":
+                body = theory_marks(body)
+            self.write(key, language, self.title_of(text), body, headings, kind, self.description_of(text), toc=kind == "theory")
 
     @staticmethod
     def glossary_source(language):
@@ -853,7 +961,13 @@ class Site:
             text = self.drop_language_link(read(ROOT / source))
             body, headings = self.render(text, source, self.page_path("glossary", language), language)
             body = self.entry_anchors(body, language, {identifier for _, _, identifier in headings})
-            self.write("glossary", language, self.title_of(text), body, headings, "glossary", self.description_of(text))
+            chips = "".join(
+                f'<a href="#{identifier}">{heading_label(text)}</a>' for level, text, identifier in headings if level == 2
+            )
+            extra = f'<nav class="chips" aria-label="{WORDS[language]["glossary_sections"]}">{chips}</nav>'
+            self.write(
+                "glossary", language, self.title_of(text), body, headings, "glossary", self.description_of(text), toc=False, extra=extra
+            )
 
     def entry_anchors(self, body, language, taken):
         """Every entry of the glossary page gets the anchor the other pages
@@ -883,7 +997,10 @@ class Site:
         """A table of marks: `rows` is a list of (label, {column: value},
         css class)."""
         index = 0 if language == "en" else 1
-        head = "".join(f"<th>{html.escape(CRITERIA.get(c, (c, c))[index])}</th>" for c in columns)
+        head = "".join(
+            ('<th class="overall-head">' if c == "Overall" else "<th>") + html.escape(CRITERIA.get(c, (c, c))[index]) + "</th>"
+            for c in columns
+        )
         body = []
         for label, cells, css in rows:
             if css == "divider":
@@ -893,11 +1010,12 @@ class Site:
             for column in columns:
                 value = cells.get(column, "—")
                 classes = []
-                if column == "Overall":
-                    classes.append("overall")
                 if value in ("—", "", None):
                     classes.append("none")
                     value = "—"
+                elif column == "Overall":
+                    classes.append("overall")
+                    value = score_cell(value, css == "ours")
                 if column == "Quads" and value != "—":
                     value = number(int(value), language)
                 attribute = f' class="{" ".join(classes)}"' if classes else ""
@@ -909,27 +1027,50 @@ class Site:
             f'<tbody>{"".join(body)}</tbody></table></div>'
         )
 
+    @staticmethod
+    def chart_legend(language):
+        index = 0 if language == "en" else 1
+        names = {"openclare": "openclare", "quadriflow": "QuadriFlow", "autoremesher": "AutoRemesher"}
+        items = "".join(f'<span><i class="swatch tool-{tool}"></i>{names[tool]}</span>' for tool in COMPARED)
+        return f'<p class="chart-legend" aria-hidden="true">{items}</p>'
+
     def averages_html(self, language):
+        """For each budget, a panel: the overall mark of the three
+        remeshers on each group of models, as bars, then every criterion
+        and the other settings in tables, folded."""
         words = RESULT_WORDS[language]
         index = 0 if language == "en" else 1
         columns = ["Quads", "Overall", "Validity", "Alignment", "Quad shape", "Fidelity", "Regularity", "Structure", "Edge loops", "Budget"]
-        parts = []
-        for budget in (3000, 1000, 8000):
-            inner = []
+        short = {"openclare": "openclare", "quadriflow": "QuadriFlow", "autoremesher": "AutoRemesher"}
+        parts = [self.chart_legend(language)]
+        for budget in BUDGETS:
+            inner, groups = [], []
             for group in GROUPS:
                 table = self.data["averages"].get((budget, group))
                 if not table:
                     continue
                 rows = []
                 compared = sorted((t for t in COMPARED if t in table), key=lambda t: -int(table[t]["Overall"]))
+                bars = []
                 for tool in compared:
                     rows.append((TOOLS[tool][index], table[tool], "ours" if tool == "openclare" else ""))
+                    mark = int(table[tool]["Overall"])
+                    ours = " ours" if tool == "openclare" else ""
+                    bars.append(
+                        f'<div class="bar-row{ours}"><span class="tool">{short[tool]}</span>'
+                        f'<span class="track" aria-hidden="true"><span class="fill tool-{tool}" style="width: {mark}%"></span></span>'
+                        f"<b>{mark}</b></div>"
+                    )
                 variants = [t for t in VARIANTS if t in table]
                 if variants:
                     rows.append((words["variants"], {}, "divider"))
                     for tool in sorted(variants, key=lambda t: -int(table[t]["Overall"])):
                         rows.append((TOOLS[tool][index], table[tool], "variant"))
                 names = self.data["over"].get((budget, group), [])
+                count = words["models_in_group"].format(n=len(names))
+                groups.append(
+                    f'<div class="group"><p class="group-name"><b>{GROUPS[group][index]}</b><span>{count}</span></p>{"".join(bars)}</div>'
+                )
                 shown = ", ".join(names)
                 inner.append(f"<h4>{GROUPS[group][index]}</h4>")
                 inner.append(f'<p class="note">{words["over"].format(count=len(names), names=shown)}</p>')
@@ -941,8 +1082,11 @@ class Site:
                     )
                     inner.append(f'<p class="note">{words["not_everywhere"].format(list=listed)}</p>')
             title = words["budget"].format(n=number(budget, language))
-            opened = " open" if budget == 3000 else ""
-            parts.append(f'<details class="budget"{opened}><summary>{title}</summary><div class="inner">{"".join(inner)}</div></details>')
+            parts.append(
+                f'<div class="budget-panel" data-budget="{budget}"><h3>{title}</h3>'
+                f'<div class="groups">{"".join(groups)}</div>'
+                f'<details class="more"><summary>{words["all_criteria"]}</summary><div class="inner">{"".join(inner)}</div></details></div>'
+            )
         parts.append(f'<p class="note">{words["legend_intro"]}</p>' + words["legend"])
         return "\n".join(parts)
 
@@ -951,7 +1095,7 @@ class Site:
         index = 0 if language == "en" else 1
         here = posixpath.dirname(page) or "."
         parts = [f'<p>{words["models_intro"]} {words["best"]}</p>']
-        for budget in (3000, 1000, 8000):
+        for budget in BUDGETS:
             marks = self.data["models"].get(str(budget), {})
             rows = []
             for name in self.models:
@@ -968,9 +1112,12 @@ class Site:
                 cells = []
                 for tool in COMPARED:
                     if tool in values:
-                        css = "overall best" if values[tool] == best else ""
-                        css += " ours" if tool == "openclare" else ""
-                        cells.append(f'<td class="{css.strip()}">{values[tool]}</td>')
+                        css = "best" if values[tool] == best else ""
+                        content = values[tool]
+                        if tool == "openclare":
+                            css += " overall ours"
+                            content = score_cell(values[tool], True)
+                        cells.append(f'<td class="{css.strip()}">{content}</td>')
                     else:
                         cells.append('<td class="none">—</td>')
                 rows.append(f"<tr><td>{label}</td><td>{kind_label}</td>{''.join(cells)}</tr>")
@@ -980,8 +1127,7 @@ class Site:
                 f'<tbody>{"".join(rows)}</tbody></table></div>'
             )
             title = words["budget"].format(n=number(budget, language))
-            opened = " open" if budget == 3000 else ""
-            parts.append(f'<details class="budget"{opened}><summary>{title}</summary><div class="inner">{table}</div></details>')
+            parts.append(f'<div class="budget-panel" data-budget="{budget}"><h3>{title}</h3>{table}</div>')
         return "\n".join(parts)
 
     def withheld_html(self, language, page):
@@ -1007,7 +1153,8 @@ class Site:
             ):
                 body = body.replace(f"<p>{{{{{token}}}}}</p>", make())
             self.write(
-                "results", language, self.title_of(text), body, headings, "results", self.description_of(text), toc=False
+                "results", language, self.title_of(text), body, headings, "results", self.description_of(text), toc=False,
+                extra=budget_switch(language),
             )
 
     # ---- model pages
@@ -1057,7 +1204,9 @@ class Site:
                 text = re.sub(pattern, replacement, text)
         legend = RESULT_WORDS[language]["legend"]
         text = re.sub(r"(?m)^(## (?:Marks|Notes))$", lambda m: m.group(1) + "\n\n" + legend.replace("\n", ""), text, count=1)
+        text = self.loop_bars(self.shots(text), language)
         body, headings = self.render(text, source, page, language)
+        body = budget_panels(marks_tables(body), language)
         body = body.replace(marker, self.credit_line(name, language, page))
         # Each picture opens at full size.
         body = re.sub(r'(<img src="([^"]+)"[^>]*>)', r'<a class="picture" href="\2">\1</a>', body)
@@ -1071,6 +1220,73 @@ class Site:
         title = name
         description = self.description_of(text.replace("@@credit@@", ""))
         self.write(f"models/{name}", language, title, body, headings, "model", description, breadcrumb, toc=False)
+
+    def shots(self, text):
+        """The table of pictures of a model page as a row of figures, the
+        remesher's name and the size of its mesh under each."""
+        lines = text.split("\n")
+        for position, line in enumerate(lines):
+            if not line.startswith("| Source |") or position + 3 >= len(lines):
+                continue
+            names = md.Converter.cells(line)
+            images = md.Converter.cells(lines[position + 2])
+            captions = md.Converter.cells(lines[position + 3])
+            figures = []
+            for name, image, caption in zip(names, images, captions):
+                match = re.match(r"!\[([^\]]*)\]\(([^)]+)\)", image)
+                picture = ""
+                if match:
+                    alt, target = match.groups()
+                    if self.is_withheld(target):
+                        picture = f'<span class="withheld">{html.escape(alt)}</span>'
+                    else:
+                        picture = f'<img src="{html.escape(target)}" alt="{html.escape(alt)}" loading="lazy" decoding="async">'
+                ours = " ours" if name == "openclare" else ""
+                figures.append(
+                    f'<figure class="shot{ours}">{picture}<figcaption><b>{html.escape(name)}</b>'
+                    f"<span>{html.escape(caption)}</span></figcaption></figure>"
+                )
+            lines[position: position + 4] = ['<div class="shots">' + "".join(figures) + "</div>"]
+            break
+        return "\n".join(lines)
+
+    @staticmethod
+    def loop_bars(text, language):
+        """Above the table of edge loops of a model page, one bar per mesh:
+        its edges on closed loops, spirals, loops that stop, and border to
+        border loops."""
+        parts = ("closed", "spiral", "stops", "border")
+        lines = text.split("\n")
+        for position, line in enumerate(lines):
+            if not line.startswith("| | ") or position + 1 >= len(lines) or not lines[position + 1].startswith("|---"):
+                continue
+            header = md.Converter.cells(line)
+            bars = []
+            row = position + 2
+            while row < len(lines) and lines[row].startswith("|"):
+                cells = md.Converter.cells(lines[row])
+                row += 1
+                try:
+                    values = [float(cell.replace("%", "").strip()) for cell in cells[1:5]]
+                except ValueError:
+                    continue
+                name = cells[0]
+                spans = "".join(
+                    f'<span class="part-{part}" style="flex-grow: {value:g}"></span>' for part, value in zip(parts, values) if value > 0
+                )
+                shares = ", ".join(f"{label} {cell}" for label, cell in zip(header[1:5], cells[1:5]))
+                label = html.escape(RESULT_WORDS[language]["loops_label"].format(name=name, parts=shares))
+                ours = " ours" if name == "openclare" else ""
+                bars.append(
+                    f'<div class="loop-bar{ours}"><p><b>{html.escape(name)}</b><span>{cells[5]} {header[5]}</span></p>'
+                    f'<div class="stack" role="img" aria-label="{label}">{spans}</div></div>'
+                )
+            if bars:
+                legend = "".join(f'<span><i class="part-{part}"></i>{label}</span>' for part, label in zip(parts, header[1:5]))
+                block = '<div class="loop-bars">' + "".join(bars) + f'<p class="loop-legend" aria-hidden="true">{legend}</p></div>'
+                lines[position:position] = [block, ""]
+            break
+        return "\n".join(lines)
 
     # ---- the whole site
 
@@ -1092,6 +1308,217 @@ class Site:
             for language in LANGUAGES:
                 self.model_page(name, language)
         return self
+
+
+# ---------------------------------------------------------------- page parts
+
+# Written in a source right under a heading, it puts that section on a night
+# band.
+NIGHT = "<!-- section: night -->"
+
+
+def number_headings(body):
+    """"## 1. The problem" shows its number apart, in vermillion."""
+    return re.sub(r'(<h2 id="[^"]*">)(\d+)\. ', r'\1<span class="num">\2</span>', body)
+
+
+def heading_label(text):
+    """A heading as a link of a table of contents."""
+    return re.sub(r"^(\d+)\. ", r'<span class="num">\1</span>', re.sub(r"<[^>]+>", "", text))
+
+
+def shell_prompts(body):
+    """A prompt before each command of a shell block (not copied with it),
+    its comments dimmed."""
+
+    def lines(match):
+        out = []
+        for line in match.group(2).split("\n"):
+            if line.lstrip().startswith("#"):
+                out.append(f'<span class="comment">{line}</span>')
+                continue
+            comment = ""
+            trailing = re.search(r"(\s+)(#.*)$", line)
+            if trailing:
+                line, comment = line[: trailing.start()], f'{trailing.group(1)}<span class="comment">{trailing.group(2)}</span>'
+            prompt = '<span class="prompt" aria-hidden="true">$ </span>' if line.strip() and not line.startswith(" ") else ""
+            out.append(prompt + line + comment)
+        return match.group(1) + "\n".join(out) + "</code></pre>"
+
+    return re.sub(r'(<pre><code class="language-sh">)(.*?)</code></pre>', lines, body, flags=re.S)
+
+
+def night_sections(body):
+    """The sections marked with NIGHT, each in a night block."""
+    if NIGHT not in body:
+        return body
+    parts = re.split(r'(?=<h2 id=")', body)
+    for position, part in enumerate(parts):
+        if NIGHT in part:
+            parts[position] = f'<section class="night night-block">\n{part.replace(NIGHT, "").strip()}\n</section>\n'
+    return "".join(parts)
+
+
+def page_intro(body, kicker, extra=""):
+    """The band at the top of a page: the kicker (or breadcrumb), the title
+    and subtitle taken out of the body, and `extra`."""
+    head = ""
+    match = re.search(r'<h1 id="[^"]*">(.*?)</h1>\n?(?:<p class="subtitle">.*?</p>\n?)?', body, re.S)
+    if match:
+        head = match.group(0).strip()
+        body = body[: match.start()] + body[match.end():]
+        # A kicker that only repeats the title says nothing.
+        if re.sub(r"<[^>]+>", "", kicker).strip().lower() == re.sub(r"<[^>]+>", "", match.group(1)).strip().lower():
+            kicker = ""
+    intro = f'<section class="intro"><div class="wrap">\n{kicker}\n{head}\n{extra}\n</div></section>'
+    return intro, body.strip("\n")
+
+
+def home_bands(body):
+    """The home page: its hero at the top, then one band per section,
+    numbered; a section marked with NIGHT on a night band. The first
+    paragraph of a section stands beside its title."""
+    parts = re.split(r'(?=<h2 id=")', body)
+    intro = f'<section class="intro"><div class="wrap">\n{parts[0].strip()}\n</div></section>'
+    bands = []
+    for number, part in enumerate(parts[1:], 1):
+        match = re.match(r'<h2 id="([^"]+)">(.*?)</h2>\n?', part, re.S)
+        identifier, title = match.groups()
+        rest = part[match.end():]
+        night = NIGHT in rest
+        rest = rest.replace(NIGHT, "").lstrip("\n")
+        lead = ""
+        first = re.match(r"<p>.*?</p>\n?", rest, re.S)
+        if first:
+            lead, rest = first.group(0).strip(), rest[first.end():]
+        bands.append(
+            f'<section class="band{" night" if night else ""}" aria-labelledby="{identifier}"><div class="wrap">\n'
+            f'<div class="band-head"><h2 id="{identifier}"><span class="num">{number:02d}</span>{title}</h2>{lead}</div>\n'
+            f"{rest.strip()}\n</div></section>"
+        )
+    return intro, "\n".join(bands)
+
+
+def budget_switch(language):
+    """The three cells that choose the budget whose panels are shown."""
+    cells = []
+    for budget in BUDGETS:
+        checked = " checked" if budget == 3000 else ""
+        cells.append(
+            f'<input type="radio" name="budget" id="budget-{budget}" value="{budget}"{checked}>'
+            f'<label for="budget-{budget}">{number(budget, language)}</label>'
+        )
+    legend = RESULT_WORDS[language]["asked_for"]
+    return f'<fieldset class="switch"><legend>{legend}</legend><div class="switch-cells">{"".join(cells)}</div></fieldset>'
+
+
+def score_cell(value, ours=False):
+    """A mark with its bar: teal, vermillion under 50, slate for the rows
+    that are not openclare's."""
+    try:
+        mark = int(re.sub(r"<[^>]+>", "", str(value)))
+    except ValueError:
+        return value
+    tone = " low" if mark < 50 else "" if ours else " plain"
+    return (
+        f'<span class="score"><b>{mark}</b><span class="track" aria-hidden="true">'
+        f'<span class="fill{tone}" style="width: {max(0, min(mark, 100))}%"></span></span></span>'
+    )
+
+
+def marks_tables(body):
+    """The tables of marks of a model page: openclare's row set apart, the
+    overall mark with its bar."""
+
+    def table(match):
+        text = match.group(0)
+        head = re.search(r"<thead><tr>(.*?)</tr></thead>", text, re.S)
+        if not head:
+            return text
+        names = [re.sub(r"<[^>]+>", "", cell) for cell in re.findall(r"<th[^>]*>(.*?)</th>", head.group(1), re.S)]
+        overall = next((i for i, name in enumerate(names) if name in ("Overall", "Note globale")), None)
+        if overall is None:
+            return text
+        text = text.replace("<table>", '<table class="marks">', 1)
+
+        def row(match):
+            cells = re.findall(r"<td[^>]*>(.*?)</td>", match.group(1), re.S)
+            ours = cells and cells[0] == "<strong>openclare</strong>"
+            out = []
+            for position, cell in enumerate(cells):
+                if position == overall:
+                    out.append(f'<td class="overall">{score_cell(cell, ours)}</td>')
+                elif cell in ("—", ""):
+                    out.append('<td class="none">—</td>')
+                else:
+                    out.append(f"<td>{cell}</td>")
+            css = ' class="ours"' if ours else ""
+            return f"<tr{css}>{''.join(out)}</tr>"
+
+        body_part = re.search(r"<tbody>(.*?)</tbody>", text, re.S)
+        rows = re.sub(r"<tr>(.*?)</tr>", row, body_part.group(1), flags=re.S)
+        text = text[: body_part.start(1)] + rows + text[body_part.end(1):]
+        return re.sub(
+            r"(<thead><tr>(?:<th[^>]*>.*?</th>){%d})<th>" % overall, r'\1<th class="overall-head">', text, count=1, flags=re.S
+        )
+
+    return re.sub(r'<div class="table-wrap"><table>.*?</table></div>', table, body, flags=re.S)
+
+
+def budget_panels(body, language):
+    """The "### 3000 quads" subsections of the marks of a model page, each a
+    panel of the budget switch, the switch above the first."""
+    pattern = re.compile(r'<h3 id="[^"]*">(\d+) quads</h3>')
+    matches = list(pattern.finditer(body))
+    if not matches:
+        return body
+    out = body[: matches[0].start()] + budget_switch(language) + "\n"
+    for index, match in enumerate(matches):
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(body)
+        chunk = body[match.start(): end]
+        stop = re.search(r"<h2 ", chunk)
+        tail = ""
+        if stop:
+            chunk, tail = chunk[: stop.start()], chunk[stop.start():]
+        out += f'<div class="budget-panel" data-budget="{match.group(1)}">\n{chunk.strip()}\n</div>\n{tail}'
+    return out
+
+
+BADGES = {
+    "proved": "proved", "measured": "measured", "conjectured": "conjectured", "refuted": "refuted",
+    "démontré": "proved", "prouvé": "proved", "mesuré": "measured", "conjecturé": "conjectured", "réfuté": "refuted",
+}
+
+
+def theory_marks(body):
+    """The theory page: each statement's kind (proved, measured...) as a
+    badge, the steps of the engine numbered."""
+    body = re.sub(
+        r"<strong>(proved|measured|conjectured|refuted|démontré|prouvé|mesuré|conjecturé|réfuté)(e?s?)</strong>",
+        lambda m: f'<strong class="badge badge-{BADGES[m.group(1)]}">{m.group(1)}{m.group(2)}</strong>',
+        body,
+    )
+    return re.sub(
+        r"<p><strong>(\d+)\. (.+?)</strong>(.*?)</p>",
+        r'<p class="step"><span class="step-number">\1</span><span><strong>\2</strong>\3</span></p>',
+        body,
+        flags=re.S,
+    )
+
+
+def strip_block_comments(text):
+    """Lean source without its /- ... -/ comments, which nest."""
+    out, depth, position = [], 0, 0
+    while position < len(text):
+        if text.startswith("/-", position):
+            depth, position = depth + 1, position + 2
+        elif depth and text.startswith("-/", position):
+            depth, position = depth - 1, position + 2
+        else:
+            if not depth:
+                out.append(text[position])
+            position += 1
+    return "".join(out)
 
 
 def french_spaces(body):

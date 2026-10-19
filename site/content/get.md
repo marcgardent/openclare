@@ -40,11 +40,13 @@ cargo build --release
 
 ## Further
 
-- [README](../../README.md): the add-on, setting by setting.
-- [USAGE.md](../../USAGE.md): the command line, the library, the C interface, and watching the chain at work.
-- [CONTRIBUTING.md](../../CONTRIBUTING.md): building, testing, the bench, the layout of the code.
-- [ALGORITHM.md](../../ALGORITHM.md): how it works, stage by stage.
-- [CREDITS.md](../../CREDITS.md): authors, sources and licences of the 3D models used.
+<div class="cards">
+<a class="card" href="../../README.md"><strong>README</strong><span>The add-on, setting by setting.</span></a>
+<a class="card" href="../../USAGE.md"><strong>USAGE.md</strong><span>The command line, the library, the C interface, and watching the chain at work.</span></a>
+<a class="card" href="../../CONTRIBUTING.md"><strong>CONTRIBUTING.md</strong><span>Building, testing, the bench, the layout of the code.</span></a>
+<a class="card" href="../../ALGORITHM.md"><strong>ALGORITHM.md</strong><span>How it works, stage by stage.</span></a>
+<a class="card" href="../../CREDITS.md"><strong>CREDITS.md</strong><span>Authors, sources and licences of the 3D models used.</span></a>
+</div>
 
 ## Licence
 

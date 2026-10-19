@@ -1,20 +1,35 @@
-# Closing Edge Loops at Quantization Time
+# Research
 
-<p class="subtitle">Helix constraints for T-mesh quantization. Research note of the openclare project, 18 October 2026. A draft, not peer reviewed.</p>
+<p class="subtitle">This work began as a programming project, openclare, an open-source quad remesher, and became research when engineering alone could no longer tell which results could be guaranteed and which computations could be saved.</p>
 
-<p class="actions"><a class="button primary" href="../../docs/research/closing-helices/paper.pdf">Read the note (PDF)</a> <a class="button" href="../../docs/research/closing-helices/paper.tex">LaTeX source</a> <a class="button" href="theory.md">The theory in plain words</a></p>
+<article class="paper" aria-labelledby="paper-a">
+<div class="paper-text">
+<p class="tags"><span class="tag tag-ink">Paper A · applied</span> <span class="tag tag-teal">Draft · not peer reviewed</span></p>
+<h2 id="paper-a">Closing Edge Loops at Quantization Time: Helix Constraints for T-Mesh Quantization</h2>
+<p>Automatic quad remeshing often produces edge loops that wind round a part of the shape as helices instead of closing into rings. Bommes et al. remove such <em>q-helices</em> from a finished mesh; we prevent them where the integer structure of the mesh is decided, in the quantization of a T-mesh.</p>
+<p class="actions"><a class="button primary" href="../../docs/research/closing-loops/paper.pdf">PDF · English · 18 p.</a> <a class="button" href="../../docs/research/closing-loops/paper.fr.pdf" hreflang="fr" lang="fr">PDF · français · 20 p.</a> <a class="button plain" href="../../docs/research/closing-loops/paper.tex">LaTeX source</a></p>
+<p class="note">The French version is a best-effort translation; the English one is authoritative.</p>
+</div>
+<figure><img src="../../docs/research/closing-loops/figures/male-overview.png" alt="Figure 3 of paper A: the male body at 10,590 quads asked for, by openclare without closing, by openclare with closing, by hand and by QuadriFlow, spiral loops in vermillion" loading="lazy"><figcaption>Figure 3 · spiral loops in vermillion, closed loops in dark blue</figcaption></figure>
+</article>
 
-## Abstract
-
-Automatic quad remeshing tools produce edge loops that wind round a part of the shape as helices instead of closing into rings, a defect that makes such meshes awkward to edit by hand. Bommes et al. identified these *q-helices* and remove them after meshing, by grid-preserving operators applied to the finished quad mesh. We take the opposite route and prevent them where the integer structure of the mesh is decided: in the quantization of a T-mesh. A straight walk across the rectangles of a T-mesh that comes back to its start defines a *turn*; we show that the pitch of the corresponding helix is a linear form in the integer lengths of the arcs, so that closing the helix is a linear constraint on the quantization. We add such constraints to a minimum-deviation-flow quantizer through a least-change projection and targeted repair walks, select among a few ways of finding turns by the share of spiral edges they leave, and guard against folds and budget drift. On our bench the share of edges on spiral loops at 3,000 quads drops from 16.7% to 6.0% on twelve models; on a human body remeshed at the face count of the hand-made base mesh it drops from 12.1% to 1.1%, below the 2.5% of the hand-made mesh.
-
-We relate turns to the twist of flat cylinders in the theory of Jenkins–Strebel differentials, show with the holonomy of the flat metric that a pair of singularities of valences three and five joined by a staircase of arcs between two turns forbids closing both, and prove that on a sphere the shift of a turn has the parity of its length, so that a helix of odd pitch closes only if its length changes. Exact computations on the lattice of closed quantizations of the human body show that whole lengths closing nearly every ring exist, but not at the size asked for. Tested on the T-mesh of that body, the propositions hold on every turn and annulus they apply to; the conflicts between two turns are not, as we had guessed, pairs on one trace, but staircases between a pair of valences three and five, exchanges of two vertices of valence three, or caps, and the one turn that cannot close on its own is held open by a separatrix that winds round a wrist. On seven other models the Burgers sum reproduces the shift of 3,600 of 3,604 rings, yet moving a singular vertex in the parametrization barely moves the shift: the map moves the other cone points instead.
-
-With Fox's free differential calculus we write any combination of shifts as a sum over the singular vertices of twisted winding numbers times Burgers vectors; winding numbers alone do not suffice, on the body as in principle, but they do modulo two, which gives a checkerboard rule for any combination of turns. Turned around, the obstructions bound from below the number of helices of any quantization: on the body, the separation of the singularities alone forces one to nine of the turns held for closing to stay helices, and this is attained, where the engine leaves 13 to 123. We list the open problems that a complete treatment would need to solve.
+<article class="paper" aria-labelledby="paper-b">
+<div class="paper-text">
+<p class="tags"><span class="tag tag-ink">Paper B · theory</span> <span class="tag tag-hot">In preparation</span></p>
+<h2 id="paper-b">Turns of a T-mesh: obstructions to closing edge loops</h2>
+<p>The shift of a turn read as translational holonomy; the conflicts the singularities impose; the turns every quantization within bounds leaves shifted; and why choosing the turns to close is NP-hard.</p>
+<p>Its draft is the first research note of the project, which carries the title of paper A and is being rewritten into this paper.</p>
+<p class="actions"><a class="button" href="../../docs/research/closing-helices/paper.pdf">Draft · PDF · English · 51 p.</a> <a class="button plain" href="../../docs/research/closing-helices/paper.tex">LaTeX source</a></p>
+</div>
+</article>
 
 ## Machine-checked proofs
 
-The algebraic cores of the note's results (its Sections 3 and 8 to 10) are checked by the [Lean 4](https://lean-lang.org/) proof assistant with the Mathlib library: **187 theorems**, in a Lake project beside the note. Every theorem depends only on Lean's three standard axioms (`propext`, `Classical.choice`, `Quot.sound`); there is no `sorry`.
+<!-- section: night -->
+
+<p class="lead-number"><b>{{theorems}}</b><span>theorems in Lean 4 + Mathlib</span></p>
+
+The algebraic cores of the note's results (its Sections 3 and 8 to 10) are checked by the [Lean 4](https://lean-lang.org/) proof assistant with the Mathlib library: **{{theorems}} theorems**, in a Lake project beside the note. Every theorem depends only on Lean's three standard axioms (`propext`, `Classical.choice`, `Quot.sound`); there is no `sorry`.
 
 **What is checked.** Among others: the shift of a turn is a linear form in the arc lengths; the complete walk of the strips finds every strip; Gauss–Bonnet for turns; the Burgers sum and the order of first visit; annuli, dislocations, staircases and exchanges of two vertices; the checkerboard rule and the parity of a turn on a sphere (with a second proof that came out of the formalization); the Fox–Burgers formula; the handshake lemma and the "free arcs" proposition; Farkas certificates for turns that can never close; and the theorem on forced helices. Several results are proved more generally than the note states them: for any rotations and dimensions, and for fields of any order (triangle and hexagon meshes).
 
@@ -32,14 +47,12 @@ The first run downloads the Lean toolchain and Mathlib already compiled, about 1
 
 ## AI assistance
 
-The note states how the work was divided between its human author and an AI system. In its own words:
+Both papers and the software they describe were made by a human author working with an AI system, which is not an author. Following the practice recommended by ACM and by Nature, each paper states how the work was divided.
 
-> This note and the software it describes were made by a human author working with an AI system. Following the practice recommended by ACM and by Nature, we state how the work was divided. No AI system is an author of this note.
->
-> **The human author** chose the problem and its aims: edge loops that close into rings, the quad sphere with the eight poles of a cube as a target, and, as an artist, a mesh with few singular vertices and few spirals rather than perfectly square quads, always made of quads only. He set the direction of the research and the order of the work, decided which results to pursue, which changes to merge into the engine and which to drop, authorized the tools (LaTeX, Lean and Mathlib), and judged the results through the measurements, pictures and drafts presented to him.
->
-> **The AI system**, Claude Opus 5.5 (Anthropic), used through Claude Code in October 2026, with several sub-agents of the same model working in parallel, did the rest. It wrote the changes to the engine and the experiment scripts, ran the experiments and the bench, carried out the exact computations (SymPy, HiGHS through SciPy), searched the literature, stated and proved the propositions, wrote the Lean formalization and drafted the text of this note. References were checked for existence, and the note attached to each entry of the bibliography says how much of the work was read: the abstract only, a part, or all of it.
->
-> **What was checked, and how.** The algebraic cores of Sections 8 to 10 are machine-checked in Lean, using only Lean's standard axioms. The topological statements that Lean takes as hypotheses, and the proofs given only on paper, were checked by AI agents rereading them and testing them numerically on the data, not by a human expert. Every measured figure can be reproduced from the scripts and branches named in the note. The note is a draft and has not been peer reviewed. Errors remain possible, and the human author, who publishes the note, is responsible for its content.
+**The human author** chose the problem and its aims: edge loops that close into rings, the quad sphere with the eight poles of a cube as a target and, as an artist, few singular vertices and few spirals rather than perfectly square quads, quads only. He set the direction and the order of the work, decided which results to pursue and which changes to merge into the engine, authorized the tools (LaTeX, Lean and Mathlib), and judged the results through the measurements, pictures and drafts presented to him.
+
+**The AI system**, Claude Opus 5.5 (Anthropic), used through Claude Code in October 2026 with several sub-agents in parallel, did the rest: the changes to the engine and the experiment scripts, the experiments and the bench, the exact computations, the search of the literature, the statements and proofs, the Lean formalization and the drafts of the text. References were checked for existence, and each entry of the bibliographies says how much of the work was read.
+
+**What was checked, and how.** The algebraic cores are machine-checked in Lean, with Lean's standard axioms only. The topological hypotheses Lean takes as given, and the proofs given only on paper, were checked by AI agents rereading them and testing them on the data, not by a human expert. Every measured figure can be reproduced from the scripts and branches the papers name. Neither paper has been peer reviewed; errors remain possible, and the author, who publishes them, is responsible for their content.
 
 This website was built the same way: its pages were drafted by the AI system and published by the author of the project.
