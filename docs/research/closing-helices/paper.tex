@@ -2731,7 +2731,7 @@ The folder \texttt{docs/research/closing-helices/lean} of the repository is
 a Lean~4~\cite{demoura2021lean4} project on Mathlib~\cite{mathlib2020},
 pinned to Mathlib \texttt{v4.35.0} and the toolchain
 \texttt{leanprover/lean4:v4.35.0}; \texttt{make proofs} fetches Mathlib
-compiled and checks it. It holds $187$ theorem declarations, many of them
+compiled and checks it. It holds $228$ theorem declarations, many of them
 small lemmas, a few of them tautologies that only restate a hypothesis (such
 as \texttt{dislocation\_closes\_iff} or \texttt{staircase\_rings}); the count is
 not evidence, and the folder's \texttt{README.md} maps each statement of the
@@ -2747,8 +2747,10 @@ theorem that uses them.
 \item Checked as algebra: the Burgers sum and the order of first visit
   (Proposition~\ref{prop:burgers}), dislocations, staircases, exchanges and
   the conjugation step of Proposition~\ref{prop:winding}; the checkerboard
-  rules, the induction of the proof of Proposition~\ref{prop:parity} given a
-  2-colouring, and the second proof of Remark~\ref{rem:borders}; the
+  rules, Proposition~\ref{prop:parity} for whole balanced lengths of any sign
+  given a 2-colouring at positive lengths and the linearity of
+  $\alpha_\gamma$ and $\shift_\gamma$ in $\ell$, and the second proof of
+  Remark~\ref{rem:borders}; the
   Fox--Burgers formula, its link with Proposition~\ref{prop:burgers}(a) for
   a simple turn, its corollary and the commutator; the handshake on a
   closed surface, Proposition~\ref{prop:free} (stronger than stated), the
@@ -3536,10 +3538,13 @@ instance.
   (Proposition~\ref{prop:staircase}); the positivity of a non-negative form
   with a held arc (Remark~\ref{rem:definite}).
 \item At whole lengths: the parities of $(I - R^{\pm1})p$ and $(I - R^2)p$; the
-  checkerboard rule (Proposition~\ref{prop:checkerboard}); the induction of the
-  proof of Proposition~\ref{prop:parity}, given a 2-colouring of the quad graph
-  (the extension from positive to all whole lengths is on paper),
-  and the second proof of Remark~\ref{rem:borders}.
+  checkerboard rule (Proposition~\ref{prop:checkerboard}); the proof of
+  Proposition~\ref{prop:parity}, for whole balanced lengths of any sign:
+  the induction at positive lengths given a 2-colouring of the quad graph,
+  positive whole balanced lengths from the real ones by Farkas' lemma, and
+  the step $\ell = (\ell + Np) - Np$, with $\alpha_\gamma$ and
+  $\shift_\gamma$ taken as linear forms in $\ell$ (a hypothesis); and the
+  second proof of Remark~\ref{rem:borders}.
 \item The Fox--Burgers formula on words, which is well defined on the free
   group, the fundamental formula, the twisted windings and $\sum_i (I -
   R_i)^\top W_i = 0$, the insertion of the relation, which changes the

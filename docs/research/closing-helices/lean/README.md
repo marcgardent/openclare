@@ -2,7 +2,7 @@
 
 This Lake project checks with Lean 4 and Mathlib the **algebraic cores** of the
 results of the research note `../paper.tex` (Sections 3, 7 and 9, and
-Appendix F): 187 `theorem` declarations, many of them small lemmas and a few
+Appendix F): 228 `theorem` declarations, many of them small lemmas and a few
 restating a hypothesis (`dislocation_closes_iff`, `staircase_rings`); the
 count is not evidence, the table below names the main ones. The topological facts the note uses (that a loop develops into a given
 motion, that a curve bounds a disc, that the quad graph of a sphere is
@@ -48,7 +48,7 @@ quarter-turn `R(a, b) = (-b, a)` the multiplication by `i`, as in
 | Prop. "A separatrix that winds", the conjugation step | `Motion.conj_translation` | the free homotopy |
 | Parity of `(I - R^{±1}) p`, `(I - R²) p` | `parity_one_sub_quarter`, `one_sub_half_turn`, `quarter_mul_parity`, `colour_rotAbout` | — |
 | Prop. "Checkerboard rule" | `checkerboard`, `oddColours_translate` | the Burgers sum of Prop. (b) |
-| Prop. "Parity of a turn on a sphere" | `parity_chain`, `parity_of_turn` (the induction of the note's proof); `colour_hol_trans` (a second proof) | a proper 2-colouring of the quad graph; for the second proof, that the turn is a word in the loops round the cone points (closed genus-zero surface) |
+| Prop. "Parity of a turn on a sphere" | `parity_of_turn_any_sign` (whole balanced lengths of any sign), from `parity_chain`, `parity_of_turn` (the induction of the note's proof at positive lengths), `even_of_even_on_positive` (`ℓ = (ℓ + N p) - N p`) and `exists_positive_whole` (positive whole balanced lengths from real ones, by `Farkas.whole_solution_of_real`); `colour_hol_trans` (a second proof) | at every positive whole balanced `ℓ`, a proper 2-colouring of the quad graph with the development of the turn (`parity_of_turn`'s hypotheses); that the length and the shift of the turn are whole linear forms in `ℓ` (the turn crosses the same patches); real positive balanced lengths; for the second proof, that the turn is a word in the loops round the cone points (closed genus-zero surface) |
 | Prop. "Fox–Burgers formula" | `fox_burgers`, `fox_fundamental`, `fox_burgers_combination`, `twisted_relation`, `combination_translate`, `insert_relation`; on the free group: `holFG`, `foxFG` | the presentation of `π₁(Σ°)` by the loops `λᵢ` |
 | … inserting the relation leaves the sum unchanged | `fox_sum_insert_relation`, `combination_insert_relation` (the `Wᵢ` change, `∑ᵢ ⟨Wᵢ, (I - Rᵢ) pᵢ⟩` does not), `hol_insert_relation` | as above |
 | … for a simple turn it is Prop. "The shift is set by the singularities" (a) | `hol_eq_composeAll` (`Fox.hol` applies the head of the word last, `composeAll` first: the list is reversed), `hol_trans_eq_burgers`, `fox_burgers_eq_burgers` (any word); on `simpleWord l = xₘ ⋯ x₁`: `hol_simpleWord`, `fox_burgers_simple` (the Fox–Burgers sum is `∑ₖ Qₖ (pₖ - Rₖ pₖ)`, `Motion.burgers_map`), `fox_simpleWord` (`ρ(∂w/∂x_{iₖ}) = Qₖ = Rₘ⋯Rₖ₊₁` when the indices are distinct) | as above; the letters are the rotations about the developed cone points |
@@ -263,9 +263,11 @@ the whole lengths of the integer search, `B` the balance matrix.
 * `Motion.lean`: motions, compositions, the Burgers sum, annuli, exchanges.
 * `FirstVisit.lean`: the cut tree and the order of first visit.
 * `QuarterTurn.lean`: quarter-turns of `ℂ`; dislocations, staircases.
-* `Fox.lean`: words, holonomy, Fox derivatives, twisted windings, commutators.
+* `Fox.lean`: words, holonomy, Fox derivatives, twisted windings, commutators;
+  the Fox–Burgers sum as the Burgers sum of `Motion.lean`.
 * `Congruence.lean`: the Fox–Burgers formula modulo `(1 - z)²`; orders 2, 3, 4, 6.
-* `Checkerboard.lean`: colours in `ℤ[i]`, the checkerboard rules, parity of a turn.
+* `Checkerboard.lean`: colours in `ℤ[i]`, the checkerboard rules, parity of a turn
+  at lengths of any sign.
 * `Balances.lean`: the handshake lemma.
 * `Bidirected.lean`: trees, switchings and unbalanced cycles of a bidirected
   graph; Proposition "Free arcs".
