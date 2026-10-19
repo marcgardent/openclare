@@ -18,8 +18,8 @@
 <p class="tags"><span class="tag tag-ink">Paper B · theory</span> <span class="tag tag-teal">Draft · not peer reviewed</span></p>
 <h2 id="paper-b">Turns of a T-Mesh: Obstructions to Closing Edge Loops</h2>
 <p>In the quantization of a T-mesh, an edge loop closes into a ring when a <em>turn</em>, a straight walk across the patches that returns to its first side, has zero <em>shift</em>, an integer linear form in the arc lengths; otherwise it winds as a helix. We study why turns cannot all be closed.</p>
-<p class="actions"><a class="button primary" href="../../docs/research/closing-helices/paper.pdf">PDF · English · 25 p.</a> <a class="button plain" href="../../docs/research/closing-helices/paper.tex">LaTeX source</a></p>
-<p class="note">A French translation will follow, as for paper A.</p>
+<p class="actions"><a class="button primary" href="../../docs/research/closing-helices/paper.pdf">PDF · English · 26 p.</a> <a class="button" href="../../docs/research/closing-helices/paper.fr.pdf" hreflang="fr" lang="fr">PDF · français · 29 p.</a> <a class="button plain" href="../../docs/research/closing-helices/paper.tex">LaTeX source</a></p>
+<p class="note">The French version is a best-effort translation; the English one is authoritative.</p>
 </div>
 </article>
 
