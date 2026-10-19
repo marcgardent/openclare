@@ -308,13 +308,26 @@ def stop_preview(context, untick=True):
             pass
 
 
+def nearest_seen(mesh, seen):
+    """For each vertex of `mesh`, the nearest vertex of `seen`, the mesh as
+    its modifiers make it: a numpy array, or None when the two have as many
+    vertices, each then being its own."""
+    import numpy
+    from mathutils.kdtree import KDTree
+
+    if len(seen.vertices) == len(mesh.vertices):
+        return None
+    tree = KDTree(len(seen.vertices))
+    for vertex in seen.vertices:
+        tree.insert(vertex.co, vertex.index)
+    tree.balance()
+    return numpy.array([tree.find(vertex.co)[1] for vertex in mesh.vertices])
+
+
 def start_preview(context, settings, owner):
     """Colours the object with its sizes, in a colour attribute of its own
     made the active and the rendered one; those that were are kept to be
     given back."""
-    import numpy
-    from mathutils.kdtree import KDTree
-
     stop_preview(context)
     colours = owner.data.color_attributes
     PREVIEW.update(
@@ -326,12 +339,7 @@ def start_preview(context, settings, owner):
     evaluated = owner.evaluated_get(context.evaluated_depsgraph_get())
     seen = evaluated.to_mesh()
     try:
-        if len(seen.vertices) != len(owner.data.vertices):
-            tree = KDTree(len(seen.vertices))
-            for vertex in seen.vertices:
-                tree.insert(vertex.co, vertex.index)
-            tree.balance()
-            PREVIEW["nearest"] = numpy.array([tree.find(vertex.co)[1] for vertex in owner.data.vertices])
+        PREVIEW["nearest"] = nearest_seen(owner.data, seen)
     finally:
         evaluated.to_mesh_clear()
     # The 3D views show the colour attribute meanwhile ("VERTEX", shown as
@@ -585,6 +593,18 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         default=4.0,
         min=1.0,
         soft_max=16.0,
+        max=100.0,
+    )
+    shape_adaptive_size: bpy.props.FloatProperty(
+        options={"HIDDEN"},
+        name="Adaptive Size Written",
+        description=(
+            "The Adaptive Size Density from Shape read the shape with before it switched it off: what it reads "
+            "the shape with again while Adaptive Size stays off and its group is the Density"
+        ),
+        subtype="PERCENTAGE",
+        default=0.0,
+        min=0.0,
         max=100.0,
     )
     guide_curves: bpy.props.PointerProperty(
@@ -1065,6 +1085,142 @@ class OPENCLARE_OT_analyse(bpy.types.Operator):
             f"openclare: '{owner.name}' analysed in {seconds:.1f} s; proposed: about {quads:.0f} quads, "
             f"{100.0 * below:.0f} % of it coarser than its shape asks",
         )
+        return {"FINISHED"}
+
+
+# The vertex group Density from Shape writes.
+SHAPE_DENSITY = "openclare density"
+# Weights are written in steps of this much: one call to Blender per value.
+WEIGHT_STEP = 1.0 / 1000.0
+
+
+def weights_from_sizes(sizes, largest, factor):
+    """The painted density that makes quads of the edges `sizes` where the
+    largest would be `largest`, with a `factor` (Density's Factor, the
+    engine's `density_contrast`): one weight per size, from 0 to 1.
+
+    The engine reads a weight w as a density `factor`**w times that of the
+    weight 0, per unit of area (sizing.rs, `Demand::measure`): the edge of
+    the quads is multiplied by `factor`**(-w / 2), the inverse square root.
+    An edge s where the weight 0 has `largest` is then the weight
+    w = 2 ln(largest / s) / ln(factor), kept between 0 and 1: no smaller
+    than `largest` / sqrt(`factor`) can be painted. A size not known (not a
+    number) is the weight 0. The engine takes the least weight painted for
+    the weight 0, so only how the weights differ counts."""
+    import numpy
+
+    if not factor > 1.0:
+        raise engine.EngineError("a Factor of 1 gives the paint no effect: raise it")
+    sizes = numpy.nan_to_num(numpy.asarray(sizes, numpy.float64), nan=largest)
+    weights = 2.0 * numpy.log(largest / numpy.maximum(sizes, 1e-30)) / math.log(factor)
+    return numpy.clip(weights, 0.0, 1.0).astype(numpy.float32)
+
+
+def write_weights(owner, name, weights):
+    """Writes `weights`, one per vertex of `owner`, as its vertex group
+    `name`: made if it is not there, emptied first if it is. Weights are
+    rounded to `WEIGHT_STEP`, for Blender to be given each value once."""
+    import numpy
+
+    group = owner.vertex_groups.get(name)
+    everyone = list(range(len(owner.data.vertices)))
+    if group is None:
+        group = owner.vertex_groups.new(name=name)
+    else:
+        group.remove(everyone)
+    steps = numpy.rint(numpy.asarray(weights, numpy.float64) / WEIGHT_STEP).astype(numpy.int64)
+    for step in numpy.unique(steps):
+        group.add(numpy.flatnonzero(steps == step).tolist(), float(step * WEIGHT_STEP), "REPLACE")
+    return group
+
+
+class OPENCLARE_OT_density_from_shape(bpy.types.Operator):
+    """Write the density the shape calls for (Adaptive Size, thin parts) as a vertex group, to paint on top in
+    Weight Paint: made the Density, with Adaptive Size switched off for the shape not to count twice"""
+
+    bl_idname = "object.openclare_density_from_shape"
+    bl_label = "Density from Shape"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        owner = object_to_remesh(context)
+        return owner is not None and source_of(owner) is None and owner.mode != "EDIT"
+
+    def execute(self, context):
+        """The shape as it is seen, modifiers applied, is analysed as Analyse
+        does, without any density painted, and its sizes read at each vertex
+        as a run would size it: between the sizes asked for (Sizes), the
+        largest being the weight 0, or for the number asked for (Number), the
+        largest found being the weight 0. They are written as weights
+        (`weights_from_sizes`) into the vertex group `SHAPE_DENSITY`, which
+        becomes the Density, and Adaptive Size is switched off. Quads Around
+        Thin Parts stays as it is: a thin part is a bound on the size, which
+        counts once however many times it is given, and keeps what is thinner
+        than the Factor can paint. Read again while the group is the Density
+        and Adaptive Size is off, the shape is read with the Adaptive Size
+        that was switched off."""
+        import numpy
+
+        owner = object_to_remesh(context)
+        adopt_scene_settings(context.scene)
+        settings = owner.openclare
+        adopt_preset(settings)
+        factor = settings.density_factor
+        if factor <= 1.0:
+            self.report({"ERROR"}, "openclare: a Factor of 1 gives the paint no effect: raise it")
+            return {"CANCELLED"}
+        shape = shape_of(settings)
+        adaptive = settings.adaptive_size
+        if adaptive == 0.0 and settings.density_group == SHAPE_DENSITY and settings.shape_adaptive_size > 0.0:
+            # Written before by this button, which switched it off: read
+            # with what it was.
+            adaptive = settings.shape_adaptive_size
+            shape["adaptivity"] = round(adaptive / 100.0, 6)
+        evaluated = owner.evaluated_get(context.evaluated_depsgraph_get())
+        mesh = evaluated.to_mesh()
+        try:
+            mesh.calc_loop_triangles()
+            positions = numpy.empty(3 * len(mesh.vertices), numpy.float32)
+            mesh.vertices.foreach_get("co", positions)
+            triangles = numpy.empty(3 * len(mesh.loop_triangles), numpy.uint32)
+            mesh.loop_triangles.foreach_get("vertices", triangles)
+            analysis = engine.Analysis(positions, triangles, BASE_PRESET, shape)
+            nearest = nearest_seen(owner.data, mesh)
+        except engine.EngineError as error:
+            self.report({"ERROR"}, f"openclare: {error}")
+            return {"CANCELLED"}
+        finally:
+            evaluated.to_mesh_clear()
+        if settings.target == "SIZE" and settings.largest_quad > 0.0:
+            scale = scale_of(owner)
+            largest = settings.largest_quad / scale
+            smallest = (min(settings.smallest_quad, settings.largest_quad) or settings.largest_quad / SIZE_RANGE) / scale
+            sizes, _ = analysis.at_vertices(largest, smallest)
+        else:
+            sizes = analysis.at_vertices_for(settings.quads)
+            largest = float(numpy.nanmax(sizes)) if numpy.isfinite(sizes).any() else 1.0
+        weights = weights_from_sizes(sizes, largest, factor)
+        # What the shape asks for and the Factor cannot paint: quads smaller
+        # than the largest over its square root.
+        beyond = float(numpy.mean(numpy.nan_to_num(sizes, nan=largest) < 0.999 * largest / math.sqrt(factor)))
+        enough = (largest / float(numpy.nanmin(sizes))) ** 2 if beyond > 0.0 else factor
+        if nearest is not None:
+            weights = weights[nearest]
+        write_weights(owner, SHAPE_DENSITY, weights)
+        if settings.density_group != SHAPE_DENSITY or settings.adaptive_size > 0.0:
+            settings.shape_adaptive_size = adaptive
+        settings.density_group = SHAPE_DENSITY
+        settings.adaptive_size = 0.0
+        message = (
+            f"openclare: '{SHAPE_DENSITY}' written from the shape (Adaptive Size {adaptive:.0f} %), "
+            f"weights {weights.min():.2f} to {weights.max():.2f}; it is the Density now, and Adaptive Size is off"
+        )
+        if beyond >= 0.005:
+            message += f"; {100.0 * beyond:.0f} % of it asks for smaller quads than the Factor gives"
+            if enough <= OpenclareSettings.bl_rna.properties["density_factor"].hard_max:
+                message += f" (a Factor of {math.ceil(enough)} would give them all)"
+        self.report({"INFO"}, message)
         return {"FINISHED"}
 
 
@@ -1930,6 +2086,7 @@ class OPENCLARE_PT_panel(DataPanel, bpy.types.Panel):
         factor = column.row()
         factor.enabled = bool(settings.density_group)
         factor.prop(settings, "density_factor")
+        column.operator(OPENCLARE_OT_density_from_shape.bl_idname, icon="MOD_VERTEX_WEIGHT")
         draw_remesh(layout, OPENCLARE_OT_remesh.bl_idname, "MOD_REMESH")
 
     def draw_result(self, context, owner):
@@ -2138,6 +2295,7 @@ class OPENCLARE_PT_relief(DataPanel, bpy.types.Panel):
 CLASSES = (
     OpenclareSettings,
     OPENCLARE_OT_analyse,
+    OPENCLARE_OT_density_from_shape,
     OPENCLARE_OT_remesh,
     OPENCLARE_OT_remesh_again,
     OPENCLARE_OT_stop,

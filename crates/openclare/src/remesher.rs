@@ -1071,16 +1071,26 @@ impl Analysis {
         let reading = sizing::Reading::between(largest, smallest);
         let sizes: Vec<Vec<f64>> = self.pieces.iter().map(|piece| piece.sizes(&reading)).collect();
         let asked: Vec<Vec<f64>> = self.pieces.iter().map(|piece| piece.asks_at_vertices(&reading)).collect();
-        let read = |values: &[Vec<f64>], (piece, corners, shares): &(u32, [u32; 3], [f64; 3])| -> f64 {
-            (0..3).map(|k| shares[k] * values[*piece as usize][corners[k] as usize]).sum()
-        };
         self.at_input
             .iter()
             .map(|at| match at {
-                Some(at) => (read(&sizes, at), read(&asked, at) < smallest),
+                Some(at) => (read_at(&sizes, at), read_at(&asked, at) < smallest),
                 None => (f64::NAN, false),
             })
             .unzip()
+    }
+
+    /// For each vertex of the shape, the edge its quads would have with
+    /// `quads` quads asked for, as a number and not as sizes: what the chain
+    /// sizes them with then, each piece read for the edge of as many quads
+    /// of one size (see [`sizing::Demand::for_as_many`]). A vertex of a
+    /// piece that was not looked at has no size (not a number).
+    pub fn at_vertices_for(&self, quads: f64) -> Vec<f64> {
+        let edge_length = (self.area() / quads).sqrt();
+        let tuning = sizing::Curvature::default();
+        let sizes: Vec<Vec<f64>> =
+            self.pieces.iter().map(|piece| piece.sizes(&piece.for_as_many(&tuning, edge_length))).collect();
+        self.at_input.iter().map(|at| at.as_ref().map_or(f64::NAN, |at| read_at(&sizes, at))).collect()
     }
 
     /// The area of the surface.
@@ -1147,6 +1157,13 @@ impl Analysis {
         }
         (largest, smallest.clamp(floor, largest))
     }
+}
+
+/// The value at a vertex of the shape of `values`, one list per piece of
+/// [`Analysis`] with one value per vertex of its work mesh: those of the
+/// corners of the triangle the vertex lies on, each by its share.
+fn read_at(values: &[Vec<f64>], (piece, corners, shares): &(u32, [u32; 3], [f64; 3])) -> f64 {
+    (0..3).map(|k| shares[k] * values[*piece as usize][corners[k] as usize]).sum()
 }
 
 /// How much of each corner of a triangle a point of it is made of.

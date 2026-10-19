@@ -58,6 +58,7 @@ begins.
 | Adaptive Size | How much the size of the quads follows the curvature: at 0 % they are all the same size; towards 100 % they get smaller where the shape bends and larger where it is flat. Each preset brings its own value |
 | Density | A vertex group of the object, painted in Weight Paint: quads are smallest where the weight is 1, largest where it is 0 |
 | Factor | How many times more quads a weight of 1 gets than a weight of 0, for the same area |
+| Density from Shape | Writes the density the shape calls for, the sizes *Adaptive Size* and thin parts give for the number or the sizes asked for, as the vertex group `openclare density` of the object, and makes it the *Density* with *Adaptive Size* off, for the shape to count once. Paint on top of it in Weight Paint where more or less detail is wanted. Where the shape asks for quads smaller than *Factor* allows, the weight stays at 1, and the report says which *Factor* would hold them all |
 | Curves | Curves drawn on the model, in two categories. *Guide* (cyan): the result has a line of edges along each. *Sharp* (violet): that line is made of hard edges, marked sharp and creased. *Assign*, *Remove*, *Select* and *Deselect* act on each category. Curves are taken with their modifiers, so a Shrinkwrap keeps a curve on the model. A curve that cannot be kept as a line of edges is let go, and the report says so |
 
 ![The ogre with and without guide curves](docs/images/guide_curves.png)

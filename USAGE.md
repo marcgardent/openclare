@@ -234,7 +234,9 @@ let (quads, report) = config.remesh(&triangles)?;
 ```
 
 Sizes instead of a number: `Target::SizeRange { largest, smallest }`. `openclare::Analysis::of`
-measures a shape once, then `quads`, `below` and `proposal` answer at once for any pair of sizes.
+measures a shape once, then `quads`, `below` and `proposal` answer at once for any pair of sizes;
+`at_vertices` gives the size at each vertex for a pair of sizes, `at_vertices_for` for a number of
+quads.
 
 The core depends on no solver: the slow quality asks one through the trait
 `openclare::quantization::RingSelector`, injected in the configuration. Without one, the slow
