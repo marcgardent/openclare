@@ -6,6 +6,16 @@ Le banc fait tourner openclare et deux autres remailleurs sur {{count:all}} mod�
 
 Les remailleurs : **openclare** tel que l'extension Blender le lance ; **QuadriFlow**, intégré à Blender ; **AutoRemesher** 1.2.0 de Jeremy Hu. Les notes sont absolues : un remailleur garde sa note quels que soient ceux auxquels on le compare.
 
+## Notes moyennes
+
+{{averages}}
+
+## Modèle par modèle
+
+{{models}}
+
+{{withheld}}
+
 ## Comment les notes sont faites
 
 | Critère | Note pleine pour | 100 à | 0 à | Poids |
@@ -21,15 +31,5 @@ Les remailleurs : **openclare** tel que l'extension Blender le lance ; **QuadriF
 | Vitesse | une réponse en une seconde | 1 s | 60 s (logarithmique) | 0 |
 
 La note globale est la moyenne pondérée des critères qui existent pour le modèle : une sphère n'a pas de direction à suivre, un maillage à bords ouverts n'a pas de minimum topologique. Le critère des boucles fait la moyenne de ses deux moitiés, et il est laissé de côté là où le maillage n'est pas une variété. La vitesse figure dans le rapport complet mais ne compte pas : ce n'est pas une question de qualité, et les temps ont été pris sur une machine chargée. Un remailleur qui n'a rendu aucun maillage a 0. La colonne *Quads* n'est pas une note : c'est le nombre de quads du maillage, en moyenne sur les modèles.
-
-## Notes moyennes
-
-{{averages}}
-
-## Modèle par modèle
-
-{{models}}
-
-{{withheld}}
 
 Le rapport complet, avec chaque critère pour chaque modèle et chaque remailleur, est [bench/results/SCORES.md](../../bench/results/SCORES.md) dans le dépôt (en anglais) ; les auteurs, sources et licences des modèles sont dans [CREDITS.md](../../CREDITS.md).

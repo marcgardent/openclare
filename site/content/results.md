@@ -6,6 +6,16 @@ The bench runs openclare and two other remeshers on {{count:all}} models: organi
 
 The remeshers: **openclare** as the Blender add-on runs it; **QuadriFlow**, built into Blender; **AutoRemesher** 1.2.0 by Jeremy Hu. Marks are absolute: a remesher keeps its mark whichever others it is compared with.
 
+## Average marks
+
+{{averages}}
+
+## Model by model
+
+{{models}}
+
+{{withheld}}
+
 ## How the marks are made
 
 | Criterion | Full marks for | 100 at | 0 at | Weight |
@@ -21,15 +31,5 @@ The remeshers: **openclare** as the Blender add-on runs it; **QuadriFlow**, buil
 | Speed | an answer within a second | 1 s | 60 s (logarithmic) | 0 |
 
 The overall mark is the weighted mean of the criteria that exist for the model: a sphere has no direction to align with, a mesh with open borders has no topological minimum. Edge loops averages its two halves, and is left out where the mesh is not a manifold. Speed is shown in the full report but does not count: it is not a matter of quality, and the timings were taken on a loaded machine. A remesher that gave no mesh at all scores 0. The *Quads* column is not a mark: it is how many quads the mesh has, the mean over the models.
-
-## Average marks
-
-{{averages}}
-
-## Model by model
-
-{{models}}
-
-{{withheld}}
 
 The full report, with every criterion for every model and remesher, is [bench/results/SCORES.md](../../bench/results/SCORES.md) in the repository; the authors, sources and licences of the models are in [CREDITS.md](../../CREDITS.md).

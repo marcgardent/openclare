@@ -40,11 +40,13 @@ cargo build --release
 
 ## Plus loin (en anglais)
 
-- [README](../../README.md) : l'extension, réglage par réglage.
-- [USAGE.md](../../USAGE.md) : la ligne de commande, la bibliothèque, l'interface C, et regarder la chaîne travailler.
-- [CONTRIBUTING.md](../../CONTRIBUTING.md) : construire, tester, le banc, l'organisation du code.
-- [ALGORITHM.md](../../ALGORITHM.md) : comment ça marche, étape par étape.
-- [CREDITS.md](../../CREDITS.md) : auteurs, sources et licences des modèles 3D utilisés.
+<div class="cards">
+<a class="card" href="../../README.md"><strong>README</strong><span>L'extension, réglage par réglage.</span></a>
+<a class="card" href="../../USAGE.md"><strong>USAGE.md</strong><span>La ligne de commande, la bibliothèque, l'interface C, et regarder la chaîne travailler.</span></a>
+<a class="card" href="../../CONTRIBUTING.md"><strong>CONTRIBUTING.md</strong><span>Construire, tester, le banc, l'organisation du code.</span></a>
+<a class="card" href="../../ALGORITHM.md"><strong>ALGORITHM.md</strong><span>Comment ça marche, étape par étape.</span></a>
+<a class="card" href="../../CREDITS.md"><strong>CREDITS.md</strong><span>Auteurs, sources et licences des modèles 3D utilisés.</span></a>
+</div>
 
 ## Licence
 
