@@ -14,21 +14,21 @@
 \usepackage{array}
 \usepackage{graphicx}
 \usepackage{tikz}
-\usetikzlibrary{arrows.meta,calc,decorations.pathreplacing,patterns}
+\usetikzlibrary{arrows.meta,decorations.pathreplacing}
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage[hidelinks]{hyperref}
 \setlength{\emergencystretch}{2em}
+% Room for the full-width figures of Section 6 at the top of a page.
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\dbltopfraction}{0.9}
+\renewcommand{\floatpagefraction}{0.8}
+\renewcommand{\dblfloatpagefraction}{0.8}
 
 \newtheorem{definition}{Definition}
 \newtheorem{proposition}{Proposition}
 
 \newcommand{\Z}{\mathbb{Z}}
 \newcommand{\shift}{s}
-
-% A figure drawn by its own file under figures/, or a placeholder box while
-% the file is missing, so that the note builds without its figures.
-\newcommand{\figureinput}[2]{\IfFileExists{figures/#1}{\input{figures/#1}}{\fbox{figure: #2}}}
-\newcommand{\figureimage}[3]{\IfFileExists{figures/#1}{\includegraphics[width=#3]{figures/#1}}{\fbox{figure: #2}}}
 
 % The commit of the engine described, written by `make paper` into
 % version.tex (ignored by git).
@@ -232,6 +232,24 @@ corner, enters the neighbouring patch across the arc it reaches, and so on,
 until it comes back into its first patch through its first side.
 \end{definition}
 
+\begin{figure}[t]
+\centering
+\input{figures/turn.tex}
+\caption{A turn and the helix it makes. (a)~A band of a T-mesh on a
+cylinder, cut open along the first side of $P_1$, which is drawn again,
+dashed, past $P_4$, where it is glued; every node is at a whole position and
+the faint grid is the quad mesh at these lengths. The turn $\gamma$ leaves
+the first side at offset $o$ and crosses $P_1$ to $P_4$; measured from the
+first corner of each patch, its offset grows by $\ell_b$, drops by $\ell_c$
+and grows by $\ell_d$, so it comes back at $o + \shift_\gamma(\ell)$ with
+$\shift_\gamma(\ell) = \ell_b - \ell_c + \ell_d = 1$. The corridor
+(shaded), the offsets whose walk crosses the same arcs, is $1 < o < 4$.
+(b)~The strip of quads at $o = 2.5$ on the cylinder: each round comes back
+one row beside itself, through $o = 1.5$, $2.5$ and $3.5$, then leaves the
+corridor: a helix of pitch $1$ (Proposition~\ref{prop:linear}).}
+\label{fig:turn}
+\end{figure}
+
 Crossing from patch $P$ to patch $Q$ across an arc composes a quarter-turn
 rotation of the local frame with a translation whose components are signed
 sums of arc lengths along the rims of $P$ and $Q$, the position of a rim
@@ -287,19 +305,6 @@ crossed patches; evaluated at the real lengths of the parametrization it
 gives the \emph{real shift}, the twist the field itself gives the cylinder.
 Figure~\ref{fig:turn} shows a turn, its corridor and the helix its shift
 makes.
-
-\begin{figure}[t]
-\centering
-\figureinput{turn.tex}{turn}
-\caption{A turn $\gamma$ across a small T-mesh. Started from an offset of its
-first side, the walk crosses each patch straight and comes back to the first
-side at a shift $\shift_\gamma(\ell)$ across the walking direction. The
-corridor (shaded) is the set of offsets whose walk crosses the same patches;
-a dual line started in it comes back $\shift_\gamma(\ell)$ rows beside
-itself and, while it stays in the corridor, winds round as a helix of that
-pitch (Proposition~\ref{prop:linear}).}
-\label{fig:turn}
-\end{figure}
 
 The closing constraint $\shift_\gamma(\ell) = 0$ thus speaks of a fixed
 sequence of crossed patches, and describes a strip of the mesh only together
@@ -377,12 +382,14 @@ flow constraint; Figure~\ref{fig:closing} shows its effect on one turn.
 
 \begin{figure}[t]
 \centering
-\figureinput{closing.tex}{closing}
-\caption{The turn of Figure~\ref{fig:turn} before and after closing. Left:
-at the lengths of the plain quantization the shift is non-zero and the strip
-is a helix. Right: the quantization with the constraint
-$\shift_\gamma(\ell) = 0$ changes a few arc lengths, the strip comes back on
-itself and closes into a ring.}
+\input{figures/closing.tex}
+\caption{The turn of Figure~\ref{fig:turn} before and after closing, on the
+same T-mesh. (a)~With $\ell_d = 2$, $\shift_\gamma(\ell) = 1$: the strips of
+the corridor form one helix. (b)~The column of $P_4$ sits one unit higher:
+$\ell_d$ and the arc above $P_4$ on the same side are one shorter, no node
+passes another, and only lengths have changed. Now $\shift_\gamma(\ell) = 1 -
+2 + 1 = 0$, and the corridor holds three closed rings, at $o = 1.5$, $2.5$
+and $3.5$.}
 \label{fig:closing}
 \end{figure}
 
@@ -552,8 +559,8 @@ modelled by hand, with $2.5\%$ of spiral edges in $3$ spiral loops and
 $31.6\%$ of its edges on closed loops. Remeshed by openclare at that count
 with the closing of Section~\ref{sec:closing}, single runs of the engines of
 commits \texttt{b0d37fa} to \texttt{8fd1932} give $1.6\%$ of spiral edges,
-in $9$ spiral loops: below the hand-made mesh, but by a few loops only
-(Figures~\ref{fig:overview} and~\ref{fig:closeups}). One such run has
+in $9$ spiral loops: below the hand-made mesh, but by a few loops only. One
+such run has
 $33.2\%$ of its edges on closed loops, a mean distance to the source of
 $0.19$\textperthousand\ of the diagonal and a mean corner deviation of $4.1$
 degrees, against $0.17$\textperthousand\ and $9.2$ degrees for the hand-made
@@ -564,28 +571,56 @@ alone (commit \texttt{ab8d89c}), one leg was a single helix from hip to
 ankle, its turns leaning more than that bound allows, and the mesh had
 $12.1\%$ of spiral edges.
 
+Figure~\ref{fig:overview} shows the body meshed by openclare with and
+without closing, next to the hand-made mesh and QuadriFlow's, with a later
+engine than the runs above (commit \texttt{89232b0}; its numbers are in the
+caption). Without closing, helices wind round the torso, both legs and the
+neck. With closing, the loops round the limbs and the torso are rings, as on
+the hand-made mesh, and the spiral loops left are short ones at the mouth, the
+forehead and the fingers. QuadriFlow winds helices round the torso, the
+shoulders, the legs and one arm. Closing is not better everywhere
+(Figure~\ref{fig:closeups}): at the left wrist it leaves spiral loops on the
+thumb and the back of the hand where the mesh without closing has closed
+ones, and near the right eye both openclare meshes keep short spiral loops,
+while closing turns a loop across the forehead into a ring.
+
 \begin{figure*}[t]
 \centering
-\figureimage{male-overview.png}{male-overview}{\textwidth}
-\caption{The male body of the Essentials library at $10{,}590$ quads. From
-left to right: openclare without closing, openclare with the closing of
-Section~\ref{sec:closing}, the base mesh modelled by hand, and QuadriFlow.
-Edges on loops that the measure of Section~\ref{sec:measure} counts as
-spiral are coloured. The shares of spiral edges are given in
-Section~\ref{sec:experiments}.}
+\includegraphics[width=\textwidth]{figures/male-overview.png}
+\caption{The male body of the Essentials library, $10{,}590$ quads asked
+for: (a)~openclare without closing, (b)~openclare with the closing of
+Section~\ref{sec:closing}, (c)~the base mesh modelled by hand,
+(d)~QuadriFlow run through Blender. Edge loops are coloured by their kind in
+the measure of Section~\ref{sec:measure}: closed loops dark blue, spiral
+loops vermillion (wider, with a dark rim), loops that stop at an irregular
+vertex grey. Meshes (a) and (b) come from the engine at commit
+\texttt{89232b0}, one deterministic run each, not from the runs quoted in the
+text (Appendix~\ref{app:provenance}). Measured on the whole meshes, they
+have $10{,}485$, $10{,}748$, $10{,}570$ (plus $20$ triangles) and $8{,}844$
+quads, $26.8\%$ ($18$ loops), $1.95\%$ ($15$), $2.55\%$ ($3$) and
+$35.7\%$ ($43$) of their edges on spiral loops, which the panels round to one
+decimal, and $10.2\%$, $32.6\%$, $31.6\%$ and $2.7\%$ on closed loops.
+QuadriFlow's mesh has $3$ inverted faces and a Hausdorff distance of
+$31$\textperthousand\ of the diagonal.}
 \label{fig:overview}
 \end{figure*}
 
 \begin{figure*}[t]
 \centering
-\figureimage{male-wrist.png}{male-wrist}{\textwidth}\\[0.5em]
-\figureimage{male-eye.png}{male-eye}{\textwidth}
+\includegraphics[width=\textwidth]{figures/male-wrist.png}\\[0.6em]
+\includegraphics[width=\textwidth]{figures/male-eye.png}
 \caption{Close-ups of the four meshes of Figure~\ref{fig:overview}, in the
-same order and colours: the left wrist (top) and the right eye (bottom). The
-wrist holds the turn that, in four of the eight ways of
-Section~\ref{sec:exact}, no lengths within the bounds of separation can close
-even on its own; the eyes, the hands and the feet are where the other
-conflicts between turns gather.}
+same order and colours: the left wrist and hand (top; the body's left, on
+the viewer's right in Figure~\ref{fig:overview}) and the right eye
+(bottom). At the wrist closing does not help locally: mesh~(b) has spiral
+loops on the thumb and the back of the hand where mesh~(a) has closed ones,
+although over the whole body closing removes most spiral edges. At the eye,
+closing turns a loop across the forehead into a ring, and short spiral loops
+remain near the eye on both openclare meshes; the loop round the eye of the
+hand-made mesh is itself counted as spiral. In the T-mesh exported in
+Section~\ref{sec:exact}, from an earlier engine, the left wrist holds the
+turn that in four of the eight ways no lengths within the bounds of
+separation can close even on its own.}
 \label{fig:closeups}
 \end{figure*}
 
@@ -915,6 +950,11 @@ hand-made male body
 male body, openclare
   & \texttt{ab8d89c}; \texttt{b0d37fa} to \texttt{8fd1932}
   & commit messages; closed loops, distance and corners: working logs \\
+Figures~\ref{fig:overview} and~\ref{fig:closeups}, their numbers
+  & commit \texttt{89232b0}, one run per mesh; QuadriFlow through Blender, on
+  the source scaled by $100$ and scaled back
+  & \texttt{figures/README.md} (commands, numbers, source checksum) and
+  \texttt{figures/make\_figures.sh}, which remakes them \\
 Section~\ref{sec:exact}, up to ``The heuristic leaves most of the gap''
   & branch \texttt{rd-exact} (export hook), engine before \texttt{3b3122d}
   & working logs, scripts and the exported systems; some summary figures
