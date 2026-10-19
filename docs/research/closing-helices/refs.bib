@@ -1,11 +1,12 @@
-% Bibliography of the research note "Closing Edge Loops at Quantization Time".
+% Bibliography of the research note "Turns of a T-mesh: obstructions to closing
+% edge loops" (only the entries it cites).
 % Checked on 2026-10-18: the DOIs were resolved on Crossref, and each note
 % says how much of the work was read. Marks "% FIX:" and "% NEW:" come from
 % that check.
 %
 % Style note: plainnat prints doi and note but NOT eprint/archivePrefix, so an
 % entry known only by its arXiv number must carry it in howpublished or note
-% (see liu2025quadgpt).
+% (as the companion note does for arXiv-only entries).
 
 % FIX: doi added. Text read in full by the reviewer (author PDF, RWTH).
 @article{bommes2011structure,
@@ -18,19 +19,6 @@
   year    = {2011},
   doi     = {10.1111/j.1467-8659.2011.01868.x},
   note    = {Proc.\ Eurographics 2011. Read in full.}
-}
-
-% FIX: article number added (110:1--110:11, as cited in Lyon et al. 2021).
-@article{campen2012dual,
-  author  = {Campen, Marcel and Bommes, David and Kobbelt, Leif},
-  title   = {Dual Loops Meshing: Quality Quad Layouts on Manifolds},
-  journal = {ACM Transactions on Graphics},
-  volume  = {31},
-  number  = {4},
-  pages   = {110:1--110:11},
-  year    = {2012},
-  doi     = {10.1145/2185520.2185606},
-  note    = {Proc.\ SIGGRAPH 2012. Abstract read.}
 }
 
 % Article number read on the ACM DL (DT-093).
@@ -74,49 +62,6 @@
              Eq.~2) and solvers read; our quantizer follows its formulation.}
 }
 
-% FIX: doi added; the \cite inside the note replaced by plain text (a
-% citation inside the bibliography is fragile and reads oddly). Article
-% number read on the ACM DL (DT-093).
-@article{myles2010feature,
-  author  = {Myles, Ashish and Pietroni, Nico and Kovacs, Denis and Zorin, Denis},
-  title   = {Feature-Aligned {T}-Meshes},
-  journal = {ACM Transactions on Graphics},
-  volume  = {29},
-  number  = {4},
-  pages   = {117:1--117:11},
-  year    = {2010},
-  doi     = {10.1145/1778765.1778854},
-  note    = {Proc.\ SIGGRAPH 2010. Cited for the remark of Bommes et
-             al.\ (2011) about it; not read.}
-}
-
-% FIX: pages (article 77) and doi added.
-@article{bommes2009miq,
-  author  = {Bommes, David and Zimmer, Henrik and Kobbelt, Leif},
-  title   = {Mixed-Integer Quadrangulation},
-  journal = {ACM Transactions on Graphics},
-  volume  = {28},
-  number  = {3},
-  pages   = {77:1--77:10},
-  year    = {2009},
-  doi     = {10.1145/1531326.1531383},
-  note    = {Proc.\ SIGGRAPH 2009.}
-}
-
-% NEW (optional): the term "integer-grid map" comes from this paper, not
-% from bommes2009miq. Article number read on the ACM DL (DT-093).
-@article{bommes2013igm,
-  author  = {Bommes, David and Campen, Marcel and Ebke, Hans-Christian and Alliez, Pierre and Kobbelt, Leif},
-  title   = {Integer-Grid Maps for Reliable Quad Meshing},
-  journal = {ACM Transactions on Graphics},
-  volume  = {32},
-  number  = {4},
-  pages   = {98:1--98:12},
-  year    = {2013},
-  doi     = {10.1145/2461912.2462014},
-  note    = {Proc.\ SIGGRAPH 2013.}
-}
-
 % FIX: article number and doi added.
 @article{lei2020quartic,
   author  = {Lei, Na and Zheng, Xiaopeng and Luo, Zhongxuan and Luo, Feng and Gu, Xianfeng},
@@ -130,23 +75,6 @@
   archivePrefix = {arXiv},
   note    = {Main theorems read (Thm.~4.7--4.13 of the arXiv version).}
 }
-
-% FIX: published version. The journal version has SIX authors (Wei Chen
-% third), the arXiv preprint five. Cite the journal version.
-@article{zheng2020abeljacobi,
-  author  = {Zheng, Xiaopeng and Zhu, Yiming and Chen, Wei and Lei, Na and Luo, Zhongxuan and Gu, Xianfeng},
-  title   = {Quadrilateral Mesh Generation {III}: Optimizing Singularity Configuration Based on {Abel--Jacobi} Theory},
-  journal = {Computer Methods in Applied Mechanics and Engineering},
-  volume  = {387},
-  pages   = {114146},
-  year    = {2021},
-  doi     = {10.1016/j.cma.2021.114146},
-  eprint  = {2007.07334},
-  archivePrefix = {arXiv},
-  note    = {Abstract read.}
-}
-% Key kept as "zheng2020abeljacobi" so paper.tex needs no change, although the
-% journal year is 2021.
 
 % FIX: volume and doi added.
 @book{strebel1984quadratic,
@@ -191,17 +119,6 @@
   note    = {As cited by Izmestiev et al.; not read.}
 }
 
-@article{lei2023crossfields,
-  author  = {Lei, Na and Zhu, Yiming and Zheng, Xiaopeng and Si, Hang and Luo, Zhongxuan and Gu, Xianfeng},
-  title   = {Why Cross Fields Are Not Equivalent to Quadrilateral Meshes},
-  journal = {Computer Methods in Applied Mechanics and Engineering},
-  volume  = {417},
-  pages   = {116442},
-  year    = {2023},
-  doi     = {10.1016/j.cma.2023.116442},
-  note    = {Abstract read.}
-}
-
 % FIX: doi added. Note: the arXiv preprint is titled "Metric Based
 % Quadrilateral Mesh Generation"; the theorem numbers quoted in the paper are
 % those of the arXiv version.
@@ -218,18 +135,6 @@
   note    = {Theorems 3.7, 3.8 and Lemma 3.9 of the arXiv version read.}
 }
 
-@article{kalberer2007quadcover,
-  author  = {K{\"a}lberer, Felix and Nieser, Matthias and Polthier, Konrad},
-  title   = {{QuadCover} -- Surface Parameterization using Branched Coverings},
-  journal = {Computer Graphics Forum},
-  volume  = {26},
-  number  = {3},
-  pages   = {375--384},
-  year    = {2007},
-  doi     = {10.1111/j.1467-8659.2007.01060.x},
-  note    = {Proc.\ Eurographics 2007. Abstract read.}
-}
-
 @incollection{kalberer2011stripe,
   author    = {K{\"a}lberer, Felix and Nieser, Matthias and Polthier, Konrad},
   title     = {Stripe Parameterization of Tubular Surfaces},
@@ -240,118 +145,6 @@
   year      = {2011},
   doi       = {10.1007/978-3-642-15014-2_2},
   note      = {Preprint read in full (Sections 3--4: integer gaps along cut paths, rounded).}
-}
-
-@article{myles2014robust,
-  author  = {Myles, Ashish and Pietroni, Nico and Zorin, Denis},
-  title   = {Robust Field-aligned Global Parametrization},
-  journal = {ACM Transactions on Graphics},
-  volume  = {33},
-  number  = {4},
-  pages   = {135:1--135:14},
-  year    = {2014},
-  doi     = {10.1145/2601097.2601154},
-  note    = {Proc.\ SIGGRAPH 2014. Abstract read.}
-}
-
-@article{pietroni2016tracing,
-  author  = {Pietroni, Nico and Puppo, Enrico and Marcias, Giorgio and Scopigno, Roberto and Cignoni, Paolo},
-  title   = {Tracing Field-Coherent Quad Layouts},
-  journal = {Computer Graphics Forum},
-  volume  = {35},
-  number  = {7},
-  pages   = {485--496},
-  year    = {2016},
-  doi     = {10.1111/cgf.13045},
-  note    = {Proc.\ Pacific Graphics 2016. Abstract read.}
-}
-
-@article{razafindrazaka2015perfect,
-  author  = {Razafindrazaka, Faniry H. and Reitebuch, Ulrich and Polthier, Konrad},
-  title   = {Perfect Matching Quad Layouts for Manifold Meshes},
-  journal = {Computer Graphics Forum},
-  volume  = {34},
-  number  = {5},
-  pages   = {219--228},
-  year    = {2015},
-  doi     = {10.1111/cgf.12710},
-  note    = {Proc.\ SGP 2015. Abstract read.}
-}
-
-% FIX: doi added; note updated (abstract and introduction of the authors'
-% version read: it optimizes the base complex of a given quad mesh).
-@article{razafindrazaka2017optimal,
-  author  = {Razafindrazaka, Faniry H. and Polthier, Konrad},
-  title   = {Optimal Base Complexes for Quadrilateral Meshes},
-  journal = {Computer Aided Geometric Design},
-  volume  = {52--53},
-  pages   = {63--74},
-  year    = {2017},
-  doi     = {10.1016/j.cagd.2017.02.012},
-  note    = {Proc.\ GMP 2017. Abstract and introduction read.}
-}
-
-@article{campen2017survey,
-  author  = {Campen, Marcel},
-  title   = {Partitioning Surfaces Into Quadrilateral Patches: A Survey},
-  journal = {Computer Graphics Forum},
-  volume  = {36},
-  number  = {8},
-  pages   = {567--588},
-  year    = {2017},
-  doi     = {10.1111/cgf.13153},
-  note    = {Abstract read.}
-}
-
-% FIX: plainnat does not print eprint, so the arXiv number must be in
-% howpublished, otherwise the entry prints with no identifier at all.
-@misc{liu2025quadgpt,
-  author       = {Liu, Jian and Wang, Chunshi and Guo, Song and Weng, Haohan and Zhou, Zhen and Li, Zhiqi and Yu, Jiaao and Zhu, Yiling and Xu, Jing and Lei, Biwen and Chen, Zhuo and Guo, Chunchao},
-  title        = {{QuadGPT}: Native Quadrilateral Mesh Generation with Autoregressive Models},
-  howpublished = {arXiv:2509.21420},
-  year         = {2025},
-  eprint       = {2509.21420},
-  archivePrefix = {arXiv},
-  note         = {Version 2 (February 2026). Appendix~B.2 read: quad rings and quad lines as reward signals.}
-}
-
-@article{aardal2000diophantine,
-  author  = {Aardal, Karen and Hurkens, Cor A. J. and Lenstra, Arjen K.},
-  title   = {Solving a System of Linear {D}iophantine Equations with Lower
-             and Upper Bounds on the Variables},
-  journal = {Mathematics of Operations Research},
-  volume  = {25},
-  number  = {3},
-  pages   = {427--442},
-  year    = {2000},
-  doi     = {10.1287/moor.25.3.427.12219},
-  note    = {Abstract read.}
-}
-
-% FIX: number added.
-@article{lenstra1982lll,
-  author  = {Lenstra, Arjen K. and Lenstra, Jr., Hendrik W. and Lov{\'a}sz, L{\'a}szl{\'o}},
-  title   = {Factoring Polynomials with Rational Coefficients},
-  journal = {Mathematische Annalen},
-  volume  = {261},
-  number  = {4},
-  pages   = {515--534},
-  year    = {1982},
-  doi     = {10.1007/BF01457454},
-  note    = {Bibliographic record checked.}
-}
-
-@article{babai1986nearest,
-  author  = {Babai, L{\'a}szl{\'o}},
-  title   = {On {L}ov{\'a}sz' Lattice Reduction and the Nearest Lattice Point
-             Problem},
-  journal = {Combinatorica},
-  volume  = {6},
-  number  = {1},
-  pages   = {1--13},
-  year    = {1986},
-  doi     = {10.1007/BF02579403},
-  note    = {Abstract read.}
 }
 
 @article{fox1953free,
@@ -418,21 +211,6 @@
   doi       = {10.1145/3188745.3188806},
   note      = {Journal version: Israel Journal of Mathematics 243 (2021),
                377--420. Not read.}
-}
-
-% FIX: TITLE. The Annals title is "On the hardness of approximating vertex
-% cover" (checked on annals.math.princeton.edu and Crossref), not "... minimum
-% vertex cover".
-@article{dinur2005hardness,
-  author  = {Dinur, Irit and Safra, Samuel},
-  title   = {On the Hardness of Approximating Vertex Cover},
-  journal = {Annals of Mathematics},
-  volume  = {162},
-  number  = {1},
-  pages   = {439--485},
-  year    = {2005},
-  doi     = {10.4007/annals.2005.162.439},
-  note    = {Abstract read.}
 }
 
 % FIX: doi added.
@@ -522,35 +300,8 @@
   note    = {Abstract read.}
 }
 
-% NEW (optional): planar vertex cover with maximum degree 3 is usually
-% credited to this paper (its Lemma 1), if the conjecture's evidence wants
-% "degree three".
-@article{garey1977rectilinear,
-  author  = {Garey, Michael R. and Johnson, David S.},
-  title   = {The Rectilinear {S}teiner Tree Problem is {NP}-Complete},
-  journal = {SIAM Journal on Applied Mathematics},
-  volume  = {32},
-  number  = {4},
-  pages   = {826--834},
-  year    = {1977},
-  doi     = {10.1137/0132071},
-  note    = {Not read.}
-}
-
 % ---------------------------------------------------------------------------
 % NEW (recommended): works and tools named in the text without a citation.
-
-@article{huang2018quadriflow,
-  author  = {Huang, Jingwei and Zhou, Yichao and Nie{\ss}ner, Matthias and Shewchuk, Jonathan Richard and Guibas, Leonidas J.},
-  title   = {{QuadriFlow}: A Scalable and Robust Method for Quadrangulation},
-  journal = {Computer Graphics Forum},
-  volume  = {37},
-  number  = {5},
-  pages   = {147--160},
-  year    = {2018},
-  doi     = {10.1111/cgf.13498},
-  note    = {Proc.\ SGP 2018. Used as a baseline.}
-}
 
 @article{bommes2013survey,
   author  = {Bommes, David and L{\'e}vy, Bruno and Pietroni, Nico and Puppo, Enrico and Silva, Claudio and Tarini, Marco and Zorin, Denis},
@@ -608,24 +359,8 @@
   doi     = {10.1038/s41592-019-0686-2}
 }
 
-@misc{autoremesher,
-  author       = {{Dust3D project}},
-  title        = {{AutoRemesher}: Automatic Quad Remeshing},
-  howpublished = {\url{https://github.com/huxingyi/autoremesher}},
-  year         = {2026},
-  note         = {Open-source software (MIT licence), the version installed on the bench machine in October 2026. Used as a baseline in the bench.}
-}
-
 % ---------------------------------------------------------------------------
 % NEW: attributions from the prior-art check of 2026-10-18.
-
-@misc{kong2026squadgen,
-  author       = {Kong, Youkang and Liu, Yang and Dong, Yue and Tong, Xin and Shum, Heung-Yeung},
-  title        = {{SQuadGen}: Generating Simple Quad Layouts via Chart Distance Fields},
-  year         = {2026},
-  howpublished = {arXiv:2604.27329},
-  note         = {Section~4.2 read: loop simplicity metrics.}
-}
 
 @article{kleman2008disclinations,
   author  = {Kl{\'e}man, Maurice and Friedel, Jacques},
@@ -636,18 +371,6 @@
   pages   = {61--115},
   year    = {2008},
   note    = {Section~II.5.1, Eq.~(5) read (arXiv:0704.3055).}
-}
-
-@article{yazyev2010graphene,
-  author  = {Yazyev, Oleg V. and Louie, Steven G.},
-  title   = {Topological Defects in Graphene: Dislocations and Grain Boundaries},
-  journal = {Physical Review B},
-  volume  = {81},
-  number  = {19},
-  pages   = {195420},
-  year    = {2010},
-  doi     = {10.1103/PhysRevB.81.195420},
-  note    = {Abstract read.}
 }
 
 @article{kaiser2015colouring,
@@ -661,18 +384,6 @@
   note    = {Lemma~3.1 read (arXiv:1310.5875v2).}
 }
 
-@article{archdeacon2001chromatic,
-  author  = {Archdeacon, Dan and Hutchinson, Joan and Nakamoto, Atsuhiro and Negami, Seiya and Ota, Katsuhiro},
-  title   = {Chromatic Numbers of Quadrangulations on Closed Surfaces},
-  journal = {Journal of Graph Theory},
-  volume  = {37},
-  number  = {2},
-  pages   = {100--114},
-  year    = {2001},
-  doi     = {10.1002/jgt.1005},
-  note    = {Abstract read.}
-}
-
 @article{zaslavsky1982signed,
   author  = {Zaslavsky, Thomas},
   title   = {Signed Graphs},
@@ -682,17 +393,6 @@
   pages   = {47--74},
   year    = {1982},
   note    = {Bibliographic data checked; not read.}
-}
-
-@article{chen2009flow,
-  author  = {Chen, Beifang and Wang, Jue},
-  title   = {The Flow and Tension Spaces and Lattices of Signed Graphs},
-  journal = {European Journal of Combinatorics},
-  volume  = {30},
-  number  = {1},
-  pages   = {263--279},
-  year    = {2009},
-  note    = {Abstract read.}
 }
 
 @article{parker1996iis,
@@ -730,18 +430,6 @@
   note    = {Abstract read.}
 }
 
-@article{morenocenteno2013implicit,
-  author  = {Moreno-Centeno, Erick and Karp, Richard M.},
-  title   = {The Implicit Hitting Set Approach to Solve Combinatorial Optimization Problems with an Application to Multigenome Alignment},
-  journal = {Operations Research},
-  volume  = {61},
-  number  = {2},
-  pages   = {453--468},
-  year    = {2013},
-  doi     = {10.1287/opre.1120.1139},
-  note    = {Abstract read.}
-}
-
 @article{amaldi1995complexity,
   author  = {Amaldi, Edoardo and Kann, Viggo},
   title   = {The Complexity and Approximability of Finding Maximum Feasible Subsystems of Linear Relations},
@@ -759,29 +447,6 @@
   year         = {2015},
   howpublished = {Optimization Online preprint 4809, \url{https://optimization-online.org/2015/03/4809/}},
   note         = {Abstract and introduction read; a journal version was not found.}
-}
-
-@article{lei2017foliation,
-  author  = {Lei, Na and Zheng, Xiaopeng and Jiang, Jian and Lin, Yu-Yao and Gu, David Xianfeng},
-  title   = {Quadrilateral and Hexahedral Mesh Generation Based on Surface Foliation Theory},
-  journal = {Computer Methods in Applied Mechanics and Engineering},
-  volume  = {316},
-  pages   = {758--781},
-  year    = {2017},
-  doi     = {10.1016/j.cma.2016.09.044},
-  note    = {Abstract read.}
-}
-
-@article{usai2015skeleton,
-  author  = {Usai, Francesco and Livesu, Marco and Puppo, Enrico and Tarini, Marco and Scateni, Riccardo},
-  title   = {Extraction of the Quad Layout of a Triangle Mesh Guided by its Curve Skeleton},
-  journal = {ACM Transactions on Graphics},
-  volume  = {35},
-  number  = {1},
-  pages   = {6:1--6:13},
-  year    = {2015},
-  doi     = {10.1145/2809785},
-  note    = {Abstract read.}
 }
 
 @incollection{thurston1998shapes,
@@ -806,4 +471,12 @@
   pages   = {589--689},
   year    = {1993},
   note    = {Bibliographic data checked; not read.}
+}
+
+@misc{gardent2026loops,
+  author       = {Gardent, Marc},
+  title        = {Closing Edge Loops at Quantization Time: Helix Constraints for {T}-Mesh Quantization},
+  howpublished = {\url{https://github.com/marcgardent/openclare/blob/main/docs/research/closing-loops/paper.pdf}},
+  note         = {companion paper},
+  year         = {2026}
 }
