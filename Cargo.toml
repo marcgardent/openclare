@@ -5,11 +5,12 @@ members = [
     "crates/openclare-capi",
     "crates/openclare-rerun",
     "crates/openclare-viewer",
+    "crates/openclare-highs",
 ]
 # Rerun brings a lot with it: its recorder is only built when asked for
 # (`--features rerun` on the command line tool), its viewer by name
 # (`-p openclare-viewer`).
-default-members = ["crates/openclare", "crates/openclare-cli", "crates/openclare-capi"]
+default-members = ["crates/openclare", "crates/openclare-cli", "crates/openclare-capi", "crates/openclare-highs"]
 resolver = "3"
 
 [workspace.package]

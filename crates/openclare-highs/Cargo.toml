@@ -1,0 +1,14 @@
+[package]
+name = "openclare-highs"
+description = "Rings chosen by an exact solver (HiGHS) for openclare's slow quality mode"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+openclare = { path = "../openclare" }
+# HiGHS, the mixed-integer solver, built from its sources (cmake and a C++
+# compiler). MIT.
+highs = "1"
+highs-sys = "1.11"
