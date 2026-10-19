@@ -1,0 +1,79 @@
+% The comb of an arc (Section "Combs" and Lemma "Combs" of v1).
+% French copy of comb.tex: it has no words, only the comma of the pairing
+% differs (written for icomma, a comma followed by a space).
+% \input inside a figure; needs \usepackage{tikz} and
+% \usetikzlibrary{arrows.meta,decorations.pathreplacing}.
+%
+% The T-mesh is that of dislocation.tex (b) and separatrix.tex (b): a band cut
+% open along the trace tau of the vertex v of valence five, the right side
+% glued to the left side two units higher above y = 3 and at the same height
+% below; v is drawn at (0,3), (10,3) and (0,5), the vertex c_3 of valence three
+% at (1,4), and the empty corner next to c_3 is glued by a quarter-turn about
+% c_3 (see dislocation.tex). Every node is at a whole position; check.py
+% checks the numbers below.
+%
+% The arc a is the piece of the separatrix sigma of v from the T-junction
+% n_0 = m = (1,5), where the separatrix of c_3 upwards stops on sigma, to the
+% T-junction n_1 = q = (10,5), where sigma stops on tau; e_a = (1,0), l_a = 9.
+% Foot of n_0: the trace through m perpendicular to a is the separatrix of c_3
+% upwards, which starts at c_3: c_0 = c_3. Foot of n_1: the trace through q
+% perpendicular to a is tau, which starts at v: c_1 = v. The comb sigma_a runs
+% from c_3 up to m (1 unit), along a to q (9 units), and down tau through the
+% T-junction n = (10,4) to v (2 units): it passes through T-junctions only.
+% Developed along it, p_{c_0} = (1,4) and p_{c_1} = (10,3), and
+%   < e_a, p_{c_1} - p_{c_0} > = < (1,0), (9,-1) > = 9 = l_a
+% (Lemma "Combs"); the teeth only add the across component -1.
+% The feet are distinct, of valences 3 and 5: the comb reads the length of a
+% as that of a dislocation (Proposition 4); with two feet of valence 3 it would
+% be an exchange (Proposition 8), with a single foot a winding separatrix
+% (Proposition 9).
+\begin{tikzpicture}[x=0.5cm, y=0.5cm, font=\footnotesize,
+    side/.style={draw=black, line width=0.5pt},
+    quadgrid/.style={draw=black!18, line width=0.25pt, step={(1,1)}},
+    surface/.style={fill=black!3},
+    node dot/.style={circle, fill=black, inner sep=0pt, minimum size=2.6pt},
+    comb/.style={draw=measured, line width=1.8pt, line join=round},
+    arc mark/.style={line width=2.2pt, draw=black},
+    dimension/.style={line width=0.5pt, {Bar[width=5pt]}-{Bar[width=5pt]}},
+    val3/.pic={\fill[valthree, draw=black, line width=0.3pt]
+      (90:3.4pt) -- (210:3.4pt) -- (330:3.4pt) -- cycle;},
+    val5/.pic={\fill[valfive, draw=black, line width=0.3pt]
+      (90:3.4pt) -- (162:3.4pt) -- (234:3.4pt) -- (306:3.4pt) -- (18:3.4pt) -- cycle;}]
+  \definecolor{valthree}{HTML}{E8890C}
+  \definecolor{valfive}{HTML}{7C3AAD}
+  \definecolor{measured}{HTML}{14934A}
+
+  \begin{scope}
+    \fill[surface] (0,1.6) rectangle (10,3) (1,3) rectangle (10,4) (0,4) rectangle (10,8);
+    \draw[quadgrid] (0,1.6) grid (10,3);
+    \draw[quadgrid] (1,3) grid (10,4);
+    \draw[quadgrid] (0,4) grid (10,8);
+    % All traces of the T-mesh in the picture.
+    \draw[side] (0,1.6) -- (0,3) (10,1.6) -- (10,8) (0,5) -- (0,8);
+    \draw[side] (0,3) -- (10,3) (1,4) -- (10,4) (1,4) -- (1,5) (0,5) -- (10,5);
+    \draw[side] (1,4) -- (1,3) (1,4) -- (0,4) -- (0,5);
+  \end{scope}
+  % The comb of a: from its foot c_3 up to m, along a, down tau to its foot v.
+  \draw[comb] (1,4) -- (1,5) -- (10,5) -- (10,3);
+  \draw[comb, line width=3pt] (1,5) -- (10,5);
+  \foreach \p in {(1,3), (0,4), (10,4), (0,6), (1,5), (10,5), (0,7)}
+    \node[node dot] at \p {};
+  \pic at (1,4) {val3};
+  \foreach \p in {(0,3), (10,3), (0,5)} \pic at \p {val5};
+  % Names.
+  \node[above] at (5.5,5) {$a$};
+  \draw[-{Stealth[length=4pt]}, line width=0.5pt] (6.6,5.75) -- (8,5.75)
+    node[right, inner sep=1pt] {$e_a$};
+  \node[above left=-1pt] at (1,5) {$n_0$};
+  \node[above right=-1pt] at (10,5) {$n_1$};
+  \node[below right=-1pt] at (1,4) {$c_0 = c_3$};
+  \node[right=2pt] at (10,3) {$c_1 = v$};
+  \node[left=1pt] at (0,4.95) {$v$};
+  \node[left=1pt] at (0,3) {$v$};
+  \node[measured, right=1pt] at (10,4.5) {$\sigma_a$};
+  \node[right=1pt] at (10,7.4) {$\tau$};
+  % The developed feet and the e_a component of their separation.
+  \draw[dimension] (1,2.2) -- (10,2.2) node[midway, fill=black!3, inner sep=1.5pt]
+    {$\langle e_a, p_{c_1} - p_{c_0}\rangle = \ell_a = 9$};
+  \draw[black!50, dotted, line width=0.6pt] (1,2.2) -- (1,4) (10,2.2) -- (10,3);
+\end{tikzpicture}
