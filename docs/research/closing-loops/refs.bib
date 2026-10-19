@@ -1,0 +1,427 @@
+% Bibliography of the research note "Closing Edge Loops at Quantization Time"
+% (docs/research/closing-loops). The entries it cites, copied unchanged from
+% docs/research/closing-helices/refs.bib, where they were checked on 2026-10-18:
+% the DOIs were resolved on Crossref, and each note says how much of the work
+% was read. Marks "% FIX:" and "% NEW:" come from that check.
+%
+% Style note: plainnat prints doi and note but NOT eprint/archivePrefix, so an
+% entry known only by its arXiv number must carry it in howpublished or note
+% (see liu2025quadgpt).
+
+% FIX: doi added. Text read in full by the reviewer (author PDF, RWTH).
+@article{bommes2011structure,
+  author  = {Bommes, David and Lempfer, Timm and Kobbelt, Leif},
+  title   = {Global Structure Optimization of Quadrilateral Meshes},
+  journal = {Computer Graphics Forum},
+  volume  = {30},
+  number  = {2},
+  pages   = {375--384},
+  year    = {2011},
+  doi     = {10.1111/j.1467-8659.2011.01868.x},
+  note    = {Proc.\ Eurographics 2011. Read in full.}
+}
+
+% FIX: article number added (110:1--110:11, as cited in Lyon et al. 2021).
+@article{campen2012dual,
+  author  = {Campen, Marcel and Bommes, David and Kobbelt, Leif},
+  title   = {Dual Loops Meshing: Quality Quad Layouts on Manifolds},
+  journal = {ACM Transactions on Graphics},
+  volume  = {31},
+  number  = {4},
+  pages   = {110:1--110:11},
+  year    = {2012},
+  doi     = {10.1145/2185520.2185606},
+  note    = {Proc.\ SIGGRAPH 2012. Abstract read.}
+}
+
+% Article number read on the ACM DL (DT-093).
+@article{campen2015qgp,
+  author  = {Campen, Marcel and Bommes, David and Kobbelt, Leif},
+  title   = {Quantized Global Parametrization},
+  journal = {ACM Transactions on Graphics},
+  volume  = {34},
+  number  = {6},
+  pages   = {192:1--192:12},
+  year    = {2015},
+  doi     = {10.1145/2816795.2818140},
+  note    = {Proc.\ SIGGRAPH Asia 2015. Abstract read.}
+}
+
+% FIX: note. The full text IS openly accessible on the Eurographics Digital
+% Library (diglib.eg.org, v40i2pp305-314.pdf); the reviewer read it.
+@article{lyon2021constrained,
+  author  = {Lyon, Max and Campen, Marcel and Kobbelt, Leif},
+  title   = {Quad Layouts via Constrained {T}-Mesh Quantization},
+  journal = {Computer Graphics Forum},
+  volume  = {40},
+  number  = {2},
+  pages   = {305--314},
+  year    = {2021},
+  doi     = {10.1111/cgf.142634},
+  note    = {Proc.\ Eurographics 2021. Read.}
+}
+
+% Article number read on the ACM DL (DT-093).
+@article{heistermann2023bimdf,
+  author  = {Heistermann, Martin and Warnett, Jethro and Bommes, David},
+  title   = {Min-Deviation-Flow in Bi-directed Graphs for {T}-Mesh Quantization},
+  journal = {ACM Transactions on Graphics},
+  volume  = {42},
+  number  = {4},
+  pages   = {70:1--70:25},
+  year    = {2023},
+  doi     = {10.1145/3592437},
+  note    = {Proc.\ SIGGRAPH 2023. Objective (sum of absolute deviations,
+             Eq.~2) and solvers read; our quantizer follows its formulation.}
+}
+
+% FIX: doi added; the \cite inside the note replaced by plain text (a
+% citation inside the bibliography is fragile and reads oddly). Article
+% number read on the ACM DL (DT-093).
+@article{myles2010feature,
+  author  = {Myles, Ashish and Pietroni, Nico and Kovacs, Denis and Zorin, Denis},
+  title   = {Feature-Aligned {T}-Meshes},
+  journal = {ACM Transactions on Graphics},
+  volume  = {29},
+  number  = {4},
+  pages   = {117:1--117:11},
+  year    = {2010},
+  doi     = {10.1145/1778765.1778854},
+  note    = {Proc.\ SIGGRAPH 2010. Cited for the remark of Bommes et
+             al.\ (2011) about it; not read.}
+}
+
+% FIX: pages (article 77) and doi added.
+@article{bommes2009miq,
+  author  = {Bommes, David and Zimmer, Henrik and Kobbelt, Leif},
+  title   = {Mixed-Integer Quadrangulation},
+  journal = {ACM Transactions on Graphics},
+  volume  = {28},
+  number  = {3},
+  pages   = {77:1--77:10},
+  year    = {2009},
+  doi     = {10.1145/1531326.1531383},
+  note    = {Proc.\ SIGGRAPH 2009.}
+}
+
+% NEW (optional): the term "integer-grid map" comes from this paper, not
+% from bommes2009miq. Article number read on the ACM DL (DT-093).
+@article{bommes2013igm,
+  author  = {Bommes, David and Campen, Marcel and Ebke, Hans-Christian and Alliez, Pierre and Kobbelt, Leif},
+  title   = {Integer-Grid Maps for Reliable Quad Meshing},
+  journal = {ACM Transactions on Graphics},
+  volume  = {32},
+  number  = {4},
+  pages   = {98:1--98:12},
+  year    = {2013},
+  doi     = {10.1145/2461912.2462014},
+  note    = {Proc.\ SIGGRAPH 2013.}
+}
+
+% FIX: article number and doi added.
+@article{lei2020quartic,
+  author  = {Lei, Na and Zheng, Xiaopeng and Luo, Zhongxuan and Luo, Feng and Gu, Xianfeng},
+  title   = {Quadrilateral Mesh Generation {II}: Meromorphic Quartic Differentials and {Abel--Jacobi} Condition},
+  journal = {Computer Methods in Applied Mechanics and Engineering},
+  volume  = {366},
+  pages   = {112980},
+  year    = {2020},
+  doi     = {10.1016/j.cma.2020.112980},
+  eprint  = {1907.00216},
+  archivePrefix = {arXiv},
+  note    = {Main theorems read (Thm.~4.7--4.13 of the arXiv version).}
+}
+
+% FIX: volume and doi added.
+@book{strebel1984quadratic,
+  author    = {Strebel, Kurt},
+  title     = {Quadratic Differentials},
+  series    = {Ergebnisse der Mathematik und ihrer Grenzgebiete (3)},
+  volume    = {5},
+  publisher = {Springer},
+  address   = {Berlin},
+  year      = {1984},
+  doi       = {10.1007/978-3-662-02414-0},
+  note      = {Not read; cited for the definition of Jenkins--Strebel
+               differentials and the existence theorem with prescribed heights.}
+}
+
+% FIX: doi added. Note: the arXiv preprint is titled "Metric Based
+% Quadrilateral Mesh Generation"; the theorem numbers quoted in the paper are
+% those of the arXiv version.
+@article{chen2019metric,
+  author  = {Chen, Wei and Zheng, Xiaopeng and Ke, Jingyao and Lei, Na and Luo, Zhongxuan and Gu, Xianfeng},
+  title   = {Quadrilateral Mesh Generation {I}: Metric Based Method},
+  journal = {Computer Methods in Applied Mechanics and Engineering},
+  volume  = {356},
+  pages   = {652--668},
+  year    = {2019},
+  doi     = {10.1016/j.cma.2019.07.023},
+  eprint  = {1811.12604},
+  archivePrefix = {arXiv},
+  note    = {Theorems 3.7, 3.8 and Lemma 3.9 of the arXiv version read.}
+}
+
+@article{kalberer2007quadcover,
+  author  = {K{\"a}lberer, Felix and Nieser, Matthias and Polthier, Konrad},
+  title   = {{QuadCover} -- Surface Parameterization using Branched Coverings},
+  journal = {Computer Graphics Forum},
+  volume  = {26},
+  number  = {3},
+  pages   = {375--384},
+  year    = {2007},
+  doi     = {10.1111/j.1467-8659.2007.01060.x},
+  note    = {Proc.\ Eurographics 2007. Abstract read.}
+}
+
+@incollection{kalberer2011stripe,
+  author    = {K{\"a}lberer, Felix and Nieser, Matthias and Polthier, Konrad},
+  title     = {Stripe Parameterization of Tubular Surfaces},
+  booktitle = {Topological Methods in Data Analysis and Visualization: Theory, Algorithms, and Applications},
+  series    = {Mathematics and Visualization},
+  publisher = {Springer},
+  pages     = {13--26},
+  year      = {2011},
+  doi       = {10.1007/978-3-642-15014-2_2},
+  note      = {Preprint read in full (Sections 3--4: integer gaps along cut paths, rounded).}
+}
+
+@article{myles2014robust,
+  author  = {Myles, Ashish and Pietroni, Nico and Zorin, Denis},
+  title   = {Robust Field-aligned Global Parametrization},
+  journal = {ACM Transactions on Graphics},
+  volume  = {33},
+  number  = {4},
+  pages   = {135:1--135:14},
+  year    = {2014},
+  doi     = {10.1145/2601097.2601154},
+  note    = {Proc.\ SIGGRAPH 2014. Abstract read.}
+}
+
+@article{pietroni2016tracing,
+  author  = {Pietroni, Nico and Puppo, Enrico and Marcias, Giorgio and Scopigno, Roberto and Cignoni, Paolo},
+  title   = {Tracing Field-Coherent Quad Layouts},
+  journal = {Computer Graphics Forum},
+  volume  = {35},
+  number  = {7},
+  pages   = {485--496},
+  year    = {2016},
+  doi     = {10.1111/cgf.13045},
+  note    = {Proc.\ Pacific Graphics 2016. Abstract read.}
+}
+
+@article{razafindrazaka2015perfect,
+  author  = {Razafindrazaka, Faniry H. and Reitebuch, Ulrich and Polthier, Konrad},
+  title   = {Perfect Matching Quad Layouts for Manifold Meshes},
+  journal = {Computer Graphics Forum},
+  volume  = {34},
+  number  = {5},
+  pages   = {219--228},
+  year    = {2015},
+  doi     = {10.1111/cgf.12710},
+  note    = {Proc.\ SGP 2015. Abstract read.}
+}
+
+% FIX: doi added; note updated (abstract and introduction of the authors'
+% version read: it optimizes the base complex of a given quad mesh).
+@article{razafindrazaka2017optimal,
+  author  = {Razafindrazaka, Faniry H. and Polthier, Konrad},
+  title   = {Optimal Base Complexes for Quadrilateral Meshes},
+  journal = {Computer Aided Geometric Design},
+  volume  = {52--53},
+  pages   = {63--74},
+  year    = {2017},
+  doi     = {10.1016/j.cagd.2017.02.012},
+  note    = {Proc.\ GMP 2017. Abstract and introduction read.}
+}
+
+@article{campen2017survey,
+  author  = {Campen, Marcel},
+  title   = {Partitioning Surfaces Into Quadrilateral Patches: A Survey},
+  journal = {Computer Graphics Forum},
+  volume  = {36},
+  number  = {8},
+  pages   = {567--588},
+  year    = {2017},
+  doi     = {10.1111/cgf.13153},
+  note    = {Abstract read.}
+}
+
+% FIX: plainnat does not print eprint, so the arXiv number must be in
+% howpublished, otherwise the entry prints with no identifier at all.
+@misc{liu2025quadgpt,
+  author       = {Liu, Jian and Wang, Chunshi and Guo, Song and Weng, Haohan and Zhou, Zhen and Li, Zhiqi and Yu, Jiaao and Zhu, Yiling and Xu, Jing and Lei, Biwen and Chen, Zhuo and Guo, Chunchao},
+  title        = {{QuadGPT}: Native Quadrilateral Mesh Generation with Autoregressive Models},
+  howpublished = {arXiv:2509.21420},
+  year         = {2025},
+  eprint       = {2509.21420},
+  archivePrefix = {arXiv},
+  note         = {Version 2 (February 2026). Appendix~B.2 read: quad rings and quad lines as reward signals.}
+}
+
+@article{aardal2000diophantine,
+  author  = {Aardal, Karen and Hurkens, Cor A. J. and Lenstra, Arjen K.},
+  title   = {Solving a System of Linear {D}iophantine Equations with Lower
+             and Upper Bounds on the Variables},
+  journal = {Mathematics of Operations Research},
+  volume  = {25},
+  number  = {3},
+  pages   = {427--442},
+  year    = {2000},
+  doi     = {10.1287/moor.25.3.427.12219},
+  note    = {Abstract read.}
+}
+
+% FIX: number added.
+@article{lenstra1982lll,
+  author  = {Lenstra, Arjen K. and Lenstra, Jr., Hendrik W. and Lov{\'a}sz, L{\'a}szl{\'o}},
+  title   = {Factoring Polynomials with Rational Coefficients},
+  journal = {Mathematische Annalen},
+  volume  = {261},
+  number  = {4},
+  pages   = {515--534},
+  year    = {1982},
+  doi     = {10.1007/BF01457454},
+  note    = {Bibliographic record checked.}
+}
+
+@article{huang2018quadriflow,
+  author  = {Huang, Jingwei and Zhou, Yichao and Nie{\ss}ner, Matthias and Shewchuk, Jonathan Richard and Guibas, Leonidas J.},
+  title   = {{QuadriFlow}: A Scalable and Robust Method for Quadrangulation},
+  journal = {Computer Graphics Forum},
+  volume  = {37},
+  number  = {5},
+  pages   = {147--160},
+  year    = {2018},
+  doi     = {10.1111/cgf.13498},
+  note    = {Proc.\ SGP 2018. Used as a baseline.}
+}
+
+@article{bommes2013survey,
+  author  = {Bommes, David and L{\'e}vy, Bruno and Pietroni, Nico and Puppo, Enrico and Silva, Claudio and Tarini, Marco and Zorin, Denis},
+  title   = {Quad-Mesh Generation and Processing: A Survey},
+  journal = {Computer Graphics Forum},
+  volume  = {32},
+  number  = {6},
+  pages   = {51--76},
+  year    = {2013},
+  doi     = {10.1111/cgf.12014}
+}
+
+@inproceedings{demoura2021lean4,
+  author    = {de Moura, Leonardo and Ullrich, Sebastian},
+  title     = {The {Lean} 4 Theorem Prover and Programming Language},
+  booktitle = {Automated Deduction -- CADE 28},
+  series    = {Lecture Notes in Computer Science},
+  volume    = {12699},
+  publisher = {Springer},
+  pages     = {625--635},
+  year      = {2021},
+  doi       = {10.1007/978-3-030-79876-5_37}
+}
+
+@article{huangfu2018highs,
+  author  = {Huangfu, Qi and Hall, J. A. Julian},
+  title   = {Parallelizing the Dual Revised Simplex Method},
+  journal = {Mathematical Programming Computation},
+  volume  = {10},
+  number  = {1},
+  pages   = {119--142},
+  year    = {2018},
+  doi     = {10.1007/s12532-017-0130-5},
+  note    = {The usual citation for the HiGHS solver.}
+}
+
+@article{virtanen2020scipy,
+  author  = {Virtanen, Pauli and Gommers, Ralf and Oliphant, Travis E. and others},
+  title   = {{SciPy} 1.0: Fundamental Algorithms for Scientific Computing in {Python}},
+  journal = {Nature Methods},
+  volume  = {17},
+  number  = {3},
+  pages   = {261--272},
+  year    = {2020},
+  doi     = {10.1038/s41592-019-0686-2}
+}
+
+@misc{autoremesher,
+  author       = {{Dust3D project}},
+  title        = {{AutoRemesher}: Automatic Quad Remeshing},
+  howpublished = {\url{https://github.com/huxingyi/autoremesher}},
+  year         = {2026},
+  note         = {Open-source software (MIT licence), the version installed on the bench machine in October 2026. Used as a baseline in the bench.}
+}
+
+@misc{kong2026squadgen,
+  author       = {Kong, Youkang and Liu, Yang and Dong, Yue and Tong, Xin and Shum, Heung-Yeung},
+  title        = {{SQuadGen}: Generating Simple Quad Layouts via Chart Distance Fields},
+  year         = {2026},
+  howpublished = {arXiv:2604.27329},
+  note         = {Section~4.2 read: loop simplicity metrics.}
+}
+
+@article{parker1996iis,
+  author  = {Parker, Mark and Ryan, Jennifer},
+  title   = {Finding the Minimum Weight {IIS} Cover of an Infeasible System of Linear Inequalities},
+  journal = {Annals of Mathematics and Artificial Intelligence},
+  volume  = {17},
+  number  = {1},
+  pages   = {107--126},
+  year    = {1996},
+  note    = {As described by citing works; not read.}
+}
+
+@article{lei2017foliation,
+  author  = {Lei, Na and Zheng, Xiaopeng and Jiang, Jian and Lin, Yu-Yao and Gu, David Xianfeng},
+  title   = {Quadrilateral and Hexahedral Mesh Generation Based on Surface Foliation Theory},
+  journal = {Computer Methods in Applied Mechanics and Engineering},
+  volume  = {316},
+  pages   = {758--781},
+  year    = {2017},
+  doi     = {10.1016/j.cma.2016.09.044},
+  note    = {Abstract read.}
+}
+
+@article{usai2015skeleton,
+  author  = {Usai, Francesco and Livesu, Marco and Puppo, Enrico and Tarini, Marco and Scateni, Riccardo},
+  title   = {Extraction of the Quad Layout of a Triangle Mesh Guided by its Curve Skeleton},
+  journal = {ACM Transactions on Graphics},
+  volume  = {35},
+  number  = {1},
+  pages   = {6:1--6:13},
+  year    = {2015},
+  doi     = {10.1145/2809785},
+  note    = {Abstract read.}
+}
+
+@incollection{thurston1998shapes,
+  author    = {Thurston, William P.},
+  title     = {Shapes of Polyhedra and Triangulations of the Sphere},
+  booktitle = {The Epstein Birthday Schrift},
+  series    = {Geometry \& Topology Monographs},
+  volume    = {1},
+  publisher = {Geometry \& Topology Publications},
+  address   = {Coventry},
+  pages     = {511--549},
+  year      = {1998},
+  note      = {Abstract read (arXiv:math/9801088).}
+}
+
+@article{veech1993flat,
+  author  = {Veech, William A.},
+  title   = {Flat Surfaces},
+  journal = {American Journal of Mathematics},
+  volume  = {115},
+  number  = {3},
+  pages   = {589--689},
+  year    = {1993},
+  note    = {Bibliographic data checked; not read.}
+}
+
+% The companion paper: the theory of turns (obstructions, holonomy, forced
+% shifts, NP-hardness, Lean), in docs/research/closing-helices.
+@misc{gardent2026turns,
+  author = {Gardent, Marc},
+  title  = {Turns of a {T}-mesh: obstructions to closing edge loops},
+  note   = {companion paper, in preparation},
+  year   = {2026}
+}

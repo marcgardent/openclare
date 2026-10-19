@@ -1,0 +1,996 @@
+% Research note: closing edge loops at quantization time (the applied paper;
+% the theory of obstructions is in the companion note, docs/research/closing-helices).
+% Build: `make paper NOTE=closing-loops` from the root of the repository, which
+% first writes version.tex (the commit described, \enginecommit); without it,
+% or by hand: pdflatex paper && bibtex paper && pdflatex paper && pdflatex paper
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,decorations.pathreplacing}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[hidelinks]{hyperref}
+\setlength{\emergencystretch}{2em}
+% Room for the full-width figures of Section 6 at the top of a page.
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\dbltopfraction}{0.9}
+\renewcommand{\floatpagefraction}{0.8}
+\renewcommand{\dblfloatpagefraction}{0.8}
+
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\shift}{s}
+
+% The commit of the engine described, written by `make paper` into
+% version.tex (ignored by git).
+\IfFileExists{version.tex}{\input{version.tex}}{}
+\providecommand{\enginecommit}{unknown}
+
+\title{Closing Edge Loops at Quantization Time:\\
+Helix Constraints for T-Mesh Quantization\\[0.5em]
+\large Research note --- draft, not peer reviewed}
+\author{Marc Gardent%
+\thanks{This note is distributed under the Creative Commons Attribution
+4.0 International licence (CC BY 4.0). The code of openclare is under the
+GPL-3.0-or-later of the repository. The note describes the engine at commit
+\texttt{\enginecommit} of \url{https://github.com/marcgardent/openclare}.}\\
+\normalsize Independent researcher\\
+\normalsize ORCID: \href{https://orcid.org/0009-0000-6466-3098}{0009-0000-6466-3098}\\
+\normalsize Contact: through the repository,
+\url{https://github.com/marcgardent/openclare}}
+\date{October 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Automatic quad remeshing often produces edge loops that wind round a part of
+the shape as helices instead of closing into rings. Bommes et
+al.~\cite{bommes2011structure} remove such \emph{q-helices} from a finished
+mesh; we prevent them where the integer structure of the mesh is decided, in
+the quantization of a T-mesh. A straight walk across the patches of a T-mesh
+that returns to its first side, a \emph{turn}, has a \emph{shift} that is an
+integer linear form in the arc lengths; at whole lengths it is how far the
+strip of quads following the turn comes back beside itself, and every strip
+of the mesh is such a walk. We add the constraints that close turns to a
+minimum-deviation quantizer~\cite{heistermann2023bimdf}, through a
+least-change projection, repair walks and rounds of constraint generation on
+the strips of the mesh, and keep the candidate with the fewest spiral edges,
+counted by a test that tells helices from closed, open and border loops. Over
+twelve models at three budgets near 3{,}000 quads, the engine leaves 4.65\%
+of the edges on spiral loops (16.7\% without closing, in single runs of an
+earlier engine); on the seven models that two other open-source remeshers
+also mesh validly, 1.8\% against 38.8\% and 21.7\%; on a human body, single
+runs give 1.6\%, against 2.5\% for the hand-made mesh. An exact analysis of
+the closing system of that body shows that the conflict between closing
+turns and keeping singularities apart is real but local, that the heuristic
+rather than the constraints leaves most turns shifted, and that closing more
+turns does not by itself make fewer spirals: the strips move with the
+lengths, and the choice of the turns to close decides.
+\end{abstract}
+
+\section{Introduction}
+
+Field-aligned quad remeshing has reached a level where element shape and
+alignment are rarely the limiting
+factor~\cite{bommes2013survey,campen2017survey}. What remains is structure:
+the way edge loops run across the surface. Artists expect a loop round an
+arm, a leg or a neck to be a ring. Automatic methods often produce a helix
+instead: the loop goes round, comes back one or a few rows further, and winds
+along the whole part (Figure~\ref{fig:overview}). Bommes et al.\ showed that
+helical configurations are a main reason why the base complex of an otherwise
+good quad mesh stays dense~\cite{bommes2011structure}, and removed them from
+the finished mesh.
+
+Whether a loop closes is decided upstream, when a quantizer assigns whole
+lengths to the arcs of a T-mesh traced in a seamless
+parametrization~\cite{campen2015qgp,lyon2021constrained,heistermann2023bimdf}.
+Quantizers choose these lengths for consistency, validity and closeness to
+the parametrization; the loops close or spiral as a side effect. This paper
+constrains the loops in the quantization itself. Section~\ref{sec:turns}
+defines \emph{turns}, straight walks across the patches of a T-mesh that
+return to their first side, and shows that the \emph{shift} of a turn is an
+integer linear form in the arc lengths that gives, at whole lengths, the
+pitch of the strip of quads following it, and that every strip of the mesh
+is such a walk. Section~\ref{sec:closing} adds the closing of turns to a
+minimum-deviation quantizer through a least-change projection, repair walks
+and rounds of constraint generation on the strips, with safeguards on folds,
+distortion and budget. Section~\ref{sec:measure} gives a share of spiral
+edges that tells helices of pitch up to four from closed, open and border
+loops; loop counts and loop simplicity scores
+exist~\cite{liu2025quadgpt,kong2026squadgen}, but they do not separate
+helices from open loops. Section~\ref{sec:experiments} measures the method in
+the open-source remesher openclare against two open-source remeshers and a
+mesh modelled by hand, and Section~\ref{sec:exact} solves the closing system
+of a human body exactly to see where the heuristic stands: the conflict
+between closing turns and keeping singularities apart is local, the
+heuristic leaves most of the shifted turns that no constraint forces, and
+yet closing more turns does not by itself reduce the spirals, because the
+strips of the mesh move with the lengths. Section~\ref{sec:limits} states
+the limitations and the open problems.
+
+The theory behind the conflicts, which reads the shift as translational
+holonomy of the flat metric and derives obstructions to closing from the
+singularities, a lower bound on the turns every quantization leaves shifted,
+and the NP-hardness of choosing the turns to close, is the subject of a
+companion paper~\cite{gardent2026turns}; we state its results in one
+sentence where we need them, without proof. Statements here are
+\emph{proved} when they come with a proof, \emph{measured} when they come
+from exact arithmetic or solver output on the systems openclare exports, and
+\emph{conjectured} otherwise.
+
+\section{Background and related work}\label{sec:related}
+
+\paragraph{T-mesh quantization.}
+Mixed-integer quadrangulation~\cite{bommes2009miq} and integer-grid
+maps~\cite{bommes2013igm} decide the integer structure of a quad mesh in
+their quantization. Campen et al.\ quantize via the integer lengths of the
+arcs of a T-mesh traced in a seamless parametrization~\cite{campen2015qgp}.
+Lyon et al.\ solve a constrained version as an integer linear program,
+bounding the directional deviation of the separatrices of the resulting
+layout, and require, as openclare does, that the quantization keep
+singularities apart~\cite{lyon2021constrained}. Heistermann et al.\ cast
+quantization as a minimum-deviation flow on a bidirected graph and give a
+fast approximate solver and an exact refinement~\cite{heistermann2023bimdf};
+openclare follows their formulation. To our knowledge none of these
+constrains the helices.
+
+\paragraph{Helices after meshing.}
+Bommes et al.~\cite{bommes2011structure} define a \emph{q-helix} as a dual
+parametric line with an integer \emph{pitch} $h$ and \emph{turn length}
+$\tau$: walking $\tau$ steps along it is equivalent to $h$ side-steps. They
+detect minimal q-helices by the self-intersections of orthogonal dual lines
+and remove them greedily with grid-preserving operators, closed dual paths of
+shift and collapse steps that keep the mesh all-quad and its singularities in
+place, followed by tangential smoothing; their experiments remove most
+helices (from 17--52 down to 1--23 per model). They note that choosing the
+pairs of singularities to align directly in the parametrization, as Myles et
+al.\ do for T-meshes~\cite{myles2010feature}, is often complicated or even
+ambiguous to automate. Razafindrazaka and
+Polthier~\cite{razafindrazaka2017optimal} replace the base complex of a
+finished mesh by an optimal one, found as a perfect matching on a graph over
+its singular vertices, and note that the operators
+of~\cite{bommes2011structure} leave some spirals. Both work after meshing,
+not in the quantization.
+
+\paragraph{Periods round a tube.}
+QuadCover~\cite{kalberer2007quadcover} lifts the cross field to a branched
+covering where it becomes a vector field. The stripe parameterization of
+tubular surfaces~\cite{kalberer2011stripe}, built on it, measures the jump
+(``gap'') of the parameter across each cut path and rounds it to the nearest
+whole number; the gap across a loop round a tube is what we call the shift of
+a turn, and rounded to a non-zero whole number it gives a helix of that
+pitch. That paper treats spiralling stripes as a legitimate outcome, and
+notes that rounding the gaps for least distortion is a hard combinatorial
+problem that it does not solve exactly.
+
+\paragraph{Flat metrics and finite trajectories.}
+Declaring every quad a unit square turns a quad mesh into a flat metric with
+cone points at its irregular vertices. Chen et al.~\cite{chen2019metric}
+characterize the metrics that arise this way; one of their conditions is a
+\emph{finite geodesic lamination}, the straight lines of the field being
+finite loops, which they assume rather than construct. Lei et
+al.~\cite{lei2020quartic} show that a closed quad mesh induces a meromorphic
+quartic differential and list as an open problem the guarantee that all its
+trajectories are finite. A trajectory that is not finite is precisely an edge
+loop that does not close. A quadratic differential all of whose non-critical
+trajectories close is a Jenkins--Strebel
+differential~\cite{strebel1984quadratic}; the complement of its critical
+graph is a union of flat cylinders, and a helix is a cylinder glued back with
+a shift of a whole number of rows. On a closed surface the valences $k(v)$ of
+a quad mesh satisfy $\sum_v (4 - k(v)) = 4\chi$: with valences three and five only, a
+closed human body needs at least eight vertices of valence three, but a hand-made base mesh has
+hundreds, and their count says nothing of where the loops go.
+
+\paragraph{Loops by construction.}
+Dual loops meshing~\cite{campen2012dual} builds a layout from loops traced on
+the surface, which close by construction; Lei et
+al.~\cite{lei2017foliation} build quad meshes from a Strebel differential
+with prescribed cylinders, and skeleton-guided
+layouts~\cite{usai2015skeleton} close the loops round limbs by design. Myles
+et al.~\cite{myles2014robust} trace the field into a partition into patches,
+Pietroni et al.~\cite{pietroni2016tracing} select traced separatrices by a
+binary linear program, and Razafindrazaka et
+al.~\cite{razafindrazaka2015perfect} obtain a layout as a minimum-weight
+perfect matching. These methods build coarse layouts, and none starts from a
+given cross field and singularity configuration to make a dense mesh whose
+loops close.
+
+\paragraph{Measuring loops.}
+QuadGPT~\cite{liu2025quadgpt} counts \emph{quad rings} (closed loops of
+faces) and \emph{quad lines} (open strips) and uses them as reward signals
+for preference optimization, without telling spirals from open lines.
+SQuadGen~\cite{kong2026squadgen} scores the loops of a layout by their
+self-intersections and their rotation index, and reports the area share of
+simple loops; it does not tell helices from open loops either.
+
+\section{Turns of a T-mesh}\label{sec:turns}
+
+A T-mesh is a partition of the surface into rectangles, the \emph{patches},
+whose sides are made of \emph{arcs}; nodes where a trace stops on another are
+T-junctions, and the singular vertices of the field are nodes. Each patch
+$P$ has local coordinates with its first corner at the origin and its sides
+along the axes. A quantization assigns every arc $a$ a length $\ell_a \in
+\Z_{\ge 0}$ such that opposite sides of every patch have equal length, the
+\emph{balances} $B\ell = 0$; the quad mesh is then read off as the integer
+grid of each patch.
+
+\begin{definition}[Turn]
+A \emph{turn} $\gamma$ is a straight walk across patches, from an offset of
+its first side that meets no node: it enters a patch through a side, leaves
+through the opposite side at the same distance from the corresponding
+corner, enters the neighbouring patch across the arc it reaches, and so on,
+until it comes back into its first patch through its first side.
+\end{definition}
+
+\begin{figure}[t]
+\centering
+\input{figures/turn.tex}
+\caption{A turn and the helix it makes. (a)~A band of a T-mesh on a
+cylinder, cut open along the first side of $P_1$, which is drawn again,
+dashed, past $P_4$, where it is glued; every node is at a whole position and
+the faint grid is the quad mesh at these lengths. The turn $\gamma$ leaves
+the first side at offset $o$ and crosses $P_1$ to $P_4$; measured from the
+first corner of each patch, its offset grows by $\ell_b$, drops by $\ell_c$
+and grows by $\ell_d$, so it comes back at $o + \shift_\gamma(\ell)$ with
+$\shift_\gamma(\ell) = \ell_b - \ell_c + \ell_d = 1$. The corridor
+(shaded), the offsets whose walk crosses the same arcs, is $1 < o < 4$.
+(b)~The strip of quads at $o = 2.5$ on the cylinder: each round comes back
+one row beside itself, through $o = 1.5$, $2.5$ and $3.5$, then leaves the
+corridor: a helix of pitch $1$ (Proposition~\ref{prop:linear}).}
+\label{fig:turn}
+\end{figure}
+
+Crossing from patch $P$ to patch $Q$ across an arc composes a quarter-turn
+rotation of the local frame with a translation whose components are signed
+sums of arc lengths along the rims of $P$ and $Q$, the position of a rim
+point being the sum of the lengths of the arcs between it and the first
+corner.
+
+\begin{proposition}[The shift of a turn is linear]\label{prop:linear}
+For a turn $\gamma$ there are integer coefficients $c_a$, independent of the
+lengths, such that after a full turn a point of the first side has moved
+across the walking direction by
+\[
+  \shift_\gamma(\ell) = \sum_a c_a\, \ell_a .
+\]
+For whole lengths $\ell$, let $o$ be a half-integer offset of the first side
+whose walk at the lengths $\ell$ crosses the same patches as $\gamma$ (the
+set of such offsets is the \emph{corridor} of $\gamma$ at $\ell$). Then the
+dual line of the quad mesh at $o$ comes back at $o + \shift_\gamma(\ell)$:
+it closes after one round if and only if $\shift_\gamma(\ell) = 0$. If
+moreover $o + j\,\shift_\gamma(\ell)$ lies in the corridor for $j = 1, \dots,
+t - 1$, it winds $t$ times round as a helix of pitch $|\shift_\gamma(\ell)|$
+in the sense of~\cite{bommes2011structure}.
+\end{proposition}
+
+\begin{proof}[Sketch]
+Each crossing is a map $x \mapsto R^k x + t$ with $R$ the quarter-turn and
+$t$ a vector whose entries are sums of $\pm\ell_a$. The walk re-enters its
+first side inward, so the composition along $\gamma$ has trivial rotation and
+is a translation $T_\gamma(\ell)$, linear in $\ell$ with integer
+coefficients. Its component along the walking direction does not move a
+point of the first side off that side; its component across is
+$\shift_\gamma(\ell)$. Singularities are nodes, never inside a patch, so the
+quad mesh is a regular grid along the walk, and a dual line at distance $o$
+from the first corner, as long as it crosses the same patches as $\gamma$,
+comes back at distance $o + \shift_\gamma(\ell)$.
+\end{proof}
+
+The component of $T_\gamma(\ell)$ along the walking direction is the
+\emph{length} $\alpha_\gamma(\ell)$ of the turn, also an integer linear form,
+which at whole lengths is the number of quads of the strip in one turn. The
+shift is the across component of the translational holonomy of the flat
+metric along the turn, linear in the lengths as any period of a flat cone
+metric~\cite{thurston1998shapes,veech1993flat}; for a ring of quads it is the
+twist of a cylinder. What is specific here is its expression in the arc
+lengths of a T-mesh, as a constraint of the quantization. The companion
+paper~\cite{gardent2026turns} shows that it is set by the singularities: for
+a turn whose curve is simple, it equals up to sign the across component of
+the Burgers vector of the singular vertices on one side, so that two parallel turns bounding an annulus free
+of singular vertices have the same shift, and a helix is a property of a
+whole cylinder of turns, not of one of them. In openclare
+(\texttt{quantization/tubes.rs}) the shift is built once per turn as an
+expression in the arc lengths, by composing the rim expressions of the
+crossed patches; evaluated at the real lengths of the parametrization it
+gives the \emph{real shift}, the twist the field itself gives the cylinder.
+Figure~\ref{fig:turn} shows a turn, its corridor and the helix its shift
+makes.
+
+The closing constraint $\shift_\gamma(\ell) = 0$ thus speaks of a fixed
+sequence of crossed patches, and describes a strip of the mesh only together
+with the corridor. Explicitly, let $\gamma$ cross the arcs $a_1, \dots, a_m$
+in turn; the walk from offset $o$ crosses the side holding $a_j$ at the
+distance $\epsilon_j o + q_j(\ell)$ from its first corner, with $\epsilon_j =
+\pm 1$ and $q_j$ an integer linear form, and $a_j$ starts at the distance
+$e_j(\ell)$, a sum of arc lengths. At whole lengths and for a half-integer
+$o$, the corridor is cut out by the inequalities
+\begin{equation}\label{eq:corridor}
+  e_j(\ell) + \tfrac12 \;\le\; \epsilon_j\, o + q_j(\ell) \;\le\; e_j(\ell) +
+  \ell_{a_j} - \tfrac12, \qquad j = 1, \dots, m,
+\end{equation}
+two per crossing. The closing steps of Section~\ref{sec:closing} impose the
+shifts but not these inequalities; Section~\ref{sec:exact} measures what
+this costs. The strips themselves are all walks of this kind.
+
+\begin{definition}[Strip]
+For whole lengths $\ell$ balancing every patch, with every patch side
+positive and no two singular vertices at the same point, the quad mesh is, in
+each patch, the integer grid of its sides. A \emph{strip} is a maximal
+sequence of quads, each sharing with the next the edge opposite the one it
+shares with the previous.
+\end{definition}
+
+\begin{proposition}[Completeness at given lengths]\label{prop:complete}
+Let $\ell$ be as in the definition. Every strip of the quad mesh that
+crosses a side $\sigma$ of a patch $P$ at the quad edge $[k, k+1]$ of
+$\sigma$ is the walk taken \emph{with the lengths $\ell$} from $\sigma$ at
+offset $k + \tfrac12$. On a closed surface the strips are thus the cycles of
+the walk on the half-integer stations of all sides, each oriented strip one
+cycle, and a strip closes after one round exactly when the turn it follows
+has $\shift_\gamma(\ell) = 0$. With borders, the strips that reach a border
+are open paths of the walk.
+\end{proposition}
+
+\begin{proof}
+Inside $P$, the quads of the strip are the unit squares between the grid
+lines at $k$ and $k+1$ across $\sigma$; their dual line is the straight line
+at $k + \tfrac12$, which reaches the opposite side at the same distance from
+the corresponding corner, the move of the walk. The crossing map to the
+neighbouring patch is a quarter-turn followed by a translation with whole
+components: it maps the grid of $P$ onto the grid of the neighbour and the
+midpoint of a quad edge onto the midpoint of a quad edge. Every node lies at
+a whole distance along the sides, so a walk at a half-integer offset never
+meets a node and the arc it crosses is determined; an arc of length zero
+holds no half-integer and no walk crosses it. Strip and walk thus continue
+together, patch after patch; positive sides make every station lie on a quad
+edge of the mesh.
+\end{proof}
+
+A walk from a fixed share of the real side lengths samples the turns;
+Proposition~\ref{prop:complete} says where the turns of a given mesh are
+\emph{all} found: at the half-integers of its whole lengths. The constraint
+rounds of Section~\ref{sec:closing} use it.
+
+\section{Closing turns in quantization}\label{sec:closing}
+
+This section describes the engine at commit \texttt{\enginecommit}, in
+\nolinkurl{crates/openclare/src/quantization/}. The quantizer minimizes a
+separable convex cost of the whole lengths, in the minimum-deviation-flow
+formulation of~\cite{heistermann2023bimdf}, subject to the balances, by
+cancelling improving walks in a strip network (a simpler solver than their
+matching-based one). Only the structure is theirs: their objective is a sum
+of absolute deviations, ours is quadratic. The cost of arc $a$ is $w_a(\ell_a
+- \lambda r_a)^2$ with $w_a = 1/(\lambda r_a + 1)$, plus a term that draws a
+vertex onto each fold of the surface the arc crosses and a penalty for going
+below a lower bound. The real lengths $r_a$ carry a fixed per-arc
+perturbation of at most $0.5\%$, so that arcs of equal length do not all
+change at the same scale; the scale $\lambda$ is searched for the number of
+quads asked for, and arcs whose zero length would break the structure of the
+mesh, by bringing two singular vertices together, are held at length at
+least one, the \emph{bounds of separation}. Closing turns is a side constraint that is not a
+flow constraint; Figure~\ref{fig:closing} shows its effect on one turn.
+
+\begin{figure}[t]
+\centering
+\input{figures/closing.tex}
+\caption{The turn of Figure~\ref{fig:turn} before and after closing, on the
+same T-mesh. (a)~With $\ell_d = 2$, $\shift_\gamma(\ell) = 1$: the strips of
+the corridor form one helix. (b)~The column of $P_4$ sits one unit higher:
+$\ell_d$ and the arc above $P_4$ on the same side are one shorter, no node
+passes another, and only lengths have changed. Now $\shift_\gamma(\ell) = 1 -
+2 + 1 = 0$, and the corridor holds three closed rings, at $o = 1.5$, $2.5$
+and $3.5$.}
+\label{fig:closing}
+\end{figure}
+
+\paragraph{Finding turns.}
+From points at given shares along each side of each patch, we walk straight
+across patches and keep the walks that return. Not every shifted turn should
+close: a turn round a part of the shape whose real shift is far from zero is
+not a rounding artefact, the field winds round the part, and a turn round a
+group of singularities may legitimately come back shifted. A turn is
+therefore \emph{held} if its real shift is above $0.05$, its \emph{lean}, the
+real shift as a share of its length, below a bound, and its length below a
+multiple of the side of the T-mesh (the side of a square of its area). Two
+turns with the same shift expression up to sign are one ring and held once.
+Eight \emph{ways} are tried: starting shares $\{0.5\}$ or $\{0.2, 0.5,
+0.8\}$, lean bounds $0.05$ or $0.12$, length bounds $2$ or $6$ sides; a way
+that holds the same turns as another is skipped.
+
+\paragraph{Least-change projection.}
+The real lengths $r_a$, at scale one, are changed as little as possible, in
+the weighted least-squares sense, for every held turn $\gamma \in H$ to have
+zero shift and every patch to stay balanced:
+\[
+  \min_{x}\ \sum_a v_a\,(x_a - r_a)^2
+  \quad\text{s.t.}\quad B x = 0,\quad \shift_\gamma(x) = 0\ \ \forall\gamma\in H,
+  \qquad v_a = \frac{1}{r_a + 1},
+\]
+solved with a sparse Cholesky factorization of the balances, computed once
+per quantization, and a small dense Schur complement for the turns. Arcs the
+solution would make negative are held at zero and the system solved again
+(an active set). If the system cannot be met, the held turn left with the
+largest shift is let go and the projection repeated. The projected lengths
+$x$ then take the place of $r$ in the cost above, and $\lambda$ is searched
+on them.
+
+\paragraph{Integer search and repair.}
+The integer search of the quantizer runs on the projected targets. Rounding
+leaves some turns shifted by one or a few rows. Repair walks are then taken
+one at a time: a walk is guided by a bias along the arcs of the shifted
+turns, and accepted if it reduces the total shift, costs little in
+deviation, keeps the structure intact and the number of quads within
+tolerance. A second, \emph{aimed} repair treats each held turn still shifted
+on its own: the bias is put on its arcs alone, and a walk is accepted if it
+shifts that turn less and the others no more. Two results of the companion
+paper~\cite{gardent2026turns} prune these walks. On a closed sphere the shift
+of every turn has, at all whole balanced lengths, the parity of its length,
+$\alpha_\gamma(\ell) \equiv \shift_\gamma(\ell) \pmod 2$, so a walk that
+keeps the length of a turn of odd shift cannot close it; on the pieces that
+are closed spheres such walks are turned down without being judged. And a
+turn whose shift equals, modulo the balances, a non-negative combination of
+arc lengths is never negative and vanishes only when those arcs do; such a
+turn already at its least is not aimed at. The debug builds of the engine
+check the integer coefficients of the shifts and the parity.
+
+\paragraph{Rounds of constraint generation.}
+After a way whose lengths are admissible (within the budget and the
+deviation cap below), up to three rounds of lazy constraint generation
+follow; the constraints added are equalities on the shifts, not
+integrality cuts. Every strip of the whole lengths is walked
+(Proposition~\ref{prop:complete}; up to $6$ times the side of the mesh);
+those that come back shifted although their real lengths bring them back
+within $0.12$ of their length are held as well, and the projection and the
+integer search are run again from the lengths of the round before. In these
+rounds the projection does not use the active set and the repair is not
+aimed. Each round gives one more candidate.
+
+\paragraph{Selection and safeguards.}
+For every candidate, the quad mesh connectivity is built and its share of
+edges on spiral loops measured (Section~\ref{sec:measure}). A candidate is
+kept if it spirals less than the plain search (without closing), its number
+of quads is within the tolerance (or no further from the budget than that of
+the plain search), its mean absolute deviation from the real lengths is at
+most $\max(1.5\,d_0,\ d_0 + 0.2)$ with $d_0$ that of the plain search, and it
+leaves the vertices no further from the folds of the surface than the plain
+search did, by more than chance would. The three with the fewest spirals are
+kept, in that order, then the plain lengths. The ways are independent and
+run in parallel. After meshing, if the first candidate makes a face fold over
+the surface, the others are meshed in turn until one does not, and the mesh
+with the fewest folds, then the fewest spirals, is kept.
+
+\section{Measuring loops}\label{sec:measure}
+
+An edge loop is followed straight through every regular vertex (valence
+four, interior), each edge belonging to one loop. A loop is \emph{closed} if
+it comes back to its start; \emph{border} if it runs from border to border;
+\emph{open} if it stops at an irregular vertex or a non-quad face; and
+\emph{spiral}, whatever its ends, if a strip of quads leaving it across meets
+it again, the same way round, within $k_{\max} = 4$ quads. The last test
+catches helices of pitch up to four, including bundles of interleaved
+helices~\cite{bommes2011structure}, while a ring is met again only round a
+whole torus or over a cap the other way round. We report the share of edges
+on each kind of loop, edges of borders left out. The same count chooses
+among the candidates of Section~\ref{sec:closing} and colours the spiral
+loops in the figures.
+
+\section{Experiments}\label{sec:experiments}
+
+All numbers come from the openclare bench, measured on the output meshes
+against their sources; Appendix~\ref{app:provenance} gives the engine
+version and the source of every figure. The engine is deterministic: one run
+per model and budget. Models: twelve organic and mechanical models for
+development, and a corpus of $33$ models for the full bench, among them two
+human bodies from Blender's Essentials library (CC0) whose base meshes,
+modelled by hand, serve as references. Times were measured on one machine,
+an Intel Core i7-7700K (4 cores, 8 threads, 4.2\,GHz, 2017) with 62\,GB of
+memory, shared with other jobs whose load was not recorded: they are
+wall-clock times and give orders of magnitude only. Linear and mixed-integer
+programs were solved with HiGHS 1.8.0~\cite{huangfu2018highs} through SciPy
+1.16.3~\cite{virtanen2020scipy} (\texttt{linprog} and \texttt{milp}), with
+default options except the time limits stated.
+
+\paragraph{Spirals on the twelve development models.}
+The share of edges on spiral loops is chaotic on a single model: a change of
+one per cent of the budget moves it as much as a real change of the method.
+We therefore judge the engine by its mean over the twelve models at three
+budgets, $2{,}970$, $3{,}000$ and $3{,}030$ quads ($36$ runs). At the cited
+commit the engine leaves $4.65\%$ of the edges on spiral loops ($2.89\%$,
+$4.97\%$ and $6.09\%$ at the three budgets; $102$ spiral loops in the $36$
+meshes, all valid), with $36.7\%$ of the edges on closed loops, a mean
+distance to the source of $0.377$\textperthousand\ of the diagonal and a mean
+corner deviation of $4.90$ degrees. Table~\ref{tab:dev} shows the
+contribution of the parts of the method, measured with the engine versions
+that introduced them, in single runs at $3{,}000$ quads: from $16.7\%$ of
+spiral edges without closing to $6.0\%$. Over these versions the Hausdorff
+distance stays within about $2\%$ and the mean corner deviation within about
+$6\%$; the longer turns and the deviation cap trade a little of both for a
+third fewer spiral edges.
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+& spiral edges & Hausdorff (\textperthousand) & corner deviation (deg) \\
+\midrule
+no closing & 16.7\% & 8.77 & 4.75 \\
+closing, one way kept by spirals & 9.7\% & 8.57 & 4.85 \\
++ leaning ways, aimed repair & 9.1\% & 8.58 & 4.91 \\
++ longer turns, deviation cap & 6.0\% & 8.68 & 5.01 \\
+\bottomrule
+\end{tabular}
+\caption{Parts of the method: mean over the twelve models at $3{,}000$
+quads, one run per model, engines of commits \texttt{7dc1727},
+\texttt{c86740f} and \texttt{cf4a82c}. Each line adds to the one above only
+roughly: between the second and third lines the baseline moved (commit
+\texttt{ab8d89c}, $10.1\%$ to $9.5\%$). The constraint rounds, the active set
+and the floor of the cap are not in the table; the engine at the cited
+commit gives $4.65\%$ over three budgets.}
+\label{tab:dev}
+\end{table}
+
+\paragraph{Against other remeshers.}
+The last full bench committed (commit \texttt{83f0967}, $3{,}000$ quads; one
+run per model for openclare and AutoRemesher~\cite{autoremesher}, the median
+of five seeds for QuadriFlow~\cite{huang2018quadriflow}, run through Blender)
+used an engine a few changes away from the cited one, which give $4.54\%$
+instead of $4.65\%$ on the twelve models at three budgets. The tools do not
+mesh the same models: QuadriFlow produces a mesh for $22$ of the $33$ models,
+AutoRemesher for $18$. On the $7$ models that all three mesh validly in every
+run, the mean share of spiral edges is $1.8\%$ for openclare, $38.8\%$ for
+QuadriFlow and $21.7\%$ for AutoRemesher; on the $15$ models where all three
+produce a mesh, valid or not, $4.2\%$, $27.2\%$ and $27.3\%$. Without closing
+(commit \texttt{4e9620c}) openclare had $16.6\%$ and $15.5\%$ on the same
+subsets.
+
+\paragraph{Against the hand-made mesh.}
+The male body of the Essentials library has a base mesh of $10{,}590$ quads
+modelled by hand, with $2.5\%$ of spiral edges in $3$ spiral loops and
+$31.6\%$ of its edges on closed loops. Remeshed by openclare at that count
+with the closing of Section~\ref{sec:closing}, single runs of the engines of
+commits \texttt{b0d37fa} to \texttt{8fd1932} give $1.6\%$ of spiral edges,
+in $9$ spiral loops: below the hand-made mesh, but by a few loops only. One
+such run has
+$33.2\%$ of its edges on closed loops, a mean distance to the source of
+$0.19$\textperthousand\ of the diagonal and a mean corner deviation of $4.1$
+degrees, against $0.17$\textperthousand\ and $9.2$ degrees for the hand-made
+mesh; these fidelity figures compare meshes made for different ends, the
+hand-made one being a base mesh whose distance and angles are choices of its
+modeller. The lean bound matters on this body: with the lean bound $0.05$
+alone (commit \texttt{ab8d89c}), one leg was a single helix from hip to
+ankle, its turns leaning more than that bound allows, and the mesh had
+$12.1\%$ of spiral edges.
+
+Figure~\ref{fig:overview} shows the body meshed by openclare with and
+without closing, next to the hand-made mesh and QuadriFlow's, with a later
+engine than the runs above (commit \texttt{89232b0}; its numbers are in the
+caption). Without closing, helices wind round the torso, both legs and the
+neck. With closing, the loops round the limbs and the torso are rings, as on
+the hand-made mesh, and the spiral loops left are short ones at the mouth, the
+forehead and the fingers. QuadriFlow winds helices round the torso, the
+shoulders, the legs and one arm. Closing is not better everywhere
+(Figure~\ref{fig:closeups}): at the left wrist it leaves spiral loops on the
+thumb and the back of the hand where the mesh without closing has closed
+ones, and near the right eye both openclare meshes keep short spiral loops,
+while closing turns a loop across the forehead into a ring.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/male-overview.png}
+\caption{The male body of the Essentials library, $10{,}590$ quads asked
+for: (a)~openclare without closing, (b)~openclare with the closing of
+Section~\ref{sec:closing}, (c)~the base mesh modelled by hand,
+(d)~QuadriFlow run through Blender. Edge loops are coloured by their kind in
+the measure of Section~\ref{sec:measure}: closed loops dark blue, spiral
+loops vermillion (wider, with a dark rim), loops that stop at an irregular
+vertex grey. Meshes (a) and (b) come from the engine at commit
+\texttt{89232b0}, one deterministic run each, not from the runs quoted in the
+text (Appendix~\ref{app:provenance}). Measured on the whole meshes, they
+have $10{,}485$, $10{,}748$, $10{,}570$ (plus $20$ triangles) and $8{,}844$
+quads, $26.8\%$ ($18$ loops), $1.95\%$ ($15$), $2.55\%$ ($3$) and
+$35.7\%$ ($43$) of their edges on spiral loops, which the panels round to one
+decimal, and $10.2\%$, $32.6\%$, $31.6\%$ and $2.7\%$ on closed loops.
+QuadriFlow's mesh has $3$ inverted faces and a Hausdorff distance of
+$31$\textperthousand\ of the diagonal.}
+\label{fig:overview}
+\end{figure*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/male-wrist.png}\\[0.6em]
+\includegraphics[width=\textwidth]{figures/male-eye.png}
+\caption{Close-ups of the four meshes of Figure~\ref{fig:overview}, in the
+same order and colours: the left wrist and hand (top; the body's left, on
+the viewer's right in Figure~\ref{fig:overview}) and the right eye
+(bottom). At the wrist closing does not help locally: mesh~(b) has spiral
+loops on the thumb and the back of the hand where mesh~(a) has closed ones,
+although over the whole body closing removes most spiral edges. At the eye,
+closing turns a loop across the forehead into a ring, and short spiral loops
+remain near the eye on both openclare meshes; the loop round the eye of the
+hand-made mesh is itself counted as spiral. In the T-mesh exported in
+Section~\ref{sec:exact}, from an earlier engine, the left wrist holds the
+turn that in four of the eight ways no lengths within the bounds of
+separation can close even on its own.}
+\label{fig:closeups}
+\end{figure*}
+
+\section{An exact look at the closing system}\label{sec:exact}
+
+How far is the heuristic of Section~\ref{sec:closing} from what the
+constraints allow? An experimental hook of openclare (branch
+\texttt{rd-exact}, on an engine without the constraint rounds and the floor
+of the deviation cap, that is before commit \texttt{3b3122d}) exports, for
+each way of finding turns, the system it works on, for the male body at
+$10{,}590$ quads. Its T-mesh has $1{,}295$ nodes ($1{,}034$ T-junctions and
+$261$ singular vertices: $133$ of valence three, $127$ of valence five and
+one of valence two), $2{,}069$ arcs and $776$ patches, hence $1{,}552$
+balance equations, one per patch and direction. The export gives the real
+lengths, every turn found with its shift (on all $1{,}299$ turns, composing
+the crossing maps along the walk gives the exported shift), and the lower
+bounds the integer search placed on arcs to keep singularities apart ($28$ to
+$36$ arcs held at length one). These bounds are the engine's choice of
+\emph{which} arc of a chain between two singular vertices carries their
+separation: validity asks a chain to keep a positive total length, not a
+given arc. Every statement below is relative to them. We call
+$P_{\mathrm{eng}}$ the balanced lengths that meet them; it is neither a
+subset nor a superset of the valid quantizations, since it excludes valid
+lengths that put the separation on another arc of the chain and allows
+lengths that bring other arcs to zero. The ways are numbered as exported:
+way $m + 2j + 4i$ starts from the shares $\{0.5\}$ ($m = 0$) or $\{0.2, 0.5,
+0.8\}$ ($m = 1$), with the lean bound $0.05$ ($j = 0$) or $0.12$ ($j = 1$)
+and the length bound $2$ ($i = 0$) or $6$ ($i = 1$) sides. Way~2 is the one
+the engine keeps for this body.
+
+\paragraph{The conflict is real but local.}
+All held turns can be closed together if the lengths are only asked to be
+non-negative; with the bounds of separation, they cannot. By Farkas' lemma a
+set of turns cannot be closed within the bounds exactly when some
+combination of their shifts equals, modulo the balances, a non-negative
+combination of arc lengths that charges an arc held open, and the companion
+paper~\cite{gardent2026turns} reads these certificates on the singularities.
+In four ways (0, 1, 2 and 4) one held turn cannot even be closed on its own:
+the same turn round the left wrist, of length $7.0$, whose shift equals,
+modulo the balances, $-(\ell_{1921} + \ell_{1937})$, where arc $1937$,
+$0.08$ quad edges long in the parametrization, is held at length at least
+one (the certificate checked in exact rational arithmetic for way~0).
+Whether $\ell_{1937} = 0$ would merge two singular vertices, that is whether
+every valid quantization meets this bound, we did not check. Giving up the
+least total amount of the bounds needed to close all held turns, a linear
+program, shows that in ways 0, 2 and 4 the bound of that single arc stands in
+the way. The other conflicts gather in clusters of singularities at the
+eyes, the hands and the feet.
+
+\paragraph{How far the projection is.}
+With every bound kept, the largest set of held turns that can be closed
+together is found by a mixed-integer program with one binary per turn
+(Table~\ref{tab:exact}). The projection of the engine of the export keeps
+far fewer: it removed, one at a time, the turn left most shifted by a
+least-squares projection whose negative lengths were clamped to zero, and a
+single clamped arc could make it drop dozens of turns that conflict with
+nothing. The engine at the cited commit holds such arcs at zero instead (the
+active set of Section~\ref{sec:closing}). In whole numbers, the same
+mixed-integer program did not finish within fifteen minutes on the two
+systems tried.
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+way & held & kept by the projection & closable together \\
+\midrule
+0 & 48 & 42 & 47 \\
+1 & 78 & 46 & 73 \\
+2 & 52 & 46 & 51 \\
+3 & 86 & 47 & 82 \\
+4 & 84 & 49 & 83 \\
+5 & 160 & 48 & 154 \\
+6 & 88 & 53 & 87 \\
+7 & 169 & 49 & 160 \\
+\bottomrule
+\end{tabular}
+\caption{Male body at $10{,}590$ quads, real numbers, engine of the export.
+``Kept by the projection'': by the clamped projection of that engine;
+``closable together'': the largest set of held turns closable with every
+bound of separation kept.}
+\label{tab:exact}
+\end{table}
+
+\paragraph{The rounding ignores the shifts.}
+Feeding the integer search of the engine better targets shows what survives
+it (Table~\ref{tab:rounding}). Aiming at the lengths of the linear program
+closes fewer loops in the end: its weighted $L^1$ objective puts the changes
+on few arcs, the deviation from the real lengths grows, and the variants with
+the fewest spirals are refused by the deviation cap. The active-set
+projection keeps every held turn closed in real numbers, yet after the
+integer search $117$ of $169$ are shifted again and the mesh spirals more;
+with the clamped projection, too, about $40\%$ of the turns it kept are
+shifted after the integer search. The integer search follows the targets
+but not the shifts.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lrrr}
+\toprule
+targets of the integer search & turns closed in reals & still shifted after & spiral edges (mesh) \\
+\midrule
+projection, clamped & about 50 & 10--23 of them & 1.1\% \\
+linear program, $L^1$ & up to 160 & --- & 11.9\% \\
+active set, floor 0 & all held (up to 169) & 117 of 169 & 3.3\% \\
+active set, floor half the real length & 36--72 & --- & 9.8\% \\
+\bottomrule
+\end{tabular}
+\caption{Male body at $10{,}590$ quads, engine of the export, one run each;
+the mesh keeps the way with the fewest spirals, so its share is that of a
+single way. The engine at the cited commit uses the active set with floor $0$
+together with the constraint rounds and the floor of the deviation cap,
+which this table does not include.}
+\label{tab:rounding}
+\end{table}
+
+\paragraph{Whole lengths are not what is missing.}
+The balances are the incidence matrix of a bidirected graph whose nodes are
+the balance equations and whose edges are the arcs (each arc lies on a side
+of each of the two patches it borders). When this graph is connected and has
+a cycle that $\pm1$ values cannot balance, as on the body, the companion
+paper shows that a set of free arcs parametrizes the lattice of whole
+balanced lengths: here $2{,}069 - 1{,}552 = 517$ arcs can be given any whole
+lengths and the others follow, so balances alone never obstruct whole
+lengths. Closing exactly, in whole numbers, the turns found closable
+together is feasible: HiGHS solves it in about two minutes a way for three of
+the four ways tried (the fourth, with $87$ turns, did not finish within ten
+minutes). The solutions leave $1$ to $4$ held turns shifted where the engine
+leaves $13$ to $44$, and fewer of the turns not held as well ($5$ against
+$9$, $5$ against $11$, $0$ against $27$), at a deviation from the real
+lengths $4\%$ to $62\%$ higher. Yet the quad meshes they make spiral
+\emph{more}: $12.2\%$ of their edges against $8.8\%$ for the first way,
+$3.7\%$ against $1.1\%$ for the second, and the third breaks the structure.
+Most of the loops that spiral are not turns the sampled walks find.
+
+Walking every strip of the mesh of way~2 instead
+(Proposition~\ref{prop:complete}) finds $230$ ways round, each strip twice,
+once in each direction; $168$ come back shifted. Selecting them by lean, as
+the constraint rounds do, keeps $222$, of which $218$ ($109$ strips) can be
+closed together in real numbers with every bound kept. Posed directly to
+HiGHS, they gave no whole solution in ten or thirty minutes; given the $171$
+arcs that every real solution sets to zero (each certified by a non-negative
+combination of shifts, $23$ distinct certificates round fingers, toes, feet,
+head, torso and neck), it finds one in a second. The obstruction is the
+size: no real lengths closing the $218$ rings have a mean deviation from the
+targets below $0.817$, where the engine of the export refused $0.474$ ($1.5$
+times the $0.316$ of its plain search; the engine at the cited commit allows
+$0.516$). A subset of $190$, chosen greedily, closes at $0.399$ in real
+numbers, keeping the number of quads to first order. In whole numbers, with
+the reformulation of Aardal, Hurkens and Lenstra~\cite{aardal2000diophantine}
+on an LLL-reduced basis~\cite{lenstra1982lll} of the lattice of closed
+quantizations, HiGHS, stopped after $1{,}200$ seconds, finds whole lengths
+closing all $190$ within every bound at a mean deviation of $0.619$ and
+$10{,}568$ quads, and proves that none does better than $0.536$. Given to the
+engine in place of its lengths, they close the $190$ rings but make $2.5\%$
+of spiral edges against $1.1\%$: at the new lengths the strips are other
+walks, $156$ of the $230$ ways round shifted. Rounding costs between $0.137$
+(proven) and $0.220$ (found) of mean deviation above the real optimum; it is
+the choice of the turns to close, at the lengths where they are the strips of
+the mesh, that decides how much the mesh spirals.
+
+\paragraph{The heuristic leaves most of the gap.}
+The companion paper~\cite{gardent2026turns} computes the least number of
+held turns that any lengths in $P_{\mathrm{eng}}$ leave shifted, a minimum
+cover of the irreducible infeasible subsystems~\cite{parker1996iis}: exactly
+$1$, $5$, $1$, $4$, $1$, $6$, $1$ and $9$ in ways 0 to 7, against $13$, $39$,
+$16$, $44$, $49$, $115$, $44$ and $123$ left shifted by the engine. With the
+engine's cap on the deviation and its window of sizes ($10{,}379$ to
+$10{,}801$ quads) added, at whole lengths, the least number is still exactly
+one in ways 0 and 2: whole lengths closing every held turn but the wrist
+exist at $10{,}439$ and $10{,}436$ quads, at mean deviations $0.442$ and
+$0.469$. Of the $16$ turns
+of way~2 the engine leaves shifted, the bounds of separation force one and
+the cap, the size and integrality none; the heuristic accounts for
+$15$. Closing more turns, however, is not what the
+measure of spirals sees: a local search over whole lengths within the same
+cap and size closes $38$ more strips of the engine's mesh than the engine
+does, but at its lengths, which also break the mesh, the strips are again
+other walks, and the share of spiral strips is $0.020$ against $0.011$ for
+the engine. Choosing the most turns to close
+is NP-hard in general, already for the bidirected balances and $0$--$1$
+bounds of quantization~\cite{gardent2026turns}.
+
+\paragraph{Closing the most rings, end to end.}
+We measured what an exact selection buys on the bench, with the engine of
+branch \texttt{complete-helices} (the constraint rounds without the finer
+work mesh at thin walls of the cited commit: $4.54\%$ of spiral edges over
+the $36$ runs). For the lengths the engine keeps, a mixed-integer program
+closes as many of its strips leaning less than $0.12$ as it can, weighted by
+their length round, within the balances, the bounds of separation, the cap
+and the quad budget; the engine meshes the result, the strips are walked
+again at the new lengths, and the program solved again, three rounds. With
+the shift expressions alone the program closes $27.3$ of the $38.2$ such
+strips of a model (mean over the $36$ runs), but at the new lengths only
+$22.1$ are closed strips, against $21.8$ for the engine. Required for every
+strip counted as closed, the corridor inequalities~\eqref{eq:corridor} make
+the count exact ($24.6$ closed by the program, $24.0$ found closed by walking
+the mesh). In place of the engine's lengths, the lengths found do not
+spiral less: $4.77\%$ and $5.08\%$ of spiral edges in two runs against
+$4.54\%$. Added to the candidates the engine chooses among by its own count
+of spirals, they lower the mean to $2.32\%$ and $2.70\%$, never higher;
+three other draws of the engine's per-arc perturbation, added the same way,
+give $4.12\%$, three lengths drawn at random within the same cap and budget
+$4.34\%$, and the rounds without the corridor inequalities $3.15\%$, better
+than the other draws on $7$ runs and worse on $7$. Closed
+loops ($38.0\%$ against $36.3\%$ of the edges) and mean distance ($0.383$
+against $0.385$) barely move, and all $36$ meshes are valid. On the male
+body every round spiralled more than the engine ($3.45\%$ to $5.59\%$ against
+$1.59\%$). The gain needs a solver that finishes: with a limit of $5$
+seconds per solve it vanishes ($4.10\%$ against $4.12\%$ for the other
+draws), as $63$ of the $126$ pieces get no solution in time and $68$ of $108$
+rounds return the engine's own lengths. A local search inside the engine,
+walks of its strip network biased by Lagrange multipliers with the corridor
+inequalities kept, costs $0.1$ to $0.25$ seconds per model but closes no more
+rings than the engine: a single walk almost always shifts a ring already
+closed, and closing needs combinations of walks.
+
+\paragraph{Acting before quantization.}
+Since the shift of a ring bounding a disc is, up to sign, the across
+component of the Burgers vector of the singular vertices inside
+it~\cite{gardent2026turns}, moving the
+singular vertices in the parametrization is a natural lever. On seven closed
+models of genus zero (blob, rock, creature, spot, pig, ogre, blub), the
+Burgers sum reproduces the shift of $3{,}600$ of the $3{,}604$ rings of the
+seamless map that bound a disc and lean by at most $0.12$, to $10^{-5}(1+L)$
+for a ring of length $L$. Yet moving a singular vertex barely moves the
+shift: the other cone points move in the map and absorb the change, and over
+twelve moves per model the measured change is $0.12$, $0.03$ and $0.01$ of
+the predicted one on the blob, the creature and the pig. Rotating the field
+rigidly on the smaller side of a ring does move it ($26\%$ to $87\%$ of the
+rotation times the length, as the rotated region grows by $0$ to $40$ rings
+of vertices), at almost no cost in distortion; but rotating the field
+cylinder by cylinder to bring the shifts to zero moved the twist onto rings
+of $90$ to $200$ edges, and over $36$ runs $2$ improved and $4$ regressed,
+which we read as chaos rather than progress. We read this, as a conjecture, as saying that with a map of fixed scale the
+lever is the orientation of the field along whole cylinders, and that the
+conflicts are better attacked in quantization.
+
+\section{Limitations and open problems}\label{sec:limits}
+
+The results come from one implementation and are preliminary. The spiral
+share of a single model is chaotic, so only the means over three budgets are
+robust; the other figures are single runs. The measure sees helices of pitch
+up to four only. The comparison with other remeshers and the experiments of
+Section~\ref{sec:exact} used earlier engines (Appendix~\ref{app:provenance}),
+and the male body was not remeshed with the cited commit. The exact look
+covers one body, with an engine without the constraint rounds, and holds
+relative to the engine's bounds of separation, which are its choice of arcs
+and neither a subset nor a superset of the valid quantizations; the cap
+imposed there is the engine's only approximately (a quantization at
+$0.4737$ was refused by it). Times were taken on a shared machine and the
+outcomes that depend on a time limit depend on its load. The scripts and logs
+of the exact experiments are not yet published
+(Appendix~\ref{app:provenance}).
+
+Three problems remain open. \emph{An exact formulation}: minimizing the
+deviation subject to the balances, the bounds and $\shift_\gamma(\ell) = 0$
+for a set of turns is a minimum-deviation flow with linear side constraints;
+how much of the exact machinery of~\cite{heistermann2023bimdf} carries over is
+open, and the linear relaxation already closes almost all held turns.
+\emph{Closing in whole numbers}: whole lengths closing every ring asked for
+are found through a reduced lattice basis, but in minutes, with the number
+of quads held only to first order and $0.14$ to $0.22$ above the real optimum
+in deviation; can the integer search move within this lattice at the speed of
+a flow solver? \emph{Which turns}, the central one on the evidence of
+Section~\ref{sec:exact}: closing rings changes the lengths, the lengths
+change the strips, and the strips of the new mesh are other walks. Is there a
+finite set of turns whose closing implies that every loop of the quad mesh
+closes? Can the loops of the quad mesh be read off the T-mesh and its lengths
+directly, so that every one is accounted for? Which objective, short of all
+loops, predicts the spirals the measure sees?
+
+\section*{AI assistance}
+This note and the software it describes were made by a human author working
+with an AI system, which is not an author. The author chose the problem and
+its aims (edge loops that close into rings and, as an artist, few singular
+vertices and few spirals rather than perfectly square quads, quads only), set
+the direction and the order of the work, decided which results to pursue and
+which changes to merge, and judged the results through the measurements,
+pictures and drafts presented to him. Claude Opus 5.5 (Anthropic), used
+through Claude Code in October 2026 with several sub-agents in parallel,
+wrote the changes to the engine and the experiment scripts, ran all the
+experiments and exact computations, searched the literature, stated and
+proved the propositions, and drafted the text. References were checked for
+existence, and the note of each bibliography entry says how much of the work
+was read. Weaker forms of Propositions~\ref{prop:linear}
+and~\ref{prop:complete} are checked in Lean~4~\cite{demoura2021lean4} in the
+companion paper; everything else here not checked by machine was written
+with AI help and checked by AI agents rereading it and testing it on the
+data, not by a human expert. The note has not been peer reviewed; the author,
+who publishes it, is responsible for its content.
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\appendix
+
+\section{Provenance of the figures}\label{app:provenance}
+
+The engine changed while the experiments were made. The table says, for each
+group of figures, which version produced it and where its raw output is.
+``Commit message'': the figures are stated in the message of that commit of
+the repository; ``working logs'': the output files and scripts of the
+experiment, kept by the author outside the repository and not yet
+published.
+
+\begin{center}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{5.6cm}@{}}
+\toprule
+figures & engine & source \\
+\midrule
+twelve models, three budgets, $4.65\%$ (Section~\ref{sec:experiments})
+  & the cited commit & working logs of the protocol below; a second run of
+  the same engine gave the same figures for the $36$ meshes \\
+Table~\ref{tab:dev}
+  & commits \texttt{7dc1727}, \texttt{c86740f}, \texttt{cf4a82c}
+  & commit messages (also \texttt{ab8d89c}) \\
+against other remeshers
+  & commits \texttt{83f0967}, \texttt{4e9620c}
+  & \texttt{bench/results/results.json} at those commits \\
+hand-made male body
+  & ---
+  & \texttt{bench/results/RESULTS.md} \\
+male body, openclare
+  & \texttt{ab8d89c}; \texttt{b0d37fa} to \texttt{8fd1932}
+  & commit messages; closed loops, distance and corners: working logs \\
+Figures~\ref{fig:overview} and~\ref{fig:closeups}, their numbers
+  & commit \texttt{89232b0}, one run per mesh; QuadriFlow through Blender, on
+  the source scaled by $100$ and scaled back
+  & \texttt{figures/README.md} (commands, numbers, source checksum) and
+  \texttt{figures/make\_figures.sh}, which remakes them \\
+Section~\ref{sec:exact}, up to ``The heuristic leaves most of the gap''
+  & branch \texttt{rd-exact} (export hook), engine before \texttt{3b3122d}
+  & working logs, scripts and the exported systems; some summary figures
+  also in commit messages (\texttt{6374097}, \texttt{38b9fb3}) \\
+closing the most rings, end to end
+  & branch \texttt{maxclose-rd}, engine of branch \texttt{complete-helices}
+  & working logs; some figures only in the experiment's summary \\
+acting before quantization
+  & a patch of the engine of commit \texttt{83f0967}
+  & working logs; the ratios over twelve moves, the $36$ runs and the
+  $3{,}600$ of $3{,}604$ rings only in the experiment's summary \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{The protocol of the twelve models.} For each model $m$ (creature,
+blob, suzanne, spot, pig, ogre, bob, jerry, blub, rock with the preset
+\texttt{organic}; cage and part with \texttt{hard-surface}) and each budget
+$Q \in \{2{,}970, 3{,}000, 3{,}030\}$: \texttt{openclare remesh}
+\texttt{bench/out/}$m$\texttt{/source.obj} \textit{out.obj}
+\texttt{--preset} $P$ \texttt{--quads} $Q$, then \texttt{openclare measure}
+on the source and the output with \texttt{--target} $Q$ \texttt{--json}; the
+figures are the means of \texttt{loop\_edges\_spiral},
+\texttt{loop\_edges\_closed}, \texttt{loops\_spiral},
+\texttt{mean\_distance} and \texttt{angle\_deviation\_mean} over the $36$
+runs.
+
+\paragraph{Reproducibility.} The method is implemented in openclare (Rust),
+in the main branch of the repository at the cited commit; the bench is
+driven by \texttt{bench/run.py}. The export of the T-mesh used in
+Section~\ref{sec:exact} is an experimental hook of the branch
+\texttt{rd-exact}, and the end-to-end selection is on the experimental
+branch \texttt{maxclose-rd}; neither is part of the engine, and neither is
+tagged yet. Until the scripts and logs of the exact experiments are
+published, the measured statements of Section~\ref{sec:exact} can be checked
+against these branches but not rerun as they stand. This version of the note
+was built from commit \texttt{\enginecommit}.
+
+\end{document}
