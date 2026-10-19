@@ -10,14 +10,15 @@ Where a remesher ran several times (one per seed), the median of each metric is 
 
 | Criterion | Full marks for | 100 at | 0 at | Weight |
 |---|---|---|---|---|
-| Validity | manifold, no flipped or collapsed face, no hole the source lacks; all quads, or nearly | every run valid | no run valid | 25 |
-| Alignment | edges along the principal curvature directions | 0° off | 22.5° off (edges at random) | 20 |
-| Quad shape | corners at right angles | 0° mean deviation | 20° | 15 |
+| Validity | manifold, no flipped or collapsed face, no hole the source lacks; all quads, or nearly | a sound mesh of quads only | a defect of structure, or one face in twenty not a quad | 25 |
+| Alignment | edges along the principal curvature directions | 8° off (9.4 to 9.8° by hand) | 22.5° off (edges at random) | 20 |
+| Quad shape | corners at right angles | 8° mean deviation from a right angle | 25° | 15 |
 | Fidelity | no point of the source far from the mesh, thin parts kept | Hausdorff distance 0; thin parts on the mesh | 5 % of the bounding diagonal; thin parts half a quad edge away | 15 |
-| Regularity | no irregular vertex beyond what the topology imposes | none | 10 per 100 quads | 10 |
-| Structure | few patches in the base complex: edge loops that run long | — | one patch per quad | 5 |
-| Budget | loops that close round the shape, none that spiral round it | exact | 25 % off | 10 |
-| Speed | the number of quads asked for | 1 s | 60 s (logarithmic) | 0 |
+| Regularity | no irregular vertex beyond what the topology imposes | 5 per 100 quads beyond the topological minimum | 15 per 100 quads | 10 |
+| Structure | few patches in the base complex: edge loops that run long | no patch | one patch per quad | 5 |
+| Edge loops | loops that close round the shape, none that spiral round it | 2 % of the edges on spirals or fewer; a quarter of the loops closed | a fifth on spirals; no loop closed | 15 |
+| Budget | the number of quads asked for | exact | 25 % off | 10 |
+| Speed | an answer within a second | 1 s | 60 s (logarithmic) | 0 |
 
 The *Quads* column is not a mark: it is how many quads the mesh has (the mean over the models, in
 the averages).

@@ -57,6 +57,24 @@ WEIGHTS = {
 }
 
 
+# Where each mark is 100 and where it is 0, as SCALES, speed_score and the
+# functions below make them: the table of SCORES.md is written from it.
+SPANS = {
+    "validity": ("a sound mesh of quads only", "a defect of structure, or one face in twenty not a quad"),
+    "alignment": ("8° off (9.4 to 9.8° by hand)", "22.5° off (edges at random)"),
+    "shape": ("8° mean deviation from a right angle", "25°"),
+    "fidelity": (
+        "Hausdorff distance 0; thin parts on the mesh",
+        "5 % of the bounding diagonal; thin parts half a quad edge away",
+    ),
+    "singularities": ("5 per 100 quads beyond the topological minimum", "15 per 100 quads"),
+    "structure": ("no patch", "one patch per quad"),
+    "loops": ("2 % of the edges on spirals or fewer; a quarter of the loops closed", "a fifth on spirals; no loop closed"),
+    "budget": ("exact", "25 % off"),
+    "speed": ("1 s", "60 s (logarithmic)"),
+}
+
+
 def linear(value, full, none):
     """100 at `full`, 0 at `none`, straight in between."""
     return max(0.0, min(100.0, 100.0 * (none - value) / (none - full)))
@@ -271,15 +289,9 @@ def write_report(targets, local=False):
         "",
         "| Criterion | Full marks for | 100 at | 0 at | Weight |",
         "|---|---|---|---|---|",
-        "| Validity | " + CRITERIA[0][2] + " | every run valid | no run valid | 25 |",
-        "| Alignment | " + CRITERIA[1][2] + " | 0° off | 22.5° off (edges at random) | 20 |",
-        "| Quad shape | " + CRITERIA[2][2] + " | 0° mean deviation | 20° | 15 |",
-        "| Fidelity | " + CRITERIA[3][2] + " | Hausdorff distance 0; thin parts on the mesh | 5 % of the bounding diagonal; "
-        "thin parts half a quad edge away | 15 |",
-        "| Regularity | " + CRITERIA[4][2] + " | none | 10 per 100 quads | 10 |",
-        "| Structure | " + CRITERIA[5][2] + " | — | one patch per quad | 5 |",
-        "| Budget | " + CRITERIA[6][2] + " | exact | 25 % off | 10 |",
-        "| Speed | " + CRITERIA[7][2] + " | 1 s | 60 s (logarithmic) | 0 |",
+    ] + [
+        f"| {title} | {said} | {SPANS[key][0]} | {SPANS[key][1]} | {WEIGHTS[key]} |" for key, title, said in CRITERIA
+    ] + [
         "",
         "The *Quads* column is not a mark: it is how many quads the mesh has (the mean over the models, in",
         "the averages).",
