@@ -150,6 +150,18 @@ réduit pas à lui seul les spirales, car les bandes du maillage bougent avec
 les longueurs. La section~\ref{sec:limits} expose les limites et les
 problèmes ouverts.
 
+Ce travail est né d'un projet de programmation, openclare, un remailleur en
+quads libre, et il est devenu une recherche quand l'ingénierie seule ne
+suffisait plus à dire quels résultats pouvaient être garantis et quels
+calculs pouvaient être épargnés. Chaque résultat utilisé ici répond à une
+telle question. Le décalage d'un tour est linéaire en les longueurs des
+arcs, si bien que fermer une boucle devient une contrainte linéaire du
+quantificateur plutôt qu'un test après coup\,; sa parité suit la longueur
+du tour, si bien que certaines réparations sont connues impossibles avant
+d'être tentées\,; et choisir le plus grand ensemble de tours à fermer est
+NP-difficile, ce qui justifie que le moteur s'en tienne à une heuristique,
+avec un solveur exact seulement sur demande.
+
 La théorie des conflits, qui lit le décalage comme l'holonomie de
 translation de la métrique plate et déduit des singularités des obstructions
 à la fermeture, un minorant du nombre de tours que toute quantification
