@@ -75,6 +75,17 @@ models themselves is not. That holds for `marine` too, a fan creation after a vi
 picture is published since 8 October 2026, by decision of the author of the project, with the
 credit above.
 
+## Fonts of the website
+
+The website serves its two typefaces itself, from `site/assets/fonts/`, so that no visitor's
+browser contacts a font service. They are the latin, latin-extended and greek subsets that
+Google Fonts distributes, unmodified, under the SIL Open Font License 1.1:
+
+- **JetBrains Mono**, © 2020 The JetBrains Mono Project Authors
+  ([licence](site/assets/fonts/OFL-JetBrainsMono.txt));
+- **Source Serif 4**, © 2014–2023 Adobe, Reserved Font Name "Source"
+  ([licence](site/assets/fonts/OFL-SourceSerif4.txt)).
+
 ## Adding a model
 
 1. Check its licence. If it does not allow redistribution, the model goes under
