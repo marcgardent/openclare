@@ -868,12 +868,13 @@ def curves_of(collection, target, sharp=False, but=()):
 
 def quads_of(
     source, preset, settings, density=None, on_stage=None, uv_layers=(), sharp_edges=False, creases=False, curves=(),
-    materials=False,
+    materials=False, copy=False,
 ):
     """A new mesh datablock: `source`, an evaluated mesh, remeshed into quads
     with the engine's `settings` on top of `preset`, and `density` if given
     (one weight per vertex of `source`). `on_stage`, if given, is told the
-    name of each stage as it begins.
+    name of each stage as it begins. The three steps, for a run that does
+    not wait: `engine_input`, `engine_run`, `mesh_of`.
 
     `uv_layers` names the layers of texture coordinates to put on the mesh
     ("grid", "atlas"); with the atlas come its seams, marked on the edges.
@@ -883,13 +884,30 @@ def quads_of(
     `curves_of` gives them, in the space of `source`. `materials` gives the
     mesh the materials of `source`, each face that of the surface it lies
     on, with the borders between them kept as lines of edges."""
+    given = engine_input(source, preset, settings, density, uv_layers, sharp_edges, creases, curves, materials, copy)
+    return mesh_of(engine_run(given, on_stage), given)
+
+
+class EngineInput:
+    """What a run of the engine is given, read from Blender beforehand: the
+    run itself touches nothing of Blender, and can go on in a thread of its
+    own when the arrays are copies."""
+
+
+def engine_input(
+    source, preset, settings, density=None, uv_layers=(), sharp_edges=False, creases=False, curves=(),
+    materials=False, copy=False,
+):
+    """The `EngineInput` of `quads_of`. With `copy`, the arrays of `source`
+    are copied out, so that the run does not depend on `source` living as
+    long as it does; otherwise they are read in place where they can be."""
     import numpy
 
     source.calc_loop_triangles()
     vertices, corners, triangles = len(source.vertices), len(source.loops), len(source.loop_triangles)
     if triangles == 0:
         raise engine.EngineError("the object has no faces")
-    if in_place(source):
+    if not copy and in_place(source):
         # Blender's own arrays, read where they are: nothing is copied here.
         addresses = (
             source.vertices[0].as_pointer(), source.loop_triangles[0].as_pointer(), source.loops[0].as_pointer()
@@ -913,12 +931,34 @@ def quads_of(
         groups = numpy.empty(triangles, numpy.int32)
         source.loop_triangles.foreach_get("material_index", groups)
         groups = groups.astype(numpy.uint32) if groups.min() != groups.max() else None
-    made = engine.remesh(
-        addresses[0], vertices, addresses[1], triangles, addresses[2], corners, preset, settings, density, on_stage,
-        uv_layers=uv_layers, seams="atlas" in uv_layers, hard_edges=sharp_edges, creases=creases, curves=curves,
-        groups=groups,
+    given = EngineInput()
+    given.counts = (vertices, triangles, corners)
+    given.addresses, given.kept, given.groups = addresses, kept, groups
+    given.preset, given.settings, given.density, given.curves = preset, settings, density, curves
+    given.uv_layers, given.sharp_edges, given.creases = uv_layers, sharp_edges, creases
+    # The materials the faces of the result take, kept as references.
+    given.materials = list(source.materials)
+    return given
+
+
+def engine_run(given, on_stage=None):
+    """Runs the engine on an `EngineInput`; `on_stage` as in `quads_of`.
+    Nothing of Blender is touched: with copied arrays, this can run in a
+    thread of its own."""
+    vertices, triangles, corners = given.counts
+    return engine.remesh(
+        given.addresses[0], vertices, given.addresses[1], triangles, given.addresses[2], corners, given.preset,
+        given.settings, given.density, on_stage, uv_layers=given.uv_layers, seams="atlas" in given.uv_layers,
+        hard_edges=given.sharp_edges, creases=given.creases, curves=given.curves, groups=given.groups,
     )
-    del kept
+
+
+def mesh_of(made, given):
+    """The mesh datablock of what a run made, with what `given` asked for,
+    and the report of the run."""
+    import numpy
+
+    uv_layers, sharp_edges, creases = given.uv_layers, given.sharp_edges, given.creases
     positions, sizes, corner_vertices, report = made.positions, made.sizes, made.corners, made.report
 
     mesh = bpy.data.meshes.new("openclare")
@@ -942,7 +982,7 @@ def quads_of(
         mesh.uv_layers[UV_NAMES["atlas"]].active_render = True
         report["seams"] = flag_edges(mesh, "use_seam", made.seams)
     if made.face_groups is not None:
-        for material in source.materials:
+        for material in given.materials:
             mesh.materials.append(material)
         mesh.polygons.foreach_set("material_index", made.face_groups.astype(numpy.int32))
         report["materials"] = len(numpy.unique(made.face_groups))
@@ -1034,7 +1074,11 @@ REPORT = "openclare_report"
 
 class Remeshing:
     """What the two buttons that remesh have in common: the run, and what
-    is said of it while it goes."""
+    is said of it while it goes.
+
+    Clicked in Blender, the engine runs in a thread of its own and Blender
+    stays free: the panel shows a bar, Esc stops the run. From a script or
+    in the background, the operator waits for the engine, as it always did."""
 
     def say(self, context, message, done=0):
         """Shows where the run is: in the status bar and in the Info log, and
@@ -1054,27 +1098,19 @@ class Remeshing:
             except RuntimeError:
                 pass
 
-    def run(self, context, original):
-        """Remeshes `original` with its settings into a new object next to
-        it, made the active one, and says how it went. Returns the new
-        object, or None if it could not be made."""
+    def begin(self, context, original, copy):
+        """Reads `original` and its settings into what the engine is given.
+        Returns it with a function to call once the engine is done with the
+        evaluated mesh (at once with `copy`), or None if it could not be
+        read, which is reported."""
         adopt_scene_settings(context.scene)
         settings = original.openclare
         adopt_preset(settings)
         stop_preview(context)
-        self.drawn, self.stages = 0.0, []
         last_report.clear()
-        context.window_manager.progress_begin(0, STAGES)
-        self.say(context, f"reading '{original.name}'")
         # With its modifiers applied: what is seen is what is remeshed.
         evaluated = original.evaluated_get(context.evaluated_depsgraph_get())
         source = evaluated.to_mesh()
-
-        def on_stage(stage):
-            self.stages.append(stage)
-            self.say(context, stage, min(len(self.stages), STAGES))
-            return False
-
         try:
             engine_settings = {"quads": settings.quads, **shape_of(settings)}
             if settings.target == "SIZE":
@@ -1093,21 +1129,57 @@ class Remeshing:
                 engine_settings["density_contrast"] = settings.density_factor
             layers = [name for name in ("grid", "atlas") if getattr(settings, f"export_{name}_uv")]
             # A curve put in both collections by hand is a sharp one.
-            sharp = curve_objects(settings.sharp_curves)
-            curves = curves_of(settings.sharp_curves, original, sharp=True)
-            curves += curves_of(settings.guide_curves, original, but=sharp)
-            mesh, report = quads_of(
-                source, BASE_PRESET, engine_settings, density, on_stage, layers,
-                settings.export_sharp_edges, settings.export_creases, curves, settings.export_materials,
+            self.sharp = curve_objects(settings.sharp_curves)
+            self.curves = curves_of(settings.sharp_curves, original, sharp=True)
+            self.curves += curves_of(settings.guide_curves, original, but=self.sharp)
+            given = engine_input(
+                source, BASE_PRESET, engine_settings, density, layers, settings.export_sharp_edges,
+                settings.export_creases, self.curves, settings.export_materials, copy,
             )
         except engine.EngineError as error:
+            evaluated.to_mesh_clear()
             self.report({"ERROR"}, f"openclare: {error}")
             return None
-        finally:
+        if copy:
             evaluated.to_mesh_clear()
+            return given, lambda: None
+        return given, evaluated.to_mesh_clear
+
+    def run(self, context, original):
+        """Remeshes `original` with its settings into a new object next to
+        it, made the active one, and says how it went, waiting for the
+        engine. Returns the new object, or None if it could not be made."""
+        self.drawn, self.stages = 0.0, []
+        context.window_manager.progress_begin(0, STAGES)
+        self.say(context, f"reading '{original.name}'")
+
+        def on_stage(stage):
+            self.stages.append(stage)
+            self.say(context, stage, min(len(self.stages), STAGES))
+            return False
+
+        try:
+            begun = self.begin(context, original, copy=False)
+            if begun is None:
+                return None
+            given, release = begun
+            try:
+                made = engine_run(given, on_stage)
+            except engine.EngineError as error:
+                self.report({"ERROR"}, f"openclare: {error}")
+                return None
+            finally:
+                release()
+        finally:
             context.window_manager.progress_end()
             context.workspace.status_text_set(None)
+        return self.finish(context, original, made, given)
 
+    def finish(self, context, original, made, given):
+        """Makes the object of what the engine `made` from `original`, next
+        to it and the active one, and says how it went. Returns it."""
+        mesh, report = mesh_of(made, given)
+        curves, sharp = self.curves, self.sharp
         mesh.name = f"{original.data.name}.quads"
         remeshed = bpy.data.objects.new(f"{original.name}.quads", mesh)
         remeshed.matrix_world = original.matrix_world
@@ -1157,7 +1229,184 @@ class Remeshing:
         return remeshed
 
 
-class OPENCLARE_OT_remesh(Remeshing, bpy.types.Operator):
+class Run:
+    """A run of the engine going on in a thread of its own. The thread only
+    calls the engine; what it says of its stages is queued, and read on
+    Blender's main thread, the only one that may touch Blender."""
+
+    def __init__(self, given):
+        import queue
+        import threading
+
+        self.given = given
+        self.told = queue.SimpleQueue()
+        self.stop = threading.Event()
+        self.made = self.error = None
+        # Read on the main thread, for the panel: where the run is.
+        self.stages, self.stage, self.done = [], "starting", 0.0
+        self.thread = threading.Thread(target=self.work, name="openclare", daemon=True)
+
+    def work(self):
+        try:
+            self.made = engine_run(self.given, self.on_stage)
+        except Exception as error:  # noqa: BLE001
+            self.error = error
+
+    def on_stage(self, stage):
+        self.told.put(stage)
+        return self.stop.is_set()
+
+    def news(self):
+        """The stages begun since last asked, in order; `stage` and `done`
+        are brought up to date."""
+        import queue
+
+        new = []
+        while True:
+            try:
+                new.append(self.told.get_nowait())
+            except queue.Empty:
+                break
+        if new:
+            self.stages += new
+            self.stage, self.done = new[-1], progress_of(self.stages)
+        return new
+
+
+def progress_of(stages):
+    """How far a run is, from 0 to 1: the stages begun out of `STAGES` for
+    each piece. The pieces are meshed at the same time, so the count, not
+    the piece last heard of, says how far it is."""
+    import re
+
+    if not stages:
+        return 0.0
+    piece = re.match(r"piece \d+ of (\d+): ", stages[-1])
+    count = int(piece[1]) if piece else 1
+    return min(len(stages) / (count * STAGES), 1.0)
+
+
+# The run going on in the background, if any: one at a time.
+RUNNING = None
+
+
+def redraw_panels():
+    """The Properties editors redrawn, for the bar of the panel to move."""
+    for window in bpy.context.window_manager.windows:
+        for area in window.screen.areas if window.screen else ():
+            if area.type == "PROPERTIES":
+                area.tag_redraw()
+
+
+class Background:
+    """The operators that remesh, run without waiting for the engine when
+    clicked: `target` is the object to remesh, `done` what follows once its
+    result is made."""
+
+    def invoke(self, context, event):
+        global RUNNING
+        if bpy.app.background:
+            return self.execute(context)
+        try:
+            engine.library()
+        except engine.EngineError as error:
+            self.report({"ERROR"}, f"openclare: {error}")
+            return {"CANCELLED"}
+        original = self.target(context)
+        begun = self.begin(context, original, copy=True)
+        if begun is None:
+            return {"CANCELLED"}
+        self.original, (given, _) = original, begun
+        self.job = RUNNING = Run(given)
+        self.workspace = context.workspace
+        self.workspace.status_text_set(f"openclare: remeshing '{original.name}'... (Esc to stop)")
+        manager = context.window_manager
+        self.timer = manager.event_timer_add(0.1, window=context.window)
+        manager.modal_handler_add(self)
+        self.job.thread.start()
+        redraw_panels()
+        return {"RUNNING_MODAL"}
+
+    def modal(self, context, event):
+        job = self.job
+        if event.type == "ESC" and event.value == "PRESS":
+            job.stop.set()
+            self.workspace.status_text_set("openclare: stopping...")
+            return {"RUNNING_MODAL"}
+        # Read at each tick of a timer, ours or another's; every other event
+        # goes on to Blender, which stays free.
+        if event.type != "TIMER":
+            return {"PASS_THROUGH"}
+        for stage in job.news():
+            if not job.stop.is_set():
+                self.workspace.status_text_set(f"openclare: {stage}... (Esc to stop)")
+            if worth_a_line(stage):
+                self.report({"INFO"}, f"openclare: {stage}")
+        redraw_panels()
+        if job.thread.is_alive():
+            return {"PASS_THROUGH"}
+        self.end(context)
+        if job.stop.is_set():
+            self.report({"WARNING"}, "openclare: stopped, nothing made")
+            return {"CANCELLED"}
+        if job.error is not None:
+            self.report({"ERROR"}, f"openclare: {job.error}")
+            return {"CANCELLED"}
+        try:
+            made = self.finish(context, self.original, job.made, job.given)
+        except ReferenceError:
+            self.report({"ERROR"}, "openclare: the object was removed while it was being remeshed")
+            return {"CANCELLED"}
+        return self.done(context, made)
+
+    def cancel(self, context):
+        # Blender ends the operator (a file loaded, Blender closed): the
+        # engine is asked to stop, and what it makes is dropped.
+        self.job.stop.set()
+        self.end(context)
+
+    def end(self, context):
+        global RUNNING
+        context.window_manager.event_timer_remove(self.timer)
+        RUNNING = None
+        try:
+            self.workspace.status_text_set(None)
+        except ReferenceError:
+            pass
+        redraw_panels()
+
+    def execute(self, context):
+        return self.done(context, self.run(context, self.target(context)))
+
+
+class OPENCLARE_OT_stop(bpy.types.Operator):
+    """Stop the remeshing under way: nothing is made"""
+
+    bl_idname = "object.openclare_stop"
+    bl_label = "Stop"
+
+    @classmethod
+    def poll(cls, context):
+        return RUNNING is not None and not RUNNING.stop.is_set()
+
+    def execute(self, context):
+        RUNNING.stop.set()
+        return {"FINISHED"}
+
+
+def draw_remesh(layout, operator, icon):
+    """The button that remeshes, or, while a run goes on, how far it is and
+    a button to stop it."""
+    if RUNNING is None:
+        layout.operator(operator, icon=icon)
+        return
+    row = layout.row(align=True)
+    text = "Stopping..." if RUNNING.stop.is_set() else RUNNING.stage.capitalize()
+    row.progress(factor=RUNNING.done, type="BAR", text=text)
+    row.operator(OPENCLARE_OT_stop.bl_idname, text="", icon="CANCEL")
+
+
+class OPENCLARE_OT_remesh(Background, Remeshing, bpy.types.Operator):
     """Remesh the object into quads, as a new object next to it"""
 
     bl_idname = "object.openclare_remesh"
@@ -1166,13 +1415,16 @@ class OPENCLARE_OT_remesh(Remeshing, bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return object_to_remesh(context) is not None and context.mode == "OBJECT"
+        return object_to_remesh(context) is not None and context.mode == "OBJECT" and RUNNING is None
 
-    def execute(self, context):
-        return {"FINISHED"} if self.run(context, object_to_remesh(context)) is not None else {"CANCELLED"}
+    def target(self, context):
+        return object_to_remesh(context)
+
+    def done(self, context, made):
+        return {"FINISHED"} if made is not None else {"CANCELLED"}
 
 
-class OPENCLARE_OT_remesh_again(Remeshing, bpy.types.Operator):
+class OPENCLARE_OT_remesh_again(Background, Remeshing, bpy.types.Operator):
     """Remesh the original of this result again, with the settings it has now, in place of this result. Its
     relief goes: bake it again"""
 
@@ -1182,13 +1434,21 @@ class OPENCLARE_OT_remesh_again(Remeshing, bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return source_of(object_to_remesh(context)) is not None and context.mode == "OBJECT"
+        return source_of(object_to_remesh(context)) is not None and context.mode == "OBJECT" and RUNNING is None
 
-    def execute(self, context):
-        result = object_to_remesh(context)
-        made = self.run(context, source_of(result))
+    def target(self, context):
+        self.result = object_to_remesh(context)
+        return source_of(self.result)
+
+    def done(self, context, made):
         if made is None:
             return {"CANCELLED"}
+        result = self.result
+        try:
+            result.data
+        except ReferenceError:
+            # The result was removed during the run: the new one stays.
+            return {"FINISHED"}
         # The new mesh goes into the result, which keeps its name, place,
         # settings and what else it was given; the new object goes.
         previous, mesh = result.data, made.data
@@ -1670,7 +1930,7 @@ class OPENCLARE_PT_panel(DataPanel, bpy.types.Panel):
         factor = column.row()
         factor.enabled = bool(settings.density_group)
         factor.prop(settings, "density_factor")
-        layout.operator(OPENCLARE_OT_remesh.bl_idname, icon="MOD_REMESH")
+        draw_remesh(layout, OPENCLARE_OT_remesh.bl_idname, "MOD_REMESH")
 
     def draw_result(self, context, owner):
         layout = self.layout
@@ -1683,7 +1943,7 @@ class OPENCLARE_PT_panel(DataPanel, bpy.types.Panel):
             box = layout.box().column(align=True)
             for line, icon in report_lines(told):
                 box.label(text=line, icon=icon)
-        layout.operator(OPENCLARE_OT_remesh_again.bl_idname, icon="FILE_REFRESH")
+        draw_remesh(layout, OPENCLARE_OT_remesh_again.bl_idname, "FILE_REFRESH")
 
 
 def report_lines(told):
@@ -1880,6 +2140,7 @@ CLASSES = (
     OPENCLARE_OT_analyse,
     OPENCLARE_OT_remesh,
     OPENCLARE_OT_remesh_again,
+    OPENCLARE_OT_stop,
     OPENCLARE_OT_select_original,
     OPENCLARE_OT_bake_relief,
     OPENCLARE_OT_curves_assign,
@@ -1931,6 +2192,8 @@ def register():
 
 
 def unregister():
+    if RUNNING is not None:
+        RUNNING.stop.set()
     bpy.utils.unregister_preset_path(ADDON_FOLDER)
     for handlers, handler in HANDLERS:
         if handler in handlers:

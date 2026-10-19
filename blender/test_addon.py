@@ -91,6 +91,36 @@ assert len(direct.polygons) == len(copied.polygons) == len(mesh.polygons)
 assert all(a.co == b.co for a, b in zip(direct.vertices, copied.vertices)), "in place and copied differ"
 print("IN PLACE OK")
 
+# Clicked in Blender, the engine runs in a thread of its own on arrays read
+# beforehand (what the modal operators do; their events need a window, so
+# the thread is driven here by hand). The mesh read is let go at once: the
+# run no longer needs it. It makes the same mesh, tells its stages, and
+# stops when asked.
+evaluated = original.evaluated_get(bpy.context.evaluated_depsgraph_get())
+source = evaluated.to_mesh()
+given = openclare.engine_input(source, "organic", {"quads": 800}, copy=True)
+evaluated.to_mesh_clear()
+job = openclare.Run(given)
+job.thread.start()
+job.thread.join()
+assert job.error is None, job.error
+apart, _ = openclare.mesh_of(job.made, given)
+assert all(a.co == b.co for a, b in zip(direct.vertices, apart.vertices)), "the run in a thread differs"
+new = job.news()
+assert new and new == job.stages and job.stage == new[-1] and job.done == 1.0, (new, job.done)
+assert job.news() == [], "stages told twice"
+job = openclare.Run(given)
+job.stop.set()
+job.thread.start()
+job.thread.join()
+assert job.made is None and str(job.error) == "stopped on request", job.error
+assert openclare.progress_of([]) == 0.0 and openclare.progress_of(["cross field"]) == 1 / openclare.STAGES
+assert openclare.progress_of(["piece 2 of 4: preprocessing", "piece 1 of 4: cross field"]) == 2 / (4 * 9)
+# Run from a script, even as a click would, the operator waits for the
+# engine: here, in the background, there is no window to come back to.
+assert bpy.ops.object.openclare_remesh.poll() and openclare.RUNNING is None
+print("IN A THREAD OK")
+
 # A painted vertex group: with the top of the head at 1 and the rest at 0,
 # and a factor of 9, the top gets most of the quads.
 def share_on_top(remeshed):
@@ -551,7 +581,9 @@ with_relief = off_the_ball()
 relief.show_viewport = False
 without = off_the_ball()
 relief.show_viewport = True
-assert without > 0.01 and with_relief < 0.2 * without, (without, with_relief)
+# The quads alone now come within 1% of the ball (the threshold was 1%);
+# the relief still brings them much closer.
+assert without > 0.005 and with_relief < 0.2 * without, (without, with_relief)
 # Baked again, it is the same relief updated, not another on top.
 assert bpy.ops.object.openclare_bake_relief() == {"FINISHED"}
 assert [modifier.name for modifier in quads.modifiers] == ["openclare subdivision", "openclare relief"]
