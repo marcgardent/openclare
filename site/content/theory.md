@@ -2,8 +2,9 @@
 
 *[Version française](theory.fr.md)*
 
-This page tells, for 3D artists and curious developers, what the research note
-[Closing Edge Loops at Quantization Time](../../docs/research/closing-helices/paper.pdf) ([source](../../docs/research/closing-helices/paper.tex)) found while
+This page tells, for 3D artists and curious developers, what the two research papers,
+[Closing Edge Loops at Quantization Time](../../docs/research/closing-loops/paper.pdf) (applied) and
+[Turns of a T-Mesh](../../docs/research/closing-helices/paper.pdf) (theory), found while
 teaching openclare to close its edge loops: the idea, the rules that came out of it, what it
 changed in the engine, and what did not work. It takes about fifteen minutes to read. Words in
 *italics* are defined, with more pictures, in the [glossary](../../docs/GLOSSARY.md).
@@ -429,7 +430,8 @@ its content.
 
 ## Read more
 
-- The note: [paper.pdf](../../docs/research/closing-helices/paper.pdf), source [paper.tex](../../docs/research/closing-helices/paper.tex).
+- Paper A, applied: [paper.pdf](../../docs/research/closing-loops/paper.pdf) (in French: [paper.fr.pdf](../../docs/research/closing-loops/paper.fr.pdf)), source [paper.tex](../../docs/research/closing-loops/paper.tex).
+- Paper B, theory: [paper.pdf](../../docs/research/closing-helices/paper.pdf), source [paper.tex](../../docs/research/closing-helices/paper.tex).
 - The machine-checked proofs: [lean/README.md](../../docs/research/closing-helices/lean/README.md).
 - The glossary, with all the pictures: [GLOSSARY.md](../../docs/GLOSSARY.md).
 - The pictures are drawn by [make_figures.py](../../docs/glossary/make_figures.py).
