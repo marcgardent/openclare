@@ -1,18 +1,21 @@
 name: proofs
 
-# The research note "Closing Edge Loops at Quantization Time"
-# (docs/research/closing-helices): its Lean proofs checked, and its PDF built
-# and kept with the run. On every push to main and every pull request that
-# touches the note, and by hand from the Actions tab.
+# The research notes: "Closing Edge Loops at Quantization Time"
+# (docs/research/closing-loops) and its companion on the theory of turns
+# (docs/research/closing-helices). The Lean proofs of the companion checked,
+# and the PDF of each note built and kept with the run. On every push to main
+# and every pull request that touches a note, and by hand from the Actions tab.
 on:
   push:
     branches: [main]
     paths:
       - "docs/research/closing-helices/**"
+      - "docs/research/closing-loops/**"
       - ".github/workflows/proofs.yml"
   pull_request:
     paths:
       - "docs/research/closing-helices/**"
+      - "docs/research/closing-loops/**"
       - ".github/workflows/proofs.yml"
   workflow_dispatch:
 
@@ -61,6 +64,11 @@ jobs:
 
   paper:
     runs-on: ubuntu-24.04
+    # One build per note, each PDF kept as its own artifact.
+    strategy:
+      fail-fast: false
+      matrix:
+        note: [closing-helices, closing-loops]
     steps:
       # The commit of the branch rather than the merge GitHub makes for a pull
       # request: it is the one the PDF names.
@@ -68,13 +76,13 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: The commit the note describes
-        run: make paper-version NOTE=closing-helices
+        run: make paper-version NOTE=${{ matrix.note }}
       - uses: xu-cheng/latex-action@4.1.0
         with:
-          working_directory: docs/research/closing-helices
+          working_directory: docs/research/${{ matrix.note }}
           root_file: paper.tex
       - uses: actions/upload-artifact@v7
         with:
-          name: closing-helices-paper
-          path: docs/research/closing-helices/paper.pdf
+          name: ${{ matrix.note }}-paper
+          path: docs/research/${{ matrix.note }}/paper.pdf
           if-no-files-found: error
