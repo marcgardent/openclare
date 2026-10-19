@@ -18,11 +18,6 @@ public import ClosingHelices.QuarterTurn
 @[expose] public section
 
 set_option linter.unusedSectionVars false
--- Some case splits close a branch earlier than the others; keep one script for all.
-set_option linter.unusedTactic false
-set_option linter.unreachableTactic false
-set_option linter.unusedSimpArgs false
-set_option linter.extra.unnecessarySeqFocus false
 
 namespace ClosingHelices
 

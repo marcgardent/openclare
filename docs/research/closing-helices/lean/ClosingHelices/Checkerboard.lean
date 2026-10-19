@@ -15,11 +15,6 @@ public import Mathlib.Algebra.CharP.Two
 @[expose] public section
 
 set_option linter.unusedSectionVars false
--- Some case splits close a branch earlier than the others; keep one script for all.
-set_option linter.unusedTactic false
-set_option linter.unreachableTactic false
-set_option linter.unusedSimpArgs false
-set_option linter.extra.unnecessarySeqFocus false
 
 namespace ClosingHelices
 
@@ -72,15 +67,14 @@ theorem one_sub_gi_mul (p : GaussianInt) :
 the parity of `p₁ + p₂` (proof of Proposition "Checkerboard rule"). -/
 theorem parity_one_sub_quarter (p : GaussianInt) (r : GaussianInt) (hr : r = gi ∨ r = -gi) :
     (((1 - r) * p).re : ZMod 2) = colour p ∧ (((1 - r) * p).im : ZMod 2) = colour p := by
-  rcases hr with rfl | rfl <;> constructor <;> simp [colour, gi] <;> push_cast <;>
-    simp [zmod_two_neg, sub_eq_add_neg, add_comm]
+  rcases hr with rfl | rfl <;> constructor <;> simp [colour, gi] <;> simp [add_comm]
 
 /-- `(1 - R²) p = 2 p` is even. -/
 theorem one_sub_half_turn (p : GaussianInt) :
     (1 - gi * gi) * p = 2 * p ∧ (((1 - gi * gi) * p).re : ZMod 2) = 0 ∧
       (((1 - gi * gi) * p).im : ZMod 2) = 0 := by
   rw [gi_mul_gi]
-  refine ⟨by ring, ?_, ?_⟩ <;> simp <;> push_cast <;> ring_nf <;> simp [zmod_two_two]
+  refine ⟨by ring, ?_, ?_⟩ <;> simp <;> ring_nf <;> simp [zmod_two_two]
 
 /-! ### Quarter-turns keep colours -/
 
@@ -106,16 +100,14 @@ theorem IsQuarter.list_prod (l : List GaussianInt) (h : ∀ a ∈ l, IsQuarter a
 theorem colour_quarter_mul {a : GaussianInt} (ha : IsQuarter a) (x : GaussianInt) :
     colour (a * x) = colour x := by
   unfold IsQuarter at ha
-  rcases ha with rfl | rfl | rfl | rfl <;> simp [colour, gi] <;> push_cast <;>
-    simp [zmod_two_neg, sub_eq_add_neg, add_comm]
+  rcases ha with rfl | rfl | rfl | rfl <;> simp [colour, gi] <;> simp [add_comm]
 
 /-- Quarter-turns keep the property "both components have parity `σ`". -/
 theorem quarter_mul_parity {a : GaussianInt} (ha : IsQuarter a) (x : GaussianInt) (σ : ZMod 2)
     (hre : (x.re : ZMod 2) = σ) (him : (x.im : ZMod 2) = σ) :
     ((a * x).re : ZMod 2) = σ ∧ ((a * x).im : ZMod 2) = σ := by
   unfold IsQuarter at ha
-  rcases ha with rfl | rfl | rfl | rfl <;> simp [gi] <;> push_cast <;>
-    simp [zmod_two_neg, hre, him]
+  rcases ha with rfl | rfl | rfl | rfl <;> simp [gi] <;> simp [hre, him]
 
 /-- A rotation by a quarter-turn about a whole point keeps the colour: the colour
 of a vertex does not depend on the path it is developed along. -/
@@ -165,7 +157,7 @@ theorem checkerboard (cs : List (GaussianInt × GaussianInt)) (hq : ∀ c ∈ cs
           rcases hc with h | h | h | h
           · simp [h]
           · exact absurd (Or.inl h) hodd
-          · rw [h]; simp; push_cast; ring_nf; simp [zmod_two_two]
+          · rw [h]; simp; ring_nf; simp [zmod_two_two]
           · exact absurd (Or.inr h) hodd
       · have hc := hq c (by simp)
         have e : c.2 - c.1 * c.2 = (1 - c.1) * c.2 := by ring
@@ -177,7 +169,7 @@ theorem checkerboard (cs : List (GaussianInt × GaussianInt)) (hq : ∀ c ∈ cs
           rcases hc with h | h | h | h
           · simp [h]
           · exact absurd (Or.inl h) hodd
-          · rw [h]; simp; push_cast; ring_nf; simp [zmod_two_two]
+          · rw [h]; simp; ring_nf; simp [zmod_two_two]
           · exact absurd (Or.inr h) hodd
     simp only [burgers, oddColours, smul_eq_mul, Zsqrtd.re_add, Zsqrtd.im_add, Int.cast_add,
       hterm.1, hterm.2, ihre, ihim]
@@ -322,11 +314,9 @@ theorem checkerboard_word (j : ι → ℤ) (p : ι → GaussianInt) (w : List (�
     simp [colour]
     ring
   constructor
-  · rw [← hqre]; simp [gi]; push_cast; ring_nf; try simp [zmod_two_two]
-  · rw [← hqre]; simp [gi]; push_cast; ring_nf
-    (try simp only [zmod_two_two, zero_mul, add_zero, mul_zero])
-    (try rw [show (-1 : ZMod 2) = 1 from rfl])
-    (try ring)
+  · rw [← hqre]; simp [gi]; ring_nf; try simp [zmod_two_two]
+  · rw [← hqre]; simp [gi]; ring_nf
+    (try simp only [zmod_two_two, add_zero, mul_zero])
 
 /-- A component `±τ₁` or `±τ₂` of a translation, chosen by `k : Fin 4`. -/
 def component (k : Fin 4) (t : GaussianInt) : ℤ :=

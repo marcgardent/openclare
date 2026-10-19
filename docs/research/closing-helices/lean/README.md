@@ -40,7 +40,7 @@ quarter-turn `R(a, b) = (-b, a)` the multiplication by `i`, as in
 | … the rotation part | `quarter_turns_prod_eq_one_iff` (`R^{j₁}⋯R^{jₘ} = I ⇔ 4 ∣ ∑ jᵢ`) | — |
 | Lemma "One self-crossing" | `gauss_bonnet_corners` (`4 χ - a + b` with `a` convex and `b` concave corners on the border) | the regions cut open at the crossing are discs; which of their corners are convex |
 | Prop. "The shift is set by the singularities" (a) | `Motion.composeAll_rotations`, `Motion.burgers_eq_sum` (`B = ∑ Qᵢ (I - Rᵢ) pᵢ`, `Qᵢ = Rₘ⋯Rᵢ₊₁`), `Motion.translation_inv` (the sign) | that `ĥ(γ̄)` is the composition of the rotations round the cone points |
-| … the order of first visit | `Forest.glue_eq_preorder`, `Forest.glue_rotations`; `Forest.order_of_first_visit_matters` (last visit gives another vector) | the recursion `G_f = G_{f_r} ∘ ⋯ ∘ G_{f_1} ∘ ρ_v` read off the cut tree |
+| … the order of first visit | `Forest.glue_eq_preorder`, `Forest.glue_rotations`; `Forest.order_of_first_visit_matters` (last visit gives another vector); all in `FirstVisit.lean`, namespace `Forest` | the recursion `G_f = G_{f_r} ∘ ⋯ ∘ G_{f_1} ∘ ρ_v` read off the cut tree |
 | Prop. (b), annuli | `Motion.annulus_holonomy` (`ĥ(γ̄₁ κ γ̄₂⁻¹ κ⁻¹)` is the translation by `T₁ - M T₂`), `Motion.conj_translation` | the homomorphism `ĥ` and the holonomies of the two turns |
 | Prop. "A dislocation between two turns" (i), (ii) | `dislocation_burgers` (the four orders and orientations), `dislocation` (`±d₁ ± d₂`, `‖B‖² = 2‖d‖²`), `dislocation_closes_iff`, `dislocation_straight` | as in (b) |
 | Prop. "Staircases" | `staircase`, `staircase_rings`, `nonneg_form_pos` | `d = ∑ ℓᵢ vᵢ` along the staircase (development along homotopic paths) |

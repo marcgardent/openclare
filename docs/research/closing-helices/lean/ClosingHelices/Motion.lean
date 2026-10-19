@@ -118,7 +118,8 @@ theorem composeAll_trans (fs : List (Motion A V)) :
   induction fs with
   | nil => simp
   | cons f fs ih =>
-    erw [Fin.sum_univ_succ]
+    show _ = ∑ i : Fin (fs.length + 1), _
+    rw [Fin.sum_univ_succ]
     simp only [composeAll_cons, comp_trans, ih, composeAll_lin, Fin.val_zero, Fin.val_succ,
       List.get_cons_zero, List.drop_succ_cons, zero_add, List.drop_zero]
     rw [add_comm]
@@ -153,7 +154,8 @@ theorem burgers_eq_sum (cs : List (A × V)) :
   induction cs with
   | nil => simp [burgers]
   | cons c cs ih =>
-    erw [Fin.sum_univ_succ]
+    show _ = ∑ i : Fin (cs.length + 1), _
+    rw [Fin.sum_univ_succ]
     simp [burgers, ih]
 
 /-- When the total rotation is trivial (Gauss–Bonnet, Lemma "Gauss–Bonnet for
