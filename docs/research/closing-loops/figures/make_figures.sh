@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Makes again the rendered figures of the paper (male-overview.png,
-# male-wrist.png, male-eye.png) from the repository. See README.md.
+# male-wrist.png, male-eye.png, and their French copies male-*.fr.png) from
+# the repository. See README.md.
 #
 #     docs/research/closing-loops/figures/make_figures.sh
 #
@@ -58,5 +59,11 @@ for view in overview wrist eye; do
         "$WORK/panels/${view}_no_closing.png" "$WORK/no_closing.obj" "openclare, no closing" \
         "$WORK/panels/${view}_closing.png" "$WORK/closing.obj" "openclare, closing" \
         "$WORK/panels/${view}_handmade.png" "$WORK/handmade.obj" "hand-made" \
+        "$WORK/panels/${view}_quadriflow.png" "$WORK/quadriflow.obj" "QuadriFlow"
+    # The same panels with French labels, for the French translation of the paper.
+    python3 "$FIGURES/compose.py" --lang fr "$FIGURES/male-$view.fr.png" "$WORK/numbers-$view.fr.json" \
+        "$WORK/panels/${view}_no_closing.png" "$WORK/no_closing.obj" "openclare, sans fermeture" \
+        "$WORK/panels/${view}_closing.png" "$WORK/closing.obj" "openclare, avec fermeture" \
+        "$WORK/panels/${view}_handmade.png" "$WORK/handmade.obj" "fait à la main" \
         "$WORK/panels/${view}_quadriflow.png" "$WORK/quadriflow.obj" "QuadriFlow"
 done

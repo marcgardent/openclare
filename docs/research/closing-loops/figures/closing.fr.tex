@@ -1,0 +1,126 @@
+% The turn of turn.tex before and after the quantization closes it.
+% French copy of closing.tex for paper.fr.tex: only the labels differ (and the
+% decimal comma, which needs the icomma package).
+% \input inside a figure; needs \usepackage{tikz} and
+% \usetikzlibrary{arrows.meta,decorations.pathreplacing}.
+%
+% Same T-mesh, two choices of whole lengths. Left, as in turn.tex: l_d = 2,
+% s = l_b - l_c + l_d = 1, the walk comes back one row above where it left,
+% and the strip at o = 2.5 is a helix. Right: the column of P_4 sits one unit
+% higher (l_d = 1, and the arc above P_4 on the same side one shorter); no node
+% passes another, so the T-mesh is the same and only lengths changed. Now
+% s = 1 - 2 + 1 = 0: the walk comes back where it left, and the corridor
+% 1 < o < 4 holds three closed rings, at o = 1.5, 2.5, 3.5.
+\begin{tikzpicture}[x=0.4cm, y=0.4cm, font=\footnotesize,
+    side/.style={draw=black, line width=0.5pt},
+    ghost/.style={draw=black!55, line width=0.5pt, dashed},
+    quadgrid/.style={draw=black!18, line width=0.25pt},
+    node dot/.style={circle, fill=black, inner sep=0pt, minimum size=2.6pt},
+    arc mark/.style={line width=1.8pt, draw=black},
+    turn/.style={line width=1pt, draw=black, -{Stealth[length=5pt]}},
+    brace/.style={decorate, decoration={brace, amplitude=3pt}, line width=0.5pt}]
+  \definecolor{corridor}{HTML}{CFE0F3}
+  \definecolor{loopspiral}{HTML}{D55E00}
+  \definecolor{loopclosed}{HTML}{0B3C8C}
+
+  % The two layouts: \p is the bottom of P_4 and of P_1 again (the cut keeps
+  % them together), so l_d = 1 - \p and s = -\p.
+  \foreach \p/\X in {-1/0, 0/21} {
+    \begin{scope}[shift={(\X,0)}]
+      \pgfmathtruncatemacro{\top}{\p + 5}
+      \begin{scope}
+        \clip (-0.1,-2.4) rectangle (16.1,7.4);
+        \fill[corridor] (0,1) rectangle (13,4);
+        \draw[quadgrid, step={(1,1)}] (0,-3) grid (16,8);
+        \foreach \x in {0,3,7,10,13} \draw[side] (\x,-3) -- (\x,8);
+        \draw[ghost] (16,-3) -- (16,8);
+        \foreach \x/\Y/\b/\t in {0/3/0/5, 3/7/-1/4, 7/10/1/6, 10/13/\p/\top} {
+          \draw[side] (\x,\b) -- (\Y,\b) (\x,\t) -- (\Y,\t);
+          \foreach \px in {\x,\Y} \foreach \py in {\b,\t}
+            \node[node dot] at (\px,\py) {};
+        }
+        \draw[ghost] (13,\p) -- (16,\p) (13,\top) -- (16,\top);
+        \foreach \py in {\p,\top} \node[node dot, fill=black!55] at (16,\py) {};
+      \end{scope}
+      \draw[arc mark] (3,-1) -- (3,0) node[midway, left=0pt] {$b$};
+      \draw[arc mark] (7,-1) -- (7,1) node[midway, left=0pt] {$c$};
+      \draw[arc mark] (10,\p) -- (10,1) node[midway, right=0pt] {$d$};
+      \node at (1.5,4.5) {$P_1$};
+      \node at (8.5,5) {$P_3$};
+      \node at (12,\p+0.5) {$P_4$};
+      \node[black!60] at (14.5,\top+0.6) {$P_1$};
+      % The turn, and where it comes back in the frame of P_1.
+      \draw[turn] (0,2.5) -- (13.08,2.5);
+      \node[above] at (6.4,2.5) {$\gamma$};
+      \draw[black, line width=0.5pt, fill=white] (0,2.5) circle (1.8pt);
+      \node[left] at (-0.05,2.5) {$o$};
+      \draw[black!60, dashed, line width=0.7pt] (13,2.5) -- (16,2.5);
+      \draw[black!60, dotted, line width=0.8pt] (13,2.5+\p) -- (16,2.5+\p);
+      \draw[black, line width=0.5pt, fill=white] (13,2.5+\p) circle (1.8pt);
+    \end{scope}
+  }
+  % Before: comes back one row above.
+  \node[right, inner sep=1pt] at (16.15,2.5) {$o + 1$};
+  \node[right, inner sep=1pt] at (16.15,1.5) {$o$};
+  \node[anchor=north west] at (0,-2.6) {$\ell_d = 2$~:\quad $s_\gamma(\ell) = 1 - 2 + 2 = 1$};
+  % After: comes back where it left.
+  \node[right, inner sep=1pt] at (37.15,2.5) {$o$};
+  \node[anchor=north west] at (21,-2.6) {$\ell_d = 1$~:\quad $s_\gamma(\ell) = 1 - 2 + 1 = 0$};
+
+  % The strip at o = 2.5 on the cylinder: a helix before, rings after.
+  \pgfmathsetmacro{\R}{2.6}
+  \pgfmathsetmacro{\k}{0.2}
+  \pgfmathsetmacro{\w}{1.5}
+  \pgfmathsetmacro{\H}{7.6}
+  \pgfmathsetmacro{\zz}{1.55}
+  \foreach \cx/\pitch/\colour in {8/1/loopspiral, 29/0/loopclosed} {
+    \begin{scope}[shift={(\cx,-14.2)}]
+      % Back halves of the centre lines, through the cylinder.
+      \foreach \j in {0,1,2} {
+        \draw[\colour!80, dashed, line width=0.6pt]
+          plot[domain=360*\j+180:360*\j+360, samples=40, variable=\t]
+            ({\R*cos(\t)}, {\zz + \w*(\j + \pitch*(\t/360 - \j) + 0.5) - \k*\R*sin(\t)});
+      }
+      \fill[black!25, fill opacity=0.18] (-\R,0) -- (-\R,\H) arc[start angle=180, end angle=360,
+        x radius=\R, y radius=\k*\R] -- (\R,0) arc[start angle=0, end angle=-180,
+        x radius=\R, y radius=\k*\R] -- cycle;
+      \draw[line width=0.5pt] (-\R,0) -- (-\R,\H) (\R,0) -- (\R,\H);
+      \draw[line width=0.5pt] (0,\H) ellipse[x radius=\R, y radius=\k*\R];
+      \draw[line width=0.5pt] (\R,0) arc[start angle=0, end angle=-180,
+        x radius=\R, y radius=\k*\R];
+      \draw[line width=0.35pt, black!40, dashed] (\R,0) arc[start angle=0, end angle=180,
+        x radius=\R, y radius=\k*\R];
+      % Front halves: the quads, 13 a round, and the centre lines.
+      \foreach \j in {0,1,2} {
+        \fill[\colour!35, fill opacity=0.55]
+          plot[domain=360*\j:360*\j+180, samples=40, variable=\t]
+            ({\R*cos(\t)}, {\zz + \w*(\j + \pitch*(\t/360 - \j)) - \k*\R*sin(\t)})
+          -- plot[domain=360*\j+180:360*\j, samples=40, variable=\t]
+            ({\R*cos(\t)}, {\zz + \w*(\j + \pitch*(\t/360 - \j) + 1) - \k*\R*sin(\t)}) -- cycle;
+        \foreach \e in {0,1} {
+          \draw[\colour!70, line width=0.45pt]
+            plot[domain=360*\j:360*\j+180, samples=40, variable=\t]
+              ({\R*cos(\t)}, {\zz + \w*(\j + \pitch*(\t/360 - \j) + \e) - \k*\R*sin(\t)});
+        }
+        \foreach \q in {1,...,6} {
+          \pgfmathsetmacro{\t}{360*\j + \q*360/13}
+          \draw[\colour!70, line width=0.35pt]
+            ({\R*cos(\t)}, {\zz + \w*(\j + \pitch*(\t/360 - \j)) - \k*\R*sin(\t)}) --
+            ({\R*cos(\t)}, {\zz + \w*(\j + \pitch*(\t/360 - \j) + 1) - \k*\R*sin(\t)});
+        }
+        \draw[\colour, line width=1pt, -{Stealth[length=4.5pt]}]
+          plot[domain=360*\j:360*\j+176, samples=40, variable=\t]
+            ({\R*cos(\t)}, {\zz + \w*(\j + \pitch*(\t/360 - \j) + 0.5) - \k*\R*sin(\t)});
+        \pgfmathsetmacro{\n}{\j + 1.5}
+        \node[right, font=\scriptsize, inner sep=2pt] at (\R,\zz + \w*\j + 0.5*\w)
+          {$\pgfmathprintnumber[fixed, precision=1, fixed zerofill, use comma]{\n}$};
+      }
+    \end{scope}
+  }
+  \node[anchor=north, align=center] at (8,-15.0)
+    {une hélice passant par $o = 1,5$\,; $2,5$ et $3,5$};
+  \node[anchor=north, align=center] at (29,-15.0)
+    {trois anneaux fermés, en $o = 1,5$\,; $2,5$ et $3,5$};
+  \node[anchor=north, font=\small] at (8,-17.0) {(a) avant~: $s_\gamma(\ell) = 1$};
+  \node[anchor=north, font=\small] at (29,-17.0) {(b) après~: $s_\gamma(\ell) = 0$};
+\end{tikzpicture}
