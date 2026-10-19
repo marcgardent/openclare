@@ -16,6 +16,8 @@ __pycache__
 /site/_build
 # The commit a research note describes, written by `make paper`.
 /docs/research/*/version.tex
+# The bundle `make paper-arxiv` writes for arXiv.
+/docs/research/*/arxiv.tar.gz
 # What is not to be published: local challengers, their meshes and results
 # (see bench/README.md).
 /local

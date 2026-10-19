@@ -352,7 +352,7 @@ side whose walk at the lengths $\ell$ crosses the same patches as $\gamma$
 Then the dual line of the quad mesh at $o$ comes back at $o +
 \shift_\gamma(\ell)$: it closes after one round if and only if
 $\shift_\gamma(\ell) = 0$. If moreover $o + j\,\shift_\gamma(\ell)$ lies in
-the corridor for $j = 1, \dots, t$, it winds $t$ times round as a helix of
+the corridor for $j = 1, \dots, t - 1$, it winds $t$ times round as a helix of
 pitch $|\shift_\gamma(\ell)|$ in the sense of~\cite{bommes2011structure}. If
 the corridor holds no half-integer, no strip of the mesh follows $\gamma$.
 \end{proposition}
@@ -503,18 +503,21 @@ held once. Eight \emph{ways} are tried: starting shares $\{0.5\}$ or $\{0.2,
 way that holds the same turns as an earlier one is skipped.
 
 \paragraph{Least-change projection.}
-The target lengths are changed as little as possible, in the weighted least
-squares sense, for every held turn to have zero shift and every patch to
-stay balanced:
+The real lengths $r_a$, at scale one before $\lambda$ is searched, are changed
+as little as possible, in the weighted least squares sense, for every held
+turn to have zero shift and every patch to stay balanced:
 \[
-  \min_{x}\ \sum_a w_a\,(x_a - r_a)^2
-  \quad\text{s.t.}\quad A x = 0,\quad \shift_\gamma(x) = 0\ \ \forall\gamma\in H,
+  \min_{x}\ \sum_a v_a\,(x_a - r_a)^2
+  \quad\text{s.t.}\quad B x = 0,\quad \shift_\gamma(x) = 0\ \ \forall\gamma\in H,
+  \qquad v_a = \frac{1}{r_a + 1},
 \]
 solved with a sparse Cholesky factorization of the balances, computed once
 per quantization, and a small dense Schur complement for the turns. Arcs the
 solution would make negative are held at zero and the system solved again
 (an active set). If the system cannot be met, the held turn left with the
-largest shift is let go and the projection repeated.
+largest shift is let go and the projection repeated. Here $B$ is the matrix
+of the balances of the patches; the projected lengths $x$ then take the place
+of $r$ in the cost above, and the scale $\lambda$ is searched on them.
 
 \paragraph{Integer search and repair.}
 The integer search of the quantizer runs on the projected targets. Rounding
@@ -1786,8 +1789,11 @@ once: up to a common constant, the winding numbers.
 \end{proof}
 
 For a simple turn the word is a product of conjugates of the $x_i$, each
-once, and the formula is Proposition~\ref{prop:burgers}(a), with
-$\rho(\partial w/\partial x_i) = Q_i$. In general the twisted winding $W_i$ is
+once. Written as the composition $\rho_m \circ \dots \circ \rho_1$ of
+Proposition~\ref{prop:burgers}(a), $c_m$ on the left and $c_1$ on the right,
+the derivative $\partial w/\partial x_i$ is the prefix left of $x_i$, so that
+$\rho(\partial w/\partial x_i) = Q_i = R_m \cdots R_{i+1}$, and the formula is
+Proposition~\ref{prop:burgers}(a). In general the twisted winding $W_i$ is
 an integer vector, not a number: the cycle may go round $c_i$ several times,
 each time with another rotation before it. Reduced modulo $2$, the rotations
 disappear.
@@ -2307,7 +2313,7 @@ $\frac1n \sum_a |\ell_a - t_a| \le D$ on the mean deviation from the targets
 $t$, or with a given number of quads. Let
 \[
   \tau_P(H) = \min\bigl\{\, |X| : X \subseteq H,\ \text{the turns of } H
-  \setminus X \text{ can be closed together by real lengths in } P \,\bigr\}.
+  \setminus X \text{ can be closed together by lengths in } P \,\bigr\}.
 \]
 Then for every $\ell \in P$, whole or not, at least $\tau_P(H)$ turns of $H$
 have $\shift_\gamma(\ell) \neq 0$. If $H$ contains $k$ pairwise disjoint subsets
@@ -2315,8 +2321,8 @@ none of which can be closed within $P$, then $\tau_P(H) \ge k$.
 \end{theorem}
 
 \begin{proof}
-At a whole $\ell \in P$, the turns of $H$ with zero shift are closed by $\ell$
-itself, which is real and lies in $P$; so the shifted turns form a set $X$ as
+At any $\ell \in P$, whole or not, the turns of $H$ with zero shift are closed
+by $\ell$ itself, which lies in $P$; so the shifted turns form a set $X$ as
 in the definition, and $|X| \ge \tau_P(H)$. A set $X$ whose removal leaves a
 closable set meets each of the $k$ subsets, which are disjoint, so $|X| \ge
 k$.
