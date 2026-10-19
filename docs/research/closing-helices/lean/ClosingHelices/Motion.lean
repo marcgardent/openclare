@@ -158,6 +158,18 @@ theorem burgers_eq_sum (cs : List (A × V)) :
     rw [Fin.sum_univ_succ]
     simp [burgers, ih]
 
+/-- The indexed form for cone points given as the images of a list `l` by a map
+`c`: `B = ∑ₖ Qₖ • (pₖ - Rₖ • pₖ)`, `(Rₖ, pₖ) = c lₖ`, `Qₖ = Rₘ ⋯ Rₖ₊₁`. -/
+theorem burgers_map {ι : Type*} (c : ι → A × V) (l : List ι) :
+    burgers (l.map c) = ∑ k : Fin l.length,
+      ((l.drop (k + 1)).map fun i => (c i).1).reverse.prod • ((c l[k]).2 - (c l[k]).1 • (c l[k]).2) := by
+  induction l with
+  | nil => simp [burgers]
+  | cons a l ih =>
+    show _ = ∑ k : Fin (l.length + 1), _
+    rw [Fin.sum_univ_succ]
+    simp [burgers, ih, Function.comp_def]
+
 /-- When the total rotation is trivial (Gauss–Bonnet, Lemma "Gauss–Bonnet for
 turns"), the composition is the translation by the Burgers sum. -/
 theorem composeAll_rotations_of_prod_eq_one (cs : List (A × V))

@@ -50,6 +50,8 @@ quarter-turn `R(a, b) = (-b, a)` the multiplication by `i`, as in
 | Prop. "Checkerboard rule" | `checkerboard`, `oddColours_translate` | the Burgers sum of Prop. (b) |
 | Prop. "Parity of a turn on a sphere" | `parity_chain`, `parity_of_turn` (the induction of the note's proof); `colour_hol_trans` (a second proof) | a proper 2-colouring of the quad graph; for the second proof, that the turn is a word in the loops round the cone points (closed genus-zero surface) |
 | Prop. "Fox–Burgers formula" | `fox_burgers`, `fox_fundamental`, `fox_burgers_combination`, `twisted_relation`, `combination_translate`, `insert_relation`; on the free group: `holFG`, `foxFG` | the presentation of `π₁(Σ°)` by the loops `λᵢ` |
+| … inserting the relation leaves the sum unchanged | `fox_sum_insert_relation`, `combination_insert_relation` (the `Wᵢ` change, `∑ᵢ ⟨Wᵢ, (I - Rᵢ) pᵢ⟩` does not), `hol_insert_relation` | as above |
+| … for a simple turn it is Prop. "The shift is set by the singularities" (a) | `hol_eq_composeAll` (`Fox.hol` applies the head of the word last, `composeAll` first: the list is reversed), `hol_trans_eq_burgers`, `fox_burgers_eq_burgers` (any word); on `simpleWord l = xₘ ⋯ x₁`: `hol_simpleWord`, `fox_burgers_simple` (the Fox–Burgers sum is `∑ₖ Qₖ (pₖ - Rₖ pₖ)`, `Motion.burgers_map`), `fox_simpleWord` (`ρ(∂w/∂x_{iₖ}) = Qₖ = Rₘ⋯Rₖ₊₁` when the indices are distinct) | as above; the letters are the rotations about the developed cone points |
 | Corollary "Checkerboard rule for any combination" | `checkerboard_word`, `checkerboard_combination`, `colours_flip`, `relation_colours`, `winding_constant` | as above; the relation `ϱ = λ₁⋯λₙ` has trivial holonomy |
 | Prop. "Winding numbers do not suffice" | `commutator_holonomy`, `winding_numbers_do_not_suffice` | — |
 | Lemma "Handshake" | `handshake`, `column_even`, `no_whole_solution` | — |
@@ -79,7 +81,7 @@ measured statement.
    the relation in `w_r` *after a prefix `a`* adds `ρ(a g ∂ϱ/∂xᵢ)ᵀ f_r` to `Wᵢ`,
    not `ρ(g ∂ϱ/∂xᵢ)ᵀ f_r`; the note's formula is the case of an insertion at
    the front (`insert_relation`). The conclusion (the sum does not change) is
-   right.
+   right (`fox_sum_insert_relation`, `combination_insert_relation`).
 2. **Theorem "Forced shifts" needs neither convexity nor whole lengths.** The
    proof holds for any set `P` of lengths and any `ℓ ∈ P`
    (`forced_helices`); convexity only makes `τ_P` computable by linear
