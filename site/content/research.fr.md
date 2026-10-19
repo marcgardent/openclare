@@ -18,8 +18,8 @@
 <p class="tags"><span class="tag tag-ink">Article B · théorie</span> <span class="tag tag-teal">Brouillon · non relu par des pairs</span></p>
 <h2 id="paper-b">Les tours d'un T-mesh : obstructions à la fermeture des boucles d'arêtes</h2>
 <p>Dans la quantification d'un T-mesh, une boucle d'arêtes se ferme en anneau quand un <em>tour</em>, une marche droite à travers les patchs qui revient sur son premier côté, a un <em>décalage</em> nul, une forme linéaire entière en les longueurs des arcs ; sinon elle s'enroule en hélice. Nous étudions pourquoi les tours ne peuvent pas tous être fermés.</p>
-<p class="actions"><a class="button primary" href="../../docs/research/closing-helices/paper.pdf" hreflang="en" lang="en">PDF · anglais · 25 p.</a> <a class="button plain" href="../../docs/research/closing-helices/paper.tex">Source LaTeX</a></p>
-<p class="note">Titre anglais : <em lang="en">Turns of a T-Mesh: Obstructions to Closing Edge Loops</em>. Une traduction française suivra, comme pour l'article A.</p>
+<p class="actions"><a class="button primary" href="../../docs/research/closing-helices/paper.fr.pdf">PDF · français · 29 p.</a> <a class="button" href="../../docs/research/closing-helices/paper.pdf" hreflang="en" lang="en">PDF · English · 26 p.</a> <a class="button plain" href="../../docs/research/closing-helices/paper.fr.tex">Source LaTeX</a></p>
+<p class="note">La version française est une traduction faite au mieux ; la version anglaise fait foi. Son titre anglais : <em lang="en">Turns of a T-Mesh: Obstructions to Closing Edge Loops</em>.</p>
 </div>
 </article>
 
