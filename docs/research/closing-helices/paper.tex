@@ -63,7 +63,7 @@ an integer linear form in the arc lengths; at integer lengths it is how far
 the dual line following the same patches comes back beside itself. We add
 the constraints that close turns to a minimum-deviation
 quantizer~\cite{heistermann2023bimdf}, through a least-change projection,
-repair walks and rounds of cuts on the strips of the mesh, and keep the
+repair walks and rounds of constraint generation on the strips of the mesh, and keep the
 candidate with the fewest spiral edges. On twelve models at three budgets
 near 3{,}000 quads, the engine leaves 4.65\% of the edges on spiral loops
 (16.7\% without closing, in single runs of an earlier engine); on a human
@@ -105,7 +105,7 @@ builds on are attributed where they are used.
   of the quantization, is what is new.
 \item Closing turns within T-mesh quantization: a least-change projection
   of the target lengths, an integer search, repair walks judged on the
-  turns, rounds of cuts on the strips of the mesh, and a choice among
+  turns, rounds of constraint generation on the strips of the mesh, and a choice among
   candidates by the share of spiral edges, with safeguards on folds,
   distortion and budget (Section~\ref{sec:closing}); measured on a bench
   that holds the result against open-source remeshers and a mesh modelled by
@@ -380,6 +380,23 @@ patches. Closing constraints $\shift_\gamma(\ell) = 0$ describe the strips
 of the mesh only together with the corridor inequalities of $\gamma$, which
 the engine of Section~\ref{sec:closing} does not impose
 (Appendices~\ref{sec:whole} and~\ref{app:endtoend} measure what this costs).
+Explicitly, let $\gamma$ cross the arcs $a_1, \dots, a_m$ in turn, and let
+$p_j(o, \ell)$ be the distance from the first corner of the side holding
+$a_j$ at which the walk from offset $o$ crosses that side. Each crossing map
+is an isometry whose translation is an integer form in $\ell$, so
+$p_j(o, \ell) = \epsilon_j\, o + q_j(\ell)$ with $\epsilon_j = \pm 1$ and
+$q_j$ an integer linear form; let $e_j(\ell)$, a sum of arc lengths, be the
+distance of the start of $a_j$ along the same side. The corridor is the
+interval
+\[
+  \bigl\{\, o \;:\; e_j(\ell) < \epsilon_j\, o + q_j(\ell) < e_j(\ell) +
+  \ell_{a_j},\ \ j = 1, \dots, m \,\bigr\},
+\]
+and at whole lengths, for a half-integer $o$, each strict inequality is the
+same as one at distance $\tfrac12$ from the ends of the arc:
+$e_j(\ell) + \tfrac12 \le \epsilon_j\, o + q_j(\ell) \le e_j(\ell) +
+\ell_{a_j} - \tfrac12$. These are the inequalities that
+Appendix~\ref{app:endtoend} imposes.
 
 The shift is the across component of the translational holonomy of the
 flat metric along the turn (Section~\ref{sec:holonomy}), which is linear in
@@ -434,7 +451,10 @@ $\pm\ell_a$, hence integers: it maps the grid of $P$ onto the grid of the
 neighbour, and the midpoint of a quad edge onto the midpoint of a quad
 edge. Every node lies at a whole distance along the sides, so a walk at a
 half-integer offset never meets a node, and the arc it crosses is
-determined. The strip and the walk thus continue together, patch after
+determined. A single arc may have length zero (two T-junctions, or a
+T-junction and a corner, at the same point): it holds no half-integer, so no
+walk crosses it, and nothing in the argument changes; only the sides of the
+patches need to be positive. The strip and the walk thus continue together, patch after
 patch. A
 strip only meets singular vertices at its sides, never inside, since they
 are corners of patches. Positive sides make each patch a grid with at
@@ -445,7 +465,7 @@ of the mesh.
 The sampled walks of Section~\ref{sec:closing} start at fixed shares of
 the real side lengths. Proposition~\ref{prop:complete} says where the
 helices of a given mesh are \emph{all} found: at the half-integers of the
-whole lengths. The engine uses this to close by cuts
+whole lengths. The engine uses this to generate closing constraints
 (Section~\ref{sec:closing}).
 
 \section{Closing turns in quantization}\label{sec:closing}
@@ -458,9 +478,13 @@ The quantizer of openclare minimizes a separable convex cost of the integer
 lengths, in the minimum-deviation-flow formulation
 of~\cite{heistermann2023bimdf}, subject to the balance of each patch, by
 cancelling improving walks in a strip network (a simpler solver than their
-matching-based one). The cost of arc $a$ is $w_a(\ell_a - \lambda r_a)^2$ with
+matching-based one). Only the structure is theirs: their objective is a sum
+of absolute deviations, ours is quadratic. The cost of arc $a$ is
+$w_a(\ell_a - \lambda r_a)^2$ with
 $w_a = 1/(\lambda r_a + 1)$, plus a term that draws a vertex onto each fold
-of the surface the arc crosses, and a penalty for going below a lower bound;
+of the surface the arc crosses, and a penalty for going below a lower bound
+(the mean absolute deviation, an $L^1$ measure, is used afterwards, as a cap
+in the selection of candidates);
 the real lengths $r_a$ carry a fixed per-arc perturbation of at most
 $0.5\%$, so that arcs of equal length do not all change at the same scale.
 The scale $\lambda$ is searched for the number of quads asked for, and arcs
@@ -483,7 +507,7 @@ The target lengths are changed as little as possible, in the weighted least
 squares sense, for every held turn to have zero shift and every patch to
 stay balanced:
 \[
-  \min_{x}\ \sum_a \frac{(x_a - r_a)^2}{w_a}
+  \min_{x}\ \sum_a w_a\,(x_a - r_a)^2
   \quad\text{s.t.}\quad A x = 0,\quad \shift_\gamma(x) = 0\ \ \forall\gamma\in H,
 \]
 solved with a sparse Cholesky factorization of the balances, computed once
@@ -508,11 +532,13 @@ turn whose shift is a non-negative form already at its least
 debug builds, the integer coefficients of the shifts, the handshake of
 Lemma~\ref{lem:handshake} and the parity of Proposition~\ref{prop:parity}.
 
-\paragraph{Closing by cuts.}
+\paragraph{Rounds of constraint generation.}
 Proposition~\ref{prop:complete} says where the strips of a given mesh are
 \emph{all} found: at the half-integers of the whole lengths. After a way
 whose lengths are admissible (within the budget and the deviation cap
-below), up to three rounds follow, in the sense of cutting planes: every
+below), up to three rounds follow, a lazy generation of constraints (the
+equations are added as the current solution violates them; they are
+equalities on the shifts, not integrality cuts): every
 strip of the whole lengths is walked (up to $6$ times the side of the mesh),
 those that come back shifted although the real lengths bring them back
 within $0.12$ of their length are held as well, and the projection and the
@@ -611,7 +637,7 @@ closing, one way kept by spirals & 9.7\% & 8.57 & 4.85 \\
 $3{,}000$ quads, one run per model, engines of commits \texttt{7dc1727},
 \texttt{c86740f} and \texttt{cf4a82c}. Each line adds to the one above only
 roughly: between the second and third lines the baseline moved (commit
-\texttt{ab8d89c}, $10.1\%$ to $9.5\%$). The cut rounds, the active set and
+\texttt{ab8d89c}, $10.1\%$ to $9.5\%$). The constraint rounds, the active set and
 the floor of the cap came later; the engine at the cited commit gives
 $4.65\%$ over three budgets (text).}
 \label{tab:dev}
@@ -665,7 +691,7 @@ eight poles of valence three, six patches, no spiral.
 
 To see how far the projection of Section~\ref{sec:closing} is from what
 the constraints allow, an experimental hook of openclare (branch
-\texttt{rd-exact}, on an engine before the cut rounds and the floor of the
+\texttt{rd-exact}, on an engine before the constraint rounds and the floor of the
 deviation cap of Section~\ref{sec:closing}: commit \texttt{3b3122d} and later
 are not in it) exports, for each way of finding turns, the system it works
 on: the real lengths of the 2{,}069 arcs of the T-mesh
@@ -769,7 +795,7 @@ active set, floor half the real length & 36--72 & --- & 9.8\% \\
 \caption{Male body at 10{,}590 quads, engine of the export, one run each;
 the mesh keeps the way with the fewest spirals, so its share is that of a
 single way. The engine at the cited commit uses the active set with floor $0$
-for the turns of each way, together with the cut rounds and the floor of the
+for the turns of each way, together with the constraint rounds and the floor of the
 deviation cap, which this table does not include.}
 \label{tab:rounding}
 \end{table}
@@ -2932,7 +2958,7 @@ paragraph ``Reproducibility'').
 \begin{center}
 \small
 \setlength{\tabcolsep}{4pt}
-\begin{tabular}{@{}p{4.6cm}p{4.4cm}p{5.6cm}@{}}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{5.6cm}@{}}
 \toprule
 figures & engine & source \\
 \midrule
@@ -3249,7 +3275,7 @@ twice, once in each direction, with opposite shift expressions (the surface
 being oriented), and 168 of them come back shifted. A selection of rings by
 the field's shift alone (under half a row) is too narrow: the twisted thigh,
 shifted 1.65 rows a turn by the field, is a ring a modeller wants closed.
-Selecting rings by their lean, as the cut rounds of the engine now do
+Selecting rings by their lean, as the constraint rounds of the engine now do
 (Section~\ref{sec:closing}), gives 222 of the 230 ways round; 218 of them
 (109 strips) can be closed together in real numbers with every bound of
 separation kept. Posed directly, HiGHS found no whole solution within ten
@@ -3425,7 +3451,7 @@ much the mesh spirals.
 \paragraph{Most rings closable, end to end.}
 Hardness is a statement about the worst case; we also measured what an exact
 selection buys on the bench, with the engine of branch
-\texttt{complete-helices} (the cut rounds without the finer work mesh of the
+\texttt{complete-helices} (the constraint rounds without the finer work mesh of the
 cited commit: $4.54\%$ of spiral edges over the $36$ runs, against $4.65\%$).
 We posed, for the lengths the engine keeps, the
 mixed-integer program that closes as many of its strips leaning less than
