@@ -38,7 +38,7 @@ quarter-turn `R(a, b) = (-b, a)` the multiplication by `i`, as in
 | Prop. "Completeness at given lengths", in a model only | `stripsEquiv` (in a model where the strips are *defined* as the cycles of a successor map built from a permutation `walk` of the stations, so the bijection holds by construction; the station walk of the gluing data, `stationWalk`, is not shown to be that permutation), `exists_station`, `sameCycle_station_iff`; `realWalk_iterate_half`, `realWalk_iterate_open` (the walk from `k + ½`, or from any point of `(k, k + 1)`, follows the unit edges); `glueLine_half`, `glueLine_open`, `oddCount_motion` (a quarter-turn with a whole translation keeps nodes, edge midpoints and quad centres apart) | the patches are integer rectangles with positive sides (`hdepth`) glued along their arcs by `t ↦ ±t + c`, `c` whole, mapping the unit edges of the sides one to one (a closed surface); that the station walk is a permutation and that the model is the quad mesh |
 | Lemma "Gauss–Bonnet for turns" | `gauss_bonnet_turn` (`∑ (4 - k) = 4 χ` inside a region whose border turns by zero), `gauss_bonnet`, `turn_border_sum`, `sum_deg`, `sum_corners` | that `γ̄`, on the grid refined by two, bounds a disc (or an annulus): a complex of quads with Euler characteristic `χ` whose interior vertices have a cycle as link and border vertices a path (`IsRegion`) |
 | … the rotation part | `quarter_turns_prod_eq_one_iff` (`R^{j₁}⋯R^{jₘ} = I ⇔ 4 ∣ ∑ jᵢ`) | — |
-| Lemma "One self-crossing" | `gauss_bonnet_corners` (`4 χ - a + b` with `a` convex and `b` concave corners on the border) | the regions cut open at the crossing are discs; which of their corners are convex |
+| Lemma "One self-crossing" | `one_crossing_on_walk` (totals `3, 3, 2`), `one_crossing_on_segment` (totals `2, 2, 4`), from `gauss_bonnet_corners` (`4 χ - a + b` with `a` convex and `b` concave corners on the border) | the regions cut open at the crossing are discs, the crossing doubled on the border of the third; how many convex and concave corners each region has (`a - b = 1, 1, 2` on the walk, `2, 2, 0` on the closing segment), the note's case analysis |
 | Prop. "The shift is set by the singularities" (a) | `Motion.composeAll_rotations`, `Motion.burgers_eq_sum` (`B = ∑ Qᵢ (I - Rᵢ) pᵢ`, `Qᵢ = Rₘ⋯Rᵢ₊₁`), `Motion.translation_inv` (the sign) | that `ĥ(γ̄)` is the composition of the rotations round the cone points |
 | … the order of first visit | `Forest.glue_eq_preorder`, `Forest.glue_rotations`; `Forest.order_of_first_visit_matters` (last visit gives another vector); all in `FirstVisit.lean`, namespace `Forest` | the recursion `G_f = G_{f_r} ∘ ⋯ ∘ G_{f_1} ∘ ρ_v` read off the cut tree |
 | Prop. (b), annuli | `Motion.annulus_holonomy` (`ĥ(γ̄₁ κ γ̄₂⁻¹ κ⁻¹)` is the translation by `T₁ - M T₂`), `Motion.conj_translation` | the homomorphism `ĥ` and the holonomies of the two turns |
@@ -66,7 +66,7 @@ each side (Jordan–Schoenflies) and that the refined quads inside form a disc i
 the combinatorial sense (`IsRegion`); the developing map, holonomy as a
 homomorphism of the fundamental group and its presentation by the loops round
 the cone points; which corners of the regions of Lemma "One self-crossing" are
-convex. Two standard graph facts, days of work: a finite graph is connected
+convex (the totals are proved from them). Two standard graph facts, days of work: a finite graph is connected
 exactly when it has a spanning tree grown by leaves, and Harary's converse (a
 graph all of whose cycles are balanced has a switching; only the direction the
 proposition needs is proved). Strips on surfaces with borders (the walk is then
@@ -271,6 +271,6 @@ the whole lengths of the integer search, `B` the balance matrix.
   "Sign-definite turns" and "Whole solutions exist at some size".
 * `Completeness.lean`: Proposition "Completeness at given lengths".
 * `GaussBonnet.lean`: discrete Gauss–Bonnet for quads, triangles and hexagons;
-  Lemmas "Gauss–Bonnet for turns" and "One self-crossing" (the count).
+  Lemmas "Gauss–Bonnet for turns" and "One self-crossing" (the counts).
 * `BeyondQuads.lean`: fields of any order: rotations and dislocations.
 * `Forced.lean`: forced helices and chains of dislocations.
