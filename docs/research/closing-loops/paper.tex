@@ -555,17 +555,17 @@ closing, one way kept by spirals & 9.7\% & 8.57 & 4.85 \\
 \bottomrule
 \end{tabular}
 \caption{Parts of the method: mean over the twelve models at $3{,}000$
-quads, one run per model, engines of commits \texttt{7dc1727},
-\texttt{c86740f} and \texttt{cf4a82c}. Each line adds to the one above only
+quads, one run per model, engines of commits \texttt{9f3e455},
+\texttt{3658abc} and \texttt{197f0ca}. Each line adds to the one above only
 roughly: between the second and third lines the baseline moved (commit
-\texttt{ab8d89c}, $10.1\%$ to $9.5\%$). The constraint rounds, the active set
+\texttt{452b346}, $10.1\%$ to $9.5\%$). The constraint rounds, the active set
 and the floor of the cap are not in the table; the engine at the cited
 commit gives $4.65\%$ over three budgets.}
 \label{tab:dev}
 \end{table}
 
 \paragraph{Against other remeshers.}
-The last full bench committed (commit \texttt{83f0967}, $3{,}000$ quads; one
+The last full bench committed (commit \texttt{5bc16c6}, $3{,}000$ quads; one
 run per model for openclare and AutoRemesher~\cite{autoremesher}, the median
 of five seeds for QuadriFlow~\cite{huang2018quadriflow}, run through Blender)
 used an engine a few changes away from the cited one, which give $4.54\%$
@@ -575,7 +575,7 @@ AutoRemesher for $18$. On the $7$ models that all three mesh validly in every
 run, the mean share of spiral edges is $1.8\%$ for openclare, $38.8\%$ for
 QuadriFlow and $21.7\%$ for AutoRemesher; on the $15$ models where all three
 produce a mesh, valid or not, $4.2\%$, $27.2\%$ and $27.3\%$. Without closing
-(commit \texttt{4e9620c}) openclare had $16.6\%$ and $15.5\%$ on the same
+(commit \texttt{b0fba91}) openclare had $16.6\%$ and $15.5\%$ on the same
 subsets. The comparison favours openclare by construction as well: the engine
 chooses among its candidates by this very share (Section~\ref{sec:closing}),
 which the other two do not optimize, and the share sees no helix of pitch
@@ -587,7 +587,7 @@ The male body of the Essentials library has a base mesh of $10{,}590$ quads
 modelled by hand, with $2.5\%$ of spiral edges in $3$ spiral loops and
 $31.6\%$ of its edges on closed loops. Remeshed by openclare at that count
 with the closing of Section~\ref{sec:closing}, single runs of the engines of
-commits \texttt{b0d37fa} to \texttt{8fd1932} give $1.6\%$ of spiral edges,
+commits \texttt{1b77f7d} to \texttt{4db7b42} give $1.6\%$ of spiral edges,
 in $9$ spiral loops: below the hand-made mesh, but by a few loops only. One
 such run has
 $33.2\%$ of its edges on closed loops, a mean distance to the source of
@@ -596,7 +596,7 @@ degrees, against $0.17$\textperthousand\ and $9.2$ degrees for the hand-made
 mesh; these fidelity figures compare meshes made for different ends, the
 hand-made one being a base mesh whose distance and angles are choices of its
 modeller. The lean bound matters on this body: with the lean bound $0.05$
-alone (commit \texttt{ab8d89c}), one leg was a single helix from hip to
+alone (commit \texttt{452b346}), one leg was a single helix from hip to
 ankle, its turns leaning more than that bound allows, and the mesh had
 $12.1\%$ of spiral edges.
 
@@ -661,7 +661,7 @@ separation can close even on its own.}
 How far is the heuristic of Section~\ref{sec:closing} from what the
 constraints allow? An experimental hook of openclare (branch
 \texttt{rd-exact}, on an engine without the constraint rounds and the floor
-of the deviation cap, that is before commit \texttt{3b3122d}) exports, for
+of the deviation cap, that is before commit \texttt{c8bf2be}) exports, for
 each way of finding turns, the system it works on, for the male body at
 $10{,}590$ quads. Its T-mesh has $1{,}295$ nodes ($1{,}034$ T-junctions and
 $261$ singular vertices: $133$ of valence three, $127$ of valence five and
@@ -979,16 +979,16 @@ twelve models, three budgets, $4.65\%$ (Section~\ref{sec:experiments})
   & the cited commit & working logs of the protocol below; a second run of
   the same engine gave the same figures for the $36$ meshes \\
 Table~\ref{tab:dev}
-  & commits \texttt{7dc1727}, \texttt{c86740f}, \texttt{cf4a82c}
-  & commit messages (also \texttt{ab8d89c}) \\
+  & commits \texttt{9f3e455}, \texttt{3658abc}, \texttt{197f0ca}
+  & commit messages (also \texttt{452b346}) \\
 against other remeshers
-  & commits \texttt{83f0967}, \texttt{4e9620c}
+  & commits \texttt{5bc16c6}, \texttt{b0fba91}
   & \texttt{bench/results/results.json} at those commits \\
 hand-made male body
   & ---
   & \texttt{bench/results/RESULTS.md} \\
 male body, openclare
-  & \texttt{ab8d89c}; \texttt{b0d37fa} to \texttt{8fd1932}
+  & \texttt{452b346}; \texttt{1b77f7d} to \texttt{4db7b42}
   & commit messages; closed loops, distance and corners: working logs \\
 Figures~\ref{fig:overview} and~\ref{fig:closeups}, their numbers
   & commit \texttt{89232b0}, one run per mesh; QuadriFlow through Blender, on
@@ -996,14 +996,14 @@ Figures~\ref{fig:overview} and~\ref{fig:closeups}, their numbers
   & \texttt{figures/README.md} (commands, numbers, source checksum) and
   \texttt{figures/make\_figures.sh}, which remakes them \\
 Section~\ref{sec:exact}, up to ``The heuristic leaves most of the gap''
-  & branch \texttt{rd-exact} (export hook), engine before \texttt{3b3122d}
+  & branch \texttt{rd-exact} (export hook), engine before \texttt{c8bf2be}
   & working logs, scripts and the exported systems; some summary figures
-  also in commit messages (\texttt{6374097}, \texttt{38b9fb3}) \\
+  also in commit messages (\texttt{2a4ca25}, \texttt{9132835}) \\
 closing the most rings, end to end
   & branch \texttt{maxclose-rd}, engine of branch \texttt{complete-helices}
   & working logs; some figures only in the experiment's summary \\
 acting before quantization
-  & a patch of the engine of commit \texttt{83f0967}
+  & a patch of the engine of commit \texttt{5bc16c6}
   & working logs; the ratios over twelve moves, the $36$ runs and the
   $3{,}600$ of $3{,}604$ rings only in the experiment's summary \\
 \bottomrule
