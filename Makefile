@@ -1,6 +1,6 @@
 # Shortcuts for the common tasks. `make help` lists them.
 
-.PHONY: help build test scenes blenderkit essentials remeasure autoremesher scores quick pages dashboard view addon install addon-windows test-windows addon-test version release paper paper-version paper-arxiv paper-clean proofs site site-serve
+.PHONY: help build test scenes blenderkit essentials remeasure autoremesher scores quick pages dashboard view addon install addon-windows test-windows addon-test capi-test version release paper paper-version paper-arxiv paper-clean proofs site site-serve
 
 help:
 	@echo "make build       build the openclare binary (release)"
@@ -16,12 +16,14 @@ help:
 	@echo "make test-windows WINE=/path/to/wine64"
 	@echo "                 run the tests of the engine built for Windows, under Wine"
 	@echo "make addon-test  run the add-on in a Blender without interface (needs blender)"
+	@echo "make capi-test   build the C test of the C interface against its header and the library,"
+	@echo "                 and run it (needs cc, or CC=clang)"
 	@echo "make autoremesher download and install the AutoRemesher challenger into ~/.local/bin"
 	@echo "make version INCREMENT=MAJOR|MINOR|FIX"
 	@echo "                 raise that number of the version in the sources, on the branch of a"
 	@echo "                 change (every change of the add-on raises it)"
-	@echo "make release     tag main with its version; PUSH=1 to send the tag, from which GitHub"
-	@echo "                 builds the add-on for Linux and for Windows"
+	@echo "make release     ask GitHub for a draft release of main (needs gh): the add-on and the C"
+	@echo "                 library for Linux, Windows and macOS; read it, then publish it there"
 	@echo "make scenes      make the scenes of the bench that are made from a file as it is"
 	@echo "                 (bench/scenes; needs blender). MODELS=cube,pig for some only,"
 	@echo "                 REFRESH=1 to make again those already there"
@@ -227,7 +229,8 @@ install: addon
 # with the files of the add-on and a manifest that says windows-x64, put
 # together in a folder of their own. blender/openclare/lib keeps the engine
 # of this system, which the tests load. Nothing here runs the result: it has
-# to be tried on Windows.
+# to be tried on Windows. The archives of a release are built on Windows
+# itself, with MSVC (.github/workflows/release.yml); this one is for trying.
 WINDOWS_TARGET = x86_64-pc-windows-gnu
 WINDOWS_STAGE = dist/stage-windows-x64
 addon-windows:
@@ -256,6 +259,17 @@ test-windows:
 addon-test: addon
 	ulimit -v $(MEMORY_CAP); blender -b --factory-startup --python-exit-code 1 --python blender/test_addon.py
 
+# The C interface called from C: crates/openclare-capi/tests/c/smoke.c, built
+# with the header crates/openclare-capi/include/openclare.h and linked to the
+# library of target/release, then run (needs a C compiler: cc, or CC=clang).
+CAPI = crates/openclare-capi
+capi-test:
+	cargo build --release -p openclare-capi
+	mkdir -p target/capi-test
+	$(CC) -std=c99 -Wall -Wextra -Werror -I $(CAPI)/include $(CAPI)/tests/c/smoke.c \
+		-L target/release -lopenclare_capi -lm -Wl,-rpath,'$$ORIGIN/../release' -o target/capi-test/smoke
+	ulimit -v $(MEMORY_CAP); target/capi-test/smoke $(ADDON_VERSION)
+
 # The next version: MAJOR, MINOR or FIX says which of its three numbers is
 # raised, in the sources, on the branch of a change: main changes only through
 # pull requests.
@@ -263,11 +277,12 @@ version:
 	@test -n "$(INCREMENT)" || { echo "which number? make version INCREMENT=MAJOR, MINOR or FIX"; exit 2; }
 	python3 scripts/release.py version $(INCREMENT)
 
-# A release: main tagged with the version it holds. The tag pushed (PUSH=1, or
-# by hand afterwards), the add-on is built on GitHub for Linux and for Windows
-# and attached to a release (.github/workflows/release.yml).
+# A release: .github/workflows/release.yml run on main with release=true, as
+# from the Actions tab. GitHub builds the add-on and the C library for Linux,
+# Windows and macOS and makes of them a DRAFT release v<version>, to read and
+# publish by hand (Zenodo archives every published release).
 release:
-	python3 scripts/release.py tag $(if $(PUSH),--push)
+	python3 scripts/release.py release
 
 # The website: site/content and the documents of the repository, made into
 # static pages by site/build.py, its links checked. GitHub Pages publishes it

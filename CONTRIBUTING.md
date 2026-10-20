@@ -129,13 +129,26 @@ raises the last number of the version in the sources (`MINOR` or `MAJOR` raise t
 `Cargo.toml`, `Cargo.lock` and the manifest of the add-on. It is done on the branch of a change,
 and committed with it: every change of the add-on raises it, so that Blender sees a new version.
 
+A release is built on GitHub, on demand only, by `.github/workflows/release.yml`: once the change
+is merged, run the workflow `release` on `main` from the Actions tab with *release* ticked, or
+
 ```bash
-make release PUSH=1
+make release        # gh workflow run release.yml --ref main -f release=true
 ```
 
-tags `main`, once the change is merged, with the version it holds (`v<version>`); `PUSH=1` sends
-the tag. Once the tag is on GitHub, the add-on is built for Linux (against glibc 2.28, as Blender
-itself) and for Windows, and attached to a release of that tag (`.github/workflows/release.yml`).
+It builds, for linux-x64 (against glibc 2.28, as Blender itself), windows-x64 (MSVC), macos-arm64
+and macos-x64 (macOS 11, signed ad hoc, not notarized):
+
+- `openclare-<version>-<platform>.zip`, the add-on, whose manifest names that system;
+- `openclare-capi-<version>-<platform>.tar.gz`, the library for C: `lib/`, `include/openclare.h`,
+  `LICENSE` and a `README.md` on linking it.
+
+Each library first passes the C test (`crates/openclare-capi/tests/c/smoke.c`, `make capi-test`
+here) on its own system, and the header is compared with `src/lib.rs` through cbindgen. The eight
+archives and their `SHA256SUMS` then make a **draft** release `v<version>` of the commit; a version
+already released stops the run. Read the draft on GitHub and publish it by hand: Zenodo archives
+every published release with a DOI, and the tag is made then. Run without *release*, the workflow
+only keeps the archives with the run, from any branch.
 
 ## Licence
 

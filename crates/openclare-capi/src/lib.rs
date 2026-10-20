@@ -35,6 +35,12 @@
 //!
 //! Nothing here unwinds into the caller: a panic inside the library comes
 //! back as an error of the result.
+//!
+//! The C header, `include/openclare.h`, is written by hand and changes with
+//! this file: a function, a type or a constant added, removed or changed here
+//! is changed there too. The release workflow compares the two through
+//! cbindgen, and compiles `tests/c/smoke.c` against the header on each
+//! system (`make capi-test` here).
 
 use std::ffi::{CStr, CString, c_char, c_void};
 use std::panic::{AssertUnwindSafe, catch_unwind};

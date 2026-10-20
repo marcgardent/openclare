@@ -1,20 +1,23 @@
 #!/usr/bin/env python3
-"""The version of openclare: raised in a change, tagged on `main` for a release.
+"""The version of openclare: raised in a change, released from `main` on GitHub.
 
     python3 scripts/release.py version fix      0.1.0 becomes 0.1.1
     python3 scripts/release.py version minor    0.1.0 becomes 0.2.0
     python3 scripts/release.py version major    0.1.0 becomes 1.0.0
-    python3 scripts/release.py tag              tag `main` with the version it holds
-    python3 scripts/release.py tag --push       and send the tag to `origin`
+    python3 scripts/release.py release          draft a release of `main` on GitHub
 
 The number is kept in Cargo.toml (every crate takes it from the workspace), in
 Cargo.lock and in the manifest of the Blender add-on. `main` changes only
 through pull requests: the number is raised on the branch of a change, with
 the change (a change of the add-on raises it, so that Blender sees a new
-version), and goes to `main` when it is merged. A release is then a tag
-`v<version>` on `main`, made from a working tree without changes; nothing
-leaves this machine without `--push`. Once the tag is on GitHub, the add-on is
-built there for Linux and for Windows (.github/workflows/release.yml).
+version), and goes to `main` when it is merged.
+
+A release is made on GitHub, by .github/workflows/release.yml run on `main`
+with `release=true`: from the Actions tab, or by `release` here, which asks
+GitHub for it through the `gh` command. It builds the add-on and the C library
+for the four systems and makes of them a DRAFT release `v<version>` of the
+commit, to read and publish by hand (Zenodo archives every published release).
+Nothing is tagged here: the tag is made on GitHub when the draft is published.
 """
 
 import argparse
@@ -72,28 +75,25 @@ def raise_version(part):
     print(f"{current} -> {version}, in Cargo.toml, Cargo.lock and the manifest of the add-on: commit it with the change")
 
 
-def tag(push):
-    if git("rev-parse", "--abbrev-ref", "HEAD") != BRANCH:
-        sys.exit(f"a release is tagged on `{BRANCH}`: this is `{git('rev-parse', '--abbrev-ref', 'HEAD')}`")
-    if git("status", "--porcelain", "--untracked-files=no"):
-        sys.exit("a release is tagged from a working tree without changes: commit or put them aside first")
+def release():
+    """Asks GitHub for a draft release of `origin/main`, with the version it holds."""
     git("fetch", "--quiet", "origin", BRANCH)
-    if git("rev-parse", "HEAD") != git("rev-parse", f"origin/{BRANCH}"):
-        sys.exit(f"`{BRANCH}` here is not `origin/{BRANCH}`: pull first")
-    version = version_in(CARGO, IN_CARGO)
-    if version_in(MANIFEST, IN_MANIFEST) != version:
-        sys.exit(f"Cargo.toml says {version}, the manifest of the add-on {version_in(MANIFEST, IN_MANIFEST)}")
-    name = f"v{version}"
-    if git("tag", "--list", name):
-        sys.exit(f"the tag {name} is already there: raise the version in a change first (make version)")
-    git("tag", "--annotate", name, "--message", f"openclare {version}")
-    print(f"{BRANCH} tagged {name}")
-    if push:
-        subprocess.run(["git", "push", "origin", name], cwd=ROOT, check=True)
-        print(f"sent to `origin`: the add-on of {name} is being built on GitHub")
-    else:
-        print(f"to have it built on GitHub:  git push origin {name}")
-        print(f"to take it back:             git tag -d {name}")
+    held = git("show", f"origin/{BRANCH}:{MANIFEST.relative_to(ROOT).as_posix()}")
+    found = IN_MANIFEST.search(held)
+    if not found:
+        sys.exit(f"no version found in the manifest of the add-on on origin/{BRANCH}")
+    name = f"v{found.group(2)}"
+    if git("ls-remote", "--tags", "origin", f"refs/tags/{name}"):
+        sys.exit(f"{name} is already released: raise the version in a change first (make version)")
+    asked = ["gh", "workflow", "run", "release.yml", "--ref", BRANCH, "-f", "release=true"]
+    try:
+        subprocess.run(asked, cwd=ROOT, check=True)
+    except FileNotFoundError:
+        sys.exit("no `gh` here: run the workflow `release` from the Actions tab of the repository, release ticked")
+    except subprocess.CalledProcessError:
+        sys.exit("GitHub did not start the workflow (see above)")
+    print(f"building {name} on GitHub: gh run watch, or the Actions tab. Once done, the draft {name} is")
+    print("under Releases: read it, then publish it there (Zenodo archives it), or delete it.")
 
 
 def main():
@@ -101,13 +101,12 @@ def main():
     asked = parser.add_subparsers(dest="action", required=True)
     raising = asked.add_parser("version", help="raise the version in the sources")
     raising.add_argument("part", type=str.lower, choices=PARTS, help="the number to raise; those after it go back to 0")
-    tagging = asked.add_parser("tag", help="tag main with its version")
-    tagging.add_argument("--push", action="store_true", help="send the tag to `origin`")
+    asked.add_parser("release", help="draft a release of origin/main on GitHub (needs gh)")
     asked = parser.parse_args()
     if asked.action == "version":
         raise_version(asked.part)
     else:
-        tag(asked.push)
+        release()
 
 
 if __name__ == "__main__":
