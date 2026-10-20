@@ -254,3 +254,97 @@ fn edge_loops_stop_at_a_face_that_is_not_a_quad() {
     let loops = metrics.edge_loops.expect("still a manifold");
     assert_eq!((loops.closed, loops.spiral, loops.open, loops.border), (48 + 24 - 4, 0, 4, 0), "{loops:?}");
 }
+
+/// An open tube of `nu` columns of quads round and `nv` rows along, its
+/// last column closed onto the first only at the rows `seam`, and
+/// `shift` rows higher: with a shift, the loops round it climb into
+/// helices. Only its connectivity counts.
+fn open_tube(nu: u32, nv: u32, seam: std::ops::Range<u32>, shift: u32) -> openclare::PolyMesh {
+    let index = |i: u32, j: u32| i * (nv + 1) + j;
+    let mut tube = openclare::PolyMesh::default();
+    for i in 0..nu {
+        for j in 0..=nv {
+            let angle =
+                std::f64::consts::TAU * (i as f64 + j as f64 / nv as f64 * shift as f64 / nv as f64) / nu as f64;
+            tube.positions.push(Vec3::new(angle.cos(), angle.sin(), j as f64 * 0.2));
+        }
+    }
+    for i in 0..nu - 1 {
+        for j in 0..nv {
+            tube.faces.push(vec![index(i, j), index(i + 1, j), index(i + 1, j + 1), index(i, j + 1)]);
+        }
+    }
+    for j in seam.filter(|j| j + shift < nv) {
+        tube.faces.push(vec![index(nu - 1, j), index(0, j + shift), index(0, j + shift + 1), index(nu - 1, j + 1)]);
+    }
+    tube
+}
+
+#[test]
+fn a_tube_of_rings_and_a_flat_grid_have_no_helix() {
+    use openclare::metrics::edge_loops;
+    // The torus grid: a strip leaving a ring goes round the torus back to
+    // the edge it left, which is no pass.
+    for (mesh, rings) in [(open_tube(24, 10, 0..10, 0), 9), (primitives::torus_quads(1.0, 0.4, 48, 24), 72)] {
+        let loops = edge_loops(&mesh).expect("a pure quad manifold");
+        assert_eq!(loops.closed, rings, "{loops:?}");
+        assert_eq!((loops.helix, loops.helix_pitch_max()), (0, 0), "{loops:?}");
+    }
+    let loops = edge_loops(&primitives::plane_quads(12)).unwrap();
+    assert_eq!((loops.border, loops.helix), (22, 0), "{loops:?}");
+}
+
+#[test]
+fn a_helix_of_pitch_one_is_seen_by_both_counts() {
+    use openclare::metrics::edge_loops;
+    // Climbing one row a turn: a single helix from one end of the tube to
+    // the other, beside itself a quad further.
+    let loops = edge_loops(&open_tube(24, 10, 0..10, 1)).expect("a pure quad manifold");
+    assert_eq!((loops.spiral, loops.helix, loops.helix_missed), (1, 1, 0), "{loops:?}");
+    assert_eq!(loops.helix_pitch_shares, vec![loops.spiral_share]);
+    // Round the twisted torus: the helix goes round the tube; the rings round
+    // the axis are met again one ring along, but across the whole tube: the
+    // turn is the strip's, and they are no helices.
+    let loops = edge_loops(&twisted_torus(24, 12, 1)).unwrap();
+    assert_eq!((loops.closed, loops.helix, loops.helix_pitch_max()), (12, 1, 1), "{loops:?}");
+    assert!((loops.helix_share - 0.5).abs() < 1e-12, "{loops:?}");
+}
+
+#[test]
+fn helices_of_pitch_six_escape_the_spiral_count() {
+    use openclare::metrics::edge_loops;
+    // Six helices wound together, each beside itself six quads further:
+    // beyond SPIRAL_ORDER, yet helices.
+    for mesh in [open_tube(24, 30, 0..30, 6), twisted_torus(24, 12, 6)] {
+        let loops = edge_loops(&mesh).expect("a pure quad manifold");
+        assert_eq!((loops.spiral, loops.helix, loops.helix_missed), (0, 6, 6), "{loops:?}");
+        assert_eq!(loops.helix_pitch_max(), 6);
+        assert_eq!(loops.helix_pitch_shares[..5], [0.0; 5]);
+        assert!((loops.helix_missed_share - loops.helix_share).abs() < 1e-12, "{loops:?}");
+    }
+    let five = edge_loops(&twisted_torus(25, 12, 5)).unwrap();
+    assert_eq!((five.spiral, five.helix, five.helix_pitch_max()), (0, 5, 5), "{five:?}");
+}
+
+#[test]
+fn a_loop_beside_itself_for_less_than_a_turn_is_no_helix() {
+    use openclare::metrics::edge_loops;
+    // Closed at a few rows only, two rows higher: the loop along row 2 goes
+    // round, on along row 4, round again and on along row 6, where it stops.
+    // Its middle turn is beside both others: a helix. (The loop along row 3
+    // goes on along row 5 only, and the edge across the seam between them
+    // has nothing beside it: a spiral, not a helix.)
+    let (nu, nv) = (24u32, 8u32);
+    let tube = open_tube(nu, nv, 1..5, 2);
+    let loops = edge_loops(&tube).expect("a pure quad manifold");
+    assert_eq!((loops.spiral, loops.helix, loops.helix_pitch_max()), (2, 1, 2), "{loops:?}");
+    // Row 4 cut open half way round: the first loop now stops there, beside
+    // itself for half a turn only. Still a spiral, no longer a helix.
+    let mut cut = tube;
+    cut.faces.retain(|face| {
+        let (i, j) = (face[0] / (nv + 1), face[0] % (nv + 1));
+        !(j == 4 && (nu / 2..nu - 1).contains(&i))
+    });
+    let loops = edge_loops(&cut).expect("a pure quad manifold");
+    assert_eq!((loops.spiral, loops.helix), (2, 0), "{loops:?}");
+}

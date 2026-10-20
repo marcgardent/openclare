@@ -145,7 +145,11 @@ impl Metrics {
             write!(json, "\"{name}\": {value}, ").unwrap();
         }
         let loops = self.edge_loops.as_ref();
-        let loop_fields: [(&str, String); 9] = [
+        let pitch_shares = |l: &EdgeLoops| {
+            let shares: Vec<String> = l.helix_pitch_shares.iter().map(f64::to_string).collect();
+            format!("[{}]", shares.join(", "))
+        };
+        let loop_fields: [(&str, String); 15] = [
             ("loops_closed", optional(loops.map(|l| l.closed))),
             ("loops_spiral", optional(loops.map(|l| l.spiral))),
             ("loops_open", optional(loops.map(|l| l.open))),
@@ -155,6 +159,12 @@ impl Metrics {
             ("loop_edges_open", optional(loops.map(|l| l.open_share))),
             ("loop_edges_border", optional(loops.map(|l| l.border_share))),
             ("longest_open_loop", optional(loops.map(|l| l.longest_open))),
+            ("loops_helix", optional(loops.map(|l| l.helix))),
+            ("loop_edges_helix", optional(loops.map(|l| l.helix_share))),
+            ("loops_helix_missed", optional(loops.map(|l| l.helix_missed))),
+            ("loop_edges_helix_missed", optional(loops.map(|l| l.helix_missed_share))),
+            ("helix_pitch_max", optional(loops.map(EdgeLoops::helix_pitch_max))),
+            ("loop_edges_helix_by_pitch", optional(loops.map(pitch_shares))),
         ];
         for (name, value) in &loop_fields {
             write!(json, "\"{name}\": {value}, ").unwrap();
@@ -249,6 +259,47 @@ pub struct EdgeLoops {
     pub border_share: f64,
     /// Edges of the longest loop that stops at an irregular vertex.
     pub longest_open: usize,
+    /// Loops that are helices, of any pitch, whatever else they are. The
+    /// engine does not choose its meshes by this count, unlike `spiral`.
+    ///
+    /// A strip of quads leaving a loop across, followed as far as it goes,
+    /// may cross the loop again the same way round: there a pass of the loop
+    /// lies beside it, that many quads across. One such pass makes no helix,
+    /// since a long loop on a large surface comes back near itself somewhere.
+    /// A loop is a helix when it lies beside itself along a whole turn: from
+    /// an edge to the pass beside it, every edge has a pass of the loop
+    /// beside it (one edge being beside another when either is beside the
+    /// other). The loop has then gone round at least twice, side by side.
+    /// The pass must also be further along the loop than across: a turn
+    /// mostly across is the strip's, not the loop's (round a twisted torus,
+    /// the rings are met again one ring along, but across the whole tube),
+    /// whereas a straight helix round a tube comes back beside itself less
+    /// than half as far across as along. A strip that goes round and comes
+    /// back to the edge it left is no pass: that is a ring on a torus.
+    ///
+    /// The pitch of a helix is the fewest quads across among those passes:
+    /// a q-helix in the sense of Bommes et al. (2011), going round a turn
+    /// being the same as stepping that many quads across. It is exact on a
+    /// tube; round a twisted torus, one helix may come back beside itself
+    /// only after several turns, and its pitch is then that of the nearest
+    /// pass, not the shift of one turn. A loop that comes back beside itself
+    /// for less than a turn before it stops is no helix here, where `spiral`
+    /// counts it if the pass is close enough.
+    pub helix: usize,
+    pub helix_share: f64,
+    /// Helices that `spiral` misses: of pitch above [`SPIRAL_ORDER`].
+    pub helix_missed: usize,
+    pub helix_missed_share: f64,
+    /// The share of the edges on helices of each pitch, from pitch 1 up to
+    /// the largest met.
+    pub helix_pitch_shares: Vec<f64>,
+}
+
+impl EdgeLoops {
+    /// The largest pitch of a helix, 0 without any.
+    pub fn helix_pitch_max(&self) -> usize {
+        self.helix_pitch_shares.len()
+    }
 }
 
 /// Most quads a strip leaving a loop across may cross to meet it again for
@@ -422,9 +473,13 @@ impl Connectivity {
         // Of the two halves of each edge on a loop, the one that runs the
         // way the loop was first followed.
         let mut forward = vec![false; halves];
+        // Where each edge is along its loop, counted from the start; those
+        // met going backward are numbered below zero, then shifted.
+        let mut position = vec![0i64; halves];
         // Per loop: its edges, whether it closed, and whether an end is on
         // an irregular vertex.
         let mut loops: Vec<(usize, bool, bool)> = Vec::new();
+        let mut behind_start: Vec<i64> = Vec::new();
         let end_on_pole = |h: u32| !self.on_boundary[self.head(h) as usize];
         for start in 0..halves as u32 {
             if loop_of[start as usize] != INVALID
@@ -435,6 +490,7 @@ impl Connectivity {
             }
             let id = loops.len() as u32;
             let (mut edges, mut closed, mut pole) = (0usize, false, false);
+            let (mut ahead, mut behind) = (0i64, 0i64);
             // Forward from the start; then, if it did not close, backward
             // from beyond its other end.
             let backward = self.twin[start as usize];
@@ -459,6 +515,15 @@ impl Connectivity {
                     loop_of[self.twin[h as usize] as usize] = id;
                     let along = if first.is_some() { h } else { self.twin[h as usize] };
                     forward[along as usize] = true;
+                    let at = if first.is_some() {
+                        ahead += 1;
+                        ahead - 1
+                    } else {
+                        behind += 1;
+                        -behind
+                    };
+                    position[h as usize] = at;
+                    position[self.twin[h as usize] as usize] = at;
                     edges += 1;
                     match self.straight_on(h, &odd) {
                         Some(on) => h = on,
@@ -470,6 +535,12 @@ impl Connectivity {
                 }
             }
             loops.push((edges, closed, pole));
+            behind_start.push(behind);
+        }
+        for h in 0..halves {
+            if loop_of[h] != INVALID {
+                position[h] += behind_start[loop_of[h] as usize];
+            }
         }
         // A strip of quads leaving a loop across that meets it again the
         // same way round, within a few quads: that loop spirals. (The edge
@@ -495,8 +566,23 @@ impl Connectivity {
                 e = beyond as usize;
             }
         }
+        let pitch = self.helices(&is_quad, &loop_of, &forward, &position, &loops);
         let mut counted = EdgeLoops::default();
         let all: usize = loops.iter().map(|l| l.0).sum();
+        for (k, &(edges, _, _)) in loops.iter().enumerate() {
+            let Some(pitch) = pitch[k] else { continue };
+            let share = edges as f64 / all.max(1) as f64;
+            counted.helix += 1;
+            counted.helix_share += share;
+            if !spiral[k] {
+                counted.helix_missed += 1;
+                counted.helix_missed_share += share;
+            }
+            if counted.helix_pitch_shares.len() < pitch {
+                counted.helix_pitch_shares.resize(pitch, 0.0);
+            }
+            counted.helix_pitch_shares[pitch - 1] += share;
+        }
         for (k, &(edges, closed, pole)) in loops.iter().enumerate() {
             let (count, share) = if spiral[k] {
                 (&mut counted.spiral, &mut counted.spiral_share)
@@ -512,6 +598,132 @@ impl Connectivity {
             *share += edges as f64 / all.max(1) as f64;
         }
         counted
+    }
+
+    /// The pitch of each loop that is a helix, `None` for the others: see
+    /// [`EdgeLoops::helix`]. `position` is where each half-edge's edge is
+    /// along its loop, from 0.
+    fn helices(
+        &self,
+        is_quad: &[bool],
+        loop_of: &[u32],
+        forward: &[bool],
+        position: &[i64],
+        loops: &[(usize, bool, bool)],
+    ) -> Vec<Option<usize>> {
+        let halves = self.origin.len();
+        let in_quad = |h: u32| is_quad[self.face[h as usize] as usize];
+        // Across a quad from the half-edge `e` it is entered by, to the half
+        // of the next quad on the far side; and back.
+        let step = |e: u32| {
+            let beyond = self.twin[self.next[self.next[e as usize] as usize] as usize];
+            (beyond != INVALID && in_quad(beyond)).then_some(beyond)
+        };
+        let step_back = |e: u32| {
+            let twin = self.twin[e as usize];
+            (twin != INVALID && in_quad(twin)).then(|| self.next[self.next[twin as usize] as usize])
+        };
+
+        // For each half-edge on a loop, the first edge of the same loop the
+        // strip of quads it enters crosses, and how many quads on. Each
+        // strip is followed once: the next of each loop along it is found
+        // walking it backward, twice round when it closes.
+        let mut met: Vec<Option<(usize, u32)>> = vec![None; halves];
+        let mut seen = vec![false; halves];
+        let mut last = vec![(usize::MAX, 0usize); loops.len()];
+        let mut strip = Vec::new();
+        for (count, seed) in (0..halves as u32).enumerate() {
+            if seen[seed as usize] || !in_quad(seed) {
+                continue;
+            }
+            let (mut first, mut closes) = (seed, false);
+            while let Some(before) = step_back(first) {
+                if before == seed {
+                    closes = true;
+                    break;
+                }
+                first = before;
+            }
+            strip.clear();
+            let mut e = first;
+            loop {
+                seen[e as usize] = true;
+                strip.push(e);
+                match step(e) {
+                    Some(after) if after != first => e = after,
+                    _ => break,
+                }
+            }
+            let n = strip.len();
+            for i in (0..if closes { 2 * n } else { n }).rev() {
+                let e = strip[i % n];
+                let id = loop_of[e as usize];
+                if id == INVALID {
+                    continue;
+                }
+                let (stamp, j) = last[id as usize];
+                // Round a closed strip back to itself is not a meeting.
+                if i < n && stamp == count && j != i + n {
+                    met[e as usize] = Some((j - i, strip[j % n]));
+                }
+                last[id as usize] = (count, i);
+            }
+        }
+
+        // Per loop and position along it, the fewest quads across to a pass
+        // of itself the same way round, and where along the loop that pass is.
+        let mut beside: Vec<Vec<Option<(usize, usize)>>> = loops.iter().map(|l| vec![None; l.0]).collect();
+        for h in 0..halves {
+            let Some((quads, other)) = met[h] else { continue };
+            let id = loop_of[h] as usize;
+            if forward[other as usize] != forward[h] {
+                continue;
+            }
+            let (edges, closed, _) = loops[id];
+            let gap = (position[other as usize] - position[h]).unsigned_abs() as usize;
+            let along = if closed { gap.min(edges - gap) } else { gap };
+            if along <= quads {
+                continue;
+            }
+            // Each of the two is beside the other.
+            let (here, there) = (position[h] as usize, position[other as usize] as usize);
+            for (at, pass) in [(here, there), (there, here)] {
+                let cell = &mut beside[id][at];
+                if cell.is_none_or(|(fewest, _)| quads < fewest) {
+                    *cell = Some((quads, pass));
+                }
+            }
+        }
+
+        beside
+            .iter()
+            .zip(loops)
+            .map(|(cells, &(edges, closed, _))| {
+                // Positions with a pass beside them before each, twice round
+                // for a closed loop.
+                let mut before = vec![0usize; 2 * edges + 1];
+                for k in 0..2 * edges {
+                    before[k + 1] = before[k] + cells[k % edges].is_some() as usize;
+                }
+                let mut pitch: Option<usize> = None;
+                for (here, cell) in cells.iter().enumerate() {
+                    let Some((quads, there)) = *cell else { continue };
+                    // The turn from here to the pass beside it (the short way
+                    // round a closed loop), all of it beside the loop.
+                    let (from, length) = if !closed {
+                        (here.min(there), here.abs_diff(there))
+                    } else if (there + edges - here) % edges <= edges / 2 {
+                        (here, (there + edges - here) % edges)
+                    } else {
+                        (there, (here + edges - there) % edges)
+                    };
+                    if before[from + length + 1] - before[from] == length + 1 {
+                        pitch = Some(pitch.map_or(quads, |p| p.min(quads)));
+                    }
+                }
+                pitch
+            })
+            .collect()
     }
 
     /// Traces a separatrix out of every irregular vertex along each of its

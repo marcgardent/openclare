@@ -410,6 +410,13 @@ rouge) deviennent des anneaux (bleu).*
 **Arêtes en boucle fermée** (*closed loop edges*). La part des arêtes sur des boucles fermées. Plus
 c'est haut, mieux c'est.
 
+**Arêtes en hélice** (*helix loop edges*). La part des arêtes sur des hélices de tout pas : des
+boucles qui longent leur propre tour suivant, dans le même sens, sur un tour entier, à quelque
+nombre de quads que ce soit. Plus c'est bas, mieux c'est. Contrairement aux arêtes en spirale, le
+moteur ne choisit pas ses maillages selon elle, et le pas n'est pas borné ; une boucle qui ne
+revient le long d'elle-même que sur moins d'un tour n'y compte pas. La mesure donne aussi les
+hélices de pas supérieur à 4, que le compte des spirales manque, et la part de chaque pas.
+
 **Distance de Hausdorff** (*Hausdorff distance*). La plus grande distance entre le résultat et la
 source, en millièmes de la diagonale. Elle est chaotique pour un seul modèle.
 

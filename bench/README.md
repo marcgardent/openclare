@@ -123,6 +123,15 @@ To measure one mesh, whatever made it:
 ./target/release/openclare measure source.obj quads.obj --target 3000
 ```
 
+With `--json` it prints every measure as one object. Of the edge loops, `loop_edges_spiral` is
+the share the engine chooses among its candidates by: loops met again, the same way round,
+within 4 quads across. `loop_edges_helix` and `loops_helix` count the helices of any pitch,
+loops that lie beside themselves along a whole turn, a measure the engine does not use;
+`loops_helix_missed` and `loop_edges_helix_missed` are those the spiral count misses, all of
+pitch above 4; `helix_pitch_max` is the largest pitch and `loop_edges_helix_by_pitch` the
+share of the edges on helices of each pitch, from 1. The definitions are those of `EdgeLoops`
+in `crates/openclare/src/metrics.rs`.
+
 ## Files
 
 | File | What it does |

@@ -369,6 +369,13 @@ model's value is chaotic, so changes are judged over three budgets.
 
 **Closed loop edges**. The share of edges on closed loops. Higher is better.
 
+**Helix loop edges**. The share of edges on helices of any pitch: loops that lie beside
+themselves, the same way round, along a whole turn, however many quads apart. Lower is better.
+Unlike the spiral loop edges, the engine does not choose its meshes by it, and the pitch has no
+bound; a loop that comes back beside itself for less than a turn is not counted. The measure
+also gives the helices of pitch above 4, which the spiral count misses, and the share of each
+pitch.
+
 **Hausdorff distance**. The largest distance between the result and the source, in thousandths
 of the diagonal. It is chaotic for a single model.
 
