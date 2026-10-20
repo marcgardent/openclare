@@ -34,6 +34,13 @@ pub(super) struct Turn {
     pub around: f64,
     /// The rectangle it starts from.
     pub patch: usize,
+    /// The side of that rectangle it starts from, and how far along it.
+    pub side: usize,
+    pub offset: f64,
+    /// The way itself, crossing after crossing: the rectangle left, the
+    /// half-arc of its rim crossed, the rectangle entered, and how far along
+    /// that half-arc (written out by the experiment options).
+    pub crossings: Vec<(usize, HalfArc, usize, f64)>,
 }
 
 /// The direction of each side of a rectangle, counter-clockwise from the
@@ -110,6 +117,13 @@ fn rims(tmesh: &TMesh, lengths: &[f64]) -> Vec<Option<Rim>> {
             Some(rim)
         })
         .collect()
+}
+
+/// Each rectangle's rim from its first corner, as the turns read it: the
+/// half-arcs and their sides.
+pub(super) fn rim_halves(tmesh: &TMesh) -> Vec<Option<Vec<(HalfArc, usize)>>> {
+    let lengths: Vec<f64> = tmesh.arcs.iter().map(|arc| arc.length).collect();
+    rims(tmesh, &lengths).into_iter().map(|rim| rim.map(|rim| rim.halves)).collect()
 }
 
 /// Turns found by going straight across the rectangles, from each of the
@@ -231,7 +245,7 @@ fn go_round(
     longest: f64,
     mut conditions: Option<&mut Vec<Condition>>,
 ) -> Option<Turn> {
-    let (start_patch, start_side) = (patch, side);
+    let (start_patch, start_side, start_offset) = (patch, side, offset);
     // Where the way is along the side it came in by, as an expression of
     // the lengths and a constant; and the arcs of a run of a rim.
     let mut offset_expression: (Expression, f64) = (Vec::new(), offset);
@@ -249,6 +263,7 @@ fn go_round(
     // The way: per crossing, the rectangle left and the place on its rim,
     // the one entered and the place on its rim.
     let mut crossings: Vec<(usize, usize, usize, usize)> = Vec::new();
+    let mut walked: Vec<(usize, HalfArc, usize, f64)> = Vec::new();
     for _ in 0..steps {
         let rim = rims[patch].as_ref()?;
         // Across to the opposite side, the same distance from its end.
@@ -316,6 +331,7 @@ fn go_round(
             offset_expression = (merged(next_offset), offset_expression.1);
         }
         crossings.push((patch, k, next, k_next));
+        walked.push((patch, half, next, into));
         quarter_turns = (quarter_turns + (next_side + 2 + 4 - opposite) % 4) % 4;
         (patch, side, offset) = (next, next_side, before_twin + (lengths[half as usize / 2] - into));
         if patch == start_patch && side == start_side && quarter_turns == 0 {
@@ -329,7 +345,15 @@ fn go_round(
                 shift.iter().chain(&along).all(|&(_, c)| c.fract() == 0.0),
                 "a turn from rectangle {start_patch} has a coefficient that is not whole: {shift:?} / {along:?}"
             );
-            return Some(Turn { shift, along, around, patch: start_patch });
+            return Some(Turn {
+                shift,
+                along,
+                around,
+                patch: start_patch,
+                side: start_side,
+                offset: start_offset,
+                crossings: walked,
+            });
         }
     }
     None
@@ -472,14 +496,17 @@ pub(super) fn broken_by(turns: &[Turn], sphere: &[bool], x: &[f64], walked: bool
 /// every set of turns held, and the most of them: their part of the system
 /// is factorized once, and the rows of the turns are reduced against it into
 /// a small dense system of their own, the Schur complement, solved anew for
-/// each set. Arcs held at nothing are no longer free: they are taken out of
-/// the system, which is factorized again without them.
+/// each set. Arcs held at their floor (nothing, unless an experiment asks
+/// for more) are no longer free: they are taken out of the system, which is
+/// factorized again without them.
 pub(super) struct Closing {
     /// The rows of the rectangles: two pairs of opposite sides each.
     stations: Vec<Expression>,
-    /// The lengths, those of the arcs held at nothing at nothing.
+    /// The lengths, the arcs held at their floor.
     lengths: Vec<f64>,
     weight: Vec<f64>,
+    /// Per arc, the least length the change may leave it.
+    floor: Vec<f64>,
     /// Per arc, how freely it changes: the inverse of its weight, nothing
     /// for an arc held.
     spread: Vec<f64>,
@@ -509,7 +536,9 @@ pub(super) struct Rows<'a> {
 }
 
 impl Closing {
-    pub fn new(tmesh: &TMesh, lengths: &[f64], weight: &[f64]) -> Option<Self> {
+    /// The closing of `tmesh` from `lengths`, the change of each weighed by
+    /// `weight`, none taken below `floor` times its length.
+    pub fn new(tmesh: &TMesh, lengths: &[f64], weight: &[f64], floor: f64) -> Option<Self> {
         let mut stations: Vec<Expression> = Vec::new();
         for patch in &tmesh.patches {
             let Some(side_of) = patch.side_of_each() else { continue };
@@ -528,15 +557,22 @@ impl Closing {
             let broken = unbalanced_columns(tmesh, &stations);
             assert!(broken.is_empty(), "the balances break the handshake: {broken:?}");
         }
-        Self::with_held(stations, lengths, weight, &[])
+        let floor: Vec<f64> = lengths.iter().map(|length| floor * length).collect();
+        Self::with_held(stations, lengths, weight, floor, &[])
     }
 
-    /// The same with the arcs `held` at nothing as well.
-    fn with_held(stations: Vec<Expression>, lengths: &[f64], weight: &[f64], held: &[usize]) -> Option<Self> {
+    /// The same with the arcs `held` at their floor as well.
+    fn with_held(
+        stations: Vec<Expression>,
+        lengths: &[f64],
+        weight: &[f64],
+        floor: Vec<f64>,
+        held: &[usize],
+    ) -> Option<Self> {
         let mut lengths = lengths.to_vec();
         let mut spread: Vec<f64> = weight.iter().map(|w| 1.0 / w).collect();
         for &arc in held {
-            lengths[arc] = 0.0;
+            lengths[arc] = floor[arc];
             spread[arc] = 0.0;
         }
         let mut columns: Vec<Vec<(usize, f64)>> = vec![Vec::new(); lengths.len()];
@@ -555,7 +591,7 @@ impl Closing {
         }
         let factorization = system.factorize().ok()?;
         let base = factorization.solve(&stations.iter().map(|row| -value(row, &lengths)).collect::<Vec<_>>());
-        Some(Self { stations, lengths, weight: weight.to_vec(), spread, columns, factorization, base })
+        Some(Self { stations, lengths, weight: weight.to_vec(), floor, spread, columns, factorization, base })
     }
 
     fn reduce(&self, row: Expression) -> Reduced {
@@ -598,8 +634,8 @@ impl<'a> Rows<'a> {
     }
 
     /// The lengths changed as little as can be for the rows `active` to
-    /// come back to `aimed`. If `pin`, arcs it would shorten below nothing
-    /// are held at nothing and the change looked for again, until none is
+    /// come back to `aimed`. If `pin`, arcs it would shorten below their
+    /// floor are held there and the change looked for again, until none is
     /// asked for less; otherwise they are cut off there.
     pub fn closed(&self, active: &[usize], aimed: &[f64], pin: bool) -> Option<Vec<f64>> {
         let (mut out, mut below) = self.solve(active, aimed)?;
@@ -610,8 +646,13 @@ impl<'a> Rows<'a> {
                 break;
             }
             held.extend(below);
-            let Some(pinned) = Closing::with_held(closing.stations.clone(), &closing.lengths, &closing.weight, &held)
-            else {
+            let Some(pinned) = Closing::with_held(
+                closing.stations.clone(),
+                &closing.lengths,
+                &closing.weight,
+                closing.floor.clone(),
+                &held,
+            ) else {
                 break;
             };
             let mut rows = Rows::new(&pinned);
@@ -659,10 +700,10 @@ impl<'a> Rows<'a> {
         let mut below = Vec::new();
         for (arc, change) in change.iter().enumerate() {
             let change = change * closing.spread[arc];
-            if out[arc] + change < -1e-9 {
+            if out[arc] + change < closing.floor[arc] - 1e-9 {
                 below.push(arc);
             }
-            out[arc] = (out[arc] + change).max(0.0);
+            out[arc] = (out[arc] + change).max(closing.floor[arc]);
         }
         Some((out, below))
     }
