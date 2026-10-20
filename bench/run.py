@@ -168,6 +168,8 @@ METRICS = [
     ("loop_edges_closed", "Edges on closed loops, % (L)", "{:.1f}", False),
     ("loop_edges_spiral", "Edges on spiralling loops, % (L)", "{:.1f}", True),
     ("loops_spiral", "Spiralling loops (L)", "{:.0f}", True),
+    ("loop_edges_helix", "Edges on helices of any pitch, % (L)", "{:.1f}", True),
+    ("loops_helix_missed", "Helices of pitch above 4, which the spiral count misses (L)", "{:.0f}", True),
     ("loop_edges_open", "Edges on loops that stop at an irregular vertex, % (L)", "{:.1f}", True),
     ("longest_open_loop", "Longest loop that stops at an irregular vertex, edges (L)", "{:.0f}", True),
     ("loop_edges_border", "Edges on loops from a border to a border, % (L)", "{:.1f}", False),
@@ -175,7 +177,7 @@ METRICS = [
     ("seconds", "Time, seconds (T)", "{:.2f}", True),
 ]
 SCALE = {"hausdorff": 1000.0, "mean_distance": 1000.0, "budget_error": 100.0, "thin_distance": 100.0, "volume_ratio": 100.0,
-         "loop_edges_closed": 100.0, "loop_edges_spiral": 100.0, "loop_edges_open": 100.0,
+         "loop_edges_closed": 100.0, "loop_edges_spiral": 100.0, "loop_edges_helix": 100.0, "loop_edges_open": 100.0,
          "loop_edges_border": 100.0}
 # The metrics the acceptance rule is about.
 QUALITY = ["irregular_vertices", "base_complex_patches", "alignment", "angle_deviation_mean", "aspect_mean"]
