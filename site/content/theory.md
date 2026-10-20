@@ -148,9 +148,8 @@ walk round a 3/5 pair of a quad mesh. Both walks are computed, not drawn by hand
 
 The note proves that **the shift of a turn is the Burgers vector of the poles on one side of
 it**, added up in a precise order (the order a walk round them first meets them). It is not
-the field that spirals; it is the poles that push the rows. **Measured:** on seven closed
-models, this sum reproduces the shift of 3,600 of 3,604 rings; on the male body, it holds on
-all 1,436 regions tested, with no exception.
+the field that spirals; it is the poles that push the rows. **Measured:** on the male body, it
+holds on all 1,436 regions tested, with no exception.
 
 **The staircase.** Put a 3/5 pair between two turns of a limb. The difference of their shifts
 is then the length of a *staircase*: a path of edges from the 5 to the 3, going in two
@@ -312,15 +311,12 @@ from 0 to 1, removes nearby 3/5 pairs and accepts quads a little less square in 
 
 Research is mostly ideas that fail. These did, and the note says why.
 
-- **Moving the poles.** Since the poles set the shifts, why not move them until every shift is
-  zero? Because the map moves the other poles instead. On the blob, moving one pole by one edge
-  should change the shift of its ring by 0.60; it changed it by 0.02 to 0.13 (**measured**).
-  The theory still holds exactly: the field sets where the poles land in the flattened map,
-  not where they sit on the surface.
-- **Cancelling 3/5 pairs** of a twisted ring: on the blob, the spiral edges went from 11.6% to
-  23–36%.
-- **Untwisting the field cylinder by cylinder**: the twist moved to longer rings. Over 36 runs,
-  2 improved and 4 got worse: chaos, not progress.
+- **Moving the poles, or untwisting the field cylinder by cylinder,** before quantization.
+  Since the poles set the shifts, why not move them until every shift is zero? Prototypes of
+  the engine tried both, and neither lowered the spirals: the shifts of two neighbouring turns
+  differ by the Burgers vector of the poles between them, so closing one turn by a local change
+  moves its shift onto the next one. The theory still holds exactly: the field sets where the
+  poles land in the flattened map, not where they sit on the surface.
 - **Closing every ring at once.** On the male body we asked for all 218 ring-like ways round
   (109 strips) of one run. It is possible in theory, but it forces 171 arcs to length zero and
   makes 3,960 quads instead of about 10,500, with quads far less square than the engine accepts
@@ -378,8 +374,8 @@ proved on paper (and the first two measured), not yet in Lean.
   certificates), and a second, simpler proof of the parity rule.
 
 **Numerical checks.** More than 30,000 configurations, on real data: the checkerboard rule on
-30,148 pairs of turns and 1,436 regions of the male body, 13,000 random configurations, the
-Burgers sum on 3,604 rings of seven models, all 1,299 turns of the male body for the general
+30,148 pairs of turns and 1,436 regions of the male body, 13,000 random configurations, all
+1,299 turns of the male body for the general
 formula, 660 turns of models with borders. Exact rational or integer arithmetic is used where a
 floating-point answer could mislead.
 

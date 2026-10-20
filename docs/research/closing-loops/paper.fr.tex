@@ -994,42 +994,19 @@ moteur (de $3,45\,\%$ à $5,59\,\%$ contre $1,59\,\%$). Le gain exige un
 solveur qui aboutit~: avec une limite de $5$ secondes par résolution, il
 disparaît ($4,10\,\%$ contre $4,12\,\%$ pour les autres tirages), car $63$
 des $126$ pièces n'obtiennent pas de solution à temps et $68$ des $108$
-passes rendent les longueurs mêmes du moteur. Une recherche locale à
-l'intérieur du moteur, des marches de son réseau de bandes biaisées par des
-multiplicateurs de Lagrange avec les inégalités de couloir gardées, coûte de
-$0,1$ à $0,25$ seconde par modèle mais ne ferme pas plus d'anneaux que le
-moteur~: une marche seule décale presque toujours un anneau déjà fermé, et
-fermer demande des combinaisons de marches.
+passes rendent les longueurs mêmes du moteur.
 
 \paragraph{Agir avant la quantification.}
-Puisque le décalage d'un anneau qui borde un disque est, au signe près, la
-composante transverse du vecteur de Burgers des sommets singuliers qu'il
-contient~\cite{gardent2026turns}, déplacer les sommets singuliers dans la
-paramétrisation est un levier naturel. Sur sept modèles fermés de genre zéro
-(blob, rock, creature, spot, pig, ogre, blub), la somme de Burgers reproduit
-le décalage de $3\,600$ des $3\,604$ anneaux de l'application sans couture
-qui bordent un disque et s'inclinent d'au plus $0,12$, à $10^{-5}(1+L)$ près
-pour un anneau de longueur $L$. Pourtant, déplacer un sommet singulier ne
-déplace presque pas le décalage~: les autres points coniques se déplacent
-dans l'application et absorbent le changement, et sur douze déplacements par
-modèle, le changement mesuré vaut $0,12$, $0,03$ et $0,01$ du changement
-prédit sur le blob, la créature et le cochon. Faire tourner rigidement le
-champ du côté le plus petit d'un anneau le déplace bel et bien (de $26\,\%$
-à $87\,\%$ de la rotation multipliée par la longueur, à mesure que la région
-tournée grandit de $0$ à $40$ couronnes de sommets), pour un coût en
-distorsion presque nul\,; mais faire tourner le champ cylindre par cylindre
-pour ramener les décalages à zéro a reporté la torsion sur des anneaux de
-$90$ à $200$ arêtes, et sur $36$ exécutions, $2$ se sont améliorées et $4$
-ont régressé, ce que nous lisons comme du chaos plutôt qu'un progrès. La
-somme de Burgers de l'article compagnon~\cite{gardent2026turns} l'explique~:
-les décalages de deux tours parallèles, un court autour d'un membre et un long
-autour du torse, diffèrent de la composante transverse du vecteur de Burgers
-des sommets singuliers situés entre eux, qui ne dépend que de leurs positions
-développées, et une application d'échelle fixée les déplace à peine (plus
-haut~: de $0,01$ à $0,12$ du changement prévu). Tourner le champ pour fermer
-le tour court reporte donc son décalage sur le long, et les tours qui
-traversent la région tournée voient leurs longueurs réelles changer. Les
-conflits sont mieux attaqués dans la quantification.
+Déplacer les sommets singuliers dans la paramétrisation, et tourner le champ
+cylindre par cylindre, ont aussi été essayés, avec des prototypes du moteur
+qui n'en font pas partie\,; ni l'un ni l'autre n'a fait baisser la part de
+spirales. La somme de Burgers de l'article compagnon~\cite{gardent2026turns}
+l'explique~: les décalages de deux tours parallèles diffèrent de la
+composante transverse du vecteur de Burgers des sommets singuliers situés
+entre eux, qui ne dépend que de leurs positions développées, si bien que
+fermer un tour par un changement local de l'application reporte son décalage
+sur les tours voisins. Les conflits sont mieux attaqués dans la
+quantification.
 
 \section{Limites et problèmes ouverts}\label{sec:limits}
 
@@ -1149,11 +1126,6 @@ fermer le plus d'anneaux, de bout en bout
   \texttt{complete-helices}
   & journaux de travail\,; certains chiffres seulement dans la synthèse de
   l'expérience \\
-agir avant la quantification
-  & un correctif du moteur du commit \texttt{5bc16c6}
-  & journaux de travail\,; les rapports sur douze déplacements, les $36$
-  exécutions et les $3\,600$ des $3\,604$ anneaux seulement dans la synthèse
-  de l'expérience \\
 \bottomrule
 \end{tabular}
 \end{center}
