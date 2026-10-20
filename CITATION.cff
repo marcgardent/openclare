@@ -40,12 +40,12 @@ references:
         orcid: "https://orcid.org/0009-0000-6466-3098"
     year: 2026
     month: 10
-    status: preprint
+    status: in-preparation
     license: CC-BY-4.0
     repository-code: "https://github.com/marcgardent/openclare"
     url: "https://marcgardent.github.io/openclare/files/closing-edge-loops.pdf"
     notes: >-
-      Research paper A (applied), not peer reviewed. LaTeX source, figures and a
+      Research paper A (applied), a draft, not peer reviewed. LaTeX source, figures and a
       best-effort French translation in docs/research/closing-loops of the
       repository.
   - type: report
@@ -58,10 +58,10 @@ references:
         orcid: "https://orcid.org/0009-0000-6466-3098"
     year: 2026
     month: 10
-    status: preprint
+    status: in-preparation
     license: CC-BY-4.0
     repository-code: "https://github.com/marcgardent/openclare"
     url: "https://marcgardent.github.io/openclare/files/turns-of-a-t-mesh.pdf"
     notes: >-
-      Research paper B (theory), not peer reviewed. LaTeX source, figures and
+      Research paper B (theory), a draft, not peer reviewed. LaTeX source, figures and
       Lean proofs in docs/research/turns-of-a-t-mesh of the repository.
