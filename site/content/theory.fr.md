@@ -156,8 +156,7 @@ calculés, pas dessinés à la main.*
 La note démontre que **le décalage d'un tour est le vecteur de Burgers des pôles situés d'un côté
 de ce tour**, additionnés dans un ordre précis (celui où un parcours autour d'eux les rencontre
 pour la première fois). Ce n'est pas le champ qui spirale ; ce sont les pôles qui poussent les
-rangées. **Mesuré :** sur sept modèles fermés, cette somme retrouve le décalage de 3 600 anneaux
-sur 3 604 ; sur le corps masculin, elle tient sur les 1 436 régions testées, sans exception.
+rangées. **Mesuré :** sur le corps masculin, elle tient sur les 1 436 régions testées, sans exception.
 
 **L'escalier.** Placez une paire 3/5 entre deux tours d'un membre. La différence de leurs
 décalages est alors la longueur d'un *escalier* : un chemin d'arêtes du 5 au 3, qui avance dans
@@ -333,15 +332,13 @@ pôles.*
 
 La recherche, c'est surtout des idées qui échouent. Celles-ci ont échoué, et la note dit pourquoi.
 
-- **Déplacer les pôles.** Puisque les pôles fixent les décalages, pourquoi ne pas les déplacer
-  jusqu'à annuler chaque décalage ? Parce que la paramétrisation déplace les autres pôles à la
-  place. Sur le blob, déplacer un pôle d'une arête devrait changer le décalage de son anneau de
-  0,60 ; il l'a changé de 0,02 à 0,13 (**mesuré**). La théorie tient toujours exactement : le
-  champ fixe où les pôles tombent dans la carte mise à plat, pas où ils sont sur la surface.
-- **Annuler les paires 3/5** d'un anneau tordu : sur le blob, les arêtes en spirale sont passées
-  de 11,6 % à 23–36 %.
-- **Détordre le champ cylindre par cylindre** : la torsion s'est déplacée vers des anneaux plus
-  longs. Sur 36 essais, 2 se sont améliorés et 4 ont empiré : du chaos, pas un progrès.
+- **Déplacer les pôles, ou détordre le champ cylindre par cylindre,** avant la quantification.
+  Puisque les pôles fixent les décalages, pourquoi ne pas les déplacer jusqu'à annuler chaque
+  décalage ? Des prototypes du moteur ont essayé les deux, et aucun n'a fait baisser les
+  spirales : les décalages de deux tours voisins diffèrent du vecteur de Burgers des pôles
+  situés entre eux, si bien que fermer un tour par un changement local reporte son décalage sur
+  le suivant. La théorie tient toujours exactement : le champ fixe où les pôles tombent dans la
+  carte mise à plat, pas où ils sont sur la surface.
 - **Fermer tous les anneaux d'un coup.** Sur le corps masculin, nous avons demandé les 218 tours
   en forme d'anneau (109 bandes) d'une variante. C'est possible en théorie, mais cela force 171
   arcs à une longueur nulle et donne 3 960 quads au lieu d'environ 10 500, avec des quads bien
@@ -407,7 +404,7 @@ désormais corrigées :
 
 **Des vérifications numériques.** Plus de 30 000 configurations, sur des données réelles : la
 règle du damier sur 30 148 paires de tours et 1 436 régions du corps masculin, 13 000
-configurations aléatoires, la somme de Burgers sur 3 604 anneaux de sept modèles, les 1 299 tours
+configurations aléatoires, les 1 299 tours
 du corps masculin pour la formule générale, 660 tours de modèles à bords. L'arithmétique exacte,
 rationnelle ou entière, est utilisée là où un calcul en virgule flottante pourrait tromper.
 

@@ -866,39 +866,17 @@ body every round spiralled more than the engine ($3.45\%$ to $5.59\%$ against
 $1.59\%$). The gain needs a solver that finishes: with a limit of $5$
 seconds per solve it vanishes ($4.10\%$ against $4.12\%$ for the other
 draws), as $63$ of the $126$ pieces get no solution in time and $68$ of $108$
-rounds return the engine's own lengths. A local search inside the engine,
-walks of its strip network biased by Lagrange multipliers with the corridor
-inequalities kept, costs $0.1$ to $0.25$ seconds per model but closes no more
-rings than the engine: a single walk almost always shifts a ring already
-closed, and closing needs combinations of walks.
+rounds return the engine's own lengths.
 
 \paragraph{Acting before quantization.}
-Since the shift of a ring bounding a disc is, up to sign, the across
-component of the Burgers vector of the singular vertices inside
-it~\cite{gardent2026turns}, moving the
-singular vertices in the parametrization is a natural lever. On seven closed
-models of genus zero (blob, rock, creature, spot, pig, ogre, blub), the
-Burgers sum reproduces the shift of $3{,}600$ of the $3{,}604$ rings of the
-seamless map that bound a disc and lean by at most $0.12$, to $10^{-5}(1+L)$
-for a ring of length $L$. Yet moving a singular vertex barely moves the
-shift: the other cone points move in the map and absorb the change, and over
-twelve moves per model the measured change is $0.12$, $0.03$ and $0.01$ of
-the predicted one on the blob, the creature and the pig. Rotating the field
-rigidly on the smaller side of a ring does move it ($26\%$ to $87\%$ of the
-rotation times the length, as the rotated region grows by $0$ to $40$ rings
-of vertices), at almost no cost in distortion; but rotating the field
-cylinder by cylinder to bring the shifts to zero moved the twist onto rings
-of $90$ to $200$ edges, and over $36$ runs $2$ improved and $4$ regressed,
-which we read as chaos rather than progress. The Burgers sum of the
+Moving singular vertices in the parametrization, and rotating the field
+cylinder by cylinder, were also tried, with prototypes of the engine that are
+not part of it; neither lowered the share of spirals. The Burgers sum of the
 companion paper~\cite{gardent2026turns} accounts for it: the shifts of two
-parallel turns, a short one round a limb and a long one round the torso,
-differ by the across component of the Burgers vector of the singular
-vertices between them, which depends only on their developed positions, and
-a map of fixed scale barely moves these (above: $0.01$ to $0.12$ of the
-predicted change). Rotating the field to close the short turn therefore moves
-its shift onto the long one, and the turns that cross the rotated region see
-their real lengths change. The conflicts are better attacked in
-quantization.
+parallel turns differ by the across component of the Burgers vector of the
+singular vertices between them, which depends only on their developed
+positions, so closing one turn by a local change of the map moves its shift
+onto the turns beside it. The conflicts are better attacked in quantization.
 
 \section{Limitations and open problems}\label{sec:limits}
 
@@ -1002,10 +980,6 @@ Section~\ref{sec:exact}, up to ``The heuristic leaves most of the gap''
 closing the most rings, end to end
   & branch \texttt{maxclose-rd}, engine of branch \texttt{complete-helices}
   & working logs; some figures only in the experiment's summary \\
-acting before quantization
-  & a patch of the engine of commit \texttt{5bc16c6}
-  & working logs; the ratios over twelve moves, the $36$ runs and the
-  $3{,}600$ of $3{,}604$ rings only in the experiment's summary \\
 \bottomrule
 \end{tabular}
 \end{center}
