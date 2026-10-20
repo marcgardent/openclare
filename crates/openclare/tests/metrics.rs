@@ -348,3 +348,49 @@ fn a_loop_beside_itself_for_less_than_a_turn_is_no_helix() {
     let loops = edge_loops(&cut).expect("a pure quad manifold");
     assert_eq!((loops.spiral, loops.helix), (2, 0), "{loops:?}");
 }
+
+#[test]
+fn a_cube_grid_keeps_every_sharp_edge_of_the_cube() {
+    let metrics = measure(&primitives::cube(8), &primitives::cube_quads(8), None);
+    // Twelve edges of eight quad edges each, all on an edge of the mesh.
+    assert_eq!(metrics.feature_chains, 12);
+    assert!((metrics.feature_edges_length - 96.0).abs() < 1e-6, "{}", metrics.feature_edges_length);
+    assert!((metrics.feature_edges_kept.unwrap() - 1.0).abs() < 1e-9, "{:?}", metrics.feature_edges_kept);
+    assert!(metrics.to_json().contains("\"feature_edges_kept\": 1"));
+}
+
+#[test]
+fn a_cube_rounded_off_keeps_none_of_its_edges() {
+    // The same grid pushed onto the sphere through the corners: the turn of
+    // each edge is spread over all the rows.
+    let mut rounded = primitives::cube_quads(8);
+    for p in &mut rounded.positions {
+        *p = p.normalize() * 3.0f64.sqrt();
+    }
+    let metrics = measure(&primitives::cube(8), &rounded, None);
+    assert_eq!(metrics.feature_chains, 12);
+    assert_eq!(metrics.feature_edges_kept, Some(0.0));
+}
+
+#[test]
+fn the_grain_of_a_sculpt_is_no_sharp_edge() {
+    use openclare::math::Rng;
+    // A sphere whose vertices are moved in and out at random: a lot of its
+    // triangles meet at more than 30 degrees, none of that shows at the
+    // size of the quads.
+    let mut source = primitives::icosphere(5);
+    let mut random = Rng::new(3);
+    for p in &mut source.positions {
+        *p *= 1.0 + 0.012 * (random.next_f64() - 0.5);
+    }
+    let topology = openclare::mesh::Topology::build(&source);
+    let creased = openclare::geometry::feature_edges(&source, &topology, Some(30f64.to_radians()), false);
+    assert!(creased.len() > 100, "{} creased edges", creased.len());
+    let mut sphere = primitives::cube_quads(8);
+    for p in &mut sphere.positions {
+        *p = p.normalize();
+    }
+    let metrics = measure(&source, &sphere, None);
+    assert_eq!((metrics.feature_edges_length, metrics.feature_chains), (0.0, 0), "{metrics:?}");
+    assert_eq!(metrics.feature_edges_kept, None);
+}

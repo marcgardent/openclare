@@ -425,6 +425,14 @@ source, en millièmes de la diagonale. Elle est chaotique pour un seul modèle.
 **Distance des parties fines** (*thin-part distance*). La distance sur les parties fines (doigts,
 oreilles, feuilles), en arêtes de quad.
 
+**Arêtes vives gardées** (*sharp edges kept*). La part de la longueur des arêtes vives de la
+source le long de laquelle le résultat a lui-même une arête vive. Plus c'est haut, mieux c'est.
+Seuls comptent les plis qui se voient encore à la taille des quads : les triangles se coupent à
+plus de 30°, la surface tourne encore d'autant sur une demi-arête de quad autour, et surtout à
+l'arête. Le grain d'une sculpture ne compte pas, ni un tube de quelques quads de tour ; deux plis
+à moins d'un demi-quad l'un de l'autre comptent pour un. Là où la source en a moins de 10 arêtes
+de quad, comme une sculpture lisse, il n'y a pas de valeur.
+
 **Rapport d'aspect** (*aspect*). À quel point les quads sont allongés : 1 veut dire carré.
 
 **Écart d'angle** (*angle deviation*). L'écart entre les coins des quads et 90°.

@@ -36,6 +36,7 @@ CRITERIA = [
     ("alignment", "Alignment", "edges along the principal curvature directions"),
     ("shape", "Quad shape", "corners at right angles"),
     ("fidelity", "Fidelity", "no point of the source far from the mesh, thin parts kept"),
+    ("sharp", "Sharp edges", "an edge of the mesh along every sharp edge of the source that shows at the size of the quads"),
     ("singularities", "Regularity", "no irregular vertex beyond what the topology imposes"),
     ("structure", "Structure", "few patches in the base complex: edge loops that run long"),
     ("loops", "Edge loops", "loops that close round the shape, none that spiral round it"),
@@ -49,6 +50,7 @@ WEIGHTS = {
     "alignment": 20,
     "shape": 15,
     "fidelity": 15,
+    "sharp": 15,
     "singularities": 10,
     "structure": 5,
     "loops": 15,
@@ -67,6 +69,7 @@ SPANS = {
         "Hausdorff distance 0; thin parts on the mesh",
         "5 % of the bounding diagonal; thin parts half a quad edge away",
     ),
+    "sharp": ("all of their length kept", "none of it"),
     "singularities": ("5 per 100 quads beyond the topological minimum", "15 per 100 quads"),
     "structure": ("no patch", "one patch per quad"),
     "loops": ("2 % of the edges on spirals or fewer; a quarter of the loops closed", "a fifth on spirals; no loop closed"),
@@ -145,6 +148,13 @@ SCALES = {
     # 9.2 by hand.
     "shape": lambda m: linear(m["angle_deviation_mean"], 8.0, 25.0),
     "fidelity": lambda m: fidelity(m),
+    # The share of the length of the sharp edges of the source along which
+    # the mesh has a sharp edge (`feature_edges_kept`, see `SharpEdges` in
+    # crates/openclare/src/metrics.rs). Only the edges that still show at
+    # the size of the quads count, not the grain of a sculpt; where the
+    # source has less than 10 quad edges of them (blob, rock, creature, bob),
+    # there is no mark and the criterion does not count.
+    "sharp": lambda m: None if m.get("feature_edges_kept") is None else linear(m["feature_edges_kept"], 1.0, 0.0),
     # Irregular vertices beyond the topological minimum (or all of them
     # where that minimum is not known), per 100 quads: 4.5 by hand, the
     # poles a modeller places for the loops to flow.
@@ -301,8 +311,9 @@ def write_report(targets, local=False):
         "on average, in quad edges. Elsewhere it is the first alone.",
         "",
         "The overall mark is the weighted mean of the criteria that exist for the model (a sphere has no",
-        "direction to align with; a mesh with open borders has no topological minimum). Speed is shown but",
-        "does not count: it is not a matter of quality. A remesher that gave no mesh at all scores 0.",
+        "direction to align with; a mesh with open borders has no topological minimum; a sculpt has no",
+        "sharp edge that shows at the size of the quads). Speed is shown but does not count: it is not a",
+        "matter of quality. A remesher that gave no mesh at all scores 0.",
         "",
         "The *extra* group is outside the acceptance rule. Its models from BlenderKit cannot be",
         "redistributed (see CREDITS.md): their marks are here, the models are not. Desert Rose, the two",

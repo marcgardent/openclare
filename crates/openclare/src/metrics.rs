@@ -12,8 +12,9 @@ use rayon::prelude::*;
 use crate::curvature::TensorField;
 use crate::geometry::{vertex_areas, vertex_normals};
 use crate::math::{INVALID, Vec3};
+use crate::mesh::topology::half_edge_vertices;
 use crate::mesh::{PolyMesh, Topology, TriMesh};
-use crate::spatial::Bvh;
+use crate::spatial::{Bvh, closest_point_on_triangle};
 
 /// Everything [`measure`] reports. Lengths are relative to the diagonal of
 /// the source's bounding box, angles are in degrees.
@@ -84,6 +85,17 @@ pub struct Metrics {
     /// Volume of the mesh over that of the source, both closed.
     pub volume_ratio: Option<f64>,
 
+    // Sharp edges.
+    /// Length of the sharp edges of the source that still show at the size
+    /// of the quads, in quad edges: see [`SharpEdges`].
+    pub feature_edges_length: f64,
+    /// Runs of those edges from an end or a junction to the next.
+    pub feature_chains: usize,
+    /// Share of that length along which an edge of the mesh runs and is
+    /// sharp itself. `None` where the source has less than
+    /// [`MIN_FEATURE_LENGTH`] quad edges of it.
+    pub feature_edges_kept: Option<f64>,
+
     // Budget.
     /// `|faces - target| / target`.
     pub budget_error: Option<f64>,
@@ -111,7 +123,7 @@ impl Metrics {
         fn optional<T: ToString>(value: Option<T>) -> String {
             value.map_or("null".into(), |v| v.to_string())
         }
-        let fields: [(&str, String); 27] = [
+        let fields: [(&str, String); 30] = [
             ("valid", self.is_valid().to_string()),
             ("vertices", self.vertices.to_string()),
             ("faces", self.faces.to_string()),
@@ -139,6 +151,9 @@ impl Metrics {
             ("thin_share", self.thin_share.to_string()),
             ("thin_distance", optional(self.thin_distance)),
             ("volume_ratio", optional(self.volume_ratio)),
+            ("feature_edges_length", self.feature_edges_length.to_string()),
+            ("feature_chains", self.feature_chains.to_string()),
+            ("feature_edges_kept", optional(self.feature_edges_kept)),
         ];
         let mut json = String::from("{");
         for (name, value) in &fields {
@@ -225,6 +240,12 @@ pub fn measure(source: &TriMesh, mesh: &PolyMesh, target_faces: Option<usize>) -
     quad_shape(mesh, &mut metrics);
     fidelity(source, &surface, mesh, diagonal, &mut metrics);
     thin_parts(source, mesh, target_edge, &mut metrics);
+    if target_edge.is_finite() && target_edge > 0.0 {
+        let sharp = SharpEdges::default().measure_with(source, &source_topology, mesh, &connectivity, target_edge);
+        metrics.feature_edges_length = sharp.length;
+        metrics.feature_chains = sharp.chains;
+        metrics.feature_edges_kept = (sharp.length >= MIN_FEATURE_LENGTH).then(|| sharp.kept / sharp.length);
+    }
     if metrics.source_boundary_edges == 0 && metrics.boundary_edges == 0 && metrics.non_manifold_edges == 0 {
         let volume = source.signed_volume();
         if volume.abs() > 0.0 {
@@ -340,6 +361,388 @@ fn thin_parts(source: &TriMesh, mesh: &PolyMesh, quad_edge: f64, metrics: &mut M
     if count >= THIN_SAMPLES {
         metrics.thin_distance = Some(sum / count as f64 / quad_edge);
     }
+}
+
+/// Fewest quad edges of sharp edges on the source for the share kept to
+/// mean something: below, a few stray edges would make the whole mark.
+pub const MIN_FEATURE_LENGTH: f64 = 10.0;
+
+/// The sharp edges of a source at the size of the quads, and how much of
+/// them a quad mesh keeps.
+///
+/// A dihedral angle alone cannot tell a machined edge from the grain of a
+/// sculpt: both turn sharply from one triangle to the next. Scale tells
+/// them apart. A mesh of quads `h` wide can only show a crease that is
+/// still there when the surface is looked at `h` wide, so an edge of the
+/// source is a feature edge when:
+///
+/// - its two triangles meet at more than `angle` degrees;
+/// - the surface round its middle, within `reach` quad edges, still turns by
+///   more than `angle`: cut in two by the plane through the edge halfway
+///   between its two triangles, the mean normals of the two halves are that
+///   far apart;
+/// - that turn happens at the edge, not across the whole width: the two
+///   halves of the surface within a quarter of the reach turn by `focus` of
+///   it at least. A tube a few quads round turns by as much across `h`, but
+///   evenly, and a quad mesh is right to round it;
+/// - the line it is on spans `shortest` quad edges at least: a nick or a
+///   wart is no edge to follow. Feature edges whose ends are within `gap`
+///   quad edges of each other are on one line, since a crease of a sculpt
+///   zigzags across the triangles and some of its edges turn by less.
+///
+/// Two creases side by side, less than `beside` quad edges apart (the two
+/// sides of a groove or of a thin plank), are one at the size of the quads,
+/// and their length counts once.
+///
+/// A point of a feature edge is kept when an edge of the quad mesh runs
+/// along it: within `tolerance` quad edges, `parallel` degrees at most from
+/// its direction, and sharp itself, its two faces meeting at `sharpness` of
+/// the angle the source turns by there at least. A mesh that cuts across
+/// the edge, or bevels it with two rows of half the angle, does not keep it.
+#[derive(Clone, Debug)]
+pub struct SharpEdges {
+    pub angle: f64,
+    pub reach: f64,
+    pub focus: f64,
+    pub shortest: f64,
+    pub gap: f64,
+    pub beside: f64,
+    pub tolerance: f64,
+    pub parallel: f64,
+    pub sharpness: f64,
+}
+
+impl Default for SharpEdges {
+    fn default() -> Self {
+        Self {
+            angle: 30.0,
+            reach: 0.5,
+            focus: 0.6,
+            shortest: 2.0,
+            gap: 0.25,
+            beside: 0.5,
+            tolerance: 0.25,
+            parallel: 30.0,
+            sharpness: 0.6,
+        }
+    }
+}
+
+/// What [`SharpEdges::measure`] finds, lengths in quad edges, two creases
+/// side by side counted once.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct SharpEdgesKept {
+    /// Length of the feature edges of the source.
+    pub length: f64,
+    /// Runs of feature edges from an end or a junction to the next; a ring
+    /// with neither is one.
+    pub chains: usize,
+    /// Length of them that the mesh keeps.
+    pub kept: f64,
+}
+
+/// An edge of the source that is a feature at the size of the quads, and
+/// the angle its surface turns by at that size, in degrees.
+struct FeatureEdge {
+    ends: [u32; 2],
+    angle: f64,
+}
+
+impl SharpEdges {
+    /// Finds the feature edges of `source` for quads `quad_edge` long, and
+    /// how much of them `mesh` keeps.
+    pub fn measure(&self, source: &TriMesh, mesh: &PolyMesh, quad_edge: f64) -> SharpEdgesKept {
+        self.measure_with(source, &Topology::build(source), mesh, &Connectivity::build(mesh), quad_edge)
+    }
+
+    fn measure_with(
+        &self,
+        source: &TriMesh,
+        topology: &Topology,
+        mesh: &PolyMesh,
+        connectivity: &Connectivity,
+        quad_edge: f64,
+    ) -> SharpEdgesKept {
+        let features = self.features(source, topology, quad_edge);
+        let (length, kept) = self.kept(source, &features, mesh, connectivity, quad_edge);
+        SharpEdgesKept { length: length / quad_edge, chains: chains(&features), kept: kept / quad_edge }
+    }
+
+    fn features(&self, source: &TriMesh, topology: &Topology, quad_edge: f64) -> Vec<FeatureEdge> {
+        let normals: Vec<Vec3> =
+            (0..source.triangles.len()).map(|t| source.area_vector(t).normalize_or_zero()).collect();
+        let cos_angle = self.angle.to_radians().cos();
+        // Each inner edge once, from the lower of its two half-edges.
+        let creased: Vec<usize> = (0..topology.opposite.len())
+            .filter(|&h| {
+                let twin = topology.opposite[h];
+                twin != INVALID
+                    && h < twin as usize
+                    && normals[h / 3] != Vec3::ZERO
+                    && normals[twin as usize / 3] != Vec3::ZERO
+                    && normals[h / 3].dot(normals[twin as usize / 3]) < cos_angle
+            })
+            .collect();
+        let candidates: Vec<FeatureEdge> = creased
+            .par_iter()
+            .filter_map(|&h| {
+                let angle = self.turn_at_scale(source, topology, h, quad_edge)?;
+                let (a, b) = half_edge_vertices(source, h);
+                Some(FeatureEdge { ends: [a, b], angle })
+            })
+            .collect();
+
+        // The lines, and the edges on those that span too little dropped.
+        let gap = self.gap * quad_edge;
+        let mut cells: HashMap<[i64; 3], Vec<(usize, Vec3)>> = HashMap::new();
+        for (i, edge) in candidates.iter().enumerate() {
+            for v in edge.ends {
+                let p = source.positions[v as usize];
+                cells.entry(cell_of(p, gap)).or_default().push((i, p));
+            }
+        }
+        let mut lines = Components::new(candidates.len());
+        for (i, edge) in candidates.iter().enumerate() {
+            for v in edge.ends {
+                let p = source.positions[v as usize];
+                for cell in cells_around(cell_of(p, gap)) {
+                    for &(j, q) in cells.get(&cell).into_iter().flatten() {
+                        if p.distance(q) <= gap {
+                            lines.union(i as u32, j as u32);
+                        }
+                    }
+                }
+            }
+        }
+        let mut bounds: HashMap<u32, (Vec3, Vec3)> = HashMap::new();
+        for (i, edge) in candidates.iter().enumerate() {
+            let line = bounds.entry(lines.find(i as u32)).or_insert((Vec3::INFINITY, Vec3::NEG_INFINITY));
+            for v in edge.ends {
+                line.0 = line.0.min(source.positions[v as usize]);
+                line.1 = line.1.max(source.positions[v as usize]);
+            }
+        }
+        let spans = |i: usize| {
+            let (low, high) = bounds[&lines.find(i as u32)];
+            low.distance(high) >= self.shortest * quad_edge
+        };
+        let keep: Vec<bool> = (0..candidates.len()).map(spans).collect();
+        candidates.into_iter().zip(keep).filter_map(|(edge, keep)| keep.then_some(edge)).collect()
+    }
+
+    /// The angle the surface turns by across the edge of half-edge `h`, seen
+    /// `reach` quad edges wide, in degrees; `None` unless that is more than
+    /// `angle` and happens at the edge.
+    fn turn_at_scale(&self, source: &TriMesh, topology: &Topology, h: usize, quad_edge: f64) -> Option<f64> {
+        let (a, b) = half_edge_vertices(source, h);
+        let (p, q) = (source.positions[a as usize], source.positions[b as usize]);
+        let middle = 0.5 * (p + q);
+        let along = (q - p).try_normalize()?;
+        let sides = [h / 3, topology.opposite[h] as usize / 3];
+        let center = |t: usize| source.corners(t).into_iter().sum::<Vec3>() / 3.0;
+        // Straight away from the edge into each of its triangles; the plane
+        // that cuts the surface in two runs halfway between.
+        let away = |t: usize| {
+            let to = center(t) - middle;
+            (to - along * to.dot(along)).try_normalize()
+        };
+        let cut = (away(sides[0])? - away(sides[1])?).try_normalize()?;
+
+        let (far, near) = (self.reach * quad_edge, 0.25 * self.reach * quad_edge);
+        // Area-weighted normals of each half, within `far` and `near`.
+        let mut sums = [[Vec3::ZERO; 2]; 2];
+        let mut seen: std::collections::HashSet<usize> = sides.into_iter().collect();
+        let mut stack: Vec<usize> = sides.to_vec();
+        while let Some(t) = stack.pop() {
+            let side = match sides.iter().position(|&s| s == t) {
+                Some(side) => side,
+                None => (cut.dot(center(t) - middle) < 0.0) as usize,
+            };
+            let [x, y, z] = source.corners(t);
+            let distance = closest_point_on_triangle(middle, x, y, z).distance(middle);
+            let area = source.area_vector(t);
+            sums[0][side] += area;
+            if distance <= near || sides.contains(&t) {
+                sums[1][side] += area;
+            }
+            for k in 0..3 {
+                let twin = topology.opposite[3 * t + k];
+                if twin == INVALID {
+                    continue;
+                }
+                let next = twin as usize / 3;
+                if seen.contains(&next) {
+                    continue;
+                }
+                let [x, y, z] = source.corners(next);
+                if closest_point_on_triangle(middle, x, y, z).distance(middle) <= far {
+                    seen.insert(next);
+                    stack.push(next);
+                }
+            }
+        }
+        let angle = |pair: [Vec3; 2]| {
+            let (u, v) = (pair[0].try_normalize()?, pair[1].try_normalize()?);
+            Some(u.dot(v).clamp(-1.0, 1.0).acos().to_degrees())
+        };
+        let (wide, close) = (angle(sums[0])?, angle(sums[1])?);
+        (wide > self.angle && close >= self.focus * wide).then_some(wide)
+    }
+
+    /// The length of the feature edges, those beside a sharper one left
+    /// out, and the length of them along which an edge of `mesh` runs, sharp
+    /// enough.
+    fn kept(
+        &self,
+        source: &TriMesh,
+        features: &[FeatureEdge],
+        mesh: &PolyMesh,
+        connectivity: &Connectivity,
+        quad_edge: f64,
+    ) -> (f64, f64) {
+        // Points along the feature edges no further apart than the
+        // tolerance: where, which way, the length each stands for, and the
+        // angle of its edge.
+        let spacing = self.tolerance * quad_edge;
+        let mut samples: Vec<(Vec3, Vec3, f64, f64)> = Vec::new();
+        for feature in features {
+            let [p, q] = feature.ends.map(|v| source.positions[v as usize]);
+            let Some(along) = (q - p).try_normalize() else { continue };
+            let count = (p.distance(q) / spacing).ceil().max(1.0) as usize;
+            for i in 0..count {
+                let point = p.lerp(q, (i as f64 + 0.5) / count as f64);
+                samples.push((point, along, p.distance(q) / count as f64, feature.angle));
+            }
+        }
+
+        // Which of them an edge of the mesh runs along.
+        let cos_parallel = self.parallel.to_radians().cos();
+        let edges = self.sharp_edges_of(mesh, connectivity);
+        let alone: Vec<bool> = samples
+            .par_iter()
+            .map(|&(point, along, _, angle)| {
+                edges.as_ref().is_some_and(|(edges, shape)| {
+                    let runs_along = |s: u32| {
+                        let (direction, dihedral) = shape[s as usize];
+                        direction.dot(along).abs() >= cos_parallel && dihedral >= self.sharpness * angle
+                    };
+                    edges.closest_point_where(point, spacing, runs_along).is_some()
+                })
+            })
+            .collect();
+
+        // Two creases side by side, closer than `beside` quad edges, are one
+        // at the size of the quads (the two sides of a groove or of a thin
+        // plank): a mesh can run along one of them only. The sharpest point
+        // first stands for those beside it, and is kept if any of them is.
+        let radius = self.beside * quad_edge;
+        let mut order: Vec<usize> = (0..samples.len()).collect();
+        order.sort_by(|&i, &j| samples[j].3.total_cmp(&samples[i].3).then(i.cmp(&j)));
+        let mut standing: HashMap<[i64; 3], Vec<usize>> = HashMap::new();
+        let mut kept_by = vec![false; samples.len()];
+        let mut owner = vec![usize::MAX; samples.len()];
+        for &i in &order {
+            let (point, along, _, _) = samples[i];
+            let first = cells_around(cell_of(point, radius))
+                .flat_map(|key| standing.get(&key).into_iter().flatten().copied())
+                .find(|&j| {
+                    let (other, direction, _, _) = samples[j];
+                    let offset = point - other;
+                    let ahead = offset.dot(direction);
+                    let across = (offset - direction * ahead).length();
+                    // Beside it, not ahead on the same line; and further than
+                    // the tolerance, within which a mesh keeps both.
+                    direction.dot(along).abs() >= cos_parallel
+                        && ahead.abs() <= 0.5 * spacing
+                        && across > spacing
+                        && across <= radius
+                });
+            match first {
+                Some(j) => owner[i] = j,
+                None => {
+                    owner[i] = i;
+                    standing.entry(cell_of(point, radius)).or_default().push(i);
+                }
+            }
+        }
+        for i in 0..samples.len() {
+            kept_by[owner[i]] |= alone[i];
+        }
+        let (mut length, mut kept) = (0.0, 0.0);
+        for i in (0..samples.len()).filter(|&i| owner[i] == i) {
+            length += samples[i].2;
+            if kept_by[i] {
+                kept += samples[i].2;
+            }
+        }
+        (length, kept)
+    }
+
+    /// The inner edges of `mesh` sharp enough for some feature, as
+    /// segments, with their direction and the angle their two faces meet at.
+    fn sharp_edges_of(&self, mesh: &PolyMesh, connectivity: &Connectivity) -> Option<(Bvh, Vec<(Vec3, f64)>)> {
+        let least = self.sharpness * self.angle;
+        let mut segments = Vec::new();
+        let mut shape = Vec::new();
+        for h in 0..connectivity.origin.len() {
+            let twin = connectivity.twin[h];
+            if twin == INVALID || h > twin as usize {
+                continue;
+            }
+            let faces = [connectivity.face[h], connectivity.face[twin as usize]];
+            let [n, m] = faces.map(|f| area_vector(mesh, &mesh.faces[f as usize]).normalize_or_zero());
+            if n == Vec3::ZERO || m == Vec3::ZERO {
+                continue;
+            }
+            let dihedral = n.dot(m).clamp(-1.0, 1.0).acos().to_degrees();
+            let (a, b) =
+                (mesh.positions[connectivity.origin[h] as usize], mesh.positions[connectivity.head(h as u32) as usize]);
+            let Some(direction) = (b - a).try_normalize() else { continue };
+            if dihedral >= least {
+                segments.push([a, b, b]);
+                shape.push((direction, dihedral));
+            }
+        }
+        (!segments.is_empty()).then(|| (Bvh::from_triangles(segments), shape))
+    }
+}
+
+/// The cell of a grid of cubes `size` wide that `p` is in.
+fn cell_of(p: Vec3, size: f64) -> [i64; 3] {
+    (p / size).floor().to_array().map(|c| c as i64)
+}
+
+/// A cell and the 26 around it.
+fn cells_around([x, y, z]: [i64; 3]) -> impl Iterator<Item = [i64; 3]> {
+    (-1..=1).flat_map(move |i| (-1..=1).flat_map(move |j| (-1..=1).map(move |k| [x + i, y + j, z + k])))
+}
+
+/// Runs of `edges` from an end or a junction to the next, a ring with
+/// neither counting as one: each run has two ends at vertices joined to
+/// other than two edges, save the rings.
+fn chains(edges: &[FeatureEdge]) -> usize {
+    let mut degree: HashMap<u32, usize> = HashMap::new();
+    for edge in edges {
+        for v in edge.ends {
+            *degree.entry(v).or_insert(0) += 1;
+        }
+    }
+    let ends: usize = degree.values().filter(|&&d| d != 2).sum();
+    // Rings: joined sets whose vertices are all on two edges.
+    let mut index: HashMap<u32, u32> = HashMap::new();
+    for &v in degree.keys() {
+        let next = index.len() as u32;
+        index.entry(v).or_insert(next);
+    }
+    let mut sets = Components::new(index.len());
+    for edge in edges {
+        sets.union(index[&edge.ends[0]], index[&edge.ends[1]]);
+    }
+    let mut open: HashMap<u32, bool> = HashMap::new();
+    for (v, &d) in &degree {
+        *open.entry(sets.find(index[v])).or_insert(false) |= d != 2;
+    }
+    ends / 2 + open.values().filter(|&&o| !o).count()
 }
 
 /// Half-edge view of a polygon mesh. Half-edge `h` leaves `origin[h]` along
