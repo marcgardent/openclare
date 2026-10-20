@@ -17,10 +17,13 @@ decision are for the author to take; the rest is already in the repository.
   with `\enginecommit`, the short hash of `HEAD`, followed by `-dirty` when
   tracked files other than the PDFs differ from it. The first page and the
   paragraph "Limitations and reproducibility" name it.
-- **Proofs and PDF on GitHub**: [`.github/workflows/proofs.yml`](../../../.github/workflows/proofs.yml)
+- **Proofs and PDF on GitHub**: [`.github/workflows/lean.yml`](../../../.github/workflows/lean.yml)
   checks the Lean proofs (no `sorry`, `admit` or `axiom`, then `lake build` on
-  the pinned Mathlib) and builds `paper.pdf`, kept with the run as an
-  artifact, on every pull request and push to `main` that touches the note.
+  the pinned Mathlib) when the `lean` folder changes;
+  [`.github/workflows/papers.yml`](../../../.github/workflows/papers.yml)
+  builds `paper.pdf` and `paper.fr.pdf` on every pull request that touches a
+  paper, and for the website on every push to `main`. The PDFs are not kept in
+  git.
 - **Citation metadata**: [`CITATION.cff`](../../../CITATION.cff) (GitHub's
   "Cite this repository"; the note is listed under `references`) and
   [`.zenodo.json`](../../../.zenodo.json), which Zenodo reads in place of

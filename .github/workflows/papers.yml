@@ -1,0 +1,54 @@
+name: papers
+
+# The PDFs of the two research papers, docs/research/closing-loops (A) and
+# docs/research/turns-of-a-t-mesh (B), each in English and in French. They are
+# not kept in the repository: this workflow builds them from the LaTeX
+# sources. On a pull request that touches a paper (its Lean folder aside,
+# checked by lean.yml), to show that it builds; called by pages.yml, which
+# serves them on the website; and by hand from the Actions tab. Each paper
+# is one artifact holding paper.pdf and paper.fr.pdf, named after its folder.
+on:
+  pull_request:
+    paths:
+      - "docs/research/**"
+      - "!docs/research/turns-of-a-t-mesh/lean/**"
+      - ".github/workflows/papers.yml"
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  paper:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        note: [closing-loops, turns-of-a-t-mesh]
+    steps:
+      # The commit of the branch rather than the merge GitHub makes for a pull
+      # request: it is the one the PDF names.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: The commit the paper describes
+        run: make paper-version NOTE=${{ matrix.note }}
+      # The numbers drawn on the figures of paper B, checked by walking the
+      # strips of the surfaces they draw.
+      - name: The figures' numbers
+        if: matrix.note == 'turns-of-a-t-mesh'
+        run: python3 docs/research/turns-of-a-t-mesh/figures/check.py
+      - uses: xu-cheng/latex-action@4.1.0
+        with:
+          working_directory: docs/research/${{ matrix.note }}
+          root_file: |
+            paper.tex
+            paper.fr.tex
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.note }}
+          path: |
+            docs/research/${{ matrix.note }}/paper.pdf
+            docs/research/${{ matrix.note }}/paper.fr.pdf
+          if-no-files-found: error

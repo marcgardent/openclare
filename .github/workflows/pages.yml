@@ -2,7 +2,8 @@ name: pages
 
 # The website (site/): built by site/build.py, its links checked, and
 # published by GitHub Pages (Settings › Pages › Source: GitHub Actions) on
-# every push to main.
+# every push to main. The PDFs of the research papers, which the site serves,
+# are not in the repository: papers.yml builds them from the commit pushed.
 on:
   push:
     branches: [main]
@@ -17,10 +18,18 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  papers:
+    uses: ./.github/workflows/papers.yml
+
   build:
+    needs: papers
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
+      # Each paper's PDFs back in its folder, where site/build.py looks.
+      - uses: actions/download-artifact@v8
+        with:
+          path: docs/research
       # Plain Python, nothing installed: without Pillow the pictures are
       # copied as they are rather than made WebP, a few hundred kilobytes more.
       - name: Build
