@@ -34,6 +34,18 @@ fn a_sphere_comes_out_closed_all_quads_and_on_budget() {
 }
 
 #[test]
+fn a_small_layout_of_more_rectangles_than_quads_is_still_quantized() {
+    // A sphere's layout has at least the six rectangles of a cube: four
+    // quads cannot be shared out among them, but so small a layout is
+    // quantized in no time, and the nearest it comes is kept.
+    let source = primitives::icosphere(4);
+    let (mesh, report) = config(4).remesh(&source).unwrap();
+    assert!(!report.fell_back, "{:?}", report.fallback_causes);
+    assert!(!mesh.faces.is_empty());
+    assert!(mesh.faces.iter().all(|face| face.len() == 4));
+}
+
+#[test]
 fn a_cube_keeps_its_edges_and_corners() {
     let source = primitives::cube(8);
     let (mesh, _) = RemeshConfig::for_hard_surface(Target::QuadCount(600)).remesh(&source).unwrap();
