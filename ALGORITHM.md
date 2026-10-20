@@ -1203,6 +1203,103 @@ On the male body the rounds find nothing better than the engine's lengths at any
 budgets: the mesh is the engine's to the byte, for about 20 s more (it was 134 s more with
 20 s per solve).
 
+**Experiment options** (`quantization/experiment.rs`, `quantization/export.rs`; DT-089). The
+experiments of the research papers (`docs/research`) run on the engine of one commit, with
+environment variables that turn off one stage of the closing at a time, write out the system it
+works on, or give it lengths worked out outside it. `openclare remesh` and `openclare quantize`
+read them once per quantization (`quantization::Experiment::from_env`, carried by
+`Request::experiment`); a value that cannot be read is an error. With none set, the meshes are
+the engine's to the byte (the 12-model batch at 3000 quads, 12 of 12 identical). Like the
+`OPENCLARE_DEBUG_*` variables (`_TUBES`: each stage of the closing, way by way, and how many turns
+are still shifted after the integer search; `_TURNS`, `_REPAIR`, `_WORK`), they are for research,
+not for users.
+
+The switches, one per stage of Section "Closing turns in quantization" of the closing-loops
+paper; any value turns a `NO_` switch on:
+
+| Variable | Effect |
+|---|---|
+| `--no-close-loops` (a flag) | no closing: the plain search alone |
+| `OPENCLARE_CLOSE_WAYS=i,j,…` | only these ways of finding turns, by their place in `CLOSE_WAYS`: way `m + 2j + 4i` starts from the shares {0.5} (`m = 0`) or {0.2, 0.5, 0.8}, with the lean bound 0.05 (`j = 0`) or 0.12, and the length bound 2 (`i = 0`) or 6 sides; `0,1` is the first closing (one lean, short turns), `0,1,2,3` adds the leaning ways |
+| `OPENCLARE_NO_AIMED_REPAIR` | no walks aimed at each held turn still shifted after the repair |
+| `OPENCLARE_NO_DEVIATION_CAP` | lengths closing loops kept however far from the real ones |
+| `OPENCLARE_NO_DEVIATION_FLOOR` | the cap is 1.5 times the plain search's deviation, without the floor of 0.2 more |
+| `OPENCLARE_NO_CUT_ROUNDS` | no rounds of constraint generation (closing by cuts) after the ways |
+| `OPENCLARE_NO_ACTIVE_SET` | the projection cuts the lengths it takes below their floor off afterwards, instead of holding them there and solving again |
+| `OPENCLARE_ACTIVE_SET_FLOOR=s` | that floor is `s` (0 to 1) times the real length of each arc, not nothing |
+| `OPENCLARE_NO_FOLD_GUARD` | lengths closing loops may take the vertices further off the folds than the plain search |
+| `OPENCLARE_JITTER_SEED=n` | another draw of the per-arc preference (0, the default, is the engine's): a control |
+
+The engines of Table `tab:dev` of the closing-loops paper, on this one: no closing; ways `0,1`
+with `NO_AIMED_REPAIR`, `NO_DEVIATION_CAP`, `NO_CUT_ROUNDS`, `NO_ACTIVE_SET` and `NO_FOLD_GUARD`;
+ways `0,1,2,3` with the aimed repair; all ways with the cap but `NO_DEVIATION_FLOOR`; then the
+stages the table leaves out, added back one at a time: the constraint rounds, the active set and
+the floor of the cap, the fold guard. The engine of the exported systems (Section "An exact look
+at the closing system", and the "Data" of the turns-of-a-t-mesh paper), before the constraint
+rounds: `NO_CUT_ROUNDS`, `NO_ACTIVE_SET`, `NO_DEVIATION_FLOOR`, `NO_FOLD_GUARD`; Table
+`tab:rounding` adds `OPENCLARE_ACTIVE_SET_FLOOR` or `OPENCLARE_AIMED`. The rest of the engine has
+moved on since those commits (field, T-mesh, the pull of the folds in the search, the candidates
+meshed in turn where one folds over): the switches rebuild the stages, not the old numbers.
+
+The files, each named after its T-mesh, since pieces are quantized in parallel:
+`call-<arcs>-<patches>-<length>`, its numbers of arcs and rectangles and the total length of its
+arcs in thousandths. A way is numbered by its place in `CLOSE_WAYS`, as above.
+
+- `OPENCLARE_EXPORT_TURNS=<dir>` writes, for each T-mesh, `call-<name>.json`: the lengths the
+  quantizer ranks first and what the engine knows of them; `call-<name>.txt`: those lengths as
+  `OPENCLARE_LENGTHS` reads them, so that the export read back gives the same mesh (12 of 12);
+  and for each way tried, `call-<name>/way-<k>.json` and `call-<name>/way-<k>-helices.json`.
+- `OPENCLARE_LENGTHS=<dir>` reads `call-<name>.txt`: a first line with the scale (empty for the
+  plain search's), then a whole length per arc, taken as they are in place of the whole closing,
+  the plain lengths after them; or `call-<name>/way-<k>-integer.txt`, a length per arc, in place
+  of what way `k`'s search and repair give, with no rounds of cuts after.
+- `OPENCLARE_AIMED=<dir>` reads `call-<name>/aimed-<k>.txt`: a first line with a length per arc,
+  at the scale of the real ones, for the search of way `k` to aim at in place of the projection's
+  (or empty, for the projection to run), and a second with the turns to close, by their place
+  among the turns the way holds (`held_index`).
+
+Fields of the files, all lengths in arc order and every linear expression in the lengths a list
+of `[arc, coefficient]`:
+
+- In every JSON object, the T-mesh: `stations`, the balances, one expression per rectangle and
+  pair of opposite sides; `arcs_at`, the middle of each arc; `nodes`, each with `at`, `kind`
+  (`singularity`, `corner`, `junction`), `vertex` (of the work mesh, or -1), `halves` (the
+  half-arcs leaving it) and `angle` (quarter turns round it; its index is 4 less that); `arcs`,
+  each with `nodes`, `length`, `patches`, `border`, `feature`, `trace`, `span` and `sides` (the
+  side of each patch it runs along, per half, -1 if none); `patches`, each rim from its first
+  corner as `[half, side]` pairs (`null` for a patch that is not a rectangle).
+- `way-<k>.json`: `call`, `way`, the way's `offsets`, `most_lean` and `longest`; `scale`, `quads`,
+  `spirals` (share of spiral loop edges, -1 where loops cannot be followed), `real` (the real
+  lengths with the per-arc preference, scale 1), `lengths` (the way's whole lengths), `lower`
+  (arcs held from vanishing); `turns`: every turn the way found, with `shift`, `along`, `around`
+  (its length at the real lengths), `lean` (its real shift over that), `patch`, `side` and
+  `offset` (where it starts), `at` (a place near it), `held`, `held_index` (its place among the
+  turns held, -1 if not), `kept` (still held after the projection let go of those it could not
+  close) and `crossings` (`[patch left, half-arc crossed, patch entered, how far along it]`).
+- `way-<k>-helices.json`: every strip of quads the way's whole lengths make (walked up to 6 times
+  the side of the mesh), with `shift`, `around`, `pitch` (its shift at the whole lengths) and
+  `field` (at the real lengths, scaled).
+- `call-<name>.json`: `call`; for the lengths ranked first, `scale`, `quads`, `lengths`, `lower`,
+  `spirals`, `deviation` (mean, in quad edges), `off_folds`, `turns_held`, `from_selector`, and
+  `way` and `round` (of cuts) they come from (`null` for none); the bounds they were kept within:
+  `wanted`, `allowed` (quads), `most_deviation`, `most_off_folds` (`null` where an experiment lifts
+  them); the plain search's `plain_quads`, `plain_scale`, `plain_deviation`, `plain_lengths`,
+  `plain_lower`; `real` and `exact` (without the preference); `folds` (`[arc, share along it,
+  sharpness]`); `reopen` and `unexplained` (what the quad mesh of the lengths breaks); and
+  `strips`, every strip of quads the lengths make, with `shift`, `around`, `pitch`, `field` and
+  `conditions`: `[expression, constant]`, each `expression . x + constant >= 0`, under which the
+  strip stays the same walk (`tubes::lattice_walks`).
+
+The experiment hooks of the archived branches `rd-exact` and `maxclose-rd` (DT-088) are these,
+with the same field names, except: the way files moved from `<dir>/way-<k>.json` into
+`<dir>/call-<name>/`, numbered by the place of the way in `CLOSE_WAYS` rather than among the
+ways not skipped (the same when none is, as on the male body), and so did `way-<k>-integer.txt`
+and `aimed-<k>.txt`; `OPENCLARE_ACTIVE_SET=<s>` is now `OPENCLARE_ACTIVE_SET_FLOOR=<s>`, the
+active set being on by default; lengths given for a way are not refined by cuts, which the
+engine of `rd-exact` did not have. Fields were only added: `call`, `way`, `offsets`, `most_lean`,
+`longest`, `quads` and `spirals` to the way files, `along` and `lean` to their turns, `field` to
+the helices, the T-mesh and `turns_held`, `from_selector`, `way`, `round` to the call files.
+
 ### M7 and M8 — From the quantized T-mesh to the quad mesh
 
 The specification planned two modules: M7, an integer-grid map constrained by the quantized

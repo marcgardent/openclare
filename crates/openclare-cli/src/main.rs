@@ -1057,7 +1057,8 @@ fn tmesh_command(args: &[String]) -> Result<(), String> {
 
 fn quantize_command(args: &[String]) -> Result<(), String> {
     let mut options = LayoutOptions::new();
-    let mut request = quantization::Request::default();
+    let experiment = quantization::Experiment::from_env().map_err(|e| e.to_string())?;
+    let mut request = quantization::Request { experiment, ..Default::default() };
     let (mut json, mut exact_scale) = (false, false);
     let mut args = args.iter();
     while let Some(arg) = args.next() {
