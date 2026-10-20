@@ -25,6 +25,8 @@ full: [SCORES.md](bench/results/SCORES.md).
 
 ## The Blender add-on
 
+This is the Community edition of the add-on.
+
 ### Installing
 
 One archive holds everything: the add-on and its engine, compiled. There is nothing else to
@@ -36,58 +38,39 @@ install, no Python package, no program beside it, and nothing is downloaded when
 2. In Blender 4.2 or later: *Edit > Preferences > Get Extensions*, the arrow at the top right,
    *Install from Disk*, and pick the archive.
 
-A tab named *openclare* appears in the sidebar of the 3D viewport (key N). The Linux build runs
-wherever Blender does (glibc 2.28 or later). The Windows build passes the tests of the engine but
-has not yet been run in a Blender for Windows; there is no build for macOS yet.
+A panel named *openclare* appears in the Properties editor, on the tab of the mesh (Object Data).
+The Linux build runs wherever Blender does (glibc 2.28 or later). The Windows build passes the
+tests of the engine but has not yet been run in a Blender for Windows; there is no build for
+macOS yet.
 
 ### Using it
 
 Select a mesh, set what follows, press *Remesh to Quads*. The result is a new object,
-`<name>.quads`, at the same place as the original, which is left as it is. What is remeshed is the
-object as it is seen, modifiers applied. Blender waits while the engine runs (about eight seconds
-for the 200,000 triangles of the ogre at 3000 quads); the status bar shows each stage as it
-begins.
+`<name>.quads`, at the same place as the original, which is left as it is. What is remeshed is
+the object as it is seen, modifiers applied. The engine runs in the background and Blender stays
+free: the panel shows a bar of its progress, with a button to stop it (Esc stops it too), and
+the status bar each stage as it begins. It takes about eight seconds for the 200,000 triangles
+of the ogre at 3000 quads.
 
 | Setting | What it does |
 |---|---|
-| Object | The object to remesh. Left empty, it is the active object, and the panel says which that is |
-| Preset | What the mesh is for: organic, animation, hard surface |
 | Ask For | *Number*: a number of quads, kept; the shape says where they are smaller. *Sizes*: the largest and the smallest quad; the shape says which where, and the number of quads is what that makes |
 | Quads | With *Number*: the number of quads asked for. A part that is thin all along (a ring, a strap, a wire) is given the quads its thickness calls for out of that number |
 | Largest, Smallest | With *Sizes*: the edges of the largest and of the smallest quads, in the units of the scene. Flat and thick parts get the largest; thin parts and tight bends get smaller ones, down to the smallest. Set from the size of the object when left at 0. The run says how many quads the shape called for |
-| Adaptive Size | How much the size of the quads follows the curvature: at 0 % they are all the same size; towards 100 % they get smaller where the shape bends and larger where it is flat. Each preset brings its own value |
 | Density | A vertex group of the object, painted in Weight Paint: quads are smallest where the weight is 1, largest where it is 0 |
 | Factor | How many times more quads a weight of 1 gets than a weight of 0, for the same area |
-| Density from Shape | Writes the density the shape calls for, the sizes *Adaptive Size* and thin parts give for the number or the sizes asked for, as the vertex group `openclare density` of the object, and makes it the *Density* with *Adaptive Size* off, for the shape to count once. Paint on top of it in Weight Paint where more or less detail is wanted. Where the shape asks for quads smaller than *Factor* allows, the weight stays at 1, and the report says which *Factor* would hold them all |
-| Curves | Curves drawn on the model, in two categories. *Guide* (cyan): the result has a line of edges along each. *Sharp* (violet): that line is made of hard edges, marked sharp and creased. *Assign*, *Remove*, *Select* and *Deselect* act on each category. Curves are taken with their modifiers, so a Shrinkwrap keeps a curve on the model. A curve that cannot be kept as a line of edges is let go, and the report says so |
+| Materials | Each quad gets the material of the surface it lies on, and the borders between materials are kept as lines of edges where that can be done |
+| Shape: presets | The menu in the header of the *Shape* block sets every setting below: *Organic*, *Animation*, *Hard Surface*, and those saved there with *+*. A saved preset can be removed; those of the add-on cannot |
+| Adaptive Size | How much the size of the quads follows the curvature: at 0 % they are all the same size; towards 100 % they get smaller where the shape bends and larger where it is flat |
+| Quads Around Thin Parts | The fewest quads that go round a thin part, a finger or the tip of an ear, for it to keep its volume. 0 does not look at thickness |
+| Hard Edges | Edges of the object sharper than the angle are followed by the quads wherever they can, and kept crisp: for mechanical parts |
+| Follow Curvature | How strongly the edges are drawn along the directions in which the shape bends, against how smoothly they flow |
+| Fewer Irregular Vertices | Irregular vertices closer than this many quads to one of the opposite kind are cancelled with it: fewer of them, for meshes meant to deform |
+| Volume Fit | How far the vertices leave the surface at the very end, for the mesh to keep the volume of the shape |
 
-![The ogre with and without guide curves](docs/images/guide_curves.png)
-
-What the result carries besides its quads, each with its box to tick:
-
-| Export | What the result gets |
-|---|---|
-| UV Layers: Grid | A UV layer, `openclare grid`, where every quad is a unit square: stripes and checkers follow the edges across the surface. Parts of it lie on top of each other: it is for patterns that repeat, not for painting |
-| UV Layers: Atlas | A UV layer, `openclare atlas`, made of islands that never overlap, packed into the unit square, to paint or bake on; its seams are marked on the edges. Every quad takes the same room in it, whatever its size on the surface: small quads, where the detail is, get more texels |
-| Edges: Sharp | The edges that follow a hard edge of the original are marked sharp. Only a preset that keeps hard edges (*Hard surface*) has any |
-| Edges: Creases | The edges that should stay sharp when the result is subdivided get a crease weight, which a Subdivision Surface modifier reads |
-| Surface: Materials | Each quad gets the material of the surface it lies on, and the borders between materials are kept as lines of edges where that can be done |
-
-### The relief of the original
-
-With a result selected, *Bake Height Map* reads the relief of the original onto it: a height map
-on its atlas, measured from the result subdivided, and the modifiers or the material that show it.
-On the ogre at 3000 quads, the surface shown is then 0.12 per mille of the size of the model away
-from the sculpt on average, against 0.92 subdivided without the relief; the bake takes a second.
-
-| Relief | |
-|---|---|
-| Levels | How many times the result is subdivided under the relief: more of them carry finer detail, at four times the faces each |
-| Resolution | The size of the height map, from 512 to 4096 texels a side |
-| Apply As: Modifier | A Displace modifier after the Subdivision Surface. Shown in every view and by every renderer, applied or exported as geometry |
-| Apply As: Material | The displacement of the material, with adaptive subdivision: Cycles dices the surface to the size of a pixel when it renders, for more detail and less memory. Nothing moves in Solid view |
-| File | Writes the height map beside the model as well: OpenEXR, 32 or 16 bits (the heights themselves, midlevel 0, scale 1), or PNG, 16 bits (heights between 0 and 1, midlevel 0.5, the scale the panel shows) |
-| Folder | Where the file goes (`//` is the folder of the `.blend`) |
+With the result selected, the same panel says what it was remeshed from and how the run went.
+The arrow beside the name of the original selects it; *Remesh Again* remeshes the original with
+the settings it has now, in place of the result, which keeps its name and place.
 
 ## Further
 

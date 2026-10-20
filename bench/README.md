@@ -51,8 +51,10 @@ A model of the bench is a **scene**: a `.blend` that holds one object to remesh 
 settings of the add-on, saved with the scene (`scene.openclare`: the object, the preset, the
 number of quads, the adaptive size, the vertex group painted as density and its factor, the
 collections of guide curves and of sharp curves, what to export). The file alone says how the
-model is to be run, and it is run as a user of the add-on would run it: the object as it is
-seen, modifiers applied, by the button of the panel.
+model is to be run, and it is run as the add-on calls the engine: the object as it is seen,
+modifiers applied. What the scene asks for that the Community add-on does not offer (the
+curves, the UV layers, the edges marked sharp and creased) is read from the scene and given to
+the engine by `blender_engine.py`.
 
 | Where | What |
 |---|---|
@@ -88,8 +90,9 @@ blender -b --factory-startup --python bench/make_scene.py -- my-file.blend bench
     --density Group --factor 4 --preset organic --quads 12000 --adaptive 100
 ```
 
-Only `--object` is needed; the collections are those the *Curves* panel of the add-on fills.
-Or open the file in Blender, set the panel as you want it, and save: any `.blend` whose scene
+Only `--object` is needed; the curves of the two collections are kept with the settings of the
+object, for `blender_engine.py` to read. Or open the file in Blender, set the panel of the
+add-on as you want it, and save: any `.blend` whose scene
 has an object chosen in the panel (or a mesh active) is a scene. To run one, in Blender without
 interface:
 
@@ -137,7 +140,8 @@ in `crates/openclare/src/metrics.rs`.
 | File | What it does |
 |---|---|
 | `run.py` | runs each tool on each model, measures, writes `results/` |
-| `blender_run.py` | Blender script: remeshes the object of a scene with the add-on, as its button does; writes the result, the object as the add-on saw it, and what the run said |
+| `blender_run.py` | Blender script: remeshes the object of a scene with the engine as the add-on calls it, with the settings of the scene; writes the result, the object as the add-on saw it, and what the run said |
+| `blender_engine.py` | for the Blender scripts: the engine run with everything a scene asks for, the curves, UV layers and marked edges the add-on does not offer included |
 | `make_scenes.py` | Blender script: makes the scenes that are a plain mesh, from `corpus/<model>.obj` or from a BlenderKit file (`make scenes`) |
 | `make_scene.py` | Blender script: makes a scene from an object of a `.blend`, with its modifiers, its curves and its painted density |
 | `export_object.py` | Blender script: writes one object of a `.blend` as an OBJ and the material of each triangle, for the command line |
@@ -181,7 +185,7 @@ The three chains of the repository are there: `instant-meshes` (the floor), `int
 (the provisional one) and `quad-layout`, the one the project is about. That last one goes by
 the name of the project in the reports, under two settings:
 
-- `openclare`: the add-on, in Blender, on the scene, with the
+- `openclare`: the engine as the add-on calls it, in Blender, on the scene, with the
   settings saved in it; the bench only sets the number of quads. On the scenes that are a
   plain mesh that is quads sized by the shape (adaptive size 50 %); on the others it is what
   their author set, curves, painted density and materials included. With each run the bench

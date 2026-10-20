@@ -4,16 +4,18 @@
 
 ## L'extension Blender
 
+C'est l'édition Community de l'extension.
+
 Une seule archive contient tout : l'extension et son moteur, compilé. Il n'y a rien d'autre à installer, ni paquet Python, ni programme à côté, et rien n'est téléchargé pendant qu'elle tourne.
 
 1. Prenez l'archive de votre système dans les [versions publiées](https://github.com/marcgardent/openclare/releases) : `openclare-<version>-linux-x64.zip` ou `openclare-<version>-windows-x64.zip`. Ou construisez-la vous-même (plus bas).
 2. Dans Blender 4.2 ou plus récent : *Edit › Preferences › Get Extensions*, la flèche en haut à droite, *Install from Disk*, et choisissez l'archive.
 
-Un onglet nommé *openclare* apparaît dans la barre latérale de la vue 3D (touche N). Sélectionnez un maillage, choisissez un préréglage (organique, animation, surface dure) et un nombre de quads, appuyez sur *Remesh to Quads*. Le résultat est un nouvel objet à côté de l'original, qui reste tel quel.
+Un panneau nommé *openclare* apparaît dans l'éditeur Properties, sur l'onglet du maillage (Object Data). Sélectionnez un maillage, demandez un nombre de quads ou leurs tailles, choisissez un préréglage de la forme (organique, animation, surface dure), appuyez sur *Remesh to Quads*. Une densité peinte en Weight Paint dit où les quads sont plus petits, et les frontières entre matériaux sont gardées comme lignes d'arêtes. Le résultat est un nouvel objet à côté de l'original, qui reste tel quel. Le moteur tourne en arrière-plan : Blender reste libre, et le panneau montre une barre de progression avec un bouton pour l'arrêter.
 
 La version Linux tourne partout où Blender tourne (glibc 2.28 ou plus récente). La version Windows passe les tests du moteur mais n'a pas encore tourné dans un Blender pour Windows ; il n'y a pas encore de version pour macOS.
 
-Ce que propose le panneau, réglage par réglage (courbes guides, densité peinte, tailles au lieu d'un nombre de quads, calques UV, arêtes vives et plis, matériaux, report du relief de l'original), est dans le [README](../../README.md).
+Ce que propose le panneau, réglage par réglage, est dans le [README](../../README.md).
 
 ### Construire l'extension
 

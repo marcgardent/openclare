@@ -1,15 +1,14 @@
-"""openclare: automatic quad retopology, as a Blender add-on.
+"""openclare: automatic quad retopology, as a Blender add-on (Community
+edition).
 
 A panel in the Properties editor, on the tab of the mesh of an object
 (Object Data), remeshes the object into quads with the settings it keeps.
 The result is a new object, next to the original, which is left as it is;
-shown, the same panel says what it was made from and how, remeshes it again
-and bakes the relief of the original onto it.
+shown, the same panel says what it was made from and how, and remeshes it
+again.
 """
 
 import math
-import time
-
 import os
 
 import bpy
@@ -24,9 +23,6 @@ PRESETS = [
     ("animation", "Animation", "Meshes meant to deform: fewer irregular vertices, at some cost in fidelity"),
     ("hard-surface", "Hard surface", "Mechanical parts: edges sharper than 30 degrees are kept exactly"),
 ]
-# How much the size of the quads follows the curvature in each preset, in
-# per cent: what the slider goes back to when the preset changes.
-ADAPTIVE_SIZE = {"organic": 50.0, "animation": 50.0, "hard-surface": 0.0}
 # The shapes the add-on ships, as the values of the settings they set: what
 # the engine's presets of the same names are. The preset files of the add-on
 # (presets/openclare_shape) say the same; files of 0.1, which named one of
@@ -48,35 +44,8 @@ SHAPE_PRESETS = "openclare_shape"
 BASE_PRESET = "organic"
 
 
-# The two kinds of curves drawn on a model, each with its collection and the
-# colour its curves take in the viewport: name, label, what it does, colour
-# of the objects, colour tag of the collection (the nearest Blender has).
-# A run takes the curves of both; a curve is of one kind only.
-CATEGORIES = [
-    (
-        "guide",
-        "Guide",
-        "Curves the result has a line of edges along, and nothing more: edge loops round an eye, a limb, a muscle",
-        (0.0, 0.85, 1.0, 1.0),
-        "COLOR_05",
-    ),
-    (
-        "sharp",
-        "Sharp",
-        "Curves the result has a line of hard edges along: marked sharp and creased, "
-        "as if the surface had a crease there",
-        (0.6, 0.25, 1.0, 1.0),
-        "COLOR_06",
-    ),
-]
-CATEGORY = {name: (label, colour, tag) for name, label, _, colour, tag in CATEGORIES}
-# What a curve goes back to when it leaves its category.
-PLAIN = (1.0, 1.0, 1.0, 1.0)
-
-
 # What the engine said of the last run of the operator, name by name: for a
-# script that drives the add-on (bench/blender_run.py). Empty until a run
-# ends well.
+# script that drives the add-on. Empty until a run ends well.
 last_report = {}
 
 
@@ -104,9 +73,9 @@ def source_of(owner):
     return source if source is not None and source.type == "MESH" else None
 
 
-# Settings that are not copied from one object to another: what is shown,
-# and the object files of 0.1 named in the settings of their scene.
-NOT_COPIED = {"rna_type", "name", "source", "show_sizes"}
+# Settings that are not copied from one object to another: the object files
+# of 0.1 named in the settings of their scene.
+NOT_COPIED = {"rna_type", "name", "source"}
 
 
 def copy_settings(given, taken):
@@ -142,54 +111,6 @@ def adopt_scene_settings(scene):
         legacy.property_unset(name)
 
 
-# How many of its largest quads go along the diagonal of the box of an object
-# when the sizes are set from it, and how many times smaller the smallest is.
-QUADS_ALONG = 40.0
-SIZE_RANGE = 8.0
-
-
-def sizes_from(owner):
-    """The largest and the smallest quad to start from for an object, in the
-    units of the scene: by its size alone."""
-    corners = [owner.matrix_world @ mathutils.Vector(corner) for corner in owner.bound_box]
-    diagonal = max((a - b).length for a in corners for b in corners)
-    largest = diagonal / QUADS_ALONG
-    return largest, largest / SIZE_RANGE
-
-
-def target_changed(settings, context):
-    """Sizes asked for and none set: those the object gives."""
-    if settings.target != "SIZE" or settings.largest_quad > 0.0:
-        return
-    owner = settings.id_data
-    if isinstance(owner, bpy.types.Object) and owner.type == "MESH":
-        settings.largest_quad, settings.smallest_quad = sizes_from(owner)
-
-
-# Shapes analysed: by object name, the engine's analysis, what it was made
-# from (to tell when it no longer holds), and the scale of the object then.
-ANALYSES = {}
-# The last count asked of an analysis, which the panel draws again and again.
-COUNTED = {}
-# The preview of the sizes: the object coloured, the colour attributes that
-# were its active and rendered ones, and how the 3D views coloured objects.
-PREVIEW = {}
-SIZES_ATTRIBUTE = "openclare sizes"
-# Sequential colours of the sizes, light for the largest quads to dark for the
-# smallest, and the colour of what is coarser than its shape asks.
-SIZE_RAMP = ["#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b"]
-COARSER = "#e34948"
-
-
-def analysis_key(settings, owner, evaluated_mesh):
-    """What an analysis depends on: the mesh as seen and the settings that
-    say what the shape calls for."""
-    vertices = len(evaluated_mesh.vertices)
-    corner = tuple(round(c, 5) for c in evaluated_mesh.vertices[0].co) if vertices else ()
-    return (owner.name, vertices, len(evaluated_mesh.polygons), corner, tuple(shape_of(settings).items()),
-            settings.density_group, round(settings.density_factor, 3))
-
-
 def shape_of(settings):
     """The settings of the shape as the engine takes them."""
     return {
@@ -214,198 +135,38 @@ def adopt_preset(settings):
     settings.property_unset("preset")
 
 
-def scale_of(owner):
-    """How long a unit of the mesh is in the scene."""
-    return sum(abs(factor) for factor in owner.matrix_world.to_scale()) / 3.0 or 1.0
+# How many of its largest quads go along the diagonal of the box of an object
+# when the sizes are set from it, and how many times smaller the smallest is.
+QUADS_ALONG = 40.0
+SIZE_RANGE = 8.0
 
 
-def analysis_of(context, settings, owner):
-    """The analysis of `owner` as it is now, if it was made: (analysis,
-    scale), or None."""
-    held = ANALYSES.get(owner.name)
-    if held is None:
-        return None
-    evaluated = owner.evaluated_get(context.evaluated_depsgraph_get())
-    mesh = evaluated.to_mesh()
-    try:
-        current = analysis_key(settings, owner, mesh)
-    finally:
-        evaluated.to_mesh_clear()
-    return (held["analysis"], scale_of(owner)) if held["key"] == current else None
+def sizes_from(owner):
+    """The largest and the smallest quad to start from for an object, in the
+    units of the scene: by its size alone."""
+    corners = [owner.matrix_world @ mathutils.Vector(corner) for corner in owner.bound_box]
+    diagonal = max((a - b).length for a in corners for b in corners)
+    largest = diagonal / QUADS_ALONG
+    return largest, largest / SIZE_RANGE
 
 
-def counted(analysis, scale, largest, smallest):
-    """How many quads and how much is coarser than asked, for sizes in the
-    units of the scene; the last answer is kept."""
-    asked = (id(analysis), round(largest, 9), round(smallest, 9), scale)
-    if COUNTED.get("asked") != asked:
-        COUNTED["asked"], COUNTED["answer"] = asked, analysis.count(largest / scale, smallest / scale)
-    return COUNTED["answer"]
-
-
-def linear(hex_colour):
-    """A colour written as #rrggbb, in the linear values Blender keeps."""
-    channels = [int(hex_colour[k : k + 2], 16) / 255.0 for k in (1, 3, 5)]
-    return [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in channels] + [1.0]
-
-
-def colour_sizes(settings):
-    """Colours the object with the sizes asked for now."""
-    import numpy
-
-    owner = bpy.data.objects.get(PREVIEW.get("of", ""))
-    held = ANALYSES.get(PREVIEW.get("of", ""))
-    if owner is None or held is None or owner.type != "MESH":
+def target_changed(settings, context):
+    """Sizes asked for and none set: those the object gives."""
+    if settings.target != "SIZE" or settings.largest_quad > 0.0:
         return
-    scale = PREVIEW["scale"]
-    largest = settings.largest_quad / scale
-    smallest = min(settings.smallest_quad / scale, largest) or largest / SIZE_RANGE
-    sizes, coarser = held["analysis"].at_vertices(largest, smallest)
-    ramp = numpy.array([linear(colour) for colour in SIZE_RAMP], numpy.float32)
-    span = max(numpy.log(largest / smallest), 1e-9)
-    # From light (largest) to dark (smallest), as a logarithm of the size.
-    t = numpy.clip(numpy.log(largest / numpy.nan_to_num(sizes, nan=largest)) / span, 0.0, 1.0) * (len(ramp) - 1)
-    low = numpy.floor(t).astype(int).clip(0, len(ramp) - 2)
-    part = (t - low)[:, None]
-    colours = ramp[low] * (1.0 - part) + ramp[low + 1] * part
-    colours[coarser] = linear(COARSER)
-    if PREVIEW.get("nearest") is not None:
-        colours = colours[PREVIEW["nearest"]]
-    mesh = owner.data
-    if len(colours) != len(mesh.vertices):
-        return
-    attribute = mesh.color_attributes.get(SIZES_ATTRIBUTE) or mesh.color_attributes.new(
-        SIZES_ATTRIBUTE, "FLOAT_COLOR", "POINT"
-    )
-    attribute.data.foreach_set("color", colours.astype(numpy.float32).ravel())
-    mesh.color_attributes.active_color_name = SIZES_ATTRIBUTE
-    mesh.color_attributes.default_color_name = SIZES_ATTRIBUTE
-    mesh.update()
-
-
-def stop_preview(context, untick=True):
-    """Takes the colours of the sizes away: the colour attributes of the
-    object are as they were, and the 3D views colour as they did. Its box
-    Show Sizes is unticked, unless `untick` says not to."""
-    owner = bpy.data.objects.get(PREVIEW.pop("of", ""))
-    active, default = PREVIEW.pop("active", ""), PREVIEW.pop("default", "")
-    PREVIEW.pop("nearest", None)
-    if owner is not None and owner.type == "MESH":
-        colours = owner.data.color_attributes
-        if SIZES_ATTRIBUTE in colours:
-            colours.remove(colours[SIZES_ATTRIBUTE])
-        if active in colours:
-            colours.active_color_name = active
-        if default in colours:
-            colours.default_color_name = default
-        owner.data.update()
-        if untick and owner.openclare.show_sizes:
-            owner.openclare.show_sizes = False
-    for space, colour_type in PREVIEW.pop("views", []):
-        try:
-            space.shading.color_type = colour_type
-        except ReferenceError:
-            pass
-
-
-def nearest_seen(mesh, seen):
-    """For each vertex of `mesh`, the nearest vertex of `seen`, the mesh as
-    its modifiers make it: a numpy array, or None when the two have as many
-    vertices, each then being its own."""
-    import numpy
-    from mathutils.kdtree import KDTree
-
-    if len(seen.vertices) == len(mesh.vertices):
-        return None
-    tree = KDTree(len(seen.vertices))
-    for vertex in seen.vertices:
-        tree.insert(vertex.co, vertex.index)
-    tree.balance()
-    return numpy.array([tree.find(vertex.co)[1] for vertex in mesh.vertices])
-
-
-def start_preview(context, settings, owner):
-    """Colours the object with its sizes, in a colour attribute of its own
-    made the active and the rendered one; those that were are kept to be
-    given back."""
-    stop_preview(context)
-    colours = owner.data.color_attributes
-    PREVIEW.update(
-        of=owner.name, scale=scale_of(owner), active=colours.active_color_name or "",
-        default=colours.default_color_name or "", nearest=None,
-    )
-    # The sizes are known at the vertices of the mesh as seen. Where its
-    # modifiers make other vertices, each of the object takes the nearest.
-    evaluated = owner.evaluated_get(context.evaluated_depsgraph_get())
-    seen = evaluated.to_mesh()
-    try:
-        PREVIEW["nearest"] = nearest_seen(owner.data, seen)
-    finally:
-        evaluated.to_mesh_clear()
-    # The 3D views show the colour attribute meanwhile ("VERTEX", shown as
-    # Attribute).
-    PREVIEW["views"] = []
-    for area in context.screen.areas if context.screen else []:
-        if area.type == "VIEW_3D":
-            space = area.spaces.active
-            PREVIEW["views"].append((space, space.shading.color_type))
-            space.shading.color_type = "VERTEX"
-    colour_sizes(settings)
-
-
-@bpy.app.handlers.persistent
-def before_saving(*_):
-    """No colours of the sizes in the file saved: taken away, then put back."""
-    PREVIEW["saved"] = PREVIEW.get("of")
-    if PREVIEW["saved"]:
-        views = PREVIEW.get("views", [])
-        stop_preview(bpy.context, untick=False)
-        PREVIEW["views_saved"] = views
-
-
-@bpy.app.handlers.persistent
-def after_saving(*_):
-    owner = bpy.data.objects.get(PREVIEW.pop("saved", None) or "")
-    views = PREVIEW.pop("views_saved", [])
-    if owner is not None:
-        start_preview(bpy.context, owner.openclare, owner)
-        # The views were given back their colouring before saving: what they
-        # had before the preview is what to give back at the end.
-        PREVIEW["views"] = views
+    owner = settings.id_data
+    if isinstance(owner, bpy.types.Object) and owner.type == "MESH":
+        settings.largest_quad, settings.smallest_quad = sizes_from(owner)
 
 
 @bpy.app.handlers.persistent
 def after_loading(*_):
-    """Another file: what was analysed and shown belonged to the last one."""
-    PREVIEW.clear()
-    ANALYSES.clear()
-    COUNTED.clear()
+    """Another file: the settings it kept as 0.1 did are given to its
+    objects."""
     for scene in bpy.data.scenes:
         adopt_scene_settings(scene)
     for owner in bpy.data.objects:
         adopt_preset(owner.openclare)
-        if owner.openclare.show_sizes:
-            owner.openclare.show_sizes = False
-
-
-def sizes_changed(settings, context):
-    """The sizes moved: the preview follows."""
-    if PREVIEW.get("of") and PREVIEW["of"] == settings.id_data.name:
-        colour_sizes(settings)
-
-
-def show_sizes_changed(settings, context):
-    if not settings.show_sizes:
-        stop_preview(context)
-        return
-    owner = settings.id_data
-    if not isinstance(owner, bpy.types.Object) or owner.type != "MESH" or owner.mode == "EDIT" \
-            or analysis_of(context, settings, owner) is None:
-        # Nothing to show before the object is analysed as it is, nor while
-        # it is edited.
-        settings.show_sizes = False
-        return
-    start_preview(context, settings, owner)
 
 
 class OpenclareSettings(bpy.types.PropertyGroup):
@@ -464,7 +225,6 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         min=0.0,
         subtype="DISTANCE",
         precision=4,
-        update=sizes_changed,
     )
     smallest_quad: bpy.props.FloatProperty(
         options=set(),
@@ -477,19 +237,6 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         min=0.0,
         subtype="DISTANCE",
         precision=4,
-        update=sizes_changed,
-    )
-    show_sizes: bpy.props.BoolProperty(
-        options=set(),
-        name="Show Sizes",
-        description=(
-            "Colour the object with the size its quads will have: light where they are largest, dark where "
-            "they are smallest, red where its shape calls for quads smaller than the smallest. A colour "
-            "attribute of its own, made the active and rendered one meanwhile, shown in Solid view by "
-            "attribute; taken away when unticked, the colour attributes of the object as they were"
-        ),
-        default=False,
-        update=show_sizes_changed,
     )
     adaptive_size: bpy.props.FloatProperty(
         options=set(),
@@ -595,130 +342,6 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         soft_max=16.0,
         max=100.0,
     )
-    shape_adaptive_size: bpy.props.FloatProperty(
-        options={"HIDDEN"},
-        name="Adaptive Size Written",
-        description=(
-            "The Adaptive Size Density from Shape read the shape with before it switched it off: what it reads "
-            "the shape with again while Adaptive Size stays off and its group is the Density"
-        ),
-        subtype="PERCENTAGE",
-        default=0.0,
-        min=0.0,
-        max=100.0,
-    )
-    guide_curves: bpy.props.PointerProperty(
-        options=set(),
-        name="Guide Curves",
-        type=bpy.types.Collection,
-        description=(
-            "Collection of curves drawn on the model: the result has a line of edges along each. "
-            "Curves are taken with their modifiers, so a Shrinkwrap keeps them on the model. "
-            "Leave empty for none"
-        ),
-    )
-    sharp_curves: bpy.props.PointerProperty(
-        options=set(),
-        name="Sharp Curves",
-        type=bpy.types.Collection,
-        description=(
-            "Collection of curves drawn on the model: the result has a line of hard edges along each, "
-            "marked sharp and creased. Curves are taken with their modifiers, so a Shrinkwrap keeps them "
-            "on the model. Leave empty for none"
-        ),
-    )
-    export_grid_uv: bpy.props.BoolProperty(
-        options=set(),
-        name="Grid UV",
-        description=(
-            "Give the result a UV layer where every quad is a unit square: stripes and checkers follow the "
-            "edges. Parts of it overlap, so it is for patterns that repeat, not for painting"
-        ),
-        default=True,
-    )
-    relief_resolution: bpy.props.EnumProperty(
-        options=set(),
-        name="Resolution",
-        description="Width and height of the height map, in texels",
-        items=[(str(size), f"{size} x {size}", "") for size in (512, 1024, 2048, 4096)],
-        default="2048",
-    )
-    relief_levels: bpy.props.IntProperty(
-        options=set(),
-        name="Levels",
-        description=(
-            "How many times the quad mesh is subdivided under the relief: the height map is measured from "
-            "that surface, creases included, and moves its vertices"
-        ),
-        default=2,
-        min=0,
-        max=5,
-    )
-    relief_apply: bpy.props.EnumProperty(
-        options=set(),
-        name="Apply As",
-        description="How the height map moves the surface",
-        items=[
-            (
-                "MODIFIER", "Modifier",
-                "A Displace modifier after the Subdivision Surface: shown in every view and by every renderer, "
-                "and applied or exported as geometry; the mesh is really subdivided, and carries no more "
-                "detail than its vertices allow",
-            ),
-            (
-                "MATERIAL", "Material",
-                "The displacement of the material, with adaptive subdivision: Cycles dices the surface to the "
-                "size of a pixel when it renders, for more detail and less memory; nothing moves in Solid view",
-            ),
-        ],
-        default="MODIFIER",
-    )
-    relief_format: bpy.props.EnumProperty(
-        options=set(),
-        name="File",
-        description="Write the height map as a file too, to use it elsewhere",
-        items=[
-            ("NONE", "None", "The image is kept in the .blend file only"),
-            (
-                "EXR32", "OpenEXR 32-bit",
-                "The heights themselves, in the unit of the object, as 32-bit floats: midlevel 0, scale 1",
-            ),
-            (
-                "EXR16", "OpenEXR 16-bit",
-                "The heights themselves, in the unit of the object, as half floats: midlevel 0, scale 1",
-            ),
-            (
-                "PNG16", "PNG 16-bit",
-                "The heights brought between 0 and 1: midlevel 0.5, and the scale that the report gives",
-            ),
-        ],
-        default="NONE",
-    )
-    relief_directory: bpy.props.StringProperty(
-        options=set(),
-        name="Folder",
-        description="Where the file is written; // is the folder of the .blend file",
-        subtype="DIR_PATH",
-        default="//textures/",
-    )
-    export_atlas_uv: bpy.props.BoolProperty(
-        options=set(),
-        name="Atlas UV",
-        description=(
-            "Give the result a UV layer made of islands that never overlap, packed into the unit square, "
-            "to paint or bake on, and mark its seams on the edges"
-        ),
-        default=True,
-    )
-    export_sharp_edges: bpy.props.BoolProperty(
-        options=set(),
-        name="Sharp Edges",
-        description=(
-            "Mark as sharp the edges of the result that follow a hard edge of the original "
-            "(only presets that keep hard edges, Hard surface, find any) or a curve of the Sharp category"
-        ),
-        default=True,
-    )
     export_materials: bpy.props.BoolProperty(
         options=set(),
         name="Materials",
@@ -726,17 +349,6 @@ class OpenclareSettings(bpy.types.PropertyGroup):
             "Give each quad of the result the material of the surface it lies on, and keep the borders "
             "between materials as lines of edges where that can be done. Has no effect on an object of "
             "one material"
-        ),
-        default=True,
-    )
-    export_creases: bpy.props.BoolProperty(
-        options=set(),
-        name="Creases",
-        description=(
-            "Give a crease weight to the edges that should stay sharp when the result is subdivided: "
-            "those along a hard edge of the original or a curve of the Sharp category, and those where "
-            "the original folds sharply. "
-            "A Subdivision Surface modifier reads them"
         ),
         default=True,
     )
@@ -787,124 +399,40 @@ def in_place(mesh):
     )
 
 
-# Names of the layers of texture coordinates on the mesh made.
-UV_NAMES = {"grid": "openclare grid", "atlas": "openclare atlas"}
+def engine_settings_of(original, evaluated, source):
+    """What the engine is given for the object `original` with its settings:
+    the settings on top of `BASE_PRESET`, and the weights of the density
+    painted, if any, on `source`, the mesh of `evaluated`, `original` as it
+    is seen."""
+    settings = original.openclare
+    engine_settings = {"quads": settings.quads, **shape_of(settings)}
+    if settings.target == "SIZE":
+        # Lengths of the scene, where the engine is given the mesh as the
+        # object holds it: before its scale.
+        if settings.largest_quad <= 0.0:
+            settings.largest_quad, settings.smallest_quad = sizes_from(original)
+        scale = sum(abs(factor) for factor in original.matrix_world.to_scale()) / 3.0 or 1.0
+        smallest = min(settings.smallest_quad, settings.largest_quad) or settings.largest_quad / SIZE_RANGE
+        del engine_settings["quads"]
+        engine_settings["largest_quad"] = settings.largest_quad / scale
+        engine_settings["smallest_quad"] = smallest / scale
+    density = None
+    if settings.density_group:
+        density = weights_of(evaluated, source, settings.density_group)
+        engine_settings["density_contrast"] = settings.density_factor
+    return engine_settings, density
 
 
-def edge_keys(mesh, pairs):
-    """One number per edge, whichever way round its two vertices are given:
-    for the edges of `mesh`, and for those given as `pairs` of vertices."""
-    import numpy
-
-    ends = numpy.empty(2 * len(mesh.edges), numpy.int64)
-    mesh.edges.foreach_get("vertices", ends)
-    ends = numpy.sort(ends.reshape(-1, 2), axis=1)
-    wanted = numpy.sort(pairs.astype(numpy.int64).reshape(-1, 2), axis=1)
-    count = len(mesh.vertices)
-    return ends[:, 0] * count + ends[:, 1], wanted[:, 0] * count + wanted[:, 1]
-
-
-def flag_edges(mesh, attribute, pairs):
-    """Sets the boolean `attribute` of the edges of `mesh` on those given as
-    `pairs` of vertices, off on the others."""
-    import numpy
-
-    of_mesh, wanted = edge_keys(mesh, pairs)
-    flags = numpy.isin(of_mesh, wanted)
-    mesh.edges.foreach_set(attribute, flags)
-    return int(flags.sum())
-
-
-def crease_edges(mesh, pairs, weights):
-    """Gives the edges of `mesh` given as `pairs` of vertices their crease
-    `weights`, what a Subdivision Surface modifier reads; the others get 0."""
-    import numpy
-
-    of_mesh, wanted = edge_keys(mesh, pairs)
-    order = numpy.argsort(wanted)
-    found = numpy.searchsorted(wanted[order], of_mesh)
-    found[found >= len(wanted)] = 0
-    values = numpy.zeros(len(of_mesh), numpy.float32)
-    if len(wanted):
-        match = wanted[order][found] == of_mesh
-        values[match] = weights[order][found[match]]
-    attribute = mesh.attributes.get("crease_edge") or mesh.attributes.new("crease_edge", "FLOAT", "EDGE")
-    attribute.data.foreach_set("value", values)
-    return int((values > 0).sum())
-
-
-def curve_objects(collection):
-    """The curve objects of `collection`, those of the collections inside it
-    included; none if there is no collection."""
-    return [] if collection is None else [drawn for drawn in collection.all_objects if drawn.type == "CURVE"]
-
-
-def curves_of(collection, target, sharp=False, but=()):
-    """The curves of `collection` as the engine takes them: for each stretch
-    of each curve object, its points in the space of the object `target`,
-    whether it closes on itself, and `sharp`: whether the edges along it are
-    to be hard edges. The objects in `but` are left out. Curves are taken as
-    they are seen, modifiers applied: a Shrinkwrap is what keeps a curve on
-    a model."""
-    import numpy
-
-    depsgraph = bpy.context.evaluated_depsgraph_get()
-    into_target = target.matrix_world.inverted()
-    curves = []
-    for drawn in curve_objects(collection):
-        if drawn in but:
-            continue
-        evaluated = drawn.evaluated_get(depsgraph)
-        mesh = evaluated.to_mesh()
-        if mesh is None:
-            continue
-        matrix = into_target @ evaluated.matrix_world
-        points = [matrix @ vertex.co for vertex in mesh.vertices]
-        # A curve comes out as chains of edges, one per stretch.
-        joined = [[] for _ in points]
-        for edge in mesh.edges:
-            a, b = edge.vertices
-            joined[a].append(b)
-            joined[b].append(a)
-        evaluated.to_mesh_clear()
-        seen = [False] * len(points)
-        ends = [v for v in range(len(points)) if len(joined[v]) == 1]
-        for start in ends + list(range(len(points))):
-            if seen[start] or not joined[start]:
-                continue
-            chain, previous, current = [start], None, start
-            seen[start] = True
-            while True:
-                onward = [v for v in joined[current] if v != previous and not seen[v]]
-                if not onward:
-                    break
-                previous, current = current, onward[0]
-                seen[current] = True
-                chain.append(current)
-            closed = len(chain) > 2 and chain[0] in joined[chain[-1]]
-            curves.append((numpy.array([tuple(points[v]) for v in chain], numpy.float32), closed, sharp))
-    return curves
-
-
-def quads_of(
-    source, preset, settings, density=None, on_stage=None, uv_layers=(), sharp_edges=False, creases=False, curves=(),
-    materials=False, copy=False,
-):
+def quads_of(source, preset, settings, density=None, on_stage=None, materials=False):
     """A new mesh datablock: `source`, an evaluated mesh, remeshed into quads
     with the engine's `settings` on top of `preset`, and `density` if given
-    (one weight per vertex of `source`). `on_stage`, if given, is told the
-    name of each stage as it begins. The three steps, for a run that does
-    not wait: `engine_input`, `engine_run`, `mesh_of`.
-
-    `uv_layers` names the layers of texture coordinates to put on the mesh
-    ("grid", "atlas"); with the atlas come its seams, marked on the edges.
-    `sharp_edges` marks as sharp the edges that follow a hard edge of
-    `source`. `creases` gives a crease weight to the edges that should stay
-    sharp when the mesh is subdivided. `curves` are guide curves, as
-    `curves_of` gives them, in the space of `source`. `materials` gives the
-    mesh the materials of `source`, each face that of the surface it lies
-    on, with the borders between them kept as lines of edges."""
-    given = engine_input(source, preset, settings, density, uv_layers, sharp_edges, creases, curves, materials, copy)
+    (one weight per vertex of `source`), and the report of the run.
+    `on_stage`, if given, is told the name of each stage as it begins.
+    `materials` gives the mesh the materials of `source`, each face that of
+    the surface it lies on, with the borders between them kept as lines of
+    edges. The three steps, for a run that does not wait: `engine_input`,
+    `engine_run`, `mesh_of`."""
+    given = engine_input(source, preset, settings, density, materials)
     return mesh_of(engine_run(given, on_stage), given)
 
 
@@ -914,10 +442,7 @@ class EngineInput:
     own when the arrays are copies."""
 
 
-def engine_input(
-    source, preset, settings, density=None, uv_layers=(), sharp_edges=False, creases=False, curves=(),
-    materials=False, copy=False,
-):
+def engine_input(source, preset, settings, density=None, materials=False, copy=False):
     """The `EngineInput` of `quads_of`. With `copy`, the arrays of `source`
     are copied out, so that the run does not depend on `source` living as
     long as it does; otherwise they are read in place where they can be."""
@@ -954,8 +479,7 @@ def engine_input(
     given = EngineInput()
     given.counts = (vertices, triangles, corners)
     given.addresses, given.kept, given.groups = addresses, kept, groups
-    given.preset, given.settings, given.density, given.curves = preset, settings, density, curves
-    given.uv_layers, given.sharp_edges, given.creases = uv_layers, sharp_edges, creases
+    given.preset, given.settings, given.density = preset, settings, density
     # The materials the faces of the result take, kept as references.
     given.materials = list(source.materials)
     return given
@@ -968,48 +492,33 @@ def engine_run(given, on_stage=None):
     vertices, triangles, corners = given.counts
     return engine.remesh(
         given.addresses[0], vertices, given.addresses[1], triangles, given.addresses[2], corners, given.preset,
-        given.settings, given.density, on_stage, uv_layers=given.uv_layers, seams="atlas" in given.uv_layers,
-        hard_edges=given.sharp_edges, creases=given.creases, curves=given.curves, groups=given.groups,
+        given.settings, given.density, on_stage, groups=given.groups,
     )
 
 
 def mesh_of(made, given):
-    """The mesh datablock of what a run made, with what `given` asked for,
-    and the report of the run."""
+    """The mesh datablock of what a run made, with the materials `given`
+    asked for, and the report of the run."""
     import numpy
 
-    uv_layers, sharp_edges, creases = given.uv_layers, given.sharp_edges, given.creases
-    positions, sizes, corner_vertices, report = made.positions, made.sizes, made.corners, made.report
-
     mesh = bpy.data.meshes.new("openclare")
-    mesh.vertices.add(len(positions) // 3)
-    mesh.vertices.foreach_set("co", positions)
-    mesh.loops.add(len(corner_vertices))
-    mesh.loops.foreach_set("vertex_index", corner_vertices.astype(numpy.int32))
-    mesh.polygons.add(len(sizes))
-    starts = numpy.zeros(len(sizes), numpy.int32)
-    numpy.cumsum(sizes[:-1], out=starts[1:])
+    mesh.vertices.add(len(made.positions) // 3)
+    mesh.vertices.foreach_set("co", made.positions)
+    mesh.loops.add(len(made.corners))
+    mesh.loops.foreach_set("vertex_index", made.corners.astype(numpy.int32))
+    mesh.polygons.add(len(made.sizes))
+    starts = numpy.zeros(len(made.sizes), numpy.int32)
+    numpy.cumsum(made.sizes[:-1], out=starts[1:])
     mesh.polygons.foreach_set("loop_start", starts)
-    mesh.polygons.foreach_set("loop_total", sizes.astype(numpy.int32))
+    mesh.polygons.foreach_set("loop_total", made.sizes.astype(numpy.int32))
     mesh.update(calc_edges=True)
     mesh.validate()
-    for name in uv_layers:
-        layer = mesh.uv_layers.new(name=UV_NAMES[name], do_init=False)
-        layer.data.foreach_set("uv", made.uv[name])
-    if "atlas" in uv_layers:
-        # The atlas is the one to paint on: it is the one Blender shows.
-        mesh.uv_layers.active = mesh.uv_layers[UV_NAMES["atlas"]]
-        mesh.uv_layers[UV_NAMES["atlas"]].active_render = True
-        report["seams"] = flag_edges(mesh, "use_seam", made.seams)
+    report = made.report
     if made.face_groups is not None:
         for material in given.materials:
             mesh.materials.append(material)
         mesh.polygons.foreach_set("material_index", made.face_groups.astype(numpy.int32))
         report["materials"] = len(numpy.unique(made.face_groups))
-    if sharp_edges:
-        report["sharp_edges"] = flag_edges(mesh, "use_edge_sharp", made.hard_edges)
-    if creases:
-        report["creases"] = crease_edges(mesh, *made.creases)
     return mesh, report
 
 
@@ -1031,199 +540,6 @@ def worth_a_line(message):
 # Stages of a run on a model in one piece, for the progress shown.
 STAGES = 9
 
-
-class OPENCLARE_OT_analyse(bpy.types.Operator):
-    """Measure what the shape asks for, and propose a largest and a smallest quad: how many quads any sizes
-    make is then shown at once"""
-
-    bl_idname = "object.openclare_analyse"
-    bl_label = "Analyse"
-    bl_options = {"REGISTER"}
-
-    @classmethod
-    def poll(cls, context):
-        return object_to_remesh(context) is not None
-
-    def execute(self, context):
-        import numpy
-
-        owner = object_to_remesh(context)
-        adopt_scene_settings(context.scene)
-        settings = owner.openclare
-        adopt_preset(settings)
-        evaluated = owner.evaluated_get(context.evaluated_depsgraph_get())
-        mesh = evaluated.to_mesh()
-        try:
-            mesh.calc_loop_triangles()
-            positions = numpy.empty(3 * len(mesh.vertices), numpy.float32)
-            mesh.vertices.foreach_get("co", positions)
-            triangles = numpy.empty(3 * len(mesh.loop_triangles), numpy.uint32)
-            mesh.loop_triangles.foreach_get("vertices", triangles)
-            engine_settings = shape_of(settings)
-            density = None
-            if settings.density_group:
-                density = weights_of(evaluated, mesh, settings.density_group)
-                engine_settings["density_contrast"] = settings.density_factor
-            key = analysis_key(settings, owner, mesh)
-            started = time.perf_counter()
-            analysis = engine.Analysis(positions, triangles, BASE_PRESET, engine_settings, density)
-            seconds = time.perf_counter() - started
-        except engine.EngineError as error:
-            self.report({"ERROR"}, f"openclare: {error}")
-            return {"CANCELLED"}
-        finally:
-            evaluated.to_mesh_clear()
-        stop_preview(context)
-        ANALYSES[owner.name] = {"analysis": analysis, "key": key}
-        scale = scale_of(owner)
-        largest, smallest = analysis.proposal()
-        settings.target = "SIZE"
-        settings.largest_quad, settings.smallest_quad = largest * scale, smallest * scale
-        quads, below = analysis.count(largest, smallest)
-        self.report(
-            {"INFO"},
-            f"openclare: '{owner.name}' analysed in {seconds:.1f} s; proposed: about {quads:.0f} quads, "
-            f"{100.0 * below:.0f} % of it coarser than its shape asks",
-        )
-        return {"FINISHED"}
-
-
-# The vertex group Density from Shape writes.
-SHAPE_DENSITY = "openclare density"
-# Weights are written in steps of this much: one call to Blender per value.
-WEIGHT_STEP = 1.0 / 1000.0
-
-
-def weights_from_sizes(sizes, largest, factor):
-    """The painted density that makes quads of the edges `sizes` where the
-    largest would be `largest`, with a `factor` (Density's Factor, the
-    engine's `density_contrast`): one weight per size, from 0 to 1.
-
-    The engine reads a weight w as a density `factor`**w times that of the
-    weight 0, per unit of area (sizing.rs, `Demand::measure`): the edge of
-    the quads is multiplied by `factor`**(-w / 2), the inverse square root.
-    An edge s where the weight 0 has `largest` is then the weight
-    w = 2 ln(largest / s) / ln(factor), kept between 0 and 1: no smaller
-    than `largest` / sqrt(`factor`) can be painted. A size not known (not a
-    number) is the weight 0. The engine takes the least weight painted for
-    the weight 0, so only how the weights differ counts."""
-    import numpy
-
-    if not factor > 1.0:
-        raise engine.EngineError("a Factor of 1 gives the paint no effect: raise it")
-    sizes = numpy.nan_to_num(numpy.asarray(sizes, numpy.float64), nan=largest)
-    weights = 2.0 * numpy.log(largest / numpy.maximum(sizes, 1e-30)) / math.log(factor)
-    return numpy.clip(weights, 0.0, 1.0).astype(numpy.float32)
-
-
-def write_weights(owner, name, weights):
-    """Writes `weights`, one per vertex of `owner`, as its vertex group
-    `name`: made if it is not there, emptied first if it is. Weights are
-    rounded to `WEIGHT_STEP`, for Blender to be given each value once."""
-    import numpy
-
-    group = owner.vertex_groups.get(name)
-    everyone = list(range(len(owner.data.vertices)))
-    if group is None:
-        group = owner.vertex_groups.new(name=name)
-    else:
-        group.remove(everyone)
-    steps = numpy.rint(numpy.asarray(weights, numpy.float64) / WEIGHT_STEP).astype(numpy.int64)
-    for step in numpy.unique(steps):
-        group.add(numpy.flatnonzero(steps == step).tolist(), float(step * WEIGHT_STEP), "REPLACE")
-    return group
-
-
-class OPENCLARE_OT_density_from_shape(bpy.types.Operator):
-    """Write the density the shape calls for (Adaptive Size, thin parts) as a vertex group, to paint on top in
-    Weight Paint: made the Density, with Adaptive Size switched off for the shape not to count twice"""
-
-    bl_idname = "object.openclare_density_from_shape"
-    bl_label = "Density from Shape"
-    bl_options = {"REGISTER", "UNDO"}
-
-    @classmethod
-    def poll(cls, context):
-        owner = object_to_remesh(context)
-        return owner is not None and source_of(owner) is None and owner.mode != "EDIT"
-
-    def execute(self, context):
-        """The shape as it is seen, modifiers applied, is analysed as Analyse
-        does, without any density painted, and its sizes read at each vertex
-        as a run would size it: between the sizes asked for (Sizes), the
-        largest being the weight 0, or for the number asked for (Number), the
-        largest found being the weight 0. They are written as weights
-        (`weights_from_sizes`) into the vertex group `SHAPE_DENSITY`, which
-        becomes the Density, and Adaptive Size is switched off. Quads Around
-        Thin Parts stays as it is: a thin part is a bound on the size, which
-        counts once however many times it is given, and keeps what is thinner
-        than the Factor can paint. Read again while the group is the Density
-        and Adaptive Size is off, the shape is read with the Adaptive Size
-        that was switched off."""
-        import numpy
-
-        owner = object_to_remesh(context)
-        adopt_scene_settings(context.scene)
-        settings = owner.openclare
-        adopt_preset(settings)
-        factor = settings.density_factor
-        if factor <= 1.0:
-            self.report({"ERROR"}, "openclare: a Factor of 1 gives the paint no effect: raise it")
-            return {"CANCELLED"}
-        shape = shape_of(settings)
-        adaptive = settings.adaptive_size
-        if adaptive == 0.0 and settings.density_group == SHAPE_DENSITY and settings.shape_adaptive_size > 0.0:
-            # Written before by this button, which switched it off: read
-            # with what it was.
-            adaptive = settings.shape_adaptive_size
-            shape["adaptivity"] = round(adaptive / 100.0, 6)
-        evaluated = owner.evaluated_get(context.evaluated_depsgraph_get())
-        mesh = evaluated.to_mesh()
-        try:
-            mesh.calc_loop_triangles()
-            positions = numpy.empty(3 * len(mesh.vertices), numpy.float32)
-            mesh.vertices.foreach_get("co", positions)
-            triangles = numpy.empty(3 * len(mesh.loop_triangles), numpy.uint32)
-            mesh.loop_triangles.foreach_get("vertices", triangles)
-            analysis = engine.Analysis(positions, triangles, BASE_PRESET, shape)
-            nearest = nearest_seen(owner.data, mesh)
-        except engine.EngineError as error:
-            self.report({"ERROR"}, f"openclare: {error}")
-            return {"CANCELLED"}
-        finally:
-            evaluated.to_mesh_clear()
-        if settings.target == "SIZE" and settings.largest_quad > 0.0:
-            scale = scale_of(owner)
-            largest = settings.largest_quad / scale
-            smallest = (min(settings.smallest_quad, settings.largest_quad) or settings.largest_quad / SIZE_RANGE) / scale
-            sizes, _ = analysis.at_vertices(largest, smallest)
-        else:
-            sizes = analysis.at_vertices_for(settings.quads)
-            largest = float(numpy.nanmax(sizes)) if numpy.isfinite(sizes).any() else 1.0
-        weights = weights_from_sizes(sizes, largest, factor)
-        # What the shape asks for and the Factor cannot paint: quads smaller
-        # than the largest over its square root.
-        beyond = float(numpy.mean(numpy.nan_to_num(sizes, nan=largest) < 0.999 * largest / math.sqrt(factor)))
-        enough = (largest / float(numpy.nanmin(sizes))) ** 2 if beyond > 0.0 else factor
-        if nearest is not None:
-            weights = weights[nearest]
-        write_weights(owner, SHAPE_DENSITY, weights)
-        if settings.density_group != SHAPE_DENSITY or settings.adaptive_size > 0.0:
-            settings.shape_adaptive_size = adaptive
-        settings.density_group = SHAPE_DENSITY
-        settings.adaptive_size = 0.0
-        message = (
-            f"openclare: '{SHAPE_DENSITY}' written from the shape (Adaptive Size {adaptive:.0f} %), "
-            f"weights {weights.min():.2f} to {weights.max():.2f}; it is the Density now, and Adaptive Size is off"
-        )
-        if beyond >= 0.005:
-            message += f"; {100.0 * beyond:.0f} % of it asks for smaller quads than the Factor gives"
-            if enough <= OpenclareSettings.bl_rna.properties["density_factor"].hard_max:
-                message += f" (a Factor of {math.ceil(enough)} would give them all)"
-        self.report({"INFO"}, message)
-        return {"FINISHED"}
-
-
 # The custom property of a result where what the engine said of it is kept.
 REPORT = "openclare_report"
 
@@ -1234,7 +550,7 @@ class Remeshing:
 
     Clicked in Blender, the engine runs in a thread of its own and Blender
     stays free: the panel shows a bar, Esc stops the run. From a script or
-    in the background, the operator waits for the engine, as it always did."""
+    in the background, the operator waits for the engine."""
 
     def say(self, context, message, done=0):
         """Shows where the run is: in the status bar and in the Info log, and
@@ -1262,36 +578,13 @@ class Remeshing:
         adopt_scene_settings(context.scene)
         settings = original.openclare
         adopt_preset(settings)
-        stop_preview(context)
         last_report.clear()
         # With its modifiers applied: what is seen is what is remeshed.
         evaluated = original.evaluated_get(context.evaluated_depsgraph_get())
         source = evaluated.to_mesh()
         try:
-            engine_settings = {"quads": settings.quads, **shape_of(settings)}
-            if settings.target == "SIZE":
-                # Lengths of the scene, where the engine is given the mesh
-                # as the object holds it: before its scale.
-                if settings.largest_quad <= 0.0:
-                    settings.largest_quad, settings.smallest_quad = sizes_from(original)
-                scale = sum(abs(factor) for factor in original.matrix_world.to_scale()) / 3.0 or 1.0
-                smallest = min(settings.smallest_quad, settings.largest_quad) or settings.largest_quad / SIZE_RANGE
-                del engine_settings["quads"]
-                engine_settings["largest_quad"] = settings.largest_quad / scale
-                engine_settings["smallest_quad"] = smallest / scale
-            density = None
-            if settings.density_group:
-                density = weights_of(evaluated, source, settings.density_group)
-                engine_settings["density_contrast"] = settings.density_factor
-            layers = [name for name in ("grid", "atlas") if getattr(settings, f"export_{name}_uv")]
-            # A curve put in both collections by hand is a sharp one.
-            self.sharp = curve_objects(settings.sharp_curves)
-            self.curves = curves_of(settings.sharp_curves, original, sharp=True)
-            self.curves += curves_of(settings.guide_curves, original, but=self.sharp)
-            given = engine_input(
-                source, BASE_PRESET, engine_settings, density, layers, settings.export_sharp_edges,
-                settings.export_creases, self.curves, settings.export_materials, copy,
-            )
+            engine_settings, density = engine_settings_of(original, evaluated, source)
+            given = engine_input(source, BASE_PRESET, engine_settings, density, settings.export_materials, copy)
         except engine.EngineError as error:
             evaluated.to_mesh_clear()
             self.report({"ERROR"}, f"openclare: {error}")
@@ -1335,11 +628,10 @@ class Remeshing:
         """Makes the object of what the engine `made` from `original`, next
         to it and the active one, and says how it went. Returns it."""
         mesh, report = mesh_of(made, given)
-        curves, sharp = self.curves, self.sharp
         mesh.name = f"{original.data.name}.quads"
         remeshed = bpy.data.objects.new(f"{original.name}.quads", mesh)
         remeshed.matrix_world = original.matrix_world
-        # Kept, for what is baked onto the result later to be read from it.
+        # Kept, for the result to be remeshed again and its original found.
         remeshed.openclare_source = original
         # And how it went, for the panel of the result to tell.
         remeshed[REPORT] = {key: str(value) for key, value in report.items()}
@@ -1360,12 +652,6 @@ class Remeshing:
             # Said, because the result then has borders the object did not show.
             said += f"; the mesh had defects and was mended ({welded} vertices welded along torn borders"
             said += f", {apart} edges with more than two faces taken apart)"
-        if curves:
-            said += f", {report.get('guide_edges', '0')} edges along the guide curves"
-            if sharp:
-                said += f", {report.get('sharp_curve_edges', '0')} along the sharp curves"
-            if report.get("guide_gaps", "0") != "0":
-                said += f" ({report['guide_gaps']} breaks)"
         thin, moved = int(report.get("thin_pieces", 0)), int(report.get("quads_for_thin_pieces", 0))
         if thin:
             said += f"; {moved} of them moved to {thin} thin part(s), to keep their shape"
@@ -1581,8 +867,7 @@ class OPENCLARE_OT_remesh(Background, Remeshing, bpy.types.Operator):
 
 
 class OPENCLARE_OT_remesh_again(Background, Remeshing, bpy.types.Operator):
-    """Remesh the original of this result again, with the settings it has now, in place of this result. Its
-    relief goes: bake it again"""
+    """Remesh the original of this result again, with the settings it has now, in place of this result"""
 
     bl_idname = "object.openclare_remesh_again"
     bl_label = "Remesh Again"
@@ -1615,397 +900,10 @@ class OPENCLARE_OT_remesh_again(Background, Remeshing, bpy.types.Operator):
             name = previous.name
             bpy.data.meshes.remove(previous)
             mesh.name = name
-        # The relief was baked on the atlas of the mesh that went.
-        for name in (RELIEF, SUBDIVISION):
-            if name in result.modifiers:
-                result.modifiers.remove(result.modifiers[name])
-        if "openclare_height_file" in result:
-            del result["openclare_height_file"]
         for other in context.selected_objects:
             other.select_set(False)
         result.select_set(True)
         context.view_layer.objects.active = result
-        return {"FINISHED"}
-
-
-def category_collection(context, name, create=False):
-    """The collection of the category `name` of the object the panel is
-    about; made and put in the scene if there is none yet and `create` says
-    so."""
-    settings = object_to_remesh(context).openclare
-    collection = getattr(settings, f"{name}_curves")
-    if collection is None and create:
-        label, _, tag = CATEGORY[name]
-        collection = bpy.data.collections.new(f"openclare {label.lower()} curves")
-        collection.color_tag = tag
-        context.scene.collection.children.link(collection)
-        setattr(settings, f"{name}_curves", collection)
-    return collection
-
-
-def show_object_colours(context):
-    """Has the 3D viewports of the screen draw wires in the colour of their
-    object, which is how the two categories are told apart."""
-    for area in context.screen.areas if context.screen else ():
-        if area.type == "VIEW_3D":
-            area.spaces.active.shading.wireframe_color_type = "OBJECT"
-
-
-# The modifiers the relief is made of, by name: found again and updated when
-# it is baked again.
-SUBDIVISION, RELIEF = "openclare subdivision", "openclare relief"
-# How far from the subdivided result the sculpt is looked for, in mean edges
-# of the quad mesh: the result lies that close to it.
-RELIEF_REACH = 1.0
-
-
-def relief_of(context, target, source, levels, resolution):
-    """The height of `source` above `target` subdivided `levels` times, on
-    the atlas of `target`: an array of `resolution` rows of as many floats
-    from the bottom up, in the unit of `target`, and what the engine says
-    of the bake."""
-    import numpy
-
-    atlas = UV_NAMES["atlas"]
-    if atlas not in target.data.uv_layers:
-        raise engine.EngineError(f"'{target.name}' has no '{atlas}' UV layer: remesh with Export > UV Layers > Atlas")
-    subdivision = target.modifiers.get(SUBDIVISION) or target.modifiers.new(SUBDIVISION, "SUBSURF")
-    subdivision.levels = subdivision.render_levels = levels
-    subdivision.show_viewport = levels > 0
-    relief = target.modifiers.get(RELIEF)
-    shown = relief.show_viewport if relief else None
-    if relief:
-        # What is measured is the surface under the relief, not with it.
-        relief.show_viewport = False
-    try:
-        depsgraph = context.evaluated_depsgraph_get()
-        depsgraph.update()
-        surface = target.evaluated_get(depsgraph).to_mesh()
-        surface.calc_loop_triangles()
-        count, faces = len(surface.vertices), len(surface.loop_triangles)
-        positions, normals = numpy.empty(3 * count, numpy.float32), numpy.empty(3 * count, numpy.float32)
-        surface.vertices.foreach_get("co", positions)
-        surface.vertex_normals.foreach_get("vector", normals)
-        triangles, corners = numpy.empty(3 * faces, numpy.int32), numpy.empty(3 * faces, numpy.int32)
-        surface.loop_triangles.foreach_get("vertices", triangles)
-        surface.loop_triangles.foreach_get("loops", corners)
-        uvs = numpy.empty(2 * len(surface.loops), numpy.float32)
-        surface.uv_layers[atlas].data.foreach_get("uv", uvs)
-        uvs = uvs.reshape(-1, 2)[corners]
-        target.evaluated_get(depsgraph).to_mesh_clear()
-
-        sculpt = source.evaluated_get(depsgraph).to_mesh()
-        sculpt.calc_loop_triangles()
-        sculpt_positions = numpy.empty(3 * len(sculpt.vertices), numpy.float32)
-        sculpt.vertices.foreach_get("co", sculpt_positions)
-        sculpt_triangles = numpy.empty(3 * len(sculpt.loop_triangles), numpy.int32)
-        sculpt.loop_triangles.foreach_get("vertices", sculpt_triangles)
-        source.evaluated_get(depsgraph).to_mesh_clear()
-    finally:
-        if relief:
-            relief.show_viewport = shown
-    # Each in its own space, where the two lie on one another whatever was
-    # done to the objects since: the result was made in the space of the
-    # original, and the original is often moved aside to see them both.
-
-    edges = numpy.empty(2 * len(target.data.edges), numpy.int32)
-    target.data.edges.foreach_get("vertices", edges)
-    corners_of = numpy.empty(3 * len(target.data.vertices), numpy.float32)
-    target.data.vertices.foreach_get("co", corners_of)
-    ends = corners_of.reshape(-1, 3)[edges.reshape(-1, 2)]
-    reach = RELIEF_REACH * float(numpy.linalg.norm(ends[:, 0] - ends[:, 1], axis=1).mean())
-    heights, report = engine.bake_height(
-        positions, normals, triangles.astype(numpy.uint32), uvs, sculpt_positions,
-        sculpt_triangles.astype(numpy.uint32), resolution, resolution, reach,
-    )
-    covered, astray = int(report["covered"]), int(report["astray"])
-    if 2 * astray > covered:
-        # Nothing to make a relief of: better none than one made of guesses.
-        raise engine.EngineError(
-            f"'{source.name}' is out of reach under {100.0 * astray / max(covered, 1):.0f} % of '{target.name}': "
-            "the result no longer lies on its original (was the mesh of one of them edited, or its scale applied?)"
-        )
-    return heights, report
-
-
-# The nodes of a material that carry the relief, by name, likewise.
-HEIGHT_NODES = ("openclare atlas", "openclare height", "openclare displacement")
-# What a height map written as a file holds, and how it is to be read: the
-# format and depth Blender is asked for, the extension, the midlevel.
-RELIEF_FILES = {"EXR32": ("OPEN_EXR", "32", "exr", 0.0), "EXR16": ("OPEN_EXR", "16", "exr", 0.0), "PNG16": ("PNG", "16", "png", 0.5)}
-
-
-def relief_in_materials(target, image, span):
-    """Plugs `image`, a height map with no height at one half and `span`
-    either way, into the displacement of the materials of `target`. Returns
-    how many materials were left alone because they have a displacement of
-    their own."""
-    atlas, height, displacement = HEIGHT_NODES
-    mesh = target.data
-    if not any(mesh.materials):
-        made = bpy.data.materials.new(f"{target.name} relief")
-        if len(mesh.materials):
-            mesh.materials[0] = made
-        else:
-            mesh.materials.append(made)
-    left_alone = 0
-    for index, material in enumerate(mesh.materials):
-        if material is None:
-            continue
-        if material.users > 1 and height not in (material.node_tree.nodes if material.node_tree else ()):
-            # Shared with another object, the original most likely: the
-            # result gets a copy of its own, or the other would be moved by a
-            # map made for this mesh.
-            material = material.copy()
-            mesh.materials[index] = material
-        material.use_nodes = True
-        nodes, links = material.node_tree.nodes, material.node_tree.links
-        output = next((node for node in nodes if node.type == "OUTPUT_MATERIAL" and node.is_active_output), None)
-        if output is None:
-            output = nodes.new("ShaderNodeOutputMaterial")
-        socket = output.inputs["Displacement"]
-        if socket.is_linked and socket.links[0].from_node.name != displacement:
-            left_alone += 1
-            continue
-        where = nodes.get(atlas) or nodes.new("ShaderNodeUVMap")
-        where.name, where.uv_map = atlas, UV_NAMES["atlas"]
-        read = nodes.get(height) or nodes.new("ShaderNodeTexImage")
-        read.name, read.image, read.extension = height, image, "EXTEND"
-        move = nodes.get(displacement) or nodes.new("ShaderNodeDisplacement")
-        move.name, move.space = displacement, "OBJECT"
-        move.inputs["Midlevel"].default_value, move.inputs["Scale"].default_value = 0.5, 2.0 * span
-        where.location, read.location, move.location = (-700, -400), (-500, -400), (-200, -400)
-        links.new(where.outputs["UV"], read.inputs["Vector"])
-        links.new(read.outputs["Color"], move.inputs["Height"])
-        links.new(move.outputs["Displacement"], socket)
-        # The surface itself is moved, and only moved: shading what is finer
-        # than its vertices on top ("Displacement and Bump") draws a dark
-        # line along every seam of the atlas, and a surface diced to the
-        # pixel has little left that is finer.
-        material.displacement_method = "DISPLACEMENT"
-    return left_alone
-
-
-def relief_out_of_materials(target):
-    """Takes out of the materials of `target` what `relief_in_materials` put
-    there."""
-    for material in target.data.materials:
-        if material is None or material.node_tree is None:
-            continue
-        nodes = material.node_tree.nodes
-        ours = [nodes[name] for name in HEIGHT_NODES if name in nodes]
-        if ours:
-            for node in ours:
-                nodes.remove(node)
-            material.displacement_method = "BUMP"
-
-
-def write_relief(heights, span, target, kind, directory):
-    """Writes the height map as a file: the heights as they are for a float
-    format, brought between 0 and 1 for an integer one. Returns the path,
-    the midlevel and the scale it is to be read with."""
-    import os
-
-    import numpy
-
-    file_format, depth, extension, midlevel = RELIEF_FILES[kind]
-    if directory.startswith("//") and not bpy.data.filepath:
-        raise engine.EngineError("save the .blend file first, or choose a folder that is not beside it (//)")
-    folder = bpy.path.abspath(directory)
-    os.makedirs(folder, exist_ok=True)
-    path = os.path.join(folder, f"{bpy.path.clean_name(target.name)}_height.{extension}")
-    if midlevel == 0.0:
-        values, scale = numpy.nan_to_num(heights, nan=0.0), 1.0
-    else:
-        values, scale = numpy.where(numpy.isnan(heights), 0.5, 0.5 + heights / (2.0 * span)), 2.0 * span
-    rows, columns = heights.shape
-    pixels = numpy.ones((rows, columns, 4), numpy.float32)
-    pixels[..., :3] = values.astype(numpy.float32)[..., None]
-    # Written by Blender, as numbers and not as colours: one channel, at the
-    # depth asked for, through a scene of its own so that the settings of
-    # the user's are not touched.
-    image = bpy.data.images.new("openclare height file", columns, rows, alpha=False, float_buffer=True, is_data=True)
-    scene = bpy.data.scenes.new("openclare height file")
-    try:
-        image.pixels.foreach_set(pixels.reshape(-1))
-        wanted = scene.render.image_settings
-        wanted.file_format, wanted.color_mode, wanted.color_depth = file_format, "BW", depth
-        if file_format == "OPEN_EXR":
-            wanted.exr_codec = "ZIP"
-        image.save_render(path, scene=scene)
-    finally:
-        bpy.data.images.remove(image)
-        bpy.data.scenes.remove(scene)
-    return path, midlevel, scale
-
-
-class OPENCLARE_OT_bake_relief(bpy.types.Operator):
-    """Bake the relief of the original onto the result, as a height map on its atlas that displaces it"""
-
-    bl_idname = "object.openclare_bake_relief"
-    bl_label = "Bake Height Map"
-    bl_options = {"REGISTER", "UNDO"}
-
-    @classmethod
-    def poll(cls, context):
-        return source_of(object_to_remesh(context)) is not None and context.mode == "OBJECT"
-
-    def execute(self, context):
-        import numpy
-
-        target = object_to_remesh(context)
-        settings = target.openclare
-        resolution = int(settings.relief_resolution)
-        try:
-            heights, report = relief_of(context, target, target.openclare_source, settings.relief_levels, resolution)
-        except engine.EngineError as error:
-            self.report({"ERROR"}, f"openclare: {error}")
-            return {"CANCELLED"}
-
-        # As an image: grey at half for no height, the greatest height either
-        # way at black or white, which is what a displacement reads.
-        span = max(abs(float(report["low"])), abs(float(report["high"])), 1e-12)
-        grey = numpy.where(numpy.isnan(heights), 0.5, 0.5 + heights / (2.0 * span)).astype(numpy.float32)
-        name = f"{target.name} height"
-        image = bpy.data.images.get(name)
-        if image is None or tuple(image.size) != (resolution, resolution):
-            if image is not None:
-                bpy.data.images.remove(image)
-            image = bpy.data.images.new(name, resolution, resolution, alpha=False, float_buffer=True, is_data=True)
-        pixels = numpy.ones((resolution, resolution, 4), numpy.float32)
-        pixels[..., :3] = grey[..., None]
-        image.pixels.foreach_set(pixels.reshape(-1))
-        image.update()
-        image.pack()
-
-        # One way of moving the surface at a time: both would move it twice.
-        subdivision, left_alone = target.modifiers[SUBDIVISION], 0
-        if settings.relief_apply == "MODIFIER":
-            relief_out_of_materials(target)
-            subdivision.use_adaptive_subdivision = False
-            texture = bpy.data.textures.get(name) or bpy.data.textures.new(name, "IMAGE")
-            texture.image = image
-            texture.extension = "EXTEND"
-            relief = target.modifiers.get(RELIEF) or target.modifiers.new(RELIEF, "DISPLACE")
-            relief.texture, relief.texture_coords, relief.uv_layer = texture, "UV", UV_NAMES["atlas"]
-            relief.direction, relief.space = "NORMAL", "LOCAL"
-            relief.mid_level, relief.strength = 0.5, 2.0 * span
-            relief.show_viewport = True
-        else:
-            if RELIEF in target.modifiers:
-                target.modifiers.remove(target.modifiers[RELIEF])
-            # Diced to the size of a pixel by a renderer that can.
-            subdivision.use_adaptive_subdivision = True
-            left_alone = relief_in_materials(target, image, span)
-
-        last_report.clear()
-        last_report.update(report)
-        last_report.update(applied_as=settings.relief_apply, materials_left_alone=str(left_alone))
-        covered, astray = int(report["covered"]), int(report["astray"])
-        said = f"openclare: height map of {resolution} x {resolution} in {float(report['seconds']):.1f} s"
-        said += f", from {float(report['low']):.4g} to {float(report['high']):.4g}"
-        if left_alone:
-            said += f"; {left_alone} material(s) have a displacement of their own and were left as they are"
-        if settings.relief_format != "NONE":
-            try:
-                path, midlevel, scale = write_relief(heights, span, target, settings.relief_format, settings.relief_directory)
-            except (engine.EngineError, OSError, RuntimeError) as error:
-                self.report({"ERROR"}, f"openclare: the height map is baked, but its file could not be written: {error}")
-                return {"CANCELLED"}
-            last_report.update(file=path, file_midlevel=str(midlevel), file_scale=repr(scale))
-            target["openclare_height_file"] = f"{bpy.path.basename(path)}: midlevel {midlevel:g}, scale {scale:.6g}"
-            said += f"; written to {path}, to read with midlevel {midlevel:g} and scale {scale:.6g}"
-        if astray:
-            # Said: there the relief is a guess, the sculpt being farther
-            # from the result than a quad is long.
-            said += f"; the original was out of reach under {100.0 * astray / max(covered, 1):.1f} % of the texels"
-        self.report({"WARNING"} if astray > covered // 20 else {"INFO"}, said)
-        return {"FINISHED"}
-
-
-class CurvesOperator:
-    """What the four buttons of a curve category have in common."""
-
-    bl_options = {"REGISTER", "UNDO"}
-
-    category: bpy.props.EnumProperty(
-        name="Category",
-        items=[(name, label, description) for name, label, description, _, _ in CATEGORIES],
-        default="guide",
-        options={"HIDDEN"},
-    )
-
-    @classmethod
-    def poll(cls, context):
-        return object_to_remesh(context) is not None and context.mode == "OBJECT"
-
-
-class OPENCLARE_OT_curves_assign(CurvesOperator, bpy.types.Operator):
-    """Move the selected curves to this category of the object and give them its colour. A curve is in one category
-    only"""
-
-    bl_idname = "object.openclare_curves_assign"
-    bl_label = "Assign"
-
-    def execute(self, context):
-        chosen = [drawn for drawn in context.selected_objects if drawn.type == "CURVE"]
-        if not chosen:
-            self.report({"WARNING"}, "openclare: no curve is selected")
-            return {"CANCELLED"}
-        collection = category_collection(context, self.category, create=True)
-        label, colour, _ = CATEGORY[self.category]
-        for drawn in chosen:
-            # Moved, not linked as well: a curve that stayed in another
-            # collection too would still show when its category is hidden.
-            for other in drawn.users_collection:
-                if other != collection:
-                    other.objects.unlink(drawn)
-            if drawn.name not in collection.objects:
-                collection.objects.link(drawn)
-            drawn.color = colour
-        show_object_colours(context)
-        self.report({"INFO"}, f"openclare: {len(chosen)} curve(s) in the {label} category")
-        return {"FINISHED"}
-
-
-class OPENCLARE_OT_curves_remove(CurvesOperator, bpy.types.Operator):
-    """Take the selected curves out of this category: back to the collection of the scene, in their plain colour"""
-
-    bl_idname = "object.openclare_curves_remove"
-    bl_label = "Remove"
-
-    def execute(self, context):
-        collection = category_collection(context, self.category)
-        chosen = [drawn for drawn in context.selected_objects if drawn.type == "CURVE"]
-        chosen = [drawn for drawn in chosen if collection is not None and drawn.name in collection.objects]
-        for drawn in chosen:
-            collection.objects.unlink(drawn)
-            # A curve must stay somewhere in the scene.
-            if not drawn.users_collection:
-                context.scene.collection.objects.link(drawn)
-            drawn.color = PLAIN
-        self.report({"INFO"}, f"openclare: {len(chosen)} curve(s) taken out")
-        return {"FINISHED"}
-
-
-class OPENCLARE_OT_curves_select(CurvesOperator, bpy.types.Operator):
-    """Select the curves of this category"""
-
-    bl_idname = "object.openclare_curves_select"
-    bl_label = "Select"
-
-    select: bpy.props.BoolProperty(default=True, options={"HIDDEN"})
-
-    @classmethod
-    def description(cls, context, properties):
-        return "Select the curves of this category" if properties.select else "Deselect the curves of this category"
-
-    def execute(self, context):
-        for drawn in curve_objects(category_collection(context, self.category)):
-            # Only what this view layer shows can be selected.
-            # The object stays the active one: its panel stays shown.
-            if drawn.name in context.view_layer.objects and (drawn.visible_get() or not self.select):
-                drawn.select_set(self.select)
         return {"FINISHED"}
 
 
@@ -2056,29 +954,9 @@ class OPENCLARE_PT_panel(DataPanel, bpy.types.Panel):
         settings = owner.openclare
         layout.prop(settings, "target", expand=True)
         if settings.target == "SIZE":
-            layout.operator(OPENCLARE_OT_analyse.bl_idname, icon="VIEWZOOM")
             sizes = layout.column(align=True)
             sizes.prop(settings, "largest_quad")
             sizes.prop(settings, "smallest_quad")
-            held = analysis_of(context, settings, owner)
-            if held is None:
-                note = "Analyse to see how many quads these sizes make"
-                if owner.name in ANALYSES:
-                    note = "The object or its settings changed: analyse again"
-                layout.label(text=note, icon="INFO")
-            elif settings.largest_quad > 0.0:
-                analysis, scale = held
-                smallest = min(settings.smallest_quad, settings.largest_quad) or settings.largest_quad / SIZE_RANGE
-                try:
-                    quads, below = counted(analysis, scale, settings.largest_quad, smallest)
-                except engine.EngineError:
-                    quads, below = None, None
-                if quads is not None:
-                    column = layout.column(align=True)
-                    column.label(text=f"About {quads:,.0f} quads".replace(",", " "), icon="MESH_GRID")
-                    if below >= 0.005:
-                        column.label(text=f"{100.0 * below:.0f} % coarser than its shape asks", icon="ERROR")
-                layout.prop(settings, "show_sizes")
         else:
             layout.prop(settings, "quads")
         column = layout.column(align=True)
@@ -2086,7 +964,7 @@ class OPENCLARE_PT_panel(DataPanel, bpy.types.Panel):
         factor = column.row()
         factor.enabled = bool(settings.density_group)
         factor.prop(settings, "density_factor")
-        column.operator(OPENCLARE_OT_density_from_shape.bl_idname, icon="MOD_VERTEX_WEIGHT")
+        layout.prop(settings, "export_materials")
         draw_remesh(layout, OPENCLARE_OT_remesh.bl_idname, "MOD_REMESH")
 
     def draw_result(self, context, owner):
@@ -2200,127 +1078,22 @@ class OPENCLARE_PT_shape(DataPanel, bpy.types.Panel):
         layout.prop(settings, "volume_fit", slider=True)
 
 
-class OPENCLARE_PT_curves(DataPanel, bpy.types.Panel):
-    """Curves drawn on the model for the result to have edges along"""
-
-    bl_label = "Curves"
-    bl_idname = "OPENCLARE_PT_curves"
-    bl_parent_id = "OPENCLARE_PT_panel"
-    bl_options = {"DEFAULT_CLOSED"}
-
-    @classmethod
-    def poll(cls, context):
-        return is_source(context)
-
-    def draw(self, context):
-        layout = self.layout
-        settings = object_to_remesh(context).openclare
-        layout.label(text="Select curves, then this object last", icon="INFO")
-        # One box per category, both always there: a run takes the curves
-        # of both.
-        for name, label, _, _, tag in CATEGORIES:
-            box = layout.box()
-            count = len(curve_objects(getattr(settings, f"{name}_curves")))
-            curves = f"{count} curve" + ("" if count == 1 else "s")
-            box.label(text=f"{label}: {curves}", icon=tag.replace("COLOR", "COLLECTION_COLOR"))
-            box.prop(settings, f"{name}_curves", text="")
-            column = box.column(align=True)
-            row = column.row(align=True)
-            row.operator(OPENCLARE_OT_curves_assign.bl_idname).category = name
-            row.operator(OPENCLARE_OT_curves_remove.bl_idname).category = name
-            row = column.row(align=True)
-            for text, select in (("Select", True), ("Deselect", False)):
-                button = row.operator(OPENCLARE_OT_curves_select.bl_idname, text=text)
-                button.category, button.select = name, select
-
-
-class OPENCLARE_PT_export(DataPanel, bpy.types.Panel):
-    """What the result carries besides its quads"""
-
-    bl_label = "Export"
-    bl_idname = "OPENCLARE_PT_export"
-    bl_parent_id = "OPENCLARE_PT_panel"
-    bl_options = {"DEFAULT_CLOSED"}
-
-    @classmethod
-    def poll(cls, context):
-        return is_source(context)
-
-    def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False
-        settings = object_to_remesh(context).openclare
-        column = layout.column(heading="UV Layers")
-        column.prop(settings, "export_grid_uv", text="Grid")
-        column.prop(settings, "export_atlas_uv", text="Atlas")
-        column = layout.column(heading="Surface")
-        column.prop(settings, "export_materials", text="Materials")
-        column = layout.column(heading="Edges")
-        column.prop(settings, "export_sharp_edges", text="Sharp")
-        column.prop(settings, "export_creases", text="Creases")
-
-
-class OPENCLARE_PT_relief(DataPanel, bpy.types.Panel):
-    """The relief of the original, baked onto the result"""
-
-    bl_label = "Relief"
-    bl_idname = "OPENCLARE_PT_relief"
-    bl_parent_id = "OPENCLARE_PT_panel"
-
-    @classmethod
-    def poll(cls, context):
-        return source_of(object_to_remesh(context)) is not None
-
-    def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False
-        target = object_to_remesh(context)
-        settings = target.openclare
-        layout.prop(settings, "relief_levels")
-        layout.prop(settings, "relief_resolution")
-        layout.prop(settings, "relief_apply")
-        layout.prop(settings, "relief_format")
-        folder = layout.row()
-        folder.enabled = settings.relief_format != "NONE"
-        folder.prop(settings, "relief_directory")
-        layout.operator(OPENCLARE_OT_bake_relief.bl_idname, icon="RNDCURVE")
-        written = target.get("openclare_height_file")
-        if written:
-            # How the file last written is to be read, where it is used.
-            layout.label(text=written, icon="FILE_IMAGE")
-
-
 CLASSES = (
     OpenclareSettings,
-    OPENCLARE_OT_analyse,
-    OPENCLARE_OT_density_from_shape,
     OPENCLARE_OT_remesh,
     OPENCLARE_OT_remesh_again,
     OPENCLARE_OT_stop,
     OPENCLARE_OT_select_original,
-    OPENCLARE_OT_bake_relief,
-    OPENCLARE_OT_curves_assign,
-    OPENCLARE_OT_curves_remove,
-    OPENCLARE_OT_curves_select,
     OPENCLARE_OT_shape_preset_add,
     OPENCLARE_PT_shape_presets,
     OPENCLARE_PT_panel,
     OPENCLARE_PT_shape,
-    OPENCLARE_PT_curves,
-    OPENCLARE_PT_export,
-    OPENCLARE_PT_relief,
 )
 
 
 # The add-on's own presets are in presets/ here.
 ADDON_FOLDER = os.path.dirname(os.path.abspath(__file__))
-HANDLERS = (
-    (bpy.app.handlers.save_pre, before_saving),
-    (bpy.app.handlers.save_post, after_saving),
-    (bpy.app.handlers.load_post, after_loading),
-)
+HANDLERS = ((bpy.app.handlers.load_post, after_loading),)
 
 
 def register():
@@ -2331,7 +1104,7 @@ def register():
     bpy.types.Scene.openclare = bpy.props.PointerProperty(type=OpenclareSettings)
     bpy.types.Object.openclare_source = bpy.props.PointerProperty(
         name="Original",
-        description="The object this one was remeshed from: what is baked onto it is read from there",
+        description="The object this one was remeshed from: what Remesh Again remeshes",
         type=bpy.types.Object,
     )
     for handlers, handler in HANDLERS:
@@ -2356,8 +1129,6 @@ def unregister():
     for handlers, handler in HANDLERS:
         if handler in handlers:
             handlers.remove(handler)
-    stop_preview(bpy.context)
-    ANALYSES.clear()
     del bpy.types.Object.openclare_source
     del bpy.types.Object.openclare
     del bpy.types.Scene.openclare

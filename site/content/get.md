@@ -4,16 +4,18 @@
 
 ## The Blender add-on
 
+This is the Community edition of the add-on.
+
 One archive holds everything: the add-on and its engine, compiled. There is nothing else to install, no Python package, no program beside it, and nothing is downloaded when it runs.
 
 1. Take the archive of your system from the [releases](https://github.com/marcgardent/openclare/releases): `openclare-<version>-linux-x64.zip` or `openclare-<version>-windows-x64.zip`. Or build it yourself (below).
 2. In Blender 4.2 or later: *Edit › Preferences › Get Extensions*, the arrow at the top right, *Install from Disk*, and pick the archive.
 
-A tab named *openclare* appears in the sidebar of the 3D viewport (key N). Select a mesh, choose a preset (organic, animation, hard surface) and a number of quads, press *Remesh to Quads*. The result is a new object beside the original, which is left as it is.
+A panel named *openclare* appears in the Properties editor, on the tab of the mesh (Object Data). Select a mesh, ask for a number of quads or for their sizes, choose a preset of the shape (organic, animation, hard surface), press *Remesh to Quads*. A density painted in Weight Paint says where the quads are smaller, and the borders between materials are kept as lines of edges. The result is a new object beside the original, which is left as it is. The engine runs in the background: Blender stays free, and the panel shows a bar of its progress with a button to stop it.
 
 The Linux build runs wherever Blender does (glibc 2.28 or later). The Windows build passes the tests of the engine but has not yet been run in a Blender for Windows; there is no build for macOS yet.
 
-What the panel offers, setting by setting (guide curves, painted density, sizes instead of a number of quads, UV layers, sharp edges and creases, materials, baking the relief of the original), is in the [README](../../README.md).
+What the panel offers, setting by setting, is in the [README](../../README.md).
 
 ### Building the add-on
 

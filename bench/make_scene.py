@@ -61,7 +61,9 @@ for kind in ("guides", "sharp"):
     if options.get(kind):
         collection = bpy.data.collections[options[kind]]
         scene.collection.children.link(collection)
-        setattr(settings, "guide_curves" if kind == "guides" else "sharp_curves", collection)
+        # Kept as an ID property of the settings: the add-on has no curves,
+        # bench/blender_engine.py reads them from there.
+        settings["guide_curves" if kind == "guides" else "sharp_curves"] = collection
 if options.get("density"):
     if options["density"] not in taken.vertex_groups:
         sys.exit(f"{options['object']} has no vertex group {options['density']}")

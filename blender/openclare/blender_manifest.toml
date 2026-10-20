@@ -1,9 +1,9 @@
 schema_version = "1.0.0"
 
 id = "openclare"
-version = "0.3.0"
+version = "0.4.0"
 name = "openclare"
-tagline = "Automatic quad retopology"
+tagline = "Automatic quad retopology, Community edition"
 maintainer = "Marc Gardent"
 type = "add-on"
 tags = ["Mesh", "Modeling", "Sculpt"]
