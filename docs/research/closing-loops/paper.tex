@@ -116,7 +116,9 @@ of a human body exactly to see where the heuristic stands: the conflict
 between closing turns and keeping singularities apart is local, the
 heuristic leaves most of the shifted turns that no constraint forces, and
 yet closing more turns does not by itself reduce the spirals, because the
-strips of the mesh move with the lengths. Section~\ref{sec:limits} states
+strips of the mesh move with the lengths; adding the inequalities of the
+corridor makes the count of closed strips exact, a coupling of shift and
+corridor we found in no earlier quantizer. Section~\ref{sec:limits} states
 the limitations and the open problems.
 
 This work began as a programming project, openclare, an open-source quad
@@ -126,8 +128,8 @@ Each result used here answers such a question. The shift of a turn is linear
 in the arc lengths, so closing a loop becomes a linear constraint of the
 quantizer rather than a test after the fact; its parity follows the length
 of the turn, so some repairs are known to be impossible before they are
-tried; and choosing the largest set of turns to close is NP-hard, which is
-why the engine keeps to a heuristic, with an exact solver only on demand.
+tried; and choosing the largest set of turns to close is NP-hard in the
+algebraic form quantization takes, which is why the engine keeps to a heuristic, with an exact solver only on demand.
 
 The theory behind the conflicts, which reads the shift as translational
 holonomy of the flat metric and derives obstructions to closing from the
@@ -376,14 +378,23 @@ rounds of Section~\ref{sec:closing} use it.
 
 This section describes the engine at commit \texttt{\enginecommit}, in
 \nolinkurl{crates/openclare/src/quantization/}. The quantizer minimizes a
-separable convex cost of the whole lengths, in the minimum-deviation-flow
-formulation of~\cite{heistermann2023bimdf}, subject to the balances, by
-cancelling improving walks in a strip network (a simpler solver than their
-matching-based one). Only the structure is theirs: their objective is a sum
-of absolute deviations, ours is quadratic. The cost of arc $a$ is $w_a(\ell_a
-- \lambda r_a)^2$ with $w_a = 1/(\lambda r_a + 1)$, plus a term that draws a
-vertex onto each fold of the surface the arc crosses and a penalty for going
-below a lower bound. The real lengths $r_a$ carry a fixed per-arc
+separable cost of the whole lengths, subject to the balances, by cancelling
+improving walks in a strip network. The network is the minimum-deviation-flow
+formulation of~\cite{heistermann2023bimdf}; their objective is a sum of
+absolute deviations and their solver is based on matchings. The cost of arc
+$a$ at length $x$ is
+\[
+  w_a \Bigl[(x - \lambda r_a)^2 + 4 \sum_f s_f\, \bigl(\sigma_f x - \lfloor
+  \sigma_f x \rceil\bigr)^2\Bigr] + 10^7 \max(0,\, b_a - x)^2,
+  \qquad w_a = \frac{1}{\lambda r_a + 1},
+\]
+where $f$ runs over the folds of the surface the arc crosses, $\sigma_f$ is
+the share of the arc at which $f$ lies, $s_f \in [0, 1]$ its sharpness and
+$\lfloor \cdot \rceil$ the nearest integer: the second term draws a vertex
+onto each fold, and the last makes going below a lower bound $b_a$ cost more
+than any walk saves. The fold term is periodic in $x$, so the cost is convex
+only on the arcs that cross no fold; where folds are crossed, cancelling walks
+reaches a local optimum, not the optimum of a convex flow. The real lengths $r_a$ carry a fixed per-arc
 perturbation of at most $0.5\%$, so that arcs of equal length do not all
 change at the same scale; the scale $\lambda$ is searched for the number of
 quads asked for, and arcs whose zero length would break the structure of the
@@ -438,11 +449,14 @@ on them.
 \paragraph{Integer search and repair.}
 The integer search of the quantizer runs on the projected targets. Rounding
 leaves some turns shifted by one or a few rows. Repair walks are then taken
-one at a time: a walk is guided by a bias along the arcs of the shifted
-turns, and accepted if it reduces the total shift, costs little in
+one at a time: a walk is guided by a linear term $\beta_a x$ added to the cost
+of each arc, with $\beta_a = 0.5 \sum_\gamma \operatorname{sign}(\shift_\gamma)
+c_{\gamma, a}$ over the turns shifted by at least one half, $c_{\gamma, a}$
+the coefficient of arc $a$ in the shift of $\gamma$
+(Proposition~\ref{prop:linear}), and accepted if it reduces the total shift, costs little in
 deviation, keeps the structure intact and the number of quads within
 tolerance. A second, \emph{aimed} repair treats each held turn still shifted
-on its own: the bias is put on its arcs alone, and a walk is accepted if it
+on its own: the term is put on its arcs alone, with $3$ in place of $0.5$, and a walk is accepted if it
 shifts that turn less and the others no more. Two results of the companion
 paper~\cite{gardent2026turns} prune these walks. On a closed sphere the shift
 of every turn has, at all whole balanced lengths, the parity of its length,
@@ -541,17 +555,17 @@ closing, one way kept by spirals & 9.7\% & 8.57 & 4.85 \\
 \bottomrule
 \end{tabular}
 \caption{Parts of the method: mean over the twelve models at $3{,}000$
-quads, one run per model, engines of commits \texttt{7dc1727},
-\texttt{c86740f} and \texttt{cf4a82c}. Each line adds to the one above only
+quads, one run per model, engines of commits \texttt{9f3e455},
+\texttt{3658abc} and \texttt{197f0ca}. Each line adds to the one above only
 roughly: between the second and third lines the baseline moved (commit
-\texttt{ab8d89c}, $10.1\%$ to $9.5\%$). The constraint rounds, the active set
+\texttt{452b346}, $10.1\%$ to $9.5\%$). The constraint rounds, the active set
 and the floor of the cap are not in the table; the engine at the cited
 commit gives $4.65\%$ over three budgets.}
 \label{tab:dev}
 \end{table}
 
 \paragraph{Against other remeshers.}
-The last full bench committed (commit \texttt{83f0967}, $3{,}000$ quads; one
+The last full bench committed (commit \texttt{5bc16c6}, $3{,}000$ quads; one
 run per model for openclare and AutoRemesher~\cite{autoremesher}, the median
 of five seeds for QuadriFlow~\cite{huang2018quadriflow}, run through Blender)
 used an engine a few changes away from the cited one, which give $4.54\%$
@@ -561,15 +575,19 @@ AutoRemesher for $18$. On the $7$ models that all three mesh validly in every
 run, the mean share of spiral edges is $1.8\%$ for openclare, $38.8\%$ for
 QuadriFlow and $21.7\%$ for AutoRemesher; on the $15$ models where all three
 produce a mesh, valid or not, $4.2\%$, $27.2\%$ and $27.3\%$. Without closing
-(commit \texttt{4e9620c}) openclare had $16.6\%$ and $15.5\%$ on the same
-subsets.
+(commit \texttt{b0fba91}) openclare had $16.6\%$ and $15.5\%$ on the same
+subsets. The comparison favours openclare by construction as well: the engine
+chooses among its candidates by this very share (Section~\ref{sec:closing}),
+which the other two do not optimize, and the share sees no helix of pitch
+above four. A measure of structure the selection does not use is left to
+future work.
 
 \paragraph{Against the hand-made mesh.}
 The male body of the Essentials library has a base mesh of $10{,}590$ quads
 modelled by hand, with $2.5\%$ of spiral edges in $3$ spiral loops and
 $31.6\%$ of its edges on closed loops. Remeshed by openclare at that count
 with the closing of Section~\ref{sec:closing}, single runs of the engines of
-commits \texttt{b0d37fa} to \texttt{8fd1932} give $1.6\%$ of spiral edges,
+commits \texttt{1b77f7d} to \texttt{4db7b42} give $1.6\%$ of spiral edges,
 in $9$ spiral loops: below the hand-made mesh, but by a few loops only. One
 such run has
 $33.2\%$ of its edges on closed loops, a mean distance to the source of
@@ -578,7 +596,7 @@ degrees, against $0.17$\textperthousand\ and $9.2$ degrees for the hand-made
 mesh; these fidelity figures compare meshes made for different ends, the
 hand-made one being a base mesh whose distance and angles are choices of its
 modeller. The lean bound matters on this body: with the lean bound $0.05$
-alone (commit \texttt{ab8d89c}), one leg was a single helix from hip to
+alone (commit \texttt{452b346}), one leg was a single helix from hip to
 ankle, its turns leaning more than that bound allows, and the mesh had
 $12.1\%$ of spiral edges.
 
@@ -601,7 +619,10 @@ while closing turns a loop across the forehead into a ring.
 \caption{The male body of the Essentials library, $10{,}590$ quads asked
 for: (a)~openclare without closing, (b)~openclare with the closing of
 Section~\ref{sec:closing}, (c)~the base mesh modelled by hand,
-(d)~QuadriFlow run through Blender. Edge loops are coloured by their kind in
+(d)~QuadriFlow run through Blender, on the source scaled by $100$ and scaled
+back: Blender refuses the sculpt as it is, some of its edges being shorter
+than its threshold of $10^{-4}$, and QuadriFlow does not depend on the scale.
+Edge loops are coloured by their kind in
 the measure of Section~\ref{sec:measure}: closed loops dark blue, spiral
 loops vermillion (wider, with a dark rim), loops that stop at an irregular
 vertex grey. Meshes (a) and (b) come from the engine at commit
@@ -640,7 +661,7 @@ separation can close even on its own.}
 How far is the heuristic of Section~\ref{sec:closing} from what the
 constraints allow? An experimental hook of openclare (branch
 \texttt{rd-exact}, on an engine without the constraint rounds and the floor
-of the deviation cap, that is before commit \texttt{3b3122d}) exports, for
+of the deviation cap, that is before commit \texttt{c8bf2be}) exports, for
 each way of finding turns, the system it works on, for the male body at
 $10{,}590$ quads. Its T-mesh has $1{,}295$ nodes ($1{,}034$ T-junctions and
 $261$ singular vertices: $133$ of valence three, $127$ of valence five and
@@ -813,8 +834,9 @@ cap and size closes $38$ more strips of the engine's mesh than the engine
 does, but at its lengths, which also break the mesh, the strips are again
 other walks, and the share of spiral strips is $0.020$ against $0.011$ for
 the engine. Choosing the most turns to close
-is NP-hard in general, already for the bidirected balances and $0$--$1$
-bounds of quantization~\cite{gardent2026turns}.
+is NP-hard for bidirected balances with $0$--$1$ bounds, the algebraic form
+of quantization~\cite{gardent2026turns}; whether the balances and turns of an
+actual T-mesh stay hard is open.
 
 \paragraph{Closing the most rings, end to end.}
 We measured what an exact selection buys on the bench, with the engine of
@@ -867,9 +889,16 @@ rotation times the length, as the rotated region grows by $0$ to $40$ rings
 of vertices), at almost no cost in distortion; but rotating the field
 cylinder by cylinder to bring the shifts to zero moved the twist onto rings
 of $90$ to $200$ edges, and over $36$ runs $2$ improved and $4$ regressed,
-which we read as chaos rather than progress. We read this, as a conjecture, as saying that with a map of fixed scale the
-lever is the orientation of the field along whole cylinders, and that the
-conflicts are better attacked in quantization.
+which we read as chaos rather than progress. The Burgers sum of the
+companion paper~\cite{gardent2026turns} accounts for it: the shifts of two
+parallel turns, a short one round a limb and a long one round the torso,
+differ by the across component of the Burgers vector of the singular
+vertices between them, which depends only on their developed positions, and
+a map of fixed scale barely moves these (above: $0.01$ to $0.12$ of the
+predicted change). Rotating the field to close the short turn therefore moves
+its shift onto the long one, and the turns that cross the rotated region see
+their real lengths change. The conflicts are better attacked in
+quantization.
 
 \section{Limitations and open problems}\label{sec:limits}
 
@@ -950,16 +979,16 @@ twelve models, three budgets, $4.65\%$ (Section~\ref{sec:experiments})
   & the cited commit & working logs of the protocol below; a second run of
   the same engine gave the same figures for the $36$ meshes \\
 Table~\ref{tab:dev}
-  & commits \texttt{7dc1727}, \texttt{c86740f}, \texttt{cf4a82c}
-  & commit messages (also \texttt{ab8d89c}) \\
+  & commits \texttt{9f3e455}, \texttt{3658abc}, \texttt{197f0ca}
+  & commit messages (also \texttt{452b346}) \\
 against other remeshers
-  & commits \texttt{83f0967}, \texttt{4e9620c}
+  & commits \texttt{5bc16c6}, \texttt{b0fba91}
   & \texttt{bench/results/results.json} at those commits \\
 hand-made male body
   & ---
   & \texttt{bench/results/RESULTS.md} \\
 male body, openclare
-  & \texttt{ab8d89c}; \texttt{b0d37fa} to \texttt{8fd1932}
+  & \texttt{452b346}; \texttt{1b77f7d} to \texttt{4db7b42}
   & commit messages; closed loops, distance and corners: working logs \\
 Figures~\ref{fig:overview} and~\ref{fig:closeups}, their numbers
   & commit \texttt{89232b0}, one run per mesh; QuadriFlow through Blender, on
@@ -967,14 +996,14 @@ Figures~\ref{fig:overview} and~\ref{fig:closeups}, their numbers
   & \texttt{figures/README.md} (commands, numbers, source checksum) and
   \texttt{figures/make\_figures.sh}, which remakes them \\
 Section~\ref{sec:exact}, up to ``The heuristic leaves most of the gap''
-  & branch \texttt{rd-exact} (export hook), engine before \texttt{3b3122d}
+  & branch \texttt{rd-exact} (export hook), engine before \texttt{c8bf2be}
   & working logs, scripts and the exported systems; some summary figures
-  also in commit messages (\texttt{6374097}, \texttt{38b9fb3}) \\
+  also in commit messages (\texttt{2a4ca25}, \texttt{9132835}) \\
 closing the most rings, end to end
   & branch \texttt{maxclose-rd}, engine of branch \texttt{complete-helices}
   & working logs; some figures only in the experiment's summary \\
 acting before quantization
-  & a patch of the engine of commit \texttt{83f0967}
+  & a patch of the engine of commit \texttt{5bc16c6}
   & working logs; the ratios over twelve moves, the $36$ runs and the
   $3{,}600$ of $3{,}604$ rings only in the experiment's summary \\
 \bottomrule

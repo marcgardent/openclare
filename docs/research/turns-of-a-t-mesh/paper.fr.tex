@@ -104,8 +104,11 @@ humain. Les conflits minorent le nombre de tours que toute quantification
 respectant des bornes données laisse décalés~: sur ce corps, dans les bornes
 de séparation d'un moteur de remaillage, exactement un à neuf des tours qu'il
 retient, là où il en laisse de 13 à 123 décalés. Choisir les tours à fermer
-est NP-difficile, déjà pour les équilibres bidirigés et les bornes $0$--$1$ de
-la quantification. Le cœur algébrique des démonstrations est vérifié en Lean.
+est NP-difficile pour des équilibres bidirigés avec des bornes $0$--$1$, la
+forme algébrique de la quantification\,; savoir si de vrais T-meshes donnent
+des instances difficiles est une question ouverte. Le cœur algébrique des démonstrations est vérifié en Lean\,; la topologie de la
+surface, que les marches et les régions soient celles d'un T-mesh, y est une
+hypothèse.
 \end{abstract}
 
 \section{Introduction}
@@ -240,8 +243,10 @@ peut contenir $o$ mais non $o + \shift_\gamma(\ell)$\,; la révolution
 suivante suit alors d'autres patchs.
 \end{proof}
 
-La composante de $T_\gamma(\ell)$ le long de la marche est la \emph{longueur}
-$\alpha_\gamma(\ell)$ du tour, qui, aux longueurs entières, est le nombre de
+Dans le repère du premier côté, avec $e_1$ la direction de marche et $e_2$
+celle des abscisses croissantes, $T_\gamma(\ell) = -\alpha_\gamma(\ell)\, e_1 +
+\shift_\gamma(\ell)\, e_2$~: il ramène la fin de la marche sur le premier
+côté. $\alpha_\gamma(\ell)$ est la \emph{longueur} du tour, qui, aux longueurs entières, est le nombre de
 quads de la bande par révolution. Aux longueurs réelles de la paramétrisation,
 le décalage est le \emph{décalage réel}, et sa part de la longueur
 l'\emph{inclinaison}. Aux longueurs entières équilibrées dont les côtés de
@@ -268,17 +273,14 @@ holonomie $x \mapsto R^{4-k}(x - p) + p$. Lorsque la rotation de $\hat
 h(\gamma)$ est l'identité, sa translation est le \emph{vecteur de Burgers} de
 $\gamma$. Pour un tour $\gamma$, soit $\bar\gamma$ la courbe fermée qui suit
 la marche puis, de retour dans son premier patch, revient à son départ le long
-d'un segment parallèle au premier côté\,; avec $e_1$ la direction de marche
-et $e_2$ la direction le long du premier côté, $\hat h(\bar\gamma)$ est une
+d'un segment parallèle au premier côté\,; $\hat h(\bar\gamma)$ est une
 translation. Elle prolonge la carte le long du lacet, tandis que les passages
 de la proposition~\ref{prop:linear} développent le dernier patch dans le
-premier~: $\hat h(\bar\gamma)$ est l'inverse de $T_\gamma(\ell)$. Désormais,
-nous lisons les décalages dans la convention de l'holonomie,
-$\shift_\gamma(\ell) = \langle e_2, \hat h(\bar\gamma) \rangle$, l'opposé du
-décalage de la proposition~\ref{prop:linear}\,; changer le signe de tous les
-décalages ne change aucun énoncé sur les anneaux, les parités ou l'existence
-de certificats, et les signes des identités mesurées sont ceux des décalages
-exportés. Les décalages, les positions développées et les vecteurs de Burgers
+premier~: $\hat h(\bar\gamma)$ est l'inverse de $T_\gamma(\ell)$, la
+translation de vecteur $\alpha_\gamma(\ell)\, e_1 - \shift_\gamma(\ell)\, e_2$,
+et $\shift_\gamma(\ell) = -\langle e_2, \hat h(\bar\gamma) \rangle$. Tous les
+décalages de cet article sont ceux de la proposition~\ref{prop:linear}, la
+convention des décalages qu'exporte le moteur et des figures. Les décalages, les positions développées et les vecteurs de Burgers
 sont des formes linéaires à coefficients entiers en $\ell$ tant que les
 chemins traversent les mêmes patchs, si bien qu'une identité entre eux qui
 vaut sur un ouvert de longueurs équilibrées strictement positives vaut pour
@@ -290,7 +292,7 @@ développent sur $\Z^2$. Une forme $f$ est égale à $g$ \emph{modulo les
 Les énoncés mesurés portent sur le T-mesh du corps masculin de la
 bibliothèque Essentials de Blender remaillé par openclare à $10\,590$ quads,
 exporté avec tous ses tours (branche \texttt{rd-exact}, moteur antérieur au
-commit \texttt{3b3122d}) et étudié dans l'article
+commit \texttt{c8bf2be}) et étudié dans l'article
 compagnon~\cite[\S7]{gardent2026loops}~: $261$ sommets singuliers ($133$ de
 valence trois, $127$ de valence cinq, un de valence deux) parmi $1\,295$
 nœuds, $2\,069$ arcs, $776$ patchs, $1\,552$ équilibres. Les tours sont
@@ -381,16 +383,18 @@ Soient $\gamma$, $\gamma_1$, $\gamma_2$ des tours à courbes simples.
   repère $(e_1, e_2)$ en $x_0$. Numérotons les $c_i$ dans l'ordre où un
   parcours de $T$ partant de $x_0$ et gardant $T$ à sa droite les atteint pour
   la première fois, et soit $p_i$ la position développée de $c_i$ à cette
-  première visite. Alors $\shift_\gamma(\ell) = \pm\langle e_2, B_D \rangle$,
-  avec
+  première visite. Alors $\shift_\gamma(\ell) = \langle e_2, B_D \rangle$ si
+  $D$ est à gauche de $\bar\gamma$, et $\shift_\gamma(\ell) = -\langle e_2,
+  B_D \rangle$ s'il est à sa droite, avec
   \[
     B_D = \sum_{i=1}^m Q_i\,(I - R_i)\,p_i ,
     \qquad R_i = R^{4 - k(c_i)},
     \qquad Q_i = R_m R_{m-1} \cdots R_{i+1},
   \]
   la translation de $\rho_m \circ \dots \circ \rho_1$, où $\rho_i(x) =
-  R_i(x - p_i) + p_i$\,; le signe est $+$ si $D$ est à droite de
-  $\bar\gamma$, et $-$ sinon.
+  R_i(x - p_i) + p_i$. Avec $D$ à sa gauche, $B_D = T_\gamma(\ell) =
+  -\alpha_\gamma(\ell)\, e_1 + \shift_\gamma(\ell)\, e_2$\,; avec $D$ à sa
+  droite, $B_D$ est la translation inverse.
 \item[(b)] Supposons que $\bar\gamma_1$ et $\bar\gamma_2$ soient disjointes et
   bordent une couronne $A$, dont les deux tours font le tour dans le même
   sens, et qu'un chemin $\kappa$ intérieur à $A$, de $\bar\gamma_1$ à
@@ -398,7 +402,7 @@ Soient $\gamma$, $\gamma_1$, $\gamma_2$ des tours à courbes simples.
   $\gamma_1$ (les tours sont \emph{parallèles})\,; mesurons les deux
   décalages selon la direction $e_2$ transportée par $\kappa$. Alors
   \(
-    \shift_{\gamma_1}(\ell) - \shift_{\gamma_2}(\ell) = \langle e_2, B_A \rangle,
+    \shift_{\gamma_1}(\ell) - \shift_{\gamma_2}(\ell) = -\langle e_2, B_A \rangle,
   \)
   où $B_A$ est le vecteur de Burgers du bord du disque obtenu en découpant
   $A$ le long de $\kappa$, donné par la même somme sur les sommets singuliers
@@ -417,13 +421,13 @@ Soient $\gamma$, $\gamma_1$, $\gamma_2$ des tours à courbes simples.
 (valences $3, 3, 3, 5, 3, 3$, indice total $4$), découpée le long d'un arbre
 $T$ et développée\,; chaque $c_i$ est dessiné à sa première visite $p_i$ lors
 du parcours de $T$. Le tour $\gamma$, de longueur $11$, revient une rangée
-plus bas, et $B_D = \sum_i Q_i (I - R_i) p_i = (-11, -1)$~: sa composante en
-long est la longueur, sa composante en travers le décalage. Le tour $\gamma'$
+plus bas, et $D$ est à sa gauche~: $B_D = \sum_i Q_i (I - R_i) p_i = (-11, -1)
+= T_\gamma(\ell)$, moins la longueur le long de la marche et le décalage $-1$
+en travers. Le tour $\gamma'$
 borde avec $\gamma$ une couronne sans sommet singulier (en grisé) et a le même
 décalage (partie~(c))\,; $11 \equiv -1 \pmod 2$
-(proposition~\ref{prop:parity}). Dans toutes les figures, les décalages sont
-indiqués dans la convention de la proposition~\ref{prop:linear}, les abscisses
-étant mesurées vers le haut.}
+(proposition~\ref{prop:parity}). Dans toutes les figures, les abscisses sont
+mesurées vers le haut.}
 \label{fig:holonomy}
 \end{figure}
 
@@ -444,14 +448,16 @@ $\bar\gamma$ étant parcourue avec $D$ à sa droite à la place de la petite
 courbe, $\hat h(\bar\gamma) = G_{f_r} \circ \dots \circ G_{f_1}$. Dérouler la
 récurrence compose les $\rho_{c_i}$ dans l'ordre de première visite\,; la
 rotation est $R^{\sum_i(4 - k(c_i))} = I$ d'après le lemme~\ref{lem:gauss},
-le développement donne $B_D$, et avec $D$ à sa gauche $\bar\gamma$ a
-l'holonomie inverse. (b) Avec $x_0$ sur $\bar\gamma_1$ au départ de $\kappa$,
+le développement donne $B_D = \hat h(\bar\gamma) = T_\gamma(\ell)^{-1}$, et
+avec $D$ à sa gauche $\bar\gamma$ a l'holonomie inverse, $B_D =
+T_\gamma(\ell)$. (b) Avec $x_0$ sur $\bar\gamma_1$ au départ de $\kappa$,
 le lacet $\lambda = \bar\gamma_1\, \kappa\, \bar\gamma_2^{-1} \kappa^{-1}$
 borde le disque obtenu en découpant $A$ le long de $\kappa$. Développer le
 long de $\kappa$ lit $\hat h(\bar\gamma_2)$ dans les coordonnées en $x_0$, où
 la marche de $\gamma_2$ suit $e_1$\,; ainsi $\hat h(\lambda)$ est la
-translation de vecteur $\hat h(\bar\gamma_1) - \hat h(\bar\gamma_2)$, et la
-partie~(a) s'applique au disque découpé, dont les sommets singuliers ont un
+translation de vecteur $\hat h(\bar\gamma_1) - \hat h(\bar\gamma_2)$, dont
+la composante selon $e_2$ est $\shift_{\gamma_2}(\ell) - \shift_{\gamma_1}(\ell)$,
+et la partie~(a) s'applique au disque découpé, dont les sommets singuliers ont un
 indice total nul. (c) La somme est vide.
 \end{proof}
 
@@ -816,7 +822,7 @@ autour de deux sommets singuliers de même valence $k$, atteints le long de
 chemins qui les développent en $p_c$ et $p_{c'}$. Alors
 \[
   \shift_{\gamma_1}(\ell) - \shift_{\gamma_2}(\ell) = \bigl\langle e_2,\
-  (I - R^{4-k})(p_c - p_{c'}) \bigr\rangle .
+  (I - R^{4-k})(p_{c'} - p_c) \bigr\rangle .
 \]
 Pour la valence trois ou cinq, cela vaut $\pm d_1 \pm d_2$ avec $d = p_c -
 p_{c'}$, comme pour une dislocation, et la proposition~\ref{prop:staircase}
@@ -825,8 +831,9 @@ s'applique.
 
 \begin{proof}
 Comme dans la proposition~\ref{prop:burgers}(b), $\hat h(\lambda)$ est la
-translation de vecteur $\hat h(\bar\gamma_1) - \hat h(\bar\gamma_2)$. Avec $j
-= 4 - k$, $\hat h(\lambda_c) \circ \hat h(\lambda_{c'})^{-1}(x) =
+translation de vecteur $\hat h(\bar\gamma_1) - \hat h(\bar\gamma_2)$, dont la
+composante selon $e_2$ est $\shift_{\gamma_2}(\ell) - \shift_{\gamma_1}(\ell)$.
+Avec $j = 4 - k$, $\hat h(\lambda_c) \circ \hat h(\lambda_{c'})^{-1}(x) =
 R^j\bigl(R^{-j}(x - p_{c'}) + p_{c'} - p_c\bigr) + p_c = x + (I - R^j)(p_c -
 p_{c'})$\,; pour $j = \pm1$, les deux composantes sont $\pm d_1 \pm d_2$.
 \end{proof}
@@ -908,7 +915,9 @@ long de $\tau$ jusqu'à $v$, écarté de $v$ vers l'intérieur du secteur qu'il
 balaie. Si $\lambda$ est librement homotope dans $\Sigma^\circ$ à la courbe
 $\bar\gamma$ d'un tour $\gamma$, la direction de marche de $\gamma$ allant sur
 celle de $\sigma$, alors $\shift_\gamma(\ell) = \pm\delta(\ell)$ pour tout
-$\ell$ équilibré. Le tour n'est un anneau que si $\delta = 0$, c'est-à-dire si
+$\ell$ équilibré, le signe dépendant du côté de $\sigma$ où se trouve $\tau$
+($+$ sur la figure~\ref{fig:separatrix}(b), $-$ au poignet gauche du corps
+masculin). Le tour n'est un anneau que si $\delta = 0$, c'est-à-dire si
 $\sigma$ revient sur son propre sommet\,; si $\delta$ est égal, modulo les
 équilibres, à une forme à coefficients positifs ou nuls contenant un arc
 maintenu à une longueur d'au moins un, $\gamma$ est une hélice pour toute
@@ -1047,7 +1056,7 @@ un mot représentant $\kappa_r \bar\gamma_r \kappa_r^{-1}$. Pour des
 multiplicateurs $u_r$, définissons l'\emph{enroulement tordu} du cycle pondéré
 autour de $c_i$,
 \[
-  W_i = \sum_{r=1}^m u_r\, \rho\Bigl(\frac{\partial w_r}{\partial x_i}\Bigr)^{\!\top} f_r
+  W_i = -\sum_{r=1}^m u_r\, \rho\Bigl(\frac{\partial w_r}{\partial x_i}\Bigr)^{\!\top} f_r
   \in \Z^2 \text{ (pour des } u_r \text{ entiers)} .
 \]
 Alors, pour toutes longueurs équilibrées,
@@ -1064,7 +1073,7 @@ une constante commune à tous les $i$ près, $w_i = \sum_r u_r\,
 \epsilon(\partial w_r/\partial x_i)$. Les mots $w_r$ sont définis à la
 relation près, et les $W_i$ en conséquence~: insérer un conjugué $g\varrho
 g^{-1}$ de la relation $\varrho$ dans $w_r$, après un préfixe $a$ de $w_r$,
-ajoute $u_r \rho(a g\, \partial \varrho/\partial x_i)^\top f_r$ à chaque $W_i$
+retranche $u_r \rho(a g\, \partial \varrho/\partial x_i)^\top f_r$ de chaque $W_i$
 (avec $a$ vide, $u_r \rho(g\, \partial \varrho/\partial x_i)^\top f_r$), et
 laisse la somme inchangée.
 \end{proposition}
@@ -1076,8 +1085,8 @@ sur le mot vide, donc partout, par récurrence sur la longueur (pour
 $x_i^{-1}$, utiliser $0 = \phi(x_i x_i^{-1})$). Pour un tour, $\hat
 h(\kappa_r \bar\gamma_r \kappa_r^{-1})$ est la translation de vecteur $M_r
 T_r$, où $T_r$ est la translation de $\bar\gamma_r$ dans son propre repère et
-$M_r$ la rotation de $\hat h(\kappa_r)$\,; donc $\shift_{\gamma_r} = \langle
-M_r e_2, M_r T_r \rangle = \langle f_r, \tau(w_r) \rangle$, et $\langle f,
+$M_r$ la rotation de $\hat h(\kappa_r)$\,; donc $\shift_{\gamma_r} = -\langle
+M_r e_2, M_r T_r \rangle = -\langle f_r, \tau(w_r) \rangle$, et $\langle f,
 \rho(D) b\rangle = \langle \rho(D)^\top f, b \rangle$ donne la formule. La
 formule fondamentale $\sum_i (\partial w/\partial x_i)(x_i - 1) = w - 1$
 donne, par $\rho$, $\sum_i \rho(\partial w_r/\partial x_i)(R_i - I) =
@@ -1255,6 +1264,13 @@ des poids réels, $c = \sum_a \tfrac{c_a}{2}\,(2\ell_a)$ sur les arcs à deux
 pieds distincts, et $c_a\ell_a$ sur ceux dont les pieds sont un même sommet.
 \end{proof}
 
+La démonstration est élémentaire\,: le contenu est dans l'hypothèse. Que la
+partie impaire d'un certificat soit un cycle du graphe des pieds est constaté
+sur les $25$ certificats du corps (exact), mais n'est pas démontré\,; le
+corollaire~\ref{cor:checker} ne le donne pas, puisqu'il contrôle la parité de
+$p_{i,1} + p_{i,2}$ alors qu'un peigne lit une seule coordonnée (sur la
+figure~\ref{fig:comb}, les deux pieds ont la même couleur et $\ell_a = 9$).
+
 \begin{remark}[Les marches fermées comme cycles tordus]
 Nous nous attendons à ce que la lecture d'une marche fermée de peignes,
 $\sum_i \langle e_{a_i} - e_{a_{i+1}},\ p_{c_i}\rangle$ par une sommation par
@@ -1299,7 +1315,11 @@ changer aucune holonomie.
 \paragraph{Sur le corps masculin.}
 Le lemme~\ref{lem:comb} vaut sur les $2\,069$ arcs, dont $2\,046$ ont deux
 pieds distincts de valence impaire~: presque tout arc est une dislocation ou
-un échange local. L'homologie tordue est de dimension $518 = 2(n - 2)$ et
+un échange local. Sur ce T-mesh (variante~1), chaque nœud ne rencontre qu'une
+trace perpendiculaire, et un seul arc, $1676$, aboutit sur la connexion de
+séparatrices, qui joint les sommets $204$ et $210$\,; nous avons pris pour
+pied le sommet d'où la connexion a été tracée, $204$, et aucun certificat de la
+variante~1 ne contient cet arc. L'homologie tordue est de dimension $518 = 2(n - 2)$ et
 l'accouplement de rang $517$, de noyau la classe transverse à l'unique
 connexion de séparatrices\,; nous conjecturons que, sans sommet de valence
 divisible par quatre, le noyau est engendré par les classes transverses aux
@@ -1825,7 +1845,11 @@ plafond assez grand ne contraint rien.
 
 La réduction a été vérifiée par ordinateur sur $40$ graphes aléatoires
 (mesuré)\,; sa troisième équation d'équilibre met chaque arc dans deux
-équilibres, comme dans un T-mesh.
+équilibres, comme dans un T-mesh. On ne sait pas qu'elle soit un T-mesh\,: ses
+formes ont des coefficients positifs ou nuls et ne sont pas construites comme
+les holonomies de marches droites\,; le théorème dit donc que l'algèbre de la
+quantification permet des instances difficiles, non qu'une surface en
+produise.
 
 \begin{conjecture}[Instances réalisables]\label{conj:realize}
 \RC{} reste NP-difficile lorsque $B$, $b$ et $H$ sont les équilibres, les
