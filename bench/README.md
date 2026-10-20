@@ -149,6 +149,7 @@ in `crates/openclare/src/metrics.rs`.
 | `creases.py` | Blender script: subdivides each result with and without its crease weights and measures both; writes `results/CREASES.md` |
 | `fetch_blenderkit.py` | downloads the BlenderKit models of the bench, which cannot be redistributed, and makes their scenes (`make blenderkit`) |
 | `../scripts/scores.py` | marks from 0 to 100 per model, remesher and criterion; writes `results/SCORES.md` (`make scores`) |
+| `../scripts/singularities.py` | sorts the irregular vertices of a quad mesh by what they do: volume (they hold the curvature round them), density (3-5 pairs whose Burgers vector the sizes ask for), direction (ends and corners of hard edges), or none; prints a summary, `--json` every vertex |
 | `acceptance.py` | checks the results against the acceptance thresholds, writes `results/ACCEPTANCE.md` |
 | `quantize.py` | quantizes the T-mesh of each model and writes `results/QUANTIZATION.md` |
 | `quadriflow.py` | Blender script: QuadriFlow on an OBJ (`out/<model>/source.obj`), once per seed |
