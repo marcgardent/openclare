@@ -80,8 +80,8 @@ The engine and QuadriFlow are deterministic here: two runs of `make_figures.sh` 
 three meshes byte for byte.
 
 Against preprint v1 (Section 6, "Against the hand-made mesh"): v1 gives 1.6% of spiral edges in
-9 spiral loops and 33.2% on closed loops for the engine, from single runs of commits b0d37fa to
-8fd1932. The engine of these figures, 89232b0, gives 1.95% in 15 spiral loops and 32.6% on closed
+9 spiral loops and 33.2% on closed loops for the engine, from single runs of commits 1b77f7d to
+4db7b42. The engine of these figures, 89232b0, gives 1.95% in 15 spiral loops and 32.6% on closed
 loops: still below the hand-made mesh's 2.55%, by less. The difference is the newer engine (v1
 already says that the later changes, a finer work mesh at thin walls, were not measured on this
 body, and that earlier versions gave 1.1% to 2.4%); like the spiral share of any single model it

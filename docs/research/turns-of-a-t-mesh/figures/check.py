@@ -212,7 +212,9 @@ def holonomy():
     for o in (1, 2, 3):
         check_turn(surface, (0, half(o)), 11, -1)
     first_visits = [((11, 5), 3), ((8, 5), 3), ((6, 5), 3), ((5, 5), 5), ((4, 5), 3), ((3, 5), 3)]
-    assert burgers(first_visits) == (-11, -1)
+    # D lies on the left of the walk: B_D = T_gamma = (-length, shift).
+    length, shift = surface.turn((0, half(3)))
+    assert burgers(first_visits) == (-length, shift) == (-11, -1)
     print("  B_D =", burgers(first_visits), "from the first visits p_1, ..., p_6")
     other_order = [((0, 4), 3), ((0, 7), 3), ((2, 7), 3), ((2, 6), 5), ((3, 6), 3), ((3, 5), 3)]
     print("  (walking round T the other way gives", burgers(other_order), "instead)")

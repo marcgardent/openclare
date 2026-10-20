@@ -79,9 +79,11 @@ single arcs, write every certificate of a conflict found on a human body. The
 conflicts bound from below the number of turns that every quantization within
 given bounds leaves shifted: on that body, within the bounds of separation of
 a remeshing engine, exactly one to nine of the turns it holds, where it leaves
-13 to 123 shifted. Choosing the turns to close is NP-hard, already for the
-bidirected balances and $0$--$1$ bounds of quantization. The algebraic cores
-of the proofs are checked in Lean.
+13 to 123 shifted. Choosing the turns to close is NP-hard for bidirected
+balances with $0$--$1$ bounds, the algebraic form of quantization; whether
+actual T-meshes give hard instances is open. The algebraic cores
+of the proofs are checked in Lean; the topology of the surface, that the walks
+and regions are those of a T-mesh, is a hypothesis there.
 \end{abstract}
 
 \section{Introduction}
@@ -202,8 +204,10 @@ contain $o$ but not $o + \shift_\gamma(\ell)$; the next round then follows
 other patches.
 \end{proof}
 
-The component of $T_\gamma(\ell)$ along the walk is the \emph{length}
-$\alpha_\gamma(\ell)$ of the turn, which at whole lengths is the number of
+In the frame of the first side, with $e_1$ the walking direction and $e_2$
+the direction of increasing offsets, $T_\gamma(\ell) = -\alpha_\gamma(\ell)\,
+e_1 + \shift_\gamma(\ell)\, e_2$: it brings the end of the walk back onto the
+first side. $\alpha_\gamma(\ell)$ is the \emph{length} of the turn, which at whole lengths is the number of
 quads of the strip in one turn. At the real lengths of the parametrization the
 shift is the \emph{real shift}, and its share of the length the \emph{lean}.
 At whole balanced lengths with positive patch sides every strip of the quad
@@ -227,16 +231,14 @@ develops it at $p$, has holonomy $x \mapsto R^{4-k}(x - p) + p$. When the
 rotation of $\hat h(\gamma)$ is the identity, its translation is the
 \emph{Burgers vector} of $\gamma$. For a turn $\gamma$, let $\bar\gamma$ be
 the closed curve that follows the walk and, back in its first patch, returns
-to its start along a segment parallel to the first side; with $e_1$ the
-walking direction and $e_2$ the direction along the first side, $\hat
+to its start along a segment parallel to the first side; $\hat
 h(\bar\gamma)$ is a translation. It continues the chart along the loop,
 while the crossings of Proposition~\ref{prop:linear} develop the last patch
-into the first: $\hat h(\bar\gamma)$ is the inverse of $T_\gamma(\ell)$. From
-here on we read shifts in the convention of the holonomy, $\shift_\gamma(\ell)
-= \langle e_2, \hat h(\bar\gamma) \rangle$, the opposite of the shift of
-Proposition~\ref{prop:linear}; changing the sign of every shift changes no
-statement about rings, parities or the existence of certificates, and the
-signs of measured identities are those of the exported shifts. Shifts, developed positions and Burgers vectors are
+into the first: $\hat h(\bar\gamma)$ is the inverse of $T_\gamma(\ell)$, the
+translation by $\alpha_\gamma(\ell)\, e_1 - \shift_\gamma(\ell)\, e_2$, and
+$\shift_\gamma(\ell) = -\langle e_2, \hat h(\bar\gamma) \rangle$. Every shift
+in this paper is that of Proposition~\ref{prop:linear}, the convention of the
+shifts the engine exports and of the figures. Shifts, developed positions and Burgers vectors are
 integer linear forms in $\ell$ as long as the paths cross the same patches, so
 an identity between them that holds on an open set of balanced positive
 lengths holds for all balanced lengths; for whole lengths the nodes develop
@@ -246,7 +248,7 @@ combination of the rows of $B$.
 \paragraph{Data.}
 The measured statements refer to the T-mesh of the male body of Blender's
 Essentials library remeshed by openclare at $10{,}590$ quads, exported with
-every turn (branch \texttt{rd-exact}, engine before commit \texttt{3b3122d})
+every turn (branch \texttt{rd-exact}, engine before commit \texttt{c8bf2be})
 and studied in the companion paper~\cite[\S7]{gardent2026loops}: $261$
 singular vertices ($133$ of valence three, $127$ of valence five, one of
 valence two) among $1{,}295$ nodes, $2{,}069$ arcs, $776$ patches, $1{,}552$
@@ -328,15 +330,18 @@ Let $\gamma$, $\gamma_1$, $\gamma_2$ be turns with simple curves.
   plane, with the frame $(e_1, e_2)$ at $x_0$. Number the $c_i$ in the order in
   which a walk round $T$ from $x_0$, keeping $T$ on its right, first reaches
   them, and let $p_i$ be the developed position of $c_i$ at that first visit.
-  Then $\shift_\gamma(\ell) = \pm\langle e_2, B_D \rangle$, with
+  Then $\shift_\gamma(\ell) = \langle e_2, B_D \rangle$ if $D$ lies on the
+  left of $\bar\gamma$, and $\shift_\gamma(\ell) = -\langle e_2, B_D
+  \rangle$ if it lies on its right, with
   \[
     B_D = \sum_{i=1}^m Q_i\,(I - R_i)\,p_i ,
     \qquad R_i = R^{4 - k(c_i)},
     \qquad Q_i = R_m R_{m-1} \cdots R_{i+1},
   \]
   the translation of $\rho_m \circ \dots \circ \rho_1$, where $\rho_i(x) =
-  R_i(x - p_i) + p_i$; the sign is $+$ if $D$ lies on the right of
-  $\bar\gamma$, and $-$ otherwise.
+  R_i(x - p_i) + p_i$. With $D$ on its left, $B_D = T_\gamma(\ell) =
+  -\alpha_\gamma(\ell)\, e_1 + \shift_\gamma(\ell)\, e_2$; with $D$ on its
+  right, $B_D$ is the inverse translation.
 \item[(b)] Let $\bar\gamma_1$ and $\bar\gamma_2$ be disjoint and bound an
   annulus $A$, round which the two turns go the same way, and let a path
   $\kappa$ inside $A$ from $\bar\gamma_1$ to $\bar\gamma_2$ carry the walking
@@ -344,7 +349,7 @@ Let $\gamma$, $\gamma_1$, $\gamma_2$ be turns with simple curves.
   \emph{parallel}); measure both shifts along the direction $e_2$ carried by
   $\kappa$. Then
   \(
-    \shift_{\gamma_1}(\ell) - \shift_{\gamma_2}(\ell) = \langle e_2, B_A \rangle,
+    \shift_{\gamma_1}(\ell) - \shift_{\gamma_2}(\ell) = -\langle e_2, B_A \rangle,
   \)
   where $B_A$ is the Burgers vector of the border of the disc $A$ cut along
   $\kappa$, given by the same sum over the singular vertices inside $A$,
@@ -362,13 +367,12 @@ Let $\gamma$, $\gamma_1$, $\gamma_2$ be turns with simple curves.
 (Proposition~\ref{prop:burgers}). A cap $D$ with six singular vertices
 (valences $3, 3, 3, 5, 3, 3$, total index $4$), cut along a tree $T$ and
 developed; each $c_i$ is drawn at its first visit $p_i$ on the walk round $T$.
-The turn $\gamma$, of length $11$, comes back one row lower, and $B_D =
-\sum_i Q_i (I - R_i) p_i = (-11, -1)$: its along component is the length,
-its across component the shift. The turn $\gamma'$ bounds with $\gamma$ an
+The turn $\gamma$, of length $11$, comes back one row lower, and $D$ lies on
+its left: $B_D = \sum_i Q_i (I - R_i) p_i = (-11, -1) = T_\gamma(\ell)$,
+minus the length along the walk and the shift $-1$ across it. The turn $\gamma'$ bounds with $\gamma$ an
 annulus without singular vertex (shaded) and has the same shift (part~(c));
-$11 \equiv -1 \pmod 2$ (Proposition~\ref{prop:parity}). In all figures the shifts
-are labelled in the convention of Proposition~\ref{prop:linear}, offsets
-measured upwards.}
+$11 \equiv -1 \pmod 2$ (Proposition~\ref{prop:parity}). In all figures
+offsets are measured upwards.}
 \label{fig:holonomy}
 \end{figure}
 
@@ -388,12 +392,14 @@ $\bar\gamma$ run with $D$ on its right in place of the arc, $\hat
 h(\bar\gamma) = G_{f_r} \circ \dots \circ G_{f_1}$. Unfolding the
 recursion composes the $\rho_{c_i}$ in the order of first visit; the rotation
 is $R^{\sum_i(4 - k(c_i))} = I$ by Lemma~\ref{lem:gauss}, expanding gives
-$B_D$, and with $D$ on its left $\bar\gamma$ has the inverse holonomy. (b) With $x_0$ on $\bar\gamma_1$ at the start of $\kappa$, the loop
+$B_D = \hat h(\bar\gamma) = T_\gamma(\ell)^{-1}$, and with $D$ on its left
+$\bar\gamma$ has the inverse holonomy, $B_D = T_\gamma(\ell)$. (b) With $x_0$ on $\bar\gamma_1$ at the start of $\kappa$, the loop
 $\lambda = \bar\gamma_1\, \kappa\, \bar\gamma_2^{-1} \kappa^{-1}$ borders the
 disc $A$ cut along $\kappa$. Developing along $\kappa$ reads $\hat
 h(\bar\gamma_2)$ in the coordinates at $x_0$, where the walk of $\gamma_2$
 runs along $e_1$; so $\hat h(\lambda)$ is the translation by $\hat
-h(\bar\gamma_1) - \hat h(\bar\gamma_2)$, and part~(a) applies to the cut disc,
+h(\bar\gamma_1) - \hat h(\bar\gamma_2)$, whose component along $e_2$ is
+$\shift_{\gamma_2}(\ell) - \shift_{\gamma_1}(\ell)$, and part~(a) applies to the cut disc,
 whose singular vertices have total index zero. (c) The sum is empty.
 \end{proof}
 
@@ -728,7 +734,7 @@ with $c$, $c'$ on their right round two singular vertices of the same valence
 $k$, reached along paths that develop them at $p_c$ and $p_{c'}$. Then
 \[
   \shift_{\gamma_1}(\ell) - \shift_{\gamma_2}(\ell) = \bigl\langle e_2,\
-  (I - R^{4-k})(p_c - p_{c'}) \bigr\rangle .
+  (I - R^{4-k})(p_{c'} - p_c) \bigr\rangle .
 \]
 For valence three or five this is $\pm d_1 \pm d_2$ with $d = p_c - p_{c'}$,
 as for a dislocation, and Proposition~\ref{prop:staircase} applies.
@@ -736,7 +742,8 @@ as for a dislocation, and Proposition~\ref{prop:staircase} applies.
 
 \begin{proof}
 As in Proposition~\ref{prop:burgers}(b), $\hat h(\lambda)$ is the translation by
-$\hat h(\bar\gamma_1) - \hat h(\bar\gamma_2)$. With $j = 4 - k$, $\hat
+$\hat h(\bar\gamma_1) - \hat h(\bar\gamma_2)$, whose component along $e_2$
+is $\shift_{\gamma_2}(\ell) - \shift_{\gamma_1}(\ell)$. With $j = 4 - k$, $\hat
 h(\lambda_c) \circ \hat h(\lambda_{c'})^{-1}(x) = R^j\bigl(R^{-j}(x - p_{c'}) +
 p_{c'} - p_c\bigr) + p_c = x + (I - R^j)(p_c - p_{c'})$; for $j = \pm1$ both
 components are $\pm d_1 \pm d_2$.
@@ -813,7 +820,9 @@ the loop that runs along $\sigma$ from $v$ to $q$ and back along $\tau$ to $v$,
 pushed off $v$ into the sector it turns through. If $\lambda$ is freely
 homotopic in $\Sigma^\circ$ to the curve $\bar\gamma$ of a turn $\gamma$, the
 walking direction of $\gamma$ going to that of $\sigma$, then
-$\shift_\gamma(\ell) = \pm\delta(\ell)$ for all balanced $\ell$. The turn is a
+$\shift_\gamma(\ell) = \pm\delta(\ell)$ for all balanced $\ell$, the sign
+depending on the side of $\sigma$ on which $\tau$ lies ($+$ in
+Figure~\ref{fig:separatrix}(b), $-$ at the left wrist of the male body). The turn is a
 ring only if $\delta = 0$, that is if $\sigma$ comes back onto its own vertex;
 if $\delta$ equals, modulo the balances, a non-negative form containing an arc
 held at length at least one, $\gamma$ is a helix under every quantization
@@ -941,7 +950,7 @@ to $x_0$ along $\kappa_r$ (one of $\pm e_1$, $\pm e_2$), and $w_r$ a word for
 $\kappa_r \bar\gamma_r \kappa_r^{-1}$. For multipliers $u_r$ define the
 \emph{twisted winding} of the weighted cycle round $c_i$,
 \[
-  W_i = \sum_{r=1}^m u_r\, \rho\Bigl(\frac{\partial w_r}{\partial x_i}\Bigr)^{\!\top} f_r
+  W_i = -\sum_{r=1}^m u_r\, \rho\Bigl(\frac{\partial w_r}{\partial x_i}\Bigr)^{\!\top} f_r
   \in \Z^2 \text{ (for whole } u_r) .
 \]
 Then, for all balanced lengths,
@@ -957,8 +966,8 @@ $\sum_r u_r \bar\gamma_r$ round $c_i$ is, up to a constant common to all $i$,
 $w_i = \sum_r u_r\, \epsilon(\partial w_r/\partial x_i)$. The words $w_r$ are
 defined up to the relation, and the $W_i$ accordingly: inserting a conjugate
 $g\varrho g^{-1}$ of the relation $\varrho$ in $w_r$, after a prefix $a$ of
-$w_r$, adds $u_r \rho(a g\, \partial \varrho/\partial x_i)^\top f_r$ to every
-$W_i$ (with $a$ empty, $u_r \rho(g\, \partial \varrho/\partial x_i)^\top f_r$),
+$w_r$, subtracts $u_r \rho(a g\, \partial \varrho/\partial x_i)^\top f_r$ from
+every $W_i$ (with $a$ empty, $u_r \rho(g\, \partial \varrho/\partial x_i)^\top f_r$),
 and leaves the sum unchanged.
 \end{proposition}
 
@@ -969,7 +978,7 @@ agree everywhere by induction on the length (for $x_i^{-1}$, use $0 =
 \phi(x_i x_i^{-1})$). For a turn, $\hat h(\kappa_r \bar\gamma_r
 \kappa_r^{-1})$ is the translation by $M_r T_r$, with $T_r$ the translation of
 $\bar\gamma_r$ in its own frame and $M_r$ the rotation of $\hat h(\kappa_r)$;
-so $\shift_{\gamma_r} = \langle M_r e_2, M_r T_r \rangle = \langle f_r,
+so $\shift_{\gamma_r} = -\langle M_r e_2, M_r T_r \rangle = -\langle f_r,
 \tau(w_r) \rangle$, and $\langle f, \rho(D) b\rangle = \langle \rho(D)^\top f,
 b \rangle$ gives the formula. The fundamental formula $\sum_i (\partial
 w/\partial x_i)(x_i - 1) = w - 1$ maps under $\rho$ to $\sum_i \rho(\partial
@@ -1135,6 +1144,13 @@ remains is $\sum_a \lfloor c_a/2 \rfloor\,2\ell_a$. With real weights, $c =
 $c_a\ell_a$ on those whose feet are one vertex.
 \end{proof}
 
+The proof is elementary: the content is in the hypothesis. That the odd part of
+a certificate is a cycle of the graph of feet is observed on all $25$
+certificates of the body (exact) but not proved; Corollary~\ref{cor:checker}
+does not give it, since it controls the parity of $p_{i,1} + p_{i,2}$ while a
+comb reads one coordinate (in Figure~\ref{fig:comb} both feet have the same
+colour and $\ell_a = 9$).
+
 \begin{remark}[Closed walks as twisted cycles]
 We expect the reading of a closed walk of combs, $\sum_i \langle e_{a_i} -
 e_{a_{i+1}},\ p_{c_i}\rangle$ by a summation by parts, to be the Burgers form
@@ -1174,7 +1190,10 @@ which the lengths can move without changing any holonomy.
 \paragraph{On the male body.}
 Lemma~\ref{lem:comb} holds on all $2{,}069$ arcs, $2{,}046$ of which have two
 distinct feet of odd valence: nearly every arc is a local dislocation or
-exchange. The
+exchange. On this T-mesh (way~1) each node meets a single perpendicular trace,
+and one arc, $1676$, ends on the separatrix connection, which joins the
+vertices $204$ and $210$; we took as its foot the vertex the connection was
+traced from, $204$, and no certificate of way~1 contains the arc. The
 twisted homology has dimension $518 = 2(n - 2)$ and the pairing rank $517$,
 its kernel the class across the one separatrix connection; we conjecture that
 without vertices of valence divisible by four the kernel is spanned by the
@@ -1644,7 +1663,10 @@ numbers $0$ and $\pm1$; a large cap constrains nothing.
 \end{proof}
 
 The reduction was checked by computer on $40$ random graphs (measured); its
-third balance puts every arc in two balances, as in a T-mesh.
+third balance puts every arc in two balances, as in a T-mesh. It is not known
+to be a T-mesh: its forms have non-negative coefficients and are not built as
+the holonomies of straight walks, so the theorem says that quantization's
+algebra allows hard instances, not that a surface produces them.
 
 \begin{conjecture}[Realizable instances]\label{conj:realize}
 \RC{} stays NP-hard when $B$, $b$ and $H$ are the balances, the bounds of
