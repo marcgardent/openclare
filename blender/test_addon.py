@@ -104,7 +104,7 @@ job = openclare.Run(given)
 job.thread.start()
 job.thread.join()
 assert job.error is None, job.error
-apart, _ = openclare.mesh_of(job.made)
+apart, _ = openclare.mesh_of(job.made, given)
 assert all(a.co == b.co for a, b in zip(direct.vertices, apart.vertices)), "the run in a thread differs"
 new = job.news()
 assert new and new == job.stages and job.stage == new[-1] and job.done == 1.0, (new, job.done)
@@ -121,20 +121,45 @@ assert openclare.progress_of(["piece 2 of 4: preprocessing", "piece 1 of 4: cros
 assert bpy.ops.object.openclare_remesh.poll() and openclare.RUNNING is None
 print("IN A THREAD OK")
 
-# An object with no faces is said, not crashed, and leaves no report.
-bpy.ops.mesh.primitive_cube_add(location=(0.0, -6.0, 0.0))
-bare = bpy.context.active_object
-bare.data.clear_geometry()
-bare.data.from_pydata([(0.0, 0.0, 0.0), (1.0, 0.0, 0.0)], [(0, 1)], [])
+# A painted vertex group: with the top of the head at 1 and the rest at 0,
+# and a factor of 9, the top gets most of the quads.
+def share_on_top(remeshed):
+    polygons = remeshed.data.polygons
+    return sum(1 for polygon in polygons if polygon.center.z > 0.0) / len(polygons)
+
+for other in bpy.context.selected_objects:
+    other.select_set(False)
+bpy.context.view_layer.objects.active = original
+original.select_set(True)
+group = original.vertex_groups.new(name="more here")
+group.add([vertex.index for vertex in original.data.vertices if vertex.co.z > 0.0], 1.0, "REPLACE")
+settings = original.openclare
+settings.adaptive_size = 0.0
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+unpainted = share_on_top(bpy.context.active_object)
+
+bpy.context.active_object.select_set(False)
+bpy.context.view_layer.objects.active = original
+original.select_set(True)
+settings.density_group, settings.density_factor = "more here", 9.0
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+painted = bpy.context.active_object
+print("DENSITY share of the quads on top: %.2f unpainted, %.2f painted" % (unpainted, share_on_top(painted)))
+assert share_on_top(painted) > unpainted + 0.1, "the painted weights changed nothing"
+assert abs(len(painted.data.polygons) - 800) < 80, "the paint changed the number of quads"
+
+# A group that is not there is said.
+bpy.context.active_object.select_set(False)
+bpy.context.view_layer.objects.active = original
+original.select_set(True)
+settings.density_group = "no such group"
 try:
     bpy.ops.object.openclare_remesh()
-    raise AssertionError("an object with no faces went unnoticed")
+    raise AssertionError("a vertex group that does not exist went unnoticed")
 except RuntimeError as error:
-    assert "no faces" in str(error), error
+    assert "no such group" in str(error)
 assert not openclare.last_report, "a run that failed left a report"
-bpy.data.objects.remove(bare)
-bpy.context.view_layer.objects.active = original
-settings = original.openclare
+settings.density_group = ""
 
 # The presets of the shape: those the add-on ships set what the engine's
 # presets of the same names are, and are applied the way the menu of the
@@ -170,7 +195,7 @@ with tempfile.TemporaryDirectory() as folder:
             assert bpy.ops.object.openclare_shape_preset_add(name="Eleven Around") == {"FINISHED"}
         written = open(os.path.join(saved, "Eleven_Around.py")).read()
         assert "settings.quads_around = 11" in written and "settings = bpy.context.object.openclare" in written
-        assert "settings.quads " not in written, written
+        assert "settings.quads " not in written and "settings.export" not in written, written
     finally:
         bpy.utils.user_resource = real_resource
 # No setting takes keyframes.
@@ -192,6 +217,37 @@ def alone(target):
             openclare.copy_settings(settings, target.openclare)
         settings = target.openclare
 
+
+# Materials: a flat grid whose left third is of another material. The result
+# has both, each quad that of the surface under it, and no quad across the
+# border between the two.
+bpy.ops.mesh.primitive_grid_add(x_subdivisions=24, y_subdivisions=24, size=2.0, location=(8.0, 0.0, 0.0))
+sheet = bpy.context.active_object
+for name in ("body", "trim"):
+    sheet.data.materials.append(bpy.data.materials.new(name))
+border = -1.0 + 2.0 * 8 / 24
+for polygon in sheet.data.polygons:
+    polygon.material_index = int(polygon.center.x < border)
+alone(sheet)
+settings.quads, settings.adaptive_size = 400, 0.0
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+mesh = bpy.context.active_object.data
+assert [material.name for material in mesh.materials] == ["body", "trim"]
+used = {polygon.material_index for polygon in mesh.polygons}
+assert used == {0, 1}, f"materials used: {used}"
+for polygon in mesh.polygons:
+    xs = [mesh.vertices[v].co.x for v in polygon.vertices]
+    left, right = all(x <= border + 1e-5 for x in xs), all(x >= border - 1e-5 for x in xs)
+    assert left or right, f"a quad from {min(xs):.3f} to {max(xs):.3f} is across the border at {border:.3f}"
+    assert polygon.material_index == int(left), "a quad has the material of the other side"
+print("MATERIALS", len(mesh.polygons), "quads,", sum(p.material_index for p in mesh.polygons), "of the second material")
+# Not asked for: the result has no material.
+settings.export_materials = False
+alone(sheet)
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+assert len(bpy.context.active_object.data.materials) == 0
+settings.export_materials = True
+settings.quads, settings.adaptive_size = 800, 50.0
 
 # A ring of wire beside a ball, in one object. The ring is thin all along:
 # asked for a number of quads, the engine gives it those its thickness
@@ -217,6 +273,39 @@ assert 540 <= kept <= 660, kept
 assert 250 <= int(openclare.last_report["quads_for_thin_pieces"]) <= 330, openclare.last_report
 on_the_wire = sum(1 for polygon in bpy.context.active_object.data.polygons if polygon.center.x > 2.0)
 assert on_the_wire > 250, on_the_wire
+
+# Sizes asked for instead of a number: set from the object when none is,
+# given to the engine as lengths of the mesh, and the number of quads is
+# what the shape calls for.
+alone(body)
+assert settings.target == "COUNT" and settings.largest_quad == 0.0
+settings.target = "SIZE"
+largest, smallest = openclare.sizes_from(body)
+assert abs(settings.largest_quad - largest) < 1e-6 and abs(settings.smallest_quad - smallest) < 1e-6
+assert abs(largest / smallest - 8.0) < 1e-6 and 0.05 < largest < 0.2, (largest, smallest)
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+sized = bpy.context.active_object
+report = dict(openclare.last_report)
+assert "quads_asked" not in report, report
+assert abs(float(report["largest_asked"]) - largest) < 1e-6, report
+made, wanted = len(sized.data.polygons), float(report["quads_wanted"])
+assert wanted > 1000 and abs(made / wanted - 1.0) < 0.15, (made, wanted)
+# Twice the size, the object scaled by two: the same mesh is asked for.
+body.scale = (2.0, 2.0, 2.0)
+bpy.context.view_layer.update()
+settings.largest_quad, settings.smallest_quad = 2.0 * largest, 2.0 * smallest
+alone(body)
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+assert abs(float(openclare.last_report["largest_asked"]) - largest) < 1e-6, openclare.last_report
+assert len(bpy.context.active_object.data.polygons) == made
+body.scale = (1.0, 1.0, 1.0)
+bpy.context.view_layer.update()
+# Larger quads make fewer of them.
+settings.largest_quad, settings.smallest_quad = 2.0 * largest, 2.0 * smallest
+alone(body)
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+assert len(bpy.context.active_object.data.polygons) < 0.5 * made
+settings.target, settings.largest_quad, settings.smallest_quad = "COUNT", 0.0, 0.0
 
 # Nothing to remesh: said, not crashed.
 bpy.ops.object.empty_add()

@@ -6,9 +6,11 @@
 The scene says what is remeshed and how (see bench/make_scene.py): the object
 chosen in the panel, or failing that the active one, with the settings saved
 in the scene. `--quads` overrides the number of quads, and nothing else. What
-runs is the button of the panel, `bpy.ops.object.openclare_remesh()`, of the
-add-on of this repository (blender/openclare, with the engine `make addon`
-puts in its lib/ folder), not of a copy installed in Blender.
+runs is the engine as the add-on of this repository calls it (blender/openclare,
+with the engine `make addon` puts in its lib/ folder), not a copy installed in
+Blender, given as well what the add-on does not offer and the scene keeps:
+the guide and sharp curves, the UV layers and the marked edges
+(blender_engine.py).
 
 Written into <dir>, NAME being the name of the object unless given:
 
@@ -42,8 +44,9 @@ from pathlib import Path
 
 import bpy
 
-ROOT = Path(__file__).resolve().parent.parent
-# The settings of the add-on a run depends on, written with its report.
+BENCH = Path(__file__).resolve().parent
+ROOT = BENCH.parent
+# The settings a run depends on, written with its report.
 SETTINGS = ["target", "quads", "largest_quad", "smallest_quad", "adaptive_size", "quads_around", "use_hard_edges",
             "hard_edge_angle", "follow_curvature", "fewer_irregular", "volume_fit", "density_group", "density_factor"]
 EXPORTS = ["grid_uv", "atlas_uv", "sharp_edges", "materials", "creases"]
@@ -67,6 +70,7 @@ def the_addon():
         if name.split(".")[-1] == "openclare":
             addon_utils.disable(name)
     sys.path.insert(0, str(ROOT / "blender"))
+    sys.path.insert(0, str(BENCH))
     import openclare
 
     openclare.register()
@@ -148,6 +152,8 @@ def write_source(original, settings, directory):
 
 def main(options):
     openclare = the_addon()
+    import blender_engine
+
     scene = bpy.context.scene
     if bpy.context.mode != "OBJECT":
         bpy.ops.object.mode_set(mode="OBJECT")
@@ -169,9 +175,10 @@ def main(options):
 
     said = {"status": "ok", "scene": bpy.data.filepath, "object": original.name}
     said["settings"] = {key: getattr(settings, key) for key in SETTINGS}
-    said["settings"]["export"] = [key for key in EXPORTS if getattr(settings, f"export_{key}")]
+    said["settings"]["export"] = [key for key in EXPORTS if blender_engine.setting(settings, f"export_{key}")]
     for kind in ("guide", "sharp"):
-        said["settings"][f"{kind}_curves"] = len(openclare.curve_objects(getattr(settings, f"{kind}_curves")))
+        curves = blender_engine.curve_objects(blender_engine.setting(settings, f"{kind}_curves"))
+        said["settings"][f"{kind}_curves"] = len(curves)
     if not options.no_source:
         said.update(write_source(original, settings, directory))
     if options.no_remesh:
@@ -179,18 +186,13 @@ def main(options):
 
     start = time.perf_counter()
     try:
-        done = bpy.ops.object.openclare_remesh()
-    except RuntimeError as error:
-        # What the operator reports as an error, or a button greyed out.
-        raise Failure(" ".join(str(error).split()).removeprefix("Error: ")) from error
+        mesh, report = blender_engine.remesh(original)
+    except openclare.engine.EngineError as error:
+        raise Failure(f"openclare: {error}") from error
     said["operator_seconds"] = round(time.perf_counter() - start, 3)
-    remeshed = bpy.context.view_layer.objects.active
-    if "FINISHED" not in done or remeshed is None or remeshed == original:
-        raise Failure(f"the operator made nothing of '{original.name}'")
 
-    mesh = remeshed.data
     write_obj(directory / f"{name}.obj", positions_of(mesh), [list(polygon.vertices) for polygon in mesh.polygons])
-    report = {key: number(value) for key, value in openclare.last_report.items()}
+    report = {key: number(value) for key, value in report.items()}
     said.update(result=str(directory / f"{name}.obj"), vertices=len(mesh.vertices), faces=len(mesh.polygons),
                 seconds=report.get("seconds", said["operator_seconds"]), report=report)
     (directory / f"{name}.json").write_text(json.dumps(said, indent=1) + "\n")

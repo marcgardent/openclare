@@ -2,10 +2,10 @@
 
     blender -b --factory-startup --python bench/creases.py -- [--models a,b] [--targets 1000,3000] [--levels 2]
 
-Blender script. For each model it remeshes the source with the add-on (the
-engine as Blender calls it), subdivides the result with a Subdivision Surface
-modifier, once with the crease weights and once without, and measures both
-against the source with `openclare measure`. Writes
+Blender script. For each model it remeshes the source with the engine as the
+add-on calls it, crease weights asked for (blender_engine.py), subdivides the
+result with a Subdivision Surface modifier, once with the crease weights and
+once without, and measures both against the source with `openclare measure`. Writes
 bench/results/CREASES.md. Needs `make addon` and a release build.
 """
 
@@ -21,6 +21,7 @@ BENCH = Path(__file__).resolve().parent
 sys.path.insert(0, str(BENCH))
 sys.path.insert(0, str(BENCH.parent / "blender"))
 import openclare  # noqa: E402
+import blender_engine  # noqa: E402
 from blender_io import read_obj, write_obj  # noqa: E402
 from run import AUTHORED, MEMORY_CAP, MODELS, OPENCLARE, OUTPUT, RESULTS, available_models, run, source_path  # noqa: E402
 
@@ -77,7 +78,10 @@ def main():
             source.data.calc_loop_triangles()
             preset = "hard-surface" if sharp else "organic"
             try:
-                mesh, report = openclare.quads_of(source.data, preset, {"quads": target}, creases=True)
+                given = openclare.engine_input(source.data, preset, {"quads": target})
+                made = blender_engine.run(given, creases=True)
+                mesh, report = openclare.mesh_of(made, given)
+                blender_engine.crease_edges(mesh, *made.creases)
             except openclare.engine.EngineError as error:
                 lines.append(f"| {model} | — | — | {error} | | |")
                 continue

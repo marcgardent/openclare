@@ -2,9 +2,8 @@
 edition).
 
 A panel in the Properties editor, on the tab of the mesh of an object
-(Object Data), remeshes the object into quads with the settings it keeps:
-a number of quads, and how they follow the shape, which presets set. The
-result is a new object, next to the original, which is left as it is;
+(Object Data), remeshes the object into quads with the settings it keeps.
+The result is a new object, next to the original, which is left as it is;
 shown, the same panel says what it was made from and how, and remeshes it
 again.
 """
@@ -13,6 +12,7 @@ import math
 import os
 
 import bpy
+import mathutils
 from bl_operators.presets import AddPresetBase
 from bl_ui.utils import PresetPanel
 
@@ -45,8 +45,7 @@ BASE_PRESET = "organic"
 
 
 # What the engine said of the last run of the operator, name by name: for a
-# script that drives the add-on (bench/blender_run.py). Empty until a run
-# ends well.
+# script that drives the add-on. Empty until a run ends well.
 last_report = {}
 
 
@@ -136,6 +135,30 @@ def adopt_preset(settings):
     settings.property_unset("preset")
 
 
+# How many of its largest quads go along the diagonal of the box of an object
+# when the sizes are set from it, and how many times smaller the smallest is.
+QUADS_ALONG = 40.0
+SIZE_RANGE = 8.0
+
+
+def sizes_from(owner):
+    """The largest and the smallest quad to start from for an object, in the
+    units of the scene: by its size alone."""
+    corners = [owner.matrix_world @ mathutils.Vector(corner) for corner in owner.bound_box]
+    diagonal = max((a - b).length for a in corners for b in corners)
+    largest = diagonal / QUADS_ALONG
+    return largest, largest / SIZE_RANGE
+
+
+def target_changed(settings, context):
+    """Sizes asked for and none set: those the object gives."""
+    if settings.target != "SIZE" or settings.largest_quad > 0.0:
+        return
+    owner = settings.id_data
+    if isinstance(owner, bpy.types.Object) and owner.type == "MESH":
+        settings.largest_quad, settings.smallest_quad = sizes_from(owner)
+
+
 @bpy.app.handlers.persistent
 def after_loading(*_):
     """Another file: the settings it kept as 0.1 did are given to its
@@ -162,14 +185,58 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         options=set(),
         name="Preset", description="The preset of files saved by openclare 0.1", items=PRESETS, default="organic"
     )
+    target: bpy.props.EnumProperty(
+        options=set(),
+        name="Ask For",
+        description="What says how dense the mesh is",
+        items=[
+            (
+                "COUNT",
+                "Number",
+                "A number of quads: the shape says where they are smaller, and the number is kept",
+            ),
+            (
+                "SIZE",
+                "Sizes",
+                "The largest and the smallest quad: the shape says which where, and the number of quads is "
+                "what that makes",
+            ),
+        ],
+        default="COUNT",
+        update=target_changed,
+    )
     quads: bpy.props.IntProperty(
         options=set(),
         name="Quads",
-        description="Number of quads asked for: the shape says where they are smaller, and the number is kept",
+        description="Number of quads asked for",
         default=3000,
         min=1,
         soft_min=100,
         soft_max=50_000,
+    )
+    largest_quad: bpy.props.FloatProperty(
+        options=set(),
+        name="Largest",
+        description=(
+            "Edge of the largest quads, in the units of the scene: what the shape is meshed with wherever "
+            "it asks for nothing smaller. 0 to have it set from the size of the object"
+        ),
+        default=0.0,
+        min=0.0,
+        subtype="DISTANCE",
+        precision=4,
+    )
+    smallest_quad: bpy.props.FloatProperty(
+        options=set(),
+        name="Smallest",
+        description=(
+            "Edge of the smallest quads, in the units of the scene: thin parts and tight bends get quads "
+            "down to that size, and what would call for smaller comes out coarser than its shape asks"
+        ),
+        default=0.0,
+        min=0.0,
+        subtype="DISTANCE",
+        precision=4,
     )
     adaptive_size: bpy.props.FloatProperty(
         options=set(),
@@ -255,6 +322,53 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         min=0.0,
         max=1.0,
     )
+    density_group: bpy.props.StringProperty(
+        options=set(),
+        name="Density",
+        description=(
+            "Vertex group painted with the density wanted (Weight Paint): quads are smallest where the weight "
+            "is 1, largest where it is 0. Leave empty for none"
+        ),
+    )
+    density_factor: bpy.props.FloatProperty(
+        options=set(),
+        name="Factor",
+        description=(
+            "How many times more quads a weight of 1 gets than a weight of 0, for the same area. "
+            "At 4, their edges are half as long; at 1 the paint has no effect"
+        ),
+        default=4.0,
+        min=1.0,
+        soft_max=16.0,
+        max=100.0,
+    )
+    export_materials: bpy.props.BoolProperty(
+        options=set(),
+        name="Materials",
+        description=(
+            "Give each quad of the result the material of the surface it lies on, and keep the borders "
+            "between materials as lines of edges where that can be done. Has no effect on an object of "
+            "one material"
+        ),
+        default=True,
+    )
+
+
+def weights_of(evaluated, mesh, name):
+    """The weights of the vertex group `name` on `mesh`, the evaluated mesh
+    of the object `evaluated`: one 32-bit float per vertex, 0 where the group
+    has nothing."""
+    import numpy
+
+    group = evaluated.vertex_groups.get(name)
+    if group is None:
+        raise engine.EngineError(f"the object has no vertex group named '{name}'")
+    weights = numpy.zeros(len(mesh.vertices), numpy.float32)
+    for vertex in mesh.vertices:
+        for membership in vertex.groups:
+            if membership.group == group.index:
+                weights[vertex.index] = membership.weight
+    return weights
 
 
 def in_place(mesh):
@@ -285,13 +399,41 @@ def in_place(mesh):
     )
 
 
-def quads_of(source, preset, settings, on_stage=None):
+def engine_settings_of(original, evaluated, source):
+    """What the engine is given for the object `original` with its settings:
+    the settings on top of `BASE_PRESET`, and the weights of the density
+    painted, if any, on `source`, the mesh of `evaluated`, `original` as it
+    is seen."""
+    settings = original.openclare
+    engine_settings = {"quads": settings.quads, **shape_of(settings)}
+    if settings.target == "SIZE":
+        # Lengths of the scene, where the engine is given the mesh as the
+        # object holds it: before its scale.
+        if settings.largest_quad <= 0.0:
+            settings.largest_quad, settings.smallest_quad = sizes_from(original)
+        scale = sum(abs(factor) for factor in original.matrix_world.to_scale()) / 3.0 or 1.0
+        smallest = min(settings.smallest_quad, settings.largest_quad) or settings.largest_quad / SIZE_RANGE
+        del engine_settings["quads"]
+        engine_settings["largest_quad"] = settings.largest_quad / scale
+        engine_settings["smallest_quad"] = smallest / scale
+    density = None
+    if settings.density_group:
+        density = weights_of(evaluated, source, settings.density_group)
+        engine_settings["density_contrast"] = settings.density_factor
+    return engine_settings, density
+
+
+def quads_of(source, preset, settings, density=None, on_stage=None, materials=False):
     """A new mesh datablock: `source`, an evaluated mesh, remeshed into quads
-    with the engine's `settings` on top of `preset`, and the report of the
-    run. `on_stage`, if given, is told the name of each stage as it begins.
-    The three steps, for a run that does not wait: `engine_input`,
+    with the engine's `settings` on top of `preset`, and `density` if given
+    (one weight per vertex of `source`), and the report of the run.
+    `on_stage`, if given, is told the name of each stage as it begins.
+    `materials` gives the mesh the materials of `source`, each face that of
+    the surface it lies on, with the borders between them kept as lines of
+    edges. The three steps, for a run that does not wait: `engine_input`,
     `engine_run`, `mesh_of`."""
-    return mesh_of(engine_run(engine_input(source, preset, settings), on_stage))
+    given = engine_input(source, preset, settings, density, materials)
+    return mesh_of(engine_run(given, on_stage), given)
 
 
 class EngineInput:
@@ -300,7 +442,7 @@ class EngineInput:
     own when the arrays are copies."""
 
 
-def engine_input(source, preset, settings, copy=False):
+def engine_input(source, preset, settings, density=None, materials=False, copy=False):
     """The `EngineInput` of `quads_of`. With `copy`, the arrays of `source`
     are copied out, so that the run does not depend on `source` living as
     long as it does; otherwise they are read in place where they can be."""
@@ -328,10 +470,18 @@ def engine_input(source, preset, settings, copy=False):
         source.loop_triangles.foreach_get("loops", kept[1])
         source.loops.foreach_get("vertex_index", kept[2])
         addresses = tuple(array.ctypes.data for array in kept)
+    groups = None
+    if materials and len(source.materials) > 1:
+        # The material of each triangle; an object all of one is left alone.
+        groups = numpy.empty(triangles, numpy.int32)
+        source.loop_triangles.foreach_get("material_index", groups)
+        groups = groups.astype(numpy.uint32) if groups.min() != groups.max() else None
     given = EngineInput()
     given.counts = (vertices, triangles, corners)
-    given.addresses, given.kept = addresses, kept
-    given.preset, given.settings = preset, settings
+    given.addresses, given.kept, given.groups = addresses, kept, groups
+    given.preset, given.settings, given.density = preset, settings, density
+    # The materials the faces of the result take, kept as references.
+    given.materials = list(source.materials)
     return given
 
 
@@ -342,12 +492,13 @@ def engine_run(given, on_stage=None):
     vertices, triangles, corners = given.counts
     return engine.remesh(
         given.addresses[0], vertices, given.addresses[1], triangles, given.addresses[2], corners, given.preset,
-        given.settings, on_stage=on_stage,
+        given.settings, given.density, on_stage, groups=given.groups,
     )
 
 
-def mesh_of(made):
-    """The mesh datablock of what a run made, and the report of the run."""
+def mesh_of(made, given):
+    """The mesh datablock of what a run made, with the materials `given`
+    asked for, and the report of the run."""
     import numpy
 
     mesh = bpy.data.meshes.new("openclare")
@@ -362,7 +513,13 @@ def mesh_of(made):
     mesh.polygons.foreach_set("loop_total", made.sizes.astype(numpy.int32))
     mesh.update(calc_edges=True)
     mesh.validate()
-    return mesh, made.report
+    report = made.report
+    if made.face_groups is not None:
+        for material in given.materials:
+            mesh.materials.append(material)
+        mesh.polygons.foreach_set("material_index", made.face_groups.astype(numpy.int32))
+        report["materials"] = len(numpy.unique(made.face_groups))
+    return mesh, report
 
 
 def worth_a_line(message):
@@ -426,7 +583,8 @@ class Remeshing:
         evaluated = original.evaluated_get(context.evaluated_depsgraph_get())
         source = evaluated.to_mesh()
         try:
-            given = engine_input(source, BASE_PRESET, {"quads": settings.quads, **shape_of(settings)}, copy)
+            engine_settings, density = engine_settings_of(original, evaluated, source)
+            given = engine_input(source, BASE_PRESET, engine_settings, density, settings.export_materials, copy)
         except engine.EngineError as error:
             evaluated.to_mesh_clear()
             self.report({"ERROR"}, f"openclare: {error}")
@@ -464,12 +622,12 @@ class Remeshing:
         finally:
             context.window_manager.progress_end()
             context.workspace.status_text_set(None)
-        return self.finish(context, original, made)
+        return self.finish(context, original, made, given)
 
-    def finish(self, context, original, made):
+    def finish(self, context, original, made, given):
         """Makes the object of what the engine `made` from `original`, next
         to it and the active one, and says how it went. Returns it."""
-        mesh, report = mesh_of(made)
+        mesh, report = mesh_of(made, given)
         mesh.name = f"{original.data.name}.quads"
         remeshed = bpy.data.objects.new(f"{original.name}.quads", mesh)
         remeshed.matrix_world = original.matrix_world
@@ -487,6 +645,8 @@ class Remeshing:
         last_report.update(report)
         seconds = float(report.get("seconds", 0.0))
         said = f"openclare: {report.get('quads', '?')} quads in {seconds:.1f} s"
+        if "materials" in report:
+            said += f", {report['materials']} materials"
         welded, apart = int(report.get("welded_vertices", 0)), int(report.get("edges_taken_apart", 0))
         if welded or apart:
             # Said, because the result then has borders the object did not show.
@@ -495,6 +655,11 @@ class Remeshing:
         thin, moved = int(report.get("thin_pieces", 0)), int(report.get("quads_for_thin_pieces", 0))
         if thin:
             said += f"; {moved} of them moved to {thin} thin part(s), to keep their shape"
+        wanted, below = float(report.get("quads_wanted", 0.0)), float(report.get("below_smallest", 0.0))
+        if wanted > 0.0:
+            said += f"; the shape called for {wanted:.0f}"
+            if below >= 0.005:
+                said += f", and {100.0 * below:.0f} % of it for quads smaller than the smallest"
         boxed = int(report.get("pieces_boxed", 0))
         if boxed:
             said += f"; {boxed} part(s) smaller than a quad could not be meshed and are boxes"
@@ -630,7 +795,7 @@ class Background:
             self.report({"ERROR"}, f"openclare: {job.error}")
             return {"CANCELLED"}
         try:
-            made = self.finish(context, self.original, job.made)
+            made = self.finish(context, self.original, job.made, job.given)
         except ReferenceError:
             self.report({"ERROR"}, "openclare: the object was removed while it was being remeshed")
             return {"CANCELLED"}
@@ -786,7 +951,20 @@ class OPENCLARE_PT_panel(DataPanel, bpy.types.Panel):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False
-        layout.prop(owner.openclare, "quads")
+        settings = owner.openclare
+        layout.prop(settings, "target", expand=True)
+        if settings.target == "SIZE":
+            sizes = layout.column(align=True)
+            sizes.prop(settings, "largest_quad")
+            sizes.prop(settings, "smallest_quad")
+        else:
+            layout.prop(settings, "quads")
+        column = layout.column(align=True)
+        column.prop_search(settings, "density_group", owner, "vertex_groups", icon="GROUP_VERTEX")
+        factor = column.row()
+        factor.enabled = bool(settings.density_group)
+        factor.prop(settings, "density_factor")
+        layout.prop(settings, "export_materials")
         draw_remesh(layout, OPENCLARE_OT_remesh.bl_idname, "MOD_REMESH")
 
     def draw_result(self, context, owner):
@@ -810,6 +988,11 @@ def report_lines(told):
     lines = []
     quads, seconds = told.get("quads", "?"), float(told.get("seconds", 0.0))
     lines.append((f"{quads} quads in {seconds:.1f} s", "MESH_GRID"))
+    wanted, below = float(told.get("quads_wanted", 0.0)), float(told.get("below_smallest", 0.0))
+    if wanted > 0.0:
+        lines.append((f"The shape called for {wanted:,.0f}".replace(",", " "), "INFO"))
+        if below >= 0.005:
+            lines.append((f"{100.0 * below:.0f} % coarser than its shape asks", "ERROR"))
     failed, boxed = int(told.get("pieces_failed", 0)), int(told.get("pieces_boxed", 0))
     if failed:
         lines.append((f"{failed} of {told.get('pieces', '?')} pieces could not be meshed", "ERROR"))

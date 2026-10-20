@@ -446,9 +446,9 @@ ENGINE = ["guide_edges", "sharp_curve_edges", "faces_across_groups", "welded_ver
 
 
 def addon(name):
-    """The chain the project is about, run as its user runs it: by the
-    add-on, in Blender, on the scene of the model, with the settings saved
-    in that scene (preset, adaptive size, curves, painted density,
+    """The chain the project is about, run as the add-on calls it, in
+    Blender, on the scene of the model, with the settings saved in that
+    scene (preset, adaptive size, curves, painted density,
     materials). The number of quads alone is the bench's. It has no seed:
     one run. Returns {seed: (path or None, seconds, failure reason, None,
     what the engine says)}."""

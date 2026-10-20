@@ -2063,12 +2063,13 @@ rules from now:
   applied) and puts the result next to it as a new object. `make addon` builds the archive,
   `make addon-test` runs it in a Blender without interface.
 - **What it does not do yet** is in DT-041.
-- **The Community edition** (0.4.0, 20 October 2026): the add-on keeps *Remesh to Quads*,
-  *Remesh Again*, *Select Original*, the number of quads and the presets of the shape, with the
-  run in the background and its Stop button; its result is a bare mesh of quads. What this
-  document says the add-on did besides (sizes and their analysis, painted density, guide and
-  sharp curves, UV layers, sharp edges, creases, materials, the relief baked), the engine and
-  its C interface still do.
+- **The Community edition** (0.4.0, 20 October 2026): the add-on keeps a number of quads or
+  their sizes, the painted density, the materials, the presets of the shape, *Remesh to Quads*,
+  *Remesh Again* and *Select Original*, with the run in the background and its Stop button.
+  What this document says the add-on did besides (the analysis of the sizes and their preview,
+  density from the shape, guide and sharp curves, UV layers, edges marked sharp and creased,
+  the relief baked), the engine and its C interface still do; the bench gives them to the
+  engine itself (`bench/blender_engine.py`).
 
 ### What is reused from the existing code
 

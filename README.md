@@ -25,8 +25,7 @@ full: [SCORES.md](bench/results/SCORES.md).
 
 ## The Blender add-on
 
-This is the Community edition of the add-on: it remeshes an object to a number of quads, with
-the presets of the shape.
+This is the Community edition of the add-on.
 
 ### Installing
 
@@ -47,15 +46,20 @@ macOS yet.
 ### Using it
 
 Select a mesh, set what follows, press *Remesh to Quads*. The result is a new object,
-`<name>.quads`, at the same place as the original, which is left as it is: a bare mesh of quads,
-with no UV layer, material or marked edge. What is remeshed is the object as it is seen,
-modifiers applied. The engine runs in the background and Blender stays free: the panel shows a
-bar of its progress, with a button to stop it (Esc stops it too), and the status bar each stage
-as it begins. It takes about eight seconds for the 200,000 triangles of the ogre at 3000 quads.
+`<name>.quads`, at the same place as the original, which is left as it is. What is remeshed is
+the object as it is seen, modifiers applied. The engine runs in the background and Blender stays
+free: the panel shows a bar of its progress, with a button to stop it (Esc stops it too), and
+the status bar each stage as it begins. It takes about eight seconds for the 200,000 triangles
+of the ogre at 3000 quads.
 
 | Setting | What it does |
 |---|---|
-| Quads | The number of quads asked for, kept; the shape says where they are smaller. A part that is thin all along (a ring, a strap, a wire) is given the quads its thickness calls for out of that number |
+| Ask For | *Number*: a number of quads, kept; the shape says where they are smaller. *Sizes*: the largest and the smallest quad; the shape says which where, and the number of quads is what that makes |
+| Quads | With *Number*: the number of quads asked for. A part that is thin all along (a ring, a strap, a wire) is given the quads its thickness calls for out of that number |
+| Largest, Smallest | With *Sizes*: the edges of the largest and of the smallest quads, in the units of the scene. Flat and thick parts get the largest; thin parts and tight bends get smaller ones, down to the smallest. Set from the size of the object when left at 0. The run says how many quads the shape called for |
+| Density | A vertex group of the object, painted in Weight Paint: quads are smallest where the weight is 1, largest where it is 0 |
+| Factor | How many times more quads a weight of 1 gets than a weight of 0, for the same area |
+| Materials | Each quad gets the material of the surface it lies on, and the borders between materials are kept as lines of edges where that can be done |
 | Shape: presets | The menu in the header of the *Shape* block sets every setting below: *Organic*, *Animation*, *Hard Surface*, and those saved there with *+*. A saved preset can be removed; those of the add-on cannot |
 | Adaptive Size | How much the size of the quads follows the curvature: at 0 % they are all the same size; towards 100 % they get smaller where the shape bends and larger where it is flat |
 | Quads Around Thin Parts | The fewest quads that go round a thin part, a finger or the tip of an ear, for it to keep its volume. 0 does not look at thickness |
