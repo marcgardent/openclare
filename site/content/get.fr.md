@@ -8,12 +8,12 @@ C'est l'édition Community de l'extension.
 
 Une seule archive contient tout : l'extension et son moteur, compilé. Il n'y a rien d'autre à installer, ni paquet Python, ni programme à côté, et rien n'est téléchargé pendant qu'elle tourne.
 
-1. Prenez l'archive de votre système dans les [versions publiées](https://github.com/marcgardent/openclare/releases) : `openclare-<version>-linux-x64.zip` ou `openclare-<version>-windows-x64.zip`. Ou construisez-la vous-même (plus bas).
+1. Prenez l'archive de votre système dans les [versions publiées](https://github.com/marcgardent/openclare/releases) : `openclare-<version>-<plateforme>.zip`, la plateforme étant `linux-x64`, `windows-x64`, `macos-arm64` ou `macos-x64`. Ou construisez-la vous-même (plus bas).
 2. Dans Blender 4.2 ou plus récent : *Edit › Preferences › Get Extensions*, la flèche en haut à droite, *Install from Disk*, et choisissez l'archive.
 
 Un panneau nommé *openclare* apparaît dans l'éditeur Properties, sur l'onglet du maillage (Object Data). Sélectionnez un maillage, demandez un nombre de quads ou leurs tailles, choisissez un préréglage de la forme (organique, animation, surface dure), appuyez sur *Remesh to Quads*. Une densité peinte en Weight Paint dit où les quads sont plus petits, et les frontières entre matériaux sont gardées comme lignes d'arêtes. Le résultat est un nouvel objet à côté de l'original, qui reste tel quel. Le moteur tourne en arrière-plan : Blender reste libre, et le panneau montre une barre de progression avec un bouton pour l'arrêter.
 
-La version Linux tourne partout où Blender tourne (glibc 2.28 ou plus récente). La version Windows passe les tests du moteur mais n'a pas encore tourné dans un Blender pour Windows ; il n'y a pas encore de version pour macOS.
+La version Linux tourne partout où Blender tourne (glibc 2.28 ou plus récente). Les versions Windows et macOS passent les tests de l'interface C sur leur système mais n'ont pas encore tourné dans un Blender sur ces systèmes ; celle pour macOS est signée ad hoc, non notariée. Chaque version publiée contient aussi le moteur en bibliothèque C avec son en-tête, `openclare-capi-<version>-<plateforme>.tar.gz`, pour d'autres programmes.
 
 Ce que propose le panneau, réglage par réglage, est dans le [README](../../README.md).
 

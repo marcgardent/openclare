@@ -47,10 +47,11 @@ decision are for the author to take; the rest is already in the repository.
 1. Sign in to <https://zenodo.org> with the GitHub account, open
    **Account › GitHub**, and switch on `marcgardent/openclare` (it must be
    public, which it is). Zenodo then watches the repository for releases.
-2. Make a GitHub release as usual (`make release PUSH=1` on `main`: the
-   tag starts `.github/workflows/release.yml`, which publishes the release with
-   the add-on). Zenodo archives the source of the tag, PDF included, and gives
-   it a DOI. Check the record it made: title, creator, licence and keywords
+2. Make a GitHub release as usual: `make release` (or the workflow `release`
+   run on `main` from the Actions tab, *release* ticked) builds the add-on and
+   the C library and drafts the release `v<version>`; publish the draft by
+   hand once read. Zenodo archives the source of the tag, PDF included, and
+   gives it a DOI. Check the record it made: title, creator, licence and keywords
    come from `.zenodo.json`.
 3. Zenodo gives two DOIs: one for this version, and a "concept" DOI that always
    resolves to the latest. Add the concept DOI to `CITATION.cff`
