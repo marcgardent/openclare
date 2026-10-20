@@ -1699,7 +1699,7 @@ complexity of maximizing $Q$ over a polytope of lengths in reals.
 \section{What is machine-checked}\label{sec:lean}
 
 The folder \texttt{lean} beside this note is a Lean~4~\cite{demoura2021lean4}
-project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $228$
+project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $235$
 theorem declarations, many of them small lemmas, depend only on Lean's
 standard axioms; the count is not evidence, and its \texttt{README.md} maps
 each statement to its Lean theorems. Lean checks the algebraic and
@@ -1740,12 +1740,14 @@ reading as a helix; Lemmas~\ref{lem:gauss} and~\ref{lem:eight}, only the
 Euler-characteristic count on the grid refined by two and the totals from the
 numbers of convex and concave corners, the regions being discs and the
 convexity of their corners hypotheses; the completeness of the walks,
-Proposition~2 of~\cite{gardent2026loops}, only in a model where the strips
-are \emph{defined} as the cycles of a permutation of the half-integer
-stations, so that the bijection holds by construction, with the real walk
-from $k + \frac12$ following the unit edges in a one-dimensional model of the
-gluing; that the station walk of the gluing data is a permutation, that patch
-sides are positive and that the model is the quad mesh are assumptions.
+Proposition~2 of~\cite{gardent2026loops}, only in a model: on a closed
+surface (opposite sides of a patch of equal length, no two unit edges glued
+onto the same one) the station walk of the gluing data is a permutation, the
+strips are \emph{defined} as the cycles of the successor it gives on the quads
+above the stations, and they are in bijection with the cycles of the real walk
+from the half-integers $k + \frac12$, in a one-dimensional model of the
+gluing; that patch sides are positive, that crossing a patch keeps the offset
+and that the model is the quad mesh are assumptions.
 \emph{Not checked}: the topology taken as hypotheses, strips with borders, the
 measured statements, and those proved on paper only (see AI assistance). The formalization found no error of sign or
 convention; it sharpened the hypotheses of Propositions~\ref{prop:parity},

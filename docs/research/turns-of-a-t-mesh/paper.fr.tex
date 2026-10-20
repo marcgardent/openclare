@@ -1888,7 +1888,7 @@ la maximisation de $Q$ sur un polytope de longueurs réelles.
 
 Le dossier \texttt{lean} à côté de cette note est un projet
 Lean~4~\cite{demoura2021lean4} sur Mathlib~\cite{mathlib2020} (tous deux en
-\texttt{v4.35.0}). Ses $228$ déclarations de théorèmes, dont beaucoup de
+\texttt{v4.35.0}). Ses $235$ déclarations de théorèmes, dont beaucoup de
 petits lemmes, ne dépendent que des axiomes standard de Lean\,; ce nombre
 n'est pas un argument, et son \texttt{README.md} associe à chaque énoncé ses
 théorèmes Lean. Lean vérifie le cœur algébrique et combinatoire de chaque
@@ -1936,13 +1936,15 @@ caractéristique d'Euler sur la grille raffinée par deux et les totaux à parti
 des nombres de coins convexes et concaves, le fait que les régions soient des
 disques et la convexité de leurs coins étant des hypothèses\,; la complétude
 des marches, proposition~2 de~\cite{gardent2026loops}, seulement dans un
-modèle où les bandes sont \emph{définies} comme les cycles d'une permutation
-des stations demi-entières, si bien que la bijection vaut par construction, la
-marche réelle depuis $k + \frac12$ suivant les arêtes unité dans un modèle
-unidimensionnel du recollement\,; que la marche des stations définie par les
-données de recollement soit une permutation, que les côtés des patchs soient
-strictement positifs et que le modèle soit le maillage de quads sont des
-hypothèses. \emph{Non vérifié}~: la topologie prise comme hypothèse, les
+modèle~: sur une surface fermée (côtés opposés d'un patch de même longueur,
+deux arêtes unité jamais recollées sur la même) la marche des stations définie
+par les données de recollement est une permutation, les bandes sont
+\emph{définies} comme les cycles du successeur qu'elle donne sur les quads
+au-dessus des stations, et elles sont en bijection avec les cycles de la
+marche réelle depuis les demi-entiers $k + \frac12$, dans un modèle
+unidimensionnel du recollement\,; que les côtés des patchs soient strictement
+positifs, que la traversée d'un patch garde l'abscisse et que le modèle soit
+le maillage de quads sont des hypothèses. \emph{Non vérifié}~: la topologie prise comme hypothèse, les
 bandes avec bords, les énoncés mesurés, et ceux qui ne sont démontrés que sur
 papier (voir Assistance par IA). La formalisation n'a trouvé aucune erreur de
 signe ou de convention\,; elle a précisé les hypothèses des

@@ -27,6 +27,14 @@ the quad mesh is its unit grid. The model has two layers.
   exactly when the walk takes one to the other (`sameCycle_station_iff`), so the
   strips are the cycles of the walk (`stripsEquiv`): walking from every
   half-integer of every side finds every strip, each as one cycle of the walk.
+
+* **Together.** On a closed surface (`ClosedGluing`: opposite sides of a patch
+  have the same length, and no two unit edges are glued onto the same one) the
+  walk on unit edges is a permutation of the stations (`stationPerm`), and
+  `completeness_at_given_lengths` takes it as the `walk` of the strips: the
+  strips are in bijection with the cycles of the real walk from the
+  half-integers. The model still assumes that crossing a patch keeps the offset,
+  and that the darts and `next` built on it are the quads and strips of the mesh.
 -/
 module
 
@@ -119,6 +127,14 @@ noncomputable def realWalk (p : Side × ℝ) : Side × ℝ :=
 /-- The same move on unit edges. -/
 def edgeWalk (p : Side × ℤ) : Side × ℤ :=
   (target (opp p.1) p.2, glueEdge (sign (opp p.1) p.2) (shift (opp p.1) p.2) p.2)
+
+/-- The second half of the move: the unit edge `k` of the side `τ` goes across the
+arc holding it to a unit edge of the side `target τ k`. -/
+def crossArc (p : Side × ℤ) : Side × ℤ :=
+  (target p.1 p.2, glueEdge (sign p.1 p.2) (shift p.1 p.2) p.2)
+
+theorem edgeWalk_eq (p : Side × ℤ) :
+    edgeWalk opp target sign shift p = crossArc target sign shift (opp p.1, p.2) := rfl
 
 variable {opp target sign shift}
 
@@ -331,9 +347,9 @@ theorem stationWalk_iterate (h : MapsStations len opp target sign shift) (n : �
     · simp only; omega
 
 /-- **The real walk from the half-integer `k + ½` of a station visits the sides at
-the midpoints of the stations of the walk**, step after step. Together with
-`stripsEquiv`, walking with the lengths `ℓ` from every half-integer of every side
-finds every strip of the quad mesh, each as one cycle. -/
+the midpoints of the stations of the walk**, step after step. On a closed surface
+the station walk is a permutation (`stationPerm`), and
+`completeness_at_given_lengths` composes this with `stripsEquiv`. -/
 theorem realWalk_stations (hs : ∀ σ k, sign σ k = 1 ∨ sign σ k = -1)
     (h : MapsStations len opp target sign shift) (n : ℕ) (s : Σ σ : Side, Fin (len σ)) :
     (realWalk opp target sign shift)^[n] (s.1, (s.2.val : ℝ) + 1 / 2) =
@@ -344,6 +360,114 @@ theorem realWalk_stations (hs : ∀ σ k, sign σ k = 1 ∨ sign σ k = -1)
   push_cast at h1
   rw [h1, ← h2]
   simp
+
+/-- **The gluing of a closed surface at whole lengths.** Crossing a patch takes the
+unit edge `k` of a side to the unit edge `k` of the opposite side; it maps the
+stations one to one when opposite sides have the same length, which is what
+lengths balancing every patch say (`len_opp`), and two sides never have the same
+opposite side (`opp_injective`). Crossing an arc takes a station to a station:
+every unit edge of a side lies in one arc, glued whole onto the arc across it, on
+a side of the neighbouring patch (`crossArc_station`); and two unit edges are
+never glued onto the same unit edge (`crossArc_injective`). On a T-mesh with
+whole lengths on a closed surface both maps are their own inverses: the opposite
+of the opposite side is the side, and crossing an arc back undoes `t ↦ ε t + c`
+(`ClosedGluing.of_involutive`). -/
+structure ClosedGluing (len : Side → ℕ) (opp : Side → Side) (target : Side → ℤ → Side)
+    (sign shift : Side → ℤ → ℤ) : Prop where
+  opp_injective : Function.Injective opp
+  len_opp : ∀ σ, len (opp σ) = len σ
+  crossArc_station : ∀ τ (k : ℤ), 0 ≤ k → k < len τ →
+    0 ≤ (crossArc target sign shift (τ, k)).2 ∧
+      (crossArc target sign shift (τ, k)).2 < len (crossArc target sign shift (τ, k)).1
+  crossArc_injective : ∀ τ τ' (k k' : ℤ), 0 ≤ k → k < len τ → 0 ≤ k' → k' < len τ' →
+    crossArc target sign shift (τ, k) = crossArc target sign shift (τ', k') → (τ, k) = (τ', k')
+
+/-- The gluing of a closed surface, from the two involutions of a T-mesh: the
+opposite of the opposite side is the side, and crossing an arc then crossing back
+returns to the unit edge one started from. -/
+theorem ClosedGluing.of_involutive (hopp : Function.Involutive opp)
+    (hlen : ∀ σ, len (opp σ) = len σ)
+    (hstation : ∀ τ (k : ℤ), 0 ≤ k → k < len τ →
+      0 ≤ (crossArc target sign shift (τ, k)).2 ∧
+        (crossArc target sign shift (τ, k)).2 < len (crossArc target sign shift (τ, k)).1)
+    (hback : ∀ τ (k : ℤ), 0 ≤ k → k < len τ →
+      crossArc target sign shift (crossArc target sign shift (τ, k)) = (τ, k)) :
+    ClosedGluing len opp target sign shift where
+  opp_injective := hopp.injective
+  len_opp := hlen
+  crossArc_station := hstation
+  crossArc_injective τ τ' k k' h₀ h₁ h₀' h₁' h := by
+    rw [← hback τ k h₀ h₁, ← hback τ' k' h₀' h₁', h]
+
+theorem ClosedGluing.mapsStations (hc : ClosedGluing len opp target sign shift) :
+    MapsStations len opp target sign shift := fun σ k h₀ h₁ =>
+  hc.crossArc_station (opp σ) k h₀ (by rw [hc.len_opp]; exact h₁)
+
+/-- **On a closed surface the walk maps no two stations to the same station.** -/
+theorem stationWalk_injective (hc : ClosedGluing len opp target sign shift) :
+    Function.Injective (stationWalk hc.mapsStations) := by
+  rintro ⟨σ, k⟩ ⟨σ', k'⟩ h
+  have e : edgeWalk opp target sign shift (σ', k'.val) =
+      edgeWalk opp target sign shift (σ, k.val) :=
+    (stationWalk_iterate hc.mapsStations 1 ⟨σ', k'⟩).symm.trans
+      ((congrArg (fun t => (t.1, (t.2.val : ℤ))) h).symm.trans
+        (stationWalk_iterate hc.mapsStations 1 ⟨σ, k⟩))
+  rw [edgeWalk_eq, edgeWalk_eq] at e
+  have := hc.crossArc_injective (opp σ') (opp σ) k'.val k.val (by positivity)
+    (by rw [hc.len_opp]; exact_mod_cast k'.isLt) (by positivity)
+    (by rw [hc.len_opp]; exact_mod_cast k.isLt) e
+  simp only [Prod.mk.injEq, Nat.cast_inj] at this
+  obtain ⟨h1, h2⟩ := this
+  obtain rfl := hc.opp_injective h1
+  rw [Fin.val_inj] at h2
+  rw [h2]
+
+/-- The walk on the stations of a closed surface, as a permutation. -/
+noncomputable def stationPerm (hc : ClosedGluing len opp target sign shift) :
+    Equiv.Perm (Σ σ : Side, Fin (len σ)) :=
+  Equiv.ofBijective _ (Finite.injective_iff_bijective.mp (stationWalk_injective hc))
+
+theorem stationPerm_pow (hc : ClosedGluing len opp target sign shift) (n : ℕ)
+    (s : Σ σ : Side, Fin (len σ)) :
+    (stationPerm hc ^ n) s = (stationWalk hc.mapsStations)^[n] s := by
+  rw [Equiv.Perm.coe_pow]; rfl
+
+/-- **Two stations lie on one cycle of the station walk exactly when the real walk
+from the half-integer of the one reaches the half-integer of the other.** -/
+theorem sameCycle_stationPerm_iff (hs : ∀ σ k, sign σ k = 1 ∨ sign σ k = -1)
+    (hc : ClosedGluing len opp target sign shift) (s s' : Σ σ : Side, Fin (len σ)) :
+    (stationPerm hc).SameCycle s s' ↔
+      ∃ n : ℕ, (realWalk opp target sign shift)^[n] (s.1, (s.2.val : ℝ) + 1 / 2) =
+        (s'.1, (s'.2.val : ℝ) + 1 / 2) := by
+  constructor
+  · intro h
+    obtain ⟨n, hn⟩ := h.exists_nat_pow_eq
+    exact ⟨n, by rw [realWalk_stations hs hc.mapsStations, ← stationPerm_pow hc, hn]⟩
+  · rintro ⟨n, hn⟩
+    rw [realWalk_stations hs hc.mapsStations, ← stationPerm_pow hc] at hn
+    simp only [Prod.mk.injEq, add_left_inj, Nat.cast_inj] at hn
+    obtain ⟨h1, h2⟩ := hn
+    exact ⟨n, by rw [zpow_natCast]; exact Sigma.ext h1 ((Fin.heq_ext_iff (by rw [h1])).mpr h2)⟩
+
+/-- **Proposition "Completeness at given lengths"**, on a closed surface at whole
+lengths. A quad above a station lies in the column of `depth s > 0` quads between
+its side and the opposite side; the strips are the cycles of the successor `next`
+built from the station walk `stationPerm`. They are in bijection with the cycles
+of the station walk, the strip of the cycle of `s` being the strip through `s`
+(`stripsEquiv`), and these cycles are those of the real walk with the lengths `ℓ`
+from the half-integers `k + ½` of all sides: walking from every half-integer of
+every side finds every strip, each as one cycle of the walk. -/
+theorem completeness_at_given_lengths (hs : ∀ σ k, sign σ k = 1 ∨ sign σ k = -1)
+    (hc : ClosedGluing len opp target sign shift) (depth : (Σ σ : Side, Fin (len σ)) → ℕ)
+    (hdepth : ∀ s, 0 < depth s) :
+    ∃ e : Quotient (Equiv.Perm.SameCycle.setoid (stationPerm hc)) ≃
+        Quotient (Equiv.Perm.SameCycle.setoid (nextPerm (stationPerm hc) depth hdepth)),
+      (∀ s, e ⟦s⟧ = ⟦station depth hdepth s⟧) ∧
+      ∀ s s', (stationPerm hc).SameCycle s s' ↔
+        ∃ n : ℕ, (realWalk opp target sign shift)^[n] (s.1, (s.2.val : ℝ) + 1 / 2) =
+          (s'.1, (s'.2.val : ℝ) + 1 / 2) :=
+  ⟨stripsEquiv (walk := stationPerm hc) (hdepth := hdepth), fun _ => rfl,
+    sameCycle_stationPerm_iff hs hc⟩
 
 end TMesh
 
