@@ -893,6 +893,7 @@ impl QuadLayout {
                 time_limit: std::time::Duration::from_secs_f64(config.slow_time_limit),
                 work_limit: (config.slow_work_limit > 0.0).then_some(config.slow_work_limit),
             }),
+            experiment: quantization::Experiment::from_env()?,
         };
         let quantized = quantization::create(quantization::Kind::WalkCancelling).quantize(&layout.tmesh, &request)?;
         clock.lap(&mut report, "quantization");
