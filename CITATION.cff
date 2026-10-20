@@ -43,7 +43,7 @@ references:
     status: preprint
     license: CC-BY-4.0
     repository-code: "https://github.com/marcgardent/openclare"
-    url: "https://github.com/marcgardent/openclare/blob/main/docs/research/closing-loops/paper.pdf"
+    url: "https://marcgardent.github.io/openclare/files/closing-edge-loops.pdf"
     notes: >-
       Research paper A (applied), not peer reviewed. LaTeX source, figures and a
       best-effort French translation in docs/research/closing-loops of the
@@ -61,7 +61,7 @@ references:
     status: preprint
     license: CC-BY-4.0
     repository-code: "https://github.com/marcgardent/openclare"
-    url: "https://github.com/marcgardent/openclare/blob/main/docs/research/turns-of-a-t-mesh/paper.pdf"
+    url: "https://marcgardent.github.io/openclare/files/turns-of-a-t-mesh.pdf"
     notes: >-
       Research paper B (theory), not peer reviewed. LaTeX source, figures and
       Lean proofs in docs/research/turns-of-a-t-mesh of the repository.

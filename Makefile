@@ -106,8 +106,9 @@ NOTES = $(if $(NOTE),docs/research/$(NOTE),$(patsubst %/paper.tex,%,$(wildcard d
 # The commit a note describes, its \enginecommit: the short hash of HEAD, with
 # "-dirty" when tracked files other than the PDFs differ from it. Written into
 # version.tex beside each note (ignored by git), and only when it changes, so
-# that latexmk does not compile again for nothing. For a PDF that names a
-# commit holding its sources: commit them, `make paper`, then commit the PDF.
+# that latexmk does not compile again for nothing. The PDFs are not kept in
+# git: on GitHub, .github/workflows/papers.yml builds them from the commit
+# pushed, and the website serves them.
 PAPER_COMMIT = $(or $(shell git rev-parse --short=12 HEAD 2>/dev/null),unknown)$(shell \
 	git status --porcelain --untracked-files=no -- . ':(exclude,glob)docs/research/*/paper*.pdf' \
 	2>/dev/null | grep -q . && echo -dirty)

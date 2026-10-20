@@ -1,0 +1,59 @@
+name: lean
+
+# The Lean proofs of the theory paper (docs/research/turns-of-a-t-mesh/lean):
+# no proof left open, then built on the pinned Mathlib. Only when the Lean
+# folder or this workflow changes, and by hand from the Actions tab.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/research/turns-of-a-t-mesh/lean/**"
+      - ".github/workflows/lean.yml"
+  pull_request:
+    paths:
+      - "docs/research/turns-of-a-t-mesh/lean/**"
+      - ".github/workflows/lean.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lean:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: docs/research/turns-of-a-t-mesh/lean
+    steps:
+      - uses: actions/checkout@v7
+      # A proof left open, or a statement taken for granted: `sorry` and
+      # `admit` close a goal without proving it, `axiom` adds a fact. The
+      # proofs use none; Lean only warns about the first, so look for all
+      # three in the sources before building.
+      - name: No sorry, admit or axiom
+        run: |
+          if grep -rnwE --include='*.lean' 'sorry|admit' . || \
+             grep -rnE --include='*.lean' '^[[:space:]]*((private|protected|noncomputable|unsafe)[[:space:]]+)*axiom[[:space:]]' .; then
+            echo "::error::a proof is left open or an axiom is declared"
+            exit 1
+          fi
+      # elan installs the toolchain that lean-toolchain names, on first use.
+      - name: elan
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh \
+            | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      # Mathlib compiled, at the release lakefile.toml pins, so that only the
+      # paper's own files are built.
+      - name: Mathlib
+        run: lake exe cache get
+      - name: Build
+        run: |
+          lake build 2>&1 | tee build.log
+          test "${PIPESTATUS[0]}" -eq 0
+      - name: No declaration uses sorry
+        run: |
+          if grep -n "declaration uses 'sorry'" build.log; then
+            echo "::error::a declaration uses sorry"
+            exit 1
+          fi
