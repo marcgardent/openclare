@@ -1,6 +1,6 @@
 # Shortcuts for the common tasks. `make help` lists them.
 
-.PHONY: help build test scenes blenderkit essentials remeasure autoremesher scores quick pages dashboard view addon install addon-windows test-windows addon-test version release paper paper-version paper-arxiv paper-clean proofs site site-serve
+.PHONY: help build test scenes blenderkit essentials remeasure autoremesher scores quick pages dashboard view addon install addon-windows test-windows addon-test capi-test version release paper paper-version paper-arxiv paper-clean proofs site site-serve
 
 help:
 	@echo "make build       build the openclare binary (release)"
@@ -16,6 +16,8 @@ help:
 	@echo "make test-windows WINE=/path/to/wine64"
 	@echo "                 run the tests of the engine built for Windows, under Wine"
 	@echo "make addon-test  run the add-on in a Blender without interface (needs blender)"
+	@echo "make capi-test   build the C test of the C interface against its header and the library,"
+	@echo "                 and run it (needs cc, or CC=clang)"
 	@echo "make autoremesher download and install the AutoRemesher challenger into ~/.local/bin"
 	@echo "make version INCREMENT=MAJOR|MINOR|FIX"
 	@echo "                 raise that number of the version in the sources, on the branch of a"
@@ -255,6 +257,17 @@ test-windows:
 
 addon-test: addon
 	ulimit -v $(MEMORY_CAP); blender -b --factory-startup --python-exit-code 1 --python blender/test_addon.py
+
+# The C interface called from C: crates/openclare-capi/tests/c/smoke.c, built
+# with the header crates/openclare-capi/include/openclare.h and linked to the
+# library of target/release, then run (needs a C compiler: cc, or CC=clang).
+CAPI = crates/openclare-capi
+capi-test:
+	cargo build --release -p openclare-capi
+	mkdir -p target/capi-test
+	$(CC) -std=c99 -Wall -Wextra -Werror -I $(CAPI)/include $(CAPI)/tests/c/smoke.c \
+		-L target/release -lopenclare_capi -lm -Wl,-rpath,'$$ORIGIN/../release' -o target/capi-test/smoke
+	ulimit -v $(MEMORY_CAP); target/capi-test/smoke $(ADDON_VERSION)
 
 # The next version: MAJOR, MINOR or FIX says which of its three numbers is
 # raised, in the sources, on the branch of a change: main changes only through

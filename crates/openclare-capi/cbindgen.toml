@@ -1,0 +1,14 @@
+# What cbindgen makes of src/lib.rs: a header to compare include/openclare.h
+# with, not to ship (.github/workflows/release.yml, job "header"). The types
+# are those the hand-written header uses, so that a C compiler that reads both
+# finds every declaration twice and the same.
+language = "C"
+include_guard = "OPENCLARE_GENERATED_H"
+usize_is_size_t = true
+# extern "C" round the declarations, as in the written header, for C++.
+cpp_compat = true
+no_includes = true
+sys_includes = ["stddef.h", "stdint.h"]
+
+[parse]
+parse_deps = false

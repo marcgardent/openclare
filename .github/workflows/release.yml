@@ -1,19 +1,76 @@
 name: release
 
-# The Blender add-on built for Linux and for Windows when a version is tagged
-# (`make release version=...`, then the tag pushed), and attached to a release
-# of that tag. Started by hand from the Actions tab, it builds the two
-# archives and keeps them with the run, without a release.
+# Built on demand only, never on a push: from the Actions tab (Run workflow),
+# or `gh workflow run release.yml` (`-f release=true` for a release). For each
+# system Blender runs on (linux-x64, windows-x64, macos-arm64, macos-x64), two
+# archives, kept with the run:
+#
+# - openclare-<version>-<platform>.zip: the add-on, to install from disk in
+#   Blender 4.2 or later;
+# - openclare-capi-<version>-<platform>.tar.gz: the library for C, with its
+#   header include/openclare.h.
+#
+# With `release` ticked, and on main only, the eight archives and their
+# SHA256SUMS go into a DRAFT release v<version> of the commit: a published
+# release is archived by Zenodo with a DOI, so it is published by hand, once
+# read. The version is the one in the sources (`make version` raises it): a
+# version already released or drafted stops the run.
+#
+# Runners hosted by GitHub, free for a public repository.
 on:
-  push:
-    tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      release:
+        description: "Draft a release v<version> of this commit (main only) with the archives"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: never
+  # The libraries shipped without symbols but those they export, nor debug
+  # information: what `make addon` does with strip.
+  CARGO_PROFILE_RELEASE_STRIP: symbols
+  CARGO_PROFILE_RELEASE_DEBUG: "0"
+
 jobs:
-  linux:
+  # The hand-written header against what cbindgen reads in src/lib.rs: a C
+  # compiler that reads both refuses a declaration that differs, and the
+  # names declared must be the same on both sides.
+  header:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: cbindgen
+        run: cargo install cbindgen --locked
+      - name: The header and the source say the same
+        working-directory: crates/openclare-capi
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/header"
+          mkdir -p "$out"
+          cbindgen --config cbindgen.toml --output "$out/generated.h" .
+          cat "$out/generated.h"
+          printf '#include "openclare.h"\n#include "generated.h"\nint main(void) { return 0; }\n' > "$out/both.c"
+          gcc -std=c11 -Wall -Wextra -Werror -I include -I "$out" "$out/both.c" -o "$out/both"
+          g++ -x c++ -std=c++11 -Wall -Wextra -Werror -I include -I "$out" "$out/both.c" -o "$out/both"
+          names() {
+            { grep -oE '\bopenclare_[a-z_]+\(' "$1" | tr -d '('
+              grep -oE '^#define OPENCLARE_[A-Z_]+ +[0-9]' "$1" | awk '{print $2}'
+              grep -oE '\bOpenclare[A-Za-z]+\b' "$1"
+            } | sort -u
+          }
+          names include/openclare.h > "$out/written"
+          names "$out/generated.h" > "$out/generated"
+          diff -u "$out/generated" "$out/written"
+
+  linux-x64:
     runs-on: ubuntu-24.04
     # The engine asks for the C library of the system it is built on, or a
     # later one. Blender runs on Linux from glibc 2.28: this image has that
@@ -21,62 +78,159 @@ jobs:
     container: quay.io/pypa/manylinux_2_28_x86_64
     steps:
       - uses: actions/checkout@v7
-      - name: Rust and zip
+      - name: Rust
         run: |
-          yum install -y zip
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
-      - run: make addon
+      - run: cargo build --release --locked -p openclare-capi
       - name: The glibc the engine asks for
         run: |
-          asked=$(objdump -T blender/openclare/lib/libopenclare_capi.so | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -1)
+          asked=$(objdump -T target/release/libopenclare_capi.so | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -1)
           echo "$asked"
           test "$(printf '%s\n' GLIBC_2.28 "$asked" | sort -V | tail -1)" = GLIBC_2.28
+          objdump -p target/release/libopenclare_capi.so | grep -E 'NEEDED|SONAME' || true
+      - name: The C test, against the header and the library shipped
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"/\1/p' blender/openclare/blender_manifest.toml)
+          mkdir -p target/capi-test
+          gcc -std=c99 -Wall -Wextra -Werror -I crates/openclare-capi/include crates/openclare-capi/tests/c/smoke.c \
+            -L target/release -lopenclare_capi -lm -Wl,-rpath,"$PWD/target/release" -o target/capi-test/smoke
+          target/capi-test/smoke "$version"
+      - name: Archives
+        run: python3 scripts/package.py linux-x64 target/release/libopenclare_capi.so
       - uses: actions/upload-artifact@v7
         with:
           name: linux-x64
-          path: dist/*.zip
+          path: |
+            dist/*.zip
+            dist/*.tar.gz
           if-no-files-found: error
 
-  # Built from Linux with MinGW-w64, as `make addon-windows` does anywhere:
-  # it is the build whose tests pass under Wine.
-  windows:
-    runs-on: ubuntu-24.04
+  # Built with the MSVC toolchain, the C runtime linked in: the library asks
+  # for nothing but Windows itself.
+  windows-x64:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      RUSTFLAGS: -C target-feature=+crt-static
     steps:
       - uses: actions/checkout@v7
-      - name: Rust for Windows and MinGW-w64
+      - run: rustup default stable && rustc --version --verbose
+      - run: cargo build --release --locked -p openclare-capi
+      - name: The version in the sources
+        run: echo "VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' blender/openclare/blender_manifest.toml)" >> "$GITHUB_ENV"
+      - name: The C test, with MSVC, against the header and the library shipped
+        shell: cmd
         run: |
-          sudo apt-get update
-          sudo apt-get install -y mingw-w64 zip
-          rustup target add x86_64-pc-windows-gnu
-      - run: make addon-windows
-      - name: The libraries the engine asks for
-        run: x86_64-w64-mingw32-objdump -p dist/stage-windows-x64/lib/openclare_capi.dll | grep "DLL Name"
+          for /f "usebackq tokens=*" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do set VS=%%i
+          call "%VS%\VC\Auxiliary\Build\vcvars64.bat" || exit /b 1
+          dumpbin /nologo /dependents target\release\openclare_capi.dll || exit /b 1
+          mkdir target\capi-test
+          cl /nologo /std:c11 /W3 /WX /I crates\openclare-capi\include crates\openclare-capi\tests\c\smoke.c target\release\openclare_capi.dll.lib /Fo:target\capi-test\ /Fe:target\capi-test\smoke.exe || exit /b 1
+          copy target\release\openclare_capi.dll target\capi-test\ || exit /b 1
+          target\capi-test\smoke.exe %VERSION%
+      - name: Archives
+        run: python scripts/package.py windows-x64 target/release/openclare_capi.dll target/release/openclare_capi.dll.lib
       - uses: actions/upload-artifact@v7
         with:
           name: windows-x64
-          path: dist/*.zip
+          path: |
+            dist/*.zip
+            dist/*.tar.gz
+          if-no-files-found: error
+
+  # Both macOS builds on one Apple Silicon runner; the x86-64 one runs its
+  # test under Rosetta. Signed ad hoc, which arm64 requires: not notarized.
+  macos:
+    runs-on: macos-15
+    env:
+      # Blender 4.2 asks for macOS 11.2.
+      MACOSX_DEPLOYMENT_TARGET: "11.0"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-arm64
+            target: aarch64-apple-darwin
+            arch: arm64
+          - platform: macos-x64
+            target: x86_64-apple-darwin
+            arch: x86_64
+    name: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v7
+      - run: rustup target add ${{ matrix.target }} && rustc --version
+      - run: cargo build --release --locked -p openclare-capi --target ${{ matrix.target }}
+      - name: Signed ad hoc, and what the library is
+        run: |
+          library=target/${{ matrix.target }}/release/libopenclare_capi.dylib
+          codesign --force --sign - "$library"
+          codesign --verify --verbose "$library"
+          file "$library"
+          otool -D "$library"
+          otool -L "$library"
+          otool -l "$library" | grep -A4 LC_BUILD_VERSION | tee /dev/stderr | grep -q 'minos 11.0'
+      - name: The C test, against the header and the library shipped
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"/\1/p' blender/openclare/blender_manifest.toml)
+          release="$PWD/target/${{ matrix.target }}/release"
+          mkdir -p target/capi-test
+          clang -arch ${{ matrix.arch }} -std=c99 -Wall -Wextra -Werror -I crates/openclare-capi/include \
+            crates/openclare-capi/tests/c/smoke.c -L "$release" -lopenclare_capi -Wl,-rpath,"$release" \
+            -o target/capi-test/smoke
+          file target/capi-test/smoke
+          target/capi-test/smoke "$version"
+      - name: Archives
+        run: python3 scripts/package.py ${{ matrix.platform }} target/${{ matrix.target }}/release/libopenclare_capi.dylib
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.platform }}
+          path: |
+            dist/*.zip
+            dist/*.tar.gz
           if-no-files-found: error
 
   release:
-    needs: [linux, windows]
+    if: inputs.release
+    needs: [header, linux-x64, windows-x64, macos]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v7
       - uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true
-      - run: ls -l dist
-      # The archives are named after the version written in the sources: a
-      # tag that says another one finds no file, and there is no release.
-      - name: Release
-        if: github.ref_type == 'tag'
+      - name: Draft release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          version="${GITHUB_REF_NAME#v}"
-          gh release create "$GITHUB_REF_NAME" \
-            "dist/openclare-$version-linux-x64.zip" "dist/openclare-$version-windows-x64.zip" \
-            --repo "$GITHUB_REPOSITORY" --title "openclare $version" --generate-notes
+          set -euo pipefail
+          if [ "$GITHUB_REF" != refs/heads/main ]; then
+            echo "::error::a release is made from main, not from $GITHUB_REF"
+            exit 1
+          fi
+          version=$(sed -n 's/^version = "\(.*\)"/\1/p' blender/openclare/blender_manifest.toml)
+          tag="v$version"
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null; then
+            echo "::error::the tag $tag is already there: raise the version first (make version)"
+            exit 1
+          fi
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::a release $tag is already there, maybe as a draft: delete it or raise the version"
+            exit 1
+          fi
+          cd dist
+          files=()
+          for platform in linux-x64 windows-x64 macos-arm64 macos-x64; do
+            files+=("openclare-$version-$platform.zip" "openclare-capi-$version-$platform.tar.gz")
+          done
+          ls -l "${files[@]}"
+          sha256sum "${files[@]}" > SHA256SUMS
+          cat SHA256SUMS
+          gh release create "$tag" "${files[@]}" SHA256SUMS \
+            --repo "$GITHUB_REPOSITORY" --draft --target "$GITHUB_SHA" \
+            --title "openclare $version" --generate-notes
