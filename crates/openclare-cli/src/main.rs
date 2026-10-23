@@ -608,6 +608,12 @@ fn measure_command(args: &[String]) -> Result<(), String> {
         100.0 * m.thin_share,
         optional(m.thin_distance.map(|distance| format!("{distance:.3} quad edges away on average"))),
     );
+    println!(
+        "sharp edges  {:.1} quad edges in {} chains; {}",
+        m.feature_edges_length,
+        m.feature_chains,
+        optional(m.feature_edges_kept.map(|kept| format!("{:.1} % kept", 100.0 * kept))),
+    );
     println!("budget       {}", optional(m.budget_error.map(|e| format!("{:.1} % off target", 100.0 * e))));
     Ok(())
 }

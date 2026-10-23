@@ -383,6 +383,13 @@ of the diagonal. It is chaotic for a single model.
 
 **Thin-part distance**. The distance on the thin parts (fingers, ears, sheets), in quad edges.
 
+**Sharp edges kept**. The share of the length of the source's sharp edges along which the
+result has a sharp edge of its own. Higher is better. Only the creases that still show at the
+size of the quads count: the triangles meet at more than 30°, the surface half a quad edge
+around still turns by as much, and mostly at the edge. The grain of a sculpt does not count, nor
+does a tube a few quads round; two creases closer than half a quad count once. Where the source
+has less than 10 quad edges of them, as a smooth sculpt, there is no value.
+
 **Aspect**. How elongated the quads are: 1 is square.
 
 **Angle deviation**. How far the quads' corners are from 90°.

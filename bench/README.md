@@ -135,6 +135,13 @@ pitch above 4; `helix_pitch_max` is the largest pitch and `loop_edges_helix_by_p
 share of the edges on helices of each pitch, from 1. The definitions are those of `EdgeLoops`
 in `crates/openclare/src/metrics.rs`.
 
+Of the sharp edges, `feature_edges_length` is the length of the creases of the source that still
+show at the size of the quads, in quad edges: the grain of a sculpt is left out, and two creases
+closer than half a quad count once. `feature_chains` is the number of runs they make, from an end
+or a junction to the next. `feature_edges_kept` is the share of that length along which the mesh
+has a sharp edge of its own, within a quarter of a quad edge; it is `null` below 10 quad edges,
+as on most sculpts. The definitions are those of `SharpEdges` in the same file.
+
 ## Files
 
 | File | What it does |

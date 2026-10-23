@@ -165,6 +165,7 @@ METRICS = [
     ("mean_distance", "Mean distance, ‰ (H)", "{:.3f}", True),
     ("thin_distance", "Thin parts: mean distance, % of a quad edge (V)", "{:.1f}", True),
     ("volume_ratio", "Volume kept, % of the source (V)", "{:.2f}", False),
+    ("feature_edges_kept", "Sharp edges kept, % of their length (E)", "{:.1f}", False),
     ("loop_edges_closed", "Edges on closed loops, % (L)", "{:.1f}", False),
     ("loop_edges_spiral", "Edges on spiralling loops, % (L)", "{:.1f}", True),
     ("loops_spiral", "Spiralling loops (L)", "{:.0f}", True),
@@ -177,6 +178,7 @@ METRICS = [
     ("seconds", "Time, seconds (T)", "{:.2f}", True),
 ]
 SCALE = {"hausdorff": 1000.0, "mean_distance": 1000.0, "budget_error": 100.0, "thin_distance": 100.0, "volume_ratio": 100.0,
+         "feature_edges_kept": 100.0,
          "loop_edges_closed": 100.0, "loop_edges_spiral": 100.0, "loop_edges_helix": 100.0, "loop_edges_open": 100.0,
          "loop_edges_border": 100.0}
 # The metrics the acceptance rule is about.

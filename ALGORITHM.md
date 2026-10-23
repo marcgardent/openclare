@@ -51,6 +51,7 @@ floor that can be measured.
 | A | Alignment | mean angle between edges and principal curvature directions, weighted by the anisotropy \|k₁−k₂\| | quality |
 | F | Shape of the quads | deviation of the angles from 90° (mean, 95th percentile), aspect ratio, spread of the areas | quality |
 | H | Fidelity | Hausdorff distance and mean distance to the source, relative to the bounding diagonal | guard |
+| E | Sharp edges | share of the length of the creases of the source that show at the size of the quads along which the mesh has a sharp edge (`SharpEdges` in `metrics.rs`) | quality, on models that have such creases |
 | N | Budget | relative gap to the number of faces asked for | guard |
 | T | Time | computing time | information |
 
