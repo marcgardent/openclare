@@ -28,9 +28,9 @@ use crate::quantization;
 use crate::recorder::{self, Recorder, Shape, Silent};
 use crate::relax::{Features, Laplacian, Relaxer, Squaring};
 use crate::singularity;
-use crate::thickness;
 use crate::sizing;
 use crate::spatial::Bvh;
+use crate::thickness;
 use crate::tmesh;
 
 /// What the user drew on the input to steer the result, as opposed to the
@@ -436,7 +436,8 @@ impl QuadLayout {
                 })
                 .collect();
             let called_for: usize = needs.iter().map(|&(_, share, needed)| needed - share).sum();
-            let others: usize = shares.iter().flatten().sum::<usize>() - needs.iter().map(|&(_, share, _)| share).sum::<usize>();
+            let others: usize =
+                shares.iter().flatten().sum::<usize>() - needs.iter().map(|&(_, share, _)| share).sum::<usize>();
             let given = called_for.min(others).min((quads / 2.0) as usize);
             if given > 0 {
                 let part = given as f64 / called_for as f64;
@@ -447,7 +448,8 @@ impl QuadLayout {
                         Some(&(_, had, needed)) => {
                             *share = had + ((needed - had) as f64 * part).round() as usize;
                             let note = format!("thin all along: {share} quads for its thickness, not {had}");
-                            recorder::Piece::new(recorder, index, pieces.len()).record("notes/thin", Shape::Note(&note));
+                            recorder::Piece::new(recorder, index, pieces.len())
+                                .record("notes/thin", Shape::Note(&note));
                             thin_pieces += 1;
                             quads_for_thin_pieces += *share - had;
                         }
@@ -521,7 +523,9 @@ impl QuadLayout {
             {
                 let offset = merged.positions.len() as u32;
                 merged.positions.extend(stand_in.positions);
-                merged.faces.extend(stand_in.faces.into_iter().map(|face| face.into_iter().map(|v| v + offset).collect()));
+                merged
+                    .faces
+                    .extend(stand_in.faces.into_iter().map(|face| face.into_iter().map(|v| v + offset).collect()));
                 report.pieces_boxed += 1;
                 recorder.record("notes/boxed", Shape::Note(&format!("its box stands for it: {why}")));
                 continue;
@@ -611,15 +615,16 @@ fn box_of(piece: &TriMesh, edge: f64) -> Option<PolyMesh> {
     if piece.positions.is_empty() || size.length() >= edge || size.length() <= 0.0 {
         return None;
     }
-    let corner = |k: usize| Vec3::new(
-        if k & 1 == 0 { low.x } else { high.x },
-        if k & 2 == 0 { low.y } else { high.y },
-        if k & 4 == 0 { low.z } else { high.z },
-    );
+    let corner = |k: usize| {
+        Vec3::new(
+            if k & 1 == 0 { low.x } else { high.x },
+            if k & 2 == 0 { low.y } else { high.y },
+            if k & 4 == 0 { low.z } else { high.z },
+        )
+    };
     // Each face with its normal pointing out: the corners are numbered by
     // which side they are on along x (1), y (2) and z (4).
-    const FACES: [[u32; 4]; 6] =
-        [[0, 4, 6, 2], [1, 3, 7, 5], [0, 1, 5, 4], [2, 6, 7, 3], [0, 2, 3, 1], [4, 5, 7, 6]];
+    const FACES: [[u32; 4]; 6] = [[0, 4, 6, 2], [1, 3, 7, 5], [0, 1, 5, 4], [2, 6, 7, 3], [0, 2, 3, 1], [4, 5, 7, 6]];
     let flat = (0..3).find(|&axis| size.to_array()[axis] <= 1e-9 * size.length());
     let faces: Vec<Vec<u32>> = match flat {
         None => FACES.iter().map(|face| face.to_vec()).collect(),
@@ -838,6 +843,11 @@ fn shares_of(pieces: &[(TriMesh, Vec<u32>)], guides: &Guides, config: &RemeshCon
     shares.into_iter().zip(kept).map(|(share, kept)| kept.then_some(share)).collect()
 }
 
+enum LayoutOutcome {
+    Done(PolyMesh, Report),
+    FallBack { cause: &'static str, underfed: bool },
+}
+
 impl QuadLayout {
     /// The chain on one connected piece. `least` is the fewest triangles its
     /// work mesh is given.
@@ -849,6 +859,39 @@ impl QuadLayout {
         least: usize,
         recorder: &mut dyn Recorder,
     ) -> Result<(PolyMesh, Report)> {
+        match self.try_layout_piece(input, guides, config, least, recorder)? {
+            LayoutOutcome::Done(mesh, report) => Ok((mesh, report)),
+            LayoutOutcome::FallBack { cause, underfed } => {
+                // With guide curves, the first thing to try is to do without
+                // them: the layout without the lines drawn is still better
+                // than the other chain.
+                if !underfed && (!guides.curves.is_empty() || !guides.lines.is_empty() || config.edge_angle.is_some()) {
+                    let free = Guides { curves: &[], lines: &[], ..*guides };
+                    let free_config = RemeshConfig { edge_angle: None, ..config.clone() };
+                    recorder.record("notes/lines", Shape::Note(&format!("done again without its lines: {cause}")));
+                    if let LayoutOutcome::Done(mesh, mut report) =
+                        self.try_layout_piece(input, &free, &free_config, least, recorder)?
+                    {
+                        report.guides_let_go = 1;
+                        report.line_causes = vec![(cause, 1)];
+                        return Ok((mesh, report));
+                    }
+                }
+                fall_back(input, config, least, cause, recorder)
+            }
+        }
+    }
+
+    /// Runs the layout and quantization chain on one connected piece, or
+    /// tells why the provisional chain must take over.
+    fn try_layout_piece(
+        &self,
+        input: &TriMesh,
+        guides: &Guides,
+        config: &RemeshConfig,
+        least: usize,
+        recorder: &mut dyn Recorder,
+    ) -> Result<LayoutOutcome> {
         let mut clock = Stopwatch::start();
         let mut report = Report::default();
         let size = WorkSize { per_quad: self.triangles_per_quad, least, most: self.max_triangles };
@@ -874,6 +917,7 @@ impl QuadLayout {
         // can vertices be read off a map that folds over. In all those
         // cases the provisional chain takes over.
         let layout_report = &layout.tmesh.report;
+        let is_underfed = underfed(layout.tmesh.patches.len(), quads);
         let cause = if layout.tmesh.patches.is_empty() || layout_report.uncut_triangles > 0 {
             Some("nothing to cut the surface from (no singularity, border or hard edge)")
         } else if layout_report.map_inversions > 0 {
@@ -884,24 +928,13 @@ impl QuadLayout {
             Some("a trace got lost")
         } else if !layout_report.is_valid() {
             Some("the layout is not made of rectangles")
-        } else if underfed(layout.tmesh.patches.len(), quads) {
+        } else if is_underfed {
             Some("the layout has more rectangles than quads asked for")
         } else {
             None
         };
         if let Some(cause) = cause {
-            // With guide curves, the first thing to try is to do without
-            // them: the layout without the lines drawn is still better than
-            // the other chain.
-            if !guides.curves.is_empty() || !guides.lines.is_empty() {
-                let free = Guides { curves: &[], lines: &[], ..*guides };
-                recorder.record("notes/lines", Shape::Note(&format!("done again without its lines: {cause}")));
-                let (mesh, mut report) = self.remesh_piece(input, &free, config, least, recorder)?;
-                report.guides_let_go = 1;
-                report.line_causes = vec![(cause, 1)];
-                return Ok((mesh, report));
-            }
-            return fall_back(input, config, least, cause, recorder);
+            return Ok(LayoutOutcome::FallBack { cause, underfed: is_underfed });
         }
 
         recorder.begin("quantization")?;
@@ -920,16 +953,7 @@ impl QuadLayout {
         clock.lap(&mut report, "quantization");
         recorder::show_lengths(recorder, &work, &layout.tmesh, &quantized);
         if !quantized.report.is_valid() || quantized.report.quads == 0 {
-            if !guides.curves.is_empty() || !guides.lines.is_empty() {
-                let free = Guides { curves: &[], lines: &[], ..*guides };
-                let note = "done again without its lines: no sound whole lengths for the layout";
-                recorder.record("notes/lines", Shape::Note(note));
-                let (mesh, mut report) = self.remesh_piece(input, &free, config, least, recorder)?;
-                report.guides_let_go = 1;
-                report.line_causes = vec![("no sound whole lengths for the layout", 1)];
-                return Ok((mesh, report));
-            }
-            return fall_back(input, config, least, "no sound whole lengths for the layout", recorder);
+            return Ok(LayoutOutcome::FallBack { cause: "no sound whole lengths for the layout", underfed: false });
         }
 
         recorder.begin("meshing")?;
@@ -979,7 +1003,7 @@ impl QuadLayout {
         lines.into_report(&mut report);
 
         report.stats = mesh.stats();
-        Ok((mesh, report))
+        Ok(LayoutOutcome::Done(mesh, report))
     }
 }
 

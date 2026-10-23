@@ -28,9 +28,9 @@ PRESETS = [
 # (presets/openclare_shape) say the same; files of 0.1, which named one of
 # these, are given its values.
 SHAPES = {
-    "organic": dict(adaptive_size=50.0, quads_around=6, use_hard_edges=False, hard_edge_angle=math.radians(30.0),
+    "organic": dict(adaptive_size=50.0, quads_around=6, use_hard_edges=True, hard_edge_angle=math.radians(30.0),
                     follow_curvature=0.05, fewer_irregular=2.0, volume_fit=1.0),
-    "animation": dict(adaptive_size=50.0, quads_around=6, use_hard_edges=False, hard_edge_angle=math.radians(30.0),
+    "animation": dict(adaptive_size=50.0, quads_around=6, use_hard_edges=True, hard_edge_angle=math.radians(30.0),
                       follow_curvature=0.05, fewer_irregular=3.0, volume_fit=1.0),
     "hard-surface": dict(adaptive_size=0.0, quads_around=0, use_hard_edges=True, hard_edge_angle=math.radians(30.0),
                          follow_curvature=0.02, fewer_irregular=2.0, volume_fit=1.0),
@@ -270,7 +270,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
             "Edges of the object sharper than the angle are followed by the quads wherever they can, and "
             "kept crisp: for mechanical parts"
         ),
-        default=False,
+        default=True,
     )
     hard_edge_angle: bpy.props.FloatProperty(
         options=set(),

@@ -182,7 +182,7 @@ impl RemeshConfig {
             singularity_reach: 2.0,
             singularity_tolerance: 1.0,
             crease_angle: None,
-            edge_angle: None,
+            edge_angle: Some(30.0),
             adaptivity: 0.5,
             quads_around: 6.0,
             most_quads: 200_000,

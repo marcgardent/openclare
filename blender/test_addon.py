@@ -179,7 +179,9 @@ for name, file in files.items():
         assert abs(getattr(settings, key) - value) < 1e-6, (name, key, getattr(settings, key), value)
 # What the engine is given: the hard edges at 30 degrees, or none.
 shape(settings, "organic")
-assert openclare.shape_of(settings)["edge_angle"] == "none" and openclare.shape_of(settings)["alignment"] == 0.05
+assert openclare.shape_of(settings)["edge_angle"] == 30.0 and openclare.shape_of(settings)["alignment"] == 0.05
+settings.use_hard_edges = False
+assert openclare.shape_of(settings)["edge_angle"] == "none"
 shape(settings, "hard-surface")
 assert openclare.shape_of(settings)["edge_angle"] == 30.0 and openclare.shape_of(settings)["quads_around"] == 0
 # Saved, removed; those of the add-on cannot be.
@@ -318,7 +320,7 @@ bpy.ops.mesh.primitive_cube_add(location=(33.0, 0.0, 0.0))
 second = bpy.context.active_object
 first.openclare.quads, second.openclare.quads = 200, 500
 shape(first.openclare, "hard-surface")
-assert not second.openclare.use_hard_edges and first.openclare.quads == 200
+assert second.openclare.quads_around == 6 and first.openclare.quads == 200
 
 # The panel is in the Properties editor, on the tab of the mesh: for an
 # object to remesh, its settings; for a result, what it comes from.

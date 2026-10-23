@@ -449,6 +449,12 @@ struct FeatureEdge {
 }
 
 impl SharpEdges {
+    /// The edges of `source` that are feature edges for quads `quad_edge`
+    /// long.
+    pub fn edges(&self, source: &TriMesh, topology: &Topology, quad_edge: f64) -> Vec<[u32; 2]> {
+        self.features(source, topology, quad_edge).into_iter().map(|edge| edge.ends).collect()
+    }
+
     /// Finds the feature edges of `source` for quads `quad_edge` long, and
     /// how much of them `mesh` keeps.
     pub fn measure(&self, source: &TriMesh, mesh: &PolyMesh, quad_edge: f64) -> SharpEdgesKept {
@@ -539,6 +545,8 @@ impl SharpEdges {
         let middle = 0.5 * (p + q);
         let along = (q - p).try_normalize()?;
         let sides = [h / 3, topology.opposite[h] as usize / 3];
+        let side_normals =
+            [source.area_vector(sides[0]).normalize_or_zero(), source.area_vector(sides[1]).normalize_or_zero()];
         let center = |t: usize| source.corners(t).into_iter().sum::<Vec3>() / 3.0;
         // Straight away from the edge into each of its triangles; the plane
         // that cuts the surface in two runs halfway between.
@@ -572,6 +580,10 @@ impl SharpEdges {
                 }
                 let next = twin as usize / 3;
                 if seen.contains(&next) {
+                    continue;
+                }
+                let next_normal = source.area_vector(next);
+                if next_normal.dot(side_normals[0]) <= 0.0 && next_normal.dot(side_normals[1]) <= 0.0 {
                     continue;
                 }
                 let [x, y, z] = source.corners(next);
