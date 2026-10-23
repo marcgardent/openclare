@@ -565,6 +565,25 @@ impl QuadLayout {
 /// Fewest triangles the work mesh of one piece among several is given.
 const MIN_PIECE_TRIANGLES: usize = 1500;
 
+/// Rectangles from which a layout of more rectangles than quads asked for is
+/// given up, for the other chain. Every rectangle left open holds a quad at
+/// least, so most of them would have to close up; the quantization holds
+/// arcs open again, round after round, for the singularities to stay apart,
+/// and looks for the number at ever smaller scales, at a cost that grows
+/// faster than the number of arcs: hours for a watermill whose railings ask
+/// for small quads (5,500 rectangles for 3,000 quads; DT-155). A field with
+/// that many singularities is noise at the size of the quads asked for.
+/// A smaller layout is quantized all the same, in seconds, and the nearest
+/// it comes to the number is kept: a sphere asked for four quads, or a
+/// small piece then done again on a finer work mesh (`remesh_stitched`).
+const UNDERFED_LAYOUT: usize = 1000;
+
+/// A layout of `rectangles` the quantization is not to be asked `quads` of
+/// (see [`UNDERFED_LAYOUT`]).
+fn underfed(rectangles: usize, quads: f64) -> bool {
+    rectangles > UNDERFED_LAYOUT && rectangles as f64 > quads
+}
+
 /// How many times its share of the quads a piece among several may come out
 /// with before it is done again on a finer work mesh.
 const OVERSHOOT: f64 = 1.5;
@@ -865,6 +884,8 @@ impl QuadLayout {
             Some("a trace got lost")
         } else if !layout_report.is_valid() {
             Some("the layout is not made of rectangles")
+        } else if underfed(layout.tmesh.patches.len(), quads) {
+            Some("the layout has more rectangles than quads asked for")
         } else {
             None
         };
@@ -1492,6 +1513,19 @@ mod tests {
         let [a, b, c] = [0, 1, 2].map(|k| stand_in.positions[stand_in.faces[0][k] as usize]);
         let up = sheet.area_vector(0).normalize();
         assert!((b - a).cross(c - a).normalize().dot(up) > 0.99);
+    }
+
+    #[test]
+    fn only_a_large_layout_of_more_rectangles_than_quads_is_given_up() {
+        // The watermill of DT-155, with and without its railings sized.
+        assert!(underfed(5514, 2969.0));
+        assert!(!underfed(2256, 2969.0));
+        // Small layouts are quantized whatever the number: a sphere asked
+        // for four quads, a small piece of a few hundred rectangles.
+        assert!(!underfed(12, 4.0));
+        assert!(!underfed(360, 83.0));
+        assert!(!underfed(UNDERFED_LAYOUT, 10.0));
+        assert!(underfed(UNDERFED_LAYOUT + 1, 10.0));
     }
 
     #[test]
