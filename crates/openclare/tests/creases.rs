@@ -51,8 +51,9 @@ fn a_smooth_shape_has_no_crease() {
 fn a_fold_of_the_source_is_creased_where_edges_run_along_it() {
     // Caps of radius 1.25: they meet at an angle of about 106 degrees.
     let source = lens(1.25);
-    let (mesh, report) = RemeshConfig::for_organic(Target::QuadCount(600)).remesh(&source).unwrap();
-    assert!(report.hard_edges.is_empty(), "the organic preset keeps no hard edge");
+    let config = RemeshConfig { edge_angle: None, ..RemeshConfig::for_organic(Target::QuadCount(600)) };
+    let (mesh, report) = config.remesh(&source).unwrap();
+    assert!(report.hard_edges.is_empty(), "without an edge angle, no hard edge is kept");
     let on_the_rim = |v: u32| {
         let p = mesh.positions[v as usize];
         p.z.abs() < 0.05 && (p.truncate().length() - 1.0).abs() < 0.08

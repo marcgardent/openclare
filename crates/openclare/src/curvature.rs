@@ -128,6 +128,101 @@ impl TensorField {
         Self { tensors }
     }
 
+    /// Estimates and smooths the curvature tensor field without differentiating
+    /// or averaging normals across `feature_edges`: a sharp crease is a jump in
+    /// the normal, not a tight smooth bend of the surface on either side.
+    pub fn on_smooth_patches(
+        mesh: &TriMesh,
+        normals: &[Vec3],
+        areas: &[f64],
+        neighbors: &[Vec<u32>],
+        feature_edges: &[[u32; 2]],
+        iterations: usize,
+    ) -> Self {
+        if feature_edges.is_empty() || mesh.triangles.is_empty() {
+            return Self::estimate(mesh, normals, areas).smoothed(neighbors, normals, areas, iterations);
+        }
+        let features: std::collections::HashSet<(u32, u32)> =
+            feature_edges.iter().map(|&[a, b]| (a.min(b), a.max(b))).collect();
+        let topology = crate::mesh::Topology::build(mesh);
+        let corners = 3 * mesh.triangles.len();
+        let mut parent: Vec<u32> = (0..corners as u32).collect();
+        fn find(parent: &mut [u32], mut x: u32) -> u32 {
+            while parent[x as usize] != x {
+                let p = parent[x as usize];
+                parent[x as usize] = parent[p as usize];
+                x = p;
+            }
+            x
+        }
+        let mut union = |a: usize, b: usize| {
+            let (ra, rb) = (find(&mut parent, a as u32), find(&mut parent, b as u32));
+            if ra != rb {
+                parent[ra.max(rb) as usize] = ra.min(rb);
+            }
+        };
+        for (h, &twin) in topology.opposite.iter().enumerate() {
+            if twin == crate::math::INVALID || (h as u32) > twin {
+                continue;
+            }
+            let (f, k) = (h / 3, h % 3);
+            let (a, b) = (mesh.triangles[f][k], mesh.triangles[f][(k + 1) % 3]);
+            if features.contains(&(a.min(b), a.max(b))) {
+                continue;
+            }
+            let (tf, tk) = (twin as usize / 3, twin as usize % 3);
+            union(3 * f + k, 3 * tf + (tk + 1) % 3);
+            union(3 * f + (k + 1) % 3, 3 * tf + tk);
+        }
+        let mut sector_of = vec![u32::MAX; corners];
+        let mut cut_positions = Vec::with_capacity(mesh.positions.len());
+        let mut origin_of = Vec::with_capacity(mesh.positions.len());
+        for c in 0..corners {
+            let root = find(&mut parent, c as u32) as usize;
+            if sector_of[root] == u32::MAX {
+                sector_of[root] = cut_positions.len() as u32;
+                let v = mesh.triangles[c / 3][c % 3];
+                cut_positions.push(mesh.positions[v as usize]);
+                origin_of.push(v as usize);
+            }
+            sector_of[c] = sector_of[root];
+        }
+        let cut_triangles: Vec<[u32; 3]> =
+            (0..mesh.triangles.len()).map(|f| [sector_of[3 * f], sector_of[3 * f + 1], sector_of[3 * f + 2]]).collect();
+        let cut_mesh = TriMesh { positions: cut_positions, triangles: cut_triangles };
+        let cut_normals = crate::geometry::vertex_normals(&cut_mesh);
+        let cut_areas = crate::geometry::vertex_areas(&cut_mesh);
+        let cut_neighbors = crate::mesh::Topology::build(&cut_mesh).neighbors;
+        let cut_field = Self::estimate(&cut_mesh, &cut_normals, &cut_areas).smoothed(
+            &cut_neighbors,
+            &cut_normals,
+            &cut_areas,
+            iterations,
+        );
+
+        let mut tensors = vec![DMat3::ZERO; mesh.positions.len()];
+        let mut weights = vec![0.0; mesh.positions.len()];
+        for (s, &v) in origin_of.iter().enumerate() {
+            let area = cut_areas[s];
+            if area <= 0.0 {
+                continue;
+            }
+            let rotation = if cut_normals[s] != Vec3::ZERO && normals[v] != Vec3::ZERO {
+                DMat3::from_quat(DQuat::from_rotation_arc(cut_normals[s], normals[v]))
+            } else {
+                DMat3::IDENTITY
+            };
+            tensors[v] += rotation * cut_field.tensors[s] * rotation.transpose() * area;
+            weights[v] += area;
+        }
+        for (tensor, weight) in tensors.iter_mut().zip(weights) {
+            if weight > 0.0 {
+                *tensor *= 1.0 / weight;
+            }
+        }
+        Self { tensors }
+    }
+
     /// Diagonalises each tensor in the tangent plane of its vertex.
     pub fn principal(&self, normals: &[Vec3]) -> Curvature {
         let n = self.tensors.len();

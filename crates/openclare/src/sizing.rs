@@ -243,14 +243,15 @@ impl Demand {
 
         let mut bend = vec![f64::INFINITY; vertices];
         if request.adaptivity > 0.0 {
-            let bending = TensorField::estimate(mesh, &work.normals, &work.areas)
-                .smoothed(
-                    &topology.neighbors,
-                    &work.normals,
-                    &work.areas,
-                    passes_over(tuning.reading_scale * request.edge_length),
-                )
-                .principal(&work.normals);
+            let bending = TensorField::on_smooth_patches(
+                mesh,
+                &work.normals,
+                &work.areas,
+                &topology.neighbors,
+                &work.feature_edges,
+                passes_over(tuning.reading_scale * request.edge_length),
+            )
+            .principal(&work.normals);
             // Curvature below what the quads can feel does not count: the
             // largest of them, when sizes are asked for.
             let floor = tuning.felt / request.bounds.map_or(request.edge_length, |(largest, _)| largest);

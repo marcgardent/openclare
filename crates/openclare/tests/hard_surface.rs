@@ -146,8 +146,8 @@ fn edges_kept_for_the_shape_are_followed_and_come_out_as_hard_edges() {
     // quads follow them, as lines that may be let go; where they are kept,
     // as they all are here, they are hard edges of the result like any.
     let source = primitives::cube(12);
-    let round = RemeshConfig::for_organic(Target::QuadCount(600));
-    let crisp = RemeshConfig { edge_angle: Some(30.0), ..round.clone() };
+    let crisp = RemeshConfig::for_organic(Target::QuadCount(600));
+    let round = RemeshConfig { edge_angle: None, ..crisp.clone() };
     let (rounded, _) = round.remesh_guided(&source, &Guides::default()).unwrap();
     let (mesh, report) = crisp.remesh_guided(&source, &Guides::default()).unwrap();
     assert!(measure(&source, &mesh, Some(600)).is_valid());

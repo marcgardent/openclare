@@ -286,6 +286,7 @@ impl Preprocessor for Isotropic {
 
         // What the vertices of a line are held on: the creases of the source
         // and the curves as laid.
+        let source_feature_count = features.len();
         let mut segments: Vec<[Vec3; 3]> = features
             .iter()
             .map(|&[a, b]| {
@@ -332,12 +333,20 @@ impl Preprocessor for Isotropic {
                 })
                 .collect();
             if let Some(cos) = request.edge_angle.map(|degrees| degrees.to_radians().cos()) {
+                let middle =
+                    |[a, b]: [u32; 2]| 0.5 * (work.mesh.positions[a as usize] + work.mesh.positions[b as usize]);
                 work.shape_guide_edges = work
                     .guide_edges
                     .iter()
                     .copied()
                     .filter(|&[a, b]| match sides.get(&(a.min(b), a.max(b))).map(Vec::as_slice) {
-                        Some([one, other]) => one.dot(*other) < cos,
+                        Some([one, other]) => {
+                            one.dot(*other) < cos
+                                && lines.as_ref().is_some_and(|bvh| {
+                                    bvh.closest_point(middle([a, b]))
+                                        .is_some_and(|hit| (hit.triangle as usize) < source_feature_count)
+                                })
+                        }
                         _ => false,
                     })
                     .collect();
@@ -468,13 +477,25 @@ fn cleaned(source: &TriMesh) -> Result<TriMesh> {
 
 fn source_features(mesh: &TriMesh, request: &Request) -> Vec<[u32; 2]> {
     let topology = Topology::build(mesh);
-    // The lesser of the two angles finds the edges of both kinds; which are
-    // creases to keep and which are lines to follow is told afterwards.
-    let angle = match (request.crease_angle, request.edge_angle) {
-        (Some(hard), Some(soft)) => Some(hard.min(soft)),
-        (hard, soft) => hard.or(soft),
+    let scale = request.curvature_scale.filter(|&s| s.is_finite() && s > 0.0);
+    // When the quad size is not given, the lesser of the two angles finds
+    // the edges of both kinds; when it is, `edge_angle` only keeps the
+    // creases that still show at that size.
+    let angle = match (request.crease_angle, request.edge_angle, scale) {
+        (Some(hard), Some(soft), None) => Some(hard.min(soft)),
+        (hard, soft, None) => hard.or(soft),
+        (hard, _, Some(_)) => hard,
     };
     let mut features = feature_edges(mesh, &topology, angle.map(f64::to_radians), true);
+    if let (Some(soft), Some(quad_edge)) = (request.edge_angle, scale) {
+        let mut known: HashSet<(u32, u32)> = features.iter().map(|&[a, b]| (a.min(b), a.max(b))).collect();
+        let sharp = crate::metrics::SharpEdges { angle: soft, ..Default::default() };
+        for [a, b] in sharp.edges(mesh, &topology, quad_edge) {
+            if known.insert((a.min(b), a.max(b))) {
+                features.push([a, b]);
+            }
+        }
+    }
     if !request.lines.is_empty() {
         // The edges asked for, found by where their ends are: the vertices
         // have other numbers here than where the lines were told.
