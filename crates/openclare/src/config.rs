@@ -258,9 +258,11 @@ impl RemeshConfig {
 
     /// The hard edges of `input` the configured chain would follow, and
     /// those it would leave out, found without remeshing (see
-    /// [`crate::Remesher::hard_edges`]).
+    /// [`crate::Remesher::hard_edges`]). To find them again under other
+    /// settings, a [`crate::HardEdgeFinder`] keeps what depends on the shape
+    /// alone.
     pub fn hard_edges(&self, input: &crate::TriMesh, guides: &Guides) -> Result<crate::preprocess::HardEdges> {
-        crate::remesher::create(self.method).hard_edges(input, guides, self)
+        crate::HardEdgeFinder::new(input.clone()).find(guides, self)
     }
 
     pub fn validate(&self) -> Result<()> {

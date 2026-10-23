@@ -1078,12 +1078,27 @@ class OPENCLARE_PT_shape(DataPanel, bpy.types.Panel):
         angle = row.row(align=True)
         angle.active = settings.use_hard_edges
         angle.prop(settings, "hard_edge_angle", text="")
-        # The preview of what the setting does, in the 3D viewport.
+        # The preview of what the setting does, in the 3D viewport, and
+        # where it is: a ring that turns while it is being computed, a tick
+        # once what is drawn is for the settings as they are, and in words
+        # below.
         wm = context.window_manager
         shown = wm.openclare_show_hard_edges
         row.prop(wm, "openclare_show_hard_edges", text="", icon="HIDE_OFF" if shown else "HIDE_ON")
-        if shown and preview.state.error:
-            column.label(text=preview.state.error, icon="ERROR")
+        if shown and preview.is_about(object_to_remesh(context)):
+            status = preview.state.status
+            if status in preview.BUSY:
+                # As wide as an icon, not a share of the row.
+                ring = row.row()
+                ring.ui_units_x = 1.0
+                ring.progress(factor=preview.ring_factor(), type="RING", text="")
+            elif status == preview.CURRENT:
+                row.label(text="", icon="CHECKMARK")
+            elif status == preview.FAILED:
+                row.label(text="", icon="ERROR")
+            said = preview.status_text()
+            if said:
+                column.label(text=said)
         layout.prop(settings, "follow_curvature")
         layout.prop(settings, "fewer_irregular")
         layout.prop(settings, "volume_fit", slider=True)

@@ -50,7 +50,7 @@ use std::time::Instant;
 use openclare::math::Vec3;
 use openclare::recorder::{Recorder, Shape};
 use openclare::uv;
-use openclare::{GuideCurve, Guides, PolyMesh, RemeshConfig, Target, TriMesh};
+use openclare::{GuideCurve, Guides, HardEdgeFinder, PolyMesh, RemeshConfig, Target, TriMesh};
 
 /// Called when a stage of the run begins, with its name ("cross field", or
 /// "piece 3 of 12: cross field") and the `user` pointer given to
@@ -1173,7 +1173,12 @@ pub unsafe extern "C" fn openclare_hard_edges(
             config.hard_edges(&input, &guides).map_err(|error| error.to_string())
         }
     }));
-    let found = match outcome {
+    Box::into_raw(Box::new(hard_edges_of(outcome)))
+}
+
+/// The handle of hard edges for what finding them came to.
+fn hard_edges_of(outcome: std::thread::Result<Result<openclare::HardEdges, String>>) -> OpenclareHardEdges {
+    match outcome {
         Ok(Ok(found)) => OpenclareHardEdges { kept: found.kept, left_out: found.left_out, error: CString::default() },
         Ok(Err(message)) => OpenclareHardEdges { kept: Vec::new(), left_out: Vec::new(), error: text(message) },
         Err(_) => OpenclareHardEdges {
@@ -1181,8 +1186,134 @@ pub unsafe extern "C" fn openclare_hard_edges(
             left_out: Vec::new(),
             error: text("openclare failed unexpectedly while finding the hard edges".to_string()),
         },
+    }
+}
+
+/// One mesh whose hard edges are found again and again under other
+/// settings, by [`openclare_hard_edge_finder_find`]: what depends on the
+/// mesh alone is done once, and the size of the quads is not looked for
+/// again for settings already met.
+pub struct OpenclareHardEdgeFinder {
+    /// None when the mesh could not be read.
+    finder: Option<HardEdgeFinder>,
+    vertex_count: usize,
+    /// Empty when all went well.
+    error: CString,
+}
+
+/// Takes in a mesh to find the hard edges of with
+/// [`openclare_hard_edge_finder_find`], as [`openclare_hard_edges`] finds
+/// them, and quicker when called more than once.
+///
+/// - `positions`, `vertex_count`, `triangles`, `triangle_count`,
+///   `corner_vertices`, `corner_count`: as for [`openclare_remesh`]. They
+///   are copied: the caller may free them on return.
+///
+/// Returns a handle to free with [`openclare_hard_edge_finder_free`], never
+/// null. A handle is used by one thread at a time.
+///
+/// # Safety
+///
+/// As for [`openclare_remesh`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_hard_edge_finder(
+    positions: *const f32,
+    vertex_count: usize,
+    triangles: *const u32,
+    triangle_count: usize,
+    corner_vertices: *const u32,
+    corner_count: usize,
+) -> *mut OpenclareHardEdgeFinder {
+    let outcome = catch_unwind(AssertUnwindSafe(|| -> Result<TriMesh, String> {
+        // SAFETY: the caller vouches for the pointers and their lengths.
+        unsafe {
+            let corners =
+                (!corner_vertices.is_null()).then(|| std::slice::from_raw_parts(corner_vertices, corner_count));
+            input_of(positions, vertex_count, triangles, triangle_count, corners)
+        }
+    }));
+    let (finder, error) = match outcome {
+        Ok(Ok(input)) => (Some(HardEdgeFinder::new(input)), CString::default()),
+        Ok(Err(message)) => (None, text(message)),
+        Err(_) => (None, text("openclare failed unexpectedly while reading the mesh".to_string())),
     };
-    Box::into_raw(Box::new(found))
+    Box::into_raw(Box::new(OpenclareHardEdgeFinder { finder, vertex_count, error }))
+}
+
+/// 1 if the mesh was read, 0 if not or if `finder` is null.
+///
+/// # Safety
+///
+/// `finder` must be null or a handle from [`openclare_hard_edge_finder`] not
+/// yet freed; the same goes for every function below.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_hard_edge_finder_ok(finder: *const OpenclareHardEdgeFinder) -> i32 {
+    // SAFETY: null or a live handle, by contract.
+    unsafe { finder.as_ref() }.is_some_and(|finder| finder.finder.is_some()) as i32
+}
+
+/// Why the mesh could not be read; empty if it was. Valid until freed.
+///
+/// # Safety
+///
+/// See [`openclare_hard_edge_finder_ok`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_hard_edge_finder_error(finder: *const OpenclareHardEdgeFinder) -> *const c_char {
+    // SAFETY: null or a live handle, by contract.
+    match unsafe { finder.as_ref() } {
+        Some(finder) => finder.error.as_ptr(),
+        None => c"no mesh".as_ptr(),
+    }
+}
+
+/// Finds the hard edges of the mesh of `finder` under `preset` and
+/// `settings`, with `density` (null, or one weight per vertex): what
+/// [`openclare_hard_edges`] gives with the same mesh and arguments.
+///
+/// Returns a handle to free with [`openclare_hard_edges_free`], never null.
+///
+/// # Safety
+///
+/// See [`openclare_hard_edge_finder_ok`]; `density` and the texts as for
+/// [`openclare_hard_edges`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_hard_edge_finder_find(
+    finder: *mut OpenclareHardEdgeFinder,
+    density: *const f32,
+    preset: *const c_char,
+    settings: *const c_char,
+) -> *mut OpenclareHardEdges {
+    let outcome = catch_unwind(AssertUnwindSafe(|| -> Result<openclare::HardEdges, String> {
+        // SAFETY: null or a live handle, by contract.
+        let Some(finder) = (unsafe { finder.as_mut() }) else { return Err("no mesh".into()) };
+        let vertex_count = finder.vertex_count;
+        let Some(found) = finder.finder.as_mut() else {
+            return Err(finder.error.to_string_lossy().into_owned());
+        };
+        // SAFETY: one weight per vertex, and texts null or NUL-terminated,
+        // as the caller vouches.
+        unsafe {
+            let painted: Option<Vec<f64>> = (!density.is_null()).then(|| {
+                std::slice::from_raw_parts(density, vertex_count).iter().map(|&weight| weight as f64).collect()
+            });
+            let config = config_of(preset, settings)?;
+            let guides = Guides { density: painted.as_deref(), ..Default::default() };
+            found.find(&guides, &config).map_err(|error| error.to_string())
+        }
+    }));
+    Box::into_raw(Box::new(hard_edges_of(outcome)))
+}
+
+/// # Safety
+///
+/// `finder` must be null or a handle from [`openclare_hard_edge_finder`] not
+/// yet freed, and no other thread may be using it.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_hard_edge_finder_free(finder: *mut OpenclareHardEdgeFinder) {
+    if !finder.is_null() {
+        // SAFETY: made by `Box::into_raw` in `openclare_hard_edge_finder`.
+        drop(unsafe { Box::from_raw(finder) });
+    }
 }
 
 /// 1 if the hard edges were found, 0 if not or if `found` is null.

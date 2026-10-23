@@ -198,3 +198,39 @@ fn what_is_kept_is_what_the_remesh_follows() {
     assert!(!recorder.lines.is_empty());
     assert!(followed_not_kept < 1e-9 && kept_not_followed < 1e-9, "{followed_not_kept} {kept_not_followed}");
 }
+
+#[test]
+fn a_finder_finds_what_is_found_afresh_whatever_the_settings_and_their_order() {
+    use openclare::{HardEdgeFinder, Method};
+    // Two pieces, so that each is sized with its share; and one piece alone.
+    let slab = stepped_slab();
+    let ball = grainy_sphere(Vec3::new(12.0, 12.0, 30.0), 8.0);
+    let density: Vec<f64> = (0..slab.positions.len() + ball.positions.len()).map(|v| (v % 5) as f64 / 4.0).collect();
+    let sizes = Target::SizeRange { largest: 4.0, smallest: 1.0 };
+    let settings = [
+        organic(60),
+        organic(3000),
+        RemeshConfig { edge_angle: Some(50.0), ..organic(3000) },
+        RemeshConfig { target: sizes, ..organic(60) },
+        // Only what the shape is measured with changes: the same work mesh.
+        RemeshConfig { target: sizes, adaptivity: 0.9, ..organic(60) },
+        RemeshConfig { target: sizes, quads_around: 0.0, ..organic(60) },
+        RemeshConfig { target: Target::SizeRange { largest: 8.0, smallest: 1.0 }, ..organic(60) },
+        RemeshConfig { target: sizes, ..organic(60) },
+        RemeshConfig { method: Method::IntegerGrid, ..organic(3000) },
+        RemeshConfig { method: Method::IntegerGrid, target: sizes, ..organic(3000) },
+        organic(60),
+        organic(60),
+    ];
+    for input in [together(&[slab.clone(), ball]), slab] {
+        let mut finder = HardEdgeFinder::new(input.clone());
+        for (index, config) in settings.iter().enumerate() {
+            // Painted for a while: what was kept for one density is not
+            // taken for another.
+            let painted = (6..=8).contains(&index).then(|| &density[..input.positions.len()]);
+            let guides = Guides { density: painted, ..Default::default() };
+            let afresh = config.hard_edges(&input, &guides).unwrap();
+            assert_eq!(finder.find(&guides, config).unwrap(), afresh, "settings {index}");
+        }
+    }
+}

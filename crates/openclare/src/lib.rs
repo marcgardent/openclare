@@ -52,4 +52,4 @@ pub use mesh::{PolyMesh, TriMesh};
 pub use pipeline::{Params, Report, Target, remesh};
 pub use preprocess::{GuideCurve, HardEdges};
 pub use recorder::{Recorder, Silent};
-pub use remesher::{Analysis, Guides, Method, Remesher};
+pub use remesher::{Analysis, Guides, HardEdgeFinder, Method, Remesher};

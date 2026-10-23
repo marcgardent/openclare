@@ -14,10 +14,12 @@
  * - Arrays and texts given to the library belong to the caller; they are
  *   read during the call only, never kept.
  * - The four calls that do work (openclare_remesh, openclare_bake_height,
- *   openclare_analyse, openclare_hard_edges) never return NULL: they return
+ *   openclare_analyse, openclare_hard_edges, openclare_hard_edge_finder,
+ *   openclare_hard_edge_finder_find) never return NULL: they return
  *   a handle, which holds either what was made or the reason it was not.
  *   Each handle is freed by its own function, once: openclare_result_free,
- *   openclare_baked_free, openclare_analysis_free, openclare_hard_edges_free.
+ *   openclare_baked_free, openclare_analysis_free, openclare_hard_edges_free,
+ *   openclare_hard_edge_finder_free.
  *   Freeing NULL is allowed.
  * - The copy functions write into arrays the caller allocates, of the size
  *   the matching count function gives.
@@ -378,8 +380,8 @@ OpenclareHardEdges *openclare_hard_edges(const float *positions,
                                          const char *preset,
                                          const char *settings);
 
-/* The functions below take a handle from openclare_hard_edges not yet freed,
- * or NULL. */
+/* The functions below take a handle from openclare_hard_edges or
+ * openclare_hard_edge_finder_find not yet freed, or NULL. */
 
 /* 1 if the hard edges were found, 0 if not or if found is NULL. */
 int32_t openclare_hard_edges_ok(const OpenclareHardEdges *found);
@@ -404,6 +406,49 @@ void openclare_hard_edges_copy_left_out(const OpenclareHardEdges *found, uint32_
 
 /* Frees a handle of hard edges. NULL is fine; twice is not. */
 void openclare_hard_edges_free(OpenclareHardEdges *found);
+
+/* One mesh whose hard edges are found again and again under other settings,
+ * as a host shows them while they are being set. Opaque; free with
+ * openclare_hard_edge_finder_free. */
+typedef struct OpenclareHardEdgeFinder OpenclareHardEdgeFinder;
+
+/*
+ * Takes in a mesh to find the hard edges of with
+ * openclare_hard_edge_finder_find: what depends on the mesh alone is done
+ * once, and the size of the quads is not looked for again for settings
+ * already met. The arguments are as for openclare_remesh; the arrays are
+ * copied, and may be freed on return.
+ *
+ * Never returns NULL; free the handle with openclare_hard_edge_finder_free.
+ * A handle is used by one thread at a time.
+ */
+OpenclareHardEdgeFinder *openclare_hard_edge_finder(const float *positions,
+                                                    size_t vertex_count,
+                                                    const uint32_t *triangles,
+                                                    size_t triangle_count,
+                                                    const uint32_t *corner_vertices,
+                                                    size_t corner_count);
+
+/* 1 if the mesh was read, 0 if not or if finder is NULL. */
+int32_t openclare_hard_edge_finder_ok(const OpenclareHardEdgeFinder *finder);
+
+/* Why the mesh could not be read; "" if it was. Owned by the handle. */
+const char *openclare_hard_edge_finder_error(const OpenclareHardEdgeFinder *finder);
+
+/*
+ * The hard edges of the mesh of finder under preset and settings, with
+ * density (NULL, or one weight per vertex): what openclare_hard_edges gives
+ * with the same mesh and arguments. The texts and density are read during
+ * the call only. Never returns NULL; free the handle with
+ * openclare_hard_edges_free.
+ */
+OpenclareHardEdges *openclare_hard_edge_finder_find(OpenclareHardEdgeFinder *finder,
+                                                    const float *density,
+                                                    const char *preset,
+                                                    const char *settings);
+
+/* Frees a finder. NULL is fine; twice is not. */
+void openclare_hard_edge_finder_free(OpenclareHardEdgeFinder *finder);
 
 #ifdef __cplusplus
 } /* extern "C" */

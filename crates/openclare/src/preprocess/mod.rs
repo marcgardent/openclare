@@ -505,22 +505,44 @@ pub struct HardEdges {
 /// before anything is remeshed. Neither the curves nor the lines of
 /// `request` count; only its angles and its scale do.
 pub fn hard_edges(source: &TriMesh, request: &Request) -> Result<HardEdges> {
-    let (mesh, was) = cleaned(source)?;
-    let topology = Topology::build(&mesh);
-    let (kept, left_out) = by_angle(&mesh, &topology, request);
-    let border: HashSet<(u32, u32)> = (0..topology.opposite.len())
-        .filter(|&h| topology.opposite[h] == INVALID)
-        .map(|h| {
-            let tri = mesh.triangles[h / 3];
-            let (a, b) = (tri[h % 3], tri[(h + 1) % 3]);
-            (a.min(b), a.max(b))
-        })
-        .collect();
-    let back = |[a, b]: [u32; 2]| [was[a as usize], was[b as usize]];
-    Ok(HardEdges {
-        kept: kept.into_iter().filter(|&[a, b]| !border.contains(&(a.min(b), a.max(b)))).map(back).collect(),
-        left_out: left_out.into_iter().map(back).collect(),
-    })
+    Ok(Surface::new(source)?.hard_edges(request))
+}
+
+/// A mesh cleaned as preprocessing cleans it, with its topology and its
+/// open borders: what its hard edges are found on, made once for a shape
+/// whose hard edges are looked for at several angles and sizes.
+pub struct Surface {
+    mesh: TriMesh,
+    /// The vertex of the source each vertex of `mesh` was.
+    was: Vec<u32>,
+    topology: Topology,
+    border: HashSet<(u32, u32)>,
+}
+
+impl Surface {
+    pub fn new(source: &TriMesh) -> Result<Self> {
+        let (mesh, was) = cleaned(source)?;
+        let topology = Topology::build(&mesh);
+        let border = (0..topology.opposite.len())
+            .filter(|&h| topology.opposite[h] == INVALID)
+            .map(|h| {
+                let tri = mesh.triangles[h / 3];
+                let (a, b) = (tri[h % 3], tri[(h + 1) % 3]);
+                (a.min(b), a.max(b))
+            })
+            .collect();
+        Ok(Self { mesh, was, topology, border })
+    }
+
+    /// The edges of the source [`hard_edges`] finds under `request`.
+    pub fn hard_edges(&self, request: &Request) -> HardEdges {
+        let (kept, left_out) = by_angle(&self.mesh, &self.topology, request);
+        let back = |[a, b]: [u32; 2]| [self.was[a as usize], self.was[b as usize]];
+        HardEdges {
+            kept: kept.into_iter().filter(|&[a, b]| !self.border.contains(&(a.min(b), a.max(b)))).map(back).collect(),
+            left_out: left_out.into_iter().map(back).collect(),
+        }
+    }
 }
 
 /// The edges of `mesh` the angles of `request` make lines to keep, open

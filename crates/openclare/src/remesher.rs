@@ -109,8 +109,10 @@ pub trait Remesher {
     /// in vertices of `input`, found without remeshing: by the code the
     /// chain finds them with, at the size of the quads it would make (see
     /// [`preprocess::hard_edges`]). Where vertices of `input` were welded
-    /// together, an edge names one of those at each end.
-    fn hard_edges(&self, input: &TriMesh, guides: &Guides, config: &RemeshConfig) -> Result<HardEdges>;
+    /// together, an edge names one of those at each end. `input` is that of
+    /// `finder`, which keeps what depends on it alone from one call to the
+    /// next.
+    fn hard_edges(&self, finder: &mut HardEdgeFinder, guides: &Guides, config: &RemeshConfig) -> Result<HardEdges>;
 }
 
 /// The chains [`create`] knows how to build.
@@ -218,10 +220,10 @@ impl Remesher for InstantMeshes {
     /// Only the creases of [`RemeshConfig::crease_angle`]: this chain has
     /// no use for [`RemeshConfig::edge_angle`], nor for the size of the
     /// quads in finding them.
-    fn hard_edges(&self, input: &TriMesh, _: &Guides, config: &RemeshConfig) -> Result<HardEdges> {
+    fn hard_edges(&self, finder: &mut HardEdgeFinder, _: &Guides, config: &RemeshConfig) -> Result<HardEdges> {
         config.validate()?;
         let request = preprocess::Request { crease_angle: config.crease_angle, ..Default::default() };
-        preprocess::hard_edges(input, &request)
+        finder.whole.hard_edges(&finder.input, &request)
     }
 }
 
@@ -301,12 +303,13 @@ impl Remesher for IntegerGrid {
         Ok((mesh, report))
     }
 
-    fn hard_edges(&self, input: &TriMesh, _: &Guides, config: &RemeshConfig) -> Result<HardEdges> {
+    fn hard_edges(&self, finder: &mut HardEdgeFinder, _: &Guides, config: &RemeshConfig) -> Result<HardEdges> {
         config.validate()?;
+        let HardEdgeFinder { input, whole, .. } = finder;
         input.validate()?;
         let size = WorkSize { per_quad: self.triangles_per_quad, least: self.min_triangles, most: self.max_triangles };
-        let asked = quad_size(input, config, &size, None, &mut Silent)?;
-        preprocess::hard_edges(input, &sharp_request(config, asked.edge_length))
+        let edge_length = whole.edge_length(input, config, &size, None)?;
+        whole.hard_edges(input, &sharp_request(config, edge_length))
     }
 }
 
@@ -394,54 +397,207 @@ impl Remesher for QuadLayout {
     }
 
     /// Found as the chain finds them: on the surface stitched, piece by
-    /// piece, each at the size of the quads of its share.
-    fn hard_edges(&self, input: &TriMesh, guides: &Guides, config: &RemeshConfig) -> Result<HardEdges> {
+    /// piece, each at the size of the quads of its share. The pieces are
+    /// looked at side by side, each on a thread of its own.
+    fn hard_edges(&self, finder: &mut HardEdgeFinder, guides: &Guides, config: &RemeshConfig) -> Result<HardEdges> {
+        use rayon::prelude::*;
+
         config.validate()?;
-        input.validate()?;
+        finder.input.validate()?;
         if let Some(density) = guides.density
-            && density.len() != input.positions.len()
+            && density.len() != finder.input.positions.len()
         {
             return Err(Error::InvalidParams(format!(
                 "{} weights painted for {} vertices",
                 density.len(),
-                input.positions.len()
+                finder.input.positions.len()
             )));
         }
-        let mended = input.stitched();
-        let (stitched, density) = mended_density(input, mended.as_ref(), guides.density);
+        finder.forget_sizes_unless(guides.density);
+        let HardEdgeFinder { input, stitched, .. } = finder;
+        let stitched = stitched.get_or_insert_with(|| Stitched::new(input));
+        let (surface, density) = mended_density(input, stitched.mended.as_ref(), guides.density);
+        let mended = &stitched.mended;
         let was = |v: u32| mended.as_ref().map_or(v, |mended| mended.vertex_was[v as usize]);
         let guides = &Guides { density: density.as_deref(), groups: None, ..*guides };
         // As `fields` sizes the quads of a piece, then as preprocessing
         // finds its hard edges.
-        let piece_edges = |piece: &TriMesh, config: &RemeshConfig, guides: &Guides, least: usize| {
-            let size = WorkSize { per_quad: self.triangles_per_quad, least, most: self.max_triangles };
-            let asked = quad_size(piece, config, &size, Some(guides), &mut Silent)?;
-            preprocess::hard_edges(piece, &sharp_request(config, asked.edge_length))
-        };
-        let pieces = stitched.pieces();
+        let piece_edges =
+            |prepared: &mut Prepared, piece: &TriMesh, config: &RemeshConfig, guides: &Guides, least: usize| {
+                let size = WorkSize { per_quad: self.triangles_per_quad, least, most: self.max_triangles };
+                let edge_length = prepared.edge_length(piece, config, &size, Some(guides))?;
+                prepared.hard_edges(piece, &sharp_request(config, edge_length))
+            };
+        let pieces = &stitched.pieces;
         if pieces.len() <= 1 {
-            let found = piece_edges(stitched, config, guides, self.min_triangles)?;
+            let found = piece_edges(&mut stitched.whole, surface, config, guides, self.min_triangles)?;
             let back = |edges: Vec<[u32; 2]>| edges.into_iter().map(|edge| edge.map(was)).collect();
             return Ok(HardEdges { kept: back(found.kept), left_out: back(found.left_out) });
         }
-        let asked = self.ask_pieces(stitched, &pieces, guides, config)?;
+        let asked = self.ask_pieces(surface, pieces, guides, config)?;
+        let found: Vec<Option<HardEdges>> = stitched
+            .each
+            .par_iter_mut()
+            .zip(pieces.par_iter())
+            .zip(asked.shares.par_iter())
+            .map(|((prepared, (piece, origin)), share)| {
+                let share = (*share)?;
+                let density: Option<Vec<f64>> =
+                    guides.density.map(|density| origin.iter().map(|&v| density[v as usize]).collect());
+                let piece_guides = Guides { density: density.as_deref(), ..*guides };
+                let piece_config = asked.config_of(config, share);
+                // A piece the chain could not size is not meshed either.
+                let least = self.least_for(piece, asked.area);
+                piece_edges(prepared, piece, &piece_config, &piece_guides, least).ok()
+            })
+            .collect();
         let mut all = HardEdges::default();
-        for (index, share) in asked.shares.iter().enumerate() {
-            let Some(share) = *share else { continue };
-            let (piece, origin) = &pieces[index];
-            let density: Option<Vec<f64>> =
-                guides.density.map(|density| origin.iter().map(|&v| density[v as usize]).collect());
-            let piece_guides = Guides { density: density.as_deref(), ..*guides };
-            let piece_config = asked.config_of(config, share);
-            // A piece the chain could not size is not meshed either.
-            let least = self.least_for(piece, asked.area);
-            let Ok(found) = piece_edges(piece, &piece_config, &piece_guides, least) else { continue };
+        for (found, (_, origin)) in found.into_iter().zip(pieces) {
+            let Some(found) = found else { continue };
             let back = |edge: [u32; 2]| edge.map(|v| was(origin[v as usize]));
             all.kept.extend(found.kept.into_iter().map(back));
             all.left_out.extend(found.left_out.into_iter().map(back));
         }
         Ok(all)
     }
+}
+
+/// One shape whose hard edges are found again and again under other
+/// settings, as a host shows them while they are being set: what depends on
+/// the shape alone (the surface stitched, its pieces, each cleaned with its
+/// topology) is done once, the first time it is needed, and so is the size
+/// of the quads for settings already met. The edges found are those
+/// [`Remesher::hard_edges`] finds on the shape afresh: the same code, on the
+/// same meshes.
+pub struct HardEdgeFinder {
+    input: TriMesh,
+    /// What is found on `input` as it is, for the chains that do not stitch
+    /// it.
+    whole: Prepared,
+    /// `input` stitched and cut into its pieces, for the chain that does.
+    stitched: Option<Stitched>,
+    /// The density painted that the sizes kept were found with.
+    density: Option<Vec<f64>>,
+}
+
+impl HardEdgeFinder {
+    pub fn new(input: TriMesh) -> Self {
+        Self { input, whole: Prepared::default(), stitched: None, density: None }
+    }
+
+    /// The hard edges under `config`, as [`Remesher::hard_edges`] finds
+    /// them with the chain `config` names.
+    pub fn find(&mut self, guides: &Guides, config: &RemeshConfig) -> Result<HardEdges> {
+        create(config.method).hard_edges(self, guides, config)
+    }
+
+    /// The sizes of quads found with a density painted other than `density`
+    /// are forgotten.
+    fn forget_sizes_unless(&mut self, density: Option<&[f64]>) {
+        if self.density.as_deref() == density {
+            return;
+        }
+        self.density = density.map(<[f64]>::to_vec);
+        self.whole.forget_sizes();
+        if let Some(stitched) = &mut self.stitched {
+            stitched.whole.forget_sizes();
+            stitched.each.iter_mut().for_each(Prepared::forget_sizes);
+        }
+    }
+}
+
+/// The input of a [`HardEdgeFinder`] as the quad-layout chain takes it.
+struct Stitched {
+    mended: Option<crate::mesh::Mended>,
+    pieces: Vec<(TriMesh, Vec<u32>)>,
+    /// What is found on the surface stitched, when it is in one piece; and
+    /// on each piece, when in several.
+    whole: Prepared,
+    each: Vec<Prepared>,
+}
+
+impl Stitched {
+    fn new(input: &TriMesh) -> Self {
+        let mended = input.stitched();
+        let pieces = mended.as_ref().map_or(input, |mended| &mended.mesh).pieces();
+        let each = pieces.iter().map(|_| Prepared::default()).collect();
+        Self { mended, pieces, whole: Prepared::default(), each }
+    }
+}
+
+/// How many sizes of quads a [`Prepared`] keeps, the last found.
+const SIZES_KEPT: usize = 16;
+
+/// What has been found on one surface of a [`HardEdgeFinder`]: the surface
+/// cleaned, with its topology; the edge of its quads for each set of
+/// settings met, by what that depends on; and the work mesh of the last
+/// analysis, for sizes asked for (see [`quad_size_with`]).
+#[derive(Default)]
+struct Prepared {
+    surface: Option<preprocess::Surface>,
+    sizes: Vec<(Vec<u64>, f64)>,
+    looked_at: Option<(Vec<u64>, WorkMesh)>,
+}
+
+impl Prepared {
+    /// The edge of the quads [`quad_size`] gives `mesh` under `config`.
+    fn edge_length(
+        &mut self,
+        mesh: &TriMesh,
+        config: &RemeshConfig,
+        size: &WorkSize,
+        guides: Option<&Guides>,
+    ) -> Result<f64> {
+        let key = size_key(config, size, guides.is_some_and(|guides| guides.density.is_some()));
+        if let Some(&(_, edge_length)) = self.sizes.iter().find(|(known, _)| *known == key) {
+            return Ok(edge_length);
+        }
+        let edge_length = quad_size_with(mesh, config, size, guides, &mut Silent, &mut self.looked_at)?.edge_length;
+        if self.sizes.len() == SIZES_KEPT {
+            self.sizes.remove(0);
+        }
+        self.sizes.push((key, edge_length));
+        Ok(edge_length)
+    }
+
+    /// The hard edges [`preprocess::hard_edges`] finds on `mesh` under
+    /// `request`.
+    fn hard_edges(&mut self, mesh: &TriMesh, request: &preprocess::Request) -> Result<HardEdges> {
+        if self.surface.is_none() {
+            self.surface = Some(preprocess::Surface::new(mesh)?);
+        }
+        Ok(self.surface.as_ref().expect("made above").hard_edges(request))
+    }
+
+    fn forget_sizes(&mut self) {
+        self.sizes.clear();
+        self.looked_at = None;
+    }
+}
+
+/// Everything [`quad_size`] reads of `config` and `size`, and whether a
+/// density is painted, as numbers to compare.
+fn size_key(config: &RemeshConfig, size: &WorkSize, painted: bool) -> Vec<u64> {
+    let angle = |angle: Option<f64>| [angle.is_some() as u64, angle.map_or(0, f64::to_bits)];
+    let target = match config.target {
+        Target::QuadCount(count) => [0, count as u64, 0],
+        Target::EdgeLength(length) => [1, length.to_bits(), 0],
+        Target::SizeRange { largest, smallest } => [2, largest.to_bits(), smallest.to_bits()],
+    };
+    let mut key = target.to_vec();
+    key.extend(angle(config.crease_angle));
+    key.extend(angle(config.edge_angle));
+    key.extend([
+        config.adaptivity.to_bits(),
+        config.quads_around.to_bits(),
+        config.most_quads as u64,
+        config.density_contrast.to_bits(),
+        size.per_quad.to_bits(),
+        size.least as u64,
+        size.most as u64,
+        painted as u64,
+    ]);
+    key
 }
 
 /// The surface the quad-layout chain works on, `input` as `mended` (if it
@@ -1509,6 +1665,20 @@ fn quad_size(
     guides: Option<&Guides>,
     recorder: &mut dyn Recorder,
 ) -> Result<QuadSize> {
+    quad_size_with(input, config, size, guides, recorder, &mut None)
+}
+
+/// [`quad_size`], where the work mesh the shape is looked at on, sizes asked
+/// for, is taken from `looked_at` if it was made there for the same
+/// request, and left there otherwise.
+fn quad_size_with(
+    input: &TriMesh,
+    config: &RemeshConfig,
+    size: &WorkSize,
+    guides: Option<&Guides>,
+    recorder: &mut dyn Recorder,
+    looked_at: &mut Option<(Vec<u64>, WorkMesh)>,
+) -> Result<QuadSize> {
     let area = input.surface_area();
     let (quads, edge_length, bounds) = match config.target {
         Target::QuadCount(0) => return Err(Error::InvalidParams("target quad count is zero".into())),
@@ -1526,7 +1696,16 @@ fn quad_size(
             let between = (largest * smallest).sqrt();
             let triangles = ((size.per_quad * area / (between * between)) as usize).clamp(size.least, size.most);
             let request = preprocess::Request { triangles, ..sharp_request(config, between) };
-            let looked_at = preprocess::create(preprocess::Kind::Isotropic).preprocess(input, &request)?;
+            // All that the work mesh depends on besides `input`.
+            let angle = |angle: Option<f64>| [angle.is_some() as u64, angle.map_or(0, f64::to_bits)];
+            let mut key = vec![triangles as u64, between.to_bits()];
+            key.extend(angle(request.crease_angle));
+            key.extend(angle(request.edge_angle));
+            if looked_at.as_ref().is_none_or(|(known, _)| *known != key) {
+                *looked_at = None;
+                *looked_at = Some((key, preprocess::create(preprocess::Kind::Isotropic).preprocess(input, &request)?));
+            }
+            let looked_at = &looked_at.as_ref().expect("made above").1;
             let asked = sizing::Request {
                 edge_length: between,
                 bounds: Some((largest, smallest)),
@@ -1534,7 +1713,7 @@ fn quad_size(
                 painted: guides.and_then(|guides| painted_of(input, guides, config.density_contrast)),
                 quads_around: config.quads_around,
             };
-            let demand = sizing::Demand::measure(&sizing::Curvature::default(), &looked_at, &asked)?;
+            let demand = sizing::Demand::measure(&sizing::Curvature::default(), looked_at, &asked)?;
             let reading = sizing::Reading::between(largest, smallest);
             let wanted = demand.quads(&reading).max(1.0);
             // More than may be made: every quad larger, by as much as it takes.

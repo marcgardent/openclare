@@ -105,6 +105,22 @@ int main(int argc, char **argv) {
     free(edges);
     openclare_hard_edges_free(hard);
 
+    /* The same found again and again under other settings, by a finder that
+     * keeps what depends on the mesh alone. */
+    OpenclareHardEdgeFinder *finder =
+        openclare_hard_edge_finder(positions, vertex_count, triangles, triangle_count, NULL, 0);
+    check(finder != NULL, "a finder is never NULL");
+    check(openclare_hard_edge_finder_ok(finder) == 1, openclare_hard_edge_finder_error(finder));
+    const char *each[] = {"quads = 300\n", "quads = 3000\n", "quads = 300\nedge_angle = 5\n"};
+    for (size_t i = 0; i < 3; i++) {
+        hard = openclare_hard_edge_finder_find(finder, NULL, "organic", each[i]);
+        check(openclare_hard_edges_ok(hard) == 1, openclare_hard_edges_error(hard));
+        printf("hard edges, settings %zu of a finder: %zu kept, %zu left out\n", i + 1,
+               openclare_hard_edges_kept_count(hard), openclare_hard_edges_left_out_count(hard));
+        openclare_hard_edges_free(hard);
+    }
+    openclare_hard_edge_finder_free(finder);
+
     /* The remesh itself. */
     char settings[64];
     snprintf(settings, sizeof settings, "quads = %d\n", QUADS);
@@ -166,6 +182,8 @@ int main(int argc, char **argv) {
     openclare_analysis_free(NULL);
     check(openclare_hard_edges_ok(NULL) == 0 && openclare_hard_edges_kept_count(NULL) == 0, "NULL hard edges are empty");
     openclare_hard_edges_free(NULL);
+    check(openclare_hard_edge_finder_ok(NULL) == 0, "a NULL finder has read nothing");
+    openclare_hard_edge_finder_free(NULL);
 
     free(uv);
     free(out_corners);

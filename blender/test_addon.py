@@ -392,18 +392,28 @@ wm.openclare_show_hard_edges = True
 def preview_settles(start=0.0):
     """Takes the steps of the timer until the edges of the object shown are
     found and drawn, or nothing is to be: what a change waits out, the run
-    in the background, the drawing."""
+    in the background, the drawing. Checks the status on the way: waiting,
+    computing, up to date; the lines drawn before dimmed until then."""
     now = start
     preview.step(now)
     assert preview.state.job is None, "the edges were looked for without waiting"
+    assert preview.state.status == preview.WAITING, preview.state.status
+    assert preview.state.shown is None or preview.state.stale, "lines out of date drawn in full"
     for _ in range(20):
         now += preview.TICK
         preview.step(now)
+        if preview.state.job is None and preview.state.status == preview.FAILED:
+            # Refused before the engine was called.
+            return
         if preview.state.job is not None:
-            assert now - start >= preview.QUIET
+            assert now - start >= preview.QUIET_SETTINGS
+            assert preview.state.status == preview.COMPUTING, preview.state.status
+            assert preview.status_text() == "Computing\u2026"
             preview.state.job.thread.join()
-            preview.step(now + 0.01)
+            assert preview.step(now + 0.01) == preview.TICK, "still busy once the edges are in"
             assert preview.state.job is None and not preview.state.pending
+            assert preview.state.status in (preview.CURRENT, preview.FAILED), preview.state.status
+            assert not preview.state.stale
             return
     raise AssertionError("the edges were never looked for")
 
@@ -425,11 +435,13 @@ assert len(shown.kept_points) == 24 and all(
 # grey cube seen from above a corner, the edges kept come out cyan, the
 # three at the back hidden behind the faces, those in front not sunk into
 # them.
+import math
+
 import gpu
 import mathutils
 
 
-def cyan_pixels(with_faces):
+def cyan_pixels(with_faces, stale=False):
     import math
 
     import numpy
@@ -466,7 +478,7 @@ def cyan_pixels(with_faces):
                 faces.bind()
                 faces.uniform_float("color", (0.6, 0.6, 0.6, 1.0))
                 batch.draw(faces)
-            preview.draw_lines(preview.state.shown, mathutils.Matrix.Identity(4), (size, size), eye)
+            preview.draw_lines(preview.state.shown, mathutils.Matrix.Identity(4), (size, size), eye, stale)
         pixels = numpy.array(framebuffer.read_color(0, 0, size, size, 4, 0, "FLOAT").to_list()).reshape(-1, 4)
     offscreen.free()
     gpu.state.depth_test_set("NONE")
@@ -484,6 +496,114 @@ if drawable:
     print("PREVIEW drawn: cyan pixels", alone_lines, "alone,", over_faces, "over the faces")
     assert over_faces > 300, over_faces
     assert over_faces < 0.85 * alone_lines, (over_faces, alone_lines)
+    # Out of date, the lines are dimmed: hardly any pixel comes out as cyan
+    # as they are in full.
+    dimmed = cyan_pixels(False, stale=True)
+    print("PREVIEW drawn dimmed: cyan pixels", dimmed)
+    assert dimmed < 0.2 * alone_lines, (dimmed, alone_lines)
+
+# Up to date: said with the counts, nothing redrawn while nothing happens,
+# nothing said in the viewport.
+assert preview.state.status == preview.CURRENT and preview.state.text_handle is None
+assert preview.status_text() == "12 followed, 0 left out", preview.status_text()
+redrawn = []
+real_redraw, preview.redraw = preview.redraw, redrawn.append
+for moment in range(5):
+    assert preview.step(5.0 + 0.1 * moment) == preview.TICK
+preview.redraw = real_redraw
+assert redrawn == [], redrawn
+# The shape read once: a change of the settings is found on the shape the
+# engine was given, after a shorter pause.
+shape_given = preview.state.shape
+assert shape_given is not None and shape_given.key == preview.shape_key_of(box)
+
+# A change while the edges of the one before are being computed: those are
+# dropped when they come, never drawn as up to date, and the latest change
+# is computed after them.
+settings.hard_edge_angle = math.radians(60.0)
+preview.step(6.0)
+preview.step(6.2)
+assert preview.state.status == preview.COMPUTING and preview.state.job is not None
+assert preview.state.stale, "the lines of the angle before are not dimmed"
+older = preview.state.job
+settings.quads = 30
+older.thread.join()
+preview.step(6.25)
+assert older.found is not None and preview.state.job is None
+assert preview.state.status == preview.WAITING and preview.state.stale, "edges of an older change shown"
+assert preview.state.shape is shape_given
+preview.step(6.3)
+assert preview.state.job is None, "the latest change not waited out"
+preview.step(6.4)
+assert preview.state.status == preview.COMPUTING and preview.state.job is not older
+assert preview.state.job.shape is shape_given, "the mesh read again for a change of the settings"
+preview.state.job.thread.join()
+preview.step(6.45)
+assert preview.state.status == preview.CURRENT and not preview.state.stale
+settings.hard_edge_angle, settings.quads = math.radians(30.0), 3000
+
+# A computation that lasts is said in the viewport too, and no longer once
+# done.
+settings.hard_edge_angle = math.radians(45.0)
+preview.step(8.0)
+preview.step(8.0 + preview.SAID_IN_VIEWPORT_AFTER)
+assert preview.state.status == preview.COMPUTING and preview.state.text_handle is not None
+preview.state.job.thread.join()
+preview.step(8.6)
+assert preview.state.status == preview.CURRENT and preview.state.text_handle is None
+settings.hard_edge_angle = math.radians(30.0)
+preview_settles(9.5)
+
+
+
+class Drawn:
+    """A layout that keeps what is drawn on it: what the panel says of the
+    preview is read off it, there being no window here."""
+
+    def __init__(self, log):
+        self.log = log
+
+    def row(self, **_):
+        return Drawn(self.log)
+
+    column = row
+
+    def prop(self, owner, name, **options):
+        self.log.append(("prop", name, options.get("icon")))
+
+    def label(self, text="", icon="NONE"):
+        self.log.append(("label", text, icon))
+
+    def progress(self, **options):
+        parameters = {p.identifier for p in bpy.types.UILayout.bl_rna.functions["progress"].parameters}
+        assert set(options) <= parameters, options
+        self.log.append(("progress", options.get("type"), options.get("text")))
+
+
+def panel_says():
+    import types
+
+    log = []
+    openclare.OPENCLARE_PT_shape.draw(types.SimpleNamespace(layout=Drawn(log)), bpy.context)
+    return [entry for entry in log if entry[0] != "prop" or entry[1] == "openclare_show_hard_edges"]
+
+
+assert panel_says() == [("prop", "openclare_show_hard_edges", "HIDE_OFF"), ("label", "", "CHECKMARK"),
+                        ("label", "12 followed, 0 left out", "NONE")], panel_says()
+settings.hard_edge_angle = math.radians(50.0)
+preview.step(9.6)
+assert panel_says()[1:] == [("progress", "RING", ""), ("label", "Computing\u2026", "NONE")], panel_says()
+settings.hard_edge_angle = math.radians(30.0)
+
+# What goes wrong is said, and nothing drawn; set right, all is drawn again.
+settings.density_group = "no such group"
+preview_settles(9.7)
+assert preview.state.status == preview.FAILED and preview.state.shown is None and preview.state.handle is None
+assert "no such group" in preview.status_text(), preview.status_text()
+assert panel_says()[1] == ("label", "", "ERROR") and "no such group" in panel_says()[2][1], panel_says()
+settings.density_group = ""
+preview_settles(9.9)
+assert preview.state.status == preview.CURRENT and edges_of(preview.state.shown.kept) == cube_edges
 
 # Hard edges turned off: nothing kept, after the pause.
 settings.use_hard_edges = False
