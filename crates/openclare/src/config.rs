@@ -256,6 +256,13 @@ impl RemeshConfig {
         Ok((mesh, report))
     }
 
+    /// The hard edges of `input` the configured chain would follow, and
+    /// those it would leave out, found without remeshing (see
+    /// [`crate::Remesher::hard_edges`]).
+    pub fn hard_edges(&self, input: &crate::TriMesh, guides: &Guides) -> Result<crate::preprocess::HardEdges> {
+        crate::remesher::create(self.method).hard_edges(input, guides, self)
+    }
+
     pub fn validate(&self) -> Result<()> {
         let non_negative = [
             ("skip_pieces_under", self.skip_pieces_under),

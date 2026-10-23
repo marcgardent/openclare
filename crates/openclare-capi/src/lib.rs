@@ -233,60 +233,14 @@ unsafe fn remesh(
     settings: *const c_char,
     watcher: &mut Watcher,
 ) -> Result<OpenclareResult, String> {
-    if (positions.is_null() && vertex_count > 0) || (triangles.is_null() && triangle_count > 0) {
-        return Err("the mesh arrays are missing".into());
-    }
-    // SAFETY: not null, and as long as the caller says.
-    let (coordinates, indices) = unsafe {
-        (
-            if vertex_count == 0 { &[][..] } else { std::slice::from_raw_parts(positions, 3 * vertex_count) },
-            if triangle_count == 0 { &[][..] } else { std::slice::from_raw_parts(triangles, 3 * triangle_count) },
-        )
-    };
-    // Through the corners, if the triangles are given by their corners.
-    let vertex_of = |index: u32| -> Result<u32, String> {
-        match corner_vertices {
-            None => Ok(index),
-            Some(corners) => corners
-                .get(index as usize)
-                .copied()
-                .ok_or_else(|| format!("a triangle names corner {index}, of {} corners", corners.len())),
-        }
-    };
-    let mut faces = Vec::with_capacity(triangle_count);
-    for t in indices.chunks_exact(3) {
-        let face = [vertex_of(t[0])?, vertex_of(t[1])?, vertex_of(t[2])?];
-        if let Some(&beyond) = face.iter().find(|&&v| v as usize >= vertex_count) {
-            return Err(format!("a triangle names vertex {beyond}, of {vertex_count} vertices"));
-        }
-        faces.push(face);
-    }
-    let input = TriMesh {
-        positions: coordinates.chunks_exact(3).map(|p| Vec3::new(p[0] as f64, p[1] as f64, p[2] as f64)).collect(),
-        triangles: faces,
-    };
+    // SAFETY: as the caller vouches.
+    let input = unsafe { input_of(positions, vertex_count, triangles, triangle_count, corner_vertices)? };
     let painted: Option<Vec<f64>> = (!density.is_null()).then(|| {
         // SAFETY: one weight per vertex, as documented.
         unsafe { std::slice::from_raw_parts(density, vertex_count) }.iter().map(|&weight| weight as f64).collect()
     });
-
-    // SAFETY: NUL-terminated, as documented.
-    let read = |pointer: *const c_char, what: &str| -> Result<Option<String>, String> {
-        if pointer.is_null() {
-            return Ok(None);
-        }
-        let text = unsafe { CStr::from_ptr(pointer) };
-        text.to_str().map(|text| Some(text.to_string())).map_err(|_| format!("the {what} is not valid UTF-8"))
-    };
-    let mut config = match read(preset, "preset name")? {
-        Some(name) if !name.is_empty() => {
-            RemeshConfig::preset(&name, RemeshConfig::default().target).map_err(|error| error.to_string())?
-        }
-        _ => RemeshConfig::default(),
-    };
-    if let Some(lines) = read(settings, "settings")? {
-        config.apply_text(&lines).map_err(|error| error.to_string())?;
-    }
+    // SAFETY: null or NUL-terminated, as documented.
+    let config = unsafe { config_of(preset, settings)? };
 
     let clock = Instant::now();
     // SAFETY: null, or one group per triangle as the caller says.
@@ -338,6 +292,80 @@ unsafe fn remesh(
         error: CString::default(),
         report: text(report),
     })
+}
+
+/// The triangle mesh a host gave as flat arrays: positions, and triangles of
+/// vertices, or of corners when `corner_vertices` gives the vertex of each.
+///
+/// # Safety
+///
+/// The arrays must hold what their counts say, or be null with a count of 0.
+unsafe fn input_of(
+    positions: *const f32,
+    vertex_count: usize,
+    triangles: *const u32,
+    triangle_count: usize,
+    corner_vertices: Option<&[u32]>,
+) -> Result<TriMesh, String> {
+    if (positions.is_null() && vertex_count > 0) || (triangles.is_null() && triangle_count > 0) {
+        return Err("the mesh arrays are missing".into());
+    }
+    // SAFETY: not null, and as long as the caller says.
+    let (coordinates, indices) = unsafe {
+        (
+            if vertex_count == 0 { &[][..] } else { std::slice::from_raw_parts(positions, 3 * vertex_count) },
+            if triangle_count == 0 { &[][..] } else { std::slice::from_raw_parts(triangles, 3 * triangle_count) },
+        )
+    };
+    // Through the corners, if the triangles are given by their corners.
+    let vertex_of = |index: u32| -> Result<u32, String> {
+        match corner_vertices {
+            None => Ok(index),
+            Some(corners) => corners
+                .get(index as usize)
+                .copied()
+                .ok_or_else(|| format!("a triangle names corner {index}, of {} corners", corners.len())),
+        }
+    };
+    let mut faces = Vec::with_capacity(triangle_count);
+    for t in indices.chunks_exact(3) {
+        let face = [vertex_of(t[0])?, vertex_of(t[1])?, vertex_of(t[2])?];
+        if let Some(&beyond) = face.iter().find(|&&v| v as usize >= vertex_count) {
+            return Err(format!("a triangle names vertex {beyond}, of {vertex_count} vertices"));
+        }
+        faces.push(face);
+    }
+    Ok(TriMesh {
+        positions: coordinates.chunks_exact(3).map(|p| Vec3::new(p[0] as f64, p[1] as f64, p[2] as f64)).collect(),
+        triangles: faces,
+    })
+}
+
+/// The configuration a host asked for: the preset of that name (the default
+/// one for null or ""), adjusted by the `key = value` lines of `settings`.
+///
+/// # Safety
+///
+/// Both texts must be null or end with a NUL.
+unsafe fn config_of(preset: *const c_char, settings: *const c_char) -> Result<RemeshConfig, String> {
+    let read = |pointer: *const c_char, what: &str| -> Result<Option<String>, String> {
+        if pointer.is_null() {
+            return Ok(None);
+        }
+        // SAFETY: NUL-terminated, as documented.
+        let text = unsafe { CStr::from_ptr(pointer) };
+        text.to_str().map(|text| Some(text.to_string())).map_err(|_| format!("the {what} is not valid UTF-8"))
+    };
+    let mut config = match read(preset, "preset name")? {
+        Some(name) if !name.is_empty() => {
+            RemeshConfig::preset(&name, RemeshConfig::default().target).map_err(|error| error.to_string())?
+        }
+        _ => RemeshConfig::default(),
+    };
+    if let Some(lines) = read(settings, "settings")? {
+        config.apply_text(&lines).map_err(|error| error.to_string())?;
+    }
+    Ok(config)
 }
 
 /// In the flags of a guide curve: its last point joins the first.
@@ -1080,5 +1108,170 @@ pub unsafe extern "C" fn openclare_analysis_free(analysis: *mut OpenclareAnalysi
     if !analysis.is_null() {
         // SAFETY: made by `Box::into_raw` in `openclare_analyse`.
         drop(unsafe { Box::from_raw(analysis) });
+    }
+}
+
+/// What a call to [`openclare_hard_edges`] gives back: the hard edges a
+/// remesh would follow, and those it would leave out, found without
+/// remeshing.
+pub struct OpenclareHardEdges {
+    kept: Vec<[u32; 2]>,
+    left_out: Vec<[u32; 2]>,
+    /// Empty when all went well.
+    error: CString,
+}
+
+/// Finds the hard edges [`openclare_remesh`] would follow on a mesh with the
+/// same arguments, by the same code and at the size of the quads it would
+/// make, without remeshing: what a host shows of the angle of the hard edges
+/// before a run.
+///
+/// - `positions`, `vertex_count`, `triangles`, `triangle_count`,
+///   `corner_vertices`, `corner_count`, `density`, `preset`, `settings`: as
+///   for [`openclare_remesh`]. The target, the angles, the adaptivity, the
+///   quads round a thin part and the paint count, as they set the size of
+///   the quads of each piece of the mesh.
+///
+/// The edges are given as two vertices of the mesh each. Kept: those sharper
+/// than the angle of the hard edges (`edge_angle`) that still are at the
+/// size of the quads, and those sharper than `crease_angle`; open borders,
+/// which are always followed, are not among them. Left out: those sharper
+/// than `edge_angle` between their two triangles that are not at the size
+/// of the quads, the grain of a sculpt. Where the mesh had vertices at the
+/// same place along a torn border, which the remesh welds, an edge names
+/// one of them at each end.
+///
+/// Returns a handle to free with [`openclare_hard_edges_free`], never null.
+///
+/// # Safety
+///
+/// As for [`openclare_remesh`].
+#[allow(clippy::too_many_arguments)]
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_hard_edges(
+    positions: *const f32,
+    vertex_count: usize,
+    triangles: *const u32,
+    triangle_count: usize,
+    corner_vertices: *const u32,
+    corner_count: usize,
+    density: *const f32,
+    preset: *const c_char,
+    settings: *const c_char,
+) -> *mut OpenclareHardEdges {
+    let outcome = catch_unwind(AssertUnwindSafe(|| -> Result<openclare::HardEdges, String> {
+        // SAFETY: the caller vouches for the pointers and their lengths.
+        unsafe {
+            let corners =
+                (!corner_vertices.is_null()).then(|| std::slice::from_raw_parts(corner_vertices, corner_count));
+            let input = input_of(positions, vertex_count, triangles, triangle_count, corners)?;
+            let painted: Option<Vec<f64>> = (!density.is_null()).then(|| {
+                std::slice::from_raw_parts(density, vertex_count).iter().map(|&weight| weight as f64).collect()
+            });
+            let config = config_of(preset, settings)?;
+            let guides = Guides { density: painted.as_deref(), ..Default::default() };
+            config.hard_edges(&input, &guides).map_err(|error| error.to_string())
+        }
+    }));
+    let found = match outcome {
+        Ok(Ok(found)) => OpenclareHardEdges { kept: found.kept, left_out: found.left_out, error: CString::default() },
+        Ok(Err(message)) => OpenclareHardEdges { kept: Vec::new(), left_out: Vec::new(), error: text(message) },
+        Err(_) => OpenclareHardEdges {
+            kept: Vec::new(),
+            left_out: Vec::new(),
+            error: text("openclare failed unexpectedly while finding the hard edges".to_string()),
+        },
+    };
+    Box::into_raw(Box::new(found))
+}
+
+/// 1 if the hard edges were found, 0 if not or if `found` is null.
+///
+/// # Safety
+///
+/// `found` must be null or a handle from [`openclare_hard_edges`] not yet
+/// freed; the same goes for every function below.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_hard_edges_ok(found: *const OpenclareHardEdges) -> i32 {
+    // SAFETY: null or a live handle, by contract.
+    unsafe { found.as_ref() }.is_some_and(|found| found.error.as_bytes().is_empty()) as i32
+}
+
+/// Why the hard edges could not be found; empty if they were. Valid until
+/// freed.
+///
+/// # Safety
+///
+/// See [`openclare_hard_edges_ok`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_hard_edges_error(found: *const OpenclareHardEdges) -> *const c_char {
+    // SAFETY: null or a live handle, by contract.
+    match unsafe { found.as_ref() } {
+        Some(found) => found.error.as_ptr(),
+        None => c"no hard edges".as_ptr(),
+    }
+}
+
+/// How many edges a remesh would follow.
+///
+/// # Safety
+///
+/// See [`openclare_hard_edges_ok`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_hard_edges_kept_count(found: *const OpenclareHardEdges) -> usize {
+    // SAFETY: null or a live handle, by contract.
+    unsafe { found.as_ref() }.map_or(0, |found| found.kept.len())
+}
+
+/// Writes the edges a remesh would follow, two vertices per edge, into
+/// `vertices`.
+///
+/// # Safety
+///
+/// See [`openclare_hard_edges_ok`]; `vertices` must have room for twice
+/// [`openclare_hard_edges_kept_count`] numbers.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_hard_edges_copy_kept(found: *const OpenclareHardEdges, vertices: *mut u32) {
+    // SAFETY: null or a live handle, by contract.
+    let Some(found) = (unsafe { found.as_ref() }) else { return };
+    // SAFETY: room as documented.
+    unsafe { copy_edges(&found.kept, vertices) }
+}
+
+/// How many edges sharper than the angle a remesh would leave out.
+///
+/// # Safety
+///
+/// See [`openclare_hard_edges_ok`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_hard_edges_left_out_count(found: *const OpenclareHardEdges) -> usize {
+    // SAFETY: null or a live handle, by contract.
+    unsafe { found.as_ref() }.map_or(0, |found| found.left_out.len())
+}
+
+/// Writes the edges sharper than the angle a remesh would leave out, two
+/// vertices per edge, into `vertices`.
+///
+/// # Safety
+///
+/// See [`openclare_hard_edges_ok`]; `vertices` must have room for twice
+/// [`openclare_hard_edges_left_out_count`] numbers.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_hard_edges_copy_left_out(found: *const OpenclareHardEdges, vertices: *mut u32) {
+    // SAFETY: null or a live handle, by contract.
+    let Some(found) = (unsafe { found.as_ref() }) else { return };
+    // SAFETY: room as documented.
+    unsafe { copy_edges(&found.left_out, vertices) }
+}
+
+/// # Safety
+///
+/// `found` must be null or a handle from [`openclare_hard_edges`] not yet
+/// freed.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_hard_edges_free(found: *mut OpenclareHardEdges) {
+    if !found.is_null() {
+        // SAFETY: made by `Box::into_raw` in `openclare_hard_edges`.
+        drop(unsafe { Box::from_raw(found) });
     }
 }

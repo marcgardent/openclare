@@ -270,7 +270,7 @@ impl Preprocessor for Isotropic {
         if request.triangles == 0 {
             return Err(Error::InvalidParams("work mesh size is zero".into()));
         }
-        let source = cleaned(source)?;
+        let (source, _) = cleaned(source)?;
         let features = source_features(&source, request);
         let surface = Bvh::build(&source);
         let face_normals: Vec<Vec3> =
@@ -433,7 +433,7 @@ impl Preprocessor for Passthrough {
     }
 
     fn preprocess(&self, source: &TriMesh, request: &Request) -> Result<WorkMesh> {
-        let mesh = cleaned(source)?;
+        let (mesh, _) = cleaned(source)?;
         let features = source_features(&mesh, request);
         Ok(work_mesh(mesh, features, request))
     }
@@ -452,19 +452,27 @@ impl Preprocessor for Passthrough {
 /// Triangles that lose a corner to welding go; flat ones with three distinct
 /// corners stay, because removing them would open a slit in the surface
 /// (remeshing collapses them properly later).
-fn cleaned(source: &TriMesh) -> Result<TriMesh> {
+///
+/// Also gives, for each vertex of the mesh cleaned, the vertex of `source`
+/// it was (one of them where several were welded into it).
+fn cleaned(source: &TriMesh) -> Result<(TriMesh, Vec<u32>)> {
     source.validate()?;
-    let mended = source.stitched().map(|mended| mended.mesh);
-    let source = mended.as_ref().unwrap_or(source);
+    let mended = source.stitched();
+    let (mesh, was) = match &mended {
+        Some(mended) => (&mended.mesh, Some(&mended.vertex_was)),
+        None => (source, None),
+    };
     // Its vertices in the order its triangles come to them, whether it was
     // mended or not: what follows depends on how they are numbered.
-    let mut compact = vec![u32::MAX; source.positions.len()];
+    let mut compact = vec![u32::MAX; mesh.positions.len()];
     let mut cleaned = TriMesh::default();
-    for tri in &source.triangles {
+    let mut origin = Vec::new();
+    for tri in &mesh.triangles {
         cleaned.triangles.push(tri.map(|v| {
             if compact[v as usize] == u32::MAX {
                 compact[v as usize] = cleaned.positions.len() as u32;
-                cleaned.positions.push(source.positions[v as usize]);
+                cleaned.positions.push(mesh.positions[v as usize]);
+                origin.push(was.map_or(v, |was| was[v as usize]));
             }
             compact[v as usize]
         }));
@@ -472,11 +480,53 @@ fn cleaned(source: &TriMesh) -> Result<TriMesh> {
     if cleaned.surface_area() == 0.0 {
         return Err(Error::InvalidMesh("mesh has no non-degenerate triangle".into()));
     }
-    Ok(cleaned)
+    Ok((cleaned, origin))
 }
 
-fn source_features(mesh: &TriMesh, request: &Request) -> Vec<[u32; 2]> {
-    let topology = Topology::build(mesh);
+/// The edges of a mesh sharper than the angles of a [`Request`], sorted as
+/// preprocessing sorts them: those it keeps as lines of the work mesh, and
+/// those it leaves out. Each edge is given by its two vertices.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct HardEdges {
+    /// Creases sharper than [`Request::crease_angle`], and edges sharper
+    /// than [`Request::edge_angle`] that still are at the size of the quads
+    /// ([`Request::curvature_scale`], see [`crate::metrics::SharpEdges`]).
+    /// Open borders, which are kept whatever the angles, are not among them.
+    pub kept: Vec<[u32; 2]>,
+    /// Edges sharper than [`Request::edge_angle`] between their two
+    /// triangles that are not at the size of the quads: the grain of a
+    /// sculpt, which the work mesh smooths over.
+    pub left_out: Vec<[u32; 2]>,
+}
+
+/// The edges of `source` the angles of `request` make lines of the work
+/// mesh, and those sharper than [`Request::edge_angle`] they leave out, in
+/// vertices of `source`: what preprocessing finds on it, with the same code,
+/// before anything is remeshed. Neither the curves nor the lines of
+/// `request` count; only its angles and its scale do.
+pub fn hard_edges(source: &TriMesh, request: &Request) -> Result<HardEdges> {
+    let (mesh, was) = cleaned(source)?;
+    let topology = Topology::build(&mesh);
+    let (kept, left_out) = by_angle(&mesh, &topology, request);
+    let border: HashSet<(u32, u32)> = (0..topology.opposite.len())
+        .filter(|&h| topology.opposite[h] == INVALID)
+        .map(|h| {
+            let tri = mesh.triangles[h / 3];
+            let (a, b) = (tri[h % 3], tri[(h + 1) % 3]);
+            (a.min(b), a.max(b))
+        })
+        .collect();
+    let back = |[a, b]: [u32; 2]| [was[a as usize], was[b as usize]];
+    Ok(HardEdges {
+        kept: kept.into_iter().filter(|&[a, b]| !border.contains(&(a.min(b), a.max(b)))).map(back).collect(),
+        left_out: left_out.into_iter().map(back).collect(),
+    })
+}
+
+/// The edges of `mesh` the angles of `request` make lines to keep, open
+/// borders included, then those sharper than [`Request::edge_angle`] that
+/// are left out for not being sharp at [`Request::curvature_scale`].
+fn by_angle(mesh: &TriMesh, topology: &Topology, request: &Request) -> (Vec<[u32; 2]>, Vec<[u32; 2]>) {
     let scale = request.curvature_scale.filter(|&s| s.is_finite() && s > 0.0);
     // When the quad size is not given, the lesser of the two angles finds
     // the edges of both kinds; when it is, `edge_angle` only keeps the
@@ -486,16 +536,27 @@ fn source_features(mesh: &TriMesh, request: &Request) -> Vec<[u32; 2]> {
         (hard, soft, None) => hard.or(soft),
         (hard, _, Some(_)) => hard,
     };
-    let mut features = feature_edges(mesh, &topology, angle.map(f64::to_radians), true);
+    let mut features = feature_edges(mesh, topology, angle.map(f64::to_radians), true);
+    let mut left_out = Vec::new();
     if let (Some(soft), Some(quad_edge)) = (request.edge_angle, scale) {
         let mut known: HashSet<(u32, u32)> = features.iter().map(|&[a, b]| (a.min(b), a.max(b))).collect();
         let sharp = crate::metrics::SharpEdges { angle: soft, ..Default::default() };
-        for [a, b] in sharp.edges(mesh, &topology, quad_edge) {
+        let (kept, grain) = sharp.edges_and_left_out(mesh, topology, quad_edge);
+        for [a, b] in kept {
             if known.insert((a.min(b), a.max(b))) {
                 features.push([a, b]);
             }
         }
+        left_out = grain.into_iter().filter(|&[a, b]| !known.contains(&(a.min(b), a.max(b)))).collect();
     }
+    (features, left_out)
+}
+
+/// The edges of `mesh` the work mesh keeps as lines: those [`by_angle`]
+/// keeps, then the lines `request` asks for.
+fn source_features(mesh: &TriMesh, request: &Request) -> Vec<[u32; 2]> {
+    let topology = Topology::build(mesh);
+    let (mut features, _) = by_angle(mesh, &topology, request);
     if !request.lines.is_empty() {
         // The edges asked for, found by where their ends are: the vertices
         // have other numbers here than where the lines were told.

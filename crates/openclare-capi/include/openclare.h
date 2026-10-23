@@ -13,11 +13,12 @@
  * Ownership, in short:
  * - Arrays and texts given to the library belong to the caller; they are
  *   read during the call only, never kept.
- * - The three calls that do work (openclare_remesh, openclare_bake_height,
- *   openclare_analyse) never return NULL: they return a handle, which holds
- *   either what was made or the reason it was not. Each handle is freed by
- *   its own function, once: openclare_result_free, openclare_baked_free,
- *   openclare_analysis_free. Freeing NULL is allowed.
+ * - The four calls that do work (openclare_remesh, openclare_bake_height,
+ *   openclare_analyse, openclare_hard_edges) never return NULL: they return
+ *   a handle, which holds either what was made or the reason it was not.
+ *   Each handle is freed by its own function, once: openclare_result_free,
+ *   openclare_baked_free, openclare_analysis_free, openclare_hard_edges_free.
+ *   Freeing NULL is allowed.
  * - The copy functions write into arrays the caller allocates, of the size
  *   the matching count function gives.
  * - Texts returned by the library (versions, errors, reports) belong to it:
@@ -335,6 +336,74 @@ int32_t openclare_analysis_vertices_for(const OpenclareAnalysis *analysis, doubl
 
 /* Frees a handle of an analysis. NULL is fine; twice is not. */
 void openclare_analysis_free(OpenclareAnalysis *analysis);
+
+/* ------------------------------------------------------------------------ */
+/* Hard edges                                                               */
+/* ------------------------------------------------------------------------ */
+
+/* What openclare_hard_edges gives back: the hard edges a remesh would follow,
+ * and those it would leave out. Opaque; free with openclare_hard_edges_free. */
+typedef struct OpenclareHardEdges OpenclareHardEdges;
+
+/*
+ * Finds the hard edges openclare_remesh would follow on a mesh with the same
+ * arguments, by the same code and at the size of the quads it would make,
+ * without remeshing: what a host shows of the angle of the hard edges before
+ * a run.
+ *
+ * - positions, vertex_count, triangles, triangle_count, corner_vertices,
+ *   corner_count, density, preset, settings: as for openclare_remesh. The
+ *   target, the angles, the adaptivity, the quads round a thin part and the
+ *   paint count, as they set the size of the quads of each piece.
+ *
+ * The edges are given as two vertices of the mesh each. Kept: those sharper
+ * than the angle of the hard edges ("edge_angle") that still are at the size
+ * of the quads, and those sharper than "crease_angle"; open borders, which
+ * are always followed, are not among them. Left out: those sharper than
+ * "edge_angle" between their two triangles that are not at the size of the
+ * quads, the grain of a sculpt. Where the mesh had vertices at the same place
+ * along a torn border, which the remesh welds, an edge names one of them at
+ * each end.
+ *
+ * The arrays and texts are read during the call only. Never returns NULL;
+ * free the handle with openclare_hard_edges_free.
+ */
+OpenclareHardEdges *openclare_hard_edges(const float *positions,
+                                         size_t vertex_count,
+                                         const uint32_t *triangles,
+                                         size_t triangle_count,
+                                         const uint32_t *corner_vertices,
+                                         size_t corner_count,
+                                         const float *density,
+                                         const char *preset,
+                                         const char *settings);
+
+/* The functions below take a handle from openclare_hard_edges not yet freed,
+ * or NULL. */
+
+/* 1 if the hard edges were found, 0 if not or if found is NULL. */
+int32_t openclare_hard_edges_ok(const OpenclareHardEdges *found);
+
+/* Why the hard edges could not be found; "" if they were. Owned by the
+ * handle. */
+const char *openclare_hard_edges_error(const OpenclareHardEdges *found);
+
+/* How many edges a remesh would follow. */
+size_t openclare_hard_edges_kept_count(const OpenclareHardEdges *found);
+
+/* Writes them, two vertices per edge, into vertices (room for twice
+ * openclare_hard_edges_kept_count numbers). */
+void openclare_hard_edges_copy_kept(const OpenclareHardEdges *found, uint32_t *vertices);
+
+/* How many edges sharper than the angle a remesh would leave out. */
+size_t openclare_hard_edges_left_out_count(const OpenclareHardEdges *found);
+
+/* Writes them, two vertices per edge, into vertices (room for twice
+ * openclare_hard_edges_left_out_count numbers). */
+void openclare_hard_edges_copy_left_out(const OpenclareHardEdges *found, uint32_t *vertices);
+
+/* Frees a handle of hard edges. NULL is fine; twice is not. */
+void openclare_hard_edges_free(OpenclareHardEdges *found);
 
 #ifdef __cplusplus
 } /* extern "C" */

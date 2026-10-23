@@ -60,9 +60,10 @@ openclare_result_free(result);
 Who frees what:
 
 - What you pass in stays yours: the library reads it during the call and keeps nothing.
-- `openclare_remesh`, `openclare_bake_height` and `openclare_analyse` never return NULL. Each
-  handle they return is freed once, by `openclare_result_free`, `openclare_baked_free` or
-  `openclare_analysis_free`, whether it holds what was asked for or an error.
+- `openclare_remesh`, `openclare_bake_height`, `openclare_analyse` and `openclare_hard_edges`
+  never return NULL. Each handle they return is freed once, by `openclare_result_free`,
+  `openclare_baked_free`, `openclare_analysis_free` or `openclare_hard_edges_free`, whether it
+  holds what was asked for or an error.
 - The `copy` functions write into arrays you allocate, of the size the `count` functions give.
 - Texts returned by the library are its own: never free them. Errors and reports live until
   their handle is freed; the version for ever.

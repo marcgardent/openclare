@@ -376,6 +376,156 @@ assert plain.openclare.quads == 4321 and first.openclare.quads == 1234 and secon
 assert result.openclare.quads != 4321, "a result took settings to remesh"
 print("PANEL OK")
 
+# The hard edges shown in the viewport. Drawing needs a window, which there
+# is not here: what is drawn is checked, and the steps the timer takes are
+# taken by hand, the background thread waited for.
+preview = openclare.preview
+wm = bpy.context.window_manager
+assert not wm.openclare_show_hard_edges and preview.state.handle is None
+bpy.ops.mesh.primitive_cube_add(location=(40.0, 0.0, 0.0))
+box = bpy.context.active_object
+alone(box)
+settings.target, settings.quads, settings.use_hard_edges = "COUNT", 3000, True
+wm.openclare_show_hard_edges = True
+
+
+def preview_settles(start=0.0):
+    """Takes the steps of the timer until the edges of the object shown are
+    found and drawn, or nothing is to be: what a change waits out, the run
+    in the background, the drawing."""
+    now = start
+    preview.step(now)
+    assert preview.state.job is None, "the edges were looked for without waiting"
+    for _ in range(20):
+        now += preview.TICK
+        preview.step(now)
+        if preview.state.job is not None:
+            assert now - start >= preview.QUIET
+            preview.state.job.thread.join()
+            preview.step(now + 0.01)
+            assert preview.state.job is None and not preview.state.pending
+            return
+    raise AssertionError("the edges were never looked for")
+
+
+def edges_of(pairs):
+    return {tuple(sorted(pair)) for pair in pairs.reshape(-1, 2).tolist()}
+
+
+preview_settles()
+shown = preview.state.shown
+assert shown is not None and shown.name == box.name and preview.state.handle is not None, preview.state.error
+# The twelve edges of the cube, in the vertices of the object.
+cube_edges = {tuple(sorted(edge.vertices)) for edge in box.data.edges}
+assert edges_of(shown.kept) == cube_edges and len(shown.left_out) == 0, (edges_of(shown.kept), cube_edges)
+assert len(shown.kept_points) == 24 and all(
+    abs(abs(c) - 1.0) < 1e-6 for point in shown.kept_points for c in point
+), "the lines are not on the edges of the cube"
+# Drawn off screen, where this Blender can draw without a window: over a
+# grey cube seen from above a corner, the edges kept come out cyan, the
+# three at the back hidden behind the faces, those in front not sunk into
+# them.
+import gpu
+import mathutils
+
+
+def cyan_pixels(with_faces):
+    import math
+
+    import numpy
+    from gpu_extras.batch import batch_for_shader
+
+    size, eye = 200, 6.0
+    offscreen = gpu.types.GPUOffScreen(size, size)
+    view = mathutils.Matrix.Translation((0.0, 0.0, -eye)) @ (
+        mathutils.Matrix.Rotation(math.radians(-55.0), 4, "X") @ mathutils.Matrix.Rotation(math.radians(-45.0), 4, "Z")
+    )
+    near, far, focal = 0.1, 100.0, 1.0 / math.tan(math.radians(25.0))
+    projection = mathutils.Matrix(
+        (
+            (focal, 0.0, 0.0, 0.0),
+            (0.0, focal, 0.0, 0.0),
+            (0.0, 0.0, (far + near) / (near - far), 2.0 * far * near / (near - far)),
+            (0.0, 0.0, -1.0, 0.0),
+        )
+    )
+    with offscreen.bind():
+        framebuffer = gpu.state.active_framebuffer_get()
+        framebuffer.clear(color=(0.2, 0.2, 0.2, 1.0), depth=1.0)
+        with gpu.matrix.push_pop(), gpu.matrix.push_pop_projection():
+            gpu.matrix.load_matrix(view)
+            gpu.matrix.load_projection_matrix(projection)
+            if with_faces:
+                mesh = box.data
+                mesh.calc_loop_triangles()
+                corners = [mesh.vertices[v].co[:] for triangle in mesh.loop_triangles for v in triangle.vertices]
+                faces = gpu.shader.from_builtin("UNIFORM_COLOR")
+                batch = batch_for_shader(faces, "TRIS", {"pos": corners})
+                gpu.state.depth_test_set("LESS_EQUAL")
+                gpu.state.depth_mask_set(True)
+                faces.bind()
+                faces.uniform_float("color", (0.6, 0.6, 0.6, 1.0))
+                batch.draw(faces)
+            preview.draw_lines(preview.state.shown, mathutils.Matrix.Identity(4), (size, size), eye)
+        pixels = numpy.array(framebuffer.read_color(0, 0, size, size, 4, 0, "FLOAT").to_list()).reshape(-1, 4)
+    offscreen.free()
+    gpu.state.depth_test_set("NONE")
+    return int(((pixels[:, 0] < 0.3) & (pixels[:, 1] > 0.6) & (pixels[:, 2] > 0.8)).sum())
+
+
+try:
+    gpu.init()
+    drawable = True
+except Exception as error:  # noqa: BLE001
+    print("PREVIEW not drawn off screen:", error)
+    drawable = False
+if drawable:
+    alone_lines, over_faces = cyan_pixels(False), cyan_pixels(True)
+    print("PREVIEW drawn: cyan pixels", alone_lines, "alone,", over_faces, "over the faces")
+    assert over_faces > 300, over_faces
+    assert over_faces < 0.85 * alone_lines, (over_faces, alone_lines)
+
+# Hard edges turned off: nothing kept, after the pause.
+settings.use_hard_edges = False
+preview_settles(10.0)
+assert len(preview.state.shown.kept) == 0 and len(preview.state.shown.left_out) == 0
+settings.use_hard_edges = True
+preview_settles(20.0)
+assert edges_of(preview.state.shown.kept) == cube_edges
+# An object with modifiers: the mesh they make is the one read, as for the
+# remesh, and the edges are of its vertices.
+alone(original)
+preview_settles(30.0)
+shown = preview.state.shown
+assert shown is not None and shown.name == original.name, preview.state.error
+evaluated = original.evaluated_get(bpy.context.evaluated_depsgraph_get())
+vertices = len(evaluated.to_mesh().vertices)
+evaluated.to_mesh_clear()
+assert all(int(v) < vertices for v in list(shown.kept) + list(shown.left_out)), vertices
+print("PREVIEW of the head:", len(shown.kept) // 2, "edges kept,", len(shown.left_out) // 2, "left out")
+# Another object made the active one: what was drawn goes at once.
+alone(box)
+preview.step(40.0)
+assert preview.state.shown is None and preview.state.handle is None
+# The object deleted while shown: nothing drawn, nothing left behind.
+preview_settles(40.0)
+assert preview.state.handle is not None
+bpy.data.objects.remove(box)
+preview.step(60.0)
+assert preview.state.shown is None and preview.state.handle is None
+# Turned off: nothing drawn; on again for what follows.
+settings = original.openclare
+alone(original)
+preview_settles(70.0)
+wm.openclare_show_hard_edges = False
+assert preview.state.shown is None and preview.state.handle is None
+assert not bpy.app.timers.is_registered(preview.tick)
+wm.openclare_show_hard_edges = True
+assert bpy.app.timers.is_registered(preview.tick)
+preview_settles(80.0)
+assert preview.state.handle is not None
+print("PREVIEW OK")
+
 # The engine is loaded from a copy named after what it holds: an add-on
 # updated in a Blender that has already used it does not get the engine it
 # had in memory back, by its path, in place of the new one.
@@ -394,4 +544,8 @@ with tempfile.TemporaryDirectory() as folder:
     after.unlink()
 
 openclare.unregister()
+# The drawing goes with the add-on.
+assert preview.state.handle is None and preview.state.shown is None
+assert not bpy.app.timers.is_registered(preview.tick)
+assert not hasattr(bpy.types.WindowManager, "openclare_show_hard_edges")
 print("ADD-ON OK")
