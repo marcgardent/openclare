@@ -63,16 +63,22 @@ of the ogre at 3000 quads.
 | Density | A vertex group of the object, painted in Weight Paint: quads are smallest where the weight is 1, largest where it is 0 |
 | Factor | How many times more quads a weight of 1 gets than a weight of 0, for the same area |
 | Materials | Each quad gets the material of the surface it lies on, and the borders between materials are kept as lines of edges where that can be done |
-| Shape: presets | The menu in the header of the *Shape* block sets every setting below: *Organic*, *Animation*, *Hard Surface*, and those saved there with *+*. A saved preset can be removed; those of the add-on cannot |
+| Shape: presets | The menu in the header of the *Shape* block saves every setting below with *+*, and sets them back from a preset saved there; a saved preset can be removed. The add-on ships none: the defaults suit sculpts, characters and mechanical parts alike |
 | Adaptive Size | How much the size of the quads follows the curvature: at 0 % they are all the same size; towards 100 % they get smaller where the shape bends and larger where it is flat |
 | Quads Around Thin Parts | The fewest quads that go round a thin part, a finger or the tip of an ear, for it to keep its volume. 0 does not look at thickness |
 | Hard Edges | On by default. Edges of the object sharper than the angle, and still sharp at the size of the quads asked for, are followed by the quads wherever they can, and kept crisp; the fine creases of a sculpt are not |
 | Show Hard Edges (eye beside the angle) | Shows over the object in the 3D viewport what *Hard Edges* does: in solid cyan the edges the quads will follow, in faint orange those sharper than the angle that are left out, too small for the quads asked for. Found by the engine's own code at the size of the quads asked for, again a moment after a setting or the object changes; nothing is written into the mesh or the file. While a change is being computed the lines are dimmed and a ring turns beside the eye; once they are up to date, a tick, and below it how many edges are followed and left out |
+| Marked Sharp | Off by default. The edges marked sharp on the object (*Mark Sharp*, or a *Smooth by Angle* modifier) are followed by the quads and kept as hard edges, whatever their angle and size |
 | Follow Curvature | How strongly the edges are drawn along the directions in which the shape bends, against how smoothly they flow |
 | Fewer Irregular Vertices | Irregular vertices closer than this many quads to one of the opposite kind are cancelled with it: fewer of them, for meshes meant to deform |
 | Volume Fit | How far the vertices leave the surface at the very end, for the mesh to keep the volume of the shape |
 
-With the result selected, the same panel says what it was remeshed from and how the run went.
+An object scaled differently along its axes is remeshed as it is seen: its quads come out
+square in the scene.
+
+With the result selected, the same panel says what it was remeshed from and how the run went:
+how many quads, and, as a warning, what did not go as asked (far fewer quads than asked for, a
+part that could not be meshed, hard edges let go).
 The arrow beside the name of the original selects it; *Remesh Again* remeshes the original with
 the settings it has now, in place of the result, which keeps its name and place.
 

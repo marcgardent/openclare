@@ -62,7 +62,7 @@ OFFSET = 1.0
 # size of the quads, and the angle.
 WATCHED = (
     "target", "quads", "largest_quad", "smallest_quad", "adaptive_size", "quads_around",
-    "use_hard_edges", "hard_edge_angle", "density_group", "density_factor",
+    "use_hard_edges", "hard_edge_angle", "use_marked_sharp", "density_group", "density_factor",
 )
 
 # Where the preview is.
@@ -90,11 +90,12 @@ class Shown:
 
 class Shape:
     """The mesh of an object as the engine was given it, for one shape of the
-    object: the finder that keeps what depends on it, and where its vertices
-    are, to draw the edges at."""
+    object: the finder that keeps what depends on it, where its vertices are,
+    to draw the edges at, and its edges marked sharp (None if none), which a
+    remesh keeps whatever the settings when asked to."""
 
-    def __init__(self, key, finder, positions):
-        self.key, self.finder, self.positions = key, finder, positions
+    def __init__(self, key, finder, positions, marked):
+        self.key, self.finder, self.positions, self.marked = key, finder, positions, marked
 
 
 class Job:
@@ -104,12 +105,12 @@ class Job:
     it is the one; otherwise `given` holds the arrays of the mesh, of which
     the thread makes it."""
 
-    def __init__(self, generation, name, shape_key, shape, given, settings, density):
+    def __init__(self, generation, name, shape_key, shape, given, settings, density, marked):
         import threading
 
         self.generation, self.name, self.shape_key = generation, name, shape_key
         self.shape, self.given = shape, given
-        self.settings, self.density = settings, density
+        self.settings, self.density, self.with_marked = settings, density, marked
         self.found = self.error = None
         self.thread = threading.Thread(target=self.work, name="openclare hard edges", daemon=True)
 
@@ -123,12 +124,33 @@ class Job:
                 finder = engine.HardEdgeFinder(
                     given.addresses[0], vertices, given.addresses[1], triangles, given.addresses[2], corners
                 )
-                self.shape = Shape(self.shape_key, finder, given.kept[0].reshape(-1, 3))
+                positions = given.kept[0].reshape(-1, 3)
+                if given.stretch is not None:
+                    # Drawn where the object has them, before its scale.
+                    positions = positions / given.stretch
+                self.shape = Shape(self.shape_key, finder, positions, given.edges)
                 self.given = None
             kept, left_out = self.shape.finder.find(BASE_PRESET, self.settings, self.density)
+            if self.with_marked and self.shape.marked is not None:
+                kept, left_out = with_marked(kept, left_out, self.shape.marked)
             self.found = Shown(self.name, kept, left_out, self.shape.positions)
         except Exception as error:  # noqa: BLE001
             self.error = error
+
+
+def with_marked(kept, left_out, marked):
+    """The edges kept and left out once those `marked` sharp are kept too:
+    all as two vertices per edge."""
+    import numpy
+
+    def keys(edges):
+        pairs = numpy.sort(edges.reshape(-1, 2).astype(numpy.int64), axis=1)
+        return pairs[:, 0] << 32 | pairs[:, 1]
+
+    known = keys(kept)
+    added = marked.reshape(-1, 2)[~numpy.isin(keys(marked), known)]
+    still_out = left_out.reshape(-1, 2)[~numpy.isin(keys(left_out), keys(marked))]
+    return numpy.concatenate([kept, added.ravel()]).astype(numpy.uint32), still_out.ravel().astype(numpy.uint32)
 
 
 class State:
@@ -174,8 +196,13 @@ def watched_object():
 
 
 def shape_key_of(owner):
-    """Which object, and which of its shapes."""
-    return owner.name, owner.as_pointer(), state.generations.get(owner.name, 0)
+    """Which object, and which of its shapes: a scale that differs along the
+    axes is applied to the mesh the engine is given, and makes another."""
+    from . import stretch_of
+
+    stretch = stretch_of(owner)
+    shape = state.generations.get(owner.name, 0), None if stretch is None else tuple(stretch)
+    return owner.name, owner.as_pointer(), shape
 
 
 def key_of(owner):
@@ -279,7 +306,7 @@ def start(owner, key, now):
     """Has the engine find the edges of `owner` in a thread of its own: on the
     shape it was given already if that is still the object's; otherwise on the
     object with its modifiers, read as the remesh reads it."""
-    from . import BASE_PRESET, engine, engine_input, engine_settings_of
+    from . import BASE_PRESET, engine, engine_input, engine_settings_of, stretch_of
 
     shape = state.shape if state.shape is not None and state.shape.key == key[:3] else None
     if shape is None:
@@ -291,7 +318,9 @@ def start(owner, key, now):
     source = evaluated.to_mesh() if shape is None or owner.openclare.density_group else None
     try:
         engine_settings, density = engine_settings_of(owner, evaluated, source, write=False)
-        given = None if shape is not None else engine_input(source, BASE_PRESET, engine_settings, density, copy=True)
+        given = None if shape is not None else engine_input(
+            source, BASE_PRESET, engine_settings, density, copy=True, sharp=True, stretch=stretch_of(owner)
+        )
     except engine.EngineError as error:
         state.error = str(error)
         hide()
@@ -300,7 +329,8 @@ def start(owner, key, now):
     finally:
         if source is not None:
             evaluated.to_mesh_clear()
-    state.job = Job(state.generation, owner.name, key[:3], shape, given, engine_settings, density)
+    marked = owner.openclare.use_marked_sharp
+    state.job = Job(state.generation, owner.name, key[:3], shape, given, engine_settings, density, marked)
     state.job.thread.start()
     set_status(COMPUTING, now)
 

@@ -40,6 +40,7 @@ OpenclareResult *result = openclare_remesh(
     NULL, 0,                    /* triangles hold vertex indices */
     NULL,                       /* no painted density */
     NULL,                       /* no groups of triangles */
+    NULL, 0,                    /* no edge kept hard whatever its angle */
     NULL, NULL, NULL, 0,        /* no guide curve */
     "organic",                  /* preset: organic, animation, hard-surface */
     "quads = 3000\n",           /* settings on top of it */

@@ -28,7 +28,7 @@ original.openclare.quads = 800
 
 
 def shape(settings, name):
-    """Gives `settings` the values of the shape `name` the add-on ships."""
+    """Gives `settings` the values of the shape `name` of the engine."""
     for key, value in openclare.SHAPES[name].items():
         setattr(settings, key, value)
 
@@ -161,22 +161,13 @@ except RuntimeError as error:
 assert not openclare.last_report, "a run that failed left a report"
 settings.density_group = ""
 
-# The presets of the shape: those the add-on ships set what the engine's
-# presets of the same names are, and are applied the way the menu of the
-# panel applies them.
+# The presets of the shape: the add-on ships none since 0.6, and the menu of
+# the panel only lists those a user saved.
 import os
 
-shipped = os.path.join(openclare.ADDON_FOLDER, "presets", openclare.SHAPE_PRESETS)
-assert shipped in bpy.utils.preset_paths(openclare.SHAPE_PRESETS), bpy.utils.preset_paths(openclare.SHAPE_PRESETS)
-files = {"organic": "Organic.py", "animation": "Animation.py", "hard-surface": "Hard_Surface.py"}
-assert sorted(f for f in os.listdir(shipped) if f.endswith(".py")) == sorted(files.values()), os.listdir(shipped)
-for name, file in files.items():
-    with bpy.context.temp_override(object=original):
-        assert bpy.ops.script.execute_preset(
-            filepath=os.path.join(shipped, file), menu_idname="OPENCLARE_PT_shape_presets"
-        ) == {"FINISHED"}
-    for key, value in openclare.SHAPES[name].items():
-        assert abs(getattr(settings, key) - value) < 1e-6, (name, key, getattr(settings, key), value)
+addon_folder = os.path.dirname(os.path.abspath(openclare.__file__))
+assert not os.path.exists(os.path.join(addon_folder, "presets")), "presets are shipped again"
+assert addon_folder not in [os.path.dirname(os.path.dirname(path)) for path in bpy.utils.preset_paths(openclare.SHAPE_PRESETS)]
 # What the engine is given: the hard edges at 30 degrees, or none.
 shape(settings, "organic")
 assert openclare.shape_of(settings)["edge_angle"] == 30.0 and openclare.shape_of(settings)["alignment"] == 0.05
@@ -197,6 +188,7 @@ with tempfile.TemporaryDirectory() as folder:
             assert bpy.ops.object.openclare_shape_preset_add(name="Eleven Around") == {"FINISHED"}
         written = open(os.path.join(saved, "Eleven_Around.py")).read()
         assert "settings.quads_around = 11" in written and "settings = bpy.context.object.openclare" in written
+        assert "settings.use_marked_sharp = False" in written, written
         assert "settings.quads " not in written and "settings.export" not in written, written
     finally:
         bpy.utils.user_resource = real_resource
@@ -662,6 +654,72 @@ with tempfile.TemporaryDirectory() as folder:
     assert after != before and after.read_bytes() == b"the engine after an update"
     assert not before.exists(), "the copy of the version before is left behind"
     after.unlink()
+
+# Edges marked sharp: a smooth sphere whose equator is marked. Asked to, the
+# quads follow it whatever its angle, and the preview shows it as kept.
+bpy.ops.mesh.primitive_uv_sphere_add(segments=48, ring_count=24, location=(60.0, 0.0, 0.0))
+ball = bpy.context.active_object
+equator = [edge.index for edge in ball.data.edges
+           if all(abs(ball.data.vertices[v].co.z) < 1e-5 for v in edge.vertices)]
+assert len(equator) == 48, len(equator)
+for index in equator:
+    ball.data.edges[index].use_edge_sharp = True
+alone(ball)
+settings.target, settings.quads, settings.use_hard_edges = "COUNT", 800, False
+
+
+def on_equator(result):
+    return sum(1 for vertex in result.data.vertices if abs(vertex.co.z) < 1e-4)
+
+
+settings.use_marked_sharp = False
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+plain = on_equator(bpy.context.active_object)
+alone(ball)
+settings.use_marked_sharp = True
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+followed = on_equator(bpy.context.active_object)
+assert plain < 10 <= 30 <= followed, (plain, followed)
+evaluated = ball.evaluated_get(bpy.context.evaluated_depsgraph_get())
+marked = openclare.marked_sharp(evaluated.to_mesh())
+evaluated.to_mesh_clear()
+assert marked is not None and len(marked) == 2 * 48
+import numpy
+
+kept, left_out = preview.with_marked(numpy.array([0, 1], numpy.uint32), numpy.array([2, 3, 4, 5], numpy.uint32),
+                                     numpy.array([3, 2, 7, 8], numpy.uint32))
+assert sorted(kept.reshape(-1, 2).tolist()) == [[0, 1], [3, 2], [7, 8]] and left_out.tolist() == [4, 5], (kept, left_out)
+print("MARKED SHARP: the equator held by", followed, "vertices, against", plain, "without")
+
+# A scale that differs along the axes: the quads come out square in the
+# scene, not stretched along the axis scaled most.
+bpy.ops.mesh.primitive_cube_add(location=(66.0, 0.0, 0.0))
+tall = bpy.context.active_object
+tall.modifiers.new("subdivide", "SUBSURF").subdivision_type = "SIMPLE"
+tall.modifiers["subdivide"].levels = 4
+tall.scale = (1.0, 1.0, 3.0)
+alone(tall)
+settings.use_marked_sharp, settings.use_hard_edges, settings.quads = False, True, 700
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+result = bpy.context.active_object
+world = [result.matrix_world @ vertex.co for vertex in result.data.vertices]
+ratios = []
+for polygon in result.data.polygons:
+    sides = [(world[polygon.vertices[k]] - world[polygon.vertices[(k + 1) % 4]]).length for k in range(4)]
+    ratios.append(max(sides) / min(sides))
+ratios.sort()
+assert ratios[len(ratios) // 2] < 1.5, f"quads stretched {ratios[len(ratios) // 2]:.2f} times in the scene"
+assert abs(max(v.z for v in world) - (0.0 + 3.0)) < 0.05, "the result is not where the scaled cube is"
+print(f"STRETCH: median quad {ratios[len(ratios) // 2]:.2f} long for wide under a scale of 1, 1, 3")
+
+# A result far short of the number asked for is said, as a warning and in
+# the panel of the result.
+told = {"quads_asked": "3000", "quads": "164", "pieces": "3", "pieces_failed": "0", "seconds": "1.0"}
+assert "only 164 quads of the 3000" in openclare.falls_short(told)
+assert any("Only 164" in line for line, _ in openclare.report_lines(told))
+assert not openclare.falls_short({"quads_asked": "3000", "quads": "2900"})
+assert not openclare.falls_short({"largest_asked": "0.1", "quads": "164"})
+print("FALLS SHORT OK")
 
 openclare.unregister()
 # The drawing goes with the add-on.

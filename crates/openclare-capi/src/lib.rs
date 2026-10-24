@@ -42,6 +42,7 @@
 //! cbindgen, and compiles `tests/c/smoke.c` against the header on each
 //! system (`make capi-test` here).
 
+use std::collections::{HashMap, HashSet};
 use std::ffi::{CStr, CString, c_char, c_void};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::OnceLock;
@@ -140,6 +141,11 @@ pub extern "C" fn openclare_version() -> *const c_char {
 ///   triangles: its material, say. The quad mesh has a line of edges where
 ///   two groups meet, and [`openclare_result_copy_face_groups`] gives the
 ///   group of each of its faces.
+/// - `edges`, `edge_count`: null and 0, or `edge_count` edges of the mesh,
+///   two vertices each, for the quad mesh to have lines of edges along and
+///   keep as hard edges, whatever their angle: the edges a modeller marked
+///   sharp, say. They go in as sharp guide curves through their vertices,
+///   joined into chains: hard edges of the result, marked sharp and creased.
 /// - `curve_points`, `curve_sizes`, `curve_flags`, `curve_count`: guide
 ///   curves, lines drawn on the surface for the quad mesh to have edges
 ///   along. `curve_count` curves, one after the other in `curve_points`
@@ -173,6 +179,8 @@ pub unsafe extern "C" fn openclare_remesh(
     corner_count: usize,
     density: *const f32,
     triangle_groups: *const u32,
+    edges: *const u32,
+    edge_count: usize,
     curve_points: *const f32,
     curve_sizes: *const u32,
     curve_flags: *const u8,
@@ -189,6 +197,7 @@ pub unsafe extern "C" fn openclare_remesh(
             let corners =
                 (!corner_vertices.is_null()).then(|| std::slice::from_raw_parts(corner_vertices, corner_count));
             let curves = curves_of(curve_points, curve_sizes, curve_flags, curve_count);
+            let edges = (!edges.is_null()).then(|| std::slice::from_raw_parts(edges, 2 * edge_count));
             remesh(
                 positions,
                 vertex_count,
@@ -197,6 +206,7 @@ pub unsafe extern "C" fn openclare_remesh(
                 corners,
                 density,
                 triangle_groups,
+                edges,
                 &curves,
                 preset,
                 settings,
@@ -228,6 +238,7 @@ unsafe fn remesh(
     corner_vertices: Option<&[u32]>,
     density: *const f32,
     triangle_groups: *const u32,
+    edges: Option<&[u32]>,
     curves: &[GuideCurve],
     preset: *const c_char,
     settings: *const c_char,
@@ -246,7 +257,14 @@ unsafe fn remesh(
     // SAFETY: null, or one group per triangle as the caller says.
     let groups =
         (!triangle_groups.is_null()).then(|| unsafe { std::slice::from_raw_parts(triangle_groups, triangle_count) });
-    let guides = Guides { density: painted.as_deref(), curves, groups, lines: &[] };
+    // The edges given go in as sharp curves through their vertices: lines of
+    // edges kept as hard edges, whatever their angle.
+    let mut curves = curves.to_vec();
+    for (chain, closed) in chains_of(edges.unwrap_or_default(), vertex_count)? {
+        let points = chain.iter().map(|&v| input.positions[v as usize]).collect();
+        curves.push(GuideCurve { points, closed, sharp: true });
+    }
+    let guides = Guides { density: painted.as_deref(), curves: &curves, groups, lines: &[] };
     let (mesh, done) = config.remesh_recorded(&input, &guides, watcher).map_err(|error| error.to_string())?;
     let seconds = clock.elapsed().as_secs_f64();
 
@@ -403,6 +421,63 @@ unsafe fn curves_of(points: *const f32, sizes: *const u32, flags: *const u8, cou
             }
         })
         .collect()
+}
+
+/// The edges given as pairs of vertices, joined into chains: each runs from
+/// an end, or a vertex where more than two meet, to the next such vertex;
+/// what is left are closed loops. With whether each closes on itself.
+fn chains_of(edges: &[u32], vertex_count: usize) -> Result<Vec<(Vec<u32>, bool)>, String> {
+    let mut next: HashMap<u32, Vec<u32>> = HashMap::new();
+    for pair in edges.chunks_exact(2) {
+        let [a, b] = [pair[0], pair[1]];
+        if a as usize >= vertex_count || b as usize >= vertex_count || a == b {
+            return Err(format!("edge ({a}, {b}) is not an edge of a mesh of {vertex_count} vertices"));
+        }
+        next.entry(a).or_default().push(b);
+        next.entry(b).or_default().push(a);
+    }
+    let mut used: HashSet<(u32, u32)> = HashSet::new();
+    let walk = |start: u32, first: u32, used: &mut HashSet<(u32, u32)>| {
+        let mut chain = vec![start];
+        let (mut previous, mut at) = (start, first);
+        used.insert((start.min(first), start.max(first)));
+        loop {
+            chain.push(at);
+            let onward = next[&at].iter().copied().find(|&v| v != previous && !used.contains(&(at.min(v), at.max(v))));
+            match onward {
+                Some(v) if next[&at].len() == 2 && at != start => {
+                    used.insert((at.min(v), at.max(v)));
+                    (previous, at) = (at, v);
+                }
+                _ => break,
+            }
+        }
+        let closed = chain.len() > 2 && chain.last() == Some(&start);
+        if closed {
+            chain.pop();
+        }
+        (chain, closed)
+    };
+    // In a fixed order, so that the curves do not depend on hashing.
+    let mut vertices: Vec<u32> = next.keys().copied().collect();
+    vertices.sort_unstable();
+    let mut chains = Vec::new();
+    // From the ends and the forks first, then round what is left: loops.
+    for pass in [false, true] {
+        for &v in &vertices {
+            if (next[&v].len() == 2) != pass {
+                continue;
+            }
+            let mut around = next[&v].clone();
+            around.sort_unstable();
+            for w in around {
+                if !used.contains(&(v.min(w), v.max(w))) {
+                    chains.push(walk(v, w, &mut used));
+                }
+            }
+        }
+    }
+    Ok(chains)
 }
 
 /// The result behind a handle; `None` for a null one.
