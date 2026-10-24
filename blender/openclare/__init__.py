@@ -267,8 +267,8 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         options=set(),
         name="Hard Edges",
         description=(
-            "Edges of the object sharper than the angle are followed by the quads wherever they can, and "
-            "kept crisp: for mechanical parts"
+            "Edges of the object sharper than the angle, and still sharp at the size of the quads, are "
+            "followed by the quads wherever they can, and kept crisp"
         ),
         default=True,
     )

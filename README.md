@@ -66,7 +66,7 @@ of the ogre at 3000 quads.
 | Shape: presets | The menu in the header of the *Shape* block sets every setting below: *Organic*, *Animation*, *Hard Surface*, and those saved there with *+*. A saved preset can be removed; those of the add-on cannot |
 | Adaptive Size | How much the size of the quads follows the curvature: at 0 % they are all the same size; towards 100 % they get smaller where the shape bends and larger where it is flat |
 | Quads Around Thin Parts | The fewest quads that go round a thin part, a finger or the tip of an ear, for it to keep its volume. 0 does not look at thickness |
-| Hard Edges | Edges of the object sharper than the angle are followed by the quads wherever they can, and kept crisp: for mechanical parts |
+| Hard Edges | On by default. Edges of the object sharper than the angle, and still sharp at the size of the quads asked for, are followed by the quads wherever they can, and kept crisp; the fine creases of a sculpt are not |
 | Follow Curvature | How strongly the edges are drawn along the directions in which the shape bends, against how smoothly they flow |
 | Fewer Irregular Vertices | Irregular vertices closer than this many quads to one of the opposite kind are cancelled with it: fewer of them, for meshes meant to deform |
 | Volume Fit | How far the vertices leave the surface at the very end, for the mesh to keep the volume of the shape |
