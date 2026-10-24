@@ -5,7 +5,8 @@ A panel in the Properties editor, on the tab of the mesh of an object
 (Object Data), remeshes the object into quads with the settings it keeps.
 The result is a new object, next to the original, which is left as it is;
 shown, the same panel says what it was made from and how, and remeshes it
-again.
+again. A toggle beside the angle of the hard edges shows in the 3D viewport
+the edges the quads will follow, and those left out (see `preview`).
 """
 
 import math
@@ -16,7 +17,7 @@ import mathutils
 from bl_operators.presets import AddPresetBase
 from bl_ui.utils import PresetPanel
 
-from . import engine
+from . import engine, preview
 
 PRESETS = [
     ("organic", "Organic", "Sculpts and characters: edges follow the shape closely, quads are smaller where it bends"),
@@ -399,22 +400,26 @@ def in_place(mesh):
     )
 
 
-def engine_settings_of(original, evaluated, source):
+def engine_settings_of(original, evaluated, source, write=True):
     """What the engine is given for the object `original` with its settings:
     the settings on top of `BASE_PRESET`, and the weights of the density
     painted, if any, on `source`, the mesh of `evaluated`, `original` as it
-    is seen."""
+    is seen. Sizes asked for and none set are set from the object, and kept
+    in its settings unless `write` is false."""
     settings = original.openclare
     engine_settings = {"quads": settings.quads, **shape_of(settings)}
     if settings.target == "SIZE":
         # Lengths of the scene, where the engine is given the mesh as the
         # object holds it: before its scale.
-        if settings.largest_quad <= 0.0:
-            settings.largest_quad, settings.smallest_quad = sizes_from(original)
+        largest, smallest = settings.largest_quad, settings.smallest_quad
+        if largest <= 0.0:
+            largest, smallest = sizes_from(original)
+            if write:
+                settings.largest_quad, settings.smallest_quad = largest, smallest
         scale = sum(abs(factor) for factor in original.matrix_world.to_scale()) / 3.0 or 1.0
-        smallest = min(settings.smallest_quad, settings.largest_quad) or settings.largest_quad / SIZE_RANGE
+        smallest = min(smallest, largest) or largest / SIZE_RANGE
         del engine_settings["quads"]
-        engine_settings["largest_quad"] = settings.largest_quad / scale
+        engine_settings["largest_quad"] = largest / scale
         engine_settings["smallest_quad"] = smallest / scale
     density = None
     if settings.density_group:
@@ -1073,6 +1078,27 @@ class OPENCLARE_PT_shape(DataPanel, bpy.types.Panel):
         angle = row.row(align=True)
         angle.active = settings.use_hard_edges
         angle.prop(settings, "hard_edge_angle", text="")
+        # The preview of what the setting does, in the 3D viewport, and
+        # where it is: a ring that turns while it is being computed, a tick
+        # once what is drawn is for the settings as they are, and in words
+        # below.
+        wm = context.window_manager
+        shown = wm.openclare_show_hard_edges
+        row.prop(wm, "openclare_show_hard_edges", text="", icon="HIDE_OFF" if shown else "HIDE_ON")
+        if shown and preview.is_about(object_to_remesh(context)):
+            status = preview.state.status
+            if status in preview.BUSY:
+                # As wide as an icon, not a share of the row.
+                ring = row.row()
+                ring.ui_units_x = 1.0
+                ring.progress(factor=preview.ring_factor(), type="RING", text="")
+            elif status == preview.CURRENT:
+                row.label(text="", icon="CHECKMARK")
+            elif status == preview.FAILED:
+                row.label(text="", icon="ERROR")
+            said = preview.status_text()
+            if said:
+                column.label(text=said)
         layout.prop(settings, "follow_curvature")
         layout.prop(settings, "fewer_irregular")
         layout.prop(settings, "volume_fit", slider=True)
@@ -1099,6 +1125,7 @@ HANDLERS = ((bpy.app.handlers.load_post, after_loading),)
 def register():
     for cls in CLASSES:
         bpy.utils.register_class(cls)
+    preview.register()
     bpy.types.Object.openclare = bpy.props.PointerProperty(type=OpenclareSettings)
     # Where files of 0.1 kept the settings: read once, then given to objects.
     bpy.types.Scene.openclare = bpy.props.PointerProperty(type=OpenclareSettings)
@@ -1125,6 +1152,7 @@ def register():
 def unregister():
     if RUNNING is not None:
         RUNNING.stop.set()
+    preview.unregister()
     bpy.utils.unregister_preset_path(ADDON_FOLDER)
     for handlers, handler in HANDLERS:
         if handler in handlers:

@@ -3,6 +3,7 @@
 use std::ffi::{CStr, CString, c_char, c_void};
 use std::ptr::{null, null_mut};
 
+use openclare::math::{Rng, Vec3};
 use openclare::mesh::primitives;
 use openclare_capi::*;
 
@@ -426,5 +427,173 @@ fn a_shape_is_analysed_once_and_asked_as_often_as_wanted() {
         assert_eq!(openclare_analysis_count(none, 0.2, 0.2, &mut quads, &mut below), 0);
         openclare_analysis_free(none);
         openclare_analysis_free(null_mut());
+    }
+}
+
+#[test]
+fn the_hard_edges_a_remesh_would_follow_are_found_without_remeshing() {
+    // A cube of six quads, given as Blender gives it: each triangle by its
+    // corners, and the vertex of each corner.
+    let cube = primitives::cube_quads(1);
+    let positions: Vec<f32> = cube.positions.iter().flat_map(|p| [p.x as f32, p.y as f32, p.z as f32]).collect();
+    let corners: Vec<u32> = cube.faces.iter().flatten().copied().collect();
+    let triangles: Vec<u32> =
+        (0..cube.faces.len() as u32).flat_map(|f| [4 * f, 4 * f + 1, 4 * f + 2, 4 * f, 4 * f + 2, 4 * f + 3]).collect();
+    let settings = CString::new("quads = 3000\n").unwrap();
+    unsafe {
+        let found = openclare_hard_edges(
+            positions.as_ptr(),
+            positions.len() / 3,
+            triangles.as_ptr(),
+            triangles.len() / 3,
+            corners.as_ptr(),
+            corners.len(),
+            null(),
+            c"organic".as_ptr(),
+            settings.as_ptr(),
+        );
+        assert_eq!(openclare_hard_edges_ok(found), 1, "{}", text(openclare_hard_edges_error(found)));
+        assert_eq!(text(openclare_hard_edges_error(found)), "");
+        assert_eq!((openclare_hard_edges_kept_count(found), openclare_hard_edges_left_out_count(found)), (12, 0));
+        let mut kept = vec![0u32; 24];
+        openclare_hard_edges_copy_kept(found, kept.as_mut_ptr());
+        let mut edges: Vec<(u32, u32)> =
+            kept.chunks_exact(2).map(|edge| (edge[0].min(edge[1]), edge[0].max(edge[1]))).collect();
+        edges.sort_unstable();
+        edges.dedup();
+        assert_eq!(edges.len(), 12);
+        assert!(edges.iter().all(|&(a, b)| b < 8 && a != b));
+        openclare_hard_edges_copy_left_out(found, null_mut());
+        openclare_hard_edges_free(found);
+
+        // Hard edges turned off: nothing either way.
+        let off = CString::new("quads = 3000\nedge_angle = none\n").unwrap();
+        let found = openclare_hard_edges(
+            positions.as_ptr(),
+            positions.len() / 3,
+            triangles.as_ptr(),
+            triangles.len() / 3,
+            corners.as_ptr(),
+            corners.len(),
+            null(),
+            c"organic".as_ptr(),
+            off.as_ptr(),
+        );
+        assert_eq!(openclare_hard_edges_ok(found), 1);
+        assert_eq!((openclare_hard_edges_kept_count(found), openclare_hard_edges_left_out_count(found)), (0, 0));
+        openclare_hard_edges_free(found);
+
+        // What goes wrong is said.
+        let found = openclare_hard_edges(
+            positions.as_ptr(),
+            positions.len() / 3,
+            triangles.as_ptr(),
+            triangles.len() / 3,
+            corners.as_ptr(),
+            corners.len(),
+            null(),
+            c"no such preset".as_ptr(),
+            null(),
+        );
+        assert_eq!(openclare_hard_edges_ok(found), 0);
+        assert!(text(openclare_hard_edges_error(found)).contains("no such preset"));
+        assert_eq!(openclare_hard_edges_kept_count(found), 0);
+        openclare_hard_edges_free(found);
+        assert_eq!(openclare_hard_edges_ok(null()), 0);
+        assert_eq!(openclare_hard_edges_kept_count(null()), 0);
+        openclare_hard_edges_free(null_mut());
+    }
+}
+
+/// The edges a handle gives, kept then left out, two vertices each.
+unsafe fn edges_of(found: *mut OpenclareHardEdges) -> (Vec<u32>, Vec<u32>) {
+    unsafe {
+        assert_eq!(openclare_hard_edges_ok(found), 1, "{}", text(openclare_hard_edges_error(found)));
+        let mut kept = vec![0u32; 2 * openclare_hard_edges_kept_count(found)];
+        let mut left_out = vec![0u32; 2 * openclare_hard_edges_left_out_count(found)];
+        openclare_hard_edges_copy_kept(found, kept.as_mut_ptr());
+        openclare_hard_edges_copy_left_out(found, left_out.as_mut_ptr());
+        openclare_hard_edges_free(found);
+        (kept, left_out)
+    }
+}
+
+#[test]
+fn a_finder_gives_the_hard_edges_found_afresh_whatever_the_settings_and_their_order() {
+    // Two pieces: a cube, and a small ball apart whose vertices are moved in
+    // and out at random, a grain of edges sharper than the angle.
+    let mut mesh = primitives::cube(2);
+    let apart = primitives::icosphere(3);
+    let mut random = Rng::new(5);
+    let offset = mesh.positions.len() as u32;
+    mesh.positions.extend(
+        apart.positions.iter().map(|p| *p * 0.5 * (1.0 + 0.05 * (random.next_f64() - 0.5)) + Vec3::new(3.0, 0.0, 0.0)),
+    );
+    mesh.triangles.extend(apart.triangles.iter().map(|t| t.map(|v| v + offset)));
+    let positions: Vec<f32> = mesh.positions.iter().flat_map(|p| [p.x as f32, p.y as f32, p.z as f32]).collect();
+    let triangles: Vec<u32> = mesh.triangles.iter().flatten().copied().collect();
+    let density: Vec<f32> = (0..mesh.positions.len()).map(|v| (v % 3) as f32 / 2.0).collect();
+    let all = [
+        ("quads = 3000\n", false),
+        ("quads = 30\n", false),
+        ("quads = 3000\nedge_angle = 60\n", false),
+        ("quads = 3000\n", true),
+        ("quads = 3000\nedge_angle = none\n", false),
+        ("quads = 3000\n", false),
+        ("quads = 3000\n", true),
+    ];
+    unsafe {
+        let finder = openclare_hard_edge_finder(
+            positions.as_ptr(),
+            positions.len() / 3,
+            triangles.as_ptr(),
+            triangles.len() / 3,
+            null(),
+            0,
+        );
+        assert_eq!(openclare_hard_edge_finder_ok(finder), 1);
+        assert_eq!(text(openclare_hard_edge_finder_error(finder)), "");
+        let mut grain = 0;
+        for (settings, painted) in all {
+            let lines = CString::new(settings).unwrap();
+            let painted = if painted { density.as_ptr() } else { null() };
+            let afresh = edges_of(openclare_hard_edges(
+                positions.as_ptr(),
+                positions.len() / 3,
+                triangles.as_ptr(),
+                triangles.len() / 3,
+                null(),
+                0,
+                painted,
+                c"organic".as_ptr(),
+                lines.as_ptr(),
+            ));
+            let found = edges_of(openclare_hard_edge_finder_find(finder, painted, c"organic".as_ptr(), lines.as_ptr()));
+            assert_eq!(found, afresh, "{settings}");
+            grain += found.1.len();
+        }
+        assert!(grain > 0, "no edge left out: the grain is not looked at");
+        // What goes wrong is said, and the finder is still good after.
+        let found = openclare_hard_edge_finder_find(finder, null(), c"no such preset".as_ptr(), null());
+        assert_eq!(openclare_hard_edges_ok(found), 0);
+        assert!(text(openclare_hard_edges_error(found)).contains("no such preset"));
+        openclare_hard_edges_free(found);
+        assert!(!edges_of(openclare_hard_edge_finder_find(finder, null(), c"organic".as_ptr(), null())).0.is_empty());
+        openclare_hard_edge_finder_free(finder);
+
+        // A mesh that cannot be read is said so, and finds nothing.
+        let broken = [7u32, 0, 1];
+        let finder = openclare_hard_edge_finder(positions.as_ptr(), 3, broken.as_ptr(), 1, null(), 0);
+        assert_eq!(openclare_hard_edge_finder_ok(finder), 0);
+        assert!(text(openclare_hard_edge_finder_error(finder)).contains("vertex 7"));
+        let found = openclare_hard_edge_finder_find(finder, null(), null(), null());
+        assert_eq!(openclare_hard_edges_ok(found), 0);
+        openclare_hard_edges_free(found);
+        openclare_hard_edge_finder_free(finder);
+        assert_eq!(openclare_hard_edge_finder_ok(null()), 0);
+        let found = openclare_hard_edge_finder_find(null_mut(), null(), null(), null());
+        assert_eq!(openclare_hard_edges_ok(found), 0);
+        openclare_hard_edges_free(found);
+        openclare_hard_edge_finder_free(null_mut());
     }
 }

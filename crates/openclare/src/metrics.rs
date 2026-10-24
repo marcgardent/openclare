@@ -4,7 +4,7 @@
 //! Blender's QuadriFlow, anything that writes polygons) goes through
 //! [`measure`], so that "better" is a number rather than an impression.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt::Write;
 
 use rayon::prelude::*;
@@ -455,6 +455,49 @@ impl SharpEdges {
         self.features(source, topology, quad_edge).into_iter().map(|edge| edge.ends).collect()
     }
 
+    /// The edges of `source` sharper than [`Self::angle`], sorted: those
+    /// that are feature edges for quads `quad_edge` long, as [`Self::edges`]
+    /// gives them, then those that are not (sharp between their two
+    /// triangles only, the grain of a sculpt), each inner edge once.
+    pub fn edges_and_left_out(
+        &self,
+        source: &TriMesh,
+        topology: &Topology,
+        quad_edge: f64,
+    ) -> (Vec<[u32; 2]>, Vec<[u32; 2]>) {
+        let kept = self.edges(source, topology, quad_edge);
+        let known: HashSet<(u32, u32)> = kept.iter().map(|&[a, b]| (a.min(b), a.max(b))).collect();
+        let left_out = self
+            .creased(source, topology)
+            .into_iter()
+            .map(|h| {
+                let (a, b) = half_edge_vertices(source, h);
+                [a, b]
+            })
+            .filter(|&[a, b]| !known.contains(&(a.min(b), a.max(b))))
+            .collect();
+        (kept, left_out)
+    }
+
+    /// The half-edges of the inner edges of `source` whose two triangles
+    /// meet at more than [`Self::angle`], each edge once, from the lower of
+    /// its two half-edges.
+    fn creased(&self, source: &TriMesh, topology: &Topology) -> Vec<usize> {
+        let normals: Vec<Vec3> =
+            (0..source.triangles.len()).map(|t| source.area_vector(t).normalize_or_zero()).collect();
+        let cos_angle = self.angle.to_radians().cos();
+        (0..topology.opposite.len())
+            .filter(|&h| {
+                let twin = topology.opposite[h];
+                twin != INVALID
+                    && h < twin as usize
+                    && normals[h / 3] != Vec3::ZERO
+                    && normals[twin as usize / 3] != Vec3::ZERO
+                    && normals[h / 3].dot(normals[twin as usize / 3]) < cos_angle
+            })
+            .collect()
+    }
+
     /// Finds the feature edges of `source` for quads `quad_edge` long, and
     /// how much of them `mesh` keeps.
     pub fn measure(&self, source: &TriMesh, mesh: &PolyMesh, quad_edge: f64) -> SharpEdgesKept {
@@ -475,20 +518,7 @@ impl SharpEdges {
     }
 
     fn features(&self, source: &TriMesh, topology: &Topology, quad_edge: f64) -> Vec<FeatureEdge> {
-        let normals: Vec<Vec3> =
-            (0..source.triangles.len()).map(|t| source.area_vector(t).normalize_or_zero()).collect();
-        let cos_angle = self.angle.to_radians().cos();
-        // Each inner edge once, from the lower of its two half-edges.
-        let creased: Vec<usize> = (0..topology.opposite.len())
-            .filter(|&h| {
-                let twin = topology.opposite[h];
-                twin != INVALID
-                    && h < twin as usize
-                    && normals[h / 3] != Vec3::ZERO
-                    && normals[twin as usize / 3] != Vec3::ZERO
-                    && normals[h / 3].dot(normals[twin as usize / 3]) < cos_angle
-            })
-            .collect();
+        let creased = self.creased(source, topology);
         let candidates: Vec<FeatureEdge> = creased
             .par_iter()
             .filter_map(|&h| {

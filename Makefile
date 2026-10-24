@@ -238,7 +238,7 @@ addon-windows:
 		cargo build --release -p openclare-capi --target $(WINDOWS_TARGET)
 	rm -rf $(WINDOWS_STAGE)
 	mkdir -p $(WINDOWS_STAGE)/lib
-	cp blender/openclare/__init__.py blender/openclare/engine.py $(WINDOWS_STAGE)/
+	cp blender/openclare/__init__.py blender/openclare/engine.py blender/openclare/preview.py $(WINDOWS_STAGE)/
 	sed 's/^platforms = .*/platforms = ["windows-x64"]/' blender/openclare/blender_manifest.toml \
 		> $(WINDOWS_STAGE)/blender_manifest.toml
 	cp target/$(WINDOWS_TARGET)/release/openclare_capi.dll $(WINDOWS_STAGE)/lib/

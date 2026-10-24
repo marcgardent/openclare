@@ -128,6 +128,27 @@ def library():
     lib.openclare_analysis_vertices_for.argtypes = [pointer, ctypes.c_double, pointer]
     lib.openclare_analysis_free.restype = None
     lib.openclare_analysis_free.argtypes = [pointer]
+    lib.openclare_hard_edges.restype = pointer
+    lib.openclare_hard_edges.argtypes = [pointer, size, pointer, size, pointer, size, pointer, text, text]
+    lib.openclare_hard_edges_ok.restype = ctypes.c_int32
+    lib.openclare_hard_edges_error.restype = text
+    for edges in ("kept", "left_out"):
+        count = getattr(lib, f"openclare_hard_edges_{edges}_count")
+        copy = getattr(lib, f"openclare_hard_edges_copy_{edges}")
+        count.restype, count.argtypes = size, [pointer]
+        copy.restype, copy.argtypes = None, [pointer, pointer]
+    lib.openclare_hard_edges_ok.argtypes = lib.openclare_hard_edges_error.argtypes = [pointer]
+    lib.openclare_hard_edges_free.restype = None
+    lib.openclare_hard_edges_free.argtypes = [pointer]
+    lib.openclare_hard_edge_finder.restype = pointer
+    lib.openclare_hard_edge_finder.argtypes = [pointer, size, pointer, size, pointer, size]
+    lib.openclare_hard_edge_finder_ok.restype = ctypes.c_int32
+    lib.openclare_hard_edge_finder_error.restype = text
+    lib.openclare_hard_edge_finder_ok.argtypes = lib.openclare_hard_edge_finder_error.argtypes = [pointer]
+    lib.openclare_hard_edge_finder_find.restype = pointer
+    lib.openclare_hard_edge_finder_find.argtypes = [pointer, pointer, text, text]
+    lib.openclare_hard_edge_finder_free.restype = None
+    lib.openclare_hard_edge_finder_free.argtypes = [pointer]
     _library = lib
     return lib
 
@@ -267,6 +288,83 @@ def remesh(
         return out
     finally:
         lib.openclare_result_free(result)
+
+
+def hard_edges(
+    positions, vertex_count, triangles, triangle_count, corner_vertices, corner_count, preset, settings, density=None
+):
+    """The hard edges a remesh with the same arguments would follow, found
+    by the engine without remeshing, by the same code and at the size of the
+    quads it would make: the arguments are those of `remesh`, read in place.
+
+    Returns two numpy arrays of unsigned 32-bit vertices, two per edge: the
+    edges kept (sharper than the angle of the hard edges and still sharp at
+    the size of the quads; open borders are not among them), and those
+    sharper than the angle left out (the grain of a sculpt)."""
+    import numpy
+
+    lib = library()
+    lines = "".join(f"{key} = {value}\n" for key, value in settings.items())
+    if density is not None and (density.dtype != numpy.float32 or len(density) != vertex_count):
+        raise EngineError(f"{len(density)} weights of type {density.dtype} for {vertex_count} vertices")
+    found = lib.openclare_hard_edges(
+        positions, vertex_count, triangles, triangle_count, corner_vertices, corner_count,
+        None if density is None else density.ctypes.data, preset.encode(), lines.encode(),
+    )
+    return _edges_of(lib, found)
+
+
+def _edges_of(lib, found):
+    """The edges kept and left out of the handle `found`, which is freed."""
+    import numpy
+
+    try:
+        if not lib.openclare_hard_edges_ok(found):
+            raise EngineError(lib.openclare_hard_edges_error(found).decode())
+        kept = numpy.empty(2 * lib.openclare_hard_edges_kept_count(found), numpy.uint32)
+        left_out = numpy.empty(2 * lib.openclare_hard_edges_left_out_count(found), numpy.uint32)
+        lib.openclare_hard_edges_copy_kept(found, kept.ctypes.data)
+        lib.openclare_hard_edges_copy_left_out(found, left_out.ctypes.data)
+        return kept, left_out
+    finally:
+        lib.openclare_hard_edges_free(found)
+
+
+class HardEdgeFinder:
+    """One mesh whose hard edges are found again and again under other
+    settings, as `hard_edges` finds them: what depends on the mesh alone is
+    done once, by the engine, which keeps it. Used by one thread at a time."""
+
+    def __init__(self, positions, vertex_count, triangles, triangle_count, corner_vertices, corner_count):
+        """The arguments are the first six of `hard_edges`, read in place
+        and copied by the engine."""
+        self._lib = library()
+        self.vertices = vertex_count
+        self._handle = self._lib.openclare_hard_edge_finder(
+            positions, vertex_count, triangles, triangle_count, corner_vertices, corner_count
+        )
+        if not self._lib.openclare_hard_edge_finder_ok(self._handle):
+            error = self._lib.openclare_hard_edge_finder_error(self._handle).decode()
+            self._lib.openclare_hard_edge_finder_free(self._handle)
+            self._handle = None
+            raise EngineError(error)
+
+    def __del__(self):
+        if getattr(self, "_handle", None):
+            self._lib.openclare_hard_edge_finder_free(self._handle)
+            self._handle = None
+
+    def find(self, preset, settings, density=None):
+        """What `hard_edges` gives for the mesh with these arguments."""
+        import numpy
+
+        if density is not None and (density.dtype != numpy.float32 or len(density) != self.vertices):
+            raise EngineError(f"{len(density)} weights of type {density.dtype} for {self.vertices} vertices")
+        lines = "".join(f"{key} = {value}\n" for key, value in settings.items())
+        found = self._lib.openclare_hard_edge_finder_find(
+            self._handle, None if density is None else density.ctypes.data, preset.encode(), lines.encode()
+        )
+        return _edges_of(self._lib, found)
 
 
 def bake_height(positions, normals, triangles, uvs, source_positions, source_triangles, width, height, reach, padding=4):

@@ -60,9 +60,13 @@ openclare_result_free(result);
 Who frees what:
 
 - What you pass in stays yours: the library reads it during the call and keeps nothing.
-- `openclare_remesh`, `openclare_bake_height` and `openclare_analyse` never return NULL. Each
-  handle they return is freed once, by `openclare_result_free`, `openclare_baked_free` or
-  `openclare_analysis_free`, whether it holds what was asked for or an error.
+- `openclare_remesh`, `openclare_bake_height`, `openclare_analyse`, `openclare_hard_edges`,
+  `openclare_hard_edge_finder` and `openclare_hard_edge_finder_find` never return NULL. Each
+  handle they return is freed once, by `openclare_result_free`, `openclare_baked_free`,
+  `openclare_analysis_free`, `openclare_hard_edges_free` or `openclare_hard_edge_finder_free`,
+  whether it holds what was asked for or an error.
+- A hard edge finder copies the mesh it is given, which is the caller's again on return; it is
+  used by one thread at a time.
 - The `copy` functions write into arrays you allocate, of the size the `count` functions give.
 - Texts returned by the library are its own: never free them. Errors and reports live until
   their handle is freed; the version for ever.
