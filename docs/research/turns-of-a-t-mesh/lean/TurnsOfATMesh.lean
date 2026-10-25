@@ -19,3 +19,4 @@ public import TurnsOfATMesh.Farkas
 public import TurnsOfATMesh.Completeness
 public import TurnsOfATMesh.GaussBonnet
 public import TurnsOfATMesh.BeyondQuads
+public import TurnsOfATMesh.TMesh
