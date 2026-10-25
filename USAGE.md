@@ -113,6 +113,23 @@ curves, and a line saying `closed` for one that joins its first point.
 
 ![The ogre with and without guide curves](docs/images/guide_curves.png)
 
+## Symmetry
+
+`--symmetry x` (or `y`, `z`; `symmetry = x` in a saved configuration) says that the plane through
+the origin of the model, across that axis, is a plane of symmetry. The plane is drawn into the
+model as a line of edges, the whole model is remeshed, and the half on the positive side is kept
+and mirrored: the result is its own mirror image, with a loop of edges on the plane. A painted
+density, groups (materials), guide curves and edges given as hard edges go through the cut.
+
+A model that is not on both sides of the plane, or whose mirror image is more than 2 % of its
+size away from its surface somewhere, is refused: its negative side would be replaced by
+something else. Where the line on the plane could not be kept, the run says how many vertices were
+put on the plane from more than half a quad away: the two halves then meet across their quads.
+
+```bash
+./target/release/openclare remesh head.obj quads.obj --quads 3000 --symmetry x
+```
+
 ## Slow quality: loops closed by an exact solver
 
 Lines of quads that go round a part (a limb, a neck, a finger) are closed into rings where the

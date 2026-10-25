@@ -63,6 +63,7 @@ of the ogre at 3000 quads.
 | Density | A vertex group of the object, painted in Weight Paint: quads are smallest where the weight is 1, largest where it is 0 |
 | Factor | How many times more quads a weight of 1 gets than a weight of 0, for the same area |
 | Materials | Each quad gets the material of the surface it lies on, and the borders between materials are kept as lines of edges where that can be done |
+| Symmetry | *None*, *X*, *Y* or *Z*: the quads come out the same on both sides of the plane through the origin of the object across that axis, in the object's own axes, with a loop of edges on the plane. The object must be the same on both sides; one that is not is refused, and said why |
 | Shape: presets | The menu in the header of the *Shape* block saves every setting below with *+*, and sets them back from a preset saved there; a saved preset can be removed. The add-on ships none: the defaults suit sculpts, characters and mechanical parts alike |
 | Adaptive Size | How much the size of the quads follows the curvature: at 0 % they are all the same size; towards 100 % they get smaller where the shape bends and larger where it is flat |
 | Quads Around Thin Parts | The fewest quads that go round a thin part, a finger or the tip of an ear, for it to keep its volume. 0 does not look at thickness |
@@ -78,7 +79,8 @@ square in the scene.
 
 With the result selected, the same panel says what it was remeshed from and how the run went:
 how many quads, and, as a warning, what did not go as asked (far fewer quads than asked for, a
-part that could not be meshed, hard edges let go).
+part that could not be meshed, hard edges let go, halves of a symmetric result that meet across
+their quads).
 The arrow beside the name of the original selects it; *Remesh Again* remeshes the original with
 the settings it has now, in place of the result, which keeps its name and place.
 

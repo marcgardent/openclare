@@ -351,6 +351,21 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         soft_max=16.0,
         max=100.0,
     )
+    symmetry: bpy.props.EnumProperty(
+        options=set(),
+        name="Symmetry",
+        description=(
+            "The quads come out the same on both sides of the plane through the origin of the object across "
+            "this axis, in the object's own axes. The object must be the same on both sides"
+        ),
+        items=[
+            ("NONE", "None", "No plane of symmetry"),
+            ("X", "X", "The plane across the object's X axis"),
+            ("Y", "Y", "The plane across the object's Y axis"),
+            ("Z", "Z", "The plane across the object's Z axis"),
+        ],
+        default="NONE",
+    )
     export_materials: bpy.props.BoolProperty(
         options=set(),
         name="Materials",
@@ -463,6 +478,8 @@ def engine_settings_of(original, evaluated, source, write=True):
         del engine_settings["quads"]
         engine_settings["largest_quad"] = largest / scale
         engine_settings["smallest_quad"] = smallest / scale
+    if settings.symmetry != "NONE":
+        engine_settings["symmetry"] = settings.symmetry.lower()
     density = None
     if settings.density_group:
         density = weights_of(evaluated, source, settings.density_group)
@@ -728,6 +745,9 @@ class Remeshing:
             said += f"; {plainer} piece(s) meshed by the plainer method, with more irregular vertices"
         if let_go:
             said += f"; hard edges or lines let go on {let_go} piece(s), which could not be meshed with them"
+        off_plane = int(report.get("off_the_plane", 0))
+        if off_plane:
+            said += "; the line on the plane of symmetry was let go, and the halves meet across their quads"
         # Said as a warning: the result then lacks part of the object, or is
         # far from what was asked.
         failed = int(report.get("pieces_failed", 0))
@@ -736,7 +756,7 @@ class Remeshing:
         short = falls_short(report)
         if short:
             said += f"; {short}"
-        self.report({"WARNING"} if failed or short else {"INFO"}, said)
+        self.report({"WARNING"} if failed or short or off_plane else {"INFO"}, said)
         return remeshed
 
 
@@ -1034,6 +1054,7 @@ class OPENCLARE_PT_panel(DataPanel, bpy.types.Panel):
         factor.enabled = bool(settings.density_group)
         factor.prop(settings, "density_factor")
         layout.prop(settings, "export_materials")
+        layout.prop(settings, "symmetry", expand=True)
         draw_remesh(layout, OPENCLARE_OT_remesh.bl_idname, "MOD_REMESH")
 
     def draw_result(self, context, owner):
@@ -1088,6 +1109,8 @@ def report_lines(told):
         lines.append((f"{plainer} piece(s) by the plainer method", "INFO"))
     if let_go:
         lines.append((f"Hard edges let go on {let_go} piece(s)", "INFO"))
+    if int(told.get("off_the_plane", 0)):
+        lines.append(("The halves meet across their quads", "ERROR"))
     welded, apart = int(told.get("welded_vertices", 0)), int(told.get("edges_taken_apart", 0))
     if welded or apart:
         lines.append((f"Mended: {welded} vertices welded, {apart} edges taken apart", "ERROR"))

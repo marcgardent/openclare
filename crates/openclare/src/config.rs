@@ -11,6 +11,7 @@ use crate::error::{Error, Result};
 use crate::pipeline::Target;
 use crate::quantization::Selector;
 use crate::remesher::{Guides, Method};
+use crate::symmetry::{self, Axis};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct RemeshConfig {
@@ -84,7 +85,28 @@ pub struct RemeshConfig {
     /// core has none of its own. Not a setting written to text.
     pub ring_selector: Selector,
     pub seed: u64,
+    /// The plane through the origin of the model across this axis is a
+    /// plane of symmetry: the quad mesh is made the same on both sides of
+    /// it (see [`crate::symmetry`]).
+    pub symmetry: Option<Axis>,
 }
+
+/// Vertices of the input closer to the plane of symmetry than this share of
+/// its diagonal are taken to be on it.
+const SYMMETRY_SNAP: f64 = 1e-6;
+/// A model whose mirror image is farther from its surface than this share
+/// of its diagonal, somewhere, is not taken to be symmetric: its negative
+/// side would be replaced by something else. Models of the bench meant to
+/// be symmetric measure up to 1.5 % (the ogre, a sculpt); a wrong axis, or
+/// an origin off the plane, 8 % and more.
+const SYMMETRY_TOLERANCE: f64 = 0.02;
+/// A vertex of the half put on the plane from farther than this share of
+/// the edge of the quads was not held there by the line of edges drawn on
+/// it: the line was let go, and the half is cut across its quads. Where the
+/// line is kept, the relaxation leaves its vertices up to half an edge off
+/// the plane (the ogre, blub); where it is let go, from 0.55 edges on (the
+/// venturi across y).
+const OFF_THE_PLANE: f64 = 0.6;
 
 /// Default of [`RemeshConfig::slow_time_limit`], in seconds: a bound for
 /// safety, well above what the work limit takes.
@@ -195,6 +217,7 @@ impl RemeshConfig {
             slow_work_limit: SLOW_WORK_LIMIT,
             ring_selector: Selector::default(),
             seed: 1,
+            symmetry: None,
         }
     }
 
@@ -250,9 +273,63 @@ impl RemeshConfig {
         recorder: &mut dyn crate::recorder::Recorder,
     ) -> Result<(crate::PolyMesh, crate::pipeline::Report)> {
         use crate::recorder::Shape;
+        if let Some(axis) = self.symmetry {
+            return self.remesh_symmetric(input, guides, axis, recorder);
+        }
         recorder.record("input/surface", Shape::Surface { mesh: input, values: guides.density });
         let (mesh, report) = crate::remesher::create(self.method).remesh_recorded(input, guides, self, recorder)?;
         recorder.record("result/quads", Shape::Polygons(&mesh));
+        Ok((mesh, report))
+    }
+
+    /// `input` remeshed with the plane across `axis` drawn into it as a line
+    /// of edges, the half on its positive side kept and mirrored. What the
+    /// guides say of the input is said of it with the plane drawn in: the
+    /// weights painted on the vertices made there are shared out from the
+    /// two ends of the edge each cuts, and each triangle cut keeps its
+    /// group.
+    fn remesh_symmetric(
+        &self,
+        input: &crate::TriMesh,
+        guides: &Guides,
+        axis: Axis,
+        recorder: &mut dyn crate::recorder::Recorder,
+    ) -> Result<(crate::PolyMesh, crate::pipeline::Report)> {
+        symmetry::check(input, axis, SYMMETRY_TOLERANCE)?;
+        let (low, high) = input
+            .positions
+            .iter()
+            .fold((crate::math::Vec3::INFINITY, crate::math::Vec3::NEG_INFINITY), |(lo, hi), &p| {
+                (lo.min(p), hi.max(p))
+            });
+        let snap = SYMMETRY_SNAP * (high - low).length();
+        let split = symmetry::split(input, axis, snap);
+        let density = guides.density.map(|density| split.weights(density));
+        let groups = guides.groups.map(|groups| split.per_triangle(groups));
+        let mut lines = guides.lines.to_vec();
+        lines.extend(split.lines.iter().copied());
+        let drawn = Guides {
+            density: density.as_deref(),
+            groups: groups.as_deref(),
+            lines: &lines,
+            held: &split.lines,
+            ..*guides
+        };
+        let config = Self { symmetry: None, ..self.clone() };
+        let (mesh, mut report) = config.remesh_recorded(&split.mesh, &drawn, recorder)?;
+        let (mesh, carried) = symmetry::symmetric(&mesh, axis, snap);
+        // What the report says of edges, by their vertices, said of the
+        // result: those of the half kept, and their images.
+        report.hard_edges = carried.edges(&report.hard_edges);
+        report.guide_edges = carried.edges(&report.guide_edges);
+        report.sharp_curve_edges = carried.edges(&report.sharp_curve_edges);
+        report.creases = carried.carry(report.creases.iter().copied());
+        if !report.face_groups.is_empty() {
+            report.face_groups = carried.faces.iter().map(|&f| report.face_groups[f as usize]).collect();
+        }
+        let edge = (high - low).length() / (mesh.faces.len().max(1) as f64).sqrt();
+        report.off_the_plane = carried.moved.iter().filter(|&&d| d > OFF_THE_PLANE * edge).count();
+        report.stats = mesh.stats();
         Ok((mesh, report))
     }
 
@@ -341,6 +418,7 @@ impl RemeshConfig {
         writeln!(text, "slow_time_limit = {}", self.slow_time_limit).unwrap();
         writeln!(text, "slow_work_limit = {}", self.slow_work_limit).unwrap();
         writeln!(text, "seed = {}", self.seed).unwrap();
+        writeln!(text, "symmetry = {}", self.symmetry.map_or("none", Axis::name)).unwrap();
         text
     }
 
@@ -411,6 +489,8 @@ impl RemeshConfig {
                 "slow_time_limit" => config.slow_time_limit = number_of("number of seconds")?,
                 "slow_work_limit" => config.slow_work_limit = number_of("number")?,
                 "seed" => config.seed = value.parse().map_err(|_| error(format!("'{value}' is not a seed")))?,
+                "symmetry" if value == "none" => config.symmetry = None,
+                "symmetry" => config.symmetry = Some(value.parse().map_err(|e: Error| error(e.to_string()))?),
                 other => return Err(error(format!("unknown setting '{other}'"))),
             }
         }

@@ -145,6 +145,11 @@ pub struct Report {
     /// How many faces of the output lie across a border between two groups
     /// of the input: none where every border is a line of edges.
     pub faces_across_groups: usize,
+    /// With a plane of symmetry: how many vertices of the half kept were
+    /// put on the plane from farther than 0.6 of the edge of the
+    /// quads, where the line of edges on it was let go. 0 when the half
+    /// was cut cleanly along it.
+    pub off_the_plane: usize,
     pub stats: MeshStats,
     pub timings: Vec<(&'static str, Duration)>,
 }
