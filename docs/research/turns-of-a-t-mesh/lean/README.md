@@ -297,6 +297,73 @@ the whole lengths of the integer search, `B` the balance matrix.
    on the paths; the general rule is `∑ᵣ uᵣ (αᵣ + sᵣ) ≡ ∑ᵣ uᵣ Ω_ℓ([γ̄ᵣ]) (mod 2)`
    (the note's Theorem "Parity of a turn on any surface").
 
+## Checked against the engine's exports
+
+A definition that does not describe the engine's object would make the theorems
+true but beside the point. `Check/` tests `TMesh.lean` on real T-meshes; it is
+not part of the library, which `lake build` builds unchanged.
+
+```sh
+make lean-check EXPORT=<dir>      # from the root of the repository
+```
+
+`<dir>` is a directory the engine wrote with `OPENCLARE_EXPORT_TURNS=<dir>`.
+`Check/convert.py` turns each way of closing (`way-<n>.json`) into the model
+(its docstring gives the mapping, read from `quantization/tubes.rs` and
+`export.rs` and checked on the data: rim side 0 is `(P, 0, 0)`, side 1 is
+`(P, 1, 1)`, sides 2 and 3 are `(P, 0, 1)` and `(P, 1, 0)` listed in reverse);
+`Check/Main.lean`, run by `lake env lean --run`, builds the `TMesh` from it,
+discharging the proof fields by checks on the data, and compares with the
+library's definitions, in exact arithmetic:
+
+* the fields of `TMesh`, `NoArcAcross` and `Oriented`, every violation listed;
+* `balance` with the engine's balances, row by row (the rows `(P, 1)` are the
+  engine's negated);
+* `Turn.shiftForm` with the engine's shift, coefficient by coefficient and
+  modulo the balances (`shiftForm − shift = λᵀ B`, `λ` found by the program and
+  the identity checked against `balance`);
+* at the lengths the engine walked: its offset lies in `Turn.corridor`, `walk`
+  passes within `10⁻⁶` of each crossing the engine recorded and comes back at
+  the offset plus `Turn.shift`; at the real lengths the same from the same
+  share of the side, and at the whole lengths from every half-integer of the
+  corridor.
+
+Surfaces with borders are out of the model's scope and reported as skipped.
+Results on 2026-10-25 (an i7-7700K, 4 cores, shared with other jobs, load
+about 6): the male body at 10,590 quads exported before commit `c8bf2be` (the
+data of the note, 8 ways), and exports from commit `300a058` of the male body
+(10,580 quads, 8 ways) and of blob, spot, rock and torus at 3,000 quads; 35
+ways, 3,841 turns:
+
+| Check | Agree |
+|---|---|
+| fields of `TMesh`, `NoArcAcross`, `Oriented` | all 35, no violation |
+| balances | 30,970 of 30,970 rows |
+| turns of the `TMesh` (`IsPath`, `closes`) | 3,841 of 3,841 |
+| `shiftForm` = engine shift, coefficient by coefficient | **0** of 3,841 |
+| `shiftForm` = engine shift modulo the balances, `λ` whole | 3,841 of 3,841 |
+| walked lengths: offset in the corridor, crossings, come-back | 3,841 of 3,841 each |
+| real lengths: come-back (2,680 turns keep the share in their corridor) | 2,680 of 2,680 |
+| whole lengths: come-back from each half-integer of the corridor (1,333 turns have one) | 12,873 of 12,873 |
+
+Suzanne, which has borders, was skipped. The run takes 20 minutes of processor
+time, 8 minutes with 3 jobs.
+
+Two findings. **The engine's shift is another representative of the same
+form.** The engine measures positions round the rim from the first corner
+(`tubes::rims`), so a position on sides 2 and 3 carries the lengths of sides 0
+and 1; the library measures each side from its own first corner. The two forms
+differ by a whole combination of the balances, so they agree at every
+balanced length (the whole lengths; the walked lengths, balanced to `10⁻⁷`,
+to within `10⁻⁶`), never as vectors. The shift of a turn is defined modulo the
+balances, and what the library proves from it (Remark "Sign-definite turns",
+Theorem "Forced shifts") is stated modulo the balances. **The real shift depends on the representative.**
+The real lengths the engine ranks turns by are its exact lengths with a jitter
+of ±0.5 % per arc (`quantization/mod.rs`), which leaves the balances off by up
+to 0.39; there the two representatives differ by up to 6.6 on the male body
+of the note and 1.2 on the fresh export, and by more than 0.05 (the real shift
+above which the engine holds a turn) for 2,572 of the 3,841 turns.
+
 ## Files
 
 * `Basic.lean`: motions and their group law; the quarter-turn group in `ℤ[i]`.
@@ -324,3 +391,5 @@ the whole lengths of the integer search, `B` the balance matrix.
   shifts and corridors; Lemma "Handshake", Proposition "Free arcs", Remark
   "Sign-definite turns" and Theorem "Forced shifts" on it; an example, a torus
   of one patch glued with a twist (`twistedTorus`).
+* `Check/`, not in the library: `convert.py`, `Main.lean` and
+  `check_exports.py`, the check against the engine's exports above.
