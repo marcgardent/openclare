@@ -95,8 +95,9 @@ fermés. En lisant le décalage comme l'holonomie de translation de la métrique
 plate, nous montrons que, pour un tour simple, il est la composante transverse
 du vecteur de Burgers des sommets singuliers situés d'un côté\,; qu'une paire
 3--5 ou un échange de deux sommets, reliés par un escalier d'arcs, force l'un
-de deux tours à être décalé, et une séparatrice qui fait une fois le tour, un
-tour seul\,; et que, sur une sphère fermée, le décalage et la longueur d'un
+de deux tours à être décalé, et qu'une séparatrice qui fait une fois le tour
+d'un tour et s'arrête sur une autre séparatrice de son sommet force ce seul tour
+à être décalé\,; et que, sur une sphère fermée, le décalage et la longueur d'un
 tour ont la même parité. Le calcul de Fox étend la somme de Burgers à toute
 combinaison de tours, et des \emph{peignes}, dislocations locales portées par
 un seul arc, écrivent tous les certificats de conflit trouvés sur un corps
@@ -840,8 +841,10 @@ p_{c'})$\,; pour $j = \pm1$, les deux composantes sont $\pm d_1 \pm d_2$.
 
 Les $13$ conflits se répartissent en six configurations
 (tableau~\ref{tab:pairs}, mesuré). En A, la couronne entre deux tours simples
-contient une paire 3--5, et l'escalier qui la relie, long de $0,990$, est la
-différence des décalages réels\,; aux longueurs entières du moteur, les deux
+contient une paire 3--5, et l'escalier qui la relie, $\ell_{611} +
+\ell_{624}$, long de $0,990$, est la différence des décalages réels\,; modulo
+les équilibres, il est égal au certificat $\ell_{611} + \ell_{616} +
+\ell_{619} + \ell_{635}$, qui maintient l'arc $619$ (exact)\,; aux longueurs entières du moteur, les deux
 sommets de la paire sont à une arête l'un de l'autre sur une même ligne de la
 grille, la proposition~\ref{prop:dislocation}(ii) avec $\delta = 1$ (son
 hypothèse sur $\kappa$ n'étant pas vérifiée). En B, C et D, les tours se
@@ -1166,7 +1169,9 @@ d'exposants de $w$ sont nulles.
 Découpé en une seule carte le long d'un arbre couvrant des nœuds, le T-mesh
 donne à chaque tour un mot, et la proposition~\ref{prop:fox} sa translation,
 pour les $1\,299$ tours. Le corollaire~\ref{cor:checker} vaut sur tous et sur
-les $14$ ensembles du tableau~\ref{tab:iis} à multiplicateurs entiers\,; à la
+les $14$ premiers ensembles du tableau~\ref{tab:iis}, multiplicateurs
+fractionnaires ramenés à des entiers (l'ensemble de $15$ tours n'a pas été
+essayé)\,; à la
 main gauche, le cycle fait un nombre pair de fois le tour de chaque sommet de
 valence impaire, ce qui explique que $-2F$ soit pair. Quatre tours vérifient
 $w_{18} = w_{22} + w_{101} + w_{65}$ autour de chaque sommet singulier alors
@@ -1872,8 +1877,8 @@ plein.
 \begin{remark}[La fenêtre de tailles\,; une esquisse]
 La fenêtre sur le nombre de quads rend difficile, au sens faible, même le
 fait de ne rien fermer. Prenons une réunion disjointe de tores, chacun formé
-de deux patchs dont les côtés ont pour cibles $N v_i$ et $1$, de sorte que $Q
-= \sum_i 2 a_i c_i$, et un plafond qui laisse les côtés courts $c_i$ grandir
+de deux patchs dont les côtés longs et courts $a_i$ et $c_i$ ont pour cibles
+$N v_i$ et $1$, de sorte que $Q = \sum_i 2 a_i c_i$, et un plafond qui laisse les côtés courts $c_i$ grandir
 de $T_0$ arêtes en tout. Pour $N$ grand, la fenêtre $Q = 2N(\sum_i v_i +
 T_0)$ est respectée exactement lorsque $\sum_i v_i(c_i - 1) = T_0$ avec des
 $c_i \ge 1$ entiers~: c'est le problème de la somme de sous-ensemble non
