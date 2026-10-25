@@ -936,7 +936,11 @@ impl Quantizer for WalkCancelling {
                     continue;
                 }
                 let clock = std::time::Instant::now();
-                let (found, held) = turns_of(tmesh, &real, offsets, lean, longest);
+                // Shifts are read at the lengths of the parametrization, which
+                // keep the balances: a shift is defined modulo them, and at the
+                // jittered lengths its value would depend on how it is written
+                // (DT-162).
+                let (found, held) = turns_of(tmesh, &exact, offsets, lean, longest);
                 if std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some() {
                     eprintln!(
                         "turns from {offsets:?} leaning up to {lean}, {longest} long: {} found, {} held, {:.1} s",
