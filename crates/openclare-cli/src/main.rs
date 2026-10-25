@@ -72,6 +72,8 @@ OPTIONS (remesh):
     --record <FILE.rrd>          record what each stage makes, to open in the Rerun viewer
                                  (needs a build with `--features rerun`)
     --seed <N>                   random seed
+    --symmetry <x|y|z|none>      the plane through the origin across that axis is a plane of symmetry: the quads
+                                 come out the same on both sides of it
 
 OPTIONS (preprocess):
     --kind <NAME>          isotropic (default) or passthrough
@@ -375,6 +377,14 @@ fn remesh(args: &[String]) -> Result<(), String> {
             "--record-still" => record_still = Some(value(arg)?.clone()),
             "--notes" => notes = true,
             "--seed" => config.seed = parse(arg, value(arg)?)?,
+            "--symmetry" => {
+                let text = value(arg)?;
+                config.symmetry = if text == "none" {
+                    None
+                } else {
+                    Some(text.parse().map_err(|e: openclare::Error| e.to_string())?)
+                };
+            }
             flag if flag.starts_with("--") => return Err(format!("unknown option '{flag}'")),
             path => paths.push(path),
         }
@@ -442,7 +452,8 @@ fn remesh(args: &[String]) -> Result<(), String> {
         }
         None => None,
     };
-    let guides = Guides { density: density.as_deref(), curves: &curves, groups: groups.as_deref(), lines: &[] };
+    let guides =
+        Guides { density: density.as_deref(), curves: &curves, groups: groups.as_deref(), lines: &[], held: &[] };
     let start = std::time::Instant::now();
     let (result, report) = match &record_path {
         Some(path) => remesh_recorded(path, record_still.as_deref(), &config, &mesh, &guides)?,
@@ -546,6 +557,13 @@ fn remesh(args: &[String]) -> Result<(), String> {
     }
     for (cause, count) in &report.fallback_causes {
         println!("         {count} x {cause}");
+    }
+    if report.off_the_plane > 0 {
+        println!(
+            "symmetry {} vertices put on the plane from more than half a quad away: the line on it was let \
+             go, and the half is cut across its quads",
+            report.off_the_plane
+        );
     }
     let valences: Vec<String> = stats.valences.iter().map(|(v, n)| format!("{v}:{n}")).collect();
     println!("valence  {}", valences.join("  "));

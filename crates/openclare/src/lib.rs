@@ -42,6 +42,7 @@ pub mod remesher;
 pub mod singularity;
 pub mod sizing;
 pub mod spatial;
+pub mod symmetry;
 pub mod thickness;
 pub mod tmesh;
 pub mod uv;

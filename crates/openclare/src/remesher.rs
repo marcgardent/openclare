@@ -48,6 +48,10 @@ pub struct Guides<'a> {
     /// Edges of the input for the quad mesh to have lines of edges along,
     /// each given by where its two ends are.
     pub lines: &'a [[Vec3; 2]],
+    /// Those of [`Self::lines`] the quad mesh must keep: where a piece
+    /// cannot be meshed with all its lines, these are tried alone before
+    /// any is let go. The plane of symmetry, drawn into the model.
+    pub held: &'a [[Vec3; 2]],
     /// A group for each triangle of the input: its material, say. Where two
     /// groups meet the quad mesh has a line of edges, so that no face
     /// straddles two of them, and the report says which group each face of
@@ -1147,6 +1151,23 @@ impl QuadLayout {
         match self.try_layout_piece(input, guides, config, least, recorder)? {
             LayoutOutcome::Done(mesh, report) => Ok((mesh, report)),
             LayoutOutcome::FallBack { cause, underfed } => {
+                // Lines that must be kept are tried alone first, without the
+                // others, the curves and the hard edges.
+                let held: Vec<[Vec3; 2]> =
+                    guides.lines.iter().copied().filter(|line| guides.held.contains(line)).collect();
+                let more = held.len() < guides.lines.len() || !guides.curves.is_empty() || config.edge_angle.is_some();
+                if !underfed && !held.is_empty() && more {
+                    let kept = Guides { curves: &[], lines: &held, ..*guides };
+                    let kept_config = RemeshConfig { edge_angle: None, ..config.clone() };
+                    recorder.record("notes/lines", Shape::Note(&format!("done again with its held lines only: {cause}")));
+                    if let LayoutOutcome::Done(mesh, mut report) =
+                        self.try_layout_piece(input, &kept, &kept_config, least, recorder)?
+                    {
+                        report.guides_let_go = 1;
+                        report.line_causes = vec![(cause, 1)];
+                        return Ok((mesh, report));
+                    }
+                }
                 // With guide curves, the first thing to try is to do without
                 // them: the layout without the lines drawn is still better
                 // than the other chain.

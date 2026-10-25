@@ -264,7 +264,7 @@ unsafe fn remesh(
         let points = chain.iter().map(|&v| input.positions[v as usize]).collect();
         curves.push(GuideCurve { points, closed, sharp: true });
     }
-    let guides = Guides { density: painted.as_deref(), curves: &curves, groups, lines: &[] };
+    let guides = Guides { density: painted.as_deref(), curves: &curves, groups, lines: &[], held: &[] };
     let (mesh, done) = config.remesh_recorded(&input, &guides, watcher).map_err(|error| error.to_string())?;
     let seconds = clock.elapsed().as_secs_f64();
 
@@ -277,7 +277,8 @@ unsafe fn remesh(
     let report = format!(
         "{asked}\nvertices = {}\nfaces = {}\nquads = {}\nirregular_vertices = {}\npieces = {}\n\
          pieces_through_fallback = {}\npieces_failed = {}\npieces_skipped = {}\npieces_boxed = {}\nthin_pieces = {}\nquads_for_thin_pieces = {}\nguide_edges = {}\nsharp_curve_edges = {}\nfaces_across_groups = {}\nwelded_vertices = {}\nedges_taken_apart = {}\nguide_gaps = {}\n\
-         guides_let_go = {}\nquads_wanted = {}\nbelow_smallest = {}\nlargest_edge = {}\nsmallest_edge = {}\nseconds = {seconds:.3}\n",
+         guides_let_go = {}\nquads_wanted = {}\nbelow_smallest = {}\nlargest_edge = {}\nsmallest_edge = {}\noff_the_plane = {}\n\
+         seconds = {seconds:.3}\n",
         stats.vertices,
         stats.faces,
         stats.quads,
@@ -300,6 +301,7 @@ unsafe fn remesh(
         done.below_smallest,
         done.largest_edge,
         done.smallest_edge,
+        done.off_the_plane,
     );
     Ok(OpenclareResult {
         mesh,

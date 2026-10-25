@@ -721,6 +721,57 @@ assert not openclare.falls_short({"quads_asked": "3000", "quads": "2900"})
 assert not openclare.falls_short({"largest_asked": "0.1", "quads": "164"})
 print("FALLS SHORT OK")
 
+# Symmetry: Suzanne is the same on both sides of the plane across her own X
+# axis. Asked to, the quads come out the same on both sides, wherever the
+# object is and however it is turned; with the marked equator of the ball
+# above, and its materials, the same.
+import mathutils
+
+
+def mirror_image_missing(result, axis):
+    """How many vertices of `result` have no vertex at their mirror image
+    across the plane through its origin across `axis`, in its own axes."""
+    tree = mathutils.kdtree.KDTree(len(result.data.vertices))
+    for vertex in result.data.vertices:
+        tree.insert(vertex.co, vertex.index)
+    tree.balance()
+    missing = 0
+    for vertex in result.data.vertices:
+        image = vertex.co.copy()
+        image[axis] = -image[axis]
+        if tree.find(image)[2] > 1e-5:
+            missing += 1
+    return missing
+
+
+bpy.ops.mesh.primitive_monkey_add(location=(72.0, 3.0, -1.0), rotation=(0.3, 0.0, 1.1))
+monkey = bpy.context.active_object
+monkey.modifiers.new("subdivide", "SUBSURF").levels = 1
+alone(monkey)
+settings.quads, settings.use_marked_sharp, settings.symmetry = 1500, False, "X"
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+result = bpy.context.active_object
+assert mirror_image_missing(result, 0) == 0
+assert int(result[openclare.REPORT].get("off_the_plane", "0")) == 0
+plain_faces = len(result.data.polygons)
+# Across Y Suzanne is not the same on both sides: refused, and said why.
+alone(monkey)
+settings.symmetry = "Y"
+try:
+    bpy.ops.object.openclare_remesh()
+    raise AssertionError("a model not the same on both sides was taken as symmetric")
+except RuntimeError as error:
+    assert "not the same on both sides" in str(error), error
+
+alone(ball)
+settings.symmetry, settings.use_marked_sharp, settings.quads = "X", True, 800
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+result = bpy.context.active_object
+assert mirror_image_missing(result, 0) == 0
+assert on_equator(result) >= 30, on_equator(result)
+settings.symmetry = "NONE"
+print("SYMMETRY:", plain_faces, "quads on Suzanne, each vertex with its image; the marked equator kept across X")
+
 openclare.unregister()
 # The drawing goes with the add-on.
 assert preview.state.handle is None and preview.state.shown is None
