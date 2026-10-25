@@ -164,7 +164,7 @@ les zéros et les pôles sont ses sommets singuliers\,; Lei et
 al.~\cite{lei2020quartic} citent comme problème ouvert la garantie que toutes
 ses trajectoires soient finies, et une trajectoire qui n'est pas finie est une
 boucle d'arêtes qui ne se ferme pas. Une différentielle quadratique dont
-toutes les trajectoires se ferment est de
+toutes les trajectoires non critiques se ferment est de
 Jenkins--Strebel~\cite{strebel1984quadratic}, une réunion de cylindres
 plats\,; une hélice est un cylindre recollé avec un décalage d'un nombre
 entier de rangées. Chen et al.~\cite{chen2019metric} caractérisent les
@@ -172,12 +172,10 @@ métriques plates des maillages de quads, en supposant que les lignes du champ
 sont des boucles finies. Izmestiev et al.~\cite{izmestiev2013torus} démontrent
 des résultats de non-existence pour les maillages de quads, parmi lesquels le
 tore avec un sommet de valence trois et un de valence
-cinq~\cite{barnette1971toroidal}, au moyen de l'holonomie de l'application
+cinq, qu'ils rappellent comme connu, au moyen de l'holonomie de l'application
 développante, dont la translation, lorsque la rotation est triviale, est le
 vecteur de Burgers de la cristallographie\,; une paire de disclinaisons
-opposées est une dislocation~\cite{kleman2008disclinations}. Les périodes
-d'une métrique plate à singularités coniques en sont des coordonnées
-locales~\cite{thurston1998shapes,veech1993flat}. Bommes et
+opposées est une dislocation~\cite{kleman2008disclinations}. Bommes et
 al.~\cite{bommes2011structure} retirent les hélices de maillages finis\,; les
 paramétrisations en bandes des tubes~\cite{kalberer2011stripe} arrondissent à
 un nombre entier le saut autour d'un tube, notre décalage. Nous n'avons trouvé
@@ -643,9 +641,10 @@ a une somme de coordonnées paire.
 \paragraph{Combien d'anneaux indépendants.}
 Des anneaux qui ne se croisent pas sont des courbes fermées simples disjointes
 de $\Sigma^\circ$\,; sur une sphère fermée à $n \ge 3$ sommets singuliers, au
-plus $n - 3$ d'entre elles sont deux à deux non homotopes, comme pour les
-cylindres d'une différentielle de
-Jenkins--Strebel~\cite{strebel1984quadratic}, et des anneaux homotopes ont le
+plus $n - 3$ d'entre elles sont deux à deux non homotopes et non
+périphériques (la taille d'une décomposition en pantalons), un anneau autour
+d'un seul sommet singulier a un décalage nul (sa valence est alors un
+multiple de quatre), et des anneaux homotopes ont le
 même décalage, si bien que leurs conditions de fermeture sont de rang au plus
 $n - 3$ ($3g - 3 + n + b$, plus au plus $b$ classes de colliers, en genre $g$
 avec $b$ bords).
@@ -1041,9 +1040,9 @@ u\,\partial v/\partial x_i$. Étendue linéairement à l'algèbre du groupe,
 $\rho$ prend les valeurs $a_0 I + a_1 R + a_2 R^2 + a_3 R^3$, et
 l'augmentation $\epsilon$ envoie un tel élément sur $a_0 + a_1 + a_2 + a_3$.
 La première identité ci-dessous est la propriété qui définit les dérivées de
-Fox pour un homomorphisme croisé~\cite{fox1953free}, et les $p_i$ sont, à un
-déplacement commun près, des coordonnées de cohomologie tordue de la métrique
-plate~\cite{thurston1998shapes,veech1993flat}\,; ce qui est nouveau est la
+Fox pour un homomorphisme croisé~\cite{fox1953free}, et les $p_i$, positions
+développées des sommets singuliers, sont définis à un déplacement commun
+près\,; ce qui est nouveau est la
 lecture sur des combinaisons de tours.
 
 \begin{proposition}[Formule de Fox--Burgers]\label{prop:fox}
@@ -1503,8 +1502,8 @@ Sur Bob, de genre un, avec dix sommets de valence trois et dix de valence
 cinq, la somme de Burgers est nulle pour les $304$ paires de tours simples qui
 se croisent une fois, et pour aucun de $90$ ordres mélangés (mesuré). Avec une
 seule paire 3--5, les deux points coniques se développeraient en un même
-point\,; qu'un tel tore n'existe pas est le théorème de Barnette, Jucovi\v{c}
-et Trenkler~\cite{barnette1971toroidal}, aussi conséquence du théorème d'Abel
+point\,; qu'un tel tore n'existe pas est connu~\cite{izmestiev2013torus}, et
+c'est aussi une conséquence du théorème d'Abel
 ($c_5 - c_3$ n'est principal sur une courbe elliptique que si $c_5 = c_3$),
 une obstruction à l'existence, non à la fermeture. Avec $j = 0$, la
 proposition est l'argument du commutateur de~\cite[\S7]{izmestiev2013torus}.
@@ -1625,8 +1624,9 @@ et la taille du plus petit ensemble transversal des cœurs trouvés jusque-là,
 et il est connu exactement dès que le complémentaire de cet ensemble est
 fermable\,; la boucle d'\emph{ensemble transversal implicite}
 (\emph{implicit hitting set}) de Parker et Ryan~\cite{parker1996iis} alterne
-les deux, avec des cœurs issus du filtre par suppression
-de~\cite{chinneck1991locating}.
+les deux\,; ici, les cœurs viennent des routines de filtrage de Chinneck et
+Dravnieks~\cite{chinneck1991locating}, qui isolent un sous-système
+irréalisable minimal.
 
 \subsection{Longueurs entières et taille}\label{sec:whole}
 
@@ -1661,7 +1661,7 @@ $B$ a deux coefficients $\pm1$~: $B$ est la matrice d'incidence d'un
 \emph{graphe bidirigé} $G$ dont les sommets sont les équilibres et les arêtes
 les arcs, un arc situé sur un bord donnant une demi-arête, le cadre
 de~\cite{heistermann2023bimdf}, avec le rang de
-Zaslavsky~\cite{zaslavsky1982signed}. Un cycle de $G$ est \emph{équilibré} si
+Zaslavsky~\cite[\S8A]{zaslavsky1982signed}. Un cycle de $G$ est \emph{équilibré} si
 des valeurs $\pm1$ sur ses arêtes équilibrent chacun de ses sommets, et
 \emph{déséquilibré} sinon.
 
@@ -1863,7 +1863,7 @@ zéro.
 \end{conjecture}
 
 Les indices en sa faveur sont que la couverture par sommets reste
-NP-difficile sur les graphes planaires de petit
+NP-difficile sur les graphes planaires, et sur les graphes de petit
 degré~\cite{garey1976simplified}, et que deux tours séparés par une
 dislocation entrent en conflit comme les deux extrémités d'une arête.
 
@@ -1882,7 +1882,8 @@ $N v_i$ et $1$, de sorte que $Q = \sum_i 2 a_i c_i$, et un plafond qui laisse le
 de $T_0$ arêtes en tout. Pour $N$ grand, la fenêtre $Q = 2N(\sum_i v_i +
 T_0)$ est respectée exactement lorsque $\sum_i v_i(c_i - 1) = T_0$ avec des
 $c_i \ge 1$ entiers~: c'est le problème de la somme de sous-ensemble non
-bornée (\emph{unbounded subset sum}), NP-complet~\cite{lueker1975two}, avec
+bornée (\emph{unbounded subset sum}, sac à dos entier), problème NP-complet
+classique, avec
 des nombres exponentiels en la taille de l'instance (les gadgets sont de genre
 un et non connexes). On ne sait pas si la fenêtre seule est fortement
 NP-difficile, avec $Q$ polynomial en la taille, ni quelle est la complexité de
@@ -2002,7 +2003,7 @@ via Claude Code en octobre 2026 avec plusieurs sous-agents, a écrit les
 changements du moteur et les scripts d'expérience, a mené les exports et les
 calculs exacts, a fait la recherche bibliographique, a énoncé et démontré les
 propositions, a écrit la formalisation Lean et a rédigé le texte. La note de
-chaque entrée de la bibliographie dit quelle part de l'œuvre a été lue.
+chaque entrée de la bibliographie dit quelle part de l'œuvre a été lue. Une œuvre dont seul le résumé, ou un compte rendu, a été lu n'est citée que pour ce que ce résumé ou ce compte rendu dit.
 Au-delà des cœurs vérifiés par machine en Lean (section~\ref{sec:lean}), tout
 a été écrit avec l'aide de l'IA et vérifié par des agents d'IA qui l'ont relu
 et testé sur les données, non par un expert humain. En particulier, les

@@ -103,10 +103,9 @@ bougent avec les longueurs, et c'est le choix des tours à fermer qui décide.
 
 \section{Introduction}
 
-Le remaillage en quads aligné sur un champ (\emph{field-aligned quad
-remeshing}) a atteint un niveau où la forme et l'alignement des éléments
-sont rarement le facteur
-limitant~\cite{bommes2013survey,campen2017survey}. Reste la structure~: la
+D'expérience, la forme et l'alignement des éléments limitent rarement
+aujourd'hui le remaillage en quads aligné sur un champ (\emph{field-aligned
+quad remeshing}\,; voir les synthèses~\cite{bommes2013survey,campen2017survey}). Reste la structure~: la
 façon dont les boucles d'arêtes (\emph{edge loops}) courent sur la surface.
 Les artistes attendent d'une boucle qui fait le tour d'un bras, d'une jambe
 ou d'un cou qu'elle soit un anneau (\emph{ring}). Les méthodes automatiques
@@ -182,8 +181,9 @@ La quadrangulation mixte-entière (\emph{mixed-integer
 quadrangulation})~\cite{bommes2009miq} et les applications à grille entière
 (\emph{integer-grid maps})~\cite{bommes2013igm} décident de la structure
 entière d'un maillage de quads dans leur quantification. Campen et al.\
-quantifient au moyen des longueurs entières des arcs d'un T-mesh tracé dans
-une paramétrisation sans couture~\cite{campen2015qgp}. Lyon et al.\ résolvent
+montrent que même une quantification valide d'une paramétrisation sans
+couture est un problème combinatoire difficile, et le résolvent par des
+systèmes d'équations diophantiennes linéaires~\cite{campen2015qgp}. Lyon et al.\ résolvent
 une version contrainte comme un programme linéaire en nombres entiers, en
 bornant l'écart de direction des séparatrices du découpage obtenu, et
 exigent, comme openclare, que la quantification garde les singularités
@@ -206,9 +206,9 @@ et d'effondrement qui gardent le maillage entièrement en quads et ses
 singularités en place, suivis d'un lissage tangentiel\,; leurs expériences
 retirent la plupart des hélices (de 17 à 52 jusqu'à 1 à 23 par modèle). Ils
 notent que choisir directement dans la paramétrisation les paires de
-singularités à aligner, comme le font Myles et al.\ pour les
-T-meshes~\cite{myles2010feature}, est souvent compliqué, voire ambigu, à
-automatiser. Razafindrazaka et Polthier~\cite{razafindrazaka2017optimal}
+singularités à aligner est souvent compliqué, voire ambigu, à automatiser,
+et citent en exemple les T-meshes alignés sur les lignes caractéristiques
+(\emph{feature-aligned}) de Myles et al.~\cite{myles2010feature}. Razafindrazaka et Polthier~\cite{razafindrazaka2017optimal}
 remplacent le complexe de base d'un maillage fini par un complexe optimal,
 trouvé comme un couplage parfait sur un graphe construit sur ses sommets
 singuliers, et notent que les opérateurs de~\cite{bommes2011structure}
@@ -256,16 +256,15 @@ meshing})~\cite{campen2012dual} construit un découpage à partir de boucles
 tracées sur la surface, qui se ferment par construction\,; Lei et
 al.~\cite{lei2017foliation} construisent des maillages de quads à partir
 d'une différentielle de Strebel à cylindres prescrits, et les découpages
-guidés par un squelette~\cite{usai2015skeleton} ferment par conception les
-boucles autour des membres. Myles et al.~\cite{myles2014robust} tracent le
+guidés par un squelette~\cite{usai2015skeleton} suivent le squelette
+courbe d'une forme articulée. Myles et al.~\cite{myles2014robust} tracent le
 champ pour obtenir une partition en patchs, Pietroni et
-al.~\cite{pietroni2016tracing} choisissent des séparatrices tracées par un
-programme linéaire binaire, et Razafindrazaka et
+al.~\cite{pietroni2016tracing} extraient un découpage de chemins tracés le
+long du champ par un programme linéaire binaire, et Razafindrazaka et
 al.~\cite{razafindrazaka2015perfect} obtiennent un découpage comme un
 couplage parfait de poids minimal. Ces méthodes construisent des découpages
-grossiers, et aucune ne part d'un champ de croix et d'une configuration de
-singularités donnés pour produire un maillage dense dont les boucles se
-ferment.
+grossiers, ou, pour Myles et al., une paramétrisation à partir de l'un
+d'eux\,; aucune ne demande aux boucles d'un maillage dense de se fermer.
 
 \paragraph{Mesurer les boucles.}
 QuadGPT~\cite{liu2025quadgpt} compte les \emph{anneaux de quads}
@@ -360,9 +359,7 @@ La composante de $T_\gamma(\ell)$ le long de la direction de marche est la
 à coefficients entiers, qui, aux longueurs entières, est le nombre de quads
 de la bande en un tour. Le décalage est la composante transverse de
 l'holonomie de translation (\emph{translational holonomy}) de la métrique
-plate le long du tour, linéaire en les longueurs comme toute période d'une
-métrique plate à singularités
-coniques~\cite{thurston1998shapes,veech1993flat}\,; pour un anneau de quads,
+plate le long du tour\,; pour un anneau de quads,
 c'est la torsion d'un cylindre. Ce qui est propre à ce travail est son
 expression en les longueurs des arcs d'un T-mesh, comme contrainte de la
 quantification. L'article compagnon~\cite{gardent2026turns} montre qu'il est
@@ -1061,7 +1058,7 @@ via Claude Code en octobre 2026 avec plusieurs sous-agents en parallèle, a
 les expériences et tous les calculs exacts, a fait la recherche
 bibliographique, a énoncé et démontré les propositions, et a rédigé le
 texte. L'existence des références a été vérifiée, et la note de chaque
-entrée de la bibliographie dit quelle part de l'œuvre a été lue. Des formes
+entrée de la bibliographie dit quelle part de l'œuvre a été lue. Une œuvre dont seul le résumé, ou un compte rendu, a été lu n'est citée que pour ce que ce résumé ou ce compte rendu dit. Des formes
 plus faibles des propositions~\ref{prop:linear} et~\ref{prop:complete} sont
 vérifiées en Lean~4~\cite{demoura2021lean4} dans l'article compagnon\,; tout
 le reste de ce qui n'est pas vérifié ici par machine a été écrit avec l'aide
