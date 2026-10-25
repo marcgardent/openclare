@@ -85,6 +85,11 @@ typedef int32_t (*OpenclareOnStage)(const char *stage, void *user);
  * - triangle_groups: NULL, or a group for each triangle (its material, say).
  *   The quad mesh has a line of edges where two groups meet, and
  *   openclare_result_copy_face_groups gives the group of each of its faces.
+ * - edges, edge_count: NULL and 0, or edge_count edges of the mesh, two
+ *   vertices each, for the quad mesh to have lines of edges along and keep
+ *   as hard edges, whatever their angle: the edges a modeller marked sharp,
+ *   say. They go in as sharp guide curves through their vertices, joined
+ *   into chains: hard edges of the result, marked sharp and creased.
  * - curve_points, curve_sizes, curve_flags, curve_count: guide curves, lines
  *   on the surface for the quad mesh to have edges along. curve_count curves,
  *   one after the other in curve_points (x y z per point), with as many
@@ -112,6 +117,8 @@ OpenclareResult *openclare_remesh(const float *positions,
                                   size_t corner_count,
                                   const float *density,
                                   const uint32_t *triangle_groups,
+                                  const uint32_t *edges,
+                                  size_t edge_count,
                                   const float *curve_points,
                                   const uint32_t *curve_sizes,
                                   const uint8_t *curve_flags,

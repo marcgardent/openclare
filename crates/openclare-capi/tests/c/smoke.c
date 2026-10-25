@@ -125,7 +125,8 @@ int main(int argc, char **argv) {
     char settings[64];
     snprintf(settings, sizeof settings, "quads = %d\n", QUADS);
     OpenclareResult *result = openclare_remesh(positions, vertex_count, triangles, triangle_count, NULL, 0, NULL,
-                                               NULL, NULL, NULL, NULL, 0, "organic", settings, on_stage, &stages_seen);
+                                               NULL, NULL, 0, NULL, NULL, NULL, 0, "organic", settings, on_stage,
+                                               &stages_seen);
     check(result != NULL, "a result is never NULL");
     check(openclare_result_ok(result) == 1, openclare_result_error(result));
     check(strcmp(openclare_result_error(result), "") == 0, "no error in a mesh that was made");
@@ -170,7 +171,7 @@ int main(int argc, char **argv) {
 
     /* An error comes back as the error of the result, not as a crash. */
     OpenclareResult *refused = openclare_remesh(positions, vertex_count, triangles, triangle_count, NULL, 0, NULL, NULL,
-                                                NULL, NULL, NULL, 0, "no such preset", NULL, NULL, NULL);
+                                                NULL, 0, NULL, NULL, NULL, 0, "no such preset", NULL, NULL, NULL);
     check(openclare_result_ok(refused) == 0, "an unknown preset is refused");
     printf("refused: %s\n", openclare_result_error(refused));
     openclare_result_free(refused);

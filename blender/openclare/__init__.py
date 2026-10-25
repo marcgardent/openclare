@@ -10,7 +10,6 @@ the edges the quads will follow, and those left out (see `preview`).
 """
 
 import math
-import os
 
 import bpy
 import mathutils
@@ -24,10 +23,10 @@ PRESETS = [
     ("animation", "Animation", "Meshes meant to deform: fewer irregular vertices, at some cost in fidelity"),
     ("hard-surface", "Hard surface", "Mechanical parts: edges sharper than 30 degrees are kept exactly"),
 ]
-# The shapes the add-on ships, as the values of the settings they set: what
-# the engine's presets of the same names are. The preset files of the add-on
-# (presets/openclare_shape) say the same; files of 0.1, which named one of
-# these, are given its values.
+# The shapes the engine's presets of these names stand for, as the values of
+# the settings they set. The add-on ships no preset since 0.6: with hard edges
+# followed by default they hardly differ from the defaults. Files of 0.1,
+# which named one of these, are still given its values.
 SHAPES = {
     "organic": dict(adaptive_size=50.0, quads_around=6, use_hard_edges=True, hard_edge_angle=math.radians(30.0),
                     follow_curvature=0.05, fewer_irregular=2.0, volume_fit=1.0),
@@ -37,9 +36,9 @@ SHAPES = {
                          follow_curvature=0.02, fewer_irregular=2.0, volume_fit=1.0),
 }
 # The settings a preset of the shape holds, in the order of the panel.
-SHAPE_NAMES = list(SHAPES["organic"])
-# Where the presets of the shape are, under presets/: those of the add-on,
-# which cannot be removed, and those saved in Blender's own folder.
+SHAPE_NAMES = [*SHAPES["organic"], "use_marked_sharp"]
+# Where the presets of the shape a user saves are, under presets/ in
+# Blender's own folder.
 SHAPE_PRESETS = "openclare_shape"
 # What the engine is given under these values: the shapes are said in full.
 BASE_PRESET = "organic"
@@ -282,6 +281,15 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         min=0.0,
         max=math.pi,
     )
+    use_marked_sharp: bpy.props.BoolProperty(
+        options=set(),
+        name="Marked Sharp",
+        description=(
+            "Edges of the object marked sharp (Mark Sharp, or a Smooth by Angle modifier) are followed by "
+            "the quads and kept as hard edges, whatever their angle and size"
+        ),
+        default=False,
+    )
     follow_curvature: bpy.props.FloatProperty(
         options=set(),
         name="Follow Curvature",
@@ -400,6 +408,37 @@ def in_place(mesh):
     )
 
 
+def stretch_of(owner):
+    """The scale of `owner` along its own three axes when they differ: what its
+    mesh is multiplied by before the engine sees it, for the quads to come out
+    square in the scene, and divided by after. None when the scale is the same
+    along all three, which only changes the sizes asked for (see
+    `engine_settings_of`)."""
+    import numpy
+
+    scale = [abs(factor) for factor in owner.matrix_world.to_scale()]
+    if max(scale) - min(scale) <= 1e-6 * max(scale):
+        return None
+    return numpy.array(scale, numpy.float32)
+
+
+def marked_sharp(mesh):
+    """The edges of `mesh` marked sharp, two vertices each, as unsigned 32-bit
+    numbers; None if there are none."""
+    import numpy
+
+    attribute = mesh.attributes.get("sharp_edge")
+    if attribute is None or attribute.domain != "EDGE" or not len(mesh.edges):
+        return None
+    sharp = numpy.zeros(len(mesh.edges), bool)
+    attribute.data.foreach_get("value", sharp)
+    if not sharp.any():
+        return None
+    ends = numpy.empty(2 * len(mesh.edges), numpy.int32)
+    mesh.edges.foreach_get("vertices", ends)
+    return ends.reshape(-1, 2)[sharp].astype(numpy.uint32).ravel()
+
+
 def engine_settings_of(original, evaluated, source, write=True):
     """What the engine is given for the object `original` with its settings:
     the settings on top of `BASE_PRESET`, and the weights of the density
@@ -410,13 +449,16 @@ def engine_settings_of(original, evaluated, source, write=True):
     engine_settings = {"quads": settings.quads, **shape_of(settings)}
     if settings.target == "SIZE":
         # Lengths of the scene, where the engine is given the mesh as the
-        # object holds it: before its scale.
+        # object holds it: before its scale, when the same along all axes.
         largest, smallest = settings.largest_quad, settings.smallest_quad
         if largest <= 0.0:
             largest, smallest = sizes_from(original)
             if write:
                 settings.largest_quad, settings.smallest_quad = largest, smallest
-        scale = sum(abs(factor) for factor in original.matrix_world.to_scale()) / 3.0 or 1.0
+        # A scale that differs along the axes is applied to the mesh itself.
+        uniform = stretch_of(original) is None
+        scale = sum(abs(factor) for factor in original.matrix_world.to_scale()) / 3.0 if uniform else 1.0
+        scale = scale or 1.0
         smallest = min(smallest, largest) or largest / SIZE_RANGE
         del engine_settings["quads"]
         engine_settings["largest_quad"] = largest / scale
@@ -447,17 +489,20 @@ class EngineInput:
     own when the arrays are copies."""
 
 
-def engine_input(source, preset, settings, density=None, materials=False, copy=False):
+def engine_input(source, preset, settings, density=None, materials=False, copy=False, sharp=False, stretch=None):
     """The `EngineInput` of `quads_of`. With `copy`, the arrays of `source`
     are copied out, so that the run does not depend on `source` living as
-    long as it does; otherwise they are read in place where they can be."""
+    long as it does; otherwise they are read in place where they can be.
+    `sharp` gives the engine the edges marked sharp, kept as hard edges;
+    `stretch`, if given, the three factors the positions are multiplied by
+    (see `stretch_of`), which copies them."""
     import numpy
 
     source.calc_loop_triangles()
     vertices, corners, triangles = len(source.vertices), len(source.loops), len(source.loop_triangles)
     if triangles == 0:
         raise engine.EngineError("the object has no faces")
-    if not copy and in_place(source):
+    if not copy and stretch is None and in_place(source):
         # Blender's own arrays, read where they are: nothing is copied here.
         addresses = (
             source.vertices[0].as_pointer(), source.loop_triangles[0].as_pointer(), source.loops[0].as_pointer()
@@ -474,6 +519,8 @@ def engine_input(source, preset, settings, density=None, materials=False, copy=F
         source.vertices.foreach_get("co", kept[0])
         source.loop_triangles.foreach_get("loops", kept[1])
         source.loops.foreach_get("vertex_index", kept[2])
+        if stretch is not None:
+            kept[0].reshape(-1, 3)[:] *= stretch
         addresses = tuple(array.ctypes.data for array in kept)
     groups = None
     if materials and len(source.materials) > 1:
@@ -485,6 +532,8 @@ def engine_input(source, preset, settings, density=None, materials=False, copy=F
     given.counts = (vertices, triangles, corners)
     given.addresses, given.kept, given.groups = addresses, kept, groups
     given.preset, given.settings, given.density = preset, settings, density
+    given.edges = marked_sharp(source) if sharp else None
+    given.stretch = stretch
     # The materials the faces of the result take, kept as references.
     given.materials = list(source.materials)
     return given
@@ -497,7 +546,7 @@ def engine_run(given, on_stage=None):
     vertices, triangles, corners = given.counts
     return engine.remesh(
         given.addresses[0], vertices, given.addresses[1], triangles, given.addresses[2], corners, given.preset,
-        given.settings, given.density, on_stage, groups=given.groups,
+        given.settings, given.density, on_stage, groups=given.groups, edges=given.edges,
     )
 
 
@@ -507,8 +556,11 @@ def mesh_of(made, given):
     import numpy
 
     mesh = bpy.data.meshes.new("openclare")
-    mesh.vertices.add(len(made.positions) // 3)
-    mesh.vertices.foreach_set("co", made.positions)
+    positions = made.positions
+    if given.stretch is not None:
+        positions = (positions.reshape(-1, 3) / given.stretch).astype(numpy.float32).ravel()
+    mesh.vertices.add(len(positions) // 3)
+    mesh.vertices.foreach_set("co", positions)
     mesh.loops.add(len(made.corners))
     mesh.loops.foreach_set("vertex_index", made.corners.astype(numpy.int32))
     mesh.polygons.add(len(made.sizes))
@@ -589,7 +641,10 @@ class Remeshing:
         source = evaluated.to_mesh()
         try:
             engine_settings, density = engine_settings_of(original, evaluated, source)
-            given = engine_input(source, BASE_PRESET, engine_settings, density, settings.export_materials, copy)
+            given = engine_input(
+                source, BASE_PRESET, engine_settings, density, settings.export_materials, copy,
+                sharp=settings.use_marked_sharp, stretch=stretch_of(original),
+            )
         except engine.EngineError as error:
             evaluated.to_mesh_clear()
             self.report({"ERROR"}, f"openclare: {error}")
@@ -668,11 +723,20 @@ class Remeshing:
         boxed = int(report.get("pieces_boxed", 0))
         if boxed:
             said += f"; {boxed} part(s) smaller than a quad could not be meshed and are boxes"
-        # Said as a warning: the result then lacks part of the object.
+        plainer, let_go = int(report.get("pieces_through_fallback", 0)), int(report.get("guides_let_go", 0))
+        if plainer:
+            said += f"; {plainer} piece(s) meshed by the plainer method, with more irregular vertices"
+        if let_go:
+            said += f"; hard edges or lines let go on {let_go} piece(s), which could not be meshed with them"
+        # Said as a warning: the result then lacks part of the object, or is
+        # far from what was asked.
         failed = int(report.get("pieces_failed", 0))
         if failed:
             said += f"; {failed} of {report.get('pieces', '?')} pieces could not be meshed and are missing"
-        self.report({"WARNING"} if failed else {"INFO"}, said)
+        short = falls_short(report)
+        if short:
+            said += f"; {short}"
+        self.report({"WARNING"} if failed or short else {"INFO"}, said)
         return remeshed
 
 
@@ -986,6 +1050,20 @@ class OPENCLARE_PT_panel(DataPanel, bpy.types.Panel):
         draw_remesh(layout, OPENCLARE_OT_remesh_again.bl_idname, "FILE_REFRESH")
 
 
+# A result with fewer quads than this share of those asked for is said to fall
+# short: the engine keeps to the number within a few per cent otherwise.
+SHORT_OF = 0.75
+
+
+def falls_short(told):
+    """What to say of a result with far fewer quads than were asked for, or
+    nothing."""
+    asked, made = int(told.get("quads_asked", 0)), int(told.get("quads", 0))
+    if asked and made < SHORT_OF * asked:
+        return f"only {made} quads of the {asked} asked for: part of the object could not be meshed as asked"
+    return ""
+
+
 def report_lines(told):
     """What the panel of a result says of how it was made: lines of text,
     each with its icon."""
@@ -1001,8 +1079,15 @@ def report_lines(told):
     failed, boxed = int(told.get("pieces_failed", 0)), int(told.get("pieces_boxed", 0))
     if failed:
         lines.append((f"{failed} of {told.get('pieces', '?')} pieces could not be meshed", "ERROR"))
+    if falls_short(told):
+        lines.append((f"Only {told.get('quads')} of the {told.get('quads_asked')} quads asked for", "ERROR"))
     if boxed:
         lines.append((f"{boxed} part(s) smaller than a quad are boxes", "ERROR"))
+    plainer, let_go = int(told.get("pieces_through_fallback", 0)), int(told.get("guides_let_go", 0))
+    if plainer:
+        lines.append((f"{plainer} piece(s) by the plainer method", "INFO"))
+    if let_go:
+        lines.append((f"Hard edges let go on {let_go} piece(s)", "INFO"))
     welded, apart = int(told.get("welded_vertices", 0)), int(told.get("edges_taken_apart", 0))
     if welded or apart:
         lines.append((f"Mended: {welded} vertices welded, {apart} edges taken apart", "ERROR"))
@@ -1099,6 +1184,7 @@ class OPENCLARE_PT_shape(DataPanel, bpy.types.Panel):
             said = preview.status_text()
             if said:
                 column.label(text=said)
+        layout.prop(settings, "use_marked_sharp")
         layout.prop(settings, "follow_curvature")
         layout.prop(settings, "fewer_irregular")
         layout.prop(settings, "volume_fit", slider=True)
@@ -1117,8 +1203,6 @@ CLASSES = (
 )
 
 
-# The add-on's own presets are in presets/ here.
-ADDON_FOLDER = os.path.dirname(os.path.abspath(__file__))
 HANDLERS = ((bpy.app.handlers.load_post, after_loading),)
 
 
@@ -1136,7 +1220,6 @@ def register():
     )
     for handlers, handler in HANDLERS:
         handlers.append(handler)
-    bpy.utils.register_preset_path(ADDON_FOLDER)
     # The file open now, when Blender lets it be read (a script, not the
     # start of Blender: there, the file is read after, and the handler does
     # it).
@@ -1153,7 +1236,6 @@ def unregister():
     if RUNNING is not None:
         RUNNING.stop.set()
     preview.unregister()
-    bpy.utils.unregister_preset_path(ADDON_FOLDER)
     for handlers, handler in HANDLERS:
         if handler in handlers:
             handlers.remove(handler)

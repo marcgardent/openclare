@@ -75,6 +75,7 @@ def library():
     lib.openclare_remesh.restype = pointer
     lib.openclare_remesh.argtypes = [
         pointer, size, pointer, size, pointer, size, pointer, pointer,
+        pointer, size,
         pointer, pointer, pointer, size,
         text, text, ON_STAGE, pointer,
     ]
@@ -182,7 +183,7 @@ class Remeshed:
 def remesh(
     positions, vertex_count, triangles, triangle_count, corner_vertices, corner_count, preset, settings,
     density=None, on_stage=None, uv_layers=(), seams=False, hard_edges=False, creases=False, curves=(),
-    groups=None,
+    groups=None, edges=None,
 ):
     """Remeshes into quads the triangle mesh whose arrays sit at the addresses
     given: three floats per vertex at `positions`, three corners per triangle
@@ -202,6 +203,10 @@ def remesh(
     triangle: the material of each, say. The result has a line of edges where
     two groups meet, and says which group each of its faces lies in.
 
+    `edges` is None or a numpy array of unsigned 32-bit vertices, two per
+    edge: edges of the mesh the result keeps as hard edges whatever their
+    angle, as if a sharp curve ran through them (those marked sharp, say).
+
     `on_stage`, if given, is called with the name of each stage as it begins
     ("cross field", or "piece 3 of 12: cross field"); the run stops if it
     returns something true, and `EngineError` says so.
@@ -219,6 +224,8 @@ def remesh(
     lines = "".join(f"{key} = {value}\n" for key, value in settings.items())
     if density is not None and (density.dtype != numpy.float32 or len(density) != vertex_count):
         raise EngineError(f"{len(density)} weights of type {density.dtype} for {vertex_count} vertices")
+    if edges is not None and (edges.dtype != numpy.uint32 or len(edges) % 2):
+        raise EngineError(f"{len(edges)} vertices of type {edges.dtype} for edges, two each")
     if groups is not None and (groups.dtype != numpy.uint32 or len(groups) != triangle_count):
         raise EngineError(f"{len(groups)} groups of type {groups.dtype} for {triangle_count} triangles")
     def told(stage, _):
@@ -251,6 +258,7 @@ def remesh(
         positions, vertex_count, triangles, triangle_count, corner_vertices, corner_count,
         None if density is None else density.ctypes.data,
         None if groups is None else groups.ctypes.data,
+        None if edges is None else edges.ctypes.data, 0 if edges is None else len(edges) // 2,
         *curve_arguments,
         preset.encode(), lines.encode(), callback, None,
     )

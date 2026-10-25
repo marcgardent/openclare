@@ -10,9 +10,9 @@
 writes into dist/:
 
 - openclare-<version>-<platform>.zip, the Blender add-on (Community edition, as
-  Blender installs it from disk): the files of blender/openclare, presets
-  included, a manifest whose `platforms` names this system only, and the
-  library in lib/;
+  Blender installs it from disk): the files of blender/openclare, a
+  manifest whose `platforms` names this system only, and the library in
+  lib/;
 - openclare-capi-<version>-<platform>.tar.gz, the library for C and other
   hosts: lib/ (the library; on Windows also its import library), include/
   openclare.h, LICENSE and README.md, in one folder of the same name.

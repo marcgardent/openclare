@@ -44,6 +44,8 @@ fn a_mesh_goes_in_as_arrays_and_quads_come_out() {
             null(),
             null(),
             null(),
+            0,
+            null(),
             null(),
             null(),
             0,
@@ -97,6 +99,8 @@ fn triangles_may_be_given_by_their_corners_as_blender_keeps_them() {
             null(),
             null(),
             null(),
+            0,
+            null(),
             null(),
             null(),
             0,
@@ -114,6 +118,8 @@ fn triangles_may_be_given_by_their_corners_as_blender_keeps_them() {
             corner_vertices.len(),
             null(),
             null(),
+            null(),
+            0,
             null(),
             null(),
             null(),
@@ -143,6 +149,8 @@ fn what_goes_wrong_is_said_not_thrown() {
             0,
             null(),
             null(),
+            null(),
+            0,
             null(),
             null(),
             null(),
@@ -199,6 +207,8 @@ fn a_host_follows_the_stages_and_can_stop_the_run() {
             null(),
             null(),
             null(),
+            0,
+            null(),
             null(),
             null(),
             0,
@@ -238,6 +248,8 @@ fn a_result_carries_its_texture_coordinates_and_its_hard_edges() {
             0,
             null(),
             null(),
+            null(),
+            0,
             null(),
             null(),
             null(),
@@ -304,6 +316,8 @@ fn guide_curves_go_in_as_flat_arrays() {
             0,
             null(),
             null(),
+            null(),
+            0,
             points.as_ptr(),
             sizes.as_ptr(),
             closed.as_ptr(),
@@ -340,6 +354,8 @@ fn guide_curves_go_in_as_flat_arrays() {
             0,
             null(),
             null(),
+            null(),
+            0,
             points.as_ptr(),
             sizes.as_ptr(),
             flags.as_ptr(),
@@ -595,5 +611,81 @@ fn a_finder_gives_the_hard_edges_found_afresh_whatever_the_settings_and_their_or
         assert_eq!(openclare_hard_edges_ok(found), 0);
         openclare_hard_edges_free(found);
         openclare_hard_edge_finder_free(null_mut());
+    }
+}
+
+#[test]
+fn edges_given_are_followed_and_kept_hard_whatever_their_angle() {
+    // A smooth torus: no edge sharper than any angle. Its outer equator is a
+    // closed loop of its edges, given as the edges a modeller marked sharp.
+    let (nu, nv) = (48u32, 24u32);
+    let mesh = primitives::torus(1.0, 0.4, nu, nv);
+    let positions: Vec<f32> = mesh.positions.iter().flat_map(|p| [p.x as f32, p.y as f32, p.z as f32]).collect();
+    let triangles: Vec<u32> = mesh.triangles.iter().flatten().copied().collect();
+    let equator: Vec<u32> = (0..nu).flat_map(|i| [i * nv, ((i + 1) % nu) * nv]).collect();
+    let settings = CString::new("quads = 800\nedge_angle = none\n").unwrap();
+    let hard_edges = |edges: &[u32]| unsafe {
+        let result = openclare_remesh(
+            positions.as_ptr(),
+            positions.len() / 3,
+            triangles.as_ptr(),
+            triangles.len() / 3,
+            null(),
+            0,
+            null(),
+            null(),
+            if edges.is_empty() { null() } else { edges.as_ptr() },
+            edges.len() / 2,
+            null(),
+            null(),
+            null(),
+            0,
+            c"organic".as_ptr(),
+            settings.as_ptr(),
+            None,
+            null_mut(),
+        );
+        assert_eq!(openclare_result_ok(result), 1, "{}", text(openclare_result_error(result)));
+        let mut hard = vec![u32::MAX; 2 * openclare_result_hard_edge_count(result)];
+        openclare_result_copy_hard_edges(result, hard.as_mut_ptr());
+        let mut points = vec![0f32; 3 * openclare_result_vertex_count(result)];
+        openclare_result_copy_positions(result, points.as_mut_ptr());
+        openclare_result_free(result);
+        hard.iter()
+            .map(|&v| Vec3::new(points[3 * v as usize] as f64, 0.0, points[3 * v as usize + 2] as f64))
+            .collect::<Vec<_>>()
+    };
+    assert!(hard_edges(&[]).is_empty(), "a smooth torus has no hard edge");
+    let along = hard_edges(&equator);
+    // Round the whole loop, and on it: z = 0 at the outer radius 1.4.
+    assert!(along.len() >= 2 * 20, "{} ends of hard edges", along.len());
+    assert!(along.iter().all(|p| p.z.abs() < 1e-3), "a hard edge off the equator");
+
+    // An edge that is none is refused, not followed.
+    let wrong = [0u32, positions.len() as u32];
+    unsafe {
+        let result = openclare_remesh(
+            positions.as_ptr(),
+            positions.len() / 3,
+            triangles.as_ptr(),
+            triangles.len() / 3,
+            null(),
+            0,
+            null(),
+            null(),
+            wrong.as_ptr(),
+            1,
+            null(),
+            null(),
+            null(),
+            0,
+            c"organic".as_ptr(),
+            settings.as_ptr(),
+            None,
+            null_mut(),
+        );
+        assert_eq!(openclare_result_ok(result), 0);
+        assert!(text(openclare_result_error(result)).contains("is not an edge"));
+        openclare_result_free(result);
     }
 }
