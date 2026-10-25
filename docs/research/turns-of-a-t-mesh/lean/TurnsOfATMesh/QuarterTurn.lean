@@ -10,14 +10,14 @@ statements about whole lengths are in `Checkerboard.lean`.
 -/
 module
 
-public import ClosingHelices.Motion
+public import TurnsOfATMesh.Motion
 public import Mathlib.RingTheory.RootsOfUnity.Complex
 
 @[expose] public section
 
 set_option linter.unusedSectionVars false
 
-namespace ClosingHelices
+namespace TurnsOfATMesh
 
 open Complex Motion
 
@@ -164,4 +164,4 @@ theorem exchange_quarter (u : ℂˣ) (hu : (u : ℂ) = I ∨ (u : ℂ) = -I) (p 
     rw [one_mul] at this
     exact ⟨this.1, this.2.1⟩
 
-end ClosingHelices
+end TurnsOfATMesh

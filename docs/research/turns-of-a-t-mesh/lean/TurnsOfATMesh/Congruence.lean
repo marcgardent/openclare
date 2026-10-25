@@ -21,7 +21,7 @@ the order of `z`:
 -/
 module
 
-public import ClosingHelices.Fox
+public import TurnsOfATMesh.Fox
 public import Mathlib.Tactic.LinearCombination
 public import Mathlib.GroupTheory.OrderOfElement
 
@@ -29,7 +29,7 @@ public import Mathlib.GroupTheory.OrderOfElement
 
 set_option linter.unusedSectionVars false
 
-namespace ClosingHelices
+namespace TurnsOfATMesh
 
 variable {ι A V : Type*} [CommRing A] [AddCommGroup V] [Module A V]
 
@@ -166,4 +166,4 @@ theorem one_sub_unit_order_six (z : A) (hz : z ^ 2 - z + 1 = 0) (v : V) :
   have h : (1 - z) * z = 1 := by linear_combination -hz
   exact ⟨h, by rw [← mul_smul, h, one_smul]⟩
 
-end ClosingHelices
+end TurnsOfATMesh

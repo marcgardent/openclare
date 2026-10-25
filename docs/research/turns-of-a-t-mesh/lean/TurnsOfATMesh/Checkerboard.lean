@@ -7,8 +7,8 @@ colour of a point `p` is the parity of `p₁ + p₂`, an element of `ZMod 2`.
 -/
 module
 
-public import ClosingHelices.Congruence
-public import ClosingHelices.Farkas
+public import TurnsOfATMesh.Congruence
+public import TurnsOfATMesh.Farkas
 public import Mathlib.NumberTheory.Zsqrtd.GaussianInt
 public import Mathlib.Data.ZMod.Basic
 public import Mathlib.Algebra.CharP.Two
@@ -17,7 +17,7 @@ public import Mathlib.Algebra.CharP.Two
 
 set_option linter.unusedSectionVars false
 
-namespace ClosingHelices
+namespace TurnsOfATMesh
 
 open Motion
 
@@ -490,4 +490,4 @@ theorem winding_constant (j : ι → ℤ) (p : ι → GaussianInt) (e : ι → �
 
 end Words
 
-end ClosingHelices
+end TurnsOfATMesh

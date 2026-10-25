@@ -16,7 +16,7 @@ public import Mathlib.Algebra.Ring.Int.Parity
 
 @[expose] public section
 
-namespace ClosingHelices
+namespace TurnsOfATMesh
 
 variable {ρ α : Type*} [Fintype ρ] [Fintype α]
 
@@ -47,4 +47,4 @@ theorem no_whole_solution (B : Matrix ρ α ℤ) (hcol : ∀ a, Even (∑ r, B r
   rw [hx] at this
   exact (Int.not_even_iff_odd.mpr hd) this
 
-end ClosingHelices
+end TurnsOfATMesh

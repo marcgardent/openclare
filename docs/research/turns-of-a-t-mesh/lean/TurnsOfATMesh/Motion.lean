@@ -24,7 +24,7 @@ public import Mathlib.Tactic.NoncommRing
 
 set_option linter.unusedSectionVars false
 
-namespace ClosingHelices
+namespace TurnsOfATMesh
 
 /-- A motion `x ↦ lin • x + trans`. -/
 @[ext] structure Motion (A V : Type*) where
@@ -280,4 +280,4 @@ theorem composeAll_trans_add {L : Type*} [AddCommGroup L] (lins : List A)
 
 end Motion
 
-end ClosingHelices
+end TurnsOfATMesh

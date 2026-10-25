@@ -24,7 +24,7 @@ public import Mathlib.Analysis.Complex.Trigonometric
 
 @[expose] public section
 
-namespace ClosingHelices
+namespace TurnsOfATMesh
 
 namespace BeyondQuads
 
@@ -83,4 +83,4 @@ theorem dislocation_norm_six (d : ℂ) : ‖(1 - zeta 6) * d‖ = ‖d‖ := by
 
 end BeyondQuads
 
-end ClosingHelices
+end TurnsOfATMesh

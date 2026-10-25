@@ -20,7 +20,7 @@ public import Mathlib.Tactic.Ring
 
 @[expose] public section
 
-namespace ClosingHelices
+namespace TurnsOfATMesh
 
 open Classical
 
@@ -200,4 +200,4 @@ theorem chain_of_dislocations (hε : ∀ k, ε k = 1 ∨ ε k = -1)
 
 end Chain
 
-end ClosingHelices
+end TurnsOfATMesh

@@ -36,7 +36,7 @@ public import Mathlib.Tactic.LinearCombination
 
 set_option linter.unusedSectionVars false
 
-namespace ClosingHelices
+namespace TurnsOfATMesh
 
 namespace Farkas
 
@@ -497,4 +497,4 @@ theorem whole_solution_of_real (M : Matrix κ α ℤ) (b : α → ℤ) (hb : ∀
 
 end Farkas
 
-end ClosingHelices
+end TurnsOfATMesh

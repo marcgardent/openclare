@@ -53,7 +53,7 @@ public import Mathlib.Tactic.Positivity
 
 set_option linter.unusedSectionVars false
 
-namespace ClosingHelices
+namespace TurnsOfATMesh
 
 namespace Completeness
 
@@ -473,4 +473,4 @@ end TMesh
 
 end Completeness
 
-end ClosingHelices
+end TurnsOfATMesh

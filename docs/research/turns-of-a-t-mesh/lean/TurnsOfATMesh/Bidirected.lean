@@ -30,7 +30,7 @@ throughout: the switching `w` takes the place of the determinant, since
 -/
 module
 
-public import ClosingHelices.Balances
+public import TurnsOfATMesh.Balances
 public import Mathlib.Data.Matrix.Basic
 public import Mathlib.LinearAlgebra.LinearIndependent.Defs
 public import Mathlib.Algebra.Order.BigOperators.Group.Finset
@@ -49,7 +49,7 @@ public import Mathlib.Data.Rat.Cast.Order
 
 set_option linter.unusedSectionVars false
 
-namespace ClosingHelices
+namespace TurnsOfATMesh
 
 namespace Bidirected
 
@@ -95,7 +95,7 @@ def IsBidirected (B : Matrix V E ℤ) : Prop :=
 theorem IsBidirected.column_even {B : Matrix V E ℤ} (hB : IsBidirected B) (e : E) :
     Even (∑ r, B r e) := by
   obtain ⟨u, v, huv, hu, hv, h0⟩ := hB e
-  exact ClosingHelices.column_even (fun r => B r e) u v huv h0 hu hv
+  exact TurnsOfATMesh.column_even (fun r => B r e) u v huv h0 hu hv
 
 /-- `∑_r w r B r e` for signs `w`: `0` or `±2`. -/
 theorem IsBidirected.pair_eq {B : Matrix V E ℤ} (hB : IsBidirected B) (w : V → ℤ)
@@ -683,4 +683,4 @@ theorem free_arcs_of_cycle {T : Finset E} {k : ℕ} (hB : IsBidirected B)
 
 end Bidirected
 
-end ClosingHelices
+end TurnsOfATMesh
