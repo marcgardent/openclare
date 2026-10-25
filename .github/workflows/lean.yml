@@ -57,3 +57,8 @@ jobs:
             echo "::error::a declaration uses sorry"
             exit 1
           fi
+      # The program that checks the library against the engine's exports
+      # (Check/, `make lean-check`): not in the library, and run on data that
+      # is not in the repository; here it is only compiled, its lemmas checked.
+      - name: Check program compiles
+        run: lake env lean Check/Main.lean

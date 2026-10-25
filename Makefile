@@ -1,6 +1,6 @@
 # Shortcuts for the common tasks. `make help` lists them.
 
-.PHONY: help build test scenes blenderkit essentials remeasure autoremesher scores quick pages dashboard view addon install addon-windows test-windows addon-test capi-test version release paper paper-version paper-arxiv paper-clean proofs site site-serve
+.PHONY: help build test scenes blenderkit essentials remeasure autoremesher scores quick pages dashboard view addon install addon-windows test-windows addon-test capi-test version release paper paper-version paper-arxiv paper-clean proofs lean-check site site-serve
 
 help:
 	@echo "make build       build the openclare binary (release)"
@@ -58,6 +58,10 @@ help:
 	@echo "                 (docs/research/*/lean, Lean and Mathlib; the first run downloads"
 	@echo "                 the toolchain and Mathlib's compiled cache, about 10 GB in all)."
 	@echo "                 NOTE=turns-of-a-t-mesh for one"
+	@echo "make lean-check EXPORT=<dir> [OUT=<dir>] [JOBS=2]"
+	@echo "                 check the T-mesh of the Lean proofs against the engine's exports"
+	@echo "                 (OPENCLARE_EXPORT_TURNS=<dir>): structure, balances, shift forms and"
+	@echo "                 walks of every turn; converted files in OUT (default <dir>/lean-check)"
 	@echo "make site        build the website, English and French, into site/_build (plain"
 	@echo "                 Python; Pillow, if installed, makes the pictures WebP), then check"
 	@echo "                 its links"
@@ -157,6 +161,16 @@ proofs:
 			$(LAKE) exe cache get && $(LAKE) build) || { echo "failed: $$project"; exit 1; }; \
 		echo "checked: $$project"; \
 	done
+
+# The T-mesh of the Lean proofs checked against what the engine exports
+# (docs/research/turns-of-a-t-mesh/lean/README.md, "Checked against the engine's
+# exports"). Mathlib as `make proofs` fetches it.
+LEAN_CHECK = docs/research/turns-of-a-t-mesh/lean
+lean-check:
+	@test -n "$(EXPORT)" || { echo "make lean-check EXPORT=<directory written by OPENCLARE_EXPORT_TURNS>"; exit 2; }
+	cd $(LEAN_CHECK) && PATH="$(dir $(LAKE)):$$PATH" $(LAKE) build
+	PATH="$(dir $(LAKE)):$$PATH" python3 $(LEAN_CHECK)/Check/check_exports.py "$(EXPORT)" \
+		"$(or $(OUT),$(EXPORT)/lean-check)" --jobs $(or $(JOBS),2)
 
 # Marks from 0 to 100, overall and per criterion, from what the bench measured.
 scores:
