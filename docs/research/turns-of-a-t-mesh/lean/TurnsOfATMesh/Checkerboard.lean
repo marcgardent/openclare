@@ -2,8 +2,9 @@
 Parity at whole lengths: the checkerboard rules and the parity of a turn.
 
 For whole lengths the developed positions are points of `ℤ²`, here the Gaussian
-integers `ℤ[i]`, with the quarter-turn `R` the multiplication by `i`. The
-colour of a point `p` is the parity of `p₁ + p₂`, an element of `ZMod 2`.
+integers `ℤ[i]`, with the quarter-turn `R` the multiplication by `gi` (the
+quarter-turn group of `Basic.lean`). The colour of a point `p` is the parity of
+`p₁ + p₂`, an element of `ZMod 2`.
 -/
 module
 
@@ -20,25 +21,6 @@ set_option linter.unusedSectionVars false
 namespace TurnsOfATMesh
 
 open Motion
-
-/-- `i`, the quarter-turn `R(a, b) = (-b, a)` of `ℤ²`. -/
-def gi : GaussianInt := Zsqrtd.sqrtd
-
-@[simp] theorem gi_re : gi.re = 0 := rfl
-@[simp] theorem gi_im : gi.im = 1 := rfl
-
-theorem gi_mul_gi : gi * gi = -1 := by ext <;> simp [gi]
-
-/-- The quarter-turn as a unit. -/
-def giUnit : GaussianIntˣ := ⟨gi, -gi, by rw [mul_neg, gi_mul_gi, neg_neg],
-  by rw [neg_mul, gi_mul_gi, neg_neg]⟩
-
-@[simp] theorem giUnit_val : (giUnit : GaussianInt) = gi := rfl
-
-theorem giUnit_sq : giUnit ^ 2 = -1 := by
-  ext : 1
-  simp [sq, gi_mul_gi]
-
 
 /-- The colour of a point of `ℤ²`: the parity of `p₁ + p₂`. -/
 def colour (p : GaussianInt) : ZMod 2 := ((p.re + p.im : ℤ) : ZMod 2)
@@ -78,25 +60,6 @@ theorem one_sub_half_turn (p : GaussianInt) :
   refine ⟨by ring, ?_, ?_⟩ <;> simp <;> ring_nf <;> simp [zmod_two_two]
 
 /-! ### Quarter-turns keep colours -/
-
-/-- `a` is one of `1, R, R², R³`. -/
-def IsQuarter (a : GaussianInt) : Prop := a = 1 ∨ a = gi ∨ a = -1 ∨ a = -gi
-
-theorem IsQuarter.mul {a b : GaussianInt} (ha : IsQuarter a) (hb : IsQuarter b) :
-    IsQuarter (a * b) := by
-  unfold IsQuarter at *
-  rcases ha with rfl | rfl | rfl | rfl <;> rcases hb with rfl | rfl | rfl | rfl <;>
-    simp [gi_mul_gi]
-
-theorem IsQuarter.one : IsQuarter 1 := Or.inl rfl
-
-theorem IsQuarter.list_prod (l : List GaussianInt) (h : ∀ a ∈ l, IsQuarter a) :
-    IsQuarter l.prod := by
-  induction l with
-  | nil => exact IsQuarter.one
-  | cons a l ih =>
-    rw [List.prod_cons]
-    exact (h a (by simp)).mul (ih fun b hb => h b (by simp [hb]))
 
 theorem colour_quarter_mul {a : GaussianInt} (ha : IsQuarter a) (x : GaussianInt) :
     colour (a * x) = colour x := by
@@ -344,17 +307,9 @@ theorem colour_hol {ι : Type*} (j : ι → ℤ) (p : ι → GaussianInt) (w : L
   induction w generalizing x with
   | nil => simp [Motion.apply, Motion.id]
   | cons y w ih =>
-    have hq : ∀ k : ℤ, IsQuarter ((giUnit ^ k : GaussianIntˣ) : GaussianInt) := by
-      intro k
-      have h4 : giUnit ^ (4 : ℤ) = 1 := by
-        rw [show (4 : ℤ) = ((2 * 2 : ℕ) : ℤ) from rfl, zpow_natCast, pow_mul, giUnit_sq]; simp
-      rw [← Int.emod_add_mul_ediv k 4, zpow_add, zpow_mul, h4, one_zpow, mul_one]
-      have hr : k % 4 = 0 ∨ k % 4 = 1 ∨ k % 4 = 2 ∨ k % 4 = 3 := by omega
-      rcases hr with h | h | h | h <;> rw [h] <;> unfold IsQuarter <;>
-        simp [zpow_ofNat, pow_succ, gi_mul_gi]
     have hy : IsQuarter (letterLin (powers giUnit j) y) := by
       obtain ⟨i, b⟩ := y
-      cases b <;> simp only [letterLin, powers, ← zpow_neg] <;> exact hq _
+      cases b <;> simp only [letterLin, powers, ← zpow_neg] <;> exact IsQuarter.zpow_giUnit _
     rw [hol_cons, apply_comp, colour_rotAbout hy, ih]
 
 /-- **Proposition "Parity of a turn on a sphere", from the holonomy.** On a surface
@@ -443,16 +398,6 @@ theorem checkerboard_combination {κ : Type*} (s : Finset κ) (j : ι → ℤ) (
   rw [hc, Finset.mul_sum]
   refine Finset.sum_congr rfl fun i _ => ?_
   push_cast; ring
-
-theorem orderOf_giUnit : orderOf giUnit = 4 := by
-  have h := orderOf_eq_prime_pow (p := 2) (n := 1) (x := giUnit) ?_ ?_
-  · simpa using h
-  · rw [pow_one, giUnit_sq]
-    intro h2
-    have := congrArg (fun u : GaussianIntˣ => ((u : GaussianInt)).re) h2
-    simp at this
-  · rw [show (2 : ℕ) ^ (1 + 1) = 2 * 2 from rfl, pow_mul, giUnit_sq]
-    simp
 
 /-- A word with trivial rotation has `∑ᵢ εᵢ jᵢ ≡ 0 (mod 4)`, hence even: moving
 the origin of the development by a whole vector, which flips every colour,

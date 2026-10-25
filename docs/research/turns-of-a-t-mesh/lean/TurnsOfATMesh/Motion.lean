@@ -1,12 +1,13 @@
 /-
-Motions of a module and the Burgers sum.
+Compositions of motions and the Burgers sum.
 
 The note develops a loop patch after patch and gets a motion `x ↦ R x + t`
 of the coordinates of its first patch. Everything here is stated for motions
-`x ↦ a • x + t` whose linear part `a` lies in an arbitrary ring `A` acting on
-an additive group `V`: quarter-turns of the plane (`A = V = ℂ` or `ℤ[i]`) are
-one instance, the rotations of a hexagonal or triangular grid another, and
-nothing in this file uses that the rotations have order four.
+`x ↦ a • x + t` (`Motion`, in `Basic.lean`) whose linear part `a` lies in an
+arbitrary ring `A` acting on an additive group `V`: quarter-turns of the plane
+(`A = V = ℂ` or `ℤ[i]`) are one instance, the rotations of a hexagonal or
+triangular grid another, and nothing in this file uses that the rotations have
+order four.
 
 Conventions: `comp f g` is `f ∘ g` (`g` applied first), as in the note's
 `ĥ(αβ) = ĥ(α) ∘ ĥ(β)`; `composeAll [ρ₁, …, ρₘ]` is `ρₘ ∘ ⋯ ∘ ρ₁` (the first
@@ -14,10 +15,8 @@ element of the list is applied first).
 -/
 module
 
-public import Mathlib.Algebra.Module.Defs
+public import TurnsOfATMesh.Basic
 public import Mathlib.Algebra.BigOperators.Fin
-public import Mathlib.Algebra.Group.Units.Basic
-public import Mathlib.Tactic.Abel
 public import Mathlib.Tactic.NoncommRing
 
 @[expose] public section
@@ -26,63 +25,9 @@ set_option linter.unusedSectionVars false
 
 namespace TurnsOfATMesh
 
-/-- A motion `x ↦ lin • x + trans`. -/
-@[ext] structure Motion (A V : Type*) where
-  /-- The linear part (a rotation, for the motions of the note). -/
-  lin : A
-  /-- The translation part. -/
-  trans : V
-
 namespace Motion
 
 variable {A V : Type*} [Ring A] [AddCommGroup V] [Module A V]
-
-/-- The motion as a map of `V`. -/
-def apply (f : Motion A V) (x : V) : V := f.lin • x + f.trans
-
-/-- `comp f g = f ∘ g`: `g` first. -/
-def comp (f g : Motion A V) : Motion A V := ⟨f.lin * g.lin, f.trans + f.lin • g.trans⟩
-
-/-- The identity motion. -/
-def id : Motion A V := ⟨1, 0⟩
-
-/-- The translation by `t`. -/
-def translation (t : V) : Motion A V := ⟨1, t⟩
-
-/-- The rotation `x ↦ a • (x - p) + p` about the point `p`, the holonomy of a
-small loop round a cone point developed at `p`. -/
-def rotAbout (a : A) (p : V) : Motion A V := ⟨a, p - a • p⟩
-
-@[simp] theorem comp_lin (f g : Motion A V) : (comp f g).lin = f.lin * g.lin := rfl
-@[simp] theorem comp_trans (f g : Motion A V) :
-    (comp f g).trans = f.trans + f.lin • g.trans := rfl
-@[simp] theorem id_lin : (id : Motion A V).lin = 1 := rfl
-@[simp] theorem id_trans : (id : Motion A V).trans = 0 := rfl
-@[simp] theorem translation_lin (t : V) : (translation t : Motion A V).lin = 1 := rfl
-@[simp] theorem translation_trans (t : V) : (translation t : Motion A V).trans = t := rfl
-@[simp] theorem rotAbout_lin (a : A) (p : V) : (rotAbout a p).lin = a := rfl
-@[simp] theorem rotAbout_trans (a : A) (p : V) : (rotAbout a p).trans = p - a • p := rfl
-
-theorem apply_comp (f g : Motion A V) (x : V) : (comp f g).apply x = f.apply (g.apply x) := by
-  simp only [apply, comp, mul_smul, smul_add]; abel
-
-theorem apply_rotAbout (a : A) (p x : V) : (rotAbout a p).apply x = a • (x - p) + p := by
-  simp only [apply, rotAbout, smul_sub]; abel
-
-theorem apply_translation (t x : V) : (translation t : Motion A V).apply x = x + t := by
-  simp [apply, translation]
-
-theorem comp_assoc (f g h : Motion A V) : comp (comp f g) h = comp f (comp g h) := by
-  ext <;> simp [mul_assoc, mul_smul, smul_add, add_assoc]
-
-@[simp] theorem comp_id (f : Motion A V) : comp f id = f := by ext <;> simp
-
-@[simp] theorem id_comp (f : Motion A V) : comp id f = f := by ext <;> simp
-
-/-- A motion with trivial linear part is the translation by its translation part. -/
-theorem eq_translation_of_lin_eq_one (f : Motion A V) (h : f.lin = 1) :
-    f = translation f.trans := by
-  ext <;> simp [h]
 
 /-! ### Composing a list of motions -/
 
@@ -191,23 +136,7 @@ theorem burgers_translate (cs : List (A × V)) (t : V) :
       List.prod_cons, List.prod_nil, mul_one, smul_add, smul_sub, mul_smul]
     abel
 
-/-! ### Inverses, orientation, annuli -/
-
-/-- The inverse of a motion with invertible linear part. -/
-def inv (f : Motion A V) (u : Aˣ) (_ : (u : A) = f.lin) : Motion A V :=
-  ⟨(↑u⁻¹ : A), -((↑u⁻¹ : A) • f.trans)⟩
-
-theorem comp_inv (f : Motion A V) (u : Aˣ) (h : (u : A) = f.lin) :
-    comp f (inv f u h) = id := by
-  ext
-  · simp [inv, ← h]
-  · simp [inv, ← h, smul_neg, ← mul_smul]
-
-theorem inv_comp (f : Motion A V) (u : Aˣ) (h : (u : A) = f.lin) :
-    comp (inv f u h) f = id := by
-  ext
-  · simp [inv, ← h]
-  · simp [inv]
+/-! ### Orientation, annuli, exchanges -/
 
 /-- Run the other way, a loop whose holonomy is the translation by `B` has the
 translation by `-B` (the sign `±` of Proposition "The shift is set by the
@@ -216,13 +145,6 @@ theorem translation_inv (B : V) :
     comp (translation B : Motion A V) (translation (-B)) = id ∧
       comp (translation (-B) : Motion A V) (translation B) = id := by
   constructor <;> ext <;> simp
-
-/-- The inverse of a rotation about `p` is the inverse rotation about `p`. -/
-theorem inv_rotAbout (u : Aˣ) (p : V) :
-    inv (rotAbout (u : A) p) u rfl = rotAbout (↑u⁻¹ : A) p := by
-  ext
-  · rfl
-  · simp [inv, rotAbout, smul_sub, ← mul_smul]
 
 /-- **Conjugating a translation.** `κ ∘ (x ↦ x + T) ∘ κ⁻¹` is the translation by
 `M • T`, `M` the linear part of `κ`. -/

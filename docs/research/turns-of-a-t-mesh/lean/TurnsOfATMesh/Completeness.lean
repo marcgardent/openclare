@@ -10,12 +10,11 @@ the quad mesh is its unit grid. The model has two layers.
   `[k, k + 1]` of the arc since nodes sit at whole positions. Such a map sends
   the midpoint `k + ½` of a unit edge to the midpoint of a unit edge
   (`glueLine_half`) and the open unit edge onto an open unit edge
-  (`glueLine_open`). In the plane, a quarter-turn with a whole translation keeps
-  nodes, midpoints of edges and centres of quads apart (`oddCount_motion`). So the
-  walk of Definition "Turn" from a half-integer `k + ½`, taken with the lengths
-  `ℓ`, crosses the sides exactly at the midpoints the discrete walk on unit
-  edges gives (`realWalk_iterate_half`), and so does the walk from any point of
-  the open unit edge (`realWalk_iterate_open`): the walk is the strip's.
+  (`glueLine_open`). So the walk of Definition "Turn" from a half-integer
+  `k + ½`, taken with the lengths `ℓ`, crosses the sides exactly at the
+  midpoints the discrete walk on unit edges gives (`realWalk_iterate_half`), and
+  so does the walk from any point of the open unit edge
+  (`realWalk_iterate_open`): the walk is the strip's.
 
 * **Strips.** A station is a unit edge of a side, entered from that side; the walk
   `walk` crosses the patch to the opposite side at the same offset and passes the
@@ -43,8 +42,6 @@ public import Mathlib.Algebra.Order.Floor.Ring
 public import Mathlib.Basic.Real.Basic
 public import Mathlib.Algebra.Order.Archimedean.Real.Basic
 public import Mathlib.Data.Fintype.Sigma
-public import Mathlib.Algebra.Ring.Parity
-public import Mathlib.Algebra.Group.Int.Even
 public import Mathlib.Tactic.Linarith
 public import Mathlib.Tactic.Ring
 public import Mathlib.Tactic.Positivity
@@ -56,38 +53,6 @@ set_option linter.unusedSectionVars false
 namespace TurnsOfATMesh
 
 namespace Completeness
-
-/-! ### In the plane: nodes, midpoints and centres -/
-
-/-- The doubled coordinates of a point of the grid: a node has both even, the
-midpoint of a quad edge exactly one odd, the centre of a quad both odd. -/
-def oddCount (p : ℤ × ℤ) : ℕ := (if Odd p.1 then 1 else 0) + (if Odd p.2 then 1 else 0)
-
-/-- The quarter-turn `R(a, b) = (-b, a)`. -/
-def quarter (p : ℤ × ℤ) : ℤ × ℤ := (-p.2, p.1)
-
-/-- The translation by a whole vector `τ`, in doubled coordinates. -/
-def translate2 (τ p : ℤ × ℤ) : ℤ × ℤ := (p.1 + 2 * τ.1, p.2 + 2 * τ.2)
-
-/-- A quarter-turn power followed by a whole translation (`2τ` in doubled
-coordinates) keeps nodes, midpoints of quad edges and centres of quads apart. -/
-theorem oddCount_motion (j : ℕ) (τ p : ℤ × ℤ) :
-    oddCount (translate2 τ (quarter^[j] p)) = oddCount p := by
-  have hq : ∀ p, oddCount (quarter p) = oddCount p := by
-    intro p
-    simp only [oddCount, quarter, odd_neg]
-    by_cases h1 : Odd p.1 <;> by_cases h2 : Odd p.2 <;> simp [h1, h2]
-  have hodd : ∀ a b : ℤ, Odd (a + 2 * b) ↔ Odd a := fun a b => by
-    constructor
-    · rintro ⟨m, hm⟩; exact ⟨m - b, by linarith⟩
-    · rintro ⟨m, hm⟩; exact ⟨m + b, by linarith⟩
-  have ht : ∀ p, oddCount (translate2 τ p) = oddCount p := by
-    intro p
-    simp only [oddCount, translate2, hodd]
-  rw [ht]
-  induction j generalizing p with
-  | zero => rfl
-  | succ j ih => rw [Function.iterate_succ_apply, ih, hq]
 
 /-! ### Along a side: half-integers and unit edges -/
 

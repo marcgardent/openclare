@@ -1699,7 +1699,7 @@ complexity of maximizing $Q$ over a polytope of lengths in reals.
 \section{What is machine-checked}\label{sec:lean}
 
 The folder \texttt{lean} beside this note is a Lean~4~\cite{demoura2021lean4}
-project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $235$
+project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $236$
 theorem declarations, many of them small lemmas, depend only on Lean's
 standard axioms; the count is not evidence, and its \texttt{README.md} maps
 each statement to its Lean theorems. Lean checks the algebraic and
@@ -1708,8 +1708,9 @@ combinatorial core of each statement, with the topological facts it uses
 the loops $\lambda_i$ present the fundamental group, that the quad graph of a
 sphere is bipartite) as explicit hypotheses. Each statement is formalized on
 its own abstraction (a turn as a list of motions, a region as finite sets with
-counts, a system as a pair of matrices): the files share no type of T-mesh
-and are not composed into one model of it.
+counts, a system as a pair of matrices): the files share the motions and the
+quarter-turn group (\texttt{Basic.lean}) but no type of T-mesh, and are not
+composed into one model of it.
 
 \emph{Checked}, statement by statement. For motions with linear parts in any
 ring: the Burgers sum, and that the recursion of the gluing maps of a tree of

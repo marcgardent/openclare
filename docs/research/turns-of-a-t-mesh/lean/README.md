@@ -6,7 +6,7 @@ Section 10 there lists what is checked, statement by statement), and of the
 two propositions of its applied companion,
 [`../../closing-loops/paper.tex`](../../closing-loops/paper.tex), "The shift of
 a turn is linear" (also stated in `../paper.tex`) and "Completeness at given
-lengths": 235 `theorem` declarations, many of them small lemmas and a few
+lengths": 236 `theorem` declarations, many of them small lemmas and a few
 restating a hypothesis (`dislocation_closes_iff`, `staircase_rings`); the
 count is not evidence, the table below names the main ones. The topological facts the note uses (that a loop develops into a given
 motion, that a curve bounds a disc, that the quad graph of a sphere is
@@ -36,10 +36,21 @@ quarter-turn `R(a, b) = (-b, a)` the multiplication by `i`, as in
 `Motion A V`; `comp f g` is `f ∘ g` and `composeAll [ρ₁, …, ρₘ]` is
 `ρₘ ∘ ⋯ ∘ ρ₁`.
 
+`Basic.lean` holds what the files share: `Motion` and its group law, and the
+quarter-turn group, stated once in `ℤ[i]` (`gi`, `giUnit` of order four,
+`IsQuarter a` for `a ∈ {1, R, R², R³}`). The files on whole lengths
+(`Checkerboard.lean`) use it as it is. The files on real lengths
+(`QuarterTurn.lean`, `FirstVisit.lean`, the twisted windings of `Fox.lean`)
+keep `I`, `-I` in `ℂ`, the image of `gi` (`toComplex_gi`): real lengths need
+`V = ℂ`, and taking the linear parts in `ℤ[i]` would mean a module structure of
+`ℂ` over `ℤ[i]` and every statement of those files restated, for no gain in the
+proofs. `BeyondQuads.lean` keeps the rotation `ζₙ` of any order `n`. All files
+share the namespace `TurnsOfATMesh`.
+
 | Statement of the note | Lean | Assumed (hypotheses) |
 |---|---|---|
 | Prop. "The shift of a turn is linear", the additivity only | `Motion.composeAll_trans_add`, `Motion.composeAll_trans` | the crossing maps have linear parts independent of the lengths and translations additive in them; the integer coefficients and the reading as a helix (with its corridor) are not formalized |
-| Prop. "Completeness at given lengths", in a model only | `completeness_at_given_lengths` (on a closed surface the strips are in bijection with the cycles of the station walk, and two stations lie on one cycle exactly when the real walk from the half-integer of one reaches that of the other), from `stationWalk_injective` and `stationPerm` (the walk on unit edges of the gluing data is a permutation of the stations), `sameCycle_stationPerm_iff` (with `realWalk_stations`) and `stripsEquiv` (strips *defined* as the cycles of a successor map built from a permutation `walk` of the stations), `exists_station`, `sameCycle_station_iff`; `realWalk_iterate_half`, `realWalk_iterate_open` (the walk from `k + ½`, or from any point of `(k, k + 1)`, follows the unit edges); `glueLine_half`, `glueLine_open`, `oddCount_motion` (a quarter-turn with a whole translation keeps nodes, edge midpoints and quad centres apart) | the patches are integer rectangles glued along their arcs by `t ↦ ±t + c`, `c` whole; a closed surface (`ClosedGluing`): opposite sides of a patch have the same length, `opp` is one to one, crossing an arc takes a unit edge of a side to a unit edge of a side and no two onto the same one (`ClosedGluing.of_involutive`: both hold when the opposite of the opposite side is the side and crossing an arc back returns to the start); columns of positive depth (`hdepth`); that crossing a patch keeps the offset and that the darts and `next` are the quads and strips of the mesh |
+| Prop. "Completeness at given lengths", in a model only | `completeness_at_given_lengths` (on a closed surface the strips are in bijection with the cycles of the station walk, and two stations lie on one cycle exactly when the real walk from the half-integer of one reaches that of the other), from `stationWalk_injective` and `stationPerm` (the walk on unit edges of the gluing data is a permutation of the stations), `sameCycle_stationPerm_iff` (with `realWalk_stations`) and `stripsEquiv` (strips *defined* as the cycles of a successor map built from a permutation `walk` of the stations), `exists_station`, `sameCycle_station_iff`; `realWalk_iterate_half`, `realWalk_iterate_open` (the walk from `k + ½`, or from any point of `(k, k + 1)`, follows the unit edges); `glueLine_half`, `glueLine_open` (a gluing `t ↦ ±t + c` takes midpoints of unit edges to midpoints, open unit edges onto open unit edges) | the patches are integer rectangles glued along their arcs by `t ↦ ±t + c`, `c` whole; a closed surface (`ClosedGluing`): opposite sides of a patch have the same length, `opp` is one to one, crossing an arc takes a unit edge of a side to a unit edge of a side and no two onto the same one (`ClosedGluing.of_involutive`: both hold when the opposite of the opposite side is the side and crossing an arc back returns to the start); columns of positive depth (`hdepth`); that crossing a patch keeps the offset and that the darts and `next` are the quads and strips of the mesh |
 | Lemma "Gauss–Bonnet for turns" | `gauss_bonnet_turn` (`∑ (4 - k) = 4 χ` inside a region whose border turns by zero), `gauss_bonnet`, `turn_border_sum`, `sum_deg`, `sum_corners` | that `γ̄`, on the grid refined by two, bounds a disc (or an annulus): a complex of quads with Euler characteristic `χ` whose interior vertices have a cycle as link and border vertices a path (`IsRegion`) |
 | … the rotation part | `quarter_turns_prod_eq_one_iff` (`R^{j₁}⋯R^{jₘ} = I ⇔ 4 ∣ ∑ jᵢ`) | — |
 | Lemma "One self-crossing" | `one_crossing_on_walk` (totals `3, 3, 2`), `one_crossing_on_segment` (totals `2, 2, 4`), from `gauss_bonnet_corners` (`4 χ - a + b` with `a` convex and `b` concave corners on the border) | the regions cut open at the crossing are discs, the crossing doubled on the border of the third; how many convex and concave corners each region has (`a - b = 1, 1, 2` on the walk, `2, 2, 0` on the closing segment), the note's case analysis |
@@ -167,9 +178,9 @@ quad graph nor positive lengths.
 * **Any rotations, any dimension.** Motions, the Burgers sum, the order of
   first visit, annuli, exchanges, the Fox–Burgers formula and twisted windings
   are proved for linear parts in an arbitrary ring `A` acting on a module `V`
-  (`Motion.lean`, `FirstVisit.lean`, `Fox.lean`), so they hold for the
-  rotations of order 6 of triangular and hexagonal meshes, for cone metrics of
-  any angles, and for motions of space.
+  (`Basic.lean`, `Motion.lean`, `FirstVisit.lean`, `Fox.lean`), so they hold
+  for the rotations of order 6 of triangular and hexagonal meshes, for cone
+  metrics of any angles, and for motions of space.
 * **Dislocations** depend on the order `n` of the rotation: `|1 - ζₙ| = 2 sin(π/n)`,
   so `‖B‖ = √2 ‖d‖` for quads, `‖B‖ = ‖d‖` for a pair of valences 5 and 7 on a
   triangle mesh; the "diagonal" forms `±d₁ ± d₂` are particular to quads.
@@ -268,9 +279,11 @@ the whole lengths of the integer search, `B` the balance matrix.
 
 ## Files
 
-* `Motion.lean`: motions, compositions, the Burgers sum, annuli, exchanges.
+* `Basic.lean`: motions and their group law; the quarter-turn group in `ℤ[i]`.
+* `Motion.lean`: compositions of motions, the Burgers sum, annuli, exchanges.
 * `FirstVisit.lean`: the cut tree and the order of first visit.
-* `QuarterTurn.lean`: quarter-turns of `ℂ`; dislocations, staircases.
+* `QuarterTurn.lean`: quarter-turns of `ℂ` (the group of `Basic.lean` read in
+  `ℂ`); dislocations, staircases.
 * `Fox.lean`: words, holonomy, Fox derivatives, twisted windings, commutators;
   the Fox–Burgers sum as the Burgers sum of `Motion.lean`.
 * `Congruence.lean`: the Fox–Burgers formula modulo `(1 - z)²`; orders 2, 3, 4, 6.

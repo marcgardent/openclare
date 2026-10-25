@@ -5,6 +5,7 @@ See README.md for what is proved and what is assumed.
 -/
 module
 
+public import TurnsOfATMesh.Basic
 public import TurnsOfATMesh.Motion
 public import TurnsOfATMesh.FirstVisit
 public import TurnsOfATMesh.QuarterTurn

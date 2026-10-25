@@ -7,6 +7,13 @@ note is multiplication by `I`. A motion `x ↦ R^j x + t` is a `Motion ℂ ℂ`.
 along and across components of a translation `t` are `t.re` and `t.im`; the
 shift of a turn is `t.im` (`⟨e₂, t⟩`). Lengths are real numbers here; the
 statements about whole lengths are in `Checkerboard.lean`.
+
+This is the quarter-turn group of `Basic.lean`, stated there in `ℤ[i]`, read in
+`ℂ`: `I` is the image of `gi` (`toComplex_gi`). Real lengths need `V = ℂ`, and
+the linear parts are kept as the complex numbers `I`, `-I` (as in `FirstVisit`
+and the twisted windings of `Fox`) rather than as elements of `ℤ[i]` acting on
+`ℂ`: that would take a module structure of `ℂ` over `ℤ[i]` and restating every
+statement of these files, with `gi • x` for `I * x`, for no gain in the proofs.
 -/
 module
 
