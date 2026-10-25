@@ -1705,20 +1705,34 @@ complexity of maximizing $Q$ over a polytope of lengths in reals.
 \section{What is machine-checked}\label{sec:lean}
 
 The folder \texttt{lean} beside this note is a Lean~4~\cite{demoura2021lean4}
-project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $236$
+project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $283$
 theorem declarations, many of them small lemmas, depend only on Lean's
 standard axioms; the count is not evidence, and its \texttt{README.md} maps
 each statement to its Lean theorems. Lean checks the algebraic and
 combinatorial core of each statement, with the topological facts it uses
 (that a loop develops into a given motion, that a curve bounds a disc, that
 the loops $\lambda_i$ present the fundamental group, that the quad graph of a
-sphere is bipartite) as explicit hypotheses. Each statement is formalized on
-its own abstraction (a turn as a list of motions, a region as finite sets with
-counts, a system as a pair of matrices): the files share the motions and the
-quarter-turn group (\texttt{Basic.lean}) but no type of T-mesh, and are not
-composed into one model of it.
+sphere is bipartite) as explicit hypotheses. The files share the motions and
+the quarter-turn group (\texttt{Basic.lean}). One of them,
+\texttt{TMesh.lean}, defines a combinatorial T-mesh: patches with two pairs of
+opposite sides, each side the list of its arcs, every arc on exactly two sides
+with a sign for the gluing. The balance matrix $B$ and the shifts of the turns
+are derived from it, and on it Proposition~\ref{prop:linear},
+Lemma~\ref{lem:handshake}, Proposition~\ref{prop:free},
+Remark~\ref{rem:definite} and Theorem~\ref{thm:forced} form one checked
+chain. The other statements keep their own abstraction (a turn as a list of
+motions, a region as finite sets with counts); the surface and the cross field
+behind the T-mesh, its orientation and the link between the shift and the
+holonomy $\hat h$ are not formalized.
 
-\emph{Checked}, statement by statement. For motions with linear parts in any
+\emph{Checked}, statement by statement. On the T-mesh, with the frames of
+the patches those of one orientation of the surface:
+Proposition~\ref{prop:linear} for the offset across the walk, that is the
+integer coefficients of $\shift_\gamma$, independent of $\ell$, the corridor
+cut out by linear inequalities in the offset and $\ell$, and the walk coming
+back at $o + \shift_\gamma(\ell)$ and winding as a helix; that this walk from
+a half-integer is a dual line of the quad mesh is the completeness proposition
+below, in its own model. For motions with linear parts in any
 ring: the Burgers sum, and that the recursion of the gluing maps of a tree of
 cuts, a hypothesis, unfolds into the order of first visit
 (Proposition~\ref{prop:burgers}(a)); the cut annulus~(b); exchanges; the
@@ -1732,7 +1746,10 @@ $\shift_\gamma$; the second proof of Remark~\ref{rem:borders}. The
 Fox--Burgers formula on the free group with the twisted windings and the
 insertion of the relation, the case of a simple turn,
 Proposition~\ref{prop:commutator} and Corollary~\ref{cor:checker}.
-Lemma~\ref{lem:handshake} on a closed surface; Proposition~\ref{prop:free},
+Lemma~\ref{lem:handshake} on a closed surface, the columns of $B$ of every
+closed T-mesh having even sums; Proposition~\ref{prop:free}, $B$ being the
+incidence matrix of a bidirected graph when no arc lies on two opposite sides
+of a patch, and
 stronger than stated (on the edges $T$ the whole image of $B$ is the lattice
 of vectors of even sum); Remarks~\ref{rem:definite} and~\ref{rem:exist}, with
 Farkas' lemma over any ordered field and whole multipliers;
@@ -1741,9 +1758,7 @@ order: the rotation part of Gauss--Bonnet and its counts on triangle and
 hexagonal meshes, the lengths of dislocations and the congruence of
 Appendix~\ref{app:orders}.
 
-\emph{Checked in a weaker form}: Proposition~\ref{prop:linear}, only the
-additivity of the composed translation, not the integer coefficients nor the
-reading as a helix; Lemmas~\ref{lem:gauss} and~\ref{lem:eight}, only the
+\emph{Checked in a weaker form}: Lemmas~\ref{lem:gauss} and~\ref{lem:eight}, only the
 Euler-characteristic count on the grid refined by two and the totals from the
 numbers of convex and concave corners, the regions being discs and the
 convexity of their corners hypotheses; the completeness of the walks,

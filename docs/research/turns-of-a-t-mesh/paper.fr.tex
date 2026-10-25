@@ -1894,21 +1894,36 @@ la maximisation de $Q$ sur un polytope de longueurs réelles.
 
 Le dossier \texttt{lean} à côté de cette note est un projet
 Lean~4~\cite{demoura2021lean4} sur Mathlib~\cite{mathlib2020} (tous deux en
-\texttt{v4.35.0}). Ses $236$ déclarations de théorèmes, dont beaucoup de
+\texttt{v4.35.0}). Ses $283$ déclarations de théorèmes, dont beaucoup de
 petits lemmes, ne dépendent que des axiomes standard de Lean\,; ce nombre
 n'est pas un argument, et son \texttt{README.md} associe à chaque énoncé ses
 théorèmes Lean. Lean vérifie le cœur algébrique et combinatoire de chaque
 énoncé, les faits topologiques qu'il utilise (qu'un lacet se développe en un
 déplacement donné, qu'une courbe borde un disque, que les lacets $\lambda_i$
 présentent le groupe fondamental, que le graphe des quads d'une sphère est
-biparti) étant des hypothèses explicites. Chaque énoncé est formalisé sur sa
-propre abstraction (un tour comme une liste de déplacements, une région comme
-des ensembles finis avec des comptes, un système comme une paire de
-matrices)~: les fichiers partagent les déplacements et le groupe des
-quarts de tour (\texttt{Basic.lean}) mais aucun type de T-mesh, et ne sont pas
-composés en un modèle unique de celui-ci.
+biparti) étant des hypothèses explicites. Les fichiers partagent les
+déplacements et le groupe des quarts de tour (\texttt{Basic.lean}). L'un
+d'eux, \texttt{TMesh.lean}, définit un T-mesh combinatoire~: des patchs à
+deux paires de côtés opposés, chaque côté la liste de ses arcs, chaque arc sur
+exactement deux côtés avec un signe pour le recollement. La matrice des
+équilibres $B$ et les décalages des tours en sont déduits, et sur lui la
+proposition~\ref{prop:linear}, le lemme~\ref{lem:handshake}, la
+proposition~\ref{prop:free}, la remarque~\ref{rem:definite} et le
+théorème~\ref{thm:forced} forment une seule chaîne vérifiée. Les autres
+énoncés gardent leur propre abstraction (un tour comme une liste de
+déplacements, une région comme des ensembles finis avec des comptes)\,; la
+surface et le champ de croix sous le T-mesh, son orientation et le lien entre
+le décalage et l'holonomie $\hat h$ ne sont pas formalisés.
 
-\emph{Vérifié}, énoncé par énoncé. Pour des déplacements dont les parties
+\emph{Vérifié}, énoncé par énoncé. Sur le T-mesh, les repères des patchs
+étant ceux d'une orientation de la surface~: la
+proposition~\ref{prop:linear} pour l'abscisse transverse à la marche,
+c'est-à-dire les coefficients entiers de $\shift_\gamma$, indépendants de
+$\ell$, le couloir découpé par des inégalités linéaires en l'abscisse et en
+$\ell$, et la marche qui revient en $o + \shift_\gamma(\ell)$ et s'enroule en
+hélice\,; que cette marche depuis un demi-entier soit une ligne duale du
+maillage de quads est la proposition de complétude ci-dessous, dans son propre
+modèle. Pour des déplacements dont les parties
 linéaires sont dans un anneau quelconque~: la somme de Burgers, et le fait que
 la récurrence des applications de recollement d'un arbre de coupures, une
 hypothèse, se déroule dans l'ordre de première visite
@@ -1925,7 +1940,9 @@ démonstration de la remarque~\ref{rem:borders}. La formule de Fox--Burgers
 sur le groupe libre avec les enroulements tordus et l'insertion de la
 relation, le cas d'un tour simple, la proposition~\ref{prop:commutator} et le
 corollaire~\ref{cor:checker}. Le lemme~\ref{lem:handshake} sur une surface
-fermée\,; la proposition~\ref{prop:free}, sous une forme plus forte
+fermée, les colonnes de $B$ de tout T-mesh fermé étant de somme paire\,; la
+proposition~\ref{prop:free}, $B$ étant la matrice d'incidence d'un graphe
+bidirigé quand aucun arc n'est sur deux côtés opposés d'un patch, et sous une forme plus forte
 qu'énoncée (sur les arêtes $T$, l'image par $B$ des vecteurs entiers est le
 réseau des vecteurs de somme paire)\,; les remarques~\ref{rem:definite}
 et~\ref{rem:exist}, avec le lemme de Farkas sur un corps ordonné quelconque et
@@ -1935,9 +1952,7 @@ rotation de Gauss--Bonnet et ses comptes sur les maillages triangulaires et
 hexagonaux, les longueurs des dislocations et la congruence de
 l'annexe~\ref{app:orders}.
 
-\emph{Vérifié sous une forme plus faible}~: la
-proposition~\ref{prop:linear}, seulement l'additivité de la translation
-composée, ni les coefficients entiers ni la lecture comme hélice\,; les
+\emph{Vérifié sous une forme plus faible}~: les
 lemmes~\ref{lem:gauss} et~\ref{lem:eight}, seulement le compte par la
 caractéristique d'Euler sur la grille raffinée par deux et les totaux à partir
 des nombres de coins convexes et concaves, le fait que les régions soient des

@@ -6,7 +6,7 @@ Section 10 there lists what is checked, statement by statement), and of the
 two propositions of its applied companion,
 [`../../closing-loops/paper.tex`](../../closing-loops/paper.tex), "The shift of
 a turn is linear" (also stated in `../paper.tex`) and "Completeness at given
-lengths": 236 `theorem` declarations, many of them small lemmas and a few
+lengths": 283 `theorem` declarations, many of them small lemmas and a few
 restating a hypothesis (`dislocation_closes_iff`, `staircase_rings`); the
 count is not evidence, the table below names the main ones. The topological facts the note uses (that a loop develops into a given
 motion, that a curve bounds a disc, that the quad graph of a sphere is
@@ -47,9 +47,23 @@ keep `I`, `-I` in `ℂ`, the image of `gi` (`toComplex_gi`): real lengths need
 proofs. `BeyondQuads.lean` keeps the rotation `ζₙ` of any order `n`. All files
 share the namespace `TurnsOfATMesh`.
 
+`TMesh.lean` is the one object the argument runs on. A `TMesh` is
+combinatorial: each patch has two pairs of opposite sides, a side is the list of
+its arcs in order from its first corner (the two sides of a pair listed from
+corresponding corners, in the same direction), and every arc lies on exactly two
+sides with a sign `ε = ±1`, the gluing of a closed surface. The balance matrix
+`B` and the shift of every turn are derived from it, not assumed: `B` is then
+an instance of `Balances.lean` and `Bidirected.lean`, and the shifts and `B`
+are the inputs of `Forced.lean` and `Farkas.lean` (`TMesh.not_closable_iff`,
+`TMesh.forced_of_certificates`). The other files keep their own abstractions:
+a turn as a list of motions (`Motion`, `Fox`, `Checkerboard`), a region as
+finite sets with counts (`GaussBonnet`), the gluing data at whole lengths
+(`Completeness`).
+
 | Statement of the note | Lean | Assumed (hypotheses) |
 |---|---|---|
-| Prop. "The shift of a turn is linear", the additivity only | `Motion.composeAll_trans_add`, `Motion.composeAll_trans` | the crossing maps have linear parts independent of the lengths and translations additive in them; the integer coefficients and the reading as a helix (with its corridor) are not formalized |
+| A T-mesh, its balances | `TMesh` (patches, sides as lists of arcs, gluing with signs); `TMesh.balance` (`B`), `balance_mulVec_eq_zero_iff` (`B ℓ = 0` ⇔ opposite sides of equal length), `balance_apply` (the column of an arc: `±1` in the balance of each of its two sides), `balance_column_even` (every column has an even sum), `balance_isBidirected` (`B` is bidirected) | a closed surface: every arc on exactly two sides, once on each, borders left out; for `balance_isBidirected`, no arc on two opposite sides of one patch (`NoArcAcross`, as when no patch borders itself) |
+| Prop. "The shift of a turn is linear" | `TMesh.Turn.shift_linear` (the composite of the crossings of a turn at the lengths `ℓ` is the translation by `∑ₐ cₐ ℓₐ`, `c = shiftForm` integer and independent of `ℓ`), from `crossForm` (crossing an arc is `x ↦ ε x + c(ℓ)`, `c` an integer linear form), `evalMotion_composeAll` and `composite_lin` (the composite keeps the direction of the offsets); `Turn.mem_corridor_iff` (the corridor, the offsets from which the walk crosses the arcs of the turn, is cut out by strict linear inequalities with integer coefficients in `(x, ℓ)`, at `ℓ ≥ 0`), from `arcAt_eq_some` (the arcs of a side cover disjoint open intervals); `Turn.comes_back` (from an offset `o` of the corridor the walk comes back to the first side at `o + shift(ℓ)`), `comes_back_iff` (it closes after one round exactly when the shift is zero), `Turn.winds` (helices: `t` rounds while `o + j shift(ℓ)` stays in the corridor); the additivity alone for any motions: `Motion.composeAll_trans_add`, `Motion.composeAll_trans` | an oriented gluing: the frames of the patches are those of one orientation of the surface (`Oriented`, a condition on the signs of the arcs); only the offset across the walk is followed, not the length `α_γ` along it; that the walk from a half-integer is a dual line of the quad mesh is Prop. "Completeness" below, in its own model; the sentence on a corridor without half-integers is not formalized |
 | Prop. "Completeness at given lengths", in a model only | `completeness_at_given_lengths` (on a closed surface the strips are in bijection with the cycles of the station walk, and two stations lie on one cycle exactly when the real walk from the half-integer of one reaches that of the other), from `stationWalk_injective` and `stationPerm` (the walk on unit edges of the gluing data is a permutation of the stations), `sameCycle_stationPerm_iff` (with `realWalk_stations`) and `stripsEquiv` (strips *defined* as the cycles of a successor map built from a permutation `walk` of the stations), `exists_station`, `sameCycle_station_iff`; `realWalk_iterate_half`, `realWalk_iterate_open` (the walk from `k + ½`, or from any point of `(k, k + 1)`, follows the unit edges); `glueLine_half`, `glueLine_open` (a gluing `t ↦ ±t + c` takes midpoints of unit edges to midpoints, open unit edges onto open unit edges) | the patches are integer rectangles glued along their arcs by `t ↦ ±t + c`, `c` whole; a closed surface (`ClosedGluing`): opposite sides of a patch have the same length, `opp` is one to one, crossing an arc takes a unit edge of a side to a unit edge of a side and no two onto the same one (`ClosedGluing.of_involutive`: both hold when the opposite of the opposite side is the side and crossing an arc back returns to the start); columns of positive depth (`hdepth`); that crossing a patch keeps the offset and that the darts and `next` are the quads and strips of the mesh |
 | Lemma "Gauss–Bonnet for turns" | `gauss_bonnet_turn` (`∑ (4 - k) = 4 χ` inside a region whose border turns by zero), `gauss_bonnet`, `turn_border_sum`, `sum_deg`, `sum_corners` | that `γ̄`, on the grid refined by two, bounds a disc (or an annulus): a complex of quads with Euler characteristic `χ` whose interior vertices have a cycle as link and border vertices a path (`IsRegion`) |
 | … the rotation part | `quarter_turns_prod_eq_one_iff` (`R^{j₁}⋯R^{jₘ} = I ⇔ 4 ∣ ∑ jᵢ`) | — |
@@ -69,12 +83,12 @@ share the namespace `TurnsOfATMesh`.
 | … for a simple turn it is Prop. "The shift is set by the singularities" (a) | `hol_eq_composeAll` (`Fox.hol` applies the head of the word last, `composeAll` first: the list is reversed), `hol_trans_eq_burgers`, `fox_burgers_eq_burgers` (any word); on `simpleWord l = xₘ ⋯ x₁`: `hol_simpleWord`, `fox_burgers_simple` (the Fox–Burgers sum is `∑ₖ Qₖ (pₖ - Rₖ pₖ)`, `Motion.burgers_map`), `fox_simpleWord` (`ρ(∂w/∂x_{iₖ}) = Qₖ = Rₘ⋯Rₖ₊₁` when the indices are distinct) | as above; the letters are the rotations about the developed cone points |
 | Corollary "Checkerboard rule for any combination" | `checkerboard_word`, `checkerboard_combination`, `colours_flip`, `relation_colours`, `winding_constant` | as above; the relation `ϱ = λ₁⋯λₙ` has trivial holonomy |
 | Prop. "Winding numbers do not suffice" | `commutator_holonomy`, `winding_numbers_do_not_suffice` | — |
-| Lemma "Handshake" | `handshake`, `column_even`, `no_whole_solution` | — |
-| Prop. "Free arcs" | `free_arcs` (unique whole extension), `free_arcs_basis` (`z_f` with entries in `{0, ±1, ±2}`), `rows_independent` (full row rank), `solve_unicyclic` (the whole image of `B` on `T ∪ {f}` is the lattice of even sums), `exists_closesUnbalanced` (the edge closing an unbalanced cycle exists), `free_arcs_of_cycle` (as stated: a spanning tree and an unbalanced cycle) | that the graph is connected, as the existence of a spanning tree grown by leaves (`IsTree`) |
+| Lemma "Handshake" | `handshake`, `column_even`, `no_whole_solution`; on a T-mesh, `TMesh.handshake` | on a T-mesh, a closed surface |
+| Prop. "Free arcs" | on a T-mesh, `TMesh.free_arcs`; for any bidirected `B`: `free_arcs` (unique whole extension), `free_arcs_basis` (`z_f` with entries in `{0, ±1, ±2}`), `rows_independent` (full row rank), `solve_unicyclic` (the whole image of `B` on `T ∪ {f}` is the lattice of even sums), `exists_closesUnbalanced` (the edge closing an unbalanced cycle exists), `free_arcs_of_cycle` (as stated: a spanning tree and an unbalanced cycle) | that the graph is connected, as the existence of a spanning tree grown by leaves (`IsTree`); on a T-mesh, `NoArcAcross` |
 | … bidirected graphs | `IsTree.exists_switching`, `IsTree.eq_zero`, `IsTree.solve`, `closesUnbalanced_of_pair`, `pair_ne_zero`, `balanced_cycle_of_not_closesUnbalanced`, `Cycle.isBalanced_of_graph` (a cycle of a balanced graph is balanced) | — |
-| Remark "Sign-definite turns", Farkas certificates | `sign_definite_certificate` (`B ℓ = 0`, `shift_γ(ℓ) = 0`, `ℓ ≥ b` infeasible ⇔ `∑ u_γ shift_γ + λᵀ B = c ≥ 0` with `c ⬝ b > 0`), `forced_zero_iff` (arcs zero in every solution), `farkas_int` (whole multipliers), `farkas`, `farkas_bounds` (any linearly ordered field, by Fourier–Motzkin) | — |
+| Remark "Sign-definite turns", Farkas certificates | on a T-mesh, `TMesh.not_closable_iff` (turns of the T-mesh that cannot close together within the balanced `ℓ ≥ b` ⇔ a certificate on its `B` and the matrix of their shift forms), from `TMesh.closable_iff` (closing is a linear system, the shifts being linear forms); for any matrices: `sign_definite_certificate` (`B ℓ = 0`, `shift_γ(ℓ) = 0`, `ℓ ≥ b` infeasible ⇔ `∑ u_γ shift_γ + λᵀ B = c ≥ 0` with `c ⬝ b > 0`), `forced_zero_iff` (arcs zero in every solution), `farkas_int` (whole multipliers), `farkas`, `farkas_bounds` (any linearly ordered field, by Fourier–Motzkin) | — |
 | Remark "Whole solutions exist at some size" | `whole_solution_of_real`, `clear_denominators` | — |
-| Theorem "Forced shifts" | `forced_helices`, `meets_infeasible`, `card_ge_of_disjoint`, `tauP_ge_of_disjoint` | — |
+| Theorem "Forced shifts" | `forced_helices`, `meets_infeasible`, `card_ge_of_disjoint`, `tauP_ge_of_disjoint` (any functions `shift γ`); on a T-mesh, `TMesh.forced_of_certificates` (`k` disjoint sets of its turns, each with a Farkas certificate: every balanced `ℓ ≥ b` leaves at least `k` of them shifted) | — |
 | Corollary "Chains of dislocations" | `sign_change_between`, `chain_of_dislocations` | the identities `s_{i-1} - s_i = εᵢ Fᵢ` with `Fᵢ > 0` |
 
 Not formalized: the topology behind the hypotheses, weeks of work with much of
@@ -86,7 +100,13 @@ the cone points; which corners of the regions of Lemma "One self-crossing" are
 convex (the totals are proved from them). Two standard graph facts, days of work: a finite graph is connected
 exactly when it has a spanning tree grown by leaves, and Harary's converse (a
 graph all of whose cycles are balanced has a switching; only the direction the
-proposition needs is proved). Strips on surfaces with borders (the walk is then
+proposition needs is proved). For the T-mesh of `TMesh.lean`: that it comes from
+a surface with a cross field (it is taken as combinatorial data), its
+orientation (`Oriented` is a hypothesis on the signs), borders, the length
+`α_γ` of a turn, the 2-dimensional crossings `x ↦ R^k x + t` (only their
+component across the walk is modelled), and the holonomy `hol` of `Fox.lean`,
+to which the note ties the shift by `shift_γ(ℓ) = -⟨e₂, ĥ(γ̄)⟩` (Section "Flat
+metric and holonomy"). Strips on surfaces with borders (the walk is then
 a partial bijection, whose open paths `stripsEquiv` does not cover), and a model
 of the quad mesh from which the stations, the depths of the columns and the
 gluing data of `completeness_at_given_lengths` would be read rather than
@@ -228,7 +248,7 @@ lengths); `shift_along` computes both components and keeps one. `ℓ` below is
 the whole lengths of the integer search, `B` the balance matrix.
 
 1. **Integer coefficients.** Every coefficient of a shift expression is a whole
-   number (`Motion.composeAll_trans_add`): `c.fract() == 0`.
+   number (`TMesh.Turn.shift_linear`): `c.fract() == 0`.
 2. **Parity of a turn** (closed surfaces of genus zero only, any whole balanced
    `ℓ`, of any sign): with `along` the other component of `shift_along`,
    `(value(along, ℓ) + value(shift, ℓ)) % 2 == 0`. In particular a ring has an
@@ -300,3 +320,7 @@ the whole lengths of the integer search, `B` the balance matrix.
   Lemmas "Gauss–Bonnet for turns" and "One self-crossing" (the counts).
 * `BeyondQuads.lean`: fields of any order: rotations and dislocations.
 * `Forced.lean`: forced helices and chains of dislocations.
+* `TMesh.lean`: the combinatorial T-mesh, its balance matrix, turns, their
+  shifts and corridors; Lemma "Handshake", Proposition "Free arcs", Remark
+  "Sign-definite turns" and Theorem "Forced shifts" on it; an example, a torus
+  of one patch glued with a twist (`twistedTorus`).
