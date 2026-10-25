@@ -81,9 +81,9 @@ lengths, and the choice of the turns to close decides.
 
 \section{Introduction}
 
-Field-aligned quad remeshing has reached a level where element shape and
-alignment are rarely the limiting
-factor~\cite{bommes2013survey,campen2017survey}. What remains is structure:
+In our experience, element shape and alignment are rarely what limits
+field-aligned quad remeshing today (see the
+surveys~\cite{bommes2013survey,campen2017survey}). What remains is structure:
 the way edge loops run across the surface. Artists expect a loop round an
 arm, a leg or a neck to be a ring. Automatic methods often produce a helix
 instead: the loop goes round, comes back one or a few rows further, and winds
@@ -146,8 +146,9 @@ from exact arithmetic or solver output on the systems openclare exports, and
 \paragraph{T-mesh quantization.}
 Mixed-integer quadrangulation~\cite{bommes2009miq} and integer-grid
 maps~\cite{bommes2013igm} decide the integer structure of a quad mesh in
-their quantization. Campen et al.\ quantize via the integer lengths of the
-arcs of a T-mesh traced in a seamless parametrization~\cite{campen2015qgp}.
+their quantization. Campen et al.\ show that even a valid quantization of a seamless
+parametrization is a hard combinatorial problem, and solve it through
+systems of linear Diophantine equations~\cite{campen2015qgp}.
 Lyon et al.\ solve a constrained version as an integer linear program,
 bounding the directional deviation of the separatrices of the resulting
 layout, and require, as openclare does, that the quantization keep
@@ -166,9 +167,9 @@ and remove them greedily with grid-preserving operators, closed dual paths of
 shift and collapse steps that keep the mesh all-quad and its singularities in
 place, followed by tangential smoothing; their experiments remove most
 helices (from 17--52 down to 1--23 per model). They note that choosing the
-pairs of singularities to align directly in the parametrization, as Myles et
-al.\ do for T-meshes~\cite{myles2010feature}, is often complicated or even
-ambiguous to automate. Razafindrazaka and
+pairs of singularities to align directly in the parametrization is often
+complicated or even ambiguous to automate, giving the feature-aligned
+T-meshes of Myles et al.~\cite{myles2010feature} as an example. Razafindrazaka and
 Polthier~\cite{razafindrazaka2017optimal} replace the base complex of a
 finished mesh by an optimal one, found as a perfect matching on a graph over
 its singular vertices, and note that the operators
@@ -209,14 +210,14 @@ Dual loops meshing~\cite{campen2012dual} builds a layout from loops traced on
 the surface, which close by construction; Lei et
 al.~\cite{lei2017foliation} build quad meshes from a Strebel differential
 with prescribed cylinders, and skeleton-guided
-layouts~\cite{usai2015skeleton} close the loops round limbs by design. Myles
+layouts~\cite{usai2015skeleton} follow the curve skeleton of an articulated
+shape. Myles
 et al.~\cite{myles2014robust} trace the field into a partition into patches,
-Pietroni et al.~\cite{pietroni2016tracing} select traced separatrices by a
-binary linear program, and Razafindrazaka et
+Pietroni et al.~\cite{pietroni2016tracing} extract a layout from traced
+field-coherent paths with a binary linear program, and Razafindrazaka et
 al.~\cite{razafindrazaka2015perfect} obtain a layout as a minimum-weight
-perfect matching. These methods build coarse layouts, and none starts from a
-given cross field and singularity configuration to make a dense mesh whose
-loops close.
+perfect matching. These methods build coarse layouts, or, for Myles et al.,
+a parametrization from one; none asks the loops of a dense mesh to close.
 
 \paragraph{Measuring loops.}
 QuadGPT~\cite{liu2025quadgpt} counts \emph{quad rings} (closed loops of
@@ -303,8 +304,7 @@ The component of $T_\gamma(\ell)$ along the walking direction is the
 \emph{length} $\alpha_\gamma(\ell)$ of the turn, also an integer linear form,
 which at whole lengths is the number of quads of the strip in one turn. The
 shift is the across component of the translational holonomy of the flat
-metric along the turn, linear in the lengths as any period of a flat cone
-metric~\cite{thurston1998shapes,veech1993flat}; for a ring of quads it is the
+metric along the turn; for a ring of quads it is the
 twist of a cylinder. What is specific here is its expression in the arc
 lengths of a T-mesh, as a constraint of the quantization. The companion
 paper~\cite{gardent2026turns} shows that it is set by the singularities: for
@@ -925,7 +925,7 @@ wrote the changes to the engine and the experiment scripts, ran all the
 experiments and exact computations, searched the literature, stated and
 proved the propositions, and drafted the text. References were checked for
 existence, and the note of each bibliography entry says how much of the work
-was read. Weaker forms of Propositions~\ref{prop:linear}
+was read. A work of which only the abstract, or a review, was read is cited only for what that abstract or review states. Weaker forms of Propositions~\ref{prop:linear}
 and~\ref{prop:complete} are checked in Lean~4~\cite{demoura2021lean4} in the
 companion paper; everything else here not checked by machine was written
 with AI help and checked by AI agents rereading it and testing it on the
