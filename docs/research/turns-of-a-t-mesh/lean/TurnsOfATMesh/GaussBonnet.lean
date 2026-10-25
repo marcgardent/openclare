@@ -50,7 +50,7 @@ public import Mathlib.Tactic.Ring
 
 set_option linter.unusedSectionVars false
 
-namespace ClosingHelices
+namespace TurnsOfATMesh
 
 namespace GaussBonnet
 
@@ -274,4 +274,4 @@ theorem gauss_bonnet_hexagons (ends : Ed → Fin 2 → Vx) (corner : Fc → Fin 
 
 end GaussBonnet
 
-end ClosingHelices
+end TurnsOfATMesh

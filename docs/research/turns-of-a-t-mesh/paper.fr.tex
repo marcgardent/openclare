@@ -1888,7 +1888,7 @@ la maximisation de $Q$ sur un polytope de longueurs réelles.
 
 Le dossier \texttt{lean} à côté de cette note est un projet
 Lean~4~\cite{demoura2021lean4} sur Mathlib~\cite{mathlib2020} (tous deux en
-\texttt{v4.35.0}). Ses $235$ déclarations de théorèmes, dont beaucoup de
+\texttt{v4.35.0}). Ses $236$ déclarations de théorèmes, dont beaucoup de
 petits lemmes, ne dépendent que des axiomes standard de Lean\,; ce nombre
 n'est pas un argument, et son \texttt{README.md} associe à chaque énoncé ses
 théorèmes Lean. Lean vérifie le cœur algébrique et combinatoire de chaque
@@ -1898,7 +1898,8 @@ présentent le groupe fondamental, que le graphe des quads d'une sphère est
 biparti) étant des hypothèses explicites. Chaque énoncé est formalisé sur sa
 propre abstraction (un tour comme une liste de déplacements, une région comme
 des ensembles finis avec des comptes, un système comme une paire de
-matrices)~: les fichiers ne partagent aucun type de T-mesh et ne sont pas
+matrices)~: les fichiers partagent les déplacements et le groupe des
+quarts de tour (\texttt{Basic.lean}) mais aucun type de T-mesh, et ne sont pas
 composés en un modèle unique de celui-ci.
 
 \emph{Vérifié}, énoncé par énoncé. Pour des déplacements dont les parties

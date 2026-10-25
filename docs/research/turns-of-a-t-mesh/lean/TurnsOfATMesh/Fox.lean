@@ -16,7 +16,7 @@ rotations (not only quarter-turns) and in any dimension.
 -/
 module
 
-public import ClosingHelices.Motion
+public import TurnsOfATMesh.Motion
 public import Mathlib.GroupTheory.FreeGroup.Basic
 public import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.Basic.Complex.BigOperators
@@ -25,7 +25,7 @@ public import Mathlib.Basic.Complex.BigOperators
 
 set_option linter.unusedSectionVars false
 
-namespace ClosingHelices
+namespace TurnsOfATMesh
 
 open Motion
 
@@ -494,4 +494,4 @@ theorem combination_translate {κ : Type*} (s : Finset κ) (u : ι → ℂˣ) (p
 
 end Twisted
 
-end ClosingHelices
+end TurnsOfATMesh

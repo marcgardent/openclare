@@ -15,6 +15,9 @@ visit, annuli, exchanges and the Fox–Burgers formula are proved for any ring
 * dislocations: the Burgers vector `(1 - ζₙ) d` of a dislocation has length
   `2 sin(π/n) ‖d‖` (`dislocation_norm`): `√2 ‖d‖` for quads, `√3 ‖d‖` for order 3,
   `‖d‖` for order 6 (a pair of valences five and seven on a triangle mesh).
+
+The rotation `ζₙ` is a complex number for every `n`; for `n = 4` it is `I`, the
+quarter-turn of `Basic.lean` read in `ℂ`.
 -/
 module
 
@@ -24,7 +27,7 @@ public import Mathlib.Analysis.Complex.Trigonometric
 
 @[expose] public section
 
-namespace ClosingHelices
+namespace TurnsOfATMesh
 
 namespace BeyondQuads
 
@@ -83,4 +86,4 @@ theorem dislocation_norm_six (d : ℂ) : ‖(1 - zeta 6) * d‖ = ‖d‖ := by
 
 end BeyondQuads
 
-end ClosingHelices
+end TurnsOfATMesh

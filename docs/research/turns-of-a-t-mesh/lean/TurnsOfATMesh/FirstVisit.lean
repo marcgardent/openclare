@@ -13,13 +13,13 @@ Trees are stored as forests in the first-child, next-sibling form.
 -/
 module
 
-public import ClosingHelices.QuarterTurn
+public import TurnsOfATMesh.QuarterTurn
 
 @[expose] public section
 
 set_option linter.unusedSectionVars false
 
-namespace ClosingHelices
+namespace TurnsOfATMesh
 
 open Motion
 
@@ -91,4 +91,4 @@ theorem order_of_first_visit_matters :
 
 end Forest
 
-end ClosingHelices
+end TurnsOfATMesh
