@@ -8,6 +8,7 @@ the check on every change of the Lean folder (`.github/workflows/lean.yml`):
 
 Written with `OPENCLARE_EXPORT_TURNS=<directory> openclare remesh <source.obj>
 <out.obj> --preset organic --quads 3000`; only the `way-<n>.json` files are kept.
-They are frozen: the engine may change, these files test the Lean side. The full
+They are frozen: the engine may change, these files test the Lean side. Their
+certificates of forced shifts are in `../certificates/fixtures.json`. The full
 check, on the male body and on fresh exports, is run with `make lean-check` (see
 `../README.md`).

@@ -24,7 +24,16 @@ turns of the way, and compares, with the library's definitions:
   says it crossed each arc, and that it comes back at the offset plus `Turn.shift`;
 * at the real lengths, the offset at the same share of the first side, and at the
   engine's whole lengths every half-integer of the corridor: `walk` comes back at the
-  offset plus the shift.
+  offset plus the shift;
+* Theorem "Forced shifts", when `certify.py` has certificates for the way: each Farkas
+  certificate as `TMesh.not_closable_iff` states it, the bounds on `τ_P(H)` of the held
+  turns they give (disjoint cores, `forced_of_certificates`; the least set meeting the
+  cores, `meets_infeasible`; whole lengths of `P` closing the others), against the
+  claims of the papers, and the sets of their table;
+* the Fox–Burgers formula, on a sphere: the words of the turns in the loops round the
+  cone points (`develop.py`), whose holonomy `Fox.hol` over `ℤ[i]` must be the
+  translation by the length of the turn along its walk and minus its `shift` across it,
+  and equal the sum of Proposition "Fox–Burgers formula" (`fox`).
 
 All arithmetic is exact (`ℤ`, `ℚ`; the engine's floats are read as the fractions they
 are). `Turn.shiftForm` and `balance` are read only at the arcs of the sides they
@@ -32,6 +41,7 @@ involve; `shiftForm_eq_zero` and `balance_eq_zero` below prove that they are zer
 every other arc.
 -/
 import TurnsOfATMesh.TMesh
+import TurnsOfATMesh.Fox
 import Lean.Data.Json
 
 open Lean TurnsOfATMesh TMesh
@@ -42,12 +52,59 @@ namespace Check
 
 structure RawTurn where
   index : Nat
+  held : Bool
   start : Nat
   path : Array Nat
   shift : Array (Nat × Int)
   offset : ℚ
   share : Option ℚ
   crossed : Array ℚ
+
+/-- A Farkas certificate of Remark "Sign-definite turns" for the turns `turns` (indices
+of the export): the multipliers `u` of their shifts and the form `c` it claims for
+`Σ u shiftForm + λᵀ B` (its nonzero terms); `λ` is left to the check. -/
+structure RawCert where
+  turns : Array Nat
+  u : Array ℚ
+  c : Array (Nat × ℚ)
+  deriving Inhabited
+
+/-- A set of a table of certificates in one way: the certificate found with the
+multipliers of the paper (`none` if none was), whole lengths closing the set without each
+of its turns (when found), and what the paper says of it. -/
+structure RawSet where
+  row : Nat
+  turns : Array Nat
+  cert : Option RawCert
+  irreducible : Array (Nat × Option (Array ℚ))
+  multipliers : Option (Array ℚ)
+  stated : Option String
+  bounded : Array Nat
+  exact : String
+  first : String
+
+/-- The data of `certify.py` for one way: the bounds `b`, the claims of the paper, the
+cores of held turns with their certificates, the disjoint ones, a set `X` of held turns
+and whole lengths closing the others, and the sets of a table. -/
+structure RawForced where
+  source : String
+  bounds : Array (Nat × Int)
+  heldClaim : Option Nat
+  tauClaim : Option Nat
+  cores : Array RawCert
+  disjoint : Array Nat
+  shifted : Array Nat
+  closing : Array ℚ
+  sets : Array RawSet
+
+/-- The words of `develop.py`: the cone points (valence and developed place, whole), each
+turn's word with the rotation of the chart of its first patch, each jump across the cut
+tree with its word and its motion `(k, x, y)`. -/
+structure RawFox where
+  convention : String
+  cones : Array (Int × Int × Int)
+  turns : Array (List (Nat × Bool) × Nat)
+  jumps : Array (List (Nat × Bool) × Nat × Int × Int)
 
 structure Raw where
   patches : Nat
@@ -59,6 +116,10 @@ structure Raw where
   walked : Array ℚ
   real : Array ℚ
   turns : Array RawTurn
+  lower : Array Int
+  forced : Option RawForced
+  fox : Option RawFox
+  foxSkipped : String
 
 def field (j : Json) (k : String) : Except String Json := j.getObjVal? k
 
@@ -87,6 +148,7 @@ def readTurn (j : Json) : Except String RawTurn := do
     | .error e => throw e
   return {
     index := ← nat (← field j "index")
+    held := ← (← field j "held").getBool?
     start := ← nat (← field j "start")
     path := ← (← arr (← field j "path")).mapM nat
     shift := ← form (← field j "shift")
@@ -94,10 +156,85 @@ def readTurn (j : Json) : Except String RawTurn := do
     share
     crossed := ← (← arr (← field j "crossed")).mapM rat }
 
+/-- A field that may be missing or `null`. -/
+def opt {α : Type} (j : Json) (k : String) (f : Json → Except String α) : Except String (Option α) :=
+  match j.getObjValD k with
+  | .null => pure none
+  | v => some <$> f v
+
+def ints (j : Json) : Except String (Array ℚ) := do
+  (← arr j).mapM fun x => do return ((← int x) : ℚ)
+
+def readCert (j : Json) : Except String RawCert := do
+  return {
+    turns := ← (← arr (← field j "turns")).mapM nat
+    u := ← (← arr (← field j "u")).mapM rat
+    c := ← (← arr (← field j "c")).mapM fun t => do
+      let t ← arr t
+      return (← nat t[0]!, (((← int t[1]!) : ℚ) / ((← nat t[2]!) : ℚ))) }
+
+def readSet (j : Json) : Except String RawSet := do
+  let paper ← field j "paper"
+  let cert ← match j.getObjValD "u" with
+    | .null => pure none
+    | _ => some <$> readCert j
+  return {
+    row := ← nat (← field j "row")
+    turns := ← (← arr (← field j "turns")).mapM nat
+    cert
+    irreducible := ← (← arr (← field j "irreducible")).mapM fun i => do
+      return (← nat (← field i "without"), ← opt i "closing" ints)
+    multipliers := ← opt paper "multipliers" fun m => do (← arr m).mapM rat
+    stated := ← opt paper "stated" fun s => s.getStr?
+    bounded := ← (← arr (← field paper "bounded")).mapM nat
+    exact := ← (← field paper "exact").getStr?
+    first := ← (← field paper "first").getStr? }
+
+def readForced (j : Json) : Except String RawForced := do
+  let tau ← field j "tau"
+  let claims := j.getObjValD "claims"
+  return {
+    source := ← (← field j "source").getStr?
+    bounds := ← (← arr (← field j "bounds")).mapM pair
+    heldClaim := ← opt claims "held" nat
+    tauClaim := ← opt claims "tau" nat
+    cores := ← (← arr (← field tau "cores")).mapM readCert
+    disjoint := ← (← arr (← field tau "disjoint")).mapM nat
+    shifted := ← (← arr (← field tau "shifted")).mapM nat
+    closing := ← ints (← field tau "closing")
+    sets := ← match j.getObjValD "sets" with
+      | .null => pure #[]
+      | s => do (← arr s).mapM readSet }
+
+def word (j : Json) : Except String (List (Nat × Bool)) := do
+  let w ← (← arr j).mapM fun x => do
+    let x ← arr x
+    return (← nat x[0]!, (← int x[1]!) == 1)
+  return w.toList
+
+def readFox (j : Json) : Except String RawFox := do
+  let c ← field j "convention"
+  return {
+    convention := s!"{(← (← field c "generator").getStr?)}; children {(← (← field c "children").getStr?)}; rotation {(← (← field c "rotation").getStr?)}"
+    cones := ← (← arr (← field j "cones")).mapM fun c => do
+      let at_ ← arr (← field c "at")
+      return (← int (← field c "valence"), ← int at_[0]!, ← int at_[1]!)
+    turns := ← (← arr (← field j "turns")).mapM fun t => do
+      return (← word (← field t "word"), ← nat (← field t "chart"))
+    jumps := ← (← arr (← field j "jumps")).mapM fun t => do
+      let m ← arr (← field t "motion")
+      return (← word (← field t "word"), ← nat m[0]!, ← int m[1]!, ← int m[2]!) }
+
 def readRaw (j : Json) : Except String Raw := do
   let stations ← (← arr (← field j "stations")).mapM fun s => do
     return (← nat (← field s "patch"), ← nat (← field s "pair"), ← form (← field s "row"))
   return {
+    lower := ← (← arr (← field j "lower")).mapM int
+    forced := ← opt j "certificates" readForced
+    fox := ← opt j "fox" readFox
+    foxSkipped := match j.getObjValD "fox_skipped" with
+      | .str s => s
+      | _ => ""
     patches := ← nat (← field j "patches")
     arcs := ← nat (← field j "arcs")
     sides := ← (← arr (← field j "sides")).mapM fun s => do (← arr s).mapM nat
@@ -241,7 +378,7 @@ A guess of `λ` with `λᵀ B = d`, for `B` given by its columns, each with two 
 connected component the rows are `c + k t` from a root, and `t` is fixed by an
 unbalanced cycle. Only a guess; `residual` checks it. -/
 
-def guess (R : Nat) (cols : Array (Array (Nat × Int))) (d : Array Int) : Array ℚ := Id.run do
+def guess (R : Nat) (cols : Array (Array (Nat × Int))) (d : Array ℚ) : Array ℚ := Id.run do
   let mut atRow : Array (Array Nat) := Array.replicate R #[]
   for a in [0:cols.size] do
     for (r, _) in cols[a]! do atRow := atRow.modify r (·.push a)
@@ -262,7 +399,7 @@ def guess (R : Nat) (cols : Array (Array (Nat × Int))) (d : Array Int) : Array 
         if col.size != 2 then continue
         let (r₀, s₀) := col[0]!
         let (r₁, s₁) := col[1]!
-        let da : ℚ := d[a]!
+        let da := d[a]!
         if k[r₀]! != 0 && k[r₁]! == 0 then
           c := c.set! r₁ (s₁ * (da - s₀ * c[r₀]!))
           k := k.set! r₁ (-(s₁ * s₀ * k[r₀]!))
@@ -279,7 +416,7 @@ def guess (R : Nat) (cols : Array (Array (Nat × Int))) (d : Array Int) : Array 
   return lam
 
 /-- The arcs `a` at which `(λᵀ B)_a ≠ d_a`. -/
-def residual (cols : Array (Array (Nat × Int))) (lam : Array ℚ) (d : Array Int) : List Nat :=
+def residual (cols : Array (Array (Nat × Int))) (lam : Array ℚ) (d : Array ℚ) : List Nat :=
   (List.range cols.size).filter fun a =>
     (cols[a]!.foldl (fun s (r, v) => s + lam[r]! * v) (0 : ℚ)) != d[a]!
 
@@ -314,6 +451,249 @@ def lengths (v : Array ℚ) : Fin n → ℚ := fun a => v[a.val]!
 def approx (x : ℚ) : Float := Float.ofInt x.num / x.den.toFloat
 
 def near (x y : ℚ) : Bool := x - y ≤ 1 / 1000000 && y - x ≤ 1 / 1000000
+
+/-! ### Theorem "Forced shifts": certificates and `τ_P(H)`
+
+A certificate `(u, c)` for a set `S` of turns is checked as `TMesh.not_closable_iff`
+states it: with `λ` solved here from the `c` claimed, the vector
+`Σ_γ u_γ shiftForm γ + λᵀ B` (the coefficients of `shiftForm` and the columns of
+`balance`) is that `c`, `c ≥ 0` at every arc and `c · b > 0`. Then `S` cannot be closed
+within `P = {B ℓ = 0, ℓ ≥ b}`. The bounds `τ_P(H)` of the held turns follow: `k` pairwise
+disjoint certified cores give `τ_P(H) ≥ k` (`forced_of_certificates`); a set meeting every
+certified core is needed (`meets_infeasible`), so the least such set is a lower bound too;
+whole lengths of `P` closing every held turn outside a set `X` give `τ_P(H) ≤ |X|`. -/
+
+/-- `Σ_k u_k · shiftForm (turns k)`, dense, from the coefficients of the turns. -/
+def combine (n : Nat) (forms : Array (Option (Array Int))) (turns : Array Nat) (u : Array ℚ) :
+    Except String (Array ℚ) := do
+  let mut v : Array ℚ := Array.replicate n 0
+  for k in [0:turns.size] do
+    let some f := forms[turns[k]!]?.join | throw s!"turn {turns[k]!} is not a turn of the TMesh"
+    for a in [0:n] do
+      if f[a]! != 0 then v := v.modify a (· + u[k]! * f[a]!)
+  return v
+
+/-- `λᵀ B`, from the columns of `balance`. -/
+def rowsTimes (cols : Array (Array (Nat × Int))) (lam : Array ℚ) : Array ℚ :=
+  cols.map fun col => col.foldl (fun s (r, v) => s + lam[r]! * v) 0
+
+/-- Checks a certificate; returns its form `c`. -/
+def checkCert (R n : Nat) (cols : Array (Array (Nat × Int))) (forms : Array (Option (Array Int)))
+    (b : Array ℚ) (cert : RawCert) : Except String (Array ℚ) := do
+  if cert.turns.size != cert.u.size then throw "not one multiplier per turn"
+  if !decide cert.turns.toList.Nodup then throw "a turn is repeated"
+  let comb ← combine n forms cert.turns cert.u
+  let claimed := cert.c.foldl (fun v (a, x) => if a < n then v.modify a (· + x) else v)
+    (Array.replicate n (0 : ℚ))
+  let d := (Array.range n).map fun a => claimed[a]! - comb[a]!
+  let lam := guess R cols d
+  let lamB := rowsTimes cols lam
+  let c := (Array.range n).map fun a => comb[a]! + lamB[a]!
+  if c != claimed then
+    throw s!"no λ with Σ u shiftForm + λᵀ B = c (residual at {(residual cols lam d).take 5})"
+  let negative := (List.range n).filter fun a => c[a]! < 0
+  if !negative.isEmpty then throw s!"c < 0 at the arcs {negative.take 5}"
+  let cb := (List.range n).foldl (fun s a => s + c[a]! * b[a]!) (0 : ℚ)
+  if cb ≤ 0 then throw s!"c · b = {cb}, not positive"
+  return c
+
+/-- Whether `ℓ ∈ P` (`B ℓ = 0` row by row, from `balance`; `ℓ ≥ b`) closes `turns`. -/
+def closesIn (rows : Array (Array (Nat × Int))) (forms : Array (Option (Array Int)))
+    (b : Array ℚ) (ℓ : Array ℚ) (turns : List Nat) : Except String Unit := do
+  if ℓ.size != b.size then throw "lengths: not one per arc"
+  if let some a := (List.range b.size).find? fun a => ℓ[a]! < b[a]! then
+    throw s!"ℓ < b at the arc {a}"
+  if let some r := (List.range rows.size).find? fun r =>
+      rows[r]!.foldl (fun s (a, v) => s + v * ℓ[a]!) (0 : ℚ) != 0 then
+    throw s!"B ℓ ≠ 0 at the row {r}"
+  for t in turns do
+    let some f := forms[t]?.join | throw s!"turn {t} is not a turn of the TMesh"
+    let s := (List.range b.size).foldl (fun s a => s + ((f[a]! : Int) : ℚ) * ℓ[a]!) (0 : ℚ)
+    if s != 0 then throw s!"turn {t} shifted by {s}"
+
+/-- Greedy pairwise disjoint cores: a lower bound on a set meeting them all. -/
+def packing (cores : Array (Array Nat)) : Nat := Id.run do
+  let mut used : Array Nat := #[]
+  let mut k := 0
+  for c in cores do
+    if !c.any used.contains then
+      used := used ++ c
+      k := k + 1
+  return k
+
+/-- The least size of a set meeting every core, if below `best` (branch and bound). -/
+partial def leastHitting (cores : Array (Array Nat)) (chosen : List Nat) (best : Nat) : Nat :=
+  let left := cores.filter fun c => !c.any chosen.contains
+  if left.isEmpty then min best chosen.length
+  else if chosen.length + packing left ≥ best then best
+  else
+    let c := left.foldl (fun c d => if d.size < c.size then d else c) left[0]!
+    c.foldl (fun best e => leastHitting cores (e :: chosen) best) best
+
+def showQ (x : ℚ) : String := if x.den = 1 then s!"{x.num}" else s!"{x.num}/{x.den}"
+
+def checkForced (n R : Nat) (cols rows : Array (Array (Nat × Int)))
+    (forms : Array (Option (Array Int))) (held : Array Bool) (lower : Array Int)
+    (f : RawForced) : IO Bool := do
+  IO.println s!"  forced shifts, certificates of {f.source}:"
+  let b : Array ℚ := f.bounds.foldl (fun v (a, x) => if a < n then v.set! a x else v)
+    (Array.replicate n 0)
+  let beyond := (List.range n).filter fun a => b[a]! != ((max lower[a]! 0 : Int) : ℚ)
+  IO.println s!"    bounds b: {((List.range n).filter (b[·]! > 0)).length} arcs at least 1, {if beyond.isEmpty then "the engine's" else s!"DIFFERENT from the engine's at {beyond.length} arcs"}"
+  let mut ok := beyond.isEmpty
+  -- H: the held turns, counted up to sign.
+  let H := (List.range held.size).filter (held[·]!)
+  let sparse := H.map fun t => (t, ((forms[t]?.join).map fun f => terms f).getD [])
+  let twins := sparse.foldl (fun k (t, f) => k + (sparse.filter fun (t', g) =>
+    t < t' && (g == f || g == f.map fun (a, c) => (a, -c))).length) 0
+  let heldOk := f.heldClaim.all (· == H.length)
+  IO.println s!"    held turns H: {H.length}{match f.heldClaim with | some k => s!", paper {k}" | none => ""}; pairs with the same shift form up to sign: {twins}"
+  ok := ok && heldOk
+  -- The cores and their certificates.
+  let mut valid : Array (Array Nat) := #[]
+  let mut validIdx : Array Nat := #[]
+  for k in [0:f.cores.size] do
+    let cert := f.cores[k]!
+    match checkCert R n cols forms b cert with
+    | .ok _ =>
+      if cert.turns.all (H.contains ·) then
+        valid := valid.push cert.turns
+        validIdx := validIdx.push k
+      else IO.println s!"    core {k}: a turn is not held"
+    | .error e => IO.println s!"    core {k} {cert.turns}: INVALID, {e}"
+  let disjointOk := f.disjoint.all (validIdx.contains ·) &&
+    (f.disjoint.toList.all fun i => f.disjoint.toList.all fun j =>
+      i == j || !(f.cores[i]!.turns.any (f.cores[j]!.turns.contains ·)))
+  let k := if disjointOk then f.disjoint.size else 0
+  let h := leastHitting valid [] (valid.size + 1)
+  IO.println s!"    cores: {valid.size} of {f.cores.size} certificates valid; {f.disjoint.size} pairwise disjoint: {disjointOk}"
+  -- The upper bound.
+  let X := f.shifted.toList
+  let upper ← match closesIn rows forms b f.closing (H.filter (!X.contains ·)) with
+    | .ok () =>
+      if X.all (H.contains ·) then pure (some X.length)
+      else IO.println "    X: a turn is not held"; pure none
+    | .error e => IO.println s!"    lengths closing H minus X: INVALID, {e}"; pure none
+  let lowerB := max k h
+  IO.println s!"    τ_P(H) ≥ {k} (disjoint certified cores), ≥ {h} (least set meeting the certified cores), ≤ {match upper with | some u => s!"{u} (whole lengths of P closing H minus X, |X| = {u})" | none => "? (no lengths checked)"}{match f.tauClaim with | some t => s!"; paper {t}" | none => ""}"
+  if let some t := f.tauClaim then
+    let agrees := lowerB ≤ t && upper.all (t ≤ ·)
+    let exact := upper == some lowerB
+    IO.println s!"    τ_P(H) = {t} of the paper: {if !agrees then "DISAGREES" else if exact then "checked exactly" else "within the bounds checked, not exactly"}"
+    ok := ok && agrees
+  ok := ok && valid.size == f.cores.size && disjointOk && upper.isSome
+  -- The sets of the table.
+  for st in f.sets do
+    let head := s!"    row {st.row} ({st.turns.size} turns {st.turns.toList}):"
+    let some cert := st.cert
+      | IO.println s!"{head} no certificate with the paper's multipliers"; ok := false; continue
+    match checkCert R n cols forms b cert with
+    | .error e => IO.println s!"{head} certificate INVALID, {e}"; ok := false
+    | .ok c =>
+      let bounded := (List.range n).filter fun a => c[a]! > 0 && b[a]! ≥ 1
+      let same := match st.multipliers with
+        | some m => if m == cert.u then "the paper's" else "NOT the paper's"
+        | none => match st.stated with
+          | some s => s!"paper: {s}"
+          | none => s!"way {st.first} of the row, up to sign"
+      let boundedOk := bounded == st.bounded.toList
+      let mut closed := 0
+      for (t, ℓ) in st.irreducible do
+        if let some ℓ := ℓ then
+          if (closesIn rows forms b ℓ ((st.turns.toList.filter (· != t)))).toBool then closed := closed + 1
+      IO.println s!"{head} valid; u = {cert.u.toList.map showQ} ({same}); bounded arcs {bounded}{if boundedOk then "" else s!", paper {st.bounded.toList}: DISAGREES"}; closable without each turn: {closed} of {st.turns.size} (paper: {st.exact})"
+      ok := ok && boundedOk && (st.multipliers.all (· == cert.u))
+  return ok
+
+/-! ### The Fox–Burgers formula: holonomy of the words against the shift
+
+The words of `develop.py` are read in the free group on the cone points, the letter
+`x_i` mapped to the rotation by `R^{4 - k}` about the developed place `p_i` of the cone
+point (`k` its valence, `R = giUnit`), over `A = V = ℤ[i]`, and `Fox.hol` gives their
+holonomy. Each jump across the cut tree must be the motion of the chart; each turn's
+holonomy a translation, by `α e₁ - shift e₂` turned by the chart of its first patch:
+`e₁` the walking direction, `e₂` the direction of increasing offsets on the first side,
+`shift` the library's `shift` at the whole lengths and `α` the length of the turn there,
+the sum of the widths of the patches crossed (Section "Flat metric and holonomy":
+`ĥ(γ̄)` is the inverse of `T_γ(ℓ) = -α e₁ + shift e₂`). -/
+
+def gauss (x y : Int) : GaussianInt := ⟨x, y⟩
+
+/-- `R^k` in `ℤ[i]`. -/
+def quarter (k : Int) : GaussianInt := ((giUnit ^ k : GaussianIntˣ) : GaussianInt)
+
+def showG (z : GaussianInt) : String := s!"({z.re}, {z.im})"
+
+/-- `⟨f, z⟩`, the plane read as `ℤ[i]`. -/
+def dot (f z : GaussianInt) : Int := f.re * z.re + f.im * z.im
+
+/-- The direction of increasing offsets of a side: `+u` on the pair `0`, `+v` on `1`. -/
+def acrossDir (σ : Side (Fin P)) : GaussianInt := if σ.2.1 = 0 then 1 else gi
+
+/-- The walking direction from a side into its patch: `+v` from `v = 0`, `-v` from
+`v = h`, `+u` from `u = 0`, `-u` from `u = w`. -/
+def inward (σ : Side (Fin P)) : GaussianInt :=
+  if σ.2.1 = 0 then (if σ.2.2 = 0 then gi else -gi) else (if σ.2.2 = 0 then 1 else -1)
+
+/-- The length of a turn at the lengths `ℓ`: across each patch from a side to the
+opposite one, the length of the sides of the other pair. -/
+def along (ℓ : Fin n → ℚ) (start : Side (Fin P)) (path : List (Fin n)) : ℚ :=
+  (path.foldl (fun (acc : Side (Fin P) × ℚ) a =>
+    (T.other a acc.1.opp, acc.2 + ((T.arcs (acc.1.1, acc.1.2.1 + 1, 0)).map ℓ).sum)) (start, 0)).2
+
+def checkFox (whole : Fin n → ℚ) (forms : Array (Option (Array Int)))
+    (paths : Array (Option (Side (Fin P) × List (Fin n)))) (fox : RawFox) : IO Bool := do
+  IO.println s!"  Fox–Burgers: {fox.cones.size} cone points, convention: {fox.convention}"
+  let u : Nat → GaussianIntˣ := fun i => giUnit ^ (4 - fox.cones[i]!.1)
+  let p : Nat → GaussianInt := fun i => gauss fox.cones[i]!.2.1 fox.cones[i]!.2.2
+  let mut jumps : Count := {}
+  let mut letters := 0
+  for (w, k, x, y) in fox.jumps do
+    let m := hol u p w
+    jumps := jumps.add (m.lin == quarter k && m.trans == gauss x y) fun _ =>
+      s!"jump: hol {showG m.lin}, {showG m.trans}, chart R^{k}, ({x}, {y})"
+  jumps.show "jumps across the cut tree: hol of the word = the change of chart"
+  let mut rotation : Count := {}
+  let mut acrossC : Count := {}
+  let mut alongC : Count := {}
+  let mut opposite := 0
+  let mut whole_ : Count := {}
+  let mut foxSum : Count := {}
+  for i in [0:fox.turns.size] do
+    let (w, chart) := fox.turns[i]!
+    let some (start, path) := paths[i]?.join | continue
+    let some c := forms[i]?.join | continue
+    letters := letters + w.length
+    let s := evalForm (fun a => c[a.val]!) whole
+    let α := along T whole start path
+    if s.den != 1 || α.den != 1 then
+      IO.println s!"    turn {i}: shift {s} or length {α} not whole"
+      continue
+    let m := hol u p w
+    let M := quarter chart
+    let e₁ := M * inward start
+    let e₂ := M * acrossDir start
+    rotation := rotation.add (m.lin == 1) fun _ => s!"turn {i}: rotation {showG m.lin}"
+    acrossC := acrossC.add (dot e₂ m.trans == -s.num) fun _ =>
+      s!"turn {i}: ⟨e₂, τ⟩ = {dot e₂ m.trans}, shift {s}"
+    alongC := alongC.add (dot e₁ m.trans == α.num) fun _ =>
+      s!"turn {i}: ⟨e₁, τ⟩ = {dot e₁ m.trans}, length {α}"
+    if dot e₁ m.trans == -α.num then opposite := opposite + 1
+    whole_ := whole_.add (m.trans == (α.num : GaussianInt) * e₁ - (s.num : GaussianInt) * e₂) fun _ =>
+      s!"turn {i}: τ {showG m.trans}"
+    -- Proposition "Fox–Burgers formula", the sum over the cone points of the word
+    -- (`fox` vanishes at the others, `fox_eq_zero_of_forall_ne`).
+    let sum := (w.map (·.1)).eraseDups.foldl
+      (fun t j => t + TurnsOfATMesh.fox u j w • (p j - ((u j : GaussianIntˣ) : GaussianInt) • p j)) 0
+    foxSum := foxSum.add (sum == m.trans) fun _ => s!"turn {i}: Fox–Burgers sum {showG sum}, τ {showG m.trans}"
+  IO.println s!"    {letters} letters in the words of the turns"
+  rotation.show "turns: hol of the word has rotation 1"
+  acrossC.show "turns: ⟨e₂, τ⟩ = -shift (shift: Turn.shift at the whole lengths)"
+  alongC.show "turns: ⟨e₁, τ⟩ = α (the length of the turn)"
+  IO.println s!"    (⟨e₁, τ⟩ = -α for {opposite})"
+  whole_.show "turns: τ = α e₁ - shift e₂"
+  foxSum.show "turns: τ = Σᵢ ρ(∂w/∂xᵢ) (1 - Rᵢ) pᵢ (Fox–Burgers sum, `fox`)"
+  return jumps.ok && rotation.ok && acrossC.ok && alongC.ok && whole_.ok && foxSum.ok
 
 /-! ### The check of one export -/
 
@@ -393,6 +773,9 @@ def checkRaw (raw : Raw) : IO Bool := do
   -- The turns for which that gap at the real lengths is beyond 0.05, the real shift
   -- above which the engine holds a turn.
   let mut apart := 0
+  -- The coefficients of `shiftForm` and the walk of every turn built, by index.
+  let mut forms : Array (Option (Array Int)) := Array.replicate raw.turns.size none
+  let mut paths : Array (Option (Side (Fin P) × List (Fin n))) := Array.replicate raw.turns.size none
   for t in raw.turns do
     let some start := (sideOf t.start : Option (Side (Fin P)))
       | throw <| IO.userError "start side out of range"
@@ -405,9 +788,12 @@ def checkRaw (raw : Raw) : IO Bool := do
     built := built.add true fun _ => ""
     -- The shift form: exactly, and modulo the balances.
     let c := coefficients T γ
+    if t.index < forms.size then
+      forms := forms.set! t.index (some c)
+      paths := paths.set! t.index (some (start, path))
     let engine := dense n t.shift
     exact := exact.add (c == engine) fun _ => s!"turn {t.index}: Lean {terms c}, engine {terms engine}"
-    let d := (Array.range n).map fun a => c[a]! - engine[a]!
+    let d := (Array.range n).map fun a => ((c[a]! - engine[a]! : Int) : ℚ)
     let lam := guess (2 * P) cols d
     let bad := residual cols lam d
     modulo := modulo.add bad.isEmpty fun _ =>
@@ -465,8 +851,24 @@ def checkRaw (raw : Raw) : IO Bool := do
   atReal.show "real lengths: walk comes back at offset + shift"
   IO.println s!"  whole lengths: {wholeTurns} of {raw.turns.size} turns have a half-integer in their corridor"
   atWhole.show "whole lengths: half-integers of the corridors, walk comes back at offset + shift"
-  return ok && built.ok && modulo.ok && corridor.ok && passes.ok && back.ok && atReal.ok &&
+  ok := ok && built.ok && modulo.ok && corridor.ok && passes.ok && back.ok && atReal.ok &&
     atWhole.ok
+  -- Theorem "Forced shifts", with the certificates of `certify.py`.
+  match raw.forced with
+  | some f =>
+    let good ← checkForced n (2 * P) cols leanRows forms (raw.turns.map (·.held)) raw.lower f
+    ok := ok && good
+  | none => IO.println "  forced shifts: no certificates for this export"
+  -- The Fox–Burgers formula, at the whole lengths.
+  let unbalanced := (List.range (2 * P)).filter fun r =>
+    leanRows[r]!.foldl (fun s (a, v) => s + v * raw.whole[a]!) (0 : ℚ) != 0
+  match raw.fox with
+  | some fox =>
+    IO.println s!"  whole lengths balanced (B ℓ = 0): {unbalanced.isEmpty}"
+    let good ← checkFox T whole forms paths fox
+    ok := ok && good && unbalanced.isEmpty
+  | none => IO.println s!"  Fox–Burgers: out of scope, {raw.foxSkipped}"
+  return ok
 
 end Check
 
