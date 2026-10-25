@@ -364,6 +364,19 @@ to 0.39; there the two representatives differ by up to 6.6 on the male body
 of the note and 1.2 on the fresh export, and by more than 0.05 (the real shift
 above which the engine holds a turn) for 2,572 of the 3,841 turns.
 
+**When it runs.**
+- **CI**, on every change of this folder, runs the check on two small exports kept in
+  `Check/fixtures` (torus and blob, frozen at commit `300a058`): a change of the
+  library that no longer describes the engine's T-mesh fails there.
+- **By hand**, `make lean-check EXPORT=<dir>`:
+  - on fresh exports, the male body included, whenever the engine's T-mesh or
+    quantization changes;
+  - at each rerun of the papers on their frozen commit, whose exports and log go to
+    the papers' data package (DT-088) and whose counts replace the table above,
+    with the commit.
+
+Exports and logs are not kept in git.
+
 ## Files
 
 * `Basic.lean`: motions and their group law; the quarter-turn group in `ℤ[i]`.

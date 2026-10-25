@@ -58,7 +58,9 @@ jobs:
             exit 1
           fi
       # The program that checks the library against the engine's exports
-      # (Check/, `make lean-check`): not in the library, and run on data that
-      # is not in the repository; here it is only compiled, its lemmas checked.
+      # (Check/, `make lean-check`): not in the library. Here it runs on the
+      # two small exports kept as fixtures; the male body is checked by hand.
       - name: Check program compiles
         run: lake env lean Check/Main.lean
+      - name: Check against the fixtures
+        run: python3 Check/check_exports.py Check/fixtures "$RUNNER_TEMP/lean-check" --jobs 2
