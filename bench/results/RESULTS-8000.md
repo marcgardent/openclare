@@ -30,7 +30,7 @@ Requested budget: 8000 quads. Median over 5 seeds; AutoRemesher and integer-grid
 | Longest loop that stops at an irregular vertex, edges (L) | 766 | 292 | 196 | 976 | 1032 | 755 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 5.1 | 65.1 | 2.1 | 5.9 | 1.6 | 1.2 | — | — |
-| Time, seconds (T) | 3.65 | 2.13 | 1.19 | 16.63 | 8.01 | 9.04 | — | — |
+| Time, seconds (T) | 3.65 | 2.13 | 1.46 | 16.82 | 8.77 | 9.11 | — | — |
 
 ## rock (organic)
 
@@ -60,37 +60,37 @@ Requested budget: 8000 quads. Median over 5 seeds; AutoRemesher and integer-grid
 | Longest loop that stops at an irregular vertex, edges (L) | 1193 | 618 | 266 | 610 | 379 | 324 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 8.2 | 27.0 | 2.6 | 8.9 | 0.5 | 1.1 | — | — |
-| Time, seconds (T) | 3.12 | 2.10 | 0.97 | 30.64 | 7.55 | 8.95 | — | — |
+| Time, seconds (T) | 3.12 | 2.10 | 1.00 | 35.03 | 7.42 | 8.16 | — | — |
 
 ## creature (organic)
 
 | | quadriflow | autoremesher | instant-meshes | integer-grid | openclare-uniform | openclare | handmade | openclare-as-handmade |
 |---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 4/5 | 1/1 | 5/5 | 0/1 | 1/1 | 1/1 | 0/0 | 0/0 |
-| Quads made | 8170 | 6819 | 8234 | 6919 | 7858 | 7842 | — | — |
+| Quads made | 8170 | 6819 | 8234 | 6919 | 7858 | 8095 | — | — |
 | Irregular vertices (S) | 22 | 18 | 214 | 38 | 40 | 42 | — | — |
 | … of which above the minimum | 14 | 10 | 206 | — | 32 | 34 | — | — |
-| Base complex patches (C) | 8170 | 3683 | 7510 | 5302 | 2072 | 2114 | — | — |
-| Alignment, degrees (A) | 13.70 | 9.77 | 11.81 | 6.84 | 6.44 | 5.59 | — | — |
-| Mean angle deviation, degrees (F) | 6.02 | 3.78 | 3.91 | 9.16 | 7.01 | 5.79 | — | — |
-| Angle deviation, 95th percentile (F) | 15.98 | 10.36 | 12.20 | 24.39 | 18.09 | 15.56 | — | — |
-| Mean aspect ratio (F) | 1.154 | 1.965 | 1.116 | 1.349 | 1.359 | 1.320 | — | — |
-| Area variation (F) | 0.157 | 0.565 | 0.127 | 0.330 | 0.388 | 0.494 | — | — |
-| Hausdorff, ‰ of the diagonal (H) | 3.19 | 1.09 | 1.70 | 2.49 | 1.20 | 0.89 | — | — |
-| Mean distance, ‰ (H) | 0.100 | 0.161 | 0.106 | 0.098 | 0.087 | 0.084 | — | — |
+| Base complex patches (C) | 8170 | 3683 | 7510 | 5302 | 2072 | 1935 | — | — |
+| Alignment, degrees (A) | 13.70 | 9.77 | 11.81 | 6.84 | 6.44 | 5.75 | — | — |
+| Mean angle deviation, degrees (F) | 6.02 | 3.78 | 3.91 | 9.16 | 7.01 | 5.98 | — | — |
+| Angle deviation, 95th percentile (F) | 15.98 | 10.36 | 12.20 | 24.39 | 18.09 | 16.22 | — | — |
+| Mean aspect ratio (F) | 1.154 | 1.965 | 1.116 | 1.349 | 1.359 | 1.317 | — | — |
+| Area variation (F) | 0.157 | 0.565 | 0.127 | 0.330 | 0.388 | 0.495 | — | — |
+| Hausdorff, ‰ of the diagonal (H) | 3.19 | 1.09 | 1.70 | 2.49 | 1.20 | 0.86 | — | — |
+| Mean distance, ‰ (H) | 0.100 | 0.161 | 0.106 | 0.098 | 0.087 | 0.081 | — | — |
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — |
 | Volume kept, % of the source (V) | 99.83 | 99.74 | 99.81 | — | 100.01 | 100.01 | — | — |
 | Sharp edges kept, % of their length (E) | — | — | — | — | — | — | — | — |
-| Edges on closed loops, % (L) | 0.0 | 23.0 | 4.4 | 10.7 | 39.5 | 37.3 | — | — |
-| Edges on spiralling loops, % (L) | 44.8 | 43.6 | 9.8 | 49.2 | 14.2 | 11.9 | — | — |
-| Spiralling loops (L) | 5 | 9 | 11 | 17 | 5 | 4 | — | — |
-| Edges on helices of any pitch, % (L) | 70.7 | 36.9 | 4.8 | 39.2 | 6.5 | 7.5 | — | — |
-| Helices of pitch above 4, which the spiral count misses (L) | 8 | 1 | 0 | 0 | 0 | 1 | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 55.2 | 33.4 | 87.6 | 38.6 | 46.4 | 50.7 | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 1471 | 594 | 230 | 303 | 306 | 571 | — | — |
+| Edges on closed loops, % (L) | 0.0 | 23.0 | 4.4 | 10.7 | 39.5 | 41.8 | — | — |
+| Edges on spiralling loops, % (L) | 44.8 | 43.6 | 9.8 | 49.2 | 14.2 | 6.8 | — | — |
+| Spiralling loops (L) | 5 | 9 | 11 | 17 | 5 | 2 | — | — |
+| Edges on helices of any pitch, % (L) | 70.7 | 36.9 | 4.8 | 39.2 | 6.5 | 0.0 | — | — |
+| Helices of pitch above 4, which the spiral count misses (L) | 8 | 1 | 0 | 0 | 0 | 0 | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 55.2 | 33.4 | 87.6 | 38.6 | 46.4 | 51.4 | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 1471 | 594 | 230 | 303 | 306 | 592 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.0 | 1.5 | 0.0 | 0.0 | — | — |
-| Off budget, % (N) | 2.1 | 14.8 | 2.9 | 13.5 | 1.8 | 2.0 | — | — |
-| Time, seconds (T) | 4.99 | 2.51 | 0.73 | 32.35 | 16.16 | 11.87 | — | — |
+| Off budget, % (N) | 2.1 | 14.8 | 2.9 | 13.5 | 1.8 | 1.2 | — | — |
+| Time, seconds (T) | 4.99 | 2.51 | 1.05 | 33.97 | 18.66 | 12.53 | — | — |
 
 ## cage (organic)
 
@@ -120,97 +120,97 @@ Requested budget: 8000 quads. Median over 5 seeds; AutoRemesher and integer-grid
 | Longest loop that stops at an irregular vertex, edges (L) | 332 | 108 | 138 | 128 | 125 | 103 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 0.9 | 25.9 | 0.6 | 2.6 | 0.5 | 0.2 | — | — |
-| Time, seconds (T) | 3.55 | 2.42 | 0.72 | 22.19 | 7.74 | 7.75 | — | — |
+| Time, seconds (T) | 3.55 | 2.42 | 0.72 | 23.88 | 7.94 | 9.81 | — | — |
 
 ## suzanne (organic)
 
 | | quadriflow | autoremesher | instant-meshes | integer-grid | openclare-uniform | openclare | handmade | openclare-as-handmade |
 |---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 5/5 | 0/1 | 5/5 | 1/1 | 1/1 | 1/1 | 0/0 | 0/0 |
-| Quads made | 7983 | 2647 | 8098 | 7521 | 8038 | 7884 | — | — |
+| Quads made | 7983 | 2647 | 8098 | 7521 | 8038 | 8105 | — | — |
 | Irregular vertices (S) | 55 | 84 | 346 | 60 | 60 | 76 | — | — |
 | … of which above the minimum | — | — | — | — | — | — | — | — |
-| Base complex patches (C) | 6194 | — | 7878 | 4210 | 3997 | 3205 | — | — |
-| Alignment, degrees (A) | 14.27 | 12.11 | 16.64 | 10.27 | 10.48 | 9.98 | — | — |
-| Mean angle deviation, degrees (F) | 6.09 | 9.37 | 5.17 | 7.22 | 5.55 | 5.79 | — | — |
-| Angle deviation, 95th percentile (F) | 18.06 | 32.08 | 17.78 | 20.03 | 14.36 | 14.92 | — | — |
-| Mean aspect ratio (F) | 1.208 | 1.892 | 1.169 | 1.223 | 1.193 | 1.293 | — | — |
-| Area variation (F) | 0.208 | 0.650 | 0.164 | 0.213 | 0.242 | 0.414 | — | — |
-| Hausdorff, ‰ of the diagonal (H) | 6.87 | 31.86 | 5.94 | 4.48 | 3.20 | 6.14 | — | — |
-| Mean distance, ‰ (H) | 0.267 | 1.112 | 0.286 | 0.256 | 0.204 | 0.192 | — | — |
+| Base complex patches (C) | 6194 | — | 7878 | 4210 | 3997 | 3722 | — | — |
+| Alignment, degrees (A) | 14.27 | 12.11 | 16.64 | 10.27 | 10.48 | 10.06 | — | — |
+| Mean angle deviation, degrees (F) | 6.09 | 9.37 | 5.17 | 7.22 | 5.55 | 5.73 | — | — |
+| Angle deviation, 95th percentile (F) | 18.06 | 32.08 | 17.78 | 20.03 | 14.36 | 14.96 | — | — |
+| Mean aspect ratio (F) | 1.208 | 1.892 | 1.169 | 1.223 | 1.193 | 1.238 | — | — |
+| Area variation (F) | 0.208 | 0.650 | 0.164 | 0.213 | 0.242 | 0.344 | — | — |
+| Hausdorff, ‰ of the diagonal (H) | 6.87 | 31.86 | 5.94 | 4.48 | 3.20 | 2.37 | — | — |
+| Mean distance, ‰ (H) | 0.267 | 1.112 | 0.286 | 0.256 | 0.204 | 0.176 | — | — |
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — |
 | Volume kept, % of the source (V) | — | — | — | — | — | — | — | — |
-| Sharp edges kept, % of their length (E) | 47.8 | 42.9 | 52.2 | 74.1 | 93.0 | 91.0 | — | — |
-| Edges on closed loops, % (L) | 1.4 | 9.5 | 0.2 | 9.9 | 11.8 | 21.7 | — | — |
-| Edges on spiralling loops, % (L) | 11.3 | 20.3 | 4.1 | 25.0 | 29.6 | 4.3 | — | — |
-| Spiralling loops (L) | 6 | 12 | 6 | 12 | 13 | 6 | — | — |
-| Edges on helices of any pitch, % (L) | 17.7 | 10.0 | 1.7 | 23.1 | 19.0 | 3.4 | — | — |
-| Helices of pitch above 4, which the spiral count misses (L) | 5 | 0 | 0 | 1 | 0 | 0 | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 68.7 | 70.2 | 94.3 | 49.8 | 44.8 | 59.9 | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 512 | 98 | 168 | 591 | 308 | 353 | — | — |
-| Edges on loops from a border to a border, % (L) | 19.0 | 0.0 | 1.3 | 15.3 | 13.8 | 14.1 | — | — |
-| Off budget, % (N) | 0.9 | 66.9 | 1.2 | 6.0 | 0.5 | 1.5 | — | — |
-| Time, seconds (T) | 5.01 | 1.98 | 0.55 | 24.04 | 7.12 | 9.80 | — | — |
+| Sharp edges kept, % of their length (E) | 47.8 | 42.9 | 52.2 | 74.1 | 93.0 | 99.5 | — | — |
+| Edges on closed loops, % (L) | 1.4 | 9.5 | 0.2 | 9.9 | 11.8 | 20.2 | — | — |
+| Edges on spiralling loops, % (L) | 11.3 | 20.3 | 4.1 | 25.0 | 29.6 | 6.2 | — | — |
+| Spiralling loops (L) | 6 | 12 | 6 | 12 | 13 | 4 | — | — |
+| Edges on helices of any pitch, % (L) | 17.7 | 10.0 | 1.7 | 23.1 | 19.0 | 6.8 | — | — |
+| Helices of pitch above 4, which the spiral count misses (L) | 5 | 0 | 0 | 1 | 0 | 4 | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 68.7 | 70.2 | 94.3 | 49.8 | 44.8 | 61.7 | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 512 | 98 | 168 | 591 | 308 | 351 | — | — |
+| Edges on loops from a border to a border, % (L) | 19.0 | 0.0 | 1.3 | 15.3 | 13.8 | 11.9 | — | — |
+| Off budget, % (N) | 0.9 | 66.9 | 1.2 | 6.0 | 0.5 | 1.3 | — | — |
+| Time, seconds (T) | 5.01 | 1.98 | 0.66 | 22.29 | 7.00 | 10.46 | — | — |
 
 ## ogre (organic)
 
 | | quadriflow | autoremesher | instant-meshes | integer-grid | openclare-uniform | openclare | handmade | openclare-as-handmade |
 |---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 0/5 | 0/1 | 0/5 | 1/1 | 1/1 | 1/1 | 0/0 | 0/0 |
-| Quads made | 7763 | 4622 | 7836 | 6846 | 7970 | 8076 | — | — |
+| Quads made | 7763 | 4622 | 7836 | 6846 | 8034 | 8076 | — | — |
 | Irregular vertices (S) | 162 | 141 | 467 | 160 | 186 | 226 | — | — |
 | … of which above the minimum | 154 | — | 432 | 152 | 178 | 218 | — | — |
-| Base complex patches (C) | 7352 | — | 7682 | 5228 | 5234 | 5136 | — | — |
-| Alignment, degrees (A) | 17.78 | 12.94 | 17.72 | 12.35 | 12.38 | 11.70 | — | — |
-| Mean angle deviation, degrees (F) | 11.59 | 7.43 | 6.20 | 9.05 | 6.90 | 8.38 | — | — |
-| Angle deviation, 95th percentile (F) | 33.33 | 22.75 | 20.95 | 25.06 | 20.29 | 22.04 | — | — |
-| Mean aspect ratio (F) | 1.339 | 1.812 | 1.225 | 1.409 | 1.431 | 1.527 | — | — |
-| Area variation (F) | 0.312 | 0.668 | 0.196 | 0.282 | 0.340 | 0.491 | — | — |
-| Hausdorff, ‰ of the diagonal (H) | 27.28 | 27.93 | 30.25 | 27.49 | 9.53 | 8.55 | — | — |
-| Mean distance, ‰ (H) | 0.521 | 1.054 | 0.618 | 0.406 | 0.310 | 0.300 | — | — |
-| Thin parts: mean distance, % of a quad edge (V) | 22.1 | 78.5 | 37.9 | 22.6 | 8.4 | 3.3 | — | — |
+| Base complex patches (C) | 7352 | — | 7682 | 5228 | 4846 | 5136 | — | — |
+| Alignment, degrees (A) | 17.78 | 12.94 | 17.72 | 12.35 | 12.29 | 11.70 | — | — |
+| Mean angle deviation, degrees (F) | 11.59 | 7.43 | 6.20 | 9.05 | 7.45 | 8.38 | — | — |
+| Angle deviation, 95th percentile (F) | 33.33 | 22.75 | 20.95 | 25.06 | 21.40 | 22.04 | — | — |
+| Mean aspect ratio (F) | 1.339 | 1.812 | 1.225 | 1.409 | 1.514 | 1.527 | — | — |
+| Area variation (F) | 0.312 | 0.668 | 0.196 | 0.282 | 0.332 | 0.491 | — | — |
+| Hausdorff, ‰ of the diagonal (H) | 27.28 | 27.93 | 30.25 | 27.49 | 10.88 | 8.55 | — | — |
+| Mean distance, ‰ (H) | 0.521 | 1.054 | 0.618 | 0.406 | 0.305 | 0.300 | — | — |
+| Thin parts: mean distance, % of a quad edge (V) | 22.1 | 78.5 | 37.9 | 22.6 | 10.4 | 3.3 | — | — |
 | Volume kept, % of the source (V) | 99.49 | 98.66 | 99.40 | 99.91 | 99.99 | 100.01 | — | — |
-| Sharp edges kept, % of their length (E) | 40.5 | 26.6 | 26.3 | 66.4 | 73.8 | 73.6 | — | — |
-| Edges on closed loops, % (L) | 2.0 | 17.3 | 1.5 | 11.9 | 17.2 | 18.3 | — | — |
-| Edges on spiralling loops, % (L) | 13.7 | 18.1 | 1.7 | 29.6 | 9.1 | 6.1 | — | — |
-| Spiralling loops (L) | 23 | 23 | 17 | 45 | 24 | 12 | — | — |
-| Edges on helices of any pitch, % (L) | 25.4 | 5.3 | 0.0 | 12.4 | 1.7 | 3.7 | — | — |
+| Sharp edges kept, % of their length (E) | 40.5 | 26.6 | 26.3 | 66.4 | 76.7 | 73.6 | — | — |
+| Edges on closed loops, % (L) | 2.0 | 17.3 | 1.5 | 11.9 | 20.0 | 18.3 | — | — |
+| Edges on spiralling loops, % (L) | 13.7 | 18.1 | 1.7 | 29.6 | 4.6 | 6.1 | — | — |
+| Spiralling loops (L) | 23 | 23 | 17 | 45 | 10 | 12 | — | — |
+| Edges on helices of any pitch, % (L) | 25.4 | 5.3 | 0.0 | 12.4 | 0.2 | 3.7 | — | — |
 | Helices of pitch above 4, which the spiral count misses (L) | 6 | 0 | 0 | 0 | 0 | 0 | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 84.3 | 64.7 | 95.8 | 58.5 | 73.7 | 75.6 | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 484 | 175 | 136 | 306 | 244 | 235 | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 84.3 | 64.7 | 95.8 | 58.5 | 75.4 | 75.6 | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 484 | 175 | 136 | 306 | 308 | 235 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 3.0 | 42.2 | 2.1 | 14.4 | 0.4 | 0.9 | — | — |
-| Time, seconds (T) | 4.24 | 3.10 | 1.95 | 66.46 | 33.26 | 32.01 | — | — |
+| Time, seconds (T) | 4.24 | 3.10 | 2.09 | 64.92 | 30.08 | 36.02 | — | — |
 
 ## human_male (organic)
 
 | | quadriflow | autoremesher | instant-meshes | integer-grid | openclare-uniform | openclare | handmade | openclare-as-handmade |
 |---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 0/5 | 0/1 | 0/5 | 0/1 | 1/1 | 1/1 | 0/1 | 1/1 |
-| Quads made | — | 2520 | 7652 | 7430 | 7937 | 7887 | 10590 | 10580 |
+| Quads made | — | 2520 | 7652 | 7430 | 8109 | 8095 | 10590 | 10520 |
 | Irregular vertices (S) | — | 156 | 400 | 111 | 148 | 226 | 476 | 254 |
 | … of which above the minimum | — | — | — | — | 140 | 218 | — | 246 |
-| Base complex patches (C) | — | — | 5799 | — | 2951 | 2847 | — | 3200 |
-| Alignment, degrees (A) | — | 10.84 | 11.76 | 7.97 | 8.42 | 8.18 | 9.88 | 8.37 |
-| Mean angle deviation, degrees (F) | — | 8.90 | 6.09 | 5.72 | 5.09 | 4.60 | 9.24 | 4.33 |
-| Angle deviation, 95th percentile (F) | — | 29.26 | 22.28 | 18.23 | 16.11 | 14.34 | 26.27 | 14.08 |
-| Mean aspect ratio (F) | — | 1.933 | 1.235 | 1.336 | 1.403 | 1.339 | 1.616 | 1.340 |
-| Area variation (F) | — | 0.738 | 0.213 | 0.301 | 0.375 | 0.519 | 1.417 | 0.462 |
-| Hausdorff, ‰ of the diagonal (H) | — | 23.89 | 35.02 | 11.15 | 9.39 | 4.69 | 6.47 | 4.59 |
-| Mean distance, ‰ (H) | — | 1.795 | 2.033 | 0.962 | 0.580 | 0.238 | 0.172 | 0.192 |
-| Thin parts: mean distance, % of a quad edge (V) | — | 36.5 | 57.2 | 29.9 | 18.9 | 5.4 | 1.5 | 5.9 |
-| Volume kept, % of the source (V) | — | — | — | 99.92 | 99.99 | 100.02 | 98.80 | 100.02 |
-| Sharp edges kept, % of their length (E) | — | 2.8 | 22.2 | 76.1 | 93.0 | 88.3 | 71.3 | 91.6 |
-| Edges on closed loops, % (L) | — | — | 12.1 | 39.4 | 31.6 | 34.9 | 31.6 | 36.4 |
-| Edges on spiralling loops, % (L) | — | — | 7.3 | 21.2 | 13.1 | 6.1 | 2.5 | 1.7 |
-| Spiralling loops (L) | — | — | 37 | 45 | 35 | 16 | 3 | 12 |
-| Edges on helices of any pitch, % (L) | — | — | 5.0 | 9.5 | 4.8 | 3.5 | 0.0 | 0.5 |
+| Base complex patches (C) | — | — | 5799 | — | 2439 | 3023 | — | 3148 |
+| Alignment, degrees (A) | — | 10.84 | 11.76 | 7.97 | 7.98 | 8.09 | 9.88 | 8.31 |
+| Mean angle deviation, degrees (F) | — | 8.90 | 6.09 | 5.72 | 4.07 | 4.48 | 9.24 | 4.27 |
+| Angle deviation, 95th percentile (F) | — | 29.26 | 22.28 | 18.23 | 12.85 | 14.36 | 26.27 | 13.84 |
+| Mean aspect ratio (F) | — | 1.933 | 1.235 | 1.336 | 1.361 | 1.336 | 1.616 | 1.341 |
+| Area variation (F) | — | 0.738 | 0.213 | 0.301 | 0.361 | 0.503 | 1.417 | 0.459 |
+| Hausdorff, ‰ of the diagonal (H) | — | 23.89 | 35.02 | 11.15 | 9.24 | 4.94 | 6.47 | 4.76 |
+| Mean distance, ‰ (H) | — | 1.795 | 2.033 | 0.962 | 0.524 | 0.236 | 0.172 | 0.202 |
+| Thin parts: mean distance, % of a quad edge (V) | — | 36.5 | 57.2 | 29.9 | 18.8 | 5.3 | 1.5 | 6.2 |
+| Volume kept, % of the source (V) | — | — | — | 99.92 | 99.98 | 100.02 | 98.80 | 100.01 |
+| Sharp edges kept, % of their length (E) | — | 2.8 | 22.2 | 76.1 | 87.1 | 93.5 | 71.3 | 94.4 |
+| Edges on closed loops, % (L) | — | — | 12.1 | 39.4 | 35.1 | 32.7 | 31.6 | 36.6 |
+| Edges on spiralling loops, % (L) | — | — | 7.3 | 21.2 | 6.9 | 3.9 | 2.5 | 1.7 |
+| Spiralling loops (L) | — | — | 37 | 45 | 31 | 11 | 3 | 16 |
+| Edges on helices of any pitch, % (L) | — | — | 5.0 | 9.5 | 1.8 | 3.2 | 0.0 | 0.3 |
 | Helices of pitch above 4, which the spiral count misses (L) | — | — | 0 | 0 | 0 | 0 | 0 | 0 |
-| Edges on loops that stop at an irregular vertex, % (L) | — | — | 79.3 | 39.4 | 55.3 | 59.0 | 65.8 | 61.8 |
-| Longest loop that stops at an irregular vertex, edges (L) | — | — | 180 | 320 | 352 | 328 | 274 | 406 |
+| Edges on loops that stop at an irregular vertex, % (L) | — | — | 79.3 | 39.4 | 58.0 | 63.3 | 65.8 | 61.7 |
+| Longest loop that stops at an irregular vertex, edges (L) | — | — | 180 | 320 | 539 | 401 | 274 | 404 |
 | Edges on loops from a border to a border, % (L) | — | — | 0.1 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
-| Off budget, % (N) | — | 68.5 | 4.3 | 7.1 | 0.8 | 1.4 | 0.0 | 0.1 |
-| Time, seconds (T) | — | 5.54 | 19.99 | 46.65 | 30.32 | 57.77 | — | 54.33 |
+| Off budget, % (N) | — | 68.5 | 4.3 | 7.1 | 1.4 | 1.2 | 0.0 | 0.7 |
+| Time, seconds (T) | — | 5.54 | 19.64 | 51.03 | 34.86 | 62.49 | — | 63.31 |
 
 Failures: quadriflow: cancelled.
 
@@ -219,30 +219,30 @@ Failures: quadriflow: cancelled.
 | | quadriflow | autoremesher | instant-meshes | integer-grid | openclare-uniform | openclare | handmade | openclare-as-handmade |
 |---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 0/5 | 0/1 | 0/5 | 0/1 | 1/1 | 1/1 | 0/1 | 1/1 |
-| Quads made | — | 2564 | 7648 | 7230 | 7955 | 7995 | 10590 | 10454 |
+| Quads made | — | 2564 | 7648 | 7230 | 7955 | 8031 | 10590 | 10642 |
 | Irregular vertices (S) | — | 150 | 414 | 137 | 160 | 234 | 476 | 274 |
 | … of which above the minimum | — | — | 395 | — | 152 | 226 | — | 266 |
-| Base complex patches (C) | — | — | 6412 | — | 2747 | 2989 | — | 3560 |
-| Alignment, degrees (A) | — | 9.84 | 11.62 | 7.78 | 7.85 | 7.10 | 9.43 | 7.23 |
-| Mean angle deviation, degrees (F) | — | 8.28 | 6.50 | 6.25 | 5.18 | 4.45 | 8.82 | 4.43 |
-| Angle deviation, 95th percentile (F) | — | 26.20 | 22.21 | 20.78 | 17.67 | 14.74 | 25.47 | 14.56 |
-| Mean aspect ratio (F) | — | 1.962 | 1.237 | 1.307 | 1.418 | 1.275 | 1.657 | 1.371 |
-| Area variation (F) | — | 0.794 | 0.217 | 0.309 | 0.411 | 0.492 | 1.432 | 0.594 |
-| Hausdorff, ‰ of the diagonal (H) | — | 26.27 | 32.73 | 11.94 | 8.97 | 5.92 | 4.44 | 5.41 |
-| Mean distance, ‰ (H) | — | 2.147 | 2.076 | 0.993 | 0.579 | 0.273 | 0.156 | 0.237 |
-| Thin parts: mean distance, % of a quad edge (V) | — | 50.9 | 73.5 | 40.0 | 23.0 | 7.4 | 1.4 | 7.0 |
-| Volume kept, % of the source (V) | — | — | 98.91 | — | 99.96 | 100.01 | 98.78 | 100.02 |
-| Sharp edges kept, % of their length (E) | — | 10.7 | 26.2 | 94.1 | 91.1 | 94.5 | 67.0 | 84.8 |
-| Edges on closed loops, % (L) | — | — | 8.3 | 18.2 | 32.8 | 31.3 | 31.6 | 33.2 |
-| Edges on spiralling loops, % (L) | — | — | 10.6 | 30.7 | 9.2 | 2.0 | 2.5 | 1.8 |
-| Spiralling loops (L) | — | — | 49 | 45 | 30 | 7 | 3 | 9 |
-| Edges on helices of any pitch, % (L) | — | — | 7.3 | 17.9 | 1.8 | 1.7 | 0.0 | 1.5 |
+| Base complex patches (C) | — | — | 6412 | — | 2747 | 2791 | — | 3850 |
+| Alignment, degrees (A) | — | 9.84 | 11.62 | 7.78 | 7.85 | 7.08 | 9.43 | 7.35 |
+| Mean angle deviation, degrees (F) | — | 8.28 | 6.50 | 6.25 | 5.18 | 4.20 | 8.82 | 4.39 |
+| Angle deviation, 95th percentile (F) | — | 26.20 | 22.21 | 20.78 | 17.67 | 13.81 | 25.47 | 13.83 |
+| Mean aspect ratio (F) | — | 1.962 | 1.237 | 1.307 | 1.418 | 1.271 | 1.657 | 1.274 |
+| Area variation (F) | — | 0.794 | 0.217 | 0.309 | 0.411 | 0.473 | 1.432 | 0.494 |
+| Hausdorff, ‰ of the diagonal (H) | — | 26.27 | 32.73 | 11.94 | 8.97 | 5.57 | 4.44 | 4.28 |
+| Mean distance, ‰ (H) | — | 2.147 | 2.076 | 0.993 | 0.579 | 0.289 | 0.156 | 0.186 |
+| Thin parts: mean distance, % of a quad edge (V) | — | 50.9 | 73.5 | 40.0 | 23.0 | 7.1 | 1.4 | 5.5 |
+| Volume kept, % of the source (V) | — | — | 98.91 | — | 99.96 | 100.03 | 98.78 | 100.02 |
+| Sharp edges kept, % of their length (E) | — | 10.7 | 26.2 | 94.1 | 91.1 | 95.8 | 67.0 | 85.7 |
+| Edges on closed loops, % (L) | — | — | 8.3 | 18.2 | 32.8 | 33.9 | 31.6 | 31.9 |
+| Edges on spiralling loops, % (L) | — | — | 10.6 | 30.7 | 9.2 | 3.5 | 2.5 | 1.9 |
+| Spiralling loops (L) | — | — | 49 | 45 | 30 | 10 | 3 | 13 |
+| Edges on helices of any pitch, % (L) | — | — | 7.3 | 17.9 | 1.8 | 0.3 | 0.0 | 1.5 |
 | Helices of pitch above 4, which the spiral count misses (L) | — | — | 0 | 0 | 0 | 0 | 0 | 0 |
-| Edges on loops that stop at an irregular vertex, % (L) | — | — | 80.4 | 51.0 | 58.0 | 66.7 | 65.8 | 65.0 |
-| Longest loop that stops at an irregular vertex, edges (L) | — | — | 166 | 445 | 386 | 376 | 274 | 500 |
+| Edges on loops that stop at an irregular vertex, % (L) | — | — | 80.4 | 51.0 | 58.0 | 62.7 | 65.8 | 66.2 |
+| Longest loop that stops at an irregular vertex, edges (L) | — | — | 166 | 445 | 386 | 269 | 274 | 385 |
 | Edges on loops from a border to a border, % (L) | — | — | 0.3 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
-| Off budget, % (N) | — | 68.0 | 4.4 | 9.6 | 0.6 | 0.1 | 0.0 | 1.3 |
-| Time, seconds (T) | — | 6.08 | 19.45 | 46.05 | 37.40 | 49.11 | — | 59.36 |
+| Off budget, % (N) | — | 68.0 | 4.4 | 9.6 | 0.6 | 0.4 | 0.0 | 0.5 |
+| Time, seconds (T) | — | 6.08 | 22.42 | 51.35 | 31.53 | 59.84 | — | 71.15 |
 
 Failures: quadriflow: cancelled.
 
@@ -251,30 +251,30 @@ Failures: quadriflow: cancelled.
 | | quadriflow | autoremesher | instant-meshes | integer-grid | openclare-uniform | openclare | handmade | openclare-as-handmade |
 |---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 4/5 | 0/1 | 5/5 | 1/1 | 1/1 | 1/1 | 0/0 | 0/0 |
-| Quads made | 7874 | 2895 | 8160 | 7188 | 7900 | 8014 | — | — |
+| Quads made | 7874 | 2895 | 8160 | 7188 | 7936 | 8054 | — | — |
 | Irregular vertices (S) | 76 | 74 | 281 | 72 | 70 | 70 | — | — |
 | … of which above the minimum | 68 | — | 273 | 64 | 62 | 62 | — | — |
-| Base complex patches (C) | 7772 | — | 8022 | 3822 | 2528 | 3116 | — | — |
-| Alignment, degrees (A) | 16.85 | 9.88 | 17.02 | 8.93 | 8.77 | 7.90 | — | — |
-| Mean angle deviation, degrees (F) | 6.23 | 7.56 | 4.53 | 8.77 | 6.49 | 5.91 | — | — |
-| Angle deviation, 95th percentile (F) | 16.10 | 20.17 | 15.39 | 22.64 | 17.42 | 15.53 | — | — |
-| Mean aspect ratio (F) | 1.177 | 1.481 | 1.142 | 1.329 | 1.350 | 1.349 | — | — |
-| Area variation (F) | 0.178 | 0.712 | 0.144 | 0.278 | 0.313 | 0.435 | — | — |
-| Hausdorff, ‰ of the diagonal (H) | 5.30 | 6.25 | 10.14 | 3.03 | 2.54 | 3.47 | — | — |
+| Base complex patches (C) | 7772 | — | 8022 | 3822 | 2910 | 2500 | — | — |
+| Alignment, degrees (A) | 16.85 | 9.88 | 17.02 | 8.93 | 8.53 | 8.01 | — | — |
+| Mean angle deviation, degrees (F) | 6.23 | 7.56 | 4.53 | 8.77 | 6.34 | 5.97 | — | — |
+| Angle deviation, 95th percentile (F) | 16.10 | 20.17 | 15.39 | 22.64 | 16.65 | 15.19 | — | — |
+| Mean aspect ratio (F) | 1.177 | 1.481 | 1.142 | 1.329 | 1.365 | 1.358 | — | — |
+| Area variation (F) | 0.178 | 0.712 | 0.144 | 0.278 | 0.312 | 0.419 | — | — |
+| Hausdorff, ‰ of the diagonal (H) | 5.30 | 6.25 | 10.14 | 3.03 | 2.55 | 3.47 | — | — |
 | Mean distance, ‰ (H) | 0.161 | 0.635 | 0.172 | 0.090 | 0.082 | 0.080 | — | — |
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — |
 | Volume kept, % of the source (V) | 99.79 | 98.89 | 99.77 | 100.00 | 100.01 | 100.00 | — | — |
-| Sharp edges kept, % of their length (E) | 46.9 | 43.1 | 14.7 | 96.0 | 86.0 | 89.3 | — | — |
-| Edges on closed loops, % (L) | 0.1 | 16.4 | 1.0 | 24.5 | 39.4 | 35.0 | — | — |
-| Edges on spiralling loops, % (L) | 19.0 | 13.5 | 7.3 | 30.4 | 13.6 | 12.9 | — | — |
-| Spiralling loops (L) | 9 | 7 | 11 | 15 | 7 | 4 | — | — |
-| Edges on helices of any pitch, % (L) | 28.7 | 9.1 | 1.8 | 20.0 | 6.8 | 5.7 | — | — |
+| Sharp edges kept, % of their length (E) | 46.9 | 43.1 | 14.7 | 96.0 | 83.9 | 89.3 | — | — |
+| Edges on closed loops, % (L) | 0.1 | 16.4 | 1.0 | 24.5 | 34.3 | 39.2 | — | — |
+| Edges on spiralling loops, % (L) | 19.0 | 13.5 | 7.3 | 30.4 | 16.7 | 5.8 | — | — |
+| Spiralling loops (L) | 9 | 7 | 11 | 15 | 7 | 3 | — | — |
+| Edges on helices of any pitch, % (L) | 28.7 | 9.1 | 1.8 | 20.0 | 10.0 | 0.0 | — | — |
 | Helices of pitch above 4, which the spiral count misses (L) | 8 | 0 | 0 | 0 | 0 | 0 | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 79.3 | 70.1 | 91.4 | 45.1 | 47.0 | 52.1 | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 578 | 134 | 234 | 410 | 425 | 288 | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 79.3 | 70.1 | 91.4 | 45.1 | 49.0 | 55.0 | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 578 | 134 | 234 | 410 | 593 | 449 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
-| Off budget, % (N) | 1.6 | 63.8 | 2.0 | 10.2 | 1.2 | 0.2 | — | — |
-| Time, seconds (T) | 3.14 | 1.70 | 1.00 | 46.13 | 14.51 | 12.32 | — | — |
+| Off budget, % (N) | 1.6 | 63.8 | 2.0 | 10.2 | 0.8 | 0.7 | — | — |
+| Time, seconds (T) | 3.14 | 1.70 | 1.48 | 54.88 | 16.54 | 13.81 | — | — |
 
 ## bob (organic)
 
@@ -304,157 +304,157 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | 840 | 228 | 232 | 224 | 212 | 204 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.0 | 9.4 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 3.3 | 49.9 | 0.9 | 13.2 | 1.4 | 0.4 | — | — |
-| Time, seconds (T) | 3.34 | 1.99 | 0.96 | 23.66 | 10.06 | 9.39 | — | — |
+| Time, seconds (T) | 3.34 | 1.99 | 1.16 | 25.10 | 11.24 | 7.21 | — | — |
 
 ## blub (organic)
 
 | | quadriflow | autoremesher | instant-meshes | integer-grid | openclare-uniform | openclare | handmade | openclare-as-handmade |
 |---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 0/5 | 0/1 | 5/5 | 1/1 | 1/1 | 1/1 | 0/0 | 0/0 |
-| Quads made | 7229 | 3438 | 8116 | 7212 | 7900 | 8123 | — | — |
+| Quads made | 7229 | 3438 | 8116 | 7212 | 8003 | 8070 | — | — |
 | Irregular vertices (S) | 70 | 53 | 267 | 43 | 44 | 54 | — | — |
 | … of which above the minimum | 62 | — | 259 | 35 | 36 | 46 | — | — |
-| Base complex patches (C) | 6275 | — | 7954 | 3852 | 1946 | 1759 | — | — |
-| Alignment, degrees (A) | 15.23 | 7.01 | 14.79 | 7.90 | 7.56 | 7.50 | — | — |
-| Mean angle deviation, degrees (F) | 10.30 | 6.30 | 4.31 | 8.37 | 6.17 | 6.04 | — | — |
-| Angle deviation, 95th percentile (F) | 28.50 | 19.86 | 15.08 | 23.50 | 18.54 | 17.89 | — | — |
-| Mean aspect ratio (F) | 1.267 | 2.320 | 1.139 | 1.315 | 1.320 | 1.338 | — | — |
-| Area variation (F) | 0.371 | 0.598 | 0.143 | 0.256 | 0.294 | 0.385 | — | — |
-| Hausdorff, ‰ of the diagonal (H) | 21.90 | 8.37 | 5.90 | 5.98 | 2.77 | 2.38 | — | — |
-| Mean distance, ‰ (H) | 0.213 | 0.399 | 0.131 | 0.084 | 0.072 | 0.065 | — | — |
+| Base complex patches (C) | 6275 | — | 7954 | 3852 | 1529 | 2356 | — | — |
+| Alignment, degrees (A) | 15.23 | 7.01 | 14.79 | 7.90 | 7.58 | 7.39 | — | — |
+| Mean angle deviation, degrees (F) | 10.30 | 6.30 | 4.31 | 8.37 | 6.18 | 6.13 | — | — |
+| Angle deviation, 95th percentile (F) | 28.50 | 19.86 | 15.08 | 23.50 | 18.87 | 17.27 | — | — |
+| Mean aspect ratio (F) | 1.267 | 2.320 | 1.139 | 1.315 | 1.320 | 1.342 | — | — |
+| Area variation (F) | 0.371 | 0.598 | 0.143 | 0.256 | 0.295 | 0.376 | — | — |
+| Hausdorff, ‰ of the diagonal (H) | 21.90 | 8.37 | 5.90 | 5.98 | 2.73 | 2.35 | — | — |
+| Mean distance, ‰ (H) | 0.213 | 0.399 | 0.131 | 0.084 | 0.074 | 0.063 | — | — |
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — |
-| Volume kept, % of the source (V) | 99.48 | 99.18 | 99.71 | 99.98 | 99.98 | 99.99 | — | — |
-| Sharp edges kept, % of their length (E) | 41.6 | 42.3 | 57.6 | 72.2 | 84.6 | 87.5 | — | — |
-| Edges on closed loops, % (L) | 6.4 | 28.0 | 1.3 | 27.3 | 46.9 | 50.5 | — | — |
-| Edges on spiralling loops, % (L) | 20.2 | 18.6 | 5.4 | 43.1 | 24.8 | 7.4 | — | — |
-| Spiralling loops (L) | 12 | 5 | 12 | 16 | 8 | 3 | — | — |
-| Edges on helices of any pitch, % (L) | 24.3 | 15.1 | 1.4 | 32.6 | 24.8 | 4.4 | — | — |
+| Volume kept, % of the source (V) | 99.48 | 99.18 | 99.71 | 99.98 | 99.99 | 99.99 | — | — |
+| Sharp edges kept, % of their length (E) | 41.6 | 42.3 | 57.6 | 72.2 | 86.9 | 85.8 | — | — |
+| Edges on closed loops, % (L) | 6.4 | 28.0 | 1.3 | 27.3 | 51.2 | 42.0 | — | — |
+| Edges on spiralling loops, % (L) | 20.2 | 18.6 | 5.4 | 43.1 | 19.4 | 15.7 | — | — |
+| Spiralling loops (L) | 12 | 5 | 12 | 16 | 4 | 6 | — | — |
+| Edges on helices of any pitch, % (L) | 24.3 | 15.1 | 1.4 | 32.6 | 17.2 | 12.6 | — | — |
 | Helices of pitch above 4, which the spiral count misses (L) | 4 | 0 | 0 | 0 | 0 | 0 | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 73.2 | 53.3 | 92.7 | 29.6 | 28.3 | 42.1 | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 660 | 163 | 216 | 322 | 267 | 319 | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 73.2 | 53.3 | 92.7 | 29.6 | 29.4 | 42.3 | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 660 | 163 | 216 | 322 | 302 | 305 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
-| Off budget, % (N) | 9.6 | 57.0 | 1.5 | 9.8 | 1.2 | 1.5 | — | — |
-| Time, seconds (T) | 2.72 | 2.29 | 0.92 | 38.38 | 13.30 | 14.70 | — | — |
+| Off budget, % (N) | 9.6 | 57.0 | 1.5 | 9.8 | 0.0 | 0.9 | — | — |
+| Time, seconds (T) | 2.72 | 2.29 | 1.28 | 47.02 | 17.38 | 15.32 | — | — |
 
 ## pig (organic)
 
 | | quadriflow | autoremesher | instant-meshes | integer-grid | openclare-uniform | openclare | handmade | openclare-as-handmade |
 |---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 0/5 | 0/1 | 4/5 | 0/1 | 1/1 | 1/1 | 0/0 | 0/0 |
-| Quads made | 6973 | 4682 | 8092 | 7441 | 8055 | 7868 | — | — |
+| Quads made | 6973 | 4682 | 8092 | 7441 | 8023 | 8049 | — | — |
 | Irregular vertices (S) | 136 | 135 | 354 | 82 | 88 | 102 | — | — |
 | … of which above the minimum | 128 | — | 355 | — | 80 | 94 | — | — |
-| Base complex patches (C) | 6841 | — | 7780 | — | 3073 | 3850 | — | — |
-| Alignment, degrees (A) | 15.84 | 11.22 | 14.87 | 9.90 | 9.87 | 9.03 | — | — |
-| Mean angle deviation, degrees (F) | 11.44 | 6.80 | 4.98 | 8.16 | 6.89 | 5.84 | — | — |
-| Angle deviation, 95th percentile (F) | 34.02 | 21.80 | 17.33 | 23.10 | 19.11 | 18.36 | — | — |
-| Mean aspect ratio (F) | 1.339 | 1.773 | 1.161 | 1.243 | 1.315 | 1.318 | — | — |
-| Area variation (F) | 0.383 | 0.668 | 0.159 | 0.242 | 0.339 | 0.446 | — | — |
-| Hausdorff, ‰ of the diagonal (H) | 56.23 | 9.84 | 16.69 | 7.27 | 10.90 | 5.67 | — | — |
-| Mean distance, ‰ (H) | 0.610 | 0.627 | 0.235 | 0.166 | 0.158 | 0.124 | — | — |
-| Thin parts: mean distance, % of a quad edge (V) | 64.0 | 21.7 | 14.5 | 15.5 | 7.9 | 4.9 | — | — |
+| Base complex patches (C) | 6841 | — | 7780 | — | 3041 | 3937 | — | — |
+| Alignment, degrees (A) | 15.84 | 11.22 | 14.87 | 9.90 | 9.89 | 8.66 | — | — |
+| Mean angle deviation, degrees (F) | 11.44 | 6.80 | 4.98 | 8.16 | 6.91 | 5.91 | — | — |
+| Angle deviation, 95th percentile (F) | 34.02 | 21.80 | 17.33 | 23.10 | 19.21 | 17.98 | — | — |
+| Mean aspect ratio (F) | 1.339 | 1.773 | 1.161 | 1.243 | 1.320 | 1.310 | — | — |
+| Area variation (F) | 0.383 | 0.668 | 0.159 | 0.242 | 0.336 | 0.470 | — | — |
+| Hausdorff, ‰ of the diagonal (H) | 56.23 | 9.84 | 16.69 | 7.27 | 10.90 | 4.99 | — | — |
+| Mean distance, ‰ (H) | 0.610 | 0.627 | 0.235 | 0.166 | 0.159 | 0.115 | — | — |
+| Thin parts: mean distance, % of a quad edge (V) | 64.0 | 21.7 | 14.5 | 15.5 | 7.9 | 5.0 | — | — |
 | Volume kept, % of the source (V) | 99.23 | 99.18 | 99.70 | 99.96 | 99.95 | 99.98 | — | — |
-| Sharp edges kept, % of their length (E) | 30.7 | 39.9 | 39.4 | 47.3 | 81.5 | 84.1 | — | — |
-| Edges on closed loops, % (L) | 0.5 | 9.6 | 2.1 | 19.1 | 38.4 | 30.3 | — | — |
-| Edges on spiralling loops, % (L) | 21.6 | 22.2 | 6.3 | 34.9 | 7.2 | 6.5 | — | — |
-| Spiralling loops (L) | 22 | 18 | 11 | 19 | 14 | 17 | — | — |
-| Edges on helices of any pitch, % (L) | 24.3 | 8.8 | 1.2 | 20.3 | 5.9 | 2.8 | — | — |
-| Helices of pitch above 4, which the spiral count misses (L) | 3 | 0 | 0 | 0 | 0 | 0 | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 77.2 | 68.1 | 91.6 | 46.0 | 54.4 | 63.2 | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 500 | 161 | 166 | 513 | 428 | 397 | — | — |
+| Sharp edges kept, % of their length (E) | 30.7 | 39.9 | 39.4 | 47.3 | 81.3 | 86.4 | — | — |
+| Edges on closed loops, % (L) | 0.5 | 9.6 | 2.1 | 19.1 | 38.6 | 30.1 | — | — |
+| Edges on spiralling loops, % (L) | 21.6 | 22.2 | 6.3 | 34.9 | 7.3 | 9.6 | — | — |
+| Spiralling loops (L) | 22 | 18 | 11 | 19 | 15 | 17 | — | — |
+| Edges on helices of any pitch, % (L) | 24.3 | 8.8 | 1.2 | 20.3 | 4.6 | 7.9 | — | — |
+| Helices of pitch above 4, which the spiral count misses (L) | 3 | 0 | 0 | 0 | 0 | 1 | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 77.2 | 68.1 | 91.6 | 46.0 | 54.1 | 60.3 | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 500 | 161 | 166 | 513 | 428 | 366 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
-| Off budget, % (N) | 12.8 | 41.5 | 1.1 | 7.0 | 0.7 | 1.7 | — | — |
-| Time, seconds (T) | 2.60 | 5.66 | 1.10 | 70.31 | 21.59 | 22.88 | — | — |
+| Off budget, % (N) | 12.8 | 41.5 | 1.1 | 7.0 | 0.3 | 0.6 | — | — |
+| Time, seconds (T) | 2.60 | 5.66 | 1.17 | 74.64 | 18.82 | 23.13 | — | — |
 
 ## jerry (organic)
 
 | | quadriflow | autoremesher | instant-meshes | integer-grid | openclare-uniform | openclare | handmade | openclare-as-handmade |
 |---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 4/5 | 0/1 | 1/5 | 0/1 | 1/1 | 1/1 | 0/0 | 0/0 |
-| Quads made | 7781 | 2740 | 7962 | 7348 | 7867 | 8137 | — | — |
+| Quads made | 7781 | 2740 | 7962 | 7348 | 7867 | 8040 | — | — |
 | Irregular vertices (S) | 112 | 109 | 491 | 168 | 160 | 264 | — | — |
 | … of which above the minimum | — | — | — | — | — | — | — | — |
-| Base complex patches (C) | 4991 | — | 7847 | — | 4692 | 7067 | — | — |
-| Alignment, degrees (A) | 17.56 | 15.73 | 18.05 | 13.55 | 12.92 | 12.43 | — | — |
-| Mean angle deviation, degrees (F) | 7.80 | 10.26 | 6.61 | 8.17 | 5.93 | 6.36 | — | — |
-| Angle deviation, 95th percentile (F) | 22.58 | 29.98 | 22.97 | 22.66 | 16.04 | 18.27 | — | — |
+| Base complex patches (C) | 4991 | — | 7847 | — | 4692 | 6626 | — | — |
+| Alignment, degrees (A) | 17.56 | 15.73 | 18.05 | 13.55 | 12.92 | 12.49 | — | — |
+| Mean angle deviation, degrees (F) | 7.80 | 10.26 | 6.61 | 8.17 | 5.93 | 6.20 | — | — |
+| Angle deviation, 95th percentile (F) | 22.58 | 29.98 | 22.97 | 22.66 | 16.04 | 18.41 | — | — |
 | Mean aspect ratio (F) | 1.257 | 1.889 | 1.250 | 1.283 | 1.345 | 1.332 | — | — |
-| Area variation (F) | 0.245 | 0.652 | 0.209 | 0.240 | 0.308 | 0.490 | — | — |
-| Hausdorff, ‰ of the diagonal (H) | 31.29 | 25.08 | 29.33 | 15.78 | 7.21 | 9.80 | — | — |
-| Mean distance, ‰ (H) | 0.581 | 2.010 | 0.654 | 0.445 | 0.305 | 0.252 | — | — |
-| Thin parts: mean distance, % of a quad edge (V) | 24.5 | 54.4 | 45.4 | 21.6 | 6.5 | 2.8 | — | — |
+| Area variation (F) | 0.245 | 0.652 | 0.209 | 0.240 | 0.308 | 0.483 | — | — |
+| Hausdorff, ‰ of the diagonal (H) | 31.29 | 25.08 | 29.33 | 15.78 | 7.21 | 10.04 | — | — |
+| Mean distance, ‰ (H) | 0.581 | 2.010 | 0.654 | 0.445 | 0.305 | 0.255 | — | — |
+| Thin parts: mean distance, % of a quad edge (V) | 24.5 | 54.4 | 45.4 | 21.6 | 6.5 | 2.7 | — | — |
 | Volume kept, % of the source (V) | — | — | — | — | — | — | — | — |
-| Sharp edges kept, % of their length (E) | 48.6 | 15.4 | 27.0 | 45.9 | 75.6 | 90.2 | — | — |
-| Edges on closed loops, % (L) | 0.0 | — | 0.1 | 0.6 | 6.9 | 3.6 | — | — |
-| Edges on spiralling loops, % (L) | 3.1 | — | 0.0 | 11.4 | 1.1 | 0.1 | — | — |
-| Spiralling loops (L) | 5 | — | 3 | 12 | 2 | 1 | — | — |
-| Edges on helices of any pitch, % (L) | 2.6 | — | 0.0 | 2.4 | 0.9 | 0.0 | — | — |
+| Sharp edges kept, % of their length (E) | 48.6 | 15.4 | 27.0 | 45.9 | 75.6 | 90.1 | — | — |
+| Edges on closed loops, % (L) | 0.0 | — | 0.1 | 0.6 | 6.9 | 3.3 | — | — |
+| Edges on spiralling loops, % (L) | 3.1 | — | 0.0 | 11.4 | 1.1 | 1.2 | — | — |
+| Spiralling loops (L) | 5 | — | 3 | 12 | 2 | 5 | — | — |
+| Edges on helices of any pitch, % (L) | 2.6 | — | 0.0 | 2.4 | 0.9 | 0.1 | — | — |
 | Helices of pitch above 4, which the spiral count misses (L) | 0 | — | 0 | 0 | 0 | 0 | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 74.6 | — | 98.6 | 76.5 | 75.9 | 92.4 | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 404 | — | 157 | 214 | 227 | 177 | — | — |
-| Edges on loops from a border to a border, % (L) | 19.8 | — | 1.3 | 11.4 | 16.0 | 4.0 | — | — |
-| Off budget, % (N) | 2.7 | 65.8 | 0.5 | 8.2 | 1.7 | 1.7 | — | — |
-| Time, seconds (T) | 4.43 | 1.67 | 0.78 | 63.95 | 15.39 | 20.57 | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 74.6 | — | 98.6 | 76.5 | 75.9 | 89.4 | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 404 | — | 157 | 214 | 227 | 164 | — | — |
+| Edges on loops from a border to a border, % (L) | 19.8 | — | 1.3 | 11.4 | 16.0 | 6.1 | — | — |
+| Off budget, % (N) | 2.7 | 65.8 | 0.5 | 8.2 | 1.7 | 0.5 | — | — |
+| Time, seconds (T) | 4.43 | 1.67 | 0.70 | 73.09 | 16.26 | 23.39 | — | — |
 
 ## rose (organic)
 
 | | quadriflow | autoremesher | instant-meshes | integer-grid | openclare-uniform | openclare | handmade | openclare-as-handmade |
 |---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 0/5 | 0/1 | 0/5 | 0/1 | 0/1 | 0/1 | 0/0 | 0/0 |
-| Quads made | 6758 | 3828 | 6927 | 6775 | 8125 | 8283 | — | — |
+| Quads made | 6758 | 3828 | 6927 | 6775 | 8197 | 8277 | — | — |
 | Irregular vertices (S) | 917 | 556 | 1149 | 624 | 1321 | 2113 | — | — |
 | … of which above the minimum | — | — | — | — | 705 | 1497 | — | — |
-| Base complex patches (C) | 6524 | — | 6449 | — | 6436 | 6666 | — | — |
-| Alignment, degrees (A) | 18.20 | 18.28 | 18.64 | 16.04 | 14.46 | 13.86 | — | — |
-| Mean angle deviation, degrees (F) | 14.81 | 17.84 | 12.49 | 11.62 | 13.89 | 16.66 | — | — |
-| Angle deviation, 95th percentile (F) | 41.39 | 56.33 | 41.64 | 33.46 | 47.77 | 49.41 | — | — |
-| Mean aspect ratio (F) | 1.514 | 3.415 | 1.607 | 1.462 | 3.262 | 3.219 | — | — |
-| Area variation (F) | 0.407 | 0.904 | 0.360 | 0.326 | 0.649 | 1.580 | — | — |
-| Hausdorff, ‰ of the diagonal (H) | 74.30 | 58.87 | 73.00 | 73.14 | 12.26 | 15.97 | — | — |
-| Mean distance, ‰ (H) | 1.492 | 4.497 | 1.734 | 1.197 | 0.645 | 0.875 | — | — |
-| Thin parts: mean distance, % of a quad edge (V) | 44.1 | 83.6 | 47.9 | 35.9 | 10.9 | 9.4 | — | — |
-| Volume kept, % of the source (V) | — | — | — | — | 97.21 | 96.04 | — | — |
-| Sharp edges kept, % of their length (E) | 17.6 | 3.7 | 9.5 | 18.0 | 39.9 | 37.9 | — | — |
-| Edges on closed loops, % (L) | 0.4 | — | 4.8 | — | 10.7 | 9.7 | — | — |
-| Edges on spiralling loops, % (L) | 17.0 | — | 8.2 | — | 21.5 | 16.8 | — | — |
-| Spiralling loops (L) | 130 | — | 101 | — | 565 | 600 | — | — |
-| Edges on helices of any pitch, % (L) | 9.4 | — | 2.1 | — | 8.9 | 5.8 | — | — |
+| Base complex patches (C) | 6524 | — | 6449 | — | 6752 | 6783 | — | — |
+| Alignment, degrees (A) | 18.20 | 18.28 | 18.64 | 16.04 | 14.65 | 13.69 | — | — |
+| Mean angle deviation, degrees (F) | 14.81 | 17.84 | 12.49 | 11.62 | 14.04 | 17.32 | — | — |
+| Angle deviation, 95th percentile (F) | 41.39 | 56.33 | 41.64 | 33.46 | 47.77 | 52.06 | — | — |
+| Mean aspect ratio (F) | 1.514 | 3.415 | 1.607 | 1.462 | 3.241 | 3.160 | — | — |
+| Area variation (F) | 0.407 | 0.904 | 0.360 | 0.326 | 0.668 | 1.622 | — | — |
+| Hausdorff, ‰ of the diagonal (H) | 74.30 | 58.87 | 73.00 | 73.14 | 12.26 | 15.37 | — | — |
+| Mean distance, ‰ (H) | 1.492 | 4.497 | 1.734 | 1.197 | 0.646 | 0.874 | — | — |
+| Thin parts: mean distance, % of a quad edge (V) | 44.1 | 83.6 | 47.9 | 35.9 | 11.1 | 9.3 | — | — |
+| Volume kept, % of the source (V) | — | — | — | — | 97.20 | 96.09 | — | — |
+| Sharp edges kept, % of their length (E) | 17.6 | 3.7 | 9.5 | 18.0 | 39.5 | 38.7 | — | — |
+| Edges on closed loops, % (L) | 0.4 | — | 4.8 | — | 9.0 | 8.9 | — | — |
+| Edges on spiralling loops, % (L) | 17.0 | — | 8.2 | — | 22.1 | 15.8 | — | — |
+| Spiralling loops (L) | 130 | — | 101 | — | 565 | 578 | — | — |
+| Edges on helices of any pitch, % (L) | 9.4 | — | 2.1 | — | 10.0 | 7.1 | — | — |
 | Helices of pitch above 4, which the spiral count misses (L) | 5 | — | 0 | — | 0 | 0 | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | 80.4 | — | 86.3 | — | 67.8 | 73.5 | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | 90 | — | 44 | — | 98 | 48 | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | 80.4 | — | 86.3 | — | 68.9 | 75.2 | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | 90 | — | 44 | — | 125 | 60 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | — | 0.7 | — | 0.0 | 0.0 | — | — |
-| Off budget, % (N) | 15.5 | 52.1 | 13.4 | 15.3 | 1.6 | 3.5 | — | — |
-| Time, seconds (T) | 2.44 | 2.36 | 1.69 | 210.79 | 28.52 | 64.81 | — | — |
+| Off budget, % (N) | 15.5 | 52.1 | 13.4 | 15.3 | 2.5 | 3.5 | — | — |
+| Time, seconds (T) | 2.44 | 2.36 | 1.82 | 221.87 | 38.74 | 69.39 | — | — |
 
 ## bridge (organic)
 
 | | quadriflow | autoremesher | instant-meshes | integer-grid | openclare-uniform | openclare | handmade | openclare-as-handmade |
 |---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 0/5 | 0/1 | 4/5 | 1/1 | 1/1 | 1/1 | 0/0 | 0/0 |
-| Quads made | — | 4954 | 7874 | 7220 | 7968 | 8125 | — | — |
+| Quads made | — | 4954 | 7874 | 7220 | 7968 | 8092 | — | — |
 | Irregular vertices (S) | — | 58 | 249 | 51 | 57 | 69 | — | — |
 | … of which above the minimum | — | — | — | — | — | — | — | — |
-| Base complex patches (C) | — | — | 4813 | 1319 | 1828 | 2053 | — | — |
-| Alignment, degrees (A) | — | 10.49 | 13.75 | 10.18 | 10.21 | 9.42 | — | — |
-| Mean angle deviation, degrees (F) | — | 6.02 | 4.36 | 6.90 | 4.79 | 5.49 | — | — |
-| Angle deviation, 95th percentile (F) | — | 18.67 | 14.77 | 19.25 | 14.15 | 16.71 | — | — |
-| Mean aspect ratio (F) | — | 1.719 | 1.140 | 1.276 | 1.269 | 1.282 | — | — |
-| Area variation (F) | — | 0.719 | 0.140 | 0.231 | 0.270 | 0.339 | — | — |
-| Hausdorff, ‰ of the diagonal (H) | — | 8.89 | 11.88 | 7.05 | 6.40 | 6.40 | — | — |
-| Mean distance, ‰ (H) | — | 0.521 | 0.284 | 0.246 | 0.222 | 0.218 | — | — |
+| Base complex patches (C) | — | — | 4813 | 1319 | 1828 | 2112 | — | — |
+| Alignment, degrees (A) | — | 10.49 | 13.75 | 10.18 | 10.21 | 9.28 | — | — |
+| Mean angle deviation, degrees (F) | — | 6.02 | 4.36 | 6.90 | 4.79 | 4.87 | — | — |
+| Angle deviation, 95th percentile (F) | — | 18.67 | 14.77 | 19.25 | 14.15 | 13.80 | — | — |
+| Mean aspect ratio (F) | — | 1.719 | 1.140 | 1.276 | 1.269 | 1.260 | — | — |
+| Area variation (F) | — | 0.719 | 0.140 | 0.231 | 0.270 | 0.332 | — | — |
+| Hausdorff, ‰ of the diagonal (H) | — | 8.89 | 11.88 | 7.05 | 6.40 | 6.34 | — | — |
+| Mean distance, ‰ (H) | — | 0.521 | 0.284 | 0.246 | 0.222 | 0.216 | — | — |
 | Thin parts: mean distance, % of a quad edge (V) | — | — | — | — | — | — | — | — |
 | Volume kept, % of the source (V) | — | — | — | — | — | — | — | — |
-| Sharp edges kept, % of their length (E) | — | 14.3 | 17.5 | 25.6 | 47.7 | 71.9 | — | — |
-| Edges on closed loops, % (L) | — | 20.8 | 4.6 | 13.6 | 19.5 | 21.2 | — | — |
-| Edges on spiralling loops, % (L) | — | 8.5 | 3.3 | 17.7 | 0.8 | 0.1 | — | — |
-| Spiralling loops (L) | — | 5 | 12 | 8 | 1 | 1 | — | — |
+| Sharp edges kept, % of their length (E) | — | 14.3 | 17.5 | 25.6 | 47.7 | 66.4 | — | — |
+| Edges on closed loops, % (L) | — | 20.8 | 4.6 | 13.6 | 19.5 | 21.3 | — | — |
+| Edges on spiralling loops, % (L) | — | 8.5 | 3.3 | 17.7 | 0.8 | 1.4 | — | — |
+| Spiralling loops (L) | — | 5 | 12 | 8 | 1 | 2 | — | — |
 | Edges on helices of any pitch, % (L) | — | 6.8 | 0.4 | 7.7 | 0.0 | 0.0 | — | — |
 | Helices of pitch above 4, which the spiral count misses (L) | — | 0 | 0 | 0 | 0 | 0 | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | — | 53.1 | 71.1 | 31.8 | 50.4 | 51.7 | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | — | 154 | 188 | 158 | 224 | 238 | — | — |
-| Edges on loops from a border to a border, % (L) | — | 17.6 | 20.3 | 36.9 | 29.3 | 27.1 | — | — |
-| Off budget, % (N) | — | 38.1 | 1.6 | 9.8 | 0.4 | 1.6 | — | — |
-| Time, seconds (T) | — | 2.74 | 1.70 | 120.50 | 16.45 | 14.73 | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | — | 53.1 | 71.1 | 31.8 | 50.4 | 52.1 | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | — | 154 | 188 | 158 | 224 | 270 | — | — |
+| Edges on loops from a border to a border, % (L) | — | 17.6 | 20.3 | 36.9 | 29.3 | 25.2 | — | — |
+| Off budget, % (N) | — | 38.1 | 1.6 | 9.8 | 0.4 | 1.1 | — | — |
+| Time, seconds (T) | — | 2.74 | 1.93 | 141.10 | 17.30 | 18.41 | — | — |
 
 Failures: quadriflow: cancelled.
 
@@ -486,7 +486,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | 160 | — | 184 | 92 | 93 | 86 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | — | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 0.3 | 38.1 | 3.4 | 1.2 | 1.2 | 1.5 | — | — |
-| Time, seconds (T) | 6.18 | 2.94 | 1.59 | 21.71 | 5.77 | 6.34 | — | — |
+| Time, seconds (T) | 6.18 | 2.94 | 2.05 | 26.93 | 6.58 | 6.75 | — | — |
 
 ## cube (mechanical)
 
@@ -516,7 +516,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | 37 | 85 | 146 | 73 | 37 | 37 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 1.0 | 65.3 | 2.5 | 0.4 | 0.8 | 0.8 | — | — |
-| Time, seconds (T) | 2.98 | 2.51 | 0.59 | 57.66 | 6.14 | 5.27 | — | — |
+| Time, seconds (T) | 2.98 | 2.51 | 0.49 | 69.41 | 7.21 | 7.92 | — | — |
 
 ## lblock (mechanical)
 
@@ -546,7 +546,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | 132 | 134 | 192 | 72 | 72 | 72 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.3 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 0.6 | 62.1 | 0.7 | 0.8 | 0.8 | 0.8 | — | — |
-| Time, seconds (T) | 2.69 | 1.49 | 0.48 | 6.56 | 11.21 | 8.49 | — | — |
+| Time, seconds (T) | 2.69 | 1.49 | 0.36 | 7.59 | 5.26 | 6.81 | — | — |
 
 Failures: quadriflow: timed out after 1800 s.
 
@@ -578,25 +578,25 @@ Failures: quadriflow: timed out after 1800 s.
 | Longest loop that stops at an irregular vertex, edges (L) | 762 | 316 | 244 | 80 | 54 | 55 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 1.1 | 67.9 | 0.8 | 2.9 | 0.7 | 0.8 | — | — |
-| Time, seconds (T) | 3.39 | 1.07 | 0.84 | 10.86 | 5.13 | 6.53 | — | — |
+| Time, seconds (T) | 3.39 | 1.07 | 0.79 | 9.27 | 7.03 | 7.22 | — | — |
 
 ## venturi (extra)
 
 | | quadriflow | autoremesher | instant-meshes | integer-grid | openclare-uniform | openclare | handmade | openclare-as-handmade |
 |---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 0/5 | 0/1 | 0/5 | 0/1 | 0/1 | 0/1 | 0/0 | 0/0 |
-| Quads made | — | 7212 | 7693 | 7234 | 7953 | 8239 | — | — |
+| Quads made | — | 7212 | 7693 | 7234 | 7945 | 8239 | — | — |
 | Irregular vertices (S) | — | 2158 | 977 | 311 | 312 | 546 | — | — |
 | … of which above the minimum | — | — | — | — | — | — | — | — |
 | Base complex patches (C) | — | — | 4255 | — | — | — | — | — |
-| Alignment, degrees (A) | — | 10.19 | 11.23 | 10.81 | 9.70 | 10.59 | — | — |
-| Mean angle deviation, degrees (F) | — | 40.97 | 10.36 | 7.70 | 7.44 | 9.92 | — | — |
-| Angle deviation, 95th percentile (F) | — | 89.08 | 43.42 | 26.95 | 25.43 | 39.40 | — | — |
-| Mean aspect ratio (F) | — | 9.234 | 1.775 | 1.520 | 1.480 | 2.041 | — | — |
+| Alignment, degrees (A) | — | 10.19 | 11.23 | 10.81 | 9.71 | 10.59 | — | — |
+| Mean angle deviation, degrees (F) | — | 40.97 | 10.36 | 7.70 | 7.39 | 9.92 | — | — |
+| Angle deviation, 95th percentile (F) | — | 89.08 | 43.42 | 26.95 | 25.12 | 39.40 | — | — |
+| Mean aspect ratio (F) | — | 9.234 | 1.775 | 1.520 | 1.481 | 2.041 | — | — |
 | Area variation (F) | — | 2.203 | 0.455 | 0.273 | 0.310 | 0.374 | — | — |
 | Hausdorff, ‰ of the diagonal (H) | — | 37.63 | 24.82 | 21.11 | 35.40 | 35.40 | — | — |
-| Mean distance, ‰ (H) | — | 2.866 | 1.379 | 1.597 | 1.380 | 1.304 | — | — |
-| Thin parts: mean distance, % of a quad edge (V) | — | 28.8 | 18.1 | 18.3 | 17.8 | 17.0 | — | — |
+| Mean distance, ‰ (H) | — | 2.866 | 1.379 | 1.597 | 1.375 | 1.304 | — | — |
+| Thin parts: mean distance, % of a quad edge (V) | — | 28.8 | 18.1 | 18.3 | 17.7 | 17.0 | — | — |
 | Volume kept, % of the source (V) | — | — | — | — | — | — | — | — |
 | Sharp edges kept, % of their length (E) | — | 19.8 | 10.0 | 40.3 | 40.0 | 39.7 | — | — |
 | Edges on closed loops, % (L) | — | — | 2.3 | 20.4 | 23.1 | 22.4 | — | — |
@@ -607,8 +607,8 @@ Failures: quadriflow: timed out after 1800 s.
 | Edges on loops that stop at an irregular vertex, % (L) | — | — | 60.1 | 56.8 | 53.8 | 56.2 | — | — |
 | Longest loop that stops at an irregular vertex, edges (L) | — | — | 51 | 236 | 217 | 217 | — | — |
 | Edges on loops from a border to a border, % (L) | — | — | 35.4 | 2.6 | 0.8 | 0.7 | — | — |
-| Off budget, % (N) | — | 9.8 | 3.8 | 9.6 | 0.6 | 3.0 | — | — |
-| Time, seconds (T) | — | 1.54 | 1.22 | 93.06 | 68.19 | 99.19 | — | — |
+| Off budget, % (N) | — | 9.8 | 3.8 | 9.6 | 0.7 | 3.0 | — | — |
+| Time, seconds (T) | — | 1.54 | 1.45 | 106.28 | 81.45 | 111.98 | — | — |
 
 Failures: quadriflow: cancelled.
 
@@ -617,30 +617,30 @@ Failures: quadriflow: cancelled.
 | | quadriflow | autoremesher | instant-meshes | integer-grid | openclare-uniform | openclare | handmade | openclare-as-handmade |
 |---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 0/5 | 0/1 | 0/5 | 0/1 | 1/1 | 1/1 | 0/0 | 0/0 |
-| Quads made | — | 4422 | 7700 | 6468 | 7992 | 7874 | — | — |
+| Quads made | — | 4422 | 7700 | 6468 | 8087 | 7874 | — | — |
 | Irregular vertices (S) | — | 172 | 442 | 152 | 198 | 338 | — | — |
 | … of which above the minimum | — | — | 446 | — | 190 | 330 | — | — |
-| Base complex patches (C) | — | — | 7440 | — | 5448 | 5298 | — | — |
-| Alignment, degrees (A) | — | 13.99 | 17.01 | 13.00 | 11.99 | 9.76 | — | — |
-| Mean angle deviation, degrees (F) | — | 7.16 | 6.55 | 9.19 | 6.70 | 6.56 | — | — |
-| Angle deviation, 95th percentile (F) | — | 21.73 | 21.36 | 24.96 | 18.43 | 19.19 | — | — |
-| Mean aspect ratio (F) | — | 1.812 | 1.226 | 1.400 | 1.408 | 1.420 | — | — |
-| Area variation (F) | — | 0.657 | 0.198 | 0.293 | 0.375 | 0.916 | — | — |
-| Hausdorff, ‰ of the diagonal (H) | — | 22.79 | 30.78 | 29.87 | 11.77 | 6.69 | — | — |
-| Mean distance, ‰ (H) | — | 1.109 | 0.706 | 0.471 | 0.312 | 0.333 | — | — |
-| Thin parts: mean distance, % of a quad edge (V) | — | 44.3 | 48.7 | 20.6 | 11.2 | 3.2 | — | — |
-| Volume kept, % of the source (V) | — | — | 99.39 | 99.98 | 100.00 | 100.01 | — | — |
-| Sharp edges kept, % of their length (E) | — | 10.6 | 14.9 | 13.1 | 18.1 | 12.3 | — | — |
-| Edges on closed loops, % (L) | — | — | 1.1 | 9.9 | 16.0 | 16.6 | — | — |
-| Edges on spiralling loops, % (L) | — | — | 3.1 | 32.2 | 11.1 | 6.2 | — | — |
-| Spiralling loops (L) | — | — | 15 | 51 | 25 | 14 | — | — |
-| Edges on helices of any pitch, % (L) | — | — | 1.2 | 9.9 | 3.7 | 4.7 | — | — |
+| Base complex patches (C) | — | — | 7440 | — | 4543 | 5298 | — | — |
+| Alignment, degrees (A) | — | 13.99 | 17.01 | 13.00 | 11.91 | 9.76 | — | — |
+| Mean angle deviation, degrees (F) | — | 7.16 | 6.55 | 9.19 | 6.09 | 6.56 | — | — |
+| Angle deviation, 95th percentile (F) | — | 21.73 | 21.36 | 24.96 | 16.41 | 19.19 | — | — |
+| Mean aspect ratio (F) | — | 1.812 | 1.226 | 1.400 | 1.403 | 1.420 | — | — |
+| Area variation (F) | — | 0.657 | 0.198 | 0.293 | 0.336 | 0.916 | — | — |
+| Hausdorff, ‰ of the diagonal (H) | — | 22.79 | 30.78 | 29.87 | 11.46 | 6.69 | — | — |
+| Mean distance, ‰ (H) | — | 1.109 | 0.706 | 0.471 | 0.309 | 0.333 | — | — |
+| Thin parts: mean distance, % of a quad edge (V) | — | 44.3 | 48.7 | 20.6 | 13.7 | 3.2 | — | — |
+| Volume kept, % of the source (V) | — | — | 99.39 | 99.98 | 99.99 | 100.01 | — | — |
+| Sharp edges kept, % of their length (E) | — | 10.6 | 14.9 | 13.1 | 20.5 | 12.3 | — | — |
+| Edges on closed loops, % (L) | — | — | 1.1 | 9.9 | 23.2 | 16.6 | — | — |
+| Edges on spiralling loops, % (L) | — | — | 3.1 | 32.2 | 6.8 | 6.2 | — | — |
+| Spiralling loops (L) | — | — | 15 | 51 | 21 | 14 | — | — |
+| Edges on helices of any pitch, % (L) | — | — | 1.2 | 9.9 | 1.1 | 4.7 | — | — |
 | Helices of pitch above 4, which the spiral count misses (L) | — | — | 0 | 0 | 0 | 0 | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | — | — | 95.6 | 58.0 | 72.9 | 77.1 | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | — | — | 142 | 244 | 308 | 205 | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | — | — | 95.6 | 58.0 | 70.1 | 77.1 | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | — | — | 142 | 244 | 234 | 205 | — | — |
 | Edges on loops from a border to a border, % (L) | — | — | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
-| Off budget, % (N) | — | 44.7 | 3.8 | 19.1 | 0.1 | 1.6 | — | — |
-| Time, seconds (T) | — | 15.77 | 77.99 | 100.34 | 123.37 | 241.30 | — | — |
+| Off budget, % (N) | — | 44.7 | 3.8 | 19.1 | 1.1 | 1.6 | — | — |
+| Time, seconds (T) | — | 15.77 | 80.63 | 111.98 | 136.69 | 262.47 | — | — |
 
 Failures: quadriflow: cancelled.
 
@@ -672,7 +672,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | 151 | — | 74 | — | — | — | — | — |
 | Edges on loops from a border to a border, % (L) | 0.1 | — | 10.5 | — | — | — | — | — |
 | Off budget, % (N) | 8.7 | 68.7 | 31.2 | 6.8 | 8.0 | 8.0 | — | — |
-| Time, seconds (T) | 6.11 | 6.65 | 1.41 | 222.14 | 371.27 | 374.15 | — | — |
+| Time, seconds (T) | 6.11 | 6.65 | 1.35 | 225.08 | 385.05 | 400.76 | — | — |
 
 ## towermill (extra)
 
@@ -702,7 +702,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | 117 | — | 60 | — | — | — | — | — |
 | Edges on loops from a border to a border, % (L) | 0.1 | — | 9.0 | — | — | — | — | — |
 | Off budget, % (N) | 10.2 | 66.7 | 28.8 | 11.2 | 11.2 | 11.2 | — | — |
-| Time, seconds (T) | 6.62 | 4.13 | 1.11 | 217.47 | 270.66 | 281.02 | — | — |
+| Time, seconds (T) | 6.62 | 4.13 | 0.97 | 207.74 | 278.11 | 261.94 | — | — |
 
 ## stonemill (extra)
 
@@ -732,37 +732,37 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | 149 | 168 | 148 | — | 331 | 242 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.2 | — | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 16.1 | 45.9 | 9.6 | 30.8 | 0.6 | 0.8 | — | — |
-| Time, seconds (T) | 5.67 | 3.04 | 1.08 | 276.11 | 35.47 | 47.22 | — | — |
+| Time, seconds (T) | 5.67 | 3.04 | 1.02 | 308.88 | 39.02 | 51.49 | — | — |
 
 ## windmill (extra)
 
 | | quadriflow | autoremesher | instant-meshes | integer-grid | openclare-uniform | openclare | handmade | openclare-as-handmade |
 |---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 0/5 | 0/1 | 0/5 | 0/1 | 1/1 | 1/1 | 0/0 | 0/0 |
-| Quads made | — | 2364 | 5699 | — | 262 | 258 | — | — |
+| Quads made | — | 2364 | 5699 | — | 262 | 254 | — | — |
 | Irregular vertices (S) | — | 234 | 704 | — | 38 | 48 | — | — |
 | … of which above the minimum | — | — | — | — | 14 | 24 | — | — |
-| Base complex patches (C) | — | — | 5305 | — | 162 | 258 | — | — |
-| Alignment, degrees (A) | — | 13.30 | 14.32 | — | 14.65 | 19.12 | — | — |
-| Mean angle deviation, degrees (F) | — | 14.00 | 12.59 | — | 22.47 | 23.24 | — | — |
-| Angle deviation, 95th percentile (F) | — | 51.31 | 47.68 | — | 62.14 | 60.18 | — | — |
-| Mean aspect ratio (F) | — | 2.278 | 1.597 | — | 7.450 | 2.860 | — | — |
-| Area variation (F) | — | 0.698 | 0.362 | — | 1.017 | 1.276 | — | — |
+| Base complex patches (C) | — | — | 5305 | — | 162 | 244 | — | — |
+| Alignment, degrees (A) | — | 13.30 | 14.32 | — | 14.65 | 18.20 | — | — |
+| Mean angle deviation, degrees (F) | — | 14.00 | 12.59 | — | 22.47 | 23.05 | — | — |
+| Angle deviation, 95th percentile (F) | — | 51.31 | 47.68 | — | 62.14 | 63.56 | — | — |
+| Mean aspect ratio (F) | — | 2.278 | 1.597 | — | 7.450 | 3.330 | — | — |
+| Area variation (F) | — | 0.698 | 0.362 | — | 1.017 | 1.195 | — | — |
 | Hausdorff, ‰ of the diagonal (H) | — | 93.86 | 36.36 | — | 529.09 | 528.69 | — | — |
-| Mean distance, ‰ (H) | — | 6.515 | 1.933 | — | 241.873 | 241.869 | — | — |
-| Thin parts: mean distance, % of a quad edge (V) | — | 80.5 | 30.1 | — | 1833.4 | 1833.5 | — | — |
-| Volume kept, % of the source (V) | — | — | — | — | 1.82 | 1.66 | — | — |
-| Sharp edges kept, % of their length (E) | — | 4.8 | 10.2 | — | 2.2 | 1.8 | — | — |
-| Edges on closed loops, % (L) | — | — | 2.7 | — | 20.6 | 0.0 | — | — |
-| Edges on spiralling loops, % (L) | — | — | 2.1 | — | 6.9 | 17.2 | — | — |
-| Spiralling loops (L) | — | — | 69 | — | 3 | 7 | — | — |
-| Edges on helices of any pitch, % (L) | — | — | 0.0 | — | 3.6 | 3.5 | — | — |
+| Mean distance, ‰ (H) | — | 6.515 | 1.933 | — | 241.873 | 242.249 | — | — |
+| Thin parts: mean distance, % of a quad edge (V) | — | 80.5 | 30.1 | — | 1833.4 | 1835.4 | — | — |
+| Volume kept, % of the source (V) | — | — | — | — | 1.82 | 1.86 | — | — |
+| Sharp edges kept, % of their length (E) | — | 4.8 | 10.2 | — | 2.2 | 2.0 | — | — |
+| Edges on closed loops, % (L) | — | — | 2.7 | — | 20.6 | 2.0 | — | — |
+| Edges on spiralling loops, % (L) | — | — | 2.1 | — | 6.9 | 16.7 | — | — |
+| Spiralling loops (L) | — | — | 69 | — | 3 | 8 | — | — |
+| Edges on helices of any pitch, % (L) | — | — | 0.0 | — | 3.6 | 0.0 | — | — |
 | Helices of pitch above 4, which the spiral count misses (L) | — | — | 0 | — | 0 | 0 | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | — | — | 87.0 | — | 72.5 | 82.8 | — | — |
-| Longest loop that stops at an irregular vertex, edges (L) | — | — | 64 | — | 26 | 17 | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | — | — | 87.0 | — | 72.5 | 81.3 | — | — |
+| Longest loop that stops at an irregular vertex, edges (L) | — | — | 64 | — | 26 | 22 | — | — |
 | Edges on loops from a border to a border, % (L) | — | — | 7.9 | — | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | — | 70.5 | 28.8 | — | 96.7 | 96.8 | — | — |
-| Time, seconds (T) | — | 2.97 | 1.37 | — | 3.13 | 39.25 | — | — |
+| Time, seconds (T) | — | 2.97 | 1.14 | — | 2.76 | 45.01 | — | — |
 
 Failures: quadriflow: cancelled; integer-grid: error: invalid mesh: work mesh has 2 non-manifold or inconsistently oriented edges.
 
@@ -794,7 +794,7 @@ Failures: quadriflow: cancelled; integer-grid: error: invalid mesh: work mesh ha
 | Longest loop that stops at an irregular vertex, edges (L) | 79 | 55 | 66 | 151 | 285 | 262 | — | — |
 | Edges on loops from a border to a border, % (L) | 46.1 | 28.9 | 20.7 | 13.9 | 18.8 | 9.4 | — | — |
 | Off budget, % (N) | 13.0 | 62.8 | 41.3 | 18.1 | 1.8 | 0.4 | — | — |
-| Time, seconds (T) | 18.30 | 4.29 | 7.00 | 311.67 | 43.70 | 67.76 | — | — |
+| Time, seconds (T) | 18.30 | 4.29 | 7.96 | 343.10 | 52.12 | 71.21 | — | — |
 
 ## mahaveer (extra)
 
@@ -824,7 +824,7 @@ Failures: quadriflow: cancelled; integer-grid: error: invalid mesh: work mesh ha
 | Longest loop that stops at an irregular vertex, edges (L) | — | — | 72 | 142 | 114 | — | — | — |
 | Edges on loops from a border to a border, % (L) | — | — | 15.8 | 22.7 | 9.1 | — | — | — |
 | Off budget, % (N) | — | 62.5 | 33.7 | 28.6 | 0.9 | 2.9 | — | — |
-| Time, seconds (T) | — | 2.29 | 5.63 | 88.45 | 156.93 | 216.12 | — | — |
+| Time, seconds (T) | — | 2.29 | 5.83 | 92.29 | 174.09 | 247.85 | — | — |
 
 Failures: quadriflow: cancelled.
 
@@ -833,30 +833,30 @@ Failures: quadriflow: cancelled.
 | | quadriflow | autoremesher | instant-meshes | integer-grid | openclare-uniform | openclare | handmade | openclare-as-handmade |
 |---|---|---|---|---|---|---|---|---|
 | **Valid meshes (V)** | 0/5 | 0/1 | 0/5 | 0/1 | 0/1 | 0/1 | 0/0 | 0/0 |
-| Quads made | — | 2388 | 4129 | — | 11908 | 11824 | — | — |
+| Quads made | — | 2388 | 4129 | — | 11960 | 11805 | — | — |
 | Irregular vertices (S) | — | 1056 | 1552 | — | 6177 | 6289 | — | — |
 | … of which above the minimum | — | — | — | — | — | — | — | — |
-| Base complex patches (C) | — | — | 3784 | — | — | 7572 | — | — |
-| Alignment, degrees (A) | — | 15.08 | 17.85 | — | 11.56 | 11.59 | — | — |
-| Mean angle deviation, degrees (F) | — | 28.51 | 20.41 | — | 16.89 | 18.13 | — | — |
-| Angle deviation, 95th percentile (F) | — | 82.76 | 58.14 | — | 67.15 | 66.40 | — | — |
-| Mean aspect ratio (F) | — | 7.658 | 2.427 | — | 6.144 | 47.072 | — | — |
-| Area variation (F) | — | 1.726 | 0.685 | — | 2.390 | 2.624 | — | — |
+| Base complex patches (C) | — | — | 3784 | — | — | 7577 | — | — |
+| Alignment, degrees (A) | — | 15.08 | 17.85 | — | 11.58 | 11.62 | — | — |
+| Mean angle deviation, degrees (F) | — | 28.51 | 20.41 | — | 16.91 | 18.14 | — | — |
+| Angle deviation, 95th percentile (F) | — | 82.76 | 58.14 | — | 67.06 | 65.34 | — | — |
+| Mean aspect ratio (F) | — | 7.658 | 2.427 | — | 6.125 | 47.057 | — | — |
+| Area variation (F) | — | 1.726 | 0.685 | — | 2.397 | 2.622 | — | — |
 | Hausdorff, ‰ of the diagonal (H) | — | 6.92 | 6.24 | — | 4.21 | 4.22 | — | — |
-| Mean distance, ‰ (H) | — | 1.765 | 1.031 | — | 0.282 | 0.286 | — | — |
-| Thin parts: mean distance, % of a quad edge (V) | — | 94.0 | 58.9 | — | 13.3 | 13.1 | — | — |
+| Mean distance, ‰ (H) | — | 1.765 | 1.031 | — | 0.281 | 0.286 | — | — |
+| Thin parts: mean distance, % of a quad edge (V) | — | 94.0 | 58.9 | — | 13.3 | 13.2 | — | — |
 | Volume kept, % of the source (V) | — | — | — | — | — | — | — | — |
 | Sharp edges kept, % of their length (E) | — | 3.1 | 10.3 | — | 55.7 | 55.1 | — | — |
-| Edges on closed loops, % (L) | — | — | 4.4 | — | — | 25.8 | — | — |
-| Edges on spiralling loops, % (L) | — | — | 12.9 | — | — | 30.6 | — | — |
-| Spiralling loops (L) | — | — | 480 | — | — | 5994 | — | — |
-| Edges on helices of any pitch, % (L) | — | — | 0.0 | — | — | 1.5 | — | — |
+| Edges on closed loops, % (L) | — | — | 4.4 | — | — | 22.8 | — | — |
+| Edges on spiralling loops, % (L) | — | — | 12.9 | — | — | 33.6 | — | — |
+| Spiralling loops (L) | — | — | 480 | — | — | 5991 | — | — |
+| Edges on helices of any pitch, % (L) | — | — | 0.0 | — | — | 4.6 | — | — |
 | Helices of pitch above 4, which the spiral count misses (L) | — | — | 0 | — | — | 0 | — | — |
-| Edges on loops that stop at an irregular vertex, % (L) | — | — | 76.6 | — | — | 42.5 | — | — |
+| Edges on loops that stop at an irregular vertex, % (L) | — | — | 76.6 | — | — | 42.6 | — | — |
 | Longest loop that stops at an irregular vertex, edges (L) | — | — | 23 | — | — | 31 | — | — |
 | Edges on loops from a border to a border, % (L) | — | — | 6.1 | — | — | 1.0 | — | — |
-| Off budget, % (N) | — | 70.2 | 48.4 | — | 48.9 | 47.8 | — | — |
-| Time, seconds (T) | — | 1.20 | 3.29 | — | 139.29 | 212.79 | — | — |
+| Off budget, % (N) | — | 70.2 | 48.4 | — | 49.5 | 47.6 | — | — |
+| Time, seconds (T) | — | 1.20 | 3.80 | — | 165.35 | 246.22 | — | — |
 
 Failures: quadriflow: cancelled; integer-grid: error: invalid mesh: work mesh has 10 non-manifold or inconsistently oriented edges.
 
@@ -888,7 +888,7 @@ Failures: quadriflow: cancelled; integer-grid: error: invalid mesh: work mesh ha
 | Longest loop that stops at an irregular vertex, edges (L) | — | — | 62 | — | 92 | 86 | — | — |
 | Edges on loops from a border to a border, % (L) | — | — | 11.6 | — | 1.9 | 2.2 | — | — |
 | Off budget, % (N) | — | 22.2 | 43.1 | 18.8 | 16.7 | 16.6 | — | — |
-| Time, seconds (T) | — | 2.93 | 5.25 | 249.01 | 44.28 | 57.38 | — | — |
+| Time, seconds (T) | — | 2.93 | 5.30 | 262.98 | 54.15 | 70.25 | — | — |
 
 Failures: quadriflow: cancelled.
 
@@ -920,7 +920,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | — | — | 106 | — | 136 | 240 | — | — |
 | Edges on loops from a border to a border, % (L) | — | — | 8.5 | — | 21.5 | 20.5 | — | — |
 | Off budget, % (N) | — | 48.6 | 14.5 | 10.7 | 1.6 | 1.4 | — | — |
-| Time, seconds (T) | — | 1.15 | 2.82 | 139.26 | 6.05 | 7.16 | — | — |
+| Time, seconds (T) | — | 1.15 | 3.07 | 155.45 | 8.37 | 7.53 | — | — |
 
 Failures: quadriflow: cancelled.
 
@@ -952,7 +952,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | — | 57 | 108 | 121 | 102 | 102 | — | — |
 | Edges on loops from a border to a border, % (L) | — | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | — | 73.5 | 4.3 | 17.4 | 13.4 | 13.4 | — | — |
-| Time, seconds (T) | — | 2.90 | 0.81 | 96.53 | 172.14 | 170.99 | — | — |
+| Time, seconds (T) | — | 2.90 | 0.59 | 117.05 | 179.19 | 199.97 | — | — |
 
 Failures: quadriflow: cancelled.
 
@@ -984,7 +984,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | 1548 | 584 | 260 | 142 | 38 | 74 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 3.3 | 18.5 | 2.3 | 1.6 | 0.7 | 0.1 | — | — |
-| Time, seconds (T) | 3.83 | 1.97 | 0.56 | 16.75 | 12.62 | 146.07 | — | — |
+| Time, seconds (T) | 3.83 | 1.97 | 0.62 | 17.12 | 13.83 | 196.59 | — | — |
 
 ## torus (calibration)
 
@@ -1014,7 +1014,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | 1065 | 0 | 214 | 0 | 0 | 0 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 14.3 | 5.7 | 0.9 | 9.0 | 0.3 | 0.3 | — | — |
-| Time, seconds (T) | 4.68 | 2.35 | 0.64 | 4.97 | 5.06 | 4.08 | — | — |
+| Time, seconds (T) | 4.68 | 2.35 | 0.87 | 5.02 | 5.07 | 4.39 | — | — |
 
 ## Summary
 
@@ -1025,9 +1025,9 @@ Number of models on which each tool has the best median, calibration shapes excl
 | Metric | quadriflow | autoremesher | instant-meshes | integer-grid | openclare-uniform | openclare | handmade | openclare-as-handmade |
 |---|---|---|---|---|---|---|---|---|
 | Irregular vertices (S) | 2 | 4 | 0 | 8 | 2 | 2 | 0 | 0 |
-| Base complex patches (C) | 0 | 2 | 0 | 1 | 7 | 5 | 0 | 0 |
+| Base complex patches (C) | 0 | 2 | 1 | 1 | 7 | 4 | 0 | 0 |
 | Alignment, degrees (A) | 0 | 1 | 0 | 2 | 1 | 11 | 0 | 0 |
-| Mean angle deviation, degrees (F) | 0 | 1 | 7 | 1 | 3 | 1 | 0 | 2 |
+| Mean angle deviation, degrees (F) | 0 | 1 | 7 | 1 | 4 | 2 | 0 | 0 |
 | Mean aspect ratio (F) | 1 | 0 | 13 | 1 | 0 | 0 | 0 | 0 |
 | Valid meshes (V) | 33/75 | 4/15 | 49/75 | 8/15 | 14/15 | 14/15 | 0/2 | 2/2 |
 
