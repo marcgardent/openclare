@@ -31,9 +31,9 @@ decision are for the author to take; the rest is already in the repository.
 
 ## Before the first preprint
 
-1. **Confirm** the licence (CC BY 4.0) and the author block. Choosing another
-   licence means changing the footnote of `paper.tex`, `LICENSE.md`, and
-   `license` in the reference of `CITATION.cff`.
+1. **Licence and author block**: done, confirmed by the author on 2026-10-26
+   (CC BY 4.0). Choosing another licence would mean changing the footnote of
+   `paper.tex`, `LICENSE.md`, and `license` in the reference of `CITATION.cff`.
 2. **ORCID**: done, 0009-0000-6466-3098 (<https://orcid.org/0009-0000-6466-3098>), in `CITATION.cff`,
    `.zenodo.json` and under the name in `paper.tex`. Zenodo, HAL and arXiv all
    link it. On the ORCID record, the published name is "Marc Gardent".
