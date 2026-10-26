@@ -636,9 +636,10 @@ impl<'a> Rows<'a> {
     /// The lengths changed as little as can be for the rows `active` to
     /// come back to `aimed`. If `pin`, arcs it would shorten below their
     /// floor are held there and the change looked for again, until none is
-    /// asked for less; otherwise they are cut off there.
-    pub fn closed(&self, active: &[usize], aimed: &[f64], pin: bool) -> Option<Vec<f64>> {
-        let (mut out, mut below) = self.solve(active, aimed)?;
+    /// asked for less; otherwise they are cut off there. With the lengths,
+    /// the multiplier of each row: what holding it costs, at the margin.
+    pub fn closed(&self, active: &[usize], aimed: &[f64], pin: bool) -> Option<(Vec<f64>, Vec<f64>)> {
+        let (mut out, mut below, mut multipliers) = self.solve(active, aimed)?;
         let mut held: Vec<usize> = Vec::new();
         let closing = self.closing;
         for _ in 0..if pin { PIN_ROUNDS } else { 0 } {
@@ -657,14 +658,14 @@ impl<'a> Rows<'a> {
             };
             let mut rows = Rows::new(&pinned);
             let again: Vec<usize> = active.iter().map(|&i| rows.push(self.rows[i].row.clone())).collect();
-            (out, below) = rows.solve(&again, aimed)?;
+            (out, below, multipliers) = rows.solve(&again, aimed)?;
         }
-        Some(out)
+        Some((out, multipliers))
     }
 
-    /// The least change for the rows `active`, and the arcs it asks for
-    /// less than nothing.
-    fn solve(&self, active: &[usize], aimed: &[f64]) -> Option<(Vec<f64>, Vec<usize>)> {
+    /// The least change for the rows `active`, the arcs it asks for less
+    /// than nothing, and the multipliers of the rows.
+    fn solve(&self, active: &[usize], aimed: &[f64]) -> Option<(Vec<f64>, Vec<usize>, Vec<f64>)> {
         let closing = self.closing;
         let size = active.len();
         let mut matrix = vec![0.0; size * size];
@@ -705,7 +706,7 @@ impl<'a> Rows<'a> {
             }
             out[arc] = (out[arc] + change).max(closing.floor[arc]);
         }
-        Some((out, below))
+        Some((out, below, y))
     }
 }
 

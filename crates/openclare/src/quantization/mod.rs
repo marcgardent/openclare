@@ -551,7 +551,7 @@ impl WalkCancelling {
         report: &mut Report,
         every: &[tubes::Turn],
         held: &[tubes::Turn],
-        cut: bool,
+        cut: Option<f64>,
         from: Option<&Lengths>,
         closing: &tubes::Closing,
         sphere: &[bool],
@@ -578,14 +578,29 @@ impl WalkCancelling {
         let mut active: Vec<usize> = held.iter().map(|turn| rows.push(turn.shift.clone())).collect();
         while !held.is_empty() && projections != usize::MAX {
             projections += 1;
-            let pin = !cut && experiment.active_set;
-            let Some(closed) = rows.closed(&active, &vec![0.0; held.len()], pin) else { break };
+            let pin = experiment.active_set && (cut.is_none() || experiment.round_active_set);
+            let Some((closed, multipliers)) = rows.closed(&active, &vec![0.0; held.len()], pin) else { break };
             let left: Vec<f64> = held.iter().map(|turn| tubes::value(&turn.shift, &closed).abs()).collect();
-            let (worst, at) =
+            let (worst, mut at) =
                 left.iter().enumerate().fold((0.0, 0), |(w, a), (k, &v)| if v > w { (v, k) } else { (w, a) });
             if worst <= 1e-3 {
-                aimed = closed;
-                break;
+                // (Experiment.) In the rounds of cuts, the turns are let go,
+                // the dearest to hold first, until the least change leaves
+                // the lengths within the room the deviation cap gives.
+                let scale = from.map_or(1.0, |from| from.1);
+                let moved =
+                    closed.iter().zip(real).map(|(a, b)| (a - b).abs()).sum::<f64>() * scale / real.len().max(1) as f64;
+                match cut {
+                    Some(room) if pin && moved > room => {
+                        at = (0..multipliers.len())
+                            .max_by(|&i, &j| multipliers[i].abs().total_cmp(&multipliers[j].abs()))
+                            .unwrap_or(0);
+                    }
+                    _ => {
+                        aimed = closed;
+                        break;
+                    }
+                }
             }
             held.remove(at);
             active.remove(at);
@@ -609,9 +624,10 @@ impl WalkCancelling {
             x = imported;
         } else {
             let target: Vec<f64> = aimed.iter().map(|length| scale * length).collect();
-            let (budget, aimed_at): (_, &[&tubes::Turn]) = if cut {
+            let (budget, aimed_at): (_, &[&tubes::Turn]) = if cut.is_some() {
                 let wanted = request.quads.unwrap_or_else(|| count_quads(tmesh, &x));
-                (Some((wanted, (request.tolerance * wanted as f64) as usize)), &[])
+                let budget = Some((wanted, (request.tolerance * wanted as f64) as usize));
+                (budget, if experiment.aimed_repair && experiment.round_aimed_repair { &held } else { &[] })
             } else if !experiment.aimed_repair {
                 (None, &[])
             } else {
@@ -668,6 +684,7 @@ impl WalkCancelling {
         first: &Lengths,
         closing: &tubes::Closing,
         sphere: &[bool],
+        room: f64,
     ) -> Vec<(Lengths, usize)> {
         // A way and the same way taken the other way round are one ring.
         let key = |turn: &tubes::Turn| -> Vec<(usize, i64)> {
@@ -725,7 +742,7 @@ impl WalkCancelling {
                 report,
                 &every,
                 &held,
-                true,
+                Some(room),
                 Some(&current),
                 closing,
                 sphere,
@@ -878,6 +895,9 @@ impl Quantizer for WalkCancelling {
         let close = request.close_turns;
         let clock = std::time::Instant::now();
         let plain = self.search(tmesh, &network, &pull, &real, request, &mut report, None);
+        if std::env::var_os("OPENCLARE_DEBUG_FOLDS").is_some() {
+            debug_folds(&pull, &real, &plain);
+        }
         if std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some() {
             eprintln!(
                 "plain search {:.1} s, {} arcs, {} patches",
@@ -906,6 +926,10 @@ impl Quantizer for WalkCancelling {
                 eprintln!("plain lengths: deviation {:.3}", deviation(&plain, &real));
             }
             let most_deviation = most_deviation(deviation(&plain, &real), experiment);
+            // (Experiment.) The room the least change has in the rounds of
+            // cuts, with the active set: what the cap leaves above the
+            // deviation of the plain lengths, rounding's share.
+            let room = if experiment.round_room { most_deviation - deviation(&plain, &real) } else { f64::INFINITY };
             // How far the vertices along the arcs are from the folds of the
             // surface they cross; closing loops may not take them further off
             // than the plain lengths left them, by more than chance would.
@@ -924,7 +948,17 @@ impl Quantizer for WalkCancelling {
             let sound = plain_spirals.is_finite() && lattice::build(tmesh, &plain.0).defects(tmesh).is_empty();
             // The least change of the real lengths that closes turns, its
             // part for the rectangles solved once for every way.
-            let weight: Vec<f64> = real.iter().map(|length| 1.0 / (length + 1.0)).collect();
+            // (Experiment.) At the scale of the plain lengths, the weights of
+            // the search that follows.
+            let projection_scale = if experiment.scaled_projection { plain.1 } else { 1.0 };
+            let weight: Vec<f64> = real.iter().map(|length| 1.0 / (projection_scale * length + 1.0)).collect();
+            if std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some() {
+                eprintln!(
+                    "plain scale {:.3}, mean real length {:.3}",
+                    plain.1,
+                    real.iter().sum::<f64>() / arcs.max(1) as f64
+                );
+            }
             let closing =
                 if sound { tubes::Closing::new(tmesh, &real, &weight, experiment.active_set_floor) } else { None };
             // The ways, each with the turns it holds; the same turns held
@@ -980,7 +1014,7 @@ impl Quantizer for WalkCancelling {
                         &mut own,
                         found,
                         held,
-                        false,
+                        None,
                         None,
                         closing.unwrap(),
                         &sphere,
@@ -1003,6 +1037,7 @@ impl Quantizer for WalkCancelling {
                             &tried,
                             closing.unwrap(),
                             &sphere,
+                            room,
                         )
                     } else {
                         Vec::new()
@@ -1133,6 +1168,37 @@ impl Quantizer for WalkCancelling {
         let first = kept.next().expect("the plain lengths are always kept");
         Ok(Quantization { candidates: kept.collect(), ..first })
     }
+}
+
+/// Prints how often the fold term of the cost is active at the `plain`
+/// lengths: arcs crossing a fold, those where it moves the best whole length
+/// of the arc taken alone, and those where the cost of the arc is not convex
+/// at its length (DT-144).
+fn debug_folds(pull: &[Vec<(f64, f64)>], real: &[f64], plain: &Lengths) {
+    let (x, scale, _, lower) = plain;
+    let target: Vec<f64> = real.iter().map(|length| scale * length).collect();
+    let weight: Vec<f64> = target.iter().map(|length| 1.0 / (length + 1.0)).collect();
+    let with = Cost { target: &target, weight: &weight, lower, bias: &[], folds: pull };
+    let without = Cost { target: &target, weight: &weight, lower, bias: &[], folds: &[] };
+    let best = |cost: &Cost, arc: usize| -> i64 {
+        let around = target[arc].round() as i64;
+        (around - 3..=around + 3).min_by(|&a, &b| cost.of(arc, a).total_cmp(&cost.of(arc, b))).unwrap_or(around)
+    };
+    let (mut crossing, mut moved, mut concave, mut sharp) = (0, 0, 0, 0);
+    for arc in 0..x.len() {
+        if pull[arc].iter().all(|&(_, strength)| strength <= 0.0) {
+            continue;
+        }
+        crossing += 1;
+        sharp += pull[arc].iter().filter(|&&(_, strength)| strength > 0.0).count();
+        moved += (best(&with, arc) != best(&without, arc)) as usize;
+        let at = x[arc];
+        concave += (at >= 1 && with.of(arc, at - 1) + with.of(arc, at + 1) - 2.0 * with.of(arc, at) < 0.0) as usize;
+    }
+    eprintln!(
+        "folds: {sharp} folds with a pull on {crossing} of {} arcs; best length moved on {moved}, not convex at the length found on {concave}",
+        x.len()
+    );
 }
 
 /// Lengths kept to choose from: their spirals, where they were counted, the

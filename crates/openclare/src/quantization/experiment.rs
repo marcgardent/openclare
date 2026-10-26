@@ -53,6 +53,20 @@ pub struct Experiment {
     /// `OPENCLARE_ACTIVE_SET_FLOOR=<share>`: that floor, as a share of the
     /// real length of each arc. 0, the default, is nothing.
     pub active_set_floor: f64,
+    /// On with `OPENCLARE_ROUND_ACTIVE_SET`: the active set in the rounds of
+    /// closing by cuts as well (DT-144).
+    pub round_active_set: bool,
+    /// On with `OPENCLARE_ROUND_AIMED_REPAIR`: the walks aimed at each turn
+    /// held in the rounds of closing by cuts as well (DT-144).
+    pub round_aimed_repair: bool,
+    /// On with `OPENCLARE_ROUND_ROOM`: with the active set in the rounds,
+    /// turns let go, the dearest first, until the least change keeps within
+    /// the room the deviation cap leaves (DT-144).
+    pub round_room: bool,
+    /// On with `OPENCLARE_SCALED_PROJECTION`: the least change weighs each
+    /// arc as the search does at the scale of the plain lengths,
+    /// `1 / (scale * length + 1)`, not `1 / (length + 1)` (DT-144).
+    pub scaled_projection: bool,
     /// Off with `OPENCLARE_NO_DEVIATION_CAP`: the most the lengths closing
     /// loops may be further from the real ones than the plain search's.
     pub deviation_cap: bool,
@@ -77,6 +91,10 @@ impl Default for Experiment {
             aimed_repair: true,
             active_set: true,
             active_set_floor: 0.0,
+            round_active_set: false,
+            round_aimed_repair: false,
+            round_room: false,
+            scaled_projection: false,
             deviation_cap: true,
             deviation_floor: true,
             fold_guard: true,
@@ -103,6 +121,10 @@ impl Experiment {
             cut_rounds: !off("OPENCLARE_NO_CUT_ROUNDS"),
             aimed_repair: !off("OPENCLARE_NO_AIMED_REPAIR"),
             active_set: !off("OPENCLARE_NO_ACTIVE_SET"),
+            round_active_set: off("OPENCLARE_ROUND_ACTIVE_SET"),
+            round_aimed_repair: off("OPENCLARE_ROUND_AIMED_REPAIR"),
+            round_room: off("OPENCLARE_ROUND_ROOM"),
+            scaled_projection: off("OPENCLARE_SCALED_PROJECTION"),
             deviation_cap: !off("OPENCLARE_NO_DEVIATION_CAP"),
             deviation_floor: !off("OPENCLARE_NO_DEVIATION_FLOOR"),
             fold_guard: !off("OPENCLARE_NO_FOLD_GUARD"),

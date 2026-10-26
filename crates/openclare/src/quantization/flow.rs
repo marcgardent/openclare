@@ -55,6 +55,14 @@ pub(super) const SHORTFALL: f64 = 1.0e7;
 /// distance off the target.
 pub(super) const FOLD_PULL: f64 = 4.0;
 
+/// `OPENCLARE_CONVEX_FOLDS` (an experiment, DT-144): the fold term of the
+/// cost made convex, each fold pulling towards the vertex nearest it at the
+/// target length.
+fn convex_folds() -> bool {
+    static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *ON.get_or_init(|| std::env::var_os("OPENCLARE_CONVEX_FOLDS").is_some())
+}
+
 /// Cost differences below this are rounding noise.
 const NOISE: f64 = 1.0e-9;
 
@@ -70,7 +78,10 @@ impl Cost<'_> {
                 .iter()
                 .map(|&(share, strength)| {
                     let at = share * x as f64;
-                    strength * (at - at.round()).powi(2)
+                    // (Experiment.) A convex stand-in: the pull towards the
+                    // vertex nearest the fold at the target, not at `x`.
+                    let nearest = if convex_folds() { (share * self.target[arc]).round() } else { at.round() };
+                    strength * (at - nearest).powi(2)
                 })
                 .sum()
         });
