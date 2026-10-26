@@ -374,12 +374,15 @@ exports.
   whole lengths closing the other held turns, and, from the claims of a paper,
   the certificates of its table with lengths closing each set without each of
   its turns; it writes them to `Check/certificates/` (see the README there).
+  Its numbers are floats read as fractions, or, when that fails (large cores,
+  vertices with large denominators), solved again exactly over the fractions.
   `Main.lean` trusts none of it: it solves `λ` from the claimed `c`, checks
   `Σ u shiftForm + λᵀ B = c ≥ 0` and `c · b > 0` with `balance` and
   `shiftForm` (the right side of `TMesh.not_closable_iff`), then bounds
   `τ_P(H)` below by the disjoint certified cores (`forced_of_certificates`) and
-  by the least set meeting the certified cores (`meets_infeasible`), above by
-  the closing lengths, and compares with the papers.
+  by the least set meeting the certified cores (`meets_infeasible`, a branch
+  and bound stopped after 100,000 nodes), above by the closing lengths, and
+  compares with the papers.
 * *Fox–Burgers* (genus zero). `Check/develop.py` cuts the surface along the
   arcs off a breadth-first tree of the patches (a spanning tree of the nodes on
   a sphere), develops it at the whole lengths, and writes each jump across the
@@ -397,17 +400,62 @@ exports.
   metric and holonomy" (`ĥ(γ̄)` the translation by `α e₁ - shift e₂`); the
   along component `-α` written in issue #141 is not what the data give.
 
-Results on 2026-10-25 (i7-7700K, 4 cores, shared, load about 4 to 6), partial:
-on the fixtures (blob, six ways, and torus) every check passes: `τ_P(H)` = 0,
-0, 1, 0, 1, 2 on the ways of blob, exact (lower = upper bound), 8 cores, all
-certificates valid; 111 of 111 jumps and 136 of 136 turns agree with
-`α e₁ - shift e₂` and the Fox sum; the torus is out of scope of the second check
-(not a sphere). On the male body of the paper, way 0: 1 of 1 certificate,
-`τ_P(H) = 1` checked exactly, Table `tab:iis` row 1 valid with the paper's
-multiplier and bounded arc 1937, 1,294 of 1,294 jumps, 91 of 91 turns. Ways 1
-to 7 of the male body and the fresh exports were not run to the end. Each check
-fails on corrupted data (a multiplier, a closing length, a developed place
+Results on 2026-10-26, all checks above, on the male body of the papers
+(exported before commit `c8bf2be`, 10,590 quads) and on exports from commit
+`524b759` (the engine with DT-162) of the male body (10,520 quads) and of blob,
+spot, rock and torus at about 3,000 quads. Every check passes on every way:
+
+| Export | Ways | Turns | Balance rows | Held | Certificates valid | `τ_P(H)` per way | Fox jumps, turns |
+|---|---|---|---|---|---|---|---|
+| male body, papers | 8 | 1,299 | 12,416 | 765 | 51 of 51 | 1, 5, 1, 4, 1, 6, 1, 9 | 10,352, 1,299 |
+| male body, `524b759` | 8 | 1,708 | 12,896 | 1,020 | 1,636 of 1,636 | 1, 5, 3, 12, 5, 20–30, 8, 28–37 | 10,728, 1,708 |
+| blob, `524b759` | 6 | 136 | 792 | 70 | 8 of 8 | 0, 0, 1, 0, 1, 2 | 666, 136 |
+| spot, `524b759` | 6 | 484 | 2,628 | 249 | 31 of 31 | 0, 0, 1, 2, 6, 7 | 2,190, 484 |
+| rock, `524b759` | 6 | 226 | 2,232 | 169 | 78 of 78 | 0, 0, 0, 0, 4, 4 | 1,866, 226 |
+| torus, `524b759` | T-mesh only | 0 | 6 | 0 | | | not a sphere |
+
+A single number is exact (lower bound = upper bound). Blob, spot and rock
+export ways 0, 1, 3, 4, 5, 7: ways 2 and 6 hold the same turns as another and
+are not run. The torus holds no turn at `524b759` (its four turns close at the
+lengths of the parametrization, DT-162), so it has no way; its T-mesh is
+checked. In ways 5 and 7 of the fresh male body, of 734 and 845 cores, the
+branch and bound stops before the least set meeting the cores (30 and 37 by
+HiGHS in `certify.py`, not checked): the bounds are the disjoint cores and the
+closing lengths. On all 3,853 turns the checks of the first table agree as on
+2026-10-25: the shift forms modulo the balances only, the walked lengths
+everywhere, the real lengths on the 2,692 turns that keep their share, the whole
+lengths on 13,261 half-integers; the real shift differs between the two
+representatives by up to 6.6 on the male body of the papers and 1.2 on the
+fresh one. Suzanne at `524b759` (10 T-meshes, all with borders) is skipped.
+
+Against the papers, on their male body: the held turns (48, 78, 52, 86, 84,
+160, 88, 169) and `τ_P(H)` = 1, 5, 1, 4, 1, 6, 1, 9 agree, exactly (in way 7,
+8 of the 21 cores are disjoint and the least set meeting them is 9). Table
+`tab:iis`: its 15 rows give 25 certificates over the ways, all valid with the
+paper's multipliers (up to the sign of each turn in the other ways of a row)
+and bounded arcs, and every set closes, at exact whole lengths, without each of
+its turns (76 of 76): rows 2 to 8, without exact check in the paper, are
+irreducible, and row 15 closes without each of its 15 turns (the paper, 14 of
+15 within its time limit). The Fox–Burgers formula holds on all 1,299 turns of
+the eight ways, way 2 included. One sentence disagrees: Section "Turns every
+quantization within bounds leaves shifted", "On the male body", says the forced
+turn of ways 0, 2, 4 and 6 is the wrist. In way 6 the wrist is held but
+closable (arc 1937 is bounded by 1 only in ways 0, 1, 2 and 4); its only core
+is turns 57 and 58 (Table `tab:iis`, row 7, arc 1241), one of which is forced. Table `tab:iis` (row 1: ways 0, 1, 2, 4) and the
+companion note ("in four ways (0, 1, 2 and 4)") agree with the data.
+
+Each check fails on corrupted data (way 1 of the papers' body: a multiplier of a
+core or of a set of the table, a closing length, a developed place, each
 changed by one).
+
+Runtimes, on the i7-7700K (4 cores, 8 threads, 62 GB) shared with a virtual
+machine of 6 cores and desktop use, load 4 to 9. `certify.py`: 50 minutes of
+processor time on the male body of the papers (1 to 21 minutes a way), 22
+minutes with four ways at a time; on the fresh exports 3 minutes for blob,
+spot and rock, 67 minutes for the male body, of which 27 and 29 in ways 5 and
+7. `make lean-check`: 6 minutes with 3 jobs on the male body of the papers (13
+minutes of processor time), 13 minutes on the fresh one (28 minutes, 9 each
+for the 734 and 845 certificates of ways 5 and 7), 2 minutes on blob, spot, rock and torus.
 
 **When it runs.**
 - **CI**, on every change of this folder, runs the check on two small exports kept in

@@ -29,6 +29,7 @@ the way it converts when the hash matches.
 import argparse
 import hashlib
 import json
+import math
 import os
 import sys
 import time
@@ -58,6 +59,36 @@ def form(row):
 
 def fraction(x):
     return [x.numerator, x.denominator]
+
+
+def solve(equations, guess):
+    """An exact solution of `equations`, each `({unknown: coefficient}, right side)` over
+    the fractions, by elimination; the unknowns left free take the value of `guess`, as a
+    fraction. None if there is none."""
+    pivots, order = {}, []
+    for form, rhs in equations:
+        row = {v: Fraction(c) for v, c in form.items() if c}
+        rhs = Fraction(rhs)
+        while (hit := next((v for v in row if v in pivots), None)) is not None:
+            f, (other, value) = row[hit], pivots[hit]
+            for v, c in other.items():
+                row[v] = row.get(v, 0) - f * c
+                if not row[v]:
+                    del row[v]
+            rhs -= f * value
+        if not row:
+            if rhs:
+                return None
+            continue
+        v = next(iter(row))
+        p = row[v]
+        pivots[v] = ({w: c / p for w, c in row.items()}, rhs / p)
+        order.append(v)
+    value = [Fraction(float(x)).limit_denominator(1000) for x in guess]
+    for v in reversed(order):
+        row, rhs = pivots[v]
+        value[v] = rhs - sum((c * value[w] for w, c in row.items() if w != v), Fraction(0))
+    return value
 
 
 class Way:
@@ -181,7 +212,8 @@ class Way:
         return core
 
     def certificate(self, turns, u=None):
-        """Exact (u, c), u given or found (least Σ |u| with c · b = 1)."""
+        """Exact (u, c), u given or found (least Σ |u| with c · b = 1): c read as
+        fractions, else λ solved again exactly (`solve`)."""
         n, m, R = self.n, len(turns), self.B.shape[0]
         St, Bt = self.H(turns).T.tocsr(), self.B.T.tocsr()
         if u is None:
@@ -192,7 +224,7 @@ class Way:
                      bounds=Bounds(np.concatenate([np.zeros(2 * m), np.full(R, -np.inf)]), np.inf))
             if r.x is None:
                 return None
-            uf = r.x[:m] - r.x[m:2 * m]
+            uf, lf = r.x[:m] - r.x[m:2 * m], r.x[2 * m:]
             candidates = [[Fraction(float(x)).limit_denominator(q) for x in uf] for q in (12, 60, 1000, 100000)]
         else:
             candidates = [u]
@@ -219,12 +251,45 @@ class Way:
                 c = {a: x for a, x in c.items() if x != 0}
                 if self.valid(turns, uq, c):
                     return uq, c
-        return None
+            # Else λ solved again exactly, c kept at zero where the program puts it.
+            exact = self.combination(turns, uq)
+            lam = solve([(dict(self.cols[a]), -exact[a]) for a in range(n) if cf[a] <= 1e-7], r.x)
+            if lam is not None:
+                for a in range(n):
+                    exact[a] += sum((lam[s] * v for s, v in self.cols[a]), Fraction(0))
+                c = {a: x for a, x in enumerate(exact) if x != 0}
+                if self.valid(turns, uq, c):
+                    return uq, c
+        if u is not None:
+            return None
+        # Else u and λ solved again together, exactly: c kept at zero where the first
+        # program puts it, and c · b = 1.
+        cf = St @ uf + Bt @ lf
+
+        def row(arcs):
+            out = {}
+            for a, weight in arcs:
+                for i, k in enumerate(turns):
+                    out[i] = out.get(i, 0) + weight * self.shift[k].get(a, 0)
+                for s, v in self.cols[a]:
+                    out[m + s] = out.get(m + s, 0) + weight * v
+            return out
+        equations = [(row([(a, 1)]), 0) for a in range(n) if cf[a] <= 1e-9]
+        equations.append((row([(a, x) for a, x in enumerate(self.b) if x]), 1))
+        x = solve(equations, np.concatenate([uf, lf]))
+        if x is None:
+            return None
+        uq, c = x[:m], self.combination(turns, x[:m])
+        for a in range(n):
+            c[a] += sum((x[m + s] * v for s, v in self.cols[a]), Fraction(0))
+        c = {a: v for a, v in enumerate(c) if v != 0}
+        return (uq, c) if self.valid(turns, uq, c) else None
 
     def closing(self, turns, seconds=60):
         """Whole ℓ ∈ P closing `turns`, checked exactly: the nearest to the engine's
         lengths found within `seconds`, else any, else real lengths made whole by their
-        common denominator (Remark "Whole solutions exist at some size")."""
+        common denominator (Remark "Whole solutions exist at some size"): the vertex of a
+        linear program read as fractions, or solved again exactly."""
         n, k = self.n, len(turns)
         S = self.H(turns) if k else csr_matrix((0, n))
         A = vstack([hstack([self.B, coo_matrix((self.B.shape[0], 2 * n))]),
@@ -252,15 +317,21 @@ class Way:
                     method="highs")
         if r.status != 0:
             return None
-        for q in (12, 60, 1000, 10 ** 6):
-            fx = [Fraction(float(t)).limit_denominator(q) for t in r.x]
-            den = 1
-            for t in fx:
-                den = den * t.denominator // np.gcd(den, t.denominator)
+        candidates = [[Fraction(float(t)).limit_denominator(q) for t in r.x] for q in (12, 60, 1000, 10 ** 6)]
+        for fx in candidates + [self.vertex(turns, r.x)]:
+            if fx is None:
+                continue
+            den = math.lcm(*(t.denominator for t in fx))
             whole = [int(t * den) for t in fx]
             if self.closes(turns, whole):
                 return whole
         return None
+
+    def vertex(self, turns, x):
+        """Exact ℓ with B ℓ = 0 and the shifts of `turns` zero, the arcs at their bound
+        in `x` kept there, the others near `x` (`solve`), or None."""
+        at_bound = [({a: 1}, self.b[a]) for a in range(self.n) if x[a] <= self.b[a] + 1e-9]
+        return solve(at_bound + [(row, 0) for row in self.rows + [self.shift[k] for k in turns]], x)
 
 
 def hitting_set(m, cores, seconds=600):
