@@ -521,14 +521,22 @@ def packing (cores : Array (Array Nat)) : Nat := Id.run do
       k := k + 1
   return k
 
-/-- The least size of a set meeting every core, if below `best` (branch and bound). -/
-partial def leastHitting (cores : Array (Array Nat)) (chosen : List Nat) (best : Nat) : Nat :=
+/-- The least size of a set meeting every core, if below `best` (branch and bound), with
+the nodes left of `fuel`; `none` when the search needs more than `fuel` nodes. -/
+partial def leastHitting (cores : Array (Array Nat)) (chosen : List Nat) (best fuel : Nat) :
+    Option (Nat × Nat) :=
+  if fuel = 0 then none else
   let left := cores.filter fun c => !c.any chosen.contains
-  if left.isEmpty then min best chosen.length
-  else if chosen.length + packing left ≥ best then best
+  if left.isEmpty then some (min best chosen.length, fuel - 1)
+  else if chosen.length + packing left ≥ best then some (best, fuel - 1)
   else
     let c := left.foldl (fun c d => if d.size < c.size then d else c) left[0]!
-    c.foldl (fun best e => leastHitting cores (e :: chosen) best) best
+    c.foldl (fun found e => found.bind fun (best, fuel) => leastHitting cores (e :: chosen) best fuel)
+      (some (best, fuel - 1))
+
+/-- The nodes `leastHitting` may visit: beyond, only the disjoint cores bound `τ_P(H)`
+below. -/
+def hittingFuel : Nat := 100000
 
 def showQ (x : ℚ) : String := if x.den = 1 then s!"{x.num}" else s!"{x.num}/{x.den}"
 
@@ -565,7 +573,8 @@ def checkForced (n R : Nat) (cols rows : Array (Array (Nat × Int)))
     (f.disjoint.toList.all fun i => f.disjoint.toList.all fun j =>
       i == j || !(f.cores[i]!.turns.any (f.cores[j]!.turns.contains ·)))
   let k := if disjointOk then f.disjoint.size else 0
-  let h := leastHitting valid [] (valid.size + 1)
+  let hit := (leastHitting valid [] (valid.size + 1) hittingFuel).map (·.1)
+  let h := hit.getD 0
   IO.println s!"    cores: {valid.size} of {f.cores.size} certificates valid; {f.disjoint.size} pairwise disjoint: {disjointOk}"
   -- The upper bound.
   let X := f.shifted.toList
@@ -575,7 +584,7 @@ def checkForced (n R : Nat) (cols rows : Array (Array (Nat × Int)))
       else IO.println "    X: a turn is not held"; pure none
     | .error e => IO.println s!"    lengths closing H minus X: INVALID, {e}"; pure none
   let lowerB := max k h
-  IO.println s!"    τ_P(H) ≥ {k} (disjoint certified cores), ≥ {h} (least set meeting the certified cores), ≤ {match upper with | some u => s!"{u} (whole lengths of P closing H minus X, |X| = {u})" | none => "? (no lengths checked)"}{match f.tauClaim with | some t => s!"; paper {t}" | none => ""}"
+  IO.println s!"    τ_P(H) ≥ {k} (disjoint certified cores), {match hit with | some h => s!"≥ {h} (least set meeting the certified cores)" | none => s!"least set meeting the certified cores not searched past {hittingFuel} nodes"}, ≤ {match upper with | some u => s!"{u} (whole lengths of P closing H minus X, |X| = {u})" | none => "? (no lengths checked)"}{match f.tauClaim with | some t => s!"; paper {t}" | none => ""}"
   if let some t := f.tauClaim then
     let agrees := lowerB ≤ t && upper.all (t ≤ ·)
     let exact := upper == some lowerB
