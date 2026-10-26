@@ -22,7 +22,7 @@ use std::str::FromStr;
 use crate::error::{Error, Result};
 use crate::math::Rng;
 use crate::tmesh::TMesh;
-pub use experiment::Experiment;
+pub use experiment::{Experiment, slow_log};
 use flow::{Cost, Network};
 pub use lattice::{Lattice, Source};
 use rayon::prelude::*;
@@ -1063,10 +1063,15 @@ impl Quantizer for WalkCancelling {
                 let start = kept.first().map_or(&plain, |first| &first.lengths).clone();
                 let found = rings::rounds(tmesh, &real, &start, wanted, allowed, most_deviation, slow);
                 let mut added = 0;
-                for (x, lower, closed) in found {
+                for (round, (x, lower, closed)) in found.into_iter().enumerate() {
                     let quads = count_quads(tmesh, &x);
                     let tried = (x, start.1, quads, lower);
                     let spirals = spirals(tmesh, &tried.0);
+                    slow_log(&format!(
+                        "round {} {round}: spirals {spirals:.5} (engine {fewest:.5}, plain {plain_spirals:.5}), {closed} rings closed, same as start {}",
+                        experiment::call_name(tmesh),
+                        tried.0 == start.0
+                    ));
                     if spirals < plain_spirals - 1e-9
                         && network.is_balanced(&tried.0)
                         && lattice::build(tmesh, &tried.0).defects(tmesh).is_empty()
@@ -1085,6 +1090,14 @@ impl Quantizer for WalkCancelling {
                     }
                 }
                 kept.sort_by(fewest_first);
+                slow_log(&format!(
+                    "piece {}: {added} kept, first {} at {:.5}, {:.1} s, cpu {:.1} s",
+                    experiment::call_name(tmesh),
+                    if kept.first().is_some_and(|first| first.from_selector) { "selector" } else { "engine" },
+                    kept.first().map_or(plain_spirals, |first| first.spirals.unwrap_or(plain_spirals)),
+                    clock.elapsed().as_secs_f64(),
+                    process_cpu_seconds() - cpu
+                ));
                 if std::env::var_os("OPENCLARE_DEBUG_WORK").is_some() {
                     eprintln!(
                         "slow quality: {} rounds by {}, {added} lengths kept, {:.1} s, cpu {:.1} s; the first is {}",
@@ -1101,6 +1114,54 @@ impl Quantizer for WalkCancelling {
                 }
             } else if request.slow.is_some() && std::env::var_os("OPENCLARE_DEBUG_WORK").is_some() {
                 eprintln!("slow quality: not posed, the engine's lengths spiral {fewest:.4}, sound {sound}");
+            }
+            // (Experiment.) The control of the slow quality mode: other draws
+            // of the per-arc preference, each closed as the engine closes,
+            // posed where the rounds would be and kept on the same terms.
+            if experiment.extra_draws > 0 && sound && fewest > 0.0 {
+                let clock = std::time::Instant::now();
+                let mut added = 0;
+                for draw in 1..=experiment.extra_draws as u64 {
+                    let other = Request {
+                        slow: None,
+                        experiment: Experiment {
+                            jitter_seed: experiment.jitter_seed.wrapping_add(draw),
+                            extra_draws: 0,
+                            export: None,
+                            ..experiment.clone()
+                        },
+                        ..request.clone()
+                    };
+                    // Only the lengths its closing kept: its plain ones are
+                    // no other candidate.
+                    let Ok(drawn) = self.quantize(tmesh, &other) else { continue };
+                    if drawn.report.turns_held == 0 {
+                        continue;
+                    }
+                    let x: Vec<i64> = drawn.lengths.iter().map(|&length| length as i64).collect();
+                    let tried = (x, drawn.report.scale, drawn.report.quads, plain.3.clone());
+                    let spirals = spirals(tmesh, &tried.0);
+                    if spirals < plain_spirals - 1e-9
+                        && network.is_balanced(&tried.0)
+                        && lattice::build(tmesh, &tried.0).defects(tmesh).is_empty()
+                        && tried.2.abs_diff(wanted) <= allowed
+                        && deviation(&tried, &real) <= most_deviation
+                        && off_folds(&folds, &tried.0) <= most_off_folds
+                        && kept.iter().all(|other| other.lengths.0 != tried.0)
+                    {
+                        added += 1;
+                        kept.push(Kept { spirals: Some(spirals), held: drawn.report.turns_held, ..Kept::new(tried) });
+                    }
+                }
+                let first_before = kept.first().map(|first| first.lengths.0.clone());
+                kept.sort_by(fewest_first);
+                slow_log(&format!(
+                    "draws {}: {added} kept, first {} at {:.5} (engine {fewest:.5}), {:.1} s",
+                    experiment::call_name(tmesh),
+                    if kept.first().map(|first| &first.lengths.0) == first_before.as_ref() { "engine" } else { "draw" },
+                    kept.first().map_or(plain_spirals, |first| first.spirals.unwrap_or(plain_spirals)),
+                    clock.elapsed().as_secs_f64()
+                ));
             }
             kept.truncate(1 + MORE_CANDIDATES);
             kept.push(Kept { spirals: Some(plain_spirals), ..Kept::new(plain) });
@@ -1697,6 +1758,24 @@ mod tests {
             assert_eq!(slow.report, standard.report);
             let lengths = |q: &Quantization| q.candidates.iter().map(|c| c.lengths.clone()).collect::<Vec<_>>();
             assert_eq!(lengths(&slow), lengths(&standard));
+        }
+    }
+
+    #[test]
+    fn other_draws_are_posed_where_the_selector_would_be_and_never_spiral_more() {
+        for (tmesh, quads) in [(cube(), 300), (ball(), 400), (ring(), 400)] {
+            let standard = quantized(&tmesh, Some(quads));
+            let experiment = Experiment { extra_draws: 3, ..Experiment::default() };
+            let request = Request { quads: Some(quads), experiment, ..Default::default() };
+            let drawn = WalkCancelling::default().quantize(&tmesh, &request).unwrap();
+            assert!(drawn.report.is_valid(), "{quads} quads");
+            if standard.report.spirals == Some(0.0) {
+                assert_eq!(drawn.lengths, standard.lengths, "{quads} quads");
+                assert_eq!(drawn.report, standard.report, "{quads} quads");
+            } else {
+                let spirals = |q: &Quantization| q.report.spirals.unwrap_or(f64::INFINITY);
+                assert!(spirals(&drawn) <= spirals(&standard), "{quads} quads");
+            }
         }
     }
 

@@ -1204,6 +1204,34 @@ On the male body the rounds find nothing better than the engine's lengths at any
 budgets: the mesh is the engine's to the byte, for about 20 s more (it was 134 s more with
 20 s per solve).
 
+**The rounds against as many other candidates** (engine of f992bac, 2026-10-26; 12 models at
+2970, 3000 and 3030 quads, and the male body at 10,590). The control, `OPENCLARE_EXTRA_DRAWS=3`,
+adds where the rounds would be posed the lengths of three other draws of the per-arc preference,
+each closed by the engine, on the same terms: as many candidates, without the solver. Means over
+the 36 runs (all valid), runs better / worse than the engine:
+
+| | Spiral edges | Helix edges | vs engine | Without blob at 3030 | Median wall per model |
+|---|---|---|---|---|---|
+| Engine | 5.85 % | 4.02 % | | 4.62 % | 15 s (load not logged) |
+| Other draws (control) | 4.84 % | 3.48 % | 10 / 0 | 3.58 % | 38 s (load 22 to 69) |
+| Slow, work limit 15 | 4.41 % | 3.30 % | 9 / 0 | 3.93 % | 41 s (load 6 to 32) |
+| Slow, work limit 60 | 4.04 % | 2.74 % | 12 / 0 | 3.61 % | 68 s (load 2.5 to 14) |
+
+Run by run, the rounds at 60 beat the other draws on 7 runs and lose on 7 (helix edges: 7 and
+4); their lead in the mean is one run (the blob at 3030, 48.9 % → 19.3 %, unchanged by the
+draws). They help on different models: the rounds on blob, blub and rock, the draws on the
+ogre, whose 2,293 arcs the solver cannot get past the root node of. Of the 61 to 72 most-rings
+solves of a batch, 1 (limit 15) and 9 (limit 60) end optimal, the others at the work limit
+(1.05 times it at the median, 3 at most, at 60); a round that closes more rings than the
+engine's lengths spirals more about as often as less (25 / 23 at 15, 34 / 29 at 60), so the
+gain is the choosing among candidates. On the male body (one piece of 2,146 arcs) no solve
+leaves the root node (gap 17 to 22) and the rounds close no more rings than the engine (33 to 37
+against 35), yet spiral twice as much (3.2 to 3.7 % against 1.65 %): their lengths drift for
+the deviation, pinch arcs, and the tries that hold them open lose rings; the spiral share counts
+the edges of whole loops, which a ring's length round does not weigh. Kept by the engine's count,
+the body is the engine's to the byte in every variant. Keeping closed, in the second solve, every
+ring the first lengths close (not only those switched on) changed one run (worse).
+
 **Experiment options** (`quantization/experiment.rs`, `quantization/export.rs`; DT-089). The
 experiments of the research papers (`docs/research`) run on the engine of one commit, with
 environment variables that turn off one stage of the closing at a time, write out the system it
@@ -1230,6 +1258,9 @@ paper; any value turns a `NO_` switch on:
 | `OPENCLARE_ACTIVE_SET_FLOOR=s` | that floor is `s` (0 to 1) times the real length of each arc, not nothing |
 | `OPENCLARE_NO_FOLD_GUARD` | lengths closing loops may take the vertices further off the folds than the plain search |
 | `OPENCLARE_JITTER_SEED=n` | another draw of the per-arc preference (0, the default, is the engine's): a control |
+| `OPENCLARE_EXTRA_DRAWS=n` | where the slow quality's rounds would be posed (sound lengths that still spiral), the lengths of `n` other draws of the per-arc preference (the next seeds), each closed as the engine closes, join the candidates on the same terms as the rounds: the control of the slow quality, as many candidates without the solver |
+| `OPENCLARE_QUALITY=slow`, `OPENCLARE_SLOW_WORK_LIMIT=w` | read by `openclare remesh` as `--quality` and `--slow-work-limit` (the command line still wins), for scripts that run one command line on every engine |
+| `OPENCLARE_SLOW_LOG=<file>` | appends, after the number of the process, a line per `remesh` call, per solve of HiGHS (status, whether it holds a solution, simplex iterations, work, nodes, gap), per try and round of the slow quality (rings, closed at the reference and by the selector, spirals) and per piece (whose lengths go first), and the same for the other draws |
 
 The engines of Table `tab:dev` of the closing-loops paper, on this one: no closing; ways `0,1`
 with `NO_AIMED_REPAIR`, `NO_DEVIATION_CAP`, `NO_CUT_ROUNDS`, `NO_ACTIVE_SET` and `NO_FOLD_GUARD`;

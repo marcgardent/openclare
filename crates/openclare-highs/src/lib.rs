@@ -255,6 +255,19 @@ impl HighsSelector {
                 work.longest,
             );
         }
+        openclare::quantization::slow_log(&format!(
+            "highs {} {m} rings {n} arcs: status {status}, solution {}, {} lp iterations ({:.2} work), {} nodes, gap {:.2e}, {:.2} s",
+            match rings {
+                Rings::Weighted => "most",
+                Rings::Fixed(_) => "polish",
+            },
+            has_solution(&solved),
+            work.iterations,
+            work.iterations as f64 * n as f64 / 1e6,
+            int64_info(&solved, "mip_node_count"),
+            double_info(&solved, "mip_gap"),
+            clock.elapsed().as_secs_f64(),
+        ));
         let usable = [
             highs_sys::MODEL_STATUS_OPTIMAL,
             highs_sys::MODEL_STATUS_REACHED_TIME_LIMIT,
