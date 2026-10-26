@@ -473,7 +473,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 1.95,
+     "seconds": 2.089,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -533,7 +533,7 @@
     },
     {
      "seed": 2,
-     "seconds": 3.366,
+     "seconds": 2.093,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -588,7 +588,7 @@
     },
     {
      "seed": 3,
-     "seconds": 2.367,
+     "seconds": 3.916,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -643,7 +643,7 @@
     },
     {
      "seed": 4,
-     "seconds": 1.901,
+     "seconds": 2.707,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -698,7 +698,7 @@
     },
     {
      "seed": 5,
-     "seconds": 1.914,
+     "seconds": 2.044,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -755,7 +755,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 66.463,
+     "seconds": 64.918,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -816,13 +816,13 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 33.26,
+     "seconds": 30.084,
      "failure": null,
      "metrics": {
       "valid": true,
-      "vertices": 7972,
-      "faces": 7970,
-      "quads": 7970,
+      "vertices": 8036,
+      "faces": 8034,
+      "quads": 8034,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 0,
@@ -834,39 +834,39 @@
       "irregular_vertices": 186,
       "topological_minimum": 8,
       "irregular_excess": 178,
-      "base_complex_patches": 5234,
-      "alignment": 12.378979636326331,
-      "angle_deviation_mean": 6.895783094026141,
-      "angle_deviation_p95": 20.292560564266225,
-      "aspect_mean": 1.430771497577334,
-      "aspect_p95": 2.234471790607751,
-      "area_variation": 0.3400311915755641,
-      "hausdorff": 0.009531923560520732,
-      "mean_distance": 0.0003095302182719503,
+      "base_complex_patches": 4846,
+      "alignment": 12.292992579448015,
+      "angle_deviation_mean": 7.451256635847768,
+      "angle_deviation_p95": 21.399957157811585,
+      "aspect_mean": 1.5135740834474305,
+      "aspect_p95": 2.336077469081398,
+      "area_variation": 0.3315361674563153,
+      "hausdorff": 0.010883735475499208,
+      "mean_distance": 0.0003054238582712105,
       "thin_share": 0.004655400264306595,
-      "thin_distance": 0.08402271111227819,
-      "volume_ratio": 0.9998639658375545,
+      "thin_distance": 0.10355714145803914,
+      "volume_ratio": 0.9999274744398404,
       "feature_edges_length": 219.07340525755723,
       "feature_chains": 172,
-      "feature_edges_kept": 0.7384065148280746,
-      "loops_closed": 95,
-      "loops_spiral": 24,
-      "loops_open": 344,
+      "feature_edges_kept": 0.7674176855009872,
+      "loops_closed": 111,
+      "loops_spiral": 10,
+      "loops_open": 358,
       "loops_border": 0,
-      "loop_edges_closed": 0.1716436637390212,
-      "loop_edges_spiral": 0.09109159347553325,
-      "loop_edges_open": 0.7372647427854473,
+      "loop_edges_closed": 0.20014936519790888,
+      "loop_edges_spiral": 0.04580532735872542,
+      "loop_edges_open": 0.7540453074433633,
       "loop_edges_border": 0,
-      "longest_open_loop": 244,
-      "loops_helix": 4,
-      "loop_edges_helix": 0.016813048933500628,
+      "longest_open_loop": 308,
+      "loops_helix": 2,
+      "loop_edges_helix": 0.0018048294747323875,
       "loops_helix_missed": 0,
       "loop_edges_helix_missed": 0,
       "helix_pitch_max": 1,
       "loop_edges_helix_by_pitch": [
-       0.016813048933500628
+       0.0018048294747323875
       ],
-      "budget_error": 0.00375
+      "budget_error": 0.00425
      },
      "against": 8000,
      "mesh": "bench/out/ogre/8000/openclare-uniform_1.obj"
@@ -875,7 +875,7 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 32.013,
+     "seconds": 36.015,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1460,7 +1460,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 1.256,
+     "seconds": 2.015,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1518,7 +1518,7 @@
     },
     {
      "seed": 2,
-     "seconds": 1.16,
+     "seconds": 1.459,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1578,7 +1578,7 @@
     },
     {
      "seed": 3,
-     "seconds": 1.168,
+     "seconds": 1.193,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1633,7 +1633,7 @@
     },
     {
      "seed": 4,
-     "seconds": 1.186,
+     "seconds": 1.207,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1688,7 +1688,7 @@
     },
     {
      "seed": 5,
-     "seconds": 2.318,
+     "seconds": 1.754,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1745,7 +1745,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 16.626,
+     "seconds": 16.819,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1815,7 +1815,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 8.013,
+     "seconds": 8.77,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -1901,7 +1901,7 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 9.042,
+     "seconds": 9.105,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2431,7 +2431,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 0.722,
+     "seconds": 1.81,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2486,7 +2486,7 @@
     },
     {
      "seed": 2,
-     "seconds": 1.56,
+     "seconds": 0.775,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2541,7 +2541,7 @@
     },
     {
      "seed": 3,
-     "seconds": 1.232,
+     "seconds": 1.383,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2596,7 +2596,7 @@
     },
     {
      "seed": 4,
-     "seconds": 0.695,
+     "seconds": 1.003,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2651,7 +2651,7 @@
     },
     {
      "seed": 5,
-     "seconds": 0.969,
+     "seconds": 0.808,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2708,7 +2708,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 30.64,
+     "seconds": 35.026,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2767,7 +2767,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 7.554,
+     "seconds": 7.424,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -2824,7 +2824,7 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 8.948,
+     "seconds": 8.16,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -3372,7 +3372,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 0.728,
+     "seconds": 2.177,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -3432,7 +3432,7 @@
     },
     {
      "seed": 2,
-     "seconds": 0.768,
+     "seconds": 1.052,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -3490,7 +3490,7 @@
     },
     {
      "seed": 3,
-     "seconds": 0.649,
+     "seconds": 0.802,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -3550,7 +3550,7 @@
     },
     {
      "seed": 4,
-     "seconds": 1.658,
+     "seconds": 1.332,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -3608,7 +3608,7 @@
     },
     {
      "seed": 5,
-     "seconds": 0.68,
+     "seconds": 0.862,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -3668,7 +3668,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 32.353,
+     "seconds": 33.968,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -3729,7 +3729,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 16.157,
+     "seconds": 18.66,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -3886,13 +3886,13 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 11.867,
+     "seconds": 12.525,
      "failure": null,
      "metrics": {
       "valid": true,
-      "vertices": 7844,
-      "faces": 7842,
-      "quads": 7842,
+      "vertices": 8097,
+      "faces": 8095,
+      "quads": 8095,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 0,
@@ -3904,123 +3904,37 @@
       "irregular_vertices": 42,
       "topological_minimum": 8,
       "irregular_excess": 34,
-      "base_complex_patches": 2114,
-      "alignment": 5.592927620385926,
-      "angle_deviation_mean": 5.793923243203215,
-      "angle_deviation_p95": 15.555373650077868,
-      "aspect_mean": 1.3195802541360862,
-      "aspect_p95": 1.8694372410868763,
-      "area_variation": 0.4941503926559042,
-      "hausdorff": 0.0008880646247433337,
-      "mean_distance": 8.440828587263268e-05,
+      "base_complex_patches": 1935,
+      "alignment": 5.7463072989333766,
+      "angle_deviation_mean": 5.982726792848654,
+      "angle_deviation_p95": 16.222110620745198,
+      "aspect_mean": 1.316892084129941,
+      "aspect_p95": 1.8714128608216396,
+      "area_variation": 0.49457402820574814,
+      "hausdorff": 0.000862656156526621,
+      "mean_distance": 8.086426177308246e-05,
       "thin_share": 0,
       "thin_distance": null,
-      "volume_ratio": 1.0001068870032956,
+      "volume_ratio": 1.0001012645428533,
       "feature_edges_length": 0,
       "feature_chains": 0,
       "feature_edges_kept": null,
-      "loops_closed": 120,
-      "loops_spiral": 4,
-      "loops_open": 76,
+      "loops_closed": 124,
+      "loops_spiral": 2,
+      "loops_open": 78,
       "loops_border": 0,
-      "loop_edges_closed": 0.3733741392501916,
-      "loop_edges_spiral": 0.11935730680948736,
-      "loop_edges_open": 0.507268553940321,
+      "loop_edges_closed": 0.41840642371834424,
+      "loop_edges_spiral": 0.06794317479925881,
+      "loop_edges_open": 0.513650401482397,
       "loop_edges_border": 0,
-      "longest_open_loop": 571,
-      "loops_helix": 2,
-      "loop_edges_helix": 0.0749171129813823,
-      "loops_helix_missed": 1,
-      "loop_edges_helix_missed": 0.03417495536852844,
-      "helix_pitch_max": 85,
-      "loop_edges_helix_by_pitch": [
-       0.040742157612853866,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0.03417495536852844
-      ],
-      "budget_error": 0.01975
+      "longest_open_loop": 592,
+      "loops_helix": 0,
+      "loop_edges_helix": 0,
+      "loops_helix_missed": 0,
+      "loop_edges_helix_missed": 0,
+      "helix_pitch_max": 0,
+      "loop_edges_helix_by_pitch": [],
+      "budget_error": 0.011875
      },
      "against": 8000,
      "mesh": "bench/out/creature/8000/openclare_1.obj",
@@ -4412,7 +4326,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 0.407,
+     "seconds": 0.463,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -4472,7 +4386,7 @@
     },
     {
      "seed": 2,
-     "seconds": 0.495,
+     "seconds": 0.72,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -4532,7 +4446,7 @@
     },
     {
      "seed": 3,
-     "seconds": 1.071,
+     "seconds": 0.872,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -4626,7 +4540,7 @@
     },
     {
      "seed": 4,
-     "seconds": 0.778,
+     "seconds": 0.51,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -4686,7 +4600,7 @@
     },
     {
      "seed": 5,
-     "seconds": 0.723,
+     "seconds": 1.191,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -4748,7 +4662,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 22.189,
+     "seconds": 23.881,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -4808,7 +4722,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 7.738,
+     "seconds": 7.94,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -4865,7 +4779,7 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 7.752,
+     "seconds": 9.807,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -5324,7 +5238,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 1.604,
+     "seconds": 1.681,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -5382,7 +5296,7 @@
     },
     {
      "seed": 2,
-     "seconds": 0.431,
+     "seconds": 0.48,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -5440,7 +5354,7 @@
     },
     {
      "seed": 3,
-     "seconds": 1.332,
+     "seconds": 0.54,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -5502,7 +5416,7 @@
     },
     {
      "seed": 4,
-     "seconds": 0.431,
+     "seconds": 0.657,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -5560,7 +5474,7 @@
     },
     {
      "seed": 5,
-     "seconds": 0.55,
+     "seconds": 0.701,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -5622,7 +5536,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 24.039,
+     "seconds": 22.288,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -5687,7 +5601,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 7.125,
+     "seconds": 7.005,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -5748,16 +5662,16 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 9.799,
+     "seconds": 10.456,
      "failure": null,
      "metrics": {
       "valid": true,
-      "vertices": 7955,
-      "faces": 7884,
-      "quads": 7884,
+      "vertices": 8175,
+      "faces": 8105,
+      "quads": 8105,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
-      "boundary_edges": 138,
+      "boundary_edges": 136,
       "source_boundary_edges": 168,
       "inverted_faces": 0,
       "degenerate_faces": 0,
@@ -5766,47 +5680,48 @@
       "irregular_vertices": 76,
       "topological_minimum": null,
       "irregular_excess": null,
-      "base_complex_patches": 3205,
-      "alignment": 9.9809074884874,
-      "angle_deviation_mean": 5.786761100777763,
-      "angle_deviation_p95": 14.91617768621829,
-      "aspect_mean": 1.2927380338137762,
-      "aspect_p95": 1.754700569972155,
-      "area_variation": 0.4137456273126907,
-      "hausdorff": 0.0061371094313588245,
-      "mean_distance": 0.00019159697583087258,
+      "base_complex_patches": 3722,
+      "alignment": 10.060705213871753,
+      "angle_deviation_mean": 5.734346350788293,
+      "angle_deviation_p95": 14.956695837006592,
+      "aspect_mean": 1.2379344402677097,
+      "aspect_p95": 1.6467237221016822,
+      "area_variation": 0.3436781779130414,
+      "hausdorff": 0.0023694352374129257,
+      "mean_distance": 0.00017590785552361814,
       "thin_share": 0,
       "thin_distance": null,
       "volume_ratio": null,
       "feature_edges_length": 96.81933180643152,
       "feature_chains": 24,
-      "feature_edges_kept": 0.9098550208907003,
+      "feature_edges_kept": 0.9952972751229666,
       "loops_closed": 46,
-      "loops_spiral": 6,
-      "loops_open": 169,
-      "loops_border": 42,
-      "loop_edges_closed": 0.21708389069367492,
-      "loop_edges_spiral": 0.0432511624944264,
-      "loop_edges_open": 0.5985094592012229,
-      "loop_edges_border": 0.14115548761067587,
-      "longest_open_loop": 353,
-      "loops_helix": 4,
-      "loop_edges_helix": 0.033887508758519654,
-      "loops_helix_missed": 0,
-      "loop_edges_helix_missed": 0,
-      "helix_pitch_max": 4,
+      "loops_spiral": 4,
+      "loops_open": 173,
+      "loops_border": 39,
+      "loop_edges_closed": 0.20183372568454952,
+      "loop_edges_spiral": 0.061764341469458556,
+      "loop_edges_open": 0.6170239127741297,
+      "loop_edges_border": 0.11937802007186234,
+      "longest_open_loop": 351,
+      "loops_helix": 6,
+      "loop_edges_helix": 0.0678354602899269,
+      "loops_helix_missed": 4,
+      "loop_edges_helix_missed": 0.032771651592119935,
+      "helix_pitch_max": 5,
       "loop_edges_helix_by_pitch": [
-       0.004649977705586343,
        0,
-       0.014586916364099624,
-       0.014650614688833684
+       0,
+       0,
+       0,
+       0.0678354602899269
       ],
-      "budget_error": 0.0145
+      "budget_error": 0.013125
      },
      "against": 8000,
      "mesh": "bench/out/suzanne/8000/openclare_1.obj",
      "engine": {
-      "guide_edges": 3,
+      "guide_edges": 2,
       "sharp_curve_edges": 0,
       "faces_across_groups": 0,
       "welded_vertices": 0,
@@ -6206,7 +6121,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 0.999,
+     "seconds": 1.604,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -6268,7 +6183,7 @@
     },
     {
      "seed": 2,
-     "seconds": 1.74,
+     "seconds": 1.482,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -6326,7 +6241,7 @@
     },
     {
      "seed": 3,
-     "seconds": 0.95,
+     "seconds": 1.147,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -6384,7 +6299,7 @@
     },
     {
      "seed": 4,
-     "seconds": 1.544,
+     "seconds": 1.021,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -6444,7 +6359,7 @@
     },
     {
      "seed": 5,
-     "seconds": 0.858,
+     "seconds": 2.282,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -6501,7 +6416,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 46.131,
+     "seconds": 54.875,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -6561,13 +6476,13 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 14.51,
+     "seconds": 16.539,
      "failure": null,
      "metrics": {
       "valid": true,
-      "vertices": 7902,
-      "faces": 7900,
-      "quads": 7900,
+      "vertices": 7938,
+      "faces": 7936,
+      "quads": 7936,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 0,
@@ -6579,39 +6494,39 @@
       "irregular_vertices": 70,
       "topological_minimum": 8,
       "irregular_excess": 62,
-      "base_complex_patches": 2528,
-      "alignment": 8.770064157254177,
-      "angle_deviation_mean": 6.485130844787703,
-      "angle_deviation_p95": 17.422191624230322,
-      "aspect_mean": 1.3504330887035505,
-      "aspect_p95": 2.054710040989637,
-      "area_variation": 0.31333026629390043,
-      "hausdorff": 0.0025377966176402408,
-      "mean_distance": 8.211196866161206e-05,
+      "base_complex_patches": 2910,
+      "alignment": 8.52983175932457,
+      "angle_deviation_mean": 6.340149715995175,
+      "angle_deviation_p95": 16.651307589287924,
+      "aspect_mean": 1.3647599467342912,
+      "aspect_p95": 2.036034344706538,
+      "area_variation": 0.3115841950626762,
+      "hausdorff": 0.0025451648732973983,
+      "mean_distance": 8.162879475630403e-05,
       "thin_share": 0,
       "thin_distance": null,
-      "volume_ratio": 1.0000758422457794,
+      "volume_ratio": 1.0000637494386717,
       "feature_edges_length": 21.021362953198974,
       "feature_chains": 11,
-      "feature_edges_kept": 0.8597474983829562,
-      "loops_closed": 105,
+      "feature_edges_kept": 0.8389527310319058,
+      "loops_closed": 107,
       "loops_spiral": 7,
       "loops_open": 129,
       "loops_border": 0,
-      "loop_edges_closed": 0.39367088607594947,
-      "loop_edges_spiral": 0.13639240506329114,
-      "loop_edges_open": 0.4699367088607593,
+      "loop_edges_closed": 0.34286794354838657,
+      "loop_edges_spiral": 0.167023689516129,
+      "loop_edges_open": 0.4901083669354837,
       "loop_edges_border": 0,
-      "longest_open_loop": 425,
+      "longest_open_loop": 593,
       "loops_helix": 3,
-      "loop_edges_helix": 0.06791139240506329,
+      "loop_edges_helix": 0.10023941532258064,
       "loops_helix_missed": 0,
       "loop_edges_helix_missed": 0,
       "helix_pitch_max": 1,
       "loop_edges_helix_by_pitch": [
-       0.06791139240506329
+       0.10023941532258064
       ],
-      "budget_error": 0.0125
+      "budget_error": 0.008
      },
      "against": 8000,
      "mesh": "bench/out/spot/8000/openclare-uniform_1.obj"
@@ -6620,13 +6535,13 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 12.325,
+     "seconds": 13.809,
      "failure": null,
      "metrics": {
       "valid": true,
-      "vertices": 8016,
-      "faces": 8014,
-      "quads": 8014,
+      "vertices": 8056,
+      "faces": 8054,
+      "quads": 8054,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 0,
@@ -6638,39 +6553,37 @@
       "irregular_vertices": 70,
       "topological_minimum": 8,
       "irregular_excess": 62,
-      "base_complex_patches": 3116,
-      "alignment": 7.9026097464003335,
-      "angle_deviation_mean": 5.91402615420671,
-      "angle_deviation_p95": 15.53194829852221,
-      "aspect_mean": 1.349371391480003,
-      "aspect_p95": 2.002779389811976,
-      "area_variation": 0.4351049646575797,
+      "base_complex_patches": 2500,
+      "alignment": 8.00995231779019,
+      "angle_deviation_mean": 5.965148365680736,
+      "angle_deviation_p95": 15.186359403718498,
+      "aspect_mean": 1.3584291460384583,
+      "aspect_p95": 2.0865802983486894,
+      "area_variation": 0.41941864374747306,
       "hausdorff": 0.0034739908619094654,
-      "mean_distance": 7.978105084818372e-05,
+      "mean_distance": 7.960917806483267e-05,
       "thin_share": 0,
       "thin_distance": null,
-      "volume_ratio": 1.0000418788932586,
+      "volume_ratio": 1.0000432294263948,
       "feature_edges_length": 21.021362953198974,
       "feature_chains": 11,
       "feature_edges_kept": 0.8927793699595458,
-      "loops_closed": 116,
-      "loops_spiral": 4,
-      "loops_open": 132,
+      "loops_closed": 127,
+      "loops_spiral": 3,
+      "loops_open": 133,
       "loops_border": 0,
-      "loop_edges_closed": 0.35001247816321407,
-      "loop_edges_spiral": 0.12902420763663588,
-      "loop_edges_open": 0.5209633142001496,
+      "loop_edges_closed": 0.392351626520983,
+      "loop_edges_spiral": 0.057797367767568913,
+      "loop_edges_open": 0.5498510057114478,
       "loop_edges_border": 0,
-      "longest_open_loop": 288,
-      "loops_helix": 1,
-      "loop_edges_helix": 0.05683803344147741,
+      "longest_open_loop": 449,
+      "loops_helix": 0,
+      "loop_edges_helix": 0,
       "loops_helix_missed": 0,
       "loop_edges_helix_missed": 0,
-      "helix_pitch_max": 1,
-      "loop_edges_helix_by_pitch": [
-       0.05683803344147741
-      ],
-      "budget_error": 0.00175
+      "helix_pitch_max": 0,
+      "loop_edges_helix_by_pitch": [],
+      "budget_error": 0.00675
      },
      "against": 8000,
      "mesh": "bench/out/spot/8000/openclare_1.obj",
@@ -7212,7 +7125,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 0.921,
+     "seconds": 1.093,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -7267,7 +7180,7 @@
     },
     {
      "seed": 2,
-     "seconds": 0.87,
+     "seconds": 1.348,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -7322,7 +7235,7 @@
     },
     {
      "seed": 3,
-     "seconds": 0.993,
+     "seconds": 1.029,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -7377,7 +7290,7 @@
     },
     {
      "seed": 4,
-     "seconds": 0.962,
+     "seconds": 1.43,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -7441,7 +7354,7 @@
     },
     {
      "seed": 5,
-     "seconds": 0.968,
+     "seconds": 1.157,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -7498,7 +7411,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 23.663,
+     "seconds": 25.1,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -7558,7 +7471,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 10.064,
+     "seconds": 11.242,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -7617,7 +7530,7 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 9.394,
+     "seconds": 7.207,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -8098,7 +8011,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 0.915,
+     "seconds": 1.244,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -8160,7 +8073,7 @@
     },
     {
      "seed": 2,
-     "seconds": 1.027,
+     "seconds": 1.478,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -8218,7 +8131,7 @@
     },
     {
      "seed": 3,
-     "seconds": 1.135,
+     "seconds": 1.28,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -8273,7 +8186,7 @@
     },
     {
      "seed": 4,
-     "seconds": 0.898,
+     "seconds": 1.324,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -8331,7 +8244,7 @@
     },
     {
      "seed": 5,
-     "seconds": 0.896,
+     "seconds": 1.205,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -8393,7 +8306,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 38.384,
+     "seconds": 47.022,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -8453,13 +8366,13 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 13.3,
+     "seconds": 17.379,
      "failure": null,
      "metrics": {
       "valid": true,
-      "vertices": 7902,
-      "faces": 7900,
-      "quads": 7900,
+      "vertices": 8005,
+      "faces": 8003,
+      "quads": 8003,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 0,
@@ -8471,40 +8384,40 @@
       "irregular_vertices": 44,
       "topological_minimum": 8,
       "irregular_excess": 36,
-      "base_complex_patches": 1946,
-      "alignment": 7.557668774161992,
-      "angle_deviation_mean": 6.1658800121624315,
-      "angle_deviation_p95": 18.541888203731204,
-      "aspect_mean": 1.3199810913708951,
-      "aspect_p95": 1.8052621762338363,
-      "area_variation": 0.29369375021764454,
-      "hausdorff": 0.002772582616014894,
-      "mean_distance": 7.248698545160226e-05,
+      "base_complex_patches": 1529,
+      "alignment": 7.577072853515079,
+      "angle_deviation_mean": 6.179206391358716,
+      "angle_deviation_p95": 18.869462300739443,
+      "aspect_mean": 1.3196538743245936,
+      "aspect_p95": 1.7936810199786175,
+      "area_variation": 0.29512751068772125,
+      "hausdorff": 0.0027324551730430937,
+      "mean_distance": 7.350549796376154e-05,
       "thin_share": 0.00013127789655301752,
       "thin_distance": null,
-      "volume_ratio": 0.9998450178048058,
+      "volume_ratio": 0.9998575615572569,
       "feature_edges_length": 85.56406243088792,
       "feature_chains": 44,
-      "feature_edges_kept": 0.8460178140800361,
-      "loops_closed": 107,
-      "loops_spiral": 8,
-      "loops_open": 76,
+      "feature_edges_kept": 0.8687412247337116,
+      "loops_closed": 122,
+      "loops_spiral": 4,
+      "loops_open": 80,
       "loops_border": 0,
-      "loop_edges_closed": 0.4692405063291143,
-      "loop_edges_spiral": 0.24759493670886074,
-      "loop_edges_open": 0.28316455696202525,
+      "loop_edges_closed": 0.5118080719730099,
+      "loop_edges_spiral": 0.19411470698488067,
+      "loop_edges_open": 0.2940772210421093,
       "loop_edges_border": 0,
-      "longest_open_loop": 267,
-      "loops_helix": 8,
-      "loop_edges_helix": 0.24759493670886074,
+      "longest_open_loop": 302,
+      "loops_helix": 3,
+      "loop_edges_helix": 0.172497813320005,
       "loops_helix_missed": 0,
       "loop_edges_helix_missed": 0,
       "helix_pitch_max": 2,
       "loop_edges_helix_by_pitch": [
-       0.18689873417721517,
-       0.060696202531645566
+       0.1252655254279645,
+       0.04723228789204049
       ],
-      "budget_error": 0.0125
+      "budget_error": 0.000375
      },
      "against": 8000,
      "mesh": "bench/out/blub/8000/openclare-uniform_1.obj"
@@ -8513,13 +8426,13 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 14.698,
+     "seconds": 15.325,
      "failure": null,
      "metrics": {
       "valid": true,
-      "vertices": 8125,
-      "faces": 8123,
-      "quads": 8123,
+      "vertices": 8072,
+      "faces": 8070,
+      "quads": 8070,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 0,
@@ -8531,39 +8444,39 @@
       "irregular_vertices": 54,
       "topological_minimum": 8,
       "irregular_excess": 46,
-      "base_complex_patches": 1759,
-      "alignment": 7.500603361487865,
-      "angle_deviation_mean": 6.042042048764512,
-      "angle_deviation_p95": 17.888980047854673,
-      "aspect_mean": 1.3379628783475113,
-      "aspect_p95": 1.8819665522383178,
-      "area_variation": 0.3853009628278557,
-      "hausdorff": 0.002379352521569261,
-      "mean_distance": 6.451275277895607e-05,
+      "base_complex_patches": 2356,
+      "alignment": 7.3947251229458555,
+      "angle_deviation_mean": 6.125216505391549,
+      "angle_deviation_p95": 17.270296260571314,
+      "aspect_mean": 1.341715990238022,
+      "aspect_p95": 1.9677524259079846,
+      "area_variation": 0.37576716279539685,
+      "hausdorff": 0.002350994274146021,
+      "mean_distance": 6.306272337996384e-05,
       "thin_share": 0.00013127789655301752,
       "thin_distance": null,
-      "volume_ratio": 0.9998810459220696,
+      "volume_ratio": 0.9998964546189839,
       "feature_edges_length": 85.56406243088792,
       "feature_chains": 44,
-      "feature_edges_kept": 0.8752137937588047,
-      "loops_closed": 119,
-      "loops_spiral": 3,
-      "loops_open": 101,
+      "feature_edges_kept": 0.858107359963266,
+      "loops_closed": 102,
+      "loops_spiral": 6,
+      "loops_open": 98,
       "loops_border": 0,
-      "loop_edges_closed": 0.5047396282161757,
-      "loop_edges_spiral": 0.07447987196848455,
-      "loop_edges_open": 0.4207804998153391,
+      "loop_edges_closed": 0.42007434944237926,
+      "loop_edges_spiral": 0.15731102850061957,
+      "loop_edges_open": 0.4226146220570013,
       "loop_edges_border": 0,
-      "longest_open_loop": 319,
-      "loops_helix": 2,
-      "loop_edges_helix": 0.04394927982272559,
+      "longest_open_loop": 305,
+      "loops_helix": 5,
+      "loop_edges_helix": 0.12633209417596034,
       "loops_helix_missed": 0,
       "loop_edges_helix_missed": 0,
       "helix_pitch_max": 1,
       "loop_edges_helix_by_pitch": [
-       0.04394927982272559
+       0.12633209417596034
       ],
-      "budget_error": 0.015375
+      "budget_error": 0.00875
      },
      "against": 8000,
      "mesh": "bench/out/blub/8000/openclare_1.obj",
@@ -9135,7 +9048,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 1.1,
+     "seconds": 0.94,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -9193,7 +9106,7 @@
     },
     {
      "seed": 2,
-     "seconds": 0.963,
+     "seconds": 1.417,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -9248,7 +9161,7 @@
     },
     {
      "seed": 3,
-     "seconds": 2.062,
+     "seconds": 1.168,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -9306,7 +9219,7 @@
     },
     {
      "seed": 4,
-     "seconds": 1.073,
+     "seconds": 1.166,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -9364,7 +9277,7 @@
     },
     {
      "seed": 5,
-     "seconds": 1.458,
+     "seconds": 1.47,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -9424,7 +9337,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 70.315,
+     "seconds": 74.636,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -9486,13 +9399,13 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 21.595,
+     "seconds": 18.816,
      "failure": null,
      "metrics": {
       "valid": true,
-      "vertices": 8057,
-      "faces": 8055,
-      "quads": 8055,
+      "vertices": 8025,
+      "faces": 8023,
+      "quads": 8023,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 0,
@@ -9504,43 +9417,41 @@
       "irregular_vertices": 88,
       "topological_minimum": 8,
       "irregular_excess": 80,
-      "base_complex_patches": 3073,
-      "alignment": 9.87048068877211,
-      "angle_deviation_mean": 6.88943046479663,
-      "angle_deviation_p95": 19.10570607063508,
-      "aspect_mean": 1.3146015766172932,
-      "aspect_p95": 1.7663625047921587,
-      "area_variation": 0.33872600102790135,
-      "hausdorff": 0.01090479246993878,
-      "mean_distance": 0.0001575048960056433,
+      "base_complex_patches": 3041,
+      "alignment": 9.886089264740706,
+      "angle_deviation_mean": 6.905437711576425,
+      "angle_deviation_p95": 19.20766463119986,
+      "aspect_mean": 1.3198850221996006,
+      "aspect_p95": 1.7739779131527964,
+      "area_variation": 0.3364036057280718,
+      "hausdorff": 0.01090478688557267,
+      "mean_distance": 0.00015888636394297917,
       "thin_share": 0.003117942158175604,
-      "thin_distance": 0.07947464172162154,
-      "volume_ratio": 0.9994854045088442,
+      "thin_distance": 0.07947113749537468,
+      "volume_ratio": 0.9994787641273857,
       "feature_edges_length": 174.010429681544,
       "feature_chains": 95,
-      "feature_edges_kept": 0.8153031819232541,
+      "feature_edges_kept": 0.8129777608543644,
       "loops_closed": 90,
-      "loops_spiral": 14,
-      "loops_open": 158,
+      "loops_spiral": 15,
+      "loops_open": 157,
       "loops_border": 0,
-      "loop_edges_closed": 0.38435754189944116,
-      "loop_edges_spiral": 0.07157045313469894,
-      "loop_edges_open": 0.5440720049658611,
+      "loop_edges_closed": 0.38589056462669774,
+      "loop_edges_spiral": 0.07328929328181479,
+      "loop_edges_open": 0.5408201420914868,
       "loop_edges_border": 0,
       "longest_open_loop": 428,
-      "loops_helix": 9,
-      "loop_edges_helix": 0.05884543761638733,
+      "loops_helix": 8,
+      "loop_edges_helix": 0.04642901657734015,
       "loops_helix_missed": 0,
       "loop_edges_helix_missed": 0,
-      "helix_pitch_max": 5,
+      "helix_pitch_max": 3,
       "loop_edges_helix_by_pitch": [
-       0.007448789571694599,
-       0.029112352576039727,
-       0.01793916821849783,
-       0,
-       0.004345127250155183
+       0.007478499314470896,
+       0.0210021189081391,
+       0.01794839835473015
       ],
-      "budget_error": 0.006875
+      "budget_error": 0.002875
      },
      "against": 8000,
      "mesh": "bench/out/pig/8000/openclare-uniform_1.obj"
@@ -9549,13 +9460,13 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 22.882,
+     "seconds": 23.129,
      "failure": null,
      "metrics": {
       "valid": true,
-      "vertices": 7870,
-      "faces": 7868,
-      "quads": 7868,
+      "vertices": 8051,
+      "faces": 8049,
+      "quads": 8049,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 0,
@@ -9567,46 +9478,48 @@
       "irregular_vertices": 102,
       "topological_minimum": 8,
       "irregular_excess": 94,
-      "base_complex_patches": 3850,
-      "alignment": 9.02588945562646,
-      "angle_deviation_mean": 5.838439156429377,
-      "angle_deviation_p95": 18.356912669370956,
-      "aspect_mean": 1.3181193883198448,
-      "aspect_p95": 1.7677287747083603,
-      "area_variation": 0.44618331996587624,
-      "hausdorff": 0.005673541600908807,
-      "mean_distance": 0.0001242715286334308,
+      "base_complex_patches": 3937,
+      "alignment": 8.658568636886978,
+      "angle_deviation_mean": 5.905579654538893,
+      "angle_deviation_p95": 17.980032274115217,
+      "aspect_mean": 1.3095593186131802,
+      "aspect_p95": 1.7196037329782414,
+      "area_variation": 0.4696756281791128,
+      "hausdorff": 0.004987252281377881,
+      "mean_distance": 0.00011492959803387125,
       "thin_share": 0.003117942158175604,
-      "thin_distance": 0.048869719750537714,
-      "volume_ratio": 0.9998046705594605,
+      "thin_distance": 0.050356250798774316,
+      "volume_ratio": 0.9998474874928801,
       "feature_edges_length": 174.010429681544,
       "feature_chains": 95,
-      "feature_edges_kept": 0.8407705992550251,
-      "loops_closed": 100,
+      "feature_edges_kept": 0.8635347457972731,
+      "loops_closed": 110,
       "loops_spiral": 17,
       "loops_open": 183,
       "loops_border": 0,
-      "loop_edges_closed": 0.30299949161159034,
-      "loop_edges_spiral": 0.06513726487036095,
-      "loop_edges_open": 0.6318632435180472,
+      "loop_edges_closed": 0.30078270592620265,
+      "loop_edges_spiral": 0.09622313330848553,
+      "loop_edges_open": 0.6029941607653136,
       "loop_edges_border": 0,
-      "longest_open_loop": 397,
-      "loops_helix": 6,
-      "loop_edges_helix": 0.02802491103202847,
-      "loops_helix_missed": 0,
-      "loop_edges_helix_missed": 0,
-      "helix_pitch_max": 3,
+      "longest_open_loop": 366,
+      "loops_helix": 7,
+      "loop_edges_helix": 0.07858119020996397,
+      "loops_helix_missed": 1,
+      "loop_edges_helix_missed": 0.010498198533979377,
+      "helix_pitch_max": 5,
       "loop_edges_helix_by_pitch": [
-       0.010231316725978648,
-       0.01175648195221149,
-       0.006037112353838333
+       0.009380047210833645,
+       0.04124735992048702,
+       0.017455584544663935,
+       0,
+       0.010498198533979377
       ],
-      "budget_error": 0.0165
+      "budget_error": 0.006125
      },
      "against": 8000,
      "mesh": "bench/out/pig/8000/openclare_1.obj",
      "engine": {
-      "guide_edges": 4,
+      "guide_edges": 6,
       "sharp_curve_edges": 0,
       "faces_across_groups": 0,
       "welded_vertices": 0,
@@ -10045,7 +9958,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 0.777,
+     "seconds": 0.753,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -10100,7 +10013,7 @@
     },
     {
      "seed": 2,
-     "seconds": 0.547,
+     "seconds": 0.678,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -10155,7 +10068,7 @@
     },
     {
      "seed": 3,
-     "seconds": 1.012,
+     "seconds": 0.698,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -10210,7 +10123,7 @@
     },
     {
      "seed": 4,
-     "seconds": 0.651,
+     "seconds": 0.69,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -10265,7 +10178,7 @@
     },
     {
      "seed": 5,
-     "seconds": 2.029,
+     "seconds": 0.748,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -10322,7 +10235,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 63.951,
+     "seconds": 73.087,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -10382,7 +10295,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 15.395,
+     "seconds": 16.258,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -10441,13 +10354,13 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 20.568,
+     "seconds": 23.391,
      "failure": null,
      "metrics": {
       "valid": true,
-      "vertices": 8224,
-      "faces": 8137,
-      "quads": 8137,
+      "vertices": 8127,
+      "faces": 8040,
+      "quads": 8040,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 172,
@@ -10459,42 +10372,44 @@
       "irregular_vertices": 264,
       "topological_minimum": null,
       "irregular_excess": null,
-      "base_complex_patches": 7067,
-      "alignment": 12.434839694475501,
-      "angle_deviation_mean": 6.357894765535895,
-      "angle_deviation_p95": 18.26654337557028,
-      "aspect_mean": 1.3321835762523802,
-      "aspect_p95": 1.84794643339162,
-      "area_variation": 0.4896314445210302,
-      "hausdorff": 0.009803026683490682,
-      "mean_distance": 0.00025222192929997764,
+      "base_complex_patches": 6626,
+      "alignment": 12.489580545793238,
+      "angle_deviation_mean": 6.20000743190678,
+      "angle_deviation_p95": 18.408761971613004,
+      "aspect_mean": 1.33235576576196,
+      "aspect_p95": 1.824889956621079,
+      "area_variation": 0.4830217248363119,
+      "hausdorff": 0.010040279967262833,
+      "mean_distance": 0.00025469329280331275,
       "thin_share": 0.04578433825369027,
-      "thin_distance": 0.02752542224175982,
+      "thin_distance": 0.026600893844825783,
       "volume_ratio": null,
       "feature_edges_length": 294.864023982445,
       "feature_chains": 134,
-      "feature_edges_kept": 0.9023638582076837,
-      "loops_closed": 16,
-      "loops_spiral": 1,
-      "loops_open": 598,
-      "loops_border": 13,
-      "loop_edges_closed": 0.03595255744996293,
-      "loop_edges_spiral": 0.0007412898443291327,
-      "loop_edges_open": 0.9235235977267108,
-      "loop_edges_border": 0.039782554978996784,
-      "longest_open_loop": 177,
-      "loops_helix": 0,
-      "loop_edges_helix": 0,
+      "feature_edges_kept": 0.9014679216032246,
+      "loops_closed": 14,
+      "loops_spiral": 5,
+      "loops_open": 591,
+      "loops_border": 16,
+      "loop_edges_closed": 0.0331374265349506,
+      "loop_edges_spiral": 0.011754407902963612,
+      "loop_edges_open": 0.8944604226584978,
+      "loop_edges_border": 0.060647742903588854,
+      "longest_open_loop": 164,
+      "loops_helix": 1,
+      "loop_edges_helix": 0.001375515818431912,
       "loops_helix_missed": 0,
       "loop_edges_helix_missed": 0,
-      "helix_pitch_max": 0,
-      "loop_edges_helix_by_pitch": [],
-      "budget_error": 0.017125
+      "helix_pitch_max": 1,
+      "loop_edges_helix_by_pitch": [
+       0.001375515818431912
+      ],
+      "budget_error": 0.005
      },
      "against": 8000,
      "mesh": "bench/out/jerry/8000/openclare_1.obj",
      "engine": {
-      "guide_edges": 17,
+      "guide_edges": 11,
       "sharp_curve_edges": 0,
       "faces_across_groups": 0,
       "welded_vertices": 0,
@@ -10879,7 +10794,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 1.687,
+     "seconds": 2.028,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -10934,7 +10849,7 @@
     },
     {
      "seed": 2,
-     "seconds": 1.475,
+     "seconds": 1.731,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -10992,7 +10907,7 @@
     },
     {
      "seed": 3,
-     "seconds": 1.818,
+     "seconds": 1.825,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -11047,7 +10962,7 @@
     },
     {
      "seed": 4,
-     "seconds": 2.146,
+     "seconds": 1.46,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -11102,7 +11017,7 @@
     },
     {
      "seed": 5,
-     "seconds": 1.675,
+     "seconds": 1.84,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -11164,7 +11079,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 210.792,
+     "seconds": 221.87,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -11221,13 +11136,13 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 28.516,
+     "seconds": 38.736,
      "failure": null,
      "metrics": {
       "valid": false,
-      "vertices": 8255,
-      "faces": 8125,
-      "quads": 8125,
+      "vertices": 8327,
+      "faces": 8197,
+      "quads": 8197,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 0,
@@ -11239,42 +11154,43 @@
       "irregular_vertices": 1321,
       "topological_minimum": 616,
       "irregular_excess": 705,
-      "base_complex_patches": 6436,
-      "alignment": 14.457307159380612,
-      "angle_deviation_mean": 13.887417844277218,
-      "angle_deviation_p95": 47.768073624847624,
-      "aspect_mean": 3.2615059041113774,
-      "aspect_p95": 6.249489542290208,
-      "area_variation": 0.6485367192479438,
+      "base_complex_patches": 6752,
+      "alignment": 14.652842589234243,
+      "angle_deviation_mean": 14.044663707542034,
+      "angle_deviation_p95": 47.77282350753944,
+      "aspect_mean": 3.240800001220753,
+      "aspect_p95": 6.3882680638729115,
+      "area_variation": 0.6677228179582112,
       "hausdorff": 0.012256042259850424,
-      "mean_distance": 0.0006445284754459282,
+      "mean_distance": 0.0006455523796567827,
       "thin_share": 0.23682039318330536,
-      "thin_distance": 0.10940016249532895,
-      "volume_ratio": 0.9720698704649355,
+      "thin_distance": 0.11103663686367057,
+      "volume_ratio": 0.9719921448209148,
       "feature_edges_length": 3046.9465852584945,
       "feature_chains": 5267,
-      "feature_edges_kept": 0.3992574727034957,
-      "loops_closed": 136,
+      "feature_edges_kept": 0.3951991723150201,
+      "loops_closed": 123,
       "loops_spiral": 565,
       "loops_open": 1817,
       "loops_border": 0,
-      "loop_edges_closed": 0.10720000000000007,
-      "loop_edges_spiral": 0.21489230769231255,
-      "loop_edges_open": 0.6779076923076836,
+      "loop_edges_closed": 0.09003293888007816,
+      "loop_edges_spiral": 0.22111748200560855,
+      "loop_edges_open": 0.688849579114296,
       "loop_edges_border": 0,
-      "longest_open_loop": 98,
-      "loops_helix": 38,
-      "loop_edges_helix": 0.08861538461538464,
+      "longest_open_loop": 125,
+      "loops_helix": 42,
+      "loop_edges_helix": 0.0995486153470782,
       "loops_helix_missed": 0,
       "loop_edges_helix_missed": 0,
-      "helix_pitch_max": 4,
+      "helix_pitch_max": 5,
       "loop_edges_helix_by_pitch": [
-       0.062030769230769216,
-       0.018584615384615387,
-       0.005107692307692308,
-       0.0028923076923076923
+       0.07063559838965475,
+       0.021654263755032332,
+       0.005123825789923143,
+       0,
+       0.002134927412467976
       ],
-      "budget_error": 0.015625
+      "budget_error": 0.024625
      },
      "against": 8000,
      "mesh": "bench/out/rose/8000/openclare-uniform_1.obj"
@@ -11283,13 +11199,13 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 64.811,
+     "seconds": 69.394,
      "failure": null,
      "metrics": {
       "valid": false,
-      "vertices": 8413,
-      "faces": 8283,
-      "quads": 8283,
+      "vertices": 8407,
+      "faces": 8277,
+      "quads": 8277,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 0,
@@ -11301,41 +11217,42 @@
       "irregular_vertices": 2113,
       "topological_minimum": 616,
       "irregular_excess": 1497,
-      "base_complex_patches": 6666,
-      "alignment": 13.863188081512533,
-      "angle_deviation_mean": 16.6642612167785,
-      "angle_deviation_p95": 49.40918560623995,
-      "aspect_mean": 3.219061468381384,
-      "aspect_p95": 5.9140140184952035,
-      "area_variation": 1.5804922696934516,
-      "hausdorff": 0.015965389544221407,
-      "mean_distance": 0.0008748554937268317,
+      "base_complex_patches": 6783,
+      "alignment": 13.691930039228438,
+      "angle_deviation_mean": 17.32363676132288,
+      "angle_deviation_p95": 52.06271318198521,
+      "aspect_mean": 3.1601575894339544,
+      "aspect_p95": 6.4697602141038315,
+      "area_variation": 1.6215206209264321,
+      "hausdorff": 0.015366186110198484,
+      "mean_distance": 0.0008739371386574766,
       "thin_share": 0.23682039318330536,
-      "thin_distance": 0.09376519200661808,
-      "volume_ratio": 0.9603973848238178,
+      "thin_distance": 0.09309867423628546,
+      "volume_ratio": 0.9608574634893451,
       "feature_edges_length": 3046.9465852584945,
       "feature_chains": 5267,
-      "feature_edges_kept": 0.3791951704996169,
-      "loops_closed": 279,
-      "loops_spiral": 600,
-      "loops_open": 3368,
+      "feature_edges_kept": 0.38667545602407266,
+      "loops_closed": 236,
+      "loops_spiral": 578,
+      "loops_open": 3390,
       "loops_border": 0,
-      "loop_edges_closed": 0.09688518652662072,
-      "loop_edges_spiral": 0.16769286490402016,
-      "loop_edges_open": 0.7354219485693584,
+      "loop_edges_closed": 0.08940437356530138,
+      "loop_edges_spiral": 0.15845112963634347,
+      "loop_edges_open": 0.7521444967983527,
       "loop_edges_border": 0,
-      "longest_open_loop": 48,
-      "loops_helix": 37,
-      "loop_edges_helix": 0.05807074731377517,
+      "longest_open_loop": 60,
+      "loops_helix": 42,
+      "loop_edges_helix": 0.0710402319681044,
       "loops_helix_missed": 0,
       "loop_edges_helix_missed": 0,
-      "helix_pitch_max": 3,
+      "helix_pitch_max": 4,
       "loop_edges_helix_by_pitch": [
-       0.04853314016660628,
-       0.0035011469274417485,
-       0.006036460219727152
+       0.052676090370907334,
+       0.00966533768273529,
+       0.0013893922918931981,
+       0.0073094116225685644
       ],
-      "budget_error": 0.035375
+      "budget_error": 0.034625
      },
      "against": 8000,
      "mesh": "bench/out/rose/8000/openclare_1.obj",
@@ -11455,7 +11372,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 1.571,
+     "seconds": 1.899,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -11510,7 +11427,7 @@
     },
     {
      "seed": 2,
-     "seconds": 2.436,
+     "seconds": 1.865,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -11588,7 +11505,7 @@
     },
     {
      "seed": 3,
-     "seconds": 1.596,
+     "seconds": 2.958,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -11643,7 +11560,7 @@
     },
     {
      "seed": 4,
-     "seconds": 2.058,
+     "seconds": 2.37,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -11701,7 +11618,7 @@
     },
     {
      "seed": 5,
-     "seconds": 1.696,
+     "seconds": 1.926,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -11761,7 +11678,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 120.503,
+     "seconds": 141.097,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -11821,7 +11738,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 16.449,
+     "seconds": 17.304,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -11878,13 +11795,13 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 14.728,
+     "seconds": 18.411,
      "failure": null,
      "metrics": {
       "valid": true,
-      "vertices": 8236,
-      "faces": 8125,
-      "quads": 8125,
+      "vertices": 8203,
+      "faces": 8092,
+      "quads": 8092,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 232,
@@ -11896,37 +11813,37 @@
       "irregular_vertices": 69,
       "topological_minimum": null,
       "irregular_excess": null,
-      "base_complex_patches": 2053,
-      "alignment": 9.41763861522058,
-      "angle_deviation_mean": 5.487569480585358,
-      "angle_deviation_p95": 16.70869925192747,
-      "aspect_mean": 1.2820469308476492,
-      "aspect_p95": 1.7865237150278688,
-      "area_variation": 0.3393864475768426,
-      "hausdorff": 0.006401894786265941,
-      "mean_distance": 0.00021790360774786647,
+      "base_complex_patches": 2112,
+      "alignment": 9.280729059202628,
+      "angle_deviation_mean": 4.872565577904965,
+      "angle_deviation_p95": 13.79727491755699,
+      "aspect_mean": 1.259574912987902,
+      "aspect_p95": 1.6547953523612609,
+      "area_variation": 0.33211807616358874,
+      "hausdorff": 0.006339797219501541,
+      "mean_distance": 0.00021574874828636045,
       "thin_share": 6.086130924848455e-05,
       "thin_distance": null,
       "volume_ratio": null,
       "feature_edges_length": 19.939435381451524,
       "feature_chains": 23,
-      "feature_edges_kept": 0.718949506052266,
-      "loops_closed": 145,
-      "loops_spiral": 1,
+      "feature_edges_kept": 0.6636454739959744,
+      "loops_closed": 141,
+      "loops_spiral": 2,
       "loops_open": 201,
-      "loops_border": 62,
-      "loop_edges_closed": 0.21166480723937,
-      "loop_edges_spiral": 0.0006817900086773273,
-      "loop_edges_open": 0.5169827693070534,
-      "loop_edges_border": 0.2706706334448989,
-      "longest_open_loop": 238,
+      "loops_border": 61,
+      "loop_edges_closed": 0.21315658451580757,
+      "loop_edges_spiral": 0.013816280806572068,
+      "loop_edges_open": 0.5209111277072439,
+      "loop_edges_border": 0.2521160069703758,
+      "longest_open_loop": 270,
       "loops_helix": 0,
       "loop_edges_helix": 0,
       "loops_helix_missed": 0,
       "loop_edges_helix_missed": 0,
       "helix_pitch_max": 0,
       "loop_edges_helix_by_pitch": [],
-      "budget_error": 0.015625
+      "budget_error": 0.0115
      },
      "against": 8000,
      "mesh": "bench/out/bridge/8000/openclare_1.obj",
@@ -12297,7 +12214,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 1.792,
+     "seconds": 2.566,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -12355,7 +12272,7 @@
     },
     {
      "seed": 2,
-     "seconds": 2.041,
+     "seconds": 1.952,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -12413,7 +12330,7 @@
     },
     {
      "seed": 3,
-     "seconds": 1.591,
+     "seconds": 2.12,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -12471,7 +12388,7 @@
     },
     {
      "seed": 4,
-     "seconds": 1.479,
+     "seconds": 2.052,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -12529,7 +12446,7 @@
     },
     {
      "seed": 5,
-     "seconds": 1.386,
+     "seconds": 1.871,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -12589,7 +12506,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 21.707,
+     "seconds": 26.928,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -12646,7 +12563,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 5.774,
+     "seconds": 6.575,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -12703,7 +12620,7 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 6.339,
+     "seconds": 6.745,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -13115,7 +13032,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 0.968,
+     "seconds": 0.486,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -13173,7 +13090,7 @@
     },
     {
      "seed": 2,
-     "seconds": 0.352,
+     "seconds": 0.424,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -13231,7 +13148,7 @@
     },
     {
      "seed": 3,
-     "seconds": 1.261,
+     "seconds": 0.666,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -13289,7 +13206,7 @@
     },
     {
      "seed": 4,
-     "seconds": 0.59,
+     "seconds": 0.69,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -13347,7 +13264,7 @@
     },
     {
      "seed": 5,
-     "seconds": 0.454,
+     "seconds": 0.483,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -13407,7 +13324,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 57.664,
+     "seconds": 69.406,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -13466,7 +13383,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 6.138,
+     "seconds": 7.214,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -13523,7 +13440,7 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 5.27,
+     "seconds": 7.921,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -14062,7 +13979,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 1.783,
+     "seconds": 0.534,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -14117,7 +14034,7 @@
     },
     {
      "seed": 2,
-     "seconds": 0.464,
+     "seconds": 0.621,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -14172,7 +14089,7 @@
     },
     {
      "seed": 3,
-     "seconds": 0.434,
+     "seconds": 0.74,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -14227,7 +14144,7 @@
     },
     {
      "seed": 4,
-     "seconds": 0.654,
+     "seconds": 1.441,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -14282,7 +14199,7 @@
     },
     {
      "seed": 5,
-     "seconds": 0.561,
+     "seconds": 0.381,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -14339,7 +14256,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 16.748,
+     "seconds": 17.121,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -14398,7 +14315,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 12.618,
+     "seconds": 13.828,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -14455,7 +14372,7 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 146.066,
+     "seconds": 196.593,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -14943,7 +14860,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 0.639,
+     "seconds": 0.651,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -14998,7 +14915,7 @@
     },
     {
      "seed": 2,
-     "seconds": 0.54,
+     "seconds": 1.036,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -15058,7 +14975,7 @@
     },
     {
      "seed": 3,
-     "seconds": 0.731,
+     "seconds": 0.64,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -15128,7 +15045,7 @@
     },
     {
      "seed": 4,
-     "seconds": 0.868,
+     "seconds": 0.87,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -15188,7 +15105,7 @@
     },
     {
      "seed": 5,
-     "seconds": 0.562,
+     "seconds": 0.893,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -15252,7 +15169,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 4.968,
+     "seconds": 5.022,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -15309,7 +15226,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 5.064,
+     "seconds": 5.065,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -15366,7 +15283,7 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 4.078,
+     "seconds": 4.389,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -15632,7 +15549,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 0.483,
+     "seconds": 0.308,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -15690,7 +15607,7 @@
     },
     {
      "seed": 2,
-     "seconds": 0.373,
+     "seconds": 0.352,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -15748,7 +15665,7 @@
     },
     {
      "seed": 3,
-     "seconds": 1.087,
+     "seconds": 0.362,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -15808,7 +15725,7 @@
     },
     {
      "seed": 4,
-     "seconds": 1.01,
+     "seconds": 0.375,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -15866,7 +15783,7 @@
     },
     {
      "seed": 5,
-     "seconds": 0.262,
+     "seconds": 0.394,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -15926,7 +15843,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 6.556,
+     "seconds": 7.594,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -15983,7 +15900,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 11.213,
+     "seconds": 5.257,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -16040,7 +15957,7 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 8.488,
+     "seconds": 6.807,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -16599,7 +16516,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 1.469,
+     "seconds": 0.705,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -16657,7 +16574,7 @@
     },
     {
      "seed": 2,
-     "seconds": 0.458,
+     "seconds": 1.263,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -16715,7 +16632,7 @@
     },
     {
      "seed": 3,
-     "seconds": 1.723,
+     "seconds": 0.74,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -16773,7 +16690,7 @@
     },
     {
      "seed": 4,
-     "seconds": 0.84,
+     "seconds": 1.177,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -16828,7 +16745,7 @@
     },
     {
      "seed": 5,
-     "seconds": 0.422,
+     "seconds": 0.786,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -16888,7 +16805,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 10.859,
+     "seconds": 9.267,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -16948,7 +16865,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 5.127,
+     "seconds": 7.031,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -17005,7 +16922,7 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 6.529,
+     "seconds": 7.221,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -17410,7 +17327,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 6.502,
+     "seconds": 7.903,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -17465,7 +17382,7 @@
     },
     {
      "seed": 2,
-     "seconds": 7.107,
+     "seconds": 8.531,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -17520,7 +17437,7 @@
     },
     {
      "seed": 3,
-     "seconds": 7.11,
+     "seconds": 8.368,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -17575,7 +17492,7 @@
     },
     {
      "seed": 4,
-     "seconds": 6.996,
+     "seconds": 7.964,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -17630,7 +17547,7 @@
     },
     {
      "seed": 5,
-     "seconds": 6.591,
+     "seconds": 7.015,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -17687,7 +17604,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 311.665,
+     "seconds": 343.099,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -17746,7 +17663,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 43.705,
+     "seconds": 52.118,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -17803,7 +17720,7 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 67.757,
+     "seconds": 71.209,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -17968,7 +17885,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 5.018,
+     "seconds": 5.01,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -18023,7 +17940,7 @@
     },
     {
      "seed": 2,
-     "seconds": 4.936,
+     "seconds": 5.196,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -18078,7 +17995,7 @@
     },
     {
      "seed": 3,
-     "seconds": 6.587,
+     "seconds": 6.155,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -18136,7 +18053,7 @@
     },
     {
      "seed": 4,
-     "seconds": 5.795,
+     "seconds": 5.827,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -18194,7 +18111,7 @@
     },
     {
      "seed": 5,
-     "seconds": 5.633,
+     "seconds": 6.575,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -18251,7 +18168,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 88.452,
+     "seconds": 92.286,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -18311,7 +18228,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 156.925,
+     "seconds": 174.087,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -18371,7 +18288,7 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 216.117,
+     "seconds": 247.847,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -18536,7 +18453,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 3.291,
+     "seconds": 3.799,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -18591,7 +18508,7 @@
     },
     {
      "seed": 2,
-     "seconds": 2.923,
+     "seconds": 3.607,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -18646,7 +18563,7 @@
     },
     {
      "seed": 3,
-     "seconds": 3.016,
+     "seconds": 3.958,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -18701,7 +18618,7 @@
     },
     {
      "seed": 4,
-     "seconds": 4.312,
+     "seconds": 3.62,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -18756,7 +18673,7 @@
     },
     {
      "seed": 5,
-     "seconds": 3.901,
+     "seconds": 4.021,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -18822,13 +18739,13 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 139.287,
+     "seconds": 165.351,
      "failure": null,
      "metrics": {
       "valid": false,
-      "vertices": 13637,
-      "faces": 11908,
-      "quads": 11904,
+      "vertices": 13689,
+      "faces": 11960,
+      "quads": 11956,
       "non_manifold_edges": 1,
       "misoriented_edges": 0,
       "boundary_edges": 612,
@@ -18841,20 +18758,20 @@
       "topological_minimum": null,
       "irregular_excess": null,
       "base_complex_patches": null,
-      "alignment": 11.561222783950337,
-      "angle_deviation_mean": 16.88725603642264,
-      "angle_deviation_p95": 67.14767923362535,
-      "aspect_mean": 6.1435771217825215,
-      "aspect_p95": 18.57972862086318,
-      "area_variation": 2.390415938690336,
+      "alignment": 11.580259866532545,
+      "angle_deviation_mean": 16.91072359677192,
+      "angle_deviation_p95": 67.06288048609113,
+      "aspect_mean": 6.124667792834981,
+      "aspect_p95": 18.425335819896507,
+      "area_variation": 2.396530183123028,
       "hausdorff": 0.004210139189764811,
-      "mean_distance": 0.0002815719787703729,
+      "mean_distance": 0.00028138952134895364,
       "thin_share": 0.8456199212016745,
-      "thin_distance": 0.13296959510691056,
+      "thin_distance": 0.1329734813230217,
       "volume_ratio": null,
       "feature_edges_length": 7643.491333405113,
       "feature_chains": 16350,
-      "feature_edges_kept": 0.5567469345891732,
+      "feature_edges_kept": 0.5568504780254866,
       "loops_closed": null,
       "loops_spiral": null,
       "loops_open": null,
@@ -18870,7 +18787,7 @@
       "loop_edges_helix_missed": null,
       "helix_pitch_max": null,
       "loop_edges_helix_by_pitch": null,
-      "budget_error": 0.4885
+      "budget_error": 0.495
      },
      "against": 8000,
      "mesh": "bench/out/marine/8000/openclare-uniform_1.obj"
@@ -18879,13 +18796,13 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 212.794,
+     "seconds": 246.22,
      "failure": null,
      "metrics": {
       "valid": false,
-      "vertices": 13557,
-      "faces": 11824,
-      "quads": 11824,
+      "vertices": 13538,
+      "faces": 11805,
+      "quads": 11805,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 634,
@@ -18897,40 +18814,40 @@
       "irregular_vertices": 6289,
       "topological_minimum": null,
       "irregular_excess": null,
-      "base_complex_patches": 7572,
-      "alignment": 11.591929273466388,
-      "angle_deviation_mean": 18.127360750684886,
-      "angle_deviation_p95": 66.40390639500683,
-      "aspect_mean": 47.07194810814987,
-      "aspect_p95": 16.03892333210138,
-      "area_variation": 2.624263255752568,
+      "base_complex_patches": 7577,
+      "alignment": 11.617242496691519,
+      "angle_deviation_mean": 18.143316535105278,
+      "angle_deviation_p95": 65.33577275364846,
+      "aspect_mean": 47.05678277931773,
+      "aspect_p95": 15.881220517794556,
+      "area_variation": 2.6219551818333833,
       "hausdorff": 0.004221347943553727,
-      "mean_distance": 0.00028581963794453556,
+      "mean_distance": 0.0002859321877925994,
       "thin_share": 0.8456199212016745,
-      "thin_distance": 0.13149647020541586,
+      "thin_distance": 0.13153005004499893,
       "volume_ratio": null,
       "feature_edges_length": 7643.491333405113,
       "feature_chains": 16350,
-      "feature_edges_kept": 0.5510750217149248,
-      "loops_closed": 572,
-      "loops_spiral": 5994,
-      "loops_open": 3941,
+      "feature_edges_kept": 0.5510233271203945,
+      "loops_closed": 505,
+      "loops_spiral": 5991,
+      "loops_open": 3945,
       "loops_border": 152,
-      "loop_edges_closed": 0.2581543868672576,
-      "loop_edges_spiral": 0.306116325918315,
-      "loop_edges_open": 0.42531395996743465,
-      "loop_edges_border": 0.01041532724701039,
+      "loop_edges_closed": 0.22770789507577457,
+      "loop_edges_spiral": 0.33610956081229615,
+      "loop_edges_open": 0.4257502253896148,
+      "loop_edges_border": 0.010432318722362962,
       "longest_open_loop": 31,
-      "loops_helix": 20,
-      "loop_edges_helix": 0.015044361579015045,
+      "loops_helix": 23,
+      "loop_edges_helix": 0.046279998282745906,
       "loops_helix_missed": 0,
       "loop_edges_helix_missed": 0,
       "helix_pitch_max": 2,
       "loop_edges_helix_by_pitch": [
-       0.013972825854013974,
-       0.0010715357250010715
+       0.04477740093590351,
+       0.001502597346842399
       ],
-      "budget_error": 0.478
+      "budget_error": 0.475625
      },
      "against": 8000,
      "mesh": "bench/out/marine/8000/openclare_1.obj",
@@ -19047,7 +18964,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 1.098,
+     "seconds": 1.247,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -19102,7 +19019,7 @@
     },
     {
      "seed": 2,
-     "seconds": 1.215,
+     "seconds": 1.182,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -19157,7 +19074,7 @@
     },
     {
      "seed": 3,
-     "seconds": 1.086,
+     "seconds": 2.132,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -19212,7 +19129,7 @@
     },
     {
      "seed": 4,
-     "seconds": 2.002,
+     "seconds": 1.731,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -19267,7 +19184,7 @@
     },
     {
      "seed": 5,
-     "seconds": 1.314,
+     "seconds": 1.445,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -19324,7 +19241,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 93.064,
+     "seconds": 106.278,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -19398,13 +19315,13 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 68.186,
+     "seconds": 81.452,
      "failure": null,
      "metrics": {
       "valid": false,
-      "vertices": 8005,
-      "faces": 7953,
-      "quads": 7945,
+      "vertices": 7997,
+      "faces": 7945,
+      "quads": 7937,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 42,
@@ -19417,16 +19334,16 @@
       "topological_minimum": null,
       "irregular_excess": null,
       "base_complex_patches": null,
-      "alignment": 9.700230989589016,
-      "angle_deviation_mean": 7.439736688655703,
-      "angle_deviation_p95": 25.433605293787494,
-      "aspect_mean": 1.4799129506689248,
-      "aspect_p95": 2.5271943706432674,
-      "area_variation": 0.3099809278479627,
+      "alignment": 9.70592712810454,
+      "angle_deviation_mean": 7.390337421472869,
+      "angle_deviation_p95": 25.123872261892757,
+      "aspect_mean": 1.4809529419987635,
+      "aspect_p95": 2.5276882659731257,
+      "area_variation": 0.31044586988988443,
       "hausdorff": 0.03539861640002718,
-      "mean_distance": 0.0013799777894337325,
+      "mean_distance": 0.0013754259907347373,
       "thin_share": 0.3947800628391888,
-      "thin_distance": 0.17785443296114772,
+      "thin_distance": 0.17733321264870097,
       "volume_ratio": null,
       "feature_edges_length": 270.74577418714847,
       "feature_chains": 178,
@@ -19435,27 +19352,27 @@
       "loops_spiral": 44,
       "loops_open": 535,
       "loops_border": 4,
-      "loop_edges_closed": 0.23109429202144502,
-      "loop_edges_spiral": 0.22283191422264292,
-      "loop_edges_open": 0.5382529170608669,
-      "loop_edges_border": 0.00782087669504888,
+      "loop_edges_closed": 0.231327735336827,
+      "loop_edges_spiral": 0.22305701117494775,
+      "loop_edges_open": 0.5377864764189634,
+      "loop_edges_border": 0.007828777069259423,
       "longest_open_loop": 217,
       "loops_helix": 13,
-      "loop_edges_helix": 0.08886786502680541,
+      "loop_edges_helix": 0.08895763621440748,
       "loops_helix_missed": 0,
       "loop_edges_helix_missed": 0,
       "helix_pitch_max": 8,
       "loop_edges_helix_by_pitch": [
-       0.009019236833806371,
-       0.06849574266792811,
+       0.009028347749226593,
+       0.06856493465496559,
        0,
        0,
        0,
        0,
        0,
-       0.011352885525070956
+       0.011364353810215291
       ],
-      "budget_error": 0.005875
+      "budget_error": 0.006875
      },
      "against": 8000,
      "mesh": "bench/out/venturi/8000/openclare-uniform_1.obj"
@@ -19464,7 +19381,7 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 99.191,
+     "seconds": 111.982,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -19638,7 +19555,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 1.138,
+     "seconds": 0.504,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -19696,7 +19613,7 @@
     },
     {
      "seed": 2,
-     "seconds": 0.93,
+     "seconds": 0.588,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -19754,7 +19671,7 @@
     },
     {
      "seed": 3,
-     "seconds": 0.813,
+     "seconds": 0.58,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -19812,7 +19729,7 @@
     },
     {
      "seed": 4,
-     "seconds": 0.572,
+     "seconds": 0.6,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -19870,7 +19787,7 @@
     },
     {
      "seed": 5,
-     "seconds": 0.751,
+     "seconds": 0.624,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -19932,7 +19849,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 96.527,
+     "seconds": 117.048,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -19998,7 +19915,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 172.136,
+     "seconds": 179.186,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -20059,7 +19976,7 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 170.993,
+     "seconds": 199.967,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -20228,7 +20145,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 7.163,
+     "seconds": 5.289,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -20286,7 +20203,7 @@
     },
     {
      "seed": 2,
-     "seconds": 5.251,
+     "seconds": 6.159,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -20344,7 +20261,7 @@
     },
     {
      "seed": 3,
-     "seconds": 6.086,
+     "seconds": 5.301,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -20399,7 +20316,7 @@
     },
     {
      "seed": 4,
-     "seconds": 4.815,
+     "seconds": 5.205,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -20457,7 +20374,7 @@
     },
     {
      "seed": 5,
-     "seconds": 4.717,
+     "seconds": 5.42,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -20514,7 +20431,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 249.012,
+     "seconds": 262.977,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -20571,7 +20488,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 44.28,
+     "seconds": 54.147,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -20631,7 +20548,7 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 57.382,
+     "seconds": 70.251,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -20805,7 +20722,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 3.287,
+     "seconds": 3.071,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -20863,7 +20780,7 @@
     },
     {
      "seed": 2,
-     "seconds": 2.356,
+     "seconds": 3.158,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -20918,7 +20835,7 @@
     },
     {
      "seed": 3,
-     "seconds": 2.447,
+     "seconds": 2.738,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -20973,7 +20890,7 @@
     },
     {
      "seed": 4,
-     "seconds": 2.823,
+     "seconds": 3.566,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -21031,7 +20948,7 @@
     },
     {
      "seed": 5,
-     "seconds": 2.884,
+     "seconds": 2.399,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -21088,7 +21005,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 139.261,
+     "seconds": 155.453,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -21145,7 +21062,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 6.05,
+     "seconds": 8.366,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -21204,7 +21121,7 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 7.162,
+     "seconds": 7.526,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -21371,7 +21288,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 82.804,
+     "seconds": 86.139,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -21429,7 +21346,7 @@
     },
     {
      "seed": 2,
-     "seconds": 77.989,
+     "seconds": 85.176,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -21484,7 +21401,7 @@
     },
     {
      "seed": 3,
-     "seconds": 77.745,
+     "seconds": 80.628,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -21542,7 +21459,7 @@
     },
     {
      "seed": 4,
-     "seconds": 76.943,
+     "seconds": 78.518,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -21597,7 +21514,7 @@
     },
     {
      "seed": 5,
-     "seconds": 82.27,
+     "seconds": 76.051,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -21657,7 +21574,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 100.342,
+     "seconds": 111.976,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -21725,13 +21642,13 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 123.366,
+     "seconds": 136.686,
      "failure": null,
      "metrics": {
       "valid": true,
-      "vertices": 7994,
-      "faces": 7992,
-      "quads": 7992,
+      "vertices": 8089,
+      "faces": 8087,
+      "quads": 8087,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 0,
@@ -21743,39 +21660,39 @@
       "irregular_vertices": 198,
       "topological_minimum": 8,
       "irregular_excess": 190,
-      "base_complex_patches": 5448,
-      "alignment": 11.9941649735921,
-      "angle_deviation_mean": 6.704396664215399,
-      "angle_deviation_p95": 18.430434226167037,
-      "aspect_mean": 1.4082483455245298,
-      "aspect_p95": 2.1866066483913618,
-      "area_variation": 0.3752530552943789,
-      "hausdorff": 0.011769420987313366,
-      "mean_distance": 0.0003120913139003274,
+      "base_complex_patches": 4543,
+      "alignment": 11.911784011182178,
+      "angle_deviation_mean": 6.09162952636599,
+      "angle_deviation_p95": 16.409256485918505,
+      "aspect_mean": 1.4030401623311644,
+      "aspect_p95": 2.1697861675973624,
+      "area_variation": 0.3362444243501651,
+      "hausdorff": 0.011461179613561481,
+      "mean_distance": 0.0003089328326733891,
       "thin_share": 0.00557741788042757,
-      "thin_distance": 0.1118254495254462,
-      "volume_ratio": 0.9999621295408128,
+      "thin_distance": 0.13734970482574016,
+      "volume_ratio": 0.9999374812788938,
       "feature_edges_length": 92.74272660040313,
       "feature_chains": 839,
-      "feature_edges_kept": 0.18104443873676332,
-      "loops_closed": 94,
-      "loops_spiral": 25,
-      "loops_open": 367,
+      "feature_edges_kept": 0.20524875114813407,
+      "loops_closed": 116,
+      "loops_spiral": 21,
+      "loops_open": 371,
       "loops_border": 0,
-      "loop_edges_closed": 0.16028528528528502,
-      "loop_edges_spiral": 0.11098598598598597,
-      "loop_edges_open": 0.7287287287287277,
+      "loop_edges_closed": 0.23172993693582336,
+      "loop_edges_spiral": 0.06770124891801657,
+      "loop_edges_open": 0.7005688141461591,
       "loop_edges_border": 0,
-      "longest_open_loop": 308,
-      "loops_helix": 4,
-      "loop_edges_helix": 0.0370995995995996,
+      "longest_open_loop": 234,
+      "loops_helix": 3,
+      "loop_edges_helix": 0.011252627674044764,
       "loops_helix_missed": 0,
       "loop_edges_helix_missed": 0,
       "helix_pitch_max": 1,
       "loop_edges_helix_by_pitch": [
-       0.0370995995995996
+       0.011252627674044764
       ],
-      "budget_error": 0.001
+      "budget_error": 0.010875
      },
      "against": 8000,
      "mesh": "bench/out/ogre_hp/8000/openclare-uniform_1.obj"
@@ -21784,7 +21701,7 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 241.299,
+     "seconds": 262.471,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -22221,7 +22138,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 1.664,
+     "seconds": 1.362,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -22276,7 +22193,7 @@
     },
     {
      "seed": 2,
-     "seconds": 1.413,
+     "seconds": 1.983,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -22334,7 +22251,7 @@
     },
     {
      "seed": 3,
-     "seconds": 1.5,
+     "seconds": 1.095,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -22389,7 +22306,7 @@
     },
     {
      "seed": 4,
-     "seconds": 1.075,
+     "seconds": 1.113,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -22444,7 +22361,7 @@
     },
     {
      "seed": 5,
-     "seconds": 1.096,
+     "seconds": 1.352,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -22504,7 +22421,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 222.144,
+     "seconds": 225.082,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -22561,7 +22478,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 371.266,
+     "seconds": 385.054,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -22618,7 +22535,7 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 374.146,
+     "seconds": 400.765,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -23043,7 +22960,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 1.035,
+     "seconds": 1.044,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -23098,7 +23015,7 @@
     },
     {
      "seed": 2,
-     "seconds": 0.834,
+     "seconds": 0.959,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -23153,7 +23070,7 @@
     },
     {
      "seed": 3,
-     "seconds": 2.045,
+     "seconds": 0.968,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -23208,7 +23125,7 @@
     },
     {
      "seed": 4,
-     "seconds": 1.106,
+     "seconds": 0.967,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -23263,7 +23180,7 @@
     },
     {
      "seed": 5,
-     "seconds": 1.169,
+     "seconds": 1.3,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -23320,7 +23237,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 217.468,
+     "seconds": 207.743,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -23377,7 +23294,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 270.66,
+     "seconds": 278.109,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -23434,7 +23351,7 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 281.025,
+     "seconds": 261.94,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -23856,7 +23773,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 1.62,
+     "seconds": 1.021,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -23914,7 +23831,7 @@
     },
     {
      "seed": 2,
-     "seconds": 1.068,
+     "seconds": 1.019,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -23972,7 +23889,7 @@
     },
     {
      "seed": 3,
-     "seconds": 1.076,
+     "seconds": 1.094,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -24030,7 +23947,7 @@
     },
     {
      "seed": 4,
-     "seconds": 0.851,
+     "seconds": 0.958,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -24088,7 +24005,7 @@
     },
     {
      "seed": 5,
-     "seconds": 1.122,
+     "seconds": 1.193,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -24148,7 +24065,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 276.108,
+     "seconds": 308.884,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -24205,7 +24122,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 35.465,
+     "seconds": 39.022,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -24266,7 +24183,7 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 47.221,
+     "seconds": 51.495,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -24431,7 +24348,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 0.952,
+     "seconds": 1.106,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -24486,7 +24403,7 @@
     },
     {
      "seed": 2,
-     "seconds": 1.367,
+     "seconds": 1.03,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -24541,7 +24458,7 @@
     },
     {
      "seed": 3,
-     "seconds": 1.588,
+     "seconds": 1.393,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -24596,7 +24513,7 @@
     },
     {
      "seed": 4,
-     "seconds": 1.367,
+     "seconds": 1.138,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -24651,7 +24568,7 @@
     },
     {
      "seed": 5,
-     "seconds": 1.276,
+     "seconds": 1.456,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -24717,7 +24634,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 3.128,
+     "seconds": 2.762,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -24776,13 +24693,13 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 39.251,
+     "seconds": 45.014,
      "failure": null,
      "metrics": {
       "valid": true,
-      "vertices": 256,
-      "faces": 258,
-      "quads": 258,
+      "vertices": 252,
+      "faces": 254,
+      "quads": 254,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 0,
@@ -24794,39 +24711,37 @@
       "irregular_vertices": 48,
       "topological_minimum": 24,
       "irregular_excess": 24,
-      "base_complex_patches": 258,
-      "alignment": 19.12229465099064,
-      "angle_deviation_mean": 23.237252443925883,
-      "angle_deviation_p95": 60.17729401246541,
-      "aspect_mean": 2.860273818232479,
-      "aspect_p95": 7.546257081137939,
-      "area_variation": 1.2759962021381717,
+      "base_complex_patches": 244,
+      "alignment": 18.19695211053548,
+      "angle_deviation_mean": 23.046222383032664,
+      "angle_deviation_p95": 63.56120584750482,
+      "aspect_mean": 3.329518590096879,
+      "aspect_p95": 7.978888892198334,
+      "area_variation": 1.1949809590119749,
       "hausdorff": 0.528692471947204,
-      "mean_distance": 0.24186897294640664,
+      "mean_distance": 0.24224904532815777,
       "thin_share": 0.617627300819562,
-      "thin_distance": 18.335228842880518,
-      "volume_ratio": 0.016640841902806333,
+      "thin_distance": 18.35392480590954,
+      "volume_ratio": 0.018643870767625,
       "feature_edges_length": 3885.5867835479808,
       "feature_chains": 2408,
-      "feature_edges_kept": 0.017851823091921515,
-      "loops_closed": 0,
-      "loops_spiral": 7,
-      "loops_open": 93,
+      "feature_edges_kept": 0.019721539228149225,
+      "loops_closed": 2,
+      "loops_spiral": 8,
+      "loops_open": 92,
       "loops_border": 0,
-      "loop_edges_closed": 0,
-      "loop_edges_spiral": 0.17248062015503876,
-      "loop_edges_open": 0.8275193798449618,
+      "loop_edges_closed": 0.01968503937007874,
+      "loop_edges_spiral": 0.16732283464566927,
+      "loop_edges_open": 0.8129921259842513,
       "loop_edges_border": 0,
-      "longest_open_loop": 17,
-      "loops_helix": 1,
-      "loop_edges_helix": 0.03488372093023256,
+      "longest_open_loop": 22,
+      "loops_helix": 0,
+      "loop_edges_helix": 0,
       "loops_helix_missed": 0,
       "loop_edges_helix_missed": 0,
-      "helix_pitch_max": 1,
-      "loop_edges_helix_by_pitch": [
-       0.03488372093023256
-      ],
-      "budget_error": 0.96775
+      "helix_pitch_max": 0,
+      "loop_edges_helix_by_pitch": [],
+      "budget_error": 0.96825
      },
      "against": 8000,
      "mesh": "bench/out/windmill/8000/openclare_1.obj",
@@ -24943,7 +24858,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 20.729,
+     "seconds": 20.528,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -25003,7 +24918,7 @@
     },
     {
      "seed": 2,
-     "seconds": 20.237,
+     "seconds": 18.534,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -25061,7 +24976,7 @@
     },
     {
      "seed": 3,
-     "seconds": 18.94,
+     "seconds": 19.639,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -25116,7 +25031,7 @@
     },
     {
      "seed": 4,
-     "seconds": 19.994,
+     "seconds": 19.187,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -25174,7 +25089,7 @@
     },
     {
      "seed": 5,
-     "seconds": 19.183,
+     "seconds": 19.918,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -25231,7 +25146,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 46.651,
+     "seconds": 51.032,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -25291,13 +25206,13 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 30.315,
+     "seconds": 34.858,
      "failure": null,
      "metrics": {
       "valid": true,
-      "vertices": 7939,
-      "faces": 7937,
-      "quads": 7937,
+      "vertices": 8111,
+      "faces": 8109,
+      "quads": 8109,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 0,
@@ -25309,40 +25224,39 @@
       "irregular_vertices": 148,
       "topological_minimum": 8,
       "irregular_excess": 140,
-      "base_complex_patches": 2951,
-      "alignment": 8.419857789322771,
-      "angle_deviation_mean": 5.085844638351393,
-      "angle_deviation_p95": 16.112560352755466,
-      "aspect_mean": 1.4028151535648823,
-      "aspect_p95": 1.9861312612780981,
-      "area_variation": 0.3753853810178586,
-      "hausdorff": 0.009390078103940373,
-      "mean_distance": 0.0005795239024794357,
+      "base_complex_patches": 2439,
+      "alignment": 7.984238760540588,
+      "angle_deviation_mean": 4.070100042448034,
+      "angle_deviation_p95": 12.846418849076954,
+      "aspect_mean": 1.3606488709425855,
+      "aspect_p95": 1.9389311349016178,
+      "area_variation": 0.36069060216962434,
+      "hausdorff": 0.009235216125358298,
+      "mean_distance": 0.0005242440286963935,
       "thin_share": 0.16095990505460245,
-      "thin_distance": 0.18914220704624815,
-      "volume_ratio": 0.999866976944929,
+      "thin_distance": 0.18833380460274188,
+      "volume_ratio": 0.9998383719673004,
       "feature_edges_length": 22.37876165435109,
       "feature_chains": 23,
-      "feature_edges_kept": 0.9299810981033405,
-      "loops_closed": 211,
-      "loops_spiral": 35,
-      "loops_open": 257,
+      "feature_edges_kept": 0.8712501486325339,
+      "loops_closed": 227,
+      "loops_spiral": 31,
+      "loops_open": 261,
       "loops_border": 0,
-      "loop_edges_closed": 0.3156104321532073,
-      "loop_edges_spiral": 0.13122086430641303,
-      "loop_edges_open": 0.5531687035403812,
+      "loop_edges_closed": 0.3505981008755704,
+      "loop_edges_spiral": 0.06930570970526578,
+      "loop_edges_open": 0.5800961894191657,
       "loop_edges_border": 0,
-      "longest_open_loop": 352,
-      "loops_helix": 5,
-      "loop_edges_helix": 0.04812901600100794,
+      "longest_open_loop": 539,
+      "loops_helix": 4,
+      "loop_edges_helix": 0.0178813663830312,
       "loops_helix_missed": 0,
       "loop_edges_helix_missed": 0,
-      "helix_pitch_max": 2,
+      "helix_pitch_max": 1,
       "loop_edges_helix_by_pitch": [
-       0.04762504724707069,
-       0.0005039687539372559
+       0.0178813663830312
       ],
-      "budget_error": 0.007875
+      "budget_error": 0.013625
      },
      "against": 8000,
      "mesh": "bench/out/human_male/8000/openclare-uniform_1.obj"
@@ -25351,13 +25265,13 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 57.775,
+     "seconds": 62.486,
      "failure": null,
      "metrics": {
       "valid": true,
-      "vertices": 7889,
-      "faces": 7887,
-      "quads": 7887,
+      "vertices": 8097,
+      "faces": 8095,
+      "quads": 8095,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 0,
@@ -25369,39 +25283,39 @@
       "irregular_vertices": 226,
       "topological_minimum": 8,
       "irregular_excess": 218,
-      "base_complex_patches": 2847,
-      "alignment": 8.177468104271824,
-      "angle_deviation_mean": 4.596344701876943,
-      "angle_deviation_p95": 14.336724577613694,
-      "aspect_mean": 1.3392465028207718,
-      "aspect_p95": 1.7970957782580237,
-      "area_variation": 0.5190932038454042,
-      "hausdorff": 0.004688549183991705,
-      "mean_distance": 0.00023790243562173168,
+      "base_complex_patches": 3023,
+      "alignment": 8.087787232923647,
+      "angle_deviation_mean": 4.478344360716366,
+      "angle_deviation_p95": 14.360681307164327,
+      "aspect_mean": 1.3355653797382587,
+      "aspect_p95": 1.80940505153845,
+      "area_variation": 0.5033222865117764,
+      "hausdorff": 0.004940415203339802,
+      "mean_distance": 0.00023595581121731404,
       "thin_share": 0.16095990505460245,
-      "thin_distance": 0.05380556428088184,
-      "volume_ratio": 1.0001900006259197,
+      "thin_distance": 0.05325035309973692,
+      "volume_ratio": 1.0002047956111657,
       "feature_edges_length": 22.37876165435109,
       "feature_chains": 23,
-      "feature_edges_kept": 0.8828369429790199,
+      "feature_edges_kept": 0.9354863284614565,
       "loops_closed": 237,
-      "loops_spiral": 16,
-      "loops_open": 432,
+      "loops_spiral": 11,
+      "loops_open": 437,
       "loops_border": 0,
-      "loop_edges_closed": 0.34918219855458305,
-      "loop_edges_spiral": 0.061049828832255605,
-      "loop_edges_open": 0.5897679726131609,
+      "loop_edges_closed": 0.3274861025324268,
+      "loop_edges_spiral": 0.03922174181593576,
+      "loop_edges_open": 0.6332921556516372,
       "loop_edges_border": 0,
-      "longest_open_loop": 328,
+      "longest_open_loop": 401,
       "loops_helix": 9,
-      "loop_edges_helix": 0.03537466717383035,
+      "loop_edges_helix": 0.032427424336009876,
       "loops_helix_missed": 0,
       "loop_edges_helix_missed": 0,
       "helix_pitch_max": 1,
       "loop_edges_helix_by_pitch": [
-       0.03537466717383035
+       0.032427424336009876
       ],
-      "budget_error": 0.014125
+      "budget_error": 0.011875
      },
      "against": 8000,
      "mesh": "bench/out/human_male/8000/openclare_1.obj",
@@ -25477,13 +25391,13 @@
    "openclare-as-handmade": [
     {
      "seed": 1,
-     "seconds": 54.33,
+     "seconds": 63.314,
      "failure": null,
      "metrics": {
       "valid": true,
-      "vertices": 10582,
-      "faces": 10580,
-      "quads": 10580,
+      "vertices": 10522,
+      "faces": 10520,
+      "quads": 10520,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 0,
@@ -25495,40 +25409,39 @@
       "irregular_vertices": 254,
       "topological_minimum": 8,
       "irregular_excess": 246,
-      "base_complex_patches": 3200,
-      "alignment": 8.37361197779914,
-      "angle_deviation_mean": 4.3268346158315625,
-      "angle_deviation_p95": 14.078135689618975,
-      "aspect_mean": 1.3402043023353236,
-      "aspect_p95": 1.7973111441650278,
-      "area_variation": 0.46188734339821663,
-      "hausdorff": 0.004585127123913374,
-      "mean_distance": 0.00019241186055064718,
+      "base_complex_patches": 3148,
+      "alignment": 8.311502621885964,
+      "angle_deviation_mean": 4.268211449860721,
+      "angle_deviation_p95": 13.840659429563459,
+      "aspect_mean": 1.3414109496284483,
+      "aspect_p95": 1.7795976187192448,
+      "area_variation": 0.4594395809205627,
+      "hausdorff": 0.0047569345201868025,
+      "mean_distance": 0.00020223893158829913,
       "thin_share": 0.12317954895031605,
-      "thin_distance": 0.05883643108634694,
-      "volume_ratio": 1.0001523573738083,
+      "thin_distance": 0.06150692308622043,
+      "volume_ratio": 1.0001383394302972,
       "feature_edges_length": 31.26523571249973,
       "feature_chains": 40,
-      "feature_edges_kept": 0.9161939407513936,
-      "loops_closed": 308,
-      "loops_spiral": 12,
-      "loops_open": 492,
+      "feature_edges_kept": 0.9444405932656766,
+      "loops_closed": 304,
+      "loops_spiral": 16,
+      "loops_open": 488,
       "loops_border": 0,
-      "loop_edges_closed": 0.3644612476370531,
-      "loop_edges_spiral": 0.017438563327032135,
-      "loop_edges_open": 0.6181001890359186,
+      "loop_edges_closed": 0.3660646387832678,
+      "loop_edges_spiral": 0.016539923954372624,
+      "loop_edges_open": 0.61739543726236,
       "loop_edges_border": 0,
-      "longest_open_loop": 406,
+      "longest_open_loop": 404,
       "loops_helix": 2,
-      "loop_edges_helix": 0.0048204158790170135,
+      "loop_edges_helix": 0.0025665399239543727,
       "loops_helix_missed": 0,
       "loop_edges_helix_missed": 0,
-      "helix_pitch_max": 2,
+      "helix_pitch_max": 1,
       "loop_edges_helix_by_pitch": [
-       0,
-       0.0048204158790170135
+       0.0025665399239543727
       ],
-      "budget_error": 0.0009442870632672333
+      "budget_error": 0.0066100094428706326
      },
      "against": 10590,
      "mesh": "bench/out/human_male/8000/openclare-as-handmade_1.obj",
@@ -25643,7 +25556,7 @@
    "instant-meshes": [
     {
      "seed": 1,
-     "seconds": 18.463,
+     "seconds": 22.649,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -25701,7 +25614,7 @@
     },
     {
      "seed": 2,
-     "seconds": 19.449,
+     "seconds": 20.782,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -25759,7 +25672,7 @@
     },
     {
      "seed": 3,
-     "seconds": 18.166,
+     "seconds": 22.422,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -25817,7 +25730,7 @@
     },
     {
      "seed": 4,
-     "seconds": 21.088,
+     "seconds": 19.327,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -25879,7 +25792,7 @@
     },
     {
      "seed": 5,
-     "seconds": 20.737,
+     "seconds": 23.37,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -25941,7 +25854,7 @@
    "integer-grid": [
     {
      "seed": 1,
-     "seconds": 46.051,
+     "seconds": 51.353,
      "failure": null,
      "metrics": {
       "valid": false,
@@ -26001,7 +25914,7 @@
    "openclare-uniform": [
     {
      "seed": 1,
-     "seconds": 37.396,
+     "seconds": 31.533,
      "failure": null,
      "metrics": {
       "valid": true,
@@ -26061,13 +25974,13 @@
    "openclare": [
     {
      "seed": 1,
-     "seconds": 49.106,
+     "seconds": 59.841,
      "failure": null,
      "metrics": {
       "valid": true,
-      "vertices": 7997,
-      "faces": 7995,
-      "quads": 7995,
+      "vertices": 8033,
+      "faces": 8031,
+      "quads": 8031,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 0,
@@ -26079,40 +25992,39 @@
       "irregular_vertices": 234,
       "topological_minimum": 8,
       "irregular_excess": 226,
-      "base_complex_patches": 2989,
-      "alignment": 7.104672793666867,
-      "angle_deviation_mean": 4.4477173534075325,
-      "angle_deviation_p95": 14.744349171413617,
-      "aspect_mean": 1.2753463616131326,
-      "aspect_p95": 1.7113991209688997,
-      "area_variation": 0.4919616302045464,
-      "hausdorff": 0.005916271578224521,
-      "mean_distance": 0.00027290025926807984,
+      "base_complex_patches": 2791,
+      "alignment": 7.081146392639087,
+      "angle_deviation_mean": 4.196037697670309,
+      "angle_deviation_p95": 13.80788252729819,
+      "aspect_mean": 1.2708145859120785,
+      "aspect_p95": 1.7237676456339783,
+      "area_variation": 0.4730836326661309,
+      "hausdorff": 0.005566723033098822,
+      "mean_distance": 0.00028934483379394104,
       "thin_share": 0.18585059680385924,
-      "thin_distance": 0.07385099679975818,
-      "volume_ratio": 1.0001373602682715,
+      "thin_distance": 0.07056079618832803,
+      "volume_ratio": 1.0002720261866123,
       "feature_edges_length": 26.574855231931263,
       "feature_chains": 28,
-      "feature_edges_kept": 0.9452334158553634,
-      "loops_closed": 285,
-      "loops_spiral": 7,
-      "loops_open": 457,
+      "feature_edges_kept": 0.9575392952748758,
+      "loops_closed": 298,
+      "loops_spiral": 10,
+      "loops_open": 454,
       "loops_border": 0,
-      "loop_edges_closed": 0.3130706691682319,
-      "loop_edges_spiral": 0.02020012507817386,
-      "loop_edges_open": 0.6667292057535947,
+      "loop_edges_closed": 0.3386875856057772,
+      "loop_edges_spiral": 0.03455360478147179,
+      "loop_edges_open": 0.6267588096127487,
       "loop_edges_border": 0,
-      "longest_open_loop": 376,
-      "loops_helix": 5,
-      "loop_edges_helix": 0.016635397123202,
+      "longest_open_loop": 269,
+      "loops_helix": 1,
+      "loop_edges_helix": 0.003424231104470178,
       "loops_helix_missed": 0,
       "loop_edges_helix_missed": 0,
-      "helix_pitch_max": 2,
+      "helix_pitch_max": 1,
       "loop_edges_helix_by_pitch": [
-       0.015634771732332707,
-       0.0010006253908692933
+       0.003424231104470178
       ],
-      "budget_error": 0.000625
+      "budget_error": 0.003875
      },
      "against": 8000,
      "mesh": "bench/out/human_female/8000/openclare_1.obj",
@@ -26188,13 +26100,13 @@
    "openclare-as-handmade": [
     {
      "seed": 1,
-     "seconds": 59.364,
+     "seconds": 71.154,
      "failure": null,
      "metrics": {
       "valid": true,
-      "vertices": 10456,
-      "faces": 10454,
-      "quads": 10454,
+      "vertices": 10644,
+      "faces": 10642,
+      "quads": 10642,
       "non_manifold_edges": 0,
       "misoriented_edges": 0,
       "boundary_edges": 0,
@@ -26206,39 +26118,40 @@
       "irregular_vertices": 274,
       "topological_minimum": 8,
       "irregular_excess": 266,
-      "base_complex_patches": 3560,
-      "alignment": 7.232546555739269,
-      "angle_deviation_mean": 4.425914540397888,
-      "angle_deviation_p95": 14.555823669928913,
-      "aspect_mean": 1.3710778716740248,
-      "aspect_p95": 1.9524608926100382,
-      "area_variation": 0.5937518185139121,
-      "hausdorff": 0.005405484105081985,
-      "mean_distance": 0.0002366504081782456,
+      "base_complex_patches": 3850,
+      "alignment": 7.35118309869705,
+      "angle_deviation_mean": 4.387625489834611,
+      "angle_deviation_p95": 13.826435422411564,
+      "aspect_mean": 1.273576553011465,
+      "aspect_p95": 1.709682642703317,
+      "area_variation": 0.49396192487461615,
+      "hausdorff": 0.004275989646817205,
+      "mean_distance": 0.00018552755863823062,
       "thin_share": 0.1390347808373263,
-      "thin_distance": 0.07014957233664529,
-      "volume_ratio": 1.000201410600163,
+      "thin_distance": 0.05528909443517533,
+      "volume_ratio": 1.0002235503335795,
       "feature_edges_length": 30.40032838823413,
       "feature_chains": 24,
-      "feature_edges_kept": 0.848347212157081,
-      "loops_closed": 325,
-      "loops_spiral": 9,
-      "loops_open": 535,
+      "feature_edges_kept": 0.8573753125027264,
+      "loops_closed": 322,
+      "loops_spiral": 13,
+      "loops_open": 531,
       "loops_border": 0,
-      "loop_edges_closed": 0.331547732925196,
-      "loop_edges_spiral": 0.01836617562655443,
-      "loop_edges_open": 0.6500860914482488,
+      "loop_edges_closed": 0.3191129486938529,
+      "loop_edges_spiral": 0.01907536177410261,
+      "loop_edges_open": 0.6618116895320458,
       "loop_edges_border": 0,
-      "longest_open_loop": 500,
-      "loops_helix": 4,
-      "loop_edges_helix": 0.01501817486129711,
+      "longest_open_loop": 385,
+      "loops_helix": 6,
+      "loop_edges_helix": 0.014752866002631084,
       "loops_helix_missed": 0,
       "loop_edges_helix_missed": 0,
-      "helix_pitch_max": 1,
+      "helix_pitch_max": 2,
       "loop_edges_helix_by_pitch": [
-       0.01501817486129711
+       0.010054501033640294,
+       0.004698364968990791
       ],
-      "budget_error": 0.012842304060434372
+      "budget_error": 0.004910292728989613
      },
      "against": 10590,
      "mesh": "bench/out/human_female/8000/openclare-as-handmade_1.obj",
@@ -26346,7 +26259,7 @@
     "longest_open_loop": 136,
     "loop_edges_border": 0,
     "budget_error": 0.0205,
-    "seconds": 1.95
+    "seconds": 2.093
    },
    "integer-grid": {
     "runs": 1,
@@ -26376,37 +26289,37 @@
     "longest_open_loop": 306,
     "loop_edges_border": 0,
     "budget_error": 0.14425,
-    "seconds": 66.463
+    "seconds": 64.918
    },
    "openclare-uniform": {
     "runs": 1,
     "produced": 1,
     "valid": 1,
     "failures": [],
-    "faces": 7970,
+    "faces": 8034,
     "irregular_vertices": 186,
     "irregular_excess": 178,
-    "base_complex_patches": 5234,
-    "alignment": 12.378979636326331,
-    "angle_deviation_mean": 6.895783094026141,
-    "angle_deviation_p95": 20.292560564266225,
-    "aspect_mean": 1.430771497577334,
-    "area_variation": 0.3400311915755641,
-    "hausdorff": 0.009531923560520732,
-    "mean_distance": 0.0003095302182719503,
-    "thin_distance": 0.08402271111227819,
-    "volume_ratio": 0.9998639658375545,
-    "feature_edges_kept": 0.7384065148280746,
-    "loop_edges_closed": 0.1716436637390212,
-    "loop_edges_spiral": 0.09109159347553325,
-    "loops_spiral": 24,
-    "loop_edges_helix": 0.016813048933500628,
+    "base_complex_patches": 4846,
+    "alignment": 12.292992579448015,
+    "angle_deviation_mean": 7.451256635847768,
+    "angle_deviation_p95": 21.399957157811585,
+    "aspect_mean": 1.5135740834474305,
+    "area_variation": 0.3315361674563153,
+    "hausdorff": 0.010883735475499208,
+    "mean_distance": 0.0003054238582712105,
+    "thin_distance": 0.10355714145803914,
+    "volume_ratio": 0.9999274744398404,
+    "feature_edges_kept": 0.7674176855009872,
+    "loop_edges_closed": 0.20014936519790888,
+    "loop_edges_spiral": 0.04580532735872542,
+    "loops_spiral": 10,
+    "loop_edges_helix": 0.0018048294747323875,
     "loops_helix_missed": 0,
-    "loop_edges_open": 0.7372647427854473,
-    "longest_open_loop": 244,
+    "loop_edges_open": 0.7540453074433633,
+    "longest_open_loop": 308,
     "loop_edges_border": 0,
-    "budget_error": 0.00375,
-    "seconds": 33.26
+    "budget_error": 0.00425,
+    "seconds": 30.084
    },
    "openclare": {
     "runs": 1,
@@ -26436,7 +26349,7 @@
     "longest_open_loop": 235,
     "loop_edges_border": 0,
     "budget_error": 0.0095,
-    "seconds": 32.013
+    "seconds": 36.015
    },
    "handmade": {
     "runs": 0,
@@ -26588,7 +26501,7 @@
     "longest_open_loop": 196,
     "loop_edges_border": 0,
     "budget_error": 0.0205,
-    "seconds": 1.186
+    "seconds": 1.459
    },
    "integer-grid": {
     "runs": 1,
@@ -26618,7 +26531,7 @@
     "longest_open_loop": 976,
     "loop_edges_border": 0,
     "budget_error": 0.058875,
-    "seconds": 16.626
+    "seconds": 16.819
    },
    "openclare-uniform": {
     "runs": 1,
@@ -26648,7 +26561,7 @@
     "longest_open_loop": 1032,
     "loop_edges_border": 0,
     "budget_error": 0.01575,
-    "seconds": 8.013
+    "seconds": 8.77
    },
    "openclare": {
     "runs": 1,
@@ -26678,7 +26591,7 @@
     "longest_open_loop": 755,
     "loop_edges_border": 0,
     "budget_error": 0.011625,
-    "seconds": 9.042
+    "seconds": 9.105
    },
    "handmade": {
     "runs": 0,
@@ -26830,7 +26743,7 @@
     "longest_open_loop": 266,
     "loop_edges_border": 0,
     "budget_error": 0.026,
-    "seconds": 0.969
+    "seconds": 1.003
    },
    "integer-grid": {
     "runs": 1,
@@ -26860,7 +26773,7 @@
     "longest_open_loop": 610,
     "loop_edges_border": 0,
     "budget_error": 0.088625,
-    "seconds": 30.64
+    "seconds": 35.026
    },
    "openclare-uniform": {
     "runs": 1,
@@ -26890,7 +26803,7 @@
     "longest_open_loop": 379,
     "loop_edges_border": 0,
     "budget_error": 0.004625,
-    "seconds": 7.554
+    "seconds": 7.424
    },
    "openclare": {
     "runs": 1,
@@ -26920,7 +26833,7 @@
     "longest_open_loop": 324,
     "loop_edges_border": 0,
     "budget_error": 0.0115,
-    "seconds": 8.948
+    "seconds": 8.16
    },
    "handmade": {
     "runs": 0,
@@ -27072,7 +26985,7 @@
     "longest_open_loop": 230,
     "loop_edges_border": 0,
     "budget_error": 0.02925,
-    "seconds": 0.728
+    "seconds": 1.052
    },
    "integer-grid": {
     "runs": 1,
@@ -27102,7 +27015,7 @@
     "longest_open_loop": 303,
     "loop_edges_border": 0.01482713727759294,
     "budget_error": 0.135125,
-    "seconds": 32.353
+    "seconds": 33.968
    },
    "openclare-uniform": {
     "runs": 1,
@@ -27132,37 +27045,37 @@
     "longest_open_loop": 306,
     "loop_edges_border": 0,
     "budget_error": 0.01775,
-    "seconds": 16.157
+    "seconds": 18.66
    },
    "openclare": {
     "runs": 1,
     "produced": 1,
     "valid": 1,
     "failures": [],
-    "faces": 7842,
+    "faces": 8095,
     "irregular_vertices": 42,
     "irregular_excess": 34,
-    "base_complex_patches": 2114,
-    "alignment": 5.592927620385926,
-    "angle_deviation_mean": 5.793923243203215,
-    "angle_deviation_p95": 15.555373650077868,
-    "aspect_mean": 1.3195802541360862,
-    "area_variation": 0.4941503926559042,
-    "hausdorff": 0.0008880646247433337,
-    "mean_distance": 8.440828587263268e-05,
+    "base_complex_patches": 1935,
+    "alignment": 5.7463072989333766,
+    "angle_deviation_mean": 5.982726792848654,
+    "angle_deviation_p95": 16.222110620745198,
+    "aspect_mean": 1.316892084129941,
+    "area_variation": 0.49457402820574814,
+    "hausdorff": 0.000862656156526621,
+    "mean_distance": 8.086426177308246e-05,
     "thin_distance": null,
-    "volume_ratio": 1.0001068870032956,
+    "volume_ratio": 1.0001012645428533,
     "feature_edges_kept": null,
-    "loop_edges_closed": 0.3733741392501916,
-    "loop_edges_spiral": 0.11935730680948736,
-    "loops_spiral": 4,
-    "loop_edges_helix": 0.0749171129813823,
-    "loops_helix_missed": 1,
-    "loop_edges_open": 0.507268553940321,
-    "longest_open_loop": 571,
+    "loop_edges_closed": 0.41840642371834424,
+    "loop_edges_spiral": 0.06794317479925881,
+    "loops_spiral": 2,
+    "loop_edges_helix": 0,
+    "loops_helix_missed": 0,
+    "loop_edges_open": 0.513650401482397,
+    "longest_open_loop": 592,
     "loop_edges_border": 0,
-    "budget_error": 0.01975,
-    "seconds": 11.867
+    "budget_error": 0.011875,
+    "seconds": 12.525
    },
    "handmade": {
     "runs": 0,
@@ -27314,7 +27227,7 @@
     "longest_open_loop": 138,
     "loop_edges_border": 0,
     "budget_error": 0.00625,
-    "seconds": 0.723
+    "seconds": 0.72
    },
    "integer-grid": {
     "runs": 1,
@@ -27344,7 +27257,7 @@
     "longest_open_loop": 128,
     "loop_edges_border": 0,
     "budget_error": 0.025875,
-    "seconds": 22.189
+    "seconds": 23.881
    },
    "openclare-uniform": {
     "runs": 1,
@@ -27374,7 +27287,7 @@
     "longest_open_loop": 125,
     "loop_edges_border": 0,
     "budget_error": 0.004625,
-    "seconds": 7.738
+    "seconds": 7.94
    },
    "openclare": {
     "runs": 1,
@@ -27404,7 +27317,7 @@
     "longest_open_loop": 103,
     "loop_edges_border": 0,
     "budget_error": 0.0025,
-    "seconds": 7.752
+    "seconds": 9.807
    },
    "handmade": {
     "runs": 0,
@@ -27556,7 +27469,7 @@
     "longest_open_loop": 168,
     "loop_edges_border": 0.012900024807740013,
     "budget_error": 0.01225,
-    "seconds": 0.55
+    "seconds": 0.657
    },
    "integer-grid": {
     "runs": 1,
@@ -27586,7 +27499,7 @@
     "longest_open_loop": 591,
     "loop_edges_border": 0.15290111504306605,
     "budget_error": 0.059875,
-    "seconds": 24.039
+    "seconds": 22.288
    },
    "openclare-uniform": {
     "runs": 1,
@@ -27616,37 +27529,37 @@
     "longest_open_loop": 308,
     "loop_edges_border": 0.13792241863951543,
     "budget_error": 0.00475,
-    "seconds": 7.125
+    "seconds": 7.005
    },
    "openclare": {
     "runs": 1,
     "produced": 1,
     "valid": 1,
     "failures": [],
-    "faces": 7884,
+    "faces": 8105,
     "irregular_vertices": 76,
     "irregular_excess": null,
-    "base_complex_patches": 3205,
-    "alignment": 9.9809074884874,
-    "angle_deviation_mean": 5.786761100777763,
-    "angle_deviation_p95": 14.91617768621829,
-    "aspect_mean": 1.2927380338137762,
-    "area_variation": 0.4137456273126907,
-    "hausdorff": 0.0061371094313588245,
-    "mean_distance": 0.00019159697583087258,
+    "base_complex_patches": 3722,
+    "alignment": 10.060705213871753,
+    "angle_deviation_mean": 5.734346350788293,
+    "angle_deviation_p95": 14.956695837006592,
+    "aspect_mean": 1.2379344402677097,
+    "area_variation": 0.3436781779130414,
+    "hausdorff": 0.0023694352374129257,
+    "mean_distance": 0.00017590785552361814,
     "thin_distance": null,
     "volume_ratio": null,
-    "feature_edges_kept": 0.9098550208907003,
-    "loop_edges_closed": 0.21708389069367492,
-    "loop_edges_spiral": 0.0432511624944264,
-    "loops_spiral": 6,
-    "loop_edges_helix": 0.033887508758519654,
-    "loops_helix_missed": 0,
-    "loop_edges_open": 0.5985094592012229,
-    "longest_open_loop": 353,
-    "loop_edges_border": 0.14115548761067587,
-    "budget_error": 0.0145,
-    "seconds": 9.799
+    "feature_edges_kept": 0.9952972751229666,
+    "loop_edges_closed": 0.20183372568454952,
+    "loop_edges_spiral": 0.061764341469458556,
+    "loops_spiral": 4,
+    "loop_edges_helix": 0.0678354602899269,
+    "loops_helix_missed": 4,
+    "loop_edges_open": 0.6170239127741297,
+    "longest_open_loop": 351,
+    "loop_edges_border": 0.11937802007186234,
+    "budget_error": 0.013125,
+    "seconds": 10.456
    },
    "handmade": {
     "runs": 0,
@@ -27798,7 +27711,7 @@
     "longest_open_loop": 234,
     "loop_edges_border": 0,
     "budget_error": 0.02,
-    "seconds": 0.999
+    "seconds": 1.482
    },
    "integer-grid": {
     "runs": 1,
@@ -27828,67 +27741,67 @@
     "longest_open_loop": 410,
     "loop_edges_border": 0,
     "budget_error": 0.1015,
-    "seconds": 46.131
+    "seconds": 54.875
    },
    "openclare-uniform": {
     "runs": 1,
     "produced": 1,
     "valid": 1,
     "failures": [],
-    "faces": 7900,
+    "faces": 7936,
     "irregular_vertices": 70,
     "irregular_excess": 62,
-    "base_complex_patches": 2528,
-    "alignment": 8.770064157254177,
-    "angle_deviation_mean": 6.485130844787703,
-    "angle_deviation_p95": 17.422191624230322,
-    "aspect_mean": 1.3504330887035505,
-    "area_variation": 0.31333026629390043,
-    "hausdorff": 0.0025377966176402408,
-    "mean_distance": 8.211196866161206e-05,
+    "base_complex_patches": 2910,
+    "alignment": 8.52983175932457,
+    "angle_deviation_mean": 6.340149715995175,
+    "angle_deviation_p95": 16.651307589287924,
+    "aspect_mean": 1.3647599467342912,
+    "area_variation": 0.3115841950626762,
+    "hausdorff": 0.0025451648732973983,
+    "mean_distance": 8.162879475630403e-05,
     "thin_distance": null,
-    "volume_ratio": 1.0000758422457794,
-    "feature_edges_kept": 0.8597474983829562,
-    "loop_edges_closed": 0.39367088607594947,
-    "loop_edges_spiral": 0.13639240506329114,
+    "volume_ratio": 1.0000637494386717,
+    "feature_edges_kept": 0.8389527310319058,
+    "loop_edges_closed": 0.34286794354838657,
+    "loop_edges_spiral": 0.167023689516129,
     "loops_spiral": 7,
-    "loop_edges_helix": 0.06791139240506329,
+    "loop_edges_helix": 0.10023941532258064,
     "loops_helix_missed": 0,
-    "loop_edges_open": 0.4699367088607593,
-    "longest_open_loop": 425,
+    "loop_edges_open": 0.4901083669354837,
+    "longest_open_loop": 593,
     "loop_edges_border": 0,
-    "budget_error": 0.0125,
-    "seconds": 14.51
+    "budget_error": 0.008,
+    "seconds": 16.539
    },
    "openclare": {
     "runs": 1,
     "produced": 1,
     "valid": 1,
     "failures": [],
-    "faces": 8014,
+    "faces": 8054,
     "irregular_vertices": 70,
     "irregular_excess": 62,
-    "base_complex_patches": 3116,
-    "alignment": 7.9026097464003335,
-    "angle_deviation_mean": 5.91402615420671,
-    "angle_deviation_p95": 15.53194829852221,
-    "aspect_mean": 1.349371391480003,
-    "area_variation": 0.4351049646575797,
+    "base_complex_patches": 2500,
+    "alignment": 8.00995231779019,
+    "angle_deviation_mean": 5.965148365680736,
+    "angle_deviation_p95": 15.186359403718498,
+    "aspect_mean": 1.3584291460384583,
+    "area_variation": 0.41941864374747306,
     "hausdorff": 0.0034739908619094654,
-    "mean_distance": 7.978105084818372e-05,
+    "mean_distance": 7.960917806483267e-05,
     "thin_distance": null,
-    "volume_ratio": 1.0000418788932586,
+    "volume_ratio": 1.0000432294263948,
     "feature_edges_kept": 0.8927793699595458,
-    "loop_edges_closed": 0.35001247816321407,
-    "loop_edges_spiral": 0.12902420763663588,
-    "loops_spiral": 4,
-    "loop_edges_helix": 0.05683803344147741,
+    "loop_edges_closed": 0.392351626520983,
+    "loop_edges_spiral": 0.057797367767568913,
+    "loops_spiral": 3,
+    "loop_edges_helix": 0,
     "loops_helix_missed": 0,
-    "loop_edges_open": 0.5209633142001496,
-    "longest_open_loop": 288,
+    "loop_edges_open": 0.5498510057114478,
+    "longest_open_loop": 449,
     "loop_edges_border": 0,
-    "budget_error": 0.00175,
-    "seconds": 12.325
+    "budget_error": 0.00675,
+    "seconds": 13.809
    },
    "handmade": {
     "runs": 0,
@@ -28040,7 +27953,7 @@
     "longest_open_loop": 232,
     "loop_edges_border": 0,
     "budget_error": 0.0085,
-    "seconds": 0.962
+    "seconds": 1.157
    },
    "integer-grid": {
     "runs": 1,
@@ -28070,7 +27983,7 @@
     "longest_open_loop": 224,
     "loop_edges_border": 0.09381755296152183,
     "budget_error": 0.132125,
-    "seconds": 23.663
+    "seconds": 25.1
    },
    "openclare-uniform": {
     "runs": 1,
@@ -28100,7 +28013,7 @@
     "longest_open_loop": 212,
     "loop_edges_border": 0,
     "budget_error": 0.013875,
-    "seconds": 10.064
+    "seconds": 11.242
    },
    "openclare": {
     "runs": 1,
@@ -28130,7 +28043,7 @@
     "longest_open_loop": 204,
     "loop_edges_border": 0,
     "budget_error": 0.00425,
-    "seconds": 9.394
+    "seconds": 7.207
    },
    "handmade": {
     "runs": 0,
@@ -28282,7 +28195,7 @@
     "longest_open_loop": 216,
     "loop_edges_border": 0,
     "budget_error": 0.0145,
-    "seconds": 0.915
+    "seconds": 1.28
    },
    "integer-grid": {
     "runs": 1,
@@ -28312,67 +28225,67 @@
     "longest_open_loop": 322,
     "loop_edges_border": 0,
     "budget_error": 0.0985,
-    "seconds": 38.384
+    "seconds": 47.022
    },
    "openclare-uniform": {
     "runs": 1,
     "produced": 1,
     "valid": 1,
     "failures": [],
-    "faces": 7900,
+    "faces": 8003,
     "irregular_vertices": 44,
     "irregular_excess": 36,
-    "base_complex_patches": 1946,
-    "alignment": 7.557668774161992,
-    "angle_deviation_mean": 6.1658800121624315,
-    "angle_deviation_p95": 18.541888203731204,
-    "aspect_mean": 1.3199810913708951,
-    "area_variation": 0.29369375021764454,
-    "hausdorff": 0.002772582616014894,
-    "mean_distance": 7.248698545160226e-05,
+    "base_complex_patches": 1529,
+    "alignment": 7.577072853515079,
+    "angle_deviation_mean": 6.179206391358716,
+    "angle_deviation_p95": 18.869462300739443,
+    "aspect_mean": 1.3196538743245936,
+    "area_variation": 0.29512751068772125,
+    "hausdorff": 0.0027324551730430937,
+    "mean_distance": 7.350549796376154e-05,
     "thin_distance": null,
-    "volume_ratio": 0.9998450178048058,
-    "feature_edges_kept": 0.8460178140800361,
-    "loop_edges_closed": 0.4692405063291143,
-    "loop_edges_spiral": 0.24759493670886074,
-    "loops_spiral": 8,
-    "loop_edges_helix": 0.24759493670886074,
+    "volume_ratio": 0.9998575615572569,
+    "feature_edges_kept": 0.8687412247337116,
+    "loop_edges_closed": 0.5118080719730099,
+    "loop_edges_spiral": 0.19411470698488067,
+    "loops_spiral": 4,
+    "loop_edges_helix": 0.172497813320005,
     "loops_helix_missed": 0,
-    "loop_edges_open": 0.28316455696202525,
-    "longest_open_loop": 267,
+    "loop_edges_open": 0.2940772210421093,
+    "longest_open_loop": 302,
     "loop_edges_border": 0,
-    "budget_error": 0.0125,
-    "seconds": 13.3
+    "budget_error": 0.000375,
+    "seconds": 17.379
    },
    "openclare": {
     "runs": 1,
     "produced": 1,
     "valid": 1,
     "failures": [],
-    "faces": 8123,
+    "faces": 8070,
     "irregular_vertices": 54,
     "irregular_excess": 46,
-    "base_complex_patches": 1759,
-    "alignment": 7.500603361487865,
-    "angle_deviation_mean": 6.042042048764512,
-    "angle_deviation_p95": 17.888980047854673,
-    "aspect_mean": 1.3379628783475113,
-    "area_variation": 0.3853009628278557,
-    "hausdorff": 0.002379352521569261,
-    "mean_distance": 6.451275277895607e-05,
+    "base_complex_patches": 2356,
+    "alignment": 7.3947251229458555,
+    "angle_deviation_mean": 6.125216505391549,
+    "angle_deviation_p95": 17.270296260571314,
+    "aspect_mean": 1.341715990238022,
+    "area_variation": 0.37576716279539685,
+    "hausdorff": 0.002350994274146021,
+    "mean_distance": 6.306272337996384e-05,
     "thin_distance": null,
-    "volume_ratio": 0.9998810459220696,
-    "feature_edges_kept": 0.8752137937588047,
-    "loop_edges_closed": 0.5047396282161757,
-    "loop_edges_spiral": 0.07447987196848455,
-    "loops_spiral": 3,
-    "loop_edges_helix": 0.04394927982272559,
+    "volume_ratio": 0.9998964546189839,
+    "feature_edges_kept": 0.858107359963266,
+    "loop_edges_closed": 0.42007434944237926,
+    "loop_edges_spiral": 0.15731102850061957,
+    "loops_spiral": 6,
+    "loop_edges_helix": 0.12633209417596034,
     "loops_helix_missed": 0,
-    "loop_edges_open": 0.4207804998153391,
-    "longest_open_loop": 319,
+    "loop_edges_open": 0.4226146220570013,
+    "longest_open_loop": 305,
     "loop_edges_border": 0,
-    "budget_error": 0.015375,
-    "seconds": 14.698
+    "budget_error": 0.00875,
+    "seconds": 15.325
    },
    "handmade": {
     "runs": 0,
@@ -28524,7 +28437,7 @@
     "longest_open_loop": 166,
     "loop_edges_border": 0,
     "budget_error": 0.0115,
-    "seconds": 1.1
+    "seconds": 1.168
    },
    "integer-grid": {
     "runs": 1,
@@ -28554,67 +28467,67 @@
     "longest_open_loop": 513,
     "loop_edges_border": 0,
     "budget_error": 0.069875,
-    "seconds": 70.315
+    "seconds": 74.636
    },
    "openclare-uniform": {
     "runs": 1,
     "produced": 1,
     "valid": 1,
     "failures": [],
-    "faces": 8055,
+    "faces": 8023,
     "irregular_vertices": 88,
     "irregular_excess": 80,
-    "base_complex_patches": 3073,
-    "alignment": 9.87048068877211,
-    "angle_deviation_mean": 6.88943046479663,
-    "angle_deviation_p95": 19.10570607063508,
-    "aspect_mean": 1.3146015766172932,
-    "area_variation": 0.33872600102790135,
-    "hausdorff": 0.01090479246993878,
-    "mean_distance": 0.0001575048960056433,
-    "thin_distance": 0.07947464172162154,
-    "volume_ratio": 0.9994854045088442,
-    "feature_edges_kept": 0.8153031819232541,
-    "loop_edges_closed": 0.38435754189944116,
-    "loop_edges_spiral": 0.07157045313469894,
-    "loops_spiral": 14,
-    "loop_edges_helix": 0.05884543761638733,
+    "base_complex_patches": 3041,
+    "alignment": 9.886089264740706,
+    "angle_deviation_mean": 6.905437711576425,
+    "angle_deviation_p95": 19.20766463119986,
+    "aspect_mean": 1.3198850221996006,
+    "area_variation": 0.3364036057280718,
+    "hausdorff": 0.01090478688557267,
+    "mean_distance": 0.00015888636394297917,
+    "thin_distance": 0.07947113749537468,
+    "volume_ratio": 0.9994787641273857,
+    "feature_edges_kept": 0.8129777608543644,
+    "loop_edges_closed": 0.38589056462669774,
+    "loop_edges_spiral": 0.07328929328181479,
+    "loops_spiral": 15,
+    "loop_edges_helix": 0.04642901657734015,
     "loops_helix_missed": 0,
-    "loop_edges_open": 0.5440720049658611,
+    "loop_edges_open": 0.5408201420914868,
     "longest_open_loop": 428,
     "loop_edges_border": 0,
-    "budget_error": 0.006875,
-    "seconds": 21.595
+    "budget_error": 0.002875,
+    "seconds": 18.816
    },
    "openclare": {
     "runs": 1,
     "produced": 1,
     "valid": 1,
     "failures": [],
-    "faces": 7868,
+    "faces": 8049,
     "irregular_vertices": 102,
     "irregular_excess": 94,
-    "base_complex_patches": 3850,
-    "alignment": 9.02588945562646,
-    "angle_deviation_mean": 5.838439156429377,
-    "angle_deviation_p95": 18.356912669370956,
-    "aspect_mean": 1.3181193883198448,
-    "area_variation": 0.44618331996587624,
-    "hausdorff": 0.005673541600908807,
-    "mean_distance": 0.0001242715286334308,
-    "thin_distance": 0.048869719750537714,
-    "volume_ratio": 0.9998046705594605,
-    "feature_edges_kept": 0.8407705992550251,
-    "loop_edges_closed": 0.30299949161159034,
-    "loop_edges_spiral": 0.06513726487036095,
+    "base_complex_patches": 3937,
+    "alignment": 8.658568636886978,
+    "angle_deviation_mean": 5.905579654538893,
+    "angle_deviation_p95": 17.980032274115217,
+    "aspect_mean": 1.3095593186131802,
+    "area_variation": 0.4696756281791128,
+    "hausdorff": 0.004987252281377881,
+    "mean_distance": 0.00011492959803387125,
+    "thin_distance": 0.050356250798774316,
+    "volume_ratio": 0.9998474874928801,
+    "feature_edges_kept": 0.8635347457972731,
+    "loop_edges_closed": 0.30078270592620265,
+    "loop_edges_spiral": 0.09622313330848553,
     "loops_spiral": 17,
-    "loop_edges_helix": 0.02802491103202847,
-    "loops_helix_missed": 0,
-    "loop_edges_open": 0.6318632435180472,
-    "longest_open_loop": 397,
+    "loop_edges_helix": 0.07858119020996397,
+    "loops_helix_missed": 1,
+    "loop_edges_open": 0.6029941607653136,
+    "longest_open_loop": 366,
     "loop_edges_border": 0,
-    "budget_error": 0.0165,
-    "seconds": 22.882
+    "budget_error": 0.006125,
+    "seconds": 23.129
    },
    "handmade": {
     "runs": 0,
@@ -28766,7 +28679,7 @@
     "longest_open_loop": 157,
     "loop_edges_border": 0.0129056747010818,
     "budget_error": 0.00475,
-    "seconds": 0.777
+    "seconds": 0.698
    },
    "integer-grid": {
     "runs": 1,
@@ -28796,7 +28709,7 @@
     "longest_open_loop": 214,
     "loop_edges_border": 0.11441113930996641,
     "budget_error": 0.0815,
-    "seconds": 63.951
+    "seconds": 73.087
    },
    "openclare-uniform": {
     "runs": 1,
@@ -28826,37 +28739,37 @@
     "longest_open_loop": 227,
     "loop_edges_border": 0.1601023017902814,
     "budget_error": 0.016625,
-    "seconds": 15.395
+    "seconds": 16.258
    },
    "openclare": {
     "runs": 1,
     "produced": 1,
     "valid": 1,
     "failures": [],
-    "faces": 8137,
+    "faces": 8040,
     "irregular_vertices": 264,
     "irregular_excess": null,
-    "base_complex_patches": 7067,
-    "alignment": 12.434839694475501,
-    "angle_deviation_mean": 6.357894765535895,
-    "angle_deviation_p95": 18.26654337557028,
-    "aspect_mean": 1.3321835762523802,
-    "area_variation": 0.4896314445210302,
-    "hausdorff": 0.009803026683490682,
-    "mean_distance": 0.00025222192929997764,
-    "thin_distance": 0.02752542224175982,
+    "base_complex_patches": 6626,
+    "alignment": 12.489580545793238,
+    "angle_deviation_mean": 6.20000743190678,
+    "angle_deviation_p95": 18.408761971613004,
+    "aspect_mean": 1.33235576576196,
+    "area_variation": 0.4830217248363119,
+    "hausdorff": 0.010040279967262833,
+    "mean_distance": 0.00025469329280331275,
+    "thin_distance": 0.026600893844825783,
     "volume_ratio": null,
-    "feature_edges_kept": 0.9023638582076837,
-    "loop_edges_closed": 0.03595255744996293,
-    "loop_edges_spiral": 0.0007412898443291327,
-    "loops_spiral": 1,
-    "loop_edges_helix": 0,
+    "feature_edges_kept": 0.9014679216032246,
+    "loop_edges_closed": 0.0331374265349506,
+    "loop_edges_spiral": 0.011754407902963612,
+    "loops_spiral": 5,
+    "loop_edges_helix": 0.001375515818431912,
     "loops_helix_missed": 0,
-    "loop_edges_open": 0.9235235977267108,
-    "longest_open_loop": 177,
-    "loop_edges_border": 0.039782554978996784,
-    "budget_error": 0.017125,
-    "seconds": 20.568
+    "loop_edges_open": 0.8944604226584978,
+    "longest_open_loop": 164,
+    "loop_edges_border": 0.060647742903588854,
+    "budget_error": 0.005,
+    "seconds": 23.391
    },
    "handmade": {
     "runs": 0,
@@ -29008,7 +28921,7 @@
     "longest_open_loop": 44,
     "loop_edges_border": 0.007231703789412786,
     "budget_error": 0.134125,
-    "seconds": 1.687
+    "seconds": 1.825
    },
    "integer-grid": {
     "runs": 1,
@@ -29038,67 +28951,67 @@
     "longest_open_loop": null,
     "loop_edges_border": null,
     "budget_error": 0.153125,
-    "seconds": 210.792
+    "seconds": 221.87
    },
    "openclare-uniform": {
     "runs": 1,
     "produced": 1,
     "valid": 0,
     "failures": [],
-    "faces": 8125,
+    "faces": 8197,
     "irregular_vertices": 1321,
     "irregular_excess": 705,
-    "base_complex_patches": 6436,
-    "alignment": 14.457307159380612,
-    "angle_deviation_mean": 13.887417844277218,
-    "angle_deviation_p95": 47.768073624847624,
-    "aspect_mean": 3.2615059041113774,
-    "area_variation": 0.6485367192479438,
+    "base_complex_patches": 6752,
+    "alignment": 14.652842589234243,
+    "angle_deviation_mean": 14.044663707542034,
+    "angle_deviation_p95": 47.77282350753944,
+    "aspect_mean": 3.240800001220753,
+    "area_variation": 0.6677228179582112,
     "hausdorff": 0.012256042259850424,
-    "mean_distance": 0.0006445284754459282,
-    "thin_distance": 0.10940016249532895,
-    "volume_ratio": 0.9720698704649355,
-    "feature_edges_kept": 0.3992574727034957,
-    "loop_edges_closed": 0.10720000000000007,
-    "loop_edges_spiral": 0.21489230769231255,
+    "mean_distance": 0.0006455523796567827,
+    "thin_distance": 0.11103663686367057,
+    "volume_ratio": 0.9719921448209148,
+    "feature_edges_kept": 0.3951991723150201,
+    "loop_edges_closed": 0.09003293888007816,
+    "loop_edges_spiral": 0.22111748200560855,
     "loops_spiral": 565,
-    "loop_edges_helix": 0.08861538461538464,
+    "loop_edges_helix": 0.0995486153470782,
     "loops_helix_missed": 0,
-    "loop_edges_open": 0.6779076923076836,
-    "longest_open_loop": 98,
+    "loop_edges_open": 0.688849579114296,
+    "longest_open_loop": 125,
     "loop_edges_border": 0,
-    "budget_error": 0.015625,
-    "seconds": 28.516
+    "budget_error": 0.024625,
+    "seconds": 38.736
    },
    "openclare": {
     "runs": 1,
     "produced": 1,
     "valid": 0,
     "failures": [],
-    "faces": 8283,
+    "faces": 8277,
     "irregular_vertices": 2113,
     "irregular_excess": 1497,
-    "base_complex_patches": 6666,
-    "alignment": 13.863188081512533,
-    "angle_deviation_mean": 16.6642612167785,
-    "angle_deviation_p95": 49.40918560623995,
-    "aspect_mean": 3.219061468381384,
-    "area_variation": 1.5804922696934516,
-    "hausdorff": 0.015965389544221407,
-    "mean_distance": 0.0008748554937268317,
-    "thin_distance": 0.09376519200661808,
-    "volume_ratio": 0.9603973848238178,
-    "feature_edges_kept": 0.3791951704996169,
-    "loop_edges_closed": 0.09688518652662072,
-    "loop_edges_spiral": 0.16769286490402016,
-    "loops_spiral": 600,
-    "loop_edges_helix": 0.05807074731377517,
+    "base_complex_patches": 6783,
+    "alignment": 13.691930039228438,
+    "angle_deviation_mean": 17.32363676132288,
+    "angle_deviation_p95": 52.06271318198521,
+    "aspect_mean": 3.1601575894339544,
+    "area_variation": 1.6215206209264321,
+    "hausdorff": 0.015366186110198484,
+    "mean_distance": 0.0008739371386574766,
+    "thin_distance": 0.09309867423628546,
+    "volume_ratio": 0.9608574634893451,
+    "feature_edges_kept": 0.38667545602407266,
+    "loop_edges_closed": 0.08940437356530138,
+    "loop_edges_spiral": 0.15845112963634347,
+    "loops_spiral": 578,
+    "loop_edges_helix": 0.0710402319681044,
     "loops_helix_missed": 0,
-    "loop_edges_open": 0.7354219485693584,
-    "longest_open_loop": 48,
+    "loop_edges_open": 0.7521444967983527,
+    "longest_open_loop": 60,
     "loop_edges_border": 0,
-    "budget_error": 0.035375,
-    "seconds": 64.811
+    "budget_error": 0.034625,
+    "seconds": 69.394
    },
    "handmade": {
     "runs": 0,
@@ -29252,7 +29165,7 @@
     "longest_open_loop": 188,
     "loop_edges_border": 0.2030155826130842,
     "budget_error": 0.01575,
-    "seconds": 1.696
+    "seconds": 1.926
    },
    "integer-grid": {
     "runs": 1,
@@ -29282,7 +29195,7 @@
     "longest_open_loop": 158,
     "loop_edges_border": 0.369023522021358,
     "budget_error": 0.0975,
-    "seconds": 120.503
+    "seconds": 141.097
    },
    "openclare-uniform": {
     "runs": 1,
@@ -29312,37 +29225,37 @@
     "longest_open_loop": 224,
     "loop_edges_border": 0.29335525067964835,
     "budget_error": 0.004,
-    "seconds": 16.449
+    "seconds": 17.304
    },
    "openclare": {
     "runs": 1,
     "produced": 1,
     "valid": 1,
     "failures": [],
-    "faces": 8125,
+    "faces": 8092,
     "irregular_vertices": 69,
     "irregular_excess": null,
-    "base_complex_patches": 2053,
-    "alignment": 9.41763861522058,
-    "angle_deviation_mean": 5.487569480585358,
-    "angle_deviation_p95": 16.70869925192747,
-    "aspect_mean": 1.2820469308476492,
-    "area_variation": 0.3393864475768426,
-    "hausdorff": 0.006401894786265941,
-    "mean_distance": 0.00021790360774786647,
+    "base_complex_patches": 2112,
+    "alignment": 9.280729059202628,
+    "angle_deviation_mean": 4.872565577904965,
+    "angle_deviation_p95": 13.79727491755699,
+    "aspect_mean": 1.259574912987902,
+    "area_variation": 0.33211807616358874,
+    "hausdorff": 0.006339797219501541,
+    "mean_distance": 0.00021574874828636045,
     "thin_distance": null,
     "volume_ratio": null,
-    "feature_edges_kept": 0.718949506052266,
-    "loop_edges_closed": 0.21166480723937,
-    "loop_edges_spiral": 0.0006817900086773273,
-    "loops_spiral": 1,
+    "feature_edges_kept": 0.6636454739959744,
+    "loop_edges_closed": 0.21315658451580757,
+    "loop_edges_spiral": 0.013816280806572068,
+    "loops_spiral": 2,
     "loop_edges_helix": 0,
     "loops_helix_missed": 0,
-    "loop_edges_open": 0.5169827693070534,
-    "longest_open_loop": 238,
-    "loop_edges_border": 0.2706706334448989,
-    "budget_error": 0.015625,
-    "seconds": 14.728
+    "loop_edges_open": 0.5209111277072439,
+    "longest_open_loop": 270,
+    "loop_edges_border": 0.2521160069703758,
+    "budget_error": 0.0115,
+    "seconds": 18.411
    },
    "handmade": {
     "runs": 0,
@@ -29494,7 +29407,7 @@
     "longest_open_loop": 184,
     "loop_edges_border": 0,
     "budget_error": 0.0335,
-    "seconds": 1.591
+    "seconds": 2.052
    },
    "integer-grid": {
     "runs": 1,
@@ -29524,7 +29437,7 @@
     "longest_open_loop": 92,
     "loop_edges_border": 0,
     "budget_error": 0.01225,
-    "seconds": 21.707
+    "seconds": 26.928
    },
    "openclare-uniform": {
     "runs": 1,
@@ -29554,7 +29467,7 @@
     "longest_open_loop": 93,
     "loop_edges_border": 0,
     "budget_error": 0.012,
-    "seconds": 5.774
+    "seconds": 6.575
    },
    "openclare": {
     "runs": 1,
@@ -29584,7 +29497,7 @@
     "longest_open_loop": 86,
     "loop_edges_border": 0,
     "budget_error": 0.015375,
-    "seconds": 6.339
+    "seconds": 6.745
    },
    "handmade": {
     "runs": 0,
@@ -29736,7 +29649,7 @@
     "longest_open_loop": 146,
     "loop_edges_border": 0,
     "budget_error": 0.02475,
-    "seconds": 0.59
+    "seconds": 0.486
    },
    "integer-grid": {
     "runs": 1,
@@ -29766,7 +29679,7 @@
     "longest_open_loop": 73,
     "loop_edges_border": 0,
     "budget_error": 0.0035,
-    "seconds": 57.664
+    "seconds": 69.406
    },
    "openclare-uniform": {
     "runs": 1,
@@ -29796,7 +29709,7 @@
     "longest_open_loop": 37,
     "loop_edges_border": 0,
     "budget_error": 0.00825,
-    "seconds": 6.138
+    "seconds": 7.214
    },
    "openclare": {
     "runs": 1,
@@ -29826,7 +29739,7 @@
     "longest_open_loop": 37,
     "loop_edges_border": 0,
     "budget_error": 0.00825,
-    "seconds": 5.27
+    "seconds": 7.921
    },
    "handmade": {
     "runs": 0,
@@ -29978,7 +29891,7 @@
     "longest_open_loop": 260,
     "loop_edges_border": 0,
     "budget_error": 0.02325,
-    "seconds": 0.561
+    "seconds": 0.621
    },
    "integer-grid": {
     "runs": 1,
@@ -30008,7 +29921,7 @@
     "longest_open_loop": 142,
     "loop_edges_border": 0,
     "budget_error": 0.015875,
-    "seconds": 16.748
+    "seconds": 17.121
    },
    "openclare-uniform": {
     "runs": 1,
@@ -30038,7 +29951,7 @@
     "longest_open_loop": 38,
     "loop_edges_border": 0,
     "budget_error": 0.007,
-    "seconds": 12.618
+    "seconds": 13.828
    },
    "openclare": {
     "runs": 1,
@@ -30068,7 +29981,7 @@
     "longest_open_loop": 74,
     "loop_edges_border": 0,
     "budget_error": 0.001125,
-    "seconds": 146.066
+    "seconds": 196.593
    },
    "handmade": {
     "runs": 0,
@@ -30220,7 +30133,7 @@
     "longest_open_loop": 214,
     "loop_edges_border": 0,
     "budget_error": 0.009,
-    "seconds": 0.639
+    "seconds": 0.87
    },
    "integer-grid": {
     "runs": 1,
@@ -30250,7 +30163,7 @@
     "longest_open_loop": 0,
     "loop_edges_border": 0,
     "budget_error": 0.09,
-    "seconds": 4.968
+    "seconds": 5.022
    },
    "openclare-uniform": {
     "runs": 1,
@@ -30280,7 +30193,7 @@
     "longest_open_loop": 0,
     "loop_edges_border": 0,
     "budget_error": 0.003,
-    "seconds": 5.064
+    "seconds": 5.065
    },
    "openclare": {
     "runs": 1,
@@ -30310,7 +30223,7 @@
     "longest_open_loop": 0,
     "loop_edges_border": 0,
     "budget_error": 0.003,
-    "seconds": 4.078
+    "seconds": 4.389
    },
    "handmade": {
     "runs": 0,
@@ -30464,7 +30377,7 @@
     "longest_open_loop": 192,
     "loop_edges_border": 0,
     "budget_error": 0.0065,
-    "seconds": 0.483
+    "seconds": 0.362
    },
    "integer-grid": {
     "runs": 1,
@@ -30494,7 +30407,7 @@
     "longest_open_loop": 72,
     "loop_edges_border": 0,
     "budget_error": 0.008,
-    "seconds": 6.556
+    "seconds": 7.594
    },
    "openclare-uniform": {
     "runs": 1,
@@ -30524,7 +30437,7 @@
     "longest_open_loop": 72,
     "loop_edges_border": 0,
     "budget_error": 0.008,
-    "seconds": 11.213
+    "seconds": 5.257
    },
    "openclare": {
     "runs": 1,
@@ -30554,7 +30467,7 @@
     "longest_open_loop": 72,
     "loop_edges_border": 0,
     "budget_error": 0.008,
-    "seconds": 8.488
+    "seconds": 6.807
    },
    "handmade": {
     "runs": 0,
@@ -30706,7 +30619,7 @@
     "longest_open_loop": 244,
     "loop_edges_border": 0,
     "budget_error": 0.008,
-    "seconds": 0.84
+    "seconds": 0.786
    },
    "integer-grid": {
     "runs": 1,
@@ -30736,7 +30649,7 @@
     "longest_open_loop": 80,
     "loop_edges_border": 0,
     "budget_error": 0.029,
-    "seconds": 10.859
+    "seconds": 9.267
    },
    "openclare-uniform": {
     "runs": 1,
@@ -30766,7 +30679,7 @@
     "longest_open_loop": 54,
     "loop_edges_border": 0,
     "budget_error": 0.00675,
-    "seconds": 5.127
+    "seconds": 7.031
    },
    "openclare": {
     "runs": 1,
@@ -30796,7 +30709,7 @@
     "longest_open_loop": 55,
     "loop_edges_border": 0,
     "budget_error": 0.00775,
-    "seconds": 6.529
+    "seconds": 7.221
    },
    "handmade": {
     "runs": 0,
@@ -30948,7 +30861,7 @@
     "longest_open_loop": 66,
     "loop_edges_border": 0.20676815244770552,
     "budget_error": 0.41275,
-    "seconds": 6.996
+    "seconds": 7.964
    },
    "integer-grid": {
     "runs": 1,
@@ -30978,7 +30891,7 @@
     "longest_open_loop": 151,
     "loop_edges_border": 0.1388632162661738,
     "budget_error": 0.180875,
-    "seconds": 311.665
+    "seconds": 343.099
    },
    "openclare-uniform": {
     "runs": 1,
@@ -31008,7 +30921,7 @@
     "longest_open_loop": 285,
     "loop_edges_border": 0.18813406960318474,
     "budget_error": 0.017625,
-    "seconds": 43.705
+    "seconds": 52.118
    },
    "openclare": {
     "runs": 1,
@@ -31038,7 +30951,7 @@
     "longest_open_loop": 262,
     "loop_edges_border": 0.09431475903614459,
     "budget_error": 0.003625,
-    "seconds": 67.757
+    "seconds": 71.209
    },
    "handmade": {
     "runs": 0,
@@ -31192,7 +31105,7 @@
     "longest_open_loop": 72.5,
     "loop_edges_border": 0.15838608520383118,
     "budget_error": 0.3365,
-    "seconds": 5.633
+    "seconds": 5.827
    },
    "integer-grid": {
     "runs": 1,
@@ -31222,7 +31135,7 @@
     "longest_open_loop": 142,
     "loop_edges_border": 0.22665449566408047,
     "budget_error": 0.285875,
-    "seconds": 88.452
+    "seconds": 92.286
    },
    "openclare-uniform": {
     "runs": 1,
@@ -31252,7 +31165,7 @@
     "longest_open_loop": 114,
     "loop_edges_border": 0.09129741791520558,
     "budget_error": 0.009375,
-    "seconds": 156.925
+    "seconds": 174.087
    },
    "openclare": {
     "runs": 1,
@@ -31282,7 +31195,7 @@
     "longest_open_loop": null,
     "loop_edges_border": null,
     "budget_error": 0.029375,
-    "seconds": 216.117
+    "seconds": 247.847
    },
    "handmade": {
     "runs": 0,
@@ -31436,7 +31349,7 @@
     "longest_open_loop": 23.0,
     "loop_edges_border": 0.060736711582038354,
     "budget_error": 0.483875,
-    "seconds": 3.291
+    "seconds": 3.799
    },
    "integer-grid": {
     "runs": 1,
@@ -31475,20 +31388,20 @@
     "produced": 1,
     "valid": 0,
     "failures": [],
-    "faces": 11908,
+    "faces": 11960,
     "irregular_vertices": 6177,
     "irregular_excess": null,
     "base_complex_patches": null,
-    "alignment": 11.561222783950337,
-    "angle_deviation_mean": 16.88725603642264,
-    "angle_deviation_p95": 67.14767923362535,
-    "aspect_mean": 6.1435771217825215,
-    "area_variation": 2.390415938690336,
+    "alignment": 11.580259866532545,
+    "angle_deviation_mean": 16.91072359677192,
+    "angle_deviation_p95": 67.06288048609113,
+    "aspect_mean": 6.124667792834981,
+    "area_variation": 2.396530183123028,
     "hausdorff": 0.004210139189764811,
-    "mean_distance": 0.0002815719787703729,
-    "thin_distance": 0.13296959510691056,
+    "mean_distance": 0.00028138952134895364,
+    "thin_distance": 0.1329734813230217,
     "volume_ratio": null,
-    "feature_edges_kept": 0.5567469345891732,
+    "feature_edges_kept": 0.5568504780254866,
     "loop_edges_closed": null,
     "loop_edges_spiral": null,
     "loops_spiral": null,
@@ -31497,38 +31410,38 @@
     "loop_edges_open": null,
     "longest_open_loop": null,
     "loop_edges_border": null,
-    "budget_error": 0.4885,
-    "seconds": 139.287
+    "budget_error": 0.495,
+    "seconds": 165.351
    },
    "openclare": {
     "runs": 1,
     "produced": 1,
     "valid": 0,
     "failures": [],
-    "faces": 11824,
+    "faces": 11805,
     "irregular_vertices": 6289,
     "irregular_excess": null,
-    "base_complex_patches": 7572,
-    "alignment": 11.591929273466388,
-    "angle_deviation_mean": 18.127360750684886,
-    "angle_deviation_p95": 66.40390639500683,
-    "aspect_mean": 47.07194810814987,
-    "area_variation": 2.624263255752568,
+    "base_complex_patches": 7577,
+    "alignment": 11.617242496691519,
+    "angle_deviation_mean": 18.143316535105278,
+    "angle_deviation_p95": 65.33577275364846,
+    "aspect_mean": 47.05678277931773,
+    "area_variation": 2.6219551818333833,
     "hausdorff": 0.004221347943553727,
-    "mean_distance": 0.00028581963794453556,
-    "thin_distance": 0.13149647020541586,
+    "mean_distance": 0.0002859321877925994,
+    "thin_distance": 0.13153005004499893,
     "volume_ratio": null,
-    "feature_edges_kept": 0.5510750217149248,
-    "loop_edges_closed": 0.2581543868672576,
-    "loop_edges_spiral": 0.306116325918315,
-    "loops_spiral": 5994,
-    "loop_edges_helix": 0.015044361579015045,
+    "feature_edges_kept": 0.5510233271203945,
+    "loop_edges_closed": 0.22770789507577457,
+    "loop_edges_spiral": 0.33610956081229615,
+    "loops_spiral": 5991,
+    "loop_edges_helix": 0.046279998282745906,
     "loops_helix_missed": 0,
-    "loop_edges_open": 0.42531395996743465,
+    "loop_edges_open": 0.4257502253896148,
     "longest_open_loop": 31,
-    "loop_edges_border": 0.01041532724701039,
-    "budget_error": 0.478,
-    "seconds": 212.794
+    "loop_edges_border": 0.010432318722362962,
+    "budget_error": 0.475625,
+    "seconds": 246.22
    },
    "handmade": {
     "runs": 0,
@@ -31682,7 +31595,7 @@
     "longest_open_loop": 51,
     "loop_edges_border": 0.35428005937654833,
     "budget_error": 0.038375,
-    "seconds": 1.215
+    "seconds": 1.445
    },
    "integer-grid": {
     "runs": 1,
@@ -31712,37 +31625,37 @@
     "longest_open_loop": 236,
     "loop_edges_border": 0.02639072157788735,
     "budget_error": 0.09575,
-    "seconds": 93.064
+    "seconds": 106.278
    },
    "openclare-uniform": {
     "runs": 1,
     "produced": 1,
     "valid": 0,
     "failures": [],
-    "faces": 7953,
+    "faces": 7945,
     "irregular_vertices": 312,
     "irregular_excess": null,
     "base_complex_patches": null,
-    "alignment": 9.700230989589016,
-    "angle_deviation_mean": 7.439736688655703,
-    "angle_deviation_p95": 25.433605293787494,
-    "aspect_mean": 1.4799129506689248,
-    "area_variation": 0.3099809278479627,
+    "alignment": 9.70592712810454,
+    "angle_deviation_mean": 7.390337421472869,
+    "angle_deviation_p95": 25.123872261892757,
+    "aspect_mean": 1.4809529419987635,
+    "area_variation": 0.31044586988988443,
     "hausdorff": 0.03539861640002718,
-    "mean_distance": 0.0013799777894337325,
-    "thin_distance": 0.17785443296114772,
+    "mean_distance": 0.0013754259907347373,
+    "thin_distance": 0.17733321264870097,
     "volume_ratio": null,
     "feature_edges_kept": 0.3996829733218231,
-    "loop_edges_closed": 0.23109429202144502,
-    "loop_edges_spiral": 0.22283191422264292,
+    "loop_edges_closed": 0.231327735336827,
+    "loop_edges_spiral": 0.22305701117494775,
     "loops_spiral": 44,
-    "loop_edges_helix": 0.08886786502680541,
+    "loop_edges_helix": 0.08895763621440748,
     "loops_helix_missed": 0,
-    "loop_edges_open": 0.5382529170608669,
+    "loop_edges_open": 0.5377864764189634,
     "longest_open_loop": 217,
-    "loop_edges_border": 0.00782087669504888,
-    "budget_error": 0.005875,
-    "seconds": 68.186
+    "loop_edges_border": 0.007828777069259423,
+    "budget_error": 0.006875,
+    "seconds": 81.452
    },
    "openclare": {
     "runs": 1,
@@ -31772,7 +31685,7 @@
     "longest_open_loop": 217,
     "loop_edges_border": 0.007425893237567716,
     "budget_error": 0.029875,
-    "seconds": 99.191
+    "seconds": 111.982
    },
    "handmade": {
     "runs": 0,
@@ -31926,7 +31839,7 @@
     "longest_open_loop": 108,
     "loop_edges_border": 0.0003901170351105331,
     "budget_error": 0.043,
-    "seconds": 0.813
+    "seconds": 0.588
    },
    "integer-grid": {
     "runs": 1,
@@ -31956,7 +31869,7 @@
     "longest_open_loop": 121,
     "loop_edges_border": 0.0003031221582297666,
     "budget_error": 0.174,
-    "seconds": 96.527
+    "seconds": 117.048
    },
    "openclare-uniform": {
     "runs": 1,
@@ -31986,7 +31899,7 @@
     "longest_open_loop": 102,
     "loop_edges_border": 0,
     "budget_error": 0.13375,
-    "seconds": 172.136
+    "seconds": 179.186
    },
    "openclare": {
     "runs": 1,
@@ -32016,7 +31929,7 @@
     "longest_open_loop": 102,
     "loop_edges_border": 0,
     "budget_error": 0.134375,
-    "seconds": 170.993
+    "seconds": 199.967
    },
    "handmade": {
     "runs": 0,
@@ -32170,7 +32083,7 @@
     "longest_open_loop": 62,
     "loop_edges_border": 0.11622009041790751,
     "budget_error": 0.4315,
-    "seconds": 5.251
+    "seconds": 5.301
    },
    "integer-grid": {
     "runs": 1,
@@ -32200,7 +32113,7 @@
     "longest_open_loop": null,
     "loop_edges_border": null,
     "budget_error": 0.188375,
-    "seconds": 249.012
+    "seconds": 262.977
    },
    "openclare-uniform": {
     "runs": 1,
@@ -32230,7 +32143,7 @@
     "longest_open_loop": 92,
     "loop_edges_border": 0.01868143803627673,
     "budget_error": 0.1665,
-    "seconds": 44.28
+    "seconds": 54.147
    },
    "openclare": {
     "runs": 1,
@@ -32260,7 +32173,7 @@
     "longest_open_loop": 86,
     "loop_edges_border": 0.02192004351373404,
     "budget_error": 0.16575,
-    "seconds": 57.382
+    "seconds": 70.251
    },
    "handmade": {
     "runs": 0,
@@ -32414,7 +32327,7 @@
     "longest_open_loop": 106,
     "loop_edges_border": 0.0845112557026402,
     "budget_error": 0.145125,
-    "seconds": 2.823
+    "seconds": 3.071
    },
    "integer-grid": {
     "runs": 1,
@@ -32444,7 +32357,7 @@
     "longest_open_loop": null,
     "loop_edges_border": null,
     "budget_error": 0.106625,
-    "seconds": 139.261
+    "seconds": 155.453
    },
    "openclare-uniform": {
     "runs": 1,
@@ -32474,7 +32387,7 @@
     "longest_open_loop": 136,
     "loop_edges_border": 0.2153604028958132,
     "budget_error": 0.016125,
-    "seconds": 6.05
+    "seconds": 8.366
    },
    "openclare": {
     "runs": 1,
@@ -32504,7 +32417,7 @@
     "longest_open_loop": 240,
     "loop_edges_border": 0.20451963135967685,
     "budget_error": 0.01375,
-    "seconds": 7.162
+    "seconds": 7.526
    },
    "handmade": {
     "runs": 0,
@@ -32658,7 +32571,7 @@
     "longest_open_loop": 142,
     "loop_edges_border": 0,
     "budget_error": 0.0375,
-    "seconds": 77.989
+    "seconds": 80.628
    },
    "integer-grid": {
     "runs": 1,
@@ -32688,37 +32601,37 @@
     "longest_open_loop": 244,
     "loop_edges_border": 0,
     "budget_error": 0.1915,
-    "seconds": 100.342
+    "seconds": 111.976
    },
    "openclare-uniform": {
     "runs": 1,
     "produced": 1,
     "valid": 1,
     "failures": [],
-    "faces": 7992,
+    "faces": 8087,
     "irregular_vertices": 198,
     "irregular_excess": 190,
-    "base_complex_patches": 5448,
-    "alignment": 11.9941649735921,
-    "angle_deviation_mean": 6.704396664215399,
-    "angle_deviation_p95": 18.430434226167037,
-    "aspect_mean": 1.4082483455245298,
-    "area_variation": 0.3752530552943789,
-    "hausdorff": 0.011769420987313366,
-    "mean_distance": 0.0003120913139003274,
-    "thin_distance": 0.1118254495254462,
-    "volume_ratio": 0.9999621295408128,
-    "feature_edges_kept": 0.18104443873676332,
-    "loop_edges_closed": 0.16028528528528502,
-    "loop_edges_spiral": 0.11098598598598597,
-    "loops_spiral": 25,
-    "loop_edges_helix": 0.0370995995995996,
+    "base_complex_patches": 4543,
+    "alignment": 11.911784011182178,
+    "angle_deviation_mean": 6.09162952636599,
+    "angle_deviation_p95": 16.409256485918505,
+    "aspect_mean": 1.4030401623311644,
+    "area_variation": 0.3362444243501651,
+    "hausdorff": 0.011461179613561481,
+    "mean_distance": 0.0003089328326733891,
+    "thin_distance": 0.13734970482574016,
+    "volume_ratio": 0.9999374812788938,
+    "feature_edges_kept": 0.20524875114813407,
+    "loop_edges_closed": 0.23172993693582336,
+    "loop_edges_spiral": 0.06770124891801657,
+    "loops_spiral": 21,
+    "loop_edges_helix": 0.011252627674044764,
     "loops_helix_missed": 0,
-    "loop_edges_open": 0.7287287287287277,
-    "longest_open_loop": 308,
+    "loop_edges_open": 0.7005688141461591,
+    "longest_open_loop": 234,
     "loop_edges_border": 0,
-    "budget_error": 0.001,
-    "seconds": 123.366
+    "budget_error": 0.010875,
+    "seconds": 136.686
    },
    "openclare": {
     "runs": 1,
@@ -32748,7 +32661,7 @@
     "longest_open_loop": 205,
     "loop_edges_border": 0,
     "budget_error": 0.01575,
-    "seconds": 241.299
+    "seconds": 262.471
    },
    "handmade": {
     "runs": 0,
@@ -32900,7 +32813,7 @@
     "longest_open_loop": 74,
     "loop_edges_border": 0.10545688782552665,
     "budget_error": 0.312,
-    "seconds": 1.413
+    "seconds": 1.352
    },
    "integer-grid": {
     "runs": 1,
@@ -32930,7 +32843,7 @@
     "longest_open_loop": null,
     "loop_edges_border": null,
     "budget_error": 0.06775,
-    "seconds": 222.144
+    "seconds": 225.082
    },
    "openclare-uniform": {
     "runs": 1,
@@ -32960,7 +32873,7 @@
     "longest_open_loop": null,
     "loop_edges_border": null,
     "budget_error": 0.079625,
-    "seconds": 371.266
+    "seconds": 385.054
    },
    "openclare": {
     "runs": 1,
@@ -32990,7 +32903,7 @@
     "longest_open_loop": null,
     "loop_edges_border": null,
     "budget_error": 0.079625,
-    "seconds": 374.146
+    "seconds": 400.765
    },
    "handmade": {
     "runs": 0,
@@ -33142,7 +33055,7 @@
     "longest_open_loop": 60.5,
     "loop_edges_border": 0.09006731201365424,
     "budget_error": 0.288,
-    "seconds": 1.106
+    "seconds": 0.968
    },
    "integer-grid": {
     "runs": 1,
@@ -33172,7 +33085,7 @@
     "longest_open_loop": null,
     "loop_edges_border": null,
     "budget_error": 0.11175,
-    "seconds": 217.468
+    "seconds": 207.743
    },
    "openclare-uniform": {
     "runs": 1,
@@ -33202,7 +33115,7 @@
     "longest_open_loop": null,
     "loop_edges_border": null,
     "budget_error": 0.11175,
-    "seconds": 270.66
+    "seconds": 278.109
    },
    "openclare": {
     "runs": 1,
@@ -33232,7 +33145,7 @@
     "longest_open_loop": null,
     "loop_edges_border": null,
     "budget_error": 0.112125,
-    "seconds": 281.025
+    "seconds": 261.94
    },
    "handmade": {
     "runs": 0,
@@ -33384,7 +33297,7 @@
     "longest_open_loop": 148,
     "loop_edges_border": 0.002076843198338526,
     "budget_error": 0.095875,
-    "seconds": 1.076
+    "seconds": 1.021
    },
    "integer-grid": {
     "runs": 1,
@@ -33414,7 +33327,7 @@
     "longest_open_loop": null,
     "loop_edges_border": null,
     "budget_error": 0.307625,
-    "seconds": 276.108
+    "seconds": 308.884
    },
    "openclare-uniform": {
     "runs": 1,
@@ -33444,7 +33357,7 @@
     "longest_open_loop": 331,
     "loop_edges_border": 0,
     "budget_error": 0.006,
-    "seconds": 35.465
+    "seconds": 39.022
    },
    "openclare": {
     "runs": 1,
@@ -33474,7 +33387,7 @@
     "longest_open_loop": 242,
     "loop_edges_border": 0,
     "budget_error": 0.0075,
-    "seconds": 47.221
+    "seconds": 51.495
    },
    "handmade": {
     "runs": 0,
@@ -33628,7 +33541,7 @@
     "longest_open_loop": 64,
     "loop_edges_border": 0.07930877671668968,
     "budget_error": 0.287625,
-    "seconds": 1.367
+    "seconds": 1.138
    },
    "integer-grid": {
     "runs": 1,
@@ -33690,37 +33603,37 @@
     "longest_open_loop": 26,
     "loop_edges_border": 0,
     "budget_error": 0.96725,
-    "seconds": 3.128
+    "seconds": 2.762
    },
    "openclare": {
     "runs": 1,
     "produced": 1,
     "valid": 1,
     "failures": [],
-    "faces": 258,
+    "faces": 254,
     "irregular_vertices": 48,
     "irregular_excess": 24,
-    "base_complex_patches": 258,
-    "alignment": 19.12229465099064,
-    "angle_deviation_mean": 23.237252443925883,
-    "angle_deviation_p95": 60.17729401246541,
-    "aspect_mean": 2.860273818232479,
-    "area_variation": 1.2759962021381717,
+    "base_complex_patches": 244,
+    "alignment": 18.19695211053548,
+    "angle_deviation_mean": 23.046222383032664,
+    "angle_deviation_p95": 63.56120584750482,
+    "aspect_mean": 3.329518590096879,
+    "area_variation": 1.1949809590119749,
     "hausdorff": 0.528692471947204,
-    "mean_distance": 0.24186897294640664,
-    "thin_distance": 18.335228842880518,
-    "volume_ratio": 0.016640841902806333,
-    "feature_edges_kept": 0.017851823091921515,
-    "loop_edges_closed": 0,
-    "loop_edges_spiral": 0.17248062015503876,
-    "loops_spiral": 7,
-    "loop_edges_helix": 0.03488372093023256,
+    "mean_distance": 0.24224904532815777,
+    "thin_distance": 18.35392480590954,
+    "volume_ratio": 0.018643870767625,
+    "feature_edges_kept": 0.019721539228149225,
+    "loop_edges_closed": 0.01968503937007874,
+    "loop_edges_spiral": 0.16732283464566927,
+    "loops_spiral": 8,
+    "loop_edges_helix": 0,
     "loops_helix_missed": 0,
-    "loop_edges_open": 0.8275193798449618,
-    "longest_open_loop": 17,
+    "loop_edges_open": 0.8129921259842513,
+    "longest_open_loop": 22,
     "loop_edges_border": 0,
-    "budget_error": 0.96775,
-    "seconds": 39.251
+    "budget_error": 0.96825,
+    "seconds": 45.014
    },
    "handmade": {
     "runs": 0,
@@ -33874,7 +33787,7 @@
     "longest_open_loop": 180,
     "loop_edges_border": 0.0011850681414181314,
     "budget_error": 0.0435,
-    "seconds": 19.994
+    "seconds": 19.639
    },
    "integer-grid": {
     "runs": 1,
@@ -33904,67 +33817,67 @@
     "longest_open_loop": 320,
     "loop_edges_border": 0,
     "budget_error": 0.07125,
-    "seconds": 46.651
+    "seconds": 51.032
    },
    "openclare-uniform": {
     "runs": 1,
     "produced": 1,
     "valid": 1,
     "failures": [],
-    "faces": 7937,
+    "faces": 8109,
     "irregular_vertices": 148,
     "irregular_excess": 140,
-    "base_complex_patches": 2951,
-    "alignment": 8.419857789322771,
-    "angle_deviation_mean": 5.085844638351393,
-    "angle_deviation_p95": 16.112560352755466,
-    "aspect_mean": 1.4028151535648823,
-    "area_variation": 0.3753853810178586,
-    "hausdorff": 0.009390078103940373,
-    "mean_distance": 0.0005795239024794357,
-    "thin_distance": 0.18914220704624815,
-    "volume_ratio": 0.999866976944929,
-    "feature_edges_kept": 0.9299810981033405,
-    "loop_edges_closed": 0.3156104321532073,
-    "loop_edges_spiral": 0.13122086430641303,
-    "loops_spiral": 35,
-    "loop_edges_helix": 0.04812901600100794,
+    "base_complex_patches": 2439,
+    "alignment": 7.984238760540588,
+    "angle_deviation_mean": 4.070100042448034,
+    "angle_deviation_p95": 12.846418849076954,
+    "aspect_mean": 1.3606488709425855,
+    "area_variation": 0.36069060216962434,
+    "hausdorff": 0.009235216125358298,
+    "mean_distance": 0.0005242440286963935,
+    "thin_distance": 0.18833380460274188,
+    "volume_ratio": 0.9998383719673004,
+    "feature_edges_kept": 0.8712501486325339,
+    "loop_edges_closed": 0.3505981008755704,
+    "loop_edges_spiral": 0.06930570970526578,
+    "loops_spiral": 31,
+    "loop_edges_helix": 0.0178813663830312,
     "loops_helix_missed": 0,
-    "loop_edges_open": 0.5531687035403812,
-    "longest_open_loop": 352,
+    "loop_edges_open": 0.5800961894191657,
+    "longest_open_loop": 539,
     "loop_edges_border": 0,
-    "budget_error": 0.007875,
-    "seconds": 30.315
+    "budget_error": 0.013625,
+    "seconds": 34.858
    },
    "openclare": {
     "runs": 1,
     "produced": 1,
     "valid": 1,
     "failures": [],
-    "faces": 7887,
+    "faces": 8095,
     "irregular_vertices": 226,
     "irregular_excess": 218,
-    "base_complex_patches": 2847,
-    "alignment": 8.177468104271824,
-    "angle_deviation_mean": 4.596344701876943,
-    "angle_deviation_p95": 14.336724577613694,
-    "aspect_mean": 1.3392465028207718,
-    "area_variation": 0.5190932038454042,
-    "hausdorff": 0.004688549183991705,
-    "mean_distance": 0.00023790243562173168,
-    "thin_distance": 0.05380556428088184,
-    "volume_ratio": 1.0001900006259197,
-    "feature_edges_kept": 0.8828369429790199,
-    "loop_edges_closed": 0.34918219855458305,
-    "loop_edges_spiral": 0.061049828832255605,
-    "loops_spiral": 16,
-    "loop_edges_helix": 0.03537466717383035,
+    "base_complex_patches": 3023,
+    "alignment": 8.087787232923647,
+    "angle_deviation_mean": 4.478344360716366,
+    "angle_deviation_p95": 14.360681307164327,
+    "aspect_mean": 1.3355653797382587,
+    "area_variation": 0.5033222865117764,
+    "hausdorff": 0.004940415203339802,
+    "mean_distance": 0.00023595581121731404,
+    "thin_distance": 0.05325035309973692,
+    "volume_ratio": 1.0002047956111657,
+    "feature_edges_kept": 0.9354863284614565,
+    "loop_edges_closed": 0.3274861025324268,
+    "loop_edges_spiral": 0.03922174181593576,
+    "loops_spiral": 11,
+    "loop_edges_helix": 0.032427424336009876,
     "loops_helix_missed": 0,
-    "loop_edges_open": 0.5897679726131609,
-    "longest_open_loop": 328,
+    "loop_edges_open": 0.6332921556516372,
+    "longest_open_loop": 401,
     "loop_edges_border": 0,
-    "budget_error": 0.014125,
-    "seconds": 57.775
+    "budget_error": 0.011875,
+    "seconds": 62.486
    },
    "handmade": {
     "runs": 1,
@@ -34001,30 +33914,30 @@
     "produced": 1,
     "valid": 1,
     "failures": [],
-    "faces": 10580,
+    "faces": 10520,
     "irregular_vertices": 254,
     "irregular_excess": 246,
-    "base_complex_patches": 3200,
-    "alignment": 8.37361197779914,
-    "angle_deviation_mean": 4.3268346158315625,
-    "angle_deviation_p95": 14.078135689618975,
-    "aspect_mean": 1.3402043023353236,
-    "area_variation": 0.46188734339821663,
-    "hausdorff": 0.004585127123913374,
-    "mean_distance": 0.00019241186055064718,
-    "thin_distance": 0.05883643108634694,
-    "volume_ratio": 1.0001523573738083,
-    "feature_edges_kept": 0.9161939407513936,
-    "loop_edges_closed": 0.3644612476370531,
-    "loop_edges_spiral": 0.017438563327032135,
-    "loops_spiral": 12,
-    "loop_edges_helix": 0.0048204158790170135,
+    "base_complex_patches": 3148,
+    "alignment": 8.311502621885964,
+    "angle_deviation_mean": 4.268211449860721,
+    "angle_deviation_p95": 13.840659429563459,
+    "aspect_mean": 1.3414109496284483,
+    "area_variation": 0.4594395809205627,
+    "hausdorff": 0.0047569345201868025,
+    "mean_distance": 0.00020223893158829913,
+    "thin_distance": 0.06150692308622043,
+    "volume_ratio": 1.0001383394302972,
+    "feature_edges_kept": 0.9444405932656766,
+    "loop_edges_closed": 0.3660646387832678,
+    "loop_edges_spiral": 0.016539923954372624,
+    "loops_spiral": 16,
+    "loop_edges_helix": 0.0025665399239543727,
     "loops_helix_missed": 0,
-    "loop_edges_open": 0.6181001890359186,
-    "longest_open_loop": 406,
+    "loop_edges_open": 0.61739543726236,
+    "longest_open_loop": 404,
     "loop_edges_border": 0,
-    "budget_error": 0.0009442870632672333,
-    "seconds": 54.33
+    "budget_error": 0.0066100094428706326,
+    "seconds": 63.314
    }
   },
   "human_female": {
@@ -34118,7 +34031,7 @@
     "longest_open_loop": 166,
     "loop_edges_border": 0.0028679442054490942,
     "budget_error": 0.044,
-    "seconds": 19.449
+    "seconds": 22.422
    },
    "integer-grid": {
     "runs": 1,
@@ -34148,7 +34061,7 @@
     "longest_open_loop": 445,
     "loop_edges_border": 0.0002076699432368822,
     "budget_error": 0.09625,
-    "seconds": 46.051
+    "seconds": 51.353
    },
    "openclare-uniform": {
     "runs": 1,
@@ -34178,37 +34091,37 @@
     "longest_open_loop": 386,
     "loop_edges_border": 0,
     "budget_error": 0.005625,
-    "seconds": 37.396
+    "seconds": 31.533
    },
    "openclare": {
     "runs": 1,
     "produced": 1,
     "valid": 1,
     "failures": [],
-    "faces": 7995,
+    "faces": 8031,
     "irregular_vertices": 234,
     "irregular_excess": 226,
-    "base_complex_patches": 2989,
-    "alignment": 7.104672793666867,
-    "angle_deviation_mean": 4.4477173534075325,
-    "angle_deviation_p95": 14.744349171413617,
-    "aspect_mean": 1.2753463616131326,
-    "area_variation": 0.4919616302045464,
-    "hausdorff": 0.005916271578224521,
-    "mean_distance": 0.00027290025926807984,
-    "thin_distance": 0.07385099679975818,
-    "volume_ratio": 1.0001373602682715,
-    "feature_edges_kept": 0.9452334158553634,
-    "loop_edges_closed": 0.3130706691682319,
-    "loop_edges_spiral": 0.02020012507817386,
-    "loops_spiral": 7,
-    "loop_edges_helix": 0.016635397123202,
+    "base_complex_patches": 2791,
+    "alignment": 7.081146392639087,
+    "angle_deviation_mean": 4.196037697670309,
+    "angle_deviation_p95": 13.80788252729819,
+    "aspect_mean": 1.2708145859120785,
+    "area_variation": 0.4730836326661309,
+    "hausdorff": 0.005566723033098822,
+    "mean_distance": 0.00028934483379394104,
+    "thin_distance": 0.07056079618832803,
+    "volume_ratio": 1.0002720261866123,
+    "feature_edges_kept": 0.9575392952748758,
+    "loop_edges_closed": 0.3386875856057772,
+    "loop_edges_spiral": 0.03455360478147179,
+    "loops_spiral": 10,
+    "loop_edges_helix": 0.003424231104470178,
     "loops_helix_missed": 0,
-    "loop_edges_open": 0.6667292057535947,
-    "longest_open_loop": 376,
+    "loop_edges_open": 0.6267588096127487,
+    "longest_open_loop": 269,
     "loop_edges_border": 0,
-    "budget_error": 0.000625,
-    "seconds": 49.106
+    "budget_error": 0.003875,
+    "seconds": 59.841
    },
    "handmade": {
     "runs": 1,
@@ -34245,30 +34158,30 @@
     "produced": 1,
     "valid": 1,
     "failures": [],
-    "faces": 10454,
+    "faces": 10642,
     "irregular_vertices": 274,
     "irregular_excess": 266,
-    "base_complex_patches": 3560,
-    "alignment": 7.232546555739269,
-    "angle_deviation_mean": 4.425914540397888,
-    "angle_deviation_p95": 14.555823669928913,
-    "aspect_mean": 1.3710778716740248,
-    "area_variation": 0.5937518185139121,
-    "hausdorff": 0.005405484105081985,
-    "mean_distance": 0.0002366504081782456,
-    "thin_distance": 0.07014957233664529,
-    "volume_ratio": 1.000201410600163,
-    "feature_edges_kept": 0.848347212157081,
-    "loop_edges_closed": 0.331547732925196,
-    "loop_edges_spiral": 0.01836617562655443,
-    "loops_spiral": 9,
-    "loop_edges_helix": 0.01501817486129711,
+    "base_complex_patches": 3850,
+    "alignment": 7.35118309869705,
+    "angle_deviation_mean": 4.387625489834611,
+    "angle_deviation_p95": 13.826435422411564,
+    "aspect_mean": 1.273576553011465,
+    "area_variation": 0.49396192487461615,
+    "hausdorff": 0.004275989646817205,
+    "mean_distance": 0.00018552755863823062,
+    "thin_distance": 0.05528909443517533,
+    "volume_ratio": 1.0002235503335795,
+    "feature_edges_kept": 0.8573753125027264,
+    "loop_edges_closed": 0.3191129486938529,
+    "loop_edges_spiral": 0.01907536177410261,
+    "loops_spiral": 13,
+    "loop_edges_helix": 0.014752866002631084,
     "loops_helix_missed": 0,
-    "loop_edges_open": 0.6500860914482488,
-    "longest_open_loop": 500,
+    "loop_edges_open": 0.6618116895320458,
+    "longest_open_loop": 385,
     "loop_edges_border": 0,
-    "budget_error": 0.012842304060434372,
-    "seconds": 59.364
+    "budget_error": 0.004910292728989613,
+    "seconds": 71.154
    }
   }
  }
