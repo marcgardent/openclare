@@ -62,35 +62,38 @@ mesh, whatever the view.
 
 ### Numbers of each panel
 
-Measured by `openclare measure <source> <mesh> --target 10590 --json` (engine 89232b0).
-Distances are per mille of the diagonal of the source's bounding box.
+Provisional: engine of commit f992bac, before the engine work planned ahead of the frozen commit;
+not the commit the paper will cite. Measured by `openclare measure <source> <mesh> --target 10590 --json`.
+Distances are per mille of the diagonal of the source's bounding box. The same numbers are in
+`../experiments/results/figures.json` (`../experiments/figure_numbers.py`).
 
 | | (a) no closing | (b) closing | (c) hand-made | (d) QuadriFlow |
 |---|---|---|---|---|
-| faces (quads) | 10,485 (10,485) | 10,748 (10,748) | 10,590 (10,570 + 20 triangles) | 8,844 (8,844) |
+| faces (quads) | 10,625 (10,625) | 10,520 (10,520) | 10,590 (10,570 + 20 triangles) | 8,844 (8,844) |
 | valid | yes | yes | no (triangles) | no (3 inverted faces) |
-| irregular vertices | 249 | 249 | 476 | 224 |
-| edges on spiral loops | **26.8%** (18 loops) | **1.95%** (15 loops) | **2.55%** (3 loops) | **35.7%** (43 loops) |
-| edges on closed loops | 10.2% (143 loops) | 32.6% (287 loops) | 31.6% (321 loops) | 2.7% (31 loops) |
-| mean distance to the source, ‰ | 0.183 | 0.190 | 0.172 | 1.356 |
-| Hausdorff distance, ‰ | 3.97 | 4.38 | 6.47 | 31.3 |
-| mean corner deviation, degrees | 4.50 | 4.32 | 9.24 | 8.79 |
+| irregular vertices | 254 | 254 | 476 | 224 |
+| edges on spiral loops | **23.4%** (21 loops) | **1.65%** (16 loops) | **2.55%** (3 loops) | **35.7%** (43 loops) |
+| edges on closed loops | 17.2% (172 loops) | 36.6% (304 loops) | 31.6% (321 loops) | 2.7% (31 loops) |
+| edges on helices of any pitch | 18.9% | 0.26% | 0.0% | 33.2% |
+| mean distance to the source, ‰ | 0.184 | 0.202 | 0.172 | 1.356 |
+| Hausdorff distance, ‰ | 4.78 | 4.76 | 6.47 | 31.3 |
+| mean corner deviation, degrees | 4.33 | 4.27 | 9.24 | 8.79 |
 
-The engine and QuadriFlow are deterministic here: two runs of `make_figures.sh` gave the same
-three meshes byte for byte.
+Mesh (b) is the one the bench made through the add-on at the hand-made count on 524b759, whose
+engine is f992bac's (`openclare-as-handmade` of human_male in `bench/results/results.json`: the
+same 10,520 quads, 1.65% and 36.6%). QuadriFlow's mesh is the same as with engine 89232b0 (it does
+not depend on the engine).
 
-Against preprint v1 (Section 6, "Against the hand-made mesh"): v1 gives 1.6% of spiral edges in
-9 spiral loops and 33.2% on closed loops for the engine, from single runs of commits 1b77f7d to
-4db7b42. The engine of these figures, 89232b0, gives 1.95% in 15 spiral loops and 32.6% on closed
-loops: still below the hand-made mesh's 2.55%, by less. The difference is the newer engine (v1
-already says that the later changes, a finer work mesh at thin walls, were not measured on this
-body, and that earlier versions gave 1.1% to 2.4%); like the spiral share of any single model it
-is chaotic (a 1% change of the budget moves it as much), so it is one run, not a trend. The hand-made
-mesh's figures (2.55%, 3 loops, 31.6%) are those of v1. QuadriFlow made 8,844 quads for 10,590
-asked for; v1 has no QuadriFlow figure on this body because the bench's run was refused (above).
-
-Note on the wrist close-up: closing leaves spiral loops on the thumb and the back of the hand
-where the mesh without closing had closed ones; the whole body still goes from 26.8% to 1.95%.
+Against the previous figures (engine 89232b0: (a) 10,485 quads, 26.8% in 18 loops, 10.2% closed;
+(b) 10,748 quads, 1.95% in 15 loops, 32.6% closed): what the pictures show changed. Without
+closing, helices wind round both legs, a band across the upper chest, the head and the outer side
+of the left arm (not the neck). With closing, the spiral loops left are on the top of the head,
+the left ear, the fingers and toes, and one long loop down the outer side of the left arm, from
+the shoulder to the hand; none at the mouth. At the left wrist both openclare meshes have spiral
+loops on the thumb, the outer forearm and the fingers; closing removes those on the back of the
+hand, so (b) is no longer worse than (a) there. Near the right eye neither openclare mesh has a
+spiral loop; closing removes the spiral loop across the temple and the forehead, which becomes a
+loop stopping at irregular vertices (grey), not a ring.
 
 ## Making them again
 
@@ -102,7 +105,8 @@ blender -b --factory-startup bench/corpus-large/scenes/human_male.blend --python
 docs/research/closing-loops/figures/make_figures.sh
 ```
 
-`make_figures.sh` builds the engine (`cargo build --release`), makes the four meshes into
+`make_figures.sh` builds the engine (`cargo build --release`; or takes the binary given as
+`OPENCLARE=<binary>`, with `COMMIT=<hash>` for the record), makes the four meshes into
 `target/figures/` (or `$WORK`; meshes already there are reused), measures them, renders twelve
 panels (`render_loops.py`, Blender 5.2.2, Workbench, in the background) and puts them together
 (`compose.py`, Python with Pillow; Latin Modern Roman for the labels), once with English labels and

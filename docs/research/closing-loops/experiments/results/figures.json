@@ -1,0 +1,72 @@
+{
+ "experiment": "figures fig:overview and fig:closeups",
+ "engine": {
+  "commit": "f992bac"
+ },
+ "meshes": {
+  "no_closing": {
+   "valid": true,
+   "faces": 10625,
+   "quads": 10625,
+   "irregular_vertices": 254,
+   "inverted_faces": 0,
+   "loop_edges_spiral": 0.23388235294117643,
+   "loops_spiral": 21,
+   "loop_edges_closed": 0.1721411764705885,
+   "loops_closed": 172,
+   "mean_distance": 0.00018423097533395113,
+   "hausdorff": 0.0047783761886926145,
+   "angle_deviation_mean": 4.334828834313852,
+   "loop_edges_helix": 0.1893176470588235,
+   "loops_helix_missed": 0
+  },
+  "closing": {
+   "valid": true,
+   "faces": 10520,
+   "quads": 10520,
+   "irregular_vertices": 254,
+   "inverted_faces": 0,
+   "loop_edges_spiral": 0.016539923954372624,
+   "loops_spiral": 16,
+   "loop_edges_closed": 0.3660646387832678,
+   "loops_closed": 304,
+   "mean_distance": 0.00020223901782211967,
+   "hausdorff": 0.0047569421697510285,
+   "angle_deviation_mean": 4.2682110803352895,
+   "loop_edges_helix": 0.0025665399239543727,
+   "loops_helix_missed": 0
+  },
+  "handmade": {
+   "valid": false,
+   "faces": 10590,
+   "quads": 10570,
+   "irregular_vertices": 476,
+   "inverted_faces": 0,
+   "loop_edges_spiral": 0.02548555187115111,
+   "loops_spiral": 3,
+   "loop_edges_closed": 0.31634296541923307,
+   "loops_closed": 321,
+   "mean_distance": 0.00017182939527282957,
+   "hausdorff": 0.006466394880397354,
+   "angle_deviation_mean": 9.243654835225026,
+   "loop_edges_helix": 0,
+   "loops_helix_missed": 0
+  },
+  "quadriflow": {
+   "valid": false,
+   "faces": 8844,
+   "quads": 8844,
+   "irregular_vertices": 224,
+   "inverted_faces": 3,
+   "loop_edges_spiral": 0.3572478516508369,
+   "loops_spiral": 43,
+   "loop_edges_closed": 0.027363184079601977,
+   "loops_closed": 31,
+   "mean_distance": 0.0013556609111100729,
+   "hausdorff": 0.031319461771840036,
+   "angle_deviation_mean": 8.787959696455031,
+   "loop_edges_helix": 0.33163726820443246,
+   "loops_helix_missed": 0
+  }
+ }
+}

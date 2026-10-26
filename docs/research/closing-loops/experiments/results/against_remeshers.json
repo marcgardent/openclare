@@ -1,0 +1,426 @@
+{
+ "experiment": "against other remeshers, read from the bench",
+ "results": "bench/results/results.json",
+ "target": 3000,
+ "current": {
+  "models": 33,
+  "produce_a_mesh": {
+   "openclare": 28,
+   "quadriflow": 22,
+   "autoremesher": 18
+  },
+  "valid_in_every_run": {
+   "openclare": 25,
+   "quadriflow": 9,
+   "autoremesher": 9
+  },
+  "subsets": {
+   "valid_in_every_run": {
+    "models": [
+     "rock",
+     "creature",
+     "cube",
+     "sphere",
+     "spot",
+     "bob",
+     "cylinder"
+    ],
+    "means": {
+     "openclare": {
+      "loop_edges_spiral": 0.021587058184617064,
+      "loop_edges_helix": 0.004668375985680422,
+      "loops_helix_missed": 0,
+      "loop_edges_closed": 0.6086685944876123
+     },
+     "quadriflow": {
+      "loop_edges_spiral": 0.3875724791928746,
+      "loop_edges_helix": 0.4287310310059931,
+      "loops_helix_missed": 1.7142857142857142,
+      "loop_edges_closed": 0.193070041165868
+     },
+     "autoremesher": {
+      "loop_edges_spiral": 0.21694191750325809,
+      "loop_edges_helix": 0.20381465017623412,
+      "loops_helix_missed": 0.5714285714285714,
+      "loop_edges_closed": 0.3513362894647281
+     }
+    }
+   },
+   "all_produce_a_mesh": {
+    "models": [
+     "blob",
+     "rock",
+     "creature",
+     "cage",
+     "suzanne",
+     "cube",
+     "sphere",
+     "torus",
+     "spot",
+     "bob",
+     "pig",
+     "jerry",
+     "lblock",
+     "cylinder",
+     "terrain"
+    ],
+    "means": {
+     "openclare": {
+      "loop_edges_spiral": 0.0331027382036746,
+      "loop_edges_helix": 0.018505084841377997,
+      "loops_helix_missed": 0,
+      "loop_edges_closed": 0.5199036462871135
+     },
+     "quadriflow": {
+      "loop_edges_spiral": 0.27157493548920253,
+      "loop_edges_helix": 0.304797884665421,
+      "loops_helix_missed": 1.7333333333333334,
+      "loop_edges_closed": 0.15594072335135656
+     },
+     "autoremesher": {
+      "loop_edges_spiral": 0.2730304165538347,
+      "loop_edges_helix": 0.2181755351452066,
+      "loops_helix_missed": 0.26666666666666666,
+      "loop_edges_closed": 0.20867246182589824
+     }
+    }
+   }
+  }
+ },
+ "at_commits": {
+  "5bc16c6": {
+   "models": 33,
+   "produce_a_mesh": {
+    "openclare": 27,
+    "quadriflow": 22,
+    "autoremesher": 18
+   },
+   "valid_in_every_run": {
+    "openclare": 24,
+    "quadriflow": 9,
+    "autoremesher": 9
+   },
+   "subsets": {
+    "valid_in_every_run": {
+     "models": [
+      "rock",
+      "creature",
+      "cube",
+      "sphere",
+      "spot",
+      "bob",
+      "cylinder"
+     ],
+     "means": {
+      "openclare": {
+       "loop_edges_spiral": 0.017821594044498953,
+       "loop_edges_helix": null,
+       "loops_helix_missed": null,
+       "loop_edges_closed": 0.6161604402900098
+      },
+      "quadriflow": {
+       "loop_edges_spiral": 0.3875724791928746,
+       "loop_edges_helix": null,
+       "loops_helix_missed": null,
+       "loop_edges_closed": 0.193070041165868
+      },
+      "autoremesher": {
+       "loop_edges_spiral": 0.21694191750325809,
+       "loop_edges_helix": null,
+       "loops_helix_missed": null,
+       "loop_edges_closed": 0.3513362894647281
+      }
+     }
+    },
+    "all_produce_a_mesh": {
+     "models": [
+      "blob",
+      "rock",
+      "creature",
+      "cage",
+      "suzanne",
+      "cube",
+      "sphere",
+      "torus",
+      "spot",
+      "bob",
+      "pig",
+      "jerry",
+      "lblock",
+      "cylinder",
+      "terrain"
+     ],
+     "means": {
+      "openclare": {
+       "loop_edges_spiral": 0.04178822332721446,
+       "loop_edges_helix": null,
+       "loops_helix_missed": null,
+       "loop_edges_closed": 0.5080513804200368
+      },
+      "quadriflow": {
+       "loop_edges_spiral": 0.27157493548920253,
+       "loop_edges_helix": null,
+       "loops_helix_missed": null,
+       "loop_edges_closed": 0.15594072335135656
+      },
+      "autoremesher": {
+       "loop_edges_spiral": 0.2730304165538347,
+       "loop_edges_helix": null,
+       "loops_helix_missed": null,
+       "loop_edges_closed": 0.20867246182589824
+      }
+     }
+    }
+   }
+  },
+  "b0fba91": {
+   "models": 31,
+   "produce_a_mesh": {
+    "openclare": 26,
+    "quadriflow": 22,
+    "autoremesher": 17
+   },
+   "valid_in_every_run": {
+    "openclare": 20,
+    "quadriflow": 9,
+    "autoremesher": 9
+   },
+   "subsets": {
+    "valid_in_every_run": {
+     "models": [
+      "rock",
+      "creature",
+      "cube",
+      "sphere",
+      "spot",
+      "bob",
+      "cylinder"
+     ],
+     "means": {
+      "openclare": {
+       "loop_edges_spiral": 0.1657155515677906,
+       "loop_edges_helix": null,
+       "loops_helix_missed": null,
+       "loop_edges_closed": 0.4597405722329657
+      },
+      "quadriflow": {
+       "loop_edges_spiral": 0.3875724791928746,
+       "loop_edges_helix": null,
+       "loops_helix_missed": null,
+       "loop_edges_closed": 0.193070041165868
+      },
+      "autoremesher": {
+       "loop_edges_spiral": 0.21694191750325809,
+       "loop_edges_helix": null,
+       "loops_helix_missed": null,
+       "loop_edges_closed": 0.3513362894647281
+      }
+     }
+    },
+    "all_produce_a_mesh": {
+     "models": [
+      "blob",
+      "rock",
+      "creature",
+      "cage",
+      "suzanne",
+      "cube",
+      "sphere",
+      "torus",
+      "spot",
+      "bob",
+      "pig",
+      "jerry",
+      "lblock",
+      "cylinder",
+      "terrain"
+     ],
+     "means": {
+      "openclare": {
+       "loop_edges_spiral": 0.1553283918706235,
+       "loop_edges_helix": null,
+       "loops_helix_missed": null,
+       "loop_edges_closed": 0.4201331554063777
+      },
+      "quadriflow": {
+       "loop_edges_spiral": 0.27157493548920253,
+       "loop_edges_helix": null,
+       "loops_helix_missed": null,
+       "loop_edges_closed": 0.15594072335135656
+      },
+      "autoremesher": {
+       "loop_edges_spiral": 0.2730304165538347,
+       "loop_edges_helix": null,
+       "loops_helix_missed": null,
+       "loop_edges_closed": 0.20867246182589824
+      }
+     }
+    }
+   }
+  }
+ },
+ "no_closing": {
+  "engine": {
+   "binary": "openclare",
+   "commit": "f992bac",
+   "build": "sha256:1283f022e1654418"
+  },
+  "machine": {
+   "processor": "Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz",
+   "threads": 8,
+   "memory": "62.7 GiB",
+   "load_average": [
+    26.95,
+    17.8,
+    11.43
+   ],
+   "load_average_at_end": [
+    31.82,
+    24.12,
+    15.52
+   ]
+  },
+  "wall_seconds": 256.6,
+  "run_seconds_total": 214.4,
+  "load_average_during_runs": null,
+  "how": "the add-on chain (bench/blender_run.py) with OPENCLARE_CLOSE_WAYS= (no way of closing)",
+  "valid": 15,
+  "runs": 15,
+  "means": {
+   "valid_in_every_run": {
+    "loop_edges_spiral": 0.1530351674460121,
+    "loop_edges_helix": 0.13015201976480692,
+    "loops_helix_missed": 0,
+    "loop_edges_closed": 0.48692985133544564
+   },
+   "all_produce_a_mesh": {
+    "loop_edges_spiral": 0.15163635438965167,
+    "loop_edges_helix": 0.10552320539390683,
+    "loops_helix_missed": 0,
+    "loop_edges_closed": 0.43628267084629424
+   }
+  },
+  "per_model": {
+   "blob": {
+    "valid": true,
+    "quads": 2946,
+    "loop_edges_spiral": 0.5989477257298031,
+    "loop_edges_helix": 0.4209097080787509,
+    "loops_helix_missed": 0,
+    "loop_edges_closed": 0.10726408689748812
+   },
+   "bob": {
+    "valid": true,
+    "quads": 2950,
+    "loop_edges_spiral": 0.03694915254237288,
+    "loop_edges_helix": 0,
+    "loops_helix_missed": 0,
+    "loop_edges_closed": 0.6845762711864414
+   },
+   "cage": {
+    "valid": true,
+    "quads": 2999,
+    "loop_edges_spiral": 0,
+    "loop_edges_helix": 0,
+    "loops_helix_missed": 0,
+    "loop_edges_closed": 0.7690896965655224
+   },
+   "creature": {
+    "valid": true,
+    "quads": 2956,
+    "loop_edges_spiral": 0.25558186738836264,
+    "loop_edges_helix": 0.24103518267929633,
+    "loops_helix_missed": 0,
+    "loop_edges_closed": 0.23308525033829516
+   },
+   "cube": {
+    "valid": true,
+    "quads": 2992,
+    "loop_edges_spiral": 0,
+    "loop_edges_helix": 0,
+    "loops_helix_missed": 0,
+    "loop_edges_closed": 0.9552139037433146
+   },
+   "cylinder": {
+    "valid": true,
+    "quads": 3009,
+    "loop_edges_spiral": 0.5928880026586906,
+    "loop_edges_helix": 0.5928880026586906,
+    "loops_helix_missed": 0,
+    "loop_edges_closed": 0.3838484546360918
+   },
+   "jerry": {
+    "valid": true,
+    "quads": 3008,
+    "loop_edges_spiral": 0.05834031852472758,
+    "loop_edges_helix": 0.028834870075440066,
+    "loops_helix_missed": 0,
+    "loop_edges_closed": 0.014752724224643753
+   },
+   "lblock": {
+    "valid": true,
+    "quads": 3060,
+    "loop_edges_spiral": 0,
+    "loop_edges_helix": 0,
+    "loops_helix_missed": 0,
+    "loop_edges_closed": 0.9323529411764698
+   },
+   "pig": {
+    "valid": true,
+    "quads": 2944,
+    "loop_edges_spiral": 0.26749320652173914,
+    "loop_edges_helix": 0.1180366847826087,
+    "loops_helix_missed": 0,
+    "loop_edges_closed": 0.15149456521739132
+   },
+   "rock": {
+    "valid": true,
+    "quads": 3010,
+    "loop_edges_spiral": 0.0925249169435216,
+    "loop_edges_helix": 0,
+    "loops_helix_missed": 0,
+    "loop_edges_closed": 0
+   },
+   "sphere": {
+    "valid": true,
+    "quads": 2990,
+    "loop_edges_spiral": 0,
+    "loop_edges_helix": 0,
+    "loops_helix_missed": 0,
+    "loop_edges_closed": 0.9551839464882952
+   },
+   "spot": {
+    "valid": true,
+    "quads": 3001,
+    "loop_edges_spiral": 0.09330223258913696,
+    "loop_edges_helix": 0.07714095301566146,
+    "loops_helix_missed": 0,
+    "loop_edges_closed": 0.19660113295568138
+   },
+   "suzanne": {
+    "valid": true,
+    "quads": 3006,
+    "loop_edges_spiral": 0.2250879249706917,
+    "loop_edges_helix": 0.1040026796181544,
+    "loops_helix_missed": 0,
+    "loop_edges_closed": 0.16077708926477985
+   },
+   "terrain": {
+    "valid": true,
+    "quads": 3008,
+    "loop_edges_spiral": 0.05342996797572898,
+    "loop_edges_helix": 0,
+    "loops_helix_missed": 0,
+    "loop_edges_closed": 0
+   },
+   "torus": {
+    "valid": true,
+    "quads": 2952,
+    "loop_edges_spiral": 0,
+    "loop_edges_helix": 0,
+    "loops_helix_missed": 0,
+    "loop_edges_closed": 0.9999999999999987
+   }
+  }
+ }
+}
