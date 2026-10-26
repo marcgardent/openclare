@@ -364,6 +364,64 @@ to 0.39; there the two representatives differ by up to 6.6 on the male body
 of the note and 1.2 on the fresh export, and by more than 0.05 (the real shift
 above which the engine holds a turn) for 2,572 of the 3,841 turns.
 
+**Forced shifts and the Fox–Burgers formula.** Two more checks run on the same
+exports.
+
+* *Certificates* (Theorem "Forced shifts", Remark "Sign-definite turns").
+  `Check/certify.py` (SciPy, run by hand) finds, for each way, the cores of held
+  turns that cannot be closed within `P = {B ℓ = 0, ℓ ≥ b}` with a Farkas
+  certificate `(u, c)` each, the disjoint ones, a least set `X` meeting them and
+  whole lengths closing the other held turns, and, from the claims of a paper,
+  the certificates of its table with lengths closing each set without each of
+  its turns; it writes them to `Check/certificates/` (see the README there).
+  `Main.lean` trusts none of it: it solves `λ` from the claimed `c`, checks
+  `Σ u shiftForm + λᵀ B = c ≥ 0` and `c · b > 0` with `balance` and
+  `shiftForm` (the right side of `TMesh.not_closable_iff`), then bounds
+  `τ_P(H)` below by the disjoint certified cores (`forced_of_certificates`) and
+  by the least set meeting the certified cores (`meets_infeasible`), above by
+  the closing lengths, and compares with the papers.
+* *Fox–Burgers* (genus zero). `Check/develop.py` cuts the surface along the
+  arcs off a breadth-first tree of the patches (a spanning tree of the nodes on
+  a sphere), develops it at the whole lengths, and writes each jump across the
+  cut as a word in the loops round the cone points by the recursion of
+  `FirstVisit.lean`, keeping a convention only if every node's rotation is
+  exactly `R^{4-k}` about one of its developed corners. `Main.lean` evaluates
+  `Fox.hol` over `ℤ[i]` (`giUnit` powers): each jump must be the change of
+  chart, each turn a translation by `α e₁ - shift e₂` (`e₁` the walking
+  direction, `e₂` that of increasing offsets, turned by the chart; `α` the
+  length of the turn, computed on the `TMesh`), and equal to the sum of
+  Proposition "Fox–Burgers formula" (`fox`). The convention found everywhere so
+  far: `G_f` is the jump from the patch holding the half of `f` towards the
+  root, children taken in the reverse of the order the node lists its halves,
+  the rotation applied first. This is the sign of the paper's Section "Flat
+  metric and holonomy" (`ĥ(γ̄)` the translation by `α e₁ - shift e₂`); the
+  along component `-α` written in issue #141 is not what the data give.
+
+Results on 2026-10-25 (i7-7700K, 4 cores, shared, load about 4 to 6), partial:
+on the fixtures (blob, six ways, and torus) every check passes: `τ_P(H)` = 0,
+0, 1, 0, 1, 2 on the ways of blob, exact (lower = upper bound), 8 cores, all
+certificates valid; 111 of 111 jumps and 136 of 136 turns agree with
+`α e₁ - shift e₂` and the Fox sum; the torus is out of scope of the second check
+(not a sphere). On the male body of the paper, way 0: 1 of 1 certificate,
+`τ_P(H) = 1` checked exactly, Table `tab:iis` row 1 valid with the paper's
+multiplier and bounded arc 1937, 1,294 of 1,294 jumps, 91 of 91 turns. Ways 1
+to 7 of the male body and the fresh exports were not run to the end. Each check
+fails on corrupted data (a multiplier, a closing length, a developed place
+changed by one).
+
+**When it runs.**
+- **CI**, on every change of this folder, runs the check on two small exports kept in
+  `Check/fixtures` (torus and blob, frozen at commit `300a058`): a change of the
+  library that no longer describes the engine's T-mesh fails there.
+- **By hand**, `make lean-check EXPORT=<dir>`:
+  - on fresh exports, the male body included, whenever the engine's T-mesh or
+    quantization changes;
+  - at each rerun of the papers on their frozen commit, whose exports and log go to
+    the papers' data package (DT-088) and whose counts replace the table above,
+    with the commit.
+
+Exports and logs are not kept in git.
+
 ## Files
 
 * `Basic.lean`: motions and their group law; the quarter-turn group in `ℤ[i]`.

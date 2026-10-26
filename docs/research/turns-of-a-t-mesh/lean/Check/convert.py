@@ -1,7 +1,7 @@
 """Converts a T-mesh exported by the engine (`OPENCLARE_EXPORT_TURNS`, a file
 `way-<n>.json`) into the combinatorial T-mesh of `TurnsOfATMesh/TMesh.lean`.
 
-    python3 convert.py <way-n.json> <out.json>
+    python3 convert.py <way-n.json> <out.json> [<certificates.json>...]
 
 Python standard library only. The conventions below are read from the engine
 (`quantization/export.rs`, `quantization/tubes.rs`, `tmesh/mod.rs`) and checked
@@ -73,12 +73,23 @@ two as exact fractions of the floats `[num, den]`; `turns`, each with its Lean
 `crossed`, the Lean offset on the side left at each crossing, from the
 engine's `into`; `strips`, the shifts of every strip of quads of the whole
 lengths (`way-<n>-helices.json`, when it is there).
+
+For the check of Theorem "Forced shifts" (`certify.py`, `Main.lean`): `lower`, the bounds
+of separation `b = max(lower, 0)`, `held` per turn, and `certificates`, the data a file
+written by `certify.py` holds for this way (matched by the SHA-256 of the way file), when
+one is given. For the check of the Fox–Burgers formula: `fox`, the words of the turns in
+the loops round the cone points, the developed places of the cone points and the jumps
+across the cut tree (`develop.py`), or `null` with the reason when the surface is not a
+sphere.
 """
 
+import hashlib
 import json
 import os
 import sys
 from fractions import Fraction
+
+import develop
 
 
 class Unsupported(Exception):
@@ -225,13 +236,31 @@ def convert(export, helices=None):
     }
     if helices is not None:
         out["strips"] = [{"shift": merged(s["shift"], "strip"), "pitch": whole(s["pitch"], "pitch")} for s in helices]
+    out["lower"] = [max(whole(b, "lower"), 0) for b in export["lower"]]
+    try:
+        out["fox"] = develop.holonomy(export, [float(arc["length"]) for arc in arcs])
+        out["fox_skipped"] = None
+    except develop.Unsupported as reason:
+        out["fox"] = None
+        out["fox_skipped"] = str(reason)
     return out
+
+
+def certificates_for(sha, files):
+    """The data of the files written by `certify.py` for the way of hash `sha`."""
+    for path in files:
+        with open(path) as f:
+            data = json.load(f)
+        if sha in data.get("ways", {}):
+            return dict(data["ways"][sha], source=os.path.basename(path))
+    return None
 
 
 def main():
     source, target = sys.argv[1], sys.argv[2]
-    with open(source) as f:
-        export = json.load(f)
+    with open(source, "rb") as f:
+        raw = f.read()
+    export = json.loads(raw)
     helices = None
     sibling = source[: -len(".json")] + "-helices.json"
     if os.path.exists(sibling):
@@ -242,9 +271,12 @@ def main():
     except Unsupported as reason:
         print(f"skipped {source}: {reason} (out of the scope of the Lean model)")
         sys.exit(3)
+    out["certificates"] = certificates_for(hashlib.sha256(raw).hexdigest(), sys.argv[3:])
     with open(target, "w") as f:
         json.dump(out, f, separators=(",", ":"))
-    print(f"converted {source}: {out['patches']} patches, {out['arcs']} arcs, {len(out['turns'])} turns")
+    print(f"converted {source}: {out['patches']} patches, {out['arcs']} arcs, {len(out['turns'])} turns"
+          f"{', certificates from ' + out['certificates']['source'] if out['certificates'] else ''}"
+          f"{', no words: ' + out['fox_skipped'] if out['fox'] is None else ''}")
 
 
 if __name__ == "__main__":

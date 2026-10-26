@@ -9,6 +9,11 @@ files at a time (one Lean process each, about 3 GB of memory). Exports out of
 the scope of the Lean model (borders, patches that are not rectangles) are
 reported as skipped. Exits with 1 if any check fails. Python standard library
 only; run from anywhere, with `lake` on the PATH.
+
+The certificates of Theorem "Forced shifts" (written by `certify.py`) are read
+from `Check/certificates/*.json` (but the `*.claims.json` they were made from)
+and from any `certificates.json` under the export directory; each applies to
+the way file whose SHA-256 it names.
 """
 
 import argparse
@@ -50,13 +55,19 @@ def main():
     found = list(exports(args.export, args.work))
     if not found:
         sys.exit(f"no way-<n>.json under {args.export}")
+    kept = os.path.join(HERE, "certificates")
+    certificates = sorted(os.path.join(kept, f) for f in os.listdir(kept)
+                          if f.endswith(".json") and not f.endswith(".claims.json"))
+    for root, _, files in os.walk(args.export):
+        if "certificates.json" in files:
+            certificates.append(os.path.join(root, "certificates.json"))
     os.makedirs(args.work, exist_ok=True)
     converted, skipped = [], []
     for source in found:
         relative = os.path.relpath(source, args.export)
         target = os.path.join(os.path.abspath(args.work), relative.replace(os.sep, "--"))
-        run = subprocess.run([sys.executable, os.path.join(HERE, "convert.py"), source, target],
-                             capture_output=True, text=True)
+        run = subprocess.run([sys.executable, os.path.join(HERE, "convert.py"), source, target]
+                             + certificates, capture_output=True, text=True)
         print(run.stdout.strip() or run.stderr.strip())
         if run.returncode == 3:
             skipped.append(relative)
