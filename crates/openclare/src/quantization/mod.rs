@@ -88,6 +88,9 @@ pub struct Report {
     /// were looked for to bring back onto themselves (DT-062).
     pub turns: usize,
     pub turns_held: usize,
+    /// Of the turns held, those these lengths leave room in their corridor:
+    /// some strip of the quad mesh still goes their way round (DT-138).
+    pub turns_in_corridor: usize,
     /// Share of the edges of the loops of the quad mesh the lengths stand
     /// for that wind as spirals, where it was counted: when loops are closed.
     pub spirals: Option<f64>,
@@ -374,6 +377,7 @@ fn repair(
     x: &mut [i64],
     every: &[tubes::Turn],
     held: &[&tubes::Turn],
+    corridors: &[&tubes::Corridor],
     budget: Option<(usize, usize)>,
     sphere: &[bool],
     report: &mut Report,
@@ -401,6 +405,12 @@ fn repair(
             count_quads(tmesh, moved).abs_diff(wanted) <= allowed.max(count_quads(tmesh, x).abs_diff(wanted))
         })
     };
+    // A walk that takes a turn out of its corridor, of `corridors`, makes
+    // another strip go its way round, or none (DT-138): it is not taken.
+    let keeps_corridors = |x: &[i64], moved: &[i64]| -> bool {
+        let (before, after) = (numbers(x), numbers(moved));
+        corridors.iter().all(|corridor| corridor.room(&after).0 >= 0.0 || corridor.room(&before).0 < 0.0)
+    };
     let mut judge = |x: &[i64], change: &[i64]| -> bool {
         let moved: Vec<i64> = x.iter().zip(change).map(|(a, b)| a + b).collect();
         let now: f64 = left_by(x).iter().map(|w| w.abs()).sum();
@@ -411,7 +421,9 @@ fn repair(
             .filter(|&(_, &delta)| delta != 0)
             .map(|(arc, &delta)| plain.of(arc, x[arc] + delta) - plain.of(arc, x[arc]))
             .sum();
-        let sound = || within(x, &moved) && lattice::build(tmesh, &moved).defects(tmesh).is_empty();
+        let sound = || {
+            within(x, &moved) && keeps_corridors(x, &moved) && lattice::build(tmesh, &moved).defects(tmesh).is_empty()
+        };
         if std::env::var_os("OPENCLARE_DEBUG_REPAIR").is_some() {
             let size = change.iter().filter(|&&d| d != 0).count();
             let sound = sound();
@@ -502,7 +514,10 @@ fn repair(
                 .map(|(arc, &delta)| plain.of(arc, x[arc] + delta) - plain.of(arc, x[arc]))
                 .sum();
             let better = shift_of(&moved).abs() < shift_of(x).abs() - 0.5 && then <= now;
-            let sound = better && within(x, &moved) && lattice::build(tmesh, &moved).defects(tmesh).is_empty();
+            let sound = better
+                && within(x, &moved)
+                && keeps_corridors(x, &moved)
+                && lattice::build(tmesh, &moved).defects(tmesh).is_empty();
             if std::env::var_os("OPENCLARE_DEBUG_REPAIR").is_some() {
                 eprintln!(
                     "    aimed walk: turn {:.0} -> {:.0}, all {now:.0} -> {then:.0}, cost {cost:.2}, sound {sound}",
@@ -558,6 +573,7 @@ impl WalkCancelling {
         way: Option<usize>,
     ) -> Lengths {
         let debug = std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some();
+        let corridor_debug = std::env::var_os("OPENCLARE_DEBUG_CORRIDORS").is_some();
         let experiment = &request.experiment;
         let clock = std::time::Instant::now();
         let asked = held;
@@ -598,17 +614,36 @@ impl WalkCancelling {
             );
         }
         let clock = std::time::Instant::now();
-        let (mut x, scale, _, lower) = self.search(tmesh, network, pull, &aimed, request, report, from);
+        let (mut x, mut scale, _, mut lower) = self.search(tmesh, network, pull, &aimed, request, report, from);
         if debug {
             eprintln!("  searched in {:.1} s", clock.elapsed().as_secs_f64());
         }
+        // The turns kept that went round as strips at the real lengths at
+        // this scale, or at the lengths of the round before, are kept in
+        // their corridor (DT-138).
+        let reference: Vec<f64> = match from {
+            Some((x, ..)) => numbers(x),
+            None => real.iter().map(|length| scale * length).collect(),
+        };
+        let corridors: Vec<&tubes::Corridor> = held
+            .iter()
+            .map(|turn| &turn.corridor)
+            .filter(|corridor| experiment.corridors && corridor.room(&reference).0 >= 0.0)
+            .collect();
+        let lost = |x: &[i64]| -> Vec<usize> {
+            let lengths = numbers(x);
+            (0..corridors.len()).filter(|&k| corridors[k].room(&lengths).0 < 0.0).collect()
+        };
+        let shifted = |x: &[i64]| -> usize {
+            let lengths = numbers(x);
+            held.iter().filter(|turn| tubes::value(&turn.shift, &lengths).abs() >= 0.5).count()
+        };
         // (Experiment.) Whole lengths worked out outside the engine, taken
         // as they are, with no repair: the search gave the scale and the
         // arcs held from vanishing.
         if let Some(imported) = way.and_then(|way| experiment.way_lengths(tmesh, way)) {
             x = imported;
         } else {
-            let target: Vec<f64> = aimed.iter().map(|length| scale * length).collect();
             let (budget, aimed_at): (_, &[&tubes::Turn]) = if cut {
                 let wanted = request.quads.unwrap_or_else(|| count_quads(tmesh, &x));
                 (Some((wanted, (request.tolerance * wanted as f64) as usize)), &[])
@@ -617,11 +652,64 @@ impl WalkCancelling {
             } else {
                 (None, &held)
             };
-            repair(tmesh, network, pull, &target, &lower, &mut x, every, aimed_at, budget, sphere, report);
-            check_turns(tmesh, network, every, sphere, &x, false);
+            let repaired = |aimed: &[f64], scale: f64, lower: &[i64], x: &mut [i64], report: &mut Report| {
+                let target: Vec<f64> = aimed.iter().map(|length| scale * length).collect();
+                repair(tmesh, network, pull, &target, lower, x, every, aimed_at, &corridors, budget, sphere, report);
+                check_turns(tmesh, network, every, sphere, x, false);
+            };
+            repaired(&aimed, scale, &lower, &mut x, report);
+            // Constraint generation: where the whole lengths took turns kept
+            // out of their corridor, the width of each at its narrowest is
+            // asked of the least change as well, wider by as much as it
+            // lacked, and the lengths looked for again from these; kept if
+            // fewer turns are out and no more shifted.
+            let mut widths: Vec<(usize, f64)> = Vec::new();
+            for _ in 0..if projections == usize::MAX { 0 } else { CORRIDOR_ROUNDS } {
+                let out = lost(&x);
+                if out.is_empty() {
+                    break;
+                }
+                let lengths = numbers(&x);
+                for &k in &out {
+                    let (room, j, i) = corridors[k].room(&lengths);
+                    let width = corridors[k].width(j, i);
+                    let aim = (scale * tubes::value(&width, &aimed) - room).max(1.0 + CORRIDOR_MARGIN) / scale;
+                    widths.push((rows.push(width), aim));
+                }
+                let asked_rows: Vec<usize> = active.iter().copied().chain(widths.iter().map(|&(row, _)| row)).collect();
+                let aims: Vec<f64> = active.iter().map(|_| 0.0).chain(widths.iter().map(|&(_, aim)| aim)).collect();
+                let Some(widened) = rows.closed(&asked_rows, &aims, !cut && experiment.active_set) else { break };
+                let from = (x.clone(), scale, count_quads(tmesh, &x), lower.clone());
+                let (mut again, again_scale, _, again_lower) =
+                    self.search(tmesh, network, pull, &widened, request, report, Some(&from));
+                repaired(&widened, again_scale, &again_lower, &mut again, report);
+                if corridor_debug {
+                    eprintln!(
+                        "  corridors widened: {} turns out of {} -> {}, {} held shifted -> {}",
+                        out.len(),
+                        corridors.len(),
+                        lost(&again).len(),
+                        shifted(&x),
+                        shifted(&again)
+                    );
+                }
+                if lost(&again).len() >= out.len() || shifted(&again) > shifted(&x) {
+                    break;
+                }
+                (x, scale, lower, aimed) = (again, again_scale, again_lower, widened);
+            }
         }
         if std::env::var_os("OPENCLARE_DEBUG_TURNS").is_some() {
             debug_turns(tmesh, every, &x, real, scale, &held);
+        }
+        if corridor_debug {
+            let room = |lengths: &[f64]| held.iter().filter(|turn| turn.corridor.room(lengths).0 >= 0.0).count();
+            eprintln!(
+                "corridors round: {} kept, {} with room before, {} after",
+                held.len(),
+                room(&reference),
+                room(&numbers(&x))
+            );
         }
         if debug {
             let lengths: Vec<f64> = x.iter().map(|&length| length as f64).collect();
@@ -653,7 +741,7 @@ impl WalkCancelling {
     /// within [`CUT_LEAN`] of their way round are held as well, and the
     /// lengths looked for again, from the lengths of the round before. A few
     /// rounds, each giving lengths to choose from, with the number of turns
-    /// held.
+    /// held and of those left in their corridor.
     #[allow(clippy::too_many_arguments)]
     fn cut_rounds(
         &self,
@@ -668,7 +756,7 @@ impl WalkCancelling {
         first: &Lengths,
         closing: &tubes::Closing,
         sphere: &[bool],
-    ) -> Vec<(Lengths, usize)> {
+    ) -> Vec<(Lengths, usize, usize)> {
         // A way and the same way taken the other way round are one ring.
         let key = |turn: &tubes::Turn| -> Vec<(usize, i64)> {
             let sign = turn.shift.first().map_or(1.0, |&(_, c)| c.signum());
@@ -734,7 +822,7 @@ impl WalkCancelling {
             if next.0 == current.0 {
                 break;
             }
-            out.push((next.clone(), held.len()));
+            out.push((next.clone(), held.len(), in_corridor(&held, &next.0)));
             current = next;
         }
         out
@@ -1007,9 +1095,10 @@ impl Quantizer for WalkCancelling {
                     } else {
                         Vec::new()
                     };
-                    let candidates: Vec<_> = std::iter::once((tried, held.len()))
+                    let in_first = in_corridor(held, &tried.0);
+                    let candidates: Vec<_> = std::iter::once((tried, held.len(), in_first))
                         .chain(cut)
-                        .map(|(tried, held)| (spirals(tmesh, &tried.0), tried, held))
+                        .map(|(tried, held, in_corridor)| (spirals(tmesh, &tried.0), tried, held, in_corridor))
                         .collect();
                     (candidates, own.moves, own.scans)
                 })
@@ -1020,7 +1109,7 @@ impl Quantizer for WalkCancelling {
             for (((index, offsets, lean, longest), ..), (candidates, moves, scans)) in ways.iter().zip(tried) {
                 report.moves += moves;
                 report.scans += scans;
-                for (round, (spirals, tried, held)) in candidates.into_iter().enumerate() {
+                for (round, (spirals, tried, held, in_corridor)) in candidates.into_iter().enumerate() {
                     if std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some() {
                         eprintln!(
                             "closing from {offsets:?} leaning up to {lean}, {longest} long, round {round}: spirals {:.3} deviation {:.3} quads {} off folds {:.2} (plain {:.3})",
@@ -1040,6 +1129,7 @@ impl Quantizer for WalkCancelling {
                         kept.push(Kept {
                             spirals: Some(spirals),
                             held,
+                            in_corridor,
                             way: Some((*index, round)),
                             ..Kept::new(tried)
                         });
@@ -1120,10 +1210,21 @@ impl Quantizer for WalkCancelling {
         if let Some(directory) = experiment.export.as_deref() {
             export::call(directory, tmesh, &real, &exact, request, &kept);
         }
+        if std::env::var_os("OPENCLARE_DEBUG_CORRIDORS").is_some() {
+            if let Some(first) = kept.first() {
+                eprintln!(
+                    "corridors kept: {} of {} turns held in their corridor, spirals {:.4}",
+                    first.in_corridor,
+                    first.held,
+                    first.spirals.unwrap_or(f64::NAN)
+                );
+            }
+        }
         let mut kept = kept.into_iter().map(|kept| {
             let (x, scale, quads, lower) = kept.lengths;
             let report = Report {
                 turns_held: kept.held,
+                turns_in_corridor: kept.in_corridor,
                 spirals: kept.spirals,
                 from_selector: kept.from_selector,
                 ..report.clone()
@@ -1142,13 +1243,14 @@ struct Kept {
     lengths: Lengths,
     spirals: Option<f64>,
     held: usize,
+    in_corridor: usize,
     from_selector: bool,
     way: Option<(usize, usize)>,
 }
 
 impl Kept {
     fn new(lengths: Lengths) -> Self {
-        Self { lengths, spirals: None, held: 0, from_selector: false, way: None }
+        Self { lengths, spirals: None, held: 0, in_corridor: 0, from_selector: false, way: None }
     }
 }
 
@@ -1286,6 +1388,11 @@ const REPAIR_WALKS: usize = 40;
 /// unit of its shift, and the most walks tried for it.
 const AIMED_LEAN: f64 = 3.0;
 const AIMED_WALKS: usize = 8;
+/// Most rounds of constraint generation for the corridors of the turns
+/// kept, and how much wider than a quad edge, in quad edges, the least change
+/// is asked to make each corridor taken out.
+const CORRIDOR_ROUNDS: usize = 2;
+const CORRIDOR_MARGIN: f64 = 0.5;
 /// Rounds of closing by cuts after each way: every strip of the quad mesh
 /// walked, those the real lengths would close held as well.
 const CUT_ROUNDS: usize = 3;
@@ -1347,6 +1454,17 @@ fn strip_network(tmesh: &TMesh) -> Network {
         }
     }
     Network::new(ends)
+}
+
+/// How many of `turns` the whole lengths `x` leave room in their corridor.
+fn in_corridor(turns: &[tubes::Turn], x: &[i64]) -> usize {
+    let lengths = numbers(x);
+    turns.iter().filter(|turn| turn.corridor.room(&lengths).0 >= 0.0).count()
+}
+
+/// Whole lengths as numbers.
+fn numbers(x: &[i64]) -> Vec<f64> {
+    x.iter().map(|&length| length as f64).collect()
 }
 
 fn count_quads(tmesh: &TMesh, x: &[i64]) -> usize {
@@ -1679,6 +1797,71 @@ mod tests {
                 assert_eq!(conditions.len() % 2, 0, "two conditions per crossing");
                 for (row, constant) in conditions {
                     assert!(tubes::value(row, &lengths) + constant >= -1e-9, "{strip:?}");
+                }
+            }
+            // Each strip goes round its own corridor at the lengths it was
+            // walked at.
+            for (strip, _) in &walks {
+                assert!(strip.corridor.room(&lengths).0 >= 0.0, "{strip:?}");
+            }
+        }
+    }
+
+    #[test]
+    fn a_turn_that_is_a_strip_has_room_in_its_corridor() {
+        // At whole lengths, the strips of the quad mesh are the walks from the
+        // middles of quad edges (Proposition "Completeness at given lengths"
+        // of the closing-loops paper). Where one from the first side of a
+        // turn found at the real lengths crosses the same arcs, it passes
+        // every node on the same side, the singular ones among them: the
+        // turn has room in its corridor.
+        for tmesh in [cube(), ball()] {
+            let found = tubes::turns(&tmesh, 4, &[0.2, 0.5, 0.8], 1e9);
+            for quads in [300, 600] {
+                let quantized = quantized(&tmesh, Some(quads));
+                let lengths: Vec<f64> = quantized.lengths.iter().map(|&length| length as f64).collect();
+                let crossed = |turn: &tubes::Turn| -> Vec<(usize, u32)> {
+                    turn.crossings.iter().map(|&(patch, half, ..)| (patch, half)).collect()
+                };
+                let (mut strips, mut with_room) = (0, 0);
+                for turn in &found {
+                    let rim = &tmesh.patches[turn.patch];
+                    let side_of = rim.side_of_each().unwrap();
+                    let side: u32 = rim
+                        .boundary
+                        .iter()
+                        .zip(&side_of)
+                        .filter(|&(_, &side)| side as usize == turn.side)
+                        .map(|(&half, _)| quantized.lengths[half as usize / 2])
+                        .sum();
+                    let strip = (0..side).any(|k| {
+                        tubes::walk(&tmesh, &lengths, turn.patch, turn.side, k as f64 + 0.5)
+                            .is_some_and(|way| crossed(&way) == crossed(turn))
+                    });
+                    let room = turn.corridor.room(&lengths).0 >= 0.0;
+                    assert!(room || !strip, "{quads} quads, turn from rectangle {}", turn.patch);
+                    strips += strip as usize;
+                    with_room += room as usize;
+                }
+                assert!(strips > 0, "{quads} quads: no turn is a strip");
+                assert!(with_room >= strips);
+            }
+        }
+    }
+
+    #[test]
+    fn turns_kept_in_their_corridor_still_give_sound_lengths() {
+        // With the corridors of the turns kept as constraints (DT-138), the
+        // lengths are as sound as without, and each candidate counts, of the
+        // turns it held, those it leaves room in their corridor.
+        let corridors = Experiment { corridors: true, ..Default::default() };
+        for tmesh in [ball(), ring()] {
+            for quads in [400, 600] {
+                let request = Request { quads: Some(quads), experiment: corridors.clone(), ..Default::default() };
+                let quantized = WalkCancelling::default().quantize(&tmesh, &request).unwrap();
+                for candidate in std::iter::once(&quantized).chain(&quantized.candidates) {
+                    assert!(candidate.report.is_valid(), "{quads} quads");
+                    assert!(candidate.report.turns_in_corridor <= candidate.report.turns_held, "{quads} quads");
                 }
             }
         }

@@ -12,7 +12,7 @@
 //! helices (DT-062).
 
 use crate::linalg::{Factorization, SymmetricBuilder, solve_dense};
-use crate::tmesh::{HalfArc, TMesh};
+use crate::tmesh::{HalfArc, NodeKind, TMesh};
 
 /// A linear expression in the lengths of the arcs: `(arc, coefficient)`.
 pub(super) type Expression = Vec<(usize, f64)>;
@@ -41,6 +41,9 @@ pub(super) struct Turn {
     /// half-arc of its rim crossed, the rectangle entered, and how far along
     /// that half-arc (written out by the experiment options).
     pub crossings: Vec<(usize, HalfArc, usize, f64)>,
+    /// The offsets from which a walk goes round the same way, on the same
+    /// side of every singular node it passes.
+    pub corridor: Corridor,
 }
 
 /// The direction of each side of a rectangle, counter-clockwise from the
@@ -182,6 +185,16 @@ fn lattice_ways(
     found
 }
 
+/// The way from side `side` of rectangle `patch`, `offset` along it, at the
+/// `lengths`, if it comes back onto that side before `longest`.
+#[cfg(test)]
+pub(super) fn walk(tmesh: &TMesh, lengths: &[f64], patch: usize, side: usize, offset: f64) -> Option<Turn> {
+    let rims = rims(tmesh, lengths);
+    let place = places(tmesh, &rims);
+    let steps = 4 * tmesh.patches.len().max(1);
+    go_round(tmesh, lengths, &rims, &place, patch, side, offset, steps, f64::INFINITY, None)
+}
+
 /// Turns from the places `starts` gives along each side, from its length.
 fn turns_with(
     tmesh: &TMesh,
@@ -192,15 +205,7 @@ fn turns_with(
     walks: bool,
 ) -> Vec<(Turn, Vec<Condition>)> {
     let rims = rims(tmesh, lengths);
-    // Where each half-arc is on a rim: the rectangle and the place.
-    let mut place = vec![None; 2 * tmesh.arcs.len()];
-    for (patch, rim) in rims.iter().enumerate() {
-        if let Some(rim) = rim {
-            for (k, &(half, _)) in rim.halves.iter().enumerate() {
-                place[half as usize] = Some((patch, k));
-            }
-        }
-    }
+    let place = places(tmesh, &rims);
     let steps = steps_per_patch * tmesh.patches.len().max(1);
     let mut found = Vec::new();
     for (start_patch, rim) in rims.iter().enumerate() {
@@ -227,11 +232,188 @@ fn turns_with(
     found
 }
 
+/// Where each half-arc is on a rim: the rectangle and the place.
+fn places(tmesh: &TMesh, rims: &[Option<Rim>]) -> Vec<Option<(usize, usize)>> {
+    let mut place = vec![None; 2 * tmesh.arcs.len()];
+    for (patch, rim) in rims.iter().enumerate() {
+        if let Some(rim) = rim {
+            for (k, &(half, _)) in rim.halves.iter().enumerate() {
+                place[half as usize] = Some((patch, k));
+            }
+        }
+    }
+    place
+}
+
+/// The corridor of a turn: the offsets along its first side from which a
+/// straight walk goes round the same way. Its rows, `low` and `high`, are
+/// linear in the lengths `x`: at the offset `o`, the walk keeps to the turn
+/// while each `low . x - o` and each `high . x + o` is half a quad edge or
+/// more. Built crossing after crossing ([`Walk`]), with one pair of rows per
+/// crossing for the two ends of the half-arc crossed, it is the corridor of
+/// Equation "corridor" of the closing-loops paper (`Turn.corridor` of the
+/// Lean module): the walk crosses the same arcs in the same order. A turn's
+/// own ([`Turn::corridor`]) has one row per singular node on the rim of each
+/// rectangle crossed instead, for the side of it the turn passes: a walk
+/// that passes a T-junction on its other side crosses other arcs but goes
+/// round with the same shift, at lengths that balance every rectangle (the
+/// turns-of-a-t-mesh paper: parallel turns with no singular vertex between
+/// them shift the same), and only a singular node between them makes it
+/// another way round. Lengths that keep a closed turn in its corridor close
+/// a strip of quads that goes that way round, not another one (DT-138).
+#[derive(Clone, Debug, Default, PartialEq)]
+pub(super) struct Corridor {
+    pub low: Vec<Expression>,
+    pub high: Vec<Expression>,
+}
+
+impl Corridor {
+    /// Its conditions at the offset `offset`, a low and a high row at a
+    /// time (built crossing after crossing, it has as many of each).
+    pub fn conditions(&self, offset: f64) -> Vec<Condition> {
+        debug_assert_eq!(self.low.len(), self.high.len());
+        self.low
+            .iter()
+            .map(|low| (low.clone(), -offset - 0.5))
+            .zip(self.high.iter().map(|high| (high.clone(), offset - 0.5)))
+            .flat_map(|(low, high)| [low, high])
+            .collect()
+    }
+
+    /// How much room it leaves at the lengths `x`, in quad edges: the least
+    /// of the `low` and of the `high` added up, less one; and the rows they
+    /// are. At whole lengths the bounds on the offset are half integers, so
+    /// a strip of the quad mesh goes round the way of the turn exactly when
+    /// there is room, nothing or more.
+    pub fn room(&self, x: &[f64]) -> (f64, usize, usize) {
+        let least = |rows: &[Expression]| {
+            rows.iter()
+                .map(|row| value(row, x))
+                .enumerate()
+                .fold((f64::INFINITY, 0), |(least, at), (k, v)| if v < least { (v, k) } else { (least, at) })
+        };
+        let ((low, j), (high, k)) = (least(&self.low), least(&self.high));
+        (low + high - 1.0, j, k)
+    }
+
+    /// The width of the corridor between its low row `j` and its high row
+    /// `k`: its room plus one where they are the narrowest.
+    pub fn width(&self, j: usize, k: usize) -> Expression {
+        merged(self.low[j].iter().chain(&self.high[k]).copied().collect())
+    }
+}
+
+/// The half-arcs of `side` of a rim, from the first to past the last.
+fn side_run(rim: &Rim, side: usize) -> (usize, usize) {
+    (rim.side_start[side], if side == 3 { rim.halves.len() } else { rim.side_start[side + 1] })
+}
+
+/// The arcs of a run of a rim, from its half-arc `begin` to `end`.
+fn run(rim: &Rim, begin: usize, end: usize) -> Expression {
+    merged((begin..end).map(|m| (rim.halves[m].0 as usize / 2, 1.0)).collect())
+}
+
+fn negated(row: &Expression) -> Expression {
+    row.iter().map(|&(i, c)| (i, -c)).collect()
+}
+
+/// A walk followed crossing after crossing: where it is along the side it
+/// came in by, in the lengths, the offset left out, and the corridor of the
+/// arcs it crossed.
+#[derive(Default)]
+struct Walk {
+    corridor: Corridor,
+    offset: Expression,
+}
+
+impl Walk {
+    /// Across `rim` to its half-arc `k`, into `next_rim` at its half-arc
+    /// `k_next`, the twin.
+    fn cross(&mut self, rim: &Rim, k: usize, next_rim: &Rim, k_next: usize) {
+        let (half, opposite) = rim.halves[k];
+        let arc = half as usize / 2;
+        let (begin, end) = side_run(rim, opposite);
+        // How far along the opposite side it leaves: that side's length
+        // less the offset. It stays inside the half-arc it leaves by, half
+        // a quad edge from either end: along - before - 1/2 >= 0 and
+        // before + length - along - 1/2 >= 0.
+        let along: Expression = run(rim, begin, end).into_iter().chain(negated(&self.offset)).collect();
+        let before = run(rim, begin, k);
+        self.corridor.low.push(merged(along.iter().copied().chain(negated(&before)).collect()));
+        self.corridor
+            .high
+            .push(merged(before.iter().copied().chain(std::iter::once((arc, 1.0))).chain(negated(&along)).collect()));
+        // The offset on the next side: what comes before the twin on its
+        // rim, plus the length of the arc, less how far into it.
+        let next_begin = next_rim.side_start[next_rim.halves[k_next].1];
+        self.offset = merged(
+            run(next_rim, next_begin, k_next)
+                .into_iter()
+                .chain(std::iter::once((arc, 1.0)))
+                .chain(negated(&along))
+                .chain(before)
+                .collect(),
+        );
+    }
+}
+
+/// The corridor of a turn (see [`Corridor`]): the way through the
+/// rectangles `crossings` (the rectangle left, the place on its rim, the
+/// one entered, the place on its rim) from `offset` along its first side,
+/// as walked at the `lengths`. In each rectangle, a node is placed across
+/// the way as far from the side it came in by as the walk is: on that side,
+/// where it is along it; on the side after it, all its length; on the
+/// opposite side, its length less where it is along it; on the side before,
+/// nothing. The singular nodes are the singularities of the field and the
+/// corners.
+fn singular_corridor(
+    tmesh: &TMesh,
+    rims: &[Option<Rim>],
+    crossings: &[(usize, usize, usize, usize)],
+    lengths: &[f64],
+    offset: f64,
+) -> Corridor {
+    let mut walk = Walk::default();
+    let mut corridor = Corridor::default();
+    for &(patch, k, next, k_next) in crossings {
+        let (Some(rim), Some(next_rim)) = (&rims[patch], &rims[next]) else { break };
+        let opposite = rim.halves[k].1;
+        let entry = (opposite + 2) % 4;
+        let at = offset + value(&walk.offset, lengths);
+        for (m, &(half, side)) in rim.halves.iter().enumerate() {
+            let node = tmesh.arcs[half as usize / 2].nodes[half as usize & 1] as usize;
+            if !matches!(tmesh.nodes[node].kind, NodeKind::Singularity { .. } | NodeKind::Corner) {
+                continue;
+            }
+            let across = match (side + 4 - entry) % 4 {
+                0 => run(rim, rim.side_start[entry], m),
+                1 => {
+                    let (begin, end) = side_run(rim, entry);
+                    run(rim, begin, end)
+                }
+                2 => {
+                    let (begin, end) = side_run(rim, opposite);
+                    merged(run(rim, begin, end).into_iter().chain(negated(&run(rim, begin, m))).collect())
+                }
+                _ => Vec::new(),
+            };
+            let row = merged(across.iter().copied().chain(negated(&walk.offset)).collect());
+            if value(&across, lengths) > at {
+                corridor.low.push(row);
+            } else {
+                corridor.high.push(negated(&row));
+            }
+        }
+        walk.cross(rim, k, next_rim, k_next);
+    }
+    corridor
+}
+
 /// Goes straight across from side `side` of rectangle `patch`, `offset`
 /// along it, until it comes back in through that side going the same way,
 /// or has gone further than `longest`. With `conditions`, adds to them,
 /// crossing after crossing, what keeps the lengths from making it another
-/// way: two per crossing.
+/// way: two per crossing, the conditions of its [`Corridor`] at `offset`.
 #[allow(clippy::too_many_arguments)]
 fn go_round(
     tmesh: &TMesh,
@@ -246,12 +428,8 @@ fn go_round(
     mut conditions: Option<&mut Vec<Condition>>,
 ) -> Option<Turn> {
     let (start_patch, start_side, start_offset) = (patch, side, offset);
-    // Where the way is along the side it came in by, as an expression of
-    // the lengths and a constant; and the arcs of a run of a rim.
-    let mut offset_expression: (Expression, f64) = (Vec::new(), offset);
-    let run = |rim: &Rim, begin: usize, end: usize| -> Expression {
-        merged((begin..end).map(|m| (rim.halves[m].0 as usize / 2, 1.0)).collect())
-    };
+    // The corridor of the arcs crossed, where its conditions are asked.
+    let mut corridor = conditions.is_some().then(Walk::default);
     let (mut patch, mut side, mut offset) = (patch, side, offset);
     let mut quarter_turns = 0usize;
     let mut around = 0.0;
@@ -288,26 +466,6 @@ fn go_round(
         }
         let (k, into) = leaving?;
         let (half, _) = rim.halves[k];
-        if let Some(conditions) = conditions.as_deref_mut() {
-            // How far along the opposite side it leaves: that side's length
-            // less the offset. It stays inside the half-arc it leaves by,
-            // half a quad edge from either end: along - before - 1/2 >= 0
-            // and before + length - along - 1/2 >= 0.
-            let along: Expression =
-                run(rim, begin, end).into_iter().chain(offset_expression.0.iter().map(|&(i, c)| (i, -c))).collect();
-            let before = run(rim, begin, k);
-            let low = merged(along.iter().copied().chain(before.iter().map(|&(i, c)| (i, -c))).collect());
-            conditions.push((low, -offset_expression.1 - 0.5));
-            let high = merged(
-                before
-                    .iter()
-                    .copied()
-                    .chain(std::iter::once((half as usize / 2, 1.0)))
-                    .chain(along.iter().map(|&(i, c)| (i, -c)))
-                    .collect(),
-            );
-            conditions.push((high, offset_expression.1 - 0.5));
-        }
         let arc = &tmesh.arcs[half as usize / 2];
         if arc.border {
             return None;
@@ -317,24 +475,17 @@ fn go_round(
         let next_side = next_rim.halves[k_next].1;
         let next_begin = next_rim.side_start[next_side];
         let before_twin: f64 = (next_begin..k_next).map(|m| lengths[next_rim.halves[m].0 as usize / 2]).sum();
-        if conditions.is_some() {
-            // The offset on the next side: what comes before the twin on
-            // its rim, plus the length of the arc, less how far into it.
-            let along: Expression =
-                run(rim, begin, end).into_iter().chain(offset_expression.0.iter().map(|&(i, c)| (i, -c))).collect();
-            let next_offset: Expression = run(next_rim, next_begin, k_next)
-                .into_iter()
-                .chain(std::iter::once((half as usize / 2, 1.0)))
-                .chain(along.iter().map(|&(i, c)| (i, -c)))
-                .chain(run(rim, begin, k))
-                .collect();
-            offset_expression = (merged(next_offset), offset_expression.1);
+        if let Some(corridor) = corridor.as_mut() {
+            corridor.cross(rim, k, next_rim, k_next);
         }
         crossings.push((patch, k, next, k_next));
         walked.push((patch, half, next, into));
         quarter_turns = (quarter_turns + (next_side + 2 + 4 - opposite) % 4) % 4;
         (patch, side, offset) = (next, next_side, before_twin + (lengths[half as usize / 2] - into));
         if patch == start_patch && side == start_side && quarter_turns == 0 {
+            if let (Some(conditions), Some(corridor)) = (conditions.as_deref_mut(), corridor.take()) {
+                conditions.extend(corridor.corridor.conditions(start_offset));
+            }
             let across = if DIRECTION[start_side][0] != 0.0 { 0 } else { 1 };
             let [first, second] = shift_along(tmesh, rims, &crossings);
             let (shift, along) = if across == 0 { (first, second) } else { (second, first) };
@@ -353,6 +504,7 @@ fn go_round(
                 side: start_side,
                 offset: start_offset,
                 crossings: walked,
+                corridor: singular_corridor(tmesh, rims, &crossings, lengths, start_offset),
             });
         }
     }
