@@ -39,6 +39,11 @@ jobs:
       - name: The figures' numbers
         if: matrix.note == 'turns-of-a-t-mesh'
         run: python3 docs/research/turns-of-a-t-mesh/figures/check.py
+      # Every statement of paper B has a level of evidence, and every Lean
+      # name its tags cite is declared in its lean folder.
+      - name: The levels of evidence
+        if: matrix.note == 'turns-of-a-t-mesh'
+        run: python3 docs/research/turns-of-a-t-mesh/evidence.py
       - uses: xu-cheng/latex-action@4.1.0
         with:
           working_directory: docs/research/${{ matrix.note }}
