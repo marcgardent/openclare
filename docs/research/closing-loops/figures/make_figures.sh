@@ -11,6 +11,10 @@
 #   WORK    where the meshes, their measures and the panels go (default
 #           target/figures); meshes already there are reused, delete them
 #           to make them again
+#   OPENCLARE  the engine (default target/release/openclare, built here
+#           with cargo; a binary given is used as it is, not built)
+#   COMMIT  the commit that engine was built from, printed with the numbers
+#           (default the commit of this clone)
 #
 # Needs: cargo, blender (5.x), python3 with Pillow. turn.tex and closing.tex
 # are drawn by hand and are not made here.
@@ -21,14 +25,20 @@ ROOT=$(cd "$FIGURES/../../../.." && pwd)
 SOURCE=${SOURCE:-$ROOT/bench/out/human_male/source.obj}
 WORK=${WORK:-$ROOT/target/figures}
 QUADS=10590
-OPENCLARE=$ROOT/target/release/openclare
+BUILD=no
+if [ -z "${OPENCLARE:-}" ]; then
+    OPENCLARE=$ROOT/target/release/openclare
+    BUILD=yes
+fi
 # Memory caps (KB) for the engine and for Blender.
 ulimit -v 24000000
 
 mkdir -p "$WORK/panels"
 cd "$ROOT"
-echo "engine commit $(git rev-parse --short HEAD), source $(md5sum "$SOURCE" | cut -d' ' -f1)"
-cargo build --release
+echo "engine commit ${COMMIT:-$(git rev-parse --short HEAD)}, source $(md5sum "$SOURCE" | cut -d' ' -f1)"
+if [ $BUILD = yes ]; then
+    cargo build --release
+fi
 
 # The four meshes.
 if [ ! -f "$WORK/no_closing.obj" ]; then
