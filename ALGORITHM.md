@@ -1125,6 +1125,44 @@ male body from 63 s to 54 s, with byte-identical meshes (36 of 36 on the batch).
 system with an odd right-hand side has no whole solution (handshake), but the search only ever
 keeps `B x = 0`: nothing to prune there.
 
+**Corridors of the turns** (`quantization/tubes.rs`, DT-138). The shift of a turn is a linear
+form in the lengths only while a strip of quads still goes that way round: while the lengths
+leave room in its corridor, the offsets along its first side from which a straight walk passes
+every singular node (singularity or corner) on the rims of the rectangles it crosses on the same
+side. A walk that passes a T-junction on its other side crosses other arcs but goes round with the
+same shift, at balanced lengths; only a singular node between them makes it another way round. The
+corridor is two lists of linear rows in the lengths (`tubes::Corridor`, built with each turn); at
+whole lengths a strip goes the turn's way round exactly when the narrowest low and high rows add up
+to one quad edge or more (tested on a cube and a sphere against the walks from every middle of a
+quad edge). `Report::turns_in_corridor` counts the turns held that the lengths leave room in
+theirs. With the experiment option `OPENCLARE_CORRIDORS`, the turns kept by the projection that
+had room at the reference lengths (the real ones at the scale found, or those of the round of cuts
+before) keep it: the repair takes no walk that takes one out, and where the integer search did,
+the narrowest width of each such corridor is added to the least change, wider by what it lacked,
+and the lengths searched again from these, kept if fewer turns are out and no more shifted (at most
+two rounds). On the 12 models at 2970, 3000 and 3030 quads, against the engine without it:
+
+| | Engine | With the corridors |
+|---|---|---|
+| Spiral edges (mean of 36) | 5.85 % | 6.02 % (2 runs better, 7 worse, 27 equal) |
+| Helix edges, independent measure (`loop_edges_helix`) | 4.02 % | 3.88 % |
+| Turns held in their corridor, at the lengths kept | 556 of 1,250 (44.5 %) | 546 of 1,214 (45.0 %) |
+| Turns kept with room, before the solves → after (all ways and rounds) | 39.1 % → 37.4 % | 39.9 % → 39.2 % |
+| Mean distance, valid meshes | 0.00038, 36 of 36 | 0.00038, 36 of 36 |
+| Processor time, 12 models at 3000 quads (i7-7700K, load about 10) | 167 s | 193 s |
+
+The male body at 10,590 quads is the same mesh either way (1.65 % of spiral edges, 32 of 64 turns
+held in their corridor). The option is off by default: it does not lower the share of spirals.
+The constraints keep the few turns the solves would take out of their corridor (4.4 % of those
+with room, 1.6 % with the option), but **six turns kept in ten have no room to begin with**: at the
+real lengths they pass between singular nodes less than a quad edge apart across the way, so no
+strip of the quad mesh goes their way round at lengths near the real ones, and closing them closes
+no ring. Two variants did no better: the corridor of Equation "corridor" of the closing-loops paper
+(the two ends of every arc crossed, T-junctions included) gives 6.18 % of spiral
+edges and 3.52 % of helix edges; holding only the turns with room gives 5.11 %, but with 10 runs
+better and 15 worse, one run (blob at 3030 quads, 48.9 % → 19.8 %) accounting for more than the
+whole gain, and 2.11 % against 1.65 % on the male body.
+
 **Slow quality: rings chosen by an exact solver** (`quantization/rings.rs`,
 `crates/openclare-highs`). Choosing which turns to close together is NP-hard (the research
 note); the engine chooses by walks, a few rings at a time. With `quality = slow`, three rounds
@@ -1268,8 +1306,9 @@ read them once per quantization (`quantization::Experiment::from_env`, carried b
 `Request::experiment`); a value that cannot be read is an error. With none set, the meshes are
 the engine's to the byte (the 12-model batch at 3000 quads, 12 of 12 identical). Like the
 `OPENCLARE_DEBUG_*` variables (`_TUBES`: each stage of the closing, way by way, and how many turns
-are still shifted after the integer search; `_TURNS`, `_REPAIR`, `_WORK`), they are for research,
-not for users.
+are still shifted after the integer search; `_CORRIDORS`: how many turns have room in their
+corridor, round by round and for the lengths kept; `_TURNS`, `_REPAIR`, `_WORK`), they are for
+research, not for users.
 
 The switches, one per stage of Section "Closing turns in quantization" of the closing-loops
 paper; any value turns a `NO_` switch on:
@@ -1285,6 +1324,7 @@ paper; any value turns a `NO_` switch on:
 | `OPENCLARE_NO_ACTIVE_SET` | the projection cuts the lengths it takes below their floor off afterwards, instead of holding them there and solving again |
 | `OPENCLARE_ACTIVE_SET_FLOOR=s` | that floor is `s` (0 to 1) times the real length of each arc, not nothing |
 | `OPENCLARE_NO_FOLD_GUARD` | lengths closing loops may take the vertices further off the folds than the plain search |
+| `OPENCLARE_CORRIDORS` | (an option on, not off) the turns kept are kept in their corridor, by the repair and by rounds of constraint generation (DT-138; "Corridors of the turns" above) |
 | `OPENCLARE_JITTER_SEED=n` | another draw of the per-arc preference (0, the default, is the engine's): a control |
 | `OPENCLARE_EXTRA_DRAWS=n` | the number of other draws of the per-arc preference (the next seeds) whose lengths join the candidates where the engine's still spiral, each closed as the engine closes: 12 by default, 0 for the engine before them (the engines of the papers up to f992bac) |
 | `OPENCLARE_QUALITY=slow`, `OPENCLARE_SLOW_WORK_LIMIT=w` | read by `openclare remesh` as `--quality` and `--slow-work-limit` (the command line still wins), for scripts that run one command line on every engine |

@@ -51,6 +51,11 @@ pub struct Experiment {
     /// Off with `OPENCLARE_NO_AIMED_REPAIR`: the walks aimed at each turn
     /// held and still shifted after the repair.
     pub aimed_repair: bool,
+    /// On with `OPENCLARE_CORRIDORS`: the turns kept are kept in their
+    /// corridor, by the repair and by rounds of constraint generation
+    /// (DT-138). Off by default: on the 12-model batch it did not lower the
+    /// share of spiral edges.
+    pub corridors: bool,
     /// Off with `OPENCLARE_NO_ACTIVE_SET`: arcs the least change would take
     /// below their floor are held there and the change looked for again;
     /// without it, they are cut off at the floor afterwards.
@@ -81,6 +86,7 @@ impl Default for Experiment {
             ways: None,
             cut_rounds: true,
             aimed_repair: true,
+            corridors: false,
             active_set: true,
             active_set_floor: 0.0,
             deviation_cap: true,
@@ -108,6 +114,7 @@ impl Experiment {
             aimed: directory("OPENCLARE_AIMED"),
             cut_rounds: !off("OPENCLARE_NO_CUT_ROUNDS"),
             aimed_repair: !off("OPENCLARE_NO_AIMED_REPAIR"),
+            corridors: lookup("OPENCLARE_CORRIDORS").is_some(),
             active_set: !off("OPENCLARE_NO_ACTIVE_SET"),
             deviation_cap: !off("OPENCLARE_NO_DEVIATION_CAP"),
             deviation_floor: !off("OPENCLARE_NO_DEVIATION_FLOOR"),
@@ -239,8 +246,10 @@ mod tests {
             ("OPENCLARE_JITTER_SEED", "3"),
             ("OPENCLARE_EXTRA_DRAWS", "2"),
             ("OPENCLARE_EXPORT_TURNS", "out"),
+            ("OPENCLARE_CORRIDORS", "1"),
         ])
         .unwrap();
+        assert!(experiment.corridors);
         assert_eq!(experiment.ways, Some(vec![0, 2, 4]));
         assert!(experiment.tries(2) && !experiment.tries(1));
         assert!(!experiment.cut_rounds && experiment.aimed_repair);
