@@ -108,7 +108,9 @@ remeasure:
 
 # The research notes: LaTeX sources in docs/research/<note>/paper.tex, their
 # bibliography next to them, the PDF written beside; a French translation,
-# paper.fr.tex, when the note has one, built the same way into paper.fr.pdf.
+# paper.fr.tex, when the note has one, built the same way into paper.fr.pdf;
+# paper.annotated.tex, the same source with the level of evidence of each
+# statement in colour, into paper.annotated.pdf.
 NOTES = $(if $(NOTE),docs/research/$(NOTE),$(patsubst %/paper.tex,%,$(wildcard docs/research/*/paper.tex)))
 # The commit a note describes, its \enginecommit: the short hash of HEAD, with
 # "-dirty" when tracked files other than the PDFs differ from it. Written into
@@ -129,7 +131,8 @@ paper-version:
 paper: paper-version
 	@for note in $(NOTES); do \
 		echo "== $$note"; \
-		for paper in paper $$(test -f $$note/paper.fr.tex && echo paper.fr); do \
+		for paper in paper $$(test -f $$note/paper.fr.tex && echo paper.fr) \
+				$$(test -f $$note/paper.annotated.tex && echo paper.annotated); do \
 			(cd $$note && latexmk -pdf -interaction=nonstopmode -halt-on-error $$paper.tex >/dev/null) \
 				|| { echo "failed: see $$note/$$paper.log"; exit 1; }; \
 			echo "written: $$note/$$paper.pdf"; \
@@ -147,6 +150,7 @@ paper-arxiv: paper
 paper-clean:
 	@for note in $(NOTES); do (cd $$note && latexmk -c paper.tex >/dev/null \
 		&& { test ! -f paper.fr.tex || latexmk -c paper.fr.tex >/dev/null; } \
+		&& { test ! -f paper.annotated.tex || latexmk -c paper.annotated.tex >/dev/null; } \
 		&& rm -f version.tex arxiv.tar.gz); done
 
 # The proofs checked by Lean: a Lake project per note in docs/research/<note>/lean,
