@@ -1232,6 +1232,34 @@ the edges of whole loops, which a ring's length round does not weigh. Kept by th
 the body is the engine's to the byte in every variant. Keeping closed, in the second solve, every
 ring the first lengths close (not only those switched on) changed one run (worse).
 
+**Other draws in the engine** (engine of f992bac with `OPENCLARE_EXTRA_DRAWS`, night of
+2026-10-26; same batch). Where the engine's lengths still spiral, the lengths of other draws of
+the per-arc preference, each closed as the engine closes its own, join the candidates on the
+same terms, and no further from the real lengths than the engine's choice (without that guard a
+draw left the ogre at 600 quads 16 % further from the shape on average; with it, every measure
+of the batch below is the same); the engine now closes **12** of them, side by side
+(`OTHER_DRAWS`). Runs better /
+worse than the engine, wall time per run of the batch (mean and median) and of the male body,
+one variant at a time on the i7-7700K (4 cores, 8 threads, 62 GB), load 1.6 to 6.6 (median
+2.5), mostly the engine's own threads:
+
+| Other draws | Spiral edges | Median | Helix edges | vs engine | Male body | Wall, mean / median | Male body wall |
+|---|---|---|---|---|---|---|---|
+| 0 | 5.85 % | 2.99 % | 4.02 % | | 1.654 % | 6.6 s / 4.2 s | 64 s |
+| 3 | 4.84 % | 1.32 % | 3.48 % | 10 / 0 | 1.654 % | 11.6 s / 4.9 s | 104 s |
+| 6 | 4.45 % | 0.33 % | 3.13 % | 14 / 0 | 1.649 % | 17.2 s / 6.4 s | 136 s |
+| **12** | **4.31 %** | **0 %** | **3.15 %** | **16 / 0** | **1.464 %** | **26.6 s / 7.1 s** | **202 s** |
+| 24 | 4.18 % | 0 % | 3.39 % | 18 / 0 | 1.464 % | 46.4 s / 8.5 s | 339 s |
+| Slow, limit 60 | 4.04 % | 0.48 % | 2.74 % | 12 / 0 | 1.654 % | 75.0 s / 62.3 s | 454 s |
+| 3, and slow at 60 | 3.58 % | 0.14 % | 2.57 % | 15 / 0 | 1.654 % | 80.1 s / 63.0 s | 513 s |
+
+Without the blob at 3030, six draws (3.17 %) and three draws with the slow rounds (3.14 %) are
+equal; the rounds win that one run (48.9 % → 19.2 %), which no draw mends. Twelve draws make no
+spiral at all in half the runs and lower the male body for the first time; the mean distance is
+unchanged (0.00038), the mean angle deviation rises from 5.10° to 5.19°. The reruns of the
+engine, of three draws and of the slow rounds gave every measure to the last digit: the engine
+is deterministic. These times were taken before the draws ran side by side.
+
 **Experiment options** (`quantization/experiment.rs`, `quantization/export.rs`; DT-089). The
 experiments of the research papers (`docs/research`) run on the engine of one commit, with
 environment variables that turn off one stage of the closing at a time, write out the system it
@@ -1258,7 +1286,7 @@ paper; any value turns a `NO_` switch on:
 | `OPENCLARE_ACTIVE_SET_FLOOR=s` | that floor is `s` (0 to 1) times the real length of each arc, not nothing |
 | `OPENCLARE_NO_FOLD_GUARD` | lengths closing loops may take the vertices further off the folds than the plain search |
 | `OPENCLARE_JITTER_SEED=n` | another draw of the per-arc preference (0, the default, is the engine's): a control |
-| `OPENCLARE_EXTRA_DRAWS=n` | where the slow quality's rounds would be posed (sound lengths that still spiral), the lengths of `n` other draws of the per-arc preference (the next seeds), each closed as the engine closes, join the candidates on the same terms as the rounds: the control of the slow quality, as many candidates without the solver |
+| `OPENCLARE_EXTRA_DRAWS=n` | the number of other draws of the per-arc preference (the next seeds) whose lengths join the candidates where the engine's still spiral, each closed as the engine closes: 12 by default, 0 for the engine before them (the engines of the papers up to f992bac) |
 | `OPENCLARE_QUALITY=slow`, `OPENCLARE_SLOW_WORK_LIMIT=w` | read by `openclare remesh` as `--quality` and `--slow-work-limit` (the command line still wins), for scripts that run one command line on every engine |
 | `OPENCLARE_SLOW_LOG=<file>` | appends, after the number of the process, a line per `remesh` call, per solve of HiGHS (status, whether it holds a solution, simplex iterations, work, nodes, gap), per try and round of the slow quality (rings, closed at the reference and by the selector, spirals) and per piece (whose lengths go first), and the same for the other draws |
 

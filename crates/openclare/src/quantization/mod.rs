@@ -1115,31 +1115,46 @@ impl Quantizer for WalkCancelling {
             } else if request.slow.is_some() && std::env::var_os("OPENCLARE_DEBUG_WORK").is_some() {
                 eprintln!("slow quality: not posed, the engine's lengths spiral {fewest:.4}, sound {sound}");
             }
-            // (Experiment.) The control of the slow quality mode: other draws
-            // of the per-arc preference, each closed as the engine closes,
-            // posed where the rounds would be and kept on the same terms.
-            if experiment.extra_draws > 0 && sound && fewest > 0.0 {
+            // Other draws of the per-arc preference, each closed as the engine
+            // closes its own, posed where the slow rounds would be (lengths
+            // that still spiral) and kept on the same terms: choosing among
+            // more lengths is most of what lowers the spirals (DT-089).
+            let draws = experiment.extra_draws.unwrap_or(OTHER_DRAWS);
+            if draws > 0 && sound && fewest > 0.0 {
                 let clock = std::time::Instant::now();
                 let mut added = 0;
-                for draw in 1..=experiment.extra_draws as u64 {
-                    let other = Request {
-                        slow: None,
-                        experiment: Experiment {
-                            jitter_seed: experiment.jitter_seed.wrapping_add(draw),
-                            extra_draws: 0,
-                            export: None,
-                            ..experiment.clone()
-                        },
-                        ..request.clone()
-                    };
-                    // Only the lengths its closing kept: its plain ones are
-                    // no other candidate.
-                    let Ok(drawn) = self.quantize(tmesh, &other) else { continue };
-                    if drawn.report.turns_held == 0 {
+                // Drawn side by side, looked at in the order of their seeds.
+                let drawn: Vec<_> = (1..=draws as u64)
+                    .into_par_iter()
+                    .map(|draw| {
+                        let other = Request {
+                            slow: None,
+                            experiment: Experiment {
+                                jitter_seed: experiment.jitter_seed.wrapping_add(draw),
+                                extra_draws: Some(0),
+                                export: None,
+                                ..experiment.clone()
+                            },
+                            ..request.clone()
+                        };
+                        // Only the lengths its closing kept: its plain ones
+                        // are no other candidate.
+                        let drawn = self.quantize(tmesh, &other).ok()?;
+                        (drawn.report.turns_held > 0).then(|| {
+                            let x: Vec<i64> = drawn.lengths.iter().map(|&length| length as i64).collect();
+                            ((x, drawn.report.scale, drawn.report.quads, plain.3.clone()), drawn.report.turns_held)
+                        })
+                    })
+                    .collect();
+                // No further from the real lengths than the engine's choice:
+                // on the ogre at 600 quads a draw spiralling less was 16 %
+                // further from the shape on average.
+                let engine_deviation =
+                    kept.first().map_or(most_deviation, |first| deviation(&first.lengths, &real)).min(most_deviation);
+                for (tried, held) in drawn.into_iter().flatten() {
+                    if deviation(&tried, &real) > engine_deviation {
                         continue;
                     }
-                    let x: Vec<i64> = drawn.lengths.iter().map(|&length| length as i64).collect();
-                    let tried = (x, drawn.report.scale, drawn.report.quads, plain.3.clone());
                     let spirals = spirals(tmesh, &tried.0);
                     if spirals < plain_spirals - 1e-9
                         && network.is_balanced(&tried.0)
@@ -1150,7 +1165,7 @@ impl Quantizer for WalkCancelling {
                         && kept.iter().all(|other| other.lengths.0 != tried.0)
                     {
                         added += 1;
-                        kept.push(Kept { spirals: Some(spirals), held: drawn.report.turns_held, ..Kept::new(tried) });
+                        kept.push(Kept { spirals: Some(spirals), held, ..Kept::new(tried) });
                     }
                 }
                 let first_before = kept.first().map(|first| first.lengths.0.clone());
@@ -1308,6 +1323,11 @@ fn finished(
     Quantization { report: Report { collapsed_patches: collapsed, ..quantization.report }, ..quantization }
 }
 
+/// Other draws of the per-arc preference closed where the engine's own
+/// lengths still spiral, each one as long as the engine's closing: 12 lower
+/// the spiral share of the batch from 5.85 % to 4.31 % and the male body's
+/// from 1.65 % to 1.46 %, for four times the mean time (DT-089).
+const OTHER_DRAWS: usize = 12;
 /// Lengths kept besides those with the fewest spirals, to mesh instead if
 /// those fold over (before the plain lengths, always kept last).
 const MORE_CANDIDATES: usize = 2;
@@ -1764,8 +1784,10 @@ mod tests {
     #[test]
     fn other_draws_are_posed_where_the_selector_would_be_and_never_spiral_more() {
         for (tmesh, quads) in [(cube(), 300), (ball(), 400), (ring(), 400)] {
-            let standard = quantized(&tmesh, Some(quads));
-            let experiment = Experiment { extra_draws: 3, ..Experiment::default() };
+            let without = Experiment { extra_draws: Some(0), ..Experiment::default() };
+            let request = Request { quads: Some(quads), experiment: without, ..Default::default() };
+            let standard = WalkCancelling::default().quantize(&tmesh, &request).unwrap();
+            let experiment = Experiment { extra_draws: Some(3), ..Experiment::default() };
             let request = Request { quads: Some(quads), experiment, ..Default::default() };
             let drawn = WalkCancelling::default().quantize(&tmesh, &request).unwrap();
             assert!(drawn.report.is_valid(), "{quads} quads");

@@ -37,12 +37,11 @@ pub struct Experiment {
     /// `OPENCLARE_JITTER_SEED=<n>`: another draw of the slight preference
     /// given to each arc. 0, the default, is the engine's own.
     pub jitter_seed: u64,
-    /// `OPENCLARE_EXTRA_DRAWS=<n>`: where the slow quality mode would be
-    /// posed, the lengths of `n` other draws of the per-arc preference (the
-    /// next seeds), each closed as the engine closes its own, added to the
-    /// candidates on the same terms as the rounds of that mode: the control
-    /// that tells the rounds' gain from that of choosing among more lengths.
-    pub extra_draws: usize,
+    /// `OPENCLARE_EXTRA_DRAWS=<n>`: the number of other draws of the per-arc
+    /// preference (the next seeds) whose lengths join the candidates where
+    /// the engine's still spiral. `None`, the default, is the engine's
+    /// number; 0 is none, the engine before them.
+    pub extra_draws: Option<usize>,
     /// `OPENCLARE_CLOSE_WAYS=<i,j,...>`: the ways of closing tried, by their
     /// place in the list of ways (0 to 7). `None`: all of them.
     pub ways: Option<Vec<usize>>,
@@ -78,7 +77,7 @@ impl Default for Experiment {
             lengths: None,
             aimed: None,
             jitter_seed: 0,
-            extra_draws: 0,
+            extra_draws: None,
             ways: None,
             cut_rounds: true,
             aimed_repair: true,
@@ -121,7 +120,7 @@ impl Experiment {
         }
         if let Some(value) = lookup("OPENCLARE_EXTRA_DRAWS") {
             out.extra_draws =
-                value.trim().parse().map_err(|_| invalid("OPENCLARE_EXTRA_DRAWS", &value, "a whole number"))?;
+                Some(value.trim().parse().map_err(|_| invalid("OPENCLARE_EXTRA_DRAWS", &value, "a whole number"))?);
         }
         if let Some(value) = lookup("OPENCLARE_ACTIVE_SET_FLOOR") {
             out.active_set_floor = value
@@ -245,7 +244,7 @@ mod tests {
         assert_eq!(experiment.ways, Some(vec![0, 2, 4]));
         assert!(experiment.tries(2) && !experiment.tries(1));
         assert!(!experiment.cut_rounds && experiment.aimed_repair);
-        assert_eq!((experiment.active_set_floor, experiment.jitter_seed, experiment.extra_draws), (0.5, 3, 2));
+        assert_eq!((experiment.active_set_floor, experiment.jitter_seed, experiment.extra_draws), (0.5, 3, Some(2)));
         assert_eq!(experiment.export, Some(PathBuf::from("out")));
         assert_eq!(read(&[("OPENCLARE_CLOSE_WAYS", "")]).unwrap().ways, Some(Vec::new()));
     }
