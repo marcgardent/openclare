@@ -58,8 +58,14 @@ LINES = [
      without("OPENCLARE_NO_AIMED_REPAIR", "OPENCLARE_NO_DEVIATION_CAP", "OPENCLARE_NO_CUT_ROUNDS",
              "OPENCLARE_NO_ACTIVE_SET")),
     ("deviation_floor", "+ floor of the deviation cap", None, [], {"OPENCLARE_NO_FOLD_GUARD": "1"}),
-    ("engine", "+ fold guard: the whole engine, no option set", None, [], {}),
+    ("fold_guard", "+ fold guard", None, [], {}),
+    ("engine", "+ other draws: the whole engine, no option set", None, [], {}),
 ]
+# Every line but the last closes the engine's own lengths only: no other
+# draws of the per-arc preference (OPENCLARE_EXTRA_DRAWS=0, the engine before
+# version 0.7.0).
+LINES = [(key, label, paper, flags, environment if key == "engine" else {**environment, "OPENCLARE_EXTRA_DRAWS": "0"})
+         for key, label, paper, flags, environment in LINES]
 
 
 def main():
