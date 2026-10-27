@@ -1,7 +1,7 @@
-"""Checks the levels of evidence of the annotated version of the paper.
+"""Checks the levels of evidence of the statements of the paper.
 
 Every theorem, proposition, lemma, corollary, remark, question and conjecture
-of paper.tex sits in an `evidence` box with a known level, or is preceded by a
+of paper.tex and of its translation paper.fr.tex sits in an `evidence` box with a known level, or is preceded by a
 comment `% evidence: none` saying why it claims nothing; every Lean name a box
 cites (\\lean{...}) is declared in lean/; a box at a Lean level cites at least
 one. Run from anywhere: python3 docs/research/turns-of-a-t-mesh/evidence.py
@@ -43,10 +43,11 @@ def declared(name, names):
     return any(full == name or full.endswith("." + name) for full in names)
 
 
-def main():
-    text = (HERE / "paper.tex").read_text()
+def check(path, names):
+    """The errors of one paper, and its counts."""
+    text = path.read_text()
     body = text[text.index(r"\begin{document}"):]
-    names = declarations()
+    offset = text[: text.index(r"\begin{document}")].count("\n")
     errors = []
     # The boxes, their levels and their Lean names.
     boxes = list(re.finditer(r"\\begin\{evidence\}(?:\[[^\]]*\])?\{(\w+)\}\{", body))
@@ -73,13 +74,29 @@ def main():
             continue
         before = body[:m.start()].rstrip().rsplit("\n", 1)[-1]
         if not before.startswith("% evidence: none"):
-            line = text[: text.index(r"\begin{document}")].count("\n") + body[: m.start()].count("\n") + 1
-            errors.append(f"line {line}: a {m.group(1)} without a level")
-    for error in errors:
-        print("evidence:", error)
-    counts = {level: sum(1 for box in boxes if box.group(1) == level) for level in sorted(LEVELS)}
-    print(f"evidence: {statements} statements, {len(boxes)} boxes {counts}, {len(names)} Lean declarations")
-    sys.exit(1 if errors else 0)
+            errors.append(f"line {offset + body[: m.start()].count(chr(10)) + 1}: a {m.group(1)} without a level")
+    levels = [box.group(1) for box in boxes]
+    return errors, statements, levels
+
+
+def main():
+    names = declarations()
+    failed = False
+    papers = [HERE / "paper.tex"] + [path for path in [HERE / "paper.fr.tex"] if path.exists()]
+    levels = {}
+    for path in papers:
+        errors, statements, levels[path.name] = check(path, names)
+        for error in errors:
+            print(f"evidence: {path.name}: {error}")
+        counts = {level: levels[path.name].count(level) for level in sorted(LEVELS)}
+        print(f"evidence: {path.name}: {statements} statements, {len(levels[path.name])} boxes {counts}")
+        failed |= bool(errors)
+    # The translation gives each statement the level of the original.
+    if len(papers) == 2 and levels["paper.tex"] != levels["paper.fr.tex"]:
+        print("evidence: paper.tex and paper.fr.tex give different levels, in order")
+        failed = True
+    print(f"evidence: {len(names)} Lean declarations")
+    sys.exit(1 if failed else 0)
 
 
 if __name__ == "__main__":

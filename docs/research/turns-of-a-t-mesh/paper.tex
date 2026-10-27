@@ -44,21 +44,17 @@
 \IfFileExists{version.tex}{\input{version.tex}}{}
 \providecommand{\enginecommit}{unknown}
 
-% Levels of evidence. paper.annotated.tex defines \annotated and inputs this
-% file: each statement and table is then boxed in the colour of what checks
-% it, with a tag naming the check; without \annotated nothing of it is
-% typeset. evidence.py, beside this file, checks that every statement has a
-% level and that every Lean name cited is declared in lean/.
+% Levels of evidence: each statement and table is framed with a tag naming
+% what checks it (Lean, the engine's data, a measure, the proof on paper, a
+% citation), read from lean/README.md. evidence.py, beside this file, checks
+% that every statement has a level and that every Lean name cited is
+% declared in lean/. \def\plain{} before \input{paper} gives the paper
+% without them, for a venue that wants it plain.
 \newcommand{\lean}[1]{\texttt{\detokenize{#1}}}
-\ifdefined\annotated
+\ifdefined\plain
+\newenvironment{evidence}[3][]{}{}
+\else
 \usepackage[most]{tcolorbox}
-\colorlet{ev-lean}{green!50!black}
-\colorlet{ev-core}{blue!75!black}
-\colorlet{ev-data}{violet!85!black}
-\colorlet{ev-measured}{teal!80!black}
-\colorlet{ev-prose}{orange!90!black}
-\colorlet{ev-cited}{black!55}
-\colorlet{ev-open}{black!40}
 \newcommand{\evlevel}[2]{\expandafter\newcommand\csname ev-name-#1\endcsname{#2}}
 \evlevel{lean}{Lean, complete}
 \evlevel{core}{Lean, algebraic core}
@@ -70,46 +66,19 @@
 \newcommand{\evname}[1]{\csname ev-name-#1\endcsname}
 \tcbset{evstyle-lean/.style={}, evstyle-core/.style={}, evstyle-data/.style={},
   evstyle-measured/.style={}, evstyle-prose/.style={}, evstyle-cited/.style={},
-  evstyle-open/.style={colback=white, borderline={0.6pt}{0pt}{ev-open, dashed}}}
-\newtcolorbox{evidence}[3][]{breakable, enhanced, colframe=ev-#2,
-  colback=ev-#2!7, boxrule=0.6pt, arc=1pt, left=4pt, right=4pt, top=2pt,
-  bottom=2pt, before skip=6pt, after skip=6pt,
-  borderline west={2.5pt}{0pt}{ev-#2},
-  evstyle-#2,
-  title={\sffamily\footnotesize\textbf{\evname{#2}}\quad #3},
-  coltitle=black, colbacktitle=ev-#2!18, toptitle=1pt, bottomtitle=1pt, #1}
-\newcommand{\evitem}[2]{\par\noindent\hangindent=2.6em\hangafter=1\fcolorbox{ev-#1}{ev-#1!18}{\rule{0pt}{1.6ex}\hspace{1.2em}}\enspace
-  \textbf{\evname{#1}}: #2\par\smallskip}
-\newcommand{\evidencelegend}{%
-\begin{tcolorbox}[colframe=black!60, colback=white, boxrule=0.6pt, arc=1pt,
-  title={\sffamily\small\textbf{Annotated version: what checks each statement}},
-  coltitle=black, colbacktitle=black!8]
-\small Every statement and table is boxed in the colour of what checks it,
-the tag naming the check; the Lean names are those of \texttt{lean/} at the
-commit on the first page, built without \texttt{sorry} on every change, and
-\texttt{lean/README.md} lists their hypotheses. The prose between the boxes
-is unmarked.\par\medskip
-\evitem{lean}{proved in Lean, with no hypothesis beyond the statement's.}
-\evitem{core}{the algebra proved in Lean; the topology of the surface (that
-the walks and regions are those of a T-mesh) assumed, as the tag says.}
-\evitem{data}{checked exactly on the engine's exported T-mesh against the Lean
-definitions (\texttt{make lean-check}).}
-\evitem{measured}{computed by a script on the engine's export; rerunnable, not
-checked by Lean.}
-\evitem{prose}{the proof is the text that follows, read by no machine: where
-a reviewer should look.}
-\evitem{cited}{a known result, with its reference.}
-\evitem{open}{a question, a conjecture or a sketch: nothing is claimed.}
-\end{tcolorbox}}
-\else
-\newenvironment{evidence}[3][]{}{}
-\newcommand{\evidencelegend}{}
+  evstyle-open/.style={frame hidden, borderline={0.4pt}{0pt}{black!45, dashed}}}
+\newtcolorbox{evidence}[3][]{breakable, enhanced, colback=white,
+  colframe=black!45, boxrule=0.4pt, arc=0pt, left=4pt, right=4pt, top=2pt,
+  bottom=2pt, before skip=6pt, after skip=6pt, evstyle-#2,
+  title={\footnotesize\textsc{\evname{#2}}\if\relax\detokenize{#3}\relax\else
+    \quad #3\fi},
+  coltitle=black, colbacktitle=white, titlerule=0.4pt, toptitle=1pt,
+  bottomtitle=1pt, #1}
 \fi
 
 \title{Turns of a T-Mesh:\\
 Obstructions to Closing Edge Loops\\[0.5em]
-\large Research note --- draft, not peer reviewed%
-\ifdefined\annotated\\[0.3em]\normalsize Annotated version: the level of evidence of each statement\fi}
+\large Research note --- draft, not peer reviewed}
 \author{Marc Gardent%
 \thanks{This note is distributed under the Creative Commons Attribution
 4.0 International licence (CC BY 4.0). The code of openclare and the Lean
@@ -151,8 +120,6 @@ of the proofs are checked in Lean; the topology of the surface, that the walks
 and regions are those of a T-mesh, is a hypothesis there.
 \end{abstract}
 
-\evidencelegend
-
 \section{Introduction}
 
 Automatic quad remeshing often produces edge loops that wind round a part of
@@ -176,9 +143,22 @@ what is open. The ingredients are classical (holonomy of flat cone metrics, Burg
 the parity of quadrangulations, Fox calculus, covers of infeasible
 subsystems); their statements for turns, the lower bound on helices and the
 hardness for the instances of quantization are ours, as far as we found.
+\ifdefined\plain
 Statements are \emph{proved} when they come with a proof, \emph{measured}
 when they come from exact arithmetic or solver output on the systems the
 remesher openclare exports, and \emph{conjectured} otherwise.
+\else
+Each statement is framed, its tag saying what checks it: \textsc{Lean,
+complete}, proved in Lean with no hypothesis beyond the statement's;
+\textsc{Lean, algebraic core}, the algebra proved in Lean and the topology of
+the surface, that the walks and regions are those of a T-mesh, assumed as the
+tag says; \textsc{checked on the engine's data}, exactly, on the T-mesh the
+remesher openclare exports, against the Lean definitions; \textsc{measured},
+by a script or a solver on that export; \textsc{proof on paper only}, the
+proof that follows, which no machine has read; \textsc{standard, cited}; and
+\textsc{open, no claim}, a question or a conjecture. The Lean names are those
+of the commit on the first page, built without \texttt{sorry}.
+\fi
 
 This work began as a programming project, openclare, an open-source quad
 remesher, and became research when engineering alone could no longer tell
@@ -1870,6 +1850,7 @@ motions, a region as finite sets with counts); the surface and the cross field
 behind the T-mesh, its orientation and the link between the shift and the
 holonomy $\hat h$ are not formalized.
 
+\ifdefined\plain
 \emph{Checked}, statement by statement. On the T-mesh, with the frames of
 the patches those of one orientation of the surface:
 Proposition~\ref{prop:linear} for the offset across the walk, that is the
@@ -1915,6 +1896,10 @@ above the stations, and they are in bijection with the cycles of the real walk
 from the half-integers $k + \frac12$, in a one-dimensional model of the
 gluing; that patch sides are positive, that crossing a patch keeps the offset
 and that the model is the quad mesh are assumptions.
+\else
+What Lean checks of each statement, and what it assumes, is the tag of the
+statement.
+\fi
 \emph{Not checked}: the topology taken as hypotheses, strips with borders, the
 measured statements, and those proved on paper only (see AI assistance). The formalization found no error of sign or
 convention; it sharpened the hypotheses of Propositions~\ref{prop:parity},

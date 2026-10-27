@@ -58,6 +58,37 @@
 \IfFileExists{version.tex}{\input{version.tex}}{}
 \providecommand{\enginecommit}{unknown}
 
+% Levels of evidence: each statement and table is framed with a tag naming
+% what checks it (Lean, the engine's data, a measure, the proof on paper, a
+% citation), read from lean/README.md. evidence.py, beside this file, checks
+% that every statement has a level and that every Lean name cited is
+% declared in lean/. \def\plain{} before \input{paper} gives the paper
+% without them, for a venue that wants it plain.
+\newcommand{\lean}[1]{\texttt{\detokenize{#1}}}
+\ifdefined\plain
+\newenvironment{evidence}[3][]{}{}
+\else
+\usepackage[most]{tcolorbox}
+\newcommand{\evlevel}[2]{\expandafter\newcommand\csname ev-name-#1\endcsname{#2}}
+\evlevel{lean}{Lean, complet}
+\evlevel{core}{Lean, cœur algébrique}
+\evlevel{data}{Vérifié sur les données du moteur}
+\evlevel{measured}{Mesuré}
+\evlevel{prose}{Démonstration sur papier seulement}
+\evlevel{cited}{Classique, cité}
+\evlevel{open}{Ouvert, rien n'est affirmé}
+\newcommand{\evname}[1]{\csname ev-name-#1\endcsname}
+\tcbset{evstyle-lean/.style={}, evstyle-core/.style={}, evstyle-data/.style={},
+  evstyle-measured/.style={}, evstyle-prose/.style={}, evstyle-cited/.style={},
+  evstyle-open/.style={frame hidden, borderline={0.4pt}{0pt}{black!45, dashed}}}
+\newtcolorbox{evidence}[3][]{breakable, enhanced, colback=white,
+  colframe=black!45, boxrule=0.4pt, arc=0pt, left=4pt, right=4pt, top=2pt,
+  bottom=2pt, before skip=6pt, after skip=6pt, evstyle-#2,
+  title={\footnotesize\textsc{\evname{#2}}\if\relax\detokenize{#3}\relax\else
+    \quad #3\fi},
+  coltitle=black, colbacktitle=white, titlerule=0.4pt, toptitle=1pt,
+  bottomtitle=1pt, #1}
+\fi
 \title{Les tours d'un T-mesh~:\\
 obstructions à la fermeture des boucles d'arêtes\\[0.5em]
 \large Note de recherche --- brouillon, non relue par des pairs}
@@ -138,11 +169,26 @@ sont classiques (holonomie des métriques plates à singularités coniques,
 vecteurs de Burgers, parité des quadrangulations, calcul de Fox, couvertures
 de sous-systèmes infaisables)\,; leurs énoncés pour les tours, le minorant du
 nombre d'hélices et la difficulté pour les instances de la quantification sont
-les nôtres, pour autant que nous ayons pu le vérifier. Un énoncé est dit
+les nôtres, pour autant que nous ayons pu le vérifier. \ifdefined\plain
+Un énoncé est dit
 \emph{prouvé} lorsqu'il est accompagné d'une démonstration, \emph{mesuré}
 lorsqu'il provient d'un calcul en arithmétique exacte ou de la sortie d'un
 solveur sur les systèmes qu'exporte le remailleur openclare, et
 \emph{conjecturé} sinon.
+\else
+Chaque énoncé est encadré, et son étiquette dit ce qui le vérifie~:
+\textsc{Lean, complet}, démontré en Lean sans autre hypothèse que celles de
+l'énoncé\,; \textsc{Lean, cœur algébrique}, l'algèbre démontrée en Lean et la
+topologie de la surface, que les marches et les régions sont celles d'un
+T-mesh, supposée comme le dit l'étiquette\,; \textsc{vérifié sur les données
+du moteur}, exactement, sur le T-mesh qu'exporte le remailleur openclare,
+contre les définitions Lean\,; \textsc{mesuré}, par un script ou un solveur
+sur cet export\,; \textsc{démonstration sur papier seulement}, celle qui
+suit, qu'aucune machine n'a lue\,; \textsc{classique, cité}\,; et
+\textsc{ouvert, rien n'est affirmé}, une question ou une conjecture. Les noms
+Lean sont ceux du commit de la première page, construit sans
+\texttt{sorry}.
+\fi
 
 Ce travail est né d'un projet de programmation, openclare, un remailleur en
 quads libre, et il est devenu une recherche quand l'ingénierie seule ne
@@ -209,6 +255,7 @@ Passer du patch $P$ au patch $Q$ à travers un arc compose une rotation d'un
 quart de tour du repère local avec une translation dont les composantes sont
 des sommes signées de longueurs d'arcs le long des bords de $P$ et de $Q$.
 
+\begin{evidence}{core}{\lean{TMesh.Turn.shift_linear}, \lean{TMesh.Turn.mem_corridor_iff}, \lean{TMesh.Turn.comes_back}, \lean{TMesh.Turn.winds}\,; supposé~: un recollement orienté\,; seule l'abscisse transverse à la marche est suivie\,; le corridor sans demi-entier n'est pas formalisé}
 \begin{proposition}[Le décalage d'un tour est linéaire]\label{prop:linear}
 Pour un tour $\gamma$, il existe des coefficients entiers $c_a$, indépendants
 des longueurs, tels qu'après un tour complet un point du premier côté s'est
@@ -227,6 +274,7 @@ en hélice de pas $|\shift_\gamma(\ell)|$ au sens
 de~\cite{bommes2011structure}. Si le couloir ne contient aucun demi-entier,
 aucune bande du maillage ne suit $\gamma$.
 \end{proposition}
+\end{evidence}
 
 \begin{proof}[Esquisse de démonstration]
 Chaque passage est une application $x \mapsto R_k x + t$, où $R_k$ est une
@@ -314,6 +362,7 @@ un Intel Core i7-7700K (4~cœurs, 2017, 62\,Go) partagé avec d'autres tâches.
 
 \section{Tours et singularités}\label{sec:holonomy}
 
+\begin{evidence}{core}{\lean{gauss_bonnet_turn}, \lean{gauss_bonnet}\,; supposé~: la courbe borde un disque (ou une couronne) de quads}
 \begin{lemma}[Gauss--Bonnet pour les tours]\label{lem:gauss}
 Soit $\gamma$ un tour dont la courbe $\bar\gamma$ est simple. Si $\bar\gamma$
 borde un disque $D \subset \Sigma$, les sommets singuliers intérieurs à $D$
@@ -321,6 +370,7 @@ vérifient $\sum_{c \in D} (4 - k(c)) = 4$. Si les courbes de deux tours sont
 disjointes et bordent une couronne $A$, alors $\sum_{c \in A} (4 - k(c)) =
 0$.
 \end{lemma}
+\end{evidence}
 
 \begin{proof}
 Pour une région d'une surface plate à points coniques bordée de segments
@@ -338,6 +388,7 @@ deux groupes d'indice total quatre, chacun d'au moins deux sommets~: un bout
 de doigt au-delà d'un anneau contient l'équivalent de quatre sommets de
 valence trois.
 
+\begin{evidence}{core}{\lean{one_crossing_on_walk}, \lean{one_crossing_on_segment}\,; supposé~: les régions coupées au point double sont des disques, et lesquels de leurs coins sont convexes}
 \begin{lemma}[Un seul point double]\label{lem:eight}
 Supposons la surface fermée de genre zéro, et que la courbe $\bar\gamma$ d'un
 tour se croise elle-même exactement une fois, transversalement, sans sommet
@@ -348,6 +399,7 @@ totaux de $4 - k$ sur les sommets singuliers des lobes et de la troisième
 région sont $3$, $3$ et $2$\,; s'il est sur le segment de fermeture, ils sont
 $2$, $2$ et $4$.
 \end{lemma}
+\end{evidence}
 
 \begin{proof}
 La marche se croise elle-même à angle droit, si bien que chaque lacet quitte
@@ -370,6 +422,7 @@ quatre directions)~: chaque lobe voit un second coin convexe et contient $2$,
 et la troisième région le reste du total $8$.
 \end{proof}
 
+\begin{evidence}{core}{\lean{Motion.burgers_eq_sum}, \lean{Motion.composeAll_rotations}, \lean{Forest.glue_eq_preorder}, \lean{Motion.annulus_holonomy}\,; supposé~: l'holonomie de la courbe est la composée des rotations autour des points coniques}
 \begin{proposition}[Le décalage est fixé par les singularités]\label{prop:burgers}
 Soient $\gamma$, $\gamma_1$, $\gamma_2$ des tours à courbes simples.
 \begin{enumerate}
@@ -411,6 +464,7 @@ Soient $\gamma$, $\gamma_1$, $\gamma_2$ des tours à courbes simples.
   propriété de tout un cylindre de tours parallèles, non de l'un d'eux.
 \end{enumerate}
 \end{proposition}
+\end{evidence}
 
 \begin{figure}[t]
 \centering
@@ -473,6 +527,7 @@ dislocation dont le vecteur de Burgers vaut $2\sin(\Omega/2)$ fois leur
 décalages de deux tours (figures~\ref{fig:holonomy}
 et~\ref{fig:dislocation}).
 
+\begin{evidence}{core}{\lean{dislocation_burgers}, \lean{dislocation}, \lean{dislocation_closes_iff}\,; supposé~: comme dans la proposition ci-dessus}
 \begin{proposition}[Une dislocation entre deux tours]\label{prop:dislocation}
 Dans le cadre de la proposition~\ref{prop:burgers}(b), supposons que la
 couronne $A$ contienne exactement deux sommets singuliers, $c_3$ de valence
@@ -499,6 +554,7 @@ leur écartement, développé dans le disque découpé. Alors~:
   deux directions du champ, ne se trouve jamais entre deux anneaux.
 \end{enumerate}
 \end{proposition}
+\end{evidence}
 
 \begin{proof}
 Avec $R_3 = R$ et $R_5 = R^{-1}$, les deux ordres donnent $B_A = R^{-1}(I -
@@ -532,6 +588,7 @@ si les deux sommets fusionnent.}
 \label{fig:dislocation}
 \end{figure}
 
+\begin{evidence}{core}{\lean{checkerboard}, \lean{oddColours_translate}\,; supposé~: la somme de Burgers de la proposition ci-dessus}
 \begin{proposition}[Règle du damier]\label{prop:checkerboard}
 Dans le cadre de la proposition~\ref{prop:burgers}(b), pour des longueurs
 entières, colorions en noir ou en blanc les points $p \in \Z^2$ du disque
@@ -541,6 +598,7 @@ la parité du nombre de sommets singuliers de valence impaire intérieurs à $A$
 qui se développent sur des points blancs. En particulier, deux anneaux ne
 bordent une couronne que si ce nombre est pair.
 \end{proposition}
+\end{evidence}
 
 \begin{proof}
 Dans la somme de la proposition~\ref{prop:burgers}, un sommet de valence paire
@@ -564,6 +622,7 @@ SymPy.
 Chaque tour d'une sphère fermée porte sa propre condition de parité, qui ne
 demande ni courbe simple ni holonomie.
 
+\begin{evidence}{core}{\lean{parity_of_turn_any_sign}, \lean{parity_of_turn}\,; supposé~: une 2-coloration du graphe des quads portée par le développement du tour, sa longueur et son décalage formes linéaires entières}
 \begin{proposition}[Parité d'un tour sur une sphère]\label{prop:parity}
 Supposons la surface fermée de genre zéro et que le T-mesh admette des
 longueurs strictement positives qui équilibrent chaque patch (ses longueurs
@@ -573,6 +632,7 @@ réelles en sont). Pour tout tour $\gamma$ et toutes longueurs entières $\ell$
   \alpha_\gamma(\ell) \equiv \shift_\gamma(\ell) \pmod 2 .
 \]
 \end{proposition}
+\end{evidence}
 
 \begin{proof}
 Supposons d'abord $\ell$ entier, équilibré et strictement positif~: les
@@ -602,6 +662,7 @@ elle tombe en défaut en genre supérieur (une grille $3 \times 3$ sur un tore a
 des anneaux de trois quads) et avec des bords
 (théorème~\ref{thm:parity-any}). Sur une sphère fermée, elle donne aussitôt~:
 
+\begin{evidence}{prose}{tiré de la proposition ci-dessus (Lean, cœur algébrique)}
 \begin{corollary}\label{cor:parity}
 Sur une surface fermée de genre zéro~:
 \begin{enumerate}
@@ -614,6 +675,7 @@ Sur une surface fermée de genre zéro~:
   quantité impaire change toujours la longueur.
 \end{enumerate}
 \end{corollary}
+\end{evidence}
 
 \begin{proof}
 (a) Un anneau est la bande d'une marche de décalage $\shift =
@@ -627,6 +689,7 @@ disque, l'argument de la règle du damier donne aux deux composantes de $B_D =
 (\alpha_\gamma, \shift_\gamma)$ la parité du nombre de sommets de valence
 impaire situés sur des points blancs, ce qui est la proposition pour ce tour.
 
+\begin{evidence}{core}{\lean{colour_hol_trans}\,; supposé~: le tour est un mot en les lacets autour des points coniques}
 \begin{remark}[Bords\,; une seconde démonstration]\label{rem:borders}
 La proposition et la partie (a) du corollaire demandent que la surface soit
 fermée~: un cylindre ouvert de trois quads de tour est un anneau de trois
@@ -637,6 +700,7 @@ $\Sigma^\circ$ est un produit de lacets autour des sommets singuliers
 conservent la parité de $p_1 + p_2$, si bien que la translation de tout lacet
 a une somme de coordonnées paire.
 \end{remark}
+\end{evidence}
 
 \paragraph{Combien d'anneaux indépendants.}
 Des anneaux qui ne se croisent pas sont des courbes fermées simples disjointes
@@ -653,6 +717,7 @@ avec $b$ bords).
 Fermer un ensemble de tours dans des bornes est une question de faisabilité
 linéaire.
 
+\begin{evidence}{lean}{\lean{TMesh.not_closable_iff}, \lean{TMesh.closable_iff}}
 \begin{remark}[Tours de signe fixe\,; certificats de Farkas]\label{rem:definite}
 Si le décalage d'un tour est égal, modulo les équilibres, à une forme $\sum_a
 c_a \ell_a$ dont tous les $c_a \ge 0$, alors pour tout $\ell \ge 0$ équilibré
@@ -670,7 +735,9 @@ longueur nulle dans toute solution avec $\ell \ge 0$ exactement lorsqu'une
 telle combinaison a $c_a > 0$. Les données étant entières, bornes comprises,
 les multiplicateurs des décalages et des équilibres peuvent être pris entiers.
 \end{remark}
+\end{evidence}
 
+\begin{evidence}{lean}{\lean{whole_solution_of_real}, \lean{clear_denominators}}
 \begin{remark}[Des solutions entières existent à une certaine taille]\label{rem:exist}
 Les contraintes d'équilibre et de fermeture sont homogènes, et les bornes de
 séparation sont des minorations $\ell \ge b$ avec $b \ge 0$. Si elles ont une
@@ -680,6 +747,7 @@ $N\ell \ge Nb \ge b$ qui les satisfont toutes. Fermer en nombres entiers n'est
 donc jamais impossible en soi\,; ce qui peut échouer, c'est fermer \emph{à une
 taille donnée} (un nombre de quads donné) ou avec un écart aux cibles donné.
 \end{remark}
+\end{evidence}
 
 \paragraph{Sur le corps masculin.}
 Les énoncés de cette section valent partout où ils s'appliquent (mesuré). Les
@@ -712,6 +780,7 @@ longueurs entières fermant les autres ont été trouvées par HiGHS et vérifi�
 en arithmétique entière exacte (mesuré).
 
 \begin{table}[t]
+\begin{evidence}[unbreakable]{data}{les 25 certificats de ses 15 lignes, valides avec les multiplicateurs imprimés, sur l\'export du corps masculin d\'où viennent ces nombres (\texttt{make lean-check})}
 \centering
 \small
 \setlength{\tabcolsep}{5pt}
@@ -746,6 +815,7 @@ bien qu'une paire est irréductible. Dans la dernière ligne, les longueurs
 entières fermant l'ensemble privé du tour 3 n'ont pas été trouvées dans la
 limite de temps.}
 \label{tab:iis}
+\end{evidence}
 \end{table}
 
 Dans quatre variantes, le tour autour du poignet gauche ne peut même pas être
@@ -767,6 +837,7 @@ $49$, $71$ de la variante~5), les tours ne sont séparés par une paire 3--5 sur
 une même trace, comme dans la proposition~\ref{prop:dislocation}(ii). Ce qui
 les sépare est un escalier.
 
+\begin{evidence}{core}{\lean{staircase}, \lean{staircase_rings}\,; supposé~: le vecteur entre les sommets est la somme le long de l'escalier}
 \begin{proposition}[Escaliers]\label{prop:staircase}
 Soient $\gamma_1$, $\gamma_2$ des tours et $c$, $c'$ des sommets singuliers
 tels que
@@ -795,6 +866,7 @@ les équilibres, à une forme à coefficients positifs ou nuls contenant un arc
 maintenu à une longueur d'au moins un, l'un des deux tours est une hélice pour
 toute quantification qui respecte les bornes.
 \end{proposition}
+\end{evidence}
 
 \begin{proof}
 Développer le long de $\sigma$ ajoute $\ell_{a_i} v_i$ arc après arc, les
@@ -810,6 +882,7 @@ forme de la différence des décalages vaut un\,; la
 proposition~\ref{prop:dislocation}(ii) est le cas rectiligne. Les échanges
 donnent les autres identités.
 
+\begin{evidence}{core}{\lean{Motion.exchange}, \lean{exchange_quarter}\,; supposé~: l'homotopie entre les lacets}
 \begin{proposition}[Échanger deux sommets]\label{prop:swap}
 Soient $\gamma_1$, $\gamma_2$ des tours, et $\kappa$ un chemin du départ de
 $\bar\gamma_1$ à celui de $\bar\gamma_2$ qui transporte la direction de marche
@@ -828,6 +901,7 @@ Pour la valence trois ou cinq, cela vaut $\pm d_1 \pm d_2$ avec $d = p_c -
 p_{c'}$, comme pour une dislocation, et la proposition~\ref{prop:staircase}
 s'applique.
 \end{proposition}
+\end{evidence}
 
 \begin{proof}
 Comme dans la proposition~\ref{prop:burgers}(b), $\hat h(\lambda)$ est la
@@ -855,6 +929,7 @@ total quatre, comme un tour autour d'une calotte, et aucun escalier, ni
 aucune somme de deux escaliers, ne s'est trouvé égal à elle.
 
 \begin{table}[t]
+\begin{evidence}[unbreakable]{measured}{sur l'export du corps masculin}
 \centering
 \small
 \setlength{\tabcolsep}{4pt}
@@ -902,12 +977,14 @@ maintenu du certificat. A~: propositions~\ref{prop:dislocation}(i)
 et~\ref{prop:staircase}\,; B--D~: propositions~\ref{prop:swap}
 et~\ref{prop:staircase}\,; E, F~: section~\ref{sec:combs}.}
 \label{tab:pairs}
+\end{evidence}
 \end{table}
 
 \paragraph{Une séparatrice qui s'enroule.}
 Le tour qui ne peut pas être fermé seul est d'une autre nature
 (figure~\ref{fig:separatrix}).
 
+\begin{evidence}{prose}{une étape en Lean, la conjugaison~: \lean{Motion.conj_translation}}
 \begin{proposition}[Une séparatrice qui s'enroule]\label{prop:winding}
 Soient $\sigma$ et $\tau$ des séparatrices d'un sommet singulier $v$ telles
 que $\sigma$, suivie depuis $v$, s'arrête sur $\tau$ en un point $q$ situé à
@@ -925,6 +1002,7 @@ $\sigma$ revient sur son propre sommet\,; si $\delta$ est égal, modulo les
 maintenu à une longueur d'au moins un, $\gamma$ est une hélice pour toute
 quantification qui respecte les bornes.
 \end{proposition}
+\end{evidence}
 
 \begin{proof}
 Développons $\lambda$ depuis un point de $\sigma$ voisin de $v$, avec $v$ à
@@ -993,6 +1071,7 @@ région plane autour d'un amas de singularités~: ce n'est le cas ni des
 configurations B à F ni des ensembles de quatre et de sept tours. Ce que les
 conflits ont en commun est local.
 
+\begin{evidence}{open}{}
 \begin{question}[Les conflits sont-ils des sommes de dislocations locales\,?]\label{conj:local}
 Sur une surface fermée de genre zéro, soit $H$ un ensemble irréductible de
 tours qui ne peuvent pas être fermés ensemble dans les bornes de séparation.
@@ -1011,6 +1090,7 @@ ou nuls de
 \end{enumerate}
 un terme au moins contenant un arc maintenu ouvert\,?
 \end{question}
+\end{evidence}
 
 La réponse est oui, avec un seul terme et aux homotopies non vérifiées près,
 pour le poignet, les configurations A à D et l'œil droit\,; la
@@ -1045,6 +1125,7 @@ développées des sommets singuliers, sont définis à un déplacement commun
 près\,; ce qui est nouveau est la
 lecture sur des combinaisons de tours.
 
+\begin{evidence}{core}{\lean{fox_burgers}, \lean{fox_fundamental}, \lean{fox_burgers_combination}\,; supposé~: la présentation du groupe fondamental par les lacets autour des sommets singuliers}
 \begin{proposition}[Formule de Fox--Burgers]\label{prop:fox}
 Pour tout mot $w$ de $F$,
 \[
@@ -1079,6 +1160,7 @@ retranche $u_r \rho(a g\, \partial \varrho/\partial x_i)^\top f_r$ de chaque $W_
 (avec $a$ vide, $u_r \rho(g\, \partial \varrho/\partial x_i)^\top f_r$), et
 laisse la somme inchangée.
 \end{proposition}
+\end{evidence}
 
 \begin{proof}
 L'application $w \mapsto \tau(w)$ et le membre de droite vérifient tous deux
@@ -1104,6 +1186,7 @@ la proposition~\ref{prop:burgers}(a). En général, un cycle peut faire
 plusieurs fois le tour de $c_i$ après des rotations différentes\,; modulo
 $2$, ces différences disparaissent.
 
+\begin{evidence}{core}{\lean{checkerboard_word}, \lean{checkerboard_combination}\,; supposé~: comme dans la formule ci-dessus}
 \begin{corollary}[Règle du damier pour toute combinaison]\label{cor:checker}
 Sur une surface fermée de genre zéro, soient $\ell$ entier et équilibré et les
 multiplicateurs $u_r$ entiers. Colorions chaque sommet singulier $c_i$ selon
@@ -1120,6 +1203,7 @@ chaque $\bar\gamma_r$. En particulier, une combinaison dont le cycle fait un
 nombre pair de fois le tour de chaque sommet de valence impaire prend des
 valeurs paires à toute longueur entière.
 \end{corollary}
+\end{evidence}
 
 \begin{proof}
 Puisque $(R - I)^2 = -2R$, on a $R^k(I - R^{\pm1}) \equiv I - R^{\pm1}$
@@ -1146,6 +1230,7 @@ cristaux~\cite{kleman2008disclinations} et
 dans~\cite[\S7]{izmestiev2013torus}, les nombres d'enroulement ne déterminent
 pas l'holonomie~:
 
+\begin{evidence}{lean}{\lean{commutator_holonomy}, \lean{winding_numbers_do_not_suffice}}
 \begin{proposition}[Les nombres d'enroulement ne suffisent pas]\label{prop:commutator}
 Soient $c_a$, $c_b$ des sommets singuliers de valence impaire développés en
 des points distincts $p_a \neq p_b$. Le lacet $\lambda_a \lambda_b
@@ -1154,6 +1239,7 @@ singulier, et son holonomie est la translation de vecteur $(I - R_a)(I -
 R_b)(p_a - p_b)$, de longueur $2|p_a - p_b| \neq 0$. Aucune fonction des
 nombres d'enroulement ne donne l'holonomie des lacets à rotation triviale.
 \end{proposition}
+\end{evidence}
 
 \begin{proof}
 Pour $w = x_a x_b x_a^{-1} x_b^{-1}$, on a $\rho(\partial w/\partial x_a) =
@@ -1212,6 +1298,7 @@ peigne sont trois lectures du même décalage $2$.}
 \label{fig:comb}
 \end{figure}
 
+\begin{evidence}{prose}{}
 \begin{lemma}[Peignes]\label{lem:comb}
 Soient $p_{c_0}$, $p_{c_1}$ les pieds d'un arc $a$, développés le long de son
 peigne. Alors, pour toutes longueurs équilibrées,
@@ -1226,6 +1313,7 @@ valences diffèrent (proposition~\ref{prop:dislocation}) et un échange si elles
 sont égales (proposition~\ref{prop:swap}). Si $c_0 = c_1$, $\ell_a$ est le
 décalage d'une séparatrice qui s'enroule (proposition~\ref{prop:winding}).
 \end{lemma}
+\end{evidence}
 
 \begin{proof}
 Chaque étape du peigne sauf $a$ suit une trace perpendiculaire à $a$, sans
@@ -1247,6 +1335,7 @@ est une séparatrice qui s'enroule, une marche de longueur deux entre des
 valences trois et cinq est l'escalier de la proposition~\ref{prop:staircase},
 et une marche autour de quatre sommets de valence trois est une calotte.
 
+\begin{evidence}{prose}{}
 \begin{proposition}[Les certificats sont des sommes de peignes]\label{thm:combs}
 Soit $c = \sum_a c_a\ell_a$, $c_a \in \Z_{\ge0}$, un certificat
 (remarque~\ref{rem:definite}) dont les arcs ont des pieds de valence impaire
@@ -1260,6 +1349,7 @@ distincts ou égaux, est une combinaison à coefficients positifs ou nuls de
 lectures de peignes $2\ell_a$ et de séparatrices qui s'enroulent $\ell_a$,
 sans condition de parité.
 \end{proposition}
+\end{evidence}
 
 \begin{proof}
 La partie impaire se décompose en marches fermées le long de ses arêtes
@@ -1275,6 +1365,7 @@ corollaire~\ref{cor:checker} ne le donne pas, puisqu'il contrôle la parité de
 $p_{i,1} + p_{i,2}$ alors qu'un peigne lit une seule coordonnée (sur la
 figure~\ref{fig:comb}, les deux pieds ont la même couleur et $\ell_a = 9$).
 
+\begin{evidence}{open}{une attente}
 \begin{remark}[Les marches fermées comme cycles tordus]
 Nous nous attendons à ce que la lecture d'une marche fermée de peignes,
 $\sum_i \langle e_{a_i} - e_{a_{i+1}},\ p_{c_i}\rangle$ par une sommation par
@@ -1284,7 +1375,9 @@ diffèrent d'une rotation, et une démonstration doit développer toute la
 marche dans une même carte. Nous n'utilisons les marches fermées que comme
 formes.
 \end{remark}
+\end{evidence}
 
+\begin{evidence}{prose}{}
 \begin{proposition}[L'accouplement de Burgers]\label{prop:pairing}
 Supposons la surface fermée de genre zéro, sans sommet singulier de valence
 divisible par quatre, et toute trace du T-mesh issue d'un sommet singulier.
@@ -1296,6 +1389,7 @@ connexion de séparatrices. Si certains sommets singuliers ont une valence
 divisible par quatre, aucune forme ne dépend de leurs positions développées,
 et l'application n'est pas nécessairement surjective.
 \end{proposition}
+\end{evidence}
 
 \begin{proof}
 Si toutes ces formes s'annulent en un $\ell$ équilibré, tout lacet de
@@ -1365,6 +1459,7 @@ enregistrée. Un nœud de bord $b$ est un coin d'angle $a(b)\pi/2$,
 d'\emph{indice} $2 - a(b)$\,; pour une composante de bord $\beta_j$,
 $L_j(\ell)$ est la somme des longueurs de ses arcs.
 
+\begin{evidence}{prose}{}
 \begin{lemma}[Gauss--Bonnet avec bords]\label{lem:gauss-border}
 Soit $D$ une région bordée par des courbes de tours et par des composantes de
 bord. Alors
@@ -1375,6 +1470,7 @@ bord. Alors
 où $\Theta$ est la rotation des courbes des tours en leurs coins, en quarts de
 tour~: nulle pour le côté d'une courbe simple.
 \end{lemma}
+\end{evidence}
 \begin{proof}
 C'est la formule de Gauss--Bonnet pour une surface plate à points coniques et
 à bord rectiligne par morceaux, les nœuds de bord étant des coins de rotation
@@ -1390,6 +1486,7 @@ d'homologie à coefficients dans $\Z/2$ de toute
 quadrangulation~\cite[lemme~3.1]{kaiser2015colouring}, étendu ici aux tours à
 toutes longueurs équilibrées.
 
+\begin{evidence}{prose}{}
 \begin{theorem}[Parité d'un tour sur toute surface]\label{thm:parity-any}
 Soit $\ell$ entier et équilibré. Il existe un homomorphisme
 $\Omega_\ell\colon H_1(\Sigma; \Z/2) \to \Z/2$ tel que, pour tout tour,
@@ -1406,6 +1503,7 @@ situées de l'un ou l'autre côté de $\bar\gamma$, ou du nombre de fois que
 $\bar\gamma$ traverse un système quelconque d'arcs disjoints qui relient deux
 à deux les composantes de bord de longueur impaire.
 \end{theorem}
+\end{evidence}
 \begin{proof}
 Comme dans la proposition~\ref{prop:parity}, $\gamma \mapsto \pi(\hat
 h(\gamma))$ est un homomorphisme, nul sur les lacets autour des sommets
@@ -1426,12 +1524,14 @@ autour d'une orbite est un anneau de $23$ quads aux longueurs d'une variante
 et de $24$ dans une autre, contrairement à la proposition~\ref{prop:parity}\,;
 son décalage est nul à toute longueur équilibrée~:
 
+\begin{evidence}{prose}{}
 \begin{proposition}[Colliers]\label{prop:collar}
 Supposons que la courbe d'un tour $\gamma$ et une composante de bord
 $\beta_j$ sans coin bordent une couronne ne contenant aucun sommet singulier.
 Alors $\shift_\gamma(\ell) = 0$ et $\alpha_\gamma(\ell) = L_j(\ell)$ pour
 toutes longueurs équilibrées.
 \end{proposition}
+\end{evidence}
 \begin{proof}
 L'holonomie de $\beta_j$ est la translation de longueur $L_j$ selon un axe du
 champ. Découpée le long d'un chemin de $\bar\gamma$ à $\beta_j$, la couronne
@@ -1453,6 +1553,7 @@ corollaire~\ref{cor:checker} peuvent dépendre des chemins, mais le compte sur
 les points blancs donne encore la parité lorsque toute courbe est contenue
 dans une région plane sans bord.
 
+\begin{evidence}{prose}{}
 \begin{proposition}[Somme de Burgers avec bords et anses]\label{prop:burgers-any}
 Supposons que les lacets $\lambda_i$ autour des sommets singuliers, $\beta_j$
 autour des composantes de bord et $a_k, b_k$ autour des anses engendrent le
@@ -1469,6 +1570,7 @@ développée\,; une anse contenue dans la région comprise entre deux tours
 contribue le commutateur $(I - \rho(b))\tau(a) - (I - \rho(a))\tau(b)$, nul
 lorsque ses deux lacets ont une rotation triviale.
 \end{proposition}
+\end{evidence}
 \begin{proof}
 Les deux membres vérifient $\phi(uv) = \phi(u) + \rho(u)\phi(v)$ et
 coïncident sur les générateurs. Le commutateur de $x \mapsto Ax + a$ et de $x
@@ -1480,6 +1582,7 @@ Avec son terme de bord, la somme reproduit les $314$ côtés contenant un bord
 sur lesquels elle a été testée, et sans lui aucun des $586$ côtés de ce type
 de Suzanne et de Jerry (mesuré).
 
+\begin{evidence}{prose}{}
 \begin{proposition}[Deux tours sécants sur un tore]\label{prop:torus}
 Sur une surface fermée de genre un, supposons que les courbes de deux tours
 soient simples et se croisent une fois. Découpée le long des deux, la surface
@@ -1491,6 +1594,7 @@ alors $(I - R^j)\,T_\gamma = \pm B_D$~: pour $j \neq 0$, la translation du
 tour est fixée par les sommets singuliers\,; pour $j = 0$, c'est une période
 libre et les sommets singuliers vérifient $B_D = 0$.
 \end{proposition}
+\end{evidence}
 \begin{proof}
 Le bord de $D$ est le commutateur des deux courbes, dont les holonomies sont
 des translations et commutent\,; la proposition~\ref{prop:burgers}(a)
@@ -1529,6 +1633,7 @@ les maillages triangulaires.
 Retournées, les obstructions minorent le nombre de tours que toute
 quantification appartenant à un ensemble $P$ de longueurs laisse décalés.
 
+\begin{evidence}{lean}{\lean{forced_helices}, \lean{card_ge_of_disjoint}, \lean{tauP_ge_of_disjoint}, \lean{TMesh.forced_of_certificates}}
 \begin{theorem}[Décalages forcés]\label{thm:forced}
 Soit $H$ un ensemble fini de tours d'un T-mesh et $P$ un ensemble non vide de
 longueurs qui contient toutes les quantifications considérées~: par exemple
@@ -1545,6 +1650,7 @@ $H$ ont $\shift_\gamma(\ell) \neq 0$. Si $H$ contient $k$ sous-ensembles deux
 à deux disjoints dont aucun ne peut être fermé dans $P$, alors $\tau_P(H) \ge
 k$.
 \end{theorem}
+\end{evidence}
 
 \begin{proof}
 En $\ell \in P$, les tours de décalage nul sont fermés par $\ell$ lui-même,
@@ -1560,6 +1666,7 @@ sous-systèmes infaisables irréductibles (IIS), $\tau_P(H)$ est la taille d'une
 couverture minimale des IIS~\cite{parker1996iis,amaldi2003maxfs}, et le
 théorème est la borne d'empilement de ce problème de couverture.
 
+\begin{evidence}{core}{\lean{sign_change_between}, \lean{chain_of_dislocations}\,; supposé~: les identités entre décalages consécutifs}
 \begin{corollary}[Chaînes de dislocations]\label{cor:chain}
 Soient $\gamma_0, \gamma_1, \dots, \gamma_m$ des tours, et supposons que,
 pour $i = 1, \dots, m$,
@@ -1579,6 +1686,7 @@ anneaux~: au moins $m - q$ sont des hélices. En particulier, $m + 1$ tours
 parallèles emboîtés, séparés par $m$ dislocations dont les escaliers montent
 tous dans le même sens, laissent au moins $m$ hélices.
 \end{corollary}
+\end{evidence}
 
 \begin{proof}
 Si $\gamma_i$ et $\gamma_j$, $i < j$, sont des anneaux, $\sum_{k=i+1}^{j}
@@ -1587,6 +1695,7 @@ signe se trouve entre $i$ et $j$\,; entre deux anneaux consécutifs se trouve
 un changement de signe qui leur est propre.
 \end{proof}
 
+% evidence: none, elle dit ce que compte le théorème
 \begin{remark}[Ce que compte la borne]
 Le théorème compte les tours de décalage non nul\,; aux longueurs où un tour
 n'est pas une bande du maillage~\cite[prop.~2]{gardent2026loops}, ou
@@ -1598,6 +1707,7 @@ La borne est atteinte, par la correspondance classique entre couvertures
 minimales des IIS et sous-systèmes faisables
 maximaux~\cite{amaldi2003maxfs,parker1996iis}~:
 
+\begin{evidence}{cited}{\cite{amaldi2003maxfs,parker1996iis}\,; (ii) aussi en Lean~: \lean{meets_infeasible}}
 \begin{theorem}[Les décalages forcés comme nombre transversal\,; classique]\label{thm:transversal}
 Disons que $Y \subseteq H$ est \emph{fermable} dans $P$ si un $\ell \in P$
 vérifie $\shift_\gamma(\ell) = 0$ pour tout $\gamma \in Y$, et appelons
@@ -1610,6 +1720,7 @@ ensemble de ce type de taille minimale est exactement l'ensemble des tours
 laissés décalés par un certain $\ell \in P$\,; (iv) $P \subseteq P'$ implique
 $\tau_P(H) \ge \tau_{P'}(H)$.
 \end{theorem}
+\end{evidence}
 
 \begin{proof}
 La fermabilité est héréditaire~: si $X$ évite un cœur, $H \setminus X$ le
@@ -1630,6 +1741,7 @@ irréalisable minimal.
 
 \subsection{Longueurs entières et taille}\label{sec:whole}
 
+\begin{evidence}{prose}{sa première étape est la remarque ci-dessus (Lean)}
 \begin{proposition}[Longueurs entières et taille sans plafond]\label{prop:whole-size}
 Si $P$ est donné par les équilibres et des bornes $\ell \ge b \ge 0$, un
 ensemble fermable en longueurs réelles est fermable en longueurs entières, et
@@ -1638,6 +1750,7 @@ Q$, et à $\inf_{P_Y} Q$ lui-même lorsque la borne inférieure est atteinte, o�
 $P_Y$ est l'ensemble des longueurs de $P$ qui ferment $Y$ et $Q(\ell)$ le
 nombre de quads.
 \end{proposition}
+\end{evidence}
 
 \begin{proof}
 On multiplie un point rationnel de $P_Y$ par son dénominateur
@@ -1665,11 +1778,13 @@ Zaslavsky~\cite[\S8A]{zaslavsky1982signed}. Un cycle de $G$ est \emph{équilibr�
 des valeurs $\pm1$ sur ses arêtes équilibrent chacun de ses sommets, et
 \emph{déséquilibré} sinon.
 
+\begin{evidence}{core}{\lean{TMesh.handshake}, \lean{handshake}, \lean{no_whole_solution}\,; supposé~: une surface fermée}
 \begin{lemma}[Poignées de main]\label{lem:handshake}
 Soient $x \in \Z^n$ et $C$ une composante connexe de $G$. Alors $\sum_{r \in
 C} (Bx)_r \equiv \sum_{a} x_a \pmod 2$, la seconde somme portant sur les arcs
 de bord de $C$. Sur une surface fermée, $\sum_r (Bx)_r$ est pair.
 \end{lemma}
+\end{evidence}
 
 \begin{proof}
 Elle vaut $\sum_a x_a \sum_{r \in C} B_{ra}$, et chaque colonne a pour somme
@@ -1680,6 +1795,7 @@ Ainsi, sur une surface fermée, un système $Bx = d$ avec $\sum_r d_r$ impair a
 des solutions réelles mais aucune solution entière\,; cela n'affecte pas les
 longueurs équilibrées~:
 
+\begin{evidence}{core}{\lean{TMesh.free_arcs}, \lean{free_arcs}, \lean{free_arcs_of_cycle}\,; supposé~: le graphe est connexe (un arbre couvrant)}
 \begin{proposition}[Arcs libres]\label{prop:free}
 Supposons $G$ connexe et contenant un cycle déséquilibré. Soit $T$ l'ensemble
 formé des arêtes d'un arbre couvrant de $G$ et d'une arête de plus qui ferme
@@ -1690,6 +1806,7 @@ réseau isomorphe à $\Z^F$, de dimension $n - m$ pour $m$ équilibres, qui a un
 base de vecteurs $z_f$, $f \in F$, chacun supporté par $T \cup \{f\}$, avec
 $z_f(f) = 1$ et des coefficients dans $\{0, \pm1, \pm2\}$.
 \end{proposition}
+\end{evidence}
 
 \begin{proof}
 $T$ existe~: le signe d'un cycle est un homomorphisme sur l'espace des cycles
@@ -1743,6 +1860,7 @@ cœurs disjoints, de bornes du solveur et de points entiers vérifiés
 exactement.
 
 \begin{table}[t]
+\begin{evidence}[unbreakable]{data}{la colonne $P_{\mathrm{eng}}$, exacte sur l\'export d\'où viennent ces nombres (\texttt{make lean-check})\,; les colonnes avec le plafond et la fenêtre sont mesurées, non vérifiées}
 \centering
 \small
 \newcommand{\head}[1]{\begin{tabular}[b]{@{}r@{}}#1\end{tabular}}
@@ -1774,6 +1892,7 @@ supérieurement par un sous-ensemble fermable trouvé dans la limite de temps
 décalés aux longueurs entières du moteur. Les tours sont comptés au signe
 près.}
 \label{tab:forced}
+\end{evidence}
 \end{table}
 
 Avec les seules bornes, les tours forcés sont exactement $1$, $5$, $1$, $4$,
@@ -1809,6 +1928,7 @@ des IIS est fortement NP-difficile déjà pour les flots dans les
 réseaux~\cite{joormann2015flowiis}\,; la difficulté survit à la structure de
 la quantification, un cas nouveau à notre connaissance.
 
+\begin{evidence}{prose}{les réductions\,; les bornes d'approximation sont citées}
 \begin{theorem}[Choisir les tours est NP-difficile]\label{thm:nphard}
 \RC{} est NP-complet, en longueurs réelles ou entières, déjà lorsque $B$ est
 la matrice d'incidence d'un graphe bidirigé, que les bornes valent $0$ ou $1$
@@ -1824,6 +1944,7 @@ vraie~\cite{khot2008vertex}, et le plus grand sous-ensemble fermable de $H$ ne
 peut pas être approché à un facteur $|H|^{1-\varepsilon}$ près sauf si
 P${}={}$NP~\cite{hastad1999clique,zuckerman2007linear}.
 \end{theorem}
+\end{evidence}
 
 \begin{proof}
 Appartenance~: fermer un ensemble donné de $k$ formes est un programme
@@ -1858,11 +1979,13 @@ les holonomies de marches droites\,; le théorème dit donc que l'algèbre de la
 quantification permet des instances difficiles, non qu'une surface en
 produise.
 
+\begin{evidence}{open}{}
 \begin{conjecture}[Instances réalisables]\label{conj:realize}
 \RC{} reste NP-difficile lorsque $B$, $b$ et $H$ sont les équilibres, les
 bornes de séparation et les tours d'un T-mesh d'une surface fermée de genre
 zéro.
 \end{conjecture}
+\end{evidence}
 
 Les indices en sa faveur sont que la couverture par sommets reste
 NP-difficile sur les graphes planaires, et sur les graphes de petit
@@ -1876,6 +1999,7 @@ formes de décalage de rang fixé, les ensembles fermables sont les plats d'un
 arrangement, mais sur le corps les tours retenus d'une variante sont de rang
 plein.
 
+\begin{evidence}{open}{une esquisse}
 \begin{remark}[La fenêtre de tailles\,; une esquisse]
 La fenêtre sur le nombre de quads rend difficile, au sens faible, même le
 fait de ne rien fermer. Prenons une réunion disjointe de tores, chacun formé
@@ -1891,6 +2015,7 @@ un et non connexes). On ne sait pas si la fenêtre seule est fortement
 NP-difficile, avec $Q$ polynomial en la taille, ni quelle est la complexité de
 la maximisation de $Q$ sur un polytope de longueurs réelles.
 \end{remark}
+\end{evidence}
 
 \section{Ce qui est vérifié par machine}\label{sec:lean}
 
@@ -1917,6 +2042,7 @@ déplacements, une région comme des ensembles finis avec des comptes)\,; la
 surface et le champ de croix sous le T-mesh, son orientation et le lien entre
 le décalage et l'holonomie $\hat h$ ne sont pas formalisés.
 
+\ifdefined\plain
 \emph{Vérifié}, énoncé par énoncé. Sur le T-mesh, les repères des patchs
 étant ceux d'une orientation de la surface~: la
 proposition~\ref{prop:linear} pour l'abscisse transverse à la marche,
@@ -1968,7 +2094,12 @@ au-dessus des stations, et elles sont en bijection avec les cycles de la
 marche réelle depuis les demi-entiers $k + \frac12$, dans un modèle
 unidimensionnel du recollement\,; que les côtés des patchs soient strictement
 positifs, que la traversée d'un patch garde l'abscisse et que le modèle soit
-le maillage de quads sont des hypothèses. \emph{Non vérifié}~: la topologie prise comme hypothèse, les
+le maillage de quads sont des hypothèses. 
+\else
+Ce que Lean vérifie de chaque énoncé, et ce qu'il suppose, est l'étiquette de
+l'énoncé.
+\fi
+\emph{Non vérifié}~: la topologie prise comme hypothèse, les
 bandes avec bords, les énoncés mesurés, et ceux qui ne sont démontrés que sur
 papier (voir Assistance par IA). La formalisation n'a trouvé aucune erreur de
 signe ou de convention\,; elle a précisé les hypothèses des
