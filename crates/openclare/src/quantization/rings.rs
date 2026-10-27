@@ -294,6 +294,18 @@ pub(super) fn rounds(
                     answer
                 }
             };
+            {
+                let closed = chosen.as_ref().map(|x| rings.iter().filter(|ring| ring.closed_by(x)).count());
+                super::slow_log(&format!(
+                    "solve {} {round} {tries}: {} rings, {} arcs, {} closed at the reference, {} closed by the selector, {:.1} s",
+                    super::experiment::call_name(tmesh),
+                    rings.len(),
+                    real.len(),
+                    rings.iter().filter(|ring| ring.closed_by(&reference)).count(),
+                    closed.map_or("none".to_string(), |closed| closed.to_string()),
+                    clock.elapsed().as_secs_f64()
+                ));
+            }
             if debug {
                 let closed = chosen.as_ref().map(|x| rings.iter().filter(|ring| ring.closed_by(x)).count());
                 eprintln!(

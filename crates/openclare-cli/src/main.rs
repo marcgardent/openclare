@@ -327,6 +327,16 @@ fn remesh(args: &[String]) -> Result<(), String> {
         (None, None) => RemeshConfig::default(),
     };
 
+    // (Experiment.) The quality and the work limit of its solves from the
+    // environment, for scripts that run the same command line on every
+    // engine; the options given on the command line still win.
+    if let Some(quality) = std::env::var("OPENCLARE_QUALITY").ok().filter(|value| !value.is_empty()) {
+        config.quality = quality.parse().map_err(|e: openclare::Error| format!("OPENCLARE_QUALITY: {e}"))?;
+    }
+    if let Some(work) = std::env::var("OPENCLARE_SLOW_WORK_LIMIT").ok().filter(|value| !value.is_empty()) {
+        config.slow_work_limit = parse("OPENCLARE_SLOW_WORK_LIMIT", &work)?;
+    }
+
     let (mut save, mut density_path, mut record_path) = (None, None, None::<String>);
     let mut notes = false;
     let mut record_still = None::<String>;
@@ -403,6 +413,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
 
     let mesh = obj::read_obj(input).map_err(|e| format!("{input}: {e}"))?;
     println!("input    {} vertices, {} triangles", mesh.positions.len(), mesh.triangles.len());
+    openclare::quantization::slow_log(&format!("remesh {input} {:?} quality {}", config.target, config.quality));
     if config.quality == Quality::Slow {
         let work = if config.slow_work_limit > 0.0 {
             format!("{} million iterations times arcs or ", config.slow_work_limit)

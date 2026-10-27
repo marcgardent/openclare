@@ -37,6 +37,11 @@ pub struct Experiment {
     /// `OPENCLARE_JITTER_SEED=<n>`: another draw of the slight preference
     /// given to each arc. 0, the default, is the engine's own.
     pub jitter_seed: u64,
+    /// `OPENCLARE_EXTRA_DRAWS=<n>`: the number of other draws of the per-arc
+    /// preference (the next seeds) whose lengths join the candidates where
+    /// the engine's still spiral. `None`, the default, is the engine's
+    /// number; 0 is none, the engine before them.
+    pub extra_draws: Option<usize>,
     /// `OPENCLARE_CLOSE_WAYS=<i,j,...>`: the ways of closing tried, by their
     /// place in the list of ways (0 to 7). `None`: all of them.
     pub ways: Option<Vec<usize>>,
@@ -72,6 +77,7 @@ impl Default for Experiment {
             lengths: None,
             aimed: None,
             jitter_seed: 0,
+            extra_draws: None,
             ways: None,
             cut_rounds: true,
             aimed_repair: true,
@@ -111,6 +117,10 @@ impl Experiment {
         if let Some(value) = lookup("OPENCLARE_JITTER_SEED") {
             out.jitter_seed =
                 value.trim().parse().map_err(|_| invalid("OPENCLARE_JITTER_SEED", &value, "a whole number"))?;
+        }
+        if let Some(value) = lookup("OPENCLARE_EXTRA_DRAWS") {
+            out.extra_draws =
+                Some(value.trim().parse().map_err(|_| invalid("OPENCLARE_EXTRA_DRAWS", &value, "a whole number"))?);
         }
         if let Some(value) = lookup("OPENCLARE_ACTIVE_SET_FLOOR") {
             out.active_set_floor = value
@@ -177,6 +187,20 @@ impl Experiment {
     }
 }
 
+/// (Experiment.) Appends `line` to the file `OPENCLARE_SLOW_LOG` names,
+/// after the number of the process: what the slow quality mode and its
+/// solver did, for runs whose output is not kept. Nothing when it is not
+/// set.
+pub fn slow_log(line: &str) {
+    use std::io::Write;
+    let Some(path) = std::env::var_os("OPENCLARE_SLOW_LOG").filter(|path| !path.is_empty()) else { return };
+    if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open(path) {
+        // One write per line, so that pieces quantized in parallel do not
+        // mix their lines.
+        let _ = file.write_all(format!("{} {line}\n", std::process::id()).as_bytes());
+    }
+}
+
 /// The name of the files of `tmesh`: `call-<arcs>-<patches>-<length>`.
 pub(super) fn call_name(tmesh: &TMesh) -> String {
     let length: f64 = tmesh.arcs.iter().map(|arc| arc.length).sum();
@@ -213,13 +237,14 @@ mod tests {
             ("OPENCLARE_NO_CUT_ROUNDS", "1"),
             ("OPENCLARE_ACTIVE_SET_FLOOR", "0.5"),
             ("OPENCLARE_JITTER_SEED", "3"),
+            ("OPENCLARE_EXTRA_DRAWS", "2"),
             ("OPENCLARE_EXPORT_TURNS", "out"),
         ])
         .unwrap();
         assert_eq!(experiment.ways, Some(vec![0, 2, 4]));
         assert!(experiment.tries(2) && !experiment.tries(1));
         assert!(!experiment.cut_rounds && experiment.aimed_repair);
-        assert_eq!((experiment.active_set_floor, experiment.jitter_seed), (0.5, 3));
+        assert_eq!((experiment.active_set_floor, experiment.jitter_seed, experiment.extra_draws), (0.5, 3, Some(2)));
         assert_eq!(experiment.export, Some(PathBuf::from("out")));
         assert_eq!(read(&[("OPENCLARE_CLOSE_WAYS", "")]).unwrap().ways, Some(Vec::new()));
     }
@@ -229,6 +254,7 @@ mod tests {
         assert!(read(&[("OPENCLARE_CLOSE_WAYS", "8")]).is_err());
         assert!(read(&[("OPENCLARE_CLOSE_WAYS", "two")]).is_err());
         assert!(read(&[("OPENCLARE_JITTER_SEED", "-1")]).is_err());
+        assert!(read(&[("OPENCLARE_EXTRA_DRAWS", "three")]).is_err());
         assert!(read(&[("OPENCLARE_ACTIVE_SET_FLOOR", "2")]).is_err());
     }
 }
