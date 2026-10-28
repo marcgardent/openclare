@@ -67,6 +67,8 @@ minimum-deviation quantizer~\cite{heistermann2023bimdf}, through a
 least-change projection, repair walks and rounds of constraint generation on
 the strips of the mesh, and keep the candidate with the fewest spiral edges,
 counted by a test that tells helices from closed, open and border loops. Over
+% RERUN v0.7.0: 4.65% and 1.6% come from engines without the twelve other
+% draws; rerun the twelve models at three budgets and the male body on v0.7.0.
 twelve models at three budgets near 3{,}000 quads, the engine leaves 4.65\%
 of the edges on spiral loops (16.7\% without closing, in single runs of an
 earlier engine); on the seven models that two other open-source remeshers
@@ -395,7 +397,7 @@ onto each fold, and the last makes going below a lower bound $b_a$ cost more
 than any walk saves. The fold term is periodic in $x$, so the cost is convex
 only on the arcs that cross no fold; where folds are crossed, cancelling walks
 reaches a local optimum, not the optimum of a convex flow. The real lengths $r_a$ carry a fixed per-arc
-perturbation of at most $0.5\%$, so that arcs of equal length do not all
+perturbation of at most $0.5\%$, drawn from a seed, so that arcs of equal length do not all
 change at the same scale; the scale $\lambda$ is searched for the number of
 quads asked for, and arcs whose zero length would break the structure of the
 mesh, by bringing two singular vertices together, are held at length at
@@ -488,9 +490,17 @@ of quads is within the tolerance (or no further from the budget than that of
 the plain search), its mean absolute deviation from the real lengths is at
 most $\max(1.5\,d_0,\ d_0 + 0.2)$ with $d_0$ that of the plain search, and it
 leaves the vertices no further from the folds of the surface than the plain
-search did, by more than chance would. The three with the fewest spirals are
-kept, in that order, then the plain lengths. The ways are independent and
-run in parallel. After meshing, if the first candidate makes a face fold over
+search did, by more than chance would. If the candidate with the fewest
+spirals still has spiral edges, twelve other draws of the per-arc
+perturbation, from the next twelve seeds, are each quantized and closed as
+above, and the closed lengths each would keep join the candidates on the
+same terms, provided their deviation from the real lengths is no larger than
+that of the engine's candidate with the fewest spirals: a draw that spirals
+less may lie further from the shape. Among candidates that spiral equally,
+the engine's own come first, then the draws in the order of their seeds, so
+the choice is deterministic. The three with the fewest spirals are kept, in
+that order, then the plain lengths. The ways and the draws are independent
+and run in parallel. After meshing, if the first candidate makes a face fold over
 the surface, the others are meshed in turn until one does not, and the mesh
 with the fewest folds, then the fewest spirals, is kept.
 
@@ -529,7 +539,11 @@ default options except the time limits stated.
 The share of edges on spiral loops is chaotic on a single model: a change of
 one per cent of the budget moves it as much as a real change of the method.
 We therefore judge the engine by its mean over the twelve models at three
-budgets, $2{,}970$, $3{,}000$ and $3{,}030$ quads ($36$ runs). At the cited
+budgets, $2{,}970$, $3{,}000$ and $3{,}030$ quads ($36$ runs).
+% RERUN v0.7.0: these figures (4.65%, the three budgets, 102 loops, closed
+% loops, distance, corners) are of the engine before the other draws, not of
+% the cited commit; rerun the protocol of the appendix on v0.7.0.
+At the cited
 commit the engine leaves $4.65\%$ of the edges on spiral loops ($2.89\%$,
 $4.97\%$ and $6.09\%$ at the three budgets; $102$ spiral loops in the $36$
 meshes, all valid), with $36.7\%$ of the edges on closed loops, a mean
@@ -560,6 +574,8 @@ quads, one run per model, engines of commits \texttt{9f3e455},
 roughly: between the second and third lines the baseline moved (commit
 \texttt{452b346}, $10.1\%$ to $9.5\%$). The constraint rounds, the active set
 and the floor of the cap are not in the table; the engine at the cited
+% RERUN v0.7.0: the cited commit's figure over three budgets, and add the
+% other draws to the parts not in the table.
 commit gives $4.65\%$ over three budgets.}
 \label{tab:dev}
 \end{table}
@@ -568,6 +584,8 @@ commit gives $4.65\%$ over three budgets.}
 The last full bench committed (commit \texttt{5bc16c6}, $3{,}000$ quads; one
 run per model for openclare and AutoRemesher~\cite{autoremesher}, the median
 of five seeds for QuadriFlow~\cite{huang2018quadriflow}, run through Blender)
+% RERUN v0.7.0: the gap to the cited commit now includes the twelve other
+% draws; restate both figures (or rerun the full bench on v0.7.0).
 used an engine a few changes away from the cited one, which give $4.54\%$
 instead of $4.65\%$ on the twelve models at three budgets. The tools do not
 mesh the same models: QuadriFlow produces a mesh for $22$ of the $33$ models,
@@ -765,8 +783,8 @@ active set, floor half the real length & 36--72 & --- & 9.8\% \\
 \caption{Male body at $10{,}590$ quads, engine of the export, one run each;
 the mesh keeps the way with the fewest spirals, so its share is that of a
 single way. The engine at the cited commit uses the active set with floor $0$
-together with the constraint rounds and the floor of the deviation cap,
-which this table does not include.}
+together with the constraint rounds, the floor of the deviation cap and the
+other draws, which this table does not include.}
 \label{tab:rounding}
 \end{table}
 
@@ -841,7 +859,7 @@ actual T-mesh stay hard is open.
 \paragraph{Closing the most rings, end to end.}
 We measured what an exact selection buys on the bench, with the engine of
 branch \texttt{complete-helices} (the constraint rounds without the finer
-work mesh at thin walls of the cited commit: $4.54\%$ of spiral edges over
+work mesh at thin walls and the other draws of the cited commit: $4.54\%$ of spiral edges over
 the $36$ runs). For the lengths the engine keeps, a mixed-integer program
 closes as many of its strips leaning less than $0.12$ as it can, weighted by
 their length round, within the balances, the bounds of separation, the cap
@@ -856,7 +874,8 @@ the mesh). In place of the engine's lengths, the lengths found do not
 spiral less: $4.77\%$ and $5.08\%$ of spiral edges in two runs against
 $4.54\%$. Added to the candidates the engine chooses among by its own count
 of spirals, they lower the mean to $2.32\%$ and $2.70\%$, never higher;
-three other draws of the engine's per-arc perturbation, added the same way,
+three other draws of the engine's per-arc perturbation, added the same way
+(the step the cited commit takes with twelve, Section~\ref{sec:closing}),
 give $4.12\%$, three lengths drawn at random within the same cap and budget
 $4.34\%$, and the rounds without the corridor inequalities $3.15\%$, better
 than the other draws on $7$ runs and worse on $7$. Closed
@@ -953,6 +972,7 @@ published.
 \toprule
 figures & engine & source \\
 \midrule
+% RERUN v0.7.0: figure and engine of this row (4.65% is not the cited commit's).
 twelve models, three budgets, $4.65\%$ (Section~\ref{sec:experiments})
   & the cited commit & working logs of the protocol below; a second run of
   the same engine gave the same figures for the $36$ meshes \\
