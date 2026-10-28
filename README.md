@@ -64,7 +64,7 @@ of the ogre at 3000 quads.
 | Factor | How many times more quads a weight of 1 gets than a weight of 0, for the same area |
 | Materials | Each quad gets the material of the surface it lies on, and the borders between materials are kept as lines of edges where that can be done |
 | Symmetry | *None*, *X*, *Y* or *Z*: the quads come out the same on both sides of the plane through the origin of the object across that axis, in the object's own axes, with a loop of edges on the plane. The object must be the same on both sides; one that is not is refused, and said why |
-| Shape: presets | The menu in the header of the *Shape* block saves every setting below with *+*, and sets them back from a preset saved there; a saved preset can be removed. The add-on ships none: the defaults suit sculpts, characters and mechanical parts alike |
+| Shape: presets | The menu in the header of the *Shape* block saves every setting below with *+*, and sets them back from a preset saved there; a saved preset can be removed. The add-on ships one, *Default*, which sets them all back to their defaults: those suit sculpts, characters and mechanical parts alike |
 | Adaptive Size | How much the size of the quads follows the curvature: at 0 % they are all the same size; towards 100 % they get smaller where the shape bends and larger where it is flat |
 | Quads Around Thin Parts | The fewest quads that go round a thin part, a finger or the tip of an ear, for it to keep its volume. 0 does not look at thickness |
 | Hard Edges | On by default. Edges of the object sharper than the angle, and still sharp at the size of the quads asked for, are followed by the quads wherever they can, and kept crisp; the fine creases of a sculpt are not |
@@ -73,6 +73,7 @@ of the ogre at 3000 quads.
 | Follow Curvature | How strongly the edges are drawn along the directions in which the shape bends, against how smoothly they flow |
 | Fewer Irregular Vertices | Irregular vertices closer than this many quads to one of the opposite kind are cancelled with it: fewer of them, for meshes meant to deform |
 | Volume Fit | How far the vertices leave the surface at the very end, for the mesh to keep the volume of the shape |
+| Shading | How the faces of the result are shaded. *By Angle* (the default): smooth, but sharp across the edges sharper than the angle of *Hard Edges*, so a sculpt stays smooth and a mechanical part keeps its edges crisp. *Smooth*: every face smooth. *Flat*: every face flat |
 
 An object scaled differently along its axes is remeshed as it is seen: its quads come out
 square in the scene.

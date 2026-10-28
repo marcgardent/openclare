@@ -44,8 +44,9 @@ assert tuple(remeshed.location) == (1.0, 2.0, 3.0), "the result is not where the
 assert all(len(polygon.vertices) == 4 for polygon in mesh.polygons), "not all quads"
 assert abs(len(mesh.polygons) - 800) < 80, f"{len(mesh.polygons)} quads for 800 asked"
 assert remeshed.select_get() and not original.select_get()
-# A bare mesh: no UV layer, no edge marked.
-assert len(mesh.uv_layers) == 0 and not any(edge.use_seam or edge.use_edge_sharp for edge in mesh.edges)
+# A bare mesh: no UV layer, no seam; the only edges marked sharp are those
+# of its shading, By Angle (checked on a cube below).
+assert len(mesh.uv_layers) == 0 and not any(edge.use_seam for edge in mesh.edges)
 # What the engine said of the run is kept, for a script to read.
 said = openclare.last_report
 assert int(said["quads"]) == len(mesh.polygons) and int(said["pieces"]) == 3, said
@@ -161,13 +162,23 @@ except RuntimeError as error:
 assert not openclare.last_report, "a run that failed left a report"
 settings.density_group = ""
 
-# The presets of the shape: the add-on ships none since 0.6, and the menu of
-# the panel only lists those a user saved.
+# The presets of the shape: the add-on ships one, Default, which gives every
+# setting of the shape its default value; the others are those a user saved.
 import os
 
-addon_folder = os.path.dirname(os.path.abspath(openclare.__file__))
-assert not os.path.exists(os.path.join(addon_folder, "presets")), "presets are shipped again"
-assert addon_folder not in [os.path.dirname(os.path.dirname(path)) for path in bpy.utils.preset_paths(openclare.SHAPE_PRESETS)]
+shipped = os.path.join(openclare.ADDON_FOLDER, "presets", openclare.SHAPE_PRESETS)
+assert shipped in bpy.utils.preset_paths(openclare.SHAPE_PRESETS), bpy.utils.preset_paths(openclare.SHAPE_PRESETS)
+assert sorted(f for f in os.listdir(shipped) if f.endswith(".py")) == ["Default.py"], os.listdir(shipped)
+properties = openclare.OpenclareSettings.bl_rna.properties
+settings.quads_around, settings.shading, settings.use_marked_sharp = 11, "FLAT", True
+with bpy.context.temp_override(object=original):
+    assert bpy.ops.script.execute_preset(
+        filepath=os.path.join(shipped, "Default.py"), menu_idname="OPENCLARE_PT_shape_presets"
+    ) == {"FINISHED"}
+for name in openclare.SHAPE_NAMES:
+    wanted = properties[name].default
+    got = getattr(settings, name)
+    assert got == wanted or abs(got - wanted) < 1e-6, (name, got, wanted)
 # What the engine is given: the hard edges at 30 degrees, or none.
 shape(settings, "organic")
 assert openclare.shape_of(settings)["edge_angle"] == 30.0 and openclare.shape_of(settings)["alignment"] == 0.05
@@ -189,6 +200,7 @@ with tempfile.TemporaryDirectory() as folder:
         written = open(os.path.join(saved, "Eleven_Around.py")).read()
         assert "settings.quads_around = 11" in written and "settings = bpy.context.object.openclare" in written
         assert "settings.use_marked_sharp = False" in written, written
+        assert "settings.shading = 'BY_ANGLE'" in written, written
         assert "settings.quads " not in written and "settings.export" not in written, written
     finally:
         bpy.utils.user_resource = real_resource
@@ -326,6 +338,27 @@ assert not bpy.ops.object.openclare_remesh_again.poll()
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 result = bpy.context.active_object
 assert openclare.source_of(result) == second and not openclare.is_source(bpy.context)
+# Shaded By Angle by default: smooth, but sharp across the edges of the cube,
+# and only there; Flat and Smooth as they say.
+mesh = result.data
+sharp = [edge for edge in mesh.edges if edge.use_edge_sharp]
+assert all(face.use_smooth for face in mesh.polygons) and len(sharp) >= 12, len(sharp)
+faces_of = {}
+for face in mesh.polygons:
+    for key in face.edge_keys:
+        faces_of.setdefault(key, []).append(face.normal)
+angle = second.openclare.hard_edge_angle
+for edge in mesh.edges:
+    normals = faces_of[edge.key]
+    bent = len(normals) == 2 and normals[0].angle(normals[1]) > angle + 1e-3
+    straight = len(normals) == 2 and normals[0].angle(normals[1]) < angle - 1e-3
+    assert not (bent and not edge.use_edge_sharp) and not (straight and edge.use_edge_sharp), edge.key
+openclare.shade(mesh, "FLAT", second.openclare.hard_edge_angle)
+assert not any(face.use_smooth for face in mesh.polygons)
+openclare.shade(mesh, "SMOOTH", second.openclare.hard_edge_angle)
+assert all(face.use_smooth for face in mesh.polygons)
+print("SHADING By Angle: %d sharp edges on the cube of %d quads" % (len(sharp), len(mesh.polygons)))
+openclare.shade(mesh, "BY_ANGLE", second.openclare.hard_edge_angle)
 assert not openclare.OPENCLARE_PT_shape.poll(bpy.context)
 # How it went is kept on the result, and said by its panel.
 told = result[openclare.REPORT]
