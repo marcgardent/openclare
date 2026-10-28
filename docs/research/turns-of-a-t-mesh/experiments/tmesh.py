@@ -88,6 +88,18 @@ def run_linprog(cost, **arguments):
     return linprog(cost, method="highs", options=options(), **arguments)
 
 
+def parallel(function, items, jobs):
+    """`function` on each item, `jobs` processes at a time (each with its own
+    HiGHS, of THREADS threads); the results in the order of the items."""
+    items = list(items)
+    if jobs <= 1 or len(items) <= 1:
+        return [function(item) for item in items]
+    import multiprocessing
+
+    with multiprocessing.get_context("fork").Pool(min(jobs, len(items))) as pool:
+        return pool.map(function, items, chunksize=1)
+
+
 # --- export directories ----------------------------------------------------------------
 
 
@@ -145,6 +157,8 @@ def arguments(parser, group, paper="turns-of-a-t-mesh"):
     parser.add_argument("--ways", type=lambda text: [int(k) for k in text.split(",")],
                         help="only these ways, as 0,2,5 (default: all)")
     parser.add_argument("--out", type=Path, default=DATA / paper / group, help="where raw output goes")
+    parser.add_argument("--jobs", type=int, default=1,
+                        help="processes at a time, where the script splits its work (one HiGHS thread each)")
     parser.add_argument("--summary", type=Path,
                         default=ROOT / "docs" / "research" / paper / "experiments"
                         / ("exact" if paper == "closing-loops" else "") / "results" / f"{group}.json",

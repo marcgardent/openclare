@@ -37,6 +37,60 @@ import tmesh  # noqa: E402  (first: it sets the threads of the linear algebra)
 import numpy as np  # noqa: E402
 
 
+def way_job(job):
+    """One way, in a process of its own when --jobs asks for several."""
+    path, arguments, files = job
+    way = tmesh.Way(path)
+    forms = tmesh.held_forms(way)
+    held_numbers = sorted(way.held_index)
+    chosen, result, seconds = way.most_closable(forms, time_limit=arguments.seconds)
+    row = {"way": way.number, "held": len(forms), "kept_by_the_projection": len(way.kept),
+           "closable_together": len(chosen), "status": result.message, "seconds": round(seconds, 1),
+           "dual_bound": getattr(result, "mip_dual_bound", None)}
+    x_aimed = None
+    if chosen:
+        result_aimed, x_aimed, _ = way.nearest([forms[k] for k in chosen])
+        if x_aimed is not None:
+            aimed = x_aimed / way.scale
+            (files / f"aimed-{way.number}.txt").write_text(
+                " ".join(f"{v:.12g}" for v in aimed) + "\n" + " ".join(str(held_numbers[k]) for k in chosen)
+                + "\n")
+            row["aimed"] = {"weighted_deviation": way.weighted_deviation(x_aimed),
+                            "deviation": way.deviation(x_aimed),
+                            "file": f"aimed-{way.number}.txt"}
+    if arguments.whole and chosen:
+        result_whole, x, took = way.nearest([forms[k] for k in chosen], integer=True, time_limit=arguments.whole)
+        closing = {"seconds": round(took, 1), "message": result_whole.message, "found": x is not None}
+        if x is not None:
+            x = np.rint(x).astype(np.int64)
+            others = [way.shift[k] for k in range(len(way.turns)) if not way.turns[k]["held"]]
+            engine = way.lengths
+            closing.update(
+                held_left_shifted=way.shifted(forms, x), engine_held_left_shifted=way.shifted(forms, engine),
+                not_held_left_shifted=way.shifted(others, x),
+                engine_not_held_left_shifted=way.shifted(others, engine),
+                weighted_deviation=way.weighted_deviation(x),
+                engine_weighted_deviation=way.weighted_deviation(engine),
+                deviation=way.deviation(x), engine_deviation=way.deviation(engine),
+                quads=way.quads(x), engine_quads=way.quads(engine),
+                file=f"way-{way.number}-integer.txt")
+            closing["deviation_higher_by"] = round(
+                closing["weighted_deviation"] / closing["engine_weighted_deviation"] - 1, 3)
+            (files / f"way-{way.number}-integer.txt").write_text(" ".join(str(int(v)) for v in x) + "\n")
+        row["whole_closing"] = closing
+    if arguments.whole_most:
+        chosen_whole, result_most, took = way.most_closable(forms, time_limit=arguments.whole_most, integer=True)
+        row["whole_most_closable"] = {"found": len(chosen_whole) if result_most.x is not None else None,
+                                      "dual_bound": getattr(result_most, "mip_dual_bound", None),
+                                      "message": result_most.message, "seconds": round(took, 1)}
+    print(f"way {way.number}: {row['held']} held, {row['kept_by_the_projection']} kept by the projection, "
+          f"{row['closable_together']} closable together ({row['status']}, {row['seconds']} s)"
+          + (f"; whole: {row['whole_closing']}" if "whole_closing" in row else "")
+          + (f"; whole program: {row['whole_most_closable']}" if "whole_most_closable" in row else ""),
+          flush=True)
+    return row
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     tmesh.arguments(parser, "most_closable", paper="closing-loops")
@@ -49,56 +103,7 @@ def main():
     call = folder.name if folder.name.startswith("call-") else None
     files = arguments.out / call if call else arguments.out
     files.mkdir(parents=True, exist_ok=True)
-    rows = []
-    for way in ways:
-        forms = tmesh.held_forms(way)
-        held_numbers = sorted(way.held_index)
-        chosen, result, seconds = way.most_closable(forms, time_limit=arguments.seconds)
-        row = {"way": way.number, "held": len(forms), "kept_by_the_projection": len(way.kept),
-               "closable_together": len(chosen), "status": result.message, "seconds": round(seconds, 1),
-               "dual_bound": getattr(result, "mip_dual_bound", None)}
-        x_aimed = None
-        if chosen:
-            result_aimed, x_aimed, _ = way.nearest([forms[k] for k in chosen])
-            if x_aimed is not None:
-                aimed = x_aimed / way.scale
-                (files / f"aimed-{way.number}.txt").write_text(
-                    " ".join(f"{v:.12g}" for v in aimed) + "\n" + " ".join(str(held_numbers[k]) for k in chosen)
-                    + "\n")
-                row["aimed"] = {"weighted_deviation": way.weighted_deviation(x_aimed),
-                                "deviation": way.deviation(x_aimed),
-                                "file": f"aimed-{way.number}.txt"}
-        if arguments.whole and chosen:
-            result_whole, x, took = way.nearest([forms[k] for k in chosen], integer=True, time_limit=arguments.whole)
-            closing = {"seconds": round(took, 1), "message": result_whole.message, "found": x is not None}
-            if x is not None:
-                x = np.rint(x).astype(np.int64)
-                others = [way.shift[k] for k in range(len(way.turns)) if not way.turns[k]["held"]]
-                engine = way.lengths
-                closing.update(
-                    held_left_shifted=way.shifted(forms, x), engine_held_left_shifted=way.shifted(forms, engine),
-                    not_held_left_shifted=way.shifted(others, x),
-                    engine_not_held_left_shifted=way.shifted(others, engine),
-                    weighted_deviation=way.weighted_deviation(x),
-                    engine_weighted_deviation=way.weighted_deviation(engine),
-                    deviation=way.deviation(x), engine_deviation=way.deviation(engine),
-                    quads=way.quads(x), engine_quads=way.quads(engine),
-                    file=f"way-{way.number}-integer.txt")
-                closing["deviation_higher_by"] = round(
-                    closing["weighted_deviation"] / closing["engine_weighted_deviation"] - 1, 3)
-                (files / f"way-{way.number}-integer.txt").write_text(" ".join(str(int(v)) for v in x) + "\n")
-            row["whole_closing"] = closing
-        if arguments.whole_most:
-            chosen_whole, result_most, took = way.most_closable(forms, time_limit=arguments.whole_most, integer=True)
-            row["whole_most_closable"] = {"found": len(chosen_whole) if result_most.x is not None else None,
-                                          "dual_bound": getattr(result_most, "mip_dual_bound", None),
-                                          "message": result_most.message, "seconds": round(took, 1)}
-        rows.append(row)
-        print(f"way {way.number}: {row['held']} held, {row['kept_by_the_projection']} kept by the projection, "
-              f"{row['closable_together']} closable together ({row['status']}, {row['seconds']} s)"
-              + (f"; whole: {row['whole_closing']}" if "whole_closing" in row else "")
-              + (f"; whole program: {row['whole_most_closable']}" if "whole_most_closable" in row else ""),
-              flush=True)
+    rows = tmesh.parallel(way_job, [(way.path, arguments, files) for way in ways], arguments.jobs)
     summary = {
         "experiment": "the most held turns closable together (Table tab:exact)",
         **tmesh.record(arguments, folder, ways, started, clock, seconds_per_program=arguments.seconds,

@@ -34,10 +34,11 @@ sizes are read from the export's call file (`most_deviation`, `wanted`,
 --cap, --wanted, --allowed set them.
 
     python3 docs/research/turns-of-a-t-mesh/experiments/forced.py [<export>] \\
-        [--steps bounds,cap,size] [--strips-ways 2] [--seconds 900] [--budget 1800] [--whole-lower]
+        [--steps bounds,cap,size] [--strips-ways 2] [--seconds 900] [--budget 1800] [--whole-lower] [--jobs 4]
 
 Seconds a family for `bounds` (66 at most on the papers' body); up to
---budget for `cap` and several times --seconds for `size`. Writes
+--budget for `cap` and several times --seconds for `size`; --jobs runs that
+many families at a time, in processes of their own. Writes
 results/forced.json, and the whole lengths found under --out.
 """
 
@@ -400,6 +401,15 @@ def run_family(family, steps, arguments, log=say):
     return out
 
 
+def family_job(job):
+    """One family, in a process of its own when --jobs asks for several."""
+    path, name, cap, wanted, allowed, steps, arguments = job
+    way = tmesh.Way(path)
+    forms = tmesh.held_forms(way) if name == "held" else [s["shift"] for s in way.strips(0.12)]
+    family = Family(way, name, forms, cap, wanted, allowed, arguments.sound)
+    return {"way": way.number, **run_family(family, steps, arguments)}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     tmesh.arguments(parser, "forced")
@@ -426,15 +436,13 @@ def main():
     steps = set(arguments.steps.split(","))
     families = arguments.families.split(",")
     say(f"P: cap {cap}, window {wanted} ± {allowed}{', sound' if arguments.sound else ''}; steps {sorted(steps)}")
-    rows = []
+    jobs = []
     for way in ways:
         if "held" in families:
-            family = Family(way, "held", tmesh.held_forms(way), cap, wanted, allowed, arguments.sound)
-            rows.append({"way": way.number, **run_family(family, steps, arguments)})
+            jobs.append((way.path, "held", cap, wanted, allowed, steps, arguments))
         if "strips" in families and way.number in arguments.strips_ways and way.helices is not None:
-            family = Family(way, "strips", [s["shift"] for s in way.strips(0.12)], cap, wanted, allowed,
-                            arguments.sound)
-            rows.append({"way": way.number, **run_family(family, steps, arguments)})
+            jobs.append((way.path, "strips", cap, wanted, allowed, steps, arguments))
+    rows = tmesh.parallel(family_job, jobs, arguments.jobs)
     summary = {
         "experiment": "turns every quantization in P leaves shifted (Table tab:forced)",
         **tmesh.record(arguments, folder, ways, started, clock, cap=cap, wanted=wanted, allowed=allowed,

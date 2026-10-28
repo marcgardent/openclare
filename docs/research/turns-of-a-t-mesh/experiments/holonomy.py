@@ -21,12 +21,13 @@
   "Dislocations", and whether a straight chain or a staircase of arcs joins
   the pair.
 
-    python3 docs/research/turns-of-a-t-mesh/experiments/holonomy.py [<export>] [--no-annuli]
+    python3 docs/research/turns-of-a-t-mesh/experiments/holonomy.py [<export>] [--no-annuli] [--jobs 4]
 
 The counts are per way and summed over the ways (with repeats, as the
 paper's). Minutes a way for the turns and discs; the annuli, a pair of
 simple turns at a time, take most of the time (an hour or more for the eight
-ways of the male body). Writes results/holonomy.json.
+ways of the male body; --jobs runs that many ways at a time, in processes
+of their own). Writes results/holonomy.json.
 """
 
 import argparse
@@ -235,6 +236,26 @@ def dislocations(L, simple_sides, tally, found, limit=None):
                       "straight_chains": lines[:3], "staircases_equal": equal[:3]})
 
 
+def way_job(job):
+    """One way, in a process of its own when --jobs asks for several."""
+    path, no_annuli, limit = job
+    tick = time.monotonic()
+    way = tmesh.Way(path)
+    L = Layout(way)
+    tally, local, pairs = Counter(), {}, []
+    simple = turns_and_discs(L, tally, local)
+    strips_parity(way, tally)
+    if not no_annuli:
+        annuli(L, simple, tally, limit)
+        parallel_pairs(L, tally, limit)
+        sides = {t: list(v.values()) for t, v in simple.items()}
+        dislocations(L, sides, tally, pairs, limit)
+    tally = {key: int(value) for key, value in sorted(tally.items())}
+    print(f"way {way.number}: {tally} ({time.monotonic() - tick:.0f} s)", flush=True)
+    return {"way": way.number, "counts": tally, "extremes": local, "pairs": pairs,
+            "seconds": round(time.monotonic() - tick, 1)}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     tmesh.arguments(parser, "holonomy")
@@ -243,25 +264,14 @@ def main():
     arguments = parser.parse_args()
     started, clock = tmesh.common.machine(), time.monotonic()
     folder, ways = tmesh.load(arguments)
-    total, extremes, rows, pairs = Counter(), {}, [], []
-    for way in ways:
-        tick = time.monotonic()
-        L = Layout(way)
-        tally, local = Counter(), {}
-        simple = turns_and_discs(L, tally, local)
-        strips_parity(way, tally)
-        if not arguments.no_annuli:
-            annuli(L, simple, tally, arguments.pairs)
-            parallel_pairs(L, tally, arguments.pairs)
-            sides = {t: list(v.values()) for t, v in simple.items()}
-            dislocations(L, sides, tally, pairs, arguments.pairs)
-        for key, value in local.items():
+    rows = tmesh.parallel(way_job, [(way.path, arguments.no_annuli, arguments.pairs) for way in ways],
+                          arguments.jobs)
+    total, extremes, pairs = Counter(), {}, []
+    for row in rows:
+        total.update(row["counts"])
+        pairs += row.pop("pairs")
+        for key, value in row["extremes"].items():
             extremes[key] = (min if "least" in key else max)(extremes.get(key, value), value)
-        tally = Counter({key: int(value) for key, value in tally.items()})
-        total.update(tally)
-        rows.append({"way": way.number, "counts": dict(sorted(tally.items())), "extremes": local,
-                     "seconds": round(time.monotonic() - tick, 1)})
-        print(f"way {way.number}: {dict(sorted(tally.items()))} ({rows[-1]['seconds']} s)", flush=True)
     summary = {
         "experiment": "turns and singularities, checked on every turn (Section 'Turns and singularities')",
         **tmesh.record(arguments, folder, ways, started, clock, annuli=not arguments.no_annuli,
