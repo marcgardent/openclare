@@ -189,6 +189,12 @@ def export_record(folder):
     return None
 
 
+def sha256(path):
+    import hashlib
+
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
 def write(path, data):
     common.write_json(Path(path), data)
     try:
