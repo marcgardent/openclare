@@ -7,15 +7,17 @@ and singularities", "Conflicts between turns", "Any combination of turns" and "C
 Section "An exact look at the closing system" of the closing-loops paper, whose scripts
 (`../../closing-loops/experiments/exact/`) read it with the module here.
 
-> **No number here yet.** The scripts were checked on 2026-10-28 against the export of the papers'
-> first version (below, "Checked"); those runs are not kept. The scripts are run on the commit the
-> papers will cite (`NIGHT.md`), and their summaries then go to `results/`.
+> **No number here yet.** The scripts were checked on 2026-10-28 against the drafts' old export
+> (`male6`, below, "Checked"); those runs are not kept. The papers' numbers are made on the engine
+> of v0.7.0 as published (the `as-is` export of `export.py`, `NIGHT.md`), and their summaries then
+> go to `results/`. Where an example of the drafts (the wrist, the right eye, the set of 15 turns)
+> is not found on that export, the text is rewritten from what the scripts find.
 
 Every script runs from the root of a clone and takes an export directory as its first argument
 (default `scratch/data-package/turns-of-a-t-mesh/male-body`, which `export.py` makes). An export
 is what the engine writes with `OPENCLARE_EXPORT_TURNS=<dir>` (ALGORITHM.md, M6, "Experiment
-options"); the export of the papers' first version, with its way files directly in the directory,
-is read too. `--ways 0,2` keeps some ways, `--call` picks the T-mesh of a model in several pieces
+options"); the drafts' old export (`male6`), with its way files directly in the directory, is
+read too. `--ways 0,2` keeps some ways, `--call` picks the T-mesh of a model in several pieces
 (by default the one with the most arcs), `--out` takes the raw output (default
 `scratch/data-package/turns-of-a-t-mesh/<group>/`, not committed), `--summary` the summary (default
 `results/<group>.json`, committed after the night). Every summary records the SHA-256 of the way
@@ -32,7 +34,7 @@ only on the same machine under the same load: the long runs are for an idle mach
 
 | Statement | Command (`B=docs/research/turns-of-a-t-mesh/experiments`) | Output |
 |---|---|---|
-| The export itself | `python3 $B/export.py --openclare <binary> --commit <hash> [--engine before-cuts]` | `<out>/export/`, `mesh.obj`, `measure.json`, `record.json` |
+| The export itself (the published engine; `--engine before-cuts` only for the aside) | `python3 $B/export.py --openclare <binary> --commit <hash>` | `<out>/export/`, `mesh.obj`, `measure.json`, `record.json` |
 | "Data": 261 singular vertices (133, 127, 1), 1,295 nodes, 2,069 arcs, 776 patches, 1,552 balances; 1,299 turns, 765 held; 28 to 36 bounds; Table `tab:forced`, columns "turns" and "left shifted by the engine"; the bidirected graph of the balances, its rank and the dimension 517 | `python3 $B/census.py <export>` | `results/census.json` |
 | Section "Turns and singularities", "On the male body": the crossing maps give the shift of all 1,299 turns; 1,436 sides of the 718 simple turns, 4 to 257 singular vertices, the Burgers sum in the order of first visit, the order of last visit failing on 150 of 158 discs of way 2; the checkerboard rule on the discs and on the 30,148 annuli, of index 0; the 294 pairs with no singular vertex between them; the ten annuli with one 3–5 pair, never on one trace; parity on all turns and on the 1,838 ways round of the strips; 101 turns crossing themselves once (97 and 4), 480 up to 107 times, 356 of the 765 held turns simple | `python3 $B/holonomy.py <export> --jobs 4` | `results/holonomy.json` |
 | Table `tab:iis` (sets, multipliers, bounded arcs, exact check, irreducibility in whole lengths); the wrist turn not closable alone in ways 0, 1, 2, 4, its form −(ℓ1921 + ℓ1937) and arc 1937 0.08 long; the three turns at the right eye; "every set found is infeasible in real numbers" | `python3 $B/conflicts.py <export>` | `results/conflicts.json`, `<out>/claims.json` |
@@ -57,9 +59,11 @@ only on the same machine under the same load: the long runs are for an idle mach
   arcs, winding numbers of a weighted cycle.
 - `integer.py` (a module): the lattice of whole solutions by exact elimination (Euclid's
   algorithm where no coefficient is a unit), and LLL with Babai's nearest plane.
-- `export.py`: one run of the engine with the export on; `--engine before-cuts` sets the experiment
-  options that give back the stages of the engine of the papers' first export (no constraint
-  rounds, no active set, no floor of the cap, no fold guard, no other draws).
+- `export.py`: one run of the engine with the export on. By default the engine as published
+  (`as-is`), on which the papers' numbers are made. `--engine before-cuts` sets the experiment
+  options that switch off the stages the engine of the drafts' first export did not have (no
+  constraint rounds, no active set, no floor of the cap, no fold guard, no other draws): an aside,
+  to compare with that export, whose summaries stay in `scratch/` (`NIGHT.md`, stage 5).
 - `census.py`: counts. The rank of the balances is computed (dense, floating point) and the graph
   facts (each arc in two balances with ±1, components, an unbalanced cycle) by a signed search.
 - `holonomy.py`: for every turn of every way, the composed crossing maps (a translation; the
@@ -105,7 +109,7 @@ only on the same machine under the same load: the long runs are for an idle mach
   exact (free arcs rounded, the others solved in rational arithmetic) and checked again in
   integer arithmetic.
 - `lattice.py`: the balances, then the held turns, eliminated in whole numbers per way, stopped
-  after `--seconds` (in way 7 of the papers' body the coefficients grow without end).
+  after `--seconds` (in way 7 of the drafts' old export the coefficients grow without end).
 - `forced.py`: τ_P(H) by implicit hitting sets for the bounds alone (exact), with the cap (exact or
   an interval after `--budget`), and with the cap, the window and whole lengths (an interval: the
   lower bound of the cap, raised with `--whole-lower` by hitting sets of no-goods in whole lengths
@@ -114,22 +118,25 @@ only on the same machine under the same load: the long runs are for an idle mach
 
 ## What the scripts cannot make again, and why
 
-- **The engine of the papers' export.** It was the hook of branch `rd-exact` on the engine before
-  commit `c8bf2be`. The hooks are on main since DT-089 (`OPENCLARE_EXPORT_TURNS`, with the same
-  fields and more), and `export.py --engine before-cuts` switches off the stages that engine did not
-  have; but the field, the T-mesh and the work mesh of today differ, so the turn numbers, arc
-  numbers and vertex numbers of the paper (wrist turn 42, arc 1937, vertex 246, configurations A
-  to F...) do not survive a fresh export: the tables are made again, with new numbers, and the
-  text must follow them.
+- **The drafts' old export.** It was the hook of branch `rd-exact` on the engine before commit
+  `c8bf2be`. The papers now describe the published engine of v0.7.0, whose export (`as-is`)
+  has another field, T-mesh and work mesh, more stages (constraint rounds, active set, floor of the
+  cap, fold guard, other draws) and so other turns: the turn numbers, arc numbers and vertex
+  numbers of the drafts (wrist turn 42, arc 1937, vertex 246, configurations A to F...) do not
+  survive. The tables are made again, with new numbers, and the text follows them. The hooks are
+  on main since DT-089 (`OPENCLARE_EXPORT_TURNS`, with the same fields and more);
+  `export.py --engine before-cuts` comes closest to the old engine on today's code, for comparison
+  only.
 - **Witnesses.** Where the paper quotes one solution among many (the whole lengths at 10,439 and
   10,436 quads, deviations 0.442 and 0.469, that show τ = 1 in ways 0 and 2), the scripts find
-  their own; on the papers' export they found 10,731 and 10,638 quads, 0.430 and 0.386.
+  their own; on the drafts' old export (`male6`) they found 10,731 and 10,638 quads, 0.430 and
+  0.386.
 - **Intervals.** The ranges of `tab:forced` depend on the time limits and on the machine; the paper
   says "within the time limit (120 to 1,800 seconds)". The night fixes them (`NIGHT.md`).
 - **The relation of windings.** `fox.py --relations K` finds the K first relations among the
   winding numbers of single turns that the translations break, in the order of the turns; which
-  four turns it names, and with which coefficients, depends on the export (on the papers' it
-  names first turn 18 of way 0 and turns 22, 101 and 65 of ways 0, 4 and 5: the paper's
+  four turns it names, and with which coefficients, depends on the export (on the drafts' old
+  export `male6` it names first turn 18 of way 0 and turns 22, 101 and 65 of ways 0, 4 and 5: the paper's
   w18 = w22 + w101 + w65).
 - **Other models.** Section "Borders and handles" (Suzanne, Jerry, Bob, part, cage, a dome; the
   314 and 586 sides holding a border, the 1,076 sides, the 660 turns, the 40 collars, Bob's pairs),
@@ -143,7 +150,7 @@ only on the same machine under the same load: the long runs are for an idle mach
 Times on an Intel Core i7-7700K (4 cores, 8 threads, 2017, 62 GB), loaded by other jobs (load 4 to
 9) and the scripts under `nice`, one HiGHS thread:
 
-| Script | On the papers' export |
+| Script | On the drafts' old export (`male6`) |
 |---|---|
 | `census.py`, `combs.py`, `pairs.py` (rows of 2 to 4 turns) | seconds |
 | `conflicts.py` | about 2 minutes for the eight ways (way 7: 50 s) |
@@ -156,9 +163,9 @@ Times on an Intel Core i7-7700K (4 cores, 8 threads, 2017, 62 GB), loaded by oth
 
 ## Checked on 2026-10-28
 
-On the export of the papers' first version (the engine before `c8bf2be`, 8 ways, 1,299 turns; its
-way files have the SHA-256 listed in `../lean/Check/certificates/male-body.claims.json`), the
-scripts give back the paper's numbers: every number of "Data" and the columns "turns" and "left
+On the drafts' old export (`male6`: the engine before `c8bf2be`, 8 ways, 1,299 turns; its way files
+have the SHA-256 listed in `../lean/Check/certificates/male-body.claims.json`), the scripts give
+back the drafts' numbers: every number of "Data" and the columns "turns" and "left
 shifted by the engine" of `tab:forced` (`census.py`); every count of "On the male body" of Section
 "Turns and singularities" but the three that rest on pairs of turns (30,148, 294, ten), whose code
 was only run on the first 400 pairs of way 0 (`holonomy.py`); every row of `tab:iis`, with the same

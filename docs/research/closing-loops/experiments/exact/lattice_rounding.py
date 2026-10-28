@@ -21,7 +21,7 @@ to mesh in place of its own (`OPENCLARE_LENGTHS`; remesh.py).
     python3 docs/research/closing-loops/experiments/exact/lattice_rounding.py [<export>] \\
         [--way 2] [--rings scratch/data-package/closing-loops/rings/subset.json] [--seconds 1200]
 
-The reduction takes minutes (87 s on the papers' body under load), the
+The reduction takes minutes (87 s on the drafts' old export, under load), the
 program --seconds (one thread). Writes results/lattice_rounding.json.
 """
 

@@ -30,13 +30,13 @@ A single number is exact (lower = upper). With --sound every arc the
 engine's lengths keep open is held at length one or more too (optima that
 bring other arcs to zero can break the mesh). The cap, wanted and allowed
 sizes are read from the export's call file (`most_deviation`, `wanted`,
-`allowed`) when it has one, else they are the papers' (0.474, 10,590, 211):
---cap, --wanted, --allowed set them.
+`allowed`) when it has one, else (the drafts' old export, which has none)
+those of its engine (0.474, 10,590, 211): --cap, --wanted, --allowed set them.
 
     python3 docs/research/turns-of-a-t-mesh/experiments/forced.py [<export>] \\
         [--steps bounds,cap,size] [--strips-ways 2] [--seconds 900] [--budget 1800] [--whole-lower] [--jobs 4]
 
-Seconds a family for `bounds` (66 at most on the papers' body); up to
+Seconds a family for `bounds` (45 at most on the drafts' old export); up to
 --budget for `cap` and several times --seconds for `size`; --jobs runs that
 many families at a time, in processes of their own. Writes
 results/forced.json, and the whole lengths found under --out.
@@ -52,9 +52,11 @@ import numpy as np
 from scipy.optimize import Bounds, LinearConstraint
 from scipy.sparse import coo_matrix, csr_matrix, diags, hstack, identity, vstack
 
-# The engine of the papers' export: the plain search's deviation 0.316 times
-# 1.5, and its window of 2 % round the 10,590 quads asked for.
-PAPERS = {"cap": 0.474, "wanted": 10590, "allowed": 211}
+# The engine of the drafts' old export (male6, written before the export had
+# call files, so without these numbers): the plain search's deviation 0.316
+# times 1.5, and its window of 2 % round the 10,590 quads asked for. Only a
+# fallback: an export of today's engine carries its own.
+OLD_EXPORT = {"cap": 0.474, "wanted": 10590, "allowed": 211}
 
 
 def say(text):
@@ -430,9 +432,9 @@ def main():
     folder, ways = tmesh.load(arguments)
     call = folder.parent / f"{folder.name}.json"
     engine = json.loads(call.read_text()) if call.exists() and folder.name.startswith("call-") else {}
-    cap = arguments.cap or engine.get("most_deviation") or PAPERS["cap"]
-    wanted = arguments.wanted or engine.get("wanted") or PAPERS["wanted"]
-    allowed = arguments.allowed or engine.get("allowed") or PAPERS["allowed"]
+    cap = arguments.cap or engine.get("most_deviation") or OLD_EXPORT["cap"]
+    wanted = arguments.wanted or engine.get("wanted") or OLD_EXPORT["wanted"]
+    allowed = arguments.allowed or engine.get("allowed") or OLD_EXPORT["allowed"]
     steps = set(arguments.steps.split(","))
     families = arguments.families.split(",")
     say(f"P: cap {cap}, window {wanted} ± {allowed}{', sound' if arguments.sound else ''}; steps {sorted(steps)}")

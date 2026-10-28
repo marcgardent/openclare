@@ -9,7 +9,7 @@ held turns (dimension left, Euclid steps, largest entry of the basis).
     python3 docs/research/turns-of-a-t-mesh/experiments/lattice.py [<export>] [--seconds 120]
 
 The elimination of a way stops after --seconds (the coefficients can grow:
-on the papers' body, way 7 did not finish); the summary says so. Seconds to
+on the drafts' old export, way 7 did not finish); the summary says so. Seconds to
 minutes a way. Writes results/lattice.json.
 """
 

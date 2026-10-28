@@ -6,13 +6,14 @@
         [--openclare target/release/openclare] [--commit <hash>] [--engine as-is|before-cuts] \\
         [--source bench/out/human_male/source.obj] [--quads 10590] [--preset organic] [--out <dir>]
 
-`--engine as-is` is the engine of the commit as a user gets it; `before-cuts`
-sets the experiment options that give back the stages of the engine whose
-export the papers' first version used (ALGORITHM.md, M6, "Experiment
-options"): no rounds of constraint generation, no active set, no floor of
-the deviation cap, no fold guard, no other draws. The rest of the engine is
-that of the commit, so this is not the old engine (field, T-mesh and work
-mesh have changed since).
+`--engine as-is` (the default) is the engine of the commit as published, the
+one the papers' numbers are made on. `before-cuts`, an aside for comparison
+with the drafts' first export, sets the experiment options that switch off
+the stages the engine of that export did not have (ALGORITHM.md, M6,
+"Experiment options"): no rounds of constraint generation, no active set, no
+floor of the deviation cap, no fold guard, no other draws. The rest of the
+engine is that of the commit, so this is not the old engine (field, T-mesh
+and work mesh have changed since).
 
 Writes, under --out (default scratch/data-package/turns-of-a-t-mesh/male-body,
 or male-body-before-cuts): `export/` (the engine's files), `mesh.obj`,

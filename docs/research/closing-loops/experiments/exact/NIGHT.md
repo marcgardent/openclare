@@ -2,15 +2,17 @@
 
 What a night run executes for Section `sec:exact`, in order, from the root of the main checkout on
 the commit the paper cites, on an idle machine, after `cargo build --release` and after stage 1
-(the exports) of `../../../turns-of-a-t-mesh/experiments/NIGHT.md`, whose stages 3 and 4 make the
-numbers this section shares with the turns paper (census, conflicts, `forced.py`).
+(the export) of `../../../turns-of-a-t-mesh/experiments/NIGHT.md`, whose stages 3 and 4 make the
+numbers this section shares with the turns paper (census, conflicts, `forced.py`). As there, the
+numbers are made on the engine of v0.7.0 as published (the `as-is` export); the `before-cuts`
+export is only an aside of the turns paper's night, for comparison with the drafts' first export.
 
 ```sh
 BIN=target/release/openclare
 FROZEN=e13fadb
 B=docs/research/turns-of-a-t-mesh/experiments
 A=docs/research/closing-loops/experiments/exact
-E=scratch/data-package/turns-of-a-t-mesh/male-body-before-cuts   # the papers' export
+E=scratch/data-package/turns-of-a-t-mesh/male-body   # the papers' export (the published engine)
 SOURCE=scratch/torso/source.obj
 export HIGHS_THREADS=1
 ```
@@ -48,7 +50,7 @@ rounded rings and of the local search.
 
 ```sh
 ulimit -S -v 24000000
-python3 $A/remesh.py --openclare $BIN --commit $FROZEN --engine before-cuts --source $SOURCE
+python3 $A/remesh.py --openclare $BIN --commit $FROZEN --engine as-is --source $SOURCE
 ulimit -S -v 16000000
 ```
 

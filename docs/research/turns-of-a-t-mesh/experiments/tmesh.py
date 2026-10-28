@@ -5,8 +5,8 @@ matrices, its linear programs, and the record of how a summary was made.
 An export is the directory the engine writes with `OPENCLARE_EXPORT_TURNS=<dir>`
 (ALGORITHM.md, M6, "Experiment options"): for each T-mesh `call-<name>.json`,
 `call-<name>.txt`, and in `call-<name>/` a `way-<k>.json` and a
-`way-<k>-helices.json` per way of closing. The export the papers' first
-version used (the hook of branch `rd-exact`, engine before commit `c8bf2be`)
+`way-<k>-helices.json` per way of closing. The drafts' old export (male6:
+the hook of branch `rd-exact`, engine before commit `c8bf2be`)
 has the way files directly in the directory, without call files; both are
 read. A model in several pieces has a T-mesh per piece: the one with the most
 arcs is taken unless `--call` names another.
@@ -45,8 +45,9 @@ import certify  # noqa: E402
 import common  # noqa: E402
 
 DATA = ROOT / "scratch" / "data-package"
-# Where export.py writes the export of the male body by default (the engine
-# as it is; `male-body-before-cuts` with the stages of the papers' export).
+# Where export.py writes the export of the male body by default: the engine
+# as published, the papers' export (`male-body-before-cuts`, the aside for
+# comparison with the drafts' first export, is never a default).
 EXPORT = DATA / "turns-of-a-t-mesh" / "male-body"
 THREADS = int(os.environ.get("HIGHS_THREADS", "1"))
 
@@ -304,7 +305,7 @@ class Way(certify.Way):
         return float(np.abs(np.asarray(x, float) - self.target).mean())
 
     def weighted_deviation(self, x):
-        """Σ |x - t| / (t + 1), the objective of the papers' first programs."""
+        """Σ |x - t| / (t + 1), the objective of the drafts' first programs."""
         return float((np.abs(np.asarray(x, float) - self.target) / (self.target + 1.0)).sum())
 
     def lean(self, k):

@@ -28,7 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "turns-of-a-t-mesh"
 import tmesh  # noqa: E402  (first: it sets the threads of the linear algebra)
 
 import numpy as np  # noqa: E402
-from forced import PAPERS, Family  # noqa: E402
+from forced import OLD_EXPORT, Family  # noqa: E402
 from scipy.optimize import Bounds, LinearConstraint  # noqa: E402
 from scipy.sparse import coo_matrix, diags, hstack  # noqa: E402
 
@@ -50,9 +50,9 @@ def main():
     folder, (way,) = tmesh.load(arguments)
     call = folder.parent / f"{folder.name}.json"
     engine_data = json.loads(call.read_text()) if call.exists() and folder.name.startswith("call-") else {}
-    cap = arguments.cap or engine_data.get("most_deviation") or PAPERS["cap"]
-    wanted = arguments.wanted or engine_data.get("wanted") or PAPERS["wanted"]
-    allowed = arguments.allowed or engine_data.get("allowed") or PAPERS["allowed"]
+    cap = arguments.cap or engine_data.get("most_deviation") or OLD_EXPORT["cap"]
+    wanted = arguments.wanted or engine_data.get("wanted") or OLD_EXPORT["wanted"]
+    allowed = arguments.allowed or engine_data.get("allowed") or OLD_EXPORT["allowed"]
     forms = [s["shift"] for s in way.strips(0.12)] if arguments.family == "strips" else tmesh.held_forms(way)
     family = Family(way, arguments.family, forms, cap, wanted, allowed, arguments.sound)
     n, m, R = family.n, family.m, arguments.radius

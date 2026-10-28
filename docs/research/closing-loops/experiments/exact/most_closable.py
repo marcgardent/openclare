@@ -21,7 +21,7 @@ Then, for the turns found closable together:
         [--seconds 300] [--whole 600] [--whole-most 900]
 
 The files for the engine go under --out/call-<name>/ (the T-mesh's name; an
-export without one, as the papers' first, cannot be given back to today's
+export without one, as the drafts' old export, cannot be given back to today's
 engine). Seconds a way for the table; --whole and --whole-most are long
 (their limit a way, one thread). Writes results/most_closable.json.
 """

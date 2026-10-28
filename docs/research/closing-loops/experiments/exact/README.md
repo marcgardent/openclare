@@ -6,9 +6,11 @@ Appendix `app:provenance` that point to it. They read the export of the male bod
 turns paper reads too, with its module `tmesh.py`
 (`../../../turns-of-a-t-mesh/experiments/`, whose README says how an export is made and read).
 
-> **No number here yet.** The scripts were checked on 2026-10-28 against the export of the papers'
-> first version (below, "Checked"); those runs are not kept. The scripts are run on the commit the
-> paper will cite (`NIGHT.md`), and their summaries then go to `results/`.
+> **No number here yet.** The scripts were checked on 2026-10-28 against the drafts' old export
+> (`male6`, below, "Checked"); those runs are not kept. The paper's numbers are made on the engine
+> of v0.7.0 as published (the `as-is` export and `remesh.py --engine as-is`, `NIGHT.md`), and their
+> summaries then go to `results/`. Where an example of the draft is not found on that engine, the
+> text is rewritten from what the scripts find.
 
 The conventions are those of `../README.md` and of the turns paper's scripts: run from the root of
 a clone; the export as first argument (default `scratch/data-package/turns-of-a-t-mesh/male-body`);
@@ -54,8 +56,8 @@ and each summary records it with the versions, the machine and its load.
   the zeros as upper bounds (and, with `--without-zeros`, without); the least plain mean deviation;
   the most rings closable within `--subset-cap` 0.40 with the number of quads held to first order
   (a program stopped after `--subset-seconds`; `--subset greedy` for the greedy choice the paper's
-  text describes: on the papers' export it keeps 140, the program 181 within 90 s and the paper's
-  190 within its time).
+  text describes: on the drafts' old export `male6` it keeps 140, the program 181 within 90 s and
+  the draft's 190 within its time).
 - `lattice_rounding.py`: the integer basis of the whole lengths closing the subset with its
   implicit zeros imposed first, its LLL reduction (plain inner product), Babai's nearest plane,
   and the program over the reduced basis (Aardal, Hurkens and Lenstra) with the number of quads
@@ -75,13 +77,15 @@ and each summary records it with the versions, the machine and its load.
 
 ## What the scripts cannot make again, and why
 
-- **The engines.** The paper's engine of the export (branch `rd-exact`, before `c8bf2be`) and the
-  engine of the end-to-end experiment (branch `complete-helices` with the hooks of branch
-  `maxclose-rd`) are not rebuilt. The hooks of both branches are on main since DT-089 (ALGORITHM.md,
-  M6, "Experiment options", last paragraph), and the max-closable selection is the slow quality
-  mode (#79, `RingSelector`, HiGHS in `crates/openclare-highs`). `export.py --engine before-cuts`
-  and `remesh.py --engine before-cuts` switch off the stages the export's engine did not have, on
-  today's engine: the numbers come back with a new T-mesh, not the old ones.
+- **The drafts' engines.** The engine of the draft's export (branch `rd-exact`, before `c8bf2be`)
+  and the engine of its end-to-end experiment (branch `complete-helices` with the hooks of branch
+  `maxclose-rd`) are not rebuilt: the paper now describes the published engine of v0.7.0, and its
+  numbers are made on it (`as-is`). The hooks of both branches are on main since DT-089
+  (ALGORITHM.md, M6, "Experiment options", last paragraph), and the max-closable selection is the
+  slow quality mode (#79, `RingSelector`, HiGHS in `crates/openclare-highs`). `export.py --engine
+  before-cuts` and `remesh.py --engine before-cuts` switch off the stages the draft's export engine
+  did not have, on today's code, only to compare with that export: they give a new T-mesh, not the
+  old numbers.
 - **The paragraph "Closing the most rings, end to end"**: the slow mode adds its lengths to the
   candidates, with the corridor inequalities always on. What it cannot run: the selector's lengths
   in place of the engine's (4.77 % and 5.08 %), three lengths drawn at random within the cap and
@@ -98,7 +102,7 @@ and each summary records it with the versions, the machine and its load.
 
 ## Long runs
 
-| Script | Limit (one HiGHS thread) | On the papers' export, under load |
+| Script | Limit (one HiGHS thread) | On the drafts' old export (`male6`), under load |
 |---|---|---|
 | `relaxation.py` | — | 1.4 s |
 | `most_closable.py` | `--seconds 300`; `--whole 600` and `--whole-most 900` a way | the table in 14 s; `--whole` hit 100 s in way 2 under load with 1 of 52 held turns left shifted |
@@ -110,7 +114,8 @@ and each summary records it with the versions, the machine and its load.
 
 ## Checked on 2026-10-28
 
-On the export of the papers' first version (see the turns paper's README), the scripts give back:
+On the drafts' old export (`male6`, see the turns paper's README), the scripts give back the
+draft's numbers:
 Table `tab:exact` entirely (`most_closable.py`); the bounds in the way, one arc (1937) in ways 0, 2
 and 4 (`relaxation.py`); 230, 168, 222, 218 and 109, the 171 implicit zeros, the 23 distinct
 certificates, whole lengths in under a second once the zeros are given, and 0.817 (`rings.py`);

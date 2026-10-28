@@ -129,7 +129,7 @@ def strips_parity(way, tally):
 
 def annuli(L, simple, tally, limit=None):
     """Pairs of disjoint simple turns bounding an annulus (as parity.py of the
-    papers' first version selected them)."""
+    drafts' first scripts selected them)."""
     x = L.whole
     for t1, t2 in itertools.islice(itertools.combinations(sorted(simple), 2), limit):
         small1 = min(simple[t1].values(), key=len)
@@ -163,7 +163,7 @@ def annuli(L, simple, tally, limit=None):
 
 def parallel_pairs(L, tally, limit=None):
     """Pairs of disjoint simple turns splitting the singular vertices alike
-    (cylinders.py of the papers' first version): equal handed shifts."""
+    (cylinders.py of the drafts' first scripts): equal handed shifts."""
     part = {}
     for tid in range(len(L.turns)):
         if L.crossings_between(tid, tid):
@@ -185,7 +185,7 @@ def parallel_pairs(L, tally, limit=None):
 
 def dislocations(L, simple_sides, tally, found, limit=None):
     """Annuli holding exactly one vertex of valence 3 and one of valence 5
-    (annuli35.py of the papers' first version), each pair of shifts once."""
+    (annuli35.py of the drafts' first scripts), each pair of shifts once."""
     seen = set()
     for t1, t2 in itertools.islice(itertools.combinations(sorted(simple_sides), 2), limit):
         candidates = [a - b for a in simple_sides[t1] for b in simple_sides[t2] if b <= a and len(a - b) == 2]

@@ -5,8 +5,10 @@ whole lengths worked out outside it, and each mesh is measured. Table
 `tab:rounding` and the meshes of paragraphs "Whole lengths are not what is
 missing" and "The heuristic leaves most of the gap".
 
-Every run sets the options of --engine (`before-cuts` by default: the stages
-of the engine the section describes, as `export.py` sets them) and exports
+Every run sets the options of --engine (`as-is` by default: the engine as
+published, the one the papers' numbers are made on; `before-cuts` switches
+off the stages the engine of the drafts' first export did not have, as
+`export.py` does, for comparison only) and exports
 its turns, from which the summary reads, way by way, the turns closed in
 real lengths (`kept`) and those still shifted at the way's whole lengths,
 and, for the lengths ranked first, their quads, deviation and the strips of
@@ -14,8 +16,8 @@ quads they make (ways round, shifted). The variants:
 
 - `engine`: the engine as the options give it;
 - `projection-clamped`: the projection cuts lengths below their floor off
-  afterwards (`OPENCLARE_NO_ACTIVE_SET`; the same as `engine` for
-  `before-cuts`);
+  afterwards (`OPENCLARE_NO_ACTIVE_SET`; the same as `engine` with
+  `--engine before-cuts`);
 - `active-set-floor-0`, `active-set-floor-half`: the active set, with the
   floor 0 or half the real length (`OPENCLARE_ACTIVE_SET_FLOOR=0.5`);
 - `aimed`: the search aims at the lengths of the linear program
@@ -27,7 +29,7 @@ quads they make (ways round, shifted). The variants:
 - `local-search`: the lengths of local_search.py.
 
     python3 docs/research/closing-loops/experiments/exact/remesh.py --openclare <binary> --commit <hash> \\
-        [--engine before-cuts] [--variants engine,active-set-floor-0,...] [--source <male body>]
+        [--engine as-is] [--variants engine,active-set-floor-0,...] [--source <male body>]
 
 A variant whose files are missing is skipped and said so. One to three
 minutes a run on the male body (the whole machine). Writes the runs under
@@ -122,7 +124,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--openclare", type=Path, default=tmesh.common.OPENCLARE, help="the openclare binary")
     parser.add_argument("--commit", help="the commit the binary was built from (default: this clone's)")
-    parser.add_argument("--engine", choices=sorted(export.ENGINES), default="before-cuts")
+    parser.add_argument("--engine", choices=sorted(export.ENGINES), default="as-is")
     parser.add_argument("--variants", default=",".join(VARIANTS))
     parser.add_argument("--source", type=Path, default=tmesh.ROOT / "bench" / "out" / "human_male" / "source.obj")
     parser.add_argument("--quads", type=int, default=10590)
