@@ -2,7 +2,8 @@
 
 Scripts that make again every applied number and figure of the paper (`../paper.tex`, Section
 `sec:experiments`, Table `tab:dev`, Figures `fig:overview` and `fig:closeups`, Appendix
-`app:provenance`), on one engine given to them. Section `sec:exact` is not covered here.
+`app:provenance`), on one engine given to them. Section `sec:exact` has its own scripts, in
+`exact/` (its README and NIGHT.md).
 
 > **No number here yet.** The scripts were run once on the engine of f992bac to check that they
 > work; those numbers are not kept, the engine having changed since (version 0.7.0). The scripts

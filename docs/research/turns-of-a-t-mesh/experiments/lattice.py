@@ -58,8 +58,9 @@ def main():
         rows.append({"way": way.number, "arcs": way.n, "balances": balances, "held_turns": held})
         print(f"way {way.number}: balances rank {balances['rank']}, lattice {balances['dimension']}, divisors "
               f"{balances['divisors']}, Euclid {balances['euclid_steps']}; with the {held['turns_imposed']} of "
-              f"{held['of']} held turns: dimension {held['dimension']}, Euclid {held['euclid_steps']}, largest entry "
-              f"{held['largest_entry_digits']} digits{'' if held['finished'] else ' (stopped)'} ({held['seconds']} s)", flush=True)
+              f"{held['of']} held turns: dimension {held['dimension']}, Euclid {held['euclid_steps']}, largest "
+              f"entry {held['largest_entry_digits']} digits{'' if held['finished'] else ' (stopped)'} "
+              f"({held['seconds']} s)", flush=True)
     summary = {
         "experiment": "the lattice of whole balanced lengths and of the held turns",
         **tmesh.record(arguments, folder, ways, started, clock, seconds_per_way=arguments.seconds),

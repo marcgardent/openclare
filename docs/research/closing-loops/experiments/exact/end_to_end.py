@@ -94,6 +94,9 @@ def read_log(path):
         elif kind == "round":
             count["rounds"] += 1
             count["rounds returning the lengths they started from"] += line.rstrip().endswith("same as start true")
+            spirals = re.search(r"spirals ([0-9.]+) \(engine ([0-9.]+)", line)
+            if spirals:
+                count["rounds spiralling more than the engine"] += float(spirals.group(1)) > float(spirals.group(2))
         elif kind == "piece":
             count["pieces"] += 1
             count["pieces whose first lengths are the selector's"] += "first selector" in line
@@ -141,7 +144,8 @@ def main():
         twelve = [row for row in rows if row["model"] != MALE[0]]
         logs = Counter()
         for job in jobs:
-            logs.update(read_log(directory / f"{job[0]}.slow.log"))
+            if job[1] != MALE[0]:
+                logs.update(read_log(directory / f"{job[0]}.slow.log"))
         out[name] = {
             "flags": flags, "environment": environment,
             "runs": len(twelve), "valid": sum(1 for row in twelve if row["metrics"] and row["metrics"]["valid"]),
@@ -154,11 +158,13 @@ def main():
                         for row in rows],
             "male_body": next(({key: row["metrics"].get(key) for key in common.MEASURES}
                                for row in rows if row["model"] == MALE[0] and row["metrics"]), None),
+            "male_body_slow_log": read_log(directory / f"{MALE[0]}-{MALE[2]}.slow.log")
+            if arguments.male_body else None,
         }
         mean = out[name]["mean"]
-        print(f"{name}: spiral edges {100 * mean['loop_edges_spiral']:.2f}%, closed {100 * mean['loop_edges_closed']:.1f}%, "
-              f"mean distance {1000 * mean['mean_distance']:.3f} per mille, {out[name]['valid']}/{len(twelve)} valid; "
-              f"{dict(logs)}", flush=True)
+        print(f"{name}: spiral edges {100 * mean['loop_edges_spiral']:.2f}%, "
+              f"closed {100 * mean['loop_edges_closed']:.1f}%, mean distance {1000 * mean['mean_distance']:.3f} "
+              f"per mille, {out[name]['valid']}/{len(twelve)} valid; {dict(logs)}", flush=True)
     summary = {
         "experiment": "an exact selection of the rings, end to end (the slow quality mode)",
         **common.header(arguments, started, [round(x, 2) for x in os.getloadavg()], time.monotonic() - clock),
