@@ -45,8 +45,9 @@ import certify  # noqa: E402
 import common  # noqa: E402
 
 DATA = ROOT / "scratch" / "data-package"
-# Where export.py writes the export of the male body by default.
-EXPORT = DATA / "turns-of-a-t-mesh" / "export"
+# Where export.py writes the export of the male body by default (the engine
+# as it is; `male-body-before-cuts` with the stages of the papers' export).
+EXPORT = DATA / "turns-of-a-t-mesh" / "male-body"
 THREADS = int(os.environ.get("HIGHS_THREADS", "1"))
 
 
