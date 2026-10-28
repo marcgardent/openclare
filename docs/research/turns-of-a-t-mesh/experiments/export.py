@@ -38,6 +38,30 @@ ENGINES = {
                     "OPENCLARE_NO_DEVIATION_FLOOR": "1", "OPENCLARE_NO_FOLD_GUARD": "1",
                     "OPENCLARE_EXTRA_DRAWS": "0"},
 }
+MEASURES = ("valid", "quads", "loop_edges_spiral", "loops_spiral", "loop_edges_closed", "mean_distance",
+            "hausdorff", "angle_deviation_mean", "irregular_vertices", "inverted_faces")
+
+
+def run(binary, source, quads, preset, options, out, memory=tmesh.common.MEMORY_LARGE, flags=()):
+    """`openclare remesh` with the experiment options `options` (the turns
+    exported to out/export), then `openclare measure`: (seconds, measure),
+    the log in out/run.log."""
+    out.mkdir(parents=True, exist_ok=True)
+    environment = {key: value for key, value in os.environ.items() if not key.startswith("OPENCLARE_")}
+    environment.update({"OPENCLARE_EXPORT_TURNS": str((out / "export").resolve()), **options})
+    command = [str(Path(binary).resolve()), "remesh", str(Path(source).resolve()), str(out / "mesh.obj"),
+               "--preset", preset, "--quads", str(quads), *flags]
+    clock = time.monotonic()
+    with open(out / "run.log", "w") as log:
+        done = subprocess.run(command, env=environment, stdout=log, stderr=subprocess.STDOUT,
+                              preexec_fn=tmesh.common.capped(memory))
+    seconds = time.monotonic() - clock
+    if done.returncode != 0:
+        raise RuntimeError(f"the engine failed ({done.returncode}): see {out / 'run.log'}")
+    tmesh.common.OPENCLARE = Path(binary).resolve()
+    measure = tmesh.common.measure(source, out / "mesh.obj", quads, memory)
+    (out / "measure.json").write_text(json.dumps(measure, indent=1) + "\n")
+    return seconds, measure
 
 
 def main():
@@ -60,21 +84,9 @@ def main():
         raise SystemExit(f"no engine at {arguments.openclare}: cargo build --release, or --openclare <binary>")
     tmesh.common.OPENCLARE = arguments.openclare.resolve()
     commit = arguments.commit or tmesh.common.commit()
-    out.mkdir(parents=True, exist_ok=True)
-    environment = {key: value for key, value in os.environ.items() if not key.startswith("OPENCLARE_")}
-    options = {"OPENCLARE_EXPORT_TURNS": str((out / "export").resolve()), **ENGINES[arguments.engine]}
-    environment.update(options)
-    command = [str(arguments.openclare.resolve()), "remesh", str(arguments.source.resolve()), str(out / "mesh.obj"),
-               "--preset", arguments.preset, "--quads", str(arguments.quads)]
-    started, clock = tmesh.common.machine(), time.monotonic()
-    with open(out / "run.log", "w") as log:
-        done = subprocess.run(command, env=environment, stdout=log, stderr=subprocess.STDOUT,
-                              preexec_fn=tmesh.common.capped(arguments.memory))
-    seconds = time.monotonic() - clock
-    if done.returncode != 0:
-        raise SystemExit(f"the engine failed ({done.returncode}): see {out / 'run.log'}")
-    measure = tmesh.common.measure(arguments.source, out / "mesh.obj", arguments.quads, arguments.memory)
-    (out / "measure.json").write_text(json.dumps(measure, indent=1) + "\n")
+    started = tmesh.common.machine()
+    seconds, measure = run(arguments.openclare, arguments.source, arguments.quads, arguments.preset,
+                           ENGINES[arguments.engine], out, arguments.memory)
     folder, ways = tmesh.ways(out / "export")
     record = {
         "experiment": "export of the turns of the closing",
@@ -87,9 +99,7 @@ def main():
         "seconds": round(seconds, 1),
         "tmesh": folder.name,
         "ways": sorted(ways),
-        "measure": {key: measure.get(key) for key in ("valid", "quads", "loop_edges_spiral", "loops_spiral",
-                                                      "loop_edges_closed", "mean_distance", "hausdorff",
-                                                      "angle_deviation_mean", "irregular_vertices")},
+        "measure": {key: measure.get(key) for key in MEASURES},
     }
     tmesh.common.write_json(out / "record.json", record)
     print(f"{folder.name}: ways {sorted(ways)}, {measure.get('quads')} quads, spiral edges "
