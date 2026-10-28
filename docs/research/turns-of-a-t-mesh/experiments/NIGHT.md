@@ -51,6 +51,7 @@ python3 $B/lattice.py $E --seconds 600          # way 7 stops at 600 s
 python3 $B/conflicts.py $E                       # about 3 minutes
 python3 $B/pairs.py $E
 python3 $B/combs.py $E
+python3 $B/fox.py $E --relations 2              # about 6 minutes
 python3 $B/forced.py $E --steps bounds --summary $B/results/forced-bounds.json   # about 2 minutes
 ```
 
@@ -64,6 +65,7 @@ python3 $B/forced.py $E --whole-lower --seconds 900 --budget 1800 --jobs 4    # 
 python3 $B/forced.py $E --ways 2 --families held --sound --seconds 900 \
     --summary $B/results/forced-sound.json --out $D/forced-sound              # under an hour
 python3 $B/holonomy.py $E --jobs 4                                              # about an hour
+python3 $B/strict.py $E                                                         # 30 to 60 minutes
 # The certificates of Table tab:iis, with the rows conflicts.py found, for the Lean check: four
 # processes of two ways each (certify.py takes 20 to 70 minutes of processor time in all).
 for part in "0 1" "2 3" "4 5" "6 7"; do
@@ -84,6 +86,7 @@ python3 $B/census.py $N --out $D/as-is/census --summary $R/census.json
 python3 $B/conflicts.py $N --out $D/as-is/conflicts --summary $R/conflicts.json
 python3 $B/pairs.py $N --table $R/conflicts.json --out $D/as-is/pairs --summary $R/pairs.json
 python3 $B/combs.py $N --table $R/conflicts.json --out $D/as-is/combs --summary $R/combs.json
+python3 $B/fox.py $N --table $R/conflicts.json --out $D/as-is/fox --summary $R/fox.json
 python3 $B/lattice.py $N --seconds 600 --out $D/as-is/lattice --summary $R/lattice.json
 python3 $B/forced.py $N --steps bounds --out $D/as-is/forced --summary $R/forced-bounds.json
 ```
@@ -97,6 +100,7 @@ python3 $B/forced.py $N --steps bounds --out $D/as-is/forced --summary $R/forced
 | 3. quick scripts | 10 minutes | high |
 | 4. `forced.py` | 1 to 4 hours | high (Table `tab:forced`) |
 | 4. `holonomy.py` | 1 hour | medium |
+| 4. `strict.py` | 30 to 60 minutes | medium |
 | 4. `certify.py` and the Lean check again | 1 hour | medium |
 | 4. `forced.py --sound` | under an hour | low |
 | 5. as-is | 15 minutes | low |

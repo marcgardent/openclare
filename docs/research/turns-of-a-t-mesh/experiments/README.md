@@ -2,8 +2,8 @@
 
 Scripts that make again every measured statement of the paper (`../paper.tex`) that comes from the
 export of the male body: its paragraph "Data", the paragraphs "On the male body" of Sections "Turns
-and singularities", "Any combination of turns" and "Combs", Tables `tab:iis`, `tab:pairs` and
-`tab:forced`, and the numbers of Section "Whole lengths and size". The same export is the system of
+and singularities", "Conflicts between turns", "Any combination of turns" and "Combs", Tables
+`tab:iis`, `tab:pairs` and `tab:forced`, and the numbers of Section "Whole lengths and size". The same export is the system of
 Section "An exact look at the closing system" of the closing-loops paper, whose scripts
 (`../../closing-loops/experiments/exact/`) read it with the module here.
 
@@ -39,6 +39,8 @@ only on the same machine under the same load: the long runs are for an idle mach
 | The certificates of `tab:iis` and τ_P(H) checked by Lean | `python3 docs/research/turns-of-a-t-mesh/lean/Check/certify.py <export>/export/call-*/way-[0-9].json --claims scratch/data-package/turns-of-a-t-mesh/conflicts/claims.json --out <export>/export/certificates.json`, then `make lean-check EXPORT=<export>/export` | Lean's report (`Check/README` of `../lean`) |
 | Table `tab:pairs` (configurations A to F: windings, staircases, mechanisms); "A separatrix that winds" (separatrix 964 of vertex 246, 6.994 long, δ = ℓ1920 + ℓ1921 = 0.305, ℓ1920 ≡ ℓ1937); "Larger conflicts": the right eye's staircase of three arcs through arc 619, the primitive multipliers (7, 5, 2, 3) at the left hand | `python3 $B/pairs.py <export>` (after `conflicts.py`) | `results/pairs.json` |
 | Section "Combs", "On the male body": Lemma "Combs" on all 2,069 arcs, 2,046 with two distinct feet of odd valence, arc 1676 on the separatrix connection of 204 and 210; the odd part of every certificate a cycle of the graph of feet | `python3 $B/combs.py <export>` (after `conflicts.py`) | `results/combs.json` |
+| Section "Any combination of turns", "On the male body": every turn a word and its translation by Proposition "Fox–Burgers formula" (1,299 turns); Corollary "Checkerboard rule for any combination" on all turns and on the sets of `tab:iis`; the four turns with w18 = w22 + w101 + w65 whose translations break the relation in every frame; the twisted windings 10 ℓ1805 at the left hand; Section "Combs": the twisted homology of dimension 518, the pairing of rank 517, kernel 1 | `python3 $B/fox.py <export> --relations 2` (after `conflicts.py`) | `results/fox.json` |
+| Section "Combs", "Question ... read loosely": read strictly, E and F separated at exact balanced lengths (−2.9967, −1.9973), the eyes separated, the left hand inside the cone | `python3 $B/strict.py <export>` (after `conflicts.py`) | `results/strict.json` |
 | Section "Whole lengths and size": dimension 517, one row of greatest common divisor 2; lattices of dimension 363 to 469 with the held turns, Euclid's steps in ways 4, 5 and 6 | `python3 $B/lattice.py <export> --seconds 600` | `results/lattice.json` |
 | Table `tab:forced`, columns "bounds", "bounds, cap", "cap, size, whole"; "exactly 1, 5, 1, 4, 1, 6, 1 and 9"; in way 7 nine turns with eight of 21 cores disjoint; at most 66 s per family; exactly one in ways 0 and 2 with the cap and the window, and the whole lengths that show it; way 3: 4 in real lengths, at least 5 in whole; the optimum 4 for way 2 keeping open every arc the engine keeps open | `python3 $B/forced.py <export> --whole-lower --jobs 4`; `python3 $B/forced.py <export> --ways 2 --families held --sound --summary $B/results/forced-sound.json` | `results/forced.json`, `results/forced-sound.json`, whole lengths under `<out>` |
 | Paper A, Section "An exact look", and the rounding gap 0.399 / 0.536 quoted in "Whole lengths and size" | `../../closing-loops/experiments/exact/README.md` | |
@@ -85,6 +87,23 @@ only on the same machine under the same load: the long runs are for an idle mach
 - `combs.py`: the feet of every arc (the vertices where the traces perpendicular to it at its ends
   start), the comb lemma checked by developing the path foot–arc–foot, and, for every certificate
   of `conflicts.py`'s table, the boundary modulo 2 of its odd part on the graph of feet.
+- `fox.py`: the one chart of the surface cut along a tree of the nodes, the jumps across the tree
+  written as words by the recursion of Proposition "Burgers sums" (a) (its conventions tried, one
+  kept only if it holds at every node, as `../lean/Check/develop.py` does), each turn's word, its
+  holonomy and Fox derivatives checked against the walk; the colours of the nodes and the
+  checkerboard rule for every turn and every set (windings of Σ u γ with the turns as walked,
+  zero on the region with the most nodes); the twisted windings of each set of at most
+  `--largest` turns, the formula, and the 3–5 pairs whose contributions are a multiple of one arc
+  length; the rank of the pairing on the twisted cycles (a basis of the balanced lengths, floating
+  point); with `--relations`, a least-L1 relation among the windings of each turn and the others
+  (whole coefficients, at most six terms), tested on the translations in every choice of
+  quarter-turn frames.
+- `strict.py`: the separation by shortest walks of the docstring, with the forms of the strict
+  reading (diagonal walks between odd vertices and closed, closed axial walks, axial walks of a
+  winding separatrix; `--loose` adds axial walks between two odd vertices, weight two), for the
+  non-negative representative of least total of each set's certificate; a separating point made
+  exact (free arcs rounded, the others solved in rational arithmetic) and checked again in
+  integer arithmetic.
 - `lattice.py`: the balances, then the held turns, eliminated in whole numbers per way, stopped
   after `--seconds` (in way 7 of the papers' body the coefficients grow without end).
 - `forced.py`: τ_P(H) by implicit hitting sets for the bounds alone (exact), with the cap (exact or
@@ -107,15 +126,11 @@ only on the same machine under the same load: the long runs are for an idle mach
   their own; on the papers' export they found 10,731 and 10,638 quads, 0.430 and 0.386.
 - **Intervals.** The ranges of `tab:forced` depend on the time limits and on the machine; the paper
   says "within the time limit (120 to 1,800 seconds)". The night fixes them (`NIGHT.md`).
-- **Not scripted here.** The paragraph "On the male body" of Section "Any combination of turns"
-  beyond the formula on every turn (which `make lean-check` checks: "Fox jumps, turns"):
-  Corollary "Checkerboard rule for any combination" on all turns and on the first 14 sets of
-  `tab:iis`, the four turns with w18 = w22 + w101 + w65; the twisted windings 10 ℓ1805 at the left
-  hand; the twisted homology of dimension 518 and the pairing of rank 517; and the strict reading
-  of Question "Are conflicts sums of local dislocations?" (E and F at −2.9967 and −1.9973, the
-  eyes separated, the left hand inside the cone). Their scripts are in the author's working files
-  (`theory/fox.py`, `vector_relation.py`, `theory-conj2/kernel.py`, `strict.py`, `graphs.py`) and
-  are to be ported like the others.
+- **The relation of windings.** `fox.py --relations K` finds the K first relations among the
+  winding numbers of single turns that the translations break, in the order of the turns; which
+  four turns it names, and with which coefficients, depends on the export (on the papers' it
+  names first turn 18 of way 0 and turns 22, 101 and 65 of ways 0, 4 and 5: the paper's
+  w18 = w22 + w101 + w65).
 - **Other models.** Section "Borders and handles" (Suzanne, Jerry, Bob, part, cage, a dome; the
   314 and 586 sides holding a border, the 1,076 sides, the 660 turns, the 40 collars, Bob's pairs),
   the 40 random graphs of the reduction of Theorem "Choosing the turns is NP-hard" and the
@@ -134,6 +149,8 @@ Times on an Intel Core i7-7700K (4 cores, 8 threads, 2017, 62 GB), loaded by oth
 | `conflicts.py` | about 2 minutes for the eight ways (way 7: 50 s) |
 | `lattice.py` | seconds for ways 0 to 6; way 7 stops at `--seconds` |
 | `holonomy.py --no-annuli` | 2.5 minutes for the eight ways; the pairs of turns about 1 minute per 400 pairs: about an hour more for all eight ways (with `--jobs 4`, a quarter of that) |
+| `fox.py` | 10 to 18 s a way; `--relations` adds about 4 minutes (the windings of every turn, then a linear program each) |
+| `strict.py` | 8 s (configuration A, in the cone) to 75 s (F, separated) a set; the sets of four and more, minutes each |
 | `forced.py --steps bounds` | 75 s for the nine families (way 7: 45 s) |
 | `forced.py` (cap and size) | up to `--budget` (1,800 s) a family for the cap and up to 6 × `--seconds` (900 s) for the size: hours; ways 0 and 2 take 15 s |
 
@@ -149,7 +166,12 @@ multipliers, bounded arcs and irreducibility (the last row closes without each o
 the Lean check found), the wrist and the right eye (`conflicts.py`); the six configurations of
 `tab:pairs`, with the same singular vertices, staircases, lengths and mechanisms, the winding
 separatrix of the wrist, the right eye's staircase and the left hand's multipliers (`pairs.py`);
-the comb lemma, 2,046, arc 1676 and the odd parts (`combs.py`); the dimensions 517 and 363 to 469
+the comb lemma, 2,046, arc 1676 and the odd parts (`combs.py`); the Fox–Burgers formula and the
+checkerboard rule on all 1,299 turns and on every set of the table (the set
+of 15 turns included), the twisted windings 10 ℓ1805 at the left hand, 518 and 517 (`fox.py`), and
+the relation w18 = w22 + w101 + w65 (`relations` of `fox.py`, run on windings read from a cache to
+stay within today's time); E and F separated at −2.9967 and −1.9973 in exact arithmetic, and A
+inside the cone (`strict.py`); the dimensions 517 and 363 to 469
 and Euclid's steps (`lattice.py`); the column "bounds" of `tab:forced` and its 21 cores, eight
 disjoint, in way 7; exactly one with the cap and the window in ways 0 and 2; at least 5 in whole
 lengths in way 3 (`forced.py`, short limits). Not run: the other cells of the columns with the cap
