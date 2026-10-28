@@ -122,6 +122,8 @@ changement, de marches de réparation et de passes de génération de
 contraintes sur les bandes du maillage, et gardons le candidat qui a le moins
 d'arêtes en spirale, comptées par un test qui distingue les hélices des
 boucles fermées, ouvertes et de bord. Sur douze modèles, à trois budgets
+% RERUN v0.7.0: 4.65% and 1.6% come from engines without the twelve other
+% draws; rerun the twelve models at three budgets and the male body on v0.7.0.
 voisins de 3\,000 quads, le moteur laisse 4,65\,\% des arêtes sur des boucles
 en spirale (16,7\,\% sans fermeture, en exécutions uniques d'un moteur
 antérieur)\,; sur les sept modèles que deux autres remailleurs libres
@@ -499,7 +501,8 @@ gagner. Le terme des arêtes vives est périodique en $x$, si bien que le coût
 n'est convexe que sur les arcs qui n'en traversent aucune\,; ailleurs,
 l'annulation des marches atteint un optimum local, non l'optimum d'un flot
 convexe. Les longueurs réelles $r_a$
-portent une perturbation fixe par arc d'au plus $0,5\,\%$, afin que des arcs
+portent une perturbation fixe par arc d'au plus $0,5\,\%$, tirée d'une
+graine, afin que des arcs
 de même longueur ne changent pas tous au même facteur d'échelle\,; l'échelle
 $\lambda$ est cherchée pour le nombre de quads demandé, et les arcs dont la
 longueur nulle casserait la structure du maillage, en réunissant deux
@@ -605,9 +608,18 @@ quads est dans la tolérance (ou pas plus loin du budget que celui de la
 recherche simple), si son écart absolu moyen aux longueurs réelles est d'au
 plus $\max(1,5\,d_0 ;\ d_0 + 0,2)$, où $d_0$ est celui de la recherche
 simple, et s'il n'éloigne pas les sommets des arêtes vives de la surface
-plus que la recherche simple, au-delà de ce que ferait le hasard. Les trois
-qui ont le moins de spirales sont gardés, dans cet ordre, puis les longueurs
-simples. Les variantes sont indépendantes et s'exécutent en parallèle. Après
+plus que la recherche simple, au-delà de ce que ferait le hasard. Si le
+candidat qui a le moins de spirales a encore des arêtes en spirale, douze
+autres tirages de la perturbation par arc, des douze graines suivantes, sont
+chacun quantifiés et fermés comme ci-dessus, et les longueurs fermées que
+chacun garderait rejoignent les candidats aux mêmes conditions, pourvu que
+leur écart aux longueurs réelles ne dépasse pas celui du candidat du moteur
+qui a le moins de spirales~: un tirage qui spirale moins peut s'écarter
+davantage de la forme. Entre candidats qui spiralent autant, ceux du moteur
+passent d'abord, puis les tirages dans l'ordre de leurs graines, si bien que
+le choix est déterministe. Les trois qui ont le moins de spirales sont
+gardés, dans cet ordre, puis les longueurs simples. Les variantes et les
+tirages sont indépendants et s'exécutent en parallèle. Après
 le maillage, si le premier candidat retourne une face par rapport à la
 surface, les autres sont maillés tour à tour jusqu'à ce que l'un ne le fasse
 pas, et le maillage qui a le moins de faces retournées, puis le moins de
@@ -655,7 +667,11 @@ La part d'arêtes sur des boucles en spirale est chaotique sur un modèle
 isolé~: un changement d'un pour cent du budget la déplace autant qu'un vrai
 changement de la méthode. Nous jugeons donc le moteur sur sa moyenne sur
 les douze modèles à trois budgets, $2\,970$, $3\,000$ et $3\,030$ quads ($36$
-exécutions). Au commit cité, le moteur laisse $4,65\,\%$ des arêtes sur des
+exécutions).
+% RERUN v0.7.0: these figures (4.65%, the three budgets, 102 loops, closed
+% loops, distance, corners) are of the engine before the other draws, not of
+% the cited commit; rerun the protocol of the appendix on v0.7.0.
+Au commit cité, le moteur laisse $4,65\,\%$ des arêtes sur des
 boucles en spirale ($2,89\,\%$, $4,97\,\%$ et $6,09\,\%$ aux trois budgets\,;
 $102$ boucles en spirale dans les $36$ maillages, tous valides), avec
 $36,7\,\%$ des arêtes sur des boucles fermées, une distance moyenne à la
@@ -688,6 +704,8 @@ s'ajoute à celle du dessus qu'approximativement~: entre la deuxième et la
 troisième ligne, la référence a bougé (commit \texttt{452b346}, de
 $10,1\,\%$ à $9,5\,\%$). Les passes de contraintes, l'ensemble actif et le
 plancher du plafond ne figurent pas dans le tableau\,; le moteur au commit
+% RERUN v0.7.0: the cited commit's figure over three budgets, and add the
+% other draws to the parts not in the table.
 cité donne $4,65\,\%$ sur trois budgets.}
 \label{tab:dev}
 \end{table}
@@ -697,6 +715,8 @@ Le dernier banc complet enregistré dans le dépôt (commit \texttt{5bc16c6},
 $3\,000$ quads\,; une exécution par modèle pour openclare et
 AutoRemesher~\cite{autoremesher}, la médiane de cinq graines pour
 QuadriFlow~\cite{huang2018quadriflow}, lancé via Blender) a utilisé un
+% RERUN v0.7.0: the gap to the cited commit now includes the twelve other
+% draws; restate both figures (or rerun the full bench on v0.7.0).
 moteur à quelques changements du moteur cité, changements qui donnent
 $4,54\,\%$ au lieu de $4,65\,\%$ sur les douze modèles à trois budgets. Les
 outils ne maillent pas les mêmes modèles~: QuadriFlow produit un maillage
@@ -913,8 +933,9 @@ ensemble actif, plancher à la moitié de la longueur réelle & 36 à 72 & --- &
 \caption{Corps masculin à $10\,590$ quads, moteur de l'export, une exécution
 chacun\,; le maillage garde la variante qui a le moins de spirales, si bien
 que sa part est celle d'une seule variante. Le moteur au commit cité utilise
-l'ensemble actif avec le plancher $0$, ainsi que les passes de contraintes
-et le plancher du plafond d'écart, que ce tableau n'inclut pas.}
+l'ensemble actif avec le plancher $0$, ainsi que les passes de contraintes,
+le plancher du plafond d'écart et les autres tirages, que ce tableau
+n'inclut pas.}
 \label{tab:rounding}
 \end{table}
 
@@ -1000,7 +1021,8 @@ une question ouverte.
 \paragraph{Fermer le plus d'anneaux, de bout en bout.}
 Nous avons mesuré ce qu'une sélection exacte apporte sur le banc, avec le
 moteur de la branche \texttt{complete-helices} (les passes de contraintes,
-sans le maillage de travail plus fin aux parois minces du commit cité~:
+sans le maillage de travail plus fin aux parois minces ni les autres tirages
+du commit cité~:
 $4,54\,\%$ d'arêtes en spirale sur les $36$ exécutions). Pour les longueurs
 que garde le moteur, un programme mixte-entier ferme autant qu'il le peut de
 ses bandes d'inclinaison inférieure à $0,12$, pondérées par leur longueur de
@@ -1018,7 +1040,8 @@ trouvées ne spiralent pas moins~: $4,77\,\%$ et $5,08\,\%$ d'arêtes en spirale
 en deux exécutions, contre $4,54\,\%$. Ajoutées aux candidats parmi lesquels
 le moteur choisit selon son propre compte des spirales, elles abaissent la
 moyenne à $2,32\,\%$ et $2,70\,\%$, jamais au-dessus\,; trois autres tirages
-de la perturbation par arc du moteur, ajoutés de la même façon, donnent
+de la perturbation par arc du moteur, ajoutés de la même façon (l'étape que
+le commit cité fait avec douze, section~\ref{sec:closing}), donnent
 $4,12\,\%$, trois jeux de longueurs tirés au hasard sous les mêmes plafond et
 budget $4,34\,\%$, et les passes sans les inégalités de couloir $3,15\,\%$,
 mieux que les autres tirages sur $7$ exécutions et moins bien sur $7$. Les
@@ -1128,6 +1151,7 @@ hors du dépôt et pas encore publiés.
 \toprule
 chiffres & moteur & source \\
 \midrule
+% RERUN v0.7.0: figure and engine of this row (4.65% is not the cited commit's).
 douze modèles, trois budgets, $4,65\,\%$ (section~\ref{sec:experiments})
   & le commit cité & journaux de travail du protocole ci-dessous\,; une
   seconde exécution du même moteur a donné les mêmes chiffres pour les $36$
