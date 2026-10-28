@@ -19,9 +19,12 @@ paragraph "On the male body"):
   where they are not zero, and the formula Σ_v ⟨W_v, (I - R_v) p_v⟩ = Σ u s
   modulo the balances;
 - the twisted homology of the surface without its singular vertices and the
-  rank of the Burgers pairing on it (Proposition "The Burgers pairing").
+  rank of the Burgers pairing on it (Proposition "The Burgers pairing");
+- with --relations K, K relations among the winding numbers of single turns
+  that their translations break in every choice of quarter-turn frames (no
+  formula linear in the windings gives the holonomy).
 
-    python3 docs/research/turns-of-a-t-mesh/experiments/fox.py [<export>] [--table .../results/conflicts.json]
+    python3 docs/research/turns-of-a-t-mesh/experiments/fox.py [<export>] [--relations 3]
 
 Genus zero only (the arcs off the tree of patches must be a tree). Minutes.
 Writes results/fox.json.
@@ -387,6 +390,62 @@ def pairing(L, fox):
             "twisted_homology_dimension": Z.shape[1], "pairing_rank": rank, "kernel": Z.shape[1] - rank}
 
 
+def relations(layouts, wanted, most_terms=6):
+    """Relations among the winding numbers of single turns that their
+    translations break in every choice of quarter-turn frames: for each turn,
+    the sparsest combination of the others (distinct windings and shifts)
+    with the same winding numbers round every singular vertex (least L1, a
+    linear program); kept if its coefficients are whole, it has at most
+    `most_terms` terms, and Σ c_r R^{j_r} T_r is not zero modulo the balances
+    for any frames j_r. Stops after `wanted` such relations."""
+    vectors, translations, info, seen = [], [], [], set()
+    for number, (L, fox, colour) in layouts.items():
+        singular = [v for v in range(len(L.nodes)) if L.singular(v)]
+        N = L.nullspace()
+        for tid, turn in enumerate(L.turns):
+            winding, bad = windings(L, [tid], [1])
+            if bad:
+                continue
+            v = np.array([winding[s] for s in singular], dtype=float)
+            v -= v[0]
+            M = L.walk(turn)
+            key = (tuple(v.astype(int)), tuple(np.round(dense(shift_form(turn), len(L.arcs)) @ N, 6)))
+            if key in seen:
+                continue
+            seen.add(key)
+            vectors.append(v)
+            translations.append((M.t0, M.t1, N))
+            info.append((number, tid))
+    W = np.array(vectors)
+    found = []
+    for target in range(len(W)):
+        others = [i for i in range(len(W)) if i != target and not np.array_equal(W[i], W[target])]
+        A = W[others].T
+        m = len(others)
+        r = tmesh.run_linprog(np.ones(2 * m), A_eq=np.hstack([A, -A]), b_eq=W[target], bounds=(0, None))
+        if r.status != 0:
+            continue
+        c = r.x[:m] - r.x[m:]
+        support = [(others[j], c[j]) for j in range(m) if abs(c[j]) > 1e-9]
+        if len(support) + 1 > most_terms or any(abs(x - round(x)) > 1e-9 for _, x in support):
+            continue
+        terms = [(target, 1)] + [(j, -int(round(x))) for j, x in support]
+        best = None
+        N = translations[terms[0][0]][2]
+        for frames in itertools.product(range(4), repeat=len(terms) - 1):
+            turned = [rotate_dense(j, *translations[i][:2]) for (i, _), j in zip(terms, (0,) + frames)]
+            t0 = sum(cf * r[0] for (_, cf), r in zip(terms, turned))
+            t1 = sum(cf * r[1] for (_, cf), r in zip(terms, turned))
+            residual = max(np.abs(t0.astype(float) @ N).max(), np.abs(t1.astype(float) @ N).max())
+            best = residual if best is None else min(best, residual)
+        if best is not None and best > 1e-6:
+            found.append({"turns": [{"way": info[i][0], "turn": info[i][1], "coefficient": cf} for i, cf in terms],
+                          "smallest_residual_over_frames": float(best)})
+            if len(found) >= wanted:
+                break
+    return found
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     tmesh.arguments(parser, "fox")
@@ -394,6 +453,8 @@ def main():
                         help="the summary of conflicts.py")
     parser.add_argument("--largest", type=int, default=4, help="twisted windings of sets of at most this size")
     parser.add_argument("--pairing-way", type=int, default=1, help="the way whose T-mesh the pairing is read on")
+    parser.add_argument("--relations", type=int, default=0,
+                        help="look for this many relations of windings that the translations break")
     arguments = parser.parse_args()
     started, clock = tmesh.common.machine(), time.monotonic()
     folder, ways = tmesh.load(arguments)
@@ -443,6 +504,10 @@ def main():
                 entry.update(twisted_windings=nonzero, twisted_formula=formula, dislocations=single)
             sets.append(entry)
         print(f"{len(sets)} sets: checkerboard rule on {sum(s['checkerboard_rule'] for s in sets)}", flush=True)
+    broken = None
+    if arguments.relations:
+        broken = relations(layouts, arguments.relations)
+        print(f"relations of windings that the translations break: {broken}", flush=True)
     pairing_out = None
     if arguments.pairing_way in layouts:
         L, fox, _ = layouts[arguments.pairing_way]
@@ -455,6 +520,7 @@ def main():
         "per_way": rows,
         "sets": sets,
         "pairing": pairing_out,
+        "relations_broken_by_the_translations": broken,
     }
     tmesh.write(arguments.summary, summary)
 
