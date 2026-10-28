@@ -49,7 +49,7 @@ def way_job(job):
            "dual_bound": getattr(result, "mip_dual_bound", None)}
     x_aimed = None
     if chosen:
-        result_aimed, x_aimed, _ = way.nearest([forms[k] for k in chosen])
+        _, x_aimed, _ = way.nearest([forms[k] for k in chosen])
         if x_aimed is not None:
             aimed = x_aimed / way.scale
             (files / f"aimed-{way.number}.txt").write_text(
