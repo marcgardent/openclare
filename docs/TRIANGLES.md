@@ -9,6 +9,10 @@ so that the right one is chosen for the job.
 
 ## In short
 
+In the add-on, *Output: Triangles* asks what they are for: *Simulation* makes openclare's, *Shape* runs Blender's
+*Decimate* (*Collapse*), the better one for fidelity, as the measures below show.
+
+
 - **The shape of the triangles: openclare.** Its triangles are close to equilateral everywhere: the smallest angle of a
   triangle is 48° to 54° on average, against 29° to 43° for *Collapse*; the worst 1 % stay at 20° to 44° on most models
   (*Collapse*: 1° to 13°), down to 6° and 7° on the ogre and jerry. A simulation of cloth or of a soft body, or an even surface to print, asks for that.

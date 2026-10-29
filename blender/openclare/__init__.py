@@ -423,6 +423,26 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         ],
         default="QUADS",
     )
+    triangles_for: bpy.props.EnumProperty(
+        options=set(),
+        name="For",
+        description="What the triangles are for, which says what makes them",
+        items=[
+            (
+                "SIMULATION",
+                "Simulation",
+                "Triangles close to equilateral, made by openclare: for cloth and soft bodies, an even surface",
+            ),
+            (
+                "SHAPE",
+                "Shape",
+                "Triangles that keep closest to the shape, stretched where it needs them, made by Blender's "
+                "Decimate (Collapse): for printing and collision meshes. Hard edges, curves and materials are not "
+                "followed",
+            ),
+        ],
+        default="SIMULATION",
+    )
     target: bpy.props.EnumProperty(
         options=set(),
         name="Ask For",
@@ -1350,6 +1370,57 @@ class OPENCLARE_OT_density_from_shape(bpy.types.Operator):
 REPORT = "openclare_report"
 
 
+def decimating(settings):
+    """Whether `settings` ask for Blender's Decimate rather than the engine."""
+    return settings.output == "TRIANGLES" and settings.triangles_for == "SHAPE"
+
+
+def decimated(context, original):
+    """A mesh datablock: `original` as it is seen, cut down to the number of
+    triangles of its settings by Blender's Decimate in Collapse mode, with
+    its symmetry, and its painted density kept denser (a weight of 1 is
+    kept, 0 goes first: Decimate reads them the other way round); and the
+    report of the run, said as the engine's is."""
+    import time
+
+    settings = original.openclare
+    started = time.perf_counter()
+    depsgraph = context.evaluated_depsgraph_get()
+    mesh = bpy.data.meshes.new_from_object(original.evaluated_get(depsgraph))
+    work = bpy.data.objects.new("openclare decimate", mesh)
+    context.scene.collection.objects.link(work)
+    try:
+        before = sum(len(polygon.vertices) - 2 for polygon in mesh.polygons)
+        modifier = work.modifiers.new("decimate", "DECIMATE")
+        modifier.decimate_type = "COLLAPSE"
+        modifier.ratio = min(1.0, settings.quads / max(before, 1))
+        modifier.use_collapse_triangulate = True
+        if settings.symmetry != "NONE":
+            modifier.use_symmetry, modifier.symmetry_axis = True, settings.symmetry
+        if settings.density_group and settings.density_group in work.vertex_groups:
+            modifier.vertex_group, modifier.invert_vertex_group = settings.density_group, True
+        made = bpy.data.meshes.new_from_object(work.evaluated_get(context.evaluated_depsgraph_get()))
+    finally:
+        bpy.data.objects.remove(work)
+        bpy.data.meshes.remove(mesh)
+    # Faces of more than three sides that Collapse left are cut too.
+    import bmesh
+
+    cut = bmesh.new()
+    cut.from_mesh(made)
+    bmesh.ops.triangulate(cut, faces=[face for face in cut.faces if len(face.verts) > 3])
+    cut.to_mesh(made)
+    cut.free()
+    report = {
+        "faces": len(made.polygons),
+        "quads": 0,
+        "quads_asked": settings.quads,
+        "method": "decimate",
+        "seconds": round(time.perf_counter() - started, 3),
+    }
+    return made, report
+
+
 class Remeshing:
     """What the two buttons that remesh have in common: the run, and what
     is said of it while it goes.
@@ -1411,6 +1482,8 @@ class Remeshing:
         """Remeshes `original` with its settings into a new object next to
         it, made the active one, and says how it went, waiting for the
         engine. Returns the new object, or None if it could not be made."""
+        if decimating(original.openclare):
+            return self.decimate(context, original)
         self.drawn, self.stages = 0.0, []
         context.window_manager.progress_begin(0, STAGES)
         self.say(context, f"reading '{original.name}'")
@@ -1508,11 +1581,37 @@ class Remeshing:
         self.report({"WARNING"} if failed or short or off_plane or crossing else {"INFO"}, said)
         return remeshed
 
+    def decimate(self, context, original):
+        """`run`, by Blender's Decimate instead of the engine (see
+        `decimated`): the result is made and said as a run's is. The
+        extensions are not called: there is nothing of the engine to give
+        them."""
+        adopt_scene_settings(context.scene)
+        settings = original.openclare
+        mesh, report = decimated(context, original)
+        shade(mesh, settings.shading, settings.hard_edge_angle)
+        mesh.name = f"{original.data.name}.tris"
+        remeshed = bpy.data.objects.new(f"{original.name}.tris", mesh)
+        remeshed.matrix_world = original.matrix_world
+        remeshed.openclare_source = original
+        remeshed[REPORT] = {key: str(value) for key, value in report.items()}
+        for collection in original.users_collection or [context.collection]:
+            collection.objects.link(remeshed)
+        for other in context.selected_objects:
+            other.select_set(False)
+        remeshed.select_set(True)
+        context.view_layer.objects.active = remeshed
+        last_report.clear()
+        last_report.update(report)
+        self.made_from, self.engine_made = original, None
+        self.report({"INFO"}, f"openclare: {made_of(report)} by Blender's Decimate (Collapse) in {report['seconds']} s")
+        return remeshed
+
     def extended(self, context, result):
         """Hands `result`, in place, to the extensions (see `extend`), with
         what the engine made of the original; what they add to the report
         is kept on the result. One that fails is said, and passed by."""
-        if not extend.EXTENSIONS:
+        if not extend.EXTENSIONS or self.engine_made is None:
             return
         report = {key: result[REPORT][key] for key in result[REPORT].keys()} if REPORT in result else {}
         for extension in extend.EXTENSIONS:
@@ -1608,6 +1707,9 @@ class Background:
             self.report({"ERROR"}, f"openclare: {error}")
             return {"CANCELLED"}
         original = self.target(context)
+        if decimating(original.openclare):
+            # Blender's own, and quick: no thread.
+            return self.done(context, self.decimate(context, original))
         begun = self.begin(context, original, copy=True)
         if begun is None:
             return {"CANCELLED"}
@@ -1915,8 +2017,16 @@ class OPENCLARE_PT_panel(DataPanel, bpy.types.Panel):
         layout.use_property_decorate = False
         settings = owner.openclare
         layout.prop(settings, "output", expand=True)
-        layout.prop(settings, "target", expand=True)
-        if settings.target == "SIZE":
+        decimate = decimating(settings)
+        if settings.output == "TRIANGLES":
+            layout.prop(settings, "triangles_for", expand=True)
+            if decimate:
+                # The best there is for it is Blender's own: it is used.
+                layout.label(text="By Blender's Decimate (Collapse): closest to the shape", icon="MOD_DECIM")
+        target = layout.row()
+        target.active = not decimate
+        target.prop(settings, "target", expand=True)
+        if settings.target == "SIZE" and not decimate:
             layout.operator(OPENCLARE_OT_analyse.bl_idname, icon="VIEWZOOM")
             sizes = layout.column(align=True)
             sizes.prop(settings, "largest_quad")
@@ -1949,12 +2059,18 @@ class OPENCLARE_PT_panel(DataPanel, bpy.types.Panel):
         column.prop_search(settings, "density_group", owner, "vertex_groups", icon="GROUP_VERTEX")
         factor = column.row()
         factor.enabled = bool(settings.density_group)
+        factor.active = not decimate
         factor.prop(settings, "density_factor")
         column.operator(OPENCLARE_OT_density_from_shape.bl_idname, icon="MOD_VERTEX_WEIGHT")
-        layout.prop(settings, "export_materials")
+        # What Decimate does not follow.
+        followed = layout.column()
+        followed.active = not decimate
+        followed.prop(settings, "export_materials")
+        layout = followed
         marks = layout.column(heading="Mark", align=True)
         marks.prop(settings, "export_sharp_edges", text="Sharp")
         marks.prop(settings, "export_creases", text="Creases")
+        layout = self.layout
         layout.prop(settings, "symmetry", expand=True)
         draw_remesh(layout, OPENCLARE_OT_remesh.bl_idname, "MOD_REMESH")
 
@@ -2006,6 +2122,8 @@ def report_lines(told):
     lines = []
     seconds = float(told.get("seconds", 0.0))
     lines.append((f"{made_of(told)} in {seconds:.1f} s", "MESH_GRID"))
+    if told.get("method") == "decimate":
+        lines.append(("By Blender's Decimate (Collapse)", "MOD_DECIM"))
     crossing = int(told.get("crossing_faces", 0))
     if crossing:
         lines.append((f"{crossing} triangles cut through another one", "ERROR"))
@@ -2095,6 +2213,8 @@ class OPENCLARE_PT_shape(DataPanel, bpy.types.Panel):
         layout.use_property_split = True
         layout.use_property_decorate = False
         settings = object_to_remesh(context).openclare
+        # Decimate reads none of the shape.
+        layout.active = not decimating(settings)
         layout.prop(settings, "adaptive_size", slider=True)
         layout.prop(settings, "quads_around")
         column = layout.column(heading="Hard Edges")
