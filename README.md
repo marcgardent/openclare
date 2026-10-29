@@ -57,6 +57,7 @@ of the ogre at 3000 quads.
 
 | Setting | What it does |
 |---|---|
+| Output | *Quads* (the default), or *Triangles*: triangles close to equilateral, of one size or as the shape asks, for simulation, 3D printing and collision meshes. The same settings apply but those of quads alone (Follow Curvature, Fewer Irregular Vertices, Volume Fit); the result says how many triangles cut through another one, which a printer cannot make sense of. How they compare with Blender's *Decimate*: [docs/TRIANGLES.md](docs/TRIANGLES.md) |
 | Ask For | *Number*: a number of quads, kept; the shape says where they are smaller. *Sizes*: the largest and the smallest quad; the shape says which where, and the number of quads is what that makes |
 | Quads | With *Number*: the number of quads asked for. A part that is thin all along (a ring, a strap, a wire) is given the quads its thickness calls for out of that number |
 | Largest, Smallest | With *Sizes*: the edges of the largest and of the smallest quads, in the units of the scene. Flat and thick parts get the largest; thin parts and tight bends get smaller ones, down to the smallest. Set from the size of the object when left at 0. The run says how many quads the shape called for |
