@@ -525,7 +525,7 @@ def shape_changed(scene, depsgraph):
     """Counts the changes of shape of each object: an edit, a modifier."""
     for update in depsgraph.updates:
         if update.is_updated_geometry and isinstance(update.id, bpy.types.Object):
-            name = update.id.original.name
+            name = update.id.name
             state.generations[name] = state.generations.get(name, 0) + 1
 
 

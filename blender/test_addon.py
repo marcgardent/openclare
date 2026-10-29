@@ -645,6 +645,224 @@ assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 assert len(bpy.context.active_object.data.polygons) < 0.5 * made
 settings.target, settings.largest_quad, settings.smallest_quad = "COUNT", 0.0, 0.0
 
+# Analysed: sizes proposed, the number of quads they make told at once, and
+# the sizes shown in colour on a copy while the object is hidden.
+alone(body)
+assert openclare.analysis_of(bpy.context, settings, body) is None
+assert bpy.ops.object.openclare_analyse() == {"FINISHED"}
+objects_before = len(bpy.data.objects)
+assert settings.target == "SIZE" and 0.0 < settings.smallest_quad <= settings.largest_quad, (
+    settings.smallest_quad, settings.largest_quad)
+held = openclare.analysis_of(bpy.context, settings, body)
+assert held is not None
+analysis, scale = held
+quads, below = openclare.counted(analysis, scale, settings.largest_quad, settings.smallest_quad)
+assert quads > 300 and 0.0 <= below <= 1.0, (quads, below)
+# Smaller quads, more of them, told without meshing anything. Not four
+# times as many: where the surface bends, the size follows the bounds only
+# by the part the adaptivity leaves them (twice as many, measured).
+started = time.perf_counter()
+finer, _ = openclare.counted(analysis, scale, settings.largest_quad / 2.0, settings.smallest_quad / 2.0)
+assert finer > 1.5 * quads and time.perf_counter() - started < 0.5, (finer, quads)
+# The colours of the sizes, on the object itself, in an attribute of their
+# own made the active and rendered one; those that were are given back.
+painted = body.data.color_attributes.new("painted", "BYTE_COLOR", "CORNER")
+body.data.color_attributes.active_color_name = body.data.color_attributes.default_color_name = "painted"
+settings.show_sizes = True
+colours = body.data.color_attributes.get("openclare sizes")
+assert colours is not None and not body.hide_get(), "no colours of the sizes on the object"
+assert len(bpy.data.objects) == objects_before, "a copy was made"
+assert body.data.color_attributes.active_color_name == "openclare sizes"
+assert body.data.color_attributes.default_color_name == "openclare sizes"
+before = [tuple(colours.data[k].color) for k in range(0, len(colours.data), 97)]
+settings.largest_quad, settings.smallest_quad = settings.largest_quad / 3.0, settings.smallest_quad / 3.0
+after = [tuple(colours.data[k].color) for k in range(0, len(colours.data), 97)]
+assert before != after, "the colours did not follow the sizes"
+red = openclare.linear(openclare.COARSER)
+
+
+def wire_in_red():
+    return [
+        all(abs(a - b) < 1e-4 for a, b in zip(colours.data[v.index].color, red))
+        for v in body.data.vertices if v.co.x > 2.0
+    ]
+
+
+# The wire was proposed what its thickness calls for. With no quad smaller
+# than the largest, it is shown as coarser than its shape asks, in red.
+assert sum(wire_in_red()) < 0.1 * len(wire_in_red()), "the wire in red with the sizes proposed"
+settings.smallest_quad = settings.largest_quad
+wire_red = wire_in_red()
+assert sum(wire_red) > 0.5 * len(wire_red), f"{sum(wire_red)} of {len(wire_red)} vertices of the wire in red"
+# Unticked: the attribute goes, the painted one is active and rendered again.
+settings.show_sizes = False
+assert "openclare sizes" not in body.data.color_attributes
+assert body.data.color_attributes.active_color_name == "painted"
+assert body.data.color_attributes.default_color_name == "painted"
+# A subdivided object: its own vertices take the sizes of the nearest seen.
+subdivided = body.modifiers.new("subdivided", "SUBSURF")
+subdivided.levels = 1
+bpy.context.view_layer.update()
+assert bpy.ops.object.openclare_analyse() == {"FINISHED"}
+settings.show_sizes = True
+assert "openclare sizes" in body.data.color_attributes, "no colours on a subdivided object"
+settings.show_sizes = False
+body.modifiers.remove(subdivided)
+bpy.context.view_layer.update()
+assert bpy.ops.object.openclare_analyse() == {"FINISHED"}
+settings.show_sizes = True
+# Saved, the file holds no colours of the sizes; they are back after. The
+# copy is saved in a temporary folder; OPENCLARE_TEST_NO_SAVE=1 skips this
+# check, where no .blend file is to be written at all.
+import os
+import tempfile
+
+if not os.environ.get("OPENCLARE_TEST_NO_SAVE"):
+    with tempfile.TemporaryDirectory() as folder:
+        saved_to = f"{folder}/saved.blend"
+        bpy.ops.wm.save_as_mainfile(filepath=saved_to, copy=True)
+        with bpy.data.libraries.load(saved_to) as (there, here):
+            here.meshes = [body.data.name]
+        kept = here.meshes[0]
+        assert "openclare sizes" not in kept.color_attributes and "painted" in kept.color_attributes
+        assert kept.color_attributes.active_color_name == "painted"
+        bpy.data.meshes.remove(kept)
+    assert "openclare sizes" in body.data.color_attributes, "the colours did not come back after saving"
+else:
+    print("SAVE skipped (OPENCLARE_TEST_NO_SAVE)")
+# Remeshing takes the colours away.
+bpy.context.view_layer.objects.active = body
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+assert "openclare sizes" not in body.data.color_attributes and not settings.show_sizes
+assert body.data.color_attributes.active_color_name == "painted"
+body.data.color_attributes.remove(body.data.color_attributes["painted"])
+# Changed, the object asks to be analysed again.
+body.data.vertices[0].co.x += 0.01
+body.data.update()
+assert openclare.analysis_of(bpy.context, settings, body) is None
+settings.show_sizes = True
+assert not settings.show_sizes, "a preview without an analysis that holds"
+settings.target, settings.largest_quad, settings.smallest_quad = "COUNT", 0.0, 0.0
+print("SIZES", round(quads), "quads proposed,", round(100 * below), "% coarser than asked")
+settings.quads, settings.adaptive_size = 800, 50.0
+
+# Density from Shape: the density the shape calls for, written as a vertex
+# group and made the Density, Adaptive Size switched off. Remeshed with it,
+# the quads are where Adaptive Size put them. An ellipsoid, flat round its
+# middle and bent tightly at its tips, with Adaptive Size at 100 %.
+import numpy  # noqa: E402
+from mathutils.kdtree import KDTree
+
+bpy.ops.mesh.primitive_uv_sphere_add(segments=96, ring_count=48, location=(0.0, 30.0, 0.0))
+ellipsoid = bpy.context.active_object
+ellipsoid.scale = (4.0, 1.0, 0.6)
+bpy.ops.object.transform_apply(scale=True)
+alone(ellipsoid)
+shape(settings, "organic")
+settings.target, settings.quads, settings.adaptive_size = "COUNT", 1500, 100.0
+settings.density_group, settings.density_factor = "", 16.0
+evaluated = ellipsoid.evaluated_get(bpy.context.evaluated_depsgraph_get())
+seen = [vertex.co.copy() for vertex in evaluated.to_mesh().vertices]
+evaluated.to_mesh_clear()
+
+
+def sizes_round(result):
+    """The edge of the quads round each vertex of the ellipsoid: the square
+    root of the mean area of the nine quads nearest to it."""
+    polygons = result.data.polygons
+    tree = KDTree(len(polygons))
+    for polygon in polygons:
+        tree.insert(polygon.center, polygon.index)
+    tree.balance()
+    areas = numpy.array([polygon.area for polygon in polygons])
+    return numpy.sqrt([areas[[index for _, index, _ in tree.find_n(point, 9)]].mean() for point in seen])
+
+
+def remeshed_sizes():
+    alone(ellipsoid)
+    assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+    return len(bpy.context.active_object.data.polygons), sizes_round(bpy.context.active_object)
+
+
+adaptive_count, adaptive = remeshed_sizes()
+settings.adaptive_size = 0.0
+uniform_count, uniform = remeshed_sizes()
+settings.adaptive_size = 100.0
+alone(ellipsoid)
+assert "UNDO" in openclare.OPENCLARE_OT_density_from_shape.bl_options
+assert bpy.ops.object.openclare_density_from_shape() == {"FINISHED"}
+assert "openclare density" in ellipsoid.vertex_groups
+assert settings.density_group == "openclare density" and settings.adaptive_size == 0.0
+assert settings.shape_adaptive_size == 100.0 and settings.quads_around == 6
+weights = numpy.zeros(len(ellipsoid.data.vertices))
+for vertex in ellipsoid.data.vertices:
+    assert len(vertex.groups) == 1, "a vertex left out of the group"
+    weights[vertex.index] = vertex.groups[0].weight
+xs = numpy.array([vertex.co.x for vertex in ellipsoid.data.vertices])
+# Weight 1 for the smallest quads, as painted: the tips, not the middle.
+assert weights.min() < 0.01 and weights[abs(xs) > 3.5].mean() > weights[abs(xs) < 1.0].mean() + 0.2, weights
+grouped_count, grouped = remeshed_sizes()
+logs = numpy.log(adaptive)
+
+
+def tips_over_middle(sizes):
+    """The edge of the quads at the tips over that round the middle."""
+    return sizes[abs(xs) > 3.5].mean() / sizes[abs(xs) < 1.0].mean()
+
+
+follows = numpy.corrcoef(logs, numpy.log(grouped))[0, 1]
+print(
+    "DENSITY FROM SHAPE quads %d adaptive, %d from the group, %d uniform; correlation of the log of the local "
+    "size with Adaptive Size: %.3f from the group, %.3f uniform; tips over middle: %.3f adaptive, %.3f from the "
+    "group, %.3f uniform"
+    % (adaptive_count, grouped_count, uniform_count, follows, numpy.corrcoef(logs, numpy.log(uniform))[0, 1],
+       tips_over_middle(adaptive), tips_over_middle(grouped), tips_over_middle(uniform))
+)
+# The engine does not lay out the same quads at every run (some 4 % more or
+# fewer, run to run, for the same settings): the bounds leave room for that.
+# Measured over ten runs: within 3.5 % of the number, a correlation of 0.984
+# or more, tips over middle within 3 % of that of Adaptive Size, uniform 22 %
+# or more above it.
+assert abs(grouped_count / adaptive_count - 1.0) < 0.08, (grouped_count, adaptive_count)
+assert follows > 0.97, follows
+assert abs(tips_over_middle(grouped) / tips_over_middle(adaptive) - 1.0) < 0.06
+assert tips_over_middle(uniform) > 1.15 * tips_over_middle(adaptive), "the ellipsoid does not tell them apart"
+# Pressed again, Adaptive Size now off: the shape is read as it was, with the
+# Adaptive Size it had; the group is replaced, not added to.
+alone(ellipsoid)
+assert bpy.ops.object.openclare_density_from_shape() == {"FINISHED"}
+again = numpy.array([ellipsoid.vertex_groups["openclare density"].weight(v) for v in range(len(weights))])
+assert numpy.abs(again - weights).max() < 0.01 and len(ellipsoid.vertex_groups) == 1
+# With Sizes, the largest asked for is the weight 0. With a Factor of 2, the
+# tips ask for smaller quads than it gives: their weight stays at 1.
+settings.target, settings.density_factor = "SIZE", 2.0
+settings.largest_quad, settings.smallest_quad = openclare.sizes_from(ellipsoid)
+alone(ellipsoid)
+assert bpy.ops.object.openclare_density_from_shape() == {"FINISHED"}
+sized = numpy.array([ellipsoid.vertex_groups["openclare density"].weight(v) for v in range(len(weights))])
+assert sized.max() == 1.0 and sized.min() < 0.01, (sized.min(), sized.max())
+# A factor of 1 has the paint do nothing: refused.
+settings.density_factor = 1.0
+try:
+    bpy.ops.object.openclare_density_from_shape()
+    raise AssertionError("a factor of 1 went unnoticed")
+except RuntimeError as error:
+    assert "Factor" in str(error), error
+# Under modifiers that make other vertices, each vertex of the object takes
+# the weight of the nearest one seen.
+settings.target, settings.density_factor = "COUNT", 16.0
+subdivided = ellipsoid.modifiers.new("subdivided", "SUBSURF")
+subdivided.levels = 1
+bpy.context.view_layer.update()
+alone(ellipsoid)
+assert bpy.ops.object.openclare_density_from_shape() == {"FINISHED"}
+under = numpy.array([ellipsoid.vertex_groups["openclare density"].weight(v) for v in range(len(weights))])
+assert numpy.abs(under - weights).mean() < 0.05, numpy.abs(under - weights).mean()
+ellipsoid.modifiers.remove(subdivided)
+settings.density_group, settings.adaptive_size = "", 50.0
+settings.target, settings.largest_quad, settings.smallest_quad = "COUNT", 0.0, 0.0
+settings.quads, settings.density_factor = 800, 4.0
+
 # Nothing to remesh: said, not crashed.
 bpy.ops.object.empty_add()
 assert not bpy.ops.object.openclare_remesh.poll()
