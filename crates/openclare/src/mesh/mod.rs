@@ -1,5 +1,6 @@
 //! Mesh containers, connectivity and I/O.
 
+pub mod intersections;
 pub mod obj;
 pub mod poly_mesh;
 pub mod primitives;

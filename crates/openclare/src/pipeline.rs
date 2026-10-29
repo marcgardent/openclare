@@ -127,6 +127,9 @@ pub struct Report {
     /// with the index of that curve among those given: what a host marks
     /// as the curve says (sharp, crease, seam).
     pub curve_edges: Vec<([u32; 2], u32)>,
+    /// Faces of the output that cut through another one of it, counted by
+    /// the chains that make triangles: what a printer cannot make sense of.
+    pub crossing_faces: usize,
     /// Places where a guide curve could not be laid as one unbroken line.
     pub guide_gaps: usize,
     /// Pieces on which the guide curves could not be kept as lines of edges:
@@ -173,6 +176,7 @@ impl Report {
         self.guide_edges.extend(piece.guide_edges);
         self.sharp_curve_edges.extend(piece.sharp_curve_edges);
         self.curve_edges.extend(piece.curve_edges);
+        self.crossing_faces += piece.crossing_faces;
         self.guide_gaps += piece.guide_gaps;
         self.guides_let_go += piece.guides_let_go;
         // Sizes asked for: the same for every piece unless one had to make
