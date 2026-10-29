@@ -1,7 +1,7 @@
 name = "AutoRemesher"
 slug = "autoremesher"
 author = "Jeremy Hu (huxingyi)"
-tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quad-dominant", "engine:own", "os:windows", "os:linux", "os:macos", "density:uniform", "density:adaptive", "edge-flow:feature-lines", "licence:open-source", "source:public", "blender:unstated", "install:external", "price:free"]
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quad-dominant", "engine:autoremesher", "os:windows", "os:linux", "os:macos", "density:uniform", "density:adaptive", "edge-flow:feature-lines", "licence:open-source", "source:public", "blender:unstated", "install:external", "price:free"]
 kind = "standalone"
 method = "isotropic remeshing, a cross field (QuadCover), then quad extraction, with its own parameterizer since 1.1.0"
 purpose = "automatic quad remeshing, standalone, with a command line"

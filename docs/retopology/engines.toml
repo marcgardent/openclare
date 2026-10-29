@@ -1,0 +1,275 @@
+# The remeshing engines (algorithms) that the tools run. Schema: README.md.
+# Each id is a value of the engine facet of taxonomy.toml.
+
+[[engine]]
+id = "instant-meshes"
+name = "Instant Meshes (Instant Field-Aligned Meshes)"
+family = "field-aligned quadrangulation by local smoothing of an orientation field and a position field"
+method = "One local smoothing operator optimizes first an orientation field (the directions of the edges), then a position field (where the vertices fall on a lattice aligned with it); the mesh is extracted from the position field. There is no global optimization, so it scales to very large inputs, point clouds included."
+output = ["quads", "quad-dominant", "triangles"]
+authors = "Wenzel Jakob, Marco Tarini, Daniele Panozzo, Olga Sorkine-Hornung"
+licence = "BSD-3-Clause"
+source = "https://github.com/wjakob/instant-meshes"
+year = 2015
+status = "stale"
+last_commit = 2019-11-03
+papers = [{ title = "Instant Field-Aligned Meshes", authors = "Wenzel Jakob, Marco Tarini, Daniele Panozzo, Olga Sorkine-Hornung", venue = "ACM Transactions on Graphics 34(6) (SIGGRAPH Asia 2015)", year = 2015, doi = "10.1145/2816795.2818078" }]
+strengths = ["executes in less than a second on meshes with hundreds of thousands of faces", "processes meshes and point clouds of several hundred million elements", "high isotropy", "aligns and snaps edges to sharp features", "takes triangle meshes, range scans and point clouds"]
+notes = "Pure quads or pure triangles by default, quad- or triangle-dominant with -D (--dominant). The licence is BSD-3-Clause with an extra clause granting the authors a licence to enhancements made public. No release on GitHub; binaries linked from the README. Since version 10.2, Modo uses the algorithm for its automatic retopology (README). The project page states no limitations."
+checked = 2026-10-29
+sources = [
+  { url = "https://github.com/wjakob/instant-meshes", what = "README, LICENSE.txt (BSD-3-Clause plus enhancements clause), last commit 2019-11-03, command-line options in src/main.cpp (-D dominant, -c crease, -r/-p symmetry)" },
+  { url = "https://igl.ethz.ch/projects/instant-meshes/", what = "abstract: isotropic triangular or quad-dominant output, sharp features, speed and scale" },
+  { url = "https://doi.org/10.1145/2816795.2818078", what = "DOI, volume 34 issue 6 (Crossref record)" },
+]
+
+[[engine]]
+id = "quadriflow"
+name = "QuadriFlow"
+family = "field-aligned quadrangulation with global singularity reduction (minimum-cost flow and SAT)"
+method = "Builds on Instant Field-Aligned Meshes and adds a system of linear and quadratic constraints to its objective, enforced by a global minimum-cost network flow problem and local boolean satisfiability problems, to remove singularities. The face count grows linearly with the resolution asked for; options add sharp-edge preservation (-sharp), a min-cost-flow solver (-mcf) and SAT flip removal (-sat)."
+output = ["quads"]
+authors = "Jingwei Huang, Yichao Zhou, Matthias Niessner, Jonathan Shewchuk, Leonidas Guibas"
+licence = "BSD-3-Clause"
+source = "https://github.com/hjwdzh/QuadriFlow"
+year = 2018
+status = "stale"
+last_commit = 2019-12-07
+papers = [{ title = "QuadriFlow: A Scalable and Robust Method for Quadrangulation", authors = "Jingwei Huang, Yichao Zhou, Matthias Niessner, Jonathan Richard Shewchuk, Leonidas J. Guibas", venue = "Computer Graphics Forum 37(5) (SGP 2018, Best Paper)", year = 2018, doi = "10.1111/cgf.13498" }]
+strengths = ["about four times fewer singularities than Instant Meshes", "robustness and efficiency verified on 17,791 objects in the wild", "SAT flip removal guarantees a watertight result (Unix only)"]
+limits = ["needs a manifold triangle mesh", "input must be a watertight manifold, otherwise it might not work (online tool)", "sharp edges not preserved unless -sharp is given", "does not clean up intersecting geometry (Blender manual)"]
+notes = "The README says \"MIT License\" but LICENSE.txt holds the BSD-3-Clause text with the same enhancements clause as Instant Meshes; the licence file is taken here. Release v1.0 (2019-08-23). Built into Blender as the Quad mode of Remesh (bpy.ops.object.quadriflow_remesh), source/blender/blenkernel/intern/mesh_remesh_voxel.cc."
+checked = 2026-10-29
+sources = [
+  { url = "https://github.com/hjwdzh/QuadriFlow", what = "README (input, options, licence statement), LICENSE.txt, last commit 2019-12-07, release v1.0" },
+  { url = "https://yichaozhou.com/publication/1805quadriflow/", what = "abstract, venue SGP 2018 Best Paper / CGF, online tool note on watertight manifold input" },
+  { url = "https://doi.org/10.1111/cgf.13498", what = "DOI, volume 37 issue 5 (Crossref record)" },
+  { url = "https://docs.blender.org/manual/en/latest/modeling/meshes/retopology.html", what = "Blender's Quad remesher uses Quadriflow; does not clean up intersecting geometry" },
+]
+
+[[engine]]
+id = "quadwild"
+name = "QuadWild (Reliable Feature-Line Driven Quad-Remeshing), with or without Bi-MDF"
+family = "feature-line driven patch layout, quantization and filling of patches by patterns"
+method = "Computes a cross field aligned exactly with the feature lines (sharp creases, borders) and traces a coarse layout of polygonal patches whose borders include every feature line, T-junctions allowed; the layout is constrained to admit a T-junction-free pure-quad tessellation, then each patch is filled. The Bi-MDF fork replaces the integer quadratic programs of the quantization (Gurobi) by a minimum-deviation flow in a bi-directed graph, solved approximately then exactly by graph matching."
+output = ["quads"]
+authors = "Nico Pietroni, Stefano Nuvoli, Thomas Alderighi, Paolo Cignoni, Marco Tarini; Bi-MDF: Martin Heistermann, Jethro Warnett, David Bommes"
+licence = "GPL-3.0"
+source = "https://github.com/nicopietroni/quadwild"
+year = 2021
+status = "stale"
+last_commit = 2022-03-10
+papers = [
+  { title = "Reliable Feature-Line Driven Quad-Remeshing", authors = "Nico Pietroni, Stefano Nuvoli, Thomas Alderighi, Paolo Cignoni, Marco Tarini", venue = "ACM Transactions on Graphics 40(4) (SIGGRAPH 2021)", year = 2021, doi = "10.1145/3450626.3459941" },
+  { title = "Min-Deviation-Flow in Bi-directed Graphs for T-Mesh Quantization", authors = "Martin Heistermann, Jethro Warnett, David Bommes", venue = "ACM Transactions on Graphics 42(4) (SIGGRAPH 2023)", year = 2023, doi = "10.1145/3592437" },
+]
+strengths = ["reproduces feature lines by construction", "pure-quad, conforming, isometric meshes", "ideal candidate for CAD models", "fully automatic", "less than 0.5% of Thingi10K cases fail to give a usable mesh", "Bi-MDF exact solver: 0.49% of QuadWild's runtime and 11% lower energy on its 300 dataset"]
+limits = ["original build needs Boost and the Gurobi solver", "CoMISo field suggested for organic meshes", "results may differ from the paper's (code has changed)"]
+notes = "Licence stated as \"GPL3\" in both READMEs, no \"or later\" clause given. The Bi-MDF fork, https://github.com/cgg-bern/quadwild-bimdf (GPL-3.0), is active: last commit 2026-08-03, pre-releases v0.0.1 and v0.0.2 (2023), CMake build without Gurobi. Status and last commit above are those of the original repository. Command line: quadwild, then field_computation, field_tracing, quad_from_patches."
+checked = 2026-10-29
+sources = [
+  { url = "https://github.com/nicopietroni/quadwild", what = "README: abstract, build (Boost, Gurobi, CoMISo), pipeline, licence GPL3; last commit 2022-03-10" },
+  { url = "https://github.com/cgg-bern/quadwild-bimdf", what = "README of the Bi-MDF fork: changes, no Gurobi needed, GPL3; last commit 2026-08-03; pre-releases" },
+  { url = "https://www.algohex.eu/publications/bimdf-quantization/", what = "Bi-MDF abstract, runtime and energy against QuadWild, BibTeX with DOI" },
+  { url = "https://doi.org/10.1145/3450626.3459941", what = "DOI, volume 40 issue 4 (Crossref record)" },
+]
+
+[[engine]]
+id = "autoremesher"
+name = "AutoRemesher"
+family = "field-aligned quad-dominant remeshing: isotropic remeshing, cross field, quad-cover parameterization, extraction"
+method = "Splits the input into islands, remeshes each into isotropic triangles with a target-length field that moves triangles from flat to detailed regions, computes a cross field and simplifies its singularities, solves a quad-cover parameterization, then extracts quads, smoothed and projected onto the input. Parameters: target quads, edge scaling, sharp edge angle, adaptivity, anisotropy."
+output = ["quad-dominant"]
+authors = "Jeremy Hu (Dust3D project)"
+licence = "MIT"
+source = "https://github.com/huxingyi/autoremesher"
+year = 2020
+status = "active"
+last_commit = 2026-10-07
+notes = "MIT since 1.0.0 (2026-07-06, relicensed from GPLv3 by reimplementing incompatible dependencies). Latest release 1.2.0 (2026-08-23); first release 2020-08-03. 1.1.0 replaced Geogram with a native quad parameterizer, though the README still says it is built on Geogram; beta.1 (2020) replaced MIQ with QuadCover. Quad-dominant since 1.0.0-beta.3. No paper; the README and changelog state no strengths or limits. CLI mode for headless runs."
+checked = 2026-10-29
+sources = [
+  { url = "https://github.com/huxingyi/autoremesher", what = "README (CLI parameters, licence MIT), LICENSE, last commit 2026-10-07, releases 1.0.0 to 1.2.0" },
+  { url = "https://github.com/huxingyi/autoremesher/blob/master/CHANGELOGS.md", what = "relicensing to MIT, Geogram replaced, QuadCover, quad-dominant output" },
+  { url = "https://github.com/huxingyi/autoremesher/blob/master/src/AutoRemesher/autoremesher.cpp", what = "pipeline: islands, isotropic remesher with target-length field, parameterizer, quad extractor" },
+  { url = "https://github.com/huxingyi/autoremesher/blob/master/src/AutoRemesher/parameterizer.cpp", what = "cross field singularity simplification and quad cover solve" },
+]
+
+[[engine]]
+id = "voxel"
+name = "OpenVDB level set and volume-to-mesh (Blender's Voxel remesh)"
+family = "voxel isosurface: signed distance level set on a sparse grid, then polygonization"
+method = "The mesh is converted into a narrow-band level set on an OpenVDB sparse grid (meshToLevelSet), and the isosurface is meshed back into quads (volumeToMesh); a non-zero adaptivity merges quads where the surface allows and adds triangles. In Blender this is the Voxel Remesh operator, the Voxel mode of the Remesh modifier and, in Geometry Nodes, Mesh to Volume then Volume to Mesh."
+output = ["quads", "quad-dominant"]
+authors = "Ken Museth and DreamWorks Animation (VDB); OpenVDB, Academy Software Foundation; Blender integration by Blender Authors"
+licence = "Apache-2.0"
+source = "https://github.com/AcademySoftwareFoundation/openvdb"
+year = 2013
+status = "active"
+last_commit = 2026-10-29
+papers = [{ title = "VDB: High-Resolution Sparse Volumes with Dynamic Topology", authors = "Ken Museth", venue = "ACM Transactions on Graphics 32(3) (SIGGRAPH 2013)", year = 2013, doi = "10.1145/2487228.2487235" }]
+strengths = ["uniform topology and no inner (self-intersecting) geometry", "a new manifold mesh that tries to preserve the original volume", "cleans up meshes for sculpting, 3D printing and physics stand-ins", "triangles only where the adaptivity threshold calls for them"]
+limits = ["not for topology that will be deformed", "the topology is just a simple grid", "not for the Subdivision Surface or Multiresolution modifier", "adaptivity above zero disables Fix Poles and can introduce triangulation", "the input mesh should have some thickness (Remesh modifier)"]
+notes = "OpenVDB was relicensed from MPL-2.0 to Apache-2.0; latest release v13.2.0 (2026-10-27). Blender's code (source/blender/blenkernel/intern/mesh_remesh_voxel.cc) is GPL-2.0-or-later and calls openvdb::tools::meshToLevelSet and VolumeToMesh; its last commit 2026-10-20. Pure quads at adaptivity 0."
+checked = 2026-10-29
+sources = [
+  { url = "https://github.com/AcademySoftwareFoundation/openvdb", what = "README (description, Apache-2.0, relicensing), last commit 2026-10-29, release v13.2.0" },
+  { url = "https://github.com/AcademySoftwareFoundation/openvdb/blob/master/openvdb/openvdb/tools/VolumeToMesh.h", what = "volumeToMesh: uniform quads, adaptive quads and triangles" },
+  { url = "https://github.com/AcademySoftwareFoundation/openvdb/blob/master/doc/faq.txt", what = "VDB by Ken Museth at DreamWorks Animation, the TOG paper" },
+  { url = "https://www.museth.org/Ken/Publications.html", what = "VDB paper: ACM TOG 32(3), June 2013, DOI" },
+  { url = "https://docs.blender.org/manual/en/latest/modeling/meshes/retopology.html", what = "Voxel remesher: how it works, uses, what not to use it for, settings" },
+  { url = "https://docs.blender.org/manual/en/latest/modeling/modifiers/generate/remesh.html", what = "Remesh modifier Voxel mode uses OpenVDB; adaptivity; thickness note" },
+  { url = "https://docs.blender.org/manual/en/latest/modeling/geometry_nodes/volume/operations/volume_to_mesh.html", what = "Volume to Mesh node: threshold, adaptivity" },
+  { url = "https://projects.blender.org/blender/blender/src/branch/main/source/blender/blenkernel/intern/mesh_remesh_voxel.cc", what = "Blender's calls to OpenVDB, GPL-2.0-or-later" },
+]
+
+[[engine]]
+id = "octree"
+name = "Dual contouring on a signed octree (Tao Ju's PolyMender, Blender's dualcon)"
+family = "octree isosurface: scan conversion, sign generation, dual contouring"
+method = "Embeds the input in a uniform grid stored as an octree and marks the grid edges that cross polygons (scan conversion); generates inside/outside signs consistent with them by patching the dual surface, which works on any bag of polygons; then contours the signed grid with one vertex per cell. Blender's Blocks, Smooth and Sharp modes place that vertex at the cell centroid, at the mass point, or by Hermite data to keep sharp edges and corners."
+output = ["quads"]
+authors = "Tao Ju (PolyMender); intern/dualcon in Blender by Blender Authors"
+licence = "GPL-2.0-or-later"
+source = "https://projects.blender.org/blender/blender/src/branch/main/intern/dualcon"
+year = 2004
+status = "active"
+last_commit = 2026-09-30
+papers = [{ title = "Robust Repair of Polygonal Models", authors = "Tao Ju", venue = "ACM Transactions on Graphics 23(3) (SIGGRAPH 2004)", year = 2004, doi = "10.1145/1015706.1015815" }]
+strengths = ["produces a closed surface from any bag of polygons", "consumes a small amount of time and memory space", "reproduces sharp features (dual contouring with Hermite data)", "suitable for repairing CAD models and gigantic polygonal models", "topologically manifold dual contouring (PolyMender 1.6)", "output topology contains only quads (Blender manual)"]
+limits = ["dual contouring needs more memory (PolyMender readme)", "the input mesh should have some thickness", "thin parts can become loose and leave small isolated pieces"]
+notes = "Blender's copy is PolyMender 1.6 (readme.txt dated 2006-10-12, files authored by Tao Ju), now under GPL-2.0-or-later SPDX headers; its directory's last commit 2026-09-30. Ju's own page: version 1.7 (2011-05-20), C++ source available for research purposes upon request. Last commit is that of the intern/dualcon path, not of all Blender."
+checked = 2026-10-29
+sources = [
+  { url = "https://projects.blender.org/blender/blender/src/branch/main/intern/dualcon/intern/readme.txt", what = "PolyMender readme: paper, Marching Cubes / quad / Dual Contouring variants, memory, octree depth" },
+  { url = "https://projects.blender.org/blender/blender/src/branch/main/intern/dualcon/dualcon.h", what = "modes centroid (blocky), mass point (smooth), sharp features; quad output; GPL-2.0-or-later" },
+  { url = "https://projects.blender.org/api/v1/repos/blender/blender/commits?path=intern/dualcon", what = "last commit of intern/dualcon, 2026-09-30" },
+  { url = "https://www.cse.wustl.edu/~taoju/code/polymender.htm", what = "algorithm in three steps, strengths, version 1.7, source on request" },
+  { url = "https://docs.blender.org/manual/en/latest/modeling/modifiers/generate/remesh.html", what = "Blocks, Smooth, Sharp modes; only quads; octree depth; thickness and loose parts" },
+  { url = "https://doi.org/10.1145/1015706.1015815", what = "DOI, volume 23 issue 3 (Crossref record)" },
+]
+
+[[engine]]
+id = "mmg"
+name = "Mmg (mmgs for surfaces)"
+family = "metric-based mesh adaptation of triangulations by local operators"
+method = "mmgs modifies a surface triangulation by local operations (point insertion, edge swapping, vertex moving, each of which can be switched off) to control its distance to the underlying surface (Hausdorff parameter) and the sizes given by an isotropic or anisotropic metric at the nodes, with gradation control. It can also mesh the zero level set of a function given at the nodes. mmg2d and mmg3d do the same for planar and tetrahedral meshes."
+output = ["triangles"]
+authors = "Cécile Dobrzynski, Charles Dapogny, Pascal Frey, Algiane Froehly, Cédric Lachat, Xavier Lacoste (Bordeaux INP, Inria, Université de Bordeaux, UPMC)"
+licence = "LGPL-3.0-or-later"
+source = "https://github.com/MmgTools/mmg"
+status = "active"
+last_commit = 2026-10-21
+papers = [{ title = "Three-dimensional adaptive domain remeshing, implicit domain meshing, and applications to free and moving boundary problems", authors = "Charles Dapogny, Cécile Dobrzynski, Pascal Frey", venue = "Journal of Computational Physics 262", year = 2014, doi = "10.1016/j.jcp.2014.01.005" }]
+strengths = ["controls the surface approximation (Hausdorff distance)", "adapts the mesh to prescribed sizes at nodes", "anisotropic adaptation", "meshes an implicit domain from a level-set function", "detects sharp features by an angle threshold"]
+notes = "Last commit 2026-10-21 on the default branch develop (master: 2026-01-20); latest release v5.8.0 (2024-10-31). Copyright Bx INP/Inria/UBordeaux/UPMC, 2004-. The paper is the one listed in the repository's References.bib; it is about mmg3d. The website mmgtools.org could not be read (its TLS certificate chain did not verify), so the facts come from the repository and its mmgs man page."
+checked = 2026-10-29
+sources = [
+  { url = "https://github.com/MmgTools/mmg", what = "README, LICENSE (LGPL v3 or later), AUTHORS, last commit 2026-10-21 (develop), release v5.8.0" },
+  { url = "https://github.com/MmgTools/mmg/blob/develop/doc/man/mmgs.1.gz", what = "mmgs man page: surface remeshing, metric, level set, -hausd, -hgrad, -A, -ar, -noinsert/-noswap/-nomove" },
+  { url = "https://github.com/MmgTools/mmg/blob/develop/doc/doxygen/References.bib", what = "Dapogny, Dobrzynski, Frey 2014" },
+  { url = "https://doi.org/10.1016/j.jcp.2014.01.005", what = "DOI (Crossref record)" },
+]
+
+[[engine]]
+id = "cwf"
+name = "CWF (Consolidating Weak Features)"
+family = "variational mesh simplification: normal anisotropy plus centroidal Voronoi tessellation energy"
+method = "Optimizes a set of movable points on the surface under a smooth functional: a normal anisotropy term, in the spirit of quadric error metrics but continuous, and a centroidal Voronoi tessellation energy for an even distribution, balanced by a decaying weight. A restricted Voronoi diagram is computed at each iteration."
+output = ["triangles"]
+authors = "Rui Xu, Longdu Liu, Ningna Wang, Shuangmin Chen, Shiqing Xin, Xiaohu Guo, Zichun Zhong, Taku Komura, Wenping Wang, Changhe Tu"
+licence = "AGPL-3.0"
+source = "https://github.com/Xrvitd/CWF"
+year = 2024
+status = "stale"
+last_commit = 2024-12-17
+papers = [{ title = "CWF: Consolidating Weak Features in High-quality Mesh Simplification", authors = "Rui Xu, Longdu Liu, Ningna Wang, Shuangmin Chen, Shiqing Xin, Xiaohu Guo, Zichun Zhong, Taku Komura, Wenping Wang, Changhe Tu", venue = "ACM Transactions on Graphics 43(4) (SIGGRAPH 2024)", year = 2024, doi = "10.1145/3658159" }]
+strengths = ["considers accuracy, triangle quality and feature alignment together", "even point distribution", "aligns weak features", "accuracy and manifoldness (project page)"]
+limits = ["tested only on 64-bit Windows with Visual Studio 2022", "not optimized for speed", "C++14 only, not C++17 or newer", "needs CGAL, Eigen3, Boost and libigl"]
+notes = "The README says AGPL-3.0 and also \"For learning purposes only and not for commercial use\", asking to be contacted for commercial use; the two statements conflict. Evaluated on 100 CAD models of the ABC dataset and 21 organic models. Neither the paper's abstract nor the project page states the output in so many words; triangles follows from a simplified mesh measured by triangle quality."
+checked = 2026-10-29
+sources = [
+  { url = "https://github.com/Xrvitd/CWF", what = "README (venue, DOI, platform, dependencies, licence statement), LICENSE (AGPL v3), last commit 2024-12-17" },
+  { url = "https://arxiv.org/abs/2404.15661", what = "abstract: functional, decaying weight, weak features, evaluation" },
+  { url = "https://ruixu.me/html/CWF/index.html", what = "project page: venue, RVD at each iteration, accuracy and manifoldness" },
+]
+
+[[engine]]
+id = "geogram"
+name = "Geogram (remesh_smooth)"
+family = "centroidal Voronoi tessellation on the surface, through restricted Voronoi diagrams; isotropic or anisotropic"
+method = "Places the desired number of points on the surface and moves them to minimize a centroidal Voronoi tessellation energy, a few Lloyd iterations then Newton iterations, computing the Voronoi diagram restricted to the surface; the result is its dual triangulation. For anisotropic remeshing the points live in 6D (position plus scaled normal), with the security-radius theorem avoiding a 6D Delaunay triangulation; a vertex weight steers the density, for instance from the local feature size."
+output = ["triangles"]
+authors = "Bruno Lévy (Inria; former ALICE project)"
+licence = "BSD-3-Clause"
+source = "https://github.com/BrunoLevy/geogram"
+status = "active"
+last_commit = 2026-10-24
+papers = [
+  { title = "Isotropic Remeshing with Fast and Exact Computation of Restricted Voronoi Diagram", authors = "Dong-Ming Yan, Bruno Lévy, Yang Liu, Feng Sun, Wenping Wang", venue = "Computer Graphics Forum 28(5)", year = 2009, doi = "10.1111/j.1467-8659.2009.01521.x" },
+  { title = "On centroidal Voronoi tessellation - energy smoothness and fast computation", authors = "Yang Liu, Wenping Wang, Bruno Lévy, Feng Sun, Dong-Ming Yan, Lin Lu, Chenglei Yang", venue = "ACM Transactions on Graphics 28(4)", year = 2009, doi = "10.1145/1559755.1559758" },
+  { title = "Anisotropic and feature sensitive triangular remeshing using normal lifting", authors = "Vincent Nivoliers, Bruno Lévy, Christophe Geuzaine", venue = "Journal of Computational and Applied Mathematics 289", year = 2015, doi = "10.1016/j.cam.2015.01.041" },
+  { title = "Variational Anisotropic Surface Meshing with Voronoi Parallel Linear Enumeration", authors = "Bruno Lévy, Nicolas Bonneel", venue = "International Meshing Roundtable (IMR)", year = 2012 },
+]
+strengths = ["well adapted to post-process the output of reconstructions", "isotropic or curvature-adapted anisotropic triangles", "density steered by a vertex weight"]
+limits = ["remesh_smooth does not manage sharp features", "may generate more points than asked to solve problematic configurations", "normal smoothing needed on very irregular meshes for anisotropic remeshing"]
+notes = "Latest release v1.10.1 (2026-09-01). Symposium on Geometry Processing Software Award 2023. The command-line arguments also declare a quad-dominant meshing group and a remesh:sharp_edges option, the latter only with GEOGRAM_WITH_VORPALINE (an extension not in the public repository); whether the public library makes quad-dominant meshes was not established. Development since 2000 (README); the GitHub repository dates from 2022, so no first-release year is given."
+checked = 2026-10-29
+sources = [
+  { url = "https://github.com/BrunoLevy/geogram", what = "README (features, history, award), LICENSE (BSD 3-Clause, Inria), last commit 2026-10-24, release v1.10.1" },
+  { url = "https://github.com/BrunoLevy/geogram/wiki/Remeshing", what = "isotropic CVT and anisotropic 6D remeshing, parameters, cited papers, post-processing reconstructions" },
+  { url = "https://github.com/BrunoLevy/geogram/blob/main/src/lib/geogram/mesh/mesh_remesh.h", what = "remesh_smooth: no management of sharp features, may add points, Lloyd and Newton iterations" },
+  { url = "https://github.com/BrunoLevy/geogram/blob/main/src/lib/geogram/basic/command_line_args.cpp", what = "quad-dominant option group, sharp_edges behind GEOGRAM_WITH_VORPALINE" },
+]
+
+[[engine]]
+id = "adaptropic"
+name = "Adaptively Isotropic Remeshing based on Curvature Smoothed Field"
+family = "adaptive isotropic triangle remeshing by edge reconnection guided by a curvature field"
+method = "After a sub-remeshing that splits long edges of distorted triangles, a curvature smoothed field (CSF) is computed by smoothing the curvature of the mesh; a histogram of it sets the target edge length per vertex, and edges are reconnected by split, collapse, flip and vertex relocation, as in isotropic remeshing. Triangles come out smaller where the curvature is high."
+output = ["triangles"]
+authors = "Chenlei Lv, Weisi Lin, Jianmin Zheng"
+licence = "Apache-2.0"
+source = "https://github.com/vvvwo/Adaptively-Isotropic-Remeshing"
+year = 2022
+status = "stale"
+last_commit = 2022-05-07
+papers = [{ title = "Adaptively Isotropic Remeshing Based on Curvature Smoothed Field", authors = "Chenlei Lv, Weisi Lin, Jianmin Zheng", venue = "IEEE Transactions on Visualization and Computer Graphics 30(7)", year = 2024, doi = "10.1109/TVCG.2022.3227970" }]
+strengths = ["retains curvature sensitivity, keeping more geometric features", "avoids obtuse triangles as much as possible", "better balance between feature preservation and mesh quality than peers"]
+limits = ["incorrect connections can break the manifold property on some manually edited meshes", "no real-time performance"]
+notes = "Published online 2022-12-09, in the July 2024 issue. The name AdapTropic is not the authors': the paper and repository say adaptively isotropic remeshing. The paper's abstract and the author's publication page link this repository. The code needs VCG, PCL 1.8+, CGAL, Eigen3 and Boost; a prebuilt exe is in the repository. Command-line choice of isotropic (1) or adaptively isotropic (2)."
+checked = 2026-10-29
+sources = [
+  { url = "https://github.com/vvvwo/Adaptively-Isotropic-Remeshing", what = "README (dependencies, parameters), LICENSE (Apache 2.0), last commit 2022-05-07; account of Chenlei Lv" },
+  { url = "https://aliexken.github.io/papers/2022_Remeshing.pdf", what = "the paper: abstract, method, limitations, publication dates, link to the code" },
+  { url = "https://aliexken.github.io/publication.html", what = "author's publication page: venue, pdf and code links" },
+  { url = "https://doi.org/10.1109/TVCG.2022.3227970", what = "DOI, volume 30 issue 7 (Crossref record)" },
+]
+
+[[engine]]
+id = "openclare"
+name = "openclare"
+family = "field-aligned quadrangulation through a T-mesh quantized with closed edge loops"
+method = "A cross field with its singularities simplified gives a seamless parametrization, cut into a T-mesh of rectangular patches; the patch lengths are made whole by a minimum-deviation bi-directed flow (Bi-MDF), to which constraints closing the turns of the T-mesh are added so that edge loops close into rings instead of winding as helices. Each rectangle is meshed from the quantized lengths, then the mesh is relaxed and projected onto the source. Sizing follows thickness, curvature or a painted density; hard edges are cuts of the T-mesh."
+output = ["quads"]
+authors = "Marc Gardent"
+licence = "GPL-3.0-or-later"
+source = "https://github.com/marcgardent/openclare"
+year = 2026
+status = "active"
+last_commit = 2026-10-29
+papers = [
+  { title = "Closing Edge Loops at Quantization Time: Helix Constraints for T-Mesh Quantization", authors = "Marc Gardent", venue = "draft, not peer reviewed", year = 2026 },
+  { title = "Turns of a T-Mesh: Obstructions to Closing Edge Loops", authors = "Marc Gardent", venue = "draft, not peer reviewed", year = 2026 },
+]
+strengths = ["a mesh of 100 % quads, manifold, with as few irregular vertices as possible", "4.65 % of the edges on spiral loops over twelve models near 3,000 quads (paper A)", "overall mark on the bench's organic models 82, 86 and 90 at 1,000, 3,000 and 8,000 quads, against 40 to 69 for QuadriFlow, AutoRemesher and Instant Meshes", "mark 99 on the mechanical models at 1,000 quads"]
+limits = ["refuses edges of three faces or more and inconsistent orientation, with a diagnosis", "pieces that go through one another are treated shell by shell", "slower than QuadriFlow: speed marks 37 to 68 against 71 to 92 on organic models"]
+notes = "Rust engine with a C interface and a Blender add-on (Community edition); the quantization uses HiGHS in a crate of its own. Latest release v0.7.0 (2026-10-28). Marks from the repository's own bench, by its own author: see bench/results/SCORES.md. Both papers are drafts under CC BY 4.0 in docs/research/."
+checked = 2026-10-29
+sources = [
+  { url = "https://github.com/marcgardent/openclare", what = "README (what it does, settings, licence GPL-3.0-or-later), CITATION.cff, last commit 2026-10-29, release v0.7.0" },
+  { url = "https://github.com/marcgardent/openclare/blob/main/ALGORITHM.md", what = "pipeline M1 to M9, accepted inputs, output, Bi-MDF quantization, limits found" },
+  { url = "https://github.com/marcgardent/openclare/blob/main/docs/research/README.md", what = "the two papers, drafts not peer reviewed" },
+  { url = "https://github.com/marcgardent/openclare/blob/main/docs/research/closing-loops/paper.tex", what = "paper A abstract: helix constraints, 4.65 % spiral edges" },
+  { url = "https://github.com/marcgardent/openclare/blob/main/bench/results/SCORES.md", what = "marks per remesher at 1,000, 3,000 and 8,000 quads" },
+]

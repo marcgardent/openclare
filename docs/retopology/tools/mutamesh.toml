@@ -1,7 +1,7 @@
 name = "Mutamesh | 4 Remeshers in One | Instant Meshes, Quadwild, CWF, AdapTropic"
 slug = "mutamesh"
 author = "Giambattista Von Nettesheim (seller Jhon Cabezas)"
-tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quads", "output:quad-dominant", "output:triangles", "engine:instant-meshes", "engine:quadwild", "engine:cwf", "os:windows", "density:uniform", "density:adaptive", "edge-flow:feature-lines", "edge-flow:curvature", "input:triangles", "input:single-object", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid"]
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quads", "output:quad-dominant", "output:triangles", "engine:instant-meshes", "engine:quadwild", "engine:cwf", "engine:adaptropic", "os:windows", "density:uniform", "density:adaptive", "edge-flow:feature-lines", "edge-flow:curvature", "input:triangles", "input:single-object", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid"]
 kind = "bridge"
 method = "runs one of four research programs shipped as Windows executables: Instant Meshes (triangles or quad-dominant, with a pure-quad pass), QuadWild (pure quads), CWF and AdapTropic (triangles)"
 purpose = "four remeshing algorithms in one add-on"

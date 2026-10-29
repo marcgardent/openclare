@@ -23,6 +23,11 @@ FOLDER = ROOT / "docs" / "retopology"
 TOOLS = FOLDER / "tools"
 PLATFORMS = FOLDER / "platforms.toml"
 TAXONOMY = FOLDER / "taxonomy.toml"
+ENGINES = FOLDER / "engines.toml"
+# Engine tags that name no single algorithm, so have no entry in engines.toml.
+NOT_ENGINES = {"own", "proprietary", "simulation", "particles", "ml"}
+ENGINE = {"id", "name", "family", "method", "output", "authors", "licence", "source", "year", "status", "last_commit",
+          "papers", "strengths", "limits", "notes", "checked", "sources"}
 README = FOLDER / "README.md"
 
 KINDS = {"built-in", "add-on", "bridge", "standalone"}
@@ -201,6 +206,30 @@ def tool_problems(path, entry, platforms, taxonomy):
     return c.found
 
 
+def engine_problems(engine, taxonomy):
+    c = Checker()
+    c.unknown(engine, ENGINE)
+    for key in ("name", "family", "method", "authors", "licence"):
+        c.need(engine, key)
+    if engine.get("id") not in taxonomy["engine"] or engine.get("id") in NOT_ENGINES:
+        c.found.append("id: not an engine value of taxonomy.toml")
+    c.among(engine, "status", STATUSES)
+    outputs = engine.get("output")
+    if not isinstance(outputs, list) or not outputs or set(outputs) - set(taxonomy["output"]):
+        c.found.append("output: missing, or a value not in the output facet")
+    if "source" in engine:
+        c.url(engine["source"], "source")
+    for key in ("checked", "last_commit"):
+        if (key == "checked" or key in engine) and not isinstance(engine.get(key), datetime.date):
+            c.found.append(f"{key}: missing, or not a TOML date")
+    for i, paper in enumerate(engine.get("papers", [])):
+        c.unknown(paper, PAPER, f"papers[{i}].")
+        for key in ("title", "authors", "venue"):
+            c.need(paper, key, f"papers[{i}].")
+    c.sources(engine.get("sources"))
+    return [f"{engine.get('id', '?')}: {problem}" for problem in c.found]
+
+
 def platform_problems(platform):
     c = Checker()
     c.unknown(platform, PLATFORM)
@@ -308,6 +337,20 @@ def main():
         print(f"taxonomy.toml: {error}")
         return 1
 
+    try:
+        engines = tomllib.loads(ENGINES.read_text(encoding="utf-8")).get("engine", [])
+    except tomllib.TOMLDecodeError as error:
+        print(f"engines.toml: {error}")
+        return 1
+    for engine in engines:
+        for problem in engine_problems(engine, taxonomy):
+            print(f"engines.toml: {problem}")
+            failed = True
+    missing = set(taxonomy["engine"]) - {"title", "required"} - NOT_ENGINES - {e.get("id") for e in engines}
+    for value in sorted(missing):
+        print(f"engines.toml: no entry for the engine tag {value}")
+        failed = True
+
     entries = []
     for path in sorted(TOOLS.glob("*.toml")):
         try:
@@ -332,7 +375,7 @@ def main():
             print("README.md: the indexes are out of date; run python3 scripts/retopology.py")
             return 1
         README.write_text(fresh, encoding="utf-8")
-    print(f"{len(entries)} tools and {len(platforms)} platforms, all following the schema")
+    print(f"{len(entries)} tools, {len(platforms)} platforms and {len(engines)} engines, all following the schema")
     return 0
 
 

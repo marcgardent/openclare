@@ -1,7 +1,7 @@
 name = "Instant Meshes"
 slug = "instant-meshes"
 author = "Wenzel Jakob, Marco Tarini, Daniele Panozzo, Olga Sorkine-Hornung"
-tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quads", "output:quad-dominant", "output:triangles", "engine:own", "os:windows", "os:linux", "os:macos", "edge-flow:feature-lines", "licence:open-source", "source:public", "blender:unstated", "install:external", "price:free"]
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quads", "output:quad-dominant", "output:triangles", "engine:instant-meshes", "os:windows", "os:linux", "os:macos", "edge-flow:feature-lines", "licence:open-source", "source:public", "blender:unstated", "install:external", "price:free"]
 kind = "standalone"
 method = "local smoothing of an orientation field and a position field, then extraction of the mesh"
 purpose = "fast field-aligned remeshing, standalone, with a command line"

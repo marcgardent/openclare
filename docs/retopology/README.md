@@ -12,7 +12,7 @@ Marks on the bench exist only for the tools that `bench` names: see [the models]
 <!-- tools:start -->
 | Tool | Mode | Output | Engine | Price | Where | Blender | Status |
 |---|---|---|---|---|---|---|---|
-| [AutoRemesher](tools/autoremesher.toml) | automatic | quad-dominant | own | free | GitHub | — | active |
+| [AutoRemesher](tools/autoremesher.toml) | automatic | quad-dominant | autoremesher | free | GitHub | — | active |
 | [AutoRemesher Bridge](tools/autoremesher-bridge.toml) | automatic | quad-dominant | autoremesher | free | GitHub | 4.2–5.2 | active |
 | [Autoremesher NOW! \| Automatic Remeshing](tools/autoremesher-now.toml) | automatic | quad-dominant, triangles | geogram | paid | Superhive (formerly Blender Market) | 5.1 | active |
 | [AutoRemesher Quad: One-Click Quad Remesh](tools/autoremesher-quad.toml) | automatic | quad-dominant | autoremesher | paid | Superhive (formerly Blender Market) | 3.3–5.2 | active |
@@ -28,17 +28,17 @@ Marks on the bench exist only for the tools that `bench` names: see [the models]
 | [Fast Remesher](tools/fast-remesher.toml) | automatic | quad-dominant | instant-meshes, quadriflow, voxel | paid | Superhive (formerly Blender Market), Publisher's own site | 4.2–5.2 | active |
 | [Geometry Nodes: Mesh to Volume, Volume to Mesh](tools/geometry-nodes-remesh.toml) | automatic | quads, triangles, n-gons | voxel | free | Blender | 3.3+ | active |
 | [HeadWrap: Automatic Head Retopology With Eyes and Teeth](tools/headwrap.toml) | automatic, semi-automatic | template | own, ml | paid | Superhive (formerly Blender Market) | 4.2–5.2 | active |
-| [Instant Meshes](tools/instant-meshes.toml) | automatic | quads, quad-dominant, triangles | own | free | GitHub | — | stale |
+| [Instant Meshes](tools/instant-meshes.toml) | automatic | quads, quad-dominant, triangles | instant-meshes | free | GitHub | — | stale |
 | [Instant Meshes Remesh](tools/instant-meshes-remesh.toml) | automatic | quads, quad-dominant, triangles | instant-meshes | free | GitHub | — | stale |
 | [JRemesh Tools](tools/jremesh-tools.toml) | automatic | quads, quad-dominant | instant-meshes, quadriflow | paid | Superhive (formerly Blender Market) | 2.8–5.2 | active |
 | [JRetopo Tools](tools/jretopo-tools.toml) | manual, semi-manual, helper | quads, triangles | — | paid | Superhive (formerly Blender Market) | 5.2 | active |
 | [Livemesher - Arrange your parts before sculpting](tools/livemesher.toml) | automatic | quads | voxel | paid | Superhive (formerly Blender Market) | 3.0–5.2 | unknown |
 | [MMGpy - Mesh Remeshing](tools/mmgpy.toml) | automatic, semi-automatic | triangles | mmg | free | Blender Extensions | 4.2+ | active |
 | [Model Optimizer Pro: Quad Remesh & Auto Retopology for Blender](tools/model-optimizer-pro.toml) | automatic | quad-dominant | autoremesher | paid | Superhive (formerly Blender Market) | 3.2–5.2 | active |
-| [Mutamesh \| 4 Remeshers in One \| Instant Meshes, Quadwild, CWF, AdapTropic](tools/mutamesh.toml) | automatic | quads, quad-dominant, triangles | instant-meshes, quadwild, cwf | paid | Superhive (formerly Blender Market) | 5.1 | active |
+| [Mutamesh \| 4 Remeshers in One \| Instant Meshes, Quadwild, CWF, AdapTropic](tools/mutamesh.toml) | automatic | quads, quad-dominant, triangles | instant-meshes, quadwild, cwf, adaptropic | paid | Superhive (formerly Blender Market) | 5.1 | active |
 | [Nitro Retopo](tools/nitro-retopo.toml) | semi-manual | quad-dominant | own | paid | Superhive (formerly Blender Market) | 5.2+ | active |
 | [OkTopo Remesher for Blender](tools/oktopo.toml) | semi-automatic | template | own | paid | Superhive (formerly Blender Market), Gumroad | — | active |
-| [openclare](tools/openclare.toml) | automatic, semi-automatic | quads | own | free | GitHub | 4.2+ | active |
+| [openclare](tools/openclare.toml) | automatic, semi-automatic | quads | openclare | free | GitHub | 4.2+ | active |
 | [Petik - Retopology Patch Maker](tools/petik.toml) | semi-manual | quads | own | paid | Superhive (formerly Blender Market), Gumroad | 3.6–5.0 | active |
 | [Poly Build](tools/poly-build.toml) | manual | — | — | free | Blender | 2.80+ | active |
 | [PolyQuilt Retopology Tool](tools/polyquilt.toml) | manual | — | — | free | Blender Extensions, GitHub | 4.5+ | active |
@@ -117,17 +117,19 @@ Where the tools are distributed: [platforms.toml](platforms.toml).
 | output | `output:triangles` | triangles | 13 |
 | output | `output:n-gons` | faces of more than four sides | 2 |
 | output | `output:template` | the topology of the base mesh given by the user | 4 |
-| engine | `engine:own` | its own algorithm | 16 |
+| engine | `engine:own` | its own algorithm | 13 |
 | engine | `engine:proprietary` | a closed algorithm | 1 |
-| engine | `engine:instant-meshes` | Instant Meshes (Jakob et al. 2015) | 11 |
+| engine | `engine:instant-meshes` | Instant Meshes (Jakob et al. 2015) | 12 |
 | engine | `engine:quadriflow` | QuadriFlow (Huang et al. 2018) | 8 |
 | engine | `engine:quadwild` | QuadWild (Pietroni et al. 2021), with or without Bi-MDF | 3 |
-| engine | `engine:autoremesher` | AutoRemesher (Jeremy Hu) | 4 |
+| engine | `engine:autoremesher` | AutoRemesher (Jeremy Hu) | 5 |
 | engine | `engine:voxel` | a voxel grid (OpenVDB) | 8 |
 | engine | `engine:octree` | an octree | 1 |
 | engine | `engine:mmg` | the MMG library | 1 |
 | engine | `engine:cwf` | CWF | 2 |
 | engine | `engine:geogram` | Geogram | 1 |
+| engine | `engine:adaptropic` | AdapTropic (Lv et al. 2022) | 1 |
+| engine | `engine:openclare` | the openclare engine: a T-mesh of closed edge loops | 1 |
 | engine | `engine:simulation` | a softbody simulation | 1 |
 | engine | `engine:particles` | particles relaxed on the surface | 1 |
 | engine | `engine:ml` | a machine-learning model somewhere in the chain | 2 |
@@ -242,6 +244,32 @@ A field that no source confirms is left out, never guessed.
 | `blender` | no | Blender versions it serves, when it depends on them |
 | `notes` | no | anything else a reader must know |
 | `sources` | yes | list of `{ url, what }` |
+
+## Schema of an engine
+
+`engines.toml` holds one `[[engine]]` table per remeshing engine (algorithm) that tools run.
+
+| Field | Required | Meaning |
+|---|---|---|
+| `id` | yes | its value in the `engine` facet of `taxonomy.toml` |
+| `name` | yes | the name its authors use |
+| `family` | yes | one line: the kind of algorithm (field-aligned quadrangulation, voxel isosurface, metric adaptation...) |
+| `method` | yes | two or three sentences: how it works |
+| `output` | yes | list of `output` facet values it makes |
+| `authors` | yes | the people or project behind it |
+| `licence` | yes | an SPDX identifier, `proprietary`, or the words of the source when they give no version |
+| `source` | no | its source code |
+| `year` | no | the year of its first release or paper |
+| `status` | yes | `active`, `stale`, `abandoned`, `unknown`, as for a tool, from its own repository |
+| `last_commit` | no | the date of the last commit of its repository (TOML date) |
+| `papers` | no | as for a tool |
+| `strengths` | no | list of short phrases the papers or the documentation state |
+| `limits` | no | list of short phrases the papers or the documentation state |
+| `notes` | no | anything else |
+| `checked` | yes | the date the sources were read |
+| `sources` | yes | list of `{ url, what }` |
+
+Every engine value of the taxonomy has an entry, except `own`, `proprietary`, `simulation`, `particles` and `ml`, which are not one algorithm.
 
 ## Schema of the taxonomy
 
