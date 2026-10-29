@@ -168,6 +168,29 @@ fn a_ring_round_a_coarse_cube_is_one_loop_of_edges() {
 }
 
 #[test]
+fn a_diagonal_across_a_face_is_followed_with_no_singularity_for_it() {
+    // At 45 degrees from the sides of the face, the field may turn either
+    // way to meet the line: it used to turn one way on one side and the
+    // other way on the other, with a pair of singularities at the two ends
+    // that folded the map and let the line go (DT-164).
+    let source = primitives::cube(1);
+    let points = (0..31).map(|i| -0.6 + 0.04 * f64::from(i)).map(|t| Vec3::new(t, t, 1.0)).collect();
+    let curve = GuideCurve { points, closed: false, sharp: false };
+    let (mesh, report) = remesh(&source, 1000, &[curve]);
+    assert!(measure(&source, &mesh, Some(1000)).is_valid());
+    assert_eq!(report.singularities, (8, 0), "the corners of the cube, nothing more");
+    let line = joined(&report.guide_edges);
+    for &v in line.keys() {
+        let p = mesh.positions[v as usize];
+        assert!((p.z - 1.0).abs() < 1e-6 && (p.x - p.y).abs() < 1e-6, "{p:?}");
+    }
+    let xs: Vec<f64> = line.keys().map(|&v| mesh.positions[v as usize].x).collect();
+    let (low, high) = (xs.iter().copied().fold(f64::INFINITY, f64::min), xs.iter().copied().fold(-1.0, f64::max));
+    assert!(low < -0.55 && high > 0.55, "the line runs from {low} to {high}");
+    assert_eq!(line.values().filter(|n| n.len() == 1).count(), 2);
+}
+
+#[test]
 fn a_curve_away_from_the_surface_changes_nothing() {
     let source = primitives::icosphere(4);
     let far =
