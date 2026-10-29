@@ -1,4 +1,4 @@
-# La retopologie dans Blender en 2026
+# Les outils de retopologie dans Blender en 2026
 
 <p class="subtitle">Les outils qui font, ou aident à faire, la topologie d'un maillage dans Blender, tels que leurs éditeurs les annoncent le 29 octobre 2026.</p>
 

@@ -1,0 +1,325 @@
+# The engines (solvers) behind the retopology tools: one [[engine]] table per value of the engine facet in taxonomy.toml that names a solver.
+# The schema is in README.md; a field that no source confirms is left out, never guessed.
+
+[[engine]]
+id = "instant-meshes"
+name = "Instant Meshes"
+authors = "Wenzel Jakob, Marco Tarini, Daniele Panozzo, Olga Sorkine-Hornung"
+kind = "paper"
+method = "field-aligned remeshing: a local smoothing operator optimises an orientation field and a position field, then the mesh is extracted"
+year = 2015
+licence = "BSD-3-Clause"
+source = "https://github.com/wjakob/instant-meshes"
+origin = "instant-meshes"
+notes = "The licence is BSD-3-Clause with an extra clause on enhancements given back to the authors; GitHub reads it as NOASSERTION. Output: pure quads or pure triangles, or quad- or triangle-dominant."
+checked = 2026-10-29
+
+[[engine.papers]]
+title = "Instant Field-Aligned Meshes"
+authors = "Wenzel Jakob, Marco Tarini, Daniele Panozzo, Olga Sorkine-Hornung"
+venue = "ACM Transactions on Graphics 34(6) (SIGGRAPH Asia)"
+year = 2015
+doi = "10.1145/2816795.2818078"
+
+[[engine.sources]]
+url = "https://igl.ethz.ch/projects/instant-meshes/"
+what = "paper, SIGGRAPH Asia 2015; a unified local smoothing operator optimises edge orientations and vertex positions; position field"
+
+[[engine.sources]]
+url = "https://github.com/wjakob/instant-meshes"
+what = "reference code; LICENSE.txt, BSD-3-Clause text with the enhancements clause; repository created 2015-09-14"
+
+[[engine]]
+id = "quadriflow"
+name = "QuadriFlow"
+authors = "Jingwei Huang, Yichao Zhou, Matthias Niessner, Jonathan Richard Shewchuk, Leonidas J. Guibas"
+kind = "paper"
+method = "the Instant Meshes objective with linear and quadratic constraints, enforced by a global minimum-cost network flow, to reduce singularities"
+year = 2018
+licence = "BSD-3-Clause"
+source = "https://github.com/hjwdzh/QuadriFlow"
+notes = "The licence is BSD-3-Clause with the same extra clause on enhancements as Instant Meshes; GitHub reads it as NOASSERTION. No commit since 2019-12-07. Blender builds it in as the Quad remesher (tools/quadriflow.toml), which is Blender's tool, not the engine's own program."
+checked = 2026-10-29
+
+[[engine.papers]]
+title = "QuadriFlow: A Scalable and Robust Method for Quadrangulation"
+authors = "Jingwei Huang, Yichao Zhou, Matthias Niessner, Jonathan Richard Shewchuk, Leonidas J. Guibas"
+venue = "Computer Graphics Forum (Symposium on Geometry Processing)"
+year = 2018
+
+[[engine.sources]]
+url = "https://yichaozhou.com/publication/1805quadriflow/"
+what = "abstract: based on Instant Field-Aligned Meshes, linear and quadratic constraints solved by a minimum-cost network flow, fewer singularities; SGP 2018, Computer Graphics Forum"
+
+[[engine.sources]]
+url = "https://github.com/hjwdzh/QuadriFlow"
+what = "reference code; LICENSE.txt, BSD-3-Clause text with the enhancements clause; last push 2019-12-07"
+
+[[engine.sources]]
+url = "https://github.com/blender/blender/blob/main/source/blender/blenkernel/intern/mesh_remesh_voxel.cc"
+what = "Blender calls the QuadriFlow library (QFLOW_quadriflow_remesh) when built WITH_QUADRIFLOW"
+
+[[engine]]
+id = "quadwild"
+name = "QuadWild"
+authors = "Nico Pietroni, Stefano Nuvoli, Thomas Alderighi, Paolo Cignoni, Marco Tarini"
+kind = "paper"
+method = "feature-line driven quadrangulation: a feature-aligned cross field, a patch layout whose boundaries hold every feature line, then a pure-quad tessellation of each patch"
+year = 2021
+licence = "GPL-3.0-or-later"
+source = "https://github.com/nicopietroni/quadwild"
+notes = "The original quantization needs the Gurobi solver. The fork cgg-bern/quadwild-bimdf (GPL-3.0) replaces it with the Bi-MDF solver, builds without Gurobi and has binaries for Linux, Windows and macOS. No commit on the original since 2022-09-09."
+checked = 2026-10-29
+
+[[engine.papers]]
+title = "Reliable Feature-Line Driven Quad-Remeshing"
+authors = "Nico Pietroni, Stefano Nuvoli, Thomas Alderighi, Paolo Cignoni, Marco Tarini"
+venue = "ACM Transactions on Graphics 40(4) (SIGGRAPH)"
+year = 2021
+doi = "10.1145/3450626.3459941"
+
+[[engine.papers]]
+title = "Min-Deviation-Flow in Bi-directed Graphs for T-Mesh Quantization"
+authors = "Martin Heistermann, Jethro Warnett, David Bommes"
+venue = "ACM Transactions on Graphics 42(4) (SIGGRAPH)"
+year = 2023
+doi = "10.1145/3592437"
+
+[[engine.sources]]
+url = "https://github.com/nicopietroni/quadwild"
+what = "README: abstract, authors, DOI, Gurobi needed; LICENSE GPL-3.0; source headers say version 3 or any later version; last push 2022-09-09"
+
+[[engine.sources]]
+url = "https://github.com/cgg-bern/quadwild-bimdf"
+what = "fork with the Bi-MDF solver instead of Gurobi IQPs, builds without Gurobi, binaries for Linux, Windows and macOS, GPL-3.0"
+
+[[engine]]
+id = "autoremesher"
+name = "AutoRemesher"
+authors = "Jeremy Hu (huxingyi)"
+kind = "program"
+method = "isotropic remeshing, a cross field (QuadCover since 1.0.0-beta.1), a quad parameterization, then quad extraction; quad-dominant output"
+year = 2020
+licence = "MIT"
+source = "https://github.com/huxingyi/autoremesher"
+origin = "autoremesher"
+notes = "MIT since 1.0.0; the betas of 2020 were GPL-3.0. Version 1.1.0 replaced Geogram with its own quad parameterizer, while the README still says it is built on Geogram. 1.0.0-beta.1 added OpenVDB for uniform remeshing and dropped MIQ and libQEx."
+checked = 2026-10-29
+
+[[engine.sources]]
+url = "https://github.com/huxingyi/autoremesher"
+what = "README (built on Geogram, libigl, isotropicremesher), MIT LICENSE, repository created 2020-06-17"
+
+[[engine.sources]]
+url = "https://github.com/huxingyi/autoremesher/blob/master/CHANGELOGS.md"
+what = "QuadCover replaces MIQ and OpenVDB added (1.0.0-beta.1), quad-dominant output (1.0.0-beta.3), relicensed from GPLv3 to MIT (1.0.0), Geogram replaced by a native quad parameterizer (1.1.0)"
+
+[[engine.sources]]
+url = "https://github.com/huxingyi/autoremesher/releases"
+what = "first release, unstable, 2020-08-03"
+
+[[engine]]
+id = "voxel"
+name = "OpenVDB"
+authors = "DreamWorks Animation (Ken Museth and others), now the Academy Software Foundation"
+kind = "library"
+method = "sparse volume grid: Blender turns the mesh into a level set (meshToLevelSet), then extracts a new mesh of quads and triangles from it (volumeToMesh)"
+year = 2012
+licence = "Apache-2.0"
+source = "https://github.com/AcademySoftwareFoundation/openvdb"
+notes = "Relicensed from MPL-2.0 to Apache-2.0. Used by Blender's Voxel Remesh, the Voxel mode of the Remesh modifier and the Mesh to Volume and Volume to Mesh nodes; these are Blender's tools, not the engine's own program."
+checked = 2026-10-29
+
+[[engine.papers]]
+title = "VDB: High-Resolution Sparse Volumes with Dynamic Topology"
+authors = "Ken Museth"
+venue = "SIGGRAPH 2013 (Technical Papers)"
+year = 2013
+doi = "10.1145/2487228.2487235"
+
+[[engine.elsewhere]]
+name = "Houdini"
+url = "https://www.aswf.io/projects/openvdb/"
+what = "named by the ASWF as adopting OpenVDB"
+
+[[engine.elsewhere]]
+name = "RenderMan"
+url = "https://www.aswf.io/projects/openvdb/"
+what = "named by the ASWF as adopting OpenVDB"
+
+[[engine.elsewhere]]
+name = "Arnold"
+url = "https://www.aswf.io/projects/openvdb/"
+what = "named by the ASWF as adopting OpenVDB"
+
+[[engine.elsewhere]]
+name = "RealFlow"
+url = "https://www.aswf.io/projects/openvdb/"
+what = "named by the ASWF as adopting OpenVDB"
+
+[[engine.sources]]
+url = "https://docs.blender.org/manual/en/latest/modeling/modifiers/generate/remesh.html"
+what = "Voxel mode uses OpenVDB to generate a new manifold mesh (5.2 LTS manual)"
+
+[[engine.sources]]
+url = "https://github.com/blender/blender/blob/main/source/blender/blenkernel/intern/mesh_remesh_voxel.cc"
+what = "Blender's voxel remesh calls openvdb::tools::meshToLevelSet then openvdb::tools::volumeToMesh, which returns quads and triangles"
+
+[[engine.sources]]
+url = "https://www.openvdb.org/about/"
+what = "developed by Ken Museth at DreamWorks Animation; first open-sourced in August 2012; the VDB paper"
+
+[[engine.sources]]
+url = "https://github.com/AcademySoftwareFoundation/openvdb"
+what = "Apache-2.0 LICENSE, relicensed from MPL-2.0"
+
+[[engine.sources]]
+url = "https://history.siggraph.org/?p=108935"
+what = "VDB paper, Ken Museth, SIGGRAPH 2013, DOI"
+
+[[engine.sources]]
+url = "https://www.aswf.io/projects/openvdb/"
+what = "adopted by Houdini, RenderMan, Arnold and RealFlow"
+
+[[engine]]
+id = "octree"
+name = "Dual Contouring (Blender's dualcon)"
+authors = "Tao Ju (code); paper by Tao Ju, Frank Losasso, Scott Schaefer, Joe Warren"
+kind = "paper"
+method = "dual contouring on an octree: the mesh is scan-converted into a signed octree with Hermite data, then one vertex is placed inside each cell, not on its edges, and the vertices are joined into quads"
+year = 2002
+licence = "GPL-2.0-or-later"
+source = "https://github.com/blender/blender/tree/main/intern/dualcon"
+notes = "The licence is that of Blender's copy (SPDX headers); the licence of Tao Ju's original code was not found. The folder keeps the readme of PolyMender 1.6 (2006) by Tao Ju, which adds topologically manifold dual contouring. Blender's Remesh modifier (Blocks, Smooth, Sharp) wraps it since 2.62; the manual itself names only the Octree Depth, not the algorithm. The modifier is Blender's tool, not the engine's own program."
+checked = 2026-10-29
+
+[[engine.papers]]
+title = "Dual Contouring of Hermite Data"
+authors = "Tao Ju, Frank Losasso, Scott Schaefer, Joe Warren"
+venue = "ACM Transactions on Graphics 21(3) (SIGGRAPH)"
+year = 2002
+doi = "10.1145/566654.566586"
+
+[[engine.sources]]
+url = "https://wiki.blender.jp/Dev:Ref/Release_Notes/2.62/Remesh_Modifier"
+what = "2.62 release notes (mirror of the Blender wiki): based on the paper Dual Contouring of Hermite Data, code contributed by Dr. Tao Ju; vertices within a cubic cell, not along the cell edges"
+
+[[engine.sources]]
+url = "https://archive.blender.org/lists/bf-committers/2011-December/034744.html"
+what = "Remesh modifier (dual contouring) for 2.62: the dual contouring code was contributed by Dr. Tao Ju, the modifier is a simple wrapper for it"
+
+[[engine.sources]]
+url = "https://github.com/blender/blender/tree/main/intern/dualcon"
+what = "octree.h: scan-conversion, sign generation and surface reconstruction, @author Tao Ju; SPDX GPL-2.0-or-later; readme.txt of PolyMender 1.6"
+
+[[engine.sources]]
+url = "https://profiles.wustl.edu/en/publications/dual-contouring-of-hermite-data-2/"
+what = "paper: authors, ACM Transactions on Graphics 21(3), 339-346, 2002, DOI"
+
+[[engine.sources]]
+url = "https://history.siggraph.org/?p=118419"
+what = "paper presented at SIGGRAPH 2002, same DOI"
+
+[[engine.sources]]
+url = "https://docs.blender.org/manual/en/latest/modeling/modifiers/generate/remesh.html"
+what = "modes Blocks, Smooth, Sharp; Octree Depth sets the resolution (5.2 LTS manual)"
+
+[[engine]]
+id = "mmg"
+name = "mmg"
+authors = "Bordeaux INP, Inria, Université de Bordeaux, UPMC"
+kind = "library"
+method = "adaptation and optimization of a surface triangulation (mmgs), and isovalue discretization; also 2D and tetrahedral meshes"
+licence = "LGPL-3.0-or-later"
+source = "https://github.com/MmgTools/mmg"
+notes = "Three applications (mmg2d, mmgs, mmg3d) and their libraries. Copyright from 2004; the oldest release on GitHub is v5.0.2 (2015-10-15), so no first year is given. Output: triangles."
+checked = 2026-10-29
+
+[[engine.sources]]
+url = "https://www.mmgtools.org/"
+what = "the three applications and four libraries, mmgs adapts and optimises a surface triangulation, LGPL, copyright Bx INP/Inria/UBordeaux/UPMC 2004-"
+
+[[engine.sources]]
+url = "https://github.com/MmgTools/mmg"
+what = "LICENSE: LGPL version 3 or any later version; oldest release v5.0.2 (2015-10-15)"
+
+[[engine]]
+id = "cwf"
+name = "CWF"
+authors = "Rui Xu, Longdu Liu, Ningna Wang, Shuangmin Chen, Shiqing Xin, Xiaohu Guo, Zichun Zhong, Taku Komura, Wenping Wang, Changhe Tu"
+kind = "paper"
+method = "mesh simplification: points movable on the surface optimise a continuous QEM-like term and a CVT energy balanced by a decaying weight; triangle output"
+year = 2024
+licence = "AGPL-3.0"
+source = "https://github.com/Xrvitd/CWF"
+notes = "The licence file does not say whether later versions apply. The authors tested only 64-bit Windows with Visual Studio 2022; depends on CGAL, Eigen, Boost and libigl."
+checked = 2026-10-29
+
+[[engine.papers]]
+title = "CWF: Consolidating Weak Features in High-quality Mesh Simplification"
+authors = "Rui Xu, Longdu Liu, Ningna Wang, Shuangmin Chen, Shiqing Xin, Xiaohu Guo, Zichun Zhong, Taku Komura, Wenping Wang, Changhe Tu"
+venue = "ACM Transactions on Graphics 43(4) (SIGGRAPH)"
+year = 2024
+doi = "10.1145/3658159"
+
+[[engine.sources]]
+url = "https://github.com/Xrvitd/CWF"
+what = "reference code, AGPL-3.0 LICENSE, citation with DOI, SIGGRAPH 2024, tested on 64-bit Windows only, dependencies"
+
+[[engine.sources]]
+url = "https://arxiv.org/abs/2404.15661"
+what = "abstract: a QEM-like term and a CVT energy on movable points on the surface, balanced by a decaying weight"
+
+[[engine]]
+id = "geogram"
+name = "Geogram"
+authors = "Bruno Lévy, Inria"
+kind = "library"
+method = "a library of geometric algorithms; its surface remesher places points by a centroidal Voronoi tessellation (CVT) and builds triangles, isotropic or adapted to curvature"
+licence = "BSD-3-Clause"
+source = "https://github.com/BrunoLevy/geogram"
+notes = "Development started in 2000; no first release date was found. Symposium on Geometry Processing Software Award 2023. AutoRemesher used it until 1.1.0; Autoremesher NOW! names Geogram CVT for its Tris → Tris operation."
+checked = 2026-10-29
+
+[[engine.papers]]
+title = "Isotropic Remeshing with Fast and Exact Computation of Restricted Voronoi Diagram"
+authors = "Dong-Ming Yan, Bruno Lévy, Yang Liu, Feng Sun, Wenping Wang"
+venue = "Computer Graphics Forum"
+year = 2009
+
+[[engine.elsewhere]]
+name = "AliceVision"
+url = "https://github.com/BrunoLevy/geogram/wiki/Publications"
+what = "photogrammetric computer vision framework, listed among the projects using Geogram"
+
+[[engine.elsewhere]]
+name = "BRL-CAD"
+url = "https://github.com/BrunoLevy/geogram/wiki/Publications"
+what = "listed among the projects using Geogram"
+
+[[engine.elsewhere]]
+name = "TetWild / Fast TetWild"
+url = "https://github.com/BrunoLevy/geogram/wiki/Publications"
+what = "robust tetrahedral meshing, listed among the projects using Geogram"
+
+[[engine.elsewhere]]
+name = "OVITO"
+url = "https://github.com/BrunoLevy/geogram/wiki/Publications"
+what = "visualization of atomistic and particle models, listed among the projects using Geogram"
+
+[[engine.elsewhere]]
+name = "PyMesh"
+url = "https://github.com/BrunoLevy/geogram/wiki/Publications"
+what = "listed among the projects using Geogram"
+
+[[engine.sources]]
+url = "https://github.com/BrunoLevy/geogram"
+what = "README: a programming library with geometric algorithms, remeshing among them; BSD-3-Clause LICENSE, copyright Inria; started in 2000; SGP Software Award 2023"
+
+[[engine.sources]]
+url = "https://github.com/BrunoLevy/geogram/wiki/Remeshing"
+what = "the remesher is based on centroidal Voronoi tessellation; isotropic or anisotropic triangle output; cites Yan, Lévy et al. 2009"
+
+[[engine.sources]]
+url = "https://github.com/BrunoLevy/geogram/wiki/Publications"
+what = "projects using Geogram: AliceVision, BRL-CAD, TetWild, OVITO, PyMesh and others"

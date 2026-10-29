@@ -1,4 +1,4 @@
-# Retopology in Blender, 2026
+# Retopology tools in Blender, 2026
 
 <p class="subtitle">The tools that make, or help make, the topology of a mesh in Blender, as their publishers state them on 29 October 2026.</p>
 
