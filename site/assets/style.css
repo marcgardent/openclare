@@ -470,6 +470,23 @@ pre .comment { color: var(--fog); }
 .button.plain { border-color: transparent; padding: 0 6px; color: var(--teal-text); text-decoration: underline; text-underline-offset: 0.2em; }
 .button.plain:hover { background: transparent; color: var(--ink); }
 
+/* ------------------------------------------------------------ 3D viewer */
+
+/* Light in both themes, like the pictures of the models. */
+.viewer {
+  --viewer-bg: var(--figure-bg);
+  --viewer-mesh: #BBCBDC;   /* the colours of the pictures (scripts/render.py) */
+  --viewer-edge: #28303F;
+  margin: 1.25rem 0 2rem;
+}
+.viewer-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 12px; }
+.viewer-bar label { font-family: var(--mono); font-size: 15px; }
+.viewer-bar select { min-height: 48px; padding: 0 10px; font: inherit; color: var(--ink); background: var(--surface); border: 1.5px solid var(--ink); }
+.viewer-stage { position: relative; width: 100%; aspect-ratio: 4 / 3; max-height: 75vh; border: 1px solid var(--rule); background: var(--viewer-bg); touch-action: none; }
+.viewer-stage canvas { display: block; width: 100%; height: 100%; }
+.viewer-info { margin: 8px 0 0; font-family: var(--mono); font-size: 14px; }
+.viewer-help, .viewer-status { margin: 4px 0 0; color: var(--slate); font-size: 15px; }
+
 /* ------------------------------------------------------------ figures */
 
 figure { margin: 2rem 0; }

@@ -12,6 +12,8 @@ Les remailleurs : **openclare** tel que l'extension Blender le lance ; **QuadriF
 
 ## Modèle par modèle
 
+<div class="viewer" data-models="all"></div>
+
 {{models}}
 
 {{withheld}}

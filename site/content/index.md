@@ -39,6 +39,8 @@ Measured by the project's bench, the night of 18 October 2026, on {{count:all}} 
 
 <figure class="wide"><picture><source media="(prefers-color-scheme: dark)" srcset="../../docs/images/dashboard/gallery-dark.webp"><img src="../../docs/images/dashboard/gallery-light.webp" alt="openclare, QuadriFlow and AutoRemesher on the ogre, the pig, a mechanical part and a generated building, each with its number of quads and its mark out of 100" loading="lazy"></picture><figcaption>Each row at the same number of quads, asked of every remesher. The stone mill is from the <em>Free Windmills Set</em> by LapaModels, CC BY 4.0.</figcaption></figure>
 
+<div class="viewer" data-models="ogre pig part stonemill human_male"></div>
+
 <figure class="wide"><picture><source media="(prefers-color-scheme: dark)" srcset="../../docs/images/dashboard/marks-dark.svg"><img src="../../docs/images/dashboard/marks-light.svg" alt="Average mark out of 100 of the three remeshers over the organic models, the mechanical parts and the assembled and generated models, at 1,000, 3,000 and 8,000 quads asked for" loading="lazy"></picture><figcaption>Average marks over the bench at 1,000, 3,000 and 8,000 quads asked for.</figcaption></figure>
 
 ## Simple rather than regular
