@@ -27,7 +27,9 @@ pub struct Request {
     /// Farthest apart, along the surface, two singularities may be to be
     /// considered a pair. This is the main control: a pair closer than a quad
     /// or two is noise the mesh could not express anyway, while a distant one
-    /// usually describes a real feature. `None` puts no limit.
+    /// usually describes a real feature: beyond reach, a pair only goes if
+    /// the field is several times smoother without it, a twist and not a
+    /// feature. `None` puts no limit.
     pub reach: Option<f64>,
 }
 
