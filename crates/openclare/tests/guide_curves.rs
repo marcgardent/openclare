@@ -238,6 +238,24 @@ fn a_curve_drawn_as_sharp_gives_hard_edges_creased_in_full() {
 }
 
 #[test]
+fn the_edges_of_a_box_are_not_taken_for_a_curve_drawn_as_sharp() {
+    // A sharp diagonal across the top of a cube: the edges of the cube are
+    // nearer to it than to any other curve, yet they are not along it
+    // (DT-164).
+    let source = primitives::cube(1);
+    let points = (0..31).map(|i| -0.6 + 0.04 * f64::from(i)).map(|t| Vec3::new(t, t, 1.0)).collect();
+    let curve = GuideCurve { points, closed: false, sharp: true };
+    let (mesh, report) = remesh(&source, 1000, &[curve]);
+    assert!(measure(&source, &mesh, Some(1000)).is_valid());
+    let line = joined(&report.sharp_curve_edges);
+    assert!(line.len() >= 8, "{} vertices along the curve", line.len());
+    for &v in line.keys() {
+        let p = mesh.positions[v as usize];
+        assert!((p.z - 1.0).abs() < 1e-6 && (p.x - p.y).abs() < 1e-6, "{p:?}");
+    }
+}
+
+#[test]
 fn no_edge_along_a_guide_curve_is_taken_for_a_hard_edge() {
     // Small loops, drawn with few points: the line the mesh follows, on the
     // surface, strays from the polygon that was drawn. The edges along it
