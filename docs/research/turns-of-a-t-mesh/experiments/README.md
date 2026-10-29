@@ -82,7 +82,9 @@ only on the same machine under the same load: the long runs are for an idle mach
   primitive whole multipliers) and, for each turn left out, whole lengths closing the others,
   checked exactly. Sets of the same turns in several ways make one row, with the certificate of
   the first way listed (another way may give another representative modulo the balances, as row 6
-  of the paper's table gives for row 4's turns).
+  of the paper's table gives for row 4's turns). `claims.json` also keeps each way's own
+  certificate (`in_each_way`): the ways hold different arcs at length one, so the bounded arcs of
+  a row differ from way to way, and `make lean-check` checks each way against its own.
 - `pairs.py`: for each row of at most `--largest` turns, the crossings, the windings of the cycle
   Σ u γ round the regions, monotone staircases of at most `--depth` + 1 arcs between the singular
   vertices of the regions where it winds whose length equals the combination modulo the balances,
