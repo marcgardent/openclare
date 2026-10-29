@@ -1,6 +1,6 @@
 # Shortcuts for the common tasks. `make help` lists them.
 
-.PHONY: help build test scenes blenderkit essentials remeasure autoremesher scores quick pages dashboard view addon install addon-windows test-windows addon-test capi-test version release paper paper-version paper-arxiv paper-clean proofs lean-check site site-serve
+.PHONY: help build test scenes blenderkit essentials remeasure autoremesher scores quick pages dashboard view addon install addon-windows test-windows addon-test test-trace capi-test version release paper paper-version paper-arxiv paper-clean proofs lean-check site site-serve
 
 help:
 	@echo "make build       build the openclare binary (release)"
@@ -16,6 +16,7 @@ help:
 	@echo "make test-windows WINE=/path/to/wine64"
 	@echo "                 run the tests of the engine built for Windows, under Wine"
 	@echo "make addon-test  run the add-on in a Blender without interface (needs blender)"
+	@echo "make test-trace  the drawing tools' logic, without Blender"
 	@echo "make capi-test   build the C test of the C interface against its header and the library,"
 	@echo "                 and run it (needs cc, or CC=clang)"
 	@echo "make autoremesher download and install the AutoRemesher challenger into ~/.local/bin"
@@ -253,7 +254,7 @@ addon-windows:
 		cargo build --release -p openclare-capi --target $(WINDOWS_TARGET)
 	rm -rf $(WINDOWS_STAGE)
 	mkdir -p $(WINDOWS_STAGE)/lib
-	cp blender/openclare/__init__.py blender/openclare/engine.py blender/openclare/preview.py $(WINDOWS_STAGE)/
+	cp blender/openclare/*.py $(WINDOWS_STAGE)/
 	sed 's/^platforms = .*/platforms = ["windows-x64"]/' blender/openclare/blender_manifest.toml \
 		> $(WINDOWS_STAGE)/blender_manifest.toml
 	cp target/$(WINDOWS_TARGET)/release/openclare_capi.dll $(WINDOWS_STAGE)/lib/
@@ -271,7 +272,14 @@ test-windows:
 	CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUNNER="$(WINE)" WINEDEBUG=-all \
 		cargo test --release --target $(WINDOWS_TARGET) -p openclare -p openclare-capi
 
-addon-test: addon
+# The drawing tools' logic, without Blender: the stroke, the curve fitted on
+# it, the loop a plane cuts.
+test-trace:
+	python3 blender/test_trace.py
+	python3 blender/test_fit.py
+	python3 blender/test_cut.py
+
+addon-test: addon test-trace
 	ulimit -v $(MEMORY_CAP); blender -b --factory-startup --python-exit-code 1 --python blender/test_addon.py
 
 # The C interface called from C: crates/openclare-capi/tests/c/smoke.c, built
