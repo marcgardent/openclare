@@ -474,6 +474,49 @@ print("SNAP onto the ridge at x = %.4f, into the valley at %.4f, for 0.123; Vall
 assert hasattr(bpy.ops.object, "openclare_snap_radius")
 assert any(entry[0] == "object.openclare_snap_radius" and entry[1]["type"] == "F"
            for entry in openclare.draw.OPENCLARE_TL_draw_curve.bl_keymap)
+# S opens the menu of the snaps; V and R switch Valley and Ridge on, and off
+# again when on.
+keys = {entry[1]["type"]: entry for entry in openclare.draw.OPENCLARE_TL_draw_curve.bl_keymap}
+assert keys["S"][0] == "wm.call_menu" and dict(keys["S"][2]["properties"])["name"] == "OPENCLARE_MT_snap"
+assert dict(keys["V"][2]["properties"])["snap"] == "VALLEY" and dict(keys["R"][2]["properties"])["snap"] == "RIDGE"
+assert hasattr(bpy.ops.object, "openclare_snap") and hasattr(bpy.types, "OPENCLARE_MT_snap")
+toggled = openclare.draw.toggled
+assert toggled("NONE", "RIDGE") == "RIDGE" and toggled("RIDGE", "RIDGE") == "NONE" and toggled("RIDGE", "VALLEY") == "VALLEY"
+
+
+def snap_pixels(snap):
+    """How many pixels the circle of the snap `snap` (and its name) takes,
+    drawn round the middle of an image of 120 by 80."""
+    import gpu as gpu_module
+    import numpy
+
+    offscreen = gpu_module.types.GPUOffScreen(120, 80)
+    with offscreen.bind():
+        framebuffer = gpu_module.state.active_framebuffer_get()
+        framebuffer.clear(color=(0.0, 0.0, 0.0, 1.0))
+        with gpu_module.matrix.push_pop(), gpu_module.matrix.push_pop_projection():
+            gpu_module.matrix.load_identity()
+            gpu_module.matrix.load_projection_matrix(mathutils.Matrix((
+                (2.0 / 120, 0.0, 0.0, -1.0), (0.0, 2.0 / 80, 0.0, -1.0), (0.0, 0.0, -1.0, 0.0), (0.0, 0.0, 0.0, 1.0))))
+            openclare.draw.draw_snap(None, (40.0, 40.0), 15.0, snap, (0.0, 0.85, 1.0, 1.0), size=(120, 80))
+        pixels = numpy.array(framebuffer.read_color(0, 0, 120, 80, 4, 0, "FLOAT").to_list()).reshape(80, 120, 4)
+    offscreen.free()
+    lit = pixels[:, :, 2] > 0.2
+    return int(lit[:, :58].sum()), int(lit[:, 58:].sum())
+
+
+try:
+    import gpu as gpu_started  # noqa: E402
+
+    gpu_started.init()
+    ring_none, word_none = snap_pixels("NONE")
+    ring_ridge, word_ridge = snap_pixels("RIDGE")
+    print("SNAP CURSOR circle of", ring_none, "pixels dashed,", ring_ridge, "whole; its name", word_none, "and",
+          word_ridge, "pixels")
+    assert 0 < ring_none < ring_ridge, (ring_none, ring_ridge)
+    assert word_none == 0 and word_ridge > 20, (word_none, word_ridge)
+except SystemError as error:
+    print("SNAP CURSOR not drawn off screen:", error)
 print("TARGET the selected active mesh; a curve active, or nothing selected: the cursor says no")
 # The surface the strokes are laid on: a ray from outside the ball reaches it
 # at its radius; the tree is kept while the shape stays as it is.
