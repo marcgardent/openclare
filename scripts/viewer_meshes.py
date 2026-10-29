@@ -8,8 +8,9 @@ machine, and writes docs/models/mesh/<model>/<remesher>-<budget>.ocqm with an
 index.json beside them, which site/build.py turns into a viewer on the model's
 page.
 
-- Only openclare, QuadriFlow and AutoRemesher are read: never Quad Remesher,
-  whose outputs stay local (its licence).
+- Only openclare, QuadriFlow and AutoRemesher are read, and the meshes modelled
+  by hand of bench/reference/handmade: never Quad Remesher, whose outputs stay
+  local (its licence).
 - Never the source: it is too heavy to load, and the page keeps its pictures.
 - A model whose licence does not allow passing it on (CREDITS.md: BlenderKit
   Royalty Free) is left out: a mesh one can download passes the model on, even
@@ -151,6 +152,22 @@ def main():
                 entries.append({"remesher": remesher, "budget": int(budget), "file": name,
                                 "faces": len(faces), "seed": seed, "run": date})
                 print(f"{model} {budget} {remesher}: seed {seed}, {len(faces)} faces, {target.stat().st_size / 1000:.0f} kB")
+        handmade = ROOT / "bench/reference/handmade" / f"{model}.obj"
+        if handmade.exists():
+            # The same mesh at every budget: shown once, checked against the run at 3,000.
+            results, date = runs.get("3000") or last_run("3000")
+            expected = chosen_run(results, model, "handmade")
+            positions, faces = read_obj(handmade)
+            if expected is None or len(faces) != expected[1]:
+                print(f"{model} handmade: {len(faces)} faces, not those of the run of {date}: refused")
+                failed = True
+            else:
+                target = ROOT / "docs/models/mesh" / model / "handmade.ocqm"
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(encode(positions, faces))
+                entries.append({"remesher": "handmade", "budget": None, "file": target.name,
+                                "faces": len(faces), "seed": None, "run": date})
+                print(f"{model} handmade: {len(faces)} faces, {target.stat().st_size / 1000:.0f} kB")
         if entries:
             azimuth, elevation = VIEWS.get(model, (-60, 20))
             view = {"up": "y" if model in Y_UP else "z", "azimuth": azimuth, "elevation": elevation}

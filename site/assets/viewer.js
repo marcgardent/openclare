@@ -9,6 +9,8 @@ const WORDS = {
   en: {
     open: "View in 3D",
     remesher: "Remesher",
+    budget: "Quads asked for",
+    handmade: "Modelled by hand",
     faces: (n) => `${n.toLocaleString("en")} faces`,
     run: (date) => `bench run of ${date}`,
     reset: "Reset the view",
@@ -21,6 +23,8 @@ const WORDS = {
   fr: {
     open: "Voir en 3D",
     remesher: "Remailleur",
+    budget: "Quads demandés",
+    handmade: "Modélisé à la main",
     faces: (n) => `${n.toLocaleString("fr").replace(/ | /g, " ")} faces`,
     run: (date) => `passage du banc du ${date}`,
     reset: "Revenir à la vue de départ",
@@ -117,21 +121,32 @@ async function start(root) {
 
   const bar = document.createElement("div");
   bar.className = "viewer-bar";
-  const label = document.createElement("label");
-  label.textContent = words.remesher + " ";
-  const select = document.createElement("select");
-  for (const [position, entry] of index.meshes.entries()) {
-    const option = document.createElement("option");
-    option.value = String(position);
-    option.textContent = `${NAMES[entry.remesher] || entry.remesher} · ${entry.budget.toLocaleString(root.lang)}`;
-    select.append(option);
-  }
-  label.append(select);
+  // Two choices: the remesher, and the number of quads asked of it (none for
+  // a mesh modelled by hand, the same at every budget).
+  const chooser = (text, values, name) => {
+    const label = document.createElement("label");
+    label.textContent = text + " ";
+    const select = document.createElement("select");
+    for (const value of values) {
+      const option = document.createElement("option");
+      option.value = String(value);
+      option.textContent = name(value);
+      select.append(option);
+    }
+    label.append(select);
+    return [label, select];
+  };
+  const remeshers = [...new Set(index.meshes.map((m) => m.remesher))];
+  const budgets = [...new Set(index.meshes.filter((m) => m.budget).map((m) => m.budget))].sort((a, b) => a - b);
+  const [remesherLabel, remesherSelect] = chooser(words.remesher, remeshers,
+    (r) => (r === "handmade" ? words.handmade : NAMES[r] || r));
+  const [budgetLabel, budgetSelect] = chooser(words.budget, budgets, (b) => b.toLocaleString(root.lang).replace(/\u202f|\u00a0/g, " "));
+  if (budgets.includes(3000)) budgetSelect.value = "3000";
   const reset = document.createElement("button");
   reset.type = "button";
   reset.className = "button";
   reset.textContent = words.reset;
-  bar.append(label, reset);
+  bar.append(remesherLabel, budgetLabel, reset);
 
   const stage = document.createElement("div");
   stage.className = "viewer-stage";
@@ -215,8 +230,17 @@ async function start(root) {
   };
 
   const cache = new Map();
-  const show = async (position) => {
-    const entry = index.meshes[position];
+  const show = async () => {
+    const remesher = remesherSelect.value;
+    const own = index.meshes.filter((m) => m.remesher === remesher);
+    // Only the budgets this remesher has; a mesh by hand has none.
+    for (const option of budgetSelect.options) option.disabled = !own.some((m) => m.budget === Number(option.value));
+    budgetSelect.disabled = own.every((m) => m.budget === null);
+    let entry = own.find((m) => m.budget === Number(budgetSelect.value));
+    if (!entry) {
+      entry = own[0];
+      if (entry.budget) budgetSelect.value = String(entry.budget);
+    }
     info.textContent = words.loading;
     try {
       let geometry = cache.get(entry.file);
@@ -243,10 +267,11 @@ async function start(root) {
     }
   };
 
-  select.addEventListener("change", () => show(Number(select.value)));
+  remesherSelect.addEventListener("change", show);
+  budgetSelect.addEventListener("change", show);
   reset.addEventListener("click", () => home && frame(home));
   resize();
-  await show(0);
+  await show();
 }
 
 for (const root of document.querySelectorAll(".viewer[data-index]")) {
