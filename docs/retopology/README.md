@@ -68,6 +68,25 @@ Marks on the bench exist only for the tools that `bench` names: see [the models]
 | [Wrap for Blender - Automatic Retopology of Any Model](tools/wrap-for-blender.toml) | semi-automatic | template | own | paid | Superhive (formerly Blender Market) | 5.0–5.2 | active |
 <!-- tools:end -->
 
+## Engines
+
+The solvers inside the tools, those that more than one tool runs or that are published apart: [engines.toml](engines.toml).
+Which tool runs which engine is in its `engine:` tags; a tool with a solver of its own carries `engine:own`.
+
+<!-- engines:start -->
+| Engine | Kind | Licence | Tools |
+|---|---|---|---|
+| Instant Meshes | paper | BSD-3-Clause | 12 |
+| QuadriFlow | paper | BSD-3-Clause | 8 |
+| QuadWild | paper | GPL-3.0-or-later | 3 |
+| AutoRemesher | program | MIT | 5 |
+| OpenVDB | library | Apache-2.0 | 8 |
+| Dual Contouring (Blender's dualcon) | paper | GPL-2.0-or-later | 1 |
+| mmg | library | LGPL-3.0-or-later | 1 |
+| CWF | paper | AGPL-3.0 | 2 |
+| Geogram | library | BSD-3-Clause | 1 |
+<!-- engines:end -->
+
 ## Platforms
 
 Where the tools are distributed: [platforms.toml](platforms.toml).
@@ -124,7 +143,7 @@ Where the tools are distributed: [platforms.toml](platforms.toml).
 | engine | `engine:quadwild` | QuadWild (Pietroni et al. 2021), with or without Bi-MDF | 3 |
 | engine | `engine:autoremesher` | AutoRemesher (Jeremy Hu) | 4 |
 | engine | `engine:voxel` | a voxel grid (OpenVDB) | 8 |
-| engine | `engine:octree` | an octree | 1 |
+| engine | `engine:octree` | dual contouring on an octree (Ju et al. 2002) | 1 |
 | engine | `engine:mmg` | the MMG library | 1 |
 | engine | `engine:cwf` | CWF | 2 |
 | engine | `engine:geogram` | Geogram | 1 |
@@ -242,6 +261,27 @@ A field that no source confirms is left out, never guessed.
 | `blender` | no | Blender versions it serves, when it depends on them |
 | `notes` | no | anything else a reader must know |
 | `sources` | yes | list of `{ url, what }` |
+
+## Schema of an engine
+
+`engines.toml` holds one `[[engine]]` table per engine.
+
+| Field | Required | Meaning |
+|---|---|---|
+| `id` | yes | the value of its `engine:` tag in `taxonomy.toml` |
+| `name` | yes | the name its authors use |
+| `authors` | yes | the people or the organisation behind it |
+| `kind` | yes | `paper` (an algorithm published with research code), `library` (meant to be built into other software), `program` (an application) |
+| `method` | yes | one line: what it does |
+| `year` | no | the year it was first published or released |
+| `licence` | no | an SPDX identifier, from the licence of its reference code |
+| `source` | no | its reference code |
+| `origin` | no | the slug of the tool in `tools/` that is the engine's own program |
+| `papers` | no | as for a tool |
+| `elsewhere` | no | list of `{ name, url, what }`: software outside Blender that runs it, when a page read says so |
+| `sources` | yes | list of `{ url, what }` |
+| `notes` | no | anything else a reader must know |
+| `checked` | yes | the date the sources were read (TOML date) |
 
 ## Schema of the taxonomy
 

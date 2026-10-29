@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Check docs/retopology/tools/*.toml, docs/retopology/platforms.toml and
-docs/retopology/taxonomy.toml against the schema of docs/retopology/README.md, and rewrite the indexes of
-that README.
+"""Check docs/retopology/tools/*.toml, docs/retopology/platforms.toml,
+docs/retopology/engines.toml and docs/retopology/taxonomy.toml against the schema of
+docs/retopology/README.md, and rewrite the indexes of that README.
 
     python3 scripts/retopology.py [--check] [--compute]
 
@@ -22,6 +22,7 @@ ROOT = Path(__file__).resolve().parent.parent
 FOLDER = ROOT / "docs" / "retopology"
 TOOLS = FOLDER / "tools"
 PLATFORMS = FOLDER / "platforms.toml"
+ENGINES = FOLDER / "engines.toml"
 TAXONOMY = FOLDER / "taxonomy.toml"
 README = FOLDER / "README.md"
 
@@ -36,6 +37,13 @@ BLENDER = {"min", "max", "release"}
 PAPER = {"title", "authors", "venue", "year", "doi"}
 PLATFORM = {"id", "name", "url", "kind", "operator", "paid", "licence_rule", "seller_share", "install", "updates",
             "blender", "notes", "sources"}
+ENGINE = {"id", "name", "authors", "kind", "method", "year", "licence", "source", "origin", "papers", "elsewhere",
+          "sources", "notes", "checked"}
+ENGINE_KINDS = {"paper", "library", "program"}
+ELSEWHERE = {"name", "url", "what"}
+# Engine tags that name no engine of their own: a tool's own or closed
+# solver, or a way of working rather than a solver.
+NOT_ENGINES = {"own", "proprietary", "simulation", "particles", "ml"}
 SLUG = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 VERSION = re.compile(r"^\d+\.\d+(\.\d+)?$")
 RELEASE = re.compile(r"^\S+ \(\d{4}-\d{2}-\d{2}\)$")
@@ -217,6 +225,38 @@ def platform_problems(platform):
     return [f"{platform.get('id', '?')}: {problem}" for problem in c.found]
 
 
+def engine_problems(engine, taxonomy, slugs):
+    c = Checker()
+    c.unknown(engine, ENGINE)
+    for key in ("name", "authors", "method"):
+        c.need(engine, key)
+    if c.need(engine, "id"):
+        if engine["id"] not in taxonomy["engine"] or engine["id"] in NOT_ENGINES:
+            c.found.append(f"id: {engine['id']} is not an engine of taxonomy.toml")
+    c.among(engine, "kind", ENGINE_KINDS)
+    if "year" in engine and not isinstance(engine["year"], int):
+        c.found.append("year: not a number")
+    if "source" in engine:
+        c.url(engine["source"], "source")
+    if "origin" in engine and engine["origin"] not in slugs:
+        c.found.append(f"origin: {engine['origin']} is no tool of tools/")
+    for i, paper in enumerate(engine.get("papers", [])):
+        c.unknown(paper, PAPER, f"papers[{i}].")
+        for key in ("title", "authors", "venue"):
+            c.need(paper, key, f"papers[{i}].")
+        if not isinstance(paper.get("year"), int):
+            c.found.append(f"papers[{i}].year: missing, or not a number")
+    for i, use in enumerate(engine.get("elsewhere", [])):
+        c.unknown(use, ELSEWHERE, f"elsewhere[{i}].")
+        c.need(use, "name", f"elsewhere[{i}].")
+        c.need(use, "what", f"elsewhere[{i}].")
+        c.url(use.get("url"), f"elsewhere[{i}].url")
+    if not isinstance(engine.get("checked"), datetime.date):
+        c.found.append("checked: missing, or not a TOML date")
+    c.sources(engine.get("sources"))
+    return [f"{engine.get('id', '?')}: {problem}" for problem in c.found]
+
+
 def tool_index(entries, platforms):
     """One row per tool, with the tags that matter most for choosing."""
     rows = ["| Tool | Mode | Output | Engine | Price | Where | Blender | Status |",
@@ -257,6 +297,15 @@ def platform_index(platforms, entries):
     for key, p in platforms.items():
         name = f"[{p['name']}]({p['url']})" if "url" in p else p["name"]
         rows.append(f"| {name} | {p['kind']} | {'yes' if p['paid'] else 'no'} | {count[key]} |")
+    return "\n".join(rows)
+
+
+def engine_index(engines, entries):
+    """One row per engine, with the tools that run it."""
+    rows = ["| Engine | Kind | Licence | Tools |", "|---|---|---|---|"]
+    for engine in engines:
+        count = sum(f"engine:{engine['id']}" in e.get("tags", []) or e["slug"] == engine.get("origin") for e in entries)
+        rows.append(f"| {engine['name']} | {engine['kind']} | {engine.get('licence', '—')} | {count} |")
     return "\n".join(rows)
 
 
@@ -320,6 +369,21 @@ def main():
             print(f"{path.name}: {problem}")
             failed = True
         entries.append(entry)
+    try:
+        engines = tomllib.loads(ENGINES.read_text(encoding="utf-8")).get("engine", [])
+    except tomllib.TOMLDecodeError as error:
+        print(f"engines.toml: {error}")
+        return 1
+    slugs = {entry.get("slug") for entry in entries}
+    seen = set()
+    for engine in engines:
+        for problem in engine_problems(engine, taxonomy, slugs):
+            print(f"engines.toml: {problem}")
+            failed = True
+        if engine.get("id") in seen:
+            print(f"engines.toml: {engine['id']}: listed twice")
+            failed = True
+        seen.add(engine.get("id"))
     if failed:
         return 1
 
@@ -327,12 +391,13 @@ def main():
     fresh = replace(text, "tools", tool_index(entries, platforms))
     fresh = replace(fresh, "tags", tag_index(entries, taxonomy))
     fresh = replace(fresh, "platforms", platform_index(platforms, entries))
+    fresh = replace(fresh, "engines", engine_index(engines, entries))
     if fresh != text:
         if args.check:
             print("README.md: the indexes are out of date; run python3 scripts/retopology.py")
             return 1
         README.write_text(fresh, encoding="utf-8")
-    print(f"{len(entries)} tools and {len(platforms)} platforms, all following the schema")
+    print(f"{len(entries)} tools, {len(engines)} engines and {len(platforms)} platforms, all following the schema")
     return 0
 
 

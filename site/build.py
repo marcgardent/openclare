@@ -102,7 +102,8 @@ WORDS = {
         "research": "Research",
         "get": "Get it",
         "market": "State of the market",
-        "retopology": "Retopology 2026",
+        "retopology": "Retopology Tools 2026",
+        "engines": "Retopology Engines 2026",
         "platforms": "Distribution platforms 2026",
         "github": "GitHub ↗",
         "models": "Model by model",
@@ -138,7 +139,8 @@ WORDS = {
         "research": "Recherche",
         "get": "L'obtenir",
         "market": "État du marché",
-        "retopology": "Retopologie 2026",
+        "retopology": "Outils de retopologie 2026",
+        "engines": "Moteurs de retopologie 2026",
         "platforms": "Plateformes de distribution 2026",
         "github": "GitHub ↗",
         "models": "Modèle par modèle",
@@ -167,7 +169,9 @@ WORDS = {
 # The logo leads home; the navigation lists the other pages.
 NAVIGATION = ("theory", "results", "market", "glossary", "research", "get")
 # The pages each item of the navigation stands for, beside its own.
-SECTIONS = {"results": ("models/",), "market": ("retopology", "platforms")}
+SECTIONS = {"results": ("models/",), "market": ("retopology", "engines", "platforms")}
+# The lists of the state of the market, in the order they are shown.
+MARKET = ("retopology", "engines", "platforms")
 
 # Display names of the remeshers of the bench, and what the rows that are
 # not one of the remeshers compared are.
@@ -350,6 +354,10 @@ RETOPOLOGY_WORDS = {
         "share_label": "What the seller keeps", "blender_label": "Blender", "market_tools": "{n} tools: automatic, semi-automatic, semi-manual, manual and helpers, with their tags.",
         "market_platforms": "{n} platforms: who runs them, what the seller keeps, how a user installs and updates.",
         "get_it": "Get it", "facts": "Facts", "same_engine": "Other tools on the same solver",
+        "market_engines": "{n} engines: the solvers inside the tools, and the tools built on each.",
+        "engine": "Engine", "authors": "Authors", "year": "Year", "own_program": "Its own program",
+        "used_by": "Used by, in Blender", "elsewhere": "Used elsewhere", "engine_count": "{n} tools",
+        "own_solver": "a solver of its own", "engine_kinds": {"paper": "paper", "library": "library", "program": "program"},
         "guide": "Guided by", "use": "Made for", "extra": "Also", "bake": "Bakes", "scope": "Acts", "release": "Latest release",
     },
     "fr": {
@@ -366,6 +374,10 @@ RETOPOLOGY_WORDS = {
         "share_label": "Ce que garde le vendeur", "blender_label": "Blender", "market_tools": "{n} outils : automatiques, semi-automatiques, semi-manuels, manuels et aides, avec leurs tags.",
         "market_platforms": "{n} plateformes : qui les tient, ce que garde le vendeur, comment on installe et met à jour.",
         "get_it": "L'obtenir", "facts": "Fiche", "same_engine": "Autres outils sur le même solveur",
+        "market_engines": "{n} moteurs : les solveurs dans les outils, et les outils bâtis sur chacun.",
+        "engine": "Moteur", "authors": "Auteurs", "year": "Année", "own_program": "Son propre programme",
+        "used_by": "Utilisé par, dans Blender", "elsewhere": "Utilisé ailleurs", "engine_count": "{n} outils",
+        "own_solver": "un solveur à lui", "engine_kinds": {"paper": "article", "library": "bibliothèque", "program": "programme"},
         "guide": "Guidé par", "use": "Fait pour", "extra": "Aussi", "bake": "Cuit", "scope": "Agit", "release": "Dernière version",
         "prose_en": "Les descriptions de cette fiche sont en anglais.",
     },
@@ -1247,7 +1259,8 @@ class Site:
         tools = [tomllib.loads(read(path)) for path in sorted((RETOPOLOGY / "tools").glob("*.toml"))]
         platforms = {p["id"]: p for p in tomllib.loads(read(RETOPOLOGY / "platforms.toml"))["platform"]}
         taxonomy = tomllib.loads(read(RETOPOLOGY / "taxonomy.toml"))["facet"]
-        return sorted(tools, key=lambda e: e["name"].lower()), platforms, taxonomy
+        engines = {e["id"]: e for e in tomllib.loads(read(RETOPOLOGY / "engines.toml"))["engine"]}
+        return sorted(tools, key=lambda e: e["name"].lower()), platforms, taxonomy, engines
 
     @staticmethod
     def tag_values(entry, facet):
@@ -1367,6 +1380,12 @@ class Site:
 
         facts = [(words["author"], html.escape(entry["author"]))]
         facts.append((words["method"], html.escape(entry["method"])))
+        engine_links = [
+            f'<a href="{posixpath.relpath(self.page_path("engines/" + v, language), here)}">{html.escape(self.engines[v]["name"])}</a>'
+            if v in self.engines else html.escape(self.tag_label(v, language))
+            for v in self.tag_values(entry, "engine")]
+        if engine_links:
+            facts.append((words["engine"], ", ".join(engine_links)))
         facts.append((words["licence"], f'{tags("licence")} ({html.escape(dist["licence"])})'))
         facts.append((words["source"], link(dist["source"]) if dist.get("source") else tags("source")))
         facts.append((words["blender"], self.blender_span(blender)))
@@ -1411,6 +1430,93 @@ class Site:
         body = "\n".join(body)
         self.write(key, language, entry["name"], body, [], "retopology", subtitle, breadcrumb, toc=False)
 
+    def built_on(self, engine_id, tools):
+        """The tools that run an engine, the engine's own program first."""
+        origin = self.engines[engine_id].get("origin")
+        return ([e for e in tools if e["slug"] == origin]
+                + [e for e in tools if e["slug"] != origin and engine_id in self.tag_values(e, "engine")])
+
+    def engines_list(self, engines, tools, language):
+        """The engines page: one tile per engine, leading to its page, with
+        the tools built on it."""
+        words = RETOPOLOGY_WORDS[language]
+        here = posixpath.dirname(self.page_path("engines", language)) or "."
+        tiles = []
+        for key, engine in engines.items():
+            target = posixpath.relpath(self.page_path(f"engines/{key}", language), here)
+            on = self.built_on(key, tools)
+            chips = [(words["kind"].lower(), words["engine_kinds"][engine["kind"]])]
+            if engine.get("licence"):
+                chips.append((words["licence"].lower(), engine["licence"]))
+            chips.append((words["tools_here"].lower(), str(len(on))))
+            tags = "".join(f'<li><span class="tag"><span class="facet">{html.escape(f)}</span> {html.escape(v)}</span></li>' for f, v in chips)
+            names = ", ".join(
+                f'<a href="{posixpath.relpath(self.page_path("retopology/" + e["slug"], language), here)}">'
+                f'{html.escape(re.split(r" - | [|] |: ", e["name"])[0])}</a>' for e in on)
+            tiles.append(
+                f'<article class="tile"><div class="tile-facts"><h3><a href="{target}">{html.escape(engine["name"])}</a></h3>'
+                f'<p class="tile-by">{html.escape(engine["authors"])}</p>'
+                f'<p class="tile-what">{html.escape(engine["method"])}</p>'
+                f'<p class="tile-price">{names}</p></div><ul class="tags">{tags}</ul></article>'
+            )
+        return f'<div class="tiles">{"".join(tiles)}</div>'
+
+    def own_solvers(self, tools, language):
+        """The tools that run a solver of their own, none of the engines."""
+        words = RETOPOLOGY_WORDS[language]
+        here = posixpath.dirname(self.page_path("engines", language)) or "."
+        own = [e for e in tools if set(self.tag_values(e, "engine")) & {"own", "proprietary", "simulation", "particles"}
+               and e["slug"] not in {engine.get("origin") for engine in self.engines.values()}]
+        items = "".join(
+            f'<li><a href="{posixpath.relpath(self.page_path("retopology/" + e["slug"], language), here)}">'
+            f'{html.escape(re.split(r" - | [|] |: ", e["name"])[0])}</a>: {html.escape(e["method"])}</li>' for e in own)
+        return f"<ul>{items}</ul>"
+
+    def engine_page(self, engine, tools, language):
+        """The page of one engine: what it is, where its code is, and the
+        tools that run it."""
+        words = RETOPOLOGY_WORDS[language]
+        key = f"engines/{engine['id']}"
+        here = posixpath.dirname(self.page_path(key, language))
+        link = lambda url, text=None: f'<a href="{html.escape(url)}" rel="noopener">{html.escape(text or url)}</a>'
+        tool = lambda e: f'<a href="{posixpath.relpath(self.page_path("retopology/" + e["slug"], language), here)}">{html.escape(e["name"])}</a>'
+        facts = [(words["authors"], html.escape(engine["authors"])), (words["kind"], words["engine_kinds"][engine["kind"]]),
+                 (words["method"], html.escape(engine["method"]))]
+        if engine.get("year"):
+            facts.append((words["year"], str(engine["year"])))
+        if engine.get("licence"):
+            facts.append((words["licence"], html.escape(engine["licence"])))
+        if engine.get("source"):
+            facts.append((words["source"], link(engine["source"])))
+        by_slug = {e["slug"]: e for e in tools}
+        if engine.get("origin") in by_slug:
+            facts.append((words["own_program"], tool(by_slug[engine["origin"]])))
+        if engine.get("papers"):
+            facts.append((words["papers"], "<ul>" + "".join(
+                f'<li>{html.escape(p["authors"])}, “{html.escape(p["title"])}”, {html.escape(p["venue"])}, {p["year"]}'
+                + (", " + link(f'https://doi.org/{p["doi"]}', f'doi:{p["doi"]}') if p.get("doi") else "") + "</li>"
+                for p in engine["papers"]) + "</ul>"))
+        if engine.get("notes"):
+            facts.append((words["notes"], html.escape(engine["notes"])))
+        rows = "".join(f"<dt>{label}</dt><dd>{value}</dd>" for label, value in facts)
+        on = self.built_on(engine["id"], tools)
+        body = [f'<h1 id="{html.escape(engine["id"])}">{html.escape(engine["name"])}</h1>',
+                f'<p class="subtitle">{html.escape(engine["method"])}</p>']
+        if language == "fr":
+            body.append(f'<p class="note">{words["prose_en"]}</p>')
+        body += [f'<h2 id="facts">{words["facts"]}</h2>', f'<dl class="facts">{rows}</dl>']
+        if on:
+            body += [f'<h2 id="used-by">{words["used_by"]} ({len(on)})</h2>',
+                     "<ul>" + "".join(f"<li>{tool(e)}</li>" for e in on) + "</ul>"]
+        if engine.get("elsewhere"):
+            body += [f'<h2 id="elsewhere">{words["elsewhere"]}</h2>', "<ul>" + "".join(
+                f'<li>{link(e["url"], e["name"])}: {html.escape(e["what"])}</li>' for e in engine["elsewhere"]) + "</ul>"]
+        sources = "".join(f'<li>{link(s["url"])}: {html.escape(s["what"])}</li>' for s in engine["sources"])
+        body += [f'<h2 id="sources">{words["sources"]}</h2>', f"<ul>{sources}</ul>",
+                 f'<p class="note">{words["checked"]} {engine["checked"]}</p>']
+        breadcrumb = self.market_crumbs(key, language, "engines", engine["name"])
+        self.write(key, language, engine["name"], "\n".join(body), [], "engines", engine["method"], breadcrumb, toc=False)
+
     def market_crumbs(self, key, language, parent=None, name=None):
         """The breadcrumb of a page under the state of the market: the
         market, the list the page belongs to (`parent`), then its name."""
@@ -1421,11 +1527,11 @@ class Site:
         return f'<nav class="breadcrumb" aria-label="breadcrumb">{links} › {html.escape(name or words[key])}</nav>'
 
     def market_nav(self, key, language):
-        """The two lists of the state of the market, as chips under a title."""
+        """The lists of the state of the market, as chips under a title."""
         here = posixpath.dirname(self.page_path(key, language)) or "."
         words = WORDS[language]
         items = []
-        for target in ("retopology", "platforms"):
+        for target in MARKET:
             current = ' aria-current="page"' if target == key else ""
             items.append(f'<a href="{posixpath.relpath(self.page_path(target, language), here)}"{current}>{words[target]}</a>')
         return f'<nav class="chips market-nav" aria-label="{words["market"]}">{"".join(items)}</nav>'
@@ -1490,12 +1596,13 @@ class Site:
         breadcrumb = self.market_crumbs(page_key, language, "platforms", p["name"])
         self.write(page_key, language, p["name"], "\n".join(body), [], "platforms", p.get("seller_share", p["name"]), breadcrumb, toc=False)
 
-    def market(self, tools, platforms):
+    def market(self, tools, platforms, engines):
         for language in LANGUAGES:
             words, here = RETOPOLOGY_WORDS[language], posixpath.dirname(self.page_path("market", language)) or "."
             text, body, headings = self.content_page("market", language, "market")
             bands = []
             for target, line in (("retopology", words["market_tools"].format(n=len(tools))),
+                                 ("engines", words["market_engines"].format(n=len(engines))),
                                  ("platforms", words["market_platforms"].format(n=len(platforms)))):
                 href = posixpath.relpath(self.page_path(target, language), here)
                 bands.append(f'<article class="tile"><div class="tile-facts"><h3><a href="{href}">{WORDS[language][target]}</a></h3>'
@@ -1504,9 +1611,9 @@ class Site:
             self.write("market", language, self.title_of(text), body, headings, "market", self.description_of(text), toc=False)
 
     def retopology(self):
-        tools, platforms, taxonomy = self.retopology_data()
-        self.taxonomy = taxonomy
-        self.market(tools, platforms)
+        tools, platforms, taxonomy, engines = self.retopology_data()
+        self.taxonomy, self.engines = taxonomy, engines
+        self.market(tools, platforms, engines)
         for language in LANGUAGES:
             text, body, headings = self.content_page("retopology", language, "retopology")
             body = body.replace("<p>{{tools}}</p>", self.retopology_tools(tools, platforms, language))
@@ -1521,6 +1628,15 @@ class Site:
                 "platforms", language, self.title_of(text), body, headings, "platforms", self.description_of(text),
                 toc=False, breadcrumb=self.market_crumbs("platforms", language), extra=self.market_nav("platforms", language),
             )
+            text, body, headings = self.content_page("engines", language, "engines")
+            body = body.replace("<p>{{engines}}</p>", self.engines_list(engines, tools, language))
+            body = body.replace("<p>{{own}}</p>", self.own_solvers(tools, language))
+            self.write(
+                "engines", language, self.title_of(text), body, headings, "engines", self.description_of(text),
+                toc=False, breadcrumb=self.market_crumbs("engines", language), extra=self.market_nav("engines", language),
+            )
+            for engine in engines.values():
+                self.engine_page(engine, tools, language)
             for entry in tools:
                 self.tool_page(entry, tools, platforms, language)
             for key, p in platforms.items():
