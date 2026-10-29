@@ -26,9 +26,9 @@ un ticket.
 
 | Usage | Qui | Ce qu'il demande | Ce qui y répond | Édition | État |
 |---|---|---|---|---|---|
-| Simulation (tissu, corps mous) | animateurs, VFX | des triangles d'une même taille, proches de l'équilatéral | le maillage triangulaire isotrope du moteur, donné comme résultat | à décider | à spécifier |
-| Impression 3D | makers | une surface de triangles fermée, propre, fidèle à la source | le même | à décider | à spécifier |
-| Maillages de collision | développeurs de jeux | une surface de triangles légère et régulière | le même | à décider | à spécifier |
+| Simulation (tissu, corps mous) | animateurs, VFX | des triangles d'une même taille, proches de l'équilatéral | le maillage triangulaire isotrope du moteur, donné comme résultat | Community | spécifié (DT-179, #226) |
+| Impression 3D | makers | une surface de triangles fermée, propre, fidèle à la source | le même | Community | spécifié (DT-179, #226) |
+| Maillages de collision | développeurs de jeux | une surface de triangles légère et régulière | le même | Community | spécifié (DT-179, #226) |
 
 ## Pipeline
 

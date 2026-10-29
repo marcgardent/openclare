@@ -25,9 +25,9 @@ A French version is in [USE_CASES.fr.md](USE_CASES.fr.md).
 
 | Use | Who | What it asks | What serves it | Edition | State |
 |---|---|---|---|---|---|
-| Simulation (cloth, soft body) | animators, VFX | triangles of one size, close to equilateral | the engine's isotropic triangle mesh as a result | to decide | to specify |
-| 3D printing | makers | a closed, clean surface of triangles, true to the source | the same | to decide | to specify |
-| Collision meshes | game developers | a light, regular surface of triangles | the same | to decide | to specify |
+| Simulation (cloth, soft body) | animators, VFX | triangles of one size, close to equilateral | the engine's isotropic triangle mesh as a result | Community | specified (DT-179, #226) |
+| 3D printing | makers | a closed, clean surface of triangles, true to the source | the same | Community | specified (DT-179, #226) |
+| Collision meshes | game developers | a light, regular surface of triangles | the same | Community | specified (DT-179, #226) |
 
 ## Pipeline
 
