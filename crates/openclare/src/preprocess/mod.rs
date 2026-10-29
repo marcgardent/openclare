@@ -358,16 +358,21 @@ impl Preprocessor for Isotropic {
                     .collect();
             }
         }
-        if laid.sharp.contains(&true) {
-            // An edge is of the kind of the stretch nearest to its middle.
-            let stretches = Bvh::from_triangles(laid.segments.iter().map(|&[a, b]| [a, b, b]).collect());
+        if laid.sharp.contains(&true)
+            && let Some(lines) = &lines
+        {
+            // An edge is of the kind of the line nearest to its middle, a
+            // crease of the source included: the edges of a box are no
+            // curve drawn as sharp, however near one they are.
             let middle = |[a, b]: [u32; 2]| 0.5 * (work.mesh.positions[a as usize] + work.mesh.positions[b as usize]);
             work.sharp_guide_edges = work
                 .guide_edges
                 .iter()
                 .copied()
                 .filter(|&edge| {
-                    stretches.closest_point(middle(edge)).is_some_and(|hit| laid.sharp[hit.triangle as usize])
+                    lines.closest_point(middle(edge)).is_some_and(|hit| {
+                        (hit.triangle as usize).checked_sub(source_feature_count).is_some_and(|k| laid.sharp[k])
+                    })
                 })
                 .collect();
         }
