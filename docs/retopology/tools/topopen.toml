@@ -1,0 +1,36 @@
+name = "TopoPen"
+slug = "topopen"
+author = "Shellblend"
+tags = ["mode:manual", "mode:semi-manual", "scope:local", "guide:points", "guide:strokes", "output:quads", "os:windows", "edge-flow:symmetry", "edge-flow:loops", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid"]
+kind = "add-on"
+method = "on a separate target object over the source: Precise Draw places snapped vertices and fills single quads, Draw previews and builds a quad grid inside four guide lines, Edge Flow drags a one-quad strip along a stroke, Circle Loop wraps loops around rounded forms, and Move and Relax brushes keep vertices on the source"
+purpose = "drawing quad topology directly over a sculpt or scan, which stays untouched"
+status = "active"
+checked = 2026-10-29
+notes = "Published on Superhive about 2 months ago. The product page gives version 1.14.2 and the documentation 2.0.1; neither has a date. Tested on Blender 4.5.5, 5.0.1 and 5.2.0; the documentation lists Windows. The store names the creator TopoPen and the seller Shellblend. The product page says systems other than Windows x64 run on Blender's own Python; the documentation offers a Windows ZIP only: only Windows is tagged."
+
+[distribution]
+url = "https://superhivemarket.com/products/topopen"
+channel = "superhive"
+licence = "GPL-3.0-or-later"
+price = "USD 16.24 (on sale; USD 24.99 otherwise)"
+
+[blender]
+min = "4.5"
+max = "5.2"
+
+[[sources]]
+url = "https://superhivemarket.com/products/topopen"
+what = "tools, USD 16.24 on sale from USD 24.99, GPL-3.0-or-later, Blender 4.5 or newer, version 1.14.2, 300+ to 400+ sales, published about 2 months ago"
+
+[[sources]]
+url = "https://superhivemarket.com/products/topopen/docs"
+what = "version 2.0.1, Blender 4.5 to 5.2, Windows, guide-and-Enter grid fill with Auto Match"
+
+[[sources]]
+url = "https://superhivemarket.com/products/topopen"
+what = "read again 2026-10-29: bundled native library on Windows x64, other systems use Blender's Python; no internet or account; mirror across local axes; Circle Loop"
+
+[[sources]]
+url = "https://superhivemarket.com/products/topopen/docs"
+what = "read again 2026-10-29: TopoPen 2.0.1, Windows ZIP; mirror X, Y or Z; Ctrl+left-drag inserts a loop"

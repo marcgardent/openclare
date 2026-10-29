@@ -1,0 +1,33 @@
+name = "Blender Instant Mesh Bridge"
+slug = "instant-mesh-bridge"
+author = "cgvirus (Fahad P), after knekke"
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quads", "output:quad-dominant", "output:triangles", "engine:instant-meshes", "requires:external-program", "edge-flow:feature-lines", "licence:open-source", "source:public", "blender:legacy", "install:zip", "price:free"]
+kind = "bridge"
+method = "calls the Instant Meshes program installed apart and imports its result"
+purpose = "Instant Meshes from inside Blender"
+status = "stale"
+checked = 2026-10-29
+notes = "No release states Blender 4.2 or later; last commit 2024-04-18."
+
+[distribution]
+url = "https://github.com/cgvirus/Blender-Instant-Mesh-Bridge-addon/releases"
+channel = "github"
+source = "https://github.com/cgvirus/Blender-Instant-Mesh-Bridge-addon"
+licence = "GPL-3.0"
+price = "free"
+
+[blender]
+min = "2.90"
+max = "4.1"
+release = "v41 (2024-04-17)"
+
+[[sources]]
+url = "https://github.com/cgvirus/Blender-Instant-Mesh-Bridge-addon/releases"
+what = "release v29 for 2.9 till 4.0, release v41 for 4.1"
+
+[brief]
+contradicted = ["Blender 2.8x to 5.x via bridges: the free bridges stop at 4.0 or 4.1; only the paid JRemesh Tools states 2.8 to 5.2"]
+
+[[sources]]
+url = "https://github.com/cgvirus/Blender-Instant-Mesh-Bridge-addon"
+what = "README: point the add-on to the Instant Meshes executable; Instant_Meshes_Remesh.py: Crease Degree, dihedral angle threshold for creases"

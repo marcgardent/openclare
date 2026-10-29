@@ -1,0 +1,32 @@
+name = "Smart Topology Pro"
+slug = "smart-topology-pro"
+author = "auron3d (Aaron Thompson)"
+tags = ["mode:automatic", "mode:semi-automatic", "scope:global", "scope:local", "guide:parameters", "guide:density", "guide:selection", "output:quads", "engine:instant-meshes", "engine:quadriflow", "edge-flow:symmetry", "extra:keeps-attributes", "os:windows", "os:linux", "os:macos", "density:adaptive", "edge-flow:feature-lines", "edge-flow:loops", "guide:strokes", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid"]
+kind = "add-on"
+method = "a pure-Python port of Instant Meshes inside Blender, with Blender's QuadriFlow as fallback; Auto runs several variants in parallel and keeps the best score; armature-aware loops at joints, symmetry, density painted by vertex groups, remeshing of a selection"
+purpose = "quad remeshing of rigged characters, sculpts, scans and hard-surface parts, keeping UVs, weights and shape keys"
+status = "active"
+checked = 2026-10-29
+notes = "Latest version: 1.2.0, undated. Listed on Superhive 22 days before 2026-10-29. The vendor's own benchmark (2026-10-06, Blender 5.2) compares it with Smart Remesh 3.0.0; not checked here. No other store found."
+
+[distribution]
+url = "https://superhivemarket.com/products/smart-topology-pro"
+channel = "superhive"
+licence = "GPL-3.0-or-later"
+price = "USD 34.99, shown USD 17.50 on sale"
+
+[blender]
+min = "4.2"
+max = "5.2"
+
+[[sources]]
+url = "https://superhivemarket.com/products/smart-topology-pro"
+what = "price and sale, GPL, Blender 4.2 - 5.2, pure Python engine, Windows, macOS and Linux"
+
+[[sources]]
+url = "https://superhivemarket.com/products/smart-topology-pro/docs"
+what = "version 1.2.0, Instant Meshes port under BSD-3-Clause, engine options, GPL-3.0-or-later, Edit Mode tools"
+
+[[sources]]
+url = "https://superhivemarket.com/products/smart-topology-pro/docs"
+what = "read again 2026-10-29: Windows, macOS and Linux, nothing extra to install; Curvature Adaptive; sharp edges and UV seams become loops; Exact Loops and Joint Loops"

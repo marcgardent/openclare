@@ -1,0 +1,36 @@
+name = "Nitro Retopo"
+slug = "nitro-retopo"
+author = "Adriflex"
+tags = ["mode:semi-manual", "scope:local", "guide:strokes", "guide:boundary", "output:quad-dominant", "engine:own", "use:ai-generated", "use:sculpt", "use:scan", "os:windows", "edge-flow:symmetry", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid"]
+kind = "add-on"
+method = "the user draws boundaries (curves, lines, freehand, ellipses, existing edges) that cut the source surface into patches, sets the corners and picks a pattern for each patch, and the tool fills them; a brush simplifies topology locally, and holes and open borders are filled or bridged"
+purpose = "cleaning up and retopologizing dense meshes with fused parts: AI-generated models, sculpts, 3D scans"
+status = "active"
+checked = 2026-10-29
+notes = "First release 1.0.0 on 2026-09-21, six releases since. The pages do not say whether patches are all quads: the 1.4.0 notes give quad connections in Bridge only when the boundary samples match, and the FAQ counts the knight result in triangles (35,000); output quad-dominant is an estimate. A Prepare Surface step makes a lighter working copy of a dense source. Releases are validated on Windows."
+
+[distribution]
+url = "https://superhivemarket.com/products/nitro-retopo"
+channel = "superhive"
+licence = "GPL (version not stated)"
+price = "USD 25"
+
+[blender]
+min = "5.2"
+release = "1.7.0 (2026-10-28)"
+
+[[sources]]
+url = "https://superhivemarket.com/products/nitro-retopo"
+what = "workflow, USD 25, GPL, Blender 5.2, 200+ sales, published about 1 month ago"
+
+[[sources]]
+url = "https://superhivemarket.com/products/nitro-retopo/versions"
+what = "versions 1.0.0 (2026-09-21) to 1.7.0 (2026-10-28), requires Blender 5.2 or later, validated on Windows, symmetry under the mode controls (1.4.0)"
+
+[[sources]]
+url = "https://superhivemarket.com/products/nitro-retopo/faq"
+what = "patches drawn on the existing surface; 1.5 million-triangle source, 35,000-triangle result"
+
+[[sources]]
+url = "https://superhivemarket.com/products/nitro-retopo/docs"
+what = "Generate holds the mirror options; computation in a separate local Blender process; no system named"

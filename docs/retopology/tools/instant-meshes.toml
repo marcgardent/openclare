@@ -1,0 +1,33 @@
+name = "Instant Meshes"
+slug = "instant-meshes"
+author = "Wenzel Jakob, Marco Tarini, Daniele Panozzo, Olga Sorkine-Hornung"
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quads", "output:quad-dominant", "output:triangles", "engine:own", "os:windows", "os:linux", "os:macos", "edge-flow:feature-lines", "licence:open-source", "source:public", "blender:unstated", "install:external", "price:free"]
+kind = "standalone"
+method = "local smoothing of an orientation field and a position field, then extraction of the mesh"
+purpose = "fast field-aligned remeshing, standalone, with a command line"
+status = "stale"
+checked = 2026-10-29
+notes = "No release on GitHub; binaries are linked from the README. Pure quads or pure triangles, or quad- or triangle-dominant with -D. The licence is BSD-3-Clause with an extra clause on enhancements. In Blender through instant-meshes-remesh, its fork instant-mesh-bridge, or bundled in paid add-ons."
+
+[distribution]
+url = "https://github.com/wjakob/instant-meshes"
+channel = "github"
+source = "https://github.com/wjakob/instant-meshes"
+licence = "BSD-3-Clause"
+price = "free"
+
+[[papers]]
+title = "Instant Field-Aligned Meshes"
+authors = "Wenzel Jakob, Marco Tarini, Daniele Panozzo, Olga Sorkine-Hornung"
+venue = "ACM Transactions on Graphics 34(6) (SIGGRAPH Asia)"
+year = 2015
+doi = "10.1145/2816795.2818078"
+
+[[sources]]
+url = "https://github.com/wjakob/instant-meshes"
+what = "licence, command-line options, last commit 2019-11-03, binaries for Windows, Mac OS X and Linux"
+
+[[sources]]
+url = "https://igl.ethz.ch/projects/instant-meshes/"
+what = "paper; abstract: edges aligned and snapped to sharp features"
+

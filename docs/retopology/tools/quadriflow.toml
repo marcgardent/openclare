@@ -1,0 +1,48 @@
+name = "QuadriFlow Remesh"
+slug = "quadriflow"
+author = "Blender Foundation, with the QuadriFlow library of Huang, Zhou, Niessner, Shewchuk and Guibas"
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quads", "engine:quadriflow", "os:windows", "os:linux", "os:macos", "density:uniform", "edge-flow:feature-lines", "edge-flow:symmetry", "licence:open-source", "source:public", "blender:5-x", "install:built-in", "price:free"]
+kind = "built-in"
+method = "field-aligned quadrangulation after Instant Meshes, with linear and quadratic constraints solved by flows to limit singularities"
+purpose = "a quad mesh with few poles and edge loops following the curvature"
+status = "active"
+checked = 2026-10-29
+notes = "Ships with Blender: release is Blender's own. The library is BSD-3-Clause; Blender as a whole is GPL. The library upstream has had no commit since 2019-12-07."
+bench = "quadriflow"
+
+[distribution]
+url = "https://docs.blender.org/manual/en/latest/modeling/meshes/retopology.html"
+channel = "blender"
+source = "https://github.com/hjwdzh/QuadriFlow"
+licence = "GPL-2.0-or-later"
+price = "free"
+
+[blender]
+min = "2.81"
+release = "5.2.3 (2026-10-22)"
+
+[[papers]]
+title = "QuadriFlow: A Scalable and Robust Method for Quadrangulation"
+authors = "Jingwei Huang, Yichao Zhou, Matthias Niessner, Jonathan Richard Shewchuk, Leonidas J. Guibas"
+venue = "Computer Graphics Forum (Symposium on Geometry Processing)"
+year = 2018
+
+[[sources]]
+url = "https://docs.blender.org/manual/en/latest/modeling/meshes/retopology.html"
+what = "the Quad remesher uses QuadriFlow, in the 5.2 LTS manual"
+
+[[sources]]
+url = "https://developer.blender.org/docs/release_notes/2.81/sculpt/"
+what = "first version, 2.81"
+
+[[sources]]
+url = "https://github.com/hjwdzh/QuadriFlow"
+what = "library, BSD-3-Clause, last commit 2019-12-07"
+
+[[sources]]
+url = "https://yichaozhou.com/publication/1805quadriflow/"
+what = "paper, SGP 2018"
+
+[[sources]]
+url = "https://docs.blender.org/manual/en/latest/modeling/meshes/retopology.html"
+what = "remeshing rebuilds the mesh with a uniform topology; Use Mesh Symmetry; Preserve Sharp keeps sharp features (5.2 LTS manual)"

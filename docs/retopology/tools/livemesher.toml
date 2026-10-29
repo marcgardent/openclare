@@ -1,0 +1,29 @@
+name = "Livemesher - Arrange your parts before sculpting"
+slug = "livemesher"
+author = "Synthomesh"
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quads", "engine:voxel", "use:parts", "density:uniform", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid"]
+kind = "add-on"
+method = "a session around Blender's Remesh modifier: the selected parts are previewed as one remeshed mesh, adjusted, then applied; a Union mode keeps the topology of the parts"
+purpose = "joining parts into one base mesh before sculpting"
+status = "unknown"
+checked = 2026-10-29
+notes = "Not a retopology tool: it prepares a base mesh for sculpting. The store does not say quads; output is quads because the voxel mode of the Remesh modifier makes quads. One undated changelog entry (1.2); published about 2023."
+
+[distribution]
+url = "https://superhivemarket.com/products/livemesher"
+channel = "superhive"
+licence = "GPL (version not stated)"
+price = "USD 5"
+
+[blender]
+min = "3.0"
+max = "5.2"
+
+[[sources]]
+url = "https://superhivemarket.com/products/livemesher"
+what = "price, licence, Blender 3.0 - 5.2, version 1.2, voxels set equally on the parts"
+
+[[sources]]
+url = "https://superhivemarket.com/products/livemesher/docs"
+what = "method"
+

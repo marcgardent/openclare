@@ -1,0 +1,40 @@
+name = "Poly Build"
+slug = "poly-build"
+author = "Blender Foundation"
+tags = ["mode:manual", "scope:local", "os:windows", "os:macos", "os:linux", "licence:open-source", "source:public", "blender:5-x", "install:built-in", "price:free"]
+kind = "built-in"
+method = "an Edit Mode tool: Ctrl-click adds a vertex and a triangle on the nearest edge (Create Quads dissolves the shared edge to leave a quad), drag moves a vertex or extrudes an edge into a quad, Shift-click deletes"
+purpose = "combines several mesh editing tools into one, especially for retopology"
+status = "active"
+checked = 2026-10-29
+notes = "The manual advises enabling Snapping and Auto Merge with it."
+
+[distribution]
+url = "https://docs.blender.org/manual/en/latest/modeling/meshes/tools/poly_build.html"
+channel = "blender"
+source = "https://projects.blender.org/blender/blender"
+licence = "GPL-2.0-or-later"
+price = "free"
+
+[blender]
+min = "2.80"
+
+[[sources]]
+url = "https://docs.blender.org/manual/en/latest/modeling/meshes/tools/poly_build.html"
+what = "controls and the Create Quads option, in the 5.2 LTS manual"
+
+[[sources]]
+url = "https://docs.blender.org/manual/en/2.80/modeling/meshes/toolbar/index.html"
+what = "Poly Build in the Edit Mode toolbar of 2.80"
+
+[[sources]]
+url = "https://developer.blender.org/docs/release_notes/2.81/sculpt/"
+what = "tool improved for retopology in 2.81: extrude by drag, preview, automatic quads, Shift-click delete"
+
+[[sources]]
+url = "https://www.blender.org/about/license/"
+what = "Blender source licensed GPL 2 or later by default"
+
+[[sources]]
+url = "https://www.blender.org/download/"
+what = "Blender 5.2.3 LTS for Windows, macOS and Linux"

@@ -1,0 +1,40 @@
+name = "Smart Remesh"
+slug = "smart-remesh"
+author = "Milad Kambari (3DRedbox Studio)"
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quads", "output:n-gons", "engine:instant-meshes", "engine:own", "use:sculpt", "use:scan", "use:hard-surface", "os:windows", "os:linux", "os:macos", "density:uniform", "edge-flow:feature-lines", "edge-flow:symmetry", "bake:color", "bake:normal", "bake:material", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid"]
+kind = "add-on"
+method = "two modes: Organic runs Instant Meshes, bundled unmodified, for an even quad grid at a chosen face count; Hardsurface keeps the original vertices, rebuilds each flat panel as one n-gon and drops loops that carry no shape (algorithm not named)"
+purpose = "remeshing sculpts and scans (Organic) and cleaning hard-surface models (Hardsurface) inside Blender"
+status = "active"
+checked = 2026-10-29
+notes = "Latest version: 3, undated. Output is quads in Organic mode only; Hardsurface mode outputs n-gon panels. Instant Meshes is redistributed with the add-on; the page does not say whether as an executable or a library. The ArtStation listing was seen in search results only: the page refused automated reading, so its price is not recorded. The changelog gives no dates; the listing says published two months before 2026-10-29. The bake tags rest on 'every PBR channel and normals baked onto the result'; the channels are not listed one by one."
+
+[distribution]
+url = "https://superhivemarket.com/products/smart-remesh"
+channel = "superhive"
+licence = "GPL (version not stated)"
+price = "USD 17"
+
+
+[[distribution.also]]
+channel = "artstation"
+url = "https://www.artstation.com/marketplace/p/yRp58/smart-remesh-blender-add-on"
+[blender]
+min = "4.2"
+max = "5.2"
+
+[[sources]]
+url = "https://superhivemarket.com/products/smart-remesh"
+what = "price, licence, Blender 4.2 - 5.2, the two modes, Instant Meshes under BSD-3-Clause, changelog up to version 3 without dates, macOS and Linux since 1.2.2"
+
+[[sources]]
+url = "https://superhivemarket.com/products/smart-remesh/docs"
+what = "Hardsurface keeps original vertices and outputs n-gons; a legacy zip for Blender 4.0 - 4.1"
+
+[[sources]]
+url = "https://www.cgchannel.com/2026/08/check-out-promising-new-blender-retopology-tool-smart-remesh/"
+what = "first release in August 2026, version 2.02 and USD 15 on 2026-08-25, Windows, Linux and macOS"
+
+[[sources]]
+url = "https://superhivemarket.com/products/smart-remesh"
+what = "read again 2026-10-29: WIN, MAC, LINUX; Organic lays a uniform surface; Hardsurface keeps the real edges sharp; symmetry retopology; every PBR channel and normals baked onto the result"

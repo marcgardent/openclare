@@ -1,0 +1,36 @@
+name = "JRetopo Tools"
+slug = "jretopo-tools"
+author = "JAYANAM"
+tags = ["mode:manual", "mode:semi-manual", "mode:helper", "scope:local", "guide:points", "output:quads", "output:triangles", "os:windows", "os:linux", "os:macos", "edge-flow:loops", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid"]
+kind = "add-on"
+method = "point-and-click tools on the source in Edit Mode: Create, Quad Strip, Face Fill (triangles, quads or caps, with a suggested fourth vertex), Grid, Loops and a brush Edit tool with snapping, plus a shader that draws the retopology mesh over the source"
+purpose = "faster manual retopology without a separate mode"
+status = "active"
+checked = 2026-10-29
+notes = "Version 5, announced by the author on Blender Artists on 2026-08-07, redesigned the interface and added Blender 5.2 support. The Superhive page lists only Blender 5.2; its FAQ and description still say Blender 4 and above. Also in a bundle with JBake at USD 29.99."
+
+[distribution]
+url = "https://superhivemarket.com/products/jretopo-tools"
+channel = "superhive"
+licence = "GPL (version not stated)"
+price = "USD 19.99"
+
+[blender]
+max = "5.2"
+release = "5 (2026-08-07)"
+
+[[sources]]
+url = "https://superhivemarket.com/products/jretopo-tools"
+what = "tools, USD 19.99, GPL, Blender 5.2, 80+ sales, bundle with JBake, Windows, macOS and Linux, loops added by drawing a line"
+
+[[sources]]
+url = "https://superhivemarket.com/products/jretopo-tools/docs"
+what = "Create, Edit, Quad Strip, Grid and Face Fill tools; the shader"
+
+[[sources]]
+url = "https://superhivemarket.com/products/jretopo-tools/faq"
+what = "no separate retopology mode, Blender 4 and above, free updates"
+
+[[sources]]
+url = "https://blenderartists.org/t/jmesh-jretopo-jremesh-updated-for-blender-5-2/1649681"
+what = "JRetopo Tools 5 for Blender 5.2, posted by jayanam on 2026-08-07"

@@ -1,0 +1,42 @@
+name = "openclare"
+slug = "openclare"
+author = "Marc Gardent"
+tags = ["mode:automatic", "mode:semi-automatic", "scope:global", "guide:parameters", "guide:density", "guide:marked-edges", "output:quads", "engine:own", "os:linux", "os:windows", "os:macos", "density:uniform", "density:adaptive", "edge-flow:feature-lines", "edge-flow:curvature", "edge-flow:pole-control", "edge-flow:symmetry", "licence:open-source", "source:public", "blender:unstated", "install:zip", "price:free"]
+kind = "add-on"
+method = "T-mesh of closed edge loops, quantized and closed; see the papers of docs/research"
+purpose = "automatic quad retopology, Community edition"
+status = "active"
+checked = 2026-10-29
+bench = "openclare"
+notes = "The Windows and macOS archives pass the tests of the C interface but have not yet been run in a Blender. Guide curves are taken by the command line, not by the add-on."
+
+[distribution]
+url = "https://github.com/marcgardent/openclare/releases"
+channel = "github"
+source = "https://github.com/marcgardent/openclare"
+licence = "GPL-3.0-or-later"
+price = "free"
+
+[blender]
+min = "4.2"
+release = "0.7.0 (2026-10-28)"
+
+[[sources]]
+url = "https://github.com/marcgardent/openclare/releases"
+what = "latest release and its date"
+
+[[sources]]
+url = "https://github.com/marcgardent/openclare/blob/main/blender/openclare/blender_manifest.toml"
+what = "licence and oldest Blender version"
+
+[[sources]]
+url = "https://github.com/marcgardent/openclare/blob/main/README.md"
+what = "archives for linux-x64, windows-x64, macos-arm64 and macos-x64, Windows and macOS not yet run in a Blender; nothing else to install or downloaded; Adaptive Size (0 % one size), Hard Edges, Follow Curvature, Fewer Irregular Vertices"
+
+[[sources]]
+url = "https://github.com/marcgardent/openclare/blob/main/USAGE.md"
+what = "--adaptivity from quads of one size to sizes following the curvature; guide curves from the command line only"
+
+[[sources]]
+url = "https://github.com/marcgardent/openclare/tree/main/blender/openclare"
+what = "the add-on passes no guide curves and bakes nothing"

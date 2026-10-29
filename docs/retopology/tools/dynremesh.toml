@@ -1,0 +1,39 @@
+name = "DynRemesh/AutoFlow - Remeshing Toolset"
+slug = "dynremesh"
+author = "AFX LAB (AlbertoFX)"
+tags = ["mode:automatic", "mode:semi-automatic", "scope:global", "guide:parameters", "guide:density", "output:quads", "engine:quadriflow", "use:sculpt", "edge-flow:symmetry", "os:windows", "os:linux", "licence:open-source", "source:with-download", "blender:legacy", "install:zip", "price:paid"]
+kind = "add-on"
+method = "a pipeline of decimation, subdivision, relaxation and smoothing; AutoFlow calls an external QuadriFlow program"
+purpose = "turning dense sculpts into quads"
+status = "stale"
+checked = 2026-10-29
+notes = "One product in two tiers, still for sale. The latest version is 2.5.1; the store shows no date for it. DynRemesh 2.5 and AutoFlow need Blender 2.8 or 2.9; only DynRemesh 1.5 runs on 2.79. No Blender 3 or later is listed, and the newest reply of the author is about five years old."
+
+[distribution]
+url = "https://superhivemarket.com/products/dynremesh-2"
+channel = "superhive"
+licence = "GPL (version not stated)"
+price = "USD 15 (DynRemesh), USD 35 (DynRemesh + AutoFlow)"
+
+[[distribution.also]]
+channel = "gumroad"
+url = "https://albertofx.gumroad.com/l/Luqth"
+price = "USD 35"
+
+[blender]
+min = "2.80"
+max = "2.91"
+
+[[sources]]
+url = "https://superhivemarket.com/products/dynremesh-2"
+what = "prices, licence, Blender 2.79 to 2.91, changelog; QuadriFlow support for Linux and Windows (read 2026-10-29)"
+
+[[sources]]
+url = "https://albertofx.gumroad.com/l/Luqth"
+what = "the same product on Gumroad, USD 35"
+
+[brief]
+contradicted = [
+  "two products: one product, AutoFlow being the USD 35 tier",
+  "mainly Blender 2.8x to 3.x: the store lists 2.79 to 2.91, no 3.x",
+]

@@ -1,0 +1,48 @@
+name = "Blender CWF Remesher"
+slug = "cwf-remesher"
+author = "AIGODLIKE"
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:triangles", "engine:cwf", "os:windows", "os:macos", "edge-flow:feature-lines", "input:manifold", "licence:not-stated", "source:public", "blender:unstated", "install:zip", "price:free"]
+kind = "add-on"
+method = "CWF mesh simplification (consolidating weak features), compiled as a Python module that the add-on loads; sampling sets the face count, an optional pre-simplification speeds it up"
+purpose = "remeshing the selected object with the CWF algorithm"
+status = "abandoned"
+checked = 2026-10-29
+notes = "Abandoned on the evidence of issue #3: the compiled module fails to load on Blender 5.1, a user says it only works with 3.6, and the authors have not answered; the shipped binaries target Python 3.10 and 3.11 on Windows and macOS, none on Linux. No release since V0.0.3 (2024-06-15); the last commit, 2025-05-23, fixed issue #1. The repository has no licence, while the CWF code it builds on is AGPL-3.0. CWF simplifies to triangles."
+
+[distribution]
+url = "https://github.com/AIGODLIKE/Blender-CWF-Remesher/releases"
+channel = "github"
+source = "https://github.com/AIGODLIKE/Blender-CWF-Remesher"
+licence = "none stated"
+price = "free"
+
+[blender]
+min = "3.6"
+release = "V0.0.3 (2024-06-15)"
+
+[[papers]]
+title = "CWF: Consolidating Weak Features in High-quality Mesh Simplification"
+authors = "Rui Xu, Longdu Liu, Ningna Wang, Shuangmin Chen, Shiqing Xin, Xiaohu Guo, Zichun Zhong, Taku Komura, Wenping Wang, Changhe Tu"
+venue = "ACM Transactions on Graphics 43(4)"
+year = 2024
+doi = "10.1145/3658159"
+
+[[sources]]
+url = "https://github.com/AIGODLIKE/Blender-CWF-Remesher"
+what = "README (CWF in Blender 3.6+), no licence file, binaries for Python 3.10 and 3.11 on Windows and macOS only, last commit 2025-05-23; README tip: avoid non-manifold meshes; cxxlibs holds windows and macosx builds only"
+
+[[sources]]
+url = "https://github.com/AIGODLIKE/Blender-CWF-Remesher/releases"
+what = "V0.0.1 to V0.0.3 (2024-06-03 to 2024-06-15)"
+
+[[sources]]
+url = "https://github.com/AIGODLIKE/Blender-CWF-Remesher/issues/3"
+what = "ImportError of the compiled module on Blender 5.1 (2026-04-15), a comment that it only works with 3.6, no answer from the authors"
+
+[[sources]]
+url = "https://github.com/Xrvitd/CWF"
+what = "the CWF paper and its code, AGPL-3.0"
+
+[[sources]]
+url = "https://arxiv.org/abs/2404.15661"
+what = "CWF abstract: QEM keeps strong feature lines, the decaying weight aligns weak features"

@@ -1,0 +1,38 @@
+name = "Relief Rebake"
+slug = "relief-rebake"
+author = "Agregarts"
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quads", "engine:own", "use:relief", "density:uniform", "licence:open-source", "source:public", "blender:unstated", "install:get-extensions", "price:free"]
+kind = "add-on"
+method = "ray-casts the object from above onto a regular grid, cleans the height map, and builds a watertight quad grid with straight side walls and a flat base"
+purpose = "rebuilding messy relief meshes (AI-generated, scanned or remeshed panels) as clean quad height fields"
+status = "active"
+checked = 2026-10-29
+notes = "For reliefs only: the relief must face +Z and overhangs are lost, since a height field keeps one Z per XY. The cost grows with the square of the resolution (default 1575). Needs only numpy, shipped with Blender. One version, no commit since 2026-08-29."
+
+[distribution]
+url = "https://extensions.blender.org/add-ons/relief-rebake/"
+channel = "extensions.blender.org"
+source = "https://github.com/agregarts/relief-rebake"
+licence = "GPL-3.0-or-later"
+price = "free"
+
+[[distribution.also]]
+channel = "github"
+url = "https://github.com/agregarts/relief-rebake"
+price = "free"
+
+[blender]
+min = "4.2"
+release = "1.0.0 (2026-08-29)"
+
+[[sources]]
+url = "https://extensions.blender.org/add-ons/relief-rebake/"
+what = "author, GPL-3.0-or-later, 1.0.0 (2026-08-29), Blender 4.2 LTS and newer, method"
+
+[[sources]]
+url = "https://github.com/agregarts/relief-rebake"
+what = "README (method, +Z only, overhangs lost), GPL-3.0, the extension zip, last commit 2026-08-29"
+
+[[sources]]
+url = "https://github.com/agregarts/relief-rebake"
+what = "sampled onto a regular grid, even quads; needs only numpy"

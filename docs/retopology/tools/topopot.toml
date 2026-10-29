@@ -1,0 +1,41 @@
+name = "TopoPot - Retopology Tool for Blender"
+slug = "topopot"
+author = "ArtVit (sveetartist)"
+tags = ["mode:manual", "mode:semi-manual", "scope:local", "guide:boundary", "output:quads", "output:triangles", "os:windows", "os:linux", "os:macos", "edge-flow:loops", "licence:open-source", "source:public", "blender:5-x", "install:get-extensions", "price:free"]
+kind = "add-on"
+method = "a Pen tool (Ctrl-click places vertices and faces, quad-only mode, Ctrl-drag draws quad strips), a Brush to move and smooth with snapping to a reference collection, and a Fill Hole mode (quads only or quads and triangles, with preview)"
+purpose = "minimal retopology in Edit Mode"
+status = "active"
+checked = 2026-10-29
+notes = "The listing dates 1.1.2 to 2026-10-19 in What's New and shows Published 2026-09-12. The repository's LICENSE file holds the AGPL-3.0 text while the manifest, the README and the listing say GPL-3.0-or-later. The listing links a donation page on Ko-fi, https://ko-fi.com/artvit, which could not be read (HTTP 403)."
+
+[distribution]
+url = "https://extensions.blender.org/add-ons/topopot-retopo-tool/"
+channel = "extensions.blender.org"
+source = "https://github.com/sveetartist/TopoPot"
+licence = "GPL-3.0-or-later"
+price = "free"
+
+[blender]
+min = "5.0"
+release = "1.1.2 (2026-10-19)"
+
+[[sources]]
+url = "https://extensions.blender.org/add-ons/topopot-retopo-tool/"
+what = "name, author ArtVit, GPL-3.0-or-later, 1.1.2, Blender 5.0 and newer, the tools, the Ko-fi link"
+
+[[sources]]
+url = "https://github.com/sveetartist/TopoPot"
+what = "README (Blender 5.0, GPL-3.0-or-later, use), manifest (1.1.2, maintainer ArtVit), LICENSE file with the AGPL-3.0 text, created 2026-09-17, last push 2026-10-25"
+
+[[sources]]
+url = "https://github.com/sveetartist/TopoPot/blob/main/topopot_retopo_tool/blender_manifest.toml"
+what = "manifest 1.1.2 without a platforms field"
+
+[[sources]]
+url = "https://docs.blender.org/manual/en/latest/advanced/extensions/getting_started.html"
+what = "a manifest without platforms is available in all operating systems"
+
+[[sources]]
+url = "https://extensions.blender.org/add-ons/topopot-retopo-tool/"
+what = "read again 2026-10-29: Ctrl-drag over an edge adds an edge loop"

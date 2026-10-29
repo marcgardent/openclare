@@ -1,0 +1,37 @@
+name = "AutoRemesher Bridge"
+slug = "autoremesher-bridge"
+author = "Adrien Rouquié (adriflex)"
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quad-dominant", "engine:autoremesher", "extra:keeps-attributes", "requires:external-program", "density:uniform", "density:adaptive", "edge-flow:feature-lines", "licence:open-source", "source:public", "blender:5-x", "install:zip", "price:free"]
+kind = "bridge"
+method = "exports an OBJ, runs AutoRemesher installed apart, imports the result as a new object; optional transfer of UVs and materials"
+purpose = "AutoRemesher from inside Blender"
+status = "active"
+checked = 2026-10-29
+notes = "Unofficial. An older add-on by Nicolas Constanty (github.com/Nicolas-Constanty/AutoRemesher-Blender) built the GPL beta engine of 2020 for Blender 2.91 and is abandoned since February 2021."
+
+[distribution]
+url = "https://github.com/adriflex/autoremesher-blender-bridge/releases"
+channel = "github"
+source = "https://github.com/adriflex/autoremesher-blender-bridge"
+licence = "GPL-3.0-or-later"
+price = "free"
+
+[blender]
+min = "4.2"
+max = "5.2"
+release = "0.1.3 (2026-07-10)"
+
+[[sources]]
+url = "https://github.com/adriflex/autoremesher-blender-bridge"
+what = "method, licence, Blender 4.2 or newer, tested with 5.2 LTS, last commit 2026-08-07; AutoRemesher installed separately, settings for adaptivity and sharp edge angle"
+
+[[sources]]
+url = "https://www.cgchannel.com/2026/07/get-free-retopology-tool-autoremesher-and-its-blender-bridge/"
+what = "unofficial bridge, July 2026"
+
+[brief]
+contradicted = ["Blender 2.8x to 5.2 through bridges: two unrelated add-ons; the current one covers 4.2 to 5.2, the old one stops at 2.91"]
+
+[[sources]]
+url = "https://github.com/huxingyi/autoremesher/blob/master/src/mainwindow.cpp"
+what = "upstream tooltips of the settings the bridge exposes: Adaptivity 0 = uniform to 1 = finer quads on curvature; sharp edges preserved as feature edges"

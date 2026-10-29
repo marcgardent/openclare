@@ -1,0 +1,31 @@
+name = "AutoRemesher Quad: One-Click Quad Remesh"
+slug = "autoremesher-quad"
+author = "blenderustad (Muhammad Junaid Alam)"
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quad-dominant", "engine:autoremesher", "use:sculpt", "use:scan", "os:windows", "os:macos", "density:uniform", "density:adaptive", "edge-flow:feature-lines", "edge-flow:symmetry", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid"]
+kind = "bridge"
+method = "sends the mesh to the AutoRemesher program of Jeremy Hu (MIT), run locally, and builds the returned mostly-quad mesh as a new object"
+purpose = "one-click quad remeshing of sculpts, scans and boolean results"
+status = "active"
+checked = 2026-10-29
+notes = "Two downloads: autoremesher_quad.zip bundles the engine (Windows x64); AutoQuadRemesher.zip downloads it once from the AutoRemesher GitHub release (Windows x64, macOS x86_64, Apple Silicon through Rosetta 2). Linux needs a user-supplied build. The store says Blender 3.3 - 5.2, the docs 4.2 or newer. UVs, materials and vertex groups are not carried over. No version number or changelog. Same seller as model-optimizer-pro, which also runs AutoRemesher. No other store."
+
+[distribution]
+url = "https://superhivemarket.com/products/autoremesher-quad-one-click-quad-remesh-for-blender"
+channel = "superhive"
+licence = "GPL (version not stated)"
+price = "USD 29"
+
+[blender]
+min = "3.3"
+max = "5.2"
+
+[[sources]]
+url = "https://superhivemarket.com/products/autoremesher-quad-one-click-quad-remesh-for-blender"
+what = "price, GPL, Blender 3.3 - 5.2, bundled engine built for Windows x64, no UV or material transfer, published 4 months ago, seller in the page data"
+
+[[sources]]
+url = "https://superhivemarket.com/products/autoremesher-quad-one-click-quad-remesh-for-blender/docs"
+what = "two files (engine bundled, Windows x64; engine downloaded once from GitHub, Windows x64 and macOS x86_64), AutoRemesher MIT © 2020 Jeremy HU / dust3d, requires Blender 4.2 or newer; Adaptivity 0 uniform to 1 more quads on curved areas, Sharp Edge kept sharp, X/Y/Z symmetry, Linux only with a user-supplied engine (read 2026-10-29)"
+
+[brief]
+contradicted = ["Windows only: the alternate file also runs on macOS x86_64 (and Apple Silicon through Rosetta 2); only the bundled-engine file is Windows only"]

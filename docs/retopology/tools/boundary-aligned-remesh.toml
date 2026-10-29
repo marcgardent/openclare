@@ -1,0 +1,48 @@
+name = "Boundary Aligned Remesh [Bookyakuno Edit]"
+slug = "boundary-aligned-remesh"
+author = "Bookyakuno, after the add-on of Jean Da Costa"
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quads", "output:triangles", "engine:own", "use:open-boundaries", "edge-flow:feature-lines", "edge-flow:symmetry", "extra:keeps-attributes", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid", "price:pay-what-you-want"]
+kind = "add-on"
+method = "local remeshing with Blender's own operators (split, collapse, dissolve), vertices pulled along the direction of the nearest boundary edge (KD-tree), reprojected on the source; triangles joined into quads as an option"
+purpose = "remeshing that keeps the edges along the open boundaries"
+status = "active"
+checked = 2026-10-29
+notes = "The original by Jean Da Costa (jeacom25b) is free on GitHub and has had no commit since 2021-04-14."
+
+[distribution]
+url = "https://superhivemarket.com/products/boundary-aligned-remesh"
+channel = "superhive"
+licence = "GPL (version not stated)"
+price = "USD 10"
+
+[[distribution.also]]
+channel = "gumroad"
+url = "https://bookyakuno.gumroad.com/l/NEMDA"
+price = "pay what you want (USD 10 suggested)"
+
+[[distribution.also]]
+channel = "github"
+url = "https://github.com/jeacom25b/blender-boundary-aligned-remesh"
+price = "free (the original, by Jean Da Costa)"
+
+[blender]
+min = "2.81"
+max = "5.2"
+
+[[sources]]
+url = "https://superhivemarket.com/products/boundary-aligned-remesh"
+what = "price, licence, Blender 2.81 - 5.2; keeps edge angle, seam, sharp, bevel weight and crease edges, mirror on X/Y/Z after remeshing (read 2026-10-29)"
+
+[[sources]]
+url = "https://bookyakuno.gumroad.com/l/NEMDA"
+what = "pay-what-you-want price, USD 10 suggested"
+
+[[sources]]
+url = "https://github.com/jeacom25b/blender-boundary-aligned-remesh"
+what = "the original add-on: method, last commit 2021-04-14, no licence declared"
+
+[brief]
+contradicted = [
+  "pay what you want, about USD 10: true on Gumroad only; Superhive asks a fixed USD 10, and the original is free",
+  "the paid edition is by Bookyakuno, the original by Jean Da Costa",
+]

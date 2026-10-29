@@ -1,0 +1,41 @@
+name = "Wrap for Blender - Automatic Retopology of Any Model"
+slug = "wrap-for-blender"
+author = "TECA 3D (Hui Liu)"
+tags = ["mode:semi-automatic", "scope:global", "guide:points", "guide:template", "output:template", "engine:own", "os:windows", "requires:account", "edge-flow:symmetry", "input:any", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid"]
+kind = "add-on"
+method = "wraps a base mesh chosen by the user onto the target, guided by point pairs the user places on both; the algorithm is not described"
+purpose = "fitting a base mesh, and so its topology, onto another model, as an alternative to Faceform's Wrap"
+status = "active"
+checked = 2026-10-29
+notes = "Windows 11 only; no macOS yet. The add-on works under a user account: a shared demo account is built in, and a private one is made on request through the publisher's Discord. The wrapping algorithm and any library are not named. No other store. The store says it works with any model; the 1.1.0 notes add a warning on meshes that mix triangles and quads."
+
+[distribution]
+url = "https://superhivemarket.com/products/wrap4blender"
+channel = "superhive"
+licence = "GPL (version not stated)"
+price = "USD 29"
+
+[blender]
+min = "5.0"
+max = "5.2"
+release = "2.1.0 (2026-08-30)"
+
+[[sources]]
+url = "https://superhivemarket.com/products/wrap4blender"
+what = "price, GPL, Blender 5.0 - 5.2, Windows 11 only, point pairs, built-in shared account, published 4 months ago, seller Hui Liu in the page data"
+
+[[sources]]
+url = "https://superhivemarket.com/products/wrap4blender/docs"
+what = "release notes from 1.0.2 (2026-06-30) to 2.1.0 (2026-08-30)"
+
+[[sources]]
+url = "https://wrap4blender.teca3d.com/"
+what = "the publisher's page: point pairs, Attract and Stick, demo scenes; no price, no other store"
+
+[[sources]]
+url = "https://superhivemarket.com/products/wrap4blender"
+what = "read again 2026-10-29: Windows 11 only; built-in account with email and password, private one on request; works with any model"
+
+[[sources]]
+url = "https://superhivemarket.com/products/wrap4blender/docs"
+what = "read again 2026-10-29: 2.1.0 adds x-symmetry; 1.1.0 warns on a mesh mixing triangles and quads"

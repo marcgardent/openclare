@@ -1,0 +1,38 @@
+name = "Geometry Nodes: Mesh to Volume, Volume to Mesh"
+slug = "geometry-nodes-remesh"
+author = "Blender Foundation"
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quads", "output:triangles", "output:n-gons", "engine:voxel", "os:windows", "os:linux", "os:macos", "density:uniform", "density:adaptive", "licence:open-source", "source:public", "blender:5-x", "install:built-in", "price:free"]
+kind = "built-in"
+method = "Mesh to Volume makes a density grid of the mesh, Volume to Mesh builds a surface at an iso value; Dual Mesh can follow to swap faces and vertices"
+purpose = "a remesh inside a node tree, non-destructive and procedural"
+status = "active"
+checked = 2026-10-29
+notes = "A route of nodes, not one tool. The manual does not say which faces Volume to Mesh makes; quads-or-triangles is not checked. Volume to Mesh exists since 2.93, Dual Mesh since 3.1, Mesh to Volume since 3.3. After Dual Mesh the faces have as many sides as the valence of the old vertices."
+
+[distribution]
+url = "https://docs.blender.org/manual/en/latest/modeling/geometry_nodes/mesh/operations/mesh_to_volume.html"
+channel = "blender"
+source = "https://projects.blender.org/blender/blender"
+licence = "GPL-2.0-or-later"
+price = "free"
+
+[blender]
+min = "3.3"
+release = "5.2.3 (2026-10-22)"
+
+[[sources]]
+url = "https://docs.blender.org/manual/en/latest/modeling/geometry_nodes/mesh/operations/mesh_to_volume.html"
+what = "Mesh to Volume in the 5.2 LTS manual"
+
+[[sources]]
+url = "https://docs.blender.org/manual/en/latest/modeling/geometry_nodes/volume/operations/volume_to_mesh.html"
+what = "Volume to Mesh, iso value, fixed voxel size or voxel amount, Adaptivity that simplifies where detail is not needed"
+
+[[sources]]
+url = "https://docs.blender.org/manual/en/latest/modeling/geometry_nodes/mesh/operations/dual_mesh.html"
+what = "Dual Mesh, manifold input only"
+
+[[sources]]
+url = "https://developer.blender.org/docs/release_notes/3.3/nodes_physics/"
+what = "Mesh to Volume node added in 3.3"
+

@@ -13,6 +13,8 @@ Sources:
 - docs/GLOSSARY.md and docs/GLOSSARY.fr.md;
 - docs/models/<model>.md and docs/models/img/: one page per model;
 - bench/results/SCORES.md and scores.json: the tables of the results page;
+- docs/retopology/: the tools for retopology in Blender, their platforms and
+  their tags, made into the retopology page;
 - CREDITS.md: who made each model, and which licences forbid passing a model
   on. The pictures of those models are left out of the site.
 
@@ -30,6 +32,7 @@ import posixpath
 import re
 import shutil
 import sys
+import tomllib
 import unicodedata
 from pathlib import Path
 
@@ -98,6 +101,9 @@ WORDS = {
         "results": "Results",
         "research": "Research",
         "get": "Get it",
+        "market": "State of the market",
+        "retopology": "Retopology 2026",
+        "platforms": "Distribution platforms 2026",
         "github": "GitHub ↗",
         "models": "Model by model",
         "other_title": "Lire cette page en français",
@@ -131,6 +137,9 @@ WORDS = {
         "results": "Résultats",
         "research": "Recherche",
         "get": "L'obtenir",
+        "market": "État du marché",
+        "retopology": "Retopologie 2026",
+        "platforms": "Plateformes de distribution 2026",
         "github": "GitHub ↗",
         "models": "Modèle par modèle",
         "other_title": "Read this page in English",
@@ -156,7 +165,9 @@ WORDS = {
 }
 
 # The logo leads home; the navigation lists the other pages.
-NAVIGATION = ("theory", "results", "glossary", "research", "get")
+NAVIGATION = ("theory", "results", "market", "glossary", "research", "get")
+# The pages each item of the navigation stands for, beside its own.
+SECTIONS = {"results": ("models/",), "market": ("retopology", "platforms")}
 
 # Display names of the remeshers of the bench, and what the rows that are
 # not one of the remeshers compared are.
@@ -289,6 +300,78 @@ MODEL_PATTERNS_FR = [
     (r"\| (\d[\d ]*) triangles \|", r"| \1 triangles |"),
     (r"(\d) quads\b", r"\1 quads"),
 ]
+# The retopology page: the facets that filter its table, and the words of
+# the page. The tags and their meanings are in docs/retopology/taxonomy.toml.
+RETOPOLOGY = ROOT / "docs" / "retopology"
+# The first switches are shown; the others fold under "More filters".
+FILTERS = ("mode", "output", "os", "blender", "price")
+MORE_FILTERS = ("scope", "guide", "engine", "use", "extra", "licence", "source", "install", "requires", "density",
+                "edge-flow", "input", "bake")
+TAGS_FR = {
+    "mode": "Mode", "scope": "Portée", "output": "Sortie", "price": "Prix", "engine": "Moteur",
+    "automatic": "automatique", "semi-automatic": "semi-automatique", "semi-manual": "semi-manuel",
+    "manual": "manuel", "helper": "aide", "global": "globale", "local": "locale", "quads": "quads",
+    "quad-dominant": "quads dominants", "triangles": "triangles", "n-gons": "n-gones", "template": "modèle",
+    "free": "gratuit", "pay-what-you-want": "prix libre", "freemium": "freemium", "paid": "payant",
+    "own": "le sien", "proprietary": "propriétaire",
+    "parameters": "paramètres", "density": "densité", "marked-edges": "arêtes marquées", "strokes": "traits",
+    "points": "points", "boundary": "contour", "selection": "sélection",
+    "sculpt": "sculptures", "scan": "scans", "ai-generated": "maillages générés par IA", "cad": "CAO",
+    "hard-surface": "surfaces dures", "organic": "organique", "head": "têtes", "cylinder": "membres et cylindres",
+    "relief": "reliefs", "parts": "assemblage de pièces", "open-boundaries": "bords ouverts", "game-asset": "assets de jeu",
+    "uv": "UV", "lod": "LOD", "repair": "réparation", "symmetry": "symétrie",
+    "keeps-attributes": "garde UV, matériaux et poids", "cloud": "calcul sur serveur",
+    "color": "couleur", "normal": "normales", "height": "hauteur", "ao": "occlusion ambiante",
+    "material": "canaux de matériau",
+    "bake": "Bake", "os": "Systèmes", "blender": "Blender", "install": "Installation", "requires": "Demande",
+    "density": "Densité", "edge-flow": "Flux d'arêtes", "input": "Entrée", "guide": "Guide", "use": "Usage",
+    "extra": "Aussi", "5-x": "5.x", "4-x": "4.2 à 4.5", "legacy": "avant 4.2", "unstated": "non indiquée",
+    "built-in": "intégré", "get-extensions": "Get Extensions", "zip": "ZIP", "external": "programme à part",
+    "external-program": "programme à part", "account": "compte", "internet": "connexion", "api-key": "clé d'API",
+    "gpu": "GPU", "uniform": "uniforme", "adaptive": "adaptative", "feature-lines": "arêtes vives",
+    "curvature": "courbure", "pole-control": "contrôle des pôles", "loops": "boucles imposées",
+    "manifold": "manifold", "single-object": "un objet", "any": "tout maillage", "windows": "Windows",
+    "linux": "Linux", "macos": "macOS", "ml": "apprentissage automatique",
+    "licence": "Licence", "source": "Code source", "open-source": "open source", "not-stated": "non indiquée",
+    "public": "public", "with-download": "dans le téléchargement", "closed": "fermé",
+}
+RETOPOLOGY_WORDS = {
+    "en": {
+        "all": "all", "old": "Hide stale and abandoned tools", "filters": "Filter by tags", "more_filters": "More filters", "reset": "Clear",
+        "help": "Check any tags, in any facet: a tool is shown when it carries every checked tag.", "os": "OS",
+        "tool": "Tool", "where": "Where", "blender": "Blender", "status": "Status",
+        "platform": "Platform", "kind": "Kind", "sells": "Sells add-ons", "share": "What the seller keeps",
+        "tools_here": "Tools", "yes": "yes", "no": "no", "method": "Method", "purpose": "For",
+        "author": "Author", "licence": "Licence", "price": "Price", "stores": "Stores", "papers": "Papers",
+        "notes": "Notes", "sources": "Sources read", "tags": "Tags", "checked": "checked",
+        "licence_rule": "Licence rule", "install": "Install", "updates": "Updates", "source": "Source code",
+        "count": "{shown} tools listed, {old} of them stale or abandoned.",
+        "visit": "Visit", "tools_on": "Tools distributed here", "operator": "Operator", "paid_label": "Sells add-ons",
+        "share_label": "What the seller keeps", "blender_label": "Blender", "market_tools": "{n} tools: automatic, semi-automatic, semi-manual, manual and helpers, with their tags.",
+        "market_platforms": "{n} platforms: who runs them, what the seller keeps, how a user installs and updates.",
+        "get_it": "Get it", "facts": "Facts", "same_engine": "Other tools on the same solver",
+        "guide": "Guided by", "use": "Made for", "extra": "Also", "bake": "Bakes", "scope": "Acts", "release": "Latest release",
+    },
+    "fr": {
+        "all": "tous", "old": "Cacher les outils anciens et abandonnés", "filters": "Filtrer par tags", "more_filters": "Plus de filtres", "reset": "Effacer",
+        "help": "Cochez autant de tags que voulu, dans toutes les facettes : un outil est montré s'il porte tous les tags cochés.", "os": "OS",
+        "tool": "Outil", "where": "Où", "blender": "Blender", "status": "État",
+        "platform": "Plateforme", "kind": "Type", "sells": "Vend des greffons", "share": "Ce que garde le vendeur",
+        "tools_here": "Outils", "yes": "oui", "no": "non", "method": "Méthode", "purpose": "Pour",
+        "author": "Auteur", "licence": "Licence", "price": "Prix", "stores": "Boutiques", "papers": "Articles",
+        "notes": "Notes", "sources": "Sources lues", "tags": "Tags", "checked": "vérifié le",
+        "licence_rule": "Règle de licence", "install": "Installation", "updates": "Mises à jour", "source": "Code source",
+        "count": "{shown} outils listés, dont {old} anciens ou abandonnés.",
+        "visit": "Visiter", "tools_on": "Outils distribués ici", "operator": "Exploitant", "paid_label": "Vend des greffons",
+        "share_label": "Ce que garde le vendeur", "blender_label": "Blender", "market_tools": "{n} outils : automatiques, semi-automatiques, semi-manuels, manuels et aides, avec leurs tags.",
+        "market_platforms": "{n} plateformes : qui les tient, ce que garde le vendeur, comment on installe et met à jour.",
+        "get_it": "L'obtenir", "facts": "Fiche", "same_engine": "Autres outils sur le même solveur",
+        "guide": "Guidé par", "use": "Fait pour", "extra": "Aussi", "bake": "Cuit", "scope": "Agit", "release": "Dernière version",
+        "prose_en": "Les descriptions de cette fiche sont en anglais.",
+    },
+}
+STATUS_FR = {"active": "actif", "stale": "ancien", "abandoned": "abandonné", "unknown": "inconnu"}
+
 KINDS_FR = {"organic": "organique", "mechanical": "mécanique", "calibration": "d'étalonnage", "extra": "extra"}
 
 
@@ -768,7 +851,7 @@ class Site:
         nav = []
         for item in NAVIGATION:
             target = posixpath.relpath(self.page_path(item, language), here)
-            current = ' aria-current="page"' if item == key or (item == "results" and key.startswith("models/")) else ""
+            current = ' aria-current="page"' if item == key or key.split("/")[0] in SECTIONS.get(item, ()) or any(key.startswith(p) for p in SECTIONS.get(item, ()) if p.endswith("/")) else ""
             nav.append(f'<li><a href="{target}"{current}>{words[item]}</a></li>')
         nav.append(f'<li><a href="{REPOSITORY}" rel="noopener">{words["github"]}</a></li>')
         other_href = posixpath.relpath(self.page_path(key, other), here)
@@ -1158,6 +1241,291 @@ class Site:
                 extra=budget_switch(language),
             )
 
+    # ---- retopology
+
+    def retopology_data(self):
+        tools = [tomllib.loads(read(path)) for path in sorted((RETOPOLOGY / "tools").glob("*.toml"))]
+        platforms = {p["id"]: p for p in tomllib.loads(read(RETOPOLOGY / "platforms.toml"))["platform"]}
+        taxonomy = tomllib.loads(read(RETOPOLOGY / "taxonomy.toml"))["facet"]
+        return sorted(tools, key=lambda e: e["name"].lower()), platforms, taxonomy
+
+    @staticmethod
+    def tag_values(entry, facet):
+        return [tag.split(":", 1)[1] for tag in entry["tags"] if tag.startswith(facet + ":")]
+
+    @staticmethod
+    def tag_label(value, language):
+        english = {"5-x": "5.x", "4-x": "4.2–4.5", "legacy": "before 4.2"}
+        return TAGS_FR.get(value, value) if language == "fr" else english.get(value, value)
+
+    def retopology_filters(self, taxonomy, language):
+        """One box per tag, as many checked as wanted: a tool is shown when it
+        carries every checked tag. CSS on :has() hides the others; without
+        :has() the boxes stay hidden and every tool is shown. A reset button
+        clears the form without a script."""
+        words = RETOPOLOGY_WORDS[language]
+        groups, rules, more, checked = [], [], [], []
+        for facet in FILTERS + MORE_FILTERS:
+            values = [v for v in taxonomy[facet] if v not in ("required", "title")]
+            title = TAGS_FR.get(facet, facet) if language == "fr" else taxonomy[facet]["title"].replace(" (computed)", "")
+            cells = []
+            for value in values:
+                cells.append(f'<input type="checkbox" id="f-{facet}-{value}">'
+                             f'<label for="f-{facet}-{value}">{self.tag_label(value, language)}</label>')
+                rules.append(f'body:has(#f-{facet}-{value}:checked) .tool:not([data-{facet}~="{value}"])')
+                checked.append(f'body:has(#f-{facet}-{value}:checked) label.tag[for="f-{facet}-{value}"]')
+            group = (f'<fieldset class="switch tag-switch"><legend>{html.escape(title)}</legend>'
+                     f'<div class="switch-cells">{"".join(cells)}</div></fieldset>')
+            (groups if facet in FILTERS else more).append(group)
+        rules.append("body:has(#f-old:checked) .tool[data-old]")
+        style = ("<style>@supports selector(:has(a)) {" + ",\n".join(rules) + " { display: none; }\n"
+                 + ",\n".join(checked) + " { background: var(--ink); color: var(--bg); border-color: var(--ink); }\n"
+                 + ",\n".join(r + " .facet" for r in checked) + " { color: var(--bg); } }</style>")
+        old = (f'<p class="tag-old"><input type="checkbox" id="f-old"> <label for="f-old">{words["old"]}</label> '
+               f'<button type="reset" class="button">{words["reset"]}</button></p>')
+        more_html = (f'<details class="more-filters"><summary>{words["more_filters"]}</summary>'
+                     f'<div class="tag-filters">{"".join(more)}</div></details>')
+        return (f'{style}<form class="tag-form" aria-label="{words["filters"]}"><p class="note tag-help">{words["help"]}</p>'
+                f'<div class="tag-filters">{"".join(groups)}{old}</div>{more_html}</form>')
+
+    def tag_chips(self, entry, language, toggles=False):
+        """The tags of a tool, facet by facet in the order of the taxonomy.
+        On the tiles each tag is the label of its filter box: a click checks
+        or clears it."""
+        chips = []
+        for facet in self.taxonomy:
+            for value in self.tag_values(entry, facet):
+                facet_name = TAGS_FR.get(facet, facet) if language == "fr" else facet
+                inner = f'<span class="facet">{html.escape(facet_name)}</span> {html.escape(self.tag_label(value, language))}'
+                if toggles:
+                    chips.append(f'<li><label class="tag" for="f-{facet}-{value}">{inner}</label></li>')
+                else:
+                    chips.append(f'<li><span class="tag">{inner}</span></li>')
+        return f'<ul class="tags">{"".join(chips)}</ul>'
+
+    def retopology_tools(self, tools, platforms, language):
+        """The tiles of the retopology page, one per tool: its name leads to
+        the tool's own page, its tags toggle the filters."""
+        words = RETOPOLOGY_WORDS[language]
+        here = posixpath.dirname(self.page_path("retopology", language)) or "."
+        tiles = []
+        old = 0
+        for entry in tools:
+            slug, dist = entry["slug"], entry["distribution"]
+            data = " ".join(f'data-{facet}="{" ".join(self.tag_values(entry, facet))}"' for facet in FILTERS + MORE_FILTERS)
+            if entry["status"] in ("stale", "abandoned"):
+                data += " data-old"
+                old += 1
+            stores = [dist] + dist.get("also", [])
+            where = ", ".join(dict.fromkeys(re.sub(r" \(.*\)$", "", platforms[s["channel"]]["name"]) for s in stores))
+            short = html.escape(re.split(r" - | \| |: ", entry["name"])[0])
+            target = posixpath.relpath(self.page_path(f"retopology/{slug}", language), here)
+            status = self.status_label(entry, language)
+            css = " tile-old" if entry["status"] in ("stale", "abandoned") else ""
+            tiles.append(
+                f'<article class="tool tile{css}" {data}><div class="tile-facts">'
+                f'<h3><a href="{target}">{short}</a></h3>'
+                f'<p class="tile-by">{html.escape(entry["author"])} · {status}</p>'
+                f'<p class="tile-what">{html.escape(entry.get("purpose") or entry["method"])}</p>'
+                f'<p class="tile-price">{html.escape(dist["price"])} · {html.escape(where)}</p></div>'
+                f'{self.tag_chips(entry, language, toggles=True)}</article>'
+            )
+        count = words["count"].format(shown=len(tools), old=old)
+        return f'<p>{count}</p><div class="tiles">{"".join(tiles)}</div>'
+
+    def os_cell(self, entry):
+        """W, L, M for the systems a tool states; a dash when none is stated."""
+        systems = self.tag_values(entry, "os")
+        return " ".join(letter for name, letter in (("windows", "W"), ("linux", "L"), ("macos", "M")) if name in systems) or "—"
+
+    @staticmethod
+    def blender_span(blender):
+        span = "–".join(dict.fromkeys(v for v in (blender.get("min"), blender.get("max")) if v)) or "—"
+        return span + "+" if blender.get("min") and not blender.get("max") else span
+
+    @staticmethod
+    def status_label(entry, language):
+        return STATUS_FR.get(entry["status"], entry["status"]) if language == "fr" else entry["status"]
+
+    @staticmethod
+    def facet_title(facet, language):
+        english = {"mode": "Mode", "scope": "Scope", "output": "Output", "engine": "Engine", "price": "Price",
+                   "licence": "Licence", "source": "Source code"}
+        return TAGS_FR.get(facet, facet) if language == "fr" else english.get(facet, facet)
+
+    def tool_page(self, entry, tools, platforms, language):
+        """The page of one tool: what it is, where to get it, its tags and
+        the pages its facts come from."""
+        words = RETOPOLOGY_WORDS[language]
+        slug, dist, blender = entry["slug"], entry["distribution"], entry.get("blender", {})
+        key = f"retopology/{slug}"
+        here = posixpath.dirname(self.page_path(key, language))
+        main = posixpath.relpath(self.page_path("retopology", language), here)
+        link = lambda url, text=None: f'<a href="{html.escape(url)}" rel="noopener">{html.escape(text or url)}</a>'
+        tags = lambda facet: ", ".join(self.tag_label(v, language) for v in self.tag_values(entry, facet))
+        stores = [dist] + dist.get("also", [])
+
+        facts = [(words["author"], html.escape(entry["author"]))]
+        facts.append((words["method"], html.escape(entry["method"])))
+        facts.append((words["licence"], f'{tags("licence")} ({html.escape(dist["licence"])})'))
+        facts.append((words["source"], link(dist["source"]) if dist.get("source") else tags("source")))
+        facts.append((words["blender"], self.blender_span(blender)))
+        if blender.get("release"):
+            facts.append((words["release"], html.escape(blender["release"])))
+        facts.append((words["status"], self.status_label(entry, language)))
+        store_items = "".join(
+            f'<li><a href="{posixpath.relpath(self.page_path("platforms/" + s["channel"], language), here)}">'
+            f'{html.escape(platforms[s["channel"]]["name"])}</a>' + (f': {html.escape(s["price"])}' if s.get("price") else "")
+            + f' · {link(s["url"], words["get_it"] + " ↗")}</li>'
+            for s in stores)
+        facts.append((words["stores"], f"<ul>{store_items}</ul>"))
+        if entry.get("papers"):
+            facts.append((words["papers"], "<ul>" + "".join(
+                f'<li>{html.escape(p["authors"])}, “{html.escape(p["title"])}”, {html.escape(p["venue"])}, {p["year"]}'
+                + (", " + link(f'https://doi.org/{p["doi"]}', f'doi:{p["doi"]}') if p.get("doi") else "") + "</li>"
+                for p in entry["papers"]) + "</ul>"))
+        if entry.get("notes"):
+            facts.append((words["notes"], html.escape(entry["notes"])))
+        rows = "".join(f"<dt>{label}</dt><dd>{value}</dd>" for label, value in facts)
+
+        engines = [e for e in self.tag_values(entry, "engine") if e not in ("own", "proprietary")]
+        same = [other for other in tools if other is not entry and set(engines) & set(self.tag_values(other, "engine"))]
+        sources = "".join(f'<li>{link(s["url"])}: {html.escape(s["what"])}</li>' for s in entry["sources"])
+        name = html.escape(entry["name"])
+        subtitle = html.escape(entry.get("purpose") or entry["method"])
+        body = [f'<h1 id="{slug}">{name}</h1>', f'<p class="subtitle">{subtitle}</p>',
+                f'<p><a class="button primary" href="{html.escape(dist["url"])}" rel="noopener">{words["get_it"]} ↗</a> '
+                f'{html.escape(dist["price"])}</p>']
+        body.append(self.tag_chips(entry, language))
+        if language == "fr":
+            body.append(f'<p class="note">{words["prose_en"]}</p>')
+        body += [f'<h2 id="facts">{words["facts"]}</h2>', f'<dl class="facts">{rows}</dl>']
+        if same:
+            items = "".join(
+                f'<li><a href="{posixpath.relpath(self.page_path("retopology/" + o["slug"], language), here)}">'
+                f'{html.escape(o["name"])}</a></li>' for o in same)
+            body += [f'<h2 id="same-engine">{words["same_engine"]}</h2>', f"<ul>{items}</ul>"]
+        body += [f'<h2 id="sources">{words["sources"]}</h2>', f"<ul>{sources}</ul>",
+                 f'<p class="note">{words["checked"]} {entry["checked"]}</p>']
+        breadcrumb = self.market_crumbs(key, language, "retopology", re.split(r" - | [|] |: ", entry["name"])[0])
+        body = "\n".join(body)
+        self.write(key, language, entry["name"], body, [], "retopology", subtitle, breadcrumb, toc=False)
+
+    def market_crumbs(self, key, language, parent=None, name=None):
+        """The breadcrumb of a page under the state of the market: the
+        market, the list the page belongs to (`parent`), then its name."""
+        here = posixpath.dirname(self.page_path(key, language)) or "."
+        words = WORDS[language]
+        steps = ["market"] + ([parent] if parent else [])
+        links = " › ".join(f'<a href="{posixpath.relpath(self.page_path(k, language), here)}">{html.escape(words[k])}</a>' for k in steps)
+        return f'<nav class="breadcrumb" aria-label="breadcrumb">{links} › {html.escape(name or words[key])}</nav>'
+
+    def market_nav(self, key, language):
+        """The two lists of the state of the market, as chips under a title."""
+        here = posixpath.dirname(self.page_path(key, language)) or "."
+        words = WORDS[language]
+        items = []
+        for target in ("retopology", "platforms"):
+            current = ' aria-current="page"' if target == key else ""
+            items.append(f'<a href="{posixpath.relpath(self.page_path(target, language), here)}"{current}>{words[target]}</a>')
+        return f'<nav class="chips market-nav" aria-label="{words["market"]}">{"".join(items)}</nav>'
+
+    def tools_on(self, platforms, tools):
+        """For each platform, the tools it distributes, with their price there."""
+        found = {key: [] for key in platforms}
+        for entry in tools:
+            dist = entry["distribution"]
+            for store in [dist] + dist.get("also", []):
+                found[store["channel"]].append((entry, store))
+        return found
+
+    def platforms_list(self, platforms, tools, language):
+        """The platforms page: one band per platform, leading to its page."""
+        words = RETOPOLOGY_WORDS[language]
+        here = posixpath.dirname(self.page_path("platforms", language)) or "."
+        on = self.tools_on(platforms, tools)
+        bands = []
+        for key, p in platforms.items():
+            target = posixpath.relpath(self.page_path(f"platforms/{key}", language), here)
+            chips = [(words["kind"].lower(), p["kind"]), (words["sells"].lower(), words["yes"] if p["paid"] else words["no"]),
+                     (words["tools_here"].lower(), str(len({e["slug"] for e, _ in on[key]})))]
+            tags = "".join(f'<li><span class="tag"><span class="facet">{html.escape(f)}</span> {html.escape(v)}</span></li>' for f, v in chips)
+            share = f'<p class="tile-what">{html.escape(p["seller_share"])}</p>' if p.get("seller_share") else ""
+            bands.append(
+                f'<article class="tile"><div class="tile-facts"><h3><a href="{target}">{html.escape(p["name"])}</a></h3>'
+                f'<p class="tile-by">{html.escape(p["operator"])}</p>{share}</div><ul class="tags">{tags}</ul></article>'
+            )
+        return f'<div class="tiles">{"".join(bands)}</div>'
+
+    def platform_page(self, key, p, tools, platforms, language):
+        """The page of one platform: its terms, and the tools it distributes."""
+        words = RETOPOLOGY_WORDS[language]
+        page_key = f"platforms/{key}"
+        here = posixpath.dirname(self.page_path(page_key, language))
+        link = lambda url, text=None: f'<a href="{html.escape(url)}" rel="noopener">{html.escape(text or url)}</a>'
+        facts = [(words["operator"], html.escape(p["operator"])), (words["kind"], html.escape(p["kind"])),
+                 (words["paid_label"], words["yes"] if p["paid"] else words["no"])]
+        for field, label in (("seller_share", words["share_label"]), ("licence_rule", words["licence_rule"]),
+                             ("install", words["install"]), ("updates", words["updates"]), ("blender", words["blender_label"]),
+                             ("notes", words["notes"])):
+            if p.get(field):
+                facts.append((label, html.escape(p[field])))
+        rows = "".join(f"<dt>{label}</dt><dd>{value}</dd>" for label, value in facts)
+        listed = sorted(self.tools_on(platforms, tools)[key], key=lambda pair: pair[0]["name"].lower())
+        items = "".join(
+            f'<li><a href="{posixpath.relpath(self.page_path("retopology/" + e["slug"], language), here)}">{html.escape(e["name"])}</a>'
+            + (f': {html.escape(store["price"])}' if store.get("price") else "") + "</li>"
+            for e, store in listed)
+        sources = "".join(f'<li>{link(s["url"])}: {html.escape(s["what"])}</li>' for s in p["sources"])
+        subtitle = f'{html.escape(p["kind"])} · {words["tools_here"].lower()} {len({e["slug"] for e, _ in listed})}'
+        body = [f'<h1 id="{html.escape(key)}">{html.escape(p["name"])}</h1>', f'<p class="subtitle">{subtitle}</p>']
+        if p.get("url"):
+            body.append(f'<p><a class="button primary" href="{html.escape(p["url"])}" rel="noopener">{words["visit"]} ↗</a></p>')
+        if language == "fr":
+            body.append(f'<p class="note">{words["prose_en"]}</p>')
+        body += [f'<h2 id="facts">{words["facts"]}</h2>', f'<dl class="facts">{rows}</dl>']
+        if items:
+            body += [f'<h2 id="tools">{words["tools_on"]} ({len(listed)})</h2>', f"<ul>{items}</ul>"]
+        body += [f'<h2 id="sources">{words["sources"]}</h2>', f"<ul>{sources}</ul>"]
+        breadcrumb = self.market_crumbs(page_key, language, "platforms", p["name"])
+        self.write(page_key, language, p["name"], "\n".join(body), [], "platforms", p.get("seller_share", p["name"]), breadcrumb, toc=False)
+
+    def market(self, tools, platforms):
+        for language in LANGUAGES:
+            words, here = RETOPOLOGY_WORDS[language], posixpath.dirname(self.page_path("market", language)) or "."
+            text, body, headings = self.content_page("market", language, "market")
+            bands = []
+            for target, line in (("retopology", words["market_tools"].format(n=len(tools))),
+                                 ("platforms", words["market_platforms"].format(n=len(platforms)))):
+                href = posixpath.relpath(self.page_path(target, language), here)
+                bands.append(f'<article class="tile"><div class="tile-facts"><h3><a href="{href}">{WORDS[language][target]}</a></h3>'
+                             f'</div><p class="tile-what">{line}</p></article>')
+            body = body.replace("<p>{{market}}</p>", f'<div class="tiles">{"".join(bands)}</div>')
+            self.write("market", language, self.title_of(text), body, headings, "market", self.description_of(text), toc=False)
+
+    def retopology(self):
+        tools, platforms, taxonomy = self.retopology_data()
+        self.taxonomy = taxonomy
+        self.market(tools, platforms)
+        for language in LANGUAGES:
+            text, body, headings = self.content_page("retopology", language, "retopology")
+            body = body.replace("<p>{{tools}}</p>", self.retopology_tools(tools, platforms, language))
+            self.write(
+                "retopology", language, self.title_of(text), body, headings, "retopology", self.description_of(text),
+                toc=False, breadcrumb=self.market_crumbs("retopology", language),
+                extra=self.market_nav("retopology", language) + self.retopology_filters(taxonomy, language),
+            )
+            text, body, headings = self.content_page("platforms", language, "platforms")
+            body = body.replace("<p>{{platforms}}</p>", self.platforms_list(platforms, tools, language))
+            self.write(
+                "platforms", language, self.title_of(text), body, headings, "platforms", self.description_of(text),
+                toc=False, breadcrumb=self.market_crumbs("platforms", language), extra=self.market_nav("platforms", language),
+            )
+            for entry in tools:
+                self.tool_page(entry, tools, platforms, language)
+            for key, p in platforms.items():
+                self.platform_page(key, p, tools, platforms, language)
+
     # ---- model pages
 
     def credit_line(self, name, language, page):
@@ -1303,6 +1671,7 @@ class Site:
         self.results()
         self.simple("research", "research")
         self.simple("get", "get")
+        self.retopology()
         for name in self.models:
             if name in self.withheld:
                 continue

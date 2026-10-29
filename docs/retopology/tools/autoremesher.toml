@@ -1,0 +1,40 @@
+name = "AutoRemesher"
+slug = "autoremesher"
+author = "Jeremy Hu (huxingyi)"
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quad-dominant", "engine:own", "os:windows", "os:linux", "os:macos", "density:uniform", "density:adaptive", "edge-flow:feature-lines", "licence:open-source", "source:public", "blender:unstated", "install:external", "price:free"]
+kind = "standalone"
+method = "isotropic remeshing, a cross field (QuadCover), then quad extraction, with its own parameterizer since 1.1.0"
+purpose = "automatic quad remeshing, standalone, with a command line"
+status = "active"
+checked = 2026-10-29
+notes = "A program of its own for Windows, Linux and macOS; in Blender through autoremesher-bridge. The README still names Geogram, which 1.1.0 replaced. The betas of 2020 were GPL-3.0."
+bench = "autoremesher"
+
+[distribution]
+url = "https://github.com/huxingyi/autoremesher/releases"
+channel = "github"
+source = "https://github.com/huxingyi/autoremesher"
+licence = "MIT"
+price = "free"
+
+[blender]
+release = "1.2.0 (2026-08-23)"
+
+[[sources]]
+url = "https://github.com/huxingyi/autoremesher"
+what = "licence, changelog (MIT since 1.0.0, Geogram replaced in 1.1.0, quad-dominant output); Windows, macOS and Linux downloads in Quick Start"
+
+[[sources]]
+url = "https://github.com/huxingyi/autoremesher/releases"
+what = "latest release and its date"
+
+[brief]
+contradicted = [
+  "built on Geogram: Geogram was replaced in 1.1.0 (2026-08-16)",
+  "MIT and GPL: MIT since 1.0.0; only the betas of 2020 were GPL-3.0",
+  "100 % quads: the changelog says quad-dominant",
+]
+
+[[sources]]
+url = "https://github.com/huxingyi/autoremesher/blob/master/src/mainwindow.cpp"
+what = "tooltips: Adaptivity 0 = uniform to 1 = finer quads in high-curvature areas; Sharp Edge: edges sharper than the threshold are preserved as feature edges"

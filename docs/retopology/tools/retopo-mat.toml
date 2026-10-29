@@ -1,0 +1,44 @@
+name = "Retopo_MAT"
+slug = "retopo-mat"
+author = "Luwizart"
+tags = ["mode:helper", "scope:local", "edge-flow:symmetry", "licence:open-source", "source:with-download", "blender:legacy", "install:zip", "price:paid"]
+kind = "add-on"
+method = "sets how the reference and the retopology mesh are drawn (material, wire thickness, vertex size), projects a mesh onto a surface with a quick Shrinkwrap whose offset and thickness change in real time, and adds a quick Mirror modifier"
+purpose = "a cleaner viewport and quick projection for manual retopology"
+status = "stale"
+checked = 2026-10-29
+notes = "Status inferred: Superhive lists Blender 2.83 to 3.0 only, the product was published about 5 years ago, and both reviews are about 5 years old; the changelog (1_5_2, 1_5_3) has no dates. The pages read do not mention shaders, matcaps or contrast."
+
+[distribution]
+url = "https://superhivemarket.com/products/retopo_mat"
+channel = "superhive"
+licence = "GPL (version not stated)"
+price = "USD 20"
+
+[[distribution.also]]
+channel = "gumroad"
+url = "https://luwizart.gumroad.com/l/aSojB"
+price = "USD 20"
+
+[blender]
+min = "2.83"
+max = "3.0"
+
+[[sources]]
+url = "https://superhivemarket.com/products/retopo_mat"
+what = "description, USD 20, GPL, Blender 2.83 - 3.0, changelog to 1_5_3, published about 5 years ago"
+
+[[sources]]
+url = "https://superhivemarket.com/products/retopo_mat/ratings"
+what = "two reviews, both about 5 years old"
+
+[[sources]]
+url = "https://luwizart.gumroad.com/l/aSojB"
+what = "USD 20, seller luwizart"
+
+[brief]
+contradicted = ["Blender 3.x, 4.x: Superhive lists Blender 2.83 to 3.0"]
+
+[[sources]]
+url = "https://superhivemarket.com/products/retopo_mat"
+what = "quick Mirror modifier (1_5_3)"

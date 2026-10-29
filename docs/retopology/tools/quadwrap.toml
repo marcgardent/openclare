@@ -1,0 +1,53 @@
+name = "Quadwrap - Retopology Tool"
+slug = "quadwrap"
+author = "AFX LAB (Alberto Gonzalez)"
+tags = ["mode:semi-manual", "scope:local", "guide:strokes", "output:quads", "engine:own", "use:cylinder", "edge-flow:symmetry", "edge-flow:loops", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid"]
+kind = "add-on"
+method = "a click-and-drag stroke along a cylindrical part extrudes rings of quads around it, with a set vertex count per ring, ring bridging, loop relax and end-cap fill"
+purpose = "retopology of arms, legs, fingers, horns and other cylindrical shapes"
+status = "active"
+checked = 2026-10-29
+notes = "The changelogs have no dates. Version 1.4 added Blender 5.0 support (Blender 5.0 was released 2025-11-18) and 1.5 came after it, so a release falls within the last 12 months. Superhive lists only Blender 5.1; the Gumroad page calls it a Blender 5.0+ tool and still shows 1.4. Also sold on FlippedNormals (https://library.flippednormals.com/product/quad-wrap-retopology-tool-67984), named by Digital Production on 2026-02-12 at USD 19; that page did not load."
+
+[distribution]
+url = "https://superhivemarket.com/products/quadwrap"
+channel = "superhive"
+licence = "GPL (version not stated)"
+price = "USD 10 (Personal), USD 24 (Small Team, 2-5 users), USD 59 (Indie, 6-20 users), USD 149 (Studio, 20+ users)"
+
+[[distribution.also]]
+channel = "gumroad"
+url = "https://albertofx.gumroad.com/l/VYsoF"
+price = "USD 20"
+
+[blender]
+min = "5.0"
+max = "5.1"
+
+[[sources]]
+url = "https://superhivemarket.com/products/quadwrap"
+what = "description, update log to v1.5, prices by licence, GPL, Blender 5.1, 1200+ sales, published over 6 years ago"
+
+[[sources]]
+url = "https://superhivemarket.com/products/quadwrap/docs"
+what = "workflow: rings, cloaks, bridging, end caps"
+
+[[sources]]
+url = "https://superhivemarket.com/products/quadwrap/ratings"
+what = "author replies signed Alberto Gonzalez; reviews up to about 1 month old"
+
+[[sources]]
+url = "https://albertofx.gumroad.com/l/VYsoF"
+what = "seller AFX, USD 20, Blender 5.0+, update log"
+
+[[sources]]
+url = "https://digitalproduction.com/2026/02/12/quad-wrap-offers-quad-first-retopology-no-magic-wand/"
+what = "manual retopology add-on by AFX Lab, sold on FlippedNormals at USD 19 (2026-02-12)"
+
+[[sources]]
+url = "https://www.blender.org/download/releases/5-0/"
+what = "Blender 5.0 released 2025-11-18"
+
+[[sources]]
+url = "https://superhivemarket.com/products/quadwrap"
+what = "Symmetry/Bisect support (v1.2); control over edge loops, loop bridging, ring count (v1.5)"

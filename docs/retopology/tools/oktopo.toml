@@ -1,0 +1,39 @@
+name = "OkTopo Remesher for Blender"
+slug = "oktopo"
+author = "Yegor Kumachov (OkTopo)"
+tags = ["mode:semi-automatic", "scope:global", "guide:points", "guide:template", "output:template", "engine:own", "use:head", "extra:uv", "os:windows", "os:macos", "os:linux", "input:manifold", "licence:open-source", "source:with-download", "blender:unstated", "install:zip", "price:paid"]
+kind = "add-on"
+method = "the user places face markers on a head centred at the origin; the add-on imports a prepared low-poly head preset with designed edge flow and UVs and deforms it onto the source; controllers then adjust parts of the result"
+purpose = "head retopology for animation and games"
+status = "active"
+checked = 2026-10-29
+notes = "Heads only; full body is planned. The result has the topology of the add-on's preset, not one computed from the source. Input must be single-sided, without holes or thickness. Blender versions disagree: 3.3 - 5.0 in the Superhive table, 3.6 or higher on Superhive and Gumroad requirements; hence no blender field. The documentation's date 04.01.2025 is ambiguous (day or month first). Status active on the Superhive listing of 5.0 support; no changelog found. oktoporemesher.com is a placeholder page."
+
+[distribution]
+url = "https://superhivemarket.com/products/oktopo"
+channel = "superhive"
+licence = "GPL (version not stated)"
+price = "USD 24 (Single User), USD 63 (Studio, 2-5 users), USD 98 (Studio, 5+ users)"
+
+[[distribution.also]]
+channel = "gumroad"
+url = "https://yegorkumachov.gumroad.com/l/oktopo"
+price = "USD 24 (Single User), USD 63 (Studio, 2-5 users), USD 98 (Studio, 5+ users)"
+
+[[sources]]
+url = "https://superhivemarket.com/products/oktopo"
+what = "prices, licence, Blender 3.3 - 5.0 in the table and 3.6 or higher in the requirements, Windows, macOS and Linux, published about a year before"
+
+[[sources]]
+url = "https://yegorkumachov.gumroad.com/l/oktopo"
+what = "same three tiers, Blender 3.6 or higher, Windows, macOS and Linux, designed for mostly clean, manifold meshes, planned features (full body, custom topology presets, texture baking)"
+
+[[sources]]
+url = "https://merciful-pepper-7d0.notion.site/OkTopo-Remesher-Documentation-1e4768b1358d8049a61efaa149547590"
+what = "version 1.0.0 dated 04.01.2025; deforms a prepared low-poly preset; the five steps (target, markers, run, controllers, finalize)"
+
+[brief]
+contradicted = [
+  "category automatic: the user places face markers and the add-on fits a head preset to them, semi-automatic",
+  "Blender 3.3 - 5.0: the requirements on Superhive and Gumroad say 3.6 or higher",
+]

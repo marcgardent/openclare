@@ -1,0 +1,41 @@
+name = "JRemesh Tools"
+slug = "jremesh-tools"
+author = "JAYANAM"
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quads", "output:quad-dominant", "engine:instant-meshes", "engine:quadriflow", "use:hard-surface", "os:windows", "os:linux", "os:macos", "requires:external-program", "edge-flow:feature-lines", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid"]
+kind = "bridge"
+method = "a front end in the sidebar for two remeshers: the Instant Meshes program, with its options (dominant, intrinsic, boundaries, smoothing, crease angle, vertex count), and Blender's built-in QuadriFlow operator"
+purpose = "quad remeshing, mainly for hard-surface models followed by a Multires modifier"
+status = "active"
+checked = 2026-10-29
+notes = "The product page says Instant Meshes must be downloaded separately; the FAQ says it is included for Windows, Linux and macOS. The Superhive pages show no version number or changelog; version 5 is named in the Blender Artists post of 2026-08-07. The original repository github.com/jayanam/jremesh-tools no longer exists; a third-party copy of version 0.3.0.2 remains at github.com/angjminer/jremesh-tools."
+
+[distribution]
+url = "https://superhivemarket.com/products/jremesh-tools"
+channel = "superhive"
+licence = "GPL (version not stated)"
+price = "USD 19.99"
+
+[blender]
+min = "2.8"
+max = "5.2"
+
+[[sources]]
+url = "https://superhivemarket.com/products/jremesh-tools"
+what = "price, licence, Blender 2.8 - 5.2, Instant Meshes downloaded separately, QuadriFlow operator, source available on request"
+
+[[sources]]
+url = "https://superhivemarket.com/products/jremesh-tools/docs"
+what = "Instant Meshes options (Crease Degree: dihedral angle threshold for creases), the Instant Meshes application referenced in the preferences, QuadriFlow called as Blender operator"
+
+[[sources]]
+url = "https://superhivemarket.com/products/jremesh-tools/faq"
+what = "Blender 2.8 - 5.x; Instant Meshes included for Windows, Linux and macOS"
+
+[[sources]]
+url = "https://blenderartists.org/t/jmesh-jretopo-jremesh-updated-for-blender-5-2/1649681"
+what = "JRemesh Tools 5 announced by jayanam on 2026-08-07, updated for Blender 5.2 with no other change listed"
+
+[[sources]]
+url = "https://github.com/angjminer/jremesh-tools"
+what = "a copy (not a GitHub fork) of jayanam's old repository: GPL-3.0, commits by jayanam up to 0.3.0.2 (2022-02-25), README for Blender 2.8 - 3.x"
+

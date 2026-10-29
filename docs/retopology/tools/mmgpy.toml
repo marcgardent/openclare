@@ -1,0 +1,48 @@
+name = "MMGpy - Mesh Remeshing"
+slug = "mmgpy"
+author = "kmarchais"
+tags = ["mode:automatic", "mode:semi-automatic", "scope:global", "guide:parameters", "guide:density", "output:triangles", "engine:mmg", "os:windows", "os:linux", "os:macos", "density:adaptive", "edge-flow:feature-lines", "licence:open-source", "source:public", "blender:unstated", "install:get-extensions", "price:free"]
+kind = "add-on"
+method = "surface mesh adaptation with the MMG library (MmgTools), driven by a size map or a metric, through the mmgpy Python bindings"
+purpose = "remeshing with presets and local refinement zones, with no scripting"
+status = "active"
+checked = 2026-10-29
+notes = "The extension is GPL-3.0-or-later because it bundles MMG (LGPL-3.0-or-later); the mmgpy library alone is MIT. macOS on Apple Silicon only."
+
+[distribution]
+url = "https://extensions.blender.org/add-ons/mmgpy/"
+channel = "extensions.blender.org"
+source = "https://github.com/kmarchais/mmgpy"
+licence = "GPL-3.0-or-later"
+price = "free"
+
+[blender]
+min = "4.2"
+release = "0.17.1 (2026-10-08)"
+
+[[sources]]
+url = "https://extensions.blender.org/add-ons/mmgpy/"
+what = "distribution, price, oldest Blender version, adaptive surface remeshing, platforms macOS Apple Silicon, Windows and Linux"
+
+[[sources]]
+url = "https://github.com/kmarchais/mmgpy"
+what = "source, licences, last commit"
+
+[[sources]]
+url = "https://kmarchais.github.io/mmgpy/latest/blender-extension/"
+what = "triangles only; Blender 4.2 LTS to 4.5 and 5.x"
+
+[[sources]]
+url = "https://api.github.com/repos/kmarchais/mmgpy/releases"
+what = "latest release and its date"
+
+[brief]
+contradicted = [
+  "Blender 4.x to 5.x: the oldest is 4.2 LTS, and 5.x is supported",
+  "Delaunay metric optimisation: no source says Delaunay; it adapts the mesh to a size map or a metric",
+  "for CFD and FEA: no source names them as the target",
+]
+
+[[sources]]
+url = "https://github.com/kmarchais/mmgpy/blob/main/blender_mmgpy/properties.py"
+what = "Use Angle Detection: angle-based ridge detection, threshold 45 degrees by default"

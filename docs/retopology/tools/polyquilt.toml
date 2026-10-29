@@ -1,0 +1,55 @@
+name = "PolyQuilt Retopology Tool"
+slug = "polyquilt"
+author = "Dan-Gry, fork of PolyQuilt by Sakana3"
+tags = ["mode:manual", "scope:local", "os:windows", "os:macos", "os:linux", "licence:open-source", "source:public", "blender:unstated", "install:get-extensions", "price:free"]
+kind = "add-on"
+method = "one Edit Mode tool that maps click, drag, hold and hold-drag on vertices, edges, faces or empty space to face creation, moving, deleting, edge loops and knife cuts"
+purpose = "faster manual hand retopology, similar to Retopology Flow and Quad Draw"
+status = "active"
+checked = 2026-10-29
+notes = "The listing says it works best on the OpenGL backend; Vulkan and Metal are not officially supported. Other versions: the original sakana3/PolyQuilt (1.3.1, Blender 2.83, no commit since 2021-12-05) and the AIGODLIKE fork (1.5.3, Blender 4.0, no commit since 2024-01-11), both stale."
+
+[distribution]
+url = "https://extensions.blender.org/add-ons/polyquilt-fork/"
+channel = "extensions.blender.org"
+source = "https://github.com/Dangry98/PolyQuilt-for-Blender-4.0"
+licence = "GPL-3.0-or-later"
+price = "free"
+
+[[distribution.also]]
+channel = "github"
+url = "https://github.com/Dangry98/PolyQuilt-for-Blender-4.0/releases"
+price = "free (1.5.2 only, for Blender 4.1 and older)"
+
+[blender]
+min = "4.5"
+release = "1.46.8 (2026-08-22)"
+
+[[sources]]
+url = "https://extensions.blender.org/add-ons/polyquilt-fork/"
+what = "name, author Dan-Gry, fork of Sakana3, licence GPL-3.0-or-later, 1.46.8, Blender 4.5 LTS and newer, move from BGL to the gpu module, known issue with Vulkan and Metal"
+
+[[sources]]
+url = "https://extensions.blender.org/add-ons/polyquilt-fork/versions/"
+what = "versions 1.45.0 (2024-07-11) to 1.46.8 (2026-08-22); minimum raised from 4.2 to 4.5 with 1.45.9 (2025-11-22)"
+
+[[sources]]
+url = "https://github.com/Dangry98/PolyQuilt-for-Blender-4.0"
+what = "fork of sakana3/PolyQuilt, manifest (maintainers Sakana3, Dan-Gry; GPL-3.0-or-later; Blender 4.5.0), last push 2026-08-10, README pointing to the extension"
+
+[[sources]]
+url = "https://github.com/sakana3/PolyQuilt"
+what = "the original: 1.3.1 (2020-06-18) for Blender 2.83, last commit 2021-12-05, GPL 3 or later in the file header, the table of mouse operations"
+
+[[sources]]
+url = "https://github.com/AIGODLIKE/PolyQuilt"
+what = "another fork: 1.5.3 for Blender 4.0, authors Sakana3, Dangry, Atticus, last commit 2024-01-11"
+
+[brief]
+contradicted = [
+  "Blender 4.2+: the extension requires Blender 4.5 since 1.45.9 (2025-11-22)",
+]
+
+[[sources]]
+url = "https://docs.blender.org/manual/en/latest/advanced/extensions/getting_started.html"
+what = "a manifest without platforms makes the extension available on all systems; the fork's manifest has none"

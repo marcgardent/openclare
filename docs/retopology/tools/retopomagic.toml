@@ -1,0 +1,32 @@
+name = "RetopoMagic"
+slug = "retopomagic"
+author = "3D ART TOOLS"
+tags = ["mode:manual", "scope:local", "guide:points", "guide:strokes", "edge-flow:loops", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid"]
+kind = "add-on"
+method = "in its own drawing mode, a click places a vertex snapped to the source, Shift-click makes the quad previewed between four points, Ctrl-click inserts an edge loop that follows the surface, a middle-button drag extrudes a boundary edge, and two parallel strokes with D make a bridge of quads"
+purpose = "fast manual retopology driven by mouse gestures"
+status = "active"
+checked = 2026-10-29
+notes = "No version number or changelog; published on Superhive about 7 months ago, with three reviews of about 6 months ago."
+
+[distribution]
+url = "https://superhivemarket.com/products/retopomagic"
+channel = "superhive"
+licence = "GPL (version not stated)"
+price = "USD 60"
+
+[blender]
+min = "4.1"
+max = "5.1"
+
+[[sources]]
+url = "https://superhivemarket.com/products/retopomagic"
+what = "documentation as description, USD 60, GPL, Blender 4.1 - 5.1, published 7 months ago"
+
+[[sources]]
+url = "https://superhivemarket.com/products/retopomagic/ratings"
+what = "three reviews of about 6 months ago"
+
+[[sources]]
+url = "https://superhivemarket.com/products/retopomagic"
+what = "read again 2026-10-29: Ctrl-click inserts an edge loop that follows the surface; no system, density or bake stated"

@@ -1,0 +1,38 @@
+name = "Fast Remesher"
+slug = "fast-remesher"
+author = "Anvil Interactive Solutions"
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quad-dominant", "engine:instant-meshes", "engine:quadriflow", "engine:voxel", "use:hard-surface", "use:organic", "extra:keeps-attributes", "os:windows", "os:linux", "os:macos", "density:uniform", "edge-flow:feature-lines", "input:single-object", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid"]
+kind = "bridge"
+method = "bundles Instant Meshes; 2.0 remeshes each part separately, checks each against the source and snaps sharp edges back onto creases, with Auto choosing Hard Surface or Organic; the 1.0 page of the Anvil Store gives Organic as QuadriFlow with a voxel fallback, Garment as Instant Meshes, Hard Surface chosen per region by curvature"
+purpose = "retopology that keeps UVs, materials and rigging, with restore of the original"
+status = "active"
+checked = 2026-10-29
+notes = "Latest version: 2.0, undated. The Superhive product page describes 2.0 (Windows tested; macOS and Linux builds experimental), while its FAQ and docs and the Anvil Store page still describe 1.0 (Windows only). The 2.0 page does not say which engine remeshes; the 1.0 description is in method. The report gives a quad percentage, hence quad-dominant. Same publisher as Quadify."
+
+[distribution]
+url = "https://superhivemarket.com/products/fast-remesher"
+channel = "superhive"
+licence = "GPL-3.0-or-later"
+price = "USD 12"
+
+[[distribution.also]]
+channel = "vendor"
+url = "https://www.theanvilstore.com/product/fast-remesher-dd9bdeed-7989-46f2-955d-fb6034be9b6b"
+price = "USD 12"
+
+[blender]
+min = "4.2"
+max = "5.2"
+
+[[sources]]
+url = "https://superhivemarket.com/products/fast-remesher"
+what = "price, GPL-3.0-or-later, Blender 4.2 - 5.2, 2.0 with a rebuilt engine, Instant Meshes included, macOS (Intel and Apple Silicon) and Linux builds included as Experimental, internet not required, quad percentage in the report, Organic makes evenly sized quads, sharp edges snapped back onto the creases"
+
+[[sources]]
+url = "https://superhivemarket.com/products/fast-remesher/faq"
+what = "1.0 for Blender 5.2, Windows 64-bit only, Instant Meshes bundled, offline, one model at a time"
+
+[[sources]]
+url = "https://www.theanvilstore.com/product/fast-remesher-dd9bdeed-7989-46f2-955d-fb6034be9b6b"
+what = "USD 12, updated September 2026, 1.0 engines per mode, Windows x64 only"
+
