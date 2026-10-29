@@ -86,6 +86,20 @@ Google Fonts distributes, unmodified, under the SIL Open Font License 1.1:
 - **Source Serif 4**, © 2014–2023 Adobe, Reserved Font Name "Source"
   ([licence](site/assets/fonts/OFL-SourceSerif4.txt)).
 
+## Scripts of the website
+
+The 3D viewer of the model pages is the website's only script. It is served by the site itself,
+from `site/assets/`, and fetches nothing before the visitor asks for the 3D view:
+
+- **three.js** 0.169.0, © 2010–2024 three.js authors, MIT licence
+  ([licence](site/assets/three/LICENSE)): `three.module.min.js` and `OrbitControls.js`, the latter
+  with one change, its import path ([site/assets/three/README.md](site/assets/three/README.md)).
+
+The meshes it shows are the remeshers' results of the bench, made by `scripts/viewer_meshes.py`
+into `docs/models/mesh/`, for the models whose licence allows passing them on: never the
+BlenderKit ones, never a source, never an output of Quad Remesher. Each keeps the licence of its
+model, listed above.
+
 ## Adding a model
 
 1. Check its licence. If it does not allow redistribution, the model goes under

@@ -118,7 +118,8 @@ WORDS = {
             "<p><strong>openclare</strong>: automatic quad retopology. Code under the GNU GPL, version 3 or later; "
             "the pictures of each model under the licence of that model, listed in "
             '<a href="{credits}">CREDITS.md</a>.</p>'
-            "<p>No cookies, no trackers, no scripts. Built from the repository by <code>site/build.py</code>"
+            "<p>No cookies, no trackers. Scripts only for the 3D viewer of the model pages, served from this site. "
+            "Built from the repository by <code>site/build.py</code>"
             ' (<a href="{repository}">GitHub</a>).</p>'
         ),
         "placeholder_theory": (
@@ -155,7 +156,8 @@ WORDS = {
             "<p><strong>openclare</strong> : la retopologie automatique en quads. Code sous GNU GPL, version 3 ou "
             "ultérieure ; les images de chaque modèle sous la licence de ce modèle, listée dans "
             '<a href="{credits}">CREDITS.md</a>.</p>'
-            "<p>Ni cookies, ni pisteurs, ni scripts. Construit depuis le dépôt par <code>site/build.py</code>"
+            "<p>Ni cookies, ni pisteurs. Des scripts seulement pour la visionneuse 3D des pages des modèles, servis par ce site. "
+            "Construit depuis le dépôt par <code>site/build.py</code>"
             ' (<a href="{repository}">GitHub</a>).</p>'
         ),
         "placeholder_theory": (
@@ -849,7 +851,7 @@ class Site:
         text = re.sub(r'\b(src|href|srcset)="([^"]+)"', attributes, text)
         return md.render(text, resolve)
 
-    def write(self, key, language, title, body, headings, kind, description="", breadcrumb="", toc=True, extra=""):
+    def write(self, key, language, title, body, headings, kind, description="", breadcrumb="", toc=True, extra="", scripts=""):
         """Write one page. Its body loses its title (and subtitle), which go
         into the band at the top of the page with `breadcrumb` or a kicker,
         and `extra` (a switch, the sections of the glossary). The home page
@@ -922,6 +924,7 @@ class Site:
             "repository_label": words["repository_label"],
             "releases": words["releases"],
             "issues": words["issues"],
+            "scripts": scripts.format(root=root),
         }
         template = read(SITE / "template.html")
         output = re.sub(r"\{(\w+)\}", lambda m: values[m.group(1)], template)
@@ -1704,7 +1707,17 @@ class Site:
         )
         title = name
         description = self.description_of(text.replace("@@credit@@", ""))
-        self.write(f"models/{name}", language, title, body, headings, "model", description, breadcrumb, toc=False)
+        scripts = ""
+        if (ROOT / "docs/models/mesh" / name / "index.json").exists():
+            # The 3D viewer, under the row of pictures: its script is the only
+            # one of the site, and fetches nothing before it is asked to.
+            index = posixpath.relpath(f"mesh/{name}/index.json", here)
+            viewer = f'<div class="viewer" data-index="{index}" lang="{language}"></div>'
+            start = body.find('<div class="shots">')
+            end = body.find("</div>", start) + len("</div>") if start >= 0 else -1
+            body = body[:end] + viewer + body[end:] if end > 0 else viewer + body
+            scripts = '<script type="module" src="{root}assets/viewer.js"></script>'
+        self.write(f"models/{name}", language, title, body, headings, "model", description, breadcrumb, toc=False, scripts=scripts)
 
     def shots(self, text):
         """The table of pictures of a model page as a row of figures, the
@@ -1780,6 +1793,9 @@ class Site:
             shutil.rmtree(self.out)
         self.out.mkdir(parents=True)
         shutil.copytree(SITE / "assets", self.out / "assets")
+        if (ROOT / "docs/models/mesh").exists():
+            # The meshes of the 3D viewer (scripts/viewer_meshes.py).
+            shutil.copytree(ROOT / "docs/models/mesh", self.out / "mesh")
         (self.out / ".nojekyll").write_text("")
         self.simple("index", "home")
         self.simple("theory", "theory", {language: WORDS[language]["placeholder_theory"] for language in LANGUAGES})

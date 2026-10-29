@@ -1,0 +1,34 @@
+{
+ "model": "ogre",
+ "view": {
+  "up": "z",
+  "azimuth": -70,
+  "elevation": 10
+ },
+ "meshes": [
+  {
+   "remesher": "openclare",
+   "budget": 3000,
+   "file": "openclare-3000.ocqm",
+   "faces": 2972,
+   "seed": 1,
+   "run": "2026-10-28"
+  },
+  {
+   "remesher": "quadriflow",
+   "budget": 3000,
+   "file": "quadriflow-3000.ocqm",
+   "faces": 2935,
+   "seed": 3,
+   "run": "2026-10-28"
+  },
+  {
+   "remesher": "autoremesher",
+   "budget": 3000,
+   "file": "autoremesher-3000.ocqm",
+   "faces": 1081,
+   "seed": 1,
+   "run": "2026-10-28"
+  }
+ ]
+}
