@@ -94,7 +94,9 @@ line of edges and nothing more.
   go at its start closes it; pressing near an end of a curve takes it up again. Esc or the right
   button drops the stroke under way. The header of the tool sets the marks of the curves to come,
   the rope that steadies the hand, and a snap that keeps the stroke to a ridge or a valley near
-  it, within a radius that F sets.
+  it, within a radius that F sets. S opens the menu of the snaps; V and R switch Valley and Ridge
+  on and off, in the middle of a stroke too. While the tool is active, the circle of the snap
+  follows the mouse, with the name of the snap beside it, dashed when there is none.
 - **Cut Volume**, under the same button, draws a straight line across a limb: the curve is the
   loop round it, the hidden side too, shown while the line is drawn.
 - A curve is the mesh's when it is its child. A drawn curve is a Bezier curve of few control

@@ -21,6 +21,11 @@ turns are rounded; the rope is drawn. With a snap chosen in the header, the
 point keeps to the ridge or the valley that a few rays
 across the stroke find near it (`trace.crease`), as far as a radius drawn
 as a circle; F sets the radius with the mouse, as it does that of a brush.
+S opens the menu of the snaps, V and R switch Valley and Ridge on and off,
+in the middle of a stroke too. While the tool is active the circle of the
+snap is drawn round the mouse, in the colour of the marks, with the name of
+the snap beside it, dashed when there is none: what the next stroke does
+is seen before it is drawn.
 
 Cut Volume draws a straight line across a limb, as a knife would, from one
 side of it to the other: the plane of the view through the line cuts the
@@ -434,6 +439,7 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
         from . import curve_colour
 
         self.timings = Timings("Draw Curve")
+        DRAWING.add(self)
         mouse = (event.mouse_region_x, event.mouse_region_y)
         self.owner = target(context)
         if self.owner is None:
@@ -502,6 +508,13 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
         if event.type in {"ESC", "RIGHTMOUSE"}:
             self.stop(context)
             return {"CANCELLED"}
+        if event.type in SNAP_KEYS and event.value == "PRESS":
+            # Switched in the middle of a stroke, and kept for the next.
+            self.snap = toggled(self.snap, SNAP_KEYS[event.type])
+            properties = draw_tool_properties(context)
+            if properties is not None:
+                properties.snap = self.snap
+            context.region.tag_redraw()
         return {"RUNNING_MODAL"}
 
     def finish(self, context):
@@ -520,6 +533,7 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
         return {"FINISHED"}
 
     def stop(self, context):
+        DRAWING.discard(self)
         for handle in self.handles:
             bpy.types.SpaceView3D.draw_handler_remove(handle, "WINDOW")
         context.region.tag_redraw()
@@ -532,13 +546,11 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
     def draw_pull(self, context):
         """The rope, from the point that draws to the mouse, and the point;
         the circle of the snap round the point."""
-        import math
-
         import gpu
         from gpu_extras.batch import batch_for_shader
 
-        rope, snap = self.rope > 0.0, self.snap != "NONE"
-        if not rope and not snap:
+        draw_snap(context, self.head, self.snap_radius, self.snap, self.colour)
+        if self.rope <= 0.0:
             return
         colour = self.colour[:3] + (0.6,)
         line = gpu.shader.from_builtin("POLYLINE_UNIFORM_COLOR")
@@ -547,17 +559,7 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
         line.uniform_float("viewportSize", (context.region.width, context.region.height))
         line.uniform_float("lineWidth", 1.5)
         line.uniform_float("color", colour)
-        if rope:
-            batch_for_shader(line, "LINES", {"pos": [(*self.head, 0.0), (*self.mouse, 0.0)]}).draw(line)
-        if snap:
-            circle = [
-                (self.head[0] + self.snap_radius * math.cos(a), self.head[1] + self.snap_radius * math.sin(a), 0.0)
-                for a in (2.0 * math.pi * k / 48 for k in range(48))
-            ]
-            batch_for_shader(line, "LINE_LOOP", {"pos": circle}).draw(line)
-        if not rope:
-            gpu.state.blend_set("NONE")
-            return
+        batch_for_shader(line, "LINES", {"pos": [(*self.head, 0.0), (*self.mouse, 0.0)]}).draw(line)
         dot = gpu.shader.from_builtin("POINT_UNIFORM_COLOR")
         point = batch_for_shader(dot, "POINTS", {"pos": [(*self.head, 0.0)]})
         gpu.state.point_size_set(6.0)
@@ -566,6 +568,67 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
         point.draw(dot)
         gpu.state.point_size_set(1.0)
         gpu.state.blend_set("NONE")
+
+
+# The keys that switch a snap on and off, and the names of the snaps.
+SNAP_KEYS = {"V": "VALLEY", "R": "RIDGE"}
+SNAP_NAMES = {"NONE": "", "RIDGE": "Ridge", "VALLEY": "Valley"}
+# A stroke under way draws its own circle: the cursor waits.
+DRAWING = set()
+# The handle of the cursor drawn while Draw Curve is the active tool.
+CURSOR = []
+
+
+def toggled(snap, asked):
+    """The snap after the key of `asked` is pressed: on, or off if it was on."""
+    return "NONE" if snap == asked else asked
+
+
+def draw_snap(context, centre, radius, snap, colour, size=None):
+    """The circle of the snap round `centre`, in pixels of the region:
+    dashed when there is no snap, whole with the name of the snap beside it
+    otherwise. `size` is that of the region, read from `context` if not
+    given."""
+    import math
+
+    import blf
+    import gpu
+    from gpu_extras.batch import batch_for_shader
+
+    width, height = size or (context.region.width, context.region.height)
+    ring = [(centre[0] + radius * math.cos(a), centre[1] + radius * math.sin(a), 0.0)
+            for a in (2.0 * math.pi * k / 48 for k in range(48))]
+    line = gpu.shader.from_builtin("POLYLINE_UNIFORM_COLOR")
+    gpu.state.blend_set("ALPHA")
+    line.bind()
+    line.uniform_float("viewportSize", (width, height))
+    line.uniform_float("lineWidth", 1.5)
+    line.uniform_float("color", colour[:3] + (0.8 if snap != "NONE" else 0.5,))
+    if snap == "NONE":
+        dashes = [point for k in range(0, 48, 2) for point in (ring[k], ring[k + 1])]
+        batch_for_shader(line, "LINES", {"pos": dashes}).draw(line)
+    else:
+        batch_for_shader(line, "LINE_LOOP", {"pos": ring}).draw(line)
+        font = 0
+        blf.size(font, 13.0)
+        blf.color(font, *colour[:3], 1.0)
+        blf.position(font, centre[0] + radius + 6.0, centre[1] - 5.0, 0.0)
+        blf.draw(font, SNAP_NAMES[snap])
+    gpu.state.blend_set("NONE")
+
+
+def draw_cursor(mouse):
+    """While Draw Curve is the active tool and there is a mesh to draw on,
+    the circle of the snap round the mouse (see `draw_snap`), in the colour
+    of the marks of the curves to come."""
+    from . import curve_colour
+
+    context = bpy.context
+    properties = draw_tool_properties(context)
+    if properties is None or DRAWING or target(context) is None:
+        return
+    colour = curve_colour(properties.sharp, properties.crease, properties.seam)
+    draw_snap(context, mouse, properties.snap_radius, properties.snap, colour)
 
 
 def draw_stroke(context, matrix_world, points, closed, colour, width=RIBBON_WIDTH):
@@ -611,9 +674,56 @@ def draw_stroke(context, matrix_world, points, closed, colour, width=RIBBON_WIDT
 
 
 def draw_tool_properties(context):
-    """The settings of Draw Curve in the header of its tool, or None."""
-    tool = context.workspace.tools.from_space_view3d_mode("OBJECT", create=False)
-    return None if tool is None else tool.operator_properties(OPENCLARE_OT_draw_curve.bl_idname)
+    """The settings of Draw Curve in the header of its tool, or None when it
+    is not the active tool."""
+    workspace = getattr(context, "workspace", None)
+    tool = workspace.tools.from_space_view3d_mode("OBJECT", create=False) if workspace is not None else None
+    if tool is None or tool.idname != OPENCLARE_TL_draw_curve.bl_idname:
+        return None
+    return tool.operator_properties(OPENCLARE_OT_draw_curve.bl_idname)
+
+
+class OPENCLARE_OT_snap(bpy.types.Operator):
+    """Switch the snap of Draw Curve: on, or off if it is on already"""
+
+    bl_idname = "object.openclare_snap"
+    bl_label = "Snap"
+    bl_options = {"INTERNAL"}
+
+    snap: bpy.props.EnumProperty(
+        items=[
+            ("NONE", "None", "No snap"),
+            ("RIDGE", "Ridge", "Keep the stroke to a ridge"),
+            ("VALLEY", "Valley", "Keep the stroke to a valley"),
+        ],
+        default="NONE",
+    )
+    toggle: bpy.props.BoolProperty(default=True, options={"HIDDEN"})
+
+    @classmethod
+    def poll(cls, context):
+        return draw_tool_properties(context) is not None
+
+    def execute(self, context):
+        properties = draw_tool_properties(context)
+        properties.snap = toggled(properties.snap, self.snap) if self.toggle else self.snap
+        if context.area is not None:
+            context.area.tag_redraw()
+        return {"FINISHED"}
+
+
+class OPENCLARE_MT_snap(bpy.types.Menu):
+    """The snaps of Draw Curve, on S"""
+
+    bl_label = "Snap"
+    bl_idname = "OPENCLARE_MT_snap"
+
+    def draw(self, context):
+        properties = draw_tool_properties(context)
+        for value, label in (("NONE", "None"), ("RIDGE", "Ridge  (R)"), ("VALLEY", "Valley  (V)")):
+            on = properties is not None and properties.snap == value
+            item = self.layout.operator(OPENCLARE_OT_snap.bl_idname, text=label, icon="RADIOBUT_ON" if on else "RADIOBUT_OFF")
+            item.snap, item.toggle = value, False
 
 
 class OPENCLARE_OT_snap_radius(bpy.types.Operator):
@@ -716,6 +826,9 @@ class OPENCLARE_TL_draw_curve(bpy.types.WorkSpaceTool):
     bl_keymap = (
         (OPENCLARE_OT_draw_curve.bl_idname, {"type": "LEFTMOUSE", "value": "PRESS"}, None),
         (OPENCLARE_OT_snap_radius.bl_idname, {"type": "F", "value": "PRESS"}, None),
+        ("wm.call_menu", {"type": "S", "value": "PRESS"}, {"properties": [("name", "OPENCLARE_MT_snap")]}),
+        ("object.openclare_snap", {"type": "V", "value": "PRESS"}, {"properties": [("snap", "VALLEY")]}),
+        ("object.openclare_snap", {"type": "R", "value": "PRESS"}, {"properties": [("snap", "RIDGE")]}),
     )
 
     def draw_settings(context, layout, tool, *, extra=False):
@@ -1023,6 +1136,9 @@ def register():
     bpy.utils.register_class(OPENCLARE_OT_draw_curve)
     bpy.utils.register_class(OPENCLARE_OT_cut_volume)
     bpy.utils.register_class(OPENCLARE_OT_snap_radius)
+    bpy.utils.register_class(OPENCLARE_OT_snap)
+    bpy.utils.register_class(OPENCLARE_MT_snap)
+    CURSOR.append(bpy.types.WindowManager.draw_cursor_add(draw_cursor, (), "VIEW_3D", "WINDOW"))
     bpy.utils.register_tool(OPENCLARE_TL_draw_curve, separator=True, group=True)
     bpy.utils.register_tool(OPENCLARE_TL_cut_volume, after={OPENCLARE_TL_draw_curve.bl_idname})
     if not bpy.app.timers.is_registered(follow_cursor):
@@ -1035,6 +1151,10 @@ def unregister():
     CURSORS.clear()
     bpy.utils.unregister_tool(OPENCLARE_TL_cut_volume)
     bpy.utils.unregister_tool(OPENCLARE_TL_draw_curve)
+    while CURSOR:
+        bpy.types.WindowManager.draw_cursor_remove(CURSOR.pop())
+    bpy.utils.unregister_class(OPENCLARE_MT_snap)
+    bpy.utils.unregister_class(OPENCLARE_OT_snap)
     bpy.utils.unregister_class(OPENCLARE_OT_snap_radius)
     bpy.utils.unregister_class(OPENCLARE_OT_cut_volume)
     bpy.utils.unregister_class(OPENCLARE_OT_draw_curve)
