@@ -10,6 +10,7 @@ the edges the quads will follow, and those left out (see `preview`).
 """
 
 import math
+import os
 
 import bpy
 import mathutils
@@ -36,10 +37,12 @@ SHAPES = {
                          follow_curvature=0.02, fewer_irregular=2.0, volume_fit=1.0),
 }
 # The settings a preset of the shape holds, in the order of the panel.
-SHAPE_NAMES = [*SHAPES["organic"], "use_marked_sharp"]
-# Where the presets of the shape a user saves are, under presets/ in
-# Blender's own folder.
+SHAPE_NAMES = [*SHAPES["organic"], "use_marked_sharp", "shading"]
+# Where the presets of the shape are: the one the add-on ships, Default
+# (presets/ here), and those a user saves, under presets/ in Blender's own
+# folder.
 SHAPE_PRESETS = "openclare_shape"
+ADDON_FOLDER = os.path.dirname(os.path.abspath(__file__))
 # What the engine is given under these values: the shapes are said in full.
 BASE_PRESET = "organic"
 
@@ -289,6 +292,21 @@ class OpenclareSettings(bpy.types.PropertyGroup):
             "the quads and kept as hard edges, whatever their angle and size"
         ),
         default=False,
+    )
+    shading: bpy.props.EnumProperty(
+        options=set(),
+        name="Shading",
+        description="How the faces of the result are shaded",
+        items=[
+            (
+                "BY_ANGLE", "By Angle",
+                "Smooth, but sharp across the edges sharper than the angle of the hard edges: a sculpt stays "
+                "smooth, a mechanical part keeps its edges crisp",
+            ),
+            ("SMOOTH", "Smooth", "Every face smooth"),
+            ("FLAT", "Flat", "Every face flat"),
+        ],
+        default="BY_ANGLE",
     )
     follow_curvature: bpy.props.FloatProperty(
         options=set(),
@@ -596,6 +614,17 @@ def mesh_of(made, given):
     return mesh, report
 
 
+def shade(mesh, shading, angle):
+    """The faces of `mesh` shaded as the setting `shading` says: flat,
+    smooth, or smooth but sharp across the edges sharper than `angle`."""
+    if shading == "FLAT":
+        mesh.shade_flat()
+        return
+    mesh.shade_smooth()
+    if shading == "BY_ANGLE":
+        mesh.set_sharp_from_angle(angle=angle)
+
+
 def worth_a_line(message):
     """Whether a stage goes to the Info log as well as to the status bar. The
     stages of a model in a few pieces all do; of hundreds of pieces, only
@@ -705,6 +734,8 @@ class Remeshing:
         """Makes the object of what the engine `made` from `original`, next
         to it and the active one, and says how it went. Returns it."""
         mesh, report = mesh_of(made, given)
+        settings = original.openclare
+        shade(mesh, settings.shading, settings.hard_edge_angle)
         mesh.name = f"{original.data.name}.quads"
         remeshed = bpy.data.objects.new(f"{original.name}.quads", mesh)
         remeshed.matrix_world = original.matrix_world
@@ -1211,6 +1242,7 @@ class OPENCLARE_PT_shape(DataPanel, bpy.types.Panel):
         layout.prop(settings, "follow_curvature")
         layout.prop(settings, "fewer_irregular")
         layout.prop(settings, "volume_fit", slider=True)
+        layout.prop(settings, "shading", expand=True)
 
 
 CLASSES = (
@@ -1243,6 +1275,7 @@ def register():
     )
     for handlers, handler in HANDLERS:
         handlers.append(handler)
+    bpy.utils.register_preset_path(ADDON_FOLDER)
     # The file open now, when Blender lets it be read (a script, not the
     # start of Blender: there, the file is read after, and the handler does
     # it).
@@ -1259,6 +1292,7 @@ def unregister():
     if RUNNING is not None:
         RUNNING.stop.set()
     preview.unregister()
+    bpy.utils.unregister_preset_path(ADDON_FOLDER)
     for handlers, handler in HANDLERS:
         if handler in handlers:
             handlers.remove(handler)
