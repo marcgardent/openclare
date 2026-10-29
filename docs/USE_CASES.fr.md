@@ -26,9 +26,9 @@ un ticket.
 
 | Usage | Qui | Ce qu'il demande | Ce qui y répond | Édition | État |
 |---|---|---|---|---|---|
-| Simulation (tissu, corps mous) | animateurs, VFX | des triangles d'une même taille, proches de l'équilatéral | le maillage triangulaire isotrope du moteur, donné comme résultat | Community | revue (#228, #229) ; face au Decimate : [TRIANGLES.fr.md](TRIANGLES.fr.md) |
-| Impression 3D | makers | une surface de triangles fermée, propre, fidèle à la source | le même | Community | revue (#228, #229) ; face au Decimate : [TRIANGLES.fr.md](TRIANGLES.fr.md) |
-| Maillages de collision | développeurs de jeux | une surface de triangles légère et régulière | le même | Community | revue (#228, #229) ; face au Decimate : [TRIANGLES.fr.md](TRIANGLES.fr.md) |
+| Simulation (tissu, corps mous) | animateurs, VFX | des triangles d'une même taille, proches de l'équilatéral | Output : Triangles, For : Simulation, les triangles d'openclare | Community | revue (#228, #229, #230) ; comparés : [TRIANGLES.fr.md](TRIANGLES.fr.md) |
+| Impression 3D | makers | une surface de triangles fermée, propre, fidèle à la source | Output : Triangles, For : Shape, le Decimate de Blender (Collapse), le plus fidèle ; croisements signalés | Community | revue (#228, #229, #230) ; comparés : [TRIANGLES.fr.md](TRIANGLES.fr.md) |
+| Maillages de collision | développeurs de jeux | une surface de triangles légère, fidèle à la forme | Output : Triangles, For : Shape, le Decimate de Blender (Collapse) | Community | revue (#228, #229, #230) ; comparés : [TRIANGLES.fr.md](TRIANGLES.fr.md) |
 
 ## Pipeline
 
