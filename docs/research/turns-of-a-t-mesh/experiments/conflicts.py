@@ -8,8 +8,8 @@ filter over the held turns in the engine's order, the first turn of each set
 found then dropped and the search repeated (at most --most sets a way). For
 each set, an exact Farkas certificate (`../lean/Check/certify.py`: the least
 Σ|u| with c · b = 1, checked in rational arithmetic; also scaled to coprime
-whole numbers), its bounded arcs, and
-for each turn left out, whole lengths closing the others, checked exactly
+whole numbers), its bounded arcs (in each way the set is in: they depend on the way's
+bounds), and for each turn left out, whole lengths closing the others, checked exactly
 (real lengths, a vertex of the linear program, times their common
 denominator).
 The sets are then grouped across ways (the same turns, up to sign: a row of
@@ -122,8 +122,9 @@ def main():
         if s.get("certificate", True) is None:
             continue
         key = tuple(sorted(tuple(k) for k in s["keys"]))
-        row = rows.setdefault(key, {"ways": {}, "first": s, "first_way": number})
+        row = rows.setdefault(key, {"ways": {}, "each": {}, "first": s, "first_way": number})
         row["ways"][number] = s["turns"]
+        row["each"][number] = {"multipliers": s["multipliers"], "bounded": s["bounded"]}
     table = []
     for key, row in rows.items():
         s = row["first"]
@@ -132,6 +133,8 @@ def main():
             "size": len(s["turns"]),
             "turns": s["turns"],
             "turns_in_each_way": {str(k): v for k, v in sorted(row["ways"].items())},
+            # The bounded arcs depend on the way: its bounds b differ.
+            "certificate_in_each_way": {str(k): v for k, v in sorted(row["each"].items())},
             "multipliers": s["multipliers"],
             "primitive_multipliers": s["primitive_multipliers"],
             "bounded": s["bounded"],
@@ -151,11 +154,14 @@ def main():
 
     claims = {
         "about": "Rows found by conflicts.py on this export: each set of held turns, its multipliers "
-                 "(those of the first way listed) and bounded arcs; turns are held indices.",
+                 "(those of the first way listed) and bounded arcs, then the same for each way it is "
+                 "in (`in_each_way`: the bounds b, and so the bounded arcs, differ between ways); "
+                 "turns are held indices.",
         "export": {way.path.name: way.sha for way in ways},
         "ways": {str(way.number): {"held": len(way.held)} for way in ways},
         "sets": [{"row": i + 1, "ways": row["turns_in_each_way"], "multipliers": row["multipliers"],
-                  "bounded": row["bounded"], "exact": "yes"} for i, row in enumerate(table)],
+                  "bounded": row["bounded"], "exact": "yes",
+                  "in_each_way": row["certificate_in_each_way"]} for i, row in enumerate(table)],
     }
     (arguments.out / "claims.json").write_text(json.dumps(claims, indent=1) + "\n")
     summary = {

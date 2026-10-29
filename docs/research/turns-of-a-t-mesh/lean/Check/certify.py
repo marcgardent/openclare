@@ -415,11 +415,17 @@ def certify(path, claims, log):
             turns = [W.held_index[h] for h in row["ways"][way]]
             first = next(iter(row["ways"]))
             given = row["multipliers"] if isinstance(row["multipliers"], list) else row.get("script")
-            paper = {"multipliers": [fraction(Fraction(x)) for x in given] if way == first else None,
+            bounded = row["bounded"]
+            # Claims written by conflicts.py give each way its own certificate: its
+            # bounds b, and so its bounded arcs, are not those of the first way.
+            own = row.get("in_each_way", {}).get(way)
+            if own is not None:
+                given, bounded = own["multipliers"], own["bounded"]
+            paper = {"multipliers": [fraction(Fraction(x)) for x in given] if way == first or own is not None else None,
                      "stated": row["multipliers"] if isinstance(row["multipliers"], str) else None,
-                     "bounded": row["bounded"], "exact": row["exact"], "first": first}
+                     "bounded": bounded, "exact": row["exact"], "first": first}
             found = None
-            if way == first:
+            if way == first or own is not None:
                 found = W.certificate(turns, [Fraction(x) for x in given])
             else:
                 # The same turns up to the sign of each: the same c when possible.
