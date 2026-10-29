@@ -1455,6 +1455,28 @@ assert int(told["crossing_faces"]) == 0 and openclare.report_lines(told)[0][0].s
 assert bpy.ops.object.openclare_remesh_again() == {"FINISHED"}
 assert all(len(polygon.vertices) == 3 for polygon in result.data.polygons)
 print("TRIANGLES", made, "triangles for 2000, none crossing; again in place")
+# For the shape: Blender's Decimate (Collapse) makes them, as many as asked,
+# its painted density kept denser, said as such; Remesh Again does it again.
+group = ball.vertex_groups.new(name="top")
+group.add([vertex.index for vertex in ball.data.vertices if vertex.co.z > 0.0], 1.0, "REPLACE")
+alone(ball)
+settings.triangles_for, settings.quads = "SHAPE", 1000
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+shaped = bpy.context.active_object
+faces = len(shaped.data.polygons)
+assert ".tris" in shaped.name and all(len(polygon.vertices) == 3 for polygon in shaped.data.polygons)
+assert abs(faces / 1000 - 1.0) < 0.05, faces
+told = shaped[openclare.REPORT]
+assert told["method"] == "decimate" and openclare.report_lines(told)[1][0] == "By Blender's Decimate (Collapse)"
+settings.density_group = "top"
+alone(ball)
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+dense = bpy.context.active_object.data
+on_top = sum(1 for polygon in dense.polygons if polygon.center.z > 0.0) / len(dense.polygons)
+assert on_top > 0.75, on_top
+assert bpy.ops.object.openclare_remesh_again() == {"FINISHED"}
+print("DECIMATE", faces, "triangles for 1000; painted on top, %.0f %% of them there" % (100 * on_top))
+settings.density_group, settings.triangles_for = "", "SIMULATION"
 settings.output = "QUADS"
 
 openclare.unregister()

@@ -9,6 +9,10 @@ ce qui les sépare, pour choisir le bon outil selon le travail.
 
 ## En bref
 
+Dans le greffon, *Output : Triangles* demande à quoi ils servent : *Simulation* fait ceux d'openclare, *Shape*
+lance le *Decimate* de Blender (*Collapse*), le meilleur pour la fidélité, comme le montrent les mesures ci-dessous.
+
+
 - **La forme des triangles : openclare.** Ses triangles sont proches de l'équilatéral partout : le plus petit angle
   d'un triangle vaut 48° à 54° en moyenne, contre 29° à 43° pour *Collapse* ; le pire 1 % reste entre 20° et 44° sur
   la plupart des modèles (*Collapse* : 1° à 13°), et descend à 6° et 7° sur l'ogre et jerry. Une simulation de tissu
