@@ -1137,6 +1137,57 @@ assert on_equator(result) >= 30, on_equator(result)
 settings.symmetry = "NONE"
 print("SYMMETRY:", plain_faces, "quads on Suzanne, each vertex with its image; the marked equator kept across X")
 
+# Extensions (see extend): what an add-on that includes this one adds to a
+# run. One asks the engine for the grid UV and lays it on the result; one
+# fails, and the result stays; Remesh Again hands them the result in place.
+class GridUV(openclare.extend.Extension):
+    def asks(self, original):
+        return {"uv_layers": ("grid",)}
+
+    def made(self, context, original, result, made, report):
+        layer = result.data.uv_layers.new(name="grid", do_init=False)
+        layer.data.foreach_set("uv", made.uv["grid"])
+        result["extended"] = result.get("extended", 0) + 1
+        report["grid"] = len(made.uv["grid"]) // 2
+
+
+class Failing(openclare.extend.Extension):
+    def made(self, context, original, result, made, report):
+        raise RuntimeError("on purpose")
+
+
+grid_uv, failing = GridUV(), Failing()
+openclare.extend.add(grid_uv)
+openclare.extend.add(failing)
+alone(ball)
+settings.quads = 400
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+result = bpy.context.active_object
+assert "grid" in result.data.uv_layers and result["extended"] == 1
+assert int(result[openclare.REPORT]["grid"]) == len(result.data.loops)
+assert bpy.ops.object.openclare_remesh_again() == {"FINISHED"}
+assert bpy.context.active_object == result and result["extended"] == 2 and "grid" in result.data.uv_layers
+openclare.extend.remove(failing)
+
+
+class Greedy(openclare.extend.Extension):
+    def asks(self, original):
+        return {"curves": ()}
+
+
+openclare.extend.add(Greedy())
+alone(ball)
+try:
+    bpy.ops.object.openclare_remesh()
+    raise AssertionError("an extension took an argument openclare gives")
+except RuntimeError as error:
+    assert "curves" in str(error), error
+openclare.extend.EXTENSIONS.clear()
+alone(ball)
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+assert len(bpy.context.active_object.data.uv_layers) == 0
+print("EXTENSIONS the grid UV asked and laid, kept on Remesh Again; a failing one passed by; none, no UV")
+
 openclare.unregister()
 # The drawing goes with the add-on.
 assert preview.state.handle is None and preview.state.shown is None

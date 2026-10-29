@@ -19,7 +19,7 @@ import mathutils
 from bl_operators.presets import AddPresetBase
 from bl_ui.utils import PresetPanel
 
-from . import draw, engine, preview
+from . import draw, engine, extend, preview
 
 PRESETS = [
     ("organic", "Organic", "Sculpts and characters: edges follow the shape closely, quads are smaller where it bends"),
@@ -706,14 +706,16 @@ class EngineInput:
 
 def engine_input(
     source, preset, settings, density=None, materials=False, copy=False, sharp=False, stretch=None, curves=(),
-    sharp_edges=False, creases=False,
+    sharp_edges=False, creases=False, asked=None,
 ):
     """The `EngineInput` of `quads_of`. With `copy`, the arrays of `source`
     are copied out, so that the run does not depend on `source` living as
     long as it does; otherwise they are read in place where they can be.
     `sharp` gives the engine the edges marked sharp, kept as hard edges;
     `stretch`, if given, the three factors the positions are multiplied by
-    (see `stretch_of`), which copies them, and the curves with them."""
+    (see `stretch_of`), which copies them, and the curves with them.
+    `asked` is what more the engine is to give, for an add-on that includes
+    this one (see `extend`)."""
     import numpy
 
     source.calc_loop_triangles()
@@ -750,7 +752,7 @@ def engine_input(
     given.counts = (vertices, triangles, corners)
     given.addresses, given.kept, given.groups = addresses, kept, groups
     given.preset, given.settings, given.density, given.curves = preset, settings, density, list(curves)
-    given.sharp_edges, given.creases = sharp_edges, creases
+    given.sharp_edges, given.creases, given.asked = sharp_edges, creases, dict(asked or {})
     given.edges = marked_sharp(source) if sharp else None
     given.stretch = stretch
     if stretch is not None:
@@ -768,7 +770,7 @@ def engine_run(given, on_stage=None):
     return engine.remesh(
         given.addresses[0], vertices, given.addresses[1], triangles, given.addresses[2], corners, given.preset,
         given.settings, given.density, on_stage, hard_edges=given.sharp_edges, creases=given.creases,
-        curves=given.curves, groups=given.groups, edges=given.edges,
+        curves=given.curves, groups=given.groups, edges=given.edges, **given.asked,
     )
 
 
@@ -896,8 +898,9 @@ class Remeshing:
                 source, BASE_PRESET, engine_settings, density, settings.export_materials, copy,
                 sharp=settings.use_marked_sharp, stretch=stretch_of(original), curves=self.curves,
                 sharp_edges=settings.export_sharp_edges, creases=settings.export_creases,
+                asked=extend.asked(original),
             )
-        except engine.EngineError as error:
+        except (engine.EngineError, ValueError) as error:
             evaluated.to_mesh_clear()
             self.report({"ERROR"}, f"openclare: {error}")
             return None
@@ -940,6 +943,8 @@ class Remeshing:
         """Makes the object of what the engine `made` from `original`, next
         to it and the active one, and says how it went. Returns it."""
         mesh, report = mesh_of(made, given)
+        # For the extensions, once the result is in place (`extended`).
+        self.made_from, self.engine_made = original, made
         settings = original.openclare
         shade(mesh, settings.shading, settings.hard_edge_angle)
         mesh.name = f"{original.data.name}.quads"
@@ -1001,6 +1006,21 @@ class Remeshing:
             said += f"; {short}"
         self.report({"WARNING"} if failed or short or off_plane else {"INFO"}, said)
         return remeshed
+
+    def extended(self, context, result):
+        """Hands `result`, in place, to the extensions (see `extend`), with
+        what the engine made of the original; what they add to the report
+        is kept on the result. One that fails is said, and passed by."""
+        if not extend.EXTENSIONS:
+            return
+        report = {key: result[REPORT][key] for key in result[REPORT].keys()} if REPORT in result else {}
+        for extension in extend.EXTENSIONS:
+            try:
+                extension.made(context, self.made_from, result, self.engine_made, report)
+            except Exception as error:  # noqa: BLE001 - whatever it is, the result stays
+                self.report({"WARNING"}, f"openclare: {type(extension).__name__} failed: {error}")
+        result[REPORT] = {key: str(value) for key, value in report.items()}
+        last_report.update(report)
 
 
 class Run:
@@ -1195,7 +1215,10 @@ class OPENCLARE_OT_remesh(Background, Remeshing, bpy.types.Operator):
         return object_to_remesh(context)
 
     def done(self, context, made):
-        return {"FINISHED"} if made is not None else {"CANCELLED"}
+        if made is None:
+            return {"CANCELLED"}
+        self.extended(context, made)
+        return {"FINISHED"}
 
 
 class OPENCLARE_OT_remesh_again(Background, Remeshing, bpy.types.Operator):
@@ -1221,6 +1244,7 @@ class OPENCLARE_OT_remesh_again(Background, Remeshing, bpy.types.Operator):
             result.data
         except ReferenceError:
             # The result was removed during the run: the new one stays.
+            self.extended(context, made)
             return {"FINISHED"}
         # The new mesh goes into the result, which keeps its name, place,
         # settings and what else it was given; the new object goes.
@@ -1236,6 +1260,7 @@ class OPENCLARE_OT_remesh_again(Background, Remeshing, bpy.types.Operator):
             other.select_set(False)
         result.select_set(True)
         context.view_layer.objects.active = result
+        self.extended(context, result)
         return {"FINISHED"}
 
 
