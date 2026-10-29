@@ -596,7 +596,7 @@ The proof uses only that the quad graph is bipartite; it fails in higher genus
 (a $3 \times 3$ grid on a torus has rings of three quads) and with borders
 (Theorem~\ref{thm:parity-any}). On a closed sphere it gives at once:
 
-\begin{evidence}{prose}{drawn from the proposition above (Lean, algebraic core)}
+\begin{evidence}{core}{\lean{ring_even}, \lean{odd_pitch_odd_length}, \lean{repair_keeps_length_cannot_close}, \lean{odd_change_of_pitch_changes_length}; assumed: as the proposition above}
 \begin{corollary}\label{cor:parity}
 On a closed surface of genus zero:
 \begin{enumerate}
@@ -1182,7 +1182,7 @@ $2$.}
 \label{fig:comb}
 \end{figure}
 
-\begin{evidence}{prose}{}
+\begin{evidence}{core}{\lean{comb_reading}; assumed: the feet exist and the perpendicular traces develop straight}
 \begin{lemma}[Combs]\label{lem:comb}
 Let $p_{c_0}$, $p_{c_1}$ be the feet of an arc $a$ developed along its comb.
 Then, for all balanced lengths,
@@ -1391,7 +1391,7 @@ round an eye socket is a ring of $23$ quads at the lengths of one way and of
 $24$ at another, against Proposition~\ref{prop:parity}; its shift is zero at
 every balanced length:
 
-\begin{evidence}{prose}{}
+\begin{evidence}{core}{\lean{collar}; assumed: the holonomy of the turn is conjugate to that of the border component, and $\alpha_\gamma > 0$}
 \begin{proposition}[Collars]\label{prop:collar}
 Let the curve of a turn $\gamma$ and a border component $\beta_j$ without
 corner bound an annulus holding no singular vertex. Then $\shift_\gamma(\ell)
@@ -1417,7 +1417,7 @@ $\sum_r u_r(\alpha_{\gamma_r} + \shift_{\gamma_r}) \equiv \sum_r u_r\,
 depend on the paths, but the count on white points still gives the parity when
 every curve lies in a planar region without border.
 
-\begin{evidence}{prose}{}
+\begin{evidence}{core}{\lean{fox_general}, \lean{holGen_rotations}, \lean{commutator_motion}; assumed: the presentation of the fundamental group by the loops named}
 \begin{proposition}[Burgers sum with borders and handles]\label{prop:burgers-any}
 Let the loops $\lambda_i$ round the singular vertices, $\beta_j$ round the
 border components and $a_k, b_k$ round the handles generate the fundamental
@@ -1445,7 +1445,7 @@ With its border term the sum reproduces all $314$ sides holding a border on
 which it was tested, and without it none of the $586$ such sides of Suzanne
 and Jerry (measured).
 
-\begin{evidence}{prose}{}
+\begin{evidence}{core}{\lean{commutator_translation}, \lean{commutator_translations}; assumed: the border of the cut disc is the commutator of the two curves}
 \begin{proposition}[Two crossing turns on a torus]\label{prop:torus}
 On a closed surface of genus one, let the curves of two turns be simple and
 cross once. Cut along both, the surface is a disc $D$ holding every singular
@@ -1589,7 +1589,7 @@ which isolate a minimal infeasible subsystem.
 
 \subsection{Whole lengths and size}\label{sec:whole}
 
-\begin{evidence}{prose}{its first step is the remark above (Lean)}
+\begin{evidence}{core}{\lean{closable_at_any_size}, \lean{smul_mem_system}, \lean{whole_solution_of_real}; assumed: the number of quads is homogeneous of degree two in the lengths; the infimum is taken on paper}
 \begin{proposition}[Whole lengths and size without a cap]\label{prop:whole-size}
 If $P$ is given by the balances and bounds $\ell \ge b \ge 0$, a set closable
 in real lengths is closable in whole lengths, and closable in real lengths at
@@ -1752,7 +1752,7 @@ general~\cite{amaldi1995complexity}, and minimum IIS covers are strongly
 NP-hard already for network flows~\cite{joormann2015flowiis}; the hardness
 survives the structure of quantization, a case new as far as we found.
 
-\begin{evidence}{prose}{the reductions; the bounds on approximation are cited}
+\begin{evidence}{core}{the reduction: \lean{closable_iff_independent}, \lean{tauP_eq_vertex_cover}; NP-hardness of Independent Set and Vertex Cover, and the bounds on approximation, are cited}
 \begin{theorem}[Choosing the turns is NP-hard]\label{thm:nphard}
 \RC{} is NP-complete, in real or in whole lengths, already when $B$ is the
 incidence matrix of a bidirected graph, the bounds are $0$ or $1$, and the
@@ -1831,7 +1831,7 @@ complexity of maximizing $Q$ over a polytope of lengths in reals.
 \section{What is machine-checked}\label{sec:lean}
 
 The folder \texttt{lean} beside this note is a Lean~4~\cite{demoura2021lean4}
-project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $283$
+project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $292$
 theorem declarations, many of them small lemmas, depend only on Lean's
 standard axioms; the count is not evidence, and its \texttt{README.md} maps
 each statement to its Lean theorems. Lean checks the algebraic and
@@ -1883,7 +1883,13 @@ Farkas' lemma over any ordered field and whole multipliers;
 Theorem~\ref{thm:forced} and Corollary~\ref{cor:chain}. For fields of any
 order: the rotation part of Gauss--Bonnet and its counts on triangle and
 hexagonal meshes, the lengths of dislocations and the congruence of
-Appendix~\ref{app:orders}.
+Appendix~\ref{app:orders}. Added after the first version: the Fox--Burgers
+formula for any generators and the commutator of two motions with commuting
+rotations (Propositions~\ref{prop:burgers-any} and~\ref{prop:torus}), collars,
+the comb identity, the scaling of Proposition~\ref{prop:whole-size}, the
+consequences of the parity (Corollary~\ref{cor:parity}), and the reduction of
+Theorem~\ref{thm:nphard}: on the gadget of a graph the closable sets are the
+independent sets and $\tau_P$ is the vertex cover number.
 
 \emph{Checked in a weaker form}: Lemmas~\ref{lem:gauss} and~\ref{lem:eight}, only the
 Euler-characteristic count on the grid refined by two and the totals from the
@@ -1949,13 +1955,15 @@ computations, searched the literature, stated and proved the propositions,
 wrote the Lean formalization and drafted the text. Each bibliography entry says how much of the work was read. A work of which only the abstract, or a review, was read is cited only for what that abstract or review states.
 Beyond the cores machine-checked in Lean (Section~\ref{sec:lean}), everything
 was written with AI help and checked by AI agents rereading it and testing it
-on the data, not by a human expert. In particular, Propositions~\ref{thm:combs},
-\ref{prop:pairing}, \ref{prop:collar}, \ref{prop:burgers-any}, \ref{prop:torus}
-and~\ref{prop:whole-size}, Lemmas~\ref{lem:comb} and~\ref{lem:gauss-border},
-Theorems~\ref{thm:parity-any}, \ref{thm:transversal} and~\ref{thm:nphard}, the
+on the data, not by a human expert. In particular, Propositions~\ref{thm:combs}
+and~\ref{prop:pairing}, Lemma~\ref{lem:gauss-border},
+Theorems~\ref{thm:parity-any} and~\ref{thm:transversal}, the
 case of Lemma~\ref{lem:handshake} with borders, and the statements on
 rotations of order six other than the checked ones have only a paper proof
-written with AI help. AI review found errors in Propositions~\ref{thm:combs}
+written with AI help; Propositions~\ref{prop:collar}, \ref{prop:burgers-any},
+\ref{prop:torus} and~\ref{prop:whole-size}, Lemma~\ref{lem:comb},
+Corollary~\ref{cor:parity} and the reduction of Theorem~\ref{thm:nphard} had
+their algebraic cores checked in Lean after the first version of this note. AI review found errors in Propositions~\ref{thm:combs}
 and~\ref{prop:pairing} and Theorem~\ref{thm:nphard}, and in
 Proposition~\ref{prop:linear} and the completeness proposition
 of~\cite{gardent2026loops}, whose Lean checks are weaker than the statements;

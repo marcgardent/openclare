@@ -20,3 +20,6 @@ public import TurnsOfATMesh.Completeness
 public import TurnsOfATMesh.GaussBonnet
 public import TurnsOfATMesh.BeyondQuads
 public import TurnsOfATMesh.TMesh
+public import TurnsOfATMesh.Consequences
+public import TurnsOfATMesh.Periods
+public import TurnsOfATMesh.Gadget

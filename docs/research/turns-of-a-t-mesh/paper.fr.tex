@@ -662,7 +662,7 @@ elle tombe en défaut en genre supérieur (une grille $3 \times 3$ sur un tore a
 des anneaux de trois quads) et avec des bords
 (théorème~\ref{thm:parity-any}). Sur une sphère fermée, elle donne aussitôt~:
 
-\begin{evidence}{prose}{tiré de la proposition ci-dessus (Lean, cœur algébrique)}
+\begin{evidence}{core}{\lean{ring_even}, \lean{odd_pitch_odd_length}, \lean{repair_keeps_length_cannot_close}, \lean{odd_change_of_pitch_changes_length}\,; supposé~: comme la proposition ci-dessus}
 \begin{corollary}\label{cor:parity}
 Sur une surface fermée de genre zéro~:
 \begin{enumerate}
@@ -1300,7 +1300,7 @@ peigne sont trois lectures du même décalage $2$.}
 \label{fig:comb}
 \end{figure}
 
-\begin{evidence}{prose}{}
+\begin{evidence}{core}{\lean{comb_reading}\,; supposé~: les pieds existent et les traces perpendiculaires se développent en droites}
 \begin{lemma}[Peignes]\label{lem:comb}
 Soient $p_{c_0}$, $p_{c_1}$ les pieds d'un arc $a$, développés le long de son
 peigne. Alors, pour toutes longueurs équilibrées,
@@ -1526,7 +1526,7 @@ autour d'une orbite est un anneau de $23$ quads aux longueurs d'une variante
 et de $24$ dans une autre, contrairement à la proposition~\ref{prop:parity}\,;
 son décalage est nul à toute longueur équilibrée~:
 
-\begin{evidence}{prose}{}
+\begin{evidence}{core}{\lean{collar}\,; supposé~: l'holonomie du tour est conjuguée à celle de la composante de bord, et $\alpha_\gamma > 0$}
 \begin{proposition}[Colliers]\label{prop:collar}
 Supposons que la courbe d'un tour $\gamma$ et une composante de bord
 $\beta_j$ sans coin bordent une couronne ne contenant aucun sommet singulier.
@@ -1555,7 +1555,7 @@ corollaire~\ref{cor:checker} peuvent dépendre des chemins, mais le compte sur
 les points blancs donne encore la parité lorsque toute courbe est contenue
 dans une région plane sans bord.
 
-\begin{evidence}{prose}{}
+\begin{evidence}{core}{\lean{fox_general}, \lean{holGen_rotations}, \lean{commutator_motion}\,; supposé~: la présentation du groupe fondamental par les lacets nommés}
 \begin{proposition}[Somme de Burgers avec bords et anses]\label{prop:burgers-any}
 Supposons que les lacets $\lambda_i$ autour des sommets singuliers, $\beta_j$
 autour des composantes de bord et $a_k, b_k$ autour des anses engendrent le
@@ -1584,7 +1584,7 @@ Avec son terme de bord, la somme reproduit les $314$ côtés contenant un bord
 sur lesquels elle a été testée, et sans lui aucun des $586$ côtés de ce type
 de Suzanne et de Jerry (mesuré).
 
-\begin{evidence}{prose}{}
+\begin{evidence}{core}{\lean{commutator_translation}, \lean{commutator_translations}\,; supposé~: le bord du disque découpé est le commutateur des deux courbes}
 \begin{proposition}[Deux tours sécants sur un tore]\label{prop:torus}
 Sur une surface fermée de genre un, supposons que les courbes de deux tours
 soient simples et se croisent une fois. Découpée le long des deux, la surface
@@ -1743,7 +1743,7 @@ irréalisable minimal.
 
 \subsection{Longueurs entières et taille}\label{sec:whole}
 
-\begin{evidence}{prose}{sa première étape est la remarque ci-dessus (Lean)}
+\begin{evidence}{core}{\lean{closable_at_any_size}, \lean{smul_mem_system}, \lean{whole_solution_of_real}\,; supposé~: le nombre de quads est homogène de degré deux en les longueurs\,; la borne inférieure est prise sur papier}
 \begin{proposition}[Longueurs entières et taille sans plafond]\label{prop:whole-size}
 Si $P$ est donné par les équilibres et des bornes $\ell \ge b \ge 0$, un
 ensemble fermable en longueurs réelles est fermable en longueurs entières, et
@@ -1930,7 +1930,7 @@ des IIS est fortement NP-difficile déjà pour les flots dans les
 réseaux~\cite{joormann2015flowiis}\,; la difficulté survit à la structure de
 la quantification, un cas nouveau à notre connaissance.
 
-\begin{evidence}{prose}{les réductions\,; les bornes d'approximation sont citées}
+\begin{evidence}{core}{la réduction~: \lean{closable_iff_independent}, \lean{tauP_eq_vertex_cover}\,; la NP-difficulté de Stable et de Couverture par sommets, et les bornes d'approximation, sont citées}
 \begin{theorem}[Choisir les tours est NP-difficile]\label{thm:nphard}
 \RC{} est NP-complet, en longueurs réelles ou entières, déjà lorsque $B$ est
 la matrice d'incidence d'un graphe bidirigé, que les bornes valent $0$ ou $1$
@@ -2023,7 +2023,7 @@ la maximisation de $Q$ sur un polytope de longueurs réelles.
 
 Le dossier \texttt{lean} à côté de cette note est un projet
 Lean~4~\cite{demoura2021lean4} sur Mathlib~\cite{mathlib2020} (tous deux en
-\texttt{v4.35.0}). Ses $283$ déclarations de théorèmes, dont beaucoup de
+\texttt{v4.35.0}). Ses $292$ déclarations de théorèmes, dont beaucoup de
 petits lemmes, ne dépendent que des axiomes standard de Lean\,; ce nombre
 n'est pas un argument, et son \texttt{README.md} associe à chaque énoncé ses
 théorèmes Lean. Lean vérifie le cœur algébrique et combinatoire de chaque
@@ -2080,7 +2080,14 @@ des multiplicateurs entiers\,; le théorème~\ref{thm:forced} et le
 corollaire~\ref{cor:chain}. Pour des champs d'ordre quelconque~: la partie
 rotation de Gauss--Bonnet et ses comptes sur les maillages triangulaires et
 hexagonaux, les longueurs des dislocations et la congruence de
-l'annexe~\ref{app:orders}.
+l'annexe~\ref{app:orders}. Ajoutés après la première version~: la formule de
+Fox--Burgers pour des générateurs quelconques et le commutateur de deux
+déplacements dont les rotations commutent (propositions~\ref{prop:burgers-any}
+et~\ref{prop:torus}), les colliers, l'identité des peignes, la mise à l'échelle
+de la proposition~\ref{prop:whole-size}, les conséquences de la parité
+(corollaire~\ref{cor:parity}), et la réduction du théorème~\ref{thm:nphard}~:
+sur le gadget d'un graphe, les ensembles fermables sont les stables et $\tau_P$
+est le nombre de couverture par sommets.
 
 \emph{Vérifié sous une forme plus faible}~: les
 lemmes~\ref{lem:gauss} et~\ref{lem:eight}, seulement le compte par la
@@ -2158,13 +2165,16 @@ chaque entrée de la bibliographie dit quelle part de l'œuvre a été lue. Une 
 Au-delà des cœurs vérifiés par machine en Lean (section~\ref{sec:lean}), tout
 a été écrit avec l'aide de l'IA et vérifié par des agents d'IA qui l'ont relu
 et testé sur les données, non par un expert humain. En particulier, les
-propositions~\ref{thm:combs}, \ref{prop:pairing}, \ref{prop:collar},
-\ref{prop:burgers-any}, \ref{prop:torus} et~\ref{prop:whole-size}, les
-lemmes~\ref{lem:comb} et~\ref{lem:gauss-border}, les
-théorèmes~\ref{thm:parity-any}, \ref{thm:transversal} et~\ref{thm:nphard}, le
-cas avec bords du lemme~\ref{lem:handshake}, et les énoncés sur les rotations
-d'ordre six autres que ceux qui sont vérifiés n'ont qu'une démonstration sur
-papier écrite avec l'aide de l'IA. La relecture par IA a trouvé des erreurs
+propositions~\ref{thm:combs} et~\ref{prop:pairing}, le
+lemme~\ref{lem:gauss-border}, les théorèmes~\ref{thm:parity-any}
+et~\ref{thm:transversal}, le cas avec bords du lemme~\ref{lem:handshake}, et
+les énoncés sur les rotations d'ordre six autres que ceux qui sont vérifiés
+n'ont qu'une démonstration sur papier écrite avec l'aide de l'IA\,; les
+propositions~\ref{prop:collar}, \ref{prop:burgers-any}, \ref{prop:torus}
+et~\ref{prop:whole-size}, le lemme~\ref{lem:comb}, le
+corollaire~\ref{cor:parity} et la réduction du théorème~\ref{thm:nphard} ont
+eu leur cœur algébrique vérifié en Lean après la première version de cette
+note. La relecture par IA a trouvé des erreurs
 dans les propositions~\ref{thm:combs} et~\ref{prop:pairing} et le
 théorème~\ref{thm:nphard}, ainsi que dans la proposition~\ref{prop:linear} et
 la proposition de complétude de~\cite{gardent2026loops}, dont les

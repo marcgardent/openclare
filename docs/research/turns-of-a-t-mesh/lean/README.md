@@ -6,7 +6,8 @@ Section 10 there lists what is checked, statement by statement), and of the
 two propositions of its applied companion,
 [`../../closing-loops/paper.tex`](../../closing-loops/paper.tex), "The shift of
 a turn is linear" (also stated in `../paper.tex`) and "Completeness at given
-lengths": 283 `theorem` declarations, many of them small lemmas and a few
+lengths": 292 `theorem` and `lemma` declarations under this folder (`Check/Main.lean`
+included), many of them small lemmas and a few
 restating a hypothesis (`dislocation_closes_iff`, `staircase_rings`); the
 count is not evidence, the table below names the main ones. The topological facts the note uses (that a loop develops into a given
 motion, that a curve bounds a disc, that the quad graph of a sphere is
@@ -90,6 +91,13 @@ finite sets with counts (`GaussBonnet`), the gluing data at whole lengths
 | Remark "Whole solutions exist at some size" | `whole_solution_of_real`, `clear_denominators` | — |
 | Theorem "Forced shifts" | `forced_helices`, `meets_infeasible`, `card_ge_of_disjoint`, `tauP_ge_of_disjoint` (any functions `shift γ`); on a T-mesh, `TMesh.forced_of_certificates` (`k` disjoint sets of its turns, each with a Farkas certificate: every balanced `ℓ ≥ b` leaves at least `k` of them shifted) | — |
 | Corollary "Chains of dislocations" | `sign_change_between`, `chain_of_dislocations` | the identities `s_{i-1} - s_i = εᵢ Fᵢ` with `Fᵢ > 0` |
+| Corollary "Parity" (a)–(c) | `ring_even`, `odd_pitch_odd_length`, `repair_keeps_length_cannot_close`, `odd_change_of_pitch_changes_length`, from `parity_mod` (`Consequences.lean`) | `α ≡ s (mod 2)`, the conclusion of `parity_of_turn_any_sign` |
+| Prop. "Whole lengths and size without a cap" | `closable_at_any_size`, `smul_mem_system` (scaling a real solution of a homogeneous system with bounds `ℓ ≥ b ≥ 0` by `√(q / Q(ℓ))`); the whole case is `whole_solution_of_real` | the number of quads `Q` homogeneous of degree two; the infimum over `P_Y` taken on paper |
+| Lemma "Combs", the identity | `comb_reading`, `dotC_sum` | the feet exist; every step of the comb but the arc is orthogonal to `e_a` (the perpendicular traces develop straight) |
+| Prop. "Burgers sum with borders and handles" | `fox_general` (`τ(w) = ∑ᵢ ρ(∂w/∂xᵢ) τ(xᵢ)` for letters that are any motions, `holGen`, `letterMotion`), `holGen_rotations` (rotations about the cone points give back `hol`), `commutator_motion` (`(1 - B) a - (1 - A) b` for commuting linear parts) (`Periods.lean`) | the presentation of `π₁(Σ°)` by the loops round the cone points, the border components and the handles |
+| Prop. "Two crossing turns on a torus" | `commutator_translation` (`(1 - R^j) T`), `commutator_translations` (two translations commute, the Burgers sum of the cut disc is zero) | the border of the disc cut along the two curves is their commutator |
+| Prop. "Collars" | `collar`, `quarter_mul_quarter` (a translation along an axis conjugated by a quarter-turn motion is a translation along an axis; `α > 0` picks `e₁`) | the holonomy of the turn is conjugate to that of the border component (an annulus without cone point) |
+| Theorem "Choosing the turns is NP-hard", the reduction | `Gadget.closable_iff_independent` (on the gadget of a graph without loops, `Closable` of `Forced.lean` ⇔ independent set), `Gadget.tauP_eq_vertex_cover` (`τ_P(V)` is the vertex cover number), from `independent_of_closable`, `witness_closes` (the lengths `0` and `1`) (`Gadget.lean`) | NP-hardness of Independent Set and Vertex Cover and the bounds on approximation are cited; that the gadget is a T-mesh is not claimed |
 
 Not formalized: the topology behind the hypotheses, weeks of work with much of
 it missing from Mathlib. That a simple closed curve on a sphere bounds a disc on
