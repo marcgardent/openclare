@@ -280,8 +280,21 @@ impl Preprocessor for Isotropic {
         if mesh.triangle_count() > ceiling {
             decimate::decimate(&mut mesh, ceiling);
         }
+        // Edge of the equilateral triangle that tiles the surface `triangles`
+        // times, stretched a little: remeshing settles on edges slightly
+        // shorter than asked (measured: about 13 % too many triangles without).
+        let edge_length = 1.06 * (4.0 * source.surface_area() / (3.0f64.sqrt() * request.triangles as f64)).sqrt();
+        // Remeshing settles within a few per cent of the size asked for;
+        // dozens of times that is a surface it cannot tile at that length.
+        let most = MOST_TRIANGLES * request.triangles.max(mesh.triangle_count());
         // Guide curves go in once the mesh is light, and before it is evened
-        // out, which then treats them as it does creases.
+        // out, which then treats them as it does creases. A curve is laid
+        // where it crosses edges: on a mesh coarser than the work mesh (a
+        // cube of twelve triangles) it would cross too few to make a line,
+        // so the long edges are split first.
+        if request.curves.iter().any(|curve| curve.points.len() >= 2) {
+            isotropic::split_to(&mut mesh, edge_length, most);
+        }
         let laid = imprint::imprint(&mut mesh, &surface, &face_normals, request.curves);
 
         // What the vertices of a line are held on: the creases of the source
@@ -297,14 +310,7 @@ impl Preprocessor for Isotropic {
         segments.extend(laid.segments.iter().map(|&[a, b]| [a, b, b]));
         let lines = (!segments.is_empty()).then(|| Bvh::from_triangles(segments));
 
-        // Edge of the equilateral triangle that tiles the surface `triangles`
-        // times, stretched a little: remeshing settles on edges slightly
-        // shorter than asked (measured: about 13 % too many triangles without).
-        let edge_length = 1.06 * (4.0 * source.surface_area() / (3.0f64.sqrt() * request.triangles as f64)).sqrt();
         let target = isotropic::Target { surface: &surface, face_normals: &face_normals, features: lines.as_ref() };
-        // Remeshing settles within a few per cent of the size asked for;
-        // dozens of times that is a surface it cannot tile at that length.
-        let most = MOST_TRIANGLES * request.triangles.max(mesh.triangle_count());
         isotropic::remesh(&mut mesh, &target, edge_length, self.iterations, most, request.refinement);
         if !laid.segments.is_empty() || !request.lines.is_empty() || request.edge_angle.is_some() {
             imprint::unpinch(&mut mesh);

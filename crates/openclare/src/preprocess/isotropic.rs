@@ -53,6 +53,13 @@ pub(crate) fn remesh(
     }
 }
 
+/// Splits the edges much longer than `edge_length`, nothing else: a coarse
+/// mesh made fine enough for a curve to be laid into it.
+pub(crate) fn split_to(mesh: &mut DynamicMesh, edge_length: f64, most: usize) {
+    let mut lengths = vec![edge_length; mesh.vertex_count()];
+    split_long_edges(mesh, &mut lengths, most);
+}
+
 fn length(mesh: &DynamicMesh, a: u32, b: u32) -> f64 {
     mesh.positions[a as usize].distance(mesh.positions[b as usize])
 }

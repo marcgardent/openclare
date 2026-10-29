@@ -129,6 +129,45 @@ fn two_curves_that_cross_share_a_vertex() {
 }
 
 #[test]
+fn a_curve_on_a_coarse_mesh_gives_a_line_of_edges() {
+    // The cube of twelve triangles (DT-164): a face is two triangles, which
+    // the line crosses once. A line of points closer together than an edge
+    // of the work mesh, as the drawing tools make them.
+    let source = primitives::cube(1);
+    let points = (0..31).map(|i| Vec3::new(-0.9 + 0.06 * f64::from(i), -1.0, 0.3)).collect();
+    let curve = GuideCurve { points, closed: false, sharp: false };
+    let (mesh, report) = remesh(&source, 600, &[curve]);
+    assert!(measure(&source, &mesh, Some(600)).is_valid());
+    let line = joined(&report.guide_edges);
+    for &v in line.keys() {
+        let p = mesh.positions[v as usize];
+        assert!((p.y + 1.0).abs() < 1e-6 && (p.z - 0.3).abs() < 1e-6, "{p:?}");
+    }
+    let xs: Vec<f64> = line.keys().map(|&v| mesh.positions[v as usize].x).collect();
+    let (low, high) = (xs.iter().copied().fold(f64::INFINITY, f64::min), xs.iter().copied().fold(-1.0, f64::max));
+    assert!(low < -0.6 && high > 0.6, "the line runs from {low} to {high}");
+    assert_eq!(line.values().filter(|n| n.len() == 1).count(), 2);
+}
+
+#[test]
+fn a_ring_round_a_coarse_cube_is_one_loop_of_edges() {
+    let source = primitives::cube(1);
+    let corners =
+        [Vec3::new(-1.0, -1.0, 0.3), Vec3::new(1.0, -1.0, 0.3), Vec3::new(1.0, 1.0, 0.3), Vec3::new(-1.0, 1.0, 0.3)];
+    let points = (0..40).map(|k| corners[k / 10].lerp(corners[(k / 10 + 1) % 4], (k % 10) as f64 / 10.0)).collect();
+    let curve = GuideCurve { points, closed: true, sharp: false };
+    let (mesh, report) = remesh(&source, 600, &[curve]);
+    assert!(measure(&source, &mesh, Some(600)).is_valid());
+    let line = joined(&report.guide_edges);
+    assert!(line.len() > 30, "{} vertices on the ring", line.len());
+    for (&v, neighbours) in &line {
+        let p = mesh.positions[v as usize];
+        assert_eq!(neighbours.len(), 2, "vertex {v} at {p:?}");
+        assert!((p.z - 0.3).abs() < 1e-6, "{p:?}");
+    }
+}
+
+#[test]
 fn a_curve_away_from_the_surface_changes_nothing() {
     let source = primitives::icosphere(4);
     let far =
