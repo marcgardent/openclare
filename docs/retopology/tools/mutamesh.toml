@@ -1,0 +1,74 @@
+name = "Mutamesh | 4 Remeshers in One | Instant Meshes, Quadwild, CWF, AdapTropic"
+slug = "mutamesh"
+author = "Giambattista Von Nettesheim (seller Jhon Cabezas)"
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quads", "output:quad-dominant", "output:triangles", "engine:instant-meshes", "engine:quadwild", "engine:cwf", "os:windows", "density:uniform", "density:adaptive", "edge-flow:feature-lines", "edge-flow:curvature", "input:triangles", "input:single-object", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid"]
+kind = "bridge"
+method = "runs one of four research programs shipped as Windows executables: Instant Meshes (triangles or quad-dominant, with a pure-quad pass), QuadWild (pure quads), CWF and AdapTropic (triangles)"
+purpose = "four remeshing algorithms in one add-on"
+status = "active"
+checked = 2026-10-29
+notes = "The licences of the engines are not given ('see individual algorithm licenses'). Their public code: Instant Meshes BSD-3-Clause, QuadWild GPL-3.0, CWF AGPL-3.0; AdapTropic is cited as Lv et al. 2022, 'Adaptively Isotropic Remeshing based on Curvature Smoothed Field', whose likely code (vvvwo/Adaptively-Isotropic-Remeshing, Chenlei Lv) is Apache-2.0, but the docs do not link it. Windows 11 x64 only. Input of triangles is required by QuadWild, CWF and AdapTropic; Instant Meshes takes quads and mixes too. The docs say Blender 4.2 or newer in one place and 5.1.1+ in another; the store and the 1.0.2 notes say 5.1 only. Also sold in a Superhive bundle with Autoremesher NOW! (USD 8, USD 20 struck through). No other store."
+
+[distribution]
+url = "https://superhivemarket.com/products/mutamesh"
+channel = "superhive"
+licence = "GPL (version not stated)"
+price = "USD 10.80 (on sale, USD 27 struck through)"
+
+[blender]
+min = "5.1"
+max = "5.1"
+release = "1.0.2 (2026-05-09)"
+
+[[papers]]
+title = "Instant Field-Aligned Meshes"
+authors = "Wenzel Jakob, Marco Tarini, Daniele Panozzo, Olga Sorkine-Hornung"
+venue = "ACM Transactions on Graphics 34(6) (SIGGRAPH Asia)"
+year = 2015
+doi = "10.1145/2816795.2818078"
+
+[[papers]]
+title = "Reliable Feature-Line Driven Quad-Remeshing"
+authors = "Nico Pietroni, Stefano Nuvoli, Thomas Alderighi, Paolo Cignoni, Marco Tarini"
+venue = "ACM Transactions on Graphics 40(4) (SIGGRAPH)"
+year = 2021
+doi = "10.1145/3450626.3459941"
+
+[[papers]]
+title = "CWF: Consolidating Weak Features in High-quality Mesh Simplification"
+authors = "Rui Xu, Longdu Liu, Ningna Wang, Shuangmin Chen, Shiqing Xin, Xiaohu Guo, Zichun Zhong, Taku Komura, Wenping Wang, Changhe Tu"
+venue = "ACM Transactions on Graphics 43(4)"
+year = 2024
+doi = "10.1145/3658159"
+
+[[sources]]
+url = "https://superhivemarket.com/products/mutamesh"
+what = "price, GPL, Blender 5.1, the four engines, published over 1 year ago, seller Jhon Cabezas in the page data"
+
+[[sources]]
+url = "https://superhivemarket.com/products/mutamesh/versions"
+what = "1.0.0 (2025-06-12, Blender 4.2+), 1.0.1 (2025-09-10), 1.0.2 (2026-05-09, only Blender 5.1.1)"
+
+[[sources]]
+url = "https://superhivemarket.com/products/mutamesh/docs"
+what = "Windows 11 x64 required, engines as Windows executables, output of each engine, the papers cited, QuadWild with libSatsuma and a Bi-MDF option; AdapTropic adaptive or isotropic, sharp features and feature lines kept, 2-RoSy along principal curvature, triangle input for QuadWild, CWF and AdapTropic, one object at a time"
+
+[[sources]]
+url = "https://mutamesh.carrd.co/"
+what = "the description shown on the store, crediting the four research codes"
+
+[[sources]]
+url = "https://github.com/Xrvitd/CWF"
+what = "CWF paper and its code under AGPL-3.0"
+
+[[sources]]
+url = "https://github.com/nicopietroni/quadwild"
+what = "QuadWild code under GPL-3.0"
+
+[[sources]]
+url = "https://github.com/vvvwo/Adaptively-Isotropic-Remeshing"
+what = "code of adaptively isotropic remeshing by Chenlei Lv, Apache-2.0"
+
+[[sources]]
+url = "https://superhivemarket.com/products/autoremesher-now--mutamesh"
+what = "bundle with Autoremesher NOW!, USD 8 on sale, USD 20 struck through"

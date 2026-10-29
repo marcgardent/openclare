@@ -1,0 +1,28 @@
+name = "Model Optimizer Pro: Quad Remesh & Auto Retopology for Blender"
+slug = "model-optimizer-pro"
+author = "blenderustad (Muhammad Junaid Alam)"
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quad-dominant", "engine:autoremesher", "extra:uv", "bake:color", "os:windows", "os:macos", "density:uniform", "density:adaptive", "edge-flow:feature-lines", "edge-flow:symmetry", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid"]
+kind = "bridge"
+method = "runs the AutoRemesher program, bundled, as a local subprocess; can unwrap the result and bake the source's image texture onto it in Cycles"
+purpose = "quad remeshing with the texture rebaked onto the new mesh"
+status = "active"
+checked = 2026-10-29
+notes = "The page does not name the author or licence of AutoRemesher; the same seller's autoremesher-quad gives them as Jeremy Hu, MIT. The output is called a quad mesh; AutoRemesher itself makes quad-dominant meshes (see autoremesher). The rebake needs an Image Texture node on the source. No Linux. No version number or changelog. No other store."
+
+[distribution]
+url = "https://superhivemarket.com/products/model-optimizer-pro-quad-remesh-auto-retopology-for-blender"
+channel = "superhive"
+licence = "GPL (version not stated)"
+price = "USD 29"
+
+[blender]
+min = "3.2"
+max = "5.2"
+
+[[sources]]
+url = "https://superhivemarket.com/products/model-optimizer-pro-quad-remesh-auto-retopology-for-blender"
+what = "price, GPL, Blender 3.2 - 5.2, AutoRemesher engine shipped inside, Re-apply Texture, published 2 months ago, seller in the page data; Adaptivity, Sharp Edge angle, remesh one half and mirror across X, Y or Z, no external software"
+
+[[sources]]
+url = "https://superhivemarket.com/products/model-optimizer-pro-quad-remesh-auto-retopology-for-blender/docs"
+what = "local subprocess, Windows x64 and macOS x64 (Apple Silicon through Rosetta 2), bake options; Adaptivity from even density to more quads on curved areas"

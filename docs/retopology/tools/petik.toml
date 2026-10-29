@@ -1,0 +1,38 @@
+name = "Petik - Retopology Patch Maker"
+slug = "petik"
+author = "Mihai Dobrin"
+tags = ["mode:semi-manual", "scope:local", "guide:strokes", "guide:boundary", "output:quads", "engine:own", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid"]
+kind = "add-on"
+method = "the user clicks control lines on the source surface; every closed loop of lines, up to six sides, becomes a patch of quads, with the vertex count per side set by scrolling and the sides shaped by Bézier points"
+purpose = "building low-poly quad patches over a high-poly surface, alone or joined to existing geometry"
+status = "active"
+checked = 2026-10-29
+notes = "Two builds per release: one for Blender 3.6 to 4.2, one packaged as an extension for 4.2 and later. The product text still says Blender 2.93 and up; Superhive lists 3.6 to 5.0. Version 2.0.4 added Petik Line, a lattice-like control for edge loops."
+
+[distribution]
+url = "https://superhivemarket.com/products/petik"
+channel = "superhive"
+licence = "GPL (version not stated)"
+price = "USD 12"
+
+[[distribution.also]]
+channel = "gumroad"
+url = "https://hikeout.gumroad.com/l/zqufz"
+price = "EUR 11.50"
+
+[blender]
+min = "3.6"
+max = "5.0"
+release = "2.0.7 (2026-03-05)"
+
+[[sources]]
+url = "https://superhivemarket.com/products/petik"
+what = "description, USD 12, GPL, Blender 3.6 - 5.0, 800+ sales"
+
+[[sources]]
+url = "https://superhivemarket.com/products/petik/versions"
+what = "versions 1.2 (2024-08-28) to 2.0.7 Vulkan (2026-03-05), builds for 3.6-4.2 and 4.2+"
+
+[[sources]]
+url = "https://hikeout.gumroad.com/l/zqufz"
+what = "seller Mihai Dobrin, EUR 11.50"

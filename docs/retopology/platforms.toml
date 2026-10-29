@@ -1,0 +1,399 @@
+# The platforms that distribute retopology tools for Blender. Schema: README.md.
+# Sources read on 2026-10-29. A source marked "search snippet" refused direct reading
+# (HTTP 403) and was read through the text a search engine quotes from it.
+
+[[platform]]
+id = "blender"
+name = "Blender"
+url = "https://www.blender.org/download/"
+operator = "Blender Foundation"
+kind = "built-in"
+paid = false
+install = "Nothing to download: a core add-on ships with Blender."
+notes = "Since Blender 4.2 most add-ons that used to ship with Blender moved to extensions.blender.org; a few stay bundled as core add-ons. Add-ons not converted to extensions still work as legacy add-ons, installed from disk as before."
+
+[[platform.sources]]
+url = "https://www.blender.org/download/"
+what = "Blender itself"
+
+[[platform.sources]]
+url = "https://developer.blender.org/docs/release_notes/4.2/"
+what = "4.2 release notes: most add-ons that shipped with Blender are now on the Extensions Platform; legacy add-ons still install from disk; a bundle of the 4.1 add-ons is offered"
+
+[[platform]]
+id = "extensions.blender.org"
+name = "Blender Extensions"
+url = "https://extensions.blender.org"
+operator = "Blender Foundation"
+kind = "official"
+paid = false
+licence_rule = "Add-ons must be wholly compliant with the GNU GPL v3 or later; themes and other extensions GPL v3 compatible; bundled binaries and assets (images, fonts) CC0. Free and open source only: no functionality behind a purchase, no optional commercial extras, no ads or links to commercial versions in Blender's interface."
+install = "In Blender, Preferences > Get Extensions (allow online access), search, Install; or click Get on the website and drag the button into Blender."
+updates = "In Blender, not automatic: check for updates by hand (or turn on Check for Updates on Startup), then update one extension or Update All."
+blender = "4.2 LTS or later"
+notes = "Links to external funding platforms are allowed on a listing, not in Blender's interface. The platform was opened on 2024-05-15 and shipped with Blender 4.2 LTS (July 2024). Showing the features of a commercial version on a listing counts as an advertisement and is not allowed."
+
+[[platform.sources]]
+url = "https://extensions.blender.org/about/"
+what = "free and open-source directory, only GNU GPL compliant software; install with Blender 4.2 LTS or newer through Get Extensions, or drag the Get button; updates checked by hand"
+
+[[platform.sources]]
+url = "https://extensions.blender.org/terms-of-service/"
+what = "terms (last updated 2026-08-10): add-ons GPL v3 or later (1.1), assets CC0 (1.2), no paywalled functionality (3.10), no commercial extras (4.3), no ads or commercial links in the UI, funding links allowed on the listing (6.1-6.3)"
+
+[[platform.sources]]
+url = "https://docs.blender.org/manual/en/latest/editors/preferences/extensions.html"
+what = "Get Extensions preferences: install from the website by drag, from Blender by name, or from disk; updates checked by hand, optional check on startup, Update All"
+
+[[platform.sources]]
+url = "https://code.blender.org/2024/05/extensions-platform-beta-release/"
+what = "beta of 2024-05-15, shipped with Blender 4.2 LTS; aims at free community-maintained extensions"
+
+[[platform]]
+id = "superhive"
+name = "Superhive (formerly Blender Market)"
+url = "https://superhivemarket.com"
+operator = "Autotroph, the company behind CG Cookie, which launched Blender Market in 2014"
+kind = "marketplace"
+paid = true
+licence_rule = "No rule for add-ons in the creator policy: the creator is responsible for any required licensing; only stand-alone products with their own binary executable must be GPL compatible."
+seller_share = "Commission rate 70% on the free plan, 80% on Pro ($49/month), 90% on Ultimate ($199/month); on each sale a merchant fee (5.5%, 5.0%, 4.0%) and a $0.49 transaction fee 'added by our Payment Providers' (pricing page; it does not say whether the creator or the buyer bears them)."
+install = "The buyer downloads the ZIP from the account page and installs it in Blender from disk (drag and drop, or Install from Disk)."
+updates = "By hand: download the new version from the account page and install it again, unless the add-on has its own updater."
+notes = "Renamed from Blender Market to Superhive in April 2025, for the Blender trademark: the old name made people think it belonged to the Blender Foundation; not sold, same team; blendermarket.com links forward to superhivemarket.com. Products are reviewed before listing. A creator can give a share of earnings to the Blender Development Fund."
+
+[[platform.sources]]
+url = "https://superhivemarket.com/pricing"
+what = "creator plans: commission 70/80/90%, merchant fee 5.5/5.0/4.0%, transaction fee $0.49 per item"
+
+[[platform.sources]]
+url = "https://support.superhivemarket.com/article/162-how-to-select-a-creator-subscription"
+what = "the same tiers, stated as of 2024-07-15"
+
+[[platform.sources]]
+url = "https://support.superhivemarket.com/article/277-creator-seller-policy"
+what = "creator policy: GPL compatibility required only of stand-alone executables; creator responsible for licensing"
+
+[[platform.sources]]
+url = "https://superhivemarket.com/page/about"
+what = "launched in 2014 by Autotroph, independently owned and operated, no affiliation with the Blender Foundation"
+
+[[platform.sources]]
+url = "https://superhivemarket.com/posts/beyond-business-as-usual-a-new-name-for-blender-market"
+what = "2024 announcement of a new name, for Blender's trademark guidelines; Autotroph manages the market"
+
+[[platform.sources]]
+url = "https://superhivemarket.com/posts/blender-market-is-now-superhive-the-best-place-to-buy-and-sell-tools-for-blender"
+what = "the rollout post (undated): reason, not sold, same team, old links forwarded in perpetuity"
+
+[[platform.sources]]
+url = "https://x.com/Blender/status/1920137942032347627"
+what = "search snippet: the Blender account congratulates Autotroph on the Superhive rebrand; the post id dates it to 2025-05-07"
+
+[[platform.sources]]
+url = "https://x.com/ScoutArtz/status/1907847814845182395"
+what = "search snippet: a user reacts to the rebranding to Superhive; the post id dates it to 2025-04-03"
+
+[[platform.sources]]
+url = "https://superhivemarket.com/pages/sell"
+what = "up to 90% commission, products reviewed for compatibility, licensing, quality and support, optional gift to the Blender Development Fund"
+
+[[platform.sources]]
+url = "https://github.com/Poly-Haven/polyhavenassets"
+what = "an example: updates by downloading again from the Superhive account page and reinstalling"
+
+[[platform]]
+id = "gumroad"
+name = "Gumroad"
+url = "https://gumroad.com"
+operator = "Gumroad"
+kind = "creator-store"
+paid = true
+seller_share = "Gumroad takes '10% + $0.50' per transaction on sales through the creator's profile or direct links, and '30%' on sales it brings through its Discover marketplace; no monthly fee. The page does not say whether card processing is included."
+install = "The buyer downloads the ZIP and installs it in Blender from disk (drag and drop, or Install from Disk)."
+updates = "By hand: Blender gives no updates for an add-on installed from disk."
+notes = "Gumroad is the merchant of record: since 2025-01-01 it collects and remits sales tax, VAT and GST worldwide."
+
+[[platform.sources]]
+url = "https://gumroad.com/pricing"
+what = "fees: 10% + $0.50 direct, 30% through Discover, no monthly fee; merchant of record handling taxes since 2025-01-01"
+
+[[platform.sources]]
+url = "https://docs.blender.org/manual/en/latest/editors/preferences/extensions.html"
+what = "a ZIP installed from disk goes to a local repository, with no updates"
+
+[[platform]]
+id = "github"
+name = "GitHub"
+url = "https://github.com"
+operator = "GitHub (Microsoft)"
+kind = "code-host"
+paid = false
+install = "Download the ZIP attached to a release and install it in Blender from disk (drag and drop, or Install from Disk)."
+updates = "By hand, unless the add-on has its own updater; a user can subscribe to a repository's release notifications."
+notes = "A release packages software with notes and binary files (each under 2 GiB, up to 1,000 per release); GitHub also offers a ZIP of the source at the tag. Source and releases only: nothing is sold there."
+
+[[platform.sources]]
+url = "https://github.com"
+what = "home page"
+
+[[platform.sources]]
+url = "https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases"
+what = "releases: notes and binary files, 2 GiB per file, 1,000 assets, source archives, release notifications"
+
+[[platform.sources]]
+url = "https://docs.blender.org/manual/en/latest/editors/preferences/extensions.html"
+what = "a ZIP installed from disk goes to a local repository, with no updates"
+
+[[platform]]
+id = "vendor"
+name = "Publisher's own site"
+operator = "each publisher"
+kind = "vendor"
+paid = true
+install = "Usually a ZIP installed from disk; some publishers host a remote repository instead (see remote-repository)."
+updates = "By hand for a ZIP installed from disk, or by the add-on's own updater; in Blender when the publisher hosts a remote repository."
+notes = "Not one platform: the publisher sells from its own site, as Exoside or The Anvil Store do, on its own terms, so each tool's page says what applies."
+
+[[platform.sources]]
+url = "https://exoside.com/quadremesher/quadremesher-buy/"
+what = "an example: Exoside sells from its own site"
+
+[[platform.sources]]
+url = "https://docs.blender.org/manual/en/latest/editors/preferences/extensions.html"
+what = "a ZIP installed from disk goes to a local repository, with no updates"
+
+[[platform]]
+id = "remote-repository"
+name = "Third-party extension repository"
+url = "https://docs.blender.org/manual/en/latest/advanced/extensions/creating_repository/index.html"
+operator = "each publisher, in a format the Blender project defines"
+kind = "vendor"
+paid = true
+install = "In Blender, Preferences > Get Extensions > Repositories > [+] > Add Remote Repository, paste the repository's URL (and an access token if it asks for one); then install from Get Extensions as from the official platform."
+updates = "In Blender, as for extensions.blender.org: check by hand or on startup, then update one or Update All."
+blender = "4.2 LTS or later"
+notes = "How a publisher hosts one: static, a JSON file that `blender --command extension server-generate --repo-dir=...` builds from the ZIPs (`--html` adds a page for drag-and-drop installs), served from a web server; dynamic, a server that answers with the latest compatible versions for the blender_version and platform Blender sends; or a fork of the whole Extensions website. A repository can ask for an access token, which Blender sends as an Authorization Bearer header; the Blender developers name repositories run by developers as the way to offer commercial add-ons. The manual describes no payment step: selling through a repository means giving each buyer access, for example a token (our reading). No licence rule is stated."
+
+[[platform.sources]]
+url = "https://docs.blender.org/manual/en/latest/advanced/extensions/creating_repository/index.html"
+what = "three ways to host: static JSON, dynamic, fork of the Extensions website"
+
+[[platform.sources]]
+url = "https://docs.blender.org/manual/en/latest/advanced/extensions/creating_repository/static_repository.html"
+what = "server-generate builds index.json (and index.html with --html); add it with Add Remote Repository"
+
+[[platform.sources]]
+url = "https://docs.blender.org/manual/en/latest/advanced/extensions/creating_repository/dynamic_repository.html"
+what = "dynamic listing by blender_version and platform; access token sent as Authorization: Bearer"
+
+[[platform.sources]]
+url = "https://docs.blender.org/manual/en/latest/editors/preferences/extensions.html"
+what = "Add Remote Repository from a URL; Access Token field, required by some repositories"
+
+[[platform.sources]]
+url = "https://code.blender.org/2024/05/extensions-platform-beta-release/"
+what = "developers may run their own repositories to offer commercial add-ons; a single JSON file is enough"
+
+[[platform]]
+id = "blendkit"
+name = "Blendkit (formerly BlenderKit)"
+url = "https://www.blendkit.com/get-blender-add-ons/"
+operator = "Blendkit"
+kind = "marketplace"
+paid = true
+seller_share = "Paid add-ons: 'Commission rate: 75%', 'Merchant fee: 4%', 'Transaction fee per purchase: $0.5', 'Additional fees: 0%'; the 15% discount on all paid add-ons does not lower the commission. Free add-ons are paid from the 'fair share redistribution system'."
+install = "With the Blendkit add-on: in its 3D View sidebar panel, search with the asset type set to add-on, then drag a free add-on into Blender; a paid one sends the buyer to the Blendkit website first. Install permanently or for one session."
+notes = "Known for its asset library; it also distributes free and paid third-party add-ons, listed on the website since January 2025 and installable from inside Blender since February 2026. Accepts add-ons in the Blender extensions format only (ZIP), validated by the Blendkit team; no licence rule found on the pages read. Renamed from BlenderKit to Blendkit on 2026-06-23 (announced 2026-06-10) to respect Blender's trademark."
+
+[[platform.sources]]
+url = "https://www.blendkit.com/get-blender-add-ons/"
+what = "free and paid add-ons from other creators; install from the sidebar panel, drag and drop, paid ones bought on the website"
+
+[[platform.sources]]
+url = "https://www.blendkit.com/add-ons-upload-beta"
+what = "creator terms: commission 75%, merchant fee 4%, $0.5 per purchase, extensions format, fair share for free add-ons"
+
+[[platform.sources]]
+url = "https://www.blendkit.com/articles/goodbye-blenderkit-hello-blendkit/"
+what = "rename announced 2026-06-10, operating as Blendkit from 23 June, for Blender's trademark"
+
+[[platform.sources]]
+url = "https://www.blendernation.com/2026/02/18/get-add-ons-directly-in-blender-with-blenderkit/"
+what = "add-ons installable from inside Blender, drag and drop, permanent or one-session install"
+
+[[platform.sources]]
+url = "https://www.blendernation.com/2025/01/25/get-all-your-blender-add-ons-on-blenderkit/"
+what = "search snippet: add-ons listed on BlenderKit from January 2025"
+
+[[platform]]
+id = "itch-io"
+name = "itch.io"
+url = "https://itch.io/tools/tag-blender"
+operator = "itch.io"
+kind = "marketplace"
+paid = true
+seller_share = "Open revenue sharing: the creator sets itch.io's cut from 0% to 100%, 10% by default; the payment processor's fee comes on top (itch.io's example: a $10 sale leaves $8.41 at the default)."
+install = "The buyer downloads the ZIP and installs it in Blender from disk (drag and drop, or Install from Disk)."
+updates = "By hand: Blender gives no updates for an add-on installed from disk."
+notes = "Blender add-ons are listed among its tools, under tags such as blender and blender-addon, free, paid or pay what you want with a minimum price."
+
+[[platform.sources]]
+url = "https://itch.io/docs/creators/payments"
+what = "search snippet: default 10% cut, processor fee taken apart, the $10 example"
+
+[[platform.sources]]
+url = "https://itch.io/updates/open-revenue-sharing"
+what = "search snippet: open revenue sharing, the seller picks itch.io's share on a slider"
+
+[[platform.sources]]
+url = "https://itch.io/tools/tag-blender-addon/tag-visualization"
+what = "search snippet: Blender add-ons listed as tools"
+
+[[platform.sources]]
+url = "https://viniguerrero.itch.io/assetbuilder/purchase"
+what = "search snippet: an example, a Blender add-on sold pay what you want with a minimum price"
+
+[[platform]]
+id = "ko-fi"
+name = "Ko-fi (shop)"
+url = "https://ko-fi.com"
+operator = "Ko-fi"
+kind = "creator-store"
+paid = true
+seller_share = "Free plan: 0% on tips and one-off donations, 5% on shop sales, memberships and commissions; Ko-fi Gold (paid monthly) removes the platform fee; Stripe or PayPal fees on top."
+install = "The buyer downloads the file and installs it in Blender from disk (drag and drop, or Install from Disk)."
+updates = "By hand: Blender gives no updates for an add-on installed from disk."
+notes = "A tip page first; its shop sells digital downloads, and some authors sell or give Blender add-ons there."
+
+[[platform.sources]]
+url = "https://help.ko-fi.com/hc/en-us/articles/360002506494-Does-Ko-fi-Take-a-Fee"
+what = "search snippet: fee table, 0% on tips, 5% on shop sales on the free plan, processor fees on top, Gold without platform fee"
+
+[[platform.sources]]
+url = "https://ko-fi.com/s/6dc35301f4"
+what = "search snippet: an example, Auto T-Pose Blender Addon sold in a Ko-fi shop"
+
+[[platform]]
+id = "patreon"
+name = "Patreon"
+url = "https://www.patreon.com"
+operator = "Patreon"
+kind = "donation"
+paid = true
+seller_share = "Creators who publish their page after 2025-08-04 pay a standard 10% platform fee, the same on shop sales of digital products; payment processing comes on top (for example 2.9% + $0.30 per card payment over $3). Creators published earlier keep their legacy plan (5% to 12%)."
+install = "The patron or buyer downloads the ZIP attached to a post or bought in the creator's shop, and installs it in Blender from disk."
+updates = "By hand: download the new version from the creator's post and install it again, unless the add-on has its own updater."
+notes = "Memberships first: add-ons come as ZIP files attached to posts for patrons of a tier, or as one-time products in the creator's Patreon shop."
+
+[[platform.sources]]
+url = "https://support.patreon.com/hc/en-us/articles/36426991446797"
+what = "search snippet: standard 10% platform fee for creators publishing after 2025-08-04"
+
+[[platform.sources]]
+url = "https://support.patreon.com/hc/articles/11111747095181"
+what = "search snippet: fees on digital products and one-time sales, processing fees by payment method"
+
+[[platform.sources]]
+url = "https://www.patreon.com/gendo/shop/align-tools-blender-addon-1651268"
+what = "search snippet: an example, a Blender add-on sold in a Patreon shop"
+
+[[platform.sources]]
+url = "https://github.com/Poly-Haven/polyhavenassets"
+what = "an example: the Poly Haven add-on, given to patrons, updated by downloading again from the Patreon post"
+
+[[platform]]
+id = "artstation"
+name = "ArtStation Marketplace"
+url = "https://www.artstation.com/marketplace/game-dev/resources/dev-tools/plugins?softwares=blender"
+operator = "KitBash (bought from Epic Games, announced 2026-08-10)"
+kind = "marketplace"
+paid = true
+seller_share = "Marketplace sales: a selling fee of 5% for Pro members, 12% for others, plus a $0.30 transaction fee per item; sales through the seller's ArtStation-powered website earn 95% of the sale."
+install = "The buyer downloads the ZIP and installs it in Blender from disk (drag and drop, or Install from Disk)."
+updates = "By hand: Blender gives no updates for an add-on installed from disk."
+notes = "Portfolio site with a marketplace; Blender add-ons are sold under Dev Tools > Plugins (Smart Remesh, for one). The move of the marketplace to Fab, announced in 2023 for 2025, had not happened by August 2026, when KitBash bought ArtStation and kept its Digital Marketplace; Epic keeps Fab."
+
+[[platform.sources]]
+url = "https://help.artstation.com/en/articles/16155081"
+what = "seller fees: 5% Pro, 12% Non-Pro, $0.30 per item; 95% on an ArtStation-powered website"
+
+[[platform.sources]]
+url = "https://digitalproduction.com/2026/08/12/kitbash-buys-artstation-and-sketchfab/"
+what = "KitBash acquires ArtStation and Sketchfab, announced 2026-08-10; the Digital Marketplace stays; Fab not part of the deal"
+
+[[platform.sources]]
+url = "https://magazine.artstation.com/2023/03/introducing-fab/"
+what = "search snippet: 2023 plan to migrate the ArtStation Marketplace to Fab in 2025, portfolios and prints staying"
+
+[[platform.sources]]
+url = "https://www.artstation.com/marketplace/p/yRp58/smart-remesh-blender-add-on"
+what = "search snippet: an example, a Blender retopology add-on sold there"
+
+[[platform]]
+id = "fab"
+name = "Fab"
+url = "https://www.fab.com"
+operator = "Epic Games"
+kind = "marketplace"
+paid = true
+seller_share = "'Creators who sell their work on Fab earn an industry-leading 88% revenue share' (Fab documentation)."
+install = "The buyer downloads the files and installs the add-on in Blender from disk (drag and drop, or Install from Disk)."
+updates = "By hand: Blender gives no updates for an add-on installed from disk."
+notes = "Epic's marketplace since October 2024, successor of the Unreal Engine Marketplace and the Sketchfab Store, mostly assets for game engines; some Blender add-ons are listed there. fab.com refused to be read, so its rules for Blender add-ons are not checked."
+
+[[platform.sources]]
+url = "https://dev.epicgames.com/documentation/fab/fab-documentation"
+what = "88% revenue share; game engine formats and a variety of 3D formats"
+
+[[platform.sources]]
+url = "https://www.fab.com/listings/b2e9466e-a253-4392-a677-90cdf3aa9b28"
+what = "search snippet: an example, Export Individual FBX (Blender Addon) listed on Fab"
+
+[[platform.sources]]
+url = "https://digitalproduction.com/2026/08/12/kitbash-buys-artstation-and-sketchfab/"
+what = "Fab launched in October 2024 as successor of the Unreal Engine Marketplace and Sketchfab Store; Epic keeps it"
+
+[[platform]]
+id = "payhip"
+name = "Payhip"
+url = "https://payhip.com"
+operator = "Payhip"
+kind = "creator-store"
+paid = true
+seller_share = "Free plan: 5% transaction fee; Plus ($29/month): 2%; Pro ($99/month): no transaction fee; PayPal and Stripe charge their standard rates on top."
+install = "The buyer downloads the ZIP and installs it in Blender from disk (drag and drop, or Install from Disk)."
+updates = "By hand: Blender gives no updates for an add-on installed from disk."
+notes = "Payhip collects, reports and remits digital EU/UK VAT and US/Canadian sales tax for the seller. Some Blender add-on authors use it, Imphenzia for one, pay what you want from $0."
+
+[[platform.sources]]
+url = "https://payhip.com/pricing"
+what = "plans and transaction fees 5/2/0%, processor fees on top, VAT and sales tax handled"
+
+[[platform.sources]]
+url = "https://payhip.com/Imphenzia/collection/blender-add-ons"
+what = "an example: two Blender add-ons at $0.00+"
+
+[[platform]]
+id = "lemon-squeezy"
+name = "Lemon Squeezy"
+url = "https://www.lemonsqueezy.com"
+operator = "Link, LLC (formerly Lemon Squeezy LLC), shown with a Stripe badge"
+kind = "creator-store"
+paid = true
+seller_share = "'one simple transaction fee of 5% + 50¢', with small extra fees in edge cases such as non-US transactions."
+install = "The buyer downloads the ZIP and installs it in Blender from disk (drag and drop, or Install from Disk)."
+updates = "By hand: Blender gives no updates for an add-on installed from disk."
+notes = "Merchant of record: it calculates, collects and pays the taxes. Can issue a licence key with each sale. Since a post of 2026-01-28 the team builds on Stripe Managed Payments and aims to move Lemon Squeezy users there. Some Blender add-on authors use it: Enrich, a GPL add-on for Blender 4.2+, sold at $20."
+
+[[platform.sources]]
+url = "https://www.lemonsqueezy.com/pricing"
+what = "fee 5% + 50 cents, extra fees in edge cases, merchant of record, licence keys, footer naming Link, LLC"
+
+[[platform.sources]]
+url = "https://www.lemonsqueezy.com/blog/2026-update"
+what = "2026-01-28: building on Stripe Managed Payments, migration path for Lemon Squeezy users"
+
+[[platform.sources]]
+url = "https://blenderskool.lemonsqueezy.com/"
+what = "an example: Enrich, a GPL Blender add-on for 4.2+, $20"

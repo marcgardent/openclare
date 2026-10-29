@@ -1,0 +1,44 @@
+name = "QuadSketch – Interactive Retopology Add-on for Blender"
+slug = "quadsketch"
+author = "OMiD Mousakhani"
+tags = ["mode:manual", "mode:semi-manual", "scope:local", "guide:strokes", "engine:own", "output:quads", "use:organic", "os:windows", "os:macos", "os:linux", "edge-flow:symmetry", "edge-flow:loops", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid"]
+kind = "add-on"
+method = "strokes drawn over the source become quad strips, guide strips, patches (rows and columns set while drawing), contour loops and circular caps; extend, stitch and weld tools join pieces, and refine and move brushes keep vertices on the surface"
+purpose = "artist-controlled quad retopology of characters, creatures and organic meshes"
+status = "active"
+checked = 2026-10-29
+notes = "Version 2.0.0, no release date given; published on Superhive about 2 months ago. The guide says tested with Blender 4.2 and 5.2.2, on Windows, macOS and Linux. The FAQ calls it artist-controlled rather than a one-click remesher."
+
+[distribution]
+url = "https://superhivemarket.com/products/quadsketch"
+channel = "superhive"
+licence = "GPL (version not stated)"
+price = "USD 18 (launch sale; USD 24 otherwise)"
+
+[blender]
+min = "4.2"
+max = "5.2"
+
+[[sources]]
+url = "https://superhivemarket.com/products/quadsketch"
+what = "tools of V2, USD 18 on sale from USD 24, GPL, Blender 4.2 - 5.2, 50+ sales, published about 2 months ago"
+
+[[sources]]
+url = "https://superhivemarket.com/products/quadsketch/docs"
+what = "version 2.0.0, Blender 4.2 or newer, tested on 4.2 and 5.2.2, list of tools"
+
+[[sources]]
+url = "https://superhivemarket.com/products/quadsketch/faq"
+what = "interactive and artist-controlled, not automatic"
+
+[[sources]]
+url = "https://superhivemarket.com/products/quadsketch/ratings"
+what = "reviews of about 2 months and 22 days ago"
+
+[[sources]]
+url = "https://superhivemarket.com/products/quadsketch"
+what = "V2.0.0 requirements Windows, macOS, Linux; symmetry on Y and Z added in V2; Contour Loop around rounded forms"
+
+[[sources]]
+url = "https://superhivemarket.com/products/quadsketch/docs"
+what = "Windows, macOS and Linux; controlled topology loops around cylindrical or rounded forms; insert and remove loops"

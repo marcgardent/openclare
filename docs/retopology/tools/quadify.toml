@@ -1,0 +1,53 @@
+name = "Quadify"
+slug = "quadify"
+author = "Anvil Interactive Solutions"
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quads", "output:quad-dominant", "engine:own", "engine:quadwild", "engine:quadriflow", "engine:voxel", "engine:ml", "use:scan", "use:ai-generated", "use:cad", "os:windows", "os:macos", "os:linux", "density:adaptive", "edge-flow:feature-lines", "edge-flow:curvature", "input:any", "licence:open-source", "source:with-download", "blender:unstated", "install:zip", "price:freemium"]
+kind = "add-on"
+method = "Base pairs triangles into quads by heuristics; Premium adds a field-based quadrangulation projected on the source; Ultra classifies the mesh and runs one of several pipelines (QuadWild with Bi-MDF, QuadriFlow, voxel), keeping the best by checks"
+purpose = "quads from scans, AI-generated models and tessellated CAD"
+status = "active"
+checked = 2026-10-29
+notes = "Four editions whose Blender versions differ, and the stores disagree: Base 5.0+ (or 4.2 - 5.2 in its own table), Premium and Pro 4.4+, Ultra 5.0+, the main Superhive listing 3.6 - 5.0; hence no blender field. Last updates August and September 2026. The field solver of Premium and the QuadWild path of Ultra run on Windows only. Pro and Ultra have an optional mode that calls the user's own Claude or GPT API key. Superhive shows half the list prices, with no sale stated. engine:ml, density:adaptive and edge-flow:curvature come from the Ultra page."
+
+[distribution]
+url = "https://www.theanvilstore.com/category/retopology"
+channel = "vendor"
+licence = "GPL (version not stated)"
+price = "free (Base), USD 25 (Premium), USD 50 (Pro), USD 150 (Ultra)"
+
+[[distribution.also]]
+channel = "superhive"
+url = "https://superhivemarket.com/products/quadify"
+price = "list USD 25, 50 and 150; shown USD 12.50, 25 and 75, no sale stated"
+
+[[distribution.also]]
+channel = "gumroad"
+url = "https://anvilinteractive.gumroad.com/l/quadify-smart-quad-remesher-for-blender"
+price = "free (Base)"
+
+[[sources]]
+url = "https://www.theanvilstore.com/category/retopology"
+what = "editions and prices"
+
+[[sources]]
+url = "https://superhivemarket.com/products/quadify"
+what = "licence, examples at 79 to 94 % quads, Blender 3.6 - 5.0"
+
+[[sources]]
+url = "https://superhivemarket.com/products/quadify-premium"
+what = "Premium: Blender 4.2 - 5.2, field solver on Windows only"
+
+[[sources]]
+url = "https://www.theanvilstore.com/product/quadify-ultra-ml-routed-retopology-for-blender-5-0-86e5fdf1-e605-4278-8687-922ed80fecd9"
+what = "Ultra: an ML engine routes between pipelines, Blender 5.0 or newer, more faces where the surface curves, sharp feature edges detected, a curvature flow field, any broken mesh, QuadWild binary Windows only, optional API key for Agent Mode"
+
+[brief]
+contradicted = [
+  "USD 25 to 200: Base is free and the top edition, Ultra, is USD 150",
+  "Blender 4.2 LTS to 5.2: depends on the edition, from 3.6 to 5.0+",
+  "multi-solver engine driven by machine learning: only Ultra routes between solvers",
+]
+
+[[sources]]
+url = "https://www.theanvilstore.com/category/retopology"
+what = "every edition tagged macOS, Windows and Linux"

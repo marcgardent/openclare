@@ -1,0 +1,26 @@
+name = "Instant Meshes Remesh"
+slug = "instant-meshes-remesh"
+author = "knekke"
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quads", "output:quad-dominant", "output:triangles", "engine:instant-meshes", "os:windows", "os:linux", "os:macos", "requires:external-program", "edge-flow:feature-lines", "licence:open-source", "source:public", "blender:unstated", "install:zip", "price:free"]
+kind = "bridge"
+method = "exports the object, runs Instant Meshes (command line or window), imports the result"
+purpose = "Instant Meshes from inside Blender"
+status = "stale"
+checked = 2026-10-29
+notes = "One file per Blender series; the newest is committed as for Blender 4 (2024-01-10). Support for 4.1 and later is not stated. No release."
+
+[distribution]
+url = "https://github.com/knekke/blender_addons"
+channel = "github"
+source = "https://github.com/knekke/blender_addons"
+licence = "GPL-3.0"
+price = "free"
+
+[[sources]]
+url = "https://github.com/knekke/blender_addons"
+what = "files for Blender 2.7x, 2.8 and 4, licence, last commit 2024-01-10; README: the Instant Meshes program is downloaded apart, temp dir named for Windows, Linux and Mac; B40_InstantMeshesRemesh.py: Crease Degree, dihedral angle threshold for creases"
+
+[[sources]]
+url = "https://www.blendernation.com/2018/06/14/instant-meshes-remeshing-add-on/"
+what = "first announced 2018-06-14"
+

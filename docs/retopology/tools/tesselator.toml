@@ -1,0 +1,42 @@
+name = "Tesselator - Quadrilateral Remeshing"
+slug = "tesselator"
+author = "Jean Machado (Jeacom)"
+tags = ["mode:automatic", "mode:semi-automatic", "scope:global", "guide:parameters", "guide:strokes", "output:quads", "output:quad-dominant", "output:triangles", "engine:particles", "density:adaptive", "edge-flow:symmetry", "licence:open-source", "source:with-download", "blender:legacy", "install:zip", "price:paid"]
+kind = "add-on"
+method = "particles spread on the surface (fast marching or integer grid), relaxed, then meshed; Grease Pencil strokes can guide them"
+purpose = "quads, triangles or quad-dominant meshes, guided by strokes"
+status = "stale"
+checked = 2026-10-29
+notes = "The store shows no version and no update date; published about 2018. Same seller as SoftWrap."
+
+[distribution]
+url = "https://superhivemarket.com/products/tesselator"
+channel = "superhive"
+licence = "GPL (version not stated)"
+price = "USD 8.50"
+
+[blender]
+min = "2.79"
+max = "3.2"
+
+[[sources]]
+url = "https://superhivemarket.com/products/tesselator"
+what = "price, licence, Blender 2.79 to 3.2"
+
+[[sources]]
+url = "https://superhivemarket.com/products/tesselator/docs"
+what = "method and output"
+
+[[sources]]
+url = "https://blenderartists.org/t/tesselator-quad-remesher/1131624"
+what = "history: thread opened 2018-10-26, last posts of the author in July 2020"
+
+[brief]
+contradicted = [
+  "about USD 8: USD 8.50",
+  "Blender 2.8x to 3.x: the store lists 2.79 to 3.2",
+]
+
+[[sources]]
+url = "https://superhivemarket.com/products/tesselator/docs"
+what = "read again 2026-10-29: Adaptive makes curved regions denser and flat ones sparse; X Mirror forces symmetry"

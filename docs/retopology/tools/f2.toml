@@ -1,0 +1,37 @@
+name = "F2"
+slug = "f2"
+author = "Bart Crouch, Alexander Nedovizin, Paul Kotelevets (concept design), Adrian Rutkowski; maintained by the Blender community"
+tags = ["mode:manual", "scope:local", "os:windows", "os:linux", "os:macos", "licence:open-source", "source:public", "blender:unstated", "install:get-extensions", "price:free"]
+kind = "add-on"
+method = "extends Make Edge/Face (F): from one selected vertex or edge, makes the quad that the open edges around it suggest, chosen by the mouse position"
+purpose = "quad-by-quad modelling and retopology with the F key"
+status = "stale"
+checked = 2026-10-29
+notes = "The source file header still says GPL-2.0-or-later; the manifest was changed to GPL 3 or later on 2025-01-19. Bundled with Blender up to 4.1; since 4.2 an extension. No release for 21 months: status stale."
+
+[distribution]
+url = "https://extensions.blender.org/add-ons/f2/"
+channel = "extensions.blender.org"
+source = "https://projects.blender.org/extensions/mesh_f2"
+licence = "GPL-3.0-or-later"
+price = "free"
+
+[blender]
+min = "4.2"
+release = "1.8.5 (2025-01-19)"
+
+[[sources]]
+url = "https://extensions.blender.org/add-ons/f2/"
+what = "authors, GPL-3.0-or-later, Blender 4.2 LTS and newer, bundled with Blender until 4.1, offered with limited support"
+
+[[sources]]
+url = "https://extensions.blender.org/add-ons/f2/versions/"
+what = "1.8.4 (2024-05-14) and 1.8.5 (2025-01-19)"
+
+[[sources]]
+url = "https://projects.blender.org/extensions/mesh_f2"
+what = "README (bundled with 4.1, community-maintained, no support expected), manifest, source code (quad from one edge), last commit 2025-03-09"
+
+[[sources]]
+url = "https://extensions.blender.org/api/v1/extensions/"
+what = "F2 1.8.5 lists no platforms; the Blender manual (advanced/extensions/getting_started) says an extension without platforms is available on all operating systems"

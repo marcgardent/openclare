@@ -1,0 +1,48 @@
+name = "Voxel Remesh"
+slug = "voxel-remesh"
+author = "Blender Foundation"
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quads", "engine:voxel", "use:sculpt", "os:windows", "os:linux", "os:macos", "density:uniform", "density:adaptive", "edge-flow:pole-control", "extra:keeps-attributes", "licence:open-source", "source:public", "blender:5-x", "install:built-in", "price:free"]
+kind = "built-in"
+method = "the mesh is sampled on a 3D voxel grid (OpenVDB) and a new mesh is built on its surface, of even face size"
+purpose = "even topology and resolved self-intersections, mostly while sculpting"
+status = "active"
+checked = 2026-10-29
+notes = "Ships with Blender: release is Blender's own. Quads only with Adaptivity 0; above it, triangles appear."
+
+[distribution]
+url = "https://docs.blender.org/manual/en/latest/modeling/meshes/retopology.html"
+channel = "blender"
+source = "https://projects.blender.org/blender/blender"
+licence = "GPL-2.0-or-later"
+price = "free"
+
+[blender]
+min = "2.81"
+release = "5.2.3 (2026-10-22)"
+
+[[sources]]
+url = "https://docs.blender.org/manual/en/latest/modeling/meshes/retopology.html"
+what = "method and output in the 5.2 LTS manual"
+
+[[sources]]
+url = "https://developer.blender.org/docs/release_notes/2.81/sculpt/"
+what = "first version, 2.81, and quad output"
+
+[[sources]]
+url = "https://docs.blender.org/manual/en/2.82/sculpt_paint/sculpting/tool_settings/remesh.html"
+what = "OpenVDB"
+
+[[sources]]
+url = "https://www.blender.org/download/"
+what = "latest Blender, 5.2.3 LTS, 2026-10-22"
+
+[brief]
+contradicted = ["all versions from 2.8: from 2.81", "always uniform quads: Adaptivity above 0 adds triangles"]
+
+[[sources]]
+url = "https://docs.blender.org/manual/en/latest/modeling/meshes/retopology.html"
+what = "read again 2026-10-29: uniform topology; Adaptivity simplifies where detail is not needed; Fix Poles reduces the poles"
+
+[[sources]]
+url = "https://www.blender.org/download/"
+what = "read again 2026-10-29: Blender for Windows, macOS and Linux"

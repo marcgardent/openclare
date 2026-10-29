@@ -972,3 +972,56 @@ details.more .table-wrap { margin: 0.75rem 0 1.25rem; }
   body { background: #fff; color: #000; }
   .budget-panel { display: block !important; }
 }
+
+/* ------------------------------------------------------------ retopology */
+
+/* The tag switches of the retopology page reuse the budget switch; the
+   rules that hide the rows are written into the page by site/build.py. */
+.tag-filters { display: none; }
+@supports selector(:has(a)) {
+  .tag-filters { display: flex; flex-wrap: wrap; gap: 16px 24px; margin-top: 8px; }
+  .tag-filters .switch { display: block; }
+}
+.tag-switch .switch-cells { flex-wrap: wrap; }
+.tag-switch label { min-height: 36px; padding: 0 10px; font-size: 13px; }
+.more-filters { margin: 12px 0 0; }
+.tag-form { margin: 0; }
+.tag-help { margin: 0 0 8px; font-family: var(--mono); font-size: 13px; color: var(--slate); }
+.tag-old .button { margin-left: 12px; min-height: 32px; padding: 0 12px; font-size: 13px; }
+.more-filters > summary { font-family: var(--mono); font-size: 13px; color: var(--slate); }
+.tag-old { flex-basis: 100%; margin: 0; font-family: var(--mono); font-size: 13px; }
+table.tools td:first-child { min-width: 9rem; }
+table.tools a.note, table.platforms a.note { text-decoration: none; color: var(--slate); }
+dl.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 12px 0; }
+dl.facts dt { color: var(--slate); font-family: var(--mono); font-size: 13px; }
+dl.facts dd { margin: 0; overflow-wrap: anywhere; }
+dl.facts ul { margin: 0; padding-left: 1.1em; }
+@media (max-width: 640px) { dl.facts { grid-template-columns: 1fr; } dl.facts dd { margin-bottom: 8px; } }
+
+/* The tools of the retopology page: one band per tool, its facts on the
+   left and its tags on the right, so that a tool with many tags grows in
+   height only, and the list keeps its order. On a band a tag is the label of
+   its filter box. */
+.tiles { display: flex; flex-direction: column; margin: 1.25rem 0 2rem; border-top: 1px solid var(--rule); }
+.tile { display: grid; grid-template-columns: minmax(14rem, 22rem) 1fr; gap: 4px 24px; padding: 14px 0; border-bottom: 1px solid var(--rule); }
+.tile-facts { display: flex; flex-direction: column; gap: 4px; }
+.tile > ul.tags { align-content: start; margin: 0; }
+.tile h3 { margin: 0; font-size: 1.05rem; }
+.tile h3 a { text-decoration: none; }
+.tile-old { opacity: 0.75; }
+.tile p { margin: 0; }
+.tile-by, .tile-price { color: var(--slate); font-family: var(--mono); font-size: 12px; }
+.tile-what { font-size: 0.95rem; line-height: 1.45; }
+@media (max-width: 720px) {
+  .tile { grid-template-columns: 1fr; }
+  .tile > ul.tags { margin-top: 6px; }
+}
+ul.tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; padding: 0; list-style: none; }
+ul.tags li { margin: 0; }
+.tag { display: inline-block; padding: 2px 6px; text-transform: none; letter-spacing: 0; border: 1px solid var(--rule); background: var(--bg); color: var(--ink);
+  font-family: var(--mono); font-size: 12px; line-height: 1.5; }
+.tag .facet { color: var(--slate); }
+label.tag { cursor: pointer; }
+label.tag:hover { border-color: var(--ink); }
+.market-nav { margin: 0 0 16px; }
+.market-nav a[aria-current="page"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }

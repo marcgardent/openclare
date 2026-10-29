@@ -1,0 +1,32 @@
+name = "Easy Patch 2 - The Smart Retopology Patching Tool"
+slug = "easy-patch"
+author = "oimoyu"
+tags = ["mode:semi-manual", "scope:local", "guide:boundary", "output:quads", "engine:own", "edge-flow:pole-control", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid"]
+kind = "add-on"
+method = "the user draws a closed boundary of 2 to 6 sides over the source; the tool fills it with a quad patch whose only poles are N-poles and E-poles, and the user switches pattern, pole position and inner loop count before applying"
+purpose = "retopology patches where the user controls edge flow and pole placement"
+status = "active"
+checked = 2026-10-29
+notes = "The update log has no dates. Its history in the documentation repository dates the entries: 2.1.0 (Blender 5.0) by 2025-10-09, 2.1.1 by 2026-02-21, 2.1.2 by 2026-09-02. Interface in English, Chinese and Japanese. Also snaps selected vertices to the surface without a modifier."
+
+[distribution]
+url = "https://superhivemarket.com/products/easy_patch"
+channel = "superhive"
+licence = "GPL (version not stated)"
+price = "USD 14.90"
+
+[blender]
+min = "3.3"
+max = "5.2"
+
+[[sources]]
+url = "https://superhivemarket.com/products/easy_patch"
+what = "description, update log to 2.1.0, USD 14.90, GPL, Blender 3.3 - 5.2, 900+ sales; the user changes the pole position (read 2026-10-29)"
+
+[[sources]]
+url = "https://oimoyu.github.io/easy_patch_2_document/en/update_log.html"
+what = "update log to 2.1.2"
+
+[[sources]]
+url = "https://github.com/oimoyu/easy_patch_2_document"
+what = "commit dates of the update log (2025-10-09, 2026-02-21, 2026-09-02), read with gh api"

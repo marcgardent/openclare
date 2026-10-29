@@ -1,0 +1,55 @@
+name = "Bsurfaces GPL Edition"
+slug = "bsurfaces"
+author = "Eclectiel and Vladimir Spivak (cwolf3d); maintained by the Blender community"
+tags = ["mode:semi-manual", "scope:local", "guide:strokes", "output:quad-dominant", "engine:own", "os:windows", "os:linux", "os:macos", "edge-flow:loops", "edge-flow:symmetry", "licence:open-source", "source:public", "blender:unstated", "install:get-extensions", "price:free"]
+kind = "add-on"
+method = "makes a grid of faces across strokes drawn as annotations or Grease Pencil, Bézier curves or loose edges; the strokes give the rows and the order of the splines the columns"
+purpose = "modelling and retopology"
+status = "stale"
+checked = 2026-10-29
+notes = "Bundled with Blender up to 4.1, then moved to Blender Extensions. Version 1.8.2 (2024-05-14) served Blender 4.2 and is now marked unsupported; 1.8.3 (2025-01-06) raised the minimum to 4.3 for the Grease Pencil v3 API. The last commit is 2025-03-09; the README says it is maintained by the community with no support expected. Output is quad-dominant rather than quads: the source code also fills empty triangles. The manifest licence is GPL-3.0-or-later; the source file header still reads GPL-2.0-or-later."
+
+[distribution]
+url = "https://extensions.blender.org/add-ons/bsurfaces-gpl-edition/"
+channel = "extensions.blender.org"
+source = "https://projects.blender.org/extensions/mesh_bsurfaces"
+licence = "GPL-3.0-or-later"
+price = "free"
+
+[blender]
+min = "4.3"
+release = "1.8.4 (2025-02-28)"
+
+[[sources]]
+url = "https://extensions.blender.org/add-ons/bsurfaces-gpl-edition/"
+what = "name, tagline, licence, Blender 4.3 and newer, maintainer Community, about 133,000 downloads"
+
+[[sources]]
+url = "https://extensions.blender.org/add-ons/bsurfaces-gpl-edition/versions/"
+what = "versions 1.8.2 (2024-05-14, Blender 4.2, unsupported), 1.8.3 (2025-01-06) and 1.8.4 (2025-02-28), both 4.3 and newer"
+
+[[sources]]
+url = "https://projects.blender.org/extensions/mesh_bsurfaces"
+what = "README (bundled until 4.1, community maintained), blender_manifest.toml (copyright Eclectiel and Vladimir Spivak), operator descriptions in source/__init__.py, last commit 2025-03-09 (read through the Gitea API)"
+
+[[sources]]
+url = "https://docs.blender.org/manual/en/4.1/addons/mesh/bsurfaces.html"
+what = "the bundled add-on in the Blender 4.1 manual, credits Eclectiel and Spivak Vladimir (cwolf3d)"
+
+[brief]
+contradicted = [
+  "on Extensions from 4.3+: it has been on Extensions since Blender 4.2 (version 1.8.2, 2024-05-14); only versions 1.8.3 and later need 4.3",
+  "author Eclectiel, Vladimir Spivak: they hold the copyright, but the extension's maintainer is the Blender community",
+]
+
+[[sources]]
+url = "https://projects.blender.org/extensions/mesh_bsurfaces/src/branch/main/source/blender_manifest.toml"
+what = "manifest has no platforms key"
+
+[[sources]]
+url = "https://docs.blender.org/manual/en/latest/advanced/extensions/getting_started.html"
+what = "a manifest without platforms is available on all operating systems"
+
+[[sources]]
+url = "https://projects.blender.org/extensions/mesh_bsurfaces/src/branch/main/source/__init__.py"
+what = "option 'Make the loops match the paths of the strokes'; setup operator adds Mirror, Shrinkwrap, Subdivision, Solidify modifiers"

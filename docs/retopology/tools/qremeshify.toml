@@ -1,0 +1,71 @@
+name = "QRemeshify"
+slug = "qremeshify"
+author = "ksami"
+tags = ["mode:automatic", "mode:semi-automatic", "scope:global", "guide:parameters", "guide:marked-edges", "output:quads", "engine:quadwild", "os:windows", "os:linux", "os:macos", "edge-flow:feature-lines", "edge-flow:symmetry", "licence:open-source", "source:public", "blender:unstated", "install:zip", "price:free", "price:pay-what-you-want", "price:paid"]
+kind = "add-on"
+method = "QuadWild with the Bi-MDF quantization, bundled; edge flow guided by edges marked seam or sharp, material and face set boundaries"
+purpose = "a free quad remesher inside Blender, guided by marked edges"
+status = "stale"
+checked = 2026-10-29
+notes = "No commit since 2024-10-08 and no answer to the issues of 2026; issue #49 (2026-09-21) reports that installing fails on Blender 5.2. The README says Windows, with Linux and macOS still being tested; every release has archives for the three."
+
+[distribution]
+url = "https://github.com/ksami/QRemeshify/releases"
+channel = "github"
+source = "https://github.com/ksami/QRemeshify"
+licence = "GPL-3.0-or-later"
+price = "free"
+
+[[distribution.also]]
+channel = "gumroad"
+url = "https://ksami.gumroad.com/l/QRemeshify"
+price = "pay what you want (SGD 5 suggested)"
+
+[[distribution.also]]
+channel = "superhive"
+url = "https://superhivemarket.com/products/qremeshify"
+price = "USD 7"
+
+[blender]
+min = "4.2"
+release = "1.1.0 (2024-10-08)"
+
+[[papers]]
+title = "Reliable Feature-Line Driven Quad-Remeshing"
+authors = "Nico Pietroni, Stefano Nuvoli, Thomas Alderighi, Paolo Cignoni, Marco Tarini"
+venue = "ACM Transactions on Graphics 40(4) (SIGGRAPH)"
+year = 2021
+doi = "10.1145/3450626.3459941"
+
+[[papers]]
+title = "Min-Deviation-Flow in Bi-directed Graphs for T-Mesh Quantization"
+authors = "Martin Heistermann, Jethro Warnett, David Bommes"
+venue = "ACM Transactions on Graphics 42(4) (SIGGRAPH)"
+year = 2023
+doi = "10.1145/3592437"
+
+[[sources]]
+url = "https://github.com/ksami/QRemeshify"
+what = "method, licence, oldest Blender version, last commit 2024-10-08, issue #49; Windows, Linux and macOS in testing; symmetry; Detect Sharp; no external programs"
+
+[[sources]]
+url = "https://github.com/ksami/QRemeshify/releases"
+what = "latest release and its date"
+
+[[sources]]
+url = "https://ksami.gumroad.com/l/QRemeshify"
+what = "pay-what-you-want price"
+
+[[sources]]
+url = "https://superhivemarket.com/products/qremeshify"
+what = "price on Superhive"
+
+[brief]
+contradicted = [
+  "free on extensions.blender.org: not there; it comes from GitHub, Gumroad or Superhive",
+  "Blender 4.2 LTS to 5.x: 4.2 is the oldest, no newest is stated, and installing on 5.2 is reported to fail",
+]
+
+[[sources]]
+url = "https://github.com/ksami/QRemeshify/releases/tag/1.1.0"
+what = "archives for Windows, Linux and macOS"

@@ -1,0 +1,44 @@
+name = "Autoremesher NOW! | Automatic Remeshing"
+slug = "autoremesher-now"
+author = "Giambattista Von Nettesheim (seller Jhon Cabezas)"
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quad-dominant", "output:triangles", "engine:geogram", "use:sculpt", "use:scan", "use:ai-generated", "extra:repair", "os:windows", "os:macos", "density:uniform", "density:adaptive", "edge-flow:feature-lines", "edge-flow:curvature", "input:triangles", "input:manifold", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid"]
+kind = "bridge"
+method = "runs an external command-line process for four operations: Tris → Quads (mostly quads, engine not named), Tris → Tris with Geogram CVT, decimation and repair"
+purpose = "quad or even-triangle remeshing of triangle meshes such as sculpts, scans and AI-generated meshes"
+status = "active"
+checked = 2026-10-29
+notes = "The engine of Tris → Quads is not named, nor whether it is bundled; the licence of Geogram is not given. Same seller as mutamesh, and sold with it in a Superhive bundle (USD 8, USD 20 struck through). The description page says Blender 4.2 and newer and links GPL-3.0; the store and the 1.0.1 notes say Blender 5.1.1 only. Windows 11 x64 tested, macOS arm64 not tested. No other store."
+
+[distribution]
+url = "https://superhivemarket.com/products/autoremesher-now"
+channel = "superhive"
+licence = "GPL (version not stated)"
+price = "USD 6 (on sale, USD 15 struck through)"
+
+[blender]
+min = "5.1"
+max = "5.1"
+release = "1.0.1 (2026-05-09)"
+
+[[sources]]
+url = "https://superhivemarket.com/products/autoremesher-now"
+what = "price, GPL, Blender 5.1, tags Geogram remesher and CVT remesh, published 11 months ago, seller Jhon Cabezas in the page data"
+
+[[sources]]
+url = "https://superhivemarket.com/products/autoremesher-now/versions"
+what = "1.0.1 (2026-05-09), only Blender 5.1.1"
+
+[[sources]]
+url = "https://superhivemarket.com/products/autoremesher-now/docs"
+what = "the four operations, Tris → Tris (Geogram CVT), mostly-quad output, CLI mechanism, Windows 11 x64 tested, macOS arm64 untested; Size Adaptation 0 = uniform, more = smaller triangles in detailed areas; Hard Surface keeps sharp features; Shape Adaptation elongates along curvature directions; expects triangles; works best on 2-manifold meshes (read 2026-10-29)"
+
+[[sources]]
+url = "https://binatheis.github.io/autoremesher-now/"
+what = "the description shown on the store: operations, external process, Windows 11 and macOS arm64, Blender 4.2 and newer, GPL-3.0 link"
+
+[[sources]]
+url = "https://superhivemarket.com/products/autoremesher-now--mutamesh"
+what = "bundle with Mutamesh, USD 8 on sale, USD 20 struck through"
+
+[brief]
+contradicted = ["engine not named: the documentation names Geogram CVT for Tris → Tris; only the Tris → Quads engine is not named"]

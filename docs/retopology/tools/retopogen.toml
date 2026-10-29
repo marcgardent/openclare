@@ -1,0 +1,32 @@
+name = "RetopoGen - Game-Ready Auto-Retopology, LODs & Baking for Blender"
+slug = "retopogen"
+author = "StormScourge Games"
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quads", "engine:quadriflow", "engine:instant-meshes", "engine:voxel", "use:game-asset", "extra:lod", "bake:normal", "bake:ao", "os:windows", "os:macos", "os:linux", "edge-flow:feature-lines", "edge-flow:symmetry", "edge-flow:loops", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid"]
+kind = "bridge"
+method = "a pipeline over existing solvers: Blender's QuadriFlow by default, or the Instant Meshes program installed by the user; an optional voxel pre-pass on a copy of the source; then a chain of 2 to 6 LODs and normal and AO bakes with Cycles"
+purpose = "game assets: a quad mesh, its LODs and baked maps from a high-poly model"
+status = "active"
+checked = 2026-10-29
+notes = "Latest version: 1.0.2, undated. Since 1.0.2 Instant Meshes is not shipped: the user downloads it and sets its path. Face and joint loops for deformation are left to hand work, says the vendor. Listed about two months before 2026-10-29. No other store found."
+
+[distribution]
+url = "https://superhivemarket.com/products/retopogen"
+channel = "superhive"
+licence = "GPL-3.0-or-later"
+price = "USD 29"
+
+[blender]
+min = "4.5"
+max = "5.2"
+
+[[sources]]
+url = "https://superhivemarket.com/products/retopogen"
+what = "price, GPL, Blender 4.5 - 5.2, solvers, LOD profiles, bakes, Windows, macOS and Linux"
+
+[[sources]]
+url = "https://superhivemarket.com/products/retopogen/docs"
+what = "changelog 1.0.0 to 1.0.2 without dates, Instant Meshes binaries no longer shipped since 1.0.2, voxel pre-pass, GPL-3.0-or-later"
+
+[[sources]]
+url = "https://superhivemarket.com/products/retopogen/docs"
+what = "Windows, macOS or Linux; no network, no account; Instant Meshes optional; sharp edges become solver constraints (Preserve Sharp Edges, Mark Hard Edges by angle); Mark Loop and Mark Ring guides; Mesh Symmetry (QuadriFlow only)"

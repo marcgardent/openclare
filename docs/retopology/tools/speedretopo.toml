@@ -1,0 +1,52 @@
+name = "SpeedRetopo"
+slug = "speedretopo"
+author = "Cédric Lepiller (Pitiwazou)"
+tags = ["mode:helper", "scope:local", "edge-flow:symmetry", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid"]
+kind = "add-on"
+method = "starts a retopology object over the reference in one click, adds and updates Shrinkwrap and Mirror modifiers, sets the shading, and hands the drawing to a chosen tool (its Face tool, Bsurfaces or Poly Build), with relax, centre and freeze tools"
+purpose = "automating the setup and the repetitive steps of manual retopology"
+status = "unknown"
+checked = 2026-10-29
+notes = "No version number and no dated changelog on any store. Superhive lists Blender 2.9 to 5.2 and says it was published almost 7 years ago; a review of about a year ago mentions a recent update. Bsurfaces, LoopTools and Retopo MT are separate add-ons it can call; the author says he will not fix them. The Gumroad prices are read from the page data (EUR 5 base plus EUR 5, 15 or 45 by tier), not from the rendered page. The Superhive Studio tier covers up to 10 users, the Gumroad one up to 20. blendermarket.com/products/speedretopo now leads to Superhive."
+
+[distribution]
+url = "https://superhivemarket.com/products/speedretopo"
+channel = "superhive"
+licence = "GPL (version not stated)"
+price = "USD 10 (Personal, 1 user), USD 40 (Pro, up to 5 users), USD 70 (Studio, up to 10 users)"
+
+[[distribution.also]]
+channel = "gumroad"
+url = "https://pitiwazou-1.gumroad.com/l/speedretopo"
+price = "EUR 10 (Personal, 1 user), EUR 20 (Pro, up to 5 users), EUR 50 (Studio, up to 20 users)"
+
+[blender]
+min = "2.9"
+max = "5.2"
+
+[[sources]]
+url = "https://superhivemarket.com/products/speedretopo"
+what = "prices by licence, GPL, Blender 2.9 - 5.2, 9000+ sales, published almost 7 years ago"
+
+[[sources]]
+url = "https://superhivemarket.com/products/speedretopo/faq"
+what = "uses Bsurfaces and LoopTools, optional; any Blender tool can be used"
+
+[[sources]]
+url = "https://superhivemarket.com/products/speedretopo/ratings"
+what = "reviews from 4 months to over 2 years old, one naming the latest update"
+
+[[sources]]
+url = "https://pitiwazou-1.gumroad.com/l/speedretopo"
+what = "seller Pitiwazou - Cédric Lepiller, features (one-click start, automatic Shrinkwrap and Mirror, Face tool, Bsurface or Polybuild), tiers in EUR"
+
+[brief]
+contradicted = [
+  "Blender 3.x, 4.x: Superhive lists Blender 2.9 to 5.2",
+  "USD 10 to 70 by licence on Gumroad: Gumroad sells in EUR (about EUR 10 to 50), and its Studio tier covers 20 users instead of 10",
+  "Blender Market as a separate store: Blender Market is now Superhive",
+]
+
+[[sources]]
+url = "https://pitiwazou-1.gumroad.com/l/speedretopo"
+what = "read again 2026-10-29 in the page data: automatically manages modifiers like Shrinkwrap and Mirror"

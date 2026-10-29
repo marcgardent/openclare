@@ -1,0 +1,64 @@
+name = "RetopoFlow 4"
+slug = "retopoflow"
+author = "Orange Turbine (Jon Denning, Jonathan Williamson, Jonathan Lampel, JF Matheu)"
+tags = ["mode:manual", "mode:semi-manual", "scope:local", "guide:strokes", "guide:boundary", "output:quads", "os:windows", "os:linux", "os:macos", "edge-flow:symmetry", "edge-flow:loops", "licence:open-source", "source:public", "blender:5-x", "install:zip", "price:paid"]
+kind = "add-on"
+method = "sketch-based tools in Edit Mode whose new geometry snaps to the high-poly surface: Contours (loops around cylinders), PolyStrips, Strokes (grids of quads between strokes), PolyPen, Patches (fills a hole bounded by selected edges), Relax and Tweak brushes"
+purpose = "faster retopology with even, quad-based topology"
+status = "active"
+checked = 2026-10-29
+notes = "Version 4 (October 2025) is a rewrite inside Edit Mode. GitHub publishes the source of version 4 in branches (v4.0.0 to v4.3.0) but releases only RetopoFlow 3 (3.4.x, Blender 3.6 or later per the README). The licence file says GPL 3 or later; the blender_manifest.toml of the v4 branches says GPL-2.0-or-later. Strokes and Patches fill areas between drawn strokes or selected edges, which is close to semi-automatic; the suite is filed as manual because the user places each loop or strip. Operating systems not stated on the store; the README says every version runs on any system Blender supports."
+
+[distribution]
+url = "https://superhivemarket.com/products/retopoflow"
+channel = "superhive"
+source = "https://github.com/CGCookie/retopoflow"
+licence = "GPL-3.0-or-later"
+price = "USD 59.99"
+
+[[distribution.also]]
+channel = "github"
+url = "https://github.com/CGCookie/retopoflow/releases"
+price = "free (RetopoFlow 3 builds; RetopoFlow 4 only as source branches)"
+
+[blender]
+min = "4.2"
+max = "5.2"
+release = "4.2.1 (2026-09-16)"
+
+[[sources]]
+url = "https://superhivemarket.com/products/retopoflow"
+what = "name, seller Orange Turbine and its developers, price USD 59.99 with 12 months of updates, licence GPL, Blender 4.2 - 5.2, the tools"
+
+[[sources]]
+url = "https://superhivemarket.com/products/retopoflow/versions"
+what = "4.2.1 (2026-09-16), 4.1.9 added Blender 5.2 compatibility"
+
+[[sources]]
+url = "https://github.com/CGCookie/retopoflow"
+what = "RetopoFlow.LICENSE (GPL 3 or later for the code; non-code assets not free), README of the master and v4.2.2 branches, manifests, last push 2026-10-08 on branch v4.2.2"
+
+[[sources]]
+url = "https://github.com/CGCookie/retopoflow/releases"
+what = "latest GitHub release 3.4.10 (2026-01-29), RetopoFlow 3"
+
+[[sources]]
+url = "https://docs.retopoflow.com/"
+what = "official documentation, rewritten for version 4; links only Superhive and GitHub"
+
+[brief]
+contradicted = [
+  "authors Jonathan Lampel, vxlcoder: the store names Orange Turbine with Jon Denning, Jonathan Williamson, Jonathan Lampel and JF Matheu; vxlcoder is not named",
+  "suite based on gestures and vector fields: the sources describe sketch-based tools that snap to the surface; no vector field is mentioned",
+  "Blender 3.6 to 4.5+: RetopoFlow 4 supports Blender 4.2 to 5.2; 3.6 or later was RetopoFlow 3.4",
+  "on Blender Market and Gumroad: Blender Market is now Superhive; no Gumroad listing found, and the README and the docs name only Superhive and GitHub",
+  "GPL source free on GitHub: GitHub releases stop at RetopoFlow 3 (3.4.10); version 4 is there only as source branches",
+]
+
+[[sources]]
+url = "https://github.com/CGCookie/retopoflow"
+what = "README: all versions work on any operating system Blender supports"
+
+[[sources]]
+url = "https://superhivemarket.com/products/retopoflow"
+what = "draw across the center line and quick mirror modifier; place and adjust loops around any cylindrical form"

@@ -1,0 +1,36 @@
+name = "QuadMend - Quad Remesher for AI & Scanned Models"
+slug = "quadmend"
+author = "MendWorks (Ryan Banks)"
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quads", "engine:instant-meshes", "engine:quadriflow", "use:ai-generated", "use:scan", "extra:repair", "bake:color", "os:windows", "os:linux", "os:macos", "edge-flow:symmetry", "input:single-object", "bake:normal", "bake:material", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid"]
+kind = "add-on"
+method = "repairs the input (welds split seams, removes floating pieces, merges parts into one closed surface), runs Instant Meshes (bundled, through the pynanoinstantmeshes binding) and QuadriFlow and keeps the better-scored result (Fast mode: QuadriFlow only), fits it back onto the source and bakes the textures"
+purpose = "quad meshes from AI-generated and scanned models"
+status = "active"
+checked = 2026-10-29
+notes = "Latest version: 0.10.8, undated. Windows 10/11 and Linux x64 supported; macOS Apple Silicon in beta; Intel Macs get Fast mode (QuadriFlow) only. The product page names 0.10.8 but one line still names the 0.10.7 zip; the docs name 0.10.8. Listed on Superhive 28 days before 2026-10-29. How the better result is scored is not stated beyond the report metrics (distance, worst 1 %, quad share). No other store found."
+
+[distribution]
+url = "https://superhivemarket.com/products/quadmend"
+channel = "superhive"
+licence = "GPL (version not stated)"
+price = "USD 15; also in the MendWorks Toolkit bundle of 3 products, USD 32"
+
+[blender]
+min = "4.2"
+max = "5.2"
+
+[[sources]]
+url = "https://superhivemarket.com/products/quadmend"
+what = "price, bundle, licences (GPL; Instant Meshes BSD-3-Clause; oneTBB Apache-2.0), Blender 4.2 - 5.2, pipeline, OS support"
+
+[[sources]]
+url = "https://superhivemarket.com/products/quadmend/docs"
+what = "download 0.10.8, first public release 0.10.2, Instant Meshes through pynanoinstantmeshes, repair options, quality report"
+
+[[sources]]
+url = "https://superhivemarket.com/products/quadmend"
+what = "Windows 10/11 and Linux x64 full support, macOS Apple Silicon beta, Intel Macs Fast mode only; no account, offline, no GPU; bakes base color, roughness, metallic, alpha, emission and a detail normal map"
+
+[[sources]]
+url = "https://superhivemarket.com/products/quadmend/docs"
+what = "Symmetry X/Y/Z (QuadriFlow only); one object at a time (Remesh Each Selected for several); Sharp Edges is a shading option"

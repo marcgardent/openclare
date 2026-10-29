@@ -1,0 +1,43 @@
+name = "QuadAnneal Remeshing — QuadRemesh & Retopology for Blender"
+slug = "quadanneal-remeshing"
+author = "blenderVfxMaster (seller han yue)"
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quads", "engine:instant-meshes", "extra:keeps-attributes", "os:windows", "os:macos", "os:linux", "density:adaptive", "edge-flow:feature-lines", "edge-flow:symmetry", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid"]
+kind = "bridge"
+method = "exports the mesh to one of two bundled external programs, Instant Meshes or a backend named QuadAnneal, and imports the result as a new object; materials, UV maps and vertex-group weights can be projected back"
+purpose = "a quad version of a dense or uneven mesh, to work from"
+status = "active"
+checked = 2026-10-29
+notes = "Neither the algorithm nor the origin of the QuadAnneal backend is stated (its controls: sharp-edge angle, adaptivity, edge scaling, normal smoothing); a search-engine summary of the docs said it runs the AutoRemesher CLI, but the pages read today do not say so. The licence of the bundled Instant Meshes (BSD-3-Clause, see instant-meshes) is not given. Blender versions: the table says 3.6 - 5.2, the text 4.2 or newer; min is the text's. No version number or changelog. The page data gives USD 15.00 while the page shows USD 12. A free version is mentioned in the ratings but not linked. No other store."
+
+[distribution]
+url = "https://superhivemarket.com/products/quadanneal-remeshing-for-blender"
+channel = "superhive"
+licence = "MIT"
+price = "USD 12 (Plus), USD 20 (Pro)"
+
+[blender]
+min = "4.2"
+max = "5.2"
+
+[[papers]]
+title = "Instant Field-Aligned Meshes"
+authors = "Wenzel Jakob, Marco Tarini, Daniele Panozzo, Olga Sorkine-Hornung"
+venue = "ACM Transactions on Graphics 34(6) (SIGGRAPH Asia)"
+year = 2015
+doi = "10.1145/2816795.2818078"
+
+[[sources]]
+url = "https://superhivemarket.com/products/quadanneal-remeshing-for-blender"
+what = "prices, MIT, Blender 3.6 - 5.2 in the table and 4.2 or newer in the text, the two backends, Windows x64, macOS Apple Silicon, Linux x64, published 2 months ago, seller han yue in the page data; control of sharp edges and symmetry; adaptivity"
+
+[[sources]]
+url = "https://superhivemarket.com/products/quadanneal-remeshing-for-blender/docs"
+what = "two bundled external backends for Windows x64, macOS Apple Silicon and Linux x64, the controls of each (sharp-edge angle, adaptivity), requires Blender 4.2 or newer"
+
+[[sources]]
+url = "https://superhivemarket.com/products/quadanneal-remeshing-for-blender/faq"
+what = "exports the mesh and runs an external backend; does not use QuadriFlow"
+
+[[sources]]
+url = "https://superhivemarket.com/products/quadanneal-remeshing-for-blender/ratings"
+what = "four ratings; a review and the seller's reply name a free version with limitations"

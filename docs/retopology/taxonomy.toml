@@ -1,0 +1,156 @@
+# The tags of the tools, by facet. A tool carries tags as "facet:value", as many as fit.
+# Schema: README.md. `required` facets need at least one tag on every tool.
+
+[facet.mode]
+required = true
+title = "How the faces are made"
+automatic = "global solve: the user sets parameters, the tool makes the whole mesh"
+semi-automatic = "global solve steered by the user: marked edges, painted density, strokes or points"
+semi-manual = "local solve in Edit Mode: the user bounds a region (strokes, a loop, a patch) and the tool fills it"
+manual = "the user places the vertices or the faces; the tool snaps and speeds up"
+helper = "makes no faces: sets up the scene, the shading or the snapping"
+
+[facet.scope]
+required = true
+title = "Where it acts"
+global = "on the whole object"
+local = "on a region or a selection"
+
+[facet.guide]
+title = "What the user gives it"
+parameters = "settings only: face count, size, smoothing"
+density = "a painted density map, a vertex group or a size map"
+marked-edges = "edges marked sharp or seam, material or face set boundaries"
+strokes = "strokes, curves or lines drawn over the source"
+points = "points or markers placed on the source"
+template = "a base mesh whose topology is kept"
+boundary = "a closed loop of edges to fill"
+selection = "only the selected faces"
+
+[facet.output]
+title = "What it makes"
+quads = "only quads"
+quad-dominant = "mostly quads, a few triangles"
+triangles = "triangles"
+n-gons = "faces of more than four sides"
+template = "the topology of the base mesh given by the user"
+
+[facet.engine]
+title = "The solver inside"
+own = "its own algorithm"
+proprietary = "a closed algorithm"
+instant-meshes = "Instant Meshes (Jakob et al. 2015)"
+quadriflow = "QuadriFlow (Huang et al. 2018)"
+quadwild = "QuadWild (Pietroni et al. 2021), with or without Bi-MDF"
+autoremesher = "AutoRemesher (Jeremy Hu)"
+voxel = "a voxel grid (OpenVDB)"
+octree = "an octree"
+mmg = "the MMG library"
+cwf = "CWF"
+geogram = "Geogram"
+simulation = "a softbody simulation"
+particles = "particles relaxed on the surface"
+ml = "a machine-learning model somewhere in the chain"
+
+[facet.use]
+title = "What the publisher says it is for"
+sculpt = "dense sculpts"
+scan = "3D scans"
+ai-generated = "AI-generated meshes"
+cad = "tessellated CAD"
+hard-surface = "hard-surface models"
+organic = "organic models"
+head = "heads and faces"
+cylinder = "limbs and other cylindrical parts"
+relief = "reliefs and height fields"
+parts = "several parts joined into one"
+open-boundaries = "meshes with open boundaries to keep"
+game-asset = "game assets"
+
+[facet.extra]
+title = "What it does beside the faces"
+uv = "unwraps UVs"
+lod = "makes levels of detail"
+repair = "repairs the input"
+keeps-attributes = "carries UVs, materials or weights over to the result"
+cloud = "runs part of the work on a server"
+
+[facet.density]
+title = "How the size of the faces is set"
+uniform = "faces of one size"
+adaptive = "smaller faces where the detail or the curvature asks for them, on its own"
+
+[facet.edge-flow]
+title = "What steers the edge loops"
+feature-lines = "keeps or detects sharp edges and creases"
+curvature = "aligns the loops with the directions of curvature"
+symmetry = "keeps a symmetry"
+pole-control = "lets the user place or limit the poles"
+loops = "lets the user impose edge loops or rings"
+
+[facet.input]
+title = "What the source must be"
+manifold = "closed and manifold"
+triangles = "triangles only"
+single-object = "one object at a time"
+any = "any mesh, as the publisher states"
+
+[facet.os]
+title = "Systems it runs on"
+windows = "Windows"
+linux = "Linux"
+macos = "macOS"
+
+[facet.requires]
+title = "What it needs beside Blender"
+external-program = "a program installed apart"
+account = "a user account"
+internet = "a connection to a server"
+api-key = "the user's own key for an online service"
+gpu = "a specific GPU, such as NVIDIA with CUDA"
+
+[facet.blender]
+required = true
+title = "Newest Blender it states (computed)"
+5-x = "Blender 5.0 or later, stated or built in"
+4-x = "newest stated is in 4.2 to 4.5"
+legacy = "newest stated is before 4.2"
+unstated = "no newest version stated"
+
+[facet.install]
+required = true
+title = "How it is installed (computed)"
+built-in = "ships with Blender"
+get-extensions = "from Get Extensions in Blender, with updates"
+zip = "a ZIP installed from disk"
+external = "a program of its own"
+
+[facet.bake]
+title = "What maps it bakes from the source onto the result"
+color = "colour: albedo, diffuse or the source's image texture"
+normal = "normal map"
+height = "height or displacement map"
+ao = "ambient occlusion"
+material = "other material channels: roughness, metallic"
+
+[facet.licence]
+required = true
+title = "Under what licence"
+open-source = "an open-source licence (GPL, MIT, BSD...), sold or not"
+proprietary = "a closed licence"
+not-stated = "no licence stated"
+
+[facet.source]
+required = true
+title = "Where the source code is"
+public = "readable online by anyone"
+with-download = "in the add-on one downloads or buys, not published apart"
+closed = "not given"
+
+[facet.price]
+required = true
+title = "What it costs"
+free = "free"
+pay-what-you-want = "the buyer chooses the price"
+freemium = "a free edition and paid ones"
+paid = "paid"

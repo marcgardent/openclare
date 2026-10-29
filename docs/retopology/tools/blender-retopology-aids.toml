@@ -1,0 +1,53 @@
+name = "Blender's retopology aids: Retopology overlay, face snapping, Shrinkwrap"
+slug = "blender-retopology-aids"
+author = "Blender Foundation"
+tags = ["mode:helper", "scope:local", "os:windows", "os:linux", "os:macos", "licence:open-source", "source:public", "blender:5-x", "install:built-in", "price:free"]
+kind = "built-in"
+method = "the Retopology overlay draws the edit mesh see-through and offset towards the camera; Snap Target for Individual Elements (Face Project, Face Nearest) puts each moved vertex on the surface; the Shrinkwrap modifier moves every vertex to the target surface"
+purpose = "seeing and keeping a new mesh on a sculpt while placing faces by hand"
+status = "active"
+checked = 2026-10-29
+notes = "Three features, one entry, so no single oldest version: the Retopology overlay since 3.6, Face Nearest since 3.3, the Shrinkwrap modifier at least since 2.80. Before 3.6 the nearest option was Hidden Wire, which the overlay replaced."
+
+[distribution]
+url = "https://docs.blender.org/manual/en/latest/editors/3dview/display/overlays.html"
+channel = "blender"
+source = "https://projects.blender.org/blender/blender"
+licence = "GPL-2.0-or-later"
+price = "free"
+
+[[sources]]
+url = "https://docs.blender.org/manual/en/latest/editors/3dview/display/overlays.html"
+what = "Retopology overlay and its Offset, in the 5.2 LTS manual"
+
+[[sources]]
+url = "https://developer.blender.org/docs/release_notes/3.6/eevee/"
+what = "Retopology overlay added in 3.6, replacing Hidden Wire"
+
+[[sources]]
+url = "https://projects.blender.org/blender/blender/pulls/104599"
+what = "pull request of the Retopology overlay, merged 2023-03-03"
+
+[[sources]]
+url = "https://docs.blender.org/manual/en/latest/editors/3dview/controls/snapping.html"
+what = "Face Project and Face Nearest, Face Nearest Steps, Backface Culling"
+
+[[sources]]
+url = "https://developer.blender.org/docs/release_notes/3.3/modeling/"
+what = "snapping to Nearest Face added in 3.3"
+
+[[sources]]
+url = "https://docs.blender.org/manual/en/latest/modeling/modifiers/deform/shrinkwrap.html"
+what = "Shrinkwrap modifier, in the 5.2 LTS manual"
+
+[[sources]]
+url = "https://docs.blender.org/manual/en/2.80/modeling/modifiers/deform/shrinkwrap.html"
+what = "Shrinkwrap modifier present in 2.80"
+
+[[sources]]
+url = "https://www.blender.org/about/license/"
+what = "Blender source licensed GPL 2 or later by default"
+
+[[sources]]
+url = "https://www.blender.org/download/requirements/"
+what = "Blender runs on Windows, macOS and Linux"

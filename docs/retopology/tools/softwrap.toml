@@ -1,0 +1,40 @@
+name = "SoftWrap - Dynamics for Retopology"
+slug = "softwrap"
+author = "Jean Machado (Jeacom)"
+tags = ["mode:semi-automatic", "scope:global", "guide:template", "output:template", "engine:simulation", "use:scan", "use:sculpt", "os:windows", "os:linux", "edge-flow:symmetry", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid"]
+kind = "add-on"
+method = "a softbody simulation, made for retopology rather than physics, that wraps a base mesh chosen by the user onto the source"
+purpose = "fitting a base mesh, and so its topology, onto a scan or a sculpt"
+status = "active"
+checked = 2026-10-29
+notes = "The changelog stops at 2.1.2 (2024-01-14), but the store lists Blender 5.2 and reviews of the last months name builds for 4.5 and 5.1: status active on that evidence. The store offers no macOS; the manual says a macOS build exists, untested, and that Linux needs a system Python matching Blender's."
+
+[distribution]
+url = "https://superhivemarket.com/products/softwrap"
+channel = "superhive"
+licence = "GPL (version not stated)"
+price = "USD 40"
+
+[blender]
+min = "2.83"
+max = "5.2"
+release = "2.1.2 (2024-01-14)"
+
+[[sources]]
+url = "https://superhivemarket.com/products/softwrap"
+what = "price, licence, Blender 2.83 - 5.2, changelog, Windows and Ubuntu only"
+
+[[sources]]
+url = "https://superhivemarket.com/products/softwrap/ratings"
+what = "reviews naming builds for Blender 4.5 and 5.1"
+
+[brief]
+contradicted = ["Blender 2.8x to 4.x: the store lists 2.83 to 5.2"]
+
+[[sources]]
+url = "https://jeacom25b.github.io/Softwrap-Manual/installation/"
+what = "Windows and Linux fully supported; a macOS build untested; on Linux a system Python matching Blender's"
+
+[[sources]]
+url = "https://jeacom25b.github.io/Softwrap-Manual/interface/"
+what = "Symmetry panel: Mirror axis of the source mesh"

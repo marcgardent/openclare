@@ -1,0 +1,34 @@
+name = "Draw Xray"
+slug = "draw-xray"
+author = "Bartosz Styperek (bartoszstyperek)"
+tags = ["mode:manual", "mode:helper", "scope:local", "guide:strokes", "licence:not-stated", "source:closed", "blender:unstated", "install:zip", "price:freemium"]
+kind = "add-on"
+method = "an overlay that draws the retopology mesh over the high-poly one and shows which parts lie above or below its surface; the paid version adds a snap engine that follows the curvature (sinks into valleys, pushes out on peaks, offsets the subdivision shrink) and Quad Stroke, Strip Stroke and Wrap Limbs tools that draw quad strips"
+purpose = "a clearer retopology overlay than Blender's own, with snapping and strip drawing in the paid version"
+status = "stale"
+checked = 2026-10-29
+notes = "The store states no licence. The Studio licence is asked of companies above USD 180k income; both licences allow commercial use. The free version only draws the overlay (a helper); the paid one makes faces, hence manual. The store ships a patched F2 (F2 Xray Fix) that does not crash with Draw Xray. Last update 2025-04-15, so stale by the 12-month rule."
+
+[distribution]
+url = "https://bartoszstyperek.gumroad.com/l/draw_xray"
+channel = "gumroad"
+licence = "not stated"
+price = "USD 0+ (overlay only, no snapping), USD 18+ (with snapping and retopo tools, Standard licence), USD 32+ (Studio licence, 2-6 seats)"
+
+[blender]
+min = "4.2"
+release = "4.2.3 (2025-04-15)"
+
+[[sources]]
+url = "https://bartoszstyperek.gumroad.com/l/draw_xray"
+what = "the three prices, Blender 4.2+, free and paid features, update history 2.3 (2019-08-23) to 4.2.3 (2025-04-15), patched F2 included; read in a browser"
+
+[[sources]]
+url = "https://blenderartists.org/t/draw-xray/669707"
+what = "thread started 2016-06-09 by JoseConseco, the author's forum name; first versions free with a donation"
+
+[brief]
+contradicted = [
+  "free Standard / USD 18 Pro: Standard is the paid licence; the tiers are USD 0+ without snapping, USD 18+ Standard and USD 32+ Studio (2-6 seats), both paid ones with snapping and retopo tools",
+  "edge projection solver: the store calls it a custom snap engine that follows curvature, plus quad and strip stroke tools",
+]

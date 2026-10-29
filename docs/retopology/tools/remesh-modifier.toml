@@ -1,0 +1,44 @@
+name = "Remesh Modifier"
+slug = "remesh-modifier"
+author = "Blender Foundation"
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quads", "engine:octree", "engine:voxel", "os:windows", "os:linux", "os:macos", "density:uniform", "density:adaptive", "edge-flow:feature-lines", "licence:open-source", "source:public", "blender:5-x", "install:built-in", "price:free"]
+kind = "built-in"
+method = "four modes: Blocks, Smooth and Sharp on an octree (Octree Depth), Voxel on OpenVDB like Voxel Remesh"
+purpose = "a non-destructive remesh in the modifier stack"
+status = "active"
+checked = 2026-10-29
+notes = "Older than 2.80; 2.80 is the oldest version checked. Voxel mode since 2.83; its Adaptivity adds triangles."
+
+[distribution]
+url = "https://docs.blender.org/manual/en/latest/modeling/modifiers/generate/remesh.html"
+channel = "blender"
+source = "https://projects.blender.org/blender/blender"
+licence = "GPL-2.0-or-later"
+price = "free"
+
+[blender]
+min = "2.80"
+release = "5.2.3 (2026-10-22)"
+
+[[sources]]
+url = "https://docs.blender.org/manual/en/latest/modeling/modifiers/generate/remesh.html"
+what = "modes and quad-only output, in the 5.2 LTS manual"
+
+[[sources]]
+url = "https://docs.blender.org/manual/en/2.80/modeling/modifiers/generate/remesh.html"
+what = "Blocks, Smooth and Sharp in 2.80"
+
+[[sources]]
+url = "https://developer.blender.org/docs/release_notes/2.83/modeling/"
+what = "Voxel mode added in 2.83"
+
+[brief]
+contradicted = ["octree and SDF: the manual says octree and OpenVDB, never SDF"]
+
+[[sources]]
+url = "https://docs.blender.org/manual/en/latest/modeling/modifiers/generate/remesh.html"
+what = "Sharp mode preserves sharp edges and corners; Voxel Adaptivity simplifies where detail is not needed (5.2 LTS manual)"
+
+[[sources]]
+url = "https://docs.blender.org/manual/en/latest/modeling/meshes/retopology.html"
+what = "the voxel remesher, which the modifier runs non-destructively, makes a uniform topology"

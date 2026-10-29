@@ -1,0 +1,29 @@
+name = "HeadWrap: Automatic Head Retopology With Eyes and Teeth"
+slug = "headwrap"
+author = "Meshwright (Arminas Attas)"
+tags = ["mode:automatic", "mode:semi-automatic", "scope:global", "guide:points", "guide:template", "output:template", "engine:own", "use:head", "extra:uv", "os:windows", "os:linux", "os:macos", "engine:ml", "bake:color", "bake:normal", "licence:open-source", "source:with-download", "blender:5-x", "install:zip", "price:paid"]
+kind = "add-on"
+method = "renders the head in Blender, finds 478 face points with Google's face landmark models (or takes 10 points clicked by the user), then fits a quad template head onto the surface; the fitting algorithm is not described"
+purpose = "a quad head with eyes, teeth, tongue and UVs, fitted onto a realistic or semi-realistic head"
+status = "active"
+checked = 2026-10-29
+notes = "Automatic by default: the face points are found without the user, who may check and move them; Guided mode (10 clicks) is for stylized heads. The template has 4,262 vertices; Medium (17,000) and High (68,000) subdivide it onto the surface. Version 1.0.0 was published about 14 hours before 2026-10-29, so the release date is 2026-10-28 or 2026-10-29. The landmark library is not named. The creator links github.com/aratass, where no HeadWrap source is published. No other store."
+
+[distribution]
+url = "https://superhivemarket.com/products/headwrap"
+channel = "superhive"
+licence = "GPL-3.0-or-later"
+price = "USD 29"
+
+[blender]
+min = "4.2"
+max = "5.2"
+
+[[sources]]
+url = "https://superhivemarket.com/products/headwrap"
+what = "price, GPL 3.0 or later, Blender 4.2 - 5.2, 478 face points, Guided mode, template from MakeHuman (CC0), landmark models by Google (Apache 2.0), pure Python for Windows, macOS and Linux, works offline, Bake Texture (Full) moves the colour onto the UVs with a normal map, published about 14 hours before reading, seller Arminas Attas in the page data"
+
+[[sources]]
+url = "https://superhivemarket.com/products/headwrap/docs"
+what = "version 1.0.0 (headwrap-1.0.0.zip), Automatic and Guided modes, detail levels, Bake Texture with an optional Normal Map in Cycles, tested on 4.2 LTS and 5.2 LTS"
+

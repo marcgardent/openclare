@@ -1,0 +1,48 @@
+name = "Remi"
+slug = "remi"
+author = "Filip Lukovič (shaderko)"
+tags = ["mode:automatic", "scope:global", "guide:parameters", "output:quads", "output:triangles", "engine:voxel", "engine:instant-meshes", "engine:autoremesher", "use:scan", "use:ai-generated", "extra:uv", "bake:color", "bake:normal", "bake:ao", "bake:material", "extra:cloud", "os:windows", "os:macos", "edge-flow:feature-lines", "input:single-object", "licence:open-source", "source:public", "blender:5-x", "install:zip", "price:freemium"]
+kind = "add-on"
+method = "voxel (SDF) remesh, MeshLab decimation with Alpha Wrap, xatlas UVs, Cycles rebake of albedo, roughness, normal and AO; quads from a bundled Instant Meshes, or from AutoRemesher as an external program"
+purpose = "turning scanned and AI-generated meshes into lighter, textured assets"
+status = "active"
+checked = 2026-10-29
+notes = "Not on extensions.blender.org: installed from a ZIP of the GitHub releases. A pre-release, 2.7.0-beta.1 (2026-10-25), adds mesh generation from images. The downloads of 2.0.0 leave out desktop Linux, Intel Macs and Windows ARM64."
+
+[distribution]
+url = "https://github.com/shaderko/remi-blender-addon/releases"
+channel = "github"
+source = "https://github.com/shaderko/remi-blender-addon"
+licence = "GPL-3.0-or-later"
+price = "free add-on; cloud optimisation on credits (10 free, one per optimisation; plan prices not published)"
+
+[blender]
+min = "5.1"
+max = "5.2"
+release = "2.0.0 (2026-10-12)"
+
+[[sources]]
+url = "https://github.com/shaderko/remi-blender-addon"
+what = "method, purpose, price of the add-on and of the cloud"
+
+[[sources]]
+url = "https://raw.githubusercontent.com/shaderko/remi-blender-addon/main/blender_manifest.toml"
+what = "licence and oldest Blender version"
+
+[[sources]]
+url = "https://github.com/shaderko/remi-blender-addon/releases/tag/v2.0.0"
+what = "latest stable release; Blender 5.1 or 5.2; maps rebaked: albedo, roughness, normal, AO"
+
+[brief]
+contradicted = [
+  "Blender 4.x to 5.2: the oldest is 5.1",
+  "free extension on the portal: free, but shipped as a ZIP from GitHub, not on extensions.blender.org",
+]
+
+[[sources]]
+url = "https://github.com/shaderko/remi-blender-addon"
+what = "Windows x64 and macOS Apple Silicon; select one mesh in Object Mode; Closing Volume fits toward source surfaces and creases; AutoRemesher optional; account only for Remi Cloud"
+
+[[sources]]
+url = "https://github.com/shaderko/remi-blender-addon/releases/tag/v2.0.0"
+what = "downloads for Windows x64 and macOS arm64 only; no Windows ARM64, Intel Macs or desktop Linux"
