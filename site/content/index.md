@@ -49,6 +49,10 @@ An artist would rather have few poles and few spirals than perfectly square quad
 
 *The male body at simplicity 0, 0.25 (the presets), 0.5 and 1: 303, 259, 213 and 172 poles.*
 
+## In Blender
+
+The free add-on holds the whole retopology: a number of quads or their sizes, a density painted or taken from the shape, hard edges and materials kept as lines of edges, curves drawn on the model as guides or as hard edges, symmetry, and the hard edges of the result marked sharp and creased. What each setting does is on the [Get it](get.md) page.
+
 ## Read on
 
 <div class="cards">
