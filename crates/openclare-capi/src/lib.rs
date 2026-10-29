@@ -91,6 +91,9 @@ pub struct OpenclareResult {
     hard_edges: Vec<[u32; 2]>,
     /// Edges to keep sharp under subdivision, and how sharp.
     creases: Vec<([u32; 2], f64)>,
+    /// Edges of the mesh along a guide curve, each with the index of the
+    /// curve among those given.
+    curve_edges: Vec<([u32; 2], u32)>,
     /// The group of the input each face lies in; empty if it had none.
     face_groups: Vec<u32>,
     /// Texture coordinates, worked out the first time they are asked for.
@@ -107,6 +110,7 @@ impl OpenclareResult {
             mesh: PolyMesh::default(),
             hard_edges: Vec::new(),
             creases: Vec::new(),
+            curve_edges: Vec::new(),
             face_groups: Vec::new(),
             layers: OnceLock::new(),
             error: text(message),
@@ -308,6 +312,7 @@ unsafe fn remesh(
         hard_edges: done.hard_edges,
         face_groups: done.face_groups,
         creases: done.creases,
+        curve_edges: done.curve_edges,
         layers: OnceLock::new(),
         error: CString::default(),
         report: text(report),
@@ -691,6 +696,44 @@ pub unsafe extern "C" fn openclare_result_copy_hard_edges(result: *const Opencla
     unsafe { copy_edges(&result.hard_edges, vertices) }
 }
 
+/// How many edges of the mesh run along a guide curve.
+///
+/// # Safety
+///
+/// See [`openclare_result_ok`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_result_curve_edge_count(result: *const OpenclareResult) -> usize {
+    unsafe { held(result) }.map_or(0, |result| result.curve_edges.len())
+}
+
+/// Writes the edges along a guide curve, two vertices per edge, into
+/// `vertices`, and the index of the curve each runs along, among the curves
+/// given to [`openclare_remesh`], into `curves`: what a host marks each edge
+/// with, as its curve says. Either may be null.
+///
+/// # Safety
+///
+/// See [`openclare_result_ok`]; `vertices` must have room for twice
+/// [`openclare_result_curve_edge_count`] numbers, `curves` for as many.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_result_copy_curve_edges(
+    result: *const OpenclareResult,
+    vertices: *mut u32,
+    curves: *mut u32,
+) {
+    let Some(result) = (unsafe { held(result) }) else { return };
+    let edges: Vec<[u32; 2]> = result.curve_edges.iter().map(|&(edge, _)| edge).collect();
+    // SAFETY: room as documented.
+    unsafe { copy_edges(&edges, vertices) }
+    if !curves.is_null() {
+        // SAFETY: room for one number per edge, as documented.
+        let out = unsafe { std::slice::from_raw_parts_mut(curves, result.curve_edges.len()) };
+        for (slot, &(_, curve)) in out.iter_mut().zip(&result.curve_edges) {
+            *slot = curve;
+        }
+    }
+}
+
 /// Writes the group of the input each face of the mesh lies in, one number
 /// per face, into `groups`. Returns 0, and writes nothing, if the input came
 /// without groups.
@@ -858,9 +901,15 @@ pub unsafe extern "C" fn openclare_bake_height(
             uvs: &target_uvs,
         };
         let clock = Instant::now();
-        let baked =
-            openclare::bake::height_map(&target, &source, width as usize, height as usize, reach as f64, padding as usize)
-                .map_err(|error| error.to_string())?;
+        let baked = openclare::bake::height_map(
+            &target,
+            &source,
+            width as usize,
+            height as usize,
+            reach as f64,
+            padding as usize,
+        )
+        .map_err(|error| error.to_string())?;
         let report = format!(
             "width = {}\nheight = {}\ncovered = {}\nastray = {}\nlow = {}\nhigh = {}\nseconds = {:.3}\n",
             baked.width,
@@ -873,7 +922,8 @@ pub unsafe extern "C" fn openclare_bake_height(
         );
         Ok(OpenclareBaked { heights: baked.heights, error: CString::default(), report: text(report) })
     }));
-    let failed = |message: String| OpenclareBaked { heights: Vec::new(), error: text(message), report: CString::default() };
+    let failed =
+        |message: String| OpenclareBaked { heights: Vec::new(), error: text(message), report: CString::default() };
     let baked = match outcome {
         Ok(Ok(baked)) => baked,
         Ok(Err(message)) => failed(message),
@@ -1074,7 +1124,9 @@ pub unsafe extern "C" fn openclare_analysis_proposal(
     smallest: *mut f64,
 ) -> i32 {
     // SAFETY: null or a live handle, by contract.
-    let Some(analysis) = (unsafe { analysis.as_ref() }).and_then(|analysis| analysis.analysis.as_ref()) else { return 0 };
+    let Some(analysis) = (unsafe { analysis.as_ref() }).and_then(|analysis| analysis.analysis.as_ref()) else {
+        return 0;
+    };
     if largest.is_null() || smallest.is_null() {
         return 0;
     }
@@ -1100,11 +1152,14 @@ pub unsafe extern "C" fn openclare_analysis_count(
     below: *mut f64,
 ) -> i32 {
     // SAFETY: null or a live handle, by contract.
-    let Some(analysis) = (unsafe { analysis.as_ref() }).and_then(|analysis| analysis.analysis.as_ref()) else { return 0 };
+    let Some(analysis) = (unsafe { analysis.as_ref() }).and_then(|analysis| analysis.analysis.as_ref()) else {
+        return 0;
+    };
     if quads.is_null() || below.is_null() || !(smallest > 0.0 && largest >= smallest && largest.is_finite()) {
         return 0;
     }
-    let made = catch_unwind(AssertUnwindSafe(|| (analysis.quads(largest, smallest), analysis.below(largest, smallest))));
+    let made =
+        catch_unwind(AssertUnwindSafe(|| (analysis.quads(largest, smallest), analysis.below(largest, smallest))));
     let Ok((made, under)) = made else { return 0 };
     // SAFETY: valid, by contract.
     unsafe { (*quads, *below) = (made, under) };
@@ -1138,7 +1193,10 @@ pub unsafe extern "C" fn openclare_analysis_vertices(
     let Ok((at, under)) = catch_unwind(AssertUnwindSafe(|| analysis.at_vertices(largest, smallest))) else { return 0 };
     // SAFETY: room for one per vertex, by contract.
     let (sizes, coarser) = unsafe {
-        (std::slice::from_raw_parts_mut(sizes, handle.vertices), std::slice::from_raw_parts_mut(coarser, handle.vertices))
+        (
+            std::slice::from_raw_parts_mut(sizes, handle.vertices),
+            std::slice::from_raw_parts_mut(coarser, handle.vertices),
+        )
     };
     for (v, (size, below)) in at.into_iter().zip(under).enumerate().take(handle.vertices) {
         (sizes[v], coarser[v]) = (size as f32, below as u8);

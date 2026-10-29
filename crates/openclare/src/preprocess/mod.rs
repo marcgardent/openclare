@@ -44,6 +44,9 @@ pub struct WorkMesh {
     /// the edges of the output along them are to come out as hard edges,
     /// not only as a line of edges.
     pub sharp_guide_edges: Vec<[u32; 2]>,
+    /// Each guide edge along a curve, with the index of that curve among
+    /// those given: what the edges of the output along it are told by.
+    pub guide_edge_curves: Vec<([u32; 2], u32)>,
     /// Those of the guide edges that are edges of the shape itself, sharper
     /// than [`Request::edge_angle`]: the edges of the output along them come
     /// out as hard edges too, as the creases they are where they are kept.
@@ -358,22 +361,28 @@ impl Preprocessor for Isotropic {
                     .collect();
             }
         }
-        if laid.sharp.contains(&true)
+        if !laid.segments.is_empty()
             && let Some(lines) = &lines
         {
-            // An edge is of the kind of the line nearest to its middle, a
-            // crease of the source included: the edges of a box are no
-            // curve drawn as sharp, however near one they are.
+            // An edge is of the curve nearest to its middle, a crease of the
+            // source taken in among them: the edges of a box are of no curve
+            // drawn on it, however near one they are.
             let middle = |[a, b]: [u32; 2]| 0.5 * (work.mesh.positions[a as usize] + work.mesh.positions[b as usize]);
-            work.sharp_guide_edges = work
+            work.guide_edge_curves = work
                 .guide_edges
                 .iter()
-                .copied()
-                .filter(|&edge| {
-                    lines.closest_point(middle(edge)).is_some_and(|hit| {
-                        (hit.triangle as usize).checked_sub(source_feature_count).is_some_and(|k| laid.sharp[k])
-                    })
+                .filter_map(|&edge| {
+                    let hit = lines.closest_point(middle(edge))?;
+                    let k = (hit.triangle as usize).checked_sub(source_feature_count)?;
+                    Some((edge, laid.curve[k]))
                 })
+                .collect();
+            let sharp: HashSet<u32> = (0..laid.curve.len()).filter(|&k| laid.sharp[k]).map(|k| laid.curve[k]).collect();
+            work.sharp_guide_edges = work
+                .guide_edge_curves
+                .iter()
+                .filter(|(_, curve)| sharp.contains(curve))
+                .map(|&(edge, _)| edge)
                 .collect();
         }
         work.guide_lines = laid.segments;
@@ -432,6 +441,7 @@ fn blunt_acute_tips(work: &mut WorkMesh, reach: f64) {
     for edges in lists {
         edges.retain(|edge| !gone.contains(edge));
     }
+    work.guide_edge_curves.retain(|(edge, _)| !gone.contains(edge));
 }
 
 /// Leaves the triangulation as it is. Guide curves are not laid.
@@ -654,6 +664,7 @@ fn work_mesh(mesh: TriMesh, feature_edges: Vec<[u32; 2]>, request: &Request) -> 
         guide_gaps: 0,
         guide_edges: Vec::new(),
         sharp_guide_edges: Vec::new(),
+        guide_edge_curves: Vec::new(),
         shape_guide_edges: Vec::new(),
         curvature,
         confidence,

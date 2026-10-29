@@ -323,6 +323,7 @@ impl RemeshConfig {
         report.hard_edges = carried.edges(&report.hard_edges);
         report.guide_edges = carried.edges(&report.guide_edges);
         report.sharp_curve_edges = carried.edges(&report.sharp_curve_edges);
+        report.curve_edges = carried.carry(report.curve_edges.iter().copied());
         report.creases = carried.carry(report.creases.iter().copied());
         if !report.face_groups.is_empty() {
             report.face_groups = carried.faces.iter().map(|&f| report.face_groups[f as usize]).collect();

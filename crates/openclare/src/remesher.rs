@@ -830,6 +830,7 @@ impl QuadLayout {
                     let offset = merged.positions.len() as u32;
                     let listed = done.hard_edges.iter_mut().chain(done.guide_edges.iter_mut());
                     let listed = listed.chain(done.sharp_curve_edges.iter_mut());
+                    let listed = listed.chain(done.curve_edges.iter_mut().map(|(edge, _)| edge));
                     for edge in listed.chain(done.creases.iter_mut().map(|(edge, _)| edge)) {
                         *edge = edge.map(|v| v + offset);
                     }
@@ -1159,7 +1160,8 @@ impl QuadLayout {
                 if !underfed && !held.is_empty() && more {
                     let kept = Guides { curves: &[], lines: &held, ..*guides };
                     let kept_config = RemeshConfig { edge_angle: None, ..config.clone() };
-                    recorder.record("notes/lines", Shape::Note(&format!("done again with its held lines only: {cause}")));
+                    recorder
+                        .record("notes/lines", Shape::Note(&format!("done again with its held lines only: {cause}")));
                     if let LayoutOutcome::Done(mesh, mut report) =
                         self.try_layout_piece(input, &kept, &kept_config, least, recorder)?
                     {
@@ -1804,7 +1806,7 @@ fn settle(
     // it was drawn as one: it is listed apart, and neither marked sharp nor
     // creased for being there.
     let mut hard_edges = guide.map_or_else(Vec::new, |features| features.edges_along(mesh));
-    let (mut guide_edges, mut sharp_curve_edges) = (Vec::new(), Vec::new());
+    let (mut guide_edges, mut sharp_curve_edges, mut curve_edges) = (Vec::new(), Vec::new(), Vec::new());
     if !work.guide_edges.is_empty() {
         // Each edge along a line is of the kind of the edge of the work
         // mesh nearest to its middle: those lines are what the vertices
@@ -1820,10 +1822,14 @@ fn settle(
         let drawn: HashSet<[u32; 2]> = work.guide_edges.iter().copied().collect();
         let sharp: HashSet<[u32; 2]> = work.sharp_guide_edges.iter().copied().collect();
         let of_the_shape: HashSet<[u32; 2]> = work.shape_guide_edges.iter().copied().collect();
+        let curve_of: HashMap<[u32; 2], u32> = work.guide_edge_curves.iter().copied().collect();
         let mut kept = Vec::with_capacity(hard_edges.len());
         for edge in hard_edges {
             let middle = 0.5 * (mesh.positions[edge[0] as usize] + mesh.positions[edge[1] as usize]);
             let nearest = lines.closest_point(middle).map(|hit| work.feature_edges[hit.triangle as usize]);
+            if let Some(&curve) = nearest.and_then(|line| curve_of.get(&line)) {
+                curve_edges.push((edge, curve));
+            }
             match nearest {
                 Some(line) if sharp.contains(&line) => {
                     sharp_curve_edges.push(edge);
@@ -1839,7 +1845,7 @@ fn settle(
         hard_edges = kept;
     }
     let creases = Creases::default().mark(mesh, input, &surface, &hard_edges);
-    Ok(Lines { hard_edges, creases, guide_edges, sharp_curve_edges })
+    Ok(Lines { hard_edges, creases, guide_edges, sharp_curve_edges, curve_edges })
 }
 
 /// The edges of a finished mesh that are worth telling apart.
@@ -1852,12 +1858,14 @@ struct Lines {
     guide_edges: Vec<[u32; 2]>,
     /// Those of the hard edges that are along a curve drawn as one.
     sharp_curve_edges: Vec<[u32; 2]>,
+    /// Each edge along a curve, guide or sharp, with the index of the curve.
+    curve_edges: Vec<([u32; 2], u32)>,
 }
 
 impl Lines {
     fn into_report(self, report: &mut Report) {
         (report.hard_edges, report.creases, report.guide_edges) = (self.hard_edges, self.creases, self.guide_edges);
-        report.sharp_curve_edges = self.sharp_curve_edges;
+        (report.sharp_curve_edges, report.curve_edges) = (self.sharp_curve_edges, self.curve_edges);
     }
 }
 
