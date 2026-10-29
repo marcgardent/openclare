@@ -282,7 +282,7 @@ unsafe fn remesh(
         "{asked}\nvertices = {}\nfaces = {}\nquads = {}\nirregular_vertices = {}\npieces = {}\n\
          pieces_through_fallback = {}\npieces_failed = {}\npieces_skipped = {}\npieces_boxed = {}\nthin_pieces = {}\nquads_for_thin_pieces = {}\nguide_edges = {}\nsharp_curve_edges = {}\nfaces_across_groups = {}\nwelded_vertices = {}\nedges_taken_apart = {}\nguide_gaps = {}\n\
          guides_let_go = {}\nquads_wanted = {}\nbelow_smallest = {}\nlargest_edge = {}\nsmallest_edge = {}\noff_the_plane = {}\n\
-         seconds = {seconds:.3}\n",
+         crossing_faces = {}\nseconds = {seconds:.3}\n",
         stats.vertices,
         stats.faces,
         stats.quads,
@@ -306,6 +306,7 @@ unsafe fn remesh(
         done.largest_edge,
         done.smallest_edge,
         done.off_the_plane,
+        done.crossing_faces,
     );
     Ok(OpenclareResult {
         mesh,

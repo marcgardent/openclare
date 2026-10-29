@@ -528,6 +528,9 @@ fn remesh(args: &[String]) -> Result<(), String> {
             println!("         written: {path}, the group of each face");
         }
     }
+    if config.method == openclare::Method::Triangles {
+        println!("crossing {} triangles cut through another one", report.crossing_faces);
+    }
     if !curves.is_empty() {
         println!("guides   {} edges along the guide curves, {} breaks", report.guide_edges.len(), report.guide_gaps);
         if curves.iter().any(|curve| curve.sharp) {
