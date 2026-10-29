@@ -97,6 +97,10 @@ def library():
         copy.restype, copy.argtypes = None, [pointer, pointer]
     lib.openclare_result_crease_count.restype = size
     lib.openclare_result_crease_count.argtypes = [pointer]
+    lib.openclare_result_curve_edge_count.restype = size
+    lib.openclare_result_curve_edge_count.argtypes = [pointer]
+    lib.openclare_result_copy_curve_edges.restype = None
+    lib.openclare_result_copy_curve_edges.argtypes = [pointer, pointer, pointer]
     lib.openclare_result_copy_creases.restype = None
     lib.openclare_result_copy_creases.argtypes = [pointer, pointer, pointer]
     lib.openclare_result_copy_face_groups.restype = ctypes.c_int32
@@ -171,19 +175,20 @@ class Remeshed:
     `report` (what the engine says of the run, as a dictionary), and what was
     asked for on top: `uv` (per layer name, two floats per corner), `seams`
     and `hard_edges` (two vertices per edge), `creases` (the same, and one
-    weight per edge), None when not asked for; and `face_groups`, the group
+    weight per edge), `curve_edges` (the same, and the index of the curve
+    each runs along), None when not asked for; and `face_groups`, the group
     of the input each face lies in, None when the input came without groups."""
 
     def __init__(self):
         self.positions = self.sizes = self.corners = None
         self.report, self.uv = {}, {}
-        self.seams = self.hard_edges = self.creases = self.face_groups = None
+        self.seams = self.hard_edges = self.creases = self.curve_edges = self.face_groups = None
 
 
 def remesh(
     positions, vertex_count, triangles, triangle_count, corner_vertices, corner_count, preset, settings,
     density=None, on_stage=None, uv_layers=(), seams=False, hard_edges=False, creases=False, curves=(),
-    groups=None, edges=None,
+    groups=None, edges=None, curve_edges=False,
 ):
     """Remeshes into quads the triangle mesh whose arrays sit at the addresses
     given: three floats per vertex at `positions`, three corners per triangle
@@ -214,7 +219,9 @@ def remesh(
     `uv_layers` names the layers of texture coordinates wanted, among
     "grid" and "atlas"; `seams` asks for the edges the atlas is cut along,
     `hard_edges` for those that run along a hard edge of the input,
-    `creases` for those to keep sharp under subdivision, with their weights.
+    `creases` for those to keep sharp under subdivision, with their weights,
+    `curve_edges` for those that run along a guide curve, with the index of
+    the curve in `curves`.
 
     Returns a `Remeshed`.
     """
@@ -241,7 +248,10 @@ def remesh(
         (numpy.ascontiguousarray(points, numpy.float32).reshape(-1, 3), closed, sharp)
         for points, closed, sharp in curves
     ]
-    curves = [curve for curve in curves if len(curve[0]) >= 2]
+    # The curves of fewer than two points are left out; the index of each
+    # curve given to the engine is kept, to name it as the caller does.
+    kept_curves = [index for index, curve in enumerate(curves) if len(curve[0]) >= 2]
+    curves = [curves[index] for index in kept_curves]
     if curves:
         curve_points = numpy.concatenate([points for points, _, _ in curves])
         curve_sizes = numpy.array([len(points) for points, _, _ in curves], numpy.uint32)
@@ -293,6 +303,11 @@ def remesh(
             count = lib.openclare_result_crease_count(result)
             out.creases = (numpy.empty(2 * count, numpy.uint32), numpy.empty(count, numpy.float32))
             lib.openclare_result_copy_creases(result, out.creases[0].ctypes.data, out.creases[1].ctypes.data)
+        if curve_edges:
+            count = lib.openclare_result_curve_edge_count(result)
+            out.curve_edges = (numpy.empty(2 * count, numpy.uint32), numpy.empty(count, numpy.uint32))
+            lib.openclare_result_copy_curve_edges(result, out.curve_edges[0].ctypes.data, out.curve_edges[1].ctypes.data)
+            out.curve_edges = (out.curve_edges[0], numpy.array(kept_curves, numpy.uint32)[out.curve_edges[1]])
         return out
     finally:
         lib.openclare_result_free(result)

@@ -301,3 +301,42 @@ fn the_map_is_shown_to_whoever_listens() {
     assert!(first("map/") < first("layout/"));
     assert!(!paths.0.iter().any(|path| path == "map/lines-let-go" || path == "map/folded-with-every-line"));
 }
+
+#[test]
+fn each_edge_along_a_curve_says_which_curve() {
+    // A point alone (no curve, but counted), a loop round the cube and a
+    // sharp diagonal across its top: each edge of the result along a curve
+    // comes with the index of that curve among those given.
+    let source = primitives::cube(1);
+    let alone = GuideCurve { points: vec![Vec3::new(0.0, -1.0, 0.0)], closed: false, sharp: false };
+    let corners =
+        [Vec3::new(-1.0, -1.0, 0.3), Vec3::new(1.0, -1.0, 0.3), Vec3::new(1.0, 1.0, 0.3), Vec3::new(-1.0, 1.0, 0.3)];
+    let points = (0..40).map(|k| corners[k / 10].lerp(corners[(k / 10 + 1) % 4], (k % 10) as f64 / 10.0)).collect();
+    let ring = GuideCurve { points, closed: true, sharp: false };
+    let points = (0..31).map(|i| -0.6 + 0.04 * f64::from(i)).map(|t| Vec3::new(t, t, 1.0)).collect();
+    let diagonal = GuideCurve { points, closed: false, sharp: true };
+    let (mesh, report) = remesh(&source, 1000, &[alone, ring, diagonal]);
+    let of = |curve: u32| -> Vec<[u32; 2]> {
+        report.curve_edges.iter().filter(|&&(_, c)| c == curve).map(|&(edge, _)| edge).collect()
+    };
+    assert!(of(0).is_empty());
+    let (ring_edges, diagonal_edges) = (of(1), of(2));
+    assert_eq!(report.curve_edges.len(), ring_edges.len() + diagonal_edges.len());
+    assert!(ring_edges.len() >= 30, "{} edges along the loop", ring_edges.len());
+    for &[a, b] in &ring_edges {
+        for v in [a, b] {
+            assert!((mesh.positions[v as usize].z - 0.3).abs() < 1e-6, "{:?}", mesh.positions[v as usize]);
+        }
+    }
+    assert!(diagonal_edges.len() >= 8, "{} edges along the diagonal", diagonal_edges.len());
+    for &[a, b] in &diagonal_edges {
+        for v in [a, b] {
+            let p = mesh.positions[v as usize];
+            assert!((p.z - 1.0).abs() < 1e-6 && (p.x - p.y).abs() < 1e-6, "{p:?}");
+        }
+    }
+    // The same edges as the report lists by kind.
+    let set = |edges: &[[u32; 2]]| edges.iter().copied().collect::<std::collections::HashSet<_>>();
+    assert_eq!(set(&ring_edges), set(&report.guide_edges));
+    assert_eq!(set(&diagonal_edges), set(&report.sharp_curve_edges));
+}

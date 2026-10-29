@@ -373,6 +373,26 @@ fn guide_curves_go_in_as_flat_arrays() {
         assert!(count("sharp_curve_edges = ") >= 12, "{report}");
         assert!(count("guide_edges = ") + count("sharp_curve_edges = ") == edges, "{report}");
         assert_eq!(openclare_result_hard_edge_count(result), count("sharp_curve_edges = "));
+        // Each edge along a curve says which: the circle (0) at the height
+        // of 0.3, the short line (1) across the bottom.
+        let along = openclare_result_curve_edge_count(result);
+        assert_eq!(along, edges);
+        let (mut vertices, mut curves) = (vec![u32::MAX; 2 * along], vec![u32::MAX; along]);
+        openclare_result_copy_curve_edges(result, vertices.as_mut_ptr(), curves.as_mut_ptr());
+        let mut out = vec![0.0f32; 3 * openclare_result_vertex_count(result)];
+        openclare_result_copy_positions(result, out.as_mut_ptr());
+        for (edge, &curve) in vertices.chunks_exact(2).zip(&curves) {
+            for &v in edge {
+                let z = out[3 * v as usize + 2];
+                match curve {
+                    0 => assert!((z - 0.3).abs() < 5e-3, "{z}"),
+                    1 => assert!(z < -0.9, "{z}"),
+                    _ => panic!("curve {curve}"),
+                }
+            }
+        }
+        assert!(curves.contains(&0) && curves.contains(&1), "{curves:?}");
+        assert_eq!(openclare_result_curve_edge_count(null()), 0);
         openclare_result_free(result);
     }
 }
