@@ -260,10 +260,12 @@ settings.shading = "BY_ANGLE"
 shape(settings, "organic")
 settings.quads = 800
 
-# Curves: two circles drawn round a ball, each held on it by a Shrinkwrap.
-# One is put in the Guide category and the other in the Sharp one, with the
-# buttons of the panel. The result has an edge loop on each, and the edges of
-# the second are marked sharp and creased.
+# Curves: two circles round a ball, each held on it by a Shrinkwrap, given
+# to the ball from the panel of the curve (its Mesh, which parents it where it
+# is). The first is a line of edges and nothing more; the second marks its
+# edges sharp, creased in full and as seams.
+import mathutils  # noqa: E402
+
 bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=5, radius=1.0, location=(4.0, 0.0, 0.0))
 ball = bpy.context.active_object
 
@@ -273,83 +275,75 @@ def circle_at(height):
     circle = bpy.context.active_object
     circle.data.resolution_u = 16
     circle.modifiers.new("on the ball", "SHRINKWRAP").target = ball
+    circle.openclare_curve.mesh = ball
     return circle
-
-
-def with_the_ball(circle):
-    """The circle selected, and the ball last: the active object, whose
-    panel the buttons are on."""
-    for other in bpy.context.selected_objects:
-        other.select_set(False)
-    circle.select_set(True)
-    ball.select_set(True)
-    bpy.context.view_layer.objects.active = ball
-
-
-def assign(circle, category):
-    with_the_ball(circle)
-    assert bpy.ops.object.openclare_curves_assign(category=category) == {"FINISHED"}
-
-
-loop, ridge = circle_at(0.3), circle_at(-0.3)
-alone(ball)
-assign(loop, "guide")
-assign(ridge, "sharp")
-guides, sharps = settings.guide_curves, settings.sharp_curves
-assert guides is not None and sharps is not None and guides != sharps
-assert list(guides.objects) == [loop] and list(sharps.objects) == [ridge]
 
 
 def coloured(drawn, colour):
     return all(abs(got - wanted) < 1e-6 for got, wanted in zip(drawn.color, colour))
 
 
-assert coloured(loop, openclare.CATEGORY["guide"][1]) and coloured(ridge, openclare.CATEGORY["sharp"][1])
-assert not coloured(loop, openclare.CATEGORY["sharp"][1])
+loop, ridge = circle_at(0.3), circle_at(-0.3)
+assert loop.parent == ball and ridge.parent == ball
+assert (loop.matrix_world.translation - mathutils.Vector((4.0, 0.0, 0.3))).length < 1e-6, "parented, it moved"
+marked = ridge.openclare_curve
+marked.sharp, marked.crease, marked.seam = True, 1.0, True
+assert coloured(ridge, openclare.CURVE_COLOURS["seam"])
+marked.seam = False
+assert coloured(ridge, openclare.CURVE_COLOURS["hard"])
+marked.seam = True
 
-# Moving a curve to the other category takes it out of the first.
-assign(loop, "sharp")
-assert list(guides.objects) == [] and set(sharps.objects) == {loop, ridge}
-assign(loop, "guide")
-assert list(guides.objects) == [loop] and list(sharps.objects) == [ridge]
-
-# Select and Deselect act on the curves of one category.
+# Select and Deselect act on the curves of the ball.
 alone(ball)
-assert bpy.ops.object.openclare_curves_select(category="sharp", select=True) == {"FINISHED"}
-assert ridge.select_get() and not loop.select_get()
+assert bpy.ops.object.openclare_curves_select(select=True) == {"FINISHED"}
+assert ridge.select_get() and loop.select_get()
 assert bpy.context.view_layer.objects.active == ball, "the ball is no longer active: its panel would go"
-assert bpy.ops.object.openclare_curves_select(category="sharp", select=False) == {"FINISHED"}
-assert not ridge.select_get()
+assert bpy.ops.object.openclare_curves_select(select=False) == {"FINISHED"}
+assert not ridge.select_get() and not loop.select_get()
 
 alone(ball)
 settings.quads, settings.adaptive_size = 600, 0.0
-curves = openclare.curves_of(guides, ball)
-assert len(curves) == 1 and curves[0][1] and not curves[0][2], "one closed guide curve expected"
-assert all(abs(float((point ** 2).sum()) ** 0.5 - 1.0) < 0.02 for point in curves[0][0]), "the circle is not on the ball"
-assert openclare.curves_of(sharps, ball, sharp=True)[0][2]
+curves, marks = openclare.curves_of(ball)
+assert len(curves) == 2 and all(closed for _, closed, _ in curves), "two closed curves expected"
+assert sorted(marks) == [(False, 0.0, False), (True, 1.0, True)], marks
+loop_points = curves[[m[0] for m in marks].index(False)][0]
+assert all(abs(float((point ** 2).sum()) ** 0.5 - 1.0) < 0.02 for point in loop_points), "the circle is not on the ball"
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 mesh = bpy.context.active_object.data
 # The Shrinkwrap brought each circle to the nearest points of the ball, a
 # circle of latitude; the loop is at its height.
-height = sum(float(point[2]) for point in curves[0][0]) / len(curves[0][0])
-on_the_loop = [vertex.index for vertex in mesh.vertices if abs(vertex.co.z - height) < 0.01]
-on_the_ridge = [vertex.index for vertex in mesh.vertices if abs(vertex.co.z + height) < 0.01]
+height = sum(float(point[2]) for point in loop_points) / len(loop_points)
+on_the_loop = {vertex.index for vertex in mesh.vertices if abs(vertex.co.z - height) < 0.01}
+on_the_ridge = {vertex.index for vertex in mesh.vertices if abs(vertex.co.z + height) < 0.01}
 print("CURVES a loop of", len(on_the_loop), "vertices at height %.3f," % height, len(on_the_ridge), "on the ridge")
 assert len(on_the_loop) >= 12 and len(on_the_ridge) >= 12, "the curves have no loop of edges"
-# Sharp and creased along the ridge, and nowhere else.
-sharp = [edge for edge in mesh.edges if edge.use_edge_sharp]
+# Sharp, creased in full and seams along the ridge, and nowhere else.
 weights = mesh.attributes["crease_edge"].data
-assert len(sharp) >= 12, f"{len(sharp)} sharp edges"
-assert all(set(edge.vertices) <= set(on_the_ridge) for edge in sharp), "a sharp edge off the ridge"
-assert all(weights[edge.index].value == 1.0 for edge in sharp), "a sharp edge is not creased in full"
-assert sum(1 for weight in weights if weight.value > 0) == len(sharp)
+along_ridge = [edge for edge in mesh.edges if set(edge.vertices) <= on_the_ridge]
+for name, edges in (("sharp", [e for e in mesh.edges if e.use_edge_sharp]), ("seam", [e for e in mesh.edges if e.use_seam]),
+                    ("creased", [e for e in mesh.edges if weights[e.index].value > 0])):
+    assert len(edges) >= 12 and all(set(edge.vertices) <= on_the_ridge for edge in edges), f"{len(edges)} {name} edges"
+assert all(edge.use_edge_sharp and edge.use_seam and weights[edge.index].value == 1.0 for edge in along_ridge)
+
+# Half a crease, and no other mark: the ridge is creased by half, and is a
+# line of edges otherwise.
+marked.sharp, marked.crease, marked.seam = False, 0.5, False
+alone(ball)
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+mesh = bpy.context.active_object.data
+weights = mesh.attributes["crease_edge"].data
+along_ridge = [edge for edge in mesh.edges if set(edge.vertices) <= {v.index for v in mesh.vertices if abs(v.co.z + height) < 0.01}]
+assert len(along_ridge) >= 12 and all(abs(weights[edge.index].value - 0.5) < 1e-6 for edge in along_ridge)
+assert not any(edge.use_seam for edge in mesh.edges) and not any(edge.use_edge_sharp for edge in along_ridge)
+print("MARKS sharp, crease 1 and seam along the ridge, then a crease of 0.5 alone:", len(along_ridge), "edges")
 
 # Under a scale that is not the same on every axis the engine is given the
 # ball stretched, and the curves stretched with it: the loops stay on them.
 ball.scale = (1.0, 1.0, 2.0)
 bpy.context.view_layer.update()
-curves = openclare.curves_of(guides, ball)
-height = sum(float(point[2]) for point in curves[0][0]) / len(curves[0][0])
+curves, marks = openclare.curves_of(ball)
+loop_points = curves[[m[1] for m in marks].index(0.0)][0]
+height = sum(float(point[2]) for point in loop_points) / len(loop_points)
 alone(ball)
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 mesh = bpy.context.active_object.data
@@ -359,23 +353,19 @@ assert len(stretched) >= 12, "the guide curve is lost under a scale of 1, 1, 2"
 ball.scale = (1.0, 1.0, 1.0)
 bpy.context.view_layer.update()
 
-# Remove takes a curve out of its category and gives it back its colour.
-with_the_ball(ridge)
-assert bpy.ops.object.openclare_curves_remove(category="guide") == {"FINISHED"}
-assert list(sharps.objects) == [ridge], "taken out of a category it was not in"
-assert bpy.ops.object.openclare_curves_remove(category="sharp") == {"FINISHED"}
-assert list(sharps.objects) == [] and ridge.users_collection and coloured(ridge, openclare.PLAIN)
-alone(ball)
-assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
-assert not any(edge.use_edge_sharp for edge in bpy.context.active_object.data.edges)
-settings.guide_curves = settings.sharp_curves = None
+# No mesh: the curve is let go of where it is, and the ball no longer takes it.
+where = ridge.matrix_world.translation.copy()
+ridge.openclare_curve.mesh = None
+assert ridge.parent is None and (ridge.matrix_world.translation - where).length < 1e-6
+assert len(openclare.curves_of(ball)[0]) == 1
+for circle in (loop, ridge):
+    bpy.data.objects.remove(circle)
 
 # A curve drawn on the ball with the drawing tool's logic: a stroke round it
-# at a height of 0.5, closed on its start, made into a curve of the Guide
-# category. The result has a loop of edges on it, with no Shrinkwrap.
+# at a height of 0.5, closed on its start, made into a curve of no mark. The
+# result has a loop of edges on it.
 from openclare import trace  # noqa: E402
 
-settings.guide_curves = None
 settings.quads, settings.adaptive_size = 600, 0.0
 height = 0.5
 ring = (1.0 - height ** 2) ** 0.5
@@ -384,14 +374,15 @@ for degrees in range(3, 360, 3):
     stroke.move((ring * math.cos(math.radians(degrees)), ring * math.sin(math.radians(degrees)), height))
 points, closed = stroke.curve()
 assert closed, "the stroke round the ball did not close"
-drawn = openclare.drawn_curve(bpy.context, ball, points, closed, "guide", 0.02 * 2 * 3 ** 0.5)
-assert list(settings.guide_curves.objects) == [drawn] and coloured(drawn, openclare.CATEGORY["guide"][1])
+drawn = openclare.drawn_curve(bpy.context, ball, points, closed, (False, 0.0, False), 0.02 * 2 * 3 ** 0.5)
+assert openclare.curve_objects(ball) == [drawn] and coloured(drawn, openclare.CURVE_COLOURS["line"])
+assert drawn.openclare_curve.mesh == ball
 # Few control points: a ring of 268 points of the stroke is two Bezier
 # segments; the curve is a child of the ball, held on it by a Shrinkwrap.
 spline = drawn.data.splines[0]
 assert spline.type == "BEZIER" and spline.use_cyclic_u and len(spline.bezier_points) <= 4, len(spline.bezier_points)
 assert drawn.parent == ball and drawn.modifiers[openclare.SHRINKWRAP].target == ball
-curves = openclare.curves_of(settings.guide_curves, ball)
+curves, _ = openclare.curves_of(ball)
 assert len(curves) == 1 and curves[0][1], "the drawn curve is not read back as one closed curve"
 off = max(abs(float(sum(x * x for x in point)) ** 0.5 - 1.0) for point in curves[0][0])
 assert off < 0.01, f"the drawn curve is {off:.4f} off the ball"
@@ -501,7 +492,7 @@ assert openclare.draw.surface_tree(bpy.context, ball) is tree
 assert abs(openclare.draw.step_of(ball) - 0.01 * 2 * 3 ** 0.5) < 1e-3, openclare.draw.step_of(ball)
 # The curve drawn above is one that can be taken up again, and its points set
 # anew (as a stroke taken up and drawn on).
-found = openclare.draw.drawn_curves(bpy.context, ball, settings.guide_curves)
+found = openclare.draw.drawn_curves(bpy.context, ball)
 assert len(found) == 1 and found[0][0] == drawn and found[0][2], found
 openclare.bezier_spline(drawn.data, points[:100], False, 0.02)
 assert drawn.data.splines[0].type == "BEZIER" and not drawn.data.splines[0].use_cyclic_u
@@ -534,26 +525,26 @@ cutter.close()
 assert done is not None and done[0] == 1 and done[1][1] is None and len(done[1][0]) == len(loop[0]), done
 step = openclare.draw.step_of(ball)
 ring = openclare.trace.resampled([tuple(point) for point in loop[0]], step, closed=True)
-belt = openclare.drawn_curve(bpy.context, ball, ring, True, "guide", step)
+belt = openclare.drawn_curve(bpy.context, ball, ring, True, (True, 1.0, False), step)
+assert coloured(belt, openclare.CURVE_COLOURS["hard"]) and belt.openclare_curve.sharp
 assert belt.data.splines[0].use_cyclic_u and len(belt.data.splines[0].bezier_points) <= 4
 print("CUT a loop of", len(loop[0]), "points round the ball, made", len(belt.data.splines[0].bezier_points), "control points")
-# A copy of the ball (Shift+D) shares its collections; a curve drawn on the
-# copy is its own, and each takes only its own curves when remeshed.
-assert settings.guide_curves.name.startswith(f"{ball.name} guide curves"), settings.guide_curves.name
+# A copy of the ball alone (Shift+D) takes none of its curves: they are the
+# children of the ball; a curve drawn on the copy is the copy's.
 bpy.ops.object.select_all(action="DESELECT")
 ball.select_set(True)
 bpy.context.view_layer.objects.active = ball
 bpy.ops.object.duplicate()
 copy = bpy.context.active_object
 copy.location.x += 5.0
-assert copy.openclare.guide_curves == settings.guide_curves
-openclare.drawn_curve(bpy.context, copy, ring, True, "guide", step)
+assert openclare.curve_objects(copy) == []
+openclare.drawn_curve(bpy.context, copy, ring, True, (False, 0.0, False), step)
 bpy.context.view_layer.update()
-assert len(openclare.curve_objects(settings.guide_curves)) == 3, openclare.curve_objects(settings.guide_curves)
-assert len(openclare.curve_objects(settings.guide_curves, ball)) == 2 and len(openclare.curve_objects(settings.guide_curves, copy)) == 1
-print("COPY the ball and its copy share a collection of 3 curves: 2 taken for the ball, 1 for the copy")
+assert len(openclare.curve_objects(ball)) == 2 and len(openclare.curve_objects(copy)) == 1
+print("COPY the copy of the ball has its own curve; the ball keeps its 2")
 bpy.data.objects.remove(copy)
-settings.guide_curves = None
+for drawn_on_ball in openclare.curve_objects(ball):
+    bpy.data.objects.remove(drawn_on_ball)
 settings.quads, settings.adaptive_size = 800, 50.0
 
 # Materials: a flat grid whose left third is of another material. The result

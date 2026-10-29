@@ -1,18 +1,18 @@
 """The Draw Curve and Cut Volume tools, in the toolbar of the 3D viewport
-(T) in Object Mode, one button: a guide or sharp curve drawn with the mouse
-straight on a mesh, instead of a curve object held on it by a Shrinkwrap by
-hand. The mesh drawn on is the active object, selected; when the active
-object is not a selected mesh, the tools show the cursor of a thing that
-cannot be done, and a click does nothing. A curve is a child of the mesh it
-was drawn on, and only its own curves are taken when it is remeshed, though
-a copy of it (Shift+D) shares its collections.
+(T) in Object Mode, one button: a curve drawn with the mouse straight on a
+mesh, for the result to have a line of edges along it, instead of a curve
+object held on it by a Shrinkwrap by hand. The mesh drawn on is the active
+object, selected; when the active object is not a selected mesh, the tools
+show the cursor of a thing that cannot be done, and a click does nothing. A
+curve is a child of the mesh it was drawn on: its children that are curves
+are what a mesh is remeshed with.
 
 The left button held down draws a stroke on the surface, as `trace` keeps
 it: forward, back along the stroke to undo it, closed if let go at its
 start (the ribbon closes to show it); pressed near an end of a curve drawn
 before, it takes that curve up again from there. A ribbon is drawn over the
-surface while the stroke goes on; on release the stroke becomes a curve of the category chosen in the
-header of the tool (`drawn_curve`), one step of undo. Esc or the right
+surface while the stroke goes on; on release the stroke becomes a curve with
+the marks chosen in the header of the tool (`drawn_curve`), one step of undo. Esc or the right
 button drops the stroke under way.
 
 The point that draws is pulled by the mouse on a rope (`trace.pulled`), as
@@ -295,16 +295,14 @@ def follow_cursor():
     return LOOK_FOR_CURSOR
 
 
-def drawn_curves(context, owner, collection):
-    """The curves of `collection` drawn on `owner` that can be taken up
-    again: children of `owner` of one spline each. A list of (object, points
-    as the curve is seen on the surface, in the space of `owner`, closed)."""
+def drawn_curves(context, owner):
+    """The curves drawn on `owner` that can be taken up again: its children
+    that are curves of one spline each. A list of (object, points as the
+    curve is seen on the surface, in the space of `owner`, closed)."""
     found = []
-    if collection is None:
-        return found
     depsgraph = context.evaluated_depsgraph_get()
-    for drawn in collection.all_objects:
-        if drawn.type != "CURVE" or drawn.parent != owner or len(drawn.data.splines) != 1:
+    for drawn in owner.children:
+        if drawn.type != "CURVE" or len(drawn.data.splines) != 1:
             continue
         evaluated = drawn.evaluated_get(depsgraph)
         mesh = evaluated.to_mesh()
@@ -336,14 +334,19 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
     bl_label = "Draw Curve"
     bl_options = {"REGISTER", "UNDO"}
 
-    category: bpy.props.EnumProperty(
-        name="Category",
-        description="What the curve drawn is",
-        items=[
-            ("guide", "Guide", "A line of edges along it"),
-            ("sharp", "Sharp", "A line of hard edges along it, marked sharp and creased"),
-        ],
-        default="guide",
+    sharp: bpy.props.BoolProperty(
+        name="Sharp", description="The edges of the result along the curve are marked sharp", default=False
+    )
+    crease: bpy.props.FloatProperty(
+        name="Crease",
+        description="Crease weight of the edges of the result along the curve: 1 keeps them sharp under subdivision",
+        subtype="FACTOR",
+        default=0.0,
+        min=0.0,
+        max=1.0,
+    )
+    seam: bpy.props.BoolProperty(
+        name="Seam", description="The edges of the result along the curve are marked as seams", default=False
     )
     rope: bpy.props.FloatProperty(
         name="Rope",
@@ -428,7 +431,7 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
         return context.area is not None and context.area.type == "VIEW_3D"
 
     def invoke(self, context, event):
-        from . import CATEGORY, category_collection
+        from . import curve_colour
 
         self.timings = Timings("Draw Curve")
         mouse = (event.mouse_region_x, event.mouse_region_y)
@@ -443,9 +446,8 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
         pixel = pixel_at(context, self.owner, start)
         self.pixel = pixel
         step, near, back = self.spacing * pixel, self.close * pixel, self.back_band * pixel
-        collection = category_collection(context, self.category, owner=self.owner)
         self.taken = None
-        curves = drawn_curves(context, self.owner, collection)
+        curves = drawn_curves(context, self.owner)
         end = trace.end_near([(points, closed) for _, points, closed in curves], start, near)
         if end is not None:
             index, at_start = end
@@ -453,7 +455,10 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
             self.stroke = trace.taken_up(points, closed, at_start, step, near, back=back)
         else:
             self.stroke = trace.Trace(start, step, near, back=back)
-        self.colour = CATEGORY[self.category][1]
+        self.colour = curve_colour(self.sharp, self.crease, self.seam)
+        if self.taken is not None:
+            told = self.taken.openclare_curve
+            self.colour = curve_colour(told.sharp, told.crease, told.seam)
         # The point that draws, on the screen, and the mouse that pulls it.
         self.head = self.mouse = mouse
         self.handles = (
@@ -511,7 +516,7 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
         if self.taken is not None:
             bezier_spline(self.taken.data, points, closed, tolerance)
         else:
-            drawn_curve(context, self.owner, points, closed, self.category, tolerance)
+            drawn_curve(context, self.owner, points, closed, (self.sharp, self.crease, self.seam), tolerance)
         return {"FINISHED"}
 
     def stop(self, context):
@@ -686,17 +691,25 @@ class OPENCLARE_OT_snap_radius(bpy.types.Operator):
         gpu.state.blend_set("NONE")
 
 
+def draw_marks(layout, properties):
+    """The marks of the curves to come, in the header of a tool."""
+    layout.prop(properties, "sharp")
+    layout.prop(properties, "seam")
+    layout.prop(properties, "crease", slider=True)
+
+
 class OPENCLARE_TL_draw_curve(bpy.types.WorkSpaceTool):
     """The tool in the toolbar: the left button draws with the operator above,
-    whose category is set in the header of the tool."""
+    the marks of whose curves are set in the header of the tool."""
 
     bl_space_type = "VIEW_3D"
     bl_context_mode = "OBJECT"
     bl_idname = "openclare.draw_curve"
     bl_label = "Draw Curve (openclare)"
     bl_description = (
-        "Draw guide or sharp curves straight on the selected mesh: forward to draw, back along the stroke "
-        "to undo, let go at its start to close it, from an end of a curve to take it up again"
+        "Draw curves straight on the selected mesh, for its result to have edges along them: forward to "
+        "draw, back along the stroke to undo, let go at its start to close it, from an end of a curve to "
+        "take it up again"
     )
     bl_icon = "ops.curve.draw"
     bl_widget = None
@@ -712,7 +725,7 @@ class OPENCLARE_TL_draw_curve(bpy.types.WorkSpaceTool):
             for name in ("width", "spacing", "back_band", "close", "fit"):
                 layout.prop(properties, name)
             return
-        layout.prop(properties, "category", expand=True)
+        draw_marks(layout, properties)
         layout.prop(properties, "rope")
         layout.prop(properties, "snap", expand=True)
         if properties.snap != "NONE":
@@ -838,14 +851,19 @@ class OPENCLARE_OT_cut_volume(bpy.types.Operator):
     bl_label = "Cut Volume"
     bl_options = {"REGISTER", "UNDO"}
 
-    category: bpy.props.EnumProperty(
-        name="Category",
-        description="What the curve made is",
-        items=[
-            ("guide", "Guide", "A line of edges along it"),
-            ("sharp", "Sharp", "A line of hard edges along it, marked sharp and creased"),
-        ],
-        default="guide",
+    sharp: bpy.props.BoolProperty(
+        name="Sharp", description="The edges of the result along the curve are marked sharp", default=False
+    )
+    crease: bpy.props.FloatProperty(
+        name="Crease",
+        description="Crease weight of the edges of the result along the curve: 1 keeps them sharp under subdivision",
+        subtype="FACTOR",
+        default=0.0,
+        min=0.0,
+        max=1.0,
+    )
+    seam: bpy.props.BoolProperty(
+        name="Seam", description="The edges of the result along the curve are marked as seams", default=False
     )
 
     @classmethod
@@ -853,7 +871,7 @@ class OPENCLARE_OT_cut_volume(bpy.types.Operator):
         return OPENCLARE_OT_draw_curve.poll(context)
 
     def invoke(self, context, event):
-        from . import CATEGORY
+        from . import curve_colour
 
         self.timings = Timings("Cut Volume")
         self.start = self.end = self.asked_end = (event.mouse_region_x, event.mouse_region_y)
@@ -868,7 +886,7 @@ class OPENCLARE_OT_cut_volume(bpy.types.Operator):
         # line `shown`, the latest asked for is `serial`.
         self.serial = self.shown = 0
         self.loop, self.why, self.header = None, None, None
-        self.colour = CATEGORY[self.category][1]
+        self.colour = curve_colour(self.sharp, self.crease, self.seam)
         self.handles = (
             bpy.types.SpaceView3D.draw_handler_add(self.draw_loop, (context,), "WINDOW", "POST_VIEW"),
             bpy.types.SpaceView3D.draw_handler_add(self.draw_line, (context,), "WINDOW", "POST_PIXEL"),
@@ -939,7 +957,7 @@ class OPENCLARE_OT_cut_volume(bpy.types.Operator):
         middle = tuple(sum(point[k] for point in self.loop) / len(self.loop) for k in range(3))
         step = STEP_PIXELS * pixel_at(context, self.owner, middle)
         points = trace.resampled(self.loop, step, closed=True)
-        drawn_curve(context, self.owner, points, True, self.category, FIT_STEPS * step)
+        drawn_curve(context, self.owner, points, True, (self.sharp, self.crease, self.seam), FIT_STEPS * step)
         return {"FINISHED"}
 
     def stop(self, context):
@@ -984,7 +1002,7 @@ class OPENCLARE_TL_cut_volume(bpy.types.WorkSpaceTool):
     bl_idname = "openclare.cut_volume"
     bl_label = "Cut Volume (openclare)"
     bl_description = (
-        "Draw a line across a limb, from one side to the other: a guide or sharp curve goes all round it where "
+        "Draw a line across a limb, from one side to the other: a curve goes all round it where "
         "the line cut it. The loop is shown while the line is drawn"
     )
     bl_icon = "ops.mesh.knife_tool"
@@ -995,7 +1013,7 @@ class OPENCLARE_TL_cut_volume(bpy.types.WorkSpaceTool):
 
     def draw_settings(context, layout, tool):
         properties = tool.operator_properties(OPENCLARE_OT_cut_volume.bl_idname)
-        layout.prop(properties, "category", expand=True)
+        draw_marks(layout, properties)
 
 
 TOOL_IDS = {OPENCLARE_TL_draw_curve.bl_idname, OPENCLARE_TL_cut_volume.bl_idname}

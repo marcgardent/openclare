@@ -50,31 +50,14 @@ ADDON_FOLDER = os.path.dirname(os.path.abspath(__file__))
 BASE_PRESET = "organic"
 
 
-# The two kinds of curves drawn on a model, each with its collection and the
-# colour its curves take in the viewport: name, label, what it does, colour
-# of the objects, colour tag of the collection (the nearest Blender has).
-# A run takes the curves of both; a curve is of one kind only.
-CATEGORIES = [
-    (
-        "guide",
-        "Guide",
-        "Curves the result has a line of edges along, and nothing more: edge loops round an eye, a limb, a muscle",
-        (0.0, 0.85, 1.0, 1.0),
-        "COLOR_05",
-    ),
-    (
-        "sharp",
-        "Sharp",
-        "Curves the result has a line of hard edges along: marked sharp and creased, "
-        "as if the surface had a crease there",
-        (0.6, 0.25, 1.0, 1.0),
-        "COLOR_06",
-    ),
-]
-CATEGORY = {name: (label, colour, tag) for name, label, _, colour, tag in CATEGORIES}
-# What a curve goes back to when it leaves its category.
-PLAIN = (1.0, 1.0, 1.0, 1.0)
+# The colour a curve drawn on a model takes in the viewport, by the marks it
+# gives the edges along it: a seam, else sharp or creased, else none (a line
+# of edges and nothing more).
+CURVE_COLOURS = {"seam": (1.0, 0.35, 0.2, 1.0), "hard": (0.6, 0.25, 1.0, 1.0), "line": (0.0, 0.85, 1.0, 1.0)}
 
+
+def curve_colour(sharp, crease, seam):
+    return CURVE_COLOURS["seam" if seam else "hard" if sharp or crease > 0.0 else "line"]
 
 # What the engine said of the last run of the operator, name by name: for a
 # script that drives the add-on. Empty until a run ends well.
@@ -662,7 +645,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         name="Sharp Edges",
         description=(
             "Mark as sharp the edges of the result that follow a hard edge of the original "
-            "(see Hard Edges and Marked Sharp) or a curve of the Sharp category"
+            "(see Hard Edges and Marked Sharp). The edges along a curve drawn on it take the marks of the curve"
         ),
         default=True,
     )
@@ -671,31 +654,76 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         name="Creases",
         description=(
             "Give a crease weight to the edges that should stay sharp when the result is subdivided: "
-            "those along a hard edge of the original or a curve of the Sharp category, and those where "
+            "those along a hard edge of the original, and those where "
             "the original folds sharply. "
             "A Subdivision Surface modifier reads them"
         ),
         default=True,
     )
-    guide_curves: bpy.props.PointerProperty(
+
+
+
+def curve_mesh_changed(settings, context):
+    """The mesh of a curve set from its panel: the curve is made its child
+    where it is, and held on it."""
+    drawn, mesh = settings.id_data, settings.mesh
+    if not isinstance(drawn, bpy.types.Object) or drawn.parent == mesh:
+        return
+    where = drawn.matrix_world.copy()
+    drawn.parent = mesh
+    if mesh is not None:
+        drawn.matrix_parent_inverse = mesh.matrix_world.inverted()
+    drawn.matrix_world = where
+    wrap = drawn.modifiers.get(SHRINKWRAP)
+    if wrap is not None:
+        wrap.target = mesh
+
+
+def curve_marks_changed(settings, context):
+    drawn = settings.id_data
+    if isinstance(drawn, bpy.types.Object):
+        drawn.color = curve_colour(settings.sharp, settings.crease, settings.seam)
+
+
+class OpenclareCurveSettings(bpy.types.PropertyGroup):
+    """What a curve drawn on a mesh gives the result: a line of edges along
+    it, always, and the marks of those edges."""
+
+    mesh: bpy.props.PointerProperty(
         options=set(),
-        name="Guide Curves",
-        type=bpy.types.Collection,
+        name="Mesh",
+        type=bpy.types.Object,
+        poll=is_a_mesh,
         description=(
-            "Collection of curves drawn on the model: the result has a line of edges along each. "
-            "Curves are taken with their modifiers, so a Shrinkwrap keeps them on the model. "
-            "Leave empty for none"
+            "The mesh the result of which has a line of edges along this curve: its parent. Set here, the "
+            "curve is made its child where it is, and its Shrinkwrap holds it on it"
         ),
+        update=curve_mesh_changed,
     )
-    sharp_curves: bpy.props.PointerProperty(
+    sharp: bpy.props.BoolProperty(
         options=set(),
-        name="Sharp Curves",
-        type=bpy.types.Collection,
+        name="Sharp",
+        description="Mark the edges of the result along this curve sharp",
+        update=curve_marks_changed,
+    )
+    crease: bpy.props.FloatProperty(
+        options=set(),
+        name="Crease",
         description=(
-            "Collection of curves drawn on the model: the result has a line of hard edges along each, "
-            "marked sharp and creased. Curves are taken with their modifiers, so a Shrinkwrap keeps them "
-            "on the model. Leave empty for none"
+            "Crease weight of the edges of the result along this curve, which a Subdivision Surface modifier "
+            "reads: 1 keeps them sharp, 0 leaves them smooth"
         ),
+        subtype="FACTOR",
+        default=0.0,
+        min=0.0,
+        max=1.0,
+        update=curve_marks_changed,
+    )
+    seam: bpy.props.BoolProperty(
+        options=set(),
+        name="Seam",
+        description="Mark the edges of the result along this curve as seams, for the UVs to be cut along it",
+        update=curve_marks_changed,
     )
 
 
@@ -850,40 +878,30 @@ def crease_edges(mesh, pairs, weights):
     return int((values > 0).sum())
 
 
-def curve_objects(collection, owner=None):
-    """The curve objects of `collection`, those of the collections inside it
-    included; none if there is no collection. With `owner`, those that are
-    children of another mesh are left out: drawn on that one, they are its
-    own, though a copy of it (Shift+D) shares its collections."""
-    if collection is None:
-        return []
-    return [
-        drawn for drawn in collection.all_objects
-        if drawn.type == "CURVE"
-        and (owner is None or drawn.parent is None or drawn.parent == owner or drawn.parent.type != "MESH")
-    ]
+def curve_objects(owner):
+    """The curves drawn on `owner`: its children that are curves."""
+    return [drawn for drawn in owner.children if drawn.type == "CURVE"]
 
 
-def curves_of(collection, target, sharp=False, but=()):
-    """The curves of `collection` as the engine takes them: for each stretch
-    of each curve object, its points in the space of the object `target`,
-    whether it closes on itself, and `sharp`: whether the edges along it are
-    to be hard edges. The objects in `but` are left out. Curves are taken as
-    they are seen, modifiers applied: a Shrinkwrap is what keeps a curve on
-    a model."""
+def curves_of(owner):
+    """The curves of `owner` as the engine takes them, and their marks: for
+    each stretch of each curve, its points in the space of `owner`, whether
+    it closes on itself and whether it is sharp; and alongside, for each, its
+    marks (sharp, crease, seam). Curves are taken as they are seen,
+    modifiers applied: a Shrinkwrap is what keeps a curve on a model."""
     import numpy
 
     depsgraph = bpy.context.evaluated_depsgraph_get()
-    into_target = target.matrix_world.inverted()
-    curves = []
-    for drawn in curve_objects(collection, target):
-        if drawn in but:
-            continue
+    into_owner = owner.matrix_world.inverted()
+    curves, marks = [], []
+    for drawn in curve_objects(owner):
+        told = drawn.openclare_curve
+        marked = (told.sharp, told.crease, told.seam)
         evaluated = drawn.evaluated_get(depsgraph)
         mesh = evaluated.to_mesh()
         if mesh is None:
             continue
-        matrix = into_target @ evaluated.matrix_world
+        matrix = into_owner @ evaluated.matrix_world
         points = [matrix @ vertex.co for vertex in mesh.vertices]
         # A curve comes out as chains of edges, one per stretch.
         joined = [[] for _ in points]
@@ -907,8 +925,41 @@ def curves_of(collection, target, sharp=False, but=()):
                 seen[current] = True
                 chain.append(current)
             closed = len(chain) > 2 and chain[0] in joined[chain[-1]]
-            curves.append((numpy.array([tuple(points[v]) for v in chain], numpy.float32), closed, sharp))
-    return curves
+            curves.append((numpy.array([tuple(points[v]) for v in chain], numpy.float32), closed, told.sharp))
+            marks.append(marked)
+    return curves, marks
+
+
+def mark_curve_edges(mesh, curve_edges, marks, report):
+    """Gives the edges of `mesh` along each curve the marks of that curve:
+    `curve_edges` as the engine gives them (the edges, and the index of the
+    curve of each), `marks` the (sharp, crease, seam) of each curve. Sharp
+    and seam add to the marks there; the crease of a curve is the weight of
+    its edges, whatever was there."""
+    import numpy
+
+    pairs, which = curve_edges
+    if not len(which):
+        return
+    sharp, crease, seam = (numpy.array([m[k] for m in marks], numpy.float32)[which] for k in range(3))
+    of_mesh, wanted = edge_keys(mesh, pairs)
+    order = numpy.argsort(of_mesh)
+    found = order[numpy.searchsorted(of_mesh[order], wanted)]
+    for attribute, key, on in (("use_edge_sharp", "curve_sharp_edges", sharp > 0), ("use_seam", "curve_seams", seam > 0)):
+        if on.any():
+            flags = numpy.zeros(len(mesh.edges), bool)
+            mesh.edges.foreach_get(attribute, flags)
+            flags[found[on]] = True
+            mesh.edges.foreach_set(attribute, flags)
+            report[key] = int(on.sum())
+    attribute = mesh.attributes.get("crease_edge")
+    if attribute is None and (crease > 0).any():
+        attribute = mesh.attributes.new("crease_edge", "FLOAT", "EDGE")
+    if attribute is not None:
+        values = numpy.zeros(len(mesh.edges), numpy.float32)
+        attribute.data.foreach_get("value", values)
+        values[found] = crease
+        attribute.data.foreach_set("value", values)
 
 
 def quads_of(
@@ -941,7 +992,7 @@ class EngineInput:
 
 def engine_input(
     source, preset, settings, density=None, materials=False, copy=False, sharp=False, stretch=None, curves=(),
-    sharp_edges=False, creases=False, asked=None,
+    sharp_edges=False, creases=False, asked=None, curve_marks=(),
 ):
     """The `EngineInput` of `quads_of`. With `copy`, the arrays of `source`
     are copied out, so that the run does not depend on `source` living as
@@ -987,6 +1038,7 @@ def engine_input(
     given.counts = (vertices, triangles, corners)
     given.addresses, given.kept, given.groups = addresses, kept, groups
     given.preset, given.settings, given.density, given.curves = preset, settings, density, list(curves)
+    given.curve_marks = list(curve_marks)
     given.sharp_edges, given.creases, given.asked = sharp_edges, creases, dict(asked or {})
     given.edges = marked_sharp(source) if sharp else None
     given.stretch = stretch
@@ -1005,7 +1057,8 @@ def engine_run(given, on_stage=None):
     return engine.remesh(
         given.addresses[0], vertices, given.addresses[1], triangles, given.addresses[2], corners, given.preset,
         given.settings, given.density, on_stage, hard_edges=given.sharp_edges, creases=given.creases,
-        curves=given.curves, groups=given.groups, edges=given.edges, **given.asked,
+        curves=given.curves, groups=given.groups, edges=given.edges, curve_edges=bool(given.curve_marks),
+        **given.asked,
     )
 
 
@@ -1039,6 +1092,8 @@ def mesh_of(made, given):
         report["sharp_edges"] = flag_edges(mesh, "use_edge_sharp", made.hard_edges)
     if given.creases:
         report["creases"] = crease_edges(mesh, *made.creases)
+    if made.curve_edges is not None:
+        mark_curve_edges(mesh, made.curve_edges, given.curve_marks, report)
     return mesh, report
 
 
@@ -1319,13 +1374,10 @@ class Remeshing:
         source = evaluated.to_mesh()
         try:
             engine_settings, density = engine_settings_of(original, evaluated, source)
-            # A curve put in both collections by hand is a sharp one.
-            self.sharp = curve_objects(settings.sharp_curves, original)
-            self.curves = curves_of(settings.sharp_curves, original, sharp=True)
-            self.curves += curves_of(settings.guide_curves, original, but=self.sharp)
+            self.curves, marks = curves_of(original)
             given = engine_input(
                 source, BASE_PRESET, engine_settings, density, settings.export_materials, copy,
-                sharp=settings.use_marked_sharp, stretch=stretch_of(original), curves=self.curves,
+                sharp=settings.use_marked_sharp, stretch=stretch_of(original), curves=self.curves, curve_marks=marks,
                 sharp_edges=settings.export_sharp_edges, creases=settings.export_creases,
                 asked=extend.asked(original),
             )
@@ -1396,9 +1448,8 @@ class Remeshing:
         if "materials" in report:
             said += f", {report['materials']} materials"
         if self.curves:
-            said += f", {report.get('guide_edges', '0')} edges along the guide curves"
-            if self.sharp:
-                said += f", {report.get('sharp_curve_edges', '0')} along the sharp curves"
+            along = int(report.get("guide_edges", 0)) + int(report.get("sharp_curve_edges", 0))
+            said += f", {along} edges along the curves"
             if report.get("guide_gaps", "0") != "0":
                 said += f" ({report['guide_gaps']} breaks)"
         welded, apart = int(report.get("welded_vertices", 0)), int(report.get("edges_taken_apart", 0))
@@ -1693,22 +1744,6 @@ class OPENCLARE_OT_remesh_again(Background, Remeshing, bpy.types.Operator):
         return {"FINISHED"}
 
 
-def category_collection(context, name, create=False, owner=None):
-    """The collection of the category `name` of `owner`, by default the
-    object the panel is about; made and put in the scene if there is none
-    yet and `create` says so."""
-    owner = owner or object_to_remesh(context)
-    settings = owner.openclare
-    collection = getattr(settings, f"{name}_curves")
-    if collection is None and create:
-        label, _, tag = CATEGORY[name]
-        collection = bpy.data.collections.new(f"{owner.name} {label.lower()} curves")
-        collection.color_tag = tag
-        context.scene.collection.children.link(collection)
-        setattr(settings, f"{name}_curves", collection)
-    return collection
-
-
 # How far a drawn curve may stray from the stroke it is fitted on, in steps
 # of the stroke (a few pixels of the viewport each, where it was drawn): the
 # curve keeps as few control points as that allows.
@@ -1739,13 +1774,14 @@ def bezier_spline(data, points, closed, tolerance):
     return spline
 
 
-def drawn_curve(context, owner, points, closed, category, tolerance):
-    """A curve object of the category `category` of `owner`, fitted on the
-    stroke `points` given in the space of `owner` (as the drawing tool lays
-    them on its surface): a Bezier curve of few control points, child of
-    `owner` so that it moves with it, and held on its surface by a
-    Shrinkwrap, so that moving its points keeps it there."""
-    data = bpy.data.curves.new(f"openclare {category} curve", "CURVE")
+def drawn_curve(context, owner, points, closed, marks, tolerance):
+    """A curve drawn on `owner`, fitted on the stroke `points` given in the
+    space of `owner` (as the drawing tool lays them on its surface): a Bezier
+    curve of few control points, child of `owner` so that it moves with it
+    and is taken when it is remeshed, held on its surface by a Shrinkwrap so
+    that moving its points keeps it there, and giving the edges along it
+    `marks`, (sharp, crease, seam)."""
+    data = bpy.data.curves.new("openclare curve", "CURVE")
     data.dimensions = "3D"
     bezier_spline(data, points, closed, tolerance)
     drawn = bpy.data.objects.new(data.name, data)
@@ -1758,9 +1794,12 @@ def drawn_curve(context, owner, points, closed, category, tolerance):
     # On the curve as it is seen, not on its control points: off, the whole
     # curve lies on the surface, not only its control points.
     wrap.use_apply_on_spline = False
-    collection = category_collection(context, category, create=True, owner=owner)
-    collection.objects.link(drawn)
-    drawn.color = CATEGORY[category][1]
+    for collection in owner.users_collection or [context.scene.collection]:
+        collection.objects.link(drawn)
+    told = drawn.openclare_curve
+    told.mesh = owner
+    told.sharp, told.crease, told.seam = marks
+    drawn.color = curve_colour(*marks)
     # Seen through the object it lies on, which hides half of a loop.
     drawn.show_in_front = True
     show_object_colours(context)
@@ -1775,90 +1814,38 @@ def show_object_colours(context):
             area.spaces.active.shading.wireframe_color_type = "OBJECT"
 
 
-class CurvesOperator:
-    """What the four buttons of a curve category have in common."""
+class OPENCLARE_OT_curves_select(bpy.types.Operator):
+    """Select the curves drawn on this object"""
 
+    bl_idname = "object.openclare_curves_select"
+    bl_label = "Select Curves"
     bl_options = {"REGISTER", "UNDO"}
 
-    category: bpy.props.EnumProperty(
-        name="Category",
-        items=[(name, label, description) for name, label, description, _, _ in CATEGORIES],
-        default="guide",
-        options={"HIDDEN"},
-    )
+    select: bpy.props.BoolProperty(default=True, options={"HIDDEN"})
 
     @classmethod
     def poll(cls, context):
         return object_to_remesh(context) is not None and context.mode == "OBJECT"
 
-
-class OPENCLARE_OT_curves_assign(CurvesOperator, bpy.types.Operator):
-    """Move the selected curves to this category of the object and give them its colour. A curve is in one category
-    only"""
-
-    bl_idname = "object.openclare_curves_assign"
-    bl_label = "Assign"
-
-    def execute(self, context):
-        chosen = [drawn for drawn in context.selected_objects if drawn.type == "CURVE"]
-        if not chosen:
-            self.report({"WARNING"}, "openclare: no curve is selected")
-            return {"CANCELLED"}
-        collection = category_collection(context, self.category, create=True)
-        label, colour, _ = CATEGORY[self.category]
-        for drawn in chosen:
-            # Moved, not linked as well: a curve that stayed in another
-            # collection too would still show when its category is hidden.
-            for other in drawn.users_collection:
-                if other != collection:
-                    other.objects.unlink(drawn)
-            if drawn.name not in collection.objects:
-                collection.objects.link(drawn)
-            drawn.color = colour
-        show_object_colours(context)
-        self.report({"INFO"}, f"openclare: {len(chosen)} curve(s) in the {label} category")
-        return {"FINISHED"}
-
-
-class OPENCLARE_OT_curves_remove(CurvesOperator, bpy.types.Operator):
-    """Take the selected curves out of this category: back to the collection of the scene, in their plain colour"""
-
-    bl_idname = "object.openclare_curves_remove"
-    bl_label = "Remove"
-
-    def execute(self, context):
-        collection = category_collection(context, self.category)
-        chosen = [drawn for drawn in context.selected_objects if drawn.type == "CURVE"]
-        chosen = [drawn for drawn in chosen if collection is not None and drawn.name in collection.objects]
-        for drawn in chosen:
-            collection.objects.unlink(drawn)
-            # A curve must stay somewhere in the scene.
-            if not drawn.users_collection:
-                context.scene.collection.objects.link(drawn)
-            drawn.color = PLAIN
-        self.report({"INFO"}, f"openclare: {len(chosen)} curve(s) taken out")
-        return {"FINISHED"}
-
-
-class OPENCLARE_OT_curves_select(CurvesOperator, bpy.types.Operator):
-    """Select the curves of this category"""
-
-    bl_idname = "object.openclare_curves_select"
-    bl_label = "Select"
-
-    select: bpy.props.BoolProperty(default=True, options={"HIDDEN"})
-
     @classmethod
     def description(cls, context, properties):
-        return "Select the curves of this category" if properties.select else "Deselect the curves of this category"
+        return "Select the curves drawn on this object" if properties.select else "Deselect them"
 
     def execute(self, context):
-        for drawn in curve_objects(category_collection(context, self.category), object_to_remesh(context)):
+        for drawn in curve_objects(object_to_remesh(context)):
             # Only what this view layer shows can be selected.
             # The object stays the active one: its panel stays shown.
             if drawn.name in context.view_layer.objects and (drawn.visible_get() or not self.select):
                 drawn.select_set(self.select)
         return {"FINISHED"}
+
+
+def marks_text(told):
+    """The marks of a curve, in a few words."""
+    said = [name for name, on in (("sharp", told.sharp), ("seam", told.seam)) if on]
+    if told.crease > 0.0:
+        said.append(f"crease {told.crease:.2f}")
+    return ", ".join(said) or "line of edges"
 
 
 class DataPanel:
@@ -2117,24 +2104,53 @@ class OPENCLARE_PT_curves(DataPanel, bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        settings = object_to_remesh(context).openclare
-        layout.label(text="Select curves, then this object last", icon="INFO")
-        # One box per category, both always there: a run takes the curves
-        # of both.
-        for name, label, _, _, tag in CATEGORIES:
-            box = layout.box()
-            count = len(curve_objects(getattr(settings, f"{name}_curves"), object_to_remesh(context)))
-            curves = f"{count} curve" + ("" if count == 1 else "s")
-            box.label(text=f"{label}: {curves}", icon=tag.replace("COLOR", "COLLECTION_COLOR"))
-            box.prop(settings, f"{name}_curves", text="")
-            column = box.column(align=True)
+        owner = object_to_remesh(context)
+        drawn = curve_objects(owner)
+        if not drawn:
+            layout.label(text="Draw Curve or Cut Volume in the toolbar (T), or parent a curve here", icon="INFO")
+            return
+        column = layout.column(align=True)
+        for curve in drawn:
             row = column.row(align=True)
-            row.operator(OPENCLARE_OT_curves_assign.bl_idname).category = name
-            row.operator(OPENCLARE_OT_curves_remove.bl_idname).category = name
-            row = column.row(align=True)
-            for text, select in (("Select", True), ("Deselect", False)):
-                button = row.operator(OPENCLARE_OT_curves_select.bl_idname, text=text)
-                button.category, button.select = name, select
+            row.label(text=curve.name, icon="OUTLINER_OB_CURVE")
+            row.label(text=marks_text(curve.openclare_curve))
+        row = layout.row(align=True)
+        for text, select in (("Select", True), ("Deselect", False)):
+            row.operator(OPENCLARE_OT_curves_select.bl_idname, text=text).select = select
+
+
+class OPENCLARE_PT_curve(DataPanel, bpy.types.Panel):
+    """For a curve drawn on a mesh: which mesh, and the marks of the edges
+    of its result along the curve"""
+
+    bl_label = "openclare"
+    bl_idname = "OPENCLARE_PT_curve"
+    bl_order = -1
+
+    @classmethod
+    def poll(cls, context):
+        drawn = getattr(context, "object", None)
+        return drawn is not None and drawn.type == "CURVE"
+
+    def draw_header(self, context):
+        self.layout.label(text="", icon="MOD_REMESH")
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        drawn = context.object
+        told = drawn.openclare_curve
+        layout.prop(told, "mesh")
+        if drawn.parent != told.mesh:
+            # Parented otherwise (Object Properties, Ctrl+P): the parent is
+            # what a run goes by.
+            parent = drawn.parent.name if drawn.parent is not None else "nothing"
+            layout.label(text=f"Its parent is {parent}: that is the mesh it guides", icon="INFO")
+        column = layout.column(heading="Mark")
+        column.prop(told, "sharp")
+        column.prop(told, "seam")
+        layout.prop(told, "crease", slider=True)
 
 
 CLASSES = (
@@ -2147,12 +2163,12 @@ CLASSES = (
     OPENCLARE_OT_select_original,
     OPENCLARE_OT_shape_preset_add,
     OPENCLARE_PT_shape_presets,
-    OPENCLARE_OT_curves_assign,
-    OPENCLARE_OT_curves_remove,
+    OpenclareCurveSettings,
     OPENCLARE_OT_curves_select,
     OPENCLARE_PT_panel,
     OPENCLARE_PT_shape,
     OPENCLARE_PT_curves,
+    OPENCLARE_PT_curve,
 )
 
 
@@ -2169,6 +2185,7 @@ def register():
     preview.register()
     draw.register()
     bpy.types.Object.openclare = bpy.props.PointerProperty(type=OpenclareSettings)
+    bpy.types.Object.openclare_curve = bpy.props.PointerProperty(type=OpenclareCurveSettings)
     # Where files of 0.1 kept the settings: read once, then given to objects.
     bpy.types.Scene.openclare = bpy.props.PointerProperty(type=OpenclareSettings)
     bpy.types.Object.openclare_source = bpy.props.PointerProperty(
@@ -2203,6 +2220,7 @@ def unregister():
     stop_preview(bpy.context)
     ANALYSES.clear()
     del bpy.types.Object.openclare_source
+    del bpy.types.Object.openclare_curve
     del bpy.types.Object.openclare
     del bpy.types.Scene.openclare
     for cls in reversed(CLASSES):
