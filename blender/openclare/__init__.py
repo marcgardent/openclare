@@ -408,6 +408,21 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         options=set(),
         name="Preset", description="The preset of files saved by openclare 0.1", items=PRESETS, default="organic"
     )
+    output: bpy.props.EnumProperty(
+        options=set(),
+        name="Output",
+        description="What the object is remeshed into",
+        items=[
+            ("QUADS", "Quads", "Quads, with edge loops that follow the shape: to model, sculpt on, animate"),
+            (
+                "TRIANGLES",
+                "Triangles",
+                "Triangles of one size or as the shape asks, close to equilateral: for simulation, 3D printing, "
+                "collision",
+            ),
+        ],
+        default="QUADS",
+    )
     target: bpy.props.EnumProperty(
         options=set(),
         name="Ask For",
@@ -829,6 +844,8 @@ def engine_settings_of(original, evaluated, source, write=True):
         engine_settings["smallest_quad"] = smallest / scale
     if settings.symmetry != "NONE":
         engine_settings["symmetry"] = settings.symmetry.lower()
+    if settings.output == "TRIANGLES":
+        engine_settings["method"] = "triangles"
     density = None
     if settings.density_group:
         density = weights_of(evaluated, source, settings.density_group)
@@ -1428,8 +1445,9 @@ class Remeshing:
         self.made_from, self.engine_made = original, made
         settings = original.openclare
         shade(mesh, settings.shading, settings.hard_edge_angle)
-        mesh.name = f"{original.data.name}.quads"
-        remeshed = bpy.data.objects.new(f"{original.name}.quads", mesh)
+        kind = ".tris" if settings.output == "TRIANGLES" else ".quads"
+        mesh.name = f"{original.data.name}{kind}"
+        remeshed = bpy.data.objects.new(f"{original.name}{kind}", mesh)
         remeshed.matrix_world = original.matrix_world
         # Kept, for the result to be remeshed again and its original found.
         remeshed.openclare_source = original
@@ -1444,7 +1462,7 @@ class Remeshing:
 
         last_report.update(report)
         seconds = float(report.get("seconds", 0.0))
-        said = f"openclare: {report.get('quads', '?')} quads in {seconds:.1f} s"
+        said = f"openclare: {made_of(report)} in {seconds:.1f} s"
         if "materials" in report:
             said += f", {report['materials']} materials"
         if self.curves:
@@ -1484,7 +1502,10 @@ class Remeshing:
         short = falls_short(report)
         if short:
             said += f"; {short}"
-        self.report({"WARNING"} if failed or short or off_plane else {"INFO"}, said)
+        crossing = int(report.get("crossing_faces", 0))
+        if crossing:
+            said += f"; {crossing} triangles cut through another one: mend them before printing"
+        self.report({"WARNING"} if failed or short or off_plane or crossing else {"INFO"}, said)
         return remeshed
 
     def extended(self, context, result):
@@ -1893,6 +1914,7 @@ class OPENCLARE_PT_panel(DataPanel, bpy.types.Panel):
         layout.use_property_split = True
         layout.use_property_decorate = False
         settings = owner.openclare
+        layout.prop(settings, "output", expand=True)
         layout.prop(settings, "target", expand=True)
         if settings.target == "SIZE":
             layout.operator(OPENCLARE_OT_analyse.bl_idname, icon="VIEWZOOM")
@@ -1914,12 +1936,15 @@ class OPENCLARE_PT_panel(DataPanel, bpy.types.Panel):
                     quads, below = None, None
                 if quads is not None:
                     column = layout.column(align=True)
-                    column.label(text=f"About {quads:,.0f} quads".replace(",", " "), icon="MESH_GRID")
+                    # Triangles of the edge of a quad: four of them over the
+                    # square root of three in its area.
+                    made = f"{quads:,.0f} quads" if settings.output == "QUADS" else f"{quads / 0.4330127:,.0f} triangles"
+                    column.label(text=f"About {made}".replace(",", " "), icon="MESH_GRID")
                     if below >= 0.005:
                         column.label(text=f"{100.0 * below:.0f} % coarser than its shape asks", icon="ERROR")
                 layout.prop(settings, "show_sizes")
         else:
-            layout.prop(settings, "quads")
+            layout.prop(settings, "quads", text="Triangles" if settings.output == "TRIANGLES" else "Quads")
         column = layout.column(align=True)
         column.prop_search(settings, "density_group", owner, "vertex_groups", icon="GROUP_VERTEX")
         factor = column.row()
@@ -1952,12 +1977,25 @@ class OPENCLARE_PT_panel(DataPanel, bpy.types.Panel):
 SHORT_OF = 0.75
 
 
+def of_triangles(told):
+    """Whether what the engine said is of a result of triangles."""
+    return int(told.get("quads", 0)) == 0 and int(told.get("faces", 0)) > 0
+
+
+def made_of(told):
+    """How many faces a result has, and of what: "1200 quads"."""
+    if of_triangles(told):
+        return f"{told.get('faces', '?')} triangles"
+    return f"{told.get('quads', '?')} quads"
+
+
 def falls_short(told):
-    """What to say of a result with far fewer quads than were asked for, or
+    """What to say of a result with far fewer faces than were asked for, or
     nothing."""
-    asked, made = int(told.get("quads_asked", 0)), int(told.get("quads", 0))
+    kind = "triangles" if of_triangles(told) else "quads"
+    asked, made = int(told.get("quads_asked", 0)), int(told.get("faces" if kind == "triangles" else "quads", 0))
     if asked and made < SHORT_OF * asked:
-        return f"only {made} quads of the {asked} asked for: part of the object could not be meshed as asked"
+        return f"only {made} {kind} of the {asked} asked for: part of the object could not be meshed as asked"
     return ""
 
 
@@ -1966,8 +2004,11 @@ def report_lines(told):
     each with its icon."""
     told = {key: told[key] for key in told.keys()}
     lines = []
-    quads, seconds = told.get("quads", "?"), float(told.get("seconds", 0.0))
-    lines.append((f"{quads} quads in {seconds:.1f} s", "MESH_GRID"))
+    seconds = float(told.get("seconds", 0.0))
+    lines.append((f"{made_of(told)} in {seconds:.1f} s", "MESH_GRID"))
+    crossing = int(told.get("crossing_faces", 0))
+    if crossing:
+        lines.append((f"{crossing} triangles cut through another one", "ERROR"))
     wanted, below = float(told.get("quads_wanted", 0.0)), float(told.get("below_smallest", 0.0))
     if wanted > 0.0:
         lines.append((f"The shape called for {wanted:,.0f}".replace(",", " "), "INFO"))
@@ -2084,9 +2125,12 @@ class OPENCLARE_PT_shape(DataPanel, bpy.types.Panel):
             if said:
                 column.label(text=said)
         layout.prop(settings, "use_marked_sharp")
-        layout.prop(settings, "follow_curvature")
-        layout.prop(settings, "fewer_irregular")
-        layout.prop(settings, "volume_fit", slider=True)
+        # What only the quads have: the triangles follow no direction.
+        quads_only = layout.column()
+        quads_only.active = settings.output == "QUADS"
+        quads_only.prop(settings, "follow_curvature")
+        quads_only.prop(settings, "fewer_irregular")
+        quads_only.prop(settings, "volume_fit", slider=True)
         layout.prop(settings, "shading", expand=True)
 
 

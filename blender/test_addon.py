@@ -1440,6 +1440,23 @@ assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 assert len(bpy.context.active_object.data.uv_layers) == 0
 print("EXTENSIONS the grid UV asked and laid, kept on Remesh Again; a failing one passed by; none, no UV")
 
+# Triangles (DT-179): the same object remeshed into triangles close to
+# equilateral, about as many as asked, none through another, said as such;
+# Remesh Again keeps them triangles.
+alone(ball)
+settings.output, settings.quads = "TRIANGLES", 2000
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+result = bpy.context.active_object
+assert result.name.endswith(".tris") and all(len(polygon.vertices) == 3 for polygon in result.data.polygons)
+made = len(result.data.polygons)
+assert abs(made / 2000 - 1.0) < 0.1, made
+told = result[openclare.REPORT]
+assert int(told["crossing_faces"]) == 0 and openclare.report_lines(told)[0][0].startswith(f"{made} triangles in ")
+assert bpy.ops.object.openclare_remesh_again() == {"FINISHED"}
+assert all(len(polygon.vertices) == 3 for polygon in result.data.polygons)
+print("TRIANGLES", made, "triangles for 2000, none crossing; again in place")
+settings.output = "QUADS"
+
 openclare.unregister()
 # The drawing goes with the add-on.
 assert preview.state.handle is None and preview.state.shown is None
