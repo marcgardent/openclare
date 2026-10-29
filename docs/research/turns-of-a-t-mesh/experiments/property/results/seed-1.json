@@ -1057,7 +1057,23 @@
   "failed": 0,
   "fox_burgers_on_spheres": 35,
   "corridor_stations_checked": 15572,
-  "command": "python3 docs/research/turns-of-a-t-mesh/lean/Check/check_exports.py scratch/data-package/property/seed-1 scratch/data-package/property/seed-1/lean-check"
+  "command": "python3 docs/research/turns-of-a-t-mesh/lean/Check/check_exports.py scratch/data-package/property/seed-1 scratch/data-package/property/seed-1/lean-check",
+  "grid": {
+   "passed": 50,
+   "failed": 0,
+   "spheres_chi_2": 35,
+   "tori_chi_0": 15,
+   "index_sum_equals_4_chi_on_every_mesh": true,
+   "rounds_from_every_station": 19584,
+   "distinct_curves": 2688,
+   "simple_curves": 2001,
+   "curve_edges_off_the_grid": 0,
+   "regions_of_simple_curves": 2927,
+   "gauss_bonnet_regions_passed": 2927,
+   "gauss_bonnet_regions": 2927,
+   "seconds_compiled": 186.6,
+   "program": "lake build check; Check/check_exports.py (the binary), definitions of Grid.lean"
+  }
  },
  "made_with": "python3 docs/research/turns-of-a-t-mesh/experiments/property/generate.py --count 50 --seed 1"
 }

@@ -56,8 +56,13 @@ nothing from the export and make the same instances again from the seed, in unde
 What `Main.lean` checks on each instance: the `TMesh` hypotheses, `NoArcAcross` and
 `Oriented`; the balances; every shift form against the paper's definition, coefficient by
 coefficient modulo the balances; the corridors and the walk coming back at `offset + shift` at
-the walked, real and whole lengths, from every half-integer station; and on spheres the words of
-the turns, their holonomy and the Fox–Burgers sum.
+the walked, real and whole lengths, from every half-integer station; on spheres the words of
+the turns, their holonomy and the Fox–Burgers sum; and, from the definitions of `Grid.lean`
+(DT-134), the quad mesh at the whole lengths, its Euler characteristic, the valences of its
+vertices, one round of the walk from every station as a closed curve of the fine grid, and on
+every simple curve the regions it cuts with Lemma "Gauss–Bonnet for turns" on each. The Python of
+`grid.py` is then a second, independent computation of the same objects. `lake build check`
+compiles the program; `check_exports.py` runs the binary when it is there.
 
 ## Seed 1, 50 instances, the Lean oracle (2026-10-29)
 

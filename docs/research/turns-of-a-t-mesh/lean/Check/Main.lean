@@ -33,7 +33,12 @@ turns of the way, and compares, with the library's definitions:
 * the Fox–Burgers formula, on a sphere: the words of the turns in the loops round the
   cone points (`develop.py`), whose holonomy `Fox.hol` over `ℤ[i]` must be the
   translation by the length of the turn along its walk and minus its `shift` across it,
-  and equal the sum of Proposition "Fox–Burgers formula" (`fox`).
+  and equal the sum of Proposition "Fox–Burgers formula" (`fox`);
+* the quad mesh at the whole lengths, from the definitions of `Grid.lean` (DT-134): its
+  vertices (the classes of the gluings, by union-find), its Euler characteristic against
+  `∑ (4 - k)` over its cone points, one round of the walk from every station as a closed
+  curve of the fine grid, and on every simple curve the regions it cuts, each with
+  Lemma "Gauss–Bonnet for turns": `∑ (4 - k) = 4 χ`.
 
 All arithmetic is exact (`ℤ`, `ℚ`; the engine's floats are read as the fractions they
 are). `Turn.shiftForm` and `balance` are read only at the arcs of the sides they
@@ -42,7 +47,10 @@ every other arc.
 -/
 import TurnsOfATMesh.TMesh
 import TurnsOfATMesh.Fox
+import TurnsOfATMesh.Grid
 import Lean.Data.Json
+import Std.Data.HashMap
+import Std.Data.HashSet
 
 open Lean TurnsOfATMesh TMesh
 
@@ -706,6 +714,197 @@ def checkFox (whole : Fin n → ℚ) (forms : Array (Option (Array Int)))
 
 /-! ### The check of one export -/
 
+/-! ### The quad mesh at the whole lengths (`Grid.lean`), its curves and regions
+
+The library defines the fine grid (points, gluings, faces, the curve of one round
+of a walk) on the `TMesh`; the program computes from these lists what a theorem
+would state about them: the vertices (the classes of the gluings, by union-find),
+the Euler characteristic of the mesh, the valence of every vertex of the quad
+graph, and for every round of every station its regions, their Euler
+characteristics and the cone points inside; then Lemma "Gauss–Bonnet for turns"
+on each region of a simple curve: `∑ (4 - k) = 4 χ`. -/
+
+/-- The root of `i` in a forest where every parent index is at most its child's. -/
+partial def rootOf (par : Array Nat) (i : Nat) : Nat :=
+  let p := par[i]!
+  if p == i then i else rootOf par p
+
+/-- Unites the classes of `i` and `j`, the larger root pointing to the smaller. -/
+def unite (par : Array Nat) (i j : Nat) : Array Nat :=
+  let ri := rootOf par i
+  let rj := rootOf par j
+  if ri == rj then par else par.set! (max ri rj) (min ri rj)
+
+/-- The representative of every index at once: parents never exceed their children. -/
+def representatives (par : Array Nat) : Array Nat := Id.run do
+  let mut rep := Array.replicate par.size 0
+  for i in [0:par.size] do
+    let p := par[i]!
+    rep := rep.set! i (if p == i then i else rep[p]!)
+  return rep
+
+/-- An edge as an unordered pair of representatives. -/
+def edgeKey (u v : Nat) : Nat × Nat := (min u v, max u v)
+
+structure Region where
+  faces : Nat
+  euler : Int
+  /-- The cone points strictly inside, by valence. -/
+  cones : List Nat
+
+/-- The regions the closed curves cut the fine grid into, with their Euler
+characteristics and the cone points strictly inside them. `faceEdgesK` lists
+the edge keys of every face, `facesAtEdge` the faces of every edge key,
+`valence` the number of fine faces at every representative (the valence of a
+vertex of the quad graph) and `coarse` whether a representative is a vertex
+of the quad graph. -/
+def regionsOf (faceEdgesK : Array (Array (Nat × Nat))) (facesAtEdge : Std.HashMap (Nat × Nat) (List Nat))
+    (valence : Array Nat) (coarse : Array Bool) (curves : List (List Nat)) : List Region := Id.run do
+  let mut cut : Std.HashSet (Nat × Nat) := ∅
+  let mut onCurve : Std.HashSet Nat := ∅
+  for curve in curves do
+    let arr := curve.toArray
+    for i in [0:arr.size] do
+      let u := arr[i]!
+      let v := arr[(i + 1) % arr.size]!
+      cut := cut.insert (edgeKey u v)
+      onCurve := onCurve.insert u
+  let mut par := Array.range faceEdgesK.size
+  for (e, fs) in facesAtEdge.toList do
+    if cut.contains e then continue
+    match fs with
+    | f :: rest => for g in rest do par := unite par f g
+    | [] => pure ()
+  let rep := representatives par
+  -- Per component: faces, vertices, edges, cones.
+  let mut facesIn : Std.HashMap Nat Nat := ∅
+  let mut verts : Std.HashMap Nat (Std.HashSet Nat) := ∅
+  let mut edges : Std.HashMap Nat (Std.HashSet (Nat × Nat)) := ∅
+  for f in [0:faceEdgesK.size] do
+    let r := rep[f]!
+    facesIn := facesIn.insert r (facesIn.getD r 0 + 1)
+    let mut vs := verts.getD r ∅
+    let mut es := edges.getD r ∅
+    for e in faceEdgesK[f]! do
+      es := es.insert e
+      vs := vs.insert e.1
+      vs := vs.insert e.2
+    verts := verts.insert r vs
+    edges := edges.insert r es
+  let mut out : List Region := []
+  for (r, nf) in facesIn.toList do
+    let vs := verts.getD r ∅
+    let es := edges.getD r ∅
+    let cones := vs.toList.filter fun v => coarse[v]! && valence[v]! != 4 && !onCurve.contains v
+    out := ⟨nf, (vs.size : Int) - es.size + nf, cones.map fun v => valence[v]!⟩ :: out
+  return out
+
+/-- The checks of the quad mesh at the whole lengths: see the section above. -/
+def checkGrid (whole : Array ℚ) : IO Bool := do
+  if whole.any (fun x => x.den ≠ 1 || x ≤ 0) then
+    IO.println "  grid: an arc of length zero at the whole lengths, the quad mesh is not built"
+    return true
+  let ℓ : Fin n → ℕ := fun a => (whole[a.val]!).num.toNat
+  let patches := List.finRange P
+  let allArcs := List.finRange n
+  -- The points and their representatives under the gluings.
+  let pts := (T.points patches ℓ).toArray
+  let mut index : Std.HashMap (Point (Fin P)) Nat := ∅
+  let mut count := 0
+  for p in pts do
+    index := index.insert p count
+    count := count + 1
+  let mut par := Array.range pts.size
+  let mut missing := 0
+  for (p, q) in T.gluings allArcs ℓ do
+    match index[p]?, index[q]? with
+    | some i, some j => par := unite par i j
+    | _, _ => missing := missing + 1
+  let rep := representatives par
+  if missing > 0 then
+    IO.println s!"  grid: FAILED, {missing} gluing pairs name points off the grid"
+    return false
+  -- The faces, their edges as representatives, the valences.
+  let fcs := (T.faces patches ℓ).toArray
+  let mut faceEdgesK : Array (Array (Nat × Nat)) := Array.replicate fcs.size #[]
+  let mut facesAtEdge : Std.HashMap (Nat × Nat) (List Nat) := ∅
+  let mut valence := Array.replicate pts.size 0
+  let mut allEdges : Std.HashSet (Nat × Nat) := ∅
+  let mut vertices : Std.HashSet Nat := ∅
+  let mut f := 0
+  for face in fcs do
+    let mut ks : Array (Nat × Nat) := #[]
+    for (p, q) in faceEdges face do
+      let u := rep[index.getD p 0]!
+      let v := rep[index.getD q 0]!
+      let k := edgeKey u v
+      ks := ks.push k
+      facesAtEdge := facesAtEdge.insert k (f :: facesAtEdge.getD k [])
+      allEdges := allEdges.insert k
+      vertices := vertices.insert u
+      valence := valence.set! u (valence[u]! + 1)
+    faceEdgesK := faceEdgesK.set! f ks
+    f := f + 1
+  let coarse : Array Bool := Id.run do
+    let mut c := Array.replicate pts.size false
+    let mut i := 0
+    for p in pts do
+      if p.x % 2 == 0 && p.y % 2 == 0 then c := c.set! (rep[i]!) true
+      i := i + 1
+    return c
+  let euler : Int := (vertices.size : Int) - allEdges.size + fcs.size
+  let mut byValence : Std.HashMap Nat Nat := ∅
+  for v in vertices.toList do
+    if coarse[v]! && valence[v]! != 4 then
+      byValence := byValence.insert valence[v]! (byValence.getD valence[v]! 0 + 1)
+  let index4 := (byValence.toList.map fun (k, c) => ((4 : Int) - k) * c).foldl (· + ·) 0
+  IO.println s!"  grid: {vertices.size} vertices, {allEdges.size} edges, {fcs.size} faces, χ = {euler}; cone points by valence {byValence.toList.mergeSort (fun a b => a.1 ≤ b.1)}, ∑ (4 - k) = {index4}"
+  let mut ok := index4 == 4 * euler
+  if !ok then IO.println "    FAILED: ∑ (4 - k) ≠ 4 χ on the whole mesh"
+  -- One round from every station, each curve once, as representatives.
+  let mut seen : Std.HashSet (List Nat) := ∅
+  let mut curves : List (List Nat) := []
+  let mut rounds := 0
+  let mut stopped := 0
+  for Pi in patches do
+    for j in (List.finRange 2) do
+      for s in (List.finRange 2) do
+        let σ : Side (Fin P) := (Pi, j, s)
+        for k in [0:T.sideLen ℓ σ] do
+          match T.round patches ℓ σ k with
+          | none => stopped := stopped + 1
+          | some pointsOf =>
+            rounds := rounds + 1
+            let reps := pointsOf.dropLast.map fun p => rep[index.getD p 0]!
+            let key := (reps.toArray.qsort (· < ·)).toList
+            if !seen.contains key then
+              seen := seen.insert key
+              curves := reps :: curves
+  IO.println s!"  rounds of the walk from every station: {rounds}, {curves.length} distinct curves, {stopped} stopped"
+  -- Lemma "Gauss–Bonnet for turns" on the regions of every simple curve.
+  let mut gb : Count := {}
+  let mut regionsTotal := 0
+  let mut simple := 0
+  let mut offGrid := 0
+  let mut byRegions : Std.HashMap Nat Nat := ∅
+  for c in curves do
+    let arr := c.toArray
+    for i in [0:arr.size] do
+      if !allEdges.contains (edgeKey arr[i]! arr[(i + 1) % arr.size]!) then offGrid := offGrid + 1
+    let distinct := (Std.HashSet.ofList c).size
+    if distinct != arr.size then continue
+    simple := simple + 1
+    let rs := regionsOf faceEdgesK facesAtEdge valence coarse [c]
+    byRegions := byRegions.insert rs.length (byRegions.getD rs.length 0 + 1)
+    for r in rs do
+      regionsTotal := regionsTotal + 1
+      let total := (r.cones.map fun k => (4 : Int) - k).foldl (· + ·) 0
+      gb := gb.add (total == 4 * r.euler) fun _ =>
+        s!"a region of {r.faces} faces with χ = {r.euler} holds index {total}"
+  IO.println s!"  simple curves: {simple}; their regions: {regionsTotal} (curves by number of regions {byRegions.toList.mergeSort (fun a b => a.1 ≤ b.1)}); curve edges off the grid: {offGrid}"
+  gb.show "Gauss–Bonnet on the fine grid: regions of simple curves with ∑ (4 - k) = 4 χ"
+  return ok && gb.ok
+
 def checkRaw (raw : Raw) : IO Bool := do
   let P := raw.patches
   let n := raw.arcs
@@ -862,6 +1061,9 @@ def checkRaw (raw : Raw) : IO Bool := do
   atWhole.show "whole lengths: half-integers of the corridors, walk comes back at offset + shift"
   ok := ok && built.ok && modulo.ok && corridor.ok && passes.ok && back.ok && atReal.ok &&
     atWhole.ok
+  -- The quad mesh at the whole lengths, its curves and their regions (`Grid.lean`).
+  let gridOk ← checkGrid T raw.whole
+  ok := ok && gridOk
   -- Theorem "Forced shifts", with the certificates of `certify.py`.
   match raw.forced with
   | some f =>

@@ -4,8 +4,10 @@
 
 Finds every `way-<n>.json` under the export directory (written by the engine
 with `OPENCLARE_EXPORT_TURNS`), converts each with `convert.py` into the work
-directory, and runs `Main.lean` on them with `lake env lean --run`, `--jobs`
-files at a time (one Lean process each, about 3 GB of memory). Exports out of
+directory, and runs `Main.lean` on them, compiled (`.lake/build/bin/check`,
+from `lake build check`) when it is there, else with `lake env lean --run`,
+`--jobs` files at a time (one process each, about 3 GB of memory
+interpreted). Exports out of
 the scope of the Lean model (borders, patches that are not rectangles) are
 reported as skipped. Exits with 1 if any check fails. Python standard library
 only; run from anywhere, with `lake` on the PATH.
@@ -76,8 +78,12 @@ def main():
         else:
             converted.append(target)
 
+    # The program compiled (`lake build check`) when it is there, else interpreted.
+    binary = os.path.join(PROJECT, ".lake", "build", "bin", "check")
+    command = [binary] if os.path.exists(binary) else ["lake", "env", "lean", "--run", "Check/Main.lean"]
+
     def check(target):
-        return subprocess.run(["lake", "env", "lean", "--run", "Check/Main.lean", target],
+        return subprocess.run(command + [target],
                               cwd=PROJECT, capture_output=True, text=True)
 
     failed = 0

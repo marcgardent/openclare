@@ -63,7 +63,7 @@ jobs:
       # (Check/, `make lean-check`): not in the library. Here it runs on the
       # two small exports kept as fixtures; the male body is checked by hand.
       - name: Check program compiles
-        run: lake env lean Check/Main.lean
+        run: lake build check
       - name: Check against the fixtures
         run: python3 Check/check_exports.py Check/fixtures "$RUNNER_TEMP/lean-check" --jobs 2
       # The property tests (experiments/property): random T-meshes that do

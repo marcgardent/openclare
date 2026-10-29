@@ -8,3 +8,10 @@ rev = "v4.35.0"
 
 [[lean_lib]]
 name = "TurnsOfATMesh"
+
+# The program of Check/Main.lean compiled, for the checks on many exports
+# (`lake build check`, then `.lake/build/bin/check <converted.json>...`);
+# `lake env lean --run Check/Main.lean` runs the same program interpreted.
+[[lean_exe]]
+name = "check"
+root = "Check.Main"
