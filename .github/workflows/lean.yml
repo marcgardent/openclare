@@ -8,10 +8,12 @@ on:
     branches: [main]
     paths:
       - "docs/research/turns-of-a-t-mesh/lean/**"
+      - "docs/research/turns-of-a-t-mesh/experiments/property/**"
       - ".github/workflows/lean.yml"
   pull_request:
     paths:
       - "docs/research/turns-of-a-t-mesh/lean/**"
+      - "docs/research/turns-of-a-t-mesh/experiments/property/**"
       - ".github/workflows/lean.yml"
   workflow_dispatch:
 
@@ -64,3 +66,31 @@ jobs:
         run: lake env lean Check/Main.lean
       - name: Check against the fixtures
         run: python3 Check/check_exports.py Check/fixtures "$RUNNER_TEMP/lean-check" --jobs 2
+      # The property tests (experiments/property): random T-meshes that do
+      # not come from the engine, at a fixed seed, checked by the same program
+      # and statement by statement; the certificates of their conflicts. A
+      # smaller count than the papers' 50, in a few minutes.
+      - name: Python for the property tests
+        run: pip install --quiet numpy scipy sympy
+      - name: Random T-meshes
+        working-directory: ${{ github.workspace }}
+        run: |
+          python3 docs/research/turns-of-a-t-mesh/experiments/property/generate.py \
+            --count 20 --seed 1 --out "$RUNNER_TEMP/property"
+      - name: Check the random T-meshes
+        run: python3 Check/check_exports.py "$RUNNER_TEMP/property" "$RUNNER_TEMP/property/lean-check" --jobs 2
+      - name: The statements on the random T-meshes
+        working-directory: ${{ github.workspace }}
+        run: |
+          python3 docs/research/turns-of-a-t-mesh/experiments/property/properties.py \
+            --count 20 --seed 1 --pairs 30 --out "$RUNNER_TEMP/property/properties.json" | tee properties.log
+          if grep -q FAILED properties.log; then
+            echo "::error::a statement of the paper failed on a random T-mesh"
+            exit 1
+          fi
+      - name: The certificates of the random T-meshes
+        working-directory: ${{ github.workspace }}
+        run: |
+          python3 docs/research/turns-of-a-t-mesh/experiments/property/certificates.py \
+            --count 20 --seed 1 --out "$RUNNER_TEMP/property/certificates.json" \
+            --work "$RUNNER_TEMP/property/bound-1"

@@ -75,11 +75,13 @@
 \evlevel{data}{Vérifié sur les données du moteur}
 \evlevel{measured}{Mesuré}
 \evlevel{prose}{Démonstration sur papier seulement}
+\evlevel{tested}{Conjecture, vérifiée par ordinateur}
 \evlevel{cited}{Classique, cité}
 \evlevel{open}{Ouvert, rien n'est affirmé}
 \newcommand{\evname}[1]{\csname ev-name-#1\endcsname}
 \tcbset{evstyle-lean/.style={}, evstyle-core/.style={}, evstyle-data/.style={},
-  evstyle-measured/.style={}, evstyle-prose/.style={}, evstyle-cited/.style={},
+  evstyle-measured/.style={}, evstyle-tested/.style={}, evstyle-prose/.style={},
+  evstyle-cited/.style={},
   evstyle-open/.style={frame hidden, borderline={0.4pt}{0pt}{black!45, dashed}}}
 \newtcolorbox{evidence}[3][]{breakable, enhanced, colback=white,
   colframe=black!45, boxrule=0.4pt, arc=0pt, left=4pt, right=4pt, top=2pt,
@@ -184,7 +186,13 @@ T-mesh, supposée comme le dit l'étiquette\,; \textsc{vérifié sur les donnée
 du moteur}, exactement, sur le T-mesh qu'exporte le remailleur openclare,
 contre les définitions Lean\,; \textsc{mesuré}, par un script ou un solveur
 sur cet export\,; \textsc{démonstration sur papier seulement}, celle qui
-suit, qu'aucune machine n'a lue\,; \textsc{classique, cité}\,; et
+suit, qu'aucune machine n'a lue\,; \textsc{conjecture, vérifiée par
+ordinateur}, vérifiée exactement sur des T-mesh aléatoires qui ne viennent
+pas du moteur, l'étiquette disant sur combien d'instances et de quel genre
+(les tests de propriétés du paquet de données,
+\texttt{experiments/property})~: un test réfute ou corrobore et ne démontre
+rien, et une étiquette d'un autre niveau dit \emph{testé} là où les mêmes
+tests ont aussi tourné\,; \textsc{classique, cité}\,; et
 \textsc{ouvert, rien n'est affirmé}, une question ou une conjecture. Les noms
 Lean sont ceux du commit de la première page, construit sans
 \texttt{sorry}.
@@ -362,7 +370,7 @@ un Intel Core i7-7700K (4~cœurs, 2017, 62\,Go) partagé avec d'autres tâches.
 
 \section{Tours et singularités}\label{sec:holonomy}
 
-\begin{evidence}{core}{\lean{gauss_bonnet_turn}, \lean{gauss_bonnet}\,; supposé~: la courbe borde un disque (ou une couronne) de quads}
+\begin{evidence}{core}{\lean{gauss_bonnet_turn}, \lean{gauss_bonnet}\,; testé~: 3\,833 régions de strips simples sur 50 instances aléatoires, 35 sphères et 15 tores\,; supposé~: la courbe borde un disque (ou une couronne) de quads}
 \begin{lemma}[Gauss--Bonnet pour les tours]\label{lem:gauss}
 Soit $\gamma$ un tour dont la courbe $\bar\gamma$ est simple. Si $\bar\gamma$
 borde un disque $D \subset \Sigma$, les sommets singuliers intérieurs à $D$
@@ -388,7 +396,7 @@ deux groupes d'indice total quatre, chacun d'au moins deux sommets~: un bout
 de doigt au-delà d'un anneau contient l'équivalent de quatre sommets de
 valence trois.
 
-\begin{evidence}{core}{\lean{one_crossing_on_walk}, \lean{one_crossing_on_segment}\,; supposé~: les régions coupées au point double sont des disques, et lesquels de leurs coins sont convexes}
+\begin{evidence}{core}{\lean{one_crossing_on_walk}, \lean{one_crossing_on_segment}\,; testé~: 42 points doubles sur les sphères de 50 instances aléatoires\,; supposé~: les régions coupées au point double sont des disques, et lesquels de leurs coins sont convexes}
 \begin{lemma}[Un seul point double]\label{lem:eight}
 Supposons la surface fermée de genre zéro, et que la courbe $\bar\gamma$ d'un
 tour se croise elle-même exactement une fois, transversalement, sans sommet
@@ -422,7 +430,7 @@ quatre directions)~: chaque lobe voit un second coin convexe et contient $2$,
 et la troisième région le reste du total $8$.
 \end{proof}
 
-\begin{evidence}{core}{\lean{Motion.burgers_eq_sum}, \lean{Motion.composeAll_rotations}, \lean{Forest.glue_eq_preorder}, \lean{Motion.annulus_holonomy}\,; supposé~: l'holonomie de la courbe est la composée des rotations autour des points coniques}
+\begin{evidence}{core}{\lean{Motion.burgers_eq_sum}, \lean{Motion.composeAll_rotations}, \lean{Forest.glue_eq_preorder}, \lean{Motion.annulus_holonomy}\,; testé~: (c) sur 898 couronnes sans point conique de 50 instances aléatoires\,; supposé~: l'holonomie de la courbe est la composée des rotations autour des points coniques}
 \begin{proposition}[Le décalage est fixé par les singularités]\label{prop:burgers}
 Soient $\gamma$, $\gamma_1$, $\gamma_2$ des tours à courbes simples.
 \begin{enumerate}
@@ -527,7 +535,7 @@ dislocation dont le vecteur de Burgers vaut $2\sin(\Omega/2)$ fois leur
 décalages de deux tours (figures~\ref{fig:holonomy}
 et~\ref{fig:dislocation}).
 
-\begin{evidence}{core}{\lean{dislocation_burgers}, \lean{dislocation}, \lean{dislocation_closes_iff}\,; supposé~: comme dans la proposition ci-dessus}
+\begin{evidence}{core}{\lean{dislocation_burgers}, \lean{dislocation}, \lean{dislocation_closes_iff}\,; testé~: (i) sur 5 couronnes contenant une paire 3--5 de 50 instances aléatoires\,; supposé~: comme dans la proposition ci-dessus}
 \begin{proposition}[Une dislocation entre deux tours]\label{prop:dislocation}
 Dans le cadre de la proposition~\ref{prop:burgers}(b), supposons que la
 couronne $A$ contienne exactement deux sommets singuliers, $c_3$ de valence
@@ -588,7 +596,7 @@ si les deux sommets fusionnent.}
 \label{fig:dislocation}
 \end{figure}
 
-\begin{evidence}{core}{\lean{checkerboard}, \lean{oddColours_translate}\,; supposé~: la somme de Burgers de la proposition ci-dessus}
+\begin{evidence}{core}{\lean{checkerboard}, \lean{oddColours_translate}\,; testé~: 1\,960 couronnes sur les sphères de 50 instances aléatoires\,; supposé~: la somme de Burgers de la proposition ci-dessus}
 \begin{proposition}[Règle du damier]\label{prop:checkerboard}
 Dans le cadre de la proposition~\ref{prop:burgers}(b), pour des longueurs
 entières, colorions en noir ou en blanc les points $p \in \Z^2$ du disque
@@ -622,7 +630,7 @@ SymPy.
 Chaque tour d'une sphère fermée porte sa propre condition de parité, qui ne
 demande ni courbe simple ni holonomie.
 
-\begin{evidence}{core}{\lean{parity_of_turn_any_sign}, \lean{parity_of_turn}\,; supposé~: une 2-coloration du graphe des quads portée par le développement du tour, sa longueur et son décalage formes linéaires entières}
+\begin{evidence}{core}{\lean{parity_of_turn_any_sign}, \lean{parity_of_turn}\,; testé~: 1\,450 strips des 35 sphères de 50 instances aléatoires\,; supposé~: une 2-coloration du graphe des quads portée par le développement du tour, sa longueur et son décalage formes linéaires entières}
 \begin{proposition}[Parité d'un tour sur une sphère]\label{prop:parity}
 Supposons la surface fermée de genre zéro et que le T-mesh admette des
 longueurs strictement positives qui équilibrent chaque patch (ses longueurs
@@ -986,7 +994,7 @@ et~\ref{prop:staircase}\,; E, F~: section~\ref{sec:combs}.}
 Le tour qui ne peut pas être fermé seul est d'une autre nature
 (figure~\ref{fig:separatrix}).
 
-\begin{evidence}{prose}{une étape en Lean, la conjugaison~: \lean{Motion.conj_translation}}
+\begin{evidence}{prose}{une étape en Lean, la conjugaison~: \lean{Motion.conj_translation}\,; sur 25 séparatrices qui s'enroulent de tores aléatoires, aucun strip voisin n'a eu le décalage $\delta$, l'homotopie n'étant pas vérifiée}
 \begin{proposition}[Une séparatrice qui s'enroule]\label{prop:winding}
 Soient $\sigma$ et $\tau$ des séparatrices d'un sommet singulier $v$ telles
 que $\sigma$, suivie depuis $v$, s'arrête sur $\tau$ en un point $q$ situé à
@@ -1300,7 +1308,7 @@ peigne sont trois lectures du même décalage $2$.}
 \label{fig:comb}
 \end{figure}
 
-\begin{evidence}{core}{\lean{comb_reading}\,; supposé~: les pieds existent et les traces perpendiculaires se développent en droites}
+\begin{evidence}{core}{\lean{comb_reading}\,; les pieds existent sur 850 des 3\,009 arcs de 50 instances aléatoires\,; supposé~: les pieds existent et les traces perpendiculaires se développent en droites}
 \begin{lemma}[Peignes]\label{lem:comb}
 Soient $p_{c_0}$, $p_{c_1}$ les pieds d'un arc $a$, développés le long de son
 peigne. Alors, pour toutes longueurs équilibrées,
@@ -1337,7 +1345,7 @@ est une séparatrice qui s'enroule, une marche de longueur deux entre des
 valences trois et cinq est l'escalier de la proposition~\ref{prop:staircase},
 et une marche autour de quatre sommets de valence trois est une calotte.
 
-\begin{evidence}{prose}{}
+\begin{evidence}{prose}{sur 50 instances aléatoires, 13 des 17 certificats exacts dont les arcs ont des pieds de valence impaire échouent à l'hypothèse sur la partie impaire, 6 sur des sphères}
 \begin{proposition}[Les certificats sont des sommes de peignes]\label{thm:combs}
 Soit $c = \sum_a c_a\ell_a$, $c_a \in \Z_{\ge0}$, un certificat
 (remarque~\ref{rem:definite}) dont les arcs ont des pieds de valence impaire
@@ -1387,7 +1395,7 @@ formes.
 \end{remark}
 \end{evidence}
 
-\begin{evidence}{prose}{}
+\begin{evidence}{tested}{les 35 sphères sans valence $4k$ parmi 50 instances aléatoires~: rang égal à la dimension sur chacune\,; sur les tores le terme de période le fait échouer (11 sur 15)}
 \begin{proposition}[L'accouplement de Burgers]\label{prop:pairing}
 Supposons la surface fermée de genre zéro, sans sommet singulier de valence
 divisible par quatre, et toute trace du T-mesh issue d'un sommet singulier.
@@ -1469,7 +1477,7 @@ enregistrée. Un nœud de bord $b$ est un coin d'angle $a(b)\pi/2$,
 d'\emph{indice} $2 - a(b)$\,; pour une composante de bord $\beta_j$,
 $L_j(\ell)$ est la somme des longueurs de ses arcs.
 
-\begin{evidence}{prose}{}
+\begin{evidence}{tested}{à $\Theta = 0$ et sans bord, 3\,833 régions de 50 instances aléatoires\,; le terme de bord n'est pas testé}
 \begin{lemma}[Gauss--Bonnet avec bords]\label{lem:gauss-border}
 Soit $D$ une région bordée par des courbes de tours et par des composantes de
 bord. Alors
@@ -1496,7 +1504,7 @@ d'homologie à coefficients dans $\Z/2$ de toute
 quadrangulation~\cite[lemme~3.1]{kaiser2015colouring}, étendu ici aux tours à
 toutes longueurs équilibrées.
 
-\begin{evidence}{core}{\lean{parity_any_surface}, \lean{colour_comp_trans}, \lean{colour_rotAbout_trans}, \lean{colour_border}, \lean{colour_turn}\,; supposé~: que $\pi \circ \hat h$ passe au quotient $H_1(\Sigma\,; \Z/2)$, et que sa valeur sur une classe est la parité de la longueur d'un cycle du graphe quad dans cette classe}
+\begin{evidence}{core}{\lean{parity_any_surface}, \lean{colour_comp_trans}, \lean{colour_rotAbout_trans}, \lean{colour_border}, \lean{colour_turn}\,; testé~: 2\,027 strips de graphes quad bipartis et 1\,960 couronnes de 50 instances aléatoires\,; supposé~: que $\pi \circ \hat h$ passe au quotient $H_1(\Sigma\,; \Z/2)$, et que sa valeur sur une classe est la parité de la longueur d'un cycle du graphe quad dans cette classe}
 \begin{theorem}[Parité d'un tour sur toute surface]\label{thm:parity-any}
 Soit $\ell$ entier et équilibré. Il existe un homomorphisme
 $\Omega_\ell\colon H_1(\Sigma; \Z/2) \to \Z/2$ tel que, pour tout tour,
@@ -2158,7 +2166,14 @@ des limites de temps du solveur sur une machine partagée. Les scripts et les
 journaux des expériences exactes ne sont pas publiés~: les énoncés mesurés
 peuvent être confrontés à la branche \texttt{rd-exact}, un point d'accroche
 expérimental d'openclare, mais pas réexécutés tels quels. Les preuves Lean se
-rejouent avec \texttt{make proofs NOTE=turns-of-a-t-mesh}. Cette version de la
+rejouent avec \texttt{make proofs NOTE=turns-of-a-t-mesh}. Les tests de
+propriétés du paquet de données (\texttt{experiments/property}) fabriquent
+$50$ T-mesh aléatoires sans le moteur à graine fixée, $35$ sphères et $15$
+tores, fermés, et vérifient sur eux les définitions Lean du T-mesh et de ses
+tours, chaque énoncé dont ils peuvent calculer l'hypothèse, et les certificats
+de leurs conflits sous les bornes $\ell \ge 1$\,; les étiquettes disent où
+ils ont tourné, et un test corrobore ou réfute mais ne démontre rien. Cette
+version de la
 note a été construite à partir du commit \texttt{\enginecommit}.
 
 \section*{Assistance par IA}

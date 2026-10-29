@@ -61,11 +61,13 @@
 \evlevel{data}{Checked on the engine's data}
 \evlevel{measured}{Measured}
 \evlevel{prose}{Proof on paper only}
+\evlevel{tested}{Conjecture, checked by computer}
 \evlevel{cited}{Standard, cited}
 \evlevel{open}{Open, no claim}
 \newcommand{\evname}[1]{\csname ev-name-#1\endcsname}
 \tcbset{evstyle-lean/.style={}, evstyle-core/.style={}, evstyle-data/.style={},
-  evstyle-measured/.style={}, evstyle-prose/.style={}, evstyle-cited/.style={},
+  evstyle-measured/.style={}, evstyle-tested/.style={}, evstyle-prose/.style={},
+  evstyle-cited/.style={},
   evstyle-open/.style={frame hidden, borderline={0.4pt}{0pt}{black!45, dashed}}}
 \newtcolorbox{evidence}[3][]{breakable, enhanced, colback=white,
   colframe=black!45, boxrule=0.4pt, arc=0pt, left=4pt, right=4pt, top=2pt,
@@ -155,7 +157,12 @@ the surface, that the walks and regions are those of a T-mesh, assumed as the
 tag says; \textsc{checked on the engine's data}, exactly, on the T-mesh the
 remesher openclare exports, against the Lean definitions; \textsc{measured},
 by a script or a solver on that export; \textsc{proof on paper only}, the
-proof that follows, which no machine has read; \textsc{standard, cited}; and
+proof that follows, which no machine has read; \textsc{conjecture, checked by
+computer}, checked exactly on random T-meshes that do not come from the
+engine, the tag saying on how many instances and of what genus (the property
+tests of the data package, \texttt{experiments/property}): a test refutes or
+corroborates and proves nothing, and a tag at another level says
+\emph{tested} where the same tests also ran; \textsc{standard, cited}; and
 \textsc{open, no claim}, a question or a conjecture. The Lean names are those
 of the commit on the first page, built without \texttt{sorry}.
 \fi
@@ -317,7 +324,7 @@ programs were solved with HiGHS 1.8.0~\cite{huangfu2018highs} through SciPy
 
 \section{Turns and singularities}\label{sec:holonomy}
 
-\begin{evidence}{core}{\lean{gauss_bonnet_turn}, \lean{gauss_bonnet}; assumed: the curve bounds a disc (or an annulus) of quads}
+\begin{evidence}{core}{\lean{gauss_bonnet_turn}, \lean{gauss_bonnet}; tested: 3{,}833 regions of simple strips on 50 random instances, 35 spheres and 15 tori; assumed: the curve bounds a disc (or an annulus) of quads}
 \begin{lemma}[Gauss--Bonnet for turns]\label{lem:gauss}
 Let $\gamma$ be a turn whose curve $\bar\gamma$ is simple. If $\bar\gamma$
 bounds a disc $D \subset \Sigma$, the singular vertices inside $D$ satisfy
@@ -340,7 +347,7 @@ On a closed sphere a simple turn thus splits the singular vertices into two
 groups of total index four, each of at least two vertices: a fingertip beyond
 a ring holds the equivalent of four vertices of valence three.
 
-\begin{evidence}{core}{\lean{one_crossing_on_walk}, \lean{one_crossing_on_segment}; assumed: the regions cut at the crossing are discs, and which of their corners are convex}
+\begin{evidence}{core}{\lean{one_crossing_on_walk}, \lean{one_crossing_on_segment}; tested: 42 self-crossings on the spheres of 50 random instances; assumed: the regions cut at the crossing are discs, and which of their corners are convex}
 \begin{lemma}[One self-crossing]\label{lem:eight}
 Let the surface be closed of genus zero, and let the curve $\bar\gamma$ of a
 turn cross itself exactly once, transversally, with no singular vertex on it.
@@ -371,7 +378,7 @@ check of the four directions): each lobe sees a second convex corner and holds
 $2$, and the third region the rest of the total $8$.
 \end{proof}
 
-\begin{evidence}{core}{\lean{Motion.burgers_eq_sum}, \lean{Motion.composeAll_rotations}, \lean{Forest.glue_eq_preorder}, \lean{Motion.annulus_holonomy}; assumed: the holonomy of the curve is the composition of the rotations round the cone points}
+\begin{evidence}{core}{\lean{Motion.burgers_eq_sum}, \lean{Motion.composeAll_rotations}, \lean{Forest.glue_eq_preorder}, \lean{Motion.annulus_holonomy}; tested: (c) on 898 annuli without cone point of 50 random instances; assumed: the holonomy of the curve is the composition of the rotations round the cone points}
 \begin{proposition}[The shift is set by the singularities]\label{prop:burgers}
 Let $\gamma$, $\gamma_1$, $\gamma_2$ be turns with simple curves.
 \begin{enumerate}
@@ -470,7 +477,7 @@ separation~\cite[Eq.~(5)]{kleman2008disclinations}. We read it
 on the shifts of two turns (Figures~\ref{fig:holonomy}
 and~\ref{fig:dislocation}).
 
-\begin{evidence}{core}{\lean{dislocation_burgers}, \lean{dislocation}, \lean{dislocation_closes_iff}; assumed: as in the proposition above}
+\begin{evidence}{core}{\lean{dislocation_burgers}, \lean{dislocation}, \lean{dislocation_closes_iff}; tested: (i) on 5 annuli holding one 3--5 pair of 50 random instances; assumed: as in the proposition above}
 \begin{proposition}[A dislocation between two turns]\label{prop:dislocation}
 In the setting of Proposition~\ref{prop:burgers}(b), let the annulus $A$ hold
 exactly two singular vertices, $c_3$ of valence three and $c_5$ of valence
@@ -530,7 +537,7 @@ merge.}
 \label{fig:dislocation}
 \end{figure}
 
-\begin{evidence}{core}{\lean{checkerboard}, \lean{oddColours_translate}; assumed: the Burgers sum of the proposition above}
+\begin{evidence}{core}{\lean{checkerboard}, \lean{oddColours_translate}; tested: 1{,}960 annuli on the spheres of 50 random instances; assumed: the Burgers sum of the proposition above}
 \begin{proposition}[Checkerboard rule]\label{prop:checkerboard}
 In the setting of Proposition~\ref{prop:burgers}(b), with whole lengths,
 colour the points $p \in \Z^2$ of the cut disc black or white by the parity of
@@ -560,7 +567,7 @@ The rule also holds on $13{,}000$ random configurations checked with SymPy.
 Each turn of a closed sphere carries its own parity condition, which needs
 neither a simple curve nor the holonomy.
 
-\begin{evidence}{core}{\lean{parity_of_turn_any_sign}, \lean{parity_of_turn}; assumed: a 2-colouring of the quad graph carried by the development of the turn, and its length and shift whole linear forms}
+\begin{evidence}{core}{\lean{parity_of_turn_any_sign}, \lean{parity_of_turn}; tested: 1{,}450 strips of the 35 spheres of 50 random instances; assumed: a 2-colouring of the quad graph carried by the development of the turn, and its length and shift whole linear forms}
 \begin{proposition}[Parity of a turn on a sphere]\label{prop:parity}
 Let the surface be closed of genus zero and the T-mesh admit lengths that are
 positive and balance every patch (its real lengths do). For every turn
@@ -893,7 +900,7 @@ Section~\ref{sec:combs}.}
 The turn that cannot be closed alone is of another kind
 (Figure~\ref{fig:separatrix}).
 
-\begin{evidence}{prose}{one step in Lean, the conjugation: \lean{Motion.conj_translation}}
+\begin{evidence}{prose}{one step in Lean, the conjugation: \lean{Motion.conj_translation}; on 25 winding separatrices of random tori no strip beside them had the shift $\delta$, the homotopy not being checked}
 \begin{proposition}[A separatrix that winds]\label{prop:winding}
 Let $\sigma$ and $\tau$ be separatrices of a singular vertex $v$ such that
 $\sigma$, followed from $v$, stops on $\tau$ at a point $q$ at distance
@@ -1182,7 +1189,7 @@ $2$.}
 \label{fig:comb}
 \end{figure}
 
-\begin{evidence}{core}{\lean{comb_reading}; assumed: the feet exist and the perpendicular traces develop straight}
+\begin{evidence}{core}{\lean{comb_reading}; the feet exist on 850 of the 3{,}009 arcs of 50 random instances; assumed: the feet exist and the perpendicular traces develop straight}
 \begin{lemma}[Combs]\label{lem:comb}
 Let $p_{c_0}$, $p_{c_1}$ be the feet of an arc $a$ developed along its comb.
 Then, for all balanced lengths,
@@ -1218,7 +1225,7 @@ separatrix, one of length two between valences three and five the staircase of
 Proposition~\ref{prop:staircase}, and one round four vertices of valence three
 a cap.
 
-\begin{evidence}{prose}{}
+\begin{evidence}{prose}{on 50 random instances, 13 of the 17 exact certificates whose arcs have feet of odd valence fail the hypothesis on the odd part, 6 of them on spheres}
 \begin{proposition}[Certificates are sums of combs]\label{thm:combs}
 Let $c = \sum_a c_a\ell_a$, $c_a \in \Z_{\ge0}$, be a certificate
 (Remark~\ref{rem:definite}) whose arcs have feet of odd valence and whose odd
@@ -1263,7 +1270,7 @@ in one chart. We use closed walks only as forms.
 \end{remark}
 \end{evidence}
 
-\begin{evidence}{prose}{}
+\begin{evidence}{tested}{the 35 spheres without valence $4k$ of 50 random instances: rank equal to the dimension on every one; on tori the period term lets it fail (11 of 15)}
 \begin{proposition}[The Burgers pairing]\label{prop:pairing}
 Let the surface be closed of genus zero, with no singular vertex of valence
 divisible by four, and let every trace of the T-mesh start at a singular
@@ -1337,7 +1344,7 @@ node $b$ is a corner of angle $a(b)\pi/2$, of
 \emph{index} $2 - a(b)$; for a border component $\beta_j$, $L_j(\ell)$ is the
 sum of the lengths of its arcs.
 
-\begin{evidence}{prose}{}
+\begin{evidence}{tested}{at $\Theta = 0$ and without border, 3{,}833 regions of 50 random instances; the border term is not tested}
 \begin{lemma}[Gauss--Bonnet with borders]\label{lem:gauss-border}
 Let $D$ be a region bounded by curves of turns and by border components. Then
 \[
@@ -1362,7 +1369,7 @@ quadrangulation~\cite[Lemma~3.1]{kaiser2015colouring}
 extended here to turns at all balanced
 lengths.
 
-\begin{evidence}{core}{\lean{parity_any_surface}, \lean{colour_comp_trans}, \lean{colour_rotAbout_trans}, \lean{colour_border}, \lean{colour_turn}; assumed: that $\pi \circ \hat h$ factors through $H_1(\Sigma; \Z/2)$, and that its value on a class is the parity of the length of a cycle of the quad graph in it}
+\begin{evidence}{core}{\lean{parity_any_surface}, \lean{colour_comp_trans}, \lean{colour_rotAbout_trans}, \lean{colour_border}, \lean{colour_turn}; tested: 2{,}027 strips of bipartite quad graphs and 1{,}960 annuli of 50 random instances; assumed: that $\pi \circ \hat h$ factors through $H_1(\Sigma; \Z/2)$, and that its value on a class is the parity of the length of a cycle of the quad graph in it}
 \begin{theorem}[Parity of a turn on any surface]\label{thm:parity-any}
 Let $\ell$ be whole and balanced. There is a homomorphism $\Omega_\ell\colon
 H_1(\Sigma; \Z/2) \to \Z/2$ such that for every turn
@@ -1949,7 +1956,13 @@ to its cap, and the intervals depend on solver time limits on a shared
 machine. The scripts and logs of the exact experiments are not published: the
 measured statements can be checked against the branch \texttt{rd-exact}, an
 experimental hook of openclare, but not rerun as they stand. The Lean proofs
-replay with \texttt{make proofs NOTE=turns-of-a-t-mesh}. This version of the
+replay with \texttt{make proofs NOTE=turns-of-a-t-mesh}. The property tests of the
+data package (\texttt{experiments/property}) make $50$ random T-meshes
+without the engine at a fixed seed, $35$ spheres and $15$ tori, closed, and
+check on them the Lean definitions of the T-mesh and its turns, each
+statement whose hypothesis they can compute, and the certificates of their
+conflicts within the bounds $\ell \ge 1$; the tags say where they ran, and
+a test corroborates or refutes but proves nothing. This version of the
 note was built from commit \texttt{\enginecommit}.
 
 \section*{AI assistance}

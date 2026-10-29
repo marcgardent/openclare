@@ -47,7 +47,9 @@ python3 docs/research/turns-of-a-t-mesh/experiments/property/properties.py --cou
 python3 docs/research/turns-of-a-t-mesh/experiments/property/certificates.py --count 50 --seed 1
 ```
 
-The first takes seconds and writes `summary.json` (families, seeds, genus, sizes, turns shifted,
+The same four run in CI (`.github/workflows/lean.yml`) on 20 instances of seed 1 whenever
+the Lean folder or this one changes; a statement that fails there fails the build. The
+first takes seconds and writes `summary.json` (families, seeds, genus, sizes, turns shifted,
 rejections) beside the instances; the second needs the Lean project built (`make proofs
 NOTE=turns-of-a-t-mesh` once) and takes about three seconds per instance; the last two read
 nothing from the export and make the same instances again from the seed, in under a minute.
