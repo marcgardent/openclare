@@ -43,6 +43,10 @@ FAMILIES = [
     (("torus", 8, 6, 2), 2),
     (("torus", 10, 7, 3), 2),
     (("torus", 12, 9, 4), 1),
+    # Long tubes with one or two 3–5 pairs: dislocations, staircases and
+    # separatrices that wind.
+    (("torus", 14, 8, 1), 2),
+    (("torus", 20, 6, 1), 1),
     (("hull", 6), 2),
     (("hull", 8), 2),
     (("hull", 12), 2),

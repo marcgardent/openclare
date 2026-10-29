@@ -8,7 +8,7 @@
  ],
  "most_lean": 0.12,
  "longest": 6.0,
- "seconds": 7.3,
+ "seconds": 2.3,
  "made": [
   {
    "kind": [
@@ -55,121 +55,39 @@
   {
    "kind": [
     "hull",
-    8
+    6
    ],
    "seed": 965274705,
    "name": "hull-965274705",
    "genus": 0,
-   "quads": 36,
-   "nodes": 37,
-   "singular": 16,
-   "arcs": 69,
-   "patches": 34,
-   "turns": 136,
-   "held": 0,
-   "strips": 46,
-   "shifted_turns": 0,
-   "shifted_strips": 0,
-   "lattice_dimension": 8
-  },
-  {
-   "kind": [
-    "hull",
-    8
-   ],
-   "seed": 815217483,
-   "name": "hull-815217483",
-   "genus": 0,
-   "quads": 36,
-   "nodes": 38,
-   "singular": 19,
-   "arcs": 72,
-   "patches": 36,
-   "turns": 92,
-   "held": 0,
-   "strips": 38,
-   "shifted_turns": 0,
-   "shifted_strips": 0,
-   "lattice_dimension": 8
-  },
-  {
-   "kind": [
-    "torus",
-    6,
-    5,
-    1
-   ],
-   "seed": 201561926,
-   "name": "torus-201561926",
-   "genus": 1,
-   "quads": 120,
+   "quads": 24,
    "nodes": 8,
-   "singular": 4,
-   "arcs": 16,
-   "patches": 8,
-   "turns": 32,
+   "singular": 8,
+   "arcs": 12,
+   "patches": 6,
+   "turns": 24,
    "held": 0,
-   "strips": 46,
+   "strips": 28,
    "shifted_turns": 0,
    "shifted_strips": 0,
-   "lattice_dimension": 4
-  },
-  {
-   "kind": [
-    "hull",
-    8
-   ],
-   "seed": 60875732,
-   "name": "hull-60875732",
-   "genus": 0,
-   "quads": 36,
-   "nodes": 26,
-   "singular": 14,
-   "arcs": 48,
-   "patches": 24,
-   "turns": 96,
-   "held": 0,
-   "strips": 30,
-   "shifted_turns": 0,
-   "shifted_strips": 0,
-   "lattice_dimension": 7
+   "lattice_dimension": 3
   },
   {
    "kind": [
     "hull",
     6
    ],
-   "seed": 929360195,
-   "name": "hull-929360195",
+   "seed": 815217483,
+   "name": "hull-815217483",
    "genus": 0,
    "quads": 24,
    "nodes": 26,
    "singular": 12,
    "arcs": 47,
    "patches": 23,
-   "turns": 0,
+   "turns": 38,
    "held": 0,
-   "strips": 0,
-   "shifted_turns": 0,
-   "shifted_strips": 0,
-   "lattice_dimension": 6
-  },
-  {
-   "kind": [
-    "dual",
-    6
-   ],
-   "seed": 4522707,
-   "name": "dual-4522707",
-   "genus": 0,
-   "quads": 24,
-   "nodes": 23,
-   "singular": 12,
-   "arcs": 39,
-   "patches": 18,
-   "turns": 66,
-   "held": 0,
-   "strips": 16,
+   "strips": 30,
    "shifted_turns": 0,
    "shifted_strips": 0,
    "lattice_dimension": 6
@@ -179,20 +97,102 @@
     "dual",
     12
    ],
-   "seed": 956461718,
-   "name": "dual-956461718",
+   "seed": 450874518,
+   "name": "dual-450874518",
    "genus": 0,
    "quads": 60,
-   "nodes": 60,
-   "singular": 30,
-   "arcs": 112,
-   "patches": 54,
-   "turns": 214,
+   "nodes": 58,
+   "singular": 29,
+   "arcs": 107,
+   "patches": 51,
+   "turns": 200,
    "held": 0,
-   "strips": 52,
+   "strips": 34,
    "shifted_turns": 0,
    "shifted_strips": 0,
    "lattice_dimension": 12
+  },
+  {
+   "kind": [
+    "cube",
+    2
+   ],
+   "seed": 1047664193,
+   "name": "cube-1047664193",
+   "genus": 0,
+   "quads": 24,
+   "nodes": 23,
+   "singular": 12,
+   "arcs": 39,
+   "patches": 18,
+   "turns": 0,
+   "held": 0,
+   "strips": 0,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 3
+  },
+  {
+   "kind": [
+    "cube",
+    0
+   ],
+   "seed": 837108038,
+   "name": "cube-837108038",
+   "genus": 0,
+   "quads": 24,
+   "nodes": 8,
+   "singular": 8,
+   "arcs": 12,
+   "patches": 6,
+   "turns": 24,
+   "held": 0,
+   "strips": 16,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 3
+  },
+  {
+   "kind": [
+    "torus",
+    14,
+    8,
+    1
+   ],
+   "seed": 4522707,
+   "name": "torus-4522707",
+   "genus": 1,
+   "quads": 448,
+   "nodes": 8,
+   "singular": 4,
+   "arcs": 16,
+   "patches": 8,
+   "turns": 32,
+   "held": 0,
+   "strips": 96,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 4
+  },
+  {
+   "kind": [
+    "dual",
+    6
+   ],
+   "seed": 956461718,
+   "name": "dual-956461718",
+   "genus": 0,
+   "quads": 24,
+   "nodes": 8,
+   "singular": 8,
+   "arcs": 12,
+   "patches": 6,
+   "turns": 24,
+   "held": 0,
+   "strips": 14,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 3
   },
   {
    "kind": [
@@ -218,23 +218,23 @@
   },
   {
    "kind": [
-    "dual",
-    6
+    "hull",
+    8
    ],
    "seed": 219531151,
-   "name": "dual-219531151",
+   "name": "hull-219531151",
    "genus": 0,
-   "quads": 24,
-   "nodes": 23,
-   "singular": 12,
-   "arcs": 39,
-   "patches": 18,
-   "turns": 60,
+   "quads": 36,
+   "nodes": 37,
+   "singular": 16,
+   "arcs": 68,
+   "patches": 33,
+   "turns": 132,
    "held": 0,
-   "strips": 26,
+   "strips": 38,
    "shifted_turns": 0,
    "shifted_strips": 0,
-   "lattice_dimension": 6
+   "lattice_dimension": 8
   },
   {
    "kind": [
@@ -280,11 +280,95 @@
   },
   {
    "kind": [
+    "hull",
+    12
+   ],
+   "seed": 19767455,
+   "name": "hull-19767455",
+   "genus": 0,
+   "quads": 60,
+   "nodes": 62,
+   "singular": 29,
+   "arcs": 120,
+   "patches": 60,
+   "turns": 240,
+   "held": 0,
+   "strips": 32,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 12
+  },
+  {
+   "kind": [
+    "torus",
+    14,
+    8,
+    1
+   ],
+   "seed": 465143663,
+   "name": "torus-465143663",
+   "genus": 1,
+   "quads": 448,
+   "nodes": 8,
+   "singular": 4,
+   "arcs": 16,
+   "patches": 8,
+   "turns": 32,
+   "held": 0,
+   "strips": 96,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 4
+  },
+  {
+   "kind": [
+    "torus",
+    14,
+    8,
+    1
+   ],
+   "seed": 62364611,
+   "name": "torus-62364611",
+   "genus": 1,
+   "quads": 448,
+   "nodes": 8,
+   "singular": 4,
+   "arcs": 16,
+   "patches": 8,
+   "turns": 32,
+   "held": 0,
+   "strips": 88,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 4
+  },
+  {
+   "kind": [
+    "hull",
+    6
+   ],
+   "seed": 476079230,
+   "name": "hull-476079230",
+   "genus": 0,
+   "quads": 24,
+   "nodes": 25,
+   "singular": 12,
+   "arcs": 45,
+   "patches": 22,
+   "turns": 84,
+   "held": 0,
+   "strips": 16,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 6
+  },
+  {
+   "kind": [
     "dual",
     8
    ],
-   "seed": 19767455,
-   "name": "dual-19767455",
+   "seed": 940356432,
+   "name": "dual-940356432",
    "genus": 0,
    "quads": 36,
    "nodes": 33,
@@ -293,7 +377,7 @@
    "patches": 27,
    "turns": 108,
    "held": 0,
-   "strips": 26,
+   "strips": 38,
    "shifted_turns": 0,
    "shifted_strips": 0,
    "lattice_dimension": 8
@@ -303,28 +387,8 @@
     "hull",
     6
    ],
-   "seed": 465143663,
-   "name": "hull-465143663",
-   "genus": 0,
-   "quads": 24,
-   "nodes": 25,
-   "singular": 12,
-   "arcs": 45,
-   "patches": 22,
-   "turns": 52,
-   "held": 0,
-   "strips": 30,
-   "shifted_turns": 0,
-   "shifted_strips": 0,
-   "lattice_dimension": 6
-  },
-  {
-   "kind": [
-    "hull",
-    6
-   ],
-   "seed": 62364611,
-   "name": "hull-62364611",
+   "seed": 500545052,
+   "name": "hull-500545052",
    "genus": 0,
    "quads": 24,
    "nodes": 8,
@@ -333,70 +397,10 @@
    "patches": 6,
    "turns": 24,
    "held": 0,
-   "strips": 16,
+   "strips": 14,
    "shifted_turns": 0,
    "shifted_strips": 0,
    "lattice_dimension": 3
-  },
-  {
-   "kind": [
-    "hull",
-    12
-   ],
-   "seed": 476079230,
-   "name": "hull-476079230",
-   "genus": 0,
-   "quads": 60,
-   "nodes": 62,
-   "singular": 30,
-   "arcs": 120,
-   "patches": 60,
-   "turns": 240,
-   "held": 0,
-   "strips": 44,
-   "shifted_turns": 0,
-   "shifted_strips": 0,
-   "lattice_dimension": 12
-  },
-  {
-   "kind": [
-    "hull",
-    8
-   ],
-   "seed": 1064748682,
-   "name": "hull-1064748682",
-   "genus": 0,
-   "quads": 36,
-   "nodes": 37,
-   "singular": 16,
-   "arcs": 68,
-   "patches": 33,
-   "turns": 132,
-   "held": 0,
-   "strips": 40,
-   "shifted_turns": 0,
-   "shifted_strips": 0,
-   "lattice_dimension": 8
-  },
-  {
-   "kind": [
-    "hull",
-    12
-   ],
-   "seed": 500545052,
-   "name": "hull-500545052",
-   "genus": 0,
-   "quads": 60,
-   "nodes": 58,
-   "singular": 27,
-   "arcs": 110,
-   "patches": 54,
-   "turns": 184,
-   "held": 0,
-   "strips": 50,
-   "shifted_turns": 0,
-   "shifted_strips": 0,
-   "lattice_dimension": 12
   },
   {
    "kind": [
@@ -423,82 +427,86 @@
   {
    "kind": [
     "dual",
-    8
+    6
    ],
    "seed": 469828692,
    "name": "dual-469828692",
    "genus": 0,
-   "quads": 36,
-   "nodes": 31,
-   "singular": 16,
-   "arcs": 53,
-   "patches": 24,
-   "turns": 88,
+   "quads": 24,
+   "nodes": 23,
+   "singular": 12,
+   "arcs": 39,
+   "patches": 18,
+   "turns": 44,
    "held": 0,
-   "strips": 32,
+   "strips": 28,
    "shifted_turns": 0,
    "shifted_strips": 0,
-   "lattice_dimension": 8
+   "lattice_dimension": 6
   },
   {
    "kind": [
-    "hull",
+    "dual",
     8
    ],
-   "seed": 622301269,
-   "name": "hull-622301269",
+   "seed": 986990922,
+   "name": "dual-986990922",
    "genus": 0,
    "quads": 36,
-   "nodes": 37,
+   "nodes": 32,
    "singular": 16,
-   "arcs": 68,
-   "patches": 33,
-   "turns": 132,
+   "arcs": 54,
+   "patches": 24,
+   "turns": 90,
    "held": 0,
-   "strips": 36,
+   "strips": 30,
    "shifted_turns": 0,
    "shifted_strips": 0,
    "lattice_dimension": 8
   },
   {
    "kind": [
-    "cube",
-    0
+    "torus",
+    10,
+    7,
+    3
    ],
-   "seed": 893739613,
-   "name": "cube-893739613",
-   "genus": 0,
-   "quads": 24,
-   "nodes": 8,
-   "singular": 8,
-   "arcs": 12,
-   "patches": 6,
-   "turns": 24,
-   "held": 0,
-   "strips": 20,
-   "shifted_turns": 0,
-   "shifted_strips": 0,
-   "lattice_dimension": 3
+   "seed": 46148794,
+   "name": "torus-46148794",
+   "genus": 1,
+   "quads": 280,
+   "nodes": 35,
+   "singular": 12,
+   "arcs": 63,
+   "patches": 28,
+   "turns": 77,
+   "held": 3,
+   "strips": 68,
+   "shifted_turns": 21,
+   "shifted_strips": 12,
+   "lattice_dimension": 10
   },
   {
    "kind": [
-    "hull",
-    12
+    "torus",
+    14,
+    8,
+    1
    ],
    "seed": 214748959,
-   "name": "hull-214748959",
-   "genus": 0,
-   "quads": 60,
-   "nodes": 62,
-   "singular": 30,
-   "arcs": 120,
-   "patches": 60,
-   "turns": 240,
+   "name": "torus-214748959",
+   "genus": 1,
+   "quads": 448,
+   "nodes": 8,
+   "singular": 4,
+   "arcs": 16,
+   "patches": 8,
+   "turns": 32,
    "held": 0,
-   "strips": 44,
+   "strips": 104,
    "shifted_turns": 0,
    "shifted_strips": 0,
-   "lattice_dimension": 12
+   "lattice_dimension": 4
   },
   {
    "kind": [
@@ -545,42 +553,42 @@
   {
    "kind": [
     "dual",
-    12
+    8
    ],
    "seed": 906467884,
    "name": "dual-906467884",
    "genus": 0,
-   "quads": 60,
-   "nodes": 57,
-   "singular": 28,
-   "arcs": 103,
-   "patches": 48,
-   "turns": 190,
+   "quads": 36,
+   "nodes": 32,
+   "singular": 16,
+   "arcs": 54,
+   "patches": 24,
+   "turns": 94,
    "held": 0,
-   "strips": 34,
+   "strips": 16,
    "shifted_turns": 0,
    "shifted_strips": 0,
-   "lattice_dimension": 12
+   "lattice_dimension": 8
   },
   {
    "kind": [
     "hull",
-    12
+    6
    ],
    "seed": 407699194,
    "name": "hull-407699194",
    "genus": 0,
-   "quads": 60,
-   "nodes": 62,
-   "singular": 29,
-   "arcs": 120,
-   "patches": 60,
-   "turns": 240,
+   "quads": 24,
+   "nodes": 26,
+   "singular": 12,
+   "arcs": 47,
+   "patches": 23,
+   "turns": 20,
    "held": 0,
-   "strips": 34,
+   "strips": 20,
    "shifted_turns": 0,
    "shifted_strips": 0,
-   "lattice_dimension": 12
+   "lattice_dimension": 6
   },
   {
    "kind": [
@@ -606,11 +614,31 @@
   },
   {
    "kind": [
-    "dual",
-    6
+    "hull",
+    8
    ],
    "seed": 1072371851,
-   "name": "dual-1072371851",
+   "name": "hull-1072371851",
+   "genus": 0,
+   "quads": 36,
+   "nodes": 37,
+   "singular": 16,
+   "arcs": 68,
+   "patches": 33,
+   "turns": 132,
+   "held": 0,
+   "strips": 36,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 8
+  },
+  {
+   "kind": [
+    "hull",
+    6
+   ],
+   "seed": 844720478,
+   "name": "hull-844720478",
    "genus": 0,
    "quads": 24,
    "nodes": 8,
@@ -619,7 +647,7 @@
    "patches": 6,
    "turns": 24,
    "held": 0,
-   "strips": 24,
+   "strips": 16,
    "shifted_turns": 0,
    "shifted_strips": 0,
    "lattice_dimension": 3
@@ -627,90 +655,30 @@
   {
    "kind": [
     "hull",
-    12
-   ],
-   "seed": 844720478,
-   "name": "hull-844720478",
-   "genus": 0,
-   "quads": 60,
-   "nodes": 62,
-   "singular": 29,
-   "arcs": 120,
-   "patches": 60,
-   "turns": 240,
-   "held": 0,
-   "strips": 30,
-   "shifted_turns": 0,
-   "shifted_strips": 0,
-   "lattice_dimension": 12
-  },
-  {
-   "kind": [
-    "dual",
-    6
-   ],
-   "seed": 74143659,
-   "name": "dual-74143659",
-   "genus": 0,
-   "quads": 24,
-   "nodes": 23,
-   "singular": 12,
-   "arcs": 39,
-   "patches": 18,
-   "turns": 30,
-   "held": 0,
-   "strips": 24,
-   "shifted_turns": 0,
-   "shifted_strips": 0,
-   "lattice_dimension": 6
-  },
-  {
-   "kind": [
-    "hull",
     8
    ],
-   "seed": 521280113,
-   "name": "hull-521280113",
+   "seed": 74143659,
+   "name": "hull-74143659",
    "genus": 0,
    "quads": 36,
-   "nodes": 35,
-   "singular": 17,
-   "arcs": 65,
-   "patches": 32,
-   "turns": 128,
+   "nodes": 37,
+   "singular": 16,
+   "arcs": 68,
+   "patches": 33,
+   "turns": 130,
    "held": 0,
-   "strips": 26,
+   "strips": 24,
    "shifted_turns": 0,
    "shifted_strips": 0,
    "lattice_dimension": 8
   },
   {
    "kind": [
-    "dual",
-    12
-   ],
-   "seed": 868202078,
-   "name": "dual-868202078",
-   "genus": 0,
-   "quads": 60,
-   "nodes": 58,
-   "singular": 28,
-   "arcs": 104,
-   "patches": 48,
-   "turns": 184,
-   "held": 0,
-   "strips": 34,
-   "shifted_turns": 0,
-   "shifted_strips": 0,
-   "lattice_dimension": 12
-  },
-  {
-   "kind": [
     "hull",
     6
    ],
-   "seed": 371530572,
-   "name": "hull-371530572",
+   "seed": 521280113,
+   "name": "hull-521280113",
    "genus": 0,
    "quads": 24,
    "nodes": 26,
@@ -723,6 +691,48 @@
    "shifted_turns": 0,
    "shifted_strips": 0,
    "lattice_dimension": 6
+  },
+  {
+   "kind": [
+    "dual",
+    8
+   ],
+   "seed": 868202078,
+   "name": "dual-868202078",
+   "genus": 0,
+   "quads": 36,
+   "nodes": 31,
+   "singular": 16,
+   "arcs": 53,
+   "patches": 24,
+   "turns": 96,
+   "held": 0,
+   "strips": 38,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 8
+  },
+  {
+   "kind": [
+    "torus",
+    14,
+    8,
+    1
+   ],
+   "seed": 371530572,
+   "name": "torus-371530572",
+   "genus": 1,
+   "quads": 448,
+   "nodes": 8,
+   "singular": 4,
+   "arcs": 16,
+   "patches": 8,
+   "turns": 32,
+   "held": 0,
+   "strips": 112,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 4
   },
   {
    "kind": [
@@ -769,44 +779,62 @@
   {
    "kind": [
     "dual",
-    8
+    6
    ],
    "seed": 231780618,
    "name": "dual-231780618",
+   "genus": 0,
+   "quads": 24,
+   "nodes": 23,
+   "singular": 12,
+   "arcs": 39,
+   "patches": 18,
+   "turns": 70,
+   "held": 0,
+   "strips": 14,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 6
+  },
+  {
+   "kind": [
+    "dual",
+    8
+   ],
+   "seed": 351539410,
+   "name": "dual-351539410",
    "genus": 0,
    "quads": 36,
    "nodes": 33,
    "singular": 17,
    "arcs": 58,
    "patches": 27,
-   "turns": 100,
+   "turns": 106,
    "held": 0,
-   "strips": 28,
+   "strips": 36,
    "shifted_turns": 0,
    "shifted_strips": 0,
    "lattice_dimension": 8
   },
   {
    "kind": [
-    "torus",
-    6,
-    5,
-    1
+    "hull",
+    6
    ],
    "seed": 844508892,
-   "name": "torus-844508892",
-   "genus": 1,
-   "quads": 120,
-   "nodes": 8,
-   "singular": 4,
-   "arcs": 16,
-   "patches": 8,
-   "turns": 32,
+   "name": "hull-844508892",
+   "genus": 0,
+   "quads": 24,
+   "nodes": 26,
+   "singular": 12,
+   "arcs": 48,
+   "patches": 24,
+   "turns": 96,
    "held": 0,
-   "strips": 78,
+   "strips": 26,
    "shifted_turns": 0,
    "shifted_strips": 0,
-   "lattice_dimension": 4
+   "lattice_dimension": 6
   },
   {
    "kind": [
@@ -833,42 +861,42 @@
   {
    "kind": [
     "dual",
-    12
+    8
    ],
    "seed": 63511747,
    "name": "dual-63511747",
    "genus": 0,
-   "quads": 60,
-   "nodes": 61,
-   "singular": 31,
-   "arcs": 116,
-   "patches": 57,
-   "turns": 226,
+   "quads": 36,
+   "nodes": 32,
+   "singular": 16,
+   "arcs": 54,
+   "patches": 24,
+   "turns": 96,
    "held": 0,
-   "strips": 34,
+   "strips": 44,
    "shifted_turns": 0,
    "shifted_strips": 0,
-   "lattice_dimension": 12
+   "lattice_dimension": 8
   },
   {
    "kind": [
     "hull",
-    8
+    6
    ],
    "seed": 93388246,
    "name": "hull-93388246",
    "genus": 0,
-   "quads": 36,
+   "quads": 24,
    "nodes": 26,
-   "singular": 14,
-   "arcs": 48,
-   "patches": 24,
-   "turns": 96,
+   "singular": 12,
+   "arcs": 47,
+   "patches": 23,
+   "turns": 74,
    "held": 0,
-   "strips": 34,
+   "strips": 26,
    "shifted_turns": 0,
    "shifted_strips": 0,
-   "lattice_dimension": 7
+   "lattice_dimension": 6
   },
   {
    "kind": [
@@ -894,23 +922,23 @@
   },
   {
    "kind": [
-    "dual",
-    8
+    "hull",
+    12
    ],
    "seed": 365822119,
-   "name": "dual-365822119",
+   "name": "hull-365822119",
    "genus": 0,
-   "quads": 36,
-   "nodes": 36,
-   "singular": 18,
-   "arcs": 64,
-   "patches": 30,
-   "turns": 112,
+   "quads": 60,
+   "nodes": 62,
+   "singular": 29,
+   "arcs": 120,
+   "patches": 60,
+   "turns": 240,
    "held": 0,
-   "strips": 18,
+   "strips": 44,
    "shifted_turns": 0,
    "shifted_strips": 0,
-   "lattice_dimension": 8
+   "lattice_dimension": 12
   },
   {
    "kind": [
@@ -957,79 +985,61 @@
   {
    "kind": [
     "hull",
-    12
+    8
    ],
    "seed": 498594435,
    "name": "hull-498594435",
    "genus": 0,
-   "quads": 60,
-   "nodes": 60,
-   "singular": 27,
-   "arcs": 114,
-   "patches": 56,
-   "turns": 224,
+   "quads": 36,
+   "nodes": 26,
+   "singular": 14,
+   "arcs": 48,
+   "patches": 24,
+   "turns": 96,
    "held": 0,
-   "strips": 38,
+   "strips": 28,
    "shifted_turns": 0,
    "shifted_strips": 0,
-   "lattice_dimension": 12
+   "lattice_dimension": 7
   },
   {
    "kind": [
-    "hull",
-    6
+    "torus",
+    14,
+    8,
+    1
    ],
    "seed": 738360465,
-   "name": "hull-738360465",
-   "genus": 0,
-   "quads": 24,
-   "nodes": 25,
-   "singular": 12,
-   "arcs": 45,
-   "patches": 22,
-   "turns": 88,
-   "held": 0,
-   "strips": 12,
-   "shifted_turns": 0,
-   "shifted_strips": 0,
-   "lattice_dimension": 6
-  },
-  {
-   "kind": [
-    "dual",
-    6
-   ],
-   "seed": 758650493,
-   "name": "dual-758650493",
-   "genus": 0,
-   "quads": 24,
+   "name": "torus-738360465",
+   "genus": 1,
+   "quads": 448,
    "nodes": 8,
-   "singular": 8,
-   "arcs": 12,
-   "patches": 6,
-   "turns": 24,
+   "singular": 4,
+   "arcs": 16,
+   "patches": 8,
+   "turns": 32,
    "held": 0,
-   "strips": 18,
+   "strips": 98,
    "shifted_turns": 0,
    "shifted_strips": 0,
-   "lattice_dimension": 3
+   "lattice_dimension": 4
   },
   {
    "kind": [
     "hull",
     8
    ],
-   "seed": 578273269,
-   "name": "hull-578273269",
+   "seed": 758650493,
+   "name": "hull-758650493",
    "genus": 0,
    "quads": 36,
    "nodes": 37,
    "singular": 16,
    "arcs": 68,
    "patches": 33,
-   "turns": 132,
+   "turns": 128,
    "held": 0,
-   "strips": 28,
+   "strips": 22,
    "shifted_turns": 0,
    "shifted_strips": 0,
    "lattice_dimension": 8
@@ -1040,8 +1050,8 @@
   "exports_checked": 50,
   "passed": 50,
   "failed": 0,
-  "fox_burgers_on_spheres": 38,
-  "corridor_stations_checked": 11983,
+  "fox_burgers_on_spheres": 33,
+  "corridor_stations_checked": 11382,
   "command": "python3 docs/research/turns-of-a-t-mesh/lean/Check/check_exports.py scratch/data-package/property/seed-1 scratch/data-package/property/seed-1/lean-check"
  },
  "made_with": "python3 docs/research/turns-of-a-t-mesh/experiments/property/generate.py --count 50 --seed 1"

@@ -48,19 +48,56 @@ corridors and the walk coming back at `offset + shift` at the walked, real and w
 from every half-integer station; and on spheres the words of the turns, their holonomy and
 the Fox–Burgers sum.
 
-## Seed 1, 50 instances (2026-10-29)
+## Seed 1, 50 instances, the Lean oracle (2026-10-29)
 
-38 spheres (cubes with 0 to 2 moves, hulls and duals of 6 to 12 points) and 12 tori (grids
-with 1 to 4 moves), 6 to 60 patches, 0 rejected: 50 passed, 0 failed (`results/seed-1.json`,
-the summary and the counts of the check). 5,138 turns, 238 of them shifted at the real lengths,
-on 6 instances; 1,825 strips of the whole lengths, 31 shifted. On the spheres the Fox–Burgers
-formula held on every turn and the recursion of the words found its convention (`G_f` the jump
-towards the root, children reversed, rotation first) on all 38.
+33 spheres (cubes with 0 to 2 moves, hulls and duals of 6 to 12 points) and 17 tori (grids
+with 1 to 4 moves, long tubes with one move), 6 to 60 patches, 0 rejected: 50 passed, 0 failed
+(`results/seed-1.json`, the summary and the counts of the check). 3,851 turns, 259 of them
+shifted at the real lengths, on 7 instances; 2,109 strips of the whole lengths, 43 shifted. On
+the spheres the Fox–Burgers formula held on every turn and the recursion of the words found its
+convention (`G_f` the jump towards the root, children reversed, rotation first) on all 33.
+
+## The property tests (`properties.py`, milestone 2)
+
+The topology the paper assumes is computed here instead (`grid.py`, `topology.py`): the quad
+mesh at the whole lengths, refined by two so that the dual line of a strip and the sides of the
+rectangles are both paths of it; the closed curve of every strip (the walk, then the closing
+segment along the first side); the regions it cuts and their Euler characteristic; the cone
+points strictly inside; the 2-colouring of the quad graph; the developed positions of the cone
+points as linear forms in the lengths, along one chart; the feet of the arcs; the traces that
+stop on a trace of their own vertex. Each statement is then checked, exactly, on every object
+its hypothesis fits:
+
+| Statement (paper) | Checked on | Seed 1 |
+|---|---|---|
+| Gauss–Bonnet, Lemma 1 (and the borders lemma at Θ = 0) | every region of every simple strip: Σ (4 − k) = 4 χ | 2,803 of 2,803 |
+| One self-crossing, Lemma 2 | spheres: regions (3, 3, 2) or (2, 2, 4) by where the crossing is | 2 of 2 |
+| Parity on a sphere, and rings even | every strip of a sphere | 812 of 812; 808 of 808 |
+| Parity on any surface | every strip where the quad graph is bipartite; two strips bounding an annulus | 1,190 of 1,190; 1,592 of 1,592 |
+| Same shift across an annulus without cone point, Prop. 2 (c) | pairs of disjoint simple strips | 731 of 731 |
+| Checkerboard rule | pairs bounding an annulus on a sphere | 1,592 of 1,592 |
+| Dislocation (i) | annuli holding exactly a 3–5 pair | none found yet |
+| Burgers pairing | spheres without valence 4k: full rank of the cone positions on the balanced lengths | 33 of 33; tori: 11 of 17 (a period is expected there) |
+| Combs: the feet | arcs whose two feet exist | 415 of 2,310 |
+| A separatrix that winds | a strip beside the trace with the shift δ | 0 of 30 found |
+
+The two last lines are counts, not verdicts. The feet are undefined on four arcs in five here:
+in these meshes two traces often stop on the same vertex from opposite sides, which the lemma's
+hypothesis excludes (the paper's own export has about forty such arcs). The strip beside a
+winding separatrix was never the turn of the statement on these tori: both strips beside it
+are rings; whether the loop of the statement is freely homotopic to a turn at all is not checked
+here, and that is the hypothesis to compute next (word reduction, DT-139).
+
+```sh
+python3 docs/research/turns-of-a-t-mesh/experiments/property/properties.py --count 50 --seed 1 --pairs 60
+```
+
+reads nothing from `generate.py`'s output: it makes the same instances again from the seed, and
+writes `results/properties-seed-1.json` with the first failures of each statement.
 
 ## Not yet here
 
-Shifted turns are rare: the lattice of balanced lengths of these T-meshes is small (3 to 18
-dimensions) and most turns bound caps; a family of tubes with dislocations inserted on purpose
-is the next generator. The topology computed (Euler characteristic of a region, H₁ mod 2, free
-reduction of words, feet of arcs) and the property test of each statement of the paper are the
-next milestones of DT-178; surfaces with borders and of higher genus too.
+Annuli holding exactly one 3–5 pair, borders (collars, the border term of the Burgers sum),
+genus two, the free homotopy of the winding separatrix, and the certificates of conflicts (the
+odd part of a certificate as a cycle of the graph of feet, DT-142) are the next milestones of
+DT-178.

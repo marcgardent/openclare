@@ -1,0 +1,1158 @@
+{
+ "experiment": "property tests of the paper's statements on random T-meshes",
+ "seed": 1,
+ "count": 50,
+ "rejected": 0,
+ "pairs_per_instance": 60,
+ "seconds": 22.3,
+ "statements": {
+  "gauss_bonnet": {
+   "applies": 2803,
+   "passed": 2803,
+   "failed": 0,
+   "failures": []
+  },
+  "one_crossing": {
+   "applies": 2,
+   "passed": 2,
+   "failed": 0,
+   "failures": []
+  },
+  "parity_sphere": {
+   "applies": 812,
+   "passed": 812,
+   "failed": 0,
+   "failures": []
+  },
+  "ring_even": {
+   "applies": 808,
+   "passed": 808,
+   "failed": 0,
+   "failures": []
+  },
+  "parity_bipartite": {
+   "applies": 1190,
+   "passed": 1190,
+   "failed": 0,
+   "failures": []
+  },
+  "annulus_parity": {
+   "applies": 1592,
+   "passed": 1592,
+   "failed": 0,
+   "failures": []
+  },
+  "same_shift": {
+   "applies": 731,
+   "passed": 731,
+   "failed": 0,
+   "failures": []
+  },
+  "checkerboard": {
+   "applies": 1592,
+   "passed": 1592,
+   "failed": 0,
+   "failures": []
+  },
+  "dislocation": {
+   "applies": 0,
+   "passed": 0,
+   "failed": 0,
+   "failures": []
+  },
+  "pairing_rank": {
+   "applies": 33,
+   "passed": 33,
+   "failed": 0,
+   "failures": []
+  },
+  "pairing_rank_with_valence_4k": {
+   "applies": 0,
+   "passed": 0,
+   "failed": 0,
+   "failures": []
+  },
+  "pairing_rank_torus_full": {
+   "applies": 17,
+   "passed": 11,
+   "failed": 6,
+   "failures": [
+    {
+     "seed": 465143663,
+     "kind": [
+      "torus",
+      14,
+      8,
+      1
+     ],
+     "rank": 3,
+     "dimension": 4,
+     "multiples_of_four": 0
+    },
+    {
+     "seed": 62364611,
+     "kind": [
+      "torus",
+      14,
+      8,
+      1
+     ],
+     "rank": 3,
+     "dimension": 4,
+     "multiples_of_four": 0
+    },
+    {
+     "seed": 46148794,
+     "kind": [
+      "torus",
+      10,
+      7,
+      3
+     ],
+     "rank": 9,
+     "dimension": 10,
+     "multiples_of_four": 0
+    },
+    {
+     "seed": 610227593,
+     "kind": [
+      "torus",
+      10,
+      7,
+      3
+     ],
+     "rank": 10,
+     "dimension": 12,
+     "multiples_of_four": 0
+    },
+    {
+     "seed": 845248881,
+     "kind": [
+      "torus",
+      10,
+      7,
+      3
+     ],
+     "rank": 8,
+     "dimension": 9,
+     "multiples_of_four": 0
+    }
+   ]
+  },
+  "feet": {
+   "applies": 2310,
+   "passed": 415,
+   "failed": 1895,
+   "failures": []
+  },
+  "winding_separatrix_beside": {
+   "applies": 30,
+   "passed": 0,
+   "failed": 30,
+   "failures": [
+    {
+     "seed": 253228484,
+     "kind": [
+      "torus",
+      8,
+      6,
+      2
+     ],
+     "trace": 21,
+     "delta": 11,
+     "found": 0
+    },
+    {
+     "seed": 253228484,
+     "kind": [
+      "torus",
+      8,
+      6,
+      2
+     ],
+     "trace": 23,
+     "delta": 1,
+     "found": 0
+    },
+    {
+     "seed": 4522707,
+     "kind": [
+      "torus",
+      14,
+      8,
+      1
+     ],
+     "trace": 13,
+     "delta": 16,
+     "found": 0
+    },
+    {
+     "seed": 4522707,
+     "kind": [
+      "torus",
+      14,
+      8,
+      1
+     ],
+     "trace": 15,
+     "delta": 4,
+     "found": 0
+    },
+    {
+     "seed": 465143663,
+     "kind": [
+      "torus",
+      14,
+      8,
+      1
+     ],
+     "trace": 10,
+     "delta": 28,
+     "found": 0
+    }
+   ]
+  },
+  "feet_by_valence": {
+   "2-5": 10,
+   "3-5": 169,
+   "5-5": 105,
+   "3-3": 131
+  }
+ },
+ "instances": [
+  {
+   "seed": 135520872,
+   "kind": [
+    "cube",
+    2
+   ],
+   "genus": 0,
+   "strips": 6,
+   "simple_strips": 4,
+   "pairs_tried": 0,
+   "bipartite": true,
+   "pairing": {
+    "rank": 5,
+    "dimension": 5,
+    "multiples_of_four": 0
+   },
+   "connections": 4
+  },
+  {
+   "seed": 253228484,
+   "kind": [
+    "torus",
+    8,
+    6,
+    2
+   ],
+   "genus": 1,
+   "strips": 52,
+   "simple_strips": 44,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 9,
+    "dimension": 9,
+    "multiples_of_four": 0
+   },
+   "connections": 2
+  },
+  {
+   "seed": 965274705,
+   "kind": [
+    "hull",
+    6
+   ],
+   "genus": 0,
+   "strips": 28,
+   "simple_strips": 28,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 3,
+    "dimension": 3,
+    "multiples_of_four": 0
+   },
+   "connections": 12
+  },
+  {
+   "seed": 815217483,
+   "kind": [
+    "hull",
+    6
+   ],
+   "genus": 0,
+   "strips": 30,
+   "simple_strips": 30,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 6,
+    "dimension": 6,
+    "multiples_of_four": 0
+   },
+   "connections": 6
+  },
+  {
+   "seed": 450874518,
+   "kind": [
+    "dual",
+    12
+   ],
+   "genus": 0,
+   "strips": 34,
+   "simple_strips": 34,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 12,
+    "dimension": 12,
+    "multiples_of_four": 0
+   },
+   "connections": 30
+  },
+  {
+   "seed": 1047664193,
+   "kind": [
+    "cube",
+    2
+   ],
+   "genus": 0,
+   "strips": 0,
+   "simple_strips": 0,
+   "pairs_tried": 0,
+   "bipartite": true,
+   "pairing": {
+    "rank": 3,
+    "dimension": 3,
+    "multiples_of_four": 0
+   },
+   "connections": 12
+  },
+  {
+   "seed": 837108038,
+   "kind": [
+    "cube",
+    0
+   ],
+   "genus": 0,
+   "strips": 16,
+   "simple_strips": 16,
+   "pairs_tried": 32,
+   "bipartite": true,
+   "pairing": {
+    "rank": 3,
+    "dimension": 3,
+    "multiples_of_four": 0
+   },
+   "connections": 12
+  },
+  {
+   "seed": 4522707,
+   "kind": [
+    "torus",
+    14,
+    8,
+    1
+   ],
+   "genus": 1,
+   "strips": 96,
+   "simple_strips": 88,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 4,
+    "dimension": 4,
+    "multiples_of_four": 0
+   },
+   "connections": 1
+  },
+  {
+   "seed": 956461718,
+   "kind": [
+    "dual",
+    6
+   ],
+   "genus": 0,
+   "strips": 14,
+   "simple_strips": 14,
+   "pairs_tried": 24,
+   "bipartite": true,
+   "pairing": {
+    "rank": 3,
+    "dimension": 3,
+    "multiples_of_four": 0
+   },
+   "connections": 12
+  },
+  {
+   "seed": 491263128,
+   "kind": [
+    "torus",
+    8,
+    6,
+    2
+   ],
+   "genus": 1,
+   "strips": 64,
+   "simple_strips": 52,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 6,
+    "dimension": 6,
+    "multiples_of_four": 0
+   },
+   "connections": 3
+  },
+  {
+   "seed": 219531151,
+   "kind": [
+    "hull",
+    8
+   ],
+   "genus": 0,
+   "strips": 38,
+   "simple_strips": 38,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 8,
+    "dimension": 8,
+    "multiples_of_four": 0
+   },
+   "connections": 6
+  },
+  {
+   "seed": 65691502,
+   "kind": [
+    "torus",
+    10,
+    7,
+    3
+   ],
+   "genus": 1,
+   "strips": 64,
+   "simple_strips": 60,
+   "pairs_tried": 60,
+   "bipartite": false,
+   "pairing": {
+    "rank": 15,
+    "dimension": 15,
+    "multiples_of_four": 0
+   },
+   "connections": 3
+  },
+  {
+   "seed": 54644572,
+   "kind": [
+    "cube",
+    0
+   ],
+   "genus": 0,
+   "strips": 24,
+   "simple_strips": 24,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 3,
+    "dimension": 3,
+    "multiples_of_four": 0
+   },
+   "connections": 12
+  },
+  {
+   "seed": 19767455,
+   "kind": [
+    "hull",
+    12
+   ],
+   "genus": 0,
+   "strips": 32,
+   "simple_strips": 32,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 12,
+    "dimension": 12,
+    "multiples_of_four": 0
+   },
+   "connections": 18
+  },
+  {
+   "seed": 465143663,
+   "kind": [
+    "torus",
+    14,
+    8,
+    1
+   ],
+   "genus": 1,
+   "strips": 96,
+   "simple_strips": 90,
+   "pairs_tried": 60,
+   "bipartite": false,
+   "pairing": {
+    "rank": 3,
+    "dimension": 4,
+    "multiples_of_four": 0
+   },
+   "connections": 1
+  },
+  {
+   "seed": 62364611,
+   "kind": [
+    "torus",
+    14,
+    8,
+    1
+   ],
+   "genus": 1,
+   "strips": 88,
+   "simple_strips": 86,
+   "pairs_tried": 60,
+   "bipartite": false,
+   "pairing": {
+    "rank": 3,
+    "dimension": 4,
+    "multiples_of_four": 0
+   },
+   "connections": 1
+  },
+  {
+   "seed": 476079230,
+   "kind": [
+    "hull",
+    6
+   ],
+   "genus": 0,
+   "strips": 16,
+   "simple_strips": 16,
+   "pairs_tried": 28,
+   "bipartite": true,
+   "pairing": {
+    "rank": 6,
+    "dimension": 6,
+    "multiples_of_four": 0
+   },
+   "connections": 6
+  },
+  {
+   "seed": 940356432,
+   "kind": [
+    "dual",
+    8
+   ],
+   "genus": 0,
+   "strips": 38,
+   "simple_strips": 38,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 8,
+    "dimension": 8,
+    "multiples_of_four": 0
+   },
+   "connections": 18
+  },
+  {
+   "seed": 500545052,
+   "kind": [
+    "hull",
+    6
+   ],
+   "genus": 0,
+   "strips": 14,
+   "simple_strips": 14,
+   "pairs_tried": 40,
+   "bipartite": true,
+   "pairing": {
+    "rank": 3,
+    "dimension": 3,
+    "multiples_of_four": 0
+   },
+   "connections": 12
+  },
+  {
+   "seed": 495782127,
+   "kind": [
+    "torus",
+    12,
+    9,
+    4
+   ],
+   "genus": 1,
+   "strips": 70,
+   "simple_strips": 66,
+   "pairs_tried": 60,
+   "bipartite": false,
+   "pairing": {
+    "rank": 12,
+    "dimension": 12,
+    "multiples_of_four": 0
+   },
+   "connections": 4
+  },
+  {
+   "seed": 469828692,
+   "kind": [
+    "dual",
+    6
+   ],
+   "genus": 0,
+   "strips": 28,
+   "simple_strips": 28,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 6,
+    "dimension": 6,
+    "multiples_of_four": 0
+   },
+   "connections": 12
+  },
+  {
+   "seed": 986990922,
+   "kind": [
+    "dual",
+    8
+   ],
+   "genus": 0,
+   "strips": 30,
+   "simple_strips": 30,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 8,
+    "dimension": 8,
+    "multiples_of_four": 0
+   },
+   "connections": 18
+  },
+  {
+   "seed": 46148794,
+   "kind": [
+    "torus",
+    10,
+    7,
+    3
+   ],
+   "genus": 1,
+   "strips": 68,
+   "simple_strips": 66,
+   "pairs_tried": 60,
+   "bipartite": false,
+   "pairing": {
+    "rank": 9,
+    "dimension": 10,
+    "multiples_of_four": 0
+   },
+   "connections": 4
+  },
+  {
+   "seed": 214748959,
+   "kind": [
+    "torus",
+    14,
+    8,
+    1
+   ],
+   "genus": 1,
+   "strips": 104,
+   "simple_strips": 96,
+   "pairs_tried": 60,
+   "bipartite": false,
+   "pairing": {
+    "rank": 4,
+    "dimension": 4,
+    "multiples_of_four": 0
+   },
+   "connections": 1
+  },
+  {
+   "seed": 636493528,
+   "kind": [
+    "torus",
+    6,
+    5,
+    1
+   ],
+   "genus": 1,
+   "strips": 64,
+   "simple_strips": 46,
+   "pairs_tried": 60,
+   "bipartite": false,
+   "pairing": {
+    "rank": 4,
+    "dimension": 4,
+    "multiples_of_four": 0
+   },
+   "connections": 1
+  },
+  {
+   "seed": 714457467,
+   "kind": [
+    "cube",
+    2
+   ],
+   "genus": 0,
+   "strips": 22,
+   "simple_strips": 22,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 6,
+    "dimension": 6,
+    "multiples_of_four": 0
+   },
+   "connections": 12
+  },
+  {
+   "seed": 906467884,
+   "kind": [
+    "dual",
+    8
+   ],
+   "genus": 0,
+   "strips": 16,
+   "simple_strips": 16,
+   "pairs_tried": 40,
+   "bipartite": true,
+   "pairing": {
+    "rank": 8,
+    "dimension": 8,
+    "multiples_of_four": 0
+   },
+   "connections": 18
+  },
+  {
+   "seed": 407699194,
+   "kind": [
+    "hull",
+    6
+   ],
+   "genus": 0,
+   "strips": 20,
+   "simple_strips": 20,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 6,
+    "dimension": 6,
+    "multiples_of_four": 0
+   },
+   "connections": 6
+  },
+  {
+   "seed": 610227593,
+   "kind": [
+    "torus",
+    10,
+    7,
+    3
+   ],
+   "genus": 1,
+   "strips": 53,
+   "simple_strips": 47,
+   "pairs_tried": 60,
+   "bipartite": false,
+   "pairing": {
+    "rank": 10,
+    "dimension": 12,
+    "multiples_of_four": 0
+   },
+   "connections": 3
+  },
+  {
+   "seed": 1072371851,
+   "kind": [
+    "hull",
+    8
+   ],
+   "genus": 0,
+   "strips": 36,
+   "simple_strips": 36,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 8,
+    "dimension": 8,
+    "multiples_of_four": 0
+   },
+   "connections": 6
+  },
+  {
+   "seed": 844720478,
+   "kind": [
+    "hull",
+    6
+   ],
+   "genus": 0,
+   "strips": 16,
+   "simple_strips": 16,
+   "pairs_tried": 28,
+   "bipartite": true,
+   "pairing": {
+    "rank": 3,
+    "dimension": 3,
+    "multiples_of_four": 0
+   },
+   "connections": 12
+  },
+  {
+   "seed": 74143659,
+   "kind": [
+    "hull",
+    8
+   ],
+   "genus": 0,
+   "strips": 24,
+   "simple_strips": 24,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 8,
+    "dimension": 8,
+    "multiples_of_four": 0
+   },
+   "connections": 8
+  },
+  {
+   "seed": 521280113,
+   "kind": [
+    "hull",
+    6
+   ],
+   "genus": 0,
+   "strips": 22,
+   "simple_strips": 22,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 6,
+    "dimension": 6,
+    "multiples_of_four": 0
+   },
+   "connections": 6
+  },
+  {
+   "seed": 868202078,
+   "kind": [
+    "dual",
+    8
+   ],
+   "genus": 0,
+   "strips": 38,
+   "simple_strips": 38,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 8,
+    "dimension": 8,
+    "multiples_of_four": 0
+   },
+   "connections": 18
+  },
+  {
+   "seed": 371530572,
+   "kind": [
+    "torus",
+    14,
+    8,
+    1
+   ],
+   "genus": 1,
+   "strips": 112,
+   "simple_strips": 106,
+   "pairs_tried": 60,
+   "bipartite": false,
+   "pairing": {
+    "rank": 4,
+    "dimension": 4,
+    "multiples_of_four": 0
+   },
+   "connections": 1
+  },
+  {
+   "seed": 804668615,
+   "kind": [
+    "torus",
+    12,
+    9,
+    4
+   ],
+   "genus": 1,
+   "strips": 68,
+   "simple_strips": 64,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 18,
+    "dimension": 18,
+    "multiples_of_four": 0
+   },
+   "connections": 4
+  },
+  {
+   "seed": 942662923,
+   "kind": [
+    "cube",
+    1
+   ],
+   "genus": 0,
+   "strips": 4,
+   "simple_strips": 4,
+   "pairs_tried": 4,
+   "bipartite": true,
+   "pairing": {
+    "rank": 4,
+    "dimension": 4,
+    "multiples_of_four": 0
+   },
+   "connections": 8
+  },
+  {
+   "seed": 231780618,
+   "kind": [
+    "dual",
+    6
+   ],
+   "genus": 0,
+   "strips": 14,
+   "simple_strips": 14,
+   "pairs_tried": 16,
+   "bipartite": true,
+   "pairing": {
+    "rank": 6,
+    "dimension": 6,
+    "multiples_of_four": 0
+   },
+   "connections": 12
+  },
+  {
+   "seed": 351539410,
+   "kind": [
+    "dual",
+    8
+   ],
+   "genus": 0,
+   "strips": 36,
+   "simple_strips": 36,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 8,
+    "dimension": 8,
+    "multiples_of_four": 0
+   },
+   "connections": 18
+  },
+  {
+   "seed": 844508892,
+   "kind": [
+    "hull",
+    6
+   ],
+   "genus": 0,
+   "strips": 26,
+   "simple_strips": 26,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 6,
+    "dimension": 6,
+    "multiples_of_four": 0
+   },
+   "connections": 6
+  },
+  {
+   "seed": 1051608830,
+   "kind": [
+    "torus",
+    12,
+    9,
+    4
+   ],
+   "genus": 1,
+   "strips": 84,
+   "simple_strips": 78,
+   "pairs_tried": 60,
+   "bipartite": false,
+   "pairing": {
+    "rank": 10,
+    "dimension": 10,
+    "multiples_of_four": 0
+   },
+   "connections": 4
+  },
+  {
+   "seed": 63511747,
+   "kind": [
+    "dual",
+    8
+   ],
+   "genus": 0,
+   "strips": 44,
+   "simple_strips": 44,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 8,
+    "dimension": 8,
+    "multiples_of_four": 0
+   },
+   "connections": 18
+  },
+  {
+   "seed": 93388246,
+   "kind": [
+    "hull",
+    6
+   ],
+   "genus": 0,
+   "strips": 26,
+   "simple_strips": 26,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 6,
+    "dimension": 6,
+    "multiples_of_four": 0
+   },
+   "connections": 6
+  },
+  {
+   "seed": 845248881,
+   "kind": [
+    "torus",
+    10,
+    7,
+    3
+   ],
+   "genus": 1,
+   "strips": 64,
+   "simple_strips": 58,
+   "pairs_tried": 60,
+   "bipartite": false,
+   "pairing": {
+    "rank": 8,
+    "dimension": 9,
+    "multiples_of_four": 0
+   },
+   "connections": 3
+  },
+  {
+   "seed": 365822119,
+   "kind": [
+    "hull",
+    12
+   ],
+   "genus": 0,
+   "strips": 44,
+   "simple_strips": 44,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 12,
+    "dimension": 12,
+    "multiples_of_four": 0
+   },
+   "connections": 18
+  },
+  {
+   "seed": 487344227,
+   "kind": [
+    "torus",
+    6,
+    5,
+    1
+   ],
+   "genus": 1,
+   "strips": 52,
+   "simple_strips": 44,
+   "pairs_tried": 60,
+   "bipartite": false,
+   "pairing": {
+    "rank": 4,
+    "dimension": 4,
+    "multiples_of_four": 0
+   },
+   "connections": 1
+  },
+  {
+   "seed": 428458136,
+   "kind": [
+    "cube",
+    0
+   ],
+   "genus": 0,
+   "strips": 26,
+   "simple_strips": 26,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 3,
+    "dimension": 3,
+    "multiples_of_four": 0
+   },
+   "connections": 12
+  },
+  {
+   "seed": 498594435,
+   "kind": [
+    "hull",
+    8
+   ],
+   "genus": 0,
+   "strips": 28,
+   "simple_strips": 28,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 7,
+    "dimension": 7,
+    "multiples_of_four": 0
+   },
+   "connections": 6
+  },
+  {
+   "seed": 738360465,
+   "kind": [
+    "torus",
+    14,
+    8,
+    1
+   ],
+   "genus": 1,
+   "strips": 98,
+   "simple_strips": 92,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 3,
+    "dimension": 4,
+    "multiples_of_four": 0
+   },
+   "connections": 1
+  },
+  {
+   "seed": 758650493,
+   "kind": [
+    "hull",
+    8
+   ],
+   "genus": 0,
+   "strips": 22,
+   "simple_strips": 22,
+   "pairs_tried": 60,
+   "bipartite": true,
+   "pairing": {
+    "rank": 8,
+    "dimension": 8,
+    "multiples_of_four": 0
+   },
+   "connections": 8
+  }
+ ]
+}

@@ -38,40 +38,50 @@ class TMesh:
 
 
 def motorcycles(quad):
-    """The trace edges, as a set of undirected quad edges, and the vertices
-    where a trace stopped."""
+    """The trace edges, as a dict from undirected quad edge to the traces
+    (motorcycles) that ran it; the vertices where a trace stopped; and per
+    trace its start vertex and where it stopped."""
     singular = [v for v in range(len(quad.positions)) if quad.valence[v] != 4]
     occupied = set(singular)
-    trail = set()
+    trail = {}
     stopped = set()
     live = []
+    starts, ends, first_edges = [], [], []
     for v in singular:
         for (a, b) in quad.star(v):
-            live.append((a, b))
+            live.append((len(starts), (a, b)))
+            starts.append(v)
+            ends.append(None)
+            first_edges.append((a, b))
     while live:
         arrivals = {}
-        for m, (a, b) in enumerate(live):
+        for (m, (a, b)) in live:
             arrivals.setdefault(b, []).append(m)
         next_live = []
-        for m, (a, b) in enumerate(live):
-            trail.add((min(a, b), max(a, b)))
+        for (m, (a, b)) in live:
+            trail.setdefault((min(a, b), max(a, b)), []).append(m)
             if b in occupied or arrivals[b][0] != m:
                 stopped.add(b)
+                ends[m] = b
                 continue
             occupied.add(b)
-            next_live.append(quad.straight(a, b))
+            next_live.append((m, quad.straight(a, b)))
         # A vertex reached by several at once is occupied from now on.
         for b, ms in arrivals.items():
             if len(ms) > 1:
                 occupied.add(b)
                 stopped.add(b)
         live = next_live
-    return trail, stopped
+    return trail, stopped, starts, ends, first_edges
 
 
 def trace(quad):
-    trail, stopped = motorcycles(quad)
+    trail, stopped, starts, ends, first_edges = motorcycles(quad)
     T = TMesh(quad)
+    T.trace_of_edge = trail
+    T.trace_start = starts
+    T.trace_end = ends
+    T.trace_first_edge = first_edges
     trail_edges_at = {}
     for (a, b) in trail:
         trail_edges_at.setdefault(a, []).append(b)
@@ -99,6 +109,7 @@ def trace(quad):
             for (p, q) in edges:
                 arc_of_edge[(p, q)] = (k, 0)
                 arc_of_edge[(q, p)] = (k, 1)
+    T.arc_of_edge = arc_of_edge
 
     # The patches: regions of quads joined across the edges that are not traces.
     region = [None] * len(quad.faces)
