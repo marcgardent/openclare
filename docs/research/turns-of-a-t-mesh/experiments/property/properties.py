@@ -141,11 +141,7 @@ def run_instance(seed, kind, tallies, pairs_per_instance, rng):
             tallies["parity_bipartite"].check((alpha - s) % 2 == 0, dict(where, strip=i, alpha=int(alpha), shift=int(s)))
 
     # Pairs of simple disjoint strips bounding an annulus.
-    positions = topology.Chart(T, g.rims).node_positions()
-    cone_position = {}
-    for n, v in enumerate(T.nodes):
-        if quad.valence[v] != 4:
-            cone_position[g.node_vertex[n]] = tuple(walks.value(f, whole_f) for f in positions[n])
+    chart = topology.Chart(T, g.rims)
     candidates = [i for i in range(len(strips)) if simple[i]]
     pairs = [(i, j) for a, i in enumerate(candidates) for j in candidates[a + 1:]
              if not (set(curves[i]) & set(curves[j]))]
@@ -168,7 +164,10 @@ def run_instance(seed, kind, tallies, pairs_per_instance, rng):
                                           dict(where, strips=[i, j], white=white, black=black, shifts=[int(s1), int(s2)]))
         if sorted(A["cones"].values()) == [3, 5]:
             (v3, v5) = sorted(A["cones"], key=lambda v: A["cones"][v])
-            d = (cone_position[v5][0] - cone_position[v3][0], cone_position[v5][1] - cone_position[v3][1])
+            # The pair developed inside the annulus, as the proposition asks.
+            d = gridmod.develop_between(g, chart, A["face_list"], v3, v5)
+            if d is None:
+                continue
             allowed = {abs(d[0] + d[1]), abs(d[0] - d[1])}
             tallies["dislocation"].check(abs(s1 - s2) in allowed,
                                          dict(where, strips=[i, j], shifts=[int(s1), int(s2)], d=[int(d[0]), int(d[1])]))

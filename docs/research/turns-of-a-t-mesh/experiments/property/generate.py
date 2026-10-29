@@ -30,6 +30,7 @@ from fractions import Fraction
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import export  # noqa: E402
+import grid  # noqa: E402
 import quadmesh  # noqa: E402
 import tracing  # noqa: E402
 import walks  # noqa: E402
@@ -47,6 +48,12 @@ FAMILIES = [
     # separatrices that wind.
     (("torus", 14, 8, 1), 2),
     (("torus", 20, 6, 1), 1),
+    # Tubes with several pairs: the conflicts within bounds live there; boxes
+    # are the spheres with a tube.
+    (("torus", 12, 9, 4), 1),
+    (("torus", 14, 10, 6), 2),
+    (("box", 2, 2, 6, 2), 2),
+    (("box", 3, 3, 8, 3), 2),
     (("hull", 6), 2),
     (("hull", 8), 2),
     (("hull", 12), 2),
@@ -60,17 +67,34 @@ def genus(quad):
     return (2 - quad.euler()) // 2
 
 
-def make(rng, kind, shares, most_lean, longest):
-    poly = quadmesh.random_polygon_mesh(rng, kind)
-    quad = quadmesh.catmull_clark(poly)
-    T = tracing.trace(quad)
-    side = max(1, int(len(quad.faces) ** 0.5))
+def random_balanced(rng, T, longest):
+    """Random whole and real balanced lengths of a T-mesh, from its quad
+    mesh's own."""
+    side = max(1, int(len(T.quad.faces) ** 0.5))
     steps = 8 * len(T.patches)
     base = walks.Walker(T, walks.quad_lengths(T))
     base_strips = base.strips(steps, longest * side)
     basis = walks.balanced_basis(T)
     whole, real = walks.random_lengths(rng, T, base_strips, basis, whole_adds=rng.randint(2, 12),
                                        real_moves=rng.randint(1, 4))
+    return whole, real, basis
+
+
+def make(rng, kind, shares, most_lean, longest, retrace=True):
+    """One instance. With `retrace`, the quad mesh of the subdivided polygon
+    mesh at random whole lengths is traced again: on the symmetric grids of
+    the subdivision, traces collide head-on at the same vertices and the feet
+    of the arcs are seldom defined; at random lengths they meet generically."""
+    poly = quadmesh.random_polygon_mesh(rng, kind)
+    quad = quadmesh.catmull_clark(poly)
+    T = tracing.trace(quad)
+    if retrace:
+        whole0, _, _ = random_balanced(rng, T, longest)
+        quad = grid.coarse_quad_mesh(grid.Grid(T, whole0))
+        T = tracing.trace(quad)
+    side = max(1, int(len(quad.faces) ** 0.5))
+    steps = 8 * len(T.patches)
+    whole, real, basis = random_balanced(rng, T, longest)
     at_real = walks.Walker(T, real)
     turns = at_real.turns_from_shares(shares, steps, longest * side)
     # Held, as the engine holds: a real shift above 0.05, a lean below the

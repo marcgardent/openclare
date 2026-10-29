@@ -18,15 +18,18 @@ def expression(form):
     return [[arc, c] for arc, c in sorted(form.items())]
 
 
-def number(x):
-    """A Fraction as the float the check reads back exactly (lengths are
-    whole or in eighths)."""
+def number(x, exact=True):
+    """A Fraction as a float: the lengths are whole or in eighths and read
+    back exactly; an offset at a share of a side need not be, and the check
+    allows it a tolerance."""
     f = float(x)
-    assert Fraction(f) == x, x
+    assert not exact or Fraction(f) == x, x
     return f
 
 
-def way_json(tmesh, whole, real, turns, held, shares, most_lean, longest, name):
+def way_json(tmesh, whole, real, turns, held, shares, most_lean, longest, name, lower=0):
+    """`lower`: the bound of separation put on every arc (`0`: none; `1`: the
+    set `P` of the balanced lengths with every arc at least one)."""
     quad = tmesh.quad
     halves = node_halves(tmesh)
     nodes = []
@@ -85,8 +88,8 @@ def way_json(tmesh, whole, real, turns, held, shares, most_lean, longest, name):
             "held_index": held_index,
             "kept": held_index >= 0,
             "side": turn["side"],
-            "offset": number(turn["offset"]),
-            "crossings": [[p, half, nxt, number(into)] for (p, half, nxt, into) in turn["crossings"]],
+            "offset": number(turn["offset"], exact=False),
+            "crossings": [[p, half, nxt, number(into, exact=False)] for (p, half, nxt, into) in turn["crossings"]],
         })
     return {
         "call": name,
@@ -99,7 +102,7 @@ def way_json(tmesh, whole, real, turns, held, shares, most_lean, longest, name):
         "spirals": -1.0,
         "real": [number(x) for x in real],
         "lengths": [int(x) for x in whole],
-        "lower": [0] * len(tmesh.arcs),
+        "lower": [lower] * len(tmesh.arcs),
         "stations": stations,
         "arcs_at": arcs_at,
         "nodes": nodes,

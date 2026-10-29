@@ -58,12 +58,25 @@ class Grid:
         # Fine faces, counter-clockwise in the frame of their rectangle.
         self.faces = []
         self.face_patch = []
+        self.face_key = []
         for p, (w, h) in enumerate(self.size):
             for x in range(2 * w):
                 for y in range(2 * h):
                     self.faces.append((self.vertex[(p, x, y)], self.vertex[(p, x + 1, y)],
                                        self.vertex[(p, x + 1, y + 1)], self.vertex[(p, x, y + 1)]))
                     self.face_patch.append(p)
+                    self.face_key.append((p, x, y))
+        # The half of the arc each fine edge of a rim lies on, by its two
+        # fine vertices, per patch.
+        self.half_of_edge = {}
+        for a in range(len(tmesh.arcs)):
+            for half in (2 * a, 2 * a + 1):
+                p, x0, y0, d = self.half_place[half]
+                for t in range(2 * self.whole[a]):
+                    u = (p, x0 + t * d[0], y0 + t * d[1])
+                    v = (p, x0 + (t + 1) * d[0], y0 + (t + 1) * d[1])
+                    self.half_of_edge[(u, v)] = half
+                    self.half_of_edge[(v, u)] = half
         self.edges = set()
         for face in self.faces:
             for i in range(4):
@@ -196,6 +209,28 @@ class Grid:
         return path
 
 
+def coarse_quad_mesh(grid):
+    """The quad mesh at the whole lengths, as a `QuadMesh` (its faces the
+    integer grid of each rectangle, counter-clockwise): traced again by the
+    motorcycle graph, it gives a T-mesh whose traces meet at generic places,
+    where the subdivided meshes made them collide head-on on symmetric grids."""
+    from quadmesh import QuadMesh
+
+    ids = {}
+    faces = []
+    for p, (w, h) in enumerate(grid.size):
+        for x in range(0, 2 * w, 2):
+            for y in range(0, 2 * h, 2):
+                face = []
+                for (cx, cy) in ((x, y), (x + 2, y), (x + 2, y + 2), (x, y + 2)):
+                    v = grid.vertex[(p, cx, cy)]
+                    if v not in ids:
+                        ids[v] = len(ids)
+                    face.append(ids[v])
+                faces.append(tuple(face))
+    return QuadMesh([(0.0, 0.0, 0.0)] * len(ids), faces)
+
+
 def regions(grid, curves):
     """The regions the closed curves (cycles of fine vertices) cut the surface
     into: the components of the fine faces not crossing them, each with its
@@ -241,9 +276,73 @@ def regions(grid, curves):
                 a, b = face[i], face[(i + 1) % 4]
                 edges.add((min(a, b), max(a, b)))
         inside = {v: k_ for v, k_ in grid.cones.items() if v in vertices and v not in on_curve}
-        out.append({"faces": len(faces), "euler": len(vertices) - len(edges) + len(faces),
+        out.append({"faces": len(faces), "face_list": faces, "euler": len(vertices) - len(edges) + len(faces),
                     "cones": inside, "index": sum(4 - k_ for k_ in inside.values())})
     return out
+
+
+def develop_between(grid, chart, faces, v_from, v_to):
+    """The separation `p_to - p_from` of two fine vertices developed along a
+    path of fine faces inside `faces` (a region), in the frame of the
+    rectangle of the first face: `(d₁, d₂)` at the whole lengths, or None if
+    no path joins them inside the region."""
+    from topology import Motion
+    from walks import value
+
+    whole = [Fraction(x) for x in grid.whole]
+    region = set(faces)
+    face_of_edge = {}
+    for f in faces:
+        face = grid.faces[f]
+        for i in range(4):
+            a, b = face[i], face[(i + 1) % 4]
+            face_of_edge.setdefault((min(a, b), max(a, b)), []).append(f)
+    start = next((f for f in faces if v_from in grid.faces[f]), None)
+    if start is None:
+        return None
+
+    def corner(f, v):
+        p, x, y = grid.face_key[f]
+        for (dx, dy) in ((0, 0), (1, 0), (1, 1), (0, 1)):
+            if grid.vertex[(p, x + dx, y + dy)] == v:
+                return (Fraction(x + dx, 2), Fraction(y + dy, 2))
+        return None
+
+    # Breadth-first over the faces, each with the motion from its frame to the
+    # frame of the first face (symbolic in the lengths, evaluated at the end).
+    motion = {start: Motion()}
+    queue = [start]
+    while queue:
+        f = queue.pop(0)
+        if v_to in grid.faces[f]:
+            c_to, c_from = corner(f, v_to), corner(start, v_from)
+            # The developed corner: the rotation applied to the point, then
+            # the translation, a pair of forms.
+            k = motion[f].k
+            rotated = {0: c_to, 1: (-c_to[1], c_to[0]), 2: (-c_to[0], -c_to[1]), 3: (c_to[1], -c_to[0])}[k]
+            t = (value(motion[f].t[0], whole), value(motion[f].t[1], whole))
+            return (rotated[0] + t[0] - c_from[0], rotated[1] + t[1] - c_from[1])
+        face = grid.faces[f]
+        pf = grid.face_key[f][0]
+        for i in range(4):
+            a, b = face[i], face[(i + 1) % 4]
+            for g in face_of_edge.get((min(a, b), max(a, b)), []):
+                if g in motion or g not in region:
+                    continue
+                pg = grid.face_key[g][0]
+                if pg == pf:
+                    motion[g] = motion[f]
+                else:
+                    # Across an arc: the fine edge of f on its rim gives the half.
+                    p, x, y = grid.face_key[f]
+                    corners = [(x, y), (x + 1, y), (x + 1, y + 1), (x, y + 1)]
+                    u, v = (p,) + corners[i], (p,) + corners[(i + 1) % 4]
+                    half = grid.half_of_edge.get((u, v))
+                    if half is None:
+                        continue
+                    motion[g] = motion[f].after(chart.change(half ^ 1))
+                queue.append(g)
+    return None
 
 
 def self_crossings(curve):

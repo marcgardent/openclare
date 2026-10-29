@@ -1241,8 +1241,15 @@ $c_a\ell_a$ on those whose feet are one vertex.
 
 The proof is elementary: the content is in the hypothesis. That the odd part of
 a certificate is a cycle of the graph of feet is observed on all $25$
-certificates of the body (exact) but not proved; Corollary~\ref{cor:checker}
-does not give it, since it controls the parity of $p_{i,1} + p_{i,2}$ while a
+certificates of the body (exact), and it is not general: on random T-meshes
+that do not come from the engine (the property tests of the data package,
+\texttt{experiments/property}), within the bounds $\ell \ge 1$ on every arc,
+$13$ of the $17$ exact certificates whose arcs have feet of odd valence have
+an odd part that is not a cycle, $6$ of them on spheres, and for none of the
+$13$ can a representative modulo the balances be one, even modulo $2$; the
+typical one is a single arc $\ell_a$ between two distinct feet, the shift of
+a turn being the offset of a 3--5 pair. Corollary~\ref{cor:checker} does not
+give the parity either, since it controls that of $p_{i,1} + p_{i,2}$ while a
 comb reads one coordinate (in Figure~\ref{fig:comb} both feet have the same
 colour and $\ell_a = 9$).
 
@@ -1355,7 +1362,7 @@ quadrangulation~\cite[Lemma~3.1]{kaiser2015colouring}
 extended here to turns at all balanced
 lengths.
 
-\begin{evidence}{prose}{}
+\begin{evidence}{core}{\lean{parity_any_surface}, \lean{colour_comp_trans}, \lean{colour_rotAbout_trans}, \lean{colour_border}, \lean{colour_turn}; assumed: that $\pi \circ \hat h$ factors through $H_1(\Sigma; \Z/2)$, and that its value on a class is the parity of the length of a cycle of the quad graph in it}
 \begin{theorem}[Parity of a turn on any surface]\label{thm:parity-any}
 Let $\ell$ be whole and balanced. There is a homomorphism $\Omega_\ell\colon
 H_1(\Sigma; \Z/2) \to \Z/2$ such that for every turn
@@ -1831,7 +1838,7 @@ complexity of maximizing $Q$ over a polytope of lengths in reals.
 \section{What is machine-checked}\label{sec:lean}
 
 The folder \texttt{lean} beside this note is a Lean~4~\cite{demoura2021lean4}
-project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $292$
+project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $298$
 theorem declarations, many of them small lemmas, depend only on Lean's
 standard axioms; the count is not evidence, and its \texttt{README.md} maps
 each statement to its Lean theorems. Lean checks the algebraic and
@@ -1887,7 +1894,10 @@ Appendix~\ref{app:orders}. Added after the first version: the Fox--Burgers
 formula for any generators and the commutator of two motions with commuting
 rotations (Propositions~\ref{prop:burgers-any} and~\ref{prop:torus}), collars,
 the comb identity, the scaling of Proposition~\ref{prop:whole-size}, the
-consequences of the parity (Corollary~\ref{cor:parity}), and the reduction of
+consequences of the parity (Corollary~\ref{cor:parity}), the parity
+homomorphism of Theorem~\ref{thm:parity-any} (on the motions with quarter-turn
+rotations and whole translations, zero on the loops round the cone points,
+$L$ on a border component, $\alpha + s$ on a turn), and the reduction of
 Theorem~\ref{thm:nphard}: on the gadget of a graph the closable sets are the
 independent sets and $\tau_P$ is the vertex cover number.
 
@@ -1957,13 +1967,14 @@ Beyond the cores machine-checked in Lean (Section~\ref{sec:lean}), everything
 was written with AI help and checked by AI agents rereading it and testing it
 on the data, not by a human expert. In particular, Propositions~\ref{thm:combs}
 and~\ref{prop:pairing}, Lemma~\ref{lem:gauss-border},
-Theorems~\ref{thm:parity-any} and~\ref{thm:transversal}, the
+Theorem~\ref{thm:transversal}, the
 case of Lemma~\ref{lem:handshake} with borders, and the statements on
 rotations of order six other than the checked ones have only a paper proof
 written with AI help; Propositions~\ref{prop:collar}, \ref{prop:burgers-any},
 \ref{prop:torus} and~\ref{prop:whole-size}, Lemma~\ref{lem:comb},
-Corollary~\ref{cor:parity} and the reduction of Theorem~\ref{thm:nphard} had
-their algebraic cores checked in Lean after the first version of this note. AI review found errors in Propositions~\ref{thm:combs}
+Corollary~\ref{cor:parity}, Theorem~\ref{thm:parity-any} and the reduction of
+Theorem~\ref{thm:nphard} had their algebraic cores checked in Lean after the
+first version of this note. AI review found errors in Propositions~\ref{thm:combs}
 and~\ref{prop:pairing} and Theorem~\ref{thm:nphard}, and in
 Proposition~\ref{prop:linear} and the completeness proposition
 of~\cite{gardent2026loops}, whose Lean checks are weaker than the statements;

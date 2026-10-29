@@ -1362,10 +1362,18 @@ pieds distincts, et $c_a\ell_a$ sur ceux dont les pieds sont un même sommet.
 
 La démonstration est élémentaire\,: le contenu est dans l'hypothèse. Que la
 partie impaire d'un certificat soit un cycle du graphe des pieds est constaté
-sur les $25$ certificats du corps (exact), mais n'est pas démontré\,; le
-corollaire~\ref{cor:checker} ne le donne pas, puisqu'il contrôle la parité de
-$p_{i,1} + p_{i,2}$ alors qu'un peigne lit une seule coordonnée (sur la
-figure~\ref{fig:comb}, les deux pieds ont la même couleur et $\ell_a = 9$).
+sur les $25$ certificats du corps (exact), et n'est pas général\,: sur des
+T-mesh aléatoires qui ne viennent pas du moteur (les tests de propriétés du
+paquet de données, \texttt{experiments/property}), sous les bornes $\ell \ge
+1$ sur chaque arc, $13$ des $17$ certificats exacts dont les arcs ont des
+pieds de valence impaire ont une partie impaire qui n'est pas un cycle, $6$
+d'entre eux sur des sphères, et pour aucun des $13$ un représentant modulo les
+balances ne peut l'être, même modulo $2$\,; le cas typique est un seul arc
+$\ell_a$ entre deux pieds distincts, le décalage d'un tour étant le décalage
+d'une paire 3--5. Le corollaire~\ref{cor:checker} ne donne pas la parité non
+plus, puisqu'il contrôle celle de $p_{i,1} + p_{i,2}$ alors qu'un peigne lit
+une seule coordonnée (sur la figure~\ref{fig:comb}, les deux pieds ont la
+même couleur et $\ell_a = 9$).
 
 \begin{evidence}{open}{une attente}
 \begin{remark}[Les marches fermées comme cycles tordus]
@@ -1488,7 +1496,7 @@ d'homologie à coefficients dans $\Z/2$ de toute
 quadrangulation~\cite[lemme~3.1]{kaiser2015colouring}, étendu ici aux tours à
 toutes longueurs équilibrées.
 
-\begin{evidence}{prose}{}
+\begin{evidence}{core}{\lean{parity_any_surface}, \lean{colour_comp_trans}, \lean{colour_rotAbout_trans}, \lean{colour_border}, \lean{colour_turn}\,; supposé~: que $\pi \circ \hat h$ passe au quotient $H_1(\Sigma\,; \Z/2)$, et que sa valeur sur une classe est la parité de la longueur d'un cycle du graphe quad dans cette classe}
 \begin{theorem}[Parité d'un tour sur toute surface]\label{thm:parity-any}
 Soit $\ell$ entier et équilibré. Il existe un homomorphisme
 $\Omega_\ell\colon H_1(\Sigma; \Z/2) \to \Z/2$ tel que, pour tout tour,
@@ -2023,7 +2031,7 @@ la maximisation de $Q$ sur un polytope de longueurs réelles.
 
 Le dossier \texttt{lean} à côté de cette note est un projet
 Lean~4~\cite{demoura2021lean4} sur Mathlib~\cite{mathlib2020} (tous deux en
-\texttt{v4.35.0}). Ses $292$ déclarations de théorèmes, dont beaucoup de
+\texttt{v4.35.0}). Ses $298$ déclarations de théorèmes, dont beaucoup de
 petits lemmes, ne dépendent que des axiomes standard de Lean\,; ce nombre
 n'est pas un argument, et son \texttt{README.md} associe à chaque énoncé ses
 théorèmes Lean. Lean vérifie le cœur algébrique et combinatoire de chaque
@@ -2085,9 +2093,13 @@ Fox--Burgers pour des générateurs quelconques et le commutateur de deux
 déplacements dont les rotations commutent (propositions~\ref{prop:burgers-any}
 et~\ref{prop:torus}), les colliers, l'identité des peignes, la mise à l'échelle
 de la proposition~\ref{prop:whole-size}, les conséquences de la parité
-(corollaire~\ref{cor:parity}), et la réduction du théorème~\ref{thm:nphard}~:
-sur le gadget d'un graphe, les ensembles fermables sont les stables et $\tau_P$
-est le nombre de couverture par sommets.
+(corollaire~\ref{cor:parity}), l'homomorphisme de parité du
+théorème~\ref{thm:parity-any} (sur les déplacements à rotation d'un quart de
+tour et translation entière, nul sur les lacets autour des points coniques,
+$L$ sur une composante de bord, $\alpha + s$ sur un tour), et la réduction du
+théorème~\ref{thm:nphard}~: sur le gadget d'un graphe, les ensembles
+fermables sont les stables et $\tau_P$ est le nombre de couverture par
+sommets.
 
 \emph{Vérifié sous une forme plus faible}~: les
 lemmes~\ref{lem:gauss} et~\ref{lem:eight}, seulement le compte par la
@@ -2166,15 +2178,15 @@ Au-delà des cœurs vérifiés par machine en Lean (section~\ref{sec:lean}), tou
 a été écrit avec l'aide de l'IA et vérifié par des agents d'IA qui l'ont relu
 et testé sur les données, non par un expert humain. En particulier, les
 propositions~\ref{thm:combs} et~\ref{prop:pairing}, le
-lemme~\ref{lem:gauss-border}, les théorèmes~\ref{thm:parity-any}
-et~\ref{thm:transversal}, le cas avec bords du lemme~\ref{lem:handshake}, et
-les énoncés sur les rotations d'ordre six autres que ceux qui sont vérifiés
-n'ont qu'une démonstration sur papier écrite avec l'aide de l'IA\,; les
-propositions~\ref{prop:collar}, \ref{prop:burgers-any}, \ref{prop:torus}
-et~\ref{prop:whole-size}, le lemme~\ref{lem:comb}, le
-corollaire~\ref{cor:parity} et la réduction du théorème~\ref{thm:nphard} ont
-eu leur cœur algébrique vérifié en Lean après la première version de cette
-note. La relecture par IA a trouvé des erreurs
+lemme~\ref{lem:gauss-border}, le théorème~\ref{thm:transversal}, le cas avec
+bords du lemme~\ref{lem:handshake}, et les énoncés sur les rotations d'ordre
+six autres que ceux qui sont vérifiés n'ont qu'une démonstration sur papier
+écrite avec l'aide de l'IA\,; les propositions~\ref{prop:collar},
+\ref{prop:burgers-any}, \ref{prop:torus} et~\ref{prop:whole-size}, le
+lemme~\ref{lem:comb}, le corollaire~\ref{cor:parity}, le
+théorème~\ref{thm:parity-any} et la réduction du théorème~\ref{thm:nphard}
+ont eu leur cœur algébrique vérifié en Lean après la première version de
+cette note. La relecture par IA a trouvé des erreurs
 dans les propositions~\ref{thm:combs} et~\ref{prop:pairing} et le
 théorème~\ref{thm:nphard}, ainsi que dans la proposition~\ref{prop:linear} et
 la proposition de complétude de~\cite{gardent2026loops}, dont les

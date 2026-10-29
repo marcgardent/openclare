@@ -96,6 +96,37 @@ def cube():
     return PolygonMesh(positions, faces).check()
 
 
+def box(a, b, c):
+    """The surface of an `a` by `b` by `c` box of unit cubes, as quads: a sphere
+    with eight vertices of valence three and, for `c` large, a tube between
+    two caps, where separatrices wind and dislocations sit between parallel
+    turns."""
+    index = {}
+    positions = []
+
+    def vertex(x, y, z):
+        key = (x, y, z)
+        if key not in index:
+            index[key] = len(positions)
+            positions.append((float(x), float(y), float(z)))
+        return index[key]
+
+    faces = []
+    for x in range(a):
+        for y in range(b):
+            faces.append([vertex(x, y, 0), vertex(x, y + 1, 0), vertex(x + 1, y + 1, 0), vertex(x + 1, y, 0)])
+            faces.append([vertex(x, y, c), vertex(x + 1, y, c), vertex(x + 1, y + 1, c), vertex(x, y + 1, c)])
+    for x in range(a):
+        for z in range(c):
+            faces.append([vertex(x, 0, z), vertex(x + 1, 0, z), vertex(x + 1, 0, z + 1), vertex(x, 0, z + 1)])
+            faces.append([vertex(x, b, z), vertex(x, b, z + 1), vertex(x + 1, b, z + 1), vertex(x + 1, b, z)])
+    for y in range(b):
+        for z in range(c):
+            faces.append([vertex(0, y, z), vertex(0, y, z + 1), vertex(0, y + 1, z + 1), vertex(0, y + 1, z)])
+            faces.append([vertex(a, y, z), vertex(a, y + 1, z), vertex(a, y + 1, z + 1), vertex(a, y, z + 1)])
+    return PolygonMesh(positions, faces).check()
+
+
 def sphere_hull(rng, count):
     """The convex hull of `count` random points on the unit sphere: a
     triangulation of the sphere with vertices of degree about six."""
@@ -231,13 +262,16 @@ def catmull_clark(mesh):
 
 def random_polygon_mesh(rng, kind):
     """One of the families: ('torus', w, h, moves), ('cube', moves),
-    ('hull', count), ('dual', count)."""
+    ('box', a, b, c, moves), ('hull', count), ('dual', count)."""
     if kind[0] == "torus":
         mesh = torus_grid(kind[1], kind[2])
         moves = kind[3]
     elif kind[0] == "cube":
         mesh = cube()
         moves = kind[1]
+    elif kind[0] == "box":
+        mesh = box(kind[1], kind[2], kind[3])
+        moves = kind[4]
     elif kind[0] == "hull":
         return sphere_hull(rng, kind[1])
     elif kind[0] == "dual":
