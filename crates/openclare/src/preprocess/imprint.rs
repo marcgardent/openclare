@@ -110,10 +110,31 @@ pub(crate) fn imprint(mesh: &mut DynamicMesh, surface: &Bvh, face_normals: &[Vec
     let mut touched: Vec<u32> = Vec::new();
     for curve in curves.iter().filter(|curve| curve.points.len() >= 2) {
         // Stretches about as long as an edge, each end back on the surface.
+        // Points closer than half an edge are passed over: the crossings are
+        // told apart by how many stretches lie between them, so stretches
+        // much shorter than an edge would put those of one edge too far apart.
+        let mut points: Vec<Vec3> = Vec::with_capacity(curve.points.len() + 1);
+        let last_point = curve.points.len() - 1;
+        for (k, &point) in curve.points.iter().enumerate() {
+            let end = k == last_point && !curve.closed;
+            match points.last() {
+                Some(&kept) if kept.distance(point) < 0.5 * spacing => {
+                    if end && points.len() > 1 {
+                        *points.last_mut().expect("not empty") = point;
+                    } else if end {
+                        points.push(point);
+                    }
+                }
+                _ => points.push(point),
+            }
+        }
+        if points.len() < 2 {
+            continue;
+        }
         let mut ends: Vec<(Vec3, Vec3)> = Vec::new();
-        let count = curve.points.len() + curve.closed as usize;
+        let count = points.len() + curve.closed as usize;
         for k in 0..count - 1 {
-            let (from, to) = (curve.points[k], curve.points[(k + 1) % curve.points.len()]);
+            let (from, to) = (points[k], points[(k + 1) % points.len()]);
             let pieces = (from.distance(to) / spacing).ceil().max(1.0) as usize;
             for step in 0..pieces {
                 let point = from.lerp(to, step as f64 / pieces as f64);
@@ -123,7 +144,7 @@ pub(crate) fn imprint(mesh: &mut DynamicMesh, surface: &Bvh, face_normals: &[Vec
             }
         }
         if !curve.closed
-            && let Some(hit) = surface.closest_point(*curve.points.last().expect("at least two points"))
+            && let Some(hit) = surface.closest_point(*points.last().expect("at least two points"))
         {
             ends.push((hit.point, face_normals[hit.triangle as usize]));
         }
@@ -208,38 +229,52 @@ pub(crate) fn imprint(mesh: &mut DynamicMesh, surface: &Bvh, face_normals: &[Vec
         }
         crossings.sort_by(|x, y| x.0.total_cmp(&y.0).then((x.1, x.2).cmp(&(y.1, y.2))));
 
-        // The vertices the curve goes through, in order.
-        let mut path: Vec<u32> = Vec::new();
-        for (_, a, b, t) in crossings {
+        // The vertices the curve goes through, each with how far along the
+        // curve it is, in stretches. A vertex already on the curve (one the
+        // long edges were split at, say) is met by several of its edges.
+        let mut on: HashMap<u32, f64> = HashMap::new();
+        for (at, a, b, _) in crossings {
             if !mesh.has_edge(a, b) {
                 continue;
             }
-            let point = mesh.positions[a as usize].lerp(mesh.positions[b as usize], t);
+            // Where the edge crosses, told again from where its ends are now:
+            // an end brought onto the curve by an earlier crossing has moved.
+            let index = (at as usize).min(stretches.len() - 1);
+            let (from, along, across, _, length) = stretches[index];
+            let (pa, pb) = (mesh.positions[a as usize], mesh.positions[b as usize]);
+            let (side_a, side_b) = ((pa - from).dot(across), (pb - from).dot(across));
+            if side_a * side_b > 0.0 {
+                // It no longer does.
+                continue;
+            }
+            let t = if side_a == side_b { 0.0 } else { side_a / (side_a - side_b) };
+            let point = pa.lerp(pb, t);
             // Close to a vertex, the curve goes through it rather than next
             // to it, if it can be brought onto the curve: one that is held,
             // or that would fold a triangle, is left alone and the edge is
             // split after all.
             let close = if t < SNAP { Some(a) } else { Some(b).filter(|_| t > 1.0 - SNAP) };
             let moved = close.filter(|&v| {
-                !path.contains(&v) && mesh.feature_degree(v) == 0 && mesh.move_keeps_orientation(v, point, u32::MAX)
+                !on.contains_key(&v) && mesh.feature_degree(v) == 0 && mesh.move_keeps_orientation(v, point, u32::MAX)
             });
             let vertex = match (moved, close) {
                 (Some(v), _) => {
                     mesh.positions[v as usize] = point;
                     v
                 }
-                // Already on the line a little earlier: the same vertex.
-                (None, Some(v)) if path.last() == Some(&v) => v,
+                // Already on the line: the same vertex.
+                (None, Some(v)) if on.contains_key(&v) => continue,
                 _ => {
                     let v = mesh.split(a, b, point);
                     cells.entry(cell_of(point)).or_default().push(v);
                     v
                 }
             };
-            if path.last() != Some(&vertex) {
-                path.push(vertex);
-            }
+            on.entry(vertex).or_insert(index as f64 + (point - from).dot(along) / length);
         }
+        let mut path: Vec<(f64, u32)> = on.into_iter().map(|(v, at)| (at, v)).collect();
+        path.sort_by(|x, y| x.0.total_cmp(&y.0).then(x.1.cmp(&y.1)));
+        let mut path: Vec<u32> = path.into_iter().map(|(_, v)| v).collect();
         if curve.closed && path.len() > 2 && path.first() == path.last() {
             path.pop();
         }
