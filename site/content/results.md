@@ -12,6 +12,8 @@ The remeshers: **openclare** as the Blender add-on runs it; **QuadriFlow**, buil
 
 ## Model by model
 
+<div class="viewer" data-models="all"></div>
+
 {{models}}
 
 {{withheld}}

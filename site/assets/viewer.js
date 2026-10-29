@@ -1,13 +1,15 @@
 // The 3D viewer of a model page: the meshes of the remeshers, with their
 // quads drawn as quads. Nothing is fetched before the visitor asks for it.
 //
-// The page holds <div class="viewer" data-index="…/index.json" lang="…">;
-// index.json lists the meshes made by scripts/viewer_meshes.py, in the .ocqm
+// The page holds <div class="viewer" data-index="…/index.json" lang="…">, or
+// <div class="viewer" data-models="ogre spot …" data-base="…/mesh/" lang="…">
+// to pick a model; each index.json lists the meshes made by scripts/viewer_meshes.py, in the .ocqm
 // format that script describes.
 
 const WORDS = {
   en: {
     open: "View in 3D",
+    model: "Model",
     remesher: "Remesher",
     budget: "Quads asked for",
     handmade: "Modelled by hand",
@@ -22,6 +24,7 @@ const WORDS = {
   },
   fr: {
     open: "Voir en 3D",
+    model: "Modèle",
     remesher: "Remailleur",
     budget: "Quads demandés",
     handmade: "Modélisé à la main",
@@ -103,49 +106,51 @@ function build(THREE, mesh, up) {
 
 async function start(root) {
   const words = WORDS[root.lang] || WORDS.en;
-  const indexUrl = new URL(root.dataset.index, document.baseURI);
+  // One model (data-index, on its page) or several to pick from (data-models
+  // and data-base, the folder of the meshes, on the home and results pages).
+  const models = root.dataset.models ? root.dataset.models.split(" ") : [null];
+  const indexOf = (model) =>
+    model ? new URL(`${model}/index.json`, new URL(root.dataset.base, document.baseURI)) : new URL(root.dataset.index, document.baseURI);
   root.replaceChildren();
   const status = document.createElement("p");
   status.className = "viewer-status";
   status.textContent = words.loading;
   root.append(status);
 
-  const [THREE, { OrbitControls }, index] = await Promise.all([
+  const [THREE, { OrbitControls }] = await Promise.all([
     import("./three/three.module.min.js"),
     import("./three/OrbitControls.js"),
-    fetch(indexUrl).then((r) => {
-      if (!r.ok) throw new Error(r.statusText);
-      return r.json();
-    }),
   ]);
 
   const bar = document.createElement("div");
   bar.className = "viewer-bar";
-  // Two choices: the remesher, and the number of quads asked of it (none for
-  // a mesh modelled by hand, the same at every budget).
-  const chooser = (text, values, name) => {
+  // The choices: the model where there are several, the remesher, and the
+  // number of quads asked of it (none for a mesh modelled by hand, the same
+  // at every budget).
+  const chooser = (text) => {
     const label = document.createElement("label");
     label.textContent = text + " ";
     const select = document.createElement("select");
-    for (const value of values) {
-      const option = document.createElement("option");
-      option.value = String(value);
-      option.textContent = name(value);
-      select.append(option);
-    }
     label.append(select);
     return [label, select];
   };
-  const remeshers = [...new Set(index.meshes.map((m) => m.remesher))];
-  const budgets = [...new Set(index.meshes.filter((m) => m.budget).map((m) => m.budget))].sort((a, b) => a - b);
-  const [remesherLabel, remesherSelect] = chooser(words.remesher, remeshers,
-    (r) => (r === "handmade" ? words.handmade : NAMES[r] || r));
-  const [budgetLabel, budgetSelect] = chooser(words.budget, budgets, (b) => b.toLocaleString(root.lang).replace(/\u202f|\u00a0/g, " "));
-  if (budgets.includes(3000)) budgetSelect.value = "3000";
+  const fill = (select, values, name) => {
+    const kept = select.value;
+    select.replaceChildren(...values.map((value) => Object.assign(document.createElement("option"), { value: String(value), textContent: name(value) })));
+    if (values.map(String).includes(kept)) select.value = kept;
+  };
+  const number = (n) => n.toLocaleString(root.lang).replace(/ | /g, " ");
+  const [modelLabel, modelSelect] = chooser(words.model);
+  fill(modelSelect, models, (m) => m);
+  const first = models.includes(root.dataset.first) ? root.dataset.first : models[0];
+  modelSelect.value = String(first);
+  const [remesherLabel, remesherSelect] = chooser(words.remesher);
+  const [budgetLabel, budgetSelect] = chooser(words.budget);
   const reset = document.createElement("button");
   reset.type = "button";
   reset.className = "button";
   reset.textContent = words.reset;
+  if (models[0]) bar.append(modelLabel);
   bar.append(remesherLabel, budgetLabel, reset);
 
   const stage = document.createElement("div");
@@ -175,15 +180,6 @@ async function start(root) {
   scene.background = new THREE.Color(style.getPropertyValue("--viewer-bg").trim() || "#ffffff");
   const camera = new THREE.PerspectiveCamera(35, 1, 0.01, 100);
   camera.up.set(0, 0, 1);
-  // Where the camera of the pictures stands (scripts/render.py), z up.
-  const view = index.view || { up: "z", azimuth: -60, elevation: 20 };
-  const azimuth = THREE.MathUtils.degToRad(view.azimuth);
-  const elevation = THREE.MathUtils.degToRad(view.elevation);
-  const towards = new THREE.Vector3(
-    Math.cos(elevation) * Math.cos(azimuth),
-    Math.cos(elevation) * Math.sin(azimuth),
-    Math.sin(elevation),
-  );
   scene.add(camera);
   scene.add(new THREE.HemisphereLight(0xffffff, 0x8796a8, 1.6));
   const light = new THREE.DirectionalLight(0xffffff, 1.8);
@@ -202,6 +198,10 @@ async function start(root) {
     polygonOffsetUnits: 1,
   });
   const lineMaterial = new THREE.LineBasicMaterial({ color: style.getPropertyValue("--viewer-edge").trim() || "#101828" });
+  let index = null;
+  let indexUrl = null;
+  let view = null;
+  let towards = null;
   let shown = null;
   let home = null;
 
@@ -243,12 +243,13 @@ async function start(root) {
     }
     info.textContent = words.loading;
     try {
-      let geometry = cache.get(entry.file);
+      const url = new URL(entry.file, indexUrl).href;
+      let geometry = cache.get(url);
       if (!geometry) {
-        const response = await fetch(new URL(entry.file, indexUrl));
+        const response = await fetch(url);
         if (!response.ok) throw new Error(response.statusText);
         geometry = build(THREE, decode(await response.arrayBuffer()), view.up);
-        cache.set(entry.file, geometry);
+        cache.set(url, geometry);
       }
       if (shown) scene.remove(shown);
       shown = new THREE.Group();
@@ -267,14 +268,35 @@ async function start(root) {
     }
   };
 
+  const load = async (model) => {
+    info.textContent = words.loading;
+    indexUrl = indexOf(model);
+    const response = await fetch(indexUrl);
+    if (!response.ok) throw new Error(response.statusText);
+    index = await response.json();
+    // Where the camera of the pictures stands (scripts/render.py), z up.
+    view = index.view || { up: "z", azimuth: -60, elevation: 20 };
+    const azimuth = THREE.MathUtils.degToRad(view.azimuth);
+    const elevation = THREE.MathUtils.degToRad(view.elevation);
+    towards = new THREE.Vector3(Math.cos(elevation) * Math.cos(azimuth), Math.cos(elevation) * Math.sin(azimuth), Math.sin(elevation));
+    fill(remesherSelect, [...new Set(index.meshes.map((m) => m.remesher))], (r) => (r === "handmade" ? words.handmade : NAMES[r] || r));
+    const budgets = [...new Set(index.meshes.filter((m) => m.budget).map((m) => m.budget))].sort((a, b) => a - b);
+    const first = !budgetSelect.options.length;
+    fill(budgetSelect, budgets, number);
+    if (first && budgets.includes(3000)) budgetSelect.value = "3000";
+    home = null;
+    await show();
+  };
+
+  modelSelect.addEventListener("change", () => load(modelSelect.value).catch(() => (info.textContent = words.failed)));
   remesherSelect.addEventListener("change", show);
   budgetSelect.addEventListener("change", show);
   reset.addEventListener("click", () => home && frame(home));
   resize();
-  await show();
+  await load(first);
 }
 
-for (const root of document.querySelectorAll(".viewer[data-index]")) {
+for (const root of document.querySelectorAll(".viewer[data-index], .viewer[data-models]")) {
   const words = WORDS[root.lang] || WORDS.en;
   const button = document.createElement("button");
   button.type = "button";

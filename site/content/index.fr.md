@@ -39,6 +39,8 @@ Mesuré par le banc d'essai du projet, la nuit du 18 octobre 2026, sur {{count:a
 
 <figure class="wide"><picture><source media="(prefers-color-scheme: dark)" srcset="../../docs/images/dashboard/gallery-dark.webp"><img src="../../docs/images/dashboard/gallery-light.webp" alt="openclare, QuadriFlow et AutoRemesher sur l'ogre, le cochon, une pièce mécanique et un bâtiment généré, chacun avec son nombre de quads et sa note sur 100" loading="lazy"></picture><figcaption>Chaque ligne au même nombre de quads, demandé à chaque remailleur. Le moulin de pierre vient du <em>Free Windmills Set</em> de LapaModels, CC BY 4.0. Légendes de l'image en anglais.</figcaption></figure>
 
+<div class="viewer" data-models="ogre pig part stonemill human_male"></div>
+
 <figure class="wide"><picture><source media="(prefers-color-scheme: dark)" srcset="../../docs/images/dashboard/marks-dark.svg"><img src="../../docs/images/dashboard/marks-light.svg" alt="Note moyenne sur 100 des trois remailleurs sur les modèles organiques, les pièces mécaniques et les modèles assemblés et générés, à 1 000, 3 000 et 8 000 quads demandés" loading="lazy"></picture><figcaption>Notes moyennes sur le banc à 1 000, 3 000 et 8 000 quads demandés.</figcaption></figure>
 
 ## Simple plutôt que régulier

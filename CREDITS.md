@@ -88,7 +88,7 @@ Google Fonts distributes, unmodified, under the SIL Open Font License 1.1:
 
 ## Scripts of the website
 
-The 3D viewer of the model pages is the website's only script. It is served by the site itself,
+The 3D viewer (on the home page, the results page and the model pages) is the website's only script. It is served by the site itself,
 from `site/assets/`, and fetches nothing before the visitor asks for the 3D view:
 
 - **three.js** 0.169.0, © 2010–2024 three.js authors, MIT licence
