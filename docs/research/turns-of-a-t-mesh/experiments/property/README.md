@@ -116,6 +116,16 @@ border and the development of the turn (`borderHolonomy_cuts` with `borderHolono
 evaluated). The border turns round its own vertices only, so the cuts it crosses are the cuts
 with an end on the curve, each once: 13,464 of the 1,889,092 cuts of the regions.
 
+The forest of cuts of a region (`CutForest.lean`, DT-134; 2026-10-30): on the same 1,852
+regions the program builds the forest of cuts from the cut crossings of the border, finding
+below each cut the cuts the library's walk clockwise round its far end crosses
+(`aroundVertexF`). In every region the forest hangs (`hangs`, decided), its cone points in
+preorder, restricted to `k ≠ 4`, are the word of the walk round the cut trees, rotation by
+rotation and position by position, its nodes are the interior vertices, and the composite of
+its cone rotations is the development of the turn (`development_eq_cones`, evaluated). The
+forests have 1,889,092 nodes, 17,289 of them with `k ≠ 4`, are at most 129 deep, and none is
+empty.
+
 On the quad meshes at the whole lengths (DT-134, DT-173; 2026-10-30, the compiled program): χ = 2
 on the 35 spheres and 0 on the 15 tori, equal to the Euler characteristic of the mesh the
 instances were made from; all 35 spheres bipartite and 7 of the 15 tori; on the 42 bipartite

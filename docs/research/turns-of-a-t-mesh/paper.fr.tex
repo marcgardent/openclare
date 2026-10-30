@@ -431,7 +431,7 @@ quatre directions)~: chaque lobe voit un second coin convexe et contient $2$,
 et la troisième région le reste du total $8$.
 \end{proof}
 
-\begin{evidence}{core}{\lean{CutDisc.holonomy_eq_preorder}, \lean{Cut.jump_eq} (sur un disque coupé le long d'une forêt, modélisé par le parcours de son bord~: la récurrence $G_f = G_{f_r} \circ \dots \circ G_{f_1} \circ \rho_v$ et l'holonomie du bord comme composée des rotations coniques dans l'ordre de première visite), \lean{CutDisc.holonomy_trans}, \lean{Motion.burgers_eq_sum}, \lean{Motion.annulus_holonomy}\,; \lean{TMesh.borderHolonomy_round} (l'holonomie de $\bar\gamma$, la carte prolongée de face en face à travers la région à sa gauche, est le développement du tour quand chaque nœud strictement intérieur au premier côté est commun à quatre faces), à partir de \lean{TMesh.crossMotion_glued} (la traversée d'une arête d'un côté envoie ses extrémités sur les points qui leur sont recollés) et de \lean{TMesh.holonomyAround_eq} (l'holonomie autour d'un sommet commun à $k$ faces est la rotation par $R^{4-k}$ autour de lui)\,; \lean{TMesh.borderHolonomy_cuts} (à travers les cartes d'un arbre dual, l'holonomie de $\bar\gamma$ est la composée des sauts à travers les coupures, dans l'ordre du bord)\,; exemples~: \lean{CutDisc.threeSquares_holonomy}\,; testé~: sur chaque sphère de 50 instances aléatoires, les deux régions de chaque courbe simple sont de tels disques coupés (une forêt de coupures, chaque arbre touchant le bord une fois) et la composée de leurs rotations est le développement \lean{TMesh.Turn.development} du tour, $B_D = T_\gamma(\ell)$ avec $D$ à gauche, sur 1\,852 régions, de même que la composée des sauts à travers les coupures\,; (c) sur 898 couronnes\,; supposé~: que ces sauts sont ceux du disque coupé du modèle}
+\begin{evidence}{core}{\lean{CutDisc.holonomy_eq_preorder}, \lean{Cut.jump_eq} (sur un disque coupé le long d'une forêt, modélisé par le parcours de son bord~: la récurrence $G_f = G_{f_r} \circ \dots \circ G_{f_1} \circ \rho_v$ et l'holonomie du bord comme composée des rotations coniques dans l'ordre de première visite), \lean{CutDisc.holonomy_trans}, \lean{Motion.burgers_eq_sum}, \lean{Motion.annulus_holonomy}\,; \lean{TMesh.borderHolonomy_round} (l'holonomie de $\bar\gamma$, la carte prolongée de face en face à travers la région à sa gauche, est le développement du tour quand chaque nœud strictement intérieur au premier côté est commun à quatre faces), à partir de \lean{TMesh.crossMotion_glued} (la traversée d'une arête d'un côté envoie ses extrémités sur les points qui leur sont recollés) et de \lean{TMesh.holonomyAround_eq} (l'holonomie autour d'un sommet commun à $k$ faces est la rotation par $R^{4-k}$ autour de lui)\,; \lean{TMesh.borderHolonomy_cuts} (à travers les cartes d'un arbre dual, l'holonomie de $\bar\gamma$ est la composée des sauts à travers les coupures, dans l'ordre du bord)\,; \lean{TMesh.development_eq_cones} (aux longueurs entières, sur une forêt de coupures que le programme vérifie, le développement du tour est la composée des rotations coniques dans l'ordre de première visite)\,; exemples~: \lean{CutDisc.threeSquares_holonomy}\,; testé~: sur chaque sphère de 50 instances aléatoires, les deux régions de chaque courbe simple sont de tels disques coupés (une forêt de coupures, chaque arbre touchant le bord une fois) et la composée de leurs rotations est le développement \lean{TMesh.Turn.development} du tour, $B_D = T_\gamma(\ell)$ avec $D$ à gauche, sur 1\,852 régions, de même que la composée des sauts à travers les coupures et celle des rotations coniques de la forêt de coupures\,; (c) sur 898 couronnes\,; supposé~: que la forêt de coupures que construit le programme soit accrochée à la région, décidé sur chaque région, non démontré}
 \begin{proposition}[Le décalage est fixé par les singularités]\label{prop:burgers}
 Soient $\gamma$, $\gamma_1$, $\gamma_2$ des tours à courbes simples.
 \begin{enumerate}
@@ -2045,7 +2045,7 @@ la maximisation de $Q$ sur un polytope de longueurs réelles.
 
 Le dossier \texttt{lean} à côté de cette note est un projet
 Lean~4~\cite{demoura2021lean4} sur Mathlib~\cite{mathlib2020} (tous deux en
-\texttt{v4.35.0}). Ses $678$ déclarations de théorèmes, dont beaucoup de
+\texttt{v4.35.0}). Ses $698$ déclarations de théorèmes, dont beaucoup de
 petits lemmes, ne dépendent que des axiomes standard de Lean\,; ce nombre
 n'est pas un argument, et son \texttt{README.md} associe à chaque énoncé ses
 théorèmes Lean. Lean vérifie le cœur algébrique et combinatoire de chaque
@@ -2094,9 +2094,10 @@ de $\bar\gamma$, la carte prolongée de face en face à travers la région à sa
 gauche, égale au développement du tour quand chaque nœud strictement
 intérieur au premier côté est commun à quatre faces et, à travers les cartes
 d'un arbre dual, à la composée des sauts à travers les coupures dans l'ordre
-du bord\,; qu'une région du maillage de quads soit
-un tel disque coupé est décidé par le programme sur chaque région, non
-démontré\,; la couronne découpée~(b)\,; les
+du bord, et, aux longueurs entières, sur une forêt de coupures que le
+programme vérifie, à la composée des rotations coniques dans l'ordre de
+première visite\,; que la forêt de coupures que construit le programme soit
+accrochée à la région est décidé sur chaque région, non démontré\,; la couronne découpée~(b)\,; les
 échanges\,; l'étape de conjugaison de la proposition~\ref{prop:winding}. Sur
 les réels~: les quatre ordres et orientations d'une dislocation et les
 chaînes droites (proposition~\ref{prop:dislocation}(i), (ii))\,; les
