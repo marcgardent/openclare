@@ -45,6 +45,40 @@
 \IfFileExists{version.tex}{\input{version.tex}}{}
 \providecommand{\enginecommit}{unknown}
 
+% Levels of evidence: each statement and table is framed with a tag naming
+% what checks it (Lean, the engine's data, a measure, the proof on paper, a
+% citation), read from the README of ../turns-of-a-t-mesh/lean, as in the companion
+% paper. evidence.py, in that folder, checks that every statement has a level
+% and that every Lean name cited is declared there. \def\plain{} before \input{paper} gives the paper
+% without them, for a venue that wants it plain.
+\newcommand{\lean}[1]{\texttt{\detokenize{#1}}}
+\ifdefined\plain
+\newenvironment{evidence}[3][]{}{}
+\else
+\usepackage[most]{tcolorbox}
+\newcommand{\evlevel}[2]{\expandafter\newcommand\csname ev-name-#1\endcsname{#2}}
+\evlevel{lean}{Lean, complet}
+\evlevel{core}{Lean, cœur algébrique}
+\evlevel{data}{Vérifié sur les données du moteur}
+\evlevel{measured}{Mesuré}
+\evlevel{prose}{Démonstration sur papier seulement}
+\evlevel{tested}{Conjecture, vérifiée par ordinateur}
+\evlevel{cited}{Classique, cité}
+\evlevel{open}{Ouvert, rien n'est affirmé}
+\newcommand{\evname}[1]{\csname ev-name-#1\endcsname}
+\tcbset{evstyle-lean/.style={}, evstyle-core/.style={}, evstyle-data/.style={},
+  evstyle-measured/.style={}, evstyle-tested/.style={}, evstyle-prose/.style={},
+  evstyle-cited/.style={},
+  evstyle-open/.style={frame hidden, borderline={0.4pt}{0pt}{black!45, dashed}}}
+\newtcolorbox{evidence}[3][]{breakable, enhanced, colback=white,
+  colframe=black!45, boxrule=0.4pt, arc=0pt, left=4pt, right=4pt, top=2pt,
+  bottom=2pt, before skip=6pt, after skip=6pt, evstyle-#2,
+  title={\footnotesize\textsc{\evname{#2}}\if\relax\detokenize{#3}\relax\else
+    \quad #3\fi},
+  coltitle=black, colbacktitle=white, titlerule=0.4pt, toptitle=1pt,
+  bottomtitle=1pt, #1}
+\fi
+
 \title{Fermer les boucles d'arêtes à la quantification~:\\
 contraintes d'hélice pour la quantification d'un T-mesh\\[0.5em]
 \large Note de recherche --- brouillon, non relue par des pairs}
@@ -322,6 +356,7 @@ des sommes signées de longueurs d'arcs le long des bords de $P$ et de $Q$,
 la position d'un point du bord étant la somme des longueurs des arcs qui le
 séparent du premier coin.
 
+\begin{evidence}{core}{\lean{TMesh.Turn.shift_linear}, \lean{TMesh.Turn.mem_corridor_iff}, \lean{TMesh.Turn.comes_back}, \lean{TMesh.Turn.winds}\,; exemples~: \lean{TMesh.twistedTorus.walk_turn}\,; supposé~: un recollement orienté\,; le corridor sans demi-entier n'est pas formalisé}
 \begin{proposition}[Le décalage d'un tour est linéaire]\label{prop:linear}
 Pour un tour $\gamma$, il existe des coefficients entiers $c_a$,
 indépendants des longueurs, tels qu'après un tour complet un point du
@@ -339,6 +374,7 @@ j\,\shift_\gamma(\ell)$ appartient au couloir pour $j = 1, \dots, t - 1$,
 elle fait $t$ fois le tour en hélice de pas $|\shift_\gamma(\ell)|$ au sens
 de~\cite{bommes2011structure}.
 \end{proposition}
+\end{evidence}
 
 \begin{proof}[Esquisse de démonstration]
 Chaque passage est une application $x \mapsto R^k x + t$, où $R$ est le
@@ -403,6 +439,7 @@ chacun partage avec le suivant l'arête opposée à celle qu'il partage avec le
 précédent.
 \end{definition}
 
+\begin{evidence}{core}{\lean{Completeness.completeness_at_given_lengths}, dans un modèle\,; supposé~: des rectangles entiers recollés le long de leurs arcs par $t \mapsto \pm t + c$, $c$ entier\,; une surface fermée, la traversée d'un arc envoyant les arêtes unité d'un côté une à une sur des arêtes unité\,; que les cycles du modèle sont les bandes du maillage\,; les bandes qui atteignent un bord ne sont pas formalisées}
 \begin{proposition}[Complétude à longueurs données]\label{prop:complete}
 Soit $\ell$ comme dans la définition. Toute bande du maillage de quads qui
 traverse un côté $\sigma$ d'un patch $P$ en l'arête de quad $[k, k+1]$ de
@@ -414,6 +451,7 @@ une révolution exactement lorsque le tour qu'elle suit a
 $\shift_\gamma(\ell) = 0$. Avec des bords, les bandes qui atteignent un bord
 sont des chemins ouverts de la marche.
 \end{proposition}
+\end{evidence}
 
 \begin{proof}
 Dans $P$, les quads de la bande sont les carrés unité situés entre les
@@ -1060,7 +1098,8 @@ bibliographique, a énoncé et démontré les propositions, et a rédigé le
 texte. L'existence des références a été vérifiée, et la note de chaque
 entrée de la bibliographie dit quelle part de l'œuvre a été lue. Une œuvre dont seul le résumé, ou un compte rendu, a été lu n'est citée que pour ce que ce résumé ou ce compte rendu dit. Des formes
 plus faibles des propositions~\ref{prop:linear} et~\ref{prop:complete} sont
-vérifiées en Lean~4~\cite{demoura2021lean4} dans l'article compagnon\,; tout
+vérifiées en Lean~4~\cite{demoura2021lean4} dans l'article compagnon, comme
+le dit l'étiquette au-dessus de chacune\,; tout
 le reste de ce qui n'est pas vérifié ici par machine a été écrit avec l'aide
 de l'IA et vérifié par des agents d'IA qui l'ont relu et testé sur les
 données, non par un expert humain. La note n'a pas été relue par des

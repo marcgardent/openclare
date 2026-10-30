@@ -1,9 +1,12 @@
-"""Checks the levels of evidence of the statements of the paper.
+"""Checks the levels of evidence of the statements of the papers.
 
-Every theorem, proposition, lemma, corollary, remark, question and conjecture
-of paper.tex and of its translation paper.fr.tex sits in an `evidence` box with a known level, or is preceded by a
-comment `% evidence: none` saying why it claims nothing; every Lean name a box
-cites (\\lean{...}) is declared in lean/; a box at a Lean level cites at least
+The papers are those of PAPERS: paper A (../closing-loops) and paper B (this
+folder), whose Lean names are all declared in this folder's lean/. Every
+theorem, proposition, lemma, corollary, remark, question and conjecture of a
+paper.tex and of its translation paper.fr.tex sits in an `evidence` box with a
+known level, or is preceded by a comment `% evidence: none` saying why it
+claims nothing; every Lean name a box cites (\\lean{...}) is declared in
+lean/; a box at a Lean level cites at least
 one; a box at the level `tested` (a conjecture checked by computer, on the
 random T-meshes of experiments/property) says on how many instances. Run from
 anywhere: python3 docs/research/turns-of-a-t-mesh/evidence.py [--json PATH]
@@ -18,13 +21,14 @@ same ones as the English:
 - `rendered from: \\lean{name}, ...` (`rendu depuis~:`), the statement's
   text rendered from those Lean sources (DT-179).
 
-The progress of the paper. `--json PATH` writes, for the statements of
-paper.tex, one step per row of PROGRESS: its names in English and French, N
-out of M statements and their labels (`kind-k` for the k-th statement when it
-has no \\label), then whether the paper is a preprint (PREPRINT), the levels
-of the statements (`none` for one that claims nothing), their total, when it
-was written (UTC) and from which commit. paper.fr.tex must give the same.
-The papers workflow writes it beside paper.pdf, in the same artifact.
+The progress of the papers. `--json PATH` writes when it was written (UTC),
+from which commit, and `papers`, one entry per paper in the order of PAPERS:
+its id (the folder), its title, one step per row of PROGRESS for the
+statements of its paper.tex (names in English and French, N out of M and the
+labels, `kind-k` for the k-th statement when it has no \\label), whether it is
+a preprint, the levels of its statements (`none` for one that claims nothing)
+and their total. paper.fr.tex must give the same. The papers workflow writes
+it beside paper B's PDFs, in the same artifact.
 """
 
 import json
@@ -51,8 +55,12 @@ PROGRESS = [
     ("mutation", "Mutation screening", "Tests de mutation", lambda s: False),
     ("rendered", "Prose from Lean", "Prose tirée du Lean", lambda s: bool(s["rendered"])),
 ]
-# Paper B is a draft until the roadmap of DT-135 is done.
-PREPRINT = False
+# The papers: id (the folder beside this one), title, and whether it is a
+# preprint; both are drafts until the roadmap of DT-135 is done.
+PAPERS = [
+    ("closing-loops", "Closing Edge Loops at Quantization Time", False),
+    ("turns-of-a-t-mesh", "Turns of a T-Mesh: Obstructions to Closing Edge Loops", False),
+]
 
 
 def declarations():
@@ -153,7 +161,7 @@ def commit():
 
 
 def progress(statements):
-    """The steps of the paper towards a preprint, as --json writes them."""
+    """The steps of one paper towards a preprint, as --json writes them."""
     steps = []
     for key, name_en, name_fr, counts in PROGRESS:
         labels = [s["label"] for s in statements if counts(s)]
@@ -162,8 +170,7 @@ def progress(statements):
     levels = {}
     for s in statements:
         levels[s["level"]] = levels.get(s["level"], 0) + 1
-    return {"paper": "Turns of a T-mesh", "steps": steps, "preprint": PREPRINT,
-            "levels": dict(sorted(levels.items())), "statements": len(statements)}
+    return {"steps": steps, "levels": dict(sorted(levels.items())), "statements": len(statements)}
 
 
 def main():
@@ -172,30 +179,33 @@ def main():
         sys.exit("usage: evidence.py [--json PATH]")
     names = declarations()
     failed = False
-    papers = [HERE / "paper.tex"] + [path for path in [HERE / "paper.fr.tex"] if path.exists()]
-    levels, statements = {}, {}
-    for path in papers:
-        errors, statements[path.name], levels[path.name] = check(path, names)
-        for error in errors:
-            print(f"evidence: {path.name}: {error}")
-        counts = {level: levels[path.name].count(level) for level in sorted(LEVELS)}
-        print(f"evidence: {path.name}: {len(statements[path.name])} statements, {len(levels[path.name])} boxes {counts}")
-        failed |= bool(errors)
-    # The translation gives each statement the level, the label and the
-    # fields of the original.
-    if len(papers) == 2 and levels["paper.tex"] != levels["paper.fr.tex"]:
-        print("evidence: paper.tex and paper.fr.tex give different levels, in order")
-        failed = True
-    if len(papers) == 2 and statements["paper.tex"] != statements["paper.fr.tex"]:
-        print("evidence: paper.tex and paper.fr.tex give different labels or fields, in order")
-        failed = True
+    result = {"generated": datetime.now(timezone.utc).isoformat(timespec="seconds"), "commit": commit(), "papers": []}
+    for paper, title, preprint in PAPERS:
+        folder = HERE.parent / paper
+        papers = [folder / "paper.tex"] + [path for path in [folder / "paper.fr.tex"] if path.exists()]
+        levels, statements = {}, {}
+        for path in papers:
+            name = f"{paper}/{path.name}"
+            errors, statements[path.name], levels[path.name] = check(path, names)
+            for error in errors:
+                print(f"evidence: {name}: {error}")
+            counts = {level: levels[path.name].count(level) for level in sorted(LEVELS)}
+            print(f"evidence: {name}: {len(statements[path.name])} statements, {len(levels[path.name])} boxes {counts}")
+            failed |= bool(errors)
+        # The translation gives each statement the level, the label and the
+        # fields of the original.
+        if len(papers) == 2 and levels["paper.tex"] != levels["paper.fr.tex"]:
+            print(f"evidence: {paper}: paper.tex and paper.fr.tex give different levels, in order")
+            failed = True
+        if len(papers) == 2 and statements["paper.tex"] != statements["paper.fr.tex"]:
+            print(f"evidence: {paper}: paper.tex and paper.fr.tex give different labels or fields, in order")
+            failed = True
+        entry = {"id": paper, "title": title, **progress(statements["paper.tex"]), "preprint": preprint}
+        result["papers"].append(entry)
+        print(f"evidence: {paper}: " + " → ".join(f"{s['name_en']} {s['n']}/{s['m']}" for s in entry["steps"])
+              + f" → Preprint: {'yes' if preprint else 'no'}")
     print(f"evidence: {len(names)} Lean declarations")
-    result = progress(statements["paper.tex"])
-    print("evidence: " + " → ".join(f"{s['name_en']} {s['n']}/{s['m']}" for s in result["steps"])
-          + f" → Preprint: {'yes' if result['preprint'] else 'no'}")
     if arguments:
-        result["generated"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
-        result["commit"] = commit()
         Path(arguments[1]).write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n")
     sys.exit(1 if failed else 0)
 

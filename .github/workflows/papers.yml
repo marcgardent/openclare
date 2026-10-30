@@ -7,7 +7,7 @@ name: papers
 # checked by lean.yml), to show that it builds; called by pages.yml, which
 # serves them on the website; and by hand from the Actions tab. Each paper
 # is one artifact holding paper.pdf and paper.fr.pdf (and, for B, progress.json,
-# written by evidence.py), named after its folder.
+# the progress of both papers, written by evidence.py), named after its folder.
 # On a pull request GitHub's `paths` filter looks at the whole diff against
 # the base, so the job `changes` looks at the files of the push itself and
 # skips the build when none of them is a paper.
@@ -83,10 +83,10 @@ jobs:
       - name: The figures' numbers
         if: matrix.note == 'turns-of-a-t-mesh'
         run: python3 docs/research/turns-of-a-t-mesh/figures/check.py
-      # Every statement of paper B has a level of evidence, every Lean name
-      # its tags cite is declared in its lean folder, and the French paper
-      # gives the same; its progress towards a preprint, as timestamped JSON,
-      # goes into the artifact beside the PDFs.
+      # Every statement of papers A and B has a level of evidence, every Lean
+      # name their tags cite is declared in B's lean folder, and each French
+      # paper gives the same; their progress towards a preprint, as
+      # timestamped JSON, goes into B's artifact beside its PDFs.
       - name: The levels of evidence
         if: matrix.note == 'turns-of-a-t-mesh'
         run: python3 docs/research/turns-of-a-t-mesh/evidence.py --json docs/research/turns-of-a-t-mesh/progress.json
