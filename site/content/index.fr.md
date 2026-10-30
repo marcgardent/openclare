@@ -51,6 +51,10 @@ Un artiste préfère peu de pôles et peu de spirales à des quads parfaitement 
 
 *Le corps masculin à simplicité 0, 0,25 (les préréglages), 0,5 et 1 : 303, 259, 213 et 172 pôles.*
 
+## Dans Blender
+
+L'extension gratuite contient toute la retopologie : un nombre de quads ou leurs tailles, une densité peinte ou tirée de la forme, les arêtes vives et les matériaux gardés comme lignes d'arêtes, des courbes tracées sur le modèle comme guides ou comme arêtes vives, la symétrie, et les arêtes vives du résultat marquées sharp et crease. Ce que fait chaque réglage est sur la page [Obtenir](get.fr.md).
+
 ## Pour aller plus loin
 
 <div class="cards">

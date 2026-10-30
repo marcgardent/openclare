@@ -126,7 +126,7 @@ Where the tools are distributed: [platforms.toml](platforms.toml).
 | guide | `guide:parameters` | settings only: face count, size, smoothing | 32 |
 | guide | `guide:density` | a painted density map, a vertex group or a size map | 5 |
 | guide | `guide:marked-edges` | edges marked sharp or seam, material or face set boundaries | 3 |
-| guide | `guide:strokes` | strokes, curves or lines drawn over the source | 11 |
+| guide | `guide:strokes` | strokes, curves or lines drawn over the source | 12 |
 | guide | `guide:points` | points or markers placed on the source | 6 |
 | guide | `guide:template` | a base mesh whose topology is kept | 4 |
 | guide | `guide:boundary` | a closed loop of edges to fill | 5 |

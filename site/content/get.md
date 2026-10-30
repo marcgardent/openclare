@@ -11,7 +11,15 @@ One archive holds everything: the add-on and its engine, compiled. There is noth
 1. Take the archive of your system from the [releases](https://github.com/marcgardent/openclare/releases): `openclare-<version>-<platform>.zip`, the platform being `linux-x64`, `windows-x64`, `macos-arm64` or `macos-x64`. Or build it yourself (below).
 2. In Blender 4.2 or later: *Edit › Preferences › Get Extensions*, the arrow at the top right, *Install from Disk*, and pick the archive.
 
-A panel named *openclare* appears in the Properties editor, on the tab of the mesh (Object Data). Select a mesh, ask for a number of quads or for their sizes, choose a preset of the shape (organic, animation, hard surface), press *Remesh to Quads*. A density painted in Weight Paint says where the quads are smaller, and the borders between materials are kept as lines of edges. The result is a new object beside the original, which is left as it is. The engine runs in the background: Blender stays free, and the panel shows a bar of its progress with a button to stop it.
+A panel named *openclare* appears in the Properties editor, on the tab of the mesh (Object Data). Select a mesh, set what follows, press *Remesh to Quads*. The result is a new object beside the original, which is left as it is. The engine runs in the background: Blender stays free, and the panel shows a bar of its progress with a button to stop it.
+
+### What it does
+
+- **How many quads, and where.** A number of quads, or the sizes of the largest and the smallest. *Analyse* proposes the sizes and says at once how many quads they make; *Show Sizes* colours the object with the size its quads will have.
+- **Density.** *Adaptive Size* makes the quads smaller where the shape bends; thin parts (a finger, an ear) keep the quads that go round them. A density painted in Weight Paint says where they are smaller, and *Density from Shape* writes the shape's own density as a group to paint on.
+- **Lines of edges.** Hard edges, the edges marked sharp, and the borders between materials are kept as lines of edges.
+- **Curves drawn on the model.** *Draw Curve* and *Cut Volume*, in the toolbar, draw a curve on the model or the loop round a limb. A *Guide* curve gives a line of edges; a *Sharp* curve gives a line of hard edges.
+- **The result.** Symmetry across X, Y or Z. Hard edges marked sharp and creased, for a *Subdivision Surface* to keep. Shading by angle, smooth or flat. Saved presets of the settings. *Remesh Again* redoes the result in place, and the panel reports on the run.
 
 The Linux build runs wherever Blender does (glibc 2.28 or later). The Windows and macOS builds pass the tests of the C interface on their system but have not yet been run in a Blender there; the macOS one is signed ad hoc, not notarized. Each release also has the engine as a C library with its header, `openclare-capi-<version>-<platform>.tar.gz`, for other programs.
 
