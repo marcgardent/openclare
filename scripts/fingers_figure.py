@@ -3,9 +3,8 @@
 
     python3 scripts/fingers_figure.py [--blender blender]
 
-Writes docs/images/fingers.webp, four panels side by side: the source,
-openclare asked at 1,000 and at 3,000 quads, and Instant Meshes asked at 3,000,
-seed 1 of the bench. It reads the bench's own results under
+Writes docs/images/fingers.webp, three panels side by side: the source,
+openclare and Instant Meshes, both asked at 3,000 quads, seed 1 of the bench. It reads the bench's own results under
 bench/out/human_male/, which `bench/run.py` makes.
 
 Each mesh is cut to the same box round the right forearm and hand, and the box's
@@ -24,7 +23,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent.parent
 BENCH = ROOT / "bench/out/human_male"
 TARGET = ROOT / "docs/images/fingers.webp"
-PANELS = (("source.obj", False), ("1000/openclare_1.obj", True), ("3000/openclare_1.obj", True), ("3000/instant-meshes_1.obj", True))
+PANELS = (("source.obj", False), ("3000/openclare_1.obj", True), ("3000/instant-meshes_1.obj", True))
 # Round the right forearm and hand, in the bench's units, z up.
 LOW, HIGH = (0.24, -0.20, 0.70), (0.46, 0.06, 1.02)
 SIZE, PAD = 700, 20
