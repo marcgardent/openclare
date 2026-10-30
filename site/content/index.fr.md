@@ -13,12 +13,12 @@
 Sélectionnez un maillage, demandez un nombre de quads, appuyez sur *Remesh to Quads*. L'original reste tel quel.
 
 <div class="cards uses">
-<div class="card"><strong>Une sculpture prête à animer</strong><span>Des quads avec peu de pôles, et des boucles autour des yeux, de la bouche et des articulations, tracées sur le modèle là où vous les voulez.</span></div>
-<div class="card"><strong>Une pièce mécanique aux arêtes nettes</strong><span>Les arêtes vives et les arêtes marquées sharp gardées comme lignes d'arêtes, avec un crease pour le Subdivision Surface.</span></div>
-<div class="card"><strong>Un scan ou un maillage d'IA rendu utilisable</strong><span>Une surface de quads propre et fermée, à partir d'une surface bruitée.</span></div>
-<div class="card"><strong>Du détail là où il compte</strong><span>Des quads plus petits sur le visage et les mains, peints ou tirés de la forme.</span></div>
-<div class="card"><strong>Des coutures où vous les voulez</strong><span>Les courbes tracées sur le modèle deviennent des coutures, prêtes pour les UV.</span></div>
-<div class="card"><strong>Des triangles aussi</strong><span>Des triangles réguliers pour la simulation de tissu, ou le Decimate de Blender pour l'impression et les collisions.</span></div>
+<div class="card" data-art="sculpt"><strong>Une sculpture prête à animer</strong><span>Des quads avec peu de pôles, et des boucles autour des yeux, de la bouche et des articulations, tracées sur le modèle là où vous les voulez.</span></div>
+<div class="card" data-art="mechanical"><strong>Une pièce mécanique aux arêtes nettes</strong><span>Les arêtes vives et les arêtes marquées sharp gardées comme lignes d'arêtes, avec un crease pour le Subdivision Surface.</span></div>
+<div class="card" data-art="scan"><strong>Un scan ou un maillage d'IA rendu utilisable</strong><span>Une surface de quads propre et fermée, à partir d'une surface bruitée.</span></div>
+<div class="card" data-art="detail"><strong>Du détail là où il compte</strong><span>Des quads plus petits sur le visage et les mains, peints ou tirés de la forme.</span></div>
+<div class="card" data-art="seams"><strong>Des coutures où vous les voulez</strong><span>Les courbes tracées sur le modèle deviennent des coutures, prêtes pour les UV.</span></div>
+<div class="card" data-art="triangles"><strong>Des triangles aussi</strong><span>Des triangles réguliers pour la simulation de tissu, ou le Decimate de Blender pour l'impression et les collisions.</span></div>
 </div>
 
 ## Des boucles qui se ferment
