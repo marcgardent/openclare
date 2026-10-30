@@ -47,7 +47,13 @@ turns of the way, and compares, with the library's definitions:
   meet the curve at one vertex (a disc); the faces developed along the tree
   (`crossMotion`); the rotations `R^{4-k}` about the cone points in the order of first
   visit of the walk round the trees, whose composite and Burgers sum are compared with
-  `Turn.development` of the turn of the curve and with the words of `develop.py`.
+  `Turn.development` of the turn of the curve and with the words of `develop.py`; the
+  faces are developed by the library's `crossEdge` (`Border.lean`);
+* the chart along the border of every round (`Border.lean`): the steps of the round
+  against its points, the holonomy of its border (`borderHolonomy`) against the
+  development of its turn, and at every vertex of the quad graph the walk round it
+  (`valenceAround`) against the union-find, its holonomy against `R^{4-k}` about it and
+  every point it meets in its class.
 
 All arithmetic is exact (`ℤ`, `ℚ`; the engine's floats are read as the fractions they
 are). `Turn.shiftForm` and `balance` are read only at the arcs of the sides they
@@ -58,6 +64,7 @@ import TurnsOfATMesh.TMesh
 import TurnsOfATMesh.Fox
 import TurnsOfATMesh.Grid
 import TurnsOfATMesh.Holonomy
+import TurnsOfATMesh.Border
 import Lean.Data.Json
 import Std.Data.HashMap
 import Std.Data.HashSet
@@ -860,41 +867,9 @@ structure Fine (K : Nat) where
   valence : Array Nat
   coarse : Array Bool
 
-/-- A point of the fine grid in the plane of its patch, in half quads. -/
-def gp (p : Point (Fin P)) : GaussianInt := ⟨p.x, p.y⟩
-
 /-- The inverse of a motion whose linear part is a quarter-turn. -/
 def invQ (m : Motion GaussianInt GaussianInt) : Motion GaussianInt GaussianInt :=
   ⟨TMesh.conj m.lin, -(TMesh.conj m.lin * m.trans)⟩
-
-/-- The side of its rectangle the fine edge from `p` to `q` lies on, with the fine
-position of its first end along it; `none` for an edge inside the rectangle. -/
-def onSide (ℓ : Fin n → ℕ) (p q : Point (Fin P)) : Option (Side (Fin P) × Nat) :=
-  let w := 2 * T.width ℓ p.patch
-  let h := 2 * T.height ℓ p.patch
-  if p.x == q.x && p.x == 0 then some ((p.patch, 1, 0), min p.y q.y)
-  else if p.x == q.x && p.x == w then some ((p.patch, 1, 1), min p.y q.y)
-  else if p.y == q.y && p.y == 0 then some ((p.patch, 0, 0), min p.x q.x)
-  else if p.y == q.y && p.y == h then some ((p.patch, 0, 1), min p.x q.x)
-  else none
-
-/-- The arc of a side whose arcs are `l` holding the fine edge from the fine position
-`t` to `t + 1`. -/
-def arcOn (ℓ : Fin n → ℕ) : List (Fin n) → Nat → Option (Fin n)
-  | [], _ => none
-  | a :: l, t => if t < 2 * ℓ a then some a else arcOn ℓ l (t - 2 * ℓ a)
-
-/-- The change of chart across the fine edge from `p` to `q` of a face, from the frame
-of the patch of `p` to that of the face across, in fine coordinates: the identity
-inside a rectangle; on a side, `crossMotion` across the arc holding the edge, its
-translation doubled (it is in quads). With the patch across. -/
-def crossFine (ℓ : Fin n → ℕ) (p q : Point (Fin P)) :
-    Option (Fin P × Motion GaussianInt GaussianInt) :=
-  match onSide T ℓ p q with
-  | none => some (p.patch, Motion.id)
-  | some (τ, t) => (arcOn ℓ (T.arcs τ) t).map fun a =>
-    let C := T.crossMotion ℓ τ a
-    ((T.other a τ).1, ⟨C.lin, 2 * C.trans⟩)
 
 /-- Whether `z` in the frame of the patch `Q` is a point of the grid glued to `p`. -/
 def sameAs (F : Fine P) (Q : Fin P) (z : GaussianInt) (p : Point (Fin P)) : Bool :=
@@ -965,11 +940,11 @@ def discOf (F : Fine P) (ℓ : Fin n → ℕ) (dflt : Point (Fin P)) (cyc : Arra
         if g == f || (chart[g]!).isSome then continue
         let p := cs[j]!
         let q := cs[(j + 1) % 4]!
-        match crossFine T ℓ p q with
+        match T.crossEdge ℓ p q with
         | none => badCharts := badCharts + 1
         | some (Q, C) =>
-          if Q.val != F.facePatch[g]! || !sameAs F Q (C.apply (gp p)) p ||
-              !sameAs F Q (C.apply (gp q)) q then
+          if Q.val != F.facePatch[g]! || !sameAs F Q (C.apply (fine p)) p ||
+              !sameAs F Q (C.apply (fine q)) q then
             badCharts := badCharts + 1
           chart := chart.set! g (some (Motion.comp Mf (invQ C)))
           treeEdges := treeEdges.insert e
@@ -1071,7 +1046,7 @@ def discOf (F : Fine P) (ℓ : Fin n → ℕ) (dflt : Point (Fin P)) (cyc : Arra
               if F.coarse[v]! && F.valence[v]! != 4 then
                 match F.cw[(v, arrived)]? with
                 | some (_, f, j) =>
-                  let at_ := ((chart[f]!).getD Motion.id).apply (gp (F.cornerPts[f]!)[j]!)
+                  let at_ := ((chart[f]!).getD Motion.id).apply (fine (F.cornerPts[f]!)[j]!)
                   word := word.push (quarter (4 - (F.valence[v]! : Int)), at_)
                 | none => walkFailed := "no face at a cone point"
             -- Clockwise round `v` to the next cut edge.
@@ -1214,6 +1189,115 @@ def checkDiscs (ℓ : Fin n → ℕ) (fcs : Array (Face (Fin P)))
   if fox.isSome then
     foxC.show "regions: composite = inverse of the holonomy of the word of develop.py for the same turn, through the chart R^k of its first patch"
   return discC.ok && wordC.ok && compC.ok && burgC.ok && foxC.ok && badCharts == 0 && rootBad == 0
+
+/-! ### The chart along the border of a round (`Border.lean`)
+
+The definitions of the fifth brick of DT-134 evaluated on the quad mesh at the whole
+lengths, and its theorems checked on them: the steps of every round against its points
+(`roundSteps_round`); the holonomy of the border of every round, the chart continued
+from face to face through the region on its left, against the development of its turn
+(`borderHolonomy_round`), counted by where the closing segment along the first side
+`σ` runs (none, a ring; with the region inside the rectangle of `σ`; outside, every
+node strictly inside `σ` met by four faces, the hypothesis of the theorem; outside,
+some node not, which the theorem does not cover); at every vertex of the quad graph,
+the walk round it (`valenceAround`) against the valence of the union-find,
+`holonomyAround` against `R^{4-k}` about it (`holonomyAround_eq`), and every point the
+walk meets in its class (`aroundStep_same`). -/
+
+/-- The checks of the fifth brick: see the section above. `pts`, `index`, `rep`,
+`valence` and `coarse` are those of `checkGrid`. -/
+def checkBorder (ℓ : Fin n → ℕ) (pts : Array (Point (Fin P)))
+    (index : Std.HashMap (Point (Fin P)) Nat) (rep valence : Array Nat) (coarse : Array Bool) :
+    IO Bool := do
+  let patches := List.finRange P
+  -- More steps than faces round any vertex: at most four corners of each corner and
+  -- side of each patch meet at a vertex.
+  let fuel := 16 * P + 16
+  -- The vertices of the quad graph, by their representatives.
+  let mut valC : Count := {}
+  let mut holC : Count := {}
+  let mut sameC : Count := {}
+  for (v, i) in pts.zipIdx do
+    if rep[i]! != i || !coarse[i]! then continue
+    let z := TMesh.fine v
+    -- A direction whose face on the right lies in the rectangle of `v`.
+    let dirs : List GaussianInt := [1, gi, -1, -gi]
+    match dirs.find? (fun d => (square z d (-gi)).all (T.inRect ℓ v.patch) &&
+        T.inRect ℓ v.patch (z + d)) with
+    | none => valC := valC.add false fun _ => s!"vertex {i}: no face of its rectangle at it"
+    | some d =>
+      let k := T.valenceAround ℓ fuel v d
+      valC := valC.add (k == some valence[i]!) fun _ =>
+        s!"vertex {i} at {repr v}: valenceAround {k}, union-find {valence[i]!}"
+      match T.holonomyAround ℓ fuel v d, k with
+      | some H, some k =>
+        let R := Motion.rotAbout (TurnsOfATMesh.quarter (4 - (k : Int))) z
+        holC := holC.add (H.lin == R.lin && H.trans == R.trans) fun _ =>
+          s!"vertex {i} at {repr v}, {k} faces: holonomy {showG H.lin}, {showG H.trans}"
+      | _, _ => holC := holC.add false fun _ => s!"vertex {i} at {repr v}: no walk round it"
+      -- The walk round the vertex, point by point.
+      let mut w := v
+      let mut e := d
+      let mut steps := 0
+      let mut done := false
+      while !done && steps < fuel do
+        match T.aroundStep ℓ gi w e with
+        | none =>
+          sameC := sameC.add false fun _ => s!"vertex {i} at {repr v}: the walk stops at {repr w}"
+          done := true
+        | some (w', e', _) =>
+          steps := steps + 1
+          let same := match index[w']? with
+            | some j => rep[j]! == i
+            | none => false
+          sameC := sameC.add same fun _ => s!"vertex {i} at {repr v}: the walk meets {repr w'}"
+          w := w'
+          e := e'
+          if w == v && e == d then done := true
+  -- One round from every station.
+  let mut stepsC : Count := {}
+  let mut ringC : Count := {}
+  let mut inC : Count := {}
+  let mut outC : Count := {}
+  let mut irrC : Count := {}
+  for Pi in patches do
+    for j in (List.finRange 2) do
+      for s in (List.finRange 2) do
+        let σ : Side (Fin P) := (Pi, j, s)
+        -- The hypothesis of `borderHolonomy_round`: every node strictly inside `σ` is met
+        -- by four faces.
+        let regular := (List.range (T.sideLen ℓ σ)).all fun m =>
+          m == 0 || T.valenceAround ℓ fuel (T.sidePoint ℓ σ (2 * m)) (TMesh.inward σ) == some 4
+        for k in [0:T.sideLen ℓ σ] do
+          let at_ := s!"station {k} of side {sideIndex σ}"
+          let rs := T.roundSteps patches ℓ σ k
+          stepsC := stepsC.add (rs.map (·.1.map Prod.fst) == (T.round patches ℓ σ k).map List.dropLast)
+            fun _ => s!"{at_}: the steps do not start at the points of the round"
+          let some (steps, path) := rs | continue
+          let D := fineMotion (Motion.composeAll (T.crossMotions ℓ σ path))
+          let ok := match T.borderHolonomy ℓ 4 steps with
+            | some H => H.lin == D.lin && H.trans == D.trans
+            | none => false
+          let what := fun (_ : Unit) =>
+            s!"{at_}: holonomy of the border {(T.borderHolonomy ℓ 4 steps).map fun H => (showG H.lin, showG H.trans)}, development {showG D.lin}, {showG D.trans}"
+          -- The station the round comes back to, `kq + ½`.
+          let x := (Motion.composeAll (T.crossingsAt (TMesh.rat ℓ) σ path)).apply ((k : ℚ) + 1 / 2)
+          let kq := ((2 * x - 1) / 2).floor.toNat
+          if kq == k then ringC := ringC.add ok what
+          else
+            let ε : Int := if kq ≤ k then 1 else -1
+            if ε == σ.orient then inC := inC.add ok what
+            else if regular then outC := outC.add ok what
+            else irrC := irrC.add ok what
+  stepsC.show "border: the steps of a round start at its points (roundSteps_round)"
+  ringC.show "border: holonomy of the border of a round = its development (borderHolonomy_round), rings"
+  inC.show "border: the same, closing segment with the region inside the rectangle of σ"
+  outC.show "border: the same, closing segment with the region outside, every node of σ met by four faces"
+  irrC.show "border: the same, closing segment outside, a node of σ not met by four faces (not covered by the theorem)"
+  valC.show "border: the walk round each vertex of the quad graph meets its valence (valenceAround)"
+  holC.show "border: holonomy round each vertex of the quad graph = R^(4-k) about it (holonomyAround_eq)"
+  sameC.show "border: every point the walk round a vertex meets is that vertex (aroundStep_same)"
+  return stepsC.ok && ringC.ok && inC.ok && outC.ok && irrC.ok && valC.ok && holC.ok && sameC.ok
 
 /-- The checks of the quad mesh at the whole lengths: see the section above.
 `lengthShift` holds `(index, γ.length, γ.shift)` at the whole lengths for the turns
@@ -1400,6 +1484,8 @@ def checkGrid (whole : Array ℚ) (lengthShift : Array (Nat × ℚ × ℚ))
               curves := cyc.toList :: curves
               curveSt := (σ, k) :: curveSt
   IO.println s!"  rounds of the walk from every station: {rounds}, {curves.length} distinct curves, {stopped} stopped"
+  -- The chart along the border of every round, and round every vertex (`Border.lean`).
+  let border ← checkBorder T ℓ pts index rep valence coarse
   -- Lemma "Gauss–Bonnet for turns" on the regions of every simple curve.
   let mut gb : Count := {}
   let mut regionsTotal := 0
@@ -1425,7 +1511,7 @@ def checkGrid (whole : Array ℚ) (lengthShift : Array (Nat × ℚ × ℚ))
     else
       IO.println s!"  regions of the simple curves: not a sphere (χ = {euler}), no discs checked"
       pure true
-  return ok && gb.ok && parity.ok && discs
+  return ok && gb.ok && parity.ok && discs && border
 
 def checkRaw (raw : Raw) : IO Bool := do
   let P := raw.patches
