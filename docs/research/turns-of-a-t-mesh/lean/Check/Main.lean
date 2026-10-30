@@ -60,7 +60,12 @@ turns of the way, and compares, with the library's definitions:
   tree agreeing across every crossing of the tree, and the composite of the jumps
   across the cuts, in border order, against the holonomy of the border and the
   development of the turn (`borderHolonomy_cuts`); the region on the right of a curve
-  is the region on the left of the curve walked back.
+  is the region on the left of the curve walked back;
+* on a sphere, the forest of cuts (`CutForest.lean`) of both regions of every simple
+  curve, built from the cut crossings of the border and the library's walks round the
+  far ends of the cuts (`aroundVertexF`): `hangs` decided, its cone points in preorder
+  against the word of the walk round the cut trees, and the composite of their
+  rotations against the development of the turn (`development_eq_cones`).
 
 All arithmetic is exact (`ℤ`, `ℚ`; the engine's floats are read as the fractions they
 are). `Turn.shiftForm` and `balance` are read only at the arcs of the sides they
@@ -73,6 +78,7 @@ import TurnsOfATMesh.Grid
 import TurnsOfATMesh.Holonomy
 import TurnsOfATMesh.Border
 import TurnsOfATMesh.Region
+import TurnsOfATMesh.CutForest
 import Lean.Data.Json
 import Std.Data.HashMap
 import Std.Data.HashSet
@@ -922,6 +928,8 @@ structure Disc where
   treePairs : Std.HashSet (Nat × Nat) := ∅
   /-- The cuts with an end on the curve. -/
   rootCuts : Nat := 0
+  /-- The interior vertices of the region (off the curve), by their classes. -/
+  innerN : Nat := 0
 
 /-- The region on the left of the curve `cyc` (its vertices, each with the edge to the
 next), or on its right when `left` is false, from the face `root` beside its first
@@ -1021,7 +1029,7 @@ def discOf (F : Fine P) (ℓ : Fin n → ℕ) (dflt : Point (Fin P)) (cyc : Arra
     let (a, b) := F.edgeEnds.getD e (0, 0)
     onCurve.contains a || onCurve.contains b).length
   let base : Disc := { faces := queue.size, cuts := cuts.size, trees, inside, badCharts, chart,
-                       treePairs, rootCuts }
+                       treePairs, rootCuts, innerN := inner.size }
   if !why.isEmpty then return { base with notDisc := ", ".intercalate why.toList }
   -- The walk round the cut trees: at each vertex of the curve, clockwise from the edge
   -- it came in by to the edge it leaves by, round every tree met there, the trees on
@@ -1091,6 +1099,19 @@ def discOf (F : Fine P) (ℓ : Fin n → ℕ) (dflt : Point (Fin P)) (cyc : Arra
     walkFailed := s!"{word.size} cone points visited of {inside} inside"
   return { base with walkFailed, word := word.toList }
 
+/-- The chart of a face of the region `r`, the identity off the region. -/
+def chartOf (faceIndex : Std.HashMap (Face (Fin P)) Nat) (r : Disc) (f : Face (Fin P)) :
+    Motion GaussianInt GaussianInt :=
+  match faceIndex[f]? with
+  | some i => (r.chart[i]?.join).getD Motion.id
+  | none => Motion.id
+
+/-- Whether two faces of the region `r` are joined by an edge of its dual tree. -/
+def treeOf (faceIndex : Std.HashMap (Face (Fin P)) Nat) (r : Disc) (f g : Face (Fin P)) : Bool :=
+  match faceIndex[f]?, faceIndex[g]? with
+  | some i, some j => r.treePairs.contains (min i j, max i j)
+  | _, _ => false
+
 /-- The jumps across the cuts of a region (`Region.lean`): what went wrong with its
 border (empty if nothing did: the steps are unit steps, each ends where the next
 starts, the first face is the root, `borderCrossings` is `some`, its faces chain as
@@ -1098,7 +1119,7 @@ starts, the first face is the root, `borderCrossings` is `some`, its faces chain
 those across the tree with charts that do not agree (`M g ∘ C ≠ M f`), the composite
 of the jumps across the cuts, and how the cut crossings, each named by its pair of
 faces, nest. -/
-structure CutsOf where
+structure CutsOf (P : Nat) where
   why : String := ""
   crossings : Nat := 0
   treeCrossings : Nat := 0
@@ -1112,24 +1133,20 @@ structure CutsOf where
   once : Bool := false
   /-- Every pair crossed exactly twice, once each way, the word well parenthesized. -/
   nested : Bool := false
+  /-- The cut crossings, in border order. -/
+  cuts : List (Crossing (Fin P)) := []
 
 /-- The definitions of the sixth brick evaluated on a region of `discOf`, with the
 closed curve of `steps` round it (the region on their left) and the face `root` the
 tree starts from. -/
 def cutsOf (F : Fine P) (ℓ : Fin n → ℕ) (faceIndex : Std.HashMap (Face (Fin P)) Nat) (r : Disc)
-    (steps : List (Step (Fin P))) (root : Face (Fin P)) : CutsOf := Id.run do
-  let M : Face (Fin P) → Motion GaussianInt GaussianInt := fun f =>
-    match faceIndex[f]? with
-    | some i => (r.chart[i]?.join).getD Motion.id
-    | none => Motion.id
+    (steps : List (Step (Fin P))) (root : Face (Fin P)) : CutsOf P := Id.run do
+  let M := chartOf faceIndex r
   let charted : Face (Fin P) → Bool := fun f =>
     match faceIndex[f]? with
     | some i => (r.chart[i]?.join).isSome
     | none => false
-  let tree : Face (Fin P) → Face (Fin P) → Bool := fun f g =>
-    match faceIndex[f]?, faceIndex[g]? with
-    | some i, some j => r.treePairs.contains (min i j, max i j)
-    | _, _ => false
+  let tree := treeOf faceIndex r
   let same : Motion GaussianInt GaussianInt → Motion GaussianInt GaussianInt → Bool :=
     fun A B => A.lin == B.lin && A.trans == B.trans
   let some s := steps.head? | return { why := "no steps" }
@@ -1181,7 +1198,71 @@ def cutsOf (F : Fine P) (ℓ : Fin n → ℕ) (faceIndex : Std.HashMap (Face (Fi
   return { why := ", ".intercalate why.toList, crossings := cs.length, treeCrossings := treeCs.length,
            treeBad, cutCrossings := cuts.length, composite := Motion.composeAll (cuts.map (jump M)),
            holonomy := T.borderHolonomy ℓ 4 steps, distinct, once := distinct == names.length,
-           nested := nested && stack.isEmpty }
+           nested := nested && stack.isEmpty, cuts }
+
+/-! ### The forest of cuts of a region (`CutForest.lean`)
+
+The roots are the cut crossings of the border, in border order. For a crossing
+`(f, C, g)`: its edge, the edge of `f` that `crossEdge` carries by `C` into the patch of
+`g` onto two corners of `g`; its far end `v`, the end off the curve for a root and the
+end off the vertex walked round below it; `d` from `v` to the other end and `k` the
+valence of `v`, from the union-find. The cuts below are those the library's walk
+clockwise round `v` (`aroundVertexF`) crosses before it crosses the cut back, read
+through the dual tree (`cutCrossings`). -/
+
+/-- The class of a point of the grid, `none` off the grid. -/
+def classOf (F : Fine P) (p : Point (Fin P)) : Option Nat := (F.index[p]?).map fun i => F.rep[i]!
+
+/-- The edge a crossing `(f, C, g)` goes across: the edge `(p, q)` of `f` that `crossEdge`
+carries by `C` into the patch of `g`, onto two corners of `g`. -/
+def cutEdge (ℓ : Fin n → ℕ) (c : Crossing (Fin P)) : Option (Point (Fin P) × Point (Fin P)) :=
+  let (f, C, g) := c
+  let gc := (corners g).map fine
+  (faceEdges f).find? fun (p, q) =>
+    match T.crossEdge ℓ p q with
+    | some (Q, C') => Q == g.patch && C'.lin == C.lin && C'.trans == C.trans &&
+        gc.contains (C.apply (fine p)) && gc.contains (C.apply (fine q))
+    | none => false
+
+/-- The node of a cut crossing: its far end `v` and the direction `d` from `v` to its near
+end, in the frame of the face before the cut, and the valence `k` of `v`. The near end is
+on the curve for a root (`near = none`), of the class `near` below a vertex. -/
+def nodeOf (F : Fine P) (ℓ : Fin n → ℕ) (onCurve : Std.HashSet Nat) (near : Option Nat)
+    (c : Crossing (Fin P)) : Except String (Step (Fin P) × Nat × Nat) := do
+  let some (p, q) := cutEdge T ℓ c | throw "a cut crossing without its edge"
+  let some a := classOf F p | throw "an end of a cut off the grid"
+  let some b := classOf F q | throw "an end of a cut off the grid"
+  let isNear : Nat → Bool := fun x => match near with
+    | some u => x == u
+    | none => onCurve.contains x
+  if isNear b && !isNear a then return ((p, fine q - fine p), F.valence[a]!, a)
+  else if isNear a && !isNear b then return ((q, fine p - fine q), F.valence[b]!, b)
+  else throw "a cut without one end near and one far"
+
+/-- **The forest of cuts** below the crossings `cs`, their near end `near` (`none`: on the
+curve), within `fuel` levels; `walkFuel` is the fuel of the walks round the far ends. -/
+def forestOf (F : Fine P) (ℓ : Fin n → ℕ) (tree : Face (Fin P) → Face (Fin P) → Bool)
+    (onCurve : Std.HashSet Nat) (walkFuel : Nat) :
+    Nat → Option Nat → List (Crossing (Fin P)) → Except String (CutForest (Fin P))
+  | 0, _, _ => throw "the forest deeper than its fuel"
+  | fuel + 1, near, cs => do
+    let nodes ← cs.mapM fun c => do
+      let (s, k, v) ← nodeOf T F ℓ onCurve near c
+      let some walk := T.aroundVertexF ℓ (-gi) walkFuel s.1 (-gi * s.2)
+        | throw "no walk round the far end of a cut"
+      let below ← forestOf F ℓ tree onCurve walkFuel fuel (some v) (cutCrossings tree walk.dropLast)
+      return (c, s, k, below)
+    return nodes.foldr (fun (c, s, k, below) next => CutForest.node c s k below next) .nil
+
+/-- The valences of the far ends of a forest, in preorder. -/
+def forestValences : CutForest (Fin P) → List Nat
+  | .nil => []
+  | .node _ _ k below next => k :: (forestValences below ++ forestValences next)
+
+/-- The depth of a forest: the most nodes on a path down from a root. -/
+def forestDepth : CutForest (Fin P) → Nat
+  | .nil => 0
+  | .node _ _ _ below next => max (forestDepth below + 1) (forestDepth next)
 
 /-- Proposition "The shift is set by the singularities" (a) on a sphere, for both
 regions of every simple curve of a round: the check of a disc, the word of first
@@ -1250,6 +1331,14 @@ def checkDiscs (ℓ : Fin n → ℕ) (fcs : Array (Face (Fin P)))
   let mut distinctN := 0
   let mut cutsOfDiscN := 0
   let mut rootCutsOfDiscN := 0
+  let mut hangC : Count := {}
+  let mut orderC : Count := {}
+  let mut conesC : Count := {}
+  let mut nodesN := 0
+  let mut singularN := 0
+  let mut depthN := 0
+  let mut emptyN := 0
+  let walkFuel := 16 * P + 16
   for (c, (σ, k)) in curves.zip curveSt do
     let cyc := c.toArray
     if (Std.HashSet.ofList (c.map (·.1))).size != c.length then continue
@@ -1313,6 +1402,31 @@ def checkDiscs (ℓ : Fin n → ℕ) (fcs : Array (Face (Fin P)))
         rootCutsOfDiscN := rootCutsOfDiscN + r.rootCuts
       discC := discC.add r.notDisc.isEmpty fun _ =>
         s!"{at_}: {r.faces} faces, {r.cuts} cuts, {r.trees} trees: {r.notDisc}"
+      -- The forest of cuts (`CutForest.lean`), from the cut crossings of the border.
+      if u.why.isEmpty && r.notDisc.isEmpty then
+        let onCurve : Std.HashSet Nat := Std.HashSet.ofList (c.map (·.1))
+        let tree := treeOf faceIndex r
+        let M := chartOf faceIndex r
+        match forestOf T F ℓ tree onCurve walkFuel (r.cuts + 1) none u.cuts with
+        | .error e =>
+          hangC := hangC.add false fun _ => s!"{at_}: the forest is not built: {e}"
+          orderC := orderC.add false fun _ => s!"{at_}: no forest"
+          conesC := conesC.add false fun _ => s!"{at_}: no forest"
+        | .ok fo =>
+          hangC := hangC.add (T.hangs M ℓ walkFuel tree fo && decide (fo.roots = u.cuts)) fun _ =>
+            s!"{at_}: the forest of {fo.size} nodes does not hang from the region"
+          let cones := Forest.preorder (fo.cones M)
+          let ks := forestValences fo
+          let singular := ((ks.zip cones).filter (·.1 != 4)).map (·.2)
+          orderC := orderC.add (r.walkFailed.isEmpty && singular == r.word && fo.size == r.innerN)
+            fun _ => s!"{at_}: forest {fo.size} nodes, {singular.length} cone points {singular.map fun (u, p) => (showG u, showG p)}; walk round the trees {r.innerN} interior vertices, word {r.word.map fun (u, p) => (showG u, showG p)}"
+          let comp := Motion.composeAll (Motion.rotations cones)
+          conesC := conesC.add (D.lin == 1 && comp.lin == 1 && comp.trans == fineD) fun _ =>
+            s!"{at_}: composite of the cone rotations of the forest {showG comp.lin}, {showG comp.trans}; development {showG D.lin}, {showG D.trans}"
+          nodesN := nodesN + fo.size
+          singularN := singularN + singular.length
+          depthN := max depthN (forestDepth fo)
+          if fo.size == 0 then emptyN := emptyN + 1
       if !r.notDisc.isEmpty then continue
       cutsN := cutsN + r.cuts
       treesN := treesN + r.trees
@@ -1348,8 +1462,12 @@ def checkDiscs (ℓ : Fin n → ℕ) (fcs : Array (Face (Fin P)))
   treeC.show "cuts: across every crossing of the dual tree the charts agree, M g ∘ C = M f (the hypothesis of borderHolonomy_cuts)"
   jumpC.show "cuts: composite of the jumps across the cuts in border order = holonomy of the border = development (2 T on the left, -2 T on the right; borderHolonomy_cuts with borderHolonomy_round)"
   IO.println s!"    for the next brick, on the regions crossed: cut crossings with a distinct pair of faces each (each cut edge crossed once) {onceN}; nested words (each crossed twice, once each way) {nestedN}; distinct pairs crossed {distinctN} of {cutsOfDiscN} cuts, {rootCutsOfDiscN} with an end on the curve; regions where the pairs crossed are all the cuts {allCutsN}, the cuts with an end on the curve {rootCutsN}"
+  hangC.show "forest: the forest of cuts built from the cut crossings of the border hangs from the region (hangs of CutForest.lean decided; its roots are the cut crossings)"
+  orderC.show "forest: its cone points in preorder, k ≠ 4, = the word of the walk round the cut trees (same rotations, positions, order); its nodes = the interior vertices"
+  conesC.show "forest: composite of the cone rotations in preorder = development (2 T on the left, -2 T on the right; development_eq_cones evaluated)"
+  IO.println s!"    {nodesN} nodes, {singularN} with k ≠ 4; deepest forest {depthN}; regions with an empty forest {emptyN}"
   return discC.ok && wordC.ok && compC.ok && burgC.ok && foxC.ok && badCharts == 0 && rootBad == 0 &&
-    crossC.ok && treeC.ok && jumpC.ok
+    crossC.ok && treeC.ok && jumpC.ok && hangC.ok && orderC.ok && conesC.ok
 
 /-! ### The chart along the border of a round (`Border.lean`)
 
