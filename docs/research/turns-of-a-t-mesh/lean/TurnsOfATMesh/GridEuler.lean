@@ -1,7 +1,10 @@
 /-
 The Euler characteristic of the quad mesh of a T-mesh at whole lengths
-(`Grid.lean`) does not depend on the lengths: at positive balanced lengths it is
-`P − A + N`, the patches minus the arcs plus the nodes of the T-mesh.
+(`Grid.lean`) does not depend on the lengths: at positive balanced lengths, every
+side holding an arc, it is `P − A + N`, the patches minus the arcs plus the nodes
+of the T-mesh (`euler_eq_nodeCount`). The nodes are defined without lengths
+(`nodeCount`): the ends of the arcs as junctions on the sides, identified by the
+gluing of the arcs and at the corners of the patches.
 
 Every point of the fine grid is inside a patch, inside an arc, or an end of an
 arc (`arcPoint`). The gluings never touch a point inside a patch, glue a point
@@ -9,6 +12,8 @@ inside an arc only to its partner on the other side of the same arc, and keep
 the ends of the arcs among themselves. So a patch adds `+1`, an arc `−1`, a node
 `+1`. An edge of the quad mesh is counted as the class of its midpoint in the
 grid refined once more (lengths `2ℓ`), where the same three cases apply.
+Counting edges as unordered pairs of vertices instead undercounts at small
+lengths: the square torus of one patch at `ℓ = 1` has 8 edges but 4 such pairs.
 -/
 module
 
@@ -696,6 +701,272 @@ theorem euler_eq [Fintype Patch] [Fintype α] {patches : List Patch} {allArcs : 
   simp only [Finset.sum_add_distrib, Finset.sum_sub_distrib]
   ring
 
+
+/-! ### The nodes without lengths
+
+A node is named by a side and the index `k` of a junction between its arcs:
+`0` at its first corner, `k` between its `k`-th and `k+1`-th arcs, the number of
+its arcs at its last corner. Two junctions are one node when the gluing of an arc
+takes an end of it to the other, or when they are one corner of a patch. -/
+
+/-- The length of the first `k` arcs of a list. -/
+def pre (ℓ : α → ℕ) (l : List α) (k : ℕ) : ℕ := ((l.take k).map ℓ).sum
+
+theorem pre_idxOf (ℓ : α → ℕ) {a : α} {l : List α} (h : a ∈ l) :
+    pre ℓ l (l.idxOf a) = posNat a l ℓ ∧ pre ℓ l (l.idxOf a + 1) = posNat a l ℓ + ℓ a := by
+  induction l with
+  | nil => simp at h
+  | cons b l ih =>
+    by_cases hb : b = a
+    · subst hb; simp [pre, posNat]
+    · have ha := (List.mem_cons.mp h).resolve_left (Ne.symm hb)
+      have hidx : (b :: l).idxOf a = l.idxOf a + 1 := by simp [hb]
+      obtain ⟨ih₁, ih₂⟩ := ih ha
+      simp only [pre] at ih₁ ih₂ ⊢
+      rw [hidx]
+      simp only [List.take_succ_cons, List.map_cons, List.sum_cons, posNat, hb, ite_false]
+      omega
+
+theorem pre_lt {ℓ : α → ℕ} (hℓ : ∀ a, 0 < ℓ a) {l : List α} {k k' : ℕ} (hk : k < k')
+    (hk' : k' ≤ l.length) : pre ℓ l k < pre ℓ l k' := by
+  induction l generalizing k k' with
+  | nil => simp at hk'; omega
+  | cons b l ih =>
+    obtain ⟨m', rfl⟩ : ∃ m', k' = m' + 1 := ⟨k' - 1, by omega⟩
+    have := hℓ b
+    rcases k with _ | m
+    · simp [pre]; omega
+    · have := ih (k := m) (k' := m') (by omega) (by simp at hk'; omega)
+      simp only [pre, List.take_succ_cons, List.map_cons, List.sum_cons] at this ⊢
+      omega
+
+theorem pre_inj {ℓ : α → ℕ} (hℓ : ∀ a, 0 < ℓ a) {l : List α} {k k' : ℕ} (hk : k ≤ l.length)
+    (hk' : k' ≤ l.length) (h : pre ℓ l k = pre ℓ l k') : k = k' := by
+  rcases lt_trichotomy k k' with hlt | rfl | hlt
+  · exact absurd h (pre_lt hℓ hlt hk').ne
+  · rfl
+  · exact absurd h (pre_lt hℓ hlt hk).ne'
+
+theorem pre_length (ℓ : α → ℕ) (l : List α) : pre ℓ l l.length = (l.map ℓ).sum := by
+  simp [pre]
+
+/-- A corner of a patch: the patch and its place `(u, v) ∈ {0, 1}²`. -/
+abbrev Corner (Patch : Type*) := Patch × Fin 2 × Fin 2
+
+/-- The first (`e = 0`) or last (`e = 1`) corner of a side. -/
+def sideCorner (σ : Side Patch) (e : Fin 2) : Corner Patch :=
+  if σ.2.1 = 0 then (σ.1, e, σ.2.2) else (σ.1, σ.2.2, e)
+
+variable (T)
+
+/-- The junction at the first (`e = 0`) or last (`e = 1`) corner of a side. -/
+def cornerJunction (σ : Side Patch) (e : Fin 2) : Side Patch × ℕ :=
+  (σ, if e = 0 then 0 else (T.arcs σ).length)
+
+/-- The junction at the start (`e = 0`) or the end (`e = 1`) of the arc `a` on its
+side `ends a i`, in the direction of that side. -/
+def endJunction (a : α) (i : Fin 2) (e : Fin 2) : Side Patch × ℕ :=
+  (T.ends a i, (T.arcs (T.ends a i)).idxOf a + e.val)
+
+/-- The identifications of junctions, without lengths: the gluing of an arc takes
+its ends on one side to its ends on the other, and the junctions at one corner of
+a patch are one. -/
+inductive NodeStep : Side Patch × ℕ → Side Patch × ℕ → Prop
+  | glue (a : α) (e : Fin 2) :
+      NodeStep (T.endJunction a 0 e) (T.endJunction a 1 (if T.sign a = 1 then e else e + 1))
+  | corner (σ τ : Side Patch) (e e' : Fin 2) (h : sideCorner σ e = sideCorner τ e') :
+      NodeStep (T.cornerJunction σ e) (T.cornerJunction τ e')
+
+/-- **The number of nodes of the T-mesh**: the classes of the ends of the arcs,
+as junctions, under `NodeStep`. It does not depend on lengths. -/
+noncomputable def nodeCount : ℕ :=
+  (Quot.mk T.NodeStep '' Set.range fun x : α × Fin 2 × Fin 2 => T.endJunction x.1 x.2.1 x.2.2).ncard
+
+/-- The point of a junction at the lengths `ℓ`. -/
+def junctionPoint (ℓ : α → ℕ) (j : Side Patch × ℕ) : Point Patch :=
+  T.sidePoint ℓ j.1 (2 * pre ℓ (T.arcs j.1) j.2)
+
+/-- The point of a corner at the lengths `ℓ`. -/
+def cornerPoint (ℓ : α → ℕ) (c : Corner Patch) : Point Patch :=
+  ⟨c.1, 2 * T.width ℓ c.1 * c.2.1.val, 2 * T.height ℓ c.1 * c.2.2.val⟩
+
+variable {T}
+
+theorem junctionPoint_endJunction (ℓ : α → ℕ) (a : α) (i e : Fin 2) :
+    T.junctionPoint ℓ (T.endJunction a i e) = T.arcPoint ℓ a i (2 * ℓ a * e.val) := by
+  obtain ⟨h₀, h₁⟩ := pre_idxOf ℓ (mem_arcs_ends (T := T) a i)
+  unfold junctionPoint endJunction arcPoint
+  fin_cases e
+  · simp only [add_zero, mul_zero, h₀]
+  · simp only [mul_one, h₁]; congr 1; ring
+
+theorem junctionPoint_cornerJunction {ℓ : α → ℕ} (hbal : T.Balanced ℓ) (σ : Side Patch)
+    (e : Fin 2) : T.junctionPoint ℓ (T.cornerJunction σ e) = T.cornerPoint ℓ (sideCorner σ e) := by
+  have hL := sideLen_eq hbal σ
+  unfold junctionPoint cornerJunction
+  obtain ⟨P, j, k⟩ := σ
+  fin_cases e <;> simp only [Fin.zero_eta, Fin.mk_one, ite_true, ite_false, one_ne_zero] <;>
+    simp only [pre, List.take_zero, List.map_nil, List.sum_nil] <;>
+    fin_cases j <;> fin_cases k <;>
+    simp_all [sidePoint, cornerPoint, sideCorner, sideLen, width, height]
+
+theorem cornerPoint_inj {ℓ : α → ℕ} (hwh : ∀ P, 0 < T.width ℓ P ∧ 0 < T.height ℓ P)
+    {c c' : Corner Patch} (h : T.cornerPoint ℓ c = T.cornerPoint ℓ c') : c = c' := by
+  obtain ⟨P, x, y⟩ := c
+  obtain ⟨Q, x', y'⟩ := c'
+  simp only [cornerPoint, Point.mk.injEq] at h
+  obtain ⟨rfl, hx, hy⟩ := h
+  obtain ⟨hw, hh⟩ := hwh P
+  have := Fin.isLt x; have := Fin.isLt x'; have := Fin.isLt y; have := Fin.isLt y'
+  have hx' : x.val = x'.val := by
+    rcases Nat.lt_or_ge x.val x'.val with h | h <;> [skip; skip] <;>
+      nlinarith [hx]
+  have hy' : y.val = y'.val := by
+    rcases Nat.lt_or_ge y.val y'.val with h | h <;> nlinarith [hy]
+  rw [Fin.ext hx', Fin.ext hy']
+
+theorem pre_le_length {ℓ : α → ℕ} (hℓ : ∀ a, 0 < ℓ a) {l : List α} {k : ℕ} (hk : k ≤ l.length) :
+    pre ℓ l k ≤ (l.map ℓ).sum := by
+  rw [← pre_length]
+  rcases hk.lt_or_eq with h | rfl
+  exacts [(pre_lt hℓ h le_rfl).le, le_rfl]
+
+theorem endJunction_valid (a : α) (i e : Fin 2) :
+    (T.endJunction a i e).2 ≤ (T.arcs (T.endJunction a i e).1).length := by
+  have := List.idxOf_lt_length_of_mem (mem_arcs_ends (T := T) a i)
+  have := e.isLt
+  simp only [endJunction]; omega
+
+theorem isEnd_junctionPoint (ℓ : α → ℕ) (a : α) (i e : Fin 2) :
+    T.IsEnd ℓ (T.junctionPoint ℓ (T.endJunction a i e)) := by
+  rw [junctionPoint_endJunction]
+  fin_cases e
+  · exact ⟨a, i, Or.inl (by simp)⟩
+  · exact ⟨a, i, Or.inr (by simp)⟩
+
+/-- **Two junctions with one point are one node**, at positive balanced lengths. -/
+theorem nodeStep_of_point {ℓ : α → ℕ} (hℓ : ∀ a, 0 < ℓ a) (hbal : T.Balanced ℓ)
+    (hwh : ∀ P, 0 < T.width ℓ P ∧ 0 < T.height ℓ P) {j j' : Side Patch × ℕ}
+    (hj : j.2 ≤ (T.arcs j.1).length) (hj' : j'.2 ≤ (T.arcs j'.1).length)
+    (h : T.junctionPoint ℓ j = T.junctionPoint ℓ j') : Relation.EqvGen T.NodeStep j j' := by
+  have key : ∀ {σ τ : Side Patch} {k k' : ℕ}, k' ≤ (T.arcs τ).length → 0 < k →
+      k < (T.arcs σ).length → T.junctionPoint ℓ (σ, k) = T.junctionPoint ℓ (τ, k') →
+      σ = τ ∧ k = k' := by
+    intro σ τ k k' hk' hk₀ hk h
+    simp only [junctionPoint] at h
+    have h₀ : pre ℓ (T.arcs σ) 0 < pre ℓ (T.arcs σ) k := pre_lt hℓ hk₀ hk.le
+    rw [show pre ℓ (T.arcs σ) 0 = 0 by simp [pre]] at h₀
+    have h₁ := pre_lt hℓ (l := T.arcs σ) hk le_rfl
+    have h₂ := pre_le_length hℓ hk'
+    rw [pre_length] at h₁
+    obtain ⟨rfl, huv⟩ := sidePoint_inj hbal hwh (by omega) (by unfold sideLen; omega)
+      (by unfold sideLen; omega) h
+    exact ⟨rfl, pre_inj hℓ hk.le hk' (by omega)⟩
+  have corner : ∀ {σ : Side Patch} {k : ℕ}, (k = 0 ∨ k = (T.arcs σ).length) →
+      ∃ e, (σ, k) = T.cornerJunction σ e := by
+    rintro σ k (rfl | rfl)
+    exacts [⟨0, by simp [cornerJunction]⟩, ⟨1, by simp [cornerJunction]⟩]
+  obtain ⟨σ, k⟩ := j
+  obtain ⟨τ, k'⟩ := j'
+  by_cases hk : 0 < k ∧ k < (T.arcs σ).length
+  · obtain ⟨rfl, rfl⟩ := key hj' hk.1 hk.2 h
+    exact Relation.EqvGen.refl _
+  by_cases hk' : 0 < k' ∧ k' < (T.arcs τ).length
+  · obtain ⟨rfl, rfl⟩ := key hj hk'.1 hk'.2 h.symm
+    exact Relation.EqvGen.refl _
+  obtain ⟨e, he⟩ := corner (σ := σ) (k := k) (by simp only at hj; omega)
+  obtain ⟨e', he'⟩ := corner (σ := τ) (k := k') (by simp only at hj'; omega)
+  rw [he, he'] at h ⊢
+  rw [junctionPoint_cornerJunction hbal, junctionPoint_cornerJunction hbal] at h
+  exact Relation.EqvGen.rel _ _ (NodeStep.corner σ τ e e' (cornerPoint_inj hwh h))
+
+theorem glued_ends (ℓ : α → ℕ) (a : α) (e : Fin 2) :
+    T.arcPoint ℓ a 1 (T.flip ℓ a (2 * ℓ a * e.val)) =
+      T.arcPoint ℓ a 1 (2 * ℓ a * (if T.sign a = 1 then e else e + 1).val) := by
+  congr 1
+  unfold flip
+  fin_cases e <;> split_ifs <;> simp
+
+/-- The points of the two ends of a gluing step are one vertex. -/
+theorem same_of_nodeStep {allArcs : List α} (hA : ∀ a, a ∈ allArcs) {ℓ : α → ℕ}
+    (hbal : T.Balanced ℓ) {j j' : Side Patch × ℕ} (h : T.NodeStep j j') :
+    T.Same allArcs ℓ (T.junctionPoint ℓ j) (T.junctionPoint ℓ j') := by
+  cases h with
+  | glue a e =>
+    have ht : 2 * ℓ a * e.val ≤ 2 * ℓ a := by fin_cases e <;> simp
+    have := T.same_of_glued allArcs ℓ a (hA a) _ ht
+    rwa [glued_eq ℓ a ht, glued_ends, ← junctionPoint_endJunction,
+      ← junctionPoint_endJunction] at this
+  | corner σ τ e e' hc =>
+    rw [junctionPoint_cornerJunction hbal, junctionPoint_cornerJunction hbal, hc]
+    exact Relation.EqvGen.refl _
+
+/-- **The nodes at positive balanced lengths are the nodes without lengths.** -/
+theorem numNodes_eq [Fintype α] {allArcs : List α} (hA : ∀ a, a ∈ allArcs) {ℓ : α → ℕ}
+    (hℓ : ∀ a, 0 < ℓ a) (hne : ∀ σ, T.arcs σ ≠ []) (hbal : T.Balanced ℓ) :
+    T.numNodes allArcs ℓ = T.nodeCount := by
+  have hwh : ∀ P, 0 < T.width ℓ P ∧ 0 < T.height ℓ P :=
+    fun P => ⟨sideLen_pos hℓ hne _, sideLen_pos hℓ hne _⟩
+  set E := Set.range fun x : α × Fin 2 × Fin 2 => T.endJunction x.1 x.2.1 x.2.2
+  have hEv : ∀ j ∈ E, j.2 ≤ (T.arcs j.1).length := by
+    rintro _ ⟨⟨a, i, e⟩, rfl⟩; exact endJunction_valid a i e
+  have hEnd : {p | T.IsEnd ℓ p} = T.junctionPoint ℓ '' E := by
+    ext p
+    constructor
+    · rintro ⟨a, i, rfl | rfl⟩
+      · exact ⟨T.endJunction a i 0, ⟨(a, i, 0), rfl⟩, by simp [junctionPoint_endJunction]⟩
+      · exact ⟨T.endJunction a i 1, ⟨(a, i, 1), rfl⟩, by simp [junctionPoint_endJunction]⟩
+    · rintro ⟨_, ⟨⟨a, i, e⟩, rfl⟩, rfl⟩
+      exact isEnd_junctionPoint ℓ a i e
+  -- The class of a point of a junction of `E` holds only points of junctions of `E`
+  -- related to it.
+  have hclosed : ∀ j₀ ∈ E, ∀ q, T.Same allArcs ℓ (T.junctionPoint ℓ j₀) q →
+      ∃ j ∈ E, T.junctionPoint ℓ j = q ∧ Relation.EqvGen T.NodeStep j₀ j := by
+    intro j₀ hj₀ q hq
+    refine (same_iff_of_gluings (S := fun p => ∃ j ∈ E, T.junctionPoint ℓ j = p ∧
+      Relation.EqvGen T.NodeStep j₀ j) (fun x y hxy => ?_) hq).mp
+      ⟨j₀, hj₀, rfl, Relation.EqvGen.refl _⟩
+    obtain ⟨b, t, ht, rfl, rfl⟩ := mem_gluings hxy
+    by_cases hte : t = 2 * ℓ b * (0 : Fin 2).val ∨ t = 2 * ℓ b * (1 : Fin 2).val
+    · obtain ⟨e, rfl⟩ : ∃ e : Fin 2, t = 2 * ℓ b * e.val := hte.elim (⟨0, ·⟩) (⟨1, ·⟩)
+      have hstep := NodeStep.glue (T := T) b e
+      rw [glued_ends, ← junctionPoint_endJunction, ← junctionPoint_endJunction]
+      have hv₀ := endJunction_valid (T := T) b 0 e
+      have hv₁ := endJunction_valid (T := T) b 1 (if T.sign b = 1 then e else e + 1)
+      constructor
+      · rintro ⟨j, hj, hjp, hr⟩
+        exact ⟨_, ⟨(b, 1, if T.sign b = 1 then e else e + 1), rfl⟩, rfl,
+          hr.trans _ _ _ ((nodeStep_of_point hℓ hbal hwh (hEv j hj) hv₀
+          hjp).trans _ _ _ (Relation.EqvGen.rel _ _ hstep))⟩
+      · rintro ⟨j, hj, hjp, hr⟩
+        exact ⟨_, ⟨(b, 0, e), rfl⟩, rfl,
+          hr.trans _ _ _ ((nodeStep_of_point hℓ hbal hwh (hEv j hj) hv₁
+          hjp).trans _ _ _ (Relation.EqvGen.symm _ _ (Relation.EqvGen.rel _ _ hstep)))⟩
+    · simp only [Fin.val_zero, mul_zero, Fin.val_one, mul_one] at hte
+      obtain ⟨hf₀, hf⟩ := flip_inner (T := T) (ℓ := ℓ) (a := b) (t := t) (by omega) (by omega)
+      refine iff_of_false ?_ ?_ <;> rintro ⟨_, ⟨⟨a, i, e⟩, rfl⟩, hjp, -⟩ <;>
+        have := isEnd_junctionPoint (T := T) ℓ a i e <;> rw [hjp] at this
+      exacts [not_isEnd hbal hwh (by omega) (by omega) this, not_isEnd hbal hwh hf₀ hf this]
+  let φ : Quot T.NodeStep → T.Vertex allArcs ℓ :=
+    Quot.lift (fun j => T.vertexOf allArcs ℓ (T.junctionPoint ℓ j))
+      fun _ _ h => vertexOf_eq_iff.mpr (same_of_nodeStep hA hbal h)
+  have himg : T.vertexOf allArcs ℓ '' {p | T.IsEnd ℓ p} = φ '' (Quot.mk T.NodeStep '' E) := by
+    rw [hEnd, Set.image_image, Set.image_image]
+  unfold numNodes nodeCount
+  rw [himg]
+  refine Set.InjOn.ncard_image ?_
+  rintro _ ⟨j, hj, rfl⟩ _ ⟨j', hj', rfl⟩ h
+  obtain ⟨j'', hj'', hp, hr⟩ := hclosed j hj _ (vertexOf_eq_iff.mp h)
+  exact Quot.eqvGen_sound (hr.trans _ _ _ (nodeStep_of_point hℓ hbal hwh (hEv _ hj'')
+    (hEv _ hj') hp))
+
+/-- **The Euler characteristic of the quad mesh does not depend on the lengths**: at
+positive balanced lengths it is the patches minus the arcs plus the nodes. -/
+theorem euler_eq_nodeCount [Fintype Patch] [Fintype α] {patches : List Patch}
+    {allArcs : List α} (hP : ∀ P, P ∈ patches) (hA : ∀ a, a ∈ allArcs) {ℓ : α → ℕ}
+    (hℓ : ∀ a, 0 < ℓ a) (hne : ∀ σ, T.arcs σ ≠ []) (hbal : T.Balanced ℓ) :
+    T.euler patches allArcs ℓ = (Fintype.card Patch : ℤ) - Fintype.card α + T.nodeCount := by
+  rw [euler_eq hP hA hℓ hne hbal, numNodes_eq hA hℓ hne hbal]
 
 end TMesh
 
