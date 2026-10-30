@@ -121,7 +121,8 @@ theorem sidePoint_inj {ℓ : α → ℕ} (hbal : T.Balanced ℓ)
   obtain ⟨Q, j', k'⟩ := τ
   obtain ⟨hw, hh⟩ := hwh P
   fin_cases j <;> fin_cases k <;> fin_cases j' <;> fin_cases k' <;>
-    simp [sidePoint, Point.mk.injEq] at h hu hv ⊢ <;> obtain ⟨rfl, h₁, h₂⟩ := h <;> first | omega | exact ⟨rfl, by omega⟩
+    simp [sidePoint, Point.mk.injEq] at h hu hv ⊢ <;> obtain ⟨rfl, h₁, h₂⟩ := h <;>
+    first | omega | exact ⟨rfl, by omega⟩
 
 /-! ### The points of the arcs -/
 
@@ -403,6 +404,298 @@ theorem ncard_classes [Fintype α] {allArcs : List α} (hA : ∀ a, a ∈ allArc
   have hEfin : (S ∩ {p | T.IsEnd ℓ p}).Finite := hfin.subset Set.inter_subset_left
   rw [hsplit, Set.ncard_union_eq hABC ((hSfin.image _).union (hXfin.image _)) (hEfin.image _),
     Set.ncard_union_eq hAX (hSfin.image _) (hXfin.image _), hAcard, hXcard]
+
+/-! ### Counting points -/
+
+theorem card_filter_odd (m : ℕ) : ((Finset.Ioo 0 (2 * m)).filter (· % 2 = 1)).card = m := by
+  have : (Finset.Ioo 0 (2 * m)).filter (· % 2 = 1) =
+      (Finset.range m).image fun i => 2 * i + 1 := by
+    ext t
+    simp only [Finset.mem_filter, Finset.mem_Ioo, Finset.mem_image, Finset.mem_range]
+    constructor
+    · rintro ⟨⟨h₀, h₁⟩, h₂⟩; exact ⟨t / 2, by omega, by omega⟩
+    · rintro ⟨i, hi, rfl⟩; omega
+  rw [this, Finset.card_image_of_injective _ (fun i j (h : 2 * i + 1 = 2 * j + 1) => by omega),
+    Finset.card_range]
+
+theorem card_filter_even (m : ℕ) : ((Finset.Ioo 0 (2 * m)).filter (· % 2 = 0)).card = m - 1 := by
+  have : (Finset.Ioo 0 (2 * m)).filter (· % 2 = 0) =
+      (Finset.range (m - 1)).image fun i => 2 * i + 2 := by
+    ext t
+    simp only [Finset.mem_filter, Finset.mem_Ioo, Finset.mem_image, Finset.mem_range]
+    constructor
+    · rintro ⟨⟨h₀, h₁⟩, h₂⟩; exact ⟨t / 2 - 1, by omega, by omega⟩
+    · rintro ⟨i, hi, rfl⟩; omega
+  rw [this, Finset.card_image_of_injective _ (fun i j (h : 2 * i + 2 = 2 * j + 2) => by omega),
+    Finset.card_range]
+
+/-- The points of `(0, 2m) × (0, 2n)` whose coordinates have an odd sum. -/
+theorem card_filter_odd_sum (m n : ℕ) :
+    ((Finset.Ioo 0 (2 * m) ×ˢ Finset.Ioo 0 (2 * n)).filter fun q => (q.1 + q.2) % 2 = 1).card =
+      m * (n - 1) + (m - 1) * n := by
+  have : ((Finset.Ioo 0 (2 * m) ×ˢ Finset.Ioo 0 (2 * n)).filter fun q => (q.1 + q.2) % 2 = 1) =
+      ((Finset.Ioo 0 (2 * m)).filter (· % 2 = 1) ×ˢ (Finset.Ioo 0 (2 * n)).filter (· % 2 = 0)) ∪
+        ((Finset.Ioo 0 (2 * m)).filter (· % 2 = 0) ×ˢ
+          (Finset.Ioo 0 (2 * n)).filter (· % 2 = 1)) := by
+    ext ⟨x, y⟩
+    simp only [Finset.mem_filter, Finset.mem_product, Finset.mem_union, Finset.mem_Ioo]
+    constructor <;> intro <;> omega
+  rw [this, Finset.card_union_of_disjoint, Finset.card_product, Finset.card_product,
+    card_filter_odd, card_filter_odd, card_filter_even, card_filter_even]
+  rw [Finset.disjoint_left]
+  rintro ⟨x, y⟩ h₁ h₂
+  simp only [Finset.mem_filter, Finset.mem_product] at h₁ h₂
+  omega
+
+section Count
+
+variable [Fintype Patch]
+
+/-- The points `(P, x, y)` with `(x, y) ∈ f P`. -/
+def ptsOf (f : Patch → Finset (ℕ × ℕ)) : Finset (Point Patch) :=
+  (Finset.univ.sigma f).image fun q => ⟨q.1, q.2.1, q.2.2⟩
+
+theorem mem_ptsOf {f : Patch → Finset (ℕ × ℕ)} {p : Point Patch} :
+    p ∈ ptsOf f ↔ (p.x, p.y) ∈ f p.patch := by
+  simp only [ptsOf, Finset.mem_image, Finset.mem_sigma, Finset.mem_univ, true_and]
+  constructor
+  · rintro ⟨⟨P, x, y⟩, h, rfl⟩; exact h
+  · intro h; exact ⟨⟨p.patch, p.x, p.y⟩, h, rfl⟩
+
+theorem card_ptsOf (f : Patch → Finset (ℕ × ℕ)) : (ptsOf f).card = ∑ P, (f P).card := by
+  rw [ptsOf, Finset.card_image_of_injective, Finset.card_sigma]
+  rintro ⟨P, x, y⟩ ⟨Q, x', y'⟩ h
+  simp only [Point.mk.injEq] at h
+  obtain ⟨rfl, rfl, rfl⟩ := h
+  rfl
+
+end Count
+
+/-! ### The vertices, edges and faces of the quad mesh -/
+
+/-- The lengths doubled: the grid refined once more, where the midpoints of the
+edges are points. -/
+def double (ℓ : α → ℕ) : α → ℕ := fun a => 2 * ℓ a
+
+/-- The midpoint of an edge of the grid at `ℓ`, a point of the grid at `double ℓ`. -/
+def midpoint (e : Point Patch × Point Patch) : Point Patch :=
+  ⟨e.1.patch, e.1.x + e.2.x, e.1.y + e.2.y⟩
+
+variable (T)
+
+/-- The number of vertices of the quad mesh: the classes of the points of the grid. -/
+noncomputable def numVertices (patches : List Patch) (allArcs : List α) (ℓ : α → ℕ) : ℕ :=
+  (T.vertexOf allArcs ℓ '' {p | p ∈ T.points patches ℓ}).ncard
+
+/-- The number of edges of the quad mesh: the edges of the faces, two being one
+edge when their midpoints are one vertex of the grid at `double ℓ`. -/
+noncomputable def numEdges (patches : List Patch) (allArcs : List α) (ℓ : α → ℕ) : ℕ :=
+  ((fun e => T.vertexOf allArcs (double ℓ) (midpoint e)) ''
+    {e | e ∈ (T.faces patches ℓ).flatMap faceEdges}).ncard
+
+/-- The number of faces of the quad mesh. -/
+noncomputable def numFaces (patches : List Patch) (ℓ : α → ℕ) : ℕ :=
+  {f | f ∈ T.faces patches ℓ}.ncard
+
+/-- The Euler characteristic of the quad mesh at `ℓ`. -/
+noncomputable def euler (patches : List Patch) (allArcs : List α) (ℓ : α → ℕ) : ℤ :=
+  (T.numVertices patches allArcs ℓ : ℤ) - T.numEdges patches allArcs ℓ + T.numFaces patches ℓ
+
+/-- The number of nodes of the T-mesh at `ℓ`: the classes of the ends of the arcs. -/
+noncomputable def numNodes (allArcs : List α) (ℓ : α → ℕ) : ℕ :=
+  (T.vertexOf allArcs ℓ '' {p | T.IsEnd ℓ p}).ncard
+
+variable {T}
+
+theorem mem_points {patches : List Patch} (hP : ∀ P, P ∈ patches) {ℓ : α → ℕ} {p : Point Patch} :
+    p ∈ T.points patches ℓ ↔ T.InGrid ℓ p := by
+  obtain ⟨P, x, y⟩ := p
+  simp [points, InGrid, hP]
+
+theorem mem_faces {patches : List Patch} (hP : ∀ P, P ∈ patches) {ℓ : α → ℕ} {f : Face Patch} :
+    f ∈ T.faces patches ℓ ↔ f.i < 2 * T.width ℓ f.patch ∧ f.j < 2 * T.height ℓ f.patch := by
+  obtain ⟨P, i, j⟩ := f
+  simp [faces, hP]
+
+theorem sideLen_double (ℓ : α → ℕ) (σ : Side Patch) :
+    T.sideLen (double ℓ) σ = 2 * T.sideLen ℓ σ := by
+  unfold sideLen double
+  induction T.arcs σ with
+  | nil => rfl
+  | cons b l ih => simp only [List.map_cons, List.sum_cons, ih]; ring
+
+theorem posNat_double (ℓ : α → ℕ) (a : α) (l : List α) :
+    posNat a l (double ℓ) = 2 * posNat a l ℓ := by
+  induction l with
+  | nil => rfl
+  | cons b l ih => simp only [posNat, double, ih]; split_ifs <;> ring
+
+theorem width_double (ℓ : α → ℕ) (P : Patch) : T.width (double ℓ) P = 2 * T.width ℓ P :=
+  sideLen_double ℓ _
+
+theorem height_double (ℓ : α → ℕ) (P : Patch) : T.height (double ℓ) P = 2 * T.height ℓ P :=
+  sideLen_double ℓ _
+
+theorem balanced_double {ℓ : α → ℕ} (hbal : T.Balanced ℓ) : T.Balanced (double ℓ) := by
+  intro P j; rw [sideLen_double, sideLen_double, hbal P j]
+
+/-- The midpoints of the edges of the faces are the points of the grid at
+`double ℓ` whose coordinates have an odd sum. -/
+theorem midpoint_edges {patches : List Patch} (hP : ∀ P, P ∈ patches) {ℓ : α → ℕ}
+    (hwh : ∀ P, 0 < T.width ℓ P ∧ 0 < T.height ℓ P) :
+    midpoint '' {e | e ∈ (T.faces patches ℓ).flatMap faceEdges} =
+      {p | T.InGrid (double ℓ) p ∧ (p.x + p.y) % 2 = 1} := by
+  ext ⟨P, X, Y⟩
+  simp only [Set.mem_image, Set.mem_ofPred_eq, List.mem_flatMap, InGrid, width_double,
+    height_double]
+  constructor
+  · rintro ⟨e, ⟨⟨Q, i, j⟩, hf, he⟩, h⟩
+    rw [mem_faces hP] at hf
+    simp only [faceEdges, List.mem_cons, List.not_mem_nil, or_false] at he
+    rcases he with rfl | rfl | rfl | rfl <;> simp only [midpoint, Point.mk.injEq] at h <;>
+      obtain ⟨rfl, rfl, rfl⟩ := h <;> simp only at hf ⊢ <;> omega
+  · rintro ⟨⟨hX, hY⟩, hodd⟩
+    have hm : ∀ i j, (⟨P, i, j⟩ : Face Patch) ∈ T.faces patches ℓ ↔
+        i < 2 * T.width ℓ P ∧ j < 2 * T.height ℓ P := fun i j => mem_faces hP
+    obtain ⟨i, rfl | rfl⟩ := Nat.even_or_odd' X <;> obtain ⟨j, rfl | rfl⟩ := Nat.even_or_odd' Y
+    · omega
+    · by_cases hi : i < 2 * T.width ℓ P
+      · exact ⟨(⟨P, i, j + 1⟩, ⟨P, i, j⟩), ⟨⟨P, i, j⟩, (hm i j).mpr ⟨hi, by omega⟩,
+          by simp [faceEdges]⟩, by simp only [midpoint, Point.mk.injEq, true_and]; omega⟩
+      · obtain ⟨k, rfl⟩ : ∃ k, i = k + 1 := ⟨i - 1, by have := hwh P; omega⟩
+        exact ⟨(⟨P, k + 1, j⟩, ⟨P, k + 1, j + 1⟩), ⟨⟨P, k, j⟩, (hm k j).mpr ⟨by omega, by omega⟩,
+          by simp [faceEdges]⟩, by simp only [midpoint, Point.mk.injEq, true_and]; omega⟩
+    · by_cases hj : j < 2 * T.height ℓ P
+      · exact ⟨(⟨P, i, j⟩, ⟨P, i + 1, j⟩), ⟨⟨P, i, j⟩, (hm i j).mpr ⟨by omega, hj⟩,
+          by simp [faceEdges]⟩, by simp only [midpoint, Point.mk.injEq, true_and]; omega⟩
+      · obtain ⟨k, rfl⟩ : ∃ k, j = k + 1 := ⟨j - 1, by have := hwh P; omega⟩
+        exact ⟨(⟨P, i + 1, k + 1⟩, ⟨P, i, k + 1⟩), ⟨⟨P, i, k⟩, (hm i k).mpr ⟨by omega, by omega⟩,
+          by simp [faceEdges]⟩, by simp only [midpoint, Point.mk.injEq, true_and]; omega⟩
+    · omega
+
+section Euler
+
+variable [Fintype Patch] [Fintype α] {patches : List Patch} {allArcs : List α}
+  (hP : ∀ P, P ∈ patches) (hA : ∀ a, a ∈ allArcs) {ℓ : α → ℕ} (hne : ∀ σ, T.arcs σ ≠ [])
+  (hbal : T.Balanced ℓ) (hwh : ∀ P, 0 < T.width ℓ P ∧ 0 < T.height ℓ P)
+include hP hA hne hbal hwh
+
+theorem numVertices_eq : T.numVertices patches allArcs ℓ =
+    ∑ P, (2 * T.width ℓ P - 1) * (2 * T.height ℓ P - 1) + ∑ a, (2 * ℓ a - 1) +
+      T.numNodes allArcs ℓ := by
+  unfold numVertices
+  rw [ncard_classes hA hne hbal hwh (T.points patches ℓ).finite_toSet
+    (fun p hp => (mem_points hP).mp hp)
+    (fun p q hp h => (mem_points hP).mpr ((inGrid_of_same hbal h).mp ((mem_points hP).mp hp)))]
+  have hI : {p | p ∈ T.points patches ℓ} ∩ {p | T.IsInner ℓ p} =
+      ↑(ptsOf fun P => Finset.Ioo 0 (2 * T.width ℓ P) ×ˢ Finset.Ioo 0 (2 * T.height ℓ P)) := by
+    ext p
+    simp only [Set.mem_inter_iff, Set.mem_ofPred_eq, mem_points hP, Finset.mem_coe, mem_ptsOf,
+      Finset.mem_product, Finset.mem_Ioo, InGrid, IsInner]
+    constructor <;> intro <;> omega
+  have hX : {x : (_ : α) × ℕ | 0 < x.2 ∧ x.2 < 2 * ℓ x.1 ∧
+      T.arcPoint ℓ x.1 0 x.2 ∈ {p | p ∈ T.points patches ℓ}} =
+      ↑(Finset.univ.sigma fun a => Finset.Ioo 0 (2 * ℓ a)) := by
+    ext ⟨a, t⟩
+    simp only [Set.mem_ofPred_eq, mem_points hP, Finset.coe_sigma, Set.mem_sigma_iff,
+      Finset.coe_univ,       Set.mem_univ, Finset.coe_Ioo, Set.mem_Ioo, true_and]
+    exact ⟨fun h => ⟨h.1, h.2.1⟩, fun h => ⟨h.1, h.2, arcPoint_inGrid hbal a 0 h.2.le⟩⟩
+  have hE : {p | p ∈ T.points patches ℓ} ∩ {p | T.IsEnd ℓ p} = {p | T.IsEnd ℓ p} := by
+    refine Set.inter_eq_right.mpr ?_
+    rintro p ⟨a, i, rfl | rfl⟩ <;> rw [Set.mem_ofPred_eq, mem_points hP]
+    exacts [arcPoint_inGrid hbal a i (Nat.zero_le _), arcPoint_inGrid hbal a i le_rfl]
+  rw [hI, hX, hE, Set.ncard_coe_finset, Set.ncard_coe_finset, card_ptsOf, Finset.card_sigma]
+  simp [numNodes]
+
+theorem numEdges_eq : T.numEdges patches allArcs ℓ =
+    ∑ P, (2 * T.width ℓ P * (2 * T.height ℓ P - 1) + (2 * T.width ℓ P - 1) * (2 * T.height ℓ P)) +
+      ∑ a, 2 * ℓ a := by
+  have hbal₂ := balanced_double hbal
+  have hwh₂ : ∀ P, 0 < T.width (double ℓ) P ∧ 0 < T.height (double ℓ) P := fun P => by
+    rw [width_double, height_double]; have := hwh P; omega
+  unfold numEdges
+  rw [← Set.image_image, midpoint_edges hP hwh]
+  have hfin : {p | T.InGrid (double ℓ) p ∧ (p.x + p.y) % 2 = 1}.Finite := by
+    rw [← midpoint_edges hP hwh]; exact (List.finite_toSet _).image _
+  rw [ncard_classes hA hne hbal₂ hwh₂ hfin (fun p hp => hp.1)
+    (fun p q hp h => ⟨(inGrid_of_same hbal₂ h).mp hp.1, by rw [← parity_of_same h]; exact hp.2⟩)]
+  have hI : {p | T.InGrid (double ℓ) p ∧ (p.x + p.y) % 2 = 1} ∩ {p | T.IsInner (double ℓ) p} =
+      ↑(ptsOf fun P => (Finset.Ioo 0 (2 * (2 * T.width ℓ P)) ×ˢ
+        Finset.Ioo 0 (2 * (2 * T.height ℓ P))).filter fun q => (q.1 + q.2) % 2 = 1) := by
+    ext p
+    simp only [Set.mem_inter_iff, Set.mem_ofPred_eq, Finset.mem_coe, mem_ptsOf,
+      Finset.mem_filter, Finset.mem_product, Finset.mem_Ioo, InGrid, IsInner, width_double,
+      height_double]
+    constructor <;> intro <;> omega
+  have hX : {x : (_ : α) × ℕ | 0 < x.2 ∧ x.2 < 2 * double ℓ x.1 ∧
+      T.arcPoint (double ℓ) x.1 0 x.2 ∈ {p | T.InGrid (double ℓ) p ∧ (p.x + p.y) % 2 = 1}} =
+      ↑(Finset.univ.sigma fun a => (Finset.Ioo 0 (2 * (2 * ℓ a))).filter (· % 2 = 1)) := by
+    ext ⟨a, t⟩
+    simp only [Set.mem_ofPred_eq, arcPoint_parity, Finset.coe_sigma, Set.mem_sigma_iff,
+      Finset.coe_univ,       Set.mem_univ, Finset.coe_filter, Finset.mem_Ioo, true_and, double]
+    exact ⟨fun h => ⟨⟨h.1, h.2.1⟩, h.2.2.2⟩,
+      fun h => ⟨h.1.1, h.1.2, arcPoint_inGrid hbal₂ a 0 (by unfold double; omega), h.2⟩⟩
+  have hE : {p | T.InGrid (double ℓ) p ∧ (p.x + p.y) % 2 = 1} ∩ {p | T.IsEnd (double ℓ) p} = ∅ := by
+    rw [Set.eq_empty_iff_forall_notMem]
+    rintro p ⟨⟨-, hodd⟩, a, i, rfl | rfl⟩ <;> rw [arcPoint_parity] at hodd <;> omega
+  rw [hI, hX, hE, Set.image_empty, Set.ncard_empty, Set.ncard_coe_finset, Set.ncard_coe_finset,
+    card_ptsOf, Finset.card_sigma]
+  simp only [card_filter_odd_sum, card_filter_odd, add_zero]
+
+omit hA in
+theorem numFaces_eq : T.numFaces patches ℓ = ∑ P, 2 * T.width ℓ P * (2 * T.height ℓ P) := by
+  have hinj : Function.Injective fun f : Face Patch => (⟨f.patch, f.i, f.j⟩ : Point Patch) := by
+    rintro ⟨P, i, j⟩ ⟨Q, i', j'⟩ h
+    simp only [Point.mk.injEq] at h
+    obtain ⟨rfl, rfl, rfl⟩ := h
+    rfl
+  have himg : (fun f : Face Patch => (⟨f.patch, f.i, f.j⟩ : Point Patch)) ''
+      {f | f ∈ T.faces patches ℓ} =
+      ↑(ptsOf fun P => Finset.range (2 * T.width ℓ P) ×ˢ Finset.range (2 * T.height ℓ P)) := by
+    ext ⟨P, x, y⟩
+    simp only [Set.mem_image, Set.mem_ofPred_eq, mem_faces hP, Finset.mem_coe, mem_ptsOf,
+      Finset.mem_product, Finset.mem_range]
+    constructor
+    · rintro ⟨⟨Q, i, j⟩, h, he⟩
+      simp only [Point.mk.injEq] at he
+      obtain ⟨rfl, rfl, rfl⟩ := he
+      exact h
+    · intro h; exact ⟨⟨P, x, y⟩, h, rfl⟩
+  unfold numFaces
+  rw [← Set.ncard_image_of_injective _ hinj, himg, Set.ncard_coe_finset, card_ptsOf]
+  simp
+
+end Euler
+
+/-- **The Euler characteristic of the quad mesh** of a T-mesh at positive balanced
+lengths is `P − A + N`: the patches minus the arcs plus the nodes. -/
+theorem euler_eq [Fintype Patch] [Fintype α] {patches : List Patch} {allArcs : List α}
+    (hP : ∀ P, P ∈ patches) (hA : ∀ a, a ∈ allArcs) {ℓ : α → ℕ} (hℓ : ∀ a, 0 < ℓ a)
+    (hne : ∀ σ, T.arcs σ ≠ []) (hbal : T.Balanced ℓ) :
+    T.euler patches allArcs ℓ =
+      (Fintype.card Patch : ℤ) - Fintype.card α + T.numNodes allArcs ℓ := by
+  have hwh : ∀ P, 0 < T.width ℓ P ∧ 0 < T.height ℓ P :=
+    fun P => ⟨sideLen_pos hℓ hne _, sideLen_pos hℓ hne _⟩
+  have cw : ∀ P, ((2 * T.width ℓ P - 1 : ℕ) : ℤ) = 2 * T.width ℓ P - 1 :=
+    fun P => by have := (hwh P).1; omega
+  have ch : ∀ P, ((2 * T.height ℓ P - 1 : ℕ) : ℤ) = 2 * T.height ℓ P - 1 :=
+    fun P => by have := (hwh P).2; omega
+  have cl : ∀ a, ((2 * ℓ a - 1 : ℕ) : ℤ) = 2 * ℓ a - 1 := fun a => by have := hℓ a; omega
+  unfold euler
+  rw [numVertices_eq hP hA hne hbal hwh, numEdges_eq hP hA hne hbal hwh,
+    numFaces_eq hP hne hbal hwh]
+  push_cast [cw, ch, cl]
+  have hcard : (Fintype.card Patch : ℤ) = ∑ P : Patch,
+      ((2 * (T.width ℓ P : ℤ) - 1) * (2 * T.height ℓ P - 1) -
+        (2 * T.width ℓ P * (2 * T.height ℓ P - 1) + (2 * T.width ℓ P - 1) * (2 * T.height ℓ P)) +
+        2 * T.width ℓ P * (2 * T.height ℓ P)) := by
+    rw [Finset.sum_congr rfl (g := fun _ => (1 : ℤ)) fun P _ => by ring]; simp
+  have hcardα : (Fintype.card α : ℤ) = ∑ a : α, (2 * (ℓ a : ℤ) - (2 * ℓ a - 1)) := by
+    rw [Finset.sum_congr rfl (g := fun _ => (1 : ℤ)) fun a _ => by ring]; simp
+  rw [hcard, hcardα]
+  simp only [Finset.sum_add_distrib, Finset.sum_sub_distrib]
+  ring
+
 
 end TMesh
 
