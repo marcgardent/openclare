@@ -78,6 +78,124 @@ theorem crossLin_acrossDir [Fintype α] (hT : T.Oriented) {τ : Side Patch} {a :
   rw [hopp, Side.orient_opp] at h
   rw [crossLin_acrossDir_orient, h, neg_mul]
 
+/-! ### The change of chart on the side -/
+
+theorem crossMotion_lin (ℓ : α → ℕ) (τ : Side Patch) (a : α) :
+    (T.crossMotion ℓ τ a).lin = crossLin τ (T.other a τ) := rfl
+
+theorem apply_eq (f : Motion GaussianInt GaussianInt) (x : GaussianInt) :
+    f.apply x = f.lin * x + f.trans := rfl
+
+/-- **Across an arc on the side**: the point of `τ` at the offset `x` goes to the
+point of the other side at the offset `sign a · x + crossTrans`. -/
+theorem crossMotion_side [Fintype α] (hT : T.Oriented) (ℓ : α → ℕ) {τ : Side Patch} {a : α}
+    (ha : a ∈ T.arcs τ) (x : ℤ) :
+    (T.crossMotion ℓ τ a).apply (T.origin ℓ τ + x * acrossDir τ) =
+      T.origin ℓ (T.other a τ) +
+        ((T.sign a * x + T.crossTrans ℓ τ a : ℤ) : GaussianInt) * acrossDir (T.other a τ) := by
+  have h := T.crossLin_acrossDir hT ha
+  rw [apply_eq, crossMotion_lin]
+  simp only [crossMotion]
+  push_cast
+  linear_combination (x : GaussianInt) * h
+
+/-- The position on a side at whole lengths is the form `posForm`. -/
+theorem evalForm_posForm_nat [Fintype α] (a : α) (l : List α) (ℓ : α → ℕ) :
+    evalForm (posForm a l) (fun b => (ℓ b : ℤ)) = posNat a l ℓ := by
+  induction l with
+  | nil => simp [posForm, posNat]
+  | cons b l ih =>
+    simp only [posForm, posNat]
+    split_ifs
+    · simp
+    · rw [evalForm_add, evalForm_single, ih]; push_cast; rfl
+
+/-- **The translation of the change of chart is that of the crossing of the offsets**:
+`crossTrans` is the form of `crossForm` at whole lengths. -/
+theorem crossTrans_eq [Fintype α] (ℓ : α → ℕ) (τ : Side Patch) (a : α) :
+    T.crossTrans ℓ τ a = evalForm (T.crossForm τ a).trans (fun b => (ℓ b : ℤ)) := by
+  unfold crossTrans crossForm
+  split_ifs
+  · simp [evalForm_sub, evalForm_posForm_nat]
+  · simp [evalForm_add, evalForm_posForm_nat, evalForm_single]
+
+/-- The same, read in the rationals of the walk: `crossTrans` is the translation of
+`crossAt` at `rat ℓ`. -/
+theorem crossTrans_rat [Fintype α] (ℓ : α → ℕ) (τ : Side Patch) (a : α) :
+    (T.crossTrans ℓ τ a : ℚ) = (T.crossAt (rat ℓ) τ a).trans := by
+  unfold crossTrans crossAt
+  split_ifs
+  · simp [posAt_rat]
+  · simp [posAt_rat, rat]
+
+/-! ### Along a path -/
+
+/-- Along a path the composite of the changes of chart takes the inward direction of
+the first side to that of the side entered last. -/
+theorem composeAll_crossMotions_inward (ℓ : α → ℕ) (σ : Side Patch) (l : List α) :
+    (Motion.composeAll (T.crossMotions ℓ σ l)).lin * inward σ = inward (T.endSide σ l) := by
+  induction l generalizing σ with
+  | nil => simp [crossMotions, endSide]
+  | cons a l ih =>
+    simp only [crossMotions, endSide, Motion.composeAll_cons, Motion.comp_lin, crossMotion_lin]
+    have h := crossLin_inward σ.opp (T.other a σ.opp)
+    rw [inward_opp] at h
+    rw [← ih, mul_assoc]
+    linear_combination (Motion.composeAll (T.crossMotions ℓ (T.other a σ.opp) l)).lin * (-1) * h
+
+/-- Along a path the composite of the changes of chart takes the direction along the
+first side to the sign of the crossings of the offsets times the direction along the
+side entered last. -/
+theorem composeAll_crossMotions_acrossDir [Fintype α] (hT : T.Oriented) (ℓ : α → ℕ)
+    (σ : Side Patch) (l : List α) (hl : T.IsPath σ l) :
+    (Motion.composeAll (T.crossMotions ℓ σ l)).lin * acrossDir σ =
+      ((Motion.composeAll (T.crossings σ l)).lin : GaussianInt) * acrossDir (T.endSide σ l) := by
+  induction l generalizing σ with
+  | nil => simp [crossMotions, crossings, endSide]
+  | cons a l ih =>
+    simp only [crossMotions, crossings, endSide, Motion.composeAll_cons, Motion.comp_lin,
+      crossMotion_lin, crossForm_lin]
+    have h := T.crossLin_acrossDir hT hl.1
+    rw [acrossDir_opp] at h
+    have ih' := ih _ hl.2
+    push_cast
+    linear_combination (Motion.composeAll (T.crossMotions ℓ (T.other a σ.opp) l)).lin * h +
+      (T.sign a : GaussianInt) * ih'
+
+/-- **The invariant along a path**: the composite of the changes of chart takes the
+first corner of the first side to the point of the side entered last at the offset
+the crossings of the offsets compose to, moved back inward by the length of the
+path. -/
+theorem development_apply_origin [Fintype α] (hT : T.Oriented) (ℓ : α → ℕ) (σ : Side Patch)
+    (l : List α) (hl : T.IsPath σ l) :
+    (Motion.composeAll (T.crossMotions ℓ σ l)).apply (T.origin ℓ σ) =
+      T.origin ℓ (T.endSide σ l) +
+        ((evalForm (Motion.composeAll (T.crossings σ l)).trans (fun a => (ℓ a : ℤ)) : ℤ) :
+          GaussianInt) * acrossDir (T.endSide σ l) -
+        ((evalForm (T.pathLengthForm σ l) (fun a => (ℓ a : ℤ)) : ℤ) : GaussianInt) *
+          inward (T.endSide σ l) := by
+  induction l generalizing σ with
+  | nil => simp [crossMotions, crossings, endSide, pathLengthForm, apply_eq]
+  | cons a l ih =>
+    set τ' := T.other a σ.opp
+    have ih' := ih τ' hl.2
+    have I1 := T.composeAll_crossMotions_inward ℓ τ' l
+    have I2 := T.composeAll_crossMotions_acrossDir hT ℓ τ' l hl.2
+    have hL := crossLin_inward σ.opp τ'
+    rw [inward_opp] at hL
+    have ho := T.origin_opp ℓ σ
+    rw [apply_eq] at ih' ⊢
+    simp only [crossMotions, crossings, endSide, pathLengthForm, Motion.composeAll_cons,
+      Motion.comp_lin, Motion.comp_trans, crossMotion_lin, evalForm_add, evalForm_smul,
+      ← crossTrans_eq, smul_eq_mul]
+    simp only [crossMotion]
+    push_cast
+    set K := (Motion.composeAll (T.crossMotions ℓ τ' l)).lin
+    set L := crossLin σ.opp τ'
+    linear_combination ih' + (T.crossTrans ℓ σ.opp a : GaussianInt) * I2 - K * L * ho +
+      ((evalForm (T.acrossForm σ) (fun a => (ℓ a : ℤ)) : ℤ) : GaussianInt) * K * hL -
+      ((evalForm (T.acrossForm σ) (fun a => (ℓ a : ℤ)) : ℤ) : GaussianInt) * I1
+
 end TMesh
 
 end TurnsOfATMesh
