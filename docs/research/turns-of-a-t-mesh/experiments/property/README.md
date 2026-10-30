@@ -63,7 +63,8 @@ vertices, one round of the walk from every station as a closed curve of the fine
 every simple curve the regions it cuts with Lemma "Gauss–Bonnet for turns" on each; the
 2-colouring of the quad graph (the constants `κ` found by propagation, `IsColouring` decided; a
 sphere must be bipartite, which `SphereGrid.lean` proves, so the decision checks the program) and, where it holds, `Turn.length ≡ Turn.shift (mod 2)` for every
-turn with a half-integer station in its corridor (DT-173). The Python of `grid.py` is then a
+turn with a half-integer station in its corridor (DT-173); from `Border.lean`, the chart along
+the border of every round and round every vertex of the quad graph. The Python of `grid.py` is then a
 second, independent computation of the same objects. Both count the edges of the grid as
 classes of midpoints, not as pairs of vertices: `GridEuler.lean` found that two edges may join
 one pair at small lengths (the square torus of one patch at length 1), which both programs had
@@ -91,6 +92,18 @@ form of "the region is a disc"), develops the region along the tree, reads the c
 the order of first visit with their positions, and checks that the composite of their
 rotations is the development of the turn and that the Burgers sum is its translation: 1,852
 regions, all discs, all equal; on the 1,488 with a word from `develop.py` the two agree.
+
+The chart along the border of a round (`Border.lean`, DT-134; 2026-10-30): on all 19,584
+rounds the steps start at the points of the round, and the holonomy of the border, the chart
+continued from face to face through the region on its left, is the development of the turn
+(`borderHolonomy_round`, evaluated): 17,296 rings, 902 rounds whose closing segment has the
+region inside the rectangle of the first side, 1,386 with it outside and every node of that
+side met by four faces, the hypothesis of the theorem, and none outside with an irregular
+node on that side, so the data do not test whether the hypothesis is needed. At
+the 21,593 vertices of the quad graph the walk round each meets the valence of the union-find
+and its holonomy is `R^{4−k}` about it (`holonomyAround_eq`), and the 86,092 points it meets
+are in its class (`aroundStep_same`). The dual trees of the regions above now carry their
+charts by the library's `crossEdge`, and every crossing takes an edge to the points glued to it.
 
 On the quad meshes at the whole lengths (DT-134, DT-173; 2026-10-30, the compiled program): χ = 2
 on the 35 spheres and 0 on the 15 tori, equal to the Euler characteristic of the mesh the
