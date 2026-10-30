@@ -378,7 +378,7 @@ check of the four directions): each lobe sees a second convex corner and holds
 $2$, and the third region the rest of the total $8$.
 \end{proof}
 
-\begin{evidence}{core}{\lean{Motion.burgers_eq_sum}, \lean{Motion.composeAll_rotations}, \lean{Forest.glue_eq_preorder}, \lean{Motion.annulus_holonomy}; tested: (c) on 898 annuli without cone point of 50 random instances, and the holonomy of the word of a turn against the inverse of its development \lean{TMesh.Turn.development} on 3{,}865 turns of 34 spheres; assumed: the holonomy of the curve is the composition of the rotations round the cone points}
+\begin{evidence}{core}{\lean{CutDisc.holonomy_eq_preorder}, \lean{Cut.jump_eq} (on a disc cut along a forest, modelled by the walk round its border: the recursion $G_f = G_{f_r} \circ \dots \circ G_{f_1} \circ \rho_v$ and the holonomy of the border as the composite of the cone rotations in the order of first visit), \lean{CutDisc.holonomy_trans}, \lean{Motion.burgers_eq_sum}, \lean{Motion.annulus_holonomy}; tested: on every sphere of 50 random instances, both regions of every simple curve are such cut discs (a forest of cuts, each tree touching the border once) and the composite of their rotations is the development \lean{TMesh.Turn.development} of the turn, $B_D = T_\gamma(\ell)$ with $D$ on the left, on 1{,}852 regions; (c) on 898 annuli; assumed: that the region of the curve is the cut disc of the model, and that the holonomy of its border is the development of the turn}
 \begin{proposition}[The shift is set by the singularities]\label{prop:burgers}
 Let $\gamma$, $\gamma_1$, $\gamma_2$ be turns with simple curves.
 \begin{enumerate}
@@ -1850,7 +1850,7 @@ complexity of maximizing $Q$ over a polytope of lengths in reals.
 \section{What is machine-checked}\label{sec:lean}
 
 The folder \texttt{lean} beside this note is a Lean~4~\cite{demoura2021lean4}
-project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $503$
+project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $527$
 theorem declarations, many of them small lemmas, depend only on Lean's
 standard axioms; the count is not evidence, and its \texttt{README.md} maps
 each statement to its Lean theorems. Lean checks the algebraic and
@@ -1886,8 +1886,11 @@ $-\alpha_\gamma(\ell) e_1 + \shift_\gamma(\ell) e_2$; that this walk from
 a half-integer is a dual line of the quad mesh is the completeness proposition
 below, in its own model. For motions with linear parts in any
 ring: the Burgers sum, and that the recursion of the gluing maps of a tree of
-cuts, a hypothesis, unfolds into the order of first visit
-(Proposition~\ref{prop:burgers}(a)); the cut annulus~(b); exchanges; the
+cuts unfolds into the order of first visit; the recursion itself on a disc cut
+along a forest, modelled by the walk round the border of the cut disc with the
+face corners met at each vertex (Proposition~\ref{prop:burgers}(a)); that a
+region of the quad mesh is such a cut disc is decided by the program on every
+region, not proved; the cut annulus~(b); exchanges; the
 conjugation step of Proposition~\ref{prop:winding}. Over the reals: the four
 orders and orientations of a dislocation and straight chains
 (Proposition~\ref{prop:dislocation}(i), (ii)); staircases; the positivity of

@@ -430,7 +430,7 @@ quatre directions)~: chaque lobe voit un second coin convexe et contient $2$,
 et la troisième région le reste du total $8$.
 \end{proof}
 
-\begin{evidence}{core}{\lean{Motion.burgers_eq_sum}, \lean{Motion.composeAll_rotations}, \lean{Forest.glue_eq_preorder}, \lean{Motion.annulus_holonomy}\,; testé~: (c) sur 898 couronnes sans point conique de 50 instances aléatoires, et l'holonomie du mot d'un tour contre l'inverse de son développement \lean{TMesh.Turn.development} sur 3\,865 tours de 34 sphères\,; supposé~: l'holonomie de la courbe est la composée des rotations autour des points coniques}
+\begin{evidence}{core}{\lean{CutDisc.holonomy_eq_preorder}, \lean{Cut.jump_eq} (sur un disque coupé le long d'une forêt, modélisé par le parcours de son bord~: la récurrence $G_f = G_{f_r} \circ \dots \circ G_{f_1} \circ \rho_v$ et l'holonomie du bord comme composée des rotations coniques dans l'ordre de première visite), \lean{CutDisc.holonomy_trans}, \lean{Motion.burgers_eq_sum}, \lean{Motion.annulus_holonomy}\,; testé~: sur chaque sphère de 50 instances aléatoires, les deux régions de chaque courbe simple sont de tels disques coupés (une forêt de coupures, chaque arbre touchant le bord une fois) et la composée de leurs rotations est le développement \lean{TMesh.Turn.development} du tour, $B_D = T_\gamma(\ell)$ avec $D$ à gauche, sur 1\,852 régions\,; (c) sur 898 couronnes\,; supposé~: que la région de la courbe est le disque coupé du modèle, et que l'holonomie de son bord est le développement du tour}
 \begin{proposition}[Le décalage est fixé par les singularités]\label{prop:burgers}
 Soient $\gamma$, $\gamma_1$, $\gamma_2$ des tours à courbes simples.
 \begin{enumerate}
@@ -2044,7 +2044,7 @@ la maximisation de $Q$ sur un polytope de longueurs réelles.
 
 Le dossier \texttt{lean} à côté de cette note est un projet
 Lean~4~\cite{demoura2021lean4} sur Mathlib~\cite{mathlib2020} (tous deux en
-\texttt{v4.35.0}). Ses $503$ déclarations de théorèmes, dont beaucoup de
+\texttt{v4.35.0}). Ses $527$ déclarations de théorèmes, dont beaucoup de
 petits lemmes, ne dépendent que des axiomes standard de Lean\,; ce nombre
 n'est pas un argument, et son \texttt{README.md} associe à chaque énoncé ses
 théorèmes Lean. Lean vérifie le cœur algébrique et combinatoire de chaque
@@ -2084,9 +2084,13 @@ e_2$\,; que cette marche depuis un demi-entier soit une ligne duale du
 maillage de quads est la proposition de complétude ci-dessous, dans son propre
 modèle. Pour des déplacements dont les parties
 linéaires sont dans un anneau quelconque~: la somme de Burgers, et le fait que
-la récurrence des applications de recollement d'un arbre de coupures, une
-hypothèse, se déroule dans l'ordre de première visite
-(proposition~\ref{prop:burgers}(a))\,; la couronne découpée~(b)\,; les
+la récurrence des applications de recollement d'un arbre de coupures se
+déroule dans l'ordre de première visite\,; la récurrence elle-même sur un
+disque coupé le long d'une forêt, modélisé par le parcours du bord du disque
+coupé avec les coins de faces rencontrés en chaque sommet
+(proposition~\ref{prop:burgers}(a))\,; qu'une région du maillage de quads soit
+un tel disque coupé est décidé par le programme sur chaque région, non
+démontré\,; la couronne découpée~(b)\,; les
 échanges\,; l'étape de conjugaison de la proposition~\ref{prop:winding}. Sur
 les réels~: les quatre ordres et orientations d'une dislocation et les
 chaînes droites (proposition~\ref{prop:dislocation}(i), (ii))\,; les
