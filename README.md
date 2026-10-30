@@ -1,6 +1,6 @@
 # openclare
 
-[https://marcgardent.github.io/openclare/](Website's marcgardent.github.io/openclare)
+[Website's marcgardent.github.io/openclare](https://marcgardent.github.io/openclare/)
 
 Automatic quad retopology for Blender: a mesh of triangles in, a mesh of quads out, its edges
 following the shape. Open source, written in Rust. The aim: an open alternative to the commercial
