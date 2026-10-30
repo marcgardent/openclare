@@ -210,7 +210,8 @@ theorem endsOf_glued {allArcs : List α} (hA : ∀ a, a ∈ allArcs) (ℓ : α �
       T.endsOf allArcs ℓ (T.arcPoint (double ℓ) a 1 (T.flip (double ℓ) a t)) := by
   simp only [double] at ht
   have g : ∀ u, u ≤ 2 * ℓ a →
-      T.vertexOf allArcs ℓ (T.arcPoint ℓ a 0 u) = T.vertexOf allArcs ℓ (T.arcPoint ℓ a 1 (T.flip ℓ a u)) := by
+      T.vertexOf allArcs ℓ (T.arcPoint ℓ a 0 u) =
+        T.vertexOf allArcs ℓ (T.arcPoint ℓ a 1 (T.flip ℓ a u)) := by
     intro u hu
     have := T.same_of_glued allArcs ℓ a (hA a) u hu
     rw [glued_eq ℓ a hu] at this
@@ -286,10 +287,12 @@ theorem card_slotsAt {m : Point Patch} (hm : T.InGrid (double ℓ) m) (hodd : (m
     ext ⟨⟨Q, a, b⟩, k⟩
     rw [ht]
     simp [slotsAt, mem_faces hP]
-  have if_side : ∀ {x y : ℕ}, ¬ (0 < x ∧ x < 2 * (2 * T.width ℓ P) ∧ 0 < y ∧ y < 2 * (2 * T.height ℓ P)) →
+  have if_side : ∀ {x y : ℕ},
+      ¬ (0 < x ∧ x < 2 * (2 * T.width ℓ P) ∧ 0 < y ∧ y < 2 * (2 * T.height ℓ P)) →
       (if T.IsInner (double ℓ) ⟨P, x, y⟩ then 2 else 1) = 1 := fun h => by
     simp only [IsInner, width_double, height_double]; simp [h]
-  have if_inner : ∀ {x y : ℕ}, (0 < x ∧ x < 2 * (2 * T.width ℓ P) ∧ 0 < y ∧ y < 2 * (2 * T.height ℓ P)) →
+  have if_inner : ∀ {x y : ℕ},
+      (0 < x ∧ x < 2 * (2 * T.width ℓ P) ∧ 0 < y ∧ y < 2 * (2 * T.height ℓ P)) →
       (if T.IsInner (double ℓ) ⟨P, x, y⟩ then 2 else 1) = 2 := fun h => by
     simp only [IsInner, width_double, height_double]; simp [h]
   rcases Nat.even_or_odd' X with ⟨i, rfl | rfl⟩ <;> rcases Nat.even_or_odd' Y with ⟨j, rfl | rfl⟩
@@ -352,7 +355,8 @@ theorem card_slots {patches : List Patch} {allArcs : List α} (hP : ∀ P, P ∈
   have hfilter : ∀ S : Point Patch → Prop, (∀ m, T.Same allArcs (double ℓ) m m₀ ↔ S m) →
       (((T.faces patches ℓ).toFinset ×ˢ Finset.univ).filter fun s : Face Patch × Fin 4 =>
         T.edgeOf allArcs ℓ (faceEdge s.1 s.2) = T.edgeOf allArcs ℓ e₀) =
-      ((T.faces patches ℓ).toFinset ×ˢ Finset.univ).filter fun s => S (midpoint (faceEdge s.1 s.2)) :=
+      ((T.faces patches ℓ).toFinset ×ˢ Finset.univ).filter fun s =>
+        S (midpoint (faceEdge s.1 s.2)) :=
     fun S hS => Finset.filter_congr fun s _ => by rw [edgeOf, edgeOf, vertexOf_eq_iff, hS]
   by_cases hi : T.IsInner (double ℓ) m₀
   · rw [hfilter (· = m₀) fun m => ⟨fun h => same_of_inner hi (T.same_symm _ _ h),
@@ -391,6 +395,196 @@ theorem card_slots {patches : List Patch} {allArcs : List α} (hP : ∀ P, P ∈
   · rcases h with rfl | rfl
     · exact Relation.EqvGen.refl _
     · rw [hm]; exact T.same_symm _ _ (same_partner hA i hs)
+
+/-! ### Connectivity -/
+
+variable (T) in
+/-- Two patches share an arc. -/
+def PatchAdj (P Q : Patch) : Prop :=
+  ∃ a, ((T.ends a 0).1 = P ∧ (T.ends a 1).1 = Q) ∨ ((T.ends a 0).1 = Q ∧ (T.ends a 1).1 = P)
+
+variable (T) in
+/-- The T-mesh is connected: any two patches are joined through arcs. -/
+def Connected : Prop := ∀ P Q, Relation.ReflTransGen T.PatchAdj P Q
+
+variable (T) in
+/-- Two vertices of the quad mesh are the two ends of a face edge. -/
+def VertexAdj (patches : List Patch) (allArcs : List α) (ℓ : α → ℕ)
+    (v w : T.Vertex allArcs ℓ) : Prop :=
+  ∃ f ∈ T.faces patches ℓ, ∃ e ∈ faceEdges f,
+    s(T.vertexOf allArcs ℓ e.1, T.vertexOf allArcs ℓ e.2) = s(v, w)
+
+variable (T) in
+/-- Two faces share an edge. -/
+def FaceAdj (patches : List Patch) (allArcs : List α) (ℓ : α → ℕ) (f g : Face Patch) : Prop :=
+  f ∈ T.faces patches ℓ ∧ g ∈ T.faces patches ℓ ∧
+    ∃ i j, T.edgeOf allArcs ℓ (faceEdge f i) = T.edgeOf allArcs ℓ (faceEdge g j)
+
+/-- A grid joined along its rows and its first column is connected from its corner. -/
+theorem rect_connected {β : Type*} {r : β → β → Prop} (g : ℕ → ℕ → β) {W H : ℕ}
+    (hx : ∀ x y, x < W → y ≤ H → r (g x y) (g (x + 1) y))
+    (hy : ∀ y, y < H → r (g 0 y) (g 0 (y + 1))) {x y : ℕ} (hxW : x ≤ W) (hyH : y ≤ H) :
+    Relation.ReflTransGen r (g 0 0) (g x y) := by
+  have hcol : ∀ y, y ≤ H → Relation.ReflTransGen r (g 0 0) (g 0 y) := by
+    intro y hy'
+    induction y with
+    | zero => exact .refl
+    | succ y ih => exact (ih (by omega)).tail (hy y (by omega))
+  induction x with
+  | zero => exact hcol y hyH
+  | succ x ih => exact (ih (by omega)).tail (hx x y (by omega) hyH)
+
+theorem rtg_symm {β : Type*} {r : β → β → Prop} (hs : ∀ {a b}, r a b → r b a) {a b : β}
+    (h : Relation.ReflTransGen r a b) : Relation.ReflTransGen r b a := by
+  induction h with
+  | refl => exact .refl
+  | tail _ hbc ih => exact ih.head (hs hbc)
+
+theorem arcPoint_patch (ℓ : α → ℕ) (a : α) (i : Fin 2) (s : ℕ) :
+    (T.arcPoint ℓ a i s).patch = (T.ends a i).1 := sidePoint_patch _ _ _
+
+theorem midpoint_patch {f : Face Patch} {e : Point Patch × Point Patch} (he : e ∈ faceEdges f) :
+    (midpoint e).patch = f.patch := by
+  simp only [faceEdges, List.mem_cons, List.not_mem_nil, or_false] at he
+  rcases he with rfl | rfl | rfl | rfl <;> rfl
+
+theorem exists_faceEdge {f : Face Patch} {e : Point Patch × Point Patch} (he : e ∈ faceEdges f) :
+    ∃ k, faceEdge f k = e := by
+  simp only [faceEdges, List.mem_cons, List.not_mem_nil, or_false] at he
+  rcases he with rfl | rfl | rfl | rfl
+  exacts [⟨0, rfl⟩, ⟨1, rfl⟩, ⟨2, rfl⟩, ⟨3, rfl⟩]
+
+section Connected
+
+variable {patches : List Patch} {allArcs : List α} (hP : ∀ P, P ∈ patches)
+  (hA : ∀ a, a ∈ allArcs) {ℓ : α → ℕ} (hℓ : ∀ a, 0 < ℓ a) (hne : ∀ σ, T.arcs σ ≠ [])
+  (hbal : T.Balanced ℓ)
+
+theorem vertexAdj_symm {v w : T.Vertex allArcs ℓ} (h : T.VertexAdj patches allArcs ℓ v w) :
+    T.VertexAdj patches allArcs ℓ w v :=
+  let ⟨f, hf, e, he, h⟩ := h; ⟨f, hf, e, he, h.trans Sym2.eq_swap⟩
+
+theorem faceAdj_symm {f g : Face Patch} (h : T.FaceAdj patches allArcs ℓ f g) :
+    T.FaceAdj patches allArcs ℓ g f :=
+  let ⟨hf, hg, i, j, h⟩ := h; ⟨hg, hf, j, i, h.symm⟩
+
+include hP in
+/-- The points of a patch are joined to its corner by face edges. -/
+theorem vertex_corner (hwh : ∀ P, 0 < T.width ℓ P ∧ 0 < T.height ℓ P) {p : Point Patch}
+    (hp : T.InGrid ℓ p) :
+    Relation.ReflTransGen (T.VertexAdj patches allArcs ℓ)
+      (T.vertexOf allArcs ℓ ⟨p.patch, 0, 0⟩) (T.vertexOf allArcs ℓ p) := by
+  obtain ⟨P, x, y⟩ := p
+  have hw := hwh P
+  have hmem : ∀ i j, i < 2 * T.width ℓ P → j < 2 * T.height ℓ P →
+      (⟨P, i, j⟩ : Face Patch) ∈ T.faces patches ℓ := fun i j hi hj => (mem_faces hP).mpr ⟨hi, hj⟩
+  dsimp only [InGrid] at hp
+  refine rect_connected (fun x y => T.vertexOf allArcs ℓ ⟨P, x, y⟩) (W := 2 * T.width ℓ P)
+    (H := 2 * T.height ℓ P) (fun x y hx hy => ?_) (fun y hy => ?_) hp.1 hp.2
+  · by_cases hy' : y < 2 * T.height ℓ P
+    · exact ⟨⟨P, x, y⟩, hmem _ _ hx hy', (⟨P, x, y⟩, ⟨P, x + 1, y⟩),
+        by simp [faceEdges], rfl⟩
+    · obtain ⟨k, rfl⟩ : ∃ k, y = k + 1 := ⟨y - 1, by omega⟩
+      exact ⟨⟨P, x, k⟩, hmem _ _ hx (by omega), (⟨P, x + 1, k + 1⟩, ⟨P, x, k + 1⟩),
+        by simp [faceEdges], Sym2.eq_swap⟩
+  · exact ⟨⟨P, 0, y⟩, hmem _ _ (by omega) hy, (⟨P, 0, y + 1⟩, ⟨P, 0, y⟩),
+      by simp [faceEdges], Sym2.eq_swap⟩
+
+include hP in
+/-- The faces of a patch are joined to its corner face through shared edges. -/
+theorem face_corner (hwh : ∀ P, 0 < T.width ℓ P ∧ 0 < T.height ℓ P) {f : Face Patch}
+    (hf : f ∈ T.faces patches ℓ) :
+    Relation.ReflTransGen (T.FaceAdj patches allArcs ℓ) ⟨f.patch, 0, 0⟩ f := by
+  obtain ⟨P, x, y⟩ := f
+  rw [mem_faces hP] at hf
+  dsimp only at hf
+  have hw := hwh P
+  have hmem : ∀ i j, i < 2 * T.width ℓ P → j < 2 * T.height ℓ P →
+      (⟨P, i, j⟩ : Face Patch) ∈ T.faces patches ℓ := fun i j hi hj => (mem_faces hP).mpr ⟨hi, hj⟩
+  refine rect_connected (fun x y => (⟨P, x, y⟩ : Face Patch)) (W := 2 * T.width ℓ P - 1)
+    (H := 2 * T.height ℓ P - 1) (fun x y hx hy => ?_) (fun y hy => ?_) (by omega) (by omega)
+  · refine ⟨hmem _ _ (by omega) (by omega), hmem _ _ (by omega) (by omega), 1, 3, ?_⟩
+    unfold edgeOf; congr 1; simp [faceEdge, faceEdges, midpoint]; omega
+  · refine ⟨hmem _ _ (by omega) (by omega), hmem _ _ (by omega) (by omega), 2, 0, ?_⟩
+    rfl
+
+include hP hA hℓ hne hbal
+
+/-- **Any two vertices of the quad mesh are joined by a chain of face edges**, when
+the T-mesh is connected. -/
+theorem vertex_connected (hc : T.Connected) {p q : Point Patch} (hp : p ∈ T.points patches ℓ)
+    (hq : q ∈ T.points patches ℓ) :
+    Relation.ReflTransGen (T.VertexAdj patches allArcs ℓ)
+      (T.vertexOf allArcs ℓ p) (T.vertexOf allArcs ℓ q) := by
+  have hwh : ∀ P, 0 < T.width ℓ P ∧ 0 < T.height ℓ P :=
+    fun P => ⟨sideLen_pos hℓ hne _, sideLen_pos hℓ hne _⟩
+  have hsymm := fun {v w} =>
+    rtg_symm (r := T.VertexAdj patches allArcs ℓ) vertexAdj_symm (a := v) (b := w)
+  let base : Patch → T.Vertex allArcs ℓ := fun P => T.vertexOf allArcs ℓ ⟨P, 0, 0⟩
+  -- Across an arc: the two ends of its first gluing pair are one vertex.
+  have hglue : ∀ a, Relation.ReflTransGen (T.VertexAdj patches allArcs ℓ)
+      (base (T.ends a 0).1) (base (T.ends a 1).1) := by
+    intro a
+    have h₀ := vertex_corner (allArcs := allArcs) hP hwh
+      (arcPoint_inGrid hbal a 0 (Nat.zero_le (2 * ℓ a)))
+    have h₁ := vertex_corner (allArcs := allArcs) hP hwh
+      (arcPoint_inGrid hbal a 1 (flip_le (T := T) (Nat.zero_le (2 * ℓ a))))
+    rw [arcPoint_patch] at h₀ h₁
+    have he := vertexOf_eq_iff.mpr (same_partner (T := T) hA (ℓ := ℓ) (a := a) 0 (Nat.zero_le _))
+    exact h₀.trans (he ▸ hsymm h₁)
+  have hadj : ∀ P Q, T.PatchAdj P Q → Relation.ReflTransGen (T.VertexAdj patches allArcs ℓ)
+      (base P) (base Q) := by
+    rintro P Q ⟨a, ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩⟩
+    exacts [hglue a, hsymm (hglue a)]
+  exact (hsymm (vertex_corner hP hwh ((mem_points hP).mp hp))).trans
+    (((hc p.patch q.patch).lift' base hadj).trans (vertex_corner hP hwh ((mem_points hP).mp hq)))
+
+/-- **Any two faces of the quad mesh are joined by a chain of faces sharing an edge**,
+when the T-mesh is connected. -/
+theorem face_connected (hc : T.Connected) {f g : Face Patch} (hf : f ∈ T.faces patches ℓ)
+    (hg : g ∈ T.faces patches ℓ) : Relation.ReflTransGen (T.FaceAdj patches allArcs ℓ) f g := by
+  have hwh : ∀ P, 0 < T.width ℓ P ∧ 0 < T.height ℓ P :=
+    fun P => ⟨sideLen_pos hℓ hne _, sideLen_pos hℓ hne _⟩
+  have hbal₂ := balanced_double hbal
+  have hsymm := fun {f g} =>
+    rtg_symm (r := T.FaceAdj patches allArcs ℓ) faceAdj_symm (a := f) (b := g)
+  -- The face of a patch along an arc whose edge has the midpoint `m`.
+  have hface : ∀ m, T.InGrid (double ℓ) m → (m.x + m.y) % 2 = 1 →
+      ∃ f ∈ T.faces patches ℓ, ∃ k, f.patch = m.patch ∧ midpoint (faceEdge f k) = m := by
+    intro m hm hodd
+    have : m ∈ midpoint '' {e | e ∈ (T.faces patches ℓ).flatMap faceEdges} := by
+      rw [midpoint_edges hP hwh]; exact ⟨hm, hodd⟩
+    obtain ⟨e, he, rfl⟩ := this
+    obtain ⟨f, hf, hef⟩ := List.mem_flatMap.mp he
+    obtain ⟨k, rfl⟩ := exists_faceEdge hef
+    exact ⟨f, hf, k, (midpoint_patch hef).symm, rfl⟩
+  let base : Patch → Face Patch := fun P => ⟨P, 0, 0⟩
+  -- Across an arc: the two edges at the start of its gluing at `double ℓ` are one edge.
+  have hglue : ∀ a, Relation.ReflTransGen (T.FaceAdj patches allArcs ℓ)
+      (base (T.ends a 0).1) (base (T.ends a 1).1) := by
+    intro a
+    have h1 : 1 ≤ 2 * double ℓ a := by have := hℓ a; unfold double; omega
+    obtain ⟨f, hf, k, hpf, hmf⟩ := hface _ (arcPoint_inGrid hbal₂ a 0 h1)
+      (by rw [arcPoint_parity])
+    obtain ⟨g, hg, k', hpg, hmg⟩ := hface _ (arcPoint_inGrid hbal₂ a 1 (flip_le (T := T) h1))
+      (by rw [arcPoint_parity, flip_parity _ _ h1])
+    rw [arcPoint_patch] at hpf hpg
+    have hfg : T.FaceAdj patches allArcs ℓ f g := ⟨hf, hg, k, k', by
+      rw [edgeOf, edgeOf, hmf, hmg]
+      exact vertexOf_eq_iff.mpr (same_partner (T := T) hA (ℓ := double ℓ) 0 h1)⟩
+    have h₀ := face_corner (allArcs := allArcs) hP hwh hf
+    have h₁ := face_corner (allArcs := allArcs) hP hwh hg
+    rw [hpf] at h₀
+    rw [hpg] at h₁
+    exact (h₀.tail hfg).trans (hsymm h₁)
+  have hadj : ∀ P Q, T.PatchAdj P Q → Relation.ReflTransGen (T.FaceAdj patches allArcs ℓ)
+      (base P) (base Q) := by
+    rintro P Q ⟨a, ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩⟩
+    exacts [hglue a, hsymm (hglue a)]
+  exact (hsymm (face_corner hP hwh hf)).trans
+    (((hc f.patch g.patch).lift' base hadj).trans (face_corner hP hwh hg))
+
+end Connected
 
 end TMesh
 
