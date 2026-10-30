@@ -118,6 +118,7 @@ WORDS = {
         "releases": "Releases",
         "issues": "Issues",
         "glossary_sections": "Sections of the glossary",
+        "glossary_description": "Poles, edge loops, spirals and the other words of retopology, with pictures.",
         "footer": (
             "<p><strong>openclare</strong>: automatic quad retopology. Code under the GNU GPL, version 3 or later; "
             "the pictures of each model under the licence of that model, listed in "
@@ -160,6 +161,7 @@ WORDS = {
         "releases": "Versions",
         "issues": "Tickets",
         "glossary_sections": "Sections du glossaire",
+        "glossary_description": "Les pôles, les boucles d'arêtes, les spirales et les autres mots de la retopologie, en images.",
         "footer": (
             "<p><strong>openclare</strong> : la retopologie automatique en quads. Code sous GNU GPL, version 3 ou "
             "ultérieure ; les images de chaque modèle sous la licence de ce modèle, listée dans "
@@ -179,21 +181,19 @@ WORDS = {
 
 # The logo leads home; the navigation lists the other pages.
 # The menu: the home page is for the artist (the logo), the articles go
-# deeper, the glossary gives the words. "Get it" is a button beside it.
-NAVIGATION = ("articles", "glossary")
+# deeper. "Get it" is a button beside it.
+NAVIGATION = ("articles",)
 # A menu item with no page of its own leads to this one.
 NAVIGATION_TARGETS = {}
 # The articles, by category, as tiles on the articles page; each has a banner,
 # site/assets/articles/<key>.svg (scripts/article_banners.py).
-ARTICLES = (("ecosystem", ("retopology", "engines", "platforms")), ("insight", ("theory", "results", "research")))
+ARTICLES = (("ecosystem", ("retopology", "engines", "platforms")), ("insight", ("theory", "results", "research", "glossary")))
 CATEGORY_OF = {key: category for category, keys in ARTICLES for key in keys}
 # The pages each item of the navigation stands for, beside its own.
 # The site map of the footer: a column per group, the articles by category.
-SITEMAP = (("openclare", ("index", "get", "articles", "glossary")),) + tuple(
-    (category, ("market",) * (category == "ecosystem") + keys) for category, keys in ARTICLES
-)
+SITEMAP = (("openclare", ("index", "get", "articles")),) + ARTICLES
 
-SECTIONS = {"articles": ("models/", "market", "retopology", "engines", "platforms", "theory", "results", "research")}
+SECTIONS = {"articles": ("models/", "retopology", "engines", "platforms", "theory", "results", "research", "glossary")}
 # The lists of the state of the market, in the order they are shown.
 MARKET = ("retopology", "engines", "platforms")
 
@@ -375,10 +375,8 @@ RETOPOLOGY_WORDS = {
         "licence_rule": "Licence rule", "install": "Install", "updates": "Updates", "source": "Source code",
         "count": "{shown} tools listed, {old} of them stale or abandoned.",
         "visit": "Visit", "tools_on": "Tools distributed here", "operator": "Operator", "paid_label": "Sells add-ons",
-        "share_label": "What the seller keeps", "blender_label": "Blender", "market_tools": "{n} tools: automatic, semi-automatic, semi-manual, manual and helpers, with their tags.",
-        "market_platforms": "{n} platforms: who runs them, what the seller keeps, how a user installs and updates.",
+        "share_label": "What the seller keeps", "blender_label": "Blender",
         "get_it": "Get it", "facts": "Facts", "same_engine": "Other tools on the same solver",
-        "market_engines": "{n} engines: the solvers inside the tools, and the tools built on each.",
         "engine": "Engine", "authors": "Authors", "year": "Year", "own_program": "Its own program",
         "used_by": "Used by, in Blender", "elsewhere": "Used elsewhere", "engine_count": "{n} tools",
         "own_solver": "a solver of its own", "engine_kinds": {"paper": "paper", "library": "library", "program": "program"},
@@ -395,10 +393,8 @@ RETOPOLOGY_WORDS = {
         "licence_rule": "Règle de licence", "install": "Installation", "updates": "Mises à jour", "source": "Code source",
         "count": "{shown} outils listés, dont {old} anciens ou abandonnés.",
         "visit": "Visiter", "tools_on": "Outils distribués ici", "operator": "Exploitant", "paid_label": "Vend des greffons",
-        "share_label": "Ce que garde le vendeur", "blender_label": "Blender", "market_tools": "{n} outils : automatiques, semi-automatiques, semi-manuels, manuels et aides, avec leurs tags.",
-        "market_platforms": "{n} plateformes : qui les tient, ce que garde le vendeur, comment on installe et met à jour.",
+        "share_label": "Ce que garde le vendeur", "blender_label": "Blender",
         "get_it": "L'obtenir", "facts": "Fiche", "same_engine": "Autres outils sur le même solveur",
-        "market_engines": "{n} moteurs : les solveurs dans les outils, et les outils bâtis sur chacun.",
         "engine": "Moteur", "authors": "Auteurs", "year": "Année", "own_program": "Son propre programme",
         "used_by": "Utilisé par, dans Blender", "elsewhere": "Utilisé ailleurs", "engine_count": "{n} outils",
         "own_solver": "un solveur à lui", "engine_kinds": {"paper": "article", "library": "bibliothèque", "program": "programme"},
@@ -1170,7 +1166,8 @@ class Site:
             )
             extra = f'<nav class="chips" aria-label="{WORDS[language]["glossary_sections"]}">{chips}</nav>'
             self.write(
-                "glossary", language, self.title_of(text), body, headings, "glossary", self.description_of(text), toc=False, extra=extra
+                "glossary", language, self.title_of(text), body, headings, "glossary", WORDS[language]["glossary_description"],
+                toc=False, extra=extra
             )
 
     def entry_anchors(self, body, language, taken):
@@ -1704,25 +1701,9 @@ class Site:
         breadcrumb = self.market_crumbs(page_key, language, "platforms", p["name"])
         self.write(page_key, language, p["name"], "\n".join(body), [], "platforms", p.get("seller_share", p["name"]), breadcrumb, toc=False)
 
-    def market(self, tools, platforms, engines):
-        for language in LANGUAGES:
-            words, here = RETOPOLOGY_WORDS[language], posixpath.dirname(self.page_path("market", language)) or "."
-            text, body, headings = self.content_page("market", language, "market")
-            bands = []
-            for target, line in (("retopology", words["market_tools"].format(n=len(tools))),
-                                 ("engines", words["market_engines"].format(n=len(engines))),
-                                 ("platforms", words["market_platforms"].format(n=len(platforms)))):
-                href = posixpath.relpath(self.page_path(target, language), here)
-                bands.append(f'<article class="tile"><div class="tile-facts"><h3><a href="{href}">{WORDS[language][target]}</a></h3>'
-                             f'</div><p class="tile-what">{line}</p></article>')
-            body = body.replace("<p>{{market}}</p>", f'<div class="tiles">{"".join(bands)}</div>')
-            self.write("market", language, self.title_of(text), body, headings, "market", self.description_of(text), toc=False,
-                       breadcrumb=self.market_crumbs("market", language))
-
     def retopology(self):
         tools, platforms, taxonomy, engines = self.retopology_data()
         self.taxonomy, self.engines = taxonomy, engines
-        self.market(tools, platforms, engines)
         for language in LANGUAGES:
             text, body, headings = self.content_page("retopology", language, "retopology")
             body = body.replace("<p>{{tools}}</p>", self.retopology_tools(tools, platforms, language))
