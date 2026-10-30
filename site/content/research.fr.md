@@ -25,15 +25,15 @@
 
 ## La méthode
 
-Les articles suivent quatre règles prises au génie logiciel. Elles disent comment le travail est vérifié, pas combien en est fait ; là où une règle n'est pas encore appliquée, c'est écrit.
+Les articles suivent quatre règles prises au génie logiciel : comment le travail est vérifié, pas où il en est. L'avancement de chaque règle change de jour en jour ; il est suivi dans les [tickets](https://github.com/marcgardent/openclare/issues) du dépôt.
 
-**1. Lean d'abord, la prose ensuite.** Les preuves dans l'assistant de preuve [Lean 4](https://lean-lang.org/), avec la bibliothèque Mathlib, font référence, et l'article les explique. *Commencé :* les cœurs algébriques de l'article B (ses sections 3 et 8 à 10) sont démontrés en Lean, avec les trois seuls axiomes standard de Lean et aucune preuve laissée ouverte ; les énoncés de l'article ne sont pas encore écrits à partir des sources Lean.
+**1. Lean d'abord, la prose ensuite.** Les preuves dans l'assistant de preuve [Lean 4](https://lean-lang.org/), avec la bibliothèque Mathlib, font référence, et l'article les explique. Seuls les trois axiomes standard de Lean sont utilisés, et aucune preuve n'est laissée ouverte.
 
-**2. Cas d'école, cas limites, cas aléatoires.** Un énoncé est essayé sur des exemples dont la réponse est connue, sur ses limites, et sur des entrées tirées au hasard. *Fait pour l'article B :* des T-meshes aléatoires, construits sans le moteur, sont confrontés aux définitions de Lean, énoncé par énoncé ([tests de propriétés](../../docs/research/turns-of-a-t-mesh/experiments/property/README.md), en anglais).
+**2. Cas d'école, cas limites, cas aléatoires.** Un énoncé est essayé sur des exemples dont la réponse est connue, sur ses limites, et sur des entrées tirées au hasard. Les entrées aléatoires sont construites sans le moteur et confrontées aux définitions de Lean, énoncé par énoncé ([tests de propriétés](../../docs/research/turns-of-a-t-mesh/experiments/property/README.md), en anglais).
 
-**3. Des tests qui doivent échouer.** Un théorème qui tient encore quand on altère la définition qu'il certifie en dit trop peu ; une hypothèse qu'on peut retirer n'était pas nécessaire. *Pas commencé.*
+**3. Des tests qui doivent échouer.** Un théorème qui tient encore quand on altère la définition qu'il certifie en dit trop peu ; une hypothèse qu'on peut retirer n'était pas nécessaire.
 
-**4. Intégration continue.** *Fait :* chaque changement des preuves ou des tests de propriétés est reconstruit sur une version figée de Mathlib, et une preuve laissée ouverte fait échouer la construction.
+**4. Intégration continue.** Chaque changement des preuves ou des tests est reconstruit sur une version figée de Mathlib, et une preuve laissée ouverte fait échouer la construction.
 
 **Ce qui est supposé.** Les faits topologiques sur lesquels la note s'appuie ne sont pas formalisés ; chacun est une hypothèse explicite du théorème qui l'utilise, jamais cachée : qu'une courbe fermée simple sur une sphère borde un disque (Jordan–Schoenflies), l'application développante et l'holonomie comme morphisme du groupe fondamental, et deux faits classiques sur les graphes. Les bandes sur les surfaces à bords, et tout énoncé *mesuré*, sont hors de la formalisation.
 

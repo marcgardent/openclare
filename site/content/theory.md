@@ -350,8 +350,7 @@ Research is mostly ideas that fail. These did, and the note says why.
 **Machine-checked proofs.** The algebraic heart of every result above is proved in
 [Lean](../../docs/research/turns-of-a-t-mesh/lean/README.md), a proof assistant: a program that accepts a proof only if every step
 follows from the previous ones. They use only Lean's standard axioms and leave no proof open,
-and random meshes test them; [the method](research.md#the-method) says how, and what is
-not done yet. They cover the shift as a sum of lengths, the completeness of the walk, the
+and random meshes test them; [the method](research.md#the-method) says how. They cover the shift as a sum of lengths, the completeness of the walk, the
 Burgers sum and its order, dislocations and staircases, the checkerboard rule, the parity of
 rings (with two different proofs), the counting of poles on a grid, the structure of the
 whole lengths, the certificates that a group of turns cannot close, and the forced helices.

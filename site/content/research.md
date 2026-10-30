@@ -25,15 +25,15 @@
 
 ## The method
 
-The papers follow four rules taken from software engineering. They say how the work is checked, not how much of it is done; where a rule is not applied yet, it says so.
+The papers follow four rules taken from software engineering: how the work is checked, not how far it has gone. Where each rule stands changes from day to day; it is followed in the repository's [issues](https://github.com/marcgardent/openclare/issues).
 
-**1. Lean first, prose last.** The proofs in the [Lean 4](https://lean-lang.org/) proof assistant, with the Mathlib library, are the reference, and the paper explains them. *Started:* the algebraic cores of paper B (its Sections 3 and 8 to 10) are proved in Lean, with Lean's three standard axioms only and no proof left open; the paper's statements are not yet written from the Lean sources.
+**1. Lean first, prose last.** The proofs in the [Lean 4](https://lean-lang.org/) proof assistant, with the Mathlib library, are the reference, and the paper explains them. Only Lean's three standard axioms are used, and no proof is left open.
 
-**2. Known cases, edge cases, random cases.** A statement is tried on examples whose answer is known, on its limits, and on random inputs. *Done for paper B:* random T-meshes, built without the engine, are checked against the Lean definitions, statement by statement ([property tests](../../docs/research/turns-of-a-t-mesh/experiments/property/README.md)).
+**2. Known cases, edge cases, random cases.** A statement is tried on examples whose answer is known, on its limits, and on random inputs. The random inputs are built without the engine and checked against the Lean definitions, statement by statement ([property tests](../../docs/research/turns-of-a-t-mesh/experiments/property/README.md)).
 
-**3. Tests that must fail.** A theorem that still holds when the definition it certifies is altered says too little; a hypothesis that can be removed was not needed. *Not started.*
+**3. Tests that must fail.** A theorem that still holds when the definition it certifies is altered says too little; a hypothesis that can be removed was not needed.
 
-**4. Continuous integration.** *Done:* every change to the proofs or to the property tests is rebuilt on a pinned Mathlib, and a proof left open fails the build.
+**4. Continuous integration.** Every change to the proofs or to the tests is rebuilt on a pinned Mathlib, and a proof left open fails the build.
 
 **What is assumed.** The topological facts the note relies on are not formalized; each one is an explicit hypothesis of the theorem that uses it, never hidden: that a simple closed curve on a sphere bounds a disc (Jordan–Schoenflies), the developing map and holonomy as a homomorphism of the fundamental group, and two standard graph facts. Strips on surfaces with borders, and every *measured* statement, are outside the formalization.
 
