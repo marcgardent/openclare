@@ -6,7 +6,7 @@ The bench runs openclare and two other remeshers on {{count:all}} models: organi
 
 The remeshers: **openclare** as the Blender add-on runs it; **QuadriFlow**, built into Blender; **AutoRemesher** 1.2.0 by Jeremy Hu. Marks are absolute: a remesher keeps its mark whichever others it is compared with.
 
-Beyond the bench, the [state of the market](market.md): the retopology tools for Blender in 2026, their engines and where they are sold.
+Beyond the bench, the [articles](articles.md) on the retopology tools for Blender in 2026, their engines and where they are sold.
 
 ## Average marks
 

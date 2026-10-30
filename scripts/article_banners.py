@@ -195,8 +195,31 @@ def platforms():
     return svg(body)
 
 
+def glossary():
+    """The words: a patch of quads with a pole, a loop and a quad pointed at, each with its entry."""
+    x0, y0, size = 100, 30, 60
+    body = warped_grid(x0, y0, 10, 5, size, 6, accent=(7, 3))
+    # An edge loop along a row, and a pole where five edges meet.
+    loop = " ".join(f"{'M' if i == 0 else 'L'}{x0 + i * size + 6 * math.sin(2 * 0.7 + i * 0.3):.1f} "
+                    f"{y0 + 2 * size + 6 * math.sin(i * 0.6 - 0.4):.1f}" for i in range(11))
+    body += f'<path style="{style("--teal", 6)}" d="{loop}"/>'
+    pole = (x0 + 3 * size + 6 * math.sin(4 * 0.7 + 3 * 0.3), y0 + 4 * size + 6 * math.sin(3 * 0.6 - 4 * 0.2))
+    body += f'<circle cx="{pole[0]:.1f}" cy="{pole[1]:.1f}" r="11" style="{style("--ink", 3, "--hot")}"/>'
+    # The entries, each a card with a word and a line of text, tied to what it names.
+    quad = (x0 + 7.5 * size, y0 + 3.5 * size)
+    cards = [(80, "--teal", (x0 + 10 * size + 6 * math.sin(2 * 0.7 + 10 * 0.3), y0 + 2 * size + 6 * math.sin(10 * 0.6 - 0.4))),
+             (170, "--hot", quad), (260, "--ink", pole)]
+    for y, colour, (tx, ty) in cards:
+        body += f'<path style="{style("--rule", 2.5)}; stroke-dasharray: 6 6" d="M{tx:.1f} {ty:.1f}L850 {y + 28}"/>'
+        body += f'<rect x="850" y="{y}" width="240" height="56" style="{style(colour, 3, "--surface")}"/>'
+        body += f'<path style="{style(colour, 5)}" d="M870 {y + 20}H950"/>'
+        body += f'<path style="{style("--slate", 3)}" d="M870 {y + 38}H1060"/>'
+    return svg(body)
+
+
 BANNERS = {"theory": theory, "results": results, "research": research,
-           "retopology": retopology, "engines": engines, "platforms": platforms}
+           "retopology": retopology, "engines": engines, "platforms": platforms,
+           "glossary": glossary}
 
 
 def main():
