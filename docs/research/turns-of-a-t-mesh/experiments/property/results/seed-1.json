@@ -1117,6 +1117,25 @@
    "dual_tree_crossings_not_taking_an_edge_to_its_glued_points": 0,
    "date": "2026-10-30",
    "program": "Check/Main.lean checkBorder: roundSteps, borderHolonomy, valenceAround, holonomyAround, aroundStep of Border.lean evaluated; the dual trees of the regions carried by crossEdge; the theorems are borderHolonomy_round, holonomyAround_eq, aroundStep_same, roundSteps_round"
+  },
+  "cuts": {
+   "spheres": 35,
+   "regions": 1852,
+   "border_crossed_face_by_face": 1852,
+   "crossings": 124632,
+   "tree_crossings": 111168,
+   "cut_crossings": 13464,
+   "charts_agree_across_every_tree_crossing": 1852,
+   "jumps_across_the_cuts_equal_holonomy_and_development": 1852,
+   "regions_each_cut_crossed_once": 1852,
+   "regions_cut_crossings_nested_twice_each": 0,
+   "distinct_cuts_crossed": 13464,
+   "cuts_of_the_regions": 1889092,
+   "cuts_with_an_end_on_the_curve": 13464,
+   "regions_cuts_crossed_are_those_with_an_end_on_the_curve": 1852,
+   "fuel": 4,
+   "date": "2026-10-30",
+   "program": "Check/Main.lean cutsOf: borderCrossings, faceAt, normalize, cutCrossings, jump of Region.lean evaluated through the charts of the dual trees of discOf, both regions of every simple curve of the rounds; the theorems are borderCrossings_chain, borderHolonomy_cuts"
   }
  },
  "made_with": "python3 docs/research/turns-of-a-t-mesh/experiments/property/generate.py --count 50 --seed 1"

@@ -105,6 +105,17 @@ and its holonomy is `R^{4−k}` about it (`holonomyAround_eq`), and the 86,092 p
 are in its class (`aroundStep_same`). The dual trees of the regions above now carry their
 charts by the library's `crossEdge`, and every crossing takes an edge to the points glued to it.
 
+The jumps across the cuts of a region (`Region.lean`, DT-134; 2026-10-30): on the 1,852
+regions of the 35 spheres, each walked with the region on its left (the curve walked back for
+the region on its right), the border is crossed face by face from the root face back to it,
+the faces chained as `borderCrossings_chain` states and every face in the region. Of its
+124,632 crossings, 111,168 cross the dual tree, every one with the charts agreeing
+(`M g ∘ C = M f`, the hypothesis of `borderHolonomy_cuts`), and 13,464 cross the cuts; in every
+region the composite of the jumps across the cuts, in border order, equals the holonomy of the
+border and the development of the turn (`borderHolonomy_cuts` with `borderHolonomy_round`,
+evaluated). The border turns round its own vertices only, so the cuts it crosses are the cuts
+with an end on the curve, each once: 13,464 of the 1,889,092 cuts of the regions.
+
 On the quad meshes at the whole lengths (DT-134, DT-173; 2026-10-30, the compiled program): χ = 2
 on the 35 spheres and 0 on the 15 tori, equal to the Euler characteristic of the mesh the
 instances were made from; all 35 spheres bipartite and 7 of the 15 tori; on the 42 bipartite
