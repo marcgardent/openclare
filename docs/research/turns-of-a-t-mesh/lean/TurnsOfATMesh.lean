@@ -32,3 +32,4 @@ public import TurnsOfATMesh.GridSurface
 public import TurnsOfATMesh.Coarse
 public import TurnsOfATMesh.CoarseEuler
 public import TurnsOfATMesh.CoarseSurface
+public import TurnsOfATMesh.SphereGrid
