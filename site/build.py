@@ -927,6 +927,7 @@ class Site:
         if language == "fr":
             body = french_spaces(body)
         body, viewer = self.viewers(body, here, language)
+        body = re.sub(r'<div class="card" data-art="(\w+)">', lambda m: f'<div class="card">{use_art(m.group(1))}', body)
         if viewer and not scripts:
             scripts = VIEWER_SCRIPT
         if key in CATEGORY_OF and not breadcrumb:
@@ -1993,6 +1994,12 @@ def night_sections(body):
 
 # The script of the 3D viewer, on the pages that hold one.
 VIEWER_SCRIPT = '<script type="module" src="{root}assets/viewer.js?v={version}"></script>'
+
+
+def use_art(name):
+    """The picture of a use card of the home page (scripts/use_art.py),
+    inline so that it takes the theme's colours."""
+    return read(SITE / "assets/uses" / f"{name}.svg").strip()
 
 
 def page_intro(body, kicker, extra="", banner=""):

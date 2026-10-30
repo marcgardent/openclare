@@ -864,6 +864,9 @@ details.more .table-wrap { margin: 0.75rem 0 1.25rem; }
 div.card strong::after { content: none; }
 div.card:hover { border-color: var(--rule); }
 .cards.uses { grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); }
+/* The picture of a use card (scripts/use_art.py), across the top of the card. */
+.cards.uses .card { padding-top: 0; overflow: hidden; }
+.cards.uses svg.use-art { display: block; width: calc(100% + 48px); max-width: none; height: auto; aspect-ratio: 2 / 1; margin: 0 -24px 12px; background: var(--surface); border-bottom: 1px solid var(--rule); }
 
 /* ------------------------------------------------------------ theory */
 

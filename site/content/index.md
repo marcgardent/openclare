@@ -13,12 +13,12 @@
 Select a mesh, ask for a number of quads, press *Remesh to Quads*. The original is left as it is.
 
 <div class="cards uses">
-<div class="card"><strong>A sculpt ready to animate</strong><span>Quads with few poles, and loops round the eyes, the mouth and the joints, drawn on the model where you want them.</span></div>
-<div class="card"><strong>A mechanical part with crisp edges</strong><span>Hard edges and marked sharp edges kept as lines of edges, creased for a Subdivision Surface.</span></div>
-<div class="card"><strong>A scan or an AI mesh made usable</strong><span>A clean, closed surface of quads from a noisy one.</span></div>
-<div class="card"><strong>Detail where it matters</strong><span>Smaller quads on the face and the hands, painted or taken from the shape.</span></div>
-<div class="card"><strong>Seams where you want them</strong><span>Curves drawn on the model become seams, ready for the UVs.</span></div>
-<div class="card"><strong>Triangles too</strong><span>Even triangles for cloth simulation, or Blender's own Decimate for printing and collisions.</span></div>
+<div class="card" data-art="sculpt"><strong>A sculpt ready to animate</strong><span>Quads with few poles, and loops round the eyes, the mouth and the joints, drawn on the model where you want them.</span></div>
+<div class="card" data-art="mechanical"><strong>A mechanical part with crisp edges</strong><span>Hard edges and marked sharp edges kept as lines of edges, creased for a Subdivision Surface.</span></div>
+<div class="card" data-art="scan"><strong>A scan or an AI mesh made usable</strong><span>A clean, closed surface of quads from a noisy one.</span></div>
+<div class="card" data-art="detail"><strong>Detail where it matters</strong><span>Smaller quads on the face and the hands, painted or taken from the shape.</span></div>
+<div class="card" data-art="seams"><strong>Seams where you want them</strong><span>Curves drawn on the model become seams, ready for the UVs.</span></div>
+<div class="card" data-art="triangles"><strong>Triangles too</strong><span>Even triangles for cloth simulation, or Blender's own Decimate for printing and collisions.</span></div>
 </div>
 
 ## Loops that close
