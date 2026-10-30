@@ -51,6 +51,7 @@ every other arc.
 import TurnsOfATMesh.TMesh
 import TurnsOfATMesh.Fox
 import TurnsOfATMesh.Grid
+import TurnsOfATMesh.Holonomy
 import Lean.Data.Json
 import Std.Data.HashMap
 import Std.Data.HashSet
@@ -635,7 +636,10 @@ holonomy a translation, by `α e₁ - shift e₂` turned by the chart of its fir
 `e₁` the walking direction, `e₂` the direction of increasing offsets on the first side,
 `shift` the library's `shift` at the whole lengths and `α` the length of the turn there,
 the sum of the widths of the patches crossed (Section "Flat metric and holonomy":
-`ĥ(γ̄)` is the inverse of `T_γ(ℓ) = -α e₁ + shift e₂`). -/
+`ĥ(γ̄)` is the inverse of `T_γ(ℓ) = -α e₁ + shift e₂`). The same holonomy is also
+compared with `Turn.development` of `Holonomy.lean`, the composite of the library's
+changes of chart along the path: `hol = R^k ∘ (development)⁻¹ ∘ R^{-k}`, rotation 1
+and translation `-R^k · (development).trans`. -/
 
 def gauss (x y : Int) : GaussianInt := ⟨x, y⟩
 
@@ -662,7 +666,8 @@ def along (ℓ : Fin n → ℚ) (start : Side (Fin P)) (path : List (Fin n)) : �
     (T.other a acc.1.opp, acc.2 + ((T.arcs (acc.1.1, acc.1.2.1 + 1, 0)).map ℓ).sum)) (start, 0)).2
 
 def checkFox (whole : Fin n → ℚ) (forms : Array (Option (Array Int)))
-    (paths : Array (Option (Side (Fin P) × List (Fin n)))) (fox : RawFox) : IO Bool := do
+    (paths : Array (Option (Side (Fin P) × List (Fin n))))
+    (devs : Array (Option (Motion GaussianInt GaussianInt))) (fox : RawFox) : IO Bool := do
   IO.println s!"  Fox–Burgers: {fox.cones.size} cone points, convention: {fox.convention}"
   let u : Nat → GaussianIntˣ := fun i => giUnit ^ (4 - fox.cones[i]!.1)
   let p : Nat → GaussianInt := fun i => gauss fox.cones[i]!.2.1 fox.cones[i]!.2.2
@@ -679,6 +684,7 @@ def checkFox (whole : Fin n → ℚ) (forms : Array (Option (Array Int)))
   let mut opposite := 0
   let mut whole_ : Count := {}
   let mut foxSum : Count := {}
+  let mut inverse : Count := {}
   for i in [0:fox.turns.size] do
     let (w, chart) := fox.turns[i]!
     let some (start, path) := paths[i]?.join | continue
@@ -693,6 +699,9 @@ def checkFox (whole : Fin n → ℚ) (forms : Array (Option (Array Int)))
     let M := quarter chart
     let e₁ := M * inward start
     let e₂ := M * acrossDir start
+    if let some d := devs[i]?.join then
+      inverse := inverse.add (m.lin == 1 && m.trans == -(M * d.trans)) fun _ =>
+        s!"turn {i}: hol {showG m.lin}, {showG m.trans}; development {showG d.lin}, {showG d.trans}; R^{chart}"
     rotation := rotation.add (m.lin == 1) fun _ => s!"turn {i}: rotation {showG m.lin}"
     acrossC := acrossC.add (dot e₂ m.trans == -s.num) fun _ =>
       s!"turn {i}: ⟨e₂, τ⟩ = {dot e₂ m.trans}, shift {s}"
@@ -713,7 +722,8 @@ def checkFox (whole : Fin n → ℚ) (forms : Array (Option (Array Int)))
   IO.println s!"    (⟨e₁, τ⟩ = -α for {opposite})"
   whole_.show "turns: τ = α e₁ - shift e₂"
   foxSum.show "turns: τ = Σᵢ ρ(∂w/∂xᵢ) (1 - Rᵢ) pᵢ (Fox–Burgers sum, `fox`)"
-  return jumps.ok && rotation.ok && acrossC.ok && alongC.ok && whole_.ok && foxSum.ok
+  inverse.show "turns: holonomy of the word = inverse of the development, turned by the chart (hol = 1, -R^k · Turn.development.trans)"
+  return jumps.ok && rotation.ok && acrossC.ok && alongC.ok && whole_.ok && foxSum.ok && inverse.ok
 
 /-! ### The check of one export -/
 
@@ -1092,6 +1102,12 @@ def checkRaw (raw : Raw) : IO Bool := do
   -- The coefficients of `shiftForm` and the walk of every turn built, by index.
   let mut forms : Array (Option (Array Int)) := Array.replicate raw.turns.size none
   let mut paths : Array (Option (Side (Fin P) × List (Fin n))) := Array.replicate raw.turns.size none
+  -- `Turn.development` (`Holonomy.lean`) of every turn built, by index, when every
+  -- length is a positive whole number (the quad mesh of `checkGrid` is then built).
+  let positive := raw.whole.all fun x => x.den == 1 && x > 0
+  let ℓN : Fin n → ℕ := fun a => (raw.whole[a.val]!).num.toNat
+  let mut devs : Array (Option (Motion GaussianInt GaussianInt)) := Array.replicate raw.turns.size none
+  let mut developed : Count := {}
   for t in raw.turns do
     let some start := (sideOf t.start : Option (Side (Fin P)))
       | throw <| IO.userError "start side out of range"
@@ -1118,6 +1134,19 @@ def checkRaw (raw : Raw) : IO Bool := do
     -- `γ.shift ℓ`, read through the coefficients (equal to `shiftForm` at every arc).
     let shiftAt (ℓ : Fin n → ℚ) : ℚ := evalForm (fun a => c[a.val]!) ℓ
     let sWhole := shiftAt whole
+    -- The development at the whole lengths: the translation by `-α e₁ + shift e₂` in the
+    -- frame of the first side, `α` the library's `Turn.length`.
+    if positive then
+      let dv := γ.development ℓN
+      if t.index < devs.size then devs := devs.set! t.index (some dv)
+      let α := γ.length whole
+      let α' := Check.along T whole start path
+      if α != α' then IO.println s!"    turn {t.index}: Turn.length {α}, along {α'}"
+      let e₁ := TMesh.inward start
+      let e₂ := TMesh.acrossDir start
+      developed := developed.add (dv.lin == 1 &&
+          dv.trans == -(α.num : GaussianInt) * e₁ + (sWhole.num : GaussianInt) * e₂) fun _ =>
+        s!"turn {t.index}: development {showG dv.lin}, {showG dv.trans}; α {α}, shift {sWhole}, e₁ {showG e₁}, e₂ {showG e₂}"
     let engineAt (ℓ : Fin n → ℚ) : ℚ := evalForm (fun a => engine[a.val]!) ℓ
     let gap (ℓ : Fin n → ℚ) : ℚ := |shiftAt ℓ - engineAt ℓ|
     gaps := (max gaps.1 (gap whole), max gaps.2.1 (gap walked), max gaps.2.2 (gap real))
@@ -1169,8 +1198,12 @@ def checkRaw (raw : Raw) : IO Bool := do
   atReal.show "real lengths: walk comes back at offset + shift"
   IO.println s!"  whole lengths: {wholeTurns} of {raw.turns.size} turns have a half-integer in their corridor"
   atWhole.show "whole lengths: half-integers of the corridors, walk comes back at offset + shift"
+  if positive then
+    developed.show "whole lengths: Turn.development = translation by -α e₁ + shift e₂ (Holonomy.lean)"
+  else
+    IO.println "  whole lengths: an arc of length zero, no development of the turns"
   ok := ok && built.ok && modulo.ok && corridor.ok && passes.ok && back.ok && atReal.ok &&
-    atWhole.ok
+    atWhole.ok && developed.ok
   -- The quad mesh at the whole lengths, its curves and their regions (`Grid.lean`).
   let gridOk ← checkGrid T raw.whole lengthShift
   ok := ok && gridOk
@@ -1186,7 +1219,7 @@ def checkRaw (raw : Raw) : IO Bool := do
   match raw.fox with
   | some fox =>
     IO.println s!"  whole lengths balanced (B ℓ = 0): {unbalanced.isEmpty}"
-    let good ← checkFox T whole forms paths fox
+    let good ← checkFox T whole forms paths devs fox
     ok := ok && good && unbalanced.isEmpty
   | none => IO.println s!"  Fox–Burgers: out of scope, {raw.foxSkipped}"
   return ok
