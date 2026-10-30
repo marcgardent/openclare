@@ -17,7 +17,7 @@ A French version is in [USE_CASES.fr.md](USE_CASES.fr.md).
 | Seams where the artist wants them | texture artists | the UVs cut along chosen lines | curves marked Seam: the edges along them marked as seams | Community | review (#209) |
 | A scan or an AI-generated mesh made usable | scanning, generation | a clean, closed surface of quads from a noisy one | the remesh, which mends torn borders and edges of more than two faces | Community | done |
 | More detail where it matters | all | smaller quads on the face, the hands | painted density; Density from Shape, sizes analysed and shown | Community | done; the rest in review (#205) |
-| Poles where the artist wants them | character artists | a pole moved off a joint or the face, pinned, the others placed round it | the poles of the last result kept on the object, those touched given to the next remesh; the tool to move them (DT-181) | Community | engine and project in review (#252, #255); the tool planned |
+| Poles where the artist wants them | character artists | a pole moved off a joint or the face, pinned, the others placed round it | the poles of the last result kept on the object, those touched given to the next remesh; the tool to move them (DT-181) | Community | engine and project in review (#252, #255); the tool in review |
 | A symmetric model | character artists | the same quads on both sides | Symmetry | Community | done |
 | Materials kept apart | all | each quad of the material under it, a line of edges between two | Materials | Community | done |
 | Primitives with the right poles | modellers | a quad sphere, cylinder or disc | Quad Shape menu | Community | planned (DT-157, #159) |

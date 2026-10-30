@@ -100,7 +100,7 @@ def owner_shown(context):
     return owner
 
 
-def draw():
+def draw_poles():
     """Draws the poles of the object shown, in the 3D view, a little towards
     the viewer so that the surface does not hide them."""
     import gpu
@@ -182,6 +182,187 @@ class OPENCLARE_OT_poles_clear(bpy.types.Operator):
         return {"FINISHED"}
 
 
+# How near the mouse, in pixels, a pole must be drawn for the tool to take it.
+PICK_PIXELS = 15.0
+
+
+def under_mouse(context, owner, mouse):
+    """The index of the pole of `owner` the mouse (region pixels) is on, or
+    None: among those drawn within `PICK_PIXELS` of it, the nearest to the
+    point of the surface under it, so that one on the far side is not taken
+    through the object."""
+    from bpy_extras import view3d_utils
+    from mathutils import Vector
+
+    from . import draw
+
+    region, view = context.region, context.region_data
+    hit = draw.hit(context, owner, draw.surface_tree(context, owner), mouse)
+    near = []
+    for index, pole in enumerate(owner.data.openclare_poles.items):
+        at = view3d_utils.location_3d_to_region_2d(region, view, owner.matrix_world @ Vector(pole.position))
+        if at is not None and (at - Vector(mouse)).length <= PICK_PIXELS:
+            depth = (Vector(pole.position) - Vector(hit)).length if hit is not None else 0.0
+            near.append((depth, (at - Vector(mouse)).length, index))
+    return min(near)[2] if near else None
+
+
+def mouse_of(event):
+    return (event.mouse_region_x, event.mouse_region_y)
+
+
+class OPENCLARE_OT_pole_move(bpy.types.Operator):
+    """Drag a pole along the surface: the next remesh has a pole of its
+    valence where it is let go"""
+
+    bl_idname = "object.openclare_pole_move"
+    bl_label = "Move Pole"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.area is not None and context.area.type == "VIEW_3D" and owner_shown(context) is not None
+
+    def invoke(self, context, event):
+        from . import draw
+
+        self.owner = owner_shown(context)
+        self.index = under_mouse(context, self.owner, mouse_of(event))
+        if self.index is None:
+            return {"CANCELLED", "PASS_THROUGH"}
+        pole = self.owner.data.openclare_poles.items[self.index]
+        self.before = (tuple(pole.position), pole.touched)
+        self.tree = draw.surface_tree(context, self.owner)
+        context.window_manager.modal_handler_add(self)
+        return {"RUNNING_MODAL"}
+
+    def modal(self, context, event):
+        from . import draw
+
+        pole = self.owner.data.openclare_poles.items[self.index]
+        if event.type == "MOUSEMOVE":
+            point = draw.hit(context, self.owner, self.tree, mouse_of(event))
+            if point is not None:
+                pole.position, pole.touched = point, True
+                context.region.tag_redraw()
+        elif event.type == "LEFTMOUSE" and event.value == "RELEASE":
+            pole.touched = True
+            return {"FINISHED"}
+        elif event.type in {"RIGHTMOUSE", "ESC"}:
+            pole.position, pole.touched = self.before
+            context.region.tag_redraw()
+            return {"CANCELLED"}
+        return {"RUNNING_MODAL"}
+
+
+class OPENCLARE_OT_pole_add(bpy.types.Operator):
+    """Place a pole on the surface under the mouse, touched: the next remesh
+    has a vertex of this valence there, and balances it with the others"""
+
+    bl_idname = "object.openclare_pole_add"
+    bl_label = "Add Pole"
+    bl_options = {"REGISTER", "UNDO"}
+
+    valence: bpy.props.IntProperty(name="Valence", min=3, max=5, default=3, options={"SKIP_SAVE"})
+
+    @classmethod
+    def poll(cls, context):
+        return context.area is not None and context.area.type == "VIEW_3D" and owner_shown(context) is not None
+
+    def invoke(self, context, event):
+        from . import draw
+
+        if self.valence not in (3, 5):
+            self.report({"ERROR"}, "openclare: a pole has a valence of 3 or 5")
+            return {"CANCELLED"}
+        owner = owner_shown(context)
+        point = draw.hit(context, owner, draw.surface_tree(context, owner), mouse_of(event))
+        if point is None:
+            return {"CANCELLED"}
+        pole = owner.data.openclare_poles.items.add()
+        pole.position, pole.valence, pole.touched = point, self.valence, True
+        redraw_views()
+        return {"FINISHED"}
+
+
+class OPENCLARE_OT_pole_remove(bpy.types.Operator):
+    """Remove the pole under the mouse: the next remesh places its poles
+    without it"""
+
+    bl_idname = "object.openclare_pole_remove"
+    bl_label = "Remove Pole"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.area is not None and context.area.type == "VIEW_3D" and owner_shown(context) is not None
+
+    def invoke(self, context, event):
+        owner = owner_shown(context)
+        index = under_mouse(context, owner, mouse_of(event))
+        if index is None:
+            return {"CANCELLED"}
+        owner.data.openclare_poles.items.remove(index)
+        redraw_views()
+        return {"FINISHED"}
+
+
+class OPENCLARE_OT_pole_pin(bpy.types.Operator):
+    """Pin the pole under the mouse where it is, or let it free: a pinned
+    pole is kept by the next remesh, a free one placed again"""
+
+    bl_idname = "object.openclare_pole_pin"
+    bl_label = "Pin or Free Pole"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.area is not None and context.area.type == "VIEW_3D" and owner_shown(context) is not None
+
+    def invoke(self, context, event):
+        owner = owner_shown(context)
+        index = under_mouse(context, owner, mouse_of(event))
+        if index is None:
+            return {"CANCELLED"}
+        pole = owner.data.openclare_poles.items[index]
+        pole.touched = not pole.touched
+        return {"FINISHED"}
+
+
+class OPENCLARE_TL_poles(bpy.types.WorkSpaceTool):
+    """The tool in the toolbar: the poles of the last result, edited on the
+    object before the next remesh."""
+
+    bl_space_type = "VIEW_3D"
+    bl_context_mode = "OBJECT"
+    bl_idname = "openclare.poles"
+    bl_label = "Poles (openclare)"
+    bl_description = (
+        "Edit the poles of the last result on the object: drag one along the surface, 3 or 5 to add one "
+        "under the mouse, P to pin or free one, X to remove one. Those touched are kept by the next remesh, "
+        "which places the others round them"
+    )
+    bl_icon = "ops.generic.select_circle"
+    bl_widget = None
+    bl_keymap = (
+        (OPENCLARE_OT_pole_move.bl_idname, {"type": "LEFTMOUSE", "value": "PRESS"}, None),
+        (OPENCLARE_OT_pole_add.bl_idname, {"type": "THREE", "value": "PRESS"}, {"properties": [("valence", 3)]}),
+        (OPENCLARE_OT_pole_add.bl_idname, {"type": "FIVE", "value": "PRESS"}, {"properties": [("valence", 5)]}),
+        (OPENCLARE_OT_pole_pin.bl_idname, {"type": "P", "value": "PRESS"}, None),
+        (OPENCLARE_OT_pole_remove.bl_idname, {"type": "X", "value": "PRESS"}, None),
+        (OPENCLARE_OT_pole_remove.bl_idname, {"type": "DEL", "value": "PRESS"}, None),
+    )
+
+    def draw_settings(context, layout, tool):
+        owner = owner_shown(context)
+        if owner is None:
+            layout.label(text="Remesh the object once to have its poles")
+            return
+        layout.label(text=summary(owner.data.openclare_poles))
+        layout.prop(owner.data.openclare_poles, "show")
+        layout.operator(OPENCLARE_OT_poles_free.bl_idname)
+
+
 def summary(poles):
     """What the panel says of the poles of a project."""
     items = poles.items
@@ -190,7 +371,16 @@ def summary(poles):
     return f"{len(items)} poles: {threes} of valence 3, {len(items) - threes} of 5; {touched} touched"
 
 
-CLASSES = (OpenclarePole, OpenclarePoles, OPENCLARE_OT_poles_free, OPENCLARE_OT_poles_clear)
+CLASSES = (
+    OpenclarePole,
+    OpenclarePoles,
+    OPENCLARE_OT_poles_free,
+    OPENCLARE_OT_poles_clear,
+    OPENCLARE_OT_pole_move,
+    OPENCLARE_OT_pole_add,
+    OPENCLARE_OT_pole_remove,
+    OPENCLARE_OT_pole_pin,
+)
 
 handle = None
 
@@ -200,11 +390,13 @@ def register():
     for cls in CLASSES:
         bpy.utils.register_class(cls)
     bpy.types.Mesh.openclare_poles = bpy.props.PointerProperty(type=OpenclarePoles)
-    handle = bpy.types.SpaceView3D.draw_handler_add(draw, (), "WINDOW", "POST_VIEW")
+    handle = bpy.types.SpaceView3D.draw_handler_add(draw_poles, (), "WINDOW", "POST_VIEW")
+    bpy.utils.register_tool(OPENCLARE_TL_poles, separator=True)
 
 
 def unregister():
     global handle
+    bpy.utils.unregister_tool(OPENCLARE_TL_poles)
     if handle is not None:
         bpy.types.SpaceView3D.draw_handler_remove(handle, "WINDOW")
         handle = None
