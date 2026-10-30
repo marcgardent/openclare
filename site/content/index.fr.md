@@ -27,7 +27,7 @@ Un artiste sélectionne une boucle d'arêtes d'un Alt-clic et s'attend à ce qu'
 
 <div class="stats">
 <div class="stat"><span class="value">4,5 %</span><span class="label">des arêtes sur des boucles en spirale, 12 modèles à trois budgets autour de 3 000 quads ; 16,7 % sans fermeture</span></div>
-<div class="stat"><span class="value">1,2–1,6 %</span><span class="label">d'arêtes en spirale sur le corps masculin, contre 2,5 % pour le maillage fait à la main (12,1 % avant fermeture)</span></div>
+<div class="stat"><span class="value">1,95 %</span><span class="label">des arêtes sur des boucles en spirale, sur le corps masculin, contre 2,55 % sur le maillage fait à la main et 26,8 % sans fermeture (<a href="../../docs/research/closing-loops/figures/README.md">figures de l'article</a>, un seul passage)</span></div>
 <div class="stat"><span class="value">{{mark:3000:organic:openclare}}<small> / 100</small></span><span class="label">note moyenne sur {{count:organic}} modèles organiques à 3 000 quads ; AutoRemesher {{mark:3000:organic:autoremesher}}, QuadriFlow {{mark:3000:organic:quadriflow}}</span></div>
 <div class="stat"><span class="value">{{mark:3000:mechanical:openclare}}<small> / 100</small></span><span class="label">note moyenne sur les pièces mécaniques à 3 000 quads</span></div>
 <div class="stat"><span class="value">{{theorems}}</span><span class="label">théorèmes de la note de recherche vérifiés par l'assistant de preuve Lean</span></div>

@@ -47,8 +47,9 @@ made by hand for it.
 
 ![The male body before and after closing loops](../../docs/glossary/male_result.png)
 
-*Spiral loops in yellow to red, closed loops in blue. Before closing, 12.1% of the edges lay on
-spiral loops; today 1.15% to 1.59%, against 2.5% for the mesh made by hand.*
+*Spiral loops in yellow to red, closed loops in blue, from an earlier run of the engine. Today's
+engine: 26.8% of the edges on spiral loops with no closing, 1.95% with it, against 2.55% for the
+mesh made by hand.*
 
 The problem is well known. Bommes and his colleagues named these helices *q-helices* in 2011
 and removed them from a finished mesh by local edits. openclare takes the opposite route: it
@@ -286,8 +287,9 @@ male body.*
   quads); the first version of closing brought it to 6.0%. Over three budgets, the first
   version leaves 7.55% and today's engine **4.54%**, with 36.3% of edges on closed loops
   instead of 34.1%, no invalid mesh, and a mean distance to the source 1.2% higher.
-- **Male body, 10,590 quads.** 12.1% before any closing; 2.47% with the first version;
-  **1.15% to 1.59%** today, over recent runs. The mesh made by hand has 2.5%. One model is
+- **Male body, 10,590 quads.** With today's engine, 26.8% with no closing and **1.95%** with it
+  ([figures of the paper](../../docs/research/closing-loops/figures/README.md), one run); the mesh made by hand has 2.55%. Earlier engines gave
+  12.1% with no closing, 2.47% with the first version of closing, then 1.15% to 1.59%. One model is
   chaotic, so this is an illustration; the batch above is the evidence.
 - **Cylinder.** **No spiral and 6 patches** at 2,990, 3,000 and 5,000 quads, against 26% to
   32% of spiral edges and about 700 patches before.

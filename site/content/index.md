@@ -27,7 +27,7 @@ An artist selects an edge loop with one Alt-click and expects it to go round an 
 
 <div class="stats">
 <div class="stat"><span class="value">4.5%</span><span class="label">of the edges on spiral loops, 12 models at three budgets near 3,000 quads; 16.7% with no closing</span></div>
-<div class="stat"><span class="value">1.2–1.6%</span><span class="label">spiral edges on the male body, against 2.5% for the mesh made by hand (12.1% before closing)</span></div>
+<div class="stat"><span class="value">1.95%</span><span class="label">of the edges on spiral loops on the male body, against 2.55% on the mesh made by hand and 26.8% with no closing (<a href="../../docs/research/closing-loops/figures/README.md">figures of the paper</a>, one run)</span></div>
 <div class="stat"><span class="value">{{mark:3000:organic:openclare}}<small> / 100</small></span><span class="label">average mark on {{count:organic}} organic models at 3,000 quads; AutoRemesher {{mark:3000:organic:autoremesher}}, QuadriFlow {{mark:3000:organic:quadriflow}}</span></div>
 <div class="stat"><span class="value">{{mark:3000:mechanical:openclare}}<small> / 100</small></span><span class="label">average mark on the mechanical parts at 3,000 quads</span></div>
 <div class="stat"><span class="value">{{theorems}}</span><span class="label">theorems of the research note checked by the Lean proof assistant</span></div>
