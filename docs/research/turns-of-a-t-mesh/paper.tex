@@ -162,7 +162,8 @@ computer}, checked exactly on random T-meshes that do not come from the
 engine, the tag saying on how many instances and of what genus (the property
 tests of the data package, \texttt{experiments/property}): a test refutes or
 corroborates and proves nothing, and a tag at another level says
-\emph{tested} where the same tests also ran; \textsc{standard, cited}; and
+\emph{tested} where the same tests also ran, and \emph{examples} where Lean
+checks it on a fixed instance; \textsc{standard, cited}; and
 \textsc{open, no claim}, a question or a conjecture. The Lean names are those
 of the commit on the first page, built without \texttt{sorry}.
 \fi
@@ -226,7 +227,7 @@ Crossing from patch $P$ to patch $Q$ across an arc composes a quarter-turn
 rotation of the local frame with a translation whose components are signed
 sums of arc lengths along the rims of $P$ and $Q$.
 
-\begin{evidence}{core}{\lean{TMesh.Turn.shift_linear}, \lean{TMesh.Turn.mem_corridor_iff}, \lean{TMesh.Turn.comes_back}, \lean{TMesh.Turn.winds}, \lean{TMesh.Turn.development_eq} (in the plane, $T_\gamma(\ell) = -\alpha_\gamma(\ell) e_1 + \shift_\gamma(\ell) e_2$ at whole lengths); tested: the development against the holonomy of the word of the turn on 3{,}865 turns of 34 spheres; assumed: an oriented gluing; the corridor without half-integers is not formalized}
+\begin{evidence}{core}{\lean{TMesh.Turn.shift_linear}, \lean{TMesh.Turn.mem_corridor_iff}, \lean{TMesh.Turn.comes_back}, \lean{TMesh.Turn.winds}, \lean{TMesh.Turn.development_eq} (in the plane, $T_\gamma(\ell) = -\alpha_\gamma(\ell) e_1 + \shift_\gamma(\ell) e_2$ at whole lengths); examples: \lean{TMesh.twistedTorus.walk_turn}; tested: the development against the holonomy of the word of the turn on 3{,}865 turns of 34 spheres; assumed: an oriented gluing; the corridor without half-integers is not formalized}
 \begin{proposition}[The shift of a turn is linear]\label{prop:linear}
 For a turn $\gamma$ there are integer coefficients $c_a$, independent of the
 lengths, such that after a full turn a point of the first side has moved
@@ -378,7 +379,7 @@ check of the four directions): each lobe sees a second convex corner and holds
 $2$, and the third region the rest of the total $8$.
 \end{proof}
 
-\begin{evidence}{core}{\lean{CutDisc.holonomy_eq_preorder}, \lean{Cut.jump_eq} (on a disc cut along a forest, modelled by the walk round its border: the recursion $G_f = G_{f_r} \circ \dots \circ G_{f_1} \circ \rho_v$ and the holonomy of the border as the composite of the cone rotations in the order of first visit), \lean{CutDisc.holonomy_trans}, \lean{Motion.burgers_eq_sum}, \lean{Motion.annulus_holonomy}; tested: on every sphere of 50 random instances, both regions of every simple curve are such cut discs (a forest of cuts, each tree touching the border once) and the composite of their rotations is the development \lean{TMesh.Turn.development} of the turn, $B_D = T_\gamma(\ell)$ with $D$ on the left, on 1{,}852 regions; (c) on 898 annuli; assumed: that the region of the curve is the cut disc of the model, and that the holonomy of its border is the development of the turn}
+\begin{evidence}{core}{\lean{CutDisc.holonomy_eq_preorder}, \lean{Cut.jump_eq} (on a disc cut along a forest, modelled by the walk round its border: the recursion $G_f = G_{f_r} \circ \dots \circ G_{f_1} \circ \rho_v$ and the holonomy of the border as the composite of the cone rotations in the order of first visit), \lean{CutDisc.holonomy_trans}, \lean{Motion.burgers_eq_sum}, \lean{Motion.annulus_holonomy}; examples: \lean{CutDisc.threeSquares_holonomy}; tested: on every sphere of 50 random instances, both regions of every simple curve are such cut discs (a forest of cuts, each tree touching the border once) and the composite of their rotations is the development \lean{TMesh.Turn.development} of the turn, $B_D = T_\gamma(\ell)$ with $D$ on the left, on 1{,}852 regions; (c) on 898 annuli; assumed: that the region of the curve is the cut disc of the model, and that the holonomy of its border is the development of the turn}
 \begin{proposition}[The shift is set by the singularities]\label{prop:burgers}
 Let $\gamma$, $\gamma_1$, $\gamma_2$ be turns with simple curves.
 \begin{enumerate}
