@@ -20,7 +20,7 @@ import mathutils
 from bl_operators.presets import AddPresetBase
 from bl_ui.utils import PresetPanel
 
-from . import draw, engine, extend, preview
+from . import draw, engine, extend, poles, preview
 
 PRESETS = [
     ("organic", "Organic", "Sculpts and characters: edges follow the shape closely, quads are smaller where it bends"),
@@ -1029,7 +1029,7 @@ class EngineInput:
 
 def engine_input(
     source, preset, settings, density=None, materials=False, copy=False, sharp=False, stretch=None, curves=(),
-    sharp_edges=False, creases=False, asked=None, curve_marks=(),
+    sharp_edges=False, creases=False, asked=None, curve_marks=(), poles=(),
 ):
     """The `EngineInput` of `quads_of`. With `copy`, the arrays of `source`
     are copied out, so that the run does not depend on `source` living as
@@ -1038,7 +1038,8 @@ def engine_input(
     `stretch`, if given, the three factors the positions are multiplied by
     (see `stretch_of`), which copies them, and the curves with them.
     `asked` is what more the engine is to give, for an add-on that includes
-    this one (see `extend`)."""
+    this one (see `extend`). `poles` are the poles placed by hand, as
+    `poles.placed` gives them."""
     import numpy
 
     source.calc_loop_triangles()
@@ -1075,7 +1076,7 @@ def engine_input(
     given.counts = (vertices, triangles, corners)
     given.addresses, given.kept, given.groups = addresses, kept, groups
     given.preset, given.settings, given.density, given.curves = preset, settings, density, list(curves)
-    given.curve_marks = list(curve_marks)
+    given.curve_marks, given.poles = list(curve_marks), list(poles)
     given.sharp_edges, given.creases, given.asked = sharp_edges, creases, dict(asked or {})
     given.edges = marked_sharp(source) if sharp else None
     given.stretch = stretch
@@ -1095,7 +1096,7 @@ def engine_run(given, on_stage=None):
         given.addresses[0], vertices, given.addresses[1], triangles, given.addresses[2], corners, given.preset,
         given.settings, given.density, on_stage, hard_edges=given.sharp_edges, creases=given.creases,
         curves=given.curves, groups=given.groups, edges=given.edges, curve_edges=bool(given.curve_marks),
-        **given.asked,
+        poles=given.poles, **given.asked,
     )
 
 
@@ -1467,7 +1468,7 @@ class Remeshing:
                 source, BASE_PRESET, engine_settings, density, settings.export_materials, copy,
                 sharp=settings.use_marked_sharp, stretch=stretch_of(original), curves=self.curves, curve_marks=marks,
                 sharp_edges=settings.export_sharp_edges, creases=settings.export_creases,
-                asked=extend.asked(original),
+                asked=extend.asked(original), poles=poles.placed(original.data, stretch_of(original)),
             )
         except (engine.EngineError, ValueError) as error:
             evaluated.to_mesh_clear()
@@ -1514,6 +1515,12 @@ class Remeshing:
         """Makes the object of what the engine `made` from `original`, next
         to it and the active one, and says how it went. Returns it."""
         mesh, report = mesh_of(made, given)
+        # The poles of the project: the touched ones kept, the free ones
+        # those of this result. Triangles have none to keep.
+        report["poles_placed"] = len(given.poles)
+        report["poles_answered"] = 0
+        if original.openclare.output != "TRIANGLES":
+            report["poles_answered"] = poles.refresh(original.data, made, given.stretch)
         # For the extensions, once the result is in place (`extended`).
         self.made_from, self.engine_made = original, made
         settings = original.openclare
@@ -1575,6 +1582,9 @@ class Remeshing:
         short = falls_short(report)
         if short:
             said += f"; {short}"
+        placed, answered = int(report["poles_placed"]), int(report["poles_answered"])
+        if placed:
+            said += f"; {answered} of the {placed} poles placed by hand"
         crossing = int(report.get("crossing_faces", 0))
         if crossing:
             said += f"; {crossing} triangles cut through another one: mend them before printing"
@@ -2283,6 +2293,32 @@ class OPENCLARE_PT_curves(DataPanel, bpy.types.Panel):
             row.operator(OPENCLARE_OT_curves_select.bl_idname, text=text).select = select
 
 
+class OPENCLARE_PT_poles(DataPanel, bpy.types.Panel):
+    """The poles of the retopo project: those of the last result, and those
+    touched by hand, which the next remesh keeps"""
+
+    bl_label = "Poles"
+    bl_idname = "OPENCLARE_PT_poles"
+    bl_parent_id = "OPENCLARE_PT_panel"
+    bl_options = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(cls, context):
+        return is_source(context)
+
+    def draw(self, context):
+        layout = self.layout
+        project = object_to_remesh(context).data.openclare_poles
+        if not project.items:
+            layout.label(text="Remesh once: the poles of the result are kept here", icon="INFO")
+            return
+        layout.label(text=poles.summary(project))
+        layout.prop(project, "show")
+        row = layout.row(align=True)
+        row.operator(poles.OPENCLARE_OT_poles_free.bl_idname)
+        row.operator(poles.OPENCLARE_OT_poles_clear.bl_idname)
+
+
 class OPENCLARE_PT_curve(DataPanel, bpy.types.Panel):
     """For a curve drawn on a mesh: which mesh, and the marks of the edges
     of its result along the curve"""
@@ -2332,6 +2368,7 @@ CLASSES = (
     OPENCLARE_PT_panel,
     OPENCLARE_PT_shape,
     OPENCLARE_PT_curves,
+    OPENCLARE_PT_poles,
     OPENCLARE_PT_curve,
 )
 
@@ -2348,6 +2385,7 @@ def register():
         bpy.utils.register_class(cls)
     preview.register()
     draw.register()
+    poles.register()
     bpy.types.Object.openclare = bpy.props.PointerProperty(type=OpenclareSettings)
     bpy.types.Object.openclare_curve = bpy.props.PointerProperty(type=OpenclareCurveSettings)
     # Where files of 0.1 kept the settings: read once, then given to objects.
@@ -2377,6 +2415,7 @@ def unregister():
         RUNNING.stop.set()
     preview.unregister()
     draw.unregister()
+    poles.unregister()
     bpy.utils.unregister_preset_path(ADDON_FOLDER)
     for handlers, handler in HANDLERS:
         if handler in handlers:

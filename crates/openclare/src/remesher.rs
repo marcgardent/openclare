@@ -142,7 +142,7 @@ fn poles_of(mesh: &PolyMesh, input: &TriMesh, placed: &[ImposedPole], reach: f64
             Some(Pole {
                 triangle: hit.triangle,
                 barycentric: barycentric_of(input.corners(hit.triangle as usize), hit.point),
-                position,
+                position: hit.point,
                 valence: valence[v],
                 imposed,
             })

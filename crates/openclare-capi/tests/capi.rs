@@ -780,14 +780,21 @@ fn poles_placed_come_back_where_they_were_placed() {
         assert!(text(openclare_result_report(result)).contains("poles_imposed = 8\n"));
         let count = openclare_result_pole_count(result);
         assert_eq!(count, 8);
-        let (mut found, mut weights) = (vec![0u32; count], vec![0f32; 3 * count]);
+        let (mut found, mut weights, mut points) = (vec![0u32; count], vec![0f32; 3 * count], vec![0f32; 3 * count]);
         let (mut valence, mut imposed) = (vec![0u8; count], vec![0i32; count]);
         openclare_result_copy_poles(
             result,
             found.as_mut_ptr(),
             weights.as_mut_ptr(),
+            points.as_mut_ptr(),
             valence.as_mut_ptr(),
             imposed.as_mut_ptr(),
+        );
+        // On the ball: its triangles are flat, a little inside the sphere.
+        assert!(
+            points
+                .chunks_exact(3)
+                .all(|p| (Vec3::new(p[0] as f64, p[1] as f64, p[2] as f64).length() - 1.0).abs() < 0.01)
         );
         assert!(found.iter().all(|&t| (t as usize) < triangles.len() / 3));
         assert!(weights.chunks_exact(3).all(|w| (w.iter().sum::<f32>() - 1.0).abs() < 1e-4));

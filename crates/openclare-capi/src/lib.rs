@@ -788,20 +788,23 @@ pub unsafe extern "C" fn openclare_result_pole_count(result: *const OpenclareRes
 }
 
 /// Writes the irregular vertices of the mesh away from its borders: where
-/// each lies on the input, as a triangle of it into `triangles` and three
-/// barycentric coordinates into `barycentric`; its valence into `valences`;
-/// and into `imposed` the index of the pole given to [`openclare_remesh`]
-/// it answers, or -1 for one placed freely. Any may be null.
+/// each lies on the input, as a triangle of it into `triangles`, three
+/// barycentric coordinates into `barycentric` and the point, x y z, into
+/// `points`; its valence into `valences`; and into `imposed` the index of
+/// the pole given to [`openclare_remesh`] it answers, or -1 for one placed
+/// freely. Any may be null.
 ///
 /// # Safety
 ///
-/// See [`openclare_result_ok`]; `barycentric` must have room for three times
-/// [`openclare_result_pole_count`] numbers, the others for as many.
+/// See [`openclare_result_ok`]; `barycentric` and `points` must have room
+/// for three times [`openclare_result_pole_count`] numbers, the others for
+/// as many.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn openclare_result_copy_poles(
     result: *const OpenclareResult,
     triangles: *mut u32,
     barycentric: *mut f32,
+    points: *mut f32,
     valences: *mut u8,
     imposed: *mut i32,
 ) {
@@ -821,6 +824,12 @@ pub unsafe extern "C" fn openclare_result_copy_poles(
                 for (value, &weight) in slot.iter_mut().zip(&pole.barycentric) {
                     *value = weight as f32;
                 }
+            }
+        }
+        if !points.is_null() {
+            let out = std::slice::from_raw_parts_mut(points, 3 * count);
+            for (slot, pole) in out.chunks_exact_mut(3).zip(&result.poles) {
+                slot.copy_from_slice(&[pole.position.x as f32, pole.position.y as f32, pole.position.z as f32]);
             }
         }
         if !valences.is_null() {
