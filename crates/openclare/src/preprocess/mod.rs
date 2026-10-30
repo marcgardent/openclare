@@ -51,6 +51,10 @@ pub struct WorkMesh {
     /// than [`Request::edge_angle`]: the edges of the output along them come
     /// out as hard edges too, as the creases they are where they are kept.
     pub shape_guide_edges: Vec<[u32; 2]>,
+    /// Vertices the field is to have a singularity at, each with its index
+    /// in quarter turns: +1 where a valence-3 vertex is wanted, -1 for a
+    /// valence 5. Poles placed by the user, not found by the solvers.
+    pub imposed: Vec<(u32, i8)>,
     /// Principal curvatures per vertex, read at [`Request::curvature_scale`].
     pub curvature: Curvature,
     /// How much the principal directions can be trusted, per vertex: 0 where
@@ -665,6 +669,7 @@ fn work_mesh(mesh: TriMesh, feature_edges: Vec<[u32; 2]>, request: &Request) -> 
         guide_edges: Vec::new(),
         sharp_guide_edges: Vec::new(),
         guide_edge_curves: Vec::new(),
+        imposed: Vec::new(),
         shape_guide_edges: Vec::new(),
         curvature,
         confidence,

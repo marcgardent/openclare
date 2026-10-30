@@ -113,6 +113,21 @@ curves, and a line saying `closed` for one that joins its first point.
 
 ![The ogre with and without guide curves](docs/images/guide_curves.png)
 
+## Poles placed by hand
+
+`--poles poles.txt` places poles: one per line as `x y z valence`, the valence 3 or 5. The quad
+mesh has a vertex of that valence on the surface where each is (within a quad), and places the
+other poles the shape needs freely: it adds, removes or moves those to balance the ones placed.
+`--poles-out <file>` writes the poles of the result in the same form, so that the poles of one
+run can be placed on another, at another number of quads, say.
+
+```bash
+./target/release/openclare remesh blob.obj blob-8000.obj --quads 8000 --poles-out poles.txt
+./target/release/openclare remesh blob.obj blob-1000.obj --quads 1000 --poles poles.txt
+```
+
+With `--symmetry`, only the poles on the positive side count: that half is mirrored.
+
 ## Symmetry
 
 `--symmetry x` (or `y`, `z`; `symmetry = x` in a saved configuration) says that the plane through

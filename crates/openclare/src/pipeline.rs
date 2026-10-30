@@ -63,6 +63,18 @@ impl Default for Params {
     }
 }
 
+/// An irregular vertex of the output: where it lies on the input, as a
+/// triangle and the barycentric coordinates of the point on it, where it is,
+/// its valence, and the pole the user placed that it answers, if any.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Pole {
+    pub triangle: u32,
+    pub barycentric: [f64; 3],
+    pub position: crate::math::Vec3,
+    pub valence: u8,
+    pub imposed: Option<u32>,
+}
+
 /// What happened during a [`remesh`] call.
 #[derive(Clone, Debug, Default)]
 pub struct Report {
@@ -127,6 +139,12 @@ pub struct Report {
     /// with the index of that curve among those given: what a host marks
     /// as the curve says (sharp, crease, seam).
     pub curve_edges: Vec<([u32; 2], u32)>,
+    /// How many of the poles the user placed were laid on the surface: a
+    /// pole away from it, on its border or on the vertex of another is not.
+    pub poles_imposed: usize,
+    /// Every irregular vertex of the output away from its borders, where it
+    /// lies on the input and its valence: the poles a host shows.
+    pub poles: Vec<Pole>,
     /// Faces of the output that cut through another one of it, counted by
     /// the chains that make triangles: what a printer cannot make sense of.
     pub crossing_faces: usize,
@@ -177,6 +195,7 @@ impl Report {
         self.sharp_curve_edges.extend(piece.sharp_curve_edges);
         self.curve_edges.extend(piece.curve_edges);
         self.crossing_faces += piece.crossing_faces;
+        self.poles_imposed += piece.poles_imposed;
         self.guide_gaps += piece.guide_gaps;
         self.guides_let_go += piece.guides_let_go;
         // Sizes asked for: the same for every piece unless one had to make

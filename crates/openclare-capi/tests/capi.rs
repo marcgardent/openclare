@@ -49,6 +49,9 @@ fn a_mesh_goes_in_as_arrays_and_quads_come_out() {
             null(),
             null(),
             0,
+            null(),
+            null(),
+            0,
             c"organic".as_ptr(),
             settings.as_ptr(),
             None,
@@ -105,6 +108,9 @@ fn triangles_may_be_given_by_their_corners_as_blender_keeps_them() {
             null(),
             0,
             null(),
+            null(),
+            0,
+            null(),
             c"quads = 300".as_ptr(),
             None,
             null_mut(),
@@ -121,6 +127,9 @@ fn triangles_may_be_given_by_their_corners_as_blender_keeps_them() {
             null(),
             0,
             null(),
+            null(),
+            null(),
+            0,
             null(),
             null(),
             0,
@@ -152,6 +161,9 @@ fn what_goes_wrong_is_said_not_thrown() {
             null(),
             0,
             null(),
+            null(),
+            null(),
+            0,
             null(),
             null(),
             0,
@@ -213,6 +225,9 @@ fn a_host_follows_the_stages_and_can_stop_the_run() {
             null(),
             0,
             null(),
+            null(),
+            0,
+            null(),
             c"quads = 300".as_ptr(),
             Some(note),
             (stages as *mut Vec<String>).cast(),
@@ -251,6 +266,9 @@ fn a_result_carries_its_texture_coordinates_and_its_hard_edges() {
             null(),
             0,
             null(),
+            null(),
+            null(),
+            0,
             null(),
             null(),
             0,
@@ -323,6 +341,9 @@ fn guide_curves_go_in_as_flat_arrays() {
             closed.as_ptr(),
             2,
             null(),
+            null(),
+            0,
+            null(),
             c"quads = 600".as_ptr(),
             None,
             null_mut(),
@@ -360,6 +381,9 @@ fn guide_curves_go_in_as_flat_arrays() {
             sizes.as_ptr(),
             flags.as_ptr(),
             2,
+            null(),
+            null(),
+            0,
             null(),
             c"quads = 600".as_ptr(),
             None,
@@ -660,6 +684,9 @@ fn edges_given_are_followed_and_kept_hard_whatever_their_angle() {
             null(),
             null(),
             0,
+            null(),
+            null(),
+            0,
             c"organic".as_ptr(),
             settings.as_ptr(),
             None,
@@ -699,6 +726,9 @@ fn edges_given_are_followed_and_kept_hard_whatever_their_angle() {
             null(),
             null(),
             0,
+            null(),
+            null(),
+            0,
             c"organic".as_ptr(),
             settings.as_ptr(),
             None,
@@ -706,6 +736,93 @@ fn edges_given_are_followed_and_kept_hard_whatever_their_angle() {
         );
         assert_eq!(openclare_result_ok(result), 0);
         assert!(text(openclare_result_error(result)).contains("is not an edge"));
+        openclare_result_free(result);
+    }
+}
+
+#[test]
+fn poles_placed_come_back_where_they_were_placed() {
+    let (positions, triangles) = ball();
+    let settings = CString::new("quads = 1500\n").unwrap();
+    // The corners of a cube turned a little: not where the poles go unasked.
+    let poles: Vec<f32> = (0..8)
+        .flat_map(|k| {
+            let p = Vec3::new([-1.0, 1.0][k & 1], [-1.0, 1.0][(k >> 1) & 1], [-1.0, 1.0][k >> 2]).normalize();
+            [(p.x * 0.8 - p.y * 0.6) as f32, (p.x * 0.6 + p.y * 0.8) as f32, p.z as f32]
+        })
+        .collect();
+    let valences = [3u8; 8];
+    unsafe {
+        let result = openclare_remesh(
+            positions.as_ptr(),
+            positions.len() / 3,
+            triangles.as_ptr(),
+            triangles.len() / 3,
+            null(),
+            0,
+            null(),
+            null(),
+            null(),
+            0,
+            null(),
+            null(),
+            null(),
+            0,
+            poles.as_ptr(),
+            valences.as_ptr(),
+            8,
+            c"organic".as_ptr(),
+            settings.as_ptr(),
+            None,
+            null_mut(),
+        );
+        assert_eq!(openclare_result_ok(result), 1, "{}", text(openclare_result_error(result)));
+        assert!(text(openclare_result_report(result)).contains("poles_imposed = 8\n"));
+        let count = openclare_result_pole_count(result);
+        assert_eq!(count, 8);
+        let (mut found, mut weights) = (vec![0u32; count], vec![0f32; 3 * count]);
+        let (mut valence, mut imposed) = (vec![0u8; count], vec![0i32; count]);
+        openclare_result_copy_poles(
+            result,
+            found.as_mut_ptr(),
+            weights.as_mut_ptr(),
+            valence.as_mut_ptr(),
+            imposed.as_mut_ptr(),
+        );
+        assert!(found.iter().all(|&t| (t as usize) < triangles.len() / 3));
+        assert!(weights.chunks_exact(3).all(|w| (w.iter().sum::<f32>() - 1.0).abs() < 1e-4));
+        assert_eq!(valence, vec![3; 8]);
+        imposed.sort();
+        assert_eq!(imposed, (0..8).collect::<Vec<i32>>());
+        openclare_result_free(result);
+
+        // A valence the engine cannot make is refused.
+        let wrong = [4u8; 8];
+        let result = openclare_remesh(
+            positions.as_ptr(),
+            positions.len() / 3,
+            triangles.as_ptr(),
+            triangles.len() / 3,
+            null(),
+            0,
+            null(),
+            null(),
+            null(),
+            0,
+            null(),
+            null(),
+            null(),
+            0,
+            poles.as_ptr(),
+            wrong.as_ptr(),
+            8,
+            c"organic".as_ptr(),
+            settings.as_ptr(),
+            None,
+            null_mut(),
+        );
+        assert_eq!(openclare_result_ok(result), 0);
+        assert!(text(openclare_result_error(result)).contains("valence 4"));
         openclare_result_free(result);
     }
 }

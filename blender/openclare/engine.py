@@ -77,6 +77,7 @@ def library():
         pointer, size, pointer, size, pointer, size, pointer, pointer,
         pointer, size,
         pointer, pointer, pointer, size,
+        pointer, pointer, size,
         text, text, ON_STAGE, pointer,
     ]
     lib.openclare_result_ok.restype = ctypes.c_int32
@@ -270,6 +271,7 @@ def remesh(
         None if groups is None else groups.ctypes.data,
         None if edges is None else edges.ctypes.data, 0 if edges is None else len(edges) // 2,
         *curve_arguments,
+        None, None, 0,
         preset.encode(), lines.encode(), callback, None,
     )
     try:

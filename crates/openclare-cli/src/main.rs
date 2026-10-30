@@ -51,6 +51,9 @@ OPTIONS (remesh):
     --curves <FILE>              guide curves, lines for the quad mesh to have edges along: one point per line
                                  as x y z; a blank line starts another curve; a line saying closed closes one,
                                  a line saying sharp makes the edges along one hard edges of the result
+    --poles <FILE>               poles placed by hand: one per line as x y z valence (3 or 5); the quad mesh has
+                                 a vertex of that valence there and places the others it needs freely
+    --poles-out <FILE>           writes the poles of the result, in the form --poles reads
     --groups <FILE>              a group for each input triangle (its material, say), one whole number per line:
                                  the quad mesh has a line of edges where two groups meet, and the group of each
                                  of its faces is written next to it, as <output>.groups
@@ -247,6 +250,26 @@ fn read_curves(text: &str) -> Result<Vec<openclare::GuideCurve>, String> {
     Ok(curves)
 }
 
+/// Poles from text: one per line as `x y z valence`, the valence 3 or 5.
+fn read_poles(text: &str) -> Result<Vec<openclare::ImposedPole>, String> {
+    let lines = text.lines().map(str::trim).enumerate().filter(|(_, line)| !line.is_empty() && !line.starts_with('#'));
+    lines
+        .map(|(number, line)| {
+            let numbers: Vec<f64> = line
+                .split_whitespace()
+                .map(str::parse)
+                .collect::<Result<_, _>>()
+                .map_err(|_| format!("line {}: '{line}' is not a pole", number + 1))?;
+            match numbers[..] {
+                [x, y, z, valence] if valence == 3.0 || valence == 5.0 => {
+                    Ok(openclare::ImposedPole { position: openclare::math::Vec3::new(x, y, z), valence: valence as u8 })
+                }
+                _ => Err(format!("line {}: a pole is x y z and a valence of 3 or 5", number + 1)),
+            }
+        })
+        .collect()
+}
+
 /// The recorder that prints what the stages remark on, and keeps nothing
 /// else: why a piece went to the other chain, what the map folded on.
 struct Notes;
@@ -342,6 +365,8 @@ fn remesh(args: &[String]) -> Result<(), String> {
     let mut record_still = None::<String>;
     let mut curves_path = None::<String>;
     let mut groups_path = None::<String>;
+    let mut poles_path = None::<String>;
+    let mut poles_out = None::<String>;
     let mut paths = Vec::new();
     let mut args = args.iter();
     while let Some(arg) = args.next() {
@@ -377,6 +402,8 @@ fn remesh(args: &[String]) -> Result<(), String> {
             "--density" => density_path = Some(value(arg)?.clone()),
             "--curves" => curves_path = Some(value(arg)?.clone()),
             "--groups" => groups_path = Some(value(arg)?.clone()),
+            "--poles" => poles_path = Some(value(arg)?.clone()),
+            "--poles-out" => poles_out = Some(value(arg)?.clone()),
             "--density-contrast" => config.density_contrast = parse(arg, value(arg)?)?,
             "--skip-pieces-under" => config.skip_pieces_under = parse(arg, value(arg)?)?,
             "--no-close-loops" => config.close_loops = false,
@@ -463,8 +490,23 @@ fn remesh(args: &[String]) -> Result<(), String> {
         }
         None => None,
     };
-    let guides =
-        Guides { density: density.as_deref(), curves: &curves, groups: groups.as_deref(), lines: &[], held: &[] };
+    let poles = match &poles_path {
+        Some(path) => {
+            let text = std::fs::read_to_string(path).map_err(|e| format!("{path}: {e}"))?;
+            let poles = read_poles(&text).map_err(|e| format!("{path}: {e}"))?;
+            println!("poles    {} placed", poles.len());
+            poles
+        }
+        None => Vec::new(),
+    };
+    let guides = Guides {
+        density: density.as_deref(),
+        curves: &curves,
+        groups: groups.as_deref(),
+        lines: &[],
+        held: &[],
+        poles: &poles,
+    };
     let start = std::time::Instant::now();
     let (result, report) = match &record_path {
         Some(path) => remesh_recorded(path, record_still.as_deref(), &config, &mesh, &guides)?,
@@ -539,6 +581,25 @@ fn remesh(args: &[String]) -> Result<(), String> {
         if report.guides_let_go > 0 {
             println!("         could not be kept as lines of edges on {} piece(s)", report.guides_let_go);
         }
+    }
+    if !poles.is_empty() {
+        let answered = report.poles.iter().filter(|pole| pole.imposed.is_some()).count();
+        println!(
+            "poles    {} of {} placed laid on the surface; {} poles in all, {} answering a placed one",
+            report.poles_imposed,
+            poles.len(),
+            report.poles.len(),
+            answered
+        );
+    }
+    if let Some(path) = &poles_out {
+        let lines: String = report
+            .poles
+            .iter()
+            .map(|pole| format!("{} {} {} {}\n", pole.position.x, pole.position.y, pole.position.z, pole.valence))
+            .collect();
+        std::fs::write(path, lines).map_err(|e| format!("{path}: {e}"))?;
+        println!("         written: {path}, {} poles", report.poles.len());
     }
     if report.quads_wanted > 0.0 {
         println!(
