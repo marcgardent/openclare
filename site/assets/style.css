@@ -962,16 +962,37 @@ div.card:hover { border-color: var(--rule); }
 
 /* ------------------------------------------------------------ research */
 
-.paper {
+/* The method: a card per step, the practice of software engineering it comes from at the bottom. */
+.method-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(440px, 100%), 1fr));
-  margin: 0 0 32px;
-  background: var(--surface);
-  border: 1px solid var(--rule);
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+  gap: 16px;
+  margin: 1.5rem 0 2.5rem;
 }
+.rule {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px 18px;
+  border: 1px solid var(--rule);
+  border-top: 4px solid var(--teal);
+  background: var(--surface);
+}
+.prose .rule > * { max-width: none; margin: 0; }
+.rule .rule-step { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--teal-text); }
+.prose .rule h3 { font-size: 17px; }
+.rule p { font-size: 15px; line-height: 1.5; }
+.rule p b { margin-right: 4px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--slate); }
+.prose .rule .origin { margin-top: auto; padding-top: 8px; border-top: 1px dashed var(--rule); color: var(--slate); font-size: 14px; }
+
+/* A paper: its title, its progress, then its summary beside its figure. */
+.paper { margin: 0 0 32px; background: var(--surface); border: 1px solid var(--rule); }
+.paper-head { display: flex; flex-direction: column; gap: 12px; padding: clamp(24px, 4vw, 44px) clamp(24px, 4vw, 44px) 8px; }
+.prose .paper-head > * { max-width: none; margin: 0; }
+.prose .paper h3 { margin: 0; font-size: clamp(22px, 1.5vw + 14px, 28px); letter-spacing: -0.035em; }
+.paper-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(440px, 100%), 1fr)); border-top: 1px solid var(--rule); }
 .paper-text { display: flex; flex-direction: column; gap: 18px; padding: clamp(24px, 4vw, 44px); min-width: 0; }
 .paper-text > * { margin: 0 !important; }
-.prose .paper h2 { margin: 0; font-size: clamp(22px, 1.5vw + 14px, 28px); letter-spacing: -0.035em; }
 .paper figure {
   display: flex;
   flex-direction: column;
@@ -987,6 +1008,34 @@ div.card:hover { border-color: var(--rule); }
   .paper figure { border-left: 0; border-top: 1px solid var(--rule); }
 }
 .paper figcaption { margin: 0; font-family: var(--mono); font-size: 12px; }
+
+/* The progress of a paper (evidence.py): the share of its tasks done, and each step. */
+.progress { padding: 16px clamp(24px, 4vw, 44px) 24px; }
+.progress header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-bottom: 12px; }
+.prose .progress h4 { margin: 0; font-family: var(--mono); font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate); }
+.prose .progress .grade { display: flex; flex-direction: column; align-items: flex-end; margin: 0; font-family: var(--mono); font-size: 13px; color: var(--slate); }
+.progress .pct { font-size: clamp(40px, 4vw + 16px, 56px); font-weight: 700; line-height: 1; letter-spacing: -0.03em; color: var(--ink); }
+.prose ol.pipeline { display: flex; flex-wrap: wrap; max-width: none; margin: 0; padding: 0; list-style: none; }
+.pipeline li {
+  display: flex;
+  flex: 1 1 120px;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 110px;
+  margin: 0 -1px -1px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 13px;
+}
+.pipeline .n { font-size: 20px; font-weight: 700; }
+.pipeline .meter { height: 6px; background: linear-gradient(to right, var(--teal) var(--p), var(--rule) 0); }
+.pipeline li.full .meter { background: var(--ink); }
+.pipeline li.end { flex: 0 0 auto; justify-content: center; align-items: center; min-width: 100px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.pipeline li.draft { background: var(--hot); border-color: var(--hot); color: #fff; }
+.pipeline li.preprint { border-style: dashed; color: var(--slate); }
+.pipeline li.preprint.ready { background: var(--teal); border-style: solid; color: var(--ink); }
+.prose .progress .stamp { max-width: none; margin: 10px 0 0; font-family: var(--mono); font-size: 12px; color: var(--slate); }
 .tags { display: flex; flex-wrap: wrap; gap: 8px; }
 .tag {
   padding: 4px 9px;

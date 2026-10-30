@@ -128,6 +128,8 @@ WORDS = {
             ' (<a href="{repository}">GitHub</a>).</p>'
         ),
         "sitemap": "Site map",
+        "progress": "Progress", "tasks": "tasks", "draft": "Draft", "preprint": "Preprint",
+        "progress_stamp": "Counted by <code>evidence.py</code> on {date} UTC, commit {commit}.",
         "placeholder_theory": (
             "# Theory\n\nThis page, the theory of openclare in plain words, is being written. Meanwhile, the "
             "[glossary](../../docs/GLOSSARY.md) explains the words with pictures, and the "
@@ -171,6 +173,8 @@ WORDS = {
             ' (<a href="{repository}">GitHub</a>).</p>'
         ),
         "sitemap": "Plan du site",
+        "progress": "Avancement", "tasks": "tâches", "draft": "Brouillon", "preprint": "Prépublication",
+        "progress_stamp": "Compté par <code>evidence.py</code> le {date} UTC, commit {commit}.",
         "placeholder_theory": (
             "# Théorie\n\nCette page, la théorie d'openclare en mots simples, est en cours d'écriture. En attendant, "
             "le [glossaire](../../docs/GLOSSARY.fr.md) explique les mots en images, et la "
@@ -1149,7 +1153,44 @@ class Site:
             text, body, headings = self.content_page(key, language, kind, fallback and fallback[language])
             if kind == "theory":
                 body = theory_marks(body)
+            if key == "research":
+                body = self.progress(body, language)
             self.write(key, language, self.title_of(text), body, headings, kind, self.description_of(text), toc=kind == "theory")
+
+    def progress(self, body, language):
+        """Each <div class="progress" data-paper="…"> of the research page: the
+        paper's steps towards a preprint, from the progress.json that
+        evidence.py writes beside paper B's PDFs (not tracked: the papers
+        workflow makes it). A task is one statement at one step. Without the
+        file the blocks are left out, with a warning."""
+        path = ROOT / "docs/research/turns-of-a-t-mesh/progress.json"
+        pattern = r'<div class="progress" data-paper="([\w-]+)"></div>\n?'
+        if not path.exists():
+            if re.search(pattern, body):
+                self.warnings.append(f"no {path.relative_to(ROOT)}: the progress of the papers is left out")
+            return re.sub(pattern, "", body)
+        data = json.loads(read(path))
+        papers = {paper["id"]: paper for paper in data["papers"]}
+        words = WORDS[language]
+        stamp = words["progress_stamp"].format(date=data["generated"][:16].replace("T", " "), commit=data["commit"][:7])
+
+        def block(match):
+            paper = papers[match.group(1)]
+            done = sum(step["n"] for step in paper["steps"])
+            total = sum(step["m"] for step in paper["steps"])
+            items = [f'<li class="end draft">{words["draft"]}</li>']
+            for step in paper["steps"]:
+                share = round(100 * step["n"] / step["m"]) if step["m"] else 0
+                full = ' class="full"' if step["n"] == step["m"] else ""
+                items.append(f'<li{full}><span>{html.escape(step["name_" + language])}</span>'
+                             f'<span class="n">{step["n"]}/{step["m"]}</span><span class="meter" style="--p: {share}%"></span></li>')
+            ready = " ready" if paper["preprint"] else ""
+            items.append(f'<li class="end preprint{ready}">{words["preprint"]}</li>')
+            return (f'<div class="progress"><header><h4>{words["progress"]}</h4><p class="grade">'
+                    f'<span class="pct">{round(100 * done / total)} %</span><span>{done} / {total} {words["tasks"]}</span></p></header>'
+                    f'<ol class="pipeline">{"".join(items)}</ol><p class="stamp">{stamp}</p></div>\n')
+
+        return re.sub(pattern, block, body)
 
     @staticmethod
     def glossary_source(language):
