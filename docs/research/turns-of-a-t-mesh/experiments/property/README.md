@@ -62,7 +62,7 @@ the turns, their holonomy and the Fox–Burgers sum; and, from the definitions o
 vertices, one round of the walk from every station as a closed curve of the fine grid, and on
 every simple curve the regions it cuts with Lemma "Gauss–Bonnet for turns" on each; the
 2-colouring of the quad graph (the constants `κ` found by propagation, `IsColouring` decided; a
-sphere must be bipartite) and, where it holds, `Turn.length ≡ Turn.shift (mod 2)` for every
+sphere must be bipartite, which `SphereGrid.lean` proves, so the decision checks the program) and, where it holds, `Turn.length ≡ Turn.shift (mod 2)` for every
 turn with a half-integer station in its corridor (DT-173). The Python of `grid.py` is then a
 second, independent computation of the same objects. Both count the edges of the grid as
 classes of midpoints, not as pairs of vertices: `GridEuler.lean` found that two edges may join

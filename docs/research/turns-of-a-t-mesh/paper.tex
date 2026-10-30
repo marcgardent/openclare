@@ -567,7 +567,7 @@ The rule also holds on $13{,}000$ random configurations checked with SymPy.
 Each turn of a closed sphere carries its own parity condition, which needs
 neither a simple curve nor the holonomy.
 
-\begin{evidence}{core}{\lean{TMesh.parity_of_turn_of_colouring}, \lean{TMesh.parity_of_turn_tmesh_any_sign}, \lean{parity_of_turn}; tested: \lean{TMesh.IsColouring} decided on the 35 spheres of 50 random instances, 4{,}388 turns of the 42 bipartite instances; assumed: the quad graph bipartite at every positive whole balanced $\ell$ (a sphere), and a half-integer station in the corridor of the turn}
+\begin{evidence}{lean}{\lean{TMesh.parity_of_turn_sphere}, from \lean{TMesh.bipartite_of_sphere} (the quad graph of a connected T-mesh with $P - A + N = 2$ is bipartite, by \lean{QuadSurface.bipartite_of_euler} and \lean{TMesh.eulerQuad_eq_nodeCount}) and \lean{TMesh.parity_of_turn_of_colouring}; the sphere is $P - A + N = 2$ and connected, and the turn is followed by the walk at every positive balanced whole $\ell$; tested: \lean{TMesh.IsColouring} decided on the 35 spheres of 50 random instances, 4{,}388 turns}
 \begin{proposition}[Parity of a turn on a sphere]\label{prop:parity}
 Let the surface be closed of genus zero and the T-mesh admit lengths that are
 positive and balance every patch (its real lengths do). For every turn
@@ -601,7 +601,9 @@ of two even values.
 
 Lean checks it on the combinatorial T-mesh without a development: the vertex
 beside the station is followed round the walk, and the colouring $i + j +
-\kappa_P$ of the quad graph is the only hypothesis. The proof uses only that
+\kappa_P$ of the quad graph comes from $V - E + F = 2$ by linear algebra over
+$\Z/2$ on the chains of the quad mesh, the sphere being $P - A + N = 2$ for
+$P$ patches, $A$ arcs and $N$ nodes, connected. The proof uses only that
 the quad graph is bipartite; it fails in higher genus
 (a $3 \times 3$ grid on a torus has rings of three quads) and with borders
 (Theorem~\ref{thm:parity-any}). On a closed sphere it gives at once:
@@ -1848,14 +1850,13 @@ complexity of maximizing $Q$ over a polytope of lengths in reals.
 \section{What is machine-checked}\label{sec:lean}
 
 The folder \texttt{lean} beside this note is a Lean~4~\cite{demoura2021lean4}
-project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $384$
+project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $480$
 theorem declarations, many of them small lemmas, depend only on Lean's
 standard axioms; the count is not evidence, and its \texttt{README.md} maps
 each statement to its Lean theorems. Lean checks the algebraic and
 combinatorial core of each statement, with the topological facts it uses
 (that a loop develops into a given motion, that a curve bounds a disc, that
-the loops $\lambda_i$ present the fundamental group, that the quad graph of a
-sphere is bipartite) as explicit hypotheses. The files share the motions and
+the loops $\lambda_i$ present the fundamental group) as explicit hypotheses. The files share the motions and
 the quarter-turn group (\texttt{Basic.lean}). One of them,
 \texttt{TMesh.lean}, defines a combinatorial T-mesh: patches with two pairs of
 opposite sides, each side the list of its arcs, every arc on exactly two sides
@@ -1885,11 +1886,12 @@ conjugation step of Proposition~\ref{prop:winding}. Over the reals: the four
 orders and orientations of a dislocation and straight chains
 (Proposition~\ref{prop:dislocation}(i), (ii)); staircases; the positivity of
 a non-negative form with a held arc. At whole lengths: the checkerboard rule;
-Proposition~\ref{prop:parity} on the T-mesh, for whole balanced lengths of any
-sign, given that the quad graph is bipartite at positive lengths and that a
-station follows the turn there; the Euler characteristic of the quad mesh at
-whole lengths, $P - A + N$ for $P$ patches, $A$ arcs and $N$ nodes, independent
-of the lengths; the second proof of Remark~\ref{rem:borders}. The
+Proposition~\ref{prop:parity} on the T-mesh, complete: the quad graph of a
+connected T-mesh with $P - A + N = 2$ is bipartite, by linear algebra over
+$\Z/2$ on the chains of its quad mesh, given only that a station follows the
+turn at every positive balanced $\ell$; the Euler characteristic of the quad
+mesh at whole lengths, $P - A + N$ for $P$ patches, $A$ arcs and $N$ nodes,
+independent of the lengths; the second proof of Remark~\ref{rem:borders}. The
 Fox--Burgers formula on the free group with the twisted windings and the
 insertion of the relation, the case of a simple turn,
 Proposition~\ref{prop:commutator} and Corollary~\ref{cor:checker}.

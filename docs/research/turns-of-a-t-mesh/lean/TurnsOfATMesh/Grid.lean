@@ -15,8 +15,9 @@ characteristics from these lists, and checks the statements of the note on
 them. Theorems on these definitions: `GridEuler.lean` (the Euler
 characteristic of the grid is `P − A + N`, independent of the lengths) and
 `Bipartite.lean` (the parity of a turn from a colouring of the quad graph).
-That a sphere's quad graph is bipartite is still a hypothesis, decided by the
-program on every export.
+That a sphere's quad graph is bipartite is `SphereGrid.lean`, through
+`Coarse.lean`, `CoarseEuler.lean`, `CoarseSurface.lean` and
+`SphereBipartite.lean`; the program still decides it on every export.
 
 Coordinates: in the frame `(u, v)` of a rectangle of width `w` (the length of
 its side `(P, 0, 0)`) and height `h` (of `(P, 1, 0)`), the fine point `(x, y)`
