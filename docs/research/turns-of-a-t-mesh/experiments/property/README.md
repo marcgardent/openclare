@@ -79,6 +79,11 @@ half-integer stations walked. On the spheres the Fox–Burgers formula held on e
 the recursion of the words found its convention (`G_f` the jump towards the root, children
 reversed, rotation first) on all 35.
 
+The development of every turn in the plane (`Holonomy.lean`, DT-134; 2026-10-30): on all
+4,898 turns it is the translation by −α e₁ + shift e₂ (the theorem `Turn.development_eq`,
+evaluated), and on the 3,865 turns of the 34 spheres with words the holonomy `Fox.hol` of the
+word of `develop.py` is its inverse turned by the chart: two independent computations agree.
+
 On the quad meshes at the whole lengths (DT-134, DT-173; 2026-10-30, the compiled program): χ = 2
 on the 35 spheres and 0 on the 15 tori, equal to the Euler characteristic of the mesh the
 instances were made from; all 35 spheres bipartite and 7 of the 15 tori; on the 42 bipartite

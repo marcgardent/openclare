@@ -226,7 +226,7 @@ Crossing from patch $P$ to patch $Q$ across an arc composes a quarter-turn
 rotation of the local frame with a translation whose components are signed
 sums of arc lengths along the rims of $P$ and $Q$.
 
-\begin{evidence}{core}{\lean{TMesh.Turn.shift_linear}, \lean{TMesh.Turn.mem_corridor_iff}, \lean{TMesh.Turn.comes_back}, \lean{TMesh.Turn.winds}; assumed: an oriented gluing; only the offset across the walk is followed; the corridor without half-integers is not formalized}
+\begin{evidence}{core}{\lean{TMesh.Turn.shift_linear}, \lean{TMesh.Turn.mem_corridor_iff}, \lean{TMesh.Turn.comes_back}, \lean{TMesh.Turn.winds}, \lean{TMesh.Turn.development_eq} (in the plane, $T_\gamma(\ell) = -\alpha_\gamma(\ell) e_1 + \shift_\gamma(\ell) e_2$ at whole lengths); tested: the development against the holonomy of the word of the turn on 3{,}865 turns of 34 spheres; assumed: an oriented gluing; the corridor without half-integers is not formalized}
 \begin{proposition}[The shift of a turn is linear]\label{prop:linear}
 For a turn $\gamma$ there are integer coefficients $c_a$, independent of the
 lengths, such that after a full turn a point of the first side has moved
@@ -378,7 +378,7 @@ check of the four directions): each lobe sees a second convex corner and holds
 $2$, and the third region the rest of the total $8$.
 \end{proof}
 
-\begin{evidence}{core}{\lean{Motion.burgers_eq_sum}, \lean{Motion.composeAll_rotations}, \lean{Forest.glue_eq_preorder}, \lean{Motion.annulus_holonomy}; tested: (c) on 898 annuli without cone point of 50 random instances; assumed: the holonomy of the curve is the composition of the rotations round the cone points}
+\begin{evidence}{core}{\lean{Motion.burgers_eq_sum}, \lean{Motion.composeAll_rotations}, \lean{Forest.glue_eq_preorder}, \lean{Motion.annulus_holonomy}; tested: (c) on 898 annuli without cone point of 50 random instances, and the holonomy of the word of a turn against the inverse of its development \lean{TMesh.Turn.development} on 3{,}865 turns of 34 spheres; assumed: the holonomy of the curve is the composition of the rotations round the cone points}
 \begin{proposition}[The shift is set by the singularities]\label{prop:burgers}
 Let $\gamma$, $\gamma_1$, $\gamma_2$ be turns with simple curves.
 \begin{enumerate}
@@ -1850,7 +1850,7 @@ complexity of maximizing $Q$ over a polytope of lengths in reals.
 \section{What is machine-checked}\label{sec:lean}
 
 The folder \texttt{lean} beside this note is a Lean~4~\cite{demoura2021lean4}
-project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $480$
+project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $503$
 theorem declarations, many of them small lemmas, depend only on Lean's
 standard axioms; the count is not evidence, and its \texttt{README.md} maps
 each statement to its Lean theorems. Lean checks the algebraic and
@@ -1867,16 +1867,22 @@ Remark~\ref{rem:definite}, Theorem~\ref{thm:forced} and, through the quad
 mesh it defines at whole lengths, Proposition~\ref{prop:parity} form one
 checked chain. The other statements keep their own abstraction (a turn as a list of
 motions, a region as finite sets with counts); the surface and the cross field
-behind the T-mesh, its orientation and the link between the shift and the
-holonomy $\hat h$ are not formalized.
+behind the T-mesh and its orientation are not formalized. The development of
+a turn in the plane is (\texttt{Holonomy.lean}): the changes of chart across
+the arcs compose to $T_\gamma(\ell) = -\alpha_\gamma(\ell) e_1 +
+\shift_\gamma(\ell) e_2$ at whole lengths; that it is the inverse of the
+holonomy $\hat h(\bar\gamma)$ of the flat metric, and that this holonomy is
+the product of the rotations round the cone points, are not.
 
 \ifdefined\plain
 \emph{Checked}, statement by statement. On the T-mesh, with the frames of
 the patches those of one orientation of the surface:
 Proposition~\ref{prop:linear} for the offset across the walk, that is the
 integer coefficients of $\shift_\gamma$, independent of $\ell$, the corridor
-cut out by linear inequalities in the offset and $\ell$, and the walk coming
-back at $o + \shift_\gamma(\ell)$ and winding as a helix; that this walk from
+cut out by linear inequalities in the offset and $\ell$, the walk coming
+back at $o + \shift_\gamma(\ell)$ and winding as a helix, and, in the plane
+at whole lengths, the development of the turn equal to the translation by
+$-\alpha_\gamma(\ell) e_1 + \shift_\gamma(\ell) e_2$; that this walk from
 a half-integer is a dual line of the quad mesh is the completeness proposition
 below, in its own model. For motions with linear parts in any
 ring: the Burgers sum, and that the recursion of the gluing maps of a tree of
