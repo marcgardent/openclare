@@ -350,6 +350,190 @@ theorem quad_two_slots {patches : List Patch} {allArcs : List α} (hP : ∀ P, P
     · exact Relation.EqvGen.refl _
     · rw [hm]; exact T.same_symm _ _ (same_partner hA i hs)
 
+/-! ### Connectivity -/
+
+theorem isCoarse_arcPoint (ℓ : α → ℕ) (a : α) (i : Fin 2) {s : ℕ} (hs : s % 2 = 0) :
+    (T.arcPoint ℓ a i s).IsCoarse := by
+  unfold arcPoint
+  obtain ⟨P, j, k⟩ := T.ends a i
+  fin_cases j <;> fin_cases k <;> simp [sidePoint, Point.IsCoarse] <;> omega
+
+theorem centreEdge_patch (c : Point Patch) (k : Fin 4) : (centreEdge c k).patch = c.patch := by
+  fin_cases k <;> rfl
+
+variable (T) in
+/-- The vertex at the corner `(0, 0)` of a patch. -/
+def quadBase {patches : List Patch} (hP : ∀ P, P ∈ patches) (allArcs : List α) (ℓ : α → ℕ)
+    (P : Patch) : T.QuadV patches allArcs ℓ :=
+  QuadV.mk T ⟨P, 0, 0⟩ ⟨(mem_points hP).mpr ⟨Nat.zero_le _, Nat.zero_le _⟩, rfl, rfl⟩
+
+variable (T) in
+/-- The face at the corner `(0, 0)` of a patch. -/
+def quadFaceBase {patches : List Patch} (hP : ∀ P, P ∈ patches) {ℓ : α → ℕ}
+    (hwh : ∀ P, 0 < T.width ℓ P ∧ 0 < T.height ℓ P) (P : Patch) : T.QuadF patches ℓ :=
+  ⟨⟨P, 1, 1⟩, (mem_points hP).mpr (by unfold InGrid; have := hwh P; dsimp only; omega), rfl, rfl⟩
+
+section Connected
+
+variable {patches : List Patch} {allArcs : List α} (hP : ∀ P, P ∈ patches)
+  (hA : ∀ a, a ∈ allArcs) {ℓ : α → ℕ} (hne : ∀ σ, T.arcs σ ≠ []) (hbal : T.Balanced ℓ)
+  (hwh : ∀ P, 0 < T.width ℓ P ∧ 0 < T.height ℓ P)
+include hP hA hne hbal hwh
+
+/-- Two vertices beside a midpoint are joined by its edge. -/
+theorem quadAdj_of_edge {m : Point Patch} (hm : m ∈ T.points patches ℓ ∧ m.IsEdge)
+    {u v : T.QuadV patches allArcs ℓ} (h : T.edgeVerts allArcs ℓ m = s(u.1, v.1)) :
+    ∃ e, s((T.quadEnds e).1, (T.quadEnds e).2) = s(u, v) :=
+  ⟨QuadE.mk T m hm, Sym2.map.injective Subtype.val_injective (by
+    rw [quadEnds_eq hA hne hbal hwh (QuadE.mk T m hm) hm rfl, h]; rfl)⟩
+
+/-- The vertices of a patch are joined to its corner by edges. -/
+theorem quadV_corner {p : Point Patch} (hp : p ∈ T.points patches ℓ ∧ p.IsCoarse) :
+    Relation.ReflTransGen (fun a b => ∃ e, s((T.quadEnds e).1, (T.quadEnds e).2) = s(a, b))
+      (T.quadBase hP allArcs ℓ p.patch) (QuadV.mk T p hp) := by
+  obtain ⟨P, x, y⟩ := p
+  obtain ⟨hp₁, hx₂, hy₂⟩ := hp
+  obtain ⟨hx, hy⟩ := (mem_points hP).mp hp₁
+  dsimp only at hx hy hx₂ hy₂
+  let w := T.width ℓ P
+  let h := T.height ℓ P
+  let g : ℕ → ℕ → T.QuadV patches allArcs ℓ := fun x y =>
+    QuadV.mk T ⟨P, 2 * min x w, 2 * min y h⟩
+      ⟨(mem_points hP).mpr (by unfold InGrid; dsimp only; omega), by
+        unfold Point.IsCoarse; dsimp only; omega⟩
+  have hg : ∀ x y, (g x y).1 = T.vertexOf allArcs ℓ ⟨P, 2 * min x w, 2 * min y h⟩ :=
+    fun _ _ => rfl
+  have h₀ : g 0 0 = T.quadBase hP allArcs ℓ P := Subtype.ext (by rw [hg]; simp [quadBase, QuadV.mk])
+  have h₁ : g (x / 2) (y / 2) = QuadV.mk T ⟨P, x, y⟩ ⟨hp₁, hx₂, hy₂⟩ :=
+    Subtype.ext (by rw [hg]; simp only [QuadV.mk]; congr 2 <;> omega)
+  rw [← h₀, ← h₁]
+  refine rect_connected g (W := w) (H := h) (fun x y hx hy => ?_) (fun y hy => ?_)
+    (by omega) (by omega)
+  · refine quadAdj_of_edge hP hA hne hbal hwh (m := ⟨P, 2 * x + 1, 2 * y⟩)
+      ⟨(mem_points hP).mpr (by unfold InGrid; dsimp only; omega), by
+        unfold Point.IsEdge; dsimp only; omega⟩ ?_
+    rw [hg, hg, show min x w = x by omega, show min (x + 1) w = x + 1 by omega,
+      show min y h = y by omega]
+    simp only [edgeVerts, edgeEnds, show (2 * x + 1) % 2 = 1 by omega, ↓reduceIte,
+      show 2 * x + 1 - 1 = 2 * x by omega, show 2 * x + 1 + 1 = 2 * (x + 1) by omega]
+  · refine quadAdj_of_edge hP hA hne hbal hwh (m := ⟨P, 0, 2 * y + 1⟩)
+      ⟨(mem_points hP).mpr (by unfold InGrid; dsimp only; omega), by
+        unfold Point.IsEdge; dsimp only; omega⟩ ?_
+    rw [hg, hg, show min y h = y by omega, show min (y + 1) h = y + 1 by omega, Nat.zero_min]
+    simp only [edgeVerts, edgeEnds, Nat.zero_mod, zero_ne_one, ↓reduceIte, mul_zero, show 2 * y + 1 - 1 = 2 * y by omega, show 2 * y + 1 + 1 = 2 * (y + 1) by omega]
+
+/-- The faces of a patch are joined to its corner face through shared edges. -/
+theorem quadF_corner (f : T.QuadF patches ℓ) :
+    Relation.ReflTransGen
+      (fun a b => ∃ i j, T.quadFaceEdge (allArcs := allArcs) a i = T.quadFaceEdge b j)
+      (T.quadFaceBase hP hwh f.1.patch) f := by
+  obtain ⟨⟨P, x, y⟩, hf₁, hx₂, hy₂⟩ := f
+  obtain ⟨hx, hy⟩ := (mem_points hP).mp hf₁
+  dsimp only at hx hy hx₂ hy₂ ⊢
+  have hw := hwh P
+  let w := T.width ℓ P
+  let h := T.height ℓ P
+  let g : ℕ → ℕ → T.QuadF patches ℓ := fun x y =>
+    ⟨⟨P, 2 * min x (w - 1) + 1, 2 * min y (h - 1) + 1⟩,
+      (mem_points hP).mpr (by unfold InGrid; dsimp only; omega), by dsimp only; omega,
+      by dsimp only; omega⟩
+  have h₀ : g 0 0 = T.quadFaceBase hP hwh P := Subtype.ext (by simp [g, quadFaceBase])
+  have h₁ : g (x / 2) (y / 2) = ⟨⟨P, x, y⟩, hf₁, hx₂, hy₂⟩ :=
+    Subtype.ext (by simp only [g, Point.mk.injEq, true_and]; omega)
+  rw [← h₀, ← h₁]
+  refine rect_connected g (W := w - 1) (H := h - 1) (fun x y hx hy => ⟨1, 3, ?_⟩)
+    (fun y hy => ⟨2, 0, ?_⟩) (by omega) (by omega) <;>
+  · refine Subtype.ext ?_
+    simp only [quadFaceEdge, QuadE.mk, g]
+    congr 1
+    simp [centreEdge]
+    omega
+
+/-- **Any two vertices of the quad mesh are joined by a chain of edges**, when the
+T-mesh is connected. -/
+theorem quad_connected (hc : T.Connected) (u v : T.QuadV patches allArcs ℓ) :
+    Relation.ReflTransGen (fun a b => ∃ e, s((T.quadEnds e).1, (T.quadEnds e).2) = s(a, b))
+      u v := by
+  have hsymm := fun {u v : T.QuadV patches allArcs ℓ} => rtg_symm
+    (r := fun a b => ∃ e, s((T.quadEnds e).1, (T.quadEnds e).2) = s(a, b))
+    (fun ⟨e, he⟩ => ⟨e, he.trans Sym2.eq_swap⟩) (a := u) (b := v)
+  have hmk : ∀ u : T.QuadV patches allArcs ℓ, ∃ p hp, u = QuadV.mk T p hp := fun u => by
+    obtain ⟨p, hp, hpu⟩ := (Set.mem_image _ _ _).mp u.2
+    exact ⟨p, hp, Subtype.ext hpu.symm⟩
+  -- Across an arc: the first ends of its two sides are one vertex.
+  have hglue : ∀ a, Relation.ReflTransGen
+      (fun a b => ∃ e, s((T.quadEnds e).1, (T.quadEnds e).2) = s(a, b))
+      (T.quadBase hP allArcs ℓ (T.ends a 0).1) (T.quadBase hP allArcs ℓ (T.ends a 1).1) := by
+    intro a
+    have hp₀ : T.arcPoint ℓ a 0 0 ∈ T.points patches ℓ ∧ (T.arcPoint ℓ a 0 0).IsCoarse :=
+      ⟨(mem_points hP).mpr (arcPoint_inGrid hbal a 0 (Nat.zero_le _)), isCoarse_arcPoint ℓ a 0 rfl⟩
+    have hp₁ : T.arcPoint ℓ a 1 (T.flip ℓ a 0) ∈ T.points patches ℓ ∧
+        (T.arcPoint ℓ a 1 (T.flip ℓ a 0)).IsCoarse :=
+      ⟨(mem_points hP).mpr (arcPoint_inGrid hbal a 1 (flip_le (Nat.zero_le _))),
+        isCoarse_arcPoint ℓ a 1 (by rw [flip_parity ℓ a (Nat.zero_le _)])⟩
+    have h₀ := quadV_corner hP hA hne hbal hwh hp₀
+    have h₁ := quadV_corner hP hA hne hbal hwh hp₁
+    rw [arcPoint_patch] at h₀ h₁
+    have he : QuadV.mk T _ hp₀ = QuadV.mk T _ hp₁ :=
+      Subtype.ext (vertexOf_eq_iff.mpr (same_partner hA 0 (Nat.zero_le _)))
+    exact h₀.trans (he ▸ hsymm h₁)
+  have hadj : ∀ P Q, T.PatchAdj P Q → Relation.ReflTransGen
+      (fun a b => ∃ e, s((T.quadEnds e).1, (T.quadEnds e).2) = s(a, b))
+      (T.quadBase hP allArcs ℓ P) (T.quadBase hP allArcs ℓ Q) := by
+    rintro P Q ⟨a, ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩⟩
+    exacts [hglue a, hsymm (hglue a)]
+  obtain ⟨p, hp, rfl⟩ := hmk u
+  obtain ⟨q, hq, rfl⟩ := hmk v
+  exact (hsymm (quadV_corner hP hA hne hbal hwh hp)).trans
+    (((hc p.patch q.patch).lift' _ hadj).trans (quadV_corner hP hA hne hbal hwh hq))
+
+/-- **Any two faces of the quad mesh are joined by a chain of faces sharing an edge**,
+when the T-mesh is connected. -/
+theorem quad_faceConnected (hℓ : ∀ a, 0 < ℓ a) (hc : T.Connected) (f g : T.QuadF patches ℓ) :
+    Relation.ReflTransGen
+      (fun a b => ∃ i j, T.quadFaceEdge (allArcs := allArcs) a i = T.quadFaceEdge b j) f g := by
+  have hsymm := fun {f g : T.QuadF patches ℓ} => rtg_symm
+    (r := fun a b => ∃ i j, T.quadFaceEdge (allArcs := allArcs) a i = T.quadFaceEdge b j)
+    (fun ⟨i, j, h⟩ => ⟨j, i, h.symm⟩) (a := f) (b := g)
+  -- The face of a patch along an arc whose edge has the midpoint `m`.
+  have hface : ∀ m, T.InGrid ℓ m → m.IsEdge →
+      ∃ f : T.QuadF patches ℓ, ∃ k, f.1.patch = m.patch ∧ centreEdge f.1 k = m := by
+    intro m hm he
+    obtain ⟨⟨f, k⟩, hfk⟩ := Finset.card_pos.mp (by
+      rw [card_quadSlotsAt hP hwh hm he]; split_ifs <;> norm_num)
+    have hfk := (Finset.mem_filter.mp hfk).2
+    exact ⟨f, k, by rw [← hfk, centreEdge_patch], hfk⟩
+  -- Across an arc: the two edges at the start of its gluing are one edge.
+  have hglue : ∀ a, Relation.ReflTransGen
+      (fun a b => ∃ i j, T.quadFaceEdge (allArcs := allArcs) a i = T.quadFaceEdge b j)
+      (T.quadFaceBase hP hwh (T.ends a 0).1) (T.quadFaceBase hP hwh (T.ends a 1).1) := by
+    intro a
+    have h1 : 1 ≤ 2 * ℓ a := by have := hℓ a; omega
+    obtain ⟨f, k, hpf, hmf⟩ := hface _ (arcPoint_inGrid hbal a 0 h1)
+      (by unfold Point.IsEdge; rw [arcPoint_parity])
+    obtain ⟨g, k', hpg, hmg⟩ := hface _ (arcPoint_inGrid hbal a 1 (flip_le (T := T) h1))
+      (by unfold Point.IsEdge; rw [arcPoint_parity, flip_parity _ _ h1])
+    rw [arcPoint_patch] at hpf hpg
+    have hfg : T.quadFaceEdge (allArcs := allArcs) f k = T.quadFaceEdge g k' := by
+      refine Subtype.ext ?_
+      simp only [quadFaceEdge, QuadE.mk]
+      rw [hmf, hmg]
+      exact vertexOf_eq_iff.mpr (same_partner hA 0 h1)
+    have h₀ := quadF_corner (allArcs := allArcs) hP hA hne hbal hwh f
+    have h₁ := quadF_corner (allArcs := allArcs) hP hA hne hbal hwh g
+    rw [hpf] at h₀
+    rw [hpg] at h₁
+    exact (h₀.tail ⟨k, k', hfg⟩).trans (hsymm h₁)
+  have hadj : ∀ P Q, T.PatchAdj P Q → Relation.ReflTransGen
+      (fun a b => ∃ i j, T.quadFaceEdge (allArcs := allArcs) a i = T.quadFaceEdge b j)
+      (T.quadFaceBase hP hwh P) (T.quadFaceBase hP hwh Q) := by
+    rintro P Q ⟨a, ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩⟩
+    exacts [hglue a, hsymm (hglue a)]
+  exact (hsymm (quadF_corner hP hA hne hbal hwh f)).trans
+    (((hc f.1.patch g.1.patch).lift' _ hadj).trans (quadF_corner hP hA hne hbal hwh g))
+
+end Connected
+
 end TMesh
 
 end TurnsOfATMesh
