@@ -37,3 +37,4 @@ public import TurnsOfATMesh.Holonomy
 public import TurnsOfATMesh.Development
 public import TurnsOfATMesh.CutDisc
 public import TurnsOfATMesh.Border
+public import TurnsOfATMesh.Region
