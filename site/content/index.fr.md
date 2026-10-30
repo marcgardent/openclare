@@ -25,9 +25,9 @@ Sélectionnez un maillage, demandez un nombre de quads, appuyez sur *Remesh to Q
 
 Sélectionnez une boucle d'arêtes avec Alt-clic : elle devrait faire une fois le tour du bras et se fermer. Les remailleurs automatiques en font souvent une spirale, qui descend de l'épaule au poignet. openclare ferme ces boucles, et préfère peu de pôles à des quads parfaitement carrés.
 
-![Le corps masculin avant et après la fermeture des boucles](../../docs/glossary/male_result.png)
+![Le corps masculin à 10 590 quads, par openclare sans fermeture des boucles, par openclare avec fermeture, fait à la main et par QuadriFlow](../../docs/research/closing-loops/figures/male-overview.fr.png)
 
-*Un corps humain à 10 590 quads. Les boucles en spirale du jaune au rouge, les boucles fermées en bleu.*
+*Un corps humain à 10 590 quads : par openclare sans fermeture des boucles, avec fermeture, fait à la main et par QuadriFlow. Les boucles en spirale en vermillon, les boucles fermées en bleu foncé.*
 
 ## Voir en 3D
 

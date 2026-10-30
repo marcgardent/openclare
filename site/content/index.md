@@ -25,9 +25,9 @@ Select a mesh, ask for a number of quads, press *Remesh to Quads*. The original 
 
 Select an edge loop with Alt-click: it should go round the arm once and close. Automatic remeshers often make it a spiral instead, winding from the shoulder to the wrist. openclare closes those loops, and keeps few poles rather than perfectly square quads.
 
-![The male body before and after closing loops](../../docs/glossary/male_result.png)
+![The male body at 10,590 quads, by openclare without closing loops, by openclare with closing, by hand and by QuadriFlow](../../docs/research/closing-loops/figures/male-overview.png)
 
-*A human body at 10,590 quads. Spiral loops in yellow to red, closed loops in blue.*
+*A human body at 10,590 quads: by openclare without closing loops, with closing, by hand and by QuadriFlow. Spiral loops in vermillion, closed loops in dark blue.*
 
 ## See it in 3D
 
