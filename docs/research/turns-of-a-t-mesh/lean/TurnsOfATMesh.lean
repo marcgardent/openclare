@@ -33,3 +33,6 @@ public import TurnsOfATMesh.Coarse
 public import TurnsOfATMesh.CoarseEuler
 public import TurnsOfATMesh.CoarseSurface
 public import TurnsOfATMesh.SphereGrid
+public import TurnsOfATMesh.Holonomy
+public import TurnsOfATMesh.Development
+public import TurnsOfATMesh.CutDisc

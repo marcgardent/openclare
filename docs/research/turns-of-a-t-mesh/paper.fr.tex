@@ -192,7 +192,8 @@ pas du moteur, l'étiquette disant sur combien d'instances et de quel genre
 (les tests de propriétés du paquet de données,
 \texttt{experiments/property})~: un test réfute ou corrobore et ne démontre
 rien, et une étiquette d'un autre niveau dit \emph{testé} là où les mêmes
-tests ont aussi tourné\,; \textsc{classique, cité}\,; et
+tests ont aussi tourné, et \emph{exemples} là où Lean le vérifie sur une
+instance fixée\,; \textsc{classique, cité}\,; et
 \textsc{ouvert, rien n'est affirmé}, une question ou une conjecture. Les noms
 Lean sont ceux du commit de la première page, construit sans
 \texttt{sorry}.
@@ -263,7 +264,7 @@ Passer du patch $P$ au patch $Q$ à travers un arc compose une rotation d'un
 quart de tour du repère local avec une translation dont les composantes sont
 des sommes signées de longueurs d'arcs le long des bords de $P$ et de $Q$.
 
-\begin{evidence}{core}{\lean{TMesh.Turn.shift_linear}, \lean{TMesh.Turn.mem_corridor_iff}, \lean{TMesh.Turn.comes_back}, \lean{TMesh.Turn.winds}\,; supposé~: un recollement orienté\,; seule l'abscisse transverse à la marche est suivie\,; le corridor sans demi-entier n'est pas formalisé}
+\begin{evidence}{core}{\lean{TMesh.Turn.shift_linear}, \lean{TMesh.Turn.mem_corridor_iff}, \lean{TMesh.Turn.comes_back}, \lean{TMesh.Turn.winds}, \lean{TMesh.Turn.development_eq} (dans le plan, $T_\gamma(\ell) = -\alpha_\gamma(\ell) e_1 + \shift_\gamma(\ell) e_2$ aux longueurs entières)\,; exemples~: \lean{TMesh.twistedTorus.walk_turn}\,; testé~: le développement contre l'holonomie du mot du tour sur 3\,865 tours de 34 sphères\,; supposé~: un recollement orienté\,; le corridor sans demi-entier n'est pas formalisé}
 \begin{proposition}[Le décalage d'un tour est linéaire]\label{prop:linear}
 Pour un tour $\gamma$, il existe des coefficients entiers $c_a$, indépendants
 des longueurs, tels qu'après un tour complet un point du premier côté s'est
@@ -430,7 +431,7 @@ quatre directions)~: chaque lobe voit un second coin convexe et contient $2$,
 et la troisième région le reste du total $8$.
 \end{proof}
 
-\begin{evidence}{core}{\lean{Motion.burgers_eq_sum}, \lean{Motion.composeAll_rotations}, \lean{Forest.glue_eq_preorder}, \lean{Motion.annulus_holonomy}\,; testé~: (c) sur 898 couronnes sans point conique de 50 instances aléatoires\,; supposé~: l'holonomie de la courbe est la composée des rotations autour des points coniques}
+\begin{evidence}{core}{\lean{CutDisc.holonomy_eq_preorder}, \lean{Cut.jump_eq} (sur un disque coupé le long d'une forêt, modélisé par le parcours de son bord~: la récurrence $G_f = G_{f_r} \circ \dots \circ G_{f_1} \circ \rho_v$ et l'holonomie du bord comme composée des rotations coniques dans l'ordre de première visite), \lean{CutDisc.holonomy_trans}, \lean{Motion.burgers_eq_sum}, \lean{Motion.annulus_holonomy}\,; exemples~: \lean{CutDisc.threeSquares_holonomy}\,; testé~: sur chaque sphère de 50 instances aléatoires, les deux régions de chaque courbe simple sont de tels disques coupés (une forêt de coupures, chaque arbre touchant le bord une fois) et la composée de leurs rotations est le développement \lean{TMesh.Turn.development} du tour, $B_D = T_\gamma(\ell)$ avec $D$ à gauche, sur 1\,852 régions\,; (c) sur 898 couronnes\,; supposé~: que la région de la courbe est le disque coupé du modèle, et que l'holonomie de son bord est le développement du tour}
 \begin{proposition}[Le décalage est fixé par les singularités]\label{prop:burgers}
 Soient $\gamma$, $\gamma_1$, $\gamma_2$ des tours à courbes simples.
 \begin{enumerate}
@@ -2044,7 +2045,7 @@ la maximisation de $Q$ sur un polytope de longueurs réelles.
 
 Le dossier \texttt{lean} à côté de cette note est un projet
 Lean~4~\cite{demoura2021lean4} sur Mathlib~\cite{mathlib2020} (tous deux en
-\texttt{v4.35.0}). Ses $480$ déclarations de théorèmes, dont beaucoup de
+\texttt{v4.35.0}). Ses $527$ déclarations de théorèmes, dont beaucoup de
 petits lemmes, ne dépendent que des axiomes standard de Lean\,; ce nombre
 n'est pas un argument, et son \texttt{README.md} associe à chaque énoncé ses
 théorèmes Lean. Lean vérifie le cœur algébrique et combinatoire de chaque
@@ -2063,8 +2064,13 @@ longueurs entières, la proposition~\ref{prop:parity} forment une seule
 chaîne vérifiée. Les autres
 énoncés gardent leur propre abstraction (un tour comme une liste de
 déplacements, une région comme des ensembles finis avec des comptes)\,; la
-surface et le champ de croix sous le T-mesh, son orientation et le lien entre
-le décalage et l'holonomie $\hat h$ ne sont pas formalisés.
+surface et le champ de croix sous le T-mesh et son orientation ne sont pas
+formalisés. Le développement d'un tour dans le plan l'est
+(\texttt{Holonomy.lean})~: les changements de carte à travers les arcs se
+composent en $T_\gamma(\ell) = -\alpha_\gamma(\ell) e_1 + \shift_\gamma(\ell)
+e_2$ aux longueurs entières\,; qu'il soit l'inverse de l'holonomie $\hat
+h(\bar\gamma)$ de la métrique plate, et que cette holonomie soit le produit
+des rotations autour des points coniques, ne le sont pas.
 
 \ifdefined\plain
 \emph{Vérifié}, énoncé par énoncé. Sur le T-mesh, les repères des patchs
@@ -2072,14 +2078,20 @@ le décalage et l'holonomie $\hat h$ ne sont pas formalisés.
 proposition~\ref{prop:linear} pour l'abscisse transverse à la marche,
 c'est-à-dire les coefficients entiers de $\shift_\gamma$, indépendants de
 $\ell$, le couloir découpé par des inégalités linéaires en l'abscisse et en
-$\ell$, et la marche qui revient en $o + \shift_\gamma(\ell)$ et s'enroule en
-hélice\,; que cette marche depuis un demi-entier soit une ligne duale du
+$\ell$, la marche qui revient en $o + \shift_\gamma(\ell)$ et s'enroule en
+hélice, et, dans le plan aux longueurs entières, le développement du tour
+égal à la translation par $-\alpha_\gamma(\ell) e_1 + \shift_\gamma(\ell)
+e_2$\,; que cette marche depuis un demi-entier soit une ligne duale du
 maillage de quads est la proposition de complétude ci-dessous, dans son propre
 modèle. Pour des déplacements dont les parties
 linéaires sont dans un anneau quelconque~: la somme de Burgers, et le fait que
-la récurrence des applications de recollement d'un arbre de coupures, une
-hypothèse, se déroule dans l'ordre de première visite
-(proposition~\ref{prop:burgers}(a))\,; la couronne découpée~(b)\,; les
+la récurrence des applications de recollement d'un arbre de coupures se
+déroule dans l'ordre de première visite\,; la récurrence elle-même sur un
+disque coupé le long d'une forêt, modélisé par le parcours du bord du disque
+coupé avec les coins de faces rencontrés en chaque sommet
+(proposition~\ref{prop:burgers}(a))\,; qu'une région du maillage de quads soit
+un tel disque coupé est décidé par le programme sur chaque région, non
+démontré\,; la couronne découpée~(b)\,; les
 échanges\,; l'étape de conjugaison de la proposition~\ref{prop:winding}. Sur
 les réels~: les quatre ordres et orientations d'une dislocation et les
 chaînes droites (proposition~\ref{prop:dislocation}(i), (ii))\,; les

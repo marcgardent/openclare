@@ -41,7 +41,13 @@ turns of the way, and compares, with the library's definitions:
   Lemma "Gauss–Bonnet for turns": `∑ (4 - k) = 4 χ`; the 2-colouring of the quad graph
   (`IsColouring`, constants `κ` found by propagation; a sphere must be bipartite) and,
   when it holds, `Turn.length ≡ Turn.shift (mod 2)` for every turn with a half-integer
-  in its corridor.
+  in its corridor;
+* on a sphere, Proposition "The shift is set by the singularities" (a) on both regions of
+  every simple curve: the cuts off a dual spanning tree form a forest whose trees each
+  meet the curve at one vertex (a disc); the faces developed along the tree
+  (`crossMotion`); the rotations `R^{4-k}` about the cone points in the order of first
+  visit of the walk round the trees, whose composite and Burgers sum are compared with
+  `Turn.development` of the turn of the curve and with the words of `develop.py`.
 
 All arithmetic is exact (`ℤ`, `ℚ`; the engine's floats are read as the fractions they
 are). `Turn.shiftForm` and `balance` are read only at the arcs of the sides they
@@ -51,6 +57,7 @@ every other arc.
 import TurnsOfATMesh.TMesh
 import TurnsOfATMesh.Fox
 import TurnsOfATMesh.Grid
+import TurnsOfATMesh.Holonomy
 import Lean.Data.Json
 import Std.Data.HashMap
 import Std.Data.HashSet
@@ -635,7 +642,10 @@ holonomy a translation, by `α e₁ - shift e₂` turned by the chart of its fir
 `e₁` the walking direction, `e₂` the direction of increasing offsets on the first side,
 `shift` the library's `shift` at the whole lengths and `α` the length of the turn there,
 the sum of the widths of the patches crossed (Section "Flat metric and holonomy":
-`ĥ(γ̄)` is the inverse of `T_γ(ℓ) = -α e₁ + shift e₂`). -/
+`ĥ(γ̄)` is the inverse of `T_γ(ℓ) = -α e₁ + shift e₂`). The same holonomy is also
+compared with `Turn.development` of `Holonomy.lean`, the composite of the library's
+changes of chart along the path: `hol = R^k ∘ (development)⁻¹ ∘ R^{-k}`, rotation 1
+and translation `-R^k · (development).trans`. -/
 
 def gauss (x y : Int) : GaussianInt := ⟨x, y⟩
 
@@ -662,7 +672,8 @@ def along (ℓ : Fin n → ℚ) (start : Side (Fin P)) (path : List (Fin n)) : �
     (T.other a acc.1.opp, acc.2 + ((T.arcs (acc.1.1, acc.1.2.1 + 1, 0)).map ℓ).sum)) (start, 0)).2
 
 def checkFox (whole : Fin n → ℚ) (forms : Array (Option (Array Int)))
-    (paths : Array (Option (Side (Fin P) × List (Fin n)))) (fox : RawFox) : IO Bool := do
+    (paths : Array (Option (Side (Fin P) × List (Fin n))))
+    (devs : Array (Option (Motion GaussianInt GaussianInt))) (fox : RawFox) : IO Bool := do
   IO.println s!"  Fox–Burgers: {fox.cones.size} cone points, convention: {fox.convention}"
   let u : Nat → GaussianIntˣ := fun i => giUnit ^ (4 - fox.cones[i]!.1)
   let p : Nat → GaussianInt := fun i => gauss fox.cones[i]!.2.1 fox.cones[i]!.2.2
@@ -679,6 +690,7 @@ def checkFox (whole : Fin n → ℚ) (forms : Array (Option (Array Int)))
   let mut opposite := 0
   let mut whole_ : Count := {}
   let mut foxSum : Count := {}
+  let mut inverse : Count := {}
   for i in [0:fox.turns.size] do
     let (w, chart) := fox.turns[i]!
     let some (start, path) := paths[i]?.join | continue
@@ -693,6 +705,9 @@ def checkFox (whole : Fin n → ℚ) (forms : Array (Option (Array Int)))
     let M := quarter chart
     let e₁ := M * inward start
     let e₂ := M * acrossDir start
+    if let some d := devs[i]?.join then
+      inverse := inverse.add (m.lin == 1 && m.trans == -(M * d.trans)) fun _ =>
+        s!"turn {i}: hol {showG m.lin}, {showG m.trans}; development {showG d.lin}, {showG d.trans}; R^{chart}"
     rotation := rotation.add (m.lin == 1) fun _ => s!"turn {i}: rotation {showG m.lin}"
     acrossC := acrossC.add (dot e₂ m.trans == -s.num) fun _ =>
       s!"turn {i}: ⟨e₂, τ⟩ = {dot e₂ m.trans}, shift {s}"
@@ -713,7 +728,8 @@ def checkFox (whole : Fin n → ℚ) (forms : Array (Option (Array Int)))
   IO.println s!"    (⟨e₁, τ⟩ = -α for {opposite})"
   whole_.show "turns: τ = α e₁ - shift e₂"
   foxSum.show "turns: τ = Σᵢ ρ(∂w/∂xᵢ) (1 - Rᵢ) pᵢ (Fox–Burgers sum, `fox`)"
-  return jumps.ok && rotation.ok && acrossC.ok && alongC.ok && whole_.ok && foxSum.ok
+  inverse.show "turns: holonomy of the word = inverse of the development, turned by the chart (hol = 1, -R^k · Turn.development.trans)"
+  return jumps.ok && rotation.ok && acrossC.ok && alongC.ok && whole_.ok && foxSum.ok && inverse.ok
 
 /-! ### The check of one export -/
 
@@ -810,10 +826,400 @@ def regionsOf (faceEdgesK : Array (Array Nat)) (faceCorners : Array (Array Nat))
     out := ⟨nf, (vs.size : Int) - es.size + nf, cones.map fun v => valence[v]!⟩ :: out
   return out
 
+/-! ### Proposition "The shift is set by the singularities" (a) on the regions of the curves
+
+On a sphere a simple curve of a round cuts two regions. For the region on each side,
+taken with the curve walked so that it lies on the left: a dual spanning tree of its
+fine faces, breadth first from the face beside the first edge of the curve, and the
+chart of every face, the frame of its patch developed into the frame of the root
+across the tree (inside a rectangle the frame is shared; across an arc it is changed
+by `crossMotion` of `Holonomy.lean`). The interior edges off the tree are the cuts;
+the region is a disc in the combinatorial sense when they form a forest in its vertex
+graph, every tree meeting the curve at exactly one vertex and every interior vertex
+on a tree. Then the walk round each tree from that vertex, the tree on its right, the
+trees in the order of the curve from its start, visits the cone points in the order of
+first visit, each at the place the chart of the face it is first reached in gives it:
+the rotations `rotAbout (R^{4-k}) p` there compose to the translation `B_D`, which the
+proposition gives as `T_γ(ℓ)`, the development of the turn, with `D` on the left of
+`γ̄`, and as its inverse with `D` on the right. -/
+
+/-- The fine grid of a sphere as the walk round the cut trees reads it. `cw` maps a
+corner `v` of a face and the edge of the face coming into `v` (counter-clockwise
+round the face) to the next edge clockwise round `v`, through that face, with the face
+and the index of the corner; `edgeEnds` gives the two ends of every edge class. -/
+structure Fine (K : Nat) where
+  facePatch : Array Nat
+  cornerPts : Array (Array (Point (Fin K)))
+  faceEdgesK : Array (Array Nat)
+  faceCorners : Array (Array Nat)
+  facesAtEdge : Std.HashMap Nat (List Nat)
+  cw : Std.HashMap (Nat × Nat) (Nat × Nat × Nat)
+  edgeEnds : Std.HashMap Nat (Nat × Nat)
+  index : Std.HashMap (Point (Fin K)) Nat
+  rep : Array Nat
+  valence : Array Nat
+  coarse : Array Bool
+
+/-- A point of the fine grid in the plane of its patch, in half quads. -/
+def gp (p : Point (Fin P)) : GaussianInt := ⟨p.x, p.y⟩
+
+/-- The inverse of a motion whose linear part is a quarter-turn. -/
+def invQ (m : Motion GaussianInt GaussianInt) : Motion GaussianInt GaussianInt :=
+  ⟨TMesh.conj m.lin, -(TMesh.conj m.lin * m.trans)⟩
+
+/-- The side of its rectangle the fine edge from `p` to `q` lies on, with the fine
+position of its first end along it; `none` for an edge inside the rectangle. -/
+def onSide (ℓ : Fin n → ℕ) (p q : Point (Fin P)) : Option (Side (Fin P) × Nat) :=
+  let w := 2 * T.width ℓ p.patch
+  let h := 2 * T.height ℓ p.patch
+  if p.x == q.x && p.x == 0 then some ((p.patch, 1, 0), min p.y q.y)
+  else if p.x == q.x && p.x == w then some ((p.patch, 1, 1), min p.y q.y)
+  else if p.y == q.y && p.y == 0 then some ((p.patch, 0, 0), min p.x q.x)
+  else if p.y == q.y && p.y == h then some ((p.patch, 0, 1), min p.x q.x)
+  else none
+
+/-- The arc of a side whose arcs are `l` holding the fine edge from the fine position
+`t` to `t + 1`. -/
+def arcOn (ℓ : Fin n → ℕ) : List (Fin n) → Nat → Option (Fin n)
+  | [], _ => none
+  | a :: l, t => if t < 2 * ℓ a then some a else arcOn ℓ l (t - 2 * ℓ a)
+
+/-- The change of chart across the fine edge from `p` to `q` of a face, from the frame
+of the patch of `p` to that of the face across, in fine coordinates: the identity
+inside a rectangle; on a side, `crossMotion` across the arc holding the edge, its
+translation doubled (it is in quads). With the patch across. -/
+def crossFine (ℓ : Fin n → ℕ) (p q : Point (Fin P)) :
+    Option (Fin P × Motion GaussianInt GaussianInt) :=
+  match onSide T ℓ p q with
+  | none => some (p.patch, Motion.id)
+  | some (τ, t) => (arcOn ℓ (T.arcs τ) t).map fun a =>
+    let C := T.crossMotion ℓ τ a
+    ((T.other a τ).1, ⟨C.lin, 2 * C.trans⟩)
+
+/-- Whether `z` in the frame of the patch `Q` is a point of the grid glued to `p`. -/
+def sameAs (F : Fine P) (Q : Fin P) (z : GaussianInt) (p : Point (Fin P)) : Bool :=
+  z.re ≥ 0 && z.im ≥ 0 &&
+    match F.index[(⟨Q, z.re.toNat, z.im.toNat⟩ : Point (Fin P))]?, F.index[p]? with
+    | some i, some j => F.rep[i]! == F.rep[j]!
+    | _, _ => false
+
+/-- The other end of the edge `e` from its end `v`. -/
+def otherEnd (F : Fine P) (v e : Nat) : Nat :=
+  let (a, b) := F.edgeEnds.getD e (v, v)
+  if a == v then b else a
+
+/-- The arcs crossed by one round of the walk from `p` at the whole lengths, until it
+comes back in through `σ`, as `Grid.curve` stops. -/
+def roundPath (ℓ : Fin n → ℕ) (σ : Side (Fin P)) :
+    Nat → Side (Fin P) × ℚ → List (Fin n) → Option (List (Fin n))
+  | 0, _, _ => none
+  | fuel + 1, p, acc =>
+    match arcAt (TMesh.rat ℓ) (T.arcs p.1.opp) p.2, T.step (TMesh.rat ℓ) p with
+    | some a, some q => if q.1 = σ then some (a :: acc).reverse else roundPath ℓ σ fuel q (a :: acc)
+    | _, _ => none
+
+/-- A region of a curve: what makes it not a disc (empty for a disc), what went wrong
+walking round its cut trees (empty if nothing did), the cone points in the order of
+first visit as `(R^{4-k}, p)`, and counts for the report. -/
+structure Disc where
+  notDisc : String := ""
+  walkFailed : String := ""
+  word : List (GaussianInt × GaussianInt) := []
+  faces : Nat := 0
+  cuts : Nat := 0
+  trees : Nat := 0
+  inside : Nat := 0
+  /-- Crossings of the dual tree where the change of chart does not take the corners
+  of the edge to the points glued to them. -/
+  badCharts : Nat := 0
+
+/-- The region on the left of the curve `cyc` (its vertices, each with the edge to the
+next), or on its right when `left` is false, from the face `root` beside its first
+edge: the dual tree, the charts, the check of a disc and the word of first visits.
+`dflt` is any point, for the arrays. -/
+def discOf (F : Fine P) (ℓ : Fin n → ℕ) (dflt : Point (Fin P)) (cyc : Array (Nat × Nat))
+    (left : Bool) (root : Nat) : Disc := Id.run do
+  have : Inhabited (Point (Fin P)) := ⟨dflt⟩
+  let m := cyc.size
+  let curveEdges : Std.HashSet Nat := cyc.foldl (fun s ue => s.insert ue.2) ∅
+  let onCurve : Std.HashSet Nat := cyc.foldl (fun s ue => s.insert ue.1) ∅
+  let nF := F.faceEdgesK.size
+  -- The dual spanning tree, breadth first across the edges off the curve, and the
+  -- chart of every face, from the frame of its patch to the frame of the root.
+  let mut chart : Array (Option (Motion GaussianInt GaussianInt)) := Array.replicate nF none
+  chart := chart.set! root (some Motion.id)
+  let mut queue : Array Nat := #[root]
+  let mut treeEdges : Std.HashSet Nat := ∅
+  let mut badCharts := 0
+  let mut i := 0
+  while i < queue.size do
+    let f := queue[i]!
+    i := i + 1
+    let Mf := (chart[f]!).getD Motion.id
+    let ks := F.faceEdgesK[f]!
+    let cs := F.cornerPts[f]!
+    for j in [0:4] do
+      let e := ks[j]!
+      if curveEdges.contains e then continue
+      for g in F.facesAtEdge.getD e [] do
+        if g == f || (chart[g]!).isSome then continue
+        let p := cs[j]!
+        let q := cs[(j + 1) % 4]!
+        match crossFine T ℓ p q with
+        | none => badCharts := badCharts + 1
+        | some (Q, C) =>
+          if Q.val != F.facePatch[g]! || !sameAs F Q (C.apply (gp p)) p ||
+              !sameAs F Q (C.apply (gp q)) q then
+            badCharts := badCharts + 1
+          chart := chart.set! g (some (Motion.comp Mf (invQ C)))
+          treeEdges := treeEdges.insert e
+          queue := queue.push g
+  -- The border: every edge of the curve has exactly one face in the region.
+  let mut why : Array String := #[]
+  let border := curveEdges.toList.filter fun e =>
+    ((F.facesAtEdge.getD e []).filter fun g => (chart[g]!).isSome).length != 1
+  if !border.isEmpty then why := why.push s!"{border.length} curve edges without one face in the region"
+  -- The cuts, the interior vertices and the cone points among them.
+  let mut cuts : Std.HashSet Nat := ∅
+  let mut inner : Std.HashSet Nat := ∅
+  let mut inside := 0
+  for f in queue do
+    for e in F.faceEdgesK[f]! do
+      if !curveEdges.contains e && !treeEdges.contains e then cuts := cuts.insert e
+    for v in F.faceCorners[f]! do
+      if !onCurve.contains v && !inner.contains v then
+        inner := inner.insert v
+        if F.coarse[v]! && F.valence[v]! != 4 then inside := inside + 1
+  -- The vertex graph of the cuts: each component a tree with one vertex on the curve.
+  let mut adj : Std.HashMap Nat (List Nat) := ∅
+  for e in cuts.toList do
+    let (a, b) := F.edgeEnds.getD e (0, 0)
+    adj := adj.insert a (e :: adj.getD a [])
+    adj := adj.insert b (e :: adj.getD b [])
+  let mut seenV : Std.HashSet Nat := ∅
+  let mut trees := 0
+  let mut cyclic := 0
+  let mut wrongBorder := 0
+  for (v₀, _) in adj.toList do
+    if seenV.contains v₀ then continue
+    seenV := seenV.insert v₀
+    trees := trees + 1
+    let mut stack : List Nat := [v₀]
+    let mut nv := 0
+    let mut ends := 0
+    let mut nb := 0
+    while !stack.isEmpty do
+      let v := stack.head!
+      stack := stack.tail
+      nv := nv + 1
+      if onCurve.contains v then nb := nb + 1
+      for e in adj.getD v [] do
+        ends := ends + 1
+        let w := otherEnd F v e
+        if !seenV.contains w then
+          seenV := seenV.insert w
+          stack := w :: stack
+    if ends / 2 + 1 != nv then cyclic := cyclic + 1
+    if nb != 1 then wrongBorder := wrongBorder + 1
+  let uncovered := (inner.toList.filter fun v => !adj.contains v).length
+  if cyclic > 0 then why := why.push s!"{cyclic} components of the cuts with a cycle"
+  if wrongBorder > 0 then why := why.push s!"{wrongBorder} cut trees not meeting the curve at one vertex"
+  if uncovered > 0 then why := why.push s!"{uncovered} interior vertices off the cuts"
+  let base : Disc := { faces := queue.size, cuts := cuts.size, trees, inside, badCharts }
+  if !why.isEmpty then return { base with notDisc := ", ".intercalate why.toList }
+  -- The walk round the cut trees: at each vertex of the curve, clockwise from the edge
+  -- it came in by to the edge it leaves by, round every tree met there, the trees on
+  -- the right; at the start last on the left, first on the right, so that the walk
+  -- begins in the root face.
+  let stops : Array (Nat × Nat × Nat) :=
+    if left then
+      ((Array.range (m - 1)).map fun j => (cyc[j + 1]!.1, cyc[j]!.2, cyc[j + 1]!.2)).push
+        (cyc[0]!.1, cyc[m - 1]!.2, cyc[0]!.2)
+    else
+      #[(cyc[0]!.1, cyc[0]!.2, cyc[m - 1]!.2)] ++ (Array.range (m - 1)).map fun j' =>
+        let j := m - 1 - j'
+        (cyc[j]!.1, cyc[j]!.2, cyc[j - 1]!.2)
+  let mut fuel := 16 * nF + 8 * m + 64
+  let mut word : Array (GaussianInt × GaussianInt) := #[]
+  let mut seen : Std.HashSet Nat := ∅
+  let mut walkFailed := ""
+  for (b, ein, eout) in stops do
+    if !walkFailed.isEmpty then break
+    let mut cur := ein
+    let mut atEnd := false
+    while !atEnd do
+      if fuel == 0 then
+        walkFailed := "lost at a vertex of the curve"
+        break
+      fuel := fuel - 1
+      match F.cw[(b, cur)]? with
+      | none =>
+        walkFailed := "no face clockwise at a vertex of the curve"
+        break
+      | some (e₂, _, _) =>
+        if e₂ == eout then atEnd := true
+        else if curveEdges.contains e₂ then
+          walkFailed := "met the curve before the edge it leaves by"
+          break
+        else if cuts.contains e₂ then
+          -- Round the branch through `e₂`, back to `b` along `e₂`.
+          let mut v := otherEnd F b e₂
+          let mut arrived := e₂
+          while v != b && fuel > 0 do
+            if !seen.contains v then
+              seen := seen.insert v
+              if F.coarse[v]! && F.valence[v]! != 4 then
+                match F.cw[(v, arrived)]? with
+                | some (_, f, j) =>
+                  let at_ := ((chart[f]!).getD Motion.id).apply (gp (F.cornerPts[f]!)[j]!)
+                  word := word.push (quarter (4 - (F.valence[v]! : Int)), at_)
+                | none => walkFailed := "no face at a cone point"
+            -- Clockwise round `v` to the next cut edge.
+            let mut c := arrived
+            let mut next := false
+            while !next && fuel > 0 do
+              fuel := fuel - 1
+              match F.cw[(v, c)]? with
+              | none => fuel := 0
+              | some (e₃, _, _) =>
+                c := e₃
+                next := cuts.contains e₃
+            arrived := c
+            v := otherEnd F v c
+          if fuel == 0 then
+            walkFailed := "lost round a cut tree"
+            break
+          cur := arrived
+        else cur := e₂
+  if walkFailed.isEmpty && word.size != inside then
+    walkFailed := s!"{word.size} cone points visited of {inside} inside"
+  return { base with walkFailed, word := word.toList }
+
+/-- Proposition "The shift is set by the singularities" (a) on a sphere, for both
+regions of every simple curve of a round: the check of a disc, the word of first
+visits, and its composite against the development of the curve. The curve of the
+round from the station `k + ½` of `σ` is the curve of the turn whose path is the arcs
+that round crosses; its development `T = Turn.development` (`Holonomy.lean`) is a
+translation in the frame of the patch of `σ`, in quads. The root face lies in that
+patch, beside the first edge of the curve, so its chart is the identity: the composite
+must be `x ↦ x + 2 T` in fine coordinates for the region on the left of the curve and
+`x ↦ x - 2 T` for the region on its right (`B_D = T_γ` with `D` on the left, its
+inverse with `D` on the right). Also the Burgers sum, and the holonomy of the word
+`develop.py` gave the same turn (`ĥ(γ̄)`, the inverse of `T`), through the chart `R^k`
+of its first patch. -/
+def checkDiscs (ℓ : Fin n → ℕ) (fcs : Array (Face (Fin P)))
+    (faceEdgesK faceCorners : Array (Array Nat)) (facesAtEdge : Std.HashMap Nat (List Nat))
+    (index : Std.HashMap (Point (Fin P)) Nat) (rep valence : Array Nat) (coarse : Array Bool)
+    (curves : List (List (Nat × Nat))) (curveSt : List (Side (Fin P) × Nat))
+    (paths : Array (Option (Side (Fin P) × List (Fin n)))) (fox : Option RawFox) : IO Bool := do
+  let mut cw : Std.HashMap (Nat × Nat) (Nat × Nat × Nat) := ∅
+  let mut edgeEnds : Std.HashMap Nat (Nat × Nat) := ∅
+  for f in [0:faceEdgesK.size] do
+    let ks := faceEdgesK[f]!
+    let cs := faceCorners[f]!
+    for i in [0:4] do
+      cw := cw.insert (cs[i]!, ks[(i + 3) % 4]!) (ks[i]!, f, i)
+      edgeEnds := edgeEnds.insert ks[i]! (cs[i]!, cs[(i + 1) % 4]!)
+  let F : Fine P := { facePatch := fcs.map (·.patch.val), cornerPts := fcs.map fun f => (corners f).toArray,
+                      faceEdgesK, faceCorners, facesAtEdge, cw, edgeEnds, index, rep, valence, coarse }
+  let mut faceIndex : Std.HashMap (Face (Fin P)) Nat := ∅
+  for face in fcs do faceIndex := faceIndex.insert face faceIndex.size
+  -- The turns of the export by their first side and path, for the words of `develop.py`.
+  let mut byPath : Std.HashMap (Nat × List Nat) Nat := ∅
+  for i in [0:paths.size] do
+    if let some (σ, l) := paths[i]?.join then byPath := byPath.insert (sideIndex σ, l.map Fin.val) i
+  let fu : Nat → GaussianIntˣ := fun i => match fox with
+    | some fx => giUnit ^ (4 - fx.cones[i]!.1)
+    | none => 1
+  let fp : Nat → GaussianInt := fun i => match fox with
+    | some fx => gauss fx.cones[i]!.2.1 fx.cones[i]!.2.2
+    | none => 0
+  let fuel := T.stations (List.finRange P) ℓ + 1
+  let mut tested := 0
+  let mut skipped := 0
+  let mut noTurn := 0
+  let mut rootBad := 0
+  let mut ofExport := 0
+  let mut letters := 0
+  let mut cutsN := 0
+  let mut treesN := 0
+  let mut badCharts := 0
+  let mut discC : Count := {}
+  let mut wordC : Count := {}
+  let mut compC : Count := {}
+  let mut burgC : Count := {}
+  let mut foxC : Count := {}
+  for (c, (σ, k)) in curves.zip curveSt do
+    let cyc := c.toArray
+    if (Std.HashSet.ofList (c.map (·.1))).size != c.length then continue
+    if cyc.isEmpty || cyc.any (fun ue => !facesAtEdge.contains ue.2) then
+      skipped := skipped + 1
+      continue
+    let some path := roundPath T ℓ σ fuel (TMesh.station σ k) []
+      | noTurn := noTurn + 1
+        continue
+    let some γ := mkTurn T σ path
+      | noTurn := noTurn + 1
+        continue
+    let D := γ.development ℓ
+    let known := byPath[(sideIndex σ, path.map Fin.val)]?
+    if known.isSome then ofExport := ofExport + 1
+    let x₀ := T.sidePoint ℓ σ (2 * k + 1)
+    let d := TMesh.inward σ
+    for left in [true, false] do
+      -- The face beside the first edge of the curve, from `x₀` into the patch of `σ`.
+      let nrm := if left then gi * d else -(gi * d)
+      let x := (x₀.x : Int) + min (min 0 d.re) (min nrm.re (d.re + nrm.re))
+      let y := (x₀.y : Int) + min (min 0 d.im) (min nrm.im (d.im + nrm.im))
+      let some root := faceIndex[(⟨σ.1, x.toNat, y.toNat⟩ : Face (Fin P))]?
+        | rootBad := rootBad + 1
+          continue
+      if !(faceEdgesK[root]!.contains cyc[0]!.2) then
+        rootBad := rootBad + 1
+        continue
+      tested := tested + 1
+      let r := discOf T F ℓ x₀ cyc left root
+      let at_ := s!"station {k} of side {sideIndex σ}, {if left then "left" else "right"}"
+      badCharts := badCharts + r.badCharts
+      discC := discC.add r.notDisc.isEmpty fun _ =>
+        s!"{at_}: {r.faces} faces, {r.cuts} cuts, {r.trees} trees: {r.notDisc}"
+      if !r.notDisc.isEmpty then continue
+      cutsN := cutsN + r.cuts
+      treesN := treesN + r.trees
+      wordC := wordC.add r.walkFailed.isEmpty fun _ => s!"{at_}: {r.walkFailed}"
+      if !r.walkFailed.isEmpty then continue
+      letters := letters + r.word.length
+      let comp := Motion.composeAll (Motion.rotations r.word)
+      -- `B_D` of the proposition in fine units: `T` with the region on the left of the
+      -- curve, `-T` with the region on its right.
+      let developed : GaussianInt := (if left then 2 else -2) * D.trans
+      compC := compC.add (D.lin == 1 && comp.lin == 1 && comp.trans == developed) fun _ =>
+        s!"{at_}: composite {showG comp.lin}, {showG comp.trans}; development {showG D.lin}, {showG D.trans}; {r.word.length} cone points {r.word.map fun (u, p) => (showG u, showG p)}"
+      burgC := burgC.add (Motion.burgers r.word == comp.trans) fun _ =>
+        s!"{at_}: Burgers sum {showG (Motion.burgers r.word)}, composite {showG comp.trans}"
+      if let (some i, some fx) := (known, fox) then
+        if h : i < fx.turns.size then
+          let (w, chart) := fx.turns[i]
+          let mh := hol fu fp w
+          foxC := foxC.add (mh.lin == 1 &&
+              quarter chart * comp.trans == (if left then -2 else 2) * mh.trans) fun _ =>
+            s!"{at_}, turn {i}: composite {showG comp.lin}, {showG comp.trans}; develop.py {showG mh.lin}, {showG mh.trans}, chart R^{chart}"
+  IO.println s!"  regions of the simple curves on the sphere, both sides: {tested} (rounds of a turn of the export: {ofExport}; curves skipped {skipped}, without a turn {noTurn}; without a root face {rootBad})"
+  discC.show "regions: the cuts (interior edges off a dual spanning tree) form a forest, each tree meeting the curve at one vertex, every interior vertex on it (a disc)"
+  IO.println s!"    {cutsN} cut edges in {treesN} trees; changes of chart across the dual trees not taking an edge to the points glued to it: {badCharts}"
+  wordC.show "regions: the walk round the cut trees visits every cone point inside (the word in the order of first visit)"
+  IO.println s!"    {letters} letters in the words of the regions"
+  compC.show "regions: composite of the rotations in first-visit order, region on the left, = Turn.development (Prop. 'The shift is set by the singularities' (a): B_D = T_γ with D on its left, the inverse with D on its right; fine units, 2 T)"
+  burgC.show "regions: Burgers sum ∑ Qᵢ (1 - Rᵢ) pᵢ = translation of the composite (Motion.burgers)"
+  if fox.isSome then
+    foxC.show "regions: composite = inverse of the holonomy of the word of develop.py for the same turn, through the chart R^k of its first patch"
+  return discC.ok && wordC.ok && compC.ok && burgC.ok && foxC.ok && badCharts == 0 && rootBad == 0
+
 /-- The checks of the quad mesh at the whole lengths: see the section above.
 `lengthShift` holds `(index, γ.length, γ.shift)` at the whole lengths for the turns
 with a half-integer in their corridor, for the parity. -/
-def checkGrid (whole : Array ℚ) (lengthShift : Array (Nat × ℚ × ℚ)) : IO Bool := do
+def checkGrid (whole : Array ℚ) (lengthShift : Array (Nat × ℚ × ℚ))
+    (paths : Array (Option (Side (Fin P) × List (Fin n)))) (fox : Option RawFox) : IO Bool := do
   if whole.any (fun x => x.den ≠ 1 || x ≤ 0) then
     IO.println "  grid: an arc of length zero at the whole lengths, the quad mesh is not built"
     return true
@@ -951,6 +1357,8 @@ def checkGrid (whole : Array ℚ) (lengthShift : Array (Nat × ℚ × ℚ)) : IO
   -- edge is from the point to the side, one more step in the direction of the line.
   let mut seen : Std.HashSet (List Nat) := ∅
   let mut curves : List (List (Nat × Nat)) := []
+  -- The station of each curve, in the same order.
+  let mut curveSt : List (Side (Fin P) × Nat) := []
   let mut offGrid := 0
   let mut rounds := 0
   let mut stopped := 0
@@ -990,6 +1398,7 @@ def checkGrid (whole : Array ℚ) (lengthShift : Array (Nat × ℚ × ℚ)) : IO
             if !seen.contains key then
               seen := seen.insert key
               curves := cyc.toList :: curves
+              curveSt := (σ, k) :: curveSt
   IO.println s!"  rounds of the walk from every station: {rounds}, {curves.length} distinct curves, {stopped} stopped"
   -- Lemma "Gauss–Bonnet for turns" on the regions of every simple curve.
   let mut gb : Count := {}
@@ -1009,7 +1418,14 @@ def checkGrid (whole : Array ℚ) (lengthShift : Array (Nat × ℚ × ℚ)) : IO
         s!"a region of {r.faces} faces with χ = {r.euler} holds index {total}"
   IO.println s!"  simple curves: {simple}; their regions: {regionsTotal} (curves by number of regions {byRegions.toList.mergeSort (fun a b => a.1 ≤ b.1)}); curve edges off the grid: {offGrid}"
   gb.show "Gauss–Bonnet on the fine grid: regions of simple curves with ∑ (4 - k) = 4 χ"
-  return ok && gb.ok && parity.ok
+  -- Proposition "The shift is set by the singularities" (a) on the regions, on a sphere.
+  let discs ← if euler == 2 then
+      checkDiscs T ℓ fcs faceEdgesK faceCorners facesAtEdge index rep valence coarse curves
+        curveSt paths fox
+    else
+      IO.println s!"  regions of the simple curves: not a sphere (χ = {euler}), no discs checked"
+      pure true
+  return ok && gb.ok && parity.ok && discs
 
 def checkRaw (raw : Raw) : IO Bool := do
   let P := raw.patches
@@ -1092,6 +1508,12 @@ def checkRaw (raw : Raw) : IO Bool := do
   -- The coefficients of `shiftForm` and the walk of every turn built, by index.
   let mut forms : Array (Option (Array Int)) := Array.replicate raw.turns.size none
   let mut paths : Array (Option (Side (Fin P) × List (Fin n))) := Array.replicate raw.turns.size none
+  -- `Turn.development` (`Holonomy.lean`) of every turn built, by index, when every
+  -- length is a positive whole number (the quad mesh of `checkGrid` is then built).
+  let positive := raw.whole.all fun x => x.den == 1 && x > 0
+  let ℓN : Fin n → ℕ := fun a => (raw.whole[a.val]!).num.toNat
+  let mut devs : Array (Option (Motion GaussianInt GaussianInt)) := Array.replicate raw.turns.size none
+  let mut developed : Count := {}
   for t in raw.turns do
     let some start := (sideOf t.start : Option (Side (Fin P)))
       | throw <| IO.userError "start side out of range"
@@ -1118,6 +1540,19 @@ def checkRaw (raw : Raw) : IO Bool := do
     -- `γ.shift ℓ`, read through the coefficients (equal to `shiftForm` at every arc).
     let shiftAt (ℓ : Fin n → ℚ) : ℚ := evalForm (fun a => c[a.val]!) ℓ
     let sWhole := shiftAt whole
+    -- The development at the whole lengths: the translation by `-α e₁ + shift e₂` in the
+    -- frame of the first side, `α` the library's `Turn.length`.
+    if positive then
+      let dv := γ.development ℓN
+      if t.index < devs.size then devs := devs.set! t.index (some dv)
+      let α := γ.length whole
+      let α' := Check.along T whole start path
+      if α != α' then IO.println s!"    turn {t.index}: Turn.length {α}, along {α'}"
+      let e₁ := TMesh.inward start
+      let e₂ := TMesh.acrossDir start
+      developed := developed.add (dv.lin == 1 &&
+          dv.trans == -(α.num : GaussianInt) * e₁ + (sWhole.num : GaussianInt) * e₂) fun _ =>
+        s!"turn {t.index}: development {showG dv.lin}, {showG dv.trans}; α {α}, shift {sWhole}, e₁ {showG e₁}, e₂ {showG e₂}"
     let engineAt (ℓ : Fin n → ℚ) : ℚ := evalForm (fun a => engine[a.val]!) ℓ
     let gap (ℓ : Fin n → ℚ) : ℚ := |shiftAt ℓ - engineAt ℓ|
     gaps := (max gaps.1 (gap whole), max gaps.2.1 (gap walked), max gaps.2.2 (gap real))
@@ -1169,10 +1604,14 @@ def checkRaw (raw : Raw) : IO Bool := do
   atReal.show "real lengths: walk comes back at offset + shift"
   IO.println s!"  whole lengths: {wholeTurns} of {raw.turns.size} turns have a half-integer in their corridor"
   atWhole.show "whole lengths: half-integers of the corridors, walk comes back at offset + shift"
+  if positive then
+    developed.show "whole lengths: Turn.development = translation by -α e₁ + shift e₂ (Holonomy.lean)"
+  else
+    IO.println "  whole lengths: an arc of length zero, no development of the turns"
   ok := ok && built.ok && modulo.ok && corridor.ok && passes.ok && back.ok && atReal.ok &&
-    atWhole.ok
+    atWhole.ok && developed.ok
   -- The quad mesh at the whole lengths, its curves and their regions (`Grid.lean`).
-  let gridOk ← checkGrid T raw.whole lengthShift
+  let gridOk ← checkGrid T raw.whole lengthShift paths raw.fox
   ok := ok && gridOk
   -- Theorem "Forced shifts", with the certificates of `certify.py`.
   match raw.forced with
@@ -1186,7 +1625,7 @@ def checkRaw (raw : Raw) : IO Bool := do
   match raw.fox with
   | some fox =>
     IO.println s!"  whole lengths balanced (B ℓ = 0): {unbalanced.isEmpty}"
-    let good ← checkFox T whole forms paths fox
+    let good ← checkFox T whole forms paths devs fox
     ok := ok && good && unbalanced.isEmpty
   | none => IO.println s!"  Fox–Burgers: out of scope, {raw.foxSkipped}"
   return ok

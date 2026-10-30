@@ -35,6 +35,40 @@
 \IfFileExists{version.tex}{\input{version.tex}}{}
 \providecommand{\enginecommit}{unknown}
 
+% Levels of evidence: each statement and table is framed with a tag naming
+% what checks it (Lean, the engine's data, a measure, the proof on paper, a
+% citation), read from the README of ../turns-of-a-t-mesh/lean, as in the companion
+% paper. evidence.py, in that folder, checks that every statement has a level
+% and that every Lean name cited is declared there. \def\plain{} before \input{paper} gives the paper
+% without them, for a venue that wants it plain.
+\newcommand{\lean}[1]{\texttt{\detokenize{#1}}}
+\ifdefined\plain
+\newenvironment{evidence}[3][]{}{}
+\else
+\usepackage[most]{tcolorbox}
+\newcommand{\evlevel}[2]{\expandafter\newcommand\csname ev-name-#1\endcsname{#2}}
+\evlevel{lean}{Lean, complete}
+\evlevel{core}{Lean, algebraic core}
+\evlevel{data}{Checked on the engine's data}
+\evlevel{measured}{Measured}
+\evlevel{prose}{Proof on paper only}
+\evlevel{tested}{Conjecture, checked by computer}
+\evlevel{cited}{Standard, cited}
+\evlevel{open}{Open, no claim}
+\newcommand{\evname}[1]{\csname ev-name-#1\endcsname}
+\tcbset{evstyle-lean/.style={}, evstyle-core/.style={}, evstyle-data/.style={},
+  evstyle-measured/.style={}, evstyle-tested/.style={}, evstyle-prose/.style={},
+  evstyle-cited/.style={},
+  evstyle-open/.style={frame hidden, borderline={0.4pt}{0pt}{black!45, dashed}}}
+\newtcolorbox{evidence}[3][]{breakable, enhanced, colback=white,
+  colframe=black!45, boxrule=0.4pt, arc=0pt, left=4pt, right=4pt, top=2pt,
+  bottom=2pt, before skip=6pt, after skip=6pt, evstyle-#2,
+  title={\footnotesize\textsc{\evname{#2}}\if\relax\detokenize{#3}\relax\else
+    \quad #3\fi},
+  coltitle=black, colbacktitle=white, titlerule=0.4pt, toptitle=1pt,
+  bottomtitle=1pt, #1}
+\fi
+
 \title{Closing Edge Loops at Quantization Time:\\
 Helix Constraints for T-Mesh Quantization\\[0.5em]
 \large Research note --- draft, not peer reviewed}
@@ -270,6 +304,7 @@ sums of arc lengths along the rims of $P$ and $Q$, the position of a rim
 point being the sum of the lengths of the arcs between it and the first
 corner.
 
+\begin{evidence}{core}{\lean{TMesh.Turn.shift_linear}, \lean{TMesh.Turn.mem_corridor_iff}, \lean{TMesh.Turn.comes_back}, \lean{TMesh.Turn.winds}; examples: \lean{TMesh.twistedTorus.walk_turn}; assumed: an oriented gluing; the corridor without half-integers is not formalized}
 \begin{proposition}[The shift of a turn is linear]\label{prop:linear}
 For a turn $\gamma$ there are integer coefficients $c_a$, independent of the
 lengths, such that after a full turn a point of the first side has moved
@@ -286,6 +321,7 @@ moreover $o + j\,\shift_\gamma(\ell)$ lies in the corridor for $j = 1, \dots,
 t - 1$, it winds $t$ times round as a helix of pitch $|\shift_\gamma(\ell)|$
 in the sense of~\cite{bommes2011structure}.
 \end{proposition}
+\end{evidence}
 
 \begin{proof}[Sketch]
 Each crossing is a map $x \mapsto R^k x + t$ with $R$ the quarter-turn and
@@ -343,6 +379,7 @@ sequence of quads, each sharing with the next the edge opposite the one it
 shares with the previous.
 \end{definition}
 
+\begin{evidence}{core}{\lean{Completeness.completeness_at_given_lengths}, in a model; assumed: integer rectangles glued along their arcs by $t \mapsto \pm t + c$, $c$ whole; a closed surface, crossing an arc taking the unit edges of a side one to one onto unit edges; that the cycles of the model are the strips of the mesh; the strips that reach a border are not formalized}
 \begin{proposition}[Completeness at given lengths]\label{prop:complete}
 Let $\ell$ be as in the definition. Every strip of the quad mesh that
 crosses a side $\sigma$ of a patch $P$ at the quad edge $[k, k+1]$ of
@@ -353,6 +390,7 @@ cycle, and a strip closes after one round exactly when the turn it follows
 has $\shift_\gamma(\ell) = 0$. With borders, the strips that reach a border
 are open paths of the walk.
 \end{proposition}
+\end{evidence}
 
 \begin{proof}
 Inside $P$, the quads of the strip are the unit squares between the grid
@@ -927,7 +965,7 @@ proved the propositions, and drafted the text. References were checked for
 existence, and the note of each bibliography entry says how much of the work
 was read. A work of which only the abstract, or a review, was read is cited only for what that abstract or review states. Weaker forms of Propositions~\ref{prop:linear}
 and~\ref{prop:complete} are checked in Lean~4~\cite{demoura2021lean4} in the
-companion paper; everything else here not checked by machine was written
+companion paper, as the tag above each says; everything else here not checked by machine was written
 with AI help and checked by AI agents rereading it and testing it on the
 data, not by a human expert. The note has not been peer reviewed; the author,
 who publishes it, is responsible for its content.

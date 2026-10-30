@@ -1081,6 +1081,25 @@
    "turns_where_not_bipartite": 510,
    "edges": "classes of midpoints (GridEuler.lean), not pairs of vertices",
    "program": "lake build check; Check/check_exports.py (the binary), definitions of Grid.lean, Bipartite.lean evaluated"
+  },
+  "development": {
+   "turns_developed": 4898,
+   "development_is_minus_alpha_e1_plus_shift_e2": 4898,
+   "spheres_with_words": 34,
+   "holonomy_of_word_is_inverse_of_development": 3865,
+   "holonomies": 3865,
+   "program": "Turn.development of Holonomy.lean evaluated by Check/Main.lean; the words of develop.py, Fox.hol"
+  },
+  "cut_discs": {
+   "regions_tested": 1852,
+   "discs": 1852,
+   "words_visiting_every_cone_point": 1852,
+   "composite_equals_development": 1852,
+   "composites": 1852,
+   "burgers_sum_equals_translation": 1852,
+   "agree_with_develop_py": 1488,
+   "with_a_word_of_develop_py": 1488,
+   "program": "Check/Main.lean: dual spanning tree, forest of cuts, first-visit word, against Turn.development; the model is CutDisc.lean"
   }
  },
  "made_with": "python3 docs/research/turns-of-a-t-mesh/experiments/property/generate.py --count 50 --seed 1"

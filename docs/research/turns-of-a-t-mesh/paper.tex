@@ -162,7 +162,8 @@ computer}, checked exactly on random T-meshes that do not come from the
 engine, the tag saying on how many instances and of what genus (the property
 tests of the data package, \texttt{experiments/property}): a test refutes or
 corroborates and proves nothing, and a tag at another level says
-\emph{tested} where the same tests also ran; \textsc{standard, cited}; and
+\emph{tested} where the same tests also ran, and \emph{examples} where Lean
+checks it on a fixed instance; \textsc{standard, cited}; and
 \textsc{open, no claim}, a question or a conjecture. The Lean names are those
 of the commit on the first page, built without \texttt{sorry}.
 \fi
@@ -226,7 +227,7 @@ Crossing from patch $P$ to patch $Q$ across an arc composes a quarter-turn
 rotation of the local frame with a translation whose components are signed
 sums of arc lengths along the rims of $P$ and $Q$.
 
-\begin{evidence}{core}{\lean{TMesh.Turn.shift_linear}, \lean{TMesh.Turn.mem_corridor_iff}, \lean{TMesh.Turn.comes_back}, \lean{TMesh.Turn.winds}; assumed: an oriented gluing; only the offset across the walk is followed; the corridor without half-integers is not formalized}
+\begin{evidence}{core}{\lean{TMesh.Turn.shift_linear}, \lean{TMesh.Turn.mem_corridor_iff}, \lean{TMesh.Turn.comes_back}, \lean{TMesh.Turn.winds}, \lean{TMesh.Turn.development_eq} (in the plane, $T_\gamma(\ell) = -\alpha_\gamma(\ell) e_1 + \shift_\gamma(\ell) e_2$ at whole lengths); examples: \lean{TMesh.twistedTorus.walk_turn}; tested: the development against the holonomy of the word of the turn on 3{,}865 turns of 34 spheres; assumed: an oriented gluing; the corridor without half-integers is not formalized}
 \begin{proposition}[The shift of a turn is linear]\label{prop:linear}
 For a turn $\gamma$ there are integer coefficients $c_a$, independent of the
 lengths, such that after a full turn a point of the first side has moved
@@ -378,7 +379,7 @@ check of the four directions): each lobe sees a second convex corner and holds
 $2$, and the third region the rest of the total $8$.
 \end{proof}
 
-\begin{evidence}{core}{\lean{Motion.burgers_eq_sum}, \lean{Motion.composeAll_rotations}, \lean{Forest.glue_eq_preorder}, \lean{Motion.annulus_holonomy}; tested: (c) on 898 annuli without cone point of 50 random instances; assumed: the holonomy of the curve is the composition of the rotations round the cone points}
+\begin{evidence}{core}{\lean{CutDisc.holonomy_eq_preorder}, \lean{Cut.jump_eq} (on a disc cut along a forest, modelled by the walk round its border: the recursion $G_f = G_{f_r} \circ \dots \circ G_{f_1} \circ \rho_v$ and the holonomy of the border as the composite of the cone rotations in the order of first visit), \lean{CutDisc.holonomy_trans}, \lean{Motion.burgers_eq_sum}, \lean{Motion.annulus_holonomy}; examples: \lean{CutDisc.threeSquares_holonomy}; tested: on every sphere of 50 random instances, both regions of every simple curve are such cut discs (a forest of cuts, each tree touching the border once) and the composite of their rotations is the development \lean{TMesh.Turn.development} of the turn, $B_D = T_\gamma(\ell)$ with $D$ on the left, on 1{,}852 regions; (c) on 898 annuli; assumed: that the region of the curve is the cut disc of the model, and that the holonomy of its border is the development of the turn}
 \begin{proposition}[The shift is set by the singularities]\label{prop:burgers}
 Let $\gamma$, $\gamma_1$, $\gamma_2$ be turns with simple curves.
 \begin{enumerate}
@@ -1850,7 +1851,7 @@ complexity of maximizing $Q$ over a polytope of lengths in reals.
 \section{What is machine-checked}\label{sec:lean}
 
 The folder \texttt{lean} beside this note is a Lean~4~\cite{demoura2021lean4}
-project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $480$
+project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $527$
 theorem declarations, many of them small lemmas, depend only on Lean's
 standard axioms; the count is not evidence, and its \texttt{README.md} maps
 each statement to its Lean theorems. Lean checks the algebraic and
@@ -1867,21 +1868,30 @@ Remark~\ref{rem:definite}, Theorem~\ref{thm:forced} and, through the quad
 mesh it defines at whole lengths, Proposition~\ref{prop:parity} form one
 checked chain. The other statements keep their own abstraction (a turn as a list of
 motions, a region as finite sets with counts); the surface and the cross field
-behind the T-mesh, its orientation and the link between the shift and the
-holonomy $\hat h$ are not formalized.
+behind the T-mesh and its orientation are not formalized. The development of
+a turn in the plane is (\texttt{Holonomy.lean}): the changes of chart across
+the arcs compose to $T_\gamma(\ell) = -\alpha_\gamma(\ell) e_1 +
+\shift_\gamma(\ell) e_2$ at whole lengths; that it is the inverse of the
+holonomy $\hat h(\bar\gamma)$ of the flat metric, and that this holonomy is
+the product of the rotations round the cone points, are not.
 
 \ifdefined\plain
 \emph{Checked}, statement by statement. On the T-mesh, with the frames of
 the patches those of one orientation of the surface:
 Proposition~\ref{prop:linear} for the offset across the walk, that is the
 integer coefficients of $\shift_\gamma$, independent of $\ell$, the corridor
-cut out by linear inequalities in the offset and $\ell$, and the walk coming
-back at $o + \shift_\gamma(\ell)$ and winding as a helix; that this walk from
+cut out by linear inequalities in the offset and $\ell$, the walk coming
+back at $o + \shift_\gamma(\ell)$ and winding as a helix, and, in the plane
+at whole lengths, the development of the turn equal to the translation by
+$-\alpha_\gamma(\ell) e_1 + \shift_\gamma(\ell) e_2$; that this walk from
 a half-integer is a dual line of the quad mesh is the completeness proposition
 below, in its own model. For motions with linear parts in any
 ring: the Burgers sum, and that the recursion of the gluing maps of a tree of
-cuts, a hypothesis, unfolds into the order of first visit
-(Proposition~\ref{prop:burgers}(a)); the cut annulus~(b); exchanges; the
+cuts unfolds into the order of first visit; the recursion itself on a disc cut
+along a forest, modelled by the walk round the border of the cut disc with the
+face corners met at each vertex (Proposition~\ref{prop:burgers}(a)); that a
+region of the quad mesh is such a cut disc is decided by the program on every
+region, not proved; the cut annulus~(b); exchanges; the
 conjugation step of Proposition~\ref{prop:winding}. Over the reals: the four
 orders and orientations of a dislocation and straight chains
 (Proposition~\ref{prop:dislocation}(i), (ii)); staircases; the positivity of
