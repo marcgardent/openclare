@@ -119,6 +119,50 @@ theorem bd1_comp_bd2 : S.bd1 ∘ₗ S.bd2 = 0 := by
     map_sum, map_smul, bd1_single, Fintype.sum_prod_type, ← Finset.smul_sum, sum_endsVec_face,
     smul_zero, Finset.sum_const_zero]
 
+/-! ### The 2-chains without boundary -/
+
+theorem eq_of_bd2_eq_zero {x : F → ZMod 2} (hx : S.bd2 x = 0) {f g : F}
+    (h : ∃ i j, S.faceEdge f i = S.faceEdge g j) : x f = x g := by
+  obtain ⟨i, j, hij⟩ := h
+  by_cases hfg : (f, i) = (g, j)
+  · simp only [Prod.mk.injEq] at hfg; rw [hfg.1]
+  have key : ∀ p q : ZMod 2, p + q = 0 → p = q := by decide
+  have hsum := congrFun hx (S.faceEdge g j)
+  rw [bd2_apply] at hsum
+  obtain ⟨a, b, hab, hset⟩ := Finset.card_eq_two.1 (S.two_slots (S.faceEdge g j))
+  have hf : (f, i) ∈ ({a, b} : Finset (F × Fin 4)) := by rw [← hset]; simp [hij]
+  have hg : (g, j) ∈ ({a, b} : Finset (F × Fin 4)) := by rw [← hset]; simp
+  rw [hset, Finset.sum_pair hab] at hsum
+  simp only [Finset.mem_insert, Finset.mem_singleton] at hf hg
+  rcases hf with hf | hf <;> rcases hg with hg | hg
+  · exact absurd (hf.trans hg.symm) hfg
+  · subst hf hg; exact key _ _ hsum
+  · subst hf hg; exact (key _ _ hsum).symm
+  · exact absurd (hf.trans hg.symm) hfg
+
+/-- A 2-chain without boundary is constant. -/
+theorem ker_bd2_le : LinearMap.ker S.bd2 ≤ Submodule.span (ZMod 2) {fun _ => 1} := by
+  intro x hx
+  rcases isEmpty_or_nonempty F with hF | ⟨⟨f₀⟩⟩
+  · rw [Subsingleton.elim x 0]; exact Submodule.zero_mem _
+  refine Submodule.mem_span_singleton.2 ⟨x f₀, funext fun f => ?_⟩
+  have : x f₀ = x f := by
+    induction S.faceConnected f₀ f with
+    | refl => rfl
+    | tail _ hab ih => exact ih.trans (S.eq_of_bd2_eq_zero hx hab)
+  simp [this]
+
+theorem finrank_ker_bd2_le : Module.finrank (ZMod 2) (LinearMap.ker S.bd2) ≤ 1 :=
+  (Submodule.finrank_mono S.ker_bd2_le).trans ((finrank_span_le_card _).trans (by simp))
+
+/-- `∂₂` has rank at least `F − 1`. -/
+theorem card_faces_le :
+    Fintype.card F ≤ Module.finrank (ZMod 2) (LinearMap.range S.bd2) + 1 := by
+  have h := LinearMap.finrank_range_add_finrank_ker S.bd2
+  rw [Module.finrank_fintype_fun_eq_card] at h
+  have := S.finrank_ker_bd2_le
+  omega
+
 end QuadSurface
 
 end TurnsOfATMesh
