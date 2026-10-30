@@ -6,6 +6,8 @@ Le banc fait tourner openclare et deux autres remailleurs sur {{count:all}} mod�
 
 Les remailleurs : **openclare** tel que l'extension Blender le lance ; **QuadriFlow**, intégré à Blender ; **AutoRemesher** 1.2.0 de Jeremy Hu. Les notes sont absolues : un remailleur garde sa note quels que soient ceux auxquels on le compare.
 
+Au-delà du banc, l'[état du marché](market.fr.md) : les outils de retopologie pour Blender en 2026, leurs moteurs et où ils sont vendus.
+
 ## Notes moyennes
 
 {{averages}}

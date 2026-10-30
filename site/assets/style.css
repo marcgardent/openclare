@@ -201,6 +201,10 @@ a.brand:hover .cursor { animation: blink 1s steps(1) infinite; }
 }
 .site-nav a:hover { border-bottom-color: var(--rule); }
 .site-nav a[aria-current="page"] { color: var(--teal-text); border-bottom-color: var(--teal); }
+/* "Get it": a button beside the menu, not one more tab. */
+.site-nav .nav-get { margin-left: 8px; }
+.site-nav .nav-get a.button { min-height: 40px; padding: 0 16px; border-width: 1.5px; font-size: 14px; }
+.site-nav .nav-get a.button[aria-current="page"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
 
 .language {
   display: flex;
@@ -225,7 +229,8 @@ a.brand:hover .cursor { animation: blink 1s steps(1) infinite; }
   .site-header .bar { gap: 4px 16px; }
   .language { margin-left: auto; }
   .site-nav { order: 3; flex-basis: 100%; margin-left: 0; }
-  .site-nav ul { gap: 0 18px; }
+  .site-nav ul { gap: 0 18px; align-items: center; }
+  .site-nav .nav-get { margin-left: auto; }
 }
 
 /* ------------------------------------------------------------ page intro */

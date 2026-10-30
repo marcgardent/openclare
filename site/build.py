@@ -102,6 +102,7 @@ WORDS = {
         "research": "Research",
         "get": "Get it",
         "market": "State of the market",
+        "science": "Science",
         "retopology": "Retopology Tools 2026",
         "engines": "Retopology Engines 2026",
         "platforms": "Distribution platforms 2026",
@@ -140,6 +141,7 @@ WORDS = {
         "research": "Recherche",
         "get": "L'obtenir",
         "market": "État du marché",
+        "science": "Science",
         "retopology": "Outils de retopologie 2026",
         "engines": "Moteurs de retopologie 2026",
         "platforms": "Plateformes de distribution 2026",
@@ -169,9 +171,14 @@ WORDS = {
 }
 
 # The logo leads home; the navigation lists the other pages.
-NAVIGATION = ("theory", "results", "market", "glossary", "research", "get")
+# The menu, in the order a visitor goes deeper: the home page is for the
+# artist (the logo), then the bench, the words, the science. "Get it" is a
+# button beside the menu.
+NAVIGATION = ("results", "glossary", "science")
+# A menu item with no page of its own leads to this one.
+NAVIGATION_TARGETS = {"science": "theory"}
 # The pages each item of the navigation stands for, beside its own.
-SECTIONS = {"results": ("models/",), "market": ("retopology", "engines", "platforms")}
+SECTIONS = {"results": ("models/", "market", "retopology", "engines", "platforms"), "science": ("theory", "research")}
 # The lists of the state of the market, in the order they are shown.
 MARKET = ("retopology", "engines", "platforms")
 
@@ -864,10 +871,13 @@ class Site:
         other = "fr" if language == "en" else "en"
         nav = []
         for item in NAVIGATION:
-            target = posixpath.relpath(self.page_path(item, language), here)
+            target = posixpath.relpath(self.page_path(NAVIGATION_TARGETS.get(item, item), language), here)
             current = ' aria-current="page"' if item == key or key.split("/")[0] in SECTIONS.get(item, ()) or any(key.startswith(p) for p in SECTIONS.get(item, ()) if p.endswith("/")) else ""
             nav.append(f'<li><a href="{target}"{current}>{words[item]}</a></li>')
         nav.append(f'<li><a href="{REPOSITORY}" rel="noopener">{words["github"]}</a></li>')
+        get = posixpath.relpath(self.page_path("get", language), here)
+        current = ' aria-current="page"' if key == "get" else ""
+        nav.append(f'<li class="nav-get"><a class="button primary" href="{get}"{current}>{words["get"]}</a></li>')
         other_href = posixpath.relpath(self.page_path(key, other), here)
         cells = []
         for code in LANGUAGES:
@@ -1546,10 +1556,11 @@ class Site:
 
     def market_crumbs(self, key, language, parent=None, name=None):
         """The breadcrumb of a page under the state of the market: the
-        market, the list the page belongs to (`parent`), then its name."""
+        results, the market, the list the page belongs to (`parent`), then
+        its name."""
         here = posixpath.dirname(self.page_path(key, language)) or "."
         words = WORDS[language]
-        steps = ["market"] + ([parent] if parent else [])
+        steps = ["results"] + (["market"] if key != "market" else []) + ([parent] if parent else [])
         links = " › ".join(f'<a href="{posixpath.relpath(self.page_path(k, language), here)}">{html.escape(words[k])}</a>' for k in steps)
         return f'<nav class="breadcrumb" aria-label="breadcrumb">{links} › {html.escape(name or words[key])}</nav>'
 
@@ -1635,7 +1646,8 @@ class Site:
                 bands.append(f'<article class="tile"><div class="tile-facts"><h3><a href="{href}">{WORDS[language][target]}</a></h3>'
                              f'</div><p class="tile-what">{line}</p></article>')
             body = body.replace("<p>{{market}}</p>", f'<div class="tiles">{"".join(bands)}</div>')
-            self.write("market", language, self.title_of(text), body, headings, "market", self.description_of(text), toc=False)
+            self.write("market", language, self.title_of(text), body, headings, "market", self.description_of(text), toc=False,
+                       breadcrumb=self.market_crumbs("market", language))
 
     def retopology(self):
         tools, platforms, taxonomy, engines = self.retopology_data()
