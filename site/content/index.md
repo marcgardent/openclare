@@ -29,6 +29,14 @@ Select an edge loop with Alt-click: it should go round the arm once and close. A
 
 *A human body at 10,590 quads: by openclare without closing loops, with closing, by hand and by QuadriFlow. Spiral loops in vermillion, closed loops in dark blue.*
 
+## Fingers that stay fingers
+
+A whole body at 3,000 quads leaves little for each hand, and many remeshers give the fingers up: they melt into a mitten. openclare keeps at least six quads round every thin part, a finger or the tip of an ear, with smaller quads there and larger ones elsewhere, so the part keeps its volume instead of coming out flat (*Quads Around Thin Parts*).
+
+![The right hand of a human body at 3,000 quads: the source, openclare with five fingers, Instant Meshes with a mitten](../../docs/images/fingers.webp)
+
+*The right hand of a human body asked at 3,000 quads: the source, openclare (3,032 quads), Instant Meshes (2,800 quads). On the thin parts the bench measures openclare 0.09 quad edge from the source, Instant Meshes 0.84.*
+
 ## See it in 3D
 
 Turn round the results of openclare and of two other remeshers, quad by quad.
