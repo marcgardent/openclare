@@ -25,3 +25,4 @@ public import TurnsOfATMesh.Periods
 public import TurnsOfATMesh.Gadget
 public import TurnsOfATMesh.AnySurface
 public import TurnsOfATMesh.Grid
+public import TurnsOfATMesh.Bipartite
