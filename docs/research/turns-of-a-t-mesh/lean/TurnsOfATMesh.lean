@@ -30,3 +30,4 @@ public import TurnsOfATMesh.GridEuler
 public import TurnsOfATMesh.SphereBipartite
 public import TurnsOfATMesh.GridSurface
 public import TurnsOfATMesh.Coarse
+public import TurnsOfATMesh.CoarseEuler
