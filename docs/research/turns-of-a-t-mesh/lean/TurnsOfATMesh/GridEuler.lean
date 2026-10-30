@@ -295,6 +295,115 @@ theorem parity_of_same {allArcs : List α} {ℓ : α → ℕ} {p q : Point Patch
       simp only [arcPoint_parity, flip_parity ℓ b ht]) h
   exact (key.mp rfl).symm
 
+/-! ### Every point of the grid is inside a patch or on an arc -/
+
+theorem exists_side {ℓ : α → ℕ} (hbal : T.Balanced ℓ) {p : Point Patch} (hp : T.InGrid ℓ p)
+    (hi : ¬ T.IsInner ℓ p) : ∃ σ u, u ≤ 2 * T.sideLen ℓ σ ∧ p = T.sidePoint ℓ σ u := by
+  obtain ⟨P, x, y⟩ := p
+  simp only [InGrid, IsInner] at hp hi
+  by_cases hx₀ : x = 0
+  · exact ⟨(P, 1, 0), y, by rw [sideLen_eq hbal]; simp; omega, by simp [sidePoint, hx₀]⟩
+  by_cases hx₁ : x = 2 * T.width ℓ P
+  · exact ⟨(P, 1, 1), y, by rw [sideLen_eq hbal]; simp; omega, by simp [sidePoint, hx₁]⟩
+  by_cases hy₀ : y = 0
+  · exact ⟨(P, 0, 0), x, by rw [sideLen_eq hbal]; simp; omega, by simp [sidePoint, hy₀]⟩
+  by_cases hy₁ : y = 2 * T.height ℓ P
+  · exact ⟨(P, 0, 1), x, by rw [sideLen_eq hbal]; simp; omega, by simp [sidePoint, hy₁]⟩
+  exact absurd ⟨by omega, by omega, by omega, by omega⟩ hi
+
+/-- A point of the grid not inside its patch is a point of an arc. -/
+theorem exists_arcPoint {ℓ : α → ℕ} (hne : ∀ σ, T.arcs σ ≠ []) (hbal : T.Balanced ℓ)
+    {p : Point Patch} (hp : T.InGrid ℓ p) (hi : ¬ T.IsInner ℓ p) :
+    ∃ a i s, s ≤ 2 * ℓ a ∧ p = T.arcPoint ℓ a i s := by
+  obtain ⟨σ, u, hu, rfl⟩ := exists_side hbal hp hi
+  obtain ⟨a, ha, h₁, h₂⟩ := exists_arc_of_le ℓ (T.arcs_nodup σ) (hne σ) hu
+  obtain ⟨i, rfl⟩ : ∃ i, σ = T.ends a i := by
+    rcases (T.mem_arcs a σ).mp ha with h | h
+    exacts [⟨0, h⟩, ⟨1, h⟩]
+  exact ⟨a, i, u - 2 * posNat a (T.arcs (T.ends a i)) ℓ, by omega,
+    by unfold arcPoint; congr 1; omega⟩
+
+/-! ### Counting the classes -/
+
+variable (T) in
+/-- The vertex of the quad mesh at a point. -/
+def vertexOf (allArcs : List α) (ℓ : α → ℕ) (p : Point Patch) : T.Vertex allArcs ℓ :=
+  Quotient.mk (T.vertexSetoid allArcs ℓ) p
+
+theorem vertexOf_eq_iff {allArcs : List α} {ℓ : α → ℕ} {p q : Point Patch} :
+    T.vertexOf allArcs ℓ p = T.vertexOf allArcs ℓ q ↔ T.Same allArcs ℓ p q :=
+  Quotient.eq
+
+/-- **The classes of a set of points** closed under `Same`: one per point inside a
+patch, one per point inside an arc on its first side, and the classes of its
+ends of arcs. -/
+theorem ncard_classes [Fintype α] {allArcs : List α} (hA : ∀ a, a ∈ allArcs) {ℓ : α → ℕ}
+    (hne : ∀ σ, T.arcs σ ≠ []) (hbal : T.Balanced ℓ)
+    (hwh : ∀ P, 0 < T.width ℓ P ∧ 0 < T.height ℓ P) {S : Set (Point Patch)} (hfin : S.Finite)
+    (hgrid : ∀ p ∈ S, T.InGrid ℓ p) (hsat : ∀ p q, p ∈ S → T.Same allArcs ℓ p q → q ∈ S) :
+    (T.vertexOf allArcs ℓ '' S).ncard =
+      (S ∩ {p | T.IsInner ℓ p}).ncard +
+        {x : (_ : α) × ℕ | 0 < x.2 ∧ x.2 < 2 * ℓ x.1 ∧ T.arcPoint ℓ x.1 0 x.2 ∈ S}.ncard +
+        (T.vertexOf allArcs ℓ '' (S ∩ {p | T.IsEnd ℓ p})).ncard := by
+  set A := T.vertexOf allArcs ℓ '' (S ∩ {p | T.IsInner ℓ p})
+  set X := {x : (_ : α) × ℕ | 0 < x.2 ∧ x.2 < 2 * ℓ x.1 ∧ T.arcPoint ℓ x.1 0 x.2 ∈ S}
+  set g := fun x : (_ : α) × ℕ => T.vertexOf allArcs ℓ (T.arcPoint ℓ x.1 0 x.2)
+  set C := T.vertexOf allArcs ℓ '' (S ∩ {p | T.IsEnd ℓ p})
+  have hXfin : X.Finite := (Finset.univ.sigma fun a => Finset.range (2 * ℓ a)).finite_toSet.subset
+    (by rintro ⟨a, t⟩ ⟨-, ht, -⟩; simp [ht])
+  have hsplit : T.vertexOf allArcs ℓ '' S = A ∪ g '' X ∪ C := by
+    ext v; constructor
+    · rintro ⟨p, hp, rfl⟩
+      by_cases hi : T.IsInner ℓ p
+      · exact Or.inl (Or.inl ⟨p, ⟨hp, hi⟩, rfl⟩)
+      obtain ⟨a, i, s, hs, rfl⟩ := exists_arcPoint hne hbal (hgrid _ hp) hi
+      by_cases he : s = 0 ∨ s = 2 * ℓ a
+      · exact Or.inr ⟨_, ⟨hp, a, i, he.imp (congrArg _) (congrArg _)⟩, rfl⟩
+      have hs₀ : 0 < s := by omega
+      have hs₁ : s < 2 * ℓ a := by omega
+      refine Or.inl (Or.inr ?_)
+      fin_cases i
+      · exact ⟨⟨a, s⟩, ⟨hs₀, hs₁, hp⟩, rfl⟩
+      · obtain ⟨hf₀, hf₁⟩ := flip_inner (T := T) hs₀ hs₁
+        have hsame : T.Same allArcs ℓ (T.arcPoint ℓ a 0 (T.flip ℓ a s)) (T.arcPoint ℓ a 1 s) := by
+          have := T.same_of_glued allArcs ℓ a (hA a) (T.flip ℓ a s) hf₁.le
+          rwa [glued_eq ℓ a hf₁.le, flip_flip hs] at this
+        exact ⟨⟨a, T.flip ℓ a s⟩, ⟨hf₀, hf₁, hsat _ _ hp (T.same_symm _ _ hsame)⟩,
+          vertexOf_eq_iff.mpr hsame⟩
+    · rintro ((⟨p, ⟨hp, -⟩, rfl⟩ | ⟨x, ⟨-, -, hx⟩, rfl⟩) | ⟨p, ⟨hp, -⟩, rfl⟩)
+      exacts [⟨p, hp, rfl⟩, ⟨_, hx, rfl⟩, ⟨p, hp, rfl⟩]
+  have hAX : Disjoint A (g '' X) := by
+    rw [Set.disjoint_left]
+    rintro v ⟨p, ⟨-, hi⟩, rfl⟩ ⟨x, -, hx⟩
+    have := same_of_inner hi (vertexOf_eq_iff.mp hx.symm)
+    exact arcPoint_not_inner ℓ x.1 0 x.2 (by rw [this]; exact hi)
+  have hABC : Disjoint (A ∪ g '' X) C := by
+    rw [Set.disjoint_union_left]
+    constructor
+    · rw [Set.disjoint_left]
+      rintro v ⟨p, ⟨-, hi⟩, rfl⟩ ⟨q, ⟨-, a, i, he⟩, hq⟩
+      have := same_of_inner hi (vertexOf_eq_iff.mp hq.symm)
+      subst this
+      rcases he with he | he <;> exact arcPoint_not_inner _ _ _ _ (he ▸ hi)
+    · rw [Set.disjoint_left]
+      rintro v ⟨x, ⟨h₀, h₁, -⟩, rfl⟩ ⟨q, ⟨-, hqe⟩, hq⟩
+      exact not_isEnd hbal hwh h₀ h₁ ((isEnd_of_same hbal hwh (vertexOf_eq_iff.mp hq)).mp hqe)
+  have hAcard : A.ncard = (S ∩ {p | T.IsInner ℓ p}).ncard :=
+    Set.InjOn.ncard_image fun p ⟨_, hp⟩ _ _ h =>
+      (same_of_inner hp (vertexOf_eq_iff.mp h)).symm
+  have hXcard : (g '' X).ncard = X.ncard := by
+    refine Set.InjOn.ncard_image ?_
+    rintro ⟨a, t⟩ ⟨h₀, h₁, -⟩ ⟨b, t'⟩ ⟨h₀', h₁', -⟩ h
+    rcases same_of_arcInner hbal hwh h₀ h₁ (vertexOf_eq_iff.mp h) with h | h
+    · obtain ⟨rfl, -, rfl⟩ := arcPoint_inj hbal hwh h₀' h₁' h₁.le h
+      rfl
+    · obtain ⟨-, h01, -⟩ := arcPoint_inj hbal hwh h₀' h₁' (flip_le h₁.le) h
+      exact absurd h01 (by decide)
+  have hSfin : (S ∩ {p | T.IsInner ℓ p}).Finite := hfin.subset Set.inter_subset_left
+  have hEfin : (S ∩ {p | T.IsEnd ℓ p}).Finite := hfin.subset Set.inter_subset_left
+  rw [hsplit, Set.ncard_union_eq hABC ((hSfin.image _).union (hXfin.image _)) (hEfin.image _),
+    Set.ncard_union_eq hAX (hSfin.image _) (hXfin.image _), hAcard, hXcard]
+
 end TMesh
 
 end TurnsOfATMesh
