@@ -846,6 +846,10 @@ details.more .table-wrap { margin: 0.75rem 0 1.25rem; }
 .card strong { font-family: var(--mono); font-size: 17px; font-weight: 700; }
 .card strong::after { content: "\00a0→"; color: var(--teal-text); }
 .card span { color: var(--slate); font-size: 1rem; line-height: 1.5; }
+/* Cards that are not links (what the add-on does for you): no arrow, no hover, three by three. */
+div.card strong::after { content: none; }
+div.card:hover { border-color: var(--rule); }
+.cards.uses { grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); }
 
 /* ------------------------------------------------------------ theory */
 

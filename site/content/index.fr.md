@@ -1,66 +1,63 @@
 <div class="hero">
 <div class="hero-text">
-<p class="kicker">Extension Blender · ligne de commande · GPL-3.0</p>
-<h1>La retopologie automatique en quads, avec des boucles d'arêtes qui se ferment.</h1>
-<p class="lede">Un maillage de triangles en entrée, un maillage de quads en sortie, dont les arêtes suivent la forme et dont les boucles d'arêtes se referment autour d'elle.</p>
-<p class="more">openclare est un remailleur en quads guidé par un champ : un champ de croix suit la courbure, un T-mesh dispose les patchs, et une quantification entière décide combien de quads vont où. Le moteur est écrit en Rust ; il est livré comme extension Blender, moteur compris, et comme outil en ligne de commande. Logiciel libre, GPL-3.0-or-later.</p>
-<p class="actions"><a class="button primary" href="get.fr.md">Obtenir l'extension</a> <a class="button" href="results.fr.md">Voir les résultats</a> <a class="button" href="theory.fr.md">Comment ça marche</a></p>
+<p class="kicker">Extension gratuite pour Blender · open source</p>
+<h1>Une retopologie propre, en un clic, dans Blender.</h1>
+<p class="lede">Des quads qui suivent la forme, et des boucles d'arêtes qui se ferment autour d'elle. Gratuit et open source.</p>
+<p class="actions"><a class="button primary" href="get.fr.md">Télécharger pour Blender</a> <a class="button" href="#voir-en-3d">Voir en 3D</a></p>
 </div>
 <figure class="pair"><div class="pair-images"><img src="../../docs/models/img/human_male__source.webp" alt="Un corps humain sculpté, {{shot:human_male:Source}}" width="600" height="600"><img src="../../docs/models/img/human_male__openclare.webp" alt="Le même corps remaillé par openclare, {{shot:human_male:openclare}}" width="600" height="600"></div><figcaption><span>{{shot:human_male:Source}}</span><span class="to">→ {{shot:human_male:openclare}}</span></figcaption></figure>
 </div>
 
+## Ce qu'elle fait pour vous
+
+Sélectionnez un maillage, demandez un nombre de quads, appuyez sur *Remesh to Quads*. L'original reste tel quel.
+
+<div class="cards uses">
+<div class="card"><strong>Une sculpture prête à animer</strong><span>Des quads avec peu de pôles, et des boucles autour des yeux, de la bouche et des articulations, tracées sur le modèle là où vous les voulez.</span></div>
+<div class="card"><strong>Une pièce mécanique aux arêtes nettes</strong><span>Les arêtes vives et les arêtes marquées sharp gardées comme lignes d'arêtes, avec un crease pour le Subdivision Surface.</span></div>
+<div class="card"><strong>Un scan ou un maillage d'IA rendu utilisable</strong><span>Une surface de quads propre et fermée, à partir d'une surface bruitée.</span></div>
+<div class="card"><strong>Du détail là où il compte</strong><span>Des quads plus petits sur le visage et les mains, peints ou tirés de la forme.</span></div>
+<div class="card"><strong>Des coutures où vous les voulez</strong><span>Les courbes tracées sur le modèle deviennent des coutures, prêtes pour les UV.</span></div>
+<div class="card"><strong>Des triangles aussi</strong><span>Des triangles réguliers pour la simulation de tissu, ou le Decimate de Blender pour l'impression et les collisions.</span></div>
+</div>
+
 ## Des boucles qui se ferment
 
-Un artiste sélectionne une boucle d'arêtes d'un Alt-clic et s'attend à ce qu'elle fasse une fois le tour d'un bras et se referme. Les remailleurs automatiques en font souvent une hélice, qui s'enroule de l'épaule au poignet. openclare ferme ces boucles au moment où il décide de la structure entière du maillage, pas après coup.
-
-![Un cylindre remaillé par openclare, avant et après la fermeture de ses boucles](../../docs/glossary/cylinder_result.png)
-
-*Un cylindre, préréglage surface dure. Avant : des boucles en spirale (rouge), environ 700 patchs. Après : chaque boucle est un anneau, et la disposition est celle d'un cube, 6 patchs.*
+Sélectionnez une boucle d'arêtes avec Alt-clic : elle devrait faire une fois le tour du bras et se fermer. Les remailleurs automatiques en font souvent une spirale, qui descend de l'épaule au poignet. openclare ferme ces boucles, et préfère peu de pôles à des quads parfaitement carrés.
 
 ![Le corps masculin avant et après la fermeture des boucles](../../docs/glossary/male_result.png)
 
-*Un corps humain à 10 590 quads, le nombre de faces du maillage de base qu'un artiste a fait pour lui. Boucles en spirale du jaune au rouge, boucles fermées en bleu.*
+*Un corps humain à 10 590 quads. Les boucles en spirale du jaune au rouge, les boucles fermées en bleu.*
 
-## Les chiffres
+## Voir en 3D
 
-<!-- section: night -->
-
-<div class="stats">
-<div class="stat"><span class="value">4,5 %</span><span class="label">des arêtes sur des boucles en spirale, 12 modèles à trois budgets autour de 3 000 quads ; 16,7 % sans fermeture</span></div>
-<div class="stat"><span class="value">1,95 %</span><span class="label">des arêtes sur des boucles en spirale, sur le corps masculin, contre 2,55 % sur le maillage fait à la main et 26,8 % sans fermeture (<a href="../../docs/research/closing-loops/figures/README.md">figures de l'article</a>, un seul passage)</span></div>
-<div class="stat"><span class="value">{{mark:3000:organic:openclare}}<small> / 100</small></span><span class="label">note moyenne sur {{count:organic}} modèles organiques à 3 000 quads ; AutoRemesher {{mark:3000:organic:autoremesher}}, QuadriFlow {{mark:3000:organic:quadriflow}}</span></div>
-<div class="stat"><span class="value">{{mark:3000:mechanical:openclare}}<small> / 100</small></span><span class="label">note moyenne sur les pièces mécaniques à 3 000 quads</span></div>
-<div class="stat"><span class="value">{{theorems}}</span><span class="label">théorèmes de la note de recherche vérifiés par l'assistant de preuve Lean</span></div>
-</div>
-
-Mesuré par le banc d'essai du projet, la nuit du 18 octobre 2026, sur {{count:all}} modèles ; la façon dont les notes sont faites est sur la page des [résultats](results.fr.md). Les notes pèsent la validité, l'alignement sur la forme, la forme des quads, la distance au modèle, les sommets irréguliers, la structure de la disposition, les boucles d'arêtes fermées et le nombre de quads demandé.
-
-## Trois remailleurs côte à côte
-
-<figure class="wide"><picture><source media="(prefers-color-scheme: dark)" srcset="../../docs/images/dashboard/gallery-dark.webp"><img src="../../docs/images/dashboard/gallery-light.webp" alt="openclare, QuadriFlow et AutoRemesher sur l'ogre, le cochon, une pièce mécanique et un bâtiment généré, chacun avec son nombre de quads et sa note sur 100" loading="lazy"></picture><figcaption>Chaque ligne au même nombre de quads, demandé à chaque remailleur. Le moulin de pierre vient du <em>Free Windmills Set</em> de LapaModels, CC BY 4.0. Légendes de l'image en anglais.</figcaption></figure>
+Tournez autour des résultats d'openclare et de deux autres remailleurs, quad par quad.
 
 <div class="viewer" data-models="ogre pig part stonemill human_male"></div>
 
-<figure class="wide"><picture><source media="(prefers-color-scheme: dark)" srcset="../../docs/images/dashboard/marks-dark.svg"><img src="../../docs/images/dashboard/marks-light.svg" alt="Note moyenne sur 100 des trois remailleurs sur les modèles organiques, les pièces mécaniques et les modèles assemblés et générés, à 1 000, 3 000 et 8 000 quads demandés" loading="lazy"></picture><figcaption>Notes moyennes sur le banc à 1 000, 3 000 et 8 000 quads demandés.</figcaption></figure>
+## Mesuré en public
 
-## Simple plutôt que régulier
+<!-- section: night -->
 
-Un artiste préfère peu de pôles et peu de spirales à des quads parfaitement carrés. Un réglage de *simplicité* retire les paires de pôles voisines et accepte en échange des quads un peu moins carrés. openclare ne fait que des quads : jamais de triangle, jamais de n-gone.
+Chaque version passe sur un banc public de {{count:all}} modèles, face à QuadriFlow, intégré à Blender, et à AutoRemesher.
 
-![Le corps masculin remaillé à simplicité 0, 0,25, 0,5 et 1](../../docs/glossary/simplicity.png)
+<div class="stats">
+<div class="stat"><span class="value">{{mark:3000:organic:openclare}}<small> / 100</small></span><span class="label">note moyenne sur {{count:organic}} modèles organiques à 3 000 quads ; AutoRemesher {{mark:3000:organic:autoremesher}}, QuadriFlow {{mark:3000:organic:quadriflow}}</span></div>
+<div class="stat"><span class="value">{{mark:3000:mechanical:openclare}}<small> / 100</small></span><span class="label">note moyenne sur les pièces mécaniques à 3 000 quads</span></div>
+</div>
 
-*Le corps masculin à simplicité 0, 0,25 (les préréglages), 0,5 et 1 : 303, 259, 213 et 172 pôles.*
+Chaque modèle, chaque note, et comment elles sont faites : les [résultats](results.fr.md).
 
-## Dans Blender
+## L'obtenir
 
-L'extension gratuite contient toute la retopologie : un nombre de quads ou leurs tailles, une densité peinte ou tirée de la forme, les arêtes vives et les matériaux gardés comme lignes d'arêtes, des courbes tracées sur le modèle comme guides ou comme arêtes vives, la symétrie, et les arêtes vives du résultat marquées sharp et crease. Ce que fait chaque réglage est sur la page [Obtenir](get.fr.md).
+Une archive pour Linux, Windows ou macOS, installée depuis les préférences de Blender. Rien d'autre à installer, rien de téléchargé pendant qu'elle tourne.
+
+<p class="actions"><a class="button primary" href="get.fr.md">Télécharger pour Blender</a></p>
 
 ## Pour aller plus loin
 
 <div class="cards">
-<a class="card" href="theory.fr.md"><strong>Théorie</strong><span>Pourquoi les boucles d'arêtes spiralent, et les règles qui les ferment, en mots simples.</span></a>
-<a class="card" href="../../docs/GLOSSARY.fr.md"><strong>Glossaire</strong><span>Pôles, champs de croix, T-mesh, tours et décalages, en images.</span></a>
-<a class="card" href="results.fr.md"><strong>Résultats</strong><span>Les notes par budget et par type de modèle, et une page par modèle.</span></a>
-<a class="card" href="research.fr.md"><strong>Recherche</strong><span>Deux articles, en anglais et en français, et leurs preuves vérifiées par machine.</span></a>
-<a class="card" href="get.fr.md"><strong>L'obtenir</strong><span>L'extension Blender et la ligne de commande.</span></a>
+<a class="card" href="articles.fr.md"><strong>Articles</strong><span>Les outils de retopologie de Blender en 2026, les résultats du banc, la théorie et la recherche.</span></a>
+<a class="card" href="../../docs/GLOSSARY.fr.md"><strong>Glossaire</strong><span>Les pôles, les boucles d'arêtes, les spirales et les autres mots de la retopologie, en images.</span></a>
+<a class="card" href="get.fr.md"><strong>L'obtenir</strong><span>L'extension, réglage par réglage, et la ligne de commande.</span></a>
 </div>
