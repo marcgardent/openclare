@@ -52,3 +52,13 @@ staircase, the winding separatrix and the comb identity:
 ```sh
 python3 docs/research/turns-of-a-t-mesh/figures/check.py
 ```
+
+## On the website
+
+`dislocation.png` and `dislocation.fr.png` are the picture of paper B on the research page of the
+website. `render.py` makes them again from `dislocation.tex` and `dislocation.fr.tex` (pdflatex
+and pdftoppm):
+
+```sh
+python3 docs/research/turns-of-a-t-mesh/figures/render.py
+```

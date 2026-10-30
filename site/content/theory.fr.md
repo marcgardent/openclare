@@ -376,7 +376,7 @@ La recherche, c'est surtout des idées qui échouent. Celles-ci ont échoué, et
 démontré en [Lean](../../docs/research/turns-of-a-t-mesh/lean/README.md), un assistant de preuve : un programme qui n'accepte une preuve
 que si chaque étape découle des précédentes. Ces preuves n'utilisent que les axiomes standard de Lean, ne laissent
 aucune preuve ouverte, et des maillages aléatoires les mettent à l'épreuve ; [la
-méthode](research.fr.md#la-méthode) dit comment, et ce qui n'est pas encore fait. Elles couvrent le
+méthode](research.fr.md#la-méthode) dit comment. Elles couvrent le
 décalage comme somme de longueurs, la complétude du parcours, la somme de Burgers et son ordre,
 les dislocations et les escaliers, la règle du damier, la parité des anneaux (avec deux preuves
 différentes), le décompte des pôles sur une grille, la structure des longueurs entières, les
