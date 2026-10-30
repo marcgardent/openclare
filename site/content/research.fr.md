@@ -23,19 +23,21 @@
 </div>
 </article>
 
-## Des preuves vérifiées par machine
+## La méthode
 
-<!-- section: night -->
+Les articles suivent quatre règles prises au génie logiciel. Elles disent comment le travail est vérifié, pas combien en est fait ; là où une règle n'est pas encore appliquée, c'est écrit.
 
-<p class="lead-number"><b>{{theorems}}</b><span>théorèmes en Lean 4 + Mathlib</span></p>
+**1. Lean d'abord, la prose ensuite.** Les preuves dans l'assistant de preuve [Lean 4](https://lean-lang.org/), avec la bibliothèque Mathlib, font référence, et l'article les explique. *Commencé :* les cœurs algébriques de l'article B (ses sections 3 et 8 à 10) sont démontrés en Lean, avec les trois seuls axiomes standard de Lean et aucune preuve laissée ouverte ; les énoncés de l'article ne sont pas encore écrits à partir des sources Lean.
 
-Les cœurs algébriques des résultats de la note (ses sections 3 et 8 à 10) sont vérifiés par l'assistant de preuve [Lean 4](https://lean-lang.org/) avec la bibliothèque Mathlib : **{{theorems}} théorèmes**, dans un projet Lake à côté de la note. Chaque théorème ne dépend que des trois axiomes standard de Lean (`propext`, `Classical.choice`, `Quot.sound`) ; il n'y a aucun `sorry`.
+**2. Cas d'école, cas limites, cas aléatoires.** Un énoncé est essayé sur des exemples dont la réponse est connue, sur ses limites, et sur des entrées tirées au hasard. *Fait pour l'article B :* des T-meshes aléatoires, construits sans le moteur, sont confrontés aux définitions de Lean, énoncé par énoncé ([tests de propriétés](../../docs/research/turns-of-a-t-mesh/experiments/property/README.md), en anglais).
 
-**Ce qui est vérifié.** Entre autres : le décalage d'un tour est une forme linéaire des longueurs d'arcs ; la marche complète des bandes trouve chaque bande ; Gauss–Bonnet pour les tours ; la somme de Burgers et l'ordre de première visite ; les anneaux, les dislocations, les escaliers et les échanges de deux sommets ; la règle du damier et la parité d'un tour sur une sphère (avec une seconde preuve, née de la formalisation) ; la formule de Fox–Burgers ; le lemme des poignées de main et la proposition des « arcs libres » ; des certificats de Farkas pour les tours qui ne peuvent jamais se fermer ; et le théorème des hélices forcées. Plusieurs résultats sont prouvés plus généralement que la note ne les énonce : pour des rotations et des dimensions quelconques, et pour des champs de tout ordre (maillages de triangles et d'hexagones).
+**3. Des tests qui doivent échouer.** Un théorème qui tient encore quand on altère la définition qu'il certifie en dit trop peu ; une hypothèse qu'on peut retirer n'était pas nécessaire. *Pas commencé.*
 
-**Ce qui est supposé.** Les faits topologiques sur lesquels la note s'appuie ne sont pas formalisés ; chacun est une hypothèse explicite du théorème qui l'utilise, jamais cachée. Parmi eux : qu'une courbe fermée simple sur une sphère borde un disque (Jordan–Schoenflies), l'application développante et l'holonomie comme morphisme du groupe fondamental, et deux faits classiques sur les graphes. Les bandes sur les surfaces à bords, et tout énoncé *mesuré*, sont hors de la formalisation.
+**4. Intégration continue.** *Fait :* chaque changement des preuves ou des tests de propriétés est reconstruit sur une version figée de Mathlib, et une preuve laissée ouverte fait échouer la construction.
 
-**Ce qu'elle a trouvé.** Formaliser la note a trouvé onze lacunes ou corrections, dont aucune erreur de signe ou de convention : un facteur mal placé dans une étape du calcul de Fox (la conclusion restant juste), un théorème qui n'a besoin ni de convexité ni de longueurs entières, un énoncé de parité qui ne vaut que sur une sphère fermée (il tombe en défaut avec deux bords ou plus), et des propositions plus fortes qu'énoncées. Elles sont listées dans le [README des preuves](../../docs/research/turns-of-a-t-mesh/lean/README.md) (en anglais).
+**Ce qui est supposé.** Les faits topologiques sur lesquels la note s'appuie ne sont pas formalisés ; chacun est une hypothèse explicite du théorème qui l'utilise, jamais cachée : qu'une courbe fermée simple sur une sphère borde un disque (Jordan–Schoenflies), l'application développante et l'holonomie comme morphisme du groupe fondamental, et deux faits classiques sur les graphes. Les bandes sur les surfaces à bords, et tout énoncé *mesuré*, sont hors de la formalisation.
+
+**Ce qu'elle a trouvé.** Formaliser la note a trouvé onze lacunes ou corrections, dont aucune erreur de signe ou de convention ; parmi elles, un énoncé de parité qui ne vaut que sur une sphère fermée. Elles sont listées dans le [README des preuves](../../docs/research/turns-of-a-t-mesh/lean/README.md) (en anglais).
 
 Pour vérifier les preuves vous-même, depuis la racine du dépôt :
 

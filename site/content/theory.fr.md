@@ -374,14 +374,14 @@ La recherche, c'est surtout des idées qui échouent. Celles-ci ont échoué, et
 
 **Des preuves vérifiées par la machine.** Le cœur algébrique de chaque résultat ci-dessus est
 démontré en [Lean](../../docs/research/turns-of-a-t-mesh/lean/README.md), un assistant de preuve : un programme qui n'accepte une preuve
-que si chaque étape découle des précédentes. Il y a **187 théorèmes**, construits sur la
-bibliothèque Mathlib, qui n'utilisent que les axiomes standard de Lean et aucune preuve
-inachevée. Ils se rejouent en une quarantaine de secondes avec `make proofs`. Ils couvrent le
+que si chaque étape découle des précédentes. Ces preuves n'utilisent que les axiomes standard de Lean, ne laissent
+aucune preuve ouverte, et des maillages aléatoires les mettent à l'épreuve ; [la
+méthode](research.fr.md#la-méthode) dit comment, et ce qui n'est pas encore fait. Elles couvrent le
 décalage comme somme de longueurs, la complétude du parcours, la somme de Burgers et son ordre,
 les dislocations et les escaliers, la règle du damier, la parité des anneaux (avec deux preuves
 différentes), le décompte des pôles sur une grille, la structure des longueurs entières, les
 certificats qui prouvent qu'un groupe de tours ne peut pas se fermer, et les hélices forcées.
-Plusieurs d'entre eux valent aussi au-delà des quads, pour les maillages de triangles et
+Plusieurs d'entre elles valent aussi au-delà des quads, pour les maillages de triangles et
 d'hexagones.
 
 **Ce qui est supposé, pas démontré par l'ordinateur.** La topologie : qu'une courbe fermée sur
