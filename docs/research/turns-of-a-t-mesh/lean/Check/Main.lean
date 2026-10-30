@@ -38,7 +38,10 @@ turns of the way, and compares, with the library's definitions:
   vertices (the classes of the gluings, by union-find), its Euler characteristic against
   `∑ (4 - k)` over its cone points, one round of the walk from every station as a closed
   curve of the fine grid, and on every simple curve the regions it cuts, each with
-  Lemma "Gauss–Bonnet for turns": `∑ (4 - k) = 4 χ`.
+  Lemma "Gauss–Bonnet for turns": `∑ (4 - k) = 4 χ`; the 2-colouring of the quad graph
+  (`IsColouring`, constants `κ` found by propagation; a sphere must be bipartite) and,
+  when it holds, `Turn.length ≡ Turn.shift (mod 2)` for every turn with a half-integer
+  in its corridor.
 
 All arithmetic is exact (`ℤ`, `ℚ`; the engine's floats are read as the fractions they
 are). `Turn.shiftForm` and `balance` are read only at the arcs of the sides they
@@ -799,8 +802,10 @@ def regionsOf (faceEdgesK : Array (Array (Nat × Nat))) (facesAtEdge : Std.HashM
     out := ⟨nf, (vs.size : Int) - es.size + nf, cones.map fun v => valence[v]!⟩ :: out
   return out
 
-/-- The checks of the quad mesh at the whole lengths: see the section above. -/
-def checkGrid (whole : Array ℚ) : IO Bool := do
+/-- The checks of the quad mesh at the whole lengths: see the section above.
+`lengthShift` holds `(index, γ.length, γ.shift)` at the whole lengths for the turns
+with a half-integer in their corridor, for the parity. -/
+def checkGrid (whole : Array ℚ) (lengthShift : Array (Nat × ℚ × ℚ)) : IO Bool := do
   if whole.any (fun x => x.den ≠ 1 || x ≤ 0) then
     IO.println "  grid: an arc of length zero at the whole lengths, the quad mesh is not built"
     return true
@@ -861,6 +866,51 @@ def checkGrid (whole : Array ℚ) : IO Bool := do
   IO.println s!"  grid: {vertices.size} vertices, {allEdges.size} edges, {fcs.size} faces, χ = {euler}; cone points by valence {byValence.toList.mergeSort (fun a b => a.1 ≤ b.1)}, ∑ (4 - k) = {index4}"
   let mut ok := index4 == 4 * euler
   if !ok then IO.println "    FAILED: ∑ (4 - k) ≠ 4 χ on the whole mesh"
+  -- The 2-colouring (`IsColouring`): the constants `κ` propagated from patch to patch
+  -- along the gluing pairs of vertices of the quad graph, `κ_Q = κ_P + c₀ p - c₀ q`.
+  let c₀ (p : Point (Fin P)) : ZMod 2 := ((p.x / 2 : ℕ) : ZMod 2) + ((p.y / 2 : ℕ) : ZMod 2)
+  let mut links : Array (Array (Nat × ZMod 2)) := Array.replicate P #[]
+  for (p, q) in T.gluings allArcs ℓ do
+    if p.IsCoarse ∧ q.IsCoarse then
+      links := links.modify p.patch.val (·.push (q.patch.val, c₀ p - c₀ q))
+      links := links.modify q.patch.val (·.push (p.patch.val, c₀ q - c₀ p))
+  let mut kappa : Array (Option (ZMod 2)) := Array.replicate P none
+  let mut conflict := false
+  for root in [0:P] do
+    if kappa[root]!.isSome then continue
+    kappa := kappa.set! root (some 0)
+    let mut queue : Array Nat := #[root]
+    let mut i := 0
+    while i < queue.size do
+      let r := queue[i]!
+      i := i + 1
+      let kr := (kappa[r]!).getD 0
+      for (s, d) in links[r]! do
+        match kappa[s]! with
+        | none =>
+          kappa := kappa.set! s (some (kr + d))
+          queue := queue.push s
+        | some ks => if ks != kr + d then conflict := true
+  let κ : Fin P → ZMod 2 := fun p => (kappa[p.val]!).getD 0
+  let colouring := decide (T.IsColouring allArcs ℓ κ)
+  IO.println s!"  bipartite: {!conflict} (IsColouring decided {colouring}), χ = {euler}"
+  if colouring == conflict then
+    IO.println "    FAILED: the propagation and IsColouring disagree"
+    ok := false
+  if euler == 2 && !colouring then
+    IO.println "    FAILED: a sphere whose quad graph is not bipartite"
+    ok := false
+  -- The parity of a turn, `α_γ ≡ shift (mod 2)`, on a bipartite quad graph.
+  let mut parity : Count := {}
+  let mut odd := 0
+  for (i, len, s) in lengthShift do
+    let even := (len - s).den == 1 && (len - s).num % 2 == 0
+    if colouring then
+      parity := parity.add even fun _ => s!"turn {i}: length {len}, shift {s}"
+    else if !even then odd := odd + 1
+  parity.show "parity α ≡ shift (mod 2) at the whole lengths, bipartite instances"
+  if !colouring then
+    IO.println s!"    quad graph not bipartite, length - shift odd for {odd} of {lengthShift.size} turns (a report)"
   -- One round from every station, each curve once, as representatives.
   let mut seen : Std.HashSet (List Nat) := ∅
   let mut curves : List (List Nat) := []
@@ -903,7 +953,7 @@ def checkGrid (whole : Array ℚ) : IO Bool := do
         s!"a region of {r.faces} faces with χ = {r.euler} holds index {total}"
   IO.println s!"  simple curves: {simple}; their regions: {regionsTotal} (curves by number of regions {byRegions.toList.mergeSort (fun a b => a.1 ≤ b.1)}); curve edges off the grid: {offGrid}"
   gb.show "Gauss–Bonnet on the fine grid: regions of simple curves with ∑ (4 - k) = 4 χ"
-  return ok && gb.ok
+  return ok && gb.ok && parity.ok
 
 def checkRaw (raw : Raw) : IO Bool := do
   let P := raw.patches
@@ -976,6 +1026,8 @@ def checkRaw (raw : Raw) : IO Bool := do
   let mut shares := 0
   let mut atWhole : Count := {}
   let mut wholeTurns := 0
+  -- Those turns as `(index, γ.length, γ.shift)` at the whole lengths, for the parity.
+  let mut lengthShift : Array (Nat × ℚ × ℚ) := #[]
   -- The most `|shift ℓ - engine shift ℓ|` at the whole, walked and real lengths.
   let mut gaps : ℚ × ℚ × ℚ := (0, 0, 0)
   -- The turns for which that gap at the real lengths is beyond 0.05, the real shift
@@ -1046,7 +1098,9 @@ def checkRaw (raw : Raw) : IO Bool := do
         atWhole := atWhole.add (T.walk whole path.length (start, o) == some (start, o + sWhole))
           fun _ => s!"turn {t.index}: at the whole lengths from {o} the walk does not come back at offset + shift"
       k := k + 1
-    if any then wholeTurns := wholeTurns + 1
+    if any then
+      wholeTurns := wholeTurns + 1
+      lengthShift := lengthShift.push (t.index, γ.length whole, sWhole)
   built.show "turns of the TMesh (IsPath, closes)"
   exact.show "shift forms, shiftForm = engine shift coefficient by coefficient" 2
   modulo.show "shift forms, shiftForm - engine shift = λᵀ B (checked exactly)"
@@ -1062,7 +1116,7 @@ def checkRaw (raw : Raw) : IO Bool := do
   ok := ok && built.ok && modulo.ok && corridor.ok && passes.ok && back.ok && atReal.ok &&
     atWhole.ok
   -- The quad mesh at the whole lengths, its curves and their regions (`Grid.lean`).
-  let gridOk ← checkGrid T raw.whole
+  let gridOk ← checkGrid T raw.whole lengthShift
   ok := ok && gridOk
   -- Theorem "Forced shifts", with the certificates of `certify.py`.
   match raw.forced with
