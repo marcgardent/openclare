@@ -123,6 +123,13 @@ pub struct Report {
     pub guide_edges: Vec<[u32; 2]>,
     /// Those of the hard edges that run along a curve drawn as one.
     pub sharp_curve_edges: Vec<[u32; 2]>,
+    /// Every edge of the output that runs along a curve, guide or sharp,
+    /// with the index of that curve among those given: what a host marks
+    /// as the curve says (sharp, crease, seam).
+    pub curve_edges: Vec<([u32; 2], u32)>,
+    /// Faces of the output that cut through another one of it, counted by
+    /// the chains that make triangles: what a printer cannot make sense of.
+    pub crossing_faces: usize,
     /// Places where a guide curve could not be laid as one unbroken line.
     pub guide_gaps: usize,
     /// Pieces on which the guide curves could not be kept as lines of edges:
@@ -168,6 +175,8 @@ impl Report {
         self.creases.extend(piece.creases);
         self.guide_edges.extend(piece.guide_edges);
         self.sharp_curve_edges.extend(piece.sharp_curve_edges);
+        self.curve_edges.extend(piece.curve_edges);
+        self.crossing_faces += piece.crossing_faces;
         self.guide_gaps += piece.guide_gaps;
         self.guides_let_go += piece.guides_let_go;
         // Sizes asked for: the same for every piece unless one had to make
@@ -179,8 +188,11 @@ impl Report {
                 (self.below_smallest * self.quads_wanted + piece.below_smallest * piece.quads_wanted) / together;
             self.quads_wanted = together;
             self.largest_edge = self.largest_edge.max(piece.largest_edge);
-            self.smallest_edge =
-                if self.smallest_edge > 0.0 { self.smallest_edge.min(piece.smallest_edge) } else { piece.smallest_edge };
+            self.smallest_edge = if self.smallest_edge > 0.0 {
+                self.smallest_edge.min(piece.smallest_edge)
+            } else {
+                piece.smallest_edge
+            };
         }
         for (cause, count) in piece.line_causes {
             match self.line_causes.iter_mut().find(|(name, _)| *name == cause) {

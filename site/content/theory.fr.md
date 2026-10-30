@@ -48,9 +48,9 @@ artiste a modélisé à la main pour lui.
 
 ![Le corps masculin avant et après la fermeture des boucles](../../docs/glossary/male_result.png)
 
-*Boucles en spirale du jaune au rouge, boucles fermées en bleu. Avant la fermeture, 12,1 % des
-arêtes étaient sur des spirales ; aujourd'hui 1,15 % à 1,59 %, contre 2,5 % pour le maillage fait
-à la main.*
+*Boucles en spirale du jaune au rouge, boucles fermées en bleu, d'un passage plus ancien du moteur.
+Avec le moteur d'aujourd'hui : 26,8 % des arêtes sur des spirales sans fermeture, 1,95 % avec,
+contre 2,55 % pour le maillage fait à la main.*
 
 Le problème est bien connu. Bommes et ses collègues ont nommé ces hélices *q-helices* en 2011 et
 les retiraient d'un maillage fini par des retouches locales. openclare prend le chemin inverse :
@@ -305,9 +305,11 @@ sur le corps masculin.*
   première version laisse 7,55 % et le moteur d'aujourd'hui **4,54 %**, avec 36,3 % des arêtes
   sur des boucles fermées au lieu de 34,1 %, aucun maillage invalide, et une distance moyenne à la
   source plus grande de 1,2 %.
-- **Corps masculin, 10 590 quads.** 12,1 % avant toute fermeture ; 2,47 % avec la première
-  version ; **1,15 % à 1,59 %** aujourd'hui, sur les essais récents. Le maillage fait à la main a
-  2,5 %. Un seul modèle est chaotique : c'est une illustration, la preuve est le lot ci-dessus.
+- **Corps masculin, 10 590 quads.** Avec le moteur d'aujourd'hui, 26,8 % sans fermeture et
+  **1,95 %** avec ([figures de l'article](../../docs/research/closing-loops/figures/README.md), un seul passage) ; le maillage fait à la main a
+  2,55 %. Les moteurs plus anciens donnaient 12,1 % sans fermeture, 2,47 % avec la première version
+  de la fermeture, puis 1,15 % à 1,59 %. Un seul modèle est chaotique : c'est une illustration, la
+  preuve est le lot ci-dessus.
 - **Cylindre.** **Aucune spirale et 6 patchs** à 2 990, 3 000 et 5 000 quads, contre 26 % à 32 %
   d'arêtes en spirale et environ 700 patchs auparavant.
 - **Face aux autres remailleurs** (banc complet de 31 modèles à 3 000 quads, première version de
@@ -372,14 +374,14 @@ La recherche, c'est surtout des idées qui échouent. Celles-ci ont échoué, et
 
 **Des preuves vérifiées par la machine.** Le cœur algébrique de chaque résultat ci-dessus est
 démontré en [Lean](../../docs/research/turns-of-a-t-mesh/lean/README.md), un assistant de preuve : un programme qui n'accepte une preuve
-que si chaque étape découle des précédentes. Il y a **187 théorèmes**, construits sur la
-bibliothèque Mathlib, qui n'utilisent que les axiomes standard de Lean et aucune preuve
-inachevée. Ils se rejouent en une quarantaine de secondes avec `make proofs`. Ils couvrent le
+que si chaque étape découle des précédentes. Ces preuves n'utilisent que les axiomes standard de Lean, ne laissent
+aucune preuve ouverte, et des maillages aléatoires les mettent à l'épreuve ; [la
+méthode](research.fr.md#la-méthode) dit comment. Elles couvrent le
 décalage comme somme de longueurs, la complétude du parcours, la somme de Burgers et son ordre,
 les dislocations et les escaliers, la règle du damier, la parité des anneaux (avec deux preuves
 différentes), le décompte des pôles sur une grille, la structure des longueurs entières, les
 certificats qui prouvent qu'un groupe de tours ne peut pas se fermer, et les hélices forcées.
-Plusieurs d'entre eux valent aussi au-delà des quads, pour les maillages de triangles et
+Plusieurs d'entre elles valent aussi au-delà des quads, pour les maillages de triangles et
 d'hexagones.
 
 **Ce qui est supposé, pas démontré par l'ordinateur.** La topologie : qu'une courbe fermée sur

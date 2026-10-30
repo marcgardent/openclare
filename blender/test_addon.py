@@ -224,6 +224,372 @@ def alone(target):
         settings = target.openclare
 
 
+import math  # noqa: E402
+import time  # noqa: E402
+
+# Marks: on a shape with hard edges, those edges marked sharp and creased.
+bpy.ops.mesh.primitive_cube_add()
+cube = bpy.context.active_object
+cube.modifiers.new("subdivide", "SUBSURF").subdivision_type = "SIMPLE"
+cube.modifiers["subdivide"].levels = 4
+alone(cube)
+shape(settings, "hard-surface")
+settings.quads = 600
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+mesh = bpy.context.active_object.data
+sharp = sum(edge.use_edge_sharp for edge in mesh.edges)
+creases = [item.value for item in mesh.attributes["crease_edge"].data]
+creased = sum(1 for value in creases if value > 0)
+print("MARK cube:", len(mesh.polygons), "quads,", sharp, "sharp edges,", creased, "creased")
+assert sharp >= 12 and sharp % 12 == 0, f"{sharp} sharp edges on a cube"
+# The same edges are creased, all the way, and they are the sharp ones.
+assert creased == sharp and all(value in (0.0, 1.0) for value in creases)
+assert all((edge.use_edge_sharp) == (creases[edge.index] == 1.0) for edge in mesh.edges)
+
+# With the boxes unticked, the result is a bare mesh.
+alone(cube)
+settings.export_sharp_edges = settings.export_creases = False
+# Shaded smooth: the shading by angle marks the edges of the cube itself.
+settings.shading = "SMOOTH"
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+mesh = bpy.context.active_object.data
+assert not any(edge.use_edge_sharp for edge in mesh.edges)
+assert "crease_edge" not in mesh.attributes
+settings.export_sharp_edges = settings.export_creases = True
+settings.shading = "BY_ANGLE"
+shape(settings, "organic")
+settings.quads = 800
+
+# Curves: two circles round a ball, each held on it by a Shrinkwrap, given
+# to the ball from the panel of the curve (its Mesh, which parents it where it
+# is). The first is a line of edges and nothing more; the second marks its
+# edges sharp, creased in full and as seams.
+import mathutils  # noqa: E402
+
+bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=5, radius=1.0, location=(4.0, 0.0, 0.0))
+ball = bpy.context.active_object
+
+
+def circle_at(height):
+    bpy.ops.curve.primitive_bezier_circle_add(radius=1.1, location=(4.0, 0.0, height))
+    circle = bpy.context.active_object
+    circle.data.resolution_u = 16
+    circle.modifiers.new("on the ball", "SHRINKWRAP").target = ball
+    circle.openclare_curve.mesh = ball
+    return circle
+
+
+def coloured(drawn, colour):
+    return all(abs(got - wanted) < 1e-6 for got, wanted in zip(drawn.color, colour))
+
+
+loop, ridge = circle_at(0.3), circle_at(-0.3)
+assert loop.parent == ball and ridge.parent == ball
+assert (loop.matrix_world.translation - mathutils.Vector((4.0, 0.0, 0.3))).length < 1e-6, "parented, it moved"
+marked = ridge.openclare_curve
+marked.sharp, marked.crease, marked.seam = True, 1.0, True
+assert coloured(ridge, openclare.CURVE_COLOURS["seam"])
+marked.seam = False
+assert coloured(ridge, openclare.CURVE_COLOURS["hard"])
+marked.seam = True
+
+# Select and Deselect act on the curves of the ball.
+alone(ball)
+assert bpy.ops.object.openclare_curves_select(select=True) == {"FINISHED"}
+assert ridge.select_get() and loop.select_get()
+assert bpy.context.view_layer.objects.active == ball, "the ball is no longer active: its panel would go"
+assert bpy.ops.object.openclare_curves_select(select=False) == {"FINISHED"}
+assert not ridge.select_get() and not loop.select_get()
+
+alone(ball)
+settings.quads, settings.adaptive_size = 600, 0.0
+curves, marks = openclare.curves_of(ball)
+assert len(curves) == 2 and all(closed for _, closed, _ in curves), "two closed curves expected"
+assert sorted(marks) == [(False, 0.0, False), (True, 1.0, True)], marks
+loop_points = curves[[m[0] for m in marks].index(False)][0]
+assert all(abs(float((point ** 2).sum()) ** 0.5 - 1.0) < 0.02 for point in loop_points), "the circle is not on the ball"
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+mesh = bpy.context.active_object.data
+# The Shrinkwrap brought each circle to the nearest points of the ball, a
+# circle of latitude; the loop is at its height.
+height = sum(float(point[2]) for point in loop_points) / len(loop_points)
+on_the_loop = {vertex.index for vertex in mesh.vertices if abs(vertex.co.z - height) < 0.01}
+on_the_ridge = {vertex.index for vertex in mesh.vertices if abs(vertex.co.z + height) < 0.01}
+print("CURVES a loop of", len(on_the_loop), "vertices at height %.3f," % height, len(on_the_ridge), "on the ridge")
+assert len(on_the_loop) >= 12 and len(on_the_ridge) >= 12, "the curves have no loop of edges"
+# Sharp, creased in full and seams along the ridge, and nowhere else.
+weights = mesh.attributes["crease_edge"].data
+along_ridge = [edge for edge in mesh.edges if set(edge.vertices) <= on_the_ridge]
+for name, edges in (("sharp", [e for e in mesh.edges if e.use_edge_sharp]), ("seam", [e for e in mesh.edges if e.use_seam]),
+                    ("creased", [e for e in mesh.edges if weights[e.index].value > 0])):
+    assert len(edges) >= 12 and all(set(edge.vertices) <= on_the_ridge for edge in edges), f"{len(edges)} {name} edges"
+assert all(edge.use_edge_sharp and edge.use_seam and weights[edge.index].value == 1.0 for edge in along_ridge)
+
+# Half a crease, and no other mark: the ridge is creased by half, and is a
+# line of edges otherwise.
+marked.sharp, marked.crease, marked.seam = False, 0.5, False
+alone(ball)
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+mesh = bpy.context.active_object.data
+weights = mesh.attributes["crease_edge"].data
+along_ridge = [edge for edge in mesh.edges if set(edge.vertices) <= {v.index for v in mesh.vertices if abs(v.co.z + height) < 0.01}]
+assert len(along_ridge) >= 12 and all(abs(weights[edge.index].value - 0.5) < 1e-6 for edge in along_ridge)
+assert not any(edge.use_seam for edge in mesh.edges) and not any(edge.use_edge_sharp for edge in along_ridge)
+print("MARKS sharp, crease 1 and seam along the ridge, then a crease of 0.5 alone:", len(along_ridge), "edges")
+
+# Under a scale that is not the same on every axis the engine is given the
+# ball stretched, and the curves stretched with it: the loops stay on them.
+ball.scale = (1.0, 1.0, 2.0)
+bpy.context.view_layer.update()
+curves, marks = openclare.curves_of(ball)
+loop_points = curves[[m[1] for m in marks].index(0.0)][0]
+height = sum(float(point[2]) for point in loop_points) / len(loop_points)
+alone(ball)
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+mesh = bpy.context.active_object.data
+stretched = [vertex.index for vertex in mesh.vertices if abs(vertex.co.z - height) < 0.01]
+print("CURVES STRETCHED a loop of", len(stretched), "vertices at height %.3f" % height)
+assert len(stretched) >= 12, "the guide curve is lost under a scale of 1, 1, 2"
+ball.scale = (1.0, 1.0, 1.0)
+bpy.context.view_layer.update()
+
+# No mesh: the curve is let go of where it is, and the ball no longer takes it.
+where = ridge.matrix_world.translation.copy()
+ridge.openclare_curve.mesh = None
+assert ridge.parent is None and (ridge.matrix_world.translation - where).length < 1e-6
+assert len(openclare.curves_of(ball)[0]) == 1
+for circle in (loop, ridge):
+    bpy.data.objects.remove(circle)
+
+# A curve drawn on the ball with the drawing tool's logic: a stroke round it
+# at a height of 0.5, closed on its start, made into a curve of no mark. The
+# result has a loop of edges on it.
+from openclare import trace  # noqa: E402
+
+settings.quads, settings.adaptive_size = 600, 0.0
+height = 0.5
+ring = (1.0 - height ** 2) ** 0.5
+stroke = trace.Trace((ring, 0.0, height), 0.02, 0.05)
+for degrees in range(3, 360, 3):
+    stroke.move((ring * math.cos(math.radians(degrees)), ring * math.sin(math.radians(degrees)), height))
+points, closed = stroke.curve()
+assert closed, "the stroke round the ball did not close"
+drawn = openclare.drawn_curve(bpy.context, ball, points, closed, (False, 0.0, False), 0.02 * 2 * 3 ** 0.5)
+assert openclare.curve_objects(ball) == [drawn] and coloured(drawn, openclare.CURVE_COLOURS["line"])
+assert drawn.openclare_curve.mesh == ball
+# Few control points: a ring of 268 points of the stroke is two Bezier
+# segments; the curve is a child of the ball, held on it by a Shrinkwrap.
+spline = drawn.data.splines[0]
+assert spline.type == "BEZIER" and spline.use_cyclic_u and len(spline.bezier_points) <= 4, len(spline.bezier_points)
+assert drawn.parent == ball and drawn.modifiers[openclare.SHRINKWRAP].target == ball
+curves, _ = openclare.curves_of(ball)
+assert len(curves) == 1 and curves[0][1], "the drawn curve is not read back as one closed curve"
+off = max(abs(float(sum(x * x for x in point)) ** 0.5 - 1.0) for point in curves[0][0])
+assert off < 0.01, f"the drawn curve is {off:.4f} off the ball"
+alone(ball)
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+mesh = bpy.context.active_object.data
+on_it = [vertex.index for vertex in mesh.vertices if abs(vertex.co.z - height) < 0.01]
+print("DRAWN a stroke of", len(points), "points round the ball, a loop of", len(on_it), "vertices on it")
+assert len(on_it) >= 12, "the drawn curve has no loop of edges"
+
+# The Draw Curve tool: in the toolbar of the 3D viewport in Object Mode, with
+# its operator. The mouse cannot be driven here; what it relies on can.
+from bl_ui.space_toolsystem_common import ToolSelectPanelHelper  # noqa: E402
+
+toolbar = ToolSelectPanelHelper._tool_class_from_space_type("VIEW_3D")
+tools = [item for item in ToolSelectPanelHelper._tools_flatten(toolbar.tools_from_context(bpy.context, mode="OBJECT"))
+         if item is not None]
+assert any(item.idname == "openclare.draw_curve" for item in tools), "no Draw Curve tool in the toolbar"
+# Cut Volume is the other tool of the same button.
+groups = [group for group in toolbar.tools_from_context(bpy.context, mode="OBJECT") if isinstance(group, tuple)]
+assert any({"openclare.draw_curve", "openclare.cut_volume"} <= {getattr(item, "idname", None) for item in group}
+           for group in groups), "Draw Curve and Cut Volume are not one button"
+assert hasattr(bpy.ops.object, "openclare_cut_volume")
+assert hasattr(bpy.ops.object, "openclare_draw_curve")
+# The tools draw on the active object if it is a selected mesh; otherwise
+# they cannot, and show it by their cursor, which the timer sets through the
+# tool system of Blender: what it relies on is there.
+bpy.ops.object.select_all(action="DESELECT")
+ball.select_set(True)
+bpy.context.view_layer.objects.active = ball
+assert openclare.draw.target(bpy.context) == ball and not openclare.draw.disabled_in(bpy.context.view_layer)
+ball.select_set(False)
+assert openclare.draw.target(bpy.context) is None and openclare.draw.disabled_in(bpy.context.view_layer)
+bpy.context.view_layer.objects.active = drawn
+drawn.select_set(True)
+assert openclare.draw.target(bpy.context) is None and openclare.draw.disabled_in(bpy.context.view_layer)
+drawn.select_set(False)
+ball.select_set(True)
+bpy.context.view_layer.objects.active = ball
+from bl_ui.space_toolsystem_common import _activate_by_item  # noqa: E402,F401
+
+item = next(item for item in tools if item.idname == "openclare.cut_volume")
+assert item._replace(cursor=openclare.draw.DISABLED).cursor == "STOP"
+assert "STOP" in {e.identifier for e in bpy.types.Window.bl_rna.functions["cursor_set"].parameters["cursor"].enum_items}
+assert openclare.draw.follow_cursor() == openclare.draw.LOOK_FOR_CURSOR
+draw_properties = bpy.ops.object.openclare_draw_curve.get_rna_type().properties
+assert draw_properties["rope"].default == 30.0 and draw_properties["snap"].default == "NONE"
+assert draw_properties["snap_radius"].default == 15.0
+assert [draw_properties[name].default for name in ("width", "spacing", "back_band", "close", "fit")] == [8.0, 5.0, 30.0, 15.0, 5.0]
+# The settings of the stroke are in the popover of the header, as those of
+# Blender's own tools: drawn without fault in a layout of a panel.
+draw_tool = next(item for item in tools if item.idname == "openclare.draw_curve")
+assert "extra" in __import__("inspect").signature(draw_tool.draw_settings).parameters
+assert {item.identifier for item in draw_properties["snap"].enum_items} == {"NONE", "RIDGE", "VALLEY"}
+# The snap on a roof with a sharp ridge at x = 0.123, the screen seen from
+# above (a pixel is 0.01): the mouse 7 pixels from the ridge, within a radius
+# of 15, is moved onto it by Ridge, and stays where it is by Valley.
+from mathutils.bvhtree import BVHTree  # noqa: E402
+
+roof_tree = BVHTree.FromPolygons(
+    [(-1.0, -1.0, 0.0), (0.123, -1.0, 1.0), (0.123, 1.0, 1.0), (-1.0, 1.0, 0.0), (1.0, -1.0, 0.0), (1.0, 1.0, 0.0)],
+    [(0, 1, 2, 3), (1, 4, 5, 2)],
+)
+
+
+def from_above(context, owner, tree, mouse):
+    location, normal, _, _ = tree.ray_cast((mouse[0] * 0.01, mouse[1] * 0.01, 5.0), (0.0, 0.0, -1.0))
+    return (None, None) if location is None else (tuple(location), tuple(normal))
+
+
+surface_at = openclare.draw.surface_at
+openclare.draw.surface_at = from_above
+try:
+    ridge = openclare.draw.snapped(None, None, roof_tree, (5.0, 0.0), (1.0, 0.0), "RIDGE", 15.0)
+    under = openclare.draw.snapped(None, None, roof_tree, (5.0, 0.0), (1.0, 0.0), "VALLEY", 15.0)
+    # A gutter, its valley at x = 0.123: found by Valley.
+    gutter_tree = BVHTree.FromPolygons(
+        [(-1.0, -1.0, 1.0), (0.123, -1.0, 0.0), (0.123, 1.0, 0.0), (-1.0, 1.0, 1.0), (1.0, -1.0, 1.0), (1.0, 1.0, 1.0)],
+        [(0, 1, 2, 3), (1, 4, 5, 2)],
+    )
+    valley = openclare.draw.snapped(None, None, gutter_tree, (5.0, 0.0), (1.0, 0.0), "VALLEY", 15.0)
+finally:
+    openclare.draw.surface_at = surface_at
+assert abs(ridge[0] - 0.123) < 1e-3 and abs(ridge[2] - 1.0) < 1e-3, ridge
+assert abs(valley[0] - 0.123) < 1e-3 and abs(valley[2]) < 1e-3, valley
+assert abs(under[0] - 0.05) < 1e-6, under
+print("SNAP onto the ridge at x = %.4f, into the valley at %.4f, for 0.123; Valley on the ridge leaves the mouse" % (ridge[0], valley[0]))
+# F sets the radius of the snap, in the tool of Draw Curve.
+assert hasattr(bpy.ops.object, "openclare_snap_radius")
+assert any(entry[0] == "object.openclare_snap_radius" and entry[1]["type"] == "F"
+           for entry in openclare.draw.OPENCLARE_TL_draw_curve.bl_keymap)
+# S opens the menu of the snaps; V and R switch Valley and Ridge on, and off
+# again when on.
+keys = {entry[1]["type"]: entry for entry in openclare.draw.OPENCLARE_TL_draw_curve.bl_keymap}
+assert keys["S"][0] == "wm.call_menu" and dict(keys["S"][2]["properties"])["name"] == "OPENCLARE_MT_snap"
+assert dict(keys["V"][2]["properties"])["snap"] == "VALLEY" and dict(keys["R"][2]["properties"])["snap"] == "RIDGE"
+assert hasattr(bpy.ops.object, "openclare_snap") and hasattr(bpy.types, "OPENCLARE_MT_snap")
+toggled = openclare.draw.toggled
+assert toggled("NONE", "RIDGE") == "RIDGE" and toggled("RIDGE", "RIDGE") == "NONE" and toggled("RIDGE", "VALLEY") == "VALLEY"
+
+
+def snap_pixels(snap):
+    """How many pixels the circle of the snap `snap` (and its name) takes,
+    drawn round the middle of an image of 120 by 80."""
+    import gpu as gpu_module
+    import numpy
+
+    offscreen = gpu_module.types.GPUOffScreen(120, 80)
+    with offscreen.bind():
+        framebuffer = gpu_module.state.active_framebuffer_get()
+        framebuffer.clear(color=(0.0, 0.0, 0.0, 1.0))
+        with gpu_module.matrix.push_pop(), gpu_module.matrix.push_pop_projection():
+            gpu_module.matrix.load_identity()
+            gpu_module.matrix.load_projection_matrix(mathutils.Matrix((
+                (2.0 / 120, 0.0, 0.0, -1.0), (0.0, 2.0 / 80, 0.0, -1.0), (0.0, 0.0, -1.0, 0.0), (0.0, 0.0, 0.0, 1.0))))
+            openclare.draw.draw_snap(None, (40.0, 40.0), 15.0, snap, (0.0, 0.85, 1.0, 1.0), size=(120, 80))
+        pixels = numpy.array(framebuffer.read_color(0, 0, 120, 80, 4, 0, "FLOAT").to_list()).reshape(80, 120, 4)
+    offscreen.free()
+    lit = pixels[:, :, 2] > 0.2
+    return int(lit[:, :58].sum()), int(lit[:, 58:].sum())
+
+
+try:
+    import gpu as gpu_started  # noqa: E402
+
+    gpu_started.init()
+    ring_none, word_none = snap_pixels("NONE")
+    ring_ridge, word_ridge = snap_pixels("RIDGE")
+    print("SNAP CURSOR circle of", ring_none, "pixels dashed,", ring_ridge, "whole; its name", word_none, "and",
+          word_ridge, "pixels")
+    assert 0 < ring_none < ring_ridge, (ring_none, ring_ridge)
+    assert word_none == 0 and word_ridge > 20, (word_none, word_ridge)
+except SystemError as error:
+    print("SNAP CURSOR not drawn off screen:", error)
+print("TARGET the selected active mesh; a curve active, or nothing selected: the cursor says no")
+# The surface the strokes are laid on: a ray from outside the ball reaches it
+# at its radius; the tree is kept while the shape stays as it is.
+tree = openclare.draw.surface_tree(bpy.context, ball)
+location, _, _, _ = tree.ray_cast((0.0, 0.0, 5.0), (0.0, 0.0, -1.0))
+assert location is not None and abs(location.z - 1.0) < 0.02, location
+assert openclare.draw.surface_tree(bpy.context, ball) is tree
+# The tree is built again when the shape changes, and only then.
+ball.data.vertices[0].co.z += 0.01
+ball.data.update()
+assert openclare.draw.surface_tree(bpy.context, ball) is not tree, "the tree outlived a change of the shape"
+ball.data.vertices[0].co.z -= 0.01
+ball.data.update()
+tree = openclare.draw.surface_tree(bpy.context, ball)
+assert openclare.draw.surface_tree(bpy.context, ball) is tree
+assert abs(openclare.draw.step_of(ball) - 0.01 * 2 * 3 ** 0.5) < 1e-3, openclare.draw.step_of(ball)
+# The curve drawn above is one that can be taken up again, and its points set
+# anew (as a stroke taken up and drawn on).
+found = openclare.draw.drawn_curves(bpy.context, ball)
+assert len(found) == 1 and found[0][0] == drawn and found[0][2], found
+openclare.bezier_spline(drawn.data, points[:100], False, 0.02)
+assert drawn.data.splines[0].type == "BEZIER" and not drawn.data.splines[0].use_cyclic_u
+# The curve moves with the ball.
+ball.location.x += 1.0
+bpy.context.view_layer.update()
+assert abs(drawn.matrix_world.translation.x - ball.matrix_world.translation.x) < 1e-6
+ball.location.x -= 1.0
+bpy.context.view_layer.update()
+print("DRAWN as", len(spline.bezier_points), "control points, a child of the ball, held on it")
+assert drawn.show_in_front, "a drawn curve is hidden half behind the object"
+
+# What Cut Volume makes of a cut: the plane of a line across the ball at a
+# height of -0.4 cuts it in one closed loop, made a closed curve of few
+# control points on it.
+surface = openclare.draw.cut_surface(bpy.context, ball)
+assert openclare.draw.cut_surface(bpy.context, ball) is surface, "the triangles were read again"
+loops = openclare.draw.cut_loops(surface, (0.0, 0.0, -0.4), (0.0, 0.0, 1.0))
+loop, gap = openclare.cut.nearest_loop(loops, (0.0, -0.9, -0.4))
+assert len(loops) == 1 and loop[1] and gap < 0.05, [(len(p), c) for p, c in loops]
+# The same cut made by the thread of Cut Volume, away from Blender.
+cutter = openclare.draw.Cutter(surface, 0.05)
+cutter.ask(1, ((0.0, 0.0, -0.4), (0.0, 0.0, 1.0)), (0.0, -0.9, -0.4))
+for _ in range(500):
+    done = cutter.take()
+    if done is not None:
+        break
+    time.sleep(0.01)
+cutter.close()
+assert done is not None and done[0] == 1 and done[1][1] is None and len(done[1][0]) == len(loop[0]), done
+step = openclare.draw.step_of(ball)
+ring = openclare.trace.resampled([tuple(point) for point in loop[0]], step, closed=True)
+belt = openclare.drawn_curve(bpy.context, ball, ring, True, (True, 1.0, False), step)
+assert coloured(belt, openclare.CURVE_COLOURS["hard"]) and belt.openclare_curve.sharp
+assert belt.data.splines[0].use_cyclic_u and len(belt.data.splines[0].bezier_points) <= 4
+print("CUT a loop of", len(loop[0]), "points round the ball, made", len(belt.data.splines[0].bezier_points), "control points")
+# A copy of the ball alone (Shift+D) takes none of its curves: they are the
+# children of the ball; a curve drawn on the copy is the copy's.
+bpy.ops.object.select_all(action="DESELECT")
+ball.select_set(True)
+bpy.context.view_layer.objects.active = ball
+bpy.ops.object.duplicate()
+copy = bpy.context.active_object
+copy.location.x += 5.0
+assert openclare.curve_objects(copy) == []
+openclare.drawn_curve(bpy.context, copy, ring, True, (False, 0.0, False), step)
+bpy.context.view_layer.update()
+assert len(openclare.curve_objects(ball)) == 2 and len(openclare.curve_objects(copy)) == 1
+print("COPY the copy of the ball has its own curve; the ball keeps its 2")
+bpy.data.objects.remove(copy)
+for drawn_on_ball in openclare.curve_objects(ball):
+    bpy.data.objects.remove(drawn_on_ball)
+settings.quads, settings.adaptive_size = 800, 50.0
+
 # Materials: a flat grid whose left third is of another material. The result
 # has both, each quad that of the surface under it, and no quad across the
 # border between the two.
@@ -312,6 +678,224 @@ alone(body)
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 assert len(bpy.context.active_object.data.polygons) < 0.5 * made
 settings.target, settings.largest_quad, settings.smallest_quad = "COUNT", 0.0, 0.0
+
+# Analysed: sizes proposed, the number of quads they make told at once, and
+# the sizes shown in colour on a copy while the object is hidden.
+alone(body)
+assert openclare.analysis_of(bpy.context, settings, body) is None
+assert bpy.ops.object.openclare_analyse() == {"FINISHED"}
+objects_before = len(bpy.data.objects)
+assert settings.target == "SIZE" and 0.0 < settings.smallest_quad <= settings.largest_quad, (
+    settings.smallest_quad, settings.largest_quad)
+held = openclare.analysis_of(bpy.context, settings, body)
+assert held is not None
+analysis, scale = held
+quads, below = openclare.counted(analysis, scale, settings.largest_quad, settings.smallest_quad)
+assert quads > 300 and 0.0 <= below <= 1.0, (quads, below)
+# Smaller quads, more of them, told without meshing anything. Not four
+# times as many: where the surface bends, the size follows the bounds only
+# by the part the adaptivity leaves them (twice as many, measured).
+started = time.perf_counter()
+finer, _ = openclare.counted(analysis, scale, settings.largest_quad / 2.0, settings.smallest_quad / 2.0)
+assert finer > 1.5 * quads and time.perf_counter() - started < 0.5, (finer, quads)
+# The colours of the sizes, on the object itself, in an attribute of their
+# own made the active and rendered one; those that were are given back.
+painted = body.data.color_attributes.new("painted", "BYTE_COLOR", "CORNER")
+body.data.color_attributes.active_color_name = body.data.color_attributes.default_color_name = "painted"
+settings.show_sizes = True
+colours = body.data.color_attributes.get("openclare sizes")
+assert colours is not None and not body.hide_get(), "no colours of the sizes on the object"
+assert len(bpy.data.objects) == objects_before, "a copy was made"
+assert body.data.color_attributes.active_color_name == "openclare sizes"
+assert body.data.color_attributes.default_color_name == "openclare sizes"
+before = [tuple(colours.data[k].color) for k in range(0, len(colours.data), 97)]
+settings.largest_quad, settings.smallest_quad = settings.largest_quad / 3.0, settings.smallest_quad / 3.0
+after = [tuple(colours.data[k].color) for k in range(0, len(colours.data), 97)]
+assert before != after, "the colours did not follow the sizes"
+red = openclare.linear(openclare.COARSER)
+
+
+def wire_in_red():
+    return [
+        all(abs(a - b) < 1e-4 for a, b in zip(colours.data[v.index].color, red))
+        for v in body.data.vertices if v.co.x > 2.0
+    ]
+
+
+# The wire was proposed what its thickness calls for. With no quad smaller
+# than the largest, it is shown as coarser than its shape asks, in red.
+assert sum(wire_in_red()) < 0.1 * len(wire_in_red()), "the wire in red with the sizes proposed"
+settings.smallest_quad = settings.largest_quad
+wire_red = wire_in_red()
+assert sum(wire_red) > 0.5 * len(wire_red), f"{sum(wire_red)} of {len(wire_red)} vertices of the wire in red"
+# Unticked: the attribute goes, the painted one is active and rendered again.
+settings.show_sizes = False
+assert "openclare sizes" not in body.data.color_attributes
+assert body.data.color_attributes.active_color_name == "painted"
+assert body.data.color_attributes.default_color_name == "painted"
+# A subdivided object: its own vertices take the sizes of the nearest seen.
+subdivided = body.modifiers.new("subdivided", "SUBSURF")
+subdivided.levels = 1
+bpy.context.view_layer.update()
+assert bpy.ops.object.openclare_analyse() == {"FINISHED"}
+settings.show_sizes = True
+assert "openclare sizes" in body.data.color_attributes, "no colours on a subdivided object"
+settings.show_sizes = False
+body.modifiers.remove(subdivided)
+bpy.context.view_layer.update()
+assert bpy.ops.object.openclare_analyse() == {"FINISHED"}
+settings.show_sizes = True
+# Saved, the file holds no colours of the sizes; they are back after. The
+# copy is saved in a temporary folder; OPENCLARE_TEST_NO_SAVE=1 skips this
+# check, where no .blend file is to be written at all.
+import os
+import tempfile
+
+if not os.environ.get("OPENCLARE_TEST_NO_SAVE"):
+    with tempfile.TemporaryDirectory() as folder:
+        saved_to = f"{folder}/saved.blend"
+        bpy.ops.wm.save_as_mainfile(filepath=saved_to, copy=True)
+        with bpy.data.libraries.load(saved_to) as (there, here):
+            here.meshes = [body.data.name]
+        kept = here.meshes[0]
+        assert "openclare sizes" not in kept.color_attributes and "painted" in kept.color_attributes
+        assert kept.color_attributes.active_color_name == "painted"
+        bpy.data.meshes.remove(kept)
+    assert "openclare sizes" in body.data.color_attributes, "the colours did not come back after saving"
+else:
+    print("SAVE skipped (OPENCLARE_TEST_NO_SAVE)")
+# Remeshing takes the colours away.
+bpy.context.view_layer.objects.active = body
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+assert "openclare sizes" not in body.data.color_attributes and not settings.show_sizes
+assert body.data.color_attributes.active_color_name == "painted"
+body.data.color_attributes.remove(body.data.color_attributes["painted"])
+# Changed, the object asks to be analysed again.
+body.data.vertices[0].co.x += 0.01
+body.data.update()
+assert openclare.analysis_of(bpy.context, settings, body) is None
+settings.show_sizes = True
+assert not settings.show_sizes, "a preview without an analysis that holds"
+settings.target, settings.largest_quad, settings.smallest_quad = "COUNT", 0.0, 0.0
+print("SIZES", round(quads), "quads proposed,", round(100 * below), "% coarser than asked")
+settings.quads, settings.adaptive_size = 800, 50.0
+
+# Density from Shape: the density the shape calls for, written as a vertex
+# group and made the Density, Adaptive Size switched off. Remeshed with it,
+# the quads are where Adaptive Size put them. An ellipsoid, flat round its
+# middle and bent tightly at its tips, with Adaptive Size at 100 %.
+import numpy  # noqa: E402
+from mathutils.kdtree import KDTree
+
+bpy.ops.mesh.primitive_uv_sphere_add(segments=96, ring_count=48, location=(0.0, 30.0, 0.0))
+ellipsoid = bpy.context.active_object
+ellipsoid.scale = (4.0, 1.0, 0.6)
+bpy.ops.object.transform_apply(scale=True)
+alone(ellipsoid)
+shape(settings, "organic")
+settings.target, settings.quads, settings.adaptive_size = "COUNT", 1500, 100.0
+settings.density_group, settings.density_factor = "", 16.0
+evaluated = ellipsoid.evaluated_get(bpy.context.evaluated_depsgraph_get())
+seen = [vertex.co.copy() for vertex in evaluated.to_mesh().vertices]
+evaluated.to_mesh_clear()
+
+
+def sizes_round(result):
+    """The edge of the quads round each vertex of the ellipsoid: the square
+    root of the mean area of the nine quads nearest to it."""
+    polygons = result.data.polygons
+    tree = KDTree(len(polygons))
+    for polygon in polygons:
+        tree.insert(polygon.center, polygon.index)
+    tree.balance()
+    areas = numpy.array([polygon.area for polygon in polygons])
+    return numpy.sqrt([areas[[index for _, index, _ in tree.find_n(point, 9)]].mean() for point in seen])
+
+
+def remeshed_sizes():
+    alone(ellipsoid)
+    assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+    return len(bpy.context.active_object.data.polygons), sizes_round(bpy.context.active_object)
+
+
+adaptive_count, adaptive = remeshed_sizes()
+settings.adaptive_size = 0.0
+uniform_count, uniform = remeshed_sizes()
+settings.adaptive_size = 100.0
+alone(ellipsoid)
+assert "UNDO" in openclare.OPENCLARE_OT_density_from_shape.bl_options
+assert bpy.ops.object.openclare_density_from_shape() == {"FINISHED"}
+assert "openclare density" in ellipsoid.vertex_groups
+assert settings.density_group == "openclare density" and settings.adaptive_size == 0.0
+assert settings.shape_adaptive_size == 100.0 and settings.quads_around == 6
+weights = numpy.zeros(len(ellipsoid.data.vertices))
+for vertex in ellipsoid.data.vertices:
+    assert len(vertex.groups) == 1, "a vertex left out of the group"
+    weights[vertex.index] = vertex.groups[0].weight
+xs = numpy.array([vertex.co.x for vertex in ellipsoid.data.vertices])
+# Weight 1 for the smallest quads, as painted: the tips, not the middle.
+assert weights.min() < 0.01 and weights[abs(xs) > 3.5].mean() > weights[abs(xs) < 1.0].mean() + 0.2, weights
+grouped_count, grouped = remeshed_sizes()
+logs = numpy.log(adaptive)
+
+
+def tips_over_middle(sizes):
+    """The edge of the quads at the tips over that round the middle."""
+    return sizes[abs(xs) > 3.5].mean() / sizes[abs(xs) < 1.0].mean()
+
+
+follows = numpy.corrcoef(logs, numpy.log(grouped))[0, 1]
+print(
+    "DENSITY FROM SHAPE quads %d adaptive, %d from the group, %d uniform; correlation of the log of the local "
+    "size with Adaptive Size: %.3f from the group, %.3f uniform; tips over middle: %.3f adaptive, %.3f from the "
+    "group, %.3f uniform"
+    % (adaptive_count, grouped_count, uniform_count, follows, numpy.corrcoef(logs, numpy.log(uniform))[0, 1],
+       tips_over_middle(adaptive), tips_over_middle(grouped), tips_over_middle(uniform))
+)
+# The engine does not lay out the same quads at every run (some 4 % more or
+# fewer, run to run, for the same settings): the bounds leave room for that.
+# Measured over ten runs: within 3.5 % of the number, a correlation of 0.984
+# or more, tips over middle within 3 % of that of Adaptive Size, uniform 22 %
+# or more above it.
+assert abs(grouped_count / adaptive_count - 1.0) < 0.08, (grouped_count, adaptive_count)
+assert follows > 0.97, follows
+assert abs(tips_over_middle(grouped) / tips_over_middle(adaptive) - 1.0) < 0.06
+assert tips_over_middle(uniform) > 1.15 * tips_over_middle(adaptive), "the ellipsoid does not tell them apart"
+# Pressed again, Adaptive Size now off: the shape is read as it was, with the
+# Adaptive Size it had; the group is replaced, not added to.
+alone(ellipsoid)
+assert bpy.ops.object.openclare_density_from_shape() == {"FINISHED"}
+again = numpy.array([ellipsoid.vertex_groups["openclare density"].weight(v) for v in range(len(weights))])
+assert numpy.abs(again - weights).max() < 0.01 and len(ellipsoid.vertex_groups) == 1
+# With Sizes, the largest asked for is the weight 0. With a Factor of 2, the
+# tips ask for smaller quads than it gives: their weight stays at 1.
+settings.target, settings.density_factor = "SIZE", 2.0
+settings.largest_quad, settings.smallest_quad = openclare.sizes_from(ellipsoid)
+alone(ellipsoid)
+assert bpy.ops.object.openclare_density_from_shape() == {"FINISHED"}
+sized = numpy.array([ellipsoid.vertex_groups["openclare density"].weight(v) for v in range(len(weights))])
+assert sized.max() == 1.0 and sized.min() < 0.01, (sized.min(), sized.max())
+# A factor of 1 has the paint do nothing: refused.
+settings.density_factor = 1.0
+try:
+    bpy.ops.object.openclare_density_from_shape()
+    raise AssertionError("a factor of 1 went unnoticed")
+except RuntimeError as error:
+    assert "Factor" in str(error), error
+# Under modifiers that make other vertices, each vertex of the object takes
+# the weight of the nearest one seen.
+settings.target, settings.density_factor = "COUNT", 16.0
+subdivided = ellipsoid.modifiers.new("subdivided", "SUBSURF")
+subdivided.levels = 1
+bpy.context.view_layer.update()
+alone(ellipsoid)
+assert bpy.ops.object.openclare_density_from_shape() == {"FINISHED"}
+under = numpy.array([ellipsoid.vertex_groups["openclare density"].weight(v) for v in range(len(weights))])
+assert numpy.abs(under - weights).mean() < 0.05, numpy.abs(under - weights).mean()
+ellipsoid.modifiers.remove(subdivided)
+settings.density_group, settings.adaptive_size = "", 50.0
+settings.target, settings.largest_quad, settings.smallest_quad = "COUNT", 0.0, 0.0
+settings.quads, settings.density_factor = 800, 4.0
 
 # Nothing to remesh: said, not crashed.
 bpy.ops.object.empty_add()
@@ -804,6 +1388,96 @@ assert mirror_image_missing(result, 0) == 0
 assert on_equator(result) >= 30, on_equator(result)
 settings.symmetry = "NONE"
 print("SYMMETRY:", plain_faces, "quads on Suzanne, each vertex with its image; the marked equator kept across X")
+
+# Extensions (see extend): what an add-on that includes this one adds to a
+# run. One asks the engine for the grid UV and lays it on the result; one
+# fails, and the result stays; Remesh Again hands them the result in place.
+class GridUV(openclare.extend.Extension):
+    def asks(self, original):
+        return {"uv_layers": ("grid",)}
+
+    def made(self, context, original, result, made, report):
+        layer = result.data.uv_layers.new(name="grid", do_init=False)
+        layer.data.foreach_set("uv", made.uv["grid"])
+        result["extended"] = result.get("extended", 0) + 1
+        report["grid"] = len(made.uv["grid"]) // 2
+
+
+class Failing(openclare.extend.Extension):
+    def made(self, context, original, result, made, report):
+        raise RuntimeError("on purpose")
+
+
+grid_uv, failing = GridUV(), Failing()
+openclare.extend.add(grid_uv)
+openclare.extend.add(failing)
+alone(ball)
+settings.quads = 400
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+result = bpy.context.active_object
+assert "grid" in result.data.uv_layers and result["extended"] == 1
+assert int(result[openclare.REPORT]["grid"]) == len(result.data.loops)
+assert bpy.ops.object.openclare_remesh_again() == {"FINISHED"}
+assert bpy.context.active_object == result and result["extended"] == 2 and "grid" in result.data.uv_layers
+openclare.extend.remove(failing)
+
+
+class Greedy(openclare.extend.Extension):
+    def asks(self, original):
+        return {"curves": ()}
+
+
+openclare.extend.add(Greedy())
+alone(ball)
+try:
+    bpy.ops.object.openclare_remesh()
+    raise AssertionError("an extension took an argument openclare gives")
+except RuntimeError as error:
+    assert "curves" in str(error), error
+openclare.extend.EXTENSIONS.clear()
+alone(ball)
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+assert len(bpy.context.active_object.data.uv_layers) == 0
+print("EXTENSIONS the grid UV asked and laid, kept on Remesh Again; a failing one passed by; none, no UV")
+
+# Triangles (DT-179): the same object remeshed into triangles close to
+# equilateral, about as many as asked, none through another, said as such;
+# Remesh Again keeps them triangles.
+alone(ball)
+settings.output, settings.quads = "TRIANGLES", 2000
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+result = bpy.context.active_object
+assert result.name.endswith(".tris") and all(len(polygon.vertices) == 3 for polygon in result.data.polygons)
+made = len(result.data.polygons)
+assert abs(made / 2000 - 1.0) < 0.1, made
+told = result[openclare.REPORT]
+assert int(told["crossing_faces"]) == 0 and openclare.report_lines(told)[0][0].startswith(f"{made} triangles in ")
+assert bpy.ops.object.openclare_remesh_again() == {"FINISHED"}
+assert all(len(polygon.vertices) == 3 for polygon in result.data.polygons)
+print("TRIANGLES", made, "triangles for 2000, none crossing; again in place")
+# For the shape: Blender's Decimate (Collapse) makes them, as many as asked,
+# its painted density kept denser, said as such; Remesh Again does it again.
+group = ball.vertex_groups.new(name="top")
+group.add([vertex.index for vertex in ball.data.vertices if vertex.co.z > 0.0], 1.0, "REPLACE")
+alone(ball)
+settings.triangles_for, settings.quads = "SHAPE", 1000
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+shaped = bpy.context.active_object
+faces = len(shaped.data.polygons)
+assert ".tris" in shaped.name and all(len(polygon.vertices) == 3 for polygon in shaped.data.polygons)
+assert abs(faces / 1000 - 1.0) < 0.05, faces
+told = shaped[openclare.REPORT]
+assert told["method"] == "decimate" and openclare.report_lines(told)[1][0] == "By Blender's Decimate (Collapse)"
+settings.density_group = "top"
+alone(ball)
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+dense = bpy.context.active_object.data
+on_top = sum(1 for polygon in dense.polygons if polygon.center.z > 0.0) / len(dense.polygons)
+assert on_top > 0.75, on_top
+assert bpy.ops.object.openclare_remesh_again() == {"FINISHED"}
+print("DECIMATE", faces, "triangles for 1000; painted on top, %.0f %% of them there" % (100 * on_top))
+settings.density_group, settings.triangles_for = "", "SIMULATION"
+settings.output = "QUADS"
 
 openclare.unregister()
 # The drawing goes with the add-on.

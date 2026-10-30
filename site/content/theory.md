@@ -47,8 +47,9 @@ made by hand for it.
 
 ![The male body before and after closing loops](../../docs/glossary/male_result.png)
 
-*Spiral loops in yellow to red, closed loops in blue. Before closing, 12.1% of the edges lay on
-spiral loops; today 1.15% to 1.59%, against 2.5% for the mesh made by hand.*
+*Spiral loops in yellow to red, closed loops in blue, from an earlier run of the engine. Today's
+engine: 26.8% of the edges on spiral loops with no closing, 1.95% with it, against 2.55% for the
+mesh made by hand.*
 
 The problem is well known. Bommes and his colleagues named these helices *q-helices* in 2011
 and removed them from a finished mesh by local edits. openclare takes the opposite route: it
@@ -286,8 +287,9 @@ male body.*
   quads); the first version of closing brought it to 6.0%. Over three budgets, the first
   version leaves 7.55% and today's engine **4.54%**, with 36.3% of edges on closed loops
   instead of 34.1%, no invalid mesh, and a mean distance to the source 1.2% higher.
-- **Male body, 10,590 quads.** 12.1% before any closing; 2.47% with the first version;
-  **1.15% to 1.59%** today, over recent runs. The mesh made by hand has 2.5%. One model is
+- **Male body, 10,590 quads.** With today's engine, 26.8% with no closing and **1.95%** with it
+  ([figures of the paper](../../docs/research/closing-loops/figures/README.md), one run); the mesh made by hand has 2.55%. Earlier engines gave
+  12.1% with no closing, 2.47% with the first version of closing, then 1.15% to 1.59%. One model is
   chaotic, so this is an illustration; the batch above is the evidence.
 - **Cylinder.** **No spiral and 6 patches** at 2,990, 3,000 and 5,000 quads, against 26% to
   32% of spiral edges and about 700 patches before.
@@ -347,9 +349,8 @@ Research is mostly ideas that fail. These did, and the note says why.
 
 **Machine-checked proofs.** The algebraic heart of every result above is proved in
 [Lean](../../docs/research/turns-of-a-t-mesh/lean/README.md), a proof assistant: a program that accepts a proof only if every step
-follows from the previous ones. There are **187 theorems**, built on the Mathlib library, using
-only Lean's standard axioms and no unfinished proof. They replay in about 40 seconds with
-`make proofs`. They cover the shift as a sum of lengths, the completeness of the walk, the
+follows from the previous ones. They use only Lean's standard axioms and leave no proof open,
+and random meshes test them; [the method](research.md#the-method) says how. They cover the shift as a sum of lengths, the completeness of the walk, the
 Burgers sum and its order, dislocations and staircases, the checkerboard rule, the parity of
 rings (with two different proofs), the counting of poles on a grid, the structure of the
 whole lengths, the certificates that a group of turns cannot close, and the forced helices.

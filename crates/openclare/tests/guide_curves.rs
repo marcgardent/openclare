@@ -129,6 +129,68 @@ fn two_curves_that_cross_share_a_vertex() {
 }
 
 #[test]
+fn a_curve_on_a_coarse_mesh_gives_a_line_of_edges() {
+    // The cube of twelve triangles (DT-164): a face is two triangles, which
+    // the line crosses once. A line of points closer together than an edge
+    // of the work mesh, as the drawing tools make them.
+    let source = primitives::cube(1);
+    let points = (0..31).map(|i| Vec3::new(-0.9 + 0.06 * f64::from(i), -1.0, 0.3)).collect();
+    let curve = GuideCurve { points, closed: false, sharp: false };
+    let (mesh, report) = remesh(&source, 600, &[curve]);
+    assert!(measure(&source, &mesh, Some(600)).is_valid());
+    let line = joined(&report.guide_edges);
+    for &v in line.keys() {
+        let p = mesh.positions[v as usize];
+        assert!((p.y + 1.0).abs() < 1e-6 && (p.z - 0.3).abs() < 1e-6, "{p:?}");
+    }
+    let xs: Vec<f64> = line.keys().map(|&v| mesh.positions[v as usize].x).collect();
+    let (low, high) = (xs.iter().copied().fold(f64::INFINITY, f64::min), xs.iter().copied().fold(-1.0, f64::max));
+    assert!(low < -0.6 && high > 0.6, "the line runs from {low} to {high}");
+    assert_eq!(line.values().filter(|n| n.len() == 1).count(), 2);
+}
+
+#[test]
+fn a_ring_round_a_coarse_cube_is_one_loop_of_edges() {
+    let source = primitives::cube(1);
+    let corners =
+        [Vec3::new(-1.0, -1.0, 0.3), Vec3::new(1.0, -1.0, 0.3), Vec3::new(1.0, 1.0, 0.3), Vec3::new(-1.0, 1.0, 0.3)];
+    let points = (0..40).map(|k| corners[k / 10].lerp(corners[(k / 10 + 1) % 4], (k % 10) as f64 / 10.0)).collect();
+    let curve = GuideCurve { points, closed: true, sharp: false };
+    let (mesh, report) = remesh(&source, 600, &[curve]);
+    assert!(measure(&source, &mesh, Some(600)).is_valid());
+    let line = joined(&report.guide_edges);
+    assert!(line.len() > 30, "{} vertices on the ring", line.len());
+    for (&v, neighbours) in &line {
+        let p = mesh.positions[v as usize];
+        assert_eq!(neighbours.len(), 2, "vertex {v} at {p:?}");
+        assert!((p.z - 0.3).abs() < 1e-6, "{p:?}");
+    }
+}
+
+#[test]
+fn a_diagonal_across_a_face_is_followed_with_no_singularity_for_it() {
+    // At 45 degrees from the sides of the face, the field may turn either
+    // way to meet the line: it used to turn one way on one side and the
+    // other way on the other, with a pair of singularities at the two ends
+    // that folded the map and let the line go (DT-164).
+    let source = primitives::cube(1);
+    let points = (0..31).map(|i| -0.6 + 0.04 * f64::from(i)).map(|t| Vec3::new(t, t, 1.0)).collect();
+    let curve = GuideCurve { points, closed: false, sharp: false };
+    let (mesh, report) = remesh(&source, 1000, &[curve]);
+    assert!(measure(&source, &mesh, Some(1000)).is_valid());
+    assert_eq!(report.singularities, (8, 0), "the corners of the cube, nothing more");
+    let line = joined(&report.guide_edges);
+    for &v in line.keys() {
+        let p = mesh.positions[v as usize];
+        assert!((p.z - 1.0).abs() < 1e-6 && (p.x - p.y).abs() < 1e-6, "{p:?}");
+    }
+    let xs: Vec<f64> = line.keys().map(|&v| mesh.positions[v as usize].x).collect();
+    let (low, high) = (xs.iter().copied().fold(f64::INFINITY, f64::min), xs.iter().copied().fold(-1.0, f64::max));
+    assert!(low < -0.55 && high > 0.55, "the line runs from {low} to {high}");
+    assert_eq!(line.values().filter(|n| n.len() == 1).count(), 2);
+}
+
+#[test]
 fn a_curve_away_from_the_surface_changes_nothing() {
     let source = primitives::icosphere(4);
     let far =
@@ -176,6 +238,24 @@ fn a_curve_drawn_as_sharp_gives_hard_edges_creased_in_full() {
 }
 
 #[test]
+fn the_edges_of_a_box_are_not_taken_for_a_curve_drawn_as_sharp() {
+    // A sharp diagonal across the top of a cube: the edges of the cube are
+    // nearer to it than to any other curve, yet they are not along it
+    // (DT-164).
+    let source = primitives::cube(1);
+    let points = (0..31).map(|i| -0.6 + 0.04 * f64::from(i)).map(|t| Vec3::new(t, t, 1.0)).collect();
+    let curve = GuideCurve { points, closed: false, sharp: true };
+    let (mesh, report) = remesh(&source, 1000, &[curve]);
+    assert!(measure(&source, &mesh, Some(1000)).is_valid());
+    let line = joined(&report.sharp_curve_edges);
+    assert!(line.len() >= 8, "{} vertices along the curve", line.len());
+    for &v in line.keys() {
+        let p = mesh.positions[v as usize];
+        assert!((p.z - 1.0).abs() < 1e-6 && (p.x - p.y).abs() < 1e-6, "{p:?}");
+    }
+}
+
+#[test]
 fn no_edge_along_a_guide_curve_is_taken_for_a_hard_edge() {
     // Small loops, drawn with few points: the line the mesh follows, on the
     // surface, strays from the polygon that was drawn. The edges along it
@@ -220,4 +300,43 @@ fn the_map_is_shown_to_whoever_listens() {
     let first = |stage: &str| paths.0.iter().position(|path| path.starts_with(stage)).unwrap();
     assert!(first("map/") < first("layout/"));
     assert!(!paths.0.iter().any(|path| path == "map/lines-let-go" || path == "map/folded-with-every-line"));
+}
+
+#[test]
+fn each_edge_along_a_curve_says_which_curve() {
+    // A point alone (no curve, but counted), a loop round the cube and a
+    // sharp diagonal across its top: each edge of the result along a curve
+    // comes with the index of that curve among those given.
+    let source = primitives::cube(1);
+    let alone = GuideCurve { points: vec![Vec3::new(0.0, -1.0, 0.0)], closed: false, sharp: false };
+    let corners =
+        [Vec3::new(-1.0, -1.0, 0.3), Vec3::new(1.0, -1.0, 0.3), Vec3::new(1.0, 1.0, 0.3), Vec3::new(-1.0, 1.0, 0.3)];
+    let points = (0..40).map(|k| corners[k / 10].lerp(corners[(k / 10 + 1) % 4], (k % 10) as f64 / 10.0)).collect();
+    let ring = GuideCurve { points, closed: true, sharp: false };
+    let points = (0..31).map(|i| -0.6 + 0.04 * f64::from(i)).map(|t| Vec3::new(t, t, 1.0)).collect();
+    let diagonal = GuideCurve { points, closed: false, sharp: true };
+    let (mesh, report) = remesh(&source, 1000, &[alone, ring, diagonal]);
+    let of = |curve: u32| -> Vec<[u32; 2]> {
+        report.curve_edges.iter().filter(|&&(_, c)| c == curve).map(|&(edge, _)| edge).collect()
+    };
+    assert!(of(0).is_empty());
+    let (ring_edges, diagonal_edges) = (of(1), of(2));
+    assert_eq!(report.curve_edges.len(), ring_edges.len() + diagonal_edges.len());
+    assert!(ring_edges.len() >= 30, "{} edges along the loop", ring_edges.len());
+    for &[a, b] in &ring_edges {
+        for v in [a, b] {
+            assert!((mesh.positions[v as usize].z - 0.3).abs() < 1e-6, "{:?}", mesh.positions[v as usize]);
+        }
+    }
+    assert!(diagonal_edges.len() >= 8, "{} edges along the diagonal", diagonal_edges.len());
+    for &[a, b] in &diagonal_edges {
+        for v in [a, b] {
+            let p = mesh.positions[v as usize];
+            assert!((p.z - 1.0).abs() < 1e-6 && (p.x - p.y).abs() < 1e-6, "{p:?}");
+        }
+    }
+    // The same edges as the report lists by kind.
+    let set = |edges: &[[u32; 2]]| edges.iter().copied().collect::<std::collections::HashSet<_>>();
+    assert_eq!(set(&ring_edges), set(&report.guide_edges));
+    assert_eq!(set(&diagonal_edges), set(&report.sharp_curve_edges));
 }

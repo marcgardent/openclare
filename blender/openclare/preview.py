@@ -525,8 +525,14 @@ def shape_changed(scene, depsgraph):
     """Counts the changes of shape of each object: an edit, a modifier."""
     for update in depsgraph.updates:
         if update.is_updated_geometry and isinstance(update.id, bpy.types.Object):
-            name = update.id.original.name
+            name = update.id.name
             state.generations[name] = state.generations.get(name, 0) + 1
+
+
+def generation_of(name):
+    """How many times the shape of the object `name` changed, as counted
+    above: what it was read from is still it while this stays the same."""
+    return state.generations.get(name, 0)
 
 
 @bpy.app.handlers.persistent

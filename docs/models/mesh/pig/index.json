@@ -1,0 +1,82 @@
+{
+ "model": "pig",
+ "view": {
+  "up": "y",
+  "azimuth": -60,
+  "elevation": 20
+ },
+ "meshes": [
+  {
+   "remesher": "openclare",
+   "budget": 1000,
+   "file": "openclare-1000.ocqm",
+   "faces": 981,
+   "seed": 1,
+   "run": "2026-10-28"
+  },
+  {
+   "remesher": "quadriflow",
+   "budget": 1000,
+   "file": "quadriflow-1000.ocqm",
+   "faces": 861,
+   "seed": 4,
+   "run": "2026-10-28"
+  },
+  {
+   "remesher": "autoremesher",
+   "budget": 1000,
+   "file": "autoremesher-1000.ocqm",
+   "faces": 548,
+   "seed": 1,
+   "run": "2026-10-28"
+  },
+  {
+   "remesher": "openclare",
+   "budget": 3000,
+   "file": "openclare-3000.ocqm",
+   "faces": 2996,
+   "seed": 1,
+   "run": "2026-10-28"
+  },
+  {
+   "remesher": "quadriflow",
+   "budget": 3000,
+   "file": "quadriflow-3000.ocqm",
+   "faces": 2675,
+   "seed": 1,
+   "run": "2026-10-28"
+  },
+  {
+   "remesher": "autoremesher",
+   "budget": 3000,
+   "file": "autoremesher-3000.ocqm",
+   "faces": 1808,
+   "seed": 1,
+   "run": "2026-10-28"
+  },
+  {
+   "remesher": "openclare",
+   "budget": 8000,
+   "file": "openclare-8000.ocqm",
+   "faces": 8001,
+   "seed": 1,
+   "run": "2026-10-28"
+  },
+  {
+   "remesher": "quadriflow",
+   "budget": 8000,
+   "file": "quadriflow-8000.ocqm",
+   "faces": 6973,
+   "seed": 4,
+   "run": "2026-10-28"
+  },
+  {
+   "remesher": "autoremesher",
+   "budget": 8000,
+   "file": "autoremesher-8000.ocqm",
+   "faces": 4682,
+   "seed": 1,
+   "run": "2026-10-28"
+  }
+ ]
+}

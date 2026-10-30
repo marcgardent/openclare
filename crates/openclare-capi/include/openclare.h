@@ -193,6 +193,16 @@ size_t openclare_result_hard_edge_count(const OpenclareResult *result);
  * into vertices (room for 2 * openclare_result_hard_edge_count numbers). */
 void openclare_result_copy_hard_edges(const OpenclareResult *result, uint32_t *vertices);
 
+/* How many edges of the mesh run along a guide curve. */
+size_t openclare_result_curve_edge_count(const OpenclareResult *result);
+
+/* Writes the edges along a guide curve, two vertices per edge, into vertices
+ * (room for 2 * openclare_result_curve_edge_count numbers), and the index of
+ * the curve each runs along, among the curves given to openclare_remesh, into
+ * curves (room for openclare_result_curve_edge_count numbers). Either may be
+ * NULL. */
+void openclare_result_copy_curve_edges(const OpenclareResult *result, uint32_t *vertices, uint32_t *curves);
+
 /* Writes the group of the input each face lies in, one number per face, into
  * groups (room for openclare_result_face_count numbers). Returns 1, or 0 and
  * writes nothing if the input came without groups. */

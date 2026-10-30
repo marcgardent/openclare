@@ -132,16 +132,20 @@ pub enum Method {
     /// Cross field, singularity simplification, seamless map, T-mesh,
     /// quantization, and one grid of quads per rectangle of the T-mesh.
     QuadLayout,
+    /// Triangles, not quads: the isotropic triangle mesh the other chains
+    /// start from, given as the result (DT-179).
+    Triangles,
 }
 
 impl Method {
-    pub const ALL: &[Method] = &[Method::InstantMeshes, Method::IntegerGrid, Method::QuadLayout];
+    pub const ALL: &[Method] = &[Method::InstantMeshes, Method::IntegerGrid, Method::QuadLayout, Method::Triangles];
 
     pub fn name(self) -> &'static str {
         match self {
             Method::InstantMeshes => "instant-meshes",
             Method::IntegerGrid => "integer-grid",
             Method::QuadLayout => "quad-layout",
+            Method::Triangles => "triangles",
         }
     }
 }
@@ -169,6 +173,7 @@ pub fn create(method: Method) -> Box<dyn Remesher> {
         Method::InstantMeshes => Box::new(InstantMeshes::default()),
         Method::IntegerGrid => Box::new(IntegerGrid::default()),
         Method::QuadLayout => Box::new(QuadLayout::default()),
+        Method::Triangles => Box::new(Triangles::default()),
     }
 }
 
@@ -228,6 +233,222 @@ impl Remesher for InstantMeshes {
         config.validate()?;
         let request = preprocess::Request { crease_angle: config.crease_angle, ..Default::default() };
         finder.whole.hard_edges(&finder.input, &request)
+    }
+}
+
+/// Tuning of the triangles chain (DT-179): the isotropic triangle mesh the
+/// quad chains start from, given as the result, for simulation, 3D printing
+/// and collision.
+#[derive(Clone, Debug)]
+pub struct Triangles {
+    /// Fewest and most triangles made, whatever is asked.
+    pub min_triangles: usize,
+    pub max_triangles: usize,
+    /// The most triangles a mesh made finer where the shape asks for
+    /// smaller ones may have, as a share of those asked.
+    pub refined_most: f64,
+}
+
+impl Default for Triangles {
+    fn default() -> Self {
+        Self { min_triangles: 100, max_triangles: 2_000_000, refined_most: 3.0 }
+    }
+}
+
+/// The area of an equilateral triangle of edge 1: what turns a number of
+/// triangles into the length of their edges, and back.
+const EQUILATERAL: f64 = 0.433_012_701_892_219_3;
+/// How many triangles a run of the triangles chain makes, how long their
+/// edges are, and the largest and smallest where sizes are asked for.
+struct TriangleSize {
+    triangles: usize,
+    edge_length: f64,
+    bounds: Option<(f64, f64)>,
+}
+
+/// How far from the number asked the triangles of different sizes may come
+/// out before the mesh is made again at a better scale.
+const COUNT_SLACK: f64 = 0.05;
+
+impl Triangles {
+    /// How many triangles, and how long their edges, `config` asks of
+    /// `input`, with the bounds of their sizes where sizes are asked for.
+    /// For sizes the lengths are of the edges of the triangles, and the
+    /// number is what that makes; for a number it is of triangles.
+    fn size(
+        &self,
+        input: &TriMesh,
+        config: &RemeshConfig,
+        guides: Option<&Guides>,
+        report: &mut Report,
+        recorder: &mut dyn Recorder,
+    ) -> Result<TriangleSize> {
+        let area = input.surface_area();
+        let (triangles, edge, bounds) = match config.target {
+            Target::QuadCount(0) => return Err(Error::InvalidParams("target count is zero".into())),
+            Target::QuadCount(count) => (count as f64, (area / (EQUILATERAL * count as f64)).sqrt(), None),
+            _ => {
+                let size = WorkSize { per_quad: 2.0, least: self.min_triangles, most: self.max_triangles };
+                let QuadSize { quads, edge_length, bounds, analysis } =
+                    quad_size(input, config, &size, guides, recorder)?;
+                if let Some((largest, smallest, wanted, below)) = analysis {
+                    (report.largest_edge, report.smallest_edge) = (largest, smallest);
+                    (report.quads_wanted, report.below_smallest) = (wanted / EQUILATERAL, below);
+                }
+                (quads / EQUILATERAL, edge_length, bounds)
+            }
+        };
+        let triangles = (triangles as usize).clamp(self.min_triangles, self.max_triangles);
+        Ok(TriangleSize { triangles, edge_length: edge, bounds })
+    }
+}
+
+impl Remesher for Triangles {
+    fn method(&self) -> Method {
+        Method::Triangles
+    }
+
+    fn remesh_recorded(
+        &self,
+        input: &TriMesh,
+        guides: &Guides,
+        config: &RemeshConfig,
+        recorder: &mut dyn Recorder,
+    ) -> Result<(PolyMesh, Report)> {
+        config.validate()?;
+        input.validate()?;
+        let mut clock = Stopwatch::start();
+        let mut report = Report::default();
+        let TriangleSize { triangles, edge_length, bounds } =
+            self.size(input, config, Some(guides), &mut report, recorder)?;
+        report.edge_length = edge_length;
+
+        recorder.begin("preprocessing")?;
+        let mut lines = guides.lines.to_vec();
+        if let Some(groups) = guides.groups {
+            lines.extend(group_borders(input, groups));
+        }
+        let request = preprocess::Request {
+            triangles,
+            curves: guides.curves,
+            lines: &lines,
+            refinement: None,
+            ..sharp_request(config, edge_length)
+        };
+        let preprocessor = preprocess::create(preprocess::Kind::Isotropic);
+        let mut work = preprocessor.preprocess(input, &request)?;
+        let painted = painted_of(input, guides, config.density_contrast);
+        if config.adaptivity > 0.0 || painted.is_some() || config.quads_around > 0.0 || bounds.is_some() {
+            // Smaller triangles where the shape asks for them, as many in
+            // all as asked: the sizes are read on the mesh of one size,
+            // a coarser one is made for the number to come out right once
+            // it is made finer where they are smaller, and the sizes read
+            // again on it for that.
+            recorder.begin("sizing")?;
+            let asked = sizing::Request {
+                edge_length,
+                bounds,
+                adaptivity: config.adaptivity,
+                painted,
+                quads_around: config.quads_around,
+            };
+            let sizer = sizing::create(sizing::Kind::Curvature);
+            let factors = sizer.size(&work, &asked)?;
+            let area: f64 = work.areas.iter().sum();
+            let more: f64 = factors.iter().zip(&work.areas).map(|(f, a)| a / f.powi(2)).sum::<f64>() / area;
+            let coarser = ((triangles as f64 / more.max(1.0)) as usize).max(self.min_triangles);
+            let coarse = preprocess::Request { triangles: coarser, ..request };
+            let base = preprocessor.preprocess(input, &coarse)?;
+            let lengths: Vec<f64> = sizer.size(&base, &asked)?.iter().map(|f| f * edge_length).collect();
+            let most = (self.refined_most * triangles as f64) as usize;
+            let finer = |base: &WorkMesh, coarse: preprocess::Request, lengths: &[f64]| -> Result<Option<WorkMesh>> {
+                match preprocess::Refinement::new(base, lengths, coarse.triangles, most) {
+                    Some(refinement) => Ok(Some(
+                        preprocessor
+                            .preprocess(input, &preprocess::Request { refinement: Some(&refinement), ..coarse })?,
+                    )),
+                    None => Ok(None),
+                }
+            };
+            work = finer(&base, coarse, &lengths)?.unwrap_or(base);
+            // Made finer only where the sizes are below those of the
+            // coarser mesh, never coarser: the number may come out off. The
+            // coarser mesh is made again, at the scale that puts it right.
+            let made = work.mesh.triangles.len() as f64;
+            if (made / triangles as f64 - 1.0).abs() > COUNT_SLACK {
+                let again = ((coarser as f64 * triangles as f64 / made) as usize).max(self.min_triangles);
+                let coarse = preprocess::Request { triangles: again, ..request };
+                let base = preprocessor.preprocess(input, &coarse)?;
+                let lengths: Vec<f64> = sizer.size(&base, &asked)?.iter().map(|f| f * edge_length).collect();
+                work = finer(&base, coarse, &lengths)?.unwrap_or(base);
+            }
+            clock.lap(&mut report, "sizing");
+        }
+        report.working_vertices = work.mesh.positions.len();
+        report.feature_edges = work.feature_edges.len();
+        report.guide_gaps = work.guide_gaps;
+        clock.lap(&mut report, "preprocess");
+        recorder::show_work(recorder, &work);
+
+        let mesh = PolyMesh {
+            positions: work.mesh.positions.clone(),
+            faces: work.mesh.triangles.iter().map(|t| t.to_vec()).collect(),
+        };
+        // The edges are those of the work mesh: what it says of them is
+        // said of the result as it is.
+        let mut faces_of: HashMap<[u32; 2], usize> = HashMap::new();
+        for t in &work.mesh.triangles {
+            for k in 0..3 {
+                let (a, b) = (t[k], t[(k + 1) % 3]);
+                *faces_of.entry([a.min(b), a.max(b)]).or_default() += 1;
+            }
+        }
+        let key = |[a, b]: [u32; 2]| [a.min(b), a.max(b)];
+        let set = |edges: &[[u32; 2]]| edges.iter().map(|&edge| key(edge)).collect::<HashSet<_>>();
+        let (drawn, sharp, of_the_shape) =
+            (set(&work.guide_edges), set(&work.sharp_guide_edges), set(&work.shape_guide_edges));
+        let mut hard_edges = Vec::new();
+        for &edge in &work.feature_edges {
+            let edge = key(edge);
+            let inner = faces_of.get(&edge) == Some(&2);
+            if sharp.contains(&edge) {
+                report.sharp_curve_edges.push(edge);
+                hard_edges.push(edge);
+            } else if of_the_shape.contains(&edge) || (inner && !drawn.contains(&edge)) {
+                hard_edges.push(edge);
+            } else if drawn.contains(&edge) {
+                report.guide_edges.push(edge);
+            }
+        }
+        report.curve_edges = work.guide_edge_curves.iter().map(|&(edge, curve)| (key(edge), curve)).collect();
+        let surface = Bvh::build(input);
+        report.creases = Creases::default().mark(&mesh, input, &surface, &hard_edges);
+        report.hard_edges = hard_edges;
+        if let Some(groups) = guides.groups {
+            // Each triangle of the group of the input under its middle.
+            report.face_groups = work
+                .mesh
+                .triangles
+                .iter()
+                .map(|t| {
+                    let middle = t.iter().map(|&v| work.mesh.positions[v as usize]).sum::<Vec3>() / 3.0;
+                    surface.closest_point(middle).map_or(0, |hit| groups[hit.triangle as usize])
+                })
+                .collect();
+        }
+        report.crossing_faces = crate::mesh::intersections::crossing_triangles(&work.mesh);
+        clock.lap(&mut report, "intersections");
+        report.stats = mesh.stats();
+        recorder.record("result/triangles", Shape::Polygons(&mesh));
+        Ok((mesh, report))
+    }
+
+    fn hard_edges(&self, finder: &mut HardEdgeFinder, _: &Guides, config: &RemeshConfig) -> Result<HardEdges> {
+        config.validate()?;
+        let HardEdgeFinder { input, whole, .. } = finder;
+        input.validate()?;
+        let edge_length = self.size(input, config, None, &mut Report::default(), &mut Silent)?.edge_length;
+        whole.hard_edges(input, &sharp_request(config, edge_length))
     }
 }
 
@@ -830,6 +1051,7 @@ impl QuadLayout {
                     let offset = merged.positions.len() as u32;
                     let listed = done.hard_edges.iter_mut().chain(done.guide_edges.iter_mut());
                     let listed = listed.chain(done.sharp_curve_edges.iter_mut());
+                    let listed = listed.chain(done.curve_edges.iter_mut().map(|(edge, _)| edge));
                     for edge in listed.chain(done.creases.iter_mut().map(|(edge, _)| edge)) {
                         *edge = edge.map(|v| v + offset);
                     }
@@ -1159,7 +1381,8 @@ impl QuadLayout {
                 if !underfed && !held.is_empty() && more {
                     let kept = Guides { curves: &[], lines: &held, ..*guides };
                     let kept_config = RemeshConfig { edge_angle: None, ..config.clone() };
-                    recorder.record("notes/lines", Shape::Note(&format!("done again with its held lines only: {cause}")));
+                    recorder
+                        .record("notes/lines", Shape::Note(&format!("done again with its held lines only: {cause}")));
                     if let LayoutOutcome::Done(mesh, mut report) =
                         self.try_layout_piece(input, &kept, &kept_config, least, recorder)?
                     {
@@ -1804,7 +2027,7 @@ fn settle(
     // it was drawn as one: it is listed apart, and neither marked sharp nor
     // creased for being there.
     let mut hard_edges = guide.map_or_else(Vec::new, |features| features.edges_along(mesh));
-    let (mut guide_edges, mut sharp_curve_edges) = (Vec::new(), Vec::new());
+    let (mut guide_edges, mut sharp_curve_edges, mut curve_edges) = (Vec::new(), Vec::new(), Vec::new());
     if !work.guide_edges.is_empty() {
         // Each edge along a line is of the kind of the edge of the work
         // mesh nearest to its middle: those lines are what the vertices
@@ -1820,10 +2043,14 @@ fn settle(
         let drawn: HashSet<[u32; 2]> = work.guide_edges.iter().copied().collect();
         let sharp: HashSet<[u32; 2]> = work.sharp_guide_edges.iter().copied().collect();
         let of_the_shape: HashSet<[u32; 2]> = work.shape_guide_edges.iter().copied().collect();
+        let curve_of: HashMap<[u32; 2], u32> = work.guide_edge_curves.iter().copied().collect();
         let mut kept = Vec::with_capacity(hard_edges.len());
         for edge in hard_edges {
             let middle = 0.5 * (mesh.positions[edge[0] as usize] + mesh.positions[edge[1] as usize]);
             let nearest = lines.closest_point(middle).map(|hit| work.feature_edges[hit.triangle as usize]);
+            if let Some(&curve) = nearest.and_then(|line| curve_of.get(&line)) {
+                curve_edges.push((edge, curve));
+            }
             match nearest {
                 Some(line) if sharp.contains(&line) => {
                     sharp_curve_edges.push(edge);
@@ -1839,7 +2066,7 @@ fn settle(
         hard_edges = kept;
     }
     let creases = Creases::default().mark(mesh, input, &surface, &hard_edges);
-    Ok(Lines { hard_edges, creases, guide_edges, sharp_curve_edges })
+    Ok(Lines { hard_edges, creases, guide_edges, sharp_curve_edges, curve_edges })
 }
 
 /// The edges of a finished mesh that are worth telling apart.
@@ -1852,12 +2079,14 @@ struct Lines {
     guide_edges: Vec<[u32; 2]>,
     /// Those of the hard edges that are along a curve drawn as one.
     sharp_curve_edges: Vec<[u32; 2]>,
+    /// Each edge along a curve, guide or sharp, with the index of the curve.
+    curve_edges: Vec<([u32; 2], u32)>,
 }
 
 impl Lines {
     fn into_report(self, report: &mut Report) {
         (report.hard_edges, report.creases, report.guide_edges) = (self.hard_edges, self.creases, self.guide_edges);
-        report.sharp_curve_edges = self.sharp_curve_edges;
+        (report.sharp_curve_edges, report.curve_edges) = (self.sharp_curve_edges, self.curve_edges);
     }
 }
 

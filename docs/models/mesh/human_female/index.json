@@ -1,0 +1,66 @@
+{
+ "model": "human_female",
+ "view": {
+  "up": "z",
+  "azimuth": -60,
+  "elevation": 20
+ },
+ "meshes": [
+  {
+   "remesher": "openclare",
+   "budget": 1000,
+   "file": "openclare-1000.ocqm",
+   "faces": 1000,
+   "seed": 1,
+   "run": "2026-10-28"
+  },
+  {
+   "remesher": "autoremesher",
+   "budget": 1000,
+   "file": "autoremesher-1000.ocqm",
+   "faces": 172,
+   "seed": 1,
+   "run": "2026-10-28"
+  },
+  {
+   "remesher": "openclare",
+   "budget": 3000,
+   "file": "openclare-3000.ocqm",
+   "faces": 2998,
+   "seed": 1,
+   "run": "2026-10-28"
+  },
+  {
+   "remesher": "autoremesher",
+   "budget": 3000,
+   "file": "autoremesher-3000.ocqm",
+   "faces": 689,
+   "seed": 1,
+   "run": "2026-10-28"
+  },
+  {
+   "remesher": "openclare",
+   "budget": 8000,
+   "file": "openclare-8000.ocqm",
+   "faces": 8045,
+   "seed": 1,
+   "run": "2026-10-28"
+  },
+  {
+   "remesher": "autoremesher",
+   "budget": 8000,
+   "file": "autoremesher-8000.ocqm",
+   "faces": 2564,
+   "seed": 1,
+   "run": "2026-10-28"
+  },
+  {
+   "remesher": "handmade",
+   "budget": null,
+   "file": "handmade.ocqm",
+   "faces": 10590,
+   "seed": null,
+   "run": "2026-10-28"
+  }
+ ]
+}

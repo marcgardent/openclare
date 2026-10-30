@@ -1,60 +1,63 @@
 <div class="hero">
 <div class="hero-text">
-<p class="kicker">Blender add-on · command line · GPL-3.0</p>
-<h1>Automatic quad retopology, with edge loops that close.</h1>
-<p class="lede">A mesh of triangles in, a mesh of quads out, its edges following the shape and its edge loops closing round it.</p>
-<p class="more">openclare is a field-aligned quad remeshing engine: a cross field follows the curvature, a T-mesh lays out the patches, and an integer quantization decides how many quads go where. The engine is written in Rust; it ships as a Blender add-on with the engine inside, and as a command-line tool. Open source, GPL-3.0-or-later.</p>
-<p class="actions"><a class="button primary" href="get.md">Get the add-on</a> <a class="button" href="results.md">See the results</a> <a class="button" href="theory.md">How it works</a></p>
+<p class="kicker">Free add-on for Blender · open source</p>
+<h1>Clean retopology, in one click, in Blender.</h1>
+<p class="lede">Quads that follow the shape, and edge loops that close round it. Free and open source.</p>
+<p class="actions"><a class="button primary" href="get.md">Download for Blender</a> <a class="button" href="#see-it-in-3d">See it in 3D</a></p>
 </div>
 <figure class="pair"><div class="pair-images"><img src="../../docs/models/img/human_male__source.webp" alt="A sculpted human body, {{shot:human_male:Source}}" width="600" height="600"><img src="../../docs/models/img/human_male__openclare.webp" alt="The same body remeshed by openclare, {{shot:human_male:openclare}}" width="600" height="600"></div><figcaption><span>{{shot:human_male:Source}}</span><span class="to">→ {{shot:human_male:openclare}}</span></figcaption></figure>
 </div>
 
+## What it does for you
+
+Select a mesh, ask for a number of quads, press *Remesh to Quads*. The original is left as it is.
+
+<div class="cards uses">
+<div class="card"><strong>A sculpt ready to animate</strong><span>Quads with few poles, and loops round the eyes, the mouth and the joints, drawn on the model where you want them.</span></div>
+<div class="card"><strong>A mechanical part with crisp edges</strong><span>Hard edges and marked sharp edges kept as lines of edges, creased for a Subdivision Surface.</span></div>
+<div class="card"><strong>A scan or an AI mesh made usable</strong><span>A clean, closed surface of quads from a noisy one.</span></div>
+<div class="card"><strong>Detail where it matters</strong><span>Smaller quads on the face and the hands, painted or taken from the shape.</span></div>
+<div class="card"><strong>Seams where you want them</strong><span>Curves drawn on the model become seams, ready for the UVs.</span></div>
+<div class="card"><strong>Triangles too</strong><span>Even triangles for cloth simulation, or Blender's own Decimate for printing and collisions.</span></div>
+</div>
+
 ## Loops that close
 
-An artist selects an edge loop with one Alt-click and expects it to go round an arm once and close. Automatic remeshers often make it a helix instead, winding from shoulder to wrist. openclare closes those loops while it decides the integer structure of the mesh, not afterwards.
-
-![A cylinder remeshed by openclare, before and after closing its loops](../../docs/glossary/cylinder_result.png)
-
-*A cylinder, hard-surface preset. Before: spiral loops (red), about 700 patches. After: every loop is a ring, and the layout is that of a cube, 6 patches.*
+Select an edge loop with Alt-click: it should go round the arm once and close. Automatic remeshers often make it a spiral instead, winding from the shoulder to the wrist. openclare closes those loops, and keeps few poles rather than perfectly square quads.
 
 ![The male body before and after closing loops](../../docs/glossary/male_result.png)
 
-*A human body at 10,590 quads, the face count of the base mesh an artist made for it. Spiral loops in yellow to red, closed loops in blue.*
+*A human body at 10,590 quads. Spiral loops in yellow to red, closed loops in blue.*
 
-## The numbers
+## See it in 3D
+
+Turn round the results of openclare and of two other remeshers, quad by quad.
+
+<div class="viewer" data-models="ogre pig part stonemill human_male"></div>
+
+## Measured in public
 
 <!-- section: night -->
 
+Every version runs on a public bench of {{count:all}} models, against QuadriFlow, built into Blender, and AutoRemesher.
+
 <div class="stats">
-<div class="stat"><span class="value">4.5%</span><span class="label">of the edges on spiral loops, 12 models at three budgets near 3,000 quads; 16.7% with no closing</span></div>
-<div class="stat"><span class="value">1.2–1.6%</span><span class="label">spiral edges on the male body, against 2.5% for the mesh made by hand (12.1% before closing)</span></div>
 <div class="stat"><span class="value">{{mark:3000:organic:openclare}}<small> / 100</small></span><span class="label">average mark on {{count:organic}} organic models at 3,000 quads; AutoRemesher {{mark:3000:organic:autoremesher}}, QuadriFlow {{mark:3000:organic:quadriflow}}</span></div>
 <div class="stat"><span class="value">{{mark:3000:mechanical:openclare}}<small> / 100</small></span><span class="label">average mark on the mechanical parts at 3,000 quads</span></div>
-<div class="stat"><span class="value">{{theorems}}</span><span class="label">theorems of the research note checked by the Lean proof assistant</span></div>
 </div>
 
-Measured by the project's bench, the night of 18 October 2026, on {{count:all}} models; how the marks are made is on the [results](results.md) page. The marks weigh validity, alignment on the shape, the shape of the quads, the distance to the model, irregular vertices, the structure of the layout, closed edge loops and the number of quads asked for.
+Every model, every mark, and how they are made: the [results](results.md).
 
-## Three remeshers side by side
+## Get it
 
-<figure class="wide"><picture><source media="(prefers-color-scheme: dark)" srcset="../../docs/images/dashboard/gallery-dark.webp"><img src="../../docs/images/dashboard/gallery-light.webp" alt="openclare, QuadriFlow and AutoRemesher on the ogre, the pig, a mechanical part and a generated building, each with its number of quads and its mark out of 100" loading="lazy"></picture><figcaption>Each row at the same number of quads, asked of every remesher. The stone mill is from the <em>Free Windmills Set</em> by LapaModels, CC BY 4.0.</figcaption></figure>
+One archive for Linux, Windows or macOS, installed from Blender's preferences. Nothing else to install, nothing downloaded while it runs.
 
-<figure class="wide"><picture><source media="(prefers-color-scheme: dark)" srcset="../../docs/images/dashboard/marks-dark.svg"><img src="../../docs/images/dashboard/marks-light.svg" alt="Average mark out of 100 of the three remeshers over the organic models, the mechanical parts and the assembled and generated models, at 1,000, 3,000 and 8,000 quads asked for" loading="lazy"></picture><figcaption>Average marks over the bench at 1,000, 3,000 and 8,000 quads asked for.</figcaption></figure>
-
-## Simple rather than regular
-
-An artist would rather have few poles and few spirals than perfectly square quads. A *simplicity* setting removes nearby pairs of poles and accepts quads a little less square in exchange. openclare makes quads only: never a triangle, never an n-gon.
-
-![The male body remeshed at simplicity 0, 0.25, 0.5 and 1](../../docs/glossary/simplicity.png)
-
-*The male body at simplicity 0, 0.25 (the presets), 0.5 and 1: 303, 259, 213 and 172 poles.*
+<p class="actions"><a class="button primary" href="get.md">Download for Blender</a></p>
 
 ## Read on
 
 <div class="cards">
-<a class="card" href="theory.md"><strong>Theory</strong><span>Why edge loops spiral, and the rules that close them, in plain words.</span></a>
-<a class="card" href="../../docs/GLOSSARY.md"><strong>Glossary</strong><span>Poles, cross fields, T-meshes, turns and shifts, with pictures.</span></a>
-<a class="card" href="results.md"><strong>Results</strong><span>Marks per budget and per kind of model, and one page per model.</span></a>
-<a class="card" href="research.md"><strong>Research</strong><span>Two papers, in English and in French, and their machine-checked proofs.</span></a>
-<a class="card" href="get.md"><strong>Get it</strong><span>The Blender add-on and the command line.</span></a>
+<a class="card" href="articles.md"><strong>Articles</strong><span>The retopology tools of Blender in 2026, the results of the bench, the theory and the research.</span></a>
+<a class="card" href="../../docs/GLOSSARY.md"><strong>Glossary</strong><span>Poles, edge loops, spirals and the other words of retopology, with pictures.</span></a>
+<a class="card" href="get.md"><strong>Get it</strong><span>The add-on, setting by setting, and the command line.</span></a>
 </div>

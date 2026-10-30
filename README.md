@@ -57,12 +57,18 @@ of the ogre at 3000 quads.
 
 | Setting | What it does |
 |---|---|
+| Output | *Quads* (the default), or *Triangles*: triangles close to equilateral, of one size or as the shape asks, for simulation, 3D printing and collision meshes. The same settings apply but those of quads alone (Follow Curvature, Fewer Irregular Vertices, Volume Fit); the result says how many triangles cut through another one, which a printer cannot make sense of. How they compare with Blender's *Decimate*: [docs/TRIANGLES.md](docs/TRIANGLES.md) |
+| For | With *Triangles*: *Simulation* (the default), the triangles of openclare, close to equilateral; or *Shape*, Blender's own *Decimate* in *Collapse* mode, which keeps closest to the shape at the same number of triangles and is the better one for printing and collision meshes: openclare uses it rather than make a worse one. Decimate reads the number, the symmetry and the painted density (kept denser); hard edges, curves and materials are not followed, and their settings are greyed |
 | Ask For | *Number*: a number of quads, kept; the shape says where they are smaller. *Sizes*: the largest and the smallest quad; the shape says which where, and the number of quads is what that makes |
 | Quads | With *Number*: the number of quads asked for. A part that is thin all along (a ring, a strap, a wire) is given the quads its thickness calls for out of that number |
 | Largest, Smallest | With *Sizes*: the edges of the largest and of the smallest quads, in the units of the scene. Flat and thick parts get the largest; thin parts and tight bends get smaller ones, down to the smallest. Set from the size of the object when left at 0. The run says how many quads the shape called for |
+| Analyse | With *Sizes*: measures what the shape asks for and proposes a largest and a smallest quad; then, as the sizes move, the panel tells at once about how many quads they make, and how much of the object is coarser than its shape asks |
+| Show Sizes | After *Analyse*: colours the object with the size its quads will have, light where they are largest, dark where they are smallest, red where the shape calls for quads smaller than the smallest. A colour attribute of its own, taken away when unticked |
 | Density | A vertex group of the object, painted in Weight Paint: quads are smallest where the weight is 1, largest where it is 0 |
 | Factor | How many times more quads a weight of 1 gets than a weight of 0, for the same area |
+| Density from Shape | Writes the density the shape calls for (Adaptive Size, thin parts) as a vertex group, to paint on top in Weight Paint. The group becomes the *Density*, and *Adaptive Size* is switched off so that the shape does not count twice |
 | Materials | Each quad gets the material of the surface it lies on, and the borders between materials are kept as lines of edges where that can be done |
+| Mark: Sharp, Creases | On by default. The edges of the result along a hard edge of the object are marked sharp, and given a crease weight that a *Subdivision Surface* modifier reads to keep them sharp. The edges along a curve take the marks of the curve |
 | Symmetry | *None*, *X*, *Y* or *Z*: the quads come out the same on both sides of the plane through the origin of the object across that axis, in the object's own axes, with a loop of edges on the plane. The object must be the same on both sides; one that is not is refused, and said why |
 | Shape: presets | The menu in the header of the *Shape* block saves every setting below with *+*, and sets them back from a preset saved there; a saved preset can be removed. The add-on ships one, *Default*, which sets them all back to their defaults: those suit sculpts, characters and mechanical parts alike |
 | Adaptive Size | How much the size of the quads follows the curvature: at 0 % they are all the same size; towards 100 % they get smaller where the shape bends and larger where it is flat |
@@ -77,6 +83,29 @@ of the ogre at 3000 quads.
 
 An object scaled differently along its axes is remeshed as it is seen: its quads come out
 square in the scene.
+
+### Curves
+
+Curves drawn on the model give the result a line of edges along each: a loop round an eye, a
+limb, a muscle. Each curve also says what to mark the edges along it with: *Sharp*, a *Crease*
+weight (1 keeps them sharp under a *Subdivision Surface* modifier), a *Seam*. With no mark, it is a
+line of edges and nothing more.
+
+- **Draw Curve**, in the toolbar of the 3D viewport (T) in Object Mode, draws on the active
+  mesh, selected: hold the left button and draw. Going back along the stroke undoes it; letting
+  go at its start closes it; pressing near an end of a curve takes it up again. Esc or the right
+  button drops the stroke under way. The header of the tool sets the marks of the curves to come,
+  the rope that steadies the hand, and a snap that keeps the stroke to a ridge or a valley near
+  it, within a radius that F sets. S opens the menu of the snaps; V and R switch Valley and Ridge
+  on and off, in the middle of a stroke too. While the tool is active, the circle of the snap
+  follows the mouse, with the name of the snap beside it, dashed when there is none.
+- **Cut Volume**, under the same button, draws a straight line across a limb: the curve is the
+  loop round it, the hidden side too, shown while the line is drawn.
+- A curve is the mesh's when it is its child. A drawn curve is a Bezier curve of few control
+  points, a child of the model, held on it by a *Shrinkwrap*: it can be edited as any curve.
+- The *openclare* panel of a curve (its Object Data tab) sets its marks, and its *Mesh*: set
+  there, the curve is made a child of that mesh where it is. A curve made by hand works too.
+- The *Curves* block of the mesh's panel lists its curves and their marks, and selects them.
 
 With the result selected, the same panel says what it was remeshed from and how the run went:
 how many quads, and, as a warning, what did not go as asked (far fewer quads than asked for, a

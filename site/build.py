@@ -25,6 +25,7 @@ glossary to its entry, the definition in the link's title.
 """
 
 import argparse
+import hashlib
 import html
 import json
 import os
@@ -102,6 +103,9 @@ WORDS = {
         "research": "Research",
         "get": "Get it",
         "market": "State of the market",
+        "articles": "Articles",
+        "ecosystem": "Blender ecosystem",
+        "insight": "In depth",
         "retopology": "Retopology Tools 2026",
         "engines": "Retopology Engines 2026",
         "platforms": "Distribution platforms 2026",
@@ -114,13 +118,18 @@ WORDS = {
         "releases": "Releases",
         "issues": "Issues",
         "glossary_sections": "Sections of the glossary",
+        "glossary_description": "Poles, edge loops, spirals and the other words of retopology, with pictures.",
         "footer": (
             "<p><strong>openclare</strong>: automatic quad retopology. Code under the GNU GPL, version 3 or later; "
             "the pictures of each model under the licence of that model, listed in "
             '<a href="{credits}">CREDITS.md</a>.</p>'
-            "<p>No cookies, no trackers, no scripts. Built from the repository by <code>site/build.py</code>"
+            "<p>No cookies, no trackers. Scripts only for the 3D viewer, served from this site. "
+            "Built from the repository by <code>site/build.py</code>"
             ' (<a href="{repository}">GitHub</a>).</p>'
         ),
+        "sitemap": "Site map",
+        "progress": "Progress", "tasks": "tasks", "draft": "Draft", "preprint": "Preprint",
+        "progress_stamp": "Counted by <code>evidence.py</code> on {date} UTC, commit {commit}.",
         "placeholder_theory": (
             "# Theory\n\nThis page, the theory of openclare in plain words, is being written. Meanwhile, the "
             "[glossary](../../docs/GLOSSARY.md) explains the words with pictures, and the "
@@ -139,6 +148,9 @@ WORDS = {
         "research": "Recherche",
         "get": "L'obtenir",
         "market": "État du marché",
+        "articles": "Articles",
+        "ecosystem": "Écosystème Blender",
+        "insight": "En profondeur",
         "retopology": "Outils de retopologie 2026",
         "engines": "Moteurs de retopologie 2026",
         "platforms": "Plateformes de distribution 2026",
@@ -151,13 +163,18 @@ WORDS = {
         "releases": "Versions",
         "issues": "Tickets",
         "glossary_sections": "Sections du glossaire",
+        "glossary_description": "Les pôles, les boucles d'arêtes, les spirales et les autres mots de la retopologie, en images.",
         "footer": (
             "<p><strong>openclare</strong> : la retopologie automatique en quads. Code sous GNU GPL, version 3 ou "
             "ultérieure ; les images de chaque modèle sous la licence de ce modèle, listée dans "
             '<a href="{credits}">CREDITS.md</a>.</p>'
-            "<p>Ni cookies, ni pisteurs, ni scripts. Construit depuis le dépôt par <code>site/build.py</code>"
+            "<p>Ni cookies, ni pisteurs. Des scripts seulement pour la visionneuse 3D, servis par ce site. "
+            "Construit depuis le dépôt par <code>site/build.py</code>"
             ' (<a href="{repository}">GitHub</a>).</p>'
         ),
+        "sitemap": "Plan du site",
+        "progress": "Avancement", "tasks": "tâches", "draft": "Brouillon", "preprint": "Prépublication",
+        "progress_stamp": "Compté par <code>evidence.py</code> le {date} UTC, commit {commit}.",
         "placeholder_theory": (
             "# Théorie\n\nCette page, la théorie d'openclare en mots simples, est en cours d'écriture. En attendant, "
             "le [glossaire](../../docs/GLOSSARY.fr.md) explique les mots en images, et la "
@@ -167,9 +184,20 @@ WORDS = {
 }
 
 # The logo leads home; the navigation lists the other pages.
-NAVIGATION = ("theory", "results", "market", "glossary", "research", "get")
+# The menu: the home page is for the artist (the logo), the articles go
+# deeper. "Get it" is a button beside it.
+NAVIGATION = ("articles",)
+# A menu item with no page of its own leads to this one.
+NAVIGATION_TARGETS = {}
+# The articles, by category, as tiles on the articles page; each has a banner,
+# site/assets/articles/<key>.svg (scripts/article_banners.py).
+ARTICLES = (("ecosystem", ("retopology", "engines", "platforms")), ("insight", ("theory", "results", "research", "glossary")))
+CATEGORY_OF = {key: category for category, keys in ARTICLES for key in keys}
 # The pages each item of the navigation stands for, beside its own.
-SECTIONS = {"results": ("models/",), "market": ("retopology", "engines", "platforms")}
+# The site map of the footer: a column per group, the articles by category.
+SITEMAP = (("openclare", ("index", "get", "articles")),) + ARTICLES
+
+SECTIONS = {"articles": ("models/", "retopology", "engines", "platforms", "theory", "results", "research", "glossary")}
 # The lists of the state of the market, in the order they are shown.
 MARKET = ("retopology", "engines", "platforms")
 
@@ -351,10 +379,8 @@ RETOPOLOGY_WORDS = {
         "licence_rule": "Licence rule", "install": "Install", "updates": "Updates", "source": "Source code",
         "count": "{shown} tools listed, {old} of them stale or abandoned.",
         "visit": "Visit", "tools_on": "Tools distributed here", "operator": "Operator", "paid_label": "Sells add-ons",
-        "share_label": "What the seller keeps", "blender_label": "Blender", "market_tools": "{n} tools: automatic, semi-automatic, semi-manual, manual and helpers, with their tags.",
-        "market_platforms": "{n} platforms: who runs them, what the seller keeps, how a user installs and updates.",
+        "share_label": "What the seller keeps", "blender_label": "Blender",
         "get_it": "Get it", "facts": "Facts", "same_engine": "Other tools on the same solver",
-        "market_engines": "{n} engines: the solvers inside the tools, and the tools built on each.",
         "engine": "Engine", "authors": "Authors", "year": "Year", "own_program": "Its own program",
         "used_by": "Used by, in Blender", "elsewhere": "Used elsewhere", "engine_count": "{n} tools",
         "own_solver": "a solver of its own", "engine_kinds": {"paper": "paper", "library": "library", "program": "program"},
@@ -371,10 +397,8 @@ RETOPOLOGY_WORDS = {
         "licence_rule": "Règle de licence", "install": "Installation", "updates": "Mises à jour", "source": "Code source",
         "count": "{shown} outils listés, dont {old} anciens ou abandonnés.",
         "visit": "Visiter", "tools_on": "Outils distribués ici", "operator": "Exploitant", "paid_label": "Vend des greffons",
-        "share_label": "Ce que garde le vendeur", "blender_label": "Blender", "market_tools": "{n} outils : automatiques, semi-automatiques, semi-manuels, manuels et aides, avec leurs tags.",
-        "market_platforms": "{n} plateformes : qui les tient, ce que garde le vendeur, comment on installe et met à jour.",
+        "share_label": "Ce que garde le vendeur", "blender_label": "Blender",
         "get_it": "L'obtenir", "facts": "Fiche", "same_engine": "Autres outils sur le même solveur",
-        "market_engines": "{n} moteurs : les solveurs dans les outils, et les outils bâtis sur chacun.",
         "engine": "Moteur", "authors": "Auteurs", "year": "Année", "own_program": "Son propre programme",
         "used_by": "Utilisé par, dans Blender", "elsewhere": "Utilisé ailleurs", "engine_count": "{n} outils",
         "own_solver": "un solveur à lui", "engine_kinds": {"paper": "article", "library": "bibliothèque", "program": "programme"},
@@ -713,6 +737,10 @@ class Site:
             key=self.model_order,
         )
         self.pages = []  # (key, language, output path)
+        # A digest of the style and the viewer, so that a browser does not keep an old one.
+        self.version = hashlib.sha256(
+            b"".join((SITE / "assets" / name).read_bytes() for name in ("style.css", "viewer.js"))
+        ).hexdigest()[:10]
         self.warnings = []
         self.terms = {}
         for language in LANGUAGES:
@@ -728,6 +756,7 @@ class Site:
                 + ", ".join(sorted(set(english) ^ set(french)) or ["(same entries, other order)"])
             )
         self.linked = {}  # output path -> anchors of the glossary linked on it
+        self.meta = {}  # (key, language) -> title and description, for the articles page
 
     def model_order(self, name):
         order = list(GROUPS)
@@ -849,7 +878,7 @@ class Site:
         text = re.sub(r'\b(src|href|srcset)="([^"]+)"', attributes, text)
         return md.render(text, resolve)
 
-    def write(self, key, language, title, body, headings, kind, description="", breadcrumb="", toc=True, extra=""):
+    def write(self, key, language, title, body, headings, kind, description="", breadcrumb="", toc=True, extra="", scripts=""):
         """Write one page. Its body loses its title (and subtitle), which go
         into the band at the top of the page with `breadcrumb` or a kicker,
         and `extra` (a switch, the sections of the glossary). The home page
@@ -862,10 +891,13 @@ class Site:
         other = "fr" if language == "en" else "en"
         nav = []
         for item in NAVIGATION:
-            target = posixpath.relpath(self.page_path(item, language), here)
+            target = posixpath.relpath(self.page_path(NAVIGATION_TARGETS.get(item, item), language), here)
             current = ' aria-current="page"' if item == key or key.split("/")[0] in SECTIONS.get(item, ()) or any(key.startswith(p) for p in SECTIONS.get(item, ()) if p.endswith("/")) else ""
             nav.append(f'<li><a href="{target}"{current}>{words[item]}</a></li>')
         nav.append(f'<li><a href="{REPOSITORY}" rel="noopener">{words["github"]}</a></li>')
+        get = posixpath.relpath(self.page_path("get", language), here)
+        current = ' aria-current="page"' if key == "get" else ""
+        nav.append(f'<li class="nav-get"><a class="button primary" href="{get}"{current}>{words["get"]}</a></li>')
         other_href = posixpath.relpath(self.page_path(key, other), here)
         cells = []
         for code in LANGUAGES:
@@ -894,11 +926,19 @@ class Site:
             body, self.linked[page] = self.terms[language].link(body, glossary)
         if language == "fr":
             body = french_spaces(body)
+        body, viewer = self.viewers(body, here, language)
+        if viewer and not scripts:
+            scripts = VIEWER_SCRIPT
+        if key in CATEGORY_OF and not breadcrumb:
+            articles = posixpath.relpath(self.page_path("articles", language), here)
+            breadcrumb = (f'<nav class="breadcrumb" aria-label="breadcrumb"><a href="{articles}">{words["articles"]}</a> › '
+                          f'{words[CATEGORY_OF[key]]}</nav>')
+        self.meta[(key, language)] = (title, description)
         if kind == "home":
             intro, body = home_bands(self.mark_strips(body, here))
         else:
             kicker = breadcrumb or f'<p class="kicker">{words.get(kind if kind in words else key, "")}</p>'
-            intro, body = page_intro(body, kicker, extra)
+            intro, body = page_intro(body, kicker, extra, self.banner(key))
         values = {
             "lang": language,
             "title": html.escape(title if key == "index" else f"{title} · openclare"),
@@ -919,9 +959,10 @@ class Site:
             "footer": words["footer"].format(
                 credits=f"{REPOSITORY}/blob/{REF}/CREDITS.md", repository=REPOSITORY
             ),
-            "repository_label": words["repository_label"],
-            "releases": words["releases"],
-            "issues": words["issues"],
+            "sitemap_label": words["sitemap"],
+            "sitemap": self.sitemap(language, here),
+            "version": self.version,
+            "scripts": scripts.format(root=root, version=self.version),
         }
         template = read(SITE / "template.html")
         output = re.sub(r"\{(\w+)\}", lambda m: values[m.group(1)], template)
@@ -929,6 +970,73 @@ class Site:
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_text(output, encoding="utf-8")
         self.pages.append((key, language, page))
+
+    def sitemap(self, language, here):
+        """The site map of the footer, with the links of the repository last."""
+        words = WORDS[language]
+        columns = []
+        for group, keys in SITEMAP:
+            title = group if group == "openclare" else words[group]
+            links = "".join(
+                f'<li><a href="{posixpath.relpath(self.page_path(k, language), here)}">{words["home" if k == "index" else k]}</a></li>' for k in keys
+            )
+            columns.append(f"<div><p>{title}</p><ul>{links}</ul></div>")
+        links = "".join(
+            f'<li><a href="{REPOSITORY}{path}">{label}</a></li>'
+            for path, label in (("", "GitHub"), ("/releases", words["releases"]), ("/issues", words["issues"]))
+        )
+        columns.append(f'<div><p>{words["repository_label"]}</p><ul>{links}</ul></div>')
+        return "".join(columns)
+
+    @staticmethod
+    def banner(key):
+        """The SVG banner of an article, inline so that it takes the theme's colours."""
+        path = SITE / "assets/articles" / f"{key}.svg"
+        return read(path).strip() if key in CATEGORY_OF and path.exists() else ""
+
+    def articles(self):
+        """The articles page: a tile per article, with its banner, by category.
+        Written last, from the titles and descriptions of the pages."""
+        for language in LANGUAGES:
+            text, body, headings = self.content_page("articles", language, "articles")
+            here = posixpath.dirname(self.page_path("articles", language)) or "."
+            words = WORDS[language]
+            parts = []
+            for category, keys in ARTICLES:
+                cards = []
+                for key in keys:
+                    title, description = self.meta[(key, language)]
+                    href = posixpath.relpath(self.page_path(key, language), here)
+                    cards.append(
+                        f'<a class="article-card" href="{href}">{self.banner(key)}'
+                        f'<span class="article-text"><span class="kicker">{words[category]}</span>'
+                        f'<strong>{html.escape(title)}</strong><span>{html.escape(description)}</span></span></a>'
+                    )
+                parts.append(f'<h2 id="{category}">{words[category]}</h2>\n<div class="article-cards">{"".join(cards)}</div>')
+            body = body.replace("<p>{{articles}}</p>", "\n".join(parts))
+            headings = headings + [(2, words[c], c) for c, _ in ARTICLES]
+            self.write("articles", language, self.title_of(text), body, headings, "articles", self.description_of(text), toc=False)
+
+    def viewers(self, body, here, language):
+        """A <div class="viewer" data-models="…"> of a page's source: the 3D
+        viewer with a choice of models ("all": every model with meshes), given
+        the folder of the meshes and the language. Returns the body and
+        whether it holds a viewer."""
+        found = 'class="viewer"' in body
+
+        def viewer(match):
+            names = match.group(1).split()
+            meshed = [p.parent.name for p in (ROOT / "docs/models/mesh").glob("*/index.json")]
+            names = sorted(meshed, key=self.model_order) if names == ["all"] else [n for n in names if n in meshed]
+            if not names:
+                return ""
+            base = posixpath.relpath("mesh", here) + "/"
+            # The ogre first where it is there: the mascot, and every remesher's mesh.
+            first = "ogre" if "ogre" in names else names[0]
+            return (f'<div class="viewer" data-models="{" ".join(names)}" data-first="{first}" data-base="{base}" '
+                    f'lang="{language}"></div>')
+
+        return re.sub(r'<div class="viewer" data-models="([^"]*)"></div>', viewer, body), found
 
     def mark_strips(self, body, here):
         """A figure whose picture is a long strip (at least twice as wide as
@@ -1045,7 +1153,44 @@ class Site:
             text, body, headings = self.content_page(key, language, kind, fallback and fallback[language])
             if kind == "theory":
                 body = theory_marks(body)
+            if key == "research":
+                body = self.progress(body, language)
             self.write(key, language, self.title_of(text), body, headings, kind, self.description_of(text), toc=kind == "theory")
+
+    def progress(self, body, language):
+        """Each <div class="progress" data-paper="…"> of the research page: the
+        paper's steps towards a preprint, from the progress.json that
+        evidence.py writes beside paper B's PDFs (not tracked: the papers
+        workflow makes it). A task is one statement at one step. Without the
+        file the blocks are left out, with a warning."""
+        path = ROOT / "docs/research/turns-of-a-t-mesh/progress.json"
+        pattern = r'<div class="progress" data-paper="([\w-]+)"></div>\n?'
+        if not path.exists():
+            if re.search(pattern, body):
+                self.warnings.append(f"no {path.relative_to(ROOT)}: the progress of the papers is left out")
+            return re.sub(pattern, "", body)
+        data = json.loads(read(path))
+        papers = {paper["id"]: paper for paper in data["papers"]}
+        words = WORDS[language]
+        stamp = words["progress_stamp"].format(date=data["generated"][:16].replace("T", " "), commit=data["commit"][:7])
+
+        def block(match):
+            paper = papers[match.group(1)]
+            done = sum(step["n"] for step in paper["steps"])
+            total = sum(step["m"] for step in paper["steps"])
+            items = [f'<li class="end draft">{words["draft"]}</li>']
+            for step in paper["steps"]:
+                share = round(100 * step["n"] / step["m"]) if step["m"] else 0
+                full = ' class="full"' if step["n"] == step["m"] else ""
+                items.append(f'<li{full}><span>{html.escape(step["name_" + language])}</span>'
+                             f'<span class="n">{step["n"]}/{step["m"]}</span><span class="meter" style="--p: {share}%"></span></li>')
+            ready = " ready" if paper["preprint"] else ""
+            items.append(f'<li class="end preprint{ready}">{words["preprint"]}</li>')
+            return (f'<div class="progress"><header><h4>{words["progress"]}</h4><p class="grade">'
+                    f'<span class="pct">{round(100 * done / total)} %</span><span>{done} / {total} {words["tasks"]}</span></p></header>'
+                    f'<ol class="pipeline">{"".join(items)}</ol><p class="stamp">{stamp}</p></div>\n')
+
+        return re.sub(pattern, block, body)
 
     @staticmethod
     def glossary_source(language):
@@ -1062,7 +1207,8 @@ class Site:
             )
             extra = f'<nav class="chips" aria-label="{WORDS[language]["glossary_sections"]}">{chips}</nav>'
             self.write(
-                "glossary", language, self.title_of(text), body, headings, "glossary", self.description_of(text), toc=False, extra=extra
+                "glossary", language, self.title_of(text), body, headings, "glossary", WORDS[language]["glossary_description"],
+                toc=False, extra=extra
             )
 
     def entry_anchors(self, body, language, taken):
@@ -1518,11 +1664,11 @@ class Site:
         self.write(key, language, engine["name"], "\n".join(body), [], "engines", engine["method"], breadcrumb, toc=False)
 
     def market_crumbs(self, key, language, parent=None, name=None):
-        """The breadcrumb of a page under the state of the market: the
-        market, the list the page belongs to (`parent`), then its name."""
+        """The breadcrumb of a page of the Blender ecosystem: the articles,
+        the list the page belongs to (`parent`), then its name."""
         here = posixpath.dirname(self.page_path(key, language)) or "."
         words = WORDS[language]
-        steps = ["market"] + ([parent] if parent else [])
+        steps = ["articles"] + ([parent] if parent else [])
         links = " › ".join(f'<a href="{posixpath.relpath(self.page_path(k, language), here)}">{html.escape(words[k])}</a>' for k in steps)
         return f'<nav class="breadcrumb" aria-label="breadcrumb">{links} › {html.escape(name or words[key])}</nav>'
 
@@ -1596,44 +1742,29 @@ class Site:
         breadcrumb = self.market_crumbs(page_key, language, "platforms", p["name"])
         self.write(page_key, language, p["name"], "\n".join(body), [], "platforms", p.get("seller_share", p["name"]), breadcrumb, toc=False)
 
-    def market(self, tools, platforms, engines):
-        for language in LANGUAGES:
-            words, here = RETOPOLOGY_WORDS[language], posixpath.dirname(self.page_path("market", language)) or "."
-            text, body, headings = self.content_page("market", language, "market")
-            bands = []
-            for target, line in (("retopology", words["market_tools"].format(n=len(tools))),
-                                 ("engines", words["market_engines"].format(n=len(engines))),
-                                 ("platforms", words["market_platforms"].format(n=len(platforms)))):
-                href = posixpath.relpath(self.page_path(target, language), here)
-                bands.append(f'<article class="tile"><div class="tile-facts"><h3><a href="{href}">{WORDS[language][target]}</a></h3>'
-                             f'</div><p class="tile-what">{line}</p></article>')
-            body = body.replace("<p>{{market}}</p>", f'<div class="tiles">{"".join(bands)}</div>')
-            self.write("market", language, self.title_of(text), body, headings, "market", self.description_of(text), toc=False)
-
     def retopology(self):
         tools, platforms, taxonomy, engines = self.retopology_data()
         self.taxonomy, self.engines = taxonomy, engines
-        self.market(tools, platforms, engines)
         for language in LANGUAGES:
             text, body, headings = self.content_page("retopology", language, "retopology")
             body = body.replace("<p>{{tools}}</p>", self.retopology_tools(tools, platforms, language))
             self.write(
                 "retopology", language, self.title_of(text), body, headings, "retopology", self.description_of(text),
-                toc=False, breadcrumb=self.market_crumbs("retopology", language),
+                toc=False, breadcrumb="",
                 extra=self.market_nav("retopology", language) + self.retopology_filters(taxonomy, language),
             )
             text, body, headings = self.content_page("platforms", language, "platforms")
             body = body.replace("<p>{{platforms}}</p>", self.platforms_list(platforms, tools, language))
             self.write(
                 "platforms", language, self.title_of(text), body, headings, "platforms", self.description_of(text),
-                toc=False, breadcrumb=self.market_crumbs("platforms", language), extra=self.market_nav("platforms", language),
+                toc=False, breadcrumb="", extra=self.market_nav("platforms", language),
             )
             text, body, headings = self.content_page("engines", language, "engines")
             body = body.replace("<p>{{engines}}</p>", self.engines_list(engines, tools, language))
             body = body.replace("<p>{{own}}</p>", self.own_solvers(tools, language))
             self.write(
                 "engines", language, self.title_of(text), body, headings, "engines", self.description_of(text),
-                toc=False, breadcrumb=self.market_crumbs("engines", language), extra=self.market_nav("engines", language),
+                toc=False, breadcrumb="", extra=self.market_nav("engines", language),
             )
             for engine in engines.values():
                 self.engine_page(engine, tools, language)
@@ -1699,12 +1830,23 @@ class Site:
         results_page = posixpath.relpath(self.page_path("results", language), here)
         words = WORDS[language]
         breadcrumb = (
-            f'<nav class="breadcrumb" aria-label="breadcrumb"><a href="{results_page}">{words["results"]}</a> › '
+            f'<nav class="breadcrumb" aria-label="breadcrumb"><a href="{posixpath.relpath(self.page_path("articles", language), here)}">{words["articles"]}</a> › '
+            f'<a href="{results_page}">{words["results"]}</a> › '
             f'<a href="{results_page}#{"model-by-model" if language == "en" else "modèle-par-modèle"}">{words["models"]}</a> › {name}</nav>'
         )
         title = name
         description = self.description_of(text.replace("@@credit@@", ""))
-        self.write(f"models/{name}", language, title, body, headings, "model", description, breadcrumb, toc=False)
+        scripts = ""
+        if (ROOT / "docs/models/mesh" / name / "index.json").exists():
+            # The 3D viewer, under the row of pictures: its script is the only
+            # one of the site, and fetches nothing before it is asked to.
+            index = posixpath.relpath(f"mesh/{name}/index.json", here)
+            viewer = f'<div class="viewer" data-index="{index}" lang="{language}"></div>'
+            start = body.find('<div class="shots">')
+            end = body.find("</div>", start) + len("</div>") if start >= 0 else -1
+            body = body[:end] + viewer + body[end:] if end > 0 else viewer + body
+            scripts = VIEWER_SCRIPT
+        self.write(f"models/{name}", language, title, body, headings, "model", description, breadcrumb, toc=False, scripts=scripts)
 
     def shots(self, text):
         """The table of pictures of a model page as a row of figures, the
@@ -1780,6 +1922,9 @@ class Site:
             shutil.rmtree(self.out)
         self.out.mkdir(parents=True)
         shutil.copytree(SITE / "assets", self.out / "assets")
+        if (ROOT / "docs/models/mesh").exists():
+            # The meshes of the 3D viewer (scripts/viewer_meshes.py).
+            shutil.copytree(ROOT / "docs/models/mesh", self.out / "mesh")
         (self.out / ".nojekyll").write_text("")
         self.simple("index", "home")
         self.simple("theory", "theory", {language: WORDS[language]["placeholder_theory"] for language in LANGUAGES})
@@ -1788,6 +1933,7 @@ class Site:
         self.simple("research", "research")
         self.simple("get", "get")
         self.retopology()
+        self.articles()
         for name in self.models:
             if name in self.withheld:
                 continue
@@ -1845,9 +1991,14 @@ def night_sections(body):
     return "".join(parts)
 
 
-def page_intro(body, kicker, extra=""):
+# The script of the 3D viewer, on the pages that hold one.
+VIEWER_SCRIPT = '<script type="module" src="{root}assets/viewer.js?v={version}"></script>'
+
+
+def page_intro(body, kicker, extra="", banner=""):
     """The band at the top of a page: the kicker (or breadcrumb), the title
-    and subtitle taken out of the body, and `extra`."""
+    and subtitle taken out of the body, and `extra`; above it, across the
+    page, the banner of an article."""
     head = ""
     match = re.search(r'<h1 id="[^"]*">(.*?)</h1>\n?(?:<p class="subtitle">.*?</p>\n?)?', body, re.S)
     if match:
@@ -1857,6 +2008,8 @@ def page_intro(body, kicker, extra=""):
         if re.sub(r"<[^>]+>", "", kicker).strip().lower() == re.sub(r"<[^>]+>", "", match.group(1)).strip().lower():
             kicker = ""
     intro = f'<section class="intro"><div class="wrap">\n{kicker}\n{head}\n{extra}\n</div></section>'
+    if banner:
+        intro = f'<div class="banner-band">{banner}</div>\n' + intro
     return intro, body.strip("\n")
 
 

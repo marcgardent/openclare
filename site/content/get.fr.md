@@ -11,7 +11,15 @@ Une seule archive contient tout : l'extension et son moteur, compilé. Il n'y a 
 1. Prenez l'archive de votre système dans les [versions publiées](https://github.com/marcgardent/openclare/releases) : `openclare-<version>-<plateforme>.zip`, la plateforme étant `linux-x64`, `windows-x64`, `macos-arm64` ou `macos-x64`. Ou construisez-la vous-même (plus bas).
 2. Dans Blender 4.2 ou plus récent : *Edit › Preferences › Get Extensions*, la flèche en haut à droite, *Install from Disk*, et choisissez l'archive.
 
-Un panneau nommé *openclare* apparaît dans l'éditeur Properties, sur l'onglet du maillage (Object Data). Sélectionnez un maillage, demandez un nombre de quads ou leurs tailles, choisissez un préréglage de la forme (organique, animation, surface dure), appuyez sur *Remesh to Quads*. Une densité peinte en Weight Paint dit où les quads sont plus petits, et les frontières entre matériaux sont gardées comme lignes d'arêtes. Le résultat est un nouvel objet à côté de l'original, qui reste tel quel. Le moteur tourne en arrière-plan : Blender reste libre, et le panneau montre une barre de progression avec un bouton pour l'arrêter.
+Un panneau nommé *openclare* apparaît dans l'éditeur Properties, sur l'onglet du maillage (Object Data). Sélectionnez un maillage, réglez ce qui suit, appuyez sur *Remesh to Quads*. Le résultat est un nouvel objet à côté de l'original, qui reste tel quel. Le moteur tourne en arrière-plan : Blender reste libre, et le panneau montre une barre de progression avec un bouton pour l'arrêter.
+
+### Ce qu'elle fait
+
+- **Combien de quads, et où.** Un nombre de quads, ou les tailles du plus grand et du plus petit. *Analyse* propose les tailles et dit tout de suite combien de quads elles font ; *Show Sizes* colore l'objet de la taille qu'auront ses quads.
+- **La densité.** *Adaptive Size* rend les quads plus petits là où la forme se courbe ; les parties fines (un doigt, une oreille) gardent les quads qui en font le tour. Une densité peinte en Weight Paint dit où ils sont plus petits, et *Density from Shape* écrit la densité de la forme elle-même en un groupe à repeindre.
+- **Les lignes d'arêtes.** Les arêtes vives, les arêtes marquées sharp et les frontières entre matériaux sont gardées comme lignes d'arêtes.
+- **Des courbes tracées sur le modèle.** *Draw Curve* et *Cut Volume*, dans la barre d'outils, tracent une courbe sur le modèle ou la boucle autour d'un membre. Une courbe *Guide* donne une ligne d'arêtes ; une courbe *Sharp* donne une ligne d'arêtes vives.
+- **Le résultat.** La symétrie selon X, Y ou Z. Les arêtes vives marquées sharp et crease, pour qu'un *Subdivision Surface* les garde. L'ombrage par angle, lisse ou plat. Des préréglages enregistrés des réglages. *Remesh Again* refait le résultat à sa place, et le panneau rend compte du calcul.
 
 La version Linux tourne partout où Blender tourne (glibc 2.28 ou plus récente). Les versions Windows et macOS passent les tests de l'interface C sur leur système mais n'ont pas encore tourné dans un Blender sur ces systèmes ; celle pour macOS est signée ad hoc, non notariée. Chaque version publiée contient aussi le moteur en bibliothèque C avec son en-tête, `openclare-capi-<version>-<plateforme>.tar.gz`, pour d'autres programmes.
 

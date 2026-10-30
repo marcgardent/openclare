@@ -44,6 +44,9 @@ pub struct WorkMesh {
     /// the edges of the output along them are to come out as hard edges,
     /// not only as a line of edges.
     pub sharp_guide_edges: Vec<[u32; 2]>,
+    /// Each guide edge along a curve, with the index of that curve among
+    /// those given: what the edges of the output along it are told by.
+    pub guide_edge_curves: Vec<([u32; 2], u32)>,
     /// Those of the guide edges that are edges of the shape itself, sharper
     /// than [`Request::edge_angle`]: the edges of the output along them come
     /// out as hard edges too, as the creases they are where they are kept.
@@ -280,8 +283,21 @@ impl Preprocessor for Isotropic {
         if mesh.triangle_count() > ceiling {
             decimate::decimate(&mut mesh, ceiling);
         }
+        // Edge of the equilateral triangle that tiles the surface `triangles`
+        // times, stretched a little: remeshing settles on edges slightly
+        // shorter than asked (measured: about 13 % too many triangles without).
+        let edge_length = 1.06 * (4.0 * source.surface_area() / (3.0f64.sqrt() * request.triangles as f64)).sqrt();
+        // Remeshing settles within a few per cent of the size asked for;
+        // dozens of times that is a surface it cannot tile at that length.
+        let most = MOST_TRIANGLES * request.triangles.max(mesh.triangle_count());
         // Guide curves go in once the mesh is light, and before it is evened
-        // out, which then treats them as it does creases.
+        // out, which then treats them as it does creases. A curve is laid
+        // where it crosses edges: on a mesh coarser than the work mesh (a
+        // cube of twelve triangles) it would cross too few to make a line,
+        // so the long edges are split first.
+        if request.curves.iter().any(|curve| curve.points.len() >= 2) {
+            isotropic::split_to(&mut mesh, edge_length, most);
+        }
         let laid = imprint::imprint(&mut mesh, &surface, &face_normals, request.curves);
 
         // What the vertices of a line are held on: the creases of the source
@@ -297,14 +313,7 @@ impl Preprocessor for Isotropic {
         segments.extend(laid.segments.iter().map(|&[a, b]| [a, b, b]));
         let lines = (!segments.is_empty()).then(|| Bvh::from_triangles(segments));
 
-        // Edge of the equilateral triangle that tiles the surface `triangles`
-        // times, stretched a little: remeshing settles on edges slightly
-        // shorter than asked (measured: about 13 % too many triangles without).
-        let edge_length = 1.06 * (4.0 * source.surface_area() / (3.0f64.sqrt() * request.triangles as f64)).sqrt();
         let target = isotropic::Target { surface: &surface, face_normals: &face_normals, features: lines.as_ref() };
-        // Remeshing settles within a few per cent of the size asked for;
-        // dozens of times that is a surface it cannot tile at that length.
-        let most = MOST_TRIANGLES * request.triangles.max(mesh.triangle_count());
         isotropic::remesh(&mut mesh, &target, edge_length, self.iterations, most, request.refinement);
         if !laid.segments.is_empty() || !request.lines.is_empty() || request.edge_angle.is_some() {
             imprint::unpinch(&mut mesh);
@@ -352,17 +361,28 @@ impl Preprocessor for Isotropic {
                     .collect();
             }
         }
-        if laid.sharp.contains(&true) {
-            // An edge is of the kind of the stretch nearest to its middle.
-            let stretches = Bvh::from_triangles(laid.segments.iter().map(|&[a, b]| [a, b, b]).collect());
+        if !laid.segments.is_empty()
+            && let Some(lines) = &lines
+        {
+            // An edge is of the curve nearest to its middle, a crease of the
+            // source taken in among them: the edges of a box are of no curve
+            // drawn on it, however near one they are.
             let middle = |[a, b]: [u32; 2]| 0.5 * (work.mesh.positions[a as usize] + work.mesh.positions[b as usize]);
-            work.sharp_guide_edges = work
+            work.guide_edge_curves = work
                 .guide_edges
                 .iter()
-                .copied()
-                .filter(|&edge| {
-                    stretches.closest_point(middle(edge)).is_some_and(|hit| laid.sharp[hit.triangle as usize])
+                .filter_map(|&edge| {
+                    let hit = lines.closest_point(middle(edge))?;
+                    let k = (hit.triangle as usize).checked_sub(source_feature_count)?;
+                    Some((edge, laid.curve[k]))
                 })
+                .collect();
+            let sharp: HashSet<u32> = (0..laid.curve.len()).filter(|&k| laid.sharp[k]).map(|k| laid.curve[k]).collect();
+            work.sharp_guide_edges = work
+                .guide_edge_curves
+                .iter()
+                .filter(|(_, curve)| sharp.contains(curve))
+                .map(|&(edge, _)| edge)
                 .collect();
         }
         work.guide_lines = laid.segments;
@@ -421,6 +441,7 @@ fn blunt_acute_tips(work: &mut WorkMesh, reach: f64) {
     for edges in lists {
         edges.retain(|edge| !gone.contains(edge));
     }
+    work.guide_edge_curves.retain(|(edge, _)| !gone.contains(edge));
 }
 
 /// Leaves the triangulation as it is. Guide curves are not laid.
@@ -643,6 +664,7 @@ fn work_mesh(mesh: TriMesh, feature_edges: Vec<[u32; 2]>, request: &Request) -> 
         guide_gaps: 0,
         guide_edges: Vec::new(),
         sharp_guide_edges: Vec::new(),
+        guide_edge_curves: Vec::new(),
         shape_guide_edges: Vec::new(),
         curvature,
         confidence,
