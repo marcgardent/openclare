@@ -191,6 +191,67 @@ def stations (patches : List Patch) (ℓ : α → ℕ) : ℕ :=
 def round (patches : List Patch) (ℓ : α → ℕ) (σ : Side Patch) (k : ℕ) : Option (List (Point Patch)) :=
   T.curve ℓ σ k (T.stations patches ℓ + 1) [] (station σ k)
 
+/-! ### The length of a turn, and the 2-colouring of the quad graph (DT-173)
+
+The objects the parity of a turn needs, as definitions on the `TMesh`. The
+length `α_γ(ℓ)` of a turn is the sum, over the patches it crosses, of the
+length across that patch (`acrossForm`). The colour of a vertex of the quad
+graph (a point of the fine grid with both coordinates even) is `x/2 + y/2 +
+κ_P mod 2` for constants `κ_P`, one per patch, chosen so that the colour agrees
+on the two points of every gluing pair (`IsColouring`). On a sphere such
+constants exist; on a torus, not always (a `3 × 3` grid). -/
+
+/-- The length across a patch when it is entered through the side `σ`: the
+length of the sides of the other pair, from their first side. At balanced
+lengths both sides of the pair have that length. -/
+def acrossForm (σ : Side Patch) : α → ℤ := lengthForm (T.arcs (σ.1, σ.2.1 + 1, 0))
+
+/-- The length of a path of arcs from the side `σ`, as an integer linear form in
+the lengths: the length across each patch entered. -/
+def pathLengthForm : Side Patch → List α → α → ℤ
+  | _, [] => 0
+  | σ, a :: l => T.acrossForm σ + pathLengthForm (T.other a σ.opp) l
+
+/-- **The length of a turn** `α_γ`, as an integer linear form in the lengths. -/
+def Turn.lengthForm {T : TMesh Patch α} (γ : T.Turn) : α → ℤ := T.pathLengthForm γ.start γ.path
+
+/-- The length of a turn at the lengths `ℓ`. -/
+def Turn.length [Fintype α] {K : Type*} [CommRing K] {T : TMesh Patch α} (γ : T.Turn)
+    (ℓ : α → K) : K := evalForm γ.lengthForm ℓ
+
+/-- A point of the fine grid is a vertex of the quad graph when both its
+coordinates are even. -/
+def Point.IsCoarse (p : Point Patch) : Prop := p.x % 2 = 0 ∧ p.y % 2 = 0
+
+instance (p : Point Patch) : Decidable p.IsCoarse := by unfold Point.IsCoarse; infer_instance
+
+/-- The colour of a point of the fine grid under the constants `κ`: for a vertex
+of the quad graph `(2i, 2j)` of the patch `P`, `i + j + κ_P mod 2`, so that
+every edge of the quad graph inside a patch changes the colour. -/
+def pointColour (κ : Patch → ZMod 2) (p : Point Patch) : ZMod 2 :=
+  ((p.x / 2 : ℕ) : ZMod 2) + ((p.y / 2 : ℕ) : ZMod 2) + κ p.patch
+
+/-- **`κ` colours the quad graph at `ℓ`**: the two points of every gluing pair of
+vertices of the quad graph have the same colour. With the colour changing along
+every edge inside a patch, the quad graph is then properly 2-coloured. -/
+def IsColouring (allArcs : List α) (ℓ : α → ℕ) (κ : Patch → ZMod 2) : Prop :=
+  ∀ pq ∈ T.gluings allArcs ℓ, pq.1.IsCoarse → pq.2.IsCoarse →
+    pointColour κ pq.1 = pointColour κ pq.2
+
+instance (allArcs : List α) (ℓ : α → ℕ) (κ : Patch → ZMod 2) :
+    Decidable (T.IsColouring allArcs ℓ κ) := by unfold IsColouring; infer_instance
+
+/-- **The quad graph at `ℓ` is bipartite**: some constants colour it. -/
+def Bipartite (allArcs : List α) (ℓ : α → ℕ) : Prop := ∃ κ, T.IsColouring allArcs ℓ κ
+
+/-- The vertex of the quad graph beside the station `k + ½` of the side `σ`: the
+point of `σ` at the fine position `2k`, the corner of the quad the walk leaves
+through. The parity proof follows this vertex round the walk: across each
+patch its colour changes by the length across, across each arc it is glued to
+a vertex of the same colour (`IsColouring`), and the walk comes back beside the
+station `k + ½ + shift`. -/
+def stationVertex (ℓ : α → ℕ) (σ : Side Patch) (k : ℕ) : Point Patch := T.sidePoint ℓ σ (2 * k)
+
 /-! ### What is proved here -/
 
 /-- The gluing pairs are symmetric as a relation: `Same` is the equivalence
