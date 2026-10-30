@@ -201,6 +201,36 @@ theorem card_vertices_le :
   have h2 := Submodule.finrank_mono (S.ker_total_le v₀)
   omega
 
+/-! ### Every cycle bounds -/
+
+theorem range_bd2_le : LinearMap.range S.bd2 ≤ LinearMap.ker S.bd1 := by
+  rintro _ ⟨x, rfl⟩
+  exact LinearMap.congr_fun S.bd1_comp_bd2 x
+
+/-- With Euler characteristic `2`, every cycle is a sum of face boundaries. -/
+theorem range_bd2_eq_ker_bd1
+    (hχ : (Fintype.card V : ℤ) - Fintype.card E + Fintype.card F = 2) :
+    LinearMap.range S.bd2 = LinearMap.ker S.bd1 := by
+  refine Submodule.eq_of_le_of_finrank_le S.range_bd2_le ?_
+  have h := LinearMap.finrank_range_add_finrank_ker S.bd1
+  rw [Module.finrank_fintype_fun_eq_card] at h
+  have := S.card_faces_le
+  have := S.card_vertices_le
+  omega
+
+theorem total_bd2 (x : F → ZMod 2) : total E (S.bd2 x) = 0 := by
+  have h4 : ∀ a : ZMod 2, (4 : ℕ) • a = 0 := by decide
+  simp only [bd2, LinearMap.coe_mk, AddHom.coe_mk, map_sum, map_smul]
+  simp [total, Fintype.sum_prod_type, h4]
+
+/-- With Euler characteristic `2`, every cycle has an even number of edges. -/
+theorem total_eq_zero_of_bd1
+    (hχ : (Fintype.card V : ℤ) - Fintype.card E + Fintype.card F = 2)
+    {y : E → ZMod 2} (hy : S.bd1 y = 0) : total E y = 0 := by
+  have : y ∈ LinearMap.range S.bd2 := by rw [S.range_bd2_eq_ker_bd1 hχ]; exact hy
+  obtain ⟨x, rfl⟩ := this
+  exact S.total_bd2 x
+
 end QuadSurface
 
 end TurnsOfATMesh
