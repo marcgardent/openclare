@@ -4,7 +4,9 @@ Every theorem, proposition, lemma, corollary, remark, question and conjecture
 of paper.tex and of its translation paper.fr.tex sits in an `evidence` box with a known level, or is preceded by a
 comment `% evidence: none` saying why it claims nothing; every Lean name a box
 cites (\\lean{...}) is declared in lean/; a box at a Lean level cites at least
-one. Run from anywhere: python3 docs/research/turns-of-a-t-mesh/evidence.py
+one; a box at the level `tested` (a conjecture checked by computer, on the
+random T-meshes of experiments/property) says on how many instances. Run from
+anywhere: python3 docs/research/turns-of-a-t-mesh/evidence.py
 """
 
 import re
@@ -12,7 +14,7 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).parent
-LEVELS = {"lean", "core", "data", "measured", "prose", "cited", "open"}
+LEVELS = {"lean", "core", "data", "measured", "tested", "prose", "cited", "open"}
 STATEMENTS = ["theorem", "proposition", "lemma", "corollary", "remark", "question", "conjecture"]
 
 
@@ -60,6 +62,10 @@ def check(path, names):
             errors.append(f"unknown level {level!r}")
         if level in ("lean", "core") and not cited:
             errors.append(f"a {level} box cites no Lean name: {tag[:60]}")
+        # A statement checked by computer says on how many instances (the
+        # property tests of experiments/property), in either language.
+        if level == "tested" and not re.search(r"\d[\d,{}\\ ]*\s*(random\s+)?instances", tag):
+            errors.append(f"a tested box does not say on how many instances: {tag[:60]}")
         for name in cited:
             if not declared(name, names):
                 errors.append(f"not declared in lean/: {name}")

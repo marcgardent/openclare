@@ -61,11 +61,13 @@
 \evlevel{data}{Checked on the engine's data}
 \evlevel{measured}{Measured}
 \evlevel{prose}{Proof on paper only}
+\evlevel{tested}{Conjecture, checked by computer}
 \evlevel{cited}{Standard, cited}
 \evlevel{open}{Open, no claim}
 \newcommand{\evname}[1]{\csname ev-name-#1\endcsname}
 \tcbset{evstyle-lean/.style={}, evstyle-core/.style={}, evstyle-data/.style={},
-  evstyle-measured/.style={}, evstyle-prose/.style={}, evstyle-cited/.style={},
+  evstyle-measured/.style={}, evstyle-tested/.style={}, evstyle-prose/.style={},
+  evstyle-cited/.style={},
   evstyle-open/.style={frame hidden, borderline={0.4pt}{0pt}{black!45, dashed}}}
 \newtcolorbox{evidence}[3][]{breakable, enhanced, colback=white,
   colframe=black!45, boxrule=0.4pt, arc=0pt, left=4pt, right=4pt, top=2pt,
@@ -155,7 +157,12 @@ the surface, that the walks and regions are those of a T-mesh, assumed as the
 tag says; \textsc{checked on the engine's data}, exactly, on the T-mesh the
 remesher openclare exports, against the Lean definitions; \textsc{measured},
 by a script or a solver on that export; \textsc{proof on paper only}, the
-proof that follows, which no machine has read; \textsc{standard, cited}; and
+proof that follows, which no machine has read; \textsc{conjecture, checked by
+computer}, checked exactly on random T-meshes that do not come from the
+engine, the tag saying on how many instances and of what genus (the property
+tests of the data package, \texttt{experiments/property}): a test refutes or
+corroborates and proves nothing, and a tag at another level says
+\emph{tested} where the same tests also ran; \textsc{standard, cited}; and
 \textsc{open, no claim}, a question or a conjecture. The Lean names are those
 of the commit on the first page, built without \texttt{sorry}.
 \fi
@@ -317,7 +324,7 @@ programs were solved with HiGHS 1.8.0~\cite{huangfu2018highs} through SciPy
 
 \section{Turns and singularities}\label{sec:holonomy}
 
-\begin{evidence}{core}{\lean{gauss_bonnet_turn}, \lean{gauss_bonnet}; assumed: the curve bounds a disc (or an annulus) of quads}
+\begin{evidence}{core}{\lean{gauss_bonnet_turn}, \lean{gauss_bonnet}; tested: 3{,}833 regions of simple strips on 50 random instances, 35 spheres and 15 tori; assumed: the curve bounds a disc (or an annulus) of quads}
 \begin{lemma}[Gauss--Bonnet for turns]\label{lem:gauss}
 Let $\gamma$ be a turn whose curve $\bar\gamma$ is simple. If $\bar\gamma$
 bounds a disc $D \subset \Sigma$, the singular vertices inside $D$ satisfy
@@ -340,7 +347,7 @@ On a closed sphere a simple turn thus splits the singular vertices into two
 groups of total index four, each of at least two vertices: a fingertip beyond
 a ring holds the equivalent of four vertices of valence three.
 
-\begin{evidence}{core}{\lean{one_crossing_on_walk}, \lean{one_crossing_on_segment}; assumed: the regions cut at the crossing are discs, and which of their corners are convex}
+\begin{evidence}{core}{\lean{one_crossing_on_walk}, \lean{one_crossing_on_segment}; tested: 42 self-crossings on the spheres of 50 random instances; assumed: the regions cut at the crossing are discs, and which of their corners are convex}
 \begin{lemma}[One self-crossing]\label{lem:eight}
 Let the surface be closed of genus zero, and let the curve $\bar\gamma$ of a
 turn cross itself exactly once, transversally, with no singular vertex on it.
@@ -371,7 +378,7 @@ check of the four directions): each lobe sees a second convex corner and holds
 $2$, and the third region the rest of the total $8$.
 \end{proof}
 
-\begin{evidence}{core}{\lean{Motion.burgers_eq_sum}, \lean{Motion.composeAll_rotations}, \lean{Forest.glue_eq_preorder}, \lean{Motion.annulus_holonomy}; assumed: the holonomy of the curve is the composition of the rotations round the cone points}
+\begin{evidence}{core}{\lean{Motion.burgers_eq_sum}, \lean{Motion.composeAll_rotations}, \lean{Forest.glue_eq_preorder}, \lean{Motion.annulus_holonomy}; tested: (c) on 898 annuli without cone point of 50 random instances; assumed: the holonomy of the curve is the composition of the rotations round the cone points}
 \begin{proposition}[The shift is set by the singularities]\label{prop:burgers}
 Let $\gamma$, $\gamma_1$, $\gamma_2$ be turns with simple curves.
 \begin{enumerate}
@@ -470,7 +477,7 @@ separation~\cite[Eq.~(5)]{kleman2008disclinations}. We read it
 on the shifts of two turns (Figures~\ref{fig:holonomy}
 and~\ref{fig:dislocation}).
 
-\begin{evidence}{core}{\lean{dislocation_burgers}, \lean{dislocation}, \lean{dislocation_closes_iff}; assumed: as in the proposition above}
+\begin{evidence}{core}{\lean{dislocation_burgers}, \lean{dislocation}, \lean{dislocation_closes_iff}; tested: (i) on 5 annuli holding one 3--5 pair of 50 random instances; assumed: as in the proposition above}
 \begin{proposition}[A dislocation between two turns]\label{prop:dislocation}
 In the setting of Proposition~\ref{prop:burgers}(b), let the annulus $A$ hold
 exactly two singular vertices, $c_3$ of valence three and $c_5$ of valence
@@ -530,7 +537,7 @@ merge.}
 \label{fig:dislocation}
 \end{figure}
 
-\begin{evidence}{core}{\lean{checkerboard}, \lean{oddColours_translate}; assumed: the Burgers sum of the proposition above}
+\begin{evidence}{core}{\lean{checkerboard}, \lean{oddColours_translate}; tested: 1{,}960 annuli on the spheres of 50 random instances; assumed: the Burgers sum of the proposition above}
 \begin{proposition}[Checkerboard rule]\label{prop:checkerboard}
 In the setting of Proposition~\ref{prop:burgers}(b), with whole lengths,
 colour the points $p \in \Z^2$ of the cut disc black or white by the parity of
@@ -560,7 +567,7 @@ The rule also holds on $13{,}000$ random configurations checked with SymPy.
 Each turn of a closed sphere carries its own parity condition, which needs
 neither a simple curve nor the holonomy.
 
-\begin{evidence}{core}{\lean{parity_of_turn_any_sign}, \lean{parity_of_turn}; assumed: a 2-colouring of the quad graph carried by the development of the turn, and its length and shift whole linear forms}
+\begin{evidence}{lean}{\lean{TMesh.parity_of_turn_sphere}, from \lean{TMesh.bipartite_of_sphere} (the quad graph of a connected T-mesh with $P - A + N = 2$ is bipartite, by \lean{QuadSurface.bipartite_of_euler} and \lean{TMesh.eulerQuad_eq_nodeCount}) and \lean{TMesh.parity_of_turn_of_colouring}; the sphere is $P - A + N = 2$ and connected, and the turn is followed by the walk at every positive balanced whole $\ell$; tested: \lean{TMesh.IsColouring} decided on the 35 spheres of 50 random instances, 4{,}388 turns}
 \begin{proposition}[Parity of a turn on a sphere]\label{prop:parity}
 Let the surface be closed of genus zero and the T-mesh admit lengths that are
 positive and balance every patch (its real lengths do). For every turn
@@ -592,11 +599,16 @@ positive whole balanced lengths $p$, and the linear form $\alpha_\gamma +
 of two even values.
 \end{proof}
 
-The proof uses only that the quad graph is bipartite; it fails in higher genus
+Lean checks it on the combinatorial T-mesh without a development: the vertex
+beside the station is followed round the walk, and the colouring $i + j +
+\kappa_P$ of the quad graph comes from $V - E + F = 2$ by linear algebra over
+$\Z/2$ on the chains of the quad mesh, the sphere being $P - A + N = 2$ for
+$P$ patches, $A$ arcs and $N$ nodes, connected. The proof uses only that
+the quad graph is bipartite; it fails in higher genus
 (a $3 \times 3$ grid on a torus has rings of three quads) and with borders
 (Theorem~\ref{thm:parity-any}). On a closed sphere it gives at once:
 
-\begin{evidence}{prose}{drawn from the proposition above (Lean, algebraic core)}
+\begin{evidence}{core}{\lean{ring_even}, \lean{odd_pitch_odd_length}, \lean{repair_keeps_length_cannot_close}, \lean{odd_change_of_pitch_changes_length}; assumed: as the proposition above}
 \begin{corollary}\label{cor:parity}
 On a closed surface of genus zero:
 \begin{enumerate}
@@ -893,7 +905,7 @@ Section~\ref{sec:combs}.}
 The turn that cannot be closed alone is of another kind
 (Figure~\ref{fig:separatrix}).
 
-\begin{evidence}{prose}{one step in Lean, the conjugation: \lean{Motion.conj_translation}}
+\begin{evidence}{prose}{one step in Lean, the conjugation: \lean{Motion.conj_translation}; on 25 winding separatrices of random tori no strip beside them had the shift $\delta$, the homotopy not being checked}
 \begin{proposition}[A separatrix that winds]\label{prop:winding}
 Let $\sigma$ and $\tau$ be separatrices of a singular vertex $v$ such that
 $\sigma$, followed from $v$, stops on $\tau$ at a point $q$ at distance
@@ -1182,7 +1194,7 @@ $2$.}
 \label{fig:comb}
 \end{figure}
 
-\begin{evidence}{prose}{}
+\begin{evidence}{core}{\lean{comb_reading}; the feet exist on 850 of the 3{,}009 arcs of 50 random instances; assumed: the feet exist and the perpendicular traces develop straight}
 \begin{lemma}[Combs]\label{lem:comb}
 Let $p_{c_0}$, $p_{c_1}$ be the feet of an arc $a$ developed along its comb.
 Then, for all balanced lengths,
@@ -1218,7 +1230,7 @@ separatrix, one of length two between valences three and five the staircase of
 Proposition~\ref{prop:staircase}, and one round four vertices of valence three
 a cap.
 
-\begin{evidence}{prose}{}
+\begin{evidence}{prose}{on 50 random instances, 13 of the 17 exact certificates whose arcs have feet of odd valence fail the hypothesis on the odd part, 6 of them on spheres}
 \begin{proposition}[Certificates are sums of combs]\label{thm:combs}
 Let $c = \sum_a c_a\ell_a$, $c_a \in \Z_{\ge0}$, be a certificate
 (Remark~\ref{rem:definite}) whose arcs have feet of odd valence and whose odd
@@ -1241,8 +1253,15 @@ $c_a\ell_a$ on those whose feet are one vertex.
 
 The proof is elementary: the content is in the hypothesis. That the odd part of
 a certificate is a cycle of the graph of feet is observed on all $25$
-certificates of the body (exact) but not proved; Corollary~\ref{cor:checker}
-does not give it, since it controls the parity of $p_{i,1} + p_{i,2}$ while a
+certificates of the body (exact), and it is not general: on random T-meshes
+that do not come from the engine (the property tests of the data package,
+\texttt{experiments/property}), within the bounds $\ell \ge 1$ on every arc,
+$13$ of the $17$ exact certificates whose arcs have feet of odd valence have
+an odd part that is not a cycle, $6$ of them on spheres, and for none of the
+$13$ can a representative modulo the balances be one, even modulo $2$; the
+typical one is a single arc $\ell_a$ between two distinct feet, the shift of
+a turn being the offset of a 3--5 pair. Corollary~\ref{cor:checker} does not
+give the parity either, since it controls that of $p_{i,1} + p_{i,2}$ while a
 comb reads one coordinate (in Figure~\ref{fig:comb} both feet have the same
 colour and $\ell_a = 9$).
 
@@ -1256,7 +1275,7 @@ in one chart. We use closed walks only as forms.
 \end{remark}
 \end{evidence}
 
-\begin{evidence}{prose}{}
+\begin{evidence}{tested}{the 35 spheres without valence $4k$ of 50 random instances: rank equal to the dimension on every one; on tori the period term lets it fail (11 of 15)}
 \begin{proposition}[The Burgers pairing]\label{prop:pairing}
 Let the surface be closed of genus zero, with no singular vertex of valence
 divisible by four, and let every trace of the T-mesh start at a singular
@@ -1330,7 +1349,7 @@ node $b$ is a corner of angle $a(b)\pi/2$, of
 \emph{index} $2 - a(b)$; for a border component $\beta_j$, $L_j(\ell)$ is the
 sum of the lengths of its arcs.
 
-\begin{evidence}{prose}{}
+\begin{evidence}{tested}{at $\Theta = 0$ and without border, 3{,}833 regions of 50 random instances; the border term is not tested}
 \begin{lemma}[Gauss--Bonnet with borders]\label{lem:gauss-border}
 Let $D$ be a region bounded by curves of turns and by border components. Then
 \[
@@ -1355,7 +1374,7 @@ quadrangulation~\cite[Lemma~3.1]{kaiser2015colouring}
 extended here to turns at all balanced
 lengths.
 
-\begin{evidence}{prose}{}
+\begin{evidence}{core}{\lean{parity_any_surface}, \lean{colour_comp_trans}, \lean{colour_rotAbout_trans}, \lean{colour_border}, \lean{colour_turn}; tested: 2{,}027 strips of bipartite quad graphs and 1{,}960 annuli of 50 random instances; assumed: that $\pi \circ \hat h$ factors through $H_1(\Sigma; \Z/2)$, and that its value on a class is the parity of the length of a cycle of the quad graph in it}
 \begin{theorem}[Parity of a turn on any surface]\label{thm:parity-any}
 Let $\ell$ be whole and balanced. There is a homomorphism $\Omega_\ell\colon
 H_1(\Sigma; \Z/2) \to \Z/2$ such that for every turn
@@ -1391,7 +1410,7 @@ round an eye socket is a ring of $23$ quads at the lengths of one way and of
 $24$ at another, against Proposition~\ref{prop:parity}; its shift is zero at
 every balanced length:
 
-\begin{evidence}{prose}{}
+\begin{evidence}{core}{\lean{collar}; assumed: the holonomy of the turn is conjugate to that of the border component, and $\alpha_\gamma > 0$}
 \begin{proposition}[Collars]\label{prop:collar}
 Let the curve of a turn $\gamma$ and a border component $\beta_j$ without
 corner bound an annulus holding no singular vertex. Then $\shift_\gamma(\ell)
@@ -1417,7 +1436,7 @@ $\sum_r u_r(\alpha_{\gamma_r} + \shift_{\gamma_r}) \equiv \sum_r u_r\,
 depend on the paths, but the count on white points still gives the parity when
 every curve lies in a planar region without border.
 
-\begin{evidence}{prose}{}
+\begin{evidence}{core}{\lean{fox_general}, \lean{holGen_rotations}, \lean{commutator_motion}; assumed: the presentation of the fundamental group by the loops named}
 \begin{proposition}[Burgers sum with borders and handles]\label{prop:burgers-any}
 Let the loops $\lambda_i$ round the singular vertices, $\beta_j$ round the
 border components and $a_k, b_k$ round the handles generate the fundamental
@@ -1445,7 +1464,7 @@ With its border term the sum reproduces all $314$ sides holding a border on
 which it was tested, and without it none of the $586$ such sides of Suzanne
 and Jerry (measured).
 
-\begin{evidence}{prose}{}
+\begin{evidence}{core}{\lean{commutator_translation}, \lean{commutator_translations}; assumed: the border of the cut disc is the commutator of the two curves}
 \begin{proposition}[Two crossing turns on a torus]\label{prop:torus}
 On a closed surface of genus one, let the curves of two turns be simple and
 cross once. Cut along both, the surface is a disc $D$ holding every singular
@@ -1589,7 +1608,7 @@ which isolate a minimal infeasible subsystem.
 
 \subsection{Whole lengths and size}\label{sec:whole}
 
-\begin{evidence}{prose}{its first step is the remark above (Lean)}
+\begin{evidence}{core}{\lean{closable_at_any_size}, \lean{smul_mem_system}, \lean{whole_solution_of_real}; assumed: the number of quads is homogeneous of degree two in the lengths; the infimum is taken on paper}
 \begin{proposition}[Whole lengths and size without a cap]\label{prop:whole-size}
 If $P$ is given by the balances and bounds $\ell \ge b \ge 0$, a set closable
 in real lengths is closable in whole lengths, and closable in real lengths at
@@ -1752,7 +1771,7 @@ general~\cite{amaldi1995complexity}, and minimum IIS covers are strongly
 NP-hard already for network flows~\cite{joormann2015flowiis}; the hardness
 survives the structure of quantization, a case new as far as we found.
 
-\begin{evidence}{prose}{the reductions; the bounds on approximation are cited}
+\begin{evidence}{core}{the reduction: \lean{closable_iff_independent}, \lean{tauP_eq_vertex_cover}; NP-hardness of Independent Set and Vertex Cover, and the bounds on approximation, are cited}
 \begin{theorem}[Choosing the turns is NP-hard]\label{thm:nphard}
 \RC{} is NP-complete, in real or in whole lengths, already when $B$ is the
 incidence matrix of a bidirected graph, the bounds are $0$ or $1$, and the
@@ -1831,22 +1850,22 @@ complexity of maximizing $Q$ over a polytope of lengths in reals.
 \section{What is machine-checked}\label{sec:lean}
 
 The folder \texttt{lean} beside this note is a Lean~4~\cite{demoura2021lean4}
-project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $283$
+project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $480$
 theorem declarations, many of them small lemmas, depend only on Lean's
 standard axioms; the count is not evidence, and its \texttt{README.md} maps
 each statement to its Lean theorems. Lean checks the algebraic and
 combinatorial core of each statement, with the topological facts it uses
 (that a loop develops into a given motion, that a curve bounds a disc, that
-the loops $\lambda_i$ present the fundamental group, that the quad graph of a
-sphere is bipartite) as explicit hypotheses. The files share the motions and
+the loops $\lambda_i$ present the fundamental group) as explicit hypotheses. The files share the motions and
 the quarter-turn group (\texttt{Basic.lean}). One of them,
 \texttt{TMesh.lean}, defines a combinatorial T-mesh: patches with two pairs of
 opposite sides, each side the list of its arcs, every arc on exactly two sides
 with a sign for the gluing. The balance matrix $B$ and the shifts of the turns
 are derived from it, and on it Proposition~\ref{prop:linear},
 Lemma~\ref{lem:handshake}, Proposition~\ref{prop:free},
-Remark~\ref{rem:definite} and Theorem~\ref{thm:forced} form one checked
-chain. The other statements keep their own abstraction (a turn as a list of
+Remark~\ref{rem:definite}, Theorem~\ref{thm:forced} and, through the quad
+mesh it defines at whole lengths, Proposition~\ref{prop:parity} form one
+checked chain. The other statements keep their own abstraction (a turn as a list of
 motions, a region as finite sets with counts); the surface and the cross field
 behind the T-mesh, its orientation and the link between the shift and the
 holonomy $\hat h$ are not formalized.
@@ -1867,9 +1886,12 @@ conjugation step of Proposition~\ref{prop:winding}. Over the reals: the four
 orders and orientations of a dislocation and straight chains
 (Proposition~\ref{prop:dislocation}(i), (ii)); staircases; the positivity of
 a non-negative form with a held arc. At whole lengths: the checkerboard rule;
-Proposition~\ref{prop:parity} for whole balanced lengths of any sign, given a
-2-colouring at positive lengths and the linearity of $\alpha_\gamma$ and
-$\shift_\gamma$; the second proof of Remark~\ref{rem:borders}. The
+Proposition~\ref{prop:parity} on the T-mesh, complete: the quad graph of a
+connected T-mesh with $P - A + N = 2$ is bipartite, by linear algebra over
+$\Z/2$ on the chains of its quad mesh, given only that a station follows the
+turn at every positive balanced $\ell$; the Euler characteristic of the quad
+mesh at whole lengths, $P - A + N$ for $P$ patches, $A$ arcs and $N$ nodes,
+independent of the lengths; the second proof of Remark~\ref{rem:borders}. The
 Fox--Burgers formula on the free group with the twisted windings and the
 insertion of the relation, the case of a simple turn,
 Proposition~\ref{prop:commutator} and Corollary~\ref{cor:checker}.
@@ -1883,7 +1905,16 @@ Farkas' lemma over any ordered field and whole multipliers;
 Theorem~\ref{thm:forced} and Corollary~\ref{cor:chain}. For fields of any
 order: the rotation part of Gauss--Bonnet and its counts on triangle and
 hexagonal meshes, the lengths of dislocations and the congruence of
-Appendix~\ref{app:orders}.
+Appendix~\ref{app:orders}. Added after the first version: the Fox--Burgers
+formula for any generators and the commutator of two motions with commuting
+rotations (Propositions~\ref{prop:burgers-any} and~\ref{prop:torus}), collars,
+the comb identity, the scaling of Proposition~\ref{prop:whole-size}, the
+consequences of the parity (Corollary~\ref{cor:parity}), the parity
+homomorphism of Theorem~\ref{thm:parity-any} (on the motions with quarter-turn
+rotations and whole translations, zero on the loops round the cone points,
+$L$ on a border component, $\alpha + s$ on a turn), and the reduction of
+Theorem~\ref{thm:nphard}: on the gadget of a graph the closable sets are the
+independent sets and $\tau_P$ is the vertex cover number.
 
 \emph{Checked in a weaker form}: Lemmas~\ref{lem:gauss} and~\ref{lem:eight}, only the
 Euler-characteristic count on the grid refined by two and the totals from the
@@ -1933,7 +1964,13 @@ to its cap, and the intervals depend on solver time limits on a shared
 machine. The scripts and logs of the exact experiments are not published: the
 measured statements can be checked against the branch \texttt{rd-exact}, an
 experimental hook of openclare, but not rerun as they stand. The Lean proofs
-replay with \texttt{make proofs NOTE=turns-of-a-t-mesh}. This version of the
+replay with \texttt{make proofs NOTE=turns-of-a-t-mesh}. The property tests of the
+data package (\texttt{experiments/property}) make $50$ random T-meshes
+without the engine at a fixed seed, $35$ spheres and $15$ tori, closed, and
+check on them the Lean definitions of the T-mesh and its turns, each
+statement whose hypothesis they can compute, and the certificates of their
+conflicts within the bounds $\ell \ge 1$; the tags say where they ran, and
+a test corroborates or refutes but proves nothing. This version of the
 note was built from commit \texttt{\enginecommit}.
 
 \section*{AI assistance}
@@ -1949,13 +1986,16 @@ computations, searched the literature, stated and proved the propositions,
 wrote the Lean formalization and drafted the text. Each bibliography entry says how much of the work was read. A work of which only the abstract, or a review, was read is cited only for what that abstract or review states.
 Beyond the cores machine-checked in Lean (Section~\ref{sec:lean}), everything
 was written with AI help and checked by AI agents rereading it and testing it
-on the data, not by a human expert. In particular, Propositions~\ref{thm:combs},
-\ref{prop:pairing}, \ref{prop:collar}, \ref{prop:burgers-any}, \ref{prop:torus}
-and~\ref{prop:whole-size}, Lemmas~\ref{lem:comb} and~\ref{lem:gauss-border},
-Theorems~\ref{thm:parity-any}, \ref{thm:transversal} and~\ref{thm:nphard}, the
+on the data, not by a human expert. In particular, Propositions~\ref{thm:combs}
+and~\ref{prop:pairing}, Lemma~\ref{lem:gauss-border},
+Theorem~\ref{thm:transversal}, the
 case of Lemma~\ref{lem:handshake} with borders, and the statements on
 rotations of order six other than the checked ones have only a paper proof
-written with AI help. AI review found errors in Propositions~\ref{thm:combs}
+written with AI help; Propositions~\ref{prop:collar}, \ref{prop:burgers-any},
+\ref{prop:torus} and~\ref{prop:whole-size}, Lemma~\ref{lem:comb},
+Corollary~\ref{cor:parity}, Theorem~\ref{thm:parity-any} and the reduction of
+Theorem~\ref{thm:nphard} had their algebraic cores checked in Lean after the
+first version of this note. AI review found errors in Propositions~\ref{thm:combs}
 and~\ref{prop:pairing} and Theorem~\ref{thm:nphard}, and in
 Proposition~\ref{prop:linear} and the completeness proposition
 of~\cite{gardent2026loops}, whose Lean checks are weaker than the statements;

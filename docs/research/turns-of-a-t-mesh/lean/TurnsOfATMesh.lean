@@ -20,3 +20,16 @@ public import TurnsOfATMesh.Completeness
 public import TurnsOfATMesh.GaussBonnet
 public import TurnsOfATMesh.BeyondQuads
 public import TurnsOfATMesh.TMesh
+public import TurnsOfATMesh.Consequences
+public import TurnsOfATMesh.Periods
+public import TurnsOfATMesh.Gadget
+public import TurnsOfATMesh.AnySurface
+public import TurnsOfATMesh.Grid
+public import TurnsOfATMesh.Bipartite
+public import TurnsOfATMesh.GridEuler
+public import TurnsOfATMesh.SphereBipartite
+public import TurnsOfATMesh.GridSurface
+public import TurnsOfATMesh.Coarse
+public import TurnsOfATMesh.CoarseEuler
+public import TurnsOfATMesh.CoarseSurface
+public import TurnsOfATMesh.SphereGrid

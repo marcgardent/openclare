@@ -1,0 +1,2128 @@
+{
+ "experiment": "certificates of conflicts on random T-meshes: the odd part against the graph of feet",
+ "seed": 1,
+ "count": 50,
+ "rejected": 0,
+ "cores_per_instance": 6,
+ "bound": "every arc at least one",
+ "shares": [
+  "1/2"
+ ],
+ "families": [
+  [
+   "cube",
+   0
+  ],
+  [
+   "cube",
+   1
+  ],
+  [
+   "cube",
+   2
+  ],
+  [
+   "torus",
+   6,
+   5,
+   1
+  ],
+  [
+   "torus",
+   8,
+   6,
+   2
+  ],
+  [
+   "torus",
+   10,
+   7,
+   3
+  ],
+  [
+   "torus",
+   12,
+   9,
+   4
+  ],
+  [
+   "torus",
+   14,
+   8,
+   1
+  ],
+  [
+   "torus",
+   20,
+   6,
+   1
+  ],
+  [
+   "torus",
+   14,
+   10,
+   6
+  ],
+  [
+   "box",
+   2,
+   2,
+   6,
+   2
+  ],
+  [
+   "box",
+   3,
+   3,
+   8,
+   3
+  ],
+  [
+   "hull",
+   6
+  ],
+  [
+   "hull",
+   8
+  ],
+  [
+   "hull",
+   12
+  ],
+  [
+   "dual",
+   6
+  ],
+  [
+   "dual",
+   8
+  ],
+  [
+   "dual",
+   12
+  ]
+ ],
+ "seconds": 13.3,
+ "instances_infeasible": 9,
+ "cores": 50,
+ "certificates": 50,
+ "certificates_exact": 50,
+ "hypothesis_met": 17,
+ "hypothesis_met_and_cycle": 4,
+ "hypothesis_met_not_cycle": 13,
+ "hypothesis_met_not_cycle_but_a_representative_could": 0,
+ "cycle_without_hypothesis": 0,
+ "counterexamples": 13,
+ "counterexamples_genus_0": 6,
+ "core_sizes": [
+  1,
+  2,
+  3
+ ],
+ "instances": [
+  {
+   "seed": 135520872,
+   "kind": [
+    "torus",
+    8,
+    6,
+    2
+   ],
+   "genus": 1,
+   "turns_in_H": 28,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 253228484,
+   "kind": [
+    "torus",
+    14,
+    10,
+    6
+   ],
+   "genus": 1,
+   "turns_in_H": 144,
+   "feasible": false,
+   "cores": [
+    {
+     "turns": [
+      124,
+      208
+     ],
+     "size": 2,
+     "multipliers": [
+      "1/2",
+      "-1/2"
+     ],
+     "arcs": [
+      75,
+      94
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      105
+     ],
+     "size": 1,
+     "multipliers": [
+      "1/4"
+     ],
+     "arcs": [
+      34,
+      117,
+      135,
+      139
+     ],
+     "scale": 4,
+     "support": 4,
+     "odd_arcs": 4,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      107,
+      185
+     ],
+     "size": 2,
+     "multipliers": [
+      "1/2",
+      "1/4"
+     ],
+     "arcs": [
+      3,
+      34,
+      135,
+      139
+     ],
+     "scale": 4,
+     "support": 4,
+     "odd_arcs": 4,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      101
+     ],
+     "size": 1,
+     "multipliers": [
+      "1/4"
+     ],
+     "arcs": [
+      34,
+      117,
+      135,
+      139
+     ],
+     "scale": 4,
+     "support": 4,
+     "odd_arcs": 4,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      20,
+      103
+     ],
+     "size": 2,
+     "multipliers": [
+      "1/4",
+      "1/2"
+     ],
+     "arcs": [
+      3,
+      34,
+      135,
+      139
+     ],
+     "scale": 4,
+     "support": 4,
+     "odd_arcs": 4,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      103,
+      249
+     ],
+     "size": 2,
+     "multipliers": [
+      "1/2",
+      "1/4"
+     ],
+     "arcs": [
+      3,
+      34,
+      135,
+      139
+     ],
+     "scale": 4,
+     "support": 4,
+     "odd_arcs": 4,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    }
+   ],
+   "counterexamples": []
+  },
+  {
+   "seed": 965274705,
+   "kind": [
+    "dual",
+    8
+   ],
+   "genus": 0,
+   "turns_in_H": 65,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 815217483,
+   "kind": [
+    "dual",
+    8
+   ],
+   "genus": 0,
+   "turns_in_H": 56,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 201561926,
+   "kind": [
+    "torus",
+    14,
+    8,
+    1
+   ],
+   "genus": 1,
+   "turns_in_H": 14,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 60875732,
+   "kind": [
+    "dual",
+    8
+   ],
+   "genus": 0,
+   "turns_in_H": 28,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 929360195,
+   "kind": [
+    "hull",
+    8
+   ],
+   "genus": 0,
+   "turns_in_H": 57,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 956461718,
+   "kind": [
+    "cube",
+    0
+   ],
+   "genus": 0,
+   "turns_in_H": 0,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 491263128,
+   "kind": [
+    "torus",
+    14,
+    10,
+    6
+   ],
+   "genus": 1,
+   "turns_in_H": 90,
+   "feasible": false,
+   "cores": [
+    {
+     "turns": [
+      134,
+      152
+     ],
+     "size": 2,
+     "multipliers": [
+      "1/2",
+      "-1/2"
+     ],
+     "arcs": [
+      28,
+      150
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      121,
+      152
+     ],
+     "size": 2,
+     "multipliers": [
+      "1/2",
+      "-1/2"
+     ],
+     "arcs": [
+      28,
+      150
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      119,
+      152
+     ],
+     "size": 2,
+     "multipliers": [
+      "1/2",
+      "-1/2"
+     ],
+     "arcs": [
+      28,
+      150
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      116,
+      152
+     ],
+     "size": 2,
+     "multipliers": [
+      "1/4",
+      "-1/4"
+     ],
+     "arcs": [
+      28,
+      127,
+      139,
+      144
+     ],
+     "scale": 4,
+     "support": 4,
+     "odd_arcs": 4,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      112,
+      152
+     ],
+     "size": 2,
+     "multipliers": [
+      "1/2",
+      "-1/2"
+     ],
+     "arcs": [
+      28,
+      150
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      110,
+      152
+     ],
+     "size": 2,
+     "multipliers": [
+      "1/2",
+      "-1/2"
+     ],
+     "arcs": [
+      28,
+      150
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    }
+   ],
+   "counterexamples": []
+  },
+  {
+   "seed": 681674953,
+   "kind": [
+    "torus",
+    6,
+    5,
+    1
+   ],
+   "genus": 1,
+   "turns_in_H": 5,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 47936369,
+   "kind": [
+    "cube",
+    1
+   ],
+   "genus": 0,
+   "turns_in_H": 44,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 19767455,
+   "kind": [
+    "cube",
+    1
+   ],
+   "genus": 0,
+   "turns_in_H": 30,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 465143663,
+   "kind": [
+    "hull",
+    8
+   ],
+   "genus": 0,
+   "turns_in_H": 48,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 62364611,
+   "kind": [
+    "hull",
+    12
+   ],
+   "genus": 0,
+   "turns_in_H": 49,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 476079230,
+   "kind": [
+    "dual",
+    12
+   ],
+   "genus": 0,
+   "turns_in_H": 122,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 1064748682,
+   "kind": [
+    "dual",
+    6
+   ],
+   "genus": 0,
+   "turns_in_H": 58,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 742385984,
+   "kind": [
+    "torus",
+    20,
+    6,
+    1
+   ],
+   "genus": 1,
+   "turns_in_H": 12,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 469828692,
+   "kind": [
+    "torus",
+    20,
+    6,
+    1
+   ],
+   "genus": 1,
+   "turns_in_H": 17,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 622301269,
+   "kind": [
+    "dual",
+    6
+   ],
+   "genus": 0,
+   "turns_in_H": 58,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 893739613,
+   "kind": [
+    "cube",
+    1
+   ],
+   "genus": 0,
+   "turns_in_H": 40,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 399230659,
+   "kind": [
+    "torus",
+    6,
+    5,
+    1
+   ],
+   "genus": 1,
+   "turns_in_H": 11,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 259609208,
+   "kind": [
+    "box",
+    2,
+    2,
+    6,
+    2
+   ],
+   "genus": 0,
+   "turns_in_H": 52,
+   "feasible": false,
+   "cores": [
+    {
+     "turns": [
+      100
+     ],
+     "size": 1,
+     "multipliers": [
+      "-1/2"
+     ],
+     "arcs": [
+      22,
+      29
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      98
+     ],
+     "size": 1,
+     "multipliers": [
+      "-1/2"
+     ],
+     "arcs": [
+      22,
+      29
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      80
+     ],
+     "size": 1,
+     "multipliers": [
+      "-1/2"
+     ],
+     "arcs": [
+      22,
+      29
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      73
+     ],
+     "size": 1,
+     "multipliers": [
+      "-1/2"
+     ],
+     "arcs": [
+      22,
+      29
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      55
+     ],
+     "size": 1,
+     "multipliers": [
+      "-1/2"
+     ],
+     "arcs": [
+      22,
+      29
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      50
+     ],
+     "size": 1,
+     "multipliers": [
+      "-1/2"
+     ],
+     "arcs": [
+      22,
+      29
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    }
+   ],
+   "counterexamples": [
+    {
+     "turns": [
+      100
+     ],
+     "size": 1,
+     "multipliers": [
+      "-1/2"
+     ],
+     "arcs": [
+      22,
+      29
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      98
+     ],
+     "size": 1,
+     "multipliers": [
+      "-1/2"
+     ],
+     "arcs": [
+      22,
+      29
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      80
+     ],
+     "size": 1,
+     "multipliers": [
+      "-1/2"
+     ],
+     "arcs": [
+      22,
+      29
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      73
+     ],
+     "size": 1,
+     "multipliers": [
+      "-1/2"
+     ],
+     "arcs": [
+      22,
+      29
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      55
+     ],
+     "size": 1,
+     "multipliers": [
+      "-1/2"
+     ],
+     "arcs": [
+      22,
+      29
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      50
+     ],
+     "size": 1,
+     "multipliers": [
+      "-1/2"
+     ],
+     "arcs": [
+      22,
+      29
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    }
+   ]
+  },
+  {
+   "seed": 906467884,
+   "kind": [
+    "box",
+    3,
+    3,
+    8,
+    3
+   ],
+   "genus": 0,
+   "turns_in_H": 75,
+   "feasible": false,
+   "cores": [
+    {
+     "turns": [
+      147
+     ],
+     "size": 1,
+     "multipliers": [
+      "-1/2"
+     ],
+     "arcs": [
+      60,
+      73
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      143
+     ],
+     "size": 1,
+     "multipliers": [
+      "-1/2"
+     ],
+     "arcs": [
+      60,
+      73
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      141
+     ],
+     "size": 1,
+     "multipliers": [
+      "-1/2"
+     ],
+     "arcs": [
+      60,
+      73
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      111
+     ],
+     "size": 1,
+     "multipliers": [
+      "-1/2"
+     ],
+     "arcs": [
+      60,
+      73
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      108
+     ],
+     "size": 1,
+     "multipliers": [
+      "-1/2"
+     ],
+     "arcs": [
+      60,
+      73
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      51
+     ],
+     "size": 1,
+     "multipliers": [
+      "1/2"
+     ],
+     "arcs": [
+      74,
+      98
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    }
+   ],
+   "counterexamples": []
+  },
+  {
+   "seed": 407699194,
+   "kind": [
+    "dual",
+    12
+   ],
+   "genus": 0,
+   "turns_in_H": 127,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 610227593,
+   "kind": [
+    "box",
+    2,
+    2,
+    6,
+    2
+   ],
+   "genus": 0,
+   "turns_in_H": 51,
+   "feasible": false,
+   "cores": [
+    {
+     "turns": [
+      10
+     ],
+     "size": 1,
+     "multipliers": [
+      "1/2"
+     ],
+     "arcs": [
+      52,
+      55
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": true,
+     "some_representative_could_mod_2": true,
+     "exact": true
+    },
+    {
+     "turns": [
+      0
+     ],
+     "size": 1,
+     "multipliers": [
+      "1/2"
+     ],
+     "arcs": [
+      52,
+      55
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": true,
+     "some_representative_could_mod_2": true,
+     "exact": true
+    }
+   ],
+   "counterexamples": []
+  },
+  {
+   "seed": 844720478,
+   "kind": [
+    "dual",
+    8
+   ],
+   "genus": 0,
+   "turns_in_H": 41,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 1031279582,
+   "kind": [
+    "cube",
+    1
+   ],
+   "genus": 0,
+   "turns_in_H": 12,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 868202078,
+   "kind": [
+    "torus",
+    12,
+    9,
+    4
+   ],
+   "genus": 1,
+   "turns_in_H": 89,
+   "feasible": false,
+   "cores": [
+    {
+     "turns": [
+      134,
+      164
+     ],
+     "size": 2,
+     "multipliers": [
+      "1/2",
+      "-1/2"
+     ],
+     "arcs": [
+      62,
+      64
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      164,
+      165
+     ],
+     "size": 2,
+     "multipliers": [
+      "-3/2",
+      "1/2"
+     ],
+     "arcs": [
+      64,
+      81
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      105,
+      161
+     ],
+     "size": 2,
+     "multipliers": [
+      "1/2",
+      "-1/2"
+     ],
+     "arcs": [
+      62,
+      64
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      161,
+      165
+     ],
+     "size": 2,
+     "multipliers": [
+      "-3/2",
+      "1/2"
+     ],
+     "arcs": [
+      64,
+      81
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      102,
+      153,
+      168
+     ],
+     "size": 3,
+     "multipliers": [
+      "1/4",
+      "-1/4",
+      "1/4"
+     ],
+     "arcs": [
+      25,
+      62,
+      64,
+      65
+     ],
+     "scale": 4,
+     "support": 4,
+     "odd_arcs": 4,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      153,
+      165
+     ],
+     "size": 2,
+     "multipliers": [
+      "-3/2",
+      "1/2"
+     ],
+     "arcs": [
+      64,
+      81
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    }
+   ],
+   "counterexamples": []
+  },
+  {
+   "seed": 371530572,
+   "kind": [
+    "hull",
+    12
+   ],
+   "genus": 0,
+   "turns_in_H": 62,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 804668615,
+   "kind": [
+    "hull",
+    6
+   ],
+   "genus": 0,
+   "turns_in_H": 10,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 942662923,
+   "kind": [
+    "torus",
+    6,
+    5,
+    1
+   ],
+   "genus": 1,
+   "turns_in_H": 14,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 231780618,
+   "kind": [
+    "dual",
+    12
+   ],
+   "genus": 0,
+   "turns_in_H": 124,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 844508892,
+   "kind": [
+    "torus",
+    10,
+    7,
+    3
+   ],
+   "genus": 1,
+   "turns_in_H": 69,
+   "feasible": false,
+   "cores": [
+    {
+     "turns": [
+      54,
+      99
+     ],
+     "size": 2,
+     "multipliers": [
+      "1/2",
+      "-1/2"
+     ],
+     "arcs": [
+      52,
+      54
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      57,
+      99
+     ],
+     "size": 2,
+     "multipliers": [
+      "1/2",
+      "-1/2"
+     ],
+     "arcs": [
+      52,
+      54
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      99,
+      114
+     ],
+     "size": 2,
+     "multipliers": [
+      "-1/2",
+      "1/2"
+     ],
+     "arcs": [
+      52,
+      54
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      91,
+      107
+     ],
+     "size": 2,
+     "multipliers": [
+      "-1/2",
+      "1/2"
+     ],
+     "arcs": [
+      52,
+      54
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      90,
+      117
+     ],
+     "size": 2,
+     "multipliers": [
+      "-1/2",
+      "1/2"
+     ],
+     "arcs": [
+      52,
+      54
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      50,
+      52
+     ],
+     "size": 2,
+     "multipliers": [
+      "1/4",
+      "-1/4"
+     ],
+     "arcs": [
+      50,
+      52,
+      54
+     ],
+     "scale": 4,
+     "support": 3,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    }
+   ],
+   "counterexamples": [
+    {
+     "turns": [
+      54,
+      99
+     ],
+     "size": 2,
+     "multipliers": [
+      "1/2",
+      "-1/2"
+     ],
+     "arcs": [
+      52,
+      54
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      57,
+      99
+     ],
+     "size": 2,
+     "multipliers": [
+      "1/2",
+      "-1/2"
+     ],
+     "arcs": [
+      52,
+      54
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      99,
+      114
+     ],
+     "size": 2,
+     "multipliers": [
+      "-1/2",
+      "1/2"
+     ],
+     "arcs": [
+      52,
+      54
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      91,
+      107
+     ],
+     "size": 2,
+     "multipliers": [
+      "-1/2",
+      "1/2"
+     ],
+     "arcs": [
+      52,
+      54
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      90,
+      117
+     ],
+     "size": 2,
+     "multipliers": [
+      "-1/2",
+      "1/2"
+     ],
+     "arcs": [
+      52,
+      54
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      50,
+      52
+     ],
+     "size": 2,
+     "multipliers": [
+      "1/4",
+      "-1/4"
+     ],
+     "arcs": [
+      50,
+      52,
+      54
+     ],
+     "scale": 4,
+     "support": 3,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    }
+   ]
+  },
+  {
+   "seed": 1051608830,
+   "kind": [
+    "hull",
+    6
+   ],
+   "genus": 0,
+   "turns_in_H": 10,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 1007857332,
+   "kind": [
+    "cube",
+    1
+   ],
+   "genus": 0,
+   "turns_in_H": 11,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 662561899,
+   "kind": [
+    "cube",
+    1
+   ],
+   "genus": 0,
+   "turns_in_H": 0,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 365822119,
+   "kind": [
+    "hull",
+    8
+   ],
+   "genus": 0,
+   "turns_in_H": 37,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 487344227,
+   "kind": [
+    "torus",
+    10,
+    7,
+    3
+   ],
+   "genus": 1,
+   "turns_in_H": 60,
+   "feasible": false,
+   "cores": [
+    {
+     "turns": [
+      93
+     ],
+     "size": 1,
+     "multipliers": [
+      "1"
+     ],
+     "arcs": [
+      7
+     ],
+     "scale": 1,
+     "support": 1,
+     "odd_arcs": 1,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": true,
+     "some_representative_could_mod_2": true,
+     "exact": true
+    },
+    {
+     "turns": [
+      89
+     ],
+     "size": 1,
+     "multipliers": [
+      "1"
+     ],
+     "arcs": [
+      7
+     ],
+     "scale": 1,
+     "support": 1,
+     "odd_arcs": 1,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": true,
+     "some_representative_could_mod_2": true,
+     "exact": true
+    },
+    {
+     "turns": [
+      86,
+      115
+     ],
+     "size": 2,
+     "multipliers": [
+      "1/2",
+      "-1/2"
+     ],
+     "arcs": [
+      61,
+      75
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      58,
+      115
+     ],
+     "size": 2,
+     "multipliers": [
+      "1/2",
+      "-1/2"
+     ],
+     "arcs": [
+      61,
+      75
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      43,
+      115
+     ],
+     "size": 2,
+     "multipliers": [
+      "-1/2",
+      "-1/2"
+     ],
+     "arcs": [
+      63,
+      75
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      30
+     ],
+     "size": 1,
+     "multipliers": [
+      "-1/3"
+     ],
+     "arcs": [
+      7,
+      61,
+      75
+     ],
+     "scale": 3,
+     "support": 3,
+     "odd_arcs": 3,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    }
+   ],
+   "counterexamples": [
+    {
+     "turns": [
+      43,
+      115
+     ],
+     "size": 2,
+     "multipliers": [
+      "-1/2",
+      "-1/2"
+     ],
+     "arcs": [
+      63,
+      75
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": true,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    }
+   ]
+  },
+  {
+   "seed": 428458136,
+   "kind": [
+    "cube",
+    0
+   ],
+   "genus": 0,
+   "turns_in_H": 0,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 868560209,
+   "kind": [
+    "torus",
+    20,
+    6,
+    1
+   ],
+   "genus": 1,
+   "turns_in_H": 16,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 738360465,
+   "kind": [
+    "dual",
+    12
+   ],
+   "genus": 0,
+   "turns_in_H": 112,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 985977877,
+   "kind": [
+    "hull",
+    6
+   ],
+   "genus": 0,
+   "turns_in_H": 11,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 12260256,
+   "kind": [
+    "torus",
+    14,
+    10,
+    6
+   ],
+   "genus": 1,
+   "turns_in_H": 102,
+   "feasible": false,
+   "cores": [
+    {
+     "turns": [
+      102,
+      215
+     ],
+     "size": 2,
+     "multipliers": [
+      "1/2",
+      "-1/2"
+     ],
+     "arcs": [
+      37,
+      42
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      86,
+      215
+     ],
+     "size": 2,
+     "multipliers": [
+      "1/2",
+      "-1/2"
+     ],
+     "arcs": [
+      50,
+      128
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      84,
+      193
+     ],
+     "size": 2,
+     "multipliers": [
+      "1/2",
+      "-1/2"
+     ],
+     "arcs": [
+      50,
+      128
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      74,
+      193
+     ],
+     "size": 2,
+     "multipliers": [
+      "1/2",
+      "-1/2"
+     ],
+     "arcs": [
+      50,
+      128
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      72,
+      215
+     ],
+     "size": 2,
+     "multipliers": [
+      "1/2",
+      "-1/2"
+     ],
+     "arcs": [
+      50,
+      128
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    },
+    {
+     "turns": [
+      70,
+      190
+     ],
+     "size": 2,
+     "multipliers": [
+      "1/2",
+      "-1/2"
+     ],
+     "arcs": [
+      50,
+      128
+     ],
+     "scale": 2,
+     "support": 2,
+     "odd_arcs": 2,
+     "feet_of_odd_valence_on_support": false,
+     "odd_part_is_cycle": false,
+     "some_representative_could_mod_2": false,
+     "exact": true
+    }
+   ],
+   "counterexamples": []
+  },
+  {
+   "seed": 277561031,
+   "kind": [
+    "hull",
+    8
+   ],
+   "genus": 0,
+   "turns_in_H": 56,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 441276232,
+   "kind": [
+    "dual",
+    12
+   ],
+   "genus": 0,
+   "turns_in_H": 99,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 120523869,
+   "kind": [
+    "hull",
+    12
+   ],
+   "genus": 0,
+   "turns_in_H": 70,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 783264694,
+   "kind": [
+    "dual",
+    8
+   ],
+   "genus": 0,
+   "turns_in_H": 73,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 887769838,
+   "kind": [
+    "torus",
+    14,
+    8,
+    1
+   ],
+   "genus": 1,
+   "turns_in_H": 10,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 766200609,
+   "kind": [
+    "dual",
+    8
+   ],
+   "genus": 0,
+   "turns_in_H": 62,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  },
+  {
+   "seed": 743196676,
+   "kind": [
+    "hull",
+    12
+   ],
+   "genus": 0,
+   "turns_in_H": 54,
+   "feasible": true,
+   "cores": [],
+   "counterexamples": []
+  }
+ ]
+}

@@ -7,6 +7,9 @@ name: papers
 # checked by lean.yml), to show that it builds; called by pages.yml, which
 # serves them on the website; and by hand from the Actions tab. Each paper
 # is one artifact holding paper.pdf and paper.fr.pdf, named after its folder.
+# On a pull request GitHub's `paths` filter looks at the whole diff against
+# the base, so the job `changes` looks at the files of the push itself and
+# skips the build when none of them is a paper.
 on:
   pull_request:
     paths:
@@ -20,7 +23,47 @@ permissions:
   contents: read
 
 jobs:
+  # Whether the files pushed this time touch a paper (its Lean folder aside)
+  # or this workflow. When called by pages.yml and by hand, always.
+  changes:
+    runs-on: ubuntu-24.04
+    outputs:
+      papers: ${{ steps.diff.outputs.papers }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: diff
+        env:
+          EVENT: ${{ github.event_name }}
+          ACTION: ${{ github.event.action }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.event.after }}
+          BASE: ${{ github.base_ref }}
+        run: |
+          concerned() {
+            grep -vE '^docs/research/turns-of-a-t-mesh/lean/' | grep -qE '^(docs/research/|\.github/workflows/papers\.yml$)'
+          }
+          if [ "$EVENT" != "pull_request" ]; then
+            echo "papers=true" >> "$GITHUB_OUTPUT"
+          elif [ "$ACTION" = "synchronize" ] && git cat-file -e "$BEFORE" 2>/dev/null; then
+            if git diff --name-only "$BEFORE" "$AFTER" | concerned; then
+              echo "papers=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "papers=false" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            git fetch --quiet origin "$BASE"
+            if git diff --name-only "origin/$BASE...HEAD" | concerned; then
+              echo "papers=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "papers=false" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+          cat "$GITHUB_OUTPUT"
   paper:
+    needs: changes
+    if: needs.changes.outputs.papers == 'true'
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
