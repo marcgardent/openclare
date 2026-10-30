@@ -3,14 +3,14 @@
 
     python3 scripts/fingers_figure.py [--blender blender]
 
-Writes docs/images/fingers.webp, three panels side by side: the source,
-openclare asked at 1,000 quads and Instant Meshes asked at 3,000, seed 1 of the
-bench. It reads the bench's own results, bench/out/human_male/source.obj,
-1000/openclare_1.obj and 3000/instant-meshes_1.obj, which `bench/run.py` makes.
+Writes docs/images/fingers.webp, four panels side by side: the source,
+openclare asked at 1,000 and at 3,000 quads, and Instant Meshes asked at 3,000,
+seed 1 of the bench. It reads the bench's own results under
+bench/out/human_male/, which `bench/run.py` makes.
 
 Each mesh is cut to the same box round the right forearm and hand, and the box's
 two corners are kept as specks too small to see, so that scripts/render.py, which
-frames what it sees, frames the three the same: a hand that is missing shows as
+frames what it sees, frames them all the same: a hand that is missing shows as
 missing, not enlarged. The panels are rendered from the back of the hand.
 """
 
@@ -24,7 +24,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent.parent
 BENCH = ROOT / "bench/out/human_male"
 TARGET = ROOT / "docs/images/fingers.webp"
-PANELS = (("source.obj", False), ("1000/openclare_1.obj", True), ("3000/instant-meshes_1.obj", True))
+PANELS = (("source.obj", False), ("1000/openclare_1.obj", True), ("3000/openclare_1.obj", True), ("3000/instant-meshes_1.obj", True))
 # Round the right forearm and hand, in the bench's units, z up.
 LOW, HIGH = (0.24, -0.20, 0.70), (0.46, 0.06, 1.02)
 SIZE, PAD = 700, 20
@@ -64,7 +64,7 @@ def main():
                        str(mesh), str(picture), "--azimuth", "0", "--elevation", "10", "--size", str(SIZE)]
             subprocess.run(command + ([] if edges else ["--no-edges"]), check=True, capture_output=True)
             images.append(Image.open(picture).convert("RGBA"))
-    # One crop for the three, round what any of them shows.
+    # One crop for all, round what any of them shows.
     boxes = [image.getbbox() for image in images]
     box = (max(0, min(b[0] for b in boxes) - PAD), max(0, min(b[1] for b in boxes) - PAD),
            min(SIZE, max(b[2] for b in boxes) + PAD), min(SIZE, max(b[3] for b in boxes) + PAD))

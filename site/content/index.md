@@ -33,9 +33,9 @@ Select an edge loop with Alt-click: it should go round the arm once and close. A
 
 At 1,000 quads a whole body has a few dozen for each hand, and many remeshers give the fingers up: they melt into a mitten, even with three times as many quads. openclare keeps at least six quads round every thin part, a finger or the tip of an ear, with smaller quads there and larger ones elsewhere, so the part keeps its volume instead of coming out flat (*Quads Around Thin Parts*).
 
-![The right hand of a human body at 1,000 and 3,000 quads: the source, openclare at 1,000 quads with five fingers, Instant Meshes at 3,000 quads with a mitten](../../docs/images/fingers.webp)
+![The right hand of a human body: the source, openclare at 1,000 and at 3,000 quads with five fingers, Instant Meshes at 3,000 quads with a mitten](../../docs/images/fingers.webp)
 
-*The right hand of a human body: the source, openclare asked at 1,000 quads (1,014 made), Instant Meshes asked at 3,000 (2,800 made). On the thin parts the bench measures openclare at 1,000 quads 0.09 quad edge from the source, Instant Meshes at 3,000 quads 0.84.*
+*The right hand of a human body: the source, openclare asked at 1,000 quads (1,014 made) and at 3,000 (3,032 made), Instant Meshes asked at 3,000 (2,800 made). On the thin parts the bench measures openclare 0.09 quad edge from the source at 1,000 quads as at 3,000, Instant Meshes 0.84 at 3,000.*
 
 ## See it in 3D
 
