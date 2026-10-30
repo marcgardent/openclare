@@ -23,19 +23,21 @@
 </div>
 </article>
 
-## Machine-checked proofs
+## The method
 
-<!-- section: night -->
+The papers follow four rules taken from software engineering. They say how the work is checked, not how much of it is done; where a rule is not applied yet, it says so.
 
-<p class="lead-number"><b>{{theorems}}</b><span>theorems in Lean 4 + Mathlib</span></p>
+**1. Lean first, prose last.** The proofs in the [Lean 4](https://lean-lang.org/) proof assistant, with the Mathlib library, are the reference, and the paper explains them. *Started:* the algebraic cores of paper B (its Sections 3 and 8 to 10) are proved in Lean, with Lean's three standard axioms only and no proof left open; the paper's statements are not yet written from the Lean sources.
 
-The algebraic cores of the note's results (its Sections 3 and 8 to 10) are checked by the [Lean 4](https://lean-lang.org/) proof assistant with the Mathlib library: **{{theorems}} theorems**, in a Lake project beside the note. Every theorem depends only on Lean's three standard axioms (`propext`, `Classical.choice`, `Quot.sound`); there is no `sorry`.
+**2. Known cases, edge cases, random cases.** A statement is tried on examples whose answer is known, on its limits, and on random inputs. *Done for paper B:* random T-meshes, built without the engine, are checked against the Lean definitions, statement by statement ([property tests](../../docs/research/turns-of-a-t-mesh/experiments/property/README.md)).
 
-**What is checked.** Among others: the shift of a turn is a linear form in the arc lengths; the complete walk of the strips finds every strip; Gauss–Bonnet for turns; the Burgers sum and the order of first visit; annuli, dislocations, staircases and exchanges of two vertices; the checkerboard rule and the parity of a turn on a sphere (with a second proof that came out of the formalization); the Fox–Burgers formula; the handshake lemma and the "free arcs" proposition; Farkas certificates for turns that can never close; and the theorem on forced helices. Several results are proved more generally than the note states them: for any rotations and dimensions, and for fields of any order (triangle and hexagon meshes).
+**3. Tests that must fail.** A theorem that still holds when the definition it certifies is altered says too little; a hypothesis that can be removed was not needed. *Not started.*
 
-**What is assumed.** The topological facts the note relies on are not formalized; each one is an explicit hypothesis of the theorem that uses it, never hidden. They include that a simple closed curve on a sphere bounds a disc (Jordan–Schoenflies), the developing map and holonomy as a homomorphism of the fundamental group, and two standard graph facts. Strips on surfaces with borders, and every *measured* statement, are outside the formalization.
+**4. Continuous integration.** *Done:* every change to the proofs or to the property tests is rebuilt on a pinned Mathlib, and a proof left open fails the build.
 
-**What it found.** Formalizing the note found eleven gaps or corrections, none of them a sign or convention error: a misplaced factor in one Fox-calculus step (with the right conclusion), a theorem that needs neither convexity nor whole lengths, a parity statement that holds on a closed sphere only (it fails with two or more borders), and propositions that are stronger than stated. They are listed in the [proofs' README](../../docs/research/turns-of-a-t-mesh/lean/README.md).
+**What is assumed.** The topological facts the note relies on are not formalized; each one is an explicit hypothesis of the theorem that uses it, never hidden: that a simple closed curve on a sphere bounds a disc (Jordan–Schoenflies), the developing map and holonomy as a homomorphism of the fundamental group, and two standard graph facts. Strips on surfaces with borders, and every *measured* statement, are outside the formalization.
+
+**What it found.** Formalizing the note found eleven gaps or corrections, none of them a sign or convention error; among them, a parity statement that holds on a closed sphere only. They are listed in the [proofs' README](../../docs/research/turns-of-a-t-mesh/lean/README.md).
 
 To check the proofs yourself, from the root of the repository:
 
