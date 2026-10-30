@@ -839,7 +839,9 @@ graph, every tree meeting the curve at exactly one vertex and every interior ver
 on a tree. Then the walk round each tree from that vertex, the tree on its right, the
 trees in the order of the curve from its start, visits the cone points in the order of
 first visit, each at the place the chart of the face it is first reached in gives it:
-the rotations `rotAbout (R^{4-k}) p` there compose to the holonomy of the curve. -/
+the rotations `rotAbout (R^{4-k}) p` there compose to the translation `B_D`, which the
+proposition gives as `T_γ(ℓ)`, the development of the turn, with `D` on the left of
+`γ̄`, and as its inverse with `D` on the right. -/
 
 /-- The fine grid of a sphere as the walk round the cut trees reads it. `cw` maps a
 corner `v` of a face and the edge of the face coming into `v` (counter-clockwise
@@ -1095,15 +1097,16 @@ def discOf (F : Fine P) (ℓ : Fin n → ℕ) (dflt : Point (Fin P)) (cyc : Arra
 
 /-- Proposition "The shift is set by the singularities" (a) on a sphere, for both
 regions of every simple curve of a round: the check of a disc, the word of first
-visits, and its composite against the holonomy of the curve. The curve of the round
-from the station `k + ½` of `σ` is the curve of the turn whose path is the arcs that
-round crosses; its development `T = Turn.development` (`Holonomy.lean`) is a
-translation in the frame of the patch of `σ`, in quads, and the holonomy of the curve
-is its inverse. The root face lies in that patch, beside the first edge of the curve,
-so its chart is the identity: walked with the region on its left, the curve has
-holonomy `x ↦ x - 2 T` in fine coordinates on the left, and `x ↦ x + 2 T` on the right,
-where the curve is walked backwards. Also the Burgers sum, and the holonomy of the
-word `develop.py` gave the same turn, through the chart `R^k` of its first patch. -/
+visits, and its composite against the development of the curve. The curve of the
+round from the station `k + ½` of `σ` is the curve of the turn whose path is the arcs
+that round crosses; its development `T = Turn.development` (`Holonomy.lean`) is a
+translation in the frame of the patch of `σ`, in quads. The root face lies in that
+patch, beside the first edge of the curve, so its chart is the identity: the composite
+must be `x ↦ x + 2 T` in fine coordinates for the region on the left of the curve and
+`x ↦ x - 2 T` for the region on its right (`B_D = T_γ` with `D` on the left, its
+inverse with `D` on the right). Also the Burgers sum, and the holonomy of the word
+`develop.py` gave the same turn (`ĥ(γ̄)`, the inverse of `T`), through the chart `R^k`
+of its first patch. -/
 def checkDiscs (ℓ : Fin n → ℕ) (fcs : Array (Face (Fin P)))
     (faceEdgesK faceCorners : Array (Array Nat)) (facesAtEdge : Std.HashMap Nat (List Nat))
     (index : Std.HashMap (Point (Fin P)) Nat) (rep valence : Array Nat) (coarse : Array Bool)
@@ -1146,7 +1149,6 @@ def checkDiscs (ℓ : Fin n → ℕ) (fcs : Array (Face (Fin P)))
   let mut compC : Count := {}
   let mut burgC : Count := {}
   let mut foxC : Count := {}
-  let mut asStated := 0
   for (c, (σ, k)) in curves.zip curveSt do
     let cyc := c.toArray
     if (Std.HashSet.ofList (c.map (·.1))).size != c.length then continue
@@ -1188,9 +1190,9 @@ def checkDiscs (ℓ : Fin n → ℕ) (fcs : Array (Face (Fin P)))
       if !r.walkFailed.isEmpty then continue
       letters := letters + r.word.length
       let comp := Motion.composeAll (Motion.rotations r.word)
-      -- The development of the curve walked with the region on its left, in fine units.
+      -- `B_D` of the proposition in fine units: `T` with the region on the left of the
+      -- curve, `-T` with the region on its right.
       let developed : GaussianInt := (if left then 2 else -2) * D.trans
-      if D.lin == 1 && comp.lin == 1 && comp.trans == -developed then asStated := asStated + 1
       compC := compC.add (D.lin == 1 && comp.lin == 1 && comp.trans == developed) fun _ =>
         s!"{at_}: composite {showG comp.lin}, {showG comp.trans}; development {showG D.lin}, {showG D.trans}; {r.word.length} cone points {r.word.map fun (u, p) => (showG u, showG p)}"
       burgC := burgC.add (Motion.burgers r.word == comp.trans) fun _ =>
@@ -1207,8 +1209,7 @@ def checkDiscs (ℓ : Fin n → ℕ) (fcs : Array (Face (Fin P)))
   IO.println s!"    {cutsN} cut edges in {treesN} trees; changes of chart across the dual trees not taking an edge to the points glued to it: {badCharts}"
   wordC.show "regions: the walk round the cut trees visits every cone point inside (the word in the order of first visit)"
   IO.println s!"    {letters} letters in the words of the regions"
-  compC.show "regions: composite of the rotations R^(4-k) in first-visit order (region on the left, trees on the right) = development of the curve (Turn.development: x + 2T on the left, x - 2T on the right, fine units)"
-  IO.println s!"    composite = holonomy of the curve, the inverse of the development, as Prop. 'The shift is set by the singularities' (a) states it: {asStated} of {compC.checked} (a report: the sign of the statement against these conventions)"
+  compC.show "regions: composite of the rotations in first-visit order, region on the left, = Turn.development (Prop. 'The shift is set by the singularities' (a): B_D = T_γ with D on its left, the inverse with D on its right; fine units, 2 T)"
   burgC.show "regions: Burgers sum ∑ Qᵢ (1 - Rᵢ) pᵢ = translation of the composite (Motion.burgers)"
   if fox.isSome then
     foxC.show "regions: composite = inverse of the holonomy of the word of develop.py for the same turn, through the chart R^k of its first patch"
