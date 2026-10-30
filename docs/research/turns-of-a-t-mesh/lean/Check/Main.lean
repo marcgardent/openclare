@@ -746,8 +746,17 @@ def representatives (par : Array Nat) : Array Nat := Id.run do
     rep := rep.set! i (if p == i then i else rep[p]!)
   return rep
 
-/-- An edge as an unordered pair of representatives. -/
-def edgeKey (u v : Nat) : Nat × Nat := (min u v, max u v)
+/-- The midpoint of a fine edge, in the coordinates doubled once more
+(`GridEuler.midpoint`): an edge is a class of midpoints, the edges along an arc
+being glued in pairs. Two fine edges may join the same two vertices (the square
+torus of one patch at ℓ = 1 has 8 edges on 4 pairs), so a pair of vertices is
+not a key. -/
+def mid (p q : Point (Fin P)) : Point (Fin P) := ⟨p.patch, p.x + q.x, p.y + q.y⟩
+
+/-- The two points are the ends of one fine edge of a rectangle. -/
+def adjacent (p q : Point (Fin P)) : Bool :=
+  p.patch == q.patch && (p.x == q.x && (p.y + 1 == q.y || q.y + 1 == p.y) ||
+    p.y == q.y && (p.x + 1 == q.x || q.x + 1 == p.x))
 
 structure Region where
   faces : Nat
@@ -757,20 +766,19 @@ structure Region where
 
 /-- The regions the closed curves cut the fine grid into, with their Euler
 characteristics and the cone points strictly inside them. `faceEdgesK` lists
-the edge keys of every face, `facesAtEdge` the faces of every edge key,
-`valence` the number of fine faces at every representative (the valence of a
-vertex of the quad graph) and `coarse` whether a representative is a vertex
-of the quad graph. -/
-def regionsOf (faceEdgesK : Array (Array (Nat × Nat))) (facesAtEdge : Std.HashMap (Nat × Nat) (List Nat))
-    (valence : Array Nat) (coarse : Array Bool) (curves : List (List Nat)) : List Region := Id.run do
-  let mut cut : Std.HashSet (Nat × Nat) := ∅
+the edge classes of every face and `faceCorners` its corners as representatives,
+`facesAtEdge` the faces of every edge class, `valence` the number of fine faces
+at every representative (the valence of a vertex of the quad graph) and `coarse`
+whether a representative is a vertex of the quad graph. A curve is its vertices
+with, at each, the class of the edge to the next. -/
+def regionsOf (faceEdgesK : Array (Array Nat)) (faceCorners : Array (Array Nat))
+    (facesAtEdge : Std.HashMap Nat (List Nat))
+    (valence : Array Nat) (coarse : Array Bool) (curves : List (List (Nat × Nat))) : List Region := Id.run do
+  let mut cut : Std.HashSet Nat := ∅
   let mut onCurve : Std.HashSet Nat := ∅
   for curve in curves do
-    let arr := curve.toArray
-    for i in [0:arr.size] do
-      let u := arr[i]!
-      let v := arr[(i + 1) % arr.size]!
-      cut := cut.insert (edgeKey u v)
+    for (u, e) in curve do
+      cut := cut.insert e
       onCurve := onCurve.insert u
   let mut par := Array.range faceEdgesK.size
   for (e, fs) in facesAtEdge.toList do
@@ -782,7 +790,7 @@ def regionsOf (faceEdgesK : Array (Array (Nat × Nat))) (facesAtEdge : Std.HashM
   -- Per component: faces, vertices, edges, cones.
   let mut facesIn : Std.HashMap Nat Nat := ∅
   let mut verts : Std.HashMap Nat (Std.HashSet Nat) := ∅
-  let mut edges : Std.HashMap Nat (Std.HashSet (Nat × Nat)) := ∅
+  let mut edges : Std.HashMap Nat (Std.HashSet Nat) := ∅
   for f in [0:faceEdgesK.size] do
     let r := rep[f]!
     facesIn := facesIn.insert r (facesIn.getD r 0 + 1)
@@ -790,8 +798,8 @@ def regionsOf (faceEdgesK : Array (Array (Nat × Nat))) (facesAtEdge : Std.HashM
     let mut es := edges.getD r ∅
     for e in faceEdgesK[f]! do
       es := es.insert e
-      vs := vs.insert e.1
-      vs := vs.insert e.2
+    for v in faceCorners[f]! do
+      vs := vs.insert v
     verts := verts.insert r vs
     edges := edges.insert r es
   let mut out : List Region := []
@@ -829,26 +837,52 @@ def checkGrid (whole : Array ℚ) (lengthShift : Array (Nat × ℚ × ℚ)) : IO
   if missing > 0 then
     IO.println s!"  grid: FAILED, {missing} gluing pairs name points off the grid"
     return false
-  -- The faces, their edges as representatives, the valences.
+  -- The edges as classes of midpoints: the midpoints of the fine edges of the
+  -- faces, those of consecutive gluing pairs of an arc being one edge.
   let fcs := (T.faces patches ℓ).toArray
-  let mut faceEdgesK : Array (Array (Nat × Nat)) := Array.replicate fcs.size #[]
-  let mut facesAtEdge : Std.HashMap (Nat × Nat) (List Nat) := ∅
+  let mut midIndex : Std.HashMap (Point (Fin P)) Nat := ∅
+  for face in fcs do
+    for (p, q) in faceEdges face do
+      let m := mid p q
+      if !midIndex.contains m then midIndex := midIndex.insert m midIndex.size
+  let mut midPar := Array.range midIndex.size
+  let mut missingEdges := 0
+  for a in allArcs do
+    for t in [0:2 * ℓ a] do
+      let (p₀, q₀) := T.glued ℓ a t
+      let (p₁, q₁) := T.glued ℓ a (t + 1)
+      match midIndex[mid p₀ p₁]?, midIndex[mid q₀ q₁]? with
+      | some i, some j => midPar := unite midPar i j
+      | _, _ => missingEdges := missingEdges + 1
+  let midRep := representatives midPar
+  if missingEdges > 0 then
+    IO.println s!"  grid: FAILED, {missingEdges} gluing pairs of edges name edges off the grid"
+    return false
+  -- The class of the fine edge from `p` to `q`, `none` unless they are adjacent in a rectangle.
+  let edgeOf (p q : Point (Fin P)) : Option Nat :=
+    if adjacent p q then (midIndex[mid p q]?).map fun i => midRep[i]! else none
+  -- The faces, their edges as classes and corners as representatives, the valences.
+  let mut faceEdgesK : Array (Array Nat) := Array.replicate fcs.size #[]
+  let mut faceCorners : Array (Array Nat) := Array.replicate fcs.size #[]
+  let mut facesAtEdge : Std.HashMap Nat (List Nat) := ∅
   let mut valence := Array.replicate pts.size 0
-  let mut allEdges : Std.HashSet (Nat × Nat) := ∅
+  let mut allEdges : Std.HashSet Nat := ∅
   let mut vertices : Std.HashSet Nat := ∅
   let mut f := 0
   for face in fcs do
-    let mut ks : Array (Nat × Nat) := #[]
+    let mut ks : Array Nat := #[]
+    let mut cs : Array Nat := #[]
     for (p, q) in faceEdges face do
       let u := rep[index.getD p 0]!
-      let v := rep[index.getD q 0]!
-      let k := edgeKey u v
+      let k := (edgeOf p q).getD 0
       ks := ks.push k
+      cs := cs.push u
       facesAtEdge := facesAtEdge.insert k (f :: facesAtEdge.getD k [])
       allEdges := allEdges.insert k
       vertices := vertices.insert u
       valence := valence.set! u (valence[u]! + 1)
     faceEdgesK := faceEdgesK.set! f ks
+    faceCorners := faceCorners.set! f cs
     f := f + 1
   let coarse : Array Bool := Id.run do
     let mut c := Array.replicate pts.size false
@@ -911,9 +945,13 @@ def checkGrid (whole : Array ℚ) (lengthShift : Array (Nat × ℚ × ℚ)) : IO
   parity.show "parity α ≡ shift (mod 2) at the whole lengths, bipartite instances"
   if !colouring then
     IO.println s!"    quad graph not bipartite, length - shift odd for {odd} of {lengthShift.size} turns (a report)"
-  -- One round from every station, each curve once, as representatives.
+  -- One round from every station, each curve once: its vertices as representatives,
+  -- each with the class of the edge to the next point. Where the curve leaves a
+  -- rectangle (`round` drops the point on the side, glued to the next point), that
+  -- edge is from the point to the side, one more step in the direction of the line.
   let mut seen : Std.HashSet (List Nat) := ∅
-  let mut curves : List (List Nat) := []
+  let mut curves : List (List (Nat × Nat)) := []
+  let mut offGrid := 0
   let mut rounds := 0
   let mut stopped := 0
   for Pi in patches do
@@ -925,26 +963,44 @@ def checkGrid (whole : Array ℚ) (lengthShift : Array (Nat × ℚ × ℚ)) : IO
           | none => stopped := stopped + 1
           | some pointsOf =>
             rounds := rounds + 1
-            let reps := pointsOf.dropLast.map fun p => rep[index.getD p 0]!
-            let key := (reps.toArray.qsort (· < ·)).toList
+            have : Inhabited (Point (Fin P)) := ⟨T.sidePoint ℓ σ 0⟩
+            let arr := pointsOf.dropLast.toArray
+            let m := arr.size
+            let mut cyc : Array (Nat × Nat) := #[]
+            let mut bad := 0
+            for i in [0:m] do
+              let p := arr[i]!
+              let q := arr[(i + 1) % m]!
+              let o := arr[(i + m - 1) % m]!
+              let u := rep[index.getD p 0]!
+              let e : Option Nat := match edgeOf p q with
+                | some e => some e
+                | none =>
+                  if adjacent o p then
+                    let s : Point (Fin P) := ⟨p.patch, p.x + p.x - o.x, p.y + p.y - o.y⟩
+                    match index[s]?, index[q]? with
+                    | some is, some iq => if rep[is]! == rep[iq]! then edgeOf p s else none
+                    | _, _ => none
+                  else none
+              match e with
+              | some e => cyc := cyc.push (u, e)
+              | none => bad := bad + 1; cyc := cyc.push (u, midRep.size + bad)
+            offGrid := offGrid + bad
+            let key := ((cyc.map (·.1)).qsort (· < ·)).toList
             if !seen.contains key then
               seen := seen.insert key
-              curves := reps :: curves
+              curves := cyc.toList :: curves
   IO.println s!"  rounds of the walk from every station: {rounds}, {curves.length} distinct curves, {stopped} stopped"
   -- Lemma "Gauss–Bonnet for turns" on the regions of every simple curve.
   let mut gb : Count := {}
   let mut regionsTotal := 0
   let mut simple := 0
-  let mut offGrid := 0
   let mut byRegions : Std.HashMap Nat Nat := ∅
   for c in curves do
-    let arr := c.toArray
-    for i in [0:arr.size] do
-      if !allEdges.contains (edgeKey arr[i]! arr[(i + 1) % arr.size]!) then offGrid := offGrid + 1
-    let distinct := (Std.HashSet.ofList c).size
-    if distinct != arr.size then continue
+    let distinct := (Std.HashSet.ofList (c.map (·.1))).size
+    if distinct != c.length then continue
     simple := simple + 1
-    let rs := regionsOf faceEdgesK facesAtEdge valence coarse [c]
+    let rs := regionsOf faceEdgesK faceCorners facesAtEdge valence coarse [c]
     byRegions := byRegions.insert rs.length (byRegions.getD rs.length 0 + 1)
     for r in rs do
       regionsTotal := regionsTotal + 1

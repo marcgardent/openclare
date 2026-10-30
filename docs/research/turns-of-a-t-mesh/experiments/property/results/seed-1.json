@@ -1071,8 +1071,16 @@
    "regions_of_simple_curves": 2927,
    "gauss_bonnet_regions_passed": 2927,
    "gauss_bonnet_regions": 2927,
-   "seconds_compiled": 186.6,
-   "program": "lake build check; Check/check_exports.py (the binary), definitions of Grid.lean"
+   "seconds_compiled": 84.6,
+   "bipartite_spheres": 35,
+   "bipartite_tori": 7,
+   "not_bipartite_tori": 8,
+   "parity_turns_passed": 4388,
+   "parity_turns": 4388,
+   "odd_turns_where_not_bipartite": 345,
+   "turns_where_not_bipartite": 510,
+   "edges": "classes of midpoints (GridEuler.lean), not pairs of vertices",
+   "program": "lake build check; Check/check_exports.py (the binary), definitions of Grid.lean, Bipartite.lean evaluated"
   }
  },
  "made_with": "python3 docs/research/turns-of-a-t-mesh/experiments/property/generate.py --count 50 --seed 1"

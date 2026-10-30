@@ -77,11 +77,45 @@ class Grid:
                     v = (p, x0 + (t + 1) * d[0], y0 + (t + 1) * d[1])
                     self.half_of_edge[(u, v)] = half
                     self.half_of_edge[(v, u)] = half
-        self.edges = set()
+        # The edges, as classes of midpoints (GridEuler.lean): the midpoint of a
+        # fine edge in the coordinates doubled once more, the edges along an arc
+        # glued in pairs. Two fine edges may join the same two vertices (the
+        # square torus of one patch at length 1: 8 edges on 4 pairs), so the
+        # pairs of vertices undercount; `regions` and `coarse_edges` key edges
+        # by pairs and need `parallel == 0`.
+        mid_index = {}
+        for p, (w, h) in enumerate(self.size):
+            for x in range(2 * w + 1):
+                for y in range(2 * h + 1):
+                    if x < 2 * w:
+                        mid_index[(p, 2 * x + 1, 2 * y)] = len(mid_index)
+                    if y < 2 * h:
+                        mid_index[(p, 2 * x, 2 * y + 1)] = len(mid_index)
+        mid_parent = list(range(len(mid_index)))
+
+        def find_mid(i):
+            while mid_parent[i] != i:
+                mid_parent[i] = mid_parent[mid_parent[i]]
+                i = mid_parent[i]
+            return i
+
+        for a, arc in enumerate(tmesh.arcs):
+            length = 2 * self.whole[a]
+            p, x0, y0, d0 = self.half_place[2 * a]
+            q, x1, y1, d1 = self.half_place[2 * a + 1]
+            for t in range(length):
+                u = mid_index[(p, 2 * x0 + (2 * t + 1) * d0[0], 2 * y0 + (2 * t + 1) * d0[1])]
+                v = mid_index[(q, 2 * x1 + (2 * (length - t) - 1) * d1[0], 2 * y1 + (2 * (length - t) - 1) * d1[1])]
+                ru, rv = find_mid(u), find_mid(v)
+                if ru != rv:
+                    mid_parent[max(ru, rv)] = min(ru, rv)
+        self.edges = len({find_mid(i) for i in range(len(mid_index))})
+        pairs = set()
         for face in self.faces:
             for i in range(4):
                 a, b = face[i], face[(i + 1) % 4]
-                self.edges.add((min(a, b), max(a, b)))
+                pairs.add((min(a, b), max(a, b)))
+        self.parallel = self.edges - len(pairs)
         # The nodes, as fine vertices, and the cone points.
         self.node_vertex = []
         for n in range(len(tmesh.nodes)):
@@ -109,7 +143,7 @@ class Grid:
         return a
 
     def euler(self):
-        return self.vertices - len(self.edges) + len(self.faces)
+        return self.vertices - self.edges + len(self.faces)
 
     def coarse_vertices(self):
         return {v for (p, x, y), v in self.vertex.items() if x % 2 == 0 and y % 2 == 0}
@@ -236,6 +270,7 @@ def regions(grid, curves):
     into: the components of the fine faces not crossing them, each with its
     Euler characteristic as a surface with boundary and the cone points
     strictly inside it."""
+    assert grid.parallel == 0, "regions key edges by their two vertices: two edges join one pair here"
     cut = set()
     for curve in curves:
         for i, a in enumerate(curve):

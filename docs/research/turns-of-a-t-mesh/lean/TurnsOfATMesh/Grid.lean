@@ -12,9 +12,11 @@ curve of one round of a walk. The vertices of the quad mesh are the classes of
 the equivalence the gluings generate (`Same`, `Vertex`); the program of
 `Check/Main.lean` computes them, the regions a curve cuts and their Euler
 characteristics from these lists, and checks the statements of the note on
-them. Theorems about these objects (that the Euler characteristic of the grid
-is that of the T-mesh, that a sphere's quad graph is bipartite) come later,
-on these definitions.
+them. Theorems on these definitions: `GridEuler.lean` (the Euler
+characteristic of the grid is `P − A + N`, independent of the lengths) and
+`Bipartite.lean` (the parity of a turn from a colouring of the quad graph).
+That a sphere's quad graph is bipartite is still a hypothesis, decided by the
+program on every export.
 
 Coordinates: in the frame `(u, v)` of a rectangle of width `w` (the length of
 its side `(P, 0, 0)`) and height `h` (of `(P, 1, 0)`), the fine point `(x, y)`

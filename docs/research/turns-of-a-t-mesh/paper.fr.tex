@@ -630,7 +630,7 @@ SymPy.
 Chaque tour d'une sphère fermée porte sa propre condition de parité, qui ne
 demande ni courbe simple ni holonomie.
 
-\begin{evidence}{core}{\lean{parity_of_turn_any_sign}, \lean{parity_of_turn}\,; testé~: 1\,450 strips des 35 sphères de 50 instances aléatoires\,; supposé~: une 2-coloration du graphe des quads portée par le développement du tour, sa longueur et son décalage formes linéaires entières}
+\begin{evidence}{core}{\lean{TMesh.parity_of_turn_of_colouring}, \lean{TMesh.parity_of_turn_tmesh_any_sign}, \lean{parity_of_turn}\,; testé~: \lean{TMesh.IsColouring} décidé sur les 35 sphères de 50 instances aléatoires, 4\,388 tours des 42 instances bipartites\,; supposé~: le graphe des quads biparti à toutes longueurs entières équilibrées strictement positives (une sphère), et une station demi-entière dans le couloir du tour}
 \begin{proposition}[Parité d'un tour sur une sphère]\label{prop:parity}
 Supposons la surface fermée de genre zéro et que le T-mesh admette des
 longueurs strictement positives qui équilibrent chaque patch (ses longueurs
@@ -665,7 +665,10 @@ strictement positives $p$, et la forme linéaire $\alpha_\gamma +
 différence de deux valeurs paires.
 \end{proof}
 
-La démonstration n'utilise que le caractère biparti du graphe des quads\,;
+Lean la vérifie sur le T-mesh combinatoire sans développement~: le sommet
+voisin de la station est suivi le long de la marche, et la coloration $i + j +
+\kappa_P$ du graphe des quads est la seule hypothèse. La démonstration
+n'utilise que le caractère biparti du graphe des quads\,;
 elle tombe en défaut en genre supérieur (une grille $3 \times 3$ sur un tore a
 des anneaux de trois quads) et avec des bords
 (théorème~\ref{thm:parity-any}). Sur une sphère fermée, elle donne aussitôt~:
@@ -2039,7 +2042,7 @@ la maximisation de $Q$ sur un polytope de longueurs réelles.
 
 Le dossier \texttt{lean} à côté de cette note est un projet
 Lean~4~\cite{demoura2021lean4} sur Mathlib~\cite{mathlib2020} (tous deux en
-\texttt{v4.35.0}). Ses $301$ déclarations de théorèmes, dont beaucoup de
+\texttt{v4.35.0}). Ses $384$ déclarations de théorèmes, dont beaucoup de
 petits lemmes, ne dépendent que des axiomes standard de Lean\,; ce nombre
 n'est pas un argument, et son \texttt{README.md} associe à chaque énoncé ses
 théorèmes Lean. Lean vérifie le cœur algébrique et combinatoire de chaque
@@ -2053,8 +2056,10 @@ deux paires de côtés opposés, chaque côté la liste de ses arcs, chaque arc 
 exactement deux côtés avec un signe pour le recollement. La matrice des
 équilibres $B$ et les décalages des tours en sont déduits, et sur lui la
 proposition~\ref{prop:linear}, le lemme~\ref{lem:handshake}, la
-proposition~\ref{prop:free}, la remarque~\ref{rem:definite} et le
-théorème~\ref{thm:forced} forment une seule chaîne vérifiée. Les autres
+proposition~\ref{prop:free}, la remarque~\ref{rem:definite}, le
+théorème~\ref{thm:forced} et, par le maillage de quads qu'il définit aux
+longueurs entières, la proposition~\ref{prop:parity} forment une seule
+chaîne vérifiée. Les autres
 énoncés gardent leur propre abstraction (un tour comme une liste de
 déplacements, une région comme des ensembles finis avec des comptes)\,; la
 surface et le champ de croix sous le T-mesh, son orientation et le lien entre
@@ -2079,9 +2084,12 @@ les réels~: les quatre ordres et orientations d'une dislocation et les
 chaînes droites (proposition~\ref{prop:dislocation}(i), (ii))\,; les
 escaliers\,; la positivité d'une forme à coefficients positifs ou nuls avec un
 arc maintenu. Aux longueurs entières~: la règle du damier\,; la
-proposition~\ref{prop:parity} pour des longueurs entières équilibrées de signe
-quelconque, étant donnés une 2-coloration aux longueurs strictement positives
-et la linéarité de $\alpha_\gamma$ et de $\shift_\gamma$\,; la seconde
+proposition~\ref{prop:parity} sur le T-mesh, pour des longueurs entières
+équilibrées de signe quelconque, étant donné que le graphe des quads est
+biparti aux longueurs strictement positives et qu'une station y suit le
+tour\,; la caractéristique d'Euler du maillage de quads aux longueurs
+entières, $P - A + N$ pour $P$ patchs, $A$ arcs et $N$ nœuds, indépendante
+des longueurs\,; la seconde
 démonstration de la remarque~\ref{rem:borders}. La formule de Fox--Burgers
 sur le groupe libre avec les enroulements tordus et l'insertion de la
 relation, le cas d'un tour simple, la proposition~\ref{prop:commutator} et le

@@ -60,8 +60,14 @@ the walked, real and whole lengths, from every half-integer station; on spheres 
 the turns, their holonomy and the Fox–Burgers sum; and, from the definitions of `Grid.lean`
 (DT-134), the quad mesh at the whole lengths, its Euler characteristic, the valences of its
 vertices, one round of the walk from every station as a closed curve of the fine grid, and on
-every simple curve the regions it cuts with Lemma "Gauss–Bonnet for turns" on each. The Python of
-`grid.py` is then a second, independent computation of the same objects. `lake build check`
+every simple curve the regions it cuts with Lemma "Gauss–Bonnet for turns" on each; the
+2-colouring of the quad graph (the constants `κ` found by propagation, `IsColouring` decided; a
+sphere must be bipartite) and, where it holds, `Turn.length ≡ Turn.shift (mod 2)` for every
+turn with a half-integer station in its corridor (DT-173). The Python of `grid.py` is then a
+second, independent computation of the same objects. Both count the edges of the grid as
+classes of midpoints, not as pairs of vertices: `GridEuler.lean` found that two edges may join
+one pair at small lengths (the square torus of one patch at length 1), which both programs had
+missed; `grid.py` asserts there is none where it still keys the regions by pairs. `lake build check`
 compiles the program; `check_exports.py` runs the binary when it is there.
 
 ## Seed 1, 50 instances, the Lean oracle (2026-10-29)
@@ -72,6 +78,13 @@ passed, 0 failed (`results/seed-1.json`, the summary and the counts of the check
 half-integer stations walked. On the spheres the Fox–Burgers formula held on every turn and
 the recursion of the words found its convention (`G_f` the jump towards the root, children
 reversed, rotation first) on all 35.
+
+On the quad meshes at the whole lengths (DT-134, DT-173; 2026-10-30, the compiled program): χ = 2
+on the 35 spheres and 0 on the 15 tori, equal to the Euler characteristic of the mesh the
+instances were made from; all 35 spheres bipartite and 7 of the 15 tori; on the 42 bipartite
+instances `length − shift` even for 4,388 of 4,388 turns, on the 8 others odd for 345 of 510;
+19,584 rounds of the walk, 2,927 regions of simple curves all with ∑ (4 − k) = 4χ, no curve
+edge off the grid.
 
 ## The property tests (`properties.py`, milestone 2)
 
