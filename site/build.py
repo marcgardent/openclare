@@ -25,6 +25,7 @@ glossary to its entry, the definition in the link's title.
 """
 
 import argparse
+import hashlib
 import html
 import json
 import os
@@ -125,6 +126,7 @@ WORDS = {
             "Built from the repository by <code>site/build.py</code>"
             ' (<a href="{repository}">GitHub</a>).</p>'
         ),
+        "sitemap": "Site map",
         "placeholder_theory": (
             "# Theory\n\nThis page, the theory of openclare in plain words, is being written. Meanwhile, the "
             "[glossary](../../docs/GLOSSARY.md) explains the words with pictures, and the "
@@ -166,6 +168,7 @@ WORDS = {
             "Construit depuis le dépôt par <code>site/build.py</code>"
             ' (<a href="{repository}">GitHub</a>).</p>'
         ),
+        "sitemap": "Plan du site",
         "placeholder_theory": (
             "# Théorie\n\nCette page, la théorie d'openclare en mots simples, est en cours d'écriture. En attendant, "
             "le [glossaire](../../docs/GLOSSARY.fr.md) explique les mots en images, et la "
@@ -185,6 +188,11 @@ NAVIGATION_TARGETS = {}
 ARTICLES = (("ecosystem", ("retopology", "engines", "platforms")), ("insight", ("theory", "results", "research")))
 CATEGORY_OF = {key: category for category, keys in ARTICLES for key in keys}
 # The pages each item of the navigation stands for, beside its own.
+# The site map of the footer: a column per group, the articles by category.
+SITEMAP = (("openclare", ("index", "get", "articles", "glossary")),) + tuple(
+    (category, ("market",) * (category == "ecosystem") + keys) for category, keys in ARTICLES
+)
+
 SECTIONS = {"articles": ("models/", "market", "retopology", "engines", "platforms", "theory", "results", "research")}
 # The lists of the state of the market, in the order they are shown.
 MARKET = ("retopology", "engines", "platforms")
@@ -729,6 +737,10 @@ class Site:
             key=self.model_order,
         )
         self.pages = []  # (key, language, output path)
+        # A digest of the style and the viewer, so that a browser does not keep an old one.
+        self.version = hashlib.sha256(
+            b"".join((SITE / "assets" / name).read_bytes() for name in ("style.css", "viewer.js"))
+        ).hexdigest()[:10]
         self.warnings = []
         self.terms = {}
         for language in LANGUAGES:
@@ -947,10 +959,10 @@ class Site:
             "footer": words["footer"].format(
                 credits=f"{REPOSITORY}/blob/{REF}/CREDITS.md", repository=REPOSITORY
             ),
-            "repository_label": words["repository_label"],
-            "releases": words["releases"],
-            "issues": words["issues"],
-            "scripts": scripts.format(root=root),
+            "sitemap_label": words["sitemap"],
+            "sitemap": self.sitemap(language, here),
+            "version": self.version,
+            "scripts": scripts.format(root=root, version=self.version),
         }
         template = read(SITE / "template.html")
         output = re.sub(r"\{(\w+)\}", lambda m: values[m.group(1)], template)
@@ -958,6 +970,23 @@ class Site:
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_text(output, encoding="utf-8")
         self.pages.append((key, language, page))
+
+    def sitemap(self, language, here):
+        """The site map of the footer, with the links of the repository last."""
+        words = WORDS[language]
+        columns = []
+        for group, keys in SITEMAP:
+            title = group if group == "openclare" else words[group]
+            links = "".join(
+                f'<li><a href="{posixpath.relpath(self.page_path(k, language), here)}">{words["home" if k == "index" else k]}</a></li>' for k in keys
+            )
+            columns.append(f"<div><p>{title}</p><ul>{links}</ul></div>")
+        links = "".join(
+            f'<li><a href="{REPOSITORY}{path}">{label}</a></li>'
+            for path, label in (("", "GitHub"), ("/releases", words["releases"]), ("/issues", words["issues"]))
+        )
+        columns.append(f'<div><p>{words["repository_label"]}</p><ul>{links}</ul></div>')
+        return "".join(columns)
 
     @staticmethod
     def banner(key):
@@ -1941,7 +1970,7 @@ def night_sections(body):
 
 
 # The script of the 3D viewer, on the pages that hold one.
-VIEWER_SCRIPT = '<script type="module" src="{root}assets/viewer.js"></script>'
+VIEWER_SCRIPT = '<script type="module" src="{root}assets/viewer.js?v={version}"></script>'
 
 
 def page_intro(body, kicker, extra="", banner=""):
