@@ -14,6 +14,7 @@ one patch glues two corners of the face at that corner.
 module
 
 public import TurnsOfATMesh.GridEuler
+public import Mathlib.Data.Sym.Sym2
 
 @[expose] public section
 
@@ -154,6 +155,89 @@ theorem faceEdges_nodup {f : Face Patch} (hf : f ∈ T.faces patches ℓ) :
       simp only [Far, midpoint, width_double, height_double] at this hf; omega
 
 end Distinct
+
+/-! ### The ends of an edge -/
+
+/-- The lower end of the unit edge of the grid at `ℓ` whose midpoint, in the grid at
+`double ℓ`, is `m`. -/
+def lowEnd (m : Point Patch) : Point Patch := ⟨m.patch, m.x / 2, m.y / 2⟩
+
+/-- The upper end of the unit edge whose midpoint is `m`. -/
+def highEnd (m : Point Patch) : Point Patch := ⟨m.patch, (m.x + 1) / 2, (m.y + 1) / 2⟩
+
+/-- The ends of a face edge are the two ends of its midpoint. -/
+theorem ends_midpoint {f : Face Patch} {e : Point Patch × Point Patch} (he : e ∈ faceEdges f) :
+    s(e.1, e.2) = s(lowEnd (midpoint e), highEnd (midpoint e)) := by
+  obtain ⟨P, i, j⟩ := f
+  simp only [faceEdges, List.mem_cons, List.not_mem_nil, or_false] at he
+  rcases he with rfl | rfl | rfl | rfl <;>
+    simp only [lowEnd, highEnd, midpoint, Sym2.eq_iff, Point.mk.injEq, true_and] <;> omega
+
+theorem lowEnd_sidePoint (ℓ : α → ℕ) (σ : Side Patch) (u : ℕ) :
+    lowEnd (T.sidePoint (double ℓ) σ u) = T.sidePoint ℓ σ (u / 2) ∧
+      highEnd (T.sidePoint (double ℓ) σ u) = T.sidePoint ℓ σ ((u + 1) / 2) := by
+  obtain ⟨P, j, k⟩ := σ
+  fin_cases j <;> fin_cases k <;>
+    simp only [sidePoint, lowEnd, highEnd, width_double, height_double] <;>
+    simp <;> omega
+
+theorem lowEnd_arcPoint (ℓ : α → ℕ) (a : α) (i : Fin 2) (s : ℕ) :
+    lowEnd (T.arcPoint (double ℓ) a i s) = T.arcPoint ℓ a i (s / 2) ∧
+      highEnd (T.arcPoint (double ℓ) a i s) = T.arcPoint ℓ a i ((s + 1) / 2) := by
+  unfold arcPoint
+  rw [posNat_double, (lowEnd_sidePoint ℓ _ _).1, (lowEnd_sidePoint ℓ _ _).2]
+  constructor <;> congr 1 <;> omega
+
+variable (T) in
+/-- The two ends of the edge whose midpoint is `m`, as vertices of the quad mesh. -/
+def endsOf (allArcs : List α) (ℓ : α → ℕ) (m : Point Patch) : Sym2 (T.Vertex allArcs ℓ) :=
+  s(T.vertexOf allArcs ℓ (lowEnd m), T.vertexOf allArcs ℓ (highEnd m))
+
+/-- A function that agrees on the two points of every gluing pair agrees on a vertex. -/
+theorem eq_of_same {allArcs : List α} {ℓ : α → ℕ} {β : Type*} {g : Point Patch → β}
+    (hg : ∀ p q, (p, q) ∈ T.gluings allArcs ℓ → g p = g q) {p q : Point Patch}
+    (h : T.Same allArcs ℓ p q) : g p = g q := by
+  induction h with
+  | rel x y hxy => exact hg x y hxy
+  | refl => rfl
+  | symm x y _ ih => exact ih.symm
+  | trans x y z _ _ ih₁ ih₂ => exact ih₁.trans ih₂
+
+/-- The two ends of an edge across an arc are glued to the two ends on the other side. -/
+theorem endsOf_glued {allArcs : List α} (hA : ∀ a, a ∈ allArcs) (ℓ : α → ℕ) (a : α) {t : ℕ}
+    (ht : t ≤ 2 * double ℓ a) :
+    T.endsOf allArcs ℓ (T.arcPoint (double ℓ) a 0 t) =
+      T.endsOf allArcs ℓ (T.arcPoint (double ℓ) a 1 (T.flip (double ℓ) a t)) := by
+  simp only [double] at ht
+  have g : ∀ u, u ≤ 2 * ℓ a →
+      T.vertexOf allArcs ℓ (T.arcPoint ℓ a 0 u) = T.vertexOf allArcs ℓ (T.arcPoint ℓ a 1 (T.flip ℓ a u)) := by
+    intro u hu
+    have := T.same_of_glued allArcs ℓ a (hA a) u hu
+    rw [glued_eq ℓ a hu] at this
+    exact vertexOf_eq_iff.mpr this
+  unfold endsOf
+  rw [(lowEnd_arcPoint ℓ a 0 t).1, (lowEnd_arcPoint ℓ a 0 t).2, (lowEnd_arcPoint ℓ a 1 _).1,
+    (lowEnd_arcPoint ℓ a 1 _).2, g (t / 2) (by omega), g ((t + 1) / 2) (by omega)]
+  unfold flip double
+  split_ifs
+  · rfl
+  · rw [Sym2.eq_swap]
+    congr 3 <;> omega
+
+/-- **An edge determines its two ends**: two face edges that are one edge of the quad
+mesh join the same two vertices. -/
+theorem ends_eq_of_edgeOf_eq {allArcs : List α} (hA : ∀ a, a ∈ allArcs) {ℓ : α → ℕ}
+    {f f' : Face Patch} {e e' : Point Patch × Point Patch} (he : e ∈ faceEdges f)
+    (he' : e' ∈ faceEdges f') (h : T.edgeOf allArcs ℓ e = T.edgeOf allArcs ℓ e') :
+    s(T.vertexOf allArcs ℓ e.1, T.vertexOf allArcs ℓ e.2) =
+      s(T.vertexOf allArcs ℓ e'.1, T.vertexOf allArcs ℓ e'.2) := by
+  have hmap : ∀ {f : Face Patch} {e : Point Patch × Point Patch}, e ∈ faceEdges f →
+      s(T.vertexOf allArcs ℓ e.1, T.vertexOf allArcs ℓ e.2) = T.endsOf allArcs ℓ (midpoint e) :=
+    fun he => by rw [endsOf, ← Sym2.map_mk, ← Sym2.map_mk, ends_midpoint he]
+  rw [hmap he, hmap he']
+  refine eq_of_same (fun p q hpq => ?_) (vertexOf_eq_iff.mp h)
+  obtain ⟨a, t, ht, rfl, rfl⟩ := mem_gluings hpq
+  exact endsOf_glued hA ℓ a ht
 
 end TMesh
 
