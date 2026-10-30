@@ -239,6 +239,159 @@ theorem ends_eq_of_edgeOf_eq {allArcs : List α} (hA : ∀ a, a ∈ allArcs) {�
   obtain ⟨a, t, ht, rfl, rfl⟩ := mem_gluings hpq
   exact endsOf_glued hA ℓ a ht
 
+/-! ### Every edge lies in exactly two slots -/
+
+/-- The edge in the slot `i` of a face. -/
+def faceEdge (f : Face Patch) (i : Fin 4) : Point Patch × Point Patch :=
+  (faceEdges f)[i.val]'(by simp [faceEdges])
+
+theorem faceEdge_mem (f : Face Patch) (i : Fin 4) : faceEdge f i ∈ faceEdges f :=
+  List.getElem_mem _
+
+instance (ℓ : α → ℕ) (p : Point Patch) : Decidable (T.IsInner ℓ p) := by
+  unfold IsInner; infer_instance
+
+variable (T) in
+/-- The slots `(f, i)` of the faces whose edge has the midpoint `m`. -/
+def slotsAt (patches : List Patch) (ℓ : α → ℕ) (m : Point Patch) : Finset (Face Patch × Fin 4) :=
+  ((T.faces patches ℓ).toFinset ×ˢ Finset.univ).filter fun s => midpoint (faceEdge s.1 s.2) = m
+
+/-- The two points of a gluing pair are one vertex, on either side. -/
+theorem same_partner {allArcs : List α} (hA : ∀ a, a ∈ allArcs) {ℓ : α → ℕ} {a : α} (i : Fin 2)
+    {s : ℕ} (hs : s ≤ 2 * ℓ a) :
+    T.Same allArcs ℓ (T.arcPoint ℓ a i s) (T.arcPoint ℓ a (i + 1) (T.flip ℓ a s)) := by
+  fin_cases i
+  · have := T.same_of_glued allArcs ℓ a (hA a) s hs
+    rwa [glued_eq ℓ a hs] at this
+  · have := T.same_of_glued allArcs ℓ a (hA a) _ (flip_le (T := T) hs)
+    rw [glued_eq ℓ a (flip_le hs), flip_flip hs] at this
+    exact T.same_symm _ _ this
+
+section Slots
+
+variable {patches : List Patch} (hP : ∀ P, P ∈ patches) {ℓ : α → ℕ}
+  (hwh : ∀ P, 0 < T.width ℓ P ∧ 0 < T.height ℓ P)
+include hP hwh
+
+/-- A midpoint inside a patch is in two slots, a midpoint on a side in one. -/
+theorem card_slotsAt {m : Point Patch} (hm : T.InGrid (double ℓ) m) (hodd : (m.x + m.y) % 2 = 1) :
+    (T.slotsAt patches ℓ m).card = if T.IsInner (double ℓ) m then 2 else 1 := by
+  obtain ⟨P, X, Y⟩ := m
+  have hw := hwh P
+  simp only [InGrid, width_double, height_double] at hm hodd
+  have hext : ∀ t : Finset (Face Patch × Fin 4), (∀ Q a b k, (⟨Q, a, b⟩, k) ∈ t ↔
+      (a < 2 * T.width ℓ Q ∧ b < 2 * T.height ℓ Q) ∧
+        midpoint (faceEdge ⟨Q, a, b⟩ k) = ⟨P, X, Y⟩) → T.slotsAt patches ℓ ⟨P, X, Y⟩ = t := by
+    intro t ht
+    ext ⟨⟨Q, a, b⟩, k⟩
+    rw [ht]
+    simp [slotsAt, mem_faces hP]
+  have if_side : ∀ {x y : ℕ}, ¬ (0 < x ∧ x < 2 * (2 * T.width ℓ P) ∧ 0 < y ∧ y < 2 * (2 * T.height ℓ P)) →
+      (if T.IsInner (double ℓ) ⟨P, x, y⟩ then 2 else 1) = 1 := fun h => by
+    simp only [IsInner, width_double, height_double]; simp [h]
+  have if_inner : ∀ {x y : ℕ}, (0 < x ∧ x < 2 * (2 * T.width ℓ P) ∧ 0 < y ∧ y < 2 * (2 * T.height ℓ P)) →
+      (if T.IsInner (double ℓ) ⟨P, x, y⟩ then 2 else 1) = 2 := fun h => by
+    simp only [IsInner, width_double, height_double]; simp [h]
+  rcases Nat.even_or_odd' X with ⟨i, rfl | rfl⟩ <;> rcases Nat.even_or_odd' Y with ⟨j, rfl | rfl⟩
+  · omega
+  · -- A vertical edge: slot 1 of the face on its left, slot 3 of the face on its right.
+    by_cases h0 : i = 0
+    · subst h0
+      rw [if_side (by omega), Finset.card_eq_one]
+      refine ⟨(⟨P, 0, j⟩, 3), hext _ fun Q a b k => ?_⟩
+      rcases eq_or_ne Q P with rfl | hQ <;> fin_cases k <;>
+        (simp [faceEdge, faceEdges, midpoint, *]; try omega)
+    by_cases h1 : i = 2 * T.width ℓ P
+    · rw [if_side (by omega), Finset.card_eq_one]
+      refine ⟨(⟨P, i - 1, j⟩, 1), hext _ fun Q a b k => ?_⟩
+      rcases eq_or_ne Q P with rfl | hQ <;> fin_cases k <;>
+        simp [faceEdge, faceEdges, midpoint, *] <;> omega
+    · rw [if_inner (by omega), Finset.card_eq_two]
+      refine ⟨(⟨P, i - 1, j⟩, 1), (⟨P, i, j⟩, 3), by simp, hext _ fun Q a b k => ?_⟩
+      rcases eq_or_ne Q P with rfl | hQ <;> fin_cases k <;>
+        simp [faceEdge, faceEdges, midpoint, *] <;> omega
+  · -- A horizontal edge: slot 0 of the face above it, slot 2 of the face below it.
+    by_cases h0 : j = 0
+    · subst h0
+      rw [if_side (by omega), Finset.card_eq_one]
+      refine ⟨(⟨P, i, 0⟩, 0), hext _ fun Q a b k => ?_⟩
+      rcases eq_or_ne Q P with rfl | hQ <;> fin_cases k <;>
+        (simp [faceEdge, faceEdges, midpoint, *]; try omega)
+    by_cases h1 : j = 2 * T.height ℓ P
+    · rw [if_side (by omega), Finset.card_eq_one]
+      refine ⟨(⟨P, i, j - 1⟩, 2), hext _ fun Q a b k => ?_⟩
+      rcases eq_or_ne Q P with rfl | hQ <;> fin_cases k <;>
+        simp [faceEdge, faceEdges, midpoint, *] <;> omega
+    · rw [if_inner (by omega), Finset.card_eq_two]
+      refine ⟨(⟨P, i, j⟩, 0), (⟨P, i, j - 1⟩, 2), by simp, hext _ fun Q a b k => ?_⟩
+      rcases eq_or_ne Q P with rfl | hQ <;> fin_cases k <;>
+        simp [faceEdge, faceEdges, midpoint, *] <;> omega
+  · omega
+
+end Slots
+
+open Classical in
+/-- **Every edge lies in exactly two slots of faces**: an edge inside a patch in the
+two faces on either side, an edge on a side in one face of each of the two patches
+the arc joins. -/
+theorem card_slots {patches : List Patch} {allArcs : List α} (hP : ∀ P, P ∈ patches)
+    (hA : ∀ a, a ∈ allArcs) {ℓ : α → ℕ} (hne : ∀ σ, T.arcs σ ≠ []) (hbal : T.Balanced ℓ)
+    (hwh : ∀ P, 0 < T.width ℓ P ∧ 0 < T.height ℓ P) {f₀ : Face Patch}
+    {e₀ : Point Patch × Point Patch} (hf₀ : f₀ ∈ T.faces patches ℓ) (he₀ : e₀ ∈ faceEdges f₀) :
+    (((T.faces patches ℓ).toFinset ×ˢ Finset.univ).filter fun s : Face Patch × Fin 4 =>
+      T.edgeOf allArcs ℓ (faceEdge s.1 s.2) = T.edgeOf allArcs ℓ e₀).card = 2 := by
+  have hbal₂ := balanced_double hbal
+  have hwh₂ : ∀ P, 0 < T.width (double ℓ) P ∧ 0 < T.height (double ℓ) P := fun P => by
+    rw [width_double, height_double]; have := hwh P; omega
+  set m₀ := midpoint e₀
+  have hm₀ : T.InGrid (double ℓ) m₀ ∧ (m₀.x + m₀.y) % 2 = 1 := by
+    have : m₀ ∈ midpoint '' {e | e ∈ (T.faces patches ℓ).flatMap faceEdges} :=
+      ⟨e₀, List.mem_flatMap.mpr ⟨f₀, hf₀, he₀⟩, rfl⟩
+    rwa [midpoint_edges hP hwh] at this
+  -- The slots of the edge are the slots of the midpoints of its class.
+  have hfilter : ∀ S : Point Patch → Prop, (∀ m, T.Same allArcs (double ℓ) m m₀ ↔ S m) →
+      (((T.faces patches ℓ).toFinset ×ˢ Finset.univ).filter fun s : Face Patch × Fin 4 =>
+        T.edgeOf allArcs ℓ (faceEdge s.1 s.2) = T.edgeOf allArcs ℓ e₀) =
+      ((T.faces patches ℓ).toFinset ×ˢ Finset.univ).filter fun s => S (midpoint (faceEdge s.1 s.2)) :=
+    fun S hS => Finset.filter_congr fun s _ => by rw [edgeOf, edgeOf, vertexOf_eq_iff, hS]
+  by_cases hi : T.IsInner (double ℓ) m₀
+  · rw [hfilter (· = m₀) fun m => ⟨fun h => same_of_inner hi (T.same_symm _ _ h),
+      fun h => h ▸ Relation.EqvGen.refl _⟩]
+    have hU : (((T.faces patches ℓ).toFinset ×ˢ Finset.univ).filter fun s : Face Patch × Fin 4 =>
+        midpoint (faceEdge s.1 s.2) = m₀) = T.slotsAt patches ℓ m₀ := by
+      ext x; simp [slotsAt]
+    have c := card_slotsAt hP hwh hm₀.1 hm₀.2
+    simp only [hi, ↓reduceIte] at c
+    rw [← hU] at c
+    convert c using 2; ext; simp only [Finset.mem_filter]
+  obtain ⟨a, i, s, hs, hm⟩ := exists_arcPoint hne hbal₂ hm₀.1 hi
+  have hs₁ : s % 2 = 1 := by have := hm₀.2; rwa [hm, arcPoint_parity] at this
+  have hs₂ : 0 < s ∧ s < 2 * double ℓ a := by omega
+  set m₁ := T.arcPoint (double ℓ) a (i + 1) (T.flip (double ℓ) a s)
+  have h01 : m₀ ≠ m₁ := fun h => by
+    have := (arcPoint_inj hbal₂ hwh₂ hs₂.1 hs₂.2 (flip_le hs) (hm.symm.trans h)).2.1
+    fin_cases i <;> simp at this
+  have hU : (((T.faces patches ℓ).toFinset ×ˢ Finset.univ).filter fun s : Face Patch × Fin 4 =>
+      midpoint (faceEdge s.1 s.2) = m₀ ∨ midpoint (faceEdge s.1 s.2) = m₁) =
+      T.slotsAt patches ℓ m₀ ∪ T.slotsAt patches ℓ m₁ := by
+    ext x; simp [slotsAt, and_or_left]
+  have hdisj : Disjoint (T.slotsAt patches ℓ m₀) (T.slotsAt patches ℓ m₁) :=
+    Finset.disjoint_left.mpr fun _ h₁ h₂ =>
+      h01 ((Finset.mem_filter.mp h₁).2.symm.trans (Finset.mem_filter.mp h₂).2)
+  have c := Finset.card_union_of_disjoint hdisj
+  rw [card_slotsAt hP hwh hm₀.1 hm₀.2, card_slotsAt hP hwh (m := m₁)
+    (arcPoint_inGrid hbal₂ _ _ (flip_le hs)) (by rw [arcPoint_parity, flip_parity _ _ hs, hs₁]),
+    ← hU] at c
+  have hi₁ : ¬ T.IsInner (double ℓ) m₁ := arcPoint_not_inner _ _ _ _
+  simp only [hi, hi₁, ↓reduceIte] at c
+  rw [hfilter (fun m => m = m₀ ∨ m = m₁) fun m => ⟨fun h => ?_, fun h => ?_⟩]
+  · convert c using 2; ext; simp only [Finset.mem_filter]
+  · rw [hm] at h ⊢
+    exact same_of_arcInner' hA hbal₂ hwh₂ hs₂.1 hs₂.2 (T.same_symm _ _ h)
+  · rcases h with rfl | rfl
+    · exact Relation.EqvGen.refl _
+    · rw [hm]; exact T.same_symm _ _ (same_partner hA i hs)
+
 end TMesh
 
 end TurnsOfATMesh
