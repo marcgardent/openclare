@@ -196,6 +196,46 @@ theorem development_apply_origin [Fintype α] (hT : T.Oriented) (ℓ : α → �
       ((evalForm (T.acrossForm σ) (fun a => (ℓ a : ℤ)) : ℤ) : GaussianInt) * K * hL -
       ((evalForm (T.acrossForm σ) (fun a => (ℓ a : ℤ)) : ℤ) : GaussianInt) * I1
 
+/-! ### The development of a turn -/
+
+namespace Turn
+
+variable {T}
+
+/-- The development of a turn keeps the directions: its linear part is `1`. -/
+theorem development_lin (γ : T.Turn) (ℓ : α → ℕ) : (γ.development ℓ).lin = 1 := by
+  have h := T.composeAll_crossMotions_inward ℓ γ.start γ.path
+  rw [γ.closes] at h
+  have hq := mul_conj_of_isQuarter (isQuarter_inward γ.start)
+  rw [development]
+  linear_combination conj (inward γ.start) * h - ((Motion.composeAll
+    (T.crossMotions ℓ γ.start γ.path)).lin - 1) * hq
+
+/-- The translation of the development of a turn: `-α_γ(ℓ) e₁ + shift_γ(ℓ) e₂`. -/
+theorem development_trans [Fintype α] (hT : T.Oriented) (γ : T.Turn) (ℓ : α → ℕ) :
+    (γ.development ℓ).trans =
+      -((evalForm γ.lengthForm (fun a => (ℓ a : ℤ)) : ℤ) : GaussianInt) * inward γ.start +
+        ((evalForm γ.shiftForm (fun a => (ℓ a : ℤ)) : ℤ) : GaussianInt) * acrossDir γ.start := by
+  have h := T.development_apply_origin hT ℓ γ.start γ.path γ.isPath
+  have hlin := γ.development_lin ℓ
+  rw [development] at hlin
+  rw [apply_eq, hlin, γ.closes] at h
+  rw [development, lengthForm, shiftForm, composite]
+  linear_combination h
+
+/-- **The development of a turn is a translation**: on an oriented T-mesh at whole
+lengths `ℓ`, the composite of the changes of chart along a turn is the translation
+by `-α_γ(ℓ) e₁ + shift_γ(ℓ) e₂`, `e₁ = inward`, `e₂ = acrossDir` of its first side. -/
+theorem development_eq [Fintype α] (hT : T.Oriented) (γ : T.Turn) (ℓ : α → ℕ) :
+    γ.development ℓ = Motion.translation
+      (-((evalForm γ.lengthForm (fun a => (ℓ a : ℤ)) : ℤ) : GaussianInt) * inward γ.start +
+        ((evalForm γ.shiftForm (fun a => (ℓ a : ℤ)) : ℤ) : GaussianInt) * acrossDir γ.start) := by
+  ext1
+  · exact γ.development_lin ℓ
+  · exact γ.development_trans hT ℓ
+
+end Turn
+
 end TMesh
 
 end TurnsOfATMesh
