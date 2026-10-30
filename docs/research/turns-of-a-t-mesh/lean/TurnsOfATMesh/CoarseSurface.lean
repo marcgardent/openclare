@@ -534,6 +534,46 @@ theorem quad_faceConnected (hℓ : ∀ a, 0 < ℓ a) (hc : T.Connected) (f g : T
 
 end Connected
 
+/-! ### The surface and its Euler characteristic -/
+
+/-- **The Euler characteristic of the cells** is `eulerQuad`: a face is its centre,
+alone in its class. -/
+theorem card_quadSurface (patches : List Patch) (allArcs : List α) (ℓ : α → ℕ) :
+    (Fintype.card (T.QuadV patches allArcs ℓ) : ℤ) - Fintype.card (T.QuadE patches allArcs ℓ) +
+      Fintype.card (T.QuadF patches ℓ) = T.eulerQuad patches allArcs ℓ := by
+  have hF : Fintype.card (T.QuadF patches ℓ) = T.numQuadFaces patches allArcs ℓ := by
+    rw [Fintype.card_eq_nat_card, Nat.card_coe_set_eq, numQuadFaces, Set.InjOn.ncard_image]
+    intro c hc c' _ h
+    exact (same_of_inner (isInner_centre hc) (vertexOf_eq_iff.mp h)).symm
+  rw [eulerQuad, numQuadVertices, numQuadEdges, hF, Fintype.card_eq_nat_card,
+    Fintype.card_eq_nat_card, Nat.card_coe_set_eq, Nat.card_coe_set_eq]
+
+variable (T) in
+/-- **The quad mesh of a T-mesh is a closed surface of quads**, at positive balanced
+whole lengths, every side holding an arc, the T-mesh connected. -/
+noncomputable def quadSurface {patches : List Patch} {allArcs : List α} (hP : ∀ P, P ∈ patches)
+    (hA : ∀ a, a ∈ allArcs) {ℓ : α → ℕ} (hℓ : ∀ a, 0 < ℓ a) (hne : ∀ σ, T.arcs σ ≠ [])
+    (hbal : T.Balanced ℓ) (hc : T.Connected) :
+    QuadSurface (T.QuadV patches allArcs ℓ) (T.QuadE patches allArcs ℓ) (T.QuadF patches ℓ) :=
+  have hwh : ∀ P, 0 < T.width ℓ P ∧ 0 < T.height ℓ P :=
+    fun P => ⟨sideLen_pos hℓ hne _, sideLen_pos hℓ hne _⟩
+  { ends := T.quadEnds
+    faceEdge := T.quadFaceEdge
+    faceCorner := T.quadFaceCorner
+    faceEdge_ends := quadFaceEdge_ends hA hne hbal hwh
+    two_slots := fun e => by convert quad_two_slots hP hA hne hbal hwh e
+    connected := quad_connected hP hA hne hbal hwh hc
+    faceConnected := quad_faceConnected hP hA hne hbal hwh hℓ hc }
+
+/-- **The quad graph is bipartite when `eulerQuad = 2`**: a colouring of the vertices
+of the quad mesh that changes along every edge. -/
+theorem quad_bipartite {patches : List Patch} {allArcs : List α} (hP : ∀ P, P ∈ patches)
+    (hA : ∀ a, a ∈ allArcs) {ℓ : α → ℕ} (hℓ : ∀ a, 0 < ℓ a) (hne : ∀ σ, T.arcs σ ≠ [])
+    (hbal : T.Balanced ℓ) (hc : T.Connected) (hχ : T.eulerQuad patches allArcs ℓ = 2) :
+    ∃ c : T.QuadV patches allArcs ℓ → ZMod 2,
+      ∀ e : T.QuadE patches allArcs ℓ, c (T.quadEnds e).1 ≠ c (T.quadEnds e).2 :=
+  (T.quadSurface hP hA hℓ hne hbal hc).bipartite_of_euler (by rw [card_quadSurface]; exact hχ)
+
 end TMesh
 
 end TurnsOfATMesh
