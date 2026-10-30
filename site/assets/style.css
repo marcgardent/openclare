@@ -479,7 +479,19 @@ pre .comment { color: var(--fog); }
 
 /* The banner of an article (scripts/article_banners.py), drawn in the theme's colours. */
 svg.banner { display: block; width: 100%; height: auto; aspect-ratio: 10 / 3; background: var(--surface); }
-.intro svg.banner { margin-top: 24px; max-width: 40rem; border: 1px solid var(--rule); }
+/* On an article's own page, a band across the page between the menu and the
+   title: the drawing centred, on the squared paper of the page's top. */
+.banner-band {
+  border-bottom: 1px solid var(--rule);
+  background-color: var(--surface);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: -1px -1px;
+}
+.banner-band svg.banner { max-width: 60rem; margin: 0 auto; background: none; }
+.banner-band svg.banner > g:first-child { display: none; }
 .article-cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));

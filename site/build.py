@@ -1956,7 +1956,8 @@ VIEWER_SCRIPT = '<script type="module" src="{root}assets/viewer.js?v={version}">
 
 def page_intro(body, kicker, extra="", banner=""):
     """The band at the top of a page: the kicker (or breadcrumb), the title
-    and subtitle taken out of the body, `extra`, and the banner of an article."""
+    and subtitle taken out of the body, and `extra`; above it, across the
+    page, the banner of an article."""
     head = ""
     match = re.search(r'<h1 id="[^"]*">(.*?)</h1>\n?(?:<p class="subtitle">.*?</p>\n?)?', body, re.S)
     if match:
@@ -1965,7 +1966,9 @@ def page_intro(body, kicker, extra="", banner=""):
         # A kicker that only repeats the title says nothing.
         if re.sub(r"<[^>]+>", "", kicker).strip().lower() == re.sub(r"<[^>]+>", "", match.group(1)).strip().lower():
             kicker = ""
-    intro = f'<section class="intro"><div class="wrap">\n{kicker}\n{head}\n{extra}\n{banner}\n</div></section>'
+    intro = f'<section class="intro"><div class="wrap">\n{kicker}\n{head}\n{extra}\n</div></section>'
+    if banner:
+        intro = f'<div class="banner-band">{banner}</div>\n' + intro
     return intro, body.strip("\n")
 
 
