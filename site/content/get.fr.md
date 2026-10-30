@@ -15,7 +15,7 @@ Un panneau nommé *openclare* apparaît dans l'éditeur Properties, sur l'onglet
 
 ### Ce qu'elle fait
 
-- **Combien de quads, et où.** Un nombre de quads, ou les tailles du plus grand et du plus petit. *Analyse* propose les tailles et dit tout de suite combien de quads elles font ; *Show Sizes* colore l'objet de la taille qu'auront ses quads.
+- **Combien de quads, et où.** Un nombre de quads, ou les tailles du plus grand et du plus petit. *Show Sizes* colore l'objet de la taille qu'auront ses quads.
 - **La densité.** *Adaptive Size* rend les quads plus petits là où la forme se courbe ; les parties fines (un doigt, une oreille) gardent les quads qui en font le tour. Une densité peinte en Weight Paint dit où ils sont plus petits, et *Density from Shape* écrit la densité de la forme elle-même en un groupe à repeindre.
 - **Les lignes d'arêtes.** Les arêtes vives, les arêtes marquées sharp et les frontières entre matériaux sont gardées comme lignes d'arêtes.
 - **Des courbes tracées sur le modèle.** *Draw Curve* et *Cut Volume*, dans la barre d'outils, tracent une courbe sur le modèle ou la boucle autour d'un membre. Une courbe *Guide* donne une ligne d'arêtes ; une courbe *Sharp* donne une ligne d'arêtes vives.
