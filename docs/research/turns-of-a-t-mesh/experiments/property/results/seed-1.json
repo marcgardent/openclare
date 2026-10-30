@@ -1100,6 +1100,23 @@
    "agree_with_develop_py": 1488,
    "with_a_word_of_develop_py": 1488,
    "program": "Check/Main.lean: dual spanning tree, forest of cuts, first-visit word, against Turn.development; the model is CutDisc.lean"
+  },
+  "border": {
+   "rounds": 19584,
+   "steps_start_at_the_points_of_the_round": 19584,
+   "border_holonomy_equals_development": 19584,
+   "rings": 17296,
+   "closing_segment_inside": 902,
+   "closing_segment_outside_nodes_of_first_side_regular": 1386,
+   "closing_segment_outside_irregular_node_on_first_side": 0,
+   "vertices_of_the_quad_graph": 21593,
+   "valence_around_equals_union_find": 21593,
+   "holonomy_around_is_rotation_4_minus_k_about_the_vertex": 21593,
+   "points_met_round_the_vertices": 86092,
+   "points_met_in_the_class_of_the_vertex": 86092,
+   "dual_tree_crossings_not_taking_an_edge_to_its_glued_points": 0,
+   "date": "2026-10-30",
+   "program": "Check/Main.lean checkBorder: roundSteps, borderHolonomy, valenceAround, holonomyAround, aroundStep of Border.lean evaluated; the dual trees of the regions carried by crossEdge; the theorems are borderHolonomy_round, holonomyAround_eq, aroundStep_same, roundSteps_round"
   }
  },
  "made_with": "python3 docs/research/turns-of-a-t-mesh/experiments/property/generate.py --count 50 --seed 1"
