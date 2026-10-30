@@ -19,6 +19,7 @@ __pycache__
 # The PDFs of the papers: built by `make paper`, and on GitHub by
 # .github/workflows/papers.yml, which the website serves.
 /docs/research/*/paper*.pdf
+/docs/research/*/progress.json
 # The bundle `make paper-arxiv` writes for arXiv.
 /docs/research/*/arxiv.tar.gz
 # What is not to be published: local challengers, their meshes and results

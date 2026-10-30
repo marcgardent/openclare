@@ -22,13 +22,16 @@ The progress of the paper. `--json PATH` writes, for the statements of
 paper.tex, one step per row of PROGRESS: its names in English and French, N
 out of M statements and their labels (`kind-k` for the k-th statement when it
 has no \\label), then whether the paper is a preprint (PREPRINT), the levels
-of the statements (`none` for one that claims nothing) and their total. The
-website reads it (site/build.py); paper.fr.tex must give the same.
+of the statements (`none` for one that claims nothing), their total, when it
+was written (UTC) and from which commit. paper.fr.tex must give the same.
+The papers workflow writes it beside paper.pdf, in the same artifact.
 """
 
 import json
 import re
+import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 HERE = Path(__file__).parent
@@ -140,6 +143,15 @@ def check(path, names):
     return errors, statements, levels
 
 
+def commit():
+    """The commit the papers are read from, or None outside git."""
+    try:
+        return subprocess.run(["git", "rev-parse", "HEAD"], cwd=HERE, capture_output=True,
+                              text=True, check=True).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return None
+
+
 def progress(statements):
     """The steps of the paper towards a preprint, as --json writes them."""
     steps = []
@@ -182,6 +194,8 @@ def main():
     print("evidence: " + " → ".join(f"{s['name_en']} {s['n']}/{s['m']}" for s in result["steps"])
           + f" → Preprint: {'yes' if result['preprint'] else 'no'}")
     if arguments:
+        result["generated"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        result["commit"] = commit()
         Path(arguments[1]).write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n")
     sys.exit(1 if failed else 0)
 
