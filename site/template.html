@@ -9,7 +9,7 @@
 <link rel="preload" href="{root}assets/fonts/jetbrains-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="{root}assets/fonts/source-serif-4-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="{root}assets/fonts.css">
-<link rel="stylesheet" href="{root}assets/style.css">
+<link rel="stylesheet" href="{root}assets/style.css?v={version}">
 <link rel="icon" href="{root}assets/icon.svg" type="image/svg+xml">
 <link rel="alternate" hreflang="{other_lang}" href="{other_href}">
 </head>
@@ -40,11 +40,9 @@
 <div class="footer-text">
 {footer}
 </div>
-<nav class="footer-nav" aria-label="{repository_label}">
-<a href="https://github.com/marcgardent/openclare">GitHub</a>
-<a href="https://github.com/marcgardent/openclare/releases">{releases}</a>
-<a href="https://github.com/marcgardent/openclare/issues">{issues}</a>
-</nav>
+</div>
+<div class="bar">
+<nav class="sitemap" aria-label="{sitemap_label}">{sitemap}</nav>
 </div>
 </footer>
 {scripts}
