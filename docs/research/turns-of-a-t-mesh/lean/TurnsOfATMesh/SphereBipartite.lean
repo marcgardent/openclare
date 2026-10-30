@@ -231,6 +231,30 @@ theorem total_eq_zero_of_bd1
   obtain ⟨x, rfl⟩ := this
   exact S.total_bd2 x
 
+/-! ### The colouring -/
+
+/-- A closed surface made of quads with Euler characteristic `2` has a bipartite
+1-skeleton: some colouring of the vertices differs at the two ends of every edge. -/
+theorem bipartite_of_euler
+    (hχ : (Fintype.card V : ℤ) - Fintype.card E + Fintype.card F = 2) :
+    ∃ c : V → ZMod 2, ∀ e, c (S.ends e).1 ≠ c (S.ends e).2 := by
+  rcases isEmpty_or_nonempty V with hV | ⟨⟨v₀⟩⟩
+  · exact ⟨fun _ => 0, fun e => isEmptyElim (S.ends e).1⟩
+  choose y hy using S.exists_bd1_eq v₀
+  refine ⟨fun v => total E (y v), fun e => ?_⟩
+  rcases hab : S.ends e with ⟨a, b⟩
+  intro hc
+  have hcyc : S.bd1 (y a + Pi.single e 1 + y b) = 0 := by
+    rw [map_add, map_add, hy, hy, bd1_single, S.endsVec_of_mk (a := a) (b := b) (by rw [hab])]
+    exact tri_sum _ _ _
+  have h := S.total_eq_zero_of_bd1 hχ hcyc
+  simp only [map_add] at h
+  simp only at hc
+  rw [hc] at h
+  have : total E (Pi.single e (1 : ZMod 2)) = 1 := by simp [total]
+  rw [this] at h
+  revert h; generalize total E (y b) = p; revert p; decide
+
 end QuadSurface
 
 end TurnsOfATMesh
