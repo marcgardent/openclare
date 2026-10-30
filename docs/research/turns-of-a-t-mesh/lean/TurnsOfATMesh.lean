@@ -28,3 +28,5 @@ public import TurnsOfATMesh.Grid
 public import TurnsOfATMesh.Bipartite
 public import TurnsOfATMesh.GridEuler
 public import TurnsOfATMesh.SphereBipartite
+public import TurnsOfATMesh.GridSurface
+public import TurnsOfATMesh.Coarse
