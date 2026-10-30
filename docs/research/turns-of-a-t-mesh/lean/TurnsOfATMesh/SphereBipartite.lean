@@ -163,6 +163,44 @@ theorem card_faces_le :
   have := S.finrank_ker_bd2_le
   omega
 
+/-! ### The 1-chains -/
+
+/-- A chain of edges from `v₀` to `v` has boundary `v₀ + v`. -/
+theorem exists_bd1_eq (v₀ v : V) : ∃ y, S.bd1 y = Pi.single v₀ 1 + Pi.single v 1 := by
+  induction S.connected v₀ v with
+  | refl => exact ⟨0, by rw [map_zero, add_self_vec]⟩
+  | @tail b c _ hbc ih =>
+    obtain ⟨y, hy⟩ := ih
+    obtain ⟨e, he⟩ := hbc
+    refine ⟨y + Pi.single e 1, ?_⟩
+    rw [map_add, hy, bd1_single, S.endsVec_of_mk he]
+    calc _ = Pi.single v₀ 1 + Pi.single c 1 + (Pi.single b (1 : ZMod 2) + Pi.single b 1) := by abel
+      _ = _ := by rw [add_self_vec, add_zero]
+
+/-- Every 0-chain with an even number of vertices is a boundary. -/
+theorem ker_total_le (v₀ : V) : LinearMap.ker (total V) ≤ LinearMap.range S.bd1 := by
+  intro z hz
+  have hz' : ∑ v, z v = 0 := hz
+  have hsum : z = ∑ v, z v • (Pi.single v 1 + Pi.single v₀ 1) := by
+    funext w
+    simp [Finset.sum_apply, Pi.single_apply, Finset.sum_add_distrib, hz']
+  rw [hsum]
+  refine Submodule.sum_mem _ fun v _ => Submodule.smul_mem _ _ ?_
+  obtain ⟨y, hy⟩ := S.exists_bd1_eq v₀ v
+  exact ⟨y, hy.trans (add_comm _ _)⟩
+
+/-- `∂₁` has rank at least `V − 1`. -/
+theorem card_vertices_le :
+    Fintype.card V ≤ Module.finrank (ZMod 2) (LinearMap.range S.bd1) + 1 := by
+  rcases isEmpty_or_nonempty V with hV | ⟨⟨v₀⟩⟩
+  · simp
+  have h := LinearMap.finrank_range_add_finrank_ker (total V)
+  rw [Module.finrank_fintype_fun_eq_card] at h
+  have h1 : Module.finrank (ZMod 2) (LinearMap.range (total V)) ≤ 1 :=
+    (Submodule.finrank_le _).trans (by simp)
+  have h2 := Submodule.finrank_mono (S.ker_total_le v₀)
+  omega
+
 end QuadSurface
 
 end TurnsOfATMesh
