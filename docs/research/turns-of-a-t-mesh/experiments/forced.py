@@ -12,8 +12,9 @@ three sets P, each inside the one before:
    set X meeting them (an integer program); done when H minus X closes.
 2. `cap`: also the engine's cap on the mean deviation from the target,
    mean |ℓ - t| ≤ D, in real lengths. The same loop, stopped after
-   --budget seconds: then the least hitting set of the cores found is a
-   lower bound and the best closable complement found an upper bound.
+   --budget seconds, checked after each program: then the least hitting
+   set of the cores found is a lower bound and the best closable complement
+   found an upper bound.
 3. `size`: also whole lengths and the engine's window of sizes, |Q(ℓ) -
    wanted| ≤ allowed, Q the number of quads. Lower bound: the one of `cap`
    and, with --whole-lower, the implicit hitting sets in whole lengths
@@ -39,7 +40,8 @@ those of its engine (0.474, 10,590, 211): --cap, --wanted, --allowed set them.
 Seconds a family for `bounds` (45 at most on the drafts' old export); up to
 --budget for `cap` and several times --seconds for `size`; --jobs runs that
 many families at a time, in processes of their own. Writes
-results/forced.json, and the whole lengths found under --out.
+results/forced.json again as each family ends ("complete" false until the
+last), and the whole lengths found under --out.
 """
 
 import argparse
@@ -220,10 +222,15 @@ class Family:
     def closable(self, Y, cap):
         return self.elastic(Y, cap)[0] <= 1e-7
 
-    def core(self, Y, cap):
+    def core(self, Y, cap, deadline=None):
+        """A set of Y that cannot close: the support of the duals, then the
+        deletion filter. Past the deadline the filter stops; what is left
+        still cannot close (the duals stay feasible), only it is not least."""
         _, duals = self.elastic(Y, cap)
         core = [Y[i] for i in range(len(Y)) if abs(duals[i]) > 1e-9]
         for k in list(core):
+            if deadline is not None and time.monotonic() > deadline:
+                break
             trial = [j for j in core if j != k]
             if not self.closable(trial, cap):
                 core = trial
@@ -231,34 +238,59 @@ class Family:
 
     def hitting_sets(self, cap, budget=None, log=say):
         """τ by implicit hitting sets: (lower, upper, a least set X, cores,
-        number of disjoint cores)."""
+        number of disjoint cores). With a budget, the time is checked after
+        each program, in every loop: past it, the least hitting set of the
+        cores found is the lower bound and the best closable complement
+        found the upper bound."""
         clock = time.monotonic()
+        deadline = None if budget is None else clock + budget
         m = self.m
         cores, pool = [], list(range(m))
-        while not self.closable(pool, cap):
-            c = self.core(pool, cap)
-            cores.append(c)
-            pool = [k for k in pool if k not in c]
-        disjoint = len(cores)
-        upper, best = m, list(range(m))
-        while True:
+        upper, best, disjoint = m, list(range(m)), None
+        shown = clock
+
+        def late():
+            return deadline is not None and time.monotonic() > deadline
+
+        def add(core):
+            nonlocal shown
+            cores.append(core)
+            if time.monotonic() - shown > 60:
+                shown = time.monotonic()
+                log(f"   {len(cores)} cores ({shown - clock:.0f} s)")
+
+        try:
+            while not self.closable(pool, cap):
+                add(self.core(pool, cap, deadline))
+                pool = [k for k in pool if k not in cores[-1]]
+                if late():
+                    raise TimeoutError
+            disjoint = len(cores)
             while True:
-                X = greedy(m, cores)
+                while True:
+                    X = greedy(m, cores)
+                    rest = [k for k in range(m) if k not in X]
+                    if self.closable(rest, cap):
+                        break
+                    add(self.core(rest, cap, deadline))
+                    if late():
+                        raise TimeoutError
+                if len(X) < upper:
+                    upper, best = len(X), X
+                X = least_hitting_set(m, cores)
                 rest = [k for k in range(m) if k not in X]
+                log(f"   {len(cores)} cores: least hitting set {len(X)}, closable found {upper} "
+                    f"({time.monotonic() - clock:.0f} s)")
                 if self.closable(rest, cap):
-                    break
-                cores.append(self.core(rest, cap))
-            if len(X) < upper:
-                upper, best = len(X), X
+                    return len(X), len(X), X, cores, disjoint
+                add(self.core(rest, cap, deadline))
+                if late():
+                    raise TimeoutError
+        except TimeoutError:
             X = least_hitting_set(m, cores)
-            rest = [k for k in range(m) if k not in X]
-            log(f"   {len(cores)} cores: least hitting set {len(X)}, closable found {upper} "
+            log(f"   out of time: {len(cores)} cores, least hitting set {len(X)}, closable found {upper} "
                 f"({time.monotonic() - clock:.0f} s)")
-            if self.closable(rest, cap):
-                return len(X), len(X), X, cores, disjoint
-            cores.append(self.core(rest, cap))
-            if budget is not None and time.monotonic() - clock > budget:
-                return len(X), upper, best, cores, disjoint
+            return len(X), upper, best, cores, len(cores) if disjoint is None else disjoint
 
 
 def least_hitting_set(m, cores, seconds=600):
@@ -444,20 +476,27 @@ def main():
             jobs.append((way.path, "held", cap, wanted, allowed, steps, arguments))
         if "strips" in families and way.number in arguments.strips_ways and way.helices is not None:
             jobs.append((way.path, "strips", cap, wanted, allowed, steps, arguments))
-    rows = tmesh.parallel(family_job, jobs, arguments.jobs)
-    summary = {
-        "experiment": "turns every quantization in P leaves shifted (Table tab:forced)",
-        **tmesh.record(arguments, folder, ways, started, clock, cap=cap, wanted=wanted, allowed=allowed,
-                       sound=arguments.sound, steps=sorted(steps), seconds_per_program=arguments.seconds,
-                       budget_per_loop=arguments.budget, margin=arguments.margin),
-        "table": [{"way": row["way"], "family": row["family"], "turns": row["turns"],
-                   "bounds": row.get("bounds", {}).get("tau"),
-                   "bounds_cap": [row["cap"]["lower"], row["cap"]["upper"]] if "cap" in row else None,
-                   "cap_size_whole": [row["size"]["lower"], row["size"]["upper"]] if "size" in row else None,
-                   "engine_left_shifted": row["engine_left_shifted"]} for row in rows],
-        "per_family": rows,
-    }
-    tmesh.write(arguments.summary, summary)
+
+    def summary(rows, complete):
+        return {
+            "experiment": "turns every quantization in P leaves shifted (Table tab:forced)",
+            "complete": complete,
+            **tmesh.record(arguments, folder, ways, started, clock, cap=cap, wanted=wanted, allowed=allowed,
+                           sound=arguments.sound, steps=sorted(steps), seconds_per_program=arguments.seconds,
+                           budget_per_loop=arguments.budget, margin=arguments.margin),
+            "table": [{"way": row["way"], "family": row["family"], "turns": row["turns"],
+                       "bounds": row.get("bounds", {}).get("tau"),
+                       "bounds_cap": [row["cap"]["lower"], row["cap"]["upper"]] if "cap" in row else None,
+                       "cap_size_whole": [row["size"]["lower"], row["size"]["upper"]] if "size" in row else None,
+                       "engine_left_shifted": row["engine_left_shifted"]} for row in rows],
+            "per_family": rows,
+        }
+
+    rows = [None] * len(jobs)
+    for index, row in tmesh.as_done(family_job, jobs, arguments.jobs):
+        rows[index] = row
+        done = [row for row in rows if row is not None]
+        tmesh.write(arguments.summary, summary(done, len(done) == len(jobs)))
 
 
 if __name__ == "__main__":
