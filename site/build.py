@@ -102,6 +102,9 @@ WORDS = {
         "research": "Research",
         "get": "Get it",
         "market": "State of the market",
+        "articles": "Articles",
+        "ecosystem": "Blender ecosystem",
+        "insight": "In depth",
         "retopology": "Retopology Tools 2026",
         "engines": "Retopology Engines 2026",
         "platforms": "Distribution platforms 2026",
@@ -140,6 +143,9 @@ WORDS = {
         "research": "Recherche",
         "get": "L'obtenir",
         "market": "État du marché",
+        "articles": "Articles",
+        "ecosystem": "Écosystème Blender",
+        "insight": "En profondeur",
         "retopology": "Outils de retopologie 2026",
         "engines": "Moteurs de retopologie 2026",
         "platforms": "Plateformes de distribution 2026",
@@ -169,9 +175,17 @@ WORDS = {
 }
 
 # The logo leads home; the navigation lists the other pages.
-NAVIGATION = ("theory", "results", "market", "glossary", "research", "get")
+# The menu: the home page is for the artist (the logo), the articles go
+# deeper, the glossary gives the words. "Get it" is a button beside it.
+NAVIGATION = ("articles", "glossary")
+# A menu item with no page of its own leads to this one.
+NAVIGATION_TARGETS = {}
+# The articles, by category, as tiles on the articles page; each has a banner,
+# site/assets/articles/<key>.svg (scripts/article_banners.py).
+ARTICLES = (("ecosystem", ("retopology", "engines", "platforms")), ("insight", ("theory", "results", "research")))
+CATEGORY_OF = {key: category for category, keys in ARTICLES for key in keys}
 # The pages each item of the navigation stands for, beside its own.
-SECTIONS = {"results": ("models/",), "market": ("retopology", "engines", "platforms")}
+SECTIONS = {"articles": ("models/", "market", "retopology", "engines", "platforms", "theory", "results", "research")}
 # The lists of the state of the market, in the order they are shown.
 MARKET = ("retopology", "engines", "platforms")
 
@@ -730,6 +744,7 @@ class Site:
                 + ", ".join(sorted(set(english) ^ set(french)) or ["(same entries, other order)"])
             )
         self.linked = {}  # output path -> anchors of the glossary linked on it
+        self.meta = {}  # (key, language) -> title and description, for the articles page
 
     def model_order(self, name):
         order = list(GROUPS)
@@ -864,10 +879,13 @@ class Site:
         other = "fr" if language == "en" else "en"
         nav = []
         for item in NAVIGATION:
-            target = posixpath.relpath(self.page_path(item, language), here)
+            target = posixpath.relpath(self.page_path(NAVIGATION_TARGETS.get(item, item), language), here)
             current = ' aria-current="page"' if item == key or key.split("/")[0] in SECTIONS.get(item, ()) or any(key.startswith(p) for p in SECTIONS.get(item, ()) if p.endswith("/")) else ""
             nav.append(f'<li><a href="{target}"{current}>{words[item]}</a></li>')
         nav.append(f'<li><a href="{REPOSITORY}" rel="noopener">{words["github"]}</a></li>')
+        get = posixpath.relpath(self.page_path("get", language), here)
+        current = ' aria-current="page"' if key == "get" else ""
+        nav.append(f'<li class="nav-get"><a class="button primary" href="{get}"{current}>{words["get"]}</a></li>')
         other_href = posixpath.relpath(self.page_path(key, other), here)
         cells = []
         for code in LANGUAGES:
@@ -899,11 +917,16 @@ class Site:
         body, viewer = self.viewers(body, here, language)
         if viewer and not scripts:
             scripts = VIEWER_SCRIPT
+        if key in CATEGORY_OF and not breadcrumb:
+            articles = posixpath.relpath(self.page_path("articles", language), here)
+            breadcrumb = (f'<nav class="breadcrumb" aria-label="breadcrumb"><a href="{articles}">{words["articles"]}</a> › '
+                          f'{words[CATEGORY_OF[key]]}</nav>')
+        self.meta[(key, language)] = (title, description)
         if kind == "home":
             intro, body = home_bands(self.mark_strips(body, here))
         else:
             kicker = breadcrumb or f'<p class="kicker">{words.get(kind if kind in words else key, "")}</p>'
-            intro, body = page_intro(body, kicker, extra)
+            intro, body = page_intro(body, kicker, extra, self.banner(key))
         values = {
             "lang": language,
             "title": html.escape(title if key == "index" else f"{title} · openclare"),
@@ -935,6 +958,35 @@ class Site:
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_text(output, encoding="utf-8")
         self.pages.append((key, language, page))
+
+    @staticmethod
+    def banner(key):
+        """The SVG banner of an article, inline so that it takes the theme's colours."""
+        path = SITE / "assets/articles" / f"{key}.svg"
+        return read(path).strip() if key in CATEGORY_OF and path.exists() else ""
+
+    def articles(self):
+        """The articles page: a tile per article, with its banner, by category.
+        Written last, from the titles and descriptions of the pages."""
+        for language in LANGUAGES:
+            text, body, headings = self.content_page("articles", language, "articles")
+            here = posixpath.dirname(self.page_path("articles", language)) or "."
+            words = WORDS[language]
+            parts = []
+            for category, keys in ARTICLES:
+                cards = []
+                for key in keys:
+                    title, description = self.meta[(key, language)]
+                    href = posixpath.relpath(self.page_path(key, language), here)
+                    cards.append(
+                        f'<a class="article-card" href="{href}">{self.banner(key)}'
+                        f'<span class="article-text"><span class="kicker">{words[category]}</span>'
+                        f'<strong>{html.escape(title)}</strong><span>{html.escape(description)}</span></span></a>'
+                    )
+                parts.append(f'<h2 id="{category}">{words[category]}</h2>\n<div class="article-cards">{"".join(cards)}</div>')
+            body = body.replace("<p>{{articles}}</p>", "\n".join(parts))
+            headings = headings + [(2, words[c], c) for c, _ in ARTICLES]
+            self.write("articles", language, self.title_of(text), body, headings, "articles", self.description_of(text), toc=False)
 
     def viewers(self, body, here, language):
         """A <div class="viewer" data-models="…"> of a page's source: the 3D
@@ -1545,11 +1597,11 @@ class Site:
         self.write(key, language, engine["name"], "\n".join(body), [], "engines", engine["method"], breadcrumb, toc=False)
 
     def market_crumbs(self, key, language, parent=None, name=None):
-        """The breadcrumb of a page under the state of the market: the
-        market, the list the page belongs to (`parent`), then its name."""
+        """The breadcrumb of a page of the Blender ecosystem: the articles,
+        the list the page belongs to (`parent`), then its name."""
         here = posixpath.dirname(self.page_path(key, language)) or "."
         words = WORDS[language]
-        steps = ["market"] + ([parent] if parent else [])
+        steps = ["articles"] + ([parent] if parent else [])
         links = " › ".join(f'<a href="{posixpath.relpath(self.page_path(k, language), here)}">{html.escape(words[k])}</a>' for k in steps)
         return f'<nav class="breadcrumb" aria-label="breadcrumb">{links} › {html.escape(name or words[key])}</nav>'
 
@@ -1635,7 +1687,8 @@ class Site:
                 bands.append(f'<article class="tile"><div class="tile-facts"><h3><a href="{href}">{WORDS[language][target]}</a></h3>'
                              f'</div><p class="tile-what">{line}</p></article>')
             body = body.replace("<p>{{market}}</p>", f'<div class="tiles">{"".join(bands)}</div>')
-            self.write("market", language, self.title_of(text), body, headings, "market", self.description_of(text), toc=False)
+            self.write("market", language, self.title_of(text), body, headings, "market", self.description_of(text), toc=False,
+                       breadcrumb=self.market_crumbs("market", language))
 
     def retopology(self):
         tools, platforms, taxonomy, engines = self.retopology_data()
@@ -1646,21 +1699,21 @@ class Site:
             body = body.replace("<p>{{tools}}</p>", self.retopology_tools(tools, platforms, language))
             self.write(
                 "retopology", language, self.title_of(text), body, headings, "retopology", self.description_of(text),
-                toc=False, breadcrumb=self.market_crumbs("retopology", language),
+                toc=False, breadcrumb="",
                 extra=self.market_nav("retopology", language) + self.retopology_filters(taxonomy, language),
             )
             text, body, headings = self.content_page("platforms", language, "platforms")
             body = body.replace("<p>{{platforms}}</p>", self.platforms_list(platforms, tools, language))
             self.write(
                 "platforms", language, self.title_of(text), body, headings, "platforms", self.description_of(text),
-                toc=False, breadcrumb=self.market_crumbs("platforms", language), extra=self.market_nav("platforms", language),
+                toc=False, breadcrumb="", extra=self.market_nav("platforms", language),
             )
             text, body, headings = self.content_page("engines", language, "engines")
             body = body.replace("<p>{{engines}}</p>", self.engines_list(engines, tools, language))
             body = body.replace("<p>{{own}}</p>", self.own_solvers(tools, language))
             self.write(
                 "engines", language, self.title_of(text), body, headings, "engines", self.description_of(text),
-                toc=False, breadcrumb=self.market_crumbs("engines", language), extra=self.market_nav("engines", language),
+                toc=False, breadcrumb="", extra=self.market_nav("engines", language),
             )
             for engine in engines.values():
                 self.engine_page(engine, tools, language)
@@ -1726,7 +1779,8 @@ class Site:
         results_page = posixpath.relpath(self.page_path("results", language), here)
         words = WORDS[language]
         breadcrumb = (
-            f'<nav class="breadcrumb" aria-label="breadcrumb"><a href="{results_page}">{words["results"]}</a> › '
+            f'<nav class="breadcrumb" aria-label="breadcrumb"><a href="{posixpath.relpath(self.page_path("articles", language), here)}">{words["articles"]}</a> › '
+            f'<a href="{results_page}">{words["results"]}</a> › '
             f'<a href="{results_page}#{"model-by-model" if language == "en" else "modèle-par-modèle"}">{words["models"]}</a> › {name}</nav>'
         )
         title = name
@@ -1828,6 +1882,7 @@ class Site:
         self.simple("research", "research")
         self.simple("get", "get")
         self.retopology()
+        self.articles()
         for name in self.models:
             if name in self.withheld:
                 continue
@@ -1889,9 +1944,9 @@ def night_sections(body):
 VIEWER_SCRIPT = '<script type="module" src="{root}assets/viewer.js"></script>'
 
 
-def page_intro(body, kicker, extra=""):
+def page_intro(body, kicker, extra="", banner=""):
     """The band at the top of a page: the kicker (or breadcrumb), the title
-    and subtitle taken out of the body, and `extra`."""
+    and subtitle taken out of the body, `extra`, and the banner of an article."""
     head = ""
     match = re.search(r'<h1 id="[^"]*">(.*?)</h1>\n?(?:<p class="subtitle">.*?</p>\n?)?', body, re.S)
     if match:
@@ -1900,7 +1955,7 @@ def page_intro(body, kicker, extra=""):
         # A kicker that only repeats the title says nothing.
         if re.sub(r"<[^>]+>", "", kicker).strip().lower() == re.sub(r"<[^>]+>", "", match.group(1)).strip().lower():
             kicker = ""
-    intro = f'<section class="intro"><div class="wrap">\n{kicker}\n{head}\n{extra}\n</div></section>'
+    intro = f'<section class="intro"><div class="wrap">\n{kicker}\n{head}\n{extra}\n{banner}\n</div></section>'
     return intro, body.strip("\n")
 
 
