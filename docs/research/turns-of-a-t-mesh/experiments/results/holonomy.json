@@ -1,0 +1,1517 @@
+{
+ "experiment": "turns and singularities, checked on every turn (Section 'Turns and singularities')",
+ "export": "scratch/data-package/turns-of-a-t-mesh/male-body/export/call-2146-806-5237618",
+ "export_record": {
+  "experiment": "export of the turns of the closing",
+  "engine": {
+   "commit": "e13fadb",
+   "build": "sha256:d444f05f7279f3e7",
+   "options": "as-is",
+   "environment": {}
+  },
+  "command": [
+   "openclare",
+   "remesh",
+   "<source>",
+   "mesh.obj",
+   "--preset",
+   "organic",
+   "--quads",
+   "10590"
+  ],
+  "source": {
+   "path": "source.obj",
+   "md5": "f1fe33002b731d1d41846daed6c59f5e"
+  },
+  "machine": {
+   "processor": "Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz",
+   "threads": 8,
+   "memory": "62.7 GiB",
+   "load_average": [
+    8.64,
+    5.25,
+    3.14
+   ],
+   "load_average_at_end": [
+    7.71,
+    6.46,
+    3.99
+   ]
+  },
+  "seconds": 187.3,
+  "tmesh": "call-2146-806-5237618",
+  "ways": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "measure": {
+   "valid": true,
+   "quads": 10484,
+   "loop_edges_spiral": 0.014641358260206027,
+   "loops_spiral": 11,
+   "loop_edges_closed": 0.36484166348721775,
+   "mean_distance": 0.0001895734178229812,
+   "hausdorff": 0.004743854442472561,
+   "angle_deviation_mean": 4.292626082506852,
+   "irregular_vertices": 254,
+   "inverted_faces": 0
+  }
+ },
+ "ways": {
+  "0": "6cc0c52ed844da1d1343a49e60e967e06c71639e970a2ffad1186047e4bff93a",
+  "1": "f9ed1876de4d580ec3f64e3cb38252890f7cc8d403f35169f762fc95471a3c16",
+  "2": "73fd72de47d0b93bf8b4d3fdf2e4cbaca7f7814337b80857130a4ca42835e517",
+  "3": "dd044d80dd8f807d335182282202b905fc021f48f750eeb03295460de6d12ca4",
+  "4": "3197c4fccb7ff314c588885bb3519c7c1eea7c977887126b2636173fb28f69f7",
+  "5": "f3bc8513c30d53e9551ff30710bca835f2a5771492d2b91bd620a375b620183c",
+  "6": "e311a34d17929be3646e76c6244d0b6e3cbd44f6515be8313f76c4051b5b5e5a",
+  "7": "826d051bb7c6219c45509225f52219665732ede8395ed4b7911c6d83fa27e993"
+ },
+ "machine": {
+  "processor": "Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz",
+  "threads": 8,
+  "memory": "62.7 GiB",
+  "load_average": [
+   2.23,
+   3.89,
+   5.93
+  ],
+  "load_average_at_end": [
+   1.64,
+   3.14,
+   4.68
+  ],
+  "processors_allowed": 8
+ },
+ "solver": {
+  "scipy": "1.16.3",
+  "highs": "1.8.0",
+  "highs_threads": 1
+ },
+ "wall_seconds": 721.1,
+ "annuli": true,
+ "pairs_limit": null,
+ "total": {
+  "annuli": 39617,
+  "annuli without a singular vertex": 88,
+  "annuli without a singular vertex: same shift up to sign": 88,
+  "annuli: checkerboard rule": 39617,
+  "annuli: index 0": 39617,
+  "crossing maps: a translation": 1708,
+  "crossing maps: shift = +h\u27e8t, d\u27e9": 1708,
+  "crossing maps: shift = +\u27e8t, d\u27e9": 840,
+  "crossing maps: shift = -h\u27e8t, d\u27e9": 0,
+  "crossing maps: shift = -\u27e8t, d\u27e9": 868,
+  "curves: one self-crossing, indices (2, 2, 4)": 10,
+  "curves: one self-crossing, indices (2, 3, 3)": 160,
+  "curves: regions = self-crossings + 2": 1398,
+  "curves: simple": 828,
+  "curves: simple, held": 416,
+  "curves: simple, indices 4 + 4": 828,
+  "curves: two or more self-crossings": 710,
+  "discs": 1656,
+  "discs: Burgers sum, order of first visit": 1656,
+  "discs: Burgers sum, order of last visit": 58,
+  "discs: checkerboard rule": 1656,
+  "discs: some convention, order of first visit": 1656,
+  "discs: some convention, order of last visit": 58,
+  "dislocations: a staircase whose length is the difference": 0,
+  "dislocations: annuli with one 3-5 pair": 48,
+  "dislocations: identity (i)": 48,
+  "dislocations: the pair on one straight chain of arcs": 0,
+  "held": 1020,
+  "parallel pairs, no singular vertex between": 394,
+  "parallel pairs: handed shifts equal": 394,
+  "parity: around + shift even": 1708,
+  "strips: around + pitch even": 1794,
+  "strips: ways round": 1794,
+  "turns": 1708
+ },
+ "extremes": {
+  "self-crossings, most": 244,
+  "regions of one curve, most": 64,
+  "singular vertices in a disc, least": 4,
+  "singular vertices in a disc, most": 250
+ },
+ "dislocation_annuli": [
+  {
+   "way": 0,
+   "turns": [
+    9,
+    46
+   ],
+   "places": [
+    17,
+    84
+   ],
+   "pair": [
+    44,
+    41
+   ],
+   "d_at_exact_lengths": [
+    0.027,
+    -0.258
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 0,
+   "turns": [
+    null,
+    46
+   ],
+   "places": [
+    36,
+    84
+   ],
+   "pair": [
+    44,
+    41
+   ],
+   "d_at_exact_lengths": [
+    0.027,
+    -0.258
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 0,
+   "turns": [
+    49,
+    50
+   ],
+   "places": [
+    91,
+    93
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 0,
+   "turns": [
+    49,
+    null
+   ],
+   "places": [
+    91,
+    95
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 0,
+   "turns": [
+    null,
+    50
+   ],
+   "places": [
+    92,
+    93
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 0,
+   "turns": [
+    null,
+    null
+   ],
+   "places": [
+    92,
+    95
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 1,
+   "turns": [
+    13,
+    71
+   ],
+   "places": [
+    23,
+    122
+   ],
+   "pair": [
+    44,
+    41
+   ],
+   "d_at_exact_lengths": [
+    0.027,
+    -0.258
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 1,
+   "turns": [
+    null,
+    71
+   ],
+   "places": [
+    26,
+    122
+   ],
+   "pair": [
+    44,
+    41
+   ],
+   "d_at_exact_lengths": [
+    0.027,
+    -0.258
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 1,
+   "turns": [
+    83,
+    84
+   ],
+   "places": [
+    140,
+    142
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 1,
+   "turns": [
+    83,
+    null
+   ],
+   "places": [
+    140,
+    144
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 1,
+   "turns": [
+    null,
+    84
+   ],
+   "places": [
+    141,
+    142
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 1,
+   "turns": [
+    null,
+    null
+   ],
+   "places": [
+    141,
+    144
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 2,
+   "turns": [
+    10,
+    51
+   ],
+   "places": [
+    19,
+    93
+   ],
+   "pair": [
+    44,
+    41
+   ],
+   "d_at_exact_lengths": [
+    0.027,
+    -0.258
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 2,
+   "turns": [
+    null,
+    51
+   ],
+   "places": [
+    39,
+    93
+   ],
+   "pair": [
+    44,
+    41
+   ],
+   "d_at_exact_lengths": [
+    0.027,
+    -0.258
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 2,
+   "turns": [
+    54,
+    55
+   ],
+   "places": [
+    100,
+    102
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 2,
+   "turns": [
+    54,
+    null
+   ],
+   "places": [
+    100,
+    104
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 2,
+   "turns": [
+    null,
+    55
+   ],
+   "places": [
+    101,
+    102
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 2,
+   "turns": [
+    null,
+    null
+   ],
+   "places": [
+    101,
+    104
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 3,
+   "turns": [
+    14,
+    79
+   ],
+   "places": [
+    25,
+    138
+   ],
+   "pair": [
+    44,
+    41
+   ],
+   "d_at_exact_lengths": [
+    0.027,
+    -0.258
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 3,
+   "turns": [
+    null,
+    79
+   ],
+   "places": [
+    28,
+    138
+   ],
+   "pair": [
+    44,
+    41
+   ],
+   "d_at_exact_lengths": [
+    0.027,
+    -0.258
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 3,
+   "turns": [
+    92,
+    93
+   ],
+   "places": [
+    158,
+    160
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 3,
+   "turns": [
+    92,
+    null
+   ],
+   "places": [
+    158,
+    162
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 3,
+   "turns": [
+    null,
+    93
+   ],
+   "places": [
+    159,
+    160
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 3,
+   "turns": [
+    null,
+    null
+   ],
+   "places": [
+    159,
+    162
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 4,
+   "turns": [
+    20,
+    100
+   ],
+   "places": [
+    33,
+    160
+   ],
+   "pair": [
+    44,
+    41
+   ],
+   "d_at_exact_lengths": [
+    0.027,
+    -0.258
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 4,
+   "turns": [
+    null,
+    100
+   ],
+   "places": [
+    64,
+    160
+   ],
+   "pair": [
+    44,
+    41
+   ],
+   "d_at_exact_lengths": [
+    0.027,
+    -0.258
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 4,
+   "turns": [
+    110,
+    113
+   ],
+   "places": [
+    176,
+    181
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 4,
+   "turns": [
+    110,
+    null
+   ],
+   "places": [
+    176,
+    183
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 4,
+   "turns": [
+    null,
+    113
+   ],
+   "places": [
+    177,
+    181
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 4,
+   "turns": [
+    null,
+    null
+   ],
+   "places": [
+    177,
+    183
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 5,
+   "turns": [
+    35,
+    165
+   ],
+   "places": [
+    54,
+    259
+   ],
+   "pair": [
+    44,
+    41
+   ],
+   "d_at_exact_lengths": [
+    0.027,
+    -0.258
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 5,
+   "turns": [
+    null,
+    165
+   ],
+   "places": [
+    57,
+    259
+   ],
+   "pair": [
+    44,
+    41
+   ],
+   "d_at_exact_lengths": [
+    0.027,
+    -0.258
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 5,
+   "turns": [
+    198,
+    206
+   ],
+   "places": [
+    310,
+    319
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 5,
+   "turns": [
+    198,
+    null
+   ],
+   "places": [
+    310,
+    322
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 5,
+   "turns": [
+    null,
+    206
+   ],
+   "places": [
+    311,
+    319
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 5,
+   "turns": [
+    null,
+    null
+   ],
+   "places": [
+    311,
+    322
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 6,
+   "turns": [
+    21,
+    105
+   ],
+   "places": [
+    35,
+    169
+   ],
+   "pair": [
+    44,
+    41
+   ],
+   "d_at_exact_lengths": [
+    0.027,
+    -0.258
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 6,
+   "turns": [
+    null,
+    105
+   ],
+   "places": [
+    67,
+    169
+   ],
+   "pair": [
+    44,
+    41
+   ],
+   "d_at_exact_lengths": [
+    0.027,
+    -0.258
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 6,
+   "turns": [
+    115,
+    118
+   ],
+   "places": [
+    185,
+    190
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 6,
+   "turns": [
+    115,
+    null
+   ],
+   "places": [
+    185,
+    192
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 6,
+   "turns": [
+    null,
+    118
+   ],
+   "places": [
+    186,
+    190
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 6,
+   "turns": [
+    null,
+    null
+   ],
+   "places": [
+    186,
+    192
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 7,
+   "turns": [
+    36,
+    173
+   ],
+   "places": [
+    56,
+    275
+   ],
+   "pair": [
+    44,
+    41
+   ],
+   "d_at_exact_lengths": [
+    0.027,
+    -0.258
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 7,
+   "turns": [
+    null,
+    173
+   ],
+   "places": [
+    59,
+    275
+   ],
+   "pair": [
+    44,
+    41
+   ],
+   "d_at_exact_lengths": [
+    0.027,
+    -0.258
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 7,
+   "turns": [
+    207,
+    215
+   ],
+   "places": [
+    328,
+    337
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 7,
+   "turns": [
+    207,
+    null
+   ],
+   "places": [
+    328,
+    340
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 7,
+   "turns": [
+    null,
+    215
+   ],
+   "places": [
+    329,
+    337
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  },
+  {
+   "way": 7,
+   "turns": [
+    null,
+    null
+   ],
+   "places": [
+    329,
+    340
+   ],
+   "pair": [
+    214,
+    215
+   ],
+   "d_at_exact_lengths": [
+    2.093,
+    -1.779
+   ],
+   "straight_chains": [],
+   "staircases_equal": []
+  }
+ ],
+ "per_way": [
+  {
+   "way": 0,
+   "counts": {
+    "annuli": 3131,
+    "annuli without a singular vertex": 11,
+    "annuli without a singular vertex: same shift up to sign": 11,
+    "annuli: checkerboard rule": 3131,
+    "annuli: index 0": 3131,
+    "crossing maps: a translation": 111,
+    "crossing maps: shift = +h\u27e8t, d\u27e9": 111,
+    "crossing maps: shift = +\u27e8t, d\u27e9": 56,
+    "crossing maps: shift = -h\u27e8t, d\u27e9": 0,
+    "crossing maps: shift = -\u27e8t, d\u27e9": 55,
+    "curves: one self-crossing, indices (2, 3, 3)": 11,
+    "curves: regions = self-crossings + 2": 107,
+    "curves: simple": 81,
+    "curves: simple, held": 39,
+    "curves: simple, indices 4 + 4": 81,
+    "curves: two or more self-crossings": 19,
+    "discs": 162,
+    "discs: Burgers sum, order of first visit": 162,
+    "discs: Burgers sum, order of last visit": 5,
+    "discs: checkerboard rule": 162,
+    "discs: some convention, order of first visit": 162,
+    "discs: some convention, order of last visit": 5,
+    "dislocations: a staircase whose length is the difference": 0,
+    "dislocations: annuli with one 3-5 pair": 6,
+    "dislocations: identity (i)": 6,
+    "dislocations: the pair on one straight chain of arcs": 0,
+    "held": 58,
+    "parallel pairs, no singular vertex between": 42,
+    "parallel pairs: handed shifts equal": 42,
+    "parity: around + shift even": 111,
+    "strips: around + pitch even": 272,
+    "strips: ways round": 272,
+    "turns": 111
+   },
+   "extremes": {
+    "self-crossings, most": 15,
+    "regions of one curve, most": 12,
+    "singular vertices in a disc, least": 4,
+    "singular vertices in a disc, most": 250
+   },
+   "seconds": 178.7
+  },
+  {
+   "way": 1,
+   "counts": {
+    "annuli": 3672,
+    "annuli without a singular vertex": 11,
+    "annuli without a singular vertex: same shift up to sign": 11,
+    "annuli: checkerboard rule": 3672,
+    "annuli: index 0": 3672,
+    "crossing maps: a translation": 162,
+    "crossing maps: shift = +h\u27e8t, d\u27e9": 162,
+    "crossing maps: shift = +\u27e8t, d\u27e9": 82,
+    "crossing maps: shift = -h\u27e8t, d\u27e9": 0,
+    "crossing maps: shift = -\u27e8t, d\u27e9": 80,
+    "curves: one self-crossing, indices (2, 3, 3)": 19,
+    "curves: regions = self-crossings + 2": 143,
+    "curves: simple": 88,
+    "curves: simple, held": 43,
+    "curves: simple, indices 4 + 4": 88,
+    "curves: two or more self-crossings": 55,
+    "discs": 176,
+    "discs: Burgers sum, order of first visit": 176,
+    "discs: Burgers sum, order of last visit": 8,
+    "discs: checkerboard rule": 176,
+    "discs: some convention, order of first visit": 176,
+    "discs: some convention, order of last visit": 8,
+    "dislocations: a staircase whose length is the difference": 0,
+    "dislocations: annuli with one 3-5 pair": 6,
+    "dislocations: identity (i)": 6,
+    "dislocations: the pair on one straight chain of arcs": 0,
+    "held": 92,
+    "parallel pairs, no singular vertex between": 45,
+    "parallel pairs: handed shifts equal": 45,
+    "parity: around + shift even": 162,
+    "strips: around + pitch even": 250,
+    "strips: ways round": 250,
+    "turns": 162
+   },
+   "extremes": {
+    "self-crossings, most": 16,
+    "regions of one curve, most": 16,
+    "singular vertices in a disc, least": 4,
+    "singular vertices in a disc, most": 250
+   },
+   "seconds": 208.6
+  },
+  {
+   "way": 2,
+   "counts": {
+    "annuli": 4056,
+    "annuli without a singular vertex": 11,
+    "annuli without a singular vertex: same shift up to sign": 11,
+    "annuli: checkerboard rule": 4056,
+    "annuli: index 0": 4056,
+    "crossing maps: a translation": 122,
+    "crossing maps: shift = +h\u27e8t, d\u27e9": 122,
+    "crossing maps: shift = +\u27e8t, d\u27e9": 62,
+    "crossing maps: shift = -h\u27e8t, d\u27e9": 0,
+    "crossing maps: shift = -\u27e8t, d\u27e9": 60,
+    "curves: one self-crossing, indices (2, 3, 3)": 11,
+    "curves: regions = self-crossings + 2": 118,
+    "curves: simple": 92,
+    "curves: simple, held": 45,
+    "curves: simple, indices 4 + 4": 92,
+    "curves: two or more self-crossings": 19,
+    "discs": 184,
+    "discs: Burgers sum, order of first visit": 184,
+    "discs: Burgers sum, order of last visit": 5,
+    "discs: checkerboard rule": 184,
+    "discs: some convention, order of first visit": 184,
+    "discs: some convention, order of last visit": 5,
+    "dislocations: a staircase whose length is the difference": 0,
+    "dislocations: annuli with one 3-5 pair": 6,
+    "dislocations: identity (i)": 6,
+    "dislocations: the pair on one straight chain of arcs": 0,
+    "held": 64,
+    "parallel pairs, no singular vertex between": 46,
+    "parallel pairs: handed shifts equal": 46,
+    "parity: around + shift even": 122,
+    "strips: around + pitch even": 306,
+    "strips: ways round": 306,
+    "turns": 122
+   },
+   "extremes": {
+    "self-crossings, most": 15,
+    "regions of one curve, most": 12,
+    "singular vertices in a disc, least": 4,
+    "singular vertices in a disc, most": 250
+   },
+   "seconds": 227.3
+  },
+  {
+   "way": 3,
+   "counts": {
+    "annuli": 5332,
+    "annuli without a singular vertex": 11,
+    "annuli without a singular vertex: same shift up to sign": 11,
+    "annuli: checkerboard rule": 5332,
+    "annuli: index 0": 5332,
+    "crossing maps: a translation": 182,
+    "crossing maps: shift = +h\u27e8t, d\u27e9": 182,
+    "crossing maps: shift = +\u27e8t, d\u27e9": 92,
+    "crossing maps: shift = -h\u27e8t, d\u27e9": 0,
+    "crossing maps: shift = -\u27e8t, d\u27e9": 90,
+    "curves: one self-crossing, indices (2, 2, 4)": 2,
+    "curves: one self-crossing, indices (2, 3, 3)": 19,
+    "curves: regions = self-crossings + 2": 163,
+    "curves: simple": 106,
+    "curves: simple, held": 52,
+    "curves: simple, indices 4 + 4": 106,
+    "curves: two or more self-crossings": 55,
+    "discs": 212,
+    "discs: Burgers sum, order of first visit": 212,
+    "discs: Burgers sum, order of last visit": 8,
+    "discs: checkerboard rule": 212,
+    "discs: some convention, order of first visit": 212,
+    "discs: some convention, order of last visit": 8,
+    "dislocations: a staircase whose length is the difference": 0,
+    "dislocations: annuli with one 3-5 pair": 6,
+    "dislocations: identity (i)": 6,
+    "dislocations: the pair on one straight chain of arcs": 0,
+    "held": 102,
+    "parallel pairs, no singular vertex between": 53,
+    "parallel pairs: handed shifts equal": 53,
+    "parity: around + shift even": 182,
+    "strips: around + pitch even": 236,
+    "strips: ways round": 236,
+    "turns": 182
+   },
+   "extremes": {
+    "self-crossings, most": 16,
+    "regions of one curve, most": 16,
+    "singular vertices in a disc, least": 4,
+    "singular vertices in a disc, most": 250
+   },
+   "seconds": 298.2
+  },
+  {
+   "way": 4,
+   "counts": {
+    "annuli": 4517,
+    "annuli without a singular vertex": 11,
+    "annuli without a singular vertex: same shift up to sign": 11,
+    "annuli: checkerboard rule": 4517,
+    "annuli: index 0": 4517,
+    "crossing maps: a translation": 205,
+    "crossing maps: shift = +h\u27e8t, d\u27e9": 205,
+    "crossing maps: shift = +\u27e8t, d\u27e9": 96,
+    "crossing maps: shift = -h\u27e8t, d\u27e9": 0,
+    "crossing maps: shift = -\u27e8t, d\u27e9": 109,
+    "curves: one self-crossing, indices (2, 3, 3)": 18,
+    "curves: regions = self-crossings + 2": 167,
+    "curves: simple": 102,
+    "curves: simple, held": 52,
+    "curves: simple, indices 4 + 4": 102,
+    "curves: two or more self-crossings": 85,
+    "discs": 204,
+    "discs: Burgers sum, order of first visit": 204,
+    "discs: Burgers sum, order of last visit": 6,
+    "discs: checkerboard rule": 204,
+    "discs: some convention, order of first visit": 204,
+    "discs: some convention, order of last visit": 6,
+    "dislocations: a staircase whose length is the difference": 0,
+    "dislocations: annuli with one 3-5 pair": 6,
+    "dislocations: identity (i)": 6,
+    "dislocations: the pair on one straight chain of arcs": 0,
+    "held": 125,
+    "parallel pairs, no singular vertex between": 47,
+    "parallel pairs: handed shifts equal": 47,
+    "parity: around + shift even": 205,
+    "strips: around + pitch even": 190,
+    "strips: ways round": 190,
+    "turns": 205
+   },
+   "extremes": {
+    "self-crossings, most": 93,
+    "regions of one curve, most": 60,
+    "singular vertices in a disc, least": 4,
+    "singular vertices in a disc, most": 250
+   },
+   "seconds": 248.4
+  },
+  {
+   "way": 5,
+   "counts": {
+    "annuli": 5601,
+    "annuli without a singular vertex": 11,
+    "annuli without a singular vertex: same shift up to sign": 11,
+    "annuli: checkerboard rule": 5601,
+    "annuli: index 0": 5601,
+    "crossing maps: a translation": 345,
+    "crossing maps: shift = +h\u27e8t, d\u27e9": 345,
+    "crossing maps: shift = +\u27e8t, d\u27e9": 170,
+    "crossing maps: shift = -h\u27e8t, d\u27e9": 0,
+    "crossing maps: shift = -\u27e8t, d\u27e9": 175,
+    "curves: one self-crossing, indices (2, 2, 4)": 3,
+    "curves: one self-crossing, indices (2, 3, 3)": 32,
+    "curves: regions = self-crossings + 2": 251,
+    "curves: simple": 114,
+    "curves: simple, held": 59,
+    "curves: simple, indices 4 + 4": 114,
+    "curves: two or more self-crossings": 196,
+    "discs": 228,
+    "discs: Burgers sum, order of first visit": 228,
+    "discs: Burgers sum, order of last visit": 10,
+    "discs: checkerboard rule": 228,
+    "discs: some convention, order of first visit": 228,
+    "discs: some convention, order of last visit": 10,
+    "dislocations: a staircase whose length is the difference": 0,
+    "dislocations: annuli with one 3-5 pair": 6,
+    "dislocations: identity (i)": 6,
+    "dislocations: the pair on one straight chain of arcs": 0,
+    "held": 219,
+    "parallel pairs, no singular vertex between": 51,
+    "parallel pairs: handed shifts equal": 51,
+    "parity: around + shift even": 345,
+    "strips: around + pitch even": 170,
+    "strips: ways round": 170,
+    "turns": 345
+   },
+   "extremes": {
+    "self-crossings, most": 244,
+    "regions of one curve, most": 64,
+    "singular vertices in a disc, least": 4,
+    "singular vertices in a disc, most": 250
+   },
+   "seconds": 309.2
+  },
+  {
+   "way": 6,
+   "counts": {
+    "annuli": 5645,
+    "annuli without a singular vertex": 11,
+    "annuli without a singular vertex: same shift up to sign": 11,
+    "annuli: checkerboard rule": 5645,
+    "annuli: index 0": 5645,
+    "crossing maps: a translation": 216,
+    "crossing maps: shift = +h\u27e8t, d\u27e9": 216,
+    "crossing maps: shift = +\u27e8t, d\u27e9": 102,
+    "crossing maps: shift = -h\u27e8t, d\u27e9": 0,
+    "crossing maps: shift = -\u27e8t, d\u27e9": 114,
+    "curves: one self-crossing, indices (2, 3, 3)": 18,
+    "curves: regions = self-crossings + 2": 178,
+    "curves: simple": 113,
+    "curves: simple, held": 58,
+    "curves: simple, indices 4 + 4": 113,
+    "curves: two or more self-crossings": 85,
+    "discs": 226,
+    "discs: Burgers sum, order of first visit": 226,
+    "discs: Burgers sum, order of last visit": 6,
+    "discs: checkerboard rule": 226,
+    "discs: some convention, order of first visit": 226,
+    "discs: some convention, order of last visit": 6,
+    "dislocations: a staircase whose length is the difference": 0,
+    "dislocations: annuli with one 3-5 pair": 6,
+    "dislocations: identity (i)": 6,
+    "dislocations: the pair on one straight chain of arcs": 0,
+    "held": 131,
+    "parallel pairs, no singular vertex between": 51,
+    "parallel pairs: handed shifts equal": 51,
+    "parity: around + shift even": 216,
+    "strips: around + pitch even": 208,
+    "strips: ways round": 208,
+    "turns": 216
+   },
+   "extremes": {
+    "self-crossings, most": 93,
+    "regions of one curve, most": 60,
+    "singular vertices in a disc, least": 4,
+    "singular vertices in a disc, most": 250
+   },
+   "seconds": 307.8
+  },
+  {
+   "way": 7,
+   "counts": {
+    "annuli": 7663,
+    "annuli without a singular vertex": 11,
+    "annuli without a singular vertex: same shift up to sign": 11,
+    "annuli: checkerboard rule": 7663,
+    "annuli: index 0": 7663,
+    "crossing maps: a translation": 365,
+    "crossing maps: shift = +h\u27e8t, d\u27e9": 365,
+    "crossing maps: shift = +\u27e8t, d\u27e9": 180,
+    "crossing maps: shift = -h\u27e8t, d\u27e9": 0,
+    "crossing maps: shift = -\u27e8t, d\u27e9": 185,
+    "curves: one self-crossing, indices (2, 2, 4)": 5,
+    "curves: one self-crossing, indices (2, 3, 3)": 32,
+    "curves: regions = self-crossings + 2": 271,
+    "curves: simple": 132,
+    "curves: simple, held": 68,
+    "curves: simple, indices 4 + 4": 132,
+    "curves: two or more self-crossings": 196,
+    "discs": 264,
+    "discs: Burgers sum, order of first visit": 264,
+    "discs: Burgers sum, order of last visit": 10,
+    "discs: checkerboard rule": 264,
+    "discs: some convention, order of first visit": 264,
+    "discs: some convention, order of last visit": 10,
+    "dislocations: a staircase whose length is the difference": 0,
+    "dislocations: annuli with one 3-5 pair": 6,
+    "dislocations: identity (i)": 6,
+    "dislocations: the pair on one straight chain of arcs": 0,
+    "held": 229,
+    "parallel pairs, no singular vertex between": 59,
+    "parallel pairs: handed shifts equal": 59,
+    "parity: around + shift even": 365,
+    "strips: around + pitch even": 162,
+    "strips: ways round": 162,
+    "turns": 365
+   },
+   "extremes": {
+    "self-crossings, most": 244,
+    "regions of one curve, most": 64,
+    "singular vertices in a disc, least": 4,
+    "singular vertices in a disc, most": 250
+   },
+   "seconds": 422.3
+  }
+ ]
+}

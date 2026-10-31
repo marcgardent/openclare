@@ -1,0 +1,179 @@
+{
+ "experiment": "turns every quantization in P leaves shifted (Table tab:forced)",
+ "complete": true,
+ "export": "call-2146-806-5237618",
+ "export_record": {
+  "experiment": "export of the turns of the closing",
+  "engine": {
+   "commit": "e13fadb",
+   "build": "sha256:d444f05f7279f3e7",
+   "options": "as-is",
+   "environment": {}
+  },
+  "command": [
+   "openclare",
+   "remesh",
+   "<source>",
+   "mesh.obj",
+   "--preset",
+   "organic",
+   "--quads",
+   "10590"
+  ],
+  "source": {
+   "path": "source.obj",
+   "md5": "f1fe33002b731d1d41846daed6c59f5e"
+  },
+  "machine": {
+   "processor": "Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz",
+   "threads": 8,
+   "memory": "62.7 GiB",
+   "load_average": [
+    8.64,
+    5.25,
+    3.14
+   ],
+   "load_average_at_end": [
+    7.71,
+    6.46,
+    3.99
+   ]
+  },
+  "seconds": 187.3,
+  "tmesh": "call-2146-806-5237618",
+  "ways": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "measure": {
+   "valid": true,
+   "quads": 10484,
+   "loop_edges_spiral": 0.014641358260206027,
+   "loops_spiral": 11,
+   "loop_edges_closed": 0.36484166348721775,
+   "mean_distance": 0.0001895734178229812,
+   "hausdorff": 0.004743854442472561,
+   "angle_deviation_mean": 4.292626082506852,
+   "irregular_vertices": 254,
+   "inverted_faces": 0
+  }
+ },
+ "ways": {
+  "2": "73fd72de47d0b93bf8b4d3fdf2e4cbaca7f7814337b80857130a4ca42835e517"
+ },
+ "machine": {
+  "processor": "Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz",
+  "threads": 8,
+  "memory": "62.7 GiB",
+  "load_average": [
+   1.67,
+   1.6,
+   1.75
+  ],
+  "load_average_at_end": [
+   2.21,
+   1.72,
+   1.78
+  ],
+  "processors_allowed": 8
+ },
+ "solver": {
+  "scipy": "1.16.3",
+  "highs": "1.8.0",
+  "highs_threads": 1
+ },
+ "wall_seconds": 28.6,
+ "cap": 0.5219249834360781,
+ "wanted": 10590,
+ "allowed": 211,
+ "sound": true,
+ "steps": [
+  "bounds",
+  "cap",
+  "size"
+ ],
+ "seconds_per_program": 900.0,
+ "budget_per_loop": 1800.0,
+ "margin": 60.0,
+ "table": [
+  {
+   "way": 2,
+   "family": "held",
+   "turns": 64,
+   "bounds": 3,
+   "bounds_cap": [
+    3,
+    3
+   ],
+   "cap_size_whole": [
+    3,
+    3
+   ],
+   "engine_left_shifted": 23
+  }
+ ],
+ "per_family": [
+  {
+   "way": 2,
+   "family": "held",
+   "turns": 64,
+   "engine_left_shifted": 23,
+   "bounds": {
+    "tau": 3,
+    "shifted": [
+     46,
+     59,
+     63
+    ],
+    "cores": 3,
+    "disjoint_cores": 3,
+    "core_sizes": [
+     1,
+     1,
+     2
+    ],
+    "seconds": 0.4
+   },
+   "cap": {
+    "lower": 3,
+    "upper": 3,
+    "shifted": [
+     46,
+     59,
+     63
+    ],
+    "cores": 3,
+    "disjoint_cores": 3,
+    "seconds": 10.4
+   },
+   "size": {
+    "lower": 3,
+    "rounds": [
+     {
+      "program": "complement",
+      "found": true,
+      "shifted": 3,
+      "quads": 10735,
+      "deviation": 0.4714,
+      "admissible": true,
+      "dual_bound": 876.3987770826149,
+      "message": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+      "seconds": 17.6
+     }
+    ],
+    "upper": 3,
+    "quads": 10735,
+    "deviation": 0.47136525066670193,
+    "lengths_file": "way-2-held-size.txt",
+    "seconds": 17.6
+   },
+   "seconds": 28.3
+  }
+ ]
+}

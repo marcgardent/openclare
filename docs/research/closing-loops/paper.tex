@@ -101,14 +101,11 @@ minimum-deviation quantizer~\cite{heistermann2023bimdf}, through a
 least-change projection, repair walks and rounds of constraint generation on
 the strips of the mesh, and keep the candidate with the fewest spiral edges,
 counted by a test that tells helices from closed, open and border loops. Over
-% RERUN v0.7.0: 4.65% and 1.6% come from engines without the twelve other
-% draws; rerun the twelve models at three budgets and the male body on v0.7.0.
-twelve models at three budgets near 3{,}000 quads, the engine leaves 4.65\%
-of the edges on spiral loops (16.7\% without closing, in single runs of an
-earlier engine); on the seven models that two other open-source remeshers
-also mesh validly, 1.8\% against 38.8\% and 21.7\%; on a human body, single
-runs give 1.6\%, against 2.5\% for the hand-made mesh. An exact analysis of
-the closing system of that body shows that the conflict between closing
+twelve models at three budgets near 3{,}000 quads, the engine leaves 4.92\%
+of the edges on spiral loops (19.8\% without closing); on the seven models
+that two other open-source remeshers also mesh validly, 2.2\% against 38.8\% % NIGHT4
+and 21.7\%; on a human body, 1.5\%, against 2.5\% for the hand-made mesh.
+An exact analysis of the closing system of that body shows that the conflict between closing
 turns and keeping singularities apart is real but local, that the heuristic
 rather than the constraints leaves most turns shifted, and that closing more
 turns does not by itself make fewer spirals: the strips move with the
@@ -559,79 +556,78 @@ loops in the figures.
 
 \section{Experiments}\label{sec:experiments}
 
-All numbers come from the openclare bench, measured on the output meshes
-against their sources; Appendix~\ref{app:provenance} gives the engine
-version and the source of every figure. The engine is deterministic: one run
-per model and budget. Models: twelve organic and mechanical models for
-development, and a corpus of $33$ models for the full bench, among them two
-human bodies from Blender's Essentials library (CC0) whose base meshes,
-modelled by hand, serve as references. Times were measured on one machine,
-an Intel Core i7-7700K (4 cores, 8 threads, 4.2\,GHz, 2017) with 62\,GB of
-memory, shared with other jobs whose load was not recorded: they are
-wall-clock times and give orders of magnitude only. Linear and mixed-integer
+Every figure is measured on the engine of version 0.7.0 (commit
+\texttt{e13fadb}), on the output meshes against their sources;
+Appendix~\ref{app:provenance} gives the script and the summary of every
+figure. The engine is deterministic: one run per model and budget. Models:
+twelve organic and mechanical models for development, and a corpus of $33$
+models for the full bench, among them two human bodies from Blender's
+Essentials library (CC0) whose base meshes, modelled by hand, serve as
+references. All runs were made on one machine, an Intel Core i7-7700K (4
+cores, 8 threads, 4.2\,GHz, 2017) with 62\,GB of memory, shared with other
+jobs; each summary records the load average, which reached $15$ during some
+runs, so times are wall-clock times and give orders of magnitude only. % NIGHT4
+Linear and mixed-integer
 programs were solved with HiGHS 1.8.0~\cite{huangfu2018highs} through SciPy
 1.16.3~\cite{virtanen2020scipy} (\texttt{linprog} and \texttt{milp}), with
-default options except the time limits stated.
+default options except one thread and the time limits stated.
 
 \paragraph{Spirals on the twelve development models.}
 The share of edges on spiral loops is chaotic on a single model: a change of
 one per cent of the budget moves it as much as a real change of the method.
 We therefore judge the engine by its mean over the twelve models at three
 budgets, $2{,}970$, $3{,}000$ and $3{,}030$ quads ($36$ runs).
-% RERUN v0.7.0: these figures (4.65%, the three budgets, 102 loops, closed
-% loops, distance, corners) are of the engine before the other draws, not of
-% the cited commit; rerun the protocol of the appendix on v0.7.0.
-At the cited
-commit the engine leaves $4.65\%$ of the edges on spiral loops ($2.89\%$,
-$4.97\%$ and $6.09\%$ at the three budgets; $102$ spiral loops in the $36$
-meshes, all valid), with $36.7\%$ of the edges on closed loops, a mean
-distance to the source of $0.377$\textperthousand\ of the diagonal and a mean
-corner deviation of $4.90$ degrees. Table~\ref{tab:dev} shows the
-contribution of the parts of the method, measured with the engine versions
-that introduced them, in single runs at $3{,}000$ quads: from $16.7\%$ of
-spiral edges without closing to $6.0\%$. Over these versions the Hausdorff
-distance stays within about $2\%$ and the mean corner deviation within about
-$6\%$; the longer turns and the deviation cap trade a little of both for a
-third fewer spiral edges.
+The engine leaves $4.92\%$ of the edges on spiral loops ($3.24\%$,
+$4.95\%$ and $6.58\%$ at the three budgets; $117$ spiral loops in the $36$
+meshes, all valid), with $36.1\%$ of the edges on closed loops, a mean
+distance to the source of $0.381$\textperthousand\ of the diagonal and a mean
+corner deviation of $5.05$ degrees. Table~\ref{tab:dev} adds the parts of
+the method one at a time to the same engine, through its experiment
+options, over the same $36$ runs: from $19.81\%$ of spiral edges without
+closing to $4.92\%$. Across the lines the Hausdorff distance stays within
+$4\%$ and the mean corner deviation within $5\%$. The decrease is not
+monotone: the deviation cap, which turns down the candidates too far from
+the real lengths, raises the share from $6.63\%$ to $8.43\%$, and the
+constraint rounds and the floor of the cap bring it back down.
 
 \begin{table}[t]
 \centering
+\small
 \begin{tabular}{lrrr}
 \toprule
 & spiral edges & Hausdorff (\textperthousand) & corner deviation (deg) \\
 \midrule
-no closing & 16.7\% & 8.77 & 4.75 \\
-closing, one way kept by spirals & 9.7\% & 8.57 & 4.85 \\
-+ leaning ways, aimed repair & 9.1\% & 8.58 & 4.91 \\
-+ longer turns, deviation cap & 6.0\% & 8.68 & 5.01 \\
+no closing & 19.81\% & 8.35 & 4.90 \\
+closing: lean bound $0.05$, turns up to $2$ sides & 10.14\% & 8.43 & 5.01 \\
++ lean bound $0.12$ & 9.08\% & 8.33 & 5.07 \\
++ aimed repair & 7.86\% & 8.12 & 5.10 \\
++ turns up to $6$ sides & 6.63\% & 8.32 & 5.15 \\
++ deviation cap, without its floor & 8.43\% & 8.29 & 5.10 \\
++ constraint rounds & 7.26\% & 8.30 & 5.14 \\
++ active set & 7.58\% & 8.27 & 5.04 \\
++ floor of the cap & 5.85\% & 8.38 & 5.10 \\
++ fold guard & 5.85\% & 8.38 & 5.10 \\
++ twelve other draws: the engine & 4.92\% & 8.38 & 5.05 \\
 \bottomrule
 \end{tabular}
-\caption{Parts of the method: mean over the twelve models at $3{,}000$
-quads, one run per model, engines of commits \texttt{9f3e455},
-\texttt{3658abc} and \texttt{197f0ca}. Each line adds to the one above only
-roughly: between the second and third lines the baseline moved (commit
-\texttt{452b346}, $10.1\%$ to $9.5\%$). The constraint rounds, the active set
-and the floor of the cap are not in the table; the engine at the cited
-% RERUN v0.7.0: the cited commit's figure over three budgets, and add the
-% other draws to the parts not in the table.
-commit gives $4.65\%$ over three budgets.}
+\caption{Parts of the method, engine of version 0.7.0 with its experiment
+options: each line adds one part to those above; mean over the twelve
+models at three budgets ($36$ runs per line). The last line sets no option
+and gives the $36$ meshes of the engine byte for byte.}
 \label{tab:dev}
 \end{table}
 
 \paragraph{Against other remeshers.}
-The last full bench committed (commit \texttt{5bc16c6}, $3{,}000$ quads; one
-run per model for openclare and AutoRemesher~\cite{autoremesher}, the median
-of five seeds for QuadriFlow~\cite{huang2018quadriflow}, run through Blender)
-% RERUN v0.7.0: the gap to the cited commit now includes the twelve other
-% draws; restate both figures (or rerun the full bench on v0.7.0).
-used an engine a few changes away from the cited one, which give $4.54\%$
-instead of $4.65\%$ on the twelve models at three budgets. The tools do not
-mesh the same models: QuadriFlow produces a mesh for $22$ of the $33$ models,
-AutoRemesher for $18$. On the $7$ models that all three mesh validly in every
-run, the mean share of spiral edges is $1.8\%$ for openclare, $38.8\%$ for
-QuadriFlow and $21.7\%$ for AutoRemesher; on the $15$ models where all three
-produce a mesh, valid or not, $4.2\%$, $27.2\%$ and $27.3\%$. Without closing
-(commit \texttt{b0fba91}) openclare had $16.6\%$ and $15.5\%$ on the same
+The full bench of version 0.7.0 ($3{,}000$ quads; one run per model for
+openclare and AutoRemesher~\cite{autoremesher}, the median of five seeds for
+QuadriFlow~\cite{huang2018quadriflow}, run through Blender) compares the
+tools. They do not mesh the same models: QuadriFlow produces a mesh for $22$
+of the $33$ models, AutoRemesher for $18$. On the $7$ models that all three
+mesh validly in every run, the mean share of spiral edges is $2.2\%$ for % NIGHT4
+openclare, $38.8\%$ for QuadriFlow and $21.7\%$ for AutoRemesher; on the $15$
+models where all three produce a mesh, valid or not, $2.9\%$, $27.2\%$ and % NIGHT4
+$27.3\%$. Without closing (the same engine through the same chain, with no
+way of closing tried) openclare has $15.3\%$ and $15.2\%$ on the same
 subsets. The comparison favours openclare by construction as well: the engine
 chooses among its candidates by this very share (Section~\ref{sec:closing}),
 which the other two do not optimize, and the share sees no helix of pitch
@@ -642,32 +638,30 @@ future work.
 The male body of the Essentials library has a base mesh of $10{,}590$ quads
 modelled by hand, with $2.5\%$ of spiral edges in $3$ spiral loops and
 $31.6\%$ of its edges on closed loops. Remeshed by openclare at that count
-with the closing of Section~\ref{sec:closing}, single runs of the engines of
-commits \texttt{1b77f7d} to \texttt{4db7b42} give $1.6\%$ of spiral edges,
-in $9$ spiral loops: below the hand-made mesh, but by a few loops only. One
-such run has
-$33.2\%$ of its edges on closed loops, a mean distance to the source of
-$0.19$\textperthousand\ of the diagonal and a mean corner deviation of $4.1$
-degrees, against $0.17$\textperthousand\ and $9.2$ degrees for the hand-made
-mesh; these fidelity figures compare meshes made for different ends, the
-hand-made one being a base mesh whose distance and angles are choices of its
-modeller. The lean bound matters on this body: with the lean bound $0.05$
-alone (commit \texttt{452b346}), one leg was a single helix from hip to
-ankle, its turns leaning more than that bound allows, and the mesh had
-$12.1\%$ of spiral edges.
+with the closing of Section~\ref{sec:closing}, it has $1.46\%$ of spiral
+edges, in $11$ spiral loops: fewer spiral edges than the hand-made mesh, in
+more loops. It has $36.5\%$ of its edges on closed loops, a mean distance to
+the source of $0.19$\textperthousand\ of the diagonal and a mean corner
+deviation of $4.3$ degrees, against $0.17$\textperthousand\ and $9.2$ degrees
+for the hand-made mesh; these fidelity figures compare meshes made for
+different ends, the hand-made one being a base mesh whose distance and
+angles are choices of its modeller. With the lean bound $0.05$ alone (ways
+0, 1, 4 and 5 of Section~\ref{sec:exact}), the body has $1.67\%$ of spiral
+edges in $12$ loops.
 
 Figure~\ref{fig:overview} shows the body meshed by openclare with and
-without closing, next to the hand-made mesh and QuadriFlow's, with a later
-engine than the runs above (commit \texttt{89232b0}; its numbers are in the
-caption). Without closing, helices wind round the torso, both legs and the
-neck. With closing, the loops round the limbs and the torso are rings, as on
-the hand-made mesh, and the spiral loops left are short ones at the mouth, the
-forehead and the fingers. QuadriFlow winds helices round the torso, the
-shoulders, the legs and one arm. Closing is not better everywhere
-(Figure~\ref{fig:closeups}): at the left wrist it leaves spiral loops on the
-thumb and the back of the hand where the mesh without closing has closed
-ones, and near the right eye both openclare meshes keep short spiral loops,
-while closing turns a loop across the forehead into a ring.
+without closing, next to the hand-made mesh and QuadriFlow's; mesh~(b) is
+the run above. Without closing, helices wind round both legs, the upper
+torso, along the left arm and on the head. With closing, the loops round the
+limbs and the torso are rings, as on the hand-made mesh, and the spiral
+loops left run along the outer side of the left arm to the hand and over the
+top of the head. QuadriFlow winds helices round the torso, the shoulders,
+the legs and one arm. Closing does not remove every spiral loop
+(Figure~\ref{fig:closeups}): at the left wrist it closes the loops of the
+thumb and the back of the hand, which spiral without closing, but a loop
+along the outer side of the forearm spirals on both meshes; near the right
+eye neither openclare mesh has a spiral loop, and both keep some on the
+forehead and at the ear.
 
 \begin{figure*}[t]
 \centering
@@ -681,13 +675,12 @@ than its threshold of $10^{-4}$, and QuadriFlow does not depend on the scale.
 Edge loops are coloured by their kind in
 the measure of Section~\ref{sec:measure}: closed loops dark blue, spiral
 loops vermillion (wider, with a dark rim), loops that stop at an irregular
-vertex grey. Meshes (a) and (b) come from the engine at commit
-\texttt{89232b0}, one deterministic run each, not from the runs quoted in the
-text (Appendix~\ref{app:provenance}). Measured on the whole meshes, they
-have $10{,}485$, $10{,}748$, $10{,}570$ (plus $20$ triangles) and $8{,}844$
-quads, $26.8\%$ ($18$ loops), $1.95\%$ ($15$), $2.55\%$ ($3$) and
-$35.7\%$ ($43$) of their edges on spiral loops, which the panels round to one
-decimal, and $10.2\%$, $32.6\%$, $31.6\%$ and $2.7\%$ on closed loops.
+vertex grey. Meshes (a) and (b) come from the engine of version 0.7.0, one
+deterministic run each, the runs quoted in the text. Measured on the whole
+meshes, they have $10{,}625$, $10{,}484$, $10{,}570$ (plus $20$ triangles)
+and $8{,}844$ quads, $23.4\%$ ($21$ loops), $1.46\%$ ($11$), $2.55\%$ ($3$)
+and $35.7\%$ ($43$) of their edges on spiral loops, which the panels round to
+one decimal, and $17.2\%$, $36.5\%$, $31.6\%$ and $2.7\%$ on closed loops.
 QuadriFlow's mesh has $3$ inverted faces and a Hausdorff distance of
 $31$\textperthousand\ of the diagonal.}
 \label{fig:overview}
@@ -700,33 +693,29 @@ $31$\textperthousand\ of the diagonal.}
 \caption{Close-ups of the four meshes of Figure~\ref{fig:overview}, in the
 same order and colours: the left wrist and hand (top; the body's left, on
 the viewer's right in Figure~\ref{fig:overview}) and the right eye
-(bottom). At the wrist closing does not help locally: mesh~(b) has spiral
-loops on the thumb and the back of the hand where mesh~(a) has closed ones,
-although over the whole body closing removes most spiral edges. At the eye,
-closing turns a loop across the forehead into a ring, and short spiral loops
-remain near the eye on both openclare meshes; the loop round the eye of the
-hand-made mesh is itself counted as spiral. In the T-mesh exported in
-Section~\ref{sec:exact}, from an earlier engine, the left wrist holds the
-turn that in four of the eight ways no lengths within the bounds of
-separation can close even on its own.}
+(bottom). At the wrist, mesh~(b) has closed loops on the thumb and the back
+of the hand where mesh~(a) has spiral ones, and a spiral loop along the outer
+side of the forearm remains on both. At the eye, neither openclare mesh has
+a spiral loop near the eye, both keep spiral loops on the forehead and at the
+ear, and the loop round the eye of the hand-made mesh is itself counted as
+spiral.}
 \label{fig:closeups}
 \end{figure*}
 
 \section{An exact look at the closing system}\label{sec:exact}
 
 How far is the heuristic of Section~\ref{sec:closing} from what the
-constraints allow? An experimental hook of openclare (branch
-\texttt{rd-exact}, on an engine without the constraint rounds and the floor
-of the deviation cap, that is before commit \texttt{c8bf2be}) exports, for
-each way of finding turns, the system it works on, for the male body at
-$10{,}590$ quads. Its T-mesh has $1{,}295$ nodes ($1{,}034$ T-junctions and
-$261$ singular vertices: $133$ of valence three, $127$ of valence five and
-one of valence two), $2{,}069$ arcs and $776$ patches, hence $1{,}552$
-balance equations, one per patch and direction. The export gives the real
-lengths, every turn found with its shift (on all $1{,}299$ turns, composing
-the crossing maps along the walk gives the exported shift), and the lower
-bounds the integer search placed on arcs to keep singularities apart ($28$ to
-$36$ arcs held at length one). These bounds are the engine's choice of
+constraints allow? An experiment option of the engine exports, for each way
+of finding turns, the system it works on; we export it for the male body at
+$10{,}590$ quads, from the engine as it runs. Its T-mesh has $1{,}342$ nodes
+($1{,}068$ T-junctions, $254$ singular vertices, $131$ of valence three and
+$123$ of valence five, and $20$ corners of folds), $2{,}146$ arcs and $806$
+patches, hence $1{,}612$ balance equations, one per patch and direction. The
+export gives the real lengths, every turn found with its shift (on all
+$1{,}708$ turns, composing the crossing maps along the walk gives the
+exported shift), and the lower bounds the integer search placed on arcs to
+keep singularities apart ($36$ to $197$ arcs held at length one, depending on
+the way). These bounds are the engine's choice of
 \emph{which} arc of a chain between two singular vertices carries their
 separation: validity asks a chain to keep a positive total length, not a
 given arc. Every statement below is relative to them. We call
@@ -736,8 +725,9 @@ lengths that put the separation on another arc of the chain and allows
 lengths that bring other arcs to zero. The ways are numbered as exported:
 way $m + 2j + 4i$ starts from the shares $\{0.5\}$ ($m = 0$) or $\{0.2, 0.5,
 0.8\}$ ($m = 1$), with the lean bound $0.05$ ($j = 0$) or $0.12$ ($j = 1$)
-and the length bound $2$ ($i = 0$) or $6$ ($i = 1$) sides. Way~2 is the one
-the engine keeps for this body.
+and the length bound $2$ ($i = 0$) or $6$ ($i = 1$) sides. Without the
+other draws the engine keeps way~2 for this body ($1.65\%$ of spiral edges);
+with them it keeps the lengths of another draw ($1.46\%$).
 
 \paragraph{The conflict is real but local.}
 All held turns can be closed together if the lengths are only asked to be
@@ -746,64 +736,66 @@ set of turns cannot be closed within the bounds exactly when some
 combination of their shifts equals, modulo the balances, a non-negative
 combination of arc lengths that charges an arc held open, and the companion
 paper~\cite{gardent2026turns} reads these certificates on the singularities.
-In four ways (0, 1, 2 and 4) one held turn cannot even be closed on its own:
-the same turn round the left wrist, of length $7.0$, whose shift equals,
-modulo the balances, $-(\ell_{1921} + \ell_{1937})$, where arc $1937$,
-$0.08$ quad edges long in the parametrization, is held at length at least
-one (the certificate checked in exact rational arithmetic for way~0).
-Whether $\ell_{1937} = 0$ would merge two singular vertices, that is whether
+In seven ways (all but way~4) some held turn cannot even be closed on its
+own. In five of them (0, 1, 2, 5 and 7) it is the same turn, of length
+$6.76$, whose shift equals, modulo the balances, $-(\ell_{1892} +
+\ell_{1908})$, where arc $1908$, less than $0.09$ quad edges long in the
+parametrization, is held at length at least one; in ways 2, 3, 6 and 7 a
+second turn, of length $4.72$, is held up in the same way by arc~$1006$ (both
+certificates checked in exact rational arithmetic).
+Whether $\ell_{1908} = 0$ would merge two singular vertices, that is whether
 every valid quantization meets this bound, we did not check. Giving up the
 least total amount of the bounds needed to close all held turns, a linear
-program, shows that in ways 0, 2 and 4 the bound of that single arc stands in
-the way. The other conflicts gather in clusters of singularities at the
-eyes, the hands and the feet.
+program, shows that in way~0 the bound of arc $1908$ alone stands in the
+way, in way~2 three bounds, that one among them, and in the other ways $6$
+to $154$.
 
-\paragraph{How far the projection is.}
+\paragraph{How many held turns can close.}
 With every bound kept, the largest set of held turns that can be closed
 together is found by a mixed-integer program with one binary per turn
-(Table~\ref{tab:exact}). The projection of the engine of the export keeps
-far fewer: it removed, one at a time, the turn left most shifted by a
-least-squares projection whose negative lengths were clamped to zero, and a
-single clamped arc could make it drop dozens of turns that conflict with
-nothing. The engine at the cited commit holds such arcs at zero instead (the
-active set of Section~\ref{sec:closing}). In whole numbers, the same
-mixed-integer program did not finish within fifteen minutes on the two
-systems tried.
+(Table~\ref{tab:exact}). The projection of the engine keeps every held turn
+closed: its active set asks the lengths to be non-negative only, which, as
+above, lets all held turns close; the bounds of separation return in the
+integer search. In whole numbers, the same mixed-integer program, with a
+limit of fifteen minutes a way, proves its optimum in way~3 only ($90$
+turns, as in real numbers); in the other ways it stops with $1$ to $88$
+turns fewer than in real numbers.
 
 \begin{table}[t]
 \centering
-\begin{tabular}{lrrr}
+\begin{tabular}{lrr}
 \toprule
-way & held & kept by the projection & closable together \\
+way & held & closable together \\
 \midrule
-0 & 48 & 42 & 47 \\
-1 & 78 & 46 & 73 \\
-2 & 52 & 46 & 51 \\
-3 & 86 & 47 & 82 \\
-4 & 84 & 49 & 83 \\
-5 & 160 & 48 & 154 \\
-6 & 88 & 53 & 87 \\
-7 & 169 & 49 & 160 \\
+0 & 58 & 57 \\
+1 & 92 & 87 \\
+2 & 64 & 61 \\
+3 & 102 & 90 \\
+4 & 125 & 120 \\
+5 & 219 & 189 \\
+6 & 131 & 123 \\
+7 & 229 & 192 \\
 \bottomrule
 \end{tabular}
-\caption{Male body at $10{,}590$ quads, real numbers, engine of the export.
-``Kept by the projection'': by the clamped projection of that engine;
-``closable together'': the largest set of held turns closable with every
-bound of separation kept.}
+\caption{Male body at $10{,}590$ quads, real numbers, engine of version
+0.7.0. ``Closable together'': the largest set of held turns closable with
+every bound of separation kept; in way~7 the program stopped at its limit
+of $300$ seconds, with a bound of $195$.}
 \label{tab:exact}
 \end{table}
 
 \paragraph{The rounding ignores the shifts.}
 Feeding the integer search of the engine better targets shows what survives
-it (Table~\ref{tab:rounding}). Aiming at the lengths of the linear program
-closes fewer loops in the end: its weighted $L^1$ objective puts the changes
-on few arcs, the deviation from the real lengths grows, and the variants with
-the fewest spirals are refused by the deviation cap. The active-set
-projection keeps every held turn closed in real numbers, yet after the
-integer search $117$ of $169$ are shifted again and the mesh spirals more;
-with the clamped projection, too, about $40\%$ of the turns it kept are
-shifted after the integer search. The integer search follows the targets
-but not the shifts.
+it (Table~\ref{tab:rounding}). The active-set projection, the engine's,
+keeps every held turn closed in real numbers, yet after the integer search
+$33\%$ to $74\%$ of them are shifted again ($170$ of $229$ in way~7); with a
+least-squares projection whose negative lengths are clamped to zero, too,
+about $40\%$ of the turns it closes are shifted after the integer search.
+The integer search follows the targets but not the shifts. Aiming at the
+lengths of the linear program, whose weighted $L^1$ objective puts the
+changes on few arcs, the engine ranks first a candidate with $2.63\%$ of
+spiral edges, yet outputs the mesh of the plain lengths: after meshing, the
+candidates ranked before them were set aside.
 
 \begin{table}[t]
 \centering
@@ -812,17 +804,16 @@ but not the shifts.
 \toprule
 targets of the integer search & turns closed in reals & still shifted after & spiral edges (mesh) \\
 \midrule
-projection, clamped & about 50 & 10--23 of them & 1.1\% \\
-linear program, $L^1$ & up to 160 & --- & 11.9\% \\
-active set, floor 0 & all held (up to 169) & 117 of 169 & 3.3\% \\
-active set, floor half the real length & 36--72 & --- & 9.8\% \\
+projection, clamped & 41--52 & 15--25 of them & 2.11\% \\
+linear program, $L^1$ & 57--192 & 14--133 of them & 23.39\% \\
+active set, floor 0 (the engine) & all held (58--229) & 19--170 of them & 1.46\% \\
+active set, floor half the real length & 51--132 & 19--93 of them & 2.80\% \\
 \bottomrule
 \end{tabular}
-\caption{Male body at $10{,}590$ quads, engine of the export, one run each;
-the mesh keeps the way with the fewest spirals, so its share is that of a
-single way. The engine at the cited commit uses the active set with floor $0$
-together with the constraint rounds, the floor of the deviation cap and the
-other draws, which this table does not include.}
+\caption{Male body at $10{,}590$ quads, engine of version 0.7.0 with its
+experiment options, one run each; ranges over the eight ways. The mesh keeps
+the candidate with the fewest spirals, so its share is that of a single way
+or draw; with the linear program it is the mesh of the plain lengths.}
 \label{tab:rounding}
 \end{table}
 
@@ -832,98 +823,95 @@ the balance equations and whose edges are the arcs (each arc lies on a side
 of each of the two patches it borders). When this graph is connected and has
 a cycle that $\pm1$ values cannot balance, as on the body, the companion
 paper shows that a set of free arcs parametrizes the lattice of whole
-balanced lengths: here $2{,}069 - 1{,}552 = 517$ arcs can be given any whole
+balanced lengths: here $2{,}146 - 1{,}612 = 534$ arcs can be given any whole
 lengths and the others follow, so balances alone never obstruct whole
 lengths. Closing exactly, in whole numbers, the turns found closable
-together is feasible: HiGHS solves it in about two minutes a way for three of
-the four ways tried (the fourth, with $87$ turns, did not finish within ten
-minutes). The solutions leave $1$ to $4$ held turns shifted where the engine
-leaves $13$ to $44$, and fewer of the turns not held as well ($5$ against
-$9$, $5$ against $11$, $0$ against $27$), at a deviation from the real
-lengths $4\%$ to $62\%$ higher. Yet the quad meshes they make spiral
-\emph{more}: $12.2\%$ of their edges against $8.8\%$ for the first way,
-$3.7\%$ against $1.1\%$ for the second, and the third breaks the structure.
-Most of the loops that spiral are not turns the sampled walks find.
+together, HiGHS finds such lengths in $83$ to $228$ seconds in ways 0 to 3,
+and none within ten minutes in ways 4 to 7. The solutions leave $1$, $5$,
+$3$ and $12$ held turns shifted where the engine leaves $19$, $40$, $23$ and
+$52$, and fewer of the turns not held as well ($3$ against $15$, $9$ against
+$25$, $5$ against $18$, $11$ against $34$), at a weighted deviation from the
+real lengths $2\%$ to $64\%$ higher. Yet three of the four spiral
+\emph{more}, by the engine's count on the connectivity of their lengths:
+$5.9\%$, $2.8\%$ and $7.8\%$ of their edges against $4.1\%$, $1.7\%$ and
+$3.5\%$ for the engine's lengths in ways 0, 2 and 3; in way~1, $4.9\%$
+against $9.1\%$. Only those of way~2 stay within the engine's window of
+sizes; the others have $10{,}857$, $12{,}420$ and $11{,}011$ quads. Most of
+the loops that spiral are not turns the sampled walks find.
 
 Walking every strip of the mesh of way~2 instead
-(Proposition~\ref{prop:complete}) finds $230$ ways round, each strip twice,
-once in each direction; $168$ come back shifted. Selecting them by lean, as
-the constraint rounds do, keeps $222$, of which $218$ ($109$ strips) can be
+(Proposition~\ref{prop:complete}) finds $306$ ways round, each strip twice,
+once in each direction; $236$ come back shifted. Selecting them by lean, as
+the constraint rounds do, keeps $298$, of which $270$ ($135$ strips) can be
 closed together in real numbers with every bound kept. Posed directly to
-HiGHS, they gave no whole solution in ten or thirty minutes; given the $171$
+HiGHS, they gave no whole solution in $12{,}651$ seconds; given the $341$
 arcs that every real solution sets to zero (each certified by a non-negative
-combination of shifts, $23$ distinct certificates round fingers, toes, feet,
-head, torso and neck), it finds one in a second. The obstruction is the
-size: no real lengths closing the $218$ rings have a mean deviation from the
-targets below $0.817$, where the engine of the export refused $0.474$ ($1.5$
-times the $0.316$ of its plain search; the engine at the cited commit allows
-$0.516$). A subset of $190$, chosen greedily, closes at $0.399$ in real
-numbers, keeping the number of quads to first order. In whole numbers, with
-the reformulation of Aardal, Hurkens and Lenstra~\cite{aardal2000diophantine}
-on an LLL-reduced basis~\cite{lenstra1982lll} of the lattice of closed
-quantizations, HiGHS, stopped after $1{,}200$ seconds, finds whole lengths
-closing all $190$ within every bound at a mean deviation of $0.619$ and
-$10{,}568$ quads, and proves that none does better than $0.536$. Given to the
-engine in place of its lengths, they close the $190$ rings but make $2.5\%$
-of spiral edges against $1.1\%$: at the new lengths the strips are other
-walks, $156$ of the $230$ ways round shifted. Rounding costs between $0.137$
-(proven) and $0.220$ (found) of mean deviation above the real optimum; it is
-the choice of the turns to close, at the lengths where they are the strips of
-the mesh, that decides how much the mesh spirals.
+combination of shifts, $216$ certificates over $36$ distinct sets of rings),
+none was found in $2{,}596$ seconds either. No real lengths closing the
+$270$ rings have a mean deviation from the targets below $1.304$, where the
+engine allows $0.522$ ($0.2$ above the $0.322$ of its plain search). The
+largest subset closable within a mean deviation of $0.4$, the number of
+quads held to first order, found by a program stopped after $600$ seconds,
+has $228$ rings (at most $267$) and closes at $0.395$ in real numbers. In
+whole numbers, with the reformulation of Aardal, Hurkens and
+Lenstra~\cite{aardal2000diophantine} on an LLL-reduced
+basis~\cite{lenstra1982lll} of the lattice of closed quantizations, HiGHS,
+stopped after $1{,}200$ seconds, finds whole lengths closing all $228$
+within every bound at a mean deviation of $0.535$ and $10{,}653$ quads, and
+proves that none does better than $0.518$. These lengths lie above the
+engine's cap ($0.535$ against $0.522$), so the engine does not take them as
+a candidate. Rounding costs between $0.123$ (proven) and $0.140$ (found) of
+mean deviation above the real optimum.
 
 \paragraph{The heuristic leaves most of the gap.}
 The companion paper~\cite{gardent2026turns} computes the least number of
 held turns that any lengths in $P_{\mathrm{eng}}$ leave shifted, a minimum
 cover of the irreducible infeasible subsystems~\cite{parker1996iis}: exactly
-$1$, $5$, $1$, $4$, $1$, $6$, $1$ and $9$ in ways 0 to 7, against $13$, $39$,
-$16$, $44$, $49$, $115$, $44$ and $123$ left shifted by the engine. With the
-engine's cap on the deviation and its window of sizes ($10{,}379$ to
-$10{,}801$ quads) added, at whole lengths, the least number is still exactly
-one in ways 0 and 2: whole lengths closing every held turn but the wrist
-exist at $10{,}439$ and $10{,}436$ quads, at mean deviations $0.442$ and
-$0.469$. Of the $16$ turns
-of way~2 the engine leaves shifted, the bounds of separation force one and
-the cap, the size and integrality none; the heuristic accounts for
-$15$. Closing more turns, however, is not what the
-measure of spirals sees: a local search over whole lengths within the same
-cap and size closes $38$ more strips of the engine's mesh than the engine
-does, but at its lengths, which also break the mesh, the strips are again
-other walks, and the share of spiral strips is $0.020$ against $0.011$ for
-the engine. Choosing the most turns to close
+$1$, $5$, $3$, $12$, $5$, $30$, $8$ and $37$ in ways 0 to 7, against $19$,
+$40$, $23$, $52$, $61$, $154$, $72$ and $170$ left shifted by the engine.
+With the engine's cap on the deviation and its window of sizes ($10{,}379$
+to $10{,}801$ quads) added, at whole lengths, the least number is still
+exactly one in way~0 and three in way~2: whole lengths closing every other
+held turn exist at $10{,}730$ and $10{,}435$ quads, at mean deviations
+$0.387$ and $0.506$. Of the $23$ turns of way~2 the engine leaves shifted,
+the bounds of separation force three and the cap, the size and integrality
+none; the heuristic accounts for $20$. Closing more turns, however, is not
+what the measure of spirals sees: a local search over whole lengths within
+the same cap and size closes $45$ more strips of the mesh of way~2 than the
+engine does, but at its lengths, where the strips are other walks, $4.7\%$
+of the edges spiral, against $1.7\%$ at the engine's lengths of way~2; it is
+the choice of the turns to close, at the lengths where they are the strips
+of the mesh, that decides how much the mesh spirals. Choosing the most turns to close
 is NP-hard for bidirected balances with $0$--$1$ bounds, the algebraic form
 of quantization~\cite{gardent2026turns}; whether the balances and turns of an
 actual T-mesh stay hard is open.
 
 \paragraph{Closing the most rings, end to end.}
-We measured what an exact selection buys on the bench, with the engine of
-branch \texttt{complete-helices} (the constraint rounds without the finer
-work mesh at thin walls and the other draws of the cited commit: $4.54\%$ of spiral edges over
-the $36$ runs). For the lengths the engine keeps, a mixed-integer program
-closes as many of its strips leaning less than $0.12$ as it can, weighted by
-their length round, within the balances, the bounds of separation, the cap
-and the quad budget; the engine meshes the result, the strips are walked
-again at the new lengths, and the program solved again, three rounds. With
-the shift expressions alone the program closes $27.3$ of the $38.2$ such
-strips of a model (mean over the $36$ runs), but at the new lengths only
-$22.1$ are closed strips, against $21.8$ for the engine. Required for every
-strip counted as closed, the corridor inequalities~\eqref{eq:corridor} make
-the count exact ($24.6$ closed by the program, $24.0$ found closed by walking
-the mesh). In place of the engine's lengths, the lengths found do not
-spiral less: $4.77\%$ and $5.08\%$ of spiral edges in two runs against
-$4.54\%$. Added to the candidates the engine chooses among by its own count
-of spirals, they lower the mean to $2.32\%$ and $2.70\%$, never higher;
-three other draws of the engine's per-arc perturbation, added the same way
-(the step the cited commit takes with twelve, Section~\ref{sec:closing}),
-give $4.12\%$, three lengths drawn at random within the same cap and budget
-$4.34\%$, and the rounds without the corridor inequalities $3.15\%$, better
-than the other draws on $7$ runs and worse on $7$. Closed
-loops ($38.0\%$ against $36.3\%$ of the edges) and mean distance ($0.383$
-against $0.385$) barely move, and all $36$ meshes are valid. On the male
-body every round spiralled more than the engine ($3.45\%$ to $5.59\%$ against
-$1.59\%$). The gain needs a solver that finishes: with a limit of $5$
-seconds per solve it vanishes ($4.10\%$ against $4.12\%$ for the other
-draws), as $63$ of the $126$ pieces get no solution in time and $68$ of $108$
-rounds return the engine's own lengths.
+We measured what an exact selection buys on the bench with the slow quality
+mode of the engine (\texttt{--quality slow}), against the engine without its
+other draws ($5.85\%$ of spiral edges over the $36$ runs), with three
+($5.43\%$) and with its twelve ($4.92\%$). For the lengths the engine keeps,
+a mixed-integer program closes as many of its strips leaning less than
+$0.12$ as it can, weighted by their length round, within the balances, the
+bounds of separation, the cap and the quad budget. A strip counts as closed
+only where the corridor inequalities~\eqref{eq:corridor} hold for it, so
+that it keeps its walk at the new lengths. The engine meshes the result, the
+strips are walked again at the new lengths, and the program solved again,
+three rounds; each round's lengths join the engine's candidates on the same
+terms. The program is solved by HiGHS linked into the engine, each solve
+stopped at a work limit (simplex iterations times arcs) that does not depend
+on the load. Without the other draws, the slow mode lowers the mean to
+$4.41\%$: lower on $9$ of the $36$ runs, never higher. Closed loops ($36.6\%$
+against $35.4\%$ of the edges) and mean distance ($0.382$\textperthousand\
+in both) barely move, and all $36$ meshes are valid. Against the twelve
+other draws it is lower on average ($4.41\%$ against $4.92\%$) but not run
+by run: higher on $9$ runs, lower on $5$. On the male body its three rounds
+return the lengths they start from: $1.65\%$, as without it, against
+$1.46\%$ for the engine with its draws. The gain does not need a solver that
+finishes: $90$ of the $120$ solves stop at the work limit, and with a limit
+of $5$ seconds per solve instead, $76$ of $100$ stop at it, $18$ of the $66$
+rounds (against $12$) return the lengths they start from, and the mean is
+$4.56\%$, on four processors where the other runs had eight.
 
 \paragraph{Acting before quantization.}
 Moving singular vertices in the parametrization, and rotating the field
@@ -940,27 +928,22 @@ onto the turns beside it. The conflicts are better attacked in quantization.
 The results come from one implementation and are preliminary. The spiral
 share of a single model is chaotic, so only the means over three budgets are
 robust; the other figures are single runs. The measure sees helices of pitch
-up to four only. The comparison with other remeshers and the experiments of
-Section~\ref{sec:exact} used earlier engines (Appendix~\ref{app:provenance}),
-and the male body was not remeshed with the cited commit. The exact look
-covers one body, with an engine without the constraint rounds, and holds
-relative to the engine's bounds of separation, which are its choice of arcs
-and neither a subset nor a superset of the valid quantizations; the cap
-imposed there is the engine's only approximately (a quantization at
-$0.4737$ was refused by it). Times were taken on a shared machine and the
-outcomes that depend on a time limit depend on its load. The scripts and logs
-of the exact experiments are not yet published
-(Appendix~\ref{app:provenance}).
+up to four only. The exact look covers one body and holds relative to the
+engine's bounds of separation, which are its choice of arcs and neither a
+subset nor a superset of the valid quantizations. The machine was shared:
+its load is recorded, not controlled, and the outcomes that depend on a
+time limit depend on it.
 
 Three problems remain open. \emph{An exact formulation}: minimizing the
 deviation subject to the balances, the bounds and $\shift_\gamma(\ell) = 0$
 for a set of turns is a minimum-deviation flow with linear side constraints;
 how much of the exact machinery of~\cite{heistermann2023bimdf} carries over is
-open, and the linear relaxation already closes almost all held turns.
+open, and the linear relaxation already closes $84\%$ to $98\%$ of the held
+turns.
 \emph{Closing in whole numbers}: whole lengths closing every ring asked for
 are found through a reduced lattice basis, but in minutes, with the number
-of quads held only to first order and $0.14$ to $0.22$ above the real optimum
-in deviation; can the integer search move within this lattice at the speed of
+of quads held only to first order and $0.12$ to $0.14$ above the real optimum
+in deviation, here above the engine's cap; can the integer search move within this lattice at the speed of
 a flow solver? \emph{Which turns}, the central one on the evidence of
 Section~\ref{sec:exact}: closing rings changes the lengths, the lengths
 change the strips, and the strips of the new mesh are other walks. Is there a
@@ -996,48 +979,57 @@ who publishes it, is responsible for its content.
 
 \section{Provenance of the figures}\label{app:provenance}
 
-The engine changed while the experiments were made. The table says, for each
-group of figures, which version produced it and where its raw output is.
-``Commit message'': the figures are stated in the message of that commit of
-the repository; ``working logs'': the output files and scripts of the
-experiment, kept by the author outside the repository and not yet
-published.
+Every figure comes from the engine of version 0.7.0 (commit
+\texttt{e13fadb}), built in release mode, and from the scripts of
+\nolinkurl{docs/research/closing-loops/experiments/} (those of
+Section~\ref{sec:exact} in its folder \nolinkurl{exact/}) and, for the
+census, the conflicts and the least number of turns left shifted, which the
+companion paper shares, of \nolinkurl{docs/research/turns-of-a-t-mesh/experiments/}.
+Each script writes a summary, \texttt{results/}\textit{name}\texttt{.json}
+beside it, with the engine's commit and build, the machine, its load and the
+solver's version; its README gives the command of every table. The raw
+output (meshes, exports, logs) is not in the repository.
 
 \begin{center}
 \small
 \setlength{\tabcolsep}{4pt}
-\begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{5.6cm}@{}}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{5.6cm}>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{4.4cm}@{}}
 \toprule
-figures & engine & source \\
+figures & script & summary \\
 \midrule
-% RERUN v0.7.0: figure and engine of this row (4.65% is not the cited commit's).
-twelve models, three budgets, $4.65\%$ (Section~\ref{sec:experiments})
-  & the cited commit & working logs of the protocol below; a second run of
-  the same engine gave the same figures for the $36$ meshes \\
+twelve models, three budgets (Section~\ref{sec:experiments})
+  & \texttt{twelve\_models.py}, the protocol below
+  & \texttt{twelve\_models.json} \\
 Table~\ref{tab:dev}
-  & commits \texttt{9f3e455}, \texttt{3658abc}, \texttt{197f0ca}
-  & commit messages (also \texttt{452b346}) \\
+  & \texttt{ablation.py}; its last line gave the $36$ meshes above byte for
+  byte
+  & \texttt{ablation.json} \\
 against other remeshers
-  & commits \texttt{5bc16c6}, \texttt{b0fba91}
-  & \texttt{bench/results/results.json} at those commits \\
-hand-made male body
-  & ---
-  & \texttt{bench/results/RESULTS.md} \\
-male body, openclare
-  & \texttt{452b346}; \texttt{1b77f7d} to \texttt{4db7b42}
-  & commit messages; closed loops, distance and corners: working logs \\
+  & \texttt{against\_remeshers.py}, from \nolinkurl{bench/results/results.json}
+  at \texttt{e13fadb}
+  & \texttt{against\_remeshers.json} \\
+male body, openclare and hand-made
+  & \texttt{male\_body.py}
+  & \texttt{male\_body.json} \\
 Figures~\ref{fig:overview} and~\ref{fig:closeups}, their numbers
-  & commit \texttt{89232b0}, one run per mesh; QuadriFlow through Blender, on
-  the source scaled by $100$ and scaled back
-  & \texttt{figures/README.md} (commands, numbers, source checksum) and
-  \texttt{figures/make\_figures.sh}, which remakes them \\
-Section~\ref{sec:exact}, up to ``The heuristic leaves most of the gap''
-  & branch \texttt{rd-exact} (export hook), engine before \texttt{c8bf2be}
-  & working logs, scripts and the exported systems; some summary figures
-  also in commit messages (\texttt{2a4ca25}, \texttt{9132835}) \\
+  & \texttt{figures/make\_figures.sh}, \texttt{figure\_numbers.py};
+  QuadriFlow through Blender, on the source scaled by $100$ and scaled back
+  & \texttt{figures.json} \\
+Section~\ref{sec:exact}: the T-mesh, the conflicts, the least numbers left
+shifted
+  & \texttt{census.py}, \texttt{holonomy.py}, \texttt{conflicts.py},
+  \texttt{forced.py} of the companion paper
+  & their summaries of the same names \\
+Section~\ref{sec:exact}: the other figures and Tables~\ref{tab:exact}
+and~\ref{tab:rounding}
+  & \texttt{exact/}: \texttt{relaxation.py}, \texttt{most\_closable.py},
+  \texttt{rings.py}, \texttt{lattice\_rounding.py}, \texttt{local\_search.py},
+  \texttt{remesh.py}
+  & their summaries of the same names \\
 closing the most rings, end to end
-  & branch \texttt{maxclose-rd}, engine of branch \texttt{complete-helices}
-  & working logs; some figures only in the experiment's summary \\
+  & \texttt{exact/end\_to\_end.py}
+  & \texttt{end\_to\_end.json}; the limit of $5$ seconds:
+  \texttt{end\_to\_end-time-5.json} \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -1055,14 +1047,15 @@ figures are the means of \texttt{loop\_edges\_spiral},
 runs.
 
 \paragraph{Reproducibility.} The method is implemented in openclare (Rust),
-in the main branch of the repository at the cited commit; the bench is
-driven by \texttt{bench/run.py}. The export of the T-mesh used in
-Section~\ref{sec:exact} is an experimental hook of the branch
-\texttt{rd-exact}, and the end-to-end selection is on the experimental
-branch \texttt{maxclose-rd}; neither is part of the engine, and neither is
-tagged yet. Until the scripts and logs of the exact experiments are
-published, the measured statements of Section~\ref{sec:exact} can be checked
-against these branches but not rerun as they stand. This version of the note
-was built from commit \texttt{\enginecommit}.
+in the main branch of the repository; the bench is driven by
+\texttt{bench/run.py}. The export of the T-mesh and the switches of
+Table~\ref{tab:dev} are experiment options of the engine of version 0.7.0
+(\texttt{ALGORITHM.md}, ``Experiment options''), and the slow quality mode
+is its option \texttt{--quality slow}, so the scripts above make every
+figure again on that engine; the figures that
+depend on a time limit depend on the machine and its load as well. The
+prototypes of ``Acting before quantization'' are not part of the engine and
+are not scripted. This version of the note was built from commit
+\texttt{\enginecommit}.
 
 \end{document}

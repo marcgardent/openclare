@@ -1,0 +1,379 @@
+{
+ "experiment": "the lattice of whole balanced lengths and of the held turns",
+ "export": "scratch/data-package/turns-of-a-t-mesh/male-body/export/call-2146-806-5237618",
+ "export_record": {
+  "experiment": "export of the turns of the closing",
+  "engine": {
+   "commit": "e13fadb",
+   "build": "sha256:d444f05f7279f3e7",
+   "options": "as-is",
+   "environment": {}
+  },
+  "command": [
+   "openclare",
+   "remesh",
+   "<source>",
+   "mesh.obj",
+   "--preset",
+   "organic",
+   "--quads",
+   "10590"
+  ],
+  "source": {
+   "path": "source.obj",
+   "md5": "f1fe33002b731d1d41846daed6c59f5e"
+  },
+  "machine": {
+   "processor": "Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz",
+   "threads": 8,
+   "memory": "62.7 GiB",
+   "load_average": [
+    8.64,
+    5.25,
+    3.14
+   ],
+   "load_average_at_end": [
+    7.71,
+    6.46,
+    3.99
+   ]
+  },
+  "seconds": 187.3,
+  "tmesh": "call-2146-806-5237618",
+  "ways": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "measure": {
+   "valid": true,
+   "quads": 10484,
+   "loop_edges_spiral": 0.014641358260206027,
+   "loops_spiral": 11,
+   "loop_edges_closed": 0.36484166348721775,
+   "mean_distance": 0.0001895734178229812,
+   "hausdorff": 0.004743854442472561,
+   "angle_deviation_mean": 4.292626082506852,
+   "irregular_vertices": 254,
+   "inverted_faces": 0
+  }
+ },
+ "ways": {
+  "0": "6cc0c52ed844da1d1343a49e60e967e06c71639e970a2ffad1186047e4bff93a",
+  "1": "f9ed1876de4d580ec3f64e3cb38252890f7cc8d403f35169f762fc95471a3c16",
+  "2": "73fd72de47d0b93bf8b4d3fdf2e4cbaca7f7814337b80857130a4ca42835e517",
+  "3": "dd044d80dd8f807d335182282202b905fc021f48f750eeb03295460de6d12ca4",
+  "4": "3197c4fccb7ff314c588885bb3519c7c1eea7c977887126b2636173fb28f69f7",
+  "5": "f3bc8513c30d53e9551ff30710bca835f2a5771492d2b91bd620a375b620183c",
+  "6": "e311a34d17929be3646e76c6244d0b6e3cbd44f6515be8313f76c4051b5b5e5a",
+  "7": "826d051bb7c6219c45509225f52219665732ede8395ed4b7911c6d83fa27e993"
+ },
+ "machine": {
+  "processor": "Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz",
+  "threads": 8,
+  "memory": "62.7 GiB",
+  "load_average": [
+   2.15,
+   3.48,
+   3.62
+  ],
+  "load_average_at_end": [
+   1.47,
+   1.93,
+   2.77
+  ],
+  "processors_allowed": 8
+ },
+ "solver": {
+  "scipy": "1.16.3",
+  "highs": "1.8.0",
+  "highs_threads": 1
+ },
+ "wall_seconds": 472.1,
+ "seconds_per_way": 600.0,
+ "per_way": [
+  {
+   "way": 0,
+   "arcs": 2146,
+   "balances": {
+    "rank": 1612,
+    "dimension": 534,
+    "divisors": [
+     2
+    ],
+    "non_unit_equations": 0,
+    "euclid_steps": 0,
+    "seconds": 0.0
+   },
+   "held_turns": {
+    "turns_imposed": 58,
+    "of": 58,
+    "finished": true,
+    "rank_beyond_balances": 54,
+    "dimension": 480,
+    "divisors": [
+     2
+    ],
+    "non_unit_equations": 0,
+    "euclid_steps": 0,
+    "largest_entry_digits": 2,
+    "seconds": 0.0
+   }
+  },
+  {
+   "way": 1,
+   "arcs": 2146,
+   "balances": {
+    "rank": 1612,
+    "dimension": 534,
+    "divisors": [
+     2
+    ],
+    "non_unit_equations": 0,
+    "euclid_steps": 0,
+    "seconds": 0.0
+   },
+   "held_turns": {
+    "turns_imposed": 92,
+    "of": 92,
+    "finished": true,
+    "rank_beyond_balances": 87,
+    "dimension": 447,
+    "divisors": [
+     2,
+     2,
+     2,
+     2,
+     2
+    ],
+    "non_unit_equations": 2,
+    "euclid_steps": 10,
+    "largest_entry_digits": 4,
+    "seconds": 0.2
+   }
+  },
+  {
+   "way": 2,
+   "arcs": 2146,
+   "balances": {
+    "rank": 1612,
+    "dimension": 534,
+    "divisors": [
+     2
+    ],
+    "non_unit_equations": 0,
+    "euclid_steps": 0,
+    "seconds": 0.0
+   },
+   "held_turns": {
+    "turns_imposed": 64,
+    "of": 64,
+    "finished": true,
+    "rank_beyond_balances": 60,
+    "dimension": 474,
+    "divisors": [
+     2
+    ],
+    "non_unit_equations": 0,
+    "euclid_steps": 0,
+    "largest_entry_digits": 2,
+    "seconds": 0.0
+   }
+  },
+  {
+   "way": 3,
+   "arcs": 2146,
+   "balances": {
+    "rank": 1612,
+    "dimension": 534,
+    "divisors": [
+     2
+    ],
+    "non_unit_equations": 0,
+    "euclid_steps": 0,
+    "seconds": 0.0
+   },
+   "held_turns": {
+    "turns_imposed": 102,
+    "of": 102,
+    "finished": true,
+    "rank_beyond_balances": 95,
+    "dimension": 439,
+    "divisors": [
+     2,
+     2,
+     2,
+     2,
+     2,
+     2
+    ],
+    "non_unit_equations": 1,
+    "euclid_steps": 251,
+    "largest_entry_digits": 3,
+    "seconds": 0.2
+   }
+  },
+  {
+   "way": 4,
+   "arcs": 2146,
+   "balances": {
+    "rank": 1612,
+    "dimension": 534,
+    "divisors": [
+     2
+    ],
+    "non_unit_equations": 0,
+    "euclid_steps": 0,
+    "seconds": 0.0
+   },
+   "held_turns": {
+    "turns_imposed": 125,
+    "of": 125,
+    "finished": true,
+    "rank_beyond_balances": 118,
+    "dimension": 416,
+    "divisors": [
+     2,
+     2,
+     2
+    ],
+    "non_unit_equations": 14,
+    "euclid_steps": 176,
+    "largest_entry_digits": 122,
+    "seconds": 0.7
+   }
+  },
+  {
+   "way": 5,
+   "arcs": 2146,
+   "balances": {
+    "rank": 1612,
+    "dimension": 534,
+    "divisors": [
+     2
+    ],
+    "non_unit_equations": 0,
+    "euclid_steps": 0,
+    "seconds": 0.0
+   },
+   "held_turns": {
+    "turns_imposed": 219,
+    "of": 219,
+    "finished": true,
+    "rank_beyond_balances": 194,
+    "dimension": 340,
+    "divisors": [
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     4,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2
+    ],
+    "non_unit_equations": 36,
+    "euclid_steps": 1031,
+    "largest_entry_digits": 12757,
+    "seconds": 49.9
+   }
+  },
+  {
+   "way": 6,
+   "arcs": 2146,
+   "balances": {
+    "rank": 1612,
+    "dimension": 534,
+    "divisors": [
+     2
+    ],
+    "non_unit_equations": 0,
+    "euclid_steps": 0,
+    "seconds": 0.0
+   },
+   "held_turns": {
+    "turns_imposed": 131,
+    "of": 131,
+    "finished": true,
+    "rank_beyond_balances": 123,
+    "dimension": 411,
+    "divisors": [
+     2,
+     2,
+     2
+    ],
+    "non_unit_equations": 16,
+    "euclid_steps": 172,
+    "largest_entry_digits": 61,
+    "seconds": 0.5
+   }
+  },
+  {
+   "way": 7,
+   "arcs": 2146,
+   "balances": {
+    "rank": 1612,
+    "dimension": 534,
+    "divisors": [
+     2
+    ],
+    "non_unit_equations": 0,
+    "euclid_steps": 0,
+    "seconds": 0.0
+   },
+   "held_turns": {
+    "turns_imposed": 229,
+    "of": 229,
+    "finished": true,
+    "rank_beyond_balances": 200,
+    "dimension": 334,
+    "divisors": [
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     4,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2
+    ],
+    "non_unit_equations": 38,
+    "euclid_steps": 972,
+    "largest_entry_digits": 37536,
+    "seconds": 420.0
+   }
+  }
+ ]
+}

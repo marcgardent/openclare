@@ -1,0 +1,324 @@
+{
+ "experiment": "an exact selection of the rings, end to end (the slow quality mode)",
+ "engine": {
+  "binary": "openclare",
+  "commit": "e13fadb",
+  "build": "sha256:d444f05f7279f3e7"
+ },
+ "machine": {
+  "processor": "Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz",
+  "threads": 8,
+  "memory": "62.7 GiB",
+  "load_average": [
+   2.21,
+   1.72,
+   1.78
+  ],
+  "processors_allowed": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "load_average_at_end": [
+   1.74,
+   1.98,
+   1.93
+  ]
+ },
+ "wall_seconds": 871.7,
+ "run_seconds_total": 0,
+ "load_average_during_runs": null,
+ "variants": {
+  "slow-time-5": {
+   "flags": [
+    "--quality",
+    "slow",
+    "--slow-work-limit",
+    "0",
+    "--slow-time-limit",
+    "5"
+   ],
+   "environment": {
+    "OPENCLARE_EXTRA_DRAWS": "0"
+   },
+   "runs": 36,
+   "valid": 36,
+   "failures": [],
+   "mean": {
+    "loop_edges_spiral": 0.045617270665384936,
+    "loop_edges_closed": 0.36395869446840945,
+    "loops_spiral": 3.25,
+    "mean_distance": 0.0003835836656474085,
+    "hausdorff": 0.00833096581336957,
+    "angle_deviation_mean": 5.119679943037948,
+    "loop_edges_helix": 0.03252265481193431,
+    "loops_helix_missed": 0.05555555555555555,
+    "base_complex_patches": 1277.0833333333333,
+    "irregular_vertices": 68.69444444444444
+   },
+   "seconds_total": 743.5,
+   "slow_log": {
+    "HiGHS solves": 100,
+    "HiGHS solves without a solution": 2,
+    "HiGHS status 13": 76,
+    "HiGHS status 7": 24,
+    "solves": 74,
+    "solves without lengths": 5,
+    "rounds": 66,
+    "rounds returning the lengths they started from": 18,
+    "rounds spiralling more than the engine": 25,
+    "pieces": 22,
+    "pieces whose first lengths are the selector's": 8
+   },
+   "per_run": [
+    {
+     "model": "creature",
+     "quads": 2970,
+     "seconds": 4.56,
+     "loop_edges_spiral": 0
+    },
+    {
+     "model": "blob",
+     "quads": 2970,
+     "seconds": 22.1,
+     "loop_edges_spiral": 0.12633155792276962
+    },
+    {
+     "model": "suzanne",
+     "quads": 2970,
+     "seconds": 33.61,
+     "loop_edges_spiral": 0.10124637186272836
+    },
+    {
+     "model": "spot",
+     "quads": 2970,
+     "seconds": 29.79,
+     "loop_edges_spiral": 0
+    },
+    {
+     "model": "pig",
+     "quads": 2970,
+     "seconds": 28.87,
+     "loop_edges_spiral": 0.03166271588215375
+    },
+    {
+     "model": "ogre",
+     "quads": 2970,
+     "seconds": 56.74,
+     "loop_edges_spiral": 0.17002349781805975
+    },
+    {
+     "model": "bob",
+     "quads": 2970,
+     "seconds": 3.85,
+     "loop_edges_spiral": 0
+    },
+    {
+     "model": "jerry",
+     "quads": 2970,
+     "seconds": 28.92,
+     "loop_edges_spiral": 0.006687844841999666
+    },
+    {
+     "model": "blub",
+     "quads": 2970,
+     "seconds": 24.21,
+     "loop_edges_spiral": 0.01459731543624161
+    },
+    {
+     "model": "rock",
+     "quads": 2970,
+     "seconds": 24.81,
+     "loop_edges_spiral": 0.028080326752893126
+    },
+    {
+     "model": "cage",
+     "quads": 2970,
+     "seconds": 2.7,
+     "loop_edges_spiral": 0
+    },
+    {
+     "model": "part",
+     "quads": 2970,
+     "seconds": 2.43,
+     "loop_edges_spiral": 0
+    },
+    {
+     "model": "creature",
+     "quads": 3000,
+     "seconds": 14.19,
+     "loop_edges_spiral": 0.058584490348797834
+    },
+    {
+     "model": "blob",
+     "quads": 3000,
+     "seconds": 9.41,
+     "loop_edges_spiral": 0.11601575319986872
+    },
+    {
+     "model": "suzanne",
+     "quads": 3000,
+     "seconds": 24.22,
+     "loop_edges_spiral": 0.12548952835007662
+    },
+    {
+     "model": "spot",
+     "quads": 3000,
+     "seconds": 4.94,
+     "loop_edges_spiral": 0
+    },
+    {
+     "model": "pig",
+     "quads": 3000,
+     "seconds": 48.13,
+     "loop_edges_spiral": 0.07087411407357408
+    },
+    {
+     "model": "ogre",
+     "quads": 3000,
+     "seconds": 48.9,
+     "loop_edges_spiral": 0.0930349932705249
+    },
+    {
+     "model": "bob",
+     "quads": 3000,
+     "seconds": 3.0,
+     "loop_edges_spiral": 0
+    },
+    {
+     "model": "jerry",
+     "quads": 3000,
+     "seconds": 36.36,
+     "loop_edges_spiral": 0.0028581035642232682
+    },
+    {
+     "model": "blub",
+     "quads": 3000,
+     "seconds": 43.02,
+     "loop_edges_spiral": 0.05433333333333333
+    },
+    {
+     "model": "rock",
+     "quads": 3000,
+     "seconds": 14.69,
+     "loop_edges_spiral": 0.0925249169435216
+    },
+    {
+     "model": "cage",
+     "quads": 3000,
+     "seconds": 4.22,
+     "loop_edges_spiral": 0
+    },
+    {
+     "model": "part",
+     "quads": 3000,
+     "seconds": 2.64,
+     "loop_edges_spiral": 0
+    },
+    {
+     "model": "creature",
+     "quads": 3030,
+     "seconds": 26.07,
+     "loop_edges_spiral": 0.01969949916527546
+    },
+    {
+     "model": "blob",
+     "quads": 3030,
+     "seconds": 21.3,
+     "loop_edges_spiral": 0.2130987292277615
+    },
+    {
+     "model": "suzanne",
+     "quads": 3030,
+     "seconds": 33.59,
+     "loop_edges_spiral": 0.09797745358090186
+    },
+    {
+     "model": "spot",
+     "quads": 3030,
+     "seconds": 4.23,
+     "loop_edges_spiral": 0
+    },
+    {
+     "model": "pig",
+     "quads": 3030,
+     "seconds": 53.33,
+     "loop_edges_spiral": 0.05018217952964558
+    },
+    {
+     "model": "ogre",
+     "quads": 3030,
+     "seconds": 52.37,
+     "loop_edges_spiral": 0.11172344689378759
+    },
+    {
+     "model": "bob",
+     "quads": 3030,
+     "seconds": 5.2,
+     "loop_edges_spiral": 0
+    },
+    {
+     "model": "jerry",
+     "quads": 3030,
+     "seconds": 9.6,
+     "loop_edges_spiral": 0
+    },
+    {
+     "model": "blub",
+     "quads": 3030,
+     "seconds": 11.83,
+     "loop_edges_spiral": 0.05719557195571956
+    },
+    {
+     "model": "rock",
+     "quads": 3030,
+     "seconds": 3.11,
+     "loop_edges_spiral": 0
+    },
+    {
+     "model": "cage",
+     "quads": 3030,
+     "seconds": 3.1,
+     "loop_edges_spiral": 0
+    },
+    {
+     "model": "part",
+     "quads": 3030,
+     "seconds": 3.45,
+     "loop_edges_spiral": 0
+    },
+    {
+     "model": "human_male",
+     "quads": 10590,
+     "seconds": 98.63,
+     "loop_edges_spiral": 0.016539923954372624
+    }
+   ],
+   "male_body": {
+    "loop_edges_spiral": 0.016539923954372624,
+    "loop_edges_closed": 0.3660646387832678,
+    "loops_spiral": 16,
+    "mean_distance": 0.00020223901782211967,
+    "hausdorff": 0.0047569421697510285,
+    "angle_deviation_mean": 4.2682110803352895,
+    "loop_edges_helix": 0.0025665399239543727,
+    "loops_helix_missed": 0,
+    "base_complex_patches": 3148,
+    "irregular_vertices": 254
+   },
+   "male_body_slow_log": {
+    "HiGHS solves": 2,
+    "HiGHS solves without a solution": 0,
+    "HiGHS status 13": 2,
+    "solves": 3,
+    "solves without lengths": 0,
+    "rounds": 3,
+    "rounds returning the lengths they started from": 3,
+    "rounds spiralling more than the engine": 0,
+    "pieces": 1,
+    "pieces whose first lengths are the selector's": 0
+   }
+  }
+ }
+}

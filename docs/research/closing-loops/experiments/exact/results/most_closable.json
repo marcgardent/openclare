@@ -1,0 +1,402 @@
+{
+ "experiment": "the most held turns closable together (Table tab:exact)",
+ "export": "scratch/data-package/turns-of-a-t-mesh/male-body/export/call-2146-806-5237618",
+ "export_record": {
+  "experiment": "export of the turns of the closing",
+  "engine": {
+   "commit": "e13fadb",
+   "build": "sha256:d444f05f7279f3e7",
+   "options": "as-is",
+   "environment": {}
+  },
+  "command": [
+   "openclare",
+   "remesh",
+   "<source>",
+   "mesh.obj",
+   "--preset",
+   "organic",
+   "--quads",
+   "10590"
+  ],
+  "source": {
+   "path": "source.obj",
+   "md5": "f1fe33002b731d1d41846daed6c59f5e"
+  },
+  "machine": {
+   "processor": "Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz",
+   "threads": 8,
+   "memory": "62.7 GiB",
+   "load_average": [
+    8.64,
+    5.25,
+    3.14
+   ],
+   "load_average_at_end": [
+    7.71,
+    6.46,
+    3.99
+   ]
+  },
+  "seconds": 187.3,
+  "tmesh": "call-2146-806-5237618",
+  "ways": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "measure": {
+   "valid": true,
+   "quads": 10484,
+   "loop_edges_spiral": 0.014641358260206027,
+   "loops_spiral": 11,
+   "loop_edges_closed": 0.36484166348721775,
+   "mean_distance": 0.0001895734178229812,
+   "hausdorff": 0.004743854442472561,
+   "angle_deviation_mean": 4.292626082506852,
+   "irregular_vertices": 254,
+   "inverted_faces": 0
+  }
+ },
+ "ways": {
+  "0": "6cc0c52ed844da1d1343a49e60e967e06c71639e970a2ffad1186047e4bff93a",
+  "1": "f9ed1876de4d580ec3f64e3cb38252890f7cc8d403f35169f762fc95471a3c16",
+  "2": "73fd72de47d0b93bf8b4d3fdf2e4cbaca7f7814337b80857130a4ca42835e517",
+  "3": "dd044d80dd8f807d335182282202b905fc021f48f750eeb03295460de6d12ca4",
+  "4": "3197c4fccb7ff314c588885bb3519c7c1eea7c977887126b2636173fb28f69f7",
+  "5": "f3bc8513c30d53e9551ff30710bca835f2a5771492d2b91bd620a375b620183c",
+  "6": "e311a34d17929be3646e76c6244d0b6e3cbd44f6515be8313f76c4051b5b5e5a",
+  "7": "826d051bb7c6219c45509225f52219665732ede8395ed4b7911c6d83fa27e993"
+ },
+ "machine": {
+  "processor": "Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz",
+  "threads": 8,
+  "memory": "62.7 GiB",
+  "load_average": [
+   1.21,
+   1.81,
+   1.98
+  ],
+  "load_average_at_end": [
+   2.16,
+   2.89,
+   3.77
+  ],
+  "processors_allowed": 8
+ },
+ "solver": {
+  "scipy": "1.16.3",
+  "highs": "1.8.0",
+  "highs_threads": 1
+ },
+ "wall_seconds": 3992.0,
+ "seconds_per_program": 300.0,
+ "whole_seconds": 600.0,
+ "whole_most_seconds": 900.0,
+ "files_for_the_engine": "call-2146-806-5237618",
+ "table": [
+  {
+   "way": 0,
+   "held": 58,
+   "kept_by_the_projection": 58,
+   "closable_together": 57
+  },
+  {
+   "way": 1,
+   "held": 92,
+   "kept_by_the_projection": 92,
+   "closable_together": 87
+  },
+  {
+   "way": 2,
+   "held": 64,
+   "kept_by_the_projection": 64,
+   "closable_together": 61
+  },
+  {
+   "way": 3,
+   "held": 102,
+   "kept_by_the_projection": 102,
+   "closable_together": 90
+  },
+  {
+   "way": 4,
+   "held": 125,
+   "kept_by_the_projection": 125,
+   "closable_together": 120
+  },
+  {
+   "way": 5,
+   "held": 219,
+   "kept_by_the_projection": 219,
+   "closable_together": 189
+  },
+  {
+   "way": 6,
+   "held": 131,
+   "kept_by_the_projection": 131,
+   "closable_together": 123
+  },
+  {
+   "way": 7,
+   "held": 229,
+   "kept_by_the_projection": 229,
+   "closable_together": 192
+  }
+ ],
+ "per_way": [
+  {
+   "way": 0,
+   "held": 58,
+   "kept_by_the_projection": 58,
+   "closable_together": 57,
+   "status": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+   "seconds": 0.0,
+   "dual_bound": -57.0,
+   "aimed": {
+    "weighted_deviation": 200.77083739185022,
+    "deviation": 0.1940392441762728,
+    "file": "aimed-0.txt"
+   },
+   "whole_closing": {
+    "seconds": 227.9,
+    "message": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+    "found": true,
+    "held_left_shifted": 1,
+    "engine_held_left_shifted": 19,
+    "not_held_left_shifted": 3,
+    "engine_not_held_left_shifted": 15,
+    "weighted_deviation": 389.97217464355305,
+    "engine_weighted_deviation": 382.96306252937893,
+    "deviation": 0.3710517884881214,
+    "engine_deviation": 0.36159463165859346,
+    "quads": 10857,
+    "engine_quads": 10501,
+    "file": "way-0-integer.txt",
+    "deviation_higher_by": 0.018
+   },
+   "whole_most_closable": {
+    "found": 55,
+    "dual_bound": -57.0,
+    "message": "Time limit reached. (HiGHS Status 13: Time limit reached)",
+    "seconds": 1519.1
+   }
+  },
+  {
+   "way": 1,
+   "held": 92,
+   "kept_by_the_projection": 92,
+   "closable_together": 87,
+   "status": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+   "seconds": 0.2,
+   "dual_bound": -87.0,
+   "aimed": {
+    "weighted_deviation": 570.2237997441333,
+    "deviation": 0.6232148499765238,
+    "file": "aimed-1.txt"
+   },
+   "whole_closing": {
+    "seconds": 151.0,
+    "message": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+    "found": true,
+    "held_left_shifted": 5,
+    "engine_held_left_shifted": 40,
+    "not_held_left_shifted": 9,
+    "engine_not_held_left_shifted": 25,
+    "weighted_deviation": 731.5186568890467,
+    "engine_weighted_deviation": 446.30295175778264,
+    "deviation": 0.7651814268432631,
+    "engine_deviation": 0.4610961102367991,
+    "quads": 12420,
+    "engine_quads": 10480,
+    "file": "way-1-integer.txt",
+    "deviation_higher_by": 0.639
+   },
+   "whole_most_closable": {
+    "found": 86,
+    "dual_bound": -90.0,
+    "message": "Time limit reached. (HiGHS Status 13: Time limit reached)",
+    "seconds": 1621.1
+   }
+  },
+  {
+   "way": 2,
+   "held": 64,
+   "kept_by_the_projection": 64,
+   "closable_together": 61,
+   "status": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+   "seconds": 0.0,
+   "dual_bound": -61.0,
+   "aimed": {
+    "weighted_deviation": 220.40886535169602,
+    "deviation": 0.20889261549247443,
+    "file": "aimed-2.txt"
+   },
+   "whole_closing": {
+    "seconds": 102.8,
+    "message": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+    "found": true,
+    "held_left_shifted": 3,
+    "engine_held_left_shifted": 23,
+    "not_held_left_shifted": 5,
+    "engine_not_held_left_shifted": 18,
+    "weighted_deviation": 397.6575021351614,
+    "engine_weighted_deviation": 387.5086157432578,
+    "deviation": 0.3741927075544678,
+    "engine_deviation": 0.36876306130092584,
+    "quads": 10527,
+    "engine_quads": 10520,
+    "file": "way-2-integer.txt",
+    "deviation_higher_by": 0.026
+   },
+   "whole_most_closable": {
+    "found": 59,
+    "dual_bound": -61.0,
+    "message": "Time limit reached. (HiGHS Status 13: Time limit reached)",
+    "seconds": 1739.7
+   }
+  },
+  {
+   "way": 3,
+   "held": 102,
+   "kept_by_the_projection": 102,
+   "closable_together": 90,
+   "status": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+   "seconds": 3.3,
+   "dual_bound": -90.00000000000003,
+   "aimed": {
+    "weighted_deviation": 431.35338972327236,
+    "deviation": 0.4619390801606219,
+    "file": "aimed-3.txt"
+   },
+   "whole_closing": {
+    "seconds": 83.4,
+    "message": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+    "found": true,
+    "held_left_shifted": 12,
+    "engine_held_left_shifted": 52,
+    "not_held_left_shifted": 11,
+    "engine_not_held_left_shifted": 34,
+    "weighted_deviation": 597.6706804297305,
+    "engine_weighted_deviation": 488.2213818741325,
+    "deviation": 0.6185042701823884,
+    "engine_deviation": 0.5159163038334407,
+    "quads": 11011,
+    "engine_quads": 10540,
+    "file": "way-3-integer.txt",
+    "deviation_higher_by": 0.224
+   },
+   "whole_most_closable": {
+    "found": 90,
+    "dual_bound": -90.00000000000001,
+    "message": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+    "seconds": 449.6
+   }
+  },
+  {
+   "way": 4,
+   "held": 125,
+   "kept_by_the_projection": 125,
+   "closable_together": 120,
+   "status": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+   "seconds": 0.5,
+   "dual_bound": -120.0,
+   "aimed": {
+    "weighted_deviation": 697.9058210339288,
+    "deviation": 0.8099085218430434,
+    "file": "aimed-4.txt"
+   },
+   "whole_closing": {
+    "seconds": 602.7,
+    "message": "Time limit reached. (HiGHS Status 13: model_status is Time limit reached; primal_status is None)",
+    "found": false
+   },
+   "whole_most_closable": {
+    "found": 89,
+    "dual_bound": -123.0,
+    "message": "Time limit reached. (HiGHS Status 13: Time limit reached)",
+    "seconds": 1426.6
+   }
+  },
+  {
+   "way": 5,
+   "held": 219,
+   "kept_by_the_projection": 219,
+   "closable_together": 189,
+   "status": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+   "seconds": 154.7,
+   "dual_bound": -189.0,
+   "aimed": {
+    "weighted_deviation": 2697.0943476394714,
+    "deviation": 3.3294020687303996,
+    "file": "aimed-5.txt"
+   },
+   "whole_closing": {
+    "seconds": 612.8,
+    "message": "Time limit reached. (HiGHS Status 13: model_status is Time limit reached; primal_status is None)",
+    "found": false
+   },
+   "whole_most_closable": {
+    "found": 101,
+    "dual_bound": -213.0,
+    "message": "Time limit reached. (HiGHS Status 13: Time limit reached)",
+    "seconds": 1475.8
+   }
+  },
+  {
+   "way": 6,
+   "held": 131,
+   "kept_by_the_projection": 131,
+   "closable_together": 123,
+   "status": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+   "seconds": 0.9,
+   "dual_bound": -123.0,
+   "aimed": {
+    "weighted_deviation": 701.4780489498418,
+    "deviation": 0.8351585555390839,
+    "file": "aimed-6.txt"
+   },
+   "whole_closing": {
+    "seconds": 605.0,
+    "message": "Time limit reached. (HiGHS Status 13: model_status is Time limit reached; primal_status is None)",
+    "found": false
+   },
+   "whole_most_closable": {
+    "found": 114,
+    "dual_bound": -127.0,
+    "message": "Time limit reached. (HiGHS Status 13: Time limit reached)",
+    "seconds": 1406.3
+   }
+  },
+  {
+   "way": 7,
+   "held": 229,
+   "kept_by_the_projection": 229,
+   "closable_together": 192,
+   "status": "Time limit reached. (HiGHS Status 13: Time limit reached)",
+   "seconds": 300.0,
+   "dual_bound": -195.0,
+   "aimed": {
+    "weighted_deviation": 5076.7975186847,
+    "deviation": 6.503541124428866,
+    "file": "aimed-7.txt"
+   },
+   "whole_closing": {
+    "seconds": 602.2,
+    "message": "Time limit reached. (HiGHS Status 13: model_status is Time limit reached; primal_status is None)",
+    "found": false
+   },
+   "whole_most_closable": {
+    "found": 133,
+    "dual_bound": -207.0,
+    "message": "Time limit reached. (HiGHS Status 13: Time limit reached)",
+    "seconds": 900.0
+   }
+  }
+ ]
+}

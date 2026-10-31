@@ -62,22 +62,20 @@ mesh, whatever the view.
 
 ### Numbers of each panel
 
-Measured by `openclare measure <source> <mesh> --target 10590 --json` (engine 89232b0).
-Distances are per mille of the diagonal of the source's bounding box.
+Measured by `openclare measure <source> <mesh> --target 10590 --json` (engine of v0.7.0, e13fadb);
+the numbers are in `../experiments/results/figures.json`. Distances are per mille of the diagonal
+of the source's bounding box.
 
 | | (a) no closing | (b) closing | (c) hand-made | (d) QuadriFlow |
 |---|---|---|---|---|
-| faces (quads) | 10,485 (10,485) | 10,748 (10,748) | 10,590 (10,570 + 20 triangles) | 8,844 (8,844) |
+| faces (quads) | 10,625 (10,625) | 10,484 (10,484) | 10,590 (10,570 + 20 triangles) | 8,844 (8,844) |
 | valid | yes | yes | no (triangles) | no (3 inverted faces) |
-| irregular vertices | 249 | 249 | 476 | 224 |
-| edges on spiral loops | **26.8%** (18 loops) | **1.95%** (15 loops) | **2.55%** (3 loops) | **35.7%** (43 loops) |
-| edges on closed loops | 10.2% (143 loops) | 32.6% (287 loops) | 31.6% (321 loops) | 2.7% (31 loops) |
-| mean distance to the source, ‰ | 0.183 | 0.190 | 0.172 | 1.356 |
-| Hausdorff distance, ‰ | 3.97 | 4.38 | 6.47 | 31.3 |
-| mean corner deviation, degrees | 4.50 | 4.32 | 9.24 | 8.79 |
-
-The engine and QuadriFlow are deterministic here: two runs of `make_figures.sh` gave the same
-three meshes byte for byte.
+| irregular vertices | 254 | 254 | 476 | 224 |
+| edges on spiral loops | **23.4%** (21 loops) | **1.46%** (11 loops) | **2.55%** (3 loops) | **35.7%** (43 loops) |
+| edges on closed loops | 17.2% (172 loops) | 36.5% (303 loops) | 31.6% (321 loops) | 2.7% (31 loops) |
+| mean distance to the source, ‰ | 0.184 | 0.190 | 0.172 | 1.356 |
+| Hausdorff distance, ‰ | 4.78 | 4.74 | 6.47 | 31.3 |
+| mean corner deviation, degrees | 4.33 | 4.29 | 9.24 | 8.79 |
 
 Against preprint v1 (Section 6, "Against the hand-made mesh"): v1 gives 1.6% of spiral edges in
 9 spiral loops and 33.2% on closed loops for the engine, from single runs of commits 1b77f7d to

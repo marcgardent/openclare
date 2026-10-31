@@ -1,0 +1,1718 @@
+{
+ "experiment": "combs: the feet of every arc, and the odd parts of the certificates",
+ "export": "scratch/data-package/turns-of-a-t-mesh/male-body/export/call-2146-806-5237618",
+ "export_record": {
+  "experiment": "export of the turns of the closing",
+  "engine": {
+   "commit": "e13fadb",
+   "build": "sha256:d444f05f7279f3e7",
+   "options": "as-is",
+   "environment": {}
+  },
+  "command": [
+   "openclare",
+   "remesh",
+   "<source>",
+   "mesh.obj",
+   "--preset",
+   "organic",
+   "--quads",
+   "10590"
+  ],
+  "source": {
+   "path": "source.obj",
+   "md5": "f1fe33002b731d1d41846daed6c59f5e"
+  },
+  "machine": {
+   "processor": "Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz",
+   "threads": 8,
+   "memory": "62.7 GiB",
+   "load_average": [
+    8.64,
+    5.25,
+    3.14
+   ],
+   "load_average_at_end": [
+    7.71,
+    6.46,
+    3.99
+   ]
+  },
+  "seconds": 187.3,
+  "tmesh": "call-2146-806-5237618",
+  "ways": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "measure": {
+   "valid": true,
+   "quads": 10484,
+   "loop_edges_spiral": 0.014641358260206027,
+   "loops_spiral": 11,
+   "loop_edges_closed": 0.36484166348721775,
+   "mean_distance": 0.0001895734178229812,
+   "hausdorff": 0.004743854442472561,
+   "angle_deviation_mean": 4.292626082506852,
+   "irregular_vertices": 254,
+   "inverted_faces": 0
+  }
+ },
+ "ways": {
+  "1": "f9ed1876de4d580ec3f64e3cb38252890f7cc8d403f35169f762fc95471a3c16"
+ },
+ "machine": {
+  "processor": "Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz",
+  "threads": 8,
+  "memory": "62.7 GiB",
+  "load_average": [
+   1.86,
+   1.78,
+   2.53
+  ],
+  "load_average_at_end": [
+   1.79,
+   1.77,
+   2.53
+  ],
+  "processors_allowed": 8
+ },
+ "solver": {
+  "scipy": "1.16.3",
+  "highs": "1.8.0",
+  "highs_threads": 1
+ },
+ "wall_seconds": 8.2,
+ "table": "conflicts.json",
+ "lemma": {
+  "way": 1,
+  "arcs": 2146,
+  "comb_lemma_holds": 2090,
+  "two_distinct_feet_of_odd_valence": 1955,
+  "feet_by_valence": {
+   "valences 3-5": 711,
+   "valences 3-3": 416,
+   "valences 5-5": 828,
+   "the same foot": 16,
+   "valences 4-5": 93,
+   "valences 4-4": 69,
+   "valences 3-4": 13
+  },
+  "arcs_whose_feet_coincide": [
+   14,
+   913,
+   920,
+   1132,
+   1211,
+   1742,
+   1807,
+   1873,
+   1949,
+   1950,
+   1969,
+   1971,
+   1973,
+   1975,
+   1991,
+   2141
+  ],
+  "arcs_with_more_than_one_perpendicular_trace": {
+   "2032": [
+    1024,
+    1025,
+    1026
+   ],
+   "2033": [
+    1021,
+    1022,
+    1023
+   ],
+   "2034": [
+    1060,
+    1061,
+    1062
+   ],
+   "2035": [
+    1027,
+    1028,
+    1029
+   ],
+   "2040": [
+    1039,
+    1040,
+    1041
+   ],
+   "2041": [
+    1033,
+    1034,
+    1035
+   ],
+   "2042": [
+    1036,
+    1037,
+    1038
+   ],
+   "2043": [
+    1042,
+    1043,
+    1044
+   ],
+   "2044": [
+    1048,
+    1049,
+    1050
+   ],
+   "2045": [
+    1051,
+    1052,
+    1053
+   ],
+   "2046": [
+    1057,
+    1058,
+    1059
+   ],
+   "2047": [
+    1075,
+    1076,
+    1077
+   ],
+   "2048": [
+    1063,
+    1064,
+    1065
+   ],
+   "2049": [
+    1069,
+    1070,
+    1071
+   ],
+   "2050": [
+    1066,
+    1067,
+    1068
+   ],
+   "2051": [
+    1072,
+    1073,
+    1074
+   ],
+   "2052": [
+    1008,
+    1019,
+    1020
+   ],
+   "2054": [
+    1008,
+    1018,
+    1020
+   ],
+   "2055": [
+    1008,
+    1018,
+    1019
+   ],
+   "2056": [
+    1009,
+    1022,
+    1023
+   ],
+   "2058": [
+    1009,
+    1021,
+    1023
+   ],
+   "2060": [
+    1009,
+    1021,
+    1022
+   ],
+   "2061": [
+    1008,
+    1025,
+    1026
+   ],
+   "2062": [
+    1008,
+    1024,
+    1026
+   ],
+   "2064": [
+    1008,
+    1024,
+    1025
+   ],
+   "2065": [
+    1010,
+    1028,
+    1029
+   ],
+   "2068": [
+    1010,
+    1027,
+    1029
+   ],
+   "2070": [
+    1010,
+    1027,
+    1028
+   ],
+   "2072": [
+    1011,
+    1031,
+    1032
+   ],
+   "2074": [
+    1011,
+    1030,
+    1032
+   ],
+   "2075": [
+    1011,
+    1030,
+    1031
+   ],
+   "2076": [
+    1011,
+    1034,
+    1035
+   ],
+   "2077": [
+    1011,
+    1033,
+    1035
+   ],
+   "2078": [
+    1011,
+    1033,
+    1034
+   ],
+   "2079": [
+    1012,
+    1037,
+    1038
+   ],
+   "2081": [
+    1012,
+    1036,
+    1038
+   ],
+   "2082": [
+    1012,
+    1036,
+    1037
+   ],
+   "2083": [
+    1010,
+    1040,
+    1041
+   ],
+   "2084": [
+    1010,
+    1039,
+    1041
+   ],
+   "2086": [
+    1010,
+    1039,
+    1040
+   ],
+   "2090": [
+    1012,
+    1043,
+    1044
+   ],
+   "2091": [
+    1012,
+    1042,
+    1044
+   ],
+   "2093": [
+    1012,
+    1042,
+    1043
+   ],
+   "2094": [
+    1013,
+    1046,
+    1047
+   ],
+   "2095": [
+    1013,
+    1045,
+    1047
+   ],
+   "2096": [
+    1013,
+    1045,
+    1046
+   ],
+   "2098": [
+    1013,
+    1049,
+    1050
+   ],
+   "2100": [
+    1013,
+    1048,
+    1050
+   ],
+   "2104": [
+    1013,
+    1048,
+    1049
+   ],
+   "2106": [
+    1014,
+    1052,
+    1053
+   ],
+   "2107": [
+    1014,
+    1051,
+    1053
+   ],
+   "2109": [
+    1014,
+    1051,
+    1052
+   ],
+   "2111": [
+    1015,
+    1055,
+    1056
+   ],
+   "2112": [
+    1015,
+    1054,
+    1056
+   ],
+   "2114": [
+    1015,
+    1054,
+    1055
+   ],
+   "2116": [
+    1014,
+    1058,
+    1059
+   ],
+   "2117": [
+    1014,
+    1057,
+    1059
+   ],
+   "2119": [
+    1014,
+    1057,
+    1058
+   ],
+   "2120": [
+    1009,
+    1061,
+    1062
+   ],
+   "2121": [
+    1009,
+    1060,
+    1062
+   ],
+   "2123": [
+    1009,
+    1060,
+    1061
+   ],
+   "2125": [
+    1016,
+    1064,
+    1065
+   ],
+   "2126": [
+    1016,
+    1063,
+    1065
+   ],
+   "2127": [
+    1016,
+    1063,
+    1064
+   ],
+   "2128": [
+    1017,
+    1067,
+    1068
+   ],
+   "2129": [
+    1017,
+    1066,
+    1068
+   ],
+   "2131": [
+    1017,
+    1066,
+    1067
+   ],
+   "2132": [
+    1016,
+    1070,
+    1071
+   ],
+   "2134": [
+    1016,
+    1069,
+    1071
+   ],
+   "2135": [
+    1016,
+    1069,
+    1070
+   ],
+   "2136": [
+    1017,
+    1073,
+    1074
+   ],
+   "2138": [
+    1017,
+    1072,
+    1074
+   ],
+   "2139": [
+    1017,
+    1072,
+    1073
+   ],
+   "2142": [
+    1015,
+    1076,
+    1077
+   ],
+   "2143": [
+    1015,
+    1075,
+    1077
+   ],
+   "2144": [
+    1015,
+    1075,
+    1076
+   ]
+  },
+  "arcs_ending_on_a_separatrix_connection": {}
+ },
+ "certificates": [
+  {
+   "way": 0,
+   "turns": [
+    54
+   ],
+   "multipliers": [
+    "-1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 1,
+   "turns": [
+    87
+   ],
+   "multipliers": [
+    "-1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 2,
+   "turns": [
+    59
+   ],
+   "multipliers": [
+    "-1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 5,
+   "turns": [
+    211
+   ],
+   "multipliers": [
+    "-1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 7,
+   "turns": [
+    220
+   ],
+   "multipliers": [
+    "-1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 2,
+   "turns": [
+    46
+   ],
+   "multipliers": [
+    "1"
+   ],
+   "arcs": 3,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 3,
+   "turns": [
+    70
+   ],
+   "multipliers": [
+    "1"
+   ],
+   "arcs": 3,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 6,
+   "turns": [
+    91
+   ],
+   "multipliers": [
+    "1"
+   ],
+   "arcs": 3,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 7,
+   "turns": [
+    152
+   ],
+   "multipliers": [
+    "1"
+   ],
+   "arcs": 3,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 1,
+   "turns": [
+    62,
+    63
+   ],
+   "multipliers": [
+    "1",
+    "-1"
+   ],
+   "arcs": 6,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 3,
+   "turns": [
+    68,
+    69
+   ],
+   "multipliers": [
+    "1",
+    "-1"
+   ],
+   "arcs": 6,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 5,
+   "turns": [
+    139,
+    142
+   ],
+   "multipliers": [
+    "1",
+    "-1"
+   ],
+   "arcs": 6,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 7,
+   "turns": [
+    145,
+    148
+   ],
+   "multipliers": [
+    "1",
+    "-1"
+   ],
+   "arcs": 6,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 2,
+   "turns": [
+    58,
+    63
+   ],
+   "multipliers": [
+    "-1",
+    "-1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 3,
+   "turns": [
+    95,
+    101
+   ],
+   "multipliers": [
+    "-1",
+    "1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 6,
+   "turns": [
+    122,
+    129
+   ],
+   "multipliers": [
+    "-1",
+    "-1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 7,
+   "turns": [
+    219,
+    227
+   ],
+   "multipliers": [
+    "-1",
+    "1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 1,
+   "turns": [
+    23,
+    36
+   ],
+   "multipliers": [
+    "-1",
+    "1"
+   ],
+   "arcs": 4,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 3,
+   "turns": [
+    24,
+    39
+   ],
+   "multipliers": [
+    "-1",
+    "1"
+   ],
+   "arcs": 4,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 4,
+   "turns": [
+    84,
+    115
+   ],
+   "multipliers": [
+    "-1",
+    "1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 6,
+   "turns": [
+    87,
+    120
+   ],
+   "multipliers": [
+    "-1",
+    "1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 4,
+   "turns": [
+    58,
+    115
+   ],
+   "multipliers": [
+    "1",
+    "1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 6,
+   "turns": [
+    60,
+    120
+   ],
+   "multipliers": [
+    "1",
+    "1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 4,
+   "turns": [
+    21,
+    93
+   ],
+   "multipliers": [
+    "-1",
+    "1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 6,
+   "turns": [
+    22,
+    97
+   ],
+   "multipliers": [
+    "-1",
+    "1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 4,
+   "turns": [
+    18,
+    103
+   ],
+   "multipliers": [
+    "1",
+    "-1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 6,
+   "turns": [
+    19,
+    108
+   ],
+   "multipliers": [
+    "1",
+    "-1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 5,
+   "turns": [
+    207,
+    208
+   ],
+   "multipliers": [
+    "-1",
+    "-1"
+   ],
+   "arcs": 7,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 7,
+   "turns": [
+    216,
+    217
+   ],
+   "multipliers": [
+    "-1",
+    "-1"
+   ],
+   "arcs": 7,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 5,
+   "turns": [
+    181,
+    205
+   ],
+   "multipliers": [
+    "1",
+    "1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 7,
+   "turns": [
+    190,
+    214
+   ],
+   "multipliers": [
+    "1",
+    "1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 5,
+   "turns": [
+    150,
+    156
+   ],
+   "multipliers": [
+    "1",
+    "1"
+   ],
+   "arcs": 5,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 7,
+   "turns": [
+    157,
+    163
+   ],
+   "multipliers": [
+    "1",
+    "1"
+   ],
+   "arcs": 5,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 5,
+   "turns": [
+    146,
+    149
+   ],
+   "multipliers": [
+    "1",
+    "-1"
+   ],
+   "arcs": 3,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 7,
+   "turns": [
+    153,
+    156
+   ],
+   "multipliers": [
+    "1",
+    "-1"
+   ],
+   "arcs": 3,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 1,
+   "turns": [
+    21,
+    68
+   ],
+   "multipliers": [
+    "1",
+    "1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 3,
+   "turns": [
+    65,
+    66
+   ],
+   "multipliers": [
+    "1",
+    "1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 3,
+   "turns": [
+    63,
+    66
+   ],
+   "multipliers": [
+    "1",
+    "1"
+   ],
+   "arcs": 8,
+   "whole": false,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": false,
+   "odd_boundary": null
+  },
+  {
+   "way": 5,
+   "turns": [
+    136,
+    208
+   ],
+   "multipliers": [
+    "-1",
+    "1"
+   ],
+   "arcs": 5,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 5,
+   "turns": [
+    129,
+    208
+   ],
+   "multipliers": [
+    "-1",
+    "1"
+   ],
+   "arcs": 5,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 7,
+   "turns": [
+    221,
+    225
+   ],
+   "multipliers": [
+    "1",
+    "1"
+   ],
+   "arcs": 1,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 4,
+   "turns": [
+    73,
+    115,
+    122
+   ],
+   "multipliers": [
+    "1",
+    "1",
+    "-1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 6,
+   "turns": [
+    75,
+    120,
+    127
+   ],
+   "multipliers": [
+    "1",
+    "1",
+    "-1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 5,
+   "turns": [
+    145,
+    147,
+    149
+   ],
+   "multipliers": [
+    "-1",
+    "-1",
+    "-1"
+   ],
+   "arcs": 3,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 7,
+   "turns": [
+    151,
+    154,
+    156
+   ],
+   "multipliers": [
+    "-1",
+    "-1",
+    "-1"
+   ],
+   "arcs": 3,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 1,
+   "turns": [
+    8,
+    10,
+    12
+   ],
+   "multipliers": [
+    "-13",
+    "1",
+    "-12"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 1,
+   "turns": [
+    0,
+    10,
+    12
+   ],
+   "multipliers": [
+    "13",
+    "1",
+    "1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 3,
+   "turns": [
+    36,
+    73,
+    83
+   ],
+   "multipliers": [
+    "-1",
+    "-1",
+    "-1"
+   ],
+   "arcs": 8,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 4,
+   "turns": [
+    82,
+    117,
+    124
+   ],
+   "multipliers": [
+    "1",
+    "-1",
+    "1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 5,
+   "turns": [
+    137,
+    196,
+    208
+   ],
+   "multipliers": [
+    "1",
+    "1",
+    "1"
+   ],
+   "arcs": 6,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 5,
+   "turns": [
+    130,
+    196,
+    208
+   ],
+   "multipliers": [
+    "1",
+    "1",
+    "1"
+   ],
+   "arcs": 6,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 6,
+   "turns": [
+    65,
+    103,
+    107
+   ],
+   "multipliers": [
+    "1",
+    "-1",
+    "-1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 6,
+   "turns": [
+    5,
+    6,
+    7,
+    74
+   ],
+   "multipliers": [
+    "-5",
+    "-2",
+    "-1",
+    "-1"
+   ],
+   "arcs": 6,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 7,
+   "turns": [
+    168,
+    192,
+    194,
+    196
+   ],
+   "multipliers": [
+    "-1",
+    "-1",
+    "1",
+    "1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 5,
+   "turns": [
+    144,
+    151,
+    152,
+    156,
+    195
+   ],
+   "multipliers": [
+    "2",
+    "-1",
+    "-1",
+    "1",
+    "2"
+   ],
+   "arcs": 10,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 7,
+   "turns": [
+    150,
+    158,
+    159,
+    163,
+    204
+   ],
+   "multipliers": [
+    "2",
+    "-1",
+    "-1",
+    "1",
+    "2"
+   ],
+   "arcs": 10,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 3,
+   "turns": [
+    33,
+    39,
+    75,
+    88,
+    91
+   ],
+   "multipliers": [
+    "1",
+    "1",
+    "-1",
+    "1",
+    "-1"
+   ],
+   "arcs": 2,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 1,
+   "turns": [
+    22,
+    25,
+    35,
+    36,
+    46,
+    82
+   ],
+   "multipliers": [
+    "1",
+    "-1",
+    "1",
+    "1",
+    "1",
+    "-1"
+   ],
+   "arcs": 8,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 1,
+   "turns": [
+    20,
+    34,
+    36,
+    44,
+    46,
+    47,
+    82
+   ],
+   "multipliers": [
+    "-1",
+    "-1",
+    "1",
+    "1",
+    "1",
+    "-1",
+    "-1"
+   ],
+   "arcs": 4,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 1,
+   "turns": [
+    26,
+    35,
+    36,
+    43,
+    44,
+    48,
+    79,
+    82
+   ],
+   "multipliers": [
+    "1",
+    "1",
+    "1",
+    "-1",
+    "1",
+    "1",
+    "1",
+    "-1"
+   ],
+   "arcs": 8,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 3,
+   "turns": [
+    29,
+    38,
+    39,
+    46,
+    47,
+    51,
+    88,
+    91
+   ],
+   "multipliers": [
+    "1",
+    "1",
+    "1",
+    "-1",
+    "1",
+    "1",
+    "1",
+    "-1"
+   ],
+   "arcs": 8,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 1,
+   "turns": [
+    30,
+    35,
+    36,
+    43,
+    44,
+    48,
+    79,
+    80,
+    82
+   ],
+   "multipliers": [
+    "1",
+    "1",
+    "2",
+    "-1",
+    "1",
+    "1",
+    "1",
+    "1",
+    "-2"
+   ],
+   "arcs": 10,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 1,
+   "turns": [
+    31,
+    34,
+    35,
+    44,
+    45,
+    48,
+    68,
+    73,
+    80,
+    82
+   ],
+   "multipliers": [
+    "1",
+    "2",
+    "4",
+    "-1",
+    "-1",
+    "4",
+    "1",
+    "1",
+    "1",
+    "-1"
+   ],
+   "arcs": 13,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 3,
+   "turns": [
+    34,
+    37,
+    38,
+    47,
+    48,
+    51,
+    76,
+    81,
+    89,
+    91
+   ],
+   "multipliers": [
+    "1",
+    "2",
+    "4",
+    "-1",
+    "-1",
+    "4",
+    "1",
+    "1",
+    "1",
+    "-1"
+   ],
+   "arcs": 13,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 3,
+   "turns": [
+    27,
+    28,
+    37,
+    38,
+    46,
+    51,
+    76,
+    81,
+    89,
+    91
+   ],
+   "multipliers": [
+    "1",
+    "1",
+    "1",
+    "3",
+    "-1",
+    "4",
+    "1",
+    "1",
+    "1",
+    "-1"
+   ],
+   "arcs": 12,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 3,
+   "turns": [
+    23,
+    37,
+    38,
+    39,
+    47,
+    51,
+    75,
+    81,
+    89,
+    91
+   ],
+   "multipliers": [
+    "1",
+    "1",
+    "2",
+    "1",
+    "-1",
+    "2",
+    "-1",
+    "1",
+    "1",
+    "-1"
+   ],
+   "arcs": 14,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 1,
+   "turns": [
+    19,
+    25,
+    34,
+    35,
+    43,
+    48,
+    68,
+    73,
+    79,
+    80,
+    82
+   ],
+   "multipliers": [
+    "-1",
+    "1",
+    "1",
+    "3",
+    "-1",
+    "4",
+    "1",
+    "1",
+    "1",
+    "1",
+    "-2"
+   ],
+   "arcs": 12,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  },
+  {
+   "way": 6,
+   "turns": [
+    27,
+    30,
+    34,
+    35,
+    36,
+    40,
+    50,
+    64,
+    103,
+    110,
+    111,
+    112
+   ],
+   "multipliers": [
+    "1",
+    "1",
+    "-1",
+    "-1",
+    "1",
+    "1",
+    "1",
+    "-1",
+    "-3",
+    "1",
+    "1",
+    "1"
+   ],
+   "arcs": 19,
+   "whole": true,
+   "odd_part_is_a_cycle_of_the_graph_of_feet": true,
+   "odd_boundary": []
+  }
+ ]
+}
