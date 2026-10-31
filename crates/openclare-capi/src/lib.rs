@@ -51,7 +51,7 @@ use std::time::Instant;
 use openclare::math::Vec3;
 use openclare::recorder::{Recorder, Shape};
 use openclare::uv;
-use openclare::{GuideCurve, Guides, HardEdgeFinder, PolyMesh, RemeshConfig, Target, TriMesh};
+use openclare::{GuideCurve, Guides, HardEdgeFinder, ImposedPole, Pole, PolyMesh, RemeshConfig, Target, TriMesh};
 
 /// Called when a stage of the run begins, with its name ("cross field", or
 /// "piece 3 of 12: cross field") and the `user` pointer given to
@@ -94,6 +94,8 @@ pub struct OpenclareResult {
     /// Edges of the mesh along a guide curve, each with the index of the
     /// curve among those given.
     curve_edges: Vec<([u32; 2], u32)>,
+    /// The irregular vertices of the mesh away from its borders.
+    poles: Vec<Pole>,
     /// The group of the input each face lies in; empty if it had none.
     face_groups: Vec<u32>,
     /// Texture coordinates, worked out the first time they are asked for.
@@ -111,6 +113,7 @@ impl OpenclareResult {
             hard_edges: Vec::new(),
             creases: Vec::new(),
             curve_edges: Vec::new(),
+            poles: Vec::new(),
             face_groups: Vec::new(),
             layers: OnceLock::new(),
             error: text(message),
@@ -157,6 +160,11 @@ pub extern "C" fn openclare_version() -> *const c_char {
 ///   in `curve_flags` what each is: [`OPENCLARE_CURVE_CLOSED`] if its last
 ///   point joins the first, plus [`OPENCLARE_CURVE_SHARP`] if the edges
 ///   along it are to be hard edges of the result. All null and 0 for none.
+/// - `pole_points`, `pole_valences`, `pole_count`: poles placed by the user,
+///   x y z each, and the valence the vertex of the quad mesh there is to
+///   have, 3 or 5. The others are placed freely, and
+///   [`openclare_result_copy_poles`] tells which of the result answers
+///   which. Both null and 0 for none.
 /// - `preset`: null for the default one, or the name of a shipped preset
 ///   (`organic`, `animation`, `hard-surface`).
 /// - `settings`: null, or `key = value` lines that adjust the preset.
@@ -169,7 +177,8 @@ pub extern "C" fn openclare_version() -> *const c_char {
 /// # Safety
 ///
 /// The arrays must hold what their counts say (for the curves, three numbers
-/// for each point `curve_sizes` adds up to), and the two texts, when not
+/// for each point `curve_sizes` adds up to; for the poles, three numbers
+/// each in `pole_points`), and the two texts, when not
 /// null, must end with a NUL. `on_stage`, when not null, must be safe to call
 /// with `user`.
 #[allow(clippy::too_many_arguments)]
@@ -189,6 +198,9 @@ pub unsafe extern "C" fn openclare_remesh(
     curve_sizes: *const u32,
     curve_flags: *const u8,
     curve_count: usize,
+    pole_points: *const f32,
+    pole_valences: *const u8,
+    pole_count: usize,
     preset: *const c_char,
     settings: *const c_char,
     on_stage: OpenclareOnStage,
@@ -202,6 +214,7 @@ pub unsafe extern "C" fn openclare_remesh(
                 (!corner_vertices.is_null()).then(|| std::slice::from_raw_parts(corner_vertices, corner_count));
             let curves = curves_of(curve_points, curve_sizes, curve_flags, curve_count);
             let edges = (!edges.is_null()).then(|| std::slice::from_raw_parts(edges, 2 * edge_count));
+            let poles = poles_of(pole_points, pole_valences, pole_count)?;
             remesh(
                 positions,
                 vertex_count,
@@ -212,6 +225,7 @@ pub unsafe extern "C" fn openclare_remesh(
                 triangle_groups,
                 edges,
                 &curves,
+                &poles,
                 preset,
                 settings,
                 &mut watcher,
@@ -244,6 +258,7 @@ unsafe fn remesh(
     triangle_groups: *const u32,
     edges: Option<&[u32]>,
     curves: &[GuideCurve],
+    poles: &[ImposedPole],
     preset: *const c_char,
     settings: *const c_char,
     watcher: &mut Watcher,
@@ -268,7 +283,7 @@ unsafe fn remesh(
         let points = chain.iter().map(|&v| input.positions[v as usize]).collect();
         curves.push(GuideCurve { points, closed, sharp: true });
     }
-    let guides = Guides { density: painted.as_deref(), curves: &curves, groups, lines: &[], held: &[] };
+    let guides = Guides { density: painted.as_deref(), curves: &curves, groups, lines: &[], held: &[], poles };
     let (mesh, done) = config.remesh_recorded(&input, &guides, watcher).map_err(|error| error.to_string())?;
     let seconds = clock.elapsed().as_secs_f64();
 
@@ -282,7 +297,7 @@ unsafe fn remesh(
         "{asked}\nvertices = {}\nfaces = {}\nquads = {}\nirregular_vertices = {}\npieces = {}\n\
          pieces_through_fallback = {}\npieces_failed = {}\npieces_skipped = {}\npieces_boxed = {}\nthin_pieces = {}\nquads_for_thin_pieces = {}\nguide_edges = {}\nsharp_curve_edges = {}\nfaces_across_groups = {}\nwelded_vertices = {}\nedges_taken_apart = {}\nguide_gaps = {}\n\
          guides_let_go = {}\nquads_wanted = {}\nbelow_smallest = {}\nlargest_edge = {}\nsmallest_edge = {}\noff_the_plane = {}\n\
-         crossing_faces = {}\nseconds = {seconds:.3}\n",
+         crossing_faces = {}\npoles = {}\npoles_imposed = {}\nseconds = {seconds:.3}\n",
         stats.vertices,
         stats.faces,
         stats.quads,
@@ -307,6 +322,8 @@ unsafe fn remesh(
         done.smallest_edge,
         done.off_the_plane,
         done.crossing_faces,
+        done.poles.len(),
+        done.poles_imposed,
     );
     Ok(OpenclareResult {
         mesh,
@@ -314,6 +331,7 @@ unsafe fn remesh(
         face_groups: done.face_groups,
         creases: done.creases,
         curve_edges: done.curve_edges,
+        poles: done.poles,
         layers: OnceLock::new(),
         error: CString::default(),
         report: text(report),
@@ -399,6 +417,30 @@ pub const OPENCLARE_CURVE_CLOSED: u8 = 1;
 /// In the flags of a guide curve: the edges along it are hard edges of the
 /// result, marked sharp and creased, and not only a line of edges.
 pub const OPENCLARE_CURVE_SHARP: u8 = 2;
+
+/// The poles a host gave as flat arrays: valences other than 3 and 5 are
+/// refused.
+///
+/// # Safety
+///
+/// `points` must hold three numbers per pole and `valences` one, or both
+/// be null.
+unsafe fn poles_of(points: *const f32, valences: *const u8, count: usize) -> Result<Vec<ImposedPole>, String> {
+    if points.is_null() || valences.is_null() || count == 0 {
+        return Ok(Vec::new());
+    }
+    // SAFETY: as the caller vouches.
+    let (points, valences) =
+        unsafe { (std::slice::from_raw_parts(points, 3 * count), std::slice::from_raw_parts(valences, count)) };
+    points
+        .chunks_exact(3)
+        .zip(valences)
+        .map(|(p, &valence)| match valence {
+            3 | 5 => Ok(ImposedPole { position: Vec3::new(p[0] as f64, p[1] as f64, p[2] as f64), valence }),
+            _ => Err(format!("a pole of valence {valence}: only 3 and 5 can be placed")),
+        })
+        .collect()
+}
 
 /// The guide curves a host gave as flat arrays.
 ///
@@ -731,6 +773,67 @@ pub unsafe extern "C" fn openclare_result_copy_curve_edges(
         let out = unsafe { std::slice::from_raw_parts_mut(curves, result.curve_edges.len()) };
         for (slot, &(_, curve)) in out.iter_mut().zip(&result.curve_edges) {
             *slot = curve;
+        }
+    }
+}
+
+/// How many irregular vertices the mesh has away from its borders.
+///
+/// # Safety
+///
+/// See [`openclare_result_ok`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_result_pole_count(result: *const OpenclareResult) -> usize {
+    unsafe { held(result) }.map_or(0, |result| result.poles.len())
+}
+
+/// Writes the irregular vertices of the mesh away from its borders: where
+/// each lies on the input, as a triangle of it into `triangles` and three
+/// barycentric coordinates into `barycentric`; its valence into `valences`;
+/// and into `imposed` the index of the pole given to [`openclare_remesh`]
+/// it answers, or -1 for one placed freely. Any may be null.
+///
+/// # Safety
+///
+/// See [`openclare_result_ok`]; `barycentric` must have room for three times
+/// [`openclare_result_pole_count`] numbers, the others for as many.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_result_copy_poles(
+    result: *const OpenclareResult,
+    triangles: *mut u32,
+    barycentric: *mut f32,
+    valences: *mut u8,
+    imposed: *mut i32,
+) {
+    let Some(result) = (unsafe { held(result) }) else { return };
+    let count = result.poles.len();
+    // SAFETY: each, when not null, has the room documented.
+    unsafe {
+        if !triangles.is_null() {
+            let out = std::slice::from_raw_parts_mut(triangles, count);
+            for (slot, pole) in out.iter_mut().zip(&result.poles) {
+                *slot = pole.triangle;
+            }
+        }
+        if !barycentric.is_null() {
+            let out = std::slice::from_raw_parts_mut(barycentric, 3 * count);
+            for (slot, pole) in out.chunks_exact_mut(3).zip(&result.poles) {
+                for (value, &weight) in slot.iter_mut().zip(&pole.barycentric) {
+                    *value = weight as f32;
+                }
+            }
+        }
+        if !valences.is_null() {
+            let out = std::slice::from_raw_parts_mut(valences, count);
+            for (slot, pole) in out.iter_mut().zip(&result.poles) {
+                *slot = pole.valence;
+            }
+        }
+        if !imposed.is_null() {
+            let out = std::slice::from_raw_parts_mut(imposed, count);
+            for (slot, pole) in out.iter_mut().zip(&result.poles) {
+                *slot = pole.imposed.map_or(-1, |k| k as i32);
+            }
         }
     }
 }

@@ -12,6 +12,8 @@
 //! with its lengths divided by the local size, and it only adds a second
 //! term to the rotation of each half-edge, the *drift*.
 
+use crate::error::Result;
+use crate::linalg::SymmetricBuilder;
 use crate::math::{INVALID, Vec3};
 use crate::mesh::{Topology, TriMesh};
 
@@ -114,6 +116,80 @@ impl FaceFrames {
             let growth = (sizing[a] / sizing[b]).ln();
             self.drift[h] = growth * 2.0 / self.weight[h];
         }
+    }
+
+    /// Adds to the drift what makes a smooth field turn round each vertex of
+    /// `imposed` by its index, in quarter turns: a singularity there.
+    ///
+    /// Round a vertex a smooth field turns as the surface does, by its angle
+    /// defect, plus the drift summed over the half-edges out of it. The
+    /// drift added is the one the sizing would add for a factor `e^φ`, `φ`
+    /// solving `L φ = c`: `c` takes the defect of each imposed vertex down
+    /// to its index, and gives what it took back over the other vertices in
+    /// proportion to their area, so that the sum stays that of the surface
+    /// (Gauss and Bonnet). The others keep the curvature of the shape, less
+    /// that share: where it gathers, the field still makes the singularities
+    /// it must, free ones (the trivial connections of Crane, Desbrun and
+    /// Schröder, 2010, for the imposed vertices only).
+    pub fn impose(&mut self, mesh: &TriMesh, imposed: &[(u32, i8)]) -> Result<()> {
+        let vertices = mesh.positions.len();
+        let mut defect = vec![std::f64::consts::TAU; vertices];
+        let mut area = vec![0.0; vertices];
+        for (f, tri) in mesh.triangles.iter().enumerate() {
+            for k in 0..3 {
+                let [p, next, previous] = [k, (k + 1) % 3, (k + 2) % 3].map(|c| mesh.positions[tri[c] as usize]);
+                let (to_next, to_previous) = ((next - p).normalize_or_zero(), (previous - p).normalize_or_zero());
+                defect[tri[k] as usize] -= to_next.dot(to_previous).clamp(-1.0, 1.0).acos();
+                area[tri[k] as usize] += self.area[f] / 3.0;
+            }
+        }
+        let mut wanted = vec![0.0; vertices];
+        let mut is_imposed = vec![false; vertices];
+        let mut taken = 0.0;
+        for &(v, index) in imposed {
+            let v = v as usize;
+            wanted[v] = defect[v] - index as f64 * std::f64::consts::FRAC_PI_2;
+            is_imposed[v] = true;
+            taken += wanted[v];
+        }
+        let rest: f64 = (0..vertices).filter(|&v| !is_imposed[v]).map(|v| area[v]).sum();
+        for v in (0..vertices).filter(|&v| !is_imposed[v]) {
+            wanted[v] = -taken * area[v] / rest;
+        }
+
+        // L is singular on a closed surface (φ is up to a constant): a
+        // shift far below its entries picks the solution of mean zero.
+        let mean_area = area.iter().sum::<f64>() / vertices as f64;
+        let mut system = SymmetricBuilder::new(vertices);
+        for (v, &a) in area.iter().enumerate() {
+            system.add(v, v, 1e-9 * a / mean_area);
+        }
+        let ends = |h: usize| {
+            let tri = mesh.triangles[h / 3];
+            (tri[h % 3] as usize, tri[(h + 1) % 3] as usize)
+        };
+        for h in 0..self.drift.len() {
+            let twin = self.across[h];
+            if twin == INVALID || self.weight[h] <= 0.0 {
+                continue;
+            }
+            let (a, b) = ends(h);
+            let link = 2.0 / self.weight[h];
+            // Each edge is met from both sides: half from each.
+            system.add(a, a, 0.5 * link);
+            system.add(b, b, 0.5 * link);
+            system.add(a, b, -0.5 * link);
+            system.add(b, a, -0.5 * link);
+        }
+        let potential = system.factorize()?.solve(&wanted);
+        for h in 0..self.drift.len() {
+            if self.across[h] == INVALID || self.weight[h] <= 0.0 {
+                continue;
+            }
+            let (a, b) = ends(h);
+            self.drift[h] += (potential[a] - potential[b]) * 2.0 / self.weight[h];
+        }
+        Ok(())
     }
 
     /// What to add to an angle on the face of half-edge `h` for a smooth

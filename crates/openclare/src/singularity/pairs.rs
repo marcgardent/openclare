@@ -192,6 +192,11 @@ impl<'a> Graph<'a> {
         if angles.on_border[v as usize] { 0 } else { angles.index(v as usize, &self.outgoing[v as usize]) }
     }
 
+    /// Whether the user placed a pole at `v`: it is never cancelled.
+    fn imposed(&self, v: u32) -> bool {
+        self.work.imposed.iter().any(|&(u, _)| u == v)
+    }
+
     fn singular_vertices(&self, angles: &AngleField) -> Vec<(u32, i32)> {
         (0..self.work.mesh.positions.len() as u32)
             .map(|v| (v, self.index(angles, v)))
@@ -304,7 +309,8 @@ impl<'a> Graph<'a> {
     /// paths of vertices from the positive to the negative end, shortest
     /// first. If its closest partners cannot be afforded, farther ones will
     /// not be either, so only a few are proposed. `off_lines`: the paths do
-    /// not go through the vertices of the lines the field is held to.
+    /// not go through the vertices of the lines the field is held to. The
+    /// poles the user placed are never one end of a pair.
     fn candidates(
         &self,
         angles: &AngleField,
@@ -314,7 +320,8 @@ impl<'a> Graph<'a> {
     ) -> Vec<Vec<u32>> {
         let singular: HashMap<u32, i32> = self.singular_vertices(angles).into_iter().collect();
         // In a fixed order, so that ties do not depend on hashing.
-        let mut positive: Vec<u32> = singular.iter().filter(|&(_, &index)| index > 0).map(|(&v, _)| v).collect();
+        let mut positive: Vec<u32> =
+            singular.iter().filter(|&(&v, &index)| index > 0 && !self.imposed(v)).map(|(&v, _)| v).collect();
         positive.sort_unstable();
 
         let limit = reach.unwrap_or(f64::INFINITY);
@@ -349,7 +356,7 @@ impl<'a> Graph<'a> {
             if reached > distance[&v] {
                 continue;
             }
-            if singular.get(&v).is_some_and(|&index| index < 0) && !rejected.contains(&(start, v)) {
+            if singular.get(&v).is_some_and(|&index| index < 0) && !self.imposed(v) && !rejected.contains(&(start, v)) {
                 let mut path = vec![v];
                 while let Some(&before) = previous.get(path.last().unwrap()) {
                     path.push(before);

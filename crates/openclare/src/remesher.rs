@@ -22,7 +22,7 @@ use crate::math::Vec3;
 use crate::mesh::{PolyMesh, TriMesh};
 use crate::meshing;
 use crate::parametrization;
-use crate::pipeline::{self, Params, Report, Target};
+use crate::pipeline::{self, Params, Pole, Report, Target};
 use crate::preprocess::{self, GuideCurve, HardEdges, WorkMesh};
 use crate::quantization;
 use crate::recorder::{self, Recorder, Shape, Silent};
@@ -57,6 +57,97 @@ pub struct Guides<'a> {
     /// straddles two of them, and the report says which group each face of
     /// the quad mesh lies in ([`Report::face_groups`]).
     pub groups: Option<&'a [u32]>,
+    /// Poles placed by the user: the quad mesh has an irregular vertex of
+    /// that valence there, and places the others it needs freely.
+    pub poles: &'a [ImposedPole],
+}
+
+/// A pole the user placed: a point on the input and the valence the vertex
+/// of the quad mesh there is to have, 3 or 5.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct ImposedPole {
+    pub position: Vec3,
+    pub valence: u8,
+}
+
+impl ImposedPole {
+    /// Its index in quarter turns, as the cross field counts it.
+    fn index(&self) -> i8 {
+        4 - self.valence as i8
+    }
+}
+
+/// The vertex of `work` each pole is at: the nearest, if it is within
+/// `reach` of it (else the pole is on another piece of the input), not on
+/// a border, and not taken by an earlier one.
+fn imposed_on(work: &WorkMesh, poles: &[ImposedPole], reach: f64) -> Vec<(u32, i8)> {
+    let mut sides: HashMap<(u32, u32), usize> = HashMap::new();
+    for tri in &work.mesh.triangles {
+        for k in 0..3 {
+            let (a, b) = (tri[k], tri[(k + 1) % 3]);
+            *sides.entry((a.min(b), a.max(b))).or_default() += 1;
+        }
+    }
+    let mut on_border = vec![false; work.mesh.positions.len()];
+    for (&(a, b), _) in sides.iter().filter(|&(_, &count)| count == 1) {
+        (on_border[a as usize], on_border[b as usize]) = (true, true);
+    }
+    let mut imposed: Vec<(u32, i8)> = Vec::new();
+    for pole in poles {
+        let positions = &work.mesh.positions;
+        let nearest = (0..positions.len()).min_by(|&a, &b| {
+            positions[a].distance_squared(pole.position).total_cmp(&positions[b].distance_squared(pole.position))
+        });
+        let Some(v) = nearest else { continue };
+        if positions[v].distance(pole.position) > reach || on_border[v] || imposed.iter().any(|&(u, _)| u == v as u32) {
+            continue;
+        }
+        imposed.push((v as u32, pole.index()));
+    }
+    imposed
+}
+
+/// The irregular vertices of `mesh` away from its borders, each found on
+/// `input`, and matched to the pole placed by the user of its valence
+/// within `reach` of it, the nearest.
+fn poles_of(mesh: &PolyMesh, input: &TriMesh, placed: &[ImposedPole], reach: f64) -> Vec<Pole> {
+    let mut valence = vec![0u8; mesh.positions.len()];
+    let mut sides: HashMap<(u32, u32), usize> = HashMap::new();
+    for face in &mesh.faces {
+        for k in 0..face.len() {
+            let (a, b) = (face[k], face[(k + 1) % face.len()]);
+            *sides.entry((a.min(b), a.max(b))).or_default() += 1;
+        }
+    }
+    let mut on_border = vec![false; mesh.positions.len()];
+    for (&(a, b), &count) in &sides {
+        valence[a as usize] += 1;
+        valence[b as usize] += 1;
+        if count == 1 {
+            (on_border[a as usize], on_border[b as usize]) = (true, true);
+        }
+    }
+    let surface = Bvh::build(input);
+    (0..mesh.positions.len())
+        .filter(|&v| valence[v] != 4 && valence[v] > 0 && !on_border[v])
+        .filter_map(|v| {
+            let position = mesh.positions[v];
+            let hit = surface.closest_point(position)?;
+            let imposed = placed
+                .iter()
+                .enumerate()
+                .filter(|(_, pole)| pole.valence == valence[v] && pole.position.distance(position) <= reach)
+                .min_by(|a, b| a.1.position.distance(position).total_cmp(&b.1.position.distance(position)))
+                .map(|(k, _)| k as u32);
+            Some(Pole {
+                triangle: hit.triangle,
+                barycentric: barycentric_of(input.corners(hit.triangle as usize), hit.point),
+                position,
+                valence: valence[v],
+                imposed,
+            })
+        })
+        .collect()
 }
 
 /// A piece with less than this share of the area of the model is left out.
@@ -604,6 +695,7 @@ impl Remesher for QuadLayout {
         if let Some(mended) = &mended {
             (report.welded_vertices, report.edges_taken_apart) = (mended.welded, mended.taken_apart);
         }
+        report.poles = poles_of(&mesh, input, guides.poles, 2.0 * report.edge_length);
         if let Some(groups) = &groups {
             // Each face is of the group of the triangle under its middle.
             // One whose corners, seen from a little inside it, are not all
@@ -1860,6 +1952,11 @@ fn fields(
             clock.lap(report, "refinement");
         }
         recorder::show_sizing(recorder, &work);
+    }
+
+    if let Some(guides) = guides {
+        work.imposed = imposed_on(&work, guides.poles, 2.0 * edge_length);
+        report.poles_imposed += work.imposed.len();
     }
 
     recorder.begin("cross field")?;
