@@ -901,6 +901,9 @@ div.card:hover { border-color: var(--rule); }
 .badge-measured { background: var(--ink); color: var(--bg); }
 .badge-conjectured,
 .badge-refuted { padding: 0 6px; border: 1.5px solid var(--hot-text); color: var(--hot-text); }
+/* The state of a feature, on the documentation pages. */
+.badge-stable { background: var(--teal-text); color: var(--button-ink); }
+.badge-experimental { padding: 0 6px; border: 1.5px solid var(--hot-text); color: var(--hot-text); }
 
 /* The steps of the engine, numbered. */
 .prose p.step {
