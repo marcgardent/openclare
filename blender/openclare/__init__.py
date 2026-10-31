@@ -39,7 +39,7 @@ SHAPES = {
     "hard-surface": dict(adaptive_size=0.0, quads_around=0, use_hard_edges=True, hard_edge_angle=math.radians(30.0),
                          follow_curvature=0.02, fewer_irregular=2.0, volume_fit=1.0),
 }
-# The settings a preset of the shape holds, in the order of the panel.
+# The settings a preset of the shape holds, from the three blocks of the panel.
 SHAPE_NAMES = [*SHAPES["organic"], "use_marked_sharp", "shading"]
 # Where the presets of the shape are: the one the add-on ships, Default
 # (presets/ here), and those a user saves, under presets/ in Blender's own
@@ -1816,11 +1816,12 @@ class OPENCLARE_OT_stop(bpy.types.Operator):
 
 def draw_remesh(layout, operator, icon):
     """The button that remeshes, or, while a run goes on, how far it is and
-    a button to stop it."""
-    if RUNNING is None:
-        layout.operator(operator, icon=icon)
-        return
+    a button to stop it. Large: it is what the panel is for."""
     row = layout.row(align=True)
+    row.scale_y = 2.0
+    if RUNNING is None:
+        row.operator(operator, icon=icon)
+        return
     text = "Stopping..." if RUNNING.stop.is_set() else RUNNING.stage.capitalize()
     row.progress(factor=RUNNING.done, type="BAR", text=text)
     row.operator(OPENCLARE_OT_stop.bl_idname, text="", icon="CANCEL")
@@ -2027,79 +2028,16 @@ class OPENCLARE_PT_panel(DataPanel, bpy.types.Panel):
     def draw_header(self, context):
         self.layout.label(text="", icon="MOD_REMESH")
 
-    def draw(self, context):
-        owner = object_to_remesh(context)
-        if source_of(owner) is None:
-            self.draw_source(context, owner)
-        else:
-            self.draw_result(context, owner)
+    def draw_header_preset(self, context):
+        # The presets set settings of each block below: they are the panel's.
+        if is_source(context):
+            OPENCLARE_PT_shape_presets.draw_panel_header(self.layout)
 
-    def draw_source(self, context, owner):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False
-        settings = owner.openclare
-        shown = experimental.shown()
-        layout.prop(settings, "output", expand=True)
-        decimate = decimating(settings)
-        if settings.output == "TRIANGLES":
-            if shown:
-                layout.prop(settings, "triangles_for", expand=True)
-            if decimate:
-                # The best there is for it is Blender's own: it is used.
-                layout.label(text="By Blender's Decimate (Collapse): closest to the shape", icon="MOD_DECIM")
-        if shown:
-            target = layout.row()
-            target.active = not decimate
-            target.prop(settings, "target", expand=True)
-        if shown and settings.target == "SIZE" and not decimate:
-            layout.operator(OPENCLARE_OT_analyse.bl_idname, icon="VIEWZOOM")
-            sizes = layout.column(align=True)
-            sizes.prop(settings, "largest_quad")
-            sizes.prop(settings, "smallest_quad")
-            held = analysis_of(context, settings, owner)
-            if held is None:
-                note = "Analyse to see how many quads these sizes make"
-                if owner.name in ANALYSES:
-                    note = "The object or its settings changed: analyse again"
-                layout.label(text=note, icon="INFO")
-            elif settings.largest_quad > 0.0:
-                analysis, scale = held
-                smallest = min(settings.smallest_quad, settings.largest_quad) or settings.largest_quad / SIZE_RANGE
-                try:
-                    quads, below = counted(analysis, scale, settings.largest_quad, smallest)
-                except engine.EngineError:
-                    quads, below = None, None
-                if quads is not None:
-                    column = layout.column(align=True)
-                    # Triangles of the edge of a quad: four of them over the
-                    # square root of three in its area.
-                    made = f"{quads:,.0f} quads" if settings.output == "QUADS" else f"{quads / 0.4330127:,.0f} triangles"
-                    column.label(text=f"About {made}".replace(",", " "), icon="MESH_GRID")
-                    if below >= 0.005:
-                        column.label(text=f"{100.0 * below:.0f} % coarser than its shape asks", icon="ERROR")
-                layout.prop(settings, "show_sizes")
-        else:
-            layout.prop(settings, "quads", text="Triangles" if settings.output == "TRIANGLES" else "Quads")
-        column = layout.column(align=True)
-        column.prop_search(settings, "density_group", owner, "vertex_groups", icon="GROUP_VERTEX")
-        factor = column.row()
-        factor.enabled = bool(settings.density_group)
-        factor.active = not decimate
-        factor.prop(settings, "density_factor")
-        if shown:
-            column.operator(OPENCLARE_OT_density_from_shape.bl_idname, icon=experimental.ICON)
-        # What Decimate does not follow.
-        followed = layout.column()
-        followed.active = not decimate
-        followed.prop(settings, "export_materials")
-        layout = followed
-        marks = layout.column(heading="Mark", align=True)
-        marks.prop(settings, "export_sharp_edges", text="Sharp")
-        marks.prop(settings, "export_creases", text="Creases")
-        layout = self.layout
-        layout.prop(settings, "symmetry", expand=True)
-        draw_remesh(layout, OPENCLARE_OT_remesh.bl_idname, "MOD_REMESH")
+    def draw(self, context):
+        # For an object to remesh, the blocks below say it all.
+        owner = object_to_remesh(context)
+        if source_of(owner) is not None:
+            self.draw_result(context, owner)
 
     def draw_result(self, context, owner):
         layout = self.layout
@@ -2213,7 +2151,7 @@ class OPENCLARE_OT_shape_preset_add(AddPresetBase, bpy.types.Operator):
 
 
 class OPENCLARE_PT_shape_presets(PresetPanel, bpy.types.Panel):
-    """The presets of the shape, in the header of its block"""
+    """The presets of the shape, in the header of the panel"""
 
     bl_label = "Shape Presets"
     preset_subdir = SHAPE_PRESETS
@@ -2221,32 +2159,39 @@ class OPENCLARE_PT_shape_presets(PresetPanel, bpy.types.Panel):
     preset_add_operator = OPENCLARE_OT_shape_preset_add.bl_idname
 
 
-class OPENCLARE_PT_shape(DataPanel, bpy.types.Panel):
-    """How the quads follow the shape: what a preset sets"""
+class SourcePanel(DataPanel):
+    """A block of the panel of an object to remesh, in the order of
+    `bl_order`: what is read on the object, what the engine does, what comes
+    out, and the button."""
 
-    bl_label = "Shape"
-    bl_idname = "OPENCLARE_PT_shape"
     bl_parent_id = "OPENCLARE_PT_panel"
 
     @classmethod
     def poll(cls, context):
         return is_source(context)
 
-    def draw_header_preset(self, context):
-        OPENCLARE_PT_shape_presets.draw_panel_header(self.layout)
-
     def draw(self, context):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False
-        settings = object_to_remesh(context).openclare
-        # Decimate reads none of the shape.
-        layout.active = not decimating(settings)
-        shown = experimental.shown()
-        layout.prop(settings, "adaptive_size", slider=True)
-        if shown:
-            layout.prop(settings, "quads_around", icon=experimental.ICON)
-        column = layout.column(heading="Hard Edges")
+        owner = object_to_remesh(context)
+        self.draw_settings(context, layout, owner, owner.openclare)
+
+
+class OPENCLARE_PT_input(SourcePanel, bpy.types.Panel):
+    """What is read on the object: its hard edges, the density painted on it,
+    the curves drawn on it and the poles kept"""
+
+    bl_label = "Input"
+    bl_idname = "OPENCLARE_PT_input"
+    bl_order = 0
+
+    def draw_settings(self, context, layout, owner, settings):
+        decimate = decimating(settings)
+        # Decimate follows no hard edge.
+        followed = layout.column()
+        followed.active = not decimate
+        column = followed.column(heading="Hard Edges")
         row = column.row(align=True)
         row.prop(settings, "use_hard_edges", text="")
         angle = row.row(align=True)
@@ -2259,7 +2204,7 @@ class OPENCLARE_PT_shape(DataPanel, bpy.types.Panel):
         wm = context.window_manager
         shown = wm.openclare_show_hard_edges
         row.prop(wm, "openclare_show_hard_edges", text="", icon="HIDE_OFF" if shown else "HIDE_ON")
-        if shown and preview.is_about(object_to_remesh(context)):
+        if shown and preview.is_about(owner):
             status = preview.state.status
             if status in preview.BUSY:
                 # As wide as an icon, not a share of the row.
@@ -2273,15 +2218,119 @@ class OPENCLARE_PT_shape(DataPanel, bpy.types.Panel):
             said = preview.status_text()
             if said:
                 column.label(text=said)
-        layout.prop(settings, "use_marked_sharp")
+        followed.prop(settings, "use_marked_sharp")
+        column = layout.column(align=True)
+        column.prop_search(settings, "density_group", owner, "vertex_groups", icon="GROUP_VERTEX")
+        factor = column.row()
+        factor.enabled = bool(settings.density_group)
+        factor.active = not decimate
+        factor.prop(settings, "density_factor")
+        if experimental.shown():
+            column.operator(OPENCLARE_OT_density_from_shape.bl_idname, icon=experimental.ICON)
+
+
+class OPENCLARE_PT_engine(SourcePanel, bpy.types.Panel):
+    """What the engine does: where the quads are smaller, how they go round
+    thin parts and follow the shape"""
+
+    bl_label = "Remesh"
+    bl_idname = "OPENCLARE_PT_engine"
+    bl_order = 1
+
+    def draw_settings(self, context, layout, owner, settings):
+        layout.prop(settings, "symmetry", expand=True)
+        # Decimate reads none of the shape.
+        shaped = layout.column()
+        shaped.active = not decimating(settings)
+        shaped.prop(settings, "adaptive_size", slider=True)
+        if not experimental.shown():
+            return
+        shaped.prop(settings, "quads_around", icon=experimental.ICON)
         # What only the quads have: the triangles follow no direction.
-        quads_only = layout.column()
+        quads_only = shaped.column()
         quads_only.active = settings.output == "QUADS"
+        quads_only.prop(settings, "follow_curvature", icon=experimental.ICON)
+        quads_only.prop(settings, "fewer_irregular", icon=experimental.ICON)
+        quads_only.prop(settings, "volume_fit", slider=True, icon=experimental.ICON)
+
+
+def draw_sizes(context, layout, owner, settings):
+    """The largest and the smallest quad asked for, and, once analysed, how
+    many quads they make."""
+    layout.operator(OPENCLARE_OT_analyse.bl_idname, icon="VIEWZOOM")
+    sizes = layout.column(align=True)
+    sizes.prop(settings, "largest_quad")
+    sizes.prop(settings, "smallest_quad")
+    held = analysis_of(context, settings, owner)
+    if held is None:
+        note = "Analyse to see how many quads these sizes make"
+        if owner.name in ANALYSES:
+            note = "The object or its settings changed: analyse again"
+        layout.label(text=note, icon="INFO")
+    elif settings.largest_quad > 0.0:
+        analysis, scale = held
+        smallest = min(settings.smallest_quad, settings.largest_quad) or settings.largest_quad / SIZE_RANGE
+        try:
+            quads, below = counted(analysis, scale, settings.largest_quad, smallest)
+        except engine.EngineError:
+            quads, below = None, None
+        if quads is not None:
+            column = layout.column(align=True)
+            # Triangles of the edge of a quad: four of them over the
+            # square root of three in its area.
+            made = f"{quads:,.0f} quads" if settings.output == "QUADS" else f"{quads / 0.4330127:,.0f} triangles"
+            column.label(text=f"About {made}".replace(",", " "), icon="MESH_GRID")
+            if below >= 0.005:
+                column.label(text=f"{100.0 * below:.0f} % coarser than its shape asks", icon="ERROR")
+    layout.prop(settings, "show_sizes")
+
+
+class OPENCLARE_PT_output(SourcePanel, bpy.types.Panel):
+    """What comes out: quads or triangles, how many, what they carry, how
+    they are shaded"""
+
+    bl_label = "Output"
+    bl_idname = "OPENCLARE_PT_output"
+    bl_order = 2
+
+    def draw_settings(self, context, layout, owner, settings):
+        shown = experimental.shown()
+        layout.prop(settings, "output", expand=True)
+        decimate = decimating(settings)
+        if settings.output == "TRIANGLES":
+            if shown:
+                layout.prop(settings, "triangles_for", expand=True)
+            if decimate:
+                # The best there is for it is Blender's own: it is used.
+                layout.label(text="By Blender's Decimate (Collapse): closest to the shape", icon="MOD_DECIM")
         if shown:
-            quads_only.prop(settings, "follow_curvature", icon=experimental.ICON)
-            quads_only.prop(settings, "fewer_irregular", icon=experimental.ICON)
-            quads_only.prop(settings, "volume_fit", slider=True, icon=experimental.ICON)
-        layout.prop(settings, "shading", expand=True)
+            target = layout.row()
+            target.active = not decimate
+            target.prop(settings, "target", expand=True)
+        if shown and settings.target == "SIZE" and not decimate:
+            draw_sizes(context, layout, owner, settings)
+        else:
+            layout.prop(settings, "quads", text="Triangles" if settings.output == "TRIANGLES" else "Quads")
+        # What Decimate does not follow.
+        followed = layout.column()
+        followed.active = not decimate
+        carried = followed.column(heading="Carry", align=True)
+        carried.prop(settings, "export_materials")
+        carried.prop(settings, "export_sharp_edges", text="Sharp")
+        carried.prop(settings, "export_creases", text="Creases")
+        followed.prop(settings, "shading", expand=True)
+
+
+class OPENCLARE_PT_go(SourcePanel, bpy.types.Panel):
+    """The button, under all the settings"""
+
+    bl_label = "Remesh to Quads"
+    bl_idname = "OPENCLARE_PT_go"
+    bl_options = {"HIDE_HEADER"}
+    bl_order = 3
+
+    def draw(self, context):
+        draw_remesh(self.layout, OPENCLARE_OT_remesh.bl_idname, "MOD_REMESH")
 
 
 class OPENCLARE_PT_curves(DataPanel, bpy.types.Panel):
@@ -2289,7 +2338,7 @@ class OPENCLARE_PT_curves(DataPanel, bpy.types.Panel):
 
     bl_label = "Curves"
     bl_idname = "OPENCLARE_PT_curves"
-    bl_parent_id = "OPENCLARE_PT_panel"
+    bl_parent_id = "OPENCLARE_PT_input"
     bl_options = {"DEFAULT_CLOSED"}
 
     @classmethod
@@ -2322,7 +2371,7 @@ class OPENCLARE_PT_poles(DataPanel, bpy.types.Panel):
 
     bl_label = "Poles"
     bl_idname = "OPENCLARE_PT_poles"
-    bl_parent_id = "OPENCLARE_PT_panel"
+    bl_parent_id = "OPENCLARE_PT_input"
     bl_options = {"DEFAULT_CLOSED"}
 
     @classmethod
@@ -2392,7 +2441,10 @@ CLASSES = (
     OpenclareCurveSettings,
     OPENCLARE_OT_curves_select,
     OPENCLARE_PT_panel,
-    OPENCLARE_PT_shape,
+    OPENCLARE_PT_input,
+    OPENCLARE_PT_engine,
+    OPENCLARE_PT_output,
+    OPENCLARE_PT_go,
     OPENCLARE_PT_curves,
     OPENCLARE_PT_poles,
     OPENCLARE_PT_curve,
