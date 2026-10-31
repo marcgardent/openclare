@@ -43,7 +43,12 @@ change to the engine. `make scenes` makes the scenes that are missing (see below
 does it too when it finds one missing. A full campaign takes a quarter of an hour or so per
 budget, most of it QuadriFlow. Options: `--models blob,cube`, `--tools quadriflow`,
 `--target 5000`, `--seeds 1,2,3`. A partial run updates the results that are there; each budget
-has its own files (`RESULTS.md` for 3000 quads, `RESULTS-8000.md`, and so on).
+has its own files (`RESULTS.md` for 3000 quads, `RESULTS-8000.md`, and so on). `--results DIR`
+writes them elsewhere, for a trial run that is not to touch `results/`.
+
+Two of the tools are not on the machine until `python3 bench/fetch_remeshers.py` has fetched
+them (see [Remeshers of the literature](#remeshers-of-the-literature)); without them their runs
+fail with "not found".
 
 ## Scenes
 
@@ -159,6 +164,7 @@ as on most sculpts. The definitions are those of `SharpEdges` in the same file.
 | `acceptance.py` | checks the results against the acceptance thresholds, writes `results/ACCEPTANCE.md` |
 | `quantize.py` | quantizes the T-mesh of each model and writes `results/QUANTIZATION.md` |
 | `quadriflow.py` | Blender script: QuadriFlow on an OBJ (`out/<model>/source.obj`), once per seed |
+| `fetch_remeshers.py` | downloads, and builds, QuadWild-BiMDF and the original Instant Meshes into `local/remeshers/` |
 | `make_references.py` | makes and keeps the meshes of the local, unpublished challengers (see below) |
 | `scenes/` | the scenes the bench runs on (see above) |
 | `scenes/` | [where each model comes from](scenes/README.md) |
@@ -205,6 +211,42 @@ the name of the project in the reports, under two settings:
 
 (Until 9 October 2026 they were called `quad-layout-adaptive` and `quad-layout`, and both ran
 from the command line on OBJ files.)
+
+## Remeshers of the literature
+
+Two open-source remeshers are run from their own programs, which `bench/fetch_remeshers.py`
+takes from their official GitHub repositories, at a pinned version, into `local/remeshers/`
+(not tracked: neither their sources nor their binaries enter this repository). The bench finds
+them there, or where `OPENCLARE_INSTANT_MESHES_JAKOB` (the program) and `OPENCLARE_QUADWILD_BIMDF`
+(the directory of the release) say. Neither takes a seed: each runs once.
+
+| Tool | Paper | Version | Licence | How it is fetched |
+|---|---|---|---|---|
+| `instant-meshes-jakob` | Jakob, Tarini, Panozzo, Sorkine-Hornung, *Instant Field-Aligned Meshes*, SIGGRAPH Asia 2015 | [wjakob/instant-meshes](https://github.com/wjakob/instant-meshes) at `7b31608` (3 November 2019, the last commit; no release) | BSD-3-Clause | the source and its submodules at that commit, built with CMake; two lines of its CMake files patched for CMake 4, and `-Wno-changes-meaning` for GCC 13 and later |
+| `quadwild-bimdf` | Heistermann, Warnett, Bommes, *Min-Deviation-Flow in Bi-directed Graphs for T-Mesh Quantization*, SIGGRAPH 2023, on QuadWild (Pietroni et al. 2021) | [cgg-bern/quadwild-bimdf](https://github.com/cgg-bern/quadwild-bimdf) release v0.0.2 (`1a24854`) | GPL-3.0 | the Linux binaries of the release, SHA-256 checked; statically linked, built without Gurobi |
+
+`instant-meshes-jakob` is the original program; `instant-meshes` is the chain of this
+repository built on the same method, the floor.
+
+How each is called (in `run.py`):
+
+- `instant-meshes-jakob`: `instant-meshes -d -f <budget/4> -o <out.obj> <source.obj>`, with
+  `-c 30` on models with hard edges and `-b` on open ones. Its pure quad output cuts every face
+  of its quad-dominant mesh in quads around the centre, about four per face, hence a quarter of
+  the budget. If the count is more than 2 % off, it runs once more with the request scaled by
+  the error and the nearer mesh is kept.
+- `quadwild-bimdf`: `quadwild <source.obj> 2 <setup>`, then
+  `quad_from_patches <source_rem_p0.obj> 1 <flow.txt>`, from the directory of the release.
+  The setup is the release's `basic_setup_Mechanical.txt` on models with hard edges, with the
+  bench's 30 degrees as `sharp_feature_thr`, and `basic_setup_Organic.txt` (no sharp edges)
+  on the others; `flow.txt` is the release's, the one its README recommends for edge flow. It
+  takes no number of quads, only a factor on their size, `scaleFact`: run with 1, then scaled by
+  the square root of the error, up to three runs while it is more than 2 % off; the nearest mesh
+  is kept. Its mesh may have faces other than quads, which the validity measure reports. The
+  release's `quad_from_patches` crashes as it exits, once its mesh is written: a run is judged
+  by the mesh it leaves.
+
+The time of both is that of every run, those that set the count included.
 
 ## Settings of the comparison
 

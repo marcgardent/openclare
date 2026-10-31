@@ -26,6 +26,7 @@ import shutil
 import statistics
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 BENCH = Path(__file__).resolve().parent
@@ -35,6 +36,14 @@ AUTOREMESHER = (
     shutil.which("autoremesher")
     or (Path.home() / ".local" / "bin" / "autoremesher" if (Path.home() / ".local" / "bin" / "autoremesher").exists() else None)
 )
+# Open-source remeshers that bench/fetch_remeshers.py downloads, and builds,
+# into local/remeshers (not tracked); an environment variable says where they
+# are instead.
+REMESHERS = ROOT / "local" / "remeshers"
+INSTANT_MESHES_JAKOB = Path(os.environ.get("OPENCLARE_INSTANT_MESHES_JAKOB",
+                                           REMESHERS / "instant-meshes-jakob" / "instant-meshes"))
+# The directory of the release: both programs and their `config/`.
+QUADWILD_BIMDF = Path(os.environ.get("OPENCLARE_QUADWILD_BIMDF", REMESHERS / "quadwild-bimdf"))
 # The scenes: what the bench runs on.
 SCENES = BENCH / "scenes"
 # The models that are a plain mesh, as OBJ files: what bench/make_scenes.py
@@ -204,7 +213,7 @@ def memory_cap(model):
     return MEMORY_CAPS.get(model, MEMORY_CAP)
 
 
-def run(command, timeout=1800, memory=MEMORY_CAP):
+def run(command, timeout=1800, memory=MEMORY_CAP, cwd=None):
     """Runs a command to its end, with at most `memory` bytes of address
     space for it and what it starts."""
 
@@ -218,7 +227,7 @@ def run(command, timeout=1800, memory=MEMORY_CAP):
 
     command = [str(c) for c in command]
     try:
-        return subprocess.run(command, capture_output=True, text=True, timeout=timeout, preexec_fn=capped)
+        return subprocess.run(command, capture_output=True, text=True, timeout=timeout, preexec_fn=capped, cwd=cwd)
     except subprocess.TimeoutExpired as late:
         # Stopped, and a failure of that run like any other: with what it
         # had said so far.
@@ -370,6 +379,127 @@ def autoremesher(model, sharp, boundary, target, seeds, directory):
     return {seeds[0]: (None, seconds, failure_of(done, "no mesh produced"))}
 
 
+def not_fetched(name):
+    return f"{name} not found (run bench/fetch_remeshers.py)"
+
+
+def closest_to(target, made):
+    """Of the meshes `made` ({path: faces}), the one whose number of faces is
+    nearest the budget."""
+    return min(made, key=lambda path: abs(made[path] - target))
+
+
+def instant_meshes_jakob(model, sharp, boundary, target, seeds, directory):
+    """Instant Meshes (wjakob/instant-meshes, Jakob et al. 2015), the original
+    program, in batch mode, deterministic (`-d`): no seed, one run.
+
+    Its pure quad output (the default; `-D` would leave triangles and
+    pentagons) is its quad-dominant mesh with every face cut in quads around
+    its centre: a quad gives four, a triangle three. It is asked for a
+    quarter of the budget with `-f`. The count is approximate: if the mesh is
+    more than 2 % off, it is run once more with the request scaled by how far
+    off it was, and the nearer of the two is kept; the time is that of both.
+    `-c` is the bench's crease angle on models with hard edges, `-b` aligns
+    to the borders of open models. Returns {seed: (path or None, seconds,
+    failure)}."""
+    if not INSTANT_MESHES_JAKOB.exists():
+        return {seeds[0]: (None, 0.0, not_fetched("instant-meshes-jakob"))}
+    request, made, seconds, done = target / 4, {}, 0.0, None
+    for attempt in range(2):
+        path = directory / f"instant-meshes-jakob_{seeds[0]}_{attempt}.obj"
+        path.unlink(missing_ok=True)
+        command = [INSTANT_MESHES_JAKOB, "-d", "-f", round(request), "-o", path]
+        if sharp:
+            command += ["-c", CREASE_ANGLE]
+        if boundary:
+            command += ["-b"]
+        start = time.monotonic()
+        done = run([*command, source_path(model)], memory=memory_cap(model))
+        seconds += time.monotonic() - start
+        if done.returncode != 0 or not path.exists():
+            break
+        made[path] = faces_of(path)
+        if abs(made[path] - target) <= 0.02 * target:
+            break
+        request *= target / made[path]
+    if not made:
+        return {seeds[0]: (None, seconds, failure_of(done, "no mesh produced"))}
+    kept = directory / f"instant-meshes-jakob_{seeds[0]}.obj"
+    shutil.move(closest_to(target, made), kept)
+    for path in made:
+        path.unlink(missing_ok=True)
+    return {seeds[0]: (kept, seconds, None)}
+
+
+def quadwild_bimdf(model, sharp, boundary, target, seeds, directory):
+    """QuadWild with Bi-MDF quantization (cgg-bern/quadwild-bimdf, Heistermann
+    et al. 2023), its release binaries, without Gurobi: no seed, one run.
+
+    Two programs, as its README runs them. `quadwild` remeshes the input,
+    traces the field and cuts the surface in patches, with the release's
+    "Mechanical" setup on models with hard edges (sharp edges kept above
+    the bench's crease angle, `alpha` 0.01) and its "Organic" one on the
+    others (no sharp edges, `alpha` 0.02). It has no option for borders.
+    `quad_from_patches` then quadrangulates the patches with `flow.txt`, the
+    configuration its README recommends for edge flow.
+
+    It takes no number of quads, only `scaleFact`, a factor on the size of
+    its quads. The second program is run with 1, then with the factor scaled
+    by the square root of how far off the number of quads was, up to three
+    runs while it is more than 2 % off, and the nearest is kept; the time is
+    that of every run. Its mesh may have faces other than quads: they are
+    left for the validity measure to report. Returns {seed: (path or None,
+    seconds, failure)}."""
+    programs = [QUADWILD_BIMDF / "quadwild", QUADWILD_BIMDF / "quad_from_patches"]
+    if not all(program.exists() for program in programs):
+        return {seeds[0]: (None, 0.0, not_fetched("quadwild-bimdf"))}
+    # It writes what it makes next to its input: a directory of its own.
+    work = directory / "quadwild-bimdf"
+    shutil.rmtree(work, ignore_errors=True)
+    work.mkdir()
+    source = work / "source.obj"
+    shutil.copyfile(source_path(model), source)
+    preparation = work / "prepare.txt"
+    preparation.write_text(f"do_remesh 1\nsharp_feature_thr {CREASE_ANGLE if sharp else -1}\n"
+                           f"alpha {0.01 if sharp else 0.02}\nscaleFact 1\n")
+    # Its configuration files name others relative to the directory of the
+    # release: both programs run from there, on absolute paths.
+    start = time.monotonic()
+    done = run([programs[0], source.resolve(), 2, preparation.resolve()], memory=memory_cap(model),
+               cwd=QUADWILD_BIMDF)
+    seconds = time.monotonic() - start
+    patches = work / "source_rem_p0.obj"
+    if not patches.exists():
+        return {seeds[0]: (None, seconds, failure_of(done, "no patches produced"))}
+    flow = (QUADWILD_BIMDF / "config" / "main_config" / "flow.txt").read_text().splitlines()
+    result = work / "source_rem_p0_1_quadrangulation_smooth.obj"
+    scale, made = 1.0, {}
+    for attempt in range(3):
+        configuration = work / "flow.txt"
+        configuration.write_text("\n".join(f"scaleFact {scale:.6f}" if line.startswith("scaleFact ") else line
+                                           for line in flow) + "\n")
+        result.unlink(missing_ok=True)
+        start = time.monotonic()
+        # Release v0.0.2 crashes as it exits, once its meshes are written:
+        # a run is judged by the mesh it leaves, not by its exit code.
+        done = run([programs[1], patches.resolve(), 1, configuration.resolve()], memory=memory_cap(model),
+                   cwd=QUADWILD_BIMDF)
+        seconds += time.monotonic() - start
+        if not result.exists() or result.stat().st_size == 0:
+            break
+        path = work / f"attempt_{attempt}.obj"
+        shutil.move(result, path)
+        made[path] = faces_of(path)
+        if abs(made[path] - target) <= 0.02 * target:
+            break
+        scale *= (made[path] / target) ** 0.5
+    if not made:
+        return {seeds[0]: (None, seconds, failure_of(done, "no mesh produced"))}
+    kept = directory / f"quadwild-bimdf_{seeds[0]}.obj"
+    shutil.move(closest_to(target, made), kept)
+    return {seeds[0]: (kept, seconds, None)}
+
+
 def challenger_reference(name, model, target):
     """Where the mesh of a local challenger is kept (see UNPUBLISHED)."""
     return UNPUBLISHED / "reference" / name / f"{model}__{target}.obj"
@@ -500,6 +630,11 @@ def openclare_as_handmade(model, sharp, boundary, target, seeds, directory):
 TOOLS = {
     "quadriflow": quadriflow,
     "autoremesher": autoremesher,
+    # Two open-source remeshers of the literature, fetched apart
+    # (bench/fetch_remeshers.py). Not to be confused with `instant-meshes`,
+    # the chain of this repository built on the same method.
+    "instant-meshes-jakob": instant_meshes_jakob,
+    "quadwild-bimdf": quadwild_bimdf,
     "instant-meshes": openclare("instant-meshes"),
     "integer-grid": openclare("integer-grid", seeded=False),
     # The chain the project is about (`quad-layout` in the engine), under
@@ -620,8 +755,8 @@ def report(results, target, seeds, tools):
     lines = [
         "# Bench results",
         "",
-        f"Requested budget: {target} quads. Median over {len(seeds)} seeds; AutoRemesher and integer-grid have "
-        "no seed and run once. The first row is how many quads each tool made; below it, lower is better "
+        f"Requested budget: {target} quads. Median over {len(seeds)} seeds; AutoRemesher, integer-grid, "
+        "instant-meshes-jakob and quadwild-bimdf have no seed and run once. The first row is how many quads each tool made; below it, lower is better "
         "for every metric. \"—\" means it could not be measured.",
         "",
     ]
@@ -668,6 +803,8 @@ def main():
     parser.add_argument("--tools", default=",".join([*TOOLS, *CHALLENGERS]))
     parser.add_argument("--target", type=int, default=DEFAULT_TARGET)
     parser.add_argument("--seeds", default="1,2,3,4,5")
+    parser.add_argument("--results", type=Path, default=RESULTS,
+                        help="where to write the results (default bench/results), for a trial run kept apart")
     parser.add_argument("--source", metavar="MODEL", help="print where the OBJ of that model is, and run nothing")
     parser.add_argument(
         "--remeasure",
@@ -690,7 +827,7 @@ def main():
     if not any((ROOT / "blender" / "openclare" / "lib").glob("*openclare_capi*")):
         sys.exit("build the add-on first: make addon")
     ensure_corpus(models)
-    RESULTS.mkdir(exist_ok=True)
+    options.results.mkdir(parents=True, exist_ok=True)
 
     every = {**TOOLS, **CHALLENGERS}
     unknown = [tool for tool in tools if tool not in every]
@@ -710,7 +847,7 @@ def main():
                 return previous["runs"]
         return {}
 
-    raw = stored(RESULTS)
+    raw = stored(options.results)
     for model, by_tool in stored(UNPUBLISHED_RESULTS).items():
         raw.setdefault(model, {}).update(by_tool)
 
@@ -759,7 +896,7 @@ def main():
         report_path.write_text(report(results, options.target, seeds, reported))
         print(f"\nwritten: {report_path}")
 
-    write(RESULTS, list(TOOLS), list(TOOLS))
+    write(options.results, list(TOOLS), list(TOOLS))
     if any(tool in by_tool for tool in CHALLENGERS for by_tool in raw.values()):
         write(UNPUBLISHED_RESULTS, list(CHALLENGERS), list(every))
 
