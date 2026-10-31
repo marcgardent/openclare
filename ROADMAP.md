@@ -24,7 +24,7 @@ order:
 | 5 | *Follow Curvature*, *Fewer Irregular Vertices*, *Volume Fit*; the presets shipped | defaults tuned on the corpus; no reach folds a quad; the volume kept after subdivision | #13, #21, #33, #72, #39 |
 | 6 | *Output: Triangles*, for *Simulation*; `--method triangles` | no triangle cuts through another on the models of [TRIANGLES.md](docs/TRIANGLES.md) | #226 |
 | 7 | *Materials*, the lines between them; `--groups` | the borders between materials kept on a real model, the author's car first | #47 |
-| 8 | The add-on on Windows and macOS | run in Blender on each, macOS notarized | #110 |
+| 8 | The add-on on macOS | run in Blender, notarized | #110 |
 
 The other experimental features are tools to look into the chain (`field`, `tmesh`,
 `quantize`, Rerun and the like) or research tracks (`--quality slow`): they stay experimental,

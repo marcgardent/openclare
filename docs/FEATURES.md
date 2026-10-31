@@ -70,7 +70,8 @@ The tools of the 3D viewport, in Object Mode.
 | Feature | State | What it lacks |
 |---|---|---|
 | The add-on on Linux | stable | |
-| The add-on on Windows and macOS | experimental | built and tested as a library, never run in Blender (#110) |
+| The add-on on Windows | stable | installed and run in a Blender for Windows on 31 October 2026; stopping a run with Esc not tried there |
+| The add-on on macOS | experimental | built and tested as a library, never run in Blender; signed ad hoc, not notarized (#110) |
 
 ## The command line
 

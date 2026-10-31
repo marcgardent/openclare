@@ -72,7 +72,8 @@ Les outils de la vue 3D, en Object Mode.
 | Fonction | État | Ce qui lui manque |
 |---|---|---|
 | Le greffon sous Linux | stable | |
-| Le greffon sous Windows et macOS | expérimental | compilé et testé comme bibliothèque, jamais lancé dans Blender (#110) |
+| Le greffon sous Windows | stable | installé et lancé dans un Blender pour Windows le 31 octobre 2026 ; l'arrêt d'un calcul par Échap n'y a pas été essayé |
+| Le greffon sous macOS | expérimental | compilé et testé comme bibliothèque, jamais lancé dans Blender ; signé ad hoc, pas notarisé (#110) |
 
 ## La ligne de commande
 

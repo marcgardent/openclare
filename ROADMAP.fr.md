@@ -24,7 +24,7 @@ contre elle. Dans cet ordre :
 | 5 | *Follow Curvature*, *Fewer Irregular Vertices*, *Volume Fit* ; les préréglages livrés | valeurs par défaut réglées sur le corpus ; aucune portée ne plie de quad ; le volume gardé après subdivision | #13, #21, #33, #72, #39 |
 | 6 | *Output: Triangles*, pour *Simulation* ; `--method triangles` | aucun triangle n'en traverse un autre sur les modèles de [TRIANGLES.fr.md](docs/TRIANGLES.fr.md) | #226 |
 | 7 | *Materials*, les lignes entre eux ; `--groups` | les frontières entre matériaux gardées sur un vrai modèle, la voiture de l'auteur d'abord | #47 |
-| 8 | Le greffon sous Windows et macOS | lancé dans Blender sur chacun, macOS notarisé | #110 |
+| 8 | Le greffon sous macOS | lancé dans Blender, notarisé | #110 |
 
 Les autres fonctions expérimentales sont des outils pour regarder dans la chaîne (`field`,
 `tmesh`, `quantize`, Rerun et les autres) ou des pistes de recherche (`--quality slow`) : elles
