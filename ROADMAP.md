@@ -4,7 +4,7 @@ What matters among what is left to do. Written on 8 October 2026 and reordered t
 the author chose to start the Blender add-on now (section 3), with its UV layers, and to keep
 the quality tracks for after its first version. Brought up to date on 10 October 2026 (order
 12, and the baking of section 4).
-The full list of shortcuts and known limits is in [BACKLOG.md](BACKLOG.md) (tickets `DT-nnn`);
+The full list of shortcuts and known limits is in [BACKLOG.md](BACKLOG.md) (the issues of the repository);
 the specification and what each finished milestone delivered are in
 [ALGORITHM.md](ALGORITHM.md).
 
