@@ -8,9 +8,10 @@ machine, and writes docs/models/mesh/<model>/<remesher>-<budget>.ocqm with an
 index.json beside them, which site/build.py turns into a viewer on the model's
 page.
 
-- Only openclare, QuadriFlow and AutoRemesher are read, and the meshes modelled
-  by hand of bench/reference/handmade: never Quad Remesher, whose outputs stay
-  local (its licence).
+- Only openclare, QuadriFlow, AutoRemesher, Instant Meshes (Jakob's program)
+  and QuadWild-BiMDF are read, and the meshes modelled by hand of
+  bench/reference/handmade: never Quad Remesher, whose outputs stay local (its
+  licence).
 - Never the source: it is too heavy to load, and the page keeps its pictures.
 - A model whose licence does not allow passing it on (CREDITS.md: BlenderKit
   Royalty Free) is left out: a mesh one can download passes the model on, even
@@ -19,6 +20,9 @@ page.
   for a remesher run with several seeds (QuadriFlow), the seed whose number of
   faces is the median the summary gives. A file whose number of faces is not
   that of its run is refused: it would come from another run.
+- The date of a run is that of the last commit of its results file; a mesh that
+  has not changed keeps the date index.json gave it, as a partial run of other
+  remeshers recommits that file.
 
 The .ocqm format, little-endian, made for quads (they are never triangulated):
 
@@ -44,7 +48,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 from pages import VIEWS, Y_UP  # noqa: E402  the view of the pictures, kept by the viewer
 
-REMESHERS = ("openclare", "quadriflow", "autoremesher")
+REMESHERS = ("openclare", "quadriflow", "autoremesher", "instant-meshes-jakob", "quadwild-bimdf")
 BUDGETS = ("1000", "3000", "8000")
 RESULTS = {"1000": "results-1000.json", "3000": "results.json", "8000": "results-8000.json"}
 
@@ -102,6 +106,14 @@ def last_run(budget):
     return json.loads(path.read_text(encoding="utf-8")), date
 
 
+def previous_dates(model):
+    """The run date of each file of the model's index.json, if it has one."""
+    path = ROOT / "docs/models/mesh" / model / "index.json"
+    if not path.exists():
+        return {}
+    return {m["file"]: m["run"] for m in json.loads(path.read_text(encoding="utf-8"))["meshes"]}
+
+
 def chosen_run(results, model, remesher):
     """The seed and number of faces of the run shown: the median one."""
     summary = results["summary"].get(model, {}).get(remesher)
@@ -128,6 +140,7 @@ def main():
             print(f"{model}: left out, its licence does not allow passing it on")
             continue
         entries = []
+        dated = previous_dates(model)
         for budget in args.budgets:
             results, date = runs[budget]
             for remesher in REMESHERS:
@@ -148,9 +161,11 @@ def main():
                 name = f"{remesher}-{budget}.ocqm"
                 target = ROOT / "docs/models/mesh" / model / name
                 target.parent.mkdir(parents=True, exist_ok=True)
-                target.write_bytes(encode(positions, faces))
+                data = encode(positions, faces)
+                run = dated.get(name, date) if target.exists() and target.read_bytes() == data else date
+                target.write_bytes(data)
                 entries.append({"remesher": remesher, "budget": int(budget), "file": name,
-                                "faces": len(faces), "seed": seed, "run": date})
+                                "faces": len(faces), "seed": seed, "run": run})
                 print(f"{model} {budget} {remesher}: seed {seed}, {len(faces)} faces, {target.stat().st_size / 1000:.0f} kB")
         handmade = ROOT / "bench/reference/handmade" / f"{model}.obj"
         if handmade.exists():
@@ -164,9 +179,11 @@ def main():
             else:
                 target = ROOT / "docs/models/mesh" / model / "handmade.ocqm"
                 target.parent.mkdir(parents=True, exist_ok=True)
-                target.write_bytes(encode(positions, faces))
+                data = encode(positions, faces)
+                run = dated.get(target.name, date) if target.exists() and target.read_bytes() == data else date
+                target.write_bytes(data)
                 entries.append({"remesher": "handmade", "budget": None, "file": target.name,
-                                "faces": len(faces), "seed": None, "run": date})
+                                "faces": len(faces), "seed": None, "run": run})
                 print(f"{model} handmade: {len(faces)} faces, {target.stat().st_size / 1000:.0f} kB")
         if entries:
             azimuth, elevation = VIEWS.get(model, (-60, 20))

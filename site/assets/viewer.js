@@ -39,7 +39,13 @@ const WORDS = {
   },
 };
 
-const NAMES = { openclare: "openclare", quadriflow: "QuadriFlow (Blender)", autoremesher: "AutoRemesher" };
+const NAMES = {
+  openclare: "openclare",
+  quadriflow: "QuadriFlow (Blender)",
+  autoremesher: "AutoRemesher",
+  "instant-meshes-jakob": "Instant Meshes",
+  "quadwild-bimdf": "QuadWild-BiMDF",
+};
 
 function decode(buffer) {
   const view = new DataView(buffer);

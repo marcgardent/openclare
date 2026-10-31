@@ -31,6 +31,22 @@
    "run": "2026-10-28"
   },
   {
+   "remesher": "instant-meshes-jakob",
+   "budget": 1000,
+   "file": "instant-meshes-jakob-1000.ocqm",
+   "faces": 1151,
+   "seed": 1,
+   "run": "2026-10-31"
+  },
+  {
+   "remesher": "quadwild-bimdf",
+   "budget": 1000,
+   "file": "quadwild-bimdf-1000.ocqm",
+   "faces": 26848,
+   "seed": 1,
+   "run": "2026-10-31"
+  },
+  {
    "remesher": "openclare",
    "budget": 3000,
    "file": "openclare-3000.ocqm",
@@ -55,6 +71,22 @@
    "run": "2026-10-28"
   },
   {
+   "remesher": "instant-meshes-jakob",
+   "budget": 3000,
+   "file": "instant-meshes-jakob-3000.ocqm",
+   "faces": 3076,
+   "seed": 1,
+   "run": "2026-10-31"
+  },
+  {
+   "remesher": "quadwild-bimdf",
+   "budget": 3000,
+   "file": "quadwild-bimdf-3000.ocqm",
+   "faces": 26871,
+   "seed": 1,
+   "run": "2026-10-31"
+  },
+  {
    "remesher": "openclare",
    "budget": 8000,
    "file": "openclare-8000.ocqm",
@@ -77,6 +109,22 @@
    "faces": 3828,
    "seed": 1,
    "run": "2026-10-28"
+  },
+  {
+   "remesher": "instant-meshes-jakob",
+   "budget": 8000,
+   "file": "instant-meshes-jakob-8000.ocqm",
+   "faces": 8157,
+   "seed": 1,
+   "run": "2026-10-31"
+  },
+  {
+   "remesher": "quadwild-bimdf",
+   "budget": 8000,
+   "file": "quadwild-bimdf-8000.ocqm",
+   "faces": 27486,
+   "seed": 1,
+   "run": "2026-10-31"
   }
  ]
 }
