@@ -15,7 +15,7 @@ A panel named *openclare* appears in the Properties editor, on the tab of the me
 
 ### What it does
 
-- **How many quads, and where.** A number of quads, or the sizes of the largest and the smallest. *Analyse* proposes the sizes and says at once how many quads they make; *Show Sizes* colours the object with the size its quads will have.
+- **How many quads, and where.** A number of quads, or the sizes of the largest and the smallest. *Show Sizes* colours the object with the size its quads will have.
 - **Density.** *Adaptive Size* makes the quads smaller where the shape bends; thin parts (a finger, an ear) keep the quads that go round them. A density painted in Weight Paint says where they are smaller, and *Density from Shape* writes the shape's own density as a group to paint on.
 - **Lines of edges.** Hard edges, the edges marked sharp, and the borders between materials are kept as lines of edges.
 - **Curves drawn on the model.** *Draw Curve* and *Cut Volume*, in the toolbar, draw a curve on the model or the loop round a limb. A *Guide* curve gives a line of edges; a *Sharp* curve gives a line of hard edges.

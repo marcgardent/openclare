@@ -29,6 +29,14 @@ Sélectionnez une boucle d'arêtes avec Alt-clic : elle devrait faire une fois l
 
 *Un corps humain à 10 590 quads : par openclare sans fermeture des boucles, avec fermeture, fait à la main et par QuadriFlow. Les boucles en spirale en vermillon, les boucles fermées en bleu foncé.*
 
+## Des doigts qui restent des doigts
+
+Un corps entier à 3 000 quads laisse peu de quads à chaque main, et beaucoup de remailleurs abandonnent les doigts : ils fondent en moufle. openclare garde au moins six quads autour de chaque partie fine, un doigt ou le bout d'une oreille, avec des quads plus petits là et plus grands ailleurs : la partie garde son volume au lieu de sortir aplatie (*Quads Around Thin Parts*).
+
+![La main droite d'un corps humain à 3 000 quads : la source, openclare avec cinq doigts, Instant Meshes avec une moufle](../../docs/images/fingers.webp)
+
+*La main droite d'un corps humain demandé à 3 000 quads : la source, openclare (3 032 quads), Instant Meshes (2 800 quads). Sur les parties fines, le banc mesure openclare à 0,09 arête de quad de la source, Instant Meshes à 0,84.*
+
 ## Voir en 3D
 
 Tournez autour des résultats d'openclare et de deux autres remailleurs, quad par quad.

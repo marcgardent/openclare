@@ -101,6 +101,26 @@ def parallel(function, items, jobs):
         return pool.map(function, items, chunksize=1)
 
 
+
+def as_done(function, items, jobs):
+    """(index, result) of `function` on each item as each one ends, `jobs`
+    processes at a time."""
+    items = list(items)
+    if jobs <= 1 or len(items) <= 1:
+        for index, item in enumerate(items):
+            yield index, function(item)
+        return
+    import multiprocessing
+
+    with multiprocessing.get_context("fork").Pool(min(jobs, len(items))) as pool:
+        yield from pool.imap_unordered(_indexed, [(function, index, item) for index, item in enumerate(items)],
+                                       chunksize=1)
+
+
+def _indexed(job):
+    function, index, item = job
+    return index, function(item)
+
 # --- export directories ----------------------------------------------------------------
 
 
