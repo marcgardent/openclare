@@ -1,0 +1,281 @@
+{
+ "experiment": "census of an export",
+ "export": "scratch/data-package/turns-of-a-t-mesh/male-body/export/call-2146-806-5237618",
+ "export_record": {
+  "experiment": "export of the turns of the closing",
+  "engine": {
+   "commit": "e13fadb",
+   "build": "sha256:d444f05f7279f3e7",
+   "options": "as-is",
+   "environment": {}
+  },
+  "command": [
+   "openclare",
+   "remesh",
+   "<source>",
+   "mesh.obj",
+   "--preset",
+   "organic",
+   "--quads",
+   "10590"
+  ],
+  "source": {
+   "path": "source.obj",
+   "md5": "f1fe33002b731d1d41846daed6c59f5e"
+  },
+  "machine": {
+   "processor": "Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz",
+   "threads": 8,
+   "memory": "62.7 GiB",
+   "load_average": [
+    8.64,
+    5.25,
+    3.14
+   ],
+   "load_average_at_end": [
+    7.71,
+    6.46,
+    3.99
+   ]
+  },
+  "seconds": 187.3,
+  "tmesh": "call-2146-806-5237618",
+  "ways": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "measure": {
+   "valid": true,
+   "quads": 10484,
+   "loop_edges_spiral": 0.014641358260206027,
+   "loops_spiral": 11,
+   "loop_edges_closed": 0.36484166348721775,
+   "mean_distance": 0.0001895734178229812,
+   "hausdorff": 0.004743854442472561,
+   "angle_deviation_mean": 4.292626082506852,
+   "irregular_vertices": 254,
+   "inverted_faces": 0
+  }
+ },
+ "ways": {
+  "0": "6cc0c52ed844da1d1343a49e60e967e06c71639e970a2ffad1186047e4bff93a",
+  "1": "f9ed1876de4d580ec3f64e3cb38252890f7cc8d403f35169f762fc95471a3c16",
+  "2": "73fd72de47d0b93bf8b4d3fdf2e4cbaca7f7814337b80857130a4ca42835e517",
+  "3": "dd044d80dd8f807d335182282202b905fc021f48f750eeb03295460de6d12ca4",
+  "4": "3197c4fccb7ff314c588885bb3519c7c1eea7c977887126b2636173fb28f69f7",
+  "5": "f3bc8513c30d53e9551ff30710bca835f2a5771492d2b91bd620a375b620183c",
+  "6": "e311a34d17929be3646e76c6244d0b6e3cbd44f6515be8313f76c4051b5b5e5a",
+  "7": "826d051bb7c6219c45509225f52219665732ede8395ed4b7911c6d83fa27e993"
+ },
+ "machine": {
+  "processor": "Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz",
+  "threads": 8,
+  "memory": "62.7 GiB",
+  "load_average": [
+   2.15,
+   3.48,
+   3.62
+  ],
+  "load_average_at_end": [
+   2.15,
+   3.48,
+   3.62
+  ],
+  "processors_allowed": 8
+ },
+ "solver": {
+  "scipy": "1.16.3",
+  "highs": "1.8.0",
+  "highs_threads": 1
+ },
+ "wall_seconds": 0.6,
+ "tmesh": {
+  "arcs": 2146,
+  "patches": 806,
+  "balances": 1612,
+  "nodes": 1342,
+  "kinds": {
+   "singularity": 254,
+   "corner": 20,
+   "junction": 1068
+  },
+  "singular_by_valence": {
+   "3": 131,
+   "5": 123
+  },
+  "index_sum": 8
+ },
+ "balances_as_a_graph": {
+  "arcs_in_two_balances_with_signs": {
+   "-/-": 566,
+   "+/-": 1016,
+   "+/+": 564
+  },
+  "arcs_otherwise": 0,
+  "components": 1,
+  "components_with_an_unbalanced_cycle": 1,
+  "rank": 1612,
+  "full_row_rank": true,
+  "kernel_dimension": 534
+ },
+ "ways_read": 8,
+ "turns_found_total": 1708,
+ "held_total": 1020,
+ "bounds_of_separation_range": [
+  36,
+  197
+ ],
+ "strips_ways_round_total": 1794,
+ "per_way": [
+  {
+   "way": 0,
+   "turns_found": 111,
+   "held": 58,
+   "kept_by_the_projection": 58,
+   "bounds_of_separation": 36,
+   "scale": 1.0358321911716575,
+   "quads": 10501,
+   "deviation": 0.36159463165859346,
+   "held_left_shifted": 19,
+   "found_left_shifted": 34,
+   "spirals": 0.04094848109703837,
+   "strips_ways_round": 272,
+   "strips_shifted": 198,
+   "strips_leaning_below_0_12": 262,
+   "strips_leaning_below_0_12_up_to_sign": 131,
+   "strips_leaning_below_0_12_shifted": 188
+  },
+  {
+   "way": 1,
+   "turns_found": 162,
+   "held": 92,
+   "kept_by_the_projection": 92,
+   "bounds_of_separation": 60,
+   "scale": 1.0579289659012248,
+   "quads": 10480,
+   "deviation": 0.4610961102367991,
+   "held_left_shifted": 40,
+   "found_left_shifted": 65,
+   "spirals": 0.09060114503816796,
+   "strips_ways_round": 250,
+   "strips_shifted": 180,
+   "strips_leaning_below_0_12": 242,
+   "strips_leaning_below_0_12_up_to_sign": 121,
+   "strips_leaning_below_0_12_shifted": 174
+  },
+  {
+   "way": 2,
+   "turns_found": 122,
+   "held": 64,
+   "kept_by_the_projection": 64,
+   "bounds_of_separation": 41,
+   "scale": 1.0389950449178833,
+   "quads": 10520,
+   "deviation": 0.36876306130092584,
+   "held_left_shifted": 23,
+   "found_left_shifted": 41,
+   "spirals": 0.016539923954372624,
+   "strips_ways_round": 306,
+   "strips_shifted": 236,
+   "strips_leaning_below_0_12": 298,
+   "strips_leaning_below_0_12_up_to_sign": 149,
+   "strips_leaning_below_0_12_shifted": 228
+  },
+  {
+   "way": 3,
+   "turns_found": 182,
+   "held": 102,
+   "kept_by_the_projection": 102,
+   "bounds_of_separation": 73,
+   "scale": 1.065500631251458,
+   "quads": 10540,
+   "deviation": 0.5159163038334407,
+   "held_left_shifted": 52,
+   "found_left_shifted": 86,
+   "spirals": 0.035341555977229606,
+   "strips_ways_round": 236,
+   "strips_shifted": 166,
+   "strips_leaning_below_0_12": 224,
+   "strips_leaning_below_0_12_up_to_sign": 112,
+   "strips_leaning_below_0_12_shifted": 156
+  },
+  {
+   "way": 4,
+   "turns_found": 205,
+   "held": 125,
+   "kept_by_the_projection": 125,
+   "bounds_of_separation": 58,
+   "scale": 1.110328271629601,
+   "quads": 10402,
+   "deviation": 0.630217195088384,
+   "held_left_shifted": 61,
+   "found_left_shifted": 94,
+   "spirals": 0.12098634877908097,
+   "strips_ways_round": 190,
+   "strips_shifted": 118,
+   "strips_leaning_below_0_12": 186,
+   "strips_leaning_below_0_12_up_to_sign": 93,
+   "strips_leaning_below_0_12_shifted": 116
+  },
+  {
+   "way": 5,
+   "turns_found": 345,
+   "held": 219,
+   "kept_by_the_projection": 219,
+   "bounds_of_separation": 187,
+   "scale": 1.323723887735546,
+   "quads": 10525,
+   "deviation": 1.12327969498494,
+   "held_left_shifted": 154,
+   "found_left_shifted": 229,
+   "spirals": 0.021995249406175775,
+   "strips_ways_round": 170,
+   "strips_shifted": 110,
+   "strips_leaning_below_0_12": 154,
+   "strips_leaning_below_0_12_up_to_sign": 77,
+   "strips_leaning_below_0_12_shifted": 98
+  },
+  {
+   "way": 6,
+   "turns_found": 216,
+   "held": 131,
+   "kept_by_the_projection": 131,
+   "bounds_of_separation": 61,
+   "scale": 1.1283370847790926,
+   "quads": 10391,
+   "deviation": 0.6426946980557547,
+   "held_left_shifted": 72,
+   "found_left_shifted": 108,
+   "spirals": 0.13964007314021748,
+   "strips_ways_round": 208,
+   "strips_shifted": 134,
+   "strips_leaning_below_0_12": 196,
+   "strips_leaning_below_0_12_up_to_sign": 98,
+   "strips_leaning_below_0_12_shifted": 126
+  },
+  {
+   "way": 7,
+   "turns_found": 365,
+   "held": 229,
+   "kept_by_the_projection": 229,
+   "bounds_of_separation": 197,
+   "scale": 1.3695886503972505,
+   "quads": 10802,
+   "deviation": 1.194942062728042,
+   "held_left_shifted": 170,
+   "found_left_shifted": 262,
+   "spirals": 0.08720607294945378,
+   "strips_ways_round": 162,
+   "strips_shifted": 116,
+   "strips_leaning_below_0_12": 146,
+   "strips_leaning_below_0_12_up_to_sign": 73,
+   "strips_leaning_below_0_12_shifted": 102
+  }
+ ]
+}
