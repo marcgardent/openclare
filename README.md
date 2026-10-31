@@ -55,6 +55,9 @@ free: the panel shows a bar of its progress, with a button to stop it (Esc stops
 the status bar each stage as it begins. It takes about eight seconds for the 200,000 triangles
 of the ogre at 3000 quads.
 
+Each setting and tool is stable or experimental: [docs/FEATURES.md](docs/FEATURES.md) says which,
+and what an experimental one lacks.
+
 | Setting | What it does |
 |---|---|
 | Output | *Quads* (the default), or *Triangles*: triangles close to equilateral, of one size or as the shape asks, for simulation, 3D printing and collision meshes. The same settings apply but those of quads alone (Follow Curvature, Fewer Irregular Vertices, Volume Fit); the result says how many triangles cut through another one, which a printer cannot make sense of. How they compare with Blender's *Decimate*: [docs/TRIANGLES.md](docs/TRIANGLES.md) |
@@ -127,7 +130,8 @@ the settings it has now, in place of the result, which keeps its name and place.
   for other hosts, and watching the chain at work.
 - [CONTRIBUTING.md](CONTRIBUTING.md): building, testing, the bench, the layout of the code.
 - [ALGORITHM.md](ALGORITHM.md): how it works, stage by stage, and what each milestone delivered.
-- [ROADMAP.md](ROADMAP.md): what is left to do. Tickets are the
+- [docs/FEATURES.md](docs/FEATURES.md): every feature, stable or experimental.
+- [ROADMAP.md](ROADMAP.md): what is left to do, feature by feature. Tickets are the
   [issues](https://github.com/marcgardent/openclare/issues).
 - [CREDITS.md](CREDITS.md): the authors, sources and licences of the 3D models and tools used.
 

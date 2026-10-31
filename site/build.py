@@ -11,6 +11,8 @@ Sources:
   get it (theory.md comes from the research note's branch; a placeholder
   stands in until it is there);
 - docs/GLOSSARY.md and docs/GLOSSARY.fr.md;
+- docs/FEATURES.md and ROADMAP.md, with their French versions: the
+  documentation, each feature stable or experimental and what is left to do;
 - docs/models/<model>.md and docs/models/img/: one page per model;
 - bench/results/SCORES.md and scores.json: the tables of the results page;
 - docs/retopology/: the tools for retopology in Blender, their platforms and
@@ -99,6 +101,9 @@ WORDS = {
         "home": "Home",
         "theory": "Theory",
         "glossary": "Glossary",
+        "documentation": "Documentation",
+        "features": "Features",
+        "roadmap": "Roadmap",
         "results": "Results",
         "research": "Research",
         "get": "Get it",
@@ -144,6 +149,9 @@ WORDS = {
         "home": "Accueil",
         "theory": "Théorie",
         "glossary": "Glossaire",
+        "documentation": "Documentation",
+        "features": "Fonctions",
+        "roadmap": "Feuille de route",
         "results": "Résultats",
         "research": "Recherche",
         "get": "L'obtenir",
@@ -186,18 +194,21 @@ WORDS = {
 # The logo leads home; the navigation lists the other pages.
 # The menu: the home page is for the artist (the logo), the articles go
 # deeper. "Get it" is a button beside it.
-NAVIGATION = ("articles",)
+NAVIGATION = ("documentation", "articles")
 # A menu item with no page of its own leads to this one.
-NAVIGATION_TARGETS = {}
+NAVIGATION_TARGETS = {"documentation": "features"}
+# The documentation: pages of the repository, the source first, then its
+# French version.
+DOCUMENTATION = {"features": ("docs/FEATURES.md", "docs/FEATURES.fr.md"), "roadmap": ("ROADMAP.md", "ROADMAP.fr.md")}
 # The articles, by category, as tiles on the articles page; each has a banner,
 # site/assets/articles/<key>.svg (scripts/article_banners.py).
 ARTICLES = (("ecosystem", ("retopology", "engines", "platforms")), ("insight", ("theory", "results", "research", "glossary")))
 CATEGORY_OF = {key: category for category, keys in ARTICLES for key in keys}
 # The pages each item of the navigation stands for, beside its own.
 # The site map of the footer: a column per group, the articles by category.
-SITEMAP = (("openclare", ("index", "get", "articles")),) + ARTICLES
+SITEMAP = (("openclare", ("index", "get", "articles")), ("documentation", tuple(DOCUMENTATION))) + ARTICLES
 
-SECTIONS = {"articles": ("models/", "retopology", "engines", "platforms", "theory", "results", "research", "glossary")}
+SECTIONS = {"documentation": tuple(DOCUMENTATION), "articles": ("models/", "retopology", "engines", "platforms", "theory", "results", "research", "glossary")}
 # The lists of the state of the market, in the order they are shown.
 MARKET = ("retopology", "engines", "platforms")
 
@@ -780,6 +791,9 @@ class Site:
         match = re.fullmatch(r"docs/GLOSSARY(\.fr)?\.md", path)
         if match:
             return "glossary", "fr" if match.group(1) else "en"
+        for key, sources in DOCUMENTATION.items():
+            if path in sources:
+                return key, LANGUAGES[sources.index(path)]
         match = re.fullmatch(r"docs/models/(\w+)\.md", path)
         if match:
             name = match.group(1)
@@ -1211,6 +1225,19 @@ class Site:
                 "glossary", language, self.title_of(text), body, headings, "glossary", WORDS[language]["glossary_description"],
                 toc=False, extra=extra
             )
+
+    def documentation(self):
+        """The pages of the documentation, from the repository's files; the
+        issues they cite by number (#253) link to the issue, and the state of
+        a feature in a table is a badge."""
+        for key, sources in DOCUMENTATION.items():
+            for language, source in zip(LANGUAGES, sources):
+                text = self.drop_language_link(read(ROOT / source))
+                body, headings = self.render(text, source, self.page_path(key, language), language)
+                body = re.sub(r"(?<![\w&;/\"'#])#(\d+)\b", rf'<a href="{REPOSITORY}/issues/\1">#\1</a>', body)
+                body = re.sub(r"<td>(stable|experimental|expérimental)</td>", lambda m: (
+                    f'<td><span class="badge badge-{"stable" if m.group(1) == "stable" else "experimental"}">{m.group(1)}</span></td>'), body)
+                self.write(key, language, self.title_of(text), body, headings, "documentation", self.description_of(text))
 
     def entry_anchors(self, body, language, taken):
         """Every entry of the glossary page gets the anchor the other pages
@@ -1930,6 +1957,7 @@ class Site:
         self.simple("index", "home")
         self.simple("theory", "theory", {language: WORDS[language]["placeholder_theory"] for language in LANGUAGES})
         self.glossary()
+        self.documentation()
         self.results()
         self.simple("research", "research")
         self.simple("get", "get")
