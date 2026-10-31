@@ -11,6 +11,16 @@
    "budget": 1000,
    "file": "openclare-1000.ocqm",
    "faces": 988,
+   "quads": 988,
+   "vertices": 1016,
+   "poles": {
+    "3": 58,
+    "5": 52
+   },
+   "loops": {
+    "closed": 6,
+    "spiral": 1
+   },
    "seed": 1,
    "run": "2026-10-28"
   },
@@ -19,6 +29,16 @@
    "budget": 1000,
    "file": "quadriflow-1000.ocqm",
    "faces": 900,
+   "quads": 900,
+   "vertices": 936,
+   "poles": {
+    "3": 37,
+    "5": 31
+   },
+   "loops": {
+    "closed": 0,
+    "spiral": 0
+   },
    "seed": 1,
    "run": "2026-10-28"
   },
@@ -27,6 +47,18 @@
    "budget": 1000,
    "file": "autoremesher-1000.ocqm",
    "faces": 305,
+   "quads": 297,
+   "vertices": 310,
+   "poles": {
+    "2": 1,
+    "3": 23,
+    "5": 7,
+    "6": 2
+   },
+   "loops": {
+    "closed": 0,
+    "spiral": 3
+   },
    "seed": 1,
    "run": "2026-10-28"
   },
@@ -35,6 +67,19 @@
    "budget": 1000,
    "file": "instant-meshes-jakob-1000.ocqm",
    "faces": 953,
+   "quads": 953,
+   "vertices": 992,
+   "poles": {
+    "2": 7,
+    "3": 56,
+    "5": 37,
+    "6": 8,
+    "7": 2
+   },
+   "loops": {
+    "closed": 1,
+    "spiral": 6
+   },
    "seed": 1,
    "run": "2026-10-31"
   },
@@ -43,6 +88,16 @@
    "budget": 1000,
    "file": "quadwild-bimdf-1000.ocqm",
    "faces": 2050,
+   "quads": 2050,
+   "vertices": 2074,
+   "poles": {
+    "3": 75,
+    "5": 70
+   },
+   "loops": {
+    "closed": 9,
+    "spiral": 8
+   },
    "seed": 1,
    "run": "2026-10-31"
   },
@@ -51,6 +106,16 @@
    "budget": 3000,
    "file": "openclare-3000.ocqm",
    "faces": 3012,
+   "quads": 3012,
+   "vertices": 3064,
+   "poles": {
+    "3": 89,
+    "5": 81
+   },
+   "loops": {
+    "closed": 8,
+    "spiral": 0
+   },
    "seed": 1,
    "run": "2026-10-28"
   },
@@ -59,6 +124,16 @@
    "budget": 3000,
    "file": "quadriflow-3000.ocqm",
    "faces": 3122,
+   "quads": 3122,
+   "vertices": 3185,
+   "poles": {
+    "3": 57,
+    "5": 51
+   },
+   "loops": {
+    "closed": 0,
+    "spiral": 0
+   },
    "seed": 4,
    "run": "2026-10-28"
   },
@@ -67,6 +142,19 @@
    "budget": 3000,
    "file": "autoremesher-3000.ocqm",
    "faces": 1102,
+   "quads": 1086,
+   "vertices": 1112,
+   "poles": {
+    "2": 1,
+    "3": 55,
+    "5": 24,
+    "6": 3,
+    "7": 1
+   },
+   "loops": {
+    "closed": 0,
+    "spiral": 6
+   },
    "seed": 1,
    "run": "2026-10-28"
   },
@@ -75,6 +163,20 @@
    "budget": 3000,
    "file": "instant-meshes-jakob-3000.ocqm",
    "faces": 3123,
+   "quads": 3123,
+   "vertices": 3197,
+   "poles": {
+    "2": 12,
+    "3": 121,
+    "5": 116,
+    "6": 8,
+    "7": 1,
+    "8": 1
+   },
+   "loops": {
+    "closed": 5,
+    "spiral": 4
+   },
    "seed": 1,
    "run": "2026-10-31"
   },
@@ -83,6 +185,16 @@
    "budget": 3000,
    "file": "quadwild-bimdf-3000.ocqm",
    "faces": 3325,
+   "quads": 3325,
+   "vertices": 3373,
+   "poles": {
+    "3": 75,
+    "5": 70
+   },
+   "loops": {
+    "closed": 9,
+    "spiral": 2
+   },
    "seed": 1,
    "run": "2026-10-31"
   },
@@ -91,6 +203,16 @@
    "budget": 8000,
    "file": "openclare-8000.ocqm",
    "faces": 8040,
+   "quads": 8040,
+   "vertices": 8127,
+   "poles": {
+    "3": 135,
+    "5": 129
+   },
+   "loops": {
+    "closed": 14,
+    "spiral": 5
+   },
    "seed": 1,
    "run": "2026-10-28"
   },
@@ -99,6 +221,16 @@
    "budget": 8000,
    "file": "quadriflow-8000.ocqm",
    "faces": 7781,
+   "quads": 7781,
+   "vertices": 7884,
+   "poles": {
+    "3": 59,
+    "5": 53
+   },
+   "loops": {
+    "closed": 0,
+    "spiral": 8
+   },
    "seed": 2,
    "run": "2026-10-28"
   },
@@ -107,6 +239,14 @@
    "budget": 8000,
    "file": "autoremesher-8000.ocqm",
    "faces": 2740,
+   "quads": 2718,
+   "vertices": 2799,
+   "poles": {
+    "3": 64,
+    "5": 40,
+    "6": 5
+   },
+   "loops": null,
    "seed": 1,
    "run": "2026-10-28"
   },
@@ -115,6 +255,19 @@
    "budget": 8000,
    "file": "instant-meshes-jakob-8000.ocqm",
    "faces": 8112,
+   "quads": 8112,
+   "vertices": 8262,
+   "poles": {
+    "2": 7,
+    "3": 219,
+    "5": 194,
+    "6": 9,
+    "7": 2
+   },
+   "loops": {
+    "closed": 0,
+    "spiral": 0
+   },
    "seed": 1,
    "run": "2026-10-31"
   },
@@ -123,6 +276,16 @@
    "budget": 8000,
    "file": "quadwild-bimdf-8000.ocqm",
    "faces": 8047,
+   "quads": 8047,
+   "vertices": 8138,
+   "poles": {
+    "3": 75,
+    "5": 70
+   },
+   "loops": {
+    "closed": 8,
+    "spiral": 8
+   },
    "seed": 1,
    "run": "2026-10-31"
   }

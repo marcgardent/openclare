@@ -4,7 +4,7 @@ use openclare::config::{PRESETS, Quality, RemeshConfig};
 use openclare::crossfield;
 use openclare::math::{Vec3, tangent_frame};
 use openclare::mesh::{Topology, obj, primitives};
-use openclare::metrics::measure;
+use openclare::metrics::{LoopKind, layout, measure};
 use openclare::parametrization;
 use openclare::preprocess;
 use openclare::quantization;
@@ -19,6 +19,7 @@ USAGE:
     openclare remesh <input.obj> <output.obj> [options]
     openclare presets
     openclare measure <source.obj> <quads.obj> [--target <N>] [--json]
+    openclare layout <quads.obj>
     openclare analyse <input.obj> [--preset <NAME>] [--largest <L>]
     openclare preprocess <input.obj> <output.obj> [options]
     openclare field <input.obj> [options]
@@ -121,6 +122,14 @@ OPTIONS (quantize): those of tmesh up to --rounds, and
 OPTIONS (measure):
     --target <N>           face count that was asked for
     --json                 print the metrics as one JSON object
+
+layout prints, as one JSON object, what measure counts of the poles and edge
+loops, for a viewer to draw them: \"poles\", [vertex, valence] for each
+irregular vertex off the borders, and \"closed\", \"spiral\", \"open\" (stops
+at an irregular vertex) and \"border\", the edges of the loops of each kind
+as a flat list of vertex pairs, and \"loops\", how many loops of each kind;
+null unless the mesh is a consistently oriented manifold. Vertices are
+numbered from 0.
 ";
 
 fn main() -> ExitCode {
@@ -144,6 +153,7 @@ fn run(args: &[String]) -> Result<(), String> {
             Ok(())
         }
         Some("measure") => measure_command(&args[1..]),
+        Some("layout") => layout_command(&args[1..]),
         Some("analyse") => analyse_command(&args[1..]),
         Some("preprocess") => preprocess_command(&args[1..]),
         Some("field") => field_command(&args[1..]),
@@ -647,6 +657,34 @@ fn remesh(args: &[String]) -> Result<(), String> {
     let summed = if report.pieces > 1 { " (summed over the pieces)" } else { "" };
     println!("timing   {}{summed}", timings.join(", "));
     println!("seconds  {seconds:.3}");
+    Ok(())
+}
+
+fn layout_command(args: &[String]) -> Result<(), String> {
+    let [quads] = args else {
+        return Err("layout takes the mesh to read".into());
+    };
+    let mesh = obj::read_obj_poly(quads).map_err(|e| format!("{quads}: {e}"))?;
+    let layout = layout(&mesh);
+    let list = |items: Vec<String>| items.join(", ");
+    let poles = list(layout.poles.iter().map(|(v, valence)| format!("[{v}, {valence}]")).collect());
+    let edges = |kind: LoopKind| match &layout.edges {
+        Some(edges) => {
+            let pairs = edges.iter().filter(|(_, k)| *k == kind).map(|([a, b], _)| format!("{a}, {b}")).collect();
+            format!("[{}]", list(pairs))
+        }
+        None => "null".into(),
+    };
+    let loops = layout.loops.map_or("null".into(), |[closed, spiral, open, border]| {
+        format!("{{\"closed\": {closed}, \"spiral\": {spiral}, \"open\": {open}, \"border\": {border}}}")
+    });
+    println!(
+        "{{\"poles\": [{poles}], \"loops\": {loops}, \"closed\": {}, \"spiral\": {}, \"open\": {}, \"border\": {}}}",
+        edges(LoopKind::Closed),
+        edges(LoopKind::Spiral),
+        edges(LoopKind::Open),
+        edges(LoopKind::Border),
+    );
     Ok(())
 }
 
