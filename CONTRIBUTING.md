@@ -112,8 +112,8 @@ left to do, in [ROADMAP.md](ROADMAP.md). The chain the project started from is d
   tickets.
 - **The core library takes no heavy dependency.** A heavy one (Rerun, say) goes into a crate
   apart, behind an interface the core knows.
-- **Tickets** are the GitHub issues, cited by their number (`#262`; the older `DT-nnn` is
-  issue #nnn), with a label `severity: high`, `medium` or `low`. Every shortcut, approximation, fallback or
+- **Tickets** are the GitHub issues, cited by their number (`#262`; an older `DT-nnn` is
+  the issue whose title starts with it), with a label `severity: high`, `medium` or `low`. Every shortcut, approximation, fallback or
   thing left undone gets one; findings and measures go into its comments; a ticket done is
   closed, not deleted.
 - **One change at a time**, on a branch, merged once reviewed, with what was measured in its

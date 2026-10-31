@@ -8,9 +8,10 @@ One ticket per shortcut, approximation, fallback or item of the specification
 deleted, and says what settled it; what is left of it stays written in it.
 
 **Numbers.** A ticket is cited by the number of its issue, `#262`. Until 31 October 2026 they
-were cited `DT-nnn` ("DT" for *dette technique*, technical debt), with the same number:
-`DT-034` in a document, a comment of the code or a commit message is issue #34; the tickets
-this file held, DT-001 to DT-053, are the issues of the same numbers.
+were cited `DT-nnn` ("DT" for *dette technique*, technical debt), the `DT-nnn` written at the
+head of the issue's title. DT-001 to DT-053, the tickets this file held, are the issues of the
+same numbers (`DT-034` is issue #34); the later ones are not (`DT-164` is issue #195), and are
+found by searching the issues for their `DT-nnn`.
 
 **Severity** is a label of the issue: *high* limits a result the acceptance rule is about;
 *medium* limits quality or robustness outside the corpus; *low* is tidiness, comfort,
