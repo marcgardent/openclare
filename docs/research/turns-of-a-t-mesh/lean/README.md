@@ -446,21 +446,17 @@ lengths on 13,261 half-integers; the real shift differs between the two
 representatives by up to 6.6 on the male body of the papers and 1.2 on the
 fresh one. Suzanne at `524b759` (10 T-meshes, all with borders) is skipped.
 
-Against the papers, on their male body: the held turns (48, 78, 52, 86, 84,
-160, 88, 169) and `τ_P(H)` = 1, 5, 1, 4, 1, 6, 1, 9 agree, exactly (in way 7,
-8 of the 21 cores are disjoint and the least set meeting them is 9). Table
-`tab:iis`: its 15 rows give 25 certificates over the ways, all valid with the
-paper's multipliers (up to the sign of each turn in the other ways of a row)
-and bounded arcs, and every set closes, at exact whole lengths, without each of
-its turns (76 of 76): rows 2 to 8, without exact check in the paper, are
-irreducible, and row 15 closes without each of its 15 turns (the paper, 14 of
-15 within its time limit). The Fox–Burgers formula holds on all 1,299 turns of
-the eight ways, way 2 included. One sentence disagrees: Section "Turns every
-quantization within bounds leaves shifted", "On the male body", says the forced
-turn of ways 0, 2, 4 and 6 is the wrist. In way 6 the wrist is held but
-closable (arc 1937 is bounded by 1 only in ways 0, 1, 2 and 4); its only core
-is turns 57 and 58 (Table `tab:iis`, row 7, arc 1241), one of which is forced. Table `tab:iis` (row 1: ways 0, 1, 2, 4) and the
-companion note ("in four ways (0, 1, 2 and 4)") agree with the data.
+Against the papers, on their male body (the export of v0.7.0): the held turns
+(58, 92, 64, 102, 125, 219, 131, 229) agree, and `τ_P(H)` = 1, 5, 3, 12, 5 and
+8 in ways 0 to 4 and 6 is checked exactly (in way 3, 10 of the 21 cores are
+disjoint and the least set meeting them is 12); in ways 5 and 7 the paper's 30
+and 37 lie within the bounds checked, 20 to 30 and 28 to 37 (disjoint certified
+cores below, whole lengths closing all but that many above; the least set
+meeting the cores is not searched past 100,000 nodes). Table `tab:iis`: its 41
+rows give 68 certificates over the ways, all valid with the paper's
+multipliers and bounded arcs, and every set closes, at exact whole lengths,
+without each of its turns (230 of 230). The Fox–Burgers formula holds on all
+1,708 turns of the eight ways.
 
 Each check fails on corrupted data (way 1 of the papers' body: a multiplier of a
 core or of a set of the table, a closing length, a developed place, each
