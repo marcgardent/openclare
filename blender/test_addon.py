@@ -1509,6 +1509,14 @@ assert openclare.poles.owner_shown(bpy.context) == ball
 bpy.context.view_layer.objects.active = ball
 assert bpy.ops.object.openclare_poles_free() == {"FINISHED"}
 assert not any(pole.touched for pole in project.items)
+# The tool to edit them is in the toolbar.
+from bl_ui.space_toolsystem_common import ToolSelectPanelHelper  # noqa: E402
+
+tools = ToolSelectPanelHelper._tool_class_from_space_type("VIEW_3D")
+assert any(
+    getattr(item, "idname", None) == "openclare.poles"
+    for item in ToolSelectPanelHelper._tools_flatten(tools.tools_from_context(bpy.context, mode="OBJECT"))
+)
 assert bpy.ops.object.openclare_poles_clear() == {"FINISHED"}
 assert len(project.items) == 0
 print("POLES", first, "kept; one touched and answered")
