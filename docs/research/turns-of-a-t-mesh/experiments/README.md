@@ -7,11 +7,10 @@ and singularities", "Conflicts between turns", "Any combination of turns" and "C
 Section "An exact look at the closing system" of the closing-loops paper, whose scripts
 (`../../closing-loops/experiments/exact/`) read it with the module here.
 
-> **No number here yet.** The scripts were checked on 2026-10-28 against the drafts' old export
-> (`male6`, below, "Checked"); those runs are not kept. The papers' numbers are made on the engine
-> of v0.7.0 as published (the `as-is` export of `export.py`, `NIGHT.md`), and their summaries then
-> go to `results/`. Where an example of the drafts (the wrist, the right eye, the set of 15 turns)
-> is not found on that export, the text is rewritten from what the scripts find.
+> The paper's numbers are made on the engine of v0.7.0 as published (`e13fadb`, the `as-is`
+> export of `export.py`, `NIGHT.md`), asked for 10,590 quads; the summaries are in `results/`.
+> The scripts were first checked on 2026-10-28 against the drafts' old export (`male6`, below,
+> "Checked"); those runs are not kept.
 
 Every script runs from the root of a clone and takes an export directory as its first argument
 (default `scratch/data-package/turns-of-a-t-mesh/male-body`, which `export.py` makes). An export
@@ -35,16 +34,16 @@ only on the same machine under the same load: the long runs are for an idle mach
 | Statement | Command (`B=docs/research/turns-of-a-t-mesh/experiments`) | Output |
 |---|---|---|
 | The export itself (the published engine; `--engine before-cuts` only for the aside) | `python3 $B/export.py --openclare <binary> --commit <hash>` | `<out>/export/`, `mesh.obj`, `measure.json`, `record.json` |
-| "Data": 261 singular vertices (133, 127, 1), 1,295 nodes, 2,069 arcs, 776 patches, 1,552 balances; 1,299 turns, 765 held; 28 to 36 bounds; Table `tab:forced`, columns "turns" and "left shifted by the engine"; the bidirected graph of the balances, its rank and the dimension 517 | `python3 $B/census.py <export>` | `results/census.json` |
-| Section "Turns and singularities", "On the male body": the crossing maps give the shift of all 1,299 turns; 1,436 sides of the 718 simple turns, 4 to 257 singular vertices, the Burgers sum in the order of first visit, the order of last visit failing on 150 of 158 discs of way 2; the checkerboard rule on the discs and on the 30,148 annuli, of index 0; the 294 pairs with no singular vertex between them; the ten annuli with one 3–5 pair, never on one trace; parity on all turns and on the 1,838 ways round of the strips; 101 turns crossing themselves once (97 and 4), 480 up to 107 times, 356 of the 765 held turns simple | `python3 $B/holonomy.py <export> --jobs 4` | `results/holonomy.json` |
-| Table `tab:iis` (sets, multipliers, bounded arcs, exact check, irreducibility in whole lengths); the wrist turn not closable alone in ways 0, 1, 2, 4, its form −(ℓ1921 + ℓ1937) and arc 1937 0.08 long; the three turns at the right eye; "every set found is infeasible in real numbers" | `python3 $B/conflicts.py <export>` | `results/conflicts.json`, `<out>/claims.json` |
+| "Data": 254 singular vertices (131, 123), 1,342 nodes, 2,146 arcs, 806 patches, 1,612 balances; 1,708 turns, 1,020 held; 36 to 197 bounds; 10,484 quads (from the export's record); Table `tab:forced`, columns "turns" and "left shifted by the engine"; the bidirected graph of the balances, its rank and the dimension 534 | `python3 $B/census.py <export>` | `results/census.json` |
+| Section "Turns and singularities", "On the male body": the crossing maps give the shift of all 1,708 turns; 1,656 sides of the 828 simple turns, 4 to 250 singular vertices, the Burgers sum in the order of first visit, the order of last visit holding on 5 of 184 discs of way 2; the checkerboard rule on the discs and on the 39,617 annuli, of index 0; the 394 pairs with no singular vertex between them; the 48 annuli with one 3–5 pair, never on one trace; parity on all turns and on the 1,794 ways round of the strips; turns crossing themselves once (160 and 10), 710 more often, up to 244 times, 416 of the 1,020 held turns simple | `python3 $B/holonomy.py <export> --jobs 4` | `results/holonomy.json` |
+| Table `tab:iis` (41 sets, multipliers, bounded arcs, exact check, irreducibility in whole lengths); turn 54 of way 0 not closable alone in ways 0, 1, 2, 5, 7, its form −(ℓ1892 + ℓ1908) and arc 1908 0.089 long; turn 46 of way 2 in ways 2, 3, 6, 7, ℓ1006 + ℓ1017 + ℓ1042, arc 1006 0.264 long; the sets of three (row 20); "every set found is infeasible in real numbers" | `python3 $B/conflicts.py <export>` | `results/conflicts.json`, `<out>/claims.json` |
 | The certificates of `tab:iis` and τ_P(H) checked by Lean | `python3 docs/research/turns-of-a-t-mesh/lean/Check/certify.py <export>/export/call-*/way-[0-9].json --claims scratch/data-package/turns-of-a-t-mesh/conflicts/claims.json --out <export>/export/certificates.json`, then `make lean-check EXPORT=<export>/export` | Lean's report (`Check/README` of `../lean`) |
-| Table `tab:pairs` (configurations A to F: windings, staircases, mechanisms); "A separatrix that winds" (separatrix 964 of vertex 246, 6.994 long, δ = ℓ1920 + ℓ1921 = 0.305, ℓ1920 ≡ ℓ1937); "Larger conflicts": the right eye's staircase of three arcs through arc 619, the primitive multipliers (7, 5, 2, 3) at the left hand | `python3 $B/pairs.py <export>` (after `conflicts.py`) | `results/pairs.json` |
-| Section "Combs", "On the male body": Lemma "Combs" on all 2,069 arcs, 2,046 with two distinct feet of odd valence, arc 1676 on the separatrix connection of 204 and 210; the odd part of every certificate a cycle of the graph of feet | `python3 $B/combs.py <export>` (after `conflicts.py`) | `results/combs.json` |
-| Section "Any combination of turns", "On the male body": every turn a word and its translation by Proposition "Fox–Burgers formula" (1,299 turns); Corollary "Checkerboard rule for any combination" on all turns and on the sets of `tab:iis`; the four turns with w18 = w22 + w101 + w65 whose translations break the relation in every frame; the twisted windings 10 ℓ1805 at the left hand; Section "Combs": the twisted homology of dimension 518, the pairing of rank 517, kernel 1 | `python3 $B/fox.py <export> --relations 2` (after `conflicts.py`) | `results/fox.json` |
-| Section "Combs", "Question ... read loosely": read strictly, E and F separated at exact balanced lengths (−2.9967, −1.9973), the eyes separated, the left hand inside the cone | `python3 $B/strict.py <export>` (after `conflicts.py`) | `results/strict.json` |
-| Section "Whole lengths and size": dimension 517, one row of greatest common divisor 2; lattices of dimension 363 to 469 with the held turns, Euclid's steps in ways 4, 5 and 6 | `python3 $B/lattice.py <export> --seconds 600` | `results/lattice.json` |
-| Table `tab:forced`, columns "bounds", "bounds, cap", "cap, size, whole"; "exactly 1, 5, 1, 4, 1, 6, 1 and 9"; in way 7 nine turns with eight of 21 cores disjoint; at most 66 s per family; exactly one in ways 0 and 2 with the cap and the window, and the whole lengths that show it; way 3: 4 in real lengths, at least 5 in whole; the optimum 4 for way 2 keeping open every arc the engine keeps open | `python3 $B/forced.py <export> --whole-lower --jobs 4`; `python3 $B/forced.py <export> --ways 2 --families held --sound --summary $B/results/forced-sound.json` | `results/forced.json`, `results/forced-sound.json`, whole lengths under `<out>` |
+| Table `tab:pairs` (the 17 pairs, rows 3 to 19 of `tab:iis`: windings, staircases, mechanisms); "A separatrix that winds" (turn 54 of way 0, separatrix 938 of vertex 239, 6.762 long, δ = ℓ1891 + ℓ1892, 0.287, ℓ1891 ≡ ℓ1908; none for turn 46 of way 2); "Larger conflicts": the 3–5 pairs of rows 22, 23, 28 and 30 | `python3 $B/pairs.py <export>` (after `conflicts.py`) | `results/pairs.json` |
+| Section "Combs", "On the male body": Lemma "Combs" on 2,090 of the 2,146 arcs, 1,955 with two distinct feet of odd valence, 76 arcs with more than one perpendicular trace, none on a separatrix connection; the odd part of 67 of the 68 certificates a cycle of the graph of feet | `python3 $B/combs.py <export>` (after `conflicts.py`) | `results/combs.json` |
+| Section "Any combination of turns", "On the male body": every turn a word and its translation by Proposition "Fox–Burgers formula" (1,708 turns); Corollary "Checkerboard rule for any combination" on all turns and on the 41 sets of `tab:iis`; no relation of windings that the translations break; Section "Combs": the twisted homology of dimension 504, the pairing of rank 504, kernel 0 | `python3 $B/fox.py <export> --relations 2` (after `conflicts.py`) | `results/fox.json` |
+| Section "Combs", "Question ... read loosely": read strictly, 15 of the 41 sets separated, each at exact balanced lengths; the certificate of turn 54 of way 0 the winding separatrix ℓ1873 | `python3 $B/strict.py <export>` (after `conflicts.py`) | `results/strict.json` |
+| Section "Whole lengths and size": dimension 534, one row of greatest common divisor 2; lattices of dimension 334 to 480 with the held turns, Euclid's steps in ways 1, 3, 4, 5, 6 and 7 | `python3 $B/lattice.py <export> --seconds 600` | `results/lattice.json` |
+| Table `tab:forced`, columns "bounds", "bounds, cap", "cap, size, whole"; "exactly 1, 5, 3, 12, 5, 30, 8 and 37"; in way 3 twelve turns with ten of 21 cores disjoint; 1,166 and 1,208 s for ways 5 and 7; exactly 1 in way 0 and 3 in way 2 with the cap and the window, and the whole lengths that show it (10,730 and 10,435 quads); ways 3 and 4: 12 and 6 in real lengths, at least 13 and 7 in whole; the optimum 3 for way 2 keeping open every arc the engine keeps open | `python3 $B/forced.py <export> --whole-lower --jobs 4`; `python3 $B/forced.py <export> --ways 2 --families held --sound --summary $B/results/forced-sound.json` | `results/forced.json`, `results/forced-sound.json`, whole lengths under `<out>` |
 | Paper A, Section "An exact look", and the rounding gap 0.399 / 0.536 quoted in "Whole lengths and size" | `../../closing-loops/experiments/exact/README.md` | |
 
 ## What each script does
@@ -129,23 +128,22 @@ only on the same machine under the same load: the long runs are for an idle mach
   on main since DT-089 (`OPENCLARE_EXPORT_TURNS`, with the same fields and more);
   `export.py --engine before-cuts` comes closest to the old engine on today's code, for comparison
   only.
-- **Witnesses.** Where the paper quotes one solution among many (the whole lengths at 10,439 and
-  10,436 quads, deviations 0.442 and 0.469, that show τ = 1 in ways 0 and 2), the scripts find
-  their own; on the drafts' old export (`male6`) they found 10,731 and 10,638 quads, 0.430 and
-  0.386.
+- **Witnesses.** Where the paper quotes one solution among many (the whole lengths at 10,730 and
+  10,435 quads, deviations 0.387 and 0.506, that show the value in ways 0 and 2), another run may
+  find others; the drafts quoted 10,439 and 10,436 quads on their old export.
 - **Intervals.** The ranges of `tab:forced` depend on the time limits and on the machine; the paper
-  says "within the time limit (120 to 1,800 seconds)". The night fixes them (`NIGHT.md`).
+  gives them (900 s a program, 1,800 s a loop). The night fixes them (`NIGHT.md`).
 - **The relation of windings.** `fox.py --relations K` finds the K first relations among the
   winding numbers of single turns that the translations break, in the order of the turns; which
-  four turns it names, and with which coefficients, depends on the export (on the drafts' old
-  export `male6` it names first turn 18 of way 0 and turns 22, 101 and 65 of ways 0, 4 and 5: the paper's
-  w18 = w22 + w101 + w65).
+  four turns it names, and with which coefficients, depends on the export: on the drafts' old
+  export `male6` it named turn 18 of way 0 and turns 22, 101 and 65 of ways 0, 4 and 5 (the drafts'
+  w18 = w22 + w101 + w65); on the export of v0.7.0, `--relations 2` finds none.
 - **Other models.** Section "Borders and handles" (Suzanne, Jerry, Bob, part, cage, a dome; the
   314 and 586 sides holding a border, the 1,076 sides, the 660 turns, the 40 collars, Bob's pairs),
   the 40 random graphs of the reduction of Theorem "Choosing the turns is NP-hard" and the
   subdivided octahedra and icosahedra of Appendix "Rotations of other orders" do not come from
-  the male body and are not scripted here. The "294" closed loops of the output meshes of
-  Theorem "Parity of closed loops" are not either.
+  the male body and are not scripted here. The parity of the closed loops of the output meshes
+  (Theorem "Parity of a turn on any surface") is not either.
 
 ## Long runs
 

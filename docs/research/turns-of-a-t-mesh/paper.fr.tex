@@ -134,10 +134,11 @@ d'un tour et s'arrête sur une autre séparatrice de son sommet force ce seul to
 tour ont la même parité. Le calcul de Fox étend la somme de Burgers à toute
 combinaison de tours, et des \emph{peignes}, dislocations locales portées par
 un seul arc, écrivent tous les certificats de conflit trouvés sur un corps
-humain. Les conflits minorent le nombre de tours que toute quantification
+humain. % PR3: 67 des 68 certificats sur le nouvel export, le 68e n'a pas de représentant entier
+Les conflits minorent le nombre de tours que toute quantification
 respectant des bornes données laisse décalés~: sur ce corps, dans les bornes
-de séparation d'un moteur de remaillage, exactement un à neuf des tours qu'il
-retient, là où il en laisse de 13 à 123 décalés. Choisir les tours à fermer
+de séparation d'un moteur de remaillage, exactement un à 37 des tours qu'il
+retient, là où il en laisse de 19 à 170 décalés. Choisir les tours à fermer
 est NP-difficile pour des équilibres bidirigés avec des bornes $0$--$1$, la
 forme algébrique de la quantification\,; savoir si de vrais T-meshes donnent
 des instances difficiles est une question ouverte. Le cœur algébrique des démonstrations est vérifié en Lean\,; la topologie de la
@@ -346,28 +347,30 @@ développent sur $\Z^2$. Une forme $f$ est égale à $g$ \emph{modulo les
 
 \paragraph{Données.}
 Les énoncés mesurés portent sur le T-mesh du corps masculin de la
-bibliothèque Essentials de Blender remaillé par openclare à $10\,590$ quads,
-exporté avec tous ses tours (branche \texttt{rd-exact}, moteur antérieur au
-commit \texttt{c8bf2be}) et étudié dans l'article
-compagnon~\cite[\S7]{gardent2026loops}~: $261$ sommets singuliers ($133$ de
-valence trois, $127$ de valence cinq, un de valence deux) parmi $1\,295$
-nœuds, $2\,069$ arcs, $776$ patchs, $1\,552$ équilibres. Les tours sont
+bibliothèque Essentials de Blender remaillé par openclare~0.7.0 tel que
+publié (commit \texttt{e13fadb}) en demandant $10\,590$ quads, ce qui en
+donne $10\,484$, exporté avec tous ses tours et étudié dans l'article
+compagnon~\cite[\S7]{gardent2026loops}~: $254$ sommets singuliers ($131$ de
+valence trois, $123$ de valence cinq) parmi $1\,342$ nœuds, $2\,146$ arcs,
+$806$ patchs, $1\,612$ équilibres. Les tours sont
 trouvés selon huit \emph{variantes}, la variante $m + 2j + 4i$ marchant depuis
 les fractions $\{0,5\}$ ($m = 0$) ou $\{0,2 ; 0,5 ; 0,8\}$ ($m = 1$) de chaque
 côté et \emph{retenant} (cherchant à fermer) un tour si son décalage réel
 dépasse $0,05$, si son inclinaison est inférieure à $0,05$ ($j = 0$) ou à
 $0,12$ ($j = 1$) et si sa longueur est inférieure à $2$ ($i = 0$) ou à $6$ ($i
-= 1$) côtés du T-mesh\,; le moteur garde la variante~2. Les variantes
-trouvent $1\,299$ tours et en retiennent $765$ (en sommant sur les
-variantes). La recherche entière maintient de $28$ à $36$ arcs à une longueur
+= 1$) côtés du T-mesh. Les variantes
+trouvent $1\,708$ tours et en retiennent $1\,020$ (en sommant sur les
+variantes). La recherche entière maintient de $36$ à $197$ arcs à une longueur
 d'au moins un, les \emph{bornes de séparation}\,; $P_{\mathrm{eng}}$,
 l'ensemble des longueurs équilibrées qui les respectent, n'est ni un
 sous-ensemble ni un sur-ensemble des quantifications valides, qui demandent
 seulement qu'une chaîne entre deux sommets singuliers garde une longueur
 strictement positive. Les identités sont vérifiées en virgule flottante sauf
 mention de l'exactitude\,; les programmes ont été résolus avec HiGHS
-1.8.0~\cite{huangfu2018highs} via SciPy 1.16.3~\cite{virtanen2020scipy}, sur
-un Intel Core i7-7700K (4~cœurs, 2017, 62\,Go) partagé avec d'autres tâches.
+1.8.0~\cite{huangfu2018highs} sur un seul fil via SciPy
+1.16.3~\cite{virtanen2020scipy}, sur un Intel Core i7-7700K (4~cœurs, 2017,
+62\,Go) partagé avec d'autres tâches (charge de $0,4$ à $2,2$ au début des
+calculs).
 
 \section{Tours et singularités}\label{sec:holonomy}
 
@@ -765,22 +768,22 @@ taille donnée} (un nombre de quads donné) ou avec un écart aux cibles donné.
 
 \paragraph{Sur le corps masculin.}
 Les énoncés de cette section valent partout où ils s'appliquent (mesuré). Les
-applications de passage donnent le décalage exporté des $1\,299$ tours. Sur
-les $1\,436$ côtés des $718$ tours simples, d'indice $4$ et de $4$ à $257$
+applications de passage donnent le décalage exporté des $1\,708$ tours. Sur
+les $1\,656$ côtés des $828$ tours simples, d'indice $4$ et de $4$ à $250$
 sommets singuliers, l'holonomie est égale à la somme de la
 proposition~\ref{prop:burgers}(a) dans ses deux composantes, alors que l'ordre
-de dernière visite échoue sur $150$ des $158$ disques de la variante~2\,; la
-règle du damier y vaut, ainsi que sur les $30\,148$ couronnes comprises entre
-des tours simples disjoints, d'indice $0$\,; les $294$ paires sans sommet
-singulier entre elles ont des décalages égaux\,; sur les dix couronnes qui
+de dernière visite ne vaut que sur $5$ des $184$ disques de la variante~2\,; la
+règle du damier y vaut, ainsi que sur les $39\,617$ couronnes comprises entre
+des tours simples disjoints, d'indice $0$\,; les $394$ paires sans sommet
+singulier entre elles ont des décalages égaux\,; sur les $48$ couronnes qui
 contiennent une paire 3--5, la proposition~\ref{prop:dislocation}(i) vaut, les
 deux sommets n'étant jamais sur une même trace. La
-proposition~\ref{prop:parity} vaut sur tous les tours et sur les $1\,838$
-révolutions des bandes des huit maillages. Des $101$ tours qui se croisent une
-fois, $97$ se découpent en $(3, 3, 2)$ et $4$, qui croisent leur segment de
-fermeture, en $(2, 2, 4)$\,; $480$ se croisent jusqu'à $107$ fois, et seuls
-$356$ des $765$ tours retenus sont simples~: la section~\ref{sec:fox} traite
-toute courbe.
+proposition~\ref{prop:parity} vaut sur tous les tours et sur les $1\,794$
+révolutions des bandes des huit maillages. Des tours qui se croisent une
+fois, $160$ se découpent en $(3, 3, 2)$ et $10$, qui croisent leur segment de
+fermeture, en $(2, 2, 4)$\,; $710$ se croisent plus souvent, jusqu'à $244$
+fois, et seuls $416$ des $1\,020$ tours retenus sont simples~: la
+section~\ref{sec:fox} traite toute courbe.
 
 \section{Conflits entre tours}\label{sec:conflicts}
 
@@ -793,30 +796,57 @@ Farkas ont été vérifiés en arithmétique exacte, et pour chaque tour omis, d
 longueurs entières fermant les autres ont été trouvées par HiGHS et vérifiées
 en arithmétique entière exacte (mesuré).
 
-\begin{table}[t]
-\begin{evidence}[unbreakable]{data}{les 25 certificats de ses 15 lignes, valides avec les multiplicateurs imprimés, sur l\'export du corps masculin d\'où viennent ces nombres (\texttt{make lean-check})}
+\begin{table}[p]
+\begin{evidence}[unbreakable]{data}{les $68$ certificats de ses $41$ lignes, chaque variante avec ses propres multiplicateurs et arcs bornés, valides, et pour chaque tour omis les longueurs entières fermant les autres, sur l\'export d\'où viennent ces nombres (\texttt{make lean-check})}
 \centering
-\small
-\setlength{\tabcolsep}{5pt}
-\begin{tabular}{llllll}
+\footnotesize
+\setlength{\tabcolsep}{2.5pt}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\begin{tabular}{@{}rlrL{4.2cm}L{4.9cm}L{2.85cm}@{}}
 \toprule
-variantes & taille & tours & multiplicateurs & arcs bornés & vérif.\ exacte \\
+ligne & variantes & taille & tours & multiplicateurs & arcs bornés \\
 \midrule
-0, 1, 2, 4 & 1 & 42 (variante 0) & $-1$ & 1937 & variante 0 \\
-1, 3, 5, 7 & 2 & 54, 61 (variante 1) & $1, -1$ & 1587 & --- \\
-1, 3 & 2 & 45, 49 (variante 1) & $1, -1$ & 1069 & --- \\
-1, 3, 7 & 2 & 26, 37 (variante 1) & $-1, 1$ & 619 & --- \\
-5, 7 & 2 & 58, 94 (variante 5) & $1, -1$ & 858 & --- \\
-5 & 2 & 49, 71 & $-1, 1$ & 619, 625 & --- \\
-6 & 2 & 57, 58 & $1, 1$ & 1241 & --- \\
-7 & 2 & 8, 15 & $1, 1$ & 191 & --- \\
-1 & 3 & 36, 37, 39 & $1, 1, -1$ & 619 & oui \\
-1 & 4 & 40, 56, 59, 61 & $1, 1, -1, -1$ & 1587 & oui \\
-1 & 4 & 66, 71, 75, 76 & $-\tfrac76, -\tfrac56, -\tfrac13, -\tfrac12$ & 1967, 1980, 1998 & oui \\
-3 & 4 & 73, 78, 82, 83 & $-\tfrac74, -\tfrac54, -\tfrac12, -\tfrac34$ & 1980, 1998 & oui \\
-5 & 7 & 59, 91, 96, 98, 99, 157, 158 & $2, 4, 1, -4, -1, 1, -1$ & 1036 & oui \\
-7 & 7 & 112--116, 145, 147 & $8, \tfrac12, 1, \tfrac12, \tfrac12, -\tfrac12, \tfrac12$ & 1157 & oui \\
-5 & 15 & 0, 2--9, 11, 14, 16--18, 64 & entiers, jusqu'à 23 & 17 & 14 sur 15 \\
+1 & 0, 1, 2, 5, 7 & 1 & 54 & $-1$ & 1908 \\
+2 & 2, 3, 6, 7 & 1 & 46 & $1$ & 1006 \\
+3 & 1, 3, 5, 7 & 2 & 62, 63 & $1$, $-1$ & 1004 \\
+4 & 2, 3, 6, 7 & 2 & 58, 63 & $-1$, $-1$ & 1755 \\
+5 & 1, 3 & 2 & 23, 36 & $-\tfrac{1}{2}$, $\tfrac{1}{2}$ & 554, 576 \\
+6 & 4, 6 & 2 & 84, 115 & $-1$, $1$ & 726 \\
+7 & 4, 6 & 2 & 58, 115 & $1$, $1$ & 1815 \\
+8 & 4, 6 & 2 & 21, 93 & $-1$, $1$ & 1127 \\
+9 & 4, 6 & 2 & 18, 103 & $1$, $-1$ & 1871 \\
+10 & 5, 7 & 2 & 207, 208 & $-\tfrac{1}{4}$, $-\tfrac{1}{4}$ & 778, 783, 784, 1860 \\
+11 & 5, 7 & 2 & 181, 205 & $1$, $1$ & 1932 \\
+12 & 5, 7 & 2 & 150, 156 & $1$, $1$ & 1226 \\
+13 & 5, 7 & 2 & 146, 149 & $1$, $-1$ & 1196 \\
+14 & 1 & 2 & 21, 68 & $1$, $1$ & 1580 \\
+15 & 3 & 2 & 65, 66 & $1$, $1$ & 748 \\
+16 & 3 & 2 & 63, 66 & $\tfrac{2}{5}$, $\tfrac{2}{5}$ & 737, 750, 876, 880 \\
+17 & 5 & 2 & 136, 208 & $-\tfrac{1}{3}$, $\tfrac{1}{3}$ & 726, 917, 1815 \\
+18 & 5 & 2 & 129, 208 & $-\tfrac{1}{3}$, $\tfrac{1}{3}$ & 726, 917, 1815 \\
+19 & 7 & 2 & 221, 225 & $\tfrac{1}{2}$, $\tfrac{1}{2}$ & 1847 \\
+20 & 4, 6 & 3 & 73, 115, 122 & $1$, $1$, $-1$ & 726 \\
+21 & 5, 7 & 3 & 145, 147, 149 & $-1$, $-1$, $-1$ & 1196 \\
+22 & 1 & 3 & 8, 10, 12 & $-13$, $1$, $-12$ & 4 \\
+23 & 1 & 3 & 0, 10, 12 & $13$, $1$, $1$ & 4 \\
+24 & 3 & 3 & 36, 73, 83 & $-\tfrac{1}{2}$, $-\tfrac{1}{2}$, $-\tfrac{1}{2}$ & 1315, 1389 \\
+25 & 4 & 3 & 82, 117, 124 & $1$, $-1$, $1$ & 1755 \\
+26 & 5 & 3 & 137, 196, 208 & $\tfrac{1}{5}$, $\tfrac{1}{5}$, $\tfrac{1}{5}$ & 726, 778, 784, 917 \\
+27 & 5 & 3 & 130, 196, 208 & $\tfrac{1}{5}$, $\tfrac{1}{5}$, $\tfrac{1}{5}$ & 726, 778, 784, 917 \\
+28 & 6 & 3 & 65, 103, 107 & $1$, $-1$, $-1$ & 1580 \\
+29 & 6 & 4 & 5--7, 74 & $-5$, $-2$, $-1$, $-1$ & 85 \\
+30 & 7 & 4 & 168, 192, 194, 196 & $-1$, $-1$, $1$, $1$ & 1580 \\
+31 & 5, 7 & 5 & 144, 151, 152, 156, 195 & $1$, $-\tfrac{1}{2}$, $-\tfrac{1}{2}$, $\tfrac{1}{2}$, $1$ & 1098, 1226 \\
+32 & 3 & 5 & 33, 39, 75, 88, 91 & $1$, $1$, $-1$, $1$, $-1$ & 1580 \\
+33 & 1 & 6 & 22, 25, 35, 36, 46, 82 & $1$, $-1$, $1$, $1$, $1$, $-1$ & 1559 \\
+34 & 1 & 7 & 20, 34, 36, 44, 46, 47, 82 & $-\tfrac{1}{2}$, $-\tfrac{1}{2}$, $\tfrac{1}{2}$, $\tfrac{1}{2}$, $\tfrac{1}{2}$, $-\tfrac{1}{2}$, $-\tfrac{1}{2}$ & 1559, 1608 \\
+35 & 1, 3 & 8 & 26, 35, 36, 43, 44, 48, 79, 82 & $1$, $1$, $1$, $-1$, $1$, $1$, $1$, $-1$ & 554 \\
+36 & 1 & 9 & 30, 35, 36, 43, 44, 48, 79, 80, 82 & $\tfrac{1}{2}$, $\tfrac{1}{2}$, $1$, $-\tfrac{1}{2}$, $\tfrac{1}{2}$, $\tfrac{1}{2}$, $\tfrac{1}{2}$, $\tfrac{1}{2}$, $-1$ & 554, 1526 \\
+37 & 1, 3 & 10 & 31, 34, 35, 44, 45, 48, 68, 73, 80, 82 & $\tfrac{1}{3}$, $\tfrac{2}{3}$, $\tfrac{4}{3}$, $-\tfrac{1}{3}$, $-\tfrac{1}{3}$, $\tfrac{4}{3}$, $\tfrac{1}{3}$, $\tfrac{1}{3}$, $\tfrac{1}{3}$, $-\tfrac{1}{3}$ & 554, 576, 1526 \\
+38 & 3 & 10 & 27, 28, 37, 38, 46, 51, 76, 81, 89, 91 & $1$, $1$, $1$, $3$, $-1$, $4$, $1$, $1$, $1$, $-1$ & 1526 \\
+39 & 3 & 10 & 23, 37--39, 47, 51, 75, 81, 89, 91 & $\tfrac{1}{2}$, $\tfrac{1}{2}$, $1$, $\tfrac{1}{2}$, $-\tfrac{1}{2}$, $1$, $-\tfrac{1}{2}$, $\tfrac{1}{2}$, $\tfrac{1}{2}$, $-\tfrac{1}{2}$ & 1526, 1543 \\
+40 & 1 & 11 & 19, 25, 34, 35, 43, 48, 68, 73, 79, 80, 82 & $-1$, $1$, $1$, $3$, $-1$, $4$, $1$, $1$, $1$, $1$, $-2$ & 1526 \\
+41 & 6 & 12 & 27, 30, 34--36, 40, 50, 64, 103, 110--112 & $\tfrac{1}{7}$, $\tfrac{1}{7}$, $-\tfrac{1}{7}$, $-\tfrac{1}{7}$, $\tfrac{1}{7}$, $\tfrac{1}{7}$, $\tfrac{1}{7}$, $-\tfrac{1}{7}$, $-\tfrac{3}{7}$, $\tfrac{1}{7}$, $\tfrac{1}{7}$, $\tfrac{1}{7}$ & 515, 1504, 1543, 1580, 1593, 1628 \\
 \bottomrule
 \end{tabular}
 \caption{Ensembles infaisables irréductibles de tours retenus sur le corps
@@ -825,33 +855,34 @@ multiplicateurs et les arcs bornés sont ceux de la première variante
 indiquée\,; «~arcs bornés~»~: les arcs maintenus à une longueur d'au moins un
 dans le support de la forme à coefficients positifs ou nuls. Une autre
 variante maintient d'autres arcs à une longueur d'au moins un, et son
-certificat peut en borner d'autres. Les lignes sans vérification exacte viennent du programme
-linéaire en virgule flottante\,; leurs tours sont chacun fermables seuls, si
-bien qu'une paire est irréductible. Dans la dernière ligne, les longueurs
-entières fermant l'ensemble privé du tour 3 n'ont pas été trouvées dans la
-limite de temps.}
+certificat peut avoir d'autres multiplicateurs et borner d'autres arcs
+(lignes 4, 12 et 31). Chaque ligne est vérifiée exactement~: son certificat
+et, pour chaque tour omis, des longueurs entières fermant les autres. La
+recherche s'arrête à $12$ ensembles par variante, ce qu'atteignent les
+variantes 1, 3, 5 et 7~: le tableau ne contient pas nécessairement tous les
+ensembles irréductibles.}
 \label{tab:iis}
 \end{evidence}
 \end{table}
 
-Dans quatre variantes, le tour autour du poignet gauche ne peut même pas être
-fermé seul~: son décalage vaut $-(\ell_{1921} + \ell_{1937})$ modulo les
-équilibres, et l'arc $1937$, long de $0,08$ arête, est maintenu à une
-longueur d'au moins un (exact pour la variante 0\,; nous n'avons pas vérifié
-si toute quantification valide respecte cette borne). On pourrait espérer que
-tout autre conflit contienne deux tours parallèles dont la couronne
-l'interdit. Le plus petit contre-exemple compte trois tours près de l'œil
-droit, dont deux quelconques se ferment ensemble~: $\shift_{36} + \shift_{37}
-- \shift_{39} = \ell_{604} + \ell_{619} + \ell_{620} + \ell_{637}$ modulo les
-équilibres, avec $\ell_{619} \ge 1$. Tout ensemble trouvé est déjà infaisable
-en nombres réels, si bien qu'aucun n'est une obstruction de parité. Les
-conflits entre deux tours se trouvent dans des amas de singularités aux yeux,
-aux mains et aux pieds, la somme ou la différence des décalages étant une
-somme de deux à huit longueurs d'arcs, dont une bornée\,; pourtant, dans aucun
-des $13$ que nous avons examinés (les paires du tableau~\ref{tab:iis} sauf
-$49$, $71$ de la variante~5), les tours ne sont séparés par une paire 3--5 sur
-une même trace, comme dans la proposition~\ref{prop:dislocation}(ii). Ce qui
-les sépare est un escalier.
+Dans cinq variantes, le tour $54$ de la variante 0 ne peut même pas être
+fermé seul~: son décalage vaut $-(\ell_{1892} + \ell_{1908})$ modulo les
+équilibres, et l'arc $1908$, long de $0,089$ arête, est maintenu à une
+longueur d'au moins un (exact\,; nous n'avons pas vérifié si toute
+quantification valide respecte cette borne). Dans quatre variantes, le tour
+$46$ de la variante 2 ne le peut pas non plus~: son décalage vaut
+$\ell_{1006} + \ell_{1017} + \ell_{1042}$, et l'arc $1006$, long de $0,264$,
+est maintenu. On pourrait espérer que tout autre conflit contienne deux tours
+parallèles dont la couronne l'interdit. Les plus petits contre-exemples
+comptent trois tours, dont deux quelconques se ferment ensemble (lignes 20 à
+28)\,; à la ligne 20, $\shift_{73} + \shift_{115} - \shift_{122} =
+\ell_{726} + \ell_{734}$ modulo les équilibres, avec $\ell_{726} \ge 1$. Tout
+ensemble trouvé est déjà infaisable en nombres réels, si bien qu'aucun n'est
+une obstruction de parité. Dans les conflits entre deux tours, la somme ou la
+différence des décalages est une forme à coefficients positifs ou nuls sur un
+à huit arcs, dont un à quatre bornés\,; pourtant, une seule des $17$ paires,
+la ligne 14, est séparée par une paire 3--5 (tableau~\ref{tab:pairs}). Ce qui
+les sépare, quand on trouve quelque chose, est un escalier.
 
 \begin{evidence}{core}{\lean{staircase}, \lean{staircase_rings}\,; supposé~: le vecteur entre les sommets est la somme le long de l'escalier}
 \begin{proposition}[Escaliers]\label{prop:staircase}
@@ -928,21 +959,19 @@ R^j\bigl(R^{-j}(x - p_{c'}) + p_{c'} - p_c\bigr) + p_c = x + (I - R^j)(p_c -
 p_{c'})$\,; pour $j = \pm1$, les deux composantes sont $\pm d_1 \pm d_2$.
 \end{proof}
 
-Les $13$ conflits se répartissent en six configurations
-(tableau~\ref{tab:pairs}, mesuré). En A, la couronne entre deux tours simples
-contient une paire 3--5, et l'escalier qui la relie, $\ell_{611} +
-\ell_{624}$, long de $0,990$, est la différence des décalages réels\,; modulo
-les équilibres, il est égal au certificat $\ell_{611} + \ell_{616} +
-\ell_{619} + \ell_{635}$, qui maintient l'arc $619$ (exact)\,; aux longueurs entières du moteur, les deux
-sommets de la paire sont à une arête l'un de l'autre sur une même ligne de la
-grille, la proposition~\ref{prop:dislocation}(ii) avec $\delta = 1$ (son
-hypothèse sur $\kappa$ n'étant pas vérifiée). En B, C et D, les tours se
-croisent et leur combinaison s'enroule $+1$ et $-1$ fois autour de deux
-sommets de valence trois, un échange en homologie (l'homotopie de la
+Les $17$ conflits entre deux tours relèvent de trois mécanismes
+(tableau~\ref{tab:pairs}, mesuré)\,; dans tous, les deux courbes se croisent,
+de deux à huit fois. À la ligne 14, la combinaison fait une fois le tour d'une
+paire 3--5, les sommets $192$ (valence cinq) et $196$ (valence trois), et
+l'escalier qui les relie, $\ell_{1544} + \ell_{1580}$, long de $0,814$,
+maintient l'arc $1580$\,; modulo les équilibres, il est égal au certificat
+$\ell_{1578} + \ell_{1580}$. Dans dix paires, la combinaison s'enroule autour
+de sommets de valence trois, $+1$ et $-1$ fois autour de deux d'entre eux sauf
+aux lignes 15 et 16, $2$, $1$ et $1$ fois autour de trois, et un escalier
+relie deux d'entre eux~: un échange en homologie (l'homotopie de la
 proposition~\ref{prop:swap} n'a pas été vérifiée, l'identité de l'escalier
-l'a été). En E et F, la combinaison fait une fois le tour de sommets d'indice
-total quatre, comme un tour autour d'une calotte, et aucun escalier, ni
-aucune somme de deux escaliers, ne s'est trouvé égal à elle.
+l'a été). Dans les six autres, aucun escalier égal à la combinaison n'a été
+trouvé.
 
 \begin{table}[t]
 \begin{evidence}[unbreakable]{measured}{sur l'export du corps masculin}
@@ -950,48 +979,39 @@ aucune somme de deux escaliers, ne s'est trouvé égal à elle.
 \small
 \setlength{\tabcolsep}{4pt}
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
-\begin{tabular}{@{}lL{4.1cm}L{3.9cm}L{4.4cm}L{2.0cm}@{}}
+\begin{tabular}{@{}rllL{3.8cm}L{5.3cm}l@{}}
 \toprule
-& conflit & entre les tours & escalier & mécanisme \\
+ligne & variantes & tours & entre les tours & escalier & mécanisme \\
 \midrule
-A & $\shift_{37} - \shift_{26}$, variantes 1, 3, 7\,; œil droit\,;
-  disjoints, simples
-  & couronne~: 78 (val.\ 3), 76 (val.\ 5)
-  & 2 arcs, $0,990$\,; arc maintenu 619 par les équilibres
-  & dislocation \\
-B & $\shift_{45} - \shift_{49}$, variantes 1, 3\,; main droite\,; simples,
-  sécants
-  & lentilles~: 102, 103 (val.\ 3)
-  & 4 arcs, $1,731$\,; arc maintenu 1069 par les équilibres
-  & échange \\
-C & $\shift_{58} - \shift_{94}$, variantes 5, 7\,; main droite
-  & 109, 118 (val.\ 3)
-  & 3 arcs, $2,203$\,; arc maintenu 858 par les équilibres
-  & échange \\
-D & $\shift_{57} + \shift_{58}$, variante 6\,; pied gauche\,; en forme de
-  huit
-  & 155, 156 (val.\ 3)
-  & 2 arcs, $1,452$, dont un maintenu
-  & échange \\
-E & $\shift_{54} - \shift_{61}$, variantes 1, 3, 5, 7\,; œil gauche
-  & 11 sommets d'indice 3, et 207 (val.\ 3)
-  & aucun\,; une chaîne fermée de 6 peignes
-  & peignes \\
-F & $\shift_{8} + \shift_{15}$, variante 7\,; pied droit
-  & 14, 23, 24, et 15 (val.\ 3)
-  & aucun\,; une chaîne fermée de 4 peignes autour d'une calotte
-  & peignes \\
+3 & 1, 3, 5, 7 & 62, 63 & 121--123, 127, 128, 145, 148\,; 125, 126 (val.\ 5) & --- & aucun trouvé \\
+4 & 2, 3, 6, 7 & 58, 63 & 217, 228 & 1755, 1829\,; $1,684$\,; dessus & échange \\
+5 & 1, 3 & 23, 36 & 68, 69 & 550, 559, 558\,; $4,117$\,; par les équilibres & échange \\
+6 & 4, 6 & 84, 115 & 90, 91 & 726, 734\,; $1,842$\,; dessus & échange \\
+7 & 4, 6 & 58, 115 & 226, 235 & 1814, 1866\,; $1,737$\,; par les équilibres & échange \\
+8 & 4, 6 & 21, 93 & 140, 142 & 1127, 1139\,; $1,675$\,; dessus & échange \\
+9 & 4, 6 & 18, 103 & 237, 238 & 1881, 1758, 1885\,; $3,361$\,; par les équilibres & échange \\
+10 & 5, 7 & 207, 208 & 91, 99, 226, 234, 235 & --- & aucun trouvé \\
+11 & 5, 7 & 181, 205 & 221, 230 & 1781, 1840\,; $1,754$\,; dessus & échange \\
+12 & 5, 7 & 150, 156 & 133, 135, 152\,; 138 (val.\ 5) & --- & aucun trouvé \\
+13 & 5, 7 & 146, 149 & 128, 148 & 1033, 1196, 1195\,; $2,078$\,; dessus & échange \\
+14 & 1 & 21, 68 & 196\,; 192 (val.\ 5) & 1544, 1580\,; $0,814$\,; dessus & dislocation \\
+15 & 3 & 65, 66 & 92, 93, 95 & 748, 758, 757\,; $2,045$\,; dessus & échange \\
+16 & 3 & 63, 66 & 92, 93, 95 & 741, 742, 754, 756, 743\,; $3,632$\,; par les équilibres & échange \\
+17 & 5 & 136, 208 & 90, 91, 100, 226, 235 & --- & aucun trouvé \\
+18 & 5 & 129, 208 & 90, 91, 100, 226, 235 & --- & aucun trouvé \\
+19 & 7 & 221, 225 & 231\,; 243 (val.\ 5) & --- & aucun trouvé \\
 \bottomrule
 \end{tabular}
-\caption{Les conflits entre deux tours sur le corps masculin (mesuré). Les
-numéros des tours sont ceux de la première variante indiquée, les signes ceux
-des décalages exportés\,; «~entre les tours~»~: les sommets singuliers,
-numérotés comme nœuds, autour desquels s'enroule la combinaison des deux
-courbes\,; «~escalier~»~: un escalier situé entre eux dont la longueur est
-égale à la combinaison modulo les équilibres, et l'endroit où se trouve l'arc
-maintenu du certificat. A~: propositions~\ref{prop:dislocation}(i)
-et~\ref{prop:staircase}\,; B--D~: propositions~\ref{prop:swap}
-et~\ref{prop:staircase}\,; E, F~: section~\ref{sec:combs}.}
+\caption{Les conflits entre deux tours sur le corps masculin (mesuré), par
+ligne du tableau~\ref{tab:iis}. Les numéros des tours sont ceux de la
+première variante indiquée\,; «~entre les tours~»~: les sommets singuliers,
+numérotés comme nœuds et de valence trois sauf mention, autour desquels
+s'enroule la combinaison des deux courbes\,; «~escalier~»~: le plus court
+trouvé entre deux d'entre eux dont la longueur est égale à la combinaison
+modulo les équilibres, ses arcs, sa longueur, et si l'arc maintenu du
+certificat est dessus ou atteint par les équilibres. Dislocation~:
+propositions~\ref{prop:dislocation}(i) et~\ref{prop:staircase}\,;
+échange~: propositions~\ref{prop:swap} et~\ref{prop:staircase}.}
 \label{tab:pairs}
 \end{evidence}
 \end{table}
@@ -1011,8 +1031,8 @@ balaie. Si $\lambda$ est librement homotope dans $\Sigma^\circ$ à la courbe
 $\bar\gamma$ d'un tour $\gamma$, la direction de marche de $\gamma$ allant sur
 celle de $\sigma$, alors $\shift_\gamma(\ell) = \pm\delta(\ell)$ pour tout
 $\ell$ équilibré, le signe dépendant du côté de $\sigma$ où se trouve $\tau$
-($+$ sur la figure~\ref{fig:separatrix}(b), $-$ au poignet gauche du corps
-masculin). Le tour n'est un anneau que si $\delta = 0$, c'est-à-dire si
+($+$ sur la figure~\ref{fig:separatrix}(b), $-$ pour le tour $54$ de la
+variante 0 du corps masculin). Le tour n'est un anneau que si $\delta = 0$, c'est-à-dire si
 $\sigma$ revient sur son propre sommet\,; si $\delta$ est égal, modulo les
 équilibres, à une forme à coefficients positifs ou nuls contenant un arc
 maintenu à une longueur d'au moins un, $\gamma$ est une hélice pour toute
@@ -1041,51 +1061,42 @@ valence cinq fait une fois le tour et s'arrête sur une autre séparatrice
 $\tau$ de $v$. (b)~Ouvert le long de $\tau$~: $\sigma$, de longueur $10$,
 s'arrête en $q$, à $\delta = \ell_e + \ell_f = 2$ de $v$, et le tour $\gamma$
 voisin de $\sigma$ revient $2 = \delta$ rangées plus haut\,; il n'est un
-anneau que si $\sigma$ revient sur $v$. Au poignet gauche du corps masculin,
-$\delta = \ell_{1920} + \ell_{1921}$, maintenu strictement positif par une
-borne de séparation.}
+anneau que si $\sigma$ revient sur $v$. Pour le tour $54$ de la variante 0
+du corps masculin, $\delta = \ell_{1891} + \ell_{1892}$, maintenu strictement
+positif par une borne de séparation.}
 \label{fig:separatrix}
 \end{figure}
 
-Au poignet gauche, le tour ($42$ de la variante 0, de longueur $6,99$, de
-décalage réel $-0,305$) borde une calotte de quatre sommets de valence trois,
-dont la somme de Burgers donne son décalage comme une forme de signe non
-fixé. Le signe vient de l'extérieur~: la séparatrice $964$ du sommet $246$,
-de valence cinq, parcourt $6,994$ arêtes en faisant une fois le tour du
-poignet et s'arrête sur une autre de ses séparatrices à $\delta = \ell_{1920}
-+ \ell_{1921} = 0,305$ de $246$\,; le décalage vaut $-\delta$, et
-$\ell_{1920}$ est égal à la longueur de l'arc maintenu $1937$, tous deux
-modulo les équilibres~: d'où le certificat et $\shift \le -1$ à toute
-longueur entière admissible. Nous avons vérifié l'identité, non l'homotopie
-(mesuré).
+Le tour $54$ de la variante 0 (de longueur $6,76$, de décalage réel
+$-0,266$) borde une calotte de quatre sommets de valence trois, dont la
+somme de Burgers donne son décalage comme une forme de signe non fixé. Le
+signe vient de l'extérieur~: la séparatrice $938$ du sommet $239$, de valence
+cinq, parcourt $6,762$ arêtes en faisant une fois le tour et s'arrête sur une
+autre de ses séparatrices à $\delta = \ell_{1891} + \ell_{1892}$ de $239$,
+$0,287$ arête\,; le décalage vaut $-\delta$, et $\ell_{1891}$ est égal à la
+longueur de l'arc maintenu $1908$, tous deux modulo les équilibres~: d'où le
+certificat et $\shift \le -1$ à toute longueur entière admissible. Nous avons
+vérifié l'identité, non l'homotopie (mesuré). Pour le tour $46$ de la
+variante 2, qui borde lui aussi une calotte de quatre sommets de valence
+trois, aucune telle séparatrice n'a été trouvée.
 
 \paragraph{Conflits plus grands.}
-Les trois tours de l'œil droit s'enroulent autour d'une paire 3--5, et leur
-combinaison est la longueur d'un escalier de trois arcs qui passe par l'arc
-maintenu $619$\,; les quatre des yeux s'enroulent autour d'une paire 3--5 et
-de deux sommets de valence trois, une dislocation et un échange en homologie.
-Les multiplicateurs fractionnaires du tableau~\ref{tab:iis} viennent de ce
-qu'on demande aux arcs bornés de peser un au total\,; à la main gauche, où les
-tours se croisent de $10$ à $46$ fois, les multiplicateurs primitifs donnent
-\[
-  -(7\shift_{66} + 5\shift_{71} + 2\shift_{75} + 3\shift_{76}) = 2F =
-  10\,\ell_{1805} + 2\ell_{1817} + 4\ell_{1853} + 2(\ell_{1870} + \ell_{1879}
-  + \ell_{1969} + \ell_{1998} + \ell_{2029})
-\]
-modulo les équilibres. Le coefficient $5$ est une dislocation~: une
-séparatrice du sommet $231$ (valence trois) s'arrête sur une séparatrice de
-$228$ (valence cinq), et l'arc $1805$, long de $0,063$ arête, relie cette
-jonction à $228$, si bien que $\ell_{1805}$ est l'écart transverse de la paire
-par rapport à la ligne du champ qui les relie presque, la
-proposition~\ref{prop:dislocation}(ii) avec $\delta = \ell_{1805}$ (hypothèse
-sur $\kappa$ non vérifiée)\,; leurs enroulements tordus
-(section~\ref{sec:fox}) contribuent exactement $10\,\ell_{1805}$ (mesuré).
+Les ensembles des lignes 22, 23, 28 et 30 s'enroulent autour d'une paire
+3--5 reliée par un escalier qui passe par l'arc maintenu~: aux lignes 22 et
+23, les sommets $0$ (valence trois) et $2$ (valence cinq), l'escalier $\ell_4
++ \ell_{23}$, long de $3,219$, et aux lignes 28 et 30, la paire et l'escalier
+de la ligne 14\,; les autres ensembles de trois et de quatre tours sont des
+échanges, ou aucun escalier n'a été trouvé (mesuré). Les multiplicateurs
+fractionnaires du tableau~\ref{tab:iis} viennent de ce qu'on demande aux arcs
+bornés de peser un au total\,; les multiplicateurs entiers primitifs ne sont
+pas toujours $\pm1$, ainsi $-13$, $1$, $-12$ à la ligne 22 et $-5$, $-2$,
+$-1$, $-1$ à la ligne 29, où aucun escalier n'a été trouvé.
 
 \paragraph{Dislocations locales.}
 Les courbes d'un ensemble irréductible ne bordent pas nécessairement une même
-région plane autour d'un amas de singularités~: ce n'est le cas ni des
-configurations B à F ni des ensembles de quatre et de sept tours. Ce que les
-conflits ont en commun est local.
+région plane autour d'un amas de singularités~: celles de chaque paire du
+tableau~\ref{tab:pairs} se croisent. Ce que les conflits ont en commun est
+local.
 
 \begin{evidence}{open}{}
 \begin{question}[Les conflits sont-ils des sommes de dislocations locales\,?]\label{conj:local}
@@ -1101,7 +1112,7 @@ ou nuls de
   valence échangés comme dans la proposition~\ref{prop:swap}, et
 \item[(ii)] décalages de calottes~: des formes de signe fixe portées par des
   courbes qui font une fois le tour de sommets singuliers d'indice total
-  quatre, comme le tour du poignet et sa séparatrice
+  quatre, comme le tour $54$ de la variante 0 et sa séparatrice
   (proposition~\ref{prop:winding}),
 \end{enumerate}
 un terme au moins contenant un arc maintenu ouvert\,?
@@ -1109,9 +1120,10 @@ un terme au moins contenant un arc maintenu ouvert\,?
 \end{evidence}
 
 La réponse est oui, avec un seul terme et aux homotopies non vérifiées près,
-pour le poignet, les configurations A à D et l'œil droit\,; la
-section~\ref{sec:combs} tranche la question sur le corps~: non telle qu'elle
-est posée, oui, mais sans contenu, lue au sens large.
+pour le tour $54$ de la variante 0 et les paires du tableau~\ref{tab:pairs}
+reliées par un escalier\,; la section~\ref{sec:combs} tranche la question sur
+le corps~: non telle qu'elle est posée, oui, mais sans contenu, lue au sens
+large. % PR3: le tour 46 de la variante 2 devient un contre-exemple à un seul tour à la lecture stricte (avec une vérification Lean)
 
 \section{Toute combinaison de tours}\label{sec:fox}
 
@@ -1269,16 +1281,13 @@ d'exposants de $w$ sont nulles.
 \paragraph{Sur le corps masculin.}
 Découpé en une seule carte le long d'un arbre couvrant des nœuds, le T-mesh
 donne à chaque tour un mot, et la proposition~\ref{prop:fox} sa translation,
-pour les $1\,299$ tours. Le corollaire~\ref{cor:checker} vaut sur tous et sur
-les $14$ premiers ensembles du tableau~\ref{tab:iis}, multiplicateurs
-fractionnaires ramenés à des entiers (l'ensemble de $15$ tours n'a pas été
-essayé)\,; à la
-main gauche, le cycle fait un nombre pair de fois le tour de chaque sommet de
-valence impaire, ce qui explique que $-2F$ soit pair. Quatre tours vérifient
-$w_{18} = w_{22} + w_{101} + w_{65}$ autour de chaque sommet singulier alors
-que leurs translations ne le vérifient pas, quels que soient les repères, à
-des quarts de tour près~: une «~formule de Burgers des enroulements~» qui
-aurait des nombres pour poids est fausse (mesuré).
+pour les $1\,708$ tours. Le corollaire~\ref{cor:checker} vaut sur tous et sur
+les $41$ ensembles du tableau~\ref{tab:iis}, multiplicateurs fractionnaires
+ramenés à des entiers (mesuré). Une recherche de relations entre les nombres
+d'enroulement de tours seuls que leurs translations brisent, quels que soient
+les repères à des quarts de tour près, n'en a trouvé aucune sur cet
+export\,; la proposition~\ref{prop:commutator} n'a pas ici d'exemple
+mesuré.
 
 \subsection{Peignes}\label{sec:combs}
 
@@ -1376,7 +1385,8 @@ pieds distincts, et $c_a\ell_a$ sur ceux dont les pieds sont un même sommet.
 
 La démonstration est élémentaire\,: le contenu est dans l'hypothèse. Que la
 partie impaire d'un certificat soit un cycle du graphe des pieds est constaté
-sur les $25$ certificats du corps (exact), et n'est pas général\,: sur des
+sur les $68$ certificats du corps (exact), % PR3: 67 sur 68 ; le 68e (ligne 16, variante 3) n'a pas de représentant entier trouvé, non testé
+et n'est pas général\,: sur des
 T-mesh aléatoires qui ne viennent pas du moteur (les tests de propriétés du
 paquet de données, \texttt{experiments/property}), sous les bornes $\ell \ge
 1$ sur chaque arc, $13$ des $17$ certificats exacts dont les arcs ont des
@@ -1435,31 +1445,27 @@ changer aucune holonomie.
 \end{proof}
 
 \paragraph{Sur le corps masculin.}
-Le lemme~\ref{lem:comb} vaut sur les $2\,069$ arcs, dont $2\,046$ ont deux
-pieds distincts de valence impaire~: presque tout arc est une dislocation ou
-un échange local. Sur ce T-mesh (variante~1), chaque nœud ne rencontre qu'une
-trace perpendiculaire, et un seul arc, $1676$, aboutit sur la connexion de
-séparatrices, qui joint les sommets $204$ et $210$\,; nous avons pris pour
-pied le sommet d'où la connexion a été tracée, $204$, et aucun certificat de la
-variante~1 ne contient cet arc. L'homologie tordue est de dimension $518 = 2(n - 2)$ et
-l'accouplement de rang $517$, de noyau la classe transverse à l'unique
-connexion de séparatrices\,; nous conjecturons que, sans sommet de valence
-divisible par quatre, le noyau est engendré par les classes transverses aux
-connexions. Les $25$ certificats des conflits examinés ont tous un
-représentant dont la partie impaire est un cycle du graphe des pieds (exact).
-Le poignet est un peigne dont les deux pieds sont en $246$, la séparatrice qui
-s'enroule\,; A, C et D sont des marches fermées de deux peignes (A,
-l'escalier $\ell_{611} + \ell_{624}$), B de quatre, l'œil droit de trois, E de
-six, d'indice total $-2$, et F de quatre autour d'une calotte\,; la main
-gauche vaut cinq fois la dislocation $\ell_{1805}$ plus huit lectures de
-peignes sur un arbre de sept arcs, et l'ensemble de sept tours de la
-variante~7 est un arbre de sept peignes (mesuré).
+Le lemme~\ref{lem:comb} vaut sur les $2\,146$ arcs, % PR3: il vaut sur 2 090 des 2 146 arcs
+dont $1\,955$ ont deux pieds distincts de valence impaire~: presque tout arc
+est une dislocation ou un échange local. Sur ce T-mesh (variante~1), chaque
+nœud ne rencontre qu'une trace perpendiculaire, % PR3: faux pour 76 arcs
+et aucun arc n'aboutit sur une connexion de séparatrices. L'homologie tordue
+est de dimension $504 = 2(n - 2)$ et l'accouplement de rang $504$\,; nous
+conjecturons que, sans sommet de valence divisible par quatre, le noyau est
+engendré par les classes transverses aux connexions. Les $68$ certificats des
+conflits examinés ont tous un représentant dont la partie impaire est un
+cycle du graphe des pieds (exact). % PR3: 67 sur 68 ; le 68e (ligne 16, variante 3) n'a pas de représentant entier trouvé, non testé
+Lu au sens strict (ci-dessous), le certificat du tour $54$ de la variante 0
+est une seule séparatrice qui s'enroule, la longueur de l'arc $1873$, dont les
+deux pieds sont confondus (mesuré).
 
+% PR3: ce paragraphe est laissé tel quel. Sur le nouvel export, la lecture stricte sépare 15 des 41 ensembles, tous avec un point exact (lignes 2, 3, 12, 19, 24, 29, 31, 33, 35 à 41) ; le tour 46 de la variante 2 (ligne 2) est un contre-exemple à un seul tour, à vérifier en Lean ; E, F, les yeux et la main gauche ont disparu.
 \paragraph{Lue au sens large, la question~\ref{conj:local} est vraie et vide.}
 En admettant toute lecture de peigne et toute marche fermée de peignes, la
 proposition~\ref{thm:combs} y répond pour tout certificat dont la partie
 impaire est un cycle du graphe des pieds, ce qui est le cas de tous ceux du
-corps\,; mais cela découle du lemme de Farkas et d'une parité, et ne dit rien
+corps\,; % PR3: 67 des 68
+mais cela découle du lemme de Farkas et d'une parité, et ne dit rien
 des configurations qui entrent en conflit. \emph{Lue au sens strict, elle est
 fausse}~: si on la restreint aux escaliers de poids un, aux marches monotones
 autour d'une calotte et aux séparatrices qui s'enroulent, des longueurs
@@ -1567,8 +1573,8 @@ s'étendent à toutes les longueurs équilibrées.
 \end{proof}
 
 Le théorème prédit la parité des $660$ tours de Suzanne, de Jerry et d'un
-dôme, dont $61$ impairs, et de toute boucle fermée des maillages produits
-($294$ sur le corps masculin)\,; la proposition vaut sur les $40$ colliers\,;
+dôme, dont $61$ impairs, et de toute boucle fermée de leurs maillages
+produits\,; la proposition vaut sur les $40$ colliers\,;
 sur Bob, $\Omega_\ell$ dépend des longueurs, les trois variantes lui donnant
 les valeurs $(0, 1)$, $(0, 0)$ et $(1, 0)$ sur deux lacets d'anse (mesuré).
 Pour les combinaisons, $\sum_r u_r(\alpha_{\gamma_r} + \shift_{\gamma_r})
@@ -1787,10 +1793,7 @@ Avec un plafond d'écart, $P_Y$ est un polytope et $Q(P_Y)$ un intervalle~:
 deux points exacts de part et d'autre d'une fenêtre de tailles certifient que
 $Y$ se ferme à l'intérieur de celle-ci, tandis que la réciproque demande les
 extrema de $Q$ sur un polytope. Le plafond est un budget partagé par tous les
-tours~: sur le corps, les longueurs peuvent bouger de $980,7$ arêtes en tout,
-alors que fermer les $109$ bandes de la variante~2 que les bornes ne forcent
-pas coûte $1\,680,2$, et les cœurs deviennent des couvertures d'un sac à dos
-(mesuré).
+tours, et les cœurs deviennent des couvertures d'un sac à dos.
 
 Sur une surface fermée où aucun patch ne se borde lui-même, un arc se trouve
 sur un côté de chacun des deux patchs qu'il borde, si bien que sa colonne de
@@ -1859,32 +1862,31 @@ déséquilibré, une arête qui en ferme un ou une demi-arête, la proposition
 s'étend au-delà de la sphère fermée, là où le rang plein en lignes peut faire
 défaut (sur part, $145$ sur $148$). Sur le corps masculin, $G$ est connexe
 avec un cycle déséquilibré et le réseau des longueurs équilibrées est de
-dimension $2\,069 - 1\,552 = 517$~: les équilibres seuls ne font jamais
+dimension $2\,146 - 1\,612 = 534$~: les équilibres seuls ne font jamais
 obstacle aux longueurs entières, et l'élimination entière se termine sur une
 seule ligne de plus grand commun diviseur $2$. Les décalages des tours retenus
-laissent des réseaux de dimension $363$ à $469$, et dans les variantes 4, 5
-et 6, l'élimination demande des étapes de l'algorithme d'Euclide~: les lignes
-des tours peuvent détruire la structure d'arcs libres (mesuré). La seule
-obstruction entière trouvée sur le corps est un coût d'arrondi en écart, non
-une parité~: des anneaux qui se ferment en nombres réels à un écart moyen de
-$0,399$ demandent au moins $0,536$ en nombres
-entiers~\cite[\S7]{gardent2026loops}.
+laissent des réseaux de dimension $334$ à $480$, et dans les variantes 1, 3,
+4, 5, 6 et 7, l'élimination demande des étapes de l'algorithme d'Euclide~: les
+lignes des tours peuvent détruire la structure d'arcs libres (mesuré). La
+seule obstruction entière trouvée sur le corps est un coût d'arrondi en écart,
+non une parité~\cite[\S7]{gardent2026loops}. % UNSOURCED: l'écart (0,399, 0,536 sur l'ancien export) vient de l'article compagnon ; remettre ses nombres quand le papier A sera refait sur l'export de v0.7.0
 
 \subsection{Sur le corps masculin}
 
 Dans le tableau~\ref{tab:forced}, $H$ est l'ensemble des tours retenus d'une
-variante, ou celui des $111$ bandes du maillage du moteur pour la variante~2
-inclinées de moins de $0,12$, et $P$ est $P_{\mathrm{eng}}$, puis
-$P_{\mathrm{eng}}$ avec en plus le plafond du moteur $D = 0,474$ sur l'écart
-moyen, puis avec en plus des longueurs entières et sa fenêtre de $10\,379$ à
-$10\,801$ quads. Avec les seules bornes, la boucle d'ensemble transversal
-implicite est exacte en au plus $66$ secondes par famille\,; avec le plafond
-et la fenêtre, les encadrements viennent de sous-ensembles fermables, de
-cœurs disjoints, de bornes du solveur et de points entiers vérifiés
-exactement.
+variante, ou celui des $149$ bandes du maillage aux longueurs du moteur pour
+la variante~2 inclinées de moins de $0,12$, et $P$ est $P_{\mathrm{eng}}$,
+puis $P_{\mathrm{eng}}$ avec en plus le plafond du moteur sur l'écart moyen,
+$D = 0,5219$ tel que l'export le donne, puis avec en plus des longueurs
+entières et sa fenêtre de $10\,379$ à $10\,801$ quads. Avec les seules
+bornes, la boucle d'ensemble transversal implicite est exacte, en $1\,166$ et
+$1\,208$ secondes pour les variantes 5 et 7 et en au plus $22$ secondes pour
+les autres familles\,; avec le plafond et la fenêtre, les encadrements
+viennent de sous-ensembles fermables, de cœurs disjoints, de bornes du
+solveur et de points entiers vérifiés exactement.
 
 \begin{table}[t]
-\begin{evidence}[unbreakable]{data}{la colonne $P_{\mathrm{eng}}$, exacte sur l\'export d\'où viennent ces nombres (\texttt{make lean-check})\,; les colonnes avec le plafond et la fenêtre sont mesurées, non vérifiées}
+\begin{evidence}[unbreakable]{data}{la colonne «~bornes~» dans les variantes 0 à 4 et 6, exacte sur l\'export d\'où viennent ces nombres (\texttt{make lean-check})\,; dans les variantes 5 et 7, Lean ne certifie que $20 \le \tau \le 30$ et $28 \le \tau \le 37$, et la ligne des bandes n\'est pas vérifiée par Lean\,; les colonnes avec le plafond et la fenêtre sont mesurées, non vérifiées}
 \centering
 \small
 \newcommand{\head}[1]{\begin{tabular}[b]{@{}r@{}}#1\end{tabular}}
@@ -1893,16 +1895,16 @@ exactement.
 variante & tours & bornes & \head{bornes,\\ plafond} & \head{plafond, taille,\\ entiers} &
 \head{laissés décalés\\ par le moteur} \\
 \midrule
-0 & 48 & 1 & 1 & 1 & 13 \\
-1 & 78 & 5 & 5 & 5--6 & 39 \\
-2 & 52 & 1 & 1 & 1 & 16 \\
-3 & 86 & 4 & 4 & 5--18 & 44 \\
-4 & 84 & 1 & 1 & 1--12 & 49 \\
-5 & 160 & 6 & 7--17 & 7--86 & 115 \\
-6 & 88 & 1 & 1 & 1--17 & 44 \\
-7 & 169 & 9 & 9--26 & 9--90 & 123 \\
+0 & 58 & 1 & 1 & 1 & 19 \\
+1 & 92 & 5 & 6 & 6--16 & 40 \\
+2 & 64 & 3 & 3 & 3 & 23 \\
+3 & 102 & 12 & 12 & 13--22 & 52 \\
+4 & 125 & 5 & 6 & 7--47 & 61 \\
+5 & 219 & 30 & 30--219 & 30--171 & 154 \\
+6 & 131 & 8 & 8--131 & 10--50 & 72 \\
+7 & 229 & 37 & 37--229 & 37--229 & 170 \\
 \midrule
-2, bandes du maillage & 111 & 2 & 3--11 & 3--43 & 81 \\
+2, bandes du maillage & 149 & 10 & 10--149 & 12--72 & 114 \\
 \bottomrule
 \end{tabular}
 \caption{Corps masculin~: tours de chaque famille que toute quantification de
@@ -1912,33 +1914,38 @@ mesuré), avec $P = P_{\mathrm{eng}}$, puis avec en plus le plafond du moteur
 tailles du moteur. Un nombre seul est exact\,; un intervalle est certifié,
 inférieurement par la borne prouvée du solveur ou par des cœurs disjoints,
 supérieurement par un sous-ensemble fermable trouvé dans la limite de temps
-(de $120$ à $1\,800$ secondes). Dernière colonne~: tours de la famille
-décalés aux longueurs entières du moteur. Les tours sont comptés au signe
-près.}
+($900$ secondes par programme, $1\,800$ par boucle), la famille entière quand
+aucun n'a été trouvé. Dernière colonne~: tours de la famille décalés aux
+longueurs entières du moteur. Les tours sont comptés au signe près.}
 \label{tab:forced}
 \end{evidence}
 \end{table}
 
-Avec les seules bornes, les tours forcés sont exactement $1$, $5$, $1$, $4$,
-$1$, $6$, $1$ et $9$ (tableau~\ref{tab:forced})\,; dans les variantes 0, 2
-et 4, le tour forcé est celui du poignet, dans la variante~6 l'un des tours $57$
-et $58$, dont le conflit maintient l'arc $1241$ (le poignet y est retenu mais
-peut être fermé)\,; dans la variante~7, neuf tours
-sont nécessaires bien qu'au plus huit de ses $21$ cœurs soient disjoints, si
-bien que la borne d'empilement n'est pas toujours atteinte. Avec le plafond
-et la fenêtre, en longueurs entières, la valeur est encore exactement $1$ dans
-les variantes 0 et 2~: des longueurs entières qui ferment tous les tours
-retenus sauf celui du poignet existent à $10\,439$ et $10\,436$ quads, à des
-écarts moyens de $0,442$ et $0,469$. Dans la variante~3, l'intégrité coûte au
-moins un tour ($4$ en nombres réels, au moins $5$ en nombres entiers). Des
-$16$ tours retenus de la variante~2 que le moteur laisse décalés, les bornes
-en forcent $1$, et le plafond, la taille et l'intégrité aucun~: l'heuristique
-est responsable des $15$ autres\,; dans les autres variantes, elle laisse au
-moins $12$ à $37$ tours de plus que les meilleures longueurs trouvées. Le
-plafond n'est celui du moteur qu'approximativement (il a refusé $0,4737$), et
-des optimums qui ramènent d'autres arcs à zéro peuvent casser le maillage\,;
-si l'on garde ouvert tout arc que le moteur garde ouvert, l'optimum pour la
-variante~2 vaut $4$ (mesuré).
+Avec les seules bornes, les tours forcés sont exactement $1$, $5$, $3$, $12$,
+$5$, $30$, $8$ et $37$ (tableau~\ref{tab:forced}). Dans la variante~0, le tour
+forcé est le tour $54$, qui ne peut pas être fermé seul\,; dans la
+variante~2, ce sont les deux tours qui ne le peuvent pas, $46$ et $59$ (le
+tour $54$ de la variante 0), et un tour de la paire de la ligne 4 du
+tableau~\ref{tab:iis}. Dans la variante~3, douze tours sont nécessaires, et
+les cœurs disjoints trouvés parmi ses $21$ cœurs n'en donnent que dix. Avec
+le plafond et la fenêtre, en longueurs entières, la valeur est encore
+exactement $1$ dans la variante~0 et $3$ dans la variante~2~: des longueurs
+entières qui ferment tous les tours retenus sauf ceux-là existent à
+$10\,730$ et $10\,435$ quads, à des écarts moyens de $0,387$ et $0,506$. Le
+plafond seul coûte un tour dans les variantes 1 et 4 ($5$ avec les bornes,
+$6$ avec le plafond), et l'intégrité au moins un de plus dans les variantes 3
+et 4 ($12$ et $6$ en nombres réels, au moins $13$ et $7$ en nombres entiers).
+Des $23$ tours retenus de la variante~2 que le moteur laisse décalés, les
+bornes en forcent $3$, et le plafond, la taille et l'intégrité aucun~:
+l'heuristique est responsable des autres\,; dans les variantes 0, 1, 3, 4 et
+6, elle laisse décalés plus de tours que les meilleures longueurs trouvées.
+Dans la variante~5, les meilleures longueurs trouvées dans le plafond et la
+fenêtre décalent plus de tours que le moteur, $171$ contre $154$, et dans la
+variante~7 on n'en a trouvé aucune\,; l'écart moyen du moteur lui-même y vaut
+$1,123$ et $1,195$, au-dessus du plafond. Des optimums qui ramènent d'autres
+arcs à zéro peuvent casser le maillage\,; si l'on garde ouvert tout arc que le
+moteur garde ouvert, l'optimum pour la variante~2 vaut $3$, à $10\,735$ quads
+et à un écart moyen de $0,471$ (mesuré).
 
 \section{Choisir les tours}\label{sec:choosing}
 
@@ -2021,7 +2028,7 @@ entière est un problème de couplage polynomial~\cite{edmonds1970matching}\,;
 avec des cœurs disjoints connus, $\tau_P(H)$ est leur nombre\,; avec des
 formes de décalage de rang fixé, les ensembles fermables sont les plats d'un
 arrangement, mais sur le corps les tours retenus d'une variante sont de rang
-plein.
+plein. % PR3: faux dans les huit variantes (rang au-delà des équilibres 54 sur 58, 87/92, 60/64, 95/102, 118/125, 194/219, 123/131, 200/229)
 
 \begin{evidence}{open}{une esquisse}
 \begin{remark}[La fenêtre de tailles\,; une esquisse]
@@ -2168,7 +2175,8 @@ ici sous leur forme précisée.
 Quand un ensemble de tours est-il fermable, en termes de configuration des
 singularités\,? Tout certificat est une somme de peignes, ce qui ne dit rien
 des singularités, et n'est pas toujours une somme d'escaliers, de calottes et
-de séparatrices qui s'enroulent seuls\,; une réponse utile se trouve entre les
+de séparatrices qui s'enroulent seuls\,; % PR3: 67 des 68 certificats sur le nouvel export ; la lecture stricte change (tour 46)
+une réponse utile se trouve entre les
 deux, par exemple des peignes portés par des ensembles disjoints de sommets,
 chacun du signe du certificat. Calculer $\tau_P(H)$ à un nombre de quads donné
 demande les extrema d'une fonction quadratique indéfinie sur un polytope.
@@ -2182,17 +2190,18 @@ côtés entiers, de ses tours et de son application développante ferait des
 hypothèses topologiques des énoncés Lean des théorèmes.
 
 \paragraph{Limites et reproductibilité.}
-Les énoncés mesurés viennent d'un seul T-mesh d'un seul corps, exporté par un
-moteur sans les passes de contraintes de l'article compagnon, et de quelques
-modèles du banc avec une version du moteur non enregistrée\,; les identités
+Les énoncés mesurés viennent d'un seul T-mesh d'un seul corps, exporté par le
+moteur d'openclare~0.7.0 tel que publié, et de quelques modèles du banc avec
+une version du moteur non enregistrée\,; les identités
 ont été vérifiées en virgule flottante sauf mention d'arithmétique exacte, et
 les homotopies des propositions~\ref{prop:swap} et~\ref{prop:winding} n'ont
 pas été vérifiées. Les comptes forcés sont relatifs aux bornes de séparation
-du moteur et, approximativement, à son plafond, et les intervalles dépendent
-des limites de temps du solveur sur une machine partagée. Les scripts et les
-journaux des expériences exactes ne sont pas publiés~: les énoncés mesurés
-peuvent être confrontés à la branche \texttt{rd-exact}, un point d'accroche
-expérimental d'openclare, mais pas réexécutés tels quels. Les preuves Lean se
+du moteur et à son plafond, tels que l'export les donne, et les intervalles
+dépendent des limites de temps du solveur sur une machine partagée. Les
+énoncés mesurés sur le corps sont refaits par les scripts
+d'\texttt{experiments}, à côté de cette note, à partir de l'export
+d'openclare~0.7.0\,; leurs synthèses sont dans
+\texttt{experiments/results}. Les preuves Lean se
 rejouent avec \texttt{make proofs NOTE=turns-of-a-t-mesh}. Les tests de
 propriétés du paquet de données (\texttt{experiments/property}) fabriquent
 $50$ T-mesh aléatoires sans le moteur à graine fixée, $35$ sphères et $15$
