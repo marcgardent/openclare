@@ -224,6 +224,7 @@ def alone(target):
         settings = target.openclare
 
 
+import itertools  # noqa: E402
 import math  # noqa: E402
 import time  # noqa: E402
 
@@ -912,12 +913,16 @@ assert second.openclare.quads_around == 6 and first.openclare.quads == 200
 
 # The panel is in the Properties editor, on the tab of the mesh: for an
 # object to remesh, its settings; for a result, what it comes from.
-panels = (openclare.OPENCLARE_PT_panel, openclare.OPENCLARE_PT_shape)
+blocks = (openclare.OPENCLARE_PT_input, openclare.OPENCLARE_PT_engine, openclare.OPENCLARE_PT_output, openclare.OPENCLARE_PT_go)
+panels = (openclare.OPENCLARE_PT_panel, *blocks)
 assert all((p.bl_space_type, p.bl_context) == ("PROPERTIES", "data") for p in panels)
 assert not hasattr(bpy.types, "VIEW3D_PT_openclare") and all(p.bl_region_type == "WINDOW" for p in panels)
 alone(second)
 second.openclare.quads = 500
-assert openclare.is_source(bpy.context) and openclare.OPENCLARE_PT_shape.poll(bpy.context)
+assert openclare.is_source(bpy.context) and all(block.poll(bpy.context) for block in blocks)
+# Read on the object, done by the engine, what comes out, then the button.
+assert [block.bl_order for block in blocks] == [0, 1, 2, 3]
+assert openclare.OPENCLARE_PT_curves.bl_parent_id == openclare.OPENCLARE_PT_poles.bl_parent_id == "OPENCLARE_PT_input"
 assert not bpy.ops.object.openclare_remesh_again.poll()
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 result = bpy.context.active_object
@@ -943,7 +948,7 @@ openclare.shade(mesh, "SMOOTH", second.openclare.hard_edge_angle)
 assert all(face.use_smooth for face in mesh.polygons)
 print("SHADING By Angle: %d sharp edges on the cube of %d quads" % (len(sharp), len(mesh.polygons)))
 openclare.shade(mesh, "BY_ANGLE", second.openclare.hard_edge_angle)
-assert not openclare.OPENCLARE_PT_shape.poll(bpy.context)
+assert not any(block.poll(bpy.context) for block in blocks)
 # How it went is kept on the result, and said by its panel.
 told = result[openclare.REPORT]
 assert int(told["quads"]) == len(result.data.polygons), dict(told)
@@ -1180,6 +1185,12 @@ class Drawn:
     def prop(self, owner, name, **options):
         self.log.append(("prop", name, options.get("icon")))
 
+    def prop_search(self, owner, name, *_, **options):
+        self.log.append(("prop_search", name, options.get("icon")))
+
+    def operator(self, name, **options):
+        self.log.append(("operator", name, options.get("icon")))
+
     def label(self, text="", icon="NONE"):
         self.log.append(("label", text, icon))
 
@@ -1190,11 +1201,10 @@ class Drawn:
 
 
 def panel_says():
-    import types
-
     log = []
-    openclare.OPENCLARE_PT_shape.draw(types.SimpleNamespace(layout=Drawn(log)), bpy.context)
-    return [entry for entry in log if entry[0] != "prop" or entry[1] == "openclare_show_hard_edges"]
+    owner = openclare.object_to_remesh(bpy.context)
+    openclare.OPENCLARE_PT_input.draw_settings(None, bpy.context, Drawn(log), owner, owner.openclare)
+    return [entry for entry in log if entry[0] in ("label", "progress") or entry[1] == "openclare_show_hard_edges"]
 
 
 assert panel_says() == [("prop", "openclare_show_hard_edges", "HIDE_OFF"), ("label", "", "CHECKMARK"),
@@ -1203,6 +1213,21 @@ settings.hard_edge_angle = math.radians(50.0)
 preview.step(9.6)
 assert panel_says()[1:] == [("progress", "RING", ""), ("label", "Computing\u2026", "NONE")], panel_says()
 settings.hard_edge_angle = math.radians(30.0)
+
+# Every block draws, whatever the output, the number or the sizes, and the
+# experimental features shown or hidden.
+owner = openclare.object_to_remesh(bpy.context)
+kept = settings.output, settings.target
+for output, target, shown in itertools.product(("QUADS", "TRIANGLES"), ("COUNT", "SIZE"), (True, False)):
+    settings.output, settings.target = output, target
+    openclare.experimental.assumed = shown
+    for block in blocks[:3]:
+        log = []
+        block.draw_settings(None, bpy.context, Drawn(log), owner, settings)
+        assert log, block
+        assert shown or all(entry[2] != openclare.experimental.ICON for entry in log), (block, log)
+openclare.experimental.assumed = True
+settings.output, settings.target = kept
 
 # What goes wrong is said, and nothing drawn; set right, all is drawn again.
 settings.density_group = "no such group"

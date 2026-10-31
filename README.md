@@ -58,6 +58,11 @@ of the ogre at 3000 quads.
 Each setting and tool is stable or experimental: [docs/FEATURES.md](docs/FEATURES.md) says which,
 and what an experimental one lacks.
 
+The panel has three blocks, and the button under them: *Input*, what is read on the object (its
+hard edges, the density painted on it, the curves drawn on it, the poles kept); *Remesh*, what
+the engine does (symmetry, adaptive size, thin parts, curvature); *Output*, what comes out
+(quads or triangles, how many, the materials and marks they carry, the shading).
+
 | Setting | What it does |
 |---|---|
 | Output | *Quads* (the default), or *Triangles*: triangles close to equilateral, of one size or as the shape asks, for simulation, 3D printing and collision meshes. The same settings apply but those of quads alone (Follow Curvature, Fewer Irregular Vertices, Volume Fit); the result says how many triangles cut through another one, which a printer cannot make sense of. How they compare with Blender's *Decimate*: [docs/TRIANGLES.md](docs/TRIANGLES.md) |
@@ -70,10 +75,10 @@ and what an experimental one lacks.
 | Density | A vertex group of the object, painted in Weight Paint: quads are smallest where the weight is 1, largest where it is 0 |
 | Factor | How many times more quads a weight of 1 gets than a weight of 0, for the same area |
 | Density from Shape | Writes the density the shape calls for (Adaptive Size, thin parts) as a vertex group, to paint on top in Weight Paint. The group becomes the *Density*, and *Adaptive Size* is switched off so that the shape does not count twice |
-| Materials | Each quad gets the material of the surface it lies on, and the borders between materials are kept as lines of edges where that can be done |
-| Mark: Sharp, Creases | On by default. The edges of the result along a hard edge of the object are marked sharp, and given a crease weight that a *Subdivision Surface* modifier reads to keep them sharp. The edges along a curve take the marks of the curve |
+| Carry: Materials | Each quad gets the material of the surface it lies on, and the borders between materials are kept as lines of edges where that can be done |
+| Carry: Sharp, Creases | On by default. The edges of the result along a hard edge of the object are marked sharp, and given a crease weight that a *Subdivision Surface* modifier reads to keep them sharp. The edges along a curve take the marks of the curve |
 | Symmetry | *None*, *X*, *Y* or *Z*: the quads come out the same on both sides of the plane through the origin of the object across that axis, in the object's own axes, with a loop of edges on the plane. The object must be the same on both sides; one that is not is refused, and said why |
-| Shape: presets | The menu in the header of the *Shape* block saves every setting below with *+*, and sets them back from a preset saved there; a saved preset can be removed. The add-on ships one, *Default*, which sets them all back to their defaults: those suit sculpts, characters and mechanical parts alike |
+| Presets | The menu in the header of the *openclare* panel saves with *+* the settings of the shape (Hard Edges, Marked Sharp, Adaptive Size, Quads Around Thin Parts, Follow Curvature, Fewer Irregular Vertices, Volume Fit, Shading), and sets them back from a preset saved there; a saved preset can be removed. The add-on ships one, *Default*, which sets them all back to their defaults: those suit sculpts, characters and mechanical parts alike |
 | Adaptive Size | How much the size of the quads follows the curvature: at 0 % they are all the same size; towards 100 % they get smaller where the shape bends and larger where it is flat |
 | Quads Around Thin Parts | The fewest quads that go round a thin part, a finger or the tip of an ear, for it to keep its volume. 0 does not look at thickness |
 | Hard Edges | On by default. Edges of the object sharper than the angle, and still sharp at the size of the quads asked for, are followed by the quads wherever they can, and kept crisp; the fine creases of a sculpt are not |
