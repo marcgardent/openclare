@@ -7,10 +7,11 @@ One ticket per shortcut, approximation, fallback or item of the specification
 ([ALGORITHM.md](ALGORITHM.md)) that was not done. A ticket that is settled is closed, not
 deleted, and says what settled it; what is left of it stays written in it.
 
-**Numbers.** The tickets this file held, DT-001 to DT-053, are the issues of the same numbers:
-`DT-034` in a document, a comment of the code or a commit message is issue #34. A new ticket
-takes the number its issue is given, and is cited the same way (`DT-054`). "DT" stands for
-*dette technique*, technical debt.
+**Numbers.** A ticket is cited by the number of its issue, `#262`. Until 31 October 2026 they
+were cited `DT-nnn` ("DT" for *dette technique*, technical debt), the `DT-nnn` written at the
+head of the issue's title. DT-001 to DT-053, the tickets this file held, are the issues of the
+same numbers (`DT-034` is issue #34); the later ones are not (`DT-164` is issue #195), and are
+found by searching the issues for their `DT-nnn`.
 
 **Severity** is a label of the issue: *high* limits a result the acceptance rule is about;
 *medium* limits quality or robustness outside the corpus; *low* is tidiness, comfort,

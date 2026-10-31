@@ -11,6 +11,8 @@ are and takes the free ones from its result.
 
 import bpy
 
+from . import experimental
+
 # Colours of the poles drawn: a valence 3 warm, a valence 5 cool; a touched
 # one has a light ring round it.
 COLOURS = {3: (0.95, 0.55, 0.12, 1.0), 5: (0.25, 0.6, 1.0, 1.0)}
@@ -108,7 +110,7 @@ def draw_poles():
 
     context = bpy.context
     owner = owner_shown(context)
-    if owner is None or not owner.data.openclare_poles.show or not owner.visible_get():
+    if owner is None or not owner.data.openclare_poles.show or not owner.visible_get() or not experimental.shown():
         return
     view = context.region_data
     if view is None:
@@ -338,7 +340,7 @@ class OPENCLARE_TL_poles(bpy.types.WorkSpaceTool):
     bl_idname = "openclare.poles"
     bl_label = "Poles (openclare)"
     bl_description = (
-        "Edit the poles of the last result on the object: drag one along the surface, 3 or 5 to add one "
+        "Experimental. Edit the poles of the last result on the object: drag one along the surface, 3 or 5 to add one "
         "under the mouse, P to pin or free one, X to remove one. Those touched are kept by the next remesh, "
         "which places the others round them"
     )
@@ -385,18 +387,25 @@ CLASSES = (
 handle = None
 
 
+def tools(shown):
+    """The Poles tool put in the toolbar or taken out: it is experimental
+    (see `experimental`)."""
+    if shown:
+        bpy.utils.register_tool(OPENCLARE_TL_poles, separator=True)
+    else:
+        bpy.utils.unregister_tool(OPENCLARE_TL_poles)
+
+
 def register():
     global handle
     for cls in CLASSES:
         bpy.utils.register_class(cls)
     bpy.types.Mesh.openclare_poles = bpy.props.PointerProperty(type=OpenclarePoles)
     handle = bpy.types.SpaceView3D.draw_handler_add(draw_poles, (), "WINDOW", "POST_VIEW")
-    bpy.utils.register_tool(OPENCLARE_TL_poles, separator=True)
 
 
 def unregister():
     global handle
-    bpy.utils.unregister_tool(OPENCLARE_TL_poles)
     if handle is not None:
         bpy.types.SpaceView3D.draw_handler_remove(handle, "WINDOW")
         handle = None

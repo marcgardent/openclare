@@ -1521,6 +1521,47 @@ assert bpy.ops.object.openclare_poles_clear() == {"FINISHED"}
 assert len(project.items) == 0
 print("POLES", first, "kept; one touched and answered")
 
+# Experimental features, hidden by the toggle of the preferences (the
+# add-on is registered by this script: its preferences cannot be read, and
+# what they would say is set by hand).
+experimental = openclare.experimental
+
+
+def our_tools():
+    found = ToolSelectPanelHelper._tools_flatten(tools.tools_from_context(bpy.context, mode="OBJECT"))
+    return {item.idname for item in found if getattr(item, "idname", "").startswith("openclare.")}
+
+
+assert our_tools() == {"openclare.draw_curve", "openclare.cut_volume", "openclare.poles"}, our_tools()
+settings = ball.openclare
+settings.target, settings.quads_around, settings.follow_curvature = "SIZE", 3, 0.2
+settings.fewer_irregular, settings.volume_fit = 4.0, 0.3
+settings.output, settings.triangles_for = "TRIANGLES", "SIMULATION"
+evaluated = ball.evaluated_get(bpy.context.evaluated_depsgraph_get())
+source = evaluated.to_mesh()
+given, _ = openclare.engine_settings_of(ball, evaluated, source, write=False)
+assert "largest_quad" in given and given["alignment"] == 0.2 and not openclare.decimating(settings), given
+experimental.assumed = False
+experimental.apply()
+assert our_tools() == set(), our_tools()
+assert not openclare.OPENCLARE_PT_curves.poll(bpy.context) and not openclare.OPENCLARE_PT_poles.poll(bpy.context)
+# Hidden: the engine is given their defaults, triangles are Blender's, and
+# what the object keeps is left as it is.
+given, _ = openclare.engine_settings_of(ball, evaluated, source, write=False)
+assert given["quads"] == settings.quads and "largest_quad" not in given, given
+assert (given["quads_around"], given["alignment"], given["singularity_reach"], given["volume_fit"]) == (6, 0.05, 2.0, 1.0)
+assert openclare.decimating(settings)
+assert (settings.target, settings.quads_around, round(settings.follow_curvature, 6)) == ("SIZE", 3, 0.2)
+experimental.assumed = True
+experimental.apply()
+assert our_tools() == {"openclare.draw_curve", "openclare.cut_volume", "openclare.poles"}, our_tools()
+given, _ = openclare.engine_settings_of(ball, evaluated, source, write=False)
+assert given["alignment"] == 0.2 and not openclare.decimating(settings)
+evaluated.to_mesh_clear()
+for name in ("target", "quads_around", "follow_curvature", "fewer_irregular", "volume_fit", "output", "triangles_for"):
+    settings.property_unset(name)
+print("EXPERIMENTAL hidden and shown again")
+
 openclare.unregister()
 assert not hasattr(bpy.types.Mesh, "openclare_poles")
 # The drawing goes with the add-on.

@@ -5,7 +5,8 @@
 Every feature of openclare, in the Blender add-on, on the command line and as a library, and how
 far it can be relied on. What is left to do with each is in the [roadmap](../ROADMAP.md).
 
-State on 31 October 2026, add-on 0.17.0.
+State on 31 October 2026, add-on 0.18.0. In the add-on, the experimental features carry the
+icon of a flask, and *Experimental Features* in its preferences hides them all.
 
 ## Stable or experimental
 

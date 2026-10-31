@@ -6,7 +6,8 @@ Chaque fonction d'openclare, dans le greffon Blender, en ligne de commande et en
 jusqu'où on peut s'y fier. Ce qui reste à faire pour chacune est dans la
 [feuille de route](../ROADMAP.fr.md).
 
-État au 31 octobre 2026, greffon 0.17.0.
+État au 31 octobre 2026, greffon 0.18.0. Dans le greffon, les fonctions expérimentales portent
+l'icône d'une fiole, et *Experimental Features*, dans ses préférences, les cache toutes.
 
 ## Stable ou expérimental
 
