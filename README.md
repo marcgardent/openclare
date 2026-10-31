@@ -84,6 +84,13 @@ of the ogre at 3000 quads.
 An object scaled differently along its axes is remeshed as it is seen: its quads come out
 square in the scene.
 
+Some features are experimental: they run, but are not tested enough yet, or have a known issue.
+They carry the icon of a flask, *Experimental* starts their tooltip, and an option of the
+add-on's preferences, *Experimental Features* (on by default), hides them all: their settings,
+the *Curves* and *Poles* blocks, and the tools *Draw Curve*, *Cut Volume* and *Poles*. Hidden,
+a remesh gives their settings the default values, asks for a number of quads, makes triangles
+with Blender's *Decimate*, and follows no curve and no pole placed by hand.
+
 ### Curves
 
 Curves drawn on the model give the result a line of edges along each: a loop round an eye, a
