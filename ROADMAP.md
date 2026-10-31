@@ -50,7 +50,6 @@ Each to be specified and validated when its turn comes.
 | Feature | What it is | Issues |
 |---|---|---|
 | **Quad Shape menu** | a sphere, cylinder or disc made of quads with their ideal poles | #159 |
-| **Baking the sculpt onto the result** | normal map, height and ambient occlusion, read through the engine's own correspondence with the sculpt | #51 |
 | **Improving a mesh from a dry run** | a run marked, the best of several kept, a part run again where it went wrong | #40 |
 | **Clean triangles for 3D printing** | the same chain with six-fold stars instead of crosses | #70 |
 
@@ -66,3 +65,5 @@ they find comes into the chain through section 1 or 2, measured on the bench fir
 - An exact integer-grid map and extraction: the direct route from the T-mesh replaced it (#1).
 - Embedding the Rerun viewer in what is distributed: it stays a tool for those who work on the
   chain.
+- Baking the sculpt onto the result (normal map, height, ambient occlusion): it is part of the
+  pipeline of the PRO edition, with the UVs and the export.

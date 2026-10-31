@@ -51,7 +51,6 @@ Chacune à spécifier et valider quand son tour vient.
 | Fonction | Ce que c'est | Issues |
 |---|---|---|
 | **Menu Quad Shape** | une sphère, un cylindre ou un disque en quads avec leurs pôles idéaux | #159 |
-| **Cuire la sculpture sur le résultat** | carte de normales, hauteur et occlusion ambiante, lues par la correspondance du moteur avec la sculpture | #51 |
 | **Améliorer un maillage à partir d'un premier essai** | un essai noté, le meilleur de plusieurs gardé, une partie refaite là où elle a raté | #40 |
 | **Triangles propres pour l'impression 3D** | la même chaîne avec des étoiles à six branches au lieu de croix | #70 |
 
@@ -69,3 +68,5 @@ Ce qu'ils trouvent entre dans la chaîne par la section 1 ou 2, mesuré d'abord 
   l'a remplacée (#1).
 - Embarquer la visionneuse Rerun dans ce qui est distribué : elle reste un outil pour ceux qui
   travaillent sur la chaîne.
+- Cuire la sculpture sur le résultat (carte de normales, hauteur, occlusion ambiante) : cela
+  fait partie de la chaîne de production de l'édition PRO, avec les UV et l'export.
