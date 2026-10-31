@@ -66,6 +66,8 @@ the same faces.
 |---|---|---|
 | "quadriflow" results | QuadriFlow, built into Blender | run again at every measurement, nothing is kept |
 | "autoremesher" results | AutoRemesher 1.2.0, Jeremy Hu ([huxingyi/autoremesher](https://github.com/huxingyi/autoremesher)) | open source (GPL-3.0); run via CLI |
+| "instant-meshes-jakob" results | Instant Meshes, Wenzel Jakob, Marco Tarini, Daniele Panozzo, Olga Sorkine-Hornung ([wjakob/instant-meshes](https://github.com/wjakob/instant-meshes), commit `7b31608`) | open source (BSD-3-Clause); built from source by `bench/fetch_remeshers.py`, not redistributed |
+| "quadwild-bimdf" results | QuadWild with Bi-MDF, Martin Heistermann, Jethro Warnett, David Bommes, on QuadWild by Nico Pietroni et al. ([cgg-bern/quadwild-bimdf](https://github.com/cgg-bern/quadwild-bimdf), release v0.0.2) | open source (GPL-3.0); its release binaries, fetched by `bench/fetch_remeshers.py`, not redistributed |
 
 ## Pictures
 
