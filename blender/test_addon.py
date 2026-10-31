@@ -1479,7 +1479,42 @@ print("DECIMATE", faces, "triangles for 1000; painted on top, %.0f %% of them th
 settings.density_group, settings.triangles_for = "", "SIMULATION"
 settings.output = "QUADS"
 
+# The poles of the project (DT-181): the first remesh keeps those of its
+# result on the mesh; one touched is given to the next remesh, which has a
+# pole of its valence there, and the free ones are those of the new result.
+bpy.ops.mesh.primitive_uv_sphere_add(segments=64, ring_count=32)
+ball = bpy.context.active_object
+ball.openclare.quads = 1500
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+project = ball.data.openclare_poles
+first = len(project.items)
+assert first >= 8 and not any(pole.touched for pole in project.items), first
+assert openclare.poles.summary(project).startswith(f"{first} poles")
+pole = project.items[0]
+x, y, z = pole.position
+# A quarter turn round the ball: where no pole was.
+pole.position, pole.touched = (-y, x, z), True
+for other in bpy.context.selected_objects:
+    other.select_set(False)
+ball.select_set(True)
+bpy.context.view_layer.objects.active = ball
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+said = bpy.context.active_object[openclare.REPORT]
+assert said["poles_placed"] == "1" and said["poles_answered"] == "1", dict(said)
+touched = [pole for pole in project.items if pole.touched]
+assert len(touched) == 1 and tuple(touched[0].position) == (-y, x, z)
+assert sum(not pole.touched for pole in project.items) >= 7
+# Shown when the ball or its result is active; freed and cleared.
+assert openclare.poles.owner_shown(bpy.context) == ball
+bpy.context.view_layer.objects.active = ball
+assert bpy.ops.object.openclare_poles_free() == {"FINISHED"}
+assert not any(pole.touched for pole in project.items)
+assert bpy.ops.object.openclare_poles_clear() == {"FINISHED"}
+assert len(project.items) == 0
+print("POLES", first, "kept; one touched and answered")
+
 openclare.unregister()
+assert not hasattr(bpy.types.Mesh, "openclare_poles")
 # The drawing goes with the add-on.
 assert preview.state.handle is None and preview.state.shown is None
 assert not bpy.app.timers.is_registered(preview.tick)

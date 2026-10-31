@@ -214,13 +214,13 @@ void openclare_result_copy_curve_edges(const OpenclareResult *result, uint32_t *
 size_t openclare_result_pole_count(const OpenclareResult *result);
 
 /* Writes the irregular vertices of the mesh away from its borders: where each
- * lies on the input, as a triangle of it into triangles and three barycentric
- * coordinates into barycentric (room for 3 * openclare_result_pole_count
- * numbers); its valence into valences; and into imposed the index of the
- * pole given to openclare_remesh it answers, or -1 for one placed freely.
- * Any may be NULL. */
+ * lies on the input, as a triangle of it into triangles, three barycentric
+ * coordinates into barycentric and the point, x y z, into points (room for
+ * 3 * openclare_result_pole_count numbers each); its valence into valences;
+ * and into imposed the index of the pole given to openclare_remesh it
+ * answers, or -1 for one placed freely. Any may be NULL. */
 void openclare_result_copy_poles(const OpenclareResult *result, uint32_t *triangles, float *barycentric,
-                                 uint8_t *valences, int32_t *imposed);
+                                 float *points, uint8_t *valences, int32_t *imposed);
 
 /* Writes the group of the input each face lies in, one number per face, into
  * groups (room for openclare_result_face_count numbers). Returns 1, or 0 and

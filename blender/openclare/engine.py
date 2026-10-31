@@ -102,6 +102,10 @@ def library():
     lib.openclare_result_curve_edge_count.argtypes = [pointer]
     lib.openclare_result_copy_curve_edges.restype = None
     lib.openclare_result_copy_curve_edges.argtypes = [pointer, pointer, pointer]
+    lib.openclare_result_pole_count.restype = size
+    lib.openclare_result_pole_count.argtypes = [pointer]
+    lib.openclare_result_copy_poles.restype = None
+    lib.openclare_result_copy_poles.argtypes = [pointer, pointer, pointer, pointer, pointer, pointer]
     lib.openclare_result_copy_creases.restype = None
     lib.openclare_result_copy_creases.argtypes = [pointer, pointer, pointer]
     lib.openclare_result_copy_face_groups.restype = ctypes.c_int32
@@ -177,19 +181,23 @@ class Remeshed:
     asked for on top: `uv` (per layer name, two floats per corner), `seams`
     and `hard_edges` (two vertices per edge), `creases` (the same, and one
     weight per edge), `curve_edges` (the same, and the index of the curve
-    each runs along), None when not asked for; and `face_groups`, the group
-    of the input each face lies in, None when the input came without groups."""
+    each runs along), None when not asked for; `face_groups`, the group
+    of the input each face lies in, None when the input came without groups;
+    and `poles`, the irregular vertices of the result away from its borders:
+    the point of the input each is on (three floats each), its valence, and
+    the index of the pole given that it answers, -1 for a free one."""
 
     def __init__(self):
         self.positions = self.sizes = self.corners = None
         self.report, self.uv = {}, {}
         self.seams = self.hard_edges = self.creases = self.curve_edges = self.face_groups = None
+        self.poles = None
 
 
 def remesh(
     positions, vertex_count, triangles, triangle_count, corner_vertices, corner_count, preset, settings,
     density=None, on_stage=None, uv_layers=(), seams=False, hard_edges=False, creases=False, curves=(),
-    groups=None, edges=None, curve_edges=False,
+    groups=None, edges=None, curve_edges=False, poles=(),
 ):
     """Remeshes into quads the triangle mesh whose arrays sit at the addresses
     given: three floats per vertex at `positions`, three corners per triangle
@@ -212,6 +220,10 @@ def remesh(
     `edges` is None or a numpy array of unsigned 32-bit vertices, two per
     edge: edges of the mesh the result keeps as hard edges whatever their
     angle, as if a sharp curve ran through them (those marked sharp, say).
+
+    `poles` are poles placed by hand: for each, its point (three floats) and
+    the valence, 3 or 5, the vertex of the result there is to have. The
+    engine places the others freely.
 
     `on_stage`, if given, is called with the name of each stage as it begins
     ("cross field", or "piece 3 of 12: cross field"); the run stops if it
@@ -263,6 +275,13 @@ def remesh(
     else:
         curve_arguments = (None, None, None, 0)
 
+    if poles:
+        pole_points = numpy.array([tuple(point) for point, _ in poles], numpy.float32).ravel()
+        pole_valences = numpy.array([valence for _, valence in poles], numpy.uint8)
+        pole_arguments = (pole_points.ctypes.data, pole_valences.ctypes.data, len(poles))
+    else:
+        pole_arguments = (None, None, 0)
+
     # Kept in a variable: the engine calls it for as long as the run lasts.
     callback = ON_STAGE(told) if on_stage else ON_STAGE()
     result = lib.openclare_remesh(
@@ -271,7 +290,7 @@ def remesh(
         None if groups is None else groups.ctypes.data,
         None if edges is None else edges.ctypes.data, 0 if edges is None else len(edges) // 2,
         *curve_arguments,
-        None, None, 0,
+        *pole_arguments,
         preset.encode(), lines.encode(), callback, None,
     )
     try:
@@ -295,6 +314,13 @@ def remesh(
             face_groups = numpy.empty(len(out.sizes), numpy.uint32)
             if lib.openclare_result_copy_face_groups(result, face_groups.ctypes.data):
                 out.face_groups = face_groups
+        count = lib.openclare_result_pole_count(result)
+        out.poles = (
+            numpy.empty(3 * count, numpy.float32), numpy.empty(count, numpy.uint8), numpy.empty(count, numpy.int32)
+        )
+        lib.openclare_result_copy_poles(
+            result, None, None, out.poles[0].ctypes.data, out.poles[1].ctypes.data, out.poles[2].ctypes.data
+        )
         if seams:
             out.seams = numpy.empty(2 * lib.openclare_result_seam_count(result), numpy.uint32)
             lib.openclare_result_copy_seams(result, out.seams.ctypes.data)

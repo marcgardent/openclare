@@ -64,7 +64,7 @@ impl Default for Params {
 }
 
 /// An irregular vertex of the output: where it lies on the input, as a
-/// triangle and the barycentric coordinates of the point on it, where it is,
+/// triangle, the barycentric coordinates of the point on it and that point,
 /// its valence, and the pole the user placed that it answers, if any.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Pole {
