@@ -379,7 +379,7 @@ check of the four directions): each lobe sees a second convex corner and holds
 $2$, and the third region the rest of the total $8$.
 \end{proof}
 
-\begin{evidence}{core}{\lean{CutDisc.holonomy_eq_preorder}, \lean{Cut.jump_eq} (on a disc cut along a forest, modelled by the walk round its border: the recursion $G_f = G_{f_r} \circ \dots \circ G_{f_1} \circ \rho_v$ and the holonomy of the border as the composite of the cone rotations in the order of first visit), \lean{CutDisc.holonomy_trans}, \lean{Motion.burgers_eq_sum}, \lean{Motion.annulus_holonomy}; \lean{TMesh.borderHolonomy_round} (the holonomy of $\bar\gamma$, the chart continued from face to face through the region on its left, is the development of the turn when every node strictly inside the first side is met by four faces), from \lean{TMesh.crossMotion_glued} (the crossing of an edge on a side takes its ends to the points glued to them) and \lean{TMesh.holonomyAround_eq} (the holonomy round a vertex met by $k$ faces is the rotation by $R^{4-k}$ about it); \lean{TMesh.borderHolonomy_cuts} (through the charts of a dual tree, the holonomy of $\bar\gamma$ is the composite of the jumps across the cuts, in border order); examples: \lean{CutDisc.threeSquares_holonomy}; tested: on every sphere of 50 random instances, both regions of every simple curve are such cut discs (a forest of cuts, each tree touching the border once) and the composite of their rotations is the development \lean{TMesh.Turn.development} of the turn, $B_D = T_\gamma(\ell)$ with $D$ on the left, on 1{,}852 regions, as is the composite of the jumps across the cuts; (c) on 898 annuli; assumed: that these jumps are those of the cut disc of the model}
+\begin{evidence}{core}{\lean{CutDisc.holonomy_eq_preorder}, \lean{Cut.jump_eq} (on a disc cut along a forest, modelled by the walk round its border: the recursion $G_f = G_{f_r} \circ \dots \circ G_{f_1} \circ \rho_v$ and the holonomy of the border as the composite of the cone rotations in the order of first visit), \lean{CutDisc.holonomy_trans}, \lean{Motion.burgers_eq_sum}, \lean{Motion.annulus_holonomy}; \lean{TMesh.borderHolonomy_round} (the holonomy of $\bar\gamma$, the chart continued from face to face through the region on its left, is the development of the turn when every node strictly inside the first side is met by four faces), from \lean{TMesh.crossMotion_glued} (the crossing of an edge on a side takes its ends to the points glued to them) and \lean{TMesh.holonomyAround_eq} (the holonomy round a vertex met by $k$ faces is the rotation by $R^{4-k}$ about it); \lean{TMesh.borderHolonomy_cuts} (through the charts of a dual tree, the holonomy of $\bar\gamma$ is the composite of the jumps across the cuts, in border order); \lean{TMesh.development_eq_cones} (at whole lengths, on a forest of cuts the program checks, the development of the turn is the composite of the cone rotations in the order of first visit); examples: \lean{CutDisc.threeSquares_holonomy}; tested: on every sphere of 50 random instances, both regions of every simple curve are such cut discs (a forest of cuts, each tree touching the border once) and the composite of their rotations is the development \lean{TMesh.Turn.development} of the turn, $B_D = T_\gamma(\ell)$ with $D$ on the left, on 1{,}852 regions, as are the composite of the jumps across the cuts and that of the cone rotations of the forest of cuts; (c) on 898 annuli; assumed: that the forest of cuts the program builds hangs from the region, decided on every region, not proved}
 \begin{proposition}[The shift is set by the singularities]\label{prop:burgers}
 Let $\gamma$, $\gamma_1$, $\gamma_2$ be turns with simple curves.
 \begin{enumerate}
@@ -1851,7 +1851,7 @@ complexity of maximizing $Q$ over a polytope of lengths in reals.
 \section{What is machine-checked}\label{sec:lean}
 
 The folder \texttt{lean} beside this note is a Lean~4~\cite{demoura2021lean4}
-project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $678$
+project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $698$
 theorem declarations, many of them small lemmas, depend only on Lean's
 standard axioms; the count is not evidence, and its \texttt{README.md} maps
 each statement to its Lean theorems. Lean checks the algebraic and
@@ -1894,9 +1894,10 @@ at whole lengths, the holonomy of $\bar\gamma$, the chart continued from face
 to face through the region on its left, equal to the development of the turn
 when every node strictly inside the first side is met by four faces, and,
 through the charts of a dual tree, to the composite of the jumps across the
-cuts in border order; that a
-region of the quad mesh is such a cut disc is decided by the program on every
-region, not proved; the cut annulus~(b); exchanges; the
+cuts in border order, and, at whole lengths, on a forest of cuts the program
+checks, to the composite of the cone rotations in the order of first visit;
+that the forest of cuts the program builds hangs from the region is decided
+on every region, not proved; the cut annulus~(b); exchanges; the
 conjugation step of Proposition~\ref{prop:winding}. Over the reals: the four
 orders and orientations of a dislocation and straight chains
 (Proposition~\ref{prop:dislocation}(i), (ii)); staircases; the positivity of

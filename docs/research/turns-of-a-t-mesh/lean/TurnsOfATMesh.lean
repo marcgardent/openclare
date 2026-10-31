@@ -38,3 +38,4 @@ public import TurnsOfATMesh.Development
 public import TurnsOfATMesh.CutDisc
 public import TurnsOfATMesh.Border
 public import TurnsOfATMesh.Region
+public import TurnsOfATMesh.CutForest

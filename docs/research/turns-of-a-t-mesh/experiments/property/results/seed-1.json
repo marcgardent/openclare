@@ -1136,6 +1136,20 @@
    "fuel": 4,
    "date": "2026-10-30",
    "program": "Check/Main.lean cutsOf: borderCrossings, faceAt, normalize, cutCrossings, jump of Region.lean evaluated through the charts of the dual trees of discOf, both regions of every simple curve of the rounds; the theorems are borderCrossings_chain, borderHolonomy_cuts"
+  },
+  "forest": {
+   "spheres": 35,
+   "regions": 1852,
+   "forest_built_and_hangs": 1852,
+   "preorder_cones_k_not_4_equal_word_and_nodes_equal_interior_vertices": 1852,
+   "composite_of_cone_rotations_equals_development": 1852,
+   "nodes": 1889092,
+   "nodes_k_not_4": 17289,
+   "deepest_forest": 129,
+   "regions_with_an_empty_forest": 0,
+   "walk_fuel": "16 P + 16",
+   "date": "2026-10-30",
+   "program": "Check/Main.lean forestOf: the forest of cuts of both regions of every simple curve of the rounds, built from the cut crossings of the border (cutsOf) and the walks aroundVertexF of CutForest.lean round the far ends of the cuts; hangs decided; Forest.preorder of its cones (k != 4) against the word of discOf; their composite against the development; the theorems are jump_node, roots_glue, borderHolonomy_forest, development_eq_cones"
   }
  },
  "made_with": "python3 docs/research/turns-of-a-t-mesh/experiments/property/generate.py --count 50 --seed 1"
