@@ -14,11 +14,13 @@ Sélectionnez un maillage, demandez un nombre de quads, appuyez sur *Remesh to Q
 
 <div class="cards uses">
 <div class="card" data-art="sculpt"><strong>Une sculpture prête à animer</strong><span>Des quads avec peu de pôles, et des boucles autour des yeux, de la bouche et des articulations, tracées sur le modèle là où vous les voulez.</span></div>
+<div class="card" data-art="loops"><strong>Une topologie éditable, sans spirales en excès</strong><span>Les boucles d'arêtes se ferment en anneaux autour des bras et des jambes : un Alt-clic en sélectionne une, et elle fait le tour une fois.</span></div>
 <div class="card" data-art="mechanical"><strong>Une pièce mécanique aux arêtes nettes</strong><span>Les arêtes vives et les arêtes marquées sharp gardées comme lignes d'arêtes, avec un crease pour le Subdivision Surface.</span></div>
 <div class="card" data-art="scan"><strong>Un scan ou un maillage d'IA rendu utilisable</strong><span>Une surface de quads propre et fermée, à partir d'une surface bruitée.</span></div>
 <div class="card" data-art="detail"><strong>Du détail là où il compte</strong><span>Des quads plus petits sur le visage et les mains, peints ou tirés de la forme.</span></div>
-<div class="card" data-art="seams"><strong>Des coutures où vous les voulez</strong><span>Les courbes tracées sur le modèle deviennent des coutures, prêtes pour les UV.</span></div>
-<div class="card" data-art="triangles"><strong>Des triangles aussi</strong><span>Des triangles réguliers pour la simulation de tissu, ou le Decimate de Blender pour l'impression et les collisions.</span></div>
+<div class="card" data-art="seams"><strong>Des UV non destructives</strong><span>Tracez les coutures une fois sur votre modèle haute définition : chaque remaillage les retrouve, prêtes pour les UV.</span></div>
+<div class="card" data-art="triangles"><strong>Des triangles pour la simulation</strong><span>Des triangles réguliers, proches de l'équilatéral, pour que le tissu et les corps mous plient partout de la même façon.</span></div>
+<div class="card" data-art="paint"><strong>Un maillage où peindre</strong><span>Des sommets répartis régulièrement, en quads d'une seule taille ou en triangles réguliers, pour des couleurs de sommets à la même résolution partout.</span></div>
 </div>
 
 ## Des boucles qui se ferment

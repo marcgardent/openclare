@@ -14,11 +14,13 @@ Select a mesh, ask for a number of quads, press *Remesh to Quads*. The original 
 
 <div class="cards uses">
 <div class="card" data-art="sculpt"><strong>A sculpt ready to animate</strong><span>Quads with few poles, and loops round the eyes, the mouth and the joints, drawn on the model where you want them.</span></div>
+<div class="card" data-art="loops"><strong>Editable topology, without stray spirals</strong><span>Edge loops close into rings round the arms and the legs: Alt-click selects one, and it goes round once.</span></div>
 <div class="card" data-art="mechanical"><strong>A mechanical part with crisp edges</strong><span>Hard edges and marked sharp edges kept as lines of edges, creased for a Subdivision Surface.</span></div>
 <div class="card" data-art="scan"><strong>A scan or an AI mesh made usable</strong><span>A clean, closed surface of quads from a noisy one.</span></div>
 <div class="card" data-art="detail"><strong>Detail where it matters</strong><span>Smaller quads on the face and the hands, painted or taken from the shape.</span></div>
-<div class="card" data-art="seams"><strong>Seams where you want them</strong><span>Curves drawn on the model become seams, ready for the UVs.</span></div>
-<div class="card" data-art="triangles"><strong>Triangles too</strong><span>Even triangles for cloth simulation, or Blender's own Decimate for printing and collisions.</span></div>
+<div class="card" data-art="seams"><strong>Non-destructive UVs</strong><span>Draw the seams once on your high-poly model: every remesh finds them again, ready for the UVs.</span></div>
+<div class="card" data-art="triangles"><strong>Triangles for simulation</strong><span>Even triangles, close to equilateral, so that cloth and soft bodies fold the same way everywhere.</span></div>
+<div class="card" data-art="paint"><strong>A mesh to paint on</strong><span>Vertices spread evenly, in quads of one size or even triangles, for vertex colours with the same resolution everywhere.</span></div>
 </div>
 
 ## Loops that close
