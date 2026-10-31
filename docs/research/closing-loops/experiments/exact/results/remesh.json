@@ -1,0 +1,1143 @@
+{
+ "experiment": "the meshes of the exact look (Table tab:rounding and the meshes of whole lengths)",
+ "engine": {
+  "commit": "e13fadb",
+  "build": "sha256:d444f05f7279f3e7",
+  "options": "as-is"
+ },
+ "source": {
+  "path": "source.obj",
+  "md5": "f1fe33002b731d1d41846daed6c59f5e"
+ },
+ "machine": {
+  "processor": "Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz",
+  "threads": 8,
+  "memory": "62.7 GiB",
+  "load_average": [
+   1.11,
+   1.05,
+   1.01
+  ],
+  "processors_allowed": 8
+ },
+ "wall_seconds": 1973.9,
+ "skipped": {},
+ "runs": [
+  {
+   "variant": "engine",
+   "options": {},
+   "seconds": 158.0,
+   "measure": {
+    "valid": true,
+    "quads": 10484,
+    "loop_edges_spiral": 0.014641358260206027,
+    "loops_spiral": 11,
+    "loop_edges_closed": 0.36484166348721775,
+    "mean_distance": 0.0001895734178229812,
+    "hausdorff": 0.004743854442472561,
+    "angle_deviation_mean": 4.292626082506852,
+    "irregular_vertices": 254,
+    "inverted_faces": 0
+   },
+   "tmesh": "call-2146-806-5237618",
+   "first": {
+    "way": null,
+    "round": null,
+    "quads": 10484,
+    "deviation": 0.36592800546950227,
+    "spirals": 0.014641358260206027,
+    "most_deviation": 0.5219249834360781,
+    "turns_held": 58,
+    "from_selector": false
+   },
+   "strips": {
+    "ways_round": 264,
+    "shifted": 196
+   },
+   "ways": [
+    {
+     "way": 0,
+     "held": 58,
+     "closed_in_real_lengths": 58,
+     "of_those_still_shifted": 19,
+     "held_still_shifted": 19,
+     "quads": 10501,
+     "spirals": 0.04094848109703837
+    },
+    {
+     "way": 1,
+     "held": 92,
+     "closed_in_real_lengths": 92,
+     "of_those_still_shifted": 40,
+     "held_still_shifted": 40,
+     "quads": 10480,
+     "spirals": 0.09060114503816796
+    },
+    {
+     "way": 2,
+     "held": 64,
+     "closed_in_real_lengths": 64,
+     "of_those_still_shifted": 23,
+     "held_still_shifted": 23,
+     "quads": 10520,
+     "spirals": 0.016539923954372624
+    },
+    {
+     "way": 3,
+     "held": 102,
+     "closed_in_real_lengths": 102,
+     "of_those_still_shifted": 52,
+     "held_still_shifted": 52,
+     "quads": 10540,
+     "spirals": 0.035341555977229606
+    },
+    {
+     "way": 4,
+     "held": 125,
+     "closed_in_real_lengths": 125,
+     "of_those_still_shifted": 61,
+     "held_still_shifted": 61,
+     "quads": 10402,
+     "spirals": 0.12098634877908097
+    },
+    {
+     "way": 5,
+     "held": 219,
+     "closed_in_real_lengths": 219,
+     "of_those_still_shifted": 154,
+     "held_still_shifted": 154,
+     "quads": 10525,
+     "spirals": 0.021995249406175775
+    },
+    {
+     "way": 6,
+     "held": 131,
+     "closed_in_real_lengths": 131,
+     "of_those_still_shifted": 72,
+     "held_still_shifted": 72,
+     "quads": 10391,
+     "spirals": 0.13964007314021748
+    },
+    {
+     "way": 7,
+     "held": 229,
+     "closed_in_real_lengths": 229,
+     "of_those_still_shifted": 170,
+     "held_still_shifted": 170,
+     "quads": 10802,
+     "spirals": 0.08720607294945378
+    }
+   ]
+  },
+  {
+   "variant": "projection-clamped",
+   "options": {
+    "OPENCLARE_NO_ACTIVE_SET": "1"
+   },
+   "seconds": 195.2,
+   "measure": {
+    "valid": true,
+    "quads": 10652,
+    "loop_edges_spiral": 0.021075854299662033,
+    "loops_spiral": 11,
+    "loop_edges_closed": 0.34923019151333173,
+    "mean_distance": 0.00017954480989236217,
+    "hausdorff": 0.004912974393205391,
+    "angle_deviation_mean": 4.186473028292793,
+    "irregular_vertices": 254,
+    "inverted_faces": 0
+   },
+   "tmesh": "call-2146-806-5237618",
+   "first": {
+    "way": null,
+    "round": null,
+    "quads": 10652,
+    "deviation": 0.3301900508381543,
+    "spirals": 0.021075854299662033,
+    "most_deviation": 0.5219249834360781,
+    "turns_held": 64,
+    "from_selector": false
+   },
+   "strips": {
+    "ways_round": 272,
+    "shifted": 198
+   },
+   "ways": [
+    {
+     "way": 0,
+     "held": 58,
+     "closed_in_real_lengths": 42,
+     "of_those_still_shifted": 16,
+     "held_still_shifted": 25,
+     "quads": 10752,
+     "spirals": 0.10909598214285716
+    },
+    {
+     "way": 1,
+     "held": 92,
+     "closed_in_real_lengths": 47,
+     "of_those_still_shifted": 16,
+     "held_still_shifted": 48,
+     "quads": 10592,
+     "spirals": 0.0739237160120846
+    },
+    {
+     "way": 2,
+     "held": 64,
+     "closed_in_real_lengths": 43,
+     "of_those_still_shifted": 15,
+     "held_still_shifted": 27,
+     "quads": 10669,
+     "spirals": 0.02554128784328428
+    },
+    {
+     "way": 3,
+     "held": 102,
+     "closed_in_real_lengths": 42,
+     "of_those_still_shifted": 17,
+     "held_still_shifted": 64,
+     "quads": 10627,
+     "spirals": 0.06652865342994259
+    },
+    {
+     "way": 4,
+     "held": 125,
+     "closed_in_real_lengths": 52,
+     "of_those_still_shifted": 25,
+     "held_still_shifted": 77,
+     "quads": 10491,
+     "spirals": 0.17505480888380515
+    },
+    {
+     "way": 5,
+     "held": 219,
+     "closed_in_real_lengths": 45,
+     "of_those_still_shifted": 19,
+     "held_still_shifted": 166,
+     "quads": 10478,
+     "spirals": 0.11552777247566332
+    },
+    {
+     "way": 6,
+     "held": 131,
+     "closed_in_real_lengths": 52,
+     "of_those_still_shifted": 19,
+     "held_still_shifted": 80,
+     "quads": 10527,
+     "spirals": 0.11024033437826541
+    },
+    {
+     "way": 7,
+     "held": 229,
+     "closed_in_real_lengths": 41,
+     "of_those_still_shifted": 18,
+     "held_still_shifted": 171,
+     "quads": 10839,
+     "spirals": 0.26137097518221236
+    }
+   ]
+  },
+  {
+   "variant": "active-set-floor-0",
+   "options": {},
+   "seconds": 156.0,
+   "measure": {
+    "valid": true,
+    "quads": 10484,
+    "loop_edges_spiral": 0.014641358260206027,
+    "loops_spiral": 11,
+    "loop_edges_closed": 0.36484166348721775,
+    "mean_distance": 0.0001895734178229812,
+    "hausdorff": 0.004743854442472561,
+    "angle_deviation_mean": 4.292626082506852,
+    "irregular_vertices": 254,
+    "inverted_faces": 0
+   },
+   "tmesh": "call-2146-806-5237618",
+   "first": {
+    "way": null,
+    "round": null,
+    "quads": 10484,
+    "deviation": 0.36592800546950227,
+    "spirals": 0.014641358260206027,
+    "most_deviation": 0.5219249834360781,
+    "turns_held": 58,
+    "from_selector": false
+   },
+   "strips": {
+    "ways_round": 264,
+    "shifted": 196
+   },
+   "ways": [
+    {
+     "way": 0,
+     "held": 58,
+     "closed_in_real_lengths": 58,
+     "of_those_still_shifted": 19,
+     "held_still_shifted": 19,
+     "quads": 10501,
+     "spirals": 0.04094848109703837
+    },
+    {
+     "way": 1,
+     "held": 92,
+     "closed_in_real_lengths": 92,
+     "of_those_still_shifted": 40,
+     "held_still_shifted": 40,
+     "quads": 10480,
+     "spirals": 0.09060114503816796
+    },
+    {
+     "way": 2,
+     "held": 64,
+     "closed_in_real_lengths": 64,
+     "of_those_still_shifted": 23,
+     "held_still_shifted": 23,
+     "quads": 10520,
+     "spirals": 0.016539923954372624
+    },
+    {
+     "way": 3,
+     "held": 102,
+     "closed_in_real_lengths": 102,
+     "of_those_still_shifted": 52,
+     "held_still_shifted": 52,
+     "quads": 10540,
+     "spirals": 0.035341555977229606
+    },
+    {
+     "way": 4,
+     "held": 125,
+     "closed_in_real_lengths": 125,
+     "of_those_still_shifted": 61,
+     "held_still_shifted": 61,
+     "quads": 10402,
+     "spirals": 0.12098634877908097
+    },
+    {
+     "way": 5,
+     "held": 219,
+     "closed_in_real_lengths": 219,
+     "of_those_still_shifted": 154,
+     "held_still_shifted": 154,
+     "quads": 10525,
+     "spirals": 0.021995249406175775
+    },
+    {
+     "way": 6,
+     "held": 131,
+     "closed_in_real_lengths": 131,
+     "of_those_still_shifted": 72,
+     "held_still_shifted": 72,
+     "quads": 10391,
+     "spirals": 0.13964007314021748
+    },
+    {
+     "way": 7,
+     "held": 229,
+     "closed_in_real_lengths": 229,
+     "of_those_still_shifted": 170,
+     "held_still_shifted": 170,
+     "quads": 10802,
+     "spirals": 0.08720607294945378
+    }
+   ]
+  },
+  {
+   "variant": "active-set-floor-half",
+   "options": {
+    "OPENCLARE_ACTIVE_SET_FLOOR": "0.5"
+   },
+   "seconds": 214.6,
+   "measure": {
+    "valid": true,
+    "quads": 10385,
+    "loop_edges_spiral": 0.027973038035628315,
+    "loops_spiral": 17,
+    "loop_edges_closed": 0.32575830524795346,
+    "mean_distance": 0.00021130681410977043,
+    "hausdorff": 0.004725684899001149,
+    "angle_deviation_mean": 4.551313242332423,
+    "irregular_vertices": 254,
+    "inverted_faces": 0
+   },
+   "tmesh": "call-2146-806-5237618",
+   "first": {
+    "way": null,
+    "round": null,
+    "quads": 10385,
+    "deviation": 0.3851467125785259,
+    "spirals": 0.027973038035628315,
+    "most_deviation": 0.5219249834360781,
+    "turns_held": 58,
+    "from_selector": false
+   },
+   "strips": {
+    "ways_round": 266,
+    "shifted": 196
+   },
+   "ways": [
+    {
+     "way": 0,
+     "held": 58,
+     "closed_in_real_lengths": 51,
+     "of_those_still_shifted": 22,
+     "held_still_shifted": 23,
+     "quads": 10534,
+     "spirals": 0.08377634326941334
+    },
+    {
+     "way": 1,
+     "held": 92,
+     "closed_in_real_lengths": 63,
+     "of_those_still_shifted": 32,
+     "held_still_shifted": 51,
+     "quads": 10411,
+     "spirals": 0.0708865622898857
+    },
+    {
+     "way": 2,
+     "held": 64,
+     "closed_in_real_lengths": 54,
+     "of_those_still_shifted": 19,
+     "held_still_shifted": 22,
+     "quads": 10551,
+     "spirals": 0.029949767794521846
+    },
+    {
+     "way": 3,
+     "held": 102,
+     "closed_in_real_lengths": 68,
+     "of_those_still_shifted": 38,
+     "held_still_shifted": 62,
+     "quads": 10646,
+     "spirals": 0.05828480180349427
+    },
+    {
+     "way": 4,
+     "held": 125,
+     "closed_in_real_lengths": 104,
+     "of_those_still_shifted": 64,
+     "held_still_shifted": 77,
+     "quads": 10631,
+     "spirals": 0.12844511334775657
+    },
+    {
+     "way": 5,
+     "held": 219,
+     "closed_in_real_lengths": 131,
+     "of_those_still_shifted": 90,
+     "held_still_shifted": 158,
+     "quads": 10809,
+     "spirals": 0.07498380978813951
+    },
+    {
+     "way": 6,
+     "held": 131,
+     "closed_in_real_lengths": 106,
+     "of_those_still_shifted": 63,
+     "held_still_shifted": 79,
+     "quads": 10544,
+     "spirals": 0.050976858877086494
+    },
+    {
+     "way": 7,
+     "held": 229,
+     "closed_in_real_lengths": 132,
+     "of_those_still_shifted": 93,
+     "held_still_shifted": 171,
+     "quads": 10752,
+     "spirals": 0.050083705357142856
+    }
+   ]
+  },
+  {
+   "variant": "aimed",
+   "options": {
+    "OPENCLARE_AIMED": "scratch/data-package/closing-loops/most_closable"
+   },
+   "seconds": 135.5,
+   "measure": {
+    "valid": true,
+    "quads": 10625,
+    "loop_edges_spiral": 0.23388235294117643,
+    "loops_spiral": 21,
+    "loop_edges_closed": 0.1721411764705885,
+    "mean_distance": 0.00018423097533395113,
+    "hausdorff": 0.0047783761886926145,
+    "angle_deviation_mean": 4.334828834313852,
+    "irregular_vertices": 254,
+    "inverted_faces": 0
+   },
+   "tmesh": "call-2146-806-5237618",
+   "first": {
+    "way": null,
+    "round": null,
+    "quads": 10633,
+    "deviation": 0.35567822642628266,
+    "spirals": 0.026286090473055582,
+    "most_deviation": 0.5219249834360781,
+    "turns_held": 129,
+    "from_selector": false
+   },
+   "strips": {
+    "ways_round": 254,
+    "shifted": 186
+   },
+   "ways": [
+    {
+     "way": 0,
+     "held": 58,
+     "closed_in_real_lengths": 57,
+     "of_those_still_shifted": 14,
+     "held_still_shifted": 15,
+     "quads": 10597,
+     "spirals": 0.11177691799565916
+    },
+    {
+     "way": 1,
+     "held": 92,
+     "closed_in_real_lengths": 87,
+     "of_those_still_shifted": 36,
+     "held_still_shifted": 40,
+     "quads": 10427,
+     "spirals": 0.08147118058885586
+    },
+    {
+     "way": 2,
+     "held": 64,
+     "closed_in_real_lengths": 61,
+     "of_those_still_shifted": 22,
+     "held_still_shifted": 25,
+     "quads": 10563,
+     "spirals": 0.07549938464451389
+    },
+    {
+     "way": 3,
+     "held": 102,
+     "closed_in_real_lengths": 90,
+     "of_those_still_shifted": 20,
+     "held_still_shifted": 31,
+     "quads": 10563,
+     "spirals": 0.08094291394490202
+    },
+    {
+     "way": 4,
+     "held": 125,
+     "closed_in_real_lengths": 120,
+     "of_those_still_shifted": 62,
+     "held_still_shifted": 64,
+     "quads": 10430,
+     "spirals": 0.16620325982742093
+    },
+    {
+     "way": 5,
+     "held": 219,
+     "closed_in_real_lengths": 189,
+     "of_those_still_shifted": 124,
+     "held_still_shifted": 150,
+     "quads": 10700,
+     "spirals": 0.33
+    },
+    {
+     "way": 6,
+     "held": 131,
+     "closed_in_real_lengths": 123,
+     "of_those_still_shifted": 70,
+     "held_still_shifted": 76,
+     "quads": 10695,
+     "spirals": 0.1732117812061711
+    },
+    {
+     "way": 7,
+     "held": 229,
+     "closed_in_real_lengths": 192,
+     "of_those_still_shifted": 133,
+     "held_still_shifted": 166,
+     "quads": 10366,
+     "spirals": 0.13322400154350764
+    }
+   ]
+  },
+  {
+   "variant": "engine-0",
+   "options": {
+    "OPENCLARE_CLOSE_WAYS": "0"
+   },
+   "seconds": 77.1,
+   "measure": {
+    "valid": true,
+    "quads": 10583,
+    "loop_edges_spiral": 0.01667769063592554,
+    "loops_spiral": 12,
+    "loop_edges_closed": 0.36643673816498,
+    "mean_distance": 0.0001893068401457388,
+    "hausdorff": 0.00475686518096341,
+    "angle_deviation_mean": 4.339668722186088,
+    "irregular_vertices": 254,
+    "inverted_faces": 0
+   },
+   "tmesh": "call-2146-806-5237618",
+   "first": {
+    "way": null,
+    "round": null,
+    "quads": 10583,
+    "deviation": 0.35793993695137805,
+    "spirals": 0.01667769063592554,
+    "most_deviation": 0.5219249834360781,
+    "turns_held": 58,
+    "from_selector": false
+   },
+   "strips": {
+    "ways_round": 310,
+    "shifted": 236
+   },
+   "ways": [
+    {
+     "way": 0,
+     "held": 58,
+     "closed_in_real_lengths": 58,
+     "of_those_still_shifted": 19,
+     "held_still_shifted": 19,
+     "quads": 10501,
+     "spirals": 0.04094848109703837
+    }
+   ]
+  },
+  {
+   "variant": "whole-0",
+   "options": {
+    "OPENCLARE_CLOSE_WAYS": "0",
+    "OPENCLARE_LENGTHS": "scratch/data-package/closing-loops/most_closable"
+   },
+   "seconds": 64.2,
+   "measure": {
+    "valid": true,
+    "quads": 10625,
+    "loop_edges_spiral": 0.23388235294117643,
+    "loops_spiral": 21,
+    "loop_edges_closed": 0.1721411764705885,
+    "mean_distance": 0.00018423097533395113,
+    "hausdorff": 0.0047783761886926145,
+    "angle_deviation_mean": 4.334828834313852,
+    "irregular_vertices": 254,
+    "inverted_faces": 0
+   },
+   "tmesh": "call-2146-806-5237618",
+   "first": {
+    "way": null,
+    "round": null,
+    "quads": 10625,
+    "deviation": 0.32192498343607806,
+    "spirals": 0.23388235294117643,
+    "most_deviation": 0.5219249834360781,
+    "turns_held": 0,
+    "from_selector": false
+   },
+   "strips": {
+    "ways_round": 266,
+    "shifted": 210
+   },
+   "ways": [
+    {
+     "way": 0,
+     "held": 58,
+     "closed_in_real_lengths": 58,
+     "of_those_still_shifted": 1,
+     "held_still_shifted": 1,
+     "quads": 10857,
+     "spirals": 0.05867182462927144
+    }
+   ]
+  },
+  {
+   "variant": "engine-1",
+   "options": {
+    "OPENCLARE_CLOSE_WAYS": "1"
+   },
+   "seconds": 73.9,
+   "measure": {
+    "valid": true,
+    "quads": 10534,
+    "loop_edges_spiral": 0.04157964685779381,
+    "loops_spiral": 20,
+    "loop_edges_closed": 0.33975697740649125,
+    "mean_distance": 0.00018978365715418557,
+    "hausdorff": 0.0046541184710989295,
+    "angle_deviation_mean": 4.611309757131823,
+    "irregular_vertices": 254,
+    "inverted_faces": 0
+   },
+   "tmesh": "call-2146-806-5237618",
+   "first": {
+    "way": null,
+    "round": null,
+    "quads": 10534,
+    "deviation": 0.35563967586415807,
+    "spirals": 0.04157964685779381,
+    "most_deviation": 0.5219249834360781,
+    "turns_held": 283,
+    "from_selector": false
+   },
+   "strips": {
+    "ways_round": 240,
+    "shifted": 174
+   },
+   "ways": [
+    {
+     "way": 1,
+     "held": 92,
+     "closed_in_real_lengths": 92,
+     "of_those_still_shifted": 40,
+     "held_still_shifted": 40,
+     "quads": 10480,
+     "spirals": 0.09060114503816796
+    }
+   ]
+  },
+  {
+   "variant": "whole-1",
+   "options": {
+    "OPENCLARE_CLOSE_WAYS": "1",
+    "OPENCLARE_LENGTHS": "scratch/data-package/closing-loops/most_closable"
+   },
+   "seconds": 59.2,
+   "measure": {
+    "valid": true,
+    "quads": 10625,
+    "loop_edges_spiral": 0.23388235294117643,
+    "loops_spiral": 21,
+    "loop_edges_closed": 0.1721411764705885,
+    "mean_distance": 0.00018423097533395113,
+    "hausdorff": 0.0047783761886926145,
+    "angle_deviation_mean": 4.334828834313852,
+    "irregular_vertices": 254,
+    "inverted_faces": 0
+   },
+   "tmesh": "call-2146-806-5237618",
+   "first": {
+    "way": null,
+    "round": null,
+    "quads": 10625,
+    "deviation": 0.32192498343607806,
+    "spirals": 0.23388235294117643,
+    "most_deviation": 0.5219249834360781,
+    "turns_held": 0,
+    "from_selector": false
+   },
+   "strips": {
+    "ways_round": 266,
+    "shifted": 210
+   },
+   "ways": [
+    {
+     "way": 1,
+     "held": 92,
+     "closed_in_real_lengths": 92,
+     "of_those_still_shifted": 5,
+     "held_still_shifted": 5,
+     "quads": 12420,
+     "spirals": 0.04911433172302737
+    }
+   ]
+  },
+  {
+   "variant": "engine-2",
+   "options": {
+    "OPENCLARE_CLOSE_WAYS": "2"
+   },
+   "seconds": 73.5,
+   "measure": {
+    "valid": true,
+    "quads": 10550,
+    "loop_edges_spiral": 0.01649289099526067,
+    "loops_spiral": 16,
+    "loop_edges_closed": 0.36654028436018954,
+    "mean_distance": 0.00020218355753844617,
+    "hausdorff": 0.0047569421697510285,
+    "angle_deviation_mean": 4.262589020823004,
+    "irregular_vertices": 254,
+    "inverted_faces": 0
+   },
+   "tmesh": "call-2146-806-5237618",
+   "first": {
+    "way": null,
+    "round": null,
+    "quads": 10550,
+    "deviation": 0.36867606040287093,
+    "spirals": 0.01649289099526067,
+    "most_deviation": 0.5219249834360781,
+    "turns_held": 64,
+    "from_selector": false
+   },
+   "strips": {
+    "ways_round": 306,
+    "shifted": 236
+   },
+   "ways": [
+    {
+     "way": 2,
+     "held": 64,
+     "closed_in_real_lengths": 64,
+     "of_those_still_shifted": 23,
+     "held_still_shifted": 23,
+     "quads": 10520,
+     "spirals": 0.016539923954372624
+    }
+   ]
+  },
+  {
+   "variant": "whole-2",
+   "options": {
+    "OPENCLARE_CLOSE_WAYS": "2",
+    "OPENCLARE_LENGTHS": "scratch/data-package/closing-loops/most_closable"
+   },
+   "seconds": 110.4,
+   "measure": {
+    "valid": true,
+    "quads": 10644,
+    "loop_edges_spiral": 0.028372792183389704,
+    "loops_spiral": 20,
+    "loop_edges_closed": 0.33342728297632424,
+    "mean_distance": 0.0001888546226340181,
+    "hausdorff": 0.004180131397301516,
+    "angle_deviation_mean": 4.223507938896198,
+    "irregular_vertices": 249,
+    "inverted_faces": 0
+   },
+   "tmesh": "call-2146-806-5237618",
+   "first": {
+    "way": 2,
+    "round": 0,
+    "quads": 10527,
+    "deviation": 0.37419270755446793,
+    "spirals": 0.028023178493397933,
+    "most_deviation": 0.5219249834360781,
+    "turns_held": 64,
+    "from_selector": false
+   },
+   "strips": {
+    "ways_round": 246,
+    "shifted": 166
+   },
+   "ways": [
+    {
+     "way": 2,
+     "held": 64,
+     "closed_in_real_lengths": 64,
+     "of_those_still_shifted": 3,
+     "held_still_shifted": 3,
+     "quads": 10527,
+     "spirals": 0.028023178493397933
+    }
+   ]
+  },
+  {
+   "variant": "engine-3",
+   "options": {
+    "OPENCLARE_CLOSE_WAYS": "3"
+   },
+   "seconds": 69.4,
+   "measure": {
+    "valid": true,
+    "quads": 10540,
+    "loop_edges_spiral": 0.035341555977229606,
+    "loops_spiral": 13,
+    "loop_edges_closed": 0.3403225806451618,
+    "mean_distance": 0.00024226283544276893,
+    "hausdorff": 0.005734962468494276,
+    "angle_deviation_mean": 4.714971755671525,
+    "irregular_vertices": 254,
+    "inverted_faces": 0
+   },
+   "tmesh": "call-2146-806-5237618",
+   "first": {
+    "way": 3,
+    "round": 0,
+    "quads": 10540,
+    "deviation": 0.5159163038334398,
+    "spirals": 0.035341555977229606,
+    "most_deviation": 0.5219249834360781,
+    "turns_held": 102,
+    "from_selector": false
+   },
+   "strips": {
+    "ways_round": 236,
+    "shifted": 166
+   },
+   "ways": [
+    {
+     "way": 3,
+     "held": 102,
+     "closed_in_real_lengths": 102,
+     "of_those_still_shifted": 52,
+     "held_still_shifted": 52,
+     "quads": 10540,
+     "spirals": 0.035341555977229606
+    }
+   ]
+  },
+  {
+   "variant": "whole-3",
+   "options": {
+    "OPENCLARE_CLOSE_WAYS": "3",
+    "OPENCLARE_LENGTHS": "scratch/data-package/closing-loops/most_closable"
+   },
+   "seconds": 61.7,
+   "measure": {
+    "valid": true,
+    "quads": 10625,
+    "loop_edges_spiral": 0.23388235294117643,
+    "loops_spiral": 21,
+    "loop_edges_closed": 0.1721411764705885,
+    "mean_distance": 0.00018423097533395113,
+    "hausdorff": 0.0047783761886926145,
+    "angle_deviation_mean": 4.334828834313852,
+    "irregular_vertices": 254,
+    "inverted_faces": 0
+   },
+   "tmesh": "call-2146-806-5237618",
+   "first": {
+    "way": null,
+    "round": null,
+    "quads": 10625,
+    "deviation": 0.32192498343607806,
+    "spirals": 0.23388235294117643,
+    "most_deviation": 0.5219249834360781,
+    "turns_held": 0,
+    "from_selector": false
+   },
+   "strips": {
+    "ways_round": 266,
+    "shifted": 210
+   },
+   "ways": [
+    {
+     "way": 3,
+     "held": 102,
+     "closed_in_real_lengths": 102,
+     "of_those_still_shifted": 12,
+     "held_still_shifted": 12,
+     "quads": 11011,
+     "spirals": 0.07805830533103261
+    }
+   ]
+  },
+  {
+   "variant": "rings",
+   "options": {
+    "OPENCLARE_LENGTHS": "scratch/data-package/closing-loops/lattice_rounding"
+   },
+   "seconds": 190.2,
+   "measure": {
+    "valid": true,
+    "quads": 10543,
+    "loop_edges_spiral": 0.007066299914635303,
+    "loops_spiral": 10,
+    "loop_edges_closed": 0.33652660533054995,
+    "mean_distance": 0.00019169252552119073,
+    "hausdorff": 0.004517377641773352,
+    "angle_deviation_mean": 4.1313139532000305,
+    "irregular_vertices": 249,
+    "inverted_faces": 0
+   },
+   "tmesh": "call-1976-741-5070407",
+   "first": {
+    "way": null,
+    "round": null,
+    "quads": 10543,
+    "deviation": 0.3498562541186206,
+    "spirals": 0.007066299914635303,
+    "most_deviation": 0.5120992249124456,
+    "turns_held": 59,
+    "from_selector": false
+   },
+   "strips": {
+    "ways_round": 224,
+    "shifted": 164
+   },
+   "ways": [
+    {
+     "way": 0,
+     "held": 59,
+     "closed_in_real_lengths": 59,
+     "of_those_still_shifted": 19,
+     "held_still_shifted": 19,
+     "quads": 10431,
+     "spirals": 0.09951107276387687
+    },
+    {
+     "way": 1,
+     "held": 86,
+     "closed_in_real_lengths": 86,
+     "of_those_still_shifted": 42,
+     "held_still_shifted": 42,
+     "quads": 10681,
+     "spirals": 0.07780170396030335
+    },
+    {
+     "way": 2,
+     "held": 64,
+     "closed_in_real_lengths": 64,
+     "of_those_still_shifted": 18,
+     "held_still_shifted": 18,
+     "quads": 10494,
+     "spirals": 0.03182771107299409
+    },
+    {
+     "way": 3,
+     "held": 93,
+     "closed_in_real_lengths": 93,
+     "of_those_still_shifted": 51,
+     "held_still_shifted": 51,
+     "quads": 10424,
+     "spirals": 0.042689946277820405
+    },
+    {
+     "way": 4,
+     "held": 98,
+     "closed_in_real_lengths": 98,
+     "of_those_still_shifted": 51,
+     "held_still_shifted": 51,
+     "quads": 10699,
+     "spirals": 0.14099448546593138
+    },
+    {
+     "way": 5,
+     "held": 177,
+     "closed_in_real_lengths": 177,
+     "of_those_still_shifted": 124,
+     "held_still_shifted": 124,
+     "quads": 10562,
+     "spirals": 0.041422079151675825
+    },
+    {
+     "way": 6,
+     "held": 103,
+     "closed_in_real_lengths": 103,
+     "of_those_still_shifted": 52,
+     "held_still_shifted": 52,
+     "quads": 10654,
+     "spirals": 0.10676741130091985
+    },
+    {
+     "way": 7,
+     "held": 184,
+     "closed_in_real_lengths": 184,
+     "of_those_still_shifted": 132,
+     "held_still_shifted": 132,
+     "quads": 10467,
+     "spirals": 0.0879908283175695
+    }
+   ]
+  },
+  {
+   "variant": "local-search",
+   "options": {
+    "OPENCLARE_LENGTHS": "scratch/data-package/closing-loops/local_search"
+   },
+   "seconds": 186.1,
+   "measure": {
+    "valid": true,
+    "quads": 10543,
+    "loop_edges_spiral": 0.007066299914635303,
+    "loops_spiral": 10,
+    "loop_edges_closed": 0.33652660533054995,
+    "mean_distance": 0.00019169252552119073,
+    "hausdorff": 0.004517377641773352,
+    "angle_deviation_mean": 4.1313139532000305,
+    "irregular_vertices": 249,
+    "inverted_faces": 0
+   },
+   "tmesh": "call-1976-741-5070407",
+   "first": {
+    "way": null,
+    "round": null,
+    "quads": 10543,
+    "deviation": 0.3498562541186206,
+    "spirals": 0.007066299914635303,
+    "most_deviation": 0.5120992249124456,
+    "turns_held": 59,
+    "from_selector": false
+   },
+   "strips": {
+    "ways_round": 224,
+    "shifted": 164
+   },
+   "ways": [
+    {
+     "way": 0,
+     "held": 59,
+     "closed_in_real_lengths": 59,
+     "of_those_still_shifted": 19,
+     "held_still_shifted": 19,
+     "quads": 10431,
+     "spirals": 0.09951107276387687
+    },
+    {
+     "way": 1,
+     "held": 86,
+     "closed_in_real_lengths": 86,
+     "of_those_still_shifted": 42,
+     "held_still_shifted": 42,
+     "quads": 10681,
+     "spirals": 0.07780170396030335
+    },
+    {
+     "way": 2,
+     "held": 64,
+     "closed_in_real_lengths": 64,
+     "of_those_still_shifted": 18,
+     "held_still_shifted": 18,
+     "quads": 10494,
+     "spirals": 0.03182771107299409
+    },
+    {
+     "way": 3,
+     "held": 93,
+     "closed_in_real_lengths": 93,
+     "of_those_still_shifted": 51,
+     "held_still_shifted": 51,
+     "quads": 10424,
+     "spirals": 0.042689946277820405
+    },
+    {
+     "way": 4,
+     "held": 98,
+     "closed_in_real_lengths": 98,
+     "of_those_still_shifted": 51,
+     "held_still_shifted": 51,
+     "quads": 10699,
+     "spirals": 0.14099448546593138
+    },
+    {
+     "way": 5,
+     "held": 177,
+     "closed_in_real_lengths": 177,
+     "of_those_still_shifted": 124,
+     "held_still_shifted": 124,
+     "quads": 10562,
+     "spirals": 0.041422079151675825
+    },
+    {
+     "way": 6,
+     "held": 103,
+     "closed_in_real_lengths": 103,
+     "of_those_still_shifted": 52,
+     "held_still_shifted": 52,
+     "quads": 10654,
+     "spirals": 0.10676741130091985
+    },
+    {
+     "way": 7,
+     "held": 184,
+     "closed_in_real_lengths": 184,
+     "of_those_still_shifted": 132,
+     "held_still_shifted": 132,
+     "quads": 10467,
+     "spirals": 0.0879908283175695
+    }
+   ]
+  }
+ ]
+}

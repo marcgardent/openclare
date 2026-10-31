@@ -1,0 +1,139 @@
+{
+ "experiment": "whole lengths closing the rings, in the reduced lattice",
+ "export": "scratch/data-package/turns-of-a-t-mesh/male-body/export/call-2146-806-5237618",
+ "export_record": {
+  "experiment": "export of the turns of the closing",
+  "engine": {
+   "commit": "e13fadb",
+   "build": "sha256:d444f05f7279f3e7",
+   "options": "as-is",
+   "environment": {}
+  },
+  "command": [
+   "openclare",
+   "remesh",
+   "<source>",
+   "mesh.obj",
+   "--preset",
+   "organic",
+   "--quads",
+   "10590"
+  ],
+  "source": {
+   "path": "source.obj",
+   "md5": "f1fe33002b731d1d41846daed6c59f5e"
+  },
+  "machine": {
+   "processor": "Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz",
+   "threads": 8,
+   "memory": "62.7 GiB",
+   "load_average": [
+    8.64,
+    5.25,
+    3.14
+   ],
+   "load_average_at_end": [
+    7.71,
+    6.46,
+    3.99
+   ]
+  },
+  "seconds": 187.3,
+  "tmesh": "call-2146-806-5237618",
+  "ways": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "measure": {
+   "valid": true,
+   "quads": 10484,
+   "loop_edges_spiral": 0.014641358260206027,
+   "loops_spiral": 11,
+   "loop_edges_closed": 0.36484166348721775,
+   "mean_distance": 0.0001895734178229812,
+   "hausdorff": 0.004743854442472561,
+   "angle_deviation_mean": 4.292626082506852,
+   "irregular_vertices": 254,
+   "inverted_faces": 0
+  }
+ },
+ "ways": {
+  "2": "73fd72de47d0b93bf8b4d3fdf2e4cbaca7f7814337b80857130a4ca42835e517"
+ },
+ "machine": {
+  "processor": "Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz",
+  "threads": 8,
+  "memory": "62.7 GiB",
+  "load_average": [
+   1.0,
+   1.0,
+   1.0
+  ],
+  "load_average_at_end": [
+   1.18,
+   1.06,
+   1.01
+  ],
+  "processors_allowed": 8
+ },
+ "solver": {
+  "scipy": "1.16.3",
+  "highs": "1.8.0",
+  "highs_threads": 1
+ },
+ "wall_seconds": 1231.1,
+ "way": 2,
+ "seconds": 1200.0,
+ "rings_file": "subset.json",
+ "rings": 228,
+ "implicit_zeros": 91,
+ "dimension": 417,
+ "largest_entry_before": 8895796,
+ "reduction": {
+  "swaps": 23545,
+  "seconds": 29.9,
+  "largest_entry": 2
+ },
+ "real": {
+  "mean_deviation": 0.39482263812372315,
+  "quads": 10444,
+  "below_a_bound": 0,
+  "negative": 0,
+  "rings_open": 0,
+  "balanced": true
+ },
+ "babai_from_the_real_point": {
+  "mean_deviation": 0.5733294262073503,
+  "quads": 10952,
+  "below_a_bound": 16,
+  "negative": 15,
+  "rings_open": 0,
+  "balanced": true
+ },
+ "babai_from_the_target": {
+  "mean_deviation": 0.48996898633135816,
+  "quads": 9809,
+  "below_a_bound": 90,
+  "negative": 67,
+  "rings_open": 0,
+  "balanced": true
+ },
+ "program": {
+  "message": "Time limit reached. (HiGHS Status 13: Time limit reached)",
+  "seconds": 1200.0,
+  "proven_mean_deviation_at_least": 0.5181518034766461,
+  "mean_deviation": 0.5346845910312874,
+  "quads": 10653,
+  "below_a_bound": 0,
+  "negative": 0,
+  "rings_open": 0,
+  "balanced": true,
+  "file": "call-2146-806-5237618.txt"
+ }
+}

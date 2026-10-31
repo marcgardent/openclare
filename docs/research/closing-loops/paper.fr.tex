@@ -122,12 +122,11 @@ changement, de marches de réparation et de passes de génération de
 contraintes sur les bandes du maillage, et gardons le candidat qui a le moins
 d'arêtes en spirale, comptées par un test qui distingue les hélices des
 boucles fermées, ouvertes et de bord. Sur douze modèles, à trois budgets
-voisins de 3\,000 quads, le moteur laisse 4,65\,\% des arêtes sur des boucles
-en spirale (16,7\,\% sans fermeture, en exécutions uniques d'un moteur
-antérieur)\,; sur les sept modèles que deux autres remailleurs libres
-maillent aussi de façon valide, 1,8\,\% contre 38,8\,\% et 21,7\,\%\,; sur un
-corps humain, des exécutions uniques donnent 1,6\,\%, contre 2,5\,\% pour le
-maillage fait à la main. Une analyse exacte du système de fermeture de ce
+voisins de 3\,000 quads, le moteur laisse 4,92\,\% des arêtes sur des boucles
+en spirale (19,8\,\% sans fermeture)\,; sur les sept modèles que deux autres
+remailleurs libres maillent aussi de façon valide, 2,2\,\% contre 38,8\,\% et % NIGHT4
+21,7\,\%\,; sur un corps humain, 1,5\,\%, contre 2,5\,\% pour le maillage
+fait à la main. Une analyse exacte du système de fermeture de ce
 corps montre que le conflit entre fermer les tours et garder les
 singularités séparées est réel mais local, que c'est l'heuristique plutôt
 que les contraintes qui laisse la plupart des tours décalés, et que fermer
@@ -499,7 +498,8 @@ gagner. Le terme des arêtes vives est périodique en $x$, si bien que le coût
 n'est convexe que sur les arcs qui n'en traversent aucune\,; ailleurs,
 l'annulation des marches atteint un optimum local, non l'optimum d'un flot
 convexe. Les longueurs réelles $r_a$
-portent une perturbation fixe par arc d'au plus $0,5\,\%$, afin que des arcs
+portent une perturbation fixe par arc d'au plus $0,5\,\%$, tirée d'une
+graine, afin que des arcs
 de même longueur ne changent pas tous au même facteur d'échelle\,; l'échelle
 $\lambda$ est cherchée pour le nombre de quads demandé, et les arcs dont la
 longueur nulle casserait la structure du maillage, en réunissant deux
@@ -605,9 +605,18 @@ quads est dans la tolérance (ou pas plus loin du budget que celui de la
 recherche simple), si son écart absolu moyen aux longueurs réelles est d'au
 plus $\max(1,5\,d_0 ;\ d_0 + 0,2)$, où $d_0$ est celui de la recherche
 simple, et s'il n'éloigne pas les sommets des arêtes vives de la surface
-plus que la recherche simple, au-delà de ce que ferait le hasard. Les trois
-qui ont le moins de spirales sont gardés, dans cet ordre, puis les longueurs
-simples. Les variantes sont indépendantes et s'exécutent en parallèle. Après
+plus que la recherche simple, au-delà de ce que ferait le hasard. Si le
+candidat qui a le moins de spirales a encore des arêtes en spirale, douze
+autres tirages de la perturbation par arc, des douze graines suivantes, sont
+chacun quantifiés et fermés comme ci-dessus, et les longueurs fermées que
+chacun garderait rejoignent les candidats aux mêmes conditions, pourvu que
+leur écart aux longueurs réelles ne dépasse pas celui du candidat du moteur
+qui a le moins de spirales~: un tirage qui spirale moins peut s'écarter
+davantage de la forme. Entre candidats qui spiralent autant, ceux du moteur
+passent d'abord, puis les tirages dans l'ordre de leurs graines, si bien que
+le choix est déterministe. Les trois qui ont le moins de spirales sont
+gardés, dans cet ordre, puis les longueurs simples. Les variantes et les
+tirages sont indépendants et s'exécutent en parallèle. Après
 le maillage, si le premier candidat retourne une face par rapport à la
 surface, les autres sont maillés tour à tour jusqu'à ce que l'un ne le fasse
 pas, et le maillage qui a le moins de faces retournées, puis le moins de
@@ -633,80 +642,86 @@ dans les figures.
 
 \section{Expériences}\label{sec:experiments}
 
-Tous les nombres viennent du banc d'essai d'openclare, mesurés sur les
-maillages produits par rapport à leurs sources\,;
-l'annexe~\ref{app:provenance} donne la version du moteur et la source de
-chaque chiffre. Le moteur est déterministe~: une exécution par modèle et par
+Chaque chiffre est mesuré sur le moteur de la version 0.7.0 (commit
+\texttt{e13fadb}), sur les maillages produits par rapport à leurs sources\,;
+l'annexe~\ref{app:provenance} donne le script et la synthèse de chaque
+chiffre. Le moteur est déterministe~: une exécution par modèle et par
 budget. Modèles~: douze modèles organiques et mécaniques pour le
 développement, et un corpus de $33$ modèles pour le banc complet, parmi
 lesquels deux corps humains de la bibliothèque Essentials de Blender (CC0)
-dont les maillages de base, modélisés à la main, servent de référence. Les
-temps ont été mesurés sur une seule machine, un Intel Core i7-7700K
-(4~cœurs, 8~threads, 4,2\,GHz, 2017) avec 62\,Go de mémoire, partagée avec
-d'autres tâches dont la charge n'a pas été relevée~: ce sont des temps
-écoulés (\emph{wall-clock}), qui ne donnent que des ordres de grandeur. Les
-programmes linéaires et mixtes-entiers ont été résolus avec HiGHS
+dont les maillages de base, modélisés à la main, servent de référence.
+Toutes les exécutions ont eu lieu sur une seule machine, un Intel Core
+i7-7700K (4~cœurs, 8~threads, 4,2\,GHz, 2017) avec 62\,Go de mémoire,
+partagée avec d'autres tâches\,; chaque synthèse relève la charge moyenne,
+qui a atteint $15$ pendant certaines exécutions, si bien que les temps sont
+des temps écoulés (\emph{wall-clock}) qui ne donnent que des ordres de
+grandeur. % NIGHT4
+Les programmes linéaires et mixtes-entiers ont été résolus avec HiGHS
 1.8.0~\cite{huangfu2018highs} via SciPy 1.16.3~\cite{virtanen2020scipy}
-(\texttt{linprog} et \texttt{milp}), avec les options par défaut sauf les
-limites de temps indiquées.
+(\texttt{linprog} et \texttt{milp}), avec les options par défaut sauf un
+seul thread et les limites de temps indiquées.
 
 \paragraph{Les spirales sur les douze modèles de développement.}
 La part d'arêtes sur des boucles en spirale est chaotique sur un modèle
 isolé~: un changement d'un pour cent du budget la déplace autant qu'un vrai
 changement de la méthode. Nous jugeons donc le moteur sur sa moyenne sur
 les douze modèles à trois budgets, $2\,970$, $3\,000$ et $3\,030$ quads ($36$
-exécutions). Au commit cité, le moteur laisse $4,65\,\%$ des arêtes sur des
-boucles en spirale ($2,89\,\%$, $4,97\,\%$ et $6,09\,\%$ aux trois budgets\,;
-$102$ boucles en spirale dans les $36$ maillages, tous valides), avec
-$36,7\,\%$ des arêtes sur des boucles fermées, une distance moyenne à la
-source de $0,377$\,\textperthousand\ de la diagonale et un écart d'angle
-moyen aux coins de $4,90$ degrés. Le tableau~\ref{tab:dev} montre la
-contribution des parties de la méthode, mesurée avec les versions du moteur
-qui les ont introduites, en exécutions uniques à $3\,000$ quads~: de
-$16,7\,\%$ d'arêtes en spirale sans fermeture à $6,0\,\%$. Au fil de ces
-versions, la distance de Hausdorff reste à environ $2\,\%$ près et l'écart
-d'angle moyen aux coins à environ $6\,\%$ près\,; les tours plus longs et le
-plafond d'écart cèdent un peu des deux contre un tiers d'arêtes en spirale
-en moins.
+exécutions).
+Le moteur laisse $4,92\,\%$ des arêtes sur des boucles en spirale
+($3,24\,\%$, $4,95\,\%$ et $6,58\,\%$ aux trois budgets\,; $117$ boucles en
+spirale dans les $36$ maillages, tous valides), avec $36,1\,\%$ des arêtes
+sur des boucles fermées, une distance moyenne à la source de
+$0,381$\,\textperthousand\ de la diagonale et un écart d'angle moyen aux
+coins de $5,05$ degrés. Le tableau~\ref{tab:dev} ajoute les parties de la
+méthode une à une au même moteur, par ses options d'expérience, sur les
+mêmes $36$ exécutions~: de $19,81\,\%$ d'arêtes en spirale sans fermeture à
+$4,92\,\%$. D'une ligne à l'autre, la distance de Hausdorff reste à $4\,\%$
+près et l'écart d'angle moyen aux coins à $5\,\%$ près. La baisse n'est pas
+monotone~: le plafond d'écart, qui écarte les candidats trop loin des
+longueurs réelles, fait monter la part de $6,63\,\%$ à $8,43\,\%$, et les
+passes de contraintes et le plancher du plafond la font redescendre.
 
 \begin{table}[t]
 \centering
+\small
 \begin{tabular}{lrrr}
 \toprule
 & arêtes en spirale & Hausdorff (\textperthousand) & écart d'angle (degrés) \\
 \midrule
-sans fermeture & 16,7\,\% & 8,77 & 4,75 \\
-fermeture, une variante choisie par les spirales & 9,7\,\% & 8,57 & 4,85 \\
-+ variantes inclinées, réparation visée & 9,1\,\% & 8,58 & 4,91 \\
-+ tours plus longs, plafond d'écart & 6,0\,\% & 8,68 & 5,01 \\
+sans fermeture & 19,81\,\% & 8,35 & 4,90 \\
+fermeture~: inclinaison $0,05$, tours jusqu'à $2$ côtés & 10,14\,\% & 8,43 & 5,01 \\
++ inclinaison $0,12$ & 9,08\,\% & 8,33 & 5,07 \\
++ réparation visée & 7,86\,\% & 8,12 & 5,10 \\
++ tours jusqu'à $6$ côtés & 6,63\,\% & 8,32 & 5,15 \\
++ plafond d'écart, sans son plancher & 8,43\,\% & 8,29 & 5,10 \\
++ passes de contraintes & 7,26\,\% & 8,30 & 5,14 \\
++ ensemble actif & 7,58\,\% & 8,27 & 5,04 \\
++ plancher du plafond & 5,85\,\% & 8,38 & 5,10 \\
++ garde-fou des arêtes vives & 5,85\,\% & 8,38 & 5,10 \\
++ douze autres tirages~: le moteur & 4,92\,\% & 8,38 & 5,05 \\
 \bottomrule
 \end{tabular}
-\caption{Les parties de la méthode~: moyenne sur les douze modèles à
-$3\,000$ quads, une exécution par modèle, moteurs des commits
-\texttt{9f3e455}, \texttt{3658abc} et \texttt{197f0ca}. Chaque ligne ne
-s'ajoute à celle du dessus qu'approximativement~: entre la deuxième et la
-troisième ligne, la référence a bougé (commit \texttt{452b346}, de
-$10,1\,\%$ à $9,5\,\%$). Les passes de contraintes, l'ensemble actif et le
-plancher du plafond ne figurent pas dans le tableau\,; le moteur au commit
-cité donne $4,65\,\%$ sur trois budgets.}
+\caption{Les parties de la méthode, moteur de la version 0.7.0 avec ses
+options d'expérience~: chaque ligne ajoute une partie à celles du dessus\,;
+moyenne sur les douze modèles à trois budgets ($36$ exécutions par ligne).
+La dernière ligne ne pose aucune option et redonne les $36$ maillages du
+moteur octet pour octet.}
 \label{tab:dev}
 \end{table}
 
 \paragraph{Face à d'autres remailleurs.}
-Le dernier banc complet enregistré dans le dépôt (commit \texttt{5bc16c6},
-$3\,000$ quads\,; une exécution par modèle pour openclare et
-AutoRemesher~\cite{autoremesher}, la médiane de cinq graines pour
-QuadriFlow~\cite{huang2018quadriflow}, lancé via Blender) a utilisé un
-moteur à quelques changements du moteur cité, changements qui donnent
-$4,54\,\%$ au lieu de $4,65\,\%$ sur les douze modèles à trois budgets. Les
-outils ne maillent pas les mêmes modèles~: QuadriFlow produit un maillage
-pour $22$ des $33$ modèles, AutoRemesher pour $18$. Sur les $7$ modèles que
-les trois maillent de façon valide à chaque exécution, la part moyenne
-d'arêtes en spirale est de $1,8\,\%$ pour openclare, $38,8\,\%$ pour
-QuadriFlow et $21,7\,\%$ pour AutoRemesher\,; sur les $15$ modèles où les
-trois produisent un maillage, valide ou non, $4,2\,\%$, $27,2\,\%$ et
-$27,3\,\%$. Sans fermeture (commit \texttt{b0fba91}), openclare avait
-$16,6\,\%$ et $15,5\,\%$ sur les mêmes sous-ensembles. La comparaison
+Le banc complet de la version 0.7.0 ($3\,000$ quads\,; une exécution par
+modèle pour openclare et AutoRemesher~\cite{autoremesher}, la médiane de
+cinq graines pour QuadriFlow~\cite{huang2018quadriflow}, lancé via Blender)
+compare les outils. Ils ne maillent pas les mêmes modèles~: QuadriFlow
+produit un maillage pour $22$ des $33$ modèles, AutoRemesher pour $18$. Sur
+les $7$ modèles que les trois maillent de façon valide à chaque exécution,
+la part moyenne d'arêtes en spirale est de $2,2\,\%$ pour openclare, % NIGHT4
+$38,8\,\%$ pour QuadriFlow et $21,7\,\%$ pour AutoRemesher\,; sur les $15$
+modèles où les trois produisent un maillage, valide ou non, $2,9\,\%$, % NIGHT4
+$27,2\,\%$ et $27,3\,\%$. Sans fermeture (le même moteur par la même
+chaîne, sans aucune variante de fermeture essayée), openclare a $15,3\,\%$
+et $15,2\,\%$ sur les mêmes sous-ensembles. La comparaison
 favorise aussi openclare par construction~: le moteur choisit parmi ses
 candidats selon cette même part (section~\ref{sec:closing}), que les deux
 autres n'optimisent pas, et la part ne voit aucune hélice de pas supérieur à
@@ -717,35 +732,33 @@ Le corps masculin de la bibliothèque Essentials a un maillage de base de
 $10\,590$ quads modélisé à la main, avec $2,5\,\%$ d'arêtes en spirale en
 $3$ boucles en spirale et $31,6\,\%$ de ses arêtes sur des boucles fermées.
 Remaillé par openclare à ce nombre de quads avec la fermeture de la
-section~\ref{sec:closing}, des exécutions uniques des moteurs des commits
-\texttt{1b77f7d} à \texttt{4db7b42} donnent $1,6\,\%$ d'arêtes en spirale,
-en $9$ boucles en spirale~: moins que le maillage fait à la main, mais de
-quelques boucles seulement. L'une de ces exécutions a $33,2\,\%$ de ses
-arêtes sur des boucles fermées, une distance moyenne à la source de
-$0,19$\,\textperthousand\ de la diagonale et un écart d'angle moyen aux coins
-de $4,1$ degrés, contre $0,17$\,\textperthousand\ et $9,2$ degrés pour le
+section~\ref{sec:closing}, il a $1,46\,\%$ d'arêtes en spirale, en $11$
+boucles en spirale~: moins d'arêtes en spirale que le maillage fait à la
+main, en plus de boucles. Il a $36,5\,\%$ de ses arêtes sur des boucles
+fermées, une distance moyenne à la source de $0,19$\,\textperthousand\ de la
+diagonale et un écart d'angle moyen aux coins de $4,3$ degrés, contre $0,17$\,\textperthousand\ et $9,2$ degrés pour le
 maillage fait à la main\,; ces chiffres de fidélité comparent des maillages
 faits à des fins différentes, celui fait à la main étant un maillage de base
-dont la distance et les angles sont des choix de son modeleur. La borne
-d'inclinaison compte sur ce corps~: avec la seule borne d'inclinaison $0,05$
-(commit \texttt{452b346}), une jambe était une seule hélice de la hanche à
-la cheville, ses tours s'inclinant plus que cette borne ne le permet, et le
-maillage avait $12,1\,\%$ d'arêtes en spirale.
+dont la distance et les angles sont des choix de son modeleur. Avec la
+seule borne d'inclinaison $0,05$ (variantes 0, 1, 4 et 5 de la
+section~\ref{sec:exact}), le corps a $1,67\,\%$ d'arêtes en spirale en $12$
+boucles.
 
 La figure~\ref{fig:overview} montre le corps maillé par openclare avec et
-sans fermeture, à côté du maillage fait à la main et de celui de QuadriFlow,
-avec un moteur plus récent que les exécutions ci-dessus (commit
-\texttt{89232b0}\,; ses chiffres sont dans la légende). Sans fermeture, des
-hélices s'enroulent autour du torse, des deux jambes et du cou. Avec
-fermeture, les boucles autour des membres et du torse sont des anneaux,
-comme sur le maillage fait à la main, et les boucles en spirale qui restent
-sont courtes, à la bouche, au front et aux doigts. QuadriFlow enroule des
+sans fermeture, à côté du maillage fait à la main et de celui de
+QuadriFlow\,; le maillage~(b) est l'exécution ci-dessus. Sans fermeture, des
+hélices s'enroulent autour des deux jambes, du haut du torse, le long du
+bras gauche et sur la tête. Avec fermeture, les boucles autour des membres
+et du torse sont des anneaux, comme sur le maillage fait à la main, et les
+boucles en spirale qui restent courent le long du côté extérieur du bras
+gauche jusqu'à la main et sur le haut de la tête. QuadriFlow enroule des
 hélices autour du torse, des épaules, des jambes et d'un bras. La fermeture
-n'est pas meilleure partout (figure~\ref{fig:closeups})~: au poignet gauche,
-elle laisse des boucles en spirale sur le pouce et le dos de la main là où le
-maillage sans fermeture a des boucles fermées, et près de l'œil droit les
-deux maillages d'openclare gardent de courtes boucles en spirale, tandis que
-la fermeture change en anneau une boucle qui traverse le front.
+ne retire pas toutes les boucles en spirale (figure~\ref{fig:closeups})~: au
+poignet gauche, elle ferme les boucles du pouce et du dos de la main, qui
+spiralent sans fermeture, mais une boucle le long du côté extérieur de
+l'avant-bras spirale sur les deux maillages\,; près de l'œil droit, aucun
+des deux maillages d'openclare n'a de boucle en spirale, et tous deux en
+gardent sur le front et à l'oreille.
 
 \begin{figure*}[t]
 \centering
@@ -760,14 +773,13 @@ dépend pas de l'échelle. Les boucles d'arêtes sont colorées selon
 leur sorte dans la mesure de la section~\ref{sec:measure}~: boucles fermées
 en bleu foncé, boucles en spirale en vermillon (plus larges, avec un liseré
 sombre), boucles qui s'arrêtent à un sommet irrégulier en gris. Les
-maillages (a) et (b) viennent du moteur au commit \texttt{89232b0}, une
-exécution déterministe chacun, et non des exécutions citées dans le texte
-(annexe~\ref{app:provenance}). Mesurés sur les maillages entiers, ils ont
-$10\,485$, $10\,748$, $10\,570$ (plus $20$ triangles) et $8\,844$ quads,
-$26,8\,\%$ ($18$ boucles), $1,95\,\%$ ($15$), $2,55\,\%$ ($3$) et $35,7\,\%$
-($43$) de leurs arêtes sur des boucles en spirale, que les panneaux
-arrondissent à une décimale, et $10,2\,\%$, $32,6\,\%$, $31,6\,\%$ et
-$2,7\,\%$ sur des boucles fermées. Le maillage de QuadriFlow a $3$ faces
+maillages (a) et (b) viennent du moteur de la version 0.7.0, une exécution
+déterministe chacun, les exécutions citées dans le texte. Mesurés sur les
+maillages entiers, ils ont $10\,625$, $10\,484$, $10\,570$ (plus $20$
+triangles) et $8\,844$ quads, $23,4\,\%$ ($21$ boucles), $1,46\,\%$ ($11$),
+$2,55\,\%$ ($3$) et $35,7\,\%$ ($43$) de leurs arêtes sur des boucles en
+spirale, que les panneaux arrondissent à une décimale, et $17,2\,\%$,
+$36,5\,\%$, $31,6\,\%$ et $2,7\,\%$ sur des boucles fermées. Le maillage de QuadriFlow a $3$ faces
 retournées et une distance de Hausdorff de $31$\,\textperthousand\ de la
 diagonale.}
 \label{fig:overview}
@@ -781,36 +793,31 @@ diagonale.}
 figure~\ref{fig:overview}, dans le même ordre et les mêmes couleurs~: le
 poignet et la main gauches (en haut\,; la gauche du corps, à droite pour qui
 regarde la figure~\ref{fig:overview}) et l'œil droit (en bas). Au poignet,
-la fermeture n'aide pas localement~: le maillage~(b) a des boucles en
-spirale sur le pouce et le dos de la main là où le maillage~(a) a des
-boucles fermées, bien que sur le corps entier la fermeture retire la plupart
-des arêtes en spirale. À l'œil, la fermeture change en anneau une boucle qui
-traverse le front, et de courtes boucles en spirale restent près de l'œil
-sur les deux maillages d'openclare\,; la boucle qui fait le tour de l'œil du
-maillage fait à la main est elle-même comptée en spirale. Dans le T-mesh
-exporté à la section~\ref{sec:exact}, issu d'un moteur antérieur, le poignet
-gauche porte le tour que, dans quatre des huit variantes, aucunes longueurs
-respectant les bornes de séparation ne peuvent fermer, même seul.}
+le maillage~(b) a des boucles fermées sur le pouce et le dos de la main là
+où le maillage~(a) a des boucles en spirale, et une boucle en spirale le
+long du côté extérieur de l'avant-bras reste sur les deux. À l'œil, aucun
+des deux maillages d'openclare n'a de boucle en spirale près de l'œil, tous
+deux en gardent sur le front et à l'oreille, et la boucle qui fait le tour
+de l'œil du maillage fait à la main est elle-même comptée en spirale.}
 \label{fig:closeups}
 \end{figure*}
 
 \section{Un regard exact sur le système de fermeture}\label{sec:exact}
 
 À quelle distance l'heuristique de la section~\ref{sec:closing} est-elle de
-ce que permettent les contraintes\,? Un point d'accroche expérimental
-d'openclare (branche \texttt{rd-exact}, sur un moteur sans les passes de
-contraintes ni le plancher du plafond d'écart, c'est-à-dire antérieur au
-commit \texttt{c8bf2be}) exporte, pour chaque variante de recherche des
-tours, le système sur lequel elle travaille, pour le corps masculin à
-$10\,590$ quads. Son T-mesh a $1\,295$ nœuds ($1\,034$ jonctions en T et
-$261$ sommets singuliers~: $133$ de valence trois, $127$ de valence cinq et
-un de valence deux), $2\,069$ arcs et $776$ patchs, d'où $1\,552$ équations
-d'équilibre, une par patch et par direction. L'export donne les longueurs
-réelles, chaque tour trouvé avec son décalage (sur les $1\,299$ tours, la
-composition des applications de passage le long de la marche redonne le
-décalage exporté), et les bornes inférieures que la recherche entière a
-placées sur des arcs pour garder les singularités séparées (de $28$ à $36$
-arcs maintenus à la longueur un). Ces bornes sont le choix, par le moteur,
+ce que permettent les contraintes\,? Une option d'expérience du moteur
+exporte, pour chaque variante de recherche des tours, le système sur lequel
+elle travaille\,; nous l'exportons pour le corps masculin à $10\,590$
+quads, depuis le moteur tel qu'il tourne. Son T-mesh a $1\,342$ nœuds
+($1\,068$ jonctions en T, $254$ sommets singuliers, $131$ de valence trois
+et $123$ de valence cinq, et $20$ coins d'arêtes vives), $2\,146$ arcs et
+$806$ patchs, d'où $1\,612$ équations d'équilibre, une par patch et par
+direction. L'export donne les longueurs réelles, chaque tour trouvé avec son
+décalage (sur les $1\,708$ tours, la composition des applications de
+passage le long de la marche redonne le décalage exporté), et les bornes
+inférieures que la recherche entière a placées sur des arcs pour garder les
+singularités séparées (de $36$ à $197$ arcs maintenus à la longueur un,
+selon la variante). Ces bornes sont le choix, par le moteur,
 de \emph{l'arc} d'une chaîne entre deux sommets singuliers qui porte leur
 séparation~: la validité demande qu'une chaîne garde une longueur totale
 strictement positive, non un arc donné. Tous les énoncés qui suivent sont
@@ -822,7 +829,9 @@ longueurs qui annulent d'autres arcs. Les variantes sont numérotées comme à
 l'export~: la variante $m + 2j + 4i$ part des fractions $\{0,5\}$ ($m = 0$)
 ou $\{0,2 ; 0,5 ; 0,8\}$ ($m = 1$), avec la borne d'inclinaison $0,05$ ($j =
 0$) ou $0,12$ ($j = 1$) et la borne de longueur de $2$ ($i = 0$) ou $6$ ($i =
-1$) côtés. La variante~2 est celle que le moteur garde pour ce corps.
+1$) côtés. Sans les autres tirages, le moteur garde la variante~2 pour ce
+corps ($1,65\,\%$ d'arêtes en spirale)\,; avec eux, il garde les longueurs
+d'un autre tirage ($1,46\,\%$).
 
 \paragraph{Le conflit est réel mais local.}
 Tous les tours retenus peuvent être fermés ensemble si l'on demande
@@ -832,68 +841,73 @@ impossible de fermer un ensemble de tours en respectant les bornes si et
 seulement si une combinaison de leurs décalages est égale, modulo les
 équilibres, à une combinaison positive de longueurs d'arcs qui charge un arc
 maintenu ouvert, et l'article compagnon~\cite{gardent2026turns} lit ces
-certificats sur les singularités. Dans quatre variantes (0, 1, 2 et 4), un
-tour retenu ne peut même pas être fermé seul~: le même tour autour du
-poignet gauche, de longueur $7,0$, dont le décalage est égal, modulo les
-équilibres, à $-(\ell_{1921} + \ell_{1937})$, où l'arc $1937$, long de $0,08$
-arête de quad dans la paramétrisation, est maintenu à une longueur d'au
-moins un (certificat vérifié en arithmétique rationnelle exacte pour la
-variante~0). Nous n'avons pas vérifié si $\ell_{1937} = 0$ réunirait deux
-sommets singuliers, c'est-à-dire si toute quantification valide respecte
-cette borne. Renoncer à la plus petite quantité totale de bornes nécessaire
-pour fermer tous les tours retenus, un programme linéaire, montre que dans
-les variantes 0, 2 et 4 c'est la borne de ce seul arc qui fait obstacle. Les
-autres conflits se regroupent en amas de singularités aux yeux, aux mains et
-aux pieds.
+certificats sur les singularités. Dans sept variantes (toutes sauf la
+variante~4), un tour retenu ne peut même pas être fermé seul. Dans cinq
+d'entre elles (0, 1, 2, 5 et 7), c'est le même tour, de longueur $6,76$,
+dont le décalage est égal, modulo les équilibres, à $-(\ell_{1892} +
+\ell_{1908})$, où l'arc $1908$, long de moins de $0,09$ arête de quad dans
+la paramétrisation, est maintenu à une longueur d'au moins un\,; dans les
+variantes 2, 3, 6 et 7, un second tour, de longueur $4,72$, est bloqué de
+la même façon par l'arc~$1006$ (les deux certificats vérifiés en
+arithmétique rationnelle exacte). Nous n'avons pas vérifié si $\ell_{1908}
+= 0$ réunirait deux sommets singuliers, c'est-à-dire si toute quantification
+valide respecte cette borne. Renoncer à la plus petite quantité totale de
+bornes nécessaire pour fermer tous les tours retenus, un programme linéaire,
+montre que dans la variante~0 seule la borne de l'arc $1908$ fait obstacle,
+dans la variante~2 trois bornes, dont celle-là, et dans les autres variantes
+de $6$ à $154$.
 
-\paragraph{L'écart de la projection.}
+\paragraph{Combien de tours retenus peuvent se fermer.}
 Toutes bornes gardées, le plus grand ensemble de tours retenus qui peuvent
 être fermés ensemble est trouvé par un programme mixte-entier à une variable
-binaire par tour (tableau~\ref{tab:exact}). La projection du moteur de
-l'export en garde bien moins~: elle retirait, un à un, le tour laissé le
-plus décalé par une projection aux moindres carrés dont les longueurs
-négatives étaient ramenées à zéro, et un seul arc ainsi tronqué pouvait lui
-faire abandonner des dizaines de tours qui n'entrent en conflit avec rien.
-Le moteur au commit cité maintient plutôt de tels arcs à zéro (l'ensemble
-actif de la section~\ref{sec:closing}). En nombres entiers, le même
-programme mixte-entier n'a pas abouti en quinze minutes sur les deux systèmes
-essayés.
+binaire par tour (tableau~\ref{tab:exact}). La projection du moteur garde
+fermé chaque tour retenu~: son ensemble actif demande seulement aux
+longueurs d'être positives ou nulles, ce qui, comme ci-dessus, laisse se
+fermer tous les tours retenus\,; les bornes de séparation reviennent dans la
+recherche entière. En nombres entiers, le même programme mixte-entier, avec
+une limite de quinze minutes par variante, ne prouve son optimum que dans la
+variante~3 ($90$ tours, comme en nombres réels)\,; dans les autres
+variantes, il s'arrête avec de $1$ à $88$ tours de moins qu'en nombres
+réels.
 
 \begin{table}[t]
 \centering
-\begin{tabular}{lrrr}
+\begin{tabular}{lrr}
 \toprule
-variante & retenus & gardés par la projection & fermables ensemble \\
+variante & retenus & fermables ensemble \\
 \midrule
-0 & 48 & 42 & 47 \\
-1 & 78 & 46 & 73 \\
-2 & 52 & 46 & 51 \\
-3 & 86 & 47 & 82 \\
-4 & 84 & 49 & 83 \\
-5 & 160 & 48 & 154 \\
-6 & 88 & 53 & 87 \\
-7 & 169 & 49 & 160 \\
+0 & 58 & 57 \\
+1 & 92 & 87 \\
+2 & 64 & 61 \\
+3 & 102 & 90 \\
+4 & 125 & 120 \\
+5 & 219 & 189 \\
+6 & 131 & 123 \\
+7 & 229 & 192 \\
 \bottomrule
 \end{tabular}
-\caption{Corps masculin à $10\,590$ quads, nombres réels, moteur de l'export.
-«~Gardés par la projection~»~: par la projection tronquée de ce moteur\,;
-«~fermables ensemble~»~: le plus grand ensemble de tours retenus qui peuvent
-être fermés en gardant toutes les bornes de séparation.}
+\caption{Corps masculin à $10\,590$ quads, nombres réels, moteur de la
+version 0.7.0. «~Fermables ensemble~»~: le plus grand ensemble de tours
+retenus qui peuvent être fermés en gardant toutes les bornes de
+séparation\,; dans la variante~7, le programme s'est arrêté à sa limite de
+$300$ secondes, avec une borne de $195$.}
 \label{tab:exact}
 \end{table}
 
 \paragraph{L'arrondi ignore les décalages.}
 Donner de meilleures cibles à la recherche entière du moteur montre ce qui
-lui survit (tableau~\ref{tab:rounding}). Viser les longueurs du programme
-linéaire ferme au bout du compte moins de boucles~: son objectif $L^1$
-pondéré concentre les changements sur peu d'arcs, l'écart aux longueurs
-réelles augmente, et les variantes qui ont le moins de spirales sont
-refusées par le plafond d'écart. La projection avec ensemble actif garde
-fermés en nombres réels tous les tours retenus, et pourtant, après la
-recherche entière, $117$ sur $169$ sont de nouveau décalés et le maillage
-spirale davantage\,; avec la projection tronquée aussi, environ $40\,\%$ des
-tours qu'elle gardait sont décalés après la recherche entière. La recherche
-entière suit les cibles, mais pas les décalages.
+lui survit (tableau~\ref{tab:rounding}). La projection avec ensemble actif,
+celle du moteur, garde fermés en nombres réels tous les tours retenus, et
+pourtant, après la recherche entière, de $33\,\%$ à $74\,\%$ d'entre eux
+sont de nouveau décalés ($170$ sur $229$ dans la variante~7)\,; avec une
+projection aux moindres carrés dont les longueurs négatives sont ramenées à
+zéro aussi, environ $40\,\%$ des tours qu'elle ferme sont décalés après la
+recherche entière. La recherche entière suit les cibles, mais pas les
+décalages. En visant les longueurs du programme linéaire, dont l'objectif
+$L^1$ pondéré concentre les changements sur peu d'arcs, le moteur classe
+premier un candidat à $2,63\,\%$ d'arêtes en spirale, mais rend le maillage
+des longueurs simples~: après le maillage, les candidats classés avant
+elles ont été écartés.
 
 \begin{table}[t]
 \centering
@@ -904,17 +918,17 @@ entière suit les cibles, mais pas les décalages.
 cibles de la recherche entière & \head{tours fermés\\ en réels} &
 \head{encore décalés\\ après} & \head{arêtes en spirale\\ (maillage)} \\
 \midrule
-projection tronquée & environ 50 & 10 à 23 d'entre eux & 1,1\,\% \\
-programme linéaire, $L^1$ & jusqu'à 160 & --- & 11,9\,\% \\
-ensemble actif, plancher 0 & tous les retenus (jusqu'à 169) & 117 sur 169 & 3,3\,\% \\
-ensemble actif, plancher à la moitié de la longueur réelle & 36 à 72 & --- & 9,8\,\% \\
+projection tronquée & 41 à 52 & 15 à 25 d'entre eux & 2,11\,\% \\
+programme linéaire, $L^1$ & 57 à 192 & 14 à 133 d'entre eux & 23,39\,\% \\
+ensemble actif, plancher 0 (le moteur) & tous les retenus (58 à 229) & 19 à 170 d'entre eux & 1,46\,\% \\
+ensemble actif, plancher à la moitié de la longueur réelle & 51 à 132 & 19 à 93 d'entre eux & 2,80\,\% \\
 \bottomrule
 \end{tabular}
-\caption{Corps masculin à $10\,590$ quads, moteur de l'export, une exécution
-chacun\,; le maillage garde la variante qui a le moins de spirales, si bien
-que sa part est celle d'une seule variante. Le moteur au commit cité utilise
-l'ensemble actif avec le plancher $0$, ainsi que les passes de contraintes
-et le plancher du plafond d'écart, que ce tableau n'inclut pas.}
+\caption{Corps masculin à $10\,590$ quads, moteur de la version 0.7.0 avec
+ses options d'expérience, une exécution chacun\,; étendues sur les huit
+variantes. Le maillage garde le candidat qui a le moins de spirales, si bien
+que sa part est celle d'une seule variante ou d'un seul tirage\,; avec le
+programme linéaire, c'est le maillage des longueurs simples.}
 \label{tab:rounding}
 \end{table}
 
@@ -925,111 +939,110 @@ sommets sont les équations d'équilibre et dont les arêtes sont les arcs
 Lorsque ce graphe est connexe et possède un cycle que des valeurs $\pm1$ ne
 peuvent équilibrer, comme sur le corps, l'article compagnon montre qu'un
 ensemble d'arcs libres paramètre le réseau des longueurs entières
-équilibrées~: ici $2\,069 - 1\,552 = 517$ arcs peuvent recevoir des longueurs
+équilibrées~: ici $2\,146 - 1\,612 = 534$ arcs peuvent recevoir des longueurs
 entières quelconques et les autres s'en déduisent, si bien que les
-équilibres seuls ne font jamais obstacle aux longueurs entières. Fermer
-exactement, en nombres entiers, les tours trouvés fermables ensemble est
-réalisable~: HiGHS le résout en environ deux minutes par variante pour trois
-des quatre variantes essayées (la quatrième, à $87$ tours, n'a pas abouti en
-dix minutes). Les solutions laissent de $1$ à $4$ tours retenus décalés là
-où le moteur en laisse de $13$ à $44$, et moins de tours non retenus
-décalés aussi ($5$ contre $9$, $5$ contre $11$, $0$ contre $27$), pour un
-écart aux longueurs réelles plus élevé de $4\,\%$ à $62\,\%$. Pourtant, les
-maillages de quads qu'elles produisent spiralent \emph{davantage}~:
-$12,2\,\%$ de leurs arêtes contre $8,8\,\%$ pour la première variante,
-$3,7\,\%$ contre $1,1\,\%$ pour la deuxième, et la troisième casse la
-structure. La plupart des boucles qui spiralent ne sont pas des tours que
+équilibres seuls ne font jamais obstacle aux longueurs entières. Pour fermer
+exactement, en nombres entiers, les tours trouvés fermables ensemble, HiGHS
+trouve de telles longueurs en $83$ à $228$ secondes dans les variantes 0 à
+3, et aucune en dix minutes dans les variantes 4 à 7. Les solutions laissent
+$1$, $5$, $3$ et $12$ tours retenus décalés là où le moteur en laisse $19$,
+$40$, $23$ et $52$, et moins de tours non retenus décalés aussi ($3$ contre
+$15$, $9$ contre $25$, $5$ contre $18$, $11$ contre $34$), pour un écart
+pondéré aux longueurs réelles plus élevé de $2\,\%$ à $64\,\%$. Pourtant,
+trois des quatre spiralent \emph{davantage}, selon le compte du moteur sur
+la connectivité de leurs longueurs~: $5,9\,\%$, $2,8\,\%$ et $7,8\,\%$ de
+leurs arêtes contre $4,1\,\%$, $1,7\,\%$ et $3,5\,\%$ pour les longueurs du
+moteur dans les variantes 0, 2 et 3\,; dans la variante~1, $4,9\,\%$ contre
+$9,1\,\%$. Seules celles de la variante~2 restent dans la fenêtre de tailles
+du moteur\,; les autres ont $10\,857$, $12\,420$ et $11\,011$ quads. La plupart des boucles qui spiralent ne sont pas des tours que
 trouvent les marches échantillonnées.
 
 Parcourir plutôt chaque bande du maillage de la variante~2
-(proposition~\ref{prop:complete}) donne $230$ parcours, chaque bande deux
-fois, une fois dans chaque sens\,; $168$ reviennent décalés. Les
+(proposition~\ref{prop:complete}) donne $306$ parcours, chaque bande deux
+fois, une fois dans chaque sens\,; $236$ reviennent décalés. Les
 sélectionner par l'inclinaison, comme le font les passes de contraintes, en
-garde $222$, dont $218$ ($109$ bandes) peuvent être fermés ensemble en
+garde $298$, dont $270$ ($135$ bandes) peuvent être fermés ensemble en
 nombres réels toutes bornes gardées. Posés directement à HiGHS, ils n'ont
-donné aucune solution entière en dix ni en trente minutes\,; si on lui donne
-les $171$ arcs que toute solution réelle met à zéro (chacun certifié par une
-combinaison positive de décalages, $23$ certificats distincts autour des
-doigts, des orteils, des pieds, de la tête, du torse et du cou), il en
-trouve une en une seconde. L'obstacle est la taille~: aucunes longueurs
-réelles fermant les $218$ anneaux n'ont un écart moyen aux cibles inférieur
-à $0,817$, quand le moteur de l'export refusait $0,474$ ($1,5$ fois les
-$0,316$ de sa recherche simple\,; le moteur au commit cité admet $0,516$). Un
-sous-ensemble de $190$, choisi de façon gloutonne, se ferme à $0,399$ en
-nombres réels, en conservant le nombre de quads au premier ordre. En nombres
+donné aucune solution entière en $12\,651$ secondes\,; si on lui donne les
+$341$ arcs que toute solution réelle met à zéro (chacun certifié par une
+combinaison positive de décalages, $216$ certificats sur $36$ ensembles
+d'anneaux distincts), il n'en a pas trouvé non plus en $2\,596$ secondes.
+Aucunes longueurs réelles fermant les $270$ anneaux n'ont un écart moyen aux
+cibles inférieur à $1,304$, quand le moteur admet $0,522$ ($0,2$ de plus que
+les $0,322$ de sa recherche simple). Le plus grand sous-ensemble qui se
+ferme sous un écart moyen de $0,4$, le nombre de quads tenu au premier
+ordre, trouvé par un programme arrêté après $600$ secondes, compte $228$
+anneaux (au plus $267$) et se ferme à $0,395$ en nombres réels. En nombres
 entiers, avec la reformulation d'Aardal, Hurkens et
 Lenstra~\cite{aardal2000diophantine} sur une base
 LLL-réduite~\cite{lenstra1982lll} du réseau des quantifications fermées,
 HiGHS, arrêté après $1\,200$ secondes, trouve des longueurs entières qui
-ferment les $190$ en respectant toutes les bornes, à un écart moyen de
-$0,619$ et $10\,568$ quads, et prouve qu'aucune ne fait mieux que $0,536$.
-Données au moteur à la place de ses longueurs, elles ferment les $190$
-anneaux mais produisent $2,5\,\%$ d'arêtes en spirale contre $1,1\,\%$~: aux
-nouvelles longueurs, les bandes sont d'autres marches, $156$ des $230$
-parcours étant décalés. L'arrondi coûte entre $0,137$ (prouvé) et $0,220$
-(trouvé) d'écart moyen au-dessus de l'optimum réel\,; c'est le choix des
-tours à fermer, aux longueurs où ils sont les bandes du maillage, qui décide
-de combien le maillage spirale.
+ferment les $228$ en respectant toutes les bornes, à un écart moyen de
+$0,535$ et $10\,653$ quads, et prouve qu'aucune ne fait mieux que $0,518$.
+Ces longueurs sont au-dessus du plafond du moteur ($0,535$ contre $0,522$),
+si bien que le moteur ne les prend pas comme candidat. L'arrondi coûte entre
+$0,123$ (prouvé) et $0,140$ (trouvé) d'écart moyen au-dessus de l'optimum
+réel.
 
 \paragraph{L'heuristique laisse l'essentiel de l'écart.}
 L'article compagnon~\cite{gardent2026turns} calcule le plus petit nombre de
 tours retenus que toutes longueurs de $P_{\mathrm{eng}}$ laissent décalés,
 une couverture minimale des sous-systèmes infaisables irréductibles
 (\emph{irreducible infeasible subsystems})~\cite{parker1996iis}~:
-exactement $1$, $5$, $1$, $4$, $1$, $6$, $1$ et $9$ dans les variantes 0 à
-7, contre $13$, $39$, $16$, $44$, $49$, $115$, $44$ et $123$ laissés décalés
-par le moteur. Si l'on ajoute le plafond d'écart du moteur et sa fenêtre de
-tailles (de $10\,379$ à $10\,801$ quads), en longueurs entières, le plus
-petit nombre vaut encore exactement un dans les variantes 0 et 2~: des
-longueurs entières qui ferment tous les tours retenus sauf celui du poignet
-existent à $10\,439$ et $10\,436$ quads, à des écarts moyens de $0,442$ et
-$0,469$. Des $16$ tours de la variante~2 que le moteur laisse décalés, les
-bornes de séparation en imposent un, et le plafond, la taille et
-l'intégrité aucun\,; l'heuristique est responsable des $15$ autres. Fermer
-davantage de tours n'est cependant pas ce que voit la mesure des spirales~:
-une recherche locale sur les longueurs entières, sous les mêmes plafond et
-taille, ferme $38$ bandes de plus du maillage du moteur que le moteur
-lui-même, mais à ses longueurs, qui de plus cassent le maillage, les bandes
-sont de nouveau d'autres marches, et la part de bandes en spirale est de
-$0,020$ contre $0,011$ pour le moteur. Choisir le plus grand nombre de tours
+exactement $1$, $5$, $3$, $12$, $5$, $30$, $8$ et $37$ dans les variantes 0
+à 7, contre $19$, $40$, $23$, $52$, $61$, $154$, $72$ et $170$ laissés
+décalés par le moteur. Si l'on ajoute le plafond d'écart du moteur et sa
+fenêtre de tailles (de $10\,379$ à $10\,801$ quads), en longueurs entières,
+le plus petit nombre vaut encore exactement un dans la variante~0 et trois
+dans la variante~2~: des longueurs entières qui ferment tous les autres
+tours retenus existent à $10\,730$ et $10\,435$ quads, à des écarts moyens
+de $0,387$ et $0,506$. Des $23$ tours de la variante~2 que le moteur laisse
+décalés, les bornes de séparation en imposent trois, et le plafond, la
+taille et l'intégrité aucun\,; l'heuristique est responsable des $20$
+autres. Fermer davantage de tours n'est cependant pas ce que voit la mesure
+des spirales~: une recherche locale sur les longueurs entières, sous les
+mêmes plafond et taille, ferme $45$ bandes de plus du maillage de la
+variante~2 que le moteur lui-même, mais à ses longueurs, où les bandes sont
+d'autres marches, $4,7\,\%$ des arêtes spiralent, contre $1,7\,\%$ aux
+longueurs du moteur pour la variante~2\,; c'est le choix des tours à
+fermer, aux longueurs où ils sont les bandes du maillage, qui décide de
+combien le maillage spirale. Choisir le plus grand nombre de tours
 à fermer est NP-difficile pour des équilibres bidirigés avec des bornes
 $0$--$1$, la forme algébrique de la quantification~\cite{gardent2026turns}\,;
 savoir si les équilibres et les tours d'un vrai T-mesh restent difficiles est
 une question ouverte.
 
 \paragraph{Fermer le plus d'anneaux, de bout en bout.}
-Nous avons mesuré ce qu'une sélection exacte apporte sur le banc, avec le
-moteur de la branche \texttt{complete-helices} (les passes de contraintes,
-sans le maillage de travail plus fin aux parois minces du commit cité~:
-$4,54\,\%$ d'arêtes en spirale sur les $36$ exécutions). Pour les longueurs
-que garde le moteur, un programme mixte-entier ferme autant qu'il le peut de
-ses bandes d'inclinaison inférieure à $0,12$, pondérées par leur longueur de
-révolution, sous les équilibres, les bornes de séparation, le plafond et le
-budget de quads\,; le moteur maille le résultat, les bandes sont parcourues
-de nouveau aux nouvelles longueurs, et le programme est résolu de nouveau,
-en trois passes. Avec les seules expressions des décalages, le programme
-ferme $27,3$ des $38,2$ bandes de ce type d'un modèle (moyenne sur les $36$
-exécutions), mais aux nouvelles longueurs seules $22,1$ sont des bandes
-fermées, contre $21,8$ pour le moteur. Exigées pour chaque bande comptée
-comme fermée, les inégalités de couloir~\eqref{eq:corridor} rendent le
-compte exact ($24,6$ fermées par le programme, $24,0$ trouvées fermées en
-parcourant le maillage). À la place des longueurs du moteur, les longueurs
-trouvées ne spiralent pas moins~: $4,77\,\%$ et $5,08\,\%$ d'arêtes en spirale
-en deux exécutions, contre $4,54\,\%$. Ajoutées aux candidats parmi lesquels
-le moteur choisit selon son propre compte des spirales, elles abaissent la
-moyenne à $2,32\,\%$ et $2,70\,\%$, jamais au-dessus\,; trois autres tirages
-de la perturbation par arc du moteur, ajoutés de la même façon, donnent
-$4,12\,\%$, trois jeux de longueurs tirés au hasard sous les mêmes plafond et
-budget $4,34\,\%$, et les passes sans les inégalités de couloir $3,15\,\%$,
-mieux que les autres tirages sur $7$ exécutions et moins bien sur $7$. Les
-boucles fermées ($38,0\,\%$ contre $36,3\,\%$ des arêtes) et la distance
-moyenne ($0,383$ contre $0,385$) bougent à peine, et les $36$ maillages sont
-tous valides. Sur le corps masculin, chaque passe a spiralé davantage que le
-moteur (de $3,45\,\%$ à $5,59\,\%$ contre $1,59\,\%$). Le gain exige un
-solveur qui aboutit~: avec une limite de $5$ secondes par résolution, il
-disparaît ($4,10\,\%$ contre $4,12\,\%$ pour les autres tirages), car $63$
-des $126$ pièces n'obtiennent pas de solution à temps et $68$ des $108$
-passes rendent les longueurs mêmes du moteur.
+Nous avons mesuré ce qu'une sélection exacte apporte sur le banc avec le
+mode de qualité lente du moteur (\texttt{--quality slow}), face au moteur
+sans ses autres tirages ($5,85\,\%$ d'arêtes en spirale sur les $36$
+exécutions), avec trois ($5,43\,\%$) et avec ses douze ($4,92\,\%$). Pour les
+longueurs que garde le moteur, un programme mixte-entier ferme autant qu'il
+le peut de ses bandes d'inclinaison inférieure à $0,12$, pondérées par leur
+longueur de révolution, sous les équilibres, les bornes de séparation, le
+plafond et le budget de quads. Une bande ne compte comme fermée que là où
+les inégalités de couloir~\eqref{eq:corridor} sont vérifiées pour elle, si
+bien qu'elle garde sa marche aux nouvelles longueurs. Le moteur maille le
+résultat, les bandes sont parcourues de nouveau aux nouvelles longueurs, et
+le programme est résolu de nouveau, en trois passes\,; les longueurs de
+chaque passe rejoignent les candidats du moteur aux mêmes conditions. Le
+programme est résolu par HiGHS, lié au moteur, chaque résolution étant
+arrêtée à une limite de travail (itérations du simplexe fois arcs) qui ne
+dépend pas de la charge. Sans les autres tirages, le mode lent abaisse la
+moyenne à $4,41\,\%$~: plus bas sur $9$ des $36$ exécutions, jamais
+au-dessus. Les boucles fermées ($36,6\,\%$ contre $35,4\,\%$ des arêtes) et
+la distance moyenne ($0,382$\,\textperthousand\ dans les deux cas) bougent à
+peine, et les $36$ maillages sont tous valides. Face aux douze autres
+tirages, il est plus bas en moyenne ($4,41\,\%$ contre $4,92\,\%$) mais pas
+exécution par exécution~: plus haut sur $9$ exécutions, plus bas sur $5$.
+Sur le corps masculin, ses trois passes rendent les longueurs dont elles
+partent~: $1,65\,\%$, comme sans lui, contre $1,46\,\%$ pour le moteur avec
+ses tirages. Le gain n'exige pas un solveur qui aboutit~: $90$ des $120$
+résolutions s'arrêtent à la limite de travail, et avec une limite de $5$
+secondes par résolution à la place, $76$ sur $100$ s'y arrêtent, $18$ des
+$66$ passes (contre $12$) rendent les longueurs dont elles partent, et la
+moyenne est de $4,56\,\%$, sur quatre processeurs là où les autres
+exécutions en avaient huit.
 
 \paragraph{Agir avant la quantification.}
 Déplacer les sommets singuliers dans la paramétrisation, et tourner le champ
@@ -1049,29 +1062,23 @@ Les résultats viennent d'une seule implémentation et sont préliminaires. La
 part de spirales d'un modèle isolé est chaotique, si bien que seules les
 moyennes sur trois budgets sont robustes\,; les autres chiffres viennent
 d'exécutions uniques. La mesure ne voit que les hélices de pas au plus
-quatre. La comparaison avec d'autres remailleurs et les expériences de la
-section~\ref{sec:exact} ont utilisé des moteurs antérieurs
-(annexe~\ref{app:provenance}), et le corps masculin n'a pas été remaillé avec
-le commit cité. Le regard exact porte sur un seul corps, avec un moteur sans
-les passes de contraintes, et vaut relativement aux bornes de séparation du
-moteur, qui sont son choix d'arcs et ne sont ni un sous-ensemble ni un
-sur-ensemble des quantifications valides\,; le plafond qui y est imposé
-n'est celui du moteur qu'approximativement (une quantification à $0,4737$ a
-été refusée par lui). Les temps ont été pris sur une machine partagée, et
-les résultats qui dépendent d'une limite de temps dépendent de sa charge.
-Les scripts et les journaux des expériences exactes ne sont pas encore
-publiés (annexe~\ref{app:provenance}).
+quatre. Le regard exact porte sur un seul corps et vaut relativement aux
+bornes de séparation du moteur, qui sont son choix d'arcs et ne sont ni un
+sous-ensemble ni un sur-ensemble des quantifications valides. La machine
+était partagée~: sa charge est relevée, non maîtrisée, et les résultats qui
+dépendent d'une limite de temps en dépendent.
 
 Trois problèmes restent ouverts. \emph{Une formulation exacte}~: minimiser
 l'écart sous les équilibres, les bornes et $\shift_\gamma(\ell) = 0$ pour un
 ensemble de tours est un flot d'écart minimal avec des contraintes annexes
 linéaires\,; on ne sait pas quelle part de l'appareil exact
 de~\cite{heistermann2023bimdf} s'y transpose, et la relaxation linéaire
-ferme déjà presque tous les tours retenus. \emph{Fermer en nombres
+ferme déjà de $84\,\%$ à $98\,\%$ des tours retenus. \emph{Fermer en nombres
 entiers}~: des longueurs entières fermant chaque anneau demandé se trouvent
 au moyen d'une base réduite du réseau, mais en quelques minutes, avec un
 nombre de quads tenu seulement au premier ordre et un écart supérieur de
-$0,14$ à $0,22$ à l'optimum réel\,; la recherche entière peut-elle se
+$0,12$ à $0,14$ à l'optimum réel, ici au-dessus du plafond du moteur\,; la
+recherche entière peut-elle se
 déplacer dans ce réseau à la vitesse d'un solveur de flot\,? \emph{Quels
 tours}, le problème central au vu de la section~\ref{sec:exact}~: fermer
 des anneaux change les longueurs, les longueurs changent les bandes, et les
@@ -1114,54 +1121,58 @@ version anglaise fait foi.
 
 \section{Provenance des chiffres}\label{app:provenance}
 
-Le moteur a changé pendant que les expériences étaient menées. Le tableau
-indique, pour chaque groupe de chiffres, quelle version l'a produit et où se
-trouve sa sortie brute. «~Message de commit~»~: les chiffres sont donnés
-dans le message de ce commit du dépôt\,; «~journaux de travail~»~: les
-fichiers de sortie et les scripts de l'expérience, conservés par l'auteur
-hors du dépôt et pas encore publiés.
+Chaque chiffre vient du moteur de la version 0.7.0 (commit
+\texttt{e13fadb}), compilé en mode \emph{release}, et des scripts de
+\nolinkurl{docs/research/closing-loops/experiments/} (ceux de la
+section~\ref{sec:exact} dans son dossier \nolinkurl{exact/}) et, pour le
+recensement, les conflits et le plus petit nombre de tours laissés décalés,
+que partage l'article compagnon, de
+\nolinkurl{docs/research/turns-of-a-t-mesh/experiments/}. Chaque script
+écrit une synthèse, \texttt{results/}\textit{nom}\texttt{.json} à côté de
+lui, avec le commit et la compilation du moteur, la machine, sa charge et la
+version du solveur\,; son README donne la commande de chaque tableau. La
+sortie brute (maillages, exports, journaux) n'est pas dans le dépôt.
 
 \begin{center}
 \small
 \setlength{\tabcolsep}{4pt}
-\begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{5.6cm}@{}}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{5.6cm}>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{4.4cm}@{}}
 \toprule
-chiffres & moteur & source \\
+chiffres & script & synthèse \\
 \midrule
-douze modèles, trois budgets, $4,65\,\%$ (section~\ref{sec:experiments})
-  & le commit cité & journaux de travail du protocole ci-dessous\,; une
-  seconde exécution du même moteur a donné les mêmes chiffres pour les $36$
-  maillages \\
+douze modèles, trois budgets (section~\ref{sec:experiments})
+  & \texttt{twelve\_models.py}, le protocole ci-dessous
+  & \texttt{twelve\_models.json} \\
 tableau~\ref{tab:dev}
-  & commits \texttt{9f3e455}, \texttt{3658abc}, \texttt{197f0ca}
-  & messages de commit (aussi \texttt{452b346}) \\
+  & \texttt{ablation.py}\,; sa dernière ligne a redonné les $36$ maillages
+  ci-dessus octet pour octet
+  & \texttt{ablation.json} \\
 face à d'autres remailleurs
-  & commits \texttt{5bc16c6}, \texttt{b0fba91}
-  & \texttt{bench/results/results.json} à ces commits \\
-corps masculin fait à la main
-  & ---
-  & \texttt{bench/results/RESULTS.md} \\
-corps masculin, openclare
-  & \texttt{452b346}\,; \texttt{1b77f7d} à \texttt{4db7b42}
-  & messages de commit\,; boucles fermées, distance et angles~: journaux de
-  travail \\
+  & \texttt{against\_remeshers.py}, depuis
+  \nolinkurl{bench/results/results.json} à \texttt{e13fadb}
+  & \texttt{against\_remeshers.json} \\
+corps masculin, openclare et fait à la main
+  & \texttt{male\_body.py}
+  & \texttt{male\_body.json} \\
 figures~\ref{fig:overview} et~\ref{fig:closeups}, leurs chiffres
-  & commit \texttt{89232b0}, une exécution par maillage\,; QuadriFlow via
-  Blender, sur la source mise à l'échelle $100$ puis ramenée
-  & \texttt{figures/README.md} (commandes, chiffres, somme de contrôle de
-  la source) et \texttt{figures/make\_figures.sh}, qui les refait \\
-section~\ref{sec:exact}, jusqu'à «~L'heuristique laisse l'essentiel de
-l'écart~»
-  & branche \texttt{rd-exact} (point d'accroche d'export), moteur antérieur à
-  \texttt{c8bf2be}
-  & journaux de travail, scripts et systèmes exportés\,; certains chiffres de
-  synthèse aussi dans des messages de commit (\texttt{2a4ca25},
-  \texttt{9132835}) \\
+  & \texttt{figures/make\_figures.sh}, \texttt{figure\_numbers.py}\,;
+  QuadriFlow via Blender, sur la source mise à l'échelle $100$ puis ramenée
+  & \texttt{figures.json} \\
+section~\ref{sec:exact}~: le T-mesh, les conflits, les plus petits nombres
+laissés décalés
+  & \texttt{census.py}, \texttt{holonomy.py}, \texttt{conflicts.py},
+  \texttt{forced.py} de l'article compagnon
+  & leurs synthèses de même nom \\
+section~\ref{sec:exact}~: les autres chiffres et les
+tableaux~\ref{tab:exact} et~\ref{tab:rounding}
+  & \texttt{exact/}~: \texttt{relaxation.py}, \texttt{most\_closable.py},
+  \texttt{rings.py}, \texttt{lattice\_rounding.py},
+  \texttt{local\_search.py}, \texttt{remesh.py}
+  & leurs synthèses de même nom \\
 fermer le plus d'anneaux, de bout en bout
-  & branche \texttt{maxclose-rd}, moteur de la branche
-  \texttt{complete-helices}
-  & journaux de travail\,; certains chiffres seulement dans la synthèse de
-  l'expérience \\
+  & \texttt{exact/end\_to\_end.py}
+  & \texttt{end\_to\_end.json}\,; la limite de $5$ secondes~:
+  \texttt{end\_to\_end-time-5.json} \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -1179,15 +1190,15 @@ chiffres sont les moyennes de \texttt{loop\_edges\_spiral},
 exécutions.
 
 \paragraph{Reproductibilité.} La méthode est implémentée dans openclare
-(Rust), dans la branche principale du dépôt au commit cité\,; le banc est
-piloté par \texttt{bench/run.py}. L'export du T-mesh utilisé à la
-section~\ref{sec:exact} est un point d'accroche expérimental de la branche
-\texttt{rd-exact}, et la sélection de bout en bout se trouve sur la branche
-expérimentale \texttt{maxclose-rd}\,; aucune des deux ne fait partie du
-moteur, et aucune n'est encore étiquetée. Tant que les scripts et les
-journaux des expériences exactes ne sont pas publiés, les énoncés mesurés de
-la section~\ref{sec:exact} peuvent être confrontés à ces branches mais pas
-réexécutés tels quels. Cette version de la note a été construite à partir
-du commit \texttt{\enginecommit}.
+(Rust), dans la branche principale du dépôt\,; le banc est piloté par
+\texttt{bench/run.py}. L'export du T-mesh et les interrupteurs du
+tableau~\ref{tab:dev} sont des options d'expérience du moteur de la version
+0.7.0 (\texttt{ALGORITHM.md}, «~Experiment options~»), et le mode de
+qualité lente est son option \texttt{--quality slow}, si bien que les
+scripts ci-dessus refont chaque chiffre sur ce moteur\,; les chiffres qui
+dépendent d'une limite de temps dépendent aussi de la machine et de sa
+charge. Les prototypes de «~Agir avant la quantification~» ne font pas
+partie du moteur et ne sont pas scriptés. Cette version de la note a été
+construite à partir du commit \texttt{\enginecommit}.
 
 \end{document}

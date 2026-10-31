@@ -1,0 +1,1429 @@
+{
+ "experiment": "the question of local dislocations read strictly",
+ "export": "scratch/data-package/turns-of-a-t-mesh/male-body/export/call-2146-806-5237618",
+ "export_record": {
+  "experiment": "export of the turns of the closing",
+  "engine": {
+   "commit": "e13fadb",
+   "build": "sha256:d444f05f7279f3e7",
+   "options": "as-is",
+   "environment": {}
+  },
+  "command": [
+   "openclare",
+   "remesh",
+   "<source>",
+   "mesh.obj",
+   "--preset",
+   "organic",
+   "--quads",
+   "10590"
+  ],
+  "source": {
+   "path": "source.obj",
+   "md5": "f1fe33002b731d1d41846daed6c59f5e"
+  },
+  "machine": {
+   "processor": "Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz",
+   "threads": 8,
+   "memory": "62.7 GiB",
+   "load_average": [
+    8.64,
+    5.25,
+    3.14
+   ],
+   "load_average_at_end": [
+    7.71,
+    6.46,
+    3.99
+   ]
+  },
+  "seconds": 187.3,
+  "tmesh": "call-2146-806-5237618",
+  "ways": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "measure": {
+   "valid": true,
+   "quads": 10484,
+   "loop_edges_spiral": 0.014641358260206027,
+   "loops_spiral": 11,
+   "loop_edges_closed": 0.36484166348721775,
+   "mean_distance": 0.0001895734178229812,
+   "hausdorff": 0.004743854442472561,
+   "angle_deviation_mean": 4.292626082506852,
+   "irregular_vertices": 254,
+   "inverted_faces": 0
+  }
+ },
+ "ways": {
+  "0": "6cc0c52ed844da1d1343a49e60e967e06c71639e970a2ffad1186047e4bff93a",
+  "2": "73fd72de47d0b93bf8b4d3fdf2e4cbaca7f7814337b80857130a4ca42835e517",
+  "1": "f9ed1876de4d580ec3f64e3cb38252890f7cc8d403f35169f762fc95471a3c16",
+  "4": "3197c4fccb7ff314c588885bb3519c7c1eea7c977887126b2636173fb28f69f7",
+  "5": "f3bc8513c30d53e9551ff30710bca835f2a5771492d2b91bd620a375b620183c",
+  "3": "dd044d80dd8f807d335182282202b905fc021f48f750eeb03295460de6d12ca4",
+  "7": "826d051bb7c6219c45509225f52219665732ede8395ed4b7911c6d83fa27e993",
+  "6": "e311a34d17929be3646e76c6244d0b6e3cbd44f6515be8313f76c4051b5b5e5a"
+ },
+ "machine": {
+  "processor": "Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz",
+  "threads": 8,
+  "memory": "62.7 GiB",
+  "load_average": [
+   1.64,
+   3.14,
+   4.68
+  ],
+  "load_average_at_end": [
+   1.7,
+   1.69,
+   2.44
+  ],
+  "processors_allowed": 8
+ },
+ "solver": {
+  "scipy": "1.16.3",
+  "highs": "1.8.0",
+  "highs_threads": 1
+ },
+ "wall_seconds": 1219.6,
+ "loose": false,
+ "table": "conflicts.json",
+ "rows": [
+  {
+   "row": 1,
+   "way": 0,
+   "turns": [
+    54
+   ],
+   "multipliers": [
+    -1
+   ],
+   "sign": 1,
+   "verdict": "in the cone",
+   "optimum": 0.0,
+   "forms_generated": 2680,
+   "seconds": 25.8,
+   "decomposition": [
+    {
+     "weight": 1.0,
+     "kind": "winding separatrix",
+     "form": {
+      "1873": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "row": 2,
+   "way": 2,
+   "turns": [
+    46
+   ],
+   "multipliers": [
+    1
+   ],
+   "sign": 1,
+   "verdict": "separated",
+   "optimum": -2.0,
+   "forms_generated": 3073,
+   "seconds": 58.7,
+   "exact_witness": {
+    "balanced": true,
+    "certificate_value": -1.99948579,
+    "certificate_value_exact": "-199948579/100000000",
+    "negative": true,
+    "forms_negative_at_it": 0,
+    "largest_length": 1.01327399
+   }
+  },
+  {
+   "row": 3,
+   "way": 1,
+   "turns": [
+    62,
+    63
+   ],
+   "multipliers": [
+    1,
+    -1
+   ],
+   "sign": 1,
+   "verdict": "separated",
+   "optimum": -4.0,
+   "forms_generated": 3053,
+   "seconds": 65.0,
+   "exact_witness": {
+    "balanced": true,
+    "certificate_value": -3.99874512,
+    "certificate_value_exact": "-24992157/6250000",
+    "negative": true,
+    "forms_negative_at_it": 0,
+    "largest_length": 1.0147355
+   }
+  },
+  {
+   "row": 4,
+   "way": 2,
+   "turns": [
+    58,
+    63
+   ],
+   "multipliers": [
+    -1,
+    -1
+   ],
+   "sign": 1,
+   "verdict": "in the cone",
+   "optimum": 0.0,
+   "forms_generated": 905,
+   "seconds": 8.4,
+   "decomposition": [
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "1751": 1.0,
+      "1827": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "row": 5,
+   "way": 1,
+   "turns": [
+    23,
+    36
+   ],
+   "multipliers": [
+    -1,
+    1
+   ],
+   "sign": 1,
+   "verdict": "in the cone",
+   "optimum": 0.0,
+   "forms_generated": 905,
+   "seconds": 8.4,
+   "decomposition": [
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "550": 1.0,
+      "558": 1.0,
+      "559": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "row": 6,
+   "way": 4,
+   "turns": [
+    84,
+    115
+   ],
+   "multipliers": [
+    -1,
+    1
+   ],
+   "sign": 1,
+   "verdict": "in the cone",
+   "optimum": 0.0,
+   "forms_generated": 905,
+   "seconds": 8.1,
+   "decomposition": [
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "726": 1.0,
+      "734": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "row": 7,
+   "way": 4,
+   "turns": [
+    58,
+    115
+   ],
+   "multipliers": [
+    1,
+    1
+   ],
+   "sign": 1,
+   "verdict": "in the cone",
+   "optimum": 0.0,
+   "forms_generated": 905,
+   "seconds": 8.4,
+   "decomposition": [
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "1814": 1.0,
+      "1866": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "row": 8,
+   "way": 4,
+   "turns": [
+    21,
+    93
+   ],
+   "multipliers": [
+    -1,
+    1
+   ],
+   "sign": 1,
+   "verdict": "in the cone",
+   "optimum": 0.0,
+   "forms_generated": 905,
+   "seconds": 11.7,
+   "decomposition": [
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "1124": 1.0,
+      "1136": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "row": 9,
+   "way": 4,
+   "turns": [
+    18,
+    103
+   ],
+   "multipliers": [
+    1,
+    -1
+   ],
+   "sign": 1,
+   "verdict": "in the cone",
+   "optimum": 0.0,
+   "forms_generated": 905,
+   "seconds": 9.6,
+   "decomposition": [
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "1758": 1.0,
+      "1881": 1.0,
+      "1885": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "row": 10,
+   "way": 5,
+   "turns": [
+    207,
+    208
+   ],
+   "multipliers": [
+    -1,
+    -1
+   ],
+   "sign": 1,
+   "verdict": "in the cone",
+   "optimum": 0.0,
+   "forms_generated": 1205,
+   "seconds": 12.7,
+   "decomposition": [
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "732": 1.0,
+      "733": 1.0,
+      "778": 1.0
+     }
+    },
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "1860": 1.0,
+      "1861": 1.0,
+      "1868": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "row": 11,
+   "way": 5,
+   "turns": [
+    181,
+    205
+   ],
+   "multipliers": [
+    1,
+    1
+   ],
+   "sign": 1,
+   "verdict": "in the cone",
+   "optimum": 0.0,
+   "forms_generated": 905,
+   "seconds": 8.8,
+   "decomposition": [
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "1781": 1.0,
+      "1840": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "row": 12,
+   "way": 5,
+   "turns": [
+    150,
+    156
+   ],
+   "multipliers": [
+    1,
+    1
+   ],
+   "sign": 1,
+   "verdict": "separated",
+   "optimum": -2.0,
+   "forms_generated": 3049,
+   "seconds": 55.2,
+   "exact_witness": {
+    "balanced": true,
+    "certificate_value": -1.99661742,
+    "certificate_value_exact": "-99830871/50000000",
+    "negative": true,
+    "forms_negative_at_it": 0,
+    "largest_length": 1.01327399
+   }
+  },
+  {
+   "row": 13,
+   "way": 5,
+   "turns": [
+    146,
+    149
+   ],
+   "multipliers": [
+    1,
+    -1
+   ],
+   "sign": 1,
+   "verdict": "in the cone",
+   "optimum": 0.0,
+   "forms_generated": 905,
+   "seconds": 9.7,
+   "decomposition": [
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "1033": 1.0,
+      "1195": 1.0,
+      "1196": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "row": 14,
+   "way": 1,
+   "turns": [
+    21,
+    68
+   ],
+   "multipliers": [
+    1,
+    1
+   ],
+   "sign": 1,
+   "verdict": "in the cone",
+   "optimum": 0.0,
+   "forms_generated": 905,
+   "seconds": 8.1,
+   "decomposition": [
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "1546": 1.0,
+      "1578": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "row": 15,
+   "way": 3,
+   "turns": [
+    65,
+    66
+   ],
+   "multipliers": [
+    1,
+    1
+   ],
+   "sign": 1,
+   "verdict": "in the cone",
+   "optimum": 0.0,
+   "forms_generated": 905,
+   "seconds": 9.7,
+   "decomposition": [
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "748": 1.0,
+      "757": 1.0,
+      "758": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "row": 16,
+   "way": 3,
+   "turns": [
+    63,
+    66
+   ],
+   "multipliers": [
+    1,
+    1
+   ],
+   "sign": 1,
+   "verdict": "in the cone",
+   "optimum": 0.0,
+   "forms_generated": 1205,
+   "seconds": 12.9,
+   "decomposition": [
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "741": 1.0,
+      "742": 1.0,
+      "743": 1.0,
+      "754": 1.0,
+      "756": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "row": 17,
+   "way": 5,
+   "turns": [
+    136,
+    208
+   ],
+   "multipliers": [
+    -1,
+    1
+   ],
+   "sign": 1,
+   "verdict": "in the cone",
+   "optimum": 0.0,
+   "forms_generated": 1205,
+   "seconds": 13.7,
+   "decomposition": [
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "730": 1.0,
+      "783": 1.0
+     }
+    },
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "1814": 1.0,
+      "1866": 1.0
+     }
+    },
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "726": 1.0,
+      "734": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "row": 18,
+   "way": 5,
+   "turns": [
+    129,
+    208
+   ],
+   "multipliers": [
+    -1,
+    1
+   ],
+   "sign": 1,
+   "verdict": "in the cone",
+   "optimum": 0.0,
+   "forms_generated": 1205,
+   "seconds": 11.1,
+   "decomposition": [
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "730": 1.0,
+      "783": 1.0
+     }
+    },
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "1814": 1.0,
+      "1866": 1.0
+     }
+    },
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "726": 1.0,
+      "734": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "row": 19,
+   "way": 7,
+   "turns": [
+    221,
+    225
+   ],
+   "multipliers": [
+    1,
+    1
+   ],
+   "sign": 1,
+   "verdict": "separated",
+   "optimum": -2.0,
+   "forms_generated": 2975,
+   "seconds": 47.8,
+   "exact_witness": {
+    "balanced": true,
+    "certificate_value": -1.9995391,
+    "certificate_value_exact": "-19995391/10000000",
+    "negative": true,
+    "forms_negative_at_it": 0,
+    "largest_length": 1.0147355
+   }
+  },
+  {
+   "row": 20,
+   "way": 4,
+   "turns": [
+    73,
+    115,
+    122
+   ],
+   "multipliers": [
+    1,
+    1,
+    -1
+   ],
+   "sign": 1,
+   "verdict": "in the cone",
+   "optimum": 0.0,
+   "forms_generated": 905,
+   "seconds": 9.5,
+   "decomposition": [
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "726": 1.0,
+      "734": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "row": 21,
+   "way": 5,
+   "turns": [
+    145,
+    147,
+    149
+   ],
+   "multipliers": [
+    -1,
+    -1,
+    -1
+   ],
+   "sign": 1,
+   "verdict": "in the cone",
+   "optimum": 0.0,
+   "forms_generated": 905,
+   "seconds": 8.9,
+   "decomposition": [
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "1033": 1.0,
+      "1195": 1.0,
+      "1196": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "row": 22,
+   "way": 1,
+   "turns": [
+    8,
+    10,
+    12
+   ],
+   "multipliers": [
+    -13,
+    1,
+    -12
+   ],
+   "sign": 1,
+   "verdict": "in the cone",
+   "optimum": 0.0,
+   "forms_generated": 1505,
+   "seconds": 13.8,
+   "decomposition": [
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "4": 1.0,
+      "23": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "row": 23,
+   "way": 1,
+   "turns": [
+    0,
+    10,
+    12
+   ],
+   "multipliers": [
+    13,
+    1,
+    1
+   ],
+   "sign": 1,
+   "verdict": "in the cone",
+   "optimum": 0.0,
+   "forms_generated": 1505,
+   "seconds": 15.1,
+   "decomposition": [
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "4": 1.0,
+      "23": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "row": 24,
+   "way": 3,
+   "turns": [
+    36,
+    73,
+    83
+   ],
+   "multipliers": [
+    -1,
+    -1,
+    -1
+   ],
+   "sign": 1,
+   "verdict": "separated",
+   "optimum": -4.0,
+   "forms_generated": 3023,
+   "seconds": 55.2,
+   "exact_witness": {
+    "balanced": true,
+    "certificate_value": -3.99436591,
+    "certificate_value_exact": "-399436591/100000000",
+    "negative": true,
+    "forms_negative_at_it": 0,
+    "largest_length": 1.0147355
+   }
+  },
+  {
+   "row": 25,
+   "way": 4,
+   "turns": [
+    82,
+    117,
+    124
+   ],
+   "multipliers": [
+    1,
+    -1,
+    1
+   ],
+   "sign": 1,
+   "verdict": "in the cone",
+   "optimum": 0.0,
+   "forms_generated": 905,
+   "seconds": 9.0,
+   "decomposition": [
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "1751": 1.0,
+      "1827": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "row": 26,
+   "way": 5,
+   "turns": [
+    137,
+    196,
+    208
+   ],
+   "multipliers": [
+    1,
+    1,
+    1
+   ],
+   "sign": 1,
+   "verdict": "in the cone",
+   "optimum": 0.0,
+   "forms_generated": 1805,
+   "seconds": 17.1,
+   "decomposition": [
+    {
+     "weight": 1.5,
+     "kind": "staircase",
+     "form": {
+      "726": 1.0,
+      "734": 1.0
+     }
+    },
+    {
+     "weight": 0.5,
+     "kind": "staircase",
+     "form": {
+      "728": 1.0,
+      "730": 1.0,
+      "731": 1.0
+     }
+    },
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "732": 1.0,
+      "733": 1.0,
+      "778": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "row": 27,
+   "way": 5,
+   "turns": [
+    130,
+    196,
+    208
+   ],
+   "multipliers": [
+    1,
+    1,
+    1
+   ],
+   "sign": 1,
+   "verdict": "in the cone",
+   "optimum": 0.0,
+   "forms_generated": 1805,
+   "seconds": 16.6,
+   "decomposition": [
+    {
+     "weight": 1.5,
+     "kind": "staircase",
+     "form": {
+      "726": 1.0,
+      "734": 1.0
+     }
+    },
+    {
+     "weight": 0.5,
+     "kind": "staircase",
+     "form": {
+      "728": 1.0,
+      "730": 1.0,
+      "731": 1.0
+     }
+    },
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "732": 1.0,
+      "733": 1.0,
+      "778": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "row": 28,
+   "way": 6,
+   "turns": [
+    65,
+    103,
+    107
+   ],
+   "multipliers": [
+    1,
+    -1,
+    -1
+   ],
+   "sign": 1,
+   "verdict": "in the cone",
+   "optimum": 0.0,
+   "forms_generated": 905,
+   "seconds": 8.4,
+   "decomposition": [
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "1546": 1.0,
+      "1578": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "row": 29,
+   "way": 6,
+   "turns": [
+    5,
+    6,
+    7,
+    74
+   ],
+   "multipliers": [
+    -5,
+    -2,
+    -1,
+    -1
+   ],
+   "sign": 1,
+   "verdict": "separated",
+   "optimum": -5.142857142857142,
+   "forms_generated": 2967,
+   "seconds": 52.5,
+   "exact_witness": {
+    "balanced": true,
+    "certificate_value": -5.13799133,
+    "certificate_value_exact": "-513799133/100000000",
+    "negative": true,
+    "forms_negative_at_it": 0,
+    "largest_length": 1.0147355
+   }
+  },
+  {
+   "row": 30,
+   "way": 7,
+   "turns": [
+    168,
+    192,
+    194,
+    196
+   ],
+   "multipliers": [
+    -1,
+    -1,
+    1,
+    1
+   ],
+   "sign": 1,
+   "verdict": "in the cone",
+   "optimum": 0.0,
+   "forms_generated": 905,
+   "seconds": 9.2,
+   "decomposition": [
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "1546": 1.0,
+      "1578": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "row": 31,
+   "way": 5,
+   "turns": [
+    144,
+    151,
+    152,
+    156,
+    195
+   ],
+   "multipliers": [
+    2,
+    -1,
+    -1,
+    1,
+    2
+   ],
+   "sign": 1,
+   "verdict": "separated",
+   "optimum": -3.0,
+   "forms_generated": 3037,
+   "seconds": 73.1,
+   "exact_witness": {
+    "balanced": true,
+    "certificate_value": -2.99369316,
+    "certificate_value_exact": "-74842329/25000000",
+    "negative": true,
+    "forms_negative_at_it": 0,
+    "largest_length": 1.05624336
+   }
+  },
+  {
+   "row": 32,
+   "way": 3,
+   "turns": [
+    33,
+    39,
+    75,
+    88,
+    91
+   ],
+   "multipliers": [
+    1,
+    1,
+    -1,
+    1,
+    -1
+   ],
+   "sign": 1,
+   "verdict": "in the cone",
+   "optimum": 0.0,
+   "forms_generated": 905,
+   "seconds": 8.2,
+   "decomposition": [
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "1546": 1.0,
+      "1578": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "row": 33,
+   "way": 1,
+   "turns": [
+    22,
+    25,
+    35,
+    36,
+    46,
+    82
+   ],
+   "multipliers": [
+    1,
+    -1,
+    1,
+    1,
+    1,
+    -1
+   ],
+   "sign": 1,
+   "verdict": "separated",
+   "optimum": -5.666666666666666,
+   "forms_generated": 3109,
+   "seconds": 54.5,
+   "exact_witness": {
+    "balanced": true,
+    "certificate_value": -5.65804476,
+    "certificate_value_exact": "-141451119/25000000",
+    "negative": true,
+    "forms_negative_at_it": 0,
+    "largest_length": 1.0147355
+   }
+  },
+  {
+   "row": 34,
+   "way": 1,
+   "turns": [
+    20,
+    34,
+    36,
+    44,
+    46,
+    47,
+    82
+   ],
+   "multipliers": [
+    -1,
+    -1,
+    1,
+    1,
+    1,
+    -1,
+    -1
+   ],
+   "sign": 1,
+   "verdict": "in the cone",
+   "optimum": -1.1102230246251565e-16,
+   "forms_generated": 1505,
+   "seconds": 16.3,
+   "decomposition": [
+    {
+     "weight": 1.0,
+     "kind": "staircase",
+     "form": {
+      "1562": 1.0,
+      "1563": 1.0,
+      "1593": 1.0
+     }
+    }
+   ]
+  },
+  {
+   "row": 35,
+   "way": 1,
+   "turns": [
+    26,
+    35,
+    36,
+    43,
+    44,
+    48,
+    79,
+    82
+   ],
+   "multipliers": [
+    1,
+    1,
+    1,
+    -1,
+    1,
+    1,
+    1,
+    -1
+   ],
+   "sign": 1,
+   "verdict": "separated",
+   "optimum": -6.769230769230769,
+   "forms_generated": 3104,
+   "seconds": 71.2,
+   "exact_witness": {
+    "balanced": true,
+    "certificate_value": -6.76429003,
+    "certificate_value_exact": "-676429003/100000000",
+    "negative": true,
+    "forms_negative_at_it": 0,
+    "largest_length": 1.01327399
+   }
+  },
+  {
+   "row": 36,
+   "way": 1,
+   "turns": [
+    30,
+    35,
+    36,
+    43,
+    44,
+    48,
+    79,
+    80,
+    82
+   ],
+   "multipliers": [
+    1,
+    1,
+    2,
+    -1,
+    1,
+    1,
+    1,
+    1,
+    -2
+   ],
+   "sign": 1,
+   "verdict": "separated",
+   "optimum": -6.769230769230769,
+   "forms_generated": 3149,
+   "seconds": 63.2,
+   "exact_witness": {
+    "balanced": true,
+    "certificate_value": -6.7615371,
+    "certificate_value_exact": "-67615371/10000000",
+    "negative": true,
+    "forms_negative_at_it": 0,
+    "largest_length": 1.01327399
+   }
+  },
+  {
+   "row": 37,
+   "way": 1,
+   "turns": [
+    31,
+    34,
+    35,
+    44,
+    45,
+    48,
+    68,
+    73,
+    80,
+    82
+   ],
+   "multipliers": [
+    1,
+    2,
+    4,
+    -1,
+    -1,
+    4,
+    1,
+    1,
+    1,
+    -1
+   ],
+   "sign": 1,
+   "verdict": "separated",
+   "optimum": -18.0,
+   "forms_generated": 3001,
+   "seconds": 64.1,
+   "exact_witness": {
+    "balanced": true,
+    "certificate_value": -17.98496437,
+    "certificate_value_exact": "-1798496437/100000000",
+    "negative": true,
+    "forms_negative_at_it": 0,
+    "largest_length": 1.0147355
+   }
+  },
+  {
+   "row": 38,
+   "way": 3,
+   "turns": [
+    27,
+    28,
+    37,
+    38,
+    46,
+    51,
+    76,
+    81,
+    89,
+    91
+   ],
+   "multipliers": [
+    1,
+    1,
+    1,
+    3,
+    -1,
+    4,
+    1,
+    1,
+    1,
+    -1
+   ],
+   "sign": 1,
+   "verdict": "separated",
+   "optimum": -17.0,
+   "forms_generated": 3015,
+   "seconds": 54.6,
+   "exact_witness": {
+    "balanced": true,
+    "certificate_value": -16.98824084,
+    "certificate_value_exact": "-424706021/25000000",
+    "negative": true,
+    "forms_negative_at_it": 0,
+    "largest_length": 1.0147355
+   }
+  },
+  {
+   "row": 39,
+   "way": 3,
+   "turns": [
+    23,
+    37,
+    38,
+    39,
+    47,
+    51,
+    75,
+    81,
+    89,
+    91
+   ],
+   "multipliers": [
+    1,
+    1,
+    2,
+    1,
+    -1,
+    2,
+    -1,
+    1,
+    1,
+    -1
+   ],
+   "sign": 1,
+   "verdict": "separated",
+   "optimum": -12.0,
+   "forms_generated": 2877,
+   "seconds": 51.5,
+   "exact_witness": {
+    "balanced": true,
+    "certificate_value": -11.98715437,
+    "certificate_value_exact": "-1198715437/100000000",
+    "negative": true,
+    "forms_negative_at_it": 0,
+    "largest_length": 1.0147355
+   }
+  },
+  {
+   "row": 40,
+   "way": 1,
+   "turns": [
+    19,
+    25,
+    34,
+    35,
+    43,
+    48,
+    68,
+    73,
+    79,
+    80,
+    82
+   ],
+   "multipliers": [
+    -1,
+    1,
+    1,
+    3,
+    -1,
+    4,
+    1,
+    1,
+    1,
+    1,
+    -2
+   ],
+   "sign": 1,
+   "verdict": "separated",
+   "optimum": -17.0,
+   "forms_generated": 3015,
+   "seconds": 54.8,
+   "exact_witness": {
+    "balanced": true,
+    "certificate_value": -16.98824084,
+    "certificate_value_exact": "-424706021/25000000",
+    "negative": true,
+    "forms_negative_at_it": 0,
+    "largest_length": 1.0147355
+   }
+  },
+  {
+   "row": 41,
+   "way": 6,
+   "turns": [
+    27,
+    30,
+    34,
+    35,
+    36,
+    40,
+    50,
+    64,
+    103,
+    110,
+    111,
+    112
+   ],
+   "multipliers": [
+    1,
+    1,
+    -1,
+    -1,
+    1,
+    1,
+    1,
+    -1,
+    -3,
+    1,
+    1,
+    1
+   ],
+   "sign": 1,
+   "verdict": "separated",
+   "optimum": -6.0,
+   "forms_generated": 3011,
+   "seconds": 54.7,
+   "exact_witness": {
+    "balanced": true,
+    "certificate_value": -5.98524446,
+    "certificate_value_exact": "-299262223/50000000",
+    "negative": true,
+    "forms_negative_at_it": 0,
+    "largest_length": 1.0147355
+   }
+  }
+ ]
+}

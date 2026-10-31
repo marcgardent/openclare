@@ -1,0 +1,3227 @@
+{
+ "experiment": "the geometry of the conflicts (Table tab:pairs)",
+ "export": "scratch/data-package/turns-of-a-t-mesh/male-body/export/call-2146-806-5237618",
+ "export_record": {
+  "experiment": "export of the turns of the closing",
+  "engine": {
+   "commit": "e13fadb",
+   "build": "sha256:d444f05f7279f3e7",
+   "options": "as-is",
+   "environment": {}
+  },
+  "command": [
+   "openclare",
+   "remesh",
+   "<source>",
+   "mesh.obj",
+   "--preset",
+   "organic",
+   "--quads",
+   "10590"
+  ],
+  "source": {
+   "path": "source.obj",
+   "md5": "f1fe33002b731d1d41846daed6c59f5e"
+  },
+  "machine": {
+   "processor": "Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz",
+   "threads": 8,
+   "memory": "62.7 GiB",
+   "load_average": [
+    8.64,
+    5.25,
+    3.14
+   ],
+   "load_average_at_end": [
+    7.71,
+    6.46,
+    3.99
+   ]
+  },
+  "seconds": 187.3,
+  "tmesh": "call-2146-806-5237618",
+  "ways": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "measure": {
+   "valid": true,
+   "quads": 10484,
+   "loop_edges_spiral": 0.014641358260206027,
+   "loops_spiral": 11,
+   "loop_edges_closed": 0.36484166348721775,
+   "mean_distance": 0.0001895734178229812,
+   "hausdorff": 0.004743854442472561,
+   "angle_deviation_mean": 4.292626082506852,
+   "irregular_vertices": 254,
+   "inverted_faces": 0
+  }
+ },
+ "ways": {
+  "0": "6cc0c52ed844da1d1343a49e60e967e06c71639e970a2ffad1186047e4bff93a",
+  "2": "73fd72de47d0b93bf8b4d3fdf2e4cbaca7f7814337b80857130a4ca42835e517",
+  "1": "f9ed1876de4d580ec3f64e3cb38252890f7cc8d403f35169f762fc95471a3c16",
+  "4": "3197c4fccb7ff314c588885bb3519c7c1eea7c977887126b2636173fb28f69f7",
+  "5": "f3bc8513c30d53e9551ff30710bca835f2a5771492d2b91bd620a375b620183c",
+  "3": "dd044d80dd8f807d335182282202b905fc021f48f750eeb03295460de6d12ca4",
+  "7": "826d051bb7c6219c45509225f52219665732ede8395ed4b7911c6d83fa27e993",
+  "6": "e311a34d17929be3646e76c6244d0b6e3cbd44f6515be8313f76c4051b5b5e5a"
+ },
+ "machine": {
+  "processor": "Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz",
+  "threads": 8,
+  "memory": "62.7 GiB",
+  "load_average": [
+   1.17,
+   1.67,
+   2.52
+  ],
+  "load_average_at_end": [
+   1.86,
+   1.78,
+   2.53
+  ],
+  "processors_allowed": 8
+ },
+ "solver": {
+  "scipy": "1.16.3",
+  "highs": "1.8.0",
+  "highs_threads": 1
+ },
+ "wall_seconds": 24.1,
+ "depth": 8,
+ "table": "conflicts.json",
+ "rows": [
+  {
+   "way": 0,
+   "turns": [
+    54
+   ],
+   "multipliers": [
+    "-1"
+   ],
+   "primitive_multipliers": [
+    -1
+   ],
+   "bounded": [
+    1908
+   ],
+   "self_crossings": [
+    0
+   ],
+   "mutual_crossings": {},
+   "around": [
+    6.76
+   ],
+   "simple": [
+    true
+   ],
+   "separatrices": [
+    {
+     "vertex": 239,
+     "valence": 5,
+     "sigma": 938,
+     "tau": 940,
+     "sigma_length": 6.762,
+     "delta_arcs": [
+      1891,
+      1892
+     ],
+     "delta": 0.287,
+     "sign": -1,
+     "delta_arc_equal_to_a_held_arc": [
+      [
+       1891,
+       1908
+      ]
+     ]
+    }
+   ],
+   "smaller_side": {
+    "index": 4,
+    "singular": [
+     [
+      237,
+      3
+     ],
+     [
+      218,
+      3
+     ],
+     [
+      238,
+      3
+     ],
+     [
+      236,
+      3
+     ]
+    ]
+   },
+   "ways": [
+    0,
+    1,
+    2,
+    5,
+    7
+   ],
+   "seconds": 2.1
+  },
+  {
+   "way": 2,
+   "turns": [
+    46
+   ],
+   "multipliers": [
+    "1"
+   ],
+   "primitive_multipliers": [
+    1
+   ],
+   "bounded": [
+    1006
+   ],
+   "self_crossings": [
+    0
+   ],
+   "mutual_crossings": {},
+   "around": [
+    4.72
+   ],
+   "simple": [
+    true
+   ],
+   "separatrices": [],
+   "smaller_side": {
+    "index": 4,
+    "singular": [
+     [
+      127,
+      3
+     ],
+     [
+      148,
+      3
+     ],
+     [
+      145,
+      3
+     ],
+     [
+      128,
+      3
+     ]
+    ]
+   },
+   "ways": [
+    2,
+    3,
+    6,
+    7
+   ],
+   "seconds": 3.3
+  },
+  {
+   "way": 1,
+   "turns": [
+    62,
+    63
+   ],
+   "multipliers": [
+    "1",
+    "-1"
+   ],
+   "primitive_multipliers": [
+    1,
+    -1
+   ],
+   "bounded": [
+    1004
+   ],
+   "self_crossings": [
+    0,
+    1
+   ],
+   "mutual_crossings": {
+    "62-63": 4
+   },
+   "around": [
+    19.15,
+    29.05
+   ],
+   "simple": [
+    true,
+    false
+   ],
+   "regions": 7,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "2",
+     "index": 1,
+     "singular": [
+      [
+       123,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "-1",
+     "index": 1,
+     "singular": [
+      [
+       121,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "1",
+     "index": 0,
+     "singular": []
+    },
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       122,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "1",
+     "index": 2,
+     "singular": [
+      [
+       125,
+       5
+      ],
+      [
+       126,
+       5
+      ],
+      [
+       127,
+       3
+      ],
+      [
+       148,
+       3
+      ],
+      [
+       145,
+       3
+      ],
+      [
+       128,
+       3
+      ]
+     ]
+    }
+   ],
+   "staircases": [],
+   "mechanism": "no staircase found",
+   "certificate_form": {
+    "979": "1",
+    "986": "1",
+    "997": "1",
+    "1004": "1",
+    "1014": "1",
+    "1042": "1"
+   },
+   "ways": [
+    1,
+    3,
+    5,
+    7
+   ],
+   "seconds": 2.1
+  },
+  {
+   "way": 2,
+   "turns": [
+    58,
+    63
+   ],
+   "multipliers": [
+    "-1",
+    "-1"
+   ],
+   "primitive_multipliers": [
+    -1,
+    -1
+   ],
+   "bounded": [
+    1755
+   ],
+   "self_crossings": [
+    0,
+    0
+   ],
+   "mutual_crossings": {
+    "58-63": 2
+   },
+   "around": [
+    35.21,
+    34.36
+   ],
+   "simple": [
+    true,
+    true
+   ],
+   "regions": 4,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "-1",
+     "index": 1,
+     "singular": [
+      [
+       217,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       228,
+       3
+      ]
+     ]
+    }
+   ],
+   "staircases": [
+    {
+     "from": 217,
+     "to": 228,
+     "valences": [
+      3,
+      3
+     ],
+     "arcs": [
+      1755,
+      1829
+     ],
+     "length": 1.684,
+     "held_arc_on_it": [
+      1755
+     ],
+     "sign": 1
+    },
+    {
+     "from": 217,
+     "to": 228,
+     "valences": [
+      3,
+      3
+     ],
+     "arcs": [
+      1751,
+      1827
+     ],
+     "length": 1.684,
+     "held_arc_on_it": [],
+     "sign": 1
+    }
+   ],
+   "mechanism": "exchange",
+   "held_arc": "on the staircase",
+   "certificate_form": {
+    "1755": "1",
+    "1835": "1"
+   },
+   "ways": [
+    2,
+    3,
+    6,
+    7
+   ],
+   "seconds": 0.0
+  },
+  {
+   "way": 1,
+   "turns": [
+    23,
+    36
+   ],
+   "multipliers": [
+    "-1/2",
+    "1/2"
+   ],
+   "primitive_multipliers": [
+    -1,
+    1
+   ],
+   "bounded": [
+    554,
+    576
+   ],
+   "self_crossings": [
+    3,
+    3
+   ],
+   "mutual_crossings": {
+    "23-36": 8
+   },
+   "around": [
+    105.42,
+    102.7
+   ],
+   "simple": [
+    false,
+    false
+   ],
+   "regions": 7,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       68,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "-1",
+     "index": 1,
+     "singular": [
+      [
+       69,
+       3
+      ]
+     ]
+    }
+   ],
+   "staircases": [
+    {
+     "from": 68,
+     "to": 69,
+     "valences": [
+      3,
+      3
+     ],
+     "arcs": [
+      550,
+      559,
+      558
+     ],
+     "length": 4.117,
+     "held_arc_on_it": [],
+     "sign": 1
+    },
+    {
+     "from": 68,
+     "to": 69,
+     "valences": [
+      3,
+      3
+     ],
+     "arcs": [
+      554,
+      555,
+      575,
+      558
+     ],
+     "length": 4.117,
+     "held_arc_on_it": [
+      554
+     ],
+     "sign": 1
+    }
+   ],
+   "mechanism": "exchange",
+   "held_arc": "by the balances",
+   "certificate_form": {
+    "550": "1/2",
+    "554": "1/2",
+    "571": "1/2",
+    "576": "1/2"
+   },
+   "ways": [
+    1,
+    3
+   ],
+   "seconds": 0.1
+  },
+  {
+   "way": 4,
+   "turns": [
+    84,
+    115
+   ],
+   "multipliers": [
+    "-1",
+    "1"
+   ],
+   "primitive_multipliers": [
+    -1,
+    1
+   ],
+   "bounded": [
+    726
+   ],
+   "self_crossings": [
+    2,
+    2
+   ],
+   "mutual_crossings": {
+    "84-115": 6
+   },
+   "around": [
+    308.02,
+    309.23
+   ],
+   "simple": [
+    false,
+    false
+   ],
+   "regions": 6,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       90,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "-1",
+     "index": 1,
+     "singular": [
+      [
+       91,
+       3
+      ]
+     ]
+    }
+   ],
+   "staircases": [
+    {
+     "from": 90,
+     "to": 91,
+     "valences": [
+      3,
+      3
+     ],
+     "arcs": [
+      726,
+      734
+     ],
+     "length": 1.842,
+     "held_arc_on_it": [
+      726
+     ],
+     "sign": 1
+    },
+    {
+     "from": 90,
+     "to": 91,
+     "valences": [
+      3,
+      3
+     ],
+     "arcs": [
+      728,
+      731,
+      730
+     ],
+     "length": 1.842,
+     "held_arc_on_it": [],
+     "sign": 1
+    }
+   ],
+   "mechanism": "exchange",
+   "held_arc": "on the staircase",
+   "certificate_form": {
+    "726": "1",
+    "734": "1"
+   },
+   "ways": [
+    4,
+    6
+   ],
+   "seconds": 2.4
+  },
+  {
+   "way": 4,
+   "turns": [
+    58,
+    115
+   ],
+   "multipliers": [
+    "1",
+    "1"
+   ],
+   "primitive_multipliers": [
+    1,
+    1
+   ],
+   "bounded": [
+    1815
+   ],
+   "self_crossings": [
+    2,
+    2
+   ],
+   "mutual_crossings": {
+    "58-115": 6
+   },
+   "around": [
+    309.82,
+    309.23
+   ],
+   "simple": [
+    false,
+    false
+   ],
+   "regions": 6,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       226,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "-1",
+     "index": 1,
+     "singular": [
+      [
+       235,
+       3
+      ]
+     ]
+    }
+   ],
+   "staircases": [
+    {
+     "from": 226,
+     "to": 235,
+     "valences": [
+      3,
+      3
+     ],
+     "arcs": [
+      1814,
+      1866
+     ],
+     "length": 1.737,
+     "held_arc_on_it": [],
+     "sign": 1
+    },
+    {
+     "from": 226,
+     "to": 235,
+     "valences": [
+      3,
+      3
+     ],
+     "arcs": [
+      1815,
+      1865
+     ],
+     "length": 1.737,
+     "held_arc_on_it": [
+      1815
+     ],
+     "sign": 1
+    }
+   ],
+   "mechanism": "exchange",
+   "held_arc": "by the balances",
+   "certificate_form": {
+    "1814": "1",
+    "1815": "1"
+   },
+   "ways": [
+    4,
+    6
+   ],
+   "seconds": 0.1
+  },
+  {
+   "way": 4,
+   "turns": [
+    21,
+    93
+   ],
+   "multipliers": [
+    "-1",
+    "1"
+   ],
+   "primitive_multipliers": [
+    -1,
+    1
+   ],
+   "bounded": [
+    1127
+   ],
+   "self_crossings": [
+    3,
+    3
+   ],
+   "mutual_crossings": {
+    "21-93": 8
+   },
+   "around": [
+    582.59,
+    584.14
+   ],
+   "simple": [
+    false,
+    false
+   ],
+   "regions": 7,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "-1",
+     "index": 1,
+     "singular": [
+      [
+       142,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       140,
+       3
+      ]
+     ]
+    }
+   ],
+   "staircases": [
+    {
+     "from": 140,
+     "to": 142,
+     "valences": [
+      3,
+      3
+     ],
+     "arcs": [
+      1127,
+      1139
+     ],
+     "length": 1.675,
+     "held_arc_on_it": [
+      1127
+     ],
+     "sign": 1
+    },
+    {
+     "from": 140,
+     "to": 142,
+     "valences": [
+      3,
+      3
+     ],
+     "arcs": [
+      1124,
+      1136
+     ],
+     "length": 1.675,
+     "held_arc_on_it": [],
+     "sign": 1
+    }
+   ],
+   "mechanism": "exchange",
+   "held_arc": "on the staircase",
+   "certificate_form": {
+    "1127": "1",
+    "1139": "1"
+   },
+   "ways": [
+    4,
+    6
+   ],
+   "seconds": 0.1
+  },
+  {
+   "way": 4,
+   "turns": [
+    18,
+    103
+   ],
+   "multipliers": [
+    "1",
+    "-1"
+   ],
+   "primitive_multipliers": [
+    1,
+    -1
+   ],
+   "bounded": [
+    1871
+   ],
+   "self_crossings": [
+    0,
+    0
+   ],
+   "mutual_crossings": {
+    "18-103": 2
+   },
+   "around": [
+    287.85,
+    288.75
+   ],
+   "simple": [
+    true,
+    true
+   ],
+   "regions": 4,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       237,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "-1",
+     "index": 1,
+     "singular": [
+      [
+       238,
+       3
+      ]
+     ]
+    }
+   ],
+   "staircases": [
+    {
+     "from": 237,
+     "to": 238,
+     "valences": [
+      3,
+      3
+     ],
+     "arcs": [
+      1881,
+      1758,
+      1885
+     ],
+     "length": 3.361,
+     "held_arc_on_it": [],
+     "sign": 1
+    },
+    {
+     "from": 237,
+     "to": 238,
+     "valences": [
+      3,
+      3
+     ],
+     "arcs": [
+      1876,
+      1886,
+      1885
+     ],
+     "length": 3.361,
+     "held_arc_on_it": [],
+     "sign": 1
+    }
+   ],
+   "mechanism": "exchange",
+   "held_arc": "by the balances",
+   "certificate_form": {
+    "1758": "1",
+    "1871": "1"
+   },
+   "ways": [
+    4,
+    6
+   ],
+   "seconds": 0.1
+  },
+  {
+   "way": 5,
+   "turns": [
+    207,
+    208
+   ],
+   "multipliers": [
+    "-1/4",
+    "-1/4"
+   ],
+   "primitive_multipliers": [
+    -1,
+    -1
+   ],
+   "bounded": [
+    778,
+    783,
+    784,
+    1860
+   ],
+   "self_crossings": [
+    3,
+    2
+   ],
+   "mutual_crossings": {
+    "207-208": 8
+   },
+   "around": [
+    308.87,
+    309.23
+   ],
+   "simple": [
+    false,
+    false
+   ],
+   "regions": 10,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "2",
+     "index": 1,
+     "singular": [
+      [
+       226,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "-1",
+     "index": 1,
+     "singular": [
+      [
+       99,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       91,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "-1",
+     "index": 0,
+     "singular": []
+    },
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       234,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       235,
+       3
+      ]
+     ]
+    }
+   ],
+   "staircases": [],
+   "mechanism": "no staircase found",
+   "certificate_form": {
+    "778": "1/4",
+    "783": "1/4",
+    "784": "1/4",
+    "785": "1/4",
+    "1814": "1/4",
+    "1860": "1/4",
+    "1868": "1/4"
+   },
+   "ways": [
+    5,
+    7
+   ],
+   "seconds": 2.5
+  },
+  {
+   "way": 5,
+   "turns": [
+    181,
+    205
+   ],
+   "multipliers": [
+    "1",
+    "1"
+   ],
+   "primitive_multipliers": [
+    1,
+    1
+   ],
+   "bounded": [
+    1932
+   ],
+   "self_crossings": [
+    3,
+    3
+   ],
+   "mutual_crossings": {
+    "181-205": 8
+   },
+   "around": [
+    321.79,
+    323.1
+   ],
+   "simple": [
+    false,
+    false
+   ],
+   "regions": 7,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       221,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "-1",
+     "index": 1,
+     "singular": [
+      [
+       230,
+       3
+      ]
+     ]
+    }
+   ],
+   "staircases": [
+    {
+     "from": 221,
+     "to": 230,
+     "valences": [
+      3,
+      3
+     ],
+     "arcs": [
+      1781,
+      1840
+     ],
+     "length": 1.754,
+     "held_arc_on_it": [
+      1781
+     ],
+     "sign": 1
+    },
+    {
+     "from": 221,
+     "to": 230,
+     "valences": [
+      3,
+      3
+     ],
+     "arcs": [
+      1783,
+      1837,
+      1836
+     ],
+     "length": 1.754,
+     "held_arc_on_it": [],
+     "sign": 1
+    }
+   ],
+   "mechanism": "exchange",
+   "held_arc": "on the staircase",
+   "certificate_form": {
+    "1783": "1",
+    "1932": "1"
+   },
+   "ways": [
+    5,
+    7
+   ],
+   "seconds": 0.1
+  },
+  {
+   "way": 5,
+   "turns": [
+    150,
+    156
+   ],
+   "multipliers": [
+    "1",
+    "1"
+   ],
+   "primitive_multipliers": [
+    1,
+    1
+   ],
+   "bounded": [
+    1226
+   ],
+   "self_crossings": [
+    0,
+    0
+   ],
+   "mutual_crossings": {
+    "150-156": 2
+   },
+   "around": [
+    233.89,
+    235.23
+   ],
+   "simple": [
+    true,
+    true
+   ],
+   "regions": 4,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "-1",
+     "index": 1,
+     "singular": [
+      [
+       138,
+       5
+      ],
+      [
+       133,
+       3
+      ],
+      [
+       152,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       135,
+       3
+      ]
+     ]
+    }
+   ],
+   "staircases": [],
+   "mechanism": "no staircase found",
+   "certificate_form": {
+    "1068": "1",
+    "1089": "1",
+    "1095": "1",
+    "1115": "1",
+    "1226": "1"
+   },
+   "ways": [
+    5,
+    7
+   ],
+   "seconds": 0.1
+  },
+  {
+   "way": 5,
+   "turns": [
+    146,
+    149
+   ],
+   "multipliers": [
+    "1",
+    "-1"
+   ],
+   "primitive_multipliers": [
+    1,
+    -1
+   ],
+   "bounded": [
+    1196
+   ],
+   "self_crossings": [
+    0,
+    0
+   ],
+   "mutual_crossings": {
+    "146-149": 2
+   },
+   "around": [
+    233.97,
+    234.27
+   ],
+   "simple": [
+    true,
+    true
+   ],
+   "regions": 4,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "-1",
+     "index": 1,
+     "singular": [
+      [
+       128,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       148,
+       3
+      ]
+     ]
+    }
+   ],
+   "staircases": [
+    {
+     "from": 128,
+     "to": 148,
+     "valences": [
+      3,
+      3
+     ],
+     "arcs": [
+      1033,
+      1196,
+      1195
+     ],
+     "length": 2.078,
+     "held_arc_on_it": [
+      1196
+     ],
+     "sign": 1
+    },
+    {
+     "from": 128,
+     "to": 148,
+     "valences": [
+      3,
+      3
+     ],
+     "arcs": [
+      1035,
+      1161,
+      1195
+     ],
+     "length": 2.078,
+     "held_arc_on_it": [],
+     "sign": 1
+    }
+   ],
+   "mechanism": "exchange",
+   "held_arc": "on the staircase",
+   "certificate_form": {
+    "1033": "1",
+    "1195": "1",
+    "1196": "1"
+   },
+   "ways": [
+    5,
+    7
+   ],
+   "seconds": 0.1
+  },
+  {
+   "way": 1,
+   "turns": [
+    21,
+    68
+   ],
+   "multipliers": [
+    "1",
+    "1"
+   ],
+   "primitive_multipliers": [
+    1,
+    1
+   ],
+   "bounded": [
+    1580
+   ],
+   "self_crossings": [
+    4,
+    4
+   ],
+   "mutual_crossings": {
+    "21-68": 8
+   },
+   "around": [
+    97.65,
+    97.48
+   ],
+   "simple": [
+    false,
+    false
+   ],
+   "regions": 7,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "1",
+     "index": 0,
+     "singular": [
+      [
+       192,
+       5
+      ],
+      [
+       196,
+       3
+      ]
+     ]
+    }
+   ],
+   "staircases": [
+    {
+     "from": 192,
+     "to": 196,
+     "valences": [
+      5,
+      3
+     ],
+     "arcs": [
+      1544,
+      1580
+     ],
+     "length": 0.814,
+     "held_arc_on_it": [
+      1580
+     ],
+     "sign": 1
+    },
+    {
+     "from": 192,
+     "to": 196,
+     "valences": [
+      5,
+      3
+     ],
+     "arcs": [
+      1546,
+      1578
+     ],
+     "length": 0.814,
+     "held_arc_on_it": [],
+     "sign": 1
+    }
+   ],
+   "mechanism": "dislocation",
+   "held_arc": "on the staircase",
+   "certificate_form": {
+    "1578": "1",
+    "1580": "1"
+   },
+   "ways": [
+    1
+   ],
+   "seconds": 0.1
+  },
+  {
+   "way": 3,
+   "turns": [
+    65,
+    66
+   ],
+   "multipliers": [
+    "1",
+    "1"
+   ],
+   "primitive_multipliers": [
+    1,
+    1
+   ],
+   "bounded": [
+    748
+   ],
+   "self_crossings": [
+    0,
+    1
+   ],
+   "mutual_crossings": {
+    "65-66": 4
+   },
+   "around": [
+    35.42,
+    35.37
+   ],
+   "simple": [
+    true,
+    false
+   ],
+   "regions": 5,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "2",
+     "index": 1,
+     "singular": [
+      [
+       92,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       95,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       93,
+       3
+      ]
+     ]
+    }
+   ],
+   "staircases": [
+    {
+     "from": 93,
+     "to": 95,
+     "valences": [
+      3,
+      3
+     ],
+     "arcs": [
+      748,
+      758,
+      757
+     ],
+     "length": 2.045,
+     "held_arc_on_it": [
+      748
+     ],
+     "sign": 1
+    },
+    {
+     "from": 93,
+     "to": 95,
+     "valences": [
+      3,
+      3
+     ],
+     "arcs": [
+      743,
+      756,
+      755
+     ],
+     "length": 2.045,
+     "held_arc_on_it": [],
+     "sign": 1
+    }
+   ],
+   "mechanism": "exchange",
+   "held_arc": "on the staircase",
+   "certificate_form": {
+    "743": "1",
+    "748": "1"
+   },
+   "ways": [
+    3
+   ],
+   "seconds": 2.4
+  },
+  {
+   "way": 3,
+   "turns": [
+    63,
+    66
+   ],
+   "multipliers": [
+    "2/5",
+    "2/5"
+   ],
+   "primitive_multipliers": [
+    1,
+    1
+   ],
+   "bounded": [
+    737,
+    750,
+    876,
+    880
+   ],
+   "self_crossings": [
+    0,
+    1
+   ],
+   "mutual_crossings": {
+    "63-66": 2
+   },
+   "around": [
+    34.38,
+    35.37
+   ],
+   "simple": [
+    true,
+    false
+   ],
+   "regions": 5,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "2",
+     "index": 1,
+     "singular": [
+      [
+       95,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       92,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       93,
+       3
+      ]
+     ]
+    }
+   ],
+   "staircases": [
+    {
+     "from": 92,
+     "to": 93,
+     "valences": [
+      3,
+      3
+     ],
+     "arcs": [
+      741,
+      742,
+      754,
+      756,
+      743
+     ],
+     "length": 3.632,
+     "held_arc_on_it": [],
+     "sign": 1
+    }
+   ],
+   "mechanism": "exchange",
+   "held_arc": "by the balances",
+   "certificate_form": {
+    "737": "1/5",
+    "739": "1/5",
+    "741": "1/5",
+    "746": "1/5",
+    "750": "2/5",
+    "751": "2/5",
+    "876": "1/5",
+    "880": "1/5"
+   },
+   "ways": [
+    3
+   ],
+   "seconds": 0.0
+  },
+  {
+   "way": 5,
+   "turns": [
+    136,
+    208
+   ],
+   "multipliers": [
+    "-1/3",
+    "1/3"
+   ],
+   "primitive_multipliers": [
+    -1,
+    1
+   ],
+   "bounded": [
+    726,
+    917,
+    1815
+   ],
+   "self_crossings": [
+    3,
+    2
+   ],
+   "mutual_crossings": {
+    "136-208": 8
+   },
+   "around": [
+    308.54,
+    309.23
+   ],
+   "simple": [
+    false,
+    false
+   ],
+   "regions": 9,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "2",
+     "index": 1,
+     "singular": [
+      [
+       91,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       90,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       100,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       226,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "-1",
+     "index": 1,
+     "singular": [
+      [
+       235,
+       3
+      ]
+     ]
+    }
+   ],
+   "staircases": [],
+   "mechanism": "no staircase found",
+   "certificate_form": {
+    "726": "1/3",
+    "730": "1/3",
+    "917": "1/3",
+    "1814": "1/3",
+    "1815": "1/3"
+   },
+   "ways": [
+    5
+   ],
+   "seconds": 0.1
+  },
+  {
+   "way": 5,
+   "turns": [
+    129,
+    208
+   ],
+   "multipliers": [
+    "-1/3",
+    "1/3"
+   ],
+   "primitive_multipliers": [
+    -1,
+    1
+   ],
+   "bounded": [
+    726,
+    917,
+    1815
+   ],
+   "self_crossings": [
+    3,
+    2
+   ],
+   "mutual_crossings": {
+    "129-208": 8
+   },
+   "around": [
+    308.54,
+    309.23
+   ],
+   "simple": [
+    false,
+    false
+   ],
+   "regions": 10,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "2",
+     "index": 1,
+     "singular": [
+      [
+       91,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "-1",
+     "index": 0,
+     "singular": []
+    },
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       90,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       100,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       226,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "-1",
+     "index": 1,
+     "singular": [
+      [
+       235,
+       3
+      ]
+     ]
+    }
+   ],
+   "staircases": [],
+   "mechanism": "no staircase found",
+   "certificate_form": {
+    "726": "1/3",
+    "730": "1/3",
+    "917": "1/3",
+    "1814": "1/3",
+    "1815": "1/3"
+   },
+   "ways": [
+    5
+   ],
+   "seconds": 0.1
+  },
+  {
+   "way": 7,
+   "turns": [
+    221,
+    225
+   ],
+   "multipliers": [
+    "1/2",
+    "1/2"
+   ],
+   "primitive_multipliers": [
+    1,
+    1
+   ],
+   "bounded": [
+    1847
+   ],
+   "self_crossings": [
+    1,
+    1
+   ],
+   "mutual_crossings": {
+    "221-225": 2
+   },
+   "around": [
+    12.23,
+    29.62
+   ],
+   "simple": [
+    false,
+    false
+   ],
+   "regions": 6,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "2",
+     "index": 0,
+     "singular": [
+      [
+       243,
+       5
+      ],
+      [
+       231,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "1",
+     "index": 0,
+     "singular": []
+    },
+    {
+     "winding": "1",
+     "index": 0,
+     "singular": []
+    }
+   ],
+   "staircases": [],
+   "mechanism": "no staircase found",
+   "certificate_form": {
+    "1847": "1"
+   },
+   "ways": [
+    7
+   ],
+   "seconds": 2.1
+  },
+  {
+   "way": 4,
+   "turns": [
+    73,
+    115,
+    122
+   ],
+   "multipliers": [
+    "1",
+    "1",
+    "-1"
+   ],
+   "primitive_multipliers": [
+    1,
+    1,
+    -1
+   ],
+   "bounded": [
+    726
+   ],
+   "self_crossings": [
+    0,
+    2,
+    7
+   ],
+   "mutual_crossings": {
+    "73-115": 6,
+    "73-122": 6,
+    "115-122": 12
+   },
+   "around": [
+    282.33,
+    309.23,
+    590.35
+   ],
+   "simple": [
+    true,
+    false,
+    false
+   ],
+   "regions": 9,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       90,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "-1",
+     "index": 1,
+     "singular": [
+      [
+       91,
+       3
+      ]
+     ]
+    }
+   ],
+   "staircases": [
+    {
+     "from": 90,
+     "to": 91,
+     "valences": [
+      3,
+      3
+     ],
+     "arcs": [
+      726,
+      734
+     ],
+     "length": 1.842,
+     "held_arc_on_it": [
+      726
+     ],
+     "sign": 1
+    },
+    {
+     "from": 90,
+     "to": 91,
+     "valences": [
+      3,
+      3
+     ],
+     "arcs": [
+      728,
+      731,
+      730
+     ],
+     "length": 1.842,
+     "held_arc_on_it": [],
+     "sign": 1
+    }
+   ],
+   "mechanism": "exchange",
+   "held_arc": "on the staircase",
+   "certificate_form": {
+    "726": "1",
+    "734": "1"
+   },
+   "ways": [
+    4,
+    6
+   ],
+   "seconds": 0.1
+  },
+  {
+   "way": 5,
+   "turns": [
+    145,
+    147,
+    149
+   ],
+   "multipliers": [
+    "-1",
+    "-1",
+    "-1"
+   ],
+   "primitive_multipliers": [
+    -1,
+    -1,
+    -1
+   ],
+   "bounded": [
+    1196
+   ],
+   "self_crossings": [
+    14,
+    5,
+    0
+   ],
+   "mutual_crossings": {
+    "145-147": 20,
+    "145-149": 12,
+    "147-149": 10
+   },
+   "around": [
+    264.54,
+    30.57,
+    234.27
+   ],
+   "simple": [
+    false,
+    false,
+    true
+   ],
+   "regions": 12,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "-1",
+     "index": 0,
+     "singular": []
+    },
+    {
+     "winding": "-1",
+     "index": 1,
+     "singular": [
+      [
+       128,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "1",
+     "index": 0,
+     "singular": []
+    },
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       148,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "1",
+     "index": 0,
+     "singular": []
+    }
+   ],
+   "staircases": [
+    {
+     "from": 128,
+     "to": 148,
+     "valences": [
+      3,
+      3
+     ],
+     "arcs": [
+      1033,
+      1196,
+      1195
+     ],
+     "length": 2.078,
+     "held_arc_on_it": [
+      1196
+     ],
+     "sign": 1
+    },
+    {
+     "from": 128,
+     "to": 148,
+     "valences": [
+      3,
+      3
+     ],
+     "arcs": [
+      1035,
+      1161,
+      1195
+     ],
+     "length": 2.078,
+     "held_arc_on_it": [],
+     "sign": 1
+    }
+   ],
+   "mechanism": "exchange",
+   "held_arc": "on the staircase",
+   "certificate_form": {
+    "1033": "1",
+    "1195": "1",
+    "1196": "1"
+   },
+   "ways": [
+    5,
+    7
+   ],
+   "seconds": 0.1
+  },
+  {
+   "way": 1,
+   "turns": [
+    8,
+    10,
+    12
+   ],
+   "multipliers": [
+    "-13",
+    "1",
+    "-12"
+   ],
+   "primitive_multipliers": [
+    -13,
+    1,
+    -12
+   ],
+   "bounded": [
+    4
+   ],
+   "self_crossings": [
+    13,
+    1,
+    14
+   ],
+   "mutual_crossings": {
+    "8-10": 28,
+    "8-12": 28,
+    "10-12": 30
+   },
+   "around": [
+    158.59,
+    59.63,
+    167.1
+   ],
+   "simple": [
+    false,
+    false,
+    false
+   ],
+   "regions": 7,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "-1",
+     "index": 1,
+     "singular": [
+      [
+       0,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "-1",
+     "index": -1,
+     "singular": [
+      [
+       2,
+       5
+      ]
+     ]
+    }
+   ],
+   "staircases": [
+    {
+     "from": 0,
+     "to": 2,
+     "valences": [
+      3,
+      5
+     ],
+     "arcs": [
+      4,
+      23
+     ],
+     "length": 3.219,
+     "held_arc_on_it": [
+      4
+     ],
+     "sign": 1
+    },
+    {
+     "from": 0,
+     "to": 2,
+     "valences": [
+      3,
+      5
+     ],
+     "arcs": [
+      0,
+      22,
+      21
+     ],
+     "length": 3.219,
+     "held_arc_on_it": [],
+     "sign": 1
+    }
+   ],
+   "mechanism": "dislocation",
+   "held_arc": "on the staircase",
+   "certificate_form": {
+    "4": "1",
+    "23": "1"
+   },
+   "ways": [
+    1
+   ],
+   "seconds": 0.5
+  },
+  {
+   "way": 1,
+   "turns": [
+    0,
+    10,
+    12
+   ],
+   "multipliers": [
+    "13",
+    "1",
+    "1"
+   ],
+   "primitive_multipliers": [
+    13,
+    1,
+    1
+   ],
+   "bounded": [
+    4
+   ],
+   "self_crossings": [
+    0,
+    1,
+    14
+   ],
+   "mutual_crossings": {
+    "0-10": 2,
+    "0-12": 2,
+    "10-12": 30
+   },
+   "around": [
+    8.51,
+    59.63,
+    167.1
+   ],
+   "simple": [
+    true,
+    false,
+    false
+   ],
+   "regions": 7,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "-1",
+     "index": 1,
+     "singular": [
+      [
+       0,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "-1",
+     "index": -1,
+     "singular": [
+      [
+       2,
+       5
+      ]
+     ]
+    }
+   ],
+   "staircases": [
+    {
+     "from": 0,
+     "to": 2,
+     "valences": [
+      3,
+      5
+     ],
+     "arcs": [
+      4,
+      23
+     ],
+     "length": 3.219,
+     "held_arc_on_it": [
+      4
+     ],
+     "sign": 1
+    },
+    {
+     "from": 0,
+     "to": 2,
+     "valences": [
+      3,
+      5
+     ],
+     "arcs": [
+      0,
+      22,
+      21
+     ],
+     "length": 3.219,
+     "held_arc_on_it": [],
+     "sign": 1
+    }
+   ],
+   "mechanism": "dislocation",
+   "held_arc": "on the staircase",
+   "certificate_form": {
+    "4": "1",
+    "23": "1"
+   },
+   "ways": [
+    1
+   ],
+   "seconds": 0.4
+  },
+  {
+   "way": 3,
+   "turns": [
+    36,
+    73,
+    83
+   ],
+   "multipliers": [
+    "-1/2",
+    "-1/2",
+    "-1/2"
+   ],
+   "primitive_multipliers": [
+    -1,
+    -1,
+    -1
+   ],
+   "bounded": [
+    1315,
+    1389
+   ],
+   "self_crossings": [
+    1,
+    0,
+    0
+   ],
+   "mutual_crossings": {
+    "36-73": 2,
+    "36-83": 2,
+    "73-83": 0
+   },
+   "around": [
+    71.83,
+    10.17,
+    58.37
+   ],
+   "simple": [
+    false,
+    true,
+    true
+   ],
+   "regions": 7,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "-2",
+     "index": 1,
+     "singular": [
+      [
+       175,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "-1",
+     "index": 0,
+     "singular": []
+    },
+    {
+     "winding": "-1",
+     "index": -1,
+     "singular": [
+      [
+       179,
+       5
+      ],
+      [
+       180,
+       3
+      ],
+      [
+       173,
+       5
+      ],
+      [
+       176,
+       5
+      ],
+      [
+       178,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       172,
+       3
+      ]
+     ]
+    }
+   ],
+   "staircases": [],
+   "mechanism": "no staircase found",
+   "certificate_form": {
+    "1315": "1/2",
+    "1373": "1/2",
+    "1389": "1/2",
+    "1396": "1/2",
+    "1397": "1/2",
+    "1401": "1/2",
+    "1466": "1/2",
+    "2046": "1/2"
+   },
+   "ways": [
+    3
+   ],
+   "seconds": 0.1
+  },
+  {
+   "way": 4,
+   "turns": [
+    82,
+    117,
+    124
+   ],
+   "multipliers": [
+    "1",
+    "-1",
+    "1"
+   ],
+   "primitive_multipliers": [
+    1,
+    -1,
+    1
+   ],
+   "bounded": [
+    1755
+   ],
+   "self_crossings": [
+    9,
+    0,
+    6
+   ],
+   "mutual_crossings": {
+    "82-117": 4,
+    "82-124": 16,
+    "117-124": 4
+   },
+   "around": [
+    442.38,
+    35.21,
+    408.02
+   ],
+   "simple": [
+    false,
+    true,
+    false
+   ],
+   "regions": 15,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       217,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "-1",
+     "index": 1,
+     "singular": [
+      [
+       228,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "-1",
+     "index": 0,
+     "singular": []
+    }
+   ],
+   "staircases": [
+    {
+     "from": 217,
+     "to": 228,
+     "valences": [
+      3,
+      3
+     ],
+     "arcs": [
+      1755,
+      1829
+     ],
+     "length": 1.684,
+     "held_arc_on_it": [
+      1755
+     ],
+     "sign": 1
+    },
+    {
+     "from": 217,
+     "to": 228,
+     "valences": [
+      3,
+      3
+     ],
+     "arcs": [
+      1751,
+      1827
+     ],
+     "length": 1.684,
+     "held_arc_on_it": [],
+     "sign": 1
+    }
+   ],
+   "mechanism": "exchange",
+   "held_arc": "on the staircase",
+   "certificate_form": {
+    "1755": "1",
+    "1835": "1"
+   },
+   "ways": [
+    4
+   ],
+   "seconds": 0.1
+  },
+  {
+   "way": 5,
+   "turns": [
+    137,
+    196,
+    208
+   ],
+   "multipliers": [
+    "1/5",
+    "1/5",
+    "1/5"
+   ],
+   "primitive_multipliers": [
+    1,
+    1,
+    1
+   ],
+   "bounded": [
+    726,
+    778,
+    784,
+    917
+   ],
+   "self_crossings": [
+    1,
+    7,
+    2
+   ],
+   "mutual_crossings": {
+    "137-196": 10,
+    "137-208": 8,
+    "196-208": 12
+   },
+   "around": [
+    282.37,
+    590.35,
+    309.23
+   ],
+   "simple": [
+    false,
+    false,
+    false
+   ],
+   "regions": 13,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "2",
+     "index": 1,
+     "singular": [
+      [
+       90,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "2",
+     "index": 1,
+     "singular": [
+      [
+       100,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "1",
+     "index": 0,
+     "singular": []
+    },
+    {
+     "winding": "-1",
+     "index": 1,
+     "singular": [
+      [
+       91,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       99,
+       3
+      ]
+     ]
+    }
+   ],
+   "staircases": [],
+   "mechanism": "no staircase found",
+   "certificate_form": {
+    "726": "2/5",
+    "734": "1/5",
+    "778": "1/5",
+    "784": "1/5",
+    "785": "1/5",
+    "917": "1/5"
+   },
+   "ways": [
+    5
+   ],
+   "seconds": 0.2
+  },
+  {
+   "way": 5,
+   "turns": [
+    130,
+    196,
+    208
+   ],
+   "multipliers": [
+    "1/5",
+    "1/5",
+    "1/5"
+   ],
+   "primitive_multipliers": [
+    1,
+    1,
+    1
+   ],
+   "bounded": [
+    726,
+    778,
+    784,
+    917
+   ],
+   "self_crossings": [
+    1,
+    7,
+    2
+   ],
+   "mutual_crossings": {
+    "130-196": 10,
+    "130-208": 8,
+    "196-208": 12
+   },
+   "around": [
+    282.37,
+    590.35,
+    309.23
+   ],
+   "simple": [
+    false,
+    false,
+    false
+   ],
+   "regions": 13,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "2",
+     "index": 1,
+     "singular": [
+      [
+       90,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "2",
+     "index": 1,
+     "singular": [
+      [
+       100,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "1",
+     "index": 0,
+     "singular": []
+    },
+    {
+     "winding": "1",
+     "index": 0,
+     "singular": []
+    },
+    {
+     "winding": "-1",
+     "index": 1,
+     "singular": [
+      [
+       91,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       99,
+       3
+      ]
+     ]
+    }
+   ],
+   "staircases": [],
+   "mechanism": "no staircase found",
+   "certificate_form": {
+    "726": "2/5",
+    "734": "1/5",
+    "778": "1/5",
+    "784": "1/5",
+    "785": "1/5",
+    "917": "1/5"
+   },
+   "ways": [
+    5
+   ],
+   "seconds": 0.2
+  },
+  {
+   "way": 6,
+   "turns": [
+    65,
+    103,
+    107
+   ],
+   "multipliers": [
+    "1",
+    "-1",
+    "-1"
+   ],
+   "primitive_multipliers": [
+    1,
+    -1,
+    -1
+   ],
+   "bounded": [
+    1580
+   ],
+   "self_crossings": [
+    35,
+    0,
+    28
+   ],
+   "mutual_crossings": {
+    "65-103": 8,
+    "65-107": 64,
+    "103-107": 6
+   },
+   "around": [
+    309.99,
+    19.44,
+    290.39
+   ],
+   "simple": [
+    false,
+    true,
+    false
+   ],
+   "regions": 36,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "1",
+     "index": 0,
+     "singular": []
+    },
+    {
+     "winding": "1",
+     "index": -1,
+     "singular": [
+      [
+       192,
+       5
+      ]
+     ]
+    },
+    {
+     "winding": "1",
+     "index": 1,
+     "singular": [
+      [
+       196,
+       3
+      ]
+     ]
+    }
+   ],
+   "staircases": [
+    {
+     "from": 192,
+     "to": 196,
+     "valences": [
+      5,
+      3
+     ],
+     "arcs": [
+      1544,
+      1580
+     ],
+     "length": 0.814,
+     "held_arc_on_it": [
+      1580
+     ],
+     "sign": 1
+    },
+    {
+     "from": 192,
+     "to": 196,
+     "valences": [
+      5,
+      3
+     ],
+     "arcs": [
+      1546,
+      1578
+     ],
+     "length": 0.814,
+     "held_arc_on_it": [],
+     "sign": 1
+    }
+   ],
+   "mechanism": "dislocation",
+   "held_arc": "on the staircase",
+   "certificate_form": {
+    "1578": "1",
+    "1580": "1"
+   },
+   "ways": [
+    6
+   ],
+   "seconds": 3.5
+  },
+  {
+   "way": 6,
+   "turns": [
+    5,
+    6,
+    7,
+    74
+   ],
+   "multipliers": [
+    "-5",
+    "-2",
+    "-1",
+    "-1"
+   ],
+   "primitive_multipliers": [
+    -5,
+    -2,
+    -1,
+    -1
+   ],
+   "bounded": [
+    85
+   ],
+   "self_crossings": [
+    0,
+    0,
+    1,
+    14
+   ],
+   "mutual_crossings": {
+    "5-6": 2,
+    "5-7": 4,
+    "5-74": 4,
+    "6-7": 2,
+    "6-74": 10,
+    "7-74": 22
+   },
+   "around": [
+    5.24,
+    232.82,
+    244.44,
+    265.29
+   ],
+   "simple": [
+    true,
+    true,
+    false,
+    false
+   ],
+   "regions": 15,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "-2",
+     "index": 0,
+     "singular": []
+    },
+    {
+     "winding": "-1",
+     "index": -1,
+     "singular": [
+      [
+       7,
+       5
+      ]
+     ]
+    },
+    {
+     "winding": "-1",
+     "index": 0,
+     "singular": []
+    },
+    {
+     "winding": "-1",
+     "index": 0,
+     "singular": []
+    },
+    {
+     "winding": "1",
+     "index": 0,
+     "singular": []
+    },
+    {
+     "winding": "-1",
+     "index": 1,
+     "singular": [
+      [
+       9,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "-1",
+     "index": 0,
+     "singular": []
+    },
+    {
+     "winding": "-1",
+     "index": 0,
+     "singular": []
+    }
+   ],
+   "staircases": [],
+   "mechanism": "no staircase found",
+   "certificate_form": {
+    "12": "2",
+    "50": "1",
+    "57": "2",
+    "62": "1",
+    "84": "1",
+    "85": "1"
+   },
+   "ways": [
+    6
+   ],
+   "seconds": 0.3
+  },
+  {
+   "way": 7,
+   "turns": [
+    168,
+    192,
+    194,
+    196
+   ],
+   "multipliers": [
+    "-1",
+    "-1",
+    "1",
+    "1"
+   ],
+   "primitive_multipliers": [
+    -1,
+    -1,
+    1,
+    1
+   ],
+   "bounded": [
+    1580
+   ],
+   "self_crossings": [
+    0,
+    55,
+    4,
+    39
+   ],
+   "mutual_crossings": {
+    "168-192": 12,
+    "168-194": 4,
+    "168-196": 10,
+    "192-194": 30,
+    "192-196": 94,
+    "194-196": 24
+   },
+   "around": [
+    19.44,
+    348.03,
+    49.79,
+    317.84
+   ],
+   "simple": [
+    true,
+    false,
+    false,
+    false
+   ],
+   "regions": 44,
+   "winding_inconsistencies": 0,
+   "between": [
+    {
+     "winding": "-1",
+     "index": 1,
+     "singular": [
+      [
+       196,
+       3
+      ]
+     ]
+    },
+    {
+     "winding": "-1",
+     "index": 0,
+     "singular": []
+    },
+    {
+     "winding": "-1",
+     "index": -1,
+     "singular": [
+      [
+       192,
+       5
+      ]
+     ]
+    },
+    {
+     "winding": "-1",
+     "index": 0,
+     "singular": []
+    }
+   ],
+   "staircases": [
+    {
+     "from": 192,
+     "to": 196,
+     "valences": [
+      5,
+      3
+     ],
+     "arcs": [
+      1544,
+      1580
+     ],
+     "length": 0.814,
+     "held_arc_on_it": [
+      1580
+     ],
+     "sign": 1
+    },
+    {
+     "from": 192,
+     "to": 196,
+     "valences": [
+      5,
+      3
+     ],
+     "arcs": [
+      1546,
+      1578
+     ],
+     "length": 0.814,
+     "held_arc_on_it": [],
+     "sign": 1
+    }
+   ],
+   "mechanism": "dislocation",
+   "held_arc": "on the staircase",
+   "certificate_form": {
+    "1578": "1",
+    "1580": "1"
+   },
+   "ways": [
+    7
+   ],
+   "seconds": 0.3
+  }
+ ]
+}
