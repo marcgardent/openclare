@@ -817,7 +817,7 @@ class OPENCLARE_TL_draw_curve(bpy.types.WorkSpaceTool):
     bl_idname = "openclare.draw_curve"
     bl_label = "Draw Curve (openclare)"
     bl_description = (
-        "Draw curves straight on the selected mesh, for its result to have edges along them: forward to "
+        "Experimental. Draw curves straight on the selected mesh, for its result to have edges along them: forward to "
         "draw, back along the stroke to undo, let go at its start to close it, from an end of a curve to "
         "take it up again"
     )
@@ -1115,7 +1115,7 @@ class OPENCLARE_TL_cut_volume(bpy.types.WorkSpaceTool):
     bl_idname = "openclare.cut_volume"
     bl_label = "Cut Volume (openclare)"
     bl_description = (
-        "Draw a line across a limb, from one side to the other: a curve goes all round it where "
+        "Experimental. Draw a line across a limb, from one side to the other: a curve goes all round it where "
         "the line cut it. The loop is shown while the line is drawn"
     )
     bl_icon = "ops.mesh.knife_tool"
@@ -1132,6 +1132,17 @@ class OPENCLARE_TL_cut_volume(bpy.types.WorkSpaceTool):
 TOOL_IDS = {OPENCLARE_TL_draw_curve.bl_idname, OPENCLARE_TL_cut_volume.bl_idname}
 
 
+def tools(shown):
+    """Draw Curve and Cut Volume put in the toolbar, one button, or taken
+    out: they are experimental (see `experimental`)."""
+    if shown:
+        bpy.utils.register_tool(OPENCLARE_TL_draw_curve, separator=True, group=True)
+        bpy.utils.register_tool(OPENCLARE_TL_cut_volume, after={OPENCLARE_TL_draw_curve.bl_idname})
+    else:
+        bpy.utils.unregister_tool(OPENCLARE_TL_cut_volume)
+        bpy.utils.unregister_tool(OPENCLARE_TL_draw_curve)
+
+
 def register():
     bpy.utils.register_class(OPENCLARE_OT_draw_curve)
     bpy.utils.register_class(OPENCLARE_OT_cut_volume)
@@ -1139,8 +1150,6 @@ def register():
     bpy.utils.register_class(OPENCLARE_OT_snap)
     bpy.utils.register_class(OPENCLARE_MT_snap)
     CURSOR.append(bpy.types.WindowManager.draw_cursor_add(draw_cursor, (), "VIEW_3D", "WINDOW"))
-    bpy.utils.register_tool(OPENCLARE_TL_draw_curve, separator=True, group=True)
-    bpy.utils.register_tool(OPENCLARE_TL_cut_volume, after={OPENCLARE_TL_draw_curve.bl_idname})
     if not bpy.app.timers.is_registered(follow_cursor):
         bpy.app.timers.register(follow_cursor, first_interval=LOOK_FOR_CURSOR, persistent=True)
 
@@ -1149,8 +1158,6 @@ def unregister():
     if bpy.app.timers.is_registered(follow_cursor):
         bpy.app.timers.unregister(follow_cursor)
     CURSORS.clear()
-    bpy.utils.unregister_tool(OPENCLARE_TL_cut_volume)
-    bpy.utils.unregister_tool(OPENCLARE_TL_draw_curve)
     while CURSOR:
         bpy.types.WindowManager.draw_cursor_remove(CURSOR.pop())
     bpy.utils.unregister_class(OPENCLARE_MT_snap)

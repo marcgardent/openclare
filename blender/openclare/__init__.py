@@ -20,7 +20,7 @@ import mathutils
 from bl_operators.presets import AddPresetBase
 from bl_ui.utils import PresetPanel
 
-from . import draw, engine, extend, poles, preview
+from . import draw, engine, experimental, extend, poles, preview
 
 PRESETS = [
     ("organic", "Organic", "Sculpts and characters: edges follow the shape closely, quads are smaller where it bends"),
@@ -176,6 +176,7 @@ def analysis_key(settings, owner, evaluated_mesh):
 
 def shape_of(settings):
     """The settings of the shape as the engine takes them."""
+    settings = experimental.effective(settings)
     return {
         "adaptivity": round(settings.adaptive_size / 100.0, 6),
         "quads_around": settings.quads_around,
@@ -431,7 +432,10 @@ class OpenclareSettings(bpy.types.PropertyGroup):
             (
                 "SIMULATION",
                 "Simulation",
-                "Triangles close to equilateral, made by openclare: for cloth and soft bodies, an even surface",
+                "Experimental. Triangles close to equilateral, made by openclare: for cloth and soft bodies, an even "
+                "surface",
+                experimental.ICON,
+                0,
             ),
             (
                 "SHAPE",
@@ -439,6 +443,8 @@ class OpenclareSettings(bpy.types.PropertyGroup):
                 "Triangles that keep closest to the shape, stretched where it needs them, made by Blender's "
                 "Decimate (Collapse): for printing and collision meshes. Hard edges, curves and materials are not "
                 "followed",
+                "NONE",
+                1,
             ),
         ],
         default="SIMULATION",
@@ -452,12 +458,16 @@ class OpenclareSettings(bpy.types.PropertyGroup):
                 "COUNT",
                 "Number",
                 "A number of quads: the shape says where they are smaller, and the number is kept",
+                "NONE",
+                0,
             ),
             (
                 "SIZE",
                 "Sizes",
-                "The largest and the smallest quad: the shape says which where, and the number of quads is "
-                "what that makes",
+                "Experimental. The largest and the smallest quad: the shape says which where, and the number of "
+                "quads is what that makes",
+                experimental.ICON,
+                1,
             ),
         ],
         default="COUNT",
@@ -527,7 +537,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         options=set(),
         name="Quads Around Thin Parts",
         description=(
-            "Fewest quads that go round a thin part, a finger or the tip of an ear: smaller quads there and "
+            "Experimental. Fewest quads that go round a thin part, a finger or the tip of an ear: smaller quads there and "
             "larger elsewhere, for the part to keep its volume instead of coming out flat. 0 does not look "
             "at thickness"
         ),
@@ -581,7 +591,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         options=set(),
         name="Follow Curvature",
         description=(
-            "How strongly the edges are drawn along the directions in which the shape bends, against how "
+            "Experimental. How strongly the edges are drawn along the directions in which the shape bends, against how "
             "smoothly they flow. 0 ignores the curvature; higher follows the shape more closely, with more "
             "irregular vertices"
         ),
@@ -595,7 +605,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         options=set(),
         name="Fewer Irregular Vertices",
         description=(
-            "Irregular vertices closer than this many quads to one of the opposite kind are cancelled with "
+            "Experimental. Irregular vertices closer than this many quads to one of the opposite kind are cancelled with "
             "it. 0 keeps them all; higher gives fewer, and edges that follow the shape a little less: for "
             "meshes meant to deform"
         ),
@@ -609,7 +619,7 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         options=set(),
         name="Volume Fit",
         description=(
-            "How far the vertices leave the surface, at the very end, for the mesh to keep the volume of the "
+            "Experimental. How far the vertices leave the surface, at the very end, for the mesh to keep the volume of the "
             "shape. 0 leaves them on the surface, where the faces run under it wherever it bulges; 1 puts "
             "as much of the mesh above the surface as below"
         ),
@@ -844,7 +854,7 @@ def engine_settings_of(original, evaluated, source, write=True):
     painted, if any, on `source`, the mesh of `evaluated`, `original` as it
     is seen. Sizes asked for and none set are set from the object, and kept
     in its settings unless `write` is false."""
-    settings = original.openclare
+    settings = experimental.effective(original.openclare)
     engine_settings = {"quads": settings.quads, **shape_of(settings)}
     if settings.target == "SIZE":
         # Lengths of the scene, where the engine is given the mesh as the
@@ -1176,8 +1186,8 @@ STAGES = 9
 
 
 class OPENCLARE_OT_analyse(bpy.types.Operator):
-    """Measure what the shape asks for, and propose a largest and a smallest quad: how many quads any sizes
-    make is then shown at once"""
+    """Experimental. Measure what the shape asks for, and propose a largest and a smallest quad: how many quads
+    any sizes make is then shown at once"""
 
     bl_idname = "object.openclare_analyse"
     bl_label = "Analyse"
@@ -1278,8 +1288,8 @@ def write_weights(owner, name, weights):
 
 
 class OPENCLARE_OT_density_from_shape(bpy.types.Operator):
-    """Write the density the shape calls for (Adaptive Size, thin parts) as a vertex group, to paint on top in
-    Weight Paint: made the Density, with Adaptive Size switched off for the shape not to count twice"""
+    """Experimental. Write the density the shape calls for (Adaptive Size, thin parts) as a vertex group, to paint
+    on top in Weight Paint: made the Density, with Adaptive Size switched off for the shape not to count twice"""
 
     bl_idname = "object.openclare_density_from_shape"
     bl_label = "Density from Shape"
@@ -1373,6 +1383,7 @@ REPORT = "openclare_report"
 
 def decimating(settings):
     """Whether `settings` ask for Blender's Decimate rather than the engine."""
+    settings = experimental.effective(settings)
     return settings.output == "TRIANGLES" and settings.triangles_for == "SHAPE"
 
 
@@ -1463,12 +1474,14 @@ class Remeshing:
         source = evaluated.to_mesh()
         try:
             engine_settings, density = engine_settings_of(original, evaluated, source)
-            self.curves, marks = curves_of(original)
+            # Curves and poles are experimental: hidden, there are none.
+            self.curves, marks = curves_of(original) if experimental.shown() else ([], [])
             given = engine_input(
                 source, BASE_PRESET, engine_settings, density, settings.export_materials, copy,
                 sharp=settings.use_marked_sharp, stretch=stretch_of(original), curves=self.curves, curve_marks=marks,
                 sharp_edges=settings.export_sharp_edges, creases=settings.export_creases,
-                asked=extend.asked(original), poles=poles.placed(original.data, stretch_of(original)),
+                asked=extend.asked(original),
+                poles=poles.placed(original.data, stretch_of(original)) if experimental.shown() else [],
             )
         except (engine.EngineError, ValueError) as error:
             evaluated.to_mesh_clear()
@@ -2026,17 +2039,20 @@ class OPENCLARE_PT_panel(DataPanel, bpy.types.Panel):
         layout.use_property_split = True
         layout.use_property_decorate = False
         settings = owner.openclare
+        shown = experimental.shown()
         layout.prop(settings, "output", expand=True)
         decimate = decimating(settings)
         if settings.output == "TRIANGLES":
-            layout.prop(settings, "triangles_for", expand=True)
+            if shown:
+                layout.prop(settings, "triangles_for", expand=True)
             if decimate:
                 # The best there is for it is Blender's own: it is used.
                 layout.label(text="By Blender's Decimate (Collapse): closest to the shape", icon="MOD_DECIM")
-        target = layout.row()
-        target.active = not decimate
-        target.prop(settings, "target", expand=True)
-        if settings.target == "SIZE" and not decimate:
+        if shown:
+            target = layout.row()
+            target.active = not decimate
+            target.prop(settings, "target", expand=True)
+        if shown and settings.target == "SIZE" and not decimate:
             layout.operator(OPENCLARE_OT_analyse.bl_idname, icon="VIEWZOOM")
             sizes = layout.column(align=True)
             sizes.prop(settings, "largest_quad")
@@ -2071,7 +2087,8 @@ class OPENCLARE_PT_panel(DataPanel, bpy.types.Panel):
         factor.enabled = bool(settings.density_group)
         factor.active = not decimate
         factor.prop(settings, "density_factor")
-        column.operator(OPENCLARE_OT_density_from_shape.bl_idname, icon="MOD_VERTEX_WEIGHT")
+        if shown:
+            column.operator(OPENCLARE_OT_density_from_shape.bl_idname, icon=experimental.ICON)
         # What Decimate does not follow.
         followed = layout.column()
         followed.active = not decimate
@@ -2225,8 +2242,10 @@ class OPENCLARE_PT_shape(DataPanel, bpy.types.Panel):
         settings = object_to_remesh(context).openclare
         # Decimate reads none of the shape.
         layout.active = not decimating(settings)
+        shown = experimental.shown()
         layout.prop(settings, "adaptive_size", slider=True)
-        layout.prop(settings, "quads_around")
+        if shown:
+            layout.prop(settings, "quads_around", icon=experimental.ICON)
         column = layout.column(heading="Hard Edges")
         row = column.row(align=True)
         row.prop(settings, "use_hard_edges", text="")
@@ -2258,9 +2277,10 @@ class OPENCLARE_PT_shape(DataPanel, bpy.types.Panel):
         # What only the quads have: the triangles follow no direction.
         quads_only = layout.column()
         quads_only.active = settings.output == "QUADS"
-        quads_only.prop(settings, "follow_curvature")
-        quads_only.prop(settings, "fewer_irregular")
-        quads_only.prop(settings, "volume_fit", slider=True)
+        if shown:
+            quads_only.prop(settings, "follow_curvature", icon=experimental.ICON)
+            quads_only.prop(settings, "fewer_irregular", icon=experimental.ICON)
+            quads_only.prop(settings, "volume_fit", slider=True, icon=experimental.ICON)
         layout.prop(settings, "shading", expand=True)
 
 
@@ -2274,7 +2294,10 @@ class OPENCLARE_PT_curves(DataPanel, bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return is_source(context)
+        return is_source(context) and experimental.shown()
+
+    def draw_header(self, context):
+        self.layout.label(text="", icon=experimental.ICON)
 
     def draw(self, context):
         layout = self.layout
@@ -2304,7 +2327,10 @@ class OPENCLARE_PT_poles(DataPanel, bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return is_source(context)
+        return is_source(context) and experimental.shown()
+
+    def draw_header(self, context):
+        self.layout.label(text="", icon=experimental.ICON)
 
     def draw(self, context):
         layout = self.layout
@@ -2330,10 +2356,10 @@ class OPENCLARE_PT_curve(DataPanel, bpy.types.Panel):
     @classmethod
     def poll(cls, context):
         drawn = getattr(context, "object", None)
-        return drawn is not None and drawn.type == "CURVE"
+        return drawn is not None and drawn.type == "CURVE" and experimental.shown()
 
     def draw_header(self, context):
-        self.layout.label(text="", icon="MOD_REMESH")
+        self.layout.label(text="", icon=experimental.ICON)
 
     def draw(self, context):
         layout = self.layout
@@ -2386,6 +2412,7 @@ def register():
     preview.register()
     draw.register()
     poles.register()
+    experimental.register(draw.tools, poles.tools)
     bpy.types.Object.openclare = bpy.props.PointerProperty(type=OpenclareSettings)
     bpy.types.Object.openclare_curve = bpy.props.PointerProperty(type=OpenclareCurveSettings)
     # Where files of 0.1 kept the settings: read once, then given to objects.
@@ -2413,6 +2440,7 @@ def register():
 def unregister():
     if RUNNING is not None:
         RUNNING.stop.set()
+    experimental.unregister()
     preview.unregister()
     draw.unregister()
     poles.unregister()

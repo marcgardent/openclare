@@ -24,6 +24,8 @@ import time
 
 import bpy
 
+from . import experimental
+
 # Blender's own colour for the edges marked sharp, a cyan that stands out on
 # the default grey of the solid view, for the edges kept; and an orange red
 # that is partly transparent and thinner, which reads as fainter, for those
@@ -209,7 +211,7 @@ def key_of(owner):
     """What the edges of `owner` depend on: which object, its shape, and its
     settings; its scale too where sizes are asked for, in the units of the
     scene."""
-    settings = owner.openclare
+    settings = experimental.effective(owner.openclare)
     key = shape_key_of(owner) + tuple(getattr(settings, name) for name in WATCHED)
     if settings.target == "SIZE":
         key += tuple(owner.matrix_world.to_scale())
