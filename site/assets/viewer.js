@@ -13,7 +13,13 @@ const WORDS = {
     remesher: "Remesher",
     budget: "Quads asked for",
     handmade: "Modelled by hand",
-    faces: (n) => `${n.toLocaleString("en")} faces`,
+    count: (n, one, many) => `${n.toLocaleString("en")} ${n === 1 ? one : many}`,
+    quads: ["quad", "quads"],
+    faces: ["face", "faces"],
+    vertices: ["vertex", "vertices"],
+    poles: ["pole", "poles"],
+    closed: ["closed loop", "closed loops"],
+    spiral: ["spiral", "spirals"],
     run: (date) => `bench run of ${date}`,
     reset: "Reset the view",
     help: "Drag to turn, scroll or pinch to zoom, right-drag or two fingers to move.",
@@ -28,7 +34,13 @@ const WORDS = {
     remesher: "Remailleur",
     budget: "Quads demandés",
     handmade: "Modélisé à la main",
-    faces: (n) => `${n.toLocaleString("fr").replace(/ | /g, " ")} faces`,
+    count: (n, one, many) => `${n.toLocaleString("fr").replace(/ | /g, " ")} ${n <= 1 ? one : many}`,
+    quads: ["quad", "quads"],
+    faces: ["face", "faces"],
+    vertices: ["sommet", "sommets"],
+    poles: ["pôle", "pôles"],
+    closed: ["boucle fermée", "boucles fermées"],
+    spiral: ["spirale", "spirales"],
     run: (date) => `passage du banc du ${date}`,
     reset: "Revenir à la vue de départ",
     help: "Glisser pour tourner, molette ou pincement pour zoomer, clic droit ou deux doigts pour déplacer.",
@@ -39,19 +51,26 @@ const WORDS = {
   },
 };
 
-const NAMES = { openclare: "openclare", quadriflow: "QuadriFlow (Blender)", autoremesher: "AutoRemesher" };
+const NAMES = {
+  openclare: "openclare",
+  quadriflow: "QuadriFlow (Blender)",
+  autoremesher: "AutoRemesher",
+  "instant-meshes-jakob": "Instant Meshes",
+  "quadwild-bimdf": "QuadWild-BiMDF",
+};
 
 function decode(buffer) {
   const view = new DataView(buffer);
   const magic = String.fromCharCode(...new Uint8Array(buffer, 0, 4));
-  if (magic !== "OCQM" || view.getUint32(4, true) !== 1) throw new Error("not an .ocqm mesh");
+  if (magic !== "OCQM" || view.getUint32(4, true) !== 2) throw new Error("not an .ocqm mesh");
   const short = (view.getUint32(8, true) & 1) === 1;
   const vertices = view.getUint32(12, true);
   const faces = view.getUint32(16, true);
   const corners = view.getUint32(20, true);
-  const low = [0, 1, 2].map((i) => view.getFloat32(24 + 4 * i, true));
-  const high = [0, 1, 2].map((i) => view.getFloat32(36 + 4 * i, true));
-  let offset = 48;
+  const edges = view.getUint32(24, true);
+  const low = [0, 1, 2].map((i) => view.getFloat32(28 + 4 * i, true));
+  const high = [0, 1, 2].map((i) => view.getFloat32(40 + 4 * i, true));
+  let offset = 52;
   const quantized = new Uint16Array(buffer.slice(offset, offset + 6 * vertices));
   offset += 6 * vertices;
   const sizes = new Uint8Array(buffer, offset, faces);
@@ -60,6 +79,10 @@ function decode(buffer) {
   const indices = short
     ? new Uint16Array(buffer.slice(offset, offset + 2 * corners))
     : new Uint32Array(buffer.slice(offset, offset + 4 * corners));
+  offset += (short ? 2 : 4) * corners;
+  // The valence of each pole (0 elsewhere), and what the loop of each edge does.
+  const valences = new Uint8Array(buffer, offset, vertices);
+  const loops = new Uint8Array(buffer, offset + vertices, edges);
   const positions = new Float32Array(3 * vertices);
   for (let v = 0; v < vertices; v++) {
     for (let axis = 0; axis < 3; axis++) {
@@ -67,14 +90,39 @@ function decode(buffer) {
       positions[3 * v + axis] = low[axis] + (quantized[3 * v + axis] / 0xffff) * span;
     }
   }
-  return { positions, sizes, indices, faces };
+  return { positions, sizes, indices, faces, valences, loops };
 }
 
-// Triangles for the shading (a fan in each face), and the edges of the faces
-// for the lines: the quads are drawn, not their triangles.
+// The codes of the loop of an edge in an .ocqm (scripts/viewer_meshes.py).
+const CLOSED = 1;
+const SPIRAL = 2;
+
+// A pole's mark, its valence told by its shape as well as said in the
+// legend: a disc for 3, a ring for 5, a square for the others (2, 6 and more).
+const SHAPE = (valence) => (valence === 3 ? "disc" : valence === 5 ? "ring" : "square");
+function mark(THREE, shape) {
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 32;
+  const context = canvas.getContext("2d");
+  context.fillStyle = context.strokeStyle = "#ffffff";
+  context.lineWidth = 7;
+  context.beginPath();
+  if (shape === "square") context.rect(5, 5, 22, 22);
+  else context.arc(16, 16, shape === "ring" ? 11.5 : 13, 0, 2 * Math.PI);
+  if (shape === "ring") context.stroke();
+  else context.fill();
+  return new THREE.CanvasTexture(canvas);
+}
+
+// Triangles for the shading (a fan in each face), the edges of the faces for
+// the lines (the quads are drawn, not their triangles), those of the loops
+// that close or spiral, and the poles by shape. The edges come in the order of
+// the format: as first met going round the faces.
 function build(THREE, mesh, up) {
   const triangles = [];
   const edges = [];
+  const closed = [];
+  const spiral = [];
   const seen = new Set();
   const count = mesh.positions.length / 3;
   let corner = 0;
@@ -88,8 +136,11 @@ function build(THREE, mesh, up) {
       const b = face[(i + 1) % size];
       const key = a < b ? a * count + b : b * count + a;
       if (!seen.has(key)) {
+        const loop = mesh.loops[seen.size];
         seen.add(key);
         edges.push(a, b);
+        if (loop === CLOSED) closed.push(a, b);
+        if (loop === SPIRAL) spiral.push(a, b);
       }
     }
   }
@@ -98,10 +149,14 @@ function build(THREE, mesh, up) {
   surface.setIndex(triangles);
   // A y-up model stands as Blender stands it for the pictures: z up.
   if (up === "y") surface.rotateX(Math.PI / 2);
-  const lines = new THREE.BufferGeometry();
-  lines.setAttribute("position", surface.getAttribute("position"));
-  lines.setIndex(edges);
-  return { surface, lines };
+  const position = surface.getAttribute("position");
+  const segments = (pairs) => new THREE.BufferGeometry().setAttribute("position", position).setIndex(pairs);
+  const poles = {};
+  mesh.valences.forEach((valence, v) => {
+    if (valence) (poles[SHAPE(valence)] ||= []).push(v);
+  });
+  const points = Object.fromEntries(Object.entries(poles).map(([shape, list]) => [shape, segments(list)]));
+  return { surface, lines: segments(edges), closed: segments(closed), spiral: segments(spiral), points };
 }
 
 async function start(root) {
@@ -167,13 +222,30 @@ async function start(root) {
   renderer.domElement.setAttribute("aria-label", words.canvas);
   stage.append(renderer.domElement);
 
+  // The layers drawn over the mesh, each box its legend and its count.
+  const layers = document.createElement("div");
+  layers.className = "viewer-layers";
+  const layer = (name) => {
+    const label = document.createElement("label");
+    const box = Object.assign(document.createElement("input"), { type: "checkbox", checked: true });
+    const text = document.createElement("span");
+    label.append(box, text);
+    label.dataset.layer = name;
+    layers.append(label);
+    box.addEventListener("change", () => {
+      if (shown) for (const object of shown.children) if (object.userData.layer === name) object.visible = box.checked;
+      draw();
+    });
+    return { box, text };
+  };
+  const toggles = { poles: layer("poles"), closed: layer("closed"), spiral: layer("spiral") };
   const info = document.createElement("p");
   info.className = "viewer-info";
   const help = document.createElement("p");
   help.className = "viewer-help";
   help.textContent = words.help;
   status.remove();
-  root.append(bar, stage, info, help);
+  root.append(bar, stage, layers, info, help);
 
   const style = getComputedStyle(root);
   const scene = new THREE.Scene();
@@ -198,6 +270,20 @@ async function start(root) {
     polygonOffsetUnits: 1,
   });
   const lineMaterial = new THREE.LineBasicMaterial({ color: style.getPropertyValue("--viewer-edge").trim() || "#101828" });
+  // Teal what closes, vermillion what breaks the regularity: the colours of
+  // the site. They are drawn after the edges they lie on, and cover them.
+  const teal = style.getPropertyValue("--viewer-closed").trim() || "#0A8F8A";
+  const hot = style.getPropertyValue("--viewer-hot").trim() || "#D4572A";
+  const loopMaterials = {
+    closed: new THREE.LineBasicMaterial({ color: teal }),
+    spiral: new THREE.LineBasicMaterial({ color: hot }),
+  };
+  const poleMaterials = Object.fromEntries(
+    ["disc", "ring", "square"].map((shape) => [
+      shape,
+      new THREE.PointsMaterial({ color: hot, map: mark(THREE, shape), size: 11, sizeAttenuation: false, alphaTest: 0.5 }),
+    ]),
+  );
   let index = null;
   let indexUrl = null;
   let view = null;
@@ -254,6 +340,14 @@ async function start(root) {
       if (shown) scene.remove(shown);
       shown = new THREE.Group();
       shown.add(new THREE.Mesh(geometry.surface, surfaceMaterial), new THREE.LineSegments(geometry.lines, lineMaterial));
+      const over = (object, name) => {
+        object.userData.layer = name;
+        object.renderOrder = 1;
+        object.visible = toggles[name].box.checked;
+        shown.add(object);
+      };
+      for (const name of ["closed", "spiral"]) over(new THREE.LineSegments(geometry[name], loopMaterials[name]), name);
+      for (const [shape, points] of Object.entries(geometry.points)) over(new THREE.Points(points, poleMaterials[shape]), "poles");
       scene.add(shown);
       geometry.surface.computeBoundingSphere();
       if (!home) {
@@ -261,7 +355,22 @@ async function start(root) {
         home = geometry.surface.boundingSphere.clone();
         frame(home);
       }
-      info.textContent = `${words.faces(entry.faces)} · ${words.run(entry.run)}`;
+      const count = (n, [one, many]) => words.count(n, one, many);
+      const size = entry.quads === entry.faces ? count(entry.quads, words.quads) : `${count(entry.faces, words.faces)} (${count(entry.quads, words.quads)})`;
+      info.textContent = `${size} · ${count(entry.vertices, words.vertices)} · ${words.run(entry.run)}`;
+      const valences = Object.entries(entry.poles);
+      const poles = valences.reduce((sum, [, n]) => sum + n, 0);
+      toggles.poles.text.replaceChildren(
+        count(poles, words.poles),
+        ...valences.map(([valence, n]) =>
+          Object.assign(document.createElement("span"), { className: `viewer-pole ${SHAPE(Number(valence))}`, textContent: `${number(n)} ×${valence}` }),
+        ),
+      );
+      // A mesh that is not a manifold has no loops measured: no boxes for them.
+      for (const name of ["closed", "spiral"]) {
+        toggles[name].box.parentElement.hidden = !entry.loops;
+        if (entry.loops) toggles[name].text.textContent = count(entry.loops[name], words[name]);
+      }
       draw();
     } catch (error) {
       info.textContent = words.failed;

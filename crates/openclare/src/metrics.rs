@@ -198,6 +198,52 @@ pub fn edge_loops(mesh: &PolyMesh) -> Option<EdgeLoops> {
     manifold.then(|| connectivity.edge_loops(mesh))
 }
 
+/// What an edge loop does, as [`EdgeLoops`] counts it: a loop that spirals
+/// is counted as such even when it closes.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum LoopKind {
+    Closed,
+    Spiral,
+    /// Stops at an irregular vertex.
+    Open,
+    /// Runs from a border to a border.
+    Border,
+}
+
+fn loop_kind(spiral: bool, closed: bool, pole: bool) -> LoopKind {
+    if spiral {
+        LoopKind::Spiral
+    } else if closed {
+        LoopKind::Closed
+    } else if pole {
+        LoopKind::Open
+    } else {
+        LoopKind::Border
+    }
+}
+
+/// What [`measure`] counts of a mesh's singularities and loops, vertex by
+/// vertex and edge by edge, for a viewer to draw.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Layout {
+    /// The irregular vertices off the borders, with their valence: those
+    /// [`Metrics::irregular_vertices`] counts.
+    pub poles: Vec<(u32, usize)>,
+    /// Each edge on a loop, with what its loop does; the edges of a border,
+    /// and of faces that are not quads, are on none. `None` unless the mesh
+    /// is a consistently oriented manifold, as [`Metrics::edge_loops`].
+    pub edges: Option<Vec<([u32; 2], LoopKind)>>,
+    /// How many loops close, spiral, stop and run from border to border:
+    /// those of [`EdgeLoops`]. On a mesh where a loop crosses an edge another
+    /// then takes, both count it, but it is drawn with the last.
+    pub loops: Option<[usize; 4]>,
+}
+
+/// The [`Layout`] of `mesh`. Only its connectivity is read.
+pub fn layout(mesh: &PolyMesh) -> Layout {
+    Connectivity::build(mesh).layout(mesh)
+}
+
 /// Measures `mesh` against the `source` surface it approximates.
 /// `target_faces` is the face count that was asked for, when known.
 pub fn measure(source: &TriMesh, mesh: &PolyMesh, target_faces: Option<usize>) -> Metrics {
@@ -789,6 +835,19 @@ fn chains(edges: &[FeatureEdge]) -> usize {
 
 /// Half-edge view of a polygon mesh. Half-edge `h` leaves `origin[h]` along
 /// its face; `twin` is [`INVALID`] on a boundary.
+/// The edge loops as [`Connectivity::follow_loops`] finds them. Per
+/// half-edge: its loop, whether it runs the way the loop was followed, and
+/// where its edge is along the loop, from 0. Per loop: its edges, whether it
+/// closed, whether an end is on an irregular vertex, and whether it spirals.
+struct Followed {
+    is_quad: Vec<bool>,
+    loop_of: Vec<u32>,
+    forward: Vec<bool>,
+    position: Vec<i64>,
+    loops: Vec<(usize, bool, bool)>,
+    spiral: Vec<bool>,
+}
+
 struct Connectivity {
     origin: Vec<u32>,
     next: Vec<u32>,
@@ -851,6 +910,11 @@ impl Connectivity {
         self.valence[v] != if self.on_boundary[v] { 3 } else { 4 }
     }
 
+    /// An irregular vertex off the borders: what the metrics count.
+    fn is_pole(&self, v: usize) -> bool {
+        self.valence[v] > 0 && !self.on_boundary[v] && self.valence[v] != 4
+    }
+
     fn validity(&self, mesh: &PolyMesh, metrics: &mut Metrics) {
         metrics.non_manifold_edges = self.uses.iter().filter(|&&(_, count)| count > 2).count();
         metrics.boundary_edges = self.uses.iter().filter(|&&(_, count)| count == 1).count();
@@ -859,9 +923,7 @@ impl Connectivity {
     }
 
     fn singularities(&self, mesh: &PolyMesh, metrics: &mut Metrics) {
-        metrics.irregular_vertices = (0..mesh.positions.len())
-            .filter(|&v| self.valence[v] > 0 && !self.on_boundary[v] && self.valence[v] != 4)
-            .count();
+        metrics.irregular_vertices = (0..mesh.positions.len()).filter(|&v| self.is_pole(v)).count();
 
         // In a closed pure quad mesh the valence defects add up to 4 χ per
         // component, so at least 4 |χ| vertices have to be irregular.
@@ -904,6 +966,43 @@ impl Connectivity {
     /// Follows every edge loop and sorts them: closed, spiral, open (at an
     /// irregular vertex) or from border to border.
     fn edge_loops(&self, mesh: &PolyMesh) -> EdgeLoops {
+        let Followed { is_quad, loop_of, forward, position, loops, spiral } = self.follow_loops(mesh);
+        let pitch = self.helices(&is_quad, &loop_of, &forward, &position, &loops);
+        let mut counted = EdgeLoops::default();
+        let all: usize = loops.iter().map(|l| l.0).sum();
+        for (k, &(edges, _, _)) in loops.iter().enumerate() {
+            let Some(pitch) = pitch[k] else { continue };
+            let share = edges as f64 / all.max(1) as f64;
+            counted.helix += 1;
+            counted.helix_share += share;
+            if !spiral[k] {
+                counted.helix_missed += 1;
+                counted.helix_missed_share += share;
+            }
+            if counted.helix_pitch_shares.len() < pitch {
+                counted.helix_pitch_shares.resize(pitch, 0.0);
+            }
+            counted.helix_pitch_shares[pitch - 1] += share;
+        }
+        for (k, &(edges, closed, pole)) in loops.iter().enumerate() {
+            let (count, share) = match loop_kind(spiral[k], closed, pole) {
+                LoopKind::Spiral => (&mut counted.spiral, &mut counted.spiral_share),
+                LoopKind::Closed => (&mut counted.closed, &mut counted.closed_share),
+                LoopKind::Open => {
+                    counted.longest_open = counted.longest_open.max(edges);
+                    (&mut counted.open, &mut counted.open_share)
+                }
+                LoopKind::Border => (&mut counted.border, &mut counted.border_share),
+            };
+            *count += 1;
+            *share += edges as f64 / all.max(1) as f64;
+        }
+        counted
+    }
+
+    /// Each edge's loop, followed straight on through every regular vertex,
+    /// and which loops spiral: see [`EdgeLoops`].
+    fn follow_loops(&self, mesh: &PolyMesh) -> Followed {
         let halves = self.origin.len();
         let is_quad: Vec<bool> = mesh.faces.iter().map(|polygon| polygon.len() == 4).collect();
         let mut odd = vec![false; mesh.positions.len()];
@@ -1011,38 +1110,29 @@ impl Connectivity {
                 e = beyond as usize;
             }
         }
-        let pitch = self.helices(&is_quad, &loop_of, &forward, &position, &loops);
-        let mut counted = EdgeLoops::default();
-        let all: usize = loops.iter().map(|l| l.0).sum();
-        for (k, &(edges, _, _)) in loops.iter().enumerate() {
-            let Some(pitch) = pitch[k] else { continue };
-            let share = edges as f64 / all.max(1) as f64;
-            counted.helix += 1;
-            counted.helix_share += share;
-            if !spiral[k] {
-                counted.helix_missed += 1;
-                counted.helix_missed_share += share;
-            }
-            if counted.helix_pitch_shares.len() < pitch {
-                counted.helix_pitch_shares.resize(pitch, 0.0);
-            }
-            counted.helix_pitch_shares[pitch - 1] += share;
+        Followed { is_quad, loop_of, forward, position, loops, spiral }
+    }
+
+    /// The irregular inner vertices and the loop of each edge: see [`layout`].
+    fn layout(&self, mesh: &PolyMesh) -> Layout {
+        let poles = (0..mesh.positions.len())
+            .filter(|&v| self.is_pole(v))
+            .map(|v| (v as u32, self.valence[v] as usize))
+            .collect();
+        let manifold = self.uses.iter().all(|&(_, count)| count <= 2) && self.misoriented == 0;
+        if !manifold {
+            return Layout { poles, edges: None, loops: None };
         }
-        for (k, &(edges, closed, pole)) in loops.iter().enumerate() {
-            let (count, share) = if spiral[k] {
-                (&mut counted.spiral, &mut counted.spiral_share)
-            } else if closed {
-                (&mut counted.closed, &mut counted.closed_share)
-            } else if pole {
-                counted.longest_open = counted.longest_open.max(edges);
-                (&mut counted.open, &mut counted.open_share)
-            } else {
-                (&mut counted.border, &mut counted.border_share)
-            };
-            *count += 1;
-            *share += edges as f64 / all.max(1) as f64;
-        }
-        counted
+        let Followed { loop_of, loops, spiral, .. } = self.follow_loops(mesh);
+        let kinds: Vec<LoopKind> =
+            loops.iter().zip(&spiral).map(|(&(_, closed, pole), &spiral)| loop_kind(spiral, closed, pole)).collect();
+        let edges = (0..self.origin.len())
+            .filter(|&h| loop_of[h] != INVALID && (h as u32) < self.twin[h])
+            .map(|h| ([self.origin[h], self.head(h as u32)], kinds[loop_of[h] as usize]))
+            .collect();
+        let counted = [LoopKind::Closed, LoopKind::Spiral, LoopKind::Open, LoopKind::Border]
+            .map(|kind| kinds.iter().filter(|&&k| k == kind).count());
+        Layout { poles, edges: Some(edges), loops: Some(counted) }
     }
 
     /// The pitch of each loop that is a helix, `None` for the others: see

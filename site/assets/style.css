@@ -522,6 +522,8 @@ svg.banner { display: block; width: 100%; height: auto; aspect-ratio: 10 / 3; ba
   --viewer-bg: var(--figure-bg);
   --viewer-mesh: #BBCBDC;   /* the colours of the pictures (scripts/render.py) */
   --viewer-edge: #28303F;
+  --viewer-closed: #0A8F8A; /* teal and vermillion of the light theme, on its light ground */
+  --viewer-hot: #D4572A;
   margin: 1.25rem 0 2rem;
 }
 .viewer-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 12px; }
@@ -529,6 +531,18 @@ svg.banner { display: block; width: 100%; height: auto; aspect-ratio: 10 / 3; ba
 .viewer-bar select { min-height: 48px; padding: 0 10px; font: inherit; color: var(--ink); background: var(--surface); border: 1.5px solid var(--ink); }
 .viewer-stage { position: relative; width: 100%; aspect-ratio: 4 / 3; max-height: 75vh; border: 1px solid var(--rule); background: var(--viewer-bg); touch-action: none; }
 .viewer-stage canvas { display: block; width: 100%; height: 100%; }
+.viewer-layers { display: flex; flex-wrap: wrap; gap: 4px 20px; margin-top: 8px; font-family: var(--mono); font-size: 14px; }
+.viewer-layers label { display: inline-flex; align-items: center; gap: 8px; min-height: 32px; cursor: pointer; }
+.viewer-layers label[hidden] { display: none; }
+.viewer-layers input { width: 18px; height: 18px; margin: 0; accent-color: var(--ink); }
+/* Each box is the legend of its layer: a stroke for a loop, the marks of the poles. */
+.viewer-layers [data-layer="closed"] span::before,
+.viewer-layers [data-layer="spiral"] span::before { content: ""; display: inline-block; width: 18px; height: 3px; margin: 0 8px 3px 0; vertical-align: middle; background: var(--viewer-closed); }
+.viewer-layers [data-layer="spiral"] span::before { background: var(--viewer-hot); }
+.viewer-pole { margin-left: 12px; white-space: nowrap; }
+.viewer-pole::before { content: ""; display: inline-block; box-sizing: border-box; width: 10px; height: 10px; margin-right: 5px; vertical-align: -1px; background: var(--viewer-hot); }
+.viewer-pole.disc::before { border-radius: 50%; }
+.viewer-pole.ring::before { border-radius: 50%; background: none; border: 2.5px solid var(--viewer-hot); }
 .viewer-info { margin: 8px 0 0; font-family: var(--mono); font-size: 14px; }
 .viewer-help, .viewer-status { margin: 4px 0 0; color: var(--slate); font-size: 15px; }
 

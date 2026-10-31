@@ -224,6 +224,43 @@ fn edge_loops_wound_together_spiral_too() {
 }
 
 #[test]
+fn the_layout_draws_what_the_metrics_count() {
+    use openclare::metrics::{LoopKind, layout};
+    // The cube: its 8 corners of valence 3, and on the twisted torus the
+    // spiral; each edge of a loop once, as many of each kind as the shares say.
+    for mesh in [primitives::cube_quads(8), twisted_torus(24, 12, 1)] {
+        let metrics = measure(&mesh.triangulated(), &mesh, None);
+        let loops = metrics.edge_loops.clone().unwrap();
+        let drawn = layout(&mesh);
+        assert_eq!(drawn.poles.len(), metrics.irregular_vertices);
+        assert_eq!(drawn.loops, Some([loops.closed, loops.spiral, loops.open, loops.border]));
+        let drawn = drawn.edges.expect("a pure quad manifold");
+        let edges = |kind| drawn.iter().filter(|(_, k)| *k == kind).count() as f64;
+        let all = drawn.len() as f64;
+        assert!((edges(LoopKind::Closed) / all - loops.closed_share).abs() < 1e-12, "{loops:?}");
+        assert!((edges(LoopKind::Spiral) / all - loops.spiral_share).abs() < 1e-12, "{loops:?}");
+        assert!((edges(LoopKind::Open) / all - loops.open_share).abs() < 1e-12, "{loops:?}");
+    }
+    let cube = layout(&primitives::cube_quads(8));
+    assert!(cube.poles.iter().all(|&(_, valence)| valence == 3) && cube.poles.len() == 8);
+    assert_eq!(cube.edges.unwrap().len(), primitives::cube_quads(8).faces.len() * 2);
+    // Three faces on an edge: the poles are counted, the loops are not.
+    let mut fin = primitives::plane_quads(2);
+    fin.positions.push(Vec3::new(0.0, 0.0, 1.0));
+    fin.positions.push(Vec3::new(0.5, 0.0, 1.0));
+    // An edge of the first quad that the second shares: an inner one.
+    let shared = |v: &u32| fin.faces[1].contains(v);
+    let inner: Vec<u32> = fin.faces[0].iter().copied().filter(shared).collect();
+    let (a, b) = (inner[0], inner[1]);
+    let top = fin.positions.len() as u32;
+    fin.faces.push(vec![a, b, top - 1, top - 2]);
+    let metrics = measure(&fin.triangulated(), &fin, None);
+    assert!(metrics.non_manifold_edges > 0 && metrics.edge_loops.is_none());
+    let drawn = layout(&fin);
+    assert_eq!((drawn.poles.len(), drawn.edges, drawn.loops), (metrics.irregular_vertices, None, None));
+}
+
+#[test]
 fn edge_loops_met_again_over_a_cap_are_rings() {
     // On a cube of two quads a side, a strip leaving a ring across goes over
     // the top and meets the ring again within four quads, but the other way
