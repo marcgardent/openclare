@@ -20,7 +20,17 @@ A region that is not a rectangle (not a disc, a corner that is not convex,
 more or fewer than four corners, an arc with the region on both sides) makes
 the instance unusable; `trace` raises `NotRectangles` and says why, and the
 generator counts how often that happens.
+
+On the double of a surface with borders (`quadmesh.double`) the border is
+traced from the start, as the engine cuts along an open border: its edges
+are trail edges of the marker `BORDER`, its vertices occupied, so that every
+trace reaching it stops there, and its vertices of valence `2a != 4` start
+traces as any singular vertex does. `mirrored` then reads the involution the
+mirror induces on the T-mesh, or raises `NotRectangles` if there is none.
 """
+
+# The trace id of the border edges in `trail` (no trace started them).
+BORDER = -1
 
 
 class NotRectangles(Exception):
@@ -37,13 +47,18 @@ class TMesh:
         self.trail = set()    # undirected trace edges (min, max)
 
 
-def motorcycles(quad):
+def motorcycles(quad, border_edges=()):
     """The trace edges, as a dict from undirected quad edge to the traces
     (motorcycles) that ran it; the vertices where a trace stopped; and per
-    trace its start vertex and where it stopped."""
+    trace its start vertex and where it stopped. The `border_edges`
+    (undirected) are trail edges of `BORDER` from the start and their
+    vertices occupied."""
     singular = [v for v in range(len(quad.positions)) if quad.valence[v] != 4]
     occupied = set(singular)
     trail = {}
+    for (a, b) in sorted(border_edges):
+        trail[(min(a, b), max(a, b))] = [BORDER]
+        occupied.update((a, b))
     stopped = set()
     live = []
     starts, ends, first_edges = [], [], []
@@ -75,8 +90,8 @@ def motorcycles(quad):
     return trail, stopped, starts, ends, first_edges
 
 
-def trace(quad):
-    trail, stopped, starts, ends, first_edges = motorcycles(quad)
+def trace(quad, border_edges=()):
+    trail, stopped, starts, ends, first_edges = motorcycles(quad, border_edges)
     T = TMesh(quad)
     T.trace_of_edge = trail
     T.trace_start = starts
@@ -110,6 +125,11 @@ def trace(quad):
                 arc_of_edge[(p, q)] = (k, 0)
                 arc_of_edge[(q, p)] = (k, 1)
     T.arc_of_edge = arc_of_edge
+    for (a, b) in trail:
+        if (a, b) not in arc_of_edge:
+            # A closed run of trace edges without a node (a border circle no
+            # trace reaches).
+            raise NotRectangles(f"the trace edge {a}-{b} is on a loop without a node")
 
     # The patches: regions of quads joined across the edges that are not traces.
     region = [None] * len(quad.faces)
@@ -216,6 +236,50 @@ def trace(quad):
         if None in arc["patches"]:
             raise NotRectangles(f"arc {a} is on the rim of one patch only")
     return T
+
+
+def mirrored(T, mirror, mirror_face):
+    """The involution a mirror of the quad mesh (`mirror` on vertices,
+    `mirror_face` on faces, orientation reversed) induces on the T-mesh: per
+    node, arc and patch its image, and per arc whether the image runs the
+    same way (0, from its first node) or back (1). Raises `NotRectangles`
+    ("not symmetric: ...") when the image of a node is not a node, of an arc
+    not an arc, of a patch not a patch, or the maps are not involutions."""
+    node = []
+    for n, v in enumerate(T.nodes):
+        if mirror[v] not in T.node_of:
+            raise NotRectangles(f"not symmetric: the image of node {n} is not a node")
+        node.append(T.node_of[mirror[v]])
+    arc, direction = [], []
+    for k, a in enumerate(T.arcs):
+        images = {T.arc_of_edge.get((mirror[p], mirror[q])) for (p, q) in a["edges"]}
+        if len(images) != 1 or None in images:
+            raise NotRectangles(f"not symmetric: the image of arc {k} is not an arc")
+        (image, way), = images
+        if len(T.arcs[image]["edges"]) != len(a["edges"]):
+            raise NotRectangles(f"not symmetric: the image of arc {k} is a part of arc {image}")
+        arc.append(image)
+        direction.append(way)
+    patch_of_face = {}
+    for p, P in enumerate(T.patches):
+        for f in P["faces"]:
+            patch_of_face[f] = p
+    patch = []
+    for p, P in enumerate(T.patches):
+        images = {patch_of_face[mirror_face[f]] for f in P["faces"]}
+        if len(images) != 1 or len(T.patches[next(iter(images))]["faces"]) != len(P["faces"]):
+            raise NotRectangles(f"not symmetric: the image of patch {p} is not a patch")
+        patch.append(images.pop())
+    for name, m in (("node", node), ("arc", arc), ("patch", patch)):
+        if any(m[m[i]] != i for i in range(len(m))):
+            raise NotRectangles(f"not symmetric: the {name} map is not an involution")
+    # Orientation reversed: the patch on the left of an arc goes to the right
+    # of its image, run the same way.
+    for k, a in enumerate(T.arcs):
+        left, right = (patch[p] for p in a["patches"])
+        if T.arcs[arc[k]]["patches"] != ([right, left] if direction[k] == 0 else [left, right]):
+            raise NotRectangles(f"not symmetric: the patches of arc {k} do not go to those of its image")
+    return node, arc, direction, patch
 
 
 def node_halves(T):
