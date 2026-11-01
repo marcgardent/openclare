@@ -37,6 +37,45 @@ is corroborated, not proved; one that fails is refuted, and the instance is kept
 7. **The export** (`export.py`): `call-<name>/way-0.json` and `way-0-helices.json`, read by
    `Check/convert.py` and `Check/Main.lean` as the engine's own.
 
+## Surfaces with borders: the double
+
+The Lean model and the steps above need a closed surface. A surface with borders is tested
+through its double: two mirror copies glued along the borders, a closed quad mesh with an
+involution, the mirror, that fixes the border. The engine cuts along an open border from the
+start and stops its traces there (`ALGORITHM.md`, "Open borders"); on the double that is the
+motorcycle graph with the border traced in advance.
+
+1. **The open families** (`quadmesh.py`): a grid as a disc or as a tube (two border circles),
+   the cube without a face, and the convex hull of random points with the faces round 1 to 3
+   vertices removed, the holes not touching; the moves on interior edges only. Catmull–Clark
+   subdivides the border with the rest: a border vertex with `a` quads has the angle `a π/2`
+   (1 at a corner of the disc, 2 on a straight border).
+2. **The double** (`quadmesh.double`): the second copy with every face reversed, one vertex for
+   each border vertex, so a border vertex of angle `a π/2` has valence `2a`. χ doubles: a disc
+   doubles into a sphere, a tube into a torus, a sphere with `b` holes into genus `b − 1`. The
+   second copy is numbered as the first (border vertices first), so that the ties of the
+   motorcycle graph, settled by the order of the traces, go the same way in both.
+3. **The border traced in advance** (`tracing.py`): the border edges are trail edges from the
+   start (the marker `BORDER`) and their vertices occupied, so a trace that reaches the border
+   stops there; a border vertex of valence `2a ≠ 4` starts traces as any singular vertex does.
+   The mirror must induce an involution of the nodes, arcs and patches (`mirrored`), reversing
+   orientation; an instance without one is rejected as "not symmetric".
+4. **Symmetric lengths** (`generate.py`): `ℓ + ℓ ∘ mirror`, for the whole and the real lengths.
+   The quad mesh at these whole lengths inherits the mirror (`grid.coarse_double`: from the
+   points of the arcs, face by face, then checked), the edges it fixes are the new border,
+   and it is traced again with that border.
+5. **`call-<name>/double.json`**: the border components of the open mesh in the numbering of
+   the traced double (the first copy on their left), with the angle `a` of each vertex; the
+   mirror on vertices, nodes, arcs and patches; the border arcs and nodes; the genus; whether
+   the whole and real lengths are symmetric. `way-0.json` is the double as a closed T-mesh.
+
+```sh
+python3 docs/research/turns-of-a-t-mesh/experiments/property/generate.py --count 50 --seed 1 --borders
+```
+
+writes them to `scratch/data-package/property/double-seed-1`. The checks that read the border
+through the mirror are not written yet.
+
 ## Running it
 
 ```sh
@@ -133,6 +172,20 @@ instances `length − shift` even for 4,388 of 4,388 turns, on the 8 others odd 
 19,584 rounds of the walk, 2,927 regions of simple curves all with ∑ (4 − k) = 4χ, no curve
 edge off the grid.
 
+The doubles of seed 1 (`--borders`, 2026-11-01; `results/double-seed-1.json`): 53 drawn, 3
+rejected, all tubes whose region lies on both sides of a trace edge, none for want of symmetry.
+The 50 made are 13 caps, 9 discs, 6 tubes and 22 holed hulls (12 with one hole, 8 with two, 2
+with three); 34 doubles are spheres, 14 tori and 2 of genus two, with 34, 14 and 2 instances of
+1, 2 and 3 border components; 498 border nodes, 2 to 184 patches, the lengths symmetric on all
+50. The quad meshes at the whole lengths are about ten times those of the closed run (226,964
+quads against 21,523). The Lean oracle passes 38 and fails 12: χ, the balances, the shift forms
+modulo the balances, the walks, Gauss–Bonnet on 9,386 regions, the cut discs, `Border.lean`,
+the parity (all 50 bipartite) and Fox–Burgers on the 34 spheres hold everywhere; the failures
+are the hypotheses of `Region.lean` and `CutForest.lean` (charts agreeing across the dual tree,
+the forest hanging from the region), short in 17 and 860 of 6,082 regions. All 12 failed
+instances, the 9 discs and 3 caps, have cone points of valence 2 (border vertices of angle
+π/2, two faces sharing two edges); 3 other caps have them and pass.
+
 ## The property tests (`properties.py`, milestone 2)
 
 The topology the paper assumes is computed here instead (`grid.py`, `topology.py`): the quad
@@ -192,5 +245,6 @@ the pair (`results/certificates-seed-1.json`, the exports with the bound under
 
 ## Not yet here
 
-Borders (collars, the border term of the Burgers sum), genus two, the free homotopy of the
+Borders read through the mirror (collars, the border term of the Burgers sum), the cone points
+of valence 2 in `Region.lean` and `CutForest.lean`, the free homotopy of the
 winding separatrix, and the parity of a turn complete on the combinatorial T-mesh (DT-173).

@@ -1,0 +1,1513 @@
+{
+ "experiment": "random T-meshes for the property tests",
+ "seed": 1,
+ "count": 50,
+ "attempts": 53,
+ "shares": [
+  "1/2"
+ ],
+ "most_lean": 0.12,
+ "longest": 6.0,
+ "seconds": 14.7,
+ "made": [
+  {
+   "kind": [
+    "disc",
+    6,
+    6,
+    2
+   ],
+   "seed": 135520872,
+   "name": "disc-135520872",
+   "genus": 0,
+   "quads": 1152,
+   "nodes": 54,
+   "singular": 20,
+   "arcs": 96,
+   "patches": 44,
+   "turns": 168,
+   "held": 0,
+   "strips": 212,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 12,
+   "border_components": 1,
+   "border_nodes": 16,
+   "border_arcs": 16,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "cap",
+    1
+   ],
+   "seed": 965274705,
+   "name": "cap-965274705",
+   "genus": 0,
+   "quads": 1910,
+   "nodes": 30,
+   "singular": 13,
+   "arcs": 52,
+   "patches": 24,
+   "turns": 32,
+   "held": 0,
+   "strips": 80,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 5,
+   "border_components": 1,
+   "border_nodes": 6,
+   "border_arcs": 6,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "cap",
+    1
+   ],
+   "seed": 815217483,
+   "name": "cap-815217483",
+   "genus": 0,
+   "quads": 1568,
+   "nodes": 31,
+   "singular": 13,
+   "arcs": 55,
+   "patches": 26,
+   "turns": 32,
+   "held": 0,
+   "strips": 52,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 5,
+   "border_components": 1,
+   "border_nodes": 7,
+   "border_arcs": 7,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "holed",
+    20,
+    2
+   ],
+   "seed": 450874518,
+   "name": "holed-450874518",
+   "genus": 1,
+   "quads": 820,
+   "nodes": 162,
+   "singular": 77,
+   "arcs": 324,
+   "patches": 162,
+   "turns": 648,
+   "held": 0,
+   "strips": 248,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 27,
+   "border_components": 2,
+   "border_nodes": 18,
+   "border_arcs": 18,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "disc",
+    4,
+    5,
+    1
+   ],
+   "seed": 1047664193,
+   "name": "disc-1047664193",
+   "genus": 0,
+   "quads": 1456,
+   "nodes": 20,
+   "singular": 10,
+   "arcs": 34,
+   "patches": 16,
+   "turns": 64,
+   "held": 0,
+   "strips": 224,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 7,
+   "border_components": 1,
+   "border_nodes": 12,
+   "border_arcs": 12,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "disc",
+    3,
+    3,
+    0
+   ],
+   "seed": 837108038,
+   "name": "disc-837108038",
+   "genus": 0,
+   "quads": 320,
+   "nodes": 4,
+   "singular": 4,
+   "arcs": 4,
+   "patches": 2,
+   "turns": 8,
+   "held": 0,
+   "strips": 112,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 2,
+   "border_components": 1,
+   "border_nodes": 4,
+   "border_arcs": 4,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "cap",
+    0
+   ],
+   "seed": 4522707,
+   "name": "cap-4522707",
+   "genus": 0,
+   "quads": 248,
+   "nodes": 12,
+   "singular": 8,
+   "arcs": 20,
+   "patches": 10,
+   "turns": 40,
+   "held": 0,
+   "strips": 76,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 4,
+   "border_components": 1,
+   "border_nodes": 4,
+   "border_arcs": 4,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "holed",
+    14,
+    2
+   ],
+   "seed": 956461718,
+   "name": "holed-956461718",
+   "genus": 1,
+   "quads": 480,
+   "nodes": 70,
+   "singular": 34,
+   "arcs": 138,
+   "patches": 68,
+   "turns": 268,
+   "held": 0,
+   "strips": 140,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 12,
+   "border_components": 2,
+   "border_nodes": 22,
+   "border_arcs": 22,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "tube",
+    5,
+    4,
+    1
+   ],
+   "seed": 491263128,
+   "name": "tube-491263128",
+   "genus": 1,
+   "quads": 1608,
+   "nodes": 22,
+   "singular": 8,
+   "arcs": 42,
+   "patches": 20,
+   "turns": 60,
+   "held": 0,
+   "strips": 310,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 9,
+   "border_components": 2,
+   "border_nodes": 6,
+   "border_arcs": 6,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "holed",
+    12,
+    1
+   ],
+   "seed": 219531151,
+   "name": "holed-219531151",
+   "genus": 0,
+   "quads": 884,
+   "nodes": 92,
+   "singular": 42,
+   "arcs": 180,
+   "patches": 90,
+   "turns": 360,
+   "held": 0,
+   "strips": 200,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 17,
+   "border_components": 1,
+   "border_nodes": 10,
+   "border_arcs": 10,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "tube",
+    6,
+    6,
+    2
+   ],
+   "seed": 65691502,
+   "name": "tube-65691502",
+   "genus": 1,
+   "quads": 1384,
+   "nodes": 49,
+   "singular": 15,
+   "arcs": 85,
+   "patches": 36,
+   "turns": 124,
+   "held": 2,
+   "strips": 260,
+   "shifted_turns": 28,
+   "shifted_strips": 20,
+   "lattice_dimension": 16,
+   "border_components": 2,
+   "border_nodes": 9,
+   "border_arcs": 9,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "disc",
+    3,
+    3,
+    0
+   ],
+   "seed": 54644572,
+   "name": "disc-54644572",
+   "genus": 0,
+   "quads": 960,
+   "nodes": 4,
+   "singular": 4,
+   "arcs": 4,
+   "patches": 2,
+   "turns": 8,
+   "held": 0,
+   "strips": 180,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 2,
+   "border_components": 1,
+   "border_nodes": 4,
+   "border_arcs": 4,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "holed",
+    20,
+    1
+   ],
+   "seed": 19767455,
+   "name": "holed-19767455",
+   "genus": 0,
+   "quads": 1016,
+   "nodes": 184,
+   "singular": 86,
+   "arcs": 356,
+   "patches": 174,
+   "turns": 692,
+   "held": 0,
+   "strips": 368,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 33,
+   "border_components": 1,
+   "border_nodes": 10,
+   "border_arcs": 10,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "cap",
+    0
+   ],
+   "seed": 465143663,
+   "name": "cap-465143663",
+   "genus": 0,
+   "quads": 360,
+   "nodes": 12,
+   "singular": 8,
+   "arcs": 20,
+   "patches": 10,
+   "turns": 40,
+   "held": 0,
+   "strips": 120,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 4,
+   "border_components": 1,
+   "border_nodes": 4,
+   "border_arcs": 4,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "cap",
+    0
+   ],
+   "seed": 62364611,
+   "name": "cap-62364611",
+   "genus": 0,
+   "quads": 1080,
+   "nodes": 12,
+   "singular": 8,
+   "arcs": 20,
+   "patches": 10,
+   "turns": 40,
+   "held": 0,
+   "strips": 168,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 4,
+   "border_components": 1,
+   "border_nodes": 4,
+   "border_arcs": 4,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "holed",
+    8,
+    1
+   ],
+   "seed": 476079230,
+   "name": "holed-476079230",
+   "genus": 0,
+   "quads": 424,
+   "nodes": 38,
+   "singular": 18,
+   "arcs": 68,
+   "patches": 32,
+   "turns": 96,
+   "held": 0,
+   "strips": 160,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 9,
+   "border_components": 1,
+   "border_nodes": 8,
+   "border_arcs": 8,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "holed",
+    20,
+    2
+   ],
+   "seed": 940356432,
+   "name": "holed-940356432",
+   "genus": 1,
+   "quads": 800,
+   "nodes": 148,
+   "singular": 68,
+   "arcs": 294,
+   "patches": 146,
+   "turns": 584,
+   "held": 0,
+   "strips": 300,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 25,
+   "border_components": 2,
+   "border_nodes": 22,
+   "border_arcs": 22,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "cap",
+    1
+   ],
+   "seed": 500545052,
+   "name": "cap-500545052",
+   "genus": 0,
+   "quads": 576,
+   "nodes": 30,
+   "singular": 10,
+   "arcs": 50,
+   "patches": 22,
+   "turns": 48,
+   "held": 0,
+   "strips": 72,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 7,
+   "border_components": 1,
+   "border_nodes": 6,
+   "border_arcs": 6,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "tube",
+    6,
+    6,
+    2
+   ],
+   "seed": 495782127,
+   "name": "tube-495782127",
+   "genus": 1,
+   "quads": 2268,
+   "nodes": 48,
+   "singular": 16,
+   "arcs": 86,
+   "patches": 38,
+   "turns": 108,
+   "held": 0,
+   "strips": 336,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 12,
+   "border_components": 2,
+   "border_nodes": 8,
+   "border_arcs": 8,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "holed",
+    20,
+    1
+   ],
+   "seed": 469828692,
+   "name": "holed-469828692",
+   "genus": 0,
+   "quads": 1336,
+   "nodes": 178,
+   "singular": 84,
+   "arcs": 344,
+   "patches": 168,
+   "turns": 672,
+   "held": 0,
+   "strips": 340,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 32,
+   "border_components": 1,
+   "border_nodes": 12,
+   "border_arcs": 12,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "holed",
+    20,
+    2
+   ],
+   "seed": 986990922,
+   "name": "holed-986990922",
+   "genus": 1,
+   "quads": 912,
+   "nodes": 166,
+   "singular": 80,
+   "arcs": 328,
+   "patches": 162,
+   "turns": 644,
+   "held": 0,
+   "strips": 300,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 28,
+   "border_components": 2,
+   "border_nodes": 16,
+   "border_arcs": 16,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "cap",
+    0
+   ],
+   "seed": 214748959,
+   "name": "cap-214748959",
+   "genus": 0,
+   "quads": 248,
+   "nodes": 12,
+   "singular": 8,
+   "arcs": 20,
+   "patches": 10,
+   "turns": 40,
+   "held": 0,
+   "strips": 88,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 4,
+   "border_components": 1,
+   "border_nodes": 4,
+   "border_arcs": 4,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "disc",
+    6,
+    6,
+    2
+   ],
+   "seed": 636493528,
+   "name": "disc-636493528",
+   "genus": 0,
+   "quads": 1704,
+   "nodes": 54,
+   "singular": 20,
+   "arcs": 96,
+   "patches": 44,
+   "turns": 176,
+   "held": 0,
+   "strips": 276,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 12,
+   "border_components": 1,
+   "border_nodes": 16,
+   "border_arcs": 16,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "disc",
+    4,
+    5,
+    1
+   ],
+   "seed": 714457467,
+   "name": "disc-714457467",
+   "genus": 0,
+   "quads": 1480,
+   "nodes": 28,
+   "singular": 12,
+   "arcs": 48,
+   "patches": 22,
+   "turns": 88,
+   "held": 0,
+   "strips": 236,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 8,
+   "border_components": 1,
+   "border_nodes": 12,
+   "border_arcs": 12,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "holed",
+    14,
+    2
+   ],
+   "seed": 906467884,
+   "name": "holed-906467884",
+   "genus": 1,
+   "quads": 672,
+   "nodes": 100,
+   "singular": 46,
+   "arcs": 194,
+   "patches": 94,
+   "turns": 376,
+   "held": 0,
+   "strips": 188,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 19,
+   "border_components": 2,
+   "border_nodes": 14,
+   "border_arcs": 14,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "holed",
+    8,
+    1
+   ],
+   "seed": 407699194,
+   "name": "holed-407699194",
+   "genus": 0,
+   "quads": 508,
+   "nodes": 45,
+   "singular": 23,
+   "arcs": 85,
+   "patches": 42,
+   "turns": 136,
+   "held": 0,
+   "strips": 168,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 10,
+   "border_components": 1,
+   "border_nodes": 7,
+   "border_arcs": 7,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "tube",
+    5,
+    4,
+    1
+   ],
+   "seed": 610227593,
+   "name": "tube-610227593",
+   "genus": 1,
+   "quads": 1092,
+   "nodes": 22,
+   "singular": 8,
+   "arcs": 42,
+   "patches": 20,
+   "turns": 80,
+   "held": 0,
+   "strips": 284,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 8,
+   "border_components": 2,
+   "border_nodes": 6,
+   "border_arcs": 6,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "holed",
+    12,
+    1
+   ],
+   "seed": 1072371851,
+   "name": "holed-1072371851",
+   "genus": 0,
+   "quads": 872,
+   "nodes": 91,
+   "singular": 46,
+   "arcs": 177,
+   "patches": 88,
+   "turns": 348,
+   "held": 0,
+   "strips": 264,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 17,
+   "border_components": 1,
+   "border_nodes": 9,
+   "border_arcs": 9,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "holed",
+    20,
+    3
+   ],
+   "seed": 844720478,
+   "name": "holed-844720478",
+   "genus": 2,
+   "quads": 768,
+   "nodes": 147,
+   "singular": 70,
+   "arcs": 297,
+   "patches": 148,
+   "turns": 588,
+   "held": 0,
+   "strips": 220,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 23,
+   "border_components": 3,
+   "border_nodes": 21,
+   "border_arcs": 21,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "holed",
+    12,
+    1
+   ],
+   "seed": 74143659,
+   "name": "holed-74143659",
+   "genus": 0,
+   "quads": 808,
+   "nodes": 86,
+   "singular": 41,
+   "arcs": 160,
+   "patches": 76,
+   "turns": 304,
+   "held": 0,
+   "strips": 224,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 17,
+   "border_components": 1,
+   "border_nodes": 10,
+   "border_arcs": 10,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "cap",
+    1
+   ],
+   "seed": 521280113,
+   "name": "cap-521280113",
+   "genus": 0,
+   "quads": 384,
+   "nodes": 33,
+   "singular": 10,
+   "arcs": 55,
+   "patches": 24,
+   "turns": 48,
+   "held": 0,
+   "strips": 68,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 7,
+   "border_components": 1,
+   "border_nodes": 3,
+   "border_arcs": 3,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "holed",
+    14,
+    2
+   ],
+   "seed": 868202078,
+   "name": "holed-868202078",
+   "genus": 1,
+   "quads": 408,
+   "nodes": 102,
+   "singular": 49,
+   "arcs": 204,
+   "patches": 102,
+   "turns": 368,
+   "held": 0,
+   "strips": 180,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 17,
+   "border_components": 2,
+   "border_nodes": 14,
+   "border_arcs": 14,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "cap",
+    0
+   ],
+   "seed": 371530572,
+   "name": "cap-371530572",
+   "genus": 0,
+   "quads": 256,
+   "nodes": 12,
+   "singular": 8,
+   "arcs": 20,
+   "patches": 10,
+   "turns": 40,
+   "held": 0,
+   "strips": 100,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 4,
+   "border_components": 1,
+   "border_nodes": 4,
+   "border_arcs": 4,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "disc",
+    4,
+    5,
+    1
+   ],
+   "seed": 942662923,
+   "name": "disc-942662923",
+   "genus": 0,
+   "quads": 640,
+   "nodes": 14,
+   "singular": 8,
+   "arcs": 24,
+   "patches": 12,
+   "turns": 48,
+   "held": 0,
+   "strips": 200,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 5,
+   "border_components": 1,
+   "border_nodes": 10,
+   "border_arcs": 10,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "holed",
+    20,
+    1
+   ],
+   "seed": 231780618,
+   "name": "holed-231780618",
+   "genus": 0,
+   "quads": 736,
+   "nodes": 174,
+   "singular": 81,
+   "arcs": 342,
+   "patches": 170,
+   "turns": 672,
+   "held": 0,
+   "strips": 256,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 31,
+   "border_components": 1,
+   "border_nodes": 12,
+   "border_arcs": 12,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "holed",
+    20,
+    2
+   ],
+   "seed": 351539410,
+   "name": "holed-351539410",
+   "genus": 1,
+   "quads": 784,
+   "nodes": 150,
+   "singular": 73,
+   "arcs": 300,
+   "patches": 150,
+   "turns": 600,
+   "held": 0,
+   "strips": 284,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 25,
+   "border_components": 2,
+   "border_nodes": 22,
+   "border_arcs": 22,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "holed",
+    8,
+    1
+   ],
+   "seed": 844508892,
+   "name": "holed-844508892",
+   "genus": 0,
+   "quads": 368,
+   "nodes": 40,
+   "singular": 18,
+   "arcs": 74,
+   "patches": 36,
+   "turns": 144,
+   "held": 0,
+   "strips": 160,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 9,
+   "border_components": 1,
+   "border_nodes": 8,
+   "border_arcs": 8,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "tube",
+    6,
+    6,
+    2
+   ],
+   "seed": 1051608830,
+   "name": "tube-1051608830",
+   "genus": 1,
+   "quads": 1856,
+   "nodes": 39,
+   "singular": 14,
+   "arcs": 73,
+   "patches": 34,
+   "turns": 136,
+   "held": 0,
+   "strips": 284,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 11,
+   "border_components": 2,
+   "border_nodes": 5,
+   "border_arcs": 5,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "holed",
+    14,
+    2
+   ],
+   "seed": 63511747,
+   "name": "holed-63511747",
+   "genus": 1,
+   "quads": 1792,
+   "nodes": 90,
+   "singular": 41,
+   "arcs": 178,
+   "patches": 88,
+   "turns": 352,
+   "held": 0,
+   "strips": 252,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 16,
+   "border_components": 2,
+   "border_nodes": 18,
+   "border_arcs": 18,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "cap",
+    1
+   ],
+   "seed": 93388246,
+   "name": "cap-93388246",
+   "genus": 0,
+   "quads": 160,
+   "nodes": 30,
+   "singular": 10,
+   "arcs": 50,
+   "patches": 22,
+   "turns": 64,
+   "held": 0,
+   "strips": 68,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 7,
+   "border_components": 1,
+   "border_nodes": 6,
+   "border_arcs": 6,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "tube",
+    5,
+    4,
+    1
+   ],
+   "seed": 845248881,
+   "name": "tube-845248881",
+   "genus": 1,
+   "quads": 852,
+   "nodes": 22,
+   "singular": 8,
+   "arcs": 42,
+   "patches": 20,
+   "turns": 60,
+   "held": 0,
+   "strips": 216,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 9,
+   "border_components": 2,
+   "border_nodes": 6,
+   "border_arcs": 6,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "holed",
+    20,
+    1
+   ],
+   "seed": 365822119,
+   "name": "holed-365822119",
+   "genus": 0,
+   "quads": 936,
+   "nodes": 183,
+   "singular": 88,
+   "arcs": 359,
+   "patches": 178,
+   "turns": 712,
+   "held": 0,
+   "strips": 364,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 33,
+   "border_components": 1,
+   "border_nodes": 9,
+   "border_arcs": 9,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "disc",
+    6,
+    6,
+    2
+   ],
+   "seed": 487344227,
+   "name": "disc-487344227",
+   "genus": 0,
+   "quads": 1232,
+   "nodes": 51,
+   "singular": 20,
+   "arcs": 89,
+   "patches": 40,
+   "turns": 160,
+   "held": 0,
+   "strips": 216,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 12,
+   "border_components": 1,
+   "border_nodes": 15,
+   "border_arcs": 15,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "disc",
+    3,
+    3,
+    0
+   ],
+   "seed": 428458136,
+   "name": "disc-428458136",
+   "genus": 0,
+   "quads": 720,
+   "nodes": 4,
+   "singular": 4,
+   "arcs": 4,
+   "patches": 2,
+   "turns": 8,
+   "held": 0,
+   "strips": 168,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 2,
+   "border_components": 1,
+   "border_nodes": 4,
+   "border_arcs": 4,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "holed",
+    8,
+    1
+   ],
+   "seed": 498594435,
+   "name": "holed-498594435",
+   "genus": 0,
+   "quads": 368,
+   "nodes": 34,
+   "singular": 18,
+   "arcs": 64,
+   "patches": 32,
+   "turns": 128,
+   "held": 0,
+   "strips": 112,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 9,
+   "border_components": 1,
+   "border_nodes": 6,
+   "border_arcs": 6,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "cap",
+    0
+   ],
+   "seed": 738360465,
+   "name": "cap-738360465",
+   "genus": 0,
+   "quads": 840,
+   "nodes": 12,
+   "singular": 8,
+   "arcs": 20,
+   "patches": 10,
+   "turns": 40,
+   "held": 0,
+   "strips": 160,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 4,
+   "border_components": 1,
+   "border_nodes": 4,
+   "border_arcs": 4,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "holed",
+    20,
+    3
+   ],
+   "seed": 758650493,
+   "name": "holed-758650493",
+   "genus": 2,
+   "quads": 1248,
+   "nodes": 125,
+   "singular": 59,
+   "arcs": 249,
+   "patches": 122,
+   "turns": 480,
+   "held": 0,
+   "strips": 284,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 21,
+   "border_components": 3,
+   "border_nodes": 27,
+   "border_arcs": 27,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "cap",
+    1
+   ],
+   "seed": 578273269,
+   "name": "cap-578273269",
+   "genus": 0,
+   "quads": 900,
+   "nodes": 26,
+   "singular": 10,
+   "arcs": 42,
+   "patches": 18,
+   "turns": 44,
+   "held": 0,
+   "strips": 106,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 7,
+   "border_components": 1,
+   "border_nodes": 4,
+   "border_arcs": 4,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "holed",
+    20,
+    1
+   ],
+   "seed": 12260256,
+   "name": "holed-12260256",
+   "genus": 0,
+   "quads": 744,
+   "nodes": 188,
+   "singular": 93,
+   "arcs": 370,
+   "patches": 184,
+   "turns": 732,
+   "held": 0,
+   "strips": 288,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 33,
+   "border_components": 1,
+   "border_nodes": 10,
+   "border_arcs": 10,
+   "lengths_symmetric": true
+  },
+  {
+   "kind": [
+    "cap",
+    0
+   ],
+   "seed": 277561031,
+   "name": "cap-277561031",
+   "genus": 0,
+   "quads": 504,
+   "nodes": 12,
+   "singular": 8,
+   "arcs": 20,
+   "patches": 10,
+   "turns": 40,
+   "held": 0,
+   "strips": 148,
+   "shifted_turns": 0,
+   "shifted_strips": 0,
+   "lattice_dimension": 4,
+   "border_components": 1,
+   "border_nodes": 4,
+   "border_arcs": 4,
+   "lengths_symmetric": true
+  }
+ ],
+ "rejected": [
+  {
+   "kind": [
+    "tube",
+    5,
+    4,
+    1
+   ],
+   "seed": 253228484,
+   "reason": "patch 0 lies on both sides of the trace edge 37-0"
+  },
+  {
+   "kind": [
+    "tube",
+    5,
+    4,
+    1
+   ],
+   "seed": 46148794,
+   "reason": "patch 8 lies on both sides of the trace edge 58-27"
+  },
+  {
+   "kind": [
+    "tube",
+    6,
+    6,
+    2
+   ],
+   "seed": 804668615,
+   "reason": "patch 14 lies on both sides of the trace edge 107-45"
+  }
+ ],
+ "families": "with borders, doubled",
+ "rejected_by_reason": {
+  "not rectangles": 3
+ },
+ "counts": {
+  "families": {
+   "disc": 9,
+   "cap": 13,
+   "holed, 2 holes": 8,
+   "tube": 6,
+   "holed, 1 hole": 12,
+   "holed, 3 holes": 2
+  },
+  "genus": {
+   "0": 34,
+   "1": 14,
+   "2": 2
+  },
+  "border_components": {
+   "1": 34,
+   "2": 14,
+   "3": 2
+  },
+  "border_nodes": 498,
+  "lengths_symmetric": 50,
+  "turns": 11748,
+  "shifted_turns": 28,
+  "strips": 10120,
+  "shifted_strips": 20
+ },
+ "lean_check": {
+  "exports_checked": 50,
+  "passed": 38,
+  "failed": 12,
+  "command": "python3 docs/research/turns-of-a-t-mesh/lean/Check/check_exports.py scratch/data-package/property/double-seed-1 scratch/data-package/property/lean-check-double-seed-1 --jobs 4",
+  "failed_instances": [
+   "cap-521280113",
+   "cap-578273269",
+   "cap-93388246",
+   "disc-1047664193",
+   "disc-135520872",
+   "disc-428458136",
+   "disc-487344227",
+   "disc-54644572",
+   "disc-636493528",
+   "disc-714457467",
+   "disc-837108038",
+   "disc-942662923"
+  ],
+  "failed_instances_with_a_cone_point_of_valence_2": 12,
+  "passed_instances_with_a_cone_point_of_valence_2": 3,
+  "checks_short_in_the_failed_instances": {
+   "forest: the forest of cuts built from the cut crossings of the border hangs from the region (hangs of CutForest.lean decided; its roots are the cut crossings)": 12,
+   "forest: its cone points in preorder, k ≠ 4, = the word of the walk round the cut trees (same rotations, positions, order); its nodes = the interior vertices": 12,
+   "forest: composite of the cone rotations in preorder = development (2 T on the left, -2 T on the right; development_eq_cones evaluated)": 12,
+   "cuts: across every crossing of the dual tree the charts agree, M g ∘ C = M f (the hypothesis of borderHolonomy_cuts)": 10,
+   "cuts: composite of the jumps across the cuts in border order = holonomy of the border = development (2 T on the left, -2 T on the right; borderHolonomy_cuts with borderHolonomy_round)": 10
+  },
+  "checks": {
+   "balances, B row (P, j) = engine row times +1 (j = 0) or -1 (j = 1)": {
+    "agree": 6140,
+    "of": 6140
+   },
+   "turns of the TMesh (IsPath, closes)": {
+    "agree": 11748,
+    "of": 11748
+   },
+   "shift forms, shiftForm = engine shift coefficient by coefficient": {
+    "agree": 6000,
+    "of": 11748
+   },
+   "shift forms, shiftForm - engine shift = λᵀ B (checked exactly)": {
+    "agree": 11748,
+    "of": 11748
+   },
+   "walked lengths: engine offset in the corridor": {
+    "agree": 11748,
+    "of": 11748
+   },
+   "walked lengths: walk where the engine crossed (within 1e-6)": {
+    "agree": 11748,
+    "of": 11748
+   },
+   "walked lengths: walk comes back at offset + shift": {
+    "agree": 11748,
+    "of": 11748
+   },
+   "real lengths: walk comes back at offset + shift": {
+    "agree": 11748,
+    "of": 11748
+   },
+   "whole lengths: half-integers of the corridors, walk comes back at offset + shift": {
+    "agree": 83372,
+    "of": 83372
+   },
+   "whole lengths: Turn.development = translation by -α e₁ + shift e₂ (Holonomy.lean)": {
+    "agree": 11748,
+    "of": 11748
+   },
+   "parity α ≡ shift (mod 2) at the whole lengths, bipartite instances": {
+    "agree": 11748,
+    "of": 11748
+   },
+   "border: the steps of a round start at its points (roundSteps_round)": {
+    "agree": 91924,
+    "of": 91924
+   },
+   "border: holonomy of the border of a round = its development (borderHolonomy_round), rings": {
+    "agree": 91644,
+    "of": 91644
+   },
+   "border: the same, closing segment with the region inside the rectangle of σ": {
+    "agree": 140,
+    "of": 140
+   },
+   "border: the same, closing segment with the region outside, every node of σ met by four faces": {
+    "agree": 140,
+    "of": 140
+   },
+   "border: the same, closing segment outside, a node of σ not met by four faces (not covered by the theorem)": {
+    "agree": 0,
+    "of": 0
+   },
+   "border: the walk round each vertex of the quad graph meets its valence (valenceAround)": {
+    "agree": 227028,
+    "of": 227028
+   },
+   "border: holonomy round each vertex of the quad graph = R^(4-k) about it (holonomyAround_eq)": {
+    "agree": 227028,
+    "of": 227028
+   },
+   "border: every point the walk round a vertex meets is that vertex (aroundStep_same)": {
+    "agree": 907856,
+    "of": 907856
+   },
+   "Gauss–Bonnet on the fine grid: regions of simple curves with ∑ (4 - k) = 4 χ": {
+    "agree": 9386,
+    "of": 9386
+   },
+   "regions: the cuts (interior edges off a dual spanning tree) form a forest, each tree meeting the curve at one vertex, every interior vertex on it (a disc)": {
+    "agree": 6082,
+    "of": 6082
+   },
+   "regions: the walk round the cut trees visits every cone point inside (the word in the order of first visit)": {
+    "agree": 6082,
+    "of": 6082
+   },
+   "regions: composite of the rotations in first-visit order, region on the left, = Turn.development (Prop. 'The shift is set by the singularities' (a): B_D = T_γ with D on its left, the inverse with D on its right; fine units, 2 T)": {
+    "agree": 6082,
+    "of": 6082
+   },
+   "regions: Burgers sum ∑ Qᵢ (1 - Rᵢ) pᵢ = translation of the composite (Motion.burgers)": {
+    "agree": 6082,
+    "of": 6082
+   },
+   "regions: composite = inverse of the holonomy of the word of develop.py for the same turn, through the chart R^k of its first patch": {
+    "agree": 5470,
+    "of": 5470
+   },
+   "cuts: the border of the region crossed face by face (borderCrossings ℓ 4 some, unit steps, closed, from the root face, the faces chain as borderCrossings_chain states, every face in the region)": {
+    "agree": 6082,
+    "of": 6082
+   },
+   "cuts: across every crossing of the dual tree the charts agree, M g ∘ C = M f (the hypothesis of borderHolonomy_cuts)": {
+    "agree": 6065,
+    "of": 6082
+   },
+   "cuts: composite of the jumps across the cuts in border order = holonomy of the border = development (2 T on the left, -2 T on the right; borderHolonomy_cuts with borderHolonomy_round)": {
+    "agree": 6065,
+    "of": 6082
+   },
+   "forest: the forest of cuts built from the cut crossings of the border hangs from the region (hangs of CutForest.lean decided; its roots are the cut crossings)": {
+    "agree": 5222,
+    "of": 6082
+   },
+   "forest: its cone points in preorder, k ≠ 4, = the word of the walk round the cut trees (same rotations, positions, order); its nodes = the interior vertices": {
+    "agree": 5210,
+    "of": 6082
+   },
+   "forest: composite of the cone rotations in preorder = development (2 T on the left, -2 T on the right; development_eq_cones evaluated)": {
+    "agree": 5210,
+    "of": 6082
+   },
+   "jumps across the cut tree: hol of the word = the change of chart": {
+    "agree": 1796,
+    "of": 1796
+   },
+   "turns: hol of the word has rotation 1": {
+    "agree": 6272,
+    "of": 6272
+   },
+   "turns: ⟨e₂, τ⟩ = -shift (shift: Turn.shift at the whole lengths)": {
+    "agree": 6272,
+    "of": 6272
+   },
+   "turns: ⟨e₁, τ⟩ = α (the length of the turn)": {
+    "agree": 6272,
+    "of": 6272
+   },
+   "turns: τ = α e₁ - shift e₂": {
+    "agree": 6272,
+    "of": 6272
+   },
+   "turns: τ = Σᵢ ρ(∂w/∂xᵢ) (1 - Rᵢ) pᵢ (Fox–Burgers sum, `fox`)": {
+    "agree": 6272,
+    "of": 6272
+   },
+   "turns: holonomy of the word = inverse of the development, turned by the chart (hol = 1, -R^k · Turn.development.trans)": {
+    "agree": 6272,
+    "of": 6272
+   }
+  },
+  "date": "2026-11-01"
+ },
+ "made_with": "python3 docs/research/turns-of-a-t-mesh/experiments/property/generate.py --count 50 --seed 1 --borders"
+}
