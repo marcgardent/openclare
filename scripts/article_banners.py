@@ -10,6 +10,7 @@ the dark theme. They are decorative, hidden from screen readers.
 """
 
 import math
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -217,9 +218,58 @@ def glossary():
     return svg(body)
 
 
+def blender_mesh(x, y, height):
+    """The Blender logo remeshed in quads (site/assets/brand/blender_mesh.svg,
+    from scripts/blender_mesh_logo.py), in its own colours."""
+    source = (ROOT / "site/assets/brand/blender_mesh.svg").read_text(encoding="utf-8")
+    box = re.search(r'viewBox="([^"]*)"', source).group(1)
+    inner = source[source.index(">") + 1:source.rindex("</svg>")]
+    _, _, w, h = map(float, box.split())
+    return f'<svg x="{x}" y="{y}" width="{height * w / h:.1f}" height="{height}" viewBox="{box}">{inner}</svg>'
+
+
+def blender():
+    """Built into Blender: the logo in quads, then one shape remeshed by a voxel grid and by a field."""
+    body = blender_mesh(50, 30, 300)
+    body += f'<path style="{style("--ink", 3)}" d="M452 180H512M494 166L512 180L494 194"/>'
+    # The blob on a grid along the axes, its cells kept as stair steps.
+    cx, cy, r = 680, 180, 110
+    inside = lambda x, y: ((x - cx) / r) ** 2 + ((y - cy) / (r * 0.8)) ** 2 < 1
+    cells = [f"M{x} {y}h40v40h-40Z" for x in range(560, 800, 40) for y in range(60, 300, 40) if inside(x + 20, y + 20)]
+    body += f'<path style="{style("--slate", 2.5, "--surface")}" d="{" ".join(cells)}"/>'
+    body += f'<ellipse cx="{cx}" cy="{cy}" rx="{r}" ry="{r * 0.8:.0f}" style="{style("--hot", 3)}; stroke-dasharray: 8 7"/>'
+    # The same outline, quads aligned with it: rings and spokes.
+    cx = 1000
+    rings = " ".join(f'M{cx + r * k:.1f} {cy}' + "".join(f'L{cx + r * k * math.cos(a):.1f} {cy + r * 0.8 * k * math.sin(a):.1f}'
+                     for a in (2 * math.pi * t / 48 for t in range(1, 49))) for k in (0.35, 0.6, 0.82, 1.0))
+    spokes = " ".join(f'M{cx + r * 0.35 * math.cos(a):.1f} {cy + r * 0.28 * math.sin(a):.1f}L{cx + r * math.cos(a):.1f} {cy + r * 0.8 * math.sin(a):.1f}'
+                      for a in (2 * math.pi * t / 16 for t in range(16)))
+    body += f'<path style="{style("--teal", 3)}" d="{rings} {spokes}"/>'
+    body += f'<ellipse cx="{cx}" cy="{cy}" rx="{r * 0.35:.0f}" ry="{r * 0.28:.0f}" style="{style("--ink", 3, "--hot", 0.85)}"/>'
+    return svg(body)
+
+
+def pipeline():
+    """The pipeline in Blender: the logo, then dense triangles, quads, and the quads with a seam and the detail baked on them."""
+    body = blender_mesh(24, 74, 212)
+    tris = []
+    for j in range(7):
+        for i in range(8):
+            x, y = 330 + i * 24 + (j % 2) * 12, 96 + j * 24
+            tris.append(f"M{x} {y}L{x + 24} {y}L{x + 12} {y + 24}Z")
+    body += f'<path style="{style("--slate", 1.5)}" d="{" ".join(tris)}"/>'
+    for x in (552, 842):
+        body += f'<path style="{style("--ink", 3)}" d="M{x} 180H{x + 40}M{x + 22} 166L{x + 40} 180L{x + 22} 194"/>'
+    body += warped_grid(616, 100, 5, 4, 40, 3, stroke="--teal")
+    body += f'<path style="{style(None, 0, "--hot", 0.35)}" d="M910 116Q960 150 1010 122T1106 128V256Q1060 276 1010 254T910 256Z"/>'
+    body += warped_grid(906, 100, 5, 4, 40, 3, stroke="--teal")
+    body += f'<path style="{style("--hot", 5)}" d="M1026 100V260"/>'
+    return svg(body)
+
+
 BANNERS = {"theory": theory, "results": results, "research": research,
            "retopology": retopology, "engines": engines, "platforms": platforms,
-           "glossary": glossary}
+           "glossary": glossary, "blender": blender, "pipeline": pipeline}
 
 
 def main():

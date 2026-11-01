@@ -114,6 +114,8 @@ WORDS = {
         "retopology": "Retopology Tools 2026",
         "engines": "Retopology Engines 2026",
         "platforms": "Distribution platforms 2026",
+        "pipeline": "The retopology pipeline in Blender",
+        "blender": "Remeshing built into Blender",
         "github": "GitHub ↗",
         "models": "Model by model",
         "other_title": "Lire cette page en français",
@@ -162,6 +164,8 @@ WORDS = {
         "retopology": "Outils de retopologie 2026",
         "engines": "Moteurs de retopologie 2026",
         "platforms": "Plateformes de distribution 2026",
+        "pipeline": "Le pipeline de retopologie dans Blender",
+        "blender": "Le remaillage intégré à Blender",
         "github": "GitHub ↗",
         "models": "Modèle par modèle",
         "other_title": "Read this page in English",
@@ -202,13 +206,13 @@ NAVIGATION_TARGETS = {"documentation": "features"}
 DOCUMENTATION = {"features": ("docs/FEATURES.md", "docs/FEATURES.fr.md"), "roadmap": ("ROADMAP.md", "ROADMAP.fr.md")}
 # The articles, by category, as tiles on the articles page; each has a banner,
 # site/assets/articles/<key>.svg (scripts/article_banners.py).
-ARTICLES = (("ecosystem", ("retopology", "engines", "platforms")), ("insight", ("theory", "results", "research", "glossary")))
+ARTICLES = (("ecosystem", ("retopology", "engines", "platforms", "pipeline", "blender")), ("insight", ("theory", "results", "research", "glossary")))
 CATEGORY_OF = {key: category for category, keys in ARTICLES for key in keys}
 # The pages each item of the navigation stands for, beside its own.
 # The site map of the footer: a column per group, the articles by category.
 SITEMAP = (("openclare", ("index", "get", "articles")), ("documentation", tuple(DOCUMENTATION))) + ARTICLES
 
-SECTIONS = {"documentation": tuple(DOCUMENTATION), "articles": ("models/", "retopology", "engines", "platforms", "theory", "results", "research", "glossary")}
+SECTIONS = {"documentation": tuple(DOCUMENTATION), "articles": ("models/", "retopology", "engines", "platforms", "pipeline", "blender", "theory", "results", "research", "glossary")}
 # The lists of the state of the market, in the order they are shown.
 MARKET = ("retopology", "engines", "platforms")
 
@@ -1170,7 +1174,7 @@ class Site:
                 body = theory_marks(body)
             if key == "research":
                 body = self.progress(body, language)
-            self.write(key, language, self.title_of(text), body, headings, kind, self.description_of(text), toc=kind == "theory")
+            self.write(key, language, self.title_of(text), body, headings, kind, self.description_of(text), toc=kind in ("theory", "blender"))
 
     def progress(self, body, language):
         """Each <div class="progress" data-paper="…"> of the research page: the
@@ -1960,6 +1964,8 @@ class Site:
         self.documentation()
         self.results()
         self.simple("research", "research")
+        self.simple("pipeline", "blender")
+        self.simple("blender", "blender")
         self.simple("get", "get")
         self.retopology()
         self.articles()
