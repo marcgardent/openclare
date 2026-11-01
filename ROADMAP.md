@@ -24,7 +24,7 @@ order:
 | 5 | *Follow Curvature*, *Fewer Irregular Vertices*, *Volume Fit*; the presets shipped | defaults tuned on the corpus; no reach folds a quad; the volume kept after subdivision | #13, #21, #33, #72, #39 |
 | 6 | *Output: Triangles*, for *Simulation*; `--method triangles` | no triangle cuts through another on the models of [TRIANGLES.md](docs/TRIANGLES.md) | #226 |
 | 7 | *Materials*, the lines between them; `--groups` | the borders between materials kept on a real model, the author's car first | #47 |
-| 8 | The add-on on Windows and macOS | run in Blender on each, macOS notarized | #110 |
+| 8 | The add-on on macOS | run in Blender, notarized | #110 |
 
 The other experimental features are tools to look into the chain (`field`, `tmesh`,
 `quantize`, Rerun and the like) or research tracks (`--quality slow`): they stay experimental,
@@ -50,7 +50,6 @@ Each to be specified and validated when its turn comes.
 | Feature | What it is | Issues |
 |---|---|---|
 | **Quad Shape menu** | a sphere, cylinder or disc made of quads with their ideal poles | #159 |
-| **Baking the sculpt onto the result** | normal map, height and ambient occlusion, read through the engine's own correspondence with the sculpt | #51 |
 | **Improving a mesh from a dry run** | a run marked, the best of several kept, a part run again where it went wrong | #40 |
 | **Clean triangles for 3D printing** | the same chain with six-fold stars instead of crosses | #70 |
 
@@ -66,3 +65,5 @@ they find comes into the chain through section 1 or 2, measured on the bench fir
 - An exact integer-grid map and extraction: the direct route from the T-mesh replaced it (#1).
 - Embedding the Rerun viewer in what is distributed: it stays a tool for those who work on the
   chain.
+- Baking the sculpt onto the result (normal map, height, ambient occlusion): it is part of the
+  pipeline of the PRO edition, with the UVs and the export.

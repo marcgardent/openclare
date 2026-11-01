@@ -21,7 +21,7 @@ A panel named *openclare* appears in the Properties editor, on the tab of the me
 - **Curves drawn on the model.** *Draw Curve* and *Cut Volume*, in the toolbar, draw a curve on the model or the loop round a limb. A *Guide* curve gives a line of edges; a *Sharp* curve gives a line of hard edges.
 - **The result.** Symmetry across X, Y or Z. Hard edges marked sharp and creased, for a *Subdivision Surface* to keep. Shading by angle, smooth or flat. Saved presets of the settings. *Remesh Again* redoes the result in place, and the panel reports on the run.
 
-The Linux build runs wherever Blender does (glibc 2.28 or later). The Windows and macOS builds pass the tests of the C interface on their system but have not yet been run in a Blender there; the macOS one is signed ad hoc, not notarized. Each release also has the engine as a C library with its header, `openclare-capi-<version>-<platform>.tar.gz`, for other programs.
+The Linux build runs wherever Blender does (glibc 2.28 or later). The Windows build has been installed and run in a Blender for Windows. The macOS builds pass the tests of the C interface there but have not yet been run in a Blender; they are signed ad hoc, not notarized. Each release also has the engine as a C library with its header, `openclare-capi-<version>-<platform>.tar.gz`, for other programs.
 
 What the panel offers, setting by setting, is in the [README](../../README.md).
 
