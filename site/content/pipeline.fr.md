@@ -17,7 +17,7 @@ Une source avec des sommets doublés, des trous ou des pièces qui se croisent t
 
 Décider où passent les boucles avant de les faire : autour des yeux et de la bouche, le long des membres, aux articulations.
 
-- [Face Sets](https://docs.blender.org/manual/fr/latest/sculpt_paint/sculpting/editing/face_sets.html) : peindre les régions de la source en Sculpt Mode, une par partie.
+- [Face Sets](https://docs.blender.org/manual/fr/latest/sculpt_paint/sculpting/editing/face_sets.html) : peindre les régions de la source en Sculpt Mode, une par partie, pour voir le plan, masquer le reste et traiter une partie à la fois, ou extraire une partie en objet à part. Aucun remailleur intégré ne les suit : QuadriFlow les ignore, et le Voxel Remesh ne fait que les reporter.
 - [Mark Seam](https://docs.blender.org/manual/fr/latest/modeling/meshes/uv/unwrapping/seams.html) : les coupes des futures UV, quand elles décident où les boucles doivent passer.
 
 ## 3. Faire les quads

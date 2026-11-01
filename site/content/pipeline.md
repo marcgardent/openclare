@@ -17,7 +17,7 @@ A source with doubled vertices, holes or parts that cross each other misleads ev
 
 Decide where the loops go before making them: round the eyes and the mouth, along the limbs, at the joints.
 
-- [Face Sets](https://docs.blender.org/manual/en/latest/sculpt_paint/sculpting/editing/face_sets.html): paint the regions of the source in Sculpt Mode, one per part.
+- [Face Sets](https://docs.blender.org/manual/en/latest/sculpt_paint/sculpting/editing/face_sets.html): paint the regions of the source in Sculpt Mode, one per part, to see the plan, hide the rest and work on one part at a time, or extract a part as its own object. No built-in remesher follows them: QuadriFlow ignores them, and Voxel Remesh only carries them over.
 - [Mark Seam](https://docs.blender.org/manual/en/latest/modeling/meshes/uv/unwrapping/seams.html): the cuts of the future UVs, when they decide where loops must run.
 
 ## 3. Make the quads
