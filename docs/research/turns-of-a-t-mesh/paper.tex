@@ -1871,9 +1871,14 @@ motions, a region as finite sets with counts); the surface and the cross field
 behind the T-mesh and its orientation are not formalized. The development of
 a turn in the plane is (\texttt{Holonomy.lean}): the changes of chart across
 the arcs compose to $T_\gamma(\ell) = -\alpha_\gamma(\ell) e_1 +
-\shift_\gamma(\ell) e_2$ at whole lengths; that it is the inverse of the
-holonomy $\hat h(\bar\gamma)$ of the flat metric, and that this holonomy is
-the product of the rotations round the cone points, are not.
+\shift_\gamma(\ell) e_2$ at whole lengths. So is, at whole lengths, the
+holonomy of $\bar\gamma$ read on the quad mesh, the chart continued from face
+to face through the region on its left (\texttt{Border.lean}): it is the
+development, and, through the charts of a dual tree, the composite of the
+rotations round the cone points in the order of first visit of a forest of
+cuts (\texttt{Region.lean}, \texttt{CutForest.lean}), the forest being
+decided by the program on each region. The flat metric itself, whose holonomy
+$\hat h$ this chart continues, is not formalized.
 
 \ifdefined\plain
 \emph{Checked}, statement by statement. On the T-mesh, with the frames of
