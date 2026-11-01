@@ -2075,9 +2075,15 @@ surface et le champ de croix sous le T-mesh et son orientation ne sont pas
 formalisés. Le développement d'un tour dans le plan l'est
 (\texttt{Holonomy.lean})~: les changements de carte à travers les arcs se
 composent en $T_\gamma(\ell) = -\alpha_\gamma(\ell) e_1 + \shift_\gamma(\ell)
-e_2$ aux longueurs entières\,; qu'il soit l'inverse de l'holonomie $\hat
-h(\bar\gamma)$ de la métrique plate, et que cette holonomie soit le produit
-des rotations autour des points coniques, ne le sont pas.
+e_2$ aux longueurs entières. L'holonomie de $\bar\gamma$ lue sur le maillage
+de quads l'est aussi, aux longueurs entières~: la carte prolongée de face en
+face à travers la région à sa gauche (\texttt{Border.lean}) est le
+développement et, à travers les cartes d'un arbre dual, la composée des
+rotations autour des points coniques dans l'ordre de première visite d'une
+forêt de coupures (\texttt{Region.lean}, \texttt{CutForest.lean}), la forêt
+étant décidée par le programme sur chaque région. La métrique plate
+elle-même, dont cette carte prolonge l'holonomie $\hat h$, n'est pas
+formalisée.
 
 \ifdefined\plain
 \emph{Vérifié}, énoncé par énoncé. Sur le T-mesh, les repères des patchs
