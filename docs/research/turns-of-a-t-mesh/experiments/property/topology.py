@@ -11,6 +11,7 @@ from fractions import Fraction
 
 import sympy
 
+from tracing import BORDER
 from walks import merged, turned
 
 
@@ -128,7 +129,8 @@ def connections(tmesh):
 def feet(tmesh):
     """Per arc, the foot of each end: the node itself if singular, else the
     start of the single trace through it perpendicular to the arc; None
-    where that trace is not unique (the hypothesis of Lemma "Combs")."""
+    where that trace is not unique (the hypothesis of Lemma "Combs") or is
+    the border pre-traced on a double, which no trace started."""
     quad = tmesh.quad
     out = []
     # Each trail edge belongs to the trace that ran it first (two run the
@@ -150,7 +152,7 @@ def feet(tmesh):
                 if key not in first or first[key] in own:
                     continue
                 along.add(first[key])
-            if len(along) == 1:
+            if len(along) == 1 and BORDER not in along:
                 pair.append(("foot", tmesh.trace_start[next(iter(along))]))
             else:
                 pair.append((None, sorted(along)))
@@ -195,7 +197,7 @@ def winding_separatrices(tmesh):
         for (p, q) in quad.star(end):
             key = (min(p, q), max(p, q))
             for t in tmesh.trace_of_edge.get(key, []):
-                if t != m and tmesh.trace_start[t] == v:
+                if t != m and t != BORDER and tmesh.trace_start[t] == v:
                     others.add(t)
         if len(others) != 1:
             continue
