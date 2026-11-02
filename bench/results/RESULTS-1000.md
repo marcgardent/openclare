@@ -30,7 +30,7 @@ Requested budget: 1000 quads. Median over 5 seeds; AutoRemesher, integer-grid, i
 | Longest loop that stops at an irregular vertex, edges (L) | 108 | 44 | 88 | 59 | 70 | 114 | 100 | 100 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 5.9 | 60.0 | 0.2 | 2.4 | 3.6 | 16.5 | 0.2 | 1.0 | — | — |
-| Time, seconds (T) | 1.54 | 0.53 | 0.65 | 12.06 | 1.17 | 4.68 | 2.53 | 3.91 | — | — |
+| Time, seconds (T) | 1.54 | 0.53 | 0.65 | 12.06 | 1.17 | 4.68 | 2.11 | 3.86 | — | — |
 
 ## rock (organic)
 
@@ -60,7 +60,7 @@ Requested budget: 1000 quads. Median over 5 seeds; AutoRemesher, integer-grid, i
 | Longest loop that stops at an irregular vertex, edges (L) | 133 | 82 | 70 | 96 | 88 | 106 | 170 | 121 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 5.3 | 22.2 | 0.4 | 6.4 | 3.4 | 13.3 | 1.1 | 1.8 | — | — |
-| Time, seconds (T) | 0.94 | 0.56 | 0.45 | 42.97 | 0.70 | 2.84 | 2.05 | 3.34 | — | — |
+| Time, seconds (T) | 0.94 | 0.56 | 0.45 | 42.97 | 0.70 | 2.84 | 3.46 | 2.05 | — | — |
 
 ## creature (organic)
 
@@ -90,7 +90,7 @@ Requested budget: 1000 quads. Median over 5 seeds; AutoRemesher, integer-grid, i
 | Longest loop that stops at an irregular vertex, edges (L) | 141 | 52 | 70 | 99 | 76 | 66 | 91 | 80 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 18.8 | 39.6 | 0.2 | 6.8 | 1.4 | 6.4 | 0.9 | 1.1 | — | — |
-| Time, seconds (T) | 1.53 | 0.80 | 0.41 | 9.08 | 1.09 | 3.22 | 2.42 | 1.80 | — | — |
+| Time, seconds (T) | 1.53 | 0.80 | 0.41 | 9.08 | 1.09 | 3.22 | 3.02 | 1.60 | — | — |
 
 ## cage (organic)
 
@@ -120,7 +120,7 @@ Requested budget: 1000 quads. Median over 5 seeds; AutoRemesher, integer-grid, i
 | Longest loop that stops at an irregular vertex, edges (L) | 47 | 74 | 48 | 32 | 50 | 108 | 22 | 19 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 4.3 | 72.0 | 0.6 | 3.0 | 2.6 | 0.8 | 1.9 | 1.4 | — | — |
-| Time, seconds (T) | 0.33 | 0.97 | 0.19 | 8.87 | 0.32 | 7.16 | 2.13 | 3.92 | — | — |
+| Time, seconds (T) | 0.33 | 0.97 | 0.19 | 8.87 | 0.32 | 7.16 | 2.71 | 3.50 | — | — |
 
 ## suzanne (organic)
 
@@ -150,7 +150,7 @@ Requested budget: 1000 quads. Median over 5 seeds; AutoRemesher, integer-grid, i
 | Longest loop that stops at an irregular vertex, edges (L) | 97 | 43 | 56 | 69 | 56 | 62 | 54 | 107 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.6 | 0.0 | 0.3 | 10.3 | 0.8 | 8.9 | 18.1 | 7.8 | — | — |
 | Off budget, % (N) | 1.0 | 64.3 | 1.1 | 4.3 | 4.2 | 2.1 | 1.0 | 0.6 | — | — |
-| Time, seconds (T) | 0.48 | 0.90 | 0.31 | 13.22 | 0.22 | 4.70 | 2.62 | 4.11 | — | — |
+| Time, seconds (T) | 0.48 | 0.90 | 0.31 | 13.22 | 0.22 | 4.70 | 3.28 | 5.40 | — | — |
 
 ## ogre (organic)
 
@@ -180,7 +180,7 @@ Requested budget: 1000 quads. Median over 5 seeds; AutoRemesher, integer-grid, i
 | Longest loop that stops at an irregular vertex, edges (L) | 102 | 17 | 50 | 76 | 64 | 57 | 152 | 58 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 10.9 | 68.9 | 1.1 | 184.5 | 7.2 | 25.8 | 0.3 | 1.6 | — | — |
-| Time, seconds (T) | 2.69 | 1.17 | 0.93 | 64.72 | 2.05 | 7.56 | 7.09 | 57.79 | — | — |
+| Time, seconds (T) | 2.69 | 1.17 | 0.93 | 64.72 | 2.05 | 7.56 | 7.39 | 48.99 | — | — |
 
 ## human_male (organic)
 
@@ -210,7 +210,7 @@ Requested budget: 1000 quads. Median over 5 seeds; AutoRemesher, integer-grid, i
 | Longest loop that stops at an irregular vertex, edges (L) | — | 16 | 36 | 68 | 40 | 54 | 54 | 41 | 274 | 401 |
 | Edges on loops from a border to a border, % (L) | — | 0.0 | 3.8 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
 | Off budget, % (N) | — | 82.4 | 2.1 | 19.7 | 13.2 | 11.5 | 11.5 | 1.4 | 0.0 | 1.0 |
-| Time, seconds (T) | — | 4.84 | 18.11 | 21.88 | 17.33 | 15.30 | 52.10 | 66.75 | — | 172.27 |
+| Time, seconds (T) | — | 4.84 | 18.11 | 21.88 | 17.33 | 15.30 | 50.65 | 57.29 | — | 148.33 |
 
 Failures: quadriflow: cancelled.
 
@@ -242,7 +242,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | — | 11 | 57 | 91 | 42 | 54 | 154 | 34 | 274 | 485 |
 | Edges on loops from a border to a border, % (L) | — | 0.0 | 0.8 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
 | Off budget, % (N) | — | 82.8 | 0.4 | 34.1 | 12.3 | 22.9 | 1.6 | 0.0 | 0.0 | 0.4 |
-| Time, seconds (T) | — | 3.67 | 17.87 | 25.14 | 21.04 | 18.64 | 27.11 | 60.69 | — | 204.37 |
+| Time, seconds (T) | — | 3.67 | 17.87 | 25.14 | 21.04 | 18.64 | 24.16 | 54.53 | — | 185.75 |
 
 Failures: quadriflow: cancelled.
 
@@ -274,7 +274,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | 79 | 48 | 50 | 55 | 52 | 97 | 76 | 79 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 2.8 | 59.6 | 1.2 | 9.6 | 2.0 | 6.2 | 1.2 | 1.3 | — | — |
-| Time, seconds (T) | 1.22 | 1.05 | 1.38 | 15.00 | 0.93 | 5.72 | 7.01 | 5.05 | — | — |
+| Time, seconds (T) | 1.22 | 1.05 | 1.38 | 15.00 | 0.93 | 5.72 | 7.16 | 4.39 | — | — |
 
 ## bob (organic)
 
@@ -304,7 +304,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | 145 | 76 | 60 | 93 | 70 | 62 | 71 | 68 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 2.8 | 42.4 | 0.4 | 3.1 | 4.6 | 15.1 | 1.9 | 0.3 | — | — |
-| Time, seconds (T) | 1.21 | 0.97 | 0.60 | 10.68 | 1.10 | 4.42 | 2.31 | 1.76 | — | — |
+| Time, seconds (T) | 1.21 | 0.97 | 0.60 | 10.68 | 1.10 | 4.42 | 2.63 | 1.92 | — | — |
 
 ## blub (organic)
 
@@ -334,7 +334,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | 87 | 42 | 56 | 108 | 84 | 80 | 85 | 78 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 15.3 | 39.6 | 2.2 | 0.8 | 1.8 | 6.0 | 1.4 | 1.1 | — | — |
-| Time, seconds (T) | 1.28 | 1.78 | 1.10 | 14.68 | 1.25 | 4.32 | 3.50 | 13.53 | — | — |
+| Time, seconds (T) | 1.28 | 1.78 | 1.10 | 14.68 | 1.25 | 4.32 | 2.84 | 10.74 | — | — |
 
 ## pig (organic)
 
@@ -364,7 +364,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | 94 | 24 | — | 105 | 52 | 58 | 76 | 80 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | — | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 13.9 | 45.2 | 4.9 | 52.5 | 6.4 | 11.6 | 0.3 | 1.9 | — | — |
-| Time, seconds (T) | 1.28 | 1.11 | 1.07 | 19.52 | 0.86 | 7.15 | 8.30 | 14.34 | — | — |
+| Time, seconds (T) | 1.28 | 1.11 | 1.07 | 19.52 | 0.86 | 7.15 | 8.62 | 14.02 | — | — |
 
 ## jerry (organic)
 
@@ -394,7 +394,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | 76 | 24 | 42 | 99 | 46 | 56 | 89 | 40 | — | — |
 | Edges on loops from a border to a border, % (L) | 14.3 | 0.0 | 0.6 | 1.7 | 2.0 | 11.6 | 17.0 | 1.8 | — | — |
 | Off budget, % (N) | 10.0 | 69.5 | 4.7 | 105.0 | 10.0 | 9.8 | 1.1 | 1.2 | — | — |
-| Time, seconds (T) | 0.64 | 0.65 | 0.71 | 28.69 | 0.55 | 5.41 | 2.53 | 25.27 | — | — |
+| Time, seconds (T) | 0.64 | 0.65 | 0.71 | 28.69 | 0.55 | 5.41 | 2.50 | 24.79 | — | — |
 
 ## rose (organic)
 
@@ -424,7 +424,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | 16 | — | 21 | 99 | 14 | — | 42 | — | — | — |
 | Edges on loops from a border to a border, % (L) | 1.5 | — | 8.5 | 0.3 | 4.9 | — | 0.0 | — | — | — |
 | Off budget, % (N) | 50.6 | 84.3 | 15.1 | 2584.8 | 45.7 | 72.9 | 46.7 | 49.3 | — | — |
-| Time, seconds (T) | 1.97 | 0.69 | 1.83 | 241.30 | 1.58 | 22.99 | 219.71 | 88.84 | — | — |
+| Time, seconds (T) | 1.97 | 0.69 | 1.83 | 241.30 | 1.58 | 22.99 | 200.90 | 75.73 | — | — |
 
 ## bridge (organic)
 
@@ -454,7 +454,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | — | 41 | 41 | 75 | 36 | 59 | 46 | 49 | — | — |
 | Edges on loops from a border to a border, % (L) | — | 0.0 | 21.3 | 5.8 | 25.2 | 30.1 | 31.5 | 21.2 | — | — |
 | Off budget, % (N) | — | 25.2 | 1.3 | 131.8 | 18.3 | 1.0 | 1.9 | 1.0 | — | — |
-| Time, seconds (T) | — | 0.92 | 1.70 | 302.07 | 1.57 | 3.81 | 3.74 | 3.85 | — | — |
+| Time, seconds (T) | — | 0.92 | 1.70 | 302.07 | 1.57 | 3.81 | 4.60 | 4.83 | — | — |
 
 Failures: quadriflow: cancelled.
 
@@ -486,7 +486,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | 36 | — | 52 | 37 | 64 | 52 | 32 | 25 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | — | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 5.7 | 65.2 | 0.4 | 3.3 | 3.6 | 0.2 | 1.2 | 0.8 | — | — |
-| Time, seconds (T) | 0.57 | 1.51 | 0.28 | 5.73 | 0.29 | 12.49 | 1.82 | 2.13 | — | — |
+| Time, seconds (T) | 0.57 | 1.51 | 0.28 | 5.73 | 0.29 | 12.49 | 2.46 | 2.40 | — | — |
 
 ## cube (mechanical)
 
@@ -516,7 +516,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | 13 | 40 | 56 | 13 | 50 | 26 | 13 | 13 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 1.4 | 42.7 | 3.8 | 1.4 | 10.0 | 0.1 | 1.4 | 1.4 | — | — |
-| Time, seconds (T) | 0.27 | 0.44 | 0.16 | 3.28 | 0.24 | 2.78 | 1.45 | 2.31 | — | — |
+| Time, seconds (T) | 0.27 | 0.44 | 0.16 | 3.28 | 0.24 | 2.78 | 1.61 | 0.75 | — | — |
 
 ## lblock (mechanical)
 
@@ -546,7 +546,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | 34 | 50 | 24 | 24 | 52 | 40 | 26 | 26 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 7.0 | 41.2 | 4.0 | 4.0 | 6.8 | 0.8 | 0.6 | 0.6 | — | — |
-| Time, seconds (T) | 0.20 | 0.51 | 0.12 | 5.19 | 0.08 | 2.54 | 1.40 | 2.31 | — | — |
+| Time, seconds (T) | 0.20 | 0.51 | 0.12 | 5.19 | 0.08 | 2.54 | 1.18 | 0.81 | — | — |
 
 ## cylinder (mechanical)
 
@@ -576,7 +576,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | 134 | 30 | 74 | 18 | 56 | 19 | 20 | 21 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 1.8 | 38.8 | 1.0 | 3.4 | 1.0 | 4.0 | 0.0 | 2.2 | — | — |
-| Time, seconds (T) | 0.28 | 0.53 | 0.09 | 5.02 | 0.07 | 1.93 | 1.43 | 2.50 | — | — |
+| Time, seconds (T) | 0.28 | 0.53 | 0.09 | 5.02 | 0.07 | 1.93 | 1.98 | 2.65 | — | — |
 
 ## venturi (extra)
 
@@ -606,7 +606,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | — | — | — | — | 16 | 67 | 66 | 46 | — | — |
 | Edges on loops from a border to a border, % (L) | — | — | — | — | 29.5 | 0.7 | 2.2 | 0.5 | — | — |
 | Off budget, % (N) | — | 139.0 | 0.2 | 626.5 | 36.1 | 23.1 | 0.3 | 4.7 | — | — |
-| Time, seconds (T) | — | 1.11 | 0.93 | 218.33 | 0.97 | 12.91 | 10.04 | 85.30 | — | — |
+| Time, seconds (T) | — | 1.11 | 0.93 | 218.33 | 0.97 | 12.91 | 8.98 | 76.99 | — | — |
 
 Failures: quadriflow: cancelled.
 
@@ -638,7 +638,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | — | 28 | 66 | 87 | 42 | 57 | 77 | 57 | — | — |
 | Edges on loops from a border to a border, % (L) | — | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | — | 66.6 | 2.0 | 9.7 | 6.0 | 24.6 | 0.1 | 1.2 | — | — |
-| Time, seconds (T) | — | 12.47 | 49.94 | 51.93 | 80.70 | 67.69 | 76.00 | 96.99 | — | — |
+| Time, seconds (T) | — | 12.47 | 49.94 | 51.93 | 80.70 | 67.69 | 64.63 | 89.58 | — | — |
 
 Failures: quadriflow: cancelled.
 
@@ -670,7 +670,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | 35 | — | — | 120 | 20 | — | — | — | — | — |
 | Edges on loops from a border to a border, % (L) | 5.2 | — | — | 0.4 | 10.8 | — | — | — | — | — |
 | Off budget, % (N) | 23.7 | 77.5 | 27.7 | 2536.5 | 52.8 | 20.7 | 24.4 | 24.4 | — | — |
-| Time, seconds (T) | 0.72 | 1.53 | 0.82 | 321.92 | 0.32 | 15.31 | 20.89 | 34.91 | — | — |
+| Time, seconds (T) | 0.72 | 1.53 | 0.82 | 321.92 | 0.32 | 15.31 | 23.96 | 27.92 | — | — |
 
 ## towermill (extra)
 
@@ -700,7 +700,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | 23 | — | — | 132 | 14 | — | — | — | — | — |
 | Edges on loops from a border to a border, % (L) | 1.5 | — | — | 0.1 | 18.6 | — | — | — | — | — |
 | Off budget, % (N) | 13.4 | 59.5 | 16.5 | 2031.3 | 51.8 | 24.9 | 24.9 | 24.9 | — | — |
-| Time, seconds (T) | 0.67 | 1.32 | 0.41 | 442.24 | 0.28 | 8.57 | 12.25 | 13.35 | — | — |
+| Time, seconds (T) | 0.67 | 1.32 | 0.41 | 442.24 | 0.28 | 8.57 | 12.48 | 17.01 | — | — |
 
 ## stonemill (extra)
 
@@ -730,7 +730,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | 50 | — | 74 | 127 | 40 | — | 57 | 54 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | — | 0.9 | 0.5 | 0.0 | — | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 6.2 | 29.7 | 6.2 | 1707.5 | 26.2 | 14.2 | 0.8 | 0.3 | — | — |
-| Time, seconds (T) | 0.65 | 1.01 | 1.15 | 91.64 | 0.42 | 20.82 | 16.75 | 47.88 | — | — |
+| Time, seconds (T) | 0.65 | 1.01 | 1.15 | 91.64 | 0.42 | 20.82 | 16.06 | 42.74 | — | — |
 
 ## windmill (extra)
 
@@ -760,7 +760,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | — | — | — | 170 | 24 | — | 8 | 20 | — | — |
 | Edges on loops from a border to a border, % (L) | — | — | — | 0.4 | 10.8 | — | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | — | 63.0 | 32.8 | 2353.9 | 40.5 | — | 91.0 | 86.9 | — | — |
-| Time, seconds (T) | — | 0.79 | 1.16 | 472.22 | 0.50 | — | 2.89 | 9.03 | — | — |
+| Time, seconds (T) | — | 0.79 | 1.16 | 472.22 | 0.50 | — | 2.81 | 8.66 | — | — |
 
 Failures: quadriflow: cancelled; integer-grid: error: invalid mesh: work mesh has 2 non-manifold or inconsistently oriented edges.
 
@@ -792,7 +792,7 @@ Failures: quadriflow: cancelled; integer-grid: error: invalid mesh: work mesh ha
 | Longest loop that stops at an irregular vertex, edges (L) | 25 | 27 | — | — | 21 | 52 | 52 | 52 | — | — |
 | Edges on loops from a border to a border, % (L) | 42.6 | 0.0 | — | — | 29.5 | 11.1 | 11.1 | 11.1 | — | — |
 | Off budget, % (N) | 12.8 | 69.2 | — | — | 42.7 | 12.0 | 12.0 | 12.0 | — | — |
-| Time, seconds (T) | 15.63 | 1.83 | — | — | 6.55 | 72.51 | 99.27 | 101.44 | — | — |
+| Time, seconds (T) | 15.63 | 1.83 | — | — | 6.55 | 72.51 | 90.14 | 93.59 | — | — |
 
 ## mahaveer (extra)
 
@@ -822,7 +822,7 @@ Failures: quadriflow: cancelled; integer-grid: error: invalid mesh: work mesh ha
 | Longest loop that stops at an irregular vertex, edges (L) | — | — | — | — | 34 | 33 | 6 | 53 | — | — |
 | Edges on loops from a border to a border, % (L) | — | — | — | — | 1.1 | 24.1 | 0.6 | 0.5 | — | — |
 | Off budget, % (N) | — | 36.4 | — | — | 47.0 | 33.0 | 99.3 | 83.7 | — | — |
-| Time, seconds (T) | — | 1.11 | — | — | 5.03 | 15.77 | 398.50 | 451.46 | — | — |
+| Time, seconds (T) | — | 1.11 | — | — | 5.03 | 15.77 | 350.02 | 423.24 | — | — |
 
 Failures: quadriflow: cancelled.
 
@@ -854,7 +854,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | — | — | — | — | 6 | — | — | 14 | — | — |
 | Edges on loops from a border to a border, % (L) | — | — | — | — | 0.0 | — | — | 0.8 | — | — |
 | Off budget, % (N) | — | 11.0 | — | — | 79.4 | — | 700.8 | 626.1 | — | — |
-| Time, seconds (T) | — | 1.64 | — | — | 3.49 | — | 672.83 | 436.93 | — | — |
+| Time, seconds (T) | — | 1.64 | — | — | 3.49 | — | 584.02 | 396.02 | — | — |
 
 Failures: quadriflow: cancelled; integer-grid: error: invalid mesh: work mesh has 10 non-manifold or inconsistently oriented edges.
 
@@ -886,7 +886,7 @@ Failures: quadriflow: cancelled; integer-grid: error: invalid mesh: work mesh ha
 | Longest loop that stops at an irregular vertex, edges (L) | — | — | — | — | 16 | — | — | 25 | — | — |
 | Edges on loops from a border to a border, % (L) | — | — | — | — | 2.8 | — | — | 1.3 | — | — |
 | Off budget, % (N) | — | 214.6 | — | — | 53.5 | 64.8 | 147.1 | 158.8 | — | — |
-| Time, seconds (T) | — | 1.23 | — | — | 4.01 | 51.31 | 47.65 | 71.57 | — | — |
+| Time, seconds (T) | — | 1.23 | — | — | 4.01 | 51.31 | 45.55 | 65.24 | — | — |
 
 Failures: quadriflow: cancelled.
 
@@ -918,7 +918,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | — | — | — | — | 24 | 36 | 10 | 23 | — | — |
 | Edges on loops from a border to a border, % (L) | — | — | — | — | 7.6 | 18.5 | 6.1 | 5.0 | — | — |
 | Off budget, % (N) | — | 1.2 | — | — | 49.2 | 16.6 | 9.3 | 12.5 | — | — |
-| Time, seconds (T) | — | 0.55 | — | — | 0.61 | 31.38 | 16.14 | 18.09 | — | — |
+| Time, seconds (T) | — | 0.55 | — | — | 0.61 | 31.38 | 14.29 | 15.71 | — | — |
 
 Failures: quadriflow: cancelled.
 
@@ -950,7 +950,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | — | 11 | — | — | 40 | — | 53 | 53 | — | — |
 | Edges on loops from a border to a border, % (L) | — | 0.0 | — | — | 0.0 | — | 0.2 | 0.2 | — | — |
 | Off budget, % (N) | — | 82.0 | — | — | 13.4 | 22.5 | 20.5 | 21.7 | — | — |
-| Time, seconds (T) | — | 1.33 | — | — | 0.17 | 15.50 | 19.95 | 17.46 | — | — |
+| Time, seconds (T) | — | 1.33 | — | — | 0.17 | 15.50 | 18.75 | 14.42 | — | — |
 
 Failures: quadriflow: cancelled.
 
@@ -982,7 +982,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | 145 | 126 | 80 | 14 | 78 | 26 | 14 | 13 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 5.0 | 23.2 | 5.0 | 9.2 | 7.2 | 2.5 | 1.2 | 1.4 | — | — |
-| Time, seconds (T) | 0.39 | 0.54 | 0.25 | 6.02 | 0.24 | 2.33 | 1.66 | 18.15 | — | — |
+| Time, seconds (T) | 0.39 | 0.54 | 0.25 | 6.02 | 0.24 | 2.33 | 1.19 | 22.12 | — | — |
 
 ## torus (calibration)
 
@@ -1012,7 +1012,7 @@ Failures: quadriflow: cancelled.
 | Longest loop that stops at an irregular vertex, edges (L) | 109 | 0 | 40 | 0 | 56 | 0 | 0 | 0 | — | — |
 | Edges on loops from a border to a border, % (L) | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | — | — |
 | Off budget, % (N) | 2.8 | 27.2 | 2.0 | 1.0 | 3.8 | 8.0 | 0.8 | 0.8 | — | — |
-| Time, seconds (T) | 0.84 | 0.73 | 0.21 | 5.74 | 0.30 | 0.93 | 1.34 | 1.34 | — | — |
+| Time, seconds (T) | 0.84 | 0.73 | 0.21 | 5.74 | 0.30 | 0.93 | 1.21 | 0.83 | — | — |
 
 ## Summary
 

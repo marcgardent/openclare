@@ -124,7 +124,7 @@ d'arêtes en spirale, comptées par un test qui distingue les hélices des
 boucles fermées, ouvertes et de bord. Sur douze modèles, à trois budgets
 voisins de 3\,000 quads, le moteur laisse 4,92\,\% des arêtes sur des boucles
 en spirale (19,8\,\% sans fermeture)\,; sur les sept modèles que deux autres
-remailleurs libres maillent aussi de façon valide, 2,2\,\% contre 38,8\,\% et % NIGHT4
+remailleurs libres maillent aussi de façon valide, 2,2\,\% contre 38,8\,\% et
 21,7\,\%\,; sur un corps humain, 1,5\,\%, contre 2,5\,\% pour le maillage
 fait à la main. Une analyse exacte du système de fermeture de ce
 corps montre que le conflit entre fermer les tours et garder les
@@ -651,11 +651,13 @@ développement, et un corpus de $33$ modèles pour le banc complet, parmi
 lesquels deux corps humains de la bibliothèque Essentials de Blender (CC0)
 dont les maillages de base, modélisés à la main, servent de référence.
 Toutes les exécutions ont eu lieu sur une seule machine, un Intel Core
-i7-7700K (4~cœurs, 8~threads, 4,2\,GHz, 2017) avec 62\,Go de mémoire,
-partagée avec d'autres tâches\,; chaque synthèse relève la charge moyenne,
-qui a atteint $15$ pendant certaines exécutions, si bien que les temps sont
-des temps écoulés (\emph{wall-clock}) qui ne donnent que des ordres de
-grandeur. % NIGHT4
+i7-7700K (4~cœurs, 8~threads, 4,2\,GHz, 2017) avec 62\,Go de mémoire. Les
+temps d'openclare du banc ont été mesurés sans autre tâche que le bureau, le 2~novembre
+2026\,; ses propres threads ont porté la charge moyenne à $11$. Les autres
+exécutions partageaient la machine avec d'autres tâches\,; chaque synthèse
+relève la charge moyenne, qui a atteint $15$ pendant certaines d'entre elles.
+Les temps sont des temps écoulés (\emph{wall-clock}) qui ne donnent que des
+ordres de grandeur.
 Les programmes linéaires et mixtes-entiers ont été résolus avec HiGHS
 1.8.0~\cite{huangfu2018highs} via SciPy 1.16.3~\cite{virtanen2020scipy}
 (\texttt{linprog} et \texttt{milp}), avec les options par défaut sauf un
@@ -716,9 +718,9 @@ cinq graines pour QuadriFlow~\cite{huang2018quadriflow}, lancé via Blender)
 compare les outils. Ils ne maillent pas les mêmes modèles~: QuadriFlow
 produit un maillage pour $22$ des $33$ modèles, AutoRemesher pour $18$. Sur
 les $7$ modèles que les trois maillent de façon valide à chaque exécution,
-la part moyenne d'arêtes en spirale est de $2,2\,\%$ pour openclare, % NIGHT4
+la part moyenne d'arêtes en spirale est de $2,2\,\%$ pour openclare,
 $38,8\,\%$ pour QuadriFlow et $21,7\,\%$ pour AutoRemesher\,; sur les $15$
-modèles où les trois produisent un maillage, valide ou non, $2,9\,\%$, % NIGHT4
+modèles où les trois produisent un maillage, valide ou non, $2,9\,\%$,
 $27,2\,\%$ et $27,3\,\%$. Sans fermeture (le même moteur par la même
 chaîne, sans aucune variante de fermeture essayée), openclare a $15,3\,\%$
 et $15,2\,\%$ sur les mêmes sous-ensembles. La comparaison
