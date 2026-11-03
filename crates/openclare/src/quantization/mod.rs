@@ -1627,7 +1627,7 @@ mod tests {
         let field = crossfield::create(crossfield::Kind::Power)
             .solve(&work, &crossfield::Request { alignment, ..Default::default() })
             .unwrap();
-        let request = tmesh::Request { edge_length };
+        let request = tmesh::Request { edge_length, pairs: tmesh::Pairs::All };
         tmesh::create(tmesh::Kind::Motorcycle).build(&work, &field, &request).unwrap().tmesh
     }
 
@@ -1777,7 +1777,8 @@ mod tests {
         let field = crossfield::create(crossfield::Kind::Power)
             .solve(&work, &crossfield::Request { alignment: 0.05, ..Default::default() })
             .unwrap();
-        let request = tmesh::Request { edge_length: (piece.surface_area() / quads as f64).sqrt() };
+        let request =
+            tmesh::Request { edge_length: (piece.surface_area() / quads as f64).sqrt(), pairs: tmesh::Pairs::All };
         (tmesh::create(tmesh::Kind::Motorcycle).build(&work, &field, &request).unwrap().tmesh, closed)
     }
 

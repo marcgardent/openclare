@@ -13,12 +13,17 @@
 //! On the cube and the sphere the poles sit at the corners of a cube and
 //! each edge is one separatrix from pole to pole (DT-115). The torus has no
 //! pole: it is cut along one loop of each family, through one vertex.
+//!
+//! The whole chain is held to the same answer on the sphere: a quad mesh of
+//! six patches, its eight irregular vertices at the corners of a cube.
 
 use openclare::TriMesh;
 use openclare::crossfield;
 use openclare::mesh::primitives;
+use openclare::metrics::measure;
 use openclare::preprocess;
 use openclare::tmesh::{self, TMesh};
+use openclare::{RemeshConfig, Target};
 
 /// The T-mesh of `source` made by the quad-layout chain, for about `quads`
 /// quads. (On a work mesh of under three triangles per quad, the field of
@@ -31,7 +36,7 @@ fn layout(source: &TriMesh, quads: f64) -> TMesh {
     let request = crossfield::Request { alignment: 0.05, ..Default::default() };
     let field = crossfield::create(crossfield::Kind::Power).solve(&work, &request).unwrap();
     let builder = tmesh::create(tmesh::Kind::Motorcycle);
-    let tmesh = builder.build(&work, &field, &tmesh::Request { edge_length }).unwrap().tmesh;
+    let tmesh = builder.build(&work, &field, &tmesh::Request { edge_length, pairs: tmesh::Pairs::All }).unwrap().tmesh;
     assert!(tmesh.report.is_valid(), "{:?}", tmesh.report);
     tmesh
 }
@@ -67,5 +72,18 @@ fn the_torus_is_one_patch() {
         let tmesh = layout(&primitives::torus(1.0, 0.4, 48, 24), quads);
         assert_eq!(tmesh.report.singularities, 0);
         assert_eq!(counts(&tmesh), [1, 2, 1, 0, 0, 0], "{quads} quads: {:?}", tmesh.report);
+    }
+}
+
+#[test]
+fn the_sphere_is_meshed_like_a_cube() {
+    let source = primitives::icosphere(5);
+    for quads in [600, 3000] {
+        let (mesh, report) = RemeshConfig::for_organic(Target::QuadCount(quads)).remesh(&source).unwrap();
+        let metrics = measure(&source, &mesh, Some(quads));
+        assert!(metrics.is_valid(), "{metrics:?}");
+        assert!(!report.fell_back, "{quads} quads: {:?}", report.fallback_causes);
+        assert_eq!(metrics.irregular_vertices, 8, "{quads} quads");
+        assert_eq!(metrics.base_complex_patches, Some(6), "{quads} quads");
     }
 }
