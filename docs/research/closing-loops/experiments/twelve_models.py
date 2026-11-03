@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""The twelve development models at three budgets (Section "Experiments",
-Appendix "Provenance", the protocol of the twelve models): 36 runs of
+"""The twelve development models at the 21 budgets of the protocol (Section
+"Experiments", Appendix "Provenance"): 252 runs of
 `openclare remesh <source> <out> --preset P --quads Q`, each measured with
 `openclare measure <source> <out> --target Q --json`, and the means over the
-36 runs (and over each budget) of the measures the paper quotes and of the
-independent measures of structure (DT-137).
+252 runs (and over each budget) of the measures the paper quotes and of the
+independent measures of structure (DT-137), with how the share of spiral
+edges is spread over the runs (`common.spread`).
 
     python3 docs/research/closing-loops/experiments/twelve_models.py \
         [--openclare target/release/openclare] [--commit <hash>] [--jobs 2]
@@ -34,7 +35,7 @@ def main():
     seconds = time.monotonic() - clock
 
     summary = {
-        "experiment": "twelve models, three budgets",
+        "experiment": "twelve models, 21 budgets",
         **common.header(arguments, started, [round(x, 2) for x in os.getloadavg()], seconds, rows),
         "sources": {model: common.md5(common.source(model)) for model, _ in common.TWELVE},
         "runs": len(rows),
@@ -42,6 +43,8 @@ def main():
         "failures": [f"{row['model']} {row['quads']}: {row['failure']}" for row in rows if row["failure"]],
         "spiral_loops_total": sum(row["metrics"]["loops_spiral"] or 0 for row in rows if row["metrics"]),
         "mean": common.means(rows),
+        "spiral": common.spread(rows),
+        "helix": common.spread(rows, "loop_edges_helix"),
         "mean_by_budget": {quads: common.means([row for row in rows if row["quads"] == quads])
                            for quads in common.BUDGETS},
         "per_run": [{"model": row["model"], "quads": row["quads"], "seconds": row["seconds"],
@@ -51,8 +54,10 @@ def main():
     }
     common.write_json(arguments.summary, summary)
     mean = summary["mean"]
+    spiral = summary["spiral"]
     print(f"spiral edges {100 * mean['loop_edges_spiral']:.2f}% "
-          f"({', '.join(f'{100 * summary["mean_by_budget"][q]["loop_edges_spiral"]:.2f}%' for q in common.BUDGETS)}), "
+          f"[{100 * spiral['interval_95'][0]:.1f}, {100 * spiral['interval_95'][1]:.1f}], "
+          f"median {100 * spiral['median']:.2f}%, none on {spiral['share_of_runs_at_zero']:.0%} of the runs, "
           f"{summary['spiral_loops_total']} spiral loops, {summary['valid']}/{summary['runs']} valid, "
           f"closed {100 * mean['loop_edges_closed']:.1f}%, mean distance {1000 * mean['mean_distance']:.3f} per mille, "
           f"corners {mean['angle_deviation_mean']:.2f} deg; helices {100 * mean['loop_edges_helix']:.2f}%")

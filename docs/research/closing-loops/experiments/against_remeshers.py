@@ -86,6 +86,17 @@ def compare(results, tools=TOOLS):
             per_model = {model: {key: median(results["runs"][model].get(tool, []), key) for key in KEYS}
                          for model in subset}
             out["subsets"][name]["means"][tool] = subset_means(per_model, subset)
+            out["subsets"][name].setdefault("per_model", {})[tool] = {
+                model: per_model[model]["loop_edges_spiral"] for model in subset}
+        # Model by model, on how many openclare has fewer spiral edges than
+        # each other tool, more, as many: a mean over seven models says
+        # little by itself (#222).
+        ours = out["subsets"][name]["per_model"][tools[0]]
+        out["subsets"][name]["openclare_against"] = {
+            tool: {"fewer": sum(ours[m] < theirs[m] for m in subset),
+                   "more": sum(ours[m] > theirs[m] for m in subset),
+                   "as_many": sum(ours[m] == theirs[m] for m in subset)}
+            for tool in tools[1:] for theirs in [out["subsets"][name]["per_model"][tool]]}
     return out
 
 
@@ -190,7 +201,10 @@ def main():
         print(f"{label}: produce a mesh {data['produce_a_mesh']}, valid in every run {data['valid_in_every_run']}")
         for name, subset in data["subsets"].items():
             print(f"  {name} ({len(subset['models'])}): "
-                  + ", ".join(f"{tool} {percent(subset['means'][tool]['loop_edges_spiral'])}%" for tool in TOOLS))
+                  + ", ".join(f"{tool} {percent(subset['means'][tool]['loop_edges_spiral'])}%" for tool in TOOLS)
+                  + "; openclare fewer/more/as many than "
+                  + ", ".join(f"{tool} {c['fewer']}/{c['more']}/{c['as_many']}"
+                              for tool, c in subset["openclare_against"].items()))
     if "no_closing" in summary:
         for name, means in summary["no_closing"]["means"].items():
             print(f"  no closing, {name}: {percent(means['loop_edges_spiral'])}%")

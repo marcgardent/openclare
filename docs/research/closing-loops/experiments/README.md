@@ -21,8 +21,8 @@ to the summaries' (the table "paper says / engine gives").
 
 | Figures | Script and command | Output |
 |---|---|---|
-| Twelve models, three budgets (`sec:experiments`, 36 runs) | `python3 docs/research/closing-loops/experiments/twelve_models.py` | `results/twelve_models.json` |
-| Table `tab:dev` as an ablation (one engine, one stage per line, 11 lines × 36 runs) | `python3 docs/research/closing-loops/experiments/ablation.py --check scratch/data-package/closing-loops/twelve_models` | `results/ablation.json` |
+| Table `tab:dev` as an ablation (one engine, one stage per line, 11 lines × 252 runs) | `python3 docs/research/closing-loops/experiments/ablation.py` | `results/ablation.json` |
+| Twelve models, 21 budgets (`sec:experiments`, 252 runs): the last line of the ablation, read back | `python3 docs/research/closing-loops/experiments/twelve_models.py --out scratch/data-package/closing-loops/ablation/engine` | `results/twelve_models.json` |
 | Against other remeshers (bench at 3,000 quads) | `python3 docs/research/closing-loops/experiments/against_remeshers.py --git 5bc16c6 --git b0fba91 --no-closing-run` | `results/against_remeshers.json` |
 | Male body against the hand-made mesh | `python3 docs/research/closing-loops/experiments/male_body.py` | `results/male_body.json` |
 | Figures `fig:overview`, `fig:closeups` | `WORK=scratch/data-package/closing-loops/figures OPENCLARE=target/release/openclare COMMIT=<commit> docs/research/closing-loops/figures/make_figures.sh`, then `python3 docs/research/closing-loops/experiments/figure_numbers.py scratch/data-package/closing-loops/figures` | `../figures/male-*.png`, `../figures/README.md`, `results/figures.json` |
@@ -31,15 +31,17 @@ to the summaries' (the table "paper says / engine gives").
 What each script does and why:
 
 - `twelve_models.py`: the protocol of Appendix `app:provenance` (12 models, presets organic or
-  hard-surface, budgets 2,970, 3,000 and 3,030, `openclare remesh` then `openclare measure
+  hard-surface, the 21 budgets 2,900 to 3,100 by 10, `openclare remesh` then `openclare measure
   --json`), and the means of `loop_edges_spiral`, `loop_edges_closed`, `loops_spiral`,
   `mean_distance`, `angle_deviation_mean`, and of the measures of structure the engine's
   selection does not look at (DT-137): `loop_edges_helix`, `loops_helix_missed`,
-  `base_complex_patches`, `irregular_vertices`.
+  `base_complex_patches`, `irregular_vertices`; and how the share of spiral edges is spread
+  (`common.spread`, below).
 - `ablation.py`: the stages of the closing turned off with the experiment options of
   `crates/openclare/src/quantization/experiment.rs` (ALGORITHM.md, M6, "Experiment options"), one
-  more stage on per line, on the twelve models at the three budgets. The last line sets no option
-  and is checked byte for byte against the plain runs of `twelve_models.py`.
+  more stage on per line, on the twelve models at the 21 budgets, with the spread of each line
+  and its paired counts against the line above (`common.paired`). The last line sets no option:
+  its runs are those of `twelve_models.py`, which reads them back.
 - `against_remeshers.py`: reads `bench/results/results.json` and nothing else, with the paper's
   definitions: a tool *produces a mesh* for a model if a run gives a mesh whose loops can be
   measured; it *meshes validly in every run* if all its runs give valid meshes; per model, the
@@ -61,14 +63,32 @@ What each script does and why:
   meshes, measures and panels go to `WORK`; `figure_numbers.py` copies the measures to
   `results/figures.json`.
 
+## Means over budgets, and comparisons run by run (#222)
+
+The share of spiral edges is chaotic on one model: one per cent of the budget moves it as much as
+a change of the method. Each model is therefore run at 21 budgets, 2,900 to 3,100 quads by 10
+(`common.BUDGETS`), and a mean is given with:
+
+- `common.spread`: the mean, the median, the share of runs with none, the number of models with
+  some, and the 95 % bootstrap interval of the mean. The bootstrap draws the models with
+  replacement, then the runs of each drawn model: the runs of one model are not independent.
+- `common.paired`, between two lines: on how many runs (same model, same budget) the share is
+  lower, higher, the same, and the two-sided sign test on those where it changes.
+
+A share is given to the unit of its interval. Most stages can only lower the share, since they add
+candidates and the engine keeps the one with the fewest spiral edges: their paired counts say how
+often they find a better candidate, not a gain beyond that construction. Against the other
+remeshers, `against_remeshers.py` counts the models where openclare has fewer spiral edges, more,
+as many.
+
 ## Table `tab:dev`: what one engine can and cannot ablate
 
 Each line is the engine of one commit with the switches of ALGORITHM.md (M6, "Experiment
-options"), one more stage on per line, on the twelve models at the three budgets (36 runs per
+options"), one more stage on per line, on the twelve models at the 21 budgets (252 runs per
 line). The paper's table gives single runs at 3,000 quads of four different engines. Every line
 but the last sets `OPENCLARE_EXTRA_DRAWS=0`: the engine's own lengths only, as before version
-0.7.0; the last line sets no option, and its 36 meshes must be those of `twelve_models.py` byte for
-byte (`--check`).
+0.7.0; the last line sets no option. With three budgets (the protocol before #222), its 36
+meshes were checked byte for byte against those of `twelve_models.py` (`--check`).
 
 | Line | Switches | Paper's row |
 |---|---|---|
