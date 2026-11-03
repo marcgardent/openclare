@@ -178,13 +178,22 @@ The 50 made are 13 caps, 9 discs, 6 tubes and 22 holed hulls (12 with one hole, 
 with three); 34 doubles are spheres, 14 tori and 2 of genus two, with 34, 14 and 2 instances of
 1, 2 and 3 border components; 498 border nodes, 2 to 184 patches, the lengths symmetric on all
 50. The quad meshes at the whole lengths are about ten times those of the closed run (226,964
-quads against 21,523). The Lean oracle passes 38 and fails 12: χ, the balances, the shift forms
-modulo the balances, the walks, Gauss–Bonnet on 9,386 regions, the cut discs, `Border.lean`,
-the parity (all 50 bipartite) and Fox–Burgers on the 34 spheres hold everywhere; the failures
-are the hypotheses of `Region.lean` and `CutForest.lean` (charts agreeing across the dual tree,
-the forest hanging from the region), short in 17 and 860 of 6,082 regions. All 12 failed
-instances, the 9 discs and 3 caps, have cone points of valence 2 (border vertices of angle
-π/2, two faces sharing two edges); 3 other caps have them and pass.
+quads against 21,523). The Lean oracle first passed 38 and failed 12: χ, the balances, the shift
+forms modulo the balances, the walks, Gauss–Bonnet on 9,386 regions, the cut discs,
+`Border.lean`, the parity (all 50 bipartite) and Fox–Burgers on the 34 spheres held everywhere;
+the failures were the hypotheses of `Region.lean` and `CutForest.lean` (charts agreeing across
+the dual tree, the forest hanging from the region), short in 17 and 860 of 6,082 regions. The
+12, the 9 discs and 3 caps, have cone points of valence 2: border corners of angle π/2 in the
+discs, interior vertices of the open mesh and their mirror images in the caps. The two faces at
+such a vertex share two edges; where the breadth-first dual tree took one and left the other a
+cut, the program, reading the tree by pairs of faces, took the cut crossing for a tree crossing
+and the forest missed the vertex. In the closed run both edges were cuts in all 56 regions with
+such a vertex inside, by the order of the search alone. The predicate `tree` of `Region.lean`
+and `CutForest.lean` now reads the whole crossing, faces and change of chart, and the 12 pass
+every check (2026-11-03): 2,066 of 2,066 regions with the charts agreeing across the dual tree
+and the forest hanging, its cone points the word of first visits, their composite the
+development. The closed run passes as before, with the same counts. The 38 others are not re-run
+yet.
 
 ## The property tests (`properties.py`, milestone 2)
 
@@ -245,6 +254,5 @@ the pair (`results/certificates-seed-1.json`, the exports with the bound under
 
 ## Not yet here
 
-Borders read through the mirror (collars, the border term of the Burgers sum), the cone points
-of valence 2 in `Region.lean` and `CutForest.lean`, the free homotopy of the
-winding separatrix, and the parity of a turn complete on the combinatorial T-mesh (DT-173).
+Borders read through the mirror (collars, the border term of the Burgers sum), the free
+homotopy of the winding separatrix, and the parity of a turn complete on the combinatorial T-mesh (DT-173).

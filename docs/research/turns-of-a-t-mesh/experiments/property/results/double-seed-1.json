@@ -1326,11 +1326,12 @@
   "shifted_strips": 20
  },
  "lean_check": {
-  "exports_checked": 50,
-  "passed": 38,
-  "failed": 12,
+  "exports_checked": 12,
+  "passed": 12,
+  "failed": 0,
   "command": "python3 docs/research/turns-of-a-t-mesh/lean/Check/check_exports.py scratch/data-package/property/double-seed-1 scratch/data-package/property/lean-check-double-seed-1 --jobs 4",
-  "failed_instances": [
+  "instances": "the 12 failed before, their call-<name> folders copied into one export folder; the 38 others not re-run yet",
+  "instances_checked": [
    "cap-521280113",
    "cap-578273269",
    "cap-93388246",
@@ -1344,170 +1345,367 @@
    "disc-837108038",
    "disc-942662923"
   ],
-  "failed_instances_with_a_cone_point_of_valence_2": 12,
-  "passed_instances_with_a_cone_point_of_valence_2": 3,
-  "checks_short_in_the_failed_instances": {
-   "forest: the forest of cuts built from the cut crossings of the border hangs from the region (hangs of CutForest.lean decided; its roots are the cut crossings)": 12,
-   "forest: its cone points in preorder, k ≠ 4, = the word of the walk round the cut trees (same rotations, positions, order); its nodes = the interior vertices": 12,
-   "forest: composite of the cone rotations in preorder = development (2 T on the left, -2 T on the right; development_eq_cones evaluated)": 12,
-   "cuts: across every crossing of the dual tree the charts agree, M g ∘ C = M f (the hypothesis of borderHolonomy_cuts)": 10,
-   "cuts: composite of the jumps across the cuts in border order = holonomy of the border = development (2 T on the left, -2 T on the right; borderHolonomy_cuts with borderHolonomy_round)": 10
-  },
   "checks": {
    "balances, B row (P, j) = engine row times +1 (j = 0) or -1 (j = 1)": {
-    "agree": 6140,
-    "of": 6140
+    "agree": 496,
+    "of": 496
    },
    "turns of the TMesh (IsPath, closes)": {
-    "agree": 11748,
-    "of": 11748
+    "agree": 884,
+    "of": 884
    },
    "shift forms, shiftForm = engine shift coefficient by coefficient": {
-    "agree": 6000,
-    "of": 11748
+    "agree": 132,
+    "of": 884
    },
-   "shift forms, shiftForm - engine shift = λᵀ B (checked exactly)": {
-    "agree": 11748,
-    "of": 11748
+   "shift forms, shiftForm - engine shift = \u03bb\u1d40 B (checked exactly)": {
+    "agree": 884,
+    "of": 884
    },
    "walked lengths: engine offset in the corridor": {
-    "agree": 11748,
-    "of": 11748
+    "agree": 884,
+    "of": 884
    },
    "walked lengths: walk where the engine crossed (within 1e-6)": {
-    "agree": 11748,
-    "of": 11748
+    "agree": 884,
+    "of": 884
    },
    "walked lengths: walk comes back at offset + shift": {
-    "agree": 11748,
-    "of": 11748
+    "agree": 884,
+    "of": 884
    },
    "real lengths: walk comes back at offset + shift": {
-    "agree": 11748,
-    "of": 11748
+    "agree": 884,
+    "of": 884
    },
    "whole lengths: half-integers of the corridors, walk comes back at offset + shift": {
-    "agree": 83372,
-    "of": 83372
+    "agree": 11820,
+    "of": 11820
    },
-   "whole lengths: Turn.development = translation by -α e₁ + shift e₂ (Holonomy.lean)": {
-    "agree": 11748,
-    "of": 11748
+   "whole lengths: Turn.development = translation by -\u03b1 e\u2081 + shift e\u2082 (Holonomy.lean)": {
+    "agree": 884,
+    "of": 884
    },
-   "parity α ≡ shift (mod 2) at the whole lengths, bipartite instances": {
-    "agree": 11748,
-    "of": 11748
+   "parity \u03b1 \u2261 shift (mod 2) at the whole lengths, bipartite instances": {
+    "agree": 884,
+    "of": 884
    },
    "border: the steps of a round start at its points (roundSteps_round)": {
-    "agree": 91924,
-    "of": 91924
+    "agree": 14024,
+    "of": 14024
    },
    "border: holonomy of the border of a round = its development (borderHolonomy_round), rings": {
-    "agree": 91644,
-    "of": 91644
+    "agree": 14024,
+    "of": 14024
    },
-   "border: the same, closing segment with the region inside the rectangle of σ": {
-    "agree": 140,
-    "of": 140
+   "border: the same, closing segment with the region inside the rectangle of \u03c3": {
+    "agree": 0,
+    "of": 0
    },
-   "border: the same, closing segment with the region outside, every node of σ met by four faces": {
-    "agree": 140,
-    "of": 140
+   "border: the same, closing segment with the region outside, every node of \u03c3 met by four faces": {
+    "agree": 0,
+    "of": 0
    },
-   "border: the same, closing segment outside, a node of σ not met by four faces (not covered by the theorem)": {
+   "border: the same, closing segment outside, a node of \u03c3 not met by four faces (not covered by the theorem)": {
     "agree": 0,
     "of": 0
    },
    "border: the walk round each vertex of the quad graph meets its valence (valenceAround)": {
-    "agree": 227028,
-    "of": 227028
+    "agree": 55290,
+    "of": 55290
    },
    "border: holonomy round each vertex of the quad graph = R^(4-k) about it (holonomyAround_eq)": {
-    "agree": 227028,
-    "of": 227028
+    "agree": 55290,
+    "of": 55290
    },
    "border: every point the walk round a vertex meets is that vertex (aroundStep_same)": {
-    "agree": 907856,
-    "of": 907856
+    "agree": 221064,
+    "of": 221064
    },
-   "Gauss–Bonnet on the fine grid: regions of simple curves with ∑ (4 - k) = 4 χ": {
-    "agree": 9386,
-    "of": 9386
+   "Gauss\u2013Bonnet on the fine grid: regions of simple curves with \u2211 (4 - k) = 4 \u03c7": {
+    "agree": 2066,
+    "of": 2066
    },
    "regions: the cuts (interior edges off a dual spanning tree) form a forest, each tree meeting the curve at one vertex, every interior vertex on it (a disc)": {
-    "agree": 6082,
-    "of": 6082
+    "agree": 2066,
+    "of": 2066
    },
    "regions: the walk round the cut trees visits every cone point inside (the word in the order of first visit)": {
-    "agree": 6082,
-    "of": 6082
+    "agree": 2066,
+    "of": 2066
    },
-   "regions: composite of the rotations in first-visit order, region on the left, = Turn.development (Prop. 'The shift is set by the singularities' (a): B_D = T_γ with D on its left, the inverse with D on its right; fine units, 2 T)": {
-    "agree": 6082,
-    "of": 6082
+   "regions: composite of the rotations in first-visit order, region on the left, = Turn.development (Prop. 'The shift is set by the singularities' (a): B_D = T_\u03b3 with D on its left, the inverse with D on its right; fine units, 2 T)": {
+    "agree": 2066,
+    "of": 2066
    },
-   "regions: Burgers sum ∑ Qᵢ (1 - Rᵢ) pᵢ = translation of the composite (Motion.burgers)": {
-    "agree": 6082,
-    "of": 6082
+   "regions: Burgers sum \u2211 Q\u1d62 (1 - R\u1d62) p\u1d62 = translation of the composite (Motion.burgers)": {
+    "agree": 2066,
+    "of": 2066
    },
    "regions: composite = inverse of the holonomy of the word of develop.py for the same turn, through the chart R^k of its first patch": {
-    "agree": 5470,
-    "of": 5470
+    "agree": 1790,
+    "of": 1790
    },
-   "cuts: the border of the region crossed face by face (borderCrossings ℓ 4 some, unit steps, closed, from the root face, the faces chain as borderCrossings_chain states, every face in the region)": {
-    "agree": 6082,
-    "of": 6082
+   "cuts: the border of the region crossed face by face (borderCrossings \u2113 4 some, unit steps, closed, from the root face, the faces chain as borderCrossings_chain states, every face in the region)": {
+    "agree": 2066,
+    "of": 2066
    },
-   "cuts: across every crossing of the dual tree the charts agree, M g ∘ C = M f (the hypothesis of borderHolonomy_cuts)": {
-    "agree": 6065,
-    "of": 6082
+   "cuts: across every crossing of the dual tree the charts agree, M g \u2218 C = M f (the hypothesis of borderHolonomy_cuts)": {
+    "agree": 2066,
+    "of": 2066
    },
    "cuts: composite of the jumps across the cuts in border order = holonomy of the border = development (2 T on the left, -2 T on the right; borderHolonomy_cuts with borderHolonomy_round)": {
-    "agree": 6065,
-    "of": 6082
+    "agree": 2066,
+    "of": 2066
    },
    "forest: the forest of cuts built from the cut crossings of the border hangs from the region (hangs of CutForest.lean decided; its roots are the cut crossings)": {
-    "agree": 5222,
-    "of": 6082
+    "agree": 2066,
+    "of": 2066
    },
-   "forest: its cone points in preorder, k ≠ 4, = the word of the walk round the cut trees (same rotations, positions, order); its nodes = the interior vertices": {
-    "agree": 5210,
-    "of": 6082
+   "forest: its cone points in preorder, k \u2260 4, = the word of the walk round the cut trees (same rotations, positions, order); its nodes = the interior vertices": {
+    "agree": 2066,
+    "of": 2066
    },
    "forest: composite of the cone rotations in preorder = development (2 T on the left, -2 T on the right; development_eq_cones evaluated)": {
-    "agree": 5210,
-    "of": 6082
+    "agree": 2066,
+    "of": 2066
    },
    "jumps across the cut tree: hol of the word = the change of chart": {
-    "agree": 1796,
-    "of": 1796
+    "agree": 310,
+    "of": 310
    },
    "turns: hol of the word has rotation 1": {
-    "agree": 6272,
-    "of": 6272
+    "agree": 884,
+    "of": 884
    },
-   "turns: ⟨e₂, τ⟩ = -shift (shift: Turn.shift at the whole lengths)": {
-    "agree": 6272,
-    "of": 6272
+   "turns: \u27e8e\u2082, \u03c4\u27e9 = -shift (shift: Turn.shift at the whole lengths)": {
+    "agree": 884,
+    "of": 884
    },
-   "turns: ⟨e₁, τ⟩ = α (the length of the turn)": {
-    "agree": 6272,
-    "of": 6272
+   "turns: \u27e8e\u2081, \u03c4\u27e9 = \u03b1 (the length of the turn)": {
+    "agree": 884,
+    "of": 884
    },
-   "turns: τ = α e₁ - shift e₂": {
-    "agree": 6272,
-    "of": 6272
+   "turns: \u03c4 = \u03b1 e\u2081 - shift e\u2082": {
+    "agree": 884,
+    "of": 884
    },
-   "turns: τ = Σᵢ ρ(∂w/∂xᵢ) (1 - Rᵢ) pᵢ (Fox–Burgers sum, `fox`)": {
-    "agree": 6272,
-    "of": 6272
+   "turns: \u03c4 = \u03a3\u1d62 \u03c1(\u2202w/\u2202x\u1d62) (1 - R\u1d62) p\u1d62 (Fox\u2013Burgers sum, `fox`)": {
+    "agree": 884,
+    "of": 884
    },
-   "turns: holonomy of the word = inverse of the development, turned by the chart (hol = 1, -R^k · Turn.development.trans)": {
-    "agree": 6272,
-    "of": 6272
+   "turns: holonomy of the word = inverse of the development, turned by the chart (hol = 1, -R^k \u00b7 Turn.development.trans)": {
+    "agree": 884,
+    "of": 884
    }
   },
-  "date": "2026-11-01"
+  "date": "2026-11-03",
+  "closed_run_seed_1": {
+   "exports_checked": 50,
+   "passed": 50,
+   "failed": 0,
+   "date": "2026-11-03",
+   "counts": "every check and every count the same as before the fix (results/seed-1.json)",
+   "cuts_and_forest": {
+    "crossings": 124632,
+    "tree_crossings": 111168,
+    "cut_crossings": 13464,
+    "regions_each_cut_crossed_once": 1852,
+    "regions_cut_crossings_nested_twice_each": 0,
+    "distinct_cuts_crossed": 13464,
+    "cuts_of_the_regions": 1889092,
+    "cuts_with_an_end_on_the_curve": 13464,
+    "regions_cuts_crossed_are_all_the_cuts": 0,
+    "regions_cuts_crossed_are_those_with_an_end_on_the_curve": 1852,
+    "nodes": 1889092,
+    "nodes_k_not_4": 17289,
+    "deepest_forest": 129,
+    "regions_with_an_empty_forest": 0
+   }
+  },
+  "before_the_fix": {
+   "date": "2026-11-01",
+   "passed": 38,
+   "failed": 12,
+   "failed_instances": [
+    "cap-521280113",
+    "cap-578273269",
+    "cap-93388246",
+    "disc-1047664193",
+    "disc-135520872",
+    "disc-428458136",
+    "disc-487344227",
+    "disc-54644572",
+    "disc-636493528",
+    "disc-714457467",
+    "disc-837108038",
+    "disc-942662923"
+   ],
+   "failed_instances_with_a_cone_point_of_valence_2": 12,
+   "passed_instances_with_a_cone_point_of_valence_2": 3,
+   "checks_short_in_the_failed_instances": {
+    "forest: the forest of cuts built from the cut crossings of the border hangs from the region (hangs of CutForest.lean decided; its roots are the cut crossings)": 12,
+    "forest: its cone points in preorder, k \u2260 4, = the word of the walk round the cut trees (same rotations, positions, order); its nodes = the interior vertices": 12,
+    "forest: composite of the cone rotations in preorder = development (2 T on the left, -2 T on the right; development_eq_cones evaluated)": 12,
+    "cuts: across every crossing of the dual tree the charts agree, M g \u2218 C = M f (the hypothesis of borderHolonomy_cuts)": 10,
+    "cuts: composite of the jumps across the cuts in border order = holonomy of the border = development (2 T on the left, -2 T on the right; borderHolonomy_cuts with borderHolonomy_round)": 10
+   },
+   "checks": {
+    "balances, B row (P, j) = engine row times +1 (j = 0) or -1 (j = 1)": {
+     "agree": 6140,
+     "of": 6140
+    },
+    "turns of the TMesh (IsPath, closes)": {
+     "agree": 11748,
+     "of": 11748
+    },
+    "shift forms, shiftForm = engine shift coefficient by coefficient": {
+     "agree": 6000,
+     "of": 11748
+    },
+    "shift forms, shiftForm - engine shift = \u03bb\u1d40 B (checked exactly)": {
+     "agree": 11748,
+     "of": 11748
+    },
+    "walked lengths: engine offset in the corridor": {
+     "agree": 11748,
+     "of": 11748
+    },
+    "walked lengths: walk where the engine crossed (within 1e-6)": {
+     "agree": 11748,
+     "of": 11748
+    },
+    "walked lengths: walk comes back at offset + shift": {
+     "agree": 11748,
+     "of": 11748
+    },
+    "real lengths: walk comes back at offset + shift": {
+     "agree": 11748,
+     "of": 11748
+    },
+    "whole lengths: half-integers of the corridors, walk comes back at offset + shift": {
+     "agree": 83372,
+     "of": 83372
+    },
+    "whole lengths: Turn.development = translation by -\u03b1 e\u2081 + shift e\u2082 (Holonomy.lean)": {
+     "agree": 11748,
+     "of": 11748
+    },
+    "parity \u03b1 \u2261 shift (mod 2) at the whole lengths, bipartite instances": {
+     "agree": 11748,
+     "of": 11748
+    },
+    "border: the steps of a round start at its points (roundSteps_round)": {
+     "agree": 91924,
+     "of": 91924
+    },
+    "border: holonomy of the border of a round = its development (borderHolonomy_round), rings": {
+     "agree": 91644,
+     "of": 91644
+    },
+    "border: the same, closing segment with the region inside the rectangle of \u03c3": {
+     "agree": 140,
+     "of": 140
+    },
+    "border: the same, closing segment with the region outside, every node of \u03c3 met by four faces": {
+     "agree": 140,
+     "of": 140
+    },
+    "border: the same, closing segment outside, a node of \u03c3 not met by four faces (not covered by the theorem)": {
+     "agree": 0,
+     "of": 0
+    },
+    "border: the walk round each vertex of the quad graph meets its valence (valenceAround)": {
+     "agree": 227028,
+     "of": 227028
+    },
+    "border: holonomy round each vertex of the quad graph = R^(4-k) about it (holonomyAround_eq)": {
+     "agree": 227028,
+     "of": 227028
+    },
+    "border: every point the walk round a vertex meets is that vertex (aroundStep_same)": {
+     "agree": 907856,
+     "of": 907856
+    },
+    "Gauss\u2013Bonnet on the fine grid: regions of simple curves with \u2211 (4 - k) = 4 \u03c7": {
+     "agree": 9386,
+     "of": 9386
+    },
+    "regions: the cuts (interior edges off a dual spanning tree) form a forest, each tree meeting the curve at one vertex, every interior vertex on it (a disc)": {
+     "agree": 6082,
+     "of": 6082
+    },
+    "regions: the walk round the cut trees visits every cone point inside (the word in the order of first visit)": {
+     "agree": 6082,
+     "of": 6082
+    },
+    "regions: composite of the rotations in first-visit order, region on the left, = Turn.development (Prop. 'The shift is set by the singularities' (a): B_D = T_\u03b3 with D on its left, the inverse with D on its right; fine units, 2 T)": {
+     "agree": 6082,
+     "of": 6082
+    },
+    "regions: Burgers sum \u2211 Q\u1d62 (1 - R\u1d62) p\u1d62 = translation of the composite (Motion.burgers)": {
+     "agree": 6082,
+     "of": 6082
+    },
+    "regions: composite = inverse of the holonomy of the word of develop.py for the same turn, through the chart R^k of its first patch": {
+     "agree": 5470,
+     "of": 5470
+    },
+    "cuts: the border of the region crossed face by face (borderCrossings \u2113 4 some, unit steps, closed, from the root face, the faces chain as borderCrossings_chain states, every face in the region)": {
+     "agree": 6082,
+     "of": 6082
+    },
+    "cuts: across every crossing of the dual tree the charts agree, M g \u2218 C = M f (the hypothesis of borderHolonomy_cuts)": {
+     "agree": 6065,
+     "of": 6082
+    },
+    "cuts: composite of the jumps across the cuts in border order = holonomy of the border = development (2 T on the left, -2 T on the right; borderHolonomy_cuts with borderHolonomy_round)": {
+     "agree": 6065,
+     "of": 6082
+    },
+    "forest: the forest of cuts built from the cut crossings of the border hangs from the region (hangs of CutForest.lean decided; its roots are the cut crossings)": {
+     "agree": 5222,
+     "of": 6082
+    },
+    "forest: its cone points in preorder, k \u2260 4, = the word of the walk round the cut trees (same rotations, positions, order); its nodes = the interior vertices": {
+     "agree": 5210,
+     "of": 6082
+    },
+    "forest: composite of the cone rotations in preorder = development (2 T on the left, -2 T on the right; development_eq_cones evaluated)": {
+     "agree": 5210,
+     "of": 6082
+    },
+    "jumps across the cut tree: hol of the word = the change of chart": {
+     "agree": 1796,
+     "of": 1796
+    },
+    "turns: hol of the word has rotation 1": {
+     "agree": 6272,
+     "of": 6272
+    },
+    "turns: \u27e8e\u2082, \u03c4\u27e9 = -shift (shift: Turn.shift at the whole lengths)": {
+     "agree": 6272,
+     "of": 6272
+    },
+    "turns: \u27e8e\u2081, \u03c4\u27e9 = \u03b1 (the length of the turn)": {
+     "agree": 6272,
+     "of": 6272
+    },
+    "turns: \u03c4 = \u03b1 e\u2081 - shift e\u2082": {
+     "agree": 6272,
+     "of": 6272
+    },
+    "turns: \u03c4 = \u03a3\u1d62 \u03c1(\u2202w/\u2202x\u1d62) (1 - R\u1d62) p\u1d62 (Fox\u2013Burgers sum, `fox`)": {
+     "agree": 6272,
+     "of": 6272
+    },
+    "turns: holonomy of the word = inverse of the development, turned by the chart (hol = 1, -R^k \u00b7 Turn.development.trans)": {
+     "agree": 6272,
+     "of": 6272
+    }
+   },
+   "cause": "the dual tree read by pairs of faces: at a vertex of valence 2 the two faces share two edges, one a tree edge and the other a cut, and the cut crossing passed for a tree crossing"
+  }
  },
  "made_with": "python3 docs/research/turns-of-a-t-mesh/experiments/property/generate.py --count 50 --seed 1 --borders"
 }
