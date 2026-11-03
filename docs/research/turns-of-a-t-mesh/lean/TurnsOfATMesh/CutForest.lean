@@ -147,7 +147,7 @@ inverse to `C`; among the others, the crossings off the tree are the roots of
 `below`, in order, and across the tree edges the charts agree; and `below` and
 `next` hang in turn. -/
 def hangs (M : Face Patch → Motion GaussianInt GaussianInt) (ℓ : α → ℕ) (fuel : ℕ)
-    (tree : Face Patch → Face Patch → Bool) : CutForest Patch → Bool
+    (tree : Crossing Patch → Bool) : CutForest Patch → Bool
   | .nil => true
   | .node c s k below next =>
     decide (IsQuarter s.2) && decide (faceAt (s.1, -gi * s.2) = c.1) &&
@@ -160,7 +160,7 @@ def hangs (M : Face Patch → Motion GaussianInt GaussianInt) (ℓ : α → ℕ)
           | some (f', C', g') =>
             decide (f' = c.2.2 ∧ g' = c.1 ∧ Motion.comp C' c.2.1 = Motion.id)) &&
         decide (cutCrossings tree cs.dropLast = below.roots) &&
-        (cs.dropLast.filter fun c' => tree c'.1 c'.2.2).all fun c' =>
+        (cs.dropLast.filter fun c' => tree c').all fun c' =>
           decide (Motion.comp (M c'.2.2) c'.2.1 = M c'.1)) &&
     hangs M ℓ fuel tree below && hangs M ℓ fuel tree next
 
@@ -178,7 +178,7 @@ def hangs (M : Face Patch → Motion GaussianInt GaussianInt) (ℓ : α → ℕ)
     (CutForest.nil : CutForest Patch).cones M = .nil := rfl
 
 @[simp] theorem hangs_nil (M : Face Patch → Motion GaussianInt GaussianInt) (ℓ : α → ℕ) (fuel : ℕ)
-    (tree : Face Patch → Face Patch → Bool) : T.hangs M ℓ fuel tree .nil = true := rfl
+    (tree : Crossing Patch → Bool) : T.hangs M ℓ fuel tree .nil = true := rfl
 
 /-- The preorder of the cones is the order of first visit: a node before the
 nodes below it, then the next cuts. -/
@@ -359,7 +359,7 @@ the face before the cut. The walk clockwise round `v` composes, through the char
 from `f` back to `f`, `rotAbout_conj`); its crossings of the tree jump by the identity
 and its last crossing is the cut walked back (`jump_reverse`). -/
 theorem jump_node (M : Face Patch → Motion GaussianInt GaussianInt)
-    (hq : ∀ f, IsQuarter (M f).lin) {ℓ : α → ℕ} {fuel : ℕ} {tree : Face Patch → Face Patch → Bool}
+    (hq : ∀ f, IsQuarter (M f).lin) {ℓ : α → ℕ} {fuel : ℕ} {tree : Crossing Patch → Bool}
     {c : Crossing Patch} {s : Step Patch} {k : ℕ} {below next : CutForest Patch}
     (h : T.hangs M ℓ fuel tree (.node c s k below next) = true) :
     jump M c = Motion.comp (Motion.composeAll (below.roots.map (jump M)))
@@ -408,10 +408,10 @@ theorem jump_node (M : Face Patch → Motion GaussianInt GaussianInt)
       -- The crossings before the last: the jumps across the tree are the identity.
       have hB : Motion.composeAll (cs.dropLast.map (jump M)) =
           Motion.composeAll (below.roots.map (jump M)) := by
-        rw [← hroots, cutCrossings, composeAll_filter_id (jump M) (fun c => !tree c.1 c.2.2)]
+        rw [← hroots, cutCrossings, composeAll_filter_id (jump M) (fun c => !tree c)]
         intro c hc hcut
         simp only [Bool.not_eq_false'] at hcut
-        have hc' : c ∈ cs.dropLast.filter fun c' => tree c'.1 c'.2.2 :=
+        have hc' : c ∈ cs.dropLast.filter fun c' => tree c' :=
           List.mem_filter.mpr ⟨hc, hcut⟩
         exact jump_tree M c (hq _) (of_decide_eq_true (List.all_eq_true.mp hall c hc'))
       -- The last crossing is the cut walked back.
@@ -443,7 +443,7 @@ theorem jump_node (M : Face Patch → Motion GaussianInt GaussianInt)
 the jumps across its roots, in order, is `Forest.glue` of the rotations `R^{4−k}`
 about the cone points, by induction with `jump_node`. -/
 theorem roots_glue (M : Face Patch → Motion GaussianInt GaussianInt)
-    (hq : ∀ f, IsQuarter (M f).lin) {ℓ : α → ℕ} {fuel : ℕ} {tree : Face Patch → Face Patch → Bool} :
+    (hq : ∀ f, IsQuarter (M f).lin) {ℓ : α → ℕ} {fuel : ℕ} {tree : Crossing Patch → Bool} :
     ∀ F : CutForest Patch, T.hangs M ℓ fuel tree F = true →
       Motion.composeAll (F.roots.map (jump M)) =
         Forest.glue ((F.cones M).map fun c => Motion.rotAbout c.1 c.2)
@@ -459,11 +459,11 @@ theorem roots_glue (M : Face Patch → Motion GaussianInt GaussianInt)
 of first visit**: with the hypotheses of `borderHolonomy_cuts`, when the cut crossings
 of the border are the roots of a forest that hangs from the region. -/
 theorem borderHolonomy_forest (M : Face Patch → Motion GaussianInt GaussianInt)
-    (hq : ∀ f, IsQuarter (M f).lin) (tree : Face Patch → Face Patch → Bool) {ℓ : α → ℕ}
+    (hq : ∀ f, IsQuarter (M f).lin) (tree : Crossing Patch → Bool) {ℓ : α → ℕ}
     {fuel fuel' : ℕ} {s s' : Step Patch} {ss : List (Step Patch)} {cs : List (Crossing Patch)}
     (hd : ∀ t ∈ s :: ss, IsQuarter t.2) (hs : T.normalize ℓ s = some s')
     (h₀ : M (faceAt s') = Motion.id) (h : T.borderCrossings ℓ fuel (s :: ss) = some cs)
-    (htree : ∀ c ∈ cs, tree c.1 c.2.2 = true → Motion.comp (M c.2.2) c.2.1 = M c.1)
+    (htree : ∀ c ∈ cs, tree c = true → Motion.comp (M c.2.2) c.2.1 = M c.1)
     {F : CutForest Patch} (hroots : cutCrossings tree cs = F.roots)
     (hF : T.hangs M ℓ fuel' tree F = true) :
     T.borderHolonomy ℓ fuel (s :: ss) =
@@ -493,10 +493,10 @@ theorem development_eq_cones [Fintype α] (hT : T.Oriented) {ℓ : α → ℕ}
     (hk : k < T.sideLen ℓ σ) {patches : List Patch} {s : Step Patch} {ss : List (Step Patch)}
     {path : List α} (h : T.roundSteps patches ℓ σ k = some (s :: ss, path))
     (M : Face Patch → Motion GaussianInt GaussianInt) (hq : ∀ f, IsQuarter (M f).lin)
-    (tree : Face Patch → Face Patch → Bool) {s' : Step Patch} {cs : List (Crossing Patch)}
+    (tree : Crossing Patch → Bool) {s' : Step Patch} {cs : List (Crossing Patch)}
     (hd : ∀ t ∈ s :: ss, IsQuarter t.2) (hs : T.normalize ℓ s = some s')
     (h₀ : M (faceAt s') = Motion.id) (hc : T.borderCrossings ℓ 4 (s :: ss) = some cs)
-    (htree : ∀ c ∈ cs, tree c.1 c.2.2 = true → Motion.comp (M c.2.2) c.2.1 = M c.1)
+    (htree : ∀ c ∈ cs, tree c = true → Motion.comp (M c.2.2) c.2.1 = M c.1)
     {F : CutForest Patch} {fuel'' : ℕ} (hroots : cutCrossings tree cs = F.roots)
     (hF : T.hangs M ℓ fuel'' tree F = true) :
     fineMotion (Motion.composeAll (T.crossMotions ℓ σ path)) =
