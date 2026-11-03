@@ -1087,6 +1087,73 @@ What stays open:
   strokes drawn) will go through the same mechanism, to be plugged in (DT-024). So will
   symmetry (J9 bis).
 
+**Since 3 November 2026, the lines from pole to pole are cut first** (DT-115,
+`tmesh/pairs.rs`). On a cube, the T-mesh had 18 patches instead of 6. Each pole sends a
+trace along each edge of the cube; in the map, the trace misses the pole at the other end by
+a hair and runs on past it. Next to every edge it left a sliver: 24 T-junctions, 12 thin
+patches.
+
+- **Pairs.** Each separatrix is walked alone through the map, with no race. Two walks from
+  two poles that run along the same line in opposite directions, in the same triangles, are
+  that line seen from both ends. Their gap across is the same all along it: the strip between
+  two poles holds no singularity, so it is flat in the map. Each separatrix keeps the first
+  such walk it meets; a pair is two separatrices that keep each other. It must have a gap of
+  at most half a quad edge (what the report counts as thin, and what quantization would
+  close), and at most a tenth of the distance between the poles, which must be at least one
+  quad edge. A separatrix may pair with another of its own pole: a loop that closes (the seed
+  of a torus).
+- **Snap.** Each pair gives one linear condition: the two poles have the same coordinate
+  across the line. Along each walk, a point of the line is carried as a linear expression in
+  the unknowns of the map; across a seam it turns and shifts as the map does. The map is
+  solved again with these conditions. Where that folds it, the pairs whose line runs near a
+  fold are let go, two rings of triangles round it, then four, eight; failing that, or if the
+  T-mesh cut from it is not valid, the map stays as it came.
+- **Race.** On the new map, the pairs are found again with a gap of 1e-6. One trace of each
+  pair runs first, alone, shortest pair first, and ends on the pole at the other end, in the
+  slot of the trace that pole would have sent down the same line; that one never sets off.
+  If it stops short, on the line of an earlier pair, its partner lays the rest of the line from
+  the other end. Then all the other separatrices race as before. A trace that lands exactly on
+  a pole, along a line that pole has not yet sent its own trace down, joins it head-on.
+- **Lines that cross.** Two pairs whose lines cross stop at the crossing, like any trace.
+  Letting each line run on to its pole, through the others, cuts the surface into a grid: on
+  the 12 models below, twice the patches.
+
+| `openclare tmesh`, 600 and 3000 quads | cube | sphere | torus | capped cylinder |
+|---|---|---|---|---|
+| patches, before → after | 18 → 6 | 18 → 6 | 3 → 1 | 18 → 14 |
+| T-junctions | 24 → 0 | 24 → 0 | 4 → 0 | 24 → 16 |
+| arcs | 48 → 12 | 48 → 12 | 8 → 2 | 48 → 36 |
+| thin patches | 12 → 0 | 12 → 0 | 2 → 0 | 0 or 1 → 0 |
+
+The cube, the sphere and the torus are now cut as a person would cut them, and a test holds
+them to it (`tests/reference_cases.rs`, DT-116). The capped cylinder is not: the poles of one
+cap are turned about 20° from those of the other, and their lines miss by about 4 quad edges,
+far past a snap.
+
+On the 12 models of the daily comparison, at 3000 quads, every T-mesh stays valid, and pairs
+are snapped on all 12:
+
+| Sum over the 12 models | before | after |
+|---|---|---|
+| patches | 3522 | 2933 (−17 %) |
+| thin patches | 1365 | 1094 (−20 %) |
+| short arcs | 3045 | 2250 (−26 %) |
+| T-junctions | 4582 | 3116 (−32 %) |
+| arcs | 9335 | 7428 (−20 %) |
+
+The hard-surface cage alone has more thin patches (541 → 572): most of its cuts are hard
+edges, which no snap moves.
+
+Cost: the map is solved at least twice, and once more for each round of letting pairs go.
+
+**Not yet better on the final mesh.** On the same 12 models, remeshed at 2970, 3000 and 3030
+quads (36 meshes, all valid), the share of loop edges on spirals rises from 4.9 % to 8.6 %
+on average, and goes up on 9 models of the 12; the corners are 0.1° further off square on
+average. Snapping only the pairs within 0.1 or 0.02 quad edge does not bring it back (5 of
+the models: 6.0 % before, 7.9 % and 9.7 %), so the size of the snap is not the cause. On the
+small ogre of the tests, at 2000 quads, the alignment to curvature goes from 12.99° to
+13.23°, past the bound of 13°. Pending: why fewer patches give more spirals.
+
 ### M6 — Quantization
 
 - **Input**: T-mesh and real lengths.

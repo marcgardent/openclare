@@ -22,6 +22,19 @@ pub struct Request {
     pub edge_length: f64,
     /// How many times to stiffen the faces that folded over and solve again.
     pub stiffening_rounds: usize,
+    /// Linear conditions the map must meet besides its own: two poles on
+    /// one grid line, say (see the T-mesh).
+    pub conditions: Vec<Condition>,
+}
+
+/// The linear condition `sum of coefficient * coordinate = target` on the
+/// map. Each coordinate is named by a corner of the work mesh, `3 * face +
+/// k`, and by which of `u` (0) or `v` (1) it is: the corners of one face
+/// share a chart, and the cut decides which corners are one unknown.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Condition {
+    pub terms: Vec<(u32, u8, f64)>,
+    pub target: f64,
 }
 
 /// What a parametrizer achieved.

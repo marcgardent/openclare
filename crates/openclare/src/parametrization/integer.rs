@@ -74,6 +74,7 @@ impl IntegerGrid {
         let problem = Problem::new(work, field, 2.0 * request.edge_length)?;
         let (on_lines, mut expressions) = if features { problem.feature_conditions() } else { Default::default() };
         let mut constraints = problem.seam_constraints();
+        constraints.extend(problem.extra_conditions(&request.conditions));
         constraints.extend(on_lines);
         expressions.extend(problem.integer_expressions(field));
         // Both faces of a crease, and both ends of an edge, often name the

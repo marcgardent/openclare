@@ -9,7 +9,7 @@ use openclare::parametrization;
 use openclare::preprocess;
 use openclare::quantization;
 use openclare::singularity;
-use openclare::tmesh::TMesh;
+use openclare::tmesh::{self, LayoutBuilder, TMesh};
 use openclare::{Guides, PolyMesh, Target, TriMesh};
 
 const USAGE: &str = "\
@@ -992,7 +992,7 @@ fn parametrize_command(args: &[String]) -> Result<(), String> {
     let (positive, negative, other) = field.singularities();
 
     let start = std::time::Instant::now();
-    let request = parametrization::Request { edge_length, stiffening_rounds: rounds };
+    let request = parametrization::Request { edge_length, stiffening_rounds: rounds, conditions: Vec::new() };
     let map = parametrization::create(kind).parametrize(&work, &field, &request).map_err(|e| e.to_string())?;
     let seconds = start.elapsed().as_secs_f64();
 
@@ -1073,13 +1073,12 @@ impl LayoutOptions {
                 .map_err(|e| e.to_string())?
                 .0;
         }
-        let request = parametrization::Request { edge_length, stiffening_rounds: self.rounds };
-        let map = parametrization::create(parametrization::Kind::Seamless)
-            .parametrize(&work, &field, &request)
-            .map_err(|e| e.to_string())?;
-
+        // The map and the T-mesh as the quad-layout chain makes them, pole
+        // pairs and all; timed together, since the map may be solved twice.
         let start = std::time::Instant::now();
-        let tmesh = TMesh::trace(&work, &field, &map, 20.0 * (quads as f64).sqrt());
+        let builder = tmesh::Motorcycle { stiffening_rounds: self.rounds, ..Default::default() };
+        let tmesh::Layout { tmesh, map } =
+            builder.build(&work, &field, &tmesh::Request { edge_length }).map_err(|e| e.to_string())?;
         Ok(Layout {
             tmesh,
             triangles: work.mesh.triangles.len(),
@@ -1121,7 +1120,8 @@ fn tmesh_command(args: &[String]) -> Result<(), String> {
              \"singularities\": {}, \"traces\": {}, \"lost_traces\": {}, \"overlaps\": {}, \"nodes\": {}, \
              \"t_junctions\": {}, \"arcs\": {}, \"patches\": {}, \"rectangles\": {}, \"side_mismatch\": {:e}, \
              \"area_error\": {:e}, \"euler\": {}, \"surface_euler\": {}, \"longest_trace\": {}, \
-             \"short_arcs\": {}, \"thin_patches\": {}, \"valid\": {}, \"seconds\": {}}}",
+             \"short_arcs\": {}, \"thin_patches\": {}, \"pole_pairs_found\": {}, \"pole_pairs_snapped\": {}, \
+             \"pole_pairs_joined\": {}, \"valid\": {}, \"seconds\": {}}}",
             triangles,
             report.map_inversions,
             features_off_grid,
@@ -1142,6 +1142,9 @@ fn tmesh_command(args: &[String]) -> Result<(), String> {
             report.longest_trace,
             report.short_arcs,
             report.thin_patches,
+            report.pole_pairs_found,
+            report.pole_pairs_snapped,
+            report.pole_pairs_joined,
             report.is_valid(),
             seconds
         );
@@ -1155,6 +1158,10 @@ fn tmesh_command(args: &[String]) -> Result<(), String> {
             report.traces, report.singularities, report.lost_traces, report.overlaps, report.longest_trace
         );
         println!("graph          {} nodes ({} T-junctions), {} arcs", report.nodes, report.t_junctions, report.arcs);
+        println!(
+            "pole pairs     {} found, {} put on one line, {} joined by one arc",
+            report.pole_pairs_found, report.pole_pairs_snapped, report.pole_pairs_joined
+        );
         println!(
             "patches        {} of which {} rectangles; opposite sides differ by {:.2e} at most",
             report.patches, report.rectangles, report.side_mismatch

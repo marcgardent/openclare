@@ -359,7 +359,7 @@ mod tests {
         assert_eq!((index - jumps).rem_euclid(4), 0);
         assert_ne!((old - jumps).rem_euclid(4), 0);
 
-        let request = parametrization::Request { edge_length: 0.25, stiffening_rounds: 40 };
+        let request = parametrization::Request { edge_length: 0.25, stiffening_rounds: 40, conditions: Vec::new() };
         let map =
             parametrization::create(parametrization::Kind::Seamless).parametrize(&work, &field, &request).unwrap();
         println!("centre: index {index}, with the drift {old}, drift {drift:.3}");
