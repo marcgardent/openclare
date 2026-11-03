@@ -24,8 +24,10 @@ fn field(work: &WorkMesh, alignment: f64) -> CrossField {
 fn layout(source: &TriMesh, crease_angle: Option<f64>, alignment: f64, edge_length: f64) -> TMesh {
     let work = work_mesh(source, crease_angle);
     let cross = field(&work, alignment);
-    let tmesh =
-        tmesh::create(tmesh::Kind::Motorcycle).build(&work, &cross, &tmesh::Request { edge_length }).unwrap().tmesh;
+    let tmesh = tmesh::create(tmesh::Kind::Motorcycle)
+        .build(&work, &cross, &tmesh::Request { edge_length, pairs: tmesh::Pairs::All })
+        .unwrap()
+        .tmesh;
     assert!(tmesh.report.is_valid(), "{:?}", tmesh.report);
     tmesh
 }

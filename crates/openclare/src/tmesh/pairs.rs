@@ -66,6 +66,14 @@ pub struct Pair {
     pub faces: Vec<u32>,
 }
 
+impl Pair {
+    /// The two poles, vertices of the work mesh, smaller first.
+    pub fn poles(&self) -> [u32; 2] {
+        let [a, b] = [self.ends[0].0, self.ends[1].0];
+        [a.min(b), a.max(b)]
+    }
+}
+
 /// A stretch of a walk within one triangle.
 struct Piece {
     walk: u32,

@@ -620,6 +620,33 @@ fn faces_reached_from(topology: &Topology, mesh: &crate::mesh::TriMesh, flagged:
 pub struct Request {
     /// Edge length of the quads to come: one unit of the map on the surface.
     pub edge_length: f64,
+    /// Which poles that one separatrix nearly joins are put on one line
+    /// and joined by one arc (DT-115).
+    pub pairs: Pairs,
+}
+
+/// Which pole pairs a builder joins.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub enum Pairs {
+    /// None: the plain motorcycle graph. The pairs are still looked for,
+    /// and listed in the layout.
+    None,
+    /// Every pair found.
+    #[default]
+    All,
+    /// The pairs between these poles, vertices of the work mesh, smaller
+    /// first, and no other.
+    Only(Vec<[u32; 2]>),
+}
+
+impl Pairs {
+    fn wants(&self, pair: &Pair) -> bool {
+        match self {
+            Pairs::None => false,
+            Pairs::All => true,
+            Pairs::Only(poles) => poles.contains(&pair.poles()),
+        }
+    }
 }
 
 /// The global structure of the quad mesh, with real lengths, and the map it
@@ -627,6 +654,9 @@ pub struct Request {
 pub struct Layout {
     pub tmesh: TMesh,
     pub map: Parametrization,
+    /// The pole pairs found on the map before any was put on its line,
+    /// whether joined or not.
+    pub pairs: Vec<Pair>,
 }
 
 /// Builds the global structure of the quad mesh, with real lengths.
@@ -706,14 +736,15 @@ impl LayoutBuilder for Motorcycle {
         };
         let side = (work.mesh.surface_area().sqrt() / request.edge_length).max(1.0);
         let max_trace = self.max_trace_length * side;
-        let (tmesh, map) = self.cut(parametrizer.as_ref(), work, field, &map_request, max_trace)?;
+        let (tmesh, map, pairs) =
+            self.cut(parametrizer.as_ref(), work, field, &map_request, max_trace, &request.pairs)?;
         if !tmesh.report.is_valid() && map.report.loose_guides.len() < work.guide_edges.len() {
             // Guide lines that did not fold the map may still leave a patch
             // that is no rectangle: let go of those near that patch first,
             // then of the rest if need be.
             let mut dropped: std::collections::HashSet<[u32; 2]> = map.report.loose_guides.iter().copied().collect();
             let mut current_tmesh = &tmesh;
-            let mut retry_holder: Option<(TMesh, Parametrization)>;
+            let mut retry_holder: Option<(TMesh, Parametrization, Vec<Pair>)>;
             let reach = 2.0 * request.edge_length;
             for _ in 0..3 {
                 let bad_points: Vec<Vec3> = current_tmesh
@@ -740,32 +771,32 @@ impl LayoutBuilder for Motorcycle {
                 let mut lighter = work.clone();
                 lighter.feature_edges.retain(|edge| !dropped.contains(edge));
                 lighter.guide_edges.retain(|edge| !dropped.contains(edge));
-                let (retry_tmesh, mut retry_map) =
-                    self.cut(parametrizer.as_ref(), &lighter, field, &map_request, max_trace)?;
+                let (retry_tmesh, mut retry_map, retry_pairs) =
+                    self.cut(parametrizer.as_ref(), &lighter, field, &map_request, max_trace, &request.pairs)?;
                 if retry_tmesh.report.is_valid() {
                     retry_map.report.guides_off_grid = true;
                     retry_map.report.loose_guides.extend(dropped);
                     retry_map.report.loose_guides.sort_unstable();
                     retry_map.report.loose_guides.dedup();
-                    return Ok(Layout { tmesh: retry_tmesh, map: retry_map });
+                    return Ok(Layout { tmesh: retry_tmesh, map: retry_map, pairs: retry_pairs });
                 }
                 dropped.extend(retry_map.report.loose_guides.iter().copied());
-                retry_holder = Some((retry_tmesh, retry_map));
+                retry_holder = Some((retry_tmesh, retry_map, retry_pairs));
                 current_tmesh = &retry_holder.as_ref().unwrap().0;
             }
             let guides: std::collections::HashSet<[u32; 2]> = work.guide_edges.iter().copied().collect();
             let mut lighter = work.clone();
             lighter.feature_edges.retain(|edge| !guides.contains(edge));
             lighter.guide_edges.clear();
-            let (retry_tmesh, mut retry_map) =
-                self.cut(parametrizer.as_ref(), &lighter, field, &map_request, max_trace)?;
+            let (retry_tmesh, mut retry_map, retry_pairs) =
+                self.cut(parametrizer.as_ref(), &lighter, field, &map_request, max_trace, &request.pairs)?;
             if retry_tmesh.report.is_valid() {
                 retry_map.report.guides_off_grid = true;
                 retry_map.report.loose_guides = work.guide_edges.clone();
-                return Ok(Layout { tmesh: retry_tmesh, map: retry_map });
+                return Ok(Layout { tmesh: retry_tmesh, map: retry_map, pairs: retry_pairs });
             }
         }
-        Ok(Layout { tmesh, map })
+        Ok(Layout { tmesh, map, pairs })
     }
 }
 
@@ -780,10 +811,11 @@ impl Motorcycle {
         field: &CrossField,
         map_request: &parametrization::Request,
         max_trace: f64,
-    ) -> Result<(TMesh, Parametrization)> {
+        wanted: &Pairs,
+    ) -> Result<(TMesh, Parametrization, Vec<Pair>)> {
         let map = parametrizer.parametrize(work, field, map_request)?;
         let found = TMesh::pole_pairs(work, field, &map, Tolerance::FULL);
-        let mut pairs: Vec<&Pair> = found.iter().collect();
+        let mut pairs: Vec<&Pair> = found.iter().filter(|pair| wanted.wants(pair)).collect();
         let topology = Topology::build(&work.mesh);
         // Where the map folds with the pairs on their lines, the pairs whose
         // line runs near a fold are let go, farther each round.
@@ -818,11 +850,11 @@ impl Motorcycle {
             }
             tmesh.report.pole_pairs_found = found.len();
             tmesh.report.pole_pairs_snapped = pairs.len();
-            return Ok((tmesh, snapped));
+            return Ok((tmesh, snapped, found));
         }
         let mut tmesh = TMesh::trace(work, field, &map, max_trace);
         tmesh.report.pole_pairs_found = found.len();
-        Ok((tmesh, map))
+        Ok((tmesh, map, found))
     }
 }
 

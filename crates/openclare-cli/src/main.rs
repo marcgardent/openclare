@@ -1073,12 +1073,14 @@ impl LayoutOptions {
                 .map_err(|e| e.to_string())?
                 .0;
         }
-        // The map and the T-mesh as the quad-layout chain makes them, pole
-        // pairs and all; timed together, since the map may be solved twice.
+        // The map and the T-mesh, every pole pair joined (the remesh chain
+        // joins only those its quantization puts on one line); timed
+        // together, since the map may be solved twice.
         let start = std::time::Instant::now();
         let builder = tmesh::Motorcycle { stiffening_rounds: self.rounds, ..Default::default() };
-        let tmesh::Layout { tmesh, map } =
-            builder.build(&work, &field, &tmesh::Request { edge_length }).map_err(|e| e.to_string())?;
+        let tmesh::Layout { tmesh, map, .. } = builder
+            .build(&work, &field, &tmesh::Request { edge_length, pairs: tmesh::Pairs::All })
+            .map_err(|e| e.to_string())?;
         Ok(Layout {
             tmesh,
             triangles: work.mesh.triangles.len(),
