@@ -19,7 +19,7 @@ fn field(work: &WorkMesh, alignment: f64) -> CrossField {
 }
 
 fn seamless(work: &WorkMesh, field: &CrossField, edge_length: f64) -> Parametrization {
-    let request = parametrization::Request { edge_length, stiffening_rounds: 40 };
+    let request = parametrization::Request { edge_length, stiffening_rounds: 40, conditions: Vec::new() };
     parametrization::create(parametrization::Kind::Seamless).parametrize(work, field, &request).unwrap()
 }
 
@@ -200,7 +200,10 @@ fn the_builder_from_the_factory_gives_the_same_layout_every_time() {
     let lengths = |tmesh: &TMesh| tmesh.arcs.iter().map(|arc| arc.length).collect::<Vec<_>>();
     assert_eq!(lengths(&first), lengths(&second));
 
-    // The same as tracing the seamless map by hand.
-    let direct = TMesh::trace(&work, &cross, &seamless(&work, &cross, 0.15), 1000.0);
+    // The same as tracing by hand the map the builder kept, with the pairs
+    // of poles on one line laid first.
+    let layout = builder.build(&work, &cross, &request).unwrap();
+    let pairs = TMesh::pole_pairs(&work, &cross, &layout.map, tmesh::Tolerance::JOINED);
+    let direct = TMesh::trace_with(&work, &cross, &layout.map, 1000.0, &pairs);
     assert_eq!(lengths(&first), lengths(&direct));
 }

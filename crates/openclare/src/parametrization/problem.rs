@@ -360,6 +360,24 @@ impl<'a> Problem<'a> {
         out
     }
 
+    /// The conditions asked for besides those of the map itself, on the
+    /// unknowns.
+    pub fn extra_conditions(&self, conditions: &[super::Condition]) -> Vec<Constraint> {
+        conditions
+            .iter()
+            .map(|condition| {
+                let row = condition
+                    .terms
+                    .iter()
+                    .map(|&(corner, coordinate, coefficient)| {
+                        (self.u(corner as usize) + coordinate as usize, coefficient)
+                    })
+                    .collect();
+                Constraint { row: merged(row), target: condition.target }
+            })
+            .collect()
+    }
+
     /// Minimises the energy under the constraints. Returns the unknowns and
     /// the worst mismatch left on a constraint.
     pub fn solve(&self, weights: &[f64], constraints: &[Constraint], solver: &Solver) -> Result<(Vec<f64>, f64)> {
