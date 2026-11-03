@@ -158,6 +158,8 @@ pub(super) struct Outcome {
     /// Traces that ran into another along the same line, which leaves two
     /// arcs on top of each other.
     pub overlaps: usize,
+    /// Pairs of separatrices laid as one arc from pole to pole.
+    pub joined: usize,
 }
 
 struct Hit {
@@ -175,13 +177,30 @@ pub(super) struct Race<'a> {
     pub(super) walls: Vec<Option<Wall>>,
     pub(super) outcome: Outcome,
     max_length: f64,
+    /// Per trace, for the first of a pair: the trace that leaves the other
+    /// end of its line, and the vertex it leaves from.
+    partner: Vec<Option<(u32, u32)>>,
 }
 
 /// Runs the race on `map` from the vertices flagged in `is_singular`, with
 /// the half-edges flagged in `is_wall` for cuts already there. `seeds` are
 /// plain vertices to start from as well, for the pieces of surface that
 /// have neither.
-pub(super) fn race(map: &Map, is_singular: &[bool], is_wall: &[bool], seeds: &[u32], max_length: f64) -> Outcome {
+///
+/// `pairs` are separatrices that run along one line from either end, each
+/// given by its vertex and the rank of its departure there: the first of
+/// each runs before any other trace, one pair after the other, and ends on
+/// the vertex of the second, which then never sets off: the line is one arc
+/// from pole to pole. If it stops short, on the line of an earlier pair, the
+/// second lays the rest of the line from the other end.
+pub(super) fn race(
+    map: &Map,
+    is_singular: &[bool],
+    is_wall: &[bool],
+    seeds: &[u32],
+    max_length: f64,
+    pairs: &[[(u32, usize); 2]],
+) -> Outcome {
     let vertices = map.mesh.positions.len();
     let mut race = Race {
         map,
@@ -191,7 +210,10 @@ pub(super) fn race(map: &Map, is_singular: &[bool], is_wall: &[bool], seeds: &[u
         walls: vec![None; 3 * map.mesh.triangles.len()],
         outcome: Outcome::default(),
         max_length,
+        partner: Vec::new(),
     };
+    // The trace leaving each vertex along each of its departures.
+    let mut leaving: std::collections::HashMap<(u32, usize), u32> = std::collections::HashMap::new();
 
     // A singularity on a wall is dealt with as part of the wall: what it
     // sends out depends on the corners the wall makes there.
@@ -213,6 +235,7 @@ pub(super) fn race(map: &Map, is_singular: &[bool], is_wall: &[bool], seeds: &[u
             used: [false; 4],
         });
         for (rank, departure) in departures.into_iter().enumerate() {
+            leaving.insert((v, rank), race.outcome.traces.len() as u32);
             race.start(node, rank as f64, departure);
         }
     }
@@ -229,17 +252,40 @@ pub(super) fn race(map: &Map, is_singular: &[bool], is_wall: &[bool], seeds: &[u
                 let trace = race.outcome.traces.len() as u32;
                 race.passages[v as usize] = Some(Passage { trace, time: 0.0, departure });
             }
+            leaving.insert((v, rank), race.outcome.traces.len() as u32);
             race.start(node, rank as f64, departure);
         }
     }
 
-    let mut queue: BinaryHeap<Reverse<(Time, u32)>> = (0..race.outcome.traces.len() as u32)
+    // The first trace of each pair runs alone, in the order of the pairs,
+    // and its partner right after it if it did not get there; then all the
+    // others race.
+    race.partner = vec![None; race.outcome.traces.len()];
+    let mut order = vec![u32::MAX; race.outcome.traces.len()];
+    for (rank, [first, second]) in pairs.iter().enumerate() {
+        if let (Some(&one), Some(&two)) = (leaving.get(first), leaving.get(second)) {
+            if one != two && race.partner[one as usize].is_none() && race.partner[two as usize].is_none() {
+                race.partner[one as usize] = Some((two, second.0));
+                order[one as usize] = rank as u32;
+            }
+        }
+    }
+    let mut queue: BinaryHeap<Reverse<(u32, Time, u32)>> = (0..race.outcome.traces.len() as u32)
         .filter(|&id| race.outcome.traces[id as usize].running)
-        .map(|id| Reverse((Time(0.0), id)))
+        .map(|id| Reverse((order[id as usize], Time(0.0), id)))
         .collect();
-    while let Some(Reverse((_, id))) = queue.pop() {
+    while let Some(Reverse((rank, _, id))) = queue.pop() {
         if race.outcome.traces[id as usize].running && race.step(id as usize) {
-            queue.push(Reverse((Time(race.outcome.traces[id as usize].length), id)));
+            queue.push(Reverse((rank, Time(race.outcome.traces[id as usize].length), id)));
+        } else if rank != u32::MAX {
+            // Stopped short of its partner, on the line of an earlier pair:
+            // the partner lays the rest of the line from the other end,
+            // before the race.
+            if let Some((partner, _)) = race.partner[id as usize] {
+                if race.outcome.traces[partner as usize].running {
+                    queue.push(Reverse((rank, Time(0.0), partner)));
+                }
+            }
         }
     }
     race.outcome.lost =
@@ -401,12 +447,18 @@ impl Race<'_> {
         let mut best: Option<Hit> = None;
         for (index, segment) in self.segments[face].iter().enumerate() {
             // The traces that set off from the same singularity only touch
-            // at their start.
+            // at their start, and so do those that end there (a pole joined
+            // to another by one arc).
+            let direction = axis_vector(segment.axis);
             if first && segment.time == 0.0 && segment.start == point {
                 continue;
             }
+            let end =
+                [segment.start[0] + segment.length * direction[0], segment.start[1] + segment.length * direction[1]];
+            if first && (end[0] - point[0]).abs() <= EPSILON && (end[1] - point[1]).abs() <= EPSILON {
+                continue;
+            }
             let own = segment.trace as usize == id;
-            let direction = axis_vector(segment.axis);
             let hit = if segment.axis % 2 != axis % 2 {
                 // Across: the stretch runs along the other coordinate.
                 let reach = (segment.start[along] - point[along]) * sign;
@@ -442,6 +494,9 @@ impl Race<'_> {
     fn reach_vertex(&mut self, id: usize, face: usize, corner: usize, axis: Axis) -> bool {
         let map = self.map;
         let vertex = map.mesh.triangles[face][corner];
+        if self.partner[id].is_some_and(|(_, at)| at == vertex) && self.join(id) {
+            return false;
+        }
         let node = self.singular[vertex as usize];
         if node != INVALID {
             if self.meet_head_on(id, node, face, corner, axis) {
@@ -478,12 +533,33 @@ impl Race<'_> {
     /// turns from that of `other`.
     fn stop_on(&mut self, id: usize, other: usize, time: f64, turn: u8, face: usize, at: [f64; 2]) {
         let (other, time, turn) = self.kept(other, time, turn);
+        // A pair's trace that runs into another trace where that one leaves
+        // or reaches the far end of its line has arrived.
+        if let Some((partner, _)) = self.partner[id] {
+            let node = self.outcome.traces[partner as usize].start.0;
+            let trace = &self.outcome.traces[other];
+            let there = if time <= MERGE {
+                Some(trace.start.0)
+            } else if time >= trace.length - MERGE {
+                trace.end.map(|(end, _)| end)
+            } else {
+                None
+            };
+            if there == Some(node) && self.join(id) {
+                return;
+            }
+        }
         // The ends of a trace may be singularities, where directions are not
         // numbered from the trace but round the vertex.
         if let Some(node) = self.singular_end(other, time) {
             let weights = self.map.barycentric(face, at);
             let corner = (0..3).max_by(|&a, &b| weights[a].total_cmp(&weights[b])).unwrap();
             let axis = self.outcome.traces[id].axis;
+            // Arrived exactly on the pole, along a line it sends a trace
+            // down that has not set off yet: the same line from both ends.
+            if self.meet_head_on(id, node, face, corner, axis) {
+                return;
+            }
             let key = self.key_at_singularity(node, face, corner, axis);
             self.finish(id, node, key);
             return;
@@ -623,6 +699,23 @@ impl Race<'_> {
             }
             None => (other, time, turn),
         }
+    }
+
+    /// Trace `id`, the first of a pair, has reached the vertex its partner
+    /// leaves from: it ends there in the slot of its partner, which never
+    /// sets off. False if the partner already has.
+    fn join(&mut self, id: usize) -> bool {
+        let Some((partner, _)) = self.partner[id] else { return false };
+        let other = &mut self.outcome.traces[partner as usize];
+        if !other.running || other.steps > 0 {
+            return false;
+        }
+        other.running = false;
+        other.merged = Some(id as u32);
+        let (node, key) = other.start;
+        self.outcome.joined += 1;
+        self.finish(id, node, key);
+        true
     }
 
     fn finish(&mut self, id: usize, node: u32, key: f64) {

@@ -10,6 +10,9 @@
 //! The stage is a [`LayoutBuilder`]; chains get one from [`create`].
 
 mod motorcycle;
+mod pairs;
+
+pub use pairs::{Pair, Tolerance};
 pub(crate) mod walk;
 mod walls;
 
@@ -159,6 +162,12 @@ pub struct Report {
     /// that: what quantization will have to collapse or widen.
     pub short_arcs: usize,
     pub thin_patches: usize,
+    /// Pairs of separatrices along one line found in the first map, those
+    /// the map was then solved again to put on one line, and those laid as
+    /// one arc from pole to pole.
+    pub pole_pairs_found: usize,
+    pub pole_pairs_snapped: usize,
+    pub pole_pairs_joined: usize,
 }
 
 impl Report {
@@ -190,9 +199,81 @@ impl TMesh {
     /// Runs the motorcycle graph of `map` from the singularities of `field`.
     /// No trace goes further than `max_trace_length` quad edges.
     pub fn trace(work: &WorkMesh, field: &CrossField, map: &Parametrization, max_trace_length: f64) -> TMesh {
+        TMesh::trace_with(work, field, map, max_trace_length, &[])
+    }
+
+    /// The pairs of separatrices of `map` that run along one line from
+    /// either end, within `tolerance` of each other: the singularities off
+    /// the walls, and the vertices pieces of surface with neither are cut
+    /// from.
+    pub fn pole_pairs(work: &WorkMesh, field: &CrossField, map: &Parametrization, tolerance: Tolerance) -> Vec<Pair> {
+        let topology = Topology::build(&work.mesh);
+        let start = Start::new(work, field, map, &topology);
+        let walk = walk::Map::new(&work.mesh, &topology, &map.uv, &map.cut.seam, &map.cut.transition);
+        let mut on_wall = vec![false; work.mesh.positions.len()];
+        for h in (0..start.is_wall.len()).filter(|&h| start.is_wall[h]) {
+            on_wall[work.mesh.triangles[h / 3][h % 3] as usize] = true;
+            on_wall[work.mesh.triangles[h / 3][(h % 3 + 1) % 3] as usize] = true;
+        }
+        let mut sources: Vec<u32> = (0..work.mesh.positions.len() as u32)
+            .filter(|&v| start.is_singular[v as usize] && !on_wall[v as usize])
+            .collect();
+        sources.extend(&start.seeds);
+        pairs::find(&walk, &map.cut.wedge, &sources, &start.is_singular, &start.is_wall, tolerance)
+    }
+
+    /// The same as [`TMesh::trace`], with the separatrices of `pairs` laid
+    /// first, each pair as one arc.
+    pub fn trace_with(
+        work: &WorkMesh,
+        field: &CrossField,
+        map: &Parametrization,
+        max_trace_length: f64,
+        pairs: &[Pair],
+    ) -> TMesh {
         let mesh = &work.mesh;
         let topology = Topology::build(mesh);
         let walk = walk::Map::new(mesh, &topology, &map.uv, &map.cut.seam, &map.cut.transition);
+        let Start { is_singular, is_wall, mut cut, seeds } = Start::new(work, field, map, &topology);
+        let ends: Vec<[(u32, usize); 2]> = pairs.iter().map(|pair| pair.ends).collect();
+        let outcome = motorcycle::race(&walk, &is_singular, &is_wall, &seeds, max_trace_length, &ends);
+
+        let mut tmesh = TMesh::assemble(&outcome);
+        tmesh.report.pole_pairs_joined = outcome.joined;
+        for trace in tmesh.traces.iter_mut().filter(|trace| !trace.feature) {
+            trace.folds = folds_crossed(mesh, &trace.stretches);
+        }
+        let report = &mut tmesh.report;
+        // (Faces that are flat in the map do not count: slivers it was not
+        // asked to copy, and triangles with two edges on one feature line,
+        // which that line flattens. A trace crosses them in no distance.)
+        report.map_inversions = map.turned_over().len();
+        report.surface_euler = mesh.positions.len() as i64 - topology.edge_count() as i64 + mesh.triangles.len() as i64;
+        for &seed in &seeds {
+            cut[seed as usize] = true;
+        }
+        let covered = faces_reached_from(&topology, mesh, &cut);
+        report.uncut_triangles = covered.iter().filter(|&&reached| !reached).count();
+        let map_area: f64 = (0..mesh.triangles.len()).filter(|&f| covered[f]).map(|f| walk.area(f)).sum();
+        let rectangles: f64 = tmesh.patches.iter().filter_map(|patch| patch.sides).map(area_of).sum();
+        report.area_error = if map_area > 0.0 { rectangles / map_area - 1.0 } else { 0.0 };
+        tmesh
+    }
+}
+
+/// Where traces start from: the singular vertices, the half-edges that are
+/// cuts from the start (borders, features), the vertices that touch either,
+/// and one vertex of each piece of surface that has neither.
+struct Start {
+    is_singular: Vec<bool>,
+    is_wall: Vec<bool>,
+    cut: Vec<bool>,
+    seeds: Vec<u32>,
+}
+
+impl Start {
+    fn new(work: &WorkMesh, field: &CrossField, map: &Parametrization, topology: &Topology) -> Start {
+        let mesh = &work.mesh;
         let is_singular: Vec<bool> = field.indices.iter().map(|&index| index != 0).collect();
         // Cuts that are there from the start: open borders, and the edges
         // the work mesh marks as features of the shape.
@@ -236,29 +317,11 @@ impl TMesh {
                 }
             }
         }
-        let outcome = motorcycle::race(&walk, &is_singular, &is_wall, &seeds, max_trace_length);
-
-        let mut tmesh = TMesh::assemble(&outcome);
-        for trace in tmesh.traces.iter_mut().filter(|trace| !trace.feature) {
-            trace.folds = folds_crossed(mesh, &trace.stretches);
-        }
-        let report = &mut tmesh.report;
-        // (Faces that are flat in the map do not count: slivers it was not
-        // asked to copy, and triangles with two edges on one feature line,
-        // which that line flattens. A trace crosses them in no distance.)
-        report.map_inversions = map.turned_over().len();
-        report.surface_euler = mesh.positions.len() as i64 - topology.edge_count() as i64 + mesh.triangles.len() as i64;
-        for &seed in &seeds {
-            cut[seed as usize] = true;
-        }
-        let covered = faces_reached_from(&topology, mesh, &cut);
-        report.uncut_triangles = covered.iter().filter(|&&reached| !reached).count();
-        let map_area: f64 = (0..mesh.triangles.len()).filter(|&f| covered[f]).map(|f| walk.area(f)).sum();
-        let rectangles: f64 = tmesh.patches.iter().filter_map(|patch| patch.sides).map(area_of).sum();
-        report.area_error = if map_area > 0.0 { rectangles / map_area - 1.0 } else { 0.0 };
-        tmesh
+        Start { is_singular, is_wall, cut, seeds }
     }
+}
 
+impl TMesh {
     /// Nodes, arcs and patches from the traces of a race.
     fn assemble(outcome: &motorcycle::Outcome) -> TMesh {
         let mut arcs: Vec<Arc> = Vec::new();
@@ -632,12 +695,14 @@ impl LayoutBuilder for Motorcycle {
 
     fn build(&self, work: &WorkMesh, field: &CrossField, request: &Request) -> Result<Layout> {
         let parametrizer = parametrization::create(parametrization::Kind::Seamless);
-        let map_request =
-            parametrization::Request { edge_length: request.edge_length, stiffening_rounds: self.stiffening_rounds };
-        let map = parametrizer.parametrize(work, field, &map_request)?;
+        let map_request = parametrization::Request {
+            edge_length: request.edge_length,
+            stiffening_rounds: self.stiffening_rounds,
+            conditions: Vec::new(),
+        };
         let side = (work.mesh.surface_area().sqrt() / request.edge_length).max(1.0);
         let max_trace = self.max_trace_length * side;
-        let tmesh = TMesh::trace(work, field, &map, max_trace);
+        let (tmesh, map) = self.cut(parametrizer.as_ref(), work, field, &map_request, max_trace)?;
         if !tmesh.report.is_valid() && map.report.loose_guides.len() < work.guide_edges.len() {
             // Guide lines that did not fold the map may still leave a patch
             // that is no rectangle: let go of those near that patch first,
@@ -671,8 +736,8 @@ impl LayoutBuilder for Motorcycle {
                 let mut lighter = work.clone();
                 lighter.feature_edges.retain(|edge| !dropped.contains(edge));
                 lighter.guide_edges.retain(|edge| !dropped.contains(edge));
-                let mut retry_map = parametrizer.parametrize(&lighter, field, &map_request)?;
-                let retry_tmesh = TMesh::trace(&lighter, field, &retry_map, max_trace);
+                let (retry_tmesh, mut retry_map) =
+                    self.cut(parametrizer.as_ref(), &lighter, field, &map_request, max_trace)?;
                 if retry_tmesh.report.is_valid() {
                     retry_map.report.guides_off_grid = true;
                     retry_map.report.loose_guides.extend(dropped);
@@ -688,8 +753,8 @@ impl LayoutBuilder for Motorcycle {
             let mut lighter = work.clone();
             lighter.feature_edges.retain(|edge| !guides.contains(edge));
             lighter.guide_edges.clear();
-            let mut retry_map = parametrizer.parametrize(&lighter, field, &map_request)?;
-            let retry_tmesh = TMesh::trace(&lighter, field, &retry_map, max_trace);
+            let (retry_tmesh, mut retry_map) =
+                self.cut(parametrizer.as_ref(), &lighter, field, &map_request, max_trace)?;
             if retry_tmesh.report.is_valid() {
                 retry_map.report.guides_off_grid = true;
                 retry_map.report.loose_guides = work.guide_edges.clone();
@@ -698,4 +763,90 @@ impl LayoutBuilder for Motorcycle {
         }
         Ok(Layout { tmesh, map })
     }
+}
+
+impl Motorcycle {
+    /// The map of `work` and the T-mesh cut from it, with the poles that one
+    /// separatrix nearly joins put on one grid line and joined by one arc,
+    /// where that keeps the map unfolded and the T-mesh valid.
+    fn cut(
+        &self,
+        parametrizer: &dyn parametrization::Parametrizer,
+        work: &WorkMesh,
+        field: &CrossField,
+        map_request: &parametrization::Request,
+        max_trace: f64,
+    ) -> Result<(TMesh, Parametrization)> {
+        let map = parametrizer.parametrize(work, field, map_request)?;
+        let found = TMesh::pole_pairs(work, field, &map, Tolerance::FULL);
+        let mut pairs: Vec<&Pair> = found.iter().collect();
+        let topology = Topology::build(&work.mesh);
+        // Where the map folds with the pairs on their lines, the pairs whose
+        // line runs near a fold are let go, farther each round.
+        for round in 0..SNAP_ROUNDS {
+            if pairs.is_empty() {
+                break;
+            }
+            let request = parametrization::Request {
+                conditions: pairs.iter().map(|pair| pair.condition.clone()).collect(),
+                ..map_request.clone()
+            };
+            // Conditions that contradict each other or those of the map
+            // make the solve fail: then none is kept.
+            let Ok(snapped) = parametrizer.parametrize(work, field, &request) else { break };
+            let folds = snapped.turned_over();
+            let worse = snapped.report.flipped > map.report.flipped
+                || (snapped.report.features_off_grid && !map.report.features_off_grid)
+                || snapped.report.loose_guides.len() > map.report.loose_guides.len();
+            if worse {
+                let near = faces_near(&topology, &work.mesh, &folds, SNAP_REACH << round);
+                let before = pairs.len();
+                pairs.retain(|pair| !pair.faces.iter().any(|&f| near[f as usize]));
+                if pairs.len() == before {
+                    break;
+                }
+                continue;
+            }
+            let joined = TMesh::pole_pairs(work, field, &snapped, Tolerance::JOINED);
+            let mut tmesh = TMesh::trace_with(work, field, &snapped, max_trace, &joined);
+            if !tmesh.report.is_valid() {
+                break;
+            }
+            tmesh.report.pole_pairs_found = found.len();
+            tmesh.report.pole_pairs_snapped = pairs.len();
+            return Ok((tmesh, snapped));
+        }
+        let mut tmesh = TMesh::trace(work, field, &map, max_trace);
+        tmesh.report.pole_pairs_found = found.len();
+        Ok((tmesh, map))
+    }
+}
+
+/// Most solves of the map with pairs on their lines, and how many rings of
+/// triangles round a fold the pairs are let go from the first time (twice
+/// as many each time after).
+const SNAP_ROUNDS: usize = 4;
+const SNAP_REACH: usize = 2;
+
+/// The faces within `rings` rings of edge-neighbours of `seeds`.
+fn faces_near(topology: &Topology, mesh: &crate::mesh::TriMesh, seeds: &[usize], rings: usize) -> Vec<bool> {
+    let mut near = vec![false; mesh.triangles.len()];
+    let mut front: Vec<usize> = seeds.to_vec();
+    for &f in &front {
+        near[f] = true;
+    }
+    for _ in 0..rings {
+        let mut next = Vec::new();
+        for &f in &front {
+            for h in 3 * f..3 * f + 3 {
+                let twin = topology.opposite[h];
+                if twin != INVALID && !near[twin as usize / 3] {
+                    near[twin as usize / 3] = true;
+                    next.push(twin as usize / 3);
+                }
+            }
+        }
+        front = next;
+    }
+    near
 }

@@ -8,7 +8,7 @@ use std::collections::HashSet;
 use super::problem::{Constraint, Problem, Solver};
 use super::{Kind, Parametrization, Parametrizer, Report, Request};
 use crate::crossfield::CrossField;
-use crate::error::Result;
+use crate::error::{Error, Result};
 use crate::mesh::Topology;
 use crate::preprocess::WorkMesh;
 
@@ -168,6 +168,7 @@ impl Seamless {
     ) -> Result<Option<Parametrization>> {
         let problem = Problem::new(work, field, request.edge_length)?;
         let mut constraints = problem.seam_constraints();
+        constraints.extend(problem.extra_conditions(&request.conditions));
         if on_lines {
             constraints.extend(problem.feature_conditions().0);
         }
@@ -192,6 +193,7 @@ impl Seamless {
     ) -> Result<std::result::Result<Parametrization, Vec<usize>>> {
         let problem = Problem::new(work, field, request.edge_length)?;
         let mut constraints = problem.seam_constraints();
+        constraints.extend(problem.extra_conditions(&request.conditions));
         constraints.extend(problem.feature_conditions().0);
         let mut weights = vec![1.0; work.mesh.triangles.len()];
         let mut report =
@@ -257,7 +259,13 @@ pub(super) fn untangle(
     // seen, and give up once the weights have grown past any use.
     let mut best: Option<(usize, Vec<[f64; 2]>, Report)> = None;
     for round in 0..=rounds {
-        let (x, mismatch) = problem.solve(weights, constraints, solver)?;
+        let (x, mismatch) = match problem.solve(weights, constraints, solver) {
+            Ok(solved) => solved,
+            // Faces stiffened a great deal can stall the solve where the
+            // first one went through: the best map seen until then stands.
+            Err(Error::Numerical(_)) if best.is_some() => break,
+            Err(error) => return Err(error),
+        };
         let uv = problem.uv(&x);
         let quality = problem.quality(&uv);
         if round == 0 {
