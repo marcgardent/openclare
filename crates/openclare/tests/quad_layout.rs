@@ -106,8 +106,9 @@ fn vertices_are_read_off_the_map_onto_the_surface() {
     let work = preprocess::create(preprocess::Kind::Isotropic).preprocess(&source, &request).unwrap();
     let field_request = crossfield::Request { alignment: 0.0, ..Default::default() };
     let field = crossfield::create(crossfield::Kind::Power).solve(&work, &field_request).unwrap();
-    let layout =
-        tmesh::create(tmesh::Kind::Motorcycle).build(&work, &field, &tmesh::Request { edge_length: 0.1 }).unwrap();
+    let layout = tmesh::create(tmesh::Kind::Motorcycle)
+        .build(&work, &field, &tmesh::Request { edge_length: 0.1, pairs: tmesh::Pairs::All })
+        .unwrap();
     assert!(layout.tmesh.report.is_valid());
     let wanted = quantization::Request { quads: Some(1500), ..Default::default() };
     let quantized = quantization::create(quantization::Kind::WalkCancelling).quantize(&layout.tmesh, &wanted).unwrap();

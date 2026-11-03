@@ -1518,6 +1518,14 @@ fn mean_and_p95(values: &mut [f64]) -> (f64, f64) {
     (mean, values[rank - 1])
 }
 
+/// The distance between `mesh` and `source` on average, both ways, as
+/// [`Metrics::mean_distance`] has it but in the units of the source.
+pub fn mean_distance(source: &TriMesh, surface: &Bvh, mesh: &PolyMesh) -> f64 {
+    let mut metrics = Metrics::default();
+    fidelity(source, surface, mesh, 1.0, &mut metrics);
+    metrics.mean_distance
+}
+
 fn fidelity(source: &TriMesh, surface: &Bvh, mesh: &PolyMesh, diagonal: f64, metrics: &mut Metrics) {
     let (mut worst, mut sum, mut count) = (0.0f64, 0.0, 0usize);
     let mut record = |distance_squared: f64| {

@@ -1521,41 +1521,29 @@ impl QuadLayout {
             fields(input, config, &size, Some(guides), &mut report, &mut clock, recorder)?;
 
         recorder.begin("layout")?;
-        let layout = tmesh::create(tmesh::Kind::Motorcycle).build(&work, &field, &tmesh::Request { edge_length })?;
-        report.map_inversions = layout.tmesh.report.map_inversions;
-        report.guides_let_go = layout.map.report.guides_off_grid as usize;
-        if layout.map.report.guides_off_grid {
-            let whole = layout.map.report.loose_guides.len() == work.guide_edges.len();
-            report.line_causes = vec![(
-                if whole { "the map folds over with them, whole" } else { "the map folds over near part of them" },
-                1,
-            )];
-        }
+        // The plain motorcycle graph first: which of the pole pairs to join
+        // is the quantization's to say (DT-115, below).
+        let builder = tmesh::create(tmesh::Kind::Motorcycle);
+        let mut layout = builder.build(&work, &field, &tmesh::Request { edge_length, pairs: tmesh::Pairs::None })?;
+        note_layout(&mut report, &work, &layout);
         clock.lap(&mut report, "layout");
-        recorder::show_map(recorder, &work, &layout.map);
-        recorder::show_layout(recorder, &work, &layout.tmesh);
-        // A piece of surface with neither singularity nor border (a torus)
-        // has no layout; a layout that went wrong cannot be meshed from, nor
-        // can vertices be read off a map that folds over. In all those
-        // cases the provisional chain takes over.
-        let layout_report = &layout.tmesh.report;
-        let is_underfed = underfed(layout.tmesh.patches.len(), quads);
-        let cause = if layout.tmesh.patches.is_empty() || layout_report.uncut_triangles > 0 {
-            Some("nothing to cut the surface from (no singularity, border or hard edge)")
-        } else if layout_report.map_inversions > 0 {
-            Some("the map folds over")
-        } else if layout_report.off_grid_edges > 0 {
-            Some("a border or hard edge is off the grid lines of the map")
-        } else if layout_report.lost_traces > 0 || layout_report.overlaps > 0 {
-            Some("a trace got lost")
-        } else if !layout_report.is_valid() {
-            Some("the layout is not made of rectangles")
-        } else if is_underfed {
-            Some("the layout has more rectangles than quads asked for")
-        } else {
-            None
-        };
+        let (mut cause, mut is_underfed) = unfit(&layout, quads);
+        // A plain graph that went wrong may come right with every pair
+        // joined: a trace that ran along another and got lost now ends on
+        // its partner.
+        let mut all_joined = false;
+        if cause.is_some()
+            && !layout.pairs.is_empty()
+            && let Ok(cut) = builder.build(&work, &field, &tmesh::Request { edge_length, pairs: tmesh::Pairs::All })
+            && unfit(&cut, quads).0.is_none()
+        {
+            note_layout(&mut report, &work, &cut);
+            (layout, cause, is_underfed, all_joined) = (cut, None, false, true);
+            clock.lap(&mut report, "pole pairs");
+        }
         if let Some(cause) = cause {
+            recorder::show_map(recorder, &work, &layout.map);
+            recorder::show_layout(recorder, &work, &layout.tmesh);
             return Ok(LayoutOutcome::FallBack { cause, underfed: is_underfed });
         }
 
@@ -1571,12 +1559,82 @@ impl QuadLayout {
             }),
             experiment: quantization::Experiment::from_env()?,
         };
-        let quantized = quantization::create(quantization::Kind::WalkCancelling).quantize(&layout.tmesh, &request)?;
+        let quantizer = quantization::create(quantization::Kind::WalkCancelling);
+        let mut quantized = quantizer.quantize(&layout.tmesh, &request)?;
         clock.lap(&mut report, "quantization");
-        recorder::show_lengths(recorder, &work, &layout.tmesh, &quantized);
         if !quantized.report.is_valid() || quantized.report.quads == 0 {
+            recorder::show_map(recorder, &work, &layout.map);
+            recorder::show_layout(recorder, &work, &layout.tmesh);
+            recorder::show_lengths(recorder, &work, &layout.tmesh, &quantized);
             return Ok(LayoutOutcome::FallBack { cause: "no sound whole lengths for the layout", underfed: false });
         }
+
+        // The pole pairs whose two poles the whole lengths put on one line
+        // anyway are joined by one arc, their line straightened in the map,
+        // and the result quantized again (DT-115). The others are left: the
+        // gap between their lines is a length the quantization needs to
+        // close loops, and joining every pair made more spirals. The new
+        // lengths are a candidate if they spiral no more.
+        let joined =
+            if all_joined { Vec::new() } else { pairs_on_one_line(&layout, &quantized.lattice(&layout.tmesh)) };
+        let mut second = None;
+        if !joined.is_empty() {
+            let count = joined.len();
+            let pairs = tmesh::Request { edge_length, pairs: tmesh::Pairs::Only(joined) };
+            if let Ok(cut) = builder.build(&work, &field, &pairs)
+                && unfit(&cut, quads).0.is_none()
+                && let Ok(again) = quantizer.quantize(&cut.tmesh, &request)
+            {
+                let spirals = |q: &quantization::Quantization| q.report.spirals.unwrap_or(0.0);
+                let fewer =
+                    again.report.is_valid() && again.report.quads > 0 && spirals(&again) <= spirals(&quantized) + 1e-9;
+                if std::env::var_os("OPENCLARE_DEBUG_PAIRS").is_some() {
+                    eprintln!(
+                        "pole pairs: {} found, {count} on one line, {} joined; spirals {:.4} -> {:.4}",
+                        layout.pairs.len(),
+                        cut.tmesh.report.pole_pairs_joined,
+                        spirals(&quantized),
+                        spirals(&again)
+                    );
+                }
+                if fewer {
+                    second = Some((cut, again));
+                }
+            }
+            clock.lap(&mut report, "pole pairs");
+        }
+
+        // The mesh of the pairs joined is kept if it folds no more and is no
+        // further from the shape on average than the plain one: the map
+        // straightened along the pairs' lines is stretched elsewhere, and on
+        // the ogre of the tests at 600 quads that cost more than half again
+        // the distance. Both are tried out of the host's sight; the one kept
+        // is shown, and meshed again, below.
+        if let Some((cut, again)) = second {
+            let tried = |layout: &tmesh::Layout, quantized: &quantization::Quantization| -> Result<PolyMesh> {
+                let (mut mesh, meshed) = meshing::create(meshing::Kind::PatchGrid).mesh(&work, layout, quantized)?;
+                let held = Some((meshed.on_feature, meshed.on_corner));
+                settle(&mut mesh, input, &work, edge_length, held, &self.relaxer, config.volume_fit, &mut Silent)?;
+                Ok(mesh)
+            };
+            let (plain, other) = (tried(&layout, &quantized)?, tried(&cut, &again)?);
+            let surface = Bvh::build(input);
+            let folds = |mesh: &PolyMesh| crate::metrics::folded_faces(input, &surface, mesh);
+            let away = |mesh: &PolyMesh| crate::metrics::mean_distance(input, &surface, mesh);
+            let (near, far) = (away(&plain), away(&other));
+            let kept = folds(&other) <= folds(&plain) && far <= PAIRS_FARTHEST * near;
+            if std::env::var_os("OPENCLARE_DEBUG_PAIRS").is_some() {
+                eprintln!("pole pairs: mean distance {near:.3e} -> {far:.3e}, kept {kept}");
+            }
+            if kept {
+                note_layout(&mut report, &work, &cut);
+                (layout, quantized) = (cut, again);
+            }
+            clock.lap(&mut report, "pole pairs meshed");
+        }
+        recorder::show_map(recorder, &work, &layout.map);
+        recorder::show_layout(recorder, &work, &layout.tmesh);
+        recorder::show_lengths(recorder, &work, &layout.tmesh, &quantized);
 
         recorder.begin("meshing")?;
         let (mut mesh, meshed) = meshing::create(meshing::Kind::PatchGrid).mesh(&work, &layout, &quantized)?;
@@ -1627,6 +1685,118 @@ impl QuadLayout {
         report.stats = mesh.stats();
         Ok(LayoutOutcome::Done(mesh, report))
     }
+}
+
+/// How much further from the shape on average the mesh of the pole pairs
+/// joined may be than the plain one, and still be kept: on the 12 models of
+/// the daily comparison, the distance moves by 2 % (median) to 6 % (mean)
+/// from one budget to the next, 1 % apart.
+const PAIRS_FARTHEST: f64 = 1.05;
+
+/// What the report says of the map a layout was cut from.
+fn note_layout(report: &mut Report, work: &WorkMesh, layout: &tmesh::Layout) {
+    report.map_inversions = layout.tmesh.report.map_inversions;
+    report.guides_let_go = layout.map.report.guides_off_grid as usize;
+    report.line_causes = Vec::new();
+    if layout.map.report.guides_off_grid {
+        let whole = layout.map.report.loose_guides.len() == work.guide_edges.len();
+        report.line_causes = vec![(
+            if whole { "the map folds over with them, whole" } else { "the map folds over near part of them" },
+            1,
+        )];
+    }
+}
+
+/// Why `layout` cannot be quantized for `quads`, if it cannot, and whether
+/// it has more rectangles than quads. A piece of surface with neither
+/// singularity nor border (a torus) has no layout; a layout that went wrong
+/// cannot be meshed from, nor can vertices be read off a map that folds
+/// over. In all those cases the provisional chain takes over.
+fn unfit(layout: &tmesh::Layout, quads: f64) -> (Option<&'static str>, bool) {
+    let layout_report = &layout.tmesh.report;
+    let is_underfed = underfed(layout.tmesh.patches.len(), quads);
+    let cause = if layout.tmesh.patches.is_empty() || layout_report.uncut_triangles > 0 {
+        Some("nothing to cut the surface from (no singularity, border or hard edge)")
+    } else if layout_report.map_inversions > 0 {
+        Some("the map folds over")
+    } else if layout_report.off_grid_edges > 0 {
+        Some("a border or hard edge is off the grid lines of the map")
+    } else if layout_report.lost_traces > 0 || layout_report.overlaps > 0 {
+        Some("a trace got lost")
+    } else if !layout_report.is_valid() {
+        Some("the layout is not made of rectangles")
+    } else if is_underfed {
+        Some("the layout has more rectangles than quads asked for")
+    } else {
+        None
+    };
+    (cause, is_underfed)
+}
+
+/// The pole pairs of `layout` whose two poles the quad mesh `lattice` joins
+/// by one straight line of edges, with no irregular vertex between them.
+fn pairs_on_one_line(layout: &tmesh::Layout, lattice: &quantization::Lattice) -> Vec<[u32; 2]> {
+    let mut vertex_of = HashMap::new();
+    for (node, at) in layout.tmesh.nodes.iter().zip(&lattice.node_vertex) {
+        if let tmesh::NodeKind::Singularity { vertex } = node.kind {
+            vertex_of.insert(vertex, *at);
+        }
+    }
+    let vertices = lattice.sources.len();
+    let mut around: Vec<Vec<u32>> = vec![Vec::new(); vertices];
+    for (index, quad) in lattice.quads.iter().enumerate() {
+        for &v in quad {
+            around[v as usize].push(index as u32);
+        }
+    }
+    // The vertices next to `v` along an edge of `quad`.
+    let beside = |quad: &[u32; 4], v: u32| -> [u32; 2] {
+        let i = quad.iter().position(|&w| w == v).unwrap();
+        [quad[(i + 1) % 4], quad[(i + 3) % 4]]
+    };
+    // From `from` along the edge to `to`, straight on through vertices of
+    // four quads: whether `target` is met before anything else stops it.
+    let reaches = |from: u32, to: u32, target: u32| -> bool {
+        let (mut previous, mut current) = (from, to);
+        for _ in 0..lattice.quads.len() {
+            if current == target {
+                return true;
+            }
+            let quads = &around[current as usize];
+            if quads.len() != 4 {
+                return false;
+            }
+            let sides: Vec<u32> = quads
+                .iter()
+                .filter(|&&q| lattice.quads[q as usize].contains(&previous))
+                .flat_map(|&q| beside(&lattice.quads[q as usize], current))
+                .collect();
+            let mut ahead: Vec<u32> = quads
+                .iter()
+                .flat_map(|&q| beside(&lattice.quads[q as usize], current))
+                .filter(|w| *w != previous && !sides.contains(w))
+                .collect();
+            ahead.sort_unstable();
+            ahead.dedup();
+            let [next] = ahead[..] else { return false };
+            (previous, current) = (current, next);
+        }
+        false
+    };
+    let mut joined: Vec<[u32; 2]> = layout
+        .pairs
+        .iter()
+        .filter_map(|pair| {
+            let [a, b] = pair.poles();
+            let (&from, &target) = (vertex_of.get(&a)?, vertex_of.get(&b)?);
+            let starts: HashSet<u32> =
+                around[from as usize].iter().flat_map(|&q| beside(&lattice.quads[q as usize], from)).collect();
+            starts.into_iter().any(|to| reaches(from, to, target)).then_some([a, b])
+        })
+        .collect();
+    joined.sort_unstable();
+    joined.dedup();
+    joined
 }
 
 /// Hands the job to the integer-grid chain, and says so in the report.

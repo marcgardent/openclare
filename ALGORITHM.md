@@ -1078,13 +1078,47 @@ edges, which no snap moves.
 
 Cost: the map is solved at least twice, and once more for each round of letting pairs go.
 
-**Not yet better on the final mesh.** On the same 12 models, remeshed at 2970, 3000 and 3030
-quads (36 meshes, all valid), the share of loop edges on spirals rises from 4.9 % to 8.6 %
-on average, and goes up on 9 models of the 12; the corners are 0.1° further off square on
-average. Snapping only the pairs within 0.1 or 0.02 quad edge does not bring it back (5 of
-the models: 6.0 % before, 7.9 % and 9.7 %), so the size of the snap is not the cause. On the
-small ogre of the tests, at 2000 quads, the alignment to curvature goes from 12.99° to
-13.23°, past the bound of 13°. Pending: why fewer patches give more spirals.
+**In the remesh chain, quantization chooses the pairs.** Joining every pair made more spirals
+in the final mesh: on the 12 models at 2970, 3000 and 3030 quads, the share of loop edges on
+spirals rose from 4.9 % to 8.6 %. The thin strip between two poles that nearly line up is a
+whole length free for quantization, and closing loops (DT-062) needs such lengths. Joining
+every pair took away 28 % of them (the cycle rank of the strip network), and the more pairs
+joined, the more spirals. So the chain now goes:
+
+1. The plain T-mesh, no pair joined, is quantized as before.
+2. In the quad mesh those lengths stand for, a pair whose two poles lie on one straight line
+   of edges, with no irregular vertex between, is one quantization joined anyway.
+3. Those pairs only are snapped and joined, and the T-mesh is quantized again. If the new
+   lengths spiral no more (by quantization's own count), both are meshed, and the mesh of
+   the pairs joined is kept if it folds no more and is at most 5 % further from the shape on
+   average. The map straightened along the pairs' lines is stretched elsewhere: on the ogre
+   of the tests, at 600 quads, spirals went from 9.8 % to 3.0 % but the mesh was 57 % further
+   from the shape and lost 3 % of its volume. Otherwise the plain T-mesh and its mesh stay.
+4. Where the plain T-mesh cannot be quantized (a lost trace, a patch that is no rectangle),
+   the T-mesh with every pair joined is tried before the integer-grid chain takes over.
+
+`openclare tmesh` still joins every pair: the table above is that stage.
+
+| Remesh, means over 36 meshes (12 models × 2970, 3000, 3030) | before | after |
+|---|---|---|
+| loop edges on spirals | 4.9 % | 4.2 % |
+| loop edges on closed loops | 36.1 % | 36.6 % |
+| patches of the final mesh | 1299 | 1277 |
+| Hausdorff distance | 8.38 ‰ | 7.97 ‰ |
+| mean distance | 0.381 ‰ | 0.376 ‰ |
+| corners, deviation from square | 5.05° | 5.15° |
+| alignment to curvature | 9.18° | 9.23° |
+
+17 of the 36 meshes are unchanged. On the 19 others, spirals are fewer on 7 and never more,
+the mesh is nearer the shape on average on 14, and fewer patches on 12; the corners are
+further off square on 13, by 0.19° on average. The Hausdorff gain is mostly the hard-surface
+part (11.4 → 4.5 ‰). The sphere at 3000 quads, whose plain T-mesh lost a trace, was meshed by
+the integer-grid chain with 84 patches; it now comes out of the layout chain with 6, and a
+test holds it to that at 600 and 3000 quads (`tests/reference_cases.rs`).
+
+Cost: when some pair is on one line, one more T-mesh (its map solved twice or more), one more
+quantization, and one more mesh. On the ogre of the tests at 600 quads, 27 s on top of the
+36 s of the first quantization (i7-7700K, 4 cores, 2017, one run alone on the machine).
 
 ### M6 — Quantization
 

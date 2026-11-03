@@ -192,7 +192,7 @@ fn the_builder_from_the_factory_gives_the_same_layout_every_time() {
     let work = work_mesh(&primitives::icosphere(4), 8000, None);
     let cross = field(&work, 0.05);
     let builder = tmesh::create(Kind::Motorcycle);
-    let request = tmesh::Request { edge_length: 0.15 };
+    let request = tmesh::Request { edge_length: 0.15, pairs: tmesh::Pairs::All };
     let (first, second) =
         (builder.build(&work, &cross, &request).unwrap().tmesh, builder.build(&work, &cross, &request).unwrap().tmesh);
     check_structure(&first);
