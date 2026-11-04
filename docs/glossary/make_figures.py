@@ -777,6 +777,256 @@ def tmesh():
     save(fig, "tmesh.png")
 
 
+# A pole pair, before and after (DT-115): an animated SVG, no script.
+#
+# The race is computed in a piece of the map, where every separatrix runs
+# along x or y at the same speed: a trace stops where it meets the line
+# another trace has already laid, or the border. The patches are counted
+# on a raster of the piece, cut along the traces.
+
+PAIR_WIDTH, PAIR_HEIGHT = 10.0, 7.0  # the piece of the map, in quad edges
+PAIR_GAP = 0.35  # how far the partner misses the line, in quad edges (under the half of the snap)
+PAIR_POLES = {"P": (4.6, 2.0), "Q": (4.6 + PAIR_GAP, 5.0), "R": (7.8, 3.6)}
+# Valence 3 each: the directions of their three separatrices.
+PAIR_PRONGS = {"P": ((0, 1), (-1, 0), (1, 0)), "Q": ((0, -1), (-1, 0), (1, 0)), "R": ((0, 1), (0, -1), (-1, 0))}
+
+
+def pair_race(poles, joined):
+    """The race of the separatrices of `poles`, the pairs of `joined` laid
+    first as one line each: the traces as (start, end, stopped on a trace),
+    the lines laid first, and the patches as (x0, y0, x1, y1)."""
+    laid = [(np.array(poles[a], float), np.array(poles[b], float)) for a, b in joined]
+    rays = []
+    for name, prongs in PAIR_PRONGS.items():
+        for d in prongs:
+            d = np.array(d, float)
+            # A separatrix along a joined line is the joined line.
+            if any(name in pair and np.allclose(poles[pair[1] if pair[0] == name else pair[0]] - np.array(poles[name]), np.linalg.norm(poles[pair[1] if pair[0] == name else pair[0]] - np.array(poles[name])) * d) for pair in joined):
+                continue
+            rays.append((np.array(poles[name], float), d))
+
+    def to_wall(o, d):
+        return min((PAIR_WIDTH - o[0]) / d[0] if d[0] > 0 else -o[0] / d[0] if d[0] < 0 else np.inf,
+                   (PAIR_HEIGHT - o[1]) / d[1] if d[1] > 0 else -o[1] / d[1] if d[1] < 0 else np.inf)
+
+    def crossing(o, d, a, b):
+        """How far along o + t d the segment a-b is crossed, and how far along it."""
+        e = b - a
+        length = np.linalg.norm(e)
+        if length == 0 or abs(d[0] * e[1] - d[1] * e[0]) < 1e-12:
+            return None
+        e = e / length
+        # o + t d = a + s e
+        m = np.array([[d[0], -e[0]], [d[1], -e[1]]])
+        t, s = np.linalg.solve(m, a - o)
+        return (t, s) if -1e-9 <= s <= length + 1e-9 else None
+
+    ends = [to_wall(o, d) for o, d in rays]
+    stopped = [False] * len(rays)
+    for _ in range(50):
+        new, hit = [], []
+        for i, (o, d) in enumerate(rays):
+            best, on_trace = to_wall(o, d), False
+            for a, b in laid:
+                c = crossing(o, d, a, b)
+                if c and 1e-9 < c[0] < best:
+                    best, on_trace = c[0], True
+            for j, (oj, dj) in enumerate(rays):
+                if j == i:
+                    continue
+                c = crossing(o, d, oj, oj + ends[j] * dj)
+                # j got there first: i stops on the line j has laid
+                if c and 1e-9 < c[0] < best and c[1] < c[0]:
+                    best, on_trace = c[0], True
+            new.append(best)
+            hit.append(on_trace)
+        if np.allclose(new, ends):
+            stopped = hit
+            break
+        ends = new
+    else:
+        raise RuntimeError("the race does not settle")
+    traces = [(o, o + t * d, s) for (o, d), t, s in zip(rays, ends, stopped)]
+
+    # Patches: a raster of the piece, cells joined unless a line runs between them.
+    n = 20  # cells per quad edge; every position above is on this raster
+    nx, ny = int(round(PAIR_WIDTH * n)), int(round(PAIR_HEIGHT * n))
+    right_wall = np.zeros((nx + 1, ny), bool)  # a wall on the left side of cell (i, j)
+    top_wall = np.zeros((nx, ny + 1), bool)
+    for a, b in [(o, e) for o, e, _ in traces] + laid:
+        (x0, y0), (x1, y1) = np.round(np.minimum(a, b) * n).astype(int), np.round(np.maximum(a, b) * n).astype(int)
+        if x0 == x1:
+            right_wall[x0, y0:y1] = True
+        else:
+            top_wall[x0:x1, y0] = True
+    label = -np.ones((nx, ny), int)
+    patches = []
+    for start in np.ndindex(nx, ny):
+        if label[start] >= 0:
+            continue
+        stack, cells = [start], []
+        label[start] = len(patches)
+        while stack:
+            i, j = stack.pop()
+            cells.append((i, j))
+            for di, dj, open_ in ((1, 0, i + 1 < nx and not right_wall[i + 1, j]), (-1, 0, i > 0 and not right_wall[i, j]),
+                                  (0, 1, j + 1 < ny and not top_wall[i, j + 1]), (0, -1, j > 0 and not top_wall[i, j])):
+                if open_ and label[i + di, j + dj] < 0:
+                    label[i + di, j + dj] = len(patches)
+                    stack.append((i + di, j + dj))
+        cells = np.array(cells)
+        (i0, j0), (i1, j1) = cells.min(axis=0), cells.max(axis=0) + 1
+        assert len(cells) == (i1 - i0) * (j1 - j0), "a patch that is not a rectangle"
+        patches.append((i0 / n, j0 / n, i1 / n, j1 / n))
+    touching = defaultdict(set)
+    for i, j in np.ndindex(nx - 1, ny):
+        if label[i, j] != label[i + 1, j]:
+            touching[label[i, j]].add(label[i + 1, j]), touching[label[i + 1, j]].add(label[i, j])
+    for i, j in np.ndindex(nx, ny - 1):
+        if label[i, j] != label[i, j + 1]:
+            touching[label[i, j]].add(label[i, j + 1]), touching[label[i, j + 1]].add(label[i, j])
+    return traces, laid, patches, touching
+
+
+@figure
+def pole_pair():
+    S, MARGIN, GAP, TOP, BOTTOM = 56.0, 24.0, 64.0, 64.0, 84.0
+    CYCLE = 14.0  # seconds
+    SPEED = 1.7  # quad edges per second
+    SNAP, JOIN, RACE = (0.8, 1.8), (2.0, 3.0), 3.4
+    width_px, height_px = PAIR_WIDTH * S, PAIR_HEIGHT * S
+    total_w, total_h = 2 * width_px + 2 * MARGIN + GAP, TOP + height_px + BOTTOM
+    css, body, count = [], [], [0]
+
+    def keyframes(frames, steps=False):
+        """A class animating its properties through (time, {property: value}) frames."""
+        count[0] += 1
+        name = f"k{count[0]}"
+        lines = [f"@keyframes {name} {{"]
+        for t, props in frames:
+            values = "; ".join(f"{k}: {v}" for k, v in props.items())
+            lines.append(f"  {100 * t / CYCLE:.2f}% {{ {values} }}")
+        lines.append("}")
+        lines.append(f".{name} {{ animation: {name} {CYCLE}s linear infinite; }}")
+        css.append("\n".join(lines))
+        return name
+
+    def appear(at, last=CYCLE - 0.8):
+        return keyframes([(0, {"opacity": 0}), (at, {"opacity": 0}), (at + 0.35, {"opacity": 1}), (last, {"opacity": 1}), (CYCLE, {"opacity": 0})])
+
+    def grow(start, duration):
+        return keyframes([(0, {"stroke-dashoffset": 1}), (start, {"stroke-dashoffset": 1}),
+                          (start + duration, {"stroke-dashoffset": 0}), (CYCLE - 0.8, {"stroke-dashoffset": 0}),
+                          (CYCLE, {"stroke-dashoffset": 0})])
+
+    def text(x, y, s, size=19, colour=INK, anchor="middle", weight="normal", cls=""):
+        c = f' class="{cls}"' if cls else ""
+        return (f'<text x="{x:.1f}" y="{y:.1f}" font-size="{size}" fill="{colour}" text-anchor="{anchor}" '
+                f'font-weight="{weight}"{c}>{s}</text>')
+
+    def triangle(x, y, r=11):
+        pts = " ".join(f"{x + r * np.cos(a):.1f},{y - r * np.sin(a):.1f}" for a in np.pi / 2 + 2 * np.pi * np.arange(3) / 3)
+        return f'<polygon points="{pts}" fill="{ORANGE}" stroke="white" stroke-width="1.8"/>'
+
+    def dot(x, y, cls):
+        return f'<circle cx="{x:.1f}" cy="{y:.1f}" r="6" fill="{INK}" stroke="white" stroke-width="1.6" class="{cls}"/>'
+
+    after_poles = dict(PAIR_POLES, Q=(PAIR_POLES["P"][0], PAIR_POLES["Q"][1]))
+    panels = (
+        ("Before: every separatrix races", PAIR_POLES, []),
+        ("After: the pair is joined first", after_poles, [("P", "Q")]),
+    )
+    fade = keyframes([(0, {"opacity": 1}), (CYCLE - 0.8, {"opacity": 1}), (CYCLE - 0.2, {"opacity": 0}), (CYCLE, {"opacity": 0})])
+    counts_shown = []
+    for k, (title, poles, joined) in enumerate(panels):
+        traces, laid, patches, touching = pair_race(poles, joined)
+        ox = MARGIN + k * (width_px + GAP)
+        X = lambda x: ox + x * S
+        Y = lambda y: TOP + height_px - y * S
+        body.append(f'<g>')
+        body.append(text(ox + width_px / 2, TOP - 22, title, size=22, weight="bold"))
+        # The patches, shown once the race is over.
+        thin = [p for p in patches if min(p[2] - p[0], p[3] - p[1]) < 0.5]
+        colour_of = {}
+        palette = [c for c in PATCH_COLOURS if c != "#f6dde3"]  # the pink would pass for a thin patch
+        for p in range(len(patches)):
+            used = {colour_of.get(q) for q in touching[p]}
+            colour_of[p] = next(c for c in range(len(palette)) if c not in used)
+        race_end = RACE + max(np.linalg.norm(e - o) for o, e, _ in traces) / SPEED
+        filled = appear(race_end + 0.2)
+        for p, (x0, y0, x1, y1) in enumerate(patches):
+            fill = RED_LIGHT if patches[p] in thin else palette[colour_of[p]]
+            body.append(f'<rect x="{X(x0):.1f}" y="{Y(y1):.1f}" width="{(x1 - x0) * S:.1f}" height="{(y1 - y0) * S:.1f}" '
+                        f'fill="{fill}" class="{filled}"/>')
+        # The quad edges, for scale.
+        for i in range(1, int(PAIR_WIDTH)):
+            body.append(f'<line x1="{X(i):.1f}" y1="{Y(0):.1f}" x2="{X(i):.1f}" y2="{Y(PAIR_HEIGHT):.1f}" stroke="{GRID}" stroke-width="0.6"/>')
+        for j in range(1, int(PAIR_HEIGHT)):
+            body.append(f'<line x1="{X(0):.1f}" y1="{Y(j):.1f}" x2="{X(PAIR_WIDTH):.1f}" y2="{Y(j):.1f}" stroke="{GRID}" stroke-width="0.6"/>')
+        body.append(f'<rect x="{X(0):.1f}" y="{Y(PAIR_HEIGHT):.1f}" width="{width_px:.1f}" height="{height_px:.1f}" '
+                    f'fill="none" stroke="{INK}" stroke-width="3"/>')
+        # P's line, which the partner misses or is moved onto.
+        px, (py, qy) = PAIR_POLES["P"][0], (PAIR_POLES["P"][1], PAIR_POLES["Q"][1])
+        body.append(f'<line x1="{X(px):.1f}" y1="{Y(py):.1f}" x2="{X(px):.1f}" y2="{Y(qy + 0.9):.1f}" stroke="{GREEN}" '
+                    f'stroke-width="2" stroke-dasharray="6 5"/>')
+        if not joined:
+            qx = PAIR_POLES["Q"][0]
+            body.append(f'<line x1="{X(px):.1f}" y1="{Y(qy + 0.7):.1f}" x2="{X(qx):.1f}" y2="{Y(qy + 0.7):.1f}" '
+                        f'stroke="{GREEN}" stroke-width="2.5"/>')
+            body.append(text(X(px) - 8, Y(qy + 0.7) + 6, f"{PAIR_GAP:g} quad edge off P's line",
+                             size=16, colour=GREEN, anchor="end"))
+        else:
+            snap_label = keyframes([(0, {"opacity": 0}), (SNAP[0], {"opacity": 1}), (JOIN[1], {"opacity": 1}),
+                                    (JOIN[1] + 0.4, {"opacity": 0}), (CYCLE, {"opacity": 0})])
+            body.append(text(X(px) + 26, Y(qy + 0.7) + 6, "snap: Q moves onto P's line", size=16,
+                             colour=GREEN, anchor="start", cls=snap_label))
+            # The joined line, laid before the race.
+            for a, b in laid:
+                body.append(f'<path d="M{X(a[0]):.1f},{Y(a[1]):.1f} L{X(b[0]):.1f},{Y(b[1]):.1f}" pathLength="1" '
+                            f'stroke="{INK}" stroke-width="4" stroke-linecap="round" fill="none" '
+                            f'stroke-dasharray="1" class="{grow(JOIN[0], JOIN[1] - JOIN[0])}"/>')
+        # The race.
+        nodes = []
+        for o, e, on_trace in traces:
+            length = np.linalg.norm(e - o)
+            body.append(f'<path d="M{X(o[0]):.1f},{Y(o[1]):.1f} L{X(e[0]):.1f},{Y(e[1]):.1f}" pathLength="1" '
+                        f'stroke="{INK}" stroke-width="4" stroke-linecap="round" fill="none" '
+                        f'stroke-dasharray="1" class="{grow(RACE, length / SPEED)}"/>')
+            nodes.append((e, RACE + length / SPEED))
+        for e, at in nodes:
+            body.append(dot(X(e[0]), Y(e[1]), appear(at)))
+        # The poles; Q slides onto P's line after.
+        for name, (x, y) in poles.items():
+            marker = triangle(X(x), Y(y)) + text(X(x) - 14, Y(y) - 12, name, size=17, anchor="end", weight="bold")
+            if joined and name == "Q":
+                dx = PAIR_GAP * S
+                slide = keyframes([(0, {"transform": f"translate({dx:.1f}px, 0px)"}), (SNAP[0], {"transform": f"translate({dx:.1f}px, 0px)"}),
+                                   (SNAP[1], {"transform": "translate(0px, 0px)"}), (CYCLE, {"transform": "translate(0px, 0px)"})])
+                marker = f'<g class="{slide}">{marker}</g>'
+            body.append(marker)
+        # What the race made.
+        junctions = sum(1 for _, _, s in traces if s)
+        words = [f"{len(patches)} patches", f"{junctions} T-junctions", f"{len(thin)} thin patch" + ("es" if len(thin) != 1 else "")]
+        counts_shown.append(words)
+        body.append(text(ox + width_px / 2, TOP + height_px + 40, " · ".join(words), size=21, cls=filled,
+                         colour=RED if thin else BLUE, weight="bold"))
+        if thin:
+            x0, y0, x1, y1 = thin[0]
+            body.append(text(X(x1) + 10, Y((y0 + y1) / 2 - 0.6), "thin patch", size=16, colour=RED, anchor="start", cls=filled))
+        body.append("</g>")
+    print("pole_pair:", counts_shown)
+    style = "\n".join(css) + "\n@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }"
+    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {total_w:.0f} {total_h:.0f}" width="{total_w:.0f}" '
+           f'height="{total_h:.0f}" font-family="DejaVu Sans, Verdana, sans-serif">\n'
+           f'<title>A pole pair: the motorcycle race before, the pair joined first after</title>\n'
+           f'<style>\n{style}\n</style>\n<rect width="100%" height="100%" fill="white"/>\n'
+           f'<g class="{fade}">\n' + "\n".join(body) + "\n</g>\n</svg>\n")
+    path = os.path.join(HERE, "pole_pair.svg")
+    with open(path, "w") as out:
+        out.write(svg)
+    print(f"pole_pair.svg: {os.path.getsize(path) // 1024} KB")
+
+
 # ----------------------------------------------------------------------------
 # 5. Quantization
 # ----------------------------------------------------------------------------
