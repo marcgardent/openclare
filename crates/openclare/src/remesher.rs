@@ -476,6 +476,7 @@ impl Remesher for Triangles {
             clock.lap(&mut report, "sizing");
         }
         report.working_vertices = work.mesh.positions.len();
+        report.work_slivers = preprocess::slivers(&work.mesh);
         report.feature_edges = work.feature_edges.len();
         report.guide_gaps = work.guide_gaps;
         clock.lap(&mut report, "preprocess");
@@ -1937,6 +1938,7 @@ fn fields(
     };
     let mut work = preprocess::create(preprocess::Kind::Isotropic).preprocess(input, &work_request)?;
     report.working_vertices = work.mesh.positions.len();
+    report.work_slivers = preprocess::slivers(&work.mesh);
     report.feature_edges = work.feature_edges.len();
     report.guide_gaps = work.guide_gaps;
     clock.lap(report, "preprocess");
@@ -1965,6 +1967,7 @@ fn fields(
             let finer = preprocess::Request { refinement: Some(&refinement), ..work_request };
             work = preprocess::create(preprocess::Kind::Isotropic).preprocess(input, &finer)?;
             report.working_vertices = work.mesh.positions.len();
+            report.work_slivers = preprocess::slivers(&work.mesh);
             report.feature_edges = work.feature_edges.len();
             report.guide_gaps = work.guide_gaps;
             recorder::show_work(recorder, &work);

@@ -82,6 +82,8 @@ pub struct Report {
     pub edge_length: f64,
     /// Vertices of the (possibly subdivided) mesh the fields were solved on.
     pub working_vertices: usize,
+    /// Triangles of the work meshes too thin for the solvers (#31).
+    pub work_slivers: crate::preprocess::Slivers,
     pub hierarchy_levels: usize,
     pub feature_edges: usize,
     /// Orientation-field singularities of index +1/4 and -1/4.
@@ -183,6 +185,7 @@ impl Report {
     /// Adds what was done on one piece to what was done on the others.
     pub(crate) fn absorb(&mut self, piece: Report) {
         self.working_vertices += piece.working_vertices;
+        self.work_slivers += piece.work_slivers;
         self.feature_edges += piece.feature_edges;
         self.singularities.0 += piece.singularities.0;
         self.singularities.1 += piece.singularities.1;

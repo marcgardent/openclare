@@ -545,6 +545,12 @@ fn remesh(args: &[String]) -> Result<(), String> {
         report.singularities.1,
     );
     println!(
+        "work     {} slivers (smallest angle under {} deg), {} of them flat",
+        report.work_slivers.thin,
+        openclare::preprocess::SLIVER_ANGLE,
+        report.work_slivers.flat,
+    );
+    println!(
         "output   {} vertices, {} faces ({} quads, {} triangles, {} n-gons), edge length {:.4}",
         stats.vertices, stats.faces, stats.quads, stats.triangles, stats.ngons, report.edge_length,
     );
