@@ -153,8 +153,14 @@ fn equalize_valences(mesh: &mut DynamicMesh) {
 /// on it.
 fn remove_slivers(mesh: &mut DynamicMesh) {
     let sliver = SLIVER_ANGLE.to_radians();
-    for _ in 0..8 {
+    for round in 0..8 {
         let slivers: Vec<[u32; 3]> = mesh.triangles().filter(|&tri| mesh.min_angle_of(tri) < sliver).collect();
+        // A surface narrower than its edges, as the strip a boolean leaves
+        // between two parts, is slivers through and through: none can go,
+        // and trying only churns the mesh.
+        if round == 0 && slivers.len() > FEW_SLIVERS && slivers.len() * MOSTLY_SLIVERS > mesh.triangle_count() {
+            return;
+        }
         let mut removed = 0;
         for tri in slivers {
             if mesh.has_triangle(tri) && mesh.min_angle_of(tri) < sliver && remove_sliver(mesh, tri) {
@@ -166,6 +172,11 @@ fn remove_slivers(mesh: &mut DynamicMesh) {
         }
     }
 }
+
+/// A work mesh with more than one sliver in this many triangles is left as
+/// it is, unless it has no more than a few of them.
+const MOSTLY_SLIVERS: usize = 10;
+const FEW_SLIVERS: usize = 16;
 
 /// Above this angle, in degrees, the largest corner of a sliver makes it a
 /// cap rather than a needle.
