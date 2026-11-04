@@ -219,8 +219,11 @@ impl Defects {
 impl Built {
     /// Checks that the lattice is a manifold quad mesh whose irregular
     /// vertices are the singularities of the T-mesh, each with its valence
-    /// unless it came to lie on a border.
-    pub fn defects(&self, tmesh: &TMesh) -> Defects {
+    /// unless it came to lie on a border. With `merging`, singularities may
+    /// share a vertex whose valence their indices add up to, if that is 3,
+    /// 4 or 5 and the Euler characteristic is kept (ALGORITHM.md, M6,
+    /// "Merging singularities").
+    pub fn defects(&self, tmesh: &TMesh, merging: bool) -> Defects {
         let lattice = &self.lattice;
         let vertices = lattice.sources.len();
         let mut defects = Defects { reopen: self.clashes.clone(), unexplained: 0 };
@@ -241,12 +244,23 @@ impl Built {
         // border too small to keep, and the border is as well without it.)
         let mut singularity: Vec<Option<u32>> = vec![None; vertices];
         let mut expected_valence: Vec<Option<usize>> = vec![None; vertices];
+        // With `merging`: the singularities come into each vertex, and the
+        // valence their indices add up to.
+        let mut merged: BTreeMap<u32, (Vec<u32>, i64)> = BTreeMap::new();
         for (node, data) in tmesh.nodes.iter().enumerate() {
             if !matches!(data.kind, NodeKind::Singularity { .. }) {
                 continue;
             }
             let vertex = lattice.node_vertex[node] as usize;
             if let Some(other) = singularity[vertex] {
+                if merging {
+                    let (nodes, valence) = merged
+                        .entry(vertex as u32)
+                        .or_insert_with(|| (vec![other], tmesh.nodes[other as usize].arcs.len() as i64));
+                    nodes.push(node as u32);
+                    *valence += data.arcs.len() as i64 - 4;
+                    continue;
+                }
                 // Two of them in one vertex: reopen something between them.
                 charge(&mut defects, vertex as u32, &|| {
                     self.largest_merge_between(other, |point| point == node as u32)
@@ -255,6 +269,15 @@ impl Built {
             }
             singularity[vertex] = Some(node as u32);
             expected_valence[vertex] = Some(data.arcs.len());
+        }
+        for (&vertex, (nodes, valence)) in &merged {
+            if (3..=5).contains(valence) {
+                expected_valence[vertex as usize] = Some(*valence as usize);
+            } else {
+                charge(&mut defects, vertex, &|| {
+                    self.largest_merge_between(nodes[0], |point| nodes[1..].contains(&point))
+                });
+            }
         }
 
         // Each directed edge belongs to one quad at most.
@@ -318,6 +341,15 @@ impl Built {
                 && (border || valence == expected_valence[vertex as usize].unwrap_or(4));
             if !sound {
                 charge(&mut defects, vertex, &|| self.largest_merge_at(vertex));
+            }
+        }
+        // Singularities merged may not pinch a tube or a handle shut that
+        // no fan shows: then each merge is undone.
+        if !merged.is_empty() && self.euler() != tmesh.report.euler {
+            for (&vertex, (nodes, _)) in &merged {
+                charge(&mut defects, vertex, &|| {
+                    self.largest_merge_between(nodes[0], |point| nodes[1..].contains(&point))
+                });
             }
         }
         defects.reopen.sort_unstable();
@@ -409,6 +441,145 @@ impl Classes {
         let (a, b) = (self.find(a), self.find(b));
         if a != b {
             self.parent[a.max(b) as usize] = a.min(b);
+        }
+    }
+}
+
+#[cfg(test)]
+pub(super) mod tests {
+    use super::*;
+    use crate::math::Vec3;
+    use crate::tmesh::{Arc, Node, Patch, Report};
+
+    /// A T-mesh with no T-junction: each of `quads` (counter-clockwise) a
+    /// rectangle, each edge an arc of real length `length` gives it, the
+    /// nodes `singular` singularities.
+    pub fn of_quads(quads: &[[u32; 4]], singular: &[u32], length: impl Fn(u32, u32) -> f64) -> TMesh {
+        let nodes = quads.iter().flatten().max().map_or(0, |&n| n + 1);
+        let mut arcs: Vec<Arc> = Vec::new();
+        let mut index: BTreeMap<(u32, u32), usize> = BTreeMap::new();
+        let mut patches = Vec::new();
+        for (patch, quad) in quads.iter().enumerate() {
+            let mut boundary = Vec::new();
+            for k in 0..4 {
+                let (a, b) = (quad[k], quad[(k + 1) % 4]);
+                let arc = *index.entry((a.min(b), a.max(b))).or_insert_with(|| {
+                    arcs.push(Arc {
+                        nodes: [a, b],
+                        length: length(a, b),
+                        patches: [u32::MAX; 2],
+                        border: true,
+                        feature: false,
+                        trace: 0,
+                        span: [0.0; 2],
+                    });
+                    arcs.len() - 1
+                });
+                let forward = arcs[arc].nodes[0] == a;
+                arcs[arc].patches[!forward as usize] = patch as u32;
+                arcs[arc].border = arcs[arc].patches.contains(&u32::MAX);
+                boundary.push(2 * arc as u32 + !forward as u32);
+            }
+            let sides: Vec<f64> = boundary.iter().map(|&half| arcs[half as usize / 2].length).collect();
+            patches.push(Patch { boundary, angles: vec![1; 4], sides: Some([sides[0], sides[1], sides[2], sides[3]]) });
+        }
+        let mut node_list: Vec<Node> = (0..nodes)
+            .map(|node| Node {
+                position: Vec3::new(0.0, 0.0, 0.0),
+                kind: if singular.contains(&node) {
+                    NodeKind::Singularity { vertex: node }
+                } else {
+                    NodeKind::Junction
+                },
+                arcs: Vec::new(),
+            })
+            .collect();
+        for (arc, data) in arcs.iter().enumerate() {
+            node_list[data.nodes[0] as usize].arcs.push(2 * arc as u32);
+            node_list[data.nodes[1] as usize].arcs.push(2 * arc as u32 + 1);
+        }
+        let euler = nodes as i64 - arcs.len() as i64 + quads.len() as i64;
+        let report = Report { euler, surface_euler: euler, ..Default::default() };
+        TMesh { nodes: node_list, arcs, patches, traces: Vec::new(), report }
+    }
+
+    /// A grid of 3 by 3 quads on a disc, with a strip of three quads
+    /// inserted along the way (0,1)-(1,1)-(1,2)-(1,3), which turns at (1,1):
+    /// the grid vertex 5 is split into a 5 (itself) and a 3 (17). The four
+    /// edges across the strip are returned with the T-mesh.
+    pub fn disc_with_a_pair() -> (TMesh, [(u32, u32); 4]) {
+        let quads = [
+            [0, 1, 5, 4],
+            [1, 2, 6, 5],
+            [2, 3, 7, 6],
+            [5, 6, 10, 9],
+            [6, 7, 11, 10],
+            [9, 10, 14, 13],
+            [10, 11, 15, 14],
+            [16, 17, 18, 8],
+            [8, 18, 19, 12],
+            // The strip.
+            [4, 5, 17, 16],
+            [5, 9, 18, 17],
+            [9, 13, 19, 18],
+        ];
+        let across = [(4, 16), (5, 17), (9, 18), (13, 19)];
+        let tmesh = of_quads(&quads, &[5, 17], |a, b| if across.contains(&(a.min(b), a.max(b))) { 0.2 } else { 1.0 });
+        (tmesh, across)
+    }
+
+    /// Lengths of 1 everywhere but on the arcs `zero`.
+    fn lengths(tmesh: &TMesh, zero: &[(u32, u32)]) -> Vec<i64> {
+        tmesh
+            .arcs
+            .iter()
+            .map(|arc| {
+                let [a, b] = arc.nodes;
+                if zero.contains(&(a.min(b), a.max(b))) { 0 } else { 1 }
+            })
+            .collect()
+    }
+
+    #[test]
+    fn a_3_and_a_5_merge_into_a_regular_vertex_only_when_asked() {
+        let (tmesh, across) = disc_with_a_pair();
+        assert_eq!((tmesh.nodes[5].arcs.len(), tmesh.nodes[17].arcs.len()), (5, 3));
+        // Every length 1: the quad mesh is the T-mesh, sound either way.
+        let open = build(&tmesh, &lengths(&tmesh, &[]));
+        assert!(open.defects(&tmesh, false).is_empty() && open.defects(&tmesh, true).is_empty());
+        // The strip closed up: the grid of 3 by 3 again, the pair in one
+        // vertex of valence 4.
+        let closed = build(&tmesh, &lengths(&tmesh, &across));
+        assert_eq!(closed.lattice.quads.len(), 9);
+        assert_eq!(closed.lattice.node_vertex[5], closed.lattice.node_vertex[17]);
+        assert_eq!(closed.euler(), tmesh.report.euler);
+        let kept = closed.defects(&tmesh, false);
+        assert!(!kept.reopen.is_empty(), "the singularities are kept apart by default");
+        assert!(kept.reopen.iter().all(|&arc| {
+            let [a, b] = tmesh.arcs[arc].nodes;
+            across.contains(&(a.min(b), a.max(b)))
+        }));
+        assert!(closed.defects(&tmesh, true).is_empty());
+    }
+
+    /// A cube of six quads: eight singularities of valence 3.
+    fn cube() -> TMesh {
+        let quads = [[0, 3, 2, 1], [4, 5, 6, 7], [0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7]];
+        of_quads(&quads, &[0, 1, 2, 3, 4, 5, 6, 7], |_, _| 1.0)
+    }
+
+    #[test]
+    fn two_3s_are_not_merged_into_a_valence_of_2() {
+        let tmesh = cube();
+        // The ring of four quads round the cube closed up: the top and the
+        // bottom glued face to face, every vertex of valence 2, the Euler
+        // characteristic still that of a sphere.
+        let closed = build(&tmesh, &lengths(&tmesh, &[(0, 4), (1, 5), (2, 6), (3, 7)]));
+        assert_eq!(closed.lattice.quads.len(), 2);
+        assert_eq!(closed.euler(), tmesh.report.euler);
+        for merging in [false, true] {
+            let defects = closed.defects(&tmesh, merging);
+            assert!(!defects.reopen.is_empty() && defects.unexplained == 0, "merging {merging}");
         }
     }
 }

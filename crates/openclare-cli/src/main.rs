@@ -60,6 +60,8 @@ OPTIONS (remesh):
                                  of its faces is written next to it, as <output>.groups
     --skip-pieces-under <Q>      leave out the separate pieces whose share of the quads is below Q (default 0: keep all)
     --no-close-loops             leave the lines of quads round a part as the lengths make them, helices or not
+    --merge-singularities        let a 3 and a 5 (singularities whose valences add up to 3, 4 or 5) merge
+                                 across a strip of no width instead of holding it one quad wide (experimental)
     --quality <standard|slow>    slow: after the engine, an exact solver (HiGHS) chooses which loops to close
                                  together, in three rounds; kept only where it makes fewer spirals. Seconds to
                                  minutes more per piece (default standard)
@@ -117,6 +119,7 @@ OPTIONS (tmesh):
 OPTIONS (quantize): those of tmesh up to --rounds, and
     --tolerance <T>        how close to the number of quads is close enough (default 0.02)
     --keep-scale           keep the scale of the T-mesh instead of aiming for the number of quads
+    --merge-singularities  let singularities merge where their valences add up to 3, 4 or 5
     --json                 print the report as one JSON object
 
 OPTIONS (measure):
@@ -417,6 +420,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
             "--density-contrast" => config.density_contrast = parse(arg, value(arg)?)?,
             "--skip-pieces-under" => config.skip_pieces_under = parse(arg, value(arg)?)?,
             "--no-close-loops" => config.close_loops = false,
+            "--merge-singularities" => config.merge_singularities = true,
             "--quality" => config.quality = value(arg)?.parse().map_err(|e: openclare::Error| e.to_string())?,
             "--slow-time-limit" => config.slow_time_limit = parse(arg, value(arg)?)?,
             "--slow-work-limit" => config.slow_work_limit = parse(arg, value(arg)?)?,
@@ -1205,6 +1209,7 @@ fn quantize_command(args: &[String]) -> Result<(), String> {
         match arg.as_str() {
             "--tolerance" => request.tolerance = parse(arg, args.next().ok_or("--tolerance expects a value")?)?,
             "--keep-scale" => exact_scale = true,
+            "--merge-singularities" => request.merge_singularities = true,
             "--json" => json = true,
             flag => return Err(format!("unknown option '{flag}'")),
         }
