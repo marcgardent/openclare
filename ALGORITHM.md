@@ -1090,8 +1090,32 @@ What stays open:
   exact refinement of Bi-MDF (matching) is not written; nothing on the corpus calls for it.
 - **The arcs kept open** give narrow strips of quads (one quad wide for a real width that is
   far less). It is the price of faithfulness to the field: agreeing instead to merge two close
-  opposite singularities (Lyon et al. 2021) would give a simpler mesh. To see with the results
-  of milestone 7.
+  opposite singularities would give a simpler mesh. Lyon et al. 2021 do not: their quantization
+  is valid only if no path of arcs of length zero joins two singularities (their §4.1), and
+  merging is left to future work in their conclusion. The option below tries it (#171).
+
+**Merging singularities (option `merge_singularities`, off by default, #171).** The lengths
+close up only what they already close up: arcs of length zero and rectangles with no width.
+Singularities of valences $d_1, \dots, d_k$ ($k \ge 2$) that come into one vertex $v$ of the
+quad mesh are accepted there when
+
+1. $v$ is inside the surface and its valence in the quad mesh is $4 + \sum_i (d_i - 4)$, a value
+   of 3, 4 or 5. The index of a vertex is $(4 - d)/4$ and indices add up when vertices merge;
+   collapsing a strip of quads between two vertices of valences $a$ and $b$ leaves
+   $a + b - 4$. So a 3 and a 5 give a regular vertex, a 3, a 5 and a 5 give a 5; two 3s
+   (valence 2) or two 5s (valence 6) are refused. On a border any valence will do, as for one
+   singularity;
+2. every other check stays as it was: each directed edge in one quad at most, no quad with a
+   repeated corner, a single fan round each vertex, every other vertex inside the surface
+   regular, no rectangle closed up between two runs of border or hard edge;
+3. where a merge was accepted, the quad mesh still has the Euler characteristic of the
+   surface: nothing pinched shut. Otherwise every merge accepted is undone.
+
+A rectangle of no width is never meshed, so none folds: its two long sides are merged, and a
+fold between two walls is condition 2. A T-junction is not a vertex of the quad mesh but a
+point on a side; one left dangling would show as a vertex out of its fan or of valence other
+than 4, which condition 2 refuses. A refused merge reopens, as before, the arc undoing the
+largest thing closed up between two of the singularities.
 - **Budget**: the finest step is a whole strip, that is 2 to 4 % of the quads at 1000 quads.
 - **A piece with neither singularity nor border** (a torus) has no T-mesh, hence nothing to
   quantize: its two periods will have to be rounded apart.
