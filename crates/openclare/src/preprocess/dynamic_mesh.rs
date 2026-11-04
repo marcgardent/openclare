@@ -138,6 +138,14 @@ impl DynamicMesh {
         (found, count)
     }
 
+    /// Is `a-b-c` a live triangle, whichever way round?
+    pub fn has_triangle(&self, [a, b, c]: [u32; 3]) -> bool {
+        self.incident[a as usize].iter().any(|&t| {
+            let tri = self.triangles[t as usize];
+            tri.contains(&b) && tri.contains(&c)
+        })
+    }
+
     pub fn has_edge(&self, a: u32, b: u32) -> bool {
         self.incident[a as usize].iter().any(|&t| self.triangles[t as usize].contains(&b))
     }
@@ -248,6 +256,19 @@ impl DynamicMesh {
     /// without changing the topology, folding the surface or damaging a
     /// feature line?
     pub fn can_collapse(&self, from: u32, to: u32, position: Vec3) -> bool {
+        self.collapse_check(from, to, position, false)
+    }
+
+    /// As [`Self::can_collapse`], and also where `from` is on a stretch of
+    /// feature line that runs alongside one through `to` between the same
+    /// two vertices: the collapse then makes the two stretches one, `from`
+    /// staying on a line. Two lines that close are what a sliver between
+    /// them is made of, where they meet at an acute angle.
+    pub fn can_merge_lines(&self, from: u32, to: u32, position: Vec3) -> bool {
+        self.collapse_check(from, to, position, true)
+    }
+
+    fn collapse_check(&self, from: u32, to: u32, position: Vec3, merge_lines: bool) -> bool {
         let (shared, count) = self.edge_triangles(from, to);
         if count == 0 || count > 2 || self.corner[from as usize] {
             return false;
@@ -287,6 +308,7 @@ impl DynamicMesh {
                     return false;
                 }
             }
+            [x, y] if merge_lines && self.is_feature(to, x) && self.is_feature(to, y) => {}
             _ => return false,
         }
 
@@ -322,6 +344,44 @@ impl DynamicMesh {
     /// If edge `a-b` can be flipped, the two vertices facing it (which the
     /// flipped edge would join).
     pub fn can_flip(&self, a: u32, b: u32) -> Option<(u32, u32)> {
+        let (shared, c, d) = self.flippable(a, b)?;
+        // Only across a (nearly) flat pair, and only if the new pair still
+        // faces the same way: otherwise the flip would change the shape.
+        let n0 = self.area_vector_of(self.triangles[shared[0] as usize]).try_normalize()?;
+        let n1 = self.area_vector_of(self.triangles[shared[1] as usize]).try_normalize()?;
+        if n0.dot(n1) < 0.8 {
+            return None;
+        }
+        let [first, second] = self.flipped(shared[0], a, b, c, d);
+        let m0 = self.area_vector_of(first).try_normalize()?;
+        let m1 = self.area_vector_of(second).try_normalize()?;
+        let mean = (n0 + n1).normalize_or_zero();
+        (m0.dot(mean) > 0.5 && m1.dot(mean) > 0.5).then_some((c, d))
+    }
+
+    /// Can edge `a-b`, which a sliver lies on, be flipped to rid the mesh
+    /// of it? The normal of a sliver means nothing, so the pair is not asked
+    /// to be flat: the new triangles are to face the way the pair does as a
+    /// whole (which the other triangle of it says), and their smallest angle
+    /// is to be larger than that of the pair.
+    pub fn can_flip_sliver(&self, a: u32, b: u32) -> bool {
+        let Some((shared, c, d)) = self.flippable(a, b) else { return false };
+        let pair = shared.map(|t| self.triangles[t as usize]);
+        let Some(mean) = (self.area_vector_of(pair[0]) + self.area_vector_of(pair[1])).try_normalize() else {
+            return false;
+        };
+        let new = self.flipped(shared[0], a, b, c, d);
+        let faces_the_same_way =
+            new.iter().all(|&tri| self.area_vector_of(tri).try_normalize().is_some_and(|m| m.dot(mean) > 0.5));
+        let smallest =
+            |tris: [[u32; 3]; 2]| tris.map(|tri| self.min_angle_of(tri)).into_iter().fold(f64::INFINITY, f64::min);
+        faces_the_same_way && smallest(new) > smallest(pair)
+    }
+
+    /// The two triangles on edge `a-b` and the vertices facing it, if it is
+    /// an edge a flip may turn: no feature, two triangles, the flipped edge
+    /// not already there, and ends with triangles to spare.
+    fn flippable(&self, a: u32, b: u32) -> Option<([u32; 2], u32, u32)> {
         if self.is_feature(a, b) {
             return None;
         }
@@ -340,19 +400,18 @@ impl DynamicMesh {
                 return None;
             }
         }
+        Some((shared, c, d))
+    }
 
-        // Only across a (nearly) flat pair, and only if the new pair still
-        // faces the same way: otherwise the flip would change the shape.
-        let n0 = self.area_vector_of(self.triangles[shared[0] as usize]).try_normalize()?;
-        let n1 = self.area_vector_of(self.triangles[shared[1] as usize]).try_normalize()?;
-        if n0.dot(n1) < 0.8 {
-            return None;
-        }
-        let [first, second] = self.flipped(shared[0], a, b, c, d);
-        let m0 = self.area_vector_of(first).try_normalize()?;
-        let m1 = self.area_vector_of(second).try_normalize()?;
-        let mean = (n0 + n1).normalize_or_zero();
-        (m0.dot(mean) > 0.5 && m1.dot(mean) > 0.5).then_some((c, d))
+    /// Smallest angle of a triangle, in radians.
+    pub fn min_angle_of(&self, tri: [u32; 3]) -> f64 {
+        let p = tri.map(|v| self.positions[v as usize]);
+        (0..3)
+            .map(|k| {
+                let (u, w) = (p[(k + 1) % 3] - p[k], p[(k + 2) % 3] - p[k]);
+                u.normalize_or_zero().dot(w.normalize_or_zero()).clamp(-1.0, 1.0).acos()
+            })
+            .fold(f64::INFINITY, f64::min)
     }
 
     /// The two triangles that replace the pair on `a-b`, with `c` facing the

@@ -4,12 +4,14 @@
 //! triangles are all about the same size and close to equilateral.
 //!
 //! The solvers downstream discretise differential operators on this mesh;
-//! slivers and wild size variations are what make them inaccurate.
+//! slivers and wild size variations are what make them inaccurate. The few
+//! slivers the loop leaves (a vertex pulled onto the edge between two
+//! others) are then removed one by one.
 
 use rayon::prelude::*;
 
-use super::Refinement;
 use super::dynamic_mesh::DynamicMesh;
+use super::{Refinement, SLIVER_ANGLE};
 use crate::math::Vec3;
 use crate::spatial::Bvh;
 
@@ -50,6 +52,7 @@ pub(crate) fn remesh(
         collapse_short_edges(mesh, &lengths);
         equalize_valences(mesh);
         relax(mesh, target, edge_length, refinement.is_some().then_some(&lengths[..]));
+        remove_slivers(mesh);
     }
 }
 
@@ -140,6 +143,99 @@ fn equalize_valences(mesh: &mut DynamicMesh) {
     }
 }
 
+/// Rids the mesh of its slivers (#31) as Botsch and Kobbelt's remeshing
+/// does: a needle, one edge much shorter than the other two, loses that edge
+/// to a collapse; a cap, one angle nearly a straight one, has the edge
+/// facing that angle flipped, or its corner laid onto that edge where no
+/// flip will do. Feature lines are respected: a collapse only slides a
+/// vertex of one along it (or makes one of two stretches of line that run
+/// side by side), a flip never turns one, and a corner laid onto one stays
+/// on it.
+fn remove_slivers(mesh: &mut DynamicMesh) {
+    let sliver = SLIVER_ANGLE.to_radians();
+    for _ in 0..8 {
+        let slivers: Vec<[u32; 3]> = mesh.triangles().filter(|&tri| mesh.min_angle_of(tri) < sliver).collect();
+        let mut removed = 0;
+        for tri in slivers {
+            if mesh.has_triangle(tri) && mesh.min_angle_of(tri) < sliver && remove_sliver(mesh, tri) {
+                removed += 1;
+            }
+        }
+        if removed == 0 {
+            break;
+        }
+    }
+}
+
+/// Above this angle, in degrees, the largest corner of a sliver makes it a
+/// cap rather than a needle.
+const CAP_ANGLE: f64 = 150.0;
+
+fn remove_sliver(mesh: &mut DynamicMesh, tri: [u32; 3]) -> bool {
+    let position = |v: u32| mesh.positions[v as usize];
+    // The edge facing each corner, shortest first.
+    let mut edges: Vec<(f64, u32, u32, u32)> = (0..3)
+        .map(|k| {
+            let (corner, a, b) = (tri[k], tri[(k + 1) % 3], tri[(k + 2) % 3]);
+            (position(a).distance(position(b)), a, b, corner)
+        })
+        .collect();
+    edges.sort_by(|x, y| x.0.total_cmp(&y.0));
+    let (_, a, b, apex) = edges[2];
+    let (u, w) =
+        ((position(a) - position(apex)).normalize_or_zero(), (position(b) - position(apex)).normalize_or_zero());
+    let largest = u.dot(w).clamp(-1.0, 1.0).acos().to_degrees();
+
+    let needle = |mesh: &mut DynamicMesh| {
+        let (_, p, q, _) = edges[0];
+        for (from, to) in [(p, q), (q, p)] {
+            let at = mesh.positions[to as usize];
+            if mesh.can_merge_lines(from, to, at) {
+                mesh.collapse(from, to, at);
+                return true;
+            }
+        }
+        false
+    };
+    let cap = |mesh: &mut DynamicMesh| {
+        if mesh.can_flip_sliver(a, b) {
+            mesh.flip(a, b);
+            return true;
+        }
+        lay_onto(mesh, a, b, apex)
+    };
+    if largest > CAP_ANGLE { cap(mesh) || needle(mesh) } else { needle(mesh) || cap(mesh) }
+}
+
+/// Lays `apex`, the corner of a cap, onto its long side `a-b`: the side is
+/// split where the apex is nearest to it, and the apex merged into the new
+/// vertex. That is how a cap along a feature line, which no flip may turn,
+/// goes: the line keeps its course and gains a vertex. Nothing changes if
+/// the merge cannot be made.
+fn lay_onto(mesh: &mut DynamicMesh, a: u32, b: u32, apex: u32) -> bool {
+    if mesh.feature_degree(apex) > 0 {
+        return false;
+    }
+    let (start, end) = (mesh.positions[a as usize], mesh.positions[b as usize]);
+    let along = end - start;
+    let length_squared = along.length_squared();
+    if length_squared == 0.0 {
+        return false;
+    }
+    let t = ((mesh.positions[apex as usize] - start).dot(along) / length_squared).clamp(0.0, 1.0);
+    let foot = start + along * t;
+    let middle = mesh.split(a, b, foot);
+    if mesh.can_collapse(apex, middle, foot) {
+        mesh.collapse(apex, middle, foot);
+        true
+    } else {
+        // Undone: merged into `a`, which does not move, the new vertex
+        // gives back the side and the two triangles it was split from.
+        mesh.collapse(middle, a, start);
+        false
+    }
+}
+
 /// Moves every vertex towards the centre of its neighbours, within its
 /// tangent plane, then back onto the source. Vertices of a feature line only
 /// move along it, corners not at all.
@@ -205,4 +301,104 @@ fn project(target: &Target, p: Vec3, normal: Vec3, edge_length: f64) -> Vec3 {
         .closest_point_where(p, 2.0 * edge_length, same_side)
         .or_else(|| target.surface.closest_point(p))
         .map_or(p, |hit| hit.point)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::mesh::{Topology, TriMesh};
+
+    /// Two sheets folded at a right angle along a crease on the x axis,
+    /// each a grid of 3 by 2 squares cut in two, with a cap along the
+    /// crease (a vertex 0.002 off it, between its vertices at x = 1 and 2)
+    /// and a needle (a vertex of the crease 0.01 from the one at x = 2).
+    fn folded_with_slivers() -> (TriMesh, Vec<[u32; 2]>) {
+        let mut positions = Vec::new();
+        // Row 0 is the crease; rows 1 and 2 are on the flat sheet (y), rows
+        // 3 and 4 on the folded one (-z).
+        for row in 0..5 {
+            for x in 0..4 {
+                let x = x as f64;
+                positions.push(match row {
+                    0 => Vec3::new(x, 0.0, 0.0),
+                    1 | 2 => Vec3::new(x, row as f64, 0.0),
+                    _ => Vec3::new(x, 0.0, -(row as f64 - 2.0)),
+                });
+            }
+        }
+        let at = |row: u32, x: u32| 4 * row + x;
+        let apex = positions.len() as u32;
+        positions.push(Vec3::new(1.5, 0.002, 0.0));
+        let near = positions.len() as u32;
+        positions.push(Vec3::new(2.01, 0.0, 0.0));
+
+        let mut triangles = Vec::new();
+        // The flat sheet faces +z, the folded one +y.
+        for (inner, outer) in [(0, 1), (1, 2)] {
+            for x in 0..3 {
+                let (a, b, c, d) = (at(inner, x), at(inner, x + 1), at(outer, x + 1), at(outer, x));
+                if inner == 0 && x == 1 {
+                    // The cell on the crease between x = 1 and 2, as a fan
+                    // round the apex: its first triangle is the cap.
+                    triangles.extend([[a, b, apex], [b, c, apex], [c, d, apex], [d, a, apex]]);
+                } else if inner == 0 && x == 2 {
+                    triangles.extend([[a, near, c], [near, b, c], [a, c, d]]);
+                } else {
+                    triangles.extend([[a, b, c], [a, c, d]]);
+                }
+            }
+        }
+        for (inner, outer) in [(0, 3), (3, 4)] {
+            for x in 0..3 {
+                let (a, b, c, d) = (at(inner, x), at(inner, x + 1), at(outer, x + 1), at(outer, x));
+                if inner == 0 && x == 2 {
+                    triangles.extend([[a, c, near], [near, c, b], [a, d, c]]);
+                } else {
+                    triangles.extend([[a, c, b], [a, d, c]]);
+                }
+            }
+        }
+        let mesh = TriMesh { positions, triangles };
+
+        let topology = Topology::build(&mesh);
+        let mut features: Vec<[u32; 2]> = topology
+            .boundary_half_edges()
+            .map(|h| {
+                let tri = mesh.triangles[h / 3];
+                [tri[h % 3], tri[(h + 1) % 3]]
+            })
+            .collect();
+        features.extend([[at(0, 0), at(0, 1)], [at(0, 1), at(0, 2)], [at(0, 2), near], [near, at(0, 3)]]);
+        (mesh, features)
+    }
+
+    #[test]
+    fn slivers_along_a_crease_are_removed_and_the_crease_kept() {
+        let (source, features) = folded_with_slivers();
+        let sliver = SLIVER_ANGLE.to_radians();
+        let mut mesh = DynamicMesh::new(&source, &features);
+        assert_eq!(mesh.triangles().filter(|&tri| mesh.min_angle_of(tri) < sliver).count(), 3);
+        let borders_before = Topology::build(&source).boundary_half_edges().count();
+
+        remove_slivers(&mut mesh);
+
+        assert_eq!(mesh.triangles().filter(|&tri| mesh.min_angle_of(tri) < sliver).count(), 0);
+        let (result, features) = mesh.finish();
+        let topology = Topology::build(&result);
+        assert_eq!(topology.non_manifold_edges, 0);
+        assert_eq!(topology.boundary_half_edges().count(), borders_before);
+        // Every vertex is still on one of the two sheets, and the crease
+        // is still a line of feature edges along the x axis, from end to end.
+        for p in &result.positions {
+            assert!(p.z.abs() < 1e-12 || p.y.abs() < 1e-12, "{p:?} is off the sheets");
+        }
+        let on_crease = |v: u32| {
+            let p = result.positions[v as usize];
+            p.y.abs() < 1e-12 && p.z.abs() < 1e-12
+        };
+        let crease: Vec<[u32; 2]> = features.into_iter().filter(|&[a, b]| on_crease(a) && on_crease(b)).collect();
+        let length: f64 =
+            crease.iter().map(|&[a, b]| result.positions[a as usize].distance(result.positions[b as usize])).sum();
+        assert!((length - 3.0).abs() < 1e-9, "the crease is {length} long in feature edges");
+    }
 }
