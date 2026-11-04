@@ -111,6 +111,7 @@ OPTIONS (tmesh):
     --simplify <R>         cancel opposite singularities closer than R quad edges
     --crease-angle <DEG>   treat input edges sharper than this as hard constraints
     --rounds <N>           most stiffening rounds against inverted triangles (default 40)
+    --no-pairs             leave the pole pairs to the race, as before DT-115
     --traces <out.obj>     write the cuts as lines on the surface
     --json                 print the report as one JSON object
 
@@ -1000,6 +1001,7 @@ struct LayoutOptions {
     field: crossfield::Request,
     simplify: Option<f64>,
     rounds: usize,
+    pairs: tmesh::Pairs,
 }
 
 impl LayoutOptions {
@@ -1011,6 +1013,7 @@ impl LayoutOptions {
             field: crossfield::Request::default(),
             simplify: None,
             rounds: 40,
+            pairs: tmesh::Pairs::All,
         }
     }
 
@@ -1024,6 +1027,7 @@ impl LayoutOptions {
             "--simplify" => self.simplify = Some(parse(arg, value()?)?),
             "--crease-angle" => self.work.crease_angle = Some(parse(arg, value()?)?),
             "--rounds" => self.rounds = parse(arg, value()?)?,
+            "--no-pairs" => self.pairs = tmesh::Pairs::None,
             flag if flag.starts_with("--") => return Ok(false),
             path if self.input.is_none() => self.input = Some(path.to_string()),
             _ => return Err("expected a single input path".into()),
@@ -1056,13 +1060,13 @@ impl LayoutOptions {
                 .map_err(|e| e.to_string())?
                 .0;
         }
-        // The map and the T-mesh, every pole pair joined (the remesh chain
-        // joins only those its quantization puts on one line); timed
-        // together, since the map may be solved twice.
+        // The map and the T-mesh, every pole pair joined unless --no-pairs
+        // (the remesh chain joins only those its quantization puts on one
+        // line); timed together, since the map may be solved twice.
         let start = std::time::Instant::now();
         let builder = tmesh::Motorcycle { stiffening_rounds: self.rounds, ..Default::default() };
         let tmesh::Layout { tmesh, map, .. } = builder
-            .build(&work, &field, &tmesh::Request { edge_length, pairs: tmesh::Pairs::All })
+            .build(&work, &field, &tmesh::Request { edge_length, pairs: self.pairs })
             .map_err(|e| e.to_string())?;
         Ok(Layout {
             tmesh,
