@@ -180,6 +180,18 @@ Quantization gives each arc a whole length.
 *The lines leaving the poles run until they hit another line or the border, and cut the surface
 into rectangles of quads, the patches. Computed on a small quad mesh with two 3/5 pairs.*
 
+**Pole pair**. Two poles that one separatrix joins, within half a quad edge in the map. Left to
+the race, the trace of each pole passes beside the other and stops on a line a hair away: a thin
+patch between two T-junctions. The layout snaps the map instead, so that both poles lie on one
+line, and joins them by one trace before the other separatrices race. In the remesh chain only
+the pairs that quantization already puts on one edge line are joined (`tmesh::Pairs`, #115).
+
+![A pole pair: the motorcycle race before, the pair joined first after](glossary/pole_pair.svg)
+
+*Computed in a piece of the map, every separatrix running along x or y at the same speed. Before,
+Q misses P's line by 0.35 quad edge and the race leaves a thin patch. After, the snap moves Q
+onto P's line and one trace joins them: no thin patch, two T-junctions fewer.*
+
 **Wall**. A border or hard edge that traces may not cross.
 
 **Patch grid meshing**. Turning every patch, once it has whole side lengths, into its grid of

@@ -1,0 +1,409 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1232 540" width="1232" height="540" font-family="DejaVu Sans, Verdana, sans-serif">
+<title>A pole pair: the motorcycle race before, the pair joined first after</title>
+<style>
+@keyframes k1 {
+  0.00% { opacity: 1 }
+  94.29% { opacity: 1 }
+  98.57% { opacity: 0 }
+  100.00% { opacity: 0 }
+}
+.k1 { animation: k1 14.0s linear infinite; }
+@keyframes k2 {
+  0.00% { opacity: 0 }
+  46.51% { opacity: 0 }
+  49.01% { opacity: 1 }
+  94.29% { opacity: 1 }
+  100.00% { opacity: 0 }
+}
+.k2 { animation: k2 14.0s linear infinite; }
+@keyframes k3 {
+  0.00% { stroke-dashoffset: 1 }
+  24.29% { stroke-dashoffset: 1 }
+  36.89% { stroke-dashoffset: 0 }
+  94.29% { stroke-dashoffset: 0 }
+  100.00% { stroke-dashoffset: 0 }
+}
+.k3 { animation: k3 14.0s linear infinite; }
+@keyframes k4 {
+  0.00% { stroke-dashoffset: 1 }
+  24.29% { stroke-dashoffset: 1 }
+  43.61% { stroke-dashoffset: 0 }
+  94.29% { stroke-dashoffset: 0 }
+  100.00% { stroke-dashoffset: 0 }
+}
+.k4 { animation: k4 14.0s linear infinite; }
+@keyframes k5 {
+  0.00% { stroke-dashoffset: 1 }
+  24.29% { stroke-dashoffset: 1 }
+  37.73% { stroke-dashoffset: 0 }
+  94.29% { stroke-dashoffset: 0 }
+  100.00% { stroke-dashoffset: 0 }
+}
+.k5 { animation: k5 14.0s linear infinite; }
+@keyframes k6 {
+  0.00% { stroke-dashoffset: 1 }
+  24.29% { stroke-dashoffset: 1 }
+  36.89% { stroke-dashoffset: 0 }
+  94.29% { stroke-dashoffset: 0 }
+  100.00% { stroke-dashoffset: 0 }
+}
+.k6 { animation: k6 14.0s linear infinite; }
+@keyframes k7 {
+  0.00% { stroke-dashoffset: 1 }
+  24.29% { stroke-dashoffset: 1 }
+  45.08% { stroke-dashoffset: 0 }
+  94.29% { stroke-dashoffset: 0 }
+  100.00% { stroke-dashoffset: 0 }
+}
+.k7 { animation: k7 14.0s linear infinite; }
+@keyframes k8 {
+  0.00% { stroke-dashoffset: 1 }
+  24.29% { stroke-dashoffset: 1 }
+  36.26% { stroke-dashoffset: 0 }
+  94.29% { stroke-dashoffset: 0 }
+  100.00% { stroke-dashoffset: 0 }
+}
+.k8 { animation: k8 14.0s linear infinite; }
+@keyframes k9 {
+  0.00% { stroke-dashoffset: 1 }
+  24.29% { stroke-dashoffset: 1 }
+  38.57% { stroke-dashoffset: 0 }
+  94.29% { stroke-dashoffset: 0 }
+  100.00% { stroke-dashoffset: 0 }
+}
+.k9 { animation: k9 14.0s linear infinite; }
+@keyframes k10 {
+  0.00% { stroke-dashoffset: 1 }
+  24.29% { stroke-dashoffset: 1 }
+  39.41% { stroke-dashoffset: 0 }
+  94.29% { stroke-dashoffset: 0 }
+  100.00% { stroke-dashoffset: 0 }
+}
+.k10 { animation: k10 14.0s linear infinite; }
+@keyframes k11 {
+  0.00% { stroke-dashoffset: 1 }
+  24.29% { stroke-dashoffset: 1 }
+  36.26% { stroke-dashoffset: 0 }
+  94.29% { stroke-dashoffset: 0 }
+  100.00% { stroke-dashoffset: 0 }
+}
+.k11 { animation: k11 14.0s linear infinite; }
+@keyframes k12 {
+  0.00% { opacity: 0 }
+  36.89% { opacity: 0 }
+  39.39% { opacity: 1 }
+  94.29% { opacity: 1 }
+  100.00% { opacity: 0 }
+}
+.k12 { animation: k12 14.0s linear infinite; }
+@keyframes k13 {
+  0.00% { opacity: 0 }
+  43.61% { opacity: 0 }
+  46.11% { opacity: 1 }
+  94.29% { opacity: 1 }
+  100.00% { opacity: 0 }
+}
+.k13 { animation: k13 14.0s linear infinite; }
+@keyframes k14 {
+  0.00% { opacity: 0 }
+  37.73% { opacity: 0 }
+  40.23% { opacity: 1 }
+  94.29% { opacity: 1 }
+  100.00% { opacity: 0 }
+}
+.k14 { animation: k14 14.0s linear infinite; }
+@keyframes k15 {
+  0.00% { opacity: 0 }
+  36.89% { opacity: 0 }
+  39.39% { opacity: 1 }
+  94.29% { opacity: 1 }
+  100.00% { opacity: 0 }
+}
+.k15 { animation: k15 14.0s linear infinite; }
+@keyframes k16 {
+  0.00% { opacity: 0 }
+  45.08% { opacity: 0 }
+  47.58% { opacity: 1 }
+  94.29% { opacity: 1 }
+  100.00% { opacity: 0 }
+}
+.k16 { animation: k16 14.0s linear infinite; }
+@keyframes k17 {
+  0.00% { opacity: 0 }
+  36.26% { opacity: 0 }
+  38.76% { opacity: 1 }
+  94.29% { opacity: 1 }
+  100.00% { opacity: 0 }
+}
+.k17 { animation: k17 14.0s linear infinite; }
+@keyframes k18 {
+  0.00% { opacity: 0 }
+  38.57% { opacity: 0 }
+  41.07% { opacity: 1 }
+  94.29% { opacity: 1 }
+  100.00% { opacity: 0 }
+}
+.k18 { animation: k18 14.0s linear infinite; }
+@keyframes k19 {
+  0.00% { opacity: 0 }
+  39.41% { opacity: 0 }
+  41.91% { opacity: 1 }
+  94.29% { opacity: 1 }
+  100.00% { opacity: 0 }
+}
+.k19 { animation: k19 14.0s linear infinite; }
+@keyframes k20 {
+  0.00% { opacity: 0 }
+  36.26% { opacity: 0 }
+  38.76% { opacity: 1 }
+  94.29% { opacity: 1 }
+  100.00% { opacity: 0 }
+}
+.k20 { animation: k20 14.0s linear infinite; }
+@keyframes k21 {
+  0.00% { opacity: 0 }
+  45.04% { opacity: 0 }
+  47.54% { opacity: 1 }
+  94.29% { opacity: 1 }
+  100.00% { opacity: 0 }
+}
+.k21 { animation: k21 14.0s linear infinite; }
+@keyframes k22 {
+  0.00% { opacity: 0 }
+  5.71% { opacity: 1 }
+  21.43% { opacity: 1 }
+  24.29% { opacity: 0 }
+  100.00% { opacity: 0 }
+}
+.k22 { animation: k22 14.0s linear infinite; }
+@keyframes k23 {
+  0.00% { stroke-dashoffset: 1 }
+  14.29% { stroke-dashoffset: 1 }
+  21.43% { stroke-dashoffset: 0 }
+  94.29% { stroke-dashoffset: 0 }
+  100.00% { stroke-dashoffset: 0 }
+}
+.k23 { animation: k23 14.0s linear infinite; }
+@keyframes k24 {
+  0.00% { stroke-dashoffset: 1 }
+  24.29% { stroke-dashoffset: 1 }
+  43.61% { stroke-dashoffset: 0 }
+  94.29% { stroke-dashoffset: 0 }
+  100.00% { stroke-dashoffset: 0 }
+}
+.k24 { animation: k24 14.0s linear infinite; }
+@keyframes k25 {
+  0.00% { stroke-dashoffset: 1 }
+  24.29% { stroke-dashoffset: 1 }
+  37.73% { stroke-dashoffset: 0 }
+  94.29% { stroke-dashoffset: 0 }
+  100.00% { stroke-dashoffset: 0 }
+}
+.k25 { animation: k25 14.0s linear infinite; }
+@keyframes k26 {
+  0.00% { stroke-dashoffset: 1 }
+  24.29% { stroke-dashoffset: 1 }
+  43.61% { stroke-dashoffset: 0 }
+  94.29% { stroke-dashoffset: 0 }
+  100.00% { stroke-dashoffset: 0 }
+}
+.k26 { animation: k26 14.0s linear infinite; }
+@keyframes k27 {
+  0.00% { stroke-dashoffset: 1 }
+  24.29% { stroke-dashoffset: 1 }
+  37.73% { stroke-dashoffset: 0 }
+  94.29% { stroke-dashoffset: 0 }
+  100.00% { stroke-dashoffset: 0 }
+}
+.k27 { animation: k27 14.0s linear infinite; }
+@keyframes k28 {
+  0.00% { stroke-dashoffset: 1 }
+  24.29% { stroke-dashoffset: 1 }
+  38.57% { stroke-dashoffset: 0 }
+  94.29% { stroke-dashoffset: 0 }
+  100.00% { stroke-dashoffset: 0 }
+}
+.k28 { animation: k28 14.0s linear infinite; }
+@keyframes k29 {
+  0.00% { stroke-dashoffset: 1 }
+  24.29% { stroke-dashoffset: 1 }
+  39.41% { stroke-dashoffset: 0 }
+  94.29% { stroke-dashoffset: 0 }
+  100.00% { stroke-dashoffset: 0 }
+}
+.k29 { animation: k29 14.0s linear infinite; }
+@keyframes k30 {
+  0.00% { stroke-dashoffset: 1 }
+  24.29% { stroke-dashoffset: 1 }
+  37.73% { stroke-dashoffset: 0 }
+  94.29% { stroke-dashoffset: 0 }
+  100.00% { stroke-dashoffset: 0 }
+}
+.k30 { animation: k30 14.0s linear infinite; }
+@keyframes k31 {
+  0.00% { opacity: 0 }
+  43.61% { opacity: 0 }
+  46.11% { opacity: 1 }
+  94.29% { opacity: 1 }
+  100.00% { opacity: 0 }
+}
+.k31 { animation: k31 14.0s linear infinite; }
+@keyframes k32 {
+  0.00% { opacity: 0 }
+  37.73% { opacity: 0 }
+  40.23% { opacity: 1 }
+  94.29% { opacity: 1 }
+  100.00% { opacity: 0 }
+}
+.k32 { animation: k32 14.0s linear infinite; }
+@keyframes k33 {
+  0.00% { opacity: 0 }
+  43.61% { opacity: 0 }
+  46.11% { opacity: 1 }
+  94.29% { opacity: 1 }
+  100.00% { opacity: 0 }
+}
+.k33 { animation: k33 14.0s linear infinite; }
+@keyframes k34 {
+  0.00% { opacity: 0 }
+  37.73% { opacity: 0 }
+  40.23% { opacity: 1 }
+  94.29% { opacity: 1 }
+  100.00% { opacity: 0 }
+}
+.k34 { animation: k34 14.0s linear infinite; }
+@keyframes k35 {
+  0.00% { opacity: 0 }
+  38.57% { opacity: 0 }
+  41.07% { opacity: 1 }
+  94.29% { opacity: 1 }
+  100.00% { opacity: 0 }
+}
+.k35 { animation: k35 14.0s linear infinite; }
+@keyframes k36 {
+  0.00% { opacity: 0 }
+  39.41% { opacity: 0 }
+  41.91% { opacity: 1 }
+  94.29% { opacity: 1 }
+  100.00% { opacity: 0 }
+}
+.k36 { animation: k36 14.0s linear infinite; }
+@keyframes k37 {
+  0.00% { opacity: 0 }
+  37.73% { opacity: 0 }
+  40.23% { opacity: 1 }
+  94.29% { opacity: 1 }
+  100.00% { opacity: 0 }
+}
+.k37 { animation: k37 14.0s linear infinite; }
+@keyframes k38 {
+  0.00% { transform: translate(19.6px, 0px) }
+  5.71% { transform: translate(19.6px, 0px) }
+  12.86% { transform: translate(0px, 0px) }
+  100.00% { transform: translate(0px, 0px) }
+}
+.k38 { animation: k38 14.0s linear infinite; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<rect width="100%" height="100%" fill="white"/>
+<g class="k1">
+<g>
+<text x="304.0" y="42.0" font-size="22" fill="#1f2933" text-anchor="middle" font-weight="bold">Before: every separatrix races</text>
+<rect x="24.0" y="344.0" width="436.8" height="112.0" fill="#dbe8f6" class="k2"/>
+<rect x="24.0" y="176.0" width="257.6" height="168.0" fill="#e2f1de" class="k2"/>
+<rect x="24.0" y="64.0" width="436.8" height="112.0" fill="#dbe8f6" class="k2"/>
+<rect x="281.6" y="176.0" width="19.6" height="168.0" fill="#f4c2bd" class="k2"/>
+<rect x="301.2" y="254.4" width="159.6" height="89.6" fill="#e2f1de" class="k2"/>
+<rect x="301.2" y="176.0" width="159.6" height="78.4" fill="#e7e0f4" class="k2"/>
+<rect x="460.8" y="64.0" width="123.2" height="392.0" fill="#fbf0cf" class="k2"/>
+<line x1="80.0" y1="456.0" x2="80.0" y2="64.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="136.0" y1="456.0" x2="136.0" y2="64.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="192.0" y1="456.0" x2="192.0" y2="64.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="248.0" y1="456.0" x2="248.0" y2="64.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="304.0" y1="456.0" x2="304.0" y2="64.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="360.0" y1="456.0" x2="360.0" y2="64.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="416.0" y1="456.0" x2="416.0" y2="64.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="472.0" y1="456.0" x2="472.0" y2="64.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="528.0" y1="456.0" x2="528.0" y2="64.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="24.0" y1="400.0" x2="584.0" y2="400.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="24.0" y1="344.0" x2="584.0" y2="344.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="24.0" y1="288.0" x2="584.0" y2="288.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="24.0" y1="232.0" x2="584.0" y2="232.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="24.0" y1="176.0" x2="584.0" y2="176.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="24.0" y1="120.0" x2="584.0" y2="120.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<rect x="24.0" y="64.0" width="560.0" height="392.0" fill="none" stroke="#1f2933" stroke-width="3"/>
+<line x1="281.6" y1="344.0" x2="281.6" y2="125.6" stroke="#14934a" stroke-width="2" stroke-dasharray="6 5"/>
+<line x1="281.6" y1="136.8" x2="301.2" y2="136.8" stroke="#14934a" stroke-width="2.5"/>
+<text x="273.6" y="142.8" font-size="16" fill="#14934a" text-anchor="end" font-weight="normal">0.35 quad edge off P's line</text>
+<path d="M281.6,344.0 L281.6,176.0" pathLength="1" stroke="#1f2933" stroke-width="4" stroke-linecap="round" fill="none" stroke-dasharray="1" class="k3"/>
+<path d="M281.6,344.0 L24.0,344.0" pathLength="1" stroke="#1f2933" stroke-width="4" stroke-linecap="round" fill="none" stroke-dasharray="1" class="k4"/>
+<path d="M281.6,344.0 L460.8,344.0" pathLength="1" stroke="#1f2933" stroke-width="4" stroke-linecap="round" fill="none" stroke-dasharray="1" class="k5"/>
+<path d="M301.2,176.0 L301.2,344.0" pathLength="1" stroke="#1f2933" stroke-width="4" stroke-linecap="round" fill="none" stroke-dasharray="1" class="k6"/>
+<path d="M301.2,176.0 L24.0,176.0" pathLength="1" stroke="#1f2933" stroke-width="4" stroke-linecap="round" fill="none" stroke-dasharray="1" class="k7"/>
+<path d="M301.2,176.0 L460.8,176.0" pathLength="1" stroke="#1f2933" stroke-width="4" stroke-linecap="round" fill="none" stroke-dasharray="1" class="k8"/>
+<path d="M460.8,254.4 L460.8,64.0" pathLength="1" stroke="#1f2933" stroke-width="4" stroke-linecap="round" fill="none" stroke-dasharray="1" class="k9"/>
+<path d="M460.8,254.4 L460.8,456.0" pathLength="1" stroke="#1f2933" stroke-width="4" stroke-linecap="round" fill="none" stroke-dasharray="1" class="k10"/>
+<path d="M460.8,254.4 L301.2,254.4" pathLength="1" stroke="#1f2933" stroke-width="4" stroke-linecap="round" fill="none" stroke-dasharray="1" class="k11"/>
+<circle cx="281.6" cy="176.0" r="6" fill="#1f2933" stroke="white" stroke-width="1.6" class="k12"/>
+<circle cx="24.0" cy="344.0" r="6" fill="#1f2933" stroke="white" stroke-width="1.6" class="k13"/>
+<circle cx="460.8" cy="344.0" r="6" fill="#1f2933" stroke="white" stroke-width="1.6" class="k14"/>
+<circle cx="301.2" cy="344.0" r="6" fill="#1f2933" stroke="white" stroke-width="1.6" class="k15"/>
+<circle cx="24.0" cy="176.0" r="6" fill="#1f2933" stroke="white" stroke-width="1.6" class="k16"/>
+<circle cx="460.8" cy="176.0" r="6" fill="#1f2933" stroke="white" stroke-width="1.6" class="k17"/>
+<circle cx="460.8" cy="64.0" r="6" fill="#1f2933" stroke="white" stroke-width="1.6" class="k18"/>
+<circle cx="460.8" cy="456.0" r="6" fill="#1f2933" stroke="white" stroke-width="1.6" class="k19"/>
+<circle cx="301.2" cy="254.4" r="6" fill="#1f2933" stroke="white" stroke-width="1.6" class="k20"/>
+<polygon points="281.6,333.0 272.1,349.5 291.1,349.5" fill="#e8890c" stroke="white" stroke-width="1.8"/><text x="267.6" y="332.0" font-size="17" fill="#1f2933" text-anchor="end" font-weight="bold">P</text>
+<polygon points="301.2,165.0 291.7,181.5 310.7,181.5" fill="#e8890c" stroke="white" stroke-width="1.8"/><text x="287.2" y="164.0" font-size="17" fill="#1f2933" text-anchor="end" font-weight="bold">Q</text>
+<polygon points="460.8,243.4 451.3,259.9 470.3,259.9" fill="#e8890c" stroke="white" stroke-width="1.8"/><text x="446.8" y="242.4" font-size="17" fill="#1f2933" text-anchor="end" font-weight="bold">R</text>
+<text x="304.0" y="496.0" font-size="21" fill="#d23c32" text-anchor="middle" font-weight="bold" class="k2">7 patches · 5 T-junctions · 1 thin patch</text>
+<text x="311.2" y="293.6" font-size="16" fill="#d23c32" text-anchor="start" font-weight="normal" class="k2">thin patch</text>
+</g>
+<g>
+<text x="928.0" y="42.0" font-size="22" fill="#1f2933" text-anchor="middle" font-weight="bold">After: the pair is joined first</text>
+<rect x="648.0" y="344.0" width="436.8" height="112.0" fill="#dbe8f6" class="k21"/>
+<rect x="648.0" y="176.0" width="257.6" height="168.0" fill="#e2f1de" class="k21"/>
+<rect x="648.0" y="64.0" width="436.8" height="112.0" fill="#dbe8f6" class="k21"/>
+<rect x="905.6" y="254.4" width="179.2" height="89.6" fill="#fbf0cf" class="k21"/>
+<rect x="905.6" y="176.0" width="179.2" height="78.4" fill="#e7e0f4" class="k21"/>
+<rect x="1084.8" y="64.0" width="123.2" height="392.0" fill="#e2f1de" class="k21"/>
+<line x1="704.0" y1="456.0" x2="704.0" y2="64.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="760.0" y1="456.0" x2="760.0" y2="64.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="816.0" y1="456.0" x2="816.0" y2="64.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="872.0" y1="456.0" x2="872.0" y2="64.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="928.0" y1="456.0" x2="928.0" y2="64.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="984.0" y1="456.0" x2="984.0" y2="64.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="1040.0" y1="456.0" x2="1040.0" y2="64.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="1096.0" y1="456.0" x2="1096.0" y2="64.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="1152.0" y1="456.0" x2="1152.0" y2="64.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="648.0" y1="400.0" x2="1208.0" y2="400.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="648.0" y1="344.0" x2="1208.0" y2="344.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="648.0" y1="288.0" x2="1208.0" y2="288.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="648.0" y1="232.0" x2="1208.0" y2="232.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="648.0" y1="176.0" x2="1208.0" y2="176.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<line x1="648.0" y1="120.0" x2="1208.0" y2="120.0" stroke="#9aa3ad" stroke-width="0.6"/>
+<rect x="648.0" y="64.0" width="560.0" height="392.0" fill="none" stroke="#1f2933" stroke-width="3"/>
+<line x1="905.6" y1="344.0" x2="905.6" y2="125.6" stroke="#14934a" stroke-width="2" stroke-dasharray="6 5"/>
+<text x="931.6" y="142.8" font-size="16" fill="#14934a" text-anchor="start" font-weight="normal" class="k22">snap: Q moves onto P's line</text>
+<path d="M905.6,344.0 L905.6,176.0" pathLength="1" stroke="#1f2933" stroke-width="4" stroke-linecap="round" fill="none" stroke-dasharray="1" class="k23"/>
+<path d="M905.6,344.0 L648.0,344.0" pathLength="1" stroke="#1f2933" stroke-width="4" stroke-linecap="round" fill="none" stroke-dasharray="1" class="k24"/>
+<path d="M905.6,344.0 L1084.8,344.0" pathLength="1" stroke="#1f2933" stroke-width="4" stroke-linecap="round" fill="none" stroke-dasharray="1" class="k25"/>
+<path d="M905.6,176.0 L648.0,176.0" pathLength="1" stroke="#1f2933" stroke-width="4" stroke-linecap="round" fill="none" stroke-dasharray="1" class="k26"/>
+<path d="M905.6,176.0 L1084.8,176.0" pathLength="1" stroke="#1f2933" stroke-width="4" stroke-linecap="round" fill="none" stroke-dasharray="1" class="k27"/>
+<path d="M1084.8,254.4 L1084.8,64.0" pathLength="1" stroke="#1f2933" stroke-width="4" stroke-linecap="round" fill="none" stroke-dasharray="1" class="k28"/>
+<path d="M1084.8,254.4 L1084.8,456.0" pathLength="1" stroke="#1f2933" stroke-width="4" stroke-linecap="round" fill="none" stroke-dasharray="1" class="k29"/>
+<path d="M1084.8,254.4 L905.6,254.4" pathLength="1" stroke="#1f2933" stroke-width="4" stroke-linecap="round" fill="none" stroke-dasharray="1" class="k30"/>
+<circle cx="648.0" cy="344.0" r="6" fill="#1f2933" stroke="white" stroke-width="1.6" class="k31"/>
+<circle cx="1084.8" cy="344.0" r="6" fill="#1f2933" stroke="white" stroke-width="1.6" class="k32"/>
+<circle cx="648.0" cy="176.0" r="6" fill="#1f2933" stroke="white" stroke-width="1.6" class="k33"/>
+<circle cx="1084.8" cy="176.0" r="6" fill="#1f2933" stroke="white" stroke-width="1.6" class="k34"/>
+<circle cx="1084.8" cy="64.0" r="6" fill="#1f2933" stroke="white" stroke-width="1.6" class="k35"/>
+<circle cx="1084.8" cy="456.0" r="6" fill="#1f2933" stroke="white" stroke-width="1.6" class="k36"/>
+<circle cx="905.6" cy="254.4" r="6" fill="#1f2933" stroke="white" stroke-width="1.6" class="k37"/>
+<polygon points="905.6,333.0 896.1,349.5 915.1,349.5" fill="#e8890c" stroke="white" stroke-width="1.8"/><text x="891.6" y="332.0" font-size="17" fill="#1f2933" text-anchor="end" font-weight="bold">P</text>
+<g class="k38"><polygon points="905.6,165.0 896.1,181.5 915.1,181.5" fill="#e8890c" stroke="white" stroke-width="1.8"/><text x="891.6" y="164.0" font-size="17" fill="#1f2933" text-anchor="end" font-weight="bold">Q</text></g>
+<polygon points="1084.8,243.4 1075.3,259.9 1094.3,259.9" fill="#e8890c" stroke="white" stroke-width="1.8"/><text x="1070.8" y="242.4" font-size="17" fill="#1f2933" text-anchor="end" font-weight="bold">R</text>
+<text x="928.0" y="496.0" font-size="21" fill="#2563b0" text-anchor="middle" font-weight="bold" class="k21">6 patches · 3 T-junctions · 0 thin patches</text>
+</g>
+</g>
+</svg>
