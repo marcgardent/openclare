@@ -344,8 +344,9 @@ impl Built {
             }
         }
         // Singularities merged may not pinch a tube or a handle shut that
-        // no fan shows: then each merge is undone.
-        if !merged.is_empty() && self.euler() != tmesh.report.euler {
+        // no fan shows: then each merge is undone. (Of a lattice with other
+        // defects the characteristic says nothing.)
+        if !merged.is_empty() && defects.is_empty() && self.euler() != tmesh.report.euler {
             for (&vertex, (nodes, _)) in &merged {
                 charge(&mut defects, vertex, &|| {
                     self.largest_merge_between(nodes[0], |point| nodes[1..].contains(&point))

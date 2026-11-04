@@ -1108,8 +1108,10 @@ quad mesh are accepted there when
 2. every other check stays as it was: each directed edge in one quad at most, no quad with a
    repeated corner, a single fan round each vertex, every other vertex inside the surface
    regular, no rectangle closed up between two runs of border or hard edge;
-3. where a merge was accepted, the quad mesh still has the Euler characteristic of the
-   surface: nothing pinched shut. Otherwise every merge accepted is undone.
+3. where a merge was accepted and nothing else is wrong, the quad mesh still has the Euler
+   characteristic of the surface: nothing pinched shut. Otherwise every merge accepted is
+   undone. (While other defects remain, the characteristic says nothing: checked then, it
+   undid sound merges, 33 of the 78 arcs held on the ogre instead of 12.)
 
 A rectangle of no width is never meshed, so none folds: its two long sides are merged, and a
 fold between two walls is condition 2. A T-junction is not a vertex of the quad mesh but a
