@@ -6,6 +6,7 @@ use openclare::mesh::primitives;
 use openclare::metrics::measure;
 use openclare::preprocess::{self, WorkMesh};
 use openclare::sizing::{self, Kind, Painted, Request};
+use openclare::spatial::Bvh;
 use openclare::{Guides, PolyMesh, RemeshConfig, Target, TriMesh};
 
 fn work_mesh(source: &TriMesh) -> WorkMesh {
@@ -46,6 +47,21 @@ fn mean_edge(mesh: &PolyMesh, keep: impl Fn(Vec3) -> bool) -> f64 {
         }
     }
     sum / count
+}
+
+/// The farthest `mesh` and `source` are from each other, both ways, over
+/// the vertices of either that `keep`.
+fn farthest_where(source: &TriMesh, mesh: &PolyMesh, keep: impl Fn(Vec3) -> bool) -> f64 {
+    let farthest = |points: &[Vec3], surface: &Bvh| {
+        points
+            .iter()
+            .filter(|&&p| keep(p))
+            .filter_map(|&p| surface.closest_point(p))
+            .map(|hit| hit.distance_squared.sqrt())
+            .fold(0.0, f64::max)
+    };
+    let there = farthest(&mesh.positions, &Bvh::build(source));
+    there.max(farthest(&source.positions, &Bvh::build(&mesh.triangulated())))
 }
 
 #[test]
@@ -143,7 +159,8 @@ fn the_mesh_is_finer_at_the_tips_of_a_spindle_when_adaptive() {
         let metrics = measure(&source, &mesh, Some(1500));
         assert!(metrics.is_valid(), "{metrics:?}");
         assert!(metrics.budget_error.unwrap() <= 0.05, "{} faces", metrics.faces);
-        (mean_edge(&mesh, |p| p.z.abs() > 2.5) / mean_edge(&mesh, |p| p.z.abs() < 0.8), metrics.hausdorff)
+        let tips = |p: Vec3| p.z.abs() > 2.5;
+        (mean_edge(&mesh, tips) / mean_edge(&mesh, |p| p.z.abs() < 0.8), farthest_where(&source, &mesh, tips))
     };
     let (uniform, coarse_error) = ratio(0.0);
     let (adaptive, fine_error) = ratio(1.0);
@@ -151,7 +168,9 @@ fn the_mesh_is_finer_at_the_tips_of_a_spindle_when_adaptive() {
     // singularities in little room.)
     assert!(adaptive < 0.9 * uniform, "tips over waist: {uniform} uniform, {adaptive} adaptive");
     // Smaller quads where it bends: the tips are followed more closely.
-    assert!(fine_error < coarse_error, "{coarse_error} uniform, {fine_error} adaptive");
+    // (Measured at the tips: the farthest point of the whole mesh is at the
+    // waist, where the adaptive quads are the larger ones.)
+    assert!(fine_error < coarse_error, "at the tips: {coarse_error} uniform, {fine_error} adaptive");
 }
 
 // The size asked for, between a largest and a smallest quad, and the number
