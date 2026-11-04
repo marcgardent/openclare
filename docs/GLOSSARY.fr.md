@@ -180,6 +180,20 @@ patch. La quantification donne à chaque arc une longueur entière.
 la surface en rectangles de quads, les patchs. Calculé sur un petit maillage de quads avec deux
 paires 3/5.*
 
+**Paire de pôles** (*pole pair*). Deux pôles qu'une même séparatrice relie, à moins d'une demi-arête
+de quad près dans la carte. Livrée à la course, la trace de chaque pôle passe à côté de l'autre et
+s'arrête sur une ligne à un cheveu : un patch fin entre deux jonctions en T. Le découpage recale
+plutôt la carte pour que les deux pôles soient sur une même ligne, et les relie par une trace avant
+que les autres séparatrices ne courent. Dans la chaîne de remaillage, seules les paires que la
+quantification met déjà sur une même ligne d'arêtes sont reliées (`tmesh::Pairs`, #115).
+
+![Une paire de pôles : la course des motos avant, la paire reliée d'abord après](glossary/pole_pair.svg)
+
+*Calculé dans un morceau de la carte, chaque séparatrice courant selon x ou y à la même vitesse.
+Avant, Q manque la ligne de P de 0,35 arête de quad et la course laisse un patch fin. Après, le
+recalage amène Q sur la ligne de P et une trace les relie : plus de patch fin, deux jonctions en T
+de moins.*
+
 **Mur** (*wall*). Un bord ou une arête vive que les traces ne peuvent pas traverser.
 
 **Maillage par grille de patchs** (*patch grid meshing*). Transformer chaque patch, une fois que ses
