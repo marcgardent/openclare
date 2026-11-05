@@ -112,7 +112,7 @@ another separatrix of its vertex forces that turn alone to be shifted; and
 that on a
 closed sphere the shift and the length of a turn have the same parity. Fox calculus extends the Burgers sum to
 any combination of turns, and \emph{combs}, local dislocations carried by
-single arcs, write every certificate of a conflict found on a human body. % PR3: 67 of the 68 certificates on the new export, the 68th has no whole representative
+single arcs, write every certificate of a conflict found on a human body.
 The
 conflicts bound from below the number of turns that every quantization within
 given bounds leaves shifted: on that body, within the bounds of separation of
@@ -1305,52 +1305,126 @@ separatrix, one of length two between valences three and five the staircase of
 Proposition~\ref{prop:staircase}, and one round four vertices of valence three
 a cap.
 
-\begin{evidence}{core}{\lean{Combs.sum_of_combs}, \lean{Combs.veblen}, \lean{Combs.sum_of_combs_real}; on 50 random instances, 13 of the 17 exact certificates whose arcs have feet of odd valence fail the hypothesis on the odd part, 6 of them on spheres; assumed: the hypothesis on the odd part}
-\begin{proposition}[Certificates are sums of combs]\label{thm:combs}
-Let $c = \sum_a c_a\ell_a$, $c_a \in \Z_{\ge0}$, be a certificate
-(Remark~\ref{rem:definite}) whose arcs have feet of odd valence and whose odd
-part, the arcs with $c_a$ odd, is a cycle modulo~$2$ of the graph of feet.
-Then $c$ is a sum with whole non-negative weights of comb readings $2\ell_a$,
-each the form of a dislocation or an exchange (Lemma~\ref{lem:comb}) when the
-two feet of $a$ are distinct and twice a winding separatrix when they are one
-vertex, and of readings of closed walks of combs. With real weights, every non-negative form
-supported on arcs whose two feet are of odd valence, distinct or equal, is a
-non-negative combination of comb readings $2\ell_a$ and of winding separatrices
-$\ell_a$, without condition of parity.
+\begin{evidence}{core}{\lean{foot_at_end}, \lean{feet_coboundary}, \lean{combination_even_of_constant_colour}, \lean{combination_reads_even}; verified by computer on the male body (paragraph below); assumed: the sums along the sides of a patch, on paper, and the development modulo~2 of the words of the turns, as in Proposition~\ref{prop:fox}}
+\begin{proposition}[Feet modulo 2]\label{prop:feet}
+Let the surface be closed of genus zero, every trace leave a \emph{vertex} (a
+singular vertex, or a node of valence four that traces leave), every other
+node be met by exactly two traces, and no trace end at a singular vertex nor
+leave one and end at a vertex. For a singular vertex $v$, let $\chi_v$ be the
+lengths that give each arc the number of its feet at $v$, and $g_v(n)$ the
+number of traces from $v$ through a node $n$ that is not a vertex ($g_v = 0$ at
+vertices).
+\begin{enumerate}
+\item[(a)] For every arc from $n_0$ to $n_1$, $\chi_v(a) \equiv g_v(n_0) +
+  g_v(n_1) \pmod 2$; and $B\chi_v \equiv 0 \pmod 2$.
+\item[(b)] $\shift_\gamma(\chi_v)$ is even for every turn $\gamma$.
+\item[(c)] For whole $u_r$ and $y$, the arcs with an odd coefficient in $c =
+  \sum_r u_r \shift_{\gamma_r} + B^\top y$ have an even number of feet at $v$
+  (a loop counting twice): the odd part of $c$ is a cycle modulo~$2$ of the
+  graph of feet.
+\item[(d)] The half-sum $h = \frac12 \sum_k B_k$ of the rows of $B$ is whole,
+  vanishes at balanced lengths, and $h(\chi_v) \equiv k(v) \pmod 2$. If the
+  bidirected graph of the balances is connected, a whole form equal to $\sum_r
+  u_r \shift_{\gamma_r}$, $u_r$ whole, modulo the balances is $c$ or $c + h$
+  with $c$ as in~(c): its odd part has an odd number of feet at no singular
+  vertex, or at every singular vertex of odd valence.
+\end{enumerate}
 \end{proposition}
 \end{evidence}
 
 \begin{proof}
-The odd part splits into closed walks along its edges (Veblen), and what
-remains is $\sum_a \lfloor c_a/2 \rfloor\,2\ell_a$. With real weights, $c =
-\sum_a \tfrac{c_a}{2}\,(2\ell_a)$ on the arcs with two distinct feet, and
-$c_a\ell_a$ on those whose feet are one vertex.
+(a) Let $a$ lie on the trace $\tau$. An end $n$ that is a vertex is its own
+foot, and either $\tau$ leaves $n$ or $\tau$ ends there, and then neither $n$
+nor the vertex $\tau$ leaves is singular; at any other end, the second trace at $n$
+is perpendicular to $a$ and the foot is the vertex it leaves. In both cases
+$[\text{foot} = v] \equiv g_v(n) + [\tau \text{ leaves } v]$, and the last term
+cancels between the two ends. On a side $S$ of a patch, $\chi_v$ sums to twice
+the number $m_S$ of nodes inside $S$ where a trace from $v$ ends, plus its
+feet at $v$ at the two corners, which are there exactly when the trace of the
+adjacent side leaves $v$, as for the opposite side $S'$; so the balance of
+the pair is $2(m_S - m_{S'})$. (b) By (a), at the lengths $\chi_v$ every patch is a
+rectangle of $(\Z/2)^2$ and the crossings are affine maps of $(\Z/2)^2$;
+round a node that is not singular they compose to the identity, round $c_i$ to
+$\rho_i$, so Proposition~\ref{prop:fox} and Corollary~\ref{cor:checker} hold
+modulo~$2$ with the same words (lift the developed positions to $\Z^2$). Along
+an arc the developed parity $p_1 + p_2$ grows by $\chi_v(a) \equiv g_v(n_0) +
+g_v(n_1)$, so every singular vertex, where $g_v = 0$, has the colour of the
+base point, and the corollary gives $\shift_\gamma(\chi_v) \equiv \kappa
+\sum_{k(c_i)\text{ odd}} w_i \equiv 0$, $\kappa$ that colour, the rotation of
+a turn being trivial.
+(c) $c(\chi_v) = \sum_r u_r \shift_{\gamma_r}(\chi_v) + y^\top B\chi_v$ is even,
+and it counts modulo~$2$ the feet at $v$ of the odd part. (d) Every column of
+$B$ has an even sum. Each node where a trace ends lies inside exactly one side,
+so $h(\chi_v) = \sum (m_S - m_{S'}) \equiv \sum_S m_S$, the number $k(v)$ of traces
+leaving $v$. If $B^\top y$ is whole, $y_k \pm y_{k'}$ is whole along every arc;
+on a connected graph $y$ is then whole up to the kernel of $B^\top$, or up to
+$\frac12\mathbf 1$ as well when the graph has an unbalanced cycle, and $B^\top y
+\in B^\top\Z^m + \{0, h\}$.
 \end{proof}
 
-The proof is elementary: the content is in the hypothesis. That the odd part of
-a certificate is a cycle of the graph of feet is observed on all $68$
-certificates of the body (exact), % PR3: 67 of 68; the 68th (row 16, way 3) has no whole representative found, untested
-and it is not general: on random T-meshes
-that do not come from the engine (the property tests of the data package,
-\texttt{experiments/property}), within the bounds $\ell \ge 1$ on every arc,
-$13$ of the $17$ exact certificates whose arcs have feet of odd valence have
-an odd part that is not a cycle, $6$ of them on spheres, and for none of the
-$13$ can a representative modulo the balances be one, even modulo $2$; the
-typical one is a single arc $\ell_a$ between two distinct feet, the shift of
-a turn being the offset of a 3--5 pair. Corollary~\ref{cor:checker} does not
-give the parity either, since it controls that of $p_{i,1} + p_{i,2}$ while a
-comb reads one coordinate (in Figure~\ref{fig:comb} both feet have the same
-colour and $\ell_a = 9$).
+The hypothesis on connections is needed: in
+Proposition~\ref{prop:dislocation}(ii) the chain joining $c_3$ to $c_5$ lies
+on one trace, and the difference $\pm\delta$ of the two shifts has an odd part
+with one foot at each. On a torus the period term of
+Proposition~\ref{prop:burgers-any} enters~(b).
 
-\begin{evidence}{open}{an expectation}
-\begin{remark}[Closed walks as twisted cycles]
-We expect the reading of a closed walk of combs, $\sum_i \langle e_{a_i} -
-e_{a_{i+1}},\ p_{c_i}\rangle$ by a summation by parts, to be the Burgers form
-of a twisted cycle near its combs; but the two combs through $c_i$ develop it
-in charts that differ by a rotation, and a proof must develop the whole walk
-in one chart. We use closed walks only as forms.
-\end{remark}
+\begin{evidence}{core}{\lean{Combs.sum_of_combs}, \lean{Combs.veblen}, \lean{Combs.sum_of_combs_real}; the parity from Proposition~\ref{prop:feet}}
+\begin{proposition}[Certificates are sums of combs]\label{thm:combs}
+In the setting of Proposition~\ref{prop:feet}, let $c = \sum_a c_a\ell_a$,
+$c_a \in \Z_{\ge0}$, be a certificate (Remark~\ref{rem:definite}) whose
+multipliers, of the shifts and of the balances, are whole, and whose arcs have
+feet of odd valence. Then $c$ is a sum with whole non-negative weights of comb
+readings $2\ell_a$, each the form of a dislocation or an exchange
+(Lemma~\ref{lem:comb}) when the two feet of $a$ are distinct and twice a
+winding separatrix when they are one vertex, and of readings of closed walks
+of combs. With real
+weights, every non-negative form supported on arcs whose two feet are of odd
+valence, distinct or equal, is a non-negative combination of comb readings
+$2\ell_a$ and of winding separatrices $\ell_a$, without condition of parity.
+\end{proposition}
 \end{evidence}
+
+\begin{proof}
+By Proposition~\ref{prop:feet}(c) the odd part is a cycle of the graph of
+feet; it splits into closed walks along its edges (Veblen), and what remains
+is $\sum_a \lfloor c_a/2 \rfloor\,2\ell_a$. With real weights, $c = \sum_a
+\tfrac{c_a}{2}\,(2\ell_a)$ on the arcs with two distinct feet, and $c_a\ell_a$
+on those whose feet are one vertex.
+\end{proof}
+
+By Proposition~\ref{prop:feet}(d), whole multipliers of the balances are not
+needed when the bidirected graph is connected and $c$ has fewer odd
+coefficients than half the singular vertices of odd valence. On the random
+T-meshes of the property tests (\texttt{experiments/property}), whose traces
+stop at singular vertices, within the bounds $\ell \ge 1$ on every arc, $13$ of
+the $17$ exact certificates whose arcs have feet of odd valence have an odd
+part that is not a cycle: $6$ on one sphere, $7$ on tori.
+
+\begin{evidence}{prose}{proof on paper, not checked on data}
+\begin{proposition}[Closed walks are twisted cycles]\label{prop:walks}
+The reading of a closed walk of combs is the form $\sum_j \langle W_j, (I -
+R_j)p_j\rangle$ of whole twisted windings $W_j$ with $\sum_j (I - R_j)^\top
+W_j = 0$, carried by the combs and the loops round their feet.
+\end{proposition}
+\end{evidence}
+
+\begin{proof}
+Let $L$ run the combs $\sigma_{a_1}, \dots, \sigma_{a_k}$ in turn, passing
+each $c_i$ with $c_i$ on its right, and develop it from $c_0$: $P_i$ is the
+developed position of $c_i$, $e_i$ the developed direction of $a_i$, $\hat
+h(L)(x) = R_L x + t_L$, so $P_k = \hat h(L)(P_0)$, and let $e_{k+1} = R_L e_1$.
+By Lemma~\ref{lem:comb} and a summation by parts, the reading is
+$\sum_{i=1}^k \langle e_i, P_i - P_{i-1}\rangle = \sum_{i=1}^k \langle e_i -
+e_{i+1}, P_i\rangle + \langle e_{k+1}, t_L\rangle$. The loop $\lambda'_i$ that
+follows $L$ to $c_i$ and goes round it has the translation $(I - R_i)P_i$, and
+$e_i - e_{i+1}$ has coordinates of equal parity, so $(I - R_i)^\top V_i = e_i
+- e_{i+1}$ has a whole solution. The reading is $\sum_i \langle V_i,
+\tau(\lambda'_i)\rangle + \langle e_{k+1}, \tau(L)\rangle$, which
+Proposition~\ref{prop:fox} writes with whole $W_j$ (words based at $x_0$
+through a path to $c_0$); by the fundamental formula $\sum_j \rho(\partial
+w/\partial x_j)(I - R_j) = I - \rho(w)$, $\sum_j (I - R_j)^\top W_j = \sum_i
+(e_i - e_{i+1}) + (I - R_L)^\top e_{k+1} = e_1 - R_L^\top e_{k+1} = 0$.
+\end{proof}
 
 \begin{evidence}{core}{\lean{Pairing.pairing_surjective}, \lean{Pairing.pairing_surjective_of_ne_one}, \lean{Pairing.form_update_of_eq_one}; tested: the 35 spheres without valence $4k$ of 50 random instances, rank equal to the dimension on every one; on tori the period term lets it fail (11 of 15); assumed: the presentation of $\pi_1(\Sigma^\circ)$ by the $\lambda_i$ and one relation of trivial holonomy, the developed positions $p_i$ linear in the lengths, every comb developed in the chart of the base point through loops $\lambda_i$; not formalized: the kernel, and that with a valence divisible by four the map need not be onto (only that no form depends on those positions)}
 \begin{proposition}[The Burgers pairing]\label{prop:pairing}
@@ -1383,26 +1457,35 @@ which the lengths can move without changing any holonomy.
 \end{proof}
 
 \paragraph{On the male body.}
-Lemma~\ref{lem:comb} holds on all $2{,}146$ arcs, % PR3: it holds on 2,090 of the 2,146 arcs
-$1{,}955$ of which have two distinct feet of odd valence: nearly every arc is
-a local dislocation or exchange. On this T-mesh (way~1) each node meets a
-single perpendicular trace, % PR3: false for 76 arcs
-and no arc ends on a separatrix connection. The twisted homology has
+Lemma~\ref{lem:comb} holds on $2{,}090$ of the $2{,}146$ arcs, the $56$
+others ending at the nodes of valence four below; $1{,}955$ arcs have two
+distinct feet of odd valence: nearly every arc is a local dislocation or
+exchange. On this T-mesh (way~1) every node is met by
+exactly two traces but $20$ of valence four, which traces leave, joined in
+pairs by $10$ traces (the $76$ arcs that end there have no single
+perpendicular trace), and no trace ends at a singular vertex: the hypotheses
+of Proposition~\ref{prop:feet} hold, and (a), (b) on all $1{,}708$ turns, and
+(d) are verified by computer at its $254$ singular vertices
+(\texttt{experiments/parity.py}). The twisted homology has
 dimension $504 = 2(n - 2)$ and the pairing rank $504$; we conjecture that
 without vertices of valence divisible by four the kernel is spanned by the
-classes across the connections. All $68$ certificates of the conflicts
-examined have a representative whose odd part is a cycle of the graph of feet
-(exact). % PR3: 67 of 68; the 68th (row 16, way 3) has no whole representative found, untested
-Read strictly (below), the certificate of turn $54$ of way 0 is one winding
+classes across the connections. With whole multipliers of the shifts, the
+odd parts of all $68$ certificates of the conflicts examined ($34$ distinct
+forms, at most $17$ odd coefficients; $20$ of them first scaled by the
+denominators, $2$ to $7$, of their multipliers, which empties the odd part of
+row~19 in way~7, $\ell_{1847}$ with multipliers $\frac12$) have an even number
+of feet at every singular vertex, as Proposition~\ref{prop:feet}(d) says they must (exact);
+in $67$ every foot has odd valence, in the $68$th three arcs have feet at
+nodes of valence four. Read strictly (below), the certificate of turn $54$ of way 0 is one winding
 separatrix, the length of arc $1873$, whose two feet coincide (measured).
 
 % PR3: this paragraph is left as it was. On the new export the strict reading separates 15 of the 41 sets, all with an exact point (rows 2, 3, 12, 19, 24, 29, 31, 33, 35 to 41); turn 46 of way 2 (row 2) is a one-turn counterexample, to be checked in Lean; E, F, the eyes and the left hand are gone.
 \paragraph{Question~\ref{conj:local}, read loosely, is true and empty.}
 Allowing every comb reading and every closed walk of combs,
-Proposition~\ref{thm:combs} answers it for every certificate whose odd part is
-a cycle of the graph of feet, all those of the body; % PR3: 67 of the 68
-but this follows from
-Farkas' lemma and a parity, and says nothing about which configurations
+Proposition~\ref{thm:combs} answers it for every certificate with whole
+multipliers whose feet have odd valence, $67$ of the $68$ of the body; but this follows from Farkas' lemma
+and the parity of Proposition~\ref{prop:feet}, and says nothing about which
+configurations
 conflict. \emph{Read strictly, it is false}: restricted to staircases of
 weight one, monotone walks round a cap and winding separatrices, exact
 rational balanced lengths make every such form non-negative and the
@@ -1928,7 +2011,7 @@ complexity of maximizing $Q$ over a polytope of lengths in reals.
 \section{What is machine-checked}\label{sec:lean}
 
 The folder \texttt{lean} beside this note is a Lean~4~\cite{demoura2021lean4}
-project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $732$
+project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $737$
 theorem declarations, many of them small lemmas, depend only on Lean's
 standard axioms; the count is not evidence, and its \texttt{README.md} maps
 each statement to its Lean theorems. Lean checks the algebraic and
@@ -2011,7 +2094,10 @@ Lemma~\ref{lem:comb} and the decomposition of Proposition~\ref{thm:combs}
 given its hypothesis on the odd part, the Fox--Burgers
 formula for any generators and the commutator of two motions with commuting
 rotations (Propositions~\ref{prop:burgers-any} and~\ref{prop:torus}), collars,
-the comb identity, the scaling of Proposition~\ref{prop:whole-size}, the
+the comb identity, the cores of Proposition~\ref{prop:feet} (the feet of an
+arc as a coboundary modulo~2, every combination of shifts even when the
+vertices of odd valence share one colour, whole combinations of shifts and
+balances), the scaling of Proposition~\ref{prop:whole-size}, the
 consequences of the parity (Corollary~\ref{cor:parity}), the parity
 homomorphism of Theorem~\ref{thm:parity-any} (on the motions with quarter-turn
 rotations and whole translations, zero on the loops round the cone points,
@@ -2045,7 +2131,7 @@ the completeness proposition, stated in their sharpened form.
 
 When is a set of turns closable, in terms of the singularity configuration?
 Every certificate is a sum of combs, which says nothing about the
-singularities, and not of staircases, caps and winding separatrices alone; % PR3: 67 of 68 certificates on the new export; the strict reading changes (turn 46)
+singularities, and not of staircases, caps and winding separatrices alone; % PR3: the strict reading changes (turn 46)
 a
 useful answer lies between, for instance combs on disjoint sets of vertices,
 each of the sign of the certificate. Computing $\tau_P(H)$ at a given number of quads needs the extremes of an

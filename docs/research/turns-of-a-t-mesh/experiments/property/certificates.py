@@ -21,8 +21,11 @@ let go. Then, with `c` scaled to whole numbers:
   feet (every vertex of odd valence is a foot of an even number of them, an
   arc whose two feet coincide counting twice).
 
-A certificate meeting the hypothesis whose odd part is not a cycle refutes
-the parity the paper observed; the instance is written beside the report.
+Proposition "Feet modulo 2" proves the parity on a sphere whose traces never
+end at a singular vertex; the motorcycle graphs here stop at singular
+vertices, so a certificate meeting the hypothesis whose odd part is not a
+cycle shows that this condition (or the genus) is needed, and the instance is
+written beside the report.
 """
 
 import argparse
