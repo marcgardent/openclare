@@ -1860,6 +1860,56 @@ interface and factory, called last):
 - **Subdivision still shrinks the mesh.** Fitting makes the quad mesh itself keep the volume,
   not the smooth surface a Catmull-Clark subdivision makes of it (DT-039).
 
+### Fitting the limit surface (#39)
+
+Artists subdivide the mesh, and Catmull-Clark rounds it off: fitted for its faces, the ogre at
+1000 quads keeps 99.7 % of its volume and 96.0 % once subdivided twice. `--fitter
+limit-surface` (`fitter = limit-surface`, off by default) fits the limit surface instead.
+
+- **The limit is linear in the vertices** (Halstead, Kass, DeRose, SIGGRAPH 1993): where quads
+  meet, the limit position of a vertex of valence `n` is `(n² v + 4 Σ e + Σ d) / (n (n + 5))`
+  over its neighbours `e` and the corners `d` across its quads; on a border, `(a + 4 v + b) / 6`.
+  `subdivision.rs` writes one step of subdivision and the limit as such weights, with Blender's
+  defaults (borders and their corners smoothed, edges of three faces sharp). Tests: 4/9, 1/9,
+  1/36 on a regular grid, the corners of a cube half way in, and the same points as seven levels
+  of subdivision, triangles and pentagons included.
+- **The fitting is the same, its points elsewhere**: the middles of the sixteen quads two
+  subdivisions make of each quad, their corners on the limit surface, each a fixed set of
+  weights on the vertices. The pull of each point goes to the vertices by those weights, as it
+  went to the four corners of a face; guards unchanged. With non-negative weights that add up
+  to 1, a round cannot overshoot.
+
+Measured on 4 November 2026, 3000 quads, the command line, Blender's Subdivision Surface at two
+levels with its defaults, least-squares → limit-surface (the same quads, only the fitting
+differs). Distances in per mille of the diagonal:
+
+| Model | Volume, subdivided, % | Hausdorff, subdivided | Mean distance, subdivided | Volume, quads, % | Hausdorff, quads | Mean distance, quads |
+|---|---|---|---|---|---|---|
+| ogre | 98.77 → 99.80 | 28.94 → 28.74 | 0.922 → 0.609 | 99.90 → 101.01 | 27.71 → 27.53 | 0.738 → 1.035 |
+| creature | 99.38 → 100.02 | 2.18 → 1.45 | 0.298 → 0.137 | 100.03 → 100.68 | 1.99 → 2.77 | 0.205 → 0.351 |
+| blob | 99.38 → 100.02 | 3.61 → 2.99 | 0.434 → 0.077 | 100.02 → 100.67 | 2.61 → 3.22 | 0.188 → 0.497 |
+| suzanne (open) | — | 7.70 → 7.34 | 0.478 → 0.217 | — | 7.69 → 7.06 | 0.469 → 0.631 |
+| spot | 99.30 → 100.02 | 3.19 → 3.02 | 0.422 → 0.060 | 100.02 → 100.76 | 3.39 → 3.50 | 0.196 → 0.452 |
+| pig | 99.31 → 99.89 | 11.37 → 11.01 | 0.530 → 0.242 | 99.98 → 100.62 | 9.99 → 9.58 | 0.301 → 0.539 |
+| bob | 99.29 → 100.02 | 1.26 → 0.50 | 0.313 → 0.018 | 100.02 → 100.76 | 1.62 → 2.84 | 0.137 → 0.362 |
+| jerry (open) | — | 13.85 → 13.60 | 0.742 → 0.486 | — | 13.98 → 13.98 | 0.759 → 0.953 |
+| blub | 99.25 → 99.85 | 8.81 → 8.14 | 0.321 → 0.113 | 99.94 → 100.57 | 7.32 → 6.63 | 0.189 → 0.342 |
+| rock | 99.73 → 100.01 | 4.20 → 3.51 | 0.731 → 0.588 | 100.00 → 100.28 | 4.53 → 5.55 | 0.696 → 0.870 |
+| cage | 98.53 → 99.44 | 13.87 → 13.41 | 0.785 → 0.671 | 99.71 → 100.70 | 5.66 → 7.81 | 0.516 → 0.874 |
+| part (hard surface) | 99.68 → 99.75 | 10.53 → 10.37 | 0.310 → 0.311 | 100.00 → 100.09 | 11.57 → 10.18 | 0.068 → 0.302 |
+| **median** | **99.30 → 99.95** | **8.26 → 7.74** | **0.456 → 0.229** | **100.00 → 100.67** | **6.49 → 6.85** | **0.253 → 0.518** |
+
+- **Subdivided, closer on every model**: Hausdorff and volume better on all twelve, the mean
+  distance halved (the part, flat and sharp, unchanged). All stay valid, no face inverted.
+- **The quads themselves move away**: their mean distance doubles and they hold 0.6 % more than
+  the shape, as they must for their limit surface to lie on it. Their Hausdorff distance gets
+  worse on six models.
+- **Tuning**: more rounds (16, 32) or a leash of half an edge change the ogre by less than
+  0.1 % of volume; the defaults stay.
+- **Left**: crease weights, which the add-on can give hard edges, are not in the limit (an edge
+  creased in Blender is sharper than what is fitted); the option is not in the add-on; one
+  budget only.
+
 ### Milestone 12 — Creases
 
 Done on 8 and 9 October 2026, at the author's suggestion ("computing and exporting creases

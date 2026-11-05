@@ -44,7 +44,7 @@ The panel *openclare* of the Properties editor, on the tab of the mesh.
 | *Shading* | stable | |
 | *Follow Curvature* | experimental | default not tuned on the corpus (#13); noisy scans and terrains (#21, #33) |
 | *Fewer Irregular Vertices* | experimental | a reach between 3.2 and 3.7 folds a quad on the male body (#72) |
-| *Volume Fit* | experimental | the volume after subdivision is not kept (#39) |
+| *Volume Fit* | experimental | the volume after subdivision is not kept; `--fitter limit-surface` keeps it, not yet in the add-on (#39) |
 | *Density* (a vertex group) and *Factor* | stable | |
 | *Symmetry* | stable | |
 | *Materials*: each quad the material under it | stable | |
@@ -85,6 +85,7 @@ The tools of the 3D viewport, in Object Mode.
 | `--alignment` | experimental | as *Follow Curvature* (#13, #21, #33) |
 | `--singularity-reach`, `--singularity-tolerance` | experimental | as *Fewer Irregular Vertices* (#72) |
 | `--volume-fit` | experimental | as *Volume Fit* (#39) |
+| `--fitter limit-surface` | experimental | off by default, on the command line only; creases not taken into account (#39) |
 | `--quads-around` | experimental | as *Quads Around Thin Parts* (#38, #18) |
 | `--largest`, `--smallest`, `--most-quads`, `analyse` | experimental | as *Ask For: Sizes* (#253) |
 | `--edge-length` | experimental | older than sizes, not on the bench |

@@ -105,6 +105,16 @@ normals, for the faces to run through it rather than under it. `--volume-fit` se
 ./target/release/openclare remesh input.obj output.obj --quads 3000 --volume-fit 0
 ```
 
+A mesh that will be subdivided is better fitted for what the subdivision makes of it: the
+Catmull-Clark limit surface, which runs inside the faces wherever the shape bulges.
+`--fitter limit-surface` moves the vertices for that surface, not the faces, to keep the volume
+(experimental, off by default): the subdivided mesh comes closer to the shape, the quad mesh
+itself a little less close.
+
+```bash
+./target/release/openclare remesh input.obj output.obj --quads 3000 --fitter limit-surface
+```
+
 ## Guide curves
 
 Curves drawn on the model become lines of edges of the result. From the command line they go in

@@ -611,7 +611,7 @@ impl Remesher for IntegerGrid {
         recorder.record("extraction/quads", Shape::Polygons(&mesh));
 
         let relaxer = Laplacian { iterations: self.relax_iterations };
-        settle(&mut mesh, input, &work, edge_length, None, &relaxer, config.volume_fit, recorder)?
+        settle(&mut mesh, input, &work, edge_length, None, &relaxer, config.volume_fit, config.fitter, recorder)?
             .into_report(&mut report);
         clock.lap(&mut report, "relaxation");
 
@@ -1585,7 +1585,17 @@ impl QuadLayout {
 
         // The layout knows which vertices lie on a border or a hard edge.
         let held = Some((meshed.on_feature, meshed.on_corner));
-        let mut lines = settle(&mut mesh, input, &work, edge_length, held, &self.relaxer, config.volume_fit, recorder)?;
+        let mut lines = settle(
+            &mut mesh,
+            input,
+            &work,
+            edge_length,
+            held,
+            &self.relaxer,
+            config.volume_fit,
+            config.fitter,
+            recorder,
+        )?;
         clock.lap(&mut report, "relaxation");
 
         // Closing the loops round a part may ask a strip for a row of quads
@@ -1607,8 +1617,17 @@ impl QuadLayout {
                 }
                 let (mut other, meshed) = meshing::create(meshing::Kind::PatchGrid).mesh(&work, &layout, candidate)?;
                 let held = Some((meshed.on_feature, meshed.on_corner));
-                let other_lines =
-                    settle(&mut other, input, &work, edge_length, held, &self.relaxer, config.volume_fit, recorder)?;
+                let other_lines = settle(
+                    &mut other,
+                    input,
+                    &work,
+                    edge_length,
+                    held,
+                    &self.relaxer,
+                    config.volume_fit,
+                    config.fitter,
+                    recorder,
+                )?;
                 let other_kept = (crate::metrics::folded_faces(input, &surface, &other), spirals(candidate));
                 if other_kept < kept {
                     let note = if candidate.report.turns_held == 0 {
@@ -2087,7 +2106,7 @@ fn sharp_request(config: &RemeshConfig, edge_length: f64) -> preprocess::Request
 }
 
 /// Relaxes `mesh` on the input surface, then fits it to that surface by
-/// `volume_fit` (see [`fitting`]). Hard edges and corners of the work mesh
+/// `volume_fit` with `fitter` (see [`fitting`]). Hard edges and corners of the work mesh
 /// are what its vertices snap to; the surface itself is the input. `held`
 /// lists the vertices known to lie on feature lines and on corners; without
 /// it they are told by distance. Returns the edges of the mesh that ended up
@@ -2102,6 +2121,7 @@ fn settle(
     held: Option<(Vec<u32>, Vec<u32>)>,
     relaxer: &dyn Relaxer,
     volume_fit: f64,
+    fitter: fitting::Kind,
     recorder: &mut dyn Recorder,
 ) -> Result<Lines> {
     let constraints =
@@ -2119,7 +2139,7 @@ fn settle(
     if volume_fit > 0.0 {
         recorder.record("relaxation/quads", Shape::Polygons(mesh));
         recorder.begin("fitting")?;
-        fitting::create(fitting::Kind::LeastSquares).fit(mesh, input, &surface, guide.as_ref(), volume_fit);
+        fitting::create(fitter).fit(mesh, input, &surface, guide.as_ref(), volume_fit);
     }
     // A line drawn by the user is a line of edges, not a hard edge, unless
     // it was drawn as one: it is listed apart, and neither marked sharp nor

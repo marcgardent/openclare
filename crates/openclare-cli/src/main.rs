@@ -47,6 +47,8 @@ OPTIONS (remesh):
     --adaptivity <A>             0 for quads of one size, up to 1 for quads as small as the shape bends
     --quads-around <N>           fewest quads round a thin part, so that it keeps its volume (0: do not look at thickness)
     --volume-fit <F>             0 leaves every vertex on the surface; 1 moves them off it for the mesh to keep the volume
+    --fitter <NAME>              what keeps the volume: least-squares, the faces of the mesh (default), or
+                                 limit-surface, the surface a Catmull-Clark subdivision of the mesh converges to
     --density <FILE>             painted density: one weight per input vertex, one per line, from 0 (least dense) to 1 (most)
     --density-contrast <F>       how many times denser a weight of 1 is than a weight of 0 (default 4)
     --curves <FILE>              guide curves, lines for the quad mesh to have edges along: one point per line
@@ -412,6 +414,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
             "--adaptivity" => config.adaptivity = parse(arg, value(arg)?)?,
             "--quads-around" => config.quads_around = parse(arg, value(arg)?)?,
             "--volume-fit" => config.volume_fit = parse(arg, value(arg)?)?,
+            "--fitter" => config.fitter = value(arg)?.parse().map_err(|e: openclare::Error| e.to_string())?,
             "--density" => density_path = Some(value(arg)?.clone()),
             "--curves" => curves_path = Some(value(arg)?.clone()),
             "--groups" => groups_path = Some(value(arg)?.clone()),

@@ -9,6 +9,10 @@
 //! along their normals, until the faces run through the surface rather than
 //! under it: as much of the mesh above as below.
 //!
+//! Artists subdivide the mesh, and what they see then is its Catmull-Clark
+//! limit surface, which runs inside the faces wherever the shape bulges.
+//! [`Kind::LimitSurface`] fits that surface instead of the faces.
+//!
 //! The stage is a [`Fitter`]; chains get one from [`create`].
 
 use std::fmt;
@@ -19,6 +23,7 @@ use crate::math::Vec3;
 use crate::mesh::{PolyMesh, TriMesh};
 use crate::relax::{Features, Hold, classify};
 use crate::spatial::Bvh;
+use crate::subdivision::{self, Stencil};
 
 pub trait Fitter {
     fn kind(&self) -> Kind;
@@ -36,14 +41,19 @@ pub enum Kind {
     /// The faces as close to the surface as they can be on the whole, in the
     /// least-squares sense, the vertices moving along their normals.
     LeastSquares,
+    /// The same, for the limit surface of the mesh rather than its faces:
+    /// the surface a Catmull-Clark subdivision converges to, which is what
+    /// an artist sees once the mesh is subdivided.
+    LimitSurface,
 }
 
 impl Kind {
-    pub const ALL: &[Kind] = &[Kind::LeastSquares];
+    pub const ALL: &[Kind] = &[Kind::LeastSquares, Kind::LimitSurface];
 
     pub fn name(self) -> &'static str {
         match self {
             Kind::LeastSquares => "least-squares",
+            Kind::LimitSurface => "limit-surface",
         }
     }
 }
@@ -69,6 +79,7 @@ impl FromStr for Kind {
 pub fn create(kind: Kind) -> Box<dyn Fitter> {
     match kind {
         Kind::LeastSquares => Box::new(LeastSquares::default()),
+        Kind::LimitSurface => Box::new(LeastSquares { limit_surface: true, ..LeastSquares::default() }),
     }
 }
 
@@ -78,6 +89,8 @@ pub struct LeastSquares {
     /// the vertices to make up for it.
     pub rounds: usize,
     /// Points looked at on each quad: this many along each of its sides.
+    /// On the limit surface, the middles of the sixteen quads two
+    /// subdivisions make of it, whatever this says.
     pub samples: usize,
     /// Farthest a vertex may end up from where it started, as a share of the
     /// shortest edge it is on. Six faces round a finger call for an eighth
@@ -85,17 +98,57 @@ pub struct LeastSquares {
     pub reach: f64,
     /// Most a face may turn, in radians.
     pub tilt: f64,
+    /// Fit the limit surface of the mesh rather than its faces.
+    pub limit_surface: bool,
 }
 
 impl Default for LeastSquares {
     fn default() -> Self {
-        Self { rounds: 8, samples: 4, reach: 0.25, tilt: 20f64.to_radians() }
+        Self { rounds: 8, samples: 4, reach: 0.25, tilt: 20f64.to_radians(), limit_surface: false }
+    }
+}
+
+impl LeastSquares {
+    /// The points looked at, each with the quad it is on and as weights on
+    /// the vertices of the mesh. Only quads are looked at.
+    fn points(&self, mesh: &PolyMesh) -> Vec<(u32, Stencil)> {
+        let quads = (0..mesh.faces.len() as u32).filter(|&f| mesh.faces[f as usize].len() == 4);
+        if !self.limit_surface {
+            // The middles of a grid of cells, between the corners.
+            let along: Vec<f64> = (0..self.samples).map(|i| (i as f64 + 0.5) / self.samples as f64).collect();
+            return quads
+                .flat_map(|f| {
+                    let face = &mesh.faces[f as usize];
+                    let along = &along;
+                    along.iter().flat_map(move |&u| {
+                        along.iter().map(move |&v| {
+                            let shares = [(1.0 - u) * (1.0 - v), u * (1.0 - v), u * v, (1.0 - u) * v];
+                            (f, (0..4).map(|k| (face[k], shares[k])).collect())
+                        })
+                    })
+                })
+                .collect();
+        }
+        // On the limit surface: the middles of the quads of the mesh
+        // subdivided twice, their corners taken to the limit. Two
+        // subdivisions are what the bench looks at, and what Blender shows
+        // by default.
+        let vertices = mesh.positions.len();
+        let once = subdivision::refine(&mesh.faces, vertices);
+        let twice = subdivision::refine(&once.faces, once.rows.len());
+        let limit = subdivision::limit(&twice.faces, twice.rows.len());
+        let on_mesh =
+            subdivision::compose(&subdivision::compose(&limit, &twice.rows, once.rows.len()), &once.rows, vertices);
+        let middles: Vec<Stencil> = twice.faces.iter().map(|face| face.iter().map(|&v| (v, 0.25)).collect()).collect();
+        let middles = subdivision::compose(&middles, &on_mesh, vertices);
+        let quad = |f: u32| mesh.faces[f as usize].len() == 4;
+        twice.parent.iter().map(|&p| once.parent[p as usize]).zip(middles).filter(|&(f, _)| quad(f)).collect()
     }
 }
 
 impl Fitter for LeastSquares {
     fn kind(&self) -> Kind {
-        Kind::LeastSquares
+        if self.limit_surface { Kind::LimitSurface } else { Kind::LeastSquares }
     }
 
     fn fit(&self, mesh: &mut PolyMesh, source: &TriMesh, surface: &Bvh, features: Option<&Features>, amount: f64) {
@@ -114,32 +167,37 @@ impl Fitter for LeastSquares {
             })
             .collect();
 
-        // Where on a quad it is looked at: the middles of a grid of cells.
-        let along: Vec<f64> = (0..self.samples).map(|i| (i as f64 + 0.5) / self.samples as f64).collect();
+        let points = self.points(mesh);
         for _ in 0..self.rounds {
             let normals = vertex_normals(mesh);
             let mut pull = vec![0.0; vertices];
             let mut weight = vec![0.0; vertices];
-            for face in mesh.faces.iter().filter(|face| face.len() == 4) {
-                let corners: [Vec3; 4] = std::array::from_fn(|k| mesh.positions[face[k] as usize]);
-                let facing = (corners[2] - corners[0]).cross(corners[3] - corners[1]);
-                // Nothing farther than the face is wide is this face's to fit.
-                let width = (corners[2] - corners[0]).length().max((corners[3] - corners[1]).length());
-                for &u in &along {
-                    for &v in &along {
-                        let shares = [(1.0 - u) * (1.0 - v), u * (1.0 - v), u * v, (1.0 - u) * v];
-                        let point: Vec3 = (0..4).map(|k| corners[k] * shares[k]).sum();
-                        // The sheet of the source that faces the same way:
-                        // on a thin part the nearest one may be the other side.
-                        let same_side = |t: u32| source.area_vector(t as usize).dot(facing) > 0.0;
-                        let Some(hit) = surface.closest_point_where(point, width, same_side) else { continue };
-                        let off = hit.point - point;
-                        for k in 0..4 {
-                            let corner = face[k] as usize;
-                            pull[corner] += shares[k] * off.dot(normals[corner]);
-                            weight[corner] += shares[k];
-                        }
+            // For each quad, which way it faces and how wide it is.
+            let quads: Vec<(Vec3, f64)> = mesh
+                .faces
+                .iter()
+                .map(|face| {
+                    if face.len() != 4 {
+                        return (Vec3::ZERO, 0.0);
                     }
+                    let corners: [Vec3; 4] = std::array::from_fn(|k| mesh.positions[face[k] as usize]);
+                    let facing = (corners[2] - corners[0]).cross(corners[3] - corners[1]);
+                    (facing, (corners[2] - corners[0]).length().max((corners[3] - corners[1]).length()))
+                })
+                .collect();
+            for (face, stencil) in &points {
+                // Nothing farther than the face is wide is this face's to fit.
+                let (facing, width) = quads[*face as usize];
+                let point = subdivision::apply(stencil, &mesh.positions);
+                // The sheet of the source that faces the same way: on a thin
+                // part the nearest one may be the other side.
+                let same_side = |t: u32| source.area_vector(t as usize).dot(facing) > 0.0;
+                let Some(hit) = surface.closest_point_where(point, width, same_side) else { continue };
+                let off = hit.point - point;
+                for &(corner, share) in stencil {
+                    let corner = corner as usize;
+                    pull[corner] += share * off.dot(normals[corner]);
+                    weight[corner] += share;
                 }
             }
             for v in (0..vertices).filter(|&v| hold[v] == Hold::Free && weight[v] > 0.0) {
