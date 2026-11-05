@@ -1982,9 +1982,68 @@ separation and the turns of a T-mesh of a closed surface of genus zero.
 \end{conjecture}
 \end{evidence}
 
-The evidence is that vertex cover stays NP-hard on planar graphs, and on graphs of
-small degree~\cite{garey1976simplified}, and that two turns separated by a
-dislocation conflict like the two ends of an edge.
+Vertex cover stays NP-hard on planar graphs, and on graphs of small
+degree~\cite{garey1976simplified}, and two turns separated by a dislocation
+whose staircase is held open conflict like the two ends of an edge
+(Corollary~\ref{cor:chain}). This suggests a gadget: a turn per vertex and a
+3--5 pair per edge between the turns of its ends. It fails, for two reasons.
+
+\begin{evidence}{prose}{(ii) checked by computer on $K_4$, the triangular prism, the cube and the pentagonal prism: for every orientation of their edges, the closable sets of the differences against the independent sets, and the implication classes (\texttt{experiments/gadget.py})}
+\begin{proposition}[What dislocations between parallel turns encode]\label{prop:differences}
+(i) On a closed surface of genus zero, let the curves of the turns of $H$ be
+simple and pairwise disjoint. Each bounds, with at most two of the others, an
+annulus holding none of the curves, and the graph joining two turns that bound
+such an annulus is a disjoint union of paths.
+(ii) Let the shifts of $H$ be bound on $P$ by differences only: for some pairs
+$(\gamma, \gamma')$ and numbers $c_{\gamma\gamma'}$, the vectors
+$(\shift_\gamma(\ell))_{\gamma \in H}$, $\ell \in P$, are the solutions of
+$x_\gamma - x_{\gamma'} \ge c_{\gamma\gamma'}$, as for the turns of one chain
+whose staircases take every value at least one (Corollary~\ref{cor:chain}).
+Write $\gamma \succ \gamma'$ when a path of these pairs from $\gamma$ to
+$\gamma'$ has a positive total. Then $\succ$ is a strict order, the closable
+sets are its antichains, and $\tau_P(H)$ is $|H|$ less the largest antichain,
+found by bipartite matching~\cite{dilworth1950decomposition,fulkerson1956note}.
+The pairs that cannot close together form a comparability graph; the
+triangular prism is not one.
+\end{proposition}
+\end{evidence}
+
+\begin{proof}
+(i) The curves cut the sphere into regions, each curve separating it; with a
+node per region and an edge per curve this is a tree. An annulus bounded by
+two curves and holding no other is a region of degree two. A curve borders two
+regions, and a cycle of annuli would be a cycle of the tree. (ii) $Y$ closes
+when the system with $x_\gamma = 0$ on $Y$ is feasible, that is when, the turns
+of $Y$ made one node, no cycle has a positive total. As $P \ne \emptyset$, a
+positive cycle can only pass through that node: it is a path of positive total
+between two turns of $Y$. Two such paths end to end make a walk of positive
+total, hence, without positive cycles, a path: $\succ$ is transitive. A
+transitive orientation of the prism orients one of its triangles $a \to b \to
+c$, $a \to c$; the edge $bb'$ then gives $a \to b \to b'$ or $b' \to b \to c$,
+a comparable pair $ab'$ or $b'c$ that is not an edge.
+\end{proof}
+
+By (i), a turn is separated from at most two others by exactly one pair; by
+(ii), chains of dislocations, however many, only encode orders, on which
+\RC{} is polynomial. The instance of Theorem~\ref{thm:nphard} has the other
+kind of relation: $\shift_u \ge 0$ and $\shift_u + \shift_v \ge d_e \ge 1$,
+sums of two shifts of fixed sign, which no choice of the walking directions
+turns into differences once the graph has an odd cycle. On a sphere this asks,
+for each vertex, a turn whose shift is a non-negative form, as a turn round a
+finger whose staircases climb the same way towards a tip that closes, and,
+for each edge, an arc held open equal modulo the balances to $y_{u,e} +
+y_{v,e}$, with $y_{u,e}$ and $y_{v,e}$ in the supports of the two shifts: two
+strips leaving the two fingers that run side by side and merge, at a
+T-junction, into one arc, the separation of a third pair, for instance. We did
+not build this gadget, and the conjecture stays open.
+
+On $60$ random T-meshes of genus zero (cubes, boxes, hulls and their duals,
+every arc held at length at least one), the pairs of turns that cannot close
+together form, on the $31$ that have any, comparability graphs, $19$ of them
+with triangles; four turns whose closable sets are exactly the independent
+sets of $K_4$ occur on two, checked exactly, and no prism, cube or pentagonal
+prism (measured, conflicts decided in floating point;
+\texttt{experiments/gadget.py}).
 
 Some parts are easy: without turns and window, whole quantization is a
 polynomial matching problem~\cite{edmonds1970matching}; with disjoint known
@@ -2135,7 +2194,10 @@ singularities, and not of staircases, caps and winding separatrices alone; % PR3
 a
 useful answer lies between, for instance combs on disjoint sets of vertices,
 each of the sign of the certificate. Computing $\tau_P(H)$ at a given number of quads needs the extremes of an
-indefinite quadratic function over a polytope. Is \RC{} NP-hard for a fixed number of singular vertices? And when
+indefinite quadratic function over a polytope. Does \RC{} stay NP-hard on the
+turns of a sphere (Conjecture~\ref{conj:realize})? Dislocations between
+parallel turns encode only orders (Proposition~\ref{prop:differences}); a
+reduction needs relations that are sums of shifts of fixed sign. Is \RC{} NP-hard for a fixed number of singular vertices? And when
 the set of turns depends on the lengths, as the strips of the mesh do, what is
 the problem at all? When does a quartic differential with all trajectories finite exist for a
 given singularity configuration~\cite{lei2020quartic}? Turns are its discrete
