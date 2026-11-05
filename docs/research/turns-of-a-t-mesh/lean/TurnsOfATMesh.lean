@@ -39,3 +39,5 @@ public import TurnsOfATMesh.CutDisc
 public import TurnsOfATMesh.Border
 public import TurnsOfATMesh.Region
 public import TurnsOfATMesh.CutForest
+public import TurnsOfATMesh.Pairing
+public import TurnsOfATMesh.Combs

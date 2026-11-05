@@ -1245,7 +1245,7 @@ $2$.}
 \label{fig:comb}
 \end{figure}
 
-\begin{evidence}{core}{\lean{comb_reading}; the feet exist on 850 of the 3{,}009 arcs of 50 random instances; assumed: the feet exist and the perpendicular traces develop straight}
+\begin{evidence}{core}{\lean{comb_reading}, \lean{Pairing.Comb.reading}; the forms: \lean{Combs.comb_dislocation}, \lean{Combs.comb_exchange}, from the comb \lean{Combs.Comb.dislocation}, \lean{Combs.Comb.exchange}; the feet exist on 850 of the 3{,}009 arcs of 50 random instances; assumed: the feet exist, the perpendicular traces develop straight, $e_a$ is an axis of the chart of the comb; the case $c_0 = c_1$ is not formalized}
 \begin{lemma}[Combs]\label{lem:comb}
 Let $p_{c_0}$, $p_{c_1}$ be the feet of an arc $a$ developed along its comb.
 Then, for all balanced lengths,
@@ -1281,14 +1281,15 @@ separatrix, one of length two between valences three and five the staircase of
 Proposition~\ref{prop:staircase}, and one round four vertices of valence three
 a cap.
 
-\begin{evidence}{prose}{on 50 random instances, 13 of the 17 exact certificates whose arcs have feet of odd valence fail the hypothesis on the odd part, 6 of them on spheres}
+\begin{evidence}{core}{\lean{Combs.sum_of_combs}, \lean{Combs.veblen}, \lean{Combs.sum_of_combs_real}; on 50 random instances, 13 of the 17 exact certificates whose arcs have feet of odd valence fail the hypothesis on the odd part, 6 of them on spheres; assumed: the hypothesis on the odd part}
 \begin{proposition}[Certificates are sums of combs]\label{thm:combs}
 Let $c = \sum_a c_a\ell_a$, $c_a \in \Z_{\ge0}$, be a certificate
 (Remark~\ref{rem:definite}) whose arcs have feet of odd valence and whose odd
 part, the arcs with $c_a$ odd, is a cycle modulo~$2$ of the graph of feet.
 Then $c$ is a sum with whole non-negative weights of comb readings $2\ell_a$,
-each the form of a dislocation or an exchange (Lemma~\ref{lem:comb}), and of
-readings of closed walks of combs. With real weights, every non-negative form
+each the form of a dislocation or an exchange (Lemma~\ref{lem:comb}) when the
+two feet of $a$ are distinct and twice a winding separatrix when they are one
+vertex, and of readings of closed walks of combs. With real weights, every non-negative form
 supported on arcs whose two feet are of odd valence, distinct or equal, is a
 non-negative combination of comb readings $2\ell_a$ and of winding separatrices
 $\ell_a$, without condition of parity.
@@ -1327,7 +1328,7 @@ in one chart. We use closed walks only as forms.
 \end{remark}
 \end{evidence}
 
-\begin{evidence}{tested}{the 35 spheres without valence $4k$ of 50 random instances: rank equal to the dimension on every one; on tori the period term lets it fail (11 of 15)}
+\begin{evidence}{core}{\lean{Pairing.pairing_surjective}, \lean{Pairing.pairing_surjective_of_ne_one}, \lean{Pairing.form_update_of_eq_one}; tested: the 35 spheres without valence $4k$ of 50 random instances, rank equal to the dimension on every one; on tori the period term lets it fail (11 of 15); assumed: the presentation of $\pi_1(\Sigma^\circ)$ by the $\lambda_i$ and one relation of trivial holonomy, the developed positions $p_i$ linear in the lengths, every comb developed in the chart of the base point through loops $\lambda_i$; not formalized: the kernel, and that with a valence divisible by four the map need not be onto (only that no form depends on those positions)}
 \begin{proposition}[The Burgers pairing]\label{prop:pairing}
 Let the surface be closed of genus zero, with no singular vertex of valence
 divisible by four, and let every trace of the T-mesh start at a singular
@@ -1903,7 +1904,7 @@ complexity of maximizing $Q$ over a polytope of lengths in reals.
 \section{What is machine-checked}\label{sec:lean}
 
 The folder \texttt{lean} beside this note is a Lean~4~\cite{demoura2021lean4}
-project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $698$
+project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $732$
 theorem declarations, many of them small lemmas, depend only on Lean's
 standard axioms; the count is not evidence, and its \texttt{README.md} maps
 each statement to its Lean theorems. Lean checks the algebraic and
@@ -1978,7 +1979,12 @@ Farkas' lemma over any ordered field and whole multipliers;
 Theorem~\ref{thm:forced} and Corollary~\ref{cor:chain}. For fields of any
 order: the rotation part of Gauss--Bonnet and its counts on triangle and
 hexagonal meshes, the lengths of dislocations and the congruence of
-Appendix~\ref{app:orders}. Added after the first version: the Fox--Burgers
+Appendix~\ref{app:orders}. Added after the first version: Proposition~\ref{prop:pairing}
+(onto, the twisted homology read on the presentation by the loops round the
+singular vertices, the relation and the development of the combs through
+those loops being hypotheses; not its kernel), the forms of the combs of
+Lemma~\ref{lem:comb} and the decomposition of Proposition~\ref{thm:combs}
+given its hypothesis on the odd part, the Fox--Burgers
 formula for any generators and the commutator of two motions with commuting
 rotations (Propositions~\ref{prop:burgers-any} and~\ref{prop:torus}), collars,
 the comb identity, the scaling of Proposition~\ref{prop:whole-size}, the
@@ -2060,13 +2066,12 @@ computations, searched the literature, stated and proved the propositions,
 wrote the Lean formalization and drafted the text. Each bibliography entry says how much of the work was read. A work of which only the abstract, or a review, was read is cited only for what that abstract or review states.
 Beyond the cores machine-checked in Lean (Section~\ref{sec:lean}), everything
 was written with AI help and checked by AI agents rereading it and testing it
-on the data, not by a human expert. In particular, Propositions~\ref{thm:combs}
-and~\ref{prop:pairing}, Lemma~\ref{lem:gauss-border},
+on the data, not by a human expert. In particular, Lemma~\ref{lem:gauss-border},
 Theorem~\ref{thm:transversal}, the
 case of Lemma~\ref{lem:handshake} with borders, and the statements on
 rotations of order six other than the checked ones have only a paper proof
 written with AI help; Propositions~\ref{prop:collar}, \ref{prop:burgers-any},
-\ref{prop:torus} and~\ref{prop:whole-size}, Lemma~\ref{lem:comb},
+\ref{prop:torus}, \ref{prop:whole-size}, \ref{thm:combs} and~\ref{prop:pairing}, Lemma~\ref{lem:comb},
 Corollary~\ref{cor:parity}, Theorem~\ref{thm:parity-any} and the reduction of
 Theorem~\ref{thm:nphard} had their algebraic cores checked in Lean after the
 first version of this note. AI review found errors in Propositions~\ref{thm:combs}
