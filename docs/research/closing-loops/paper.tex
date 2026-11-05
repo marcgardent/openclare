@@ -188,8 +188,15 @@ layout, and require, as openclare does, that the quantization keep
 singularities apart~\cite{lyon2021constrained}. Heistermann et al.\ cast
 quantization as a minimum-deviation flow on a bidirected graph and give a
 fast approximate solver and an exact refinement~\cite{heistermann2023bimdf};
-openclare follows their formulation. To our knowledge none of these
-constrains the helices.
+openclare follows their formulation. Pietroni et al.\ trace a layout with
+T-junctions whose borders include every feature line, letting the traced
+paths drift from the field so that they do not spiral, and quantize it with
+an integer linear program that rewards regular patches and aligned
+singularities~\cite{pietroni2021reliable}. Ebke et al.\ keep the
+mixed-integer quantization of~\cite{bommes2009miq} and act upstream: they
+filter the normals at the scale of the target edge length, so that features
+and handles below it make no singularities~\cite{ebke2014lod}. To our
+knowledge none of these constrains the helices of the mesh.
 
 \paragraph{Helices after meshing.}
 Bommes et al.~\cite{bommes2011structure} define a \emph{q-helix} as a dual
@@ -206,11 +213,20 @@ T-meshes of Myles et al.~\cite{myles2010feature} as an example. Razafindrazaka a
 Polthier~\cite{razafindrazaka2017optimal} replace the base complex of a
 finished mesh by an optimal one, found as a perfect matching on a graph over
 its singular vertices, and note that the operators
-of~\cite{bommes2011structure} leave some spirals. Both work after meshing,
-not in the quantization.
+of~\cite{bommes2011structure} leave some spirals. Tarini et
+al.~\cite{tarini2011simple} simplify the graph of separatrices of a quad mesh
+read as a cross field, greedily deleting and retracing separatrices to reduce
+their crossings, and parametrize over the few rectangles that remain; they
+note that removing helical configurations also simplifies that graph. All
+three start from a quad mesh, not from the quantization.
 
 \paragraph{Periods round a tube.}
-QuadCover~\cite{kalberer2007quadcover} lifts the cross field to a branched
+Periodic global parameterization~\cite{ray2006periodic} asks the transitions
+between charts to be quarter-turns and translations by whole periods, but
+solves for the sines and cosines of the coordinates, so that no whole number
+enters the solve; the translations are read afterwards, edge by edge.
+Composed round a tube they give its shift, which nothing in the method
+controls. QuadCover~\cite{kalberer2007quadcover} lifts the cross field to a branched
 covering where it becomes a vector field. The stripe parameterization of
 tubular surfaces~\cite{kalberer2011stripe}, built on it, measures the jump
 (``gap'') of the parameter across each cut path and rounds it to the nearest
@@ -240,7 +256,9 @@ hundreds, and their count says nothing of where the loops go.
 
 \paragraph{Loops by construction.}
 Dual loops meshing~\cite{campen2012dual} builds a layout from loops traced on
-the surface, which close by construction; Lei et
+the surface, which close by construction, and dual strip
+weaving~\cite{campen2014weaving} lets a user design such a layout one closed
+strip at a time, each an elastica loop found as a minimum-weight cycle; Lei et
 al.~\cite{lei2017foliation} build quad meshes from a Strebel differential
 with prescribed cylinders, and skeleton-guided
 layouts~\cite{usai2015skeleton} follow the curve skeleton of an articulated
@@ -632,7 +650,12 @@ subsets. The comparison favours openclare by construction as well: the engine
 chooses among its candidates by this very share (Section~\ref{sec:closing}),
 which the other two do not optimize, and the share sees no helix of pitch
 above four. A measure of structure the selection does not use is left to
-future work.
+future work. Since 31 October 2026 (\#248) the bench also runs Instant
+Meshes~\cite{jakob2015instant}, which smooths local orientation and position
+fields with no global parametrization, and the layout and tessellation of
+QuadWild~\cite{pietroni2021reliable} with the quantizer
+of~\cite{heistermann2023bimdf}; their columns are in
+\nolinkurl{bench/results}, and this paper reports no figure for them.
 
 \paragraph{Against the hand-made mesh.}
 The male body of the Essentials library has a base mesh of $10{,}590$ quads

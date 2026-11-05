@@ -102,8 +102,9 @@ In the quantization of a T-mesh, an edge loop closes into a ring when a
 \emph{turn}, a straight walk across the patches that returns to its first
 side, has zero \emph{shift}, an integer linear form in the arc lengths;
 otherwise it winds as a helix. We study why turns cannot all be closed.
-Reading the shift as translational holonomy of the flat metric, we show that
-for a simple turn it is the across component of the Burgers vector of the
+Reading the shift as translational holonomy of the flat metric, in the
+classical coordinates of flat cone metrics taken for rotations of order four,
+we show that for a simple turn it is the across component of the Burgers vector of the
 singular vertices on one side; that a 3--5 pair or an exchange of two
 vertices, joined by a staircase of arcs, forces one of two turns to be
 shifted, and that a separatrix winding once round a turn and stopping on
@@ -142,10 +143,13 @@ turn to conflicts between turns, any combination of turns, and borders and
 handles; Sections~\ref{sec:forced} and~\ref{sec:choosing} bound the turns
 every quantization leaves shifted and show that choosing them is NP-hard;
 Sections~\ref{sec:lean} and~\ref{sec:open} say what is machine-checked and
-what is open. The ingredients are classical (holonomy of flat cone metrics, Burgers vectors,
+what is open. The ingredients are classical (holonomy and spaces of flat
+cone metrics~\cite{veech1993flat}, their local
+coordinates~\cite{thurston1998shapes}, Burgers vectors,
 the parity of quadrangulations, Fox calculus, covers of infeasible
-subsystems); their statements for turns, the lower bound on helices and the
-hardness for the instances of quantization are ours, as far as we found.
+subsystems); their reading in the arc lengths and on turns, the staircases,
+the parity on any surface, the lower bound on helices and the hardness for
+the instances of quantization are ours, as far as we found.
 \ifdefined\plain
 Statements are \emph{proved} when they come with a proof, \emph{measured}
 when they come from exact arithmetic or solver output on the systems the
@@ -182,7 +186,9 @@ settles for a heuristic.
 \section{Related work}\label{sec:related}
 
 The valences of a closed quad mesh of genus $g$ satisfy $\sum_v (4 - k(v)) = 8(1-g)$,
-which says how many singular vertices are needed, not where. A closed quad mesh induces a quartic differential
+the Gauss--Bonnet formula of a flat surface with cone
+points~\cite{troyanov1986surfaces}, which says how many singular vertices are
+needed, not where. A closed quad mesh induces a quartic differential
 whose zeros and poles are its singular vertices; Lei et
 al.~\cite{lei2020quartic} list as open the guarantee that all its
 trajectories are finite, and a trajectory that is not finite is an edge loop
@@ -196,7 +202,19 @@ among them the torus with one vertex of valence three and one of valence
 five, which they recall as known, with the holonomy of the developing map,
 whose translation, when the rotation is trivial, is the Burgers vector of
 crystallography; a pair of opposite disclinations is a
-dislocation~\cite{kleman2008disclinations}. Bommes et
+dislocation~\cite{kleman2008disclinations}. Thurston~\cite{thurston1998shapes}
+gives local coordinates on the flat cone metrics of the sphere with
+prescribed positive curvatures: the edge vectors of a triangulation through
+the cone points, a cocycle with coefficients twisted by the rotations of the
+holonomy, of which triangulations are the cocycles with values in the
+Eisenstein integers; Veech~\cite{veech1993flat} studies the space of such
+metrics on any closed surface, foliated by the level sets of their holonomy
+character. The
+Burgers sum, the Fox--Burgers formula and the Burgers pairing
+(Sections~\ref{sec:holonomy} and~\ref{sec:fox}) are written in these
+coordinates, for rotations of order four and curvatures of both signs, and
+read in the arc lengths of a T-mesh; what is ours is that reading on turns,
+the staircases and the parity on any surface. Bommes et
 al.~\cite{bommes2011structure} remove helices from finished meshes; stripe
 parameterizations of tubes~\cite{kalberer2011stripe} round the gap round a
 tube, our shift, to a whole number. We found no lower bound on the number of helices for a given
@@ -276,7 +294,7 @@ Unless stated otherwise the surface $\Sigma$ is closed, and \emph{genus zero}
 means a closed sphere. Balanced lengths $\ell > 0$ make each patch a
 Euclidean rectangle, and $\Sigma$ a flat surface with cone points at the
 singular vertices: a vertex of valence $k$ has angle $k\pi/2$ and curvature
-$(4-k)\pi/2$, and T-junctions are not cone points. Let $\Sigma^\circ$ be $\Sigma$ without its singular vertices,
+$(4-k)\pi/2$~\cite{troyanov1986surfaces}, and T-junctions are not cone points. Let $\Sigma^\circ$ be $\Sigma$ without its singular vertices,
 $x_0$ a point inside a patch, and $R$ the positive quarter-turn. Developing a
 loop $\gamma$ of $\Sigma^\circ$ based at $x_0$ patch after patch gives its
 \emph{holonomy}, a motion $\hat h(\gamma)\colon x \mapsto R^j x + t$ of the
@@ -299,7 +317,10 @@ shifts the engine exports and of the figures. Shifts, developed positions and Bu
 integer linear forms in $\ell$ as long as the paths cross the same patches, so
 an identity between them that holds on an open set of balanced positive
 lengths holds for all balanced lengths; for whole lengths the nodes develop
-onto $\Z^2$. A form $f$ equals $g$ \emph{modulo the balances} if $f - g$ is a
+onto $\Z^2$. The developed positions of the singular vertices, or the vectors
+between them, are the local coordinates of~\cite{thurston1998shapes} on the
+flat cone metrics, here with rotations of order four and integer forms in the
+arc lengths. A form $f$ equals $g$ \emph{modulo the balances} if $f - g$ is a
 combination of the rows of $B$.
 
 \paragraph{Data.}
@@ -466,6 +487,11 @@ h(\bar\gamma_1) - \hat h(\bar\gamma_2)$, whose component along $e_2$ is
 $\shift_{\gamma_2}(\ell) - \shift_{\gamma_1}(\ell)$, and part~(a) applies to the cut disc,
 whose singular vertices have total index zero. (c) The sum is empty.
 \end{proof}
+
+The sum is the translation of a composite of cone rotations, written in the
+developed positions of the cone points, the coordinates
+of~\cite{thurston1998shapes}; what the proposition adds is its reading on a
+turn, whose shift is the across component.
 
 In the T-meshes of openclare, whose traces start at singular vertices, an
 annulus without singular vertex holds no node unless a trace winding round
@@ -1056,8 +1082,10 @@ the values $a_0 I + a_1 R + a_2 R^2 + a_3 R^3$, and the augmentation $\epsilon$
 maps such an element to $a_0 + a_1 + a_2 + a_3$. The first identity below is
 the defining property of Fox derivatives for a crossed
 homomorphism~\cite{fox1953free}, and the $p_i$, the developed positions of
-the singular vertices, are defined up to a common motion; what is new is the
-reading on combinations of turns.
+the singular vertices, are defined up to a common motion. The translation of
+a loop is then a cocycle twisted by the rotations evaluated on these
+positions, the coordinates of~\cite{thurston1998shapes} for rotations of
+order four; what is new is the reading on combinations of turns.
 
 \begin{evidence}{core}{\lean{fox_burgers}, \lean{fox_fundamental}, \lean{fox_burgers_combination}; assumed: the presentation of the fundamental group by the loops round the singular vertices}
 \begin{proposition}[Fox--Burgers formula]\label{prop:fox}

@@ -125,7 +125,8 @@ lorsqu'un \emph{tour}, marche en ligne droite à travers les patchs qui revient
 linéaire à coefficients entiers des longueurs des arcs\,; sinon, elle
 s'enroule en hélice. Nous étudions pourquoi les tours ne peuvent pas tous être
 fermés. En lisant le décalage comme l'holonomie de translation de la métrique
-plate, nous montrons que, pour un tour simple, il est la composante transverse
+plate, dans les coordonnées classiques des métriques plates à singularités
+coniques prises pour des rotations d'ordre quatre, nous montrons que, pour un tour simple, il est la composante transverse
 du vecteur de Burgers des sommets singuliers situés d'un côté\,; qu'une paire
 3--5 ou un échange de deux sommets, reliés par un escalier d'arcs, force l'un
 de deux tours à être décalé, et qu'une séparatrice qui fait une fois le tour
@@ -168,11 +169,14 @@ aux anses\,; les sections~\ref{sec:forced} et~\ref{sec:choosing} minorent le
 nombre de tours que toute quantification laisse décalés et montrent que les
 choisir est NP-difficile\,; les sections~\ref{sec:lean} et~\ref{sec:open}
 disent ce qui est vérifié par machine et ce qui reste ouvert. Les ingrédients
-sont classiques (holonomie des métriques plates à singularités coniques,
-vecteurs de Burgers, parité des quadrangulations, calcul de Fox, couvertures
-de sous-systèmes infaisables)\,; leurs énoncés pour les tours, le minorant du
-nombre d'hélices et la difficulté pour les instances de la quantification sont
-les nôtres, pour autant que nous ayons pu le vérifier. \ifdefined\plain
+sont classiques (holonomie et espaces des métriques plates à
+singularités coniques~\cite{veech1993flat}, leurs coordonnées
+locales~\cite{thurston1998shapes}, vecteurs de
+Burgers, parité des quadrangulations, calcul de Fox, couvertures de
+sous-systèmes infaisables)\,; leur lecture dans les longueurs des arcs et sur
+les tours, les escaliers, la parité sur toute surface, le minorant du nombre
+d'hélices et la difficulté pour les instances de la quantification sont les
+nôtres, pour autant que nous ayons pu le vérifier. \ifdefined\plain
 Un énoncé est dit
 \emph{prouvé} lorsqu'il est accompagné d'une démonstration, \emph{mesuré}
 lorsqu'il provient d'un calcul en arithmétique exacte ou de la sortie d'un
@@ -214,8 +218,9 @@ difficulté de leur choix explique qu'un moteur s'en tienne à une heuristique.
 \section{Travaux antérieurs}\label{sec:related}
 
 Les valences d'un maillage de quads fermé de genre $g$ vérifient $\sum_v (4 -
-k(v)) = 8(1-g)$, ce qui dit combien de sommets singuliers il faut, non où les
-placer. Un maillage de quads fermé induit une différentielle quartique dont
+k(v)) = 8(1-g)$, la formule de Gauss--Bonnet d'une surface plate à points
+coniques~\cite{troyanov1986surfaces}, qui dit combien de sommets singuliers il
+faut, non où les placer. Un maillage de quads fermé induit une différentielle quartique dont
 les zéros et les pôles sont ses sommets singuliers\,; Lei et
 al.~\cite{lei2020quartic} citent comme problème ouvert la garantie que toutes
 ses trajectoires soient finies, et une trajectoire qui n'est pas finie est une
@@ -231,7 +236,20 @@ tore avec un sommet de valence trois et un de valence
 cinq, qu'ils rappellent comme connu, au moyen de l'holonomie de l'application
 développante, dont la translation, lorsque la rotation est triviale, est le
 vecteur de Burgers de la cristallographie\,; une paire de disclinaisons
-opposées est une dislocation~\cite{kleman2008disclinations}. Bommes et
+opposées est une dislocation~\cite{kleman2008disclinations}.
+Thurston~\cite{thurston1998shapes} donne des coordonnées locales sur les
+métriques plates à singularités coniques de la sphère, de courbures positives
+prescrites~: les vecteurs des arêtes d'une triangulation par les points
+coniques, un cocycle à coefficients tordus par les rotations de l'holonomie,
+dont les triangulations sont les cocycles à valeurs dans les entiers
+d'Eisenstein\,; Veech~\cite{veech1993flat} étudie l'espace de ces métriques
+sur toute surface fermée, feuilleté par les ensembles de niveau de leur caractère
+d'holonomie. La somme de Burgers, la formule de Fox--Burgers et l'accouplement
+de Burgers (sections~\ref{sec:holonomy} et~\ref{sec:fox}) s'écrivent dans ces
+coordonnées, pour des rotations d'ordre quatre et des courbures des deux
+signes, et se lisent dans les longueurs des arcs d'un T-mesh\,; ce qui est à
+nous est cette lecture sur les tours, les escaliers et la parité sur toute
+surface. Bommes et
 al.~\cite{bommes2011structure} retirent les hélices de maillages finis\,; les
 paramétrisations en bandes des tubes~\cite{kalberer2011stripe} arrondissent à
 un nombre entier le saut autour d'un tube, notre décalage. Nous n'avons trouvé
@@ -316,7 +334,7 @@ Sauf mention contraire, la surface $\Sigma$ est fermée, et \emph{genre zéro}
 signifie une sphère fermée. Des longueurs équilibrées $\ell > 0$ font de
 chaque patch un rectangle euclidien, et de $\Sigma$ une surface plate à points
 coniques aux sommets singuliers~: un sommet de valence $k$ a un angle
-$k\pi/2$ et une courbure $(4-k)\pi/2$, et les jonctions en T ne sont pas des
+$k\pi/2$ et une courbure $(4-k)\pi/2$~\cite{troyanov1986surfaces}, et les jonctions en T ne sont pas des
 points coniques. Soit $\Sigma^\circ$ la surface $\Sigma$ privée de ses
 sommets singuliers, $x_0$ un point intérieur à un patch, et $R$ le quart de
 tour positif. Développer patch après patch un lacet $\gamma$ de $\Sigma^\circ$
@@ -342,7 +360,11 @@ sont des formes linéaires à coefficients entiers en $\ell$ tant que les
 chemins traversent les mêmes patchs, si bien qu'une identité entre eux qui
 vaut sur un ouvert de longueurs équilibrées strictement positives vaut pour
 toutes les longueurs équilibrées\,; pour des longueurs entières, les nœuds se
-développent sur $\Z^2$. Une forme $f$ est égale à $g$ \emph{modulo les
+développent sur $\Z^2$. Les positions développées des sommets singuliers, ou
+les vecteurs qui les relient, sont les coordonnées locales
+de~\cite{thurston1998shapes} sur les métriques plates à singularités
+coniques, ici avec des rotations d'ordre quatre et des formes entières des
+longueurs des arcs. Une forme $f$ est égale à $g$ \emph{modulo les
 équilibres} si $f - g$ est une combinaison des lignes de $B$.
 
 \paragraph{Données.}
@@ -525,6 +547,11 @@ la composante selon $e_2$ est $\shift_{\gamma_2}(\ell) - \shift_{\gamma_1}(\ell)
 et la partie~(a) s'applique au disque découpé, dont les sommets singuliers ont un
 indice total nul. (c) La somme est vide.
 \end{proof}
+
+La somme est la translation d'une composée de rotations coniques, écrite dans
+les positions développées des points coniques, les coordonnées
+de~\cite{thurston1998shapes}\,; ce que la proposition ajoute est sa lecture
+sur un tour, dont le décalage est la composante transverse.
 
 Dans les T-meshes d'openclare, dont les traces partent des sommets
 singuliers, une couronne sans sommet singulier ne contient aucun nœud, à moins
@@ -1158,8 +1185,10 @@ l'augmentation $\epsilon$ envoie un tel élément sur $a_0 + a_1 + a_2 + a_3$.
 La première identité ci-dessous est la propriété qui définit les dérivées de
 Fox pour un homomorphisme croisé~\cite{fox1953free}, et les $p_i$, positions
 développées des sommets singuliers, sont définis à un déplacement commun
-près\,; ce qui est nouveau est la
-lecture sur des combinaisons de tours.
+près. La translation d'une boucle est alors un cocycle tordu par les
+rotations évalué sur ces positions, les coordonnées
+de~\cite{thurston1998shapes} pour des rotations d'ordre quatre\,; ce qui est
+nouveau est la lecture sur des combinaisons de tours.
 
 \begin{evidence}{core}{\lean{fox_burgers}, \lean{fox_fundamental}, \lean{fox_burgers_combination}\,; supposé~: la présentation du groupe fondamental par les lacets autour des sommets singuliers}
 \begin{proposition}[Formule de Fox--Burgers]\label{prop:fox}
