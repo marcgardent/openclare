@@ -6,7 +6,7 @@ Section 10 there lists what is checked, statement by statement), and of the
 two propositions of its applied companion,
 [`../../closing-loops/paper.tex`](../../closing-loops/paper.tex), "The shift of
 a turn is linear" (also stated in `../paper.tex`) and "Completeness at given
-lengths": 732 `theorem` and `lemma` declarations under this folder (`Check/Main.lean`
+lengths": 702 `theorem` and `lemma` declarations under this folder (`Check/Main.lean`
 included), many of them small lemmas and a few
 restating a hypothesis (`dislocation_closes_iff`, `staircase_rings`); the
 count is not evidence, the table below names the main ones. The topological facts the note uses (that a loop develops into a given
@@ -100,6 +100,7 @@ finite sets with counts (`GaussBonnet`), the gluing data at whole lengths
 | Lemma "Combs", the identity | `comb_reading`, `dotC_sum`; on a comb read in one chart, `Pairing.Comb.reading` | the feet exist; every step of the comb but the arc is orthogonal to `e_a` (the perpendicular traces develop straight) |
 | … the forms `2ℓ_a` | `Combs.comb_dislocation` (feet of valences `3` and `5`, `R₁ = R₀⁻¹`: `λ_{c₀} λ_{c₁}` has trivial rotation, its class is a cycle, and against the whole `v = e_a (I - R₀)`, with `(I - R₀)ᵀ v = 2 e_a`, its form is `-2ℓ_a`), `Combs.comb_exchange` (equal odd valences, `λ_{c₀} λ_{c₁}⁻¹`); from a comb that develops as in the lemma, with distinct feet, the same at the feet developed along it, `Combs.Comb.dislocation`, `Combs.Comb.exchange` (`Combs.combChart`); from `Combs.form_pair`, `Combs.conj_mul_one_sub` (`(I - R)ᵀ (I - R) = 2` for `R = ±I`) | the two feet developed in the chart of the comb, `e_a` an axis of it, `⟨e_a, p_{c₁} - p_{c₀}⟩ = ℓ_a` (the identity); the case `c₀ = c₁`, a winding separatrix, is not formalized |
 | Prop. "Certificates are sums of combs" | `Combs.sum_of_combs` (a whole non-negative form whose arcs have feet of odd valence and whose odd part is a cycle modulo 2 of the graph of feet is the sum of `⌊cₐ/2⌋ · 2ℓₐ` and of the readings of closed walks of combs through feet of odd valence), from `Combs.veblen` (a set of arcs with even degree at every vertex is a union of closed walks walking each of its arcs once, `Combs.IsWalk`, `Combs.reading`), `Combs.trail`, `Combs.deg_walk`; with real weights, `Combs.sum_of_combs_real` | the hypothesis on the odd part, the content of the proposition (refuted on random T-meshes, see the note); that the form is a certificate is not used |
+| Prop. "Feet modulo 2" (a)–(c) | `foot_at_end`, `feet_coboundary` (at each end of an arc on the trace `τ`, `[foot = v] ≡ g_v(n) + [τ leaves v]`; on the arc, `χ_v ≡ g_v(n₀) + g_v(n₁)`), `combination_even_of_constant_colour` (from `checkerboard_combination`: when every vertex of odd valence has one colour, every whole combination of the components of words with trivial rotation is even), `combination_reads_even` (whole combinations of shifts and balances that each read `χ` even) (`FeetParity.lean`) | every trace leaves a vertex, every other node is met by exactly two traces (`EndOfArc`), no trace ends at a singular vertex; that `χ_v` balances every patch modulo 2 and `h(χ_v) ≡ k(v)` (the sums along the sides of a patch, on paper); that the development modulo 2 at `χ_v` is the holonomy of the words of the turns, lifted to `ℤ²` |
 | Prop. "Burgers sum with borders and handles" | `fox_general` (`τ(w) = ∑ᵢ ρ(∂w/∂xᵢ) τ(xᵢ)` for letters that are any motions, `holGen`, `letterMotion`), `holGen_rotations` (rotations about the cone points give back `hol`), `commutator_motion` (`(1 - B) a - (1 - A) b` for commuting linear parts) (`Periods.lean`) | the presentation of `π₁(Σ°)` by the loops round the cone points, the border components and the handles |
 | Prop. "Two crossing turns on a torus" | `commutator_translation` (`(1 - R^j) T`), `commutator_translations` (two translations commute, the Burgers sum of the cut disc is zero) | the border of the disc cut along the two curves is their commutator |
 | Prop. "Collars" | `collar`, `quarter_mul_quarter` (a translation along an axis conjugated by a quarter-turn motion is a translation along an axis; `α > 0` picks `e₁`) | the holonomy of the turn is conjugate to that of the border component (an annulus without cone point) |
@@ -499,6 +500,8 @@ Exports and logs are not kept in git.
 * `Congruence.lean`: the Fox–Burgers formula modulo `(1 - z)²`; orders 2, 3, 4, 6.
 * `Checkerboard.lean`: colours in `ℤ[i]`, the checkerboard rules, parity of a turn
   at lengths of any sign.
+* `FeetParity.lean`: Proposition "Feet modulo 2": the feet of an arc as a
+  coboundary modulo 2, and every combination of shifts even at `χ_v`.
 * `Balances.lean`: the handshake lemma.
 * `Bidirected.lean`: trees, switchings and unbalanced cycles of a bidirected
   graph; Proposition "Free arcs".
