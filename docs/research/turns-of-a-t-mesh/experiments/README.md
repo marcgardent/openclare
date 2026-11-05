@@ -39,6 +39,7 @@ only on the same machine under the same load: the long runs are for an idle mach
 | Table `tab:iis` (41 sets, multipliers, bounded arcs, exact check, irreducibility in whole lengths); turn 54 of way 0 not closable alone in ways 0, 1, 2, 5, 7, its form −(ℓ1892 + ℓ1908) and arc 1908 0.089 long; turn 46 of way 2 in ways 2, 3, 6, 7, ℓ1006 + ℓ1017 + ℓ1042, arc 1006 0.264 long; the sets of three (row 20); "every set found is infeasible in real numbers" | `python3 $B/conflicts.py <export>` | `results/conflicts.json`, `<out>/claims.json` |
 | The certificates of `tab:iis` and τ_P(H) checked by Lean | `python3 docs/research/turns-of-a-t-mesh/lean/Check/certify.py <export>/export/call-*/way-[0-9].json --claims scratch/data-package/turns-of-a-t-mesh/conflicts/claims.json --out <export>/export/certificates.json`, then `make lean-check EXPORT=<export>/export` | Lean's report (`Check/README` of `../lean`) |
 | Table `tab:pairs` (the 17 pairs, rows 3 to 19 of `tab:iis`: windings, staircases, mechanisms); "A separatrix that winds" (turn 54 of way 0, separatrix 938 of vertex 239, 6.762 long, δ = ℓ1891 + ℓ1892, 0.287, ℓ1891 ≡ ℓ1908; none for turn 46 of way 2); "Larger conflicts": the 3–5 pairs of rows 22, 23, 28 and 30 | `python3 $B/pairs.py <export>` (after `conflicts.py`) | `results/pairs.json` |
+| Section "Conflicts between turns": the homotopies of Propositions "Exchanging two vertices" and "A separatrix that winds", and of the dislocation of row 14, checked by conjugacy in the free group (table below) | `python3 $B/conjugacy.py <export>` (after `pairs.py`) | `results/conjugacy.json` |
 | Section "Combs", "On the male body": Lemma "Combs" on 2,090 of the 2,146 arcs, 1,955 with two distinct feet of odd valence, 76 arcs with more than one perpendicular trace, none on a separatrix connection; the odd part of 67 of the 68 certificates a cycle of the graph of feet | `python3 $B/combs.py <export>` (after `conflicts.py`) | `results/combs.json` |
 | Section "Any combination of turns", "On the male body": every turn a word and its translation by Proposition "Fox–Burgers formula" (1,708 turns); Corollary "Checkerboard rule for any combination" on all turns and on the 41 sets of `tab:iis`; no relation of windings that the translations break; Section "Combs": the twisted homology of dimension 504, the pairing of rank 504, kernel 0 | `python3 $B/fox.py <export> --relations 2` (after `conflicts.py`) | `results/fox.json` |
 | Section "Combs", "Question ... read loosely": read strictly, 15 of the 41 sets separated, each at exact balanced lengths; the certificate of turn 54 of way 0 the winding separatrix ℓ1873 | `python3 $B/strict.py <export>` (after `conflicts.py`) | `results/strict.json` |
@@ -88,7 +89,33 @@ only on the same machine under the same load: the long runs are for an idle mach
   Σ u γ round the regions, monotone staircases of at most `--depth` + 1 arcs between the singular
   vertices of the regions where it winds whose length equals the combination modulo the balances,
   and the mechanism; for a single turn, the winding separatrix. The homotopies of Propositions
-  "Exchanging two vertices" and "A separatrix that winds" are not checked, as in the paper.
+  "Exchanging two vertices" and "A separatrix that winds" are left to `conjugacy.py`.
+- `conjugacy.py`: the words of curves in the fundamental group of the surface without its
+  singular vertices, by the crossings of `fox.py`'s tree, the word map checked to be an
+  isomorphism onto the free group on the loops round the singular vertices but the root (the
+  loop round every other node reduces to the empty word, that round a singular vertex to a
+  conjugate of its letter); then, for each row of `pairs.py` with a mechanism, whether a loop of
+  the turns (λ = γ̄1 κ γ̄2^{±1} κ^{-1} with κ inside the chart; for sets of three turns with
+  multipliers ±1, products of their loops) is conjugate to the loop of the mechanism (round c,
+  along the staircase, round c'; for a winding separatrix, along σ and back along τ, pushed to
+  either side): cyclic reduction and comparison up to rotation, the loop and its inverse. The
+  class in homology of λ, which does not depend on κ, tells where no κ can work. Results:
+
+  | Row of `tab:iis` | Turns (way) | Mechanism | Loops tried | Conjugate to the mechanism's loop |
+  |---|---|---|---|---|
+  | 1 | 54 (0) | winding separatrix 938 of 239 | 2 sides | yes, pushed to the right, to the turn walked backwards |
+  | 4, 5, 6, 7, 8, 9, 11, 13 | pairs | exchange | 8 to 493 | yes (1 or 2 loops each) |
+  | 14 | 21, 68 (1) | 3–5 pair 192, 196 | 193 | yes (1 loop) |
+  | 15, 16 | 65, 66 and 63, 66 (3) | exchange of `pairs.py` | 11, 13 | no, and no κ can: the class in homology differs |
+  | 20, 25 | three turns (4) | exchange | 13,144, 2,841 | yes |
+  | 21 | 145, 147, 149 (5) | exchange | 1,462 | none of those tried; other κ not decided |
+  | 28 | 65, 103, 107 (6) | 3–5 pair 192, 196 | 13,851 | yes |
+  | 22, 23, 30 | | 3–5 pairs | not tried | multipliers ±13, ±12, or four turns |
+
+  The control, the mechanism's loop with c' walked round the other way, is conjugate to no loop
+  tried. Prop. "A dislocation between two turns" (ii) has no instance on this export (the 3–5
+  pairs are never on one straight chain of arcs, `holonomy.py`), so its hypothesis on κ is
+  not checked: there is nothing to check it on.
 - `combs.py`: the feet of every arc (the vertices where the traces perpendicular to it at its ends
   start), the comb lemma checked by developing the path foot–arc–foot, and, for every certificate
   of `conflicts.py`'s table, the boundary modulo 2 of its odd part on the graph of feet.
@@ -157,6 +184,7 @@ Times on an Intel Core i7-7700K (4 cores, 8 threads, 2017, 62 GB), loaded by oth
 | `lattice.py` | seconds for ways 0 to 6; way 7 stops at `--seconds` |
 | `holonomy.py --no-annuli` | 2.5 minutes for the eight ways; the pairs of turns about 1 minute per 400 pairs: about an hour more for all eight ways (with `--jobs 4`, a quarter of that) |
 | `fox.py` | 10 to 18 s a way; `--relations` adds about 4 minutes (the windings of every turn, then a linear program each) |
+| `conjugacy.py` | not run there; on the export of v0.7.0, 626 s at load 5 to 9, most of it on rows 20, 21, 25 and 28 |
 | `strict.py` | 8 s (configuration A, in the cone) to 75 s (F, separated) a set; the sets of four and more, minutes each |
 | `forced.py --steps bounds` | 75 s for the nine families (way 7: 45 s) |
 | `forced.py` (cap and size) | up to `--budget` (1,800 s) a family for the cap and up to 6 × `--seconds` (900 s) for the size: hours; ways 0 and 2 take 15 s |

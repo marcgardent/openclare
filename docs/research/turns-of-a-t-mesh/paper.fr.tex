@@ -968,10 +968,24 @@ maintient l'arc $1580$\,; modulo les équilibres, il est égal au certificat
 $\ell_{1578} + \ell_{1580}$. Dans dix paires, la combinaison s'enroule autour
 de sommets de valence trois, $+1$ et $-1$ fois autour de deux d'entre eux sauf
 aux lignes 15 et 16, $2$, $1$ et $1$ fois autour de trois, et un escalier
-relie deux d'entre eux~: un échange en homologie (l'homotopie de la
-proposition~\ref{prop:swap} n'a pas été vérifiée, l'identité de l'escalier
-l'a été). Dans les six autres, aucun escalier égal à la combinaison n'a été
-trouvé.
+relie deux d'entre eux. Dans les six autres, aucun escalier égal à la
+combinaison n'a été trouvé.
+
+Les homotopies ont été vérifiées par ordinateur dans le groupe fondamental de
+$\Sigma^\circ$, libre sur les lacets autour des sommets singuliers sauf un~:
+les traversées de l'arbre de la section~\ref{sec:fox} donnent à toute courbe
+un mot, le lacet autour de tout nœud non singulier se réduisant au mot vide. Deux
+lacets sont librement homotopes si et seulement si leurs mots, réduits
+cycliquement, sont des permutations circulaires l'un de l'autre. Pour
+$\kappa$ dans la carte, aux lignes 4 à 9, 11 et 13, un lacet $\lambda$ de la
+proposition~\ref{prop:swap} est conjugué à $\lambda_c \lambda_{c'}^{-1}$,
+$c'$ atteint le long de l'escalier, et à la ligne 14 à $\lambda_{192}
+\lambda_{196}$, le produit que lit la preuve de la
+proposition~\ref{prop:dislocation}(i)\,; sa rotation est triviale et sa
+translation donne la combinaison. Aux lignes 15 et 16, aucun $\kappa$ ne
+convient~: la classe de $\lambda$ en homologie, qui ne dépend pas de
+$\kappa$, n'est celle de $\lambda_c \lambda_{c'}^{-1}$ pour aucun couple de
+sommets, et l'escalier n'y donne que l'identité des formes.
 
 \begin{table}[t]
 \begin{evidence}[unbreakable]{measured}{sur l'export du corps masculin}
@@ -995,8 +1009,8 @@ ligne & variantes & tours & entre les tours & escalier & mécanisme \\
 12 & 5, 7 & 150, 156 & 133, 135, 152\,; 138 (val.\ 5) & --- & aucun trouvé \\
 13 & 5, 7 & 146, 149 & 128, 148 & 1033, 1196, 1195\,; $2,078$\,; dessus & échange \\
 14 & 1 & 21, 68 & 196\,; 192 (val.\ 5) & 1544, 1580\,; $0,814$\,; dessus & dislocation \\
-15 & 3 & 65, 66 & 92, 93, 95 & 748, 758, 757\,; $2,045$\,; dessus & échange \\
-16 & 3 & 63, 66 & 92, 93, 95 & 741, 742, 754, 756, 743\,; $3,632$\,; par les équilibres & échange \\
+15 & 3 & 65, 66 & 92, 93, 95 & 748, 758, 757\,; $2,045$\,; dessus & escalier seul \\
+16 & 3 & 63, 66 & 92, 93, 95 & 741, 742, 754, 756, 743\,; $3,632$\,; par les équilibres & escalier seul \\
 17 & 5 & 136, 208 & 90, 91, 100, 226, 235 & --- & aucun trouvé \\
 18 & 5 & 129, 208 & 90, 91, 100, 226, 235 & --- & aucun trouvé \\
 19 & 7 & 221, 225 & 231\,; 243 (val.\ 5) & --- & aucun trouvé \\
@@ -1011,7 +1025,10 @@ trouvé entre deux d'entre eux dont la longueur est égale à la combinaison
 modulo les équilibres, ses arcs, sa longueur, et si l'arc maintenu du
 certificat est dessus ou atteint par les équilibres. Dislocation~:
 propositions~\ref{prop:dislocation}(i) et~\ref{prop:staircase}\,;
-échange~: propositions~\ref{prop:swap} et~\ref{prop:staircase}.}
+échange~: propositions~\ref{prop:swap} et~\ref{prop:staircase}\,; dans les
+deux cas, l'homotopie vérifiée par ordinateur. Escalier seul~: l'identité des
+formes est vraie, l'homotopie de la proposition~\ref{prop:swap} ne l'est
+pas.}
 \label{tab:pairs}
 \end{evidence}
 \end{table}
@@ -1075,8 +1092,11 @@ cinq, parcourt $6,762$ arêtes en faisant une fois le tour et s'arrête sur une
 autre de ses séparatrices à $\delta = \ell_{1891} + \ell_{1892}$ de $239$,
 $0,287$ arête\,; le décalage vaut $-\delta$, et $\ell_{1891}$ est égal à la
 longueur de l'arc maintenu $1908$, tous deux modulo les équilibres~: d'où le
-certificat et $\shift \le -1$ à toute longueur entière admissible. Nous avons
-vérifié l'identité, non l'homotopie (mesuré). Pour le tour $46$ de la
+certificat et $\shift \le -1$ à toute longueur entière admissible (mesuré).
+L'homotopie a été vérifiée par ordinateur comme plus haut~: poussé hors de
+$239$ vers sa droite, le lacet le long de $938$ et retour le long de $940$ est
+conjugué à la courbe du tour $54$ parcourue à rebours\,; poussé vers sa
+gauche, il fait un tour de plus autour de $239$. Pour le tour $46$ de la
 variante 2, qui borde lui aussi une calotte de quatre sommets de valence
 trois, aucune telle séparatrice n'a été trouvée.
 
@@ -1086,7 +1106,12 @@ Les ensembles des lignes 22, 23, 28 et 30 s'enroulent autour d'une paire
 23, les sommets $0$ (valence trois) et $2$ (valence cinq), l'escalier $\ell_4
 + \ell_{23}$, long de $3,219$, et aux lignes 28 et 30, la paire et l'escalier
 de la ligne 14\,; les autres ensembles de trois et de quatre tours sont des
-échanges, ou aucun escalier n'a été trouvé (mesuré). Les multiplicateurs
+échanges, ou aucun escalier n'a été trouvé (mesuré). Un produit des trois
+lacets, reliés dans la carte, est conjugué au lacet du mécanisme aux lignes
+20, 25 et 28 (vérifié par ordinateur)\,; à la ligne 21 aucun ne l'est, sans
+qu'on ait tranché si un autre $\kappa$ en donne un, et les lignes 22, 23 et
+30, aux multiplicateurs autres que $\pm1$ ou à quatre tours, n'ont pas été
+essayées. Les multiplicateurs
 fractionnaires du tableau~\ref{tab:iis} viennent de ce qu'on demande aux arcs
 bornés de peser un au total\,; les multiplicateurs entiers primitifs ne sont
 pas toujours $\pm1$, ainsi $-13$, $1$, $-12$ à la ligne 22 et $-5$, $-2$,
@@ -1119,9 +1144,9 @@ un terme au moins contenant un arc maintenu ouvert\,?
 \end{question}
 \end{evidence}
 
-La réponse est oui, avec un seul terme et aux homotopies non vérifiées près,
-pour le tour $54$ de la variante 0 et les paires du tableau~\ref{tab:pairs}
-reliées par un escalier\,; la section~\ref{sec:combs} tranche la question sur
+La réponse est oui, avec un seul terme et les homotopies vérifiées par
+ordinateur, pour le tour $54$ de la variante 0 et les paires du
+tableau~\ref{tab:pairs} reliées par un escalier sauf les lignes 15 et 16\,; la section~\ref{sec:combs} tranche la question sur
 le corps~: non telle qu'elle est posée, oui, mais sans contenu, lue au sens
 large. % PR3: le tour 46 de la variante 2 devient un contre-exemple à un seul tour à la lecture stricte (avec une vérification Lean)
 
@@ -2201,7 +2226,8 @@ moteur d'openclare~0.7.0 tel que publié, et de quelques modèles du banc avec
 une version du moteur non enregistrée\,; les identités
 ont été vérifiées en virgule flottante sauf mention d'arithmétique exacte, et
 les homotopies des propositions~\ref{prop:swap} et~\ref{prop:winding} n'ont
-pas été vérifiées. Les comptes forcés sont relatifs aux bornes de séparation
+été vérifiées que sur les conflits du corps, la première pour des chemins
+$\kappa$ dans une seule carte. Les comptes forcés sont relatifs aux bornes de séparation
 du moteur et à son plafond, tels que l'export les donne, et les intervalles
 dépendent des limites de temps du solveur sur une machine partagée. Les
 énoncés mesurés sur le corps sont refaits par les scripts

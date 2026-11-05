@@ -879,9 +879,23 @@ joining them, $\ell_{1544} + \ell_{1580}$, $0.814$ long, holds arc $1580$;
 modulo the balances it equals the certificate $\ell_{1578} + \ell_{1580}$. In
 ten pairs the combination winds round vertices of valence three, $+1$ and $-1$
 round two of them but in rows 15 and 16, $2$, $1$ and $1$ round three, and a
-staircase joins two of them: an exchange in homology (the homotopy of
-Proposition~\ref{prop:swap} was not checked, the staircase identity was). In
-the six others no staircase was found equal to the combination.
+staircase joins two of them. In the six others no staircase was found equal
+to the combination.
+
+The homotopies were checked by computer in the fundamental group of
+$\Sigma^\circ$, free on the loops round the singular vertices but one: the
+crossings of the tree of Section~\ref{sec:fox} give every curve a word, the
+loop round every node that is not singular reducing to the empty word. Two loops are freely
+homotopic if and only if their words, cyclically reduced, are cyclic
+permutations of one another. For $\kappa$ inside the chart, in rows 4 to 9, 11
+and 13 a loop $\lambda$ of Proposition~\ref{prop:swap} is conjugate to
+$\lambda_c \lambda_{c'}^{-1}$, $c'$ reached along the staircase, and in row 14
+to $\lambda_{192} \lambda_{196}$, the product the proof of
+Proposition~\ref{prop:dislocation}(i) reads; its rotation is trivial and its
+translation gives the combination. In rows 15 and 16 no $\kappa$ does: the
+class of $\lambda$ in homology, which does not depend on $\kappa$, is not that
+of $\lambda_c \lambda_{c'}^{-1}$ for any two vertices, and there the staircase
+gives the identity of forms only.
 
 \begin{table}[t]
 \begin{evidence}[unbreakable]{measured}{on the export of the male body}
@@ -889,7 +903,7 @@ the six others no staircase was found equal to the combination.
 \small
 \setlength{\tabcolsep}{4pt}
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
-\begin{tabular}{@{}rllL{3.8cm}L{5.3cm}l@{}}
+\begin{tabular}{@{}rllL{3.8cm}L{5.0cm}l@{}}
 \toprule
 row & ways & turns & between the turns & staircase & mechanism \\
 \midrule
@@ -905,8 +919,8 @@ row & ways & turns & between the turns & staircase & mechanism \\
 12 & 5, 7 & 150, 156 & 133, 135, 152; 138 (val.\ 5) & --- & none found \\
 13 & 5, 7 & 146, 149 & 128, 148 & 1033, 1196, 1195; $2.078$; on it & exchange \\
 14 & 1 & 21, 68 & 196; 192 (val.\ 5) & 1544, 1580; $0.814$; on it & dislocation \\
-15 & 3 & 65, 66 & 92, 93, 95 & 748, 758, 757; $2.045$; on it & exchange \\
-16 & 3 & 63, 66 & 92, 93, 95 & 741, 742, 754, 756, 743; $3.632$; by the balances & exchange \\
+15 & 3 & 65, 66 & 92, 93, 95 & 748, 758, 757; $2.045$; on it & staircase only \\
+16 & 3 & 63, 66 & 92, 93, 95 & 741, 742, 754, 756, 743; $3.632$; by the balances & staircase only \\
 17 & 5 & 136, 208 & 90, 91, 100, 226, 235 & --- & none found \\
 18 & 5 & 129, 208 & 90, 91, 100, 226, 235 & --- & none found \\
 19 & 7 & 221, 225 & 231; 243 (val.\ 5) & --- & none found \\
@@ -921,7 +935,9 @@ equals the combination modulo the balances, its arcs, its length, and whether
 the held arc of the certificate lies on it or is reached by the balances.
 Dislocation: Propositions~\ref{prop:dislocation}(i)
 and~\ref{prop:staircase}; exchange: Propositions~\ref{prop:swap}
-and~\ref{prop:staircase}.}
+and~\ref{prop:staircase}; in both the homotopy checked by computer.
+Staircase only: the identity of forms holds, the homotopy of
+Proposition~\ref{prop:swap} does not.}
 \label{tab:pairs}
 \end{evidence}
 \end{table}
@@ -981,8 +997,10 @@ $239$, of valence five, runs $6.762$ edges once round and stops on another of
 its separatrices at $\delta = \ell_{1891} + \ell_{1892}$ from $239$, $0.287$
 edges; the shift is $-\delta$, and $\ell_{1891}$ equals the length of the held
 arc $1908$, both modulo the balances: whence the certificate and $\shift \le
--1$ at every admissible whole length. We checked the identity, not the
-homotopy (measured). For turn $46$ of way 2, which also bounds a cap of four
+-1$ at every admissible whole length (measured). The homotopy was checked by
+computer as above: pushed off $239$ to its right, the loop along $938$ and
+back along $940$ is conjugate to the curve of turn $54$ walked backwards;
+pushed to its left, it winds once more round $239$. For turn $46$ of way 2, which also bounds a cap of four
 vertices of valence three, no such separatrix was found.
 
 \paragraph{Larger conflicts.}
@@ -991,7 +1009,11 @@ staircase through the held arc: in rows 22 and 23 the vertices $0$ (valence
 three) and $2$ (valence five), the staircase $\ell_4 + \ell_{23}$, $3.219$
 long, and in rows 28 and 30 the pair and the staircase of row 14; the other
 sets of three and four turns are exchanges, or no staircase was found
-(measured). The fractional multipliers of Table~\ref{tab:iis} come from
+(measured). A product of the three loops, joined inside the chart, is
+conjugate to the loop of the mechanism in rows 20, 25 and 28 (checked by
+computer); in row 21 none is, whether another $\kappa$ gives one was not
+decided, and rows 22, 23 and 30, with multipliers other than $\pm1$ or four
+turns, were not tried. The fractional multipliers of Table~\ref{tab:iis} come from
 asking the bounded arcs to weigh one in total; the primitive whole ones need
 not be $\pm1$, as $-13$, $1$, $-12$ in row 22 and $-5$, $-2$, $-1$, $-1$ in
 row 29, where no staircase was found.
@@ -1020,8 +1042,9 @@ one term at least containing an arc held open?
 \end{question}
 \end{evidence}
 
-It holds with one term, up to the unchecked homotopies, for turn $54$ of way 0
-and the pairs of Table~\ref{tab:pairs} joined by a staircase;
+It holds with one term, the homotopies checked by computer, for turn $54$ of
+way 0 and the pairs of Table~\ref{tab:pairs} joined by a staircase but rows 15
+and 16;
 Section~\ref{sec:combs} settles it on the body: no as stated, yes and empty
 when read loosely. % PR3: turn 46 of way 2 becomes a one-turn counterexample to the strict reading (with a Lean check)
 
@@ -1996,7 +2019,8 @@ The measured statements come from one T-mesh of one body, exported by the
 engine of openclare~0.7.0 as published, and from a few bench models with an
 unrecorded engine version; identities were checked in
 floating point unless exact arithmetic is stated, and the homotopies of
-Propositions~\ref{prop:swap} and~\ref{prop:winding} were not checked. Forced
+Propositions~\ref{prop:swap} and~\ref{prop:winding} were checked only on the
+conflicts of the body, the first for paths $\kappa$ inside one chart. Forced
 counts are relative to the engine's bounds of separation and to its cap, as
 the export gives them, and the intervals depend on solver time limits on a
 shared machine. The measured statements on the body are made again by the

@@ -1,0 +1,941 @@
+{
+ "experiment": "the homotopies of the mechanisms of the conflicts, by conjugacy in the free group",
+ "export": "call-2146-806-5237618",
+ "export_record": {
+  "experiment": "export of the turns of the closing",
+  "engine": {
+   "commit": "e13fadb",
+   "build": "sha256:d444f05f7279f3e7",
+   "options": "as-is",
+   "environment": {}
+  },
+  "command": [
+   "openclare",
+   "remesh",
+   "<source>",
+   "mesh.obj",
+   "--preset",
+   "organic",
+   "--quads",
+   "10590"
+  ],
+  "source": {
+   "path": "source.obj",
+   "md5": "f1fe33002b731d1d41846daed6c59f5e"
+  },
+  "machine": {
+   "processor": "Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz",
+   "threads": 8,
+   "memory": "62.7 GiB",
+   "load_average": [
+    8.64,
+    5.25,
+    3.14
+   ],
+   "load_average_at_end": [
+    7.71,
+    6.46,
+    3.99
+   ]
+  },
+  "seconds": 187.3,
+  "tmesh": "call-2146-806-5237618",
+  "ways": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "measure": {
+   "valid": true,
+   "quads": 10484,
+   "loop_edges_spiral": 0.014641358260206027,
+   "loops_spiral": 11,
+   "loop_edges_closed": 0.36484166348721775,
+   "mean_distance": 0.0001895734178229812,
+   "hausdorff": 0.004743854442472561,
+   "angle_deviation_mean": 4.292626082506852,
+   "irregular_vertices": 254,
+   "inverted_faces": 0
+  }
+ },
+ "ways": {
+  "0": "6cc0c52ed844da1d1343a49e60e967e06c71639e970a2ffad1186047e4bff93a",
+  "2": "73fd72de47d0b93bf8b4d3fdf2e4cbaca7f7814337b80857130a4ca42835e517",
+  "1": "f9ed1876de4d580ec3f64e3cb38252890f7cc8d403f35169f762fc95471a3c16",
+  "4": "3197c4fccb7ff314c588885bb3519c7c1eea7c977887126b2636173fb28f69f7",
+  "5": "f3bc8513c30d53e9551ff30710bca835f2a5771492d2b91bd620a375b620183c",
+  "3": "dd044d80dd8f807d335182282202b905fc021f48f750eeb03295460de6d12ca4",
+  "7": "826d051bb7c6219c45509225f52219665732ede8395ed4b7911c6d83fa27e993",
+  "6": "e311a34d17929be3646e76c6244d0b6e3cbd44f6515be8313f76c4051b5b5e5a"
+ },
+ "machine": {
+  "processor": "Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz",
+  "threads": 8,
+  "memory": "62.7 GiB",
+  "load_average": [
+   4.67,
+   5.23,
+   7.63
+  ],
+  "load_average_at_end": [
+   9.19,
+   8.84,
+   8.62
+  ],
+  "processors_allowed": 8
+ },
+ "solver": {
+  "scipy": "1.16.3",
+  "highs": "1.8.0",
+  "highs_threads": 1
+ },
+ "wall_seconds": 626.2,
+ "table": "pairs.json",
+ "presentations": {
+  "0": {
+   "nodes": 1342,
+   "not_singular_trivial": 1088,
+   "singular_own_letter": 253,
+   "singular": 254,
+   "root": 18,
+   "failures": [],
+   "isomorphism": true
+  },
+  "2": {
+   "nodes": 1342,
+   "not_singular_trivial": 1088,
+   "singular_own_letter": 253,
+   "singular": 254,
+   "root": 18,
+   "failures": [],
+   "isomorphism": true
+  },
+  "1": {
+   "nodes": 1342,
+   "not_singular_trivial": 1088,
+   "singular_own_letter": 253,
+   "singular": 254,
+   "root": 18,
+   "failures": [],
+   "isomorphism": true
+  },
+  "4": {
+   "nodes": 1342,
+   "not_singular_trivial": 1088,
+   "singular_own_letter": 253,
+   "singular": 254,
+   "root": 18,
+   "failures": [],
+   "isomorphism": true
+  },
+  "5": {
+   "nodes": 1342,
+   "not_singular_trivial": 1088,
+   "singular_own_letter": 253,
+   "singular": 254,
+   "root": 18,
+   "failures": [],
+   "isomorphism": true
+  },
+  "3": {
+   "nodes": 1342,
+   "not_singular_trivial": 1088,
+   "singular_own_letter": 253,
+   "singular": 254,
+   "root": 18,
+   "failures": [],
+   "isomorphism": true
+  },
+  "7": {
+   "nodes": 1342,
+   "not_singular_trivial": 1088,
+   "singular_own_letter": 253,
+   "singular": 254,
+   "root": 18,
+   "failures": [],
+   "isomorphism": true
+  },
+  "6": {
+   "nodes": 1342,
+   "not_singular_trivial": 1088,
+   "singular_own_letter": 253,
+   "singular": 254,
+   "root": 18,
+   "failures": [],
+   "isomorphism": true
+  }
+ },
+ "rows": [
+  {
+   "row": 1,
+   "way": 0,
+   "turns": [
+    54
+   ],
+   "mechanism": "winding separatrix",
+   "vertex": 239,
+   "sigma": 938,
+   "tau": 940,
+   "singular_vertices_passed": [],
+   "turn_word": "x218x238x214x215x242x236x237x242\u207b\u00b9x215\u207b\u00b9x214\u207b\u00b9",
+   "sides": {
+    "left": {
+     "word": "x239\u207b\u00b9x237\u207b\u00b9x236\u207b\u00b9x242\u207b\u00b9x215\u207b\u00b9x214\u207b\u00b9x238\u207b\u00b9x218\u207b\u00b9x214x215x242",
+     "homotopic": null
+    },
+    "right": {
+     "word": "x237\u207b\u00b9x236\u207b\u00b9x242\u207b\u00b9x215\u207b\u00b9x214\u207b\u00b9x238\u207b\u00b9x218\u207b\u00b9x214x215x242",
+     "homotopic": "conjugate to the inverse"
+    }
+   },
+   "passes": true
+  },
+  {
+   "row": 2,
+   "way": 2,
+   "turns": [
+    46
+   ],
+   "mechanism": "none found"
+  },
+  {
+   "row": 3,
+   "way": 1,
+   "turns": [
+    62,
+    63
+   ],
+   "mechanism": "no staircase found"
+  },
+  {
+   "row": 4,
+   "way": 2,
+   "turns": [
+    58,
+    63
+   ],
+   "orientations_with_the_class_of_the_mechanism": [
+    [
+     1
+    ]
+   ],
+   "mechanism": "exchange",
+   "staircase": {
+    "from": 217,
+    "to": 228,
+    "arcs": [
+     1755,
+     1829
+    ]
+   },
+   "mechanism_word": "x228\u207b\u00b9x217",
+   "loops_tried": 8,
+   "homotopic": [
+    {
+     "chords": [
+      0,
+      8
+     ],
+     "kind": "antiparallel",
+     "rotation": 0,
+     "combination_sign": 1,
+     "word": "x217x228\u207b\u00b9",
+     "homotopic": "conjugate"
+    }
+   ],
+   "homotopic_to_the_control": 0,
+   "passes": true
+  },
+  {
+   "row": 5,
+   "way": 1,
+   "turns": [
+    23,
+    36
+   ],
+   "orientations_with_the_class_of_the_mechanism": [
+    [
+     -1
+    ]
+   ],
+   "mechanism": "exchange",
+   "staircase": {
+    "from": 68,
+    "to": 69,
+    "arcs": [
+     550,
+     559,
+     558
+    ]
+   },
+   "mechanism_word": "x48\u207b\u00b9x69\u207b\u00b9x48x68",
+   "loops_tried": 66,
+   "homotopic": [
+    {
+     "chords": [
+      0,
+      27
+     ],
+     "kind": "parallel",
+     "rotation": 0,
+     "combination_sign": -1,
+     "word": "x48x68x48\u207b\u00b9x69\u207b\u00b9",
+     "homotopic": "conjugate"
+    }
+   ],
+   "homotopic_to_the_control": 0,
+   "passes": true
+  },
+  {
+   "row": 6,
+   "way": 4,
+   "turns": [
+    84,
+    115
+   ],
+   "orientations_with_the_class_of_the_mechanism": [
+    [
+     1
+    ]
+   ],
+   "mechanism": "exchange",
+   "staircase": {
+    "from": 90,
+    "to": 91,
+    "arcs": [
+     726,
+     734
+    ]
+   },
+   "mechanism_word": "x90x99x100x91\u207b\u00b9x100\u207b\u00b9x99\u207b\u00b9",
+   "loops_tried": 220,
+   "homotopic": [
+    {
+     "chords": [
+      0,
+      28
+     ],
+     "kind": "antiparallel",
+     "rotation": 0,
+     "combination_sign": -1,
+     "word": "x91\u207b\u00b9x100\u207b\u00b9x99\u207b\u00b9x90x99x100",
+     "homotopic": "conjugate"
+    }
+   ],
+   "homotopic_to_the_control": 0,
+   "passes": true
+  },
+  {
+   "row": 7,
+   "way": 4,
+   "turns": [
+    58,
+    115
+   ],
+   "orientations_with_the_class_of_the_mechanism": [
+    [
+     -1
+    ]
+   ],
+   "mechanism": "exchange",
+   "staircase": {
+    "from": 226,
+    "to": 235,
+    "arcs": [
+     1814,
+     1866
+    ]
+   },
+   "mechanism_word": "x235\u207b\u00b9x226",
+   "loops_tried": 202,
+   "homotopic": [
+    {
+     "chords": [
+      0,
+      22
+     ],
+     "kind": "parallel",
+     "rotation": 0,
+     "combination_sign": -1,
+     "word": "x226x235\u207b\u00b9",
+     "homotopic": "conjugate"
+    },
+    {
+     "chords": [
+      41,
+      7
+     ],
+     "kind": "parallel",
+     "rotation": 0,
+     "combination_sign": -1,
+     "word": "x235\u207b\u00b9x226",
+     "homotopic": "conjugate"
+    }
+   ],
+   "homotopic_to_the_control": 0,
+   "passes": true
+  },
+  {
+   "row": 8,
+   "way": 4,
+   "turns": [
+    21,
+    93
+   ],
+   "orientations_with_the_class_of_the_mechanism": [
+    [
+     1
+    ]
+   ],
+   "mechanism": "exchange",
+   "staircase": {
+    "from": 140,
+    "to": 142,
+    "arcs": [
+     1127,
+     1139
+    ]
+   },
+   "mechanism_word": "x142\u207b\u00b9x140",
+   "loops_tried": 493,
+   "homotopic": [
+    {
+     "chords": [
+      0,
+      88
+     ],
+     "kind": "antiparallel",
+     "rotation": 0,
+     "combination_sign": -1,
+     "word": "x142\u207b\u00b9x140",
+     "homotopic": "conjugate"
+    },
+    {
+     "chords": [
+      94,
+      108
+     ],
+     "kind": "antiparallel",
+     "rotation": 0,
+     "combination_sign": -1,
+     "word": "x140x142\u207b\u00b9",
+     "homotopic": "conjugate"
+    }
+   ],
+   "homotopic_to_the_control": 0,
+   "passes": true
+  },
+  {
+   "row": 9,
+   "way": 4,
+   "turns": [
+    18,
+    103
+   ],
+   "orientations_with_the_class_of_the_mechanism": [
+    [
+     -1
+    ]
+   ],
+   "mechanism": "exchange",
+   "staircase": {
+    "from": 237,
+    "to": 238,
+    "arcs": [
+     1881,
+     1758,
+     1885
+    ]
+   },
+   "mechanism_word": "x236\u207b\u00b9x242\u207b\u00b9x215\u207b\u00b9x214\u207b\u00b9x238\u207b\u00b9x214x215x242x236x237",
+   "loops_tried": 145,
+   "homotopic": [
+    {
+     "chords": [
+      0,
+      37
+     ],
+     "kind": "parallel",
+     "rotation": 0,
+     "combination_sign": 1,
+     "word": "x238x214x215x242x236x237\u207b\u00b9x236\u207b\u00b9x242\u207b\u00b9x215\u207b\u00b9x214\u207b\u00b9",
+     "homotopic": "conjugate to the inverse"
+    },
+    {
+     "chords": [
+      37,
+      8
+     ],
+     "kind": "parallel",
+     "rotation": 0,
+     "combination_sign": 1,
+     "word": "x242\u207b\u00b9x215\u207b\u00b9x214\u207b\u00b9x238x214x215x242x236x237\u207b\u00b9x236\u207b\u00b9",
+     "homotopic": "conjugate to the inverse"
+    }
+   ],
+   "homotopic_to_the_control": 0,
+   "passes": true
+  },
+  {
+   "row": 10,
+   "way": 5,
+   "turns": [
+    207,
+    208
+   ],
+   "mechanism": "no staircase found"
+  },
+  {
+   "row": 11,
+   "way": 5,
+   "turns": [
+    181,
+    205
+   ],
+   "orientations_with_the_class_of_the_mechanism": [
+    [
+     1
+    ]
+   ],
+   "mechanism": "exchange",
+   "staircase": {
+    "from": 221,
+    "to": 230,
+    "arcs": [
+     1781,
+     1840
+    ]
+   },
+   "mechanism_word": "x243\u207b\u00b9x230\u207b\u00b9x243x221",
+   "loops_tried": 227,
+   "homotopic": [
+    {
+     "chords": [
+      0,
+      61
+     ],
+     "kind": "antiparallel",
+     "rotation": 0,
+     "combination_sign": -1,
+     "word": "x243x221x243\u207b\u00b9x230\u207b\u00b9",
+     "homotopic": "conjugate"
+    }
+   ],
+   "homotopic_to_the_control": 0,
+   "passes": true
+  },
+  {
+   "row": 12,
+   "way": 5,
+   "turns": [
+    150,
+    156
+   ],
+   "mechanism": "no staircase found"
+  },
+  {
+   "row": 13,
+   "way": 5,
+   "turns": [
+    146,
+    149
+   ],
+   "orientations_with_the_class_of_the_mechanism": [
+    [
+     -1
+    ]
+   ],
+   "mechanism": "exchange",
+   "staircase": {
+    "from": 128,
+    "to": 148,
+    "arcs": [
+     1033,
+     1196,
+     1195
+    ]
+   },
+   "mechanism_word": "x148\u207b\u00b9x128",
+   "loops_tried": 54,
+   "homotopic": [
+    {
+     "chords": [
+      1,
+      27
+     ],
+     "kind": "parallel",
+     "rotation": 0,
+     "combination_sign": -1,
+     "word": "x148x128\u207b\u00b9",
+     "homotopic": "conjugate to the inverse"
+    }
+   ],
+   "homotopic_to_the_control": 0,
+   "passes": true
+  },
+  {
+   "row": 14,
+   "way": 1,
+   "turns": [
+    21,
+    68
+   ],
+   "orientations_with_the_class_of_the_mechanism": [
+    [
+     1
+    ]
+   ],
+   "mechanism": "dislocation",
+   "staircase": {
+    "from": 192,
+    "to": 196,
+    "arcs": [
+     1544,
+     1580
+    ]
+   },
+   "mechanism_word": "x196x191x189x199x205x202x200x194x201x193x198x197x169x188x59x180x178x170x69x48x68x73x67x63x62x56x79x75x89x87x88x85x113x116x98x109x92x110x94x112x93x95x107x102x103x83x105x101x106x104x111x82x97x115x96x108x84x86x90x99x100x91x114x117x77x76x78x30x74x54x57x60x61x42x66x65x72x70x71x64x58x47x40x39x38x49x52x253x174x43x51x45x44x46x41x50x53x163x165x177x184x55x159x171x158x161x168x166x167x172x164x155x154x156x181x175x173x179x182x176x186x157x187x162x204x203x195x192x195\u207b\u00b9x203\u207b\u00b9x204\u207b\u00b9x162\u207b\u00b9x187\u207b\u00b9x157\u207b\u00b9x186\u207b\u00b9x176\u207b\u00b9x182\u207b\u00b9x179\u207b\u00b9x173\u207b\u00b9x175\u207b\u00b9x181\u207b\u00b9x156\u207b\u00b9x154\u207b\u00b9x155\u207b\u00b9x164\u207b\u00b9x172\u207b\u00b9x167\u207b\u00b9x166\u207b\u00b9x168\u207b\u00b9x161\u207b\u00b9x158\u207b\u00b9x171\u207b\u00b9x159\u207b\u00b9x55\u207b\u00b9x184\u207b\u00b9x177\u207b\u00b9x165\u207b\u00b9x163\u207b\u00b9x53\u207b\u00b9x50\u207b\u00b9x41\u207b\u00b9x46\u207b\u00b9x44\u207b\u00b9x45\u207b\u00b9x51\u207b\u00b9x43\u207b\u00b9x174\u207b\u00b9x253\u207b\u00b9x52\u207b\u00b9x49\u207b\u00b9x38\u207b\u00b9x39\u207b\u00b9x40\u207b\u00b9x47\u207b\u00b9x58\u207b\u00b9x64\u207b\u00b9x71\u207b\u00b9x70\u207b\u00b9x72\u207b\u00b9x65\u207b\u00b9x66\u207b\u00b9x42\u207b\u00b9x61\u207b\u00b9x60\u207b\u00b9x57\u207b\u00b9x54\u207b\u00b9x74\u207b\u00b9x30\u207b\u00b9x78\u207b\u00b9x76\u207b\u00b9x77\u207b\u00b9x117\u207b\u00b9x114\u207b\u00b9x91\u207b\u00b9x100\u207b\u00b9x99\u207b\u00b9x90\u207b\u00b9x86\u207b\u00b9x84\u207b\u00b9x108\u207b\u00b9x96\u207b\u00b9x115\u207b\u00b9x97\u207b\u00b9x82\u207b\u00b9x111\u207b\u00b9x104\u207b\u00b9x106\u207b\u00b9x101\u207b\u00b9x105\u207b\u00b9x83\u207b\u00b9x103\u207b\u00b9x102\u207b\u00b9x107\u207b\u00b9x95\u207b\u00b9x93\u207b\u00b9x112\u207b\u00b9x94\u207b\u00b9x110\u207b\u00b9x92\u207b\u00b9x109\u207b\u00b9x98\u207b\u00b9x116\u207b\u00b9x113\u207b\u00b9x85\u207b\u00b9x88\u207b\u00b9x87\u207b\u00b9x89\u207b\u00b9x75\u207b\u00b9x79\u207b\u00b9x56\u207b\u00b9x62\u207b\u00b9x63\u207b\u00b9x67\u207b\u00b9x73\u207b\u00b9x68\u207b\u00b9x48\u207b\u00b9x69\u207b\u00b9x170\u207b\u00b9x178\u207b\u00b9x180\u207b\u00b9x59\u207b\u00b9x188\u207b\u00b9x169\u207b\u00b9x197\u207b\u00b9x198\u207b\u00b9x193\u207b\u00b9x201\u207b\u00b9x194\u207b\u00b9x200\u207b\u00b9x202\u207b\u00b9x205\u207b\u00b9x199\u207b\u00b9x189\u207b\u00b9x191\u207b\u00b9",
+   "loops_tried": 193,
+   "homotopic": [
+    {
+     "chords": [
+      0,
+      29
+     ],
+     "kind": "antiparallel",
+     "rotation": 0,
+     "combination_sign": -1,
+     "word": "x196x191x189x199x205x202x200x194x201x193x198x197x169x188x59x180x178x170x69x48x68x73x67x63x62x56x79x75x89x87x88x85x113x116x98x109x92x110x94x112x93x95x107x102x103x83x105x101x106x104x111x82x97x115x96x108x84x86x90x99x100x91x114x117x77x76x78x30x74x54x57x60x61x42x66x65x72x70x71x64x58x47x40x39x38x49x52x253x174x43x51x45x44x46x41x50x53x163x165x177x184x55x159x171x158x161x168x166x167x172x164x155x154x156x181x175x173x179x182x176x186x157x187x162x204x203x195x192x195\u207b\u00b9x203\u207b\u00b9x204\u207b\u00b9x162\u207b\u00b9x187\u207b\u00b9x157\u207b\u00b9x186\u207b\u00b9x176\u207b\u00b9x182\u207b\u00b9x179\u207b\u00b9x173\u207b\u00b9x175\u207b\u00b9x181\u207b\u00b9x156\u207b\u00b9x154\u207b\u00b9x155\u207b\u00b9x164\u207b\u00b9x172\u207b\u00b9x167\u207b\u00b9x166\u207b\u00b9x168\u207b\u00b9x161\u207b\u00b9x158\u207b\u00b9x171\u207b\u00b9x159\u207b\u00b9x55\u207b\u00b9x184\u207b\u00b9x177\u207b\u00b9x165\u207b\u00b9x163\u207b\u00b9x53\u207b\u00b9x50\u207b\u00b9x41\u207b\u00b9x46\u207b\u00b9x44\u207b\u00b9x45\u207b\u00b9x51\u207b\u00b9x43\u207b\u00b9x174\u207b\u00b9x253\u207b\u00b9x52\u207b\u00b9x49\u207b\u00b9x38\u207b\u00b9x39\u207b\u00b9x40\u207b\u00b9x47\u207b\u00b9x58\u207b\u00b9x64\u207b\u00b9x71\u207b\u00b9x70\u207b\u00b9x72\u207b\u00b9x65\u207b\u00b9x66\u207b\u00b9x42\u207b\u00b9x61\u207b\u00b9x60\u207b\u00b9x57\u207b\u00b9x54\u207b\u00b9x74\u207b\u00b9x30\u207b\u00b9x78\u207b\u00b9x76\u207b\u00b9x77\u207b\u00b9x117\u207b\u00b9x114\u207b\u00b9x91\u207b\u00b9x100\u207b\u00b9x99\u207b\u00b9x90\u207b\u00b9x86\u207b\u00b9x84\u207b\u00b9x108\u207b\u00b9x96\u207b\u00b9x115\u207b\u00b9x97\u207b\u00b9x82\u207b\u00b9x111\u207b\u00b9x104\u207b\u00b9x106\u207b\u00b9x101\u207b\u00b9x105\u207b\u00b9x83\u207b\u00b9x103\u207b\u00b9x102\u207b\u00b9x107\u207b\u00b9x95\u207b\u00b9x93\u207b\u00b9x112\u207b\u00b9x94\u207b\u00b9x110\u207b\u00b9x92\u207b\u00b9x109\u207b\u00b9x98\u207b\u00b9x116\u207b\u00b9x113\u207b\u00b9x85\u207b\u00b9x88\u207b\u00b9x87\u207b\u00b9x89\u207b\u00b9x75\u207b\u00b9x79\u207b\u00b9x56\u207b\u00b9x62\u207b\u00b9x63\u207b\u00b9x67\u207b\u00b9x73\u207b\u00b9x68\u207b\u00b9x48\u207b\u00b9x69\u207b\u00b9x170\u207b\u00b9x178\u207b\u00b9x180\u207b\u00b9x59\u207b\u00b9x188\u207b\u00b9x169\u207b\u00b9x197\u207b\u00b9x198\u207b\u00b9x193\u207b\u00b9x201\u207b\u00b9x194\u207b\u00b9x200\u207b\u00b9x202\u207b\u00b9x205\u207b\u00b9x199\u207b\u00b9x189\u207b\u00b9x191\u207b\u00b9",
+     "homotopic": "conjugate"
+    }
+   ],
+   "homotopic_to_the_control": 0,
+   "passes": true
+  },
+  {
+   "row": 15,
+   "way": 3,
+   "turns": [
+    65,
+    66
+   ],
+   "orientations_with_the_class_of_the_mechanism": [],
+   "mechanism": "exchange",
+   "staircase": {
+    "from": 93,
+    "to": 95,
+    "arcs": [
+     748,
+     758,
+     757
+    ]
+   },
+   "mechanism_word": "x95\u207b\u00b9x93",
+   "loops_tried": 11,
+   "homotopic": [],
+   "homotopic_to_the_control": 0,
+   "passes": false
+  },
+  {
+   "row": 16,
+   "way": 3,
+   "turns": [
+    63,
+    66
+   ],
+   "orientations_with_the_class_of_the_mechanism": [],
+   "mechanism": "exchange",
+   "staircase": {
+    "from": 92,
+    "to": 93,
+    "arcs": [
+     741,
+     742,
+     754,
+     756,
+     743
+    ]
+   },
+   "mechanism_word": "x110x94x112x93\u207b\u00b9x112\u207b\u00b9x94\u207b\u00b9x110\u207b\u00b9x92",
+   "loops_tried": 13,
+   "homotopic": [],
+   "homotopic_to_the_control": 0,
+   "passes": false
+  },
+  {
+   "row": 17,
+   "way": 5,
+   "turns": [
+    136,
+    208
+   ],
+   "mechanism": "no staircase found"
+  },
+  {
+   "row": 18,
+   "way": 5,
+   "turns": [
+    129,
+    208
+   ],
+   "mechanism": "no staircase found"
+  },
+  {
+   "row": 19,
+   "way": 7,
+   "turns": [
+    221,
+    225
+   ],
+   "mechanism": "no staircase found"
+  },
+  {
+   "row": 20,
+   "way": 4,
+   "turns": [
+    73,
+    115,
+    122
+   ],
+   "orientations_with_the_class_of_the_mechanism": [
+    [
+     -1,
+     -1
+    ]
+   ],
+   "mechanism": "exchange",
+   "staircase": {
+    "from": 90,
+    "to": 91,
+    "arcs": [
+     726,
+     734
+    ]
+   },
+   "mechanism_word": "x90x99x100x91\u207b\u00b9x100\u207b\u00b9x99\u207b\u00b9",
+   "loops_tried": 13144,
+   "homotopic": [
+    {
+     "chords": [
+      0,
+      43,
+      18
+     ],
+     "kind": "order (0, 2, 1), signs (1, -1, -1)",
+     "rotation": 0,
+     "combination_sign": 1,
+     "word": "x99x100x91x100\u207b\u00b9x99\u207b\u00b9x90\u207b\u00b9",
+     "homotopic": "conjugate to the inverse"
+    },
+    {
+     "chords": [
+      0,
+      43,
+      77
+     ],
+     "kind": "order (0, 1, 2), signs (1, -1, -1)",
+     "rotation": 0,
+     "combination_sign": 1,
+     "word": "x100\u207b\u00b9x99\u207b\u00b9x90\u207b\u00b9x99x100x91",
+     "homotopic": "conjugate to the inverse"
+    }
+   ],
+   "homotopic_to_the_control": 0,
+   "passes": true
+  },
+  {
+   "row": 21,
+   "way": 5,
+   "turns": [
+    145,
+    147,
+    149
+   ],
+   "orientations_with_the_class_of_the_mechanism": [
+    [
+     -1,
+     -1
+    ]
+   ],
+   "mechanism": "exchange",
+   "staircase": {
+    "from": 128,
+    "to": 148,
+    "arcs": [
+     1033,
+     1196,
+     1195
+    ]
+   },
+   "mechanism_word": "x148\u207b\u00b9x128",
+   "loops_tried": 1462,
+   "homotopic": [],
+   "homotopic_to_the_control": 0,
+   "passes": false
+  },
+  {
+   "row": 22,
+   "way": 1,
+   "turns": [
+    8,
+    10,
+    12
+   ],
+   "mechanism": "dislocation",
+   "not_tried": "more than three turns, or multipliers other than \u00b11"
+  },
+  {
+   "row": 23,
+   "way": 1,
+   "turns": [
+    0,
+    10,
+    12
+   ],
+   "mechanism": "dislocation",
+   "not_tried": "more than three turns, or multipliers other than \u00b11"
+  },
+  {
+   "row": 24,
+   "way": 3,
+   "turns": [
+    36,
+    73,
+    83
+   ],
+   "mechanism": "no staircase found"
+  },
+  {
+   "row": 25,
+   "way": 4,
+   "turns": [
+    82,
+    117,
+    124
+   ],
+   "orientations_with_the_class_of_the_mechanism": [
+    [
+     1,
+     1
+    ]
+   ],
+   "mechanism": "exchange",
+   "staircase": {
+    "from": 217,
+    "to": 228,
+    "arcs": [
+     1755,
+     1829
+    ]
+   },
+   "mechanism_word": "x228\u207b\u00b9x217",
+   "loops_tried": 2841,
+   "homotopic": [
+    {
+     "chords": [
+      69,
+      12,
+      0
+     ],
+     "kind": "order (0, 2, 1), signs (1, 1, 1)",
+     "rotation": 0,
+     "combination_sign": -1,
+     "word": "x217x228\u207b\u00b9",
+     "homotopic": "conjugate"
+    }
+   ],
+   "homotopic_to_the_control": 0,
+   "passes": true
+  },
+  {
+   "row": 26,
+   "way": 5,
+   "turns": [
+    137,
+    196,
+    208
+   ],
+   "mechanism": "no staircase found"
+  },
+  {
+   "row": 27,
+   "way": 5,
+   "turns": [
+    130,
+    196,
+    208
+   ],
+   "mechanism": "no staircase found"
+  },
+  {
+   "row": 28,
+   "way": 6,
+   "turns": [
+    65,
+    103,
+    107
+   ],
+   "orientations_with_the_class_of_the_mechanism": [
+    [
+     1,
+     -1
+    ]
+   ],
+   "mechanism": "dislocation",
+   "staircase": {
+    "from": 192,
+    "to": 196,
+    "arcs": [
+     1544,
+     1580
+    ]
+   },
+   "mechanism_word": "x196x191x189x199x205x202x200x194x201x193x198x197x169x188x59x180x178x170x69x48x68x73x67x63x62x56x79x75x89x87x88x85x113x116x98x109x92x110x94x112x93x95x107x102x103x83x105x101x106x104x111x82x97x115x96x108x84x86x90x99x100x91x114x117x77x76x78x30x74x54x57x60x61x42x66x65x72x70x71x64x58x47x40x39x38x49x52x253x174x43x51x45x44x46x41x50x53x163x165x177x184x55x159x171x158x161x168x166x167x172x164x155x154x156x181x175x173x179x182x176x186x157x187x162x204x203x195x192x195\u207b\u00b9x203\u207b\u00b9x204\u207b\u00b9x162\u207b\u00b9x187\u207b\u00b9x157\u207b\u00b9x186\u207b\u00b9x176\u207b\u00b9x182\u207b\u00b9x179\u207b\u00b9x173\u207b\u00b9x175\u207b\u00b9x181\u207b\u00b9x156\u207b\u00b9x154\u207b\u00b9x155\u207b\u00b9x164\u207b\u00b9x172\u207b\u00b9x167\u207b\u00b9x166\u207b\u00b9x168\u207b\u00b9x161\u207b\u00b9x158\u207b\u00b9x171\u207b\u00b9x159\u207b\u00b9x55\u207b\u00b9x184\u207b\u00b9x177\u207b\u00b9x165\u207b\u00b9x163\u207b\u00b9x53\u207b\u00b9x50\u207b\u00b9x41\u207b\u00b9x46\u207b\u00b9x44\u207b\u00b9x45\u207b\u00b9x51\u207b\u00b9x43\u207b\u00b9x174\u207b\u00b9x253\u207b\u00b9x52\u207b\u00b9x49\u207b\u00b9x38\u207b\u00b9x39\u207b\u00b9x40\u207b\u00b9x47\u207b\u00b9x58\u207b\u00b9x64\u207b\u00b9x71\u207b\u00b9x70\u207b\u00b9x72\u207b\u00b9x65\u207b\u00b9x66\u207b\u00b9x42\u207b\u00b9x61\u207b\u00b9x60\u207b\u00b9x57\u207b\u00b9x54\u207b\u00b9x74\u207b\u00b9x30\u207b\u00b9x78\u207b\u00b9x76\u207b\u00b9x77\u207b\u00b9x117\u207b\u00b9x114\u207b\u00b9x91\u207b\u00b9x100\u207b\u00b9x99\u207b\u00b9x90\u207b\u00b9x86\u207b\u00b9x84\u207b\u00b9x108\u207b\u00b9x96\u207b\u00b9x115\u207b\u00b9x97\u207b\u00b9x82\u207b\u00b9x111\u207b\u00b9x104\u207b\u00b9x106\u207b\u00b9x101\u207b\u00b9x105\u207b\u00b9x83\u207b\u00b9x103\u207b\u00b9x102\u207b\u00b9x107\u207b\u00b9x95\u207b\u00b9x93\u207b\u00b9x112\u207b\u00b9x94\u207b\u00b9x110\u207b\u00b9x92\u207b\u00b9x109\u207b\u00b9x98\u207b\u00b9x116\u207b\u00b9x113\u207b\u00b9x85\u207b\u00b9x88\u207b\u00b9x87\u207b\u00b9x89\u207b\u00b9x75\u207b\u00b9x79\u207b\u00b9x56\u207b\u00b9x62\u207b\u00b9x63\u207b\u00b9x67\u207b\u00b9x73\u207b\u00b9x68\u207b\u00b9x48\u207b\u00b9x69\u207b\u00b9x170\u207b\u00b9x178\u207b\u00b9x180\u207b\u00b9x59\u207b\u00b9x188\u207b\u00b9x169\u207b\u00b9x197\u207b\u00b9x198\u207b\u00b9x193\u207b\u00b9x201\u207b\u00b9x194\u207b\u00b9x200\u207b\u00b9x202\u207b\u00b9x205\u207b\u00b9x199\u207b\u00b9x189\u207b\u00b9x191\u207b\u00b9",
+   "loops_tried": 13851,
+   "homotopic": [
+    {
+     "chords": [
+      107,
+      3,
+      10
+     ],
+     "kind": "order (0, 2, 1), signs (1, 1, -1)",
+     "rotation": 0,
+     "combination_sign": -1,
+     "word": "x196x191x189x199x205x202x200x194x201x193x198x197x169x188x59x180x178x170x69x48x68x73x67x63x62x56x79x75x89x87x88x85x113x116x98x109x92x110x94x112x93x95x107x102x103x83x105x101x106x104x111x82x97x115x96x108x84x86x90x99x100x91x114x117x77x76x78x30x74x54x57x60x61x42x66x65x72x70x71x64x58x47x40x39x38x49x52x253x174x43x51x45x44x46x41x50x53x163x165x177x184x55x159x171x158x161x168x166x167x172x164x155x154x156x181x175x173x179x182x176x186x157x187x162x204x203x195x192x195\u207b\u00b9x203\u207b\u00b9x204\u207b\u00b9x162\u207b\u00b9x187\u207b\u00b9x157\u207b\u00b9x186\u207b\u00b9x176\u207b\u00b9x182\u207b\u00b9x179\u207b\u00b9x173\u207b\u00b9x175\u207b\u00b9x181\u207b\u00b9x156\u207b\u00b9x154\u207b\u00b9x155\u207b\u00b9x164\u207b\u00b9x172\u207b\u00b9x167\u207b\u00b9x166\u207b\u00b9x168\u207b\u00b9x161\u207b\u00b9x158\u207b\u00b9x171\u207b\u00b9x159\u207b\u00b9x55\u207b\u00b9x184\u207b\u00b9x177\u207b\u00b9x165\u207b\u00b9x163\u207b\u00b9x53\u207b\u00b9x50\u207b\u00b9x41\u207b\u00b9x46\u207b\u00b9x44\u207b\u00b9x45\u207b\u00b9x51\u207b\u00b9x43\u207b\u00b9x174\u207b\u00b9x253\u207b\u00b9x52\u207b\u00b9x49\u207b\u00b9x38\u207b\u00b9x39\u207b\u00b9x40\u207b\u00b9x47\u207b\u00b9x58\u207b\u00b9x64\u207b\u00b9x71\u207b\u00b9x70\u207b\u00b9x72\u207b\u00b9x65\u207b\u00b9x66\u207b\u00b9x42\u207b\u00b9x61\u207b\u00b9x60\u207b\u00b9x57\u207b\u00b9x54\u207b\u00b9x74\u207b\u00b9x30\u207b\u00b9x78\u207b\u00b9x76\u207b\u00b9x77\u207b\u00b9x117\u207b\u00b9x114\u207b\u00b9x91\u207b\u00b9x100\u207b\u00b9x99\u207b\u00b9x90\u207b\u00b9x86\u207b\u00b9x84\u207b\u00b9x108\u207b\u00b9x96\u207b\u00b9x115\u207b\u00b9x97\u207b\u00b9x82\u207b\u00b9x111\u207b\u00b9x104\u207b\u00b9x106\u207b\u00b9x101\u207b\u00b9x105\u207b\u00b9x83\u207b\u00b9x103\u207b\u00b9x102\u207b\u00b9x107\u207b\u00b9x95\u207b\u00b9x93\u207b\u00b9x112\u207b\u00b9x94\u207b\u00b9x110\u207b\u00b9x92\u207b\u00b9x109\u207b\u00b9x98\u207b\u00b9x116\u207b\u00b9x113\u207b\u00b9x85\u207b\u00b9x88\u207b\u00b9x87\u207b\u00b9x89\u207b\u00b9x75\u207b\u00b9x79\u207b\u00b9x56\u207b\u00b9x62\u207b\u00b9x63\u207b\u00b9x67\u207b\u00b9x73\u207b\u00b9x68\u207b\u00b9x48\u207b\u00b9x69\u207b\u00b9x170\u207b\u00b9x178\u207b\u00b9x180\u207b\u00b9x59\u207b\u00b9x188\u207b\u00b9x169\u207b\u00b9x197\u207b\u00b9x198\u207b\u00b9x193\u207b\u00b9x201\u207b\u00b9x194\u207b\u00b9x200\u207b\u00b9x202\u207b\u00b9x205\u207b\u00b9x199\u207b\u00b9x189\u207b\u00b9x191\u207b\u00b9",
+     "homotopic": "conjugate"
+    }
+   ],
+   "homotopic_to_the_control": 0,
+   "passes": true
+  },
+  {
+   "row": 29,
+   "way": 6,
+   "turns": [
+    5,
+    6,
+    7,
+    74
+   ],
+   "mechanism": "no staircase found"
+  },
+  {
+   "row": 30,
+   "way": 7,
+   "turns": [
+    168,
+    192,
+    194,
+    196
+   ],
+   "mechanism": "dislocation",
+   "not_tried": "more than three turns, or multipliers other than \u00b11"
+  }
+ ]
+}
