@@ -23,7 +23,7 @@ to the summaries' (the table "paper says / engine gives").
 |---|---|---|
 | Twelve models, three budgets (`sec:experiments`, 36 runs) | `python3 docs/research/closing-loops/experiments/twelve_models.py` | `results/twelve_models.json` |
 | Table `tab:dev` as an ablation (one engine, one stage per line, 11 lines × 36 runs) | `python3 docs/research/closing-loops/experiments/ablation.py --check scratch/data-package/closing-loops/twelve_models` | `results/ablation.json` |
-| Against other remeshers (bench at 3,000 quads) | `python3 docs/research/closing-loops/experiments/against_remeshers.py --git 5bc16c6 --git b0fba91 --no-closing-run` | `results/against_remeshers.json` |
+| Against other remeshers (bench at 3,000 quads), Table `tab:remeshers` | `python3 docs/research/closing-loops/experiments/against_remeshers.py --git 5bc16c6 --git b0fba91 --no-closing-from docs/research/closing-loops/experiments/results/against_remeshers.json` (first made with `--no-closing-run`) | `results/against_remeshers.json` |
 | Male body against the hand-made mesh | `python3 docs/research/closing-loops/experiments/male_body.py` | `results/male_body.json` |
 | Figures `fig:overview`, `fig:closeups` | `WORK=scratch/data-package/closing-loops/figures OPENCLARE=target/release/openclare COMMIT=<commit> docs/research/closing-loops/figures/make_figures.sh`, then `python3 docs/research/closing-loops/experiments/figure_numbers.py scratch/data-package/closing-loops/figures` | `../figures/male-*.png`, `../figures/README.md`, `results/figures.json` |
 | The paper's numbers next to the summaries' | `python3 docs/research/closing-loops/experiments/compare.py` | Markdown on the standard output |
@@ -44,14 +44,19 @@ What each script does and why:
   definitions: a tool *produces a mesh* for a model if a run gives a mesh whose loops can be
   measured; it *meshes validly in every run* if all its runs give valid meshes; per model, the
   bench's median over the runs (five seeds for QuadriFlow, one run otherwise); then the mean over
-  the models. `--git 5bc16c6 --git b0fba91` reads the files the paper used: they give back
+  the models. The tools are openclare, QuadriFlow, AutoRemesher, QuadWild-BiMDF and Instant Meshes
+  (the last two run on the 27 models whose meshes may be passed on); a results file is compared on
+  the tools it has, and the script prints the rows of Table `tab:remeshers` in both languages. `--git 5bc16c6 --git b0fba91` reads the files the paper used: they give back
   exactly the paper's 22, 18, 7, 15, 1.8%, 38.8%, 21.7%, 4.2%, 27.2%, 27.3%, and 16.6% and 15.5%
   without closing, which checks the definitions. The current bench has no run without closing:
   `--no-closing-run` makes it, as the bench runs openclare (the add-on, in Blender, on the model's
   scene; `make addon` first) with `OPENCLARE_CLOSE_WAYS=` (no way of closing tried). That variable
   gives the same meshes as `--no-close-loops` (checked byte for byte on blob, suzanne and spot), and
   the add-on chain of f992bac gives back the measures of the bench's openclare mesh of 524b759
-  (checked on blob: same quads, spiral and closed shares, Hausdorff).
+  (checked on blob: same quads, spiral and closed shares, Hausdorff). The summary keeps those runs
+  (`no_closing`, `per_model`, engine e13fadb); `--no-closing-from` takes the means again from them
+  on the current subsets, nothing run, which is how the line was made once the subset of models
+  where every tool produces a mesh went from 15 to 14 (the two new tools were not run on terrain).
 - `male_body.py`: the male body at 10,590 quads, preset organic, with closing, without it, and
   with the lean bound 0.05 alone (`OPENCLARE_CLOSE_WAYS=0,1,4,5`, the paper's "commit 452b346"
   experiment), and the hand-made mesh `bench/reference/handmade/human_male.obj` measured the same

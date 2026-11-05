@@ -123,9 +123,10 @@ contraintes sur les bandes du maillage, et gardons le candidat qui a le moins
 d'arêtes en spirale, comptées par un test qui distingue les hélices des
 boucles fermées, ouvertes et de bord. Sur douze modèles, à trois budgets
 voisins de 3\,000 quads, le moteur laisse 4,92\,\% des arêtes sur des boucles
-en spirale (19,8\,\% sans fermeture)\,; sur les sept modèles que deux autres
-remailleurs libres maillent aussi de façon valide, 2,2\,\% contre 38,8\,\% et % NIGHT4
-21,7\,\%\,; sur un corps humain, 1,5\,\%, contre 2,5\,\% pour le maillage
+en spirale (19,8\,\% quand le moteur lui-même tourne sans fermeture)\,; sur
+les sept modèles que quatre autres remailleurs libres maillent aussi de façon
+valide, 2,2\,\% contre 11,4\,\% à 38,8\,\%, dont 19,9\,\% pour % NIGHT4
+QuadWild-BiMDF, un quantificateur d'écart minimal sans fermeture\,; sur un corps humain, 1,5\,\%, contre 2,5\,\% pour le maillage
 fait à la main. Une analyse exacte du système de fermeture de ce
 corps montre que le conflit entre fermer les tours et garder les
 singularités séparées est réel mais local, que c'est l'heuristique plutôt
@@ -172,7 +173,7 @@ les hélices de pas au plus quatre des boucles fermées, ouvertes et de
 bord\,; il existe des comptes de boucles et des scores de simplicité des
 boucles~\cite{liu2025quadgpt,kong2026squadgen}, mais ils ne séparent pas les
 hélices des boucles ouvertes. La section~\ref{sec:experiments} mesure la
-méthode dans le remailleur libre openclare face à deux remailleurs libres et
+méthode dans le remailleur libre openclare face à quatre remailleurs libres et
 à un maillage modélisé à la main, et la section~\ref{sec:exact} résout
 exactement le système de fermeture d'un corps humain pour situer
 l'heuristique~: le conflit entre fermer les tours et garder les singularités
@@ -732,28 +733,81 @@ moteur octet pour octet.}
 \end{table}
 
 \paragraph{Face à d'autres remailleurs.}
-Le banc complet de la version 0.7.0 ($3\,000$ quads\,; une exécution par
-modèle pour openclare et AutoRemesher~\cite{autoremesher}, la médiane de
-cinq graines pour QuadriFlow~\cite{huang2018quadriflow}, lancé via Blender)
-compare les outils. Ils ne maillent pas les mêmes modèles~: QuadriFlow
-produit un maillage pour $22$ des $33$ modèles, AutoRemesher pour $18$. Sur
-les $7$ modèles que les trois maillent de façon valide à chaque exécution,
-la part moyenne d'arêtes en spirale est de $2,2\,\%$ pour openclare, % NIGHT4
-$38,8\,\%$ pour QuadriFlow et $21,7\,\%$ pour AutoRemesher\,; sur les $15$
-modèles où les trois produisent un maillage, valide ou non, $2,9\,\%$, % NIGHT4
-$27,2\,\%$ et $27,3\,\%$. Sans fermeture (le même moteur par la même
-chaîne, sans aucune variante de fermeture essayée), openclare a $15,3\,\%$
-et $15,2\,\%$ sur les mêmes sous-ensembles. La comparaison
-favorise aussi openclare par construction~: le moteur choisit parmi ses
-candidats selon cette même part (section~\ref{sec:closing}), que les deux
-autres n'optimisent pas, et la part ne voit aucune hélice de pas supérieur à
+Le banc complet de la version 0.7.0 ($3\,000$ quads) compare openclare à
+quatre remailleurs libres (tableau~\ref{tab:remeshers})~:
+QuadriFlow~\cite{huang2018quadriflow}, lancé via Blender, la médiane de cinq
+graines\,; AutoRemesher~\cite{autoremesher}\,; et, depuis le 31 octobre 2026
+(\#248), le découpage et le pavage de QuadWild~\cite{pietroni2021reliable}
+avec le quantificateur Bi-MDF de Heistermann, Warnett et
+Bommes~\cite{heistermann2023bimdf} (QuadWild-BiMDF) et Instant
+Meshes~\cite{jakob2015instant}\,; une exécution par modèle pour les autres.
+QuadWild-BiMDF quantifie son découpage avec le même genre de quantificateur
+d'écart minimal qu'openclare, sans contraintes de fermeture, ce qui en fait
+le témoin naturel\,; Instant Meshes lisse des champs locaux d'orientation et
+de position, sans paramétrisation globale ni quantification globale. Les outils ne maillent pas les mêmes
+modèles. Les trois premiers ont été lancés sur les $33$ modèles du banc,
+QuadWild-BiMDF et Instant Meshes sur les $27$ dont les maillages peuvent être
+diffusés, pas sur les $6$ autres. Un outil \emph{produit un maillage} pour un
+modèle si l'une de ses exécutions donne un maillage dont les boucles se
+mesurent, et le maille de façon valide si chaque exécution donne un maillage
+valide~: openclare produit un maillage pour $28$ modèles, QuadriFlow pour
+$22$, AutoRemesher pour $18$, QuadWild-BiMDF pour $26$ et Instant Meshes pour
+$20$, et ils en maillent $25$, $9$, $9$, $19$ et $15$ de façon valide. Sur
+les $7$ modèles que les cinq maillent de façon valide à chaque exécution, la
+part moyenne d'arêtes en spirale est de $2,2\,\%$ pour openclare, % NIGHT4
+$38,8\,\%$ pour QuadriFlow, $21,7\,\%$ pour AutoRemesher, $19,9\,\%$ pour
+QuadWild-BiMDF et $11,4\,\%$ pour Instant Meshes\,; sur les $14$ modèles où
+les cinq produisent un maillage, valide ou non, $3,1\,\%$, $29,1\,\%$, % NIGHT4
+$29,3\,\%$, $16,8\,\%$ et $9,1\,\%$. Le second sous-ensemble laisse de côté
+le terrain, que les trois premiers maillent et sur lequel les deux autres
+n'ont pas été lancés. Sans fermeture (le même moteur par la même chaîne,
+sans aucune variante de fermeture essayée), openclare a $15,3\,\%$ et
+$15,9\,\%$ sur les mêmes sous-ensembles. QuadWild-BiMDF a plus d'arêtes en
+spirale qu'openclare sans fermeture, $19,9\,\%$ et $16,8\,\%$, avec plus de ses arêtes sur des boucles
+fermées ($56,5\,\%$ et $51,4\,\%$ contre $48,7\,\%$ et $46,7\,\%$)\,; son
+champ et son découpage diffèrent aussi de ceux d'openclare, si bien que
+l'écart avec openclare n'est pas dû à la seule fermeture, que la ligne sans
+fermeture isole. Instant Meshes a le moins d'arêtes en spirale après
+openclare mais aussi le moins de boucles fermées, $13,7\,\%$ et $15,3\,\%$
+de ses arêtes~: les trois quarts sont sur des boucles ouvertes, qui
+s'arrêtent à ses sommets irréguliers, dont il a $84$ par maillage sur les
+sept modèles contre $31$ pour openclare. La comparaison favorise aussi
+openclare par construction~: le moteur choisit parmi ses candidats selon
+cette même part (section~\ref{sec:closing}), que les quatre autres
+n'optimisent pas, et la part ne voit aucune hélice de pas supérieur à
 quatre. Une mesure de structure que la sélection n'utilise pas reste à faire.
-Depuis le 31 octobre 2026 (\#248), le banc lance aussi Instant
-Meshes~\cite{jakob2015instant}, qui lisse des champs locaux d'orientation et
-de position sans paramétrisation globale, et le découpage et le pavage de
-QuadWild~\cite{pietroni2021reliable} avec le quantificateur
-de~\cite{heistermann2023bimdf}\,; leurs colonnes sont dans
-\nolinkurl{bench/results}, et cet article n'en rapporte aucun chiffre.
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrrrrrr}
+\toprule
+& \multicolumn{3}{c}{modèles sur $33$} & \multicolumn{2}{c}{$7$ valides pour tous}
+& \multicolumn{2}{c}{$14$ maillés par tous} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}
+& lancés & maillés & valides & spirale & fermées & spirale & fermées \\
+\midrule
+openclare & 33 & 28 & 25 & 2,2\,\% & 60,9\,\% & 3,1\,\% & 55,8\,\% \\ % NIGHT4
+\quad sans fermeture & -- & -- & -- & 15,3\,\% & 48,7\,\% & 15,9\,\% & 46,7\,\% \\
+QuadriFlow & 33 & 22 & 9 & 38,8\,\% & 19,3\,\% & 29,1\,\% & 16,7\,\% \\
+AutoRemesher & 33 & 18 & 9 & 21,7\,\% & 35,1\,\% & 29,3\,\% & 22,4\,\% \\
+QuadWild-BiMDF & 27 & 26 & 19 & 19,9\,\% & 56,5\,\% & 16,8\,\% & 51,4\,\% \\
+Instant Meshes & 27 & 20 & 15 & 11,4\,\% & 13,7\,\% & 9,1\,\% & 15,3\,\% \\
+\bottomrule
+\end{tabular}
+\caption{Face à d'autres remailleurs à $3\,000$ quads, lu dans les résultats
+enregistrés du banc (\nolinkurl{bench/results/results.json} au commit
+\texttt{fa009a9}\,; openclare de la version 0.7.0, commit \texttt{e13fadb}).
+Lancés~: modèles sur lesquels l'outil a été lancé\,; maillés~: modèles où une
+exécution donne un maillage dont les boucles se mesurent\,; valides~: modèles
+maillés de façon valide à chaque exécution. Spirale et fermées~: parts
+moyennes d'arêtes sur des boucles en spirale et sur des boucles fermées sur
+le sous-ensemble, par modèle la médiane des exécutions. La ligne sans
+fermeture est le même moteur par la même chaîne sans aucune variante de
+fermeture essayée, sur les seuls modèles des deux sous-ensembles.}
+\label{tab:remeshers}
+\end{table}
 
 \paragraph{Face au maillage fait à la main.}
 Le corps masculin de la bibliothèque Essentials a un maillage de base de
@@ -1177,7 +1231,8 @@ tableau~\ref{tab:dev}
   & \texttt{ablation.json} \\
 face à d'autres remailleurs
   & \texttt{against\_remeshers.py}, depuis
-  \nolinkurl{bench/results/results.json} à \texttt{e13fadb}
+  \nolinkurl{bench/results/results.json} à \texttt{fa009a9} (openclare,
+  QuadriFlow et AutoRemesher tels qu'à \texttt{e13fadb})
   & \texttt{against\_remeshers.json} \\
 corps masculin, openclare et fait à la main
   & \texttt{male\_body.py}

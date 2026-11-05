@@ -102,9 +102,10 @@ least-change projection, repair walks and rounds of constraint generation on
 the strips of the mesh, and keep the candidate with the fewest spiral edges,
 counted by a test that tells helices from closed, open and border loops. Over
 twelve models at three budgets near 3{,}000 quads, the engine leaves 4.92\%
-of the edges on spiral loops (19.8\% without closing); on the seven models
-that two other open-source remeshers also mesh validly, 2.2\% against 38.8\% % NIGHT4
-and 21.7\%; on a human body, 1.5\%, against 2.5\% for the hand-made mesh.
+of the edges on spiral loops (19.8\% when the engine itself runs without
+closing); on the seven models that four other open-source remeshers also
+mesh validly, 2.2\% against 11.4\% to 38.8\%, among them 19.9\% for % NIGHT4
+QuadWild-BiMDF, a minimum-deviation quantizer with no closing; on a human body, 1.5\%, against 2.5\% for the hand-made mesh.
 An exact analysis of the closing system of that body shows that the conflict between closing
 turns and keeping singularities apart is real but local, that the heuristic
 rather than the constraints leaves most turns shifted, and that closing more
@@ -143,7 +144,7 @@ edges that tells helices of pitch up to four from closed, open and border
 loops; loop counts and loop simplicity scores
 exist~\cite{liu2025quadgpt,kong2026squadgen}, but they do not separate
 helices from open loops. Section~\ref{sec:experiments} measures the method in
-the open-source remesher openclare against two open-source remeshers and a
+the open-source remesher openclare against four open-source remeshers and a
 mesh modelled by hand, and Section~\ref{sec:exact} solves the closing system
 of a human body exactly to see where the heuristic stands: the conflict
 between closing turns and keeping singularities apart is local, the
@@ -636,26 +637,76 @@ and gives the $36$ meshes of the engine byte for byte.}
 \end{table}
 
 \paragraph{Against other remeshers.}
-The full bench of version 0.7.0 ($3{,}000$ quads; one run per model for
-openclare and AutoRemesher~\cite{autoremesher}, the median of five seeds for
-QuadriFlow~\cite{huang2018quadriflow}, run through Blender) compares the
-tools. They do not mesh the same models: QuadriFlow produces a mesh for $22$
-of the $33$ models, AutoRemesher for $18$. On the $7$ models that all three
-mesh validly in every run, the mean share of spiral edges is $2.2\%$ for % NIGHT4
-openclare, $38.8\%$ for QuadriFlow and $21.7\%$ for AutoRemesher; on the $15$
-models where all three produce a mesh, valid or not, $2.9\%$, $27.2\%$ and % NIGHT4
-$27.3\%$. Without closing (the same engine through the same chain, with no
-way of closing tried) openclare has $15.3\%$ and $15.2\%$ on the same
-subsets. The comparison favours openclare by construction as well: the engine
-chooses among its candidates by this very share (Section~\ref{sec:closing}),
-which the other two do not optimize, and the share sees no helix of pitch
-above four. A measure of structure the selection does not use is left to
-future work. Since 31 October 2026 (\#248) the bench also runs Instant
-Meshes~\cite{jakob2015instant}, which smooths local orientation and position
-fields with no global parametrization, and the layout and tessellation of
-QuadWild~\cite{pietroni2021reliable} with the quantizer
-of~\cite{heistermann2023bimdf}; their columns are in
-\nolinkurl{bench/results}, and this paper reports no figure for them.
+The full bench of version 0.7.0 ($3{,}000$ quads) compares openclare with
+four open-source remeshers (Table~\ref{tab:remeshers}):
+QuadriFlow~\cite{huang2018quadriflow}, run through Blender, the median of
+five seeds; AutoRemesher~\cite{autoremesher}; and, since 31 October 2026
+(\#248), the layout and tessellation of QuadWild~\cite{pietroni2021reliable}
+with the Bi-MDF quantizer of Heistermann, Warnett and
+Bommes~\cite{heistermann2023bimdf} (QuadWild-BiMDF) and Instant
+Meshes~\cite{jakob2015instant}; one run per model for the others. QuadWild-BiMDF
+quantizes its layout with the same kind of minimum-deviation quantizer as
+openclare, without closing constraints, which makes it the natural witness;
+Instant Meshes smooths local orientation and position fields, with no global
+parametrization and no global quantization. The tools do not mesh the same models. The
+first three ran on the $33$ models of the bench, QuadWild-BiMDF and Instant
+Meshes on the $27$ whose meshes may be passed on, not on the other $6$. A
+tool \emph{produces a mesh} for a model if one of its runs gives a mesh whose
+loops can be measured, and meshes it validly if every run gives a valid mesh:
+openclare produces a mesh for $28$ models, QuadriFlow for $22$, AutoRemesher
+for $18$, QuadWild-BiMDF for $26$ and Instant Meshes for $20$, and they mesh
+$25$, $9$, $9$, $19$ and $15$ validly. On the $7$ models that all five mesh
+validly in every run, the mean share of spiral edges is $2.2\%$ for % NIGHT4
+openclare, $38.8\%$ for QuadriFlow, $21.7\%$ for AutoRemesher, $19.9\%$ for
+QuadWild-BiMDF and $11.4\%$ for Instant Meshes; on the $14$ models where all
+five produce a mesh, valid or not, $3.1\%$, $29.1\%$, $29.3\%$, $16.8\%$ and % NIGHT4
+$9.1\%$. The second subset leaves out the terrain, which the first three
+mesh and the other two were not run on. Without closing (the same engine
+through the same chain, with no way of closing tried) openclare has
+$15.3\%$ and $15.9\%$ on the same subsets. QuadWild-BiMDF has more spiral
+edges than that, $19.9\%$ and $16.8\%$, with more of its edges on closed
+loops ($56.5\%$ and $51.4\%$ against $48.7\%$ and $46.7\%$); its field and
+its layout differ from openclare's as well, so the gap with openclare is not
+the closing alone, which the line without closing isolates. Instant Meshes
+has the fewest spiral edges after openclare but also the fewest closed
+loops, $13.7\%$ and $15.3\%$ of its edges: three quarters of them lie on
+open loops, which stop at its irregular vertices, of which it has $84$ per
+mesh on the seven models against $31$ for openclare. The comparison favours
+openclare by construction as well: the engine chooses among its candidates
+by this very share (Section~\ref{sec:closing}), which the other four do not
+optimize, and the share sees no helix of pitch above four. A measure of
+structure the selection does not use is left to future work.
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrrrrrr}
+\toprule
+& \multicolumn{3}{c}{models of $33$} & \multicolumn{2}{c}{$7$ valid for all}
+& \multicolumn{2}{c}{$14$ meshed by all} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}
+& run & meshed & valid & spiral & closed & spiral & closed \\
+\midrule
+openclare & 33 & 28 & 25 & 2.2\% & 60.9\% & 3.1\% & 55.8\% \\ % NIGHT4
+\quad without closing & -- & -- & -- & 15.3\% & 48.7\% & 15.9\% & 46.7\% \\
+QuadriFlow & 33 & 22 & 9 & 38.8\% & 19.3\% & 29.1\% & 16.7\% \\
+AutoRemesher & 33 & 18 & 9 & 21.7\% & 35.1\% & 29.3\% & 22.4\% \\
+QuadWild-BiMDF & 27 & 26 & 19 & 19.9\% & 56.5\% & 16.8\% & 51.4\% \\
+Instant Meshes & 27 & 20 & 15 & 11.4\% & 13.7\% & 9.1\% & 15.3\% \\
+\bottomrule
+\end{tabular}
+\caption{Against other remeshers at $3{,}000$ quads, read from the bench's
+stored results (\nolinkurl{bench/results/results.json} at commit
+\texttt{fa009a9}; openclare of version 0.7.0, commit \texttt{e13fadb}). Run:
+models the tool was run on; meshed: models where a run gives a mesh whose
+loops can be measured; valid: models meshed validly in every run. Spiral and
+closed: mean shares of edges on spiral and on closed loops over the subset,
+per model the median over the runs. The line without closing is the same
+engine through the same chain with no way of closing tried, on the models of
+the two subsets only.}
+\label{tab:remeshers}
+\end{table}
 
 \paragraph{Against the hand-made mesh.}
 The male body of the Essentials library has a base mesh of $10{,}590$ quads
@@ -1029,7 +1080,8 @@ Table~\ref{tab:dev}
   & \texttt{ablation.json} \\
 against other remeshers
   & \texttt{against\_remeshers.py}, from \nolinkurl{bench/results/results.json}
-  at \texttt{e13fadb}
+  at \texttt{fa009a9} (openclare, QuadriFlow and AutoRemesher as at
+  \texttt{e13fadb})
   & \texttt{against\_remeshers.json} \\
 male body, openclare and hand-made
   & \texttt{male\_body.py}
