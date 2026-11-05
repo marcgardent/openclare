@@ -1090,8 +1090,60 @@ What stays open:
   exact refinement of Bi-MDF (matching) is not written; nothing on the corpus calls for it.
 - **The arcs kept open** give narrow strips of quads (one quad wide for a real width that is
   far less). It is the price of faithfulness to the field: agreeing instead to merge two close
-  opposite singularities (Lyon et al. 2021) would give a simpler mesh. To see with the results
-  of milestone 7.
+  opposite singularities would give a simpler mesh. Lyon et al. 2021 do not: their quantization
+  is valid only if no path of arcs of length zero joins two singularities (their §4.1), and
+  merging is left to future work in their conclusion. The option below tries it (#171).
+
+**Merging singularities (option `merge_singularities`, off by default, #171).** The lengths
+close up only what they already close up: arcs of length zero and rectangles with no width.
+Singularities of valences $d_1, \dots, d_k$ ($k \ge 2$) that come into one vertex $v$ of the
+quad mesh are accepted there when
+
+1. $v$ is inside the surface and its valence in the quad mesh is $4 + \sum_i (d_i - 4)$, a value
+   of 3, 4 or 5. The index of a vertex is $(4 - d)/4$ and indices add up when vertices merge;
+   collapsing a strip of quads between two vertices of valences $a$ and $b$ leaves
+   $a + b - 4$. So a 3 and a 5 give a regular vertex, a 3, a 5 and a 5 give a 5; two 3s
+   (valence 2) or two 5s (valence 6) are refused. On a border any valence will do, as for one
+   singularity;
+2. every other check stays as it was: each directed edge in one quad at most, no quad with a
+   repeated corner, a single fan round each vertex, every other vertex inside the surface
+   regular, no rectangle closed up between two runs of border or hard edge;
+3. where a merge was accepted and nothing else is wrong, the quad mesh still has the Euler
+   characteristic of the surface: nothing pinched shut. Otherwise every merge accepted is
+   undone. (While other defects remain, the characteristic says nothing: checked then, it
+   undid sound merges, and the option brought the ogre's 78 arcs held open down to 66
+   instead of 45.)
+
+A rectangle of no width is never meshed, so none folds: its two long sides are merged, and a
+fold between two walls is condition 2. A T-junction is not a vertex of the quad mesh but a
+point on a side; one left dangling would show as a vertex out of its fan or of valence other
+than 4, which condition 2 refuses. A refused merge reopens, as before, the arc undoing the
+largest thing closed up between two of the singularities.
+
+*Result* (13 models, 2970, 3000 and 3030 quads, means over the three; arcs held open counted by
+`openclare quantize` on the whole mesh, the rest by `openclare measure` on `remesh`, presets of
+the 12-model batch):
+
+| model | arcs held open | irregular vertices | spiral edges % | Hausdorff ‰ |
+|---|---|---|---|---|
+| ogre | 68.3 → 50.3 | 154.7 → 153.3 | 10.9 → 6.3 | 27.4 → 27.2 |
+| jerry | 34.3 → 15.3 | 175.0 → 172.0 | 0.2 → 0.4 | 13.8 → 14.6 |
+| stonemill | 218.0 → 75.3 | 198.0 → 188.0 | 3.8 → 4.7 | 26.1 → 25.1 |
+| pig | 7.3 → 3.0 | 94.7 → 94.7 | 5.5 → 4.8 | 11.6 → 12.7 |
+| rock | 4.0 → 0 | 64.7 → 64.7 | 3.1 → 3.1 | 4.3 → 4.3 |
+| suzanne | 2.0 → 0 | 55.0 → 55.0 | 10.2 → 10.8 | 7.3 → 6.8 |
+| bob | 1.0 → 0.3 | 20.0 → 20.0 | 0 → 0 | 1.7 → 1.7 |
+| blub | 0 → 0 | 53.3 → 52.7 | 2.2 → 1.7 | 7.9 → 7.6 |
+| cage, spot | 8, 1 unchanged | unchanged | unchanged | unchanged |
+| creature, blob, part | 0 | unchanged | unchanged | unchanged |
+| **mean** | **26.5 → 11.8** | **78.6 → 77.4** | **4.8 → 4.5** | **9.7 → 9.7** |
+
+Every mesh stays valid. The arcs held open fall by more than half, and no model has more; the
+irregular vertices fall where merges happen (stonemill −10) and rise nowhere. Spirals and
+Hausdorff move both ways, by no more than a budget change moves them. Most of what stays held
+is not a dipole: on the ogre, the singularities that land in one vertex are nearly all of one
+sign (two 3s, two or more 5s), which no sum of indices lets merge.
+
 - **Budget**: the finest step is a whole strip, that is 2 to 4 % of the quads at 1000 quads.
 - **A piece with neither singularity nor border** (a torus) has no T-mesh, hence nothing to
   quantize: its two periods will have to be rounded apart.

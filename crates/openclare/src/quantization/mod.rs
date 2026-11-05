@@ -46,11 +46,22 @@ pub struct Request {
     /// closing turned off, its system written out, lengths read in. None by
     /// default.
     pub experiment: Experiment,
+    /// Singularities may merge across arcs of length zero where their
+    /// indices add up to a valence of 3, 4 or 5, a 3 and a 5 giving a
+    /// regular vertex, instead of holding an arc open between them (#171).
+    pub merge_singularities: bool,
 }
 
 impl Default for Request {
     fn default() -> Self {
-        Self { quads: None, tolerance: 0.02, close_turns: true, slow: None, experiment: Experiment::default() }
+        Self {
+            quads: None,
+            tolerance: 0.02,
+            close_turns: true,
+            slow: None,
+            experiment: Experiment::default(),
+            merge_singularities: false,
+        }
     }
 }
 
@@ -380,6 +391,7 @@ fn repair(
     corridors: &[&tubes::Corridor],
     budget: Option<(usize, usize)>,
     sphere: &[bool],
+    merging: bool,
     report: &mut Report,
 ) {
     let clock = std::time::Instant::now();
@@ -422,7 +434,9 @@ fn repair(
             .map(|(arc, &delta)| plain.of(arc, x[arc] + delta) - plain.of(arc, x[arc]))
             .sum();
         let sound = || {
-            within(x, &moved) && keeps_corridors(x, &moved) && lattice::build(tmesh, &moved).defects(tmesh).is_empty()
+            within(x, &moved)
+                && keeps_corridors(x, &moved)
+                && lattice::build(tmesh, &moved).defects(tmesh, merging).is_empty()
         };
         if std::env::var_os("OPENCLARE_DEBUG_REPAIR").is_some() {
             let size = change.iter().filter(|&&d| d != 0).count();
@@ -517,7 +531,7 @@ fn repair(
             let sound = better
                 && within(x, &moved)
                 && keeps_corridors(x, &moved)
-                && lattice::build(tmesh, &moved).defects(tmesh).is_empty();
+                && lattice::build(tmesh, &moved).defects(tmesh, merging).is_empty();
             if std::env::var_os("OPENCLARE_DEBUG_REPAIR").is_some() {
                 eprintln!(
                     "    aimed walk: turn {:.0} -> {:.0}, all {now:.0} -> {then:.0}, cost {cost:.2}, sound {sound}",
@@ -654,7 +668,21 @@ impl WalkCancelling {
             };
             let repaired = |aimed: &[f64], scale: f64, lower: &[i64], x: &mut [i64], report: &mut Report| {
                 let target: Vec<f64> = aimed.iter().map(|length| scale * length).collect();
-                repair(tmesh, network, pull, &target, lower, x, every, aimed_at, &corridors, budget, sphere, report);
+                repair(
+                    tmesh,
+                    network,
+                    pull,
+                    &target,
+                    lower,
+                    x,
+                    every,
+                    aimed_at,
+                    &corridors,
+                    budget,
+                    sphere,
+                    request.merge_singularities,
+                    report,
+                );
                 check_turns(tmesh, network, every, sphere, x, false);
             };
             repaired(&aimed, scale, &lower, &mut x, report);
@@ -873,7 +901,7 @@ impl WalkCancelling {
                 report.scans += effort.scans;
                 // The lengths are sound if the quad mesh they stand for is;
                 // where it is not, something closed up that must not.
-                let defects = lattice::build(tmesh, &x).defects(tmesh);
+                let defects = lattice::build(tmesh, &x).defects(tmesh, request.merge_singularities);
                 if defects.reopen.is_empty() {
                     separated = defects.is_empty();
                     break;
@@ -1009,7 +1037,8 @@ impl Quantizer for WalkCancelling {
             let plain_spirals = spirals(tmesh, &plain.0);
             // Lengths that leave the structure broken are not mended by
             // closing loops, and each way would cost as long a search again.
-            let sound = plain_spirals.is_finite() && lattice::build(tmesh, &plain.0).defects(tmesh).is_empty();
+            let sound = plain_spirals.is_finite()
+                && lattice::build(tmesh, &plain.0).defects(tmesh, request.merge_singularities).is_empty();
             // The least change of the real lengths that closes turns, its
             // part for the rectangles solved once for every way.
             let weight: Vec<f64> = real.iter().map(|length| 1.0 / (length + 1.0)).collect();
@@ -1151,7 +1180,16 @@ impl Quantizer for WalkCancelling {
             {
                 let (clock, cpu) = (std::time::Instant::now(), process_cpu_seconds());
                 let start = kept.first().map_or(&plain, |first| &first.lengths).clone();
-                let found = rings::rounds(tmesh, &real, &start, wanted, allowed, most_deviation, slow);
+                let found = rings::rounds(
+                    tmesh,
+                    &real,
+                    &start,
+                    wanted,
+                    allowed,
+                    most_deviation,
+                    slow,
+                    request.merge_singularities,
+                );
                 let mut added = 0;
                 for (round, (x, lower, closed)) in found.into_iter().enumerate() {
                     let quads = count_quads(tmesh, &x);
@@ -1164,7 +1202,7 @@ impl Quantizer for WalkCancelling {
                     ));
                     if spirals < plain_spirals - 1e-9
                         && network.is_balanced(&tried.0)
-                        && lattice::build(tmesh, &tried.0).defects(tmesh).is_empty()
+                        && lattice::build(tmesh, &tried.0).defects(tmesh, request.merge_singularities).is_empty()
                         && tried.2.abs_diff(wanted) <= allowed
                         && deviation(&tried, &real) <= most_deviation
                         && off_folds(&folds, &tried.0) <= most_off_folds
@@ -1248,7 +1286,7 @@ impl Quantizer for WalkCancelling {
                     let spirals = spirals(tmesh, &tried.0);
                     if spirals < plain_spirals - 1e-9
                         && network.is_balanced(&tried.0)
-                        && lattice::build(tmesh, &tried.0).defects(tmesh).is_empty()
+                        && lattice::build(tmesh, &tried.0).defects(tmesh, request.merge_singularities).is_empty()
                         && tried.2.abs_diff(wanted) <= allowed
                         && deviation(&tried, &real) <= most_deviation
                         && off_folds(&folds, &tried.0) <= most_off_folds
@@ -1411,7 +1449,8 @@ fn finished(
     report.budget_error = request.quads.map(|wanted| quads.abs_diff(wanted) as f64 / wanted as f64);
     report.balanced = network.is_balanced(x);
     let built = lattice::build(tmesh, x);
-    report.separated &= built.defects(tmesh).is_empty() && built.euler() == tmesh.report.euler;
+    report.separated &=
+        built.defects(tmesh, request.merge_singularities).is_empty() && built.euler() == tmesh.report.euler;
     report.zero_arcs = x.iter().filter(|&&length| length == 0).count();
     report.held_arcs = lower.iter().zip(x).filter(|&(&bound, &length)| bound > 0 && length == bound).count();
     let deviations: Vec<f64> =
@@ -1620,6 +1659,30 @@ mod tests {
     fn quantized(tmesh: &TMesh, quads: Option<usize>) -> Quantization {
         let request = Request { quads, ..Default::default() };
         WalkCancelling::default().quantize(tmesh, &request).unwrap()
+    }
+
+    #[test]
+    fn a_strip_between_a_3_and_a_5_closes_up_only_when_they_may_merge() {
+        // The strip is a fifth of a quad wide: closed up, it would merge the
+        // pair; kept apart, it is held one quad wide.
+        let (tmesh, across) = lattice::tests::disc_with_a_pair();
+        let is_across = |arc: usize| {
+            let [a, b] = tmesh.arcs[arc].nodes;
+            across.contains(&(a.min(b), a.max(b)))
+        };
+        for merging in [false, true] {
+            let request = Request { close_turns: false, merge_singularities: merging, ..Default::default() };
+            let quantized = WalkCancelling::default().quantize(&tmesh, &request).unwrap();
+            let report = &quantized.report;
+            assert!(report.is_valid(), "merging {merging}: {report:?}");
+            let width: Vec<u32> =
+                (0..tmesh.arcs.len()).filter(|&arc| is_across(arc)).map(|arc| quantized.lengths[arc]).collect();
+            if merging {
+                assert_eq!((width, report.held_arcs, report.quads), (vec![0; 4], 0, 9));
+            } else {
+                assert_eq!((width, report.held_arcs, report.quads), (vec![1; 4], 1, 12));
+            }
+        }
     }
 
     /// Whether some way round of these, shift and length along added up, is

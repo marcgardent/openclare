@@ -97,6 +97,7 @@ The tools of the 3D viewport, in Object Mode.
 | `--method integer-grid`, `--method instant-meshes` | experimental | other chains, kept for comparison (#9) |
 | `--quality slow`, `--slow-work-limit`, `--slow-time-limit` | experimental | a research track, on the command line only (#138, #144) |
 | `--skip-pieces-under`, `--no-close-loops` | experimental | tools to look into a run |
+| `--merge-singularities` | experimental | a 3 and a 5 merged across a strip of no width, off by default (#171) |
 | `measure`, `layout`, `primitive` | stable | |
 | `field`, `parametrize`, `tmesh`, `quantize`, `preprocess` | experimental | stages of the chain one at a time: their options follow the chain |
 | `--record`, `--record-still`, `openclare-view` (Rerun) | experimental | a version of Rerun behind, stages not shown (#35) |

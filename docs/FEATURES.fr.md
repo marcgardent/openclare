@@ -99,6 +99,7 @@ Les outils de la vue 3D, en Object Mode.
 | `--method integer-grid`, `--method instant-meshes` | expérimental | autres chaînes, gardées pour comparer (#9) |
 | `--quality slow`, `--slow-work-limit`, `--slow-time-limit` | expérimental | une piste de recherche, en ligne de commande seulement (#138, #144) |
 | `--skip-pieces-under`, `--no-close-loops` | expérimental | des outils pour regarder dans un calcul |
+| `--merge-singularities` | expérimental | un 3 et un 5 fusionnés à travers une bande sans largeur, désactivé par défaut (#171) |
 | `measure`, `layout`, `primitive` | stable | |
 | `field`, `parametrize`, `tmesh`, `quantize`, `preprocess` | expérimental | les étapes de la chaîne une à une : leurs options suivent la chaîne |
 | `--record`, `--record-still`, `openclare-view` (Rerun) | expérimental | une version de Rerun en retard, des étapes non montrées (#35) |

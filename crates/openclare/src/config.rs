@@ -70,6 +70,11 @@ pub struct RemeshConfig {
     /// Lines of quads that go round a part are closed into rings where the
     /// whole lengths would wind them into helices (DT-062).
     pub close_loops: bool,
+    /// Singularities whose indices add up to a valence of 3, 4 or 5 (a 3
+    /// and a 5 giving a regular vertex) may merge across arcs of length
+    /// zero, instead of holding open a strip of quads between them (#171).
+    /// Off by default: an experiment.
+    pub merge_singularities: bool,
     /// How hard the loops are closed: by the engine alone, or, slowly, by
     /// an exact solver as well (see [`Quality`]).
     pub quality: Quality,
@@ -212,6 +217,7 @@ impl RemeshConfig {
             density_contrast: 4.0,
             skip_pieces_under: 0.0,
             close_loops: true,
+            merge_singularities: false,
             quality: Quality::Standard,
             slow_time_limit: SLOW_TIME_LIMIT,
             slow_work_limit: SLOW_WORK_LIMIT,
@@ -415,6 +421,7 @@ impl RemeshConfig {
         writeln!(text, "density_contrast = {}", self.density_contrast).unwrap();
         writeln!(text, "skip_pieces_under = {}", self.skip_pieces_under).unwrap();
         writeln!(text, "close_loops = {}", self.close_loops).unwrap();
+        writeln!(text, "merge_singularities = {}", self.merge_singularities).unwrap();
         writeln!(text, "quality = {}", self.quality).unwrap();
         writeln!(text, "slow_time_limit = {}", self.slow_time_limit).unwrap();
         writeln!(text, "slow_work_limit = {}", self.slow_work_limit).unwrap();
@@ -485,6 +492,10 @@ impl RemeshConfig {
                 "skip_pieces_under" => config.skip_pieces_under = number_of("number")?,
                 "close_loops" => {
                     config.close_loops = value.parse().map_err(|_| error(format!("'{value}' is not true or false")))?
+                }
+                "merge_singularities" => {
+                    config.merge_singularities =
+                        value.parse().map_err(|_| error(format!("'{value}' is not true or false")))?
                 }
                 "quality" => config.quality = value.parse().map_err(|e: Error| error(e.to_string()))?,
                 "slow_time_limit" => config.slow_time_limit = number_of("number of seconds")?,
