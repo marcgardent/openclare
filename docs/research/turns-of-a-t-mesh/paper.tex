@@ -2023,8 +2023,8 @@ c$, $a \to c$; the edge $bb'$ then gives $a \to b \to b'$ or $b' \to b \to c$,
 a comparable pair $ab'$ or $b'c$ that is not an edge.
 \end{proof}
 
-By (i), a turn is separated from at most two others by exactly one pair; by
-(ii), chains of dislocations, however many, only encode orders, on which
+By (i), when the turns are pairwise disjoint, a turn is separated from at most
+two others by exactly one pair; by (ii), chains of dislocations, however many, only encode orders, on which
 \RC{} is polynomial. The instance of Theorem~\ref{thm:nphard} has the other
 kind of relation: $\shift_u \ge 0$ and $\shift_u + \shift_v \ge d_e \ge 1$,
 sums of two shifts of fixed sign, which no choice of the walking directions
@@ -2041,8 +2041,8 @@ On $60$ random T-meshes of genus zero (cubes, boxes, hulls and their duals,
 every arc held at length at least one), the pairs of turns that cannot close
 together form, on the $31$ that have any, comparability graphs, $19$ of them
 with triangles; four turns whose closable sets are exactly the independent
-sets of $K_4$ occur on two, checked exactly, and no prism, cube or pentagonal
-prism (measured, conflicts decided in floating point;
+sets of $K_4$ occur on two instances, three such sets on one of them checked
+exactly, and no prism, cube or pentagonal prism (measured, conflicts decided in floating point;
 \texttt{experiments/gadget.py}).
 
 Some parts are easy: without turns and window, whole quantization is a

@@ -15,7 +15,7 @@ pentagonal prism (planar, every vertex of degree three).
    the edges of a graph, with `x_u − x_v ≥ 1` on each arc `u → v`, the
    closable sets are compared with the independent sets; and the same for one
    chain, its turns in a row with the sign of each staircase. The implication
-   classes of Gallai (Golumbic, Theorem 5.4) say again which graphs have such
+   classes of Gallai say again which graphs have such
    an orientation (the comparability graphs).
 2. The reduction's own instance (bidirected balances, Lemma
    `closable_iff_independent`) on the same graphs, exactly: whole lengths
@@ -135,7 +135,7 @@ def same_closable_sets(n, arcs, independent):
 
 def comparability(n, edges):
     """Gallai's implication classes: G is a comparability graph if and only if
-    no class holds an oriented edge and its reverse (Golumbic, Theorem 5.4)."""
+    no class holds an oriented edge and its reverse."""
     adjacent = adjacency(n, edges)
     oriented = [(a, b) for a, b in edges] + [(b, a) for a, b in edges]
     parent = {e: e for e in oriented}

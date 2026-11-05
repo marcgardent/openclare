@@ -190,6 +190,7 @@ Times on an Intel Core i7-7700K (4 cores, 8 threads, 2017, 62 GB), loaded by oth
 | `holonomy.py --no-annuli` | 2.5 minutes for the eight ways; the pairs of turns about 1 minute per 400 pairs: about an hour more for all eight ways (with `--jobs 4`, a quarter of that) |
 | `fox.py` | 10 to 18 s a way; `--relations` adds about 4 minutes (the windings of every turn, then a linear program each) |
 | `conjugacy.py` | not run there; on the export of v0.7.0, 626 s at load 5 to 9, most of it on rows 20, 21, 25 and 28 |
+| `gadget.py` | not run there (it reads no export); 352 s for its 60 random spheres at load 15 to 17 |
 | `strict.py` | 8 s (configuration A, in the cone) to 75 s (F, separated) a set; the sets of four and more, minutes each |
 | `forced.py --steps bounds` | 75 s for the nine families (way 7: 45 s) |
 | `forced.py` (cap and size) | up to `--budget` (1,800 s) a family for the cap and up to 6 × `--seconds` (900 s) for the size: hours; ways 0 and 2 take 15 s |
