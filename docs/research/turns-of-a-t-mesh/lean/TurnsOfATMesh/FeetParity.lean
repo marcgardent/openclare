@@ -51,7 +51,12 @@ theorem foot_at_end (origin : Trace → Node) (through : Node → Finset Trace)
     (isVertex : Node → Prop) [DecidablePred isVertex] (τ : Trace) (n f v : Node)
     (h : EndOfArc origin through isVertex τ n f) :
     ind (f = v) = fromVertex origin through isVertex v n + ind (origin τ = v) := by
-  sorry
+  rcases h with ⟨hv, ho, rfl⟩ | ⟨hv, ρ, hρ, ht, rfl⟩
+  · simp [fromVertex, hv, ho]
+  · simp only [fromVertex, hv, ite_false, ht]
+    by_cases h₁ : origin τ = v <;> by_cases h₂ : origin ρ = v <;>
+      simp [ind, h₁, h₂, Finset.filter_insert, Finset.filter_singleton, Finset.card_pair (Ne.symm hρ)] <;>
+      decide
 
 /-- **Proposition "Feet modulo 2" (a), on an arc.** For an arc on the trace `τ`
 with ends `n₀`, `n₁` and feet `f₀`, `f₁`, the number of its feet at `v` is the
@@ -61,7 +66,10 @@ theorem feet_coboundary (origin : Trace → Node) (through : Node → Finset Tra
     (h₀ : EndOfArc origin through isVertex τ n₀ f₀) (h₁ : EndOfArc origin through isVertex τ n₁ f₁) :
     ind (f₀ = v) + ind (f₁ = v) =
       fromVertex origin through isVertex v n₀ + fromVertex origin through isVertex v n₁ := by
-  sorry
+  rw [foot_at_end origin through isVertex τ n₀ f₀ v h₀, foot_at_end origin through isVertex τ n₁ f₁ v h₁]
+  have h : ind (origin τ = v) + ind (origin τ = v) = 0 := by
+    unfold ind; split <;> decide
+  linear_combination h
 
 end Feet
 
@@ -81,7 +89,32 @@ theorem combination_even_of_constant_colour {K : Type*} (s : Finset K) (j : ι �
     (hrot : ∀ r ∈ s, rhoW (powers giUnit j) (w r) = 1) (κ : ZMod 2)
     (hcol : ∀ i, Odd (j i) → colour (p i) = κ) :
     ((∑ r ∈ s, c r * component (dir r) (hol (powers giUnit j) p (w r)).trans : ℤ) : ZMod 2) = 0 := by
-  sorry
+  rw [checkerboard_combination]
+  have hj : ∀ i, (j i : ZMod 2) * colour (p i) = (j i : ZMod 2) * κ := by
+    intro i
+    rcases Int.even_or_odd (j i) with he | ho
+    · have h0 : (j i : ZMod 2) = 0 := by
+        rw [ZMod.intCast_zmod_eq_zero_iff_dvd]; exact even_iff_two_dvd.mp he
+      simp [h0]
+    · rw [hcol i ho]
+  have hw : ∀ r ∈ s, ((∑ i, expSum i (w r) * j i : ℤ) : ZMod 2) = 0 := by
+    intro r hr
+    have hd := sum_dvd_of_rhoW_eq_one giUnit j (w r) (hrot r hr)
+    rw [orderOf_giUnit] at hd
+    rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
+    exact Int.dvd_trans (by norm_num) hd
+  calc ∑ i, ((∑ r ∈ s, c r * expSum i (w r) : ℤ) : ZMod 2) * (j i : ZMod 2) * colour (p i)
+      = ∑ i, ((∑ r ∈ s, c r * expSum i (w r) : ℤ) : ZMod 2) * (j i : ZMod 2) * κ := by
+        refine Finset.sum_congr rfl fun i _ => ?_
+        rw [mul_assoc, hj i, ← mul_assoc]
+    _ = κ * ∑ r ∈ s, (c r : ZMod 2) * ((∑ i, expSum i (w r) * j i : ℤ) : ZMod 2) := by
+        push_cast
+        simp only [Finset.mul_sum, Finset.sum_mul]
+        rw [Finset.sum_comm]
+        refine Finset.sum_congr rfl fun r _ => Finset.sum_congr rfl fun i _ => ?_
+        ring
+    _ = 0 := by
+        rw [Finset.sum_eq_zero fun r hr => by rw [hw r hr, mul_zero], mul_zero]
 
 end Combination
 
@@ -98,7 +131,18 @@ theorem combination_reads_even (shift : K → Arc → ℤ) (B : Row → Arc → 
     (χ : Arc → ℤ) (hs : ∀ r, ((∑ a, shift r a * χ a : ℤ) : ZMod 2) = 0)
     (hB : ∀ k, ((∑ a, B k a * χ a : ℤ) : ZMod 2) = 0) :
     ((∑ a, (∑ r, u r * shift r a + ∑ k, y k * B k a) * χ a : ℤ) : ZMod 2) = 0 := by
-  sorry
+  have hs' : ∀ r, ∑ a, (shift r a : ZMod 2) * (χ a : ZMod 2) = 0 := fun r => by
+    simpa using hs r
+  have hB' : ∀ k, ∑ a, (B k a : ZMod 2) * (χ a : ZMod 2) = 0 := fun k => by
+    simpa using hB k
+  push_cast
+  calc ∑ a, (∑ r, (u r : ZMod 2) * shift r a + ∑ k, (y k : ZMod 2) * B k a) * χ a
+      = ∑ r, (u r : ZMod 2) * ∑ a, (shift r a : ZMod 2) * χ a +
+          ∑ k, (y k : ZMod 2) * ∑ a, (B k a : ZMod 2) * χ a := by
+        simp only [add_mul, Finset.sum_add_distrib, Finset.sum_mul, Finset.mul_sum]
+        rw [Finset.sum_comm, Finset.sum_comm (f := fun a k => (y k : ZMod 2) * B k a * χ a)]
+        congr 1 <;> refine Finset.sum_congr rfl fun _ _ => Finset.sum_congr rfl fun _ _ => ?_ <;> ring
+    _ = 0 := by simp [hs', hB']
 
 end Assembly
 
