@@ -4,15 +4,26 @@
  "target": 3000,
  "current": {
   "models": 33,
+  "run_on": {
+   "openclare": 33,
+   "quadriflow": 33,
+   "autoremesher": 33,
+   "quadwild-bimdf": 27,
+   "instant-meshes-jakob": 27
+  },
   "produce_a_mesh": {
    "openclare": 28,
    "quadriflow": 22,
-   "autoremesher": 18
+   "autoremesher": 18,
+   "quadwild-bimdf": 26,
+   "instant-meshes-jakob": 20
   },
   "valid_in_every_run": {
    "openclare": 25,
    "quadriflow": 9,
-   "autoremesher": 9
+   "autoremesher": 9,
+   "quadwild-bimdf": 19,
+   "instant-meshes-jakob": 15
   },
   "subsets": {
    "valid_in_every_run": {
@@ -30,19 +41,41 @@
       "loop_edges_spiral": 0.021587058184617064,
       "loop_edges_helix": 0.004668375985680422,
       "loops_helix_missed": 0,
-      "loop_edges_closed": 0.6086685944876123
+      "loop_edges_closed": 0.6086685944876123,
+      "loop_edges_open": 0.3697443473277705,
+      "irregular_vertices": 31.142857142857142
      },
      "quadriflow": {
       "loop_edges_spiral": 0.3875724791928746,
       "loop_edges_helix": 0.4287310310059931,
       "loops_helix_missed": 1.7142857142857142,
-      "loop_edges_closed": 0.193070041165868
+      "loop_edges_closed": 0.193070041165868,
+      "loop_edges_open": 0.4082304272105084,
+      "irregular_vertices": 22.285714285714285
      },
      "autoremesher": {
       "loop_edges_spiral": 0.21694191750325809,
       "loop_edges_helix": 0.20381465017623412,
       "loops_helix_missed": 0.5714285714285714,
-      "loop_edges_closed": 0.3513362894647281
+      "loop_edges_closed": 0.3513362894647281,
+      "loop_edges_open": 0.4317217930320135,
+      "irregular_vertices": 21.714285714285715
+     },
+     "quadwild-bimdf": {
+      "loop_edges_spiral": 0.19864531269520286,
+      "loop_edges_helix": 0.0961591075618136,
+      "loops_helix_missed": 0,
+      "loop_edges_closed": 0.5654414909928871,
+      "loop_edges_open": 0.23591319631191,
+      "irregular_vertices": 27.142857142857142
+     },
+     "instant-meshes-jakob": {
+      "loop_edges_spiral": 0.114217565478709,
+      "loop_edges_helix": 0.07055893797935507,
+      "loops_helix_missed": 0,
+      "loop_edges_closed": 0.1370400138093525,
+      "loop_edges_open": 0.7487424207119384,
+      "irregular_vertices": 83.57142857142857
      }
     }
    },
@@ -61,27 +94,48 @@
      "pig",
      "jerry",
      "lblock",
-     "cylinder",
-     "terrain"
+     "cylinder"
     ],
     "means": {
      "openclare": {
-      "loop_edges_spiral": 0.029051833851068718,
-      "loop_edges_helix": 0.016081064061433628,
+      "loop_edges_spiral": 0.03112696484043077,
+      "loop_edges_helix": 0.01722971149439317,
       "loops_helix_missed": 0,
-      "loop_edges_closed": 0.5227704849645581
+      "loop_edges_closed": 0.5578772143369215,
+      "loop_edges_open": 0.39794443151089925,
+      "irregular_vertices": 44.42857142857143
      },
      "quadriflow": {
-      "loop_edges_spiral": 0.27157493548920253,
-      "loop_edges_helix": 0.304797884665421,
-      "loops_helix_missed": 1.7333333333333334,
-      "loop_edges_closed": 0.15594072335135656
+      "loop_edges_spiral": 0.29097314516700273,
+      "loop_edges_helix": 0.32656916214152254,
+      "loops_helix_missed": 1.8571428571428572,
+      "loop_edges_closed": 0.16707934644788203,
+      "loop_edges_open": 0.5212831408182749,
+      "irregular_vertices": 43.285714285714285
      },
      "autoremesher": {
-      "loop_edges_spiral": 0.2730304165538347,
-      "loop_edges_helix": 0.2181755351452066,
-      "loops_helix_missed": 0.26666666666666666,
-      "loop_edges_closed": 0.20867246182589824
+      "loop_edges_spiral": 0.2925325891648229,
+      "loop_edges_helix": 0.2337595019412928,
+      "loops_helix_missed": 0.2857142857142857,
+      "loop_edges_closed": 0.22357763767060526,
+      "loop_edges_open": 0.4838897731645719,
+      "irregular_vertices": 38.5
+     },
+     "quadwild-bimdf": {
+      "loop_edges_spiral": 0.16822201018758767,
+      "loop_edges_helix": 0.1012994909627116,
+      "loops_helix_missed": 0,
+      "loop_edges_closed": 0.5140963108468105,
+      "loop_edges_open": 0.303941965721967,
+      "irregular_vertices": 40.642857142857146
+     },
+     "instant-meshes-jakob": {
+      "loop_edges_spiral": 0.09061635971283533,
+      "loop_edges_helix": 0.04060945735859525,
+      "loops_helix_missed": 0,
+      "loop_edges_closed": 0.15293508984523105,
+      "loop_edges_open": 0.7539953203561923,
+      "irregular_vertices": 114.07142857142857
      }
     }
    }
@@ -90,6 +144,11 @@
  "at_commits": {
   "5bc16c6": {
    "models": 33,
+   "run_on": {
+    "openclare": 33,
+    "quadriflow": 33,
+    "autoremesher": 33
+   },
    "produce_a_mesh": {
     "openclare": 27,
     "quadriflow": 22,
@@ -116,19 +175,25 @@
        "loop_edges_spiral": 0.017821594044498953,
        "loop_edges_helix": null,
        "loops_helix_missed": null,
-       "loop_edges_closed": 0.6161604402900098
+       "loop_edges_closed": 0.6161604402900098,
+       "loop_edges_open": 0.36601796566549144,
+       "irregular_vertices": 31.142857142857142
       },
       "quadriflow": {
        "loop_edges_spiral": 0.3875724791928746,
        "loop_edges_helix": null,
        "loops_helix_missed": null,
-       "loop_edges_closed": 0.193070041165868
+       "loop_edges_closed": 0.193070041165868,
+       "loop_edges_open": 0.4082304272105084,
+       "irregular_vertices": 22.285714285714285
       },
       "autoremesher": {
        "loop_edges_spiral": 0.21694191750325809,
        "loop_edges_helix": null,
        "loops_helix_missed": null,
-       "loop_edges_closed": 0.3513362894647281
+       "loop_edges_closed": 0.3513362894647281,
+       "loop_edges_open": 0.4317217930320135,
+       "irregular_vertices": 21.714285714285715
       }
      }
     },
@@ -155,19 +220,25 @@
        "loop_edges_spiral": 0.04178822332721446,
        "loop_edges_helix": null,
        "loops_helix_missed": null,
-       "loop_edges_closed": 0.5080513804200368
+       "loop_edges_closed": 0.5080513804200368,
+       "loop_edges_open": 0.4267322929921487,
+       "irregular_vertices": 48.46666666666667
       },
       "quadriflow": {
        "loop_edges_spiral": 0.27157493548920253,
        "loop_edges_helix": null,
        "loops_helix_missed": null,
-       "loop_edges_closed": 0.15594072335135656
+       "loop_edges_closed": 0.15594072335135656,
+       "loop_edges_open": 0.521840162481959,
+       "irregular_vertices": 47.86666666666667
       },
       "autoremesher": {
        "loop_edges_spiral": 0.2730304165538347,
        "loop_edges_helix": null,
        "loops_helix_missed": null,
-       "loop_edges_closed": 0.20867246182589824
+       "loop_edges_closed": 0.20867246182589824,
+       "loop_edges_open": 0.49670621252935804,
+       "irregular_vertices": 38.93333333333333
       }
      }
     }
@@ -175,6 +246,11 @@
   },
   "b0fba91": {
    "models": 31,
+   "run_on": {
+    "openclare": 31,
+    "quadriflow": 31,
+    "autoremesher": 31
+   },
    "produce_a_mesh": {
     "openclare": 26,
     "quadriflow": 22,
@@ -201,19 +277,25 @@
        "loop_edges_spiral": 0.1657155515677906,
        "loop_edges_helix": null,
        "loops_helix_missed": null,
-       "loop_edges_closed": 0.4597405722329657
+       "loop_edges_closed": 0.4597405722329657,
+       "loop_edges_open": 0.37454387619924373,
+       "irregular_vertices": 34.857142857142854
       },
       "quadriflow": {
        "loop_edges_spiral": 0.3875724791928746,
        "loop_edges_helix": null,
        "loops_helix_missed": null,
-       "loop_edges_closed": 0.193070041165868
+       "loop_edges_closed": 0.193070041165868,
+       "loop_edges_open": 0.4082304272105084,
+       "irregular_vertices": 22.285714285714285
       },
       "autoremesher": {
        "loop_edges_spiral": 0.21694191750325809,
        "loop_edges_helix": null,
        "loops_helix_missed": null,
-       "loop_edges_closed": 0.3513362894647281
+       "loop_edges_closed": 0.3513362894647281,
+       "loop_edges_open": 0.4317217930320135,
+       "irregular_vertices": 21.714285714285715
       }
      }
     },
@@ -240,19 +322,25 @@
        "loop_edges_spiral": 0.1553283918706235,
        "loop_edges_helix": null,
        "loops_helix_missed": null,
-       "loop_edges_closed": 0.4201331554063777
+       "loop_edges_closed": 0.4201331554063777,
+       "loop_edges_open": 0.40348989229679766,
+       "irregular_vertices": 49.93333333333333
       },
       "quadriflow": {
        "loop_edges_spiral": 0.27157493548920253,
        "loop_edges_helix": null,
        "loops_helix_missed": null,
-       "loop_edges_closed": 0.15594072335135656
+       "loop_edges_closed": 0.15594072335135656,
+       "loop_edges_open": 0.521840162481959,
+       "irregular_vertices": 47.86666666666667
       },
       "autoremesher": {
        "loop_edges_spiral": 0.2730304165538347,
        "loop_edges_helix": null,
        "loops_helix_missed": null,
-       "loop_edges_closed": 0.20867246182589824
+       "loop_edges_closed": 0.20867246182589824,
+       "loop_edges_open": 0.49670621252935804,
+       "irregular_vertices": 38.93333333333333
       }
      }
     }
@@ -291,13 +379,17 @@
     "loop_edges_spiral": 0.1530351674460121,
     "loop_edges_helix": 0.13015201976480692,
     "loops_helix_missed": 0,
-    "loop_edges_closed": 0.48692985133544564
+    "loop_edges_closed": 0.48692985133544564,
+    "loop_edges_open": null,
+    "irregular_vertices": null
    },
    "all_produce_a_mesh": {
-    "loop_edges_spiral": 0.15163635438965167,
-    "loop_edges_helix": 0.10552320539390683,
+    "loop_edges_spiral": 0.15865109627636045,
+    "loop_edges_helix": 0.11306057720775732,
     "loops_helix_missed": 0,
-    "loop_edges_closed": 0.43628267084629424
+    "loop_edges_closed": 0.4674457187638867,
+    "loop_edges_open": null,
+    "irregular_vertices": null
    }
   },
   "per_model": {
@@ -421,6 +513,7 @@
     "loops_helix_missed": 0,
     "loop_edges_closed": 0.9999999999999987
    }
-  }
+  },
+  "read_from": "docs/research/closing-loops/experiments/results/against_remeshers.json"
  }
 }
