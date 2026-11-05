@@ -106,7 +106,7 @@ only on the same machine under the same load: the long runs are for an idle mach
   | 1 | 54 (0) | winding separatrix 938 of 239 | 2 sides | yes, pushed to the right, to the turn walked backwards |
   | 4, 5, 6, 7, 8, 9, 11, 13 | pairs | exchange | 8 to 493 | yes (1 or 2 loops each) |
   | 14 | 21, 68 (1) | 3–5 pair 192, 196 | 193 | yes (1 loop) |
-  | 15, 16 | 65, 66 and 63, 66 (3) | exchange of `pairs.py` | 11, 13 | no, and no κ can: the class in homology differs |
+  | 15, 16 | 65, 66 and 63, 66 (3) | exchange of `pairs.py` | 11, 13 | no, and no κ can: for either orientation the class in homology is not that of an exchange of any two vertices (`classes_of_the_loops`) |
   | 20, 25 | three turns (4) | exchange | 13,144, 2,841 | yes |
   | 21 | 145, 147, 149 (5) | exchange | 1,462 | none of those tried; other κ not decided |
   | 28 | 65, 103, 107 (6) | 3–5 pair 192, 196 | 13,851 | yes |

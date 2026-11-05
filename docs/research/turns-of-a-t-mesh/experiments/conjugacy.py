@@ -263,6 +263,20 @@ def exponents(word):
     return {v: e for v, e in out.items() if e}
 
 
+def exchange_class(c, W):
+    """Whether a class in homology is ±([c] − [c']) for two singular vertices,
+    c' the root included (its letter is minus the sum of all the others)."""
+    values = sorted(c.values())
+    if values == [-1, 1]:
+        return True
+    letters_all = len(W.fox.places)
+    for sign in (1, -1):
+        d = {v: sign * e for v, e in c.items()}
+        if len(d) == letters_all and sorted(d.values()) == [1] * (letters_all - 1) + [2]:
+            return True
+    return False
+
+
 def set_loops(L, W, ids, mu):
     """For three turns: the products, in both cyclic orders, of their loops
     from chords whose walking directions in the chart lie on one axis, each
@@ -375,6 +389,12 @@ def describe(L, W, row):
     # the turns' loops for which it is that of the mechanism's loop.
     turns = [W.fox.turn_word(L.turns[t]) for t in ids]
     wanted = [exponents(mu), exponents(inverse(mu))]
+    classes = {}
+    for signs in itertools.product((1, -1), repeat=len(ids) - 1):
+        classes[signs] = exponents([x for w, e in zip(turns, (1,) + signs) for x in (w if e == 1 else inverse(w))])
+    out["classes_of_the_loops"] = {str(list(signs)): {str(v): e for v, e in sorted(c.items())}
+                                   for signs, c in classes.items()}
+    out["class_of_an_exchange_of_two_vertices"] = any(exchange_class(c, W) for c in classes.values())
     out["orientations_with_the_class_of_the_mechanism"] = [
         list(signs) for signs in itertools.product((1, -1), repeat=len(ids) - 1)
         if exponents([x for w, e in zip(turns, (1,) + signs) for x in (w if e == 1 else inverse(w))]) in wanted]
