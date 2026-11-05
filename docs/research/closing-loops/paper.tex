@@ -573,6 +573,67 @@ on each kind of loop, edges of borders left out. The same count chooses
 among the candidates of Section~\ref{sec:closing} and colours the spiral
 loops in the figures.
 
+The engine therefore selects by the measure it is evaluated on: it keeps the
+candidate with the fewest spiral edges, and Section~\ref{sec:experiments}
+compares the tools by that share, which the other tools do not optimize and
+which sees no helix of pitch above four. The measures below are not used by
+that selection: no step of the engine computes them.
+
+\paragraph{Measures the selection does not use.}
+A separate script, sharing no code with the engine, measures the meshes the
+bench stored at $3{,}000$ quads (\texttt{experiments/structure.py}). It
+counts the \emph{q-helices} of every pitch~\cite{bommes2011structure}: strips
+of quads along which $\tau$ steps equal $h$ side-steps, minimal ($h \le
+\tau$), kept when the property holds over a whole turn (two windings or more)
+and the band between windings is a regular grid, a criterion of ours
+grounded in their remark that the property implies a regular region round
+the helix. It extracts the \emph{base
+complex}: a separatrix from each irregular vertex along each of its edges,
+until an irregular vertex, a border or its own path, where it ends in a
+T-junction; the patches are the regions between separatrices. And it counts
+the inner \emph{singularities}. On twisted tori and a cube it gives the
+expected helices and patches, and on the bench meshes it gives the engine's
+counts of irregular vertices and of patches (without the stop on its own
+path) on every mesh where the bench stored them. Table~\ref{tab:structure} gives these measures on the
+$21$ models that all six tools mesh. Of the $1{,}393$ q-helices on all $395$
+stored meshes, $14$ have a pitch above four, in $10$ meshes of QuadriFlow and
+QuadWild-BiMDF~\cite{pietroni2021reliable,heistermann2023bimdf}, none of
+openclare. The engine's own count of helices of every
+pitch, which asks for no regular band and which the selection does not use
+either, finds $159$ of $1{,}061$ above four, in $57$ of the $356$ meshes whose
+loops it can follow, none of openclare's. By q-helices, openclare has fewer
+than QuadriFlow but not fewer than AutoRemesher, nor than Instant
+Meshes~\cite{jakob2015instant}, whose meshes have the most singularities and nearly one base-complex patch
+per quad.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lrrrrrr}
+\toprule
+& spiral edges & q-helices & pitch $> 4$ & patches & T-junctions & singularities \\
+\midrule
+openclare & 0.0\% (0.0--7.9) & 1 (0--3) & 0 of 89 & 861 (66--1913) & 6 (0--9) & 56 (20--154) \\
+QuadriFlow & 17.6\% (9.6--35.4) & 3 (1--5) & 12 of 358 & 2205 (1489--2605) & 14 (2--28) & 52 (24--106) \\
+AutoRemesher & 20.8\% (7.1--33.2) & 1 (0--5) & 0 of 51 & 950 (602--1180) & 8 (4--18) & 68 (18--99) \\
+QuadWild-BiMDF & 10.3\% (1.7--20.2) & 2 (0--5) & 2 of 169 & 1643 (122--2647) & 13 (0--26) & 50 (18--145) \\
+Instant Meshes & 7.3\% (4.7--9.2) & 0 (0--3) & 0 of 28 & 2867 (2379--3000) & 7 (4--16) & 137 (97--192) \\
+IM, bench chain & 5.2\% (3.0--9.6) & 0 (0--1) & 0 of 88 & 2856 (1997--2986) & 4 (2--10) & 160 (111--214) \\
+\bottomrule
+\end{tabular}
+\caption{Structure of the meshes stored by the bench at $3{,}000$ quads, on
+the $21$ models that all six tools mesh: median over the models (quartiles in
+parentheses), each model the median of its runs (five seeds for QuadriFlow
+and for the bench's own Instant Meshes chain, IM, one run otherwise). Spiral
+edges: the measure the engine selects by, over the models whose loops can be
+followed; the other columns are measures no step of the engine uses.
+q-helices: per mesh; pitch $> 4$: of all the q-helices of the tool's meshes.
+Patches and T-junctions: the base complex. Singularities: inner vertices of
+valence other than four.}
+\label{tab:structure}
+\end{table}
+
 \section{Experiments}\label{sec:experiments}
 
 Every figure is measured on the engine of version 0.7.0 (commit
@@ -674,8 +735,9 @@ open loops, which stop at its irregular vertices, of which it has $84$ per
 mesh on the seven models against $31$ for openclare. The comparison favours
 openclare by construction as well: the engine chooses among its candidates
 by this very share (Section~\ref{sec:closing}), which the other four do not
-optimize, and the share sees no helix of pitch above four. A measure of
-structure the selection does not use is left to future work.
+optimize, and the share sees no helix of pitch above four.
+Table~\ref{tab:structure} gives measures of structure the selection does not
+use.
 
 \begin{table}[t]
 \centering
