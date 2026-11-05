@@ -62,7 +62,7 @@ pub struct RemeshConfig {
     pub volume_fit: f64,
     /// What the vertices are moved off the surface for: the faces of the
     /// mesh to keep the volume, or the limit surface of its Catmull-Clark
-    /// subdivision, what an artist sees once it is subdivided (DT-039).
+    /// subdivision, what an artist sees once it is subdivided (#39).
     pub fitter: fitting::Kind,
     /// With a painted density: how many times more quads per unit of area
     /// the places painted at 1 get than those left at 0. At 4, their edges
