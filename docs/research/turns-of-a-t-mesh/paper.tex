@@ -939,9 +939,11 @@ the loop that runs along $\sigma$ from $v$ to $q$ and back along $\tau$ to $v$,
 pushed off $v$ into the sector it turns through. If $\lambda$ is freely
 homotopic in $\Sigma^\circ$ to the curve $\bar\gamma$ of a turn $\gamma$, the
 walking direction of $\gamma$ going to that of $\sigma$, then
-$\shift_\gamma(\ell) = \pm\delta(\ell)$ for all balanced $\ell$, the sign
-depending on the side of $\sigma$ on which $\tau$ lies ($+$ in
-Figure~\ref{fig:separatrix}(b), $-$ for turn $54$ of way 0 of the male body). The turn is a
+$\shift_\gamma(\ell) = \varepsilon\,\delta(\ell)$ for all balanced $\ell$, where
+$\varepsilon = 1$ if $\tau$, followed from $v$, runs through $q$ along the
+direction $e_2$ of increasing offsets of $\gamma$, and $\varepsilon = -1$ if
+along $-e_2$ ($+$ in Figure~\ref{fig:separatrix}(b), $-$ for turn $54$ of way
+0 of the male body). The turn is a
 ring only if $\delta = 0$, that is if $\sigma$ comes back onto its own vertex;
 if $\delta$ equals, modulo the balances, a non-negative form containing an arc
 held at length at least one, $\gamma$ is a helix under every quantization
@@ -950,14 +952,20 @@ meeting the bounds.
 \end{evidence}
 
 \begin{proof}
-Develop $\lambda$ from a point of $\sigma$ next to $v$, with $v$ at the origin
-and $\sigma$ along $e_1$. The separatrix stops on $\tau$ at a right angle, so
-the return is a segment of length $\delta$ along $\pm e_2$. Homotopic to the
+Develop $\lambda$ from a point of $\sigma$ next to $v$, with $v$ at the origin,
+$\sigma$ along $e_1$ and $e_2$ the direction of increasing offsets of
+$\gamma$. The separatrix, of length $a$, stops on $\tau$ at a right angle at
+$q = a\,e_1$, where $\tau$ runs along $\varepsilon e_2$, so the return from
+$q$ to $v$ is the segment of length $\delta$ along $-\varepsilon e_2$, and $v$
+develops at the end at $a\,e_1 - \varepsilon\delta\,e_2$. Homotopic to the
 curve of a turn, $\lambda$ has a translation as holonomy, which maps $v$
-developed at the start onto $v$ developed at the end, at distance $\delta$
-from $q$ across $\sigma$. A free homotopy conjugates the holonomy by a motion
+developed at the start onto $v$ developed at the end: the translation by $a\,e_1
+- \varepsilon\delta\,e_2$. A free homotopy conjugates the holonomy by a motion
 whose rotation carries the walking direction of $\gamma$ onto that of
-$\sigma$, here the identity.
+$\sigma$, here the identity, so $\hat h(\bar\gamma)$ is this translation. As
+$\hat h(\bar\gamma)$ is the translation by $\alpha_\gamma(\ell)\,e_1 -
+\shift_\gamma(\ell)\,e_2$, $\shift_\gamma = \varepsilon\delta$ and
+$\alpha_\gamma = a$.
 \end{proof}
 
 \begin{figure}[t]

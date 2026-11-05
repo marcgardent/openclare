@@ -1029,10 +1029,12 @@ d'arcs. Soit $\lambda$ le lacet qui suit $\sigma$ de $v$ à $q$ puis revient le
 long de $\tau$ jusqu'à $v$, écarté de $v$ vers l'intérieur du secteur qu'il
 balaie. Si $\lambda$ est librement homotope dans $\Sigma^\circ$ à la courbe
 $\bar\gamma$ d'un tour $\gamma$, la direction de marche de $\gamma$ allant sur
-celle de $\sigma$, alors $\shift_\gamma(\ell) = \pm\delta(\ell)$ pour tout
-$\ell$ équilibré, le signe dépendant du côté de $\sigma$ où se trouve $\tau$
-($+$ sur la figure~\ref{fig:separatrix}(b), $-$ pour le tour $54$ de la
-variante 0 du corps masculin). Le tour n'est un anneau que si $\delta = 0$, c'est-à-dire si
+celle de $\sigma$, alors $\shift_\gamma(\ell) = \varepsilon\,\delta(\ell)$ pour
+tout $\ell$ équilibré, avec $\varepsilon = 1$ si $\tau$, suivie depuis $v$,
+passe en $q$ selon la direction $e_2$ des abscisses croissantes de $\gamma$, et
+$\varepsilon = -1$ si elle y passe selon $-e_2$ ($+$ sur la
+figure~\ref{fig:separatrix}(b), $-$ pour le tour $54$ de la variante 0 du
+corps masculin). Le tour n'est un anneau que si $\delta = 0$, c'est-à-dire si
 $\sigma$ revient sur son propre sommet\,; si $\delta$ est égal, modulo les
 équilibres, à une forme à coefficients positifs ou nuls contenant un arc
 maintenu à une longueur d'au moins un, $\gamma$ est une hélice pour toute
@@ -1042,14 +1044,20 @@ quantification qui respecte les bornes.
 
 \begin{proof}
 Développons $\lambda$ depuis un point de $\sigma$ voisin de $v$, avec $v$ à
-l'origine et $\sigma$ selon $e_1$. La séparatrice s'arrête sur $\tau$ à angle
-droit, si bien que le retour est un segment de longueur $\delta$ selon $\pm
-e_2$. Homotope à la courbe d'un tour, $\lambda$ a pour holonomie une
-translation, qui envoie $v$ développé au départ sur $v$ développé à
-l'arrivée, à la distance $\delta$ de $q$ transversalement à $\sigma$. Une
-homotopie libre conjugue l'holonomie par un déplacement dont la rotation
-transporte la direction de marche de $\gamma$ sur celle de $\sigma$, ici
-l'identité.
+l'origine, $\sigma$ selon $e_1$ et $e_2$ la direction des abscisses
+croissantes de $\gamma$. La séparatrice, de longueur $a$, s'arrête sur $\tau$
+à angle droit en $q = a\,e_1$, où $\tau$ passe selon $\varepsilon e_2$, si
+bien que le retour de $q$ à $v$ est le segment de longueur $\delta$ selon
+$-\varepsilon e_2$, et que $v$ se développe à l'arrivée en $a\,e_1 -
+\varepsilon\delta\,e_2$. Homotope à la courbe d'un tour, $\lambda$ a pour
+holonomie une translation, qui envoie $v$ développé au départ sur $v$
+développé à l'arrivée~: la translation de vecteur $a\,e_1 -
+\varepsilon\delta\,e_2$. Une homotopie libre conjugue l'holonomie par un
+déplacement dont la rotation transporte la direction de marche de $\gamma$ sur
+celle de $\sigma$, ici l'identité, donc $\hat h(\bar\gamma)$ est cette
+translation. Comme $\hat h(\bar\gamma)$ est la translation de vecteur
+$\alpha_\gamma(\ell)\,e_1 - \shift_\gamma(\ell)\,e_2$, $\shift_\gamma =
+\varepsilon\delta$ et $\alpha_\gamma = a$.
 \end{proof}
 
 \begin{figure}[t]
