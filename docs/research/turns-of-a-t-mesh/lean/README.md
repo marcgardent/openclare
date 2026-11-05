@@ -6,7 +6,7 @@ Section 10 there lists what is checked, statement by statement), and of the
 two propositions of its applied companion,
 [`../../closing-loops/paper.tex`](../../closing-loops/paper.tex), "The shift of
 a turn is linear" (also stated in `../paper.tex`) and "Completeness at given
-lengths": 703 `theorem` and `lemma` declarations under this folder (`Check/Main.lean`
+lengths": 737 `theorem` and `lemma` declarations under this folder (`Check/Main.lean`
 included, counted as the lines `grep -rhE --include='*.lean' --exclude-dir=.lake
 '^\s*(private |protected |nonrec |noncomputable )*(theorem|lemma)\b' .` prints), many of them small lemmas and a few
 restating a hypothesis (`dislocation_closes_iff`, `staircase_rings`); the
