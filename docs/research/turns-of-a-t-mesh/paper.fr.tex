@@ -2175,10 +2175,75 @@ zéro.
 \end{conjecture}
 \end{evidence}
 
-Les indices en sa faveur sont que la couverture par sommets reste
-NP-difficile sur les graphes planaires, et sur les graphes de petit
-degré~\cite{garey1976simplified}, et que deux tours séparés par une
-dislocation entrent en conflit comme les deux extrémités d'une arête.
+La couverture par sommets reste NP-difficile sur les graphes planaires, et
+sur les graphes de petit degré~\cite{garey1976simplified}, et deux tours
+séparés par une dislocation dont l'escalier est tenu ouvert entrent en conflit
+comme les deux extrémités d'une arête (corollaire~\ref{cor:chain}). Cela
+suggère un gadget~: un tour par sommet et une paire 3--5 par arête entre les
+tours de ses extrémités. Il échoue, pour deux raisons.
+
+\begin{evidence}{prose}{(ii) vérifié par ordinateur sur $K_4$, le prisme triangulaire, le cube et le prisme pentagonal~: pour chaque orientation de leurs arêtes, les ensembles fermables des différences comparés aux ensembles indépendants, et les classes d'implication (\texttt{experiments/gadget.py})}
+\begin{proposition}[Ce que codent les dislocations entre tours parallèles]\label{prop:differences}
+(i) Sur une surface fermée de genre zéro, soient les courbes des tours de $H$
+simples et deux à deux disjointes. Chacune borde, avec au plus deux des
+autres, un anneau qui ne contient aucune des courbes, et le graphe qui relie deux
+tours bordant un tel anneau est une union disjointe de chemins.
+(ii) Supposons les décalages de $H$ liés sur $P$ par des différences
+seulement~: pour certains couples $(\gamma, \gamma')$ et des nombres
+$c_{\gamma\gamma'}$, les vecteurs $(\shift_\gamma(\ell))_{\gamma \in H}$,
+$\ell \in P$, sont les solutions de $x_\gamma - x_{\gamma'} \ge
+c_{\gamma\gamma'}$, comme pour les tours d'une chaîne dont les escaliers
+prennent toute valeur au moins égale à un (corollaire~\ref{cor:chain}).
+Notons $\gamma \succ \gamma'$ lorsqu'un chemin de ces couples de $\gamma$ à
+$\gamma'$ a un total positif. Alors $\succ$ est un ordre strict, les ensembles
+fermables sont ses antichaînes, et $\tau_P(H)$ vaut $|H|$ moins la plus grande
+antichaîne, trouvée par un couplage
+biparti~\cite{dilworth1950decomposition,fulkerson1956note}. Les couples qui ne
+peuvent se fermer ensemble forment un graphe de comparabilité\,; le prisme
+triangulaire n'en est pas un.
+\end{proposition}
+\end{evidence}
+
+\begin{proof}
+(i) Les courbes découpent la sphère en régions, chaque courbe la séparant\,;
+avec un nœud par région et une arête par courbe, c'est un arbre. Un anneau
+bordé par deux courbes et n'en contenant aucune autre est une région de degré
+deux. Une courbe borde deux régions, et un cycle d'anneaux serait un cycle de
+l'arbre. (ii) $Y$ se ferme lorsque le système avec $x_\gamma = 0$ sur $Y$ est
+réalisable, c'est-à-dire lorsque, les tours de $Y$ réunis en un nœud, aucun
+cycle n'a de total positif. Comme $P \ne \emptyset$, un cycle positif ne peut
+passer que par ce nœud~: c'est un chemin de total positif entre deux tours de
+$Y$. Deux tels chemins mis bout à bout font une marche de total positif, donc,
+sans cycle positif, un chemin~: $\succ$ est transitive. Une orientation
+transitive du prisme oriente un de ses triangles $a \to b \to c$, $a \to c$\,;
+l'arête $bb'$ donne alors $a \to b \to b'$ ou $b' \to b \to c$, un couple
+comparable $ab'$ ou $b'c$ qui n'est pas une arête.
+\end{proof}
+
+Par (i), lorsque les tours sont deux à deux disjoints, un tour n'est séparé
+que d'au plus deux autres par exactement une paire\,; par (ii), des chaînes de dislocations, si nombreuses soient-elles, ne
+codent que des ordres, sur lesquels \RC{} est polynomial. L'instance du
+théorème~\ref{thm:nphard} porte l'autre sorte de relation~: $\shift_u \ge 0$
+et $\shift_u + \shift_v \ge d_e \ge 1$, des sommes de deux décalages de signe
+fixé, qu'aucun choix des sens de marche ne change en différences dès que le
+graphe a un cycle impair. Sur une sphère, cela demande, pour chaque sommet, un
+tour dont le décalage est une forme positive ou nulle, comme un tour autour
+d'un doigt dont les escaliers montent dans le même sens vers un bout qui se
+ferme, et, pour chaque arête, un arc tenu ouvert égal modulo les équilibres à
+$y_{u,e} + y_{v,e}$, avec $y_{u,e}$ et $y_{v,e}$ dans les supports des deux
+décalages~: deux bandes issues des deux doigts qui courent côte à côte et se
+réunissent, en une jonction en T, en un seul arc, la séparation d'une
+troisième paire par exemple. Nous n'avons pas construit ce gadget, et la
+conjecture reste ouverte.
+
+Sur $60$ T-meshes aléatoires de genre zéro (cubes, boîtes, enveloppes et leurs
+duaux, chaque arc tenu à une longueur au moins égale à un), les couples de
+tours qui ne peuvent se fermer ensemble forment, sur les $31$ qui en ont, des
+graphes de comparabilité, dont $19$ avec des triangles\,; quatre tours dont
+les ensembles fermables sont exactement les ensembles indépendants de $K_4$
+apparaissent sur deux instances, trois de ces ensembles vérifiés exactement
+sur l'une d'elles, et aucun prisme, cube ni prisme pentagonal (mesuré, conflits décidés en virgule flottante\,;
+\texttt{experiments/gadget.py}).
 
 Certaines parties sont faciles~: sans tours ni fenêtre, la quantification
 entière est un problème de couplage polynomial~\cite{edmonds1970matching}\,;
@@ -2348,7 +2413,11 @@ une réponse utile se trouve entre les
 deux, par exemple des peignes portés par des ensembles disjoints de sommets,
 chacun du signe du certificat. Calculer $\tau_P(H)$ à un nombre de quads donné
 demande les extrema d'une fonction quadratique indéfinie sur un polytope.
-\RC{} est-il NP-difficile pour un nombre fixé de sommets singuliers\,? Et
+\RC{} reste-t-il NP-difficile sur les tours d'une sphère
+(conjecture~\ref{conj:realize})\,? Les dislocations entre tours parallèles
+ne codent que des ordres (proposition~\ref{prop:differences})\,; une
+réduction demande des relations qui soient des sommes de décalages de signe
+fixé. \RC{} est-il NP-difficile pour un nombre fixé de sommets singuliers\,? Et
 lorsque l'ensemble des tours dépend des longueurs, comme c'est le cas des
 bandes du maillage, quel est au juste le problème\,? Quand existe-t-il, pour
 une configuration de singularités donnée, une différentielle quartique dont

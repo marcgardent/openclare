@@ -46,6 +46,7 @@ only on the same machine under the same load: the long runs are for an idle mach
 | Section "Combs", "Question ... read loosely": read strictly, 15 of the 41 sets separated, each at exact balanced lengths; the certificate of turn 54 of way 0 the winding separatrix ℓ1873 | `python3 $B/strict.py <export>` (after `conflicts.py`) | `results/strict.json` |
 | Section "Whole lengths and size": dimension 534, one row of greatest common divisor 2; lattices of dimension 334 to 480 with the held turns, Euclid's steps in ways 1, 3, 4, 5, 6 and 7 | `python3 $B/lattice.py <export> --seconds 600` | `results/lattice.json` |
 | Table `tab:forced`, columns "bounds", "bounds, cap", "cap, size, whole"; "exactly 1, 5, 3, 12, 5, 30, 8 and 37"; in way 3 twelve turns with ten of 21 cores disjoint; 1,166 and 1,208 s for ways 5 and 7; exactly 1 in way 0 and 3 in way 2 with the cap and the window, and the whole lengths that show it (10,730 and 10,435 quads); ways 3 and 4: 12 and 6 in real lengths, at least 13 and 7 in whole; the optimum 3 for way 2 keeping open every arc the engine keeps open | `python3 $B/forced.py <export> --whole-lower --jobs 4`; `python3 $B/forced.py <export> --ways 2 --families held --sound --summary $B/results/forced-sound.json` | `results/forced.json`, `results/forced-sound.json`, whole lengths under `<out>` |
+| Section "Choosing the turns" (#216): Proposition "What dislocations between parallel turns encode", (ii) on K4, the prism, the cube and the pentagonal prism (orientations, implication classes, one chain), the reduction's instance checked exactly on them, and the graphs of conflicts of turns on 60 random spheres (no T-mesh of the male body read) | `python3 -I $B/gadget.py --count 60 --seed 1 --families box:2:2:6:2,box:3:3:8:3,box:3:3:10:6,box:4:4:10:8,box:3:3:12:10,cube:6,hull:12,dual:12` | `results/gadget.json` |
 | Paper A, Section "An exact look", and the rounding gap 0.399 / 0.536 quoted in "Whole lengths and size" | `../../closing-loops/experiments/exact/README.md` | |
 
 ## What each script does
@@ -189,6 +190,7 @@ Times on an Intel Core i7-7700K (4 cores, 8 threads, 2017, 62 GB), loaded by oth
 | `holonomy.py --no-annuli` | 2.5 minutes for the eight ways; the pairs of turns about 1 minute per 400 pairs: about an hour more for all eight ways (with `--jobs 4`, a quarter of that) |
 | `fox.py` | 10 to 18 s a way; `--relations` adds about 4 minutes (the windings of every turn, then a linear program each) |
 | `conjugacy.py` | not run there; on the export of v0.7.0, 626 s at load 5 to 9, most of it on rows 20, 21, 25 and 28 |
+| `gadget.py` | not run there (it reads no export); 352 s for its 60 random spheres at load 15 to 17 |
 | `strict.py` | 8 s (configuration A, in the cone) to 75 s (F, separated) a set; the sets of four and more, minutes each |
 | `forced.py --steps bounds` | 75 s for the nine families (way 7: 45 s) |
 | `forced.py` (cap and size) | up to `--budget` (1,800 s) a family for the cap and up to 6 × `--seconds` (900 s) for the size: hours; ways 0 and 2 take 15 s |

@@ -1,0 +1,2475 @@
+{
+ "experiment": "#216: differences, the reduction's instance, and the graphs of conflicts of random T-meshes of genus zero against K4, the prism, the cube and the pentagonal prism",
+ "machine": {
+  "platform": "Linux-7.0.0-38-generic-x86_64-inconnu-with-glibc2.43",
+  "python": "3.14.4",
+  "numpy": "2.3.5",
+  "scipy": "1.16.3",
+  "load_at_start": [
+   15.02392578125,
+   16.37158203125,
+   17.48095703125
+  ]
+ },
+ "differences": [
+  {
+   "graph": "K4",
+   "vertices": 4,
+   "edges": 6,
+   "independent_sets": 5,
+   "orientations": 64,
+   "orientations_whose_closable_sets_are_the_independent_sets": 24,
+   "example": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     1,
+     3
+    ],
+    [
+     2,
+     3
+    ]
+   ],
+   "comparability_graph_by_implication_classes": true,
+   "one_chain_realizes_it": true
+  },
+  {
+   "graph": "prism",
+   "vertices": 6,
+   "edges": 9,
+   "independent_sets": 13,
+   "orientations": 512,
+   "orientations_whose_closable_sets_are_the_independent_sets": 0,
+   "example": null,
+   "comparability_graph_by_implication_classes": false,
+   "one_chain_realizes_it": false
+  },
+  {
+   "graph": "cube",
+   "vertices": 8,
+   "edges": 12,
+   "independent_sets": 35,
+   "orientations": 4096,
+   "orientations_whose_closable_sets_are_the_independent_sets": 2,
+   "example": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     3,
+     1
+    ],
+    [
+     5,
+     1
+    ],
+    [
+     3,
+     2
+    ],
+    [
+     6,
+     2
+    ],
+    [
+     3,
+     7
+    ],
+    [
+     5,
+     4
+    ],
+    [
+     6,
+     4
+    ],
+    [
+     5,
+     7
+    ],
+    [
+     6,
+     7
+    ]
+   ],
+   "comparability_graph_by_implication_classes": true,
+   "one_chain_realizes_it": false
+  },
+  {
+   "graph": "pentagonal prism",
+   "vertices": 10,
+   "edges": 15,
+   "independent_sets": 81,
+   "orientations": 32768,
+   "orientations_whose_closable_sets_are_the_independent_sets": 0,
+   "example": null,
+   "comparability_graph_by_implication_classes": false,
+   "one_chain_realizes_it": false
+  }
+ ],
+ "reduction": [
+  {
+   "graph": "K4",
+   "maximal_independent_sets_closed_exactly": 4,
+   "edges_with_exact_certificate": 6
+  },
+  {
+   "graph": "prism",
+   "maximal_independent_sets_closed_exactly": 6,
+   "edges_with_exact_certificate": 9
+  },
+  {
+   "graph": "cube",
+   "maximal_independent_sets_closed_exactly": 6,
+   "edges_with_exact_certificate": 12
+  },
+  {
+   "graph": "pentagonal prism",
+   "maximal_independent_sets_closed_exactly": 10,
+   "edges_with_exact_certificate": 15
+  }
+ ],
+ "seed": 1,
+ "count": 60,
+ "rejected": 0,
+ "bound": "every arc at least one",
+ "families": [
+  [
+   "box",
+   2,
+   2,
+   6,
+   2
+  ],
+  [
+   "box",
+   3,
+   3,
+   8,
+   3
+  ],
+  [
+   "box",
+   3,
+   3,
+   10,
+   6
+  ],
+  [
+   "box",
+   4,
+   4,
+   10,
+   8
+  ],
+  [
+   "box",
+   3,
+   3,
+   12,
+   10
+  ],
+  [
+   "cube",
+   6
+  ],
+  [
+   "hull",
+   12
+  ],
+  [
+   "dual",
+   12
+  ]
+ ],
+ "rounds": 40,
+ "seconds": 352.3,
+ "instances_with_a_conflict": 31,
+ "graphs_of_conflicts_not_comparability": 0,
+ "graphs_of_conflicts_not_bipartite": 19,
+ "instances_with_a_triangle": 19,
+ "instances_with_an_induced_copy": {
+  "K4": 2,
+  "prism": 0,
+  "cube": 0,
+  "pentagonal prism": 0
+ },
+ "checked_exactly": {
+  "K4": [
+   {
+    "instance": "box-46148794",
+    "turns": [
+     0,
+     26,
+     93,
+     107
+    ],
+    "holds": true
+   },
+   {
+    "instance": "box-46148794",
+    "turns": [
+     0,
+     26,
+     107,
+     109
+    ],
+    "holds": true
+   },
+   {
+    "instance": "box-46148794",
+    "turns": [
+     26,
+     44,
+     93,
+     107
+    ],
+    "holds": true
+   }
+  ],
+  "prism": [],
+  "cube": [],
+  "pentagonal prism": []
+ },
+ "found": {
+  "K4": [
+   {
+    "instance": "box-46148794",
+    "kind": [
+     "box",
+     3,
+     3,
+     12,
+     10
+    ],
+    "seed": 46148794,
+    "turns": [
+     0,
+     26,
+     93,
+     107
+    ],
+    "forms": [
+     {
+      "3": 1,
+      "4": 1,
+      "10": 1,
+      "24": -1,
+      "36": 1,
+      "56": -1,
+      "96": 1,
+      "121": -1,
+      "135": 1,
+      "157": -1,
+      "158": -1,
+      "159": -1,
+      "161": -1,
+      "177": -1,
+      "179": -1,
+      "180": 1
+     },
+     {
+      "76": 1,
+      "84": 1,
+      "95": -1,
+      "98": 1,
+      "102": 1,
+      "177": -1,
+      "179": -1,
+      "180": 1,
+      "183": 1,
+      "184": 1,
+      "187": 1,
+      "197": -1,
+      "208": 1,
+      "209": 1,
+      "210": 1,
+      "213": 1,
+      "214": 1,
+      "220": -1,
+      "224": 1,
+      "228": -1,
+      "230": -1,
+      "232": -1,
+      "233": -1,
+      "235": -1
+     },
+     {
+      "36": 1,
+      "43": -1,
+      "91": 1,
+      "101": 1,
+      "104": -1,
+      "121": -1,
+      "135": 1,
+      "157": -1,
+      "158": -1,
+      "159": -1,
+      "161": -1,
+      "177": -1,
+      "179": -1,
+      "180": 1,
+      "208": 1,
+      "213": 1,
+      "220": -1,
+      "224": 1,
+      "232": -1
+     },
+     {
+      "101": 1,
+      "104": -1,
+      "121": -1,
+      "135": 1,
+      "157": -1,
+      "158": -1,
+      "159": -1,
+      "161": -1,
+      "177": -1,
+      "179": -1,
+      "180": 1,
+      "183": 1,
+      "184": 1,
+      "187": 1,
+      "197": -1,
+      "208": 1,
+      "213": 1,
+      "220": -1,
+      "224": 1,
+      "228": -1,
+      "230": -1,
+      "232": -1,
+      "233": -1
+     }
+    ],
+    "maximal_independent_sets": [
+     {
+      "vertices": [
+       0
+      ],
+      "closed_exactly": true
+     },
+     {
+      "vertices": [
+       1
+      ],
+      "closed_exactly": true
+     },
+     {
+      "vertices": [
+       2
+      ],
+      "closed_exactly": true
+     },
+     {
+      "vertices": [
+       3
+      ],
+      "closed_exactly": true
+     }
+    ],
+    "edges": [
+     {
+      "ends": [
+       0,
+       1
+      ],
+      "certificate_exact": true,
+      "multipliers": [
+       "-1/8",
+       "1/8"
+      ],
+      "arcs": [
+       58,
+       67,
+       77,
+       94,
+       108,
+       156,
+       179,
+       226
+      ]
+     },
+     {
+      "ends": [
+       0,
+       2
+      ],
+      "certificate_exact": true,
+      "multipliers": [
+       "1/2",
+       "-1/2"
+      ],
+      "arcs": [
+       19,
+       166
+      ]
+     },
+     {
+      "ends": [
+       0,
+       3
+      ],
+      "certificate_exact": true,
+      "multipliers": [
+       "1/4",
+       "-1/4"
+      ],
+      "arcs": [
+       19,
+       166,
+       228,
+       230
+      ]
+     },
+     {
+      "ends": [
+       1,
+       2
+      ],
+      "certificate_exact": true,
+      "multipliers": [
+       "1/9",
+       "-1/12"
+      ],
+      "arcs": [
+       34,
+       37,
+       56,
+       58,
+       67,
+       77,
+       94,
+       101,
+       108,
+       109,
+       156,
+       166,
+       179,
+       226
+      ]
+     },
+     {
+      "ends": [
+       1,
+       3
+      ],
+      "certificate_exact": true,
+      "multipliers": [
+       "3/28",
+       "-1/28"
+      ],
+      "arcs": [
+       37,
+       56,
+       58,
+       67,
+       70,
+       74,
+       77,
+       94,
+       101,
+       108,
+       109,
+       156,
+       179,
+       226,
+       230
+      ]
+     },
+     {
+      "ends": [
+       2,
+       3
+      ],
+      "certificate_exact": true,
+      "multipliers": [
+       "1/2",
+       "-1/2"
+      ],
+      "arcs": [
+       228,
+       230
+      ]
+     }
+    ],
+    "holds": true
+   },
+   {
+    "instance": "box-46148794",
+    "kind": [
+     "box",
+     3,
+     3,
+     12,
+     10
+    ],
+    "seed": 46148794,
+    "turns": [
+     0,
+     26,
+     107,
+     109
+    ],
+    "forms": [
+     {
+      "3": 1,
+      "4": 1,
+      "10": 1,
+      "24": -1,
+      "36": 1,
+      "56": -1,
+      "96": 1,
+      "121": -1,
+      "135": 1,
+      "157": -1,
+      "158": -1,
+      "159": -1,
+      "161": -1,
+      "177": -1,
+      "179": -1,
+      "180": 1
+     },
+     {
+      "76": 1,
+      "84": 1,
+      "95": -1,
+      "98": 1,
+      "102": 1,
+      "177": -1,
+      "179": -1,
+      "180": 1,
+      "183": 1,
+      "184": 1,
+      "187": 1,
+      "197": -1,
+      "208": 1,
+      "209": 1,
+      "210": 1,
+      "213": 1,
+      "214": 1,
+      "220": -1,
+      "224": 1,
+      "228": -1,
+      "230": -1,
+      "232": -1,
+      "233": -1,
+      "235": -1
+     },
+     {
+      "101": 1,
+      "104": -1,
+      "121": -1,
+      "135": 1,
+      "157": -1,
+      "158": -1,
+      "159": -1,
+      "161": -1,
+      "177": -1,
+      "179": -1,
+      "180": 1,
+      "183": 1,
+      "184": 1,
+      "187": 1,
+      "197": -1,
+      "208": 1,
+      "213": 1,
+      "220": -1,
+      "224": 1,
+      "228": -1,
+      "230": -1,
+      "232": -1,
+      "233": -1
+     },
+     {
+      "36": 1,
+      "43": -1,
+      "91": 1,
+      "101": 1,
+      "104": -1,
+      "121": -1,
+      "135": 1,
+      "157": -1,
+      "158": -1,
+      "159": -1,
+      "161": -1,
+      "177": -1,
+      "179": -1,
+      "180": 1,
+      "208": 1,
+      "213": 1,
+      "220": -1,
+      "224": 1,
+      "232": -1
+     }
+    ],
+    "maximal_independent_sets": [
+     {
+      "vertices": [
+       0
+      ],
+      "closed_exactly": true
+     },
+     {
+      "vertices": [
+       1
+      ],
+      "closed_exactly": true
+     },
+     {
+      "vertices": [
+       2
+      ],
+      "closed_exactly": true
+     },
+     {
+      "vertices": [
+       3
+      ],
+      "closed_exactly": true
+     }
+    ],
+    "edges": [
+     {
+      "ends": [
+       0,
+       1
+      ],
+      "certificate_exact": true,
+      "multipliers": [
+       "-1/8",
+       "1/8"
+      ],
+      "arcs": [
+       58,
+       67,
+       77,
+       94,
+       108,
+       156,
+       179,
+       226
+      ]
+     },
+     {
+      "ends": [
+       0,
+       2
+      ],
+      "certificate_exact": true,
+      "multipliers": [
+       "1/4",
+       "-1/4"
+      ],
+      "arcs": [
+       19,
+       166,
+       228,
+       230
+      ]
+     },
+     {
+      "ends": [
+       0,
+       3
+      ],
+      "certificate_exact": true,
+      "multipliers": [
+       "1/2",
+       "-1/2"
+      ],
+      "arcs": [
+       19,
+       166
+      ]
+     },
+     {
+      "ends": [
+       1,
+       2
+      ],
+      "certificate_exact": true,
+      "multipliers": [
+       "3/28",
+       "-1/28"
+      ],
+      "arcs": [
+       37,
+       56,
+       58,
+       67,
+       70,
+       74,
+       77,
+       94,
+       101,
+       108,
+       109,
+       156,
+       179,
+       226,
+       230
+      ]
+     },
+     {
+      "ends": [
+       1,
+       3
+      ],
+      "certificate_exact": true,
+      "multipliers": [
+       "1/9",
+       "-1/12"
+      ],
+      "arcs": [
+       34,
+       37,
+       56,
+       58,
+       67,
+       77,
+       94,
+       101,
+       108,
+       109,
+       156,
+       166,
+       179,
+       226
+      ]
+     },
+     {
+      "ends": [
+       2,
+       3
+      ],
+      "certificate_exact": true,
+      "multipliers": [
+       "-1/2",
+       "1/2"
+      ],
+      "arcs": [
+       228,
+       230
+      ]
+     }
+    ],
+    "holds": true
+   },
+   {
+    "instance": "box-46148794",
+    "kind": [
+     "box",
+     3,
+     3,
+     12,
+     10
+    ],
+    "seed": 46148794,
+    "turns": [
+     26,
+     44,
+     93,
+     107
+    ],
+    "forms": [
+     {
+      "76": 1,
+      "84": 1,
+      "95": -1,
+      "98": 1,
+      "102": 1,
+      "177": -1,
+      "179": -1,
+      "180": 1,
+      "183": 1,
+      "184": 1,
+      "187": 1,
+      "197": -1,
+      "208": 1,
+      "209": 1,
+      "210": 1,
+      "213": 1,
+      "214": 1,
+      "220": -1,
+      "224": 1,
+      "228": -1,
+      "230": -1,
+      "232": -1,
+      "233": -1,
+      "235": -1
+     },
+     {
+      "3": 1,
+      "4": 1,
+      "10": 1,
+      "24": -1,
+      "36": 1,
+      "56": -1,
+      "96": 1,
+      "121": -1,
+      "135": 1,
+      "157": -1,
+      "158": -1,
+      "159": -1,
+      "161": -1,
+      "177": -1,
+      "179": -1,
+      "180": 1
+     },
+     {
+      "36": 1,
+      "43": -1,
+      "91": 1,
+      "101": 1,
+      "104": -1,
+      "121": -1,
+      "135": 1,
+      "157": -1,
+      "158": -1,
+      "159": -1,
+      "161": -1,
+      "177": -1,
+      "179": -1,
+      "180": 1,
+      "208": 1,
+      "213": 1,
+      "220": -1,
+      "224": 1,
+      "232": -1
+     },
+     {
+      "101": 1,
+      "104": -1,
+      "121": -1,
+      "135": 1,
+      "157": -1,
+      "158": -1,
+      "159": -1,
+      "161": -1,
+      "177": -1,
+      "179": -1,
+      "180": 1,
+      "183": 1,
+      "184": 1,
+      "187": 1,
+      "197": -1,
+      "208": 1,
+      "213": 1,
+      "220": -1,
+      "224": 1,
+      "228": -1,
+      "230": -1,
+      "232": -1,
+      "233": -1
+     }
+    ],
+    "maximal_independent_sets": [
+     {
+      "vertices": [
+       0
+      ],
+      "closed_exactly": true
+     },
+     {
+      "vertices": [
+       1
+      ],
+      "closed_exactly": true
+     },
+     {
+      "vertices": [
+       2
+      ],
+      "closed_exactly": true
+     },
+     {
+      "vertices": [
+       3
+      ],
+      "closed_exactly": true
+     }
+    ],
+    "edges": [
+     {
+      "ends": [
+       0,
+       1
+      ],
+      "certificate_exact": true,
+      "multipliers": [
+       "1/8",
+       "-1/8"
+      ],
+      "arcs": [
+       58,
+       67,
+       77,
+       94,
+       108,
+       156,
+       179,
+       226
+      ]
+     },
+     {
+      "ends": [
+       0,
+       2
+      ],
+      "certificate_exact": true,
+      "multipliers": [
+       "1/9",
+       "-1/12"
+      ],
+      "arcs": [
+       34,
+       37,
+       56,
+       58,
+       67,
+       77,
+       94,
+       101,
+       108,
+       109,
+       156,
+       166,
+       179,
+       226
+      ]
+     },
+     {
+      "ends": [
+       0,
+       3
+      ],
+      "certificate_exact": true,
+      "multipliers": [
+       "3/28",
+       "-1/28"
+      ],
+      "arcs": [
+       37,
+       56,
+       58,
+       67,
+       70,
+       74,
+       77,
+       94,
+       101,
+       108,
+       109,
+       156,
+       179,
+       226,
+       230
+      ]
+     },
+     {
+      "ends": [
+       1,
+       2
+      ],
+      "certificate_exact": true,
+      "multipliers": [
+       "1/2",
+       "-1/2"
+      ],
+      "arcs": [
+       19,
+       166
+      ]
+     },
+     {
+      "ends": [
+       1,
+       3
+      ],
+      "certificate_exact": true,
+      "multipliers": [
+       "1/4",
+       "-1/4"
+      ],
+      "arcs": [
+       19,
+       166,
+       228,
+       230
+      ]
+     },
+     {
+      "ends": [
+       2,
+       3
+      ],
+      "certificate_exact": true,
+      "multipliers": [
+       "1/2",
+       "-1/2"
+      ],
+      "arcs": [
+       228,
+       230
+      ]
+     }
+    ],
+    "holds": true
+   }
+  ],
+  "prism": [],
+  "cube": [],
+  "pentagonal prism": []
+ },
+ "instances": [
+  {
+   "name": "box-135520872",
+   "kind": [
+    "box",
+    3,
+    3,
+    10,
+    6
+   ],
+   "seed": 135520872,
+   "arcs": 171,
+   "turns_in_H": 98,
+   "closable_alone": 98,
+   "pairs_tested_by_a_program": 386,
+   "conflicts": 111,
+   "comparability": true,
+   "bipartite": false,
+   "triangles": 52,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-253228484",
+   "kind": [
+    "box",
+    3,
+    3,
+    12,
+    10
+   ],
+   "seed": 253228484,
+   "arcs": 251,
+   "turns_in_H": 99,
+   "closable_alone": 98,
+   "pairs_tested_by_a_program": 289,
+   "conflicts": 29,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "dual-965274705",
+   "kind": [
+    "dual",
+    12
+   ],
+   "seed": 965274705,
+   "arcs": 109,
+   "turns_in_H": 122,
+   "closable_alone": 122,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "dual-815217483",
+   "kind": [
+    "dual",
+    12
+   ],
+   "seed": 815217483,
+   "arcs": 105,
+   "turns_in_H": 117,
+   "closable_alone": 117,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-201561926",
+   "kind": [
+    "box",
+    4,
+    4,
+    10,
+    8
+   ],
+   "seed": 201561926,
+   "arcs": 217,
+   "turns_in_H": 122,
+   "closable_alone": 120,
+   "pairs_tested_by_a_program": 1075,
+   "conflicts": 147,
+   "comparability": true,
+   "bipartite": false,
+   "triangles": 136,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "dual-60875732",
+   "kind": [
+    "dual",
+    12
+   ],
+   "seed": 60875732,
+   "arcs": 111,
+   "turns_in_H": 103,
+   "closable_alone": 103,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "hull-929360195",
+   "kind": [
+    "hull",
+    12
+   ],
+   "seed": 929360195,
+   "arcs": 109,
+   "turns_in_H": 66,
+   "closable_alone": 66,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-956461718",
+   "kind": [
+    "box",
+    2,
+    2,
+    6,
+    2
+   ],
+   "seed": 956461718,
+   "arcs": 60,
+   "turns_in_H": 54,
+   "closable_alone": 39,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-491263128",
+   "kind": [
+    "box",
+    3,
+    3,
+    12,
+    10
+   ],
+   "seed": 491263128,
+   "arcs": 234,
+   "turns_in_H": 152,
+   "closable_alone": 144,
+   "pairs_tested_by_a_program": 656,
+   "conflicts": 94,
+   "comparability": true,
+   "bipartite": false,
+   "triangles": 76,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-681674953",
+   "kind": [
+    "box",
+    3,
+    3,
+    8,
+    3
+   ],
+   "seed": 681674953,
+   "arcs": 91,
+   "turns_in_H": 59,
+   "closable_alone": 59,
+   "pairs_tested_by_a_program": 333,
+   "conflicts": 105,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-47936369",
+   "kind": [
+    "box",
+    2,
+    2,
+    6,
+    2
+   ],
+   "seed": 47936369,
+   "arcs": 61,
+   "turns_in_H": 61,
+   "closable_alone": 52,
+   "pairs_tested_by_a_program": 51,
+   "conflicts": 10,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-19767455",
+   "kind": [
+    "box",
+    2,
+    2,
+    6,
+    2
+   ],
+   "seed": 19767455,
+   "arcs": 65,
+   "turns_in_H": 46,
+   "closable_alone": 46,
+   "pairs_tested_by_a_program": 132,
+   "conflicts": 41,
+   "comparability": true,
+   "bipartite": false,
+   "triangles": 26,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "hull-465143663",
+   "kind": [
+    "hull",
+    12
+   ],
+   "seed": 465143663,
+   "arcs": 110,
+   "turns_in_H": 73,
+   "closable_alone": 73,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "hull-62364611",
+   "kind": [
+    "hull",
+    12
+   ],
+   "seed": 62364611,
+   "arcs": 111,
+   "turns_in_H": 49,
+   "closable_alone": 49,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-940356432",
+   "kind": [
+    "box",
+    4,
+    4,
+    10,
+    8
+   ],
+   "seed": 940356432,
+   "arcs": 223,
+   "turns_in_H": 145,
+   "closable_alone": 145,
+   "pairs_tested_by_a_program": 1439,
+   "conflicts": 141,
+   "comparability": true,
+   "bipartite": false,
+   "triangles": 11,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "dual-500545052",
+   "kind": [
+    "dual",
+    12
+   ],
+   "seed": 500545052,
+   "arcs": 108,
+   "turns_in_H": 123,
+   "closable_alone": 123,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "cube-495782127",
+   "kind": [
+    "cube",
+    6
+   ],
+   "seed": 495782127,
+   "arcs": 48,
+   "turns_in_H": 21,
+   "closable_alone": 21,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-986990922",
+   "kind": [
+    "box",
+    4,
+    4,
+    10,
+    8
+   ],
+   "seed": 986990922,
+   "arcs": 225,
+   "turns_in_H": 99,
+   "closable_alone": 99,
+   "pairs_tested_by_a_program": 1930,
+   "conflicts": 310,
+   "comparability": true,
+   "bipartite": false,
+   "triangles": 381,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-46148794",
+   "kind": [
+    "box",
+    3,
+    3,
+    12,
+    10
+   ],
+   "seed": 46148794,
+   "arcs": 238,
+   "turns_in_H": 75,
+   "closable_alone": 72,
+   "pairs_tested_by_a_program": 509,
+   "conflicts": 107,
+   "comparability": true,
+   "bipartite": false,
+   "triangles": 76,
+   "induced": {
+    "K4": 12,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "hull-214748959",
+   "kind": [
+    "hull",
+    12
+   ],
+   "seed": 214748959,
+   "arcs": 117,
+   "turns_in_H": 40,
+   "closable_alone": 40,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-636493528",
+   "kind": [
+    "box",
+    3,
+    3,
+    10,
+    6
+   ],
+   "seed": 636493528,
+   "arcs": 161,
+   "turns_in_H": 120,
+   "closable_alone": 119,
+   "pairs_tested_by_a_program": 2074,
+   "conflicts": 332,
+   "comparability": true,
+   "bipartite": false,
+   "triangles": 1080,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-714457467",
+   "kind": [
+    "box",
+    3,
+    3,
+    8,
+    3
+   ],
+   "seed": 714457467,
+   "arcs": 88,
+   "turns_in_H": 65,
+   "closable_alone": 51,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "hull-407699194",
+   "kind": [
+    "hull",
+    12
+   ],
+   "seed": 407699194,
+   "arcs": 119,
+   "turns_in_H": 68,
+   "closable_alone": 68,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-610227593",
+   "kind": [
+    "box",
+    3,
+    3,
+    12,
+    10
+   ],
+   "seed": 610227593,
+   "arcs": 244,
+   "turns_in_H": 81,
+   "closable_alone": 78,
+   "pairs_tested_by_a_program": 82,
+   "conflicts": 60,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "dual-844720478",
+   "kind": [
+    "dual",
+    12
+   ],
+   "seed": 844720478,
+   "arcs": 110,
+   "turns_in_H": 91,
+   "closable_alone": 91,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-1031279582",
+   "kind": [
+    "box",
+    2,
+    2,
+    6,
+    2
+   ],
+   "seed": 1031279582,
+   "arcs": 71,
+   "turns_in_H": 72,
+   "closable_alone": 59,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-868202078",
+   "kind": [
+    "box",
+    4,
+    4,
+    10,
+    8
+   ],
+   "seed": 868202078,
+   "arcs": 194,
+   "turns_in_H": 85,
+   "closable_alone": 84,
+   "pairs_tested_by_a_program": 196,
+   "conflicts": 29,
+   "comparability": true,
+   "bipartite": false,
+   "triangles": 2,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "hull-371530572",
+   "kind": [
+    "hull",
+    12
+   ],
+   "seed": 371530572,
+   "arcs": 108,
+   "turns_in_H": 62,
+   "closable_alone": 62,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "cube-804668615",
+   "kind": [
+    "cube",
+    6
+   ],
+   "seed": 804668615,
+   "arcs": 33,
+   "turns_in_H": 23,
+   "closable_alone": 23,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-942662923",
+   "kind": [
+    "box",
+    3,
+    3,
+    8,
+    3
+   ],
+   "seed": 942662923,
+   "arcs": 84,
+   "turns_in_H": 75,
+   "closable_alone": 75,
+   "pairs_tested_by_a_program": 74,
+   "conflicts": 53,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-351539410",
+   "kind": [
+    "box",
+    3,
+    3,
+    8,
+    3
+   ],
+   "seed": 351539410,
+   "arcs": 100,
+   "turns_in_H": 64,
+   "closable_alone": 49,
+   "pairs_tested_by_a_program": 365,
+   "conflicts": 336,
+   "comparability": true,
+   "bipartite": false,
+   "triangles": 540,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "hull-795691372",
+   "kind": [
+    "hull",
+    12
+   ],
+   "seed": 795691372,
+   "arcs": 105,
+   "turns_in_H": 81,
+   "closable_alone": 81,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "dual-63511747",
+   "kind": [
+    "dual",
+    12
+   ],
+   "seed": 63511747,
+   "arcs": 116,
+   "turns_in_H": 114,
+   "closable_alone": 114,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "dual-93388246",
+   "kind": [
+    "dual",
+    12
+   ],
+   "seed": 93388246,
+   "arcs": 109,
+   "turns_in_H": 124,
+   "closable_alone": 124,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-845248881",
+   "kind": [
+    "box",
+    3,
+    3,
+    12,
+    10
+   ],
+   "seed": 845248881,
+   "arcs": 234,
+   "turns_in_H": 61,
+   "closable_alone": 61,
+   "pairs_tested_by_a_program": 119,
+   "conflicts": 23,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-362053496",
+   "kind": [
+    "box",
+    3,
+    3,
+    10,
+    6
+   ],
+   "seed": 362053496,
+   "arcs": 160,
+   "turns_in_H": 74,
+   "closable_alone": 74,
+   "pairs_tested_by_a_program": 228,
+   "conflicts": 78,
+   "comparability": true,
+   "bipartite": false,
+   "triangles": 84,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-26417446",
+   "kind": [
+    "box",
+    4,
+    4,
+    10,
+    8
+   ],
+   "seed": 26417446,
+   "arcs": 218,
+   "turns_in_H": 60,
+   "closable_alone": 58,
+   "pairs_tested_by_a_program": 188,
+   "conflicts": 43,
+   "comparability": true,
+   "bipartite": false,
+   "triangles": 3,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-498594435",
+   "kind": [
+    "box",
+    4,
+    4,
+    10,
+    8
+   ],
+   "seed": 498594435,
+   "arcs": 198,
+   "turns_in_H": 95,
+   "closable_alone": 95,
+   "pairs_tested_by_a_program": 724,
+   "conflicts": 108,
+   "comparability": true,
+   "bipartite": false,
+   "triangles": 165,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "hull-738360465",
+   "kind": [
+    "hull",
+    12
+   ],
+   "seed": 738360465,
+   "arcs": 120,
+   "turns_in_H": 74,
+   "closable_alone": 74,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "cube-985977877",
+   "kind": [
+    "cube",
+    6
+   ],
+   "seed": 985977877,
+   "arcs": 47,
+   "turns_in_H": 15,
+   "closable_alone": 15,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-12260256",
+   "kind": [
+    "box",
+    3,
+    3,
+    12,
+    10
+   ],
+   "seed": 12260256,
+   "arcs": 249,
+   "turns_in_H": 107,
+   "closable_alone": 107,
+   "pairs_tested_by_a_program": 2006,
+   "conflicts": 375,
+   "comparability": true,
+   "bipartite": false,
+   "triangles": 636,
+   "induced": {
+    "K4": 165,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "hull-277561031",
+   "kind": [
+    "hull",
+    12
+   ],
+   "seed": 277561031,
+   "arcs": 113,
+   "turns_in_H": 39,
+   "closable_alone": 39,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-915022765",
+   "kind": [
+    "box",
+    4,
+    4,
+    10,
+    8
+   ],
+   "seed": 915022765,
+   "arcs": 213,
+   "turns_in_H": 91,
+   "closable_alone": 82,
+   "pairs_tested_by_a_program": 624,
+   "conflicts": 118,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-1033158277",
+   "kind": [
+    "box",
+    2,
+    2,
+    6,
+    2
+   ],
+   "seed": 1033158277,
+   "arcs": 60,
+   "turns_in_H": 62,
+   "closable_alone": 57,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "cube-429151876",
+   "kind": [
+    "cube",
+    6
+   ],
+   "seed": 429151876,
+   "arcs": 38,
+   "turns_in_H": 18,
+   "closable_alone": 18,
+   "pairs_tested_by_a_program": 5,
+   "conflicts": 5,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "hull-1041368740",
+   "kind": [
+    "hull",
+    12
+   ],
+   "seed": 1041368740,
+   "arcs": 110,
+   "turns_in_H": 69,
+   "closable_alone": 69,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "cube-889969879",
+   "kind": [
+    "cube",
+    6
+   ],
+   "seed": 889969879,
+   "arcs": 44,
+   "turns_in_H": 14,
+   "closable_alone": 14,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "cube-3403220",
+   "kind": [
+    "cube",
+    6
+   ],
+   "seed": 3403220,
+   "arcs": 38,
+   "turns_in_H": 9,
+   "closable_alone": 9,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "cube-983862753",
+   "kind": [
+    "cube",
+    6
+   ],
+   "seed": 983862753,
+   "arcs": 38,
+   "turns_in_H": 9,
+   "closable_alone": 2,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-493073046",
+   "kind": [
+    "box",
+    2,
+    2,
+    6,
+    2
+   ],
+   "seed": 493073046,
+   "arcs": 71,
+   "turns_in_H": 59,
+   "closable_alone": 52,
+   "pairs_tested_by_a_program": 198,
+   "conflicts": 60,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-388230663",
+   "kind": [
+    "box",
+    3,
+    3,
+    10,
+    6
+   ],
+   "seed": 388230663,
+   "arcs": 138,
+   "turns_in_H": 94,
+   "closable_alone": 87,
+   "pairs_tested_by_a_program": 171,
+   "conflicts": 48,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-548239776",
+   "kind": [
+    "box",
+    3,
+    3,
+    8,
+    3
+   ],
+   "seed": 548239776,
+   "arcs": 91,
+   "turns_in_H": 77,
+   "closable_alone": 74,
+   "pairs_tested_by_a_program": 628,
+   "conflicts": 266,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-151297683",
+   "kind": [
+    "box",
+    2,
+    2,
+    6,
+    2
+   ],
+   "seed": 151297683,
+   "arcs": 73,
+   "turns_in_H": 81,
+   "closable_alone": 77,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-35842859",
+   "kind": [
+    "box",
+    3,
+    3,
+    8,
+    3
+   ],
+   "seed": 35842859,
+   "arcs": 96,
+   "turns_in_H": 96,
+   "closable_alone": 96,
+   "pairs_tested_by_a_program": 756,
+   "conflicts": 193,
+   "comparability": true,
+   "bipartite": false,
+   "triangles": 203,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "dual-31267309",
+   "kind": [
+    "dual",
+    12
+   ],
+   "seed": 31267309,
+   "arcs": 112,
+   "turns_in_H": 108,
+   "closable_alone": 108,
+   "pairs_tested_by_a_program": 0,
+   "conflicts": 0,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-535924353",
+   "kind": [
+    "box",
+    3,
+    3,
+    12,
+    10
+   ],
+   "seed": 535924353,
+   "arcs": 241,
+   "turns_in_H": 82,
+   "closable_alone": 79,
+   "pairs_tested_by_a_program": 138,
+   "conflicts": 57,
+   "comparability": true,
+   "bipartite": false,
+   "triangles": 45,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-235125031",
+   "kind": [
+    "box",
+    3,
+    3,
+    12,
+    10
+   ],
+   "seed": 235125031,
+   "arcs": 251,
+   "turns_in_H": 71,
+   "closable_alone": 71,
+   "pairs_tested_by_a_program": 413,
+   "conflicts": 150,
+   "comparability": true,
+   "bipartite": false,
+   "triangles": 114,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-739642468",
+   "kind": [
+    "box",
+    3,
+    3,
+    10,
+    6
+   ],
+   "seed": 739642468,
+   "arcs": 166,
+   "turns_in_H": 58,
+   "closable_alone": 58,
+   "pairs_tested_by_a_program": 1,
+   "conflicts": 1,
+   "comparability": true,
+   "bipartite": true,
+   "triangles": 0,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-149283140",
+   "kind": [
+    "box",
+    3,
+    3,
+    12,
+    10
+   ],
+   "seed": 149283140,
+   "arcs": 249,
+   "turns_in_H": 76,
+   "closable_alone": 75,
+   "pairs_tested_by_a_program": 396,
+   "conflicts": 112,
+   "comparability": true,
+   "bipartite": false,
+   "triangles": 85,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  },
+  {
+   "name": "box-342793205",
+   "kind": [
+    "box",
+    3,
+    3,
+    10,
+    6
+   ],
+   "seed": 342793205,
+   "arcs": 151,
+   "turns_in_H": 85,
+   "closable_alone": 84,
+   "pairs_tested_by_a_program": 286,
+   "conflicts": 81,
+   "comparability": true,
+   "bipartite": false,
+   "triangles": 80,
+   "induced": {
+    "K4": 0,
+    "prism": 0,
+    "cube": 0,
+    "pentagonal prism": 0
+   }
+  }
+ ]
+}
