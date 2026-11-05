@@ -257,7 +257,11 @@ def staircase():
     # q = (10,5), which is (0,7) on the left copy of tau: delta = 7 - 5.
     motion, _ = surface.glued[edge((10, 4), (10, 5))]
     assert motion((10, 5)) == (0, 7)
-    print("  sigma lands on tau at (10,5) = (0,7): delta = 2 = s_2")
+    # Proposition "A separatrix that winds": tau runs through q, from v = (10,3),
+    # along e_2 of the turn at y = 5.5, so the sign is + and s = +delta.
+    sign = dot(rotate(1, (1, 0)), minus((10, 5), (10, 3))) // 2
+    assert sign == 1 and surface.turn((0, half(5)))[1] == sign * (7 - 5)
+    print("  sigma lands on tau at (10,5) = (0,7): delta = 2, tau along e_2: s_2 = +delta")
     # The comb of a = [(1,5), (10,5)]: feet c_3 = (1,4) and v = (10,3).
     assert dot((1, 0), minus((10, 3), (1, 4))) == 9
     print("  comb of a: <e_a, p_c1 - p_c0> = 9 = l_a")
