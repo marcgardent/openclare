@@ -136,9 +136,10 @@ combinaison de tours, et des \emph{peignes}, dislocations locales portées par
 un seul arc, écrivent tous les certificats de conflit trouvés sur un corps
 humain. % PR3: 67 des 68 certificats sur le nouvel export, le 68e n'a pas de représentant entier
 Les conflits minorent le nombre de tours que toute quantification
-respectant des bornes données laisse décalés~: sur ce corps, dans les bornes
-de séparation d'un moteur de remaillage, exactement un à 37 des tours qu'il
-retient, là où il en laisse de 19 à 170 décalés. Choisir les tours à fermer
+respectant des bornes données laisse décalés~: sur ce corps, toute
+quantification qui garde les sommets singuliers séparés laisse décalés de
+zéro à 33 des tours qu'un moteur de remaillage retient, là où le moteur en
+laisse de 19 à 170 décalés (de un à 37 dans ses propres bornes de séparation). Choisir les tours à fermer
 est NP-difficile pour des équilibres bidirigés avec des bornes $0$--$1$, la
 forme algébrique de la quantification\,; savoir si de vrais T-meshes donnent
 des instances difficiles est une question ouverte. Le cœur algébrique des démonstrations est vérifié en Lean\,; la topologie de la
@@ -165,7 +166,9 @@ séparés. Le présent article demande pourquoi, et ce qui s'ensuit.
 Les sections~\ref{sec:setting} à~\ref{sec:beyond} vont de l'holonomie d'un
 tour aux conflits entre tours, à toute combinaison de tours, puis aux bords et
 aux anses\,; les sections~\ref{sec:forced} et~\ref{sec:choosing} minorent le
-nombre de tours que toute quantification laisse décalés et montrent que les
+nombre de tours que toute quantification laisse décalés (sur un corps humain,
+de zéro à 33 des tours qu'un moteur retient, quels que soient les arcs qui
+portent la séparation de ses sommets singuliers) et montrent que les
 choisir est NP-difficile\,; les sections~\ref{sec:lean} et~\ref{sec:open}
 disent ce qui est vérifié par machine et ce qui reste ouvert. Les ingrédients
 sont classiques (holonomie des métriques plates à singularités coniques,
@@ -363,9 +366,17 @@ trouvent $1\,708$ tours et en retiennent $1\,020$ (en sommant sur les
 variantes). La recherche entière maintient de $36$ à $197$ arcs à une longueur
 d'au moins un, les \emph{bornes de séparation}\,; $P_{\mathrm{eng}}$,
 l'ensemble des longueurs équilibrées qui les respectent, n'est ni un
-sous-ensemble ni un sur-ensemble des quantifications valides, qui demandent
-seulement qu'une chaîne entre deux sommets singuliers garde une longueur
-strictement positive. Les identités sont vérifiées en virgule flottante sauf
+sous-ensemble ni un sur-ensemble des quantifications valides. Nous notons
+$P_{\mathrm{valid}}$ l'ensemble des longueurs équilibrées positives ou nulles
+qui donnent une longueur d'au moins un à toute \emph{chaîne}~: un chemin
+d'arcs entre deux sommets singuliers à travers des jonctions en T et des
+coins, ou l'une des $8$ séparatrices qui s'arrêtent sur une autre séparatrice
+de leur sommet, refermée le long de celle-ci. Une chaîne de longueur nulle
+confond deux sommets singuliers ou pince la surface en l'un
+d'eux~\cite[\S4.1]{lyon2021constrained}~; $P_{\mathrm{valid}}$ contient donc
+toute quantification valide, quel que soit l'arc d'une chaîne qui porte la
+séparation, et un compte forcé dans $P_{\mathrm{valid}}$ vaut pour toutes\,;
+les longueurs du moteur y sont dans chaque variante. Les identités sont vérifiées en virgule flottante sauf
 mention de l'exactitude\,; les programmes ont été résolus avec HiGHS
 1.8.0~\cite{huangfu2018highs} sur un seul fil via SciPy
 1.16.3~\cite{virtanen2020scipy}, sur un Intel Core i7-7700K (4~cœurs, 2017,
@@ -1875,41 +1886,48 @@ non une parité~\cite[\S7]{gardent2026loops}. % UNSOURCED: l'écart (0,399, 0,53
 
 Dans le tableau~\ref{tab:forced}, $H$ est l'ensemble des tours retenus d'une
 variante, ou celui des $149$ bandes du maillage aux longueurs du moteur pour
-la variante~2 inclinées de moins de $0,12$, et $P$ est $P_{\mathrm{eng}}$,
-puis $P_{\mathrm{eng}}$ avec en plus le plafond du moteur sur l'écart moyen,
+la variante~2 inclinées de moins de $0,12$, et $P$ est $P_{\mathrm{eng}}$
+ou $P_{\mathrm{valid}}$, puis avec en plus le plafond du moteur sur l'écart moyen,
 $D = 0,5219$ tel que l'export le donne, puis avec en plus des longueurs
 entières et sa fenêtre de $10\,379$ à $10\,801$ quads. Avec les seules
-bornes, la boucle d'ensemble transversal implicite est exacte, en $1\,166$ et
-$1\,208$ secondes pour les variantes 5 et 7 et en au plus $22$ secondes pour
-les autres familles\,; avec le plafond et la fenêtre, les encadrements
+bornes, la boucle d'ensemble transversal implicite est exacte, dans
+$P_{\mathrm{eng}}$ en $1\,166$ et $1\,208$ secondes pour les variantes 5 et 7
+et en au plus $22$ secondes pour les autres familles\,; dans
+$P_{\mathrm{valid}}$, les chemins, trop nombreux pour être listés, entrent
+dans chaque programme à mesure que ses longueurs les violent (plus courts
+chemins), jusqu'à ce qu'aucun ne le soit. Avec le plafond et la fenêtre, les encadrements
 viennent de sous-ensembles fermables, de cœurs disjoints, de bornes du
 solveur et de points entiers vérifiés exactement.
 
 \begin{table}[t]
-\begin{evidence}[unbreakable]{data}{la colonne «~bornes~» dans les variantes 0 à 4 et 6, exacte sur l\'export d\'où viennent ces nombres (\texttt{make lean-check})\,; dans les variantes 5 et 7, Lean ne certifie que $20 \le \tau \le 30$ et $28 \le \tau \le 37$, et la ligne des bandes n\'est pas vérifiée par Lean\,; les colonnes avec le plafond et la fenêtre sont mesurées, non vérifiées}
+\begin{evidence}[unbreakable]{data}{la colonne «~bornes~» de $P_{\mathrm{eng}}$ dans les variantes 0 à 4 et 6, exacte sur l\'export d\'où viennent ces nombres (\texttt{make lean-check})\,; dans les variantes 5 et 7, Lean ne certifie que $20 \le \tau \le 30$ et $28 \le \tau \le 37$, et la ligne des bandes n\'est pas vérifiée par Lean\,; les colonnes de $P_{\mathrm{valid}}$ et celles avec le plafond et la fenêtre sont mesurées, non vérifiées}
 \centering
 \small
 \newcommand{\head}[1]{\begin{tabular}[b]{@{}r@{}}#1\end{tabular}}
-\begin{tabular}{lrrrrr}
+\begin{tabular}{lrrrrrrrr}
 \toprule
+& & \multicolumn{3}{c}{$P_{\mathrm{eng}}$} & \multicolumn{3}{c}{$P_{\mathrm{valid}}$} & \\
+\cmidrule(lr){3-5}\cmidrule(lr){6-8}
 variante & tours & bornes & \head{bornes,\\ plafond} & \head{plafond, taille,\\ entiers} &
+chaînes & \head{chaînes,\\ plafond} & \head{plafond, taille,\\ entiers} &
 \head{laissés décalés\\ par le moteur} \\
 \midrule
-0 & 58 & 1 & 1 & 1 & 19 \\
-1 & 92 & 5 & 6 & 6--16 & 40 \\
-2 & 64 & 3 & 3 & 3 & 23 \\
-3 & 102 & 12 & 12 & 13--22 & 52 \\
-4 & 125 & 5 & 6 & 7--47 & 61 \\
-5 & 219 & 30 & 30--219 & 30--171 & 154 \\
-6 & 131 & 8 & 8--131 & 10--50 & 72 \\
-7 & 229 & 37 & 37--229 & 37--229 & 170 \\
+0 & 58 & 1 & 1 & 1 & 0 & 0 & 0 & 19 \\
+1 & 92 & 5 & 6 & 6--16 & 3 & 3 & 3 & 40 \\
+2 & 64 & 3 & 3 & 3 & 1 & 1 & 1 & 23 \\
+3 & 102 & 12 & 12 & 13--22 & 11 & 11 & 11--18 & 52 \\
+4 & 125 & 5 & 6 & 7--47 & 5 & 5 & 6--47 & 61 \\
+5 & 219 & 30 & 30--219 & 30--171 & 26 & -- & -- & 154 \\
+6 & 131 & 8 & 8--131 & 10--50 & 7 & 7 & 8--54 & 72 \\
+7 & 229 & 37 & 37--229 & 37--229 & 33 & -- & -- & 170 \\
 \midrule
-2, bandes du maillage & 149 & 10 & 10--149 & 12--72 & 114 \\
+2, bandes & 149 & 10 & 10--149 & 12--72 & 17 & 17--149 & 17--82 & 114 \\
 \bottomrule
 \end{tabular}
 \caption{Corps masculin~: tours de chaque famille que toute quantification de
 $P$ laisse décalés (théorèmes~\ref{thm:forced} et~\ref{thm:transversal}\,;
-mesuré), avec $P = P_{\mathrm{eng}}$, puis avec en plus le plafond du moteur
+mesuré), avec $P = P_{\mathrm{eng}}$ (ses bornes de séparation) ou
+$P_{\mathrm{valid}}$ (toute chaîne de longueur au moins un), puis avec en plus le plafond du moteur
 (longueurs réelles), puis avec en plus des longueurs entières et la fenêtre de
 tailles du moteur. Un nombre seul est exact\,; un intervalle est certifié,
 inférieurement par la borne prouvée du solveur ou par des cœurs disjoints,
@@ -1946,6 +1964,25 @@ $1,123$ et $1,195$, au-dessus du plafond. Des optimums qui ramènent d'autres
 arcs à zéro peuvent casser le maillage\,; si l'on garde ouvert tout arc que le
 moteur garde ouvert, l'optimum pour la variante~2 vaut $3$, à $10\,735$ quads
 et à un écart moyen de $0,471$ (mesuré).
+
+Dans $P_{\mathrm{valid}}$, les chaînes seules forcent exactement $0$, $3$, $1$,
+$11$, $5$, $26$, $7$ et $33$ tours. Tout tour qui ne peut pas être fermé seul
+dans les bornes ($54$ de la variante~0, $87$ de la variante~1, $46$ et $59$ de
+la variante~2, $70$, $211$, $91$, $152$ et $220$ des variantes 3, 5, 6 et 7)
+se ferme seul dans $P_{\mathrm{valid}}$~: son certificat demande l'arc que le
+moteur maintient, et un autre arc de la chaîne peut porter la séparation. Ce
+que toute quantification valide laisse décalé vient de conflits entre
+tours\,; dans la variante~2, c'est un tour de la paire de la ligne 4 du
+tableau~\ref{tab:iis}. Avec le plafond et la fenêtre, en longueurs entières,
+la valeur est exactement $0$ dans la variante~0, $3$ dans la variante~1 et $1$
+dans la variante~2~: des longueurs entières de $P_{\mathrm{valid}}$ qui ne
+laissent décalés que ceux-là existent à $10\,643$, $10\,701$ et $10\,715$
+quads, à des écarts moyens de $0,394$, $0,509$ et $0,386$, vérifiées
+exactement pour les équilibres, les chaînes, le plafond et la fenêtre, non
+pour le treillis du moteur. Pour les bandes, les chaînes forcent plus que les
+bornes, $17$ contre $10$~: $P_{\mathrm{eng}}$ admet des longueurs qui annulent
+des chaînes que le moteur ne maintient pas. Les colonnes avec le plafond n'ont
+pas été calculées dans les variantes 5 et 7 (mesuré).
 
 \section{Choisir les tours}\label{sec:choosing}
 
@@ -2201,8 +2238,10 @@ moteur d'openclare~0.7.0 tel que publié, et de quelques modèles du banc avec
 une version du moteur non enregistrée\,; les identités
 ont été vérifiées en virgule flottante sauf mention d'arithmétique exacte, et
 les homotopies des propositions~\ref{prop:swap} et~\ref{prop:winding} n'ont
-pas été vérifiées. Les comptes forcés sont relatifs aux bornes de séparation
-du moteur et à son plafond, tels que l'export les donne, et les intervalles
+pas été vérifiées. Les comptes forcés dans $P_{\mathrm{valid}}$ valent pour
+toute quantification qui garde les sommets singuliers séparés, ceux de
+$P_{\mathrm{eng}}$ seulement dans les bornes de séparation du moteur\,; tous
+sont relatifs à son plafond tel que l'export le donne, et les intervalles
 dépendent des limites de temps du solveur sur une machine partagée. Les
 énoncés mesurés sur le corps sont refaits par les scripts
 d'\texttt{experiments}, à côté de cette note, à partir de l'export

@@ -820,12 +820,16 @@ singularités séparées (de $36$ à $197$ arcs maintenus à la longueur un,
 selon la variante). Ces bornes sont le choix, par le moteur,
 de \emph{l'arc} d'une chaîne entre deux sommets singuliers qui porte leur
 séparation~: la validité demande qu'une chaîne garde une longueur totale
-strictement positive, non un arc donné. Tous les énoncés qui suivent sont
-relatifs à ces bornes. Nous notons $P_{\mathrm{eng}}$ l'ensemble des
+strictement positive, non un arc donné. Nous notons $P_{\mathrm{eng}}$ l'ensemble des
 longueurs équilibrées qui les respectent\,; ce n'est ni un sous-ensemble ni
 un sur-ensemble des quantifications valides, puisqu'il exclut des longueurs
 valides qui placent la séparation sur un autre arc de la chaîne et admet des
-longueurs qui annulent d'autres arcs. Les variantes sont numérotées comme à
+longueurs qui annulent d'autres arcs. Nous notons $P_{\mathrm{valid}}$
+l'ensemble des longueurs équilibrées positives ou nulles qui donnent à toute
+chaîne (un chemin d'arcs entre deux sommets singuliers, ou une boucle de
+séparatrice) une longueur d'au moins un\,; il contient toute quantification
+valide~\cite{gardent2026turns}. Les énoncés qui suivent sont relatifs à
+$P_{\mathrm{eng}}$, sauf s'ils nomment $P_{\mathrm{valid}}$. Les variantes sont numérotées comme à
 l'export~: la variante $m + 2j + 4i$ part des fractions $\{0,5\}$ ($m = 0$)
 ou $\{0,2 ; 0,5 ; 0,8\}$ ($m = 1$), avec la borne d'inclinaison $0,05$ ($j =
 0$) ou $0,12$ ($j = 1$) et la borne de longueur de $2$ ($i = 0$) ou $6$ ($i =
@@ -991,14 +995,17 @@ une couverture minimale des sous-systèmes infaisables irréductibles
 (\emph{irreducible infeasible subsystems})~\cite{parker1996iis}~:
 exactement $1$, $5$, $3$, $12$, $5$, $30$, $8$ et $37$ dans les variantes 0
 à 7, contre $19$, $40$, $23$, $52$, $61$, $154$, $72$ et $170$ laissés
-décalés par le moteur. Si l'on ajoute le plafond d'écart du moteur et sa
+décalés par le moteur. Dans $P_{\mathrm{valid}}$, le minorant qui vaut pour
+toute quantification valide, les plus petits nombres sont exactement $0$,
+$3$, $1$, $11$, $5$, $26$, $7$ et 33~: le seul tour forcé dans la variante~0
+l'est par l'arc que le moteur a choisi pour porter une séparation. Si l'on ajoute le plafond d'écart du moteur et sa
 fenêtre de tailles (de $10\,379$ à $10\,801$ quads), en longueurs entières,
 le plus petit nombre vaut encore exactement un dans la variante~0 et trois
 dans la variante~2~: des longueurs entières qui ferment tous les autres
 tours retenus existent à $10\,730$ et $10\,435$ quads, à des écarts moyens
 de $0,387$ et $0,506$. Des $23$ tours de la variante~2 que le moteur laisse
-décalés, les bornes de séparation en imposent trois, et le plafond, la
-taille et l'intégrité aucun\,; l'heuristique est responsable des $20$
+décalés, les bornes de séparation en imposent trois (un dans
+$P_{\mathrm{valid}}$), et le plafond, la taille et l'intégrité aucun\,; l'heuristique est responsable des $20$
 autres. Fermer davantage de tours n'est cependant pas ce que voit la mesure
 des spirales~: une recherche locale sur les longueurs entières, sous les
 mêmes plafond et taille, ferme $45$ bandes de plus du maillage de la

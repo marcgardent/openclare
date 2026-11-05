@@ -718,11 +718,15 @@ keep singularities apart ($36$ to $197$ arcs held at length one, depending on
 the way). These bounds are the engine's choice of
 \emph{which} arc of a chain between two singular vertices carries their
 separation: validity asks a chain to keep a positive total length, not a
-given arc. Every statement below is relative to them. We call
+given arc. We call
 $P_{\mathrm{eng}}$ the balanced lengths that meet them; it is neither a
 subset nor a superset of the valid quantizations, since it excludes valid
 lengths that put the separation on another arc of the chain and allows
-lengths that bring other arcs to zero. The ways are numbered as exported:
+lengths that bring other arcs to zero. We call $P_{\mathrm{valid}}$ the
+non-negative balanced lengths that give every chain (a path of arcs between
+two singular vertices, or a separatrix loop) a length of at least one; it
+contains every valid quantization~\cite{gardent2026turns}. Statements below
+are relative to $P_{\mathrm{eng}}$ unless they name $P_{\mathrm{valid}}$. The ways are numbered as exported:
 way $m + 2j + 4i$ starts from the shares $\{0.5\}$ ($m = 0$) or $\{0.2, 0.5,
 0.8\}$ ($m = 1$), with the lean bound $0.05$ ($j = 0$) or $0.12$ ($j = 1$)
 and the length bound $2$ ($i = 0$) or $6$ ($i = 1$) sides. Without the
@@ -868,14 +872,18 @@ The companion paper~\cite{gardent2026turns} computes the least number of
 held turns that any lengths in $P_{\mathrm{eng}}$ leave shifted, a minimum
 cover of the irreducible infeasible subsystems~\cite{parker1996iis}: exactly
 $1$, $5$, $3$, $12$, $5$, $30$, $8$ and $37$ in ways 0 to 7, against $19$,
-$40$, $23$, $52$, $61$, $154$, $72$ and $170$ left shifted by the engine.
+$40$, $23$, $52$, $61$, $154$, $72$ and $170$ left shifted by the engine. In
+$P_{\mathrm{valid}}$, the bound that holds for every valid quantization, the
+least numbers are exactly $0$, $3$, $1$, $11$, $5$, $26$, $7$ and 33: the one
+turn forced in way~0 is forced by the arc the engine chose to carry a
+separation.
 With the engine's cap on the deviation and its window of sizes ($10{,}379$
 to $10{,}801$ quads) added, at whole lengths, the least number is still
 exactly one in way~0 and three in way~2: whole lengths closing every other
 held turn exist at $10{,}730$ and $10{,}435$ quads, at mean deviations
 $0.387$ and $0.506$. Of the $23$ turns of way~2 the engine leaves shifted,
-the bounds of separation force three and the cap, the size and integrality
-none; the heuristic accounts for $20$. Closing more turns, however, is not
+the bounds of separation force three (one in $P_{\mathrm{valid}}$) and the
+cap, the size and integrality none; the heuristic accounts for $20$. Closing more turns, however, is not
 what the measure of spirals sees: a local search over whole lengths within
 the same cap and size closes $45$ more strips of the mesh of way~2 than the
 engine does, but at its lengths, where the strips are other walks, $4.7\%$
