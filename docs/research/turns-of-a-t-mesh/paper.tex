@@ -1209,7 +1209,7 @@ $2$.}
 \label{fig:comb}
 \end{figure}
 
-\begin{evidence}{core}{\lean{comb_reading}, \lean{Pairing.Comb.reading}; the forms: \lean{Combs.comb_dislocation}, \lean{Combs.comb_exchange}; the feet exist on 850 of the 3{,}009 arcs of 50 random instances; assumed: the feet exist, the perpendicular traces develop straight, $e_a$ is an axis of the chart of the comb; the case $c_0 = c_1$ is not formalized}
+\begin{evidence}{core}{\lean{comb_reading}, \lean{Pairing.Comb.reading}; the forms: \lean{Combs.comb_dislocation}, \lean{Combs.comb_exchange}, from the comb \lean{Combs.Comb.dislocation}, \lean{Combs.Comb.exchange}; the feet exist on 850 of the 3{,}009 arcs of 50 random instances; assumed: the feet exist, the perpendicular traces develop straight, $e_a$ is an axis of the chart of the comb; the case $c_0 = c_1$ is not formalized}
 \begin{lemma}[Combs]\label{lem:comb}
 Let $p_{c_0}$, $p_{c_1}$ be the feet of an arc $a$ developed along its comb.
 Then, for all balanced lengths,
@@ -1251,8 +1251,9 @@ Let $c = \sum_a c_a\ell_a$, $c_a \in \Z_{\ge0}$, be a certificate
 (Remark~\ref{rem:definite}) whose arcs have feet of odd valence and whose odd
 part, the arcs with $c_a$ odd, is a cycle modulo~$2$ of the graph of feet.
 Then $c$ is a sum with whole non-negative weights of comb readings $2\ell_a$,
-each the form of a dislocation or an exchange (Lemma~\ref{lem:comb}), and of
-readings of closed walks of combs. With real weights, every non-negative form
+each the form of a dislocation or an exchange (Lemma~\ref{lem:comb}) when the
+two feet of $a$ are distinct and twice a winding separatrix when they are one
+vertex, and of readings of closed walks of combs. With real weights, every non-negative form
 supported on arcs whose two feet are of odd valence, distinct or equal, is a
 non-negative combination of comb readings $2\ell_a$ and of winding separatrices
 $\ell_a$, without condition of parity.
@@ -1291,7 +1292,7 @@ in one chart. We use closed walks only as forms.
 \end{remark}
 \end{evidence}
 
-\begin{evidence}{core}{\lean{Pairing.pairing_surjective}, \lean{Pairing.pairing_surjective_of_ne_one}, \lean{Pairing.form_update_of_eq_one}; tested: the 35 spheres without valence $4k$ of 50 random instances, rank equal to the dimension on every one; on tori the period term lets it fail (11 of 15); assumed: the presentation of $\pi_1(\Sigma^\circ)$ by the $\lambda_i$ and one relation of trivial holonomy, every comb developed in the chart of the base point through loops $\lambda_i$; the kernel is not formalized}
+\begin{evidence}{core}{\lean{Pairing.pairing_surjective}, \lean{Pairing.pairing_surjective_of_ne_one}, \lean{Pairing.form_update_of_eq_one}; tested: the 35 spheres without valence $4k$ of 50 random instances, rank equal to the dimension on every one; on tori the period term lets it fail (11 of 15); assumed: the presentation of $\pi_1(\Sigma^\circ)$ by the $\lambda_i$ and one relation of trivial holonomy, the developed positions $p_i$ linear in the lengths, every comb developed in the chart of the base point through loops $\lambda_i$; not formalized: the kernel, and that with a valence divisible by four the map need not be onto (only that no form depends on those positions)}
 \begin{proposition}[The Burgers pairing]\label{prop:pairing}
 Let the surface be closed of genus zero, with no singular vertex of valence
 divisible by four, and let every trace of the T-mesh start at a singular
@@ -1867,7 +1868,7 @@ complexity of maximizing $Q$ over a polytope of lengths in reals.
 \section{What is machine-checked}\label{sec:lean}
 
 The folder \texttt{lean} beside this note is a Lean~4~\cite{demoura2021lean4}
-project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $729$
+project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $732$
 theorem declarations, many of them small lemmas, depend only on Lean's
 standard axioms; the count is not evidence, and its \texttt{README.md} maps
 each statement to its Lean theorems. Lean checks the algebraic and

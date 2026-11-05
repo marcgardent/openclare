@@ -145,6 +145,47 @@ theorem comb_exchange (u : ι → ℂˣ) (q : ι → ℂ) (c₀ c₁ : ι)
     simp only [letterLin, Units.val_inv_eq_inv_val, hR₁]
     exact mul_inv_cancel₀ (Units.ne_zero _)) hR₀ e he len hlen
 
+/-- The feet of a comb at their positions in the chart of the comb. -/
+def combChart (C : Comb ι) (u : ι → ℂˣ) (p : ι → ℂ) (i : ι) : ℂ :=
+  if i = C.foot₁ then C.at₁ u p else C.at₀ u p
+
+theorem combChart_reading (C : Comb ι) (u : ι → ℂˣ) (p : ι → ℂ) (len : ℝ)
+    (h : C.Develops u p len) (hne : C.foot₀ ≠ C.foot₁) :
+    dotC C.dir (combChart C u p C.foot₁ - combChart C u p C.foot₀) = len := by
+  simp only [combChart, ite_true, hne, ite_false]
+  exact C.reading u p len h
+
+/-- **Lemma "Combs", a dislocation, from the comb.** A comb that develops as in
+the lemma, with distinct feet of valences three and five and `e_a` an axis,
+gives the dislocation of `comb_dislocation` at the feet developed along it. -/
+theorem Comb.dislocation (C : Comb ι) (u : ι → ℂˣ) (p : ι → ℂ) (len : ℝ)
+    (h : C.Develops u p len) (hne : C.foot₀ ≠ C.foot₁)
+    (hR₀ : (u C.foot₀ : ℂ) = Complex.I ∨ (u C.foot₀ : ℂ) = -Complex.I)
+    (hR₁ : (u C.foot₁ : ℂ) = (u C.foot₀ : ℂ)⁻¹)
+    (he : C.dir = 1 ∨ C.dir = Complex.I ∨ C.dir = -1 ∨ C.dir = -Complex.I) :
+    let W := twistedWinding {()} u (fun _ => 1) (fun _ => C.dir * (1 - (u C.foot₀ : ℂ)))
+      (fun _ => [(C.foot₀, true), (C.foot₁, true)])
+    rhoW u [(C.foot₀, true), (C.foot₁, true)] = 1 ∧ W ∈ cycles u ∧
+      IsWhole (C.dir * (1 - (u C.foot₀ : ℂ))) ∧
+      conj (1 - (u C.foot₀ : ℂ)) * (C.dir * (1 - (u C.foot₀ : ℂ))) = 2 * C.dir ∧
+      form u W (combChart C u p) = -2 * len :=
+  comb_dislocation u _ _ _ hR₀ hR₁ _ he len (combChart_reading C u p len h hne)
+
+/-- **Lemma "Combs", an exchange, from the comb.** The same with equal odd
+valences. -/
+theorem Comb.exchange (C : Comb ι) (u : ι → ℂˣ) (p : ι → ℂ) (len : ℝ)
+    (h : C.Develops u p len) (hne : C.foot₀ ≠ C.foot₁)
+    (hR₀ : (u C.foot₀ : ℂ) = Complex.I ∨ (u C.foot₀ : ℂ) = -Complex.I)
+    (hR₁ : (u C.foot₁ : ℂ) = u C.foot₀)
+    (he : C.dir = 1 ∨ C.dir = Complex.I ∨ C.dir = -1 ∨ C.dir = -Complex.I) :
+    let W := twistedWinding {()} u (fun _ => 1) (fun _ => C.dir * (1 - (u C.foot₀ : ℂ)))
+      (fun _ => [(C.foot₀, true), (C.foot₁, false)])
+    rhoW u [(C.foot₀, true), (C.foot₁, false)] = 1 ∧ W ∈ cycles u ∧
+      IsWhole (C.dir * (1 - (u C.foot₀ : ℂ))) ∧
+      conj (1 - (u C.foot₀ : ℂ)) * (C.dir * (1 - (u C.foot₀ : ℂ))) = 2 * C.dir ∧
+      form u W (combChart C u p) = -2 * len :=
+  comb_exchange u _ _ _ hR₀ hR₁ _ he len (combChart_reading C u p len h hne)
+
 end Forms
 
 /-! ### Closed walks of combs -/

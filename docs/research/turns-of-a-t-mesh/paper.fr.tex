@@ -1323,7 +1323,7 @@ peigne sont trois lectures du même décalage $2$.}
 \label{fig:comb}
 \end{figure}
 
-\begin{evidence}{core}{\lean{comb_reading}, \lean{Pairing.Comb.reading}\,; les formes~: \lean{Combs.comb_dislocation}, \lean{Combs.comb_exchange}\,; les pieds existent sur 850 des 3\,009 arcs de 50 instances aléatoires\,; supposé~: les pieds existent, les traces perpendiculaires se développent en droites, $e_a$ est un axe de la carte du peigne\,; le cas $c_0 = c_1$ n'est pas formalisé}
+\begin{evidence}{core}{\lean{comb_reading}, \lean{Pairing.Comb.reading}\,; les formes~: \lean{Combs.comb_dislocation}, \lean{Combs.comb_exchange}, depuis le peigne \lean{Combs.Comb.dislocation}, \lean{Combs.Comb.exchange}\,; les pieds existent sur 850 des 3\,009 arcs de 50 instances aléatoires\,; supposé~: les pieds existent, les traces perpendiculaires se développent en droites, $e_a$ est un axe de la carte du peigne\,; le cas $c_0 = c_1$ n'est pas formalisé}
 \begin{lemma}[Peignes]\label{lem:comb}
 Soient $p_{c_0}$, $p_{c_1}$ les pieds d'un arc $a$, développés le long de son
 peigne. Alors, pour toutes longueurs équilibrées,
@@ -1367,8 +1367,9 @@ Soit $c = \sum_a c_a\ell_a$, $c_a \in \Z_{\ge0}$, un certificat
 et dont la partie impaire, les arcs de coefficient $c_a$ impair, est un cycle
 modulo~$2$ du graphe des pieds. Alors $c$ est une somme à poids entiers
 positifs ou nuls de lectures de peignes $2\ell_a$, chacune la forme d'une
-dislocation ou d'un échange (lemme~\ref{lem:comb}), et de lectures de marches
-fermées de peignes. Avec des poids réels, toute forme à coefficients positifs
+dislocation ou d'un échange (lemme~\ref{lem:comb}) quand les deux pieds de
+$a$ sont distincts et deux fois une séparatrice qui s'enroule quand ils sont
+un même sommet, et de lectures de marches fermées de peignes. Avec des poids réels, toute forme à coefficients positifs
 ou nuls supportée par des arcs dont les deux pieds sont de valence impaire,
 distincts ou égaux, est une combinaison à coefficients positifs ou nuls de
 lectures de peignes $2\ell_a$ et de séparatrices qui s'enroulent $\ell_a$,
@@ -1411,7 +1412,7 @@ formes.
 \end{remark}
 \end{evidence}
 
-\begin{evidence}{core}{\lean{Pairing.pairing_surjective}, \lean{Pairing.pairing_surjective_of_ne_one}, \lean{Pairing.form_update_of_eq_one}\,; testé~: les 35 sphères sans valence $4k$ parmi 50 instances aléatoires, rang égal à la dimension sur chacune\,; sur les tores le terme de période le fait échouer (11 sur 15)\,; supposé~: la présentation de $\pi_1(\Sigma^\circ)$ par les $\lambda_i$ et une relation d'holonomie triviale, chaque peigne développé dans la carte du point de base par des lacets $\lambda_i$\,; le noyau n'est pas formalisé}
+\begin{evidence}{core}{\lean{Pairing.pairing_surjective}, \lean{Pairing.pairing_surjective_of_ne_one}, \lean{Pairing.form_update_of_eq_one}\,; testé~: les 35 sphères sans valence $4k$ parmi 50 instances aléatoires, rang égal à la dimension sur chacune\,; sur les tores le terme de période le fait échouer (11 sur 15)\,; supposé~: la présentation de $\pi_1(\Sigma^\circ)$ par les $\lambda_i$ et une relation d'holonomie triviale, les positions développées $p_i$ linéaires en les longueurs, chaque peigne développé dans la carte du point de base par des lacets $\lambda_i$\,; non formalisé~: le noyau, et qu'avec une valence divisible par quatre l'application peut ne pas être surjective (seulement qu'aucune forme ne dépend de ces positions)}
 \begin{proposition}[L'accouplement de Burgers]\label{prop:pairing}
 Supposons la surface fermée de genre zéro, sans sommet singulier de valence
 divisible par quatre, et toute trace du T-mesh issue d'un sommet singulier.
@@ -2052,7 +2053,7 @@ la maximisation de $Q$ sur un polytope de longueurs réelles.
 
 Le dossier \texttt{lean} à côté de cette note est un projet
 Lean~4~\cite{demoura2021lean4} sur Mathlib~\cite{mathlib2020} (tous deux en
-\texttt{v4.35.0}). Ses $729$ déclarations de théorèmes, dont beaucoup de
+\texttt{v4.35.0}). Ses $732$ déclarations de théorèmes, dont beaucoup de
 petits lemmes, ne dépendent que des axiomes standard de Lean\,; ce nombre
 n'est pas un argument, et son \texttt{README.md} associe à chaque énoncé ses
 théorèmes Lean. Lean vérifie le cœur algébrique et combinatoire de chaque
