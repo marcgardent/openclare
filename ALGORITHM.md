@@ -432,6 +432,72 @@ Limits found:
 - **Non-manifold inputs**: left as they are, neither repaired nor refused.
 - **Cylinder**: no test on a cylinder, for want of a primitive; the torus covers the same case.
 
+**Slivers of the work mesh (#31, November 2026).** A sliver is a triangle whose smallest angle
+is under 5°; the report counts them (`work N slivers`), and those of next to no area (under a
+millionth of the equilateral triangle on the mean edge). On main, at 2970, 3000 and 3030 quads,
+only five organic models of the 18 have any: 88 in all (jerry 48, ogre 25, pig 10, bridge 3,
+blub 2); the hard surfaces have none. Isotropic remeshing makes them where a vertex is pulled
+onto the edge between two others.
+
+They are removed at the end of each pass of the loop, as Botsch and Kobbelt do. A needle, one
+edge much shorter than the other two, loses that edge to a collapse; a collapse may make one
+of two stretches of feature line that run side by side, which is what a sliver between them is
+made of. A cap, whose largest angle is over 150°, has its long edge flipped where the new
+triangles face the way the pair does and are fatter; otherwise its corner is laid onto that
+edge, split at the foot. Feature lines keep their course and their corners. A flip may not make
+a triangle with two sides on feature lines: where a line ends or two meet at a tip, the lines
+held straight in the map leave it no room, the map folds over and the chain lets every line go
+(jerry at 2970 quads lost a fingertip that way). A work mesh with more slivers than a tenth of
+its triangles (and more than 16) is left as it is: a strip as narrow as its edges, which a
+boolean leaves between two parts, is slivers through and through, and trying only churns it.
+
+Result on the 18 models at the three budgets: 88 slivers → 23 (jerry 14, the ogre, pig and
+bridge 3 each), those its operations had to refuse. Validity and budget unchanged (18 valid
+out of 18, within 2 %). Eleven models do not change.
+
+The Hausdorff distance of the seven that do had to be read with care. It is set at a feature
+about a quad across (a stretch of jerry's open border, the tip of the ogre's horn), where the
+whole lengths of a few short arcs are decided by the closing of loops (M6): it moves whole
+strips by one where the cost hardly cares (targets near a half: 1.52, 0.58, 0.42) and lets the
+spirals decide. The seed changes nothing in this chain (the five seeds of the acceptance rule
+give the same mesh to the byte); the draw of the slight per-arc preference does
+(`OPENCLARE_JITTER_SEED`). Medians over the three budgets and five draws (15 meshes per
+model), against a change meant to be neutral, one more pass of the loop with no removal:
+
+| Model | Hausdorff, ‰: main | with removal | one more pass | Mean distance, ‰: main / removal / more |
+|---|---|---|---|---|
+| jerry | 13.96 | 15.33 | 15.64 | 0.759 / 0.749 / 0.779 |
+| ogre | 27.41 | 28.05 | 28.36 | 0.768 / 0.722 / 0.747 |
+| pig | 10.62 | 11.17 | 13.19 | 0.301 / 0.306 / 0.310 |
+| bridge | 7.32 | 9.33 | 7.27 | 0.455 / 0.455 / 0.450 |
+| blub | 7.68 | 8.07 | 6.73 | 0.189 / 0.169 / 0.169 |
+| part | 11.57 | 11.52 | — | 0.079 / 0.078 / — |
+| cylinder | 0.74 | 0.74 | — | 0.132 / 0.114 / — |
+
+Any change of the work mesh moves the Hausdorff distance of these models by as much as the
+removal does, −12 to +24 %: one more pass costs jerry 12 % and the ogre 3 %, on all 15 meshes
+of each. Main sits where these two happen to do well; the removal does better than the neutral
+change on jerry, the ogre and pig, worse on bridge (3 meshes of 15 differ) and blub. The mean
+distance is lower with the removal on four of the seven models, level on two, slightly higher
+on pig.
+
+Tried and not kept:
+
+- *Preventing slivers instead*: no split, collapse or valence flip that makes a sliver where
+  there was none. The valence flips stop making anew, pass after pass, the slivers removed the
+  pass before (73 → 0 on jerry at 3000 quads), but the Hausdorff distance at the three budgets
+  is no better (jerry 14.72, ogre 29.41, pig 12.73 ‰ in mean) and a test of the thin-part sizing
+  fails.
+- *A floor on the arcs where the shape bends*: one edge per twelfth of a turn the surface makes
+  across an arc. It helps the ogre (25.50 ‰ in mean over the three budgets, against 27.42) and
+  pig (9.84 against 11.59), but costs jerry 3 ‰ (16.80 against 13.80), whose maximum sits on a
+  border that hardly turns: the edges given to the bends are taken back from short arcs
+  elsewhere, which tip over at a half again.
+
+Left open: with the removal, jerry has one vertex of valence 2 at 2970 and 3000 quads, where the
+singularity stage and the field the map is made of count an index differently (#279), which
+the checks of validity do not see (#280).
+
 ### M1 bis — Sizing field
 
 - **Input**: the work mesh; the adaptivity setting (from 0 to 1); optionally, a density painted
