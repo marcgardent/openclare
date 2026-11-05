@@ -224,8 +224,16 @@ séparées~\cite{lyon2021constrained}. Heistermann et al.\ formulent la
 quantification comme un flot d'écart minimal (\emph{minimum-deviation flow})
 sur un graphe bidirigé, et donnent un solveur approché rapide et un
 raffinement exact~\cite{heistermann2023bimdf}\,; openclare suit leur
-formulation. À notre connaissance, aucune de ces méthodes ne contraint les
-hélices.
+formulation. Pietroni et al.\ tracent un découpage à jonctions en T dont les
+bords comprennent toutes les lignes caractéristiques, en laissant les chemins
+tracés s'écarter du champ pour qu'ils ne spiralent pas, et le quantifient par
+un programme linéaire en nombres entiers qui favorise les patchs réguliers et
+les singularités alignées~\cite{pietroni2021reliable}. Ebke et al.\ gardent la
+quantification mixte-entière de~\cite{bommes2009miq} et agissent en amont~:
+ils filtrent les normales à l'échelle de la longueur d'arête visée, si bien
+que les détails et les anses plus petits ne font pas de
+singularités~\cite{ebke2014lod}. À notre connaissance, aucune de ces méthodes
+ne contraint les hélices du maillage.
 
 \paragraph{Les hélices après le maillage.}
 Bommes et al.~\cite{bommes2011structure} définissent une \emph{q-hélice}
@@ -245,11 +253,21 @@ et citent en exemple les T-meshes alignés sur les lignes caractéristiques
 remplacent le complexe de base d'un maillage fini par un complexe optimal,
 trouvé comme un couplage parfait sur un graphe construit sur ses sommets
 singuliers, et notent que les opérateurs de~\cite{bommes2011structure}
-laissent des spirales. Les deux travaillent après le maillage, pas dans la
-quantification.
+laissent des spirales. Tarini et al.~\cite{tarini2011simple} simplifient le
+graphe des séparatrices d'un maillage de quads lu comme un champ de croix, en
+supprimant et retraçant des séparatrices de façon gloutonne pour réduire
+leurs croisements, et paramètrent sur les quelques rectangles qui restent\,;
+ils notent que retirer les configurations hélicoïdales simplifie aussi ce
+graphe. Les trois partent d'un maillage de quads, pas de la quantification.
 
 \paragraph{Les périodes autour d'un tube.}
-QuadCover~\cite{kalberer2007quadcover} relève le champ de croix (\emph{cross
+La paramétrisation globale périodique (\emph{periodic global
+parameterization})~\cite{ray2006periodic} demande que les transitions entre
+cartes soient des quarts de tour et des translations d'un nombre entier de
+périodes, mais résout pour les sinus et cosinus des coordonnées, si bien
+qu'aucun nombre entier n'entre dans la résolution\,; les translations sont
+lues ensuite, arête par arête. Composées autour d'un tube, elles donnent son
+décalage, que rien dans la méthode ne contrôle. QuadCover~\cite{kalberer2007quadcover} relève le champ de croix (\emph{cross
 field}) sur un revêtement ramifié où il devient un champ de vecteurs. La
 paramétrisation en bandes des surfaces tubulaires (\emph{stripe
 parameterization})~\cite{kalberer2011stripe}, construite sur lui, mesure le
@@ -286,7 +304,10 @@ rien de l'endroit où vont les boucles.
 \paragraph{Des boucles par construction.}
 Le maillage par boucles duales (\emph{dual loops
 meshing})~\cite{campen2012dual} construit un découpage à partir de boucles
-tracées sur la surface, qui se ferment par construction\,; Lei et
+tracées sur la surface, qui se ferment par construction, et le tissage de
+bandes duales (\emph{dual strip weaving})~\cite{campen2014weaving} fait
+dessiner un tel découpage bande fermée après bande fermée, chacune une boucle
+élastique trouvée comme un cycle de poids minimal\,; Lei et
 al.~\cite{lei2017foliation} construisent des maillages de quads à partir
 d'une différentielle de Strebel à cylindres prescrits, et les découpages
 guidés par un squelette~\cite{usai2015skeleton} suivent le squelette
@@ -726,6 +747,12 @@ favorise aussi openclare par construction~: le moteur choisit parmi ses
 candidats selon cette même part (section~\ref{sec:closing}), que les deux
 autres n'optimisent pas, et la part ne voit aucune hélice de pas supérieur à
 quatre. Une mesure de structure que la sélection n'utilise pas reste à faire.
+Depuis la version 0.7.0, le banc lance aussi Instant
+Meshes~\cite{jakob2015instant}, qui lisse des champs locaux d'orientation et
+de position sans paramétrisation globale, et le découpage et le pavage de
+QuadWild~\cite{pietroni2021reliable} avec le quantificateur
+de~\cite{heistermann2023bimdf}\,; leurs colonnes sont dans
+\nolinkurl{bench/results}, et cet article n'en rapporte aucun chiffre.
 
 \paragraph{Face au maillage fait à la main.}
 Le corps masculin de la bibliothèque Essentials a un maillage de base de
