@@ -11,7 +11,7 @@ vertices of odd valence) and, modulo 2, by the shift form of every turn of
 every way; then the boundary of the odd part of every certificate of
 `../lean/Check/certificates/male-body.json`, scaled to whole numbers.
 
-    python3 docs/research/turns-of-a-t-mesh/experiments/parity.py [<export>] \\
+    python3 -I docs/research/turns-of-a-t-mesh/experiments/parity.py [<export>] \\
         [--certificates docs/research/turns-of-a-t-mesh/lean/Check/certificates/male-body.json]
 
 Seconds, one thread. Writes results/parity.json.
@@ -20,14 +20,18 @@ Seconds, one thread. Writes results/parity.json.
 import argparse
 import json
 import math
+import sys
 import time
 from collections import Counter, defaultdict
 from fractions import Fraction
 from pathlib import Path
 
-import tmesh  # first: it sets the threads of the linear algebra
-from combs import Feet
-from geometry import Layout
+# The modules beside this script, also under `python3 -I`.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import tmesh  # noqa: E402  first: it sets the threads of the linear algebra
+from combs import Feet  # noqa: E402
+from geometry import Layout  # noqa: E402
 
 
 def node_function(L, F, vertices, v):

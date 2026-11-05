@@ -112,7 +112,7 @@ another separatrix of its vertex forces that turn alone to be shifted; and
 that on a
 closed sphere the shift and the length of a turn have the same parity. Fox calculus extends the Burgers sum to
 any combination of turns, and \emph{combs}, local dislocations carried by
-single arcs, write every certificate of a conflict found on a human body. % PR3: 67 of the 68 certificates on the new export, the 68th has no whole representative
+single arcs, write every certificate of a conflict found on a human body.
 The
 conflicts bound from below the number of turns that every quantization within
 given bounds leaves shifted: on that body, within the bounds of separation of
@@ -1333,14 +1333,15 @@ vertices).
 \end{evidence}
 
 \begin{proof}
-(a) Let $a$ lie on the trace $\tau$. At an end $n$ that is a vertex, $\tau$
-leaves $n$ and $n$ is its own foot; at any other end, the second trace at $n$
+(a) Let $a$ lie on the trace $\tau$. An end $n$ that is a vertex is its own
+foot, and either $\tau$ leaves $n$ or $\tau$ ends there, and then neither $n$
+nor the vertex $\tau$ leaves is singular; at any other end, the second trace at $n$
 is perpendicular to $a$ and the foot is the vertex it leaves. In both cases
 $[\text{foot} = v] \equiv g_v(n) + [\tau \text{ leaves } v]$, and the last term
 cancels between the two ends. On a side $S$ of a patch, $\chi_v$ sums to twice
 the number $m_S$ of nodes inside $S$ where a trace from $v$ ends, plus its
-feet at $v$ at the two corners, which are the vertices that the traces of the
-two adjacent sides leave, shared with the opposite side $S'$; so the balance of
+feet at $v$ at the two corners, which are there exactly when the trace of the
+adjacent side leaves $v$, as for the opposite side $S'$; so the balance of
 the pair is $2(m_S - m_{S'})$. (b) By (a), at the lengths $\chi_v$ every patch is a
 rectangle of $(\Z/2)^2$ and the crossings are affine maps of $(\Z/2)^2$;
 round a node that is not singular they compose to the identity, round $c_i$ to
@@ -1456,9 +1457,10 @@ which the lengths can move without changing any holonomy.
 \end{proof}
 
 \paragraph{On the male body.}
-Lemma~\ref{lem:comb} holds on all $2{,}146$ arcs, % PR3: it holds on 2,090 of the 2,146 arcs
-$1{,}955$ of which have two distinct feet of odd valence: nearly every arc is
-a local dislocation or exchange. On this T-mesh (way~1) every node is met by
+Lemma~\ref{lem:comb} holds on $2{,}090$ of the $2{,}146$ arcs, the $56$
+others ending at the nodes of valence four below; $1{,}955$ arcs have two
+distinct feet of odd valence: nearly every arc is a local dislocation or
+exchange. On this T-mesh (way~1) every node is met by
 exactly two traces but $20$ of valence four, which traces leave, joined in
 pairs by $10$ traces (the $76$ arcs that end there have no single
 perpendicular trace), and no trace ends at a singular vertex: the hypotheses
@@ -1469,8 +1471,10 @@ dimension $504 = 2(n - 2)$ and the pairing rank $504$; we conjecture that
 without vertices of valence divisible by four the kernel is spanned by the
 classes across the connections. With whole multipliers of the shifts, the
 odd parts of all $68$ certificates of the conflicts examined ($34$ distinct
-forms, at most $17$ odd coefficients) have an even number of feet at every
-singular vertex, as Proposition~\ref{prop:feet}(d) says they must (exact);
+forms, at most $17$ odd coefficients; $20$ of them first scaled by the
+denominators, $2$ to $7$, of their multipliers, which empties the odd part of
+row~19 in way~7, $\ell_{1847}$ with multipliers $\frac12$) have an even number
+of feet at every singular vertex, as Proposition~\ref{prop:feet}(d) says they must (exact);
 in $67$ every foot has odd valence, in the $68$th three arcs have feet at
 nodes of valence four. Read strictly (below), the certificate of turn $54$ of way 0 is one winding
 separatrix, the length of arc $1873$, whose two feet coincide (measured).
@@ -2007,7 +2011,7 @@ complexity of maximizing $Q$ over a polytope of lengths in reals.
 \section{What is machine-checked}\label{sec:lean}
 
 The folder \texttt{lean} beside this note is a Lean~4~\cite{demoura2021lean4}
-project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $702$
+project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $703$
 theorem declarations, many of them small lemmas, depend only on Lean's
 standard axioms; the count is not evidence, and its \texttt{README.md} maps
 each statement to its Lean theorems. Lean checks the algebraic and
@@ -2127,7 +2131,7 @@ the completeness proposition, stated in their sharpened form.
 
 When is a set of turns closable, in terms of the singularity configuration?
 Every certificate is a sum of combs, which says nothing about the
-singularities, and not of staircases, caps and winding separatrices alone; % PR3: 67 of 68 certificates on the new export; the strict reading changes (turn 46)
+singularities, and not of staircases, caps and winding separatrices alone; % PR3: the strict reading changes (turn 46)
 a
 useful answer lies between, for instance combs on disjoint sets of vertices,
 each of the sign of the certificate. Computing $\tau_P(H)$ at a given number of quads needs the extremes of an

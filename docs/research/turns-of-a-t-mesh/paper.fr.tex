@@ -135,7 +135,7 @@ d'un tour et s'arrête sur une autre séparatrice de son sommet force ce seul to
 tour ont la même parité. Le calcul de Fox étend la somme de Burgers à toute
 combinaison de tours, et des \emph{peignes}, dislocations locales portées par
 un seul arc, écrivent tous les certificats de conflit trouvés sur un corps
-humain. % PR3: 67 des 68 certificats sur le nouvel export, le 68e n'a pas de représentant entier
+humain.
 Les conflits minorent le nombre de tours que toute quantification
 respectant des bornes données laisse décalés~: sur ce corps, dans les bornes
 de séparation d'un moteur de remaillage, exactement un à 37 des tours qu'il
@@ -1453,15 +1453,17 @@ de traces issues de $v$ qui passent par un nœud $n$ qui n'est pas un sommet
 \end{evidence}
 
 \begin{proof}
-(a) Soit $a$ sur la trace $\tau$. En une extrémité $n$ qui est un sommet,
-$\tau$ part de $n$ et $n$ est son propre pied\,; en toute autre extrémité, la
+(a) Soit $a$ sur la trace $\tau$. Une extrémité $n$ qui est un sommet est son
+propre pied, et ou bien $\tau$ part de $n$, ou bien $\tau$ y aboutit, et alors
+ni $n$ ni le sommet d'où part $\tau$ ne sont singuliers\,; en toute autre
+extrémité, la
 seconde trace en $n$ est perpendiculaire à $a$ et le pied est le sommet d'où
 elle part. Dans les deux cas $[\text{pied} = v] \equiv g_v(n) + [\tau \text{
 part de } v]$, et le dernier terme s'annule entre les deux extrémités. Sur un
 côté $S$ d'un patch, $\chi_v$ a pour somme deux fois le nombre $m_S$ de nœuds
 intérieurs à $S$ où aboutit une trace issue de $v$, plus ses pieds en $v$ aux
-deux coins, qui sont les sommets d'où partent les traces des deux côtés
-adjacents, partagés avec le côté opposé $S'$\,; la balance de la paire vaut
+deux coins, présents exactement quand la trace du côté adjacent part de $v$,
+comme pour le côté opposé $S'$\,; la balance de la paire vaut
 donc $2(m_S - m_{S'})$. (b) Par (a), aux longueurs $\chi_v$ chaque patch est
 un rectangle de $(\Z/2)^2$ et les traversées sont des applications affines de
 $(\Z/2)^2$\,; autour d'un nœud non singulier elles se composent en
@@ -1587,9 +1589,10 @@ changer aucune holonomie.
 \end{proof}
 
 \paragraph{Sur le corps masculin.}
-Le lemme~\ref{lem:comb} vaut sur les $2\,146$ arcs, % PR3: il vaut sur 2 090 des 2 146 arcs
-dont $1\,955$ ont deux pieds distincts de valence impaire~: presque tout arc
-est une dislocation ou un échange local. Sur ce T-mesh (variante~1), tout
+Le lemme~\ref{lem:comb} vaut sur $2\,090$ des $2\,146$ arcs, les $56$
+autres aboutissant aux nœuds de valence quatre ci-dessous\,; $1\,955$ arcs
+ont deux pieds distincts de valence impaire~: presque tout arc est une
+dislocation ou un échange local. Sur ce T-mesh (variante~1), tout
 nœud est rencontré par exactement deux traces sauf $20$ de valence quatre,
 d'où partent des traces, joints par paires par $10$ traces (les $76$ arcs qui
 y aboutissent n'ont pas une seule trace perpendiculaire), et aucune trace
@@ -1602,8 +1605,10 @@ conjecturons que, sans sommet de valence divisible par quatre, le noyau est
 engendré par les classes transverses aux connexions. Avec des
 multiplicateurs entiers des décalages, les parties impaires des $68$
 certificats des conflits examinés ($34$ formes distinctes, au plus $17$
-coefficients impairs) ont toutes un nombre pair de pieds en chaque sommet
-singulier, comme la proposition~\ref{prop:feet}(d) l'impose (exact)\,; dans
+coefficients impairs\,; $20$ d'entre eux d'abord multipliés par les
+dénominateurs, de $2$ à $7$, de leurs multiplicateurs, ce qui vide la partie
+impaire de la ligne~19 de la variante~7, $\ell_{1847}$ de multiplicateurs
+$\frac12$) ont toutes un nombre pair de pieds en chaque sommet singulier, comme la proposition~\ref{prop:feet}(d) l'impose (exact)\,; dans
 $67$ tout pied est de valence impaire, dans le $68$e trois arcs ont des pieds
 en des nœuds de valence quatre. Lu au sens strict (ci-dessous), le certificat du tour $54$ de la variante 0
 est une seule séparatrice qui s'enroule, la longueur de l'arc $1873$, dont les
@@ -2202,7 +2207,7 @@ la maximisation de $Q$ sur un polytope de longueurs réelles.
 
 Le dossier \texttt{lean} à côté de cette note est un projet
 Lean~4~\cite{demoura2021lean4} sur Mathlib~\cite{mathlib2020} (tous deux en
-\texttt{v4.35.0}). Ses $702$ déclarations de théorèmes, dont beaucoup de
+\texttt{v4.35.0}). Ses $703$ déclarations de théorèmes, dont beaucoup de
 petits lemmes, ne dépendent que des axiomes standard de Lean\,; ce nombre
 n'est pas un argument, et son \texttt{README.md} associe à chaque énoncé ses
 théorèmes Lean. Lean vérifie le cœur algébrique et combinatoire de chaque
@@ -2336,7 +2341,7 @@ ici sous leur forme précisée.
 Quand un ensemble de tours est-il fermable, en termes de configuration des
 singularités\,? Tout certificat est une somme de peignes, ce qui ne dit rien
 des singularités, et n'est pas toujours une somme d'escaliers, de calottes et
-de séparatrices qui s'enroulent seuls\,; % PR3: 67 des 68 certificats sur le nouvel export ; la lecture stricte change (tour 46)
+de séparatrices qui s'enroulent seuls\,; % PR3: la lecture stricte change (tour 46)
 une réponse utile se trouve entre les
 deux, par exemple des peignes portés par des ensembles disjoints de sommets,
 chacun du signe du certificat. Calculer $\tau_P(H)$ à un nombre de quads donné

@@ -37,36 +37,41 @@ def fromVertex (origin : Trace → Node) (through : Node → Finset Trace) (isVe
   if isVertex n then 0 else (((through n).filter fun t => origin t = v).card : ZMod 2)
 
 /-- The hypotheses at one end `n`, with foot `f`, of an arc on the trace `τ`:
-either `n` is the vertex `τ` leaves, its own foot, or `n` is a junction met by
-`τ` and exactly one other trace `ρ`, and the foot is the vertex `ρ` leaves. No
-trace ends at a vertex. -/
-def EndOfArc (origin : Trace → Node) (through : Node → Finset Trace) (isVertex : Node → Prop)
+either `n` is a vertex, its own foot, which `τ` leaves, or where `τ` ends with
+neither `n` nor the vertex `τ` leaves singular; or `n` is a junction met by `τ`
+and exactly one other trace `ρ`, and the foot is the vertex `ρ` leaves. -/
+def EndOfArc (origin : Trace → Node) (through : Node → Finset Trace) (isVertex isSingular : Node → Prop)
     (τ : Trace) (n f : Node) : Prop :=
-  (isVertex n ∧ origin τ = n ∧ f = n) ∨
+  (isVertex n ∧ f = n ∧ (origin τ = n ∨ (¬ isSingular n ∧ ¬ isSingular (origin τ)))) ∨
     (¬ isVertex n ∧ ∃ ρ, ρ ≠ τ ∧ through n = {τ, ρ} ∧ f = origin ρ)
 
-/-- At one end of an arc on `τ`, the foot is at `v` exactly when `g_v(n) + [τ leaves v]`
-is odd. -/
+/-- At one end of an arc on `τ`, the foot is at the singular vertex `v` exactly
+when `g_v(n) + [τ leaves v]` is odd. -/
 theorem foot_at_end (origin : Trace → Node) (through : Node → Finset Trace)
-    (isVertex : Node → Prop) [DecidablePred isVertex] (τ : Trace) (n f v : Node)
-    (h : EndOfArc origin through isVertex τ n f) :
+    (isVertex isSingular : Node → Prop) [DecidablePred isVertex] (τ : Trace) (n f v : Node)
+    (hv : isSingular v) (h : EndOfArc origin through isVertex isSingular τ n f) :
     ind (f = v) = fromVertex origin through isVertex v n + ind (origin τ = v) := by
-  rcases h with ⟨hv, ho, rfl⟩ | ⟨hv, ρ, hρ, ht, rfl⟩
-  · simp [fromVertex, hv, ho]
-  · simp only [fromVertex, hv, ite_false, ht]
+  rcases h with ⟨hn, rfl, ho | ⟨hs, hso⟩⟩ | ⟨hn, ρ, hρ, ht, rfl⟩
+  · simp [fromVertex, hn, ho]
+  · have h₁ : f ≠ v := fun e => hs (e ▸ hv)
+    have h₂ : origin τ ≠ v := fun e => hso (e ▸ hv)
+    simp [ind, fromVertex, hn, h₁, h₂]
+  · simp only [fromVertex, hn, ite_false, ht]
     by_cases h₁ : origin τ = v <;> by_cases h₂ : origin ρ = v <;>
       simp [ind, h₁, h₂, Finset.filter_insert, Finset.filter_singleton, Finset.card_pair (Ne.symm hρ)] <;>
       decide
 
 /-- **Proposition "Feet modulo 2" (a), on an arc.** For an arc on the trace `τ`
-with ends `n₀`, `n₁` and feet `f₀`, `f₁`, the number of its feet at `v` is the
-coboundary of `g_v` modulo 2. -/
+with ends `n₀`, `n₁` and feet `f₀`, `f₁`, the number of its feet at the singular
+vertex `v` is the coboundary of `g_v` modulo 2. -/
 theorem feet_coboundary (origin : Trace → Node) (through : Node → Finset Trace)
-    (isVertex : Node → Prop) [DecidablePred isVertex] (τ : Trace) (n₀ n₁ f₀ f₁ v : Node)
-    (h₀ : EndOfArc origin through isVertex τ n₀ f₀) (h₁ : EndOfArc origin through isVertex τ n₁ f₁) :
+    (isVertex isSingular : Node → Prop) [DecidablePred isVertex] (τ : Trace) (n₀ n₁ f₀ f₁ v : Node)
+    (hv : isSingular v) (h₀ : EndOfArc origin through isVertex isSingular τ n₀ f₀)
+    (h₁ : EndOfArc origin through isVertex isSingular τ n₁ f₁) :
     ind (f₀ = v) + ind (f₁ = v) =
       fromVertex origin through isVertex v n₀ + fromVertex origin through isVertex v n₁ := by
-  rw [foot_at_end origin through isVertex τ n₀ f₀ v h₀, foot_at_end origin through isVertex τ n₁ f₁ v h₁]
+  rw [foot_at_end origin through isVertex isSingular τ n₀ f₀ v hv h₀,
+    foot_at_end origin through isVertex isSingular τ n₁ f₁ v hv h₁]
   have h : ind (origin τ = v) + ind (origin τ = v) = 0 := by
     unfold ind; split <;> decide
   linear_combination h
