@@ -363,7 +363,10 @@ impl DynamicMesh {
     /// of it? The normal of a sliver means nothing, so the pair is not asked
     /// to be flat: the new triangles are to face the way the pair does as a
     /// whole (which the other triangle of it says), and their smallest angle
-    /// is to be larger than that of the pair.
+    /// is to be larger than that of the pair. Nor may a new triangle have two
+    /// sides on feature lines, as where a line ends or two meet at a tip:
+    /// held straight in the map, the lines leave it no room there, and the
+    /// map folds over (the chain then lets every line go, #31).
     pub fn can_flip_sliver(&self, a: u32, b: u32) -> bool {
         let Some((shared, c, d)) = self.flippable(a, b) else { return false };
         let pair = shared.map(|t| self.triangles[t as usize]);
@@ -375,7 +378,9 @@ impl DynamicMesh {
             new.iter().all(|&tri| self.area_vector_of(tri).try_normalize().is_some_and(|m| m.dot(mean) > 0.5));
         let smallest =
             |tris: [[u32; 3]; 2]| tris.map(|tri| self.min_angle_of(tri)).into_iter().fold(f64::INFINITY, f64::min);
-        faces_the_same_way && smallest(new) > smallest(pair)
+        let on_lines =
+            |[x, y, z]: [u32; 3]| [(x, y), (y, z), (z, x)].into_iter().filter(|&(u, w)| self.is_feature(u, w)).count();
+        faces_the_same_way && smallest(new) > smallest(pair) && new.iter().all(|&tri| on_lines(tri) < 2)
     }
 
     /// The two triangles on edge `a-b` and the vertices facing it, if it is
@@ -576,5 +581,27 @@ mod tests {
         // Sliding a corner along a side would cut it: the turn is not straight.
         assert!(!mesh.can_collapse(corner, on_side, target(on_side)));
         assert!(mesh.can_flip(corner, on_side).is_none());
+    }
+
+    #[test]
+    fn a_sliver_flip_never_closes_a_triangle_on_two_lines() {
+        // A cap: c a hair above the long edge a-b. Its flip to c-d would
+        // close a-d-c, two of whose sides are the lines that meet at a.
+        let at = |x: f64, y: f64| Vec3::new(x, y, 0.0);
+        let source = TriMesh {
+            positions: vec![
+                at(0.0, 0.0),
+                at(2.0, 0.0),
+                at(1.0, 0.05),
+                at(1.0, -1.0),
+                at(1.0, 1.0),
+                at(-1.0, 0.0),
+                at(3.0, 0.0),
+            ],
+            triangles: vec![[0, 1, 2], [1, 0, 3], [0, 2, 4], [2, 1, 4], [5, 0, 4], [5, 3, 0], [1, 6, 4], [1, 3, 6]],
+        };
+        let (a, b, c, d) = (0, 1, 2, 3);
+        assert!(DynamicMesh::new(&source, &[]).can_flip_sliver(a, b));
+        assert!(!DynamicMesh::new(&source, &[[a, c], [a, d]]).can_flip_sliver(a, b));
     }
 }
