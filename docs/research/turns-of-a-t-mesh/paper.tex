@@ -194,7 +194,8 @@ al.~\cite{lei2020quartic} list as open the guarantee that all its
 trajectories are finite, and a trajectory that is not finite is an edge loop
 that does not close. A quadratic
 differential whose non-critical trajectories all close is
-Jenkins--Strebel~\cite{strebel1984quadratic}, a union of flat cylinders; a
+Jenkins--Strebel~\cite[\S20.1]{strebel1984quadratic}, and its closed
+trajectories sweep out flat cylinders~\cite[\S\S9.3, 20.2]{strebel1984quadratic}; a
 helix is a cylinder glued back with a shift of whole rows. Chen et
 al.~\cite{chen2019metric} characterize the flat metrics of quad meshes,
 assuming that the lines of the field are finite loops. Izmestiev et al.~\cite{izmestiev2013torus} prove non-existence results for quad meshes,
@@ -1758,8 +1759,9 @@ shifts a subset of $X$ meeting every core, hence all of $X$.
 
 So $\tau_P(H)$ lies between the largest number of disjoint cores and the
 least hitting set of the cores found so far, exact once its complement is
-closable; the \emph{implicit hitting-set} loop of Parker and
-Ryan~\cite{parker1996iis} alternates the two; here the cores come from the
+closable; Parker and Ryan~\cite{parker1996iis} alternate the two, solving
+the covering over the cores found so far and generating a core only when a
+trial solution violates it; here the cores come from the
 filtering routines of Chinneck and Dravnieks~\cite{chinneck1991locating},
 which isolate a minimal infeasible subsystem.
 
@@ -1792,7 +1794,7 @@ each of the two patches it borders, so its column of $B$ has two entries
 $\pm1$: $B$ is the incidence matrix of a \emph{bidirected graph} $G$ whose
 nodes are the balances and whose edges are the arcs, an arc on a border giving
 a half-edge, the setting of~\cite{heistermann2023bimdf}, with the rank of
-Zaslavsky~\cite[\S8A]{zaslavsky1982signed}.
+Zaslavsky~\cite[Thm.~5.1(j), \S8A, Thm.~8B.1]{zaslavsky1982signed}.
 A cycle of $G$ is \emph{balanced} if values $\pm1$ on its edges balance each
 of its nodes, and \emph{unbalanced} otherwise.
 
@@ -1862,7 +1864,7 @@ strips of the mesh at the engine's lengths for way~2 leaning less than
 $0.12$, and $P$ is $P_{\mathrm{eng}}$, then also the engine's cap on the mean
 deviation, $D = 0.5219$ as the export gives it, then also whole lengths and
 its window of $10{,}379$ to $10{,}801$ quads. With the bounds alone the
-implicit hitting-set loop is exact, in $1{,}166$ and $1{,}208$ seconds for
+loop of Parker and Ryan is exact, in $1{,}166$ and $1{,}208$ seconds for
 ways 5 and 7 and in at most $22$ seconds for the other families; with the cap
 and the window, bounds come from closable subsets, disjoint cores, solver
 bounds and whole points checked exactly.
@@ -1927,8 +1929,9 @@ $3$, at $10{,}735$ quads and mean deviation $0.471$ (measured).
 Call \RC{} the problem: given the balances $B$, bounds $b$, a set $H$ of
 linear forms (the shifts) and a number $k$, are there lengths in $P = \{\ell :
 B\ell = 0,\ \ell \ge b\}$ that close at least $k$ forms of $H$? The maximum
-feasible subsystem problem is NP-hard and hard to approximate in
-general~\cite{amaldi1995complexity}, and minimum IIS covers are strongly
+feasible subsystem problem is NP-hard~\cite[\S1]{amaldi2003maxfs} and has no
+polynomial-time approximation scheme unless
+P${}={}$NP~\cite{amaldi1995complexity}, and minimum IIS covers are strongly
 NP-hard already for network flows~\cite{joormann2015flowiis}; the hardness
 survives the structure of quantization, a case new as far as we found.
 

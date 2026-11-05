@@ -226,8 +226,9 @@ al.~\cite{lei2020quartic} citent comme problème ouvert la garantie que toutes
 ses trajectoires soient finies, et une trajectoire qui n'est pas finie est une
 boucle d'arêtes qui ne se ferme pas. Une différentielle quadratique dont
 toutes les trajectoires non critiques se ferment est de
-Jenkins--Strebel~\cite{strebel1984quadratic}, une réunion de cylindres
-plats\,; une hélice est un cylindre recollé avec un décalage d'un nombre
+Jenkins--Strebel~\cite[\S20.1]{strebel1984quadratic}, et ses trajectoires
+fermées balaient des cylindres plats~\cite[\S\S9.3, 20.2]{strebel1984quadratic}\,;
+une hélice est un cylindre recollé avec un décalage d'un nombre
 entier de rangées. Chen et al.~\cite{chen2019metric} caractérisent les
 métriques plates des maillages de quads, en supposant que les lignes du champ
 sont des boucles finies. Izmestiev et al.~\cite{izmestiev2013torus} démontrent
@@ -1918,9 +1919,9 @@ $X$ qui rencontre tout cœur, donc $X$ tout entier.
 Ainsi, $\tau_P(H)$ est compris entre le plus grand nombre de cœurs disjoints
 et la taille du plus petit ensemble transversal des cœurs trouvés jusque-là,
 et il est connu exactement dès que le complémentaire de cet ensemble est
-fermable\,; la boucle d'\emph{ensemble transversal implicite}
-(\emph{implicit hitting set}) de Parker et Ryan~\cite{parker1996iis} alterne
-les deux\,; ici, les cœurs viennent des routines de filtrage de Chinneck et
+fermable\,; Parker et Ryan~\cite{parker1996iis} alternent les deux, en
+résolvant le recouvrement sur les cœurs trouvés jusque-là et en n'engendrant
+un cœur que lorsqu'une solution d'essai le viole\,; ici, les cœurs viennent des routines de filtrage de Chinneck et
 Dravnieks~\cite{chinneck1991locating}, qui isolent un sous-système
 irréalisable minimal.
 
@@ -1956,7 +1957,7 @@ $B$ a deux coefficients $\pm1$~: $B$ est la matrice d'incidence d'un
 \emph{graphe bidirigé} $G$ dont les sommets sont les équilibres et les arêtes
 les arcs, un arc situé sur un bord donnant une demi-arête, le cadre
 de~\cite{heistermann2023bimdf}, avec le rang de
-Zaslavsky~\cite[\S8A]{zaslavsky1982signed}. Un cycle de $G$ est \emph{équilibré} si
+Zaslavsky~\cite[th.~5.1(j), \S8A, th.~8B.1]{zaslavsky1982signed}. Un cycle de $G$ est \emph{équilibré} si
 des valeurs $\pm1$ sur ses arêtes équilibrent chacun de ses sommets, et
 \emph{déséquilibré} sinon.
 
@@ -2034,7 +2035,7 @@ la variante~2 inclinées de moins de $0,12$, et $P$ est $P_{\mathrm{eng}}$,
 puis $P_{\mathrm{eng}}$ avec en plus le plafond du moteur sur l'écart moyen,
 $D = 0,5219$ tel que l'export le donne, puis avec en plus des longueurs
 entières et sa fenêtre de $10\,379$ à $10\,801$ quads. Avec les seules
-bornes, la boucle d'ensemble transversal implicite est exacte, en $1\,166$ et
+bornes, la boucle de Parker et Ryan est exacte, en $1\,166$ et
 $1\,208$ secondes pour les variantes 5 et 7 et en au plus $22$ secondes pour
 les autres familles\,; avec le plafond et la fenêtre, les encadrements
 viennent de sous-ensembles fermables, de cœurs disjoints, de bornes du
@@ -2108,8 +2109,9 @@ Appelons \RC{} le problème suivant~: étant donnés les équilibres $B$, des
 bornes $b$, un ensemble $H$ de formes linéaires (les décalages) et un nombre
 $k$, existe-t-il des longueurs dans $P = \{\ell : B\ell = 0,\ \ell \ge b\}$
 qui ferment au moins $k$ formes de $H$\,? Le problème du sous-système
-faisable maximum est NP-difficile et difficile à approcher en
-général~\cite{amaldi1995complexity}, et le calcul d'une couverture minimale
+faisable maximum est NP-difficile~\cite[\S1]{amaldi2003maxfs} et n'a pas de
+schéma d'approximation en temps polynomial sauf si
+P${}={}$NP~\cite{amaldi1995complexity}, et le calcul d'une couverture minimale
 des IIS est fortement NP-difficile déjà pour les flots dans les
 réseaux~\cite{joormann2015flowiis}\,; la difficulté survit à la structure de
 la quantification, un cas nouveau à notre connaissance.

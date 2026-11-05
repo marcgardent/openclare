@@ -115,8 +115,8 @@ lengths, and the choice of the turns to close decides.
 \section{Introduction}
 
 In our experience, element shape and alignment are rarely what limits
-field-aligned quad remeshing today (see the
-surveys~\cite{bommes2013survey,campen2017survey}). What remains is structure:
+field-aligned quad remeshing today (the
+surveys~\cite{bommes2013survey,campen2017survey} review the methods). What remains is structure:
 the way edge loops run across the surface. Artists expect a loop round an
 arm, a leg or a neck to be a ring. Automatic methods often produce a helix
 instead: the loop goes round, comes back one or a few rows further, and winds
@@ -180,7 +180,7 @@ from exact arithmetic or solver output on the systems openclare exports, and
 Mixed-integer quadrangulation~\cite{bommes2009miq} and integer-grid
 maps~\cite{bommes2013igm} decide the integer structure of a quad mesh in
 their quantization. Campen et al.\ show that even a valid quantization of a seamless
-parametrization is a hard combinatorial problem, and solve it through
+parametrization is a complex combinatorial problem, and solve it through
 systems of linear Diophantine equations~\cite{campen2015qgp}.
 Lyon et al.\ solve a constrained version as an integer linear program,
 bounding the directional deviation of the separatrices of the resulting
@@ -247,8 +247,8 @@ quartic differential and list as an open problem the guarantee that all its
 trajectories are finite. A trajectory that is not finite is precisely an edge
 loop that does not close. A quadratic differential all of whose non-critical
 trajectories close is a Jenkins--Strebel
-differential~\cite{strebel1984quadratic}; the complement of its critical
-graph is a union of flat cylinders, and a helix is a cylinder glued back with
+differential~\cite[\S20.1]{strebel1984quadratic}; its closed trajectories
+sweep out flat cylinders~\cite[\S\S9.3, 20.2]{strebel1984quadratic}, and a helix is a cylinder glued back with
 a shift of a whole number of rows. On a closed surface the valences $k(v)$ of
 a quad mesh satisfy $\sum_v (4 - k(v)) = 4\chi$: with valences three and five only, a
 closed human body needs at least eight vertices of valence three, but a hand-made base mesh has

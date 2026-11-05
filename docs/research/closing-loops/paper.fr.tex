@@ -138,7 +138,7 @@ bougent avec les longueurs, et c'est le choix des tours à fermer qui décide.
 
 D'expérience, la forme et l'alignement des éléments limitent rarement
 aujourd'hui le remaillage en quads aligné sur un champ (\emph{field-aligned
-quad remeshing}\,; voir les synthèses~\cite{bommes2013survey,campen2017survey}). Reste la structure~: la
+quad remeshing}\,; les synthèses~\cite{bommes2013survey,campen2017survey} passent en revue les méthodes). Reste la structure~: la
 façon dont les boucles d'arêtes (\emph{edge loops}) courent sur la surface.
 Les artistes attendent d'une boucle qui fait le tour d'un bras, d'une jambe
 ou d'un cou qu'elle soit un anneau (\emph{ring}). Les méthodes automatiques
@@ -215,7 +215,7 @@ quadrangulation})~\cite{bommes2009miq} et les applications à grille entière
 (\emph{integer-grid maps})~\cite{bommes2013igm} décident de la structure
 entière d'un maillage de quads dans leur quantification. Campen et al.\
 montrent que même une quantification valide d'une paramétrisation sans
-couture est un problème combinatoire difficile, et le résolvent par des
+couture est un problème combinatoire complexe, et le résolvent par des
 systèmes d'équations diophantiennes linéaires~\cite{campen2015qgp}. Lyon et al.\ résolvent
 une version contrainte comme un programme linéaire en nombres entiers, en
 bornant l'écart de direction des séparatrices du découpage obtenu, et
@@ -292,8 +292,9 @@ garantie que toutes ses trajectoires soient finies. Une trajectoire qui
 n'est pas finie est précisément une boucle d'arêtes qui ne se ferme pas. Une
 différentielle quadratique dont toutes les trajectoires non critiques se
 ferment est une différentielle de
-Jenkins--Strebel~\cite{strebel1984quadratic}\,; le complémentaire de son
-graphe critique est une réunion de cylindres plats, et une hélice est un
+Jenkins--Strebel~\cite[\S20.1]{strebel1984quadratic}\,; ses trajectoires
+fermées balaient des cylindres plats~\cite[\S\S9.3, 20.2]{strebel1984quadratic},
+et une hélice est un
 cylindre recollé avec un décalage d'un nombre entier de rangées. Sur une
 surface fermée, les valences $k(v)$ d'un maillage de quads vérifient
 $\sum_v (4 - k(v)) = 4\chi$~: avec des valences trois et cinq seulement, un
