@@ -102,10 +102,10 @@ least-change projection, repair walks and rounds of constraint generation on
 the strips of the mesh, and keep the candidate with the fewest spiral edges,
 counted by a test that tells helices from closed, open and border loops. Over
 twelve models at three budgets near 3{,}000 quads, the engine leaves 4.92\%
-of the edges on spiral loops (19.8\% without closing); on the seven models
-that four other open-source remeshers also mesh validly, 2.2\% against % NIGHT4
-11.4\% to 38.8\%, and 19.9\% for the same kind of quantizer without closing
-(QuadWild-BiMDF); on a human body, 1.5\%, against 2.5\% for the hand-made mesh.
+of the edges on spiral loops (19.8\% when the engine itself runs without
+closing); on the seven models that four other open-source remeshers also
+mesh validly, 2.2\% against 11.4\% to 38.8\%, among them 19.9\% for % NIGHT4
+QuadWild-BiMDF, a minimum-deviation quantizer with no closing; on a human body, 1.5\%, against 2.5\% for the hand-made mesh.
 An exact analysis of the closing system of that body shows that the conflict between closing
 turns and keeping singularities apart is real but local, that the heuristic
 rather than the constraints leaves most turns shifted, and that closing more

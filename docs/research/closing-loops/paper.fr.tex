@@ -123,10 +123,10 @@ contraintes sur les bandes du maillage, et gardons le candidat qui a le moins
 d'arêtes en spirale, comptées par un test qui distingue les hélices des
 boucles fermées, ouvertes et de bord. Sur douze modèles, à trois budgets
 voisins de 3\,000 quads, le moteur laisse 4,92\,\% des arêtes sur des boucles
-en spirale (19,8\,\% sans fermeture)\,; sur les sept modèles que quatre autres
-remailleurs libres maillent aussi de façon valide, 2,2\,\% contre % NIGHT4
-11,4\,\% à 38,8\,\%, et 19,9\,\% pour le même genre de quantificateur sans
-fermeture (QuadWild-BiMDF)\,; sur un corps humain, 1,5\,\%, contre 2,5\,\% pour le maillage
+en spirale (19,8\,\% quand le moteur lui-même tourne sans fermeture)\,; sur
+les sept modèles que quatre autres remailleurs libres maillent aussi de façon
+valide, 2,2\,\% contre 11,4\,\% à 38,8\,\%, dont 19,9\,\% pour % NIGHT4
+QuadWild-BiMDF, un quantificateur d'écart minimal sans fermeture\,; sur un corps humain, 1,5\,\%, contre 2,5\,\% pour le maillage
 fait à la main. Une analyse exacte du système de fermeture de ce
 corps montre que le conflit entre fermer les tours et garder les
 singularités séparées est réel mais local, que c'est l'heuristique plutôt
@@ -762,7 +762,7 @@ le terrain, que les trois premiers maillent et sur lequel les deux autres
 n'ont pas été lancés. Sans fermeture (le même moteur par la même chaîne,
 sans aucune variante de fermeture essayée), openclare a $15,3\,\%$ et
 $15,9\,\%$ sur les mêmes sous-ensembles. QuadWild-BiMDF a plus d'arêtes en
-spirale, $19,9\,\%$ et $16,8\,\%$, avec plus de ses arêtes sur des boucles
+spirale qu'openclare sans fermeture, $19,9\,\%$ et $16,8\,\%$, avec plus de ses arêtes sur des boucles
 fermées ($56,5\,\%$ et $51,4\,\%$ contre $48,7\,\%$ et $46,7\,\%$)\,; son
 champ et son découpage diffèrent aussi de ceux d'openclare, si bien que
 l'écart avec openclare n'est pas dû à la seule fermeture, que la ligne sans
