@@ -2116,7 +2116,7 @@ des IIS est fortement NP-difficile déjà pour les flots dans les
 réseaux~\cite{joormann2015flowiis}\,; la difficulté survit à la structure de
 la quantification, un cas nouveau à notre connaissance.
 
-\begin{evidence}{core}{la réduction~: \lean{closable_iff_independent}, \lean{tauP_eq_vertex_cover}\,; la NP-difficulté de Stable et de Couverture par sommets, et les bornes d'approximation, sont citées}
+\begin{evidence}{core}{la réduction~: \lean{closable_iff_independent}, \lean{tauP_eq_vertex_cover}, $B$ bidirigé~: \lean{Gadget.balance_isBidirected}, \lean{Gadget.feasible_iff}\,; la NP-difficulté de Stable et de Couverture par sommets, et les bornes d'approximation, sont citées}
 \begin{theorem}[Choisir les tours est NP-difficile]\label{thm:nphard}
 \RC{} est NP-complet, en longueurs réelles ou entières, déjà lorsque $B$ est
 la matrice d'incidence d'un graphe bidirigé, que les bornes valent $0$ ou $1$
@@ -2276,7 +2276,7 @@ la maximisation de $Q$ sur un polytope de longueurs réelles.
 
 Le dossier \texttt{lean} à côté de cette note est un projet
 Lean~4~\cite{demoura2021lean4} sur Mathlib~\cite{mathlib2020} (tous deux en
-\texttt{v4.35.0}). Ses $754$ déclarations de théorèmes, dont beaucoup de
+\texttt{v4.35.0}). Ses $757$ déclarations de théorèmes, dont beaucoup de
 petits lemmes, ne dépendent que des axiomes standard de Lean\,; ce nombre
 n'est pas un argument, et son \texttt{README.md} associe à chaque énoncé ses
 théorèmes Lean. Lean vérifie le cœur algébrique et combinatoire de chaque
@@ -2375,9 +2375,9 @@ théorème~\ref{thm:parity-any} (sur les déplacements à rotation d'un quart de
 tour et translation entière, nul sur les lacets autour des points coniques,
 $L$ sur une composante de bord, $\alpha + s$ sur un tour\,; qu'il se
 factorise par $H_1(\Sigma; \Z/2)$ est supposé), et la réduction du
-théorème~\ref{thm:nphard}~: sur le gadget d'un graphe, les ensembles
-fermables sont les stables et $\tau_P$ est le nombre de couverture par
-sommets.
+théorème~\ref{thm:nphard}~: sur le gadget d'un graphe, dont $B$ est la
+matrice d'incidence d'un graphe bidirigé, les ensembles fermables sont les
+stables et $\tau_P$ est le nombre de couverture par sommets.
 
 \emph{Vérifié sous une forme plus faible}~: les
 lemmes~\ref{lem:gauss} et~\ref{lem:eight}, seulement le compte par la

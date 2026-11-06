@@ -1935,7 +1935,7 @@ P${}={}$NP~\cite{amaldi1995complexity}, and minimum IIS covers are strongly
 NP-hard already for network flows~\cite{joormann2015flowiis}; the hardness
 survives the structure of quantization, a case new as far as we found.
 
-\begin{evidence}{core}{the reduction: \lean{closable_iff_independent}, \lean{tauP_eq_vertex_cover}; NP-hardness of Independent Set and Vertex Cover, and the bounds on approximation, are cited}
+\begin{evidence}{core}{the reduction: \lean{closable_iff_independent}, \lean{tauP_eq_vertex_cover}, $B$ bidirected: \lean{Gadget.balance_isBidirected}, \lean{Gadget.feasible_iff}; NP-hardness of Independent Set and Vertex Cover, and the bounds on approximation, are cited}
 \begin{theorem}[Choosing the turns is NP-hard]\label{thm:nphard}
 \RC{} is NP-complete, in real or in whole lengths, already when $B$ is the
 incidence matrix of a bidirected graph, the bounds are $0$ or $1$, and the
@@ -2075,7 +2075,7 @@ complexity of maximizing $Q$ over a polytope of lengths in reals.
 \section{What is machine-checked}\label{sec:lean}
 
 The folder \texttt{lean} beside this note is a Lean~4~\cite{demoura2021lean4}
-project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $754$
+project on Mathlib~\cite{mathlib2020} (both \texttt{v4.35.0}). Its $757$
 theorem declarations, many of them small lemmas, depend only on Lean's
 standard axioms; the count is not evidence, and its \texttt{README.md} maps
 each statement to its Lean theorems. Lean checks the algebraic and
@@ -2167,8 +2167,9 @@ homomorphism of Theorem~\ref{thm:parity-any} (on the motions with quarter-turn
 rotations and whole translations, zero on the loops round the cone points,
 $L$ on a border component, $\alpha + s$ on a turn; that it factors through
 $H_1(\Sigma; \Z/2)$ is assumed), and the reduction of
-Theorem~\ref{thm:nphard}: on the gadget of a graph the closable sets are the
-independent sets and $\tau_P$ is the vertex cover number.
+Theorem~\ref{thm:nphard}: on the gadget of a graph, whose $B$ is the
+incidence matrix of a bidirected graph, the closable sets are the independent
+sets and $\tau_P$ is the vertex cover number.
 
 \emph{Checked in a weaker form}: Lemmas~\ref{lem:gauss} and~\ref{lem:eight}, only the
 Euler-characteristic count on the grid refined by two and the totals from the
