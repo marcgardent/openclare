@@ -89,7 +89,8 @@ pub struct Report {
     pub balanced: bool,
     /// The quad mesh the lengths stand for is a manifold with the topology
     /// of the surface, and its irregular vertices are the singularities of
-    /// the T-mesh: no two of them merged, nothing pinched.
+    /// the T-mesh, each with the valence its index asks for: no two of them
+    /// merged, nothing pinched.
     pub separated: bool,
     /// Improving moves made by the solver, over all its runs, and the states
     /// it looked at to find them.
@@ -1449,8 +1450,10 @@ fn finished(
     report.budget_error = request.quads.map(|wanted| quads.abs_diff(wanted) as f64 / wanted as f64);
     report.balanced = network.is_balanced(x);
     let built = lattice::build(tmesh, x);
-    report.separated &=
-        built.defects(tmesh, request.merge_singularities).is_empty() && built.euler() == tmesh.report.euler;
+    // A singularity the T-mesh gives a wrong valence leaves no lengths
+    // sound: the search could not mend it, but the result is no less wrong.
+    let defects = built.defects(tmesh, request.merge_singularities);
+    report.separated &= defects.is_empty() && defects.wrong_singularities == 0 && built.euler() == tmesh.report.euler;
     report.zero_arcs = x.iter().filter(|&&length| length == 0).count();
     report.held_arcs = lower.iter().zip(x).filter(|&(&bound, &length)| bound > 0 && length == bound).count();
     let deviations: Vec<f64> =

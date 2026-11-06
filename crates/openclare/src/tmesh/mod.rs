@@ -31,8 +31,11 @@ pub type HalfArc = u32;
 /// What a node of the T-mesh is.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NodeKind {
-    /// A singularity of the field, on that vertex of the work mesh.
-    Singularity { vertex: u32 },
+    /// A singularity of the field, on that vertex of the work mesh, with
+    /// the field's index there in quarter turns: the vertex of the quad
+    /// mesh it becomes must have valence `4 - index`, whatever arcs the
+    /// map sends out of it (the two can disagree, #279).
+    Singularity { vertex: u32, index: i8 },
     /// A vertex where a border or a hard edge turns, ends or meets another.
     Corner,
     /// A point where a cut stops on another one, on a border or on a hard
@@ -238,7 +241,7 @@ impl TMesh {
         }
         let outcome = motorcycle::race(&walk, &is_singular, &is_wall, &seeds, max_trace_length);
 
-        let mut tmesh = TMesh::assemble(&outcome);
+        let mut tmesh = TMesh::assemble(&outcome, &field.indices);
         for trace in tmesh.traces.iter_mut().filter(|trace| !trace.feature) {
             trace.folds = folds_crossed(mesh, &trace.stretches);
         }
@@ -259,8 +262,9 @@ impl TMesh {
         tmesh
     }
 
-    /// Nodes, arcs and patches from the traces of a race.
-    fn assemble(outcome: &motorcycle::Outcome) -> TMesh {
+    /// Nodes, arcs and patches from the traces of a race, the singularities
+    /// with their `indices` in the field.
+    fn assemble(outcome: &motorcycle::Outcome, indices: &[i8]) -> TMesh {
         let mut arcs: Vec<Arc> = Vec::new();
         // Per node: its half-arcs with the key that orders them round it.
         let mut around: Vec<Vec<(f64, HalfArc)>> = vec![Vec::new(); outcome.junctions.len()];
@@ -365,7 +369,7 @@ impl TMesh {
             .map(|(junction, list)| Node {
                 position: junction.position,
                 kind: match junction.vertex {
-                    Some(vertex) => NodeKind::Singularity { vertex },
+                    Some(vertex) => NodeKind::Singularity { vertex, index: indices[vertex as usize] },
                     None if junction.corner => NodeKind::Corner,
                     None => NodeKind::Junction,
                 },

@@ -41,6 +41,13 @@ pub struct Metrics {
     // Singularities.
     /// Interior vertices of valence other than 4.
     pub irregular_vertices: usize,
+    /// Of those, the ones of valence 2 (or 1, on a face that folds onto
+    /// itself): two quads sharing two edges, a fold no quad mesh should
+    /// have.
+    pub valence_2_vertices: usize,
+    /// Of those, the ones of valence over 6: more than any singularity of
+    /// a cross field calls for once those of a half turn are split.
+    pub valence_over_6_vertices: usize,
     /// Fewest irregular vertices the topology allows (`4 |χ|` per closed
     /// component); `None` when the mesh is open or not pure quad.
     pub topological_minimum: Option<usize>,
@@ -103,7 +110,8 @@ pub struct Metrics {
 
 impl Metrics {
     /// All quads, manifold, consistently wound, no inverted or collapsed
-    /// face, and no hole the source does not have.
+    /// face, no vertex inside of valence 2 or over 6, and no hole the
+    /// source does not have.
     pub fn is_valid(&self) -> bool {
         self.faces > 0
             && self.quads == self.faces
@@ -111,6 +119,8 @@ impl Metrics {
             && self.misoriented_edges == 0
             && self.inverted_faces == 0
             && self.degenerate_faces == 0
+            && self.valence_2_vertices == 0
+            && self.valence_over_6_vertices == 0
             && (self.source_boundary_edges > 0 || self.boundary_edges == 0)
     }
 
@@ -123,7 +133,7 @@ impl Metrics {
         fn optional<T: ToString>(value: Option<T>) -> String {
             value.map_or("null".into(), |v| v.to_string())
         }
-        let fields: [(&str, String); 30] = [
+        let fields: [(&str, String); 32] = [
             ("valid", self.is_valid().to_string()),
             ("vertices", self.vertices.to_string()),
             ("faces", self.faces.to_string()),
@@ -137,6 +147,8 @@ impl Metrics {
             ("components", self.components.to_string()),
             ("source_components", self.source_components.to_string()),
             ("irregular_vertices", self.irregular_vertices.to_string()),
+            ("valence_2_vertices", self.valence_2_vertices.to_string()),
+            ("valence_over_6_vertices", self.valence_over_6_vertices.to_string()),
             ("topological_minimum", optional(self.topological_minimum)),
             ("irregular_excess", optional(self.irregular_excess())),
             ("base_complex_patches", optional(self.base_complex_patches)),
@@ -234,8 +246,7 @@ pub struct Layout {
     /// is a consistently oriented manifold, as [`Metrics::edge_loops`].
     pub edges: Option<Vec<([u32; 2], LoopKind)>>,
     /// How many loops close, spiral, stop and run from border to border:
-    /// those of [`EdgeLoops`]. On a mesh where a loop crosses an edge another
-    /// then takes, both count it, but it is drawn with the last.
+    /// those of [`EdgeLoops`], each edge counted once, with its loop.
     pub loops: Option<[usize; 4]>,
 }
 
@@ -373,6 +384,11 @@ impl EdgeLoops {
 /// the loop to be a spiral: as many helices wound together. Rings are met
 /// again only round a whole torus, or over a cap the other way round.
 pub const SPIRAL_ORDER: usize = 4;
+
+/// Largest valence a vertex inside a valid mesh may have: a singularity of
+/// index -2, which the engine splits where it can (`quantization::lattice`
+/// holds its own meshes to the same bound).
+pub const MOST_VALENCE: u32 = 6;
 
 /// Fewest thin vertices for their mean distance to mean something.
 const THIN_SAMPLES: usize = 20;
@@ -859,6 +875,9 @@ struct Connectivity {
     misoriented: usize,
     valence: Vec<u32>,
     on_boundary: Vec<bool>,
+    /// Vertices off the borders whose faces make more than one fan: two
+    /// cones meeting at their tips.
+    pinched: Vec<bool>,
 }
 
 impl Connectivity {
@@ -879,7 +898,7 @@ impl Connectivity {
             let entry = directed.entry((origin[h], head(h))).or_insert((h as u32, 0));
             entry.1 += 1;
         }
-        let twin =
+        let twin: Vec<u32> =
             (0..origin.len()).map(|h| directed.get(&(head(h), origin[h])).map_or(INVALID, |&(twin, _)| twin)).collect();
 
         let uses: Vec<((u32, u32), u32)> = mesh.edge_uses().into_iter().collect();
@@ -898,7 +917,36 @@ impl Connectivity {
                 misoriented += 1;
             }
         }
-        Self { origin, next, face, twin, uses, misoriented, valence, on_boundary }
+        // Round a vertex off the borders, each half-edge leaving it is
+        // followed by the next one of the face across: one closed fan meets
+        // them all.
+        let mut leaving = vec![0u32; mesh.positions.len()];
+        let mut first = vec![INVALID; mesh.positions.len()];
+        for (h, &v) in origin.iter().enumerate() {
+            leaving[v as usize] += 1;
+            first[v as usize] = h as u32;
+        }
+        let pinched = (0..mesh.positions.len())
+            .map(|v| {
+                if first[v] == INVALID || on_boundary[v] {
+                    return false;
+                }
+                let (mut h, mut met) = (first[v], 0);
+                loop {
+                    met += 1;
+                    let across = twin[h as usize];
+                    if across == INVALID || met > leaving[v] {
+                        break;
+                    }
+                    h = next[across as usize];
+                    if h == first[v] {
+                        break;
+                    }
+                }
+                met != leaving[v]
+            })
+            .collect();
+        Self { origin, next, face, twin, uses, misoriented, valence, on_boundary, pinched }
     }
 
     fn head(&self, h: u32) -> u32 {
@@ -924,6 +972,9 @@ impl Connectivity {
 
     fn singularities(&self, mesh: &PolyMesh, metrics: &mut Metrics) {
         metrics.irregular_vertices = (0..mesh.positions.len()).filter(|&v| self.is_pole(v)).count();
+        let poles = || (0..mesh.positions.len()).filter(|&v| self.is_pole(v)).map(|v| self.valence[v]);
+        metrics.valence_2_vertices = poles().filter(|&valence| valence < 3).count();
+        metrics.valence_over_6_vertices = poles().filter(|&valence| valence > MOST_VALENCE).count();
 
         // In a closed pure quad mesh the valence defects add up to 4 χ per
         // component, so at least 4 |χ| vertices have to be irregular.
@@ -954,9 +1005,13 @@ impl Connectivity {
     /// The half-edge straight on from `h`, through its head: across the
     /// edge between the two faces ahead. None at an irregular vertex, on a
     /// border or on a face that is not a quad (`odd`), where a loop stops.
+    /// None too at a vertex of four edges whose faces make two fans of two
+    /// quads (each a pair of quads sharing two edges, met in Instant
+    /// Meshes' output): straight on there is the way back along `h`, and
+    /// the walk would cross edges another loop takes again (#262).
     fn straight_on(&self, h: u32, odd: &[bool]) -> Option<u32> {
         let v = self.head(h) as usize;
-        if self.is_irregular(v) || self.on_boundary[v] || odd[v] {
+        if self.is_irregular(v) || self.on_boundary[v] || odd[v] || self.pinched[v] {
             return None;
         }
         let across = self.twin[self.next[h as usize] as usize];
@@ -1055,6 +1110,13 @@ impl Connectivity {
                         closed = true;
                         break;
                     }
+                    // An edge belongs to the first loop to reach it. With
+                    // pinched vertices stopping the walks, straight on is one
+                    // to one and no walk meets another loop's edge; were one
+                    // to, it stops there rather than count the edge twice.
+                    if loop_of[h as usize] != INVALID {
+                        break;
+                    }
                     loop_of[h as usize] = id;
                     loop_of[self.twin[h as usize] as usize] = id;
                     let along = if first.is_some() { h } else { self.twin[h as usize] };
@@ -1085,6 +1147,14 @@ impl Connectivity {
             if loop_of[h] != INVALID {
                 position[h] += behind_start[loop_of[h] as usize];
             }
+        }
+        if cfg!(debug_assertions) {
+            // Each loop holds the edges it counts, and those alone.
+            let mut held = vec![0usize; loops.len()];
+            for h in (0..halves).filter(|&h| loop_of[h] != INVALID) {
+                held[loop_of[h] as usize] += 1;
+            }
+            debug_assert!(loops.iter().zip(&held).all(|(l, &halves)| 2 * l.0 == halves));
         }
         // A strip of quads leaving a loop across that meets it again the
         // same way round, within a few quads: that loop spirals. (The edge

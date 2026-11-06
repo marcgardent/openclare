@@ -108,6 +108,52 @@ fn defects_are_caught() {
 }
 
 #[test]
+fn a_vertex_of_valence_2_inside_is_a_defect() {
+    // A grid's corners have valence 2 too, but on its border.
+    let source = primitives::plane(24);
+    let grid = primitives::plane_quads(12);
+    let metrics = measure(&source, &grid, None);
+    assert!(metrics.is_valid(), "{metrics:?}");
+    assert_eq!((metrics.valence_2_vertices, metrics.valence_over_6_vertices), (0, 0));
+
+    // One quad cut along a diagonal by a vertex in its middle: two quads
+    // sharing two edges, otherwise as sound as the grid.
+    let mut pocket = grid.clone();
+    let [a, b, c, d] = <[u32; 4]>::try_from(pocket.faces[50].clone()).unwrap();
+    let middle = pocket.positions.len() as u32;
+    pocket.positions.push((pocket.positions[a as usize] + pocket.positions[c as usize]) * 0.5);
+    pocket.faces[50] = vec![a, b, c, middle];
+    pocket.faces.push(vec![a, middle, c, d]);
+    let metrics = measure(&source, &pocket, None);
+    assert_eq!(metrics.valence_2_vertices, 1);
+    assert_eq!((metrics.quads, metrics.non_manifold_edges, metrics.misoriented_edges), (metrics.faces, 0, 0));
+    assert_eq!((metrics.inverted_faces, metrics.degenerate_faces), (0, 0));
+    assert!(!metrics.is_valid());
+}
+
+#[test]
+fn a_vertex_of_valence_over_6_is_a_defect() {
+    // A disc of `n` quads round one vertex.
+    let disc = |n: u32| {
+        let mut mesh = openclare::PolyMesh::default();
+        mesh.positions.push(Vec3::ZERO);
+        for i in 0..2 * n {
+            let angle = std::f64::consts::PI * i as f64 / n as f64;
+            mesh.positions.push(Vec3::new(angle.cos(), angle.sin(), 0.0));
+        }
+        let rim = |i: u32| 1 + i % (2 * n);
+        mesh.faces = (0..n).map(|k| vec![0, rim(2 * k), rim(2 * k + 1), rim(2 * k + 2)]).collect();
+        mesh
+    };
+    for (n, over) in [(5, 0), (6, 0), (7, 1), (8, 1)] {
+        let mesh = disc(n);
+        let metrics = measure(&mesh.triangulated(), &mesh, None);
+        assert_eq!((metrics.irregular_vertices, metrics.valence_over_6_vertices), (1, over), "{n} quads");
+        assert_eq!(metrics.is_valid(), over == 0, "{n} quads: {metrics:?}");
+    }
+}
+
+#[test]
 fn distance_to_the_source_is_measured_both_ways() {
     let source = primitives::icosphere(4);
     let mut inflated = primitives::cube_quads(8);
@@ -258,6 +304,45 @@ fn the_layout_draws_what_the_metrics_count() {
     assert!(metrics.non_manifold_edges > 0 && metrics.edge_loops.is_none());
     let drawn = layout(&fin);
     assert_eq!((drawn.poles.len(), drawn.edges, drawn.loops), (metrics.irregular_vertices, None, None));
+}
+
+#[test]
+fn an_edge_is_on_one_loop_where_the_faces_pinch() {
+    use openclare::metrics::{LoopKind, edge_loops, layout};
+    // A cube whose bottom and top quads are each cut, by a vertex in their
+    // middle, into two quads sharing two edges; the two middles are one
+    // vertex: four edges, two fans of two quads (#262). Straight on there
+    // is the way back, and the loops coming in once counted 18 edges of 16.
+    let mut mesh = openclare::PolyMesh::default();
+    mesh.positions = (0..8)
+        .map(|corner| Vec3::new((corner & 1) as f64, (corner >> 1 & 1) as f64, (corner >> 2) as f64))
+        .chain([Vec3::splat(0.5)])
+        .collect();
+    let [a, b, c, d, e, f, g, h, middle] = [0, 1, 3, 2, 4, 5, 7, 6, 8];
+    mesh.faces = vec![
+        vec![a, b, f, e],
+        vec![b, c, g, f],
+        vec![c, d, h, g],
+        vec![d, a, e, h],
+        vec![a, d, c, middle],
+        vec![a, middle, c, b],
+        vec![e, f, g, middle],
+        vec![e, middle, g, h],
+    ];
+    let loops = edge_loops(&mesh).expect("every edge on two faces, each way once");
+    let drawn = layout(&mesh);
+    assert_eq!(drawn.loops, Some([loops.closed, loops.spiral, loops.open, loops.border]));
+    let drawn = drawn.edges.unwrap();
+    assert_eq!(drawn.len(), 16);
+    let edges = |kind| drawn.iter().filter(|(_, k)| *k == kind).count() as f64 / 16.0;
+    for (kind, share) in [
+        (LoopKind::Closed, loops.closed_share),
+        (LoopKind::Spiral, loops.spiral_share),
+        (LoopKind::Open, loops.open_share),
+        (LoopKind::Border, loops.border_share),
+    ] {
+        assert!((edges(kind) - share).abs() < 1e-12, "{kind:?}: {loops:?}");
+    }
 }
 
 #[test]
