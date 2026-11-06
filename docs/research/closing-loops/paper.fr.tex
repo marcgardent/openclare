@@ -663,6 +663,71 @@ sorte de boucle, arêtes de bord exclues. Le même compte choisit parmi les
 candidats de la section~\ref{sec:closing} et colore les boucles en spirale
 dans les figures.
 
+Le moteur choisit donc selon la mesure sur laquelle il est évalué\,: il
+garde le candidat qui a le moins d'arêtes en spirale, et la
+section~\ref{sec:experiments} compare les outils selon cette part, que les
+autres outils n'optimisent pas et qui ne voit aucune hélice de pas supérieur
+à quatre. Les mesures ci-dessous ne sont pas utilisées par cette
+sélection\,: aucune étape du moteur ne les calcule.
+
+\paragraph{Mesures que la sélection n'utilise pas.}
+Un script à part, qui ne partage aucun code avec le moteur, mesure les
+maillages que le banc a gardés à 3\,000 quads
+(\texttt{experiments/structure.py}). Il compte les \emph{q-hélices} de tout
+pas~\cite{bommes2011structure}\,: bandes de quads le long desquelles $\tau$
+pas valent $h$ pas de côté, minimales ($h \le \tau$), gardées quand la
+propriété vaut sur un tour entier (deux enroulements ou plus) et que la bande
+entre enroulements est une grille régulière, un critère à nous fondé sur leur
+remarque que la propriété implique une région régulière autour de l'hélice. Il extrait le \emph{complexe de
+base}\,: une séparatrice part de chaque sommet irrégulier le long de chacune
+de ses arêtes, jusqu'à un sommet irrégulier, un bord ou son propre chemin, où
+elle finit en jonction en T\,; les patchs sont les régions entre
+séparatrices. Il compte enfin les \emph{singularités} intérieures. Sur des
+tores vrillés et un cube, il donne les hélices et les patchs attendus, et sur
+les maillages du banc il redonne les comptes du moteur, sommets irréguliers
+et patchs (sans l'arrêt sur son propre chemin), sur chaque maillage où le
+banc les a gardés. Le
+tableau~\ref{tab:structure} donne ces mesures sur les 21 modèles que les six
+outils maillent. Des 1\,393 q-hélices des 395 maillages gardés, 14 ont un pas
+supérieur à quatre, dans 10 maillages de QuadriFlow et de
+QuadWild-BiMDF~\cite{pietroni2021reliable,heistermann2023bimdf}, aucun
+d'openclare. Le compte d'hélices de tout pas du moteur lui-même, qui ne
+demande pas de bande régulière et que la sélection n'utilise pas non plus, en
+trouve 159 sur 1\,061 au-dessus de quatre, dans 57 des 356 maillages dont il
+peut suivre les boucles, aucun d'openclare. En q-hélices, openclare en a
+moins que QuadriFlow, mais pas moins qu'AutoRemesher, ni qu'Instant
+Meshes~\cite{jakob2015instant}, dont les maillages ont le plus de singularités et presque un patch du
+complexe de base par quad.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lrrrrrr}
+\toprule
+& arêtes en spirale & q-hélices & pas $> 4$ & patchs & jonctions en T & singularités \\
+\midrule
+openclare & 0,0\,\% (0,0--7,9) & 1 (0--3) & 0 sur 89 & 861 (66--1913) & 6 (0--9) & 56 (20--154) \\
+QuadriFlow & 17,6\,\% (9,6--35,4) & 3 (1--5) & 12 sur 358 & 2205 (1489--2605) & 14 (2--28) & 52 (24--106) \\
+AutoRemesher & 20,8\,\% (7,1--33,2) & 1 (0--5) & 0 sur 51 & 950 (602--1180) & 8 (4--18) & 68 (18--99) \\
+QuadWild-BiMDF & 10,3\,\% (1,7--20,2) & 2 (0--5) & 2 sur 169 & 1643 (122--2647) & 13 (0--26) & 50 (18--145) \\
+Instant Meshes & 7,3\,\% (4,7--9,2) & 0 (0--3) & 0 sur 28 & 2867 (2379--3000) & 7 (4--16) & 137 (97--192) \\
+IM, chaîne du banc & 5,2\,\% (3,0--9,6) & 0 (0--1) & 0 sur 88 & 2856 (1997--2986) & 4 (2--10) & 160 (111--214) \\
+\bottomrule
+\end{tabular}
+\caption{Structure des maillages gardés par le banc à 3\,000 quads, sur les
+21 modèles que les six outils maillent\,: médiane sur les modèles (quartiles
+entre parenthèses), chaque modèle la médiane de ses passes (cinq graines pour
+QuadriFlow et pour la chaîne Instant Meshes du banc, IM, une passe sinon).
+Arêtes en spirale\,: la mesure selon laquelle le moteur choisit, sur les
+modèles dont on peut suivre les boucles\,; les autres colonnes sont des
+mesures qu'aucune étape du moteur n'utilise. q-hélices\,: par maillage\,; pas
+$> 4$\,: sur toutes les q-hélices des maillages de l'outil. Patchs et
+jonctions en T\,: le complexe de base. Singularités\,: sommets intérieurs de
+valence autre que quatre.}
+\label{tab:structure}
+\end{table}
+
 \section{Expériences}\label{sec:experiments}
 
 Chaque chiffre est mesuré sur le moteur de la version 0.7.0 (commit
@@ -775,7 +840,8 @@ sept modèles contre $31$ pour openclare. La comparaison favorise aussi
 openclare par construction~: le moteur choisit parmi ses candidats selon
 cette même part (section~\ref{sec:closing}), que les quatre autres
 n'optimisent pas, et la part ne voit aucune hélice de pas supérieur à
-quatre. Une mesure de structure que la sélection n'utilise pas reste à faire.
+quatre. Le tableau~\ref{tab:structure} donne des mesures de structure que la
+sélection n'utilise pas.
 
 \begin{table}[t]
 \centering
