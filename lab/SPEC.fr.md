@@ -240,7 +240,7 @@ séparé (Q3) : suspendre et demander, continuer, ou annuler le reste.
 ## 9. Moniteur et indicateur de calme
 
 Un fil d'échantillonnage lit toutes les 2 secondes (réglable, 1 à 5) : CPU % total et par thread,
-moyennes de charge 1/5/15 et mémoire par `sysinfo` ; VRAM et GPU % par
+moyennes de charge 1/5/15 et mémoire dans /proc (Linux seulement ; `sysinfo` n'apporterait rien ici) ; VRAM et GPU % par
 `nvidia-smi --query-gpu=memory.used,memory.total,utilization.gpu --format=csv,noheader,nounits` (toutes
 les 4 secondes ; « n/a » si la commande manque ou échoue) ; et le CPU de chaque processus. Les processus
 de l'exécution sont ceux de son groupe et leurs descendants (par pid parent, ce qui attrape aussi les
@@ -270,27 +270,33 @@ ci-dessus sont une première proposition, à régler sur de vraies exécutions (
 ## 10. Estimation de la progression
 
 La **clé de commande** d'une exécution est sa commande rendue, l'environnement de sa tâche et son dossier
-(le checkout exclu : un worktree et le checkout principal donnent la même clé). L'estimation d'un élément
-de file est :
+(le checkout exclu). L'estimation d'une tâche est la médiane des durées de ses exécutions `Ok` :
 
-1. la médiane des durées des exécutions `Ok`, `timing_valid`, de même clé et de même commit ;
-2. sinon la même sur la même clé, à tout commit ;
-3. sinon « pas d'estimation ».
+1. de même clé et de même commit ;
+2. sinon de même clé, à tout commit ;
+3. sinon sur toutes les exécutions de la tâche, résultats du dépôt compris (section 13) ;
+4. sinon « pas d'estimation ».
 
-Les exécutions dont le temps n'est pas valide ne font pas d'estimation. Si elles sont tout ce qu'il y a,
-l'élément affiche « pas d'estimation (3 exécutions chargées : 21 à 34 min) » pour que Marc les voie, mais
-elles n'entrent dans aucune heure de fin (Q7). L'interface dit toujours de combien d'exécutions vient la
-médiane et à quel niveau : « ≈ 2 h 41 (médiane de 3, même commit) ».
+Une estimation dit toujours sur quoi elle repose : « ≈ 2 h 38 min 24 · 1 exécution, charge 0,43 ». Les
+exécutions sous charge servent, et le disent : ce sont souvent les seules (Marc, 2026-11-06).
 
-Pendant une exécution : écoulé / estimé, une barre, l'heure de fin de la tâche. Au-delà de l'estimation,
-la barre reste pleine et le texte dit « dépasse l'estimation de 12 min ». L'heure de fin de la file est
-maintenant + ce qui reste de l'exécution en cours + la somme des estimations des éléments en attente ;
-avec des éléments sans estimation elle se lit « après 03:40, plus 2 tâches sans estimation ». Une
-exécution terminée est un point de plus pour l'estimation suivante.
+La file montre, pour chaque élément, son estimation, le **cumul** depuis le début de la file et son heure
+de fin prévue. Un élément sans estimation fait lire le cumul « au moins …, plus n tâches sans
+estimation ». Pendant une exécution : écoulé / estimé et une barre ; au-delà, « dépasse l'estimation de
+12 min ». Une exécution terminée est un point de plus pour l'estimation suivante.
+
+## 10 bis. Versions : sur un tag ou hors tag
+
+- Une exécution se range par **un seul hash** : celui qu'elle note. C'est le commit du checkout pour une
+  exécution lancée par lab, le commit écrit dans le résumé pour un résultat du dépôt ; pour un résultat qui
+  n'en note aucun, le commit qui l'a apporté dans git (`git log -1 -- <fichier>`).
+- Ce hash est celui d'un tag (`git tag -l 'v*'`) : l'exécution est **sur ce tag** et peut étayer un papier.
+  Sinon elle est **hors tag**, montrée avec son hash, et ne peut pas étayer un papier.
+- Une exécution dont la durée n'a pas été mesurée affiche « no time ».
 
 ## 11. Écrans
 
-Une fenêtre, une barre du haut et quatre onglets. Libellés en anglais comme le code ; des libellés
+Une fenêtre, une barre du haut et cinq onglets. Libellés en anglais comme le code ; des libellés
 français sont possibles par un réglage (Q11). Disposition, d'après la maquette :
 
 ### Barre du haut
@@ -298,14 +304,24 @@ français sont possibles par un réglage (Q11). Disposition, d'après la maquett
 Checkout d'attache (branche, commit court, marque de modification), l'indicateur de calme, CPU et load1
 d'un coup d'œil, le réglage de threads (de 1 à 8, ambre au-delà de la limite de confort).
 
-### File (l'écran d'ouverture)
+### État (l'écran d'ouverture)
+
+- Une ligne par tâche, groupées par papier, avec sa **dernière exécution** (Last run) : marquée de son tag
+  (« v0.7.0 ») ou « off-tag <hash> », puis sa date, sa durée (« no time » si non mesurée), la charge au
+  début et le fichier où elle a été lue ; ou « never run ».
+- En tête, les comptes : dernière exécution sur un tag, hors tag, jamais lancée.
+- Un filtre **Tag** : « All runs » (la dernière exécution de chaque tâche, où qu'elle ait tourné), ou un
+  tag : seule la dernière exécution de chaque tâche sur ce tag, les autres « no run on this tag ».
+- Les tâches cochées ici, ou toutes celles jamais lancées, partent dans la file d'un clic.
+
+### File
 
 - **À gauche, le catalogue** : tâches groupées par catégorie, une recherche, pour chacune une case, son
   estimation, une marque si son temps compte ; les séquences au-dessus (en cocher une ajoute ses tâches
   dans l'ordre).
-- **Au milieu, la file** : les éléments dans l'ordre (glisser pour réordonner, retirer), chacun avec ses
-  paramètres (modifiables), son checkout (d'attache ou un worktree), ses threads effectifs, son
-  estimation ; dessous : le commentaire et la version de papier (A ou B, un libellé suggéré d'après les
+- **Au milieu, la file** : les éléments dans l'ordre, réordonnés par une **poignée** de glisser-déposer,
+  chacun avec ses paramètres (modifiables), son checkout (d'attache ou un worktree, et si l'exécution sera
+  sur un tag ou hors tag), ses threads effectifs, son estimation, son cumul et son heure de fin (section 10) ; dessous : le commentaire et la version de papier (A ou B, un libellé suggéré d'après les
   libellés passés) appliqués à toutes les exécutions de la file, les politiques d'arrêt et d'échec, l'heure de fin de la file, Lancer.
 - **À droite, l'exécution en cours** : tâche, élément n sur m, écoulé / estimé avec la barre, heures de
   fin de la tâche et de la file, Arrêter, le journal qui défile.
@@ -348,24 +364,16 @@ et fenêtre du calme, période d'échantillonnage, délai entre SIGTERM et SIGKI
 d'échec, libellé de la machine pour les exports (proposé : « i7-7700K 4c/8t 2017, 62 GB », comparé à ce qui
 est détecté : l'application avertit si le modèle de processeur ou la mémoire diffèrent).
 
-## 13. Amorcer l'historique
+## 13. Les résultats du dépôt dans l'historique
 
-Une commande `lab seed` (le même binaire, sans fenêtre) écrit des fiches `source = Seeded { from }` :
-
-- **Ce qui s'amorce, depuis ce qui est suivi** : les résumés `docs/research/*/experiments/results/*.json`
-  qui notent `wall_seconds` et `machine` (environ dix-sept aujourd'hui : les scripts du papier des tours,
-  et `twelve_models`, `ablation`, `male_body`). Ils donnent la durée, le processeur, la mémoire, la charge
-  au début et à la fin, et le commit du moteur pour le papier A. La commande vient des tableaux des README ;
-  la date est celle du commit qui a apporté le fichier (marquée comme telle : l'heure n'est pas connue). Leur
-  calme ne peut pas s'établir (aucun CPU étranger n'a été échantillonné, et la plupart ont démarré à load1
-  de 1,2 à 15,6) : elles reçoivent `timing_valid = false`, avec la raison « non mesuré (amorcé) », elles
-  informent donc sans nourrir les estimations. Elles montrent aussi la dérive que l'application doit
-  empêcher : `forced-bounds.json` note 2 501 s là où NIGHT.md écrit « environ 2 minutes ».
-- **Ce qui ne s'amorce pas** : `bench/results/*.json` garde des secondes par maillage, pas le temps d'un
-  banc ; `bench/quick.py` affiche ses temps sans les garder ; descriptions de PR et notes de mémoire ne se
-  lisent pas par machine. Ceux-là passent par « Saisir une exécution passée ».
-
-L'amorçage est le jalon 1b (facultatif, §15).
+À chaque ouverture, lab lit les résumés que le dépôt contient déjà et montre chacun comme une exécution
+« du dépôt », jamais recopiée dans `runs.jsonl`. Une tâche nomme son résumé dans `jobs.toml` (`summary`, un
+chemin, avec `#clé` pour un enregistrement niché dans un autre fichier, comme l'export dans les résumés des
+papiers). Un résumé donne : le hash qu'il note (sinon le commit qui l'a apporté, section 10 bis), la date de
+ce commit (l'heure n'est pas connue), `wall_seconds` ou `seconds`, le processeur et la mémoire, les moyennes
+de charge au début et à la fin. Son calme ne peut pas se savoir (rien d'autre n'a été échantillonné) :
+`timing_valid = false`, raison « non mesuré (du dépôt) ». `bench/results/*.json` et quelques autres ne notent
+aucune durée : « no time ».
 
 ## 14. Choix techniques
 
@@ -374,7 +382,7 @@ L'amorçage est le jalon 1b (facultatif, §15).
   à un tableau de bord redessiné chaque seconde, et il est mûr sous Linux (X11 et Wayland). Le cache cargo
   d'ici contient `egui` 0.36.2, `egui_extras` 0.36.2 et `egui_plot` 0.37.0, mais pas `eframe` : la
   première construction le télécharge avec ses dépendances depuis crates.io (Q12).
-- `sysinfo` 0.39 (CPU, mémoire, charge, processus), `nix` 0.31 (groupes de processus, signaux,
+- CPU, mémoire, charge et processus lus dans /proc ; `nix` 0.31 (groupes de processus, signaux,
   `setrlimit`), `serde`, `serde_json`, `toml`, `chrono`, `sha2`, `glob`, `dirs`. Le GPU par la commande
   `nvidia-smi`, sans liaison NVML.
 - Fils : l'interface ; l'échantillonnage ; le lanceur (lancement, attente, fin d'exécution) ; une

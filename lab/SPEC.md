@@ -328,7 +328,7 @@ A failed job (non-zero exit or signal not sent by the app): same setting as Stop
 ## 9. Monitoring and the calm indicator
 
 A sampler thread reads, every 2 seconds (tunable, 1 to 5): CPU % in total and per thread, load
-averages 1/5/15 and RAM through `sysinfo`; VRAM, GPU % through
+averages 1/5/15 and RAM from /proc (Linux only; `sysinfo` would add nothing here); VRAM, GPU % through
 `nvidia-smi --query-gpu=memory.used,memory.total,utilization.gpu --format=csv,noheader,nounits`
 (every 4 seconds; "n/a" when the command is missing or fails); and the CPU of each process. The
 processes of the run are those of its process group and their descendants (by parent pid, which
@@ -356,27 +356,34 @@ values above are a first proposal to tune on real runs (Q5).
 ## 10. Progress estimation
 
 The **command key** of a run is its rendered command, its job's environment and its directory
-(the checkout excluded: a worktree and the main checkout give the same key). The estimate of a
-queue item is:
+(the checkout excluded). The estimate of a job is the median of `seconds` over its runs with
+`status = Ok`:
 
-1. the median of `seconds` over the runs with `status = Ok`, `timing_valid = true`, the same command
-   key and the same commit;
-2. else the same over the same command key at any commit;
-3. else "no estimate".
+1. with the same command key and the same commit;
+2. else with the same command key at any commit;
+3. else over all the job's runs, those read from the repository included (section 13);
+4. else "no estimate".
 
-Runs that are not timing-valid do not make estimates. If they are all there is, the item shows
-"no estimate (3 loaded runs: 21 to 34 min)" so Marc sees them, but they enter no ETA (Q7). The UI
-always says how many runs the median comes from and which level: "≈ 2 h 41 (median of 3, same
-commit)".
+An estimate always says what it stands on: "≈ 2 h 38 min 24 · 1 run, load 0.43". Runs under load are
+used, and say so: they are often all there is (Marc, 2026-11-06).
 
-During a run: elapsed / estimate, a progress bar, the job's ETA. Past the estimate, the bar stays
-full and the text says "over the estimate by 12 min". The queue's ETA is now + what is left of the
-current run + the sum of the estimates of the items waiting; with items without an estimate it reads
-"after 03:40, plus 2 jobs without estimate". A finished run is a new point for the next estimate.
+The queue shows, for each item, its estimate, the **running total** from the start of the queue and the
+time it should end. An item without an estimate makes the total read "at least …, plus n jobs without
+an estimate". During a run: elapsed / estimate and a progress bar; past the estimate, "over the
+estimate by 12 min". A finished run is a new point for the next estimate.
+
+## 10b. Versions: on a tag or off-tag
+
+- A run is classed by **one hash**: the one it records. That is the commit of the checkout for a run
+  launched by lab, the commit written in the summary for a result of the repository; for a result that
+  records none, the commit that brought it into git (`git log -1 -- <file>`).
+- That hash is a tag's (`git tag -l 'v*'`): the run is **on that tag** and can back a paper. Otherwise it
+  is **off-tag**, shown with its hash, and cannot back a paper.
+- A run whose duration was not measured shows "no time".
 
 ## 11. Screens
 
-One window, a top bar and four tabs. Labels in English, as the code; French labels are possible with a
+One window, a top bar and five tabs. Labels in English, as the code; French labels are possible with a
 switch (Q11). Layout, from the mockup:
 
 ### Top bar
@@ -384,12 +391,23 @@ switch (Q11). Layout, from the mockup:
 Home checkout (branch, short commit, dirty mark), the calm indicator, CPU and load1 at a glance,
 the thread setting (a spinner from 1 to 8, amber above the comfort limit).
 
-### Queue (the screen the app opens on)
+### State (the screen the app opens on)
+
+- One line per job, grouped by paper, with its **Last run**: marked with its tag ("v0.7.0") or
+  "off-tag <hash>", then its date, duration ("no time" if not measured), load at start and the file it
+  was read from; or "never run".
+- Counts at the top: last run on a tag, off-tag, never run.
+- A **Tag** filter: "All runs" (the last run of each job, wherever it ran), or one tag: only the last run
+  of each job on that tag, the others "no run on this tag".
+- Jobs checked here, or all those never run, go to the queue in one click.
+
+### Queue
 
 - **Left, the catalogue**: jobs grouped by category, a search box, for each a checkbox, its estimate,
   a mark if its timing matters; the sequences above them (checking one adds its jobs in order).
-- **Middle, the queue**: the items in order (drag to reorder, remove), each with its parameters
-  (editable), checkout (home or a worktree), effective threads, estimate; below: the comment and the
+- **Middle, the queue**: the items in order, reordered with a **drag handle**, each with its parameters
+  (editable), checkout (home or a worktree, and whether the run will be on a tag or off-tag), effective
+  threads, estimate, running total and end time (section 10); below: the comment and the
   paper version (A or B, a label with suggestions from past labels) applied to every run of the queue,
   the policies on stop and on failure, the queue's ETA, Run.
 - **Right, the run under way**: job, item n of m, elapsed / estimate with the bar, ETA of the job and
@@ -431,24 +449,15 @@ and window, sample period, delay between SIGTERM and SIGKILL, the policies on st
 machine label used in exports (default proposed "i7-7700K 4c/8t 2017, 62 GB", checked against what is
 detected: the app warns if the CPU model or the memory differ).
 
-## 13. Seeding the history
+## 13. The repository's results in the history
 
-A command `lab seed` (the same binary, no window) writes records with `source = Seeded { from }`:
-
-- **What can be seeded, from what is tracked**: the summaries `docs/research/*/experiments/results/*.json`
-  that record `wall_seconds` and `machine` (about seventeen today: the turns paper's scripts, and
-  `twelve_models`, `ablation`, `male_body`). They give the duration, the processor, the memory, the
-  load at start and at end, and the engine's commit for paper A. The command comes from the README tables;
-  the date is the date of the commit that brought the file (marked as such: the time of day is not
-  known). Their calm cannot be established (no foreign CPU was sampled, and most started at load1 1.2
-  to 15.6): they get `timing_valid = false`, with the reason "not measured (seeded)", so they inform
-  without feeding the estimates. They also show the drift the app is for: `forced-bounds.json` records
-  2,501 s where NIGHT.md writes "about 2 minutes".
-- **What cannot**: `bench/results/*.json` keeps seconds per mesh, not the time of a bench run;
-  `bench/quick.py` prints its times without saving them; PR bodies and memory notes are not
-  machine-readable. Those go through "Record a past run" by hand.
-
-Seeding is milestone 1b (optional, §15).
+At every opening, lab reads the summaries the repository already holds and shows each as a run "from the
+repository", never copied into `runs.jsonl`. A job names its summary in `jobs.toml` (`summary`, a path, with
+`#key` for a record nested in another file, as the export inside the papers' summaries). A summary gives:
+the hash it records (else the commit that brought it, section 10b), the date of that commit (the time of day
+is not known), `wall_seconds` or `seconds`, the processor and memory, the load averages at start and at end.
+Its calm cannot be known (nothing else was sampled): `timing_valid = false`, reason "not measured (from the
+repository)". `bench/results/*.json` and a few others record no duration: "no time".
 
 ## 14. Technical choices
 
@@ -457,7 +466,7 @@ Seeding is milestone 1b (optional, §15).
   dashboard redrawn every second, and it is mature on Linux (X11 and Wayland). The cargo cache here holds
   `egui` 0.36.2, `egui_extras` 0.36.2 and `egui_plot` 0.37.0, but not `eframe`: the first build downloads
   it and its dependencies from crates.io (Q12).
-- `sysinfo` 0.39 (CPU, RAM, load, processes), `nix` 0.31 (process groups, signals, `setrlimit`),
+- CPU, RAM, load and processes read from /proc; `nix` 0.31 (process groups, signals, `setrlimit`),
   `serde`, `serde_json`, `toml`, `chrono`, `sha2`, `glob`, `dirs`. The GPU through the command
   `nvidia-smi`, no NVML binding.
 - Threads: the UI; the sampler; the runner (spawn, wait, end of run); a file watcher on `jobs.toml` (a check

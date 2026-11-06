@@ -11,6 +11,8 @@
 # checkout: "home" (the default), "ask", or { branch = "name" }.
 # memory_limit_gb: the cap of `ulimit -v`, per process.
 # timing_matters: the job waits for a calm machine; its time may go into a paper.
+# summary: the JSON that records a run of the job in the repository (`#key` for a
+# record nested in it); lab reads it at every opening (SPEC.md, section 13).
 #
 # The durations in the descriptions are what the documents say, not what lab
 # measured.
@@ -60,6 +62,7 @@ memory_limit_gb = 32
 
 [[job]]
 name = "bench"
+summary = "bench/results/results.json"
 description = "Every remesher on every model at one budget (bench/run.py), the comparison against the other remeshers included; about an hour (bench/quick.py), about 3 hours a full night (Marc). The threads it uses are to be checked (SPEC.md, Q8)."
 category = "bench"
 command = "python3 bench/run.py --target {target} {options}"
@@ -79,6 +82,7 @@ outputs = ["bench/results/*.json", "bench/results/*.md"]
 
 [[job]]
 name = "scores"
+summary = "bench/results/scores.json"
 description = "The comparative report, marks from 0 to 100 (make scores): seconds."
 category = "bench"
 command = "make scores"
@@ -97,6 +101,7 @@ paper = "B"
 
 [[job]]
 name = "lean-oracle-seed-1"
+summary = "docs/research/turns-of-a-t-mesh/experiments/property/results/seed-1.json"
 description = "T-meshes made without the engine, checked by the Lean oracle Check/Main.lean (experiments/property/README.md): about 3 s an instance."
 category = "lean-oracle"
 command = "export PATH=\"$HOME/.elan/bin:$PATH\"; python3 docs/research/turns-of-a-t-mesh/experiments/property/generate.py --count {count} --seed {seed} && python3 docs/research/turns-of-a-t-mesh/lean/Check/check_exports.py scratch/data-package/property/seed-{seed} scratch/data-package/property/seed-{seed}/lean-check --jobs {threads}"
@@ -137,6 +142,7 @@ tags = ["paper-B-data"]
 
 [[job]]
 name = "export-male-body"
+summary = "docs/research/turns-of-a-t-mesh/experiments/results/census.json#export_record"
 description = "Stage 1 of NIGHT.md: the export both papers read, the male body on the engine of v0.7.0 (about 2 minutes, the whole machine). The prepare refuses a checkout whose engine is not that of {frozen}: pick a worktree at v0.7.0."
 category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/export.py --openclare target/release/openclare --commit {frozen} --engine {variant} --source scratch/torso/source.obj"
@@ -153,6 +159,7 @@ tags = ["paper-B-data", "stage-1"]
 
 [[job]]
 name = "census"
+summary = "docs/research/turns-of-a-t-mesh/experiments/results/census.json"
 description = "Stage 3 of NIGHT.md: counts of the export."
 category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/census.py {export}"
@@ -167,6 +174,7 @@ tags = ["paper-B-data", "stage-3"]
 
 [[job]]
 name = "lattice"
+summary = "docs/research/turns-of-a-t-mesh/experiments/results/lattice.json"
 description = "Stage 3 of NIGHT.md: the lattice of whole lengths, a way stopped at 600 s."
 category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/lattice.py {export} --seconds 600"
@@ -181,6 +189,7 @@ tags = ["paper-B-data", "stage-3"]
 
 [[job]]
 name = "conflicts"
+summary = "docs/research/turns-of-a-t-mesh/experiments/results/conflicts.json"
 description = "Stage 3 of NIGHT.md: Table tab:iis (about 3 minutes)."
 category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/conflicts.py {export}"
@@ -195,6 +204,7 @@ tags = ["paper-B-data", "stage-3"]
 
 [[job]]
 name = "pairs"
+summary = "docs/research/turns-of-a-t-mesh/experiments/results/pairs.json"
 description = "Stage 3 of NIGHT.md: Table tab:pairs (after conflicts)."
 category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/pairs.py {export}"
@@ -209,6 +219,7 @@ tags = ["paper-B-data", "stage-3"]
 
 [[job]]
 name = "combs"
+summary = "docs/research/turns-of-a-t-mesh/experiments/results/combs.json"
 description = "Stage 3 of NIGHT.md: Lemma Combs on the male body (after conflicts)."
 category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/combs.py {export}"
@@ -223,6 +234,7 @@ tags = ["paper-B-data", "stage-3"]
 
 [[job]]
 name = "fox"
+summary = "docs/research/turns-of-a-t-mesh/experiments/results/fox.json"
 description = "Stage 3 of NIGHT.md: the Fox-Burgers formula on every turn (about 6 minutes)."
 category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/fox.py {export} --relations 2"
@@ -237,6 +249,7 @@ tags = ["paper-B-data", "stage-3"]
 
 [[job]]
 name = "forced-bounds"
+summary = "docs/research/turns-of-a-t-mesh/experiments/results/forced-bounds.json"
 description = "Stage 3 of NIGHT.md: Table tab:forced, column bounds; about 2 minutes says NIGHT.md, 2,501 s in results/forced-bounds.json."
 category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/forced.py {export} --steps bounds --summary docs/research/turns-of-a-t-mesh/experiments/results/forced-bounds.json"
@@ -251,6 +264,7 @@ tags = ["paper-B-data", "stage-3"]
 
 [[job]]
 name = "forced-whole-lower"
+summary = "docs/research/turns-of-a-t-mesh/experiments/results/forced.json"
 description = "Stage 4 of NIGHT.md: Table tab:forced with the cap, the window and whole lengths; 1 to 4 hours, {threads} families at a time."
 category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/forced.py {export} --whole-lower --seconds 900 --budget 1800 --jobs {threads}"
@@ -264,6 +278,7 @@ tags = ["paper-B-data", "stage-4"]
 
 [[job]]
 name = "forced-sound"
+summary = "docs/research/turns-of-a-t-mesh/experiments/results/forced-sound.json"
 description = "Stage 4 of NIGHT.md: the optimum for way 2 keeping open every arc the engine keeps open; under an hour."
 category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/forced.py {export} --ways 2 --families held --sound --seconds 900 --summary docs/research/turns-of-a-t-mesh/experiments/results/forced-sound.json --out scratch/data-package/turns-of-a-t-mesh/forced-sound"
@@ -278,6 +293,7 @@ tags = ["paper-B-data", "stage-4"]
 
 [[job]]
 name = "holonomy"
+summary = "docs/research/turns-of-a-t-mesh/experiments/results/holonomy.json"
 description = "Stage 4 of NIGHT.md: the crossing maps, discs and annuli of every turn; about an hour with 4 jobs."
 category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/holonomy.py {export} --jobs {threads}"
@@ -291,6 +307,7 @@ tags = ["paper-B-data", "stage-4"]
 
 [[job]]
 name = "strict"
+summary = "docs/research/turns-of-a-t-mesh/experiments/results/strict.json"
 description = "Stage 4 of NIGHT.md: the question read strictly (after conflicts); 30 to 60 minutes."
 category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/strict.py {export}"
@@ -305,6 +322,7 @@ tags = ["paper-B-data", "stage-4"]
 
 [[job]]
 name = "certify"
+summary = "docs/research/turns-of-a-t-mesh/lean/Check/certificates/male-body.json"
 description = "Stage 4 of NIGHT.md: the certificates of tab:iis for the Lean check, four processes of two ways each (20 to 70 minutes of processor time in all); run lean-check-export after it."
 category = "experiment"
 command = "for part in \"0 1\" \"2 3\" \"4 5\" \"6 7\"; do set -- $part; mkdir -p {export}/export/certificates/part-$1; python3 docs/research/turns-of-a-t-mesh/lean/Check/certify.py {export}/export/call-*/way-$1.json {export}/export/call-*/way-$2.json --claims scratch/data-package/turns-of-a-t-mesh/conflicts/claims.json --out {export}/export/certificates/part-$1/certificates.json & done; wait"
@@ -318,6 +336,7 @@ tags = ["paper-B-data", "stage-4"]
 
 [[job]]
 name = "conjugacy"
+summary = "docs/research/turns-of-a-t-mesh/experiments/results/conjugacy.json"
 description = "Section Conflicts between turns: the homotopies by conjugacy in the free group (after pairs); 626 s under load (experiments/README.md)."
 category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/conjugacy.py {export}"
@@ -331,6 +350,7 @@ paper = "B"
 
 [[job]]
 name = "parity"
+summary = "docs/research/turns-of-a-t-mesh/experiments/results/parity.json"
 description = "Proposition Feet modulo 2 on the male body."
 category = "experiment"
 command = "python3 -I docs/research/turns-of-a-t-mesh/experiments/parity.py {export}"
@@ -344,6 +364,7 @@ paper = "B"
 
 [[job]]
 name = "gadget"
+summary = "docs/research/turns-of-a-t-mesh/experiments/results/gadget.json"
 description = "Section Choosing the turns (#216): the reduction on small graphs and 60 random spheres; 352 s under load (experiments/README.md). Reads no export."
 category = "experiment"
 command = "python3 -I docs/research/turns-of-a-t-mesh/experiments/gadget.py --count 60 --seed 1 --families box:2:2:6:2,box:3:3:8:3,box:3:3:10:6,box:4:4:10:8,box:3:3:12:10,cube:6,hull:12,dual:12"
@@ -359,6 +380,7 @@ paper = "B"
 
 [[job]]
 name = "twelve-models"
+summary = "docs/research/closing-loops/experiments/results/twelve_models.json"
 description = "Twelve models at three budgets, 36 runs (sec:experiments); one run at a time, the engine on the thread setting."
 category = "experiment"
 command = "python3 docs/research/closing-loops/experiments/twelve_models.py --jobs 1"
@@ -370,6 +392,7 @@ paper = "A"
 
 [[job]]
 name = "ablation"
+summary = "docs/research/closing-loops/experiments/results/ablation.json"
 description = "Table tab:dev as an ablation, 11 lines of 36 runs, checked against the plain runs of twelve-models."
 category = "experiment"
 command = "python3 docs/research/closing-loops/experiments/ablation.py --jobs 1 --check scratch/data-package/closing-loops/twelve_models"
@@ -381,6 +404,7 @@ paper = "A"
 
 [[job]]
 name = "male-body"
+summary = "docs/research/closing-loops/experiments/results/male_body.json"
 description = "The male body at 10,590 quads with and without closing, against the hand-made mesh."
 category = "experiment"
 command = "python3 docs/research/closing-loops/experiments/male_body.py"
@@ -392,6 +416,7 @@ paper = "A"
 
 [[job]]
 name = "figures"
+summary = "docs/research/closing-loops/experiments/results/figures.json"
 description = "Figures fig:overview and fig:closeups, then their numbers (needs blender and Pillow)."
 category = "experiment"
 command = "WORK=scratch/data-package/closing-loops/figures OPENCLARE=target/release/openclare COMMIT={commit} docs/research/closing-loops/figures/make_figures.sh && python3 docs/research/closing-loops/experiments/figure_numbers.py scratch/data-package/closing-loops/figures"
@@ -402,6 +427,7 @@ paper = "A"
 
 [[job]]
 name = "structure"
+summary = "docs/research/closing-loops/experiments/results/structure.json"
 description = "Measures of structure the selection does not use (DT-137), on the bench's stored meshes; nothing remeshed."
 category = "experiment"
 command = "python3 -I docs/research/closing-loops/experiments/structure.py"
@@ -411,6 +437,7 @@ paper = "A"
 
 [[job]]
 name = "against-remeshers"
+summary = "docs/research/closing-loops/experiments/results/against_remeshers.json"
 description = "Table tab:remeshers, read from bench/results/results.json and the files the paper used; runs nothing."
 category = "experiment"
 command = "python3 docs/research/closing-loops/experiments/against_remeshers.py --git 5bc16c6 --git b0fba91 --no-closing-from docs/research/closing-loops/experiments/results/against_remeshers.json"
@@ -431,6 +458,7 @@ paper = "A"
 
 [[job]]
 name = "exact-relaxation"
+summary = "docs/research/closing-loops/experiments/exact/results/relaxation.json"
 description = "Stage 1 of exact/NIGHT.md: seconds."
 category = "experiment"
 command = "python3 docs/research/closing-loops/experiments/exact/relaxation.py {export}"
@@ -444,6 +472,7 @@ tags = ["paper-A-exact"]
 
 [[job]]
 name = "most-closable"
+summary = "docs/research/closing-loops/experiments/exact/results/most_closable.json"
 description = "Stage 2 of exact/NIGHT.md: Table tab:exact, 8 ways, {threads} at a time; about 1.5 hours with 4."
 category = "experiment"
 command = "python3 docs/research/closing-loops/experiments/exact/most_closable.py {export} --whole 600 --whole-most 900 --jobs {threads}"
@@ -456,6 +485,7 @@ tags = ["paper-A-exact"]
 
 [[job]]
 name = "rings"
+summary = "docs/research/closing-loops/experiments/exact/results/rings.json"
 description = "Stage 2 of exact/NIGHT.md, the lane of way 2: rings, their rounding in the lattice, the local search; about 1.5 hours. NIGHT.md runs it beside most-closable; lab runs one job at a time."
 category = "experiment"
 command = "python3 docs/research/closing-loops/experiments/exact/rings.py {export} --subset-seconds 600 --without-zeros 1800 && python3 docs/research/closing-loops/experiments/exact/lattice_rounding.py {export} --seconds 1200 && python3 docs/research/closing-loops/experiments/exact/local_search.py {export} --seconds 1200"
@@ -469,6 +499,7 @@ tags = ["paper-A-exact"]
 
 [[job]]
 name = "exact-remesh"
+summary = "docs/research/closing-loops/experiments/exact/results/remesh.json"
 description = "Stage 3 of exact/NIGHT.md: Table tab:rounding, the engine's meshes (the whole machine, about 30 minutes). The prepare refuses a checkout whose engine is not that of {frozen}."
 category = "experiment"
 command = "python3 docs/research/closing-loops/experiments/exact/remesh.py --openclare target/release/openclare --commit {frozen} --engine as-is --source scratch/torso/source.obj"
@@ -484,6 +515,7 @@ tags = ["paper-A-exact"]
 
 [[job]]
 name = "end-to-end"
+summary = "docs/research/closing-loops/experiments/exact/results/end_to_end.json"
 description = "Stage 4 of exact/NIGHT.md: the slow quality mode, deterministic variants, two runs at a time; 2 to 4 hours."
 category = "experiment"
 command = "python3 docs/research/closing-loops/experiments/exact/end_to_end.py --openclare target/release/openclare --commit {frozen} --variants draws-0,draws-3,engine,slow-draws-0 --jobs 2 --male-body"
@@ -498,6 +530,7 @@ tags = ["paper-A-exact"]
 
 [[job]]
 name = "end-to-end-time-5"
+summary = "docs/research/closing-loops/experiments/exact/results/end_to_end-time-5.json"
 description = "Stage 4 of exact/NIGHT.md: the variant limited to 5 s, one run on processors 0 to 3; 1 to 2 hours."
 category = "experiment"
 command = "python3 docs/research/closing-loops/experiments/exact/end_to_end.py --openclare target/release/openclare --commit {frozen} --variants slow-time-5 --jobs 1 --cpus 0-3 --male-body --summary docs/research/closing-loops/experiments/exact/results/end_to_end-time-5.json"
@@ -513,6 +546,7 @@ tags = ["paper-A-exact"]
 
 [[job]]
 name = "end-to-end-time-300"
+summary = "docs/research/closing-loops/experiments/exact/results/end_to_end-time-300.json"
 description = "Stage 4 of exact/NIGHT.md: the variant limited to 300 s, one run on processors 0 to 3; hours, lowest priority."
 category = "experiment"
 command = "python3 docs/research/closing-loops/experiments/exact/end_to_end.py --openclare target/release/openclare --commit {frozen} --variants slow-time-300 --jobs 1 --cpus 0-3 --summary docs/research/closing-loops/experiments/exact/results/end_to_end-time-300.json"

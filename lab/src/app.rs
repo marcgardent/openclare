@@ -2,6 +2,7 @@
 //! screen is in `queue.rs`; the runner it drives, in `runner.rs`.
 
 mod queue;
+mod state;
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -16,18 +17,21 @@ use crate::home::{GitState, Places, Worktree, worktrees};
 use crate::model::{Paper, Run, Source, duration_text};
 use crate::runner::{Runner, Shared, recover};
 use crate::settings::{Policy, Settings};
+use crate::state::{Tag, place, repository_runs, tags};
 use crate::store::History;
 
 const AMBER: Color32 = Color32::from_rgb(255, 210, 122);
 const RED: Color32 = Color32::from_rgb(255, 176, 176);
 const GREEN: Color32 = Color32::from_rgb(143, 240, 176);
 const MUTED: Color32 = Color32::from_rgb(154, 161, 171);
+const BLUE: Color32 = Color32::from_rgb(169, 196, 255);
 
 /// How often the files are looked at again.
 const RELOAD: Duration = Duration::from_secs(2);
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Tab {
+    State,
     Queue,
     History,
     Catalogue,
@@ -82,6 +86,13 @@ pub struct App {
     filter: Filter,
     sort: (SortBy, bool),
     run: Option<String>,
+    // State tab: the tags, the runs the repository's summaries record, and
+    // the commit they were read at.
+    tags: Vec<Tag>,
+    repository: Vec<Run>,
+    repository_problems: Vec<String>,
+    repository_head: String,
+    state_view: state::StateView,
     /// Where to write a picture of the window, then close it.
     screenshot: Option<Screenshot>,
 }
@@ -122,6 +133,7 @@ struct Screenshot {
 impl Tab {
     pub fn named(name: &str) -> Option<Tab> {
         match name {
+            "state" => Some(Tab::State),
             "queue" => Some(Tab::Queue),
             "history" => Some(Tab::History),
             "catalogue" => Some(Tab::Catalogue),
@@ -157,7 +169,7 @@ impl App {
             settings,
             settings_error,
             last_look: Instant::now(),
-            tab: opening.tab.unwrap_or(Tab::Queue),
+            tab: opening.tab.unwrap_or(Tab::State),
             about: false,
             shared,
             worktrees,
@@ -173,6 +185,11 @@ impl App {
             filter: Filter::default(),
             sort: (SortBy::Started, false),
             run: opening.run,
+            tags: Vec::new(),
+            repository: Vec::new(),
+            repository_problems: Vec::new(),
+            repository_head: String::new(),
+            state_view: state::StateView::default(),
             screenshot: opening.screenshot.map(|path| Screenshot {
                 path,
                 at: Instant::now() + Duration::from_secs_f64(opening.after.max(0.0)),
@@ -192,6 +209,7 @@ impl App {
                 _ => {}
             }
         }
+        app.read_repository();
         app.job = app.catalogue.as_ref().ok().and_then(|catalogue| catalogue.jobs.first()).map(|job| job.name.clone());
         app
     }
@@ -213,6 +231,27 @@ impl App {
         self.modified = now;
         self.git = GitState::read(&self.places.home);
         self.worktrees = list_worktrees(&self.places);
+        self.read_repository();
+    }
+
+    /// The tags and the repository's runs, read again when HEAD moved.
+    fn read_repository(&mut self) {
+        let head = self.git.as_ref().map(|git| git.commit.clone()).unwrap_or_default();
+        if head == self.repository_head && !head.is_empty() {
+            return;
+        }
+        self.repository_head = head;
+        self.tags = tags(&self.places.home);
+        if let Ok(catalogue) = &self.catalogue {
+            (self.repository, self.repository_problems) = repository_runs(&self.places.home, catalogue);
+        }
+    }
+
+    /// The runs lab recorded and those the repository's summaries record.
+    fn all_runs(&self) -> Vec<Run> {
+        let mut runs = self.history.as_ref().map(|history| history.runs.clone()).unwrap_or_default();
+        runs.extend(self.repository.iter().cloned());
+        runs
     }
 
     fn commit(&self) -> String {
@@ -247,6 +286,7 @@ impl eframe::App for App {
             self.problems(ui);
             self.messages(ui);
             match self.tab {
+                Tab::State => self.state_tab(ui),
                 Tab::Queue => self.queue_tab(ui),
                 Tab::History => self.history_tab(ui),
                 Tab::Catalogue => self.catalogue_tab(ui),
@@ -419,6 +459,7 @@ impl App {
         });
         ui.add_space(4.0);
         ui.horizontal(|ui| {
+            ui.selectable_value(&mut self.tab, Tab::State, "State");
             ui.selectable_value(&mut self.tab, Tab::Queue, "Queue");
             ui.selectable_value(&mut self.tab, Tab::History, "History");
             ui.selectable_value(&mut self.tab, Tab::Catalogue, "Catalogue");
@@ -439,6 +480,7 @@ impl App {
             Err(error) => problems.push(error.clone()),
         }
         problems.extend(self.settings_error.iter().cloned());
+        problems.extend(self.repository_problems.iter().map(|problem| format!("repository summary, {problem}")));
         if problems.is_empty() {
             return;
         }
@@ -556,19 +598,13 @@ impl App {
     }
 
     fn history_tab(&mut self, ui: &mut egui::Ui) {
-        let runs: Vec<Run> = match &self.history {
-            Ok(history) => history.runs.clone(),
-            Err(_) => Vec::new(),
-        };
+        let runs: Vec<Run> = self.all_runs();
         if runs.is_empty() {
             ui.add_space(20.0);
-            ui.label(format!("No run recorded yet in {}.", self.places.runs().display()));
-            ui.label(
-                RichText::new(
-                    "The queue writes runs from milestone M2; seeding from the papers' summaries is milestone M1b.",
-                )
-                .color(MUTED),
-            );
+            ui.label(format!(
+                "No run recorded yet in {}, and none in the repository's summaries.",
+                self.places.runs().display()
+            ));
             return;
         }
         let mut jobs: Vec<String> = runs.iter().map(|run| run.job.clone()).collect();
@@ -643,6 +679,7 @@ impl App {
                     .show(ui, |ui| run_detail(ui, run, &self.places.data));
             });
         }
+        let tags = self.tags.clone();
         let mut sort = self.sort;
         let mut clicked = None;
         egui::CentralPanel::default().show(ui, |ui| {
@@ -675,7 +712,7 @@ impl App {
                         ("Started", Some(SortBy::Started)),
                         ("Job", Some(SortBy::Job)),
                         ("Duration", Some(SortBy::Duration)),
-                        ("Commit", Some(SortBy::Commit)),
+                        ("Run on", Some(SortBy::Commit)),
                         ("Thr", None),
                         ("Calm", None),
                         ("Status", Some(SortBy::Status)),
@@ -700,10 +737,13 @@ impl App {
                             }
                         });
                         row.col(|ui| {
-                            ui.monospace(run.seconds.map_or("—".to_string(), duration_text));
+                            ui.monospace(run.seconds.map_or("no time".to_string(), duration_text));
                         });
                         row.col(|ui| {
-                            ui.monospace(run.short_commit().unwrap_or_else(|| "?".to_string()));
+                            let place = place(run, &tags);
+                            let colour = if place.starts_with('v') { GREEN } else { BLUE };
+                            ui.colored_label(colour, RichText::new(place).monospace())
+                                .on_hover_text("a run on a tag can back a paper; an off-tag run cannot");
                         });
                         row.col(|ui| {
                             ui.monospace(run.threads.map_or("?".to_string(), |threads| threads.effective.to_string()));
@@ -763,7 +803,7 @@ fn category_word(category: Category) -> &'static str {
 fn source_word(source: &Source) -> &'static str {
     match source {
         Source::App => "",
-        Source::Seeded { .. } => "seeded",
+        Source::Seeded { .. } => "repository",
         Source::Manual => "typed",
     }
 }
@@ -800,7 +840,7 @@ fn run_detail(ui: &mut egui::Ui, run: &Run, data: &Path) {
     let seconds = run.seconds.map(|seconds| format!(" · {}", duration_text(seconds))).unwrap_or_default();
     rows.push(("When", format!("{}{ended}{seconds}", run.started.format("%Y-%m-%d %H:%M:%S"))));
     if let Source::Seeded { from } = &run.source {
-        rows.push(("Seeded from", format!("{from} (date of its commit, time of day unknown)")));
+        rows.push(("Read from", format!("{from} (the date is that of the commit that brought it)")));
     }
     if !run.environment.is_empty() {
         let text: Vec<String> = run.environment.iter().map(|(name, value)| format!("{name}={value}")).collect();

@@ -20,6 +20,7 @@ mod machine;
 mod model;
 mod runner;
 mod settings;
+mod state;
 mod store;
 
 use std::path::PathBuf;

@@ -48,6 +48,10 @@ pub struct Job {
     /// Globs relative to the checkout.
     #[serde(default)]
     pub outputs: Vec<String>,
+    /// The summary that records a run of the job in the repository: a path
+    /// relative to the checkout, `#key` for a record nested in it.
+    #[serde(default)]
+    pub summary: Option<String>,
     #[serde(default)]
     pub paper: Option<Paper>,
     #[serde(default)]
@@ -273,6 +277,11 @@ impl Job {
         }
         if self.directory.starts_with('/') {
             problems.push("directory: relative to the checkout".to_string());
+        }
+        if let Some(summary) = &self.summary
+            && (summary.starts_with('/') || local_path(summary).is_some())
+        {
+            problems.push(format!("summary: {summary} is not relative to the checkout"));
         }
         for output in &self.outputs {
             if output.starts_with('/') || local_path(output).is_some() {
