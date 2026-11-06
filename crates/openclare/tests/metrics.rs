@@ -108,6 +108,52 @@ fn defects_are_caught() {
 }
 
 #[test]
+fn a_vertex_of_valence_2_inside_is_a_defect() {
+    // A grid's corners have valence 2 too, but on its border.
+    let source = primitives::plane(24);
+    let grid = primitives::plane_quads(12);
+    let metrics = measure(&source, &grid, None);
+    assert!(metrics.is_valid(), "{metrics:?}");
+    assert_eq!((metrics.valence_2_vertices, metrics.valence_over_6_vertices), (0, 0));
+
+    // One quad cut along a diagonal by a vertex in its middle: two quads
+    // sharing two edges, otherwise as sound as the grid.
+    let mut pocket = grid.clone();
+    let [a, b, c, d] = <[u32; 4]>::try_from(pocket.faces[50].clone()).unwrap();
+    let middle = pocket.positions.len() as u32;
+    pocket.positions.push((pocket.positions[a as usize] + pocket.positions[c as usize]) * 0.5);
+    pocket.faces[50] = vec![a, b, c, middle];
+    pocket.faces.push(vec![a, middle, c, d]);
+    let metrics = measure(&source, &pocket, None);
+    assert_eq!(metrics.valence_2_vertices, 1);
+    assert_eq!((metrics.quads, metrics.non_manifold_edges, metrics.misoriented_edges), (metrics.faces, 0, 0));
+    assert_eq!((metrics.inverted_faces, metrics.degenerate_faces), (0, 0));
+    assert!(!metrics.is_valid());
+}
+
+#[test]
+fn a_vertex_of_valence_over_6_is_a_defect() {
+    // A disc of `n` quads round one vertex.
+    let disc = |n: u32| {
+        let mut mesh = openclare::PolyMesh::default();
+        mesh.positions.push(Vec3::ZERO);
+        for i in 0..2 * n {
+            let angle = std::f64::consts::PI * i as f64 / n as f64;
+            mesh.positions.push(Vec3::new(angle.cos(), angle.sin(), 0.0));
+        }
+        let rim = |i: u32| 1 + i % (2 * n);
+        mesh.faces = (0..n).map(|k| vec![0, rim(2 * k), rim(2 * k + 1), rim(2 * k + 2)]).collect();
+        mesh
+    };
+    for (n, over) in [(5, 0), (6, 0), (7, 1), (8, 1)] {
+        let mesh = disc(n);
+        let metrics = measure(&mesh.triangulated(), &mesh, None);
+        assert_eq!((metrics.irregular_vertices, metrics.valence_over_6_vertices), (1, over), "{n} quads");
+        assert_eq!(metrics.is_valid(), over == 0, "{n} quads: {metrics:?}");
+    }
+}
+
+#[test]
 fn distance_to_the_source_is_measured_both_ways() {
     let source = primitives::icosphere(4);
     let mut inflated = primitives::cube_quads(8);

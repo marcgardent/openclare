@@ -734,6 +734,10 @@ fn measure_command(args: &[String]) -> Result<(), String> {
         m.boundary_edges, m.source_boundary_edges, m.components, m.source_components,
     );
     println!(
+        "             {} inner vertices of valence 2, {} of valence over 6",
+        m.valence_2_vertices, m.valence_over_6_vertices,
+    );
+    println!(
         "irregular    {} vertices, topological minimum {}, excess {}",
         m.irregular_vertices,
         optional(m.topological_minimum.map(|n| n.to_string())),

@@ -41,6 +41,13 @@ pub struct Metrics {
     // Singularities.
     /// Interior vertices of valence other than 4.
     pub irregular_vertices: usize,
+    /// Of those, the ones of valence 2 (or 1, on a face that folds onto
+    /// itself): two quads sharing two edges, a fold no quad mesh should
+    /// have.
+    pub valence_2_vertices: usize,
+    /// Of those, the ones of valence over 6: more than any singularity of
+    /// a cross field calls for once those of a half turn are split.
+    pub valence_over_6_vertices: usize,
     /// Fewest irregular vertices the topology allows (`4 |χ|` per closed
     /// component); `None` when the mesh is open or not pure quad.
     pub topological_minimum: Option<usize>,
@@ -103,7 +110,8 @@ pub struct Metrics {
 
 impl Metrics {
     /// All quads, manifold, consistently wound, no inverted or collapsed
-    /// face, and no hole the source does not have.
+    /// face, no vertex inside of valence 2 or over 6, and no hole the
+    /// source does not have.
     pub fn is_valid(&self) -> bool {
         self.faces > 0
             && self.quads == self.faces
@@ -111,6 +119,8 @@ impl Metrics {
             && self.misoriented_edges == 0
             && self.inverted_faces == 0
             && self.degenerate_faces == 0
+            && self.valence_2_vertices == 0
+            && self.valence_over_6_vertices == 0
             && (self.source_boundary_edges > 0 || self.boundary_edges == 0)
     }
 
@@ -123,7 +133,7 @@ impl Metrics {
         fn optional<T: ToString>(value: Option<T>) -> String {
             value.map_or("null".into(), |v| v.to_string())
         }
-        let fields: [(&str, String); 30] = [
+        let fields: [(&str, String); 32] = [
             ("valid", self.is_valid().to_string()),
             ("vertices", self.vertices.to_string()),
             ("faces", self.faces.to_string()),
@@ -137,6 +147,8 @@ impl Metrics {
             ("components", self.components.to_string()),
             ("source_components", self.source_components.to_string()),
             ("irregular_vertices", self.irregular_vertices.to_string()),
+            ("valence_2_vertices", self.valence_2_vertices.to_string()),
+            ("valence_over_6_vertices", self.valence_over_6_vertices.to_string()),
             ("topological_minimum", optional(self.topological_minimum)),
             ("irregular_excess", optional(self.irregular_excess())),
             ("base_complex_patches", optional(self.base_complex_patches)),
@@ -373,6 +385,11 @@ impl EdgeLoops {
 /// the loop to be a spiral: as many helices wound together. Rings are met
 /// again only round a whole torus, or over a cap the other way round.
 pub const SPIRAL_ORDER: usize = 4;
+
+/// Largest valence a vertex inside a valid mesh may have: a singularity of
+/// index -2, which the engine splits where it can (`quantization::lattice`
+/// holds its own meshes to the same bound).
+pub const MOST_VALENCE: u32 = 6;
 
 /// Fewest thin vertices for their mean distance to mean something.
 const THIN_SAMPLES: usize = 20;
@@ -924,6 +941,9 @@ impl Connectivity {
 
     fn singularities(&self, mesh: &PolyMesh, metrics: &mut Metrics) {
         metrics.irregular_vertices = (0..mesh.positions.len()).filter(|&v| self.is_pole(v)).count();
+        let poles = || (0..mesh.positions.len()).filter(|&v| self.is_pole(v)).map(|v| self.valence[v]);
+        metrics.valence_2_vertices = poles().filter(|&valence| valence < 3).count();
+        metrics.valence_over_6_vertices = poles().filter(|&valence| valence > MOST_VALENCE).count();
 
         // In a closed pure quad mesh the valence defects add up to 4 χ per
         // component, so at least 4 |χ| vertices have to be irregular.

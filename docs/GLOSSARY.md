@@ -411,7 +411,8 @@ has less than 10 quad edges of them, as a smooth sculpt, there is no value.
 
 **Budget error**. How far the number of quads made is from the number asked for.
 
-**Validity**. Closed where the source is closed, manifold, with no inverted or degenerate face.
+**Validity**. Closed where the source is closed, manifold, with no inverted or degenerate face,
+and no vertex inside of valence 2 (two quads sharing two edges) or over 6.
 
 **QuadSphere**. The academic answer for a sphere: the layout of a cube, with eight poles of
 valence 3, six patches and every loop closed.
