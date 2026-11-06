@@ -873,7 +873,7 @@ mod tests {
     }
 
     fn home(places: &Places) -> Worktree {
-        Worktree { path: places.home.clone(), relative: ".".to_string(), branch: None }
+        Worktree { path: places.home.clone(), relative: ".".to_string(), branch: None, head: String::new() }
     }
 
     /// Runs the queue until the runner has nothing left to do; `act` may

@@ -270,10 +270,9 @@ impl App {
 
 /// The checkouts a job can run in; the home checkout alone if git cannot say.
 fn list_worktrees(places: &Places) -> Vec<Worktree> {
-    worktrees(&places.home)
-        .ok()
-        .filter(|found| !found.is_empty())
-        .unwrap_or_else(|| vec![Worktree { path: places.home.clone(), relative: ".".to_string(), branch: None }])
+    worktrees(&places.home).ok().filter(|found| !found.is_empty()).unwrap_or_else(|| {
+        vec![Worktree { path: places.home.clone(), relative: ".".to_string(), branch: None, head: String::new() }]
+    })
 }
 
 impl eframe::App for App {

@@ -85,6 +85,8 @@ pub struct Worktree {
     /// Relative to the home checkout, as a record names it.
     pub relative: String,
     pub branch: Option<String>,
+    /// The commit checked out, when git says.
+    pub head: String,
 }
 
 /// The checkouts `git worktree list` knows, the home checkout first.
@@ -94,15 +96,18 @@ pub fn worktrees(home: &Path) -> Result<Vec<Worktree>, String> {
     for block in text.split("\n\n") {
         let mut path = None;
         let mut branch = None;
+        let mut head = String::new();
         for line in block.lines() {
             if let Some(rest) = line.strip_prefix("worktree ") {
                 path = Some(PathBuf::from(rest));
+            } else if let Some(rest) = line.strip_prefix("HEAD ") {
+                head = rest.to_string();
             } else if let Some(rest) = line.strip_prefix("branch ") {
                 branch = Some(rest.trim_start_matches("refs/heads/").to_string());
             }
         }
         if let Some(path) = path.filter(|path| path.is_dir()) {
-            found.push(Worktree { relative: crate::files::relative(home, &path), path, branch });
+            found.push(Worktree { relative: crate::files::relative(home, &path), path, branch, head });
         }
     }
     found.sort_by_key(|worktree| worktree.relative != ".");
@@ -138,5 +143,6 @@ mod tests {
         let worktrees = worktrees(&places.home).unwrap();
         assert_eq!(worktrees[0].relative, ".");
         assert_eq!(worktrees[0].branch, git.branch);
+        assert_eq!(worktrees[0].head, git.commit);
     }
 }

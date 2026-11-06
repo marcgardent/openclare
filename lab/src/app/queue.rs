@@ -5,13 +5,15 @@ use std::time::{Duration, Instant};
 
 use eframe::egui::{self, RichText};
 
-use super::{AMBER, App, GREEN, MUTED, RED, command_lines};
+use super::{AMBER, App, BLUE, GREEN, MUTED, RED, command_lines};
+use crate::catalogue::render;
 use crate::catalogue::{Category, CheckoutChoice, Job, ThreadUse};
 use crate::files;
 use crate::home::Worktree;
 use crate::model::{Paper, PaperRef, Status, duration_text};
-use crate::runner::{ItemState, Mode, OrphanDecision, Phase, QueueSettings};
+use crate::runner::{ItemState, Mode, OrphanDecision, Phase, QueueSettings, Shared};
 use crate::settings::Policy;
+use crate::state::{Estimate, estimate};
 
 /// How often the log under view is read again.
 const LOG_EVERY: Duration = Duration::from_millis(500);
@@ -223,17 +225,26 @@ impl App {
             });
         }
         let threads = if shared.mode == Mode::Idle { self.settings.threads } else { shared.queue.threads };
-        let mut moves: Vec<(usize, isize)> = Vec::new();
+        let timings = self.timings(&shared, threads);
+        let mut drops: Vec<(u64, usize)> = Vec::new();
         let mut removed: Vec<u64> = Vec::new();
+        if let Some(Some(last)) = timings.iter().rev().find(|timing| timing.is_some()) {
+            ui.label(RichText::new(last.total_text(true)).strong());
+        }
         let worktrees = self.worktrees.clone();
         let height = ui.available_height() - 210.0;
         egui::ScrollArea::vertical().max_height(height.max(120.0)).auto_shrink([false, true]).show(ui, |ui| {
             for index in 0..shared.items.len() {
                 let item = &mut shared.items[index];
-                egui::Frame::group(ui.style()).show(ui, |ui| {
+                let frame = egui::Frame::group(ui.style()).show(ui, |ui| {
                     ui.set_width(ui.available_width());
                     let editable = item.state == ItemState::Waiting;
                     ui.horizontal(|ui| {
+                        if editable {
+                            handle(ui, item.key);
+                        } else {
+                            ui.add_space(14.0);
+                        }
                         ui.label(RichText::new(format!("{} · {}", index + 1, item.job.name)).strong());
                         if item.job.timing_matters {
                             ui.label(RichText::new("timed").color(MUTED));
@@ -261,27 +272,47 @@ impl App {
                         let plural = if effective == 1 { "thread" } else { "threads" };
                         let colour = if effective > self.settings.comfort_threads { AMBER } else { MUTED };
                         ui.colored_label(colour, format!("{effective} {plural}{fixed}"));
+                        let (place, colour) = match self
+                            .tags
+                            .iter()
+                            .find(|tag| !item.checkout.head.is_empty() && tag.commit == item.checkout.head)
+                        {
+                            Some(tag) => (format!("on {}", tag.name), GREEN),
+                            None => ("off-tag: cannot back a paper".to_string(), BLUE),
+                        };
+                        ui.colored_label(colour, place);
                         if editable {
                             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                                 if ui.small_button("remove").clicked() {
                                     removed.push(item.key);
                                 }
-                                if ui.small_button("down").clicked() {
-                                    moves.push((index, 1));
-                                }
-                                if ui.small_button("up").clicked() {
-                                    moves.push((index, -1));
-                                }
                             });
                         }
                     });
+                    if let Some(Some(timing)) = timings.get(index) {
+                        ui.horizontal(|ui| {
+                            ui.add_space(14.0);
+                            match &timing.estimate {
+                                Some(estimate) => {
+                                    ui.label(
+                                        RichText::new(format!("≈ {}", duration_text(estimate.seconds))).monospace(),
+                                    );
+                                    ui.label(RichText::new(estimate.basis()).color(MUTED));
+                                }
+                                None => {
+                                    ui.label(RichText::new("no estimate").color(MUTED));
+                                }
+                            }
+                            ui.label(RichText::new(format!("· {}", timing.total_text(false))).monospace());
+                        });
+                    }
                     if editable && !item.parameters.is_empty() {
                         ui.horizontal_wrapped(|ui| {
                             for (name, value) in item.parameters.iter_mut() {
                                 ui.label(RichText::new(name.as_str()).color(MUTED));
                                 ui.add(
                                     egui::TextEdit::singleline(value)
-                                        .desired_width(260.0)
+                                        .desired_width(480.0)
                                         .font(egui::TextStyle::Monospace),
                                 );
                             }
@@ -291,17 +322,29 @@ impl App {
                     let values = item.job.values(threads, commit, None, &item.parameters);
                     command_lines(ui, &item.job, &values);
                 });
+                let response = frame.response;
+                if item.state == ItemState::Waiting {
+                    if response.dnd_hover_payload::<u64>().is_some() {
+                        let rect = response.rect;
+                        ui.painter().hline(rect.x_range(), rect.top() - 2.0, egui::Stroke::new(2.0, BLUE));
+                    }
+                    if let Some(dragged) = response.dnd_release_payload::<u64>() {
+                        drops.push((*dragged, index));
+                    }
+                }
             }
         });
         shared.items.retain(|item| !removed.contains(&item.key));
-        for (index, delta) in moves {
-            let target = index as isize + delta;
-            let movable = |position: usize, items: &[crate::runner::Item]| {
-                items.get(position).is_some_and(|item| item.state == ItemState::Waiting)
+        // A job dropped on a waiting one takes its place; only waiting jobs move.
+        for (dragged, target) in drops {
+            let Some(from) =
+                shared.items.iter().position(|item| item.key == dragged && item.state == ItemState::Waiting)
+            else {
+                continue;
             };
-            if target >= 0 && movable(target as usize, &shared.items) && movable(index, &shared.items) {
-                shared.items.swap(index, target as usize);
-            }
+            let moved = shared.items.remove(from);
+            let target = target.min(shared.items.len());
+            shared.items.insert(target, moved);
         }
 
         ui.separator();
@@ -352,20 +395,19 @@ impl App {
                 );
             }
         });
-        ui.label(
-            RichText::new("Estimates and ETAs come in milestone M4; the wait for a calm machine, in M3.")
-                .small()
-                .color(MUTED),
-        );
     }
 
     fn run_panel(&mut self, ui: &mut egui::Ui) {
-        let (current, position, count) = {
+        let (current, position, count, estimate) = {
             let shared = self.lock();
             let current = shared.current.clone();
             let position =
                 current.as_ref().and_then(|current| shared.items.iter().position(|item| item.key == current.key));
-            (current, position, shared.items.len())
+            let threads = shared.queue.threads;
+            let estimate = position
+                .and_then(|index| self.timings(&shared, threads).swap_remove(index))
+                .and_then(|timing| timing.estimate);
+            (current, position, shared.items.len(), estimate)
         };
         match &current {
             Some(current) => {
@@ -381,10 +423,35 @@ impl App {
                     (false, Phase::Prepare) => "its prepare".to_string(),
                     (false, Phase::Command) => "its command".to_string(),
                 };
+                let elapsed = current.started.elapsed().as_secs_f64();
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new(duration_text(current.started.elapsed().as_secs_f64())).strong().size(16.0));
-                    ui.label(RichText::new(format!("elapsed · {phase} · no estimate before M4")).color(MUTED));
+                    ui.label(RichText::new(duration_text(elapsed)).strong().size(16.0));
+                    match &estimate {
+                        Some(estimate) => {
+                            ui.label(
+                                RichText::new(format!(
+                                    "/ ≈ {} · {} · {phase}",
+                                    duration_text(estimate.seconds),
+                                    estimate.basis()
+                                ))
+                                .color(MUTED),
+                            );
+                        }
+                        None => {
+                            ui.label(RichText::new(format!("elapsed · no estimate · {phase}")).color(MUTED));
+                        }
+                    }
                 });
+                if let Some(estimate) = &estimate {
+                    let fraction = (elapsed / estimate.seconds.max(1.0)).min(1.0) as f32;
+                    ui.add(egui::ProgressBar::new(fraction).fill(AMBER));
+                    if elapsed > estimate.seconds {
+                        ui.colored_label(
+                            AMBER,
+                            format!("over the estimate by {}", duration_text(elapsed - estimate.seconds)),
+                        );
+                    }
+                }
                 ui.horizontal(|ui| {
                     let stop = ui.add_enabled(!current.stopping, egui::Button::new(RichText::new("Stop").color(RED)));
                     if stop.clicked() {
@@ -472,6 +539,84 @@ impl App {
 /// "home" for the home checkout, else its path relative to it.
 fn checkout_name(checkout: &Worktree) -> &str {
     if checkout.relative == "." { "home" } else { &checkout.relative }
+}
+
+/// What an item of the queue is expected to take, and the queue up to it.
+pub(super) struct Timing {
+    estimate: Option<Estimate>,
+    /// The estimated seconds from now to the end of this item.
+    total: f64,
+    /// Items up to this one without an estimate.
+    unknown: usize,
+}
+
+impl Timing {
+    /// "total 12 min 02 · ends 15:44", or with jobs without an estimate,
+    /// "at least …, plus 2 jobs without an estimate · ends after …".
+    fn total_text(&self, queue: bool) -> String {
+        let ends = (chrono::Local::now() + chrono::Duration::seconds(self.total.round() as i64)).format("%H:%M");
+        let what = if queue { "queue" } else { "total" };
+        match self.unknown {
+            0 => format!("{what} {} · ends {ends}", duration_text(self.total)),
+            unknown => {
+                let jobs = if unknown == 1 { "job" } else { "jobs" };
+                format!(
+                    "{what} at least {}, plus {unknown} {jobs} without an estimate · ends after {ends}",
+                    duration_text(self.total)
+                )
+            }
+        }
+    }
+}
+
+/// The drag handle of a waiting item: six dots, its key as the payload.
+fn handle(ui: &mut egui::Ui, key: u64) {
+    let (rect, response) = ui.allocate_exact_size(egui::vec2(12.0, 18.0), egui::Sense::drag());
+    let colour = if response.hovered() { ui.visuals().strong_text_color() } else { MUTED };
+    for row in 0..3 {
+        for column in 0..2 {
+            let centre = rect.min + egui::vec2(3.0 + 6.0 * column as f32, 4.0 + 5.0 * row as f32);
+            ui.painter().circle_filled(centre, 1.5, colour);
+        }
+    }
+    response.on_hover_text("drag to reorder").dnd_set_drag_payload(key);
+}
+
+impl App {
+    /// For each item still to run, its estimate and the running total from
+    /// now (SPEC.md, section 10); None for an item done.
+    fn timings(&self, shared: &Shared, threads: u32) -> Vec<Option<Timing>> {
+        let runs = self.all_runs();
+        let home = self.git.as_ref().map(|git| (git.commit.clone(), git.short.clone())).unwrap_or_default();
+        let elapsed = shared.current.as_ref().map(|current| (current.key, current.started.elapsed().as_secs_f64()));
+        let mut total = 0.0;
+        let mut unknown = 0;
+        shared
+            .items
+            .iter()
+            .map(|item| {
+                if !matches!(item.state, ItemState::Waiting | ItemState::Running) {
+                    return None;
+                }
+                let (commit, short) = if item.checkout.relative == "." {
+                    home.clone()
+                } else {
+                    (item.checkout.head.clone(), item.checkout.head.chars().take(7).collect())
+                };
+                let values = item.job.values(threads, &short, None, &item.parameters);
+                let command = render(&item.job.command, &values).unwrap_or_default();
+                let estimate = estimate(&item.job.name, &command, &commit, &runs);
+                match &estimate {
+                    Some(estimate) => {
+                        let spent = elapsed.filter(|(key, _)| *key == item.key).map_or(0.0, |(_, seconds)| seconds);
+                        total += (estimate.seconds - spent).max(0.0);
+                    }
+                    None => unknown += 1,
+                }
+                Some(Timing { estimate, total, unknown })
+            })
+            .collect()
+    }
 }
 
 fn state_text(state: &ItemState) -> (String, egui::Color32) {
