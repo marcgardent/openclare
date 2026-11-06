@@ -733,7 +733,10 @@ five seeds; AutoRemesher~\cite{autoremesher}; and, since 31 October 2026
 (\#248), the layout and tessellation of QuadWild~\cite{pietroni2021reliable}
 with the Bi-MDF quantizer of Heistermann, Warnett and
 Bommes~\cite{heistermann2023bimdf} (QuadWild-BiMDF) and Instant
-Meshes~\cite{jakob2015instant}; one run per model for the others. QuadWild-BiMDF
+Meshes~\cite{jakob2015instant}; one run per model for the others. The bench
+gives QuadriFlow the sources as they are; only the male body of
+Figure~\ref{fig:overview}, which Blender refuses as it is, was scaled by $100$
+and scaled back. QuadWild-BiMDF
 quantizes its layout with the same kind of minimum-deviation quantizer as
 openclare, without closing constraints, which makes it the natural witness;
 Instant Meshes smooths local orientation and position fields, with no global
