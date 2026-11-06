@@ -35,7 +35,7 @@ jobs, reading the results of a run (the scripts' summaries stay what they are).
 | `<data>/runs.jsonl` | no | the app | the live database, one run per line |
 | `<data>/logs/<run id>.log` | no | the job (its stdout and stderr) | the log of each run |
 | `<data>/state.json` | no | the app | the queue in progress and the run under way, for recovery |
-| `<config>/settings.toml` | no | the app | thresholds, hours of the night, policies, machine label (§12) |
+| `<config>/settings.toml` | no | the app | thresholds, thread warning, policies, machine label (§12) |
 
 `<data>` is `$XDG_DATA_HOME/openclare-lab` (default `~/.local/share/openclare-lab`),
 `<config>` is `$XDG_CONFIG_HOME/openclare-lab` (default `~/.config/openclare-lab`). The app
@@ -103,7 +103,7 @@ struct Run {
 }
 
 enum Status { Ok, Failed { code: Option<i32>, signal: Option<i32> }, Stopped, Interrupted }
-// Stopped: by Marc. Interrupted: the app ended during the run (§8.6).
+// Stopped: by Marc. Interrupted: the app ended during the run (§8.5).
 
 struct Prepare { command: String, seconds: f64, status: Status, skipped_because: Option<String> }
 
@@ -137,8 +137,7 @@ struct Calm {
     before: bool,          // the machine was calm during the window before the start (§9)
     during: bool,          // foreign load stayed under the thresholds during the run
     forced: bool,          // Marc started it anyway (§7.2)
-    night: bool,           // started within the hours of the night
-    timing_valid: bool,    // before && during && !forced (&& night if the job's timing matters)
+    timing_valid: bool,    // before && during && !forced
     reason: String,        // why not, in words: "foreign CPU 34 % at 23:12 (lake)"
 }
 
@@ -168,7 +167,7 @@ struct Job {
     tags: Vec<String>,
 }
 
-/// A named, ordered list of jobs, a [[sequence]] table: a night as NIGHT.md writes it.
+/// A named, ordered list of jobs, a [[sequence]] table: a NIGHT.md as it lists its stages.
 struct Sequence { name: String, description: String, jobs: Vec<String> }
 ```
 
@@ -191,7 +190,7 @@ memory_limit_gb = 16
 timing_matters = true
 outputs = ["docs/research/turns-of-a-t-mesh/experiments/results/forced.json"]
 paper = "B"
-tags = ["night-B", "stage-4"]
+tags = ["paper-B-data", "stage-4"]
 ```
 
 Placeholders: `{threads}` (the effective thread count), `{repo}` (the root of the checkout the
@@ -208,7 +207,7 @@ documents say, not measured by the app; "?" where nothing is written.
 | `test-release` | test suite | `cargo test --release` (40 GB cap) | | setting | no | ~15 min (Marc) |
 | `addon-test` | test suite | `make addon-test` | | setting | no | ? |
 | `quick-bench` | quick bench | `python3 bench/quick.py --models {models} --target {target} --jobs {threads}`, `OPENCLARE_THREADS=1` | `cargo build --release && make addon` | setting (Q8) | no | a couple of minutes (quick.py) |
-| `bench` | bench | `python3 bench/run.py --target {target} --tools {tools}` | `cargo build --release && make addon` | ? (Q8) | yes | an hour (quick.py docstring); about 3 h a night (Marc) |
+| `bench` | bench | `python3 bench/run.py --target {target} --tools {tools}` | `cargo build --release && make addon` | ? (Q8) | yes | an hour (quick.py docstring); about 3 h in all (Marc) |
 | `remeasure` | bench | `make remeasure` | | setting | no | ? |
 | `scores` | bench | `make scores` | | 1 | no | seconds |
 | `lean-build` | Lean build | `make proofs NOTE=turns-of-a-t-mesh` | | ? (Q9) | no | ? |
@@ -227,7 +226,7 @@ documents say, not measured by the app; "?" where nothing is written.
 The comparison against other remeshers is the `bench` job with every tool (`--tools` default);
 `against-remeshers` only reads `bench/results/results.json`.
 
-Seeded sequences: `night-B` (NIGHT.md stages 1 to 4 in order), `night-A-exact`
+Seeded sequences: `paper-B-data` (NIGHT.md stages 1 to 4 in order), `paper-A-exact`
 (exact/NIGHT.md 1 to 4), `before-merge` (`build-release`, `test-release`, `quick-bench`).
 
 ## 7. Rules the app enforces
@@ -240,23 +239,23 @@ Seeded sequences: `night-B` (NIGHT.md stages 1 to 4 in order), `night-A-exact`
 - The app sets, for every job, `OPENCLARE_THREADS`, `RAYON_NUM_THREADS`, `RUST_TEST_THREADS`
   and `CARGO_BUILD_JOBS` to the effective count, and fills `{threads}` (for `-P`, `--jobs`,
   `JOBS=`). A job's own `environment` overrides them (as `HIGHS_THREADS = "1"`).
-- **Day rule.** By day (outside the hours of the night, §12) an effective count above 6 is
-  shown in red on the queue item; pressing Run asks for confirmation, and the record keeps it.
-  The app cannot see the threads of other sessions on the machine: the monitor's foreign load
-  (§9) shows them.
+- **Comfort limit.** Above 6 threads (tunable, §12) the queue item shows an amber warning: the
+  machine is slow to use meanwhile. It never blocks: Marc decides when he launches. The app
+  cannot see the threads of other sessions on the machine: the monitor's foreign load (§9)
+  shows them.
 - The queue runs one job at a time, so a bench comparison and the test suite never overlap
   when both are launched from the app.
 
 ### 7.2 Timing that matters
 
-A job with `timing_matters = true` is the kind whose duration goes into a paper. Proposal (Q2):
+A job with `timing_matters = true` is the kind whose duration goes into a paper. What makes its
+time honest is an idle machine, not the hour: Marc launches when he knows he is not using it, by
+day as well as by night. Proposal (Q2):
 
-- **By day the app refuses to start it now** and offers "Start tonight at 22:00" for the queue, or
-  "Run the others now", which leaves those items waiting in the queue for the night.
-- At the head of the queue, at night, it **waits for the machine to be calm** (§9): the item shows
-  "waiting for calm since 22:04 (foreign CPU 18 %)". It starts once the machine has been calm for
-  the whole window.
-- "Start anyway" exists in both cases. The run then has `forced = true`, so `timing_valid = false`:
+- At the head of the queue it **waits for the machine to be calm** (§9): the item shows "waiting for
+  calm since 15:04 (foreign CPU 18 %)". It starts once the machine has been calm for the whole
+  window. The other jobs of the queue do not wait for it unless they come after it.
+- "Start anyway" starts it at once. The run then has `forced = true`, so `timing_valid = false`:
   the run counts, its time does not.
 - Every run, whatever the job, gets its `Calm` verdict; a timing is reported only from a run with
   `timing_valid = true`.
@@ -313,12 +312,7 @@ rest.
 A failed job (non-zero exit or signal not sent by the app): same setting as Stop, separately
 (Q3): pause and ask, continue, or cancel the rest.
 
-### 8.5 Starting later
-
-"Start tonight" sets a start time on the queue (the beginning of the night). The queue shows a
-countdown; the machine must stay awake (Q6).
-
-### 8.6 Closing the window, crash
+### 8.5 Closing the window, crash
 
 - Closing the window during a run asks: "Stop the run and quit" or "Keep the window open"
   (default). There is no detached mode: the record needs the app alive (Q4).
@@ -354,7 +348,7 @@ in the last 5 minutes (tunable); in that case the foreign CPU alone decides. CPU
 the whole machine (8 threads: 12.5 % is one thread busy).
 
 Thresholds, window and sample period are in `settings.toml` and editable in the Machine screen; the
-values above are a first proposal to tune on real nights (Q5).
+values above are a first proposal to tune on real runs (Q5).
 
 ## 10. Progress estimation
 
@@ -385,8 +379,7 @@ switch (Q11). Layout, from the mockup:
 ### Top bar
 
 Home checkout (branch, short commit, dirty mark), the calm indicator, CPU and load1 at a glance,
-the clock with "day: 6 threads at most" or "night", the thread setting (a spinner from 1 to 8, red
-above 6 by day).
+the thread setting (a spinner from 1 to 8, amber above the comfort limit).
 
 ### Queue (the screen the app opens on)
 
@@ -395,7 +388,7 @@ above 6 by day).
 - **Middle, the queue**: the items in order (drag to reorder, remove), each with its parameters
   (editable), checkout (home or a worktree), effective threads, estimate; below: the comment and the
   paper version (A or B, a label with suggestions from past labels) applied to every run of the queue,
-  the start (now, tonight at 22:00), the policies on stop and on failure, the queue's ETA, Run.
+  the policies on stop and on failure, the queue's ETA, Run.
 - **Right, the run under way**: job, item n of m, elapsed / estimate with the bar, ETA of the job and
   of the queue, Stop, the log tail.
 
@@ -430,7 +423,7 @@ editable.
 
 ## 12. Settings
 
-`<config>/settings.toml`: night (default 22:00 to 07:00, Q1), the day thread limit (6), calm thresholds
+`<config>/settings.toml`: the comfort limit of threads (6, Q1), calm thresholds
 and window, sample period, delay between SIGTERM and SIGKILL, the policies on stop and on failure, the
 machine label used in exports (default proposed "i7-7700K 4c/8t 2017, 62 GB", checked against what is
 detected: the app warns if the CPU model or the memory differ).
@@ -497,20 +490,21 @@ Each is one or a few commits on the branch, then a stop for Marc's review.
 - **Threads of a job**: the app sets the variables; whether each script honours them is not checked (Q8, Q9).
 - **Timing of the app itself**: the sampler's own CPU (estimated under 1 % of a thread) counts as foreign;
   it is measured in M3.
-- **Calm thresholds**: a first proposal, to tune on real nights.
+- **Calm thresholds**: a first proposal, to tune on real runs.
 - **Wayland or X11**: not checked which session Marc runs; eframe supports both.
 
 ## 17. Open questions for Marc
 
-1. **Night**: 22:00 to 07:00?
-2. **Timing that matters by day**: refuse and offer "tonight" (proposed), or only warn?
+1. **Comfort limit**: an amber warning above 6 threads, never blocking: enough?
+2. **Timing that matters, machine not calm**: wait for calm at the head of the queue (proposed), or
+   only warn and start?
 3. **Rest of the queue after Stop, after a failure**: pause and ask (proposed for both), cancel, continue?
 4. **Closing the window during a run**: ask (proposed) and no detached mode, or a headless runner `lab run`
    that survives the window (a later milestone)?
 5. **Calm thresholds**: foreign CPU mean < 5 % and peak < 25 % over 60 s, load1 < 1.0: right orders of
    magnitude?
-6. **Sleep at night**: does the machine suspend itself? If so the app must hold it awake
-   (`systemd-inhibit`) during a queue.
+6. **Sleep**: does the machine suspend itself when nobody touches it? If so the app must hold it
+   awake (`systemd-inhibit`) during a queue of several hours.
 7. **Estimates from loaded runs**: shown but kept out of the ETA (proposed), or used with a mark?
 8. **Threads of the bench**: how many threads does `bench/run.py` use (Blender, the engine, the other
    remeshers)? Is `OPENCLARE_THREADS` honoured inside Blender through the add-on?

@@ -36,7 +36,7 @@ récurrentes, lire les résultats d'une exécution (les résumés des scripts re
 | `<data>/runs.jsonl` | non | l'application | la base vivante, une exécution par ligne |
 | `<data>/logs/<id>.log` | non | la tâche (sa sortie standard et d'erreur) | le journal de chaque exécution |
 | `<data>/state.json` | non | l'application | la file en cours et l'exécution en cours, pour la reprise |
-| `<config>/settings.toml` | non | l'application | seuils, heures de nuit, politiques, libellé de la machine (§12) |
+| `<config>/settings.toml` | non | l'application | seuils, alerte de threads, politiques, libellé de la machine (§12) |
 
 `<data>` est `$XDG_DATA_HOME/openclare-lab` (par défaut `~/.local/share/openclare-lab`), `<config>`
 est `$XDG_CONFIG_HOME/openclare-lab` (par défaut `~/.config/openclare-lab`). L'application montre les
@@ -85,7 +85,7 @@ Les types Rust sont ceux de `SPEC.md` §5, identiques ; seuls les commentaires s
   commentaire (modifiable après coup), papiers (modifiables après coup), journal, fichiers produits,
   date de dernière modification du commentaire ou des papiers.
 - `Status` : `Ok`, `Failed { code, signal }`, `Stopped` (arrêté par Marc), `Interrupted`
-  (l'application s'est terminée pendant l'exécution, §8.6).
+  (l'application s'est terminée pendant l'exécution, §8.5).
 - `Prepare` : commande, durée, statut, et la raison d'un saut (`skipped_because`).
 - `Git` : commit (40 caractères hexadécimaux), `dirty` (des fichiers suivis diffèrent de HEAD,
   `lab/runs.jsonl` exclu), branche.
@@ -98,9 +98,8 @@ Les types Rust sont ceux de `SPEC.md` §5, identiques ; seuls les commentaires s
 - `Load` : l'échantillon au début, à la fin, et le résumé pendant (`During` : nombre d'échantillons,
   moyenne et pic du CPU étranger, load1 maximal, pics de mémoire et de VRAM).
 - `Calm` : `before` (machine calme sur la fenêtre avant le début, §9), `during` (charge étrangère
-  sous les seuils pendant l'exécution), `forced` (Marc l'a lancée quand même, §7.2), `night` (lancée
-  dans les heures de nuit), `timing_valid` (`before && during && !forced`, et `night` si le temps de
-  la tâche compte), `reason` en mots (« CPU étranger 34 % à 23:12 (lake) »).
+  sous les seuils pendant l'exécution), `forced` (Marc l'a lancée quand même, §7.2),
+  `timing_valid` (`before && during && !forced`), `reason` en mots (« CPU étranger 34 % à 23:12 (lake) »).
 - `Paper` : `A` (closing-loops) ou `B` (turns-of-a-t-mesh) ; `PaperRef` : un papier et un libellé
   (« v0.7.0 », « 2026-11-06 », « tab:forced »).
 - `FileRef` : chemin, taille, SHA-256 jusqu'à 1 Go.
@@ -110,8 +109,8 @@ Les types Rust sont ceux de `SPEC.md` §5, identiques ; seuls les commentaires s
   paramètres avec leurs valeurs par défaut (modifiables par élément de file), environnement propre,
   usage des threads (`Setting` ou `Fixed(n)`), plafond mémoire, « le temps compte », motifs des
   fichiers produits, papier par défaut, étiquettes.
-- `Sequence` : une liste ordonnée et nommée de tâches, une table `[[sequence]]` : une nuit telle que
-  NIGHT.md l'écrit.
+- `Sequence` : une liste ordonnée et nommée de tâches, une table `[[sequence]]` : les étapes d'un
+  NIGHT.md dans l'ordre où il les donne.
 
 ## 6. Le catalogue
 
@@ -138,7 +137,7 @@ donne une par une, avec la durée **écrite** dans les documents (pas mesurée p
 - papier A : `twelve-models`, `ablation`, `male-body`, `figures`, `structure`, `against-remeshers`
   (lit seulement `bench/results/results.json`), `compare`, et les étapes de `exact/NIGHT.md`.
 
-Séquences amorcées : `night-B` (NIGHT.md, étapes 1 à 4 dans l'ordre), `night-A-exact`
+Séquences amorcées : `paper-B-data` (NIGHT.md, étapes 1 à 4 dans l'ordre), `paper-A-exact`
 (exact/NIGHT.md, 1 à 4), `before-merge` (`build-release`, `test-release`, `quick-bench`).
 
 ## 7. Règles que l'application fait respecter
@@ -152,24 +151,23 @@ Séquences amorcées : `night-B` (NIGHT.md, étapes 1 à 4 dans l'ordre), `night
 - Pour chaque tâche, l'application pose `OPENCLARE_THREADS`, `RAYON_NUM_THREADS`,
   `RUST_TEST_THREADS` et `CARGO_BUILD_JOBS` au nombre effectif, et remplit `{threads}` (pour `-P`,
   `--jobs`, `JOBS=`). L'environnement propre d'une tâche les remplace (comme `HIGHS_THREADS = "1"`).
-- **Règle de jour.** De jour (hors des heures de nuit, §12), un nombre effectif au-delà de 6 s'affiche
-  en rouge sur l'élément de file ; Lancer demande confirmation, et la fiche la garde. L'application ne
-  voit pas les threads des autres sessions de la machine : la charge étrangère du moniteur (§9) les
-  montre.
+- **Limite de confort.** Au-delà de 6 threads (réglable, §12), l'élément de file affiche une alerte
+  ambre : la machine rame pendant ce temps. Elle ne bloque jamais : Marc décide quand il lance.
+  L'application ne voit pas les threads des autres sessions de la machine : la charge étrangère du
+  moniteur (§9) les montre.
 - La file lance une tâche à la fois : un banc de comparaison et la suite de tests ne se chevauchent
   jamais quand les deux partent de l'application.
 
 ### 7.2 Temps qui compte
 
-Une tâche `timing_matters = true` est de celles dont la durée entre dans un papier. Proposition (Q2) :
+Une tâche `timing_matters = true` est de celles dont la durée entre dans un papier. Ce qui rend son
+temps honnête, c'est une machine au repos, pas l'heure : Marc lance quand il sait qu'il ne s'en sert
+pas, de jour comme de nuit. Proposition (Q2) :
 
-- **De jour, l'application refuse de la lancer tout de suite** et propose « Lancer cette nuit à 22:00 »
-  pour la file, ou « Lancer les autres maintenant », qui laisse ces éléments attendre la nuit dans la
-  file.
-- En tête de file, la nuit, elle **attend que la machine soit calme** (§9) : l'élément affiche « attend
-  le calme depuis 22:04 (CPU étranger 18 %) ». Elle part quand la machine a été calme sur toute la
-  fenêtre.
-- « Lancer quand même » existe dans les deux cas. La fiche a alors `forced = true`, donc
+- En tête de file, elle **attend que la machine soit calme** (§9) : l'élément affiche « attend le calme
+  depuis 15:04 (CPU étranger 18 %) ». Elle part quand la machine a été calme sur toute la fenêtre. Les
+  autres tâches de la file ne l'attendent que si elles viennent après elle.
+- « Lancer quand même » la lance tout de suite. La fiche a alors `forced = true`, donc
   `timing_valid = false` : l'exécution compte, son temps non.
 - Toute exécution, quelle que soit la tâche, reçoit son verdict `Calm` ; un temps n'est rapporté que
   d'une exécution `timing_valid = true`.
@@ -225,12 +223,7 @@ demander** (proposé par défaut : « Continuer la file / Annuler le reste »), 
 Une tâche échouée (code non nul, ou signal que l'application n'a pas envoyé) : même réglage que l'arrêt,
 séparé (Q3) : suspendre et demander, continuer, ou annuler le reste.
 
-### 8.5 Lancement différé
-
-« Lancer cette nuit » donne à la file une heure de départ (le début de la nuit). La file affiche un
-compte à rebours ; la machine doit rester éveillée (Q6).
-
-### 8.6 Fermeture de la fenêtre, plantage
+### 8.5 Fermeture de la fenêtre, plantage
 
 - Fermer la fenêtre pendant une exécution demande : « Arrêter l'exécution et quitter » ou « Garder la
   fenêtre ouverte » (par défaut). Pas de mode détaché : la fiche a besoin de l'application vivante (Q4).
@@ -268,7 +261,7 @@ que si aucune exécution à nous ne s'est terminée dans les 5 dernières minute
 thread occupé).
 
 Seuils, fenêtre et période sont dans `settings.toml` et modifiables dans l'écran Machine ; les valeurs
-ci-dessus sont une première proposition, à régler sur de vraies nuits (Q5).
+ci-dessus sont une première proposition, à régler sur de vraies exécutions (Q5).
 
 ## 10. Estimation de la progression
 
@@ -299,8 +292,7 @@ français sont possibles par un réglage (Q11). Disposition, d'après la maquett
 ### Barre du haut
 
 Checkout d'attache (branche, commit court, marque de modification), l'indicateur de calme, CPU et load1
-d'un coup d'œil, l'horloge avec « jour : 6 threads au plus » ou « nuit », le réglage de threads (de 1 à
-8, rouge au-delà de 6 de jour).
+d'un coup d'œil, le réglage de threads (de 1 à 8, ambre au-delà de la limite de confort).
 
 ### File (l'écran d'ouverture)
 
@@ -310,8 +302,7 @@ d'un coup d'œil, l'horloge avec « jour : 6 threads au plus » ou « nuit », l
 - **Au milieu, la file** : les éléments dans l'ordre (glisser pour réordonner, retirer), chacun avec ses
   paramètres (modifiables), son checkout (d'attache ou un worktree), ses threads effectifs, son
   estimation ; dessous : le commentaire et la version de papier (A ou B, un libellé suggéré d'après les
-  libellés passés) appliqués à toutes les exécutions de la file, le départ (maintenant, cette nuit à
-  22:00), les politiques d'arrêt et d'échec, l'heure de fin de la file, Lancer.
+  libellés passés) appliqués à toutes les exécutions de la file, les politiques d'arrêt et d'échec, l'heure de fin de la file, Lancer.
 - **À droite, l'exécution en cours** : tâche, élément n sur m, écoulé / estimé avec la barre, heures de
   fin de la tâche et de la file, Arrêter, le journal qui défile.
 
@@ -348,7 +339,7 @@ les seuils modifiables.
 
 ## 12. Réglages
 
-`<config>/settings.toml` : la nuit (par défaut 22:00 à 07:00, Q1), la limite de threads de jour (6), seuils
+`<config>/settings.toml` : la limite de confort des threads (6, Q1), seuils
 et fenêtre du calme, période d'échantillonnage, délai entre SIGTERM et SIGKILL, politiques d'arrêt et
 d'échec, libellé de la machine pour les exports (proposé : « i7-7700K 4c/8t 2017, 62 GB », comparé à ce qui
 est détecté : l'application avertit si le modèle de processeur ou la mémoire diffèrent).
@@ -417,21 +408,22 @@ Chacun est un ou quelques commits sur la branche, puis un arrêt pour la revue d
   vérifié (Q8, Q9).
 - **Coût de l'application** : le CPU de son propre échantillonnage (estimé sous 1 % d'un thread) compte
   comme étranger ; il est mesuré au jalon M3.
-- **Seuils du calme** : une première proposition, à régler sur de vraies nuits.
+- **Seuils du calme** : une première proposition, à régler sur de vraies exécutions.
 - **Wayland ou X11** : la session de Marc n'est pas vérifiée ; eframe gère les deux.
 
 ## 17. Questions ouvertes pour Marc
 
-1. **Nuit** : de 22:00 à 07:00 ?
-2. **Temps qui compte, de jour** : refuser et proposer « cette nuit » (proposé), ou seulement avertir ?
+1. **Limite de confort** : une alerte ambre au-delà de 6 threads, jamais bloquante : suffisant ?
+2. **Temps qui compte, machine pas calme** : attendre le calme en tête de file (proposé), ou seulement
+   avertir et lancer ?
 3. **Reste de la file après Arrêter, après un échec** : suspendre et demander (proposé pour les deux),
    annuler, continuer ?
 4. **Fermer la fenêtre pendant une exécution** : demander (proposé) sans mode détaché, ou un lanceur sans
    fenêtre `lab run` qui survit à la fenêtre (un jalon plus tard) ?
 5. **Seuils du calme** : CPU étranger moyen < 5 % et pic < 25 % sur 60 s, load1 < 1,0 : bons ordres de
    grandeur ?
-6. **Veille la nuit** : la machine se met-elle en veille d'elle-même ? Si oui, l'application doit la tenir
-   éveillée (`systemd-inhibit`) pendant une file.
+6. **Veille** : la machine se met-elle en veille quand personne n'y touche ? Si oui, l'application doit la tenir
+   éveillée (`systemd-inhibit`) pendant une file de plusieurs heures.
 7. **Estimations tirées d'exécutions chargées** : montrées mais hors de l'heure de fin (proposé), ou
    utilisées avec une marque ?
 8. **Threads du banc** : combien de threads utilise `bench/run.py` (Blender, le moteur, les autres
