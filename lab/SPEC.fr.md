@@ -84,6 +84,8 @@ Les types Rust sont ceux de `SPEC.md` §5, identiques ; seuls les commentaires s
   travail relatif à ce checkout, git, threads, plafond mémoire, machine, charge, verdict de calme,
   commentaire (modifiable après coup), papiers (modifiables après coup), journal, fichiers produits,
   date de dernière modification du commentaire ou des papiers.
+  Git, threads, machine et charge sont facultatifs : une fiche amorcée ou saisie n'a que ce qui est
+  connu.
 - `Status` : `Ok`, `Failed { code, signal }`, `Stopped` (arrêté par Marc), `Interrupted`
   (l'application s'est terminée pendant l'exécution, §8.5).
 - `Prepare` : commande, durée, statut, et la raison d'un saut (`skipped_because`).

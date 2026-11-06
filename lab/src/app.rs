@@ -1,0 +1,890 @@
+//! The window (SPEC.md, section 11): a top bar and four tabs. Milestone M1
+//! shows the catalogue and the history; the queue runs nothing yet.
+
+use std::collections::BTreeMap;
+use std::path::Path;
+use std::time::{Duration, Instant, SystemTime};
+
+use eframe::egui::{self, Color32, RichText};
+use egui_extras::{Column, TableBuilder};
+
+use crate::catalogue::{Catalogue, Category, Job, ThreadUse, render};
+use crate::home::{GitState, Places};
+use crate::model::{Paper, Run, Source, duration_text};
+use crate::settings::Settings;
+use crate::store::History;
+
+const AMBER: Color32 = Color32::from_rgb(255, 210, 122);
+const RED: Color32 = Color32::from_rgb(255, 176, 176);
+const GREEN: Color32 = Color32::from_rgb(143, 240, 176);
+const MUTED: Color32 = Color32::from_rgb(154, 161, 171);
+
+/// How often the files are looked at again.
+const RELOAD: Duration = Duration::from_secs(2);
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Tab {
+    Queue,
+    History,
+    Catalogue,
+    Machine,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum SortBy {
+    Started,
+    Job,
+    Duration,
+    Commit,
+    Status,
+}
+
+#[derive(Default)]
+struct Filter {
+    job: Option<String>,
+    paper: Option<Paper>,
+    commit: String,
+    text: String,
+    valid_only: bool,
+}
+
+pub struct App {
+    places: Places,
+    settings: Settings,
+    settings_error: Option<String>,
+    catalogue: Result<Catalogue, String>,
+    history: Result<History, String>,
+    git: Result<GitState, String>,
+    modified: (Option<SystemTime>, Option<SystemTime>),
+    last_look: Instant,
+    tab: Tab,
+    about: bool,
+    // Queue tab: the jobs in the order they were checked, a job possibly twice.
+    queue: Vec<String>,
+    search: String,
+    // Catalogue tab.
+    job: Option<String>,
+    // History tab.
+    filter: Filter,
+    sort: (SortBy, bool),
+    run: Option<String>,
+    /// Where to write a picture of the window, then close it.
+    screenshot: Option<Screenshot>,
+}
+
+/// How the window opens: from the command line (main.rs).
+#[derive(Default)]
+pub struct Opening {
+    pub tab: Option<Tab>,
+    /// Jobs or sequences put in the queue.
+    pub queue: Vec<String>,
+    /// The run selected in the history.
+    pub run: Option<String>,
+    pub screenshot: Option<std::path::PathBuf>,
+}
+
+/// A picture of the window itself, never of the screen: taken a few frames
+/// after opening, written as a PPM, then the window closes.
+struct Screenshot {
+    path: std::path::PathBuf,
+    frames: u32,
+    asked: bool,
+}
+
+impl Tab {
+    pub fn named(name: &str) -> Option<Tab> {
+        match name {
+            "queue" => Some(Tab::Queue),
+            "history" => Some(Tab::History),
+            "catalogue" => Some(Tab::Catalogue),
+            "machine" => Some(Tab::Machine),
+            _ => None,
+        }
+    }
+}
+
+fn modified(path: &Path) -> Option<SystemTime> {
+    std::fs::metadata(path).and_then(|metadata| metadata.modified()).ok()
+}
+
+impl App {
+    pub fn new(places: Places, opening: Opening) -> App {
+        let (settings, settings_error) = match Settings::load(&places.settings()) {
+            Ok(settings) => (settings, None),
+            Err(error) => (Settings::default(), Some(error)),
+        };
+        let mut app = App {
+            catalogue: Catalogue::read(&places.jobs()),
+            history: History::read(&places.runs()),
+            git: GitState::read(&places.home),
+            modified: (modified(&places.jobs()), modified(&places.runs())),
+            places,
+            settings,
+            settings_error,
+            last_look: Instant::now(),
+            tab: opening.tab.unwrap_or(Tab::Queue),
+            about: false,
+            queue: Vec::new(),
+            search: String::new(),
+            job: None,
+            filter: Filter::default(),
+            sort: (SortBy::Started, false),
+            run: opening.run,
+            screenshot: opening.screenshot.map(|path| Screenshot { path, frames: 0, asked: false }),
+        };
+        if let Ok(catalogue) = &app.catalogue {
+            for name in &opening.queue {
+                match catalogue.sequences.iter().find(|sequence| &sequence.name == name) {
+                    Some(sequence) => app.queue.extend(sequence.jobs.iter().cloned()),
+                    None => app.queue.push(name.clone()),
+                }
+            }
+        }
+        app.job = app.catalogue.as_ref().ok().and_then(|catalogue| catalogue.jobs.first()).map(|job| job.name.clone());
+        app
+    }
+
+    /// Reads again what changed on the disk: jobs.toml edited by hand,
+    /// runs.jsonl written by another process, a commit made.
+    fn look_again(&mut self) {
+        if self.last_look.elapsed() < RELOAD {
+            return;
+        }
+        self.last_look = Instant::now();
+        let now = (modified(&self.places.jobs()), modified(&self.places.runs()));
+        if now.0 != self.modified.0 {
+            self.catalogue = Catalogue::read(&self.places.jobs());
+        }
+        if now.1 != self.modified.1 {
+            self.history = History::read(&self.places.runs());
+        }
+        self.modified = now;
+        self.git = GitState::read(&self.places.home);
+    }
+
+    fn commit(&self) -> String {
+        self.git.as_ref().map(|git| git.short.clone()).unwrap_or_else(|_| "unknown".to_string())
+    }
+
+    fn set_threads(&mut self, threads: u32) {
+        if threads != self.settings.threads {
+            self.settings.threads = threads;
+            if let Err(error) = self.settings.save(&self.places.settings()) {
+                self.settings_error = Some(error);
+            }
+        }
+    }
+}
+
+impl eframe::App for App {
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        self.look_again();
+        ui.ctx().request_repaint_after(RELOAD);
+        egui::Panel::top("top").show(ui, |ui| self.top_bar(ui));
+        egui::CentralPanel::default().show(ui, |ui| {
+            self.problems(ui);
+            match self.tab {
+                Tab::Queue => self.queue_tab(ui),
+                Tab::History => self.history_tab(ui),
+                Tab::Catalogue => self.catalogue_tab(ui),
+                Tab::Machine => {
+                    ui.add_space(20.0);
+                    ui.label("The monitor of the machine and the calm indicator come in milestone M3.");
+                }
+            }
+        });
+        if self.about {
+            let mut open = true;
+            egui::Window::new("About lab").open(&mut open).resizable(false).show(ui.ctx(), |ui| {
+                ui.label("The record and the launcher of openclare's computations (lab/SPEC.md).");
+                egui::Grid::new("places").num_columns(2).show(ui, |ui| {
+                    for (name, path) in [
+                        ("Home checkout", self.places.home.clone()),
+                        ("Catalogue", self.places.jobs()),
+                        ("Runs", self.places.runs()),
+                        ("Settings", self.places.settings()),
+                    ] {
+                        ui.label(RichText::new(name).color(MUTED));
+                        ui.monospace(path.display().to_string());
+                        ui.end_row();
+                    }
+                });
+            });
+            self.about = open;
+        }
+        self.take_screenshot(ui.ctx());
+    }
+}
+
+impl App {
+    fn take_screenshot(&mut self, context: &egui::Context) {
+        let Some(screenshot) = &mut self.screenshot else { return };
+        context.request_repaint();
+        screenshot.frames += 1;
+        if screenshot.frames == 10 && !screenshot.asked {
+            screenshot.asked = true;
+            context.send_viewport_cmd(egui::ViewportCommand::Screenshot(egui::UserData::default()));
+        }
+        let image = context.input(|input| {
+            input.raw.events.iter().find_map(|event| match event {
+                egui::Event::Screenshot { image, .. } => Some(image.clone()),
+                _ => None,
+            })
+        });
+        if let Some(image) = image {
+            let [width, height] = image.size;
+            let mut bytes = format!("P6\n{width} {height}\n255\n").into_bytes();
+            for pixel in &image.pixels {
+                bytes.extend_from_slice(&[pixel.r(), pixel.g(), pixel.b()]);
+            }
+            if let Err(error) = std::fs::write(&screenshot.path, bytes) {
+                eprintln!("lab: {}: {error}", screenshot.path.display());
+            }
+            context.send_viewport_cmd(egui::ViewportCommand::Close);
+        }
+    }
+}
+
+/// A rounded label in a colour: the calm indicator, the marks of the tables.
+fn pill(ui: &mut egui::Ui, text: &str, colour: Color32) {
+    egui::Frame::new()
+        .fill(colour.gamma_multiply(0.18))
+        .stroke(egui::Stroke::new(1.0, colour.gamma_multiply(0.6)))
+        .corner_radius(12)
+        .inner_margin(egui::Margin::symmetric(10, 3))
+        .show(ui, |ui| ui.label(RichText::new(text).color(colour).strong()));
+}
+
+impl App {
+    fn top_bar(&mut self, ui: &mut egui::Ui) {
+        ui.add_space(6.0);
+        ui.horizontal(|ui| {
+            ui.label(RichText::new("lab").strong().size(18.0));
+            ui.add_space(8.0);
+            match &self.git {
+                Ok(git) => {
+                    let branch = git.branch.clone().unwrap_or_else(|| "detached".to_string());
+                    let mut text = format!("home: {branch} · {}", git.short);
+                    if git.dirty {
+                        text.push_str(" · modified");
+                    }
+                    if git.worktree {
+                        text.push_str(" · a worktree");
+                    }
+                    ui.label(RichText::new(text).monospace().color(MUTED));
+                }
+                Err(error) => {
+                    ui.colored_label(RED, format!("git: {error}"));
+                }
+            }
+            ui.add_space(8.0);
+            pill(ui, "Machine not monitored yet (M3)", MUTED);
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if ui.button("About").clicked() {
+                    self.about = true;
+                }
+                let most = std::thread::available_parallelism().map_or(8, |count| count.get() as u32);
+                let mut threads = self.settings.threads;
+                ui.add(egui::DragValue::new(&mut threads).range(1..=most));
+                self.set_threads(threads);
+                ui.label("Threads");
+                if self.settings.threads > self.settings.comfort_threads {
+                    ui.colored_label(
+                        AMBER,
+                        format!("above {}: the machine will be slow to use", self.settings.comfort_threads),
+                    );
+                }
+            });
+        });
+        ui.add_space(4.0);
+        ui.horizontal(|ui| {
+            ui.selectable_value(&mut self.tab, Tab::Queue, "Queue");
+            ui.selectable_value(&mut self.tab, Tab::History, "History");
+            ui.selectable_value(&mut self.tab, Tab::Catalogue, "Catalogue");
+            ui.selectable_value(&mut self.tab, Tab::Machine, "Machine");
+        });
+        ui.add_space(4.0);
+    }
+
+    /// What could not be read, above every tab.
+    fn problems(&self, ui: &mut egui::Ui) {
+        let mut problems: Vec<String> = Vec::new();
+        match &self.catalogue {
+            Ok(catalogue) => problems.extend(catalogue.problems.iter().map(|problem| format!("jobs.toml, {problem}"))),
+            Err(error) => problems.push(error.clone()),
+        }
+        match &self.history {
+            Ok(history) => problems.extend(history.problems.iter().cloned()),
+            Err(error) => problems.push(error.clone()),
+        }
+        problems.extend(self.settings_error.iter().cloned());
+        if problems.is_empty() {
+            return;
+        }
+        egui::Frame::new().fill(Color32::from_rgb(46, 26, 28)).inner_margin(8).corner_radius(4).show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            for problem in &problems {
+                ui.colored_label(RED, problem);
+            }
+        });
+        ui.add_space(6.0);
+    }
+
+    fn queue_tab(&mut self, ui: &mut egui::Ui) {
+        let Ok(catalogue) = &self.catalogue else {
+            ui.label("No catalogue: see the error above.");
+            return;
+        };
+        let catalogue = catalogue.clone();
+        egui::Panel::left("catalogue").resizable(true).default_size(320.0).show(ui, |ui| {
+            ui.add(egui::TextEdit::singleline(&mut self.search).hint_text("Search jobs"));
+            egui::ScrollArea::vertical().auto_shrink([false; 2]).show(ui, |ui| {
+                ui.add_space(6.0);
+                ui.label(RichText::new("SEQUENCES").small().strong().color(MUTED));
+                for sequence in &catalogue.sequences {
+                    let mut all =
+                        !sequence.jobs.is_empty() && sequence.jobs.iter().all(|name| self.queue.contains(name));
+                    let response = ui
+                        .checkbox(&mut all, format!("{}  ({} jobs)", sequence.name, sequence.jobs.len()))
+                        .on_hover_text(&sequence.description);
+                    if response.changed() {
+                        if all {
+                            self.queue.extend(sequence.jobs.iter().cloned());
+                        } else {
+                            self.queue.retain(|name| !sequence.jobs.contains(name));
+                        }
+                    }
+                }
+                let search = self.search.to_lowercase();
+                for category in Category::ALL {
+                    let jobs: Vec<&Job> = catalogue
+                        .jobs
+                        .iter()
+                        .filter(|job| job.category == category)
+                        .filter(|job| {
+                            search.is_empty()
+                                || job.name.contains(&search)
+                                || job.description.to_lowercase().contains(&search)
+                        })
+                        .collect();
+                    if jobs.is_empty() {
+                        continue;
+                    }
+                    ui.add_space(8.0);
+                    ui.label(RichText::new(category.title().to_uppercase()).small().strong().color(MUTED));
+                    for job in jobs {
+                        let mut checked = self.queue.contains(&job.name);
+                        let mut text = job.name.clone();
+                        if job.timing_matters {
+                            text.push_str("  · timed");
+                        }
+                        if ui.checkbox(&mut checked, text).on_hover_text(&job.description).changed() {
+                            if checked {
+                                self.queue.push(job.name.clone());
+                            } else {
+                                self.queue.retain(|name| name != &job.name);
+                            }
+                        }
+                    }
+                }
+                ui.add_space(8.0);
+                ui.label(
+                    RichText::new("timed: the timing matters, the job waits for a calm machine").small().color(MUTED),
+                );
+            });
+        });
+        egui::CentralPanel::default().show(ui, |ui| {
+            ui.horizontal(|ui| {
+                ui.label(RichText::new(format!("QUEUE · {} JOBS", self.queue.len())).small().strong().color(MUTED));
+                if !self.queue.is_empty() && ui.button("Clear").clicked() {
+                    self.queue.clear();
+                }
+            });
+            ui.label(
+                RichText::new("Run, Stop and the log come in milestone M2: this queue runs nothing yet.").color(AMBER),
+            );
+            ui.add_space(6.0);
+            let commit = self.commit();
+            let mut removed = None;
+            egui::ScrollArea::vertical().auto_shrink([false; 2]).show(ui, |ui| {
+                for (index, name) in self.queue.iter().enumerate() {
+                    let Some(job) = catalogue.job(name) else { continue };
+                    egui::Frame::group(ui.style()).show(ui, |ui| {
+                        ui.set_width(ui.available_width());
+                        ui.horizontal(|ui| {
+                            ui.label(RichText::new(format!("{} · {}", index + 1, job.name)).strong());
+                            if job.timing_matters {
+                                ui.label(RichText::new("timed").color(MUTED));
+                            }
+                            ui.label(RichText::new(format!("checkout {}", job.checkout.text())).color(MUTED));
+                            let threads = job.effective_threads(self.settings.threads);
+                            let fixed = if matches!(job.threads, ThreadUse::Fixed(_)) { " fixed" } else { "" };
+                            let colour = if threads > self.settings.comfort_threads { AMBER } else { MUTED };
+                            let plural = if threads == 1 { "thread" } else { "threads" };
+                            ui.colored_label(colour, format!("{threads} {plural}{fixed}"));
+                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                if ui.small_button("remove").on_hover_text("Remove from the queue").clicked() {
+                                    removed = Some(index);
+                                }
+                            });
+                        });
+                        let values = job.values(self.settings.threads, &commit, None, &BTreeMap::new());
+                        command_lines(ui, job, &values);
+                    });
+                }
+            });
+            if let Some(index) = removed {
+                self.queue.remove(index);
+            }
+        });
+    }
+
+    fn catalogue_tab(&mut self, ui: &mut egui::Ui) {
+        let Ok(catalogue) = &self.catalogue else {
+            ui.label("No catalogue: see the error above.");
+            return;
+        };
+        let catalogue = catalogue.clone();
+        egui::Panel::left("jobs").resizable(true).default_size(280.0).show(ui, |ui| {
+            egui::ScrollArea::vertical().auto_shrink([false; 2]).show(ui, |ui| {
+                for category in Category::ALL {
+                    let jobs: Vec<&Job> = catalogue.jobs.iter().filter(|job| job.category == category).collect();
+                    if jobs.is_empty() {
+                        continue;
+                    }
+                    ui.add_space(8.0);
+                    ui.label(RichText::new(category.title().to_uppercase()).small().strong().color(MUTED));
+                    for job in jobs {
+                        let selected = self.job.as_deref() == Some(job.name.as_str());
+                        if ui.selectable_label(selected, &job.name).clicked() {
+                            self.job = Some(job.name.clone());
+                        }
+                    }
+                }
+                ui.add_space(8.0);
+                ui.label(RichText::new("SEQUENCES").small().strong().color(MUTED));
+                for sequence in &catalogue.sequences {
+                    ui.label(&sequence.name).on_hover_text(format!(
+                        "{}\n\n{}",
+                        sequence.description,
+                        sequence.jobs.join(", ")
+                    ));
+                }
+            });
+        });
+        egui::CentralPanel::default().show(ui, |ui| {
+            let Some(job) = self.job.as_deref().and_then(|name| catalogue.job(name)) else {
+                ui.label("Pick a job on the left.");
+                return;
+            };
+            egui::ScrollArea::vertical().auto_shrink([false; 2]).show(ui, |ui| {
+                ui.label(RichText::new(&job.name).strong().size(20.0));
+                ui.label(&job.description);
+                ui.add_space(8.0);
+                let threads = match job.threads {
+                    ThreadUse::Setting => format!("the setting ({})", self.settings.threads),
+                    ThreadUse::Fixed(count) => format!("{count}, fixed"),
+                };
+                let mut rows = vec![
+                    ("Category", category_word(job.category).to_string()),
+                    ("Checkout", job.checkout.text()),
+                    ("Directory", job.directory.clone()),
+                    ("Threads", threads),
+                    ("Memory cap", job.memory_limit_gb.map_or("none".to_string(), |gb| format!("{gb} GB per process"))),
+                    (
+                        "Timing matters",
+                        if job.timing_matters { "yes: waits for a calm machine" } else { "no" }.to_string(),
+                    ),
+                    ("Paper", job.paper.map_or("none".to_string(), |paper| paper.to_string())),
+                    ("Tags", job.tags.join(", ")),
+                    ("Outputs", job.outputs.join("  ")),
+                ];
+                for (name, value) in &job.parameters {
+                    rows.push(("Parameter", format!("{name} = {value}")));
+                }
+                egui::Grid::new("job").num_columns(2).spacing([16.0, 4.0]).show(ui, |ui| {
+                    for (name, value) in rows {
+                        ui.label(RichText::new(name).color(MUTED));
+                        ui.label(value);
+                        ui.end_row();
+                    }
+                });
+                ui.add_space(8.0);
+                ui.label(
+                    RichText::new(format!(
+                        "AS IT WOULD RUN, WITH {} THREADS AND COMMIT {}",
+                        self.settings.threads,
+                        self.commit()
+                    ))
+                    .small()
+                    .strong()
+                    .color(MUTED),
+                );
+                let values = job.values(self.settings.threads, &self.commit(), None, &BTreeMap::new());
+                command_lines(ui, job, &values);
+                match job.environment_for(&values) {
+                    Ok(environment) => {
+                        let text: Vec<String> =
+                            environment.iter().map(|(name, value)| format!("{name}={value}")).collect();
+                        ui.label(RichText::new(text.join(" ")).monospace().color(MUTED));
+                    }
+                    Err(error) => {
+                        ui.colored_label(RED, error);
+                    }
+                }
+                ui.add_space(12.0);
+                ui.label(
+                    RichText::new(
+                        "Edit jobs.toml by hand: the app reads it again within two seconds. Editing here is not in M1.",
+                    )
+                    .color(MUTED),
+                );
+            });
+        });
+    }
+
+    fn history_tab(&mut self, ui: &mut egui::Ui) {
+        let runs: Vec<Run> = match &self.history {
+            Ok(history) => history.runs.clone(),
+            Err(_) => Vec::new(),
+        };
+        if runs.is_empty() {
+            ui.add_space(20.0);
+            ui.label(format!("No run recorded yet in {}.", self.places.runs().display()));
+            ui.label(
+                RichText::new(
+                    "The queue writes runs from milestone M2; seeding from the papers' summaries is milestone M1b.",
+                )
+                .color(MUTED),
+            );
+            return;
+        }
+        let mut jobs: Vec<String> = runs.iter().map(|run| run.job.clone()).collect();
+        jobs.sort();
+        jobs.dedup();
+        ui.horizontal_wrapped(|ui| {
+            ui.label("Job");
+            egui::ComboBox::from_id_salt("job")
+                .selected_text(self.filter.job.clone().unwrap_or_else(|| "all".to_string()))
+                .show_ui(ui, |ui| {
+                    ui.selectable_value(&mut self.filter.job, None, "all");
+                    for job in &jobs {
+                        ui.selectable_value(&mut self.filter.job, Some(job.clone()), job);
+                    }
+                });
+            ui.label("Paper");
+            egui::ComboBox::from_id_salt("paper")
+                .selected_text(self.filter.paper.map_or("any".to_string(), |paper| paper.to_string()))
+                .show_ui(ui, |ui| {
+                    ui.selectable_value(&mut self.filter.paper, None, "any");
+                    ui.selectable_value(&mut self.filter.paper, Some(Paper::A), "A");
+                    ui.selectable_value(&mut self.filter.paper, Some(Paper::B), "B");
+                });
+            ui.label("Commit");
+            ui.add(egui::TextEdit::singleline(&mut self.filter.commit).desired_width(80.0));
+            ui.label("Text");
+            ui.add(
+                egui::TextEdit::singleline(&mut self.filter.text)
+                    .hint_text("comment, command, label")
+                    .desired_width(180.0),
+            );
+            ui.checkbox(&mut self.filter.valid_only, "timing-valid only");
+        });
+        let text = self.filter.text.to_lowercase();
+        let mut shown: Vec<&Run> = runs
+            .iter()
+            .filter(|run| self.filter.job.as_ref().is_none_or(|job| &run.job == job))
+            .filter(|run| {
+                self.filter.paper.is_none_or(|paper| run.papers.iter().any(|reference| reference.paper == paper))
+            })
+            .filter(|run| {
+                self.filter.commit.is_empty()
+                    || run.git.as_ref().is_some_and(|git| git.commit.starts_with(self.filter.commit.trim()))
+            })
+            .filter(|run| !self.filter.valid_only || run.calm.timing_valid)
+            .filter(|run| {
+                text.is_empty()
+                    || run.comment.to_lowercase().contains(&text)
+                    || run.command.to_lowercase().contains(&text)
+                    || run.papers_text().to_lowercase().contains(&text)
+            })
+            .collect();
+        let (by, ascending) = self.sort;
+        shown.sort_by(|a, b| {
+            let order = match by {
+                SortBy::Started => a.started.cmp(&b.started),
+                SortBy::Job => a.job.cmp(&b.job),
+                SortBy::Duration => a.seconds.unwrap_or(-1.0).total_cmp(&b.seconds.unwrap_or(-1.0)),
+                SortBy::Commit => a.short_commit().cmp(&b.short_commit()),
+                SortBy::Status => a.status.text().cmp(&b.status.text()),
+            };
+            if ascending { order } else { order.reverse() }
+        });
+        ui.label(RichText::new(format!("{} of {} runs", shown.len(), runs.len())).color(MUTED));
+
+        let selected = self.run.clone();
+        let detail = selected.as_ref().and_then(|id| runs.iter().find(|run| &run.id == id)).cloned();
+        if let Some(run) = &detail {
+            egui::Panel::right("run").resizable(true).default_size(460.0).show(ui, |ui| {
+                egui::ScrollArea::vertical().auto_shrink([false; 2]).show(ui, |ui| run_detail(ui, run));
+            });
+        }
+        let mut sort = self.sort;
+        let mut clicked = None;
+        egui::CentralPanel::default().show(ui, |ui| {
+            let header = |ui: &mut egui::Ui, sort: &mut (SortBy, bool), name: &str, by: Option<SortBy>| {
+                let Some(by) = by else {
+                    ui.strong(name);
+                    return;
+                };
+                let mark = if sort.0 == by { if sort.1 { " (up)" } else { " (down)" } } else { "" };
+                if ui.add(egui::Button::new(RichText::new(format!("{name}{mark}")).strong()).frame(false)).clicked() {
+                    *sort = (by, if sort.0 == by { !sort.1 } else { by != SortBy::Started && by != SortBy::Duration });
+                }
+            };
+            TableBuilder::new(ui)
+                .striped(true)
+                .resizable(true)
+                .sense(egui::Sense::click())
+                .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
+                .column(Column::auto().at_least(120.0))
+                .column(Column::auto().at_least(140.0))
+                .column(Column::auto().at_least(90.0))
+                .column(Column::auto().at_least(80.0))
+                .column(Column::auto())
+                .column(Column::auto())
+                .column(Column::auto().at_least(70.0))
+                .column(Column::auto().at_least(120.0))
+                .column(Column::remainder())
+                .header(22.0, |mut row| {
+                    for (name, by) in [
+                        ("Started", Some(SortBy::Started)),
+                        ("Job", Some(SortBy::Job)),
+                        ("Duration", Some(SortBy::Duration)),
+                        ("Commit", Some(SortBy::Commit)),
+                        ("Thr", None),
+                        ("Calm", None),
+                        ("Status", Some(SortBy::Status)),
+                        ("Papers", None),
+                        ("Comment", None),
+                    ] {
+                        row.col(|ui| header(ui, &mut sort, name, by));
+                    }
+                })
+                .body(|body| {
+                    body.rows(20.0, shown.len(), |mut row| {
+                        let run = shown[row.index()];
+                        row.set_selected(selected.as_deref() == Some(run.id.as_str()));
+                        let seeded = !matches!(run.source, Source::App);
+                        row.col(|ui| {
+                            ui.monospace(run.started.format("%Y-%m-%d %H:%M").to_string());
+                        });
+                        row.col(|ui| {
+                            ui.label(&run.job);
+                            if seeded {
+                                ui.label(RichText::new(source_word(&run.source)).small().color(MUTED));
+                            }
+                        });
+                        row.col(|ui| {
+                            ui.monospace(run.seconds.map_or("—".to_string(), duration_text));
+                        });
+                        row.col(|ui| {
+                            ui.monospace(run.short_commit().unwrap_or_else(|| "?".to_string()));
+                        });
+                        row.col(|ui| {
+                            ui.monospace(run.threads.map_or("?".to_string(), |threads| threads.effective.to_string()));
+                        });
+                        row.col(|ui| {
+                            let (mark, colour) = calm_mark(run);
+                            ui.colored_label(colour, mark).on_hover_text(&run.calm.reason);
+                        });
+                        row.col(|ui| {
+                            ui.label(run.status.text());
+                        });
+                        row.col(|ui| {
+                            ui.label(run.papers_text());
+                        });
+                        row.col(|ui| {
+                            ui.label(&run.comment);
+                        });
+                        if row.response().clicked() {
+                            clicked = Some(run.id.clone());
+                        }
+                    });
+                });
+        });
+        self.sort = sort;
+        if let Some(id) = clicked {
+            self.run = if self.run.as_ref() == Some(&id) { None } else { Some(id) };
+        }
+    }
+}
+
+/// The command and the prepare of a job with these values, or why not.
+fn command_lines(ui: &mut egui::Ui, job: &Job, values: &BTreeMap<String, String>) {
+    if let Some(prepare) = &job.prepare {
+        match render(prepare, values) {
+            Ok(text) => ui.label(RichText::new(format!("prepare: {text}")).monospace().color(MUTED)),
+            Err(error) => ui.colored_label(RED, error),
+        };
+    }
+    match render(&job.command, values) {
+        Ok(text) => ui.label(RichText::new(text).monospace()),
+        Err(error) => ui.colored_label(RED, error),
+    };
+}
+
+fn category_word(category: Category) -> &'static str {
+    match category {
+        Category::Build => "build",
+        Category::TestSuite => "test suite",
+        Category::QuickBench => "quick bench",
+        Category::Bench => "bench",
+        Category::LeanBuild => "Lean build",
+        Category::LeanOracle => "Lean oracle",
+        Category::Experiment => "experiment",
+    }
+}
+
+fn source_word(source: &Source) -> &'static str {
+    match source {
+        Source::App => "",
+        Source::Seeded { .. } => "seeded",
+        Source::Manual => "typed",
+    }
+}
+
+/// "yes" timing valid, "forced", "no" not calm, "?" not measured.
+fn calm_mark(run: &Run) -> (&'static str, Color32) {
+    if run.calm.timing_valid {
+        ("yes", GREEN)
+    } else if run.calm.forced {
+        ("forced", AMBER)
+    } else if !matches!(run.source, Source::App) {
+        ("?", MUTED)
+    } else {
+        ("no", RED)
+    }
+}
+
+fn run_detail(ui: &mut egui::Ui, run: &Run) {
+    ui.horizontal(|ui| {
+        ui.label(RichText::new(&run.job).strong().size(18.0));
+        let (mark, colour) = calm_mark(run);
+        ui.colored_label(
+            colour,
+            format!("{} · {}", run.status.text(), if run.calm.timing_valid { "timing valid" } else { mark }),
+        );
+    });
+    ui.label(RichText::new(&run.id).monospace().color(MUTED));
+    ui.add_space(6.0);
+    ui.label(RichText::new(&run.command).monospace());
+    ui.add_space(6.0);
+    let gigabytes = |bytes: u64| format!("{:.1} GiB", bytes as f64 / (1u64 << 30) as f64);
+    let mut rows: Vec<(&str, String)> = Vec::new();
+    let ended = run.ended.map(|ended| format!(" to {}", ended.format("%Y-%m-%d %H:%M:%S"))).unwrap_or_default();
+    let seconds = run.seconds.map(|seconds| format!(" · {}", duration_text(seconds))).unwrap_or_default();
+    rows.push(("When", format!("{}{ended}{seconds}", run.started.format("%Y-%m-%d %H:%M:%S"))));
+    if let Source::Seeded { from } = &run.source {
+        rows.push(("Seeded from", format!("{from} (date of its commit, time of day unknown)")));
+    }
+    if !run.environment.is_empty() {
+        let text: Vec<String> = run.environment.iter().map(|(name, value)| format!("{name}={value}")).collect();
+        rows.push(("Environment", text.join(" ")));
+    }
+    for (name, value) in &run.parameters {
+        rows.push(("Parameter", format!("{name} = {value}")));
+    }
+    let memory = run.memory_limit_gb.map(|gb| format!(" · memory cap {gb} GB")).unwrap_or_default();
+    rows.push(("Checkout", format!("{} · directory {}{memory}", run.checkout, run.directory)));
+    if let Some(git) = &run.git {
+        let branch = git.branch.clone().unwrap_or_default();
+        rows.push(("Git", format!("{} {} {branch}", git.commit, if git.dirty { "modified" } else { "clean" })));
+    }
+    if let Some(threads) = run.threads {
+        rows.push(("Threads", format!("{} (setting {})", threads.effective, threads.setting)));
+    }
+    if let Some(machine) = &run.machine {
+        let gpu = machine
+            .gpu
+            .as_ref()
+            .map(|gpu| format!(" · {} {}", gpu.name, gigabytes(gpu.memory_bytes)))
+            .unwrap_or_default();
+        rows.push((
+            "Machine",
+            format!(
+                "{} · {} · {} cores, {} threads · {}{gpu}",
+                machine.hostname,
+                machine.cpu,
+                machine.cores,
+                machine.threads,
+                gigabytes(machine.memory_bytes)
+            ),
+        ));
+    }
+    if let Some(load) = &run.load {
+        let sample = |sample: &crate::model::Sample| {
+            let mut text = format!("load {:.2} {:.2} {:.2}", sample.load[0], sample.load[1], sample.load[2]);
+            if let Some(cpu) = sample.cpu_percent {
+                text.push_str(&format!(" · CPU {cpu:.1} %"));
+            }
+            if let Some(foreign) = sample.foreign_cpu_percent {
+                text.push_str(&format!(" · foreign {foreign:.1} %"));
+            }
+            if let Some(memory) = sample.memory_used_bytes {
+                text.push_str(&format!(" · RAM {}", gigabytes(memory)));
+            }
+            text
+        };
+        rows.push(("At start", sample(&load.at_start)));
+        if let Some(during) = &load.during {
+            rows.push((
+                "During",
+                format!(
+                    "foreign CPU mean {:.1} %, peak {:.1} % · load1 max {:.2} · RAM peak {}",
+                    during.foreign_cpu_mean,
+                    during.foreign_cpu_peak,
+                    during.load1_max,
+                    gigabytes(during.memory_used_peak)
+                ),
+            ));
+        }
+        if let Some(end) = &load.at_end {
+            rows.push(("At end", sample(end)));
+        }
+    }
+    let calm = &run.calm;
+    let yes = |value: bool| if value { "yes" } else { "no" };
+    let mut verdict = format!(
+        "before {} · during {} · {}",
+        yes(calm.before),
+        yes(calm.during),
+        if calm.forced { "forced" } else { "not forced" }
+    );
+    if !calm.reason.is_empty() {
+        verdict.push_str(&format!(" · {}", calm.reason));
+    }
+    rows.push(("Calm", verdict));
+    for output in &run.outputs {
+        let hash = output
+            .sha256
+            .as_ref()
+            .map(|hash| format!(" · {}…{}", &hash[..4.min(hash.len())], &hash[hash.len().saturating_sub(4)..]))
+            .unwrap_or_default();
+        rows.push(("Output", format!("{} · {} bytes{hash}", output.path, output.bytes)));
+    }
+    if let Some(log) = &run.log {
+        rows.push(("Log", format!("{} · {} bytes", log.path, log.bytes)));
+    }
+    rows.push(("Papers", run.papers_text()));
+    rows.push(("Comment", run.comment.clone()));
+    egui::Grid::new("run").num_columns(2).spacing([12.0, 4.0]).show(ui, |ui| {
+        for (name, value) in rows {
+            ui.label(RichText::new(name).color(MUTED));
+            ui.add(egui::Label::new(value).wrap());
+            ui.end_row();
+        }
+    });
+    ui.add_space(8.0);
+    ui.label(RichText::new("Editing the comment and the papers comes in milestone M5.").color(MUTED));
+}

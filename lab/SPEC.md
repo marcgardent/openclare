@@ -89,11 +89,12 @@ struct Run {
     parameters: BTreeMap<String, String>,  // the job's parameters as chosen
     checkout: String,               // "." or ".claude/worktrees/name"
     directory: String,              // working directory, relative to that checkout
-    git: Git,
-    threads: Threads,
+    // The four below are None only in a seeded or typed run: it carries what is known.
+    git: Option<Git>,
+    threads: Option<Threads>,
     memory_limit_gb: Option<u32>,
-    machine: Machine,
-    load: Load,
+    machine: Option<Machine>,
+    load: Option<Load>,
     calm: Calm,
     comment: String,                // editable afterwards
     papers: Vec<PaperRef>,          // editable afterwards
