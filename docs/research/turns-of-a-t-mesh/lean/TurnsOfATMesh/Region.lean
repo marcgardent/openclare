@@ -43,7 +43,9 @@ Proved:
   along the chain: `facesChain_telescope`).
 * `borderHolonomy_cuts`: and of the jumps across the cuts alone
   (`cutCrossings tree cs`), when the charts agree across every crossing `tree`
-  holds for.
+  holds for. `tree` reads the whole crossing, not only its faces: the two faces
+  at a vertex of valence 2 share two edges, one may be a tree edge and the other
+  a cut, and only the change of chart tells the crossings apart.
 
 That the jumps across the cuts, in border order, are the jumps of a cut disc of
 the model (`CutDisc.lean`), hence compose to the rotations round the cone
@@ -127,10 +129,10 @@ def jump (M : Face Patch → Motion GaussianInt GaussianInt) (c : Crossing Patch
   Motion.comp (M c.2.2) (Motion.comp c.2.1 (qinv (M c.1)))
 
 /-- The crossings of a list across the cuts: those the predicate `tree` does not
-hold for, by the faces they leave and enter. -/
-def cutCrossings (tree : Face Patch → Face Patch → Bool) (cs : List (Crossing Patch)) :
+hold for. -/
+def cutCrossings (tree : Crossing Patch → Bool) (cs : List (Crossing Patch)) :
     List (Crossing Patch) :=
-  cs.filter fun c => !tree c.1 c.2.2
+  cs.filter fun c => !tree c
 
 /-! ### First facts -/
 
@@ -422,15 +424,15 @@ theorem composeAll_filter_id {X : Type*} (g : X → Motion GaussianInt GaussianI
 border order, through charts `M` that are the identity on the face on the left of the
 first step and agree across every crossing `tree` holds for. -/
 theorem borderHolonomy_cuts (M : Face Patch → Motion GaussianInt GaussianInt)
-    (hq : ∀ f, IsQuarter (M f).lin) (tree : Face Patch → Face Patch → Bool) {ℓ : α → ℕ}
+    (hq : ∀ f, IsQuarter (M f).lin) (tree : Crossing Patch → Bool) {ℓ : α → ℕ}
     {fuel : ℕ} {s s' : Step Patch} {ss : List (Step Patch)} {cs : List (Crossing Patch)}
     (hd : ∀ t ∈ s :: ss, IsQuarter t.2) (hs : T.normalize ℓ s = some s')
     (h₀ : M (faceAt s') = Motion.id) (h : T.borderCrossings ℓ fuel (s :: ss) = some cs)
-    (htree : ∀ c ∈ cs, tree c.1 c.2.2 = true → Motion.comp (M c.2.2) c.2.1 = M c.1) :
+    (htree : ∀ c ∈ cs, tree c = true → Motion.comp (M c.2.2) c.2.1 = M c.1) :
     T.borderHolonomy ℓ fuel (s :: ss) =
       some (Motion.composeAll ((cutCrossings tree cs).map (jump M))) := by
   rw [T.borderHolonomy_jumps M hq hd hs h₀ h, cutCrossings,
-    composeAll_filter_id (jump M) (fun c => !tree c.1 c.2.2) cs]
+    composeAll_filter_id (jump M) (fun c => !tree c) cs]
   intro c hc hcut
   simp only [Bool.not_eq_false'] at hcut
   exact jump_tree M c (hq _) (htree c hc hcut)
