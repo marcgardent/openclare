@@ -690,17 +690,7 @@ pub struct Quality {
 }
 
 pub fn quality(mesh: &TriMesh) -> Quality {
-    let mut min_angles: Vec<f64> = (0..mesh.triangles.len())
-        .map(|f| {
-            let p = mesh.corners(f);
-            (0..3)
-                .map(|k| {
-                    let (a, b) = (p[(k + 1) % 3] - p[k], p[(k + 2) % 3] - p[k]);
-                    a.normalize_or_zero().dot(b.normalize_or_zero()).clamp(-1.0, 1.0).acos().to_degrees()
-                })
-                .fold(f64::INFINITY, f64::min)
-        })
-        .collect();
+    let mut min_angles: Vec<f64> = (0..mesh.triangles.len()).map(|f| min_angle(mesh.corners(f))).collect();
     min_angles.sort_unstable_by(f64::total_cmp);
     let (shortest, _, longest) = mesh.edge_length_stats();
     Quality {
@@ -708,4 +698,52 @@ pub fn quality(mesh: &TriMesh) -> Quality {
         min_angle_p01: min_angles.get(min_angles.len() / 100).copied().unwrap_or(0.0),
         edge_ratio: if shortest > 0.0 { longest / shortest } else { f64::INFINITY },
     }
+}
+
+/// Triangles of a work mesh too thin for the solvers downstream (#31).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Slivers {
+    /// Triangles whose smallest angle is below [`SLIVER_ANGLE`].
+    pub thin: usize,
+    /// Those of them of next to no area: below [`FLAT_AREA`] times the
+    /// area of the equilateral triangle on the mean edge of the mesh.
+    pub flat: usize,
+}
+
+/// Smallest angle, in degrees, of a triangle that is not a sliver.
+pub const SLIVER_ANGLE: f64 = 5.0;
+/// Share of the area of a triangle of the mean edge below which a triangle
+/// has next to no area.
+pub const FLAT_AREA: f64 = 1e-6;
+
+impl std::ops::AddAssign for Slivers {
+    fn add_assign(&mut self, other: Self) {
+        self.thin += other.thin;
+        self.flat += other.flat;
+    }
+}
+
+pub fn slivers(mesh: &TriMesh) -> Slivers {
+    let edge = mesh.edge_length_stats().1;
+    let flat = FLAT_AREA * 3.0f64.sqrt() / 4.0 * edge * edge;
+    let mut slivers = Slivers::default();
+    for f in 0..mesh.triangles.len() {
+        if mesh.area_vector(f).length() < flat {
+            slivers.thin += 1;
+            slivers.flat += 1;
+        } else if min_angle(mesh.corners(f)) < SLIVER_ANGLE {
+            slivers.thin += 1;
+        }
+    }
+    slivers
+}
+
+/// The smallest angle of a triangle, in degrees.
+fn min_angle(p: [Vec3; 3]) -> f64 {
+    (0..3)
+        .map(|k| {
+            let (a, b) = (p[(k + 1) % 3] - p[k], p[(k + 2) % 3] - p[k]);
+            a.normalize_or_zero().dot(b.normalize_or_zero()).clamp(-1.0, 1.0).acos().to_degrees()
+        })
+        .fold(f64::INFINITY, f64::min)
 }
