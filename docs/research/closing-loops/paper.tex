@@ -104,7 +104,7 @@ counted by a test that tells helices from closed, open and border loops. Over
 twelve models at three budgets near 3{,}000 quads, the engine leaves 4.92\%
 of the edges on spiral loops (19.8\% when the engine itself runs without
 closing); on the seven models that four other open-source remeshers also
-mesh validly, 2.2\% against 11.4\% to 38.8\%, among them 19.9\% for % NIGHT4
+mesh validly, 2.2\% against 11.4\% to 38.8\%, among them 19.9\% for
 QuadWild-BiMDF, a minimum-deviation quantizer with no closing; on a human body, 1.5\%, against 2.5\% for the hand-made mesh.
 An exact analysis of the closing system of that body shows that the conflict between closing
 turns and keeping singularities apart is real but local, that the heuristic
@@ -644,9 +644,12 @@ twelve organic and mechanical models for development, and a corpus of $33$
 models for the full bench, among them two human bodies from Blender's
 Essentials library (CC0) whose base meshes, modelled by hand, serve as
 references. All runs were made on one machine, an Intel Core i7-7700K (4
-cores, 8 threads, 4.2\,GHz, 2017) with 62\,GB of memory, shared with other
-jobs; each summary records the load average, which reached $15$ during some
-runs, so times are wall-clock times and give orders of magnitude only. % NIGHT4
+cores, 8 threads, 4.2\,GHz, 2017) with 62\,GB of memory. The bench's times
+of openclare were measured with no job but the desktop, on 2 November 2026; its own
+threads brought the load average to $11$. The other runs shared the machine
+with other jobs; each summary records the load average, which reached $15$
+during some of them. Times are wall-clock times and give orders of magnitude
+only.
 Linear and mixed-integer
 programs were solved with HiGHS 1.8.0~\cite{huangfu2018highs} through SciPy
 1.16.3~\cite{virtanen2020scipy} (\texttt{linprog} and \texttt{milp}), with
@@ -717,10 +720,10 @@ loops can be measured, and meshes it validly if every run gives a valid mesh:
 openclare produces a mesh for $28$ models, QuadriFlow for $22$, AutoRemesher
 for $18$, QuadWild-BiMDF for $26$ and Instant Meshes for $20$, and they mesh
 $25$, $9$, $9$, $19$ and $15$ validly. On the $7$ models that all five mesh
-validly in every run, the mean share of spiral edges is $2.2\%$ for % NIGHT4
+validly in every run, the mean share of spiral edges is $2.2\%$ for
 openclare, $38.8\%$ for QuadriFlow, $21.7\%$ for AutoRemesher, $19.9\%$ for
 QuadWild-BiMDF and $11.4\%$ for Instant Meshes; on the $14$ models where all
-five produce a mesh, valid or not, $3.1\%$, $29.1\%$, $29.3\%$, $16.8\%$ and % NIGHT4
+five produce a mesh, valid or not, $3.1\%$, $29.1\%$, $29.3\%$, $16.8\%$ and
 $9.1\%$. The second subset leaves out the terrain, which the first three
 mesh and the other two were not run on. Without closing (the same engine
 through the same chain, with no way of closing tried) openclare has
@@ -750,7 +753,7 @@ use.
 \cmidrule(lr){2-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}
 & run & meshed & valid & spiral & closed & spiral & closed \\
 \midrule
-openclare & 33 & 28 & 25 & 2.2\% & 60.9\% & 3.1\% & 55.8\% \\ % NIGHT4
+openclare & 33 & 28 & 25 & 2.2\% & 60.9\% & 3.1\% & 55.8\% \\
 \quad without closing & -- & -- & -- & 15.3\% & 48.7\% & 15.9\% & 46.7\% \\
 QuadriFlow & 33 & 22 & 9 & 38.8\% & 19.3\% & 29.1\% & 16.7\% \\
 AutoRemesher & 33 & 18 & 9 & 21.7\% & 35.1\% & 29.3\% & 22.4\% \\

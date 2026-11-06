@@ -125,7 +125,7 @@ boucles fermées, ouvertes et de bord. Sur douze modèles, à trois budgets
 voisins de 3\,000 quads, le moteur laisse 4,92\,\% des arêtes sur des boucles
 en spirale (19,8\,\% quand le moteur lui-même tourne sans fermeture)\,; sur
 les sept modèles que quatre autres remailleurs libres maillent aussi de façon
-valide, 2,2\,\% contre 11,4\,\% à 38,8\,\%, dont 19,9\,\% pour % NIGHT4
+valide, 2,2\,\% contre 11,4\,\% à 38,8\,\%, dont 19,9\,\% pour
 QuadWild-BiMDF, un quantificateur d'écart minimal sans fermeture\,; sur un corps humain, 1,5\,\%, contre 2,5\,\% pour le maillage
 fait à la main. Une analyse exacte du système de fermeture de ce
 corps montre que le conflit entre fermer les tours et garder les
@@ -739,11 +739,13 @@ développement, et un corpus de $33$ modèles pour le banc complet, parmi
 lesquels deux corps humains de la bibliothèque Essentials de Blender (CC0)
 dont les maillages de base, modélisés à la main, servent de référence.
 Toutes les exécutions ont eu lieu sur une seule machine, un Intel Core
-i7-7700K (4~cœurs, 8~threads, 4,2\,GHz, 2017) avec 62\,Go de mémoire,
-partagée avec d'autres tâches\,; chaque synthèse relève la charge moyenne,
-qui a atteint $15$ pendant certaines exécutions, si bien que les temps sont
-des temps écoulés (\emph{wall-clock}) qui ne donnent que des ordres de
-grandeur. % NIGHT4
+i7-7700K (4~cœurs, 8~threads, 4,2\,GHz, 2017) avec 62\,Go de mémoire. Les
+temps d'openclare du banc ont été mesurés sans autre tâche que le bureau, le 2~novembre
+2026\,; ses propres threads ont porté la charge moyenne à $11$. Les autres
+exécutions partageaient la machine avec d'autres tâches\,; chaque synthèse
+relève la charge moyenne, qui a atteint $15$ pendant certaines d'entre elles.
+Les temps sont des temps écoulés (\emph{wall-clock}) qui ne donnent que des
+ordres de grandeur.
 Les programmes linéaires et mixtes-entiers ont été résolus avec HiGHS
 1.8.0~\cite{huangfu2018highs} via SciPy 1.16.3~\cite{virtanen2020scipy}
 (\texttt{linprog} et \texttt{milp}), avec les options par défaut sauf un
@@ -819,10 +821,10 @@ valide~: openclare produit un maillage pour $28$ modèles, QuadriFlow pour
 $22$, AutoRemesher pour $18$, QuadWild-BiMDF pour $26$ et Instant Meshes pour
 $20$, et ils en maillent $25$, $9$, $9$, $19$ et $15$ de façon valide. Sur
 les $7$ modèles que les cinq maillent de façon valide à chaque exécution, la
-part moyenne d'arêtes en spirale est de $2,2\,\%$ pour openclare, % NIGHT4
+part moyenne d'arêtes en spirale est de $2,2\,\%$ pour openclare,
 $38,8\,\%$ pour QuadriFlow, $21,7\,\%$ pour AutoRemesher, $19,9\,\%$ pour
 QuadWild-BiMDF et $11,4\,\%$ pour Instant Meshes\,; sur les $14$ modèles où
-les cinq produisent un maillage, valide ou non, $3,1\,\%$, $29,1\,\%$, % NIGHT4
+les cinq produisent un maillage, valide ou non, $3,1\,\%$, $29,1\,\%$,
 $29,3\,\%$, $16,8\,\%$ et $9,1\,\%$. Le second sous-ensemble laisse de côté
 le terrain, que les trois premiers maillent et sur lequel les deux autres
 n'ont pas été lancés. Sans fermeture (le même moteur par la même chaîne,
@@ -854,7 +856,7 @@ sélection n'utilise pas.
 \cmidrule(lr){2-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}
 & lancés & maillés & valides & spirale & fermées & spirale & fermées \\
 \midrule
-openclare & 33 & 28 & 25 & 2,2\,\% & 60,9\,\% & 3,1\,\% & 55,8\,\% \\ % NIGHT4
+openclare & 33 & 28 & 25 & 2,2\,\% & 60,9\,\% & 3,1\,\% & 55,8\,\% \\
 \quad sans fermeture & -- & -- & -- & 15,3\,\% & 48,7\,\% & 15,9\,\% & 46,7\,\% \\
 QuadriFlow & 33 & 22 & 9 & 38,8\,\% & 19,3\,\% & 29,1\,\% & 16,7\,\% \\
 AutoRemesher & 33 & 18 & 9 & 21,7\,\% & 35,1\,\% & 29,3\,\% & 22,4\,\% \\
