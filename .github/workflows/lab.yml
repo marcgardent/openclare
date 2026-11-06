@@ -1,0 +1,36 @@
+# lab, the record and launcher of the computations (lab/README.md): built and
+# tested when lab/ or this workflow changes, and by hand from the Actions tab.
+# lab is a Cargo workspace of its own: the engine's builds are not concerned.
+name: lab
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "lab/**"
+      - ".github/workflows/lab.yml"
+  pull_request:
+    paths:
+      - "lab/**"
+      - ".github/workflows/lab.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      # The tests read the repository's tags and the summaries' history.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Libraries eframe links to
+        run: sudo apt-get update && sudo apt-get install -y libxkbcommon-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libgl1-mesa-dev libwayland-dev
+      - name: Build
+        working-directory: lab
+        run: cargo build --release --locked
+      - name: Test
+        working-directory: lab
+        run: cargo test --release --locked

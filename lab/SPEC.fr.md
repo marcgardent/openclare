@@ -411,6 +411,11 @@ Chacun est un ou quelques commits sur la branche, puis un arrêt pour la revue d
 | M4 | estimations et heures de fin | tests unitaires sur des historiques inventés ; une file de `sleep` lancée deux fois |
 | M5 | détail de l'historique, modification, export Markdown et CSV, saisie d'une exécution passée, copie dans le dépôt, `lab/README.md` et `README.fr.md`, CI ; la PR sur le mot de Marc | un export collé dans un tableau de brouillon |
 
+État au 2026-11-06 : jalons M1 à M5 faits, avec l'écran État et la règle des tags (sections 10 bis, 11,
+13) demandés après M2, et les résumés du dépôt lus à chaque ouverture à la place de M1b. Pas fait :
+la modification du catalogue dans l'application (modifier `jobs.toml` à la main), les libellés français
+(Q11).
+
 ## 16. Ce qui ne peut pas être vérifié ici
 
 - **VRAM** : `nvidia-smi` répond sur cette machine (GeForce RTX 5070, 12 227 Mio, lu le 2026-11-06), la

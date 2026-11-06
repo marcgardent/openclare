@@ -54,6 +54,38 @@ impl History {
     }
 }
 
+/// The live file rewritten with `run` in place of the line of the same id,
+/// the five previous versions kept as runs.jsonl.1 to .5 (SPEC.md, section 4).
+pub fn replace(path: &Path, run: &Run) -> Result<(), String> {
+    let mut history = History::read(path)?;
+    match history.runs.iter_mut().find(|known| known.id == run.id) {
+        Some(known) => *known = run.clone(),
+        None => return Err(format!("{}: no run {}", path.display(), run.id)),
+    }
+    write_all(path, &history.runs)
+}
+
+/// All the runs, one per line, sorted, the previous versions kept.
+pub fn write_all(path: &Path, runs: &[Run]) -> Result<(), String> {
+    let mut text = String::new();
+    for run in runs {
+        text.push_str(&serde_json::to_string(run).map_err(|error| error.to_string())?);
+        text.push('\n');
+    }
+    if path.exists() {
+        let numbered = |count: u32| {
+            let mut name = path.as_os_str().to_owned();
+            name.push(format!(".{count}"));
+            std::path::PathBuf::from(name)
+        };
+        for count in (1..5).rev() {
+            let _ = std::fs::rename(numbered(count), numbered(count + 1));
+        }
+        std::fs::copy(path, numbered(1)).map_err(|error| format!("{}: {error}", path.display()))?;
+    }
+    write_atomically(path, text.as_bytes())
+}
+
 /// Written beside, then renamed: a reader sees the old file or the new one.
 pub fn write_atomically(path: &Path, bytes: &[u8]) -> Result<(), String> {
     let failed = |error: std::io::Error| format!("{}: {error}", path.display());
@@ -78,6 +110,22 @@ mod tests {
         assert!(history.problems.is_empty(), "{:?}", history.problems);
         let ids: Vec<&str> = history.runs.iter().map(|run| run.id.as_str()).collect();
         assert_eq!(ids, ["seeded-forced", "20261106-153212-quick-bench", "20261106-223912-forced-whole-lower"]);
+    }
+
+    #[test]
+    fn an_edit_rewrites_its_line_and_keeps_the_previous_version() {
+        let folder = Path::new(env!("CARGO_MANIFEST_DIR")).join("target").join("test-data").join("store");
+        let _ = std::fs::remove_dir_all(&folder);
+        std::fs::create_dir_all(&folder).unwrap();
+        let path = folder.join("runs.jsonl");
+        std::fs::write(&path, FIXTURE).unwrap();
+        let mut run = History::parse(FIXTURE).runs[1].clone();
+        run.comment = "changed".to_string();
+        replace(&path, &run).unwrap();
+        let again = History::read(&path).unwrap();
+        assert_eq!(again.runs.len(), 3);
+        assert_eq!(again.runs[1].comment, "changed");
+        assert_eq!(std::fs::read_to_string(folder.join("runs.jsonl.1")).unwrap(), FIXTURE);
     }
 
     #[test]

@@ -495,6 +495,10 @@ Each is one or a few commits on the branch, then a stop for Marc's review.
 | M4 | estimates and ETAs | unit tests on made-up histories; a queue of `sleep` jobs run twice |
 | M5 | History detail, editing, export Markdown and CSV, record a past run, copy to the repo, `lab/README.md` and `README.fr.md`, CI; the PR on Marc's word | an export pasted into a draft table |
 
+Status on 2026-11-06: M1 to M5 done, with the State screen and the tag rule (sections 10b, 11, 13)
+asked for after M2, and the repository's summaries read at every opening in place of M1b. Not done:
+editing the catalogue in the app (edit `jobs.toml` by hand), French labels (Q11).
+
 ## 16. What cannot be verified here
 
 - **VRAM**: `nvidia-smi` answers on this machine (GeForce RTX 5070, 12,227 MiB, read on 2026-11-06), so the

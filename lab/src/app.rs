@@ -1,6 +1,7 @@
 //! The window (SPEC.md, section 11): a top bar and four tabs. The queue
 //! screen is in `queue.rs`; the runner it drives, in `runner.rs`.
 
+mod history;
 mod machine;
 mod queue;
 mod state;
@@ -85,6 +86,9 @@ pub struct App {
     closing: bool,
     quit_after_stop: bool,
     log: LogView,
+    // History tab: the edit of the run selected, and the form of a past run.
+    edit: Option<history::Edit>,
+    past: Option<history::PastRun>,
     // Catalogue tab.
     job: Option<String>,
     // History tab.
@@ -195,6 +199,8 @@ impl App {
             closing: false,
             quit_after_stop: false,
             log: LogView::default(),
+            edit: None,
+            past: None,
             job: None,
             filter: Filter::default(),
             sort: (SortBy::Started, false),
@@ -326,6 +332,7 @@ impl eframe::App for App {
             self.about = open;
         }
         self.stop_dialog(ui.ctx());
+        self.past_run_window(ui.ctx());
         self.take_screenshot(ui.ctx());
     }
 }
@@ -453,7 +460,14 @@ impl App {
                 .stroke(egui::Stroke::new(1.0, colour.gamma_multiply(0.6)))
                 .corner_radius(12)
                 .inner_margin(egui::Margin::symmetric(10, 3))
-                .show(ui, |ui| ui.label(RichText::new(format!("{title} · {short}")).color(colour).strong()))
+                .show(ui, |ui| {
+                    let text = if verdict.calmness == Calmness::Measuring {
+                        short.clone()
+                    } else {
+                        format!("{title} · {short}")
+                    };
+                    ui.label(RichText::new(text).color(colour).strong())
+                })
                 .response;
             response.on_hover_text(&verdict.text);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -684,15 +698,19 @@ impl App {
             };
             if ascending { order } else { order.reverse() }
         });
-        ui.label(RichText::new(format!("{} of {} runs", shown.len(), runs.len())).color(MUTED));
+        ui.horizontal(|ui| {
+            ui.label(RichText::new(format!("{} of {} runs", shown.len(), runs.len())).color(MUTED));
+            self.history_tools(ui, &shown);
+        });
 
         let selected = self.run.clone();
         let detail = selected.as_ref().and_then(|id| runs.iter().find(|run| &run.id == id)).cloned();
         if let Some(run) = &detail {
             egui::Panel::right("run").resizable(true).default_size(460.0).show(ui, |ui| {
-                egui::ScrollArea::vertical()
-                    .auto_shrink([false; 2])
-                    .show(ui, |ui| run_detail(ui, run, &self.places.data));
+                egui::ScrollArea::vertical().auto_shrink([false; 2]).show(ui, |ui| {
+                    run_detail(ui, run, &self.places.data);
+                    self.edit_panel(ui, run);
+                });
             });
         }
         let tags = self.tags.clone();
@@ -880,17 +898,18 @@ fn run_detail(ui: &mut egui::Ui, run: &Run, data: &Path) {
             .as_ref()
             .map(|gpu| format!(" · {} {}", gpu.name, gigabytes(gpu.memory_bytes)))
             .unwrap_or_default();
-        rows.push((
-            "Machine",
-            format!(
-                "{} · {} · {} cores, {} threads · {}{gpu}",
-                machine.hostname,
-                machine.cpu,
-                machine.cores,
-                machine.threads,
-                gigabytes(machine.memory_bytes)
-            ),
-        ));
+        // A summary of the repository records no host nor cores: say only what is known.
+        let mut parts: Vec<String> = Vec::new();
+        if !machine.hostname.is_empty() {
+            parts.push(machine.hostname.clone());
+        }
+        parts.push(machine.cpu.clone());
+        match machine.cores {
+            0 => parts.push(format!("{} threads", machine.threads)),
+            cores => parts.push(format!("{cores} cores, {} threads", machine.threads)),
+        }
+        parts.push(format!("{}{gpu}", gigabytes(machine.memory_bytes)));
+        rows.push(("Machine", parts.join(" · ")));
     }
     if let Some(load) = &run.load {
         let sample = |sample: &crate::model::Sample| {
@@ -961,5 +980,4 @@ fn run_detail(ui: &mut egui::Ui, run: &Run, data: &Path) {
     {
         let _ = std::process::Command::new("xdg-open").arg(data.join(&log.path)).spawn();
     }
-    ui.label(RichText::new("Editing the comment and the papers comes in milestone M5.").color(MUTED));
 }
