@@ -18,6 +18,7 @@ mod files;
 mod home;
 mod machine;
 mod model;
+mod monitor;
 mod runner;
 mod settings;
 mod state;

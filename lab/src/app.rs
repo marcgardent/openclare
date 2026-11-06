@@ -1,6 +1,7 @@
 //! The window (SPEC.md, section 11): a top bar and four tabs. The queue
 //! screen is in `queue.rs`; the runner it drives, in `runner.rs`.
 
+mod machine;
 mod queue;
 mod state;
 
@@ -15,6 +16,7 @@ use egui_extras::{Column, TableBuilder};
 use crate::catalogue::{Catalogue, Category, Job, ThreadUse, render};
 use crate::home::{GitState, Places, Worktree, worktrees};
 use crate::model::{Paper, Run, Source, duration_text};
+use crate::monitor::{Calmness, Watch};
 use crate::runner::{Runner, Shared, recover};
 use crate::settings::{Policy, Settings};
 use crate::state::{Tag, place, repository_runs, tags};
@@ -69,6 +71,9 @@ pub struct App {
     about: bool,
     // Queue tab: the queue the runner runs, shared with it.
     shared: Arc<Mutex<Shared>>,
+    // The monitor's samples, and the calm thresholds it and the runner read.
+    watch: Arc<Mutex<Watch>>,
+    calm: Arc<Mutex<crate::settings::CalmSettings>>,
     worktrees: Vec<Worktree>,
     search: String,
     comment: String,
@@ -159,7 +164,14 @@ impl App {
         recover(&places, catalogue.as_ref().ok(), &worktrees, &mut shared);
         let shared = Arc::new(Mutex::new(shared));
         let machine = crate::machine::machine(&settings.machine_label);
-        Runner::new(shared.clone(), places.clone(), machine, Box::new(move || context.request_repaint())).spawn();
+        let watch = Arc::new(Mutex::new(Watch::default()));
+        let calm = Arc::new(Mutex::new(settings.calm.clone()));
+        let period = Duration::from_secs(u64::from(settings.sample_seconds.clamp(1, 5)));
+        let repaint = context.clone();
+        crate::monitor::spawn(watch.clone(), calm.clone(), period, Box::new(move || repaint.request_repaint()));
+        Runner::new(shared.clone(), places.clone(), machine, Box::new(move || context.request_repaint()))
+            .with_monitor(watch.clone(), calm.clone())
+            .spawn();
         let mut app = App {
             catalogue,
             history: History::read(&places.runs()),
@@ -172,6 +184,8 @@ impl App {
             tab: opening.tab.unwrap_or(Tab::State),
             about: false,
             shared,
+            watch,
+            calm,
             worktrees,
             search: String::new(),
             comment: String::new(),
@@ -289,10 +303,7 @@ impl eframe::App for App {
                 Tab::Queue => self.queue_tab(ui),
                 Tab::History => self.history_tab(ui),
                 Tab::Catalogue => self.catalogue_tab(ui),
-                Tab::Machine => {
-                    ui.add_space(20.0);
-                    ui.label("The monitor of the machine and the calm indicator come in milestone M3.");
-                }
+                Tab::Machine => self.machine_tab(ui),
             }
         });
         if self.about {
@@ -405,16 +416,6 @@ impl App {
     }
 }
 
-/// A rounded label in a colour: the calm indicator, the marks of the tables.
-fn pill(ui: &mut egui::Ui, text: &str, colour: Color32) {
-    egui::Frame::new()
-        .fill(colour.gamma_multiply(0.18))
-        .stroke(egui::Stroke::new(1.0, colour.gamma_multiply(0.6)))
-        .corner_radius(12)
-        .inner_margin(egui::Margin::symmetric(10, 3))
-        .show(ui, |ui| ui.label(RichText::new(text).color(colour).strong()));
-}
-
 impl App {
     fn top_bar(&mut self, ui: &mut egui::Ui) {
         ui.add_space(6.0);
@@ -438,7 +439,23 @@ impl App {
                 }
             }
             ui.add_space(8.0);
-            pill(ui, "Machine not monitored yet (M3)", MUTED);
+            let verdict = crate::monitor::lock(&self.watch).verdict(&self.settings.calm);
+            let (title, colour) = match verdict.calmness {
+                Calmness::Measuring => ("Measuring", MUTED),
+                Calmness::Calm => ("Calm machine", GREEN),
+                Calmness::Ours => ("Busy with our run", AMBER),
+                Calmness::Busy => ("Loaded by something else", RED),
+            };
+            // The first clause in the bar; the whole verdict on hover.
+            let short = verdict.text.split(" · ").next().unwrap_or_default().to_string();
+            let response = egui::Frame::new()
+                .fill(colour.gamma_multiply(0.18))
+                .stroke(egui::Stroke::new(1.0, colour.gamma_multiply(0.6)))
+                .corner_radius(12)
+                .inner_margin(egui::Margin::symmetric(10, 3))
+                .show(ui, |ui| ui.label(RichText::new(format!("{title} · {short}")).color(colour).strong()))
+                .response;
+            response.on_hover_text(&verdict.text);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if ui.button("About").clicked() {
                     self.about = true;

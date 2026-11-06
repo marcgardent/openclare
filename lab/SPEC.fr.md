@@ -418,8 +418,8 @@ Chacun est un ou quelques commits sur la branche, puis un arrêt pour la revue d
   partagée entre nous et l'étranger.
 - **Threads d'une tâche** : l'application pose les variables ; que chaque script les respecte n'est pas
   vérifié (Q8, Q9).
-- **Coût de l'application** : le CPU de son propre échantillonnage (estimé sous 1 % d'un thread) compte
-  comme étranger ; il est mesuré au jalon M3.
+- **Coût de l'application** : mesuré le 2026-11-06 à 15 % d'un thread (environ 2 % de la machine), fenêtre
+  ouverte sur l'onglet Machine, machine chargée par d'autres travaux ; il compte comme CPU étranger.
 - **Seuils du calme** : une première proposition, à régler sur de vraies exécutions.
 - **Wayland ou X11** : la session de Marc n'est pas vérifiée ; eframe gère les deux.
 

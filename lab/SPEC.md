@@ -500,8 +500,8 @@ Each is one or a few commits on the branch, then a stop for Marc's review.
 - **VRAM**: `nvidia-smi` answers on this machine (GeForce RTX 5070, 12,227 MiB, read on 2026-11-06), so the
   query of §9 works; the GPU % of a process is not read, so GPU load is not split into ours and foreign.
 - **Threads of a job**: the app sets the variables; whether each script honours them is not checked (Q8, Q9).
-- **Timing of the app itself**: the sampler's own CPU (estimated under 1 % of a thread) counts as foreign;
-  it is measured in M3.
+- **Cost of the app itself**: measured on 2026-11-06 at 15 % of one thread (about 2 % of the machine),
+  window open on the Machine tab, machine loaded by other work; it counts as foreign CPU.
 - **Calm thresholds**: a first proposal, to tune on real runs.
 - **Wayland or X11**: not checked which session Marc runs; eframe supports both.
 

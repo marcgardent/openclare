@@ -224,6 +224,22 @@ impl App {
                 });
             });
         }
+        if let Some(why) = shared.waiting_for_calm.clone() {
+            banner(ui, RED, |ui| {
+                ui.label(why);
+                ui.horizontal(|ui| {
+                    if ui.button("Start anyway (its time will not count)").clicked()
+                        && let Some(item) = shared.items.iter_mut().find(|item| item.state == ItemState::Waiting)
+                    {
+                        item.forced = true;
+                    }
+                    if ui.button("Pause the queue").clicked() {
+                        shared.mode = Mode::Paused("Paused while waiting for a calm machine.".to_string());
+                        shared.waiting_for_calm = None;
+                    }
+                });
+            });
+        }
         let threads = if shared.mode == Mode::Idle { self.settings.threads } else { shared.queue.threads };
         let timings = self.timings(&shared, threads);
         let mut drops: Vec<(u64, usize)> = Vec::new();

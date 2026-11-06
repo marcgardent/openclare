@@ -27,13 +27,14 @@ use crate::files;
 use crate::home::{GitState, Places, Worktree};
 use crate::machine;
 use crate::model::{Calm, FORMAT, FileRef, Git, Machine, PaperRef, Prepare, Run, Source, Status, Threads};
-use crate::settings::Policy;
+use crate::monitor::{self, Calmness, Verdict, Watch};
+use crate::settings::{CalmSettings, Policy};
 
 /// How often the runner looks at its child.
 const TICK: Duration = Duration::from_millis(200);
 
 /// What a run records of its calm until the monitor exists (milestone M3).
-const NOT_MEASURED: &str = "not measured: the monitor comes with milestone M3";
+const NOT_MEASURED: &str = "not measured: lab ran without its monitor";
 
 #[derive(Clone, Debug)]
 pub struct Item {
@@ -43,6 +44,8 @@ pub struct Item {
     pub parameters: BTreeMap<String, String>,
     pub checkout: Worktree,
     pub state: ItemState,
+    /// Started although the machine was not calm: its time cannot be reported.
+    pub forced: bool,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -115,6 +118,9 @@ pub struct Shared {
     /// What went wrong, for the window to show.
     pub messages: Vec<String>,
     pub orphan: Option<Orphan>,
+    /// Why the item at the head of the queue waits: its timing matters and
+    /// the machine is not calm.
+    pub waiting_for_calm: Option<String>,
     next_key: u64,
 }
 
@@ -128,7 +134,14 @@ impl Shared {
     pub fn add(&mut self, job: Job, checkout: Worktree) -> u64 {
         self.next_key += 1;
         let parameters = job.parameters.clone();
-        self.items.push(Item { key: self.next_key, job, parameters, checkout, state: ItemState::Waiting });
+        self.items.push(Item {
+            key: self.next_key,
+            job,
+            parameters,
+            checkout,
+            state: ItemState::Waiting,
+            forced: false,
+        });
         self.next_key
     }
 
@@ -216,7 +229,7 @@ pub fn recover(places: &Places, catalogue: Option<&Catalogue>, worktrees: &[Work
                 log.as_deref().and_then(|log| std::fs::metadata(log).and_then(|metadata| metadata.modified()).ok());
             run.ended = ended.map(|ended| DateTime::<Local>::from(ended).fixed_offset());
             run.status = Status::Interrupted;
-            run.calm.reason = format!("the app ended during the run; {NOT_MEASURED}");
+            run.calm.reason = "the app ended during the run: its calm during it is not known".to_string();
             if let Err(error) = write_record(places, &run) {
                 shared.messages.push(error);
             }
@@ -287,6 +300,17 @@ struct Running {
     stop_sent: Option<Instant>,
     killed: bool,
     prepare_key: Option<String>,
+    during: During,
+}
+
+/// The monitor's samples taken during a run.
+#[derive(Default)]
+struct During {
+    last: Option<Instant>,
+    foreign: Vec<f64>,
+    load1_max: f64,
+    memory_peak: u64,
+    vram_peak: Option<u64>,
 }
 
 pub struct Runner {
@@ -300,6 +324,10 @@ pub struct Runner {
     ids: BTreeSet<String>,
     /// What state.json holds, as last written: None for no file.
     written: Option<Option<String>>,
+    /// The monitor and its thresholds; without them the calm is not measured.
+    monitor: Option<(Arc<Mutex<Watch>>, Arc<Mutex<CalmSettings>>)>,
+    /// Since when the head of the queue waits for a calm machine.
+    waiting_since: Option<DateTime<Local>>,
 }
 
 impl Runner {
@@ -307,7 +335,45 @@ impl Runner {
         let ids = crate::store::History::read(&places.runs())
             .map(|history| history.runs.into_iter().map(|run| run.id).collect())
             .unwrap_or_default();
-        Runner { shared, places, machine, repaint, running: None, prepared: Vec::new(), ids, written: None }
+        Runner {
+            shared,
+            places,
+            machine,
+            repaint,
+            running: None,
+            prepared: Vec::new(),
+            ids,
+            written: None,
+            monitor: None,
+            waiting_since: None,
+        }
+    }
+
+    /// The monitor whose verdict holds a job whose timing matters, and whose
+    /// samples make the calm of each record.
+    pub fn with_monitor(mut self, watch: Arc<Mutex<Watch>>, calm: Arc<Mutex<CalmSettings>>) -> Runner {
+        self.monitor = Some((watch, calm));
+        self
+    }
+
+    /// A sample of the machine: /proc, and the monitor's last point when there is one.
+    fn sample(&self) -> crate::model::Sample {
+        let mut sample = machine::sample();
+        if let Some((watch, _)) = &self.monitor
+            && let Some(point) = monitor::lock(watch).latest()
+        {
+            sample.cpu_percent = Some(point.cpu);
+            sample.foreign_cpu_percent = Some(point.foreign);
+            sample.vram_used_bytes = point.vram.map(|(used, _)| used);
+            sample.gpu_percent = point.gpu;
+        }
+        sample
+    }
+
+    fn verdict(&self) -> Option<Verdict> {
+        let (watch, calm) = self.monitor.as_ref()?;
+        let calm = calm.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone();
+        Some(monitor::lock(watch).verdict(&calm))
     }
 
     /// The runner's thread: a step every tick, for as long as the app lives.
@@ -346,6 +412,35 @@ impl Runner {
         if self.watch_orphan() {
             return;
         }
+        // A job whose timing matters waits, at the head of the queue, for a calm machine.
+        let head = {
+            let shared = self.lock();
+            if shared.mode != Mode::Running {
+                return;
+            }
+            shared
+                .items
+                .iter()
+                .find(|item| item.state == ItemState::Waiting)
+                .map(|item| (item.job.clone(), item.forced))
+        };
+        if let Some((job, false)) = &head
+            && job.timing_matters
+            && let Some(verdict) = self.verdict()
+            && verdict.calmness != Calmness::Calm
+        {
+            let since = *self.waiting_since.get_or_insert_with(Local::now);
+            self.lock().waiting_for_calm = Some(format!(
+                "{} waits for a calm machine since {} ({})",
+                job.name,
+                since.format("%H:%M"),
+                verdict.text
+            ));
+            (self.repaint)();
+            return;
+        }
+        self.waiting_since = None;
+        self.lock().waiting_for_calm = None;
         let next = {
             let mut shared = self.lock();
             if shared.mode != Mode::Running {
@@ -395,6 +490,7 @@ impl Runner {
     fn begin(&mut self, item: &Item, queue: &QueueSettings) -> Result<(), String> {
         let job = &item.job;
         let checkout = item.checkout.path.clone();
+        let before = self.verdict();
         let git = GitState::read(&checkout)?;
         let started = Local::now().fixed_offset();
         let id = self.unique_id(&started, &job.name);
@@ -433,13 +529,19 @@ impl Runner {
             threads: Some(Threads { setting: queue.threads, effective: threads }),
             memory_limit_gb: job.memory_limit_gb,
             machine: Some(self.machine.clone()),
-            load: Some(crate::model::Load { at_start: machine::sample(), at_end: None, during: None }),
+            load: Some(crate::model::Load { at_start: self.sample(), at_end: None, during: None }),
             calm: Calm {
-                before: false,
+                before: before.as_ref().is_some_and(|verdict| verdict.calmness == Calmness::Calm),
                 during: false,
-                forced: false,
+                forced: item.forced,
                 timing_valid: false,
-                reason: NOT_MEASURED.to_string(),
+                reason: match &before {
+                    None => NOT_MEASURED.to_string(),
+                    Some(verdict) if verdict.calmness != Calmness::Calm => {
+                        format!("not calm at the start: {}", verdict.text)
+                    }
+                    Some(_) => String::new(),
+                },
             },
             comment: queue.comment.clone(),
             papers: if queue.papers.is_empty() {
@@ -468,6 +570,7 @@ impl Runner {
             stop_sent: None,
             killed: false,
             prepare_key: None,
+            during: During::default(),
         };
         let prepare = match &job.prepare {
             Some(prepare) => Some((render(prepare, &executed)?, scrub.text(&render(prepare, &recorded)?))),
@@ -546,7 +649,11 @@ impl Runner {
                 command.pre_exec(move || setrlimit(Resource::RLIMIT_AS, bytes, bytes).map_err(std::io::Error::from));
             }
         }
-        running.child = Some(command.spawn().map_err(|error| format!("bash: {error}"))?);
+        let child = command.spawn().map_err(|error| format!("bash: {error}"))?;
+        if let Some((watch, _)) = &self.monitor {
+            monitor::lock(watch).group = Some(child.id() as i32);
+        }
+        running.child = Some(child);
         running.phase = phase;
         running.phase_started = Instant::now();
         Ok(())
@@ -557,6 +664,19 @@ impl Runner {
             let shared = self.lock();
             (shared.stop, Duration::from_secs(u64::from(shared.queue.grace_seconds.max(1))))
         };
+        if let (Some((watch, _)), Some(running)) = (&self.monitor, self.running.as_mut()) {
+            let watch = monitor::lock(watch);
+            if let Some(point) = watch.latest().filter(|point| running.during.last.is_none_or(|last| point.at > last)) {
+                let during = &mut running.during;
+                during.last = Some(point.at);
+                during.foreign.push(point.foreign);
+                during.load1_max = during.load1_max.max(point.load[0]);
+                during.memory_peak = during.memory_peak.max(point.memory_used);
+                if let Some((used, _)) = point.vram {
+                    during.vram_peak = Some(during.vram_peak.unwrap_or(0).max(used));
+                }
+            }
+        }
         let running = self.running.as_mut().expect("a run under way");
         let Some(child) = running.child.as_mut() else { return };
         let group = child.id() as i32;
@@ -643,8 +763,46 @@ impl Runner {
         run.ended = Some(ended);
         run.seconds = seconds;
         run.status = status.clone();
+        let at_end = self.sample();
         if let Some(load) = &mut run.load {
-            load.at_end = Some(machine::sample());
+            load.at_end = Some(at_end);
+        }
+        if let Some((watch, calm)) = &self.monitor {
+            {
+                let mut watch = monitor::lock(watch);
+                watch.group = None;
+                watch.our_last_end = Some(Instant::now());
+            }
+            let calm = calm.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone();
+            let during = &running.during;
+            if !during.foreign.is_empty() {
+                let mean = during.foreign.iter().sum::<f64>() / during.foreign.len() as f64;
+                let peak = during.foreign.iter().copied().fold(0.0, f64::max);
+                if let Some(load) = &mut run.load {
+                    load.during = Some(crate::model::During {
+                        samples: during.foreign.len() as u32,
+                        foreign_cpu_mean: mean,
+                        foreign_cpu_peak: peak,
+                        load1_max: during.load1_max,
+                        memory_used_peak: during.memory_peak,
+                        vram_used_peak: during.vram_peak,
+                    });
+                }
+                run.calm.during = mean < calm.foreign_cpu_mean_max && peak < calm.foreign_cpu_peak_max;
+                if !run.calm.during {
+                    let reason = format!("foreign CPU mean {mean:.1} %, peak {peak:.1} % during the run");
+                    run.calm.reason =
+                        if run.calm.reason.is_empty() { reason } else { format!("{}; {reason}", run.calm.reason) };
+                }
+            }
+            if run.calm.forced {
+                run.calm.reason = if run.calm.reason.is_empty() {
+                    "started anyway".to_string()
+                } else {
+                    format!("started anyway; {}", run.calm.reason)
+                };
+            }
+            run.calm.timing_valid = run.calm.before && run.calm.during && !run.calm.forced;
         }
         let mut outputs: BTreeSet<String> = BTreeSet::new();
         for pattern in &running.outputs {
@@ -733,7 +891,8 @@ impl Runner {
         let mut run = orphan.run;
         run.status = status;
         run.ended = Some(Local::now().fixed_offset());
-        run.calm.reason = format!("the app ended during the run, its exit status is not known; {NOT_MEASURED}");
+        run.calm.reason =
+            "the app ended during the run: its exit status and its calm during it are not known".to_string();
         if let Err(error) = write_record(&self.places, &run) {
             self.message(error);
         }
@@ -1044,6 +1203,58 @@ mod tests {
         again.lock().unwrap().cancel_waiting();
         runner.step();
         assert!(!places.data.join("state.json").exists(), "nothing waits any more");
+    }
+
+    #[test]
+    fn a_job_whose_timing_matters_waits_for_calm_unless_forced() {
+        let places = places("calm");
+        let catalogue =
+            jobs("[[job]]\nname = \"timed\"\ncategory = \"experiment\"\ncommand = \"true\"\ntiming_matters = true\n");
+        // A machine busy with something else: one sample far above the peak.
+        let point = |foreign: f64| crate::monitor::Point {
+            at: Instant::now(),
+            cpu: foreign,
+            per_thread: Vec::new(),
+            ours: 0.0,
+            foreign,
+            load: [0.2, 0.2, 0.2],
+            memory_used: 1,
+            memory_total: 2,
+            vram: None,
+            gpu: None,
+        };
+        let watch = Arc::new(Mutex::new(Watch {
+            points: vec![point(60.0)].into(),
+            started: Some(Instant::now() - Duration::from_secs(120)),
+            ..Watch::default()
+        }));
+        let calm = Arc::new(Mutex::new(CalmSettings::default()));
+        let shared = Arc::new(Mutex::new(Shared::default()));
+        {
+            let mut queue = shared.lock().unwrap();
+            queue.add(catalogue.job("timed").unwrap().clone(), home(&places));
+            queue.start(QueueSettings {
+                id: "test".to_string(),
+                threads: 1,
+                grace_seconds: 1,
+                ..QueueSettings::default()
+            });
+        }
+        let mut runner = Runner::new(shared.clone(), places.clone(), machine::machine("test"), Box::new(|| {}))
+            .with_monitor(watch.clone(), calm);
+        runner.step();
+        assert!(runner.running.is_none(), "it waits");
+        assert!(shared.lock().unwrap().waiting_for_calm.as_ref().unwrap().contains("waits for a calm machine"));
+        shared.lock().unwrap().items[0].forced = true;
+        let begun = Instant::now();
+        while shared.lock().unwrap().mode == Mode::Running || runner.running.is_some() {
+            runner.step();
+            assert!(begun.elapsed() < Duration::from_secs(10));
+            std::thread::sleep(Duration::from_millis(20));
+        }
+        let run = &History::read(&places.runs()).unwrap().runs[0];
+        assert!(run.calm.forced && !run.calm.before && !run.calm.timing_valid, "{:?}", run.calm);
+        assert!(run.calm.reason.starts_with("started anyway"), "{}", run.calm.reason);
     }
 
     #[test]
