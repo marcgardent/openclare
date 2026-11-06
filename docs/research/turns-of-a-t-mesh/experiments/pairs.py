@@ -24,7 +24,7 @@ listed):
         [--table docs/research/turns-of-a-t-mesh/experiments/results/conflicts.json] [--largest 4] [--depth 8]
 
 Identities are checked in floating point, on the balanced lengths (a basis
-of them); homotopies are not checked. Seconds to minutes a row. Writes
+of them); the homotopies are checked by `conjugacy.py`. Seconds to minutes a row. Writes
 results/pairs.json.
 """
 

@@ -135,7 +135,7 @@ pub(super) fn call(directory: &Path, tmesh: &TMesh, real: &[f64], exact: &[f64],
     .unwrap();
     let folds: Vec<String> = folds.iter().map(|&(arc, share, sharp)| format!("[{arc},{share},{sharp}]")).collect();
     write!(out, "\"folds\":[{}],", folds.join(",")).unwrap();
-    let defects = lattice::build(tmesh, x).defects(tmesh);
+    let defects = lattice::build(tmesh, x).defects(tmesh, request.merge_singularities);
     write!(out, "\"reopen\":{:?},\"unexplained\":{},", defects.reopen, defects.unexplained).unwrap();
     tmesh_fields(&mut out, tmesh);
     // Every strip of quads the lengths make, each with the conditions on the

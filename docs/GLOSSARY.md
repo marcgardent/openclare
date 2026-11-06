@@ -144,7 +144,20 @@ and 5 leave a valence-5 vertex. Separatrices become edge loops that end at poles
 
 **Trace**. A separatrix followed across the surface until it meets another trace or a border.
 It is called a *motorcycle* because it stops where it hits another one, like the bikes in the
-film Tron.
+film Tron. The traces of all the poles form the *motorcycle graph*, introduced on quad meshes by
+Eppstein, Goodrich, Kim and Tamstorf ([SGP 2008](https://disneyanimation.com/publications/motorcycle-graphs-canonical-quad-mesh-partitioning/)).
+
+![Motorcycle traces leaving the poles of a small quad mesh, one edge per step](glossary/motorcycles.svg)
+
+*On a quad mesh: the traces leave every pole together, one edge per step, and stop on a trace
+already drawn or on the border. The regions they close are the patches. Same mesh as the
+T-mesh picture below.*
+
+![Motorcycle traces leaving the singularities of a continuous cross field](glossary/motorcycles_field.svg)
+
+*In a continuous cross field whose singularities are the poles of the mesh above: the traces
+follow the field at one speed and stop the same way. There is no edge to snap to, so a trace
+may end elsewhere than on the mesh.*
 
 **Head-on merge**. Two traces that run into each other from opposite directions are joined into
 one, instead of one stopping on the other.

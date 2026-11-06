@@ -4,21 +4,28 @@ remeshers"), read from the bench's results at 3,000 quads; nothing of the
 bench is run again.
 
     python3 docs/research/closing-loops/experiments/against_remeshers.py \
-        [--results bench/results/results.json] [--git <commit>]... [--no-closing-run]
+        [--results bench/results/results.json] [--git <commit>]...
+        [--no-closing-run | --no-closing-from <summary>]
 
 The figures, with the paper's definitions: a tool "produces a mesh" for a
 model if one of its runs gives a mesh whose loops can be measured (a share of
 spiral edges); it "meshes validly in every run" if every run of it gives a
-valid mesh. Per model and tool, the median over the runs (five seeds for
-QuadriFlow, one run for openclare and AutoRemesher), as the bench reports it;
-then the mean over the models of the subset. Besides the share of spiral
+valid mesh; a model a tool was not run on counts as neither. Per model and
+tool, the median over the runs (five seeds for QuadriFlow, one run for
+openclare, AutoRemesher, QuadWild-BiMDF and Instant Meshes), as the bench
+reports it; then the mean over the models of the subset. QuadWild-BiMDF and
+Instant Meshes were run on the 27 models whose meshes may be passed on
+(CREDITS.md), not on the other 6. Besides the share of spiral
 edges, the independent measures of structure (DT-137): edges on helices of
 any pitch, helices of pitch above four the spiral count misses, edges on
-closed loops.
+closed loops; and, for the loops that are neither, edges on open loops and
+irregular vertices.
 
 --git <commit> reads `bench/results/results.json` as it is at that commit
 too (the paper's figures came from 5bc16c6, and without closing from
-b0fba91), to check that the definitions give the paper's numbers back.
+b0fba91, before the bench ran QuadWild-BiMDF and Instant Meshes), to check
+that the definitions give the paper's numbers back; a results file is
+compared on the tools it has.
 
 --no-closing-run makes the line "without closing" on the engine given: the
 add-on chain of the bench (bench/blender_run.py, on each model's scene) with
@@ -26,6 +33,10 @@ add-on chain of the bench (bench/blender_run.py, on each model's scene) with
 the models of the subsets. It needs the add-on's library built from the same
 commit (`make addon`; the engine of the add-on is that library, not
 --openclare, which measures) and blender on the PATH.
+
+--no-closing-from <summary> makes the same line from the runs a previous
+summary recorded (its "no_closing" "per_model"), nothing run: the means are
+taken again on the current subsets, which must be among its models.
 """
 
 import argparse
@@ -38,8 +49,11 @@ from pathlib import Path
 
 import common
 
-TOOLS = ["openclare", "quadriflow", "autoremesher"]
-KEYS = ["loop_edges_spiral", "loop_edges_helix", "loops_helix_missed", "loop_edges_closed"]
+TOOLS = ["openclare", "quadriflow", "autoremesher", "quadwild-bimdf", "instant-meshes-jakob"]
+NAMES = {"openclare": "openclare", "quadriflow": "QuadriFlow", "autoremesher": "AutoRemesher",
+         "quadwild-bimdf": "QuadWild-BiMDF", "instant-meshes-jakob": "Instant Meshes"}
+KEYS = ["loop_edges_spiral", "loop_edges_helix", "loops_helix_missed", "loop_edges_closed", "loop_edges_open",
+        "irregular_vertices"]
 
 
 def measured(runs):
@@ -68,13 +82,15 @@ def subset_means(per_model, models, keys=KEYS):
     return out
 
 
-def compare(results, tools=TOOLS):
+def compare(results):
     """The subsets and the means of the paper, from one results file."""
     models = list(results["runs"])
+    tools = [tool for tool in TOOLS if any(tool in results["runs"][model] for model in models)]
     every_valid = [model for model in models if all(valid_every_run(results, model, tool) for tool in tools)]
     all_produce = [model for model in models if all(produced(results, model, tool) for tool in tools)]
     out = {
         "models": len(models),
+        "run_on": {tool: sum(1 for model in models if tool in results["runs"][model]) for tool in tools},
         "produce_a_mesh": {tool: sum(1 for model in models if produced(results, model, tool)) for tool in tools},
         "valid_in_every_run": {tool: sum(1 for model in models if valid_every_run(results, model, tool))
                                for tool in tools},
@@ -149,8 +165,43 @@ def no_closing_run(models, target, directory, places):
     return runs
 
 
+def no_closing_from(path, models):
+    """The runs without closing a previous summary recorded, as runs."""
+    recorded = json.loads(path.read_text())["no_closing"]
+    missing = [model for model in models if model not in recorded["per_model"]]
+    if missing:
+        raise SystemExit(f"{path} has no run without closing of {', '.join(missing)}")
+    return recorded, {model: {"metrics": recorded["per_model"][model]} for model in models}
+
+
 def percent(value):
     return None if value is None else round(100 * value, 2)
+
+
+def table(summary, french=False):
+    """The rows of Table tab:remeshers: models run, meshed and meshed validly
+    in every run, then the spiral and closed shares on the two subsets."""
+    current, no_closing = summary["current"], summary.get("no_closing")
+
+    def share(value):
+        if value is None:
+            return "--"
+        text = f"{100 * value:.1f}"
+        return text.replace(".", ",") + "\\,\\%" if french else text + "\\%"
+
+    def shares(means):
+        return [share(means[name][key]) for name in ("valid_in_every_run", "all_produce_a_mesh")
+                for key in ("loop_edges_spiral", "loop_edges_closed")]
+
+    rows = []
+    for tool in current["subsets"]["valid_in_every_run"]["means"]:
+        both = {name: subset["means"][tool] for name, subset in current["subsets"].items()}
+        rows.append([NAMES[tool], str(current["run_on"][tool]), str(current["produce_a_mesh"][tool]),
+                     str(current["valid_in_every_run"][tool]), *shares(both)])
+        if tool == "openclare" and no_closing:
+            rows.append(["\\quad sans fermeture" if french else "\\quad without closing", "--", "--", "--",
+                         *shares(no_closing["means"])])
+    return [" & ".join(row) + " \\\\" for row in rows]
 
 
 def main():
@@ -160,6 +211,8 @@ def main():
     parser.add_argument("--git", action="append", default=[], help="also read the results at this commit")
     parser.add_argument("--no-closing-run", action="store_true",
                         help="make the line without closing on the engine given (Blender, the add-on)")
+    parser.add_argument("--no-closing-from", type=Path,
+                        help="make the line without closing from the runs this summary recorded")
     parser.add_argument("--scenes", type=Path, nargs="+",
                         default=[common.ROOT / "bench" / "scenes", common.ROOT / "bench" / "corpus-large" / "scenes"],
                         help="where the models' scenes are (default those of bench/run.py)")
@@ -175,14 +228,26 @@ def main():
         "current": compare(results),
         "at_commits": {commit: compare(at_commit(commit)) for commit in arguments.git},
     }
-    if arguments.no_closing_run:
-        subsets = summary["current"]["subsets"]
-        models = sorted(set(subsets["valid_in_every_run"]["models"]) | set(subsets["all_produce_a_mesh"]["models"]))
-        runs = no_closing_run(models, results["target"], arguments.out, arguments.scenes)
+    subsets = summary["current"]["subsets"]
+    models = sorted(set(subsets["valid_in_every_run"]["models"]) | set(subsets["all_produce_a_mesh"]["models"]))
+
+    def line_on_subsets(runs):
         line = {}
         for name, subset in subsets.items():
             per_model = {model: {key: median([runs[model]], key) for key in KEYS} for model in subset["models"]}
             line[name] = subset_means(per_model, subset["models"])
+        return line
+
+    if arguments.no_closing_from:
+        recorded, runs = no_closing_from(arguments.no_closing_from, models)
+        summary["no_closing"] = {
+            **recorded,
+            "read_from": str(arguments.no_closing_from.resolve().relative_to(common.ROOT)),
+            "means": line_on_subsets(runs),
+        }
+    elif arguments.no_closing_run:
+        runs = no_closing_run(models, results["target"], arguments.out, arguments.scenes)
+        line = line_on_subsets(runs)
         summary["no_closing"] = {
             **common.header(arguments, started, [round(x, 2) for x in os.getloadavg()], time.monotonic() - clock,
                            list(runs.values())),
@@ -198,16 +263,22 @@ def main():
     common.write_json(arguments.summary, summary)
 
     for label, data in [("current", summary["current"]), *summary["at_commits"].items()]:
-        print(f"{label}: produce a mesh {data['produce_a_mesh']}, valid in every run {data['valid_in_every_run']}")
+        print(f"{label}: run on {data['run_on']}, produce a mesh {data['produce_a_mesh']}, "
+              f"valid in every run {data['valid_in_every_run']}")
         for name, subset in data["subsets"].items():
             print(f"  {name} ({len(subset['models'])}): "
-                  + ", ".join(f"{tool} {percent(subset['means'][tool]['loop_edges_spiral'])}%" for tool in TOOLS)
+                  + ", ".join(f"{tool} {percent(means['loop_edges_spiral'])}%"
+                              for tool, means in subset["means"].items())
                   + "; openclare fewer/more/as many than "
                   + ", ".join(f"{tool} {c['fewer']}/{c['more']}/{c['as_many']}"
                               for tool, c in subset["openclare_against"].items()))
     if "no_closing" in summary:
         for name, means in summary["no_closing"]["means"].items():
             print(f"  no closing, {name}: {percent(means['loop_edges_spiral'])}%")
+    for french, paper in ((False, "paper.tex"), (True, "paper.fr.tex")):
+        print(f"Table tab:remeshers, {paper}:")
+        for row in table(summary, french):
+            print(f"  {row}")
     print(f"summary: {arguments.summary}")
 
 

@@ -3,8 +3,9 @@
 //! And the mending of the input that comes first.
 
 use openclare::math::Vec3;
-use openclare::mesh::primitives;
+use openclare::mesh::{Topology, primitives};
 use openclare::metrics::measure;
+use openclare::preprocess::{self, Kind};
 use openclare::{Guides, RemeshConfig, Target, TriMesh};
 
 /// The group of each triangle of `mesh`: 1 where `inside` says so of its
@@ -145,4 +146,50 @@ fn two_sheets_that_cross_stay_two_sheets() {
     for (sheet, _) in mended.mesh.pieces() {
         assert_eq!((sheet.positions.len(), sheet.triangles.len()), (6, 4));
     }
+}
+
+#[test]
+fn a_flap_folded_onto_another_is_two_sheets() {
+    // Two closed wedges whose knife edges meet along one line, their tops
+    // in one plane: four faces round each edge of that line, the two tops
+    // going straight on from one another, and the two undersides nearly
+    // so. Each wedge is a sheet that folds back round the line onto
+    // itself; joining the tops would join the wedges round both ends of
+    // the line and leave its four faces on the same two vertices (#161:
+    // windmill's main piece, not meshed).
+    let mut wedges = TriMesh::default();
+    let spine = [Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 1.0, 0.0)];
+    wedges.positions.extend(spine);
+    for side in [-1.0, 1.0] {
+        let first = wedges.positions.len() as u32;
+        let section = [Vec3::new(side, 0.0, 0.0), Vec3::new(side, 0.0, -0.3)];
+        for y in [0.0, 1.0] {
+            wedges.positions.extend(section.map(|p| p + Vec3::new(0.0, y, 0.0)));
+        }
+        // The cross section at either end, the knife edge first, and the
+        // sides between them, outwards whichever side the wedge is on.
+        let ([a0, b0, c0], [a1, b1, c1]) = ([0, first, first + 1], [1, first + 2, first + 3]);
+        let mut triangles = vec![[a0, c0, b0], [a1, b1, c1]];
+        for ((p0, q0), (p1, q1)) in [((a0, b0), (a1, b1)), ((b0, c0), (b1, c1)), ((c0, a0), (c1, a1))] {
+            triangles.extend([[p0, q0, q1], [p0, q1, p1]]);
+        }
+        if side < 0.0 {
+            triangles.iter_mut().for_each(|tri| tri.swap(1, 2));
+        }
+        wedges.triangles.extend(triangles);
+    }
+    assert_eq!(Topology::build(&wedges).non_manifold_edges, 2);
+    let mended = wedges.stitched().expect("four faces round an edge are sorted out");
+    assert_eq!((mended.welded, mended.taken_apart), (0, 1));
+    assert_eq!(Topology::build(&mended.mesh).non_manifold_edges, 0);
+    let pieces = mended.mesh.pieces();
+    assert_eq!(pieces.len(), 2);
+    for (wedge, _) in &pieces {
+        assert_eq!((wedge.positions.len(), wedge.triangles.len()), (6, 8));
+        assert!(Topology::build(wedge).is_closed());
+    }
+    // And the work mesh made of them is a surface the field can be laid on.
+    let request = preprocess::Request { triangles: 2000, ..Default::default() };
+    let work = preprocess::create(Kind::Isotropic).preprocess(&wedges, &request).unwrap();
+    assert_eq!(Topology::build(&work.mesh).non_manifold_edges, 0);
 }

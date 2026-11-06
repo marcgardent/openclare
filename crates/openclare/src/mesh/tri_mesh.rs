@@ -109,7 +109,10 @@ impl TriMesh {
     /// the one sheet they are, and the others are taken apart along it,
     /// each keeping the edge as a border of its own: what comes out is a
     /// surface everywhere, in more pieces if need be, where the mesh as it
-    /// was could not be worked on at all.
+    /// was could not be worked on at all. Two faces that go straight on are
+    /// still kept apart where joining them would join the sheets they come
+    /// back to round the ends of the edge, and so leave all their faces on
+    /// it: a flap folded over another, which is two sheets.
     pub fn stitched(&self) -> Option<Mended> {
         let key = |a: u32, b: u32| (a.min(b), a.max(b));
         // A closed surface, every edge with its two faces and every vertex
@@ -207,41 +210,70 @@ impl TriMesh {
             let across = apex - from;
             (across - along * across.dot(along)).normalize_or_zero()
         };
-        let mut joined: Vec<[(u32, u32); 2]> = Vec::new();
-        for faces in sides.values() {
-            if faces.len() == 2 {
-                joined.push([faces[0], faces[1]]);
-            } else if faces.len() > 2 {
-                // More faces than two: those that go straight on from one
-                // another across the edge, and run round it the same way,
-                // are one sheet and stay joined, the straightest pair first.
-                // What is left over is taken apart there.
-                let mut pairs: Vec<(f64, usize, usize)> = Vec::new();
-                for i in 0..faces.len() {
-                    for j in i + 1..faces.len() {
-                        let opposed = vertex_at(faces[i].0) != vertex_at(faces[j].0);
-                        let straight = -leaves(faces[i]).dot(leaves(faces[j]));
-                        if opposed && straight >= STRAIGHT_ON {
-                            pairs.push((straight, i, j));
-                        }
-                    }
-                }
-                pairs.sort_by(|a, b| b.0.total_cmp(&a.0).then((a.1, a.2).cmp(&(b.1, b.2))));
-                let mut taken = vec![false; faces.len()];
-                for (_, i, j) in pairs {
-                    if !taken[i] && !taken[j] {
-                        (taken[i], taken[j]) = (true, true);
-                        joined.push([faces[i], faces[j]]);
+        // Joins two faces across an edge: their corners at each end become
+        // one vertex, whichever way round each face has them.
+        let join = |parent: &mut [u32], (a, b): (u32, u32), (c, d): (u32, u32)| {
+            let (c, d) = if vertex_at(a) == vertex_at(c) { (c, d) } else { (d, c) };
+            for (one, other) in [(a, c), (b, d)] {
+                let (one, other) = (find(parent, one), find(parent, other));
+                parent[one.max(other) as usize] = one.min(other);
+            }
+        };
+        for faces in sides.values().filter(|faces| faces.len() == 2) {
+            join(&mut parent, faces[0], faces[1]);
+        }
+        // More faces than two: those that go straight on from one another
+        // across the edge, and run round it the same way, are one sheet and
+        // stay joined, the straightest pair first. What is left over is
+        // taken apart there. Each edge in turn, in an order of their own: a
+        // join at one may decide one at another that shares a vertex.
+        let mut crowded: Vec<(&(u32, u32), &Vec<(u32, u32)>)> =
+            sides.iter().filter(|(_, faces)| faces.len() > 2).collect();
+        crowded.sort_unstable_by_key(|&(edge, _)| *edge);
+        for (&(low, _), faces) in crowded {
+            let mut pairs: Vec<(f64, usize, usize)> = Vec::new();
+            for i in 0..faces.len() {
+                for j in i + 1..faces.len() {
+                    let opposed = vertex_at(faces[i].0) != vertex_at(faces[j].0);
+                    let straight = -leaves(faces[i]).dot(leaves(faces[j]));
+                    if opposed && straight >= STRAIGHT_ON {
+                        pairs.push((straight, i, j));
                     }
                 }
             }
-        }
-        for [(a, b), (c, d)] in joined {
-            // The same two vertices, whichever way round each face has them.
-            let (c, d) = if vertex_at(a) == vertex_at(c) { (c, d) } else { (d, c) };
-            for (one, other) in [(a, c), (b, d)] {
-                let (one, other) = (find(&mut parent, one), find(&mut parent, other));
-                parent[one.max(other) as usize] = one.min(other);
+            pairs.sort_by(|a, b| b.0.total_cmp(&a.0).then((a.1, a.2).cmp(&(b.1, b.2))));
+            // The vertex each face has at either end of the edge, the lower
+            // first, as the faces joined so far make them.
+            let ends = |parent: &mut [u32], (a, b): (u32, u32)| {
+                let (a, b) = (find(parent, a), find(parent, b));
+                if vertex_at(a) == low { (a, b) } else { (b, a) }
+            };
+            let mut taken = vec![false; faces.len()];
+            for (_, i, j) in pairs {
+                if taken[i] || taken[j] {
+                    continue;
+                }
+                // A pair is not joined where it would bring other faces of
+                // the edge onto the same two vertices: the faces round an
+                // end that come back to the edge are one fan, and joining
+                // two fans at both ends would leave the edge with all their
+                // faces, as many as before.
+                let (one, other) = (ends(&mut parent, faces[i]), ends(&mut parent, faces[j]));
+                let merged =
+                    |(a, b): (u32, u32)| (if a == other.0 { one.0 } else { a }, if b == other.1 { one.1 } else { b });
+                let mut on: HashMap<(u32, u32), Vec<usize>> = HashMap::new();
+                for k in 0..faces.len() {
+                    on.entry(merged(ends(&mut parent, faces[k]))).or_default().push(k);
+                }
+                let surface = on.values().all(|faces_on| match faces_on[..] {
+                    [_] => true,
+                    [k, l] => vertex_at(faces[k].0) != vertex_at(faces[l].0),
+                    _ => false,
+                });
+                if surface {
+                    (taken[i], taken[j]) = (true, true);
+                    join(&mut parent, faces[i], faces[j]);
+                }
             }
         }
         let mut compact = vec![INVALID; parent.len()];

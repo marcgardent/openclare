@@ -8,6 +8,7 @@
 use std::fmt::Write;
 
 use crate::error::{Error, Result};
+use crate::fitting;
 use crate::pipeline::Target;
 use crate::quantization::Selector;
 use crate::remesher::{Guides, Method};
@@ -59,6 +60,10 @@ pub struct RemeshConfig {
     /// vertices on the surface; 1 puts as much of the mesh above the surface
     /// as below.
     pub volume_fit: f64,
+    /// What the vertices are moved off the surface for: the faces of the
+    /// mesh to keep the volume, or the limit surface of its Catmull-Clark
+    /// subdivision, what an artist sees once it is subdivided (#39).
+    pub fitter: fitting::Kind,
     /// With a painted density: how many times more quads per unit of area
     /// the places painted at 1 get than those left at 0. At 4, their edges
     /// are half as long.
@@ -70,6 +75,11 @@ pub struct RemeshConfig {
     /// Lines of quads that go round a part are closed into rings where the
     /// whole lengths would wind them into helices (DT-062).
     pub close_loops: bool,
+    /// Singularities whose indices add up to a valence of 3, 4 or 5 (a 3
+    /// and a 5 giving a regular vertex) may merge across arcs of length
+    /// zero, instead of holding open a strip of quads between them (#171).
+    /// Off by default: an experiment.
+    pub merge_singularities: bool,
     /// How hard the loops are closed: by the engine alone, or, slowly, by
     /// an exact solver as well (see [`Quality`]).
     pub quality: Quality,
@@ -209,9 +219,11 @@ impl RemeshConfig {
             quads_around: 6.0,
             most_quads: 200_000,
             volume_fit: 1.0,
+            fitter: fitting::Kind::LeastSquares,
             density_contrast: 4.0,
             skip_pieces_under: 0.0,
             close_loops: true,
+            merge_singularities: false,
             quality: Quality::Standard,
             slow_time_limit: SLOW_TIME_LIMIT,
             slow_work_limit: SLOW_WORK_LIMIT,
@@ -412,9 +424,11 @@ impl RemeshConfig {
         writeln!(text, "quads_around = {}", self.quads_around).unwrap();
         writeln!(text, "most_quads = {}", self.most_quads).unwrap();
         writeln!(text, "volume_fit = {}", self.volume_fit).unwrap();
+        writeln!(text, "fitter = {}", self.fitter).unwrap();
         writeln!(text, "density_contrast = {}", self.density_contrast).unwrap();
         writeln!(text, "skip_pieces_under = {}", self.skip_pieces_under).unwrap();
         writeln!(text, "close_loops = {}", self.close_loops).unwrap();
+        writeln!(text, "merge_singularities = {}", self.merge_singularities).unwrap();
         writeln!(text, "quality = {}", self.quality).unwrap();
         writeln!(text, "slow_time_limit = {}", self.slow_time_limit).unwrap();
         writeln!(text, "slow_work_limit = {}", self.slow_work_limit).unwrap();
@@ -481,10 +495,15 @@ impl RemeshConfig {
                 // for the files that have it, and no longer used.
                 "preserve_volumes" => {}
                 "volume_fit" => config.volume_fit = number_of("number")?,
+                "fitter" => config.fitter = value.parse().map_err(|e: Error| error(e.to_string()))?,
                 "density_contrast" => config.density_contrast = number_of("number")?,
                 "skip_pieces_under" => config.skip_pieces_under = number_of("number")?,
                 "close_loops" => {
                     config.close_loops = value.parse().map_err(|_| error(format!("'{value}' is not true or false")))?
+                }
+                "merge_singularities" => {
+                    config.merge_singularities =
+                        value.parse().map_err(|_| error(format!("'{value}' is not true or false")))?
                 }
                 "quality" => config.quality = value.parse().map_err(|e: Error| error(e.to_string()))?,
                 "slow_time_limit" => config.slow_time_limit = number_of("number of seconds")?,
@@ -534,9 +553,9 @@ mod tests {
     #[test]
     fn settings_can_be_laid_over_a_preset() {
         let mut config = RemeshConfig::for_hard_surface(Target::QuadCount(1000));
-        config.apply_text("quads = 4000\nvolume_fit = 0.5\n").unwrap();
+        config.apply_text("quads = 4000\nvolume_fit = 0.5\nfitter = limit-surface\n").unwrap();
         assert_eq!(config.target, Target::QuadCount(4000));
-        assert_eq!(config.volume_fit, 0.5);
+        assert_eq!((config.volume_fit, config.fitter), (0.5, fitting::Kind::LimitSurface));
         // What the text does not mention is still the preset's.
         assert_eq!((config.crease_angle, config.edge_angle), (None, Some(30.0)));
         // A text that is wrong changes nothing at all.

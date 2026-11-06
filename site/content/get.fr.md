@@ -21,7 +21,7 @@ Un panneau nommé *openclare* apparaît dans l'éditeur Properties, sur l'onglet
 - **Des courbes tracées sur le modèle.** *Draw Curve* et *Cut Volume*, dans la barre d'outils, tracent une courbe sur le modèle ou la boucle autour d'un membre. Une courbe *Guide* donne une ligne d'arêtes ; une courbe *Sharp* donne une ligne d'arêtes vives.
 - **Le résultat.** La symétrie selon X, Y ou Z. Les arêtes vives marquées sharp et crease, pour qu'un *Subdivision Surface* les garde. L'ombrage par angle, lisse ou plat. Des préréglages enregistrés des réglages. *Remesh Again* refait le résultat à sa place, et le panneau rend compte du calcul.
 
-La version Linux tourne partout où Blender tourne (glibc 2.28 ou plus récente). Les versions Windows et macOS passent les tests de l'interface C sur leur système mais n'ont pas encore tourné dans un Blender sur ces systèmes ; celle pour macOS est signée ad hoc, non notariée. Chaque version publiée contient aussi le moteur en bibliothèque C avec son en-tête, `openclare-capi-<version>-<plateforme>.tar.gz`, pour d'autres programmes.
+La version Linux tourne partout où Blender tourne (glibc 2.28 ou plus récente). La version Windows a été installée et lancée dans un Blender pour Windows. Les versions macOS passent les tests de l'interface C sur ce système mais n'ont pas encore tourné dans un Blender ; elles sont signées ad hoc, non notariées. Chaque version publiée contient aussi le moteur en bibliothèque C avec son en-tête, `openclare-capi-<version>-<plateforme>.tar.gz`, pour d'autres programmes.
 
 Ce que propose le panneau, réglage par réglage, est dans le [README](../../README.md).
 

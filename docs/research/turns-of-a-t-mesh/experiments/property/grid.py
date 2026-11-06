@@ -247,11 +247,13 @@ def coarse_quad_mesh(grid):
     """The quad mesh at the whole lengths, as a `QuadMesh` (its faces the
     integer grid of each rectangle, counter-clockwise): traced again by the
     motorcycle graph, it gives a T-mesh whose traces meet at generic places,
-    where the subdivided meshes made them collide head-on on symmetric grids."""
+    where the subdivided meshes made them collide head-on on symmetric grids.
+    The mesh keeps the patch of each face (`face_patch`) and the vertex of
+    each fine vertex it uses (`coarse_of_fine`)."""
     from quadmesh import QuadMesh
 
     ids = {}
-    faces = []
+    faces, face_patch = [], []
     for p, (w, h) in enumerate(grid.size):
         for x in range(0, 2 * w, 2):
             for y in range(0, 2 * h, 2):
@@ -262,7 +264,92 @@ def coarse_quad_mesh(grid):
                         ids[v] = len(ids)
                     face.append(ids[v])
                 faces.append(tuple(face))
-    return QuadMesh([(0.0, 0.0, 0.0)] * len(ids), faces)
+                face_patch.append(p)
+    quad = QuadMesh([(0.0, 0.0, 0.0)] * len(ids), faces)
+    quad.face_patch = face_patch
+    quad.coarse_of_fine = ids
+    return quad
+
+
+def coarse_double(grid, mirror_arc, direction, mirror_patch, copy_of_patch):
+    """The quad mesh at the whole lengths of the T-mesh of a double, as a
+    double again (`quadmesh.Double`). The lengths must be symmetric. The
+    coarse mesh inherits the T-mesh's involution: the points of each arc go
+    to the points of its image (`direction` 1: from the other end), and from
+    there face by face, each face to the face holding its edges reversed;
+    the result must be an involution reversing orientation that takes each
+    patch to its image, and the edges it fixes, the new border, must be those
+    of the arcs it fixes. The half on copy 0 (`copy_of_patch`) is then
+    doubled again, so that the second copy lists its vertices and faces as
+    the first does, as `quadmesh.double` numbers them."""
+    from quadmesh import QuadMesh, double
+    from tracing import NotRectangles
+
+    coarse = coarse_quad_mesh(grid)
+    ids = coarse.coarse_of_fine
+    image = {}
+
+    def put(v, w):
+        if image.setdefault(v, w) != w:
+            raise NotRectangles(f"not symmetric: the coarse vertex {v} has two images")
+
+    border = set()
+    for a in range(len(grid.T.arcs)):
+        b, length = mirror_arc[a], grid.whole[a]
+        if grid.whole[b] != length:
+            raise NotRectangles(f"not symmetric: arcs {a} and {b} have different lengths")
+        p, x0, y0, d0 = grid.half_place[2 * a]
+        q, x1, y1, d1 = grid.half_place[2 * b]
+        points = []
+        for t in range(length + 1):
+            s = t if direction[a] == 0 else length - t
+            u = ids[grid.vertex[(p, x0 + 2 * t * d0[0], y0 + 2 * t * d0[1])]]
+            put(u, ids[grid.vertex[(q, x1 + 2 * s * d1[0], y1 + 2 * s * d1[1])]])
+            points.append(u)
+        if b == a:
+            border.update((min(u, v), max(u, v)) for u, v in zip(points, points[1:]))
+    face_image = [None] * len(coarse.faces)
+
+    def place(f, i):
+        face = coarse.faces[f]
+        a, b = face[i], face[(i + 1) % 4]
+        found = coarse.where.get((image[b], image[a]))
+        if found is None:
+            raise NotRectangles(f"not symmetric: the coarse face {f} has no image")
+        g, j = found
+        for k in range(4):
+            put(face[(i + k) % 4], coarse.faces[g][(j + 1 - k) % 4])
+        face_image[f] = g
+
+    start = next(coarse.where[(u, v)] for (u, v) in coarse.where if u in image and v in image)
+    place(*start)
+    queue = [start[0]]
+    while queue:
+        f = queue.pop()
+        face = coarse.faces[f]
+        for i in range(4):
+            g, j = coarse.where[(face[(i + 1) % 4], face[i])]
+            if face_image[g] is None:
+                place(g, j)
+                queue.append(g)
+    m = [image[v] for v in range(len(coarse.positions))]
+    if any(m[m[v]] != v for v in range(len(m))) or any(face_image[g] != f for f, g in enumerate(face_image)):
+        raise NotRectangles("not symmetric: the coarse mirror is not an involution")
+    if any(coarse.face_patch[g] != mirror_patch[coarse.face_patch[f]] for f, g in enumerate(face_image)):
+        raise NotRectangles("not symmetric: the coarse mirror does not follow the patches")
+    fixed = {(min(u, v), max(u, v)) for (u, v) in coarse.where if m[u] == u and m[v] == v}
+    if fixed != border:
+        raise NotRectangles("not symmetric: the edges the coarse mirror fixes are not the border")
+    # The half on copy 0, doubled again.
+    number, faces = {}, []
+    for f, face in enumerate(coarse.faces):
+        if copy_of_patch[coarse.face_patch[f]] == 0:
+            faces.append(tuple(number.setdefault(v, len(number)) for v in face))
+    half = QuadMesh([(0.0, 0.0, 0.0)] * len(number), faces, closed=False)
+    D = double(half)
+    assert len(D.quad.positions) == len(coarse.positions) and len(D.quad.faces) == len(coarse.faces)
+    assert len(D.border_edges) == len(border)
+    return D
 
 
 def regions(grid, curves):

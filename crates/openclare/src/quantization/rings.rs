@@ -213,6 +213,7 @@ pub(super) fn rounds(
     allowed: usize,
     most_deviation: f64,
     slow: &Slow,
+    merging: bool,
 ) -> Vec<(Vec<i64>, Vec<i64>, usize)> {
     let debug = std::env::var_os("OPENCLARE_DEBUG_TUBES").is_some();
     let (x, scale, _, lower) = start;
@@ -317,7 +318,7 @@ pub(super) fn rounds(
             }
             // No lengths found: those of the round before stay.
             let chosen = chosen.unwrap_or_else(|| reference.clone());
-            let defects = lattice::build(tmesh, &chosen).defects(tmesh);
+            let defects = lattice::build(tmesh, &chosen).defects(tmesh, merging);
             if defects.is_empty() || tries >= TRIES {
                 break chosen;
             }

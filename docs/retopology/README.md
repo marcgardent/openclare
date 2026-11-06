@@ -162,9 +162,9 @@ Where the tools are distributed: [platforms.toml](platforms.toml).
 | use | `use:parts` | several parts joined into one | 1 |
 | use | `use:open-boundaries` | meshes with open boundaries to keep | 1 |
 | use | `use:game-asset` | game assets | 1 |
-| extra | `extra:uv` | unwraps UVs | 4 |
+| extra | `extra:uv` | unwraps UVs | 5 |
 | extra | `extra:lod` | makes levels of detail | 1 |
-| extra | `extra:repair` | repairs the input | 2 |
+| extra | `extra:repair` | repairs the input | 3 |
 | extra | `extra:keeps-attributes` | carries UVs, materials or weights over to the result | 6 |
 | extra | `extra:cloud` | runs part of the work on a server | 1 |
 | density | `density:uniform` | faces of one size | 16 |

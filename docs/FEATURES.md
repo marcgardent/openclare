@@ -44,7 +44,7 @@ The panel *openclare* of the Properties editor, on the tab of the mesh.
 | *Shading* | stable | |
 | *Follow Curvature* | experimental | default not tuned on the corpus (#13); noisy scans and terrains (#21, #33) |
 | *Fewer Irregular Vertices* | experimental | a reach between 3.2 and 3.7 folds a quad on the male body (#72) |
-| *Volume Fit* | experimental | the volume after subdivision is not kept (#39) |
+| *Volume Fit* | experimental | the volume after subdivision is not kept; `--fitter limit-surface` keeps it, not yet in the add-on (#39) |
 | *Density* (a vertex group) and *Factor* | stable | |
 | *Symmetry* | stable | |
 | *Materials*: each quad the material under it | stable | |
@@ -70,7 +70,8 @@ The tools of the 3D viewport, in Object Mode.
 | Feature | State | What it lacks |
 |---|---|---|
 | The add-on on Linux | stable | |
-| The add-on on Windows and macOS | experimental | built and tested as a library, never run in Blender (#110) |
+| The add-on on Windows | stable | installed and run in a Blender for Windows on 31 October 2026; stopping a run with Esc not tried there |
+| The add-on on macOS | experimental | built and tested as a library, never run in Blender; signed ad hoc, not notarized (#110) |
 
 ## The command line
 
@@ -85,6 +86,7 @@ The tools of the 3D viewport, in Object Mode.
 | `--alignment` | experimental | as *Follow Curvature* (#13, #21, #33) |
 | `--singularity-reach`, `--singularity-tolerance` | experimental | as *Fewer Irregular Vertices* (#72) |
 | `--volume-fit` | experimental | as *Volume Fit* (#39) |
+| `--fitter limit-surface` | experimental | off by default, on the command line only; creases not taken into account (#39) |
 | `--quads-around` | experimental | as *Quads Around Thin Parts* (#38, #18) |
 | `--largest`, `--smallest`, `--most-quads`, `analyse` | experimental | as *Ask For: Sizes* (#253) |
 | `--edge-length` | experimental | older than sizes, not on the bench |
@@ -97,6 +99,7 @@ The tools of the 3D viewport, in Object Mode.
 | `--method integer-grid`, `--method instant-meshes` | experimental | other chains, kept for comparison (#9) |
 | `--quality slow`, `--slow-work-limit`, `--slow-time-limit` | experimental | a research track, on the command line only (#138, #144) |
 | `--skip-pieces-under`, `--no-close-loops` | experimental | tools to look into a run |
+| `--merge-singularities` | experimental | a 3 and a 5 merged across a strip of no width, off by default (#171) |
 | `measure`, `layout`, `primitive` | stable | |
 | `field`, `parametrize`, `tmesh`, `quantize`, `preprocess` | experimental | stages of the chain one at a time: their options follow the chain |
 | `--record`, `--record-still`, `openclare-view` (Rerun) | experimental | a version of Rerun behind, stages not shown (#35) |

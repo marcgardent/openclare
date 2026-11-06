@@ -155,7 +155,20 @@ d'arêtes qui se terminent à des pôles.
 
 **Trace** (*trace*). Une séparatrice suivie à travers la surface jusqu'à ce qu'elle rencontre une
 autre trace ou un bord. On l'appelle *motocyclette* parce qu'elle s'arrête là où elle en heurte une
-autre, comme les motos du film Tron.
+autre, comme les motos du film Tron. Les traces de tous les pôles forment le *graphe des motocyclettes*,
+introduit sur les maillages de quads par Eppstein, Goodrich, Kim et Tamstorf ([SGP 2008](https://disneyanimation.com/publications/motorcycle-graphs-canonical-quad-mesh-partitioning/)).
+
+![Traces en motocyclette partant des pôles d'un petit maillage de quads, une arête par pas](glossary/motorcycles.svg)
+
+*Sur un maillage de quads : les traces partent de tous les pôles ensemble, une arête par pas, et
+s'arrêtent sur une trace déjà tracée ou sur le bord. Les régions qu'elles ferment sont les patchs.
+Même maillage que l'image du T-mesh ci-dessous.*
+
+![Traces en motocyclette partant des singularités d'un champ de croix continu](glossary/motorcycles_field.svg)
+
+*Dans un champ de croix continu dont les singularités sont les pôles du maillage ci-dessus : les
+traces suivent le champ à la même vitesse et s'arrêtent de la même façon. Sans arête où se caler,
+une trace peut finir ailleurs que sur le maillage.*
 
 **Fusion frontale** (*head-on merge*). Deux traces qui se rencontrent de face sont réunies en une
 seule, au lieu que l'une s'arrête sur l'autre.
