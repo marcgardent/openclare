@@ -9,11 +9,11 @@
 
 use std::cmp::Reverse;
 use std::collections::{BinaryHeap, HashMap, HashSet};
-use std::f64::consts::{FRAC_PI_2, TAU};
+use std::f64::consts::FRAC_PI_2;
 
 use super::angle_field::AngleField;
 use super::{Kind, Report, Request, SingularityOptimizer};
-use crate::crossfield::{CrossField, FaceFrames, prepare_sized};
+use crate::crossfield::{CrossField, FaceFrames, angle_defects, prepare_sized};
 use crate::error::Result;
 use crate::math::INVALID;
 use crate::mesh::Topology;
@@ -38,8 +38,12 @@ impl SingularityOptimizer for PairCancellation {
 
     fn optimize(&self, work: &WorkMesh, field: &CrossField, request: &Request) -> Result<(CrossField, Report)> {
         let (topology, frames) = prepare_sized(work)?;
-        let graph = Graph::new(work, &topology);
+        let graph = Graph::new(work, &topology, &frames);
         let mut angles = AngleField::new(work, &topology, &frames, field, request.alignment);
+        let debug = std::env::var_os("OPENCLARE_DEBUG_INDEX").is_some();
+        if debug {
+            graph.report_disagreements(&angles, &frames, field, "entry");
+        }
         let everything: Vec<u32> = (0..work.mesh.triangles.len() as u32).collect();
         let total_energy = |angles: &mut AngleField| {
             angles.select(&everything, true);
@@ -137,7 +141,12 @@ impl SingularityOptimizer for PairCancellation {
         }
         report.energy_after = total_energy(&mut angles);
         report.singularities_after = graph.singular_vertices(&angles).len();
-        Ok((angles.into_field(), report))
+        let optimized = angles.into_field();
+        if debug {
+            let angles = AngleField::new(work, &topology, &frames, &optimized, request.alignment);
+            graph.report_disagreements(&angles, &frames, &optimized, "exit");
+        }
+        Ok((optimized, report))
     }
 }
 
@@ -166,26 +175,84 @@ struct Graph<'a> {
 }
 
 impl<'a> Graph<'a> {
-    fn new(work: &'a WorkMesh, topology: &'a Topology) -> Self {
+    fn new(work: &'a WorkMesh, topology: &'a Topology, frames: &FaceFrames) -> Self {
         let mesh = &work.mesh;
         let mut half_edge = HashMap::with_capacity(3 * mesh.triangles.len());
         let mut outgoing = vec![Vec::new(); mesh.positions.len()];
-        let mut defect = vec![TAU; mesh.positions.len()];
         for (f, tri) in mesh.triangles.iter().enumerate() {
             for k in 0..3 {
                 let h = (3 * f + k) as u32;
                 half_edge.insert((tri[k], tri[(k + 1) % 3]), h);
                 outgoing[tri[k] as usize].push(h);
-                let [p, next, previous] = [k, (k + 1) % 3, (k + 2) % 3].map(|c| mesh.positions[tri[c] as usize]);
-                let (to_next, to_previous) = ((next - p).normalize_or_zero(), (previous - p).normalize_or_zero());
-                defect[tri[k] as usize] -= to_next.dot(to_previous).clamp(-1.0, 1.0).acos();
             }
         }
+        let (defect, _) = angle_defects(mesh, frames);
         let mut on_line = vec![false; mesh.positions.len()];
         for &[a, b] in &work.feature_edges {
             (on_line[a as usize], on_line[b as usize]) = (true, true);
         }
         Self { work, topology, half_edge, outgoing, defect, on_line }
+    }
+
+    /// Debugging (`OPENCLARE_DEBUG_INDEX`): the vertices where the index
+    /// this optimizer reads differs from the one `field` holds, the one the
+    /// map and the T-mesh are made with. `OPENCLARE_DEBUG_INDEX_PATCH=v:rings:path`
+    /// also writes the faces within `rings` of vertex `v` (six at least),
+    /// with their sizing and the field's angles, as an OBJ: how the fixture
+    /// of jerry's spike was cut (`tests/data/jerry_spike.obj`).
+    fn report_disagreements(&self, angles: &AngleField, frames: &FaceFrames, field: &CrossField, when: &str) {
+        let positions = &self.work.mesh.positions;
+        let mut count = 0;
+        for v in 0..positions.len() as u32 {
+            let (optimizer, map) = (self.index(angles, v), field.indices[v as usize] as i32);
+            if optimizer != map {
+                count += 1;
+                let drift: f64 = self.outgoing[v as usize].iter().map(|&h| frames.drift[h as usize]).sum();
+                let p = positions[v as usize];
+                eprintln!(
+                    "index {when}: vertex {v} at ({:.4}, {:.4}, {:.4}): optimizer {optimizer}, map {map}, drift {drift:.3}",
+                    p.x, p.y, p.z
+                );
+            }
+        }
+        let singular = field.indices.iter().filter(|&&i| i != 0).count();
+        let higher = field.indices.iter().filter(|&&i| i.abs() >= 2).count();
+        eprintln!("index {when}: {count} disagreements, {singular} singular for the map, {higher} of index 2 or more");
+        let Some(spec) = std::env::var_os("OPENCLARE_DEBUG_INDEX_PATCH") else { return };
+        let spec = spec.to_string_lossy().into_owned();
+        let parts: Vec<&str> = spec.splitn(3, ':').collect();
+        let [centre, rings, path] = parts[..] else { return };
+        let (Ok(centre), Ok(rings)) = (centre.parse::<u32>(), rings.parse::<usize>()) else { return };
+        if when != "entry" || centre as usize >= positions.len() {
+            return;
+        }
+        let faces = self.faces_around(&[centre], rings.saturating_sub(6), frames);
+        let mut renumber: HashMap<u32, usize> = HashMap::new();
+        let mut order = Vec::new();
+        for &f in &faces {
+            for &v in &self.work.mesh.triangles[f as usize] {
+                renumber.entry(v).or_insert_with(|| {
+                    order.push(v);
+                    order.len()
+                });
+            }
+        }
+        let mut out = String::new();
+        for &v in &order {
+            let p = positions[v as usize];
+            out += &format!("v {:.9} {:.9} {:.9}\n", p.x, p.y, p.z);
+        }
+        for &v in &order {
+            out += &format!("# sizing {:.9}\n", self.work.sizing[v as usize]);
+        }
+        for &f in &faces {
+            let [a, b, c] = self.work.mesh.triangles[f as usize].map(|v| renumber[&v]);
+            out += &format!("f {a} {b} {c}\n");
+            out += &format!("# angle {:.12}\n", field.angles[f as usize]);
+        }
+        out += &format!("# centre {}\n", renumber[&centre]);
+        std::fs::write(path, out).expect("patch written");
+        eprintln!("index: patch of {} faces round vertex {centre} written to {path}", faces.len());
     }
 
     fn index(&self, angles: &AngleField, v: u32) -> i32 {
