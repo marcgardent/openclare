@@ -34,6 +34,8 @@ the quad mesh is its unit grid. The model has two layers.
   strips are in bijection with the cycles of the real walk from the
   half-integers. The model still assumes that crossing a patch keeps the offset,
   and that the darts and `next` built on it are the quads and strips of the mesh.
+  `Stations.lean` reads the gluing data off the `TMesh`, where crossing a patch
+  keeps the offset by construction (`TMesh.completeness_tmesh`).
 -/
 module
 

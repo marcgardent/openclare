@@ -464,7 +464,7 @@ chacun partage avec le suivant l'arête opposée à celle qu'il partage avec le
 précédent.
 \end{definition}
 
-\begin{evidence}{core}{\lean{Completeness.completeness_at_given_lengths}, dans un modèle\,; supposé~: des rectangles entiers recollés le long de leurs arcs par $t \mapsto \pm t + c$, $c$ entier\,; une surface fermée, la traversée d'un arc envoyant les arêtes unité d'un côté une à une sur des arêtes unité\,; que les cycles du modèle sont les bandes du maillage\,; les bandes qui atteignent un bord ne sont pas formalisées}
+\begin{evidence}{core}{\lean{TMesh.completeness_tmesh}, à partir de \lean{Completeness.completeness_at_given_lengths} et \lean{TMesh.closedGluing} (le recollement des arêtes unité lu sur le T-maillage, biunivoque à longueurs entières équilibrées), \lean{TMesh.walk_stations}, \lean{TMesh.arcAt_of_unit_edge}\,; supposé~: que les cycles du modèle sont les bandes du maillage\,; les bandes qui atteignent un bord ne sont pas formalisées}
 \begin{proposition}[Complétude à longueurs données]\label{prop:complete}
 Soit $\ell$ comme dans la définition. Toute bande du maillage de quads qui
 traverse un côté $\sigma$ d'un patch $P$ en l'arête de quad $[k, k+1]$ de

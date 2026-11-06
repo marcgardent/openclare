@@ -1,12 +1,12 @@
 # Machine-checked cores of "Turns of a T-mesh: obstructions to closing edge loops"
 
 This Lake project checks with Lean 4 and Mathlib the **algebraic cores** of the
-results of the research note `../paper.tex` (Sections 3 to 8 and Appendix A;
+results of the research note `../paper.tex` (Sections 3 to 9 and Appendix A;
 Section 10 there lists what is checked, statement by statement), and of the
 two propositions of its applied companion,
 [`../../closing-loops/paper.tex`](../../closing-loops/paper.tex), "The shift of
 a turn is linear" (also stated in `../paper.tex`) and "Completeness at given
-lengths": 737 `theorem` and `lemma` declarations under this folder (`Check/Main.lean`
+lengths": 754 `theorem` and `lemma` declarations under this folder (`Check/Main.lean`
 included, counted as the lines `grep -rhE --include='*.lean' --exclude-dir=.lake
 '^\s*(private |protected |nonrec |noncomputable )*(theorem|lemma)\b' .` prints), many of them small lemmas and a few
 restating a hypothesis (`dislocation_closes_iff`, `staircase_rings`); the
@@ -59,14 +59,14 @@ are the inputs of `Forced.lean` and `Farkas.lean` (`TMesh.not_closable_iff`,
 `TMesh.forced_of_certificates`). The other files keep their own abstractions:
 a turn as a list of motions (`Motion`, `Fox`, `Checkerboard`), a region as
 finite sets with counts (`GaussBonnet`), the gluing data at whole lengths
-(`Completeness`).
+(`Completeness`, read off the `TMesh` in `Stations.lean`).
 
 | Statement of the note | Lean | Assumed (hypotheses) |
 |---|---|---|
 | A T-mesh, its balances | `TMesh` (patches, sides as lists of arcs, gluing with signs); `TMesh.balance` (`B`), `balance_mulVec_eq_zero_iff` (`B ℓ = 0` ⇔ opposite sides of equal length), `balance_apply` (the column of an arc: `±1` in the balance of each of its two sides), `balance_column_even` (every column has an even sum), `balance_isBidirected` (`B` is bidirected) | a closed surface: every arc on exactly two sides, once on each, borders left out; for `balance_isBidirected`, no arc on two opposite sides of one patch (`NoArcAcross`, as when no patch borders itself) |
 | Prop. "The shift of a turn is linear" | `TMesh.Turn.shift_linear` (the composite of the crossings of a turn at the lengths `ℓ` is the translation by `∑ₐ cₐ ℓₐ`, `c = shiftForm` integer and independent of `ℓ`), from `crossForm` (crossing an arc is `x ↦ ε x + c(ℓ)`, `c` an integer linear form), `evalMotion_composeAll` and `composite_lin` (the composite keeps the direction of the offsets); `Turn.mem_corridor_iff` (the corridor, the offsets from which the walk crosses the arcs of the turn, is cut out by strict linear inequalities with integer coefficients in `(x, ℓ)`, at `ℓ ≥ 0`), from `arcAt_eq_some` (the arcs of a side cover disjoint open intervals); `Turn.comes_back` (from an offset `o` of the corridor the walk comes back to the first side at `o + shift(ℓ)`), `comes_back_iff` (it closes after one round exactly when the shift is zero), `Turn.winds` (helices: `t` rounds while `o + j shift(ℓ)` stays in the corridor); the additivity alone for any motions: `Motion.composeAll_trans_add`, `Motion.composeAll_trans` | an oriented gluing: the frames of the patches are those of one orientation of the surface (`Oriented`, a condition on the signs of the arcs); that the walk from a half-integer is a dual line of the quad mesh is Prop. "Completeness" below, in its own model; the sentence on a corridor without half-integers is not formalized |
 | The development of a turn in the plane, `T_γ(ℓ)` (DT-134, third brick) | `Holonomy.lean`: the frame of a side (`inward` the walking direction into the patch, `acrossDir` the direction of increasing offsets, `origin` its first corner), the change of chart across an arc as a motion of `ℤ[i]` (`crossLin`, the quarter-turn taking `inward τ` to `-inward τ'`; `crossTrans`, the crossing of the offsets read in `ℤ`; `crossMotion`), `crossMotions` along a path and `Turn.development`; `Development.lean`: `Turn.development_eq` (on an oriented T-mesh, at whole lengths, the development of a turn is the translation by `-α_γ(ℓ) inward + shift_γ(ℓ) acrossDir` in the frame of the first side), from `crossLin_acrossDir` (the geometric content of `Oriented`: the linear part takes `acrossDir τ` to `sign a · acrossDir τ'`), `crossMotion_side`, `crossTrans_eq`, and the invariant of the frame along a path (`composeAll_crossMotions_inward`, `composeAll_crossMotions_acrossDir`, `development_apply_origin`) | that the development is the inverse of the holonomy `ĥ(γ̄)` of the flat metric, and that this holonomy is the product of the rotations round the cone points: `Check/Main.lean` compares the development with `Fox.hol` of the word of the turn (`develop.py`) on every sphere, 3,865 turns of 34 spheres agree |
-| Prop. "Completeness at given lengths", in a model only | `completeness_at_given_lengths` (on a closed surface the strips are in bijection with the cycles of the station walk, and two stations lie on one cycle exactly when the real walk from the half-integer of one reaches that of the other), from `stationWalk_injective` and `stationPerm` (the walk on unit edges of the gluing data is a permutation of the stations), `sameCycle_stationPerm_iff` (with `realWalk_stations`) and `stripsEquiv` (strips *defined* as the cycles of a successor map built from a permutation `walk` of the stations), `exists_station`, `sameCycle_station_iff`; `realWalk_iterate_half`, `realWalk_iterate_open` (the walk from `k + ½`, or from any point of `(k, k + 1)`, follows the unit edges); `glueLine_half`, `glueLine_open` (a gluing `t ↦ ±t + c` takes midpoints of unit edges to midpoints, open unit edges onto open unit edges) | the patches are integer rectangles glued along their arcs by `t ↦ ±t + c`, `c` whole; a closed surface (`ClosedGluing`): opposite sides of a patch have the same length, `opp` is one to one, crossing an arc takes a unit edge of a side to a unit edge of a side and no two onto the same one (`ClosedGluing.of_involutive`: both hold when the opposite of the opposite side is the side and crossing an arc back returns to the start); columns of positive depth (`hdepth`); that crossing a patch keeps the offset and that the darts and `next` are the quads and strips of the mesh |
+| Prop. "Completeness at given lengths", the strips in a model | on the T-mesh: `TMesh.completeness_tmesh` (at balanced whole lengths the strips are in bijection with the cycles of the station walk of the T-mesh, and two stations lie on one cycle exactly when `TMesh.walk` from the half-integer of one reaches that of the other), from `TMesh.closedGluing` (the gluing of the unit edges read off the arcs of the sides is a `ClosedGluing`: `opp_involutive`, `sideLen_opp`, `crossArc_back`, crossing an arc back returns to the unit edge one started from), `TMesh.walk_stations` (the walk of the T-mesh from `k + ½` is defined at every step and is the station walk), `TMesh.step_eq_realWalk` (one move of `TMesh.step` from a point of an open unit edge is the move of `realWalk` on the data `edgeTarget`, `edgeSign`, `edgeShift`), `TMesh.arcAt_of_unit_edge` (the nodes being partial sums of whole lengths, every point of `(k, k + 1)` lies in the arc `arcOfEdge` finds: `arcOfEdge_eq_some`, `exists_arcOfEdge`), `TMesh.columnDepth_pos` (`Stations.lean`); in the model of `Completeness.lean`: `completeness_at_given_lengths`, from `stationWalk_injective` and `stationPerm` (the walk on unit edges of a closed gluing is a permutation of the stations), `sameCycle_stationPerm_iff` (with `realWalk_stations`) and `stripsEquiv` (strips *defined* as the cycles of a successor map built from a permutation `walk` of the stations), `exists_station`, `sameCycle_station_iff`; `realWalk_iterate_half`, `realWalk_iterate_open` (the walk from `k + ½`, or from any point of `(k, k + 1)`, follows the unit edges); `glueLine_half`, `glueLine_open` (a gluing `t ↦ ±t + c` takes midpoints of unit edges to midpoints, open unit edges onto open unit edges) | a closed surface given as a `TMesh` (crossing a patch keeps the offset, as there); columns of positive depth (`hdepth`; `columnDepth`, the length across the patch, is one, positive when every arc is positive and every side holds an arc); that the darts and `next` are the quads and strips of the mesh |
 | Lemma "Gauss–Bonnet for turns" | `gauss_bonnet_turn` (`∑ (4 - k) = 4 χ` inside a region whose border turns by zero), `gauss_bonnet`, `turn_border_sum`, `sum_deg`, `sum_corners` | that `γ̄`, on the grid refined by two, bounds a disc (or an annulus): a complex of quads with Euler characteristic `χ` whose interior vertices have a cycle as link and border vertices a path (`IsRegion`) |
 | … the rotation part | `quarter_turns_prod_eq_one_iff` (`R^{j₁}⋯R^{jₘ} = I ⇔ 4 ∣ ∑ jᵢ`) | — |
 | Lemma "One self-crossing" | `one_crossing_on_walk` (totals `3, 3, 2`), `one_crossing_on_segment` (totals `2, 2, 4`), from `gauss_bonnet_corners` (`4 χ - a + b` with `a` convex and `b` concave corners on the border) | the regions cut open at the crossing are discs, the crossing doubled on the border of the third; how many convex and concave corners each region has (`a - b = 1, 1, 2` on the walk, `2, 2, 0` on the closing segment), the note's case analysis |
@@ -130,10 +130,10 @@ orientation (`Oriented` is a hypothesis on the signs), borders, the length
 component across the walk is modelled), and the holonomy `hol` of `Fox.lean`,
 to which the note ties the shift by `shift_γ(ℓ) = -⟨e₂, ĥ(γ̄)⟩` (Section "Flat
 metric and holonomy"). Strips on surfaces with borders (the walk is then
-a partial bijection, whose open paths `stripsEquiv` does not cover), and a model
-of the quad mesh from which the stations, the depths of the columns and the
-gluing data of `completeness_at_given_lengths` would be read rather than
-assumed. And every
+a partial bijection, whose open paths `stripsEquiv` does not cover), and that the
+darts and `next` of `completeness_tmesh`, whose stations, columns and gluing are
+read off the `TMesh`, are the quads and strips of the quad mesh of `Grid.lean`.
+And every
 measured statement.
 
 ## Gaps and corrections found in the note
@@ -158,7 +158,8 @@ measured statement.
    the `λᵢ` with one relation, both of a closed sphere. On the bench, this
    matters for models with borders (suzanne, whose eye sockets carry rings of
    23 quads) and with handles (bob, part, cage). The note now gives the rule on
-   any surface (Theorem "Parity of a turn on any surface", proved on paper).
+   any surface (Theorem "Parity of a turn on any surface", its algebraic core
+   checked in `AnySurface.lean`).
 4. **Prop. "Parity of a turn on a sphere", frame.** The frame `(e₁, e₂)` of the
    first side is that of the first patch up to a quarter-turn, not only up to
    signs (when the first side is horizontal the coordinates swap). Harmless for
@@ -280,7 +281,9 @@ the whole lengths of the integer search, `B` the balance matrix.
    the sum has instead the parity `Ω_ℓ([γ̄])` of the note's Theorem "Parity of
    a turn on any surface" (on a surface of genus zero, the total length of the
    borders on one side of the turn); a ring of 23 quads round an eye socket of
-   Suzanne is correct, not a bug. That theorem is proved on paper, not here.
+   Suzanne is correct, not a bug. Its algebraic core is checked here
+   (`parity_any_surface`); that `π ∘ ĥ` factors through `H₁(Σ; ℤ/2)` is
+   assumed.
 3. **Handshake.** Each column of `B` has two entries `±1`, or a single one for
    an arc on a border of the surface (one half of the arc lies on a patch rim),
    or none. So for every whole `x` and every connected component `C` of the

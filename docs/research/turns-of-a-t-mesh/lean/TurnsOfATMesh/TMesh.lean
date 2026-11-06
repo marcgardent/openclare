@@ -54,7 +54,8 @@ checks that the definitions are not vacuous: its vertical turn has shift
 Not modelled: the surface and the cross field behind the T-mesh, the geometry of
 the patches (only the offset across the walk is followed, not the length of the
 turn), borders, the strips of the quad mesh (`Completeness.lean` relates walk and
-strips in its own model at whole lengths) and the link with the holonomy of
+strips in its own model at whole lengths, whose gluing data `Stations.lean` reads
+off the T-mesh) and the link with the holonomy of
 `Fox.lean`. The orientation is a hypothesis on the signs of the gluing
 (`Oriented`).
 -/
