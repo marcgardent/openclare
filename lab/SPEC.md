@@ -210,6 +210,7 @@ documents say, not measured by the app; "?" where nothing is written.
 | `test-release` | test suite | `cargo test --release` (40 GB cap) | | setting | no | ~15 min (Marc) |
 | `addon-test` | test suite | `make addon-test` | | setting | no | ? |
 | `quick-bench` | quick bench | `python3 bench/quick.py --models {models} --target {target} --jobs {threads}`, `OPENCLARE_THREADS=1` | `cargo build --release && make addon` | setting (Q8) | no | a couple of minutes (quick.py) |
+| `three-budgets` | quick bench | `python3 bench/budgets.py --engine '{engine}' ...`: the twelve models at 2970, 3000, 3030 quads, metrics and valences; `{engine}` a commit to build, or empty for the one built here; checkout asked | `cargo build --release` | setting, one engine thread per run | no | ? |
 | `bench` | bench | `python3 bench/run.py --target {target} --tools {tools}` | `cargo build --release && make addon` | ? (Q8) | yes | an hour (quick.py docstring); about 3 h in all (Marc) |
 | `remeasure` | bench | `make remeasure` | | setting | no | ? |
 | `scores` | bench | `make scores` | | 1 | no | seconds |

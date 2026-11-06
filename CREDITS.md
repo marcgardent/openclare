@@ -33,7 +33,7 @@ made from a work under BY-SA 4.0 may be placed under the GPLv3, not the reverse.
 | `bob` | *Bob*, Keenan Crane | same | same | in the repository | subdivided twice, then 100,000 triangles |
 | `blub` | *Blub*, Keenan Crane | same | same | in the repository | subdivided twice, then 100,000 triangles |
 | `pig` | *Origins of the Pig*, Keenan Crane | same | same | in the repository | body only, subdivided twice, then 100,000 triangles |
-| `jerry` | *Jerry the Ogre*, Keenan Crane | same | same | in the repository | face at rest, as it is |
+| `jerry` | *Jerry the Ogre*, Keenan Crane | same | same | in the repository | face at rest, as it is; `crates/openclare/tests/data/jerry_spike.obj` is 248 triangles of its work mesh at 3000 quads round a spike, which a test of the engine reads |
 | `rose` | *Desert Rose*, Keenan Crane | same | same | in the repository | 150,000 triangles |
 | `bridge` | *Pittsburgh Bridge*, scan by the Panoptic Studio (Carnegie Mellon) | same | released into the public domain by its authors | in the repository | as it is |
 | `suzanne` | *Suzanne*, Blender's monkey head, Blender Foundation | Blender's "Monkey" primitive, exported by `bench/make_corpus.py` | ships with Blender, software under the GNU GPL | in the repository | subdivided |

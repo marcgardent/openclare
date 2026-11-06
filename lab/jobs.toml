@@ -560,6 +560,21 @@ outputs = ["docs/research/closing-loops/experiments/exact/results/end_to_end-tim
 paper = "A"
 tags = ["paper-A-exact"]
 
+# ---------------------------------------------------------------- before and after
+
+[[job]]
+name = "three-budgets"
+description = "The twelve models at 2970, 3000 and 3030 quads (bench/budgets.py), one run each: measure's metrics and the valences of each quad mesh, interior and border. {engine} is a commit to build and run (origin/main, a branch), or empty for the engine built in the checkout; results in scratch/budgets/<the engine's commit>.json; the script is on the branch of ticket #279 until it is merged. One engine thread per run, {threads} runs at a time."
+category = "quick-bench"
+command = "python3 bench/budgets.py --engine '{engine}' --budgets {budgets} --models {models} --jobs {threads}"
+prepare = "cargo build --release"
+checkout = "ask"
+parameters = { engine = "origin/main", budgets = "2970,3000,3030", models = "creature,blob,suzanne,spot,pig,ogre,bob,jerry,blub,rock,cage,part" }
+environment = { OPENCLARE_THREADS = "1", RAYON_NUM_THREADS = "1" }
+memory_limit_gb = 32
+timing_matters = false
+outputs = ["scratch/budgets/*.json"]
+
 # ---------------------------------------------------------------- sequences
 
 [[sequence]]
