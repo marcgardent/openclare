@@ -123,9 +123,10 @@ contraintes sur les bandes du maillage, et gardons le candidat qui a le moins
 d'arêtes en spirale, comptées par un test qui distingue les hélices des
 boucles fermées, ouvertes et de bord. Sur douze modèles, à trois budgets
 voisins de 3\,000 quads, le moteur laisse 4,92\,\% des arêtes sur des boucles
-en spirale (19,8\,\% sans fermeture)\,; sur les sept modèles que deux autres
-remailleurs libres maillent aussi de façon valide, 2,2\,\% contre 38,8\,\% et
-21,7\,\%\,; sur un corps humain, 1,5\,\%, contre 2,5\,\% pour le maillage
+en spirale (19,8\,\% quand le moteur lui-même tourne sans fermeture)\,; sur
+les sept modèles que quatre autres remailleurs libres maillent aussi de façon
+valide, 2,2\,\% contre 11,4\,\% à 38,8\,\%, dont 19,9\,\% pour
+QuadWild-BiMDF, un quantificateur d'écart minimal sans fermeture\,; sur un corps humain, 1,5\,\%, contre 2,5\,\% pour le maillage
 fait à la main. Une analyse exacte du système de fermeture de ce
 corps montre que le conflit entre fermer les tours et garder les
 singularités séparées est réel mais local, que c'est l'heuristique plutôt
@@ -138,7 +139,7 @@ bougent avec les longueurs, et c'est le choix des tours à fermer qui décide.
 
 D'expérience, la forme et l'alignement des éléments limitent rarement
 aujourd'hui le remaillage en quads aligné sur un champ (\emph{field-aligned
-quad remeshing}\,; voir les synthèses~\cite{bommes2013survey,campen2017survey}). Reste la structure~: la
+quad remeshing}\,; les synthèses~\cite{bommes2013survey,campen2017survey} passent en revue les méthodes). Reste la structure~: la
 façon dont les boucles d'arêtes (\emph{edge loops}) courent sur la surface.
 Les artistes attendent d'une boucle qui fait le tour d'un bras, d'une jambe
 ou d'un cou qu'elle soit un anneau (\emph{ring}). Les méthodes automatiques
@@ -172,7 +173,7 @@ les hélices de pas au plus quatre des boucles fermées, ouvertes et de
 bord\,; il existe des comptes de boucles et des scores de simplicité des
 boucles~\cite{liu2025quadgpt,kong2026squadgen}, mais ils ne séparent pas les
 hélices des boucles ouvertes. La section~\ref{sec:experiments} mesure la
-méthode dans le remailleur libre openclare face à deux remailleurs libres et
+méthode dans le remailleur libre openclare face à quatre remailleurs libres et
 à un maillage modélisé à la main, et la section~\ref{sec:exact} résout
 exactement le système de fermeture d'un corps humain pour situer
 l'heuristique~: le conflit entre fermer les tours et garder les singularités
@@ -215,7 +216,7 @@ quadrangulation})~\cite{bommes2009miq} et les applications à grille entière
 (\emph{integer-grid maps})~\cite{bommes2013igm} décident de la structure
 entière d'un maillage de quads dans leur quantification. Campen et al.\
 montrent que même une quantification valide d'une paramétrisation sans
-couture est un problème combinatoire difficile, et le résolvent par des
+couture est un problème combinatoire complexe, et le résolvent par des
 systèmes d'équations diophantiennes linéaires~\cite{campen2015qgp}. Lyon et al.\ résolvent
 une version contrainte comme un programme linéaire en nombres entiers, en
 bornant l'écart de direction des séparatrices du découpage obtenu, et
@@ -224,8 +225,16 @@ séparées~\cite{lyon2021constrained}. Heistermann et al.\ formulent la
 quantification comme un flot d'écart minimal (\emph{minimum-deviation flow})
 sur un graphe bidirigé, et donnent un solveur approché rapide et un
 raffinement exact~\cite{heistermann2023bimdf}\,; openclare suit leur
-formulation. À notre connaissance, aucune de ces méthodes ne contraint les
-hélices.
+formulation. Pietroni et al.\ tracent un découpage à jonctions en T dont les
+bords comprennent toutes les lignes caractéristiques, en laissant les chemins
+tracés s'écarter du champ pour qu'ils ne spiralent pas, et le quantifient par
+un programme linéaire en nombres entiers qui favorise les patchs réguliers et
+les singularités alignées~\cite{pietroni2021reliable}. Ebke et al.\ gardent la
+quantification mixte-entière de~\cite{bommes2009miq} et agissent en amont~:
+ils filtrent les normales à l'échelle de la longueur d'arête visée, si bien
+que les détails et les anses plus petits ne font pas de
+singularités~\cite{ebke2014lod}. À notre connaissance, aucune de ces méthodes
+ne contraint les hélices du maillage.
 
 \paragraph{Les hélices après le maillage.}
 Bommes et al.~\cite{bommes2011structure} définissent une \emph{q-hélice}
@@ -245,11 +254,21 @@ et citent en exemple les T-meshes alignés sur les lignes caractéristiques
 remplacent le complexe de base d'un maillage fini par un complexe optimal,
 trouvé comme un couplage parfait sur un graphe construit sur ses sommets
 singuliers, et notent que les opérateurs de~\cite{bommes2011structure}
-laissent des spirales. Les deux travaillent après le maillage, pas dans la
-quantification.
+laissent des spirales. Tarini et al.~\cite{tarini2011simple} simplifient le
+graphe des séparatrices d'un maillage de quads lu comme un champ de croix, en
+supprimant et retraçant des séparatrices de façon gloutonne pour réduire
+leurs croisements, et paramètrent sur les quelques rectangles qui restent\,;
+ils notent que retirer les configurations hélicoïdales simplifie aussi ce
+graphe. Les trois partent d'un maillage de quads, pas de la quantification.
 
 \paragraph{Les périodes autour d'un tube.}
-QuadCover~\cite{kalberer2007quadcover} relève le champ de croix (\emph{cross
+La paramétrisation globale périodique (\emph{periodic global
+parameterization})~\cite{ray2006periodic} demande que les transitions entre
+cartes soient des quarts de tour et des translations d'un nombre entier de
+périodes, mais résout pour les sinus et cosinus des coordonnées, si bien
+qu'aucun nombre entier n'entre dans la résolution\,; les translations sont
+lues ensuite, arête par arête. Composées autour d'un tube, elles donnent son
+décalage, que rien dans la méthode ne contrôle. QuadCover~\cite{kalberer2007quadcover} relève le champ de croix (\emph{cross
 field}) sur un revêtement ramifié où il devient un champ de vecteurs. La
 paramétrisation en bandes des surfaces tubulaires (\emph{stripe
 parameterization})~\cite{kalberer2011stripe}, construite sur lui, mesure le
@@ -274,8 +293,9 @@ garantie que toutes ses trajectoires soient finies. Une trajectoire qui
 n'est pas finie est précisément une boucle d'arêtes qui ne se ferme pas. Une
 différentielle quadratique dont toutes les trajectoires non critiques se
 ferment est une différentielle de
-Jenkins--Strebel~\cite{strebel1984quadratic}\,; le complémentaire de son
-graphe critique est une réunion de cylindres plats, et une hélice est un
+Jenkins--Strebel~\cite[\S20.1]{strebel1984quadratic}\,; ses trajectoires
+fermées balaient des cylindres plats~\cite[\S\S9.3, 20.2]{strebel1984quadratic},
+et une hélice est un
 cylindre recollé avec un décalage d'un nombre entier de rangées. Sur une
 surface fermée, les valences $k(v)$ d'un maillage de quads vérifient
 $\sum_v (4 - k(v)) = 4\chi$~: avec des valences trois et cinq seulement, un
@@ -286,7 +306,10 @@ rien de l'endroit où vont les boucles.
 \paragraph{Des boucles par construction.}
 Le maillage par boucles duales (\emph{dual loops
 meshing})~\cite{campen2012dual} construit un découpage à partir de boucles
-tracées sur la surface, qui se ferment par construction\,; Lei et
+tracées sur la surface, qui se ferment par construction, et le tissage de
+bandes duales (\emph{dual strip weaving})~\cite{campen2014weaving} fait
+dessiner un tel découpage bande fermée après bande fermée, chacune une boucle
+élastique trouvée comme un cycle de poids minimal\,; Lei et
 al.~\cite{lei2017foliation} construisent des maillages de quads à partir
 d'une différentielle de Strebel à cylindres prescrits, et les découpages
 guidés par un squelette~\cite{usai2015skeleton} suivent le squelette
@@ -640,6 +663,71 @@ sorte de boucle, arêtes de bord exclues. Le même compte choisit parmi les
 candidats de la section~\ref{sec:closing} et colore les boucles en spirale
 dans les figures.
 
+Le moteur choisit donc selon la mesure sur laquelle il est évalué\,: il
+garde le candidat qui a le moins d'arêtes en spirale, et la
+section~\ref{sec:experiments} compare les outils selon cette part, que les
+autres outils n'optimisent pas et qui ne voit aucune hélice de pas supérieur
+à quatre. Les mesures ci-dessous ne sont pas utilisées par cette
+sélection\,: aucune étape du moteur ne les calcule.
+
+\paragraph{Mesures que la sélection n'utilise pas.}
+Un script à part, qui ne partage aucun code avec le moteur, mesure les
+maillages que le banc a gardés à 3\,000 quads
+(\texttt{experiments/structure.py}). Il compte les \emph{q-hélices} de tout
+pas~\cite{bommes2011structure}\,: bandes de quads le long desquelles $\tau$
+pas valent $h$ pas de côté, minimales ($h \le \tau$), gardées quand la
+propriété vaut sur un tour entier (deux enroulements ou plus) et que la bande
+entre enroulements est une grille régulière, un critère à nous fondé sur leur
+remarque que la propriété implique une région régulière autour de l'hélice. Il extrait le \emph{complexe de
+base}\,: une séparatrice part de chaque sommet irrégulier le long de chacune
+de ses arêtes, jusqu'à un sommet irrégulier, un bord ou son propre chemin, où
+elle finit en jonction en T\,; les patchs sont les régions entre
+séparatrices. Il compte enfin les \emph{singularités} intérieures. Sur des
+tores vrillés et un cube, il donne les hélices et les patchs attendus, et sur
+les maillages du banc il redonne les comptes du moteur, sommets irréguliers
+et patchs (sans l'arrêt sur son propre chemin), sur chaque maillage où le
+banc les a gardés. Le
+tableau~\ref{tab:structure} donne ces mesures sur les 21 modèles que les six
+outils maillent. Des 1\,393 q-hélices des 395 maillages gardés, 14 ont un pas
+supérieur à quatre, dans 10 maillages de QuadriFlow et de
+QuadWild-BiMDF~\cite{pietroni2021reliable,heistermann2023bimdf}, aucun
+d'openclare. Le compte d'hélices de tout pas du moteur lui-même, qui ne
+demande pas de bande régulière et que la sélection n'utilise pas non plus, en
+trouve 159 sur 1\,061 au-dessus de quatre, dans 57 des 356 maillages dont il
+peut suivre les boucles, aucun d'openclare. En q-hélices, openclare en a
+moins que QuadriFlow, mais pas moins qu'AutoRemesher, ni qu'Instant
+Meshes~\cite{jakob2015instant}, dont les maillages ont le plus de singularités et presque un patch du
+complexe de base par quad.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lrrrrrr}
+\toprule
+& arêtes en spirale & q-hélices & pas $> 4$ & patchs & jonctions en T & singularités \\
+\midrule
+openclare & 0,0\,\% (0,0--7,9) & 1 (0--3) & 0 sur 89 & 861 (66--1913) & 6 (0--9) & 56 (20--154) \\
+QuadriFlow & 17,6\,\% (9,6--35,4) & 3 (1--5) & 12 sur 358 & 2205 (1489--2605) & 14 (2--28) & 52 (24--106) \\
+AutoRemesher & 20,8\,\% (7,1--33,2) & 1 (0--5) & 0 sur 51 & 950 (602--1180) & 8 (4--18) & 68 (18--99) \\
+QuadWild-BiMDF & 10,3\,\% (1,7--20,2) & 2 (0--5) & 2 sur 169 & 1643 (122--2647) & 13 (0--26) & 50 (18--145) \\
+Instant Meshes & 7,3\,\% (4,7--9,2) & 0 (0--3) & 0 sur 28 & 2867 (2379--3000) & 7 (4--16) & 137 (97--192) \\
+IM, chaîne du banc & 5,2\,\% (3,0--9,6) & 0 (0--1) & 0 sur 88 & 2856 (1997--2986) & 4 (2--10) & 160 (111--214) \\
+\bottomrule
+\end{tabular}
+\caption{Structure des maillages gardés par le banc à 3\,000 quads, sur les
+21 modèles que les six outils maillent\,: médiane sur les modèles (quartiles
+entre parenthèses), chaque modèle la médiane de ses passes (cinq graines pour
+QuadriFlow et pour la chaîne Instant Meshes du banc, IM, une passe sinon).
+Arêtes en spirale\,: la mesure selon laquelle le moteur choisit, sur les
+modèles dont on peut suivre les boucles\,; les autres colonnes sont des
+mesures qu'aucune étape du moteur n'utilise. q-hélices\,: par maillage\,; pas
+$> 4$\,: sur toutes les q-hélices des maillages de l'outil. Patchs et
+jonctions en T\,: le complexe de base. Singularités\,: sommets intérieurs de
+valence autre que quatre.}
+\label{tab:structure}
+\end{table}
+
 \section{Expériences}\label{sec:experiments}
 
 Chaque chiffre est mesuré sur le moteur de la version 0.7.0 (commit
@@ -712,22 +800,82 @@ moteur octet pour octet.}
 \end{table}
 
 \paragraph{Face à d'autres remailleurs.}
-Le banc complet de la version 0.7.0 ($3\,000$ quads\,; une exécution par
-modèle pour openclare et AutoRemesher~\cite{autoremesher}, la médiane de
-cinq graines pour QuadriFlow~\cite{huang2018quadriflow}, lancé via Blender)
-compare les outils. Ils ne maillent pas les mêmes modèles~: QuadriFlow
-produit un maillage pour $22$ des $33$ modèles, AutoRemesher pour $18$. Sur
-les $7$ modèles que les trois maillent de façon valide à chaque exécution,
-la part moyenne d'arêtes en spirale est de $2,2\,\%$ pour openclare,
-$38,8\,\%$ pour QuadriFlow et $21,7\,\%$ pour AutoRemesher\,; sur les $15$
-modèles où les trois produisent un maillage, valide ou non, $2,9\,\%$,
-$27,2\,\%$ et $27,3\,\%$. Sans fermeture (le même moteur par la même
-chaîne, sans aucune variante de fermeture essayée), openclare a $15,3\,\%$
-et $15,2\,\%$ sur les mêmes sous-ensembles. La comparaison
-favorise aussi openclare par construction~: le moteur choisit parmi ses
-candidats selon cette même part (section~\ref{sec:closing}), que les deux
-autres n'optimisent pas, et la part ne voit aucune hélice de pas supérieur à
-quatre. Une mesure de structure que la sélection n'utilise pas reste à faire.
+Le banc complet de la version 0.7.0 ($3\,000$ quads) compare openclare à
+quatre remailleurs libres (tableau~\ref{tab:remeshers})~:
+QuadriFlow~\cite{huang2018quadriflow}, lancé via Blender, la médiane de cinq
+graines\,; AutoRemesher~\cite{autoremesher}\,; et, depuis le 31 octobre 2026
+(\#248), le découpage et le pavage de QuadWild~\cite{pietroni2021reliable}
+avec le quantificateur Bi-MDF de Heistermann, Warnett et
+Bommes~\cite{heistermann2023bimdf} (QuadWild-BiMDF) et Instant
+Meshes~\cite{jakob2015instant}\,; une exécution par modèle pour les autres.
+QuadWild-BiMDF quantifie son découpage avec le même genre de quantificateur
+d'écart minimal qu'openclare, sans contraintes de fermeture, ce qui en fait
+le témoin naturel\,; Instant Meshes lisse des champs locaux d'orientation et
+de position, sans paramétrisation globale ni quantification globale. Les outils ne maillent pas les mêmes
+modèles. Les trois premiers ont été lancés sur les $33$ modèles du banc,
+QuadWild-BiMDF et Instant Meshes sur les $27$ dont les maillages peuvent être
+diffusés, pas sur les $6$ autres. Un outil \emph{produit un maillage} pour un
+modèle si l'une de ses exécutions donne un maillage dont les boucles se
+mesurent, et le maille de façon valide si chaque exécution donne un maillage
+valide~: openclare produit un maillage pour $28$ modèles, QuadriFlow pour
+$22$, AutoRemesher pour $18$, QuadWild-BiMDF pour $26$ et Instant Meshes pour
+$20$, et ils en maillent $25$, $9$, $9$, $19$ et $15$ de façon valide. Sur
+les $7$ modèles que les cinq maillent de façon valide à chaque exécution, la
+part moyenne d'arêtes en spirale est de $2,2\,\%$ pour openclare,
+$38,8\,\%$ pour QuadriFlow, $21,7\,\%$ pour AutoRemesher, $19,9\,\%$ pour
+QuadWild-BiMDF et $11,4\,\%$ pour Instant Meshes\,; sur les $14$ modèles où
+les cinq produisent un maillage, valide ou non, $3,1\,\%$, $29,1\,\%$,
+$29,3\,\%$, $16,8\,\%$ et $9,1\,\%$. Le second sous-ensemble laisse de côté
+le terrain, que les trois premiers maillent et sur lequel les deux autres
+n'ont pas été lancés. Sans fermeture (le même moteur par la même chaîne,
+sans aucune variante de fermeture essayée), openclare a $15,3\,\%$ et
+$15,9\,\%$ sur les mêmes sous-ensembles. QuadWild-BiMDF a plus d'arêtes en
+spirale qu'openclare sans fermeture, $19,9\,\%$ et $16,8\,\%$, avec plus de ses arêtes sur des boucles
+fermées ($56,5\,\%$ et $51,4\,\%$ contre $48,7\,\%$ et $46,7\,\%$)\,; son
+champ et son découpage diffèrent aussi de ceux d'openclare, si bien que
+l'écart avec openclare n'est pas dû à la seule fermeture, que la ligne sans
+fermeture isole. Instant Meshes a le moins d'arêtes en spirale après
+openclare mais aussi le moins de boucles fermées, $13,7\,\%$ et $15,3\,\%$
+de ses arêtes~: les trois quarts sont sur des boucles ouvertes, qui
+s'arrêtent à ses sommets irréguliers, dont il a $84$ par maillage sur les
+sept modèles contre $31$ pour openclare. La comparaison favorise aussi
+openclare par construction~: le moteur choisit parmi ses candidats selon
+cette même part (section~\ref{sec:closing}), que les quatre autres
+n'optimisent pas, et la part ne voit aucune hélice de pas supérieur à
+quatre. Le tableau~\ref{tab:structure} donne des mesures de structure que la
+sélection n'utilise pas.
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrrrrrr}
+\toprule
+& \multicolumn{3}{c}{modèles sur $33$} & \multicolumn{2}{c}{$7$ valides pour tous}
+& \multicolumn{2}{c}{$14$ maillés par tous} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}
+& lancés & maillés & valides & spirale & fermées & spirale & fermées \\
+\midrule
+openclare & 33 & 28 & 25 & 2,2\,\% & 60,9\,\% & 3,1\,\% & 55,8\,\% \\
+\quad sans fermeture & -- & -- & -- & 15,3\,\% & 48,7\,\% & 15,9\,\% & 46,7\,\% \\
+QuadriFlow & 33 & 22 & 9 & 38,8\,\% & 19,3\,\% & 29,1\,\% & 16,7\,\% \\
+AutoRemesher & 33 & 18 & 9 & 21,7\,\% & 35,1\,\% & 29,3\,\% & 22,4\,\% \\
+QuadWild-BiMDF & 27 & 26 & 19 & 19,9\,\% & 56,5\,\% & 16,8\,\% & 51,4\,\% \\
+Instant Meshes & 27 & 20 & 15 & 11,4\,\% & 13,7\,\% & 9,1\,\% & 15,3\,\% \\
+\bottomrule
+\end{tabular}
+\caption{Face à d'autres remailleurs à $3\,000$ quads, lu dans les résultats
+enregistrés du banc (\nolinkurl{bench/results/results.json} au commit
+\texttt{fa009a9}\,; openclare de la version 0.7.0, commit \texttt{e13fadb}).
+Lancés~: modèles sur lesquels l'outil a été lancé\,; maillés~: modèles où une
+exécution donne un maillage dont les boucles se mesurent\,; valides~: modèles
+maillés de façon valide à chaque exécution. Spirale et fermées~: parts
+moyennes d'arêtes sur des boucles en spirale et sur des boucles fermées sur
+le sous-ensemble, par modèle la médiane des exécutions. La ligne sans
+fermeture est le même moteur par la même chaîne sans aucune variante de
+fermeture essayée, sur les seuls modèles des deux sous-ensembles.}
+\label{tab:remeshers}
+\end{table}
 
 \paragraph{Face au maillage fait à la main.}
 Le corps masculin de la bibliothèque Essentials a un maillage de base de
@@ -1151,7 +1299,8 @@ tableau~\ref{tab:dev}
   & \texttt{ablation.json} \\
 face à d'autres remailleurs
   & \texttt{against\_remeshers.py}, depuis
-  \nolinkurl{bench/results/results.json} à \texttt{e13fadb}
+  \nolinkurl{bench/results/results.json} à \texttt{fa009a9} (openclare,
+  QuadriFlow et AutoRemesher tels qu'à \texttt{e13fadb})
   & \texttt{against\_remeshers.json} \\
 corps masculin, openclare et fait à la main
   & \texttt{male\_body.py}

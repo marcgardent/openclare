@@ -23,9 +23,10 @@ to the summaries' (the table "paper says / engine gives").
 |---|---|---|
 | Twelve models, three budgets (`sec:experiments`, 36 runs) | `python3 docs/research/closing-loops/experiments/twelve_models.py` | `results/twelve_models.json` |
 | Table `tab:dev` as an ablation (one engine, one stage per line, 11 lines × 36 runs) | `python3 docs/research/closing-loops/experiments/ablation.py --check scratch/data-package/closing-loops/twelve_models` | `results/ablation.json` |
-| Against other remeshers (bench at 3,000 quads) | `python3 docs/research/closing-loops/experiments/against_remeshers.py --git 5bc16c6 --git b0fba91 --no-closing-run` | `results/against_remeshers.json` |
+| Against other remeshers (bench at 3,000 quads), Table `tab:remeshers` | `python3 docs/research/closing-loops/experiments/against_remeshers.py --git 5bc16c6 --git b0fba91 --no-closing-from docs/research/closing-loops/experiments/results/against_remeshers.json` (first made with `--no-closing-run`) | `results/against_remeshers.json` |
 | Male body against the hand-made mesh | `python3 docs/research/closing-loops/experiments/male_body.py` | `results/male_body.json` |
 | Figures `fig:overview`, `fig:closeups` | `WORK=scratch/data-package/closing-loops/figures OPENCLARE=target/release/openclare COMMIT=<commit> docs/research/closing-loops/figures/make_figures.sh`, then `python3 docs/research/closing-loops/experiments/figure_numbers.py scratch/data-package/closing-loops/figures` | `../figures/male-*.png`, `../figures/README.md`, `results/figures.json` |
+| Measures the selection does not use (DT-137), on the bench's stored meshes at 3,000 quads | `python3 -I docs/research/closing-loops/experiments/structure.py [--meshes bench/out]` | `results/structure.json` |
 | The paper's numbers next to the summaries' | `python3 docs/research/closing-loops/experiments/compare.py` | Markdown on the standard output |
 
 What each script does and why:
@@ -44,14 +45,19 @@ What each script does and why:
   definitions: a tool *produces a mesh* for a model if a run gives a mesh whose loops can be
   measured; it *meshes validly in every run* if all its runs give valid meshes; per model, the
   bench's median over the runs (five seeds for QuadriFlow, one run otherwise); then the mean over
-  the models. `--git 5bc16c6 --git b0fba91` reads the files the paper used: they give back
+  the models. The tools are openclare, QuadriFlow, AutoRemesher, QuadWild-BiMDF and Instant Meshes
+  (the last two run on the 27 models whose meshes may be passed on); a results file is compared on
+  the tools it has, and the script prints the rows of Table `tab:remeshers` in both languages. `--git 5bc16c6 --git b0fba91` reads the files the paper used: they give back
   exactly the paper's 22, 18, 7, 15, 1.8%, 38.8%, 21.7%, 4.2%, 27.2%, 27.3%, and 16.6% and 15.5%
   without closing, which checks the definitions. The current bench has no run without closing:
   `--no-closing-run` makes it, as the bench runs openclare (the add-on, in Blender, on the model's
   scene; `make addon` first) with `OPENCLARE_CLOSE_WAYS=` (no way of closing tried). That variable
   gives the same meshes as `--no-close-loops` (checked byte for byte on blob, suzanne and spot), and
   the add-on chain of f992bac gives back the measures of the bench's openclare mesh of 524b759
-  (checked on blob: same quads, spiral and closed shares, Hausdorff).
+  (checked on blob: same quads, spiral and closed shares, Hausdorff). The summary keeps those runs
+  (`no_closing`, `per_model`, engine e13fadb); `--no-closing-from` takes the means again from them
+  on the current subsets, nothing run, which is how the line was made once the subset of models
+  where every tool produces a mesh went from 15 to 14 (the two new tools were not run on terrain).
 - `male_body.py`: the male body at 10,590 quads, preset organic, with closing, without it, and
   with the lean bound 0.05 alone (`OPENCLARE_CLOSE_WAYS=0,1,4,5`, the paper's "commit 452b346"
   experiment), and the hand-made mesh `bench/reference/handmade/human_male.obj` measured the same
@@ -99,3 +105,83 @@ expression (4db7b42), the parity and non-negative-combination pruning (8908d6a),
 at the parametrization's lengths (524b759), and the three candidates kept. So the paper's
 single-run numbers per version (16.7%, 9.7%, 9.1%, 6.0%) and the moved baseline of the caption
 (10.1% to 9.5% at 452b346) cannot be made again on one commit; the lines above replace them.
+
+## Measures the selection does not use (DT-137)
+
+The engine keeps, among its candidates, the one with the fewest spiral edges, and the paper
+compares the tools by that same share, which sees no helix of pitch above four (`k_max = 4`).
+`structure.py` measures the structure of the meshes the bench stored at 3,000 quads
+(`bench/out/<model>/3000/<tool>_<seed>.obj`, the runs of `bench/results/results.json`; nothing is
+remeshed) by three measures no step of the engine uses, in Python with the standard library only,
+one thread, no code shared with the engine:
+
+- **q-helices** of Bommes, Lempfer and Kobbelt (Eurographics 2011, Section 2.4) of every pitch: a
+  strip of quads along which walking `tau` steps is the same, in position and orientation, as `h`
+  side-steps; found, as in their Section 3, where the orthogonal strip through a quad first meets
+  the strip again, then extended as far as the property holds; minimal ones only (`h <= tau`, the
+  smallest `h`). Counted: those whose property holds over a whole turn (winding number `l / tau >=
+  2`) and whose band between windings is checked to be a regular grid, a criterion of ours
+  grounded in the paper's remark that the property implies a regular region round the helix. Read
+  at a single place, the
+  property also holds wherever a strip comes back beside itself once, the same way round, round
+  singularities whose turns cancel: these *meetings of any winding* number in the hundreds per mesh
+  and are kept in the JSON (`any_winding`) but say little.
+- **The base complex after extraction**: a separatrix from each irregular vertex along each of its
+  edges, straight on through regular vertices, until an irregular vertex, a border, or a vertex it
+  already passed (a T-junction); patches are the regions of faces between separatrices.
+- **Singularities**: inner vertices of valence other than four, by valence in the JSON.
+
+Each (quad, direction) of a strip and each edge of a separatrix is counted once, so the double
+count of #262 (an edge on two of the engine's loops on degenerate meshes) cannot occur here.
+
+**Checks.** The hand-made cases (`--check`, run before every measure): a 20 x 10 torus grid
+without shift (no helix, one patch), shifted by 1 (one helix of pitch 1, turn 10, 20 windings),
+by 4 (four interleaved helices of pitch 4) and a 21 x 10 grid shifted by 7 (seven helices of pitch
+7, which the spiral count cannot see), and a cube of 6 x 6 quads per side (eight corners of valence
+3, six patches, no T-junction, no helix): all give what they must. On the bench meshes, the count
+of irregular vertices equals the engine's `irregular_vertices` on all 395 meshes, and the patches
+without the stop on itself equal the engine's `base_complex_patches` on all 345 meshes where the
+bench stored it. Not checked by a hand-made case: a T-junction (no small mesh with a known nonzero
+count was built), and a helix whose band holds a singularity.
+
+**Results** (median over the models, each model the median over its runs, quartiles in
+parentheses; spiral edges are the bench's stored share, over the meshes whose loops the engine
+can follow; the engine's helices are its own count of every pitch, `loops_helix`, of which
+`loops_helix_missed` above four, which the selection does not use either):
+
+All the models each tool meshes:
+
+| Tool | Models (meshes) | Spiral edges, % | q-helices per mesh | q-helices of pitch > 4 | Meetings of any winding (pitch > 4) | Engine's helices (pitch > 4) | Base-complex patches | T-junctions | Singularities |
+|---|---|---|---|---|---|---|---|---|---|
+| openclare | 33 (33) | 1.5 (0.0–8.7) | 2 (0–6) | 0 of 376 | 5533 (1702) | 92 (0) | 1256 (231–2058) | 5 (0–11) | 90 (40–192) |
+| quadriflow | 22 (110) | 16.4 (9.6–34.7) | 2 (1–4) | 12 of 358 | 15636 (7133) | 589 (146) | 2202 (992–2601) | 13 (2–28) | 59 (25–110) |
+| autoremesher | 33 (33) | 15.6 (6.3–31.4) | 3 (0–6) | 0 of 225 | 3311 (1371) | 48 (4) | 850 (563–1180) | 6 (2–18) | 84 (26–129) |
+| quadwild-bimdf | 27 (27) | 12.3 (3.4–21.7) | 2 (0–6) | 2 of 216 | 23803 (16260) | 117 (5) | 1720 (298–2794) | 14 (2–24) | 56 (24–183) |
+| instant-meshes-jakob | 27 (27) | 6.7 (4.9–10.0) | 0 (0–3) | 0 of 48 | 7083 (4381) | 29 (0) | 2597 (2180–2950) | 7 (4–15) | 158 (104–224) |
+| instant-meshes | 33 (165) | 5.4 (3.3–9.6) | 0 (0–2) | 0 of 170 | 40989 (20468) | 186 (4) | 2366 (1697–2896) | 6 (2–10) | 204 (136–287) |
+
+The 21 models every tool meshes (blob, blub, bob, cage, creature, cube, cylinder, jerry, lblock, ogre, part, pig, rock, rose, sphere, spot, stonemill, suzanne, torus, towermill, watermill):
+
+| Tool | Models (meshes) | Spiral edges, % | q-helices per mesh | q-helices of pitch > 4 | Meetings of any winding (pitch > 4) | Engine's helices (pitch > 4) | Base-complex patches | T-junctions | Singularities |
+|---|---|---|---|---|---|---|---|---|---|
+| openclare | 21 (21) | 0.0 (0.0–7.9) | 1 (0–3) | 0 of 89 | 2679 (1184) | 53 (0) | 861 (66–1913) | 6 (0–9) | 56 (20–154) |
+| quadriflow | 21 (105) | 17.6 (9.6–35.4) | 3 (1–5) | 12 of 358 | 15597 (7100) | 589 (146) | 2205 (1489–2605) | 14 (2–28) | 52 (24–106) |
+| autoremesher | 21 (21) | 20.8 (7.1–33.2) | 1 (0–5) | 0 of 51 | 1630 (1025) | 40 (4) | 950 (602–1180) | 8 (4–18) | 68 (18–99) |
+| quadwild-bimdf | 21 (21) | 10.3 (1.7–20.2) | 2 (0–5) | 2 of 169 | 19603 (13748) | 91 (3) | 1643 (122–2647) | 13 (0–26) | 50 (18–145) |
+| instant-meshes-jakob | 21 (21) | 7.3 (4.7–9.2) | 0 (0–3) | 0 of 28 | 5769 (3561) | 23 (0) | 2867 (2379–3000) | 7 (4–16) | 137 (97–192) |
+| instant-meshes | 21 (105) | 5.2 (3.0–9.6) | 0 (0–1) | 0 of 88 | 27695 (14585) | 109 (4) | 2856 (1997–2986) | 4 (2–10) | 160 (111–214) |
+
+**How often a helix has a pitch above four.** Of the 1,393 q-helices on the 395 meshes, 14 have
+a pitch above four (largest 12), in 10 meshes, all from QuadriFlow (12) and QuadWild-BiMDF (2),
+none from openclare. The engine's own helix count, which asks a pass of the loop beside every
+edge along a turn but no regular band, finds more: 159 of 1,061 helices above four, in 57 of the
+356 meshes it can measure, 49 of them QuadriFlow's; none in openclare's 28. So the cut-off
+`k_max = 4` hides no helix of openclare's meshes at 3,000 quads by either count, and hides some of
+QuadriFlow's.
+
+**What these measures do not settle.** On the 21 models every tool meshes, openclare has fewer
+q-helices than QuadriFlow (median 1 against 3 per mesh) but not fewer than AutoRemesher (1) or
+either Instant Meshes (0), which have the most singularities and a base complex of nearly one patch
+per quad. openclare and AutoRemesher have the fewest patches (medians 861 and 950), with wide
+spreads; the T-junctions are few for every tool (medians 4 to 14). The measures are not ported to
+the engine (`openclare measure`); that is left.

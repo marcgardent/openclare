@@ -46,7 +46,7 @@ Le panneau *openclare* de l'éditeur Properties, dans l'onglet du maillage.
 | *Shading* | stable | |
 | *Follow Curvature* | expérimental | valeur par défaut pas réglée sur le corpus (#13) ; scans bruités et terrains (#21, #33) |
 | *Fewer Irregular Vertices* | expérimental | une portée entre 3,2 et 3,7 plie un quad sur le corps d'homme (#72) |
-| *Volume Fit* | expérimental | le volume après subdivision n'est pas gardé (#39) |
+| *Volume Fit* | expérimental | le volume après subdivision n'est pas gardé ; `--fitter limit-surface` le garde, pas encore dans le greffon (#39) |
 | *Density* (un groupe de sommets) et *Factor* | stable | |
 | *Symmetry* | stable | |
 | *Materials* : chaque quad prend le matériau sous lui | stable | |
@@ -72,7 +72,8 @@ Les outils de la vue 3D, en Object Mode.
 | Fonction | État | Ce qui lui manque |
 |---|---|---|
 | Le greffon sous Linux | stable | |
-| Le greffon sous Windows et macOS | expérimental | compilé et testé comme bibliothèque, jamais lancé dans Blender (#110) |
+| Le greffon sous Windows | stable | installé et lancé dans un Blender pour Windows le 31 octobre 2026 ; l'arrêt d'un calcul par Échap n'y a pas été essayé |
+| Le greffon sous macOS | expérimental | compilé et testé comme bibliothèque, jamais lancé dans Blender ; signé ad hoc, pas notarisé (#110) |
 
 ## La ligne de commande
 
@@ -87,6 +88,7 @@ Les outils de la vue 3D, en Object Mode.
 | `--alignment` | expérimental | comme *Follow Curvature* (#13, #21, #33) |
 | `--singularity-reach`, `--singularity-tolerance` | expérimental | comme *Fewer Irregular Vertices* (#72) |
 | `--volume-fit` | expérimental | comme *Volume Fit* (#39) |
+| `--fitter limit-surface` | expérimental | désactivé par défaut, en ligne de commande seulement ; les plis (creases) ne sont pas pris en compte (#39) |
 | `--quads-around` | expérimental | comme *Quads Around Thin Parts* (#38, #18) |
 | `--largest`, `--smallest`, `--most-quads`, `analyse` | expérimental | comme *Ask For: Sizes* (#253) |
 | `--edge-length` | expérimental | plus ancien que les tailles, hors du banc |
@@ -99,6 +101,7 @@ Les outils de la vue 3D, en Object Mode.
 | `--method integer-grid`, `--method instant-meshes` | expérimental | autres chaînes, gardées pour comparer (#9) |
 | `--quality slow`, `--slow-work-limit`, `--slow-time-limit` | expérimental | une piste de recherche, en ligne de commande seulement (#138, #144) |
 | `--skip-pieces-under`, `--no-close-loops` | expérimental | des outils pour regarder dans un calcul |
+| `--merge-singularities` | expérimental | un 3 et un 5 fusionnés à travers une bande sans largeur, désactivé par défaut (#171) |
 | `measure`, `layout`, `primitive` | stable | |
 | `field`, `parametrize`, `tmesh`, `quantize`, `preprocess` | expérimental | les étapes de la chaîne une à une : leurs options suivent la chaîne |
 | `--record`, `--record-still`, `openclare-view` (Rerun) | expérimental | une version de Rerun en retard, des étapes non montrées (#35) |

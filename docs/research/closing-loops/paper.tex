@@ -102,9 +102,10 @@ least-change projection, repair walks and rounds of constraint generation on
 the strips of the mesh, and keep the candidate with the fewest spiral edges,
 counted by a test that tells helices from closed, open and border loops. Over
 twelve models at three budgets near 3{,}000 quads, the engine leaves 4.92\%
-of the edges on spiral loops (19.8\% without closing); on the seven models
-that two other open-source remeshers also mesh validly, 2.2\% against 38.8\%
-and 21.7\%; on a human body, 1.5\%, against 2.5\% for the hand-made mesh.
+of the edges on spiral loops (19.8\% when the engine itself runs without
+closing); on the seven models that four other open-source remeshers also
+mesh validly, 2.2\% against 11.4\% to 38.8\%, among them 19.9\% for
+QuadWild-BiMDF, a minimum-deviation quantizer with no closing; on a human body, 1.5\%, against 2.5\% for the hand-made mesh.
 An exact analysis of the closing system of that body shows that the conflict between closing
 turns and keeping singularities apart is real but local, that the heuristic
 rather than the constraints leaves most turns shifted, and that closing more
@@ -115,8 +116,8 @@ lengths, and the choice of the turns to close decides.
 \section{Introduction}
 
 In our experience, element shape and alignment are rarely what limits
-field-aligned quad remeshing today (see the
-surveys~\cite{bommes2013survey,campen2017survey}). What remains is structure:
+field-aligned quad remeshing today (the
+surveys~\cite{bommes2013survey,campen2017survey} review the methods). What remains is structure:
 the way edge loops run across the surface. Artists expect a loop round an
 arm, a leg or a neck to be a ring. Automatic methods often produce a helix
 instead: the loop goes round, comes back one or a few rows further, and winds
@@ -143,7 +144,7 @@ edges that tells helices of pitch up to four from closed, open and border
 loops; loop counts and loop simplicity scores
 exist~\cite{liu2025quadgpt,kong2026squadgen}, but they do not separate
 helices from open loops. Section~\ref{sec:experiments} measures the method in
-the open-source remesher openclare against two open-source remeshers and a
+the open-source remesher openclare against four open-source remeshers and a
 mesh modelled by hand, and Section~\ref{sec:exact} solves the closing system
 of a human body exactly to see where the heuristic stands: the conflict
 between closing turns and keeping singularities apart is local, the
@@ -180,7 +181,7 @@ from exact arithmetic or solver output on the systems openclare exports, and
 Mixed-integer quadrangulation~\cite{bommes2009miq} and integer-grid
 maps~\cite{bommes2013igm} decide the integer structure of a quad mesh in
 their quantization. Campen et al.\ show that even a valid quantization of a seamless
-parametrization is a hard combinatorial problem, and solve it through
+parametrization is a complex combinatorial problem, and solve it through
 systems of linear Diophantine equations~\cite{campen2015qgp}.
 Lyon et al.\ solve a constrained version as an integer linear program,
 bounding the directional deviation of the separatrices of the resulting
@@ -188,8 +189,15 @@ layout, and require, as openclare does, that the quantization keep
 singularities apart~\cite{lyon2021constrained}. Heistermann et al.\ cast
 quantization as a minimum-deviation flow on a bidirected graph and give a
 fast approximate solver and an exact refinement~\cite{heistermann2023bimdf};
-openclare follows their formulation. To our knowledge none of these
-constrains the helices.
+openclare follows their formulation. Pietroni et al.\ trace a layout with
+T-junctions whose borders include every feature line, letting the traced
+paths drift from the field so that they do not spiral, and quantize it with
+an integer linear program that rewards regular patches and aligned
+singularities~\cite{pietroni2021reliable}. Ebke et al.\ keep the
+mixed-integer quantization of~\cite{bommes2009miq} and act upstream: they
+filter the normals at the scale of the target edge length, so that features
+and handles below it make no singularities~\cite{ebke2014lod}. To our
+knowledge none of these constrains the helices of the mesh.
 
 \paragraph{Helices after meshing.}
 Bommes et al.~\cite{bommes2011structure} define a \emph{q-helix} as a dual
@@ -206,11 +214,20 @@ T-meshes of Myles et al.~\cite{myles2010feature} as an example. Razafindrazaka a
 Polthier~\cite{razafindrazaka2017optimal} replace the base complex of a
 finished mesh by an optimal one, found as a perfect matching on a graph over
 its singular vertices, and note that the operators
-of~\cite{bommes2011structure} leave some spirals. Both work after meshing,
-not in the quantization.
+of~\cite{bommes2011structure} leave some spirals. Tarini et
+al.~\cite{tarini2011simple} simplify the graph of separatrices of a quad mesh
+read as a cross field, greedily deleting and retracing separatrices to reduce
+their crossings, and parametrize over the few rectangles that remain; they
+note that removing helical configurations also simplifies that graph. All
+three start from a quad mesh, not from the quantization.
 
 \paragraph{Periods round a tube.}
-QuadCover~\cite{kalberer2007quadcover} lifts the cross field to a branched
+Periodic global parameterization~\cite{ray2006periodic} asks the transitions
+between charts to be quarter-turns and translations by whole periods, but
+solves for the sines and cosines of the coordinates, so that no whole number
+enters the solve; the translations are read afterwards, edge by edge.
+Composed round a tube they give its shift, which nothing in the method
+controls. QuadCover~\cite{kalberer2007quadcover} lifts the cross field to a branched
 covering where it becomes a vector field. The stripe parameterization of
 tubular surfaces~\cite{kalberer2011stripe}, built on it, measures the jump
 (``gap'') of the parameter across each cut path and rounds it to the nearest
@@ -231,8 +248,8 @@ quartic differential and list as an open problem the guarantee that all its
 trajectories are finite. A trajectory that is not finite is precisely an edge
 loop that does not close. A quadratic differential all of whose non-critical
 trajectories close is a Jenkins--Strebel
-differential~\cite{strebel1984quadratic}; the complement of its critical
-graph is a union of flat cylinders, and a helix is a cylinder glued back with
+differential~\cite[\S20.1]{strebel1984quadratic}; its closed trajectories
+sweep out flat cylinders~\cite[\S\S9.3, 20.2]{strebel1984quadratic}, and a helix is a cylinder glued back with
 a shift of a whole number of rows. On a closed surface the valences $k(v)$ of
 a quad mesh satisfy $\sum_v (4 - k(v)) = 4\chi$: with valences three and five only, a
 closed human body needs at least eight vertices of valence three, but a hand-made base mesh has
@@ -240,7 +257,9 @@ hundreds, and their count says nothing of where the loops go.
 
 \paragraph{Loops by construction.}
 Dual loops meshing~\cite{campen2012dual} builds a layout from loops traced on
-the surface, which close by construction; Lei et
+the surface, which close by construction, and dual strip
+weaving~\cite{campen2014weaving} lets a user design such a layout one closed
+strip at a time, each an elastica loop found as a minimum-weight cycle; Lei et
 al.~\cite{lei2017foliation} build quad meshes from a Strebel differential
 with prescribed cylinders, and skeleton-guided
 layouts~\cite{usai2015skeleton} follow the curve skeleton of an articulated
@@ -554,6 +573,67 @@ on each kind of loop, edges of borders left out. The same count chooses
 among the candidates of Section~\ref{sec:closing} and colours the spiral
 loops in the figures.
 
+The engine therefore selects by the measure it is evaluated on: it keeps the
+candidate with the fewest spiral edges, and Section~\ref{sec:experiments}
+compares the tools by that share, which the other tools do not optimize and
+which sees no helix of pitch above four. The measures below are not used by
+that selection: no step of the engine computes them.
+
+\paragraph{Measures the selection does not use.}
+A separate script, sharing no code with the engine, measures the meshes the
+bench stored at $3{,}000$ quads (\texttt{experiments/structure.py}). It
+counts the \emph{q-helices} of every pitch~\cite{bommes2011structure}: strips
+of quads along which $\tau$ steps equal $h$ side-steps, minimal ($h \le
+\tau$), kept when the property holds over a whole turn (two windings or more)
+and the band between windings is a regular grid, a criterion of ours
+grounded in their remark that the property implies a regular region round
+the helix. It extracts the \emph{base
+complex}: a separatrix from each irregular vertex along each of its edges,
+until an irregular vertex, a border or its own path, where it ends in a
+T-junction; the patches are the regions between separatrices. And it counts
+the inner \emph{singularities}. On twisted tori and a cube it gives the
+expected helices and patches, and on the bench meshes it gives the engine's
+counts of irregular vertices and of patches (without the stop on its own
+path) on every mesh where the bench stored them. Table~\ref{tab:structure} gives these measures on the
+$21$ models that all six tools mesh. Of the $1{,}393$ q-helices on all $395$
+stored meshes, $14$ have a pitch above four, in $10$ meshes of QuadriFlow and
+QuadWild-BiMDF~\cite{pietroni2021reliable,heistermann2023bimdf}, none of
+openclare. The engine's own count of helices of every
+pitch, which asks for no regular band and which the selection does not use
+either, finds $159$ of $1{,}061$ above four, in $57$ of the $356$ meshes whose
+loops it can follow, none of openclare's. By q-helices, openclare has fewer
+than QuadriFlow but not fewer than AutoRemesher, nor than Instant
+Meshes~\cite{jakob2015instant}, whose meshes have the most singularities and nearly one base-complex patch
+per quad.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lrrrrrr}
+\toprule
+& spiral edges & q-helices & pitch $> 4$ & patches & T-junctions & singularities \\
+\midrule
+openclare & 0.0\% (0.0--7.9) & 1 (0--3) & 0 of 89 & 861 (66--1913) & 6 (0--9) & 56 (20--154) \\
+QuadriFlow & 17.6\% (9.6--35.4) & 3 (1--5) & 12 of 358 & 2205 (1489--2605) & 14 (2--28) & 52 (24--106) \\
+AutoRemesher & 20.8\% (7.1--33.2) & 1 (0--5) & 0 of 51 & 950 (602--1180) & 8 (4--18) & 68 (18--99) \\
+QuadWild-BiMDF & 10.3\% (1.7--20.2) & 2 (0--5) & 2 of 169 & 1643 (122--2647) & 13 (0--26) & 50 (18--145) \\
+Instant Meshes & 7.3\% (4.7--9.2) & 0 (0--3) & 0 of 28 & 2867 (2379--3000) & 7 (4--16) & 137 (97--192) \\
+IM, bench chain & 5.2\% (3.0--9.6) & 0 (0--1) & 0 of 88 & 2856 (1997--2986) & 4 (2--10) & 160 (111--214) \\
+\bottomrule
+\end{tabular}
+\caption{Structure of the meshes stored by the bench at $3{,}000$ quads, on
+the $21$ models that all six tools mesh: median over the models (quartiles in
+parentheses), each model the median of its runs (five seeds for QuadriFlow
+and for the bench's own Instant Meshes chain, IM, one run otherwise). Spiral
+edges: the measure the engine selects by, over the models whose loops can be
+followed; the other columns are measures no step of the engine uses.
+q-helices: per mesh; pitch $> 4$: of all the q-helices of the tool's meshes.
+Patches and T-junctions: the base complex. Singularities: inner vertices of
+valence other than four.}
+\label{tab:structure}
+\end{table}
+
 \section{Experiments}\label{sec:experiments}
 
 Every figure is measured on the engine of version 0.7.0 (commit
@@ -621,21 +701,77 @@ and gives the $36$ meshes of the engine byte for byte.}
 \end{table}
 
 \paragraph{Against other remeshers.}
-The full bench of version 0.7.0 ($3{,}000$ quads; one run per model for
-openclare and AutoRemesher~\cite{autoremesher}, the median of five seeds for
-QuadriFlow~\cite{huang2018quadriflow}, run through Blender) compares the
-tools. They do not mesh the same models: QuadriFlow produces a mesh for $22$
-of the $33$ models, AutoRemesher for $18$. On the $7$ models that all three
-mesh validly in every run, the mean share of spiral edges is $2.2\%$ for
-openclare, $38.8\%$ for QuadriFlow and $21.7\%$ for AutoRemesher; on the $15$
-models where all three produce a mesh, valid or not, $2.9\%$, $27.2\%$ and
-$27.3\%$. Without closing (the same engine through the same chain, with no
-way of closing tried) openclare has $15.3\%$ and $15.2\%$ on the same
-subsets. The comparison favours openclare by construction as well: the engine
-chooses among its candidates by this very share (Section~\ref{sec:closing}),
-which the other two do not optimize, and the share sees no helix of pitch
-above four. A measure of structure the selection does not use is left to
-future work.
+The full bench of version 0.7.0 ($3{,}000$ quads) compares openclare with
+four open-source remeshers (Table~\ref{tab:remeshers}):
+QuadriFlow~\cite{huang2018quadriflow}, run through Blender, the median of
+five seeds; AutoRemesher~\cite{autoremesher}; and, since 31 October 2026
+(\#248), the layout and tessellation of QuadWild~\cite{pietroni2021reliable}
+with the Bi-MDF quantizer of Heistermann, Warnett and
+Bommes~\cite{heistermann2023bimdf} (QuadWild-BiMDF) and Instant
+Meshes~\cite{jakob2015instant}; one run per model for the others. QuadWild-BiMDF
+quantizes its layout with the same kind of minimum-deviation quantizer as
+openclare, without closing constraints, which makes it the natural witness;
+Instant Meshes smooths local orientation and position fields, with no global
+parametrization and no global quantization. The tools do not mesh the same models. The
+first three ran on the $33$ models of the bench, QuadWild-BiMDF and Instant
+Meshes on the $27$ whose meshes may be passed on, not on the other $6$. A
+tool \emph{produces a mesh} for a model if one of its runs gives a mesh whose
+loops can be measured, and meshes it validly if every run gives a valid mesh:
+openclare produces a mesh for $28$ models, QuadriFlow for $22$, AutoRemesher
+for $18$, QuadWild-BiMDF for $26$ and Instant Meshes for $20$, and they mesh
+$25$, $9$, $9$, $19$ and $15$ validly. On the $7$ models that all five mesh
+validly in every run, the mean share of spiral edges is $2.2\%$ for
+openclare, $38.8\%$ for QuadriFlow, $21.7\%$ for AutoRemesher, $19.9\%$ for
+QuadWild-BiMDF and $11.4\%$ for Instant Meshes; on the $14$ models where all
+five produce a mesh, valid or not, $3.1\%$, $29.1\%$, $29.3\%$, $16.8\%$ and
+$9.1\%$. The second subset leaves out the terrain, which the first three
+mesh and the other two were not run on. Without closing (the same engine
+through the same chain, with no way of closing tried) openclare has
+$15.3\%$ and $15.9\%$ on the same subsets. QuadWild-BiMDF has more spiral
+edges than that, $19.9\%$ and $16.8\%$, with more of its edges on closed
+loops ($56.5\%$ and $51.4\%$ against $48.7\%$ and $46.7\%$); its field and
+its layout differ from openclare's as well, so the gap with openclare is not
+the closing alone, which the line without closing isolates. Instant Meshes
+has the fewest spiral edges after openclare but also the fewest closed
+loops, $13.7\%$ and $15.3\%$ of its edges: three quarters of them lie on
+open loops, which stop at its irregular vertices, of which it has $84$ per
+mesh on the seven models against $31$ for openclare. The comparison favours
+openclare by construction as well: the engine chooses among its candidates
+by this very share (Section~\ref{sec:closing}), which the other four do not
+optimize, and the share sees no helix of pitch above four.
+Table~\ref{tab:structure} gives measures of structure the selection does not
+use.
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrrrrrr}
+\toprule
+& \multicolumn{3}{c}{models of $33$} & \multicolumn{2}{c}{$7$ valid for all}
+& \multicolumn{2}{c}{$14$ meshed by all} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}
+& run & meshed & valid & spiral & closed & spiral & closed \\
+\midrule
+openclare & 33 & 28 & 25 & 2.2\% & 60.9\% & 3.1\% & 55.8\% \\
+\quad without closing & -- & -- & -- & 15.3\% & 48.7\% & 15.9\% & 46.7\% \\
+QuadriFlow & 33 & 22 & 9 & 38.8\% & 19.3\% & 29.1\% & 16.7\% \\
+AutoRemesher & 33 & 18 & 9 & 21.7\% & 35.1\% & 29.3\% & 22.4\% \\
+QuadWild-BiMDF & 27 & 26 & 19 & 19.9\% & 56.5\% & 16.8\% & 51.4\% \\
+Instant Meshes & 27 & 20 & 15 & 11.4\% & 13.7\% & 9.1\% & 15.3\% \\
+\bottomrule
+\end{tabular}
+\caption{Against other remeshers at $3{,}000$ quads, read from the bench's
+stored results (\nolinkurl{bench/results/results.json} at commit
+\texttt{fa009a9}; openclare of version 0.7.0, commit \texttt{e13fadb}). Run:
+models the tool was run on; meshed: models where a run gives a mesh whose
+loops can be measured; valid: models meshed validly in every run. Spiral and
+closed: mean shares of edges on spiral and on closed loops over the subset,
+per model the median over the runs. The line without closing is the same
+engine through the same chain with no way of closing tried, on the models of
+the two subsets only.}
+\label{tab:remeshers}
+\end{table}
 
 \paragraph{Against the hand-made mesh.}
 The male body of the Essentials library has a base mesh of $10{,}590$ quads
@@ -1009,7 +1145,8 @@ Table~\ref{tab:dev}
   & \texttt{ablation.json} \\
 against other remeshers
   & \texttt{against\_remeshers.py}, from \nolinkurl{bench/results/results.json}
-  at \texttt{e13fadb}
+  at \texttt{fa009a9} (openclare, QuadriFlow and AutoRemesher as at
+  \texttt{e13fadb})
   & \texttt{against\_remeshers.json} \\
 male body, openclare and hand-made
   & \texttt{male\_body.py}

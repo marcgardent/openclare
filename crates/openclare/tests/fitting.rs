@@ -69,6 +69,46 @@ fn flat_faces_and_hard_edges_are_left_where_they_are() {
     }
 }
 
+/// The mesh subdivided twice as Blender does it, its vertices on the limit
+/// surface: what an artist sees.
+fn subdivided(mesh: &openclare::PolyMesh) -> openclare::PolyMesh {
+    use openclare::subdivision::{apply, limit, refine};
+    let (mut faces, mut positions) = (mesh.faces.clone(), mesh.positions.clone());
+    for _ in 0..2 {
+        let once = refine(&faces, positions.len());
+        positions = once.rows.iter().map(|row| apply(row, &positions)).collect();
+        faces = once.faces;
+    }
+    let positions = limit(&faces, positions.len()).iter().map(|row| apply(row, &positions)).collect();
+    openclare::PolyMesh { positions, faces }
+}
+
+#[test]
+fn fitting_the_limit_surface_keeps_the_volume_once_subdivided() {
+    use openclare::fitting::Kind;
+    for (name, source, quads) in
+        [("ball", primitives::icosphere(5), 300), ("ring", primitives::torus(1.0, 0.4, 96, 48), 400)]
+    {
+        let base = RemeshConfig { adaptivity: 0.0, ..RemeshConfig::for_organic(Target::QuadCount(quads)) };
+        assert_eq!(base.fitter, Kind::LeastSquares);
+        let (faces, _) = base.remesh(&source).unwrap();
+        let (limit, _) = RemeshConfig { fitter: Kind::LimitSurface, ..base }.remesh(&source).unwrap();
+        // The same mesh, its vertices moved.
+        assert_eq!(limit.faces, faces.faces, "{name}");
+        let cage = measure(&source, &limit, Some(quads));
+        assert!(cage.is_valid(), "{name}");
+        let (before, after) = (
+            measure(&source, &subdivided(&faces), None).volume_ratio.unwrap(),
+            measure(&source, &subdivided(&limit), None).volume_ratio.unwrap(),
+        );
+        assert!(before < 0.995, "{name}: the faces fitted keep {before} once subdivided");
+        assert!(
+            (after - 1.0).abs() < 0.3 * (1.0 - before),
+            "{name}: volume kept once subdivided {after} (it was {before})"
+        );
+    }
+}
+
 // The fitter on its own, on meshes whose answer is known.
 
 use openclare::fitting::{Fitter, LeastSquares};

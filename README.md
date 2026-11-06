@@ -39,9 +39,9 @@ install, no Python package, no program beside it, and nothing is downloaded when
    *Install from Disk*, and pick the archive.
 
 A panel named *openclare* appears in the Properties editor, on the tab of the mesh (Object Data).
-The Linux build runs wherever Blender does (glibc 2.28 or later). The Windows and macOS builds
-pass the tests of the C interface on their system but have not yet been run in a Blender there;
-the macOS one is signed ad hoc, not notarized.
+The Linux build runs wherever Blender does (glibc 2.28 or later). The Windows build has been
+installed and run in a Blender for Windows. The macOS builds pass the tests of the C interface
+there but have not yet been run in a Blender; they are signed ad hoc, not notarized.
 
 Each release also has `openclare-capi-<version>-<platform>.tar.gz`: the engine as a C library,
 with its header, for other programs ([crates/openclare-capi/README.md](crates/openclare-capi/README.md)).

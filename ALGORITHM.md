@@ -432,6 +432,72 @@ Limits found:
 - **Non-manifold inputs**: left as they are, neither repaired nor refused.
 - **Cylinder**: no test on a cylinder, for want of a primitive; the torus covers the same case.
 
+**Slivers of the work mesh (#31, November 2026).** A sliver is a triangle whose smallest angle
+is under 5°; the report counts them (`work N slivers`), and those of next to no area (under a
+millionth of the equilateral triangle on the mean edge). On main, at 2970, 3000 and 3030 quads,
+only five organic models of the 18 have any: 88 in all (jerry 48, ogre 25, pig 10, bridge 3,
+blub 2); the hard surfaces have none. Isotropic remeshing makes them where a vertex is pulled
+onto the edge between two others.
+
+They are removed at the end of each pass of the loop, as Botsch and Kobbelt do. A needle, one
+edge much shorter than the other two, loses that edge to a collapse; a collapse may make one
+of two stretches of feature line that run side by side, which is what a sliver between them is
+made of. A cap, whose largest angle is over 150°, has its long edge flipped where the new
+triangles face the way the pair does and are fatter; otherwise its corner is laid onto that
+edge, split at the foot. Feature lines keep their course and their corners. A flip may not make
+a triangle with two sides on feature lines: where a line ends or two meet at a tip, the lines
+held straight in the map leave it no room, the map folds over and the chain lets every line go
+(jerry at 2970 quads lost a fingertip that way). A work mesh with more slivers than a tenth of
+its triangles (and more than 16) is left as it is: a strip as narrow as its edges, which a
+boolean leaves between two parts, is slivers through and through, and trying only churns it.
+
+Result on the 18 models at the three budgets: 88 slivers → 23 (jerry 14, the ogre, pig and
+bridge 3 each), those its operations had to refuse. Validity and budget unchanged (18 valid
+out of 18, within 2 %). Eleven models do not change.
+
+The Hausdorff distance of the seven that do had to be read with care. It is set at a feature
+about a quad across (a stretch of jerry's open border, the tip of the ogre's horn), where the
+whole lengths of a few short arcs are decided by the closing of loops (M6): it moves whole
+strips by one where the cost hardly cares (targets near a half: 1.52, 0.58, 0.42) and lets the
+spirals decide. The seed changes nothing in this chain (the five seeds of the acceptance rule
+give the same mesh to the byte); the draw of the slight per-arc preference does
+(`OPENCLARE_JITTER_SEED`). Medians over the three budgets and five draws (15 meshes per
+model), against a change meant to be neutral, one more pass of the loop with no removal:
+
+| Model | Hausdorff, ‰: main | with removal | one more pass | Mean distance, ‰: main / removal / more |
+|---|---|---|---|---|
+| jerry | 13.96 | 15.33 | 15.64 | 0.759 / 0.749 / 0.779 |
+| ogre | 27.41 | 28.05 | 28.36 | 0.768 / 0.722 / 0.747 |
+| pig | 10.62 | 11.17 | 13.19 | 0.301 / 0.306 / 0.310 |
+| bridge | 7.32 | 9.33 | 7.27 | 0.455 / 0.455 / 0.450 |
+| blub | 7.68 | 8.07 | 6.73 | 0.189 / 0.169 / 0.169 |
+| part | 11.57 | 11.52 | — | 0.079 / 0.078 / — |
+| cylinder | 0.74 | 0.74 | — | 0.132 / 0.114 / — |
+
+Any change of the work mesh moves the Hausdorff distance of these models by as much as the
+removal does, −12 to +24 %: one more pass costs jerry 12 % and the ogre 3 %, on all 15 meshes
+of each. Main sits where these two happen to do well; the removal does better than the neutral
+change on jerry, the ogre and pig, worse on bridge (3 meshes of 15 differ) and blub. The mean
+distance is lower with the removal on four of the seven models, level on two, slightly higher
+on pig.
+
+Tried and not kept:
+
+- *Preventing slivers instead*: no split, collapse or valence flip that makes a sliver where
+  there was none. The valence flips stop making anew, pass after pass, the slivers removed the
+  pass before (73 → 0 on jerry at 3000 quads), but the Hausdorff distance at the three budgets
+  is no better (jerry 14.72, ogre 29.41, pig 12.73 ‰ in mean) and a test of the thin-part sizing
+  fails.
+- *A floor on the arcs where the shape bends*: one edge per twelfth of a turn the surface makes
+  across an arc. It helps the ogre (25.50 ‰ in mean over the three budgets, against 27.42) and
+  pig (9.84 against 11.59), but costs jerry 3 ‰ (16.80 against 13.80), whose maximum sits on a
+  border that hardly turns: the edges given to the bends are taken back from short arcs
+  elsewhere, which tip over at a half again.
+
+Left open: with the removal, jerry has one vertex of valence 2 at 2970 and 3000 quads, where the
+singularity stage and the field the map is made of count an index differently (#279), which
+the checks of validity do not see (#280).
+
 ### M1 bis — Sizing field
 
 - **Input**: the work mesh; the adaptivity setting (from 0 to 1); optionally, a density painted
@@ -1090,8 +1156,60 @@ What stays open:
   exact refinement of Bi-MDF (matching) is not written; nothing on the corpus calls for it.
 - **The arcs kept open** give narrow strips of quads (one quad wide for a real width that is
   far less). It is the price of faithfulness to the field: agreeing instead to merge two close
-  opposite singularities (Lyon et al. 2021) would give a simpler mesh. To see with the results
-  of milestone 7.
+  opposite singularities would give a simpler mesh. Lyon et al. 2021 do not: their quantization
+  is valid only if no path of arcs of length zero joins two singularities (their §4.1), and
+  merging is left to future work in their conclusion. The option below tries it (#171).
+
+**Merging singularities (option `merge_singularities`, off by default, #171).** The lengths
+close up only what they already close up: arcs of length zero and rectangles with no width.
+Singularities of valences $d_1, \dots, d_k$ ($k \ge 2$) that come into one vertex $v$ of the
+quad mesh are accepted there when
+
+1. $v$ is inside the surface and its valence in the quad mesh is $4 + \sum_i (d_i - 4)$, a value
+   of 3, 4 or 5. The index of a vertex is $(4 - d)/4$ and indices add up when vertices merge;
+   collapsing a strip of quads between two vertices of valences $a$ and $b$ leaves
+   $a + b - 4$. So a 3 and a 5 give a regular vertex, a 3, a 5 and a 5 give a 5; two 3s
+   (valence 2) or two 5s (valence 6) are refused. On a border any valence will do, as for one
+   singularity;
+2. every other check stays as it was: each directed edge in one quad at most, no quad with a
+   repeated corner, a single fan round each vertex, every other vertex inside the surface
+   regular, no rectangle closed up between two runs of border or hard edge;
+3. where a merge was accepted and nothing else is wrong, the quad mesh still has the Euler
+   characteristic of the surface: nothing pinched shut. Otherwise every merge accepted is
+   undone. (While other defects remain, the characteristic says nothing: checked then, it
+   undid sound merges, and the option brought the ogre's 78 arcs held open down to 66
+   instead of 45.)
+
+A rectangle of no width is never meshed, so none folds: its two long sides are merged, and a
+fold between two walls is condition 2. A T-junction is not a vertex of the quad mesh but a
+point on a side; one left dangling would show as a vertex out of its fan or of valence other
+than 4, which condition 2 refuses. A refused merge reopens, as before, the arc undoing the
+largest thing closed up between two of the singularities.
+
+*Result* (13 models, 2970, 3000 and 3030 quads, means over the three; arcs held open counted by
+`openclare quantize` on the whole mesh, the rest by `openclare measure` on `remesh`, presets of
+the 12-model batch):
+
+| model | arcs held open | irregular vertices | spiral edges % | Hausdorff ‰ |
+|---|---|---|---|---|
+| ogre | 68.3 → 50.3 | 154.7 → 153.3 | 10.9 → 6.3 | 27.4 → 27.2 |
+| jerry | 34.3 → 15.3 | 175.0 → 172.0 | 0.2 → 0.4 | 13.8 → 14.6 |
+| stonemill | 218.0 → 75.3 | 198.0 → 188.0 | 3.8 → 4.7 | 26.1 → 25.1 |
+| pig | 7.3 → 3.0 | 94.7 → 94.7 | 5.5 → 4.8 | 11.6 → 12.7 |
+| rock | 4.0 → 0 | 64.7 → 64.7 | 3.1 → 3.1 | 4.3 → 4.3 |
+| suzanne | 2.0 → 0 | 55.0 → 55.0 | 10.2 → 10.8 | 7.3 → 6.8 |
+| bob | 1.0 → 0.3 | 20.0 → 20.0 | 0 → 0 | 1.7 → 1.7 |
+| blub | 0 → 0 | 53.3 → 52.7 | 2.2 → 1.7 | 7.9 → 7.6 |
+| cage, spot | 8, 1 unchanged | unchanged | unchanged | unchanged |
+| creature, blob, part | 0 | unchanged | unchanged | unchanged |
+| **mean** | **26.5 → 11.8** | **78.6 → 77.4** | **4.8 → 4.5** | **9.7 → 9.7** |
+
+Every mesh stays valid. The arcs held open fall by more than half, and no model has more; the
+irregular vertices fall where merges happen (stonemill −10) and rise nowhere. Spirals and
+Hausdorff move both ways, by no more than a budget change moves them. Most of what stays held
+is not a dipole: on the ogre, the singularities that land in one vertex are nearly all of one
+sign (two 3s, two or more 5s), which no sum of indices lets merge.
+
 - **Budget**: the finest step is a whole strip, that is 2 to 4 % of the quads at 1000 quads.
 - **A piece with neither singularity nor border** (a torus) has no T-mesh, hence nothing to
   quantize: its two periods will have to be rounded apart.
@@ -1807,6 +1925,56 @@ interface and factory, called last):
   of a cylinder is still a polygon inside its circle.
 - **Subdivision still shrinks the mesh.** Fitting makes the quad mesh itself keep the volume,
   not the smooth surface a Catmull-Clark subdivision makes of it (DT-039).
+
+### Fitting the limit surface (#39)
+
+Artists subdivide the mesh, and Catmull-Clark rounds it off: fitted for its faces, the ogre at
+1000 quads keeps 99.7 % of its volume and 96.0 % once subdivided twice. `--fitter
+limit-surface` (`fitter = limit-surface`, off by default) fits the limit surface instead.
+
+- **The limit is linear in the vertices** (Halstead, Kass, DeRose, SIGGRAPH 1993): where quads
+  meet, the limit position of a vertex of valence `n` is `(n² v + 4 Σ e + Σ d) / (n (n + 5))`
+  over its neighbours `e` and the corners `d` across its quads; on a border, `(a + 4 v + b) / 6`.
+  `subdivision.rs` writes one step of subdivision and the limit as such weights, with Blender's
+  defaults (borders and their corners smoothed, edges of three faces sharp). Tests: 4/9, 1/9,
+  1/36 on a regular grid, the corners of a cube half way in, and the same points as seven levels
+  of subdivision, triangles and pentagons included.
+- **The fitting is the same, its points elsewhere**: the middles of the sixteen quads two
+  subdivisions make of each quad, their corners on the limit surface, each a fixed set of
+  weights on the vertices. The pull of each point goes to the vertices by those weights, as it
+  went to the four corners of a face; guards unchanged. With non-negative weights that add up
+  to 1, a round cannot overshoot.
+
+Measured on 4 November 2026, 3000 quads, the command line, Blender's Subdivision Surface at two
+levels with its defaults, least-squares → limit-surface (the same quads, only the fitting
+differs). Distances in per mille of the diagonal:
+
+| Model | Volume, subdivided, % | Hausdorff, subdivided | Mean distance, subdivided | Volume, quads, % | Hausdorff, quads | Mean distance, quads |
+|---|---|---|---|---|---|---|
+| ogre | 98.77 → 99.80 | 28.94 → 28.74 | 0.922 → 0.609 | 99.90 → 101.01 | 27.71 → 27.53 | 0.738 → 1.035 |
+| creature | 99.38 → 100.02 | 2.18 → 1.45 | 0.298 → 0.137 | 100.03 → 100.68 | 1.99 → 2.77 | 0.205 → 0.351 |
+| blob | 99.38 → 100.02 | 3.61 → 2.99 | 0.434 → 0.077 | 100.02 → 100.67 | 2.61 → 3.22 | 0.188 → 0.497 |
+| suzanne (open) | — | 7.70 → 7.34 | 0.478 → 0.217 | — | 7.69 → 7.06 | 0.469 → 0.631 |
+| spot | 99.30 → 100.02 | 3.19 → 3.02 | 0.422 → 0.060 | 100.02 → 100.76 | 3.39 → 3.50 | 0.196 → 0.452 |
+| pig | 99.31 → 99.89 | 11.37 → 11.01 | 0.530 → 0.242 | 99.98 → 100.62 | 9.99 → 9.58 | 0.301 → 0.539 |
+| bob | 99.29 → 100.02 | 1.26 → 0.50 | 0.313 → 0.018 | 100.02 → 100.76 | 1.62 → 2.84 | 0.137 → 0.362 |
+| jerry (open) | — | 13.85 → 13.60 | 0.742 → 0.486 | — | 13.98 → 13.98 | 0.759 → 0.953 |
+| blub | 99.25 → 99.85 | 8.81 → 8.14 | 0.321 → 0.113 | 99.94 → 100.57 | 7.32 → 6.63 | 0.189 → 0.342 |
+| rock | 99.73 → 100.01 | 4.20 → 3.51 | 0.731 → 0.588 | 100.00 → 100.28 | 4.53 → 5.55 | 0.696 → 0.870 |
+| cage | 98.53 → 99.44 | 13.87 → 13.41 | 0.785 → 0.671 | 99.71 → 100.70 | 5.66 → 7.81 | 0.516 → 0.874 |
+| part (hard surface) | 99.68 → 99.75 | 10.53 → 10.37 | 0.310 → 0.311 | 100.00 → 100.09 | 11.57 → 10.18 | 0.068 → 0.302 |
+| **median** | **99.30 → 99.95** | **8.26 → 7.74** | **0.456 → 0.229** | **100.00 → 100.67** | **6.49 → 6.85** | **0.253 → 0.518** |
+
+- **Subdivided, closer on every model**: Hausdorff and volume better on all twelve, the mean
+  distance halved (the part, flat and sharp, unchanged). All stay valid, no face inverted.
+- **The quads themselves move away**: their mean distance doubles and they hold 0.6 % more than
+  the shape, as they must for their limit surface to lie on it. Their Hausdorff distance gets
+  worse on six models.
+- **Tuning**: more rounds (16, 32) or a leash of half an edge change the ogre by less than
+  0.1 % of volume; the defaults stay.
+- **Left**: crease weights, which the add-on can give hard edges, are not in the limit (an edge
+  creased in Blender is sharper than what is fitted); the option is not in the add-on; one
+  budget only.
 
 ### Milestone 12 — Creases
 

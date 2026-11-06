@@ -47,6 +47,8 @@ OPTIONS (remesh):
     --adaptivity <A>             0 for quads of one size, up to 1 for quads as small as the shape bends
     --quads-around <N>           fewest quads round a thin part, so that it keeps its volume (0: do not look at thickness)
     --volume-fit <F>             0 leaves every vertex on the surface; 1 moves them off it for the mesh to keep the volume
+    --fitter <NAME>              what keeps the volume: least-squares, the faces of the mesh (default), or
+                                 limit-surface, the surface a Catmull-Clark subdivision of the mesh converges to
     --density <FILE>             painted density: one weight per input vertex, one per line, from 0 (least dense) to 1 (most)
     --density-contrast <F>       how many times denser a weight of 1 is than a weight of 0 (default 4)
     --curves <FILE>              guide curves, lines for the quad mesh to have edges along: one point per line
@@ -60,6 +62,8 @@ OPTIONS (remesh):
                                  of its faces is written next to it, as <output>.groups
     --skip-pieces-under <Q>      leave out the separate pieces whose share of the quads is below Q (default 0: keep all)
     --no-close-loops             leave the lines of quads round a part as the lengths make them, helices or not
+    --merge-singularities        let a 3 and a 5 (singularities whose valences add up to 3, 4 or 5) merge
+                                 across a strip of no width instead of holding it one quad wide (experimental)
     --quality <standard|slow>    slow: after the engine, an exact solver (HiGHS) chooses which loops to close
                                  together, in three rounds; kept only where it makes fewer spirals. Seconds to
                                  minutes more per piece (default standard)
@@ -117,6 +121,7 @@ OPTIONS (tmesh):
 OPTIONS (quantize): those of tmesh up to --rounds, and
     --tolerance <T>        how close to the number of quads is close enough (default 0.02)
     --keep-scale           keep the scale of the T-mesh instead of aiming for the number of quads
+    --merge-singularities  let singularities merge where their valences add up to 3, 4 or 5
     --json                 print the report as one JSON object
 
 OPTIONS (measure):
@@ -409,6 +414,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
             "--adaptivity" => config.adaptivity = parse(arg, value(arg)?)?,
             "--quads-around" => config.quads_around = parse(arg, value(arg)?)?,
             "--volume-fit" => config.volume_fit = parse(arg, value(arg)?)?,
+            "--fitter" => config.fitter = value(arg)?.parse().map_err(|e: openclare::Error| e.to_string())?,
             "--density" => density_path = Some(value(arg)?.clone()),
             "--curves" => curves_path = Some(value(arg)?.clone()),
             "--groups" => groups_path = Some(value(arg)?.clone()),
@@ -417,6 +423,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
             "--density-contrast" => config.density_contrast = parse(arg, value(arg)?)?,
             "--skip-pieces-under" => config.skip_pieces_under = parse(arg, value(arg)?)?,
             "--no-close-loops" => config.close_loops = false,
+            "--merge-singularities" => config.merge_singularities = true,
             "--quality" => config.quality = value(arg)?.parse().map_err(|e: openclare::Error| e.to_string())?,
             "--slow-time-limit" => config.slow_time_limit = parse(arg, value(arg)?)?,
             "--slow-work-limit" => config.slow_work_limit = parse(arg, value(arg)?)?,
@@ -536,6 +543,12 @@ fn remesh(args: &[String]) -> Result<(), String> {
         report.feature_edges,
         report.singularities.0,
         report.singularities.1,
+    );
+    println!(
+        "work     {} slivers (smallest angle under {} deg), {} of them flat",
+        report.work_slivers.thin,
+        openclare::preprocess::SLIVER_ANGLE,
+        report.work_slivers.flat,
     );
     println!(
         "output   {} vertices, {} faces ({} quads, {} triangles, {} n-gons), edge length {:.4}",
@@ -1205,6 +1218,7 @@ fn quantize_command(args: &[String]) -> Result<(), String> {
         match arg.as_str() {
             "--tolerance" => request.tolerance = parse(arg, args.next().ok_or("--tolerance expects a value")?)?,
             "--keep-scale" => exact_scale = true,
+            "--merge-singularities" => request.merge_singularities = true,
             "--json" => json = true,
             flag => return Err(format!("unknown option '{flag}'")),
         }

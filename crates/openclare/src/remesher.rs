@@ -476,6 +476,7 @@ impl Remesher for Triangles {
             clock.lap(&mut report, "sizing");
         }
         report.working_vertices = work.mesh.positions.len();
+        report.work_slivers = preprocess::slivers(&work.mesh);
         report.feature_edges = work.feature_edges.len();
         report.guide_gaps = work.guide_gaps;
         clock.lap(&mut report, "preprocess");
@@ -611,7 +612,7 @@ impl Remesher for IntegerGrid {
         recorder.record("extraction/quads", Shape::Polygons(&mesh));
 
         let relaxer = Laplacian { iterations: self.relax_iterations };
-        settle(&mut mesh, input, &work, edge_length, None, &relaxer, config.volume_fit, recorder)?
+        settle(&mut mesh, input, &work, edge_length, None, &relaxer, config.volume_fit, config.fitter, recorder)?
             .into_report(&mut report);
         clock.lap(&mut report, "relaxation");
 
@@ -1563,6 +1564,7 @@ impl QuadLayout {
             quads: Some((quads.round() as usize).max(1)),
             tolerance: self.budget_tolerance,
             close_turns: config.close_loops,
+            merge_singularities: config.merge_singularities,
             slow: (config.quality == crate::config::Quality::Slow).then(|| quantization::Slow {
                 selector: config.ring_selector.clone(),
                 time_limit: std::time::Duration::from_secs_f64(config.slow_time_limit),
@@ -1584,7 +1586,17 @@ impl QuadLayout {
 
         // The layout knows which vertices lie on a border or a hard edge.
         let held = Some((meshed.on_feature, meshed.on_corner));
-        let mut lines = settle(&mut mesh, input, &work, edge_length, held, &self.relaxer, config.volume_fit, recorder)?;
+        let mut lines = settle(
+            &mut mesh,
+            input,
+            &work,
+            edge_length,
+            held,
+            &self.relaxer,
+            config.volume_fit,
+            config.fitter,
+            recorder,
+        )?;
         clock.lap(&mut report, "relaxation");
 
         // Closing the loops round a part may ask a strip for a row of quads
@@ -1606,8 +1618,17 @@ impl QuadLayout {
                 }
                 let (mut other, meshed) = meshing::create(meshing::Kind::PatchGrid).mesh(&work, &layout, candidate)?;
                 let held = Some((meshed.on_feature, meshed.on_corner));
-                let other_lines =
-                    settle(&mut other, input, &work, edge_length, held, &self.relaxer, config.volume_fit, recorder)?;
+                let other_lines = settle(
+                    &mut other,
+                    input,
+                    &work,
+                    edge_length,
+                    held,
+                    &self.relaxer,
+                    config.volume_fit,
+                    config.fitter,
+                    recorder,
+                )?;
                 let other_kept = (crate::metrics::folded_faces(input, &surface, &other), spirals(candidate));
                 if other_kept < kept {
                     let note = if candidate.report.turns_held == 0 {
@@ -1917,6 +1938,7 @@ fn fields(
     };
     let mut work = preprocess::create(preprocess::Kind::Isotropic).preprocess(input, &work_request)?;
     report.working_vertices = work.mesh.positions.len();
+    report.work_slivers = preprocess::slivers(&work.mesh);
     report.feature_edges = work.feature_edges.len();
     report.guide_gaps = work.guide_gaps;
     clock.lap(report, "preprocess");
@@ -1945,6 +1967,7 @@ fn fields(
             let finer = preprocess::Request { refinement: Some(&refinement), ..work_request };
             work = preprocess::create(preprocess::Kind::Isotropic).preprocess(input, &finer)?;
             report.working_vertices = work.mesh.positions.len();
+            report.work_slivers = preprocess::slivers(&work.mesh);
             report.feature_edges = work.feature_edges.len();
             report.guide_gaps = work.guide_gaps;
             recorder::show_work(recorder, &work);
@@ -2086,7 +2109,7 @@ fn sharp_request(config: &RemeshConfig, edge_length: f64) -> preprocess::Request
 }
 
 /// Relaxes `mesh` on the input surface, then fits it to that surface by
-/// `volume_fit` (see [`fitting`]). Hard edges and corners of the work mesh
+/// `volume_fit` with `fitter` (see [`fitting`]). Hard edges and corners of the work mesh
 /// are what its vertices snap to; the surface itself is the input. `held`
 /// lists the vertices known to lie on feature lines and on corners; without
 /// it they are told by distance. Returns the edges of the mesh that ended up
@@ -2101,6 +2124,7 @@ fn settle(
     held: Option<(Vec<u32>, Vec<u32>)>,
     relaxer: &dyn Relaxer,
     volume_fit: f64,
+    fitter: fitting::Kind,
     recorder: &mut dyn Recorder,
 ) -> Result<Lines> {
     let constraints =
@@ -2118,7 +2142,7 @@ fn settle(
     if volume_fit > 0.0 {
         recorder.record("relaxation/quads", Shape::Polygons(mesh));
         recorder.begin("fitting")?;
-        fitting::create(fitting::Kind::LeastSquares).fit(mesh, input, &surface, guide.as_ref(), volume_fit);
+        fitting::create(fitter).fit(mesh, input, &surface, guide.as_ref(), volume_fit);
     }
     // A line drawn by the user is a line of edges, not a hard edge, unless
     // it was drawn as one: it is listed apart, and neither marked sharp nor
