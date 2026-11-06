@@ -112,7 +112,8 @@ another separatrix of its vertex forces that turn alone to be shifted; and
 that on a
 closed sphere the shift and the length of a turn have the same parity. Fox calculus extends the Burgers sum to
 any combination of turns, and \emph{combs}, local dislocations carried by
-single arcs, write every certificate of a conflict found on a human body.
+single arcs, write all but one of the $68$ certificates of conflicts found on a
+human body.
 The
 conflicts bound from below the number of turns that every quantization within
 given bounds leaves shifted: on that body, within the bounds of separation of
@@ -1057,32 +1058,11 @@ row 29, where no staircase was found.
 \paragraph{Local dislocations.}
 The curves of an irreducible set need not bound one planar region round a
 cluster of singularities: those of every pair of Table~\ref{tab:pairs} cross.
-What the conflicts share is local.
-
-\begin{evidence}{open}{}
-\begin{question}[Are conflicts sums of local dislocations?]\label{conj:local}
-On a closed surface of genus zero, let $H$ be an irreducible set of turns that
-cannot be closed together within the bounds of separation. Does some
-combination $\sum_{\gamma \in H} u_\gamma \shift_\gamma$ with whole
-multipliers that certifies the conflict (Remark~\ref{rem:definite}) equal,
-modulo the balances, a sum with non-negative whole weights of
-\begin{enumerate}
-\item[(i)] lengths of staircases (Proposition~\ref{prop:staircase}) between a
-  vertex of valence three and one of valence five, or between two vertices of
-  equal valence exchanged as in Proposition~\ref{prop:swap}, and
-\item[(ii)] shifts of caps: sign-definite forms carried by curves that wind
-  once round singular vertices of total index four, as turn $54$ of way 0 and
-  its separatrix (Proposition~\ref{prop:winding}),
-\end{enumerate}
-one term at least containing an arc held open?
-\end{question}
-\end{evidence}
-
-It holds with one term, the homotopies checked by computer, for turn $54$ of
-way 0 and the pairs of Table~\ref{tab:pairs} joined by a staircase but rows 15
-and 16;
-Section~\ref{sec:combs} settles it on the body: no as stated, yes and empty
-when read loosely. % PR3: turn 46 of way 2 becomes a one-turn counterexample to the strict reading (with a Lean check)
+What the conflicts share is local: for turn $54$ of way 0 and for the pairs of
+Table~\ref{tab:pairs} joined by a staircase but rows 15 and 16, the
+certificate is, modulo the balances, the length of one winding separatrix or
+one staircase, the homotopy checked by computer. Section~\ref{sec:combs}
+writes certificates as sums of combs.
 
 \section{Any combination of turns}\label{sec:fox}
 
@@ -1240,16 +1220,12 @@ example here.
 
 \subsection{Combs}\label{sec:combs}
 
-The twisted windings depend on the chart; combs do not. In the T-meshes of
-openclare, traced from the separatrices of the singular vertices only, every
-trace of a closed surface starts at a singular vertex (feature lines or seeded
-traces would break this; we assume it). For an arc $a$, along $e_a$ from the node $n_0$
-to the node $n_1$, the \emph{foot} of $n_j$ is the node itself if it is
-singular, and otherwise the singular vertex where the trace through $n_j$
-perpendicular to $a$ starts. We assume this vertex unique: a single trace
-perpendicular to $a$ meets $n_j$ (not two, from opposite sides), and it is neither a separatrix
-connection nor a loop; otherwise a foot must be chosen, and different choices
-give different dislocations. The \emph{comb} $\sigma_a$ of $a$ runs from the
+The twisted windings depend on the chart; combs do not. A \emph{vertex} is a
+singular vertex or a node of valence four that traces leave. For an arc $a$,
+along $e_a$ from the node $n_0$ to the node $n_1$, the \emph{foot} of $n_j$ is
+$n_j$ if it is singular and otherwise, when exactly one trace perpendicular to
+$a$ meets $n_j$ and that trace is neither a separatrix connection nor a loop,
+the vertex it leaves. The \emph{comb} $\sigma_a$ of $a$ runs from the
 foot $c_0$ of $n_0$ along its trace to $n_0$, along $a$ to $n_1$, and along the
 other trace to the foot $c_1$ of $n_1$, through T-junctions only
 (Figure~\ref{fig:comb}). The \emph{graph of feet} has the singular vertices of
@@ -1272,8 +1248,10 @@ $2$.}
 
 \begin{evidence}{core}{\lean{comb_reading}, \lean{Pairing.Comb.reading}; the forms: \lean{Combs.comb_dislocation}, \lean{Combs.comb_exchange}, from the comb \lean{Combs.Comb.dislocation}, \lean{Combs.Comb.exchange}; the feet exist on 850 of the 3{,}009 arcs of 50 random instances; assumed: the feet exist, the perpendicular traces develop straight, $e_a$ is an axis of the chart of the comb; the case $c_0 = c_1$ is not formalized}
 \begin{lemma}[Combs]\label{lem:comb}
-Let $p_{c_0}$, $p_{c_1}$ be the feet of an arc $a$ developed along its comb.
-Then, for all balanced lengths,
+Let $a$ be an arc each of whose ends is singular or meets exactly one trace
+perpendicular to $a$, that trace being neither a separatrix connection nor a
+loop, and let $p_{c_0}$, $p_{c_1}$ be its feet developed along its comb. Then,
+for all balanced lengths,
 \[
   \langle e_a,\ p_{c_1} - p_{c_0} \rangle = \ell_a .
 \]
@@ -1299,12 +1277,17 @@ among them $2e_a$. If $c_0 = c_1$, the second trace is a separatrix of the same
 vertex stopping on the first at the distance $\ell_a$.
 \end{proof}
 
+On the body (way~1) the hypothesis fails on the $76$ arcs that end at one of
+the $20$ nodes of valence four, which three other traces meet; they are counted
+and left out. No arc ends on a separatrix connection, $16$ have their two feet
+at one vertex, and the identity holds on $2{,}090$ of the $2{,}146$ arcs, every
+failure among the $76$ (measured).
+
 A \emph{closed walk of combs} is a sequence of arcs $a_1, \dots, a_k$ whose
 feet are $c_{i-1}$ and $c_i$, of odd valence, with $c_k = c_0$; its
-\emph{reading} is $\sum_i \ell_{a_i}$. A walk of length one is a winding
-separatrix, one of length two between valences three and five the staircase of
-Proposition~\ref{prop:staircase}, and one round four vertices of valence three
-a cap.
+\emph{reading} $\sum_i \ell_{a_i}$ is a winding separatrix for $k = 1$, the
+staircase of Proposition~\ref{prop:staircase} for $k = 2$ between valences
+three and five, and a cap round four vertices of valence three.
 
 \begin{evidence}{core}{\lean{foot_at_end}, \lean{feet_coboundary}, \lean{combination_even_of_constant_colour}, \lean{combination_reads_even}; verified by computer on the male body (paragraph below); assumed: the sums along the sides of a patch, on paper, and the development modulo~2 of the words of the turns, as in Proposition~\ref{prop:fox}}
 \begin{proposition}[Feet modulo 2]\label{prop:feet}
@@ -1363,11 +1346,12 @@ $\frac12\mathbf 1$ as well when the graph has an unbalanced cycle, and $B^\top y
 \in B^\top\Z^m + \{0, h\}$.
 \end{proof}
 
-The hypothesis on connections is needed: in
-Proposition~\ref{prop:dislocation}(ii) the chain joining $c_3$ to $c_5$ lies
-on one trace, and the difference $\pm\delta$ of the two shifts has an odd part
-with one foot at each. On a torus the period term of
-Proposition~\ref{prop:burgers-any} enters~(b).
+Here an end that is a vertex is its own foot. The hypotheses on the ends of
+traces are needed: in Proposition~\ref{prop:dislocation}(ii) the chain joining
+$c_3$ to $c_5$ lies on one trace, and the odd part of the difference
+$\pm\delta$ of the two shifts has one foot at each; on random T-meshes whose
+traces stop at singular vertices, $13$ of $17$ certificates have an odd part
+that is not a cycle (\texttt{experiments/property}).
 
 \begin{evidence}{core}{\lean{Combs.sum_of_combs}, \lean{Combs.veblen}, \lean{Combs.sum_of_combs_real}; the parity from Proposition~\ref{prop:feet}}
 \begin{proposition}[Certificates are sums of combs]\label{thm:combs}
@@ -1393,13 +1377,9 @@ is $\sum_a \lfloor c_a/2 \rfloor\,2\ell_a$. With real weights, $c = \sum_a
 on those whose feet are one vertex.
 \end{proof}
 
-By Proposition~\ref{prop:feet}(d), whole multipliers of the balances are not
-needed when the bidirected graph is connected and $c$ has fewer odd
-coefficients than half the singular vertices of odd valence. On the random
-T-meshes of the property tests (\texttt{experiments/property}), whose traces
-stop at singular vertices, within the bounds $\ell \ge 1$ on every arc, $13$ of
-the $17$ exact certificates whose arcs have feet of odd valence have an odd
-part that is not a cycle: $6$ on one sphere, $7$ on tori.
+By Lemma~\ref{lem:comb}, each reading $2\ell_a$ with two distinct feet of odd
+valence is a local dislocation (valences three and five, $711$ arcs of the
+body) or exchange (equal valences, $1{,}244$).
 
 \begin{evidence}{prose}{proof on paper, not checked on data}
 \begin{proposition}[Closed walks are twisted cycles]\label{prop:walks}
@@ -1458,45 +1438,14 @@ which the lengths can move without changing any holonomy.
 \end{proof}
 
 \paragraph{On the male body.}
-Lemma~\ref{lem:comb} holds on $2{,}090$ of the $2{,}146$ arcs, the $56$
-others ending at the nodes of valence four below; $1{,}955$ arcs have two
-distinct feet of odd valence: nearly every arc is a local dislocation or
-exchange. On this T-mesh (way~1) every node is met by
-exactly two traces but $20$ of valence four, which traces leave, joined in
-pairs by $10$ traces (the $76$ arcs that end there have no single
-perpendicular trace), and no trace ends at a singular vertex: the hypotheses
-of Proposition~\ref{prop:feet} hold, and (a), (b) on all $1{,}708$ turns, and
-(d) are verified by computer at its $254$ singular vertices
-(\texttt{experiments/parity.py}). The twisted homology has
-dimension $504 = 2(n - 2)$ and the pairing rank $504$; we conjecture that
-without vertices of valence divisible by four the kernel is spanned by the
-classes across the connections. With whole multipliers of the shifts, the
-odd parts of all $68$ certificates of the conflicts examined ($34$ distinct
-forms, at most $17$ odd coefficients; $20$ of them first scaled by the
-denominators, $2$ to $7$, of their multipliers, which empties the odd part of
-row~19 in way~7, $\ell_{1847}$ with multipliers $\frac12$) have an even number
-of feet at every singular vertex, as Proposition~\ref{prop:feet}(d) says they must (exact);
-in $67$ every foot has odd valence, in the $68$th three arcs have feet at
-nodes of valence four. Read strictly (below), the certificate of turn $54$ of way 0 is one winding
-separatrix, the length of arc $1873$, whose two feet coincide (measured).
-
-% PR3: this paragraph is left as it was. On the new export the strict reading separates 15 of the 41 sets, all with an exact point (rows 2, 3, 12, 19, 24, 29, 31, 33, 35 to 41); turn 46 of way 2 (row 2) is a one-turn counterexample, to be checked in Lean; E, F, the eyes and the left hand are gone.
-\paragraph{Question~\ref{conj:local}, read loosely, is true and empty.}
-Allowing every comb reading and every closed walk of combs,
-Proposition~\ref{thm:combs} answers it for every certificate with whole
-multipliers whose feet have odd valence, $67$ of the $68$ of the body; but this follows from Farkas' lemma
-and the parity of Proposition~\ref{prop:feet}, and says nothing about which
-configurations
-conflict. \emph{Read strictly, it is false}: restricted to staircases of
-weight one, monotone walks round a cap and winding separatrices, exact
-rational balanced lengths make every such form non-negative and the
-certificates of E and F negative, $-2.9967$ and $-1.9973$ (checked in integer
-arithmetic). These forms are infinitely many, but each is the length of a walk
-on a graph whose steps carry the arc lengths, so a shortest-path search finds
-a negative one if any. In floating point the same test also separates the four
-turns at the eyes and puts the left hand inside the cone (measured). Whether
-every certificate splits into combs on disjoint sets of vertices, each of its
-sign, is open: the trees of the left hand and of way~7 share vertices.
+The hypotheses of Proposition~\ref{prop:feet} hold, the $20$ nodes of valence
+four being joined in pairs by $10$ traces, and (a), (b), (d) are verified by
+computer at the $254$ singular vertices, on every arc, the $76$ left out of
+Lemma~\ref{lem:comb} included, and on the $1{,}708$ turns
+(\texttt{experiments/parity.py}). The odd parts of the $68$ certificates of the
+conflicts, $20$ first scaled to whole multipliers, have an even number of feet
+at every singular vertex (exact); Proposition~\ref{thm:combs} applies to the
+$67$ whose feet all have odd valence, not to row $24$ in way~3.
 
 \section{Borders and handles}\label{sec:beyond}
 
@@ -1660,8 +1609,7 @@ and~\ref{prop:commutator}, Remarks~\ref{rem:definite} and~\ref{rem:exist},
 Theorem~\ref{thm:forced} and Corollary~\ref{cor:chain} need no closed sphere;
 Lemma~\ref{lem:eight}, Proposition~\ref{prop:parity},
 Corollary~\ref{cor:parity}, the count of independent rings, the setting of
-Proposition~\ref{prop:fox}, Corollary~\ref{cor:checker} and
-Question~\ref{conj:local} do; Appendix~\ref{app:orders} treats triangle
+Proposition~\ref{prop:fox} and Corollary~\ref{cor:checker} do; Appendix~\ref{app:orders} treats triangle
 meshes.
 
 \section{Turns every quantization within bounds leaves shifted}\label{sec:forced}
@@ -2192,11 +2140,20 @@ the completeness proposition, stated in their sharpened form.
 \section{Open problems and limitations}\label{sec:open}
 
 When is a set of turns closable, in terms of the singularity configuration?
-Every certificate is a sum of combs, which says nothing about the
-singularities, and not of staircases, caps and winding separatrices alone; % PR3: the strict reading changes (turn 46)
-a
-useful answer lies between, for instance combs on disjoint sets of vertices,
-each of the sign of the certificate. Computing $\tau_P(H)$ at a given number of quads needs the extremes of an
+Asked as whether every certificate is a sum of local dislocations, it has two
+answers: read loosely, with every comb and every closed walk of combs, yes,
+which follows from Farkas' lemma and the parity of the feet
+(Proposition~\ref{thm:combs}) and says nothing about the singularities; read
+strictly, with staircases of weight one, monotone walks round a cap and
+winding separatrices only, no. These forms are infinitely many, but each is
+the length of a walk on a graph whose steps carry the arc lengths, so a
+shortest-path search finds a negative one if there is any: on the body it
+separates $15$ of the $41$ sets of Table~\ref{tab:iis}, each at exact balanced
+lengths where its certificate is negative and none of these forms is (checked
+in integer arithmetic), among them turn $46$ of way 2, a counterexample of one
+turn. Among the $26$ others, the certificate of turn $54$ of way 0 is the length of arc $1873$, a
+winding separatrix (measured). A useful answer lies between, for instance
+combs on disjoint sets of vertices, each of the sign of the certificate. Computing $\tau_P(H)$ at a given number of quads needs the extremes of an
 indefinite quadratic function over a polytope. Does \RC{} stay NP-hard on the
 turns of a sphere (Conjecture~\ref{conj:realize})? Dislocations between
 parallel turns encode only orders (Proposition~\ref{prop:differences}); a
@@ -2204,7 +2161,11 @@ reduction needs relations that are sums of shifts of fixed sign. Is \RC{} NP-har
 the set of turns depends on the lengths, as the strips of the mesh do, what is
 the problem at all? When does a quartic differential with all trajectories finite exist for a
 given singularity configuration~\cite{lei2020quartic}? Turns are its discrete
-version. Finally, a formal model of a complex
+version. Without singular vertices of valence divisible by four, is
+the kernel of the Burgers pairing (Proposition~\ref{prop:pairing}) spanned by
+the classes across the separatrix connections? On the body, which has none,
+the twisted homology has dimension $504 = 2(n - 2)$ and the pairing rank
+$504$. Finally, a formal model of a complex
 of rectangles with integer sides, its turns and its developing map would turn
 the topological hypotheses of the Lean statements into theorems.
 
