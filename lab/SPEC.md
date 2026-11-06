@@ -34,6 +34,7 @@ jobs, reading the results of a run (the scripts' summaries stay what they are).
 | `lab/runs.jsonl` | yes | the app, on Marc's request ("Copy history to the repo") | the published snapshot of the history |
 | `<data>/runs.jsonl` | no | the app | the live database, one run per line |
 | `<data>/logs/<run id>.log` | no | the job (its stdout and stderr) | the log of each run |
+| `<data>/refused.jsonl` | no | the app | the records that still name a local path (section 4) |
 | `<data>/state.json` | no | the app | the queue in progress and the run under way, for recovery |
 | `<config>/settings.toml` | no | the app | thresholds, thread warning, policies, machine label (§12) |
 
@@ -66,7 +67,8 @@ job ran in, and that checkout is named relative to the home checkout (`.` or
 `.claude/worktrees/name`). Before writing, the app replaces the root of the checkout by `{repo}`
 and the home folder by `~` in the command, the environment and the paths, then refuses to write a
 record that still matches the home-folder patterns of `hygiene.yml` (Linux, macOS and Windows)
-or contains `/tmp/`, and shows the offending field. The environment recorded is the variables
+or contains `/tmp/`, and shows the offending field; that record is kept in `<data>/refused.jsonl`,
+never copied into the repository. The environment recorded is the variables
 the app sets (§7), not the whole inherited environment.
 
 ## 5. Data model

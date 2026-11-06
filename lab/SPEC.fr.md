@@ -35,6 +35,7 @@ récurrentes, lire les résultats d'une exécution (les résumés des scripts re
 | `lab/runs.jsonl` | oui | l'application, à la demande de Marc (« Copier l'historique dans le dépôt ») | l'instantané publié de l'historique |
 | `<data>/runs.jsonl` | non | l'application | la base vivante, une exécution par ligne |
 | `<data>/logs/<id>.log` | non | la tâche (sa sortie standard et d'erreur) | le journal de chaque exécution |
+| `<data>/refused.jsonl` | non | l'application | les fiches qui nomment encore un chemin local (section 4) |
 | `<data>/state.json` | non | l'application | la file en cours et l'exécution en cours, pour la reprise |
 | `<config>/settings.toml` | non | l'application | seuils, alerte de threads, politiques, libellé de la machine (§12) |
 
@@ -68,7 +69,8 @@ où la tâche a tourné, et ce checkout est nommé relativement au checkout d'at
 `.claude/worktrees/nom`). Avant d'écrire, l'application remplace la racine du checkout par `{repo}` et
 le dossier personnel par `~` dans la commande, l'environnement et les chemins, puis refuse d'écrire une
 fiche qui correspond encore aux motifs de dossier personnel de `hygiene.yml` (Linux, macOS et Windows) ou qui
-contient `/tmp/`, et montre le champ fautif. L'environnement enregistré est celui des variables que
+contient `/tmp/`, et montre le champ fautif ; cette fiche est gardée dans `<data>/refused.jsonl`,
+jamais copiée dans le dépôt. L'environnement enregistré est celui des variables que
 l'application pose (§7), pas tout l'environnement hérité.
 
 ## 5. Modèle de données

@@ -7,13 +7,18 @@
 //! history on the made-up runs of the tests). `--tab <queue|history|
 //! catalogue|machine>` opens on that tab, `--queue <job or sequence>` puts
 //! it in the queue (repeatable), `--run <id>` selects that run in the
-//! history. `--screenshot <file.ppm>` writes a picture of the window, not of
-//! the screen, and closes it.
+//! history, `--start` presses Run (or goes on with a queue left paused).
+//! `--screenshot <file.ppm>` writes a picture of the window, not of the
+//! screen, `--after <seconds>` seconds after opening, and closes it, even
+//! during a run, as an app that dies would.
 
 mod app;
 mod catalogue;
+mod files;
 mod home;
+mod machine;
 mod model;
+mod runner;
 mod settings;
 mod store;
 
@@ -25,16 +30,22 @@ fn main() -> ExitCode {
     let mut opening = app::Opening::default();
     let mut arguments = std::env::args().skip(1);
     while let Some(argument) = arguments.next() {
-        let value = arguments.next();
-        match (argument.as_str(), value) {
+        if argument == "--start" {
+            opening.start = true;
+            continue;
+        }
+        match (argument.as_str(), arguments.next()) {
             ("--data", Some(folder)) => data = Some(PathBuf::from(folder)),
             ("--tab", Some(name)) if app::Tab::named(&name).is_some() => opening.tab = app::Tab::named(&name),
             ("--queue", Some(name)) => opening.queue.push(name),
             ("--run", Some(id)) => opening.run = Some(id),
             ("--screenshot", Some(file)) => opening.screenshot = Some(PathBuf::from(file)),
+            ("--after", Some(seconds)) if seconds.parse::<f64>().is_ok() => {
+                opening.after = seconds.parse().unwrap_or(0.0)
+            }
             _ => {
                 eprintln!(
-                    "usage: lab [--data <folder>] [--tab <name>] [--queue <job>]... [--run <id>] [--screenshot <file.ppm>]"
+                    "usage: lab [--data <folder>] [--tab <name>] [--queue <job>]... [--start] [--run <id>] [--screenshot <file.ppm> [--after <seconds>]]"
                 );
                 return ExitCode::from(2);
             }
@@ -60,7 +71,7 @@ fn main() -> ExitCode {
         options,
         Box::new(|creation| {
             creation.egui_ctx.set_theme(eframe::egui::Theme::Dark);
-            Ok(Box::new(app::App::new(places, opening)))
+            Ok(Box::new(app::App::new(places, opening, creation.egui_ctx.clone())))
         }),
     );
     match result {
