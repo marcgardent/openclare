@@ -3,7 +3,9 @@
 binary with the experiment options of `crates/openclare/src/quantization/
 experiment.rs` (ALGORITHM.md, M6, "Experiment options") turning stages of
 the closing off, one more stage on per line. The twelve development models,
-at the budgets given (default the three of the protocol), means over the runs.
+at the budgets given (default the 21 of the protocol), means over the runs,
+with how the share of spiral edges is spread (`common.spread`) and, run by
+run, what each line changes against the line above (`common.paired`).
 
     python3 docs/research/closing-loops/experiments/ablation.py \
         [--openclare target/release/openclare] [--commit <hash>] [--budgets 3000] [--jobs 2]
@@ -80,7 +82,7 @@ def main():
     common.use(arguments)
 
     started, clock = common.machine(), time.monotonic()
-    lines, all_rows = [], []
+    lines, all_rows, previous = [], [], None
     for key, label, paper, flags, environment in LINES:
         directory = arguments.out / key
         directory.mkdir(parents=True, exist_ok=True)
@@ -100,12 +102,21 @@ def main():
             "failures": [f"{row['model']} {row['quads']}: {row['failure']}" for row in rows if row["failure"]],
             "spiral_loops_total": sum(row["metrics"]["loops_spiral"] or 0 for row in rows if row["metrics"]),
             "mean": mean,
+            "spiral": common.spread(rows),
+            "helix": common.spread(rows, "loop_edges_helix"),
+            "against_previous_line": common.paired(previous, rows) if previous else None,
             "mean_at_3000": common.means([row for row in rows if row["quads"] == 3000]) if 3000 in arguments.budgets
             else None,
             "run_seconds": round(sum(row["seconds"] or 0 for row in rows), 1),
         })
-        print(f"{label}: spiral {100 * mean['loop_edges_spiral']:.2f}%, hausdorff {1000 * mean['hausdorff']:.2f}, "
-              f"corners {mean['angle_deviation_mean']:.2f}", flush=True)
+        spiral, against = lines[-1]["spiral"], lines[-1]["against_previous_line"]
+        print(f"{label}: spiral {100 * mean['loop_edges_spiral']:.2f}% "
+              f"[{100 * spiral['interval_95'][0]:.1f}, {100 * spiral['interval_95'][1]:.1f}], "
+              f"median {100 * spiral['median']:.2f}%, none on {spiral['share_of_runs_at_zero']:.0%} of the runs, "
+              f"hausdorff {1000 * mean['hausdorff']:.2f}, corners {mean['angle_deviation_mean']:.2f}"
+              + (f"; against the line above, lower {against['lower']}, higher {against['higher']}, "
+                 f"same {against['same']}, sign test p {against['sign_test_p']:.2g}" if against else ""), flush=True)
+        previous = rows
 
     identical = None
     if arguments.check:

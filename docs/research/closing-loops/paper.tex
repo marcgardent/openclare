@@ -101,11 +101,14 @@ minimum-deviation quantizer~\cite{heistermann2023bimdf}, through a
 least-change projection, repair walks and rounds of constraint generation on
 the strips of the mesh, and keep the candidate with the fewest spiral edges,
 counted by a test that tells helices from closed, open and border loops. Over
-twelve models at three budgets near 3{,}000 quads, the engine leaves 4.92\%
-of the edges on spiral loops (19.8\% when the engine itself runs without
-closing); on the seven models that four other open-source remeshers also
-mesh validly, 2.2\% against 11.4\% to 38.8\%, among them 19.9\% for
-QuadWild-BiMDF, a minimum-deviation quantizer with no closing; on a human body, 1.5\%, against 2.5\% for the hand-made mesh.
+twelve models at $21$ budgets from 2{,}900 to 3{,}100 quads, the engine leaves
+5\% of the edges on spiral loops (95\% interval 2 to 11\%), against 19\%
+without closing, lower on 228 of the 252 runs and higher on none; on the seven
+models that four other open-source remeshers also mesh validly, 2.2\% against
+11.4\% to 38.8\%, among them 19.9\% for QuadWild-BiMDF, a minimum-deviation
+quantizer with no closing, fewer than each of them on four to six of the seven
+models and more than Instant Meshes on two; on a human body, in one run,
+1.5\%, against 2.5\% for the hand-made mesh.
 An exact analysis of the closing system of that body shows that the conflict between closing
 turns and keeping singularities apart is real but local, that the heuristic
 rather than the constraints leaves most turns shifted, and that closing more
@@ -658,45 +661,67 @@ default options except one thread and the time limits stated.
 \paragraph{Spirals on the twelve development models.}
 The share of edges on spiral loops is chaotic on a single model: a change of
 one per cent of the budget moves it as much as a real change of the method.
-We therefore judge the engine by its mean over the twelve models at three
-budgets, $2{,}970$, $3{,}000$ and $3{,}030$ quads ($36$ runs).
-The engine leaves $4.92\%$ of the edges on spiral loops ($3.24\%$,
-$4.95\%$ and $6.58\%$ at the three budgets; $117$ spiral loops in the $36$
-meshes, all valid), with $36.1\%$ of the edges on closed loops, a mean
-distance to the source of $0.381$\textperthousand\ of the diagonal and a mean
-corner deviation of $5.05$ degrees. Table~\ref{tab:dev} adds the parts of
-the method one at a time to the same engine, through its experiment
-options, over the same $36$ runs: from $19.81\%$ of spiral edges without
-closing to $4.92\%$. Across the lines the Hausdorff distance stays within
-$4\%$ and the mean corner deviation within $5\%$. The decrease is not
-monotone: the deviation cap, which turns down the candidates too far from
-the real lengths, raises the share from $6.63\%$ to $8.43\%$, and the
-constraint rounds and the floor of the cap bring it back down.
+We therefore run each of the twelve models at $21$ budgets, $2{,}900$ to
+$3{,}100$ quads by $10$ ($252$ runs), and give each mean with its $95\%$
+bootstrap interval; the bootstrap draws the models, then the runs of each,
+since the runs of one model are not independent. A share is given to the unit
+of its interval. The engine leaves $5\%$ of the edges on spiral loops ($2$ to
+$11\%$), with a median of $1.7\%$: none on $42\%$ of the runs, but some at
+one budget at least on each of the twelve models. Its $252$ meshes have $802$
+spiral loops and are all valid but one (ogre at $3{,}020$ quads, one
+inverted face); they have $36\%$ of their edges on closed loops, a mean
+distance to the source of $0.38$\textperthousand\ of the diagonal and a mean
+corner deviation of $5.1$ degrees.
+
+Table~\ref{tab:dev} adds the parts of the method one at a time to the same
+engine, through its experiment options, over the same $252$ runs. The
+intervals of all the lines overlap, from $13$ to $27\%$ without closing to
+$2$ to $11\%$ for the engine: the spread between models is larger than the
+effect of any part on the mean, so each part is judged run by run, against
+the line above. Most parts can only lower the share: they add candidates,
+and the engine keeps the one with the fewest spiral edges. That they lower
+it on many runs and raise it on none (the first closing on $190$ runs, the
+longer turns on $102$, the other draws on $95$) says how often they find a
+better candidate, not more. Three parts are of another kind. The aimed repair
+changes the candidates: it lowers the share on $77$ runs and raises it on
+$34$ (sign test, $p = 6 \cdot 10^{-5}$). The deviation cap, which turns down
+the candidates too far from the real lengths, raises it on $23$ runs and
+lowers it on none, a cost the constraint rounds and the floor of the cap
+recover. The active set, which changes how the rounds are solved, lowers it
+on $82$ runs and raises it on $84$ ($p = 0.94$): no effect on spirals is
+seen. Across the lines the Hausdorff distance stays within $3\%$ and the
+mean corner deviation within $5\%$.
 
 \begin{table}[t]
 \centering
 \small
-\begin{tabular}{lrrr}
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}lrrrrrr@{}}
 \toprule
-& spiral edges & Hausdorff (\textperthousand) & corner deviation (deg) \\
+& \multicolumn{3}{c}{spiral edges} & \multicolumn{1}{c}{runs} & & \\
+\cmidrule(lr){2-4}
+& mean & interval & none & lower/higher & Hausdorff & corners \\
 \midrule
-no closing & 19.81\% & 8.35 & 4.90 \\
-closing: lean bound $0.05$, turns up to $2$ sides & 10.14\% & 8.43 & 5.01 \\
-+ lean bound $0.12$ & 9.08\% & 8.33 & 5.07 \\
-+ aimed repair & 7.86\% & 8.12 & 5.10 \\
-+ turns up to $6$ sides & 6.63\% & 8.32 & 5.15 \\
-+ deviation cap, without its floor & 8.43\% & 8.29 & 5.10 \\
-+ constraint rounds & 7.26\% & 8.30 & 5.14 \\
-+ active set & 7.58\% & 8.27 & 5.04 \\
-+ floor of the cap & 5.85\% & 8.38 & 5.10 \\
-+ fold guard & 5.85\% & 8.38 & 5.10 \\
-+ twelve other draws: the engine & 4.92\% & 8.38 & 5.05 \\
+no closing & 19\% & 13--27\% & 6\% & & 8.16 & 4.91 \\
+closing: lean bound $0.05$, turns up to $2$ sides & 11\% & 7--17\% & 15\% & 190/0 & 8.25 & 4.97 \\
++ lean bound $0.12$ & 10\% & 6--15\% & 16\% & 72/0 & 8.25 & 4.99 \\
++ aimed repair & 10\% & 5--14\% & 19\% & 77/34 & 8.25 & 5.01 \\
++ turns up to $6$ sides & 7\% & 4--11\% & 28\% & 102/0 & 8.27 & 5.06 \\
++ deviation cap, without its floor & 8\% & 4--14\% & 26\% & 0/23 & 8.26 & 5.02 \\
++ constraint rounds & 7\% & 3--13\% & 32\% & 90/0 & 8.25 & 5.06 \\
++ active set & 8\% & 3--14\% & 31\% & 82/84 & 8.16 & 5.09 \\
++ floor of the cap & 7\% & 3--12\% & 34\% & 35/0 & 8.25 & 5.14 \\
++ fold guard & 7\% & 3--12\% & 34\% & 0/1 & 8.25 & 5.14 \\
++ twelve other draws: the engine & 5\% & 2--11\% & 42\% & 95/0 & 8.35 & 5.12 \\
 \bottomrule
 \end{tabular}
 \caption{Parts of the method, engine of version 0.7.0 with its experiment
-options: each line adds one part to those above; mean over the twelve
-models at three budgets ($36$ runs per line). The last line sets no option
-and gives the $36$ meshes of the engine byte for byte.}
+options: each line adds one part to those above, over the twelve models at
+$21$ budgets ($252$ runs per line). Spiral edges: the mean share, its $95\%$
+bootstrap interval, the share of runs with none. Runs: on how many the share
+is lower, and higher, than on the line above. Then the mean Hausdorff
+distance (\textperthousand\ of the diagonal) and the mean corner deviation
+(degrees). The last line sets no option.}
 \label{tab:dev}
 \end{table}
 
@@ -724,7 +749,13 @@ validly in every run, the mean share of spiral edges is $2.2\%$ for
 openclare, $38.8\%$ for QuadriFlow, $21.7\%$ for AutoRemesher, $19.9\%$ for
 QuadWild-BiMDF and $11.4\%$ for Instant Meshes; on the $14$ models where all
 five produce a mesh, valid or not, $3.1\%$, $29.1\%$, $29.3\%$, $16.8\%$ and
-$9.1\%$. The second subset leaves out the terrain, which the first three
+$9.1\%$. Model by model, on the $7$, openclare has fewer spiral edges than
+QuadriFlow on $6$ and as many on $1$, fewer than AutoRemesher on $5$ and as
+many on $2$, fewer than QuadWild-BiMDF on $4$ and as many on $3$, fewer than
+Instant Meshes on $4$, more on $2$ and as many on $1$; on the $14$, fewer
+than QuadriFlow on $13$ and as many on $1$, fewer than AutoRemesher on $11$,
+more on $1$ and as many on $2$, fewer than QuadWild-BiMDF on $9$ and as many
+on $5$, fewer than Instant Meshes on $8$, more on $4$ and as many on $2$. The second subset leaves out the terrain, which the first three
 mesh and the other two were not run on. Without closing (the same engine
 through the same chain, with no way of closing tried) openclare has
 $15.3\%$ and $15.9\%$ on the same subsets. QuadWild-BiMDF has more spiral
@@ -1028,8 +1059,9 @@ actual T-mesh stay hard is open.
 \paragraph{Closing the most rings, end to end.}
 We measured what an exact selection buys on the bench with the slow quality
 mode of the engine (\texttt{--quality slow}), against the engine without its
-other draws ($5.85\%$ of spiral edges over the $36$ runs), with three
-($5.43\%$) and with its twelve ($4.92\%$). For the lengths the engine keeps,
+other draws ($5.85\%$ of spiral edges over the $36$ runs of the twelve
+models at $2{,}970$, $3{,}000$ and $3{,}030$ quads, the protocol before the
+$21$ budgets), with three ($5.43\%$) and with its twelve ($4.92\%$). For the lengths the engine keeps,
 a mixed-integer program closes as many of its strips leaning less than
 $0.12$ as it can, weighted by their length round, within the balances, the
 bounds of separation, the cap and the quad budget. A strip counts as closed
@@ -1065,8 +1097,8 @@ onto the turns beside it. The conflicts are better attacked in quantization.
 \section{Limitations and open problems}\label{sec:limits}
 
 The results come from one implementation and are preliminary. The spiral
-share of a single model is chaotic, so only the means over three budgets are
-robust; the other figures are single runs. The measure sees helices of pitch
+share of a single model is chaotic, so only the means over many budgets,
+compared run by run, are robust; most other figures are single runs. The measure sees helices of pitch
 up to four only. The exact look covers one body and holds relative to the
 engine's bounds of separation, which are its choice of arcs and neither a
 subset nor a superset of the valid quantizations. The machine was shared:
@@ -1136,12 +1168,11 @@ output (meshes, exports, logs) is not in the repository.
 \toprule
 figures & script & summary \\
 \midrule
-twelve models, three budgets (Section~\ref{sec:experiments})
+twelve models, $21$ budgets (Section~\ref{sec:experiments})
   & \texttt{twelve\_models.py}, the protocol below
   & \texttt{twelve\_models.json} \\
 Table~\ref{tab:dev}
-  & \texttt{ablation.py}; its last line gave the $36$ meshes above byte for
-  byte
+  & \texttt{ablation.py}; its last line consists of the $252$ runs above
   & \texttt{ablation.json} \\
 against other remeshers
   & \texttt{against\_remeshers.py}, from \nolinkurl{bench/results/results.json}
@@ -1177,14 +1208,15 @@ closing the most rings, end to end
 \paragraph{The protocol of the twelve models.} For each model $m$ (creature,
 blob, suzanne, spot, pig, ogre, bob, jerry, blub, rock with the preset
 \texttt{organic}; cage and part with \texttt{hard-surface}) and each budget
-$Q \in \{2{,}970, 3{,}000, 3{,}030\}$: \texttt{openclare remesh}
+$Q \in \{2{,}900, 2{,}910, \dots, 3{,}100\}$: \texttt{openclare remesh}
 \texttt{bench/out/}$m$\texttt{/source.obj} \textit{out.obj}
 \texttt{--preset} $P$ \texttt{--quads} $Q$, then \texttt{openclare measure}
 on the source and the output with \texttt{--target} $Q$ \texttt{--json}; the
 figures are the means of \texttt{loop\_edges\_spiral},
 \texttt{loop\_edges\_closed}, \texttt{loops\_spiral},
-\texttt{mean\_distance} and \texttt{angle\_deviation\_mean} over the $36$
-runs.
+\texttt{mean\_distance} and \texttt{angle\_deviation\_mean} over the $252$
+runs, with the interval and the counts of \texttt{common.spread} and
+\texttt{common.paired}.
 
 \paragraph{Reproducibility.} The method is implemented in openclare (Rust),
 in the main branch of the repository; the bench is driven by

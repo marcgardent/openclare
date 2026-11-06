@@ -43,7 +43,11 @@ TWELVE = [
     ("cage", "hard-surface"),
     ("part", "hard-surface"),
 ]
-BUDGETS = [2970, 3000, 3030]
+# The budgets of the protocol. The share of spiral edges is chaotic on one
+# model, a change of one per cent of the budget moving it as much as a change
+# of the method: each model is run at 21 budgets, 2,900 to 3,100 quads by 10,
+# so that a mean is over the chaos and not three draws of it (#222).
+BUDGETS = list(range(2900, 3101, 10))
 
 # The measures averaged: those the paper quotes, then the independent
 # measures of structure (DT-137), which the selection of the engine does not
@@ -186,6 +190,58 @@ def means(rows, measures=MEASURES):
         values = [row["metrics"][key] for row in rows if row.get("metrics") and row["metrics"].get(key) is not None]
         out[key] = statistics.mean(values) if values else None
     return out
+
+
+def spread(rows, key="loop_edges_spiral", draws=4000, seed=1):
+    """How a share is spread over the runs: its mean, its median, the share
+    of runs where it is 0, the 95 % bootstrap interval of the mean, and the
+    number of models where it is ever above 0. The bootstrap draws the
+    models with replacement, then the runs of each drawn model: the runs of
+    one model are not independent of each other."""
+    import random
+
+    by_model = {}
+    for row in rows:
+        if row.get("metrics") and row["metrics"].get(key) is not None:
+            by_model.setdefault(row["model"], []).append(row["metrics"][key])
+    values = [value for runs in by_model.values() for value in runs]
+    if not values:
+        return None
+    rng, means = random.Random(seed), []
+    for _ in range(draws):
+        drawn = []
+        for model in rng.choices(list(by_model), k=len(by_model)):
+            drawn += rng.choices(by_model[model], k=len(by_model[model]))
+        means.append(statistics.mean(drawn))
+    means.sort()
+    return {
+        "runs": len(values),
+        "mean": statistics.mean(values),
+        "interval_95": [means[int(0.025 * draws)], means[int(0.975 * draws) - 1]],
+        "median": statistics.median(values),
+        "share_of_runs_at_zero": sum(value == 0 for value in values) / len(values),
+        "models_above_zero": sum(any(value > 0 for value in runs) for runs in by_model.values()),
+        "models": len(by_model),
+    }
+
+
+def paired(before, after, key="loop_edges_spiral"):
+    """Run by run (same model, same budget), on how many runs `after` has a
+    lower share than `before`, a higher one, the same; and the two-sided
+    sign test on the runs where it changes."""
+    from math import comb
+
+    def shares(rows):
+        return {(row["model"], row["quads"]): row["metrics"][key] for row in rows
+                if row.get("metrics") and row["metrics"].get(key) is not None}
+
+    first, second = shares(before), shares(after)
+    changes = [second[run] - first[run] for run in first.keys() & second.keys()]
+    lower, higher = sum(change < 0 for change in changes), sum(change > 0 for change in changes)
+    changed, fewer = lower + higher, min(lower, higher)
+    p = 1.0 if changed == 0 else min(1.0, 2 * sum(comb(changed, i) for i in range(fewer + 1)) / 2 ** changed)
+    return {"runs": len(changes), "lower": lower, "higher": higher, "same": len(changes) - changed,
+            "sign_test_p": p}
 
 
 def write_json(path, data):

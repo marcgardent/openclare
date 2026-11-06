@@ -121,12 +121,15 @@ minimal~\cite{heistermann2023bimdf}, au moyen d'une projection de moindre
 changement, de marches de réparation et de passes de génération de
 contraintes sur les bandes du maillage, et gardons le candidat qui a le moins
 d'arêtes en spirale, comptées par un test qui distingue les hélices des
-boucles fermées, ouvertes et de bord. Sur douze modèles, à trois budgets
-voisins de 3\,000 quads, le moteur laisse 4,92\,\% des arêtes sur des boucles
-en spirale (19,8\,\% quand le moteur lui-même tourne sans fermeture)\,; sur
-les sept modèles que quatre autres remailleurs libres maillent aussi de façon
-valide, 2,2\,\% contre 11,4\,\% à 38,8\,\%, dont 19,9\,\% pour
-QuadWild-BiMDF, un quantificateur d'écart minimal sans fermeture\,; sur un corps humain, 1,5\,\%, contre 2,5\,\% pour le maillage
+boucles fermées, ouvertes et de bord. Sur douze modèles, à $21$ budgets de
+2\,900 à 3\,100 quads, le moteur laisse 5\,\% des arêtes sur des boucles en
+spirale (intervalle à 95\,\% de 2 à 11\,\%), contre 19\,\% sans fermeture,
+plus bas sur 228 des 252 exécutions et plus haut sur aucune\,; sur les sept
+modèles que quatre autres remailleurs libres maillent aussi de façon valide,
+2,2\,\% contre 11,4\,\% à 38,8\,\%, dont 19,9\,\% pour QuadWild-BiMDF, un
+quantificateur d'écart minimal sans fermeture, moins que chacun d'eux sur
+quatre à six des sept modèles et plus qu'Instant Meshes sur deux\,; sur un
+corps humain, en une exécution, 1,5\,\%, contre 2,5\,\% pour le maillage
 fait à la main. Une analyse exacte du système de fermeture de ce
 corps montre que le conflit entre fermer les tours et garder les
 singularités séparées est réel mais local, que c'est l'heuristique plutôt
@@ -754,48 +757,73 @@ seul thread et les limites de temps indiquées.
 \paragraph{Les spirales sur les douze modèles de développement.}
 La part d'arêtes sur des boucles en spirale est chaotique sur un modèle
 isolé~: un changement d'un pour cent du budget la déplace autant qu'un vrai
-changement de la méthode. Nous jugeons donc le moteur sur sa moyenne sur
-les douze modèles à trois budgets, $2\,970$, $3\,000$ et $3\,030$ quads ($36$
-exécutions).
-Le moteur laisse $4,92\,\%$ des arêtes sur des boucles en spirale
-($3,24\,\%$, $4,95\,\%$ et $6,58\,\%$ aux trois budgets\,; $117$ boucles en
-spirale dans les $36$ maillages, tous valides), avec $36,1\,\%$ des arêtes
-sur des boucles fermées, une distance moyenne à la source de
-$0,381$\,\textperthousand\ de la diagonale et un écart d'angle moyen aux
-coins de $5,05$ degrés. Le tableau~\ref{tab:dev} ajoute les parties de la
-méthode une à une au même moteur, par ses options d'expérience, sur les
-mêmes $36$ exécutions~: de $19,81\,\%$ d'arêtes en spirale sans fermeture à
-$4,92\,\%$. D'une ligne à l'autre, la distance de Hausdorff reste à $4\,\%$
-près et l'écart d'angle moyen aux coins à $5\,\%$ près. La baisse n'est pas
-monotone~: le plafond d'écart, qui écarte les candidats trop loin des
-longueurs réelles, fait monter la part de $6,63\,\%$ à $8,43\,\%$, et les
-passes de contraintes et le plancher du plafond la font redescendre.
+changement de la méthode. Nous lançons donc chacun des douze modèles à
+$21$ budgets, de $2\,900$ à $3\,100$ quads par pas de $10$ ($252$
+exécutions), et donnons chaque moyenne avec son intervalle bootstrap à
+$95\,\%$\,; le bootstrap tire les modèles, puis les exécutions de chacun, car
+les exécutions d'un même modèle ne sont pas indépendantes. Une part est
+donnée à l'unité de son intervalle. Le moteur laisse $5\,\%$ des arêtes sur
+des boucles en spirale (de $2$ à $11\,\%$), avec une médiane de
+$1,7\,\%$~: aucune sur $42\,\%$ des exécutions, mais quelques-unes à un
+budget au moins sur chacun des douze modèles. Ses $252$ maillages ont $802$
+boucles en spirale et sont tous valides sauf un (ogre à $3\,020$ quads, une
+face retournée)\,; ils ont $36\,\%$ de leurs arêtes sur des boucles fermées,
+une distance moyenne à la source de $0,38$\,\textperthousand\ de la diagonale
+et un écart d'angle moyen aux coins de $5,1$ degrés.
+
+Le tableau~\ref{tab:dev} ajoute les parties de la méthode une à une au même
+moteur, par ses options d'expérience, sur les mêmes $252$ exécutions. Les
+intervalles de toutes les lignes se recouvrent, de $13$ à $27\,\%$ sans
+fermeture à $2$ à $11\,\%$ pour le moteur~: l'écart entre modèles dépasse
+l'effet de chaque partie sur la moyenne, si bien que chaque partie est jugée
+exécution par exécution, face à la ligne du dessus. La plupart des parties
+ne peuvent que baisser la part~: elles ajoutent des candidats, et le moteur
+garde celui qui a le moins d'arêtes en spirale. Qu'elles la baissent sur de
+nombreuses exécutions et ne la montent sur aucune (la première fermeture sur
+$190$ exécutions, les tours plus longs sur $102$, les autres tirages sur
+$95$) dit combien de fois elles trouvent un meilleur candidat, rien de plus.
+Trois parties sont d'une autre sorte. La réparation visée change les
+candidats~: elle baisse la part sur $77$ exécutions et la monte sur $34$
+(test du signe, $p = 6 \cdot 10^{-5}$). Le plafond d'écart, qui écarte les
+candidats trop loin des longueurs réelles, la monte sur $23$ exécutions et
+ne la baisse sur aucune, un coût que les passes de contraintes et le
+plancher du plafond rattrapent. L'ensemble actif, qui change la façon de
+résoudre les passes, la baisse sur $82$ exécutions et la monte sur $84$
+($p = 0,94$)~: on ne lui voit aucun effet sur les spirales. D'une ligne à
+l'autre, la distance de Hausdorff reste à $3\,\%$ près et l'écart d'angle
+moyen aux coins à $5\,\%$ près.
 
 \begin{table}[t]
 \centering
-\small
-\begin{tabular}{lrrr}
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}lrrrrrr@{}}
 \toprule
-& arêtes en spirale & Hausdorff (\textperthousand) & écart d'angle (degrés) \\
+& \multicolumn{3}{c}{arêtes en spirale} & \multicolumn{1}{c}{exécutions} & & \\
+\cmidrule(lr){2-4}
+& moyenne & intervalle & aucune & plus bas/haut & Hausdorff & coins \\
 \midrule
-sans fermeture & 19,81\,\% & 8,35 & 4,90 \\
-fermeture~: inclinaison $0,05$, tours jusqu'à $2$ côtés & 10,14\,\% & 8,43 & 5,01 \\
-+ inclinaison $0,12$ & 9,08\,\% & 8,33 & 5,07 \\
-+ réparation visée & 7,86\,\% & 8,12 & 5,10 \\
-+ tours jusqu'à $6$ côtés & 6,63\,\% & 8,32 & 5,15 \\
-+ plafond d'écart, sans son plancher & 8,43\,\% & 8,29 & 5,10 \\
-+ passes de contraintes & 7,26\,\% & 8,30 & 5,14 \\
-+ ensemble actif & 7,58\,\% & 8,27 & 5,04 \\
-+ plancher du plafond & 5,85\,\% & 8,38 & 5,10 \\
-+ garde-fou des arêtes vives & 5,85\,\% & 8,38 & 5,10 \\
-+ douze autres tirages~: le moteur & 4,92\,\% & 8,38 & 5,05 \\
+sans fermeture & 19\,\% & 13--27\,\% & 6\,\% & & 8,16 & 4,91 \\
+fermeture~: inclinaison $0,05$, tours jusqu'à $2$ côtés & 11\,\% & 7--17\,\% & 15\,\% & 190/0 & 8,25 & 4,97 \\
++ inclinaison $0,12$ & 10\,\% & 6--15\,\% & 16\,\% & 72/0 & 8,25 & 4,99 \\
++ réparation visée & 10\,\% & 5--14\,\% & 19\,\% & 77/34 & 8,25 & 5,01 \\
++ tours jusqu'à $6$ côtés & 7\,\% & 4--11\,\% & 28\,\% & 102/0 & 8,27 & 5,06 \\
++ plafond d'écart, sans son plancher & 8\,\% & 4--14\,\% & 26\,\% & 0/23 & 8,26 & 5,02 \\
++ passes de contraintes & 7\,\% & 3--13\,\% & 32\,\% & 90/0 & 8,25 & 5,06 \\
++ ensemble actif & 8\,\% & 3--14\,\% & 31\,\% & 82/84 & 8,16 & 5,09 \\
++ plancher du plafond & 7\,\% & 3--12\,\% & 34\,\% & 35/0 & 8,25 & 5,14 \\
++ garde-fou des arêtes vives & 7\,\% & 3--12\,\% & 34\,\% & 0/1 & 8,25 & 5,14 \\
++ douze autres tirages~: le moteur & 5\,\% & 2--11\,\% & 42\,\% & 95/0 & 8,35 & 5,12 \\
 \bottomrule
 \end{tabular}
 \caption{Les parties de la méthode, moteur de la version 0.7.0 avec ses
-options d'expérience~: chaque ligne ajoute une partie à celles du dessus\,;
-moyenne sur les douze modèles à trois budgets ($36$ exécutions par ligne).
-La dernière ligne ne pose aucune option et redonne les $36$ maillages du
-moteur octet pour octet.}
+options d'expérience~: chaque ligne ajoute une partie à celles du dessus,
+sur les douze modèles à $21$ budgets ($252$ exécutions par ligne). Arêtes en
+spirale~: la part moyenne, son intervalle bootstrap à $95\,\%$, la part des
+exécutions qui n'en ont aucune. Exécutions~: sur combien la part est plus
+basse, et plus haute, qu'à la ligne du dessus. Puis la distance de Hausdorff
+moyenne (\textperthousand\ de la diagonale) et l'écart d'angle moyen aux coins
+(degrés). La dernière ligne ne pose aucune option.}
 \label{tab:dev}
 \end{table}
 
@@ -825,7 +853,14 @@ part moyenne d'arêtes en spirale est de $2,2\,\%$ pour openclare,
 $38,8\,\%$ pour QuadriFlow, $21,7\,\%$ pour AutoRemesher, $19,9\,\%$ pour
 QuadWild-BiMDF et $11,4\,\%$ pour Instant Meshes\,; sur les $14$ modèles où
 les cinq produisent un maillage, valide ou non, $3,1\,\%$, $29,1\,\%$,
-$29,3\,\%$, $16,8\,\%$ et $9,1\,\%$. Le second sous-ensemble laisse de côté
+$29,3\,\%$, $16,8\,\%$ et $9,1\,\%$. Modèle par modèle, sur les $7$, openclare a moins d'arêtes en
+spirale que QuadriFlow sur $6$ et autant sur $1$, moins qu'AutoRemesher sur
+$5$ et autant sur $2$, moins que QuadWild-BiMDF sur $4$ et autant sur $3$,
+moins qu'Instant Meshes sur $4$, plus sur $2$ et autant sur $1$\,; sur les
+$14$, moins que QuadriFlow sur $13$ et autant sur $1$, moins qu'AutoRemesher
+sur $11$, plus sur $1$ et autant sur $2$, moins que QuadWild-BiMDF sur $9$ et
+autant sur $5$, moins qu'Instant Meshes sur $8$, plus sur $4$ et autant sur
+$2$. Le second sous-ensemble laisse de côté
 le terrain, que les trois premiers maillent et sur lequel les deux autres
 n'ont pas été lancés. Sans fermeture (le même moteur par la même chaîne,
 sans aucune variante de fermeture essayée), openclare a $15,3\,\%$ et
@@ -1166,7 +1201,9 @@ une question ouverte.
 Nous avons mesuré ce qu'une sélection exacte apporte sur le banc avec le
 mode de qualité lente du moteur (\texttt{--quality slow}), face au moteur
 sans ses autres tirages ($5,85\,\%$ d'arêtes en spirale sur les $36$
-exécutions), avec trois ($5,43\,\%$) et avec ses douze ($4,92\,\%$). Pour les
+exécutions des douze modèles à $2\,970$, $3\,000$ et $3\,030$ quads, le
+protocole d'avant les $21$ budgets), avec trois ($5,43\,\%$) et avec ses
+douze ($4,92\,\%$). Pour les
 longueurs que garde le moteur, un programme mixte-entier ferme autant qu'il
 le peut de ses bandes d'inclinaison inférieure à $0,12$, pondérées par leur
 longueur de révolution, sous les équilibres, les bornes de séparation, le
@@ -1210,8 +1247,8 @@ quantification.
 
 Les résultats viennent d'une seule implémentation et sont préliminaires. La
 part de spirales d'un modèle isolé est chaotique, si bien que seules les
-moyennes sur trois budgets sont robustes\,; les autres chiffres viennent
-d'exécutions uniques. La mesure ne voit que les hélices de pas au plus
+moyennes sur de nombreux budgets, comparées exécution par exécution, sont
+robustes\,; la plupart des autres chiffres viennent d'exécutions uniques. La mesure ne voit que les hélices de pas au plus
 quatre. Le regard exact porte sur un seul corps et vaut relativement aux
 bornes de séparation du moteur, qui sont son choix d'arcs et ne sont ni un
 sous-ensemble ni un sur-ensemble des quantifications valides. La machine
@@ -1290,12 +1327,12 @@ sortie brute (maillages, exports, journaux) n'est pas dans le dépôt.
 \toprule
 chiffres & script & synthèse \\
 \midrule
-douze modèles, trois budgets (section~\ref{sec:experiments})
+douze modèles, $21$ budgets (section~\ref{sec:experiments})
   & \texttt{twelve\_models.py}, le protocole ci-dessous
   & \texttt{twelve\_models.json} \\
 tableau~\ref{tab:dev}
-  & \texttt{ablation.py}\,; sa dernière ligne a redonné les $36$ maillages
-  ci-dessus octet pour octet
+  & \texttt{ablation.py}\,; sa dernière ligne, ce sont les $252$ exécutions
+  ci-dessus
   & \texttt{ablation.json} \\
 face à d'autres remailleurs
   & \texttt{against\_remeshers.py}, depuis
@@ -1331,14 +1368,15 @@ fermer le plus d'anneaux, de bout en bout
 \paragraph{Le protocole des douze modèles.} Pour chaque modèle $m$
 (creature, blob, suzanne, spot, pig, ogre, bob, jerry, blub, rock avec le
 préréglage \texttt{organic}\,; cage et part avec \texttt{hard-surface}) et
-chaque budget $Q \in \{2\,970 ; 3\,000 ; 3\,030\}$~: \texttt{openclare remesh}
+chaque budget $Q \in \{2\,900 ; 2\,910 ; \dots ; 3\,100\}$~: \texttt{openclare remesh}
 \texttt{bench/out/}$m$\texttt{/source.obj} \textit{out.obj}
 \texttt{--preset} $P$ \texttt{--quads} $Q$, puis \texttt{openclare measure}
 sur la source et la sortie avec \texttt{--target} $Q$ \texttt{--json}\,; les
 chiffres sont les moyennes de \texttt{loop\_edges\_spiral},
 \texttt{loop\_edges\_closed}, \texttt{loops\_spiral},
-\texttt{mean\_distance} et \texttt{angle\_deviation\_mean} sur les $36$
-exécutions.
+\texttt{mean\_distance} et \texttt{angle\_deviation\_mean} sur les $252$
+exécutions, avec l'intervalle et les comptes de \texttt{common.spread} et
+\texttt{common.paired}.
 
 \paragraph{Reproductibilité.} La méthode est implémentée dans openclare
 (Rust), dans la branche principale du dépôt\,; le banc est piloté par
