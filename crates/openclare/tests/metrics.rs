@@ -307,6 +307,45 @@ fn the_layout_draws_what_the_metrics_count() {
 }
 
 #[test]
+fn an_edge_is_on_one_loop_where_the_faces_pinch() {
+    use openclare::metrics::{LoopKind, edge_loops, layout};
+    // A cube whose bottom and top quads are each cut, by a vertex in their
+    // middle, into two quads sharing two edges; the two middles are one
+    // vertex: four edges, two fans of two quads (#262). Straight on there
+    // is the way back, and the loops coming in once counted 18 edges of 16.
+    let mut mesh = openclare::PolyMesh::default();
+    mesh.positions = (0..8)
+        .map(|corner| Vec3::new((corner & 1) as f64, (corner >> 1 & 1) as f64, (corner >> 2) as f64))
+        .chain([Vec3::splat(0.5)])
+        .collect();
+    let [a, b, c, d, e, f, g, h, middle] = [0, 1, 3, 2, 4, 5, 7, 6, 8];
+    mesh.faces = vec![
+        vec![a, b, f, e],
+        vec![b, c, g, f],
+        vec![c, d, h, g],
+        vec![d, a, e, h],
+        vec![a, d, c, middle],
+        vec![a, middle, c, b],
+        vec![e, f, g, middle],
+        vec![e, middle, g, h],
+    ];
+    let loops = edge_loops(&mesh).expect("every edge on two faces, each way once");
+    let drawn = layout(&mesh);
+    assert_eq!(drawn.loops, Some([loops.closed, loops.spiral, loops.open, loops.border]));
+    let drawn = drawn.edges.unwrap();
+    assert_eq!(drawn.len(), 16);
+    let edges = |kind| drawn.iter().filter(|(_, k)| *k == kind).count() as f64 / 16.0;
+    for (kind, share) in [
+        (LoopKind::Closed, loops.closed_share),
+        (LoopKind::Spiral, loops.spiral_share),
+        (LoopKind::Open, loops.open_share),
+        (LoopKind::Border, loops.border_share),
+    ] {
+        assert!((edges(kind) - share).abs() < 1e-12, "{kind:?}: {loops:?}");
+    }
+}
+
+#[test]
 fn edge_loops_met_again_over_a_cap_are_rings() {
     // On a cube of two quads a side, a strip leaving a ring across goes over
     // the top and meets the ring again within four quads, but the other way

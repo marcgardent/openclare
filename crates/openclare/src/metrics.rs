@@ -246,8 +246,7 @@ pub struct Layout {
     /// is a consistently oriented manifold, as [`Metrics::edge_loops`].
     pub edges: Option<Vec<([u32; 2], LoopKind)>>,
     /// How many loops close, spiral, stop and run from border to border:
-    /// those of [`EdgeLoops`]. On a mesh where a loop crosses an edge another
-    /// then takes, both count it, but it is drawn with the last.
+    /// those of [`EdgeLoops`], each edge counted once, with its loop.
     pub loops: Option<[usize; 4]>,
 }
 
@@ -876,6 +875,9 @@ struct Connectivity {
     misoriented: usize,
     valence: Vec<u32>,
     on_boundary: Vec<bool>,
+    /// Vertices off the borders whose faces make more than one fan: two
+    /// cones meeting at their tips.
+    pinched: Vec<bool>,
 }
 
 impl Connectivity {
@@ -896,7 +898,7 @@ impl Connectivity {
             let entry = directed.entry((origin[h], head(h))).or_insert((h as u32, 0));
             entry.1 += 1;
         }
-        let twin =
+        let twin: Vec<u32> =
             (0..origin.len()).map(|h| directed.get(&(head(h), origin[h])).map_or(INVALID, |&(twin, _)| twin)).collect();
 
         let uses: Vec<((u32, u32), u32)> = mesh.edge_uses().into_iter().collect();
@@ -915,7 +917,36 @@ impl Connectivity {
                 misoriented += 1;
             }
         }
-        Self { origin, next, face, twin, uses, misoriented, valence, on_boundary }
+        // Round a vertex off the borders, each half-edge leaving it is
+        // followed by the next one of the face across: one closed fan meets
+        // them all.
+        let mut leaving = vec![0u32; mesh.positions.len()];
+        let mut first = vec![INVALID; mesh.positions.len()];
+        for (h, &v) in origin.iter().enumerate() {
+            leaving[v as usize] += 1;
+            first[v as usize] = h as u32;
+        }
+        let pinched = (0..mesh.positions.len())
+            .map(|v| {
+                if first[v] == INVALID || on_boundary[v] {
+                    return false;
+                }
+                let (mut h, mut met) = (first[v], 0);
+                loop {
+                    met += 1;
+                    let across = twin[h as usize];
+                    if across == INVALID || met > leaving[v] {
+                        break;
+                    }
+                    h = next[across as usize];
+                    if h == first[v] {
+                        break;
+                    }
+                }
+                met != leaving[v]
+            })
+            .collect();
+        Self { origin, next, face, twin, uses, misoriented, valence, on_boundary, pinched }
     }
 
     fn head(&self, h: u32) -> u32 {
@@ -974,9 +1005,13 @@ impl Connectivity {
     /// The half-edge straight on from `h`, through its head: across the
     /// edge between the two faces ahead. None at an irregular vertex, on a
     /// border or on a face that is not a quad (`odd`), where a loop stops.
+    /// None too at a vertex of four edges whose faces make two fans of two
+    /// quads (each a pair of quads sharing two edges, met in Instant
+    /// Meshes' output): straight on there is the way back along `h`, and
+    /// the walk would cross edges another loop takes again (#262).
     fn straight_on(&self, h: u32, odd: &[bool]) -> Option<u32> {
         let v = self.head(h) as usize;
-        if self.is_irregular(v) || self.on_boundary[v] || odd[v] {
+        if self.is_irregular(v) || self.on_boundary[v] || odd[v] || self.pinched[v] {
             return None;
         }
         let across = self.twin[self.next[h as usize] as usize];
@@ -1075,6 +1110,13 @@ impl Connectivity {
                         closed = true;
                         break;
                     }
+                    // An edge belongs to the first loop to reach it. With
+                    // pinched vertices stopping the walks, straight on is one
+                    // to one and no walk meets another loop's edge; were one
+                    // to, it stops there rather than count the edge twice.
+                    if loop_of[h as usize] != INVALID {
+                        break;
+                    }
                     loop_of[h as usize] = id;
                     loop_of[self.twin[h as usize] as usize] = id;
                     let along = if first.is_some() { h } else { self.twin[h as usize] };
@@ -1105,6 +1147,14 @@ impl Connectivity {
             if loop_of[h] != INVALID {
                 position[h] += behind_start[loop_of[h] as usize];
             }
+        }
+        if cfg!(debug_assertions) {
+            // Each loop holds the edges it counts, and those alone.
+            let mut held = vec![0usize; loops.len()];
+            for h in (0..halves).filter(|&h| loop_of[h] != INVALID) {
+                held[loop_of[h] as usize] += 1;
+            }
+            debug_assert!(loops.iter().zip(&held).all(|(l, &halves)| 2 * l.0 == halves));
         }
         // A strip of quads leaving a loop across that meets it again the
         // same way round, within a few quads: that loop spirals. (The edge
