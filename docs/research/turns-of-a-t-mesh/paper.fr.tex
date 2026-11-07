@@ -2057,7 +2057,7 @@ des IIS est fortement NP-difficile déjà pour les flots dans les
 réseaux~\cite{joormann2015flowiis}\,; la difficulté survit à la structure de
 la quantification, un cas nouveau à notre connaissance.
 
-\begin{evidence}{core}{la réduction~: \lean{closable_iff_independent}, \lean{tauP_eq_vertex_cover}\,; la NP-difficulté de Stable et de Couverture par sommets, et les bornes d'approximation, sont citées}
+\begin{evidence}{core}{la réduction~: \lean{closable_iff_independent}, \lean{tauP_eq_vertex_cover}, $B$ bidirigé~: \lean{Gadget.balance_isBidirected}, \lean{Gadget.feasible_iff}\,; la NP-difficulté de Stable et de Couverture par sommets, et les bornes d'approximation, sont citées}
 \begin{theorem}[Choisir les tours est NP-difficile]\label{thm:nphard}
 \RC{} est NP-complet, en longueurs réelles ou entières, déjà lorsque $B$ est
 la matrice d'incidence d'un graphe bidirigé, que les bornes valent $0$ ou $1$
@@ -2102,7 +2102,9 @@ plafond assez grand ne contraint rien.
 
 La réduction a été vérifiée par ordinateur sur $40$ graphes aléatoires
 (mesuré)\,; sa troisième équation d'équilibre met chaque arc dans deux
-équilibres, comme dans un T-mesh. On ne sait pas qu'elle soit un T-mesh\,: ses
+équilibres, comme dans un T-mesh, et elle est la différence des deux
+premières, si bien que $B$ est de rang $2$ sur les trois équilibres de chaque
+arête. On ne sait pas qu'elle soit un T-mesh\,: ses
 formes ont des coefficients positifs ou nuls et ne sont pas construites comme
 les holonomies de marches droites\,; le théorème dit donc que l'algèbre de la
 quantification permet des instances difficiles, non qu'une surface en
@@ -2215,7 +2217,7 @@ la maximisation de $Q$ sur un polytope de longueurs réelles.
 
 Le dossier \texttt{lean} à côté de cette note est un projet
 Lean~4~\cite{demoura2021lean4} sur Mathlib~\cite{mathlib2020} (tous deux en
-\texttt{v4.35.0}). Ses $737$ déclarations de théorèmes, dont beaucoup de
+\texttt{v4.35.0}). Ses $757$ déclarations de théorèmes, dont beaucoup de
 petits lemmes, ne dépendent que des axiomes standard de Lean\,; ce nombre
 n'est pas un argument, et son \texttt{README.md} associe à chaque énoncé ses
 théorèmes Lean. Lean vérifie le cœur algébrique et combinatoire de chaque
@@ -2312,26 +2314,25 @@ de la proposition~\ref{prop:whole-size}, les conséquences de la parité
 (corollaire~\ref{cor:parity}), l'homomorphisme de parité du
 théorème~\ref{thm:parity-any} (sur les déplacements à rotation d'un quart de
 tour et translation entière, nul sur les lacets autour des points coniques,
-$L$ sur une composante de bord, $\alpha + s$ sur un tour), et la réduction du
-théorème~\ref{thm:nphard}~: sur le gadget d'un graphe, les ensembles
-fermables sont les stables et $\tau_P$ est le nombre de couverture par
-sommets.
+$L$ sur une composante de bord, $\alpha + s$ sur un tour\,; qu'il se
+factorise par $H_1(\Sigma; \Z/2)$ est supposé), et la réduction du
+théorème~\ref{thm:nphard}~: sur le gadget d'un graphe, dont $B$ est la
+matrice d'incidence d'un graphe bidirigé, les ensembles fermables sont les
+stables et $\tau_P$ est le nombre de couverture par sommets.
 
 \emph{Vérifié sous une forme plus faible}~: les
 lemmes~\ref{lem:gauss} et~\ref{lem:eight}, seulement le compte par la
 caractéristique d'Euler sur la grille raffinée par deux et les totaux à partir
 des nombres de coins convexes et concaves, le fait que les régions soient des
 disques et la convexité de leurs coins étant des hypothèses\,; la complétude
-des marches, proposition~2 de~\cite{gardent2026loops}, seulement dans un
-modèle~: sur une surface fermée (côtés opposés d'un patch de même longueur,
-deux arêtes unité jamais recollées sur la même) la marche des stations définie
-par les données de recollement est une permutation, les bandes sont
-\emph{définies} comme les cycles du successeur qu'elle donne sur les quads
-au-dessus des stations, et elles sont en bijection avec les cycles de la
-marche réelle depuis les demi-entiers $k + \frac12$, dans un modèle
-unidimensionnel du recollement\,; que les côtés des patchs soient strictement
-positifs, que la traversée d'un patch garde l'abscisse et que le modèle soit
-le maillage de quads sont des hypothèses. 
+des marches, proposition~2 de~\cite{gardent2026loops}, avec les bandes dans un
+modèle~: sur le T-maillage à longueurs entières équilibrées, le recollement des
+arêtes unité, lu sur les arcs des côtés et les sommes partielles de leurs
+longueurs, est biunivoque, la marche depuis les demi-entiers $k + \frac12$ le
+suit, et les bandes, \emph{définies} comme les cycles du successeur qu'elle
+donne sur les quads au-dessus des stations, sont en bijection avec les cycles
+de cette marche\,; que le modèle soit le maillage de quads est une
+hypothèse. 
 \else
 Ce que Lean vérifie de chaque énoncé, et ce qu'il suppose, est l'étiquette de
 l'énoncé.

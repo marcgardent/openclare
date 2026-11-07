@@ -400,7 +400,7 @@ sequence of quads, each sharing with the next the edge opposite the one it
 shares with the previous.
 \end{definition}
 
-\begin{evidence}{core}{\lean{Completeness.completeness_at_given_lengths}, in a model; assumed: integer rectangles glued along their arcs by $t \mapsto \pm t + c$, $c$ whole; a closed surface, crossing an arc taking the unit edges of a side one to one onto unit edges; that the cycles of the model are the strips of the mesh; the strips that reach a border are not formalized}
+\begin{evidence}{core}{\lean{TMesh.completeness_tmesh}, from \lean{Completeness.completeness_at_given_lengths} and \lean{TMesh.closedGluing} (the gluing of the unit edges read off the T-mesh, one to one at balanced whole lengths), \lean{TMesh.walk_stations}, \lean{TMesh.arcAt_of_unit_edge}; assumed: that the cycles of the model are the strips of the mesh; the strips that reach a border are not formalized}
 \begin{proposition}[Completeness at given lengths]\label{prop:complete}
 Let $\ell$ be as in the definition. Every strip of the quad mesh that
 crosses a side $\sigma$ of a patch $P$ at the quad edge $[k, k+1]$ of
