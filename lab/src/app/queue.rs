@@ -5,7 +5,7 @@ use std::time::{Duration, Instant};
 
 use eframe::egui::{self, RichText};
 
-use super::{AMBER, App, BLUE, GREEN, MUTED, RED, command_lines};
+use super::{AMBER, App, BLUE, GREEN, MUTED, RED, STOPWATCH, command_lines, stopwatch};
 use crate::catalogue::render;
 use crate::catalogue::{Category, CheckoutChoice, Job, ThreadUse};
 use crate::files;
@@ -134,22 +134,26 @@ impl App {
                     ui.label(RichText::new(category.title().to_uppercase()).small().strong().color(MUTED));
                     for job in jobs {
                         let mut checked = waiting.contains(&job.name);
-                        let text =
-                            if job.timing_matters { format!("{}  · timed", job.name) } else { job.name.clone() };
-                        if ui.checkbox(&mut checked, text).on_hover_text(&job.description).changed() {
-                            if checked {
-                                add.push(job.name.clone());
-                            } else {
-                                remove.push(job.name.clone());
+                        ui.horizontal(|ui| {
+                            if ui.checkbox(&mut checked, &job.name).on_hover_text(&job.description).changed() {
+                                if checked {
+                                    add.push(job.name.clone());
+                                } else {
+                                    remove.push(job.name.clone());
+                                }
                             }
-                        }
+                            stopwatch(ui, job.timing_matters);
+                        });
                     }
                 }
                 ui.add_space(8.0);
                 ui.label(
-                    RichText::new("timed: the timing matters, the job waits for a calm machine (M3)")
-                        .small()
-                        .color(MUTED),
+                    RichText::new(format!(
+                        "{STOPWATCH} its duration counts: the job waits for a calm machine, and a run under load \
+                         reports no time. Without the mark, the duration is not a measurement."
+                    ))
+                    .small()
+                    .color(MUTED),
                 );
             });
         });
@@ -226,7 +230,7 @@ impl App {
         }
         if let Some(why) = shared.waiting_for_calm.clone() {
             banner(ui, RED, |ui| {
-                ui.label(why);
+                ui.label(format!("{STOPWATCH} {why}"));
                 ui.horizontal(|ui| {
                     if ui.button("Start anyway (its time will not count)").clicked()
                         && let Some(item) = shared.items.iter_mut().find(|item| item.state == ItemState::Waiting)
@@ -262,9 +266,7 @@ impl App {
                             ui.add_space(14.0);
                         }
                         ui.label(RichText::new(format!("{} · {}", index + 1, item.job.name)).strong());
-                        if item.job.timing_matters {
-                            ui.label(RichText::new("timed").color(MUTED));
-                        }
+                        stopwatch(ui, item.job.timing_matters);
                         let (text, colour) = state_text(&item.state);
                         ui.colored_label(colour, text);
                         if editable {
@@ -414,7 +416,7 @@ impl App {
     }
 
     fn run_panel(&mut self, ui: &mut egui::Ui) {
-        let (current, position, count, estimate) = {
+        let (current, position, count, estimate, timed_current) = {
             let shared = self.lock();
             let current = shared.current.clone();
             let position =
@@ -423,7 +425,9 @@ impl App {
             let estimate = position
                 .and_then(|index| self.timings(&shared, threads).swap_remove(index))
                 .and_then(|timing| timing.estimate);
-            (current, position, shared.items.len(), estimate)
+            let timed_current =
+                position.and_then(|index| shared.items.get(index)).is_some_and(|item| item.job.timing_matters);
+            (current, position, shared.items.len(), estimate, timed_current)
         };
         match &current {
             Some(current) => {
@@ -433,7 +437,10 @@ impl App {
                         .strong()
                         .color(MUTED),
                 );
-                ui.label(RichText::new(&current.job).strong().size(20.0));
+                ui.horizontal(|ui| {
+                    ui.label(RichText::new(&current.job).strong().size(20.0));
+                    stopwatch(ui, timed_current);
+                });
                 let phase = match (current.stopping, current.phase) {
                     (true, _) => "stopping".to_string(),
                     (false, Phase::Prepare) => "its prepare".to_string(),

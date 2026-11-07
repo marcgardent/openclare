@@ -17,12 +17,16 @@ donne le GPU.
   `off-tag <hash>`, sa date, sa durée (`no time` quand elle n'a pas été mesurée) et la charge à son début.
   Une exécution est sur un tag quand le seul hash qu'elle note est celui du tag ; une exécution hors tag
   ne peut pas étayer un papier. Le filtre Tag montre la dernière exécution de chaque tâche sur un seul
-  tag. Les tâches cochées, ou toutes celles jamais lancées, partent dans la file d'un clic.
+  tag. Les tâches cochées, ou toutes celles jamais lancées, partent dans la file d'un clic. Un
+  chronomètre ⏱ à côté d'une tâche dit que son temps compte : elle attend une machine calme, et sa durée
+  n'est en clair que si le temps de l'exécution est valide, grisée quand son calme n'a pas été mesuré,
+  barrée quand la machine n'était pas calme. Une tâche sans chronomètre tourne sous n'importe quelle
+  charge ; sa durée est un ordre de grandeur.
 - **Queue** : tâches et séquences prises dans le catalogue, réordonnées par leur poignée, leurs
   paramètres et leur checkout modifiables ; chacune montre son estimation (la médiane des exécutions
   passées de la tâche, avec leur nombre et leur charge), le cumul et l'heure de fin prévue. Run les lance
   une à une, chacune dans son groupe de processus ; Stop envoie SIGTERM, puis SIGKILL. Une tâche dont le
-  temps compte attend une machine calme ; « Start anyway » la lance, son temps ne compte alors pas.
+  temps compte (⏱) attend une machine calme ; « Start anyway » la lance, son temps ne compte alors pas.
 - **History** : toutes les exécutions notées par lab et tous les résultats que les résumés du dépôt
   contiennent, triables et filtrées ; le détail d'une exécution ; son commentaire et son papier
   modifiables ; les exécutions affichées copiées en Markdown (avec la ligne de matériel) ou en CSV ; une

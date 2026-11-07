@@ -5,8 +5,8 @@ use std::collections::BTreeSet;
 
 use eframe::egui::{self, RichText};
 
-use super::{AMBER, App, BLUE, GREEN, MUTED, Tab};
-use crate::model::{Paper, Run, Source, duration_text};
+use super::{AMBER, App, BLUE, GREEN, MUTED, Tab, duration_cell, stopwatch};
+use crate::model::{Paper, Run, Source};
 use crate::state::{last_runs, place, tag_of};
 
 /// The filters of the screen.
@@ -170,14 +170,17 @@ impl App {
                                 self.state_view.checked.remove(&job.name);
                             }
                         }
-                        ui.label(&job.name);
+                        ui.horizontal(|ui| {
+                            ui.label(&job.name);
+                            stopwatch(ui, job.timing_matters);
+                        });
                         match last.get(&job.name) {
                             Some(run) => {
                                 let place = place(run, &tags);
                                 let colour = if tag_of(run, &tags).is_some() { GREEN } else { BLUE };
                                 ui.label(RichText::new(place).monospace().color(colour));
                                 ui.monospace(run.started.format("%Y-%m-%d").to_string());
-                                ui.monospace(run.seconds.map_or("no time".to_string(), duration_text));
+                                duration_cell(ui, run, job.timing_matters);
                                 match load1(run) {
                                     Some(load) => {
                                         let colour = if load >= 1.0 { AMBER } else { ui.visuals().text_color() };
