@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Question "Are conflicts sums of local dislocations?" read strictly (Section
-"Combs", paragraph "Question ..., read loosely, is true and empty"): is the
+"""The question "Are conflicts sums of local dislocations?" read strictly
+(Section "Open problems and limitations"): is the
 certificate of each set of the table of `conflicts.py` a non-negative
 combination, modulo the balances, of the strict local forms?
 

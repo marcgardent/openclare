@@ -135,7 +135,7 @@ d'un tour et s'arrête sur une autre séparatrice de son sommet force ce seul to
 tour ont la même parité. Le calcul de Fox étend la somme de Burgers à toute
 combinaison de tours, et des \emph{peignes}, dislocations locales portées par
 un seul arc, écrivent tous les certificats de conflit trouvés sur un corps
-humain.
+humain sauf un sur $68$.
 Les conflits minorent le nombre de tours que toute quantification
 respectant des bornes données laisse décalés~: sur ce corps, dans les bornes
 de séparation d'un moteur de remaillage, exactement un à 37 des tours qu'il
@@ -1158,34 +1158,11 @@ $-1$, $-1$ à la ligne 29, où aucun escalier n'a été trouvé.
 Les courbes d'un ensemble irréductible ne bordent pas nécessairement une même
 région plane autour d'un amas de singularités~: celles de chaque paire du
 tableau~\ref{tab:pairs} se croisent. Ce que les conflits ont en commun est
-local.
-
-\begin{evidence}{open}{}
-\begin{question}[Les conflits sont-ils des sommes de dislocations locales\,?]\label{conj:local}
-Sur une surface fermée de genre zéro, soit $H$ un ensemble irréductible de
-tours qui ne peuvent pas être fermés ensemble dans les bornes de séparation.
-Existe-t-il une combinaison $\sum_{\gamma \in H} u_\gamma \shift_\gamma$ à
-multiplicateurs entiers qui certifie le conflit (remarque~\ref{rem:definite})
-et qui soit égale, modulo les équilibres, à une somme à poids entiers positifs
-ou nuls de
-\begin{enumerate}
-\item[(i)] longueurs d'escaliers (proposition~\ref{prop:staircase}) entre un
-  sommet de valence trois et un de valence cinq, ou entre deux sommets de même
-  valence échangés comme dans la proposition~\ref{prop:swap}, et
-\item[(ii)] décalages de calottes~: des formes de signe fixe portées par des
-  courbes qui font une fois le tour de sommets singuliers d'indice total
-  quatre, comme le tour $54$ de la variante 0 et sa séparatrice
-  (proposition~\ref{prop:winding}),
-\end{enumerate}
-un terme au moins contenant un arc maintenu ouvert\,?
-\end{question}
-\end{evidence}
-
-La réponse est oui, avec un seul terme et les homotopies vérifiées par
-ordinateur, pour le tour $54$ de la variante 0 et les paires du
-tableau~\ref{tab:pairs} reliées par un escalier sauf les lignes 15 et 16\,; la section~\ref{sec:combs} tranche la question sur
-le corps~: non telle qu'elle est posée, oui, mais sans contenu, lue au sens
-large. % PR3: le tour 46 de la variante 2 devient un contre-exemple à un seul tour à la lecture stricte (avec une vérification Lean)
+local~: pour le tour $54$ de la variante 0 et pour les paires du
+tableau~\ref{tab:pairs} reliées par un escalier sauf les lignes 15 et 16, le
+certificat est, modulo les équilibres, la longueur d'une seule séparatrice qui
+s'enroule ou d'un seul escalier, l'homotopie vérifiée par ordinateur. La
+section~\ref{sec:combs} écrit les certificats comme des sommes de peignes.
 
 \section{Toute combinaison de tours}\label{sec:fox}
 
@@ -1355,18 +1332,13 @@ mesuré.
 
 \subsection{Peignes}\label{sec:combs}
 
-Les enroulements tordus dépendent de la carte\,; les peignes, non. Dans les
-T-meshes d'openclare, tracés à partir des seules séparatrices des sommets
-singuliers, toute trace d'une surface fermée part d'un sommet singulier (des
-lignes caractéristiques ou des traces amorcées casseraient cette propriété\,;
-nous la supposons). Pour un arc $a$, orienté selon $e_a$ du nœud $n_0$ au nœud
-$n_1$, le \emph{pied} de $n_j$ est le nœud lui-même s'il est singulier, et
-sinon le sommet singulier d'où part la trace qui passe par $n_j$
-perpendiculairement à $a$. Nous supposons ce sommet unique~: une seule trace
-perpendiculaire à $a$ rencontre $n_j$ (et non deux, venant de côtés opposés),
-et ce n'est ni une connexion de séparatrices ni une trace refermée sur
-elle-même\,; sinon, un pied doit être choisi, et des choix différents donnent
-des dislocations différentes. Le \emph{peigne} $\sigma_a$ de $a$ va du pied
+Les enroulements tordus dépendent de la carte\,; les peignes, non. Un
+\emph{sommet} est un sommet singulier ou un nœud de valence quatre d'où partent
+des traces. Pour un arc $a$, orienté selon $e_a$ du nœud $n_0$ au nœud $n_1$,
+le \emph{pied} de $n_j$ est $n_j$ s'il est singulier et sinon, quand une seule
+trace perpendiculaire à $a$ rencontre $n_j$ et que ce n'est ni une connexion
+de séparatrices ni une trace refermée sur elle-même, le sommet d'où elle part.
+Le \emph{peigne} $\sigma_a$ de $a$ va du pied
 $c_0$ de $n_0$ le long de sa trace jusqu'à $n_0$, le long de $a$ jusqu'à
 $n_1$, et le long de l'autre trace jusqu'au pied $c_1$ de $n_1$, en ne passant
 que par des jonctions en T (figure~\ref{fig:comb}). Le \emph{graphe des pieds}
@@ -1389,8 +1361,10 @@ peigne sont trois lectures du même décalage $2$.}
 
 \begin{evidence}{core}{\lean{comb_reading}, \lean{Pairing.Comb.reading}\,; les formes~: \lean{Combs.comb_dislocation}, \lean{Combs.comb_exchange}, depuis le peigne \lean{Combs.Comb.dislocation}, \lean{Combs.Comb.exchange}\,; les pieds existent sur 850 des 3\,009 arcs de 50 instances aléatoires\,; supposé~: les pieds existent, les traces perpendiculaires se développent en droites, $e_a$ est un axe de la carte du peigne\,; le cas $c_0 = c_1$ n'est pas formalisé}
 \begin{lemma}[Peignes]\label{lem:comb}
-Soient $p_{c_0}$, $p_{c_1}$ les pieds d'un arc $a$, développés le long de son
-peigne. Alors, pour toutes longueurs équilibrées,
+Soit $a$ un arc dont chaque extrémité est singulière ou rencontrée par une
+seule trace perpendiculaire à $a$, qui n'est ni une connexion de séparatrices
+ni une trace refermée sur elle-même, et soient $p_{c_0}$, $p_{c_1}$ ses pieds,
+développés le long de son peigne. Alors, pour toutes longueurs équilibrées,
 \[
   \langle e_a,\ p_{c_1} - p_{c_0} \rangle = \ell_a .
 \]
@@ -1417,12 +1391,19 @@ $2e_a$. Si $c_0 = c_1$, la seconde trace est une séparatrice du même sommet
 qui s'arrête sur la première à la distance $\ell_a$.
 \end{proof}
 
+Sur le corps (variante~1), l'hypothèse tombe en défaut sur les $76$ arcs qui
+aboutissent à l'un des $20$ nœuds de valence quatre, que rencontrent trois
+autres traces\,; ils sont comptés et laissés de côté. Aucun arc n'aboutit à
+une connexion de séparatrices, $16$ ont leurs deux pieds en un même sommet, et
+l'identité vaut sur $2\,090$ des $2\,146$ arcs, chaque échec parmi les $76$
+(mesuré).
+
 Une \emph{marche fermée de peignes} est une suite d'arcs $a_1, \dots, a_k$
 dont les pieds sont $c_{i-1}$ et $c_i$, de valence impaire, avec $c_k =
-c_0$\,; sa \emph{lecture} est $\sum_i \ell_{a_i}$. Une marche de longueur un
-est une séparatrice qui s'enroule, une marche de longueur deux entre des
-valences trois et cinq est l'escalier de la proposition~\ref{prop:staircase},
-et une marche autour de quatre sommets de valence trois est une calotte.
+c_0$\,; sa \emph{lecture} $\sum_i \ell_{a_i}$ est une séparatrice qui
+s'enroule pour $k = 1$, l'escalier de la proposition~\ref{prop:staircase} pour
+$k = 2$ entre des valences trois et cinq, et une calotte autour de quatre
+sommets de valence trois.
 
 \begin{evidence}{core}{\lean{foot_at_end}, \lean{feet_coboundary}, \lean{combination_even_of_constant_colour}, \lean{combination_reads_even}\,; vérifié par ordinateur sur le corps masculin (paragraphe ci-dessous)\,; admis~: les sommes le long des côtés d'un patch, sur le papier, et le développement modulo~2 des mots des tours, comme dans la proposition~\ref{prop:fox}}
 \begin{proposition}[Les pieds modulo 2]\label{prop:feet}
@@ -1485,11 +1466,13 @@ un élément du noyau de $B^\top$ près, ou aussi à $\frac12\mathbf 1$ près qu
 le graphe a un cycle non équilibré, et $B^\top y \in B^\top\Z^m + \{0, h\}$.
 \end{proof}
 
-L'hypothèse sur les connexions est nécessaire~: dans la
+Ici, une extrémité qui est un sommet est son propre pied. Les hypothèses sur
+les extrémités des traces sont nécessaires~: dans la
 proposition~\ref{prop:dislocation}(ii), la chaîne qui joint $c_3$ à $c_5$ est
-sur une seule trace, et la différence $\pm\delta$ des deux décalages a une
-partie impaire avec un pied en chacun. Sur un tore, le terme de période de la
-proposition~\ref{prop:burgers-any} entre dans~(b).
+sur une seule trace, et la partie impaire de la différence $\pm\delta$ des
+deux décalages a un pied en chacun\,; sur des T-meshes aléatoires dont les
+traces s'arrêtent aux sommets singuliers, $13$ certificats sur $17$ ont une
+partie impaire qui n'est pas un cycle (\texttt{experiments/property}).
 
 \begin{evidence}{core}{\lean{Combs.sum_of_combs}, \lean{Combs.veblen}, \lean{Combs.sum_of_combs_real}\,; la parité par la proposition~\ref{prop:feet}}
 \begin{proposition}[Les certificats sont des sommes de peignes]\label{thm:combs}
@@ -1517,15 +1500,9 @@ deux pieds distincts, et $c_a\ell_a$ sur ceux dont les pieds sont un même
 sommet.
 \end{proof}
 
-Par la proposition~\ref{prop:feet}(d), des multiplicateurs entiers des
-balances ne sont pas nécessaires quand le graphe biorienté est connexe et que
-$c$ a moins de coefficients impairs que la moitié des sommets singuliers de
-valence impaire. Sur les T-mesh aléatoires des tests de propriétés
-(\texttt{experiments/property}), dont les traces s'arrêtent aux sommets
-singuliers, sous les bornes $\ell \ge 1$ sur chaque arc, $13$ des $17$
-certificats exacts dont les arcs ont des pieds de valence impaire ont une
-partie impaire qui n'est pas un cycle~: $6$ sur une même sphère, $7$ sur des
-tores.
+Par le lemme~\ref{lem:comb}, chaque lecture $2\ell_a$ à deux pieds distincts
+de valence impaire est une dislocation locale (valences trois et cinq, $711$
+arcs du corps) ou un échange local (valences égales, $1\,244$).
 
 \begin{evidence}{prose}{démonstration sur le papier, non vérifiée sur les données}
 \begin{proposition}[Les marches fermées sont des cycles tordus]\label{prop:walks}
@@ -1590,51 +1567,15 @@ changer aucune holonomie.
 \end{proof}
 
 \paragraph{Sur le corps masculin.}
-Le lemme~\ref{lem:comb} vaut sur $2\,090$ des $2\,146$ arcs, les $56$
-autres aboutissant aux nœuds de valence quatre ci-dessous\,; $1\,955$ arcs
-ont deux pieds distincts de valence impaire~: presque tout arc est une
-dislocation ou un échange local. Sur ce T-mesh (variante~1), tout
-nœud est rencontré par exactement deux traces sauf $20$ de valence quatre,
-d'où partent des traces, joints par paires par $10$ traces (les $76$ arcs qui
-y aboutissent n'ont pas une seule trace perpendiculaire), et aucune trace
-n'aboutit à un sommet singulier~: les hypothèses de la
-proposition~\ref{prop:feet} sont satisfaites, et (a), (b) sur les $1\,708$
-tours, et (d) sont vérifiés par ordinateur en ses $254$ sommets singuliers
-(\texttt{experiments/parity.py}). L'homologie tordue
-est de dimension $504 = 2(n - 2)$ et l'accouplement de rang $504$\,; nous
-conjecturons que, sans sommet de valence divisible par quatre, le noyau est
-engendré par les classes transverses aux connexions. Avec des
-multiplicateurs entiers des décalages, les parties impaires des $68$
-certificats des conflits examinés ($34$ formes distinctes, au plus $17$
-coefficients impairs\,; $20$ d'entre eux d'abord multipliés par les
-dénominateurs, de $2$ à $7$, de leurs multiplicateurs, ce qui vide la partie
-impaire de la ligne~19 de la variante~7, $\ell_{1847}$ de multiplicateurs
-$\frac12$) ont toutes un nombre pair de pieds en chaque sommet singulier, comme la proposition~\ref{prop:feet}(d) l'impose (exact)\,; dans
-$67$ tout pied est de valence impaire, dans le $68$e trois arcs ont des pieds
-en des nœuds de valence quatre. Lu au sens strict (ci-dessous), le certificat du tour $54$ de la variante 0
-est une seule séparatrice qui s'enroule, la longueur de l'arc $1873$, dont les
-deux pieds sont confondus (mesuré).
-
-% PR3: ce paragraphe est laissé tel quel. Sur le nouvel export, la lecture stricte sépare 15 des 41 ensembles, tous avec un point exact (lignes 2, 3, 12, 19, 24, 29, 31, 33, 35 à 41) ; le tour 46 de la variante 2 (ligne 2) est un contre-exemple à un seul tour, à vérifier en Lean ; E, F, les yeux et la main gauche ont disparu.
-\paragraph{Lue au sens large, la question~\ref{conj:local} est vraie et vide.}
-En admettant toute lecture de peigne et toute marche fermée de peignes, la
-proposition~\ref{thm:combs} y répond pour tout certificat à multiplicateurs
-entiers dont les pieds sont de valence impaire, $67$ des $68$ du corps\,; mais
-cela découle du lemme de Farkas et de la parité de la
-proposition~\ref{prop:feet}, et ne dit rien
-des configurations qui entrent en conflit. \emph{Lue au sens strict, elle est
-fausse}~: si on la restreint aux escaliers de poids un, aux marches monotones
-autour d'une calotte et aux séparatrices qui s'enroulent, des longueurs
-équilibrées rationnelles exactes rendent toutes ces formes positives ou nulles
-et les certificats de E et F négatifs, $-2,9967$ et $-1,9973$ (vérifié en
-arithmétique entière). Ces formes sont en nombre infini, mais chacune est la
-longueur d'une marche sur un graphe dont les arêtes portent les longueurs des
-arcs, si bien qu'une recherche de plus court chemin en trouve une négative
-s'il en existe. En virgule flottante, le même test sépare aussi les quatre
-tours des yeux et place la main gauche à l'intérieur du cône (mesuré). On ne
-sait pas si tout certificat se décompose en peignes portés par des ensembles
-disjoints de sommets, chacun de son signe~: les arbres de la main gauche et de
-la variante~7 partagent des sommets.
+Les hypothèses de la proposition~\ref{prop:feet} sont satisfaites, les $20$
+nœuds de valence quatre étant joints par paires par $10$ traces, et (a), (b),
+(d) sont vérifiés par ordinateur aux $254$ sommets singuliers, sur chaque
+arc, les $76$ laissés de côté par le lemme~\ref{lem:comb} compris, et sur les
+$1\,708$ tours (\texttt{experiments/parity.py}). Les parties impaires des $68$
+certificats des conflits, dont $20$ d'abord multipliés pour rendre leurs
+multiplicateurs entiers, ont un nombre pair de pieds en chaque sommet
+singulier (exact)\,; la proposition~\ref{thm:combs} s'applique aux $67$ dont
+tous les pieds sont de valence impaire, pas à la ligne $24$ de la variante~3.
 
 \section{Bords et anses}\label{sec:beyond}
 
@@ -1810,8 +1751,8 @@ remarques~\ref{rem:definite} et~\ref{rem:exist}, le
 théorème~\ref{thm:forced} et le corollaire~\ref{cor:chain} ne demandent pas de
 sphère fermée\,; le lemme~\ref{lem:eight}, la proposition~\ref{prop:parity},
 le corollaire~\ref{cor:parity}, le compte des anneaux indépendants, le cadre
-de la proposition~\ref{prop:fox}, le corollaire~\ref{cor:checker} et la
-question~\ref{conj:local} en demandent une\,; l'annexe~\ref{app:orders} traite
+de la proposition~\ref{prop:fox} et le corollaire~\ref{cor:checker} en
+demandent une\,; l'annexe~\ref{app:orders} traite
 les maillages triangulaires.
 
 \section{Les tours que toute quantification dans les bornes laisse décalés}\label{sec:forced}
@@ -2406,12 +2347,23 @@ ici sous leur forme précisée.
 \section{Problèmes ouverts et limites}\label{sec:open}
 
 Quand un ensemble de tours est-il fermable, en termes de configuration des
-singularités\,? Tout certificat est une somme de peignes, ce qui ne dit rien
-des singularités, et n'est pas toujours une somme d'escaliers, de calottes et
-de séparatrices qui s'enroulent seuls\,; % PR3: la lecture stricte change (tour 46)
-une réponse utile se trouve entre les
-deux, par exemple des peignes portés par des ensembles disjoints de sommets,
-chacun du signe du certificat. Calculer $\tau_P(H)$ à un nombre de quads donné
+singularités\,? Posée comme «~tout certificat est-il une somme de
+dislocations locales\,?~», la question a deux réponses~: lue au sens large,
+avec tout peigne et toute marche fermée de peignes, oui, ce qui découle du
+lemme de Farkas et de la parité des pieds (proposition~\ref{thm:combs}) et ne
+dit rien des singularités\,; lue au sens strict, avec les seuls escaliers de
+poids un, marches monotones autour d'une calotte et séparatrices qui
+s'enroulent, non. Ces formes sont en nombre infini, mais chacune est la
+longueur d'une marche sur un graphe dont les arêtes portent les longueurs des
+arcs, si bien qu'une recherche de plus court chemin en trouve une négative
+s'il en existe~: sur le corps, elle sépare $15$ des $41$ ensembles du
+tableau~\ref{tab:iis}, chacun en des longueurs équilibrées exactes où son
+certificat est négatif et aucune de ces formes ne l'est (vérifié en
+arithmétique entière), dont le tour $46$ de la variante 2, contre-exemple à un
+seul tour. Parmi les $26$ autres, le certificat du tour $54$ de la variante 0
+est la longueur de l'arc $1873$, une séparatrice qui s'enroule (mesuré). Une
+réponse utile se trouve entre les deux, par exemple des peignes portés par des
+ensembles disjoints de sommets, chacun du signe du certificat. Calculer $\tau_P(H)$ à un nombre de quads donné
 demande les extrema d'une fonction quadratique indéfinie sur un polytope.
 \RC{} reste-t-il NP-difficile sur les tours d'une sphère
 (conjecture~\ref{conj:realize})\,? Les dislocations entre tours parallèles
@@ -2422,7 +2374,11 @@ lorsque l'ensemble des tours dépend des longueurs, comme c'est le cas des
 bandes du maillage, quel est au juste le problème\,? Quand existe-t-il, pour
 une configuration de singularités donnée, une différentielle quartique dont
 toutes les trajectoires sont finies~\cite{lei2020quartic}\,? Les tours en sont
-la version discrète. Enfin, un modèle formel d'un complexe de rectangles à
+la version discrète. Sans sommet singulier de valence divisible par quatre,
+le noyau de l'accouplement de Burgers (proposition~\ref{prop:pairing})
+est-il engendré par les classes transverses aux connexions de séparatrices\,?
+Sur le corps, qui n'en a aucune, l'homologie tordue est de dimension $504 =
+2(n - 2)$ et l'accouplement de rang $504$. Enfin, un modèle formel d'un complexe de rectangles à
 côtés entiers, de ses tours et de son application développante ferait des
 hypothèses topologiques des énoncés Lean des théorèmes.
 
