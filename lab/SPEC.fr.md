@@ -175,6 +175,13 @@ pas, de jour comme de nuit. Proposition (Q2) :
   `timing_valid = false` : l'exécution compte, son temps non.
 - Toute exécution, quelle que soit la tâche, reçoit son verdict `Calm` ; un temps n'est rapporté que
   d'une exécution `timing_valid = true`.
+- Les écrans disent de quel cas il s'agit. Un chronomètre ⏱ se tient à côté du nom d'une tâche dont le
+  temps compte, partout où la tâche est montrée (État, File, Historique, Catalogue, l'exécution en
+  cours, l'attente du calme) ; une tâche sans lui tourne sous n'importe quelle charge et sa durée est un
+  ordre de grandeur, pas une mesure. Pour une tâche au chronomètre, la durée d'une exécution n'est en
+  clair que si `timing_valid` : grisée quand son calme n'a pas été mesuré (exécution lue dans le dépôt ou
+  saisie à la main), barrée quand la machine n'était pas calme ou que l'exécution a été forcée, la raison
+  au survol.
 
 ### 7.3 Préparation avant la tâche
 
@@ -306,9 +313,11 @@ d'un coup d'œil, le réglage de threads (de 1 à 8, ambre au-delà de la limite
 
 ### État (l'écran d'ouverture)
 
-- Une ligne par tâche, groupées par papier, avec sa **dernière exécution** (Last run) : marquée de son tag
-  (« v0.7.0 ») ou « off-tag <hash> », puis sa date, sa durée (« no time » si non mesurée), la charge au
-  début et le fichier où elle a été lue ; ou « never run ».
+- Une ligne par tâche, groupées par papier, le chronomètre ⏱ à côté d'une tâche dont le temps compte,
+  avec sa **dernière exécution** (Last run) : marquée de son tag (« v0.7.0 ») ou « off-tag <hash> », puis
+  sa date, sa durée (« no time » si non mesurée ; grisée ou barrée quand le temps de la tâche compte et
+  que celui-ci n'est pas valide, §7.2), la charge au début et le fichier où elle a été lue ; ou
+  « never run ».
 - En tête, les comptes : dernière exécution sur un tag, hors tag, jamais lancée.
 - Un filtre **Tag** : « All runs » (la dernière exécution de chaque tâche, où qu'elle ait tourné), ou un
   tag : seule la dernière exécution de chaque tâche sur ce tag, les autres « no run on this tag ».
@@ -317,8 +326,8 @@ d'un coup d'œil, le réglage de threads (de 1 à 8, ambre au-delà de la limite
 ### File
 
 - **À gauche, le catalogue** : tâches groupées par catégorie, une recherche, pour chacune une case, son
-  estimation, une marque si son temps compte ; les séquences au-dessus (en cocher une ajoute ses tâches
-  dans l'ordre).
+  estimation, le chronomètre ⏱ si son temps compte ; les séquences au-dessus (en cocher une ajoute ses
+  tâches dans l'ordre).
 - **Au milieu, la file** : les éléments dans l'ordre, réordonnés par une **poignée** de glisser-déposer,
   chacun avec ses paramètres (modifiables), son checkout (d'attache ou un worktree, et si l'exécution sera
   sur un tag ou hors tag), ses threads effectifs, son estimation, son cumul et son heure de fin (section 10) ; dessous : le commentaire et la version de papier (A ou B, un libellé suggéré d'après les
@@ -328,8 +337,10 @@ d'un coup d'œil, le réglage de threads (de 1 à 8, ambre au-delà de la limite
 
 ### Historique
 
-- Un tableau de toutes les exécutions : date, tâche, durée, commit (court, marque de modification),
-  threads, calme (✓, ✗ avec la raison en info-bulle, « forcée »), statut, commentaire, papiers. Tri par
+- Un tableau de toutes les exécutions : date, tâche (avec le chronomètre ⏱ quand son temps compte),
+  durée (grisée ou barrée quand ce temps n'est pas valide, §7.2), commit (court, marque de
+  modification), threads, calme (✓, ✗ avec la raison en info-bulle, « forcée »), statut, commentaire,
+  papiers. Tri par
   toute colonne ; filtres par tâche, commit, papier et libellé, dates, statut, « temps valides
   seulement ».
 - Un panneau de détail de l'exécution choisie : commande entière, environnement, paramètres, checkout et

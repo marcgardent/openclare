@@ -17,12 +17,15 @@ the GPU.
   its date, its duration (`no time` when it was not measured) and the load at its start. A run is on a
   tag when the one hash it records is the tag's; an off-tag run cannot back a paper. The Tag filter
   shows the last run of each job on one tag only. Jobs checked, or all those never run, go to the
-  queue in one click.
+  queue in one click. A stopwatch ⏱ beside a job says its timing matters: it waits for a calm machine,
+  and its duration is shown plain only when the run's time is valid, muted when its calm was not
+  measured, struck when the machine was not calm. A job without the stopwatch runs under any load; its
+  duration is an order of magnitude.
 - **Queue**: jobs and sequences picked from the catalogue, reordered with their handle, their parameters
   and checkout edited; each shows its estimate (the median of the job's past runs, with how many and
   under which load), the running total and the time it should end. Run starts them one at a time, each
-  in a process group of its own; Stop sends SIGTERM, then SIGKILL. A job whose timing matters waits for
-  a calm machine; "Start anyway" starts it, its time then not counted.
+  in a process group of its own; Stop sends SIGTERM, then SIGKILL. A job whose timing matters (⏱) waits
+  for a calm machine; "Start anyway" starts it, its time then not counted.
 - **History**: every run lab recorded and every result the repository's summaries hold, sortable and
   filtered; the detail of a run; its comment and paper edited; the runs shown copied as Markdown (with
   the hardware line) or CSV; a past run typed by hand; the history copied into the repository.

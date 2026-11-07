@@ -262,6 +262,12 @@ day as well as by night. Proposal (Q2):
   the run counts, its time does not.
 - Every run, whatever the job, gets its `Calm` verdict; a timing is reported only from a run with
   `timing_valid = true`.
+- The screens say which it is. A stopwatch ⏱ stands beside the name of a job whose timing matters,
+  wherever the job is shown (State, Queue, History, Catalogue, the run under way, the wait for calm);
+  a job without it runs under any load and its duration is an order of magnitude, not a measurement.
+  For a job with the stopwatch, the duration of a run is plain only when `timing_valid`: muted when its
+  calm was not measured (a run read from the repository or typed by hand), struck through when the
+  machine was not calm or the run was forced, the reason on hover.
 
 ### 7.3 Prepare before the job
 
@@ -393,9 +399,10 @@ the thread setting (a spinner from 1 to 8, amber above the comfort limit).
 
 ### State (the screen the app opens on)
 
-- One line per job, grouped by paper, with its **Last run**: marked with its tag ("v0.7.0") or
-  "off-tag <hash>", then its date, duration ("no time" if not measured), load at start and the file it
-  was read from; or "never run".
+- One line per job, grouped by paper, the stopwatch ⏱ beside a job whose timing matters, with its
+  **Last run**: marked with its tag ("v0.7.0") or "off-tag <hash>", then its date, duration ("no time"
+  if not measured; muted or struck when the job's timing matters and this time is not valid, §7.2),
+  load at start and the file it was read from; or "never run".
 - Counts at the top: last run on a tag, off-tag, never run.
 - A **Tag** filter: "All runs" (the last run of each job, wherever it ran), or one tag: only the last run
   of each job on that tag, the others "no run on this tag".
@@ -404,7 +411,7 @@ the thread setting (a spinner from 1 to 8, amber above the comfort limit).
 ### Queue
 
 - **Left, the catalogue**: jobs grouped by category, a search box, for each a checkbox, its estimate,
-  a mark if its timing matters; the sequences above them (checking one adds its jobs in order).
+  the stopwatch ⏱ if its timing matters; the sequences above them (checking one adds its jobs in order).
 - **Middle, the queue**: the items in order, reordered with a **drag handle**, each with its parameters
   (editable), checkout (home or a worktree, and whether the run will be on a tag or off-tag), effective
   threads, estimate, running total and end time (section 10); below: the comment and the
@@ -415,7 +422,8 @@ the thread setting (a spinner from 1 to 8, amber above the comfort limit).
 
 ### History
 
-- A table of every run: date, job, duration, commit (short, dirty mark), threads, calm (✓, ✗ with the
+- A table of every run: date, job (with the stopwatch ⏱ when its timing matters), duration (muted or
+  struck when that time is not valid, §7.2), commit (short, dirty mark), threads, calm (✓, ✗ with the
   reason as a tooltip, "forced"), status, comment, papers. Sorted by any column; filtered by job,
   commit, paper and label, dates, status, "timing-valid only".
 - A detail pane for the selected run: full command, environment, parameters, checkout and directory,

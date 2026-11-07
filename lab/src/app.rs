@@ -29,6 +29,36 @@ const GREEN: Color32 = Color32::from_rgb(143, 240, 176);
 const MUTED: Color32 = Color32::from_rgb(154, 161, 171);
 const BLUE: Color32 = Color32::from_rgb(169, 196, 255);
 
+/// The mark of a job whose timing matters (SPEC.md, section 7.2): beside its
+/// name wherever the job is shown. A job without it runs under any load and
+/// its duration is an order of magnitude, not a measurement.
+pub(crate) const STOPWATCH: &str = "⏱";
+const STOPWATCH_HINT: &str =
+    "its duration counts: it waits for a calm machine, and a run under load does not report a time";
+
+/// The stopwatch beside a job's name, when its timing matters.
+fn stopwatch(ui: &mut egui::Ui, timing_matters: bool) {
+    if timing_matters {
+        ui.label(RichText::new(STOPWATCH).color(AMBER)).on_hover_text(STOPWATCH_HINT);
+    }
+}
+
+/// A run's duration (SPEC.md, section 7.2): "no time" when not measured. For
+/// a job whose timing matters, the time is plain only when it is valid: muted
+/// when its calm was not measured (a run read from the repository or typed),
+/// struck through when the machine was not calm or the run was forced.
+fn duration_cell(ui: &mut egui::Ui, run: &Run, timing_matters: bool) {
+    let text = RichText::new(run.seconds.map_or("no time".to_string(), duration_text)).monospace();
+    if !timing_matters || run.seconds.is_none() || run.calm.timing_valid {
+        ui.label(text);
+    } else if !matches!(run.source, Source::App) {
+        ui.label(text.color(MUTED)).on_hover_text("its calm was not measured: an order of magnitude, not a timing");
+    } else {
+        let why = if run.calm.reason.is_empty() { "not calm".to_string() } else { run.calm.reason.clone() };
+        ui.label(text.strikethrough().color(MUTED)).on_hover_text(format!("time not reported: {why}"));
+    }
+}
+
 /// How often the files are looked at again.
 const RELOAD: Duration = Duration::from_secs(2);
 
@@ -272,6 +302,16 @@ impl App {
         let mut runs = self.history.as_ref().map(|history| history.runs.clone()).unwrap_or_default();
         runs.extend(self.repository.iter().cloned());
         runs
+    }
+
+    /// The names of the jobs whose timing matters, for the runs' rows.
+    fn timed_jobs(&self) -> std::collections::BTreeSet<String> {
+        self.catalogue
+            .as_ref()
+            .map(|catalogue| {
+                catalogue.jobs.iter().filter(|job| job.timing_matters).map(|job| job.name.clone()).collect()
+            })
+            .unwrap_or_default()
     }
 
     fn commit(&self) -> String {
@@ -540,9 +580,12 @@ impl App {
                     ui.label(RichText::new(category.title().to_uppercase()).small().strong().color(MUTED));
                     for job in jobs {
                         let selected = self.job.as_deref() == Some(job.name.as_str());
-                        if ui.selectable_label(selected, &job.name).clicked() {
-                            self.job = Some(job.name.clone());
-                        }
+                        ui.horizontal(|ui| {
+                            if ui.selectable_label(selected, &job.name).clicked() {
+                                self.job = Some(job.name.clone());
+                            }
+                            stopwatch(ui, job.timing_matters);
+                        });
                     }
                 }
                 ui.add_space(8.0);
@@ -562,7 +605,10 @@ impl App {
                 return;
             };
             egui::ScrollArea::vertical().auto_shrink([false; 2]).show(ui, |ui| {
-                ui.label(RichText::new(&job.name).strong().size(20.0));
+                ui.horizontal(|ui| {
+                    ui.label(RichText::new(&job.name).strong().size(20.0));
+                    stopwatch(ui, job.timing_matters);
+                });
                 ui.label(&job.description);
                 ui.add_space(8.0);
                 let threads = match job.threads {
@@ -577,7 +623,11 @@ impl App {
                     ("Memory cap", job.memory_limit_gb.map_or("none".to_string(), |gb| format!("{gb} GB per process"))),
                     (
                         "Timing matters",
-                        if job.timing_matters { "yes: waits for a calm machine" } else { "no" }.to_string(),
+                        if job.timing_matters {
+                            format!("{STOPWATCH} yes: it waits for a calm machine; a run under load reports no time")
+                        } else {
+                            "no: it runs under any load; its duration is not a measurement".to_string()
+                        },
                     ),
                     ("Paper", job.paper.map_or("none".to_string(), |paper| paper.to_string())),
                     ("Tags", job.tags.join(", ")),
@@ -703,12 +753,13 @@ impl App {
             self.history_tools(ui, &shown);
         });
 
+        let timed = self.timed_jobs();
         let selected = self.run.clone();
         let detail = selected.as_ref().and_then(|id| runs.iter().find(|run| &run.id == id)).cloned();
         if let Some(run) = &detail {
             egui::Panel::right("run").resizable(true).default_size(460.0).show(ui, |ui| {
                 egui::ScrollArea::vertical().auto_shrink([false; 2]).show(ui, |ui| {
-                    run_detail(ui, run, &self.places.data);
+                    run_detail(ui, run, &self.places.data, timed.contains(&run.job));
                     self.edit_panel(ui, run);
                 });
             });
@@ -766,12 +817,13 @@ impl App {
                         });
                         row.col(|ui| {
                             ui.label(&run.job);
+                            stopwatch(ui, timed.contains(&run.job));
                             if seeded {
                                 ui.label(RichText::new(source_word(&run.source)).small().color(MUTED));
                             }
                         });
                         row.col(|ui| {
-                            ui.monospace(run.seconds.map_or("no time".to_string(), duration_text));
+                            duration_cell(ui, run, timed.contains(&run.job));
                         });
                         row.col(|ui| {
                             let place = place(run, &tags);
@@ -855,9 +907,10 @@ fn calm_mark(run: &Run) -> (&'static str, Color32) {
     }
 }
 
-fn run_detail(ui: &mut egui::Ui, run: &Run, data: &Path) {
+fn run_detail(ui: &mut egui::Ui, run: &Run, data: &Path, timing_matters: bool) {
     ui.horizontal(|ui| {
         ui.label(RichText::new(&run.job).strong().size(18.0));
+        stopwatch(ui, timing_matters);
         let (mark, colour) = calm_mark(run);
         ui.colored_label(
             colour,
