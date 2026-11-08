@@ -506,13 +506,13 @@ file are lost when it is saved from the app (Q10).
 
 CPU total and per thread (bars and a 10-minute sparkline), load 1/5/15, RAM used/total, VRAM and GPU
 %, the heaviest processes with "ours" or "foreign", the indicator with the reason, the thresholds
-editable.
+editable; the checkouts of the mirror with their size, and a Clean button that removes those off any
+tag with their `target/` and `.lake/` (nothing is removed on its own, Q16).
 
 ## 12. Settings
 
 `<lab>/settings.toml`: the remote (`marcgardent/openclare`), the machine name (the hostname by default:
-the branch `lab/runs-<machine>` and the exports), the push policy (`ask`, `auto`, `never`), the number
-of checkouts kept besides the tags' (Q16), the comfort limit of threads (6, Q1), calm thresholds
+the branch `lab/runs-<machine>` and the exports), the push policy (`ask`, `auto`, `never`), the comfort limit of threads (6, Q1), calm thresholds
 and window, sample period, delay between SIGTERM and SIGKILL, the policies on stop and on failure, the
 machine label used in exports (default proposed "i7-7700K 4c/8t 2017, 62 GB", checked against what is
 detected: the app warns if the CPU model or the memory differ).
@@ -635,3 +635,6 @@ outside the repository, met in git, §4b). New:
 18. **Night machine**: a deploy key limited to the repository, with write access, for its pushes?
 19. **Where everything lives**: the mirror and the checkouts in `~/.openclare-lab` beside the memory,
     several GB; or the memory alone there and the checkouts elsewhere (`--checkouts <folder>`)?
+
+Answered on 2026-11-08: Q15 `ask`; Q16 everything kept, a Clean button in the Machine screen; Q17 the
+hostname; Q18 no night machine, Marc's key alone; Q19 everything in `~/.openclare-lab`.
