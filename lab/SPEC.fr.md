@@ -426,13 +426,14 @@ l'ordre des tâches ; les commentaires du fichier sont perdus quand il est enreg
 
 CPU total et par thread (barres et courbe sur 10 minutes), charge 1/5/15, mémoire utilisée / totale, VRAM
 et GPU %, les processus les plus lourds marqués « à nous » ou « étranger », l'indicateur avec sa raison,
-les seuils modifiables.
+les seuils modifiables ; les checkouts du miroir avec leur taille, et un bouton Clean qui retire ceux hors
+de tout tag avec leur `target/` et leur `.lake/` (rien n'est retiré tout seul, Q16).
 
 ## 12. Réglages
 
 `<lab>/settings.toml` : le dépôt distant (`marcgardent/openclare`), le nom de la machine (le nom d'hôte
 par défaut : la branche `lab/runs-<machine>` et les exports), la politique de push (`ask`, `auto`,
-`never`), le nombre de checkouts gardés outre ceux des tags (Q16), la limite de confort des threads (6,
+`never`), la limite de confort des threads (6,
 Q1), seuils
 et fenêtre du calme, période d'échantillonnage, délai entre SIGTERM et SIGKILL, politiques d'arrêt et
 d'échec, libellé de la machine pour les exports (proposé : « i7-7700K 4c/8t 2017, 62 GB », comparé à ce qui
@@ -563,3 +564,6 @@ hors du dépôt, réunie dans git, §4 bis). Nouvelles :
 18. **Machine de nuit** : une clé de déploiement limitée au dépôt, en écriture, pour ses push ?
 19. **Où tout habite** : le miroir et les checkouts dans `~/.openclare-lab` à côté de la mémoire, plusieurs
     Go ; ou la mémoire seule là et les checkouts ailleurs (`--checkouts <dossier>`) ?
+
+Répondues le 2026-11-08 : Q15 `ask` ; Q16 tout gardé, un bouton Clean dans l'écran Machine ; Q17 le nom
+d'hôte ; Q18 pas de machine de nuit, la clé de Marc seule ; Q19 tout dans `~/.openclare-lab`.
