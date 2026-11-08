@@ -34,7 +34,7 @@ s'il est là, donne le GPU.
   barrée quand la machine n'était pas calme. Une tâche sans chronomètre tourne sous n'importe quelle
   charge ; sa durée est un ordre de grandeur.
 - **Queue** : tâches et séquences prises dans le catalogue, réordonnées par leur poignée, leurs
-  paramètres et leur référence modifiables (▼ liste les tags et les branches), chacune disant si elle
+  paramètres et leur référence modifiables (… liste les tags et les branches), chacune disant si elle
   sera sur un tag, hors tag ou orpheline et si son commit est déjà extrait ; chacune montre son estimation
   (la médiane des exécutions passées de la tâche, avec leur nombre et leur charge), le cumul et l'heure de
   fin prévue. Run récupère le miroir et les lance une à une, chacune dans son groupe de processus, la

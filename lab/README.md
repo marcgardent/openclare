@@ -33,7 +33,7 @@ GPU.
   measured, struck when the machine was not calm. A job without the stopwatch runs under any load; its
   duration is an order of magnitude.
 - **Queue**: jobs and sequences picked from the catalogue, reordered with their handle, their parameters
-  and reference edited (▼ lists the tags and the branches), each saying whether it will be on a tag,
+  and reference edited (… lists the tags and the branches), each saying whether it will be on a tag,
   off-tag or orphan and whether its commit is checked out already; each shows its estimate (the median
   of the job's past runs, with how many and under which load), the running total and the time it should
   end. Run fetches the mirror and starts them one at a time, each in a process group of its own, the

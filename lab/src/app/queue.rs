@@ -227,7 +227,12 @@ impl App {
                 });
             });
         }
-        let threads = if shared.mode == Mode::Idle { self.settings.threads } else { shared.queue.threads };
+        // A queue recovered before Run was pressed has no thread count of its own yet.
+        let threads = if shared.mode == Mode::Idle || shared.queue.threads == 0 {
+            self.settings.threads
+        } else {
+            shared.queue.threads
+        };
         let timings = self.timings(&shared, threads);
         let mut drops: Vec<(u64, usize)> = Vec::new();
         let mut removed: Vec<u64> = Vec::new();
@@ -271,7 +276,7 @@ impl App {
                                 "a tag (v0.7.0), a branch (main), a pull request (pull/301) or a hash, resolved in the mirror; \
                                  or a folder on this machine (/…, ~/…), the escape hatch for an experiment not committed",
                             );
-                            ui.menu_button("▼", |ui| {
+                            ui.menu_button("…", |ui| {
                                 for reference in &references {
                                     if ui.button(reference).clicked() {
                                         item.target = reference.clone();
