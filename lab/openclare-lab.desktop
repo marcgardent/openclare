@@ -1,0 +1,14 @@
+# The entry of the desktop menu. `make lab-install` copies it to
+# ~/.local/share/applications with Exec= set to the installed binary and
+# Path= to the clone it ran from, where lab reads lab/jobs.toml.
+[Desktop Entry]
+Type=Application
+Name=openclare lab
+Comment=The record and the launcher of openclare's computations
+Exec=lab
+Path=.
+Icon=openclare-lab
+Terminal=false
+Categories=Development;
+Keywords=openclare;retopology;bench;
+StartupWMClass=openclare-lab

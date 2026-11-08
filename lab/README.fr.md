@@ -5,10 +5,15 @@ expérience des papiers se lance d'ici, et chaque exécution est notée avec son
 le verdict de calme et le papier qu'elle étaye. La spécification est `SPEC.fr.md` (anglais : `SPEC.md`).
 
 ```sh
-cd lab && cargo run --release
+make lab-install
 ```
 
-lab trouve le dépôt où il se trouve. Il tourne sous Linux (il lit /proc) ; `nvidia-smi`, s'il est là,
+depuis la racine du dépôt met le binaire dans `~/.local/bin/lab` et une entrée « openclare lab » dans le
+menu du bureau (KDE, et tout ce qui lit `~/.local/share/applications`) ; `make lab-uninstall` le défait.
+Pendant le développement de lab, `cd lab && cargo run --release`.
+
+lab trouve le dépôt où il se trouve ; l'entrée du menu le lance dans le clone d'où `make lab-install` a
+tourné. Il tourne sous Linux (il lit /proc) ; `nvidia-smi`, s'il est là,
 donne le GPU.
 
 ## Les écrans
@@ -47,18 +52,22 @@ autre chose la charge.
 |---|---|---|
 | `lab/jobs.toml` | oui | le catalogue : commandes, préparations, threads, plafonds mémoire, le résumé que chaque tâche écrit |
 | `lab/runs.jsonl` | oui | un instantané de l'historique, écrit par « Copy history to the repo » |
-| `~/.local/share/openclare-lab/runs.jsonl` | non | l'historique vivant, une exécution par ligne |
-| `~/.local/share/openclare-lab/logs/` | non | le journal de chaque exécution |
-| `~/.local/share/openclare-lab/state.json` | non | la file en cours, pour reprendre une exécution laissée par une application morte |
-| `~/.config/openclare-lab/settings.toml` | non | réglage de threads, limite de confort, seuils du calme, politiques |
+| `~/.openclare-lab/runs.jsonl` | non | l'historique vivant de cette machine, une exécution par ligne |
+| `~/.openclare-lab/logs/` | non | le journal de chaque exécution |
+| `~/.openclare-lab/state.json` | non | la file en cours, pour reprendre une exécution laissée par une application morte |
+| `~/.openclare-lab/settings.toml` | non | réglage de threads, limite de confort, seuils du calme, politiques |
+
+`~/.openclare-lab` est le seul dossier de tout ce que lab garde sur la machine. Le premier démarrage y
+déplace une fois les fichiers des anciens dossiers, `~/.local/share/openclare-lab` et
+`~/.config/openclare-lab`.
 
 Aucune fiche ne nomme un chemin local : le checkout s'écrit `{repo}`, le dossier personnel `~` ; une fiche
 qui en nomme encore un va dans `refused.jsonl`.
 
 ## Options
 
-`--data <dossier>` lit et écrit les exécutions ailleurs (`tests/fixtures` montre l'historique sur des
-exécutions inventées) ; `--tab <state|queue|history|catalogue|machine>` ; `--queue <tâche ou séquence>`
+`--data <dossier>` utilise un autre dossier que `~/.openclare-lab` (`tests/fixtures` montre l'historique
+sur des exécutions inventées) ; `--tab <state|queue|history|catalogue|machine>` ; `--queue <tâche ou séquence>`
 (répétable) ; `--start` appuie sur Run ; `--run <id>` choisit une exécution ;
 `--screenshot <fichier.ppm> [--after <secondes>]` écrit une image de la fenêtre elle-même, jamais de
 l'écran, puis la ferme.

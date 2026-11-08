@@ -5,10 +5,15 @@ experiment of the papers is launched from here, and each run is recorded with it
 calm verdict and the paper it backs. The specification is `SPEC.md` (French: `SPEC.fr.md`).
 
 ```sh
-cd lab && cargo run --release
+make lab-install
 ```
 
-lab finds the repository it sits in. It runs on Linux (it reads /proc); `nvidia-smi`, if present, gives
+from the root of the repository puts the binary in `~/.local/bin/lab` and an entry "openclare lab" in
+the desktop menu (KDE, and whatever reads `~/.local/share/applications`); `make lab-uninstall` undoes
+it. While developing lab, `cd lab && cargo run --release`.
+
+lab finds the repository it sits in; the entry of the menu starts it in the clone `make lab-install`
+ran from. It runs on Linux (it reads /proc); `nvidia-smi`, if present, gives
 the GPU.
 
 ## The screens
@@ -44,18 +49,21 @@ ours); amber when busy with our run alone; red when something else loads the mac
 |---|---|---|
 | `lab/jobs.toml` | yes | the catalogue: commands, prepares, threads, memory caps, the summary each job writes |
 | `lab/runs.jsonl` | yes | a snapshot of the history, written by "Copy history to the repo" |
-| `~/.local/share/openclare-lab/runs.jsonl` | no | the live history, one run per line |
-| `~/.local/share/openclare-lab/logs/` | no | the log of each run |
-| `~/.local/share/openclare-lab/state.json` | no | the queue under way, to recover a run left by an app that died |
-| `~/.config/openclare-lab/settings.toml` | no | thread setting, comfort limit, calm thresholds, policies |
+| `~/.openclare-lab/runs.jsonl` | no | the live history of this machine, one run per line |
+| `~/.openclare-lab/logs/` | no | the log of each run |
+| `~/.openclare-lab/state.json` | no | the queue under way, to recover a run left by an app that died |
+| `~/.openclare-lab/settings.toml` | no | thread setting, comfort limit, calm thresholds, policies |
+
+`~/.openclare-lab` is the one folder of everything lab keeps on the machine. The first start moves the
+files of the earlier folders, `~/.local/share/openclare-lab` and `~/.config/openclare-lab`, into it once.
 
 No record names a local path: the checkout is written `{repo}`, the home folder `~`; a record that still
 names one goes to `refused.jsonl` instead.
 
 ## Options
 
-`--data <folder>` reads and writes the runs elsewhere (`tests/fixtures` shows the history on made-up
-runs); `--tab <state|queue|history|catalogue|machine>`; `--queue <job or sequence>` (repeatable);
+`--data <folder>` uses another folder than `~/.openclare-lab` (`tests/fixtures` shows the history on
+made-up runs); `--tab <state|queue|history|catalogue|machine>`; `--queue <job or sequence>` (repeatable);
 `--start` presses Run; `--run <id>` selects a run; `--screenshot <file.ppm> [--after <seconds>]`
 writes a picture of the window itself, never of the screen, then closes it.
 

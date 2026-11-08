@@ -1022,7 +1022,7 @@ mod tests {
         let data = lab.join("target").join("test-data").join(name);
         let _ = std::fs::remove_dir_all(&data);
         std::fs::create_dir_all(&data).unwrap();
-        Places { home: lab.parent().unwrap().to_path_buf(), data: data.clone(), config: data }
+        Places { home: lab.parent().unwrap().to_path_buf(), data }
     }
 
     fn jobs(text: &str) -> Catalogue {

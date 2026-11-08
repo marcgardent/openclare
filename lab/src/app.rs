@@ -158,6 +158,8 @@ pub struct Opening {
     pub after: f64,
     /// Press Run, or go on with a queue left paused.
     pub start: bool,
+    /// What main.rs has to say, shown with the runner's messages.
+    pub messages: Vec<String>,
 }
 
 /// A picture of the window itself, never of the screen, written as a PPM;
@@ -196,6 +198,7 @@ impl App {
         let worktrees = list_worktrees(&places);
         let mut shared = Shared::default();
         recover(&places, catalogue.as_ref().ok(), &worktrees, &mut shared);
+        shared.messages.extend(opening.messages.iter().cloned());
         let shared = Arc::new(Mutex::new(shared));
         let machine = crate::machine::machine(&settings.machine_label);
         let watch = Arc::new(Mutex::new(Watch::default()));
@@ -359,6 +362,7 @@ impl eframe::App for App {
                 egui::Grid::new("places").num_columns(2).show(ui, |ui| {
                     for (name, path) in [
                         ("Home checkout", self.places.home.clone()),
+                        ("Folder", self.places.data.clone()),
                         ("Catalogue", self.places.jobs()),
                         ("Runs", self.places.runs()),
                         ("Settings", self.places.settings()),

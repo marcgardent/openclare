@@ -1,6 +1,6 @@
 # Shortcuts for the common tasks. `make help` lists them.
 
-.PHONY: help build test scenes blenderkit essentials remeasure autoremesher scores quick pages dashboard view addon install addon-windows test-windows addon-test test-trace capi-test version release paper paper-version paper-arxiv paper-clean proofs lean-check site site-serve
+.PHONY: help build test scenes blenderkit essentials remeasure autoremesher scores quick pages dashboard view addon install addon-windows test-windows addon-test test-trace capi-test version release paper paper-version paper-arxiv paper-clean proofs lean-check site site-serve lab-install lab-uninstall
 
 help:
 	@echo "make build       build the openclare binary (release)"
@@ -10,6 +10,8 @@ help:
 	@echo "make install     build the add-on and put it straight into the extensions of the"
 	@echo "                 Blender on the PATH (~/.config/blender/<version>/extensions/user_default);"
 	@echo "                 BLENDER_VERSION=5.2 for another, EXTENSIONS=<dir> for another place"
+	@echo "make lab-install build lab (the record and the launcher of the computations, lab/) and put"
+	@echo "                 the binary in ~/.local/bin and its entry in the desktop menu; lab-uninstall undoes it"
 	@echo "make addon-windows  build the same add-on for Windows, from here:"
 	@echo "                 dist/openclare-<version>-windows-x64.zip (needs the Rust target"
 	@echo "                 x86_64-pc-windows-gnu and MinGW-w64)"
@@ -318,3 +320,24 @@ site:
 site-serve: site
 	@echo "serving site/_build on http://localhost:$(PORT) (Ctrl+C to stop)"
 	python3 -m http.server $(PORT) --bind 127.0.0.1 --directory site/_build
+
+# lab, the record and the launcher of the computations (lab/README.md): the
+# binary in ~/.local/bin, an entry in the desktop menu and its icon, nothing
+# outside the home folder. The entry starts lab with the binary's absolute
+# path (~/.local/bin need not be on the PATH of the desktop session) in this
+# clone, where it reads lab/jobs.toml. The build reuses lab/target.
+LAB_PREFIX ?= $(HOME)/.local
+LAB_SHARE = $(or $(XDG_DATA_HOME),$(HOME)/.local/share)
+lab-install:
+	cargo install --path lab --root "$(LAB_PREFIX)" --target-dir lab/target --locked
+	mkdir -p "$(LAB_SHARE)/applications" "$(LAB_SHARE)/icons/hicolor/scalable/apps"
+	sed -e 's|^Exec=lab$$|Exec=$(LAB_PREFIX)/bin/lab|' -e 's|^Path=.*|Path=$(CURDIR)|' \
+		lab/openclare-lab.desktop > "$(LAB_SHARE)/applications/openclare-lab.desktop"
+	cp site/assets/icon.svg "$(LAB_SHARE)/icons/hicolor/scalable/apps/openclare-lab.svg"
+	-update-desktop-database "$(LAB_SHARE)/applications" 2>/dev/null
+	@echo "installed: $(LAB_PREFIX)/bin/lab, and the menu entry openclare lab starts it in $(CURDIR)"
+
+lab-uninstall:
+	-cargo uninstall --root "$(LAB_PREFIX)" openclare-lab
+	rm -f "$(LAB_SHARE)/applications/openclare-lab.desktop" "$(LAB_SHARE)/icons/hicolor/scalable/apps/openclare-lab.svg"
+	-update-desktop-database "$(LAB_SHARE)/applications" 2>/dev/null

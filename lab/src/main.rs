@@ -2,9 +2,11 @@
 //!
 //!     cargo run --release [-- options]
 //!
-//! `--data <folder>` reads and writes the runs in another folder than
-//! `$XDG_DATA_HOME/openclare-lab` (for example `tests/fixtures`, to see the
-//! history on the made-up runs of the tests). `--tab <queue|history|
+//! `--data <folder>` uses another folder than `~/.openclare-lab` (for
+//! example `tests/fixtures`, to see the history on the made-up runs of the
+//! tests); without it, the first start moves the files of the earlier
+//! folders, `~/.local/share/openclare-lab` and `~/.config/openclare-lab`,
+//! into `~/.openclare-lab` once. `--tab <queue|history|
 //! catalogue|machine>` opens on that tab, `--queue <job or sequence>` puts
 //! it in the queue (repeatable), `--run <id>` selects that run in the
 //! history, `--start` presses Run (or goes on with a queue left paused).
@@ -50,6 +52,22 @@ fn main() -> ExitCode {
                     "usage: lab [--data <folder>] [--tab <name>] [--queue <job>]... [--start] [--run <id>] [--screenshot <file.ppm> [--after <seconds>]]"
                 );
                 return ExitCode::from(2);
+            }
+        }
+    }
+    if data.is_none() {
+        if let Some(lab) = home::default_folder() {
+            match home::migrate(&lab, &home::earlier_folders()) {
+                Ok(said) => {
+                    for line in &said {
+                        eprintln!("lab: {line}");
+                    }
+                    opening.messages = said;
+                }
+                Err(error) => {
+                    eprintln!("lab: {error}");
+                    return ExitCode::FAILURE;
+                }
             }
         }
     }
