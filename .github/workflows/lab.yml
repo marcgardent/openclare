@@ -31,6 +31,10 @@ jobs:
       - name: Build
         working-directory: lab
         run: cargo build --release --locked
+      # The tests check commits out of a mirror of this checkout, which holds
+      # no LFS object: the scenes stay pointers, as the checkout above has them.
       - name: Test
         working-directory: lab
+        env:
+          GIT_LFS_SKIP_SMUDGE: "1"
         run: cargo test --release --locked
