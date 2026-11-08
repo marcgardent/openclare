@@ -3,6 +3,11 @@
 Status: **draft for validation**. No code is written before Marc validates this document.
 French mirror: `SPEC.fr.md`.
 
+Amendment of 2026-11-08, **draft for validation**: lab becomes a program of its own, installed on
+the machine, which fetches the repository, checks out the commit asked for and runs the job there; one
+memory per machine in `~/.openclare-lab`, met in git on a branch of that machine (§1, §2, §3, §4, §4b,
+§5, §6, §7.3, §8.1, §10b, §11, §12, §13, §14, §15, §17).
+
 ## 1. Purpose
 
 Every long computation of the project (benches, test suites, Lean builds and oracle runs,
@@ -14,33 +19,49 @@ The application does six things: it keeps the database of runs (§4), the catalo
 (§6), a queue that runs them one at a time (§8), a progress estimate from history (§10), a
 monitor of the machine with a "calm" indicator (§9), and a history view with export (§11).
 
-Out of scope: running jobs on another machine, running two jobs at once, scheduling recurrent
-jobs, reading the results of a run (the scripts' summaries stay what they are).
+Out of scope: launching a job on another machine from here (each machine runs its own lab, and
+their records meet in git, §4b), running two jobs at once, scheduling recurrent jobs, reading the
+results of a run (the scripts' summaries stay what they are).
 
 ## 2. Name and place
 
 - Folder `lab/` at the root of the repository, its own Cargo workspace (its own `Cargo.toml`,
   `Cargo.lock` and `target/`), not a member of the engine's workspace: engine builds and CI are
   unchanged.
-- Package `openclare-lab`, binary `lab`. Opened with `cargo run --release` from `lab/`.
-- The **home checkout** is the clone `lab/` sits in. The catalogue is read from it. Jobs run
-  in it or in one of its worktrees (`git worktree list`).
+- Package `openclare-lab`, binary `lab`. Installed on the machine by `make lab-install` at the root
+  of the repository (§14); `cargo run --release` from `lab/` while developing it. The root's
+  `make install` stays the Blender add-on's.
+- lab owns a **mirror** of the repository, `~/.openclare-lab/repo.git`, fetched from GitHub
+  (`marcgardent/openclare`, or the `remote` setting) before every queue and on request. It no longer
+  looks for the clone it was started from.
+- A job runs on a **reference**: a tag (`v0.7.0`), a branch (`main`, `worktree-borders`), a pull
+  request (`pull/301`) or a hash. lab resolves it in the mirror and checks that commit out in
+  `~/.openclare-lab/checkouts/<short hash>/`, a detached worktree of the mirror, one per commit,
+  reused by every run on that commit. The catalogue the job is rendered from is the `lab/jobs.toml`
+  of that commit; a commit older than lab takes the catalogue of `main`.
+- The escape hatch for an experiment not committed: a job run in a folder given by hand (a **local**
+  checkout). Its record is off-tag, dirty if the tree differs from HEAD, and orphan if its commit is
+  not pushed (§10b).
 
 ## 3. Files
 
 | File | Tracked | Written by | Content |
 |---|---|---|---|
-| `lab/jobs.toml` | yes | the app and Marc by hand | the catalogue (§6) |
+| `lab/jobs.toml` | yes | Marc by hand | the catalogue (§6), read at the commit a job runs on |
 | `lab/runs.jsonl` | yes | the app, on Marc's request ("Copy history to the repo") | the published snapshot of the history |
-| `<data>/runs.jsonl` | no | the app | the live database, one run per line |
-| `<data>/logs/<run id>.log` | no | the job (its stdout and stderr) | the log of each run |
-| `<data>/refused.jsonl` | no | the app | the records that still name a local path (section 4) |
-| `<data>/state.json` | no | the app | the queue in progress and the run under way, for recovery |
-| `<config>/settings.toml` | no | the app | thresholds, thread warning, policies, machine label (§12) |
+| `<lab>/runs.jsonl` | no | the app | the live memory of this machine, one run per line |
+| `<lab>/logs/<run id>.log` | no | the job (its stdout and stderr) | the log of each run |
+| `<lab>/refused.jsonl` | no | the app | the records that still name a local path (section 4) |
+| `<lab>/state.json` | no | the app | the queue in progress and the run under way, for recovery |
+| `<lab>/settings.toml` | no | the app | remote, machine name, push policy, thresholds, thread warning, policies (§12) |
+| `<lab>/repo.git/` | no | git | the mirror of the repository (§2) |
+| `<lab>/checkouts/<short hash>/` | no | git, the prepares, the jobs | one detached worktree per commit run (§2), with its `target/` and `.lake/` |
+| `<lab>/machines/<machine>.jsonl` | no | the app | the memory of each other machine, as last fetched (§4b) |
 
-`<data>` is `$XDG_DATA_HOME/openclare-lab` (default `~/.local/share/openclare-lab`),
-`<config>` is `$XDG_CONFIG_HOME/openclare-lab` (default `~/.config/openclare-lab`). The app
-shows both paths in its "About" box.
+`<lab>` is `~/.openclare-lab`, one folder for everything lab keeps on the machine; `--data <folder>`
+moves it (the tests use `tests/fixtures`). The first start finds the `~/.local/share/openclare-lab` and
+`~/.config/openclare-lab` of the earlier version and moves their files into `<lab>` once. The app shows
+the path in its "About" box.
 
 ## 4. Storage
 
@@ -51,11 +72,11 @@ binary file git can neither diff nor merge. Editing a comment rewrites the file 
 (written beside, then renamed): the git diff of the snapshot is that one line.
 
 **The live file is outside the work tree; git holds a snapshot.** If the live database were
-`lab/runs.jsonl` in the home checkout, the main checkout would carry a local change all the
+`lab/runs.jsonl` in a checkout, that checkout would carry a local change all the
 time: `git pull` would refuse to run each time a PR changed the file, and the `dirty` flag of
 every run made there would be true because of the database itself. So the app writes
-`<data>/runs.jsonl`, one file for the machine whatever checkout or worktree a job runs in, and
-"Copy history to the repo" writes the whole sorted file to `lab/runs.jsonl` of the checkout
+`<lab>/runs.jsonl`, one file for the machine whatever checkout or worktree a job runs in, and
+"Copy history to the repo" writes the union of the machines' memories (§4b), sorted, to `lab/runs.jsonl` of the checkout
 Marc picks, to be committed with the PR that cites the runs. `lab/.gitattributes` declares
 `runs.jsonl merge=union`: two branches that each add runs merge without conflict; the loader
 then keeps one line per run id (the one with the latest `edited`). The tracked snapshot is also
@@ -63,13 +84,36 @@ the backup of the live file; the app keeps the last five versions of the live fi
 (`runs.jsonl.1` to `.5`) as well.
 
 **No absolute path is written to a record.** Paths are relative to the root of the checkout the
-job ran in, and that checkout is named relative to the home checkout (`.` or
-`.claude/worktrees/name`). Before writing, the app replaces the root of the checkout by `{repo}`
+job ran in, and that checkout is named by the reference asked for (`v0.7.0`, `main`, `pull/301`, a hash), or
+`local` for a folder given by hand (§2). Before writing, the app replaces the root of the checkout by `{repo}`
 and the home folder by `~` in the command, the environment and the paths, then refuses to write a
 record that still matches the home-folder patterns of `hygiene.yml` (Linux, macOS and Windows)
-or contains `/tmp/`, and shows the offending field; that record is kept in `<data>/refused.jsonl`,
+or contains `/tmp/`, and shows the offending field; that record is kept in `<lab>/refused.jsonl`,
 never copied into the repository. The environment recorded is the variables
 the app sets (§7), not the whole inherited environment.
+
+## 4b. One memory per machine, met in git
+
+- Each machine has its own live memory, `<lab>/runs.jsonl`, and its own **branch** in the repository,
+  `lab/runs-<machine>` (`<machine>` is the `machine` setting, the hostname by default). The branch
+  holds one file, `runs.jsonl`, the copy of the live memory, and shares no history with `main` (an
+  orphan branch, as `gh-pages` is). Only that machine writes to it: every push is a fast-forward, there
+  is never a conflict nor a race between two machines.
+- **Push**: after every run, by the `push` setting (`ask`, the default: a button in the top bar with the
+  count of records not yet pushed; `auto`; `never`). The push needs a key with write access to the
+  repository: Marc's on his machines, a deploy key limited to the repository on a machine that runs
+  at night (Q18).
+- **Read**: at every opening and after every fetch, lab reads the `lab/runs-*` branches of the mirror
+  into `<lab>/machines/` and unions them with the live memory of this machine: one line per run id,
+  the latest `edited` wins, the rule §4 already has. A comment or a paper edited on another machine
+  therefore reaches this one at the next fetch; the same record edited on two machines keeps the later
+  edit.
+- **Publication**: "Copy history to the repo" writes that union, sorted, to `lab/runs.jsonl` in a
+  checkout Marc picks, to be committed with the PR that cites the runs; `main` still changes by PR
+  only.
+- The tags and the repository's summaries (§13) are read from the mirror (`git tag`,
+  `git show origin/main:<file>`, `git log -1 origin/main -- <file>`), never from a work tree. The
+  State screen therefore depends on no checkout: the same on every machine after the same fetch.
 
 ## 5. Data model
 
@@ -89,7 +133,7 @@ struct Run {
     command: String,                // as executed, placeholders filled, {repo} kept
     environment: BTreeMap<String, String>, // the variables the app set
     parameters: BTreeMap<String, String>,  // the job's parameters as chosen
-    checkout: String,               // "." or ".claude/worktrees/name"
+    checkout: String,               // the reference asked for, or "local" (§2)
     directory: String,              // working directory, relative to that checkout
     // The four below are None only in a seeded or typed run: it carries what is known.
     git: Option<Git>,
@@ -110,8 +154,9 @@ enum Status { Ok, Failed { code: Option<i32>, signal: Option<i32> }, Stopped, In
 
 struct Prepare { command: String, seconds: f64, status: Status, skipped_because: Option<String> }
 
-struct Git { commit: String /* 40 hex */, dirty: bool, branch: Option<String> }
-// dirty: tracked files differ from HEAD, lab/runs.jsonl excluded.
+struct Git { commit: String /* 40 hex */, dirty: bool, branch: Option<String>, pushed: bool }
+// dirty: tracked files differ from HEAD, lab/runs.jsonl excluded; always false in a checkout of the mirror.
+// branch: the reference asked for. pushed: the commit is reachable from a branch or a tag of the remote (§10b).
 
 struct Threads { setting: u32, effective: u32 } // effective: what the job uses (§7)
 
@@ -158,7 +203,7 @@ struct Job {
     category: Category,  // Build | TestSuite | QuickBench | Bench | LeanBuild | LeanOracle | Experiment
     command: String,               // shell line with placeholders
     prepare: Option<String>,       // run before the command, in the same checkout
-    checkout: CheckoutChoice,      // Home | Ask | Branch(String)
+    checkout: CheckoutChoice,      // Ask | Reference(String)
     directory: String,             // default "."
     parameters: BTreeMap<String, String>, // name -> default, editable per queue item
     environment: BTreeMap<String, String>,
@@ -185,7 +230,7 @@ name = "forced-whole-lower"
 description = "Table tab:forced: tau_P(H) with the cap, the window and whole lengths"
 category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/forced.py {export} --whole-lower --seconds 900 --budget 1800 --jobs {threads}"
-checkout = "home"
+checkout = "ask"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
 environment = { HIGHS_THREADS = "1" }
 threads = "setting"
@@ -197,7 +242,8 @@ tags = ["paper-B-data", "stage-4"]
 ```
 
 Placeholders: `{threads}` (the effective thread count), `{repo}` (the root of the checkout the
-job runs in), `{commit}` (its short hash), and the job's own `{parameters}`. An unknown
+job runs in), `{commit}` (its short hash), `{ref}` (the reference asked for), and the job's own
+`{parameters}`. An unknown
 placeholder is an error shown in the catalogue, not at run time.
 
 The catalogue is seeded with the jobs the repository has today. Durations are what the
@@ -273,8 +319,10 @@ day as well as by night. Proposal (Q2):
 
 - The prepare command runs before the job, in the same checkout, with the same thread setting;
   its time and status are kept in `prepare`, apart from the job's `seconds`.
-- The same prepare on the same commit (clean) runs once per queue: the second is skipped with
-  `skipped_because = "done for forced-bounds at 22:03"`.
+- The same prepare on the same checkout runs once for all queues: it writes its command in
+  `.lab-prepared` at the root of the checkout, and is skipped while that file names it
+  (`skipped_because = "done for forced-bounds on 2026-11-06"`). A local checkout, which may change
+  between two queues, runs it once per queue.
 - A failed prepare fails the job; the job's command does not run.
 - So `cargo build --release` always comes before a bench: `cargo test --release` does not rebuild
   `target/release/openclare`, and the bench jobs carry the build in their prepare.
@@ -289,12 +337,14 @@ does. Seeded values follow the project's rules: 32 GB for the engine, Blender an
 
 ### 8.1 Starting a run
 
-The app writes `state.json` (the queue, the item started), takes the start sample (§9), reads git
-(`rev-parse HEAD`, `status --porcelain --untracked-files=no`, branch), then spawns
-`bash -c "<command>"`:
+The app fetches the mirror, resolves the reference, adds the checkout of that commit if none exists
+(`git worktree add --detach <lab>/checkouts/<short hash> <hash>`), writes `state.json` (the queue, the
+item started), takes the start sample (§9), reads git (`rev-parse HEAD`, `status --porcelain
+--untracked-files=no`, the reference as `branch`, `pushed` by `branch -r --contains` and
+`tag --contains`), then spawns `bash -c "<command>"` in that checkout:
 
 - in a new process group (`setpgid(0, 0)` in `pre_exec`), with the memory cap;
-- stdout and stderr both redirected to `<data>/logs/<run id>.log`, opened by the app and handed to
+- stdout and stderr both redirected to `<lab>/logs/<run id>.log`, opened by the app and handed to
   the child: the log keeps being written if the app dies;
 - stdin from `/dev/null`;
 - the environment inherited, plus the variables of §7.1 and the job's own.
@@ -383,8 +433,11 @@ estimate by 12 min". A finished run is a new point for the next estimate.
 - A run is classed by **one hash**: the one it records. That is the commit of the checkout for a run
   launched by lab, the commit written in the summary for a result of the repository; for a result that
   records none, the commit that brought it into git (`git log -1 -- <file>`).
-- That hash is a tag's (`git tag -l 'v*'`): the run is **on that tag** and can back a paper. Otherwise it
-  is **off-tag**, shown with its hash, and cannot back a paper.
+- That hash is a tag's (`git tag -l 'v*'` in the mirror): the run is **on that tag** and can back a
+  paper. Otherwise it is **off-tag**, shown with its hash, and cannot back a paper.
+- That hash is reachable from no branch nor tag of the remote (`pushed = false`): the run is **orphan**,
+  shown "orphan <hash>", and cannot back a paper either: nobody can check out what ran. A run of a
+  local checkout is orphan until its commit is pushed.
 - A run whose duration was not measured shows "no time".
 
 ## 11. Screens
@@ -394,7 +447,8 @@ switch (Q11). Layout, from the mockup:
 
 ### Top bar
 
-Home checkout (branch, short commit, dirty mark), the calm indicator, CPU and load1 at a glance,
+The mirror (time of the last fetch, a Fetch button), the records not yet pushed (a Push button, §4b),
+the calm indicator, CPU and load1 at a glance,
 the thread setting (a spinner from 1 to 8, amber above the comfort limit).
 
 ### State (the screen the app opens on)
@@ -403,7 +457,10 @@ the thread setting (a spinner from 1 to 8, amber above the comfort limit).
   **Last run**: marked with its tag ("v0.7.0") or "off-tag <hash>", then its date, duration ("no time"
   if not measured; muted or struck when the job's timing matters and this time is not valid, §7.2),
   load at start and the file it was read from; or "never run".
-- Counts at the top: last run on a tag, off-tag, never run.
+- Counts at the top: last run on a tag, off-tag, orphan, never run.
+- The runs shown are the union of the machines' memories (§4b) and the repository's summaries (§13),
+  read from the mirror: the screen depends on no checkout. A **Machine** filter keeps one machine's
+  runs.
 - A **Tag** filter: "All runs" (the last run of each job, wherever it ran), or one tag: only the last run
   of each job on that tag, the others "no run on this tag".
 - Jobs checked here, or all those never run, go to the queue in one click.
@@ -413,7 +470,8 @@ the thread setting (a spinner from 1 to 8, amber above the comfort limit).
 - **Left, the catalogue**: jobs grouped by category, a search box, for each a checkbox, its estimate,
   the stopwatch ⏱ if its timing matters; the sequences above them (checking one adds its jobs in order).
 - **Middle, the queue**: the items in order, reordered with a **drag handle**, each with its parameters
-  (editable), checkout (home or a worktree, and whether the run will be on a tag or off-tag), effective
+  (editable), reference (a tag, a branch, a pull request, a hash, or a local folder; whether the run
+  will be on a tag, off-tag or orphan; whether that commit has a prepared checkout already), effective
   threads, estimate, running total and end time (section 10); below: the comment and the
   paper version (A or B, a label with suggestions from past labels) applied to every run of the queue,
   the policies on stop and on failure, the queue's ETA, Run.
@@ -452,14 +510,17 @@ editable.
 
 ## 12. Settings
 
-`<config>/settings.toml`: the comfort limit of threads (6, Q1), calm thresholds
+`<lab>/settings.toml`: the remote (`marcgardent/openclare`), the machine name (the hostname by default:
+the branch `lab/runs-<machine>` and the exports), the push policy (`ask`, `auto`, `never`), the number
+of checkouts kept besides the tags' (Q16), the comfort limit of threads (6, Q1), calm thresholds
 and window, sample period, delay between SIGTERM and SIGKILL, the policies on stop and on failure, the
 machine label used in exports (default proposed "i7-7700K 4c/8t 2017, 62 GB", checked against what is
 detected: the app warns if the CPU model or the memory differ).
 
 ## 13. The repository's results in the history
 
-At every opening, lab reads the summaries the repository already holds and shows each as a run "from the
+At every opening and after every fetch, lab reads the summaries `origin/main` holds in the mirror
+(`git show`, `git log -1 origin/main -- <file>`, never a work tree) and shows each as a run "from the
 repository", never copied into `runs.jsonl`. A job names its summary in `jobs.toml` (`summary`, a path, with
 `#key` for a record nested in another file, as the export inside the papers' summaries). A summary gives:
 the hash it records (else the commit that brought it, section 10b), the date of that commit (the time of day
@@ -484,6 +545,18 @@ repository)". `bench/results/*.json` and a few others record no duration: "no ti
   with unit tests; the UI calls them.
 - Own builds light: `CARGO_BUILD_JOBS=4` while developing.
 
+**Install.** `make lab-install` at the root of the repository: `cargo install --path lab --root
+~/.local` puts the binary at `~/.local/bin/lab`; `lab/openclare-lab.desktop` goes to
+`~/.local/share/applications/` and `site/assets/icon.svg` to
+`~/.local/share/icons/hicolor/scalable/apps/openclare-lab.svg`, so KDE lists "openclare lab" in its
+menu; `update-desktop-database` runs when present. `make lab-uninstall` removes the three. Nothing is
+installed outside the home folder.
+
+**Headless.** `lab run <job> --ref <reference> [--push]` runs one job without a window, with the same
+runner, monitor and records, and exits with the job's status; `lab fetch`, `lab push` and `lab status`
+do what their names say. A systemd timer or a shell on another machine can call them (Q4 of §17
+answered). The window stays the place where one watches.
+
 **CI.** A workflow `lab.yml`, run only when `lab/**` or itself changes (the same `paths` filter and
 `changes` job as `lean.yml`): `cargo build --release --locked` and `cargo test --locked` in `lab/`, on
 `ubuntu-24.04` with the system libraries eframe needs. It costs a few minutes of GitHub's time, none of
@@ -506,6 +579,14 @@ Each is one or a few commits on the branch, then a stop for Marc's review.
 Status on 2026-11-06: M1 to M5 done, with the State screen and the tag rule (sections 10b, 11, 13)
 asked for after M2, and the repository's summaries read at every opening in place of M1b. Not done:
 editing the catalogue in the app (edit `jobs.toml` by hand), French labels (Q11).
+
+The amendment of 2026-11-08 adds three, each one PR, this document first:
+
+| | Content | Checked by |
+|---|---|---|
+| M6 | `~/.openclare-lab` as the one folder, the files of the earlier folders moved once; `make lab-install` and `lab-uninstall`, the desktop entry and the icon | the entry in the KDE menu opens lab with the history still there |
+| M7 | the mirror, one checkout per commit, prepares once per checkout, `{ref}`, `pushed`, orphan runs; `lab run`, `fetch`, `push`, `status` without a window | a job queued on `v0.7.0` and on `main`; `lab run` from a shell, the window closed |
+| M8 | the branches `lab/runs-<machine>`, push by policy, the union read, the tags and summaries from the mirror; the State screen off any checkout | two memories (a second machine name with `--data`) pushed and read back; the screen the same from both folders |
 
 ## 16. What cannot be verified here
 
@@ -541,3 +622,16 @@ editing the catalogue in the app (edit `jobs.toml` by hand), French labels (Q11)
 13. **Live database outside the repo, snapshot in git** (§4): agreed, or the database itself tracked in the
     home checkout?
 14. **Name**: `lab` for the folder and the binary, `openclare-lab` for the package?
+
+Answered by the amendment of 2026-11-08: Q4 (`lab run` without a window, M7) and Q13 (the live memory
+outside the repository, met in git, §4b). New:
+
+15. **Push**: `ask` by default, a button with the count of records not yet pushed; or `auto` after every
+    run?
+16. **Checkouts kept**: the tags' always, the last five other commits, the rest removed with their
+    `target/` and `.lake/` when a queue ends: right? A `.lake/packages` shared by a link between
+    checkouts of the same toolchain, to spare the Mathlib cache?
+17. **Machine name**: the hostname, or a name set by hand (`i7-7700K`)?
+18. **Night machine**: a deploy key limited to the repository, with write access, for its pushes?
+19. **Where everything lives**: the mirror and the checkouts in `~/.openclare-lab` beside the memory,
+    several GB; or the memory alone there and the checkouts elsewhere (`--checkouts <folder>`)?
