@@ -207,13 +207,21 @@ impl Mirror {
             .collect()
     }
 
-    /// The branches of the remote, `main` first, then by name.
+    /// The branches of the remote, `main` first, then by name: the mirror's
+    /// own, and those under `refs/remotes/origin`, which a mirror seeded from
+    /// a clone that holds its branches there alone (a CI checkout) keeps.
     pub fn branches(&self) -> Vec<String> {
-        let Ok(text) = self.git(&["for-each-ref", "--format=%(refname:short)", "refs/heads"]) else {
+        let Ok(text) = self.git(&["for-each-ref", "--format=%(refname:short)", "refs/heads", "refs/remotes/origin"])
+        else {
             return Vec::new();
         };
-        let mut branches: Vec<String> = text.lines().map(str::to_string).filter(|name| !name.is_empty()).collect();
+        let mut branches: Vec<String> = text
+            .lines()
+            .map(|name| name.strip_prefix("origin/").unwrap_or(name).to_string())
+            .filter(|name| !name.is_empty() && name != "HEAD" && name != "origin")
+            .collect();
         branches.sort_by_key(|name| (name != MAIN, name.clone()));
+        branches.dedup();
         branches
     }
 
