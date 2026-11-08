@@ -1,6 +1,6 @@
-//! Where things are: the home checkout and the folder of the machine,
-//! `~/.openclare-lab` (SPEC.md, sections 2 and 3), and what git says of a
-//! checkout.
+//! Where things are: the folder of the machine, `~/.openclare-lab`
+//! (SPEC.md, sections 2 and 3), the clone lab may have been started in, and
+//! what git says of a checkout.
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -8,30 +8,36 @@ use std::process::Command;
 /// The folders of one session of the app.
 #[derive(Clone, Debug)]
 pub struct Places {
-    /// The clone `lab/` sits in.
-    pub home: PathBuf,
-    /// `~/.openclare-lab`: `runs.jsonl`, `logs/`, `state.json`, `settings.toml`.
+    /// The clone lab was started in, if any: the catalogue to fall back on
+    /// while there is no mirror, and the seed of the mirror.
+    pub home: Option<PathBuf>,
+    /// `~/.openclare-lab`: `runs.jsonl`, `logs/`, `state.json`, `settings.toml`,
+    /// `repo.git/`, `checkouts/`.
     pub data: PathBuf,
+    /// A catalogue given by hand (`--catalogue`), in place of the `lab/jobs.toml`
+    /// of `main` in the mirror.
+    pub catalogue: Option<PathBuf>,
 }
 
 impl Places {
-    /// The home checkout is the first folder holding `lab/jobs.toml` from
-    /// `start` up, else the one this binary was built from. The folder of
-    /// the machine is `data`, else `~/.openclare-lab`.
-    pub fn find(start: &Path, data: Option<PathBuf>) -> Result<Places, String> {
-        let built_from = Path::new(env!("CARGO_MANIFEST_DIR")).parent().map(Path::to_path_buf);
-        let home = start
-            .ancestors()
-            .find(|folder| folder.join("lab").join("jobs.toml").is_file())
-            .map(Path::to_path_buf)
-            .or(built_from.filter(|folder| folder.join("lab").join("jobs.toml").is_file()))
-            .ok_or("no lab/jobs.toml here or above: run lab from the repository")?;
+    /// The clone is the first folder holding `lab/jobs.toml` from `start`
+    /// up, if any. The folder of the machine is `data`, else `~/.openclare-lab`.
+    pub fn find(start: &Path, data: Option<PathBuf>, catalogue: Option<PathBuf>) -> Result<Places, String> {
+        let home =
+            start.ancestors().find(|folder| folder.join("lab").join("jobs.toml").is_file()).map(Path::to_path_buf);
         let data = data.or_else(default_folder).ok_or("no home folder ($HOME)")?;
-        Ok(Places { home, data })
+        Ok(Places { home, data, catalogue })
     }
 
-    pub fn jobs(&self) -> PathBuf {
-        self.home.join("lab").join("jobs.toml")
+    /// The catalogue read from a file: the one given by hand, else the clone's.
+    pub fn catalogue_file(&self) -> Option<PathBuf> {
+        self.catalogue.clone().or_else(|| self.home.as_ref().map(|home| home.join("lab").join("jobs.toml")))
+    }
+
+    /// The git folder of the clone lab was started in: the seed of the mirror.
+    pub fn seed(&self) -> Option<PathBuf> {
+        let home = self.home.as_ref()?;
+        git(home, &["rev-parse", "--path-format=absolute", "--git-common-dir"]).ok().map(PathBuf::from)
     }
 
     pub fn runs(&self) -> PathBuf {
@@ -133,42 +139,6 @@ impl GitState {
     }
 }
 
-/// A checkout a job can run in: the home checkout or one of its worktrees.
-#[derive(Clone, Debug, PartialEq)]
-pub struct Worktree {
-    pub path: PathBuf,
-    /// Relative to the home checkout, as a record names it.
-    pub relative: String,
-    pub branch: Option<String>,
-    /// The commit checked out, when git says.
-    pub head: String,
-}
-
-/// The checkouts `git worktree list` knows, the home checkout first.
-pub fn worktrees(home: &Path) -> Result<Vec<Worktree>, String> {
-    let text = git(home, &["worktree", "list", "--porcelain"])?;
-    let mut found = Vec::new();
-    for block in text.split("\n\n") {
-        let mut path = None;
-        let mut branch = None;
-        let mut head = String::new();
-        for line in block.lines() {
-            if let Some(rest) = line.strip_prefix("worktree ") {
-                path = Some(PathBuf::from(rest));
-            } else if let Some(rest) = line.strip_prefix("HEAD ") {
-                head = rest.to_string();
-            } else if let Some(rest) = line.strip_prefix("branch ") {
-                branch = Some(rest.trim_start_matches("refs/heads/").to_string());
-            }
-        }
-        if let Some(path) = path.filter(|path| path.is_dir()) {
-            found.push(Worktree { relative: crate::files::relative(home, &path), path, branch, head });
-        }
-    }
-    found.sort_by_key(|worktree| worktree.relative != ".");
-    Ok(found)
-}
-
 fn git(checkout: &Path, arguments: &[&str]) -> Result<String, String> {
     let output = Command::new("git")
         .arg("-C")
@@ -187,19 +157,21 @@ mod tests {
     use super::*;
 
     #[test]
-    fn the_home_checkout_is_found_from_inside_it() {
+    fn the_clone_is_found_from_inside_it() {
         let lab = Path::new(env!("CARGO_MANIFEST_DIR"));
-        let places = Places::find(&lab.join("src"), Some(PathBuf::from("data"))).unwrap();
-        assert_eq!(places.home, lab.parent().unwrap());
+        let places = Places::find(&lab.join("src"), Some(PathBuf::from("data")), None).unwrap();
+        assert_eq!(places.home.as_deref(), lab.parent());
+        assert_eq!(places.catalogue_file(), Some(lab.join("jobs.toml")));
+        assert!(places.seed().is_some_and(|seed| seed.join("HEAD").is_file()));
         assert_eq!(places.runs(), PathBuf::from("data").join("runs.jsonl"));
         assert_eq!(places.settings(), PathBuf::from("data").join("settings.toml"));
-        let git = GitState::read(&places.home).unwrap();
+        let git = GitState::read(&places.home.clone().unwrap()).unwrap();
         assert_eq!(git.commit.len(), 40);
         assert!(git.commit.starts_with(&git.short));
-        let worktrees = worktrees(&places.home).unwrap();
-        assert_eq!(worktrees[0].relative, ".");
-        assert_eq!(worktrees[0].branch, git.branch);
-        assert_eq!(worktrees[0].head, git.commit);
+        let elsewhere =
+            Places::find(Path::new("/"), Some(PathBuf::from("data")), Some(PathBuf::from("c.toml"))).unwrap();
+        assert!(elsewhere.home.is_none() && elsewhere.seed().is_none());
+        assert_eq!(elsewhere.catalogue_file(), Some(PathBuf::from("c.toml")));
     }
 
     #[test]

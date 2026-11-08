@@ -33,7 +33,9 @@ results of a run (the scripts' summaries stay what they are).
   `make install` stays the Blender add-on's.
 - lab owns a **mirror** of the repository, `~/.openclare-lab/repo.git`, fetched from GitHub
   (`marcgardent/openclare`, or the `remote` setting) before every queue and on request. It no longer
-  looks for the clone it was started from.
+  needs the clone it was started from: the first start creates the mirror, from that clone when there is
+  one (fast, offline, its LFS objects linked in), else from GitHub. The catalogue it shows is the
+  `lab/jobs.toml` of `main` in the mirror; `--catalogue <file>` reads another, while one is being written.
 - A job runs on a **reference**: a tag (`v0.7.0`), a branch (`main`, `worktree-borders`), a pull
   request (`pull/301`) or a hash. lab resolves it in the mirror and checks that commit out in
   `~/.openclare-lab/checkouts/<short hash>/`, a detached worktree of the mirror, one per commit,
@@ -112,8 +114,9 @@ the app sets (§7), not the whole inherited environment.
   checkout Marc picks, to be committed with the PR that cites the runs; `main` still changes by PR
   only.
 - The tags and the repository's summaries (§13) are read from the mirror (`git tag`,
-  `git show origin/main:<file>`, `git log -1 origin/main -- <file>`), never from a work tree. The
-  State screen therefore depends on no checkout: the same on every machine after the same fetch.
+  `git show main:<file>`, `git log -1 main -- <file>`; the remote's branches are the mirror's own), never
+  from a work tree. The State screen therefore depends on no checkout: the same on every machine after
+  the same fetch.
 
 ## 5. Data model
 
@@ -244,7 +247,8 @@ tags = ["paper-B-data", "stage-4"]
 Placeholders: `{threads}` (the effective thread count), `{repo}` (the root of the checkout the
 job runs in), `{commit}` (its short hash), `{ref}` (the reference asked for), and the job's own
 `{parameters}`. An unknown
-placeholder is an error shown in the catalogue, not at run time.
+placeholder is an error shown in the catalogue, not at run time. `checkout` is the reference the job
+runs on, `main` when the field is absent, or `"ask"`: Marc picks it on the item of the queue.
 
 The catalogue is seeded with the jobs the repository has today. Durations are what the
 documents say, not measured by the app; "?" where nothing is written.
@@ -519,8 +523,8 @@ detected: the app warns if the CPU model or the memory differ).
 
 ## 13. The repository's results in the history
 
-At every opening and after every fetch, lab reads the summaries `origin/main` holds in the mirror
-(`git show`, `git log -1 origin/main -- <file>`, never a work tree) and shows each as a run "from the
+At every opening and after every fetch, lab reads the summaries `main` holds in the mirror
+(`git show`, `git log -1 main -- <file>`, never a work tree) and shows each as a run "from the
 repository", never copied into `runs.jsonl`. A job names its summary in `jobs.toml` (`summary`, a path, with
 `#key` for a record nested in another file, as the export inside the papers' summaries). A summary gives:
 the hash it records (else the commit that brought it, section 10b), the date of that commit (the time of day
@@ -552,9 +556,11 @@ repository)". `bench/results/*.json` and a few others record no duration: "no ti
 menu; `update-desktop-database` runs when present. `make lab-uninstall` removes the three. Nothing is
 installed outside the home folder.
 
-**Headless.** `lab run <job> --ref <reference> [--push]` runs one job without a window, with the same
-runner, monitor and records, and exits with the job's status; `lab fetch`, `lab push` and `lab status`
-do what their names say. A systemd timer or a shell on another machine can call them (Q4 of §17
+**Headless.** `lab run <job> [--ref <reference>] [--force] [--threads <n>]` runs one job without a
+window, with the same runner, monitor and records, its log on stdout, and exits with the job's status;
+the reference defaults to the job's own, `--force` starts it although the machine is not calm (its time
+then not counting). `lab fetch` and `lab status` do what their names say; `lab push` and `--push` come
+with the branches of M8. A systemd timer or a shell on another machine can call them (Q4 of §17
 answered). The window stays the place where one watches.
 
 **CI.** A workflow `lab.yml`, run only when `lab/**` or itself changes (the same `paths` filter and
@@ -585,8 +591,10 @@ The amendment of 2026-11-08 adds three, each one PR, this document first:
 | | Content | Checked by |
 |---|---|---|
 | M6 | `~/.openclare-lab` as the one folder, the files of the earlier folders moved once; `make lab-install` and `lab-uninstall`, the desktop entry and the icon | the entry in the KDE menu opens lab with the history still there |
-| M7 | the mirror, one checkout per commit, prepares once per checkout, `{ref}`, `pushed`, orphan runs; `lab run`, `fetch`, `push`, `status` without a window | a job queued on `v0.7.0` and on `main`; `lab run` from a shell, the window closed |
-| M8 | the branches `lab/runs-<machine>`, push by policy, the union read, the tags and summaries from the mirror; the State screen off any checkout | two memories (a second machine name with `--data`) pushed and read back; the screen the same from both folders |
+| M7 | the mirror, one checkout per commit, prepares once per checkout, `{ref}`, `pushed`, orphan runs; the catalogue, the tags and the summaries read from the mirror, so that no clone is needed; the checkouts and the Clean button in the Machine screen; `lab run`, `fetch`, `status` without a window | a job queued on `v0.7.0` and on `main`; `lab run` from a shell, the window closed |
+| M8 | the branches `lab/runs-<machine>`, push by policy, `lab push` and `lab run --push`, the union read; the Machine filter of the State screen | two memories (a second machine name with `--data`) pushed and read back; the screen the same from both folders |
+
+Status on 2026-11-08: M6 and M7 done; `lab push` went from M7 to M8, where the branches it pushes are.
 
 ## 16. What cannot be verified here
 

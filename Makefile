@@ -325,7 +325,7 @@ site-serve: site
 # binary in ~/.local/bin, an entry in the desktop menu and its icon, nothing
 # outside the home folder. The entry starts lab with the binary's absolute
 # path (~/.local/bin need not be on the PATH of the desktop session) in this
-# clone, where it reads lab/jobs.toml. The build reuses lab/target.
+# clone, the seed of its mirror at the first start. The build reuses lab/target.
 LAB_PREFIX ?= $(HOME)/.local
 LAB_SHARE = $(or $(XDG_DATA_HOME),$(HOME)/.local/share)
 lab-install:

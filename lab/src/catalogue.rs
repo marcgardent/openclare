@@ -1,7 +1,8 @@
 //! The catalogue of jobs, `lab/jobs.toml` (SPEC.md, section 6).
 //!
 //! A placeholder is `{name}` with a name of lower-case letters, digits, `_`
-//! and `-`: `{threads}`, `{repo}`, `{commit}` and the job's own parameters.
+//! and `-`: `{threads}`, `{repo}`, `{commit}`, `{ref}` and the job's own
+//! parameters.
 //! `${...}` is the shell's and `{a,b}` is not a name: both are left as they
 //! are.
 
@@ -13,7 +14,7 @@ use serde::Deserialize;
 use crate::model::Paper;
 
 /// The placeholders every job has.
-pub const BUILT_IN: [&str; 3] = ["threads", "repo", "commit"];
+pub const BUILT_IN: [&str; 4] = ["threads", "repo", "commit", "ref"];
 
 /// The variables set to the effective thread count for every job, before
 /// the job's own environment (SPEC.md, section 7.1).
@@ -139,24 +140,30 @@ impl TryFrom<ThreadText> for ThreadUse {
     }
 }
 
-/// Where a job runs: `checkout = "home"`, `"ask"`, or `{ branch = "name" }`.
-#[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize)]
+/// Where a job runs (SPEC.md, §5): `checkout = "ask"`, Marc picking the
+/// reference per queue item, or a reference, `"main"` when the field is absent.
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 #[serde(try_from = "CheckoutText")]
 pub enum CheckoutChoice {
-    /// The checkout `lab/` sits in.
-    #[default]
-    Home,
-    /// Marc picks the checkout or worktree per queue item.
     Ask,
-    /// The worktree that has this branch checked out.
-    Branch(String),
+    /// A tag, a branch, `pull/<n>` or a hash, resolved in the mirror.
+    Reference(String),
+}
+
+impl Default for CheckoutChoice {
+    fn default() -> Self {
+        CheckoutChoice::Reference(crate::mirror::MAIN.to_string())
+    }
 }
 
 #[derive(Deserialize)]
 #[serde(untagged)]
 enum CheckoutText {
     Word(String),
-    Branch { branch: String },
+    /// The form of the catalogues before M7, read as the branch's name.
+    Branch {
+        branch: String,
+    },
 }
 
 impl TryFrom<CheckoutText> for CheckoutChoice {
@@ -164,12 +171,12 @@ impl TryFrom<CheckoutText> for CheckoutChoice {
 
     fn try_from(text: CheckoutText) -> Result<Self, String> {
         match text {
-            CheckoutText::Word(word) if word == "home" => Ok(CheckoutChoice::Home),
             CheckoutText::Word(word) if word == "ask" => Ok(CheckoutChoice::Ask),
-            CheckoutText::Word(word) => {
-                Err(format!("checkout = \"{word}\": \"home\", \"ask\" or {{ branch = \"...\" }}"))
+            CheckoutText::Word(word) if word.trim().is_empty() => {
+                Err("checkout = \"\": \"ask\" or a reference (a tag, a branch, pull/<n>, a hash)".to_string())
             }
-            CheckoutText::Branch { branch } => Ok(CheckoutChoice::Branch(branch)),
+            CheckoutText::Word(word) => Ok(CheckoutChoice::Reference(word)),
+            CheckoutText::Branch { branch } => Ok(CheckoutChoice::Reference(branch)),
         }
     }
 }
@@ -177,9 +184,16 @@ impl TryFrom<CheckoutText> for CheckoutChoice {
 impl CheckoutChoice {
     pub fn text(&self) -> String {
         match self {
-            CheckoutChoice::Home => "home".to_string(),
             CheckoutChoice::Ask => "ask".to_string(),
-            CheckoutChoice::Branch(branch) => format!("branch {branch}"),
+            CheckoutChoice::Reference(reference) => reference.clone(),
+        }
+    }
+
+    /// The reference an item of the queue starts with: `main` when Marc is to pick.
+    pub fn initial(&self) -> String {
+        match self {
+            CheckoutChoice::Ask => crate::mirror::MAIN.to_string(),
+            CheckoutChoice::Reference(reference) => reference.clone(),
         }
     }
 }
@@ -301,11 +315,13 @@ impl Job {
 
     /// The values of the placeholders: the built-in ones, the parameters'
     /// defaults, then `chosen` over them. `repo` left out keeps `{repo}`
-    /// as it is, as a record writes it.
+    /// as it is, as a record writes it; `reference` is what the record's
+    /// `checkout` says.
     pub fn values(
         &self,
         setting: u32,
         commit: &str,
+        reference: &str,
         repo: Option<&str>,
         chosen: &BTreeMap<String, String>,
     ) -> BTreeMap<String, String> {
@@ -313,6 +329,7 @@ impl Job {
         values.extend(chosen.iter().map(|(name, value)| (name.clone(), value.clone())));
         values.insert("threads".to_string(), self.effective_threads(setting).to_string());
         values.insert("commit".to_string(), commit.to_string());
+        values.insert("ref".to_string(), reference.to_string());
         values.insert("repo".to_string(), repo.unwrap_or("{repo}").to_string());
         values
     }
@@ -432,6 +449,12 @@ mod tests {
             [[job]]
             name = "doubles"
             category = "lean-oracle"
+            command = "echo {ref} {commit}"
+            checkout = "worktree-borders"
+
+            [[job]]
+            name = "old-form"
+            category = "lean-oracle"
             command = "true"
             checkout = { branch = "worktree-borders" }
             "#,
@@ -440,9 +463,10 @@ mod tests {
         assert!(catalogue.problems.is_empty(), "{:?}", catalogue.problems);
         let census = &catalogue.jobs[0];
         assert_eq!(census.directory, ".");
-        assert_eq!(census.checkout, CheckoutChoice::Home);
+        assert_eq!(census.checkout, CheckoutChoice::Reference("main".to_string()));
+        assert_eq!(census.checkout.initial(), "main");
         assert_eq!(census.effective_threads(6), 1);
-        let values = census.values(6, "9683d14", None, &BTreeMap::new());
+        let values = census.values(6, "9683d14", "main", None, &BTreeMap::new());
         assert_eq!(
             render(&census.command, &values).unwrap(),
             "python3 census.py scratch/data-package/turns-of-a-t-mesh/male-body --jobs 1"
@@ -450,7 +474,12 @@ mod tests {
         let environment = census.environment_for(&values).unwrap();
         assert_eq!(environment["RAYON_NUM_THREADS"], "1");
         assert_eq!(environment["HIGHS_THREADS"], "1");
-        assert_eq!(catalogue.jobs[1].checkout, CheckoutChoice::Branch("worktree-borders".to_string()));
+        let doubles = &catalogue.jobs[1];
+        assert_eq!(doubles.checkout, CheckoutChoice::Reference("worktree-borders".to_string()));
+        let values = doubles.values(6, "5187ab0", "worktree-borders", None, &BTreeMap::new());
+        assert_eq!(render(&doubles.command, &values).unwrap(), "echo worktree-borders 5187ab0");
+        assert_eq!(catalogue.jobs[2].checkout, doubles.checkout, "the form of before M7 still reads");
+        assert_eq!(CheckoutChoice::Ask.initial(), "main");
     }
 
     #[test]
@@ -499,7 +528,7 @@ mod tests {
         assert!(catalogue.problems.is_empty(), "{:#?}", catalogue.problems);
         assert!(catalogue.jobs.len() > 30);
         for job in &catalogue.jobs {
-            let values = job.values(4, "9683d14", None, &BTreeMap::new());
+            let values = job.values(4, "9683d14", "main", None, &BTreeMap::new());
             render(&job.command, &values).unwrap();
             job.environment_for(&values).unwrap();
         }

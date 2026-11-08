@@ -1,6 +1,6 @@
 # The entry of the desktop menu. `make lab-install` copies it to
 # ~/.local/share/applications with Exec= set to the installed binary and
-# Path= to the clone it ran from, where lab reads lab/jobs.toml.
+# Path= to the clone it ran from, the seed of the mirror at the first start.
 [Desktop Entry]
 Type=Application
 Name=openclare lab

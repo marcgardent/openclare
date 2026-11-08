@@ -33,8 +33,10 @@ récurrentes, lire les résultats d'une exécution (les résumés des scripts re
   dépôt (§14) ; `cargo run --release` depuis `lab/` pendant son développement. Le `make install` de la
   racine reste celui du greffon Blender.
 - lab possède un **miroir** du dépôt, `~/.openclare-lab/repo.git`, récupéré depuis GitHub
-  (`marcgardent/openclare`, ou le réglage `remote`) avant chaque file et à la demande. Il ne cherche plus
-  le clone d'où il a été lancé.
+  (`marcgardent/openclare`, ou le réglage `remote`) avant chaque file et à la demande. Il n'a plus besoin
+  du clone d'où il a été lancé : le premier démarrage crée le miroir, depuis ce clone quand il y en a un
+  (rapide, hors ligne, ses objets LFS liés), sinon depuis GitHub. Le catalogue qu'il montre est le
+  `lab/jobs.toml` de `main` dans le miroir ; `--catalogue <fichier>` en lit un autre, le temps d'en écrire un.
 - Une tâche tourne sur une **référence** : un tag (`v0.7.0`), une branche (`main`, `worktree-borders`),
   une pull request (`pull/301`) ou un hash. lab la résout dans le miroir et extrait ce commit dans
   `~/.openclare-lab/checkouts/<hash court>/`, un worktree détaché du miroir, un par commit, réutilisé par
@@ -114,9 +116,9 @@ l'application pose (§7), pas tout l'environnement hérité.
   d'un checkout que Marc choisit, à commettre avec la PR qui cite les exécutions ; `main` ne change
   toujours que par PR.
 - Les tags et les résumés du dépôt (§13) sont lus dans le miroir (`git tag`,
-  `git show origin/main:<fichier>`, `git log -1 origin/main -- <fichier>`), jamais dans un arbre de
-  travail. L'écran État ne dépend donc d'aucun checkout : le même sur chaque machine après la même
-  récupération.
+  `git show main:<fichier>`, `git log -1 main -- <fichier>` ; les branches du dépôt distant sont celles du
+  miroir), jamais dans un arbre de travail. L'écran État ne dépend donc d'aucun checkout : le même sur
+  chaque machine après la même récupération.
 
 ## 5. Modèle de données
 
@@ -170,7 +172,8 @@ fichier change sur le disque. L'exemple `forced-whole-lower` de `SPEC.md` §6 mo
 Marques : `{threads}` (le nombre effectif de threads), `{repo}` (la racine du checkout où tourne la
 tâche), `{commit}` (son hash court), `{ref}` (la référence demandée), et les `{paramètres}` propres à la
 tâche. Une marque inconnue est
-une erreur montrée dans le catalogue, pas au lancement.
+une erreur montrée dans le catalogue, pas au lancement. `checkout` est la référence sur laquelle la tâche
+tourne, `main` quand le champ est absent, ou `"ask"` : Marc la choisit sur l'élément de la file.
 
 Le catalogue est amorcé avec les tâches que le dépôt a aujourd'hui : le tableau de `SPEC.md` §6 les
 donne une par une, avec la durée **écrite** dans les documents (pas mesurée par l'application ;
@@ -441,8 +444,8 @@ est détecté : l'application avertit si le modèle de processeur ou la mémoire
 
 ## 13. Les résultats du dépôt dans l'historique
 
-À chaque ouverture et après chaque récupération, lab lit les résumés que `origin/main` contient dans le
-miroir (`git show`, `git log -1 origin/main -- <fichier>`, jamais un arbre de travail) et montre chacun comme une exécution
+À chaque ouverture et après chaque récupération, lab lit les résumés que `main` contient dans le
+miroir (`git show`, `git log -1 main -- <fichier>`, jamais un arbre de travail) et montre chacun comme une exécution
 « du dépôt », jamais recopiée dans `runs.jsonl`. Une tâche nomme son résumé dans `jobs.toml` (`summary`, un
 chemin, avec `#clé` pour un enregistrement niché dans un autre fichier, comme l'export dans les résumés des
 papiers). Un résumé donne : le hash qu'il note (sinon le commit qui l'a apporté, section 10 bis), la date de
@@ -475,10 +478,13 @@ met le binaire dans `~/.local/bin/lab` ; `lab/openclare-lab.desktop` va dans
 son menu ; `update-desktop-database` tourne s'il est présent. `make lab-uninstall` retire les trois. Rien
 n'est installé hors du dossier personnel.
 
-**Sans fenêtre.** `lab run <tâche> --ref <référence> [--push]` lance une tâche sans fenêtre, avec le même
-lanceur, le même moniteur et les mêmes fiches, et sort avec le statut de la tâche ; `lab fetch`,
-`lab push` et `lab status` font ce que leur nom dit. Un timer systemd ou un shell sur une autre machine
-peuvent les appeler (Q4 du §17 répondue). La fenêtre reste l'endroit où l'on regarde.
+**Sans fenêtre.** `lab run <tâche> [--ref <référence>] [--force] [--threads <n>]` lance une tâche sans
+fenêtre, avec le même lanceur, le même moniteur et les mêmes fiches, son journal sur la sortie standard,
+et sort avec le statut de la tâche ; la référence est par défaut celle de la tâche, `--force` la lance
+bien que la machine ne soit pas calme (son temps ne compte alors pas). `lab fetch` et `lab status` font
+ce que leur nom dit ; `lab push` et `--push` viennent avec les branches de M8. Un timer systemd ou un
+shell sur une autre machine peuvent les appeler (Q4 du §17 répondue). La fenêtre reste l'endroit où l'on
+regarde.
 
 **CI.** Un workflow `lab.yml`, lancé seulement quand `lab/**` ou lui-même change (même filtre `paths` et
 même tâche `changes` que `lean.yml`) : `cargo build --release --locked` et `cargo test --locked` dans
@@ -509,8 +515,10 @@ L'amendement du 2026-11-08 en ajoute trois, une PR chacun, ce document d'abord :
 | | Contenu | Vérifié par |
 |---|---|---|
 | M6 | `~/.openclare-lab` comme dossier unique, les fichiers des anciens dossiers déplacés une fois ; `make lab-install` et `lab-uninstall`, l'entrée de bureau et l'icône | l'entrée du menu KDE ouvre lab avec l'historique toujours là |
-| M7 | le miroir, un checkout par commit, préparations une fois par checkout, `{ref}`, `pushed`, exécutions orphelines ; `lab run`, `fetch`, `push`, `status` sans fenêtre | une tâche en file sur `v0.7.0` et sur `main` ; `lab run` depuis un shell, fenêtre fermée |
-| M8 | les branches `lab/runs-<machine>`, push selon la politique, lecture par union, tags et résumés depuis le miroir ; l'écran État hors de tout checkout | deux mémoires (un second nom de machine avec `--data`) poussées et relues ; l'écran identique depuis les deux dossiers |
+| M7 | le miroir, un checkout par commit, préparations une fois par checkout, `{ref}`, `pushed`, exécutions orphelines ; le catalogue, les tags et les résumés lus dans le miroir, plus aucun clone nécessaire ; les checkouts et le bouton Clean dans l'écran Machine ; `lab run`, `fetch`, `status` sans fenêtre | une tâche en file sur `v0.7.0` et sur `main` ; `lab run` depuis un shell, fenêtre fermée |
+| M8 | les branches `lab/runs-<machine>`, push selon la politique, `lab push` et `lab run --push`, lecture par union ; le filtre Machine de l'écran État | deux mémoires (un second nom de machine avec `--data`) poussées et relues ; l'écran identique depuis les deux dossiers |
+
+État au 2026-11-08 : M6 et M7 faits ; `lab push` est passé de M7 à M8, où sont les branches qu'il pousse.
 
 ## 16. Ce qui ne peut pas être vérifié ici
 

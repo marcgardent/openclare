@@ -1,9 +1,12 @@
 //! The Machine screen (SPEC.md, section 11): CPU, load, memory and GPU, the
-//! heaviest processes, and the calm indicator with its thresholds.
+//! heaviest processes, the calm indicator with its thresholds, and the
+//! checkouts of the mirror with their size and the Clean button.
+
+use std::path::PathBuf;
 
 use eframe::egui::{self, Color32, RichText};
 
-use super::{AMBER, App, GREEN, MUTED, RED};
+use super::{AMBER, App, GREEN, MUTED, RED, place_style};
 use crate::monitor::{Calmness, Point, lock};
 
 /// A line of the last ten minutes, the oldest on the left.
@@ -158,6 +161,118 @@ impl App {
                 .small()
                 .color(MUTED),
             );
+            ui.add_space(14.0);
+            self.checkouts_panel(ui);
         });
+    }
+
+    /// The checkouts of the mirror, their size measured on a thread of its
+    /// own, and the Clean button that removes those off any tag (Q16:
+    /// nothing is removed on its own).
+    fn checkouts_panel(&mut self, ui: &mut egui::Ui) {
+        ui.label(RichText::new("CHECKOUTS OF THE MIRROR").small().strong().color(MUTED));
+        let checkouts = self.mirror.checkouts();
+        if checkouts.is_empty() {
+            ui.label(RichText::new("none yet: the first run on a reference checks its commit out").color(MUTED));
+            return;
+        }
+        let sizes = self.checkout_sizes.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone();
+        let in_use: Option<PathBuf> = {
+            let shared = self.lock();
+            shared.current.as_ref().and_then(|current| {
+                shared.items.iter().find(|item| item.key == current.key).map(|item| item.target.clone())
+            })
+        }
+        .and_then(|target| self.resolution(&target).ok())
+        .and_then(|resolution| checkouts.iter().find(|checkout| checkout.head == resolution.commit))
+        .map(|checkout| checkout.path.clone());
+        let mut off_tag: Vec<PathBuf> = Vec::new();
+        let gibibytes = |bytes: u64| format!("{:.1} GiB", bytes as f64 / (1u64 << 30) as f64);
+        egui::Grid::new("checkouts").num_columns(4).striped(true).spacing([12.0, 4.0]).show(ui, |ui| {
+            for checkout in &checkouts {
+                let short: String = checkout.head.chars().take(7).collect();
+                let tag = self.tags.iter().find(|tag| tag.commit == checkout.head);
+                let place = match tag {
+                    Some(tag) => tag.name.clone(),
+                    None if self.mirror.pushed(&checkout.head) => format!("off-tag {short}"),
+                    None => format!("orphan {short}"),
+                };
+                if tag.is_none() && in_use.as_ref() != Some(&checkout.path) {
+                    off_tag.push(checkout.path.clone());
+                }
+                let (colour, hint) = place_style(&place);
+                ui.monospace(
+                    checkout.path.file_name().map(|name| name.to_string_lossy().into_owned()).unwrap_or_default(),
+                );
+                ui.colored_label(colour, place).on_hover_text(hint);
+                let size = sizes.as_ref().and_then(|sizes| sizes.iter().find(|(path, _)| path == &checkout.path));
+                ui.monospace(size.map_or("…".to_string(), |(_, bytes)| gibibytes(*bytes)));
+                let prepared = std::fs::read_to_string(checkout.path.join(crate::runner::PREPARED))
+                    .map(|text| text.lines().count())
+                    .unwrap_or(0);
+                let mut notes = Vec::new();
+                if prepared > 0 {
+                    notes.push(format!("{prepared} prepare{} done", if prepared == 1 { "" } else { "s" }));
+                }
+                if in_use.as_ref() == Some(&checkout.path) {
+                    notes.push("a run under way".to_string());
+                }
+                ui.label(RichText::new(notes.join(" · ")).color(MUTED));
+                ui.end_row();
+            }
+        });
+        ui.horizontal(|ui| {
+            if ui.button("Measure the sizes").clicked() {
+                let paths: Vec<PathBuf> = checkouts.iter().map(|checkout| checkout.path.clone()).collect();
+                let sizes = self.checkout_sizes.clone();
+                let context = ui.ctx().clone();
+                std::thread::spawn(move || {
+                    let measured: Vec<(PathBuf, u64)> =
+                        paths.into_iter().map(|path| (path.clone(), crate::mirror::size(&path))).collect();
+                    *sizes.lock().unwrap_or_else(|poisoned| poisoned.into_inner()) = Some(measured);
+                    context.request_repaint();
+                });
+            }
+            let total: Option<u64> = sizes
+                .as_ref()
+                .map(|sizes| sizes.iter().filter(|(path, _)| off_tag.contains(path)).map(|(_, bytes)| bytes).sum());
+            let label = match total {
+                Some(bytes) => {
+                    format!("Clean: remove the {} checkouts off any tag ({})", off_tag.len(), gibibytes(bytes))
+                }
+                None => format!("Clean: remove the {} checkouts off any tag", off_tag.len()),
+            };
+            if ui.add_enabled(!off_tag.is_empty(), egui::Button::new(label)).clicked() {
+                self.clean_dialog = true;
+            }
+        });
+        if self.clean_dialog {
+            let mut open = true;
+            egui::Window::new("Clean the checkouts").collapsible(false).resizable(false).show(ui.ctx(), |ui| {
+                ui.label(format!(
+                    "Remove {} checkouts off any tag, with what was built in them (target/, .lake/)? The tags' checkouts and a run under way stay. A removed commit is checked out again at its next run.",
+                    off_tag.len()
+                ));
+                for path in &off_tag {
+                    ui.monospace(path.display().to_string());
+                }
+                ui.horizontal(|ui| {
+                    if ui.button("Keep them").clicked() {
+                        open = false;
+                    }
+                    if ui.button(RichText::new("Remove").color(RED)).clicked() {
+                        for path in &off_tag {
+                            if let Err(error) = self.mirror.remove_checkout(path) {
+                                self.lock().messages.push(format!("clean: {error}"));
+                            }
+                        }
+                        self.lock().mirror_changes += 1;
+                        *self.checkout_sizes.lock().unwrap_or_else(|poisoned| poisoned.into_inner()) = None;
+                        open = false;
+                    }
+                });
+            });
+            self.clean_dialog = open;
+        }
     }
 }

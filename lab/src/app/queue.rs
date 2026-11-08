@@ -5,11 +5,11 @@ use std::time::{Duration, Instant};
 
 use eframe::egui::{self, RichText};
 
-use super::{AMBER, App, BLUE, GREEN, MUTED, RED, STOPWATCH, command_lines, stopwatch};
+use super::{AMBER, App, BLUE, GREEN, MUTED, RED, STOPWATCH, command_lines, place_style, stopwatch};
 use crate::catalogue::render;
 use crate::catalogue::{Category, CheckoutChoice, Job, ThreadUse};
 use crate::files;
-use crate::home::Worktree;
+use crate::mirror::Target;
 use crate::model::{Paper, PaperRef, Status, duration_text};
 use crate::runner::{ItemState, Mode, OrphanDecision, Phase, QueueSettings, Shared};
 use crate::settings::Policy;
@@ -40,16 +40,13 @@ impl App {
         let mut problems = Vec::new();
         for name in names {
             match catalogue.job(&name) {
-                Some(job) => match self.checkout_for(job) {
-                    Ok(checkout) => added.push((job.clone(), checkout)),
-                    Err(error) => problems.push(format!("{name}: {error}")),
-                },
+                Some(job) => added.push((job.clone(), job.checkout.initial())),
                 None => problems.push(format!("no job named {name}")),
             }
         }
         let mut shared = self.lock();
-        for (job, checkout) in added {
-            shared.add(job, checkout);
+        for (job, target) in added {
+            shared.add(job, target);
         }
         shared.messages.extend(problems);
     }
@@ -65,20 +62,6 @@ impl App {
             threads: self.settings.threads,
             on_failure: Some(self.settings.on_failure),
             grace_seconds: self.settings.stop_grace_seconds,
-        }
-    }
-
-    /// The checkout a job goes to when queued; "ask" starts at home and is
-    /// changed on the item.
-    fn checkout_for(&self, job: &Job) -> Result<Worktree, String> {
-        match &job.checkout {
-            CheckoutChoice::Branch(branch) => self
-                .worktrees
-                .iter()
-                .find(|worktree| worktree.branch.as_deref() == Some(branch.as_str()))
-                .cloned()
-                .ok_or_else(|| format!("no worktree has the branch {branch} checked out")),
-            CheckoutChoice::Home | CheckoutChoice::Ask => Ok(self.worktrees[0].clone()),
         }
     }
 
@@ -251,7 +234,14 @@ impl App {
         if let Some(Some(last)) = timings.iter().rev().find(|timing| timing.is_some()) {
             ui.label(RichText::new(last.total_text(true)).strong());
         }
-        let worktrees = self.worktrees.clone();
+        let references = self.references.clone();
+        let resolutions: Vec<Option<Result<super::Resolution, String>>> = shared
+            .items
+            .iter()
+            .map(|item| {
+                matches!(item.state, ItemState::Waiting | ItemState::Running).then(|| self.resolution(&item.target))
+            })
+            .collect();
         let height = ui.available_height() - 210.0;
         egui::ScrollArea::vertical().max_height(height.max(120.0)).auto_shrink([false, true]).show(ui, |ui| {
             for index in 0..shared.items.len() {
@@ -270,35 +260,58 @@ impl App {
                         let (text, colour) = state_text(&item.state);
                         ui.colored_label(colour, text);
                         if editable {
-                            egui::ComboBox::from_id_salt(("checkout", item.key))
-                                .selected_text(format!("checkout {}", checkout_name(&item.checkout)))
-                                .show_ui(ui, |ui| {
-                                    for worktree in &worktrees {
-                                        let branch = worktree.branch.clone().unwrap_or_else(|| "detached".to_string());
-                                        let text = format!("{} ({branch})", worktree.relative);
-                                        ui.selectable_value(&mut item.checkout, worktree.clone(), text);
+                            ui.label(RichText::new("on").color(MUTED));
+                            ui.add(
+                                egui::TextEdit::singleline(&mut item.target)
+                                    .hint_text("tag, branch, pull/<n>, hash, or a folder")
+                                    .desired_width(150.0)
+                                    .font(egui::TextStyle::Monospace),
+                            )
+                            .on_hover_text(
+                                "a tag (v0.7.0), a branch (main), a pull request (pull/301) or a hash, resolved in the mirror; \
+                                 or a folder on this machine (/…, ~/…), the escape hatch for an experiment not committed",
+                            );
+                            ui.menu_button("▼", |ui| {
+                                for reference in &references {
+                                    if ui.button(reference).clicked() {
+                                        item.target = reference.clone();
+                                        ui.close();
                                     }
-                                });
-                            if item.job.checkout == CheckoutChoice::Ask && item.checkout.relative == "." {
-                                ui.colored_label(AMBER, "pick its checkout");
+                                }
+                            });
+                            if item.job.checkout == CheckoutChoice::Ask && item.target == item.job.checkout.initial() {
+                                ui.colored_label(AMBER, "pick its reference").on_hover_text(
+                                    "the catalogue says checkout = \"ask\": the job is to be run where you say",
+                                );
                             }
                         } else {
-                            ui.label(RichText::new(format!("checkout {}", checkout_name(&item.checkout))).color(MUTED));
+                            ui.label(RichText::new(format!("on {}", item.target)).monospace().color(MUTED));
                         }
                         let effective = item.job.effective_threads(threads);
                         let fixed = if matches!(item.job.threads, ThreadUse::Fixed(_)) { " fixed" } else { "" };
                         let plural = if effective == 1 { "thread" } else { "threads" };
                         let colour = if effective > self.settings.comfort_threads { AMBER } else { MUTED };
                         ui.colored_label(colour, format!("{effective} {plural}{fixed}"));
-                        let (place, colour) = match self
-                            .tags
-                            .iter()
-                            .find(|tag| !item.checkout.head.is_empty() && tag.commit == item.checkout.head)
-                        {
-                            Some(tag) => (format!("on {}", tag.name), GREEN),
-                            None => ("off-tag: cannot back a paper".to_string(), BLUE),
-                        };
-                        ui.colored_label(colour, place);
+                        match resolutions.get(index).cloned().flatten() {
+                            Some(Ok(resolution)) => {
+                                let place = match (&resolution.tag, resolution.pushed) {
+                                    (Some(tag), _) => tag.clone(),
+                                    (None, true) => format!("off-tag {}", resolution.short),
+                                    (None, false) => format!("orphan {}", resolution.short),
+                                };
+                                let (colour, hint) = place_style(&place);
+                                ui.colored_label(colour, place).on_hover_text(hint);
+                                if resolution.dirty {
+                                    ui.colored_label(AMBER, "modified").on_hover_text("tracked files differ from HEAD");
+                                }
+                                let ready = if resolution.checked_out { "checkout ready" } else { "to check out" };
+                                ui.label(RichText::new(ready).color(MUTED));
+                            }
+                            Some(Err(error)) => {
+                                ui.colored_label(RED, "unknown").on_hover_text(error);
+                            }
+                            None => {}
+                        }
                         if editable {
                             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                                 if ui.small_button("remove").clicked() {
@@ -336,8 +349,12 @@ impl App {
                             }
                         });
                     }
-                    let commit = "{commit}";
-                    let values = item.job.values(threads, commit, None, &item.parameters);
+                    let commit = match resolutions.get(index) {
+                        Some(Some(Ok(resolution))) => resolution.short.clone(),
+                        _ => "{commit}".to_string(),
+                    };
+                    let reference = Target::parse(&item.target).recorded();
+                    let values = item.job.values(threads, &commit, &reference, None, &item.parameters);
                     command_lines(ui, &item.job, &values);
                 });
                 let response = frame.response;
@@ -417,7 +434,8 @@ impl App {
 
     fn run_panel(&mut self, ui: &mut egui::Ui) {
         let (current, position, count, estimate, timed_current) = {
-            let shared = self.lock();
+            let arc = self.shared.clone();
+            let shared = arc.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
             let current = shared.current.clone();
             let position =
                 current.as_ref().and_then(|current| shared.items.iter().position(|item| item.key == current.key));
@@ -559,11 +577,6 @@ impl App {
     }
 }
 
-/// "home" for the home checkout, else its path relative to it.
-fn checkout_name(checkout: &Worktree) -> &str {
-    if checkout.relative == "." { "home" } else { &checkout.relative }
-}
-
 /// What an item of the queue is expected to take, and the queue up to it.
 pub(super) struct Timing {
     estimate: Option<Estimate>,
@@ -608,9 +621,8 @@ fn handle(ui: &mut egui::Ui, key: u64) {
 impl App {
     /// For each item still to run, its estimate and the running total from
     /// now (SPEC.md, section 10); None for an item done.
-    fn timings(&self, shared: &Shared, threads: u32) -> Vec<Option<Timing>> {
+    fn timings(&mut self, shared: &Shared, threads: u32) -> Vec<Option<Timing>> {
         let runs = self.all_runs();
-        let home = self.git.as_ref().map(|git| (git.commit.clone(), git.short.clone())).unwrap_or_default();
         let elapsed = shared.current.as_ref().map(|current| (current.key, current.started.elapsed().as_secs_f64()));
         let mut total = 0.0;
         let mut unknown = 0;
@@ -621,12 +633,12 @@ impl App {
                 if !matches!(item.state, ItemState::Waiting | ItemState::Running) {
                     return None;
                 }
-                let (commit, short) = if item.checkout.relative == "." {
-                    home.clone()
-                } else {
-                    (item.checkout.head.clone(), item.checkout.head.chars().take(7).collect())
+                let (commit, short) = match self.resolution(&item.target) {
+                    Ok(resolution) => (resolution.commit, resolution.short),
+                    Err(_) => (String::new(), "{commit}".to_string()),
                 };
-                let values = item.job.values(threads, &short, None, &item.parameters);
+                let reference = Target::parse(&item.target).recorded();
+                let values = item.job.values(threads, &short, &reference, None, &item.parameters);
                 let command = render(&item.job.command, &values).unwrap_or_default();
                 let estimate = estimate(&item.job.name, &command, &commit, &runs);
                 match &estimate {

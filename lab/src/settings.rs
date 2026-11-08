@@ -9,6 +9,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct Settings {
+    /// The repository the mirror is fetched from: `owner/name` on GitHub, or a URL.
+    pub remote: String,
     /// The global thread setting of the top bar.
     pub threads: u32,
     /// Above it the queue warns, never blocks (SPEC.md, section 7.1).
@@ -47,6 +49,7 @@ pub enum Policy {
 impl Default for Settings {
     fn default() -> Self {
         Settings {
+            remote: crate::mirror::DEFAULT_REMOTE.to_string(),
             threads: 4,
             comfort_threads: 6,
             sample_seconds: 2,
@@ -100,6 +103,7 @@ mod tests {
         let settings: Settings = toml::from_str("threads = 6\n[calm]\nload1_max = 0.5\n").unwrap();
         assert_eq!(settings.threads, 6);
         assert_eq!(settings.comfort_threads, 6);
+        assert_eq!(settings.remote, "marcgardent/openclare");
         assert_eq!(settings.calm.load1_max, 0.5);
         assert_eq!(settings.calm.window_seconds, 60);
         assert!(toml::from_str::<Settings>("thread = 6\n").is_err());
