@@ -19,7 +19,7 @@ use crate::mirror::{MAIN, Mirror};
 use crate::model::Status;
 use crate::monitor::Watch;
 use crate::runner::{ItemState, Mode, QueueSettings, Runner, Shared, State};
-use crate::settings::{Policy, Settings};
+use crate::settings::{Policy, Push, Settings};
 use crate::store::History;
 
 /// What `lab run` was asked.
@@ -29,6 +29,8 @@ pub struct RunArguments {
     /// Start although the machine is not calm: the time will not count.
     pub force: bool,
     pub threads: Option<u32>,
+    /// Push the live memory to this machine's branch after the run, whatever the setting.
+    pub push: bool,
 }
 
 /// Set by the SIGINT handler: the run is stopped and recorded, then lab exits.
@@ -62,7 +64,8 @@ fn settings(places: &Places) -> Settings {
     })
 }
 
-/// `lab fetch`: the mirror created if need be, then fetched.
+/// `lab fetch`: the mirror created if need be, then fetched, and the other
+/// machines' memories read into `<lab>/machines/` (SPEC.md, §4b).
 pub fn fetch(places: &Places) -> ExitCode {
     let settings = settings(places);
     let mirror = Mirror::new(&places.data, &settings.remote);
@@ -75,6 +78,32 @@ pub fn fetch(places: &Places) -> ExitCode {
                 mirror.branches().len(),
                 mirror.checkouts().len()
             );
+            match crate::machines::refresh(places, &mirror) {
+                Ok(machines) if machines.is_empty() => println!("no machine has pushed its memory yet"),
+                Ok(machines) => println!("machines: {}", machines.join(" ")),
+                Err(error) => eprintln!("lab: machines: {error}"),
+            }
+            ExitCode::SUCCESS
+        }
+        Err(error) => {
+            eprintln!("lab: {error}");
+            ExitCode::FAILURE
+        }
+    }
+}
+
+/// `lab push`: the mirror fetched, then the live memory pushed to this
+/// machine's branch (SPEC.md, §4b), whatever the `push` setting says.
+pub fn push(places: &Places) -> ExitCode {
+    let settings = settings(places);
+    let mirror = Mirror::new(&places.data, &settings.remote);
+    let result = mirror.fetch(places.seed().as_deref()).and_then(|said| {
+        let _ = crate::machines::refresh(places, &mirror);
+        crate::machines::push(places, &mirror, &settings.machine).map(|pushed| format!("{said}; {pushed}"))
+    });
+    match result {
+        Ok(said) => {
+            println!("{said}");
             ExitCode::SUCCESS
         }
         Err(error) => {
@@ -89,6 +118,21 @@ pub fn status(places: &Places) -> ExitCode {
     let settings = settings(places);
     let mirror = Mirror::new(&places.data, &settings.remote);
     println!("folder    {}", places.data.display());
+    let unpushed = crate::machines::unpushed(places, &mirror, &settings.machine).unwrap_or(0);
+    let policy = match settings.push {
+        Push::Ask => "on request",
+        Push::Auto => "after every run",
+        Push::Never => "never",
+    };
+    println!(
+        "machine   {} · branch {} · {unpushed} runs not pushed · push {policy}",
+        settings.machine,
+        crate::mirror::runs_branch(&settings.machine)
+    );
+    let machines = mirror.machines();
+    if !machines.is_empty() {
+        println!("machines  {}", machines.join(" "));
+    }
     if mirror.exists() {
         let fetched = mirror
             .last_fetch()
@@ -216,8 +260,10 @@ pub fn run(places: &Places, arguments: RunArguments) -> ExitCode {
     let period = Duration::from_secs(u64::from(settings.sample_seconds.clamp(1, 5)));
     crate::monitor::spawn(watch.clone(), calm.clone(), period, Box::new(|| {}));
     let machine = crate::machine::machine(&settings.machine_label);
-    let mut runner =
-        Runner::new(shared.clone(), places.clone(), mirror, machine, Box::new(|| {})).with_monitor(watch, calm);
+    let push = if arguments.push { Push::Auto } else { settings.push };
+    let mut runner = Runner::new(shared.clone(), places.clone(), mirror, machine, Box::new(|| {}))
+        .with_monitor(watch, calm)
+        .with_push(push, settings.machine.clone());
     // Safety: the handler only stores a flag.
     unsafe {
         let _ = signal(Signal::SIGINT, SigHandler::Handler(on_interrupt));
@@ -245,7 +291,10 @@ pub fn run(places: &Places, arguments: RunArguments) -> ExitCode {
         }
         let (done, messages, waiting, activity, log) = {
             let mut shared = shared.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
-            let messages: Vec<String> = shared.messages.drain(..).collect();
+            let mut messages: Vec<String> = shared.messages.drain(..).collect();
+            if let Some((_, said)) = shared.pushed.take() {
+                messages.push(said);
+            }
             let done = shared.mode != Mode::Running && shared.current.is_none();
             let log = shared.current.as_ref().map(|current| current.log.clone());
             (done, messages, shared.waiting_for_calm.clone(), shared.activity.clone(), log)

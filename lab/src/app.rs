@@ -20,7 +20,7 @@ use crate::mirror::{MAIN, Mirror, Target};
 use crate::model::{Paper, Run, Source, duration_text};
 use crate::monitor::{Calmness, Watch};
 use crate::runner::{Runner, Shared, recover};
-use crate::settings::{Policy, Settings};
+use crate::settings::{Policy, Push, Settings};
 use crate::state::{Reach, Tag, place, repository_runs};
 use crate::store::History;
 
@@ -115,7 +115,15 @@ pub struct App {
     catalogue: Result<Catalogue, String>,
     /// Where the catalogue was read from, for the screens.
     catalogue_source: String,
+    /// The memories met (SPEC.md, §4b): this machine's live one and the other
+    /// machines' as last fetched, one line per run id.
     history: Result<History, String>,
+    /// The machine each run comes from.
+    origin: BTreeMap<String, String>,
+    /// Every machine met, this one first.
+    machines: Vec<String>,
+    /// The records of this machine its branch does not have yet.
+    unpushed: usize,
     modified: (Option<SystemTime>, Option<SystemTime>),
     last_look: Instant,
     tab: Tab,
@@ -246,12 +254,16 @@ impl App {
             Box::new(move || context.request_repaint()),
         )
         .with_monitor(watch.clone(), calm.clone())
+        .with_push(settings.push, settings.machine.clone())
         .spawn();
         let copy_target = places.home.as_ref().map(|home| home.to_string_lossy().into_owned()).unwrap_or_default();
         let mut app = App {
             catalogue,
             catalogue_source,
-            history: History::read(&places.runs()),
+            history: Ok(History::default()),
+            origin: BTreeMap::new(),
+            machines: Vec::new(),
+            unpushed: 0,
             modified: (places.catalogue_file().as_deref().and_then(modified), modified(&places.runs())),
             places,
             mirror,
@@ -330,16 +342,36 @@ impl App {
             (self.catalogue, self.catalogue_source) = read_catalogue(&self.places, &self.mirror);
         }
         if now.1 != self.modified.1 {
-            self.history = History::read(&self.places.runs());
+            self.read_history();
             self.reach_all();
         }
         self.modified = now;
+    }
+
+    /// The memories met, read again (SPEC.md, §4b): the other machines' as
+    /// the folder has them, this machine's live one, and what of it is not
+    /// pushed yet.
+    pub(crate) fn read_history(&mut self) {
+        match crate::machines::union(&self.places, &self.settings.machine) {
+            Ok(union) => {
+                self.history = Ok(union.history);
+                self.origin = union.origin;
+                self.machines = union.machines;
+            }
+            Err(error) => self.history = Err(error),
+        }
+        self.unpushed = crate::machines::unpushed(&self.places, &self.mirror, &self.settings.machine).unwrap_or(0);
+        self.modified.1 = modified(&self.places.runs());
     }
 
     /// Everything read from the mirror, again: the catalogue at `main`, the
     /// tags, the branches, the repository's runs, what the references of the
     /// queue resolve to, which commits are pushed.
     fn read_repository(&mut self) {
+        if let Err(error) = crate::machines::refresh(&self.places, &self.mirror) {
+            self.lock().messages.push(format!("machines: {error}"));
+        }
+        self.read_history();
         (self.catalogue, self.catalogue_source) = read_catalogue(&self.places, &self.mirror);
         self.tags = self.mirror.tags();
         self.references = self.tags.iter().map(|tag| tag.name.clone()).collect();
@@ -481,6 +513,16 @@ impl eframe::App for App {
                         ("Checkouts", self.mirror.checkouts.display().to_string()),
                         ("Catalogue", self.catalogue_source.clone()),
                         ("Runs", self.places.runs().display().to_string()),
+                        (
+                            "Machine",
+                            format!(
+                                "{} · branch {} · {} runs not pushed",
+                                self.settings.machine,
+                                crate::mirror::runs_branch(&self.settings.machine),
+                                self.unpushed
+                            ),
+                        ),
+                        ("Machines", crate::machines::folder(&self.places).display().to_string()),
                         ("Settings", self.places.settings().display().to_string()),
                         ("Started in", home),
                     ] {
@@ -590,9 +632,9 @@ impl App {
         ui.horizontal(|ui| {
             ui.label(RichText::new("lab").strong().size(18.0));
             ui.add_space(8.0);
-            let (activity, fetched) = {
+            let (activity, fetched, pushed) = {
                 let shared = self.lock();
-                (shared.activity.clone(), shared.fetched.clone())
+                (shared.activity.clone(), shared.fetched.clone(), shared.pushed.clone())
             };
             match &activity {
                 Some(activity) => {
@@ -623,6 +665,32 @@ impl App {
                 .clicked()
             {
                 self.lock().fetch_requested = true;
+            }
+            // The records not yet pushed to this machine's branch (SPEC.md, §4b).
+            let branch = crate::mirror::runs_branch(&self.settings.machine);
+            match self.settings.push {
+                Push::Never => {
+                    ui.label(RichText::new(format!("{} not pushed (setting: never)", self.unpushed)).color(MUTED))
+                        .on_hover_text(format!("push = \"never\" in settings.toml: nothing goes to {branch}"));
+                }
+                policy => {
+                    let hint = match &pushed {
+                        Some((at, said)) => format!("to {branch}; last: {said} at {}", at.format("%H:%M")),
+                        None => format!("git push to {branch}, the memory of this machine"),
+                    };
+                    let label = if policy == Push::Auto && self.unpushed == 0 {
+                        "Push (auto)".to_string()
+                    } else {
+                        format!("Push ({})", self.unpushed)
+                    };
+                    if ui
+                        .add_enabled(activity.is_none() && self.mirror.exists(), egui::Button::new(label))
+                        .on_hover_text(hint)
+                        .clicked()
+                    {
+                        self.lock().push_requested = true;
+                    }
+                }
             }
             ui.add_space(8.0);
             let verdict = crate::monitor::lock(&self.watch).verdict(&self.settings.calm);
@@ -900,7 +968,8 @@ impl App {
         if let Some(run) = &detail {
             egui::Panel::right("run").resizable(true).default_size(460.0).show(ui, |ui| {
                 egui::ScrollArea::vertical().auto_shrink([false; 2]).show(ui, |ui| {
-                    run_detail(ui, run, &self.places.data, timed.contains(&run.job));
+                    let origin = self.origin.get(&run.id).cloned();
+                    run_detail(ui, run, &self.places.data, timed.contains(&run.job), origin.as_deref());
                     self.edit_panel(ui, run);
                 });
             });
@@ -1061,7 +1130,7 @@ fn calm_mark(run: &Run) -> (&'static str, Color32) {
     }
 }
 
-fn run_detail(ui: &mut egui::Ui, run: &Run, data: &Path, timing_matters: bool) {
+fn run_detail(ui: &mut egui::Ui, run: &Run, data: &Path, timing_matters: bool, origin: Option<&str>) {
     ui.horizontal(|ui| {
         ui.label(RichText::new(&run.job).strong().size(18.0));
         stopwatch(ui, timing_matters);
@@ -1092,6 +1161,9 @@ fn run_detail(ui: &mut egui::Ui, run: &Run, data: &Path, timing_matters: bool) {
     }
     let memory = run.memory_limit_gb.map(|gb| format!(" · memory cap {gb} GB")).unwrap_or_default();
     rows.push(("Checkout", format!("{} · directory {}{memory}", run.checkout, run.directory)));
+    if let Some(origin) = origin {
+        rows.push(("Recorded by", format!("{origin} (its branch {})", crate::mirror::runs_branch(origin))));
+    }
     if let Some(git) = &run.git {
         let branch = git.branch.clone().unwrap_or_default();
         let pushed = if git.pushed { "pushed" } else { "not pushed when it ran" };

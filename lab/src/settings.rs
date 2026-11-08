@@ -11,6 +11,11 @@ use serde::{Deserialize, Serialize};
 pub struct Settings {
     /// The repository the mirror is fetched from: `owner/name` on GitHub, or a URL.
     pub remote: String,
+    /// The name of this machine (SPEC.md, §4b): its branch `lab/runs-<machine>`
+    /// in the repository. The hostname by default (Q17).
+    pub machine: String,
+    /// When the live memory is pushed to that branch (§4b).
+    pub push: Push,
     /// The global thread setting of the top bar.
     pub threads: u32,
     /// Above it the queue warns, never blocks (SPEC.md, section 7.1).
@@ -37,6 +42,17 @@ pub struct CalmSettings {
     pub load1_ignored_minutes: u32,
 }
 
+/// When the live memory is pushed to the machine's branch (SPEC.md, §4b):
+/// on Marc's click, after every run, or never.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum Push {
+    #[default]
+    Ask,
+    Auto,
+    Never,
+}
+
 /// What happens to the rest of the queue after a stop or a failure.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -50,6 +66,8 @@ impl Default for Settings {
     fn default() -> Self {
         Settings {
             remote: crate::mirror::DEFAULT_REMOTE.to_string(),
+            machine: crate::machine::hostname(),
+            push: Push::Ask,
             threads: 4,
             comfort_threads: 6,
             sample_seconds: 2,
@@ -104,6 +122,9 @@ mod tests {
         assert_eq!(settings.threads, 6);
         assert_eq!(settings.comfort_threads, 6);
         assert_eq!(settings.remote, "marcgardent/openclare");
+        assert!(!settings.machine.is_empty(), "the hostname");
+        assert_eq!(settings.push, Push::Ask);
+        assert_eq!(toml::from_str::<Settings>("push = \"auto\"\nmachine = \"night\"\n").unwrap().push, Push::Auto);
         assert_eq!(settings.calm.load1_max, 0.5);
         assert_eq!(settings.calm.window_seconds, 60);
         assert!(toml::from_str::<Settings>("thread = 6\n").is_err());

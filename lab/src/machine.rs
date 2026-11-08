@@ -24,11 +24,18 @@ fn kilobytes(text: &str, name: &str) -> Option<u64> {
     field(text, name)?.split_whitespace().next()?.parse::<u64>().ok().map(|kb| kb * 1024)
 }
 
+/// The hostname, the default name of this machine (SPEC.md, §12, Q17);
+/// "machine" if /proc does not say.
+pub fn hostname() -> String {
+    let name = read("/proc/sys/kernel/hostname").trim().to_string();
+    if name.is_empty() { "machine".to_string() } else { name }
+}
+
 pub fn machine(label: &str) -> Machine {
     let cpuinfo = read("/proc/cpuinfo");
     let meminfo = read("/proc/meminfo");
     Machine {
-        hostname: read("/proc/sys/kernel/hostname").trim().to_string(),
+        hostname: hostname(),
         cpu: field(&cpuinfo, "model name").unwrap_or("unknown").to_string(),
         cores: field(&cpuinfo, "cpu cores").and_then(|cores| cores.parse().ok()).unwrap_or(0),
         threads: cpuinfo.lines().filter(|line| line.starts_with("processor")).count() as u32,

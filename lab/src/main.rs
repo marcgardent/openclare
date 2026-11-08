@@ -1,8 +1,9 @@
 //! lab: the record and the launcher of openclare's computations (SPEC.md).
 //!
 //!     lab [options]                      the window
-//!     lab [options] run <job> [--ref <reference>] [--force] [--threads <n>]
+//!     lab [options] run <job> [--ref <reference>] [--force] [--threads <n>] [--push]
 //!     lab [options] fetch
+//!     lab [options] push
 //!     lab [options] status
 //!
 //! `--data <folder>` uses another folder than `~/.openclare-lab` (for
@@ -21,8 +22,10 @@
 //!
 //! `run` runs one job without a window and exits with its status (§14):
 //! on the reference given, else the job's own; `--force` starts it although
-//! the machine is not calm, its time then not counting. `fetch` fetches the
-//! mirror, creating it if need be. `status` says where things stand.
+//! the machine is not calm, its time then not counting; `--push` pushes the
+//! live memory to this machine's branch after the run, whatever the setting.
+//! `fetch` fetches the mirror, creating it if need be. `push` fetches, then
+//! pushes the live memory. `status` says where things stand.
 
 mod app;
 mod catalogue;
@@ -30,6 +33,7 @@ mod files;
 mod headless;
 mod home;
 mod machine;
+mod machines;
 mod mirror;
 mod model;
 mod monitor;
@@ -42,14 +46,16 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 const USAGE: &str = "usage: lab [--data <folder>] [--catalogue <file>] [--tab <name>] [--queue <job>]... [--start] [--run <id>] [--screenshot <file.ppm> [--after <seconds>]]
-       lab [--data <folder>] [--catalogue <file>] run <job> [--ref <reference>] [--force] [--threads <n>]
+       lab [--data <folder>] [--catalogue <file>] run <job> [--ref <reference>] [--force] [--threads <n>] [--push]
        lab [--data <folder>] fetch
+       lab [--data <folder>] push
        lab [--data <folder>] status";
 
 enum Command {
     Window,
     Run(headless::RunArguments),
     Fetch,
+    Push,
     Status,
 }
 
@@ -63,14 +69,21 @@ fn main() -> ExitCode {
         match (argument.as_str(), &mut command) {
             ("--start", None) => opening.start = true,
             ("--force", Some(Command::Run(run))) => run.force = true,
+            ("--push", Some(Command::Run(run))) => run.push = true,
             ("run", None) => match arguments.next() {
                 Some(job) => {
-                    command =
-                        Some(Command::Run(headless::RunArguments { job, reference: None, force: false, threads: None }))
+                    command = Some(Command::Run(headless::RunArguments {
+                        job,
+                        reference: None,
+                        force: false,
+                        threads: None,
+                        push: false,
+                    }))
                 }
                 None => return usage(),
             },
             ("fetch", None) => command = Some(Command::Fetch),
+            ("push", None) => command = Some(Command::Push),
             ("status", None) => command = Some(Command::Status),
             _ => match (argument.as_str(), arguments.next(), &mut command) {
                 ("--data", Some(folder), _) => data = Some(PathBuf::from(folder)),
@@ -114,9 +127,15 @@ fn main() -> ExitCode {
             return ExitCode::FAILURE;
         }
     };
+    // `lab status | head` ends quietly, as a shell command does.
+    // Safety: the default disposition of SIGPIPE, set before any thread starts.
+    unsafe {
+        let _ = nix::sys::signal::signal(nix::sys::signal::Signal::SIGPIPE, nix::sys::signal::SigHandler::SigDfl);
+    }
     match command.unwrap_or(Command::Window) {
         Command::Run(arguments) => headless::run(&places, arguments),
         Command::Fetch => headless::fetch(&places),
+        Command::Push => headless::push(&places),
         Command::Status => headless::status(&places),
         Command::Window => window(places, opening),
     }

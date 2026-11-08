@@ -31,7 +31,7 @@ use crate::machine;
 use crate::mirror::{Mirror, Target};
 use crate::model::{Calm, FORMAT, FileRef, Git, Machine, PaperRef, Prepare, Run, Source, Status, Threads};
 use crate::monitor::{self, Calmness, Verdict, Watch};
-use crate::settings::{CalmSettings, Policy};
+use crate::settings::{CalmSettings, Policy, Push};
 
 /// How often the runner looks at its child.
 const TICK: Duration = Duration::from_millis(200);
@@ -137,6 +137,10 @@ pub struct Shared {
     pub mirror_changes: u64,
     /// What the last fetch said, and when.
     pub fetched: Option<(DateTime<Local>, String)>,
+    /// The window asked for a push of the live memory (SPEC.md, §4b); the runner does it.
+    pub push_requested: bool,
+    /// What the last push said, and when.
+    pub pushed: Option<(DateTime<Local>, String)>,
     next_key: u64,
 }
 
@@ -352,6 +356,10 @@ pub struct Runner {
     monitor: Option<(Arc<Mutex<Watch>>, Arc<Mutex<CalmSettings>>)>,
     /// Since when the head of the queue waits for a calm machine.
     waiting_since: Option<DateTime<Local>>,
+    /// When the live memory is pushed to this machine's branch, and the
+    /// machine's name (SPEC.md, §4b): never, until `with_push` says.
+    push: Push,
+    machine_name: String,
 }
 
 impl Runner {
@@ -378,7 +386,18 @@ impl Runner {
             written: None,
             monitor: None,
             waiting_since: None,
+            push: Push::Never,
+            machine_name: crate::machine::hostname(),
         }
+    }
+
+    /// The push policy and the name of this machine: `Auto` pushes the live
+    /// memory after every record written; every policy but `Never` pushes on
+    /// request.
+    pub fn with_push(mut self, push: Push, machine_name: String) -> Runner {
+        self.push = push;
+        self.machine_name = machine_name;
+        self
     }
 
     /// The monitor whose verdict holds a job whose timing matters, and whose
@@ -442,12 +461,17 @@ impl Runner {
     }
 
     fn look(&mut self) {
+        // A fetch or a push asked for is done even during a run: git touches
+        // no checkout, and the run is looked at again right after.
+        if self.lock().fetch_requested {
+            self.fetch();
+        }
+        if self.lock().push_requested {
+            self.push_memory();
+        }
         if self.running.is_some() {
             self.watch();
             return;
-        }
-        if self.lock().fetch_requested {
-            self.fetch();
         }
         if self.watch_orphan() {
             return;
@@ -536,6 +560,31 @@ impl Runner {
         }
         self.ids.insert(id.clone());
         id
+    }
+
+    /// Pushes the live memory to this machine's branch (SPEC.md, §4b); what
+    /// went wrong goes to the messages.
+    fn push_memory(&mut self) {
+        {
+            let mut shared = self.lock();
+            shared.push_requested = false;
+            if self.push == Push::Never {
+                shared.messages.push("push: the setting says never".to_string());
+                return;
+            }
+            shared.activity = Some("pushing".to_string());
+        }
+        (self.repaint)();
+        let result = crate::machines::push(&self.places, &self.mirror, &self.machine_name);
+        let mut shared = self.lock();
+        shared.activity = None;
+        shared.mirror_changes += 1;
+        match result {
+            Ok(said) => shared.pushed = Some((Local::now(), said)),
+            Err(error) => shared.messages.push(format!("push: {error}")),
+        }
+        drop(shared);
+        (self.repaint)();
     }
 
     /// Fetches the mirror, creating it from the clone lab was started in or
@@ -958,8 +1007,10 @@ impl Runner {
         if !why.is_empty() {
             log_line(&mut running.log, why);
         }
-        if let Err(error) = write_record(&self.places, run) {
-            self.message(error);
+        match write_record(&self.places, run) {
+            Ok(()) if self.push == Push::Auto => self.push_memory(),
+            Ok(()) => {}
+            Err(error) => self.message(error),
         }
         let policy = {
             let shared = self.lock();
@@ -1489,6 +1540,57 @@ mod tests {
         );
         assert_eq!(mirror.checkouts().len(), 1, "one checkout for the two runs");
         assert_eq!(prepared_in(&checkout, "nothing"), None);
+    }
+
+    /// The policy `auto`: the record of each run pushed to this machine's
+    /// branch as soon as it is written; a push on request too.
+    #[test]
+    fn the_memory_is_pushed_after_a_run_when_the_policy_says_so() {
+        let places = places("runner-push");
+        let mirror = crate::mirror::tests::mirror("runner-push-mirror");
+        let remote = crate::mirror::tests::remote_of(&mirror);
+        let catalogue = jobs("[[job]]\nname = \"quick\"\ncategory = \"build\"\ncommand = \"true\"\n");
+        let shared = Arc::new(Mutex::new(Shared::default()));
+        {
+            let mut queue = shared.lock().unwrap();
+            let job = catalogue.job("quick").unwrap().clone();
+            queue.add(job, home(&places));
+            queue.start(QueueSettings {
+                id: "push".to_string(),
+                threads: 1,
+                grace_seconds: 1,
+                ..QueueSettings::default()
+            });
+        }
+        let mut runner =
+            Runner::new(shared.clone(), places.clone(), mirror.clone(), machine::machine("test"), Box::new(|| {}))
+                .with_push(Push::Auto, "box".to_string());
+        let begun = Instant::now();
+        loop {
+            runner.step();
+            if shared.lock().unwrap().mode != Mode::Running && runner.running.is_none() {
+                break;
+            }
+            assert!(begun.elapsed() < Duration::from_secs(60), "the queue took too long");
+            std::thread::sleep(Duration::from_millis(20));
+        }
+        let (pushed, messages) = {
+            let shared = shared.lock().unwrap();
+            (shared.pushed.clone(), shared.messages.clone())
+        };
+        assert!(messages.is_empty(), "{messages:?}");
+        assert_eq!(pushed.unwrap().1, "created lab/runs-box with 1 runs");
+        let at_remote = std::process::Command::new("git")
+            .args(["-C", &remote.to_string_lossy(), "show", "lab/runs-box:runs.jsonl"])
+            .output()
+            .unwrap();
+        let text = String::from_utf8_lossy(&at_remote.stdout);
+        assert_eq!(History::parse(&text).runs.len(), 1, "{text}");
+        assert_eq!(crate::machines::unpushed(&places, &mirror, "box").unwrap(), 0);
+        // On request, with nothing new, the branch is written again as it is.
+        shared.lock().unwrap().push_requested = true;
+        runner.step();
+        assert_eq!(shared.lock().unwrap().pushed.clone().unwrap().1, "pushed 1 runs to lab/runs-box");
     }
 
     #[test]

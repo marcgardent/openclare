@@ -1,5 +1,5 @@
 //! The State screen (SPEC.md, section 11): the last run of each job, on a tag,
-//! off-tag or orphan, and the tag filter.
+//! off-tag or orphan, the tag filter and the machine filter.
 
 use std::collections::BTreeSet;
 
@@ -14,6 +14,8 @@ use crate::state::{Class, class, last_runs, place, tag_of};
 pub(super) struct StateView {
     /// None: all runs; else the name of a tag.
     tag: Option<String>,
+    /// None: every machine; else the runs one machine recorded (SPEC.md, §4b).
+    machine: Option<String>,
     show: Show,
     checked: BTreeSet<String>,
 }
@@ -44,12 +46,29 @@ impl App {
         let tags = self.tags.clone();
         let reach = self.reach.clone();
         let chosen = self.state_view.tag.clone();
-        let last = match &chosen {
-            None => last_runs(&runs, |_| true),
-            Some(name) => last_runs(&runs, |run| tag_of(run, &tags).is_some_and(|tag| &tag.name == name)),
-        };
+        let machine = self.state_view.machine.clone();
+        let origin = &self.origin;
+        let last = last_runs(&runs, |run| {
+            chosen.as_ref().is_none_or(|name| tag_of(run, &tags).is_some_and(|tag| &tag.name == name))
+                && machine.as_ref().is_none_or(|machine| origin.get(&run.id) == Some(machine))
+        });
 
         ui.horizontal(|ui| {
+            ui.label("Machine");
+            let this = self.machines.first().cloned().unwrap_or_default();
+            let text = match &machine {
+                None => "every machine".to_string(),
+                Some(name) if name == &this => format!("{name} (this one)"),
+                Some(name) => name.clone(),
+            };
+            egui::ComboBox::from_id_salt("machine filter").selected_text(text).width(200.0).show_ui(ui, |ui| {
+                ui.selectable_value(&mut self.state_view.machine, None, "every machine");
+                for name in self.machines.clone() {
+                    let label = if name == this { format!("{name} (this one)") } else { name.clone() };
+                    ui.selectable_value(&mut self.state_view.machine, Some(name), label);
+                }
+            });
+            ui.add_space(10.0);
             ui.label("Tag");
             let text = chosen.clone().unwrap_or_else(|| "All runs: the last run of each job".to_string());
             egui::ComboBox::from_id_salt("tag filter").selected_text(text).width(320.0).show_ui(ui, |ui| {
@@ -85,7 +104,11 @@ impl App {
                     big(ui, on_tag, green, "last run on a tag");
                     big(ui, off_tag, blue, "last run off-tag");
                     big(ui, orphan, amber, "last run orphan");
-                    big(ui, missing.len(), ui.visuals().text_color(), "never run");
+                    let never = match &machine {
+                        Some(name) => format!("never run on {name}"),
+                        None => "never run".to_string(),
+                    };
+                    big(ui, missing.len(), ui.visuals().text_color(), &never);
                 }
                 Some(name) => {
                     big(ui, on_tag, green, &format!("with a run on {name}"));

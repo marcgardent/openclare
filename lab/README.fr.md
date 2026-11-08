@@ -18,8 +18,11 @@ GitHub par SSH) et récupéré avant chaque file et par le bouton Fetch. Chaque 
 **référence**, un tag (`v0.7.0`), une branche (`main`), une pull request (`pull/301`) ou un hash, résolue
 dans le miroir et extraite une fois dans `~/.openclare-lab/checkouts/<hash>/` ; un dossier de la machine
 (`~/…`) est la porte de secours pour une expérience non commise, ses exécutions notées « local ». Le
-catalogue montré est le `lab/jobs.toml` de `main`. Il tourne sous Linux (il lit /proc) ; `nvidia-smi`,
-s'il est là, donne le GPU.
+catalogue montré est le `lab/jobs.toml` de `main`. Chaque machine garde sa propre mémoire et la pousse
+vers sa branche `lab/runs-<machine>` du dépôt (le bouton Push de la barre du haut, ou `push = "auto"`
+dans les réglages) ; chaque machine lit les branches des autres à chaque récupération, et les écrans
+montrent toutes les exécutions, où qu'elles aient tourné. Il tourne sous Linux (il lit /proc) ;
+`nvidia-smi`, s'il est là, donne le GPU.
 
 ## Les écrans
 
@@ -28,7 +31,8 @@ s'il est là, donne le GPU.
   Une exécution est sur un tag quand le seul hash qu'elle note est celui du tag ; sinon elle est hors tag,
   ou `orphan <hash>` quand aucune branche ni tag du dépôt distant n'atteint ce commit ; ni l'une ni
   l'autre ne peut étayer un papier. Le filtre Tag montre la dernière exécution de chaque tâche sur un seul
-  tag. Les tâches cochées, ou toutes celles jamais lancées, partent dans la file d'un clic. Un
+  tag ; le filtre Machine, les exécutions notées par une machine. Les tâches cochées, ou toutes celles
+  jamais lancées, partent dans la file d'un clic. Un
   chronomètre ⏱ à côté d'une tâche dit que son temps compte : elle attend une machine calme, et sa durée
   n'est en clair que si le temps de l'exécution est valide, grisée quand son calme n'a pas été mesuré,
   barrée quand la machine n'était pas calme. Une tâche sans chronomètre tourne sous n'importe quelle
@@ -43,7 +47,7 @@ s'il est là, donne le GPU.
 - **History** : toutes les exécutions notées par lab et tous les résultats que les résumés du dépôt
   contiennent, triables et filtrées ; le détail d'une exécution ; son commentaire et son papier
   modifiables ; les exécutions affichées copiées en Markdown (avec la ligne de matériel) ou en CSV ; une
-  exécution passée saisie à la main ; l'historique copié dans le dépôt.
+  exécution passée saisie à la main ; l'historique de toutes les machines copié dans le dépôt.
 - **Catalogue** : les tâches de `jobs.toml` et les commandes telles qu'elles partiraient. Modifiez
   `jobs.toml` à la main : celui du miroir est relu à la récupération suivante, un fichier donné par
   `--catalogue` dans les deux secondes.
@@ -65,8 +69,9 @@ autre chose la charge.
 | `~/.openclare-lab/runs.jsonl` | non | l'historique vivant de cette machine, une exécution par ligne |
 | `~/.openclare-lab/logs/` | non | le journal de chaque exécution |
 | `~/.openclare-lab/state.json` | non | la file en cours, pour reprendre une exécution laissée par une application morte |
-| `~/.openclare-lab/settings.toml` | non | le dépôt distant, réglage de threads, limite de confort, seuils du calme, politiques |
+| `~/.openclare-lab/settings.toml` | non | le dépôt distant, le nom de la machine, la politique de push, réglage de threads, limite de confort, seuils du calme, politiques |
 | `~/.openclare-lab/repo.git/` | non | le miroir du dépôt |
+| `~/.openclare-lab/machines/<machine>.jsonl` | non | la mémoire de chaque machine, telle que sa branche `lab/runs-<machine>` l'avait à la dernière récupération |
 | `~/.openclare-lab/checkouts/<hash>/` | non | un checkout détaché par commit lancé, avec son `target/`, son `.lake/` et `.lab-prepared`, les préparations faites dedans |
 
 `~/.openclare-lab` est le seul dossier de tout ce que lab garde sur la machine. Le premier démarrage y
@@ -94,8 +99,10 @@ lab run build-release --ref v0.7.0
 lance une tâche avec le même lanceur, le même moniteur et les mêmes fiches, son journal sur la sortie
 standard, et sort avec le statut de la tâche ; `--ref` est par défaut la référence de la tâche, `--force`
 la lance bien que la machine ne soit pas calme (son temps ne compte alors pas), `--threads <n>` fixe le
-nombre de threads. Ctrl-C arrête l'exécution et la note arrêtée. `lab fetch` crée ou récupère le miroir ;
-`lab status` dit où en sont le miroir, les checkouts, la file et l'historique.
+nombre de threads, `--push` pousse la mémoire de cette machine vers sa branche après l'exécution, quel
+que soit le réglage. Ctrl-C arrête l'exécution et la note arrêtée. `lab fetch` crée ou récupère le miroir
+et lit les mémoires des autres machines ; `lab push` récupère puis pousse la mémoire de cette machine ;
+`lab status` dit où en sont le miroir, les checkouts, les machines, la file et l'historique.
 
 ## Tests
 

@@ -18,8 +18,10 @@ GitHub over SSH) and fetched before every queue and with the Fetch button. Each 
 **reference**, a tag (`v0.7.0`), a branch (`main`), a pull request (`pull/301`) or a hash, resolved in
 the mirror and checked out once in `~/.openclare-lab/checkouts/<hash>/`; a folder on the machine (`~/…`)
 is the escape hatch for an experiment not committed, its runs recorded "local". The catalogue shown is
-the `lab/jobs.toml` of `main`. It runs on Linux (it reads /proc); `nvidia-smi`, if present, gives the
-GPU.
+the `lab/jobs.toml` of `main`. Each machine keeps its own memory and pushes it to its branch
+`lab/runs-<machine>` of the repository (the Push button of the top bar, or `push = "auto"` in the
+settings); every machine reads the others' branches at each fetch, so the screens show every run,
+wherever it ran. It runs on Linux (it reads /proc); `nvidia-smi`, if present, gives the GPU.
 
 ## The screens
 
@@ -27,7 +29,8 @@ GPU.
   its date, its duration (`no time` when it was not measured) and the load at its start. A run is on a
   tag when the one hash it records is the tag's; else it is off-tag, or `orphan <hash>` when no branch
   nor tag of the remote reaches that commit; neither can back a paper. The Tag filter
-  shows the last run of each job on one tag only. Jobs checked, or all those never run, go to the
+  shows the last run of each job on one tag only; the Machine filter, the runs one machine
+  recorded. Jobs checked, or all those never run, go to the
   queue in one click. A stopwatch ⏱ beside a job says its timing matters: it waits for a calm machine,
   and its duration is shown plain only when the run's time is valid, muted when its calm was not
   measured, struck when the machine was not calm. A job without the stopwatch runs under any load; its
@@ -41,7 +44,8 @@ GPU.
   for a calm machine; "Start anyway" starts it, its time then not counted.
 - **History**: every run lab recorded and every result the repository's summaries hold, sortable and
   filtered; the detail of a run; its comment and paper edited; the runs shown copied as Markdown (with
-  the hardware line) or CSV; a past run typed by hand; the history copied into the repository.
+  the hardware line) or CSV; a past run typed by hand; the history of every machine copied into the
+  repository.
 - **Catalogue**: the jobs of `jobs.toml` and the commands as they would run. Edit `jobs.toml` by hand:
   the mirror's is read again at the next fetch, a file given with `--catalogue` within two seconds.
 - **Machine**: CPU in all and per thread, load, memory, VRAM, the heaviest processes (ours or foreign),
@@ -61,8 +65,9 @@ ours); amber when busy with our run alone; red when something else loads the mac
 | `~/.openclare-lab/runs.jsonl` | no | the live history of this machine, one run per line |
 | `~/.openclare-lab/logs/` | no | the log of each run |
 | `~/.openclare-lab/state.json` | no | the queue under way, to recover a run left by an app that died |
-| `~/.openclare-lab/settings.toml` | no | the remote, thread setting, comfort limit, calm thresholds, policies |
+| `~/.openclare-lab/settings.toml` | no | the remote, the machine name, the push policy, thread setting, comfort limit, calm thresholds, policies |
 | `~/.openclare-lab/repo.git/` | no | the mirror of the repository |
+| `~/.openclare-lab/machines/<machine>.jsonl` | no | the memory of each machine, as its branch `lab/runs-<machine>` had it at the last fetch |
 | `~/.openclare-lab/checkouts/<hash>/` | no | one detached checkout per commit run, with its `target/`, its `.lake/` and `.lab-prepared`, the prepares done in it |
 
 `~/.openclare-lab` is the one folder of everything lab keeps on the machine. The first start moves the
@@ -87,9 +92,11 @@ lab run build-release --ref v0.7.0
 
 runs one job with the same runner, monitor and records, its log on stdout, and exits with the job's
 status; `--ref` defaults to the job's own reference, `--force` starts it although the machine is not calm
-(its time then not counting), `--threads <n>` sets the thread count. Ctrl-C stops the run and records
-it stopped. `lab fetch` creates or fetches the mirror; `lab status` says where the mirror, the checkouts,
-the queue and the history stand.
+(its time then not counting), `--threads <n>` sets the thread count, `--push` pushes the memory of this
+machine to its branch after the run, whatever the setting. Ctrl-C stops the run and records it stopped.
+`lab fetch` creates or fetches the mirror and reads the other machines' memories; `lab push` fetches,
+then pushes this machine's memory; `lab status` says where the mirror, the checkouts, the machines, the
+queue and the history stand.
 
 ## Tests
 

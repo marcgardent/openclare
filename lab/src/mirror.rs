@@ -2,12 +2,13 @@
 //! 8.1): fetched from GitHub, it resolves the reference a job runs on, holds
 //! one detached checkout per commit under `<lab>/checkouts/`, and answers what
 //! the repository knows without any clone: its tags, its branches, a file at
-//! `main`, whether a commit is pushed.
+//! `main`, whether a commit is pushed. It also pushes the live memory of this
+//! machine to its branch `lab/runs-<machine>` (§4b).
 //!
 //! Every git command runs on the runner's thread or on the window's; the two
 //! never fetch at once, since only the runner fetches (runner.rs).
 
-use std::io::Read;
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant, SystemTime};
@@ -20,6 +21,17 @@ pub const DEFAULT_REMOTE: &str = "marcgardent/openclare";
 
 /// A fetch that takes longer is given up.
 const FETCH_TIMEOUT: Duration = Duration::from_secs(300);
+
+/// The branches that hold the memory of each machine (SPEC.md, §4b).
+pub const RUNS_BRANCHES: &str = "lab/runs-";
+
+/// The one file of such a branch.
+pub const RUNS_FILE: &str = "runs.jsonl";
+
+/// The branch of a machine's memory: `lab/runs-<machine>`.
+pub fn runs_branch(machine: &str) -> String {
+    format!("{RUNS_BRANCHES}{machine}")
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Mirror {
@@ -132,6 +144,8 @@ impl Mirror {
                     said.push(format!("mirror created from {}", self.url));
                 }
             }
+            // Fetched as a mirror, never pushed as one (push_runs pushes one branch).
+            self.git(&["config", "remote.origin.mirror", "false"])?;
         }
         let before = self.refs();
         git_at(&self.path, &["fetch", "--quiet", "--prune", "origin"], FETCH_TIMEOUT)?;
@@ -277,6 +291,79 @@ impl Mirror {
         Ok(path)
     }
 
+    /// The machines whose memory the repository holds: one per branch
+    /// `lab/runs-*` of the mirror, by name.
+    pub fn machines(&self) -> Vec<String> {
+        let Ok(text) =
+            self.git(&["for-each-ref", "--format=%(refname:short)", &format!("refs/heads/{RUNS_BRANCHES}*")])
+        else {
+            return Vec::new();
+        };
+        let mut machines: Vec<String> =
+            text.lines().filter_map(|name| name.strip_prefix(RUNS_BRANCHES)).map(str::to_string).collect();
+        machines.sort();
+        machines
+    }
+
+    /// The memory of a machine as its branch holds it, as last fetched or
+    /// pushed; None if the repository has no branch for it.
+    pub fn runs_of(&self, machine: &str) -> Option<String> {
+        if !self.exists() {
+            return None;
+        }
+        self.git(&["show", &format!("refs/heads/{}:{RUNS_FILE}", runs_branch(machine))]).ok()
+    }
+
+    /// Pushes `text`, the memory of `machine`, as the one file of its branch
+    /// (SPEC.md, §4b): a commit without parent the first time, else a child
+    /// of the branch as the mirror has it, so that every push is a
+    /// fast-forward; the branch of the mirror then moves with it. Says what
+    /// was pushed. Needs a key with write access to the repository.
+    pub fn push_runs(&self, machine: &str, text: &str, message: &str) -> Result<String, String> {
+        if !self.exists() {
+            return Err("no mirror yet: fetch first".to_string());
+        }
+        if machine.is_empty() || machine.contains(['/', ' ', '~', '^', ':', '?', '*', '[', '\\']) {
+            return Err(format!("{machine:?}: not a name a branch can carry"));
+        }
+        let branch = runs_branch(machine);
+        let reference = format!("refs/heads/{branch}");
+        let parent = self.git(&["rev-parse", "--verify", "--quiet", &format!("{reference}^{{commit}}")]).ok();
+        let blob = git_in(&self.path, &["hash-object", "-w", "--stdin"], Duration::from_secs(60), text.as_bytes())?;
+        let entry = format!("100644 blob {blob}\t{RUNS_FILE}\n");
+        let tree = git_in(&self.path, &["mktree"], Duration::from_secs(60), entry.as_bytes())?;
+        let mut arguments = vec!["commit-tree", tree.as_str(), "-m", message];
+        if let Some(parent) = &parent {
+            arguments.extend(["-p", parent.as_str()]);
+        }
+        let identity = self.identity(machine);
+        let commit = git_with(&self.path, &arguments, Duration::from_secs(60), None, &identity)?;
+        // A mirror pushes every reference by default, and would delete at the
+        // remote what it does not have: this push carries one branch, by name.
+        let spec = format!("{commit}:{reference}");
+        git_at(&self.path, &["-c", "remote.origin.mirror=false", "push", "--quiet", "origin", &spec], FETCH_TIMEOUT)?;
+        self.git(&["update-ref", &reference, &commit])?;
+        let lines = text.lines().filter(|line| !line.trim().is_empty()).count();
+        Ok(match parent {
+            Some(_) => format!("pushed {lines} runs to {branch}"),
+            None => format!("created {branch} with {lines} runs"),
+        })
+    }
+
+    /// The author of the commits of the memory: what git is configured with,
+    /// else lab on this machine.
+    fn identity(&self, machine: &str) -> Vec<(String, String)> {
+        let configured = |key: &str| self.git(&["config", "--get", key]).ok().filter(|value| !value.is_empty());
+        let name = configured("user.name").unwrap_or_else(|| format!("lab on {machine}"));
+        let email = configured("user.email").unwrap_or_else(|| format!("lab@{machine}.invalid"));
+        vec![
+            ("GIT_AUTHOR_NAME".to_string(), name.clone()),
+            ("GIT_AUTHOR_EMAIL".to_string(), email.clone()),
+            ("GIT_COMMITTER_NAME".to_string(), name),
+            ("GIT_COMMITTER_EMAIL".to_string(), email),
+        ]
+    }
+
     /// Removes a checkout and what was built in it.
     pub fn remove_checkout(&self, path: &Path) -> Result<(), String> {
         let target = path.to_string_lossy().into_owned();
@@ -296,16 +383,38 @@ impl Mirror {
 /// as it comes, on threads of its own: a `git show` of a large file would
 /// otherwise fill the pipe and wait for ever.
 fn git_at(folder: &Path, arguments: &[&str], timeout: Duration) -> Result<String, String> {
+    git_with(folder, arguments, timeout, None, &[])
+}
+
+/// The same, with `input` on its standard input.
+fn git_in(folder: &Path, arguments: &[&str], timeout: Duration, input: &[u8]) -> Result<String, String> {
+    git_with(folder, arguments, timeout, Some(input), &[])
+}
+
+fn git_with(
+    folder: &Path,
+    arguments: &[&str],
+    timeout: Duration,
+    input: Option<&[u8]>,
+    environment: &[(String, String)],
+) -> Result<String, String> {
     let mut child = Command::new("git")
         .arg("-C")
         .arg(folder)
         .args(arguments)
         .env("GIT_TERMINAL_PROMPT", "0")
-        .stdin(Stdio::null())
+        .envs(environment.iter().map(|(name, value)| (name.as_str(), value.as_str())))
+        .stdin(if input.is_some() { Stdio::piped() } else { Stdio::null() })
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
         .map_err(|error| format!("git: {error}"))?;
+    if let (Some(input), Some(mut stdin)) = (input, child.stdin.take()) {
+        let input = input.to_vec();
+        std::thread::spawn(move || {
+            let _ = stdin.write_all(&input);
+        });
+    }
     fn read<R: Read + Send + 'static>(pipe: Option<R>) -> std::thread::JoinHandle<Vec<u8>> {
         std::thread::spawn(move || {
             let mut bytes = Vec::new();
@@ -471,5 +580,43 @@ pub(crate) mod tests {
         assert!(mirror.fetch(None).unwrap().contains("nothing new"));
         mirror.remove_checkout(&path).unwrap();
         assert!(!path.exists() && mirror.checkouts().is_empty());
+    }
+
+    /// A bare copy of the mirror, the stand-in for GitHub: the mirror pushes
+    /// to it and fetches from it, and this repository is never written.
+    pub(crate) fn remote_of(mirror: &Mirror) -> PathBuf {
+        let remote = mirror.path.parent().unwrap().join("remote.git");
+        let (from, to) = (mirror.path.to_string_lossy().into_owned(), remote.to_string_lossy().into_owned());
+        git_at(remote.parent().unwrap(), &["clone", "--quiet", "--bare", &from, &to], FETCH_TIMEOUT).unwrap();
+        mirror.git(&["remote", "set-url", "origin", &to]).unwrap();
+        remote
+    }
+
+    #[test]
+    fn the_memory_of_a_machine_is_pushed_to_its_branch_and_read_back() {
+        let mirror = mirror("push");
+        let remote = remote_of(&mirror);
+        assert!(mirror.machines().is_empty() && mirror.runs_of("box").is_none());
+        assert!(mirror.push_runs("a/b", "{}\n", "m").is_err(), "a name a branch cannot carry");
+        let said = mirror.push_runs("box", "{\"id\":1}\n{\"id\":2}\n", "lab: 2 runs").unwrap();
+        assert_eq!(said, "created lab/runs-box with 2 runs");
+        let at_remote = git_at(&remote, &["show", "lab/runs-box:runs.jsonl"], Duration::from_secs(10)).unwrap();
+        assert_eq!(at_remote, "{\"id\":1}\n{\"id\":2}");
+        assert_eq!(mirror.runs_of("box").unwrap(), at_remote, "the mirror's branch moved with the push");
+        assert_eq!(mirror.machines(), ["box"]);
+        let said = mirror.push_runs("box", "{\"id\":1}\n{\"id\":2}\n{\"id\":3}\n", "lab: 3 runs").unwrap();
+        assert_eq!(said, "pushed 3 runs to lab/runs-box");
+        let count = git_at(&remote, &["rev-list", "--count", "lab/runs-box"], Duration::from_secs(10)).unwrap();
+        assert_eq!(count, "2", "a child of the first commit");
+        let parents =
+            git_at(&remote, &["rev-list", "--max-parents=0", "lab/runs-box"], Duration::from_secs(10)).unwrap();
+        assert_eq!(parents.lines().count(), 1, "an orphan branch, no history shared with main");
+        assert!(git_at(&remote, &["merge-base", "main", "lab/runs-box"], Duration::from_secs(10)).is_err());
+        // Another machine's branch arrives with a fetch.
+        let other = git_at(&remote, &["rev-parse", "lab/runs-box"], Duration::from_secs(10)).unwrap();
+        git_at(&remote, &["update-ref", "refs/heads/lab/runs-night", &other], Duration::from_secs(10)).unwrap();
+        assert!(mirror.fetch(None).unwrap().contains("1 references moved or new"));
+        assert_eq!(mirror.machines(), ["box", "night"]);
+        assert_eq!(mirror.runs_of("night").unwrap().lines().count(), 3);
     }
 }

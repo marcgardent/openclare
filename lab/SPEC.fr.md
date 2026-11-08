@@ -104,14 +104,16 @@ l'application pose (§7), pas tout l'environnement hérité.
   `main` (une branche orpheline, comme `gh-pages`). Seule cette machine y écrit : chaque push est un
   fast-forward, jamais de conflit ni de course entre deux machines.
 - **Push** : après chaque exécution, selon le réglage `push` (`ask`, par défaut : un bouton dans la barre
-  du haut avec le nombre de fiches pas encore poussées ; `auto` ; `never`). Le push demande une clé en
-  écriture sur le dépôt : celle de Marc sur ses machines, une clé de déploiement limitée au dépôt sur
-  une machine qui tourne la nuit (Q18).
+  du haut avec le nombre de fiches pas encore poussées ; `auto` ; `never`). Ce qui est poussé est l'union
+  de la branche et de la mémoire vivante : une mémoire effacée sur la machine ne perd rien. Le push
+  demande une clé en écriture sur le dépôt : celle de Marc sur ses machines, une clé de déploiement
+  limitée au dépôt sur une machine qui tourne la nuit (Q18).
 - **Lecture** : à chaque ouverture et après chaque récupération, lab lit les branches `lab/runs-*` du
   miroir dans `<lab>/machines/` et en fait l'union avec la mémoire vivante de cette machine : une ligne
   par identifiant, le `edited` le plus récent gagne, la règle que le §4 a déjà. Un commentaire ou un
   papier modifié sur une autre machine arrive donc ici à la récupération suivante ; la même fiche
-  modifiée sur deux machines garde la modification la plus récente.
+  modifiée sur deux machines garde la modification la plus récente. Une fiche d'une autre machine
+  modifiée ici s'ajoute à la mémoire de cette machine, et arrive partout comme la plus récente.
 - **Publication** : « Copier l'historique dans le dépôt » écrit cette union, triée, dans `lab/runs.jsonl`
   d'un checkout que Marc choisit, à commettre avec la PR qui cite les exécutions ; `main` ne change
   toujours que par PR.
@@ -482,9 +484,10 @@ n'est installé hors du dossier personnel.
 fenêtre, avec le même lanceur, le même moniteur et les mêmes fiches, son journal sur la sortie standard,
 et sort avec le statut de la tâche ; la référence est par défaut celle de la tâche, `--force` la lance
 bien que la machine ne soit pas calme (son temps ne compte alors pas). `lab fetch` et `lab status` font
-ce que leur nom dit ; `lab push` et `--push` viennent avec les branches de M8. Un timer systemd ou un
-shell sur une autre machine peuvent les appeler (Q4 du §17 répondue). La fenêtre reste l'endroit où l'on
-regarde.
+ce que leur nom dit ; `lab push` récupère puis pousse la mémoire vivante vers la branche de cette machine
+(§4 bis), quoi que dise le réglage `push`, et `lab run … --push` le fait après l'exécution. Un timer
+systemd ou un shell sur une autre machine peuvent les appeler (Q4 du §17 répondue). La fenêtre reste
+l'endroit où l'on regarde.
 
 **CI.** Un workflow `lab.yml`, lancé seulement quand `lab/**` ou lui-même change (même filtre `paths` et
 même tâche `changes` que `lean.yml`) : `cargo build --release --locked` et `cargo test --locked` dans
@@ -518,7 +521,8 @@ L'amendement du 2026-11-08 en ajoute trois, une PR chacun, ce document d'abord :
 | M7 | le miroir, un checkout par commit, préparations une fois par checkout, `{ref}`, `pushed`, exécutions orphelines ; le catalogue, les tags et les résumés lus dans le miroir, plus aucun clone nécessaire ; les checkouts et le bouton Clean dans l'écran Machine ; `lab run`, `fetch`, `status` sans fenêtre | une tâche en file sur `v0.7.0` et sur `main` ; `lab run` depuis un shell, fenêtre fermée |
 | M8 | les branches `lab/runs-<machine>`, push selon la politique, `lab push` et `lab run --push`, lecture par union ; le filtre Machine de l'écran État | deux mémoires (un second nom de machine avec `--data`) poussées et relues ; l'écran identique depuis les deux dossiers |
 
-État au 2026-11-08 : M6 et M7 faits ; `lab push` est passé de M7 à M8, où sont les branches qu'il pousse.
+État au 2026-11-08 : M6, M7 et M8 faits ; `lab push` est passé de M7 à M8, où sont les branches qu'il
+pousse.
 
 ## 16. Ce qui ne peut pas être vérifié ici
 

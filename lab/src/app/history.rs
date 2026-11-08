@@ -55,7 +55,7 @@ impl App {
         }
         if ui
             .add_enabled(!self.copy_target.trim().is_empty(), egui::Button::new("Copy history to the repo"))
-            .on_hover_text("writes the runs lab recorded into lab/runs.jsonl of the clone named beside, to commit with the PR that cites them")
+            .on_hover_text("writes the runs lab recorded, on every machine, into lab/runs.jsonl of the clone named beside, to commit with the PR that cites them")
             .clicked()
         {
             let message = match self.copy_to_repository() {
@@ -73,28 +73,15 @@ impl App {
         .on_hover_text("the clone \"Copy history to the repo\" writes into: its lab/runs.jsonl");
     }
 
-    /// The live runs.jsonl copied to lab/runs.jsonl of the clone Marc names
-    /// (SPEC.md, sections 4 and 4b).
+    /// The union of the memories, sorted, written to lab/runs.jsonl of the
+    /// clone Marc names (SPEC.md, sections 4 and 4b).
     fn copy_to_repository(&self) -> Result<usize, String> {
         let clone = match crate::mirror::Target::parse(&self.copy_target) {
             crate::mirror::Target::Local(path) => path,
             crate::mirror::Target::Reference(text) => std::path::PathBuf::from(text),
         };
-        if !clone.join("lab").is_dir() {
-            return Err(format!("{}: not a clone with a lab/ folder", clone.display()));
-        }
-        let history = crate::store::History::read(&self.places.runs())?;
-        let mut text = String::new();
-        for run in &history.runs {
-            let line = serde_json::to_string(run).map_err(|error| error.to_string())?;
-            if let Some(path) = crate::catalogue::local_path(&line) {
-                return Err(format!("run {} names a local path ({path}): nothing copied", run.id));
-            }
-            text.push_str(&line);
-            text.push('\n');
-        }
-        crate::store::write_atomically(&clone.join("lab").join("runs.jsonl"), text.as_bytes())?;
-        Ok(history.runs.len())
+        let history = self.history.as_ref().map_err(|error| error.clone())?;
+        crate::machines::publish(history, &clone)
     }
 
     /// The comment and the papers of a run lab recorded, editable.
@@ -136,7 +123,7 @@ impl App {
                 edit.paper.map(|paper| PaperRef { paper, label: edit.label.trim().to_string() }).into_iter().collect();
             updated.edited = Some(Local::now().fixed_offset());
             match crate::store::replace(&self.places.runs(), &updated) {
-                Ok(()) => self.history = crate::store::History::read(&self.places.runs()),
+                Ok(()) => self.read_history(),
                 Err(error) => self.lock().messages.push(error),
             }
         }
@@ -244,7 +231,7 @@ impl App {
             edited: None,
         };
         crate::runner::write_record(&self.places, &run)?;
-        self.history = crate::store::History::read(&self.places.runs());
+        self.read_history();
         Ok(())
     }
 }

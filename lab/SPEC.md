@@ -102,14 +102,16 @@ the app sets (§7), not the whole inherited environment.
   orphan branch, as `gh-pages` is). Only that machine writes to it: every push is a fast-forward, there
   is never a conflict nor a race between two machines.
 - **Push**: after every run, by the `push` setting (`ask`, the default: a button in the top bar with the
-  count of records not yet pushed; `auto`; `never`). The push needs a key with write access to the
-  repository: Marc's on his machines, a deploy key limited to the repository on a machine that runs
-  at night (Q18).
+  count of records not yet pushed; `auto`; `never`). What is pushed is the union of the branch and the
+  live memory, so that a memory wiped on the machine loses nothing. The push needs a key with write
+  access to the repository: Marc's on his machines, a deploy key limited to the repository on a machine
+  that runs at night (Q18).
 - **Read**: at every opening and after every fetch, lab reads the `lab/runs-*` branches of the mirror
   into `<lab>/machines/` and unions them with the live memory of this machine: one line per run id,
   the latest `edited` wins, the rule §4 already has. A comment or a paper edited on another machine
   therefore reaches this one at the next fetch; the same record edited on two machines keeps the later
-  edit.
+  edit. A record of another machine edited here is added to this machine's memory, and reaches every
+  machine as the latest.
 - **Publication**: "Copy history to the repo" writes that union, sorted, to `lab/runs.jsonl` in a
   checkout Marc picks, to be committed with the PR that cites the runs; `main` still changes by PR
   only.
@@ -559,9 +561,10 @@ installed outside the home folder.
 **Headless.** `lab run <job> [--ref <reference>] [--force] [--threads <n>]` runs one job without a
 window, with the same runner, monitor and records, its log on stdout, and exits with the job's status;
 the reference defaults to the job's own, `--force` starts it although the machine is not calm (its time
-then not counting). `lab fetch` and `lab status` do what their names say; `lab push` and `--push` come
-with the branches of M8. A systemd timer or a shell on another machine can call them (Q4 of §17
-answered). The window stays the place where one watches.
+then not counting). `lab fetch` and `lab status` do what their names say; `lab push` fetches, then
+pushes the live memory to this machine's branch (§4b), whatever the `push` setting says, and
+`lab run … --push` does so after the run. A systemd timer or a shell on another machine can call them
+(Q4 of §17 answered). The window stays the place where one watches.
 
 **CI.** A workflow `lab.yml`, run only when `lab/**` or itself changes (the same `paths` filter and
 `changes` job as `lean.yml`): `cargo build --release --locked` and `cargo test --locked` in `lab/`, on
@@ -594,7 +597,7 @@ The amendment of 2026-11-08 adds three, each one PR, this document first:
 | M7 | the mirror, one checkout per commit, prepares once per checkout, `{ref}`, `pushed`, orphan runs; the catalogue, the tags and the summaries read from the mirror, so that no clone is needed; the checkouts and the Clean button in the Machine screen; `lab run`, `fetch`, `status` without a window | a job queued on `v0.7.0` and on `main`; `lab run` from a shell, the window closed |
 | M8 | the branches `lab/runs-<machine>`, push by policy, `lab push` and `lab run --push`, the union read; the Machine filter of the State screen | two memories (a second machine name with `--data`) pushed and read back; the screen the same from both folders |
 
-Status on 2026-11-08: M6 and M7 done; `lab push` went from M7 to M8, where the branches it pushes are.
+Status on 2026-11-08: M6, M7 and M8 done; `lab push` went from M7 to M8, where the branches it pushes are.
 
 ## 16. What cannot be verified here
 
