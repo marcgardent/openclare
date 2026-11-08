@@ -3,12 +3,16 @@
 #
 # command, prepare: shell lines run by `bash -c` in the checkout, from
 # `directory`. Placeholders: {threads} (the effective thread count), {repo}
-# (the root of the checkout), {commit} (its short hash), and the job's own
-# `parameters`, editable per queue item. `${...}` is left to the shell.
+# (the root of the checkout), {commit} (its short hash), {ref} (the reference
+# asked for), and the job's own `parameters`, editable per queue item.
+# `${...}` is left to the shell.
 # threads: "setting" (the global setting, the default) or a fixed number.
 # The app sets OPENCLARE_THREADS, RAYON_NUM_THREADS, RUST_TEST_THREADS and
 # CARGO_BUILD_JOBS to the effective count; `environment` overrides them.
-# checkout: "home" (the default), "ask", or { branch = "name" }.
+# checkout: the reference the job runs on, resolved in the mirror of the
+# repository: a tag ("v0.7.0"), a branch ("main", the default), a pull request
+# ("pull/301") or a hash; or "ask", Marc picking it per queue item. The
+# prepare of a job runs once per checkout (SPEC.md, section 7.3).
 # memory_limit_gb: the cap of `ulimit -v`, per process.
 # timing_matters: the job waits for a calm machine; its time may go into a paper.
 # summary: the JSON that records a run of the job in the repository (`#key` for a
@@ -118,7 +122,7 @@ description = "The doubles of the surfaces with borders through the Lean oracle,
 category = "lean-oracle"
 command = "export PATH=\"$HOME/.elan/bin:$PATH\"; python3 docs/research/turns-of-a-t-mesh/experiments/property/generate.py --count {count} --seed {seed} --borders && python3 docs/research/turns-of-a-t-mesh/lean/Check/check_exports.py scratch/data-package/property/double-seed-{seed} scratch/data-package/property/double-seed-{seed}/lean-check --jobs {threads}"
 prepare = "make proofs NOTE=turns-of-a-t-mesh"
-checkout = { branch = "worktree-borders" }
+checkout = "worktree-borders"
 parameters = { count = "50", seed = "1" }
 memory_limit_gb = 32
 timing_matters = true
@@ -143,7 +147,7 @@ tags = ["paper-B-data"]
 [[job]]
 name = "export-male-body"
 summary = "docs/research/turns-of-a-t-mesh/experiments/results/census.json#export_record"
-description = "Stage 1 of NIGHT.md: the export both papers read, the male body on the engine of v0.7.0 (about 2 minutes, the whole machine). The prepare refuses a checkout whose engine is not that of {frozen}: pick a worktree at v0.7.0."
+description = "Stage 1 of NIGHT.md: the export both papers read, the male body on the engine of v0.7.0 (about 2 minutes, the whole machine). The prepare refuses a checkout whose engine is not that of {frozen}: run it on v0.7.0."
 category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/export.py --openclare target/release/openclare --commit {frozen} --engine {variant} --source scratch/torso/source.obj"
 prepare = "git diff --quiet {frozen} HEAD -- crates Cargo.toml Cargo.lock && cargo build --release"

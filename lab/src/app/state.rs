@@ -1,19 +1,21 @@
-//! The State screen (SPEC.md, section 11): the last run of each job, on a tag
-//! or off-tag, and the tag filter.
+//! The State screen (SPEC.md, section 11): the last run of each job, on a tag,
+//! off-tag or orphan, the tag filter and the machine filter.
 
 use std::collections::BTreeSet;
 
 use eframe::egui::{self, RichText};
 
-use super::{AMBER, App, BLUE, GREEN, MUTED, Tab, duration_cell, stopwatch};
+use super::{AMBER, App, MUTED, Tab, duration_cell, place_style, stopwatch};
 use crate::model::{Paper, Run, Source};
-use crate::state::{last_runs, place, tag_of};
+use crate::state::{Class, class, last_runs, place, tag_of};
 
 /// The filters of the screen.
 #[derive(Default)]
 pub(super) struct StateView {
     /// None: all runs; else the name of a tag.
     tag: Option<String>,
+    /// None: every machine; else the runs one machine recorded (SPEC.md, §4b).
+    machine: Option<String>,
     show: Show,
     checked: BTreeSet<String>,
 }
@@ -24,6 +26,7 @@ enum Show {
     All,
     OnTag,
     OffTag,
+    Orphan,
     Never,
     UnderLoad,
 }
@@ -41,13 +44,31 @@ impl App {
         let catalogue = catalogue.clone();
         let runs = self.all_runs();
         let tags = self.tags.clone();
+        let reach = self.reach.clone();
         let chosen = self.state_view.tag.clone();
-        let last = match &chosen {
-            None => last_runs(&runs, |_| true),
-            Some(name) => last_runs(&runs, |run| tag_of(run, &tags).is_some_and(|tag| &tag.name == name)),
-        };
+        let machine = self.state_view.machine.clone();
+        let origin = &self.origin;
+        let last = last_runs(&runs, |run| {
+            chosen.as_ref().is_none_or(|name| tag_of(run, &tags).is_some_and(|tag| &tag.name == name))
+                && machine.as_ref().is_none_or(|machine| origin.get(&run.id) == Some(machine))
+        });
 
         ui.horizontal(|ui| {
+            ui.label("Machine");
+            let this = self.machines.first().cloned().unwrap_or_default();
+            let text = match &machine {
+                None => "every machine".to_string(),
+                Some(name) if name == &this => format!("{name} (this one)"),
+                Some(name) => name.clone(),
+            };
+            egui::ComboBox::from_id_salt("machine filter").selected_text(text).width(200.0).show_ui(ui, |ui| {
+                ui.selectable_value(&mut self.state_view.machine, None, "every machine");
+                for name in self.machines.clone() {
+                    let label = if name == this { format!("{name} (this one)") } else { name.clone() };
+                    ui.selectable_value(&mut self.state_view.machine, Some(name), label);
+                }
+            });
+            ui.add_space(10.0);
             ui.label("Tag");
             let text = chosen.clone().unwrap_or_else(|| "All runs: the last run of each job".to_string());
             egui::ComboBox::from_id_salt("tag filter").selected_text(text).width(320.0).show_ui(ui, |ui| {
@@ -58,17 +79,18 @@ impl App {
                 }
             });
             ui.label(
-                RichText::new("A run is on a tag when the one hash it records is the tag's; else it is off-tag and cannot back a paper.")
+                RichText::new("A run is on a tag when the one hash it records is the tag's; else it is off-tag, or orphan when no branch nor tag of the remote reaches it; neither can back a paper.")
                     .color(MUTED),
             );
         });
         ui.add_space(6.0);
 
         let names: Vec<&str> = catalogue.jobs.iter().map(|job| job.name.as_str()).collect();
-        let on_tag =
-            names.iter().filter(|name| last.get(**name).is_some_and(|run| tag_of(run, &tags).is_some())).count();
-        let off_tag =
-            names.iter().filter(|name| last.get(**name).is_some_and(|run| tag_of(run, &tags).is_none())).count();
+        let count = |wanted: Class| {
+            names.iter().filter(|name| last.get(**name).is_some_and(|run| class(run, &tags, &reach) == wanted)).count()
+        };
+        let (on_tag, off_tag, orphan) = (count(Class::OnTag), count(Class::OffTag), count(Class::Orphan));
+        let (green, blue, amber) = (place_style("v").0, place_style("off-tag").0, place_style("orphan").0);
         let missing: Vec<String> =
             names.iter().filter(|name| !last.contains_key(**name)).map(|name| name.to_string()).collect();
         ui.horizontal(|ui| {
@@ -79,12 +101,17 @@ impl App {
             };
             match &chosen {
                 None => {
-                    big(ui, on_tag, GREEN, "last run on a tag");
-                    big(ui, off_tag, BLUE, "last run off-tag");
-                    big(ui, missing.len(), ui.visuals().text_color(), "never run");
+                    big(ui, on_tag, green, "last run on a tag");
+                    big(ui, off_tag, blue, "last run off-tag");
+                    big(ui, orphan, amber, "last run orphan");
+                    let never = match &machine {
+                        Some(name) => format!("never run on {name}"),
+                        None => "never run".to_string(),
+                    };
+                    big(ui, missing.len(), ui.visuals().text_color(), &never);
                 }
                 Some(name) => {
-                    big(ui, on_tag, GREEN, &format!("with a run on {name}"));
+                    big(ui, on_tag, green, &format!("with a run on {name}"));
                     big(ui, missing.len(), ui.visuals().text_color(), &format!("without a run on {name}"));
                 }
             }
@@ -121,6 +148,7 @@ impl App {
                 (Show::All, "All"),
                 (Show::OnTag, "Last run on a tag"),
                 (Show::OffTag, "Last run off-tag"),
+                (Show::Orphan, "Last run orphan"),
                 (Show::Never, if chosen.is_some() { "No run on this tag" } else { "Never run" }),
                 (Show::UnderLoad, "Started under load"),
             ] {
@@ -132,8 +160,9 @@ impl App {
         let show = self.state_view.show;
         let keep = |run: Option<&&Run>| match (show, run) {
             (Show::All, _) => true,
-            (Show::OnTag, Some(run)) => tag_of(run, &tags).is_some(),
-            (Show::OffTag, Some(run)) => tag_of(run, &tags).is_none(),
+            (Show::OnTag, Some(run)) => class(run, &tags, &reach) == Class::OnTag,
+            (Show::OffTag, Some(run)) => class(run, &tags, &reach) == Class::OffTag,
+            (Show::Orphan, Some(run)) => class(run, &tags, &reach) == Class::Orphan,
             (Show::Never, None) => true,
             (Show::UnderLoad, Some(run)) => load1(run).is_some_and(|load| load >= 1.0),
             _ => false,
@@ -176,9 +205,9 @@ impl App {
                         });
                         match last.get(&job.name) {
                             Some(run) => {
-                                let place = place(run, &tags);
-                                let colour = if tag_of(run, &tags).is_some() { GREEN } else { BLUE };
-                                ui.label(RichText::new(place).monospace().color(colour));
+                                let place = place(run, &tags, &reach);
+                                let (colour, hint) = place_style(&place);
+                                ui.label(RichText::new(place).monospace().color(colour)).on_hover_text(hint);
                                 ui.monospace(run.started.format("%Y-%m-%d").to_string());
                                 duration_cell(ui, run, job.timing_matters);
                                 match load1(run) {

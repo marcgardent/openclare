@@ -15,12 +15,13 @@ use eframe::egui::{self, Color32, RichText};
 use egui_extras::{Column, TableBuilder};
 
 use crate::catalogue::{Catalogue, Category, Job, ThreadUse, render};
-use crate::home::{GitState, Places, Worktree, worktrees};
+use crate::home::{GitState, Places};
+use crate::mirror::{MAIN, Mirror, Target};
 use crate::model::{Paper, Run, Source, duration_text};
 use crate::monitor::{Calmness, Watch};
 use crate::runner::{Runner, Shared, recover};
-use crate::settings::{Policy, Settings};
-use crate::state::{Tag, place, repository_runs, tags};
+use crate::settings::{Policy, Push, Settings};
+use crate::state::{Reach, Tag, place, repository_runs};
 use crate::store::History;
 
 const AMBER: Color32 = Color32::from_rgb(255, 210, 122);
@@ -89,13 +90,40 @@ struct Filter {
     valid_only: bool,
 }
 
+/// The checkouts of the mirror and their sizes, measured on a thread of their own.
+type CheckoutSizes = Arc<Mutex<Option<Vec<(PathBuf, u64)>>>>;
+
+/// What the mirror says of a reference typed on an item of the queue.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct Resolution {
+    /// 40 hexadecimal digits.
+    pub commit: String,
+    pub short: String,
+    pub tag: Option<String>,
+    pub pushed: bool,
+    /// A local folder: tracked files differ from HEAD.
+    pub dirty: bool,
+    /// A checkout of that commit exists already (always, for a local folder).
+    pub checked_out: bool,
+}
+
 pub struct App {
     places: Places,
+    mirror: Mirror,
     settings: Settings,
     settings_error: Option<String>,
     catalogue: Result<Catalogue, String>,
+    /// Where the catalogue was read from, for the screens.
+    catalogue_source: String,
+    /// The memories met (SPEC.md, §4b): this machine's live one and the other
+    /// machines' as last fetched, one line per run id.
     history: Result<History, String>,
-    git: Result<GitState, String>,
+    /// The machine each run comes from.
+    origin: BTreeMap<String, String>,
+    /// Every machine met, this one first.
+    machines: Vec<String>,
+    /// The records of this machine its branch does not have yet.
+    unpushed: usize,
     modified: (Option<SystemTime>, Option<SystemTime>),
     last_look: Instant,
     tab: Tab,
@@ -105,7 +133,14 @@ pub struct App {
     // The monitor's samples, and the calm thresholds it and the runner read.
     watch: Arc<Mutex<Watch>>,
     calm: Arc<Mutex<crate::settings::CalmSettings>>,
-    worktrees: Vec<Worktree>,
+    /// The tags and the branches of the mirror, to pick a reference from.
+    references: Vec<String>,
+    /// What each reference typed resolves to, as the mirror said last.
+    resolutions: BTreeMap<String, Result<Resolution, String>>,
+    /// Whether each commit the runs name is pushed, as the mirror said last.
+    reach: Reach,
+    /// The mirror changes the runner counted, as last read.
+    mirror_seen: u64,
     search: String,
     comment: String,
     paper: Option<Paper>,
@@ -125,13 +160,16 @@ pub struct App {
     filter: Filter,
     sort: (SortBy, bool),
     run: Option<String>,
-    // State tab: the tags, the runs the repository's summaries record, and
-    // the commit they were read at.
+    // State tab: the tags and the runs the repository's summaries record, from the mirror.
     tags: Vec<Tag>,
     repository: Vec<Run>,
     repository_problems: Vec<String>,
-    repository_head: String,
     state_view: state::StateView,
+    /// The clone "Copy history to the repo" writes into.
+    copy_target: String,
+    /// Machine tab: the checkouts of the mirror and their sizes, measured apart.
+    checkout_sizes: CheckoutSizes,
+    clean_dialog: bool,
     /// Where to write a picture of the window, then close it.
     screenshot: Option<Screenshot>,
 }
@@ -158,6 +196,8 @@ pub struct Opening {
     pub after: f64,
     /// Press Run, or go on with a queue left paused.
     pub start: bool,
+    /// What main.rs has to say, shown with the runner's messages.
+    pub messages: Vec<String>,
 }
 
 /// A picture of the window itself, never of the screen, written as a PPM;
@@ -192,10 +232,13 @@ impl App {
             Ok(settings) => (settings, None),
             Err(error) => (Settings::default(), Some(error)),
         };
-        let catalogue = Catalogue::read(&places.jobs());
-        let worktrees = list_worktrees(&places);
+        let mirror = Mirror::new(&places.data, &settings.remote);
+        let (catalogue, catalogue_source) = read_catalogue(&places, &mirror);
         let mut shared = Shared::default();
-        recover(&places, catalogue.as_ref().ok(), &worktrees, &mut shared);
+        recover(&places, catalogue.as_ref().ok(), &mut shared);
+        shared.messages.extend(opening.messages.iter().cloned());
+        // The mirror is created at the first start (SPEC.md, §2).
+        shared.fetch_requested = !mirror.exists();
         let shared = Arc::new(Mutex::new(shared));
         let machine = crate::machine::machine(&settings.machine_label);
         let watch = Arc::new(Mutex::new(Watch::default()));
@@ -203,15 +246,27 @@ impl App {
         let period = Duration::from_secs(u64::from(settings.sample_seconds.clamp(1, 5)));
         let repaint = context.clone();
         crate::monitor::spawn(watch.clone(), calm.clone(), period, Box::new(move || repaint.request_repaint()));
-        Runner::new(shared.clone(), places.clone(), machine, Box::new(move || context.request_repaint()))
-            .with_monitor(watch.clone(), calm.clone())
-            .spawn();
+        Runner::new(
+            shared.clone(),
+            places.clone(),
+            mirror.clone(),
+            machine,
+            Box::new(move || context.request_repaint()),
+        )
+        .with_monitor(watch.clone(), calm.clone())
+        .with_push(settings.push, settings.machine.clone())
+        .spawn();
+        let copy_target = places.home.as_ref().map(|home| home.to_string_lossy().into_owned()).unwrap_or_default();
         let mut app = App {
             catalogue,
-            history: History::read(&places.runs()),
-            git: GitState::read(&places.home),
-            modified: (modified(&places.jobs()), modified(&places.runs())),
+            catalogue_source,
+            history: Ok(History::default()),
+            origin: BTreeMap::new(),
+            machines: Vec::new(),
+            unpushed: 0,
+            modified: (places.catalogue_file().as_deref().and_then(modified), modified(&places.runs())),
             places,
+            mirror,
             settings,
             settings_error,
             last_look: Instant::now(),
@@ -220,7 +275,10 @@ impl App {
             shared,
             watch,
             calm,
-            worktrees,
+            references: Vec::new(),
+            resolutions: BTreeMap::new(),
+            reach: Reach::new(),
+            mirror_seen: 0,
             search: String::new(),
             comment: String::new(),
             paper: None,
@@ -238,8 +296,10 @@ impl App {
             tags: Vec::new(),
             repository: Vec::new(),
             repository_problems: Vec::new(),
-            repository_head: String::new(),
             state_view: state::StateView::default(),
+            copy_target,
+            checkout_sizes: Arc::new(Mutex::new(None)),
+            clean_dialog: false,
             screenshot: opening.screenshot.map(|path| Screenshot {
                 path,
                 at: Instant::now() + Duration::from_secs_f64(opening.after.max(0.0)),
@@ -264,37 +324,111 @@ impl App {
         app
     }
 
-    /// Reads again what changed on the disk: jobs.toml edited by hand,
-    /// runs.jsonl written by another process, a commit made.
+    /// Reads again what changed: a catalogue file edited by hand, runs.jsonl
+    /// written by another process, the mirror fetched or a checkout added.
     fn look_again(&mut self) {
+        let moved = self.lock().mirror_changes;
+        if moved != self.mirror_seen {
+            self.mirror_seen = moved;
+            self.read_repository();
+            return;
+        }
         if self.last_look.elapsed() < RELOAD {
             return;
         }
         self.last_look = Instant::now();
-        let now = (modified(&self.places.jobs()), modified(&self.places.runs()));
-        if now.0 != self.modified.0 {
-            self.catalogue = Catalogue::read(&self.places.jobs());
+        let now = (self.places.catalogue_file().as_deref().and_then(modified), modified(&self.places.runs()));
+        if now.0 != self.modified.0 && self.places.catalogue_file().is_some() {
+            (self.catalogue, self.catalogue_source) = read_catalogue(&self.places, &self.mirror);
         }
         if now.1 != self.modified.1 {
-            self.history = History::read(&self.places.runs());
+            self.read_history();
+            self.reach_all();
         }
         self.modified = now;
-        self.git = GitState::read(&self.places.home);
-        self.worktrees = list_worktrees(&self.places);
-        self.read_repository();
     }
 
-    /// The tags and the repository's runs, read again when HEAD moved.
+    /// The memories met, read again (SPEC.md, §4b): the other machines' as
+    /// the folder has them, this machine's live one, and what of it is not
+    /// pushed yet.
+    pub(crate) fn read_history(&mut self) {
+        match crate::machines::union(&self.places, &self.settings.machine) {
+            Ok(union) => {
+                self.history = Ok(union.history);
+                self.origin = union.origin;
+                self.machines = union.machines;
+            }
+            Err(error) => self.history = Err(error),
+        }
+        self.unpushed = crate::machines::unpushed(&self.places, &self.mirror, &self.settings.machine).unwrap_or(0);
+        self.modified.1 = modified(&self.places.runs());
+    }
+
+    /// Everything read from the mirror, again: the catalogue at `main`, the
+    /// tags, the branches, the repository's runs, what the references of the
+    /// queue resolve to, which commits are pushed.
     fn read_repository(&mut self) {
-        let head = self.git.as_ref().map(|git| git.commit.clone()).unwrap_or_default();
-        if head == self.repository_head && !head.is_empty() {
+        if let Err(error) = crate::machines::refresh(&self.places, &self.mirror) {
+            self.lock().messages.push(format!("machines: {error}"));
+        }
+        self.read_history();
+        (self.catalogue, self.catalogue_source) = read_catalogue(&self.places, &self.mirror);
+        self.tags = self.mirror.tags();
+        self.references = self.tags.iter().map(|tag| tag.name.clone()).collect();
+        self.references.extend(self.mirror.branches());
+        if let Ok(catalogue) = &self.catalogue {
+            (self.repository, self.repository_problems) = repository_runs(&self.mirror, catalogue);
+        }
+        self.resolutions.clear();
+        self.reach.clear();
+        self.reach_all();
+    }
+
+    /// Whether each commit the runs name is pushed, asked of the mirror once per commit.
+    fn reach_all(&mut self) {
+        if !self.mirror.exists() {
             return;
         }
-        self.repository_head = head;
-        self.tags = tags(&self.places.home);
-        if let Ok(catalogue) = &self.catalogue {
-            (self.repository, self.repository_problems) = repository_runs(&self.places.home, catalogue);
+        let commits: Vec<String> = self
+            .history
+            .as_ref()
+            .map(|history| {
+                history.runs.iter().filter_map(|run| run.git.as_ref().map(|git| git.commit.clone())).collect()
+            })
+            .unwrap_or_default();
+        for commit in commits {
+            if !self.reach.contains_key(&commit) {
+                let pushed = self.mirror.pushed(&commit);
+                self.reach.insert(commit, pushed);
+            }
         }
+    }
+
+    /// What a target typed on an item resolves to, asked of the mirror once per text.
+    pub(crate) fn resolution(&mut self, text: &str) -> Result<Resolution, String> {
+        if let Some(known) = self.resolutions.get(text) {
+            return known.clone();
+        }
+        let resolution = match Target::parse(text) {
+            Target::Local(path) => GitState::read(&path).map(|git| Resolution {
+                tag: self.tags.iter().find(|tag| tag.commit == git.commit).map(|tag| tag.name.clone()),
+                pushed: self.mirror.pushed(&git.commit),
+                dirty: git.dirty,
+                checked_out: true,
+                short: git.short,
+                commit: git.commit,
+            }),
+            Target::Reference(reference) => self.mirror.resolve(&reference).map(|commit| Resolution {
+                short: commit.chars().take(7).collect(),
+                tag: self.tags.iter().find(|tag| tag.commit == commit).map(|tag| tag.name.clone()),
+                pushed: self.mirror.pushed(&commit),
+                dirty: false,
+                checked_out: self.mirror.checkouts().iter().any(|checkout| checkout.head == commit),
+                commit,
+            }),
+        };
+        self.resolutions.insert(text.to_string(), resolution.clone());
+        resolution
     }
 
     /// The runs lab recorded and those the repository's summaries record.
@@ -314,8 +448,9 @@ impl App {
             .unwrap_or_default()
     }
 
-    fn commit(&self) -> String {
-        self.git.as_ref().map(|git| git.short.clone()).unwrap_or_else(|_| "unknown".to_string())
+    /// The short hash of `main`, for the previews of the catalogue.
+    fn commit(&mut self) -> String {
+        self.resolution(MAIN).map(|resolution| resolution.short).unwrap_or_else(|_| "unknown".to_string())
     }
 
     fn set_threads(&mut self, threads: u32) {
@@ -328,11 +463,25 @@ impl App {
     }
 }
 
-/// The checkouts a job can run in; the home checkout alone if git cannot say.
-fn list_worktrees(places: &Places) -> Vec<Worktree> {
-    worktrees(&places.home).ok().filter(|found| !found.is_empty()).unwrap_or_else(|| {
-        vec![Worktree { path: places.home.clone(), relative: ".".to_string(), branch: None, head: String::new() }]
-    })
+/// The catalogue, and where it comes from (SPEC.md, §2): the file given by
+/// hand, else `lab/jobs.toml` at `main` of the mirror, else, while there is
+/// no mirror, the clone lab was started in.
+fn read_catalogue(places: &Places, mirror: &Mirror) -> (Result<Catalogue, String>, String) {
+    if let Some(file) = &places.catalogue {
+        return (Catalogue::read(file), file.display().to_string());
+    }
+    if mirror.exists() {
+        let source = format!("lab/jobs.toml at {MAIN} of the mirror");
+        let read = match mirror.show(MAIN, "lab/jobs.toml") {
+            Some(text) => Catalogue::parse(&text).map_err(|error| format!("{source}: {error}")),
+            None => Err(format!("{MAIN} of the mirror has no lab/jobs.toml")),
+        };
+        return (read, source);
+    }
+    match places.catalogue_file() {
+        Some(file) => (Catalogue::read(&file), format!("{} (no mirror yet)", file.display())),
+        None => (Err("no catalogue yet: the mirror is being created".to_string()), "none yet".to_string()),
+    }
 }
 
 impl eframe::App for App {
@@ -357,14 +506,28 @@ impl eframe::App for App {
             egui::Window::new("About lab").open(&mut open).resizable(false).show(ui.ctx(), |ui| {
                 ui.label("The record and the launcher of openclare's computations (lab/SPEC.md).");
                 egui::Grid::new("places").num_columns(2).show(ui, |ui| {
-                    for (name, path) in [
-                        ("Home checkout", self.places.home.clone()),
-                        ("Catalogue", self.places.jobs()),
-                        ("Runs", self.places.runs()),
-                        ("Settings", self.places.settings()),
+                    let home = self.places.home.as_ref().map_or("none".to_string(), |home| home.display().to_string());
+                    for (name, text) in [
+                        ("Folder", self.places.data.display().to_string()),
+                        ("Mirror", format!("{} ← {}", self.mirror.path.display(), self.mirror.url)),
+                        ("Checkouts", self.mirror.checkouts.display().to_string()),
+                        ("Catalogue", self.catalogue_source.clone()),
+                        ("Runs", self.places.runs().display().to_string()),
+                        (
+                            "Machine",
+                            format!(
+                                "{} · branch {} · {} runs not pushed",
+                                self.settings.machine,
+                                crate::mirror::runs_branch(&self.settings.machine),
+                                self.unpushed
+                            ),
+                        ),
+                        ("Machines", crate::machines::folder(&self.places).display().to_string()),
+                        ("Settings", self.places.settings().display().to_string()),
+                        ("Started in", home),
                     ] {
                         ui.label(RichText::new(name).color(MUTED));
-                        ui.monospace(path.display().to_string());
+                        ui.monospace(text);
                         ui.end_row();
                     }
                 });
@@ -469,20 +632,64 @@ impl App {
         ui.horizontal(|ui| {
             ui.label(RichText::new("lab").strong().size(18.0));
             ui.add_space(8.0);
-            match &self.git {
-                Ok(git) => {
-                    let branch = git.branch.clone().unwrap_or_else(|| "detached".to_string());
-                    let mut text = format!("home: {branch} · {}", git.short);
-                    if git.dirty {
-                        text.push_str(" · modified");
-                    }
-                    if git.worktree {
-                        text.push_str(" · a worktree");
-                    }
-                    ui.label(RichText::new(text).monospace().color(MUTED));
+            let (activity, fetched, pushed) = {
+                let shared = self.lock();
+                (shared.activity.clone(), shared.fetched.clone(), shared.pushed.clone())
+            };
+            match &activity {
+                Some(activity) => {
+                    ui.spinner();
+                    ui.label(RichText::new(format!("mirror: {activity}…")).color(AMBER));
                 }
-                Err(error) => {
-                    ui.colored_label(RED, format!("git: {error}"));
+                None if !self.mirror.exists() => {
+                    ui.colored_label(RED, "no mirror: Fetch creates it");
+                }
+                None => {
+                    let when = match &fetched {
+                        Some((at, said)) => {
+                            ui.label(RichText::new(format!("mirror: fetched {}", at.format("%H:%M"))).color(MUTED))
+                                .on_hover_text(said);
+                            None
+                        }
+                        None => self.mirror.last_fetch().map(chrono::DateTime::<chrono::Local>::from),
+                    };
+                    if let Some(at) = when {
+                        let text = format!("mirror: fetched {}", at.format("%Y-%m-%d %H:%M"));
+                        ui.label(RichText::new(text).color(MUTED)).on_hover_text(self.mirror.url.clone());
+                    }
+                }
+            }
+            if ui
+                .add_enabled(activity.is_none(), egui::Button::new("Fetch"))
+                .on_hover_text(format!("git fetch --prune from {}", self.mirror.url))
+                .clicked()
+            {
+                self.lock().fetch_requested = true;
+            }
+            // The records not yet pushed to this machine's branch (SPEC.md, §4b).
+            let branch = crate::mirror::runs_branch(&self.settings.machine);
+            match self.settings.push {
+                Push::Never => {
+                    ui.label(RichText::new(format!("{} not pushed (setting: never)", self.unpushed)).color(MUTED))
+                        .on_hover_text(format!("push = \"never\" in settings.toml: nothing goes to {branch}"));
+                }
+                policy => {
+                    let hint = match &pushed {
+                        Some((at, said)) => format!("to {branch}; last: {said} at {}", at.format("%H:%M")),
+                        None => format!("git push to {branch}, the memory of this machine"),
+                    };
+                    let label = if policy == Push::Auto && self.unpushed == 0 {
+                        "Push (auto)".to_string()
+                    } else {
+                        format!("Push ({})", self.unpushed)
+                    };
+                    if ui
+                        .add_enabled(activity.is_none() && self.mirror.exists(), egui::Button::new(label))
+                        .on_hover_text(hint)
+                        .clicked()
+                    {
+                        self.lock().push_requested = true;
+                    }
                 }
             }
             ui.add_space(8.0);
@@ -644,17 +851,18 @@ impl App {
                     }
                 });
                 ui.add_space(8.0);
+                let commit = self.commit();
                 ui.label(
                     RichText::new(format!(
-                        "AS IT WOULD RUN, WITH {} THREADS AND COMMIT {}",
+                        "AS IT WOULD RUN, WITH {} THREADS, ON {} AT {commit}",
                         self.settings.threads,
-                        self.commit()
+                        job.checkout.initial()
                     ))
                     .small()
                     .strong()
                     .color(MUTED),
                 );
-                let values = job.values(self.settings.threads, &self.commit(), None, &BTreeMap::new());
+                let values = job.values(self.settings.threads, &commit, &job.checkout.initial(), None, &BTreeMap::new());
                 command_lines(ui, job, &values);
                 match job.environment_for(&values) {
                     Ok(environment) => {
@@ -668,9 +876,10 @@ impl App {
                 }
                 ui.add_space(12.0);
                 ui.label(
-                    RichText::new(
-                        "Edit jobs.toml by hand: the app reads it again within two seconds. Editing here is not in M1.",
-                    )
+                    RichText::new(format!(
+                        "Read from {}. Edit jobs.toml by hand; a catalogue file is read again within two seconds, the mirror's at the next fetch. Editing here is not in M1.",
+                        self.catalogue_source
+                    ))
                     .color(MUTED),
                 );
             });
@@ -759,12 +968,14 @@ impl App {
         if let Some(run) = &detail {
             egui::Panel::right("run").resizable(true).default_size(460.0).show(ui, |ui| {
                 egui::ScrollArea::vertical().auto_shrink([false; 2]).show(ui, |ui| {
-                    run_detail(ui, run, &self.places.data, timed.contains(&run.job));
+                    let origin = self.origin.get(&run.id).cloned();
+                    run_detail(ui, run, &self.places.data, timed.contains(&run.job), origin.as_deref());
                     self.edit_panel(ui, run);
                 });
             });
         }
         let tags = self.tags.clone();
+        let reach = self.reach.clone();
         let mut sort = self.sort;
         let mut clicked = None;
         egui::CentralPanel::default().show(ui, |ui| {
@@ -826,10 +1037,9 @@ impl App {
                             duration_cell(ui, run, timed.contains(&run.job));
                         });
                         row.col(|ui| {
-                            let place = place(run, &tags);
-                            let colour = if place.starts_with('v') { GREEN } else { BLUE };
-                            ui.colored_label(colour, RichText::new(place).monospace())
-                                .on_hover_text("a run on a tag can back a paper; an off-tag run cannot");
+                            let place = place(run, &tags, &reach);
+                            let (colour, hint) = place_style(&place);
+                            ui.colored_label(colour, RichText::new(place).monospace()).on_hover_text(hint);
                         });
                         row.col(|ui| {
                             ui.monospace(run.threads.map_or("?".to_string(), |threads| threads.effective.to_string()));
@@ -874,6 +1084,19 @@ fn command_lines(ui: &mut egui::Ui, job: &Job, values: &BTreeMap<String, String>
     };
 }
 
+/// The colour of a run's place, and why it matters (SPEC.md, §10b).
+pub(crate) fn place_style(place: &str) -> (Color32, &'static str) {
+    if place.starts_with("orphan") {
+        (AMBER, "its commit is reachable from no branch nor tag of the remote: nobody can check out what ran")
+    } else if place.starts_with("off-tag") {
+        (BLUE, "a run on a tag can back a paper; an off-tag run cannot")
+    } else if place.starts_with("no hash") {
+        (MUTED, "the record names no commit")
+    } else {
+        (GREEN, "on a tag: it can back a paper")
+    }
+}
+
 fn category_word(category: Category) -> &'static str {
     match category {
         Category::Build => "build",
@@ -907,7 +1130,7 @@ fn calm_mark(run: &Run) -> (&'static str, Color32) {
     }
 }
 
-fn run_detail(ui: &mut egui::Ui, run: &Run, data: &Path, timing_matters: bool) {
+fn run_detail(ui: &mut egui::Ui, run: &Run, data: &Path, timing_matters: bool, origin: Option<&str>) {
     ui.horizontal(|ui| {
         ui.label(RichText::new(&run.job).strong().size(18.0));
         stopwatch(ui, timing_matters);
@@ -938,9 +1161,16 @@ fn run_detail(ui: &mut egui::Ui, run: &Run, data: &Path, timing_matters: bool) {
     }
     let memory = run.memory_limit_gb.map(|gb| format!(" · memory cap {gb} GB")).unwrap_or_default();
     rows.push(("Checkout", format!("{} · directory {}{memory}", run.checkout, run.directory)));
+    if let Some(origin) = origin {
+        rows.push(("Recorded by", format!("{origin} (its branch {})", crate::mirror::runs_branch(origin))));
+    }
     if let Some(git) = &run.git {
         let branch = git.branch.clone().unwrap_or_default();
-        rows.push(("Git", format!("{} {} {branch}", git.commit, if git.dirty { "modified" } else { "clean" })));
+        let pushed = if git.pushed { "pushed" } else { "not pushed when it ran" };
+        rows.push((
+            "Git",
+            format!("{} {} {branch} · {pushed}", git.commit, if git.dirty { "modified" } else { "clean" }),
+        ));
     }
     if let Some(threads) = run.threads {
         rows.push(("Threads", format!("{} (setting {})", threads.effective, threads.setting)));

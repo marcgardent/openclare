@@ -2,10 +2,12 @@
 //!
 //! The window and the runner share the queue behind a mutex. The runner is a
 //! thread of its own, so a queue goes on while the window is not drawn. It
-//! runs one job at a time: its prepare, then its command, each `bash -c` in
-//! a process group of its own, stdout and stderr in the run's log; then it
-//! writes the record. `state.json` says, at every step, what is under way,
-//! so that a run left behind by an app that died can be recorded.
+//! fetches the mirror before a queue and on request, resolves the reference
+//! of each item and checks that commit out, then runs one job at a time: its
+//! prepare, then its command, each `bash -c` in a process group of its own,
+//! stdout and stderr in the run's log; then it writes the record.
+//! `state.json` says, at every step, what is under way, so that a run left
+//! behind by an app that died can be recorded.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::File;
@@ -24,11 +26,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::catalogue::{Catalogue, Job, local_path, render};
 use crate::files;
-use crate::home::{GitState, Places, Worktree};
+use crate::home::{GitState, Places};
 use crate::machine;
+use crate::mirror::{Mirror, Target};
 use crate::model::{Calm, FORMAT, FileRef, Git, Machine, PaperRef, Prepare, Run, Source, Status, Threads};
 use crate::monitor::{self, Calmness, Verdict, Watch};
-use crate::settings::{CalmSettings, Policy};
+use crate::settings::{CalmSettings, Policy, Push};
 
 /// How often the runner looks at its child.
 const TICK: Duration = Duration::from_millis(200);
@@ -36,13 +39,18 @@ const TICK: Duration = Duration::from_millis(200);
 /// What a run records of its calm until the monitor exists (milestone M3).
 const NOT_MEASURED: &str = "not measured: lab ran without its monitor";
 
+/// The file at the root of a checkout of the mirror that lists the prepares
+/// done in it (SPEC.md, §7.3): one per line, "<when>\t<job>\t<command>".
+pub const PREPARED: &str = ".lab-prepared";
+
 #[derive(Clone, Debug)]
 pub struct Item {
     pub key: u64,
     pub job: Job,
     /// The values chosen for the job's parameters.
     pub parameters: BTreeMap<String, String>,
-    pub checkout: Worktree,
+    /// Where it runs, as typed: a reference, or a folder (`Target::parse`).
+    pub target: String,
     pub state: ItemState,
     /// Started although the machine was not calm: its time cannot be reported.
     pub forced: bool,
@@ -121,6 +129,18 @@ pub struct Shared {
     /// Why the item at the head of the queue waits: its timing matters and
     /// the machine is not calm.
     pub waiting_for_calm: Option<String>,
+    /// The window asked for a fetch of the mirror; the runner does it.
+    pub fetch_requested: bool,
+    /// What the runner does with the mirror now: "fetching", "checking out e13fadb".
+    pub activity: Option<String>,
+    /// Counts the fetches and the checkouts added: the window reads the mirror again when it moves.
+    pub mirror_changes: u64,
+    /// What the last fetch said, and when.
+    pub fetched: Option<(DateTime<Local>, String)>,
+    /// The window asked for a push of the live memory (SPEC.md, §4b); the runner does it.
+    pub push_requested: bool,
+    /// What the last push said, and when.
+    pub pushed: Option<(DateTime<Local>, String)>,
     next_key: u64,
 }
 
@@ -131,17 +151,10 @@ impl Default for Mode {
 }
 
 impl Shared {
-    pub fn add(&mut self, job: Job, checkout: Worktree) -> u64 {
+    pub fn add(&mut self, job: Job, target: String) -> u64 {
         self.next_key += 1;
         let parameters = job.parameters.clone();
-        self.items.push(Item {
-            key: self.next_key,
-            job,
-            parameters,
-            checkout,
-            state: ItemState::Waiting,
-            forced: false,
-        });
+        self.items.push(Item { key: self.next_key, job, parameters, target, state: ItemState::Waiting, forced: false });
         self.next_key
     }
 
@@ -176,6 +189,7 @@ pub struct State {
 pub struct SavedItem {
     pub job: String,
     pub parameters: BTreeMap<String, String>,
+    /// The target as typed.
     pub checkout: String,
 }
 
@@ -208,7 +222,7 @@ pub fn write_record(places: &Places, run: &Run) -> Result<(), String> {
 /// A run left behind by an app that ended during it (SPEC.md, section 8.5):
 /// recorded `Interrupted` if its processes are gone, else handed to Marc;
 /// the items that were waiting come back, the queue paused.
-pub fn recover(places: &Places, catalogue: Option<&Catalogue>, worktrees: &[Worktree], shared: &mut Shared) {
+pub fn recover(places: &Places, catalogue: Option<&Catalogue>, shared: &mut Shared) {
     let Ok(text) = std::fs::read_to_string(state_path(places)) else { return };
     let state: State = match serde_json::from_str(&text) {
         Ok(state) => state,
@@ -237,17 +251,27 @@ pub fn recover(places: &Places, catalogue: Option<&Catalogue>, worktrees: &[Work
         }
     }
     for saved in state.items {
-        let job = catalogue.and_then(|catalogue| catalogue.job(&saved.job)).cloned();
-        let checkout = worktrees.iter().find(|worktree| worktree.relative == saved.checkout).cloned();
-        match (job, checkout) {
-            (Some(job), Some(checkout)) => {
-                let key = shared.add(job, checkout);
+        // "." named the clone lab sat in, before M7: the clone it is started in now, if any.
+        let target = match (saved.checkout.as_str(), &places.home) {
+            (".", Some(home)) => home.to_string_lossy().into_owned(),
+            (".", None) => {
+                shared.messages.push(format!(
+                    "state.json: {} was queued in a clone lab no longer knows: not queued again",
+                    saved.job
+                ));
+                continue;
+            }
+            _ => saved.checkout,
+        };
+        match catalogue.and_then(|catalogue| catalogue.job(&saved.job)).cloned() {
+            Some(job) => {
+                let key = shared.add(job, target);
                 if let Some(item) = shared.items.iter_mut().find(|item| item.key == key) {
                     item.parameters = saved.parameters;
                 }
             }
-            _ => {
-                shared.messages.push(format!("state.json: {} in {} cannot be queued again", saved.job, saved.checkout))
+            None => {
+                shared.messages.push(format!("state.json: {} is not in the catalogue: not queued again", saved.job))
             }
         }
     }
@@ -299,7 +323,8 @@ struct Running {
     since: SystemTime,
     stop_sent: Option<Instant>,
     killed: bool,
-    prepare_key: Option<String>,
+    /// The prepare under way, to remember once done: its key, and the command as executed.
+    prepare_key: Option<(String, String)>,
     during: During,
 }
 
@@ -316,11 +341,14 @@ struct During {
 pub struct Runner {
     shared: Arc<Mutex<Shared>>,
     places: Places,
+    mirror: Mirror,
     machine: Machine,
     repaint: Box<dyn Fn() + Send>,
     running: Option<Running>,
-    /// The prepares done in this session: checkout, commit, command.
+    /// The prepares done in local checkouts this session: queue, folder, commit, command.
     prepared: Vec<(String, String)>,
+    /// The queue the mirror was fetched for (SPEC.md, §8.1: before every queue).
+    fetched_queue: Option<String>,
     ids: BTreeSet<String>,
     /// What state.json holds, as last written: None for no file.
     written: Option<Option<String>>,
@@ -328,25 +356,48 @@ pub struct Runner {
     monitor: Option<(Arc<Mutex<Watch>>, Arc<Mutex<CalmSettings>>)>,
     /// Since when the head of the queue waits for a calm machine.
     waiting_since: Option<DateTime<Local>>,
+    /// When the live memory is pushed to this machine's branch, and the
+    /// machine's name (SPEC.md, §4b): never, until `with_push` says.
+    push: Push,
+    machine_name: String,
 }
 
 impl Runner {
-    pub fn new(shared: Arc<Mutex<Shared>>, places: Places, machine: Machine, repaint: Box<dyn Fn() + Send>) -> Runner {
+    pub fn new(
+        shared: Arc<Mutex<Shared>>,
+        places: Places,
+        mirror: Mirror,
+        machine: Machine,
+        repaint: Box<dyn Fn() + Send>,
+    ) -> Runner {
         let ids = crate::store::History::read(&places.runs())
             .map(|history| history.runs.into_iter().map(|run| run.id).collect())
             .unwrap_or_default();
         Runner {
             shared,
             places,
+            mirror,
             machine,
             repaint,
             running: None,
             prepared: Vec::new(),
+            fetched_queue: None,
             ids,
             written: None,
             monitor: None,
             waiting_since: None,
+            push: Push::Never,
+            machine_name: crate::machine::hostname(),
         }
+    }
+
+    /// The push policy and the name of this machine: `Auto` pushes the live
+    /// memory after every record written; every policy but `Never` pushes on
+    /// request.
+    pub fn with_push(mut self, push: Push, machine_name: String) -> Runner {
+        self.push = push;
+        self.machine_name = machine_name;
+        self
     }
 
     /// The monitor whose verdict holds a job whose timing matters, and whose
@@ -393,6 +444,11 @@ impl Runner {
         self.shared.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
     }
 
+    /// No run under way on this runner.
+    pub fn idle(&self) -> bool {
+        self.running.is_none()
+    }
+
     fn message(&self, text: String) {
         self.lock().messages.push(text);
         (self.repaint)();
@@ -405,6 +461,14 @@ impl Runner {
     }
 
     fn look(&mut self) {
+        // A fetch or a push asked for is done even during a run: git touches
+        // no checkout, and the run is looked at again right after.
+        if self.lock().fetch_requested {
+            self.fetch();
+        }
+        if self.lock().push_requested {
+            self.push_memory();
+        }
         if self.running.is_some() {
             self.watch();
             return;
@@ -424,6 +488,17 @@ impl Runner {
                 .find(|item| item.state == ItemState::Waiting)
                 .map(|item| (item.job.clone(), item.forced))
         };
+        // The mirror is fetched once before each queue that runs on a reference.
+        let queue_id = self.lock().queue.id.clone();
+        if head.is_some()
+            && self.fetched_queue.as_deref() != Some(queue_id.as_str())
+            && self.lock().items.iter().any(|item| {
+                item.state == ItemState::Waiting && matches!(Target::parse(&item.target), Target::Reference(_))
+            })
+        {
+            self.fetched_queue = Some(queue_id);
+            self.fetch();
+        }
         if let Some((job, false)) = &head
             && job.timing_matters
             && let Some(verdict) = self.verdict()
@@ -487,23 +562,120 @@ impl Runner {
         id
     }
 
+    /// Pushes the live memory to this machine's branch (SPEC.md, §4b); what
+    /// went wrong goes to the messages.
+    fn push_memory(&mut self) {
+        {
+            let mut shared = self.lock();
+            shared.push_requested = false;
+            if self.push == Push::Never {
+                shared.messages.push("push: the setting says never".to_string());
+                return;
+            }
+            shared.activity = Some("pushing".to_string());
+        }
+        (self.repaint)();
+        let result = crate::machines::push(&self.places, &self.mirror, &self.machine_name);
+        let mut shared = self.lock();
+        shared.activity = None;
+        shared.mirror_changes += 1;
+        match result {
+            Ok(said) => shared.pushed = Some((Local::now(), said)),
+            Err(error) => shared.messages.push(format!("push: {error}")),
+        }
+        drop(shared);
+        (self.repaint)();
+    }
+
+    /// Fetches the mirror, creating it from the clone lab was started in or
+    /// from the remote (SPEC.md, §2); what went wrong goes to the messages.
+    fn fetch(&mut self) {
+        {
+            let mut shared = self.lock();
+            shared.fetch_requested = false;
+            shared.activity = Some(if self.mirror.exists() { "fetching" } else { "creating the mirror" }.to_string());
+        }
+        (self.repaint)();
+        let seed = self.places.seed();
+        let result = self.mirror.fetch(seed.as_deref());
+        let mut shared = self.lock();
+        shared.activity = None;
+        shared.mirror_changes += 1;
+        match result {
+            Ok(said) => shared.fetched = Some((Local::now(), said)),
+            Err(error) => shared.messages.push(format!("mirror: {error}")),
+        }
+        drop(shared);
+        (self.repaint)();
+    }
+
+    /// The checkout an item runs in, with what git says of it: the folder
+    /// given by hand, or the commit its reference names, checked out of the
+    /// mirror if not already (SPEC.md, §8.1).
+    fn checkout(&self, item: &Item) -> Result<(PathBuf, GitState, Target), String> {
+        let target = Target::parse(&item.target);
+        let root = match &target {
+            Target::Local(path) => {
+                if !path.is_dir() {
+                    return Err(format!("{}: no such folder", path.display()));
+                }
+                path.clone()
+            }
+            Target::Reference(reference) => {
+                let hash = self.mirror.resolve(reference)?;
+                let short: String = hash.chars().take(7).collect();
+                self.lock().activity = Some(format!("checking out {reference} ({short})"));
+                (self.repaint)();
+                let added = self.mirror.checkout(&hash);
+                let mut shared = self.lock();
+                shared.activity = None;
+                shared.mirror_changes += 1;
+                drop(shared);
+                added?
+            }
+        };
+        let mut git = GitState::read(&root)?;
+        if let Target::Reference(reference) = &target {
+            git.branch = Some(reference.clone());
+        }
+        Ok((root, git, target))
+    }
+
     fn begin(&mut self, item: &Item, queue: &QueueSettings) -> Result<(), String> {
-        let job = &item.job;
-        let checkout = item.checkout.path.clone();
+        let (checkout, git, target) = self.checkout(item)?;
+        let pushed = self.mirror.pushed(&git.commit);
+        // The catalogue of the commit run, when it has one with this job (SPEC.md, §2).
+        let mut catalogue_line = "catalogue: the one lab shows".to_string();
+        let mut job = item.job.clone();
+        if let Target::Reference(_) = &target
+            && let Ok(at_commit) = Catalogue::read(&checkout.join("lab").join("jobs.toml"))
+        {
+            match at_commit.job(&job.name) {
+                Some(found) => {
+                    job = found.clone();
+                    catalogue_line = format!("catalogue: lab/jobs.toml at {}", git.short);
+                }
+                None => catalogue_line = format!("catalogue: lab/jobs.toml at {} has no {}", git.short, job.name),
+            }
+        }
+        let job = &job;
         let before = self.verdict();
-        let git = GitState::read(&checkout)?;
         let started = Local::now().fixed_offset();
         let id = self.unique_id(&started, &job.name);
         let threads = job.effective_threads(queue.threads);
-        let recorded = job.values(queue.threads, &git.short, None, &item.parameters);
-        let executed = job.values(queue.threads, &git.short, Some(&checkout.to_string_lossy()), &item.parameters);
+        let reference = target.recorded();
+        let recorded = job.values(queue.threads, &git.short, &reference, None, &item.parameters);
+        let executed =
+            job.values(queue.threads, &git.short, &reference, Some(&checkout.to_string_lossy()), &item.parameters);
         let command = render(&job.command, &executed)?;
         let environment = job.environment_for(&executed)?;
         let directory = checkout.join(render(&job.directory, &executed)?);
         let log_relative = format!("logs/{id}.log");
         let log_path = self.places.data.join(&log_relative);
         std::fs::create_dir_all(log_path.parent().expect("logs/ has a parent")).map_err(|error| error.to_string())?;
-        let log = File::create(&log_path).map_err(|error| format!("{}: {error}", log_path.display()))?;
+        let mut log = File::create(&log_path).map_err(|error| format!("{}: {error}", log_path.display()))?;
+        log_line(&mut log, &format!("checkout: {reference} at {} in {}", git.commit, checkout.display()));
+        log_line(&mut log, &catalogue_line);
         let scrub = Scrub::new(&checkout);
         let run = Run {
             format: FORMAT,
@@ -523,9 +695,9 @@ impl Runner {
                 .map(|(name, value)| (name, scrub.text(&value)))
                 .collect(),
             parameters: item.parameters.iter().map(|(name, value)| (name.clone(), scrub.text(value))).collect(),
-            checkout: item.checkout.relative.clone(),
+            checkout: reference.clone(),
             directory: job.directory.clone(),
-            git: Some(Git { commit: git.commit.clone(), dirty: git.dirty, branch: git.branch.clone() }),
+            git: Some(Git { commit: git.commit.clone(), dirty: git.dirty, branch: git.branch.clone(), pushed }),
             threads: Some(Threads { setting: queue.threads, effective: threads }),
             memory_limit_gb: job.memory_limit_gb,
             machine: Some(self.machine.clone()),
@@ -578,9 +750,19 @@ impl Runner {
         };
         match prepare {
             Some((executed, recorded)) => {
-                let key = format!("{}\n{}\n{executed}", item.checkout.relative, git.commit);
-                let done =
-                    self.prepared.iter().find(|(done, _)| !git.dirty && done == &key).map(|(_, why)| why.clone());
+                // Once per checkout of the mirror, `.lab-prepared` remembering it; once per
+                // queue in a local folder, which may change between two queues (SPEC.md, §7.3).
+                let (key, done) = match &target {
+                    Target::Reference(_) => {
+                        let key = format!("{}\n{executed}", checkout.display());
+                        (key, prepared_in(&checkout, &executed))
+                    }
+                    Target::Local(_) => {
+                        let key = format!("{}\n{}\n{}\n{executed}", queue.id, checkout.display(), git.commit);
+                        let done = self.prepared.iter().find(|(done, _)| !git.dirty && done == &key);
+                        (key, done.map(|(_, why)| why.clone()))
+                    }
+                };
                 match done {
                     Some(why) => {
                         log_line(&mut running.log, &format!("prepare skipped: {why}"));
@@ -593,7 +775,7 @@ impl Runner {
                         self.launch(&mut running, Phase::Command)?;
                     }
                     None => {
-                        running.prepare_key = Some(key);
+                        running.prepare_key = Some((key, executed.clone()));
                         running.run.prepare = Some(Prepare {
                             command: recorded,
                             seconds: 0.0,
@@ -727,9 +909,13 @@ impl Runner {
             prepare.seconds = seconds;
             prepare.status = status_of(status, stopped);
             if status.success() && !stopped {
-                if let Some(key) = running.prepare_key.take() {
-                    let why = format!("done for {} at {}", running.run.job, Local::now().format("%H:%M"));
-                    self.prepared.push((key, why));
+                if let Some((key, executed)) = running.prepare_key.take() {
+                    let why = format!("done for {} on {}", running.run.job, Local::now().format("%Y-%m-%d %H:%M"));
+                    if running.run.checkout == "local" {
+                        self.prepared.push((key, why));
+                    } else if let Err(error) = remember_prepared(&running.root, &running.run.job, &executed) {
+                        log_line(&mut running.log, &format!("{PREPARED}: {error}"));
+                    }
                 }
                 let mut running = self.running.take().expect("a run under way");
                 match self.launch(&mut running, Phase::Command) {
@@ -821,8 +1007,10 @@ impl Runner {
         if !why.is_empty() {
             log_line(&mut running.log, why);
         }
-        if let Err(error) = write_record(&self.places, run) {
-            self.message(error);
+        match write_record(&self.places, run) {
+            Ok(()) if self.push == Push::Auto => self.push_memory(),
+            Ok(()) => {}
+            Err(error) => self.message(error),
         }
         let policy = {
             let shared = self.lock();
@@ -916,7 +1104,7 @@ impl Runner {
                     .map(|item| SavedItem {
                         job: item.job.name.clone(),
                         parameters: item.parameters.clone(),
-                        checkout: item.checkout.relative.clone(),
+                        checkout: item.target.clone(),
                     })
                     .collect(),
                 current: self
@@ -954,6 +1142,22 @@ impl Runner {
             Err(error) => self.message(error),
         }
     }
+}
+
+/// Why the prepare of `command` need not run again in this checkout, if
+/// `.lab-prepared` says it ran (SPEC.md, §7.3).
+pub fn prepared_in(checkout: &Path, command: &str) -> Option<String> {
+    let text = std::fs::read_to_string(checkout.join(PREPARED)).ok()?;
+    text.lines().filter_map(|line| line.split_once('\t')).find_map(|(when, rest)| {
+        let (job, done) = rest.split_once('\t')?;
+        (done == command).then(|| format!("done for {job} on {}", when.get(..16).unwrap_or(when).replace('T', " ")))
+    })
+}
+
+/// A prepare done, written in the checkout's `.lab-prepared` as executed.
+fn remember_prepared(checkout: &Path, job: &str, executed: &str) -> Result<(), String> {
+    let when = Local::now().format("%Y-%m-%dT%H:%M:%S");
+    files::append_line(&checkout.join(PREPARED), &format!("{when}\t{job}\t{executed}"))
 }
 
 fn log_line(log: &mut File, text: &str) {
@@ -1022,7 +1226,16 @@ mod tests {
         let data = lab.join("target").join("test-data").join(name);
         let _ = std::fs::remove_dir_all(&data);
         std::fs::create_dir_all(&data).unwrap();
-        Places { home: lab.parent().unwrap().to_path_buf(), data: data.clone(), config: data }
+        Places { home: Some(lab.parent().unwrap().to_path_buf()), data, catalogue: None }
+    }
+
+    /// A mirror that is not there: the tests on local folders never touch it.
+    fn no_mirror(places: &Places) -> Mirror {
+        Mirror::new(&places.data, "nowhere/none")
+    }
+
+    fn new_runner(shared: &Arc<Mutex<Shared>>, places: &Places) -> Runner {
+        Runner::new(shared.clone(), places.clone(), no_mirror(places), machine::machine("test"), Box::new(|| {}))
     }
 
     fn jobs(text: &str) -> Catalogue {
@@ -1031,8 +1244,9 @@ mod tests {
         catalogue
     }
 
-    fn home(places: &Places) -> Worktree {
-        Worktree { path: places.home.clone(), relative: ".".to_string(), branch: None, head: String::new() }
+    /// This repository as a local folder, the target of the tests.
+    fn home(places: &Places) -> String {
+        places.home.clone().unwrap().to_string_lossy().into_owned()
     }
 
     /// Runs the queue until the runner has nothing left to do; `act` may
@@ -1053,7 +1267,7 @@ mod tests {
                 ..QueueSettings::default()
             });
         }
-        let mut runner = Runner::new(shared.clone(), places.clone(), machine::machine("test"), Box::new(|| {}));
+        let mut runner = new_runner(&shared, places);
         let begun = Instant::now();
         loop {
             runner.step();
@@ -1115,14 +1329,16 @@ mod tests {
         // {repo} kept in the record, filled in the command executed.
         let fine = &runs[0];
         assert_eq!(fine.command, "echo threads $RAYON_NUM_THREADS 3 in {repo}; ulimit -v");
+        assert_eq!(fine.checkout, "local");
+        assert!(!fine.git.as_ref().unwrap().pushed, "no mirror to say so");
         assert_eq!(fine.environment["RAYON_NUM_THREADS"], "3");
         assert_eq!(fine.comment, "a test");
         assert!(fine.seconds.is_some() && fine.git.is_some() && fine.machine.is_some());
         let log = std::fs::read_to_string(places.data.join(&fine.log.as_ref().unwrap().path)).unwrap();
         assert!(log.contains("prepared"), "{log}");
-        assert!(log.contains(&format!("threads 3 3 in {}", places.home.display())), "{log}");
+        assert!(log.contains(&format!("threads 3 3 in {}", home(&places))), "{log}");
         assert!(log.contains("2000000"), "the memory cap is ulimit -v 2000000: {log}");
-        // The same prepare on the same commit runs once, if the checkout is clean.
+        // The same prepare on the same commit runs once per queue in a local folder, if it is clean.
         let also = runs[1].prepare.as_ref().unwrap();
         let dirty = runs[1].git.as_ref().unwrap().dirty;
         assert_eq!(also.skipped_because.is_some(), !dirty, "{also:?}");
@@ -1173,7 +1389,7 @@ mod tests {
                 ..QueueSettings::default()
             });
         }
-        let mut runner = Runner::new(shared.clone(), places.clone(), machine::machine("test"), Box::new(|| {}));
+        let mut runner = new_runner(&shared, &places);
         runner.step();
         let mut child = runner.running.as_mut().unwrap().child.take().unwrap();
         let group = child.id() as i32;
@@ -1183,8 +1399,7 @@ mod tests {
         // Reaped, as init reaps the children of an app that died.
         child.wait().unwrap();
         let mut again = Shared::default();
-        let worktrees = vec![home(&places)];
-        recover(&places, Some(&catalogue), &worktrees, &mut again);
+        recover(&places, Some(&catalogue), &mut again);
         assert!(matches!(again.mode, Mode::Paused(_)), "{:?}", again.mode);
         assert_eq!(again.items.len(), 1, "fine waits again");
         assert_eq!(again.items[0].job.name, "fine");
@@ -1194,7 +1409,7 @@ mod tests {
         assert!(history.runs[0].ended.is_some());
         // The file stays until a runner writes what is left: fine, waiting.
         let again = Arc::new(Mutex::new(again));
-        let mut runner = Runner::new(again.clone(), places.clone(), machine::machine("test"), Box::new(|| {}));
+        let mut runner = new_runner(&again, &places);
         runner.step();
         let state: State =
             serde_json::from_str(&std::fs::read_to_string(places.data.join("state.json")).unwrap()).unwrap();
@@ -1240,8 +1455,7 @@ mod tests {
                 ..QueueSettings::default()
             });
         }
-        let mut runner = Runner::new(shared.clone(), places.clone(), machine::machine("test"), Box::new(|| {}))
-            .with_monitor(watch.clone(), calm);
+        let mut runner = new_runner(&shared, &places).with_monitor(watch.clone(), calm);
         runner.step();
         assert!(runner.running.is_none(), "it waits");
         assert!(shared.lock().unwrap().waiting_for_calm.as_ref().unwrap().contains("waits for a calm machine"));
@@ -1255,6 +1469,128 @@ mod tests {
         let run = &History::read(&places.runs()).unwrap().runs[0];
         assert!(run.calm.forced && !run.calm.before && !run.calm.timing_valid, "{:?}", run.calm);
         assert!(run.calm.reason.starts_with("started anyway"), "{}", run.calm.reason);
+    }
+
+    /// A queue on a reference: the mirror fetched, the commit checked out once,
+    /// the prepare done once per checkout, the record naming the reference.
+    #[test]
+    fn a_queue_on_a_reference_checks_the_commit_out_once() {
+        let places = places("reference");
+        let seed = crate::mirror::tests::seed();
+        let mirror = Mirror::new(&places.data, &seed.to_string_lossy());
+        let catalogue = jobs(
+            r#"
+            [[job]]
+            name = "where"
+            category = "build"
+            command = "git rev-parse HEAD; echo on {ref} at {commit}; cat .lab-prepared"
+            prepare = "echo prepared {ref} > prepared.txt"
+            checkout = "v0.7.0"
+            "#,
+        );
+        let shared = Arc::new(Mutex::new(Shared::default()));
+        {
+            let mut queue = shared.lock().unwrap();
+            let job = catalogue.job("where").unwrap().clone();
+            queue.add(job.clone(), job.checkout.initial());
+            queue.add(job.clone(), "v0.7.0".to_string());
+            queue.add(job, "no-such-reference".to_string());
+            queue.start(QueueSettings {
+                id: "test".to_string(),
+                threads: 1,
+                grace_seconds: 1,
+                on_failure: Some(Policy::Continue),
+                ..QueueSettings::default()
+            });
+        }
+        let mut runner =
+            Runner::new(shared.clone(), places.clone(), mirror.clone(), machine::machine("test"), Box::new(|| {}));
+        let begun = Instant::now();
+        loop {
+            runner.step();
+            if shared.lock().unwrap().mode != Mode::Running && runner.running.is_none() {
+                break;
+            }
+            assert!(begun.elapsed() < Duration::from_secs(120), "the queue took too long");
+            std::thread::sleep(Duration::from_millis(20));
+        }
+        let shared = shared.lock().unwrap();
+        assert!(mirror.exists(), "the mirror was created before the queue");
+        assert!(shared.fetched.is_some() && shared.mirror_changes >= 2, "{:?}", shared.fetched);
+        let history = History::read(&places.runs()).unwrap();
+        assert_eq!(history.runs.len(), 2, "the item on an unknown reference could not start");
+        assert!(shared.messages.iter().any(|message| message.contains("no-such-reference")), "{:?}", shared.messages);
+        assert_eq!(shared.items[2].state, ItemState::Cancelled);
+        let first = &history.runs[0];
+        let git = first.git.as_ref().unwrap();
+        assert_eq!(first.checkout, "v0.7.0");
+        assert!(git.commit.starts_with("e13fadb") && git.pushed && !git.dirty, "{git:?}");
+        assert_eq!(git.branch.as_deref(), Some("v0.7.0"));
+        assert_eq!(first.command, "git rev-parse HEAD; echo on v0.7.0 at e13fadb; cat .lab-prepared");
+        let checkout = mirror.checkouts.join("e13fadb");
+        assert!(checkout.join("prepared.txt").is_file(), "the prepare ran in the checkout");
+        assert_eq!(std::fs::read_to_string(checkout.join("prepared.txt")).unwrap(), "prepared v0.7.0\n");
+        let log = std::fs::read_to_string(places.data.join(&first.log.as_ref().unwrap().path)).unwrap();
+        assert!(log.contains(&format!("on v0.7.0 at e13fadb")) && log.contains("checkout: v0.7.0 at e13fadb"), "{log}");
+        assert!(first.prepare.as_ref().unwrap().skipped_because.is_none());
+        let second = history.runs[1].prepare.as_ref().unwrap();
+        assert!(
+            second.skipped_because.as_deref().is_some_and(|why| why.starts_with("done for where on")),
+            "{second:?}"
+        );
+        assert_eq!(mirror.checkouts().len(), 1, "one checkout for the two runs");
+        assert_eq!(prepared_in(&checkout, "nothing"), None);
+    }
+
+    /// The policy `auto`: the record of each run pushed to this machine's
+    /// branch as soon as it is written; a push on request too.
+    #[test]
+    fn the_memory_is_pushed_after_a_run_when_the_policy_says_so() {
+        let places = places("runner-push");
+        let mirror = crate::mirror::tests::mirror("runner-push-mirror");
+        let remote = crate::mirror::tests::remote_of(&mirror);
+        let catalogue = jobs("[[job]]\nname = \"quick\"\ncategory = \"build\"\ncommand = \"true\"\n");
+        let shared = Arc::new(Mutex::new(Shared::default()));
+        {
+            let mut queue = shared.lock().unwrap();
+            let job = catalogue.job("quick").unwrap().clone();
+            queue.add(job, home(&places));
+            queue.start(QueueSettings {
+                id: "push".to_string(),
+                threads: 1,
+                grace_seconds: 1,
+                ..QueueSettings::default()
+            });
+        }
+        let mut runner =
+            Runner::new(shared.clone(), places.clone(), mirror.clone(), machine::machine("test"), Box::new(|| {}))
+                .with_push(Push::Auto, "box".to_string());
+        let begun = Instant::now();
+        loop {
+            runner.step();
+            if shared.lock().unwrap().mode != Mode::Running && runner.running.is_none() {
+                break;
+            }
+            assert!(begun.elapsed() < Duration::from_secs(60), "the queue took too long");
+            std::thread::sleep(Duration::from_millis(20));
+        }
+        let (pushed, messages) = {
+            let shared = shared.lock().unwrap();
+            (shared.pushed.clone(), shared.messages.clone())
+        };
+        assert!(messages.is_empty(), "{messages:?}");
+        assert_eq!(pushed.unwrap().1, "created lab/runs-box with 1 runs");
+        let at_remote = std::process::Command::new("git")
+            .args(["-C", &remote.to_string_lossy(), "show", "lab/runs-box:runs.jsonl"])
+            .output()
+            .unwrap();
+        let text = String::from_utf8_lossy(&at_remote.stdout);
+        assert_eq!(History::parse(&text).runs.len(), 1, "{text}");
+        assert_eq!(crate::machines::unpushed(&places, &mirror, "box").unwrap(), 0);
+        // On request, with nothing new, the branch is written again as it is.
+        shared.lock().unwrap().push_requested = true;
+        runner.step();
+        assert_eq!(shared.lock().unwrap().pushed.clone().unwrap().1, "pushed 1 runs to lab/runs-box");
     }
 
     #[test]

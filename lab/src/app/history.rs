@@ -9,7 +9,7 @@ use eframe::egui::{self, RichText};
 
 use super::{App, MUTED, RED};
 use crate::model::{Calm, FORMAT, Git, Paper, PaperRef, Run, Source, Status, duration_text};
-use crate::state::{Tag, place, tag_of};
+use crate::state::{Reach, Tag, place, tag_of};
 
 /// The comment and the paper of the run selected, as edited.
 pub(super) struct Edit {
@@ -34,10 +34,10 @@ pub(super) struct PastRun {
 impl App {
     pub(super) fn history_tools(&mut self, ui: &mut egui::Ui, shown: &[&Run]) {
         if ui.button("Copy as Markdown").on_hover_text("the runs shown, with the hardware line").clicked() {
-            ui.ctx().copy_text(markdown(shown, &self.tags, &self.settings.machine_label));
+            ui.ctx().copy_text(markdown(shown, &self.tags, &self.reach, &self.settings.machine_label));
         }
         if ui.button("Copy as CSV").clicked() {
-            ui.ctx().copy_text(csv(shown, &self.tags));
+            ui.ctx().copy_text(csv(shown, &self.tags, &self.reach));
         }
         if ui.button("Record a past run").clicked() {
             let job =
@@ -54,33 +54,34 @@ impl App {
             });
         }
         if ui
-            .button("Copy history to the repo")
-            .on_hover_text("writes the runs lab recorded into lab/runs.jsonl of this checkout, to commit with the PR that cites them")
+            .add_enabled(!self.copy_target.trim().is_empty(), egui::Button::new("Copy history to the repo"))
+            .on_hover_text("writes the runs lab recorded, on every machine, into lab/runs.jsonl of the clone named beside, to commit with the PR that cites them")
             .clicked()
         {
             let message = match self.copy_to_repository() {
-                Ok(count) => format!("{count} runs written to lab/runs.jsonl: commit it with the PR that cites them."),
+                Ok(count) => format!("{count} runs written to lab/runs.jsonl of {}: commit it with the PR that cites them.", self.copy_target.trim()),
                 Err(error) => error,
             };
             self.lock().messages.push(message);
         }
+        ui.add(
+            egui::TextEdit::singleline(&mut self.copy_target)
+                .hint_text("a clone of the repository")
+                .desired_width(220.0)
+                .font(egui::TextStyle::Monospace),
+        )
+        .on_hover_text("the clone \"Copy history to the repo\" writes into: its lab/runs.jsonl");
     }
 
-    /// The live runs.jsonl copied to lab/runs.jsonl of the home checkout
-    /// (SPEC.md, section 4).
+    /// The union of the memories, sorted, written to lab/runs.jsonl of the
+    /// clone Marc names (SPEC.md, sections 4 and 4b).
     fn copy_to_repository(&self) -> Result<usize, String> {
-        let history = crate::store::History::read(&self.places.runs())?;
-        let mut text = String::new();
-        for run in &history.runs {
-            let line = serde_json::to_string(run).map_err(|error| error.to_string())?;
-            if let Some(path) = crate::catalogue::local_path(&line) {
-                return Err(format!("run {} names a local path ({path}): nothing copied", run.id));
-            }
-            text.push_str(&line);
-            text.push('\n');
-        }
-        crate::store::write_atomically(&self.places.home.join("lab").join("runs.jsonl"), text.as_bytes())?;
-        Ok(history.runs.len())
+        let clone = match crate::mirror::Target::parse(&self.copy_target) {
+            crate::mirror::Target::Local(path) => path,
+            crate::mirror::Target::Reference(text) => std::path::PathBuf::from(text),
+        };
+        let history = self.history.as_ref().map_err(|error| error.clone())?;
+        crate::machines::publish(history, &clone)
     }
 
     /// The comment and the papers of a run lab recorded, editable.
@@ -122,7 +123,7 @@ impl App {
                 edit.paper.map(|paper| PaperRef { paper, label: edit.label.trim().to_string() }).into_iter().collect();
             updated.edited = Some(Local::now().fixed_offset());
             match crate::store::replace(&self.places.runs(), &updated) {
-                Ok(()) => self.history = crate::store::History::read(&self.places.runs()),
+                Ok(()) => self.read_history(),
                 Err(error) => self.lock().messages.push(error),
             }
         }
@@ -193,16 +194,7 @@ impl App {
         let commit = if typed.is_empty() {
             None
         } else {
-            let output = std::process::Command::new("git")
-                .arg("-C")
-                .arg(&self.places.home)
-                .args(["rev-parse", "--verify", "--quiet", &format!("{typed}^{{commit}}")])
-                .output()
-                .map_err(|error| error.to_string())?;
-            if !output.status.success() {
-                return Err(format!("Commit: git does not know {typed}"));
-            }
-            Some(String::from_utf8_lossy(&output.stdout).trim().to_string())
+            Some(self.mirror.resolve(typed).map_err(|_| format!("Commit: the mirror does not know {typed}"))?)
         };
         let run = Run {
             format: FORMAT,
@@ -218,9 +210,9 @@ impl App {
             command: String::new(),
             environment: Default::default(),
             parameters: Default::default(),
-            checkout: ".".to_string(),
+            checkout: typed.to_string(),
             directory: ".".to_string(),
-            git: commit.map(|commit| Git { commit, dirty: false, branch: None }),
+            git: commit.map(|commit| Git { commit, dirty: false, branch: None, pushed: true }),
             threads: None,
             memory_limit_gb: None,
             machine: None,
@@ -239,7 +231,7 @@ impl App {
             edited: None,
         };
         crate::runner::write_record(&self.places, &run)?;
-        self.history = crate::store::History::read(&self.places.runs());
+        self.read_history();
         Ok(())
     }
 }
@@ -250,7 +242,7 @@ fn load1(run: &Run) -> Option<f64> {
 
 /// The runs as a Markdown table, with the hardware line a paper needs and
 /// what the selection mixes.
-pub(super) fn markdown(runs: &[&Run], tags: &[Tag], label: &str) -> String {
+pub(super) fn markdown(runs: &[&Run], tags: &[Tag], reach: &Reach, label: &str) -> String {
     let mut text =
         String::from("| Job | Run on | Date | Duration | Load at start | Timing |\n|---|---|---|---|---|---|\n");
     for run in runs {
@@ -258,7 +250,7 @@ pub(super) fn markdown(runs: &[&Run], tags: &[Tag], label: &str) -> String {
         text.push_str(&format!(
             "| {} | {} | {} | {} | {} | {timing} |\n",
             run.job,
-            place(run, tags),
+            place(run, tags, reach),
             run.started.format("%Y-%m-%d"),
             run.seconds.map_or("no time".to_string(), duration_text),
             load1(run).map_or(String::new(), |load| format!("{load:.2}")),
@@ -287,15 +279,21 @@ pub(super) fn markdown(runs: &[&Run], tags: &[Tag], label: &str) -> String {
         "Timings valid (calm before and during, not forced): {valid} of {}; the others cannot be reported.\n",
         runs.len()
     ));
-    let places: BTreeSet<String> =
-        runs.iter().map(|run| tag_of(run, tags).map_or("off-tag".to_string(), |tag| tag.name.clone())).collect();
+    let places: BTreeSet<String> = runs
+        .iter()
+        .map(|run| match tag_of(run, tags) {
+            Some(tag) => tag.name.clone(),
+            None if crate::state::is_pushed(run, reach) => "off-tag".to_string(),
+            None => "orphan".to_string(),
+        })
+        .collect();
     if places.len() > 1 {
         text.push_str(&format!("Mixed: {}.\n", places.into_iter().collect::<Vec<_>>().join(", ")));
     }
     text
 }
 
-pub(super) fn csv(runs: &[&Run], tags: &[Tag]) -> String {
+pub(super) fn csv(runs: &[&Run], tags: &[Tag], reach: &Reach) -> String {
     let quote = |text: &str| format!("\"{}\"", text.replace('"', "\"\""));
     let mut text = String::from("id,job,run_on,commit,started,seconds,load1,timing_valid,status,comment,papers\n");
     for run in runs {
@@ -303,7 +301,7 @@ pub(super) fn csv(runs: &[&Run], tags: &[Tag]) -> String {
             "{},{},{},{},{},{},{},{},{},{},{}\n",
             quote(&run.id),
             quote(&run.job),
-            quote(&place(run, tags)),
+            quote(&place(run, tags, reach)),
             run.git.as_ref().map_or(String::new(), |git| git.commit.clone()),
             run.started.to_rfc3339(),
             run.seconds.map_or(String::new(), |seconds| seconds.to_string()),
@@ -326,7 +324,7 @@ mod tests {
         let runs = crate::store::History::parse(include_str!("../../tests/fixtures/runs.jsonl")).runs;
         let shown: Vec<&Run> = runs.iter().collect();
         let tags = [Tag { name: "v0.7.0".to_string(), commit: "e13fadb0".to_string(), date: String::new() }];
-        let text = markdown(&shown, &tags, "i7-7700K 4c/8t 2017, 62 GB");
+        let text = markdown(&shown, &tags, &Reach::new(), "i7-7700K 4c/8t 2017, 62 GB");
         assert!(
             text.contains("| forced-whole-lower | v0.7.0 | 2026-10-31 | 2 h 38 min 24 | 0.43 | not valid |"),
             "{text}"
@@ -338,7 +336,7 @@ mod tests {
         assert!(text.contains("(i7-7700K 4c/8t 2017, 62 GB)"), "{text}");
         assert!(text.contains("Timings valid (calm before and during, not forced): 1 of 3"), "{text}");
         assert!(text.contains("Mixed: off-tag, v0.7.0."), "{text}");
-        let table = csv(&shown, &tags);
+        let table = csv(&shown, &tags, &Reach::new());
         assert_eq!(table.lines().count(), 4);
         assert!(table.contains("\"A made-up run: the fixture of the tests.\""));
     }

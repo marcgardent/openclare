@@ -56,11 +56,13 @@ impl History {
 
 /// The live file rewritten with `run` in place of the line of the same id,
 /// the five previous versions kept as runs.jsonl.1 to .5 (SPEC.md, section 4).
+/// A run of another machine edited here is added: the edit reaches the union
+/// of every machine as the latest (§4b).
 pub fn replace(path: &Path, run: &Run) -> Result<(), String> {
     let mut history = History::read(path)?;
     match history.runs.iter_mut().find(|known| known.id == run.id) {
         Some(known) => *known = run.clone(),
-        None => return Err(format!("{}: no run {}", path.display(), run.id)),
+        None => history.runs.push(run.clone()),
     }
     write_all(path, &history.runs)
 }
@@ -126,6 +128,10 @@ mod tests {
         assert_eq!(again.runs.len(), 3);
         assert_eq!(again.runs[1].comment, "changed");
         assert_eq!(std::fs::read_to_string(folder.join("runs.jsonl.1")).unwrap(), FIXTURE);
+        // A run of another machine, edited here, is added.
+        run.id = "elsewhere".to_string();
+        replace(&path, &run).unwrap();
+        assert_eq!(History::read(&path).unwrap().runs.len(), 4);
     }
 
     #[test]

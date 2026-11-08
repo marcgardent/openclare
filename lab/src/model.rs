@@ -38,7 +38,8 @@ pub struct Run {
     pub environment: BTreeMap<String, String>,
     #[serde(default)]
     pub parameters: BTreeMap<String, String>,
-    /// "." for the home checkout, else the worktree relative to it.
+    /// The reference asked for (a tag, a branch, `pull/<n>`, a hash), or
+    /// "local" for a folder given by hand (SPEC.md, §2).
     pub checkout: String,
     /// The working directory, relative to that checkout.
     pub directory: String,
@@ -113,8 +114,15 @@ pub struct Git {
     pub commit: String,
     /// Tracked files differ from HEAD, `lab/runs.jsonl` excluded.
     pub dirty: bool,
+    /// The reference asked for (SPEC.md, §5); what `git branch` said, for a
+    /// local checkout.
     #[serde(default)]
     pub branch: Option<String>,
+    /// The commit is reachable from a branch, a tag or a pull request of the
+    /// remote, as the mirror knew when the run started (§10b). A record from
+    /// before M7 says nothing: false.
+    #[serde(default)]
+    pub pushed: bool,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]

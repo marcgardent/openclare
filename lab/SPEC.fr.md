@@ -3,6 +3,11 @@
 État : **brouillon à valider**. Aucun code n'est écrit avant que Marc valide ce document.
 Version anglaise de référence : `SPEC.md`.
 
+Amendement du 2026-11-08, **brouillon à valider** : lab devient un programme à part, installé sur la
+machine, qui récupère le dépôt, extrait le commit demandé et y lance la tâche ; une mémoire par machine
+dans `~/.openclare-lab`, réunie dans git sur une branche de cette machine (§1, §2, §3, §4, §4 bis, §5,
+§6, §7.3, §8.1, §10 bis, §11, §12, §13, §14, §15, §17).
+
 ## 1. Objet
 
 Tout calcul long du projet (bancs, suites de tests, constructions et oracle Lean, expériences des
@@ -15,7 +20,8 @@ L'application fait six choses : elle tient la base des exécutions (§4), le cat
 une file qui les lance une par une (§8), une estimation de progression tirée de l'historique (§10), un
 moniteur de la machine avec un indicateur « calme » (§9), et une vue d'historique avec export (§11).
 
-Hors champ : lancer sur une autre machine, lancer deux tâches à la fois, programmer des tâches
+Hors champ : lancer d'ici une tâche sur une autre machine (chaque machine fait tourner son lab, et
+leurs fiches se réunissent dans git, §4 bis), lancer deux tâches à la fois, programmer des tâches
 récurrentes, lire les résultats d'une exécution (les résumés des scripts restent ce qu'ils sont).
 
 ## 2. Nom et emplacement
@@ -23,25 +29,42 @@ récurrentes, lire les résultats d'une exécution (les résumés des scripts re
 - Dossier `lab/` à la racine du dépôt, son propre espace de travail Cargo (son `Cargo.toml`, son
   `Cargo.lock` et son `target/`), hors de l'espace de travail du moteur : les constructions du moteur
   et la CI ne changent pas.
-- Paquet `openclare-lab`, binaire `lab`. Ouvert par `cargo run --release` depuis `lab/`.
-- Le **checkout d'attache** est le clone où se trouve `lab/`. Le catalogue y est lu. Les tâches
-  tournent dans ce checkout ou dans l'un de ses worktrees (`git worktree list`).
+- Paquet `openclare-lab`, binaire `lab`. Installé sur la machine par `make lab-install` à la racine du
+  dépôt (§14) ; `cargo run --release` depuis `lab/` pendant son développement. Le `make install` de la
+  racine reste celui du greffon Blender.
+- lab possède un **miroir** du dépôt, `~/.openclare-lab/repo.git`, récupéré depuis GitHub
+  (`marcgardent/openclare`, ou le réglage `remote`) avant chaque file et à la demande. Il n'a plus besoin
+  du clone d'où il a été lancé : le premier démarrage crée le miroir, depuis ce clone quand il y en a un
+  (rapide, hors ligne, ses objets LFS liés), sinon depuis GitHub. Le catalogue qu'il montre est le
+  `lab/jobs.toml` de `main` dans le miroir ; `--catalogue <fichier>` en lit un autre, le temps d'en écrire un.
+- Une tâche tourne sur une **référence** : un tag (`v0.7.0`), une branche (`main`, `worktree-borders`),
+  une pull request (`pull/301`) ou un hash. lab la résout dans le miroir et extrait ce commit dans
+  `~/.openclare-lab/checkouts/<hash court>/`, un worktree détaché du miroir, un par commit, réutilisé par
+  toute exécution sur ce commit. Le catalogue dont la tâche est rendue est le `lab/jobs.toml` de ce
+  commit ; un commit antérieur à lab prend le catalogue de `main`.
+- La porte de secours pour une expérience non commise : une tâche lancée dans un dossier donné à la main
+  (checkout **local**). Sa fiche est hors tag, `dirty` si l'arbre diffère de HEAD, et orpheline si son
+  commit n'est pas poussé (§10 bis).
 
 ## 3. Fichiers
 
 | Fichier | Suivi | Écrit par | Contenu |
 |---|---|---|---|
-| `lab/jobs.toml` | oui | l'application et Marc à la main | le catalogue (§6) |
+| `lab/jobs.toml` | oui | Marc à la main | le catalogue (§6), lu au commit où la tâche tourne |
 | `lab/runs.jsonl` | oui | l'application, à la demande de Marc (« Copier l'historique dans le dépôt ») | l'instantané publié de l'historique |
-| `<data>/runs.jsonl` | non | l'application | la base vivante, une exécution par ligne |
-| `<data>/logs/<id>.log` | non | la tâche (sa sortie standard et d'erreur) | le journal de chaque exécution |
-| `<data>/refused.jsonl` | non | l'application | les fiches qui nomment encore un chemin local (section 4) |
-| `<data>/state.json` | non | l'application | la file en cours et l'exécution en cours, pour la reprise |
-| `<config>/settings.toml` | non | l'application | seuils, alerte de threads, politiques, libellé de la machine (§12) |
+| `<lab>/runs.jsonl` | non | l'application | la mémoire vivante de cette machine, une exécution par ligne |
+| `<lab>/logs/<id>.log` | non | la tâche (sa sortie standard et d'erreur) | le journal de chaque exécution |
+| `<lab>/refused.jsonl` | non | l'application | les fiches qui nomment encore un chemin local (section 4) |
+| `<lab>/state.json` | non | l'application | la file en cours et l'exécution en cours, pour la reprise |
+| `<lab>/settings.toml` | non | l'application | dépôt distant, nom de la machine, politique de push, seuils, alerte de threads, politiques (§12) |
+| `<lab>/repo.git/` | non | git | le miroir du dépôt (§2) |
+| `<lab>/checkouts/<hash court>/` | non | git, les préparations, les tâches | un worktree détaché par commit exécuté (§2), avec son `target/` et son `.lake/` |
+| `<lab>/machines/<machine>.jsonl` | non | l'application | la mémoire de chaque autre machine, telle que récupérée en dernier (§4 bis) |
 
-`<data>` est `$XDG_DATA_HOME/openclare-lab` (par défaut `~/.local/share/openclare-lab`), `<config>`
-est `$XDG_CONFIG_HOME/openclare-lab` (par défaut `~/.config/openclare-lab`). L'application montre les
-deux chemins dans sa boîte « À propos ».
+`<lab>` est `~/.openclare-lab`, un seul dossier pour tout ce que lab garde sur la machine ;
+`--data <dossier>` le déplace (les tests utilisent `tests/fixtures`). Le premier démarrage trouve les
+`~/.local/share/openclare-lab` et `~/.config/openclare-lab` de la version précédente et déplace leurs
+fichiers dans `<lab>` une fois. L'application montre le chemin dans sa boîte « À propos ».
 
 ## 4. Stockage
 
@@ -53,25 +76,51 @@ Modifier un commentaire réécrit le fichier de façon atomique (écrit à côt�
 git de l'instantané est cette seule ligne.
 
 **Le fichier vivant est hors de l'arbre de travail ; git en garde un instantané.** Si la base
-vivante était `lab/runs.jsonl` du checkout d'attache, le checkout principal porterait sans cesse une
+vivante était `lab/runs.jsonl` d'un checkout, ce checkout porterait sans cesse une
 modification locale : `git pull` refuserait de passer chaque fois qu'une PR change le fichier, et le
 drapeau `dirty` de toute exécution lancée là serait vrai à cause de la base elle-même. L'application
-écrit donc `<data>/runs.jsonl`, un seul fichier pour la machine quel que soit le checkout ou le
-worktree où tourne une tâche, et « Copier l'historique dans le dépôt » écrit le fichier entier, trié,
-dans `lab/runs.jsonl` du checkout que Marc choisit, à commettre avec la PR qui cite les exécutions.
+écrit donc `<lab>/runs.jsonl`, un seul fichier pour la machine quel que soit le checkout ou le
+worktree où tourne une tâche, et « Copier l'historique dans le dépôt » écrit l'union des mémoires des machines (§4 bis),
+triée, dans `lab/runs.jsonl` du checkout que Marc choisit, à commettre avec la PR qui cite les exécutions.
 `lab/.gitattributes` déclare `runs.jsonl merge=union` : deux branches qui ajoutent chacune des
 exécutions fusionnent sans conflit ; le chargement garde ensuite une ligne par identifiant (celle dont
 `edited` est le plus récent). L'instantané suivi sert aussi de sauvegarde du fichier vivant ;
 l'application garde en plus les cinq dernières versions du fichier vivant (`runs.jsonl.1` à `.5`).
 
 **Aucun chemin absolu n'est écrit dans une fiche.** Les chemins sont relatifs à la racine du checkout
-où la tâche a tourné, et ce checkout est nommé relativement au checkout d'attache (`.` ou
-`.claude/worktrees/nom`). Avant d'écrire, l'application remplace la racine du checkout par `{repo}` et
+où la tâche a tourné, et ce checkout est nommé par la référence demandée (`v0.7.0`, `main`, `pull/301`, un hash), ou
+`local` pour un dossier donné à la main (§2). Avant d'écrire, l'application remplace la racine du checkout par `{repo}` et
 le dossier personnel par `~` dans la commande, l'environnement et les chemins, puis refuse d'écrire une
 fiche qui correspond encore aux motifs de dossier personnel de `hygiene.yml` (Linux, macOS et Windows) ou qui
-contient `/tmp/`, et montre le champ fautif ; cette fiche est gardée dans `<data>/refused.jsonl`,
+contient `/tmp/`, et montre le champ fautif ; cette fiche est gardée dans `<lab>/refused.jsonl`,
 jamais copiée dans le dépôt. L'environnement enregistré est celui des variables que
 l'application pose (§7), pas tout l'environnement hérité.
+
+## 4 bis. Une mémoire par machine, réunies dans git
+
+- Chaque machine a sa mémoire vivante, `<lab>/runs.jsonl`, et sa **branche** dans le dépôt,
+  `lab/runs-<machine>` (`<machine>` est le réglage `machine`, le nom d'hôte par défaut). La branche
+  porte un seul fichier, `runs.jsonl`, copie de la mémoire vivante, et n'a aucune histoire commune avec
+  `main` (une branche orpheline, comme `gh-pages`). Seule cette machine y écrit : chaque push est un
+  fast-forward, jamais de conflit ni de course entre deux machines.
+- **Push** : après chaque exécution, selon le réglage `push` (`ask`, par défaut : un bouton dans la barre
+  du haut avec le nombre de fiches pas encore poussées ; `auto` ; `never`). Ce qui est poussé est l'union
+  de la branche et de la mémoire vivante : une mémoire effacée sur la machine ne perd rien. Le push
+  demande une clé en écriture sur le dépôt : celle de Marc sur ses machines, une clé de déploiement
+  limitée au dépôt sur une machine qui tourne la nuit (Q18).
+- **Lecture** : à chaque ouverture et après chaque récupération, lab lit les branches `lab/runs-*` du
+  miroir dans `<lab>/machines/` et en fait l'union avec la mémoire vivante de cette machine : une ligne
+  par identifiant, le `edited` le plus récent gagne, la règle que le §4 a déjà. Un commentaire ou un
+  papier modifié sur une autre machine arrive donc ici à la récupération suivante ; la même fiche
+  modifiée sur deux machines garde la modification la plus récente. Une fiche d'une autre machine
+  modifiée ici s'ajoute à la mémoire de cette machine, et arrive partout comme la plus récente.
+- **Publication** : « Copier l'historique dans le dépôt » écrit cette union, triée, dans `lab/runs.jsonl`
+  d'un checkout que Marc choisit, à commettre avec la PR qui cite les exécutions ; `main` ne change
+  toujours que par PR.
+- Les tags et les résumés du dépôt (§13) sont lus dans le miroir (`git tag`,
+  `git show main:<fichier>`, `git log -1 main -- <fichier>` ; les branches du dépôt distant sont celles du
+  miroir), jamais dans un arbre de travail. L'écran État ne dépend donc d'aucun checkout : le même sur
+  chaque machine après la même récupération.
 
 ## 5. Modèle de données
 
@@ -82,8 +131,9 @@ Les types Rust sont ceux de `SPEC.md` §5, identiques ; seuls les commentaires s
   (`App`, `Seeded { from }` pour l'historique amorcé, `Manual` pour une saisie à la main), file
   d'origine, début et fin (RFC 3339 avec décalage), durée de la tâche seule (préparation exclue),
   statut, préparation, commande telle qu'exécutée (marques remplies, `{repo}` gardé), variables
-  posées par l'application, paramètres choisis, checkout (`.` ou `.claude/worktrees/nom`), dossier de
-  travail relatif à ce checkout, git, threads, plafond mémoire, machine, charge, verdict de calme,
+  posées par l'application, paramètres choisis, checkout (la référence demandée, ou `local`, §2), dossier de
+  travail relatif à ce checkout, git (commit, `dirty`, référence, `pushed` : le commit est atteignable
+  depuis une branche ou un tag du dépôt distant, §10 bis), threads, plafond mémoire, machine, charge, verdict de calme,
   commentaire (modifiable après coup), papiers (modifiables après coup), journal, fichiers produits,
   date de dernière modification du commentaire ou des papiers.
   Git, threads, machine et charge sont facultatifs : une fiche amorcée ou saisie n'a que ce qui est
@@ -109,7 +159,7 @@ Les types Rust sont ceux de `SPEC.md` §5, identiques ; seuls les commentaires s
 - `FileRef` : chemin, taille, SHA-256 jusqu'à 1 Go.
 - `Job` : une tâche du catalogue, une table `[[job]]` de `jobs.toml` : nom unique, description,
   catégorie (`Build`, `TestSuite`, `QuickBench`, `Bench`, `LeanBuild`, `LeanOracle`, `Experiment`),
-  commande avec marques, préparation, choix du checkout (`Home`, `Ask`, `Branch(nom)`), dossier,
+  commande avec marques, préparation, choix du checkout (`Ask`, `Reference(nom)`), dossier,
   paramètres avec leurs valeurs par défaut (modifiables par élément de file), environnement propre,
   usage des threads (`Setting` ou `Fixed(n)`), plafond mémoire, « le temps compte », motifs des
   fichiers produits, papier par défaut, étiquettes.
@@ -122,8 +172,10 @@ Les types Rust sont ceux de `SPEC.md` §5, identiques ; seuls les commentaires s
 fichier change sur le disque. L'exemple `forced-whole-lower` de `SPEC.md` §6 montre le format.
 
 Marques : `{threads}` (le nombre effectif de threads), `{repo}` (la racine du checkout où tourne la
-tâche), `{commit}` (son hash court), et les `{paramètres}` propres à la tâche. Une marque inconnue est
-une erreur montrée dans le catalogue, pas au lancement.
+tâche), `{commit}` (son hash court), `{ref}` (la référence demandée), et les `{paramètres}` propres à la
+tâche. Une marque inconnue est
+une erreur montrée dans le catalogue, pas au lancement. `checkout` est la référence sur laquelle la tâche
+tourne, `main` quand le champ est absent, ou `"ask"` : Marc la choisit sur l'élément de la file.
 
 Le catalogue est amorcé avec les tâches que le dépôt a aujourd'hui : le tableau de `SPEC.md` §6 les
 donne une par une, avec la durée **écrite** dans les documents (pas mesurée par l'application ;
@@ -187,8 +239,10 @@ pas, de jour comme de nuit. Proposition (Q2) :
 
 - La préparation tourne avant la tâche, dans le même checkout, avec le même réglage ; sa durée et son
   statut sont gardés dans `prepare`, à part de la durée de la tâche.
-- La même préparation sur le même commit (propre) tourne une fois par file : la seconde est sautée avec
-  `skipped_because = "faite pour forced-bounds à 22:03"`.
+- La même préparation sur le même checkout tourne une fois pour toutes les files : elle écrit sa commande
+  dans `.lab-prepared` à la racine du checkout, et est sautée tant que ce fichier la nomme
+  (`skipped_because = "faite pour forced-bounds le 2026-11-06"`). Un checkout local, qui peut changer
+  entre deux files, la fait tourner une fois par file.
 - Une préparation échouée fait échouer la tâche ; sa commande ne tourne pas.
 - Ainsi `cargo build --release` précède toujours un banc : `cargo test --release` ne refait pas
   `target/release/openclare`, et les tâches de banc portent la construction dans leur préparation.
@@ -203,12 +257,14 @@ valeurs amorcées suivent les règles du projet : 32 Go pour le moteur, Blender 
 
 ### 8.1 Lancement
 
-L'application écrit `state.json` (la file, l'élément lancé), prend l'échantillon de début (§9), lit git
-(`rev-parse HEAD`, `status --porcelain --untracked-files=no`, branche), puis lance
-`bash -c "<commande>"` :
+L'application récupère le miroir, résout la référence, ajoute le checkout de ce commit s'il n'existe pas
+(`git worktree add --detach <lab>/checkouts/<hash court> <hash>`), écrit `state.json` (la file, l'élément
+lancé), prend l'échantillon de début (§9), lit git (`rev-parse HEAD`, `status --porcelain
+--untracked-files=no`, la référence comme `branch`, `pushed` par `branch -r --contains` et
+`tag --contains`), puis lance `bash -c "<commande>"` dans ce checkout :
 
 - dans un nouveau groupe de processus (`setpgid(0, 0)` dans `pre_exec`), avec le plafond mémoire ;
-- sortie standard et d'erreur redirigées vers `<data>/logs/<id>.log`, ouvert par l'application et
+- sortie standard et d'erreur redirigées vers `<lab>/logs/<id>.log`, ouvert par l'application et
   passé à l'enfant : le journal continue de s'écrire si l'application meurt ;
 - entrée standard sur `/dev/null` ;
 - l'environnement hérité, plus les variables du §7.1 et celles de la tâche.
@@ -297,8 +353,12 @@ estimation ». Pendant une exécution : écoulé / estimé et une barre ; au-del
 - Une exécution se range par **un seul hash** : celui qu'elle note. C'est le commit du checkout pour une
   exécution lancée par lab, le commit écrit dans le résumé pour un résultat du dépôt ; pour un résultat qui
   n'en note aucun, le commit qui l'a apporté dans git (`git log -1 -- <fichier>`).
-- Ce hash est celui d'un tag (`git tag -l 'v*'`) : l'exécution est **sur ce tag** et peut étayer un papier.
-  Sinon elle est **hors tag**, montrée avec son hash, et ne peut pas étayer un papier.
+- Ce hash est celui d'un tag (`git tag -l 'v*'` dans le miroir) : l'exécution est **sur ce tag** et peut
+  étayer un papier. Sinon elle est **hors tag**, montrée avec son hash, et ne peut pas étayer un papier.
+- Ce hash n'est atteignable depuis aucune branche ni aucun tag du dépôt distant (`pushed = false`) :
+  l'exécution est **orpheline**, montrée « orphan <hash> », et ne peut pas non plus étayer un papier :
+  personne ne peut extraire ce qui a tourné. Une exécution d'un checkout local est orpheline tant que
+  son commit n'est pas poussé.
 - Une exécution dont la durée n'a pas été mesurée affiche « no time ».
 
 ## 11. Écrans
@@ -308,7 +368,8 @@ français sont possibles par un réglage (Q11). Disposition, d'après la maquett
 
 ### Barre du haut
 
-Checkout d'attache (branche, commit court, marque de modification), l'indicateur de calme, CPU et load1
+Le miroir (heure de la dernière récupération, un bouton Fetch), les fiches pas encore poussées (un bouton
+Push, §4 bis), l'indicateur de calme, CPU et load1
 d'un coup d'œil, le réglage de threads (de 1 à 8, ambre au-delà de la limite de confort).
 
 ### État (l'écran d'ouverture)
@@ -318,7 +379,10 @@ d'un coup d'œil, le réglage de threads (de 1 à 8, ambre au-delà de la limite
   sa date, sa durée (« no time » si non mesurée ; grisée ou barrée quand le temps de la tâche compte et
   que celui-ci n'est pas valide, §7.2), la charge au début et le fichier où elle a été lue ; ou
   « never run ».
-- En tête, les comptes : dernière exécution sur un tag, hors tag, jamais lancée.
+- En tête, les comptes : dernière exécution sur un tag, hors tag, orpheline, jamais lancée.
+- Les exécutions montrées sont l'union des mémoires des machines (§4 bis) et des résumés du dépôt (§13),
+  lus dans le miroir : l'écran ne dépend d'aucun checkout. Un filtre **Machine** garde celles d'une
+  machine.
 - Un filtre **Tag** : « All runs » (la dernière exécution de chaque tâche, où qu'elle ait tourné), ou un
   tag : seule la dernière exécution de chaque tâche sur ce tag, les autres « no run on this tag ».
 - Les tâches cochées ici, ou toutes celles jamais lancées, partent dans la file d'un clic.
@@ -329,8 +393,9 @@ d'un coup d'œil, le réglage de threads (de 1 à 8, ambre au-delà de la limite
   estimation, le chronomètre ⏱ si son temps compte ; les séquences au-dessus (en cocher une ajoute ses
   tâches dans l'ordre).
 - **Au milieu, la file** : les éléments dans l'ordre, réordonnés par une **poignée** de glisser-déposer,
-  chacun avec ses paramètres (modifiables), son checkout (d'attache ou un worktree, et si l'exécution sera
-  sur un tag ou hors tag), ses threads effectifs, son estimation, son cumul et son heure de fin (section 10) ; dessous : le commentaire et la version de papier (A ou B, un libellé suggéré d'après les
+  chacun avec ses paramètres (modifiables), sa référence (un tag, une branche, une pull request, un hash, ou un
+  dossier local ; si l'exécution sera sur un tag, hors tag ou orpheline ; si ce commit a déjà un checkout
+  préparé), ses threads effectifs, son estimation, son cumul et son heure de fin (section 10) ; dessous : le commentaire et la version de papier (A ou B, un libellé suggéré d'après les
   libellés passés) appliqués à toutes les exécutions de la file, les politiques d'arrêt et d'échec, l'heure de fin de la file, Lancer.
 - **À droite, l'exécution en cours** : tâche, élément n sur m, écoulé / estimé avec la barre, heures de
   fin de la tâche et de la file, Arrêter, le journal qui défile.
@@ -366,18 +431,23 @@ l'ordre des tâches ; les commentaires du fichier sont perdus quand il est enreg
 
 CPU total et par thread (barres et courbe sur 10 minutes), charge 1/5/15, mémoire utilisée / totale, VRAM
 et GPU %, les processus les plus lourds marqués « à nous » ou « étranger », l'indicateur avec sa raison,
-les seuils modifiables.
+les seuils modifiables ; les checkouts du miroir avec leur taille, et un bouton Clean qui retire ceux hors
+de tout tag avec leur `target/` et leur `.lake/` (rien n'est retiré tout seul, Q16).
 
 ## 12. Réglages
 
-`<config>/settings.toml` : la limite de confort des threads (6, Q1), seuils
+`<lab>/settings.toml` : le dépôt distant (`marcgardent/openclare`), le nom de la machine (le nom d'hôte
+par défaut : la branche `lab/runs-<machine>` et les exports), la politique de push (`ask`, `auto`,
+`never`), la limite de confort des threads (6,
+Q1), seuils
 et fenêtre du calme, période d'échantillonnage, délai entre SIGTERM et SIGKILL, politiques d'arrêt et
 d'échec, libellé de la machine pour les exports (proposé : « i7-7700K 4c/8t 2017, 62 GB », comparé à ce qui
 est détecté : l'application avertit si le modèle de processeur ou la mémoire diffèrent).
 
 ## 13. Les résultats du dépôt dans l'historique
 
-À chaque ouverture, lab lit les résumés que le dépôt contient déjà et montre chacun comme une exécution
+À chaque ouverture et après chaque récupération, lab lit les résumés que `main` contient dans le
+miroir (`git show`, `git log -1 main -- <fichier>`, jamais un arbre de travail) et montre chacun comme une exécution
 « du dépôt », jamais recopiée dans `runs.jsonl`. Une tâche nomme son résumé dans `jobs.toml` (`summary`, un
 chemin, avec `#clé` pour un enregistrement niché dans un autre fichier, comme l'export dans les résumés des
 papiers). Un résumé donne : le hash qu'il note (sinon le commit qui l'a apporté, section 10 bis), la date de
@@ -403,6 +473,22 @@ aucune durée : « no time ».
   avec tests unitaires ; l'interface les appelle.
 - Constructions légères : `CARGO_BUILD_JOBS=4` pendant le développement.
 
+**Installation.** `make lab-install` à la racine du dépôt : `cargo install --path lab --root ~/.local`
+met le binaire dans `~/.local/bin/lab` ; `lab/openclare-lab.desktop` va dans
+`~/.local/share/applications/` et `site/assets/icon.svg` dans
+`~/.local/share/icons/hicolor/scalable/apps/openclare-lab.svg`, KDE liste alors « openclare lab » dans
+son menu ; `update-desktop-database` tourne s'il est présent. `make lab-uninstall` retire les trois. Rien
+n'est installé hors du dossier personnel.
+
+**Sans fenêtre.** `lab run <tâche> [--ref <référence>] [--force] [--threads <n>]` lance une tâche sans
+fenêtre, avec le même lanceur, le même moniteur et les mêmes fiches, son journal sur la sortie standard,
+et sort avec le statut de la tâche ; la référence est par défaut celle de la tâche, `--force` la lance
+bien que la machine ne soit pas calme (son temps ne compte alors pas). `lab fetch` et `lab status` font
+ce que leur nom dit ; `lab push` récupère puis pousse la mémoire vivante vers la branche de cette machine
+(§4 bis), quoi que dise le réglage `push`, et `lab run … --push` le fait après l'exécution. Un timer
+systemd ou un shell sur une autre machine peuvent les appeler (Q4 du §17 répondue). La fenêtre reste
+l'endroit où l'on regarde.
+
 **CI.** Un workflow `lab.yml`, lancé seulement quand `lab/**` ou lui-même change (même filtre `paths` et
 même tâche `changes` que `lean.yml`) : `cargo build --release --locked` et `cargo test --locked` dans
 `lab/`, sur `ubuntu-24.04` avec les bibliothèques système qu'il faut à eframe. Il coûte quelques minutes
@@ -426,6 +512,17 @@ Chacun est un ou quelques commits sur la branche, puis un arrêt pour la revue d
 13) demandés après M2, et les résumés du dépôt lus à chaque ouverture à la place de M1b. Pas fait :
 la modification du catalogue dans l'application (modifier `jobs.toml` à la main), les libellés français
 (Q11).
+
+L'amendement du 2026-11-08 en ajoute trois, une PR chacun, ce document d'abord :
+
+| | Contenu | Vérifié par |
+|---|---|---|
+| M6 | `~/.openclare-lab` comme dossier unique, les fichiers des anciens dossiers déplacés une fois ; `make lab-install` et `lab-uninstall`, l'entrée de bureau et l'icône | l'entrée du menu KDE ouvre lab avec l'historique toujours là |
+| M7 | le miroir, un checkout par commit, préparations une fois par checkout, `{ref}`, `pushed`, exécutions orphelines ; le catalogue, les tags et les résumés lus dans le miroir, plus aucun clone nécessaire ; les checkouts et le bouton Clean dans l'écran Machine ; `lab run`, `fetch`, `status` sans fenêtre | une tâche en file sur `v0.7.0` et sur `main` ; `lab run` depuis un shell, fenêtre fermée |
+| M8 | les branches `lab/runs-<machine>`, push selon la politique, `lab push` et `lab run --push`, lecture par union ; le filtre Machine de l'écran État | deux mémoires (un second nom de machine avec `--data`) poussées et relues ; l'écran identique depuis les deux dossiers |
+
+État au 2026-11-08 : M6, M7 et M8 faits ; `lab push` est passé de M7 à M8, où sont les branches qu'il
+pousse.
 
 ## 16. Ce qui ne peut pas être vérifié ici
 
@@ -466,3 +563,19 @@ la modification du catalogue dans l'application (modifier `jobs.toml` à la main
 13. **Base vivante hors du dépôt, instantané dans git** (§4) : d'accord, ou la base elle-même suivie dans le
     checkout d'attache ?
 14. **Nom** : `lab` pour le dossier et le binaire, `openclare-lab` pour le paquet ?
+
+Répondues par l'amendement du 2026-11-08 : Q4 (`lab run` sans fenêtre, M7) et Q13 (la mémoire vivante
+hors du dépôt, réunie dans git, §4 bis). Nouvelles :
+
+15. **Push** : `ask` par défaut, un bouton avec le nombre de fiches pas encore poussées ; ou `auto` après
+    chaque exécution ?
+16. **Checkouts gardés** : ceux des tags toujours, les cinq derniers autres commits, le reste retiré avec
+    son `target/` et son `.lake/` à la fin d'une file : d'accord ? Un `.lake/packages` partagé par un lien
+    entre checkouts de même toolchain, pour épargner le cache Mathlib ?
+17. **Nom de la machine** : le nom d'hôte, ou un nom posé à la main (`i7-7700K`) ?
+18. **Machine de nuit** : une clé de déploiement limitée au dépôt, en écriture, pour ses push ?
+19. **Où tout habite** : le miroir et les checkouts dans `~/.openclare-lab` à côté de la mémoire, plusieurs
+    Go ; ou la mémoire seule là et les checkouts ailleurs (`--checkouts <dossier>`) ?
+
+Répondues le 2026-11-08 : Q15 `ask` ; Q16 tout gardé, un bouton Clean dans l'écran Machine ; Q17 le nom
+d'hôte ; Q18 pas de machine de nuit, la clé de Marc seule ; Q19 tout dans `~/.openclare-lab`.

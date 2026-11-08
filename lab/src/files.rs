@@ -1,8 +1,8 @@
-//! Files: the outputs of a run, their hashes, the tail of a log, paths made
-//! relative, records appended.
+//! Files: the outputs of a run, their hashes, the tail of a log, records
+//! appended.
 
 use std::io::{Read, Seek, SeekFrom, Write};
-use std::path::{Component, Path, PathBuf};
+use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
 use sha2::{Digest, Sha256};
@@ -118,16 +118,6 @@ fn without_colours(line: &str) -> String {
     clean
 }
 
-/// `to` relative to `from`, both absolute: "." , "sub/dir", "../../other".
-pub fn relative(from: &Path, to: &Path) -> String {
-    let from: Vec<Component> = from.components().collect();
-    let to: Vec<Component> = to.components().collect();
-    let common = from.iter().zip(&to).take_while(|(a, b)| a == b).count();
-    let mut parts: Vec<String> = vec!["..".to_string(); from.len() - common];
-    parts.extend(to[common..].iter().map(|part| part.as_os_str().to_string_lossy().into_owned()));
-    if parts.is_empty() { ".".to_string() } else { parts.join("/") }
-}
-
 /// One line added at the end of a file, in a single write.
 pub fn append_line(path: &Path, line: &str) -> Result<(), String> {
     let failed = |error: std::io::Error| format!("{}: {error}", path.display());
@@ -163,14 +153,6 @@ mod tests {
         assert_eq!(glob(root, "src/*/queue.rs"), [PathBuf::from("src/app/queue.rs")]);
         assert_eq!(glob(root, "tests/*/runs.jsonl"), [PathBuf::from("tests/fixtures/runs.jsonl")]);
         assert!(glob(root, "src").is_empty(), "a folder is not an output");
-    }
-
-    #[test]
-    fn paths_are_made_relative() {
-        assert_eq!(relative(Path::new("/r/a"), Path::new("/r/a")), ".");
-        assert_eq!(relative(Path::new("/r/a"), Path::new("/r/a/.claude/w")), ".claude/w");
-        assert_eq!(relative(Path::new("/r/a/.claude/w"), Path::new("/r/a")), "../..");
-        assert_eq!(relative(Path::new("/r/a"), Path::new("/r/b")), "../b");
     }
 
     #[test]
