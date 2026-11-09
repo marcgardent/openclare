@@ -307,11 +307,14 @@ A job with `timing_matters = true` is the kind whose duration goes into a paper.
 time honest is an idle machine, not the hour: Marc launches when he knows he is not using it, by
 day as well as by night. Proposal (Q2):
 
-- At the head of the queue it **waits for the machine to be calm** (§9): the item shows "waiting for
-  calm since 15:04 (foreign CPU 18 %)". It starts once the machine has been calm for the whole
-  window. The other jobs of the queue do not wait for it unless they come after it.
-- "Start anyway" starts it at once. The run then has `forced = true`, so `timing_valid = false`:
-  the run counts, its time does not.
+- It **starts at once**, like every job (decision of 2026-11-09: lab warns, it never keeps a Run
+  from starting). A run begun on a machine not calm has `before = false`, so `timing_valid = false`,
+  its reason recorded ("not calm at the start: foreign CPU 18 %"), and the message band says so.
+- With `wait = true` under `[calm]` in the settings, it waits at the head of the queue for the machine
+  to be calm (§9): the item shows "waiting for calm since 15:04 (foreign CPU 18 %)", it starts once
+  the machine has been calm for the whole window, and the other jobs of the queue wait for it only
+  when they come after it. "Start anyway" starts it at once: `forced = true`, so `timing_valid =
+  false`, the run counts, its time does not.
 - Every run, whatever the job, gets its `Calm` verdict; a timing is reported only from a run with
   `timing_valid = true`.
 - The screens say which it is. A stopwatch ⏱ stands beside the name of a job whose timing matters,
@@ -354,6 +357,11 @@ item started), takes the start sample (§9), reads git (`rev-parse HEAD`, `statu
   the child: the log keeps being written if the app dies;
 - stdin from `/dev/null`;
 - the environment inherited, plus the variables of §7.1 and the job's own.
+
+A reference the mirror does not know (a branch deleted after its merge, a typo) does not stop the item:
+it runs on `main`, the message band and the log say which reference was asked and which commit ran, the
+record names `main`, and the queue item showed "unknown, main instead" beforehand. lab warns, it never
+keeps a run from starting (2026-11-09).
 
 The log is tailed in the app: the last 2,000 lines, refreshed every half second, ANSI colours
 stripped, search in the log.
@@ -519,7 +527,7 @@ tag with their `target/` and `.lake/` (nothing is removed on its own, Q16).
 
 `<lab>/settings.toml`: the remote (`marcgardent/openclare`), the machine name (the hostname by default:
 the branch `lab/runs-<machine>` and the exports), the push policy (`ask`, `auto`, `never`), the comfort limit of threads (6, Q1), calm thresholds
-and window, sample period, delay between SIGTERM and SIGKILL, the policies on stop and on failure, the
+and window and whether a timed job waits for calm (`wait`, off by default), sample period, delay between SIGTERM and SIGKILL, the policies on stop and on failure, the
 machine label used in exports (default proposed "i7-7700K 4c/8t 2017, 62 GB", checked against what is
 detected: the app warns if the CPU model or the memory differ).
 
@@ -560,8 +568,8 @@ installed outside the home folder.
 
 **Headless.** `lab run <job> [--ref <reference>] [--force] [--threads <n>]` runs one job without a
 window, with the same runner, monitor and records, its log on stdout, and exits with the job's status;
-the reference defaults to the job's own, `--force` starts it although the machine is not calm (its time
-then not counting). `lab fetch` and `lab status` do what their names say; `lab push` fetches, then
+the reference defaults to the job's own, `--force` starts it although the machine is not calm when the
+`wait` setting makes it wait (its time then not counting). `lab fetch` and `lab status` do what their names say; `lab push` fetches, then
 pushes the live memory to this machine's branch (§4b), whatever the `push` setting says, and
 `lab run … --push` does so after the run. A systemd timer or a shell on another machine can call them
 (Q4 of §17 answered). The window stays the place where one watches.
@@ -613,7 +621,8 @@ Status on 2026-11-08: M6, M7 and M8 done; `lab push` went from M7 to M8, where t
 
 1. **Comfort limit**: an amber warning above 6 threads, never blocking: enough?
 2. **Timing that matters, machine not calm**: wait for calm at the head of the queue (proposed), or
-   only warn and start?
+   only warn and start? Answered on 2026-11-09: warn and start, the time not counting; the wait is
+   the `wait` calm setting, off by default (§7.2).
 3. **Rest of the queue after Stop, after a failure**: pause and ask (proposed for both), cancel, continue?
 4. **Closing the window during a run**: ask (proposed) and no detached mode, or a headless runner `lab run`
    that survives the window (a later milestone)?

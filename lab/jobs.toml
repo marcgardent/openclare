@@ -118,11 +118,10 @@ paper = "B"
 
 [[job]]
 name = "lean-oracle-doubles"
-description = "The doubles of the surfaces with borders through the Lean oracle, on the branch of PR #271; about 18 hours of one core in all (memory note)."
+description = "The doubles of the surfaces with borders through the Lean oracle (PR #271, merged into main); about 18 hours of one core in all (memory note)."
 category = "lean-oracle"
 command = "export PATH=\"$HOME/.elan/bin:$PATH\"; python3 docs/research/turns-of-a-t-mesh/experiments/property/generate.py --count {count} --seed {seed} --borders && python3 docs/research/turns-of-a-t-mesh/lean/Check/check_exports.py scratch/data-package/property/double-seed-{seed} scratch/data-package/property/double-seed-{seed}/lean-check --jobs {threads}"
 prepare = "make proofs NOTE=turns-of-a-t-mesh"
-checkout = "worktree-borders"
 parameters = { count = "50", seed = "1" }
 memory_limit_gb = 32
 timing_matters = true

@@ -31,8 +31,8 @@ wherever it ran. It runs on Linux (it reads /proc); `nvidia-smi`, if present, gi
   nor tag of the remote reaches that commit; neither can back a paper. The Tag filter
   shows the last run of each job on one tag only; the Machine filter, the runs one machine
   recorded. Jobs checked, or all those never run, go to the
-  queue in one click. A stopwatch ⏱ beside a job says its timing matters: it waits for a calm machine,
-  and its duration is shown plain only when the run's time is valid, muted when its calm was not
+  queue in one click. A stopwatch ⏱ beside a job says its timing matters:
+  its duration is shown plain only when the run's time is valid, muted when its calm was not
   measured, struck when the machine was not calm. A job without the stopwatch runs under any load; its
   duration is an order of magnitude.
 - **Queue**: jobs and sequences picked from the catalogue, reordered with their handle, their parameters
@@ -40,8 +40,10 @@ wherever it ran. It runs on Linux (it reads /proc); `nvidia-smi`, if present, gi
   off-tag or orphan and whether its commit is checked out already; each shows its estimate (the median
   of the job's past runs, with how many and under which load), the running total and the time it should
   end. Run fetches the mirror and starts them one at a time, each in a process group of its own, the
-  prepare once per checkout; Stop sends SIGTERM, then SIGKILL. A job whose timing matters (⏱) waits
-  for a calm machine; "Start anyway" starts it, its time then not counted.
+  prepare once per checkout; Stop sends SIGTERM, then SIGKILL. A job whose timing matters (⏱) starts at
+  once like the others, and its time does not count when the machine was not calm; with `wait = true`
+  under `[calm]` in the settings it waits for a calm machine, and "Start anyway" starts it. A reference
+  the mirror does not know runs on `main`, with a warning: lab warns, it never holds a Run back.
 - **History**: every run lab recorded and every result the repository's summaries hold, sortable and
   filtered; the detail of a run; its comment and paper edited; the runs shown copied as Markdown (with
   the hardware line) or CSV; a past run typed by hand; the history of every machine copied into the
@@ -92,7 +94,7 @@ lab run build-release --ref v0.7.0
 
 runs one job with the same runner, monitor and records, its log on stdout, and exits with the job's
 status; `--ref` defaults to the job's own reference, `--force` starts it although the machine is not calm
-(its time then not counting), `--threads <n>` sets the thread count, `--push` pushes the memory of this
+when the `wait` setting makes it wait (its time then not counting), `--threads <n>` sets the thread count, `--push` pushes the memory of this
 machine to its branch after the run, whatever the setting. Ctrl-C stops the run and records it stopped.
 `lab fetch` creates or fetches the mirror and reads the other machines' memories; `lab push` fetches,
 then pushes this machine's memory; `lab status` says where the mirror, the checkouts, the machines, the
