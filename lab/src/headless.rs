@@ -26,7 +26,8 @@ use crate::store::History;
 pub struct RunArguments {
     pub job: String,
     pub reference: Option<String>,
-    /// Start although the machine is not calm: the time will not count.
+    /// Start although the machine is not calm, when the `wait` calm setting
+    /// makes a timed job wait: the time will not count.
     pub force: bool,
     pub threads: Option<u32>,
     /// Push the live memory to this machine's branch after the run, whatever the setting.

@@ -22,7 +22,8 @@
 //!
 //! `run` runs one job without a window and exits with its status (§14):
 //! on the reference given, else the job's own; `--force` starts it although
-//! the machine is not calm, its time then not counting; `--push` pushes the
+//! the machine is not calm when the `wait` calm setting makes it wait, its
+//! time then not counting; `--push` pushes the
 //! live memory to this machine's branch after the run, whatever the setting.
 //! `fetch` fetches the mirror, creating it if need be. `push` fetches, then
 //! pushes the live memory. `status` says where things stand.

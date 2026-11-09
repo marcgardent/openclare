@@ -132,8 +132,8 @@ impl App {
                 ui.add_space(8.0);
                 ui.label(
                     RichText::new(format!(
-                        "{STOPWATCH} its duration counts: the job waits for a calm machine, and a run under load \
-                         reports no time. Without the mark, the duration is not a measurement."
+                        "{STOPWATCH} its duration counts: a run under load reports no time (with the calm setting \
+                         `wait`, the job waits for a calm machine). Without the mark, the duration is not a measurement."
                     ))
                     .small()
                     .color(MUTED),
@@ -311,6 +311,10 @@ impl App {
                                 }
                                 let ready = if resolution.checked_out { "checkout ready" } else { "to check out" };
                                 ui.label(RichText::new(ready).color(MUTED));
+                            }
+                            Some(Err(error)) if item.target.trim() != crate::mirror::MAIN => {
+                                ui.colored_label(AMBER, format!("unknown, {} instead", crate::mirror::MAIN))
+                                    .on_hover_text(format!("{error}; the run will be on {}", crate::mirror::MAIN));
                             }
                             Some(Err(error)) => {
                                 ui.colored_label(RED, "unknown").on_hover_text(error);

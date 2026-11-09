@@ -220,11 +220,15 @@ Une tâche `timing_matters = true` est de celles dont la durée entre dans un pa
 temps honnête, c'est une machine au repos, pas l'heure : Marc lance quand il sait qu'il ne s'en sert
 pas, de jour comme de nuit. Proposition (Q2) :
 
-- En tête de file, elle **attend que la machine soit calme** (§9) : l'élément affiche « attend le calme
-  depuis 15:04 (CPU étranger 18 %) ». Elle part quand la machine a été calme sur toute la fenêtre. Les
-  autres tâches de la file ne l'attendent que si elles viennent après elle.
-- « Lancer quand même » la lance tout de suite. La fiche a alors `forced = true`, donc
-  `timing_valid = false` : l'exécution compte, son temps non.
+- Elle **part tout de suite**, comme toute tâche (décision du 2026-11-09 : lab avertit, il n'empêche
+  jamais un Run de démarrer). Une exécution commencée sur une machine non calme a `before = false`,
+  donc `timing_valid = false`, sa raison notée (« pas calme au départ : CPU étranger 18 % »), et le
+  bandeau de messages le dit.
+- Avec `wait = true` sous `[calm]` dans les réglages, elle attend en tête de file que la machine soit
+  calme (§9) : l'élément affiche « attend le calme depuis 15:04 (CPU étranger 18 %) », elle part quand
+  la machine a été calme sur toute la fenêtre, et les autres tâches de la file ne l'attendent que si
+  elles viennent après elle. « Lancer quand même » la lance tout de suite : `forced = true`, donc
+  `timing_valid = false`, l'exécution compte, son temps non.
 - Toute exécution, quelle que soit la tâche, reçoit son verdict `Calm` ; un temps n'est rapporté que
   d'une exécution `timing_valid = true`.
 - Les écrans disent de quel cas il s'agit. Un chronomètre ⏱ se tient à côté du nom d'une tâche dont le
@@ -268,6 +272,12 @@ lancé), prend l'échantillon de début (§9), lit git (`rev-parse HEAD`, `statu
   passé à l'enfant : le journal continue de s'écrire si l'application meurt ;
 - entrée standard sur `/dev/null` ;
 - l'environnement hérité, plus les variables du §7.1 et celles de la tâche.
+
+Une référence que le miroir ne connaît pas (une branche supprimée après sa fusion, une faute de frappe)
+n'arrête pas l'élément : il tourne sur `main`, le bandeau de messages et le journal disent quelle
+référence était demandée et quel commit a tourné, la fiche nomme `main`, et l'élément de la file
+affichait « unknown, main instead » avant. lab avertit, il n'empêche jamais une exécution de démarrer
+(2026-11-09).
 
 Le journal défile dans l'application : les 2 000 dernières lignes, rafraîchies toutes les demi-secondes,
 couleurs ANSI retirées, recherche dans le journal.
@@ -440,7 +450,8 @@ de tout tag avec leur `target/` et leur `.lake/` (rien n'est retiré tout seul, 
 par défaut : la branche `lab/runs-<machine>` et les exports), la politique de push (`ask`, `auto`,
 `never`), la limite de confort des threads (6,
 Q1), seuils
-et fenêtre du calme, période d'échantillonnage, délai entre SIGTERM et SIGKILL, politiques d'arrêt et
+et fenêtre du calme, si une tâche au chronomètre attend le calme (`wait`, non par défaut), période
+d'échantillonnage, délai entre SIGTERM et SIGKILL, politiques d'arrêt et
 d'échec, libellé de la machine pour les exports (proposé : « i7-7700K 4c/8t 2017, 62 GB », comparé à ce qui
 est détecté : l'application avertit si le modèle de processeur ou la mémoire diffèrent).
 
@@ -483,7 +494,8 @@ n'est installé hors du dossier personnel.
 **Sans fenêtre.** `lab run <tâche> [--ref <référence>] [--force] [--threads <n>]` lance une tâche sans
 fenêtre, avec le même lanceur, le même moniteur et les mêmes fiches, son journal sur la sortie standard,
 et sort avec le statut de la tâche ; la référence est par défaut celle de la tâche, `--force` la lance
-bien que la machine ne soit pas calme (son temps ne compte alors pas). `lab fetch` et `lab status` font
+bien que la machine ne soit pas calme quand le réglage `wait` la fait attendre (son temps ne compte alors
+pas). `lab fetch` et `lab status` font
 ce que leur nom dit ; `lab push` récupère puis pousse la mémoire vivante vers la branche de cette machine
 (§4 bis), quoi que dise le réglage `push`, et `lab run … --push` le fait après l'exécution. Un timer
 systemd ou un shell sur une autre machine peuvent les appeler (Q4 du §17 répondue). La fenêtre reste
@@ -540,7 +552,8 @@ pousse.
 
 1. **Limite de confort** : une alerte ambre au-delà de 6 threads, jamais bloquante : suffisant ?
 2. **Temps qui compte, machine pas calme** : attendre le calme en tête de file (proposé), ou seulement
-   avertir et lancer ?
+   avertir et lancer ? Répondu le 2026-11-09 : avertir et lancer, le temps ne comptant pas ; l'attente
+   est le réglage `wait` du calme, non par défaut (§7.2).
 3. **Reste de la file après Arrêter, après un échec** : suspendre et demander (proposé pour les deux),
    annuler, continuer ?
 4. **Fermer la fenêtre pendant une exécution** : demander (proposé) sans mode détaché, ou un lanceur sans

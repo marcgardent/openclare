@@ -33,7 +33,7 @@ montrent toutes les exécutions, où qu'elles aient tourné. Il tourne sous Linu
   l'autre ne peut étayer un papier. Le filtre Tag montre la dernière exécution de chaque tâche sur un seul
   tag ; le filtre Machine, les exécutions notées par une machine. Les tâches cochées, ou toutes celles
   jamais lancées, partent dans la file d'un clic. Un
-  chronomètre ⏱ à côté d'une tâche dit que son temps compte : elle attend une machine calme, et sa durée
+  chronomètre ⏱ à côté d'une tâche dit que son temps compte : sa durée
   n'est en clair que si le temps de l'exécution est valide, grisée quand son calme n'a pas été mesuré,
   barrée quand la machine n'était pas calme. Une tâche sans chronomètre tourne sous n'importe quelle
   charge ; sa durée est un ordre de grandeur.
@@ -43,7 +43,10 @@ montrent toutes les exécutions, où qu'elles aient tourné. Il tourne sous Linu
   (la médiane des exécutions passées de la tâche, avec leur nombre et leur charge), le cumul et l'heure de
   fin prévue. Run récupère le miroir et les lance une à une, chacune dans son groupe de processus, la
   préparation une fois par checkout ; Stop envoie SIGTERM, puis SIGKILL. Une tâche dont le temps compte
-  (⏱) attend une machine calme ; « Start anyway » la lance, son temps ne compte alors pas.
+  (⏱) part tout de suite comme les autres, et son temps ne compte pas si la machine n'était pas calme ;
+  avec `wait = true` sous `[calm]` dans les réglages elle attend une machine calme, et « Start anyway »
+  la lance. Une référence que le miroir ne connaît pas tourne sur `main`, avec un avertissement : lab
+  avertit, il n'empêche jamais un Run.
 - **History** : toutes les exécutions notées par lab et tous les résultats que les résumés du dépôt
   contiennent, triables et filtrées ; le détail d'une exécution ; son commentaire et son papier
   modifiables ; les exécutions affichées copiées en Markdown (avec la ligne de matériel) ou en CSV ; une
@@ -98,7 +101,8 @@ lab run build-release --ref v0.7.0
 
 lance une tâche avec le même lanceur, le même moniteur et les mêmes fiches, son journal sur la sortie
 standard, et sort avec le statut de la tâche ; `--ref` est par défaut la référence de la tâche, `--force`
-la lance bien que la machine ne soit pas calme (son temps ne compte alors pas), `--threads <n>` fixe le
+la lance bien que la machine ne soit pas calme quand le réglage `wait` la fait attendre (son temps ne
+compte alors pas), `--threads <n>` fixe le
 nombre de threads, `--push` pousse la mémoire de cette machine vers sa branche après l'exécution, quel
 que soit le réglage. Ctrl-C arrête l'exécution et la note arrêtée. `lab fetch` crée ou récupère le miroir
 et lit les mémoires des autres machines ; `lab push` récupère puis pousse la mémoire de cette machine ;

@@ -40,6 +40,10 @@ pub struct CalmSettings {
     pub load1_max: f64,
     /// After a run of ours ends, load1 is not looked at for this long.
     pub load1_ignored_minutes: u32,
+    /// Whether a job whose timing matters waits at the head of the queue for a
+    /// calm machine. Off by default: it starts at once, and its time does not
+    /// count when the machine was not calm (SPEC.md, §7.2).
+    pub wait: bool,
 }
 
 /// When the live memory is pushed to the machine's branch (SPEC.md, §4b):
@@ -88,6 +92,7 @@ impl Default for CalmSettings {
             foreign_cpu_peak_max: 25.0,
             load1_max: 1.0,
             load1_ignored_minutes: 5,
+            wait: false,
         }
     }
 }
@@ -127,6 +132,8 @@ mod tests {
         assert_eq!(toml::from_str::<Settings>("push = \"auto\"\nmachine = \"night\"\n").unwrap().push, Push::Auto);
         assert_eq!(settings.calm.load1_max, 0.5);
         assert_eq!(settings.calm.window_seconds, 60);
+        assert!(!settings.calm.wait, "a timed job starts at once unless asked to wait");
+        assert!(toml::from_str::<Settings>("[calm]\nwait = true\n").unwrap().calm.wait);
         assert!(toml::from_str::<Settings>("thread = 6\n").is_err());
     }
 

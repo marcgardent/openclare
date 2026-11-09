@@ -427,6 +427,13 @@ impl Runner {
         Some(monitor::lock(watch).verdict(&calm))
     }
 
+    /// Whether a job whose timing matters waits for a calm machine (the `wait`
+    /// calm setting). Off by default: it starts at once and its time does not
+    /// count when the machine was not calm (SPEC.md, §7.2).
+    fn waits_for_calm(&self) -> bool {
+        self.monitor.as_ref().is_some_and(|(_, calm)| calm.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).wait)
+    }
+
     /// The runner's thread: a step every tick, for as long as the app lives.
     pub fn spawn(mut self) {
         std::thread::Builder::new()
@@ -501,6 +508,7 @@ impl Runner {
         }
         if let Some((job, false)) = &head
             && job.timing_matters
+            && self.waits_for_calm()
             && let Some(verdict) = self.verdict()
             && verdict.calmness != Calmness::Calm
         {
@@ -540,7 +548,7 @@ impl Runner {
                     self.settle(
                         item.key,
                         ItemState::Cancelled,
-                        Some(Policy::PauseAndAsk),
+                        queue.on_failure.or(Some(Policy::PauseAndAsk)),
                         &format!("{} could not start.", item.job.name),
                     );
                 }
@@ -612,8 +620,12 @@ impl Runner {
     /// The checkout an item runs in, with what git says of it: the folder
     /// given by hand, or the commit its reference names, checked out of the
     /// mirror if not already (SPEC.md, §8.1).
-    fn checkout(&self, item: &Item) -> Result<(PathBuf, GitState, Target), String> {
-        let target = Target::parse(&item.target);
+    /// The folder the item runs in, its git state and its target, with a note
+    /// when the reference asked is unknown and `main` runs instead: lab warns,
+    /// it never keeps a run from starting (SPEC.md, §8.1).
+    fn checkout(&self, item: &Item) -> Result<(PathBuf, GitState, Target, Option<String>), String> {
+        let mut target = Target::parse(&item.target);
+        let mut note = None;
         let root = match &target {
             Target::Local(path) => {
                 if !path.is_dir() {
@@ -622,7 +634,16 @@ impl Runner {
                 path.clone()
             }
             Target::Reference(reference) => {
-                let hash = self.mirror.resolve(reference)?;
+                let (reference, hash) = match self.mirror.resolve(reference) {
+                    Ok(hash) => (reference.clone(), hash),
+                    Err(error) if reference != crate::mirror::MAIN => {
+                        let hash = self.mirror.resolve(crate::mirror::MAIN)?;
+                        let short: String = hash.chars().take(7).collect();
+                        note = Some(format!("{error}; run on {} ({short}) instead", crate::mirror::MAIN));
+                        (crate::mirror::MAIN.to_string(), hash)
+                    }
+                    Err(error) => return Err(error),
+                };
                 let short: String = hash.chars().take(7).collect();
                 self.lock().activity = Some(format!("checking out {reference} ({short})"));
                 (self.repaint)();
@@ -634,15 +655,21 @@ impl Runner {
                 added?
             }
         };
+        if note.is_some() {
+            target = Target::Reference(crate::mirror::MAIN.to_string());
+        }
         let mut git = GitState::read(&root)?;
         if let Target::Reference(reference) = &target {
             git.branch = Some(reference.clone());
         }
-        Ok((root, git, target))
+        Ok((root, git, target, note))
     }
 
     fn begin(&mut self, item: &Item, queue: &QueueSettings) -> Result<(), String> {
-        let (checkout, git, target) = self.checkout(item)?;
+        let (checkout, git, target, note) = self.checkout(item)?;
+        if let Some(note) = &note {
+            self.message(format!("{}: {note}", item.job.name));
+        }
         let pushed = self.mirror.pushed(&git.commit);
         // The catalogue of the commit run, when it has one with this job (SPEC.md, §2).
         let mut catalogue_line = "catalogue: the one lab shows".to_string();
@@ -660,6 +687,16 @@ impl Runner {
         }
         let job = &job;
         let before = self.verdict();
+        if job.timing_matters
+            && !item.forced
+            && let Some(verdict) = &before
+            && verdict.calmness != Calmness::Calm
+        {
+            self.message(format!(
+                "{}: started on a machine not calm ({}); its time will not count",
+                job.name, verdict.text
+            ));
+        }
         let started = Local::now().fixed_offset();
         let id = self.unique_id(&started, &job.name);
         let threads = job.effective_threads(queue.threads);
@@ -676,6 +713,9 @@ impl Runner {
         let mut log = File::create(&log_path).map_err(|error| format!("{}: {error}", log_path.display()))?;
         log_line(&mut log, &format!("checkout: {reference} at {} in {}", git.commit, checkout.display()));
         log_line(&mut log, &catalogue_line);
+        if let Some(note) = &note {
+            log_line(&mut log, &format!("reference: {note}"));
+        }
         let scrub = Scrub::new(&checkout);
         let run = Run {
             format: FORMAT,
@@ -1420,12 +1460,9 @@ mod tests {
         assert!(!places.data.join("state.json").exists(), "nothing waits any more");
     }
 
-    #[test]
-    fn a_job_whose_timing_matters_waits_for_calm_unless_forced() {
-        let places = places("calm");
-        let catalogue =
-            jobs("[[job]]\nname = \"timed\"\ncategory = \"experiment\"\ncommand = \"true\"\ntiming_matters = true\n");
-        // A machine busy with something else: one sample far above the peak.
+    /// A monitor that saw a machine busy with something else: one sample far
+    /// above the peak, two minutes after it started.
+    fn busy_watch() -> Arc<Mutex<Watch>> {
         let point = |foreign: f64| crate::monitor::Point {
             at: Instant::now(),
             cpu: foreign,
@@ -1438,12 +1475,59 @@ mod tests {
             vram: None,
             gpu: None,
         };
-        let watch = Arc::new(Mutex::new(Watch {
+        Arc::new(Mutex::new(Watch {
             points: vec![point(60.0)].into(),
             started: Some(Instant::now() - Duration::from_secs(120)),
             ..Watch::default()
-        }));
+        }))
+    }
+
+    fn timed_job() -> Catalogue {
+        jobs("[[job]]\nname = \"timed\"\ncategory = \"experiment\"\ncommand = \"true\"\ntiming_matters = true\n")
+    }
+
+    #[test]
+    fn a_job_whose_timing_matters_starts_at_once_by_default_its_time_not_counting() {
+        let places = places("calm-at-once");
+        let catalogue = timed_job();
+        let watch = busy_watch();
         let calm = Arc::new(Mutex::new(CalmSettings::default()));
+        let shared = Arc::new(Mutex::new(Shared::default()));
+        {
+            let mut queue = shared.lock().unwrap();
+            queue.add(catalogue.job("timed").unwrap().clone(), home(&places));
+            queue.start(QueueSettings {
+                id: "test".to_string(),
+                threads: 1,
+                grace_seconds: 1,
+                ..QueueSettings::default()
+            });
+        }
+        let mut runner = new_runner(&shared, &places).with_monitor(watch, calm);
+        let begun = Instant::now();
+        while shared.lock().unwrap().mode == Mode::Running || runner.running.is_some() {
+            runner.step();
+            assert!(begun.elapsed() < Duration::from_secs(10));
+            std::thread::sleep(Duration::from_millis(20));
+        }
+        let shared = shared.lock().unwrap();
+        assert!(shared.waiting_for_calm.is_none(), "it did not wait");
+        assert!(
+            shared.messages.iter().any(|message| message.contains("its time will not count")),
+            "{:?}",
+            shared.messages
+        );
+        let run = &History::read(&places.runs()).unwrap().runs[0];
+        assert!(!run.calm.forced && !run.calm.before && !run.calm.timing_valid, "{:?}", run.calm);
+        assert!(run.calm.reason.starts_with("not calm at the start"), "{}", run.calm.reason);
+    }
+
+    #[test]
+    fn a_job_whose_timing_matters_waits_for_calm_when_the_setting_says_so_unless_forced() {
+        let places = places("calm");
+        let catalogue = timed_job();
+        let watch = busy_watch();
+        let calm = Arc::new(Mutex::new(CalmSettings { wait: true, ..CalmSettings::default() }));
         let shared = Arc::new(Mutex::new(Shared::default()));
         {
             let mut queue = shared.lock().unwrap();
@@ -1518,9 +1602,16 @@ mod tests {
         assert!(mirror.exists(), "the mirror was created before the queue");
         assert!(shared.fetched.is_some() && shared.mirror_changes >= 2, "{:?}", shared.fetched);
         let history = History::read(&places.runs()).unwrap();
-        assert_eq!(history.runs.len(), 2, "the item on an unknown reference could not start");
-        assert!(shared.messages.iter().any(|message| message.contains("no-such-reference")), "{:?}", shared.messages);
-        assert_eq!(shared.items[2].state, ItemState::Cancelled);
+        assert_eq!(history.runs.len(), 3, "the item on an unknown reference ran on main");
+        assert!(
+            shared.messages.iter().any(|message| message.contains("no-such-reference") && message.contains("main")),
+            "{:?}",
+            shared.messages
+        );
+        assert!(matches!(shared.items[2].state, ItemState::Done { .. }), "{:?}", shared.items[2].state);
+        let third = &history.runs[2];
+        assert_eq!(third.checkout, "main");
+        assert_eq!(third.git.as_ref().unwrap().branch.as_deref(), Some("main"));
         let first = &history.runs[0];
         let git = first.git.as_ref().unwrap();
         assert_eq!(first.checkout, "v0.7.0");
@@ -1538,7 +1629,12 @@ mod tests {
             second.skipped_because.as_deref().is_some_and(|why| why.starts_with("done for where on")),
             "{second:?}"
         );
-        assert_eq!(mirror.checkouts().len(), 1, "one checkout for the two runs");
+        assert_eq!(mirror.checkouts().len(), 2, "one checkout for the two runs on v0.7.0, one for main");
+        let third_log = std::fs::read_to_string(places.data.join(&third.log.as_ref().unwrap().path)).unwrap();
+        assert!(
+            third_log.contains("reference: no-such-reference") && third_log.contains("checkout: main at"),
+            "{third_log}"
+        );
         assert_eq!(prepared_in(&checkout, "nothing"), None);
     }
 
