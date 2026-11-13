@@ -22,6 +22,7 @@ which a worktree does not have.
 import argparse
 import json
 import subprocess
+import time
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -80,8 +81,10 @@ def run(engine, sources, out, model, budget):
     mesh = out / f"{model}-{budget}.obj"
     preset = "hard-surface" if model in HARD_SURFACE else "organic"
     record = {"model": model, "budget": budget}
+    clock = time.monotonic()
     remesh = subprocess.run([engine, "remesh", source, mesh, "--preset", preset, "--quads", str(budget)],
                             capture_output=True, text=True, timeout=900)
+    record["seconds"] = time.monotonic() - clock
     if remesh.returncode != 0:
         record["failure"] = remesh.stderr.strip().splitlines()[-1:] or ["no message"]
         return record
