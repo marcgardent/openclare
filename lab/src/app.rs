@@ -558,6 +558,37 @@ impl eframe::App for App {
 impl App {
     /// Closing the window during a run asks first (SPEC.md, section 8.5):
     /// the record needs the app open.
+    /// What lab did to the desktop's processors (SPEC.md, §7.5): pinned off
+    /// the job processors while something runs, every processor given back after.
+    fn desktop_pill(&self, ui: &mut egui::Ui) {
+        let desktop = self.lock().desktop.clone();
+        let Some(desktop) = desktop else { return };
+        let (text, colour, hover) = match &desktop {
+            crate::desktop::Desktop::Pinned { cpus, processes, since } => (
+                format!("Desktop on {cpus} · {processes} processes"),
+                AMBER,
+                format!(
+                    "since {}: your processes are kept on the processors {cpus}, off the job processors; \
+                     lab gives them every processor back once nothing runs",
+                    since.format("%H:%M:%S")
+                ),
+            ),
+            crate::desktop::Desktop::Freed { processes, at, why } => (
+                format!("Desktop free · {processes} restored {}", at.format("%H:%M")),
+                GREEN,
+                format!("{processes} processes given every processor back at {} ({why})", at.format("%H:%M:%S")),
+            ),
+        };
+        egui::Frame::new()
+            .fill(colour.gamma_multiply(0.18))
+            .stroke(egui::Stroke::new(1.0, colour.gamma_multiply(0.6)))
+            .corner_radius(12)
+            .inner_margin(egui::Margin::symmetric(10, 3))
+            .show(ui, |ui| ui.label(RichText::new(text).color(colour).strong()))
+            .response
+            .on_hover_text(hover);
+    }
+
     fn closing_window(&mut self, context: &egui::Context) {
         let running = self.lock().running();
         if self.quit_after_stop && !running {
@@ -565,6 +596,13 @@ impl App {
             return;
         }
         let closing = context.input(|input| input.viewport().close_requested());
+        if closing && !running {
+            // The window closes: the desktop gets every processor back (SPEC.md, §7.5).
+            let job_cpus = crate::cpus::job_cpus(&self.settings.calm.job_cpus).unwrap_or_default();
+            if !job_cpus.is_empty() {
+                crate::desktop::free(&crate::desktop::cpus(&job_cpus));
+            }
+        }
         if closing && running && !self.quit_after_stop && self.screenshot.is_none() {
             context.send_viewport_cmd(egui::ViewportCommand::CancelClose);
             self.closing = true;
@@ -732,6 +770,7 @@ impl App {
                 })
                 .response;
             response.on_hover_text(&verdict.text);
+            self.desktop_pill(ui);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if ui.button("About").clicked() {
                     self.about = true;

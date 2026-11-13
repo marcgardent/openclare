@@ -189,6 +189,8 @@ pub struct Shared {
     pub pushed: Option<(DateTime<Local>, String)>,
     /// The batch under way, or the last one (R3).
     pub grid: Option<LiveGrid>,
+    /// What lab last did to the desktop's processors (SPEC.md, §7.5).
+    pub desktop: Option<crate::desktop::Desktop>,
     next_key: u64,
 }
 
@@ -518,6 +520,10 @@ pub struct Runner {
     /// machine's name (SPEC.md, §4b): never, until `with_push` says.
     push: Push,
     machine_name: String,
+    /// The desktop's processors while lab keeps it pinned to them (SPEC.md, §7.5).
+    desktop_pinned: Option<Vec<usize>>,
+    /// Whether the desktop was looked at once: what an earlier session left pinned is freed then.
+    desktop_looked: bool,
 }
 
 impl Runner {
@@ -546,6 +552,8 @@ impl Runner {
             waiting_since: None,
             push: Push::Never,
             machine_name: crate::machine::hostname(),
+            desktop_pinned: None,
+            desktop_looked: false,
         }
     }
 
@@ -629,7 +637,61 @@ impl Runner {
     /// One look: the run under way, else the orphan, else the next item.
     pub fn step(&mut self) {
         self.look();
+        let busy = self.running.is_some() || {
+            let shared = self.lock();
+            shared.mode == Mode::Running && shared.items.iter().any(|item| item.state == ItemState::Waiting)
+        };
+        self.desktop_follow(busy);
         self.save_state();
+    }
+
+    /// The desktop off the job processors while something runs, every
+    /// processor back once nothing does (SPEC.md, §7.5); at the first look,
+    /// what a session that ended without freeing it left pinned is freed.
+    fn desktop_follow(&mut self, busy: bool) {
+        let Some((_, calm)) = self.monitor.as_ref() else { return };
+        let calm = calm.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone();
+        let job_cpus = crate::cpus::job_cpus(&calm.job_cpus).unwrap_or_default();
+        if job_cpus.is_empty() {
+            return;
+        }
+        let desktop = crate::desktop::cpus(&job_cpus);
+        let first_look = !self.desktop_looked;
+        self.desktop_looked = true;
+        match (&self.desktop_pinned, busy && calm.pin_desktop) {
+            (None, true) => {
+                let processes = crate::desktop::pin(&desktop);
+                self.lock().desktop = Some(crate::desktop::Desktop::Pinned {
+                    cpus: crate::cpus::text(&desktop),
+                    processes,
+                    since: Local::now(),
+                });
+                self.desktop_pinned = Some(desktop);
+                (self.repaint)();
+            }
+            (Some(pinned), false) => {
+                let processes = crate::desktop::free(pinned);
+                self.lock().desktop = Some(crate::desktop::Desktop::Freed {
+                    processes,
+                    at: Local::now(),
+                    why: "nothing runs".to_string(),
+                });
+                self.desktop_pinned = None;
+                (self.repaint)();
+            }
+            (None, false) if first_look => {
+                let processes = crate::desktop::free(&desktop);
+                if processes > 0 {
+                    self.lock().desktop = Some(crate::desktop::Desktop::Freed {
+                        processes,
+                        at: Local::now(),
+                        why: "left pinned by an earlier session".to_string(),
+                    });
+                    (self.repaint)();
+                }
+            }
+            _ => {}
+        }
     }
 
     fn look(&mut self) {
@@ -767,6 +829,8 @@ impl Runner {
         }
         (self.repaint)();
         let has_ref_axis = batch.axis(crate::catalogue::REFERENCE_AXIS).is_some();
+        // The batch runs here to its end: the desktop goes off the job processors first.
+        self.desktop_follow(true);
         let options = crate::batch::Options {
             only: Vec::new(),
             reference: (!has_ref_axis).then(|| item.target.clone()),

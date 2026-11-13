@@ -43,6 +43,9 @@ pub struct CalmSettings {
     /// The processors the jobs run on, pinned, as `1-3,5-7` (SPEC.md, §7.5):
     /// the calm is then judged on them alone. Empty: every processor, no pinning.
     pub job_cpus: String,
+    /// Whether lab keeps the desktop off the job processors while it runs
+    /// something, and gives it every processor back after (SPEC.md, §7.5).
+    pub pin_desktop: bool,
     /// Whether a job whose timing matters waits at the head of the queue for a
     /// calm machine. Off by default: it starts at once, and its time does not
     /// count when the machine was not calm (SPEC.md, §7.2).
@@ -96,6 +99,7 @@ impl Default for CalmSettings {
             load1_max: 1.0,
             load1_ignored_minutes: 5,
             job_cpus: String::new(),
+            pin_desktop: true,
             wait: false,
         }
     }

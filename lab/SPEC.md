@@ -689,10 +689,14 @@ few percent of the machine. Rather than close them, the jobs get cores of their 
 - **The calm on them alone.** The foreign CPU is measured on the job processors only: their busy
   time less the jobs' own, in percent of them; load1, which counts the whole machine, is not looked
   at. The verdict says so: "foreign CPU on the job processors 1-3,5-7 mean …".
-- **The desktop elsewhere.** `lab/pin-desktop.sh 0,4` pins every process of the user still allowed
-  on every processor to `0,4`; what starts later inherits it, lab's window included, while the jobs
-  lab pins keep their core. `--undo 0,4` puts them back, `--dry-run` lists them. Nothing permanent;
-  run it when no launch of an older lab, whose jobs are not pinned, is under way.
+- **The desktop elsewhere, by lab.** While lab runs something (a queue running, a batch, `lab run`),
+  every process of the user still allowed on every processor is pinned to the desktop's processors,
+  those the jobs do not take (`0,4`); what starts meanwhile inherits them, lab's window included,
+  while the jobs keep their core. Once nothing runs, or when the window closes, they get every
+  processor back. A session that ended without freeing them is freed at the next start. The top
+  bar says it: "Desktop on 0,4 · 283 processes" (amber) while pinned, then "Desktop free · 283
+  restored 21:05" (green). `[calm] pin_desktop = false` leaves the desktop alone.
+  `lab/pin-desktop.sh` does the same by hand (`--undo`, `--dry-run`), for a launch of an older lab.
 
 ## 8. The runner
 

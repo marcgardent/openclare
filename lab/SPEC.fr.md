@@ -587,11 +587,15 @@ donne aux jobs des cœurs à eux (Marc, 2026-11-13).
 - **Le calme sur eux seuls.** Le CPU étranger se mesure sur les processeurs des jobs seulement : leur
   temps occupé moins celui des jobs, en pour cent d'eux ; load1, qui compte toute la machine, n'est
   pas regardé. Le verdict le dit : « foreign CPU on the job processors 1-3,5-7 mean … ».
-- **Le bureau ailleurs.** `lab/pin-desktop.sh 0,4` épingle sur `0,4` tout processus de l'utilisateur
-  encore permis sur tous les processeurs ; ce qui démarre ensuite en hérite, la fenêtre de lab
-  comprise, tandis que les jobs épinglés par lab gardent leur cœur. `--undo 0,4` les remet,
-  `--dry-run` les liste. Rien de permanent ; à lancer quand aucun lancement d'un lab plus ancien, dont
-  les jobs ne sont pas épinglés, n'est en cours.
+- **Le bureau ailleurs, par lab.** Pendant que lab fait tourner quelque chose (une file en marche, un
+  batch, `lab run`), tout processus de l'utilisateur encore permis sur tous les processeurs est
+  épinglé sur ceux du bureau, que les jobs ne prennent pas (`0,4`) ; ce qui démarre entre-temps en
+  hérite, la fenêtre de lab comprise, tandis que les jobs gardent leur cœur. Quand plus rien ne
+  tourne, ou quand la fenêtre se ferme, ils retrouvent tous les processeurs. Une session finie sans
+  les libérer est libérée au démarrage suivant. La barre du haut le dit : « Desktop on 0,4 · 283
+  processes » (ambre) tant qu'il est épinglé, puis « Desktop free · 283 restored 21:05 » (vert).
+  `[calm] pin_desktop = false` laisse le bureau tranquille. `lab/pin-desktop.sh` fait la même chose
+  à la main (`--undo`, `--dry-run`), pour un lancement d'un lab plus ancien.
 
 ## 8. Le lanceur
 
