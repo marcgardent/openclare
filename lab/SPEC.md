@@ -391,16 +391,32 @@ ref = ["main", "12a6675"]
   the record keeps `{out}` unrendered in `command`, so that two runs of the same cell have the same
   command key (§10).
 - An existing **`[[job]]` is a batch without axes**: one cell, run as today, its record without a
-  `cell`. The jobs, sequences and records of today do not change; the jobs that are batches in a
-  script (`twelve-models`, `three-budgets`, `quick-bench`, `ablation`, `pole-pairs-115`,
-  `lean-oracle-doubles`) are split later, one at a time. A computation whose steps depend on each
-  other stays one job. `lean-oracle-doubles` is the first split (2026-11-13): the generation, one
-  random stream for all the instances, is its prepare; one job checks one instance, axis `index`.
-  Then `lean-oracle-seed-1` the same way, `three-budgets` (model × budget × ref, the references
-  given with `--axis ref=…`) and `pole-pairs-115-tmesh` (model × budget × pairs, the T-mesh part of
-  `pole-pairs-115`). `certify` waits for R3: it is in the sequence `paper-B-data`, whose next
-  job reads its certificates, and the window cannot queue a batch before R3. The State screen lists
-  the batches, without the box that queues a job.
+  `cell`. A computation whose steps depend on each other (one reads another's result, one random
+  stream, one optimisation) stays one job; the jobs that were batches in a script are split, one job
+  per unit, their summary rebuilt by the batch's report (R4). Done on 2026-11-13:
+
+  | Batch | One job per | Its report |
+  |---|---|---|
+  | `lean-oracle-doubles`, `lean-oracle-seed-1` | instance (`index`); the generation, one random stream, is the prepare | — |
+  | `lean-check-export` | way file (`index`) | — |
+  | `lattice`, `holonomy`, `conjugacy`, `certify` | way | `experiments/merge.py` |
+  | `forced-bounds`, `forced-whole-lower`, `forced-valid-bounds`, `forced-valid` | family (8 held, the strips of way 2): bounds, cap and size of a family read each other | `merge.py` |
+  | `strict` | row of the table of conflicts | `merge.py` |
+  | `twelve-models`, `ablation`, `end-to-end`, `end-to-end-time-5`, `end-to-end-time-300` | (line or variant ×) model × budget | `closing-loops/experiments/collect.py`, then the script reads the runs back |
+  | `end-to-end-male-body`, `male-body`, `exact-remesh`, `forced-valid-remesh`, `most-closable` | variant, run or way | `collect.py` |
+  | `three-budgets`, `pole-pairs-115-remesh`, `pole-pairs-115-tmesh` | model × budget × ref (or pairs) | `bench/before_after.py` |
+  | `pole-pairs-115-male-body` | side (`ref`): the export, then conflicts on it | — |
+  | `quick-bench`, `bench`, `remeasure` | model, model × tool, budget | `bench/run.py --merge` (bench) |
+
+  `rings` split in two jobs: the rings with their rounding (the rounding reads the subset the rings
+  chose), and `local-search`, which reads the export alone. Stay one job, by the rule or for being
+  seconds: the builds and test suites, `lean-build`, `export-male-body`, `census`, `conflicts` (its
+  table groups the ways), `pairs`, `combs`, `fox` (its relations pool every way), `forced-sound` (one
+  family), `parity`, `gadget` (one random stream), `scores`, `figures`, `structure`,
+  `against-remeshers`, `compare`, `exact-relaxation`. The batches of the papers read the export of
+  the male body in `scratch/`, outside their key: `skip_done = false`. The scripts of closing-loops
+  drop the `OPENCLARE_*` variables they inherit, `OPENCLARE_THREADS` included: the engine takes the
+  whole machine, so their batches run one job at a time (threads the setting, or 8).
 
 ### Dependencies (amendment R2)
 

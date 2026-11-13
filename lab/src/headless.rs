@@ -465,6 +465,7 @@ fn run_batch(
         let _ = signal(Signal::SIGINT, SigHandler::Handler(on_interrupt));
         let _ = signal(Signal::SIGTERM, SigHandler::Handler(on_interrupt));
     }
+    let options_reference = arguments.reference.clone();
     let options = crate::batch::Options {
         only: arguments.only,
         reference: arguments.reference,
@@ -510,7 +511,8 @@ fn run_batch(
     }
     // A launch ends with its batch's report, on the last record of every cell (R4).
     if batch.report.is_some() && !INTERRUPTED.load(Ordering::SeqCst) {
-        match crate::report::make(places, &mirror, batch, None, None, threads) {
+        // On the reference the batch ran on, its report beside its jobs' files.
+        match crate::report::make(places, &mirror, batch, None, options_reference.as_deref(), threads) {
             Ok(made) => {
                 println!("{}", crate::report::table(&made));
                 eprintln!("lab: the report in {}", made.folder.display());

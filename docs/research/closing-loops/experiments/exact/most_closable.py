@@ -22,11 +22,16 @@ Then, for the turns found closable together:
 
 The files for the engine go under --out/call-<name>/ (the T-mesh's name; an
 export without one, as the drafts' old export, cannot be given back to today's
-engine). Seconds a way for the table; --whole and --whole-most are long
-(their limit a way, one thread). Writes results/most_closable.json.
+engine), with each way's row (`way-<way>.json`), which a later run with the
+same way and the same limits reads back instead of solving again: the ways
+can be run one at a time (--ways 3, one cell of lab's batch, README "Run as
+lab batches") and their files gathered, then the script run on all of them.
+Seconds a way for the table; --whole and --whole-most are long (their limit
+a way, one thread). Writes results/most_closable.json.
 """
 
 import argparse
+import json
 import sys
 import time
 from pathlib import Path
@@ -41,6 +46,13 @@ def way_job(job):
     """One way, in a process of its own when --jobs asks for several."""
     path, arguments, files = job
     way = tmesh.Way(path)
+    limits = {"seconds": arguments.seconds, "whole": arguments.whole, "whole_most": arguments.whole_most}
+    record = files / f"way-{way.number}.json"
+    if record.exists():
+        kept = json.loads(record.read_text())
+        if kept.get("way_sha") == way.sha and kept.get("limits") == limits:
+            print(f"way {way.number}: read back from {record.name}", flush=True)
+            return kept["row"]
     forms = tmesh.held_forms(way)
     held_numbers = sorted(way.held_index)
     chosen, result, seconds = way.most_closable(forms, time_limit=arguments.seconds)
@@ -88,6 +100,7 @@ def way_job(job):
           + (f"; whole: {row['whole_closing']}" if "whole_closing" in row else "")
           + (f"; whole program: {row['whole_most_closable']}" if "whole_most_closable" in row else ""),
           flush=True)
+    tmesh.common.write_json(record, {"way_sha": way.sha, "limits": limits, "row": row})
     return row
 
 

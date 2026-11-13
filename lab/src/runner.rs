@@ -827,7 +827,8 @@ impl Runner {
         };
         // A launch ends with its batch's report, its table in the launch's log (R4).
         if batch.report.is_some() && stop.is_none() {
-            match crate::report::make(&self.places, &self.mirror, &batch, None, None, queue.threads) {
+            let reference = (!has_ref_axis).then(|| item.target.clone());
+            match crate::report::make(&self.places, &self.mirror, &batch, None, reference.as_deref(), queue.threads) {
                 Ok(made) => {
                     log_line(&mut log, &format!("report in {}:", made.folder.display()));
                     for line in crate::report::table(&made).lines() {

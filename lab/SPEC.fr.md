@@ -269,16 +269,34 @@ moteur, `timeout = "30m"`.
   `{repo}`, la fiche garde `{out}` tel quel dans `command`, pour que deux exécutions de la même case
   aient la même clé de commande (§10).
 - Un **`[[job]]` existant est un batch sans axe** : une case, lancée comme aujourd'hui, sa fiche sans
-  `cell`. Les jobs, séquences et fiches d'aujourd'hui ne changent pas ; les jobs qui sont des batches
-  dans un script (`twelve-models`, `three-budgets`, `quick-bench`, `ablation`, `pole-pairs-115`,
-  `lean-oracle-doubles`) seront découpés plus tard, un à la fois. Un calcul dont les étapes dépendent
-  les unes des autres reste un seul job. `lean-oracle-doubles` est le premier découpé (2026-11-13) :
-  la génération, un seul flux aléatoire pour toutes les instances, est sa préparation ; un job vérifie
-  une instance, axe `index`. Puis `lean-oracle-seed-1` de la même façon, `three-budgets` (modèle ×
-  budget × ref, les références données par `--axis ref=…`) et `pole-pairs-115-tmesh` (modèle ×
-  budget × pairs, la partie T-mesh de `pole-pairs-115`). `certify` attend R3 : il est dans la séquence
-  `paper-B-data`, dont le job suivant lit ses certificats, et la fenêtre ne met pas de batch en file
-  avant R3. L'écran État liste les batches, sans la case qui met un job en file.
+  `cell`. Un calcul dont les étapes dépendent les unes des autres (l'une lit le résultat d'une autre,
+  un seul flux aléatoire, une seule optimisation) reste un seul job ; les jobs qui étaient des batches
+  dans un script sont découpés, un job par unité, leur résumé refait par le rapport du batch (R4).
+  Fait le 2026-11-13 :
+
+  | Batch | Un job par | Son rapport |
+  |---|---|---|
+  | `lean-oracle-doubles`, `lean-oracle-seed-1` | instance (`index`) ; la génération, un seul flux aléatoire, est la préparation | — |
+  | `lean-check-export` | fichier de voie (`index`) | — |
+  | `lattice`, `holonomy`, `conjugacy`, `certify` | voie | `experiments/merge.py` |
+  | `forced-bounds`, `forced-whole-lower`, `forced-valid-bounds`, `forced-valid` | famille (8 tenues, les bandes de la voie 2) : bornes, plafond et taille d'une famille se lisent l'une l'autre | `merge.py` |
+  | `strict` | ligne de la table des conflits | `merge.py` |
+  | `twelve-models`, `ablation`, `end-to-end`, `end-to-end-time-5`, `end-to-end-time-300` | (ligne ou variante ×) modèle × budget | `closing-loops/experiments/collect.py`, puis le script relit les exécutions |
+  | `end-to-end-male-body`, `male-body`, `exact-remesh`, `forced-valid-remesh`, `most-closable` | variante, exécution ou voie | `collect.py` |
+  | `three-budgets`, `pole-pairs-115-remesh`, `pole-pairs-115-tmesh` | modèle × budget × ref (ou pairs) | `bench/before_after.py` |
+  | `pole-pairs-115-male-body` | côté (`ref`) : l'export, puis conflicts dessus | — |
+  | `quick-bench`, `bench`, `remeasure` | modèle, modèle × outil, budget | `bench/run.py --merge` (bench) |
+
+  `rings` est coupé en deux jobs : les anneaux avec leur arrondi (l'arrondi lit le sous-ensemble que
+  les anneaux ont choisi), et `local-search`, qui ne lit que l'export. Restent un seul job, par la
+  règle ou parce qu'ils durent quelques secondes : les compilations et suites de tests, `lean-build`,
+  `export-male-body`, `census`, `conflicts` (sa table regroupe les voies), `pairs`, `combs`, `fox`
+  (ses relations mettent toutes les voies ensemble), `forced-sound` (une famille), `parity`, `gadget`
+  (un seul flux aléatoire), `scores`, `figures`, `structure`, `against-remeshers`, `compare`,
+  `exact-relaxation`. Les batches des papiers lisent l'export du corps masculin dans `scratch/`, hors
+  de leur clé : `skip_done = false`. Les scripts de closing-loops retirent les variables `OPENCLARE_*`
+  dont ils héritent, `OPENCLARE_THREADS` compris : le moteur prend toute la machine, si bien que leurs
+  batches font un job à la fois (threads le réglage, ou 8).
 
 ### Dépendances (amendement R2)
 

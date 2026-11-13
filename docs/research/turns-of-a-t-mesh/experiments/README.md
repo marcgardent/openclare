@@ -50,6 +50,14 @@ only on the same machine under the same load: the long runs are for an idle mach
 | Table `tab:forced`, the columns of P_valid ("chains", "chains, cap", "cap, size, whole"); the abstract's and the introduction's "none to 33"; Paper A, "exactly 0, 3, 1, 11, 5, 26, 7 and 33"; the engine's lengths in P_valid in every way | `python3 $B/forced.py <export> --steps bounds --valid --summary $B/results/forced-valid-bounds.json`; `python3 $B/forced.py <export> --valid --whole-lower --summary $B/results/forced-valid.json` | `results/forced-valid-bounds.json`, `results/forced-valid.json` (table below) |
 | Paper A, Section "An exact look", and the rounding gap 0.399 / 0.536 quoted in "Whole lengths and size" | `../../closing-loops/experiments/exact/README.md` | |
 
+**Batches.** The long scripts that loop over independent ways, families or rows (`lattice.py`,
+`forced.py`, `holonomy.py`, `strict.py`, `conjugacy.py`, `certify.py`) run as batches of lab
+(`lab/SPEC.md`, section 6b): one job per unit, each writing its summary with `--summary
+{out}/<group>.json`. The batch's report, `merge.py <records.json> --file <group>.json --mode
+concat|holonomy|conjugacy|certify`, makes again from the cells the summary of `results/` the script
+writes unsplit (`complete` false, and `missing`, when a cell is not ok), with `merged_from` the
+cells it was made of.
+
 ## What each script does
 
 - `tmesh.py` (a module): finds the way files of an export, reads a way (extending `Way` of

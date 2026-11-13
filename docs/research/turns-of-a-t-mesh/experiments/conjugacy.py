@@ -436,6 +436,8 @@ def main():
     layouts, presentations, rows, ways_read = {}, {}, [], []
     for row in table["rows"]:
         number = row["way"]
+        if arguments.ways is not None and number not in arguments.ways:
+            continue
         if number not in layouts:
             way = tmesh.Way(paths[number])
             ways_read.append(way)

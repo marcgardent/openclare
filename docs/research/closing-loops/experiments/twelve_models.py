@@ -8,36 +8,47 @@ independent measures of structure (DT-137), with how the share of spiral
 edges is spread over the runs (`common.spread`).
 
     python3 docs/research/closing-loops/experiments/twelve_models.py \
-        [--openclare target/release/openclare] [--commit <hash>] [--jobs 2]
+        [--openclare target/release/openclare] [--commit <hash>] [--jobs 2] \
+        [--models bob,pig] [--budgets 2900,3000]
 
-Writes the meshes and their measures under --out, and the summary to
-results/twelve_models.json.
+Writes the meshes and their measures under --out (`<model>-<quads>.obj`,
+`.json`; a run already there is read back), and the summary to
+results/twelve_models.json. --models and --budgets restrict the grid, one
+cell of lab's batch for instance (README, "Run as lab batches").
 """
 
 import argparse
 import os
+import sys
 import time
+from pathlib import Path
 
-import common
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import common  # noqa: E402
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     common.options(parser, "twelve_models")
     parser.add_argument("--jobs", type=int, default=2, help="runs at a time (each engine run is parallel too)")
+    parser.add_argument("--models", help="only these models, as bob,pig (default: the twelve)")
+    common.budgets_option(parser)
     arguments = parser.parse_args()
     common.use(arguments)
+    models, budgets = common.models(arguments.models), common.budgets(arguments)
 
     started, clock = common.machine(), time.monotonic()
     jobs = [(f"{model}-{quads}", model, preset, quads, arguments.out, (), None)
-            for quads in common.BUDGETS for model, preset in common.TWELVE]
+            for quads in budgets for model, preset in models]
     rows = common.batch(jobs, arguments.jobs)
     seconds = time.monotonic() - clock
 
     summary = {
         "experiment": "twelve models, 21 budgets",
         **common.header(arguments, started, [round(x, 2) for x in os.getloadavg()], seconds, rows),
-        "sources": {model: common.md5(common.source(model)) for model, _ in common.TWELVE},
+        "models": [model for model, _ in models],
+        "budgets": budgets,
+        "sources": {model: common.md5(common.source(model)) for model, _ in models},
         "runs": len(rows),
         "valid": sum(1 for row in rows if row["metrics"] and row["metrics"]["valid"]),
         "failures": [f"{row['model']} {row['quads']}: {row['failure']}" for row in rows if row["failure"]],
@@ -46,7 +57,7 @@ def main():
         "spiral": common.spread(rows),
         "helix": common.spread(rows, "loop_edges_helix"),
         "mean_by_budget": {quads: common.means([row for row in rows if row["quads"] == quads])
-                           for quads in common.BUDGETS},
+                           for quads in budgets},
         "per_run": [{"model": row["model"], "quads": row["quads"], "seconds": row["seconds"],
                      "valid": row["metrics"]["valid"] if row["metrics"] else None,
                      **{key: row["metrics"].get(key) if row["metrics"] else None for key in common.MEASURES}}
@@ -55,6 +66,10 @@ def main():
     common.write_json(arguments.summary, summary)
     mean = summary["mean"]
     spiral = summary["spiral"]
+    if spiral is None:
+        print(f"no run measured, {summary['valid']}/{summary['runs']} valid; failures {summary['failures']}")
+        print(f"summary: {arguments.summary}")
+        return
     print(f"spiral edges {100 * mean['loop_edges_spiral']:.2f}% "
           f"[{100 * spiral['interval_95'][0]:.1f}, {100 * spiral['interval_95'][1]:.1f}], "
           f"median {100 * spiral['median']:.2f}%, none on {spiral['share_of_runs_at_zero']:.0%} of the runs, "

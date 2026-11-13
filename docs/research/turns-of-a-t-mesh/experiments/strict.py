@@ -416,6 +416,10 @@ def main():
     started, clock = tmesh.common.machine(), time.monotonic()
     folder, paths = tmesh.ways(arguments.export, arguments.call)
     table = json.loads(arguments.table.read_text())
+    outside = [k for k in arguments.rows or [] if not 1 <= k <= len(table["table"])]
+    if outside:
+        parser.error(f"--rows {outside} out of range: the table of {arguments.table.name} has rows "
+                     f"1 to {len(table['table'])}")
     meshes, out = {}, []
     for i, row in enumerate(table["table"]):
         if arguments.rows and i + 1 not in arguments.rows:

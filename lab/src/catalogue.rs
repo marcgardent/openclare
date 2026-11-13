@@ -1085,7 +1085,7 @@ mod tests {
         let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("jobs.toml");
         let catalogue = Catalogue::read(&path).unwrap();
         assert!(catalogue.problems.is_empty(), "{:#?}", catalogue.problems);
-        assert!(catalogue.jobs.len() > 30);
+        assert!(catalogue.jobs.len() + catalogue.batches.len() > 40);
         for job in &catalogue.jobs {
             let values = job.values(4, "9683d14", "main", None, &BTreeMap::new());
             render(&job.command, &values).unwrap();

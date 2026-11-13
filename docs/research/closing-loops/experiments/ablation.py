@@ -8,7 +8,13 @@ with how the share of spiral edges is spread (`common.spread`) and, run by
 run, what each line changes against the line above (`common.paired`).
 
     python3 docs/research/closing-loops/experiments/ablation.py \
-        [--openclare target/release/openclare] [--commit <hash>] [--budgets 3000] [--jobs 2]
+        [--openclare target/release/openclare] [--commit <hash>] [--budgets 3000] [--jobs 2] \
+        [--lines no_closing,engine] [--models bob,pig]
+
+The runs of a line go under --out/<line>/ (`<model>-<quads>.obj`, `.json`;
+a run already there is read back). --lines, --models and --budgets restrict
+the grid, one cell of lab's batch for instance (README, "Run as lab
+batches"); a line is compared with the line above it among those run.
 
 One stage is added per line. The paper's table has four lines, two of which
 add two stages at once (leaning ways and aimed repair; longer turns and the
@@ -21,9 +27,12 @@ plain run, byte for byte, when --check is given).
 import argparse
 import filecmp
 import os
+import sys
 import time
+from pathlib import Path
 
-import common
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import common  # noqa: E402
 
 # Every stage the switches turn off, as the variables that do it.
 OFF = {
@@ -73,21 +82,32 @@ LINES = [(key, label, paper, flags, environment if key == "engine" else {**envir
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     common.options(parser, "ablation")
-    parser.add_argument("--budgets", type=int, nargs="+", default=common.BUDGETS)
+    common.budgets_option(parser)
+    parser.add_argument("--lines", help="only these lines, by key, as no_closing,engine (default: all, "
+                                        + ",".join(key for key, *_ in LINES) + ")")
+    parser.add_argument("--models", help="only these models, as bob,pig (default: the twelve)")
     parser.add_argument("--jobs", type=int, default=2, help="runs at a time (each engine run is parallel too)")
     parser.add_argument("--check", type=str,
                         help="directory of plain runs (<model>-<quads>.obj, e.g. twelve_models' output) that the "
                              "last line must equal byte for byte")
     arguments = parser.parse_args()
     common.use(arguments)
+    arguments.budgets = common.budgets(arguments)
+    models = common.models(arguments.models)
+    keys = [key for key, *_ in LINES]
+    asked = common.listed(arguments.lines) if arguments.lines else keys
+    if unknown := [key for key in asked if key not in keys]:
+        raise SystemExit(f"unknown line {', '.join(unknown)}: {', '.join(keys)}")
 
     started, clock = common.machine(), time.monotonic()
     lines, all_rows, previous = [], [], None
     for key, label, paper, flags, environment in LINES:
+        if key not in asked:
+            continue
         directory = arguments.out / key
         directory.mkdir(parents=True, exist_ok=True)
         jobs = [(f"{model}-{quads}", model, preset, quads, directory, flags, environment)
-                for quads in arguments.budgets for model, preset in common.TWELVE]
+                for quads in arguments.budgets for model, preset in models]
         rows = common.batch(jobs, arguments.jobs)
         all_rows += rows
         mean = common.means(rows)
@@ -110,20 +130,23 @@ def main():
             "run_seconds": round(sum(row["seconds"] or 0 for row in rows), 1),
         })
         spiral, against = lines[-1]["spiral"], lines[-1]["against_previous_line"]
+        previous = rows
+        if spiral is None:
+            print(f"{label}: no run measured; failures {lines[-1]['failures']}", flush=True)
+            continue
         print(f"{label}: spiral {100 * mean['loop_edges_spiral']:.2f}% "
               f"[{100 * spiral['interval_95'][0]:.1f}, {100 * spiral['interval_95'][1]:.1f}], "
               f"median {100 * spiral['median']:.2f}%, none on {spiral['share_of_runs_at_zero']:.0%} of the runs, "
               f"hausdorff {1000 * mean['hausdorff']:.2f}, corners {mean['angle_deviation_mean']:.2f}"
               + (f"; against the line above, lower {against['lower']}, higher {against['higher']}, "
                  f"same {against['same']}, sign test p {against['sign_test_p']:.2g}" if against else ""), flush=True)
-        previous = rows
 
     identical = None
-    if arguments.check:
+    if arguments.check and "engine" in asked:
         plain = common.Path(arguments.check)
-        names = [f"{model}-{quads}.obj" for quads in arguments.budgets for model, _ in common.TWELVE]
+        names = [f"{model}-{quads}.obj" for quads in arguments.budgets for model, _ in models]
         identical = sum(1 for name in names
-                        if (plain / name).exists()
+                        if (plain / name).exists() and (arguments.out / "engine" / name).exists()
                         and filecmp.cmp(plain / name, arguments.out / "engine" / name, shallow=False))
         identical = f"{identical} of {len(names)}"
         print(f"whole engine against plain runs: {identical} identical")
@@ -133,6 +156,7 @@ def main():
         **common.header(arguments, started, [round(x, 2) for x in os.getloadavg()], time.monotonic() - clock,
                          all_rows),
         "budgets": arguments.budgets,
+        "models": [model for model, _ in models],
         "whole_engine_identical_to_plain_runs": identical,
         "lines": lines,
     }

@@ -39,11 +39,13 @@ def has_ways(folder):
 
 def exports(directory, work):
     """The ways under `directory`, and the T-meshes (`call-<name>.json`) for which
-    the engine wrote no way (as on surfaces with borders), those in `work` left
-    out."""
+    the engine wrote no way (as on surfaces with borders), those in `work` and in
+    any folder named `lean-check` (the work folder of `make lean-check`, which an
+    earlier run may have left in the export) left out."""
     work = os.path.abspath(work)
     for root, folders, files in os.walk(directory):
-        folders[:] = sorted(f for f in folders if os.path.abspath(os.path.join(root, f)) != work)
+        folders[:] = sorted(f for f in folders
+                            if f != "lean-check" and os.path.abspath(os.path.join(root, f)) != work)
         for name in sorted(files):
             if name.startswith("way-") and name.endswith(".json") and not name.endswith("-helices.json"):
                 yield os.path.join(root, name)

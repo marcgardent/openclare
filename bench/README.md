@@ -46,6 +46,26 @@ budget, most of it QuadriFlow. Options: `--models blob,cube`, `--tools quadriflo
 has its own files (`RESULTS.md` for 3000 quads, `RESULTS-8000.md`, and so on). `--results DIR`
 writes them elsewhere, for a trial run that is not to touch `results/`.
 
+As batches of lab (`lab/SPEC.md`, section 6b), each run is a job with an empty folder of its own,
+`{out}`. The prepare, `cargo build --release && make addon && python3 bench/run.py --prepare`,
+makes the scenes and the sources once, before the jobs; the jobs that run side by side then
+share no file they write. The quick look is one job per model (`python3 bench/quick.py --models
+{model} --target {target} --jobs 1 --out {out}`); the bench one job per model and tool
+(`python3 bench/run.py --models {model} --tools {tool} --target {target} --results {out}`),
+its meshes still in `bench/out/<model>/<budget>/`; the measures again one job per budget (`cp
+bench/results/results{-T}.json {out}/ && python3 bench/run.py --remeasure --target {target}
+--results {out}`). The batch's report puts the bench's jobs together:
+
+```bash
+python3 bench/run.py --merge records.json --target 3000 [--results DIR]
+```
+
+It takes the runs of each job done from its folder, puts them in place of those of the same model
+and tool in the results of `DIR` (or of `results/` while `DIR` has none), and writes the data file
+and the report again, as a run would have; the jobs not done are listed and keep what was stored.
+The local challengers are not jobs of the batch: they share `local/results`, and a run reads and
+writes it only when one of them is among its tools.
+
 Two of the tools are not on the machine until `python3 bench/fetch_remeshers.py` has fetched
 them (see [Remeshers of the literature](#remeshers-of-the-literature)); without them their runs
 fail with "not found".
