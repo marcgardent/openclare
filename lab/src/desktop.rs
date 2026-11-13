@@ -65,11 +65,16 @@ pub fn cpus(job_cpus: &[usize]) -> Vec<usize> {
     crate::cpus::online().into_iter().filter(|cpu| !job_cpus.contains(cpu)).collect()
 }
 
+/// The tests never move the machine's processes: where sudo needs no password
+/// (CI), the services held to the desktop's processors would hold the jobs
+/// started by the tests there too, and they could not be pinned to theirs.
+const TESTING: bool = cfg!(test);
+
 /// Pins to `desktop` every process of this user allowed on every processor,
 /// and the system's services.
 pub fn pin(desktop: &[usize]) -> Moved {
     let online: Vec<usize> = crate::cpus::online();
-    if desktop.is_empty() || desktop.len() == online.len() {
+    if desktop.is_empty() || desktop.len() == online.len() || TESTING {
         return Moved::default();
     }
     let all: BTreeSet<usize> = online.iter().copied().collect();
@@ -91,7 +96,7 @@ pub fn pin(desktop: &[usize]) -> Moved {
 /// `desktop`, and to the system's services when lab pinned them.
 pub fn free(desktop: &[usize]) -> Moved {
     let online = crate::cpus::online();
-    if desktop.is_empty() || desktop.len() == online.len() {
+    if desktop.is_empty() || desktop.len() == online.len() || TESTING {
         return Moved::default();
     }
     let pinned: BTreeSet<usize> = desktop.iter().copied().collect();
