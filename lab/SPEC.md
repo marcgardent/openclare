@@ -8,6 +8,12 @@ the machine, which fetches the repository, checks out the commit asked for and r
 memory per machine in `~/.openclare-lab`, met in git on a branch of that machine (§1, §2, §3, §4, §4b,
 §5, §6, §7.3, §8.1, §10b, §11, §12, §13, §14, §15, §17).
 
+Amendment R1 of 2026-11-13, **draft for validation**: a job is one computation, timed and judged by lab;
+a batch is a grid of jobs, declared as `[[batch]]` with axes and expanded by lab, which runs it in a pool,
+one record per job, each job cut at its timeout, the versions of the tools in every record; without a
+window first (§1, §3, §5, §6b, §14, §15, §17). The grid in the window, the reruns, the cached
+dependencies and the reports are R2 to R4 (§15).
+
 ## 1. Purpose
 
 Every long computation of the project (benches, test suites, Lean builds and oracle runs,
@@ -20,8 +26,9 @@ The application does six things: it keeps the database of runs (§4), the catalo
 monitor of the machine with a "calm" indicator (§9), and a history view with export (§11).
 
 Out of scope: launching a job on another machine from here (each machine runs its own lab, and
-their records meet in git, §4b), running two jobs at once, scheduling recurrent jobs, reading the
-results of a run (the scripts' summaries stay what they are).
+their records meet in git, §4b), running two items of the queue at once (the jobs of one batch run
+side by side in its pool, §6b), scheduling recurrent jobs, reading the results of a run (the scripts'
+summaries stay what they are).
 
 ## 2. Name and place
 
@@ -53,6 +60,7 @@ results of a run (the scripts' summaries stay what they are).
 | `lab/runs.jsonl` | yes | the app, on Marc's request ("Copy history to the repo") | the published snapshot of the history |
 | `<lab>/runs.jsonl` | no | the app | the live memory of this machine, one run per line |
 | `<lab>/logs/<run id>.log` | no | the job (its stdout and stderr) | the log of each run |
+| `<lab>/out/<run id>/` | no | the job, through `{out}` | the files of one job of a batch (§6b) |
 | `<lab>/refused.jsonl` | no | the app | the records that still name a local path (section 4) |
 | `<lab>/state.json` | no | the app | the queue in progress and the run under way, for recovery |
 | `<lab>/settings.toml` | no | the app | remote, machine name, push policy, thresholds, thread warning, policies (§12) |
@@ -152,10 +160,21 @@ struct Run {
     log: Option<FileRef>,           // the log, outside the repo
     outputs: Vec<FileRef>,          // files the run produced
     edited: Option<DateTime<FixedOffset>>, // last change of comment or papers
+    // R1 (§6b); absent in the records written before it.
+    cell: Option<Cell>,             // the batch and the cell this job is; None for a [[job]]
+    timeout_seconds: Option<f64>,   // the limit the job ran under; None: no limit
+    tools: BTreeMap<String, String>, // "blender" -> "5.3.0", "rustc" -> "1.95.0", "python" -> "3.14.4", "lean" -> "v4.35.0"
 }
 
-enum Status { Ok, Failed { code: Option<i32>, signal: Option<i32> }, Stopped, Interrupted }
-// Stopped: by Marc. Interrupted: the app ended during the run (§8.5).
+enum Status { Ok, Failed { code: Option<i32>, signal: Option<i32> }, Stopped, Interrupted, TimedOut }
+// Stopped: by Marc. Interrupted: the app ended during the run (§8.5). TimedOut: killed by lab at its
+// timeout (§6b), `seconds` then the time until the kill.
+
+struct Cell {
+    launch: String,                    // "20261113-221403-pole-pairs-115-remesh": one launch of the batch
+    values: BTreeMap<String, String>,  // axis -> value: {"budget": "3000", "model": "ogre", "ref": "12a6675"}
+    pool: u32,                         // jobs of the batch running side by side (§6b)
+}
 
 struct Prepare { command: String, seconds: f64, status: Status, skipped_because: Option<String> }
 
@@ -218,7 +237,17 @@ struct Job {
     outputs: Vec<String>,          // globs relative to the checkout
     paper: Option<Paper>,          // default paper of its runs
     tags: Vec<String>,
+    timeout_seconds: Option<f64>,  // R1: none by default for a [[job]] (Q20)
 }
+
+/// A grid of jobs, a [[batch]] table of jobs.toml (§6b): every field of Job, and its axes.
+struct Batch {
+    job: Job,                       // the template: command and prepare with the axes' placeholders
+    axes: Vec<Axis>,                // in the order written; the last varies fastest
+    timeout_seconds: f64,           // 1800 when absent
+}
+struct Axis { name: String, values: Vec<AxisValue> }
+struct AxisValue { value: String, placeholders: BTreeMap<String, String> } // "cage", {"preset": "hard-surface"}
 
 /// A named, ordered list of jobs, a [[sequence]] table: a NIGHT.md as it lists its stages.
 struct Sequence { name: String, description: String, jobs: Vec<String> }
@@ -284,6 +313,97 @@ The comparison against other remeshers is the `bench` job with every tool (`--to
 
 Seeded sequences: `paper-B-data` (NIGHT.md stages 1 to 4 in order), `paper-A-exact`
 (exact/NIGHT.md 1 to 4), `before-merge` (`build-release`, `test-release`, `quick-bench`).
+
+## 6b. Batches (amendment R1)
+
+A **job** is one computation: one command, one process group, one time, one log, one record. A
+**batch** is a grid of jobs: a command template and axes, which lab expands into one job per cell. The
+words are those of the interface. A script that runs 150 computations inside one `[[job]]` is a black
+box to lab: no progress, one time for everything, and the first computation that hangs loses the
+others (the `pole-pairs-115` job, 2026-11-13). A batch is the same work with lab as its pool and
+its stopwatch.
+
+### The catalogue
+
+```toml
+[[batch]]
+name = "pole-pairs-115-remesh"
+description = "Ticket #115 before and after: the twelve models of bench/budgets.py at three budgets, on main and on 12a6675."
+category = "quick-bench"
+prepare = "cargo build --release && make addon && python3 -c 'import sys; sys.path.insert(0, \"bench\"); import run; [run.source_path(m) for m in sys.argv[1:]]' creature blob suzanne spot pig ogre bob jerry blub rock cage part"
+command = "target/release/openclare remesh bench/out/{model}/source.obj {out}/mesh.obj --preset {preset} --quads {budget} && target/release/openclare measure bench/out/{model}/source.obj {out}/mesh.obj --target {budget} --json > {out}/measure.json"
+parameters = { preset = "organic" }
+threads = 1
+memory_limit_gb = 32
+timeout = "30m"
+timing_matters = true
+
+[batch.axes]
+model = ["creature", "blob", "suzanne", "spot", "pig", "ogre", "bob", "jerry", "blub", "rock",
+         { value = "cage", preset = "hard-surface" }, { value = "part", preset = "hard-surface" }]
+budget = [2970, 3000, 3030]
+ref = ["main", "12a6675"]
+```
+
+- A `[[batch]]` has every field of a `[[job]]` (§6), plus `axes` and `timeout`.
+- **Axes.** Each axis is a placeholder of the command and the prepare, with the list of its values
+  (strings or numbers). A value may be a table: its `value` is the cell's, its other keys are
+  placeholders of that cell only, overriding the batch's `parameters` (above, `{preset}`). The grid
+  is the product of the axes, expanded in the order they are written, the last varying fastest: the
+  axis compared goes last, so that its values run side by side under the same load (above, main and
+  12a6675 of one model and budget follow each other).
+- **`ref`** is the one axis with a meaning: the reference each cell runs on, resolved and checked out
+  as in §2, one checkout per commit. A batch without it runs on its `checkout`.
+- **One catalogue for the whole grid.** Every cell is rendered from the catalogue the batch was taken
+  from (`main` of the mirror, or `--catalogue`), not from the `jobs.toml` of each cell's commit: a
+  comparison across commits runs the same command on each.
+- **`{out}`**, a new built-in placeholder: `<lab>/out/<run id>/`, a folder made empty before the job
+  starts. Every file in it goes into the record's `outputs`, with size and SHA-256. Like `{repo}`,
+  the record keeps `{out}` unrendered in `command`, so that two runs of the same cell have the same
+  command key (§10).
+- An existing **`[[job]]` is a batch without axes**: one cell, run as today, its record without a
+  `cell`. The jobs, sequences and records of today do not change; the jobs that are batches in a
+  script (`twelve-models`, `three-budgets`, `quick-bench`, `ablation`, `pole-pairs-115`) are split
+  later, one at a time.
+
+### The run of a batch
+
+1. **Expand** the grid; an axis restricted by hand (`--axis model=ogre,pig`) keeps those values only.
+   Resolve each `ref` (an unknown reference runs on `main`, as in §8.1).
+2. **Tools**, read once per checkout: `blender --version`, `rustc --version` and `python3 --version`
+   run in the checkout, their version number kept; Lean is the toolchain named by the checkout's
+   `lean-toolchain` file, read and not run (elan would download a toolchain it lacks). A tool not
+   found is left out of the map. Every record gets the map of its checkout, a `[[job]]`'s as well:
+   until now nothing recorded that Blender is 5.3.0.
+3. **Prepares**, one checkout after the other, before any job: the prepare of §7.3, once per checkout
+   (`.lab-prepared`), with the whole thread setting (not the job's `threads`). Its time and status go
+   into the `prepare` of every job of that checkout. A failed prepare fails the jobs of its checkout
+   without running them, one record each; the other checkouts go on.
+4. **The pool.** `threads` is what one job uses. The pool runs `max(1, setting / threads)` jobs side
+   by side (by day, the setting 6 and one engine thread: six jobs), in the grid's order, each started
+   as §8.1 starts a run: its own process group, memory cap and log `<lab>/logs/<run id>.log`. The
+   comfort limit (§7.1) is checked on the pool's width times `threads`.
+5. **One record per job, written when it ends**: `job` is the batch's name, `parameters` the cell's
+   placeholders, `checkout` its reference, `cell` the launch, the axis values and the pool's width.
+   The run id is the start time, the batch's name and the cell's values (`20261113-221403-pole-pairs-
+   115-remesh-ogre-3000-12a6675`), with `-2`, `-3` if it is taken. A batch that dies loses the jobs
+   under way, never those already done.
+6. **Timeout**, per job: `timeout` in the batch (`"90s"`, `"30m"`, `"2h"`), 30 minutes when absent;
+   `--timeout` overrides it for one launch. Past it, lab ends the job as Stop does (§8.3, SIGTERM,
+   then SIGKILL to the group): status `TimedOut`. A failed or timed-out job is a failed cell; the
+   batch goes on. The policies of §8.4 apply between the items of a queue, not inside a batch.
+7. **Calm**, per job, by §9, the foreign CPU being the processes outside the batch (the other jobs of
+   the pool are ours); load1 is not checked while the batch runs, as after one of our runs. The time
+   of a job run in a pool of six is a time in a pool of six: `cell.pool` says so, and two sides of a
+   comparison run interleaved in the same pool (Q21).
+8. **The end**: a line per status (`72 jobs: 71 ok, 1 timed out`), the failed cells named with their
+   logs; exit code 0 when every job is `Ok`, else 1. Stop (Ctrl-C without a window) ends the jobs
+   under way, recorded `Stopped`; the jobs not started get no record.
+
+Without a window (§14), `lab run <batch>` prints one line per job that starts and ends (`[37/72] ok
+41.2 s  model=ogre budget=3000 ref=12a6675`), not the logs, which are several at once. In R1 the
+window lists the batches in the catalogue and their records in the history, but does not queue them
+(R3).
 
 ## 7. Rules the app enforces
 
@@ -574,6 +694,8 @@ the reference defaults to the job's own, `--force` starts it although the machin
 pushes the live memory to this machine's branch (§4b), whatever the `push` setting says, and
 `lab run … --push` does so after the run. A systemd timer or a shell on another machine can call them
 (Q4 of §17 answered). The window stays the place where one watches.
+R1: `lab run <batch> [--axis <name>=<value>,…]… [--timeout <duration>] [--threads <n>]` runs a batch
+(§6b); `--ref` gives the reference of a batch without a `ref` axis.
 
 **CI.** A workflow `lab.yml`, run only when `lab/**` or itself changes (the same `paths` filter and
 `changes` job as `lean.yml`): `cargo build --release --locked` and `cargo test --locked` in `lab/`, on
@@ -607,6 +729,16 @@ The amendment of 2026-11-08 adds three, each one PR, this document first:
 | M8 | the branches `lab/runs-<machine>`, push by policy, `lab push` and `lab run --push`, the union read; the Machine filter of the State screen | two memories (a second machine name with `--data`) pushed and read back; the screen the same from both folders |
 
 Status on 2026-11-08: M6, M7 and M8 done; `lab push` went from M7 to M8, where the branches it pushes are.
+
+The amendment R1 of 2026-11-13 starts the reform of jobs and batches (§6b), four milestones, each its
+own review, the batch of ticket #115 the witness of each:
+
+| | Content | Checked by |
+|---|---|---|
+| R1 | `[[batch]]`, the grid expanded into jobs, the pool, one record per job, a timeout per job, the tools' versions; without a window | `lab run pole-pairs-115-remesh`: 72 records, ogre at 3000 quads on 12a6675 timed out if it passes 30 minutes, the others done |
+| R2 | dependencies as jobs, cached by key: the engine of a commit, the source of a scene, shared across batches | a second launch builds and exports nothing |
+| R3 | the grid in the window (rows, columns, a cell's state, its log), selecting cells and running them again; a job already done (same command key, commit and tools) skipped unless forced; ETA per job | ogre alone run again with a longer timeout |
+| R4 | reports: a short script reads the jobs' outputs and makes the table, run again in seconds | the before-and-after table of #115, nothing computed again |
 
 ## 16. What cannot be verified here
 
@@ -659,3 +791,17 @@ outside the repository, met in git, §4b). New:
 
 Answered on 2026-11-08: Q15 `ask`; Q16 everything kept, a Clean button in the Machine screen; Q17 the
 hostname; Q18 no night machine, Marc's key alone; Q19 everything in `~/.openclare-lab`.
+
+Decided on 2026-11-13 (the reform's proposal): remesh and measure are one job; a job is cut after
+30 minutes by default, each batch may change it; "job" and "batch" in the interface; the reform in a
+session and a branch of its own. New:
+
+20. **Timeout of a `[[job]]`**: none by default (proposed), since many of today's jobs are whole
+    batches in a script (`lean-oracle-doubles`, about 18 h; `forced-whole-lower`, 1 to 4 h) and 30
+    minutes would kill them; or 30 minutes for every job, each long one setting its own?
+21. **Pool and timing**: six one-thread jobs side by side on 4 cores and 8 threads slow each other
+    down. Proposed: the pool fills the thread setting, `cell.pool` recorded, and a comparison is fair
+    because its sides run interleaved in the same pool. Or a batch whose timing matters runs one job
+    at a time, slower but each time alone?
+22. **Lean's version**: the toolchain named by `lean-toolchain` (proposed, nothing run); or
+    `lean --version` through elan, at the risk of a download?
