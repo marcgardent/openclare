@@ -19,6 +19,11 @@ Amendement R2 du 2026-11-13, demandé par Marc le même jour (« finis tes jalon
 commit et la source d'une scène sont des dépendances, `[[dependency]]`, faites une fois par clé dans
 `<lab>/cache/` et partagées par tous les batches qui en ont besoin (§3, §5, §6 bis, §15, §17).
 
+Amendement R3 du 2026-11-13, demandé le même jour : la fenêtre met un batch en file comme un seul
+élément et une séquence peut nommer des batches ; un écran Batches montre la grille, dont on choisit
+des cases à remettre en file ; un job déjà fait est sauté sauf si on le redemande ; une estimation par
+job (§6 bis, §11, §14, §15).
+
 ## 1. Objet
 
 Tout calcul long du projet (bancs, suites de tests, constructions et oracle Lean, expériences des
@@ -377,8 +382,41 @@ command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {bu
 
 Sans fenêtre (§14), `lab run <batch>` écrit une ligne par job qui commence et qui finit
 (`[37/72] ok 41.2 s  model=ogre budget=3000 ref=12a6675`), pas les journaux, qui sont plusieurs à la
-fois. En R1, la fenêtre liste les batches dans le catalogue et leurs fiches dans l'historique, mais ne
-les met pas en file (R3).
+fois. En R1, la fenêtre liste les batches dans le catalogue et leurs fiches dans l'historique ; R3 les
+met en file (ci-dessous).
+
+### La grille, les relances et la file (amendement R3)
+
+- **Un batch dans la file.** L'écran File liste les batches à côté des jobs, et une séquence peut
+  nommer des batches comme des jobs. Un batch est un élément de la file : à son tour, le lanceur
+  l'exécute comme ci-dessus (dépendances, préparations, pool), puis passe à l'élément suivant. Son
+  élément affiche `37/72` pendant qu'il tourne ; les règles du §8.4 s'appliquent après lui quand l'un
+  de ses jobs n'a pas fini `Ok`. Arrêter termine les jobs en cours (`Stopped`), comme Ctrl-C sans
+  fenêtre ; les jobs non commencés n'ont pas de fiche. Les lignes du lancement, celles qu'écrit
+  `lab run`, vont dans `logs/<lancement>.log` : le journal que l'écran File montre pour lui.
+- **L'écran Batches**, un sixième onglet : les batches à gauche ; pour celui choisi, sa grille. Une
+  ligne par valeur du premier axe, une colonne par combinaison des autres (`3000 · main`). Une case
+  montre son état : en cours (écoulé et estimation), en attente dans la file (son estimation), sa
+  dernière fiche (`ok 41 s`, `failed`, `timed out`, le temps grisé quand il ne compte pas, §7.2), ou
+  `—`, jamais lancée. Le survol donne son exécution, son commit, son calme et son estimation ; un clic la
+  choisit, et la dernière case cliquée montre sa fiche et la fin de son journal sous la grille.
+- **Choisir et relancer.** On choisit les cases une à une, ou « en échec », « jamais lancées »,
+  « toutes », « aucune » ; un délai pour ce lancement (celui du batch par défaut) ; « Mettre la
+  sélection en file » met le batch en file réduit à ces cases. Sans fenêtre, `--axis` réduit la grille
+  comme en R1.
+- **Un job déjà fait est sauté.** Une case dont la dernière fiche `Ok` a la même clé de commande (§10),
+  le même commit, les mêmes versions d'outils et les mêmes clés de dépendances ne retourne pas : pas
+  de nouvelle fiche, la ligne dit `done before` avec l'identifiant de cette fiche, et la grille
+  continue de la montrer. Une fiche dont le temps ne compte pas est faite tout de même : son résultat
+  est là. « Again » (`--again` sans fenêtre) les relance quand même.
+- **Une estimation par job** : la médiane des temps des fiches `Ok` du même batch à la même clé de
+  commande et au même commit, sinon à la même clé de commande, sinon aux mêmes valeurs des axes.
+  `lab run` la donne sur la ligne d'un job qui commence (`≈ 41 s`), et au début le total du lancement
+  divisé par la largeur du pool ; la grille donne celle de chaque case et le temps restant du batch
+  en cours.
+- **Données** : un élément de file gagne `batch: Option<BatchChoice>`, `BatchChoice { cells:
+  Vec<BTreeMap<String, String>> /* vide : toutes */, timeout: Option<Timeout>, again: bool }` ; il
+  exécute le batch du catalogue que montre la fenêtre.
 
 ## 7. Règles que l'application fait respecter
 
@@ -740,7 +778,11 @@ tests unitaires sur des grilles inventées ; vérifié à la main sur 4 jobs du 
 Marc. R2 codé (`[[dependency]]` dans `src/catalogue.rs`, le cache dans `src/batch.rs`), tests unitaires
 sur une dépendance inventée ; le témoin réduit à blob à 3000 quads sur main et 12a6675 : le premier
 lancement a compilé deux moteurs et exporté une source (la scène est la même aux deux commits), le
-second n'a rien compilé ni exporté.
+second n'a rien compilé ni exporté. R3 codé (`src/app/batches.rs`, l'élément batch de `src/runner.rs`, le
+saut et les estimations dans `src/batch.rs`) ; un test unitaire passe un élément batch de la file sur des
+cases choisies, puis à nouveau (sautées) ; l'écran Batches regardé sur les fiches du témoin et sur un
+batch inventé en cours. Le témoin de R3, ogre relancé seul avec un délai plus long depuis la grille, est
+laissé à Marc.
 
 ## 16. Ce qui ne peut pas être vérifié ici
 

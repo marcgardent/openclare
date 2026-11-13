@@ -18,6 +18,10 @@ Amendment R2 of 2026-11-13, asked by Marc the same day ("finish the milestones")
 and the source of a scene are dependencies, `[[dependency]]`, made once per key in `<lab>/cache/` and
 shared by every batch that needs them (§3, §5, §6b, §15, §17).
 
+Amendment R3 of 2026-11-13, asked the same day: the window queues a batch as one item and a sequence
+may name batches; a Batches screen shows the grid, its cells selected and queued again; a job already
+done is skipped unless asked again; an estimate per job (§6b, §11, §14, §15).
+
 ## 1. Purpose
 
 Every long computation of the project (benches, test suites, Lean builds and oracle runs,
@@ -496,8 +500,37 @@ command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {bu
 
 Without a window (§14), `lab run <batch>` prints one line per job that starts and ends (`[37/72] ok
 41.2 s  model=ogre budget=3000 ref=12a6675`), not the logs, which are several at once. In R1 the
-window lists the batches in the catalogue and their records in the history, but does not queue them
-(R3).
+window lists the batches in the catalogue and their records in the history; R3 queues them (below).
+
+### The grid, reruns and the queue (amendment R3)
+
+- **A batch in the queue.** The Queue screen lists the batches beside the jobs, and a sequence may name
+  batches as well as jobs. A batch is one item of the queue: at its turn the runner runs it as above
+  (dependencies, prepares, pool), then goes to the next item. Its item reads `37/72` while it runs;
+  the policies of §8.4 apply after it when one of its jobs did not end `Ok`. Stop ends the jobs under
+  way (`Stopped`), as Ctrl-C does without a window; the jobs not started get no record. The lines of
+  the launch, those `lab run` prints, go to `logs/<launch>.log`: the log the Queue screen shows for it.
+- **The Batches screen**, a sixth tab: the batches on the left; for the one chosen, its grid. One row
+  per value of the first axis, one column per combination of the others (`3000 · main`). A cell shows
+  its state: running (elapsed and estimate), waiting in the queue (its estimate), its last record
+  (`ok 41 s`, `failed`, `timed out`, the time muted when it does not count, §7.2), or `—`, never run.
+  Hovering it gives its run, commit, calm and estimate; a click selects it, and the cell clicked last
+  shows its record and the end of its log under the grid.
+- **Selecting and running again.** Cells are selected one by one, or "failed", "never run", "all",
+  "none"; a timeout for this launch (the batch's by default); "Queue the selection" puts the batch in
+  the queue restricted to those cells. Without a window, `--axis` restricts the grid as in R1.
+- **A job already done is skipped.** A cell whose last `Ok` record has the same command key (§10),
+  commit, tools' versions and dependencies' keys is not run again: no new record, the line says
+  `done before` with that record's id, and the grid keeps showing it. A record whose time does not
+  count is done all the same: its result is there. "Again" (`--again` without a window) runs them
+  anyway.
+- **An estimate per job**: the median time of the `Ok` records of the same batch with the same
+  command key and commit, else the same command key, else the same values of the axes. `lab run`
+  gives it on the line of a job that starts (`≈ 41 s`), and at the start the launch's total divided by
+  the pool's width; the grid gives each cell's and the time left of the batch under way.
+- **Data**: a queue item gains `batch: Option<BatchChoice>`, `BatchChoice { cells: Vec<BTreeMap<String,
+  String>> /* empty: all */, timeout: Option<Timeout>, again: bool }`; it runs the batch from the
+  catalogue the window shows.
 
 ## 7. Rules the app enforces
 
@@ -840,7 +873,10 @@ tests on made-up grids; checked by hand on 4 jobs of the witness, the full 72 le
 (`[[dependency]]` in `src/catalogue.rs`, the cache in `src/batch.rs`), unit tests on a made-up
 dependency; the witness restricted to blob at 3000 quads on main and 12a6675: the first launch built two
 engines and exported one source (the scene is the same on both commits), the second built and exported
-nothing.
+nothing. R3 coded (`src/app/batches.rs`, the batch item of `src/runner.rs`, the skip and the estimates in
+`src/batch.rs`); a unit test runs a batch item of the queue on chosen cells, then again (skipped); the
+Batches screen looked at on the witness's records and on a made-up batch under way. The witness of R3,
+ogre run again alone with a longer timeout from the grid, is left to Marc.
 
 ## 16. What cannot be verified here
 

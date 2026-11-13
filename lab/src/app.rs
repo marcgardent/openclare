@@ -1,6 +1,7 @@
 //! The window (SPEC.md, section 11): a top bar and four tabs. The queue
 //! screen is in `queue.rs`; the runner it drives, in `runner.rs`.
 
+mod batches;
 mod history;
 mod machine;
 mod queue;
@@ -67,6 +68,7 @@ const RELOAD: Duration = Duration::from_secs(2);
 pub enum Tab {
     State,
     Queue,
+    Batches,
     History,
     Catalogue,
     Machine,
@@ -172,6 +174,8 @@ pub struct App {
     clean_dialog: bool,
     /// Where to write a picture of the window, then close it.
     screenshot: Option<Screenshot>,
+    /// Batches tab (R3): the batch chosen, its cells selected.
+    batches: batches::BatchView,
 }
 
 /// The log shown beside the queue: the run under way's, else the last one's.
@@ -191,6 +195,8 @@ pub struct Opening {
     pub queue: Vec<String>,
     /// The run selected in the history.
     pub run: Option<String>,
+    /// The batch whose grid the Batches screen shows.
+    pub batch: Option<String>,
     pub screenshot: Option<std::path::PathBuf>,
     /// Seconds before the picture is taken.
     pub after: f64,
@@ -214,6 +220,7 @@ impl Tab {
         match name {
             "state" => Some(Tab::State),
             "queue" => Some(Tab::Queue),
+            "batches" => Some(Tab::Batches),
             "history" => Some(Tab::History),
             "catalogue" => Some(Tab::Catalogue),
             "machine" => Some(Tab::Machine),
@@ -300,6 +307,7 @@ impl App {
             copy_target,
             checkout_sizes: Arc::new(Mutex::new(None)),
             clean_dialog: false,
+            batches: batches::BatchView::showing(opening.batch.clone()),
             screenshot: opening.screenshot.map(|path| Screenshot {
                 path,
                 at: Instant::now() + Duration::from_secs_f64(opening.after.max(0.0)),
@@ -502,6 +510,7 @@ impl eframe::App for App {
             match self.tab {
                 Tab::State => self.state_tab(ui),
                 Tab::Queue => self.queue_tab(ui),
+                Tab::Batches => self.batches_tab(ui),
                 Tab::History => self.history_tab(ui),
                 Tab::Catalogue => self.catalogue_tab(ui),
                 Tab::Machine => self.machine_tab(ui),
@@ -744,6 +753,7 @@ impl App {
         ui.horizontal(|ui| {
             ui.selectable_value(&mut self.tab, Tab::State, "State");
             ui.selectable_value(&mut self.tab, Tab::Queue, "Queue");
+            ui.selectable_value(&mut self.tab, Tab::Batches, "Batches");
             ui.selectable_value(&mut self.tab, Tab::History, "History");
             ui.selectable_value(&mut self.tab, Tab::Catalogue, "Catalogue");
             ui.selectable_value(&mut self.tab, Tab::Machine, "Machine");
@@ -810,7 +820,7 @@ impl App {
                         let jobs: usize = batch.axes.iter().map(|axis| axis.values.len()).product();
                         ui.horizontal(|ui| {
                             ui.label(&batch.job.name).on_hover_text(format!(
-                                "{}\n\n{jobs} jobs: {}.\nRun it with `lab run {}`; the window does not queue a batch yet (R3).",
+                                "{}\n\n{jobs} jobs: {}.\nIts grid is in the Batches screen; `lab run {}` without a window.",
                                 batch.job.description,
                                 axes.join(" × "),
                                 batch.job.name

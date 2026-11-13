@@ -47,6 +47,11 @@ montrent toutes les exécutions, où qu'elles aient tourné. Il tourne sous Linu
   avec `wait = true` sous `[calm]` dans les réglages elle attend une machine calme, et « Start anyway »
   la lance. Une référence que le miroir ne connaît pas tourne sur `main`, avec un avertissement : lab
   avertit, il n'empêche jamais un Run.
+- **Batches** : la grille d'un batch, une ligne par valeur de son premier axe, une colonne par
+  combinaison des autres ; chaque case son état en cours ou sa dernière fiche (`ok 41 s`, `failed`,
+  `timed out`, `—` jamais lancée), son estimation au survol, sa fiche et la fin de son journal une fois
+  cliquée. On choisit des cases (une à une, ou celles en échec, jamais lancées, toutes) et on met le
+  batch en file réduit à elles, avec un délai pour ce lancement.
 - **History** : toutes les exécutions notées par lab et tous les résultats que les résumés du dépôt
   contiennent, triables et filtrées ; le détail d'une exécution ; son commentaire et son papier
   modifiables ; les exécutions affichées copiées en Markdown (avec la ligne de matériel) ou en CSV ; une
@@ -130,6 +135,12 @@ fait faire une fois par clé, avant ses jobs, et la garde dans `~/.openclare-lab
 les lancements suivants, de ce batch ou d'un autre, l'y trouvent. La clé lit la commande de la
 dépendance, les objets git des chemins de `key` et les versions de ses `tools` : deux commits aux mêmes
 sources du moteur partagent un moteur. Rien ne vide le cache tout seul : retirer le dossier à la main.
+
+Un job déjà fait (même commande, commit, outils et dépendances, fini ok) est sauté, dit `done
+before` ; `--again` le relance quand même. La ligne d'un job qui commence donne son estimation, la
+médiane des temps passés de sa case. Dans la fenêtre, un batch est un élément de la file (une séquence
+peut nommer des batches), ses lignes dans `logs/<lancement>.log`, ses cases dans l'écran Batches à
+mesure qu'elles commencent et finissent.
 
 ## Tests
 

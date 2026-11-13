@@ -117,8 +117,8 @@ impl App {
             }
             ui.label(RichText::new(format!("of {} jobs", names.len())).color(MUTED));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                // The batches are left out: `lab run` runs them, the queue does not yet (R3).
-                let queueable: Vec<&String> = missing.iter().filter(|name| catalogue.batch(name).is_none()).collect();
+                // A batch goes to the queue whole, as one item (R3).
+                let queueable: Vec<&String> = missing.iter().collect();
                 let label = match &chosen {
                     None => format!("Queue the {} jobs never run", queueable.len()),
                     Some(name) => format!("Queue the {} jobs without a run on {name}", queueable.len()),
@@ -192,11 +192,9 @@ impl App {
                     }
                     ui.end_row();
                     for job in jobs {
-                        // A batch is run with `lab run`: the window does not queue it yet (R3).
+                        // A batch goes to the queue whole; its cells are chosen in the Batches screen (R3).
                         let mut checked = self.state_view.checked.contains(&job.name);
-                        if catalogue.batch(&job.name).is_some() {
-                            ui.label("").on_hover_text(format!("a batch: lab run {}", job.name));
-                        } else if ui.checkbox(&mut checked, "").changed() {
+                        if ui.checkbox(&mut checked, "").changed() {
                             if checked {
                                 self.state_view.checked.insert(job.name.clone());
                             } else {

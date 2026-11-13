@@ -44,6 +44,11 @@ wherever it ran. It runs on Linux (it reads /proc); `nvidia-smi`, if present, gi
   once like the others, and its time does not count when the machine was not calm; with `wait = true`
   under `[calm]` in the settings it waits for a calm machine, and "Start anyway" starts it. A reference
   the mirror does not know runs on `main`, with a warning: lab warns, it never holds a Run back.
+- **Batches**: the grid of a batch, one row per value of its first axis, one column per combination of
+  the others; each cell its state under way or its last record (`ok 41 s`, `failed`, `timed out`, `—`
+  never run), its estimate on hover, its record and the end of its log once clicked. Cells are selected
+  (one by one, or the failed ones, those never run, all) and the batch is queued restricted to them,
+  with a timeout for that launch.
 - **History**: every run lab recorded and every result the repository's summaries hold, sortable and
   filtered; the detail of a run; its comment and paper edited; the runs shown copied as Markdown (with
   the hardware line) or CSV; a past run typed by hand; the history of every machine copied into the
@@ -121,6 +126,11 @@ per key, before its jobs, and kept in `~/.openclare-lab/cache/<name>/<key>/`; th
 this batch or another, find it there. The key reads the dependency's command, the git objects of its
 `key` paths and the versions of its `tools`, so two commits with the same engine sources share one
 engine. Nothing empties the cache on its own: remove the folder by hand.
+
+A job already done (same command, commit, tools and dependencies, ended ok) is skipped, said `done
+before`; `--again` runs it anyway. The line of a job that starts gives its estimate, the median of its
+cell's past times. In the window, a batch is one item of the queue (a sequence may name batches), its
+lines in `logs/<launch>.log`, its cells in the Batches screen as they start and end.
 
 ## Tests
 

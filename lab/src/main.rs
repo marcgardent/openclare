@@ -2,7 +2,7 @@
 //!
 //!     lab [options]                      the window
 //!     lab [options] run <job> [--ref <reference>] [--force] [--threads <n>] [--push]
-//!     lab [options] run <batch> [--axis <name>=<value>,…]… [--timeout <duration>] [--ref <reference>] [--force] [--threads <n>] [--push]
+//!     lab [options] run <batch> [--axis <name>=<value>,…]… [--timeout <duration>] [--again] [--ref <reference>] [--force] [--threads <n>] [--push]
 //!     lab [options] fetch
 //!     lab [options] push
 //!     lab [options] status
@@ -14,9 +14,9 @@
 //! into `~/.openclare-lab` once. `--catalogue <file>` reads the catalogue
 //! from that file in place of `lab/jobs.toml` at `main` of the mirror.
 //!
-//! The window takes `--tab <state|queue|history|catalogue|machine>`, `--queue
-//! <job or sequence>` (repeatable), `--run <id>` to select that run in the
-//! history, `--start` to press Run (or go on with a queue left paused), and
+//! The window takes `--tab <state|queue|batches|history|catalogue|machine>`,
+//! `--queue <job, batch or sequence>` (repeatable), `--run <id>` to select that
+//! run in the history, `--batch <name>` to show that batch's grid, `--start` to press Run (or go on with a queue left paused), and
 //! `--screenshot <file.ppm> [--after <seconds>]`, a picture of the window,
 //! not of the screen, taken that many seconds after opening, then the window
 //! closes, even during a run, as an app that dies would.
@@ -28,8 +28,9 @@
 //! live memory to this machine's branch after the run, whatever the setting.
 //! `run` on a batch (§6b) runs its grid, one line per job that starts and
 //! ends; `--axis model=ogre,pig` keeps those values of an axis (any reference
-//! for `ref`), `--timeout 20s` replaces the timeout of each of its jobs; it
-//! exits 0 when every job is ok.
+//! for `ref`), `--timeout 20s` replaces the timeout of each of its jobs, and
+//! a job done before (same command, commit, tools and dependencies, ended ok)
+//! is skipped unless `--again`; it exits 0 when every job is ok.
 //! `fetch` fetches the mirror, creating it if need be. `push` fetches, then
 //! pushes the live memory. `status` says where things stand.
 
@@ -53,8 +54,8 @@ mod tools;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-const USAGE: &str = "usage: lab [--data <folder>] [--catalogue <file>] [--tab <name>] [--queue <job>]... [--start] [--run <id>] [--screenshot <file.ppm> [--after <seconds>]]
-       lab [--data <folder>] [--catalogue <file>] run <job or batch> [--ref <reference>] [--force] [--threads <n>] [--push] [--timeout <90s|30m|2h>] [--axis <name>=<value>,...]...
+const USAGE: &str = "usage: lab [--data <folder>] [--catalogue <file>] [--tab <name>] [--queue <job>]... [--start] [--run <id>] [--batch <name>] [--screenshot <file.ppm> [--after <seconds>]]
+       lab [--data <folder>] [--catalogue <file>] run <job or batch> [--ref <reference>] [--force] [--threads <n>] [--push] [--timeout <90s|30m|2h>] [--again] [--axis <name>=<value>,...]...
        lab [--data <folder>] fetch
        lab [--data <folder>] push
        lab [--data <folder>] status";
@@ -77,6 +78,7 @@ fn main() -> ExitCode {
         match (argument.as_str(), &mut command) {
             ("--start", None) => opening.start = true,
             ("--force", Some(Command::Run(run))) => run.force = true,
+            ("--again", Some(Command::Run(run))) => run.again = true,
             ("--push", Some(Command::Run(run))) => run.push = true,
             ("run", None) => match arguments.next() {
                 Some(job) => {
@@ -88,6 +90,7 @@ fn main() -> ExitCode {
                         push: false,
                         only: Vec::new(),
                         timeout: None,
+                        again: false,
                     }))
                 }
                 None => return usage(),
@@ -118,6 +121,7 @@ fn main() -> ExitCode {
                 ("--tab", Some(name), None) if app::Tab::named(&name).is_some() => opening.tab = app::Tab::named(&name),
                 ("--queue", Some(name), None) => opening.queue.push(name),
                 ("--run", Some(id), None) => opening.run = Some(id),
+                ("--batch", Some(name), None) => opening.batch = Some(name),
                 ("--screenshot", Some(file), None) => opening.screenshot = Some(PathBuf::from(file)),
                 ("--after", Some(seconds), None) if seconds.parse::<f64>().is_ok() => {
                     opening.after = seconds.parse().unwrap_or(0.0)

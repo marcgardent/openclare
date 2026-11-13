@@ -54,6 +54,48 @@ pub struct Item {
     pub state: ItemState,
     /// Started although the machine was not calm: its time cannot be reported.
     pub forced: bool,
+    /// A batch (SPEC.md, §6b, R3): `job` is its template, run by `batch::run`.
+    pub batch: Option<BatchChoice>,
+}
+
+/// A batch in the queue: the cells chosen, the timeout and whether to run
+/// again the jobs done (SPEC.md, §6b, R3), from the catalogue the window shows.
+#[derive(Clone, Debug)]
+pub struct BatchChoice {
+    pub catalogue: Arc<Catalogue>,
+    /// The cells kept, each its axes' values; empty: every cell.
+    pub cells: Vec<BTreeMap<String, String>>,
+    pub timeout: Option<crate::catalogue::Timeout>,
+    pub again: bool,
+}
+
+/// The grid of the batch under way, or of the last one, as the window shows it.
+#[derive(Clone, Debug, Default)]
+pub struct LiveGrid {
+    pub batch: String,
+    pub launch: String,
+    pub width: u32,
+    pub cells: Vec<LiveCell>,
+    pub ended: bool,
+}
+
+#[derive(Clone, Debug)]
+pub struct LiveCell {
+    pub values: Vec<(String, String)>,
+    pub estimate: Option<f64>,
+    pub state: LiveState,
+}
+
+#[derive(Clone, Debug)]
+pub enum LiveState {
+    Waiting,
+    Running(Instant),
+    /// Its record written: the grid then shows the record.
+    Ended {
+        status: Status,
+    },
+    /// Done before: the grid shows that record.
+    Skipped,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -141,6 +183,8 @@ pub struct Shared {
     pub push_requested: bool,
     /// What the last push said, and when.
     pub pushed: Option<(DateTime<Local>, String)>,
+    /// The batch under way, or the last one (R3).
+    pub grid: Option<LiveGrid>,
     next_key: u64,
 }
 
@@ -154,8 +198,25 @@ impl Shared {
     pub fn add(&mut self, job: Job, target: String) -> u64 {
         self.next_key += 1;
         let parameters = job.parameters.clone();
-        self.items.push(Item { key: self.next_key, job, parameters, target, state: ItemState::Waiting, forced: false });
+        self.items.push(Item {
+            key: self.next_key,
+            job,
+            parameters,
+            target,
+            state: ItemState::Waiting,
+            forced: false,
+            batch: None,
+        });
         self.next_key
+    }
+
+    /// A batch at the end of the queue, some of its cells or all (R3).
+    pub fn add_batch(&mut self, batch: &crate::catalogue::Batch, choice: BatchChoice) -> u64 {
+        let key = self.add(batch.job.clone(), batch.job.checkout.initial());
+        if let Some(item) = self.items.iter_mut().find(|item| item.key == key) {
+            item.batch = Some(choice);
+        }
+        key
     }
 
     /// Run the items waiting, with these settings.
@@ -191,6 +252,16 @@ pub struct SavedItem {
     pub parameters: BTreeMap<String, String>,
     /// The target as typed.
     pub checkout: String,
+    /// A batch's choice (R3); absent for a job.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub batch: Option<SavedBatch>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SavedBatch {
+    pub cells: Vec<BTreeMap<String, String>>,
+    pub timeout_seconds: Option<f64>,
+    pub again: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -263,6 +334,26 @@ pub fn recover(places: &Places, catalogue: Option<&Catalogue>, shared: &mut Shar
             }
             _ => saved.checkout,
         };
+        if let Some(choice) = &saved.batch {
+            match catalogue.and_then(|catalogue| catalogue.batch(&saved.job).map(|batch| (catalogue, batch))) {
+                Some((catalogue, batch)) => {
+                    let choice = BatchChoice {
+                        catalogue: Arc::new(catalogue.clone()),
+                        cells: choice.cells.clone(),
+                        timeout: choice.timeout_seconds.map(|seconds| crate::catalogue::Timeout { seconds }),
+                        again: choice.again,
+                    };
+                    let key = shared.add_batch(batch, choice);
+                    if let Some(item) = shared.items.iter_mut().find(|item| item.key == key) {
+                        item.target = target;
+                    }
+                }
+                None => shared
+                    .messages
+                    .push(format!("state.json: the batch {} is not in the catalogue: not queued again", saved.job)),
+            }
+            continue;
+        }
         match catalogue.and_then(|catalogue| catalogue.job(&saved.job)).cloned() {
             Some(job) => {
                 let key = shared.add(job, target);
@@ -282,6 +373,11 @@ pub fn recover(places: &Places, catalogue: Option<&Catalogue>, shared: &mut Shar
     // state.json stays: the runner writes it again at its first step. If the
     // app dies before, the next one reads it again, and the record of an
     // interrupted run, written again under the same id, is read once.
+}
+
+/// The shared queue, a poisoned lock taken all the same.
+fn locked(shared: &Arc<Mutex<Shared>>) -> std::sync::MutexGuard<'_, Shared> {
+    shared.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
 }
 
 pub fn group_alive(group: i32) -> bool {
@@ -592,6 +688,7 @@ impl Runner {
             }
         };
         match next {
+            Some((item, queue)) if item.batch.is_some() => self.run_batch(&item, &queue),
             Some((item, queue)) => {
                 if let Err(error) = self.begin(&item, &queue) {
                     self.message(format!("{}: {error}", item.job.name));
@@ -606,6 +703,142 @@ impl Runner {
             None => self.save_state(),
         }
         (self.repaint)();
+    }
+
+    /// A batch of the queue, run to its end on this thread (SPEC.md, §6b,
+    /// R3): its lines in `logs/<launch>.log`, its cells in `Shared::grid`.
+    fn run_batch(&mut self, item: &Item, queue: &QueueSettings) {
+        let choice = item.batch.clone().expect("a batch item");
+        let name = item.job.name.clone();
+        let Some(batch) = choice.catalogue.batch(&name).cloned() else {
+            self.message(format!("{name}: no batch of that name in the catalogue"));
+            self.settle(item.key, ItemState::Cancelled, Some(Policy::PauseAndAsk), &format!("{name} could not start."));
+            return;
+        };
+        let begun = Instant::now();
+        let relative = format!("logs/{}-{name}.log", Local::now().format("%Y%m%d-%H%M%S"));
+        let path = self.places.data.join(&relative);
+        let log = std::fs::create_dir_all(path.parent().expect("logs/ has a parent"))
+            .and_then(|_| File::create(&path))
+            .map_err(|error| format!("{}: {error}", path.display()));
+        let mut log = match log {
+            Ok(log) => log,
+            Err(error) => {
+                self.message(error);
+                self.settle(
+                    item.key,
+                    ItemState::Cancelled,
+                    Some(Policy::PauseAndAsk),
+                    &format!("{name} could not start."),
+                );
+                return;
+            }
+        };
+        {
+            let mut shared = self.lock();
+            shared.current = Some(Current {
+                key: item.key,
+                job: name.clone(),
+                phase: Phase::Command,
+                started: begun,
+                log: path.clone(),
+                stopping: false,
+            });
+            shared.grid = Some(LiveGrid { batch: name.clone(), ..LiveGrid::default() });
+        }
+        (self.repaint)();
+        let has_ref_axis = batch.axis(crate::catalogue::REFERENCE_AXIS).is_some();
+        let options = crate::batch::Options {
+            only: Vec::new(),
+            reference: (!has_ref_axis).then(|| item.target.clone()),
+            timeout: choice.timeout,
+            threads: queue.threads,
+            grace: Duration::from_secs(u64::from(queue.grace_seconds.max(1))),
+            forced: item.forced,
+            comment: queue.comment.clone(),
+            papers: queue.papers.clone(),
+            cells: choice.cells.clone(),
+            again: choice.again,
+        };
+        let shared = self.shared.clone();
+        let stopped = || locked(&shared).stop.is_some();
+        let repaint = &self.repaint;
+        let mut say = |line: String| {
+            log_line(&mut log, &line);
+            repaint();
+        };
+        let mut progress = |progress: crate::batch::Progress| {
+            let mut shared = locked(&shared);
+            let Some(grid) = shared.grid.as_mut() else { return };
+            match progress {
+                crate::batch::Progress::Planned { launch, width, cells } => {
+                    grid.launch = launch;
+                    grid.width = width;
+                    grid.cells = cells
+                        .into_iter()
+                        .map(|(values, estimate)| LiveCell { values, estimate, state: LiveState::Waiting })
+                        .collect();
+                }
+                crate::batch::Progress::Started(index) => {
+                    if let Some(cell) = grid.cells.get_mut(index) {
+                        cell.state = LiveState::Running(Instant::now());
+                    }
+                }
+                crate::batch::Progress::Ended { index, status } => {
+                    if let Some(cell) = grid.cells.get_mut(index) {
+                        cell.state = LiveState::Ended { status };
+                    }
+                }
+                crate::batch::Progress::Skipped { index } => {
+                    if let Some(cell) = grid.cells.get_mut(index) {
+                        cell.state = LiveState::Skipped;
+                    }
+                }
+            }
+            drop(shared);
+            repaint();
+        };
+        let mut context = crate::batch::Context {
+            places: &self.places,
+            mirror: &self.mirror,
+            machine: self.machine.clone(),
+            monitor: self.monitor.clone(),
+            stopped: &stopped,
+            say: &mut say,
+            progress: &mut progress,
+        };
+        let result = crate::batch::run(&mut context, &choice.catalogue, &batch, &options);
+        let stop = locked(&shared).stop;
+        let (status, summary) = match &result {
+            Ok(summary) => {
+                log_line(&mut log, &summary.counts());
+                if stop.is_some() {
+                    (Status::Stopped, format!("{name} was stopped: {}.", summary.counts()))
+                } else if summary.all_ok() {
+                    (Status::Ok, String::new())
+                } else {
+                    (Status::Failed { code: None, signal: None }, format!("{name}: {}.", summary.counts()))
+                }
+            }
+            Err(error) => {
+                log_line(&mut log, error);
+                (Status::Failed { code: None, signal: None }, format!("{name}: {error}"))
+            }
+        };
+        let launch = result.as_ref().map(|summary| summary.launch.clone()).unwrap_or_default();
+        if let Some(grid) = locked(&shared).grid.as_mut() {
+            grid.ended = true;
+        }
+        if self.push == Push::Auto && result.is_ok() {
+            self.push_memory();
+        }
+        let policy = match &status {
+            Status::Ok => None,
+            Status::Stopped => stop.or(Some(Policy::PauseAndAsk)),
+            _ => queue.on_failure.or(Some(Policy::PauseAndAsk)),
+        };
+        let seconds = Some(begun.elapsed().as_secs_f64());
+        self.settle(item.key, ItemState::Done { run: launch, status, seconds }, policy, &summary);
     }
 
     fn unique_id(&mut self, started: &DateTime<FixedOffset>, job: &str) -> String {
@@ -1147,6 +1380,11 @@ impl Runner {
                         job: item.job.name.clone(),
                         parameters: item.parameters.clone(),
                         checkout: item.target.clone(),
+                        batch: item.batch.as_ref().map(|choice| SavedBatch {
+                            cells: choice.cells.clone(),
+                            timeout_seconds: choice.timeout.map(|timeout| timeout.seconds),
+                            again: choice.again,
+                        }),
                     })
                     .collect(),
                 current: self
@@ -1440,6 +1678,111 @@ mod tests {
         command = "sleep 30"
         timeout = "1s"
     "#;
+
+    const LITTLE: &str = r#"
+        [[batch]]
+        name = "little"
+        category = "build"
+        command = "echo {model} {budget} > {out}/said.txt; test {model} != slow || sleep 30"
+        threads = 1
+        [batch.axes]
+        model = ["a", "slow"]
+        budget = [1, 2]
+        [[job]]
+        name = "after"
+        category = "build"
+        command = "true"
+    "#;
+
+    /// A batch in the window's queue (SPEC.md, §6b, R3): the cells chosen, its
+    /// timeout, its grid; the queue goes on after it; a second time, a cell done
+    /// is skipped.
+    #[test]
+    fn a_batch_in_the_queue_runs_its_cells_chosen_then_the_rest() {
+        let places = places("queue-batch");
+        let catalogue = Arc::new(jobs(LITTLE));
+        let chosen = |cells: &[(&str, &str)]| -> Vec<BTreeMap<String, String>> {
+            cells
+                .iter()
+                .map(|(model, budget)| {
+                    [("model".to_string(), model.to_string()), ("budget".to_string(), budget.to_string())].into()
+                })
+                .collect()
+        };
+        let target = home(&places);
+        let queue_it = |cells: Vec<BTreeMap<String, String>>, after: bool| {
+            let catalogue = catalogue.clone();
+            let target = target.clone();
+            move |queue: &mut Shared| {
+                let batch = catalogue.batch("little").unwrap();
+                let choice = BatchChoice {
+                    catalogue: catalogue.clone(),
+                    cells: cells.clone(),
+                    timeout: Some(crate::catalogue::Timeout { seconds: 1.0 }),
+                    again: false,
+                };
+                let key = queue.add_batch(batch, choice);
+                queue.items.iter_mut().find(|item| item.key == key).unwrap().target = target.clone();
+                if after {
+                    queue.add(catalogue.job("after").unwrap().clone(), target.clone());
+                }
+            }
+        };
+        let shared = run_with(&places, queue_it(chosen(&[("slow", "1"), ("a", "2")]), true));
+        let queue = shared.lock().unwrap();
+        let states: Vec<&ItemState> = queue.items.iter().map(|item| &item.state).collect();
+        assert!(
+            matches!(states[0], ItemState::Done { status: Status::Failed { .. }, .. }),
+            "a cell timed out: {states:?}"
+        );
+        assert!(matches!(states[1], ItemState::Done { status: Status::Ok, .. }), "the queue went on: {states:?}");
+        let grid = queue.grid.clone().unwrap();
+        assert!(grid.ended);
+        assert_eq!(grid.cells.len(), 2);
+        assert!(matches!(grid.cells[0].state, LiveState::Ended { status: Status::Ok }), "{:?}", grid.cells);
+        assert!(matches!(grid.cells[1].state, LiveState::Ended { status: Status::TimedOut }), "{:?}", grid.cells);
+        drop(queue);
+        let runs = crate::store::History::read(&places.runs()).unwrap().runs;
+        let little: Vec<&Run> = runs.iter().filter(|run| run.job == "little").collect();
+        assert_eq!(little.len(), 2);
+        assert!(little.iter().all(|run| run.comment == "a test" && run.timeout_seconds == Some(1.0)));
+        assert_eq!(runs.iter().filter(|run| run.job == "after").count(), 1);
+        // Again, the cell done: skipped, nothing recorded, the item ok.
+        let shared = run_with(&places, queue_it(chosen(&[("a", "2")]), false));
+        let queue = shared.lock().unwrap();
+        assert!(matches!(queue.items[0].state, ItemState::Done { status: Status::Ok, .. }));
+        assert!(matches!(queue.grid.as_ref().unwrap().cells[0].state, LiveState::Skipped));
+        drop(queue);
+        assert_eq!(crate::store::History::read(&places.runs()).unwrap().runs.len(), 3);
+    }
+
+    /// A queue filled by `fill`, then run to its end.
+    fn run_with(places: &Places, fill: impl Fn(&mut Shared)) -> Arc<Mutex<Shared>> {
+        let shared = Arc::new(Mutex::new(Shared::default()));
+        {
+            let mut queue = shared.lock().unwrap();
+            fill(&mut queue);
+            queue.start(QueueSettings {
+                id: "test".to_string(),
+                comment: "a test".to_string(),
+                threads: 3,
+                grace_seconds: 1,
+                on_failure: Some(Policy::Continue),
+                ..QueueSettings::default()
+            });
+        }
+        let mut runner = new_runner(&shared, places);
+        let begun = Instant::now();
+        loop {
+            runner.step();
+            if shared.lock().unwrap().mode != Mode::Running && runner.running.is_none() {
+                break;
+            }
+            assert!(begun.elapsed() < Duration::from_secs(30), "the queue took too long");
+            std::thread::sleep(Duration::from_millis(20));
+        }
+        shared
+    }
 
     /// A job past its timeout is ended and recorded `TimedOut`; the queue goes on.
     #[test]

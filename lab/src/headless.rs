@@ -36,6 +36,8 @@ pub struct RunArguments {
     pub only: Vec<(String, Vec<String>)>,
     /// The timeout of each job, replaced for this launch.
     pub timeout: Option<crate::catalogue::Timeout>,
+    /// Of a batch: run again the jobs already done (SPEC.md, §6b, R3).
+    pub again: bool,
 }
 
 /// Set by the SIGINT handler: the run is stopped and recorded, then lab exits.
@@ -231,6 +233,10 @@ pub fn run(places: &Places, arguments: RunArguments) -> ExitCode {
     }
     if arguments.timeout.is_some() {
         eprintln!("lab: {} is a job: --timeout is for a batch; a job's own is `timeout` in jobs.toml", job.name);
+        return ExitCode::from(2);
+    }
+    if arguments.again {
+        eprintln!("lab: {} is a job: --again is for a batch, whose jobs done before are skipped", job.name);
         return ExitCode::from(2);
     }
     let target = match (&arguments.reference, &job.checkout) {
@@ -439,6 +445,8 @@ fn run_batch(
         forced: arguments.force,
         comment: String::new(),
         papers: Vec::new(),
+        cells: Vec::new(),
+        again: arguments.again,
     };
     let stopped = || INTERRUPTED.load(Ordering::SeqCst);
     let mut say = |line: String| eprintln!("lab: {line}");
@@ -449,6 +457,7 @@ fn run_batch(
         monitor: Some((watch, calm)),
         stopped: &stopped,
         say: &mut say,
+        progress: &mut |_| {},
     };
     let summary = match crate::batch::run(&mut context, catalogue, batch, &options) {
         Ok(summary) => summary,

@@ -51,6 +51,31 @@ pub struct Options {
     pub forced: bool,
     pub comment: String,
     pub papers: Vec<PaperRef>,
+    /// The cells kept, each its axes' values; empty: every cell (R3, the selection of the grid).
+    pub cells: Vec<BTreeMap<String, String>>,
+    /// Run again the jobs already done (R3).
+    pub again: bool,
+}
+
+/// What the pool tells the window of the cells of a launch (R3).
+#[derive(Clone, Debug)]
+pub enum Progress {
+    /// The cells of the launch, in order: their axes' values and estimates.
+    Planned {
+        launch: String,
+        width: u32,
+        cells: Vec<(Vec<(String, String)>, Option<f64>)>,
+    },
+    Started(usize),
+    /// Its record written.
+    Ended {
+        index: usize,
+        status: Status,
+    },
+    /// Done before: the grid shows that record.
+    Skipped {
+        index: usize,
+    },
 }
 
 /// What the launch did, for the last lines and the exit code.
@@ -64,6 +89,8 @@ pub struct Summary {
     pub not_run: Vec<String>,
     /// The dependencies made for the launch (R2): (text, status, run id).
     pub dependencies: Vec<(String, Status, String)>,
+    /// Cells done before, not run again (R3): (text, the record's id).
+    pub skipped: Vec<(String, String)>,
 }
 
 impl Summary {
@@ -79,6 +106,9 @@ impl Summary {
         }
         if !self.not_run.is_empty() {
             counts.insert("not run".to_string(), self.not_run.len());
+        }
+        if !self.skipped.is_empty() {
+            counts.insert("done before".to_string(), self.skipped.len());
         }
         let mut parts: Vec<String> = Vec::new();
         if let Some(ok) = counts.remove("ok") {
@@ -107,6 +137,8 @@ pub struct Context<'a> {
     pub stopped: &'a dyn Fn() -> bool,
     /// Where the lines of progress go.
     pub say: &'a mut dyn FnMut(String),
+    /// Where the state of each cell goes, for the grid (R3).
+    pub progress: &'a mut dyn FnMut(Progress),
 }
 
 /// A checkout the batch runs in, with what every job there records.
@@ -185,12 +217,20 @@ struct Planned<'a> {
     /// A dependency's own run: the key, its folder moved into the cache when it ends Ok.
     cache: Option<String>,
     timeout: Option<f64>,
+    /// A cell done before (R3): the id of its record.
+    done: Option<String>,
+    estimate: Option<f64>,
 }
 
 /// Runs a launch of `batch` to its end; `catalogue` holds the dependencies it needs.
 pub fn run(context: &mut Context, catalogue: &Catalogue, batch: &Batch, options: &Options) -> Result<Summary, String> {
     let job = &batch.job;
-    let cells = batch.expand(&options.only)?;
+    let mut cells = batch.expand(&options.only)?;
+    if !options.cells.is_empty() {
+        cells.retain(|cell| {
+            options.cells.iter().any(|kept| cell.values.iter().all(|(axis, value)| kept.get(axis) == Some(value)))
+        });
+    }
     let has_ref_axis = batch.axis(crate::catalogue::REFERENCE_AXIS).is_some();
     if has_ref_axis && options.reference.is_some() {
         return Err(format!("{} has a ref axis: give its references with --axis ref=…", job.name));
@@ -269,9 +309,9 @@ pub fn run(context: &mut Context, catalogue: &Catalogue, batch: &Batch, options:
         places.insert(target.clone(), place);
     }
 
-    let mut ids: BTreeSet<String> = crate::store::History::read(&context.places.runs())
-        .map(|history| history.runs.into_iter().map(|run| run.id).collect())
-        .unwrap_or_default();
+    let history: Vec<Run> =
+        crate::store::History::read(&context.places.runs()).map(|history| history.runs).unwrap_or_default();
+    let mut ids: BTreeSet<String> = history.iter().map(|run| run.id.clone()).collect();
 
     // The dependencies, by key, before anything else; then which cell has which.
     let mut cell_keys: Vec<BTreeMap<String, Result<String, String>>> = vec![BTreeMap::new(); cells.len()];
@@ -316,6 +356,8 @@ pub fn run(context: &mut Context, catalogue: &Catalogue, batch: &Batch, options:
                             dependencies: BTreeMap::new(),
                             cache: Some(key.clone()),
                             timeout: dependency.job.timeout.map(|timeout| timeout.seconds),
+                            done: None,
+                            estimate: None,
                         });
                     }
                 }
@@ -328,9 +370,21 @@ pub fn run(context: &mut Context, catalogue: &Catalogue, batch: &Batch, options:
             let dependency_width = pool_width(options.threads, dependency_threads);
             (context.say)(format!("{name}: {} to make, {dependency_width} at a time", plans.len()));
             let mut not_run = Vec::new();
+            let mut skipped = Vec::new();
             let stopped = context.stopped;
-            let records =
-                pool(context, plans, &places, options, &launch, dependency_width, &mut ids, &mut not_run, stopped);
+            let mut quiet = Pool { report: false, skipped: &mut skipped };
+            let records = pool(
+                context,
+                plans,
+                &places,
+                options,
+                &launch,
+                dependency_width,
+                &mut ids,
+                &mut not_run,
+                stopped,
+                &mut quiet,
+            );
             summary.dependencies.extend(records);
         }
         for ((dependency_name, key), present) in made.iter_mut() {
@@ -400,7 +454,7 @@ pub fn run(context: &mut Context, catalogue: &Catalogue, batch: &Batch, options:
                 }
             }
         }
-        plans.push(Planned {
+        let mut plan = Planned {
             job,
             text: cell.text(),
             values: cell.values.clone(),
@@ -411,15 +465,108 @@ pub fn run(context: &mut Context, catalogue: &Catalogue, batch: &Batch, options:
             dependencies,
             cache: None,
             timeout: Some(timeout),
-        });
+            done: None,
+            estimate: None,
+        };
+        if let Some(Ok(place)) = places.get(&plan.target)
+            && let Ok((command, environment)) = recorded_texts(&plan, place, options.threads)
+        {
+            let same_key = |run: &&Run| {
+                run.job == job.name
+                    && run.command == command
+                    && run.environment == environment
+                    && run.directory == job.directory
+            };
+            let same_commit = |run: &&Run| run.git.as_ref().is_some_and(|git| git.commit == place.git.commit);
+            plan.done = history
+                .iter()
+                .rev()
+                .filter(same_key)
+                .filter(same_commit)
+                .find(|run| {
+                    run.status == Status::Ok && run.tools == place.tools && run.dependencies == plan.dependencies
+                })
+                .map(|run| run.id.clone());
+            let ok: Vec<&Run> = history
+                .iter()
+                .filter(|run| run.job == job.name && run.status == Status::Ok && run.seconds.is_some())
+                .collect();
+            let values: BTreeMap<String, String> = plan.values.iter().cloned().collect();
+            let same_cell = |run: &&Run| run.cell.as_ref().is_some_and(|cell| cell.values == values);
+            plan.estimate = median(ok.iter().copied().filter(same_key).filter(same_commit))
+                .or_else(|| median(ok.iter().copied().filter(same_key)))
+                .or_else(|| median(ok.iter().copied().filter(same_cell)));
+        }
+        plans.push(plan);
     }
+    let to_run = |plan: &&Planned| plan.done.is_none() || options.again;
+    let known: Vec<f64> = plans.iter().filter(to_run).filter_map(|plan| plan.estimate).collect();
+    if !known.is_empty() {
+        let total: f64 = known.iter().sum::<f64>() / f64::from(width);
+        let unknown = plans.iter().filter(to_run).count() - known.len();
+        (context.say)(format!(
+            "about {} with a pool of {width}{}",
+            crate::model::duration_text(total),
+            if unknown == 0 { String::new() } else { format!(", plus {unknown} jobs without an estimate") }
+        ));
+    }
+    (context.progress)(Progress::Planned {
+        launch: launch.clone(),
+        width,
+        cells: plans.iter().map(|plan| (plan.values.clone(), plan.estimate)).collect(),
+    });
     let stopped = context.stopped;
-    let records = pool(context, plans, &places, options, &launch, width, &mut ids, &mut summary.not_run, stopped);
+    let mut cells_pool = Pool { report: true, skipped: &mut summary.skipped };
+    let records = pool(
+        context,
+        plans,
+        &places,
+        options,
+        &launch,
+        width,
+        &mut ids,
+        &mut summary.not_run,
+        stopped,
+        &mut cells_pool,
+    );
     summary.records = records;
     if let Some((watch, _)) = &context.monitor {
         monitor::lock(watch).our_last_end = Some(Instant::now());
     }
     Ok(summary)
+}
+
+/// The median of some durations, None for none.
+fn median<'a>(runs: impl Iterator<Item = &'a Run>) -> Option<f64> {
+    let mut seconds: Vec<f64> = runs.filter_map(|run| run.seconds).collect();
+    if seconds.is_empty() {
+        return None;
+    }
+    seconds.sort_by(f64::total_cmp);
+    let middle = seconds.len() / 2;
+    Some(if seconds.len() % 2 == 1 { seconds[middle] } else { (seconds[middle - 1] + seconds[middle]) / 2.0 })
+}
+
+/// The command and environment a plan's record keeps: placeholders filled,
+/// `{repo}`, `{out}` and the dependencies' paths kept, local paths scrubbed.
+fn recorded_texts(plan: &Planned, place: &Place, setting: u32) -> Result<(String, BTreeMap<String, String>), String> {
+    let job = plan.job;
+    let mut recorded = job.values(setting, &place.git.short, &place.reference, None, &plan.parameters);
+    recorded.insert(OUT.to_string(), format!("{{{OUT}}}"));
+    for (name, (_, kept)) in &plan.given {
+        recorded.insert(name.clone(), kept.clone());
+    }
+    let scrub = Scrub::new(&place.root);
+    let command = scrub.text(&render(&job.command, &recorded)?);
+    let environment =
+        job.environment_for(&recorded)?.into_iter().map(|(name, value)| (name, scrub.text(&value))).collect();
+    Ok((command, environment))
+}
+
+/// What a pool tells besides its lines: the cells' progress, and the cells done before.
+struct Pool<'s> {
+    report: bool,
+    skipped: &'s mut Vec<(String, String)>,
 }
 
 /// `<lab>/cache/<name>/<key>/`.
@@ -488,6 +635,7 @@ fn pool(
     ids: &mut BTreeSet<String>,
     not_run: &mut Vec<String>,
     stopped: &dyn Fn() -> bool,
+    tell: &mut Pool,
 ) -> Vec<(String, Status, String)> {
     let mut records = Vec::new();
     let mut next = 0;
@@ -500,6 +648,16 @@ fn pool(
             let index = next;
             next += 1;
             let plan = &plans[index];
+            if let Some(run) = &plan.done
+                && !options.again
+            {
+                (context.say)(format!("[{:>digits$}/{count}] done before  {}  · {run}", index + 1, plan.text));
+                tell.skipped.push((plan.text.clone(), run.clone()));
+                if tell.report {
+                    (context.progress)(Progress::Skipped { index });
+                }
+                continue;
+            }
             let place = match places.get(&plan.target) {
                 Some(Ok(place)) => place,
                 _ => {
@@ -526,9 +684,23 @@ fn pool(
                     if started_job.child.is_none() {
                         // Its prepare or a dependency failed: recorded at once, without running.
                         let status = Status::Failed { code: None, signal: None };
-                        finish(context, started_job, status, None, &mut records, digits, count);
+                        finish(context, started_job, status.clone(), None, &mut records, digits, count);
+                        if tell.report {
+                            (context.progress)(Progress::Ended { index, status });
+                        }
                     } else {
-                        (context.say)(format!("[{:>digits$}/{count}] start  {}", index + 1, started_job.text));
+                        let estimate = plan
+                            .estimate
+                            .map(|seconds| format!("  ≈ {}", crate::model::duration_text(seconds)))
+                            .unwrap_or_default();
+                        (context.say)(format!(
+                            "[{:>digits$}/{count}] start  {}{estimate}",
+                            index + 1,
+                            started_job.text
+                        ));
+                        if tell.report {
+                            (context.progress)(Progress::Started(index));
+                        }
                         running.push(started_job);
                     }
                 }
@@ -616,7 +788,11 @@ fn pool(
             if let Some((watch, _)) = &context.monitor {
                 monitor::lock(watch).groups.retain(|known| *known != group);
             }
-            finish(context, job, status, Some(seconds), &mut records, digits, count);
+            let index = job.index;
+            finish(context, job, status.clone(), Some(seconds), &mut records, digits, count);
+            if tell.report {
+                (context.progress)(Progress::Ended { index, status });
+            }
         }
         std::thread::sleep(TICK);
     }
@@ -733,12 +909,10 @@ fn begin(
     let root = place.root.to_string_lossy().into_owned();
     let mut executed = job.values(options.threads, &place.git.short, &place.reference, Some(&root), &plan.parameters);
     executed.insert(OUT.to_string(), out.to_string_lossy().into_owned());
-    let mut recorded = job.values(options.threads, &place.git.short, &place.reference, None, &plan.parameters);
-    recorded.insert(OUT.to_string(), format!("{{{OUT}}}"));
-    for (name, (now, kept)) in &plan.given {
+    for (name, (now, _)) in &plan.given {
         executed.insert(name.clone(), now.clone());
-        recorded.insert(name.clone(), kept.clone());
     }
+    let (recorded_command, recorded_environment) = recorded_texts(plan, place, options.threads)?;
     let scrub = Scrub::new(&place.root);
     let command = render(&job.command, &executed)?;
     let environment = job.environment_for(&executed)?;
@@ -768,12 +942,8 @@ fn begin(
         seconds: None,
         status: Status::Interrupted,
         prepare: place.prepare.clone(),
-        command: scrub.text(&render(&job.command, &recorded)?),
-        environment: job
-            .environment_for(&recorded)?
-            .into_iter()
-            .map(|(name, value)| (name, scrub.text(&value)))
-            .collect(),
+        command: recorded_command,
+        environment: recorded_environment,
         parameters: plan.parameters.iter().map(|(name, value)| (name.clone(), scrub.text(value))).collect(),
         checkout: place.reference.clone(),
         directory: job.directory.clone(),
@@ -960,6 +1130,7 @@ mod tests {
         let mut lines = Vec::new();
         let stopped = || false;
         let mut say = |line: String| lines.push(line);
+        let mut progress = |_: Progress| {};
         let mut context = Context {
             places,
             mirror: &mirror,
@@ -967,6 +1138,7 @@ mod tests {
             monitor: None,
             stopped: &stopped,
             say: &mut say,
+            progress: &mut progress,
         };
         let options = Options {
             reference: Some(places.home.clone().unwrap().to_string_lossy().into_owned()),
@@ -1100,13 +1272,25 @@ mod tests {
         let got = cell.outputs.iter().find(|output| output.path.ends_with("got.txt")).unwrap();
         assert_eq!(std::fs::read_to_string(places.data.join(&got.path)).unwrap(), "made a\n");
         assert_eq!(cell.dependencies["thing"].len(), 16);
-        // The second launch makes nothing.
+        // The second launch makes nothing, and skips the jobs done (R3).
         let (summary, lines) = launch(&places, NEEDS, Options::default());
-        assert_eq!(summary.counts(), "4 jobs: 4 ok");
+        assert_eq!(summary.counts(), "4 jobs: 4 done before");
+        assert!(summary.all_ok());
         assert!(summary.dependencies.is_empty(), "{lines:#?}");
         assert_eq!(lines.iter().filter(|line| line.ends_with(": cached")).count(), 2, "{lines:#?}");
         let runs = History::read(&places.runs()).unwrap().runs;
         assert_eq!(runs.iter().filter(|run| run.job == "thing").count(), 2);
+        assert_eq!(runs.len(), 6, "no new record");
+        // Again, on one cell chosen: it runs, with an estimate from its first run.
+        let chosen = Options {
+            again: true,
+            cells: vec![[("model".to_string(), "b".to_string()), ("budget".to_string(), "2".to_string())].into()],
+            ..Options::default()
+        };
+        let (summary, lines) = launch(&places, NEEDS, chosen);
+        assert_eq!(summary.counts(), "1 jobs: 1 ok", "{lines:#?}");
+        assert!(lines.iter().any(|line| line.contains("start  model=b budget=2  ≈")), "{lines:#?}");
+        assert!(lines.iter().any(|line| line.starts_with("about ")), "{lines:#?}");
     }
 
     #[test]
