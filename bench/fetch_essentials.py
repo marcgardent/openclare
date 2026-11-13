@@ -8,14 +8,14 @@ Asset Browser (Essentials > Base Meshes > Human). Each holds a base mesh,
 modelled by hand, under a Multires modifier whose top level is the sculpt.
 From each, two things are made:
 
-- the scene of the bench, in bench/corpus-large/scenes: the body as Blender
+- the scene of the bench, in bench/scenes: the body as Blender
   sees it, its Multires at the top level, so that the sculpt is what every
   remesher is given;
 - the hand-made mesh, the base level of the Multires, in
   bench/reference/handmade: what the remeshers are held up against.
 
-The library is CC0 (see CREDITS.md); the sculpts are large, so their scenes
-stay out of the repository, and the hand-made meshes, small, go in it.
+The library is CC0 (see CREDITS.md): both go in the repository, the scenes
+through Git LFS.
 """
 
 import argparse
@@ -25,7 +25,7 @@ from pathlib import Path
 
 BENCH = Path(__file__).resolve().parent
 CACHE = Path.home() / ".cache" / "blender" / "remote-assets" / "online-essentials" / "base_meshes"
-SCENES = BENCH / "corpus-large" / "scenes"
+SCENES = BENCH / "scenes"
 HANDMADE = BENCH / "reference" / "handmade"
 # Model of the bench: file of the library and the object of the body.
 BODIES = {
