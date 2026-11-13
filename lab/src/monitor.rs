@@ -66,8 +66,9 @@ pub struct Watch {
     pub points: VecDeque<Point>,
     /// The heaviest processes at the last sample.
     pub heaviest: Vec<Process>,
-    /// The process group of the run under way, set by the runner.
-    pub group: Option<i32>,
+    /// The process groups of the runs under way, set by the runner: one, or
+    /// the jobs of a batch's pool (SPEC.md, §6b).
+    pub groups: Vec<i32>,
     /// When a run of ours last ended.
     pub our_last_end: Option<Instant>,
     /// When the machine was last seen busy by something else.
@@ -116,7 +117,7 @@ impl Watch {
                 text: format!("foreign CPU mean {mean:.1} %, peak {peak:.1} %{}", foreign_names()),
             };
         }
-        let ours = self.group.is_some();
+        let ours = !self.groups.is_empty();
         let load1 = points.last().map_or(0.0, |point| point.load[0]);
         let after_ours = self.our_last_end.is_some_and(|end| {
             now.duration_since(end) < Duration::from_secs(60 * u64::from(calm.load1_ignored_minutes))
@@ -199,10 +200,13 @@ fn load() -> [f64; 3] {
     [0, 1, 2].map(|index| values.get(index).copied().unwrap_or(0.0))
 }
 
-/// The processes of a group and their descendants.
-fn ours(group: Option<i32>, all: &BTreeMap<i32, (String, i32, i32, u64)>) -> Vec<i32> {
-    let Some(group) = group else { return Vec::new() };
-    let mut found: Vec<i32> = all.iter().filter(|(_, (_, _, pgrp, _))| *pgrp == group).map(|(pid, _)| *pid).collect();
+/// The processes of the groups and their descendants.
+fn ours(groups: &[i32], all: &BTreeMap<i32, (String, i32, i32, u64)>) -> Vec<i32> {
+    if groups.is_empty() {
+        return Vec::new();
+    }
+    let mut found: Vec<i32> =
+        all.iter().filter(|(_, (_, _, pgrp, _))| groups.contains(pgrp)).map(|(pid, _)| *pid).collect();
     let mut grew = true;
     while grew {
         grew = false;
@@ -250,8 +254,8 @@ pub fn spawn(
                 let total = percent(0);
                 let per_thread: Vec<f64> = (1..cpu.len()).map(percent).collect();
                 let processes = processes();
-                let group = lock(&watch).group;
-                let ours_pids = ours(group, &processes);
+                let groups = lock(&watch).groups.clone();
+                let ours_pids = ours(&groups, &processes);
                 let mut heaviest: Vec<Process> = processes
                     .iter()
                     .filter_map(|(pid, (name, _, _, ticks))| {
@@ -336,7 +340,7 @@ mod tests {
         let quiet = watch((0..30).map(|second| point(second * 2, 1.0, 0.2)).collect());
         assert_eq!(quiet.verdict(&calm).calmness, Calmness::Calm);
         let mut ours = watch((0..30).map(|second| point(second * 2, 1.0, 3.0)).collect());
-        ours.group = Some(1);
+        ours.groups = vec![1];
         assert_eq!(ours.verdict(&calm).calmness, Calmness::Ours, "load1 counts our run: not looked at");
         let busy = watch((0..30).map(|second| point(second * 2, if second == 3 { 40.0 } else { 1.0 }, 0.2)).collect());
         assert_eq!(busy.verdict(&calm).calmness, Calmness::Busy, "one sample above the peak");
@@ -356,7 +360,7 @@ mod tests {
         let me = std::process::id() as i32;
         assert!(all.contains_key(&me));
         let group = all[&me].2;
-        assert!(ours(Some(group), &all).contains(&me));
+        assert!(ours(&[group], &all).contains(&me));
         assert!(memory().1 > 0);
     }
 }

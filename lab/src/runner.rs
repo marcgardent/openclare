@@ -37,7 +37,7 @@ use crate::settings::{CalmSettings, Policy, Push};
 const TICK: Duration = Duration::from_millis(200);
 
 /// What a run records of its calm until the monitor exists (milestone M3).
-const NOT_MEASURED: &str = "not measured: lab ran without its monitor";
+pub const NOT_MEASURED: &str = "not measured: lab ran without its monitor";
 
 /// The file at the root of a checkout of the mirror that lists the prepares
 /// done in it (SPEC.md, §7.3): one per line, "<when>\t<job>\t<command>".
@@ -54,6 +54,48 @@ pub struct Item {
     pub state: ItemState,
     /// Started although the machine was not calm: its time cannot be reported.
     pub forced: bool,
+    /// A batch (SPEC.md, §6b, R3): `job` is its template, run by `batch::run`.
+    pub batch: Option<BatchChoice>,
+}
+
+/// A batch in the queue: the cells chosen, the timeout and whether to run
+/// again the jobs done (SPEC.md, §6b, R3), from the catalogue the window shows.
+#[derive(Clone, Debug)]
+pub struct BatchChoice {
+    pub catalogue: Arc<Catalogue>,
+    /// The cells kept, each its axes' values; empty: every cell.
+    pub cells: Vec<BTreeMap<String, String>>,
+    pub timeout: Option<crate::catalogue::Timeout>,
+    pub again: bool,
+}
+
+/// The grid of the batch under way, or of the last one, as the window shows it.
+#[derive(Clone, Debug, Default)]
+pub struct LiveGrid {
+    pub batch: String,
+    pub launch: String,
+    pub width: u32,
+    pub cells: Vec<LiveCell>,
+    pub ended: bool,
+}
+
+#[derive(Clone, Debug)]
+pub struct LiveCell {
+    pub values: Vec<(String, String)>,
+    pub estimate: Option<f64>,
+    pub state: LiveState,
+}
+
+#[derive(Clone, Debug)]
+pub enum LiveState {
+    Waiting,
+    Running(Instant),
+    /// Its record written: the grid then shows the record.
+    Ended {
+        status: Status,
+    },
+    /// Done before: the grid shows that record.
+    Skipped,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -141,6 +183,8 @@ pub struct Shared {
     pub push_requested: bool,
     /// What the last push said, and when.
     pub pushed: Option<(DateTime<Local>, String)>,
+    /// The batch under way, or the last one (R3).
+    pub grid: Option<LiveGrid>,
     next_key: u64,
 }
 
@@ -154,8 +198,25 @@ impl Shared {
     pub fn add(&mut self, job: Job, target: String) -> u64 {
         self.next_key += 1;
         let parameters = job.parameters.clone();
-        self.items.push(Item { key: self.next_key, job, parameters, target, state: ItemState::Waiting, forced: false });
+        self.items.push(Item {
+            key: self.next_key,
+            job,
+            parameters,
+            target,
+            state: ItemState::Waiting,
+            forced: false,
+            batch: None,
+        });
         self.next_key
+    }
+
+    /// A batch at the end of the queue, some of its cells or all (R3).
+    pub fn add_batch(&mut self, batch: &crate::catalogue::Batch, choice: BatchChoice) -> u64 {
+        let key = self.add(batch.job.clone(), batch.job.checkout.initial());
+        if let Some(item) = self.items.iter_mut().find(|item| item.key == key) {
+            item.batch = Some(choice);
+        }
+        key
     }
 
     /// Run the items waiting, with these settings.
@@ -191,6 +252,16 @@ pub struct SavedItem {
     pub parameters: BTreeMap<String, String>,
     /// The target as typed.
     pub checkout: String,
+    /// A batch's choice (R3); absent for a job.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub batch: Option<SavedBatch>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SavedBatch {
+    pub cells: Vec<BTreeMap<String, String>>,
+    pub timeout_seconds: Option<f64>,
+    pub again: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -263,6 +334,26 @@ pub fn recover(places: &Places, catalogue: Option<&Catalogue>, shared: &mut Shar
             }
             _ => saved.checkout,
         };
+        if let Some(choice) = &saved.batch {
+            match catalogue.and_then(|catalogue| catalogue.batch(&saved.job).map(|batch| (catalogue, batch))) {
+                Some((catalogue, batch)) => {
+                    let choice = BatchChoice {
+                        catalogue: Arc::new(catalogue.clone()),
+                        cells: choice.cells.clone(),
+                        timeout: choice.timeout_seconds.map(|seconds| crate::catalogue::Timeout { seconds }),
+                        again: choice.again,
+                    };
+                    let key = shared.add_batch(batch, choice);
+                    if let Some(item) = shared.items.iter_mut().find(|item| item.key == key) {
+                        item.target = target;
+                    }
+                }
+                None => shared
+                    .messages
+                    .push(format!("state.json: the batch {} is not in the catalogue: not queued again", saved.job)),
+            }
+            continue;
+        }
         match catalogue.and_then(|catalogue| catalogue.job(&saved.job)).cloned() {
             Some(job) => {
                 let key = shared.add(job, target);
@@ -284,18 +375,23 @@ pub fn recover(places: &Places, catalogue: Option<&Catalogue>, shared: &mut Shar
     // interrupted run, written again under the same id, is read once.
 }
 
-fn group_alive(group: i32) -> bool {
+/// The shared queue, a poisoned lock taken all the same.
+fn locked(shared: &Arc<Mutex<Shared>>) -> std::sync::MutexGuard<'_, Shared> {
+    shared.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+
+pub fn group_alive(group: i32) -> bool {
     group > 0 && killpg(Pid::from_raw(group), None).is_ok()
 }
 
-fn signal(group: i32, signal: Signal) {
+pub fn signal(group: i32, signal: Signal) {
     if group > 0 {
         let _ = killpg(Pid::from_raw(group), signal);
     }
 }
 
 /// Marc stops a recovered orphan: SIGTERM, then SIGKILL after the grace.
-fn kill_group(group: i32, grace: Duration) {
+pub fn kill_group(group: i32, grace: Duration) {
     signal(group, Signal::SIGTERM);
     let asked = Instant::now();
     while group_alive(group) && asked.elapsed() < grace {
@@ -326,16 +422,66 @@ struct Running {
     /// The prepare under way, to remember once done: its key, and the command as executed.
     prepare_key: Option<(String, String)>,
     during: During,
+    /// The limit of the command, its prepare excluded (SPEC.md, §6b).
+    timeout: Option<Duration>,
+    timed_out: bool,
 }
 
 /// The monitor's samples taken during a run.
 #[derive(Default)]
-struct During {
+pub struct During {
     last: Option<Instant>,
     foreign: Vec<f64>,
     load1_max: f64,
     memory_peak: u64,
     vram_peak: Option<u64>,
+}
+
+impl During {
+    /// The monitor's last point, if it is new.
+    pub fn take(&mut self, watch: &Watch) {
+        if let Some(point) = watch.latest().filter(|point| self.last.is_none_or(|last| point.at > last)) {
+            self.last = Some(point.at);
+            self.foreign.push(point.foreign);
+            self.load1_max = self.load1_max.max(point.load[0]);
+            self.memory_peak = self.memory_peak.max(point.memory_used);
+            if let Some((used, _)) = point.vram {
+                self.vram_peak = Some(self.vram_peak.unwrap_or(0).max(used));
+            }
+        }
+    }
+
+    /// The load during the run and the calm verdict written into its record.
+    pub fn apply(&self, run: &mut Run, calm: &CalmSettings) {
+        if !self.foreign.is_empty() {
+            let mean = self.foreign.iter().sum::<f64>() / self.foreign.len() as f64;
+            let peak = self.foreign.iter().copied().fold(0.0, f64::max);
+            if let Some(load) = &mut run.load {
+                load.during = Some(crate::model::During {
+                    samples: self.foreign.len() as u32,
+                    foreign_cpu_mean: mean,
+                    foreign_cpu_peak: peak,
+                    load1_max: self.load1_max,
+                    memory_used_peak: self.memory_peak,
+                    vram_used_peak: self.vram_peak,
+                });
+            }
+            run.calm.during = mean < calm.foreign_cpu_mean_max && peak < calm.foreign_cpu_peak_max;
+            if !run.calm.during {
+                let reason = format!("foreign CPU mean {mean:.1} %, peak {peak:.1} % during the run");
+                run.calm.reason =
+                    if run.calm.reason.is_empty() { reason } else { format!("{}; {reason}", run.calm.reason) };
+            }
+        }
+        if run.calm.forced {
+            run.calm.reason = if run.calm.reason.is_empty() {
+                "started anyway".to_string()
+            } else {
+                format!("started anyway; {}", run.calm.reason)
+            };
+        }
+        run.calm.timing_valid = run.calm.before && run.calm.during && !run.calm.forced;
+    }
 }
 
 pub struct Runner {
@@ -542,6 +688,7 @@ impl Runner {
             }
         };
         match next {
+            Some((item, queue)) if item.batch.is_some() => self.run_batch(&item, &queue),
             Some((item, queue)) => {
                 if let Err(error) = self.begin(&item, &queue) {
                     self.message(format!("{}: {error}", item.job.name));
@@ -556,6 +703,155 @@ impl Runner {
             None => self.save_state(),
         }
         (self.repaint)();
+    }
+
+    /// A batch of the queue, run to its end on this thread (SPEC.md, §6b,
+    /// R3): its lines in `logs/<launch>.log`, its cells in `Shared::grid`.
+    fn run_batch(&mut self, item: &Item, queue: &QueueSettings) {
+        let choice = item.batch.clone().expect("a batch item");
+        let name = item.job.name.clone();
+        let Some(batch) = choice.catalogue.batch(&name).cloned() else {
+            self.message(format!("{name}: no batch of that name in the catalogue"));
+            self.settle(item.key, ItemState::Cancelled, Some(Policy::PauseAndAsk), &format!("{name} could not start."));
+            return;
+        };
+        let begun = Instant::now();
+        let relative = format!("logs/{}-{name}.log", Local::now().format("%Y%m%d-%H%M%S"));
+        let path = self.places.data.join(&relative);
+        let log = std::fs::create_dir_all(path.parent().expect("logs/ has a parent"))
+            .and_then(|_| File::create(&path))
+            .map_err(|error| format!("{}: {error}", path.display()));
+        let mut log = match log {
+            Ok(log) => log,
+            Err(error) => {
+                self.message(error);
+                self.settle(
+                    item.key,
+                    ItemState::Cancelled,
+                    Some(Policy::PauseAndAsk),
+                    &format!("{name} could not start."),
+                );
+                return;
+            }
+        };
+        {
+            let mut shared = self.lock();
+            shared.current = Some(Current {
+                key: item.key,
+                job: name.clone(),
+                phase: Phase::Command,
+                started: begun,
+                log: path.clone(),
+                stopping: false,
+            });
+            shared.grid = Some(LiveGrid { batch: name.clone(), ..LiveGrid::default() });
+        }
+        (self.repaint)();
+        let has_ref_axis = batch.axis(crate::catalogue::REFERENCE_AXIS).is_some();
+        let options = crate::batch::Options {
+            only: Vec::new(),
+            reference: (!has_ref_axis).then(|| item.target.clone()),
+            timeout: choice.timeout,
+            threads: queue.threads,
+            grace: Duration::from_secs(u64::from(queue.grace_seconds.max(1))),
+            forced: item.forced,
+            comment: queue.comment.clone(),
+            papers: queue.papers.clone(),
+            cells: choice.cells.clone(),
+            again: choice.again,
+        };
+        let shared = self.shared.clone();
+        let stopped = || locked(&shared).stop.is_some();
+        let repaint = &self.repaint;
+        let mut say = |line: String| {
+            log_line(&mut log, &line);
+            repaint();
+        };
+        let mut progress = |progress: crate::batch::Progress| {
+            let mut shared = locked(&shared);
+            let Some(grid) = shared.grid.as_mut() else { return };
+            match progress {
+                crate::batch::Progress::Planned { launch, width, cells } => {
+                    grid.launch = launch;
+                    grid.width = width;
+                    grid.cells = cells
+                        .into_iter()
+                        .map(|(values, estimate)| LiveCell { values, estimate, state: LiveState::Waiting })
+                        .collect();
+                }
+                crate::batch::Progress::Started(index) => {
+                    if let Some(cell) = grid.cells.get_mut(index) {
+                        cell.state = LiveState::Running(Instant::now());
+                    }
+                }
+                crate::batch::Progress::Ended { index, status } => {
+                    if let Some(cell) = grid.cells.get_mut(index) {
+                        cell.state = LiveState::Ended { status };
+                    }
+                }
+                crate::batch::Progress::Skipped { index } => {
+                    if let Some(cell) = grid.cells.get_mut(index) {
+                        cell.state = LiveState::Skipped;
+                    }
+                }
+            }
+            drop(shared);
+            repaint();
+        };
+        let mut context = crate::batch::Context {
+            places: &self.places,
+            mirror: &self.mirror,
+            machine: self.machine.clone(),
+            monitor: self.monitor.clone(),
+            stopped: &stopped,
+            say: &mut say,
+            progress: &mut progress,
+        };
+        let result = crate::batch::run(&mut context, &choice.catalogue, &batch, &options);
+        let stop = locked(&shared).stop;
+        let (status, summary) = match &result {
+            Ok(summary) => {
+                log_line(&mut log, &summary.counts());
+                if stop.is_some() {
+                    (Status::Stopped, format!("{name} was stopped: {}.", summary.counts()))
+                } else if summary.all_ok() {
+                    (Status::Ok, String::new())
+                } else {
+                    (Status::Failed { code: None, signal: None }, format!("{name}: {}.", summary.counts()))
+                }
+            }
+            Err(error) => {
+                log_line(&mut log, error);
+                (Status::Failed { code: None, signal: None }, format!("{name}: {error}"))
+            }
+        };
+        // A launch ends with its batch's report, its table in the launch's log (R4).
+        if batch.report.is_some() && stop.is_none() {
+            let reference = (!has_ref_axis).then(|| item.target.clone());
+            match crate::report::make(&self.places, &self.mirror, &batch, None, reference.as_deref(), queue.threads) {
+                Ok(made) => {
+                    log_line(&mut log, &format!("report in {}:", made.folder.display()));
+                    for line in crate::report::table(&made).lines() {
+                        log_line(&mut log, line);
+                    }
+                }
+                Err(error) => log_line(&mut log, &format!("report: {error}")),
+            }
+        }
+        let launch = result.as_ref().map(|summary| summary.launch.clone()).unwrap_or_default();
+        if let Some(grid) = locked(&shared).grid.as_mut() {
+            grid.ended = true;
+        }
+        if self.push == Push::Auto && result.is_ok() {
+            self.push_memory();
+        }
+        let policy = match &status {
+            Status::Ok => None,
+            Status::Stopped => stop.or(Some(Policy::PauseAndAsk)),
+            _ => queue.on_failure.or(Some(Policy::PauseAndAsk)),
+        };
+        let seconds = Some(begun.elapsed().as_secs_f64());
+        self.settle(item.key, ItemState::Done { run: launch, status, seconds }, policy, &summary);
     }
 
     fn unique_id(&mut self, started: &DateTime<FixedOffset>, job: &str) -> String {
@@ -624,45 +920,15 @@ impl Runner {
     /// when the reference asked is unknown and `main` runs instead: lab warns,
     /// it never keeps a run from starting (SPEC.md, §8.1).
     fn checkout(&self, item: &Item) -> Result<(PathBuf, GitState, Target, Option<String>), String> {
-        let mut target = Target::parse(&item.target);
-        let mut note = None;
-        let root = match &target {
-            Target::Local(path) => {
-                if !path.is_dir() {
-                    return Err(format!("{}: no such folder", path.display()));
-                }
-                path.clone()
-            }
-            Target::Reference(reference) => {
-                let (reference, hash) = match self.mirror.resolve(reference) {
-                    Ok(hash) => (reference.clone(), hash),
-                    Err(error) if reference != crate::mirror::MAIN => {
-                        let hash = self.mirror.resolve(crate::mirror::MAIN)?;
-                        let short: String = hash.chars().take(7).collect();
-                        note = Some(format!("{error}; run on {} ({short}) instead", crate::mirror::MAIN));
-                        (crate::mirror::MAIN.to_string(), hash)
-                    }
-                    Err(error) => return Err(error),
-                };
-                let short: String = hash.chars().take(7).collect();
-                self.lock().activity = Some(format!("checking out {reference} ({short})"));
-                (self.repaint)();
-                let added = self.mirror.checkout(&hash);
-                let mut shared = self.lock();
-                shared.activity = None;
+        resolve_checkout(&self.mirror, &item.target, &|activity| {
+            let mut shared = self.lock();
+            if activity.is_none() {
                 shared.mirror_changes += 1;
-                drop(shared);
-                added?
             }
-        };
-        if note.is_some() {
-            target = Target::Reference(crate::mirror::MAIN.to_string());
-        }
-        let mut git = GitState::read(&root)?;
-        if let Target::Reference(reference) = &target {
-            git.branch = Some(reference.clone());
-        }
-        Ok((root, git, target, note))
+            shared.activity = activity;
+            drop(shared);
+            (self.repaint)();
+        })
     }
 
     fn begin(&mut self, item: &Item, queue: &QueueSettings) -> Result<(), String> {
@@ -764,6 +1030,11 @@ impl Runner {
             log: Some(FileRef { path: log_relative, bytes: 0, sha256: None }),
             outputs: Vec::new(),
             edited: None,
+            cell: None,
+            timeout_seconds: job.timeout.map(|timeout| timeout.seconds),
+            tools: crate::tools::read(&checkout),
+            dependencies: BTreeMap::new(),
+            cache: None,
         };
         let mut running = Running {
             key: item.key,
@@ -783,6 +1054,8 @@ impl Runner {
             killed: false,
             prepare_key: None,
             during: During::default(),
+            timeout: job.timeout.map(|timeout| Duration::from_secs_f64(timeout.seconds)),
+            timed_out: false,
         };
         let prepare = match &job.prepare {
             Some(prepare) => Some((render(prepare, &executed)?, scrub.text(&render(prepare, &recorded)?))),
@@ -851,29 +1124,15 @@ impl Runner {
     fn launch(&self, running: &mut Running, phase: Phase) -> Result<(), String> {
         let word = if phase == Phase::Prepare { "prepare" } else { "command" };
         log_line(&mut running.log, &format!("{word}: {}", running.command));
-        let output = running.log.try_clone().map_err(|error| error.to_string())?;
-        let errors = running.log.try_clone().map_err(|error| error.to_string())?;
-        let mut command = Command::new("bash");
-        command
-            .arg("-c")
-            .arg(&running.command)
-            .current_dir(&running.directory)
-            .envs(&running.environment)
-            .stdin(Stdio::null())
-            .stdout(output)
-            .stderr(errors)
-            .process_group(0);
-        if let Some(gigabytes) = running.memory_limit_gb {
-            // As `ulimit -v`, whose unit is the kilobyte: 32 GB is 32,000,000 kB.
-            let bytes = u64::from(gigabytes) * 1_000_000 * 1024;
-            // Safety: only setrlimit, async-signal-safe, between fork and exec.
-            unsafe {
-                command.pre_exec(move || setrlimit(Resource::RLIMIT_AS, bytes, bytes).map_err(std::io::Error::from));
-            }
-        }
-        let child = command.spawn().map_err(|error| format!("bash: {error}"))?;
+        let child = spawn_shell(
+            &running.command,
+            &running.directory,
+            &running.environment,
+            running.memory_limit_gb,
+            &running.log,
+        )?;
         if let Some((watch, _)) = &self.monitor {
-            monitor::lock(watch).group = Some(child.id() as i32);
+            monitor::lock(watch).groups = vec![child.id() as i32];
         }
         running.child = Some(child);
         running.phase = phase;
@@ -887,21 +1146,37 @@ impl Runner {
             (shared.stop, Duration::from_secs(u64::from(shared.queue.grace_seconds.max(1))))
         };
         if let (Some((watch, _)), Some(running)) = (&self.monitor, self.running.as_mut()) {
-            let watch = monitor::lock(watch);
-            if let Some(point) = watch.latest().filter(|point| running.during.last.is_none_or(|last| point.at > last)) {
-                let during = &mut running.during;
-                during.last = Some(point.at);
-                during.foreign.push(point.foreign);
-                during.load1_max = during.load1_max.max(point.load[0]);
-                during.memory_peak = during.memory_peak.max(point.memory_used);
-                if let Some((used, _)) = point.vram {
-                    during.vram_peak = Some(during.vram_peak.unwrap_or(0).max(used));
-                }
-            }
+            running.during.take(&monitor::lock(watch));
         }
         let running = self.running.as_mut().expect("a run under way");
         let Some(child) = running.child.as_mut() else { return };
         let group = child.id() as i32;
+        if running.phase == Phase::Command
+            && !running.timed_out
+            && stop.is_none()
+            && let Some(limit) = running.timeout
+            && running.phase_started.elapsed() >= limit
+        {
+            log_line(
+                &mut running.log,
+                &format!(
+                    "past its timeout of {}: SIGTERM to the process group",
+                    crate::model::duration_text(limit.as_secs_f64())
+                ),
+            );
+            signal(group, Signal::SIGTERM);
+            running.stop_sent = Some(Instant::now());
+            running.timed_out = true;
+        }
+        if running.timed_out
+            && let Some(sent) = running.stop_sent
+            && !running.killed
+            && sent.elapsed() >= grace
+        {
+            log_line(&mut running.log, &format!("still running after {} s: SIGKILL to the group", grace.as_secs()));
+            signal(group, Signal::SIGKILL);
+            running.killed = true;
+        }
         if stop.is_some() {
             match running.stop_sent {
                 None => {
@@ -977,7 +1252,8 @@ impl Runner {
             self.finish(status_of(status, stopped), None, &why);
             return;
         }
-        self.finish(status_of(status, stopped), Some(seconds), "");
+        let status = if running.timed_out && !stopped { Status::TimedOut } else { status_of(status, stopped) };
+        self.finish(status, Some(seconds), "");
     }
 
     /// The record written, the item settled, the policy applied.
@@ -996,39 +1272,11 @@ impl Runner {
         if let Some((watch, calm)) = &self.monitor {
             {
                 let mut watch = monitor::lock(watch);
-                watch.group = None;
+                watch.groups.clear();
                 watch.our_last_end = Some(Instant::now());
             }
             let calm = calm.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone();
-            let during = &running.during;
-            if !during.foreign.is_empty() {
-                let mean = during.foreign.iter().sum::<f64>() / during.foreign.len() as f64;
-                let peak = during.foreign.iter().copied().fold(0.0, f64::max);
-                if let Some(load) = &mut run.load {
-                    load.during = Some(crate::model::During {
-                        samples: during.foreign.len() as u32,
-                        foreign_cpu_mean: mean,
-                        foreign_cpu_peak: peak,
-                        load1_max: during.load1_max,
-                        memory_used_peak: during.memory_peak,
-                        vram_used_peak: during.vram_peak,
-                    });
-                }
-                run.calm.during = mean < calm.foreign_cpu_mean_max && peak < calm.foreign_cpu_peak_max;
-                if !run.calm.during {
-                    let reason = format!("foreign CPU mean {mean:.1} %, peak {peak:.1} % during the run");
-                    run.calm.reason =
-                        if run.calm.reason.is_empty() { reason } else { format!("{}; {reason}", run.calm.reason) };
-                }
-            }
-            if run.calm.forced {
-                run.calm.reason = if run.calm.reason.is_empty() {
-                    "started anyway".to_string()
-                } else {
-                    format!("started anyway; {}", run.calm.reason)
-                };
-            }
-            run.calm.timing_valid = run.calm.before && run.calm.during && !run.calm.forced;
+            running.during.apply(run, &calm);
         }
         let mut outputs: BTreeSet<String> = BTreeSet::new();
         for pattern in &running.outputs {
@@ -1145,6 +1393,11 @@ impl Runner {
                         job: item.job.name.clone(),
                         parameters: item.parameters.clone(),
                         checkout: item.target.clone(),
+                        batch: item.batch.as_ref().map(|choice| SavedBatch {
+                            cells: choice.cells.clone(),
+                            timeout_seconds: choice.timeout.map(|timeout| timeout.seconds),
+                            again: choice.again,
+                        }),
                     })
                     .collect(),
                 current: self
@@ -1184,6 +1437,52 @@ impl Runner {
     }
 }
 
+/// The folder a target runs in, its git state and its target as run, with
+/// a note when the reference asked is unknown and `main` runs instead: lab
+/// warns, it never keeps a run from starting (SPEC.md, §8.1). `activity`
+/// hears "checking out …" before a checkout and None after.
+pub fn resolve_checkout(
+    mirror: &Mirror,
+    text: &str,
+    activity: &dyn Fn(Option<String>),
+) -> Result<(PathBuf, GitState, Target, Option<String>), String> {
+    let mut target = Target::parse(text);
+    let mut note = None;
+    let root = match &target {
+        Target::Local(path) => {
+            if !path.is_dir() {
+                return Err(format!("{}: no such folder", path.display()));
+            }
+            path.clone()
+        }
+        Target::Reference(reference) => {
+            let (reference, hash) = match mirror.resolve(reference) {
+                Ok(hash) => (reference.clone(), hash),
+                Err(error) if reference != crate::mirror::MAIN => {
+                    let hash = mirror.resolve(crate::mirror::MAIN)?;
+                    let short: String = hash.chars().take(7).collect();
+                    note = Some(format!("{error}; run on {} ({short}) instead", crate::mirror::MAIN));
+                    (crate::mirror::MAIN.to_string(), hash)
+                }
+                Err(error) => return Err(error),
+            };
+            let short: String = hash.chars().take(7).collect();
+            activity(Some(format!("checking out {reference} ({short})")));
+            let added = mirror.checkout(&hash);
+            activity(None);
+            added?
+        }
+    };
+    if note.is_some() {
+        target = Target::Reference(crate::mirror::MAIN.to_string());
+    }
+    let mut git = GitState::read(&root)?;
+    if let Target::Reference(reference) = &target {
+        git.branch = Some(reference.clone());
+    }
+    Ok((root, git, target, note))
+}
+
 /// Why the prepare of `command` need not run again in this checkout, if
 /// `.lab-prepared` says it ran (SPEC.md, §7.3).
 pub fn prepared_in(checkout: &Path, command: &str) -> Option<String> {
@@ -1195,16 +1494,49 @@ pub fn prepared_in(checkout: &Path, command: &str) -> Option<String> {
 }
 
 /// A prepare done, written in the checkout's `.lab-prepared` as executed.
-fn remember_prepared(checkout: &Path, job: &str, executed: &str) -> Result<(), String> {
+pub fn remember_prepared(checkout: &Path, job: &str, executed: &str) -> Result<(), String> {
     let when = Local::now().format("%Y-%m-%dT%H:%M:%S");
     files::append_line(&checkout.join(PREPARED), &format!("{when}\t{job}\t{executed}"))
 }
 
-fn log_line(log: &mut File, text: &str) {
+/// `bash -c <command>` in `directory`, in a process group of its own, with
+/// the memory cap, stdin from /dev/null, stdout and stderr to `log`
+/// (SPEC.md, §8.1).
+pub fn spawn_shell(
+    line: &str,
+    directory: &Path,
+    environment: &BTreeMap<String, String>,
+    memory_limit_gb: Option<u32>,
+    log: &File,
+) -> Result<Child, String> {
+    let output = log.try_clone().map_err(|error| error.to_string())?;
+    let errors = log.try_clone().map_err(|error| error.to_string())?;
+    let mut command = Command::new("bash");
+    command
+        .arg("-c")
+        .arg(line)
+        .current_dir(directory)
+        .envs(environment)
+        .stdin(Stdio::null())
+        .stdout(output)
+        .stderr(errors)
+        .process_group(0);
+    if let Some(gigabytes) = memory_limit_gb {
+        // As `ulimit -v`, whose unit is the kilobyte: 32 GB is 32,000,000 kB.
+        let bytes = u64::from(gigabytes) * 1_000_000 * 1024;
+        // Safety: only setrlimit, async-signal-safe, between fork and exec.
+        unsafe {
+            command.pre_exec(move || setrlimit(Resource::RLIMIT_AS, bytes, bytes).map_err(std::io::Error::from));
+        }
+    }
+    command.spawn().map_err(|error| format!("bash: {error}"))
+}
+
+pub fn log_line(log: &mut File, text: &str) {
     let _ = writeln!(log, "== lab {}: {text}", Local::now().format("%H:%M:%S"));
 }
 
-fn describe(status: ExitStatus) -> String {
+pub fn describe(status: ExitStatus) -> String {
     match (status.code(), status.signal()) {
         (Some(code), _) => format!("exit {code}"),
         (None, Some(signal)) => format!("killed by signal {signal}"),
@@ -1212,7 +1544,7 @@ fn describe(status: ExitStatus) -> String {
     }
 }
 
-fn status_of(status: ExitStatus, stopped: bool) -> Status {
+pub fn status_of(status: ExitStatus, stopped: bool) -> Status {
     if stopped {
         return Status::Stopped;
     }
@@ -1223,7 +1555,7 @@ fn status_of(status: ExitStatus, stopped: bool) -> Status {
 }
 
 /// The tracked files that differ from HEAD in a checkout.
-fn changed(checkout: &Path) -> BTreeSet<String> {
+pub fn changed(checkout: &Path) -> BTreeSet<String> {
     let output =
         Command::new("git").arg("-C").arg(checkout).args(["status", "--porcelain", "--untracked-files=no"]).output();
     let Ok(output) = output else { return BTreeSet::new() };
@@ -1232,20 +1564,20 @@ fn changed(checkout: &Path) -> BTreeSet<String> {
 
 /// Local paths written as a record keeps them: the checkout as `{repo}`,
 /// the home folder as `~`.
-struct Scrub {
+pub struct Scrub {
     checkout: String,
     home: Option<String>,
 }
 
 impl Scrub {
-    fn new(checkout: &Path) -> Scrub {
+    pub fn new(checkout: &Path) -> Scrub {
         Scrub {
             checkout: checkout.to_string_lossy().into_owned(),
             home: dirs::home_dir().map(|home| home.to_string_lossy().into_owned()),
         }
     }
 
-    fn text(&self, text: &str) -> String {
+    pub fn text(&self, text: &str) -> String {
         let mut text = text.replace(&self.checkout, "{repo}");
         if let Some(home) = &self.home {
             text = text.replace(home.as_str(), "~");
@@ -1353,7 +1685,133 @@ mod tests {
         name = "stubborn"
         category = "build"
         command = "trap '' TERM; sleep 30"
+        [[job]]
+        name = "too-slow"
+        category = "build"
+        command = "sleep 30"
+        timeout = "1s"
     "#;
+
+    const LITTLE: &str = r#"
+        [[batch]]
+        name = "little"
+        category = "build"
+        command = "echo {model} {budget} > {out}/said.txt; test {model} != slow || sleep 30"
+        threads = 1
+        [batch.axes]
+        model = ["a", "slow"]
+        budget = [1, 2]
+        [[job]]
+        name = "after"
+        category = "build"
+        command = "true"
+    "#;
+
+    /// A batch in the window's queue (SPEC.md, §6b, R3): the cells chosen, its
+    /// timeout, its grid; the queue goes on after it; a second time, a cell done
+    /// is skipped.
+    #[test]
+    fn a_batch_in_the_queue_runs_its_cells_chosen_then_the_rest() {
+        let places = places("queue-batch");
+        let catalogue = Arc::new(jobs(LITTLE));
+        let chosen = |cells: &[(&str, &str)]| -> Vec<BTreeMap<String, String>> {
+            cells
+                .iter()
+                .map(|(model, budget)| {
+                    [("model".to_string(), model.to_string()), ("budget".to_string(), budget.to_string())].into()
+                })
+                .collect()
+        };
+        let target = home(&places);
+        let queue_it = |cells: Vec<BTreeMap<String, String>>, after: bool| {
+            let catalogue = catalogue.clone();
+            let target = target.clone();
+            move |queue: &mut Shared| {
+                let batch = catalogue.batch("little").unwrap();
+                let choice = BatchChoice {
+                    catalogue: catalogue.clone(),
+                    cells: cells.clone(),
+                    timeout: Some(crate::catalogue::Timeout { seconds: 1.0 }),
+                    again: false,
+                };
+                let key = queue.add_batch(batch, choice);
+                queue.items.iter_mut().find(|item| item.key == key).unwrap().target = target.clone();
+                if after {
+                    queue.add(catalogue.job("after").unwrap().clone(), target.clone());
+                }
+            }
+        };
+        let shared = run_with(&places, queue_it(chosen(&[("slow", "1"), ("a", "2")]), true));
+        let queue = shared.lock().unwrap();
+        let states: Vec<&ItemState> = queue.items.iter().map(|item| &item.state).collect();
+        assert!(
+            matches!(states[0], ItemState::Done { status: Status::Failed { .. }, .. }),
+            "a cell timed out: {states:?}"
+        );
+        assert!(matches!(states[1], ItemState::Done { status: Status::Ok, .. }), "the queue went on: {states:?}");
+        let grid = queue.grid.clone().unwrap();
+        assert!(grid.ended);
+        assert_eq!(grid.cells.len(), 2);
+        assert!(matches!(grid.cells[0].state, LiveState::Ended { status: Status::Ok }), "{:?}", grid.cells);
+        assert!(matches!(grid.cells[1].state, LiveState::Ended { status: Status::TimedOut }), "{:?}", grid.cells);
+        drop(queue);
+        let runs = crate::store::History::read(&places.runs()).unwrap().runs;
+        let little: Vec<&Run> = runs.iter().filter(|run| run.job == "little").collect();
+        assert_eq!(little.len(), 2);
+        assert!(little.iter().all(|run| run.comment == "a test" && run.timeout_seconds == Some(1.0)));
+        assert_eq!(runs.iter().filter(|run| run.job == "after").count(), 1);
+        // Again, the cell done: skipped, nothing recorded, the item ok.
+        let shared = run_with(&places, queue_it(chosen(&[("a", "2")]), false));
+        let queue = shared.lock().unwrap();
+        assert!(matches!(queue.items[0].state, ItemState::Done { status: Status::Ok, .. }));
+        assert!(matches!(queue.grid.as_ref().unwrap().cells[0].state, LiveState::Skipped));
+        drop(queue);
+        assert_eq!(crate::store::History::read(&places.runs()).unwrap().runs.len(), 3);
+    }
+
+    /// A queue filled by `fill`, then run to its end.
+    fn run_with(places: &Places, fill: impl Fn(&mut Shared)) -> Arc<Mutex<Shared>> {
+        let shared = Arc::new(Mutex::new(Shared::default()));
+        {
+            let mut queue = shared.lock().unwrap();
+            fill(&mut queue);
+            queue.start(QueueSettings {
+                id: "test".to_string(),
+                comment: "a test".to_string(),
+                threads: 3,
+                grace_seconds: 1,
+                on_failure: Some(Policy::Continue),
+                ..QueueSettings::default()
+            });
+        }
+        let mut runner = new_runner(&shared, places);
+        let begun = Instant::now();
+        loop {
+            runner.step();
+            if shared.lock().unwrap().mode != Mode::Running && runner.running.is_none() {
+                break;
+            }
+            assert!(begun.elapsed() < Duration::from_secs(30), "the queue took too long");
+            std::thread::sleep(Duration::from_millis(20));
+        }
+        shared
+    }
+
+    /// A job past its timeout is ended and recorded `TimedOut`; the queue goes on.
+    #[test]
+    fn a_job_past_its_timeout_is_timed_out() {
+        let places = places("timeout");
+        let catalogue = jobs(JOBS);
+        run(&places, &catalogue, &["too-slow", "also-fine"], |_| {});
+        let runs = History::read(&places.runs()).unwrap().runs;
+        assert_eq!(runs[0].status, Status::TimedOut);
+        assert_eq!(runs[0].timeout_seconds, Some(1.0));
+        assert!(runs[0].seconds.unwrap() < 5.0, "{:?}", runs[0].seconds);
+        assert_eq!(runs[1].status, Status::Ok);
+        assert_eq!(runs[1].timeout_seconds, None, "a [[job]] has no timeout unless it sets one");
+        assert!(runs[1].tools.contains_key("rustc"), "{:?}", runs[1].tools);
+        assert!(runs[1].cell.is_none());
+    }
 
     #[test]
     fn a_queue_records_each_run() {

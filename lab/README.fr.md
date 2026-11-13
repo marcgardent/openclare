@@ -47,6 +47,11 @@ montrent toutes les exécutions, où qu'elles aient tourné. Il tourne sous Linu
   avec `wait = true` sous `[calm]` dans les réglages elle attend une machine calme, et « Start anyway »
   la lance. Une référence que le miroir ne connaît pas tourne sur `main`, avec un avertissement : lab
   avertit, il n'empêche jamais un Run.
+- **Batches** : la grille d'un batch, une ligne par valeur de son premier axe, une colonne par
+  combinaison des autres ; chaque case son état en cours ou sa dernière fiche (`ok 41 s`, `failed`,
+  `timed out`, `—` jamais lancée), son estimation au survol, sa fiche et la fin de son journal une fois
+  cliquée. On choisit des cases (une à une, ou celles en échec, jamais lancées, toutes) et on met le
+  batch en file réduit à elles, avec un délai pour ce lancement.
 - **History** : toutes les exécutions notées par lab et tous les résultats que les résumés du dépôt
   contiennent, triables et filtrées ; le détail d'une exécution ; son commentaire et son papier
   modifiables ; les exécutions affichées copiées en Markdown (avec la ligne de matériel) ou en CSV ; une
@@ -107,6 +112,45 @@ nombre de threads, `--push` pousse la mémoire de cette machine vers sa branche 
 que soit le réglage. Ctrl-C arrête l'exécution et la note arrêtée. `lab fetch` crée ou récupère le miroir
 et lit les mémoires des autres machines ; `lab push` récupère puis pousse la mémoire de cette machine ;
 `lab status` dit où en sont le miroir, les checkouts, les machines, la file et l'historique.
+
+## Batches
+
+Un `[[batch]]` de `jobs.toml` est une grille de jobs, un calcul chacun (SPEC.md, §6b) :
+
+```sh
+lab run pole-pairs-115-remesh
+lab run pole-pairs-115-remesh --axis model=ogre --axis budget=3000 --timeout 1h
+```
+
+lance chaque case de la grille, `réglage / threads` jobs à la fois, chacun avec son journal, son dossier
+(`{out}`), son délai (30 minutes sauf si le batch en donne un) et son verdict de calme, chacun noté à
+sa fin ; un job en échec ou en dépassement est une case en échec et le batch continue. Il écrit une
+ligne par job qui commence et qui finit, puis les comptes, et sort avec 0 quand tous les jobs sont ok.
+`--axis` garde certaines valeurs d'un axe (toute référence pour `ref`), `--timeout` remplace le délai
+de chaque job pour ce lancement. La fenêtre liste les batches dans son catalogue mais ne les met pas
+encore en file.
+
+Un batch qui a besoin (`needs`) d'une `[[dependency]]` (le moteur d'un commit, la source d'une scène) la
+fait faire une fois par clé, avant ses jobs, et la garde dans `~/.openclare-lab/cache/<nom>/<clé>/` ;
+les lancements suivants, de ce batch ou d'un autre, l'y trouvent. La clé lit la commande de la
+dépendance, les objets git des chemins de `key` et les versions de ses `tools` : deux commits aux mêmes
+sources du moteur partagent un moteur. Rien ne vide le cache tout seul : retirer le dossier à la main.
+
+Un job déjà fait (même commande, commit, outils et dépendances, fini ok) est sauté, dit `done
+before` ; `--again` le relance quand même. La ligne d'un job qui commence donne son estimation, la
+médiane des temps passés de sa case. Dans la fenêtre, un batch est un élément de la file (une séquence
+peut nommer des batches), ses lignes dans `logs/<lancement>.log`, ses cases dans l'écran Batches à
+mesure qu'elles commencent et finissent.
+
+```sh
+lab report pole-pairs-115-remesh
+```
+
+écrit la dernière fiche de chaque case du batch dans `~/.openclare-lab/reports/<batch>/<heure>/records.json`
+et lance le `report` du batch dessus, qui lit les fichiers laissés par les jobs et affiche le tableau :
+refait en quelques secondes, rien n'est relancé. `bench/before_after.py` est le rapport des comparaisons
+(#115 : main contre 12a6675, moyennes sur les cases ok des deux côtés). L'écran Batches a un bouton
+Report.
 
 ## Tests
 

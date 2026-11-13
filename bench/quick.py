@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 """A quick look at what a change does: one run of the add-on per model, several at a time.
 
-    python3 bench/quick.py [--models camera,wolf] [--target 3000] [--jobs 4]
+    python3 bench/quick.py [--models camera,wolf] [--target 3000] [--jobs 4] [--out DIR]
 
 For each model, what the bench has stored for `openclare` and what the engine
 as it is built now gives: faces, validity, Hausdorff and mean distance (per
 mille of the diagonal), seconds, and the quads added for thin pieces. Nothing
 stored is touched: this is for the work in hand, in a couple of minutes, where
 the bench proper (bench/run.py) runs every tool at every budget and takes an
-hour. Its files go to bench/out/quick.
+hour. Its files go to bench/out/quick, one folder per model (`--out` elsewhere:
+the folder of a job, when it is run as a batch of lab, one job per model).
 """
 
 import argparse
 import json
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 from run import DEFAULT_TARGET, MODELS, OUTPUT, RESULTS, TOOLS, available_models, measure
 
@@ -31,6 +33,8 @@ def main():
     parser.add_argument("--models", default=",".join(available_models()))
     parser.add_argument("--target", type=int, default=DEFAULT_TARGET)
     parser.add_argument("--jobs", type=int, default=4, help="runs at a time; each may take a few gigabytes")
+    parser.add_argument("--out", type=Path, default=OUTPUT / "quick",
+                        help="where the meshes go, one folder per model (default bench/out/quick)")
     options = parser.parse_args()
     wanted = options.models.split(",")
     suffix = "" if options.target == DEFAULT_TARGET else f"-{options.target}"
@@ -39,7 +43,7 @@ def main():
 
     def one(entry):
         model, _, sharp, boundary = entry
-        directory = OUTPUT / "quick" / model
+        directory = options.out / model
         directory.mkdir(parents=True, exist_ok=True)
         path, seconds, failure, _, engine = TOOLS["openclare"](model, sharp, boundary, options.target, [1], directory)[1]
         before = (stored.get(model, {}).get("openclare") or [{}])[0]

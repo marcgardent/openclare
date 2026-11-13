@@ -5,12 +5,14 @@ hand-made mesh's 10,590 quads, preset organic, with closing, without it, and
 with the lean bound 0.05 alone; the hand-made mesh measured the same way.
 
     python3 docs/research/closing-loops/experiments/male_body.py \
-        [--openclare target/release/openclare] [--commit <hash>] [--source <male body .obj>]
+        [--openclare target/release/openclare] [--commit <hash>] [--source <male body .obj>] [--runs closing,lean_005]
 
 The source is the body as the bench gives it to every remesher
 (bench/out/human_male/source.obj; see figures/README.md for how to make it).
 The meshes are written under --out as no_closing.obj and closing.obj, the
-names figures/make_figures.sh reuses (WORK=<that directory>).
+names figures/make_figures.sh reuses (WORK=<that directory>). `--runs` makes
+only those runs (closing, no_closing, lean_005), one job each when lab runs
+them as a batch; a run whose record is under --out is read back, not made again.
 """
 
 import argparse
@@ -39,13 +41,21 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     common.options(parser, "male_body")
     parser.add_argument("--source", type=Path, help="the male body (default <sources>/human_male/source.obj)")
+    parser.add_argument("--runs", help="only these runs, as closing,lean_005 (default: the three)")
     arguments = parser.parse_args()
+    names = [name for name, *_ in RUNS]
+    wanted = arguments.runs.split(",") if arguments.runs else names
+    unknown = [name for name in wanted if name not in names]
+    if unknown:
+        parser.error(f"--runs {','.join(unknown)}: the runs are {', '.join(names)}")
     common.use(arguments)
     source = (arguments.source or common.source("human_male")).resolve()
 
     started, clock = common.machine(), time.monotonic()
     meshes = {}
     for name, label, flags, environment in RUNS:
+        if name not in wanted:
+            continue
         mesh, record = arguments.out / f"{name}.obj", arguments.out / f"{name}.json"
         if record.exists():
             meshes[name] = json.loads(record.read_text())

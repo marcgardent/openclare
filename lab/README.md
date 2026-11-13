@@ -44,6 +44,11 @@ wherever it ran. It runs on Linux (it reads /proc); `nvidia-smi`, if present, gi
   once like the others, and its time does not count when the machine was not calm; with `wait = true`
   under `[calm]` in the settings it waits for a calm machine, and "Start anyway" starts it. A reference
   the mirror does not know runs on `main`, with a warning: lab warns, it never holds a Run back.
+- **Batches**: the grid of a batch, one row per value of its first axis, one column per combination of
+  the others; each cell its state under way or its last record (`ok 41 s`, `failed`, `timed out`, `—`
+  never run), its estimate on hover, its record and the end of its log once clicked. Cells are selected
+  (one by one, or the failed ones, those never run, all) and the batch is queued restricted to them,
+  with a timeout for that launch.
 - **History**: every run lab recorded and every result the repository's summaries hold, sortable and
   filtered; the detail of a run; its comment and paper edited; the runs shown copied as Markdown (with
   the hardware line) or CSV; a past run typed by hand; the history of every machine copied into the
@@ -99,6 +104,42 @@ machine to its branch after the run, whatever the setting. Ctrl-C stops the run 
 `lab fetch` creates or fetches the mirror and reads the other machines' memories; `lab push` fetches,
 then pushes this machine's memory; `lab status` says where the mirror, the checkouts, the machines, the
 queue and the history stand.
+
+## Batches
+
+A `[[batch]]` of `jobs.toml` is a grid of jobs, one computation each (SPEC.md, §6b):
+
+```sh
+lab run pole-pairs-115-remesh
+lab run pole-pairs-115-remesh --axis model=ogre --axis budget=3000 --timeout 1h
+```
+
+runs every cell of the grid, `setting / threads` jobs at a time, each with its own log, folder
+(`{out}`), timeout (30 minutes unless the batch sets one) and calm verdict, each recorded as it ends; a
+failed or timed-out job is a failed cell and the batch goes on. It prints one line per job that starts
+and ends, then the counts, and exits 0 when every job is ok. `--axis` keeps some values of an axis (any
+reference for `ref`), `--timeout` replaces each job's for this launch. The window lists the batches in
+its catalogue but does not queue them yet.
+
+A batch that `needs` a `[[dependency]]` (the engine of a commit, the source of a scene) has it made once
+per key, before its jobs, and kept in `~/.openclare-lab/cache/<name>/<key>/`; the next launches, of
+this batch or another, find it there. The key reads the dependency's command, the git objects of its
+`key` paths and the versions of its `tools`, so two commits with the same engine sources share one
+engine. Nothing empties the cache on its own: remove the folder by hand.
+
+A job already done (same command, commit, tools and dependencies, ended ok) is skipped, said `done
+before`; `--again` runs it anyway. The line of a job that starts gives its estimate, the median of its
+cell's past times. In the window, a batch is one item of the queue (a sequence may name batches), its
+lines in `logs/<launch>.log`, its cells in the Batches screen as they start and end.
+
+```sh
+lab report pole-pairs-115-remesh
+```
+
+writes the last record of each cell of the batch to `~/.openclare-lab/reports/<batch>/<time>/records.json`
+and runs the batch's `report` on it, which reads the files the jobs left and prints the table: computed
+again in seconds, nothing run again. `bench/before_after.py` is the report of the comparisons (#115:
+main against 12a6675, means over the cells ok on both sides). The Batches screen has a Report button.
 
 ## Tests
 

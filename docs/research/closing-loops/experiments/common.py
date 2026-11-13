@@ -92,6 +92,40 @@ def options(parser, group):
     parser.add_argument("--summary", type=Path, default=RESULTS / f"{group}.json", help="the summary written")
 
 
+def listed(text):
+    """The values of an option given as `a,b` (or as several words): the
+    words, in order, empty ones left out."""
+    return [word for part in (text if isinstance(text, list) else [text]) for word in part.split(",") if word]
+
+
+def budgets_option(parser, default=BUDGETS):
+    """`--budgets 2900,3000` (or `2900 3000`): the budgets run, by default those
+    of the protocol."""
+    parser.add_argument("--budgets", nargs="+", default=None,
+                        help="only these budgets, as 2900,3000 (default: the 21 of the protocol)")
+    parser.set_defaults(budgets_default=default)
+
+
+def budgets(arguments):
+    """The budgets of `budgets_option`."""
+    if arguments.budgets is None:
+        return list(arguments.budgets_default)
+    return [int(word) for word in listed(arguments.budgets)]
+
+
+def models(text, known=None):
+    """The models of `--models a,b` among `known` (default the twelve), in
+    the order of `known`: [(model, preset)]."""
+    known = TWELVE if known is None else known
+    if text is None:
+        return list(known)
+    asked = listed(text)
+    unknown = [name for name in asked if name not in dict(known)]
+    if unknown:
+        raise SystemExit(f"unknown model {', '.join(unknown)}: {', '.join(name for name, _ in known)}")
+    return [(name, preset) for name, preset in known if name in asked]
+
+
 def use(arguments):
     """Takes the engine and the sources given on the command line."""
     global OPENCLARE, SOURCES
@@ -113,11 +147,17 @@ def commit():
 
 def engine_version():
     """What tells the binary apart: the start of its SHA-256."""
+    if VERSIONS.get(OPENCLARE):
+        return VERSIONS[OPENCLARE]
     digest = hashlib.sha256()
     with open(OPENCLARE, "rb") as data:
         for block in iter(lambda: data.read(1 << 20), b""):
             digest.update(block)
-    return "sha256:" + digest.hexdigest()[:16]
+    VERSIONS[OPENCLARE] = "sha256:" + digest.hexdigest()[:16]
+    return VERSIONS[OPENCLARE]
+
+
+VERSIONS = {}
 
 
 def machine():
@@ -258,7 +298,8 @@ def run_one(name, model, preset, quads, directory, flags=(), environment=None, m
     load = round(os.getloadavg()[0], 2)
     seconds, failure = remesh(source(model), mesh, preset, quads, flags, environment, memory)
     row = {"model": model, "preset": preset, "quads": quads, "flags": list(flags), "environment": environment or {},
-           "seconds": round(seconds, 2), "load_average": load, "failure": failure, "metrics": None}
+           "seconds": round(seconds, 2), "load_average": load, "failure": failure, "metrics": None,
+           "build": engine_version()}
     if failure is None:
         row["metrics"] = measure(source(model), mesh, quads, memory)
     write_json(record, row)
@@ -285,8 +326,14 @@ def header(arguments, started, finished_load, seconds, rows=()):
     """What the summary says of how it was made. `seconds` is the wall time
     of this call of the script (short if its runs were read back); the sum of
     the times of the runs themselves is kept with them."""
+    # The runs read back may have been made by another binary (a run of
+    # lab's batch, merged): the builds they say made them.
+    builds = sorted({row["build"] for row in rows if row.get("build")})
+    if builds and builds != [engine_version()]:
+        print(f"warning: runs made by {', '.join(builds)}, the summary's engine is {engine_version()}", flush=True)
     return {
-        "engine": {"binary": "openclare", "commit": arguments.commit, "build": engine_version()},
+        "engine": {"binary": "openclare", "commit": arguments.commit, "build": engine_version(),
+                   "builds_of_the_runs": builds},
         "machine": {**started, "load_average_at_end": finished_load},
         "wall_seconds": round(seconds, 1),
         "run_seconds_total": round(sum(row.get("seconds") or 0 for row in rows), 1),

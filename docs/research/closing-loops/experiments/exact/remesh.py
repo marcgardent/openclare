@@ -25,6 +25,9 @@ quads they make (ways round, shifted). The variants:
 - `whole-<way>` and `engine-<way>`: that way alone (`OPENCLARE_CLOSE_WAYS`),
   with the exact whole lengths of most_closable.py --whole
   (`way-<way>-integer.txt`, `OPENCLARE_LENGTHS`) or with the engine's;
+  `whole` asks both for every way that has its file, `whole-<way>` and
+  `engine-<way>` one run each (one cell of lab's batch, README "Run as lab
+  batches");
 - `rings`: the lengths of lattice_rounding.py (`call-<name>.txt`);
 - `local-search`: the lengths of local_search.py.
 
@@ -40,6 +43,7 @@ results/remesh.json.
 import argparse
 import json
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -84,6 +88,15 @@ def variants(arguments):
                 alone = {**base, "OPENCLARE_CLOSE_WAYS": way}
                 out.append((f"engine-{way}", alone))
                 out.append((f"whole-{way}", {**alone, "OPENCLARE_LENGTHS": str(arguments.most_closable.resolve())}))
+        elif re.fullmatch(r"engine-[0-9]+", name):
+            out.append((name, {**base, "OPENCLARE_CLOSE_WAYS": name[len("engine-"):]}))
+        elif re.fullmatch(r"whole-[0-9]+", name):
+            way = name[len("whole-"):]
+            if list(arguments.most_closable.glob(f"call-*/way-{way}-integer.txt")):
+                out.append((name, {**base, "OPENCLARE_CLOSE_WAYS": way,
+                                   "OPENCLARE_LENGTHS": str(arguments.most_closable.resolve())}))
+            else:
+                skipped[name] = f"no call-<name>/way-{way}-integer.txt in {arguments.most_closable}"
         elif name in ("rings", "local-search"):
             folder = arguments.lattice_rounding if name == "rings" else arguments.local_search
             if list(folder.glob("call-*.txt")):
@@ -91,7 +104,7 @@ def variants(arguments):
             else:
                 skipped[name] = f"no call-<name>.txt in {folder}"
         else:
-            raise SystemExit(f"unknown variant {name}: {VARIANTS}")
+            raise SystemExit(f"unknown variant {name}: {VARIANTS}, engine-<way> or whole-<way>")
     return out, skipped
 
 

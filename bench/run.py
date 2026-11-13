@@ -3,12 +3,20 @@
 
     python3 bench/run.py [--models a,b] [--tools a,b] [--target N] [--seeds 1,2,3]
     python3 bench/run.py --source MODEL
+    python3 bench/run.py --prepare [--models a,b]
+    python3 bench/run.py --merge RECORDS [--target N] [--results DIR]
 
 A model is a scene, a .blend that holds the object to remesh and the settings
 of the add-on (bench/scenes; see bench/make_scene.py). `openclare` runs on it
 through the add-on, in Blender; the other tools are given the same object as
 the add-on sees it, exported as an OBJ. `--source` prints where that OBJ is,
-after making it if need be.
+after making it if need be; `--prepare` makes the scenes and those OBJ files
+of every model and runs nothing.
+
+The bench is also run as a batch of lab, one job per model and tool, each
+writing its results to a folder of its own (`--results`); `--merge` puts
+the results of those jobs together, from the records lab writes for the
+report of the batch (see bench/README.md).
 
 Remeshers whose results are not to be published can be run too, on this
 machine only: see `UNPUBLISHED` below.
@@ -19,6 +27,8 @@ bench/results/.
 """
 
 import argparse
+import contextlib
+import fcntl
 import json
 import os
 import resource
@@ -251,6 +261,20 @@ def failure_of(done, otherwise):
     return otherwise
 
 
+@contextlib.contextmanager
+def exclusive(path):
+    """Holds a lock on the file `path` (made if need be) while the block
+    runs: the processes of the bench that run side by side, the jobs of a
+    batch, make a scene or a source one at a time."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(lock, fcntl.LOCK_UN)
+
+
 def scene_path(model):
     """The scene of a model: the .blend the bench runs it from."""
     return (LOCAL / "scenes" if model in LOCAL_MODELS else SCENES) / f"{model}.blend"
@@ -279,12 +303,20 @@ def source_path(model):
     """The model as the add-on sees it, modifiers applied, in triangles: the
     OBJ every result is measured against, and what the tools that do not
     read a scene are given. Exported from the scene into bench/out, and
-    again when the scene is newer."""
+    again when the scene is newer. Jobs of a batch should find it made by
+    the batch's prepare (`--prepare`); if not, the first one makes it and
+    the others wait for it, instead of writing it at the same time."""
     path, scene = OUTPUT / model / "source.obj", scene_path(model)
-    if not path.exists() or path.stat().st_mtime < scene.stat().st_mtime:
-        said = in_blender(model, path.parent, "--no-remesh")
-        if said["status"] != "ok":
-            sys.exit(f"{model}: {said['message']}")
+
+    def stale():
+        return not path.exists() or path.stat().st_mtime < scene.stat().st_mtime
+
+    if stale():
+        with exclusive(path.parent / "source.lock"):
+            if stale():
+                said = in_blender(model, path.parent, "--no-remesh")
+                if said["status"] != "ok":
+                    sys.exit(f"{model}: {said['message']}")
     return path
 
 
@@ -303,19 +335,25 @@ def available_models():
 
 def ensure_corpus(models):
     """Makes the scenes that are missing, and the OBJ files they are made
-    from if those are missing too."""
-    missing = [model for model in models if not scene_path(model).exists() and model not in AUTHORED]
-    plain = [model for model in missing if model not in LOCAL_MODELS]
-    if plain:
-        CORPUS.mkdir(exist_ok=True)
-        for model in plain:
-            if model in PRIMITIVES and not obj_path(model).exists():
-                run([OPENCLARE, "primitive", model, obj_path(model)])
-        if any(not obj_path(model).exists() for model in plain):
-            run(["blender", "-b", "--factory-startup", "--python", BENCH / "make_corpus.py", "--", CORPUS])
-    if missing:
-        run(["blender", "-b", "--factory-startup", "--python", BENCH / "make_scenes.py", "--",
-             "--models", ",".join(missing)])
+    from if those are missing too. One process at a time makes them."""
+
+    def absent():
+        return [model for model in models if not scene_path(model).exists() and model not in AUTHORED]
+
+    if absent():
+        with exclusive(OUTPUT / "corpus.lock"):
+            missing = absent()
+            plain = [model for model in missing if model not in LOCAL_MODELS]
+            if plain:
+                CORPUS.mkdir(exist_ok=True)
+                for model in plain:
+                    if model in PRIMITIVES and not obj_path(model).exists():
+                        run([OPENCLARE, "primitive", model, obj_path(model)])
+                if any(not obj_path(model).exists() for model in plain):
+                    run(["blender", "-b", "--factory-startup", "--python", BENCH / "make_corpus.py", "--", CORPUS])
+            if missing:
+                run(["blender", "-b", "--factory-startup", "--python", BENCH / "make_scenes.py", "--",
+                     "--models", ",".join(missing)])
     missing = [model for model in models if not scene_path(model).exists()]
     if missing:
         sys.exit(f"missing scenes of the corpus: {', '.join(missing)}")
@@ -796,6 +834,96 @@ def report(results, target, seeds, tools):
     return "\n".join(lines)
 
 
+def suffix_of(target):
+    """What the files of a budget are named with: nothing for the default
+    one, `-<budget>` for the others."""
+    return "" if target == DEFAULT_TARGET else f"-{target}"
+
+
+def write_results(directory, raw, kept, shown, target, seeds):
+    """The runs of `raw` of the tools `kept` into the data file of
+    `directory`, and the report of the tools `shown` next to it. Every tool
+    that has results is reported, in the order they are declared; where a
+    tool has none for a model, its column says so."""
+    suffix = suffix_of(target)
+    runs = {model: {t: by_tool[t] for t in kept if t in by_tool} for model, by_tool in raw.items()}
+    reported = [t for t in shown if any(t in by_tool for by_tool in raw.values())]
+    results = {model: {t: summarize(raw[model].get(t, [])) for t in reported} for model in raw}
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / f"results{suffix}.json").write_text(
+        json.dumps({"target": target, "seeds": seeds, "runs": runs, "summary": results}, indent=1))
+    report_path = directory / f"RESULTS{suffix}.md"
+    report_path.write_text(report(results, target, seeds, reported))
+    print(f"\nwritten: {report_path}")
+
+
+def merge(records_path, directory, target):
+    """Puts together the results of the jobs of a batch of lab, one job per
+    model and tool, each run with `--results <its folder>`: from the records
+    lab writes for the batch's report, the runs of each job done are taken
+    from `results{-T}.json` in its folder, and they replace those of the same
+    model and tool in the results of `directory` (those of bench/results if
+    `directory` has none yet). The jobs not done are listed, and what was
+    stored of them is left as it was. Then the data file and the report are
+    written again, as a run of the bench would have."""
+    suffix = suffix_of(target)
+    records = json.loads(Path(records_path).read_text())
+    by_budget = "target" in records.get("axes", [])
+    taken, left, seeds = [], [], set()
+    fresh = {}
+    for entry in records["cells"]:
+        values = entry.get("values", {})
+        if by_budget and str(values.get("target")) != str(target):
+            continue
+        label = ", ".join(f"{axis} {value}" for axis, value in values.items())
+        job = Path(entry["out"]) / f"results{suffix}.json" if entry.get("out") else None
+        if entry.get("status") != "ok":
+            left.append(f"{label}: {entry.get('status') or 'not run'}")
+            continue
+        if job is None or not job.exists():
+            left.append(f"{label}: no results{suffix}.json in its folder")
+            continue
+        done = json.loads(job.read_text())
+        if done.get("target") != target:
+            left.append(f"{label}: results of {done.get('target')} quads, not {target}")
+            continue
+        seeds.add(tuple(done["seeds"]))
+        for model, by_tool in done["runs"].items():
+            for tool, runs in by_tool.items():
+                fresh.setdefault(model, {})[tool] = runs
+        taken.append(label)
+    if len(seeds) > 1:
+        sys.exit(f"the jobs were run with different seeds: {sorted(seeds)}")
+
+    base = directory / f"results{suffix}.json"
+    if not base.exists():
+        base = RESULTS / f"results{suffix}.json"
+    stored = json.loads(base.read_text()) if base.exists() else {"seeds": None, "runs": {}}
+    seeds = list(seeds.pop()) if seeds else stored["seeds"]
+    if stored["runs"] and stored["seeds"] != seeds:
+        # A run of the bench would drop what was stored: the merge does not.
+        sys.exit(f"{kept_as(base)} was run with the seeds {stored['seeds']}, the jobs with {seeds}: "
+                 "merge them into an empty folder (--results) instead")
+    raw = stored["runs"]
+    for model, by_tool in fresh.items():
+        raw.setdefault(model, {}).update(by_tool)
+    print(f"{len(taken)} jobs merged from {kept_as(records_path)} into the results of {kept_as(base)}")
+    if left:
+        print(f"{len(left)} not, their stored runs left as they were:")
+        for line in left:
+            print(f"  {line}")
+    write_results(directory, raw, list(TOOLS), list(TOOLS), target, seeds)
+    # As a full run does, the local report again, with the runs of the
+    # local challengers, if there are any: for bench/results only.
+    local = UNPUBLISHED_RESULTS / f"results{suffix}.json"
+    if directory.resolve() == RESULTS.resolve() and local.exists():
+        kept = json.loads(local.read_text())
+        if kept.get("seeds") == seeds:
+            for model, by_tool in kept["runs"].items():
+                raw.setdefault(model, {}).update(by_tool)
+            write_results(UNPUBLISHED_RESULTS, raw, list(CHALLENGERS), [*TOOLS, *CHALLENGERS], target, seeds)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--models", default=",".join(available_models()))
@@ -805,12 +933,20 @@ def main():
     parser.add_argument("--results", type=Path, default=RESULTS,
                         help="where to write the results (default bench/results), for a trial run kept apart")
     parser.add_argument("--source", metavar="MODEL", help="print where the OBJ of that model is, and run nothing")
+    parser.add_argument("--prepare", action="store_true",
+                        help="make the scenes and the OBJ files of the models, and run nothing: the prepare of a batch")
+    parser.add_argument("--merge", metavar="RECORDS", type=Path,
+                        help="run nothing: put together the results of the jobs of a batch of lab (the records.json "
+                             "of its report) into those of --results, for the budget --target")
     parser.add_argument(
         "--remeasure",
         action="store_true",
         help="run no remesher: measure again the meshes the results of this budget were made of, where they are kept",
     )
     options = parser.parse_args()
+    if options.merge:
+        merge(options.merge, options.results, options.target)
+        return
     if options.source:
         if options.source not in [name for name, *_ in MODELS]:
             sys.exit(f"unknown model '{options.source}'")
@@ -826,6 +962,10 @@ def main():
     if not any((ROOT / "blender" / "openclare" / "lib").glob("*openclare_capi*")):
         sys.exit("build the add-on first: make addon")
     ensure_corpus(models)
+    if options.prepare:
+        for model in models:
+            print(source_path(model), flush=True)
+        return
     options.results.mkdir(parents=True, exist_ok=True)
 
     every = {**TOOLS, **CHALLENGERS}
@@ -835,8 +975,12 @@ def main():
 
     # One pair of files per budget; a partial run (some models, some tools)
     # updates them in place instead of discarding what was measured before.
-    # The runs of the local challengers are kept apart, in local/results.
-    suffix = "" if options.target == DEFAULT_TARGET else f"-{options.target}"
+    # The runs of the local challengers are kept apart, in local/results,
+    # read and written only by a run with a challenger among its tools: the
+    # jobs of a batch, run side by side with a folder of results each, write
+    # no file in common.
+    suffix = suffix_of(options.target)
+    challenged = any(tool in CHALLENGERS for tool in tools)
 
     def stored(directory):
         path = directory / f"results{suffix}.json"
@@ -847,7 +991,7 @@ def main():
         return {}
 
     raw = stored(options.results)
-    for model, by_tool in stored(UNPUBLISHED_RESULTS).items():
+    for model, by_tool in (stored(UNPUBLISHED_RESULTS) if challenged else {}).items():
         raw.setdefault(model, {}).update(by_tool)
 
     if options.remeasure:
@@ -880,24 +1024,9 @@ def main():
                   f"patches {cell(summary, 'base_complex_patches', '{:.0f}'):>6}  "
                   f"alignment {cell(summary, 'alignment', '{:.2f}'):>6}", flush=True)
 
-    def write(directory, kept, shown):
-        """The runs of the tools `kept` into the data file of `directory`,
-        and the report of the tools `shown` next to it. Every tool that has
-        results is reported, in the order they are declared; where a tool
-        has none for a model, its column says so."""
-        runs = {model: {t: by_tool[t] for t in kept if t in by_tool} for model, by_tool in raw.items()}
-        reported = [t for t in shown if any(t in by_tool for by_tool in raw.values())]
-        results = {model: {t: summarize(raw[model].get(t, [])) for t in reported} for model in raw}
-        directory.mkdir(parents=True, exist_ok=True)
-        (directory / f"results{suffix}.json").write_text(
-            json.dumps({"target": options.target, "seeds": seeds, "runs": runs, "summary": results}, indent=1))
-        report_path = directory / f"RESULTS{suffix}.md"
-        report_path.write_text(report(results, options.target, seeds, reported))
-        print(f"\nwritten: {report_path}")
-
-    write(options.results, list(TOOLS), list(TOOLS))
-    if any(tool in by_tool for tool in CHALLENGERS for by_tool in raw.values()):
-        write(UNPUBLISHED_RESULTS, list(CHALLENGERS), list(every))
+    write_results(options.results, raw, list(TOOLS), list(TOOLS), options.target, seeds)
+    if challenged and any(tool in by_tool for tool in CHALLENGERS for by_tool in raw.values()):
+        write_results(UNPUBLISHED_RESULTS, raw, list(CHALLENGERS), list(every), options.target, seeds)
 
 
 if __name__ == "__main__":

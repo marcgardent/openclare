@@ -1,6 +1,7 @@
 //! The window (SPEC.md, section 11): a top bar and four tabs. The queue
 //! screen is in `queue.rs`; the runner it drives, in `runner.rs`.
 
+mod batches;
 mod history;
 mod machine;
 mod queue;
@@ -67,6 +68,7 @@ const RELOAD: Duration = Duration::from_secs(2);
 pub enum Tab {
     State,
     Queue,
+    Batches,
     History,
     Catalogue,
     Machine,
@@ -172,6 +174,8 @@ pub struct App {
     clean_dialog: bool,
     /// Where to write a picture of the window, then close it.
     screenshot: Option<Screenshot>,
+    /// Batches tab (R3): the batch chosen, its cells selected.
+    batches: batches::BatchView,
 }
 
 /// The log shown beside the queue: the run under way's, else the last one's.
@@ -191,6 +195,8 @@ pub struct Opening {
     pub queue: Vec<String>,
     /// The run selected in the history.
     pub run: Option<String>,
+    /// The batch whose grid the Batches screen shows.
+    pub batch: Option<String>,
     pub screenshot: Option<std::path::PathBuf>,
     /// Seconds before the picture is taken.
     pub after: f64,
@@ -214,6 +220,7 @@ impl Tab {
         match name {
             "state" => Some(Tab::State),
             "queue" => Some(Tab::Queue),
+            "batches" => Some(Tab::Batches),
             "history" => Some(Tab::History),
             "catalogue" => Some(Tab::Catalogue),
             "machine" => Some(Tab::Machine),
@@ -300,6 +307,7 @@ impl App {
             copy_target,
             checkout_sizes: Arc::new(Mutex::new(None)),
             clean_dialog: false,
+            batches: batches::BatchView::showing(opening.batch.clone()),
             screenshot: opening.screenshot.map(|path| Screenshot {
                 path,
                 at: Instant::now() + Duration::from_secs_f64(opening.after.max(0.0)),
@@ -443,7 +451,13 @@ impl App {
         self.catalogue
             .as_ref()
             .map(|catalogue| {
-                catalogue.jobs.iter().filter(|job| job.timing_matters).map(|job| job.name.clone()).collect()
+                catalogue
+                    .jobs
+                    .iter()
+                    .chain(catalogue.batches.iter().map(|batch| &batch.job))
+                    .filter(|job| job.timing_matters)
+                    .map(|job| job.name.clone())
+                    .collect()
             })
             .unwrap_or_default()
     }
@@ -496,6 +510,7 @@ impl eframe::App for App {
             match self.tab {
                 Tab::State => self.state_tab(ui),
                 Tab::Queue => self.queue_tab(ui),
+                Tab::Batches => self.batches_tab(ui),
                 Tab::History => self.history_tab(ui),
                 Tab::Catalogue => self.catalogue_tab(ui),
                 Tab::Machine => self.machine_tab(ui),
@@ -738,6 +753,7 @@ impl App {
         ui.horizontal(|ui| {
             ui.selectable_value(&mut self.tab, Tab::State, "State");
             ui.selectable_value(&mut self.tab, Tab::Queue, "Queue");
+            ui.selectable_value(&mut self.tab, Tab::Batches, "Batches");
             ui.selectable_value(&mut self.tab, Tab::History, "History");
             ui.selectable_value(&mut self.tab, Tab::Catalogue, "Catalogue");
             ui.selectable_value(&mut self.tab, Tab::Machine, "Machine");
@@ -793,6 +809,41 @@ impl App {
                             }
                             stopwatch(ui, job.timing_matters);
                         });
+                    }
+                }
+                if !catalogue.batches.is_empty() {
+                    ui.add_space(8.0);
+                    ui.label(RichText::new("BATCHES").small().strong().color(MUTED));
+                    for batch in &catalogue.batches {
+                        let axes: Vec<String> =
+                            batch.axes.iter().map(|axis| format!("{} ({})", axis.name, axis.values.len())).collect();
+                        let jobs: usize = batch.axes.iter().map(|axis| axis.values.len()).product();
+                        ui.horizontal(|ui| {
+                            ui.label(&batch.job.name).on_hover_text(format!(
+                                "{}\n\n{jobs} jobs: {}.\nIts grid is in the Batches screen; `lab run {}` without a window.",
+                                batch.job.description,
+                                axes.join(" × "),
+                                batch.job.name
+                            ));
+                            stopwatch(ui, batch.job.timing_matters);
+                        });
+                    }
+                }
+                if !catalogue.dependencies.is_empty() {
+                    ui.add_space(8.0);
+                    ui.label(RichText::new("DEPENDENCIES").small().strong().color(MUTED));
+                    for dependency in &catalogue.dependencies {
+                        ui.label(&dependency.job.name).on_hover_text(format!(
+                            "{}\n\nMade once per key in the cache, {} kept: the key reads {}{}.",
+                            dependency.job.description,
+                            dependency.provides,
+                            dependency.key.join(", "),
+                            if dependency.tools.is_empty() {
+                                String::new()
+                            } else {
+                                format!(" and the versions of {}", dependency.tools.join(", "))
+                            }
+                        ));
                     }
                 }
                 ui.add_space(8.0);

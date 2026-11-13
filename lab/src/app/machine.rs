@@ -43,7 +43,7 @@ impl App {
         let (points, heaviest, verdict, group) = {
             let watch = lock(&self.watch);
             let points: Vec<Point> = watch.points.iter().cloned().collect();
-            (points, watch.heaviest.clone(), watch.verdict(&self.settings.calm), watch.group)
+            (points, watch.heaviest.clone(), watch.verdict(&self.settings.calm), !watch.groups.is_empty())
         };
         let Some(last) = points.last().cloned() else {
             ui.add_space(20.0);
@@ -119,7 +119,7 @@ impl App {
                 Calmness::Measuring => MUTED,
             };
             ui.colored_label(colour, &verdict.text);
-            if group.is_some() {
+            if group {
                 ui.label(RichText::new("a run of ours is under way: load1 is not looked at").color(MUTED));
             }
             ui.add_space(8.0);

@@ -15,6 +15,27 @@
 # prepare of a job runs once per checkout (SPEC.md, section 7.3).
 # memory_limit_gb: the cap of `ulimit -v`, per process.
 # timing_matters: the job waits for a calm machine; its time may go into a paper.
+# timeout: the job is ended past it ("90s", "30m", "2h"); none for a [[job]]
+# unless it sets one.
+#
+# [[batch]] (SPEC.md, section 6b): a grid of jobs, one computation each, timed
+# and recorded by lab one by one. Every field of a [[job]], plus [batch.axes]:
+# each axis a placeholder with its values, the last axis varying fastest; a
+# value may be a table, { value = "cage", preset = "hard-surface" }, whose
+# other keys override the batch's parameters for that cell. The axis `ref` is
+# the reference each cell runs on. {out} is the job's own empty folder, every
+# file in it recorded. The prepare runs once per checkout, before any job,
+# with the whole thread setting. The jobs run `setting / threads` at a time;
+# timeout 30 minutes when the batch sets none. Run with `lab run <batch>`.
+#
+# [[dependency]] (SPEC.md, section 6b, R2): a job made once per key and kept in
+# <lab>/cache/<name>/<key>/, shared by every batch that `needs` it: {<name>}
+# in the batch's command is the file it `provides` there. The key: its command,
+# the git objects under the paths of `key` (placeholders of the cell allowed),
+# the versions of its `tools`. No prepare: its command does it all.
+# report (R4): the command that makes a batch's table from its records, `lab
+# report <batch>`: {records} the file of each cell's last record, {out} its
+# folder; it computes nothing again.
 # summary: the JSON that records a run of the job in the repository (`#key` for a
 # record nested in it); lab reads it at every opening (SPEC.md, section 13).
 #
@@ -54,35 +75,46 @@ memory_limit_gb = 32
 
 # ---------------------------------------------------------------- benches
 
-[[job]]
+[[batch]]
 name = "quick-bench"
-description = "One run of the add-on per model next to what the bench stored (bench/quick.py): a couple of minutes. One engine thread per run, {threads} runs at a time."
+description = "One run of the add-on per model next to what the bench stored (bench/quick.py), one job per model at one engine thread; its comparison in the job's log. The prepare builds the engine and the add-on and exports the sources."
 category = "quick-bench"
-command = "python3 bench/quick.py --models {models} --target {target} --jobs {threads}"
-prepare = "cargo build --release && make addon"
-parameters = { models = "creature,blob,suzanne,spot", target = "3000" }
+prepare = "cargo build --release && make addon && python3 bench/run.py --prepare --models creature,blob,suzanne,spot"
+command = "python3 bench/quick.py --models {model} --target {target} --jobs 1 --out {out}"
+parameters = { target = "3000" }
 environment = { OPENCLARE_THREADS = "1", RAYON_NUM_THREADS = "1" }
+threads = 1
 memory_limit_gb = 32
+axes = { model = ["creature", "blob", "suzanne", "spot"] }
 
-[[job]]
+[[batch]]
 name = "bench"
 summary = "bench/results/results.json"
-description = "Every remesher on every model at one budget (bench/run.py), the comparison against the other remeshers included; about an hour (bench/quick.py), about 3 hours a full night (Marc). The threads it uses are to be checked (SPEC.md, Q8)."
+description = "Every remesher on every model of the checkout at one budget (bench/run.py), one job per model and tool; the seeds and the retries of a tool stay in its job. The tools use the whole machine and their times are compared: one job at a time. The prepare builds the engine and the add-on and makes every scene and source. instant-meshes-jakob and quadwild-bimdf need their programs (OPENCLARE_INSTANT_MESHES_JAKOB, OPENCLARE_QUADWILD_BIMDF), else they say not found; handmade and the local challengers run apart. The report merges the jobs into results{-T}.json and its Markdown, in its folder: to bench/results by PR."
 category = "bench"
-command = "python3 bench/run.py --target {target} {options}"
-prepare = "cargo build --release && make addon"
+prepare = "cargo build --release && make addon && python3 bench/run.py --prepare"
+command = "python3 bench/run.py --models {model} --tools {tool} --target {target} --results {out} {options}"
+report = "python3 bench/run.py --merge {records} --target {target} --results {out}"
 parameters = { target = "3000", options = "" }
 memory_limit_gb = 32
+timeout = "1h"
 timing_matters = true
-outputs = ["bench/results/*.json", "bench/results/*.md"]
 paper = "A"
 
-[[job]]
+[batch.axes]
+model = ["blob", "rock", "creature", "cage", "suzanne", "ogre", "spot", "bob", "blub", "pig", "jerry", "rose", "bridge",
+         "part", "cube", "lblock", "cylinder", "venturi", "ogre_hp", "watermill", "towermill", "stonemill", "windmill", "sphere", "torus"]
+tool = ["quadriflow", "autoremesher", "instant-meshes-jakob", "quadwild-bimdf", "instant-meshes", "integer-grid", "openclare-uniform", "openclare"]
+
+[[batch]]
 name = "remeasure"
-description = "Measure again the meshes of the results at the three budgets, without remeshing (make remeasure)."
+description = "Measure again the meshes of the results, without remeshing, one job per budget (bench/run.py --remeasure): its results file copied into the job's folder and measured there, to bench/results by PR. It measures the meshes in bench/out of the checkout: run it where the bench ran."
 category = "bench"
-command = "make remeasure"
-outputs = ["bench/results/*.json", "bench/results/*.md"]
+command = "cp bench/results/results{suffix}.json {out}/ && python3 bench/run.py --remeasure --target {target} --results {out}"
+parameters = { suffix = "" }
+threads = 1
+skip_done = false
+axes = { target = [{ value = "3000", suffix = "" }, { value = "1000", suffix = "-1000" }, { value = "8000", suffix = "-8000" }] }
 
 [[job]]
 name = "scores"
@@ -103,41 +135,53 @@ command = "make proofs NOTE=turns-of-a-t-mesh"
 memory_limit_gb = 32
 paper = "B"
 
-[[job]]
+[[batch]]
 name = "lean-oracle-seed-1"
 summary = "docs/research/turns-of-a-t-mesh/experiments/property/results/seed-1.json"
-description = "T-meshes made without the engine, checked by the Lean oracle Check/Main.lean (experiments/property/README.md): about 3 s an instance."
+description = "T-meshes made without the engine, checked by the Lean oracle Check/Main.lean (experiments/property/README.md): about 3 s an instance. The prepare builds the proofs and generates the instances once per checkout; one job checks one instance (check_exports.py --index), the axis index running from 0 to count - 1: change both together."
 category = "lean-oracle"
-command = "export PATH=\"$HOME/.elan/bin:$PATH\"; python3 docs/research/turns-of-a-t-mesh/experiments/property/generate.py --count {count} --seed {seed} && python3 docs/research/turns-of-a-t-mesh/lean/Check/check_exports.py scratch/data-package/property/seed-{seed} scratch/data-package/property/seed-{seed}/lean-check --jobs {threads}"
-prepare = "make proofs NOTE=turns-of-a-t-mesh"
+prepare = "make proofs NOTE=turns-of-a-t-mesh && rm -rf scratch/data-package/property/seed-{seed} && python3 docs/research/turns-of-a-t-mesh/experiments/property/generate.py --count {count} --seed {seed}"
+command = "export PATH=\"$HOME/.elan/bin:$PATH\"; python3 docs/research/turns-of-a-t-mesh/lean/Check/check_exports.py scratch/data-package/property/seed-{seed} {out}/lean-check --index {index} --jobs 1"
 parameters = { count = "50", seed = "1" }
+threads = 1
 memory_limit_gb = 32
 timing_matters = true
-outputs = ["scratch/data-package/property/seed-*/summary.json"]
 paper = "B"
 
-[[job]]
+[batch.axes]
+index = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49]
+
+[[batch]]
 name = "lean-oracle-doubles"
-description = "The doubles of the surfaces with borders through the Lean oracle (PR #271, merged into main); about 18 hours of one core in all (memory note)."
+description = "The doubles of the surfaces with borders through the Lean oracle (PR #271, merged into main); about 18 hours of one core in all (memory note), the instances from 2 to 184 patches. The prepare builds the proofs and generates the instances once per checkout (14 s for 50); one job checks one instance (check_exports.py --index), the axis index running from 0 to count - 1: change both together. The timeout of 4 h is a guess, to tune on the times of the first run."
 category = "lean-oracle"
-command = "export PATH=\"$HOME/.elan/bin:$PATH\"; python3 docs/research/turns-of-a-t-mesh/experiments/property/generate.py --count {count} --seed {seed} --borders && python3 docs/research/turns-of-a-t-mesh/lean/Check/check_exports.py scratch/data-package/property/double-seed-{seed} scratch/data-package/property/double-seed-{seed}/lean-check --jobs {threads}"
-prepare = "make proofs NOTE=turns-of-a-t-mesh"
+prepare = "make proofs NOTE=turns-of-a-t-mesh && rm -rf scratch/data-package/property/double-seed-{seed} && python3 docs/research/turns-of-a-t-mesh/experiments/property/generate.py --count {count} --seed {seed} --borders"
+command = "export PATH=\"$HOME/.elan/bin:$PATH\"; python3 docs/research/turns-of-a-t-mesh/lean/Check/check_exports.py scratch/data-package/property/double-seed-{seed} {out}/lean-check --index {index} --jobs 1"
 parameters = { count = "50", seed = "1" }
+threads = 1
 memory_limit_gb = 32
+timeout = "4h"
 timing_matters = true
-outputs = ["scratch/data-package/property/double-seed-*/summary.json"]
 paper = "B"
 
-[[job]]
+[batch.axes]
+index = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49]
+
+[[batch]]
 name = "lean-check-export"
-description = "The T-mesh of the Lean proofs against the engine's export of the male body (make lean-check; NIGHT.md stage 2): about 15 minutes with 3 jobs."
+description = "The T-mesh of the Lean proofs against the engine's export of the male body (NIGHT.md stage 2, make lean-check): one job per way file (check_exports.py --index), about 5 minutes each. The prepare builds the proofs. It runs twice in paper-B-data, before and after certify, whose certificates it reads: skip_done = false."
 category = "lean-oracle"
-command = "make lean-check EXPORT={export}/export JOBS={threads}"
+prepare = "make proofs NOTE=turns-of-a-t-mesh"
+command = "export PATH=\"$HOME/.elan/bin:$PATH\"; python3 docs/research/turns-of-a-t-mesh/lean/Check/check_exports.py {export}/export {out}/lean-check --index {index} --jobs 1"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
+threads = 1
 memory_limit_gb = 32
+timeout = "1h"
 timing_matters = true
+skip_done = false
 paper = "B"
 tags = ["paper-B-data"]
+axes = { index = [0, 1, 2, 3, 4, 5, 6, 7] }
 
 # ---------------------------------------------------------------- paper B, the turns of a T-mesh
 # docs/research/turns-of-a-t-mesh/experiments/NIGHT.md, in its order. HiGHS on
@@ -175,20 +219,23 @@ outputs = ["docs/research/turns-of-a-t-mesh/experiments/results/census.json"]
 paper = "B"
 tags = ["paper-B-data", "stage-3"]
 
-[[job]]
+[[batch]]
 name = "lattice"
 summary = "docs/research/turns-of-a-t-mesh/experiments/results/lattice.json"
-description = "Stage 3 of NIGHT.md: the lattice of whole lengths, a way stopped at 600 s."
+description = "Stage 3 of NIGHT.md: the lattice of whole lengths, one job per way stopped at 600 s (way 7 420 s, way 5 50 s, the others under a second in results/lattice.json). The report merges the ways into lattice.json."
 category = "experiment"
-command = "python3 docs/research/turns-of-a-t-mesh/experiments/lattice.py {export} --seconds 600"
+command = "python3 docs/research/turns-of-a-t-mesh/experiments/lattice.py {export} --ways {way} --seconds 600 --out {out} --summary {out}/lattice.json"
+report = "python3 docs/research/turns-of-a-t-mesh/experiments/merge.py {records} --file lattice.json --mode concat --out {out}"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
 environment = { HIGHS_THREADS = "1" }
 threads = 1
 memory_limit_gb = 16
+timeout = "1h"
 timing_matters = true
-outputs = ["docs/research/turns-of-a-t-mesh/experiments/results/lattice.json"]
+skip_done = false
 paper = "B"
 tags = ["paper-B-data", "stage-3"]
+axes = { way = [0, 1, 2, 3, 4, 5, 6, 7] }
 
 [[job]]
 name = "conflicts"
@@ -250,34 +297,47 @@ outputs = ["docs/research/turns-of-a-t-mesh/experiments/results/fox.json"]
 paper = "B"
 tags = ["paper-B-data", "stage-3"]
 
-[[job]]
+[[batch]]
 name = "forced-bounds"
 summary = "docs/research/turns-of-a-t-mesh/experiments/results/forced-bounds.json"
-description = "Stage 3 of NIGHT.md: Table tab:forced, column bounds; about 2 minutes says NIGHT.md, 2,501 s in results/forced-bounds.json."
+description = "Stage 3 of NIGHT.md: Table tab:forced, column bounds (ways 5 and 7 near 1,200 s each, the others under 20 s, in results/forced-bounds.json). One job per family (8 held, the strips of way 2), bounds then cap then size, each step reading the one before; the report merges them into forced-bounds.json."
 category = "experiment"
-command = "python3 docs/research/turns-of-a-t-mesh/experiments/forced.py {export} --steps bounds --summary docs/research/turns-of-a-t-mesh/experiments/results/forced-bounds.json"
-parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
+command = "python3 docs/research/turns-of-a-t-mesh/experiments/forced.py {export} --ways {way} --families {families} --steps bounds --out {out} --summary {out}/forced-bounds.json"
+report = "python3 docs/research/turns-of-a-t-mesh/experiments/merge.py {records} --file forced-bounds.json --mode concat --out {out}"
+parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body", way = "0", families = "held" }
 environment = { HIGHS_THREADS = "1" }
 threads = 1
 memory_limit_gb = 16
+timeout = "2h"
 timing_matters = true
-outputs = ["docs/research/turns-of-a-t-mesh/experiments/results/forced-bounds.json"]
+skip_done = false
 paper = "B"
 tags = ["paper-B-data", "stage-3"]
 
-[[job]]
+[batch.axes]
+family = [{ value = "0-held", way = 0 }, { value = "1-held", way = 1 }, { value = "2-held", way = 2 }, { value = "2-strips", way = 2, families = "strips" },
+          { value = "3-held", way = 3 }, { value = "4-held", way = 4 }, { value = "5-held", way = 5 }, { value = "6-held", way = 6 }, { value = "7-held", way = 7 }]
+
+[[batch]]
 name = "forced-whole-lower"
 summary = "docs/research/turns-of-a-t-mesh/experiments/results/forced.json"
-description = "Stage 4 of NIGHT.md: Table tab:forced with the cap, the window and whole lengths; 1 to 4 hours, {threads} families at a time."
+description = "Stage 4 of NIGHT.md: Table tab:forced with the cap, the window and whole lengths, a family from 17 s to 5,800 s. One job per family (8 held, the strips of way 2), bounds then cap then size, each step reading the one before; the report merges them into forced.json."
 category = "experiment"
-command = "python3 docs/research/turns-of-a-t-mesh/experiments/forced.py {export} --whole-lower --seconds 900 --budget 1800 --jobs {threads}"
-parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
+command = "python3 docs/research/turns-of-a-t-mesh/experiments/forced.py {export} --ways {way} --families {families} --whole-lower --seconds 900 --budget 1800 --out {out} --summary {out}/forced.json"
+report = "python3 docs/research/turns-of-a-t-mesh/experiments/merge.py {records} --file forced.json --mode concat --out {out}"
+parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body", way = "0", families = "held" }
 environment = { HIGHS_THREADS = "1" }
+threads = 1
 memory_limit_gb = 16
+timeout = "4h"
 timing_matters = true
-outputs = ["docs/research/turns-of-a-t-mesh/experiments/results/forced.json"]
+skip_done = false
 paper = "B"
 tags = ["paper-B-data", "stage-4"]
+
+[batch.axes]
+family = [{ value = "0-held", way = 0 }, { value = "1-held", way = 1 }, { value = "2-held", way = 2 }, { value = "2-strips", way = 2, families = "strips" },
+          { value = "3-held", way = 3 }, { value = "4-held", way = 4 }, { value = "5-held", way = 5 }, { value = "6-held", way = 6 }, { value = "7-held", way = 7 }]
 
 [[job]]
 name = "forced-sound"
@@ -294,108 +354,143 @@ outputs = ["docs/research/turns-of-a-t-mesh/experiments/results/forced-sound.jso
 paper = "B"
 tags = ["paper-B-data", "stage-4"]
 
-[[job]]
+[[batch]]
 name = "forced-valid-bounds"
 summary = "docs/research/turns-of-a-t-mesh/experiments/results/forced-valid-bounds.json"
-description = "Table tab:forced, column chains of P_valid (#211): every chain between singular vertices of length one or more in place of the engine's bounds; over an hour for each of ways 5 and 7 on one thread."
+description = "Table tab:forced, column chains of P_valid (#211): every chain between singular vertices of length one or more in place of the engine's bounds; ways 5 and 7 over an hour each. One job per family (8 held, the strips of way 2), bounds then cap then size, each step reading the one before; the report merges them into forced-valid-bounds.json."
 category = "experiment"
-command = "python3 docs/research/turns-of-a-t-mesh/experiments/forced.py {export} --steps bounds --valid --out scratch/data-package/turns-of-a-t-mesh/forced-valid --summary docs/research/turns-of-a-t-mesh/experiments/results/forced-valid-bounds.json"
-parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
+command = "python3 docs/research/turns-of-a-t-mesh/experiments/forced.py {export} --ways {way} --families {families} --steps bounds --valid --out scratch/data-package/turns-of-a-t-mesh/forced-valid --summary {out}/forced-valid-bounds.json"
+report = "python3 docs/research/turns-of-a-t-mesh/experiments/merge.py {records} --file forced-valid-bounds.json --mode concat --out {out}"
+parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body", way = "0", families = "held" }
 environment = { HIGHS_THREADS = "1" }
 threads = 1
 memory_limit_gb = 16
+timeout = "4h"
 timing_matters = false
-outputs = ["docs/research/turns-of-a-t-mesh/experiments/results/forced-valid-bounds.json"]
+skip_done = false
 paper = "B"
 tags = ["paper-B-data", "stage-4"]
 
-[[job]]
+[batch.axes]
+family = [{ value = "0-held", way = 0 }, { value = "1-held", way = 1 }, { value = "2-held", way = 2 }, { value = "2-strips", way = 2, families = "strips" },
+          { value = "3-held", way = 3 }, { value = "4-held", way = 4 }, { value = "5-held", way = 5 }, { value = "6-held", way = 6 }, { value = "7-held", way = 7 }]
+
+[[batch]]
 name = "forced-valid"
 summary = "docs/research/turns-of-a-t-mesh/experiments/results/forced-valid.json"
-description = "Table tab:forced, P_valid with the cap, the window and whole lengths (#211), every family (ways 5 and 7 missing from the table); hours, {threads} families at a time. Writes the whole lengths found for forced-valid-remesh."
+description = "Table tab:forced, P_valid with the cap, the window and whole lengths (#211), every family (ways 5 and 7 missing from the table); a family up to 80 minutes. Its --out stays in scratch: forced-valid-remesh reads the whole lengths found there. One job per family (8 held, the strips of way 2), bounds then cap then size, each step reading the one before; the report merges them into forced-valid.json."
 category = "experiment"
-command = "python3 docs/research/turns-of-a-t-mesh/experiments/forced.py {export} --valid --whole-lower --seconds 900 --budget 1800 --jobs {threads} --out scratch/data-package/turns-of-a-t-mesh/forced-valid --summary docs/research/turns-of-a-t-mesh/experiments/results/forced-valid.json"
-parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
+command = "python3 docs/research/turns-of-a-t-mesh/experiments/forced.py {export} --ways {way} --families {families} --valid --whole-lower --seconds 900 --budget 1800 --out scratch/data-package/turns-of-a-t-mesh/forced-valid --summary {out}/forced-valid.json"
+report = "python3 docs/research/turns-of-a-t-mesh/experiments/merge.py {records} --file forced-valid.json --mode concat --out {out}"
+parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body", way = "0", families = "held" }
 environment = { HIGHS_THREADS = "1" }
+threads = 1
 memory_limit_gb = 16
+timeout = "4h"
 timing_matters = false
-outputs = ["docs/research/turns-of-a-t-mesh/experiments/results/forced-valid.json", "scratch/data-package/turns-of-a-t-mesh/forced-valid/*.txt"]
+skip_done = false
+outputs = ["scratch/data-package/turns-of-a-t-mesh/forced-valid/*.txt"]
 paper = "B"
 tags = ["paper-B-data", "stage-4"]
 
-[[job]]
+[batch.axes]
+family = [{ value = "0-held", way = 0 }, { value = "1-held", way = 1 }, { value = "2-held", way = 2 }, { value = "2-strips", way = 2, families = "strips" },
+          { value = "3-held", way = 3 }, { value = "4-held", way = 4 }, { value = "5-held", way = 5 }, { value = "6-held", way = 6 }, { value = "7-held", way = 7 }]
+
+[[batch]]
 name = "forced-valid-remesh"
 summary = "docs/research/closing-loops/experiments/exact/results/remesh-valid.json"
-description = "After forced-valid (#211): the engine meshes the male body way by way with the whole lengths P_valid found within the cap and the window (remesh.py, variant whole); valid says whether they are a sound quad mesh, which P_valid only bounds. The whole machine, a few minutes a way. The prepare refuses a checkout whose engine is not that of {frozen}."
+description = "After forced-valid (#211): the engine meshes the male body way by way with the whole lengths P_valid found within the cap and the window (remesh.py), one job per way and variant (engine, whole); valid says whether they are a sound quad mesh, which P_valid only bounds. The whole machine, a few minutes a job. Each job first writes the lengths forced-valid left. The prepare refuses a checkout whose engine is not that of {frozen}."
 category = "experiment"
 prepare = "git diff --quiet {frozen} HEAD -- crates Cargo.toml Cargo.lock && cargo build --release"
-command = "D=scratch/data-package/turns-of-a-t-mesh; L=$D/forced-valid/lengths/$(basename $(ls -d $D/male-body/export/call-*/ | head -1)); mkdir -p $L && for f in $D/forced-valid/way-*-held-size.txt; do k=$(basename $f | cut -d- -f2); tail -n +2 $f | tr '\\n' ' ' > $L/way-$k-integer.txt; done && python3 docs/research/closing-loops/experiments/exact/remesh.py --openclare target/release/openclare --commit {frozen} --engine as-is --source scratch/torso/source.obj --variants whole --most-closable $D/forced-valid/lengths --out scratch/data-package/closing-loops/remesh-valid --summary docs/research/closing-loops/experiments/exact/results/remesh-valid.json"
+command = "D=scratch/data-package/turns-of-a-t-mesh; L=$D/forced-valid/lengths/$(basename $(ls -d $D/male-body/export/call-*/ | head -1)); mkdir -p $L && for f in $D/forced-valid/way-*-held-size.txt; do k=$(basename $f | cut -d- -f2); tail -n +2 $f | tr '\\n' ' ' > $L/way-$k-integer.txt; done && python3 docs/research/closing-loops/experiments/exact/remesh.py --openclare target/release/openclare --commit {frozen} --engine as-is --source scratch/torso/source.obj --variants {variant}-{way} --most-closable $D/forced-valid/lengths --out {out} --summary {out}/summary.json"
+report = "python3 docs/research/closing-loops/experiments/collect.py {records} --into scratch/data-package/closing-loops/remesh-valid && python3 docs/research/closing-loops/experiments/exact/remesh.py --openclare target/release/openclare --commit {frozen} --engine as-is --source scratch/torso/source.obj --variants whole --most-closable scratch/data-package/turns-of-a-t-mesh/forced-valid/lengths --out scratch/data-package/closing-loops/remesh-valid --summary {out}/remesh-valid.json"
 checkout = "ask"
 parameters = { frozen = "e13fadb" }
 environment = { HIGHS_THREADS = "1" }
 threads = 8
 memory_limit_gb = 24
+timeout = "1h"
 timing_matters = false
-outputs = ["docs/research/closing-loops/experiments/exact/results/remesh-valid.json"]
+skip_done = false
 paper = "B"
 tags = ["paper-B-data", "stage-4"]
 
-[[job]]
+[batch.axes]
+way = [0, 1, 2, 3, 4, 6]
+variant = ["engine", "whole"]
+
+[[batch]]
 name = "holonomy"
 summary = "docs/research/turns-of-a-t-mesh/experiments/results/holonomy.json"
-description = "Stage 4 of NIGHT.md: the crossing maps, discs and annuli of every turn; about an hour with 4 jobs."
+description = "Stage 4 of NIGHT.md: the crossing maps, discs and annuli of every turn, one job per way (179 to 422 s). The report sums the counts, keeps the extremes and merges the ways into holonomy.json."
 category = "experiment"
-command = "python3 docs/research/turns-of-a-t-mesh/experiments/holonomy.py {export} --jobs {threads}"
+command = "python3 docs/research/turns-of-a-t-mesh/experiments/holonomy.py {export} --ways {way} --jobs 1 --out {out} --summary {out}/holonomy.json"
+report = "python3 docs/research/turns-of-a-t-mesh/experiments/merge.py {records} --file holonomy.json --mode holonomy --out {out}"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
 environment = { HIGHS_THREADS = "1" }
+threads = 1
 memory_limit_gb = 16
+timeout = "1h"
 timing_matters = true
-outputs = ["docs/research/turns-of-a-t-mesh/experiments/results/holonomy.json"]
+skip_done = false
 paper = "B"
 tags = ["paper-B-data", "stage-4"]
+axes = { way = [0, 1, 2, 3, 4, 5, 6, 7] }
 
-[[job]]
+[[batch]]
 name = "strict"
 summary = "docs/research/turns-of-a-t-mesh/experiments/results/strict.json"
-description = "Stage 4 of NIGHT.md: the question read strictly (after conflicts); 30 to 60 minutes."
+description = "Stage 4 of NIGHT.md: the question read strictly (after conflicts), one job per row of the table of conflicts (8 to 73 s each); the axis row follows the size of that table, 41 rows today. The report merges the rows into strict.json."
 category = "experiment"
-command = "python3 docs/research/turns-of-a-t-mesh/experiments/strict.py {export}"
+command = "python3 docs/research/turns-of-a-t-mesh/experiments/strict.py {export} --rows {row} --out {out} --summary {out}/strict.json"
+report = "python3 docs/research/turns-of-a-t-mesh/experiments/merge.py {records} --file strict.json --mode concat --out {out}"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
 environment = { HIGHS_THREADS = "1" }
 threads = 1
 memory_limit_gb = 16
+timeout = "30m"
 timing_matters = true
-outputs = ["docs/research/turns-of-a-t-mesh/experiments/results/strict.json"]
+skip_done = false
 paper = "B"
 tags = ["paper-B-data", "stage-4"]
+axes = { row = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41] }
 
-[[job]]
+[[batch]]
 name = "certify"
 summary = "docs/research/turns-of-a-t-mesh/lean/Check/certificates/male-body.json"
-description = "Stage 4 of NIGHT.md: the certificates of tab:iis for the Lean check, four processes of two ways each (20 to 70 minutes of processor time in all); run lean-check-export after it."
+description = "Stage 4 of NIGHT.md: the certificates of tab:iis for the Lean check, one job per way (20 to 70 minutes of processor time in all, ways 5 and 7 the longest), written into the export where lean-check-export reads them; run lean-check-export after it. The prepare removes the certificates of an earlier layout. The report makes the union of the ways (Check/certificates/male-body.json is that union)."
 category = "experiment"
-command = "for part in \"0 1\" \"2 3\" \"4 5\" \"6 7\"; do set -- $part; mkdir -p {export}/export/certificates/part-$1; python3 docs/research/turns-of-a-t-mesh/lean/Check/certify.py {export}/export/call-*/way-$1.json {export}/export/call-*/way-$2.json --claims scratch/data-package/turns-of-a-t-mesh/conflicts/claims.json --out {export}/export/certificates/part-$1/certificates.json & done; wait"
-parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
-environment = { HIGHS_THREADS = "1" }
-threads = 4
-memory_limit_gb = 16
-timing_matters = true
-paper = "B"
-tags = ["paper-B-data", "stage-4"]
-
-[[job]]
-name = "conjugacy"
-summary = "docs/research/turns-of-a-t-mesh/experiments/results/conjugacy.json"
-description = "Section Conflicts between turns: the homotopies by conjugacy in the free group (after pairs); 626 s under load (experiments/README.md)."
-category = "experiment"
-command = "python3 docs/research/turns-of-a-t-mesh/experiments/conjugacy.py {export}"
+prepare = "rm -rf {export}/export/certificates"
+command = "mkdir -p {export}/export/certificates/way-{way} && python3 docs/research/turns-of-a-t-mesh/lean/Check/certify.py {export}/export/call-*/way-{way}.json --claims scratch/data-package/turns-of-a-t-mesh/conflicts/claims.json --out {export}/export/certificates/way-{way}/certificates.json && cp {export}/export/certificates/way-{way}/certificates.json {out}/"
+report = "python3 docs/research/turns-of-a-t-mesh/experiments/merge.py {records} --file certificates.json --mode certify --out {out}"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
 environment = { HIGHS_THREADS = "1" }
 threads = 1
 memory_limit_gb = 16
+timeout = "2h"
 timing_matters = true
-outputs = ["docs/research/turns-of-a-t-mesh/experiments/results/conjugacy.json"]
+skip_done = false
 paper = "B"
+tags = ["paper-B-data", "stage-4"]
+axes = { way = [0, 1, 2, 3, 4, 5, 6, 7] }
+
+[[batch]]
+name = "conjugacy"
+summary = "docs/research/turns-of-a-t-mesh/experiments/results/conjugacy.json"
+description = "Section Conflicts between turns: the homotopies by conjugacy in the free group (after pairs), one job per way (its rows: 1, 6, 2, 3, 6, 8, 2, 2), one presentation built per way; 626 s in all under load. The report merges the ways into conjugacy.json."
+category = "experiment"
+command = "python3 docs/research/turns-of-a-t-mesh/experiments/conjugacy.py {export} --ways {way} --out {out} --summary {out}/conjugacy.json"
+report = "python3 docs/research/turns-of-a-t-mesh/experiments/merge.py {records} --file conjugacy.json --mode conjugacy --out {out}"
+parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
+environment = { HIGHS_THREADS = "1" }
+threads = 1
+memory_limit_gb = 16
+timeout = "1h"
+timing_matters = true
+skip_done = false
+paper = "B"
+axes = { way = [0, 1, 2, 3, 4, 5, 6, 7] }
 
 [[job]]
 name = "parity"
@@ -427,41 +522,52 @@ paper = "B"
 # ---------------------------------------------------------------- paper A, closing edge loops
 # docs/research/closing-loops/experiments/README.md
 
-[[job]]
+[[batch]]
 name = "twelve-models"
 summary = "docs/research/closing-loops/experiments/results/twelve_models.json"
-description = "Twelve models at three budgets, 36 runs (sec:experiments); one run at a time, the engine on the thread setting."
+description = "Twelve models at the 21 budgets of common.BUDGETS (2900 to 3100 by 10), one job per run (sec:experiments); the engine on the whole machine (the scripts drop OPENCLARE_THREADS), so one job at a time. The report copies the runs back and lets twelve_models.py read them into its summary, nothing remeshed."
 category = "experiment"
-command = "python3 docs/research/closing-loops/experiments/twelve_models.py --jobs 1"
-prepare = "cargo build --release"
+prepare = "cargo build --release && make addon && python3 bench/run.py --prepare --models creature,blob,suzanne,spot,pig,ogre,bob,jerry,blub,rock,cage,part"
+command = "python3 docs/research/closing-loops/experiments/twelve_models.py --openclare target/release/openclare --commit {commit} --models {model} --budgets {budget} --jobs 1 --out {out} --summary {out}/summary.json"
+report = "python3 docs/research/closing-loops/experiments/collect.py {records} --into scratch/data-package/closing-loops/twelve_models && python3 docs/research/closing-loops/experiments/twelve_models.py --openclare target/release/openclare --commit {commit} --jobs 1 --summary {out}/twelve_models.json"
 memory_limit_gb = 32
 timing_matters = true
-outputs = ["docs/research/closing-loops/experiments/results/twelve_models.json"]
 paper = "A"
 
-[[job]]
+[batch.axes]
+model = ["creature", "blob", "suzanne", "spot", "pig", "ogre", "bob", "jerry", "blub", "rock", "cage", "part"]
+budget = [2900, 2910, 2920, 2930, 2940, 2950, 2960, 2970, 2980, 2990, 3000, 3010, 3020, 3030, 3040, 3050, 3060, 3070, 3080, 3090, 3100]
+
+[[batch]]
 name = "ablation"
 summary = "docs/research/closing-loops/experiments/results/ablation.json"
-description = "Table tab:dev as an ablation, 11 lines of 36 runs, checked against the plain runs of twelve-models."
+description = "Table tab:dev as an ablation, 11 lines × 12 models × 21 budgets, one job per run (3 to 5 s each); one at a time, the engine on the whole machine. The report copies the runs back, then ablation.py reads them, compares each line with the one before and checks the engine line against twelve-models' meshes (run twelve-models first)."
 category = "experiment"
-command = "python3 docs/research/closing-loops/experiments/ablation.py --jobs 1 --check scratch/data-package/closing-loops/twelve_models"
-prepare = "cargo build --release"
+prepare = "cargo build --release && make addon && python3 bench/run.py --prepare --models creature,blob,suzanne,spot,pig,ogre,bob,jerry,blub,rock,cage,part"
+command = "python3 docs/research/closing-loops/experiments/ablation.py --openclare target/release/openclare --commit {commit} --lines {line} --models {model} --budgets {budget} --jobs 1 --out {out} --summary {out}/summary.json"
+report = "python3 docs/research/closing-loops/experiments/collect.py {records} --into scratch/data-package/closing-loops/ablation && python3 docs/research/closing-loops/experiments/ablation.py --openclare target/release/openclare --commit {commit} --jobs 1 --check scratch/data-package/closing-loops/twelve_models --summary {out}/ablation.json"
 memory_limit_gb = 32
 timing_matters = true
-outputs = ["docs/research/closing-loops/experiments/results/ablation.json"]
 paper = "A"
 
-[[job]]
+[batch.axes]
+line = ["no_closing", "first_closing", "leaning", "leaning_aimed", "longer", "longer_cap", "cut_rounds", "active_set", "deviation_floor", "fold_guard", "engine"]
+model = ["creature", "blob", "suzanne", "spot", "pig", "ogre", "bob", "jerry", "blub", "rock", "cage", "part"]
+budget = [2900, 2910, 2920, 2930, 2940, 2950, 2960, 2970, 2980, 2990, 3000, 3010, 3020, 3030, 3040, 3050, 3060, 3070, 3080, 3090, 3100]
+
+[[batch]]
 name = "male-body"
 summary = "docs/research/closing-loops/experiments/results/male_body.json"
-description = "The male body at 10,590 quads with and without closing, against the hand-made mesh."
+description = "The male body at 10,590 quads, one job per run: with closing, without it, and with the lean bound 0.05 alone; the whole machine each. The report copies them back, measures the hand-made mesh and writes the summary."
 category = "experiment"
-command = "python3 docs/research/closing-loops/experiments/male_body.py"
 prepare = "cargo build --release"
+command = "python3 docs/research/closing-loops/experiments/male_body.py --openclare target/release/openclare --commit {commit} --runs {run} --out {out} --summary {out}/summary.json"
+report = "python3 docs/research/closing-loops/experiments/collect.py {records} --into scratch/data-package/closing-loops/male_body && python3 docs/research/closing-loops/experiments/male_body.py --openclare target/release/openclare --commit {commit} --summary {out}/male_body.json"
 memory_limit_gb = 32
+timeout = "2h"
 timing_matters = true
-outputs = ["docs/research/closing-loops/experiments/results/male_body.json"]
 paper = "A"
+axes = { run = ["closing", "no_closing", "lean_005"] }
 
 [[job]]
 name = "figures"
@@ -519,25 +625,30 @@ timing_matters = true
 paper = "A"
 tags = ["paper-A-exact"]
 
-[[job]]
+[[batch]]
 name = "most-closable"
 summary = "docs/research/closing-loops/experiments/exact/results/most_closable.json"
-description = "Stage 2 of exact/NIGHT.md: Table tab:exact, 8 ways, {threads} at a time; about 1.5 hours with 4."
+description = "Stage 2 of exact/NIGHT.md: Table tab:exact, one job per way (300 + 600 + 900 s caps, 600 to 1,800 s recorded). The report copies the aimed and whole lengths to scratch/data-package/closing-loops/most_closable, where exact-remesh reads them, and writes the summary."
 category = "experiment"
-command = "python3 docs/research/closing-loops/experiments/exact/most_closable.py {export} --whole 600 --whole-most 900 --jobs {threads}"
+command = "python3 docs/research/closing-loops/experiments/exact/most_closable.py {export} --ways {way} --whole 600 --whole-most 900 --jobs 1 --out {out} --summary {out}/summary.json"
+report = "python3 docs/research/closing-loops/experiments/collect.py {records} --into scratch/data-package/closing-loops/most_closable && python3 docs/research/closing-loops/experiments/exact/most_closable.py {export} --whole 600 --whole-most 900 --jobs 1 --summary {out}/most_closable.json"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
 environment = { HIGHS_THREADS = "1" }
+threads = 1
 memory_limit_gb = 16
+timeout = "1h"
 timing_matters = true
+skip_done = false
 paper = "A"
 tags = ["paper-A-exact"]
+axes = { way = [0, 1, 2, 3, 4, 5, 6, 7] }
 
 [[job]]
 name = "rings"
 summary = "docs/research/closing-loops/experiments/exact/results/rings.json"
-description = "Stage 2 of exact/NIGHT.md, the lane of way 2: rings, their rounding in the lattice, the local search; about 1.5 hours. NIGHT.md runs it beside most-closable; lab runs one job at a time."
+description = "Stage 2 of exact/NIGHT.md, the lane of way 2: the rings, then their rounding in the lattice, which reads the subset the rings chose (one job: the second step reads the first); 15,862 s and 1,231 s recorded. The local search, which reads only the export, is local-search."
 category = "experiment"
-command = "python3 docs/research/closing-loops/experiments/exact/rings.py {export} --subset-seconds 600 --without-zeros 1800 && python3 docs/research/closing-loops/experiments/exact/lattice_rounding.py {export} --seconds 1200 && python3 docs/research/closing-loops/experiments/exact/local_search.py {export} --seconds 1200"
+command = "python3 docs/research/closing-loops/experiments/exact/rings.py {export} --subset-seconds 600 --without-zeros 1800 && python3 docs/research/closing-loops/experiments/exact/lattice_rounding.py {export} --seconds 1200"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
 environment = { HIGHS_THREADS = "1" }
 threads = 1
@@ -547,28 +658,51 @@ paper = "A"
 tags = ["paper-A-exact"]
 
 [[job]]
+name = "local-search"
+summary = "docs/research/closing-loops/experiments/exact/results/local_search.json"
+description = "Stage 2 of exact/NIGHT.md, the lane of way 2: the local search, stopped at 1,200 s; it reads the export only, so it is a job apart from rings."
+category = "experiment"
+command = "python3 docs/research/closing-loops/experiments/exact/local_search.py {export} --seconds 1200"
+parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
+environment = { HIGHS_THREADS = "1" }
+threads = 1
+memory_limit_gb = 16
+timing_matters = true
+paper = "A"
+tags = ["paper-A-exact"]
+
+[[batch]]
 name = "exact-remesh"
 summary = "docs/research/closing-loops/experiments/exact/results/remesh.json"
-description = "Stage 3 of exact/NIGHT.md: Table tab:rounding, the engine's meshes (the whole machine, about 30 minutes). The prepare refuses a checkout whose engine is not that of {frozen}."
+description = "Stage 3 of exact/NIGHT.md: Table tab:rounding, the engine's meshes, one job per variant (59 to 215 s each, the whole machine, one at a time); whole-<k> ends at once when most-closable found no whole lengths for way k. The prepare refuses a checkout whose engine is not that of {frozen}. The report copies the runs back and writes the summary."
 category = "experiment"
-command = "python3 docs/research/closing-loops/experiments/exact/remesh.py --openclare target/release/openclare --commit {frozen} --engine as-is --source scratch/torso/source.obj"
 prepare = "git diff --quiet {frozen} HEAD -- crates Cargo.toml Cargo.lock && cargo build --release"
+command = "python3 docs/research/closing-loops/experiments/exact/remesh.py --openclare target/release/openclare --commit {frozen} --engine as-is --source scratch/torso/source.obj --variants {variant} --out {out} --summary {out}/summary.json"
+report = "python3 docs/research/closing-loops/experiments/collect.py {records} --into scratch/data-package/closing-loops/remesh && python3 docs/research/closing-loops/experiments/exact/remesh.py --openclare target/release/openclare --commit {frozen} --engine as-is --source scratch/torso/source.obj --summary {out}/remesh.json"
 checkout = "ask"
 parameters = { frozen = "e13fadb" }
 environment = { HIGHS_THREADS = "1" }
 threads = 8
 memory_limit_gb = 24
+timeout = "1h"
 timing_matters = true
+skip_done = false
 paper = "A"
 tags = ["paper-A-exact"]
 
-[[job]]
+[batch.axes]
+variant = ["engine", "projection-clamped", "active-set-floor-0", "active-set-floor-half", "aimed", "rings", "local-search",
+           "engine-0", "engine-1", "engine-2", "engine-3", "engine-4", "engine-5", "engine-6", "engine-7",
+           "whole-0", "whole-1", "whole-2", "whole-3", "whole-4", "whole-5", "whole-6", "whole-7"]
+
+[[batch]]
 name = "end-to-end"
 summary = "docs/research/closing-loops/experiments/exact/results/end_to_end.json"
-description = "Stage 4 of exact/NIGHT.md: the slow quality mode, deterministic variants, two runs at a time; 2 to 4 hours."
+description = "Stage 4 of exact/NIGHT.md: the slow quality mode, deterministic variants, one job per variant, model and budget (6 to 36 s each); the whole machine, one at a time. The male body is end-to-end-male-body, whose report writes the summary of all: run this one first, its report copies its runs back."
 category = "experiment"
-command = "python3 docs/research/closing-loops/experiments/exact/end_to_end.py --openclare target/release/openclare --commit {frozen} --variants draws-0,draws-3,engine,slow-draws-0 --jobs 2 --male-body"
-prepare = "git diff --quiet {frozen} HEAD -- crates Cargo.toml Cargo.lock && cargo build --release"
+prepare = "git diff --quiet {frozen} HEAD -- crates Cargo.toml Cargo.lock && cargo build --release && make addon && python3 bench/run.py --prepare --models creature,blob,suzanne,spot,pig,ogre,bob,jerry,blub,rock,cage,part"
+command = "python3 docs/research/closing-loops/experiments/exact/end_to_end.py --openclare target/release/openclare --commit {frozen} --variants {variant} --models {model} --budgets {budget} --jobs 1 --out {out} --summary {out}/summary.json"
+report = "python3 docs/research/closing-loops/experiments/collect.py {records} --into scratch/data-package/closing-loops/end_to_end"
 checkout = "ask"
 parameters = { frozen = "e13fadb" }
 threads = 8
@@ -577,65 +711,167 @@ timing_matters = true
 paper = "A"
 tags = ["paper-A-exact"]
 
-[[job]]
+[batch.axes]
+variant = ["draws-0", "draws-3", "engine", "slow-draws-0"]
+model = ["creature", "blob", "suzanne", "spot", "pig", "ogre", "bob", "jerry", "blub", "rock", "cage", "part"]
+budget = [2900, 2910, 2920, 2930, 2940, 2950, 2960, 2970, 2980, 2990, 3000, 3010, 3020, 3030, 3040, 3050, 3060, 3070, 3080, 3090, 3100]
+
+[[batch]]
 name = "end-to-end-time-5"
 summary = "docs/research/closing-loops/experiments/exact/results/end_to_end-time-5.json"
-description = "Stage 4 of exact/NIGHT.md: the variant limited to 5 s, one run on processors 0 to 3; 1 to 2 hours."
+description = "Stage 4 of exact/NIGHT.md: the variant limited to 5 s, on processors 0 to 3, one job per model and budget, one at a time (threads 8 keeps the pool at one job: two would share the four processors). Its male body is in end-to-end-male-body. The report copies its runs back."
 category = "experiment"
-command = "python3 docs/research/closing-loops/experiments/exact/end_to_end.py --openclare target/release/openclare --commit {frozen} --variants slow-time-5 --jobs 1 --cpus 0-3 --male-body --summary docs/research/closing-loops/experiments/exact/results/end_to_end-time-5.json"
-prepare = "git diff --quiet {frozen} HEAD -- crates Cargo.toml Cargo.lock && cargo build --release"
+prepare = "git diff --quiet {frozen} HEAD -- crates Cargo.toml Cargo.lock && cargo build --release && make addon && python3 bench/run.py --prepare --models creature,blob,suzanne,spot,pig,ogre,bob,jerry,blub,rock,cage,part"
+command = "python3 docs/research/closing-loops/experiments/exact/end_to_end.py --openclare target/release/openclare --commit {frozen} --variants slow-time-5 --models {model} --budgets {budget} --jobs 1 --cpus 0-3 --out {out} --summary {out}/summary.json"
+report = "python3 docs/research/closing-loops/experiments/collect.py {records} --into scratch/data-package/closing-loops/end_to_end"
 checkout = "ask"
 parameters = { frozen = "e13fadb" }
-threads = 4
+threads = 8
 memory_limit_gb = 24
 timing_matters = true
-outputs = ["docs/research/closing-loops/experiments/exact/results/end_to_end-time-5.json"]
 paper = "A"
 tags = ["paper-A-exact"]
 
-[[job]]
+[batch.axes]
+model = ["creature", "blob", "suzanne", "spot", "pig", "ogre", "bob", "jerry", "blub", "rock", "cage", "part"]
+budget = [2900, 2910, 2920, 2930, 2940, 2950, 2960, 2970, 2980, 2990, 3000, 3010, 3020, 3030, 3040, 3050, 3060, 3070, 3080, 3090, 3100]
+
+[[batch]]
 name = "end-to-end-time-300"
 summary = "docs/research/closing-loops/experiments/exact/results/end_to_end-time-300.json"
-description = "Stage 4 of exact/NIGHT.md: the variant limited to 300 s, one run on processors 0 to 3; hours, lowest priority."
+description = "Stage 4 of exact/NIGHT.md: the variant limited to 300 s, on processors 0 to 3, one job per model and budget, one at a time; lowest priority. The report copies the runs back and writes its summary (no male body)."
 category = "experiment"
-command = "python3 docs/research/closing-loops/experiments/exact/end_to_end.py --openclare target/release/openclare --commit {frozen} --variants slow-time-300 --jobs 1 --cpus 0-3 --summary docs/research/closing-loops/experiments/exact/results/end_to_end-time-300.json"
-prepare = "git diff --quiet {frozen} HEAD -- crates Cargo.toml Cargo.lock && cargo build --release"
+prepare = "git diff --quiet {frozen} HEAD -- crates Cargo.toml Cargo.lock && cargo build --release && make addon && python3 bench/run.py --prepare --models creature,blob,suzanne,spot,pig,ogre,bob,jerry,blub,rock,cage,part"
+command = "python3 docs/research/closing-loops/experiments/exact/end_to_end.py --openclare target/release/openclare --commit {frozen} --variants slow-time-300 --models {model} --budgets {budget} --jobs 1 --cpus 0-3 --out {out} --summary {out}/summary.json"
+report = "python3 docs/research/closing-loops/experiments/collect.py {records} --into scratch/data-package/closing-loops/end_to_end && python3 docs/research/closing-loops/experiments/exact/end_to_end.py --openclare target/release/openclare --commit {frozen} --variants slow-time-300 --jobs 1 --cpus 0-3 --summary {out}/end_to_end-time-300.json"
 checkout = "ask"
 parameters = { frozen = "e13fadb" }
-threads = 4
+threads = 8
 memory_limit_gb = 24
+timeout = "1h"
 timing_matters = true
-outputs = ["docs/research/closing-loops/experiments/exact/results/end_to_end-time-300.json"]
 paper = "A"
 tags = ["paper-A-exact"]
+
+[batch.axes]
+model = ["creature", "blob", "suzanne", "spot", "pig", "ogre", "bob", "jerry", "blub", "rock", "cage", "part"]
+budget = [2900, 2910, 2920, 2930, 2940, 2950, 2960, 2970, 2980, 2990, 3000, 3010, 3020, 3030, 3040, 3050, 3060, 3070, 3080, 3090, 3100]
+
+[[batch]]
+name = "end-to-end-male-body"
+description = "Stage 4 of exact/NIGHT.md: the male body of the end-to-end variants, one job per variant (slow-time-5 on processors 0 to 3), after end-to-end and end-to-end-time-5, whose runs their reports copied back: its report writes end_to_end.json and end_to_end-time-5.json from all of them."
+category = "experiment"
+prepare = "git diff --quiet {frozen} HEAD -- crates Cargo.toml Cargo.lock && cargo build --release"
+command = "python3 docs/research/closing-loops/experiments/exact/end_to_end.py --openclare target/release/openclare --commit {frozen} --variants {variant} --models human_male --jobs 1 {cpus} --out {out} --summary {out}/summary.json"
+report = "python3 docs/research/closing-loops/experiments/collect.py {records} --into scratch/data-package/closing-loops/end_to_end && python3 docs/research/closing-loops/experiments/exact/end_to_end.py --openclare target/release/openclare --commit {frozen} --variants draws-0,draws-3,engine,slow-draws-0 --male-body --jobs 1 --summary {out}/end_to_end.json && python3 docs/research/closing-loops/experiments/exact/end_to_end.py --openclare target/release/openclare --commit {frozen} --variants slow-time-5 --male-body --jobs 1 --cpus 0-3 --summary {out}/end_to_end-time-5.json"
+checkout = "ask"
+parameters = { frozen = "e13fadb", cpus = "" }
+threads = 8
+memory_limit_gb = 24
+timeout = "2h"
+timing_matters = true
+paper = "A"
+tags = ["paper-A-exact"]
+axes = { variant = ["draws-0", "draws-3", "engine", "slow-draws-0", { value = "slow-time-5", cpus = "--cpus 0-3" }] }
+
+# ---------------------------------------------------------------- dependencies
+
+[[dependency]]
+name = "engine"
+description = "The engine's command line of a commit, release; shared by the commits whose engine sources are the same."
+category = "build"
+command = "cargo build --release -p openclare-cli && cp target/release/openclare {out}/"
+key = ["crates/openclare", "crates/openclare-cli", "crates/openclare-highs", "crates/openclare-rerun", "Cargo.toml", "Cargo.lock"]
+tools = ["rustc"]
+provides = "openclare"
+
+[[dependency]]
+name = "source"
+description = "A scene of the bench as the add-on sees it, modifiers applied, in triangles (bench/blender_run.py --no-remesh): what a result is measured against. Blender, a few seconds; the engine's library is not loaded."
+category = "quick-bench"
+command = "blender -b --factory-startup bench/scenes/{model}.blend --python-exit-code 1 --python bench/blender_run.py -- --out {out} --no-remesh"
+key = ["bench/scenes/{model}.blend", "bench/blender_run.py", "bench/blender_engine.py", "blender/openclare"]
+tools = ["blender"]
+provides = "source.obj"
+threads = 1
+memory_limit_gb = 32
+timeout = "10m"
 
 # ---------------------------------------------------------------- before and after
 
-[[job]]
+[[batch]]
 name = "three-budgets"
-description = "The twelve models at 2970, 3000 and 3030 quads (bench/budgets.py), one run each: measure's metrics and the valences of each quad mesh, interior and border. {engine} is a commit to build and run (origin/main, a branch), or empty for the engine built in the checkout; results in scratch/budgets/<the engine's commit>.json; the script is on the branch of ticket #279 until it is merged. One engine thread per run, {threads} runs at a time."
+description = "The twelve models at 2970, 3000 and 3030 quads, one job each: the remesh and its measure (measure's metrics in {out}/measure.json, the mesh beside it for the valences), at one engine thread. The references to compare are the axis ref: `lab run three-budgets --axis ref=main,<branch>`, run side by side. The engine of each commit and the sources are dependencies, made once and shared."
 category = "quick-bench"
-command = "python3 bench/budgets.py --engine '{engine}' --budgets {budgets} --models {models} --jobs {threads}"
-prepare = "cargo build --release"
-checkout = "ask"
-parameters = { engine = "origin/main", budgets = "2970,3000,3030", models = "creature,blob,suzanne,spot,pig,ogre,bob,jerry,blub,rock,cage,part" }
-environment = { OPENCLARE_THREADS = "1", RAYON_NUM_THREADS = "1" }
+needs = ["engine", "source"]
+command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {budget} && {engine} measure {source} {out}/mesh.obj --target {budget} --json > {out}/measure.json"
+report = "python3 bench/before_after.py {records} --side ref --by budget --out {out}"
+parameters = { preset = "organic" }
+environment = { HIGHS_THREADS = "1" }
+threads = 1
 memory_limit_gb = 32
 timing_matters = false
-outputs = ["scratch/budgets/*.json"]
 
-[[job]]
-name = "pole-pairs-115"
-description = "Ticket #115 before and after (bench/pole_pairs.py): the T-mesh of the twelve models with and without --no-pairs at {tmesh_budgets} quads; their final meshes at {budgets} on {before} (empty: main) and on 12a6675, the head of claude/pole-pairs-115; the male body's export and conflicts.py on both when its source is there (it is not in git, so not in lab's checkouts). The sources are exported from the scenes by Blender at the first run of a checkout. One engine thread per run, {threads} runs at a time; the seconds are compared, so it waits for a calm machine."
+[batch.axes]
+model = ["creature", "blob", "suzanne", "spot", "pig", "ogre", "bob", "jerry", "blub", "rock",
+         { value = "cage", preset = "hard-surface" }, { value = "part", preset = "hard-surface" }]
+budget = [2970, 3000, 3030]
+ref = ["main"]
+
+[[batch]]
+name = "pole-pairs-115-male-body"
+description = "Ticket #115, the male body: the export on the engine of each side, then conflicts.py on it (one job a side: conflicts reads the export), on main and on 12a6675. Its source is not in git: copy it to {male_body} in lab's checkout first. The whole thread setting for each, one side after the other."
 category = "quick-bench"
-command = "python3 bench/pole_pairs.py --before '{before}' --tmesh-budgets {tmesh_budgets} --budgets {budgets} --jobs {threads}"
-prepare = "cargo build --release && make addon"
-checkout = "12a6675"
-parameters = { before = "", tmesh_budgets = "1000,3000,8000", budgets = "2970,3000,3030" }
-environment = { OPENCLARE_THREADS = "1", RAYON_NUM_THREADS = "1", HIGHS_THREADS = "1" }
+needs = ["engine"]
+command = "python3 docs/research/turns-of-a-t-mesh/experiments/export.py --openclare {engine} --commit {commit} --source {male_body} --out {out}/male-body && python3 docs/research/turns-of-a-t-mesh/experiments/conflicts.py {out}/male-body --out {out}/conflicts --summary {out}/conflicts.json"
+parameters = { male_body = "scratch/torso/source.obj" }
+environment = { HIGHS_THREADS = "1" }
 memory_limit_gb = 32
+timeout = "1h"
+timing_matters = false
+skip_done = false
+axes = { ref = ["main", "12a6675"] }
+
+[[batch]]
+name = "pole-pairs-115-remesh"
+description = "Ticket #115 before and after: the twelve models of bench/budgets.py at 2970, 3000 and 3030 quads, on main and on 12a6675 (the head of claude/pole-pairs-115), interleaved; one job is the remesh and its measure, at one engine thread. The engine of each commit and the sources are dependencies, made once and shared."
+category = "quick-bench"
+needs = ["engine", "source"]
+command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {budget} && {engine} measure {source} {out}/mesh.obj --target {budget} --json > {out}/measure.json"
+report = "python3 bench/before_after.py {records} --side ref --by budget --out {out}"
+parameters = { preset = "organic" }
+environment = { HIGHS_THREADS = "1" }
+threads = 1
+memory_limit_gb = 32
+timeout = "30m"
 timing_matters = true
-outputs = ["scratch/pole-pairs/*.json"]
+
+[batch.axes]
+model = ["creature", "blob", "suzanne", "spot", "pig", "ogre", "bob", "jerry", "blub", "rock",
+         { value = "cage", preset = "hard-surface" }, { value = "part", preset = "hard-surface" }]
+budget = [2970, 3000, 3030]
+ref = ["main", "12a6675"]
+
+[[batch]]
+name = "pole-pairs-115-tmesh"
+description = "Ticket #115, the T-mesh (bench/pole_pairs.py, part tmesh): `openclare tmesh --json` of the twelve models at 1000, 3000 and 8000 quads, the pole pairs joined and with --no-pairs (which only 12a6675, the head of claude/pole-pairs-115, has), one job each at one engine thread: patches, thin patches, short arcs, T-junctions in {out}/tmesh.json."
+category = "quick-bench"
+needs = ["engine", "source"]
+command = "{engine} tmesh {source} --quads {budget} --simplify 2 --json {crease} {pairs_flag} > {out}/tmesh.json"
+report = "python3 bench/before_after.py {records} --side pairs --by budget --file tmesh.json --keys patches,thin_patches,short_arcs,t_junctions,arcs,pole_pairs_joined,valid --sum --out {out}"
+checkout = "12a6675"
+parameters = { crease = "", pairs_flag = "" }
+environment = { HIGHS_THREADS = "1" }
+threads = 1
+memory_limit_gb = 32
+timeout = "30m"
+timing_matters = true
+
+[batch.axes]
+model = ["creature", "blob", "suzanne", "spot", "pig", "ogre", "bob", "jerry", "blub", "rock",
+         { value = "cage", crease = "--crease-angle 30" }, { value = "part", crease = "--crease-angle 30" }]
+budget = [1000, 3000, 8000]
+pairs = [{ value = "joined", pairs_flag = "" }, { value = "no-pairs", pairs_flag = "--no-pairs" }]
 
 # ---------------------------------------------------------------- sequences
 
@@ -647,7 +883,7 @@ jobs = ["export-male-body", "lean-check-export", "census", "lattice", "conflicts
 [[sequence]]
 name = "paper-A-exact"
 description = "docs/research/closing-loops/experiments/exact/NIGHT.md, stages 1 to 4, after paper-B-data's export."
-jobs = ["exact-relaxation", "most-closable", "rings", "exact-remesh", "end-to-end", "end-to-end-time-5", "end-to-end-time-300"]
+jobs = ["exact-relaxation", "most-closable", "rings", "local-search", "exact-remesh", "end-to-end", "end-to-end-time-5", "end-to-end-male-body", "end-to-end-time-300"]
 
 [[sequence]]
 name = "before-merge"

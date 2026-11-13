@@ -8,6 +8,26 @@ machine, qui récupère le dépôt, extrait le commit demandé et y lance la tâ
 dans `~/.openclare-lab`, réunie dans git sur une branche de cette machine (§1, §2, §3, §4, §4 bis, §5,
 §6, §7.3, §8.1, §10 bis, §11, §12, §13, §14, §15, §17).
 
+Amendement R1 du 2026-11-13, **validé par Marc le même jour** : un job est un calcul, chronométré et
+jugé par lab ; un batch est une grille de jobs, déclarée en `[[batch]]` avec des axes et développée
+par lab, qui l'exécute dans un pool, une fiche par job, chaque job coupé à son délai, les versions des
+outils dans chaque fiche ; d'abord sans fenêtre (§1, §3, §5, §6 bis, §14, §15, §17). La grille dans la
+fenêtre, les relances, les dépendances en cache et les rapports sont R2 à R4 (§15). Dans ce qui suit,
+la « tâche » des sections plus anciennes est un job ; l'interface dit « job » et « batch ».
+
+Amendement R2 du 2026-11-13, demandé par Marc le même jour (« finis tes jalons ») : le moteur d'un
+commit et la source d'une scène sont des dépendances, `[[dependency]]`, faites une fois par clé dans
+`<lab>/cache/` et partagées par tous les batches qui en ont besoin (§3, §5, §6 bis, §15, §17).
+
+Amendement R3 du 2026-11-13, demandé le même jour : la fenêtre met un batch en file comme un seul
+élément et une séquence peut nommer des batches ; un écran Batches montre la grille, dont on choisit
+des cases à remettre en file ; un job déjà fait est sauté sauf si on le redemande ; une estimation par
+job (§6 bis, §11, §14, §15).
+
+Amendement R4 du 2026-11-13, demandé le même jour : le `report` d'un batch, un court script qui lit les
+sorties de ses jobs et fait le tableau, relancé en quelques secondes sans rien recalculer (§6 bis,
+§14, §15).
+
 ## 1. Objet
 
 Tout calcul long du projet (bancs, suites de tests, constructions et oracle Lean, expériences des
@@ -21,7 +41,8 @@ une file qui les lance une par une (§8), une estimation de progression tirée d
 moniteur de la machine avec un indicateur « calme » (§9), et une vue d'historique avec export (§11).
 
 Hors champ : lancer d'ici une tâche sur une autre machine (chaque machine fait tourner son lab, et
-leurs fiches se réunissent dans git, §4 bis), lancer deux tâches à la fois, programmer des tâches
+leurs fiches se réunissent dans git, §4 bis), lancer deux éléments de la file à la fois (les jobs d'un
+batch tournent côte à côte dans son pool, §6 bis), programmer des tâches
 récurrentes, lire les résultats d'une exécution (les résumés des scripts restent ce qu'ils sont).
 
 ## 2. Nom et emplacement
@@ -54,6 +75,8 @@ récurrentes, lire les résultats d'une exécution (les résumés des scripts re
 | `lab/runs.jsonl` | oui | l'application, à la demande de Marc (« Copier l'historique dans le dépôt ») | l'instantané publié de l'historique |
 | `<lab>/runs.jsonl` | non | l'application | la mémoire vivante de cette machine, une exécution par ligne |
 | `<lab>/logs/<id>.log` | non | la tâche (sa sortie standard et d'erreur) | le journal de chaque exécution |
+| `<lab>/out/<id>/` | non | le job, par `{out}` | les fichiers d'un job d'un batch (§6 bis) |
+| `<lab>/cache/<dépendance>/<clé>/` | non | le job d'une dépendance | ce qu'une dépendance a fait, partagé par les batches qui en ont besoin (§6 bis, R2) |
 | `<lab>/refused.jsonl` | non | l'application | les fiches qui nomment encore un chemin local (section 4) |
 | `<lab>/state.json` | non | l'application | la file en cours et l'exécution en cours, pour la reprise |
 | `<lab>/settings.toml` | non | l'application | dépôt distant, nom de la machine, politique de push, seuils, alerte de threads, politiques (§12) |
@@ -135,11 +158,18 @@ Les types Rust sont ceux de `SPEC.md` §5, identiques ; seuls les commentaires s
   travail relatif à ce checkout, git (commit, `dirty`, référence, `pushed` : le commit est atteignable
   depuis une branche ou un tag du dépôt distant, §10 bis), threads, plafond mémoire, machine, charge, verdict de calme,
   commentaire (modifiable après coup), papiers (modifiables après coup), journal, fichiers produits,
-  date de dernière modification du commentaire ou des papiers.
+  date de dernière modification du commentaire ou des papiers. Depuis R1 : la case (`cell`, absente
+  pour un `[[job]]` : le lancement du batch, la valeur de chaque axe, la largeur du pool), le délai
+  sous lequel le job a tourné (`timeout_seconds`), les versions des outils (`tools` : `blender`,
+  `rustc`, `python`, `lean`) ; les trois sont omis de la ligne quand ils sont vides, si bien que les
+  fiches d'avant se relisent et se réécrivent à l'identique. Depuis R2 : les clés des dépendances
+  d'une case (`dependencies` : `{"engine": "3f2a…", "source": "9c01…"}`), et pour le job d'une
+  dépendance la clé qu'il a faite (`cache`) ; omis eux aussi quand ils sont vides.
   Git, threads, machine et charge sont facultatifs : une fiche amorcée ou saisie n'a que ce qui est
   connu.
 - `Status` : `Ok`, `Failed { code, signal }`, `Stopped` (arrêté par Marc), `Interrupted`
-  (l'application s'est terminée pendant l'exécution, §8.5).
+  (l'application s'est terminée pendant l'exécution, §8.5), `TimedOut` (tué par lab à son délai,
+  §6 bis ; `seconds` est alors le temps jusqu'à l'arrêt).
 - `Prepare` : commande, durée, statut, et la raison d'un saut (`skipped_because`).
 - `Git` : commit (40 caractères hexadécimaux), `dirty` (des fichiers suivis diffèrent de HEAD,
   `lab/runs.jsonl` exclu), branche.
@@ -162,7 +192,15 @@ Les types Rust sont ceux de `SPEC.md` §5, identiques ; seuls les commentaires s
   commande avec marques, préparation, choix du checkout (`Ask`, `Reference(nom)`), dossier,
   paramètres avec leurs valeurs par défaut (modifiables par élément de file), environnement propre,
   usage des threads (`Setting` ou `Fixed(n)`), plafond mémoire, « le temps compte », motifs des
-  fichiers produits, papier par défaut, étiquettes.
+  fichiers produits, papier par défaut, étiquettes, délai (`timeout`, aucun par défaut pour un
+  `[[job]]`, Q20).
+- `Batch` : une table `[[batch]]` : tous les champs d'un `Job` (son délai 30 minutes s'il n'en donne
+  pas), et ses axes dans l'ordre écrit, chacun un nom et ses valeurs ; une valeur peut porter ses
+  propres marques (`"cage"`, `{"preset": "hard-surface"}`).
+- `Dependency` (R2) : une table `[[dependency]]` : les champs d'un `Job` sauf `prepare`, `summary` et
+  `outputs`, plus `key` (les chemins du checkout dont le résultat dépend, marques permises), `tools`
+  (les outils dont la version entre dans la clé) et `provides` (le fichier que `{<nom>}` désigne dans
+  le dossier du cache). Un `Batch` gagne `needs`, les dépendances de ses cases.
 - `Sequence` : une liste ordonnée et nommée de tâches, une table `[[sequence]]` : les étapes d'un
   NIGHT.md dans l'ordre où il les donne.
 
@@ -197,6 +235,240 @@ donne une par une, avec la durée **écrite** dans les documents (pas mesurée p
 
 Séquences amorcées : `paper-B-data` (NIGHT.md, étapes 1 à 4 dans l'ordre), `paper-A-exact`
 (exact/NIGHT.md, 1 à 4), `before-merge` (`build-release`, `test-release`, `quick-bench`).
+
+## 6 bis. Batches (amendement R1)
+
+Un **job** est un calcul : une commande, un groupe de processus, un temps, un journal, une fiche. Un
+**batch** est une grille de jobs : un gabarit de commande et des axes, que lab développe en un job
+par case. Un script qui fait 150 calculs dans un seul `[[job]]` est une boîte noire pour lab : pas de
+progression, un seul temps pour tout, et le premier calcul qui s'éternise fait perdre les autres (le
+job `pole-pairs-115`, 2026-11-13). Un batch est le même travail, avec lab pour pool et pour chrono.
+
+### Le catalogue
+
+L'exemple est celui de `SPEC.md` §6b, le batch `pole-pairs-115-remesh` de `lab/jobs.toml` : douze
+modèles, trois budgets, `ref = ["main", "12a6675"]`, un remaillage et sa mesure par job, un thread
+moteur, `timeout = "30m"`.
+
+- Un `[[batch]]` a tous les champs d'un `[[job]]` (§6), plus `axes` et `timeout`.
+- **Axes.** Chaque axe est une marque de la commande, avec la liste de ses valeurs (textes ou
+  nombres). Une valeur peut être une table : son `value` est celui de la case, ses autres clés
+  remplacent, pour cette case seule, les `parameters` du batch de même nom (`{preset}` ; une clé qui
+  n'est pas un paramètre est un problème du catalogue). La grille est le produit des axes, développé
+  dans l'ordre où ils sont écrits, le dernier variant le plus vite : l'axe comparé va en dernier,
+  pour que ses valeurs tournent côte à côte sous la même charge.
+- **`ref`** est le seul axe qui a un sens : la référence de chaque case, résolue et extraite comme au
+  §2, un checkout par commit. Un batch sans cet axe tourne sur son `checkout`.
+- **La préparation** peut nommer les marques intégrées et les paramètres, pas les autres axes : elle
+  tourne une fois par checkout, pas par case.
+- **Un seul catalogue pour toute la grille** : celui d'où le batch est tiré (`main` du miroir, ou
+  `--catalogue`), pas le `jobs.toml` du commit de chaque case : une comparaison entre commits lance la
+  même commande sur chacun.
+- **`{out}`**, nouvelle marque intégrée : `<lab>/out/<id>/`, un dossier vidé avant le début du job.
+  Chaque fichier qui s'y trouve va dans les `outputs` de la fiche, avec taille et SHA-256. Comme
+  `{repo}`, la fiche garde `{out}` tel quel dans `command`, pour que deux exécutions de la même case
+  aient la même clé de commande (§10).
+- Un **`[[job]]` existant est un batch sans axe** : une case, lancée comme aujourd'hui, sa fiche sans
+  `cell`. Un calcul dont les étapes dépendent les unes des autres (l'une lit le résultat d'une autre,
+  un seul flux aléatoire, une seule optimisation) reste un seul job ; les jobs qui étaient des batches
+  dans un script sont découpés, un job par unité, leur résumé refait par le rapport du batch (R4).
+  Fait le 2026-11-13 :
+
+  | Batch | Un job par | Son rapport |
+  |---|---|---|
+  | `lean-oracle-doubles`, `lean-oracle-seed-1` | instance (`index`) ; la génération, un seul flux aléatoire, est la préparation | — |
+  | `lean-check-export` | fichier de voie (`index`) | — |
+  | `lattice`, `holonomy`, `conjugacy`, `certify` | voie | `experiments/merge.py` |
+  | `forced-bounds`, `forced-whole-lower`, `forced-valid-bounds`, `forced-valid` | famille (8 tenues, les bandes de la voie 2) : bornes, plafond et taille d'une famille se lisent l'une l'autre | `merge.py` |
+  | `strict` | ligne de la table des conflits | `merge.py` |
+  | `twelve-models`, `ablation`, `end-to-end`, `end-to-end-time-5`, `end-to-end-time-300` | (ligne ou variante ×) modèle × budget | `closing-loops/experiments/collect.py`, puis le script relit les exécutions |
+  | `end-to-end-male-body`, `male-body`, `exact-remesh`, `forced-valid-remesh`, `most-closable` | variante, exécution ou voie | `collect.py` |
+  | `three-budgets`, `pole-pairs-115-remesh`, `pole-pairs-115-tmesh` | modèle × budget × ref (ou pairs) | `bench/before_after.py` |
+  | `pole-pairs-115-male-body` | côté (`ref`) : l'export, puis conflicts dessus | — |
+  | `quick-bench`, `bench`, `remeasure` | modèle, modèle × outil, budget | `bench/run.py --merge` (bench) |
+
+  `rings` est coupé en deux jobs : les anneaux avec leur arrondi (l'arrondi lit le sous-ensemble que
+  les anneaux ont choisi), et `local-search`, qui ne lit que l'export. Restent un seul job, par la
+  règle ou parce qu'ils durent quelques secondes : les compilations et suites de tests, `lean-build`,
+  `export-male-body`, `census`, `conflicts` (sa table regroupe les voies), `pairs`, `combs`, `fox`
+  (ses relations mettent toutes les voies ensemble), `forced-sound` (une famille), `parity`, `gadget`
+  (un seul flux aléatoire), `scores`, `figures`, `structure`, `against-remeshers`, `compare`,
+  `exact-relaxation`. Les batches des papiers lisent l'export du corps masculin dans `scratch/`, hors
+  de leur clé : `skip_done = false`. Les scripts de closing-loops retirent les variables `OPENCLARE_*`
+  dont ils héritent, `OPENCLARE_THREADS` compris : le moteur prend toute la machine, si bien que leurs
+  batches font un job à la fois (threads le réglage, ou 8).
+
+### Dépendances (amendement R2)
+
+Une **dépendance** est un calcul dont beaucoup de jobs se servent et dont le résultat est le même
+pour beaucoup d'entre eux : le moteur d'un commit, la source d'une scène. Déclarée une fois en
+`[[dependency]]`, elle est faite une fois par **clé**, gardée dans `<lab>/cache/<nom>/<clé>/`, et
+partagée par tous les batches et tous les lancements qui en ont besoin. Un second lancement du témoin
+ne compile ni n'exporte rien.
+
+```toml
+[[dependency]]
+name = "engine"
+description = "The engine's command line, release."
+category = "build"
+command = "cargo build --release && cp target/release/openclare {out}/"
+key = ["crates", "Cargo.toml", "Cargo.lock"]
+tools = ["rustc"]
+provides = "openclare"
+
+[[dependency]]
+name = "source"
+description = "A scene of the bench as the add-on sees it, exported by Blender."
+category = "quick-bench"
+command = "blender -b --factory-startup bench/scenes/{model}.blend --python-exit-code 1 --python bench/blender_run.py -- --out {out} --no-remesh"
+key = ["bench/scenes/{model}.blend", "bench/blender_run.py", "bench/blender_engine.py", "blender/openclare"]
+tools = ["blender"]
+provides = "source.obj"
+threads = 1
+
+[[batch]]
+name = "pole-pairs-115-remesh"
+needs = ["engine", "source"]
+command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {budget} && {engine} measure {source} {out}/mesh.obj --target {budget} --json > {out}/measure.json"
+# … le reste comme plus haut, sans la préparation
+```
+
+- Une `[[dependency]]` a les champs d'un `[[job]]` sauf `prepare`, `summary` et `outputs` (ses
+  fichiers sont ceux de son `{out}`), plus `key`, `tools` et `provides`. Ses threads sont le réglage
+  sauf mention contraire ; elle n'a pas de délai sauf si elle en donne un. Elle ne se met pas seule en
+  file et ne figure pas dans une séquence : c'est un batch qui en a besoin qui la fait.
+- **Ses marques** : les intégrées, `{out}`, ses paramètres, et celles de la case qui en a besoin
+  (`{model}` ci-dessus). Un batch qui a besoin d'une dépendance dont une marque manque à ses cases est
+  un problème du catalogue.
+- **La clé** : les 16 premiers chiffres hexadécimaux d'un SHA-256 sur le nom de la dépendance, sa
+  commande rendue (`{out}` et `{repo}` gardés), pour chaque chemin de `key` rendu les objets git sous
+  lui au commit du checkout (`git ls-tree -r` ; pour un dossier local, le texte de `git diff HEAD` sur
+  ces chemins en plus, les nouveaux fichiers non suivis n'étant pas vus), et les versions des `tools`
+  nommés (§6 bis, étape 2). Un chemin qui ne désigne rien à ce commit fait échouer la dépendance.
+  Ainsi deux commits dont les sources du moteur sont les mêmes partagent un moteur, et une scène qui
+  n'a pas changé n'est pas réexportée, quel que soit le commit.
+- **`needs`**, dans un batch : les dépendances de ses cases. `{engine}` dans la commande est le chemin
+  du fichier `provides` dans le dossier du cache du moteur de cette case. La fiche garde `{engine}`
+  non rendu, comme `{out}`, pour que les clés de commande de deux commits restent égales, et donne les
+  clés dans `dependencies`.
+- **Quand** : après la lecture des outils et avant les préparations (étape 3 ci-dessous). Les
+  dépendances de toutes les cases sont rendues et regroupées par clé ; celles déjà dans le cache sont
+  dites et sautées (« engine 3f2a… en cache ») ; les autres tournent dans l'ordre de `needs`, un pool
+  par dépendance (`réglage / threads` côte à côte), chacune un job avec sa fiche : `job` le nom de la
+  dépendance, `cell` ses marques, `cache` sa clé, son journal dans `logs/`. Son `{out}` est
+  `<lab>/out/<id>/` ; quand elle finit `Ok`, le dossier est déplacé en `<lab>/cache/<nom>/<clé>/` (un
+  dossier qu'un autre lancement y a mis d'abord l'emporte, le nôtre est retiré), et ses fichiers sont
+  notés là. Une dépendance en échec fait échouer les cases qui en ont besoin sans les lancer, une
+  fiche chacune, comme une préparation en échec ; les autres cases continuent.
+- Rien ne vide le cache tout seul (un moteur pèse environ 20 Mo, une source quelques Mo) ; le dossier
+  se retire à la main (Q23).
+
+### L'exécution d'un batch
+
+1. **Développer** la grille ; un axe restreint à la main (`--axis model=ogre,pig`) ne garde que ces
+   valeurs. Résoudre chaque `ref` (une référence inconnue tourne sur `main`, comme au §8.1).
+2. **Outils**, lus une fois par checkout : `blender --version`, `rustc --version` et
+   `python3 --version` lancés dans le checkout, leur numéro de version gardé ; Lean est la chaîne
+   nommée par le fichier `lean-toolchain` du checkout, lu et non lancé (elan téléchargerait une chaîne
+   absente). Un outil introuvable est omis. Chaque fiche reçoit la table de son checkout, celle d'un
+   `[[job]]` aussi : rien ne notait jusqu'ici que Blender est en 5.3.0.
+3. **Dépendances** (R2, ci-dessus), puis **préparations**, un checkout après l'autre, avant tout job : celle du §7.3, une fois par
+   checkout (`.lab-prepared`), avec tout le réglage de threads (pas les `threads` du job). Son temps
+   et son statut vont dans le `prepare` de chaque job de ce checkout. Une préparation en échec fait
+   échouer les jobs de son checkout sans les lancer, une fiche chacun ; les autres checkouts
+   continuent.
+4. **Le pool.** `threads` est ce qu'un job utilise. Le pool lance `max(1, réglage / threads)` jobs
+   côte à côte (de jour, le réglage 6 et un thread moteur : six jobs), dans l'ordre de la grille,
+   chacun lancé comme au §8.1 : son groupe de processus, son plafond mémoire, son journal
+   `<lab>/logs/<id>.log`. La limite de confort (§7.1) se vérifie sur la largeur du pool fois
+   `threads`.
+5. **Une fiche par job, écrite à sa fin** : `job` est le nom du batch, `parameters` les marques de la
+   case, `checkout` sa référence, `cell` le lancement, les valeurs des axes et la largeur du pool.
+   L'id est l'heure du début, le nom du batch et les valeurs de la case
+   (`20261113-221403-pole-pairs-115-remesh-ogre-3000-12a6675`), avec `-2`, `-3` s'il est pris. Un
+   batch qui meurt perd les jobs en cours, jamais ceux déjà faits.
+6. **Délai**, par job : `timeout` dans le batch (`"90s"`, `"30m"`, `"2h"`), 30 minutes s'il manque ;
+   `--timeout` le remplace pour un lancement. Au-delà, lab arrête le job comme le fait Stop (§8.3,
+   SIGTERM puis SIGKILL au groupe) : statut `TimedOut`. Un job en échec ou en dépassement est une case
+   en échec ; le batch continue. Les politiques du §8.4 s'appliquent entre les éléments d'une file,
+   pas dans un batch.
+7. **Calme**, par job, selon le §9, le CPU étranger étant celui des processus hors du batch (les autres
+   jobs du pool sont les nôtres) ; load1 n'est pas regardé pendant le batch, comme après une de nos
+   exécutions. Un batch dont le temps compte lance son pool quand le moniteur a une fenêtre pleine
+   (60 s), sinon ses premiers jobs n'auraient pas de verdict. Le temps d'un job dans un pool de six est
+   un temps dans un pool de six : `cell.pool` le dit, et les deux côtés d'une comparaison tournent
+   entrelacés dans le même pool (Q21).
+8. **La fin** : une ligne par statut (`72 jobs: 71 ok, 1 timed out`), les cases en échec nommées avec
+   leur journal ; code de sortie 0 quand tous les jobs sont `Ok`, 1 sinon. Stop (Ctrl-C sans fenêtre)
+   arrête les jobs en cours, notés `Stopped` ; les jobs pas encore lancés n'ont pas de fiche.
+
+Sans fenêtre (§14), `lab run <batch>` écrit une ligne par job qui commence et qui finit
+(`[37/72] ok 41.2 s  model=ogre budget=3000 ref=12a6675`), pas les journaux, qui sont plusieurs à la
+fois. En R1, la fenêtre liste les batches dans le catalogue et leurs fiches dans l'historique ; R3 les
+met en file (ci-dessous).
+
+### La grille, les relances et la file (amendement R3)
+
+- **Un batch dans la file.** L'écran File liste les batches à côté des jobs, et une séquence peut
+  nommer des batches comme des jobs. Un batch est un élément de la file : à son tour, le lanceur
+  l'exécute comme ci-dessus (dépendances, préparations, pool), puis passe à l'élément suivant. Son
+  élément affiche `37/72` pendant qu'il tourne ; les règles du §8.4 s'appliquent après lui quand l'un
+  de ses jobs n'a pas fini `Ok`. Arrêter termine les jobs en cours (`Stopped`), comme Ctrl-C sans
+  fenêtre ; les jobs non commencés n'ont pas de fiche. Les lignes du lancement, celles qu'écrit
+  `lab run`, vont dans `logs/<lancement>.log` : le journal que l'écran File montre pour lui.
+- **L'écran Batches**, un sixième onglet : les batches à gauche ; pour celui choisi, sa grille. Une
+  ligne par valeur du premier axe, une colonne par combinaison des autres (`3000 · main`). Une case
+  montre son état : en cours (écoulé et estimation), en attente dans la file (son estimation), sa
+  dernière fiche (`ok 41 s`, `failed`, `timed out`, le temps grisé quand il ne compte pas, §7.2), ou
+  `—`, jamais lancée. Le survol donne son exécution, son commit, son calme et son estimation ; un clic la
+  choisit, et la dernière case cliquée montre sa fiche et la fin de son journal sous la grille.
+- **Choisir et relancer.** On choisit les cases une à une, ou « en échec », « jamais lancées »,
+  « toutes », « aucune » ; un délai pour ce lancement (celui du batch par défaut) ; « Mettre la
+  sélection en file » met le batch en file réduit à ces cases. Sans fenêtre, `--axis` réduit la grille
+  comme en R1.
+- **Un job déjà fait est sauté.** Une case dont la dernière fiche `Ok` a la même clé de commande (§10),
+  le même commit, les mêmes versions d'outils et les mêmes clés de dépendances ne retourne pas : pas
+  de nouvelle fiche, la ligne dit `done before` avec l'identifiant de cette fiche, et la grille
+  continue de la montrer. Une fiche dont le temps ne compte pas est faite tout de même : son résultat
+  est là. « Again » (`--again` sans fenêtre) les relance quand même. Un batch dont les jobs lisent des
+  fichiers que leur commande, leur commit et leurs dépendances ne nomment pas (l'export du corps
+  masculin dans `scratch/`) dit `skip_done = false` : ses jobs tournent toujours.
+- **Une estimation par job** : la médiane des temps des fiches `Ok` du même batch à la même clé de
+  commande et au même commit, sinon à la même clé de commande, sinon aux mêmes valeurs des axes.
+  `lab run` la donne sur la ligne d'un job qui commence (`≈ 41 s`), et au début le total du lancement
+  divisé par la largeur du pool ; la grille donne celle de chaque case et le temps restant du batch
+  en cours.
+- **Données** : un élément de file gagne `batch: Option<BatchChoice>`, `BatchChoice { cells:
+  Vec<BTreeMap<String, String>> /* vide : toutes */, timeout: Option<Timeout>, again: bool }` ; il
+  exécute le batch du catalogue que montre la fenêtre.
+
+### Rapports (amendement R4)
+
+- Un batch peut avoir un **`report`** : une commande, lancée dans un checkout comme un job, qui lit
+  les fiches de ses cases et leurs fichiers, et écrit un tableau. Elle ne recalcule rien : relancée,
+  elle donne le même tableau en quelques secondes. Marques : les intégrées, les paramètres du batch,
+  `{records}` et `{out}` ; pas les axes.
+
+  ```toml
+  report = "python3 bench/before_after.py {records} --side ref --out {out}"
+  ```
+
+- **`lab report <batch>`** prend, pour chaque case de la grille, sa dernière fiche (`--launch <id>` :
+  de ce lancement seulement), et les écrit dans `<lab>/reports/<batch>/<heure>/records.json` : le
+  batch, ses axes, et par case ses valeurs, l'identifiant de sa fiche, son statut, ses secondes, si le
+  temps compte, son commit, sa référence, et les chemins absolus de son dossier `{out}` et de ses
+  fichiers (`null` pour une case jamais lancée). Puis il lance le rapport dans le checkout de ce
+  dossier : le `checkout` du batch, ou `--ref <référence ou dossier>` ; son `{out}` est ce même dossier,
+  sa sortie dans `report.log`, que `lab report` affiche. Un rapport qui dure plus de 10 minutes est
+  arrêté. Pas de fiche : un rapport se refait à volonté à partir des fiches. Un lancement d'un batch
+  qui a un rapport finit par lui, sans fenêtre comme dans la fenêtre (son tableau dans le journal du
+  lancement) : une nuit de séquence laisse ses tableaux et ses résumés fusionnés prêts.
+- L'écran Batches a un bouton **Report** à côté de la grille d'un batch qui en a un ; le tableau
+  s'affiche sous la grille quand il est fait.
+- Un seul script sert aux comparaisons, `bench/before_after.py` : l'axe comparé (`--side`, `ref` par
+  défaut), le fichier que chaque job a écrit (`--file`, `measure.json` par défaut), les clés
+  comparées, leur moyenne ou leur somme sur les autres axes sauf un (`--by`, `budget` par défaut) ; le
+  temps est celui de lab, avec combien de ces temps comptent.
 
 ## 7. Règles que l'application fait respecter
 
@@ -493,6 +765,11 @@ met le binaire dans `~/.local/bin/lab` ; `lab/openclare-lab.desktop` va dans
 son menu ; `update-desktop-database` tourne s'il est présent. `make lab-uninstall` retire les trois. Rien
 n'est installé hors du dossier personnel.
 
+**Sans fenêtre, batches (R1).** `lab run <batch> [--axis <nom>=<valeur>,…]… [--timeout <durée>]
+[--threads <n>]` lance un batch (§6 bis) ; `--ref` donne la référence d'un batch sans axe `ref` ;
+`--axis` et `--timeout` ne valent que pour un batch, le délai d'un job étant son `timeout` dans
+`jobs.toml`.
+
 **Sans fenêtre.** `lab run <tâche> [--ref <référence>] [--force] [--threads <n>]` lance une tâche sans
 fenêtre, avec le même lanceur, le même moniteur et les mêmes fiches, son journal sur la sortie standard,
 et sort avec le statut de la tâche ; la référence est par défaut celle de la tâche, `--force` la lance
@@ -537,6 +814,30 @@ L'amendement du 2026-11-08 en ajoute trois, une PR chacun, ce document d'abord :
 
 État au 2026-11-08 : M6, M7 et M8 faits ; `lab push` est passé de M7 à M8, où sont les branches qu'il
 pousse.
+
+L'amendement R1 du 2026-11-13 commence la réforme des jobs et des batches (§6 bis), quatre jalons,
+chacun sa revue, le batch du ticket #115 servant de témoin à chacun :
+
+| | Contenu | Vérifié par |
+|---|---|---|
+| R1 | `[[batch]]`, la grille développée en jobs, le pool, une fiche par job, un délai par job, les versions des outils ; sans fenêtre | `lab run pole-pairs-115-remesh` : 72 fiches, ogre à 3 000 quads sur 12a6675 en dépassement s'il passe 30 minutes, les autres faits |
+| R2 | les dépendances comme jobs, en cache par clé : le moteur d'un commit, la source d'une scène, partagés entre batches | un second lancement ne compile ni n'exporte rien |
+| R3 | la grille dans la fenêtre (lignes, colonnes, l'état d'une case, son journal), la sélection de cases et leur relance ; un job déjà fait (même clé de commande, commit et outils) sauté sauf si on force ; une estimation par job | ogre seul relancé avec un délai plus long |
+| R4 | les rapports : un script court lit les sorties des jobs et fait le tableau, relancé en quelques secondes | le tableau avant et après de #115, rien recalculé |
+
+État au 2026-11-13 : R1 codé (`src/batch.rs`, `[[batch]]` dans `src/catalogue.rs`, `src/tools.rs`),
+tests unitaires sur des grilles inventées ; vérifié à la main sur 4 jobs du témoin, les 72 laissés à
+Marc. R2 codé (`[[dependency]]` dans `src/catalogue.rs`, le cache dans `src/batch.rs`), tests unitaires
+sur une dépendance inventée ; le témoin réduit à blob à 3000 quads sur main et 12a6675 : le premier
+lancement a compilé deux moteurs et exporté une source (la scène est la même aux deux commits), le
+second n'a rien compilé ni exporté. R3 codé (`src/app/batches.rs`, l'élément batch de `src/runner.rs`, le
+saut et les estimations dans `src/batch.rs`) ; un test unitaire passe un élément batch de la file sur des
+cases choisies, puis à nouveau (sautées) ; l'écran Batches regardé sur les fiches du témoin et sur un
+batch inventé en cours. Le témoin de R3, ogre relancé seul avec un délai plus long depuis la grille, est
+laissé à Marc. R4 codé (`src/report.rs`, `lab report`, le bouton Report, `bench/before_after.py`) ; un
+test unitaire fait deux fois le rapport d'un batch inventé, même tableau et pas de fiche ; le rapport du
+témoin fait à partir des fiches des essais de R1 et R2 (blob et ogre à 3000 quads). Le tableau complet
+de #115 attend le lancement des 72 jobs par Marc.
 
 ## 16. Ce qui ne peut pas être vérifié ici
 
@@ -594,3 +895,21 @@ hors du dépôt, réunie dans git, §4 bis). Nouvelles :
 
 Répondues le 2026-11-08 : Q15 `ask` ; Q16 tout gardé, un bouton Clean dans l'écran Machine ; Q17 le nom
 d'hôte ; Q18 pas de machine de nuit, la clé de Marc seule ; Q19 tout dans `~/.openclare-lab`.
+
+Décidé le 2026-11-13 (la proposition de réforme) : remaillage et mesure font un seul job ; un job est
+coupé après 30 minutes par défaut, chaque batch peut changer ce délai ; « job » et « batch » dans
+l'interface ; la réforme dans une session et une branche à elle. Nouvelles, répondues le même jour
+comme proposé :
+
+20. **Délai d'un `[[job]]`** : aucun par défaut, car beaucoup des jobs d'aujourd'hui sont des batches
+    entiers dans un script (`lean-oracle-doubles`, environ 18 h d'un cœur ; `forced-whole-lower`, 1 à
+    4 h) que 30 minutes tueraient.
+21. **Pool et temps** : six jobs à un thread sur 4 cœurs et 8 threads se ralentissent l'un l'autre ;
+    le pool remplit le réglage, `cell.pool` est noté, et une comparaison reste juste parce que ses deux
+    côtés tournent entrelacés dans le même pool.
+22. **Version de Lean** : la chaîne nommée par `lean-toolchain`, rien n'est lancé.
+
+Nouvelle avec R2 :
+
+23. **Le cache** : gardé jusqu'à ce qu'on le retire à la main (proposé ; un moteur pèse environ 20 Mo
+    par commit), ou nettoyé comme les checkouts, par un bouton de l'écran Machine ?

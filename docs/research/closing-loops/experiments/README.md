@@ -69,6 +69,27 @@ What each script does and why:
   meshes, measures and panels go to `WORK`; `figure_numbers.py` copies the measures to
   `results/figures.json`.
 
+## Run as lab batches
+
+The scripts loop over independent runs, and lab runs such a loop better as a `[[batch]]`, one job
+per run, each with its own empty folder `{out}` (lab/SPEC.md, §6b). The options that pick one
+cell: `twelve_models.py --models bob --budgets 2900`, `ablation.py --lines no_closing --models bob
+--budgets 2900`, `exact/end_to_end.py --variants engine --models bob --budgets 2900` (`--models
+human_male` for the male body), `exact/remesh.py --variants whole-3` (or `engine-3`, or any other
+single variant), `exact/most_closable.py --ways 3`; each job also takes `--out {out} --summary
+{out}/summary.json`, so that it writes nothing in the checkout. A script lays its runs out under
+`--out` as it would in a run of the whole grid (`<model>-<quads>.*`, `<line>/…`, `<variant>/…`,
+`call-<name>/…`). The merge is `collect.py`: it copies the files of every cell that ended ok from
+the `records.json` of `lab report` into the script's default `--out`, at the same relative paths
+(the jobs' `summary.json` left out), refusing a file of other bytes unless `--force`, and says
+which cells are missing. The script then run unchanged on the whole grid reads every run back
+(`<name>.json`, `record.json`, `way-<way>.json`) and writes the summary, nothing run again; for
+example `python3 docs/research/closing-loops/experiments/collect.py <records.json> --into
+scratch/data-package/closing-loops/twelve_models && python3
+docs/research/closing-loops/experiments/twelve_models.py --jobs 1 --openclare <the jobs' engine>`.
+The summary's engine is the binary given to the merge: `builds_of_the_runs` lists the builds the
+runs read back say made them, and the script warns when they differ.
+
 ## Means over budgets, and comparisons run by run (#222)
 
 The share of spiral edges is chaotic on one model: one per cent of the budget moves it as much as

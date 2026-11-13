@@ -27,10 +27,15 @@ the engine and HiGHS inherit; HiGHS's own threads are not set by the engine)
 and stated.
 
     python3 docs/research/closing-loops/experiments/exact/end_to_end.py --openclare <binary> --commit <hash> \\
-        [--variants draws-0,draws-3,slow-draws-0,slow-time-5] [--jobs 1] [--cpus 0-3] [--male-body]
+        [--variants draws-0,draws-3,slow-draws-0,slow-time-5] [--jobs 1] [--cpus 0-3] [--male-body] \
+        [--models bob,pig] [--budgets 2900,3000]
 
 Runs are kept under --out (scratch/data-package/closing-loops/end_to_end/
-<variant>/) and read back when there. Hours: 36 runs a variant, seconds to
+<variant>/<model>-<quads>.obj, .json, .slow.log) and read back when there.
+--models and --budgets restrict the twelve models and their budgets, one
+cell of lab's batch for instance (README, "Run as lab batches"); the male
+body is run with --male-body or when --models names it (human_male), at its
+own budget whatever --budgets says. Hours: 36 runs a variant, seconds to
 minutes each. Writes results/end_to_end.json.
 """
 
@@ -115,8 +120,15 @@ def main():
     parser.add_argument("--jobs", type=int, default=1, help="runs at a time (1 for the time-limited variants)")
     parser.add_argument("--cpus", help="processors the runs may use, as 0-3 or 0,1 (default: all)")
     parser.add_argument("--male-body", action="store_true", help="also the male body at 10,590 quads")
+    parser.add_argument("--models", help="only these models, as bob,pig (default: the twelve); human_male is "
+                                         "the male body")
+    common.budgets_option(parser)
     arguments = parser.parse_args()
     common.use(arguments)
+    models = common.models(arguments.models, common.TWELVE + [MALE[:2]]) if arguments.models else common.TWELVE
+    arguments.male_body = arguments.male_body or MALE[:2] in models
+    models = [case for case in models if case[0] != MALE[0]]
+    budgets = common.budgets(arguments)
     if arguments.cpus:
         cpus = set()
         for part in arguments.cpus.split(","):
@@ -131,7 +143,7 @@ def main():
         directory = arguments.out / name
         directory.mkdir(parents=True, exist_ok=True)
         jobs = []
-        cases = [(model, preset, quads) for quads in common.BUDGETS for model, preset in common.TWELVE]
+        cases = [(model, preset, quads) for quads in budgets for model, preset in models]
         if arguments.male_body:
             cases.append(MALE)
         for model, preset, quads in cases:
@@ -162,12 +174,18 @@ def main():
             if arguments.male_body else None,
         }
         mean = out[name]["mean"]
+        if mean["loop_edges_spiral"] is None:
+            print(f"{name}: none of the twelve models measured; failures {out[name]['failures']}", flush=True)
+            continue
         print(f"{name}: spiral edges {100 * mean['loop_edges_spiral']:.2f}%, "
               f"closed {100 * mean['loop_edges_closed']:.1f}%, mean distance {1000 * mean['mean_distance']:.3f} "
               f"per mille, {out[name]['valid']}/{len(twelve)} valid; {dict(logs)}", flush=True)
     summary = {
         "experiment": "an exact selection of the rings, end to end (the slow quality mode)",
         **common.header(arguments, started, [round(x, 2) for x in os.getloadavg()], time.monotonic() - clock),
+        "models": [model for model, _ in models],
+        "budgets": budgets,
+        "with_male_body": arguments.male_body,
         "variants": out,
     }
     common.write_json(arguments.summary, summary)

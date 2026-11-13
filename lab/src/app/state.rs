@@ -85,7 +85,7 @@ impl App {
         });
         ui.add_space(6.0);
 
-        let names: Vec<&str> = catalogue.jobs.iter().map(|job| job.name.as_str()).collect();
+        let names: Vec<&str> = catalogue.every_job().map(|job| job.name.as_str()).collect();
         let count = |wanted: Class| {
             names.iter().filter(|name| last.get(**name).is_some_and(|run| class(run, &tags, &reach) == wanted)).count()
         };
@@ -117,12 +117,14 @@ impl App {
             }
             ui.label(RichText::new(format!("of {} jobs", names.len())).color(MUTED));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                // A batch goes to the queue whole, as one item (R3).
+                let queueable: Vec<&String> = missing.iter().collect();
                 let label = match &chosen {
-                    None => format!("Queue the {} never run", missing.len()),
-                    Some(name) => format!("Queue the {} without a run on {name}", missing.len()),
+                    None => format!("Queue the {} jobs never run", queueable.len()),
+                    Some(name) => format!("Queue the {} jobs without a run on {name}", queueable.len()),
                 };
-                if ui.add_enabled(!missing.is_empty(), egui::Button::new(label)).clicked() {
-                    for name in &missing {
+                if ui.add_enabled(!queueable.is_empty(), egui::Button::new(label)).clicked() {
+                    for name in queueable {
                         self.add_to_queue(name);
                     }
                     self.tab = Tab::Queue;
@@ -175,8 +177,7 @@ impl App {
         egui::ScrollArea::vertical().auto_shrink([false; 2]).show(ui, |ui| {
             for (paper, title) in groups {
                 let jobs: Vec<&crate::catalogue::Job> = catalogue
-                    .jobs
-                    .iter()
+                    .every_job()
                     .filter(|job| job.paper == paper)
                     .filter(|job| keep(last.get(&job.name)))
                     .collect();
@@ -191,6 +192,7 @@ impl App {
                     }
                     ui.end_row();
                     for job in jobs {
+                        // A batch goes to the queue whole; its cells are chosen in the Batches screen (R3).
                         let mut checked = self.state_view.checked.contains(&job.name);
                         if ui.checkbox(&mut checked, "").changed() {
                             if checked {

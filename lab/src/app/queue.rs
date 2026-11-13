@@ -11,7 +11,7 @@ use crate::catalogue::{Category, CheckoutChoice, Job, ThreadUse};
 use crate::files;
 use crate::mirror::Target;
 use crate::model::{Paper, PaperRef, Status, duration_text};
-use crate::runner::{ItemState, Mode, OrphanDecision, Phase, QueueSettings, Shared};
+use crate::runner::{BatchChoice, ItemState, LiveState, Mode, OrphanDecision, Phase, QueueSettings, Shared};
 use crate::settings::Policy;
 use crate::state::{Estimate, estimate};
 
@@ -29,24 +29,27 @@ fn policy_text(policy: Policy) -> &'static str {
 }
 
 impl App {
-    /// A job, or every job of a sequence, at the end of the queue.
+    /// A job, a batch (all its cells), or every job and batch of a sequence,
+    /// at the end of the queue.
     pub(super) fn add_to_queue(&mut self, name: &str) {
         let Ok(catalogue) = &self.catalogue else { return };
         let names = match catalogue.sequences.iter().find(|sequence| sequence.name == name) {
             Some(sequence) => sequence.jobs.clone(),
             None => vec![name.to_string()],
         };
-        let mut added = Vec::new();
+        let shared_catalogue = std::sync::Arc::new(catalogue.clone());
         let mut problems = Vec::new();
+        let mut shared = self.shared.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
         for name in names {
-            match catalogue.job(&name) {
-                Some(job) => added.push((job.clone(), job.checkout.initial())),
-                None => problems.push(format!("no job named {name}")),
+            if let Some(job) = catalogue.job(&name) {
+                shared.add(job.clone(), job.checkout.initial());
+            } else if let Some(batch) = catalogue.batch(&name) {
+                let choice =
+                    BatchChoice { catalogue: shared_catalogue.clone(), cells: Vec::new(), timeout: None, again: false };
+                shared.add_batch(batch, choice);
+            } else {
+                problems.push(format!("no job nor batch named {name}"));
             }
-        }
-        let mut shared = self.lock();
-        for (job, target) in added {
-            shared.add(job, target);
         }
         shared.messages.extend(problems);
     }
@@ -99,6 +102,38 @@ impl App {
                     }
                 }
                 let search = self.search.to_lowercase();
+                let batches: Vec<_> = catalogue
+                    .batches
+                    .iter()
+                    .filter(|batch| {
+                        search.is_empty()
+                            || batch.job.name.contains(&search)
+                            || batch.job.description.to_lowercase().contains(&search)
+                    })
+                    .collect();
+                if !batches.is_empty() {
+                    ui.add_space(8.0);
+                    ui.label(RichText::new("BATCHES").small().strong().color(MUTED));
+                    for batch in batches {
+                        let mut checked = waiting.contains(&batch.job.name);
+                        let jobs: usize = batch.axes.iter().map(|axis| axis.values.len()).product();
+                        ui.horizontal(|ui| {
+                            let text = format!("{}  ({jobs} jobs)", batch.job.name);
+                            let hover = format!(
+                                "{}\n\nEvery cell; choose some in the Batches screen.",
+                                batch.job.description
+                            );
+                            if ui.checkbox(&mut checked, text).on_hover_text(hover).changed() {
+                                if checked {
+                                    add.push(batch.job.name.clone());
+                                } else {
+                                    remove.push(batch.job.name.clone());
+                                }
+                            }
+                            stopwatch(ui, batch.job.timing_matters);
+                        });
+                    }
+                }
                 for category in Category::ALL {
                     let jobs: Vec<&Job> = catalogue
                         .jobs
@@ -247,6 +282,7 @@ impl App {
                 matches!(item.state, ItemState::Waiting | ItemState::Running).then(|| self.resolution(&item.target))
             })
             .collect();
+        let shared_grid = shared.grid.clone();
         let height = ui.available_height() - 210.0;
         egui::ScrollArea::vertical().max_height(height.max(120.0)).auto_shrink([false, true]).show(ui, |ui| {
             for index in 0..shared.items.len() {
@@ -264,7 +300,15 @@ impl App {
                         stopwatch(ui, item.job.timing_matters);
                         let (text, colour) = state_text(&item.state);
                         ui.colored_label(colour, text);
-                        if editable {
+                        let ref_axis = item.batch.as_ref().is_some_and(|choice| {
+                            choice
+                                .catalogue
+                                .batch(&item.job.name)
+                                .is_some_and(|batch| batch.axis(crate::catalogue::REFERENCE_AXIS).is_some())
+                        });
+                        if ref_axis {
+                            ui.label(RichText::new("on its ref axis").color(MUTED));
+                        } else if editable {
                             ui.label(RichText::new("on").color(MUTED));
                             ui.add(
                                 egui::TextEdit::singleline(&mut item.target)
@@ -345,6 +389,34 @@ impl App {
                             }
                             ui.label(RichText::new(format!("· {}", timing.total_text(false))).monospace());
                         });
+                    }
+                    if let Some(choice) = &item.batch {
+                        let cells = if choice.cells.is_empty() {
+                            "every cell".to_string()
+                        } else {
+                            format!("{} cells chosen", choice.cells.len())
+                        };
+                        let timeout = choice
+                            .timeout
+                            .map(|timeout| format!(" · timeout {}", duration_text(timeout.seconds)))
+                            .unwrap_or_default();
+                        let again = if choice.again { " · again: the jobs done run again" } else { "" };
+                        let mut line = format!("batch · {cells}{timeout}{again}");
+                        if item.state == ItemState::Running
+                            && let Some(grid) = &shared_grid
+                        {
+                            let ended = grid
+                                .cells
+                                .iter()
+                                .filter(|cell| matches!(cell.state, LiveState::Ended { .. } | LiveState::Skipped))
+                                .count();
+                            line.push_str(&format!(" · {ended}/{}", grid.cells.len()));
+                        }
+                        ui.horizontal(|ui| {
+                            ui.add_space(14.0);
+                            ui.label(RichText::new(line).color(MUTED));
+                        });
+                        return;
                     }
                     if editable && !item.parameters.is_empty() {
                         ui.horizontal_wrapped(|ui| {
@@ -468,6 +540,22 @@ impl App {
                     ui.label(RichText::new(&current.job).strong().size(20.0));
                     stopwatch(ui, timed_current);
                 });
+                let grid = self.lock().grid.clone().filter(|grid| grid.batch == current.job && !grid.ended);
+                if let Some(grid) = grid {
+                    let count =
+                        |wanted: fn(&LiveState) -> bool| grid.cells.iter().filter(|cell| wanted(&cell.state)).count();
+                    let ended = count(|state| matches!(state, LiveState::Ended { .. } | LiveState::Skipped));
+                    let running = count(|state| matches!(state, LiveState::Running(_)));
+                    let failed =
+                        count(|state| matches!(state, LiveState::Ended { status, .. } if *status != Status::Ok));
+                    ui.label(format!(
+                        "batch: {ended}/{} jobs, {running} running, {failed} not ok; its grid in the Batches screen",
+                        grid.cells.len()
+                    ));
+                    if !grid.cells.is_empty() {
+                        ui.add(egui::ProgressBar::new(ended as f32 / grid.cells.len() as f32).fill(BLUE));
+                    }
+                }
                 let phase = match (current.stopping, current.phase) {
                     (true, _) => "stopping".to_string(),
                     (false, Phase::Prepare) => "its prepare".to_string(),
@@ -642,6 +730,23 @@ impl App {
                 if !matches!(item.state, ItemState::Waiting | ItemState::Running) {
                     return None;
                 }
+                if let Some(choice) = &item.batch {
+                    let found = choice
+                        .catalogue
+                        .batch(&item.job.name)
+                        .map(|batch| super::batches::batch_estimate(batch, choice, &runs, threads));
+                    let (seconds, without) = found.unwrap_or((None, 0));
+                    let estimate = seconds.map(|seconds| Estimate { seconds, runs: 1, load: None });
+                    match &estimate {
+                        Some(estimate) => {
+                            let spent = elapsed.filter(|(key, _)| *key == item.key).map_or(0.0, |(_, seconds)| seconds);
+                            total += (estimate.seconds - spent).max(0.0);
+                        }
+                        None => unknown += 1,
+                    }
+                    unknown += usize::from(without > 0 && estimate.is_some());
+                    return Some(Timing { estimate, total, unknown });
+                }
                 let (commit, short) = match self.resolution(&item.target) {
                     Ok(resolution) => (resolution.commit, resolution.short),
                     Err(_) => (String::new(), "{commit}".to_string()),
@@ -673,7 +778,7 @@ fn state_text(state: &ItemState) -> (String, egui::Color32) {
             let colour = match status {
                 Status::Ok => GREEN,
                 Status::Stopped | Status::Interrupted => AMBER,
-                Status::Failed { .. } => RED,
+                Status::Failed { .. } | Status::TimedOut => RED,
             };
             (format!("{}{time}", status.text()), colour)
         }

@@ -2,7 +2,7 @@
 //! papers edited afterwards, the export of the runs shown, the copy of the
 //! history into the repository, and a past run typed by hand.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use chrono::{Local, NaiveDateTime, TimeZone};
 use eframe::egui::{self, RichText};
@@ -229,6 +229,11 @@ impl App {
             log: None,
             outputs: Vec::new(),
             edited: None,
+            cell: None,
+            timeout_seconds: None,
+            tools: BTreeMap::new(),
+            dependencies: BTreeMap::new(),
+            cache: None,
         };
         crate::runner::write_record(&self.places, &run)?;
         self.read_history();

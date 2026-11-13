@@ -22,7 +22,8 @@ eframe = { version = "0.36", default-features = false, features = ["default_font
 egui_extras = "0.36"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-toml = "0.9"
+# preserve_order: the axes of a batch in the order they are written.
+toml = { version = "0.9", features = ["preserve_order"] }
 chrono = { version = "0.4", features = ["serde"] }
 dirs = "6"
 # Process groups, signals and the memory cap of a job. MIT.
