@@ -14,6 +14,10 @@ one record per job, each job cut at its timeout, the versions of the tools in ev
 window first (§1, §3, §5, §6b, §14, §15, §17). The grid in the window, the reruns, the cached
 dependencies and the reports are R2 to R4 (§15).
 
+Amendment R2 of 2026-11-13, asked by Marc the same day ("finish the milestones"): the engine of a commit
+and the source of a scene are dependencies, `[[dependency]]`, made once per key in `<lab>/cache/` and
+shared by every batch that needs them (§3, §5, §6b, §15, §17).
+
 ## 1. Purpose
 
 Every long computation of the project (benches, test suites, Lean builds and oracle runs,
@@ -61,6 +65,7 @@ summaries stay what they are).
 | `<lab>/runs.jsonl` | no | the app | the live memory of this machine, one run per line |
 | `<lab>/logs/<run id>.log` | no | the job (its stdout and stderr) | the log of each run |
 | `<lab>/out/<run id>/` | no | the job, through `{out}` | the files of one job of a batch (§6b) |
+| `<lab>/cache/<dependency>/<key>/` | no | a dependency's job | what a dependency made, shared by the batches that need it (§6b, R2) |
 | `<lab>/refused.jsonl` | no | the app | the records that still name a local path (section 4) |
 | `<lab>/state.json` | no | the app | the queue in progress and the run under way, for recovery |
 | `<lab>/settings.toml` | no | the app | remote, machine name, push policy, thresholds, thread warning, policies (§12) |
@@ -164,6 +169,9 @@ struct Run {
     cell: Option<Cell>,             // the batch and the cell this job is; None for a [[job]]
     timeout_seconds: Option<f64>,   // the limit the job ran under; None: no limit
     tools: BTreeMap<String, String>, // "blender" -> "5.3.0", "rustc" -> "1.95.0", "python" -> "3.14.4", "lean" -> "v4.35.0"
+    // R2 (§6b); absent before it.
+    dependencies: BTreeMap<String, String>, // a cell's: dependency -> key, {"engine": "3f2a…", "source": "9c01…"}
+    cache: Option<String>,          // a dependency's own run: the key it made
 }
 
 enum Status { Ok, Failed { code: Option<i32>, signal: Option<i32> }, Stopped, Interrupted, TimedOut }
@@ -248,6 +256,16 @@ struct Batch {
 struct Timeout { seconds: f64 }    // written "90s", "30m", "2h"
 struct Axis { name: String, values: Vec<AxisValue> }
 struct AxisValue { value: String, placeholders: BTreeMap<String, String> } // "cage", {"preset": "hard-surface"}
+
+/// R2: made once per key and shared, a [[dependency]] table (§6b): the fields of Job but
+/// prepare, summary and outputs, and:
+struct Dependency {
+    job: Job,
+    key: Vec<String>,               // paths of the checkout, placeholders allowed: what the result depends on
+    tools: Vec<String>,             // the tools whose versions are in the key: "rustc", "blender"
+    provides: String,               // the file {<name>} names in the cache folder: "openclare", "source.obj"
+}
+// Batch gains `needs: Vec<String>`, the dependencies its cells use.
 
 /// A named, ordered list of jobs, a [[sequence]] table: a NIGHT.md as it lists its stages.
 struct Sequence { name: String, description: String, jobs: Vec<String> }
@@ -376,6 +394,70 @@ ref = ["main", "12a6675"]
   job reads its certificates, and the window cannot queue a batch before R3. The State screen lists
   the batches, without the box that queues a job.
 
+### Dependencies (amendment R2)
+
+A **dependency** is a computation many jobs use and whose result is the same for many of them: the
+engine of a commit, the source of a scene. Declared once as `[[dependency]]`, it is made once per
+**key**, kept in `<lab>/cache/<name>/<key>/`, and shared by every batch and every launch that needs
+it. A second launch of the witness builds and exports nothing.
+
+```toml
+[[dependency]]
+name = "engine"
+description = "The engine's command line, release."
+category = "build"
+command = "cargo build --release && cp target/release/openclare {out}/"
+key = ["crates", "Cargo.toml", "Cargo.lock"]
+tools = ["rustc"]
+provides = "openclare"
+
+[[dependency]]
+name = "source"
+description = "A scene of the bench as the add-on sees it, exported by Blender."
+category = "quick-bench"
+command = "blender -b --factory-startup bench/scenes/{model}.blend --python-exit-code 1 --python bench/blender_run.py -- --out {out} --no-remesh"
+key = ["bench/scenes/{model}.blend", "bench/blender_run.py", "bench/blender_engine.py", "blender/openclare"]
+tools = ["blender"]
+provides = "source.obj"
+threads = 1
+
+[[batch]]
+name = "pole-pairs-115-remesh"
+needs = ["engine", "source"]
+command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {budget} && {engine} measure {source} {out}/mesh.obj --target {budget} --json > {out}/measure.json"
+# … the rest as above, without the prepare
+```
+
+- A `[[dependency]]` has the fields of a `[[job]]` but `prepare`, `summary` and `outputs` (its files
+  are those of its `{out}`), plus `key`, `tools` and `provides`. Its threads are the setting unless
+  it says otherwise; it has no timeout unless it sets one. It is not queued alone nor named in a
+  sequence: a batch that needs it makes it.
+- **Its placeholders**: the built-in ones, `{out}`, its parameters, and those of the cell that needs
+  it (`{model}` above). A batch that needs a dependency naming a placeholder its cells lack is a
+  problem of the catalogue.
+- **The key**: the first 16 hex digits of a SHA-256 over the dependency's name, its command rendered
+  (`{out}` and `{repo}` kept), for each path of `key` rendered, the git objects under it at the
+  checkout's commit (`git ls-tree -r`; for a local folder, the text of `git diff HEAD` on those paths
+  as well, new untracked files not seen), and the versions of the `tools` named (§6b, step 2). A
+  path that names nothing at that commit fails the dependency. So two commits whose engine sources
+  are the same share one engine, and a scene that did not change is not exported again, whatever
+  the commit.
+- **`needs`**, in a batch: the dependencies of its cells. `{engine}` in the command is the path of
+  the file `provides` in the cache folder of that cell's engine. The record keeps `{engine}`
+  unrendered, as `{out}`, so the command keys of two commits stay equal, and gives the keys in
+  `dependencies`.
+- **When**: after the tools are read and before the prepares (step 3 below). The dependencies of
+  every cell are rendered and gathered by key; those already in the cache are said and skipped
+  ("engine 3f2a… cached"); the others run in the order of `needs`, one pool per dependency
+  (`setting / threads` side by side), each a job with its own record: `job` the dependency's name,
+  `cell` its placeholders, `cache` its key, its log in `logs/`. Its `{out}` is `<lab>/out/<run id>/`;
+  when it ends `Ok` the folder is moved to `<lab>/cache/<name>/<key>/` (a folder another launch put
+  there first wins, ours is removed), and its outputs are recorded there. A failed dependency fails
+  the cells that need it without running them, one record each, as a failed prepare does; the other
+  cells go on.
+- Nothing removes the cache on its own (an engine is about 20 MB, a source a few MB); the folder is
+  removed by hand (Q23).
+
 ### The run of a batch
 
 1. **Expand** the grid; an axis restricted by hand (`--axis model=ogre,pig`) keeps those values only.
@@ -385,7 +467,7 @@ ref = ["main", "12a6675"]
    `lean-toolchain` file, read and not run (elan would download a toolchain it lacks). A tool not
    found is left out of the map. Every record gets the map of its checkout, a `[[job]]`'s as well:
    until now nothing recorded that Blender is 5.3.0.
-3. **Prepares**, one checkout after the other, before any job: the prepare of §7.3, once per checkout
+3. **Dependencies** (R2, above), then the **prepares**, one checkout after the other, before any job: the prepare of §7.3, once per checkout
    (`.lab-prepared`), with the whole thread setting (not the job's `threads`). Its time and status go
    into the `prepare` of every job of that checkout. A failed prepare fails the jobs of its checkout
    without running them, one record each; the other checkouts go on.
@@ -754,7 +836,11 @@ own review, the batch of ticket #115 the witness of each:
 | R4 | reports: a short script reads the jobs' outputs and makes the table, run again in seconds | the before-and-after table of #115, nothing computed again |
 
 Status on 2026-11-13: R1 coded (`src/batch.rs`, `[[batch]]` in `src/catalogue.rs`, `src/tools.rs`), unit
-tests on made-up grids; checked by hand on 4 jobs of the witness, the full 72 left to Marc.
+tests on made-up grids; checked by hand on 4 jobs of the witness, the full 72 left to Marc. R2 coded
+(`[[dependency]]` in `src/catalogue.rs`, the cache in `src/batch.rs`), unit tests on a made-up
+dependency; the witness restricted to blob at 3000 quads on main and 12a6675: the first launch built two
+engines and exported one source (the scene is the same on both commits), the second built and exported
+nothing.
 
 ## 16. What cannot be verified here
 
@@ -824,3 +910,8 @@ filling the thread setting, Lean's version from `lean-toolchain`).
     at a time, slower but each time alone?
 22. **Lean's version**: the toolchain named by `lean-toolchain` (proposed, nothing run); or
     `lean --version` through elan, at the risk of a download?
+
+New with R2:
+
+23. **The cache**: kept until removed by hand (proposed; an engine is about 20 MB a commit), or
+    cleaned like the checkouts, by a button of the Machine screen?

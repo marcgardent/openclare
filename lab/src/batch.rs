@@ -14,8 +14,9 @@ use std::time::{Duration, Instant, SystemTime};
 
 use chrono::{DateTime, FixedOffset, Local};
 use nix::sys::signal::Signal;
+use sha2::{Digest, Sha256};
 
-use crate::catalogue::{Batch, CellPlan, OUT, Timeout, render};
+use crate::catalogue::{Batch, Catalogue, Dependency, Job as CatalogueJob, OUT, Timeout, render};
 use crate::files;
 use crate::home::{GitState, Places};
 use crate::mirror::{Mirror, Target};
@@ -26,6 +27,9 @@ use crate::runner::{
     resolve_checkout, signal, spawn_shell, status_of, write_record,
 };
 use crate::settings::CalmSettings;
+
+/// The folder of the dependencies' results, under lab's data (R2).
+pub const CACHE: &str = "cache";
 
 /// How often the pool looks at its jobs.
 const TICK: Duration = Duration::from_millis(100);
@@ -58,6 +62,8 @@ pub struct Summary {
     pub records: Vec<(String, Status, String)>,
     /// Cells that got no record: not started (stopped before) or whose checkout could not be had.
     pub not_run: Vec<String>,
+    /// The dependencies made for the launch (R2): (text, status, run id).
+    pub dependencies: Vec<(String, Status, String)>,
 }
 
 impl Summary {
@@ -134,7 +140,7 @@ struct Job {
     /// The checkout and the batch's `outputs` globs in it.
     root: PathBuf,
     globs: Vec<String>,
-    timeout: Duration,
+    timeout: Option<Duration>,
     stop_sent: Option<Instant>,
     killed: bool,
     timed_out: bool,
@@ -143,9 +149,9 @@ struct Job {
 }
 
 /// The id of a job: the start time, the batch's name, the cell's values.
-pub fn run_id(started: &DateTime<FixedOffset>, batch: &str, cell: &CellPlan) -> String {
+pub fn run_id(started: &DateTime<FixedOffset>, batch: &str, values: &[(String, String)]) -> String {
     let mut id = format!("{}-{batch}", started.format("%Y%m%d-%H%M%S"));
-    for (_, value) in &cell.values {
+    for (_, value) in values {
         let word: String = value
             .chars()
             .map(|c| if c.is_ascii_alphanumeric() || c == '.' || c == '_' { c.to_ascii_lowercase() } else { '-' })
@@ -161,14 +167,41 @@ pub fn pool_width(setting: u32, job_threads: u32) -> u32 {
     (setting / job_threads.max(1)).max(1)
 }
 
-/// Runs a launch of `batch` to its end.
-pub fn run(context: &mut Context, batch: &Batch, options: &Options) -> Result<Summary, String> {
+/// A job the pool runs: a cell of the batch, or a dependency to make (R2).
+struct Planned<'a> {
+    job: &'a CatalogueJob,
+    /// "model=ogre budget=3000 ref=main", "engine 3f2a1b2c on main".
+    text: String,
+    /// The values its id and its `cell` carry.
+    values: Vec<(String, String)>,
+    /// Its placeholders: the cell's parameters and axes.
+    parameters: BTreeMap<String, String>,
+    target: String,
+    /// Placeholders given by the launch: name -> (executed, recorded), `{engine}` -> (its path, "{engine}").
+    given: BTreeMap<String, (String, String)>,
+    /// Why its command does not run: its prepare or a dependency failed.
+    blocked: Option<String>,
+    dependencies: BTreeMap<String, String>,
+    /// A dependency's own run: the key, its folder moved into the cache when it ends Ok.
+    cache: Option<String>,
+    timeout: Option<f64>,
+}
+
+/// Runs a launch of `batch` to its end; `catalogue` holds the dependencies it needs.
+pub fn run(context: &mut Context, catalogue: &Catalogue, batch: &Batch, options: &Options) -> Result<Summary, String> {
     let job = &batch.job;
     let cells = batch.expand(&options.only)?;
     let has_ref_axis = batch.axis(crate::catalogue::REFERENCE_AXIS).is_some();
     if has_ref_axis && options.reference.is_some() {
         return Err(format!("{} has a ref axis: give its references with --axis ref=…", job.name));
     }
+    let needs = batch
+        .needs
+        .iter()
+        .map(|name| {
+            catalogue.dependency(name).ok_or_else(|| format!("{} needs {name}, not in the catalogue", job.name))
+        })
+        .collect::<Result<Vec<&Dependency>, String>>()?;
     let fallback = match (&options.reference, &job.checkout) {
         (Some(reference), _) => reference.clone(),
         (None, crate::catalogue::CheckoutChoice::Ask) if !has_ref_axis => {
@@ -236,6 +269,77 @@ pub fn run(context: &mut Context, batch: &Batch, options: &Options) -> Result<Su
         places.insert(target.clone(), place);
     }
 
+    let mut ids: BTreeSet<String> = crate::store::History::read(&context.places.runs())
+        .map(|history| history.runs.into_iter().map(|run| run.id).collect())
+        .unwrap_or_default();
+
+    // The dependencies, by key, before anything else; then which cell has which.
+    let mut cell_keys: Vec<BTreeMap<String, Result<String, String>>> = vec![BTreeMap::new(); cells.len()];
+    let mut made: BTreeMap<(String, String), bool> = BTreeMap::new();
+    for dependency in &needs {
+        let name = &dependency.job.name;
+        let mut plans: Vec<Planned> = Vec::new();
+        let mut said: BTreeSet<String> = BTreeSet::new();
+        for (index, cell) in cells.iter().enumerate() {
+            let Some(Ok(place)) = places.get(&targets[index]) else { continue };
+            let key = dependency_key(dependency, place, &cell.parameters, options.threads);
+            match &key {
+                Err(error) => {
+                    if said.insert(error.clone()) {
+                        (context.say)(format!("{name}: {error}; the cells that need it fail"));
+                    }
+                }
+                Ok(key) if !made.contains_key(&(name.clone(), key.clone())) => {
+                    let cached = cache_folder(context.places, name, key).is_dir();
+                    made.insert((name.clone(), key.clone()), cached);
+                    let wanted: Vec<(String, String)> = dependency
+                        .wanted()
+                        .into_iter()
+                        .filter_map(|wanted| cell.parameters.get(&wanted).map(|value| (wanted, value.clone())))
+                        .collect();
+                    let mut text = format!("{name} {}", &key[..8]);
+                    for (wanted, value) in &wanted {
+                        text.push_str(&format!(" {wanted}={value}"));
+                    }
+                    text.push_str(&format!(" on {}", place.reference));
+                    if cached {
+                        (context.say)(format!("{text}: cached"));
+                    } else {
+                        plans.push(Planned {
+                            job: &dependency.job,
+                            text,
+                            values: wanted,
+                            parameters: cell.parameters.clone(),
+                            target: targets[index].clone(),
+                            given: BTreeMap::new(),
+                            blocked: None,
+                            dependencies: BTreeMap::new(),
+                            cache: Some(key.clone()),
+                            timeout: dependency.job.timeout.map(|timeout| timeout.seconds),
+                        });
+                    }
+                }
+                Ok(_) => {}
+            }
+            cell_keys[index].insert(name.clone(), key);
+        }
+        if !plans.is_empty() {
+            let dependency_threads = dependency.job.effective_threads(options.threads);
+            let dependency_width = pool_width(options.threads, dependency_threads);
+            (context.say)(format!("{name}: {} to make, {dependency_width} at a time", plans.len()));
+            let mut not_run = Vec::new();
+            let stopped = context.stopped;
+            let records =
+                pool(context, plans, &places, options, &launch, dependency_width, &mut ids, &mut not_run, stopped);
+            summary.dependencies.extend(records);
+        }
+        for ((dependency_name, key), present) in made.iter_mut() {
+            if dependency_name == name {
+                *present = cache_folder(context.places, name, key).is_dir();
+            }
+        }
+    }
+
     // The prepares, one checkout after the other, before any job.
     if let Some(prepare) = &job.prepare {
         for target in &order {
@@ -267,29 +371,148 @@ pub fn run(context: &mut Context, batch: &Batch, options: &Options) -> Result<Su
         }
     }
 
-    // The pool.
-    let mut ids: BTreeSet<String> = crate::store::History::read(&context.places.runs())
-        .map(|history| history.runs.into_iter().map(|run| run.id).collect())
-        .unwrap_or_default();
+    // The cells.
+    let mut plans = Vec::with_capacity(cells.len());
+    for (index, cell) in cells.iter().enumerate() {
+        let mut given = BTreeMap::new();
+        let mut dependencies = BTreeMap::new();
+        let mut blocked = match places.get(&targets[index]) {
+            Some(Ok(place)) if place.prepare_failed() => Some("its checkout's prepare failed".to_string()),
+            _ => None,
+        };
+        for dependency in &needs {
+            let name = &dependency.job.name;
+            match cell_keys[index].get(name) {
+                Some(Ok(key)) => {
+                    dependencies.insert(name.clone(), key.clone());
+                    let path = cache_folder(context.places, name, key).join(&dependency.provides);
+                    given.insert(name.clone(), (path.to_string_lossy().into_owned(), format!("{{{name}}}")));
+                    if !made.get(&(name.clone(), key.clone())).copied().unwrap_or(false) {
+                        blocked.get_or_insert(format!("its dependency {name} {} failed", &key[..8]));
+                    }
+                }
+                Some(Err(error)) => {
+                    given.insert(name.clone(), (format!("{{{name}}}"), format!("{{{name}}}")));
+                    blocked.get_or_insert(format!("its dependency {name}: {error}"));
+                }
+                None => {
+                    given.insert(name.clone(), (format!("{{{name}}}"), format!("{{{name}}}")));
+                }
+            }
+        }
+        plans.push(Planned {
+            job,
+            text: cell.text(),
+            values: cell.values.clone(),
+            parameters: cell.parameters.clone(),
+            target: targets[index].clone(),
+            given,
+            blocked,
+            dependencies,
+            cache: None,
+            timeout: Some(timeout),
+        });
+    }
+    let stopped = context.stopped;
+    let records = pool(context, plans, &places, options, &launch, width, &mut ids, &mut summary.not_run, stopped);
+    summary.records = records;
+    if let Some((watch, _)) = &context.monitor {
+        monitor::lock(watch).our_last_end = Some(Instant::now());
+    }
+    Ok(summary)
+}
+
+/// `<lab>/cache/<name>/<key>/`.
+pub fn cache_folder(places: &Places, name: &str, key: &str) -> PathBuf {
+    places.data.join(CACHE).join(name).join(key)
+}
+
+/// The key of a dependency for a cell (SPEC.md, §6b, R2): its name, its
+/// command as recorded, the git objects under each path of its key at the
+/// checkout's commit (and the local changes of a local folder), the
+/// versions of its tools; the first 16 hex digits of their SHA-256.
+fn dependency_key(
+    dependency: &Dependency,
+    place: &Place,
+    parameters: &BTreeMap<String, String>,
+    setting: u32,
+) -> Result<String, String> {
+    let mut values = dependency.job.values(setting, &place.git.short, &place.reference, None, parameters);
+    values.insert(OUT.to_string(), format!("{{{OUT}}}"));
+    let mut hasher = Sha256::new();
+    hasher.update(format!("{}\n{}\n", dependency.job.name, render(&dependency.job.command, &values)?));
+    for path in &dependency.key {
+        let path = render(path, &values)?;
+        let listed = git(&place.root, &["ls-tree", "-r", "HEAD", "--", &path])?;
+        if listed.trim().is_empty() {
+            return Err(format!("key: {path} names nothing at {}", place.git.short));
+        }
+        hasher.update(format!("{path}\n{listed}"));
+        if place.local {
+            hasher.update(git(&place.root, &["diff", "HEAD", "--", &path])?);
+        }
+    }
+    for tool in &dependency.tools {
+        let version = place.tools.get(tool).map_or("none", String::as_str);
+        hasher.update(format!("{tool}={version}\n"));
+    }
+    let digest = hasher.finalize();
+    Ok(digest.iter().take(8).map(|byte| format!("{byte:02x}")).collect())
+}
+
+/// The standard output of a git command in `root`.
+fn git(root: &Path, arguments: &[&str]) -> Result<String, String> {
+    let output = std::process::Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(arguments)
+        .output()
+        .map_err(|error| format!("git: {error}"))?;
+    if !output.status.success() {
+        return Err(format!("git {}: {}", arguments.join(" "), String::from_utf8_lossy(&output.stderr).trim()));
+    }
+    Ok(String::from_utf8_lossy(&output.stdout).into_owned())
+}
+
+/// Runs the planned jobs `width` at a time, in their order, to their ends;
+/// returns their records (text, status, run id). `stopped` ends those under
+/// way and starts no more.
+#[allow(clippy::too_many_arguments)]
+fn pool(
+    context: &mut Context,
+    plans: Vec<Planned>,
+    places: &BTreeMap<String, Result<Place, String>>,
+    options: &Options,
+    launch: &str,
+    width: u32,
+    ids: &mut BTreeSet<String>,
+    not_run: &mut Vec<String>,
+    stopped: &dyn Fn() -> bool,
+) -> Vec<(String, Status, String)> {
+    let mut records = Vec::new();
     let mut next = 0;
     let mut running: Vec<Job> = Vec::new();
-    let count = cells.len();
+    let count = plans.len();
     let digits = count.to_string().len();
     loop {
-        let stopping = (context.stopped)();
+        let stopping = stopped();
         while !stopping && running.len() < width as usize && next < count {
             let index = next;
             next += 1;
-            let cell = &cells[index];
-            let place = match places.get(&targets[index]) {
+            let plan = &plans[index];
+            let place = match places.get(&plan.target) {
                 Some(Ok(place)) => place,
                 _ => {
-                    summary.not_run.push(cell.text());
+                    not_run.push(plan.text.clone());
                     continue;
                 }
             };
             let started = Local::now().fixed_offset();
-            let mut id = run_id(&started, &job.name, cell);
+            let mut id = run_id(&started, &plan.job.name, &plan.values);
+            if let Some(key) = &plan.cache {
+                id.push('-');
+                id.push_str(&key[..8]);
+            }
             let base = id.clone();
             let mut suffix = 1;
             while ids.contains(&id) {
@@ -297,34 +520,27 @@ pub fn run(context: &mut Context, batch: &Batch, options: &Options) -> Result<Su
                 id = format!("{base}-{suffix}");
             }
             ids.insert(id.clone());
-            match begin(context, batch, cell, place, options, &launch, id, started, width, timeout) {
+            match begin(context, plan, place, options, launch, id, started, width) {
                 Ok(mut started_job) => {
                     started_job.index = index;
                     if started_job.child.is_none() {
-                        // Its prepare failed: recorded at once, without running.
-                        finish(
-                            context,
-                            started_job,
-                            Status::Failed { code: None, signal: None },
-                            None,
-                            &mut summary,
-                            digits,
-                            count,
-                        );
+                        // Its prepare or a dependency failed: recorded at once, without running.
+                        let status = Status::Failed { code: None, signal: None };
+                        finish(context, started_job, status, None, &mut records, digits, count);
                     } else {
                         (context.say)(format!("[{:>digits$}/{count}] start  {}", index + 1, started_job.text));
                         running.push(started_job);
                     }
                 }
                 Err(error) => {
-                    (context.say)(format!("[{:>digits$}/{count}] {}: {error}", index + 1, cell.text()));
-                    summary.not_run.push(cell.text());
+                    (context.say)(format!("[{:>digits$}/{count}] {}: {error}", index + 1, plan.text));
+                    not_run.push(plan.text.clone());
                 }
             }
         }
         if stopping {
             while next < count {
-                summary.not_run.push(cells[next].text());
+                not_run.push(plans[next].text.clone());
                 next += 1;
             }
         }
@@ -345,12 +561,15 @@ pub fn run(context: &mut Context, batch: &Batch, options: &Options) -> Result<Su
                 job.stop_sent = Some(Instant::now());
                 job.stopped = true;
             }
-            if job.stop_sent.is_none() && job.started.elapsed() >= job.timeout {
+            if job.stop_sent.is_none()
+                && let Some(limit) = job.timeout
+                && job.started.elapsed() >= limit
+            {
                 log_line(
                     &mut job.log,
                     &format!(
                         "past its timeout of {}: SIGTERM to the process group",
-                        crate::model::duration_text(job.timeout.as_secs_f64())
+                        crate::model::duration_text(limit.as_secs_f64())
                     ),
                 );
                 signal(group, Signal::SIGTERM);
@@ -397,28 +616,11 @@ pub fn run(context: &mut Context, batch: &Batch, options: &Options) -> Result<Su
             if let Some((watch, _)) = &context.monitor {
                 monitor::lock(watch).groups.retain(|known| *known != group);
             }
-            finish(context, job, status, Some(seconds), &mut summary, digits, count);
+            finish(context, job, status, Some(seconds), &mut records, digits, count);
         }
         std::thread::sleep(TICK);
     }
-    if let Some((watch, _)) = &context.monitor {
-        monitor::lock(watch).our_last_end = Some(Instant::now());
-    }
-    Ok(summary)
-}
-
-/// The values of a cell's placeholders: the job's, the cell's, and `{out}`.
-fn values(
-    batch: &Batch,
-    place: &Place,
-    parameters: &BTreeMap<String, String>,
-    setting: u32,
-    repo: Option<&str>,
-    out: &str,
-) -> BTreeMap<String, String> {
-    let mut values = batch.job.values(setting, &place.git.short, &place.reference, repo, parameters);
-    values.insert(OUT.to_string(), out.to_string());
-    values
+    records
 }
 
 /// The prepare of one checkout, once (`.lab-prepared`), with the whole
@@ -511,28 +713,32 @@ fn run_prepare(
 }
 
 /// A job begun: its folder and log made, its record as known at the start,
-/// its command launched; not launched when its checkout's prepare failed.
+/// its command launched; not launched when it is blocked.
 #[allow(clippy::too_many_arguments)]
 fn begin(
     context: &mut Context,
-    batch: &Batch,
-    cell: &CellPlan,
+    plan: &Planned,
     place: &Place,
     options: &Options,
     launch: &str,
     id: String,
     started: DateTime<FixedOffset>,
     width: u32,
-    timeout: f64,
 ) -> Result<Job, String> {
-    let job = &batch.job;
+    let job = plan.job;
     let out_relative = format!("{OUT}/{id}");
     let out = context.places.data.join(&out_relative);
     let _ = std::fs::remove_dir_all(&out);
     std::fs::create_dir_all(&out).map_err(|error| format!("{}: {error}", out.display()))?;
     let root = place.root.to_string_lossy().into_owned();
-    let executed = values(batch, place, &cell.parameters, options.threads, Some(&root), &out.to_string_lossy());
-    let recorded = values(batch, place, &cell.parameters, options.threads, None, "{out}");
+    let mut executed = job.values(options.threads, &place.git.short, &place.reference, Some(&root), &plan.parameters);
+    executed.insert(OUT.to_string(), out.to_string_lossy().into_owned());
+    let mut recorded = job.values(options.threads, &place.git.short, &place.reference, None, &plan.parameters);
+    recorded.insert(OUT.to_string(), format!("{{{OUT}}}"));
+    for (name, (now, kept)) in &plan.given {
+        executed.insert(name.clone(), now.clone());
+        recorded.insert(name.clone(), kept.clone());
+    }
     let scrub = Scrub::new(&place.root);
     let command = render(&job.command, &executed)?;
     let environment = job.environment_for(&executed)?;
@@ -541,7 +747,7 @@ fn begin(
     let log_path = context.places.data.join(&log_relative);
     std::fs::create_dir_all(log_path.parent().expect("logs/ has a parent")).map_err(|error| error.to_string())?;
     let mut log = File::create(&log_path).map_err(|error| format!("{}: {error}", log_path.display()))?;
-    log_line(&mut log, &format!("batch: {} · launch {launch} · {}", job.name, cell.text()));
+    log_line(&mut log, &format!("{}: {} · launch {launch} · {}", job.name, plan.text, place.reference));
     log_line(&mut log, &format!("checkout: {} at {} in {}", place.reference, place.git.commit, place.root.display()));
     let before = context.monitor.as_ref().map(|(watch, calm)| {
         let calm = calm.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone();
@@ -550,10 +756,7 @@ fn begin(
     // The other jobs of the pool are ours: `Ours` is calm for the one that starts.
     let calm_before =
         before.as_ref().is_some_and(|verdict| matches!(verdict.calmness, Calmness::Calm | Calmness::Ours));
-    let mut cell_values: BTreeMap<String, String> = BTreeMap::new();
-    for (axis, value) in &cell.values {
-        cell_values.insert(axis.clone(), value.clone());
-    }
+    let cell_values: BTreeMap<String, String> = plan.values.iter().cloned().collect();
     let run = Run {
         format: FORMAT,
         id: id.clone(),
@@ -571,7 +774,7 @@ fn begin(
             .into_iter()
             .map(|(name, value)| (name, scrub.text(&value)))
             .collect(),
-        parameters: cell.parameters.iter().map(|(name, value)| (name.clone(), scrub.text(value))).collect(),
+        parameters: plan.parameters.iter().map(|(name, value)| (name.clone(), scrub.text(value))).collect(),
         checkout: place.reference.clone(),
         directory: job.directory.clone(),
         git: Some(Git {
@@ -605,12 +808,14 @@ fn begin(
         outputs: Vec::new(),
         edited: None,
         cell: Some(Cell { launch: launch.to_string(), values: cell_values, pool: width }),
-        timeout_seconds: Some(timeout),
+        timeout_seconds: plan.timeout,
         tools: place.tools.clone(),
+        dependencies: plan.dependencies.clone(),
+        cache: plan.cache.clone(),
     };
     let mut started_job = Job {
         index: 0,
-        text: cell.text(),
+        text: plan.text.clone(),
         child: None,
         started: Instant::now(),
         since: SystemTime::now(),
@@ -619,15 +824,15 @@ fn begin(
         out: out_relative,
         root: place.root.clone(),
         globs: job.outputs.clone(),
-        timeout: Duration::from_secs_f64(timeout),
+        timeout: plan.timeout.map(Duration::from_secs_f64),
         stop_sent: None,
         killed: false,
         timed_out: false,
         stopped: false,
         during: During::default(),
     };
-    if place.prepare_failed() {
-        log_line(&mut started_job.log, "its checkout's prepare failed: the command does not run");
+    if let Some(why) = &plan.blocked {
+        log_line(&mut started_job.log, &format!("{why}: the command does not run"));
         return Ok(started_job);
     }
     log_line(&mut started_job.log, &format!("command: {command}"));
@@ -640,16 +845,38 @@ fn begin(
     Ok(started_job)
 }
 
-/// The record of a job that ended, written at once, and its line said.
+/// The record of a job that ended, written at once, and its line said. A
+/// dependency that ended Ok has its folder moved into the cache first.
 fn finish(
     context: &mut Context,
     mut job: Job,
     status: Status,
     seconds: Option<f64>,
-    summary: &mut Summary,
+    records: &mut Vec<(String, Status, String)>,
     digits: usize,
     count: usize,
 ) {
+    let data = &context.places.data;
+    if status == Status::Ok
+        && let Some(key) = job.run.cache.clone()
+    {
+        let folder = cache_folder(context.places, &job.run.job, &key);
+        let moved = if folder.is_dir() {
+            // Another launch made it first: its folder wins.
+            let _ = std::fs::remove_dir_all(data.join(&job.out));
+            Ok(())
+        } else {
+            std::fs::create_dir_all(folder.parent().expect("cache/<name> has a parent"))
+                .and_then(|_| std::fs::rename(data.join(&job.out), &folder))
+        };
+        match moved {
+            Ok(()) => {
+                job.out =
+                    folder.strip_prefix(data).map(Path::to_path_buf).unwrap_or(folder).to_string_lossy().into_owned()
+            }
+            Err(error) => log_line(&mut job.log, &format!("moving its folder into the cache: {error}")),
+        }
+    }
     let run = &mut job.run;
     run.ended = Some(Local::now().fixed_offset());
     run.seconds = seconds;
@@ -662,7 +889,6 @@ fn finish(
         job.during.apply(run, &calm);
     }
     // Its folder's files, then the batch's globs in the checkout written since it started.
-    let data = &context.places.data;
     let mut outputs: Vec<FileRef> = files_under(&data.join(&job.out))
         .into_iter()
         .filter_map(|path| path.strip_prefix(data).ok().map(Path::to_path_buf))
@@ -688,7 +914,7 @@ fn finish(
         line.push_str(&format!("  · log {}", data.join(&log.path).display()));
     }
     (context.say)(line);
-    summary.records.push((job.text.clone(), status, run.id.clone()));
+    records.push((job.text.clone(), status, run.id.clone()));
 }
 
 /// Every file under a folder, sorted.
@@ -713,7 +939,7 @@ fn files_under(folder: &Path) -> Vec<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::catalogue::Catalogue;
+    use crate::catalogue::CellPlan;
     use crate::store::History;
 
     /// A data folder of its own under target/, empty.
@@ -749,7 +975,7 @@ mod tests {
             ..options
         };
         let begun = Instant::now();
-        let summary = run(&mut context, &batch, &options).unwrap();
+        let summary = run(&mut context, &catalogue, &batch, &options).unwrap();
         assert!(begun.elapsed() < Duration::from_secs(30), "the batch took too long");
         (summary, lines)
     }
@@ -837,6 +1063,86 @@ mod tests {
         }
     }
 
+    const NEEDS: &str = r#"
+        [[dependency]]
+        name = "thing"
+        category = "build"
+        command = "echo made {model} > {out}/thing.txt"
+        key = ["lab/Cargo.toml"]
+        provides = "thing.txt"
+        threads = 1
+
+        [[batch]]
+        name = "uses"
+        category = "quick-bench"
+        needs = ["thing"]
+        command = "cat {thing} > {out}/got.txt"
+        threads = 1
+        [batch.axes]
+        model = ["a", "b"]
+        budget = [1, 2]
+        "#;
+
+    #[test]
+    fn a_dependency_is_made_once_per_key_and_found_in_the_cache_the_second_time() {
+        let places = places("needs");
+        let (summary, lines) = launch(&places, NEEDS, Options::default());
+        assert_eq!(summary.counts(), "4 jobs: 4 ok", "{lines:#?}");
+        assert_eq!(summary.dependencies.len(), 2, "one per model, shared by its two budgets");
+        let runs = History::read(&places.runs()).unwrap().runs;
+        let made: Vec<&Run> = runs.iter().filter(|run| run.job == "thing").collect();
+        assert_eq!(made.len(), 2);
+        let key = made[0].cache.clone().unwrap();
+        assert_eq!(key.len(), 16);
+        assert!(made[0].outputs[0].path.starts_with(&format!("cache/thing/{key}/")), "{:?}", made[0].outputs);
+        let cell = runs.iter().find(|run| run.job == "uses" && run.parameters["model"] == "a").unwrap();
+        assert_eq!(cell.command, "cat {thing} > {out}/got.txt", "the path is kept out of the command key");
+        let got = cell.outputs.iter().find(|output| output.path.ends_with("got.txt")).unwrap();
+        assert_eq!(std::fs::read_to_string(places.data.join(&got.path)).unwrap(), "made a\n");
+        assert_eq!(cell.dependencies["thing"].len(), 16);
+        // The second launch makes nothing.
+        let (summary, lines) = launch(&places, NEEDS, Options::default());
+        assert_eq!(summary.counts(), "4 jobs: 4 ok");
+        assert!(summary.dependencies.is_empty(), "{lines:#?}");
+        assert_eq!(lines.iter().filter(|line| line.ends_with(": cached")).count(), 2, "{lines:#?}");
+        let runs = History::read(&places.runs()).unwrap().runs;
+        assert_eq!(runs.iter().filter(|run| run.job == "thing").count(), 2);
+    }
+
+    #[test]
+    fn a_failed_dependency_fails_the_cells_that_need_it() {
+        let places = places("needs-failed");
+        let text =
+            NEEDS.replace("echo made {model} > {out}/thing.txt", "test {model} = a && echo made > {out}/thing.txt");
+        let (summary, lines) = launch(&places, &text, Options::default());
+        assert_eq!(summary.counts(), "4 jobs: 2 ok, 2 failed", "{lines:#?}");
+        let runs = History::read(&places.runs()).unwrap().runs;
+        for run in runs.iter().filter(|run| run.job == "uses" && run.parameters["model"] == "b") {
+            assert!(run.seconds.is_none(), "the command did not run");
+        }
+        assert!(
+            !places
+                .data
+                .join(CACHE)
+                .join("thing")
+                .read_dir()
+                .unwrap()
+                .any(|entry| { std::fs::read_to_string(entry.unwrap().path().join("thing.txt")).is_err() }),
+            "a failed dependency leaves nothing in the cache"
+        );
+        // A key that names nothing: no dependency runs, its cells fail.
+        let places = places_named("needs-nothing");
+        let text = NEEDS.replace("lab/Cargo.toml", "lab/no-such-file");
+        let (summary, lines) = launch(&places, &text, Options::default());
+        assert_eq!(summary.counts(), "4 jobs: 4 failed", "{lines:#?}");
+        assert!(summary.dependencies.is_empty());
+        assert!(lines.iter().any(|line| line.contains("key: lab/no-such-file names nothing")), "{lines:#?}");
+    }
+
+    fn places_named(name: &str) -> Places {
+        places(name)
+    }
+
     #[test]
     fn ids_widths_and_counts() {
         let started = DateTime::parse_from_rfc3339("2026-11-13T22:14:03+01:00").unwrap();
@@ -850,7 +1156,7 @@ mod tests {
             reference: Some("pull/301".to_string()),
         };
         assert_eq!(
-            run_id(&started, "pole-pairs-115-remesh", &cell),
+            run_id(&started, "pole-pairs-115-remesh", &cell.values),
             "20261113-221403-pole-pairs-115-remesh-ogre-3000-pull-301"
         );
         assert_eq!(pool_width(6, 1), 6);

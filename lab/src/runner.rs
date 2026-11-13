@@ -787,6 +787,8 @@ impl Runner {
             cell: None,
             timeout_seconds: job.timeout.map(|timeout| timeout.seconds),
             tools: crate::tools::read(&checkout),
+            dependencies: BTreeMap::new(),
+            cache: None,
         };
         let mut running = Running {
             key: item.key,

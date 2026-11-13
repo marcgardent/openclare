@@ -9,6 +9,10 @@
 //! A `[[batch]]` (SPEC.md, §6b) is a job whose command is a template over
 //! axes: every field of a `[[job]]`, plus `axes`, each axis a placeholder
 //! with its values, and a `timeout` of 30 minutes by default.
+//!
+//! A `[[dependency]]` (SPEC.md, §6b, R2) is a job made once per key and
+//! shared: a batch that `needs` it names `{<its name>}` in its command, the
+//! path of the file it `provides` in `<lab>/cache/<name>/<key>/`.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
@@ -118,6 +122,22 @@ pub struct Batch {
     pub job: Job,
     /// In the order written; the last varies fastest.
     pub axes: Vec<Axis>,
+    /// The dependencies its cells use, in the order they are made (R2).
+    pub needs: Vec<String>,
+}
+
+/// A computation made once per key and shared, a `[[dependency]]` table
+/// (SPEC.md, §6b, R2): the engine of a commit, the source of a scene.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Dependency {
+    /// Every field of a job but prepare, summary and outputs.
+    pub job: Job,
+    /// Paths of the checkout, placeholders allowed: what its result depends on.
+    pub key: Vec<String>,
+    /// The tools whose versions go into the key.
+    pub tools: Vec<String>,
+    /// The file `{<name>}` names in its folder of the cache.
+    pub provides: String,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -301,6 +321,9 @@ struct File {
     /// Read by hand: `axes` taken out, the rest is a job.
     #[serde(default, rename = "batch")]
     batches: Vec<toml::Table>,
+    /// Read by hand: `key`, `tools` and `provides` taken out, the rest is a job.
+    #[serde(default, rename = "dependency")]
+    dependencies: Vec<toml::Table>,
 }
 
 /// The catalogue as read, with what is wrong in it. A file that does not
@@ -310,6 +333,7 @@ struct File {
 pub struct Catalogue {
     pub jobs: Vec<Job>,
     pub batches: Vec<Batch>,
+    pub dependencies: Vec<Dependency>,
     pub sequences: Vec<Sequence>,
     pub problems: Vec<String>,
 }
@@ -323,7 +347,9 @@ impl Catalogue {
     pub fn parse(text: &str) -> Result<Catalogue, String> {
         let file: File = toml::from_str(text).map_err(|error| error.to_string())?;
         let batches = file.batches.into_iter().map(Batch::from_table).collect::<Result<Vec<_>, _>>()?;
-        let mut catalogue = Catalogue { jobs: file.jobs, batches, sequences: file.sequences, problems: Vec::new() };
+        let dependencies = file.dependencies.into_iter().map(Dependency::from_table).collect::<Result<Vec<_>, _>>()?;
+        let mut catalogue =
+            Catalogue { jobs: file.jobs, batches, dependencies, sequences: file.sequences, problems: Vec::new() };
         catalogue.problems = catalogue.check();
         Ok(catalogue)
     }
@@ -342,6 +368,10 @@ impl Catalogue {
         self.batches.iter().find(|batch| batch.job.name == name)
     }
 
+    pub fn dependency(&self, name: &str) -> Option<&Dependency> {
+        self.dependencies.iter().find(|dependency| dependency.job.name == name)
+    }
+
     fn check(&self) -> Vec<String> {
         let mut problems = Vec::new();
         let mut names = BTreeSet::new();
@@ -356,6 +386,32 @@ impl Catalogue {
                 problems.push(format!("batch {}: the name is used twice", batch.job.name));
             }
             problems.extend(batch.check().into_iter().map(|problem| format!("batch {}: {problem}", batch.job.name)));
+            for need in &batch.needs {
+                match self.dependency(need) {
+                    None => {
+                        problems.push(format!("batch {}: needs {need}, no dependency of that name", batch.job.name))
+                    }
+                    Some(dependency) => {
+                        let has = batch.placeholders();
+                        for wanted in dependency.wanted() {
+                            if !has.contains(&wanted) {
+                                problems.push(format!(
+                                    "batch {}: the dependency {need} names {{{wanted}}}, which its cells lack",
+                                    batch.job.name
+                                ));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        let mut dependency_names = BTreeSet::new();
+        for dependency in &self.dependencies {
+            let name = dependency.job.name.as_str();
+            if names.contains(name) || !dependency_names.insert(name) {
+                problems.push(format!("dependency {name}: the name is used twice"));
+            }
+            problems.extend(dependency.check().into_iter().map(|problem| format!("dependency {name}: {problem}")));
         }
         let mut sequence_names = BTreeSet::new();
         for sequence in &self.sequences {
@@ -490,10 +546,21 @@ impl Batch {
                 .collect::<Result<Vec<_>, _>>()?,
             Some(_) => return Err(wrong("axes is a table, an axis and its values".to_string())),
         };
+        let needs = strings(&mut table, "needs").map_err(wrong)?.unwrap_or_default();
         let mut job: Job =
             toml::Value::Table(table).try_into().map_err(|error: toml::de::Error| wrong(error.to_string()))?;
         job.timeout.get_or_insert(Timeout { seconds: BATCH_TIMEOUT_SECONDS });
-        Ok(Batch { job, axes })
+        Ok(Batch { job, axes, needs })
+    }
+
+    /// Every placeholder a cell of the batch has: the built-in ones, `{out}`,
+    /// the parameters and the axes.
+    pub fn placeholders(&self) -> BTreeSet<String> {
+        let mut has: BTreeSet<String> = BUILT_IN.iter().map(|name| name.to_string()).collect();
+        has.insert(OUT.to_string());
+        has.extend(self.job.parameters.keys().cloned());
+        has.extend(self.axes.iter().map(|axis| axis.name.clone()));
+        has
     }
 
     fn check(&self) -> Vec<String> {
@@ -534,6 +601,15 @@ impl Batch {
         }
         if self.job.parameters.contains_key(OUT) {
             problems.push(format!("parameter {OUT} hides the built-in placeholder"));
+        }
+        for need in &self.needs {
+            if command_only.contains(need)
+                || self.job.parameters.contains_key(need)
+                || BUILT_IN.contains(&need.as_str())
+            {
+                problems.push(format!("needs {need}: a placeholder of that name exists already"));
+            }
+            command_only.insert(need.clone());
         }
         problems.extend(self.job.check_with(&command_only, &BTreeSet::new()));
         problems
@@ -617,6 +693,80 @@ impl Axis {
             })
             .collect::<Result<Vec<_>, String>>()?;
         Ok(Axis { name: name.to_string(), values })
+    }
+}
+
+impl Dependency {
+    /// A `[[dependency]]` table: `key`, `tools` and `provides` taken out,
+    /// the rest read as a job.
+    fn from_table(mut table: toml::Table) -> Result<Dependency, String> {
+        let name = table.get("name").and_then(|name| name.as_str()).unwrap_or("?").to_string();
+        let wrong = |what: String| format!("dependency {name}: {what}");
+        let key = strings(&mut table, "key")
+            .map_err(wrong)?
+            .ok_or_else(|| wrong("key: the paths it depends on".to_string()))?;
+        let tools = strings(&mut table, "tools").map_err(wrong)?.unwrap_or_default();
+        let provides = match table.remove("provides") {
+            Some(toml::Value::String(file)) => file,
+            _ => return Err(wrong("provides: the file it makes, a string".to_string())),
+        };
+        let job: Job =
+            toml::Value::Table(table).try_into().map_err(|error: toml::de::Error| wrong(error.to_string()))?;
+        Ok(Dependency { job, key, tools, provides })
+    }
+
+    /// The placeholders it takes from the cell that needs it: those it names
+    /// beyond the built-in ones, `{out}` and its parameters.
+    pub fn wanted(&self) -> BTreeSet<String> {
+        let mut texts: Vec<&str> = vec![&self.job.command, &self.job.directory];
+        texts.extend(self.key.iter().map(String::as_str));
+        texts.extend(self.job.environment.values().map(String::as_str));
+        texts
+            .into_iter()
+            .flat_map(placeholders)
+            .filter(|name| !BUILT_IN.contains(&name.as_str()) && name != OUT && !self.job.parameters.contains_key(name))
+            .collect()
+    }
+
+    fn check(&self) -> Vec<String> {
+        let mut problems = Vec::new();
+        if self.job.prepare.is_some() {
+            problems.push("a dependency has no prepare: its command does it all".to_string());
+        }
+        if self.job.summary.is_some() || !self.job.outputs.is_empty() {
+            problems.push("a dependency has no summary nor outputs: its files are those of {out}".to_string());
+        }
+        if self.key.is_empty() {
+            problems.push("key: at least one path".to_string());
+        }
+        for path in &self.key {
+            if path.starts_with('/') || path.contains("..") || local_path(path).is_some() {
+                problems.push(format!("key: {path} is not a path of the checkout"));
+            }
+        }
+        if self.provides.is_empty() || self.provides.starts_with('/') || self.provides.contains("..") {
+            problems.push(format!("provides: {} is not a file of its folder", self.provides));
+        }
+        let mut command_only = self.wanted();
+        command_only.insert(OUT.to_string());
+        problems.extend(self.job.check_with(&command_only, &BTreeSet::new()));
+        problems
+    }
+}
+
+/// A list of strings taken out of a table, None when absent.
+fn strings(table: &mut toml::Table, field: &str) -> Result<Option<Vec<String>>, String> {
+    match table.remove(field) {
+        None => Ok(None),
+        Some(toml::Value::Array(values)) => values
+            .into_iter()
+            .map(|value| match value {
+                toml::Value::String(text) => Ok(text),
+                _ => Err(format!("{field}: a list of strings")),
+            })
+            .collect::<Result<Vec<_>, _>>()
+            .map(Some),
+        Some(_) => Err(format!("{field}: a list of strings")),
     }
 }
 
@@ -914,6 +1064,16 @@ mod tests {
                 let reference = cell.reference.clone().unwrap_or_else(|| batch.job.checkout.initial());
                 let mut values = batch.job.values(6, "12a6675", &reference, None, &cell.parameters);
                 values.insert(OUT.to_string(), "{out}".to_string());
+                for need in &batch.needs {
+                    values.insert(need.clone(), format!("{{{need}}}"));
+                    let dependency = catalogue.dependency(need).unwrap();
+                    let mut own = dependency.job.values(6, "12a6675", &reference, None, &cell.parameters);
+                    own.insert(OUT.to_string(), "{out}".to_string());
+                    render(&dependency.job.command, &own).unwrap();
+                    for path in &dependency.key {
+                        render(path, &own).unwrap();
+                    }
+                }
                 render(&batch.job.command, &values).unwrap();
                 batch.job.environment_for(&values).unwrap();
             }
@@ -932,10 +1092,53 @@ mod tests {
         for cell in &cells {
             let mut values = batch.job.values(6, "12a6675", cell.reference.as_deref().unwrap(), None, &cell.parameters);
             values.insert(OUT.to_string(), "{out}".to_string());
+            values.insert("engine".to_string(), "{engine}".to_string());
+            values.insert("source".to_string(), "{source}".to_string());
             let command = render(&batch.job.command, &values).unwrap();
             let model = &cell.parameters["model"];
             let preset = if ["cage", "part"].contains(&model.as_str()) { "hard-surface" } else { "organic" };
             assert!(command.contains(&format!("--preset {preset} --quads {}", cell.parameters["budget"])), "{command}");
         }
+        // R2: the witness needs the engine and the sources, and prepares nothing.
+        assert_eq!(batch.needs, ["engine", "source"]);
+        assert!(batch.job.prepare.is_none());
+    }
+
+    #[test]
+    fn a_dependency_that_breaks_a_rule_is_a_problem() {
+        let text = r#"
+            [[dependency]]
+            name = "thing"
+            category = "build"
+            command = "make {model} > {out}/thing"
+            prepare = "true"
+            key = ["/abs/path", "lab/{model}"]
+            provides = "thing"
+
+            [[batch]]
+            name = "uses"
+            category = "build"
+            needs = ["thing", "nothing"]
+            command = "cat {thing}"
+            [batch.axes]
+            budget = [1]
+            "#;
+        let catalogue = Catalogue::parse(text).unwrap();
+        let problems = catalogue.problems.join("\n");
+        assert!(problems.contains("dependency thing: a dependency has no prepare"), "{problems}");
+        assert!(problems.contains("dependency thing: key: /abs/path is not a path of the checkout"), "{problems}");
+        assert!(problems.contains("batch uses: needs nothing, no dependency of that name"), "{problems}");
+        assert!(
+            problems.contains("batch uses: the dependency thing names {model}, which its cells lack"),
+            "{problems}"
+        );
+        assert_eq!(catalogue.dependency("thing").unwrap().wanted(), BTreeSet::from(["model".to_string()]));
+        assert!(
+            Catalogue::parse(
+                "[[dependency]]\nname = \"x\"\ncategory = \"build\"\ncommand = \"true\"\nprovides = \"x\"\n"
+            )
+            .is_err(),
+            "key is required"
+        );
     }
 }

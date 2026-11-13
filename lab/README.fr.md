@@ -125,6 +125,12 @@ ligne par job qui commence et qui finit, puis les comptes, et sort avec 0 quand 
 de chaque job pour ce lancement. La fenêtre liste les batches dans son catalogue mais ne les met pas
 encore en file.
 
+Un batch qui a besoin (`needs`) d'une `[[dependency]]` (le moteur d'un commit, la source d'une scène) la
+fait faire une fois par clé, avant ses jobs, et la garde dans `~/.openclare-lab/cache/<nom>/<clé>/` ;
+les lancements suivants, de ce batch ou d'un autre, l'y trouvent. La clé lit la commande de la
+dépendance, les objets git des chemins de `key` et les versions de ses `tools` : deux commits aux mêmes
+sources du moteur partagent un moteur. Rien ne vide le cache tout seul : retirer le dossier à la main.
+
 ## Tests
 
 ```sh

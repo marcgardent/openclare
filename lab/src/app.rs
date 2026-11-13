@@ -819,6 +819,23 @@ impl App {
                         });
                     }
                 }
+                if !catalogue.dependencies.is_empty() {
+                    ui.add_space(8.0);
+                    ui.label(RichText::new("DEPENDENCIES").small().strong().color(MUTED));
+                    for dependency in &catalogue.dependencies {
+                        ui.label(&dependency.job.name).on_hover_text(format!(
+                            "{}\n\nMade once per key in the cache, {} kept: the key reads {}{}.",
+                            dependency.job.description,
+                            dependency.provides,
+                            dependency.key.join(", "),
+                            if dependency.tools.is_empty() {
+                                String::new()
+                            } else {
+                                format!(" and the versions of {}", dependency.tools.join(", "))
+                            }
+                        ));
+                    }
+                }
                 ui.add_space(8.0);
                 ui.label(RichText::new("SEQUENCES").small().strong().color(MUTED));
                 for sequence in &catalogue.sequences {

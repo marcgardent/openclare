@@ -167,6 +167,8 @@ fn repository_run(mirror: &Mirror, job: &Job, summary: &str) -> Result<Option<Ru
         cell: None,
         timeout_seconds: None,
         tools: BTreeMap::new(),
+        dependencies: BTreeMap::new(),
+        cache: None,
     }))
 }
 

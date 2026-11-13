@@ -389,7 +389,10 @@ fn run_batch(
     let problems: Vec<&String> = catalogue
         .problems
         .iter()
-        .filter(|problem| problem.starts_with(&format!("batch {}:", batch.job.name)))
+        .filter(|problem| {
+            problem.starts_with(&format!("batch {}:", batch.job.name))
+                || batch.needs.iter().any(|need| problem.starts_with(&format!("dependency {need}:")))
+        })
         .collect();
     if !problems.is_empty() {
         for problem in problems {
@@ -447,7 +450,7 @@ fn run_batch(
         stopped: &stopped,
         say: &mut say,
     };
-    let summary = match crate::batch::run(&mut context, batch, &options) {
+    let summary = match crate::batch::run(&mut context, catalogue, batch, &options) {
         Ok(summary) => summary,
         Err(error) => {
             eprintln!("lab: {error}");

@@ -116,6 +116,12 @@ and ends, then the counts, and exits 0 when every job is ok. `--axis` keeps some
 reference for `ref`), `--timeout` replaces each job's for this launch. The window lists the batches in
 its catalogue but does not queue them yet.
 
+A batch that `needs` a `[[dependency]]` (the engine of a commit, the source of a scene) has it made once
+per key, before its jobs, and kept in `~/.openclare-lab/cache/<name>/<key>/`; the next launches, of
+this batch or another, find it there. The key reads the dependency's command, the git objects of its
+`key` paths and the versions of its `tools`, so two commits with the same engine sources share one
+engine. Nothing empties the cache on its own: remove the folder by hand.
+
 ## Tests
 
 ```sh

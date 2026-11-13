@@ -80,6 +80,12 @@ pub struct Run {
     /// "rustc", "python", "lean"; a tool not found is left out.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub tools: BTreeMap<String, String>,
+    /// A cell's dependencies: name -> key (SPEC.md, §6b, R2).
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub dependencies: BTreeMap<String, String>,
+    /// A dependency's own run: the key it made.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cache: Option<String>,
 }
 
 /// One cell of one launch of a batch (SPEC.md, §6b).

@@ -15,6 +15,10 @@ outils dans chaque fiche ; d'abord sans fenêtre (§1, §3, §5, §6 bis, §14, 
 fenêtre, les relances, les dépendances en cache et les rapports sont R2 à R4 (§15). Dans ce qui suit,
 la « tâche » des sections plus anciennes est un job ; l'interface dit « job » et « batch ».
 
+Amendement R2 du 2026-11-13, demandé par Marc le même jour (« finis tes jalons ») : le moteur d'un
+commit et la source d'une scène sont des dépendances, `[[dependency]]`, faites une fois par clé dans
+`<lab>/cache/` et partagées par tous les batches qui en ont besoin (§3, §5, §6 bis, §15, §17).
+
 ## 1. Objet
 
 Tout calcul long du projet (bancs, suites de tests, constructions et oracle Lean, expériences des
@@ -63,6 +67,7 @@ récurrentes, lire les résultats d'une exécution (les résumés des scripts re
 | `<lab>/runs.jsonl` | non | l'application | la mémoire vivante de cette machine, une exécution par ligne |
 | `<lab>/logs/<id>.log` | non | la tâche (sa sortie standard et d'erreur) | le journal de chaque exécution |
 | `<lab>/out/<id>/` | non | le job, par `{out}` | les fichiers d'un job d'un batch (§6 bis) |
+| `<lab>/cache/<dépendance>/<clé>/` | non | le job d'une dépendance | ce qu'une dépendance a fait, partagé par les batches qui en ont besoin (§6 bis, R2) |
 | `<lab>/refused.jsonl` | non | l'application | les fiches qui nomment encore un chemin local (section 4) |
 | `<lab>/state.json` | non | l'application | la file en cours et l'exécution en cours, pour la reprise |
 | `<lab>/settings.toml` | non | l'application | dépôt distant, nom de la machine, politique de push, seuils, alerte de threads, politiques (§12) |
@@ -148,7 +153,9 @@ Les types Rust sont ceux de `SPEC.md` §5, identiques ; seuls les commentaires s
   pour un `[[job]]` : le lancement du batch, la valeur de chaque axe, la largeur du pool), le délai
   sous lequel le job a tourné (`timeout_seconds`), les versions des outils (`tools` : `blender`,
   `rustc`, `python`, `lean`) ; les trois sont omis de la ligne quand ils sont vides, si bien que les
-  fiches d'avant se relisent et se réécrivent à l'identique.
+  fiches d'avant se relisent et se réécrivent à l'identique. Depuis R2 : les clés des dépendances
+  d'une case (`dependencies` : `{"engine": "3f2a…", "source": "9c01…"}`), et pour le job d'une
+  dépendance la clé qu'il a faite (`cache`) ; omis eux aussi quand ils sont vides.
   Git, threads, machine et charge sont facultatifs : une fiche amorcée ou saisie n'a que ce qui est
   connu.
 - `Status` : `Ok`, `Failed { code, signal }`, `Stopped` (arrêté par Marc), `Interrupted`
@@ -181,6 +188,10 @@ Les types Rust sont ceux de `SPEC.md` §5, identiques ; seuls les commentaires s
 - `Batch` : une table `[[batch]]` : tous les champs d'un `Job` (son délai 30 minutes s'il n'en donne
   pas), et ses axes dans l'ordre écrit, chacun un nom et ses valeurs ; une valeur peut porter ses
   propres marques (`"cage"`, `{"preset": "hard-surface"}`).
+- `Dependency` (R2) : une table `[[dependency]]` : les champs d'un `Job` sauf `prepare`, `summary` et
+  `outputs`, plus `key` (les chemins du checkout dont le résultat dépend, marques permises), `tools`
+  (les outils dont la version entre dans la clé) et `provides` (le fichier que `{<nom>}` désigne dans
+  le dossier du cache). Un `Batch` gagne `needs`, les dépendances de ses cases.
 - `Sequence` : une liste ordonnée et nommée de tâches, une table `[[sequence]]` : les étapes d'un
   NIGHT.md dans l'ordre où il les donne.
 
@@ -260,6 +271,71 @@ moteur, `timeout = "30m"`.
   `paper-B-data`, dont le job suivant lit ses certificats, et la fenêtre ne met pas de batch en file
   avant R3. L'écran État liste les batches, sans la case qui met un job en file.
 
+### Dépendances (amendement R2)
+
+Une **dépendance** est un calcul dont beaucoup de jobs se servent et dont le résultat est le même
+pour beaucoup d'entre eux : le moteur d'un commit, la source d'une scène. Déclarée une fois en
+`[[dependency]]`, elle est faite une fois par **clé**, gardée dans `<lab>/cache/<nom>/<clé>/`, et
+partagée par tous les batches et tous les lancements qui en ont besoin. Un second lancement du témoin
+ne compile ni n'exporte rien.
+
+```toml
+[[dependency]]
+name = "engine"
+description = "The engine's command line, release."
+category = "build"
+command = "cargo build --release && cp target/release/openclare {out}/"
+key = ["crates", "Cargo.toml", "Cargo.lock"]
+tools = ["rustc"]
+provides = "openclare"
+
+[[dependency]]
+name = "source"
+description = "A scene of the bench as the add-on sees it, exported by Blender."
+category = "quick-bench"
+command = "blender -b --factory-startup bench/scenes/{model}.blend --python-exit-code 1 --python bench/blender_run.py -- --out {out} --no-remesh"
+key = ["bench/scenes/{model}.blend", "bench/blender_run.py", "bench/blender_engine.py", "blender/openclare"]
+tools = ["blender"]
+provides = "source.obj"
+threads = 1
+
+[[batch]]
+name = "pole-pairs-115-remesh"
+needs = ["engine", "source"]
+command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {budget} && {engine} measure {source} {out}/mesh.obj --target {budget} --json > {out}/measure.json"
+# … le reste comme plus haut, sans la préparation
+```
+
+- Une `[[dependency]]` a les champs d'un `[[job]]` sauf `prepare`, `summary` et `outputs` (ses
+  fichiers sont ceux de son `{out}`), plus `key`, `tools` et `provides`. Ses threads sont le réglage
+  sauf mention contraire ; elle n'a pas de délai sauf si elle en donne un. Elle ne se met pas seule en
+  file et ne figure pas dans une séquence : c'est un batch qui en a besoin qui la fait.
+- **Ses marques** : les intégrées, `{out}`, ses paramètres, et celles de la case qui en a besoin
+  (`{model}` ci-dessus). Un batch qui a besoin d'une dépendance dont une marque manque à ses cases est
+  un problème du catalogue.
+- **La clé** : les 16 premiers chiffres hexadécimaux d'un SHA-256 sur le nom de la dépendance, sa
+  commande rendue (`{out}` et `{repo}` gardés), pour chaque chemin de `key` rendu les objets git sous
+  lui au commit du checkout (`git ls-tree -r` ; pour un dossier local, le texte de `git diff HEAD` sur
+  ces chemins en plus, les nouveaux fichiers non suivis n'étant pas vus), et les versions des `tools`
+  nommés (§6 bis, étape 2). Un chemin qui ne désigne rien à ce commit fait échouer la dépendance.
+  Ainsi deux commits dont les sources du moteur sont les mêmes partagent un moteur, et une scène qui
+  n'a pas changé n'est pas réexportée, quel que soit le commit.
+- **`needs`**, dans un batch : les dépendances de ses cases. `{engine}` dans la commande est le chemin
+  du fichier `provides` dans le dossier du cache du moteur de cette case. La fiche garde `{engine}`
+  non rendu, comme `{out}`, pour que les clés de commande de deux commits restent égales, et donne les
+  clés dans `dependencies`.
+- **Quand** : après la lecture des outils et avant les préparations (étape 3 ci-dessous). Les
+  dépendances de toutes les cases sont rendues et regroupées par clé ; celles déjà dans le cache sont
+  dites et sautées (« engine 3f2a… en cache ») ; les autres tournent dans l'ordre de `needs`, un pool
+  par dépendance (`réglage / threads` côte à côte), chacune un job avec sa fiche : `job` le nom de la
+  dépendance, `cell` ses marques, `cache` sa clé, son journal dans `logs/`. Son `{out}` est
+  `<lab>/out/<id>/` ; quand elle finit `Ok`, le dossier est déplacé en `<lab>/cache/<nom>/<clé>/` (un
+  dossier qu'un autre lancement y a mis d'abord l'emporte, le nôtre est retiré), et ses fichiers sont
+  notés là. Une dépendance en échec fait échouer les cases qui en ont besoin sans les lancer, une
+  fiche chacune, comme une préparation en échec ; les autres cases continuent.
+- Rien ne vide le cache tout seul (un moteur pèse environ 20 Mo, une source quelques Mo) ; le dossier
+  se retire à la main (Q23).
+
 ### L'exécution d'un batch
 
 1. **Développer** la grille ; un axe restreint à la main (`--axis model=ogre,pig`) ne garde que ces
@@ -269,7 +345,7 @@ moteur, `timeout = "30m"`.
    nommée par le fichier `lean-toolchain` du checkout, lu et non lancé (elan téléchargerait une chaîne
    absente). Un outil introuvable est omis. Chaque fiche reçoit la table de son checkout, celle d'un
    `[[job]]` aussi : rien ne notait jusqu'ici que Blender est en 5.3.0.
-3. **Préparations**, un checkout après l'autre, avant tout job : celle du §7.3, une fois par
+3. **Dépendances** (R2, ci-dessus), puis **préparations**, un checkout après l'autre, avant tout job : celle du §7.3, une fois par
    checkout (`.lab-prepared`), avec tout le réglage de threads (pas les `threads` du job). Son temps
    et son statut vont dans le `prepare` de chaque job de ce checkout. Une préparation en échec fait
    échouer les jobs de son checkout sans les lancer, une fiche chacun ; les autres checkouts
@@ -661,7 +737,10 @@ chacun sa revue, le batch du ticket #115 servant de témoin à chacun :
 
 État au 2026-11-13 : R1 codé (`src/batch.rs`, `[[batch]]` dans `src/catalogue.rs`, `src/tools.rs`),
 tests unitaires sur des grilles inventées ; vérifié à la main sur 4 jobs du témoin, les 72 laissés à
-Marc.
+Marc. R2 codé (`[[dependency]]` dans `src/catalogue.rs`, le cache dans `src/batch.rs`), tests unitaires
+sur une dépendance inventée ; le témoin réduit à blob à 3000 quads sur main et 12a6675 : le premier
+lancement a compilé deux moteurs et exporté une source (la scène est la même aux deux commits), le
+second n'a rien compilé ni exporté.
 
 ## 16. Ce qui ne peut pas être vérifié ici
 
@@ -732,3 +811,8 @@ comme proposé :
     le pool remplit le réglage, `cell.pool` est noté, et une comparaison reste juste parce que ses deux
     côtés tournent entrelacés dans le même pool.
 22. **Version de Lean** : la chaîne nommée par `lean-toolchain`, rien n'est lancé.
+
+Nouvelle avec R2 :
+
+23. **Le cache** : gardé jusqu'à ce qu'on le retire à la main (proposé ; un moteur pèse environ 20 Mo
+    par commit), ou nettoyé comme les checkouts, par un bouton de l'écran Machine ?

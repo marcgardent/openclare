@@ -27,6 +27,12 @@
 # file in it recorded. The prepare runs once per checkout, before any job,
 # with the whole thread setting. The jobs run `setting / threads` at a time;
 # timeout 30 minutes when the batch sets none. Run with `lab run <batch>`.
+#
+# [[dependency]] (SPEC.md, section 6b, R2): a job made once per key and kept in
+# <lab>/cache/<name>/<key>/, shared by every batch that `needs` it: {<name>}
+# in the batch's command is the file it `provides` there. The key: its command,
+# the git objects under the paths of `key` (placeholders of the cell allowed),
+# the versions of its `tools`. No prepare: its command does it all.
 # summary: the JSON that records a run of the job in the repository (`#key` for a
 # record nested in it); lab reads it at every opening (SPEC.md, section 13).
 #
@@ -628,14 +634,37 @@ outputs = ["docs/research/closing-loops/experiments/exact/results/end_to_end-tim
 paper = "A"
 tags = ["paper-A-exact"]
 
+# ---------------------------------------------------------------- dependencies
+
+[[dependency]]
+name = "engine"
+description = "The engine's command line of a commit, release; shared by the commits whose engine sources are the same."
+category = "build"
+command = "cargo build --release -p openclare-cli && cp target/release/openclare {out}/"
+key = ["crates/openclare", "crates/openclare-cli", "crates/openclare-highs", "crates/openclare-rerun", "Cargo.toml", "Cargo.lock"]
+tools = ["rustc"]
+provides = "openclare"
+
+[[dependency]]
+name = "source"
+description = "A scene of the bench as the add-on sees it, modifiers applied, in triangles (bench/blender_run.py --no-remesh): what a result is measured against. Blender, a few seconds; the engine's library is not loaded."
+category = "quick-bench"
+command = "blender -b --factory-startup bench/scenes/{model}.blend --python-exit-code 1 --python bench/blender_run.py -- --out {out} --no-remesh"
+key = ["bench/scenes/{model}.blend", "bench/blender_run.py", "bench/blender_engine.py", "blender/openclare"]
+tools = ["blender"]
+provides = "source.obj"
+threads = 1
+memory_limit_gb = 32
+timeout = "10m"
+
 # ---------------------------------------------------------------- before and after
 
 [[batch]]
 name = "three-budgets"
-description = "The twelve models at 2970, 3000 and 3030 quads, one job each: the remesh and its measure (measure's metrics in {out}/measure.json, the mesh beside it for the valences), at one engine thread. The references to compare are the axis ref: `lab run three-budgets --axis ref=main,<branch>`, run side by side. The prepare builds the engine and the add-on, and exports the sources from the scenes by Blender the first time in each checkout."
+description = "The twelve models at 2970, 3000 and 3030 quads, one job each: the remesh and its measure (measure's metrics in {out}/measure.json, the mesh beside it for the valences), at one engine thread. The references to compare are the axis ref: `lab run three-budgets --axis ref=main,<branch>`, run side by side. The engine of each commit and the sources are dependencies, made once and shared."
 category = "quick-bench"
-prepare = "cargo build --release && make addon && python3 -c 'import sys; sys.path.insert(0, \"bench\"); import run; [run.source_path(model) for model in sys.argv[1:]]' creature blob suzanne spot pig ogre bob jerry blub rock cage part"
-command = "target/release/openclare remesh bench/out/{model}/source.obj {out}/mesh.obj --preset {preset} --quads {budget} && target/release/openclare measure bench/out/{model}/source.obj {out}/mesh.obj --target {budget} --json > {out}/measure.json"
+needs = ["engine", "source"]
+command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {budget} && {engine} measure {source} {out}/mesh.obj --target {budget} --json > {out}/measure.json"
 parameters = { preset = "organic" }
 environment = { HIGHS_THREADS = "1" }
 threads = 1
@@ -663,10 +692,10 @@ outputs = ["scratch/pole-pairs/*.json"]
 
 [[batch]]
 name = "pole-pairs-115-remesh"
-description = "Ticket #115 before and after: the twelve models of bench/budgets.py at 2970, 3000 and 3030 quads, on main and on 12a6675 (the head of claude/pole-pairs-115), interleaved; one job is the remesh and its measure, at one engine thread. The prepare builds the engine and the add-on, and exports the sources from the scenes by Blender the first time."
+description = "Ticket #115 before and after: the twelve models of bench/budgets.py at 2970, 3000 and 3030 quads, on main and on 12a6675 (the head of claude/pole-pairs-115), interleaved; one job is the remesh and its measure, at one engine thread. The engine of each commit and the sources are dependencies, made once and shared."
 category = "quick-bench"
-prepare = "cargo build --release && make addon && python3 -c 'import sys; sys.path.insert(0, \"bench\"); import run; [run.source_path(model) for model in sys.argv[1:]]' creature blob suzanne spot pig ogre bob jerry blub rock cage part"
-command = "target/release/openclare remesh bench/out/{model}/source.obj {out}/mesh.obj --preset {preset} --quads {budget} && target/release/openclare measure bench/out/{model}/source.obj {out}/mesh.obj --target {budget} --json > {out}/measure.json"
+needs = ["engine", "source"]
+command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {budget} && {engine} measure {source} {out}/mesh.obj --target {budget} --json > {out}/measure.json"
 parameters = { preset = "organic" }
 environment = { HIGHS_THREADS = "1" }
 threads = 1
@@ -684,8 +713,8 @@ ref = ["main", "12a6675"]
 name = "pole-pairs-115-tmesh"
 description = "Ticket #115, the T-mesh (bench/pole_pairs.py, part tmesh): `openclare tmesh --json` of the twelve models at 1000, 3000 and 8000 quads, the pole pairs joined and with --no-pairs (which only 12a6675, the head of claude/pole-pairs-115, has), one job each at one engine thread: patches, thin patches, short arcs, T-junctions in {out}/tmesh.json."
 category = "quick-bench"
-prepare = "cargo build --release && make addon && python3 -c 'import sys; sys.path.insert(0, \"bench\"); import run; [run.source_path(model) for model in sys.argv[1:]]' creature blob suzanne spot pig ogre bob jerry blub rock cage part"
-command = "target/release/openclare tmesh bench/out/{model}/source.obj --quads {budget} --simplify 2 --json {crease} {pairs_flag} > {out}/tmesh.json"
+needs = ["engine", "source"]
+command = "{engine} tmesh {source} --quads {budget} --simplify 2 --json {crease} {pairs_flag} > {out}/tmesh.json"
 checkout = "12a6675"
 parameters = { crease = "", pairs_flag = "" }
 environment = { HIGHS_THREADS = "1" }

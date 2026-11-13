@@ -232,6 +232,8 @@ impl App {
             cell: None,
             timeout_seconds: None,
             tools: BTreeMap::new(),
+            dependencies: BTreeMap::new(),
+            cache: None,
         };
         crate::runner::write_record(&self.places, &run)?;
         self.read_history();
