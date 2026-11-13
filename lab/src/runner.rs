@@ -77,6 +77,10 @@ pub struct LiveGrid {
     pub width: u32,
     pub cells: Vec<LiveCell>,
     pub ended: bool,
+    /// What the launch does now: "making engine: 2 to make", "prepare on main", "the jobs".
+    pub phase: String,
+    /// The dependencies met, in order: their text and state.
+    pub dependencies: Vec<(String, LiveState)>,
 }
 
 #[derive(Clone, Debug)]
@@ -769,6 +773,14 @@ impl Runner {
         };
         let mut progress = |progress: crate::batch::Progress| {
             let mut shared = locked(&shared);
+            // The log of what runs now, for the run panel: the job's own, not the launch's.
+            let follow = match &progress {
+                crate::batch::Progress::Follow(log) | crate::batch::Progress::Started { log, .. } => Some(log.clone()),
+                _ => None,
+            };
+            if let (Some(log), Some(current)) = (follow, shared.current.as_mut()) {
+                current.log = log;
+            }
             let Some(grid) = shared.grid.as_mut() else { return };
             match progress {
                 crate::batch::Progress::Planned { launch, width, cells } => {
@@ -779,7 +791,7 @@ impl Runner {
                         .map(|(values, estimate)| LiveCell { values, estimate, state: LiveState::Waiting })
                         .collect();
                 }
-                crate::batch::Progress::Started(index) => {
+                crate::batch::Progress::Started { index, .. } => {
                     if let Some(cell) = grid.cells.get_mut(index) {
                         cell.state = LiveState::Running(Instant::now());
                     }
@@ -794,6 +806,19 @@ impl Runner {
                         cell.state = LiveState::Skipped;
                     }
                 }
+                crate::batch::Progress::Phase(phase) => grid.phase = phase,
+                crate::batch::Progress::Dependency { text, state } => {
+                    let state = match state {
+                        crate::batch::DependencyState::Cached => LiveState::Skipped,
+                        crate::batch::DependencyState::Started => LiveState::Running(Instant::now()),
+                        crate::batch::DependencyState::Ended(status) => LiveState::Ended { status },
+                    };
+                    match grid.dependencies.iter_mut().find(|(known, _)| *known == text) {
+                        Some(found) => found.1 = state,
+                        None => grid.dependencies.push((text, state)),
+                    }
+                }
+                crate::batch::Progress::Follow(_) => {}
             }
             drop(shared);
             repaint();

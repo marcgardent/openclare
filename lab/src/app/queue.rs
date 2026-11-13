@@ -552,6 +552,9 @@ impl App {
                         "batch: {ended}/{} jobs, {running} running, {failed} not ok; its grid in the Batches screen",
                         grid.cells.len()
                     ));
+                    if !grid.phase.is_empty() {
+                        ui.label(RichText::new(format!("now: {}", grid.phase)).strong());
+                    }
                     if !grid.cells.is_empty() {
                         ui.add(egui::ProgressBar::new(ended as f32 / grid.cells.len() as f32).fill(BLUE));
                     }

@@ -438,7 +438,11 @@ met en file (ci-dessous).
   montre son état : en cours (écoulé et estimation), en attente dans la file (son estimation), sa
   dernière fiche (`ok 41 s`, `failed`, `timed out`, le temps grisé quand il ne compte pas, §7.2), ou
   `—`, jamais lancée. Le survol donne son exécution, son commit, son calme et son estimation ; un clic la
-  choisit, et la dernière case cliquée montre sa fiche et la fin de son journal sous la grille.
+  choisit, et la dernière case cliquée montre sa fiche et la fin de son journal sous la grille. La
+  grille d'un lancement s'affiche dès son début ; au-dessus, ce que le lancement fait maintenant (les
+  checkouts, une dépendance en cours, une préparation, l'attente du moniteur, les jobs) et chaque
+  dépendance, en cache, en cours ou faite. Le journal de l'écran File suit le job qui tourne, une
+  dépendance ou une préparation comprise, pas les lignes du lancement.
 - **Choisir et relancer.** On choisit les cases une à une, ou « en échec », « jamais lancées »,
   « toutes », « aucune » ; un délai pour ce lancement (celui du batch par défaut) ; « Mettre la
   sélection en file » met le batch en file réduit à ces cases. Sans fenêtre, `--axis` réduit la grille

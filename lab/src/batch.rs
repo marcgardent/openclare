@@ -64,21 +64,26 @@ pub type PlannedCell = (Vec<(String, String)>, Option<f64>);
 #[derive(Clone, Debug)]
 pub enum Progress {
     /// The cells of the launch, in order: their axes' values and estimates.
-    Planned {
-        launch: String,
-        width: u32,
-        cells: Vec<PlannedCell>,
-    },
-    Started(usize),
+    Planned { launch: String, width: u32, cells: Vec<PlannedCell> },
+    /// A cell started; its log is followed.
+    Started { index: usize, log: PathBuf },
     /// Its record written.
-    Ended {
-        index: usize,
-        status: Status,
-    },
+    Ended { index: usize, status: Status },
     /// Done before: the grid shows that record.
-    Skipped {
-        index: usize,
-    },
+    Skipped { index: usize },
+    /// What the launch does now, before its cells: "engine: 1 of 2 to make", "prepare on main".
+    Phase(String),
+    /// A dependency met: cached, started (its log), or ended.
+    Dependency { text: String, state: DependencyState },
+    /// The log of what runs now (a dependency, a prepare): the window follows it.
+    Follow(PathBuf),
+}
+
+#[derive(Clone, Debug)]
+pub enum DependencyState {
+    Cached,
+    Started,
+    Ended(Status),
 }
 
 /// What the launch did, for the last lines and the exit code.
@@ -267,6 +272,13 @@ pub fn run(context: &mut Context, catalogue: &Catalogue, batch: &Batch, options:
     let begun = Local::now().fixed_offset();
     let launch = format!("{}-{}", begun.format("%Y%m%d-%H%M%S"), job.name);
     let mut summary = Summary { launch: launch.clone(), jobs: cells.len(), ..Summary::default() };
+    // The grid is shown at once, its estimates once the dependencies and the prepares are known.
+    (context.progress)(Progress::Planned {
+        launch: launch.clone(),
+        width,
+        cells: cells.iter().map(|cell| (cell.values.clone(), None)).collect(),
+    });
+    (context.progress)(Progress::Phase("the checkouts and the tools' versions".to_string()));
     (context.say)(format!(
         "{}: {} jobs, {width} at a time of {threads} thread{} each, timeout {} each",
         job.name,
@@ -327,6 +339,9 @@ pub fn run(context: &mut Context, catalogue: &Catalogue, batch: &Batch, options:
     let mut cell_keys: Vec<BTreeMap<String, Result<String, String>>> = vec![BTreeMap::new(); cells.len()];
     let mut made: BTreeMap<(String, String), bool> = BTreeMap::new();
     for dependency in &needs {
+        if (context.stopped)() {
+            break;
+        }
         let name = &dependency.job.name;
         let mut plans: Vec<Planned> = Vec::new();
         let mut said: BTreeSet<String> = BTreeSet::new();
@@ -354,6 +369,7 @@ pub fn run(context: &mut Context, catalogue: &Catalogue, batch: &Batch, options:
                     text.push_str(&format!(" on {}", place.reference));
                     if cached {
                         (context.say)(format!("{text}: cached"));
+                        (context.progress)(Progress::Dependency { text, state: DependencyState::Cached });
                     } else {
                         plans.push(Planned {
                             job: &dependency.job,
@@ -379,10 +395,11 @@ pub fn run(context: &mut Context, catalogue: &Catalogue, batch: &Batch, options:
             let dependency_threads = dependency.job.effective_threads(options.threads);
             let dependency_width = pool_width(options.threads, dependency_threads);
             (context.say)(format!("{name}: {} to make, {dependency_width} at a time", plans.len()));
+            (context.progress)(Progress::Phase(format!("making {name}: {} to make", plans.len())));
             let mut not_run = Vec::new();
             let mut skipped = Vec::new();
             let stopped = context.stopped;
-            let mut quiet = Pool { report: false, skipped: &mut skipped };
+            let mut quiet = Pool { cells: false, skipped: &mut skipped };
             let records = pool(
                 context,
                 plans,
@@ -411,6 +428,7 @@ pub fn run(context: &mut Context, catalogue: &Catalogue, batch: &Batch, options:
             if (context.stopped)() {
                 break;
             }
+            (context.progress)(Progress::Phase(format!("prepare on {}", place.reference)));
             let outcome = run_prepare(context, batch, prepare, place, options, &launch)?;
             place.prepare = Some(outcome);
         }
@@ -429,6 +447,9 @@ pub fn run(context: &mut Context, catalogue: &Catalogue, batch: &Batch, options:
         {
             if !said {
                 (context.say)("the monitor measures the machine before the first jobs".to_string());
+                (context.progress)(Progress::Phase(
+                    "the monitor measures the machine before the first jobs (up to a minute)".to_string(),
+                ));
                 said = true;
             }
             std::thread::sleep(TICK);
@@ -527,8 +548,9 @@ pub fn run(context: &mut Context, catalogue: &Catalogue, batch: &Batch, options:
         width,
         cells: plans.iter().map(|plan| (plan.values.clone(), plan.estimate)).collect(),
     });
+    (context.progress)(Progress::Phase("the jobs".to_string()));
     let stopped = context.stopped;
-    let mut cells_pool = Pool { report: true, skipped: &mut summary.skipped };
+    let mut cells_pool = Pool { cells: true, skipped: &mut summary.skipped };
     let records = pool(
         context,
         plans,
@@ -577,7 +599,8 @@ fn recorded_texts(plan: &Planned, place: &Place, setting: u32) -> Result<(String
 
 /// What a pool tells besides its lines: the cells' progress, and the cells done before.
 struct Pool<'s> {
-    report: bool,
+    /// The cells of the grid (their progress told by index), else dependencies (by text).
+    cells: bool,
     skipped: &'s mut Vec<(String, String)>,
 }
 
@@ -665,7 +688,7 @@ fn pool(
             {
                 (context.say)(format!("[{:>digits$}/{count}] done before  {}  · {run}", index + 1, plan.text));
                 tell.skipped.push((plan.text.clone(), run.clone()));
-                if tell.report {
+                if tell.cells {
                     (context.progress)(Progress::Skipped { index });
                 }
                 continue;
@@ -696,9 +719,12 @@ fn pool(
                     if started_job.child.is_none() {
                         // Its prepare or a dependency failed: recorded at once, without running.
                         let status = Status::Failed { code: None, signal: None };
+                        let text = started_job.text.clone();
                         finish(context, started_job, status.clone(), None, &mut records, digits, count);
-                        if tell.report {
+                        if tell.cells {
                             (context.progress)(Progress::Ended { index, status });
+                        } else {
+                            (context.progress)(Progress::Dependency { text, state: DependencyState::Ended(status) });
                         }
                     } else {
                         let estimate = plan
@@ -710,8 +736,18 @@ fn pool(
                             index + 1,
                             started_job.text
                         ));
-                        if tell.report {
-                            (context.progress)(Progress::Started(index));
+                        let log = started_job
+                            .run
+                            .log
+                            .as_ref()
+                            .map(|log| context.places.data.join(&log.path))
+                            .unwrap_or_default();
+                        if tell.cells {
+                            (context.progress)(Progress::Started { index, log });
+                        } else {
+                            let text = started_job.text.clone();
+                            (context.progress)(Progress::Follow(log.clone()));
+                            (context.progress)(Progress::Dependency { text, state: DependencyState::Started });
                         }
                         running.push(started_job);
                     }
@@ -800,10 +836,12 @@ fn pool(
             if let Some((watch, _)) = &context.monitor {
                 monitor::lock(watch).groups.retain(|known| *known != group);
             }
-            let index = job.index;
+            let (index, text) = (job.index, job.text.clone());
             finish(context, job, status.clone(), Some(seconds), &mut records, digits, count);
-            if tell.report {
+            if tell.cells {
                 (context.progress)(Progress::Ended { index, status });
+            } else {
+                (context.progress)(Progress::Dependency { text, state: DependencyState::Ended(status) });
             }
         }
         std::thread::sleep(TICK);
@@ -847,6 +885,7 @@ fn run_prepare(
     log_line(&mut log, &format!("checkout: {} at {} in {}", place.reference, place.git.commit, place.root.display()));
     log_line(&mut log, &format!("prepare: {line}"));
     (context.say)(format!("{}: prepare, its log {}", place.reference, path.display()));
+    (context.progress)(Progress::Follow(path.clone()));
     let environment = job.environment_for(&executed)?;
     let directory = place.root.join(render(&job.directory, &executed)?);
     let mut child = spawn_shell(&line, &directory, &environment, job.memory_limit_gb, &log)?;
