@@ -134,8 +134,8 @@ this batch or another, find it there. The key reads the dependency's command, th
 `key` paths and the versions of its `tools`, so two commits with the same engine sources share one
 engine. Nothing empties the cache on its own: remove the folder by hand.
 
-A job already done (same command, commit, tools and dependencies, ended ok) is skipped, said `done
-before`; `--again` runs it anyway. The line of a job that starts gives its estimate, the median of its
+A job already done (same command, commit, tools and dependencies, ended ok, and in a ⏱ batch its
+time counting) is skipped, said `done before`; `--again` runs it anyway. The line of a job that starts gives its estimate, the median of its
 cell's past times. In the window, a batch is one item of the queue (a sequence may name batches), its
 lines in `logs/<launch>.log`, its cells in the Batches screen as they start and end.
 

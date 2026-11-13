@@ -143,8 +143,8 @@ les lancements suivants, de ce batch ou d'un autre, l'y trouvent. La clé lit la
 dépendance, les objets git des chemins de `key` et les versions de ses `tools` : deux commits aux mêmes
 sources du moteur partagent un moteur. Rien ne vide le cache tout seul : retirer le dossier à la main.
 
-Un job déjà fait (même commande, commit, outils et dépendances, fini ok) est sauté, dit `done
-before` ; `--again` le relance quand même. La ligne d'un job qui commence donne son estimation, la
+Un job déjà fait (même commande, commit, outils et dépendances, fini ok, et dans un batch ⏱ son temps
+comptant) est sauté, dit `done before` ; `--again` le relance quand même. La ligne d'un job qui commence donne son estimation, la
 médiane des temps passés de sa case. Dans la fenêtre, un batch est un élément de la file (une séquence
 peut nommer des batches), ses lignes dans `logs/<lancement>.log`, ses cases dans l'écran Batches à
 mesure qu'elles commencent et finissent.
