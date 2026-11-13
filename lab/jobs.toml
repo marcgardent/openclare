@@ -115,18 +115,21 @@ command = "make proofs NOTE=turns-of-a-t-mesh"
 memory_limit_gb = 32
 paper = "B"
 
-[[job]]
+[[batch]]
 name = "lean-oracle-seed-1"
 summary = "docs/research/turns-of-a-t-mesh/experiments/property/results/seed-1.json"
-description = "T-meshes made without the engine, checked by the Lean oracle Check/Main.lean (experiments/property/README.md): about 3 s an instance."
+description = "T-meshes made without the engine, checked by the Lean oracle Check/Main.lean (experiments/property/README.md): about 3 s an instance. The prepare builds the proofs and generates the instances once per checkout; one job checks one instance (check_exports.py --index), the axis index running from 0 to count - 1: change both together."
 category = "lean-oracle"
-command = "export PATH=\"$HOME/.elan/bin:$PATH\"; python3 docs/research/turns-of-a-t-mesh/experiments/property/generate.py --count {count} --seed {seed} && python3 docs/research/turns-of-a-t-mesh/lean/Check/check_exports.py scratch/data-package/property/seed-{seed} scratch/data-package/property/seed-{seed}/lean-check --jobs {threads}"
-prepare = "make proofs NOTE=turns-of-a-t-mesh"
+prepare = "make proofs NOTE=turns-of-a-t-mesh && rm -rf scratch/data-package/property/seed-{seed} && python3 docs/research/turns-of-a-t-mesh/experiments/property/generate.py --count {count} --seed {seed}"
+command = "export PATH=\"$HOME/.elan/bin:$PATH\"; python3 docs/research/turns-of-a-t-mesh/lean/Check/check_exports.py scratch/data-package/property/seed-{seed} {out}/lean-check --index {index} --jobs 1"
 parameters = { count = "50", seed = "1" }
+threads = 1
 memory_limit_gb = 32
 timing_matters = true
-outputs = ["scratch/data-package/property/seed-*/summary.json"]
 paper = "B"
+
+[batch.axes]
+index = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49]
 
 [[batch]]
 name = "lean-oracle-doubles"
@@ -627,18 +630,23 @@ tags = ["paper-A-exact"]
 
 # ---------------------------------------------------------------- before and after
 
-[[job]]
+[[batch]]
 name = "three-budgets"
-description = "The twelve models at 2970, 3000 and 3030 quads (bench/budgets.py), one run each: measure's metrics and the valences of each quad mesh, interior and border. {engine} is a commit to build and run (origin/main, a branch), or empty for the engine built in the checkout; results in scratch/budgets/<the engine's commit>.json; the script is on the branch of ticket #279 until it is merged. One engine thread per run, {threads} runs at a time."
+description = "The twelve models at 2970, 3000 and 3030 quads, one job each: the remesh and its measure (measure's metrics in {out}/measure.json, the mesh beside it for the valences), at one engine thread. The references to compare are the axis ref: `lab run three-budgets --axis ref=main,<branch>`, run side by side. The prepare builds the engine and the add-on, and exports the sources from the scenes by Blender the first time in each checkout."
 category = "quick-bench"
-command = "python3 bench/budgets.py --engine '{engine}' --budgets {budgets} --models {models} --jobs {threads}"
-prepare = "cargo build --release"
-checkout = "ask"
-parameters = { engine = "origin/main", budgets = "2970,3000,3030", models = "creature,blob,suzanne,spot,pig,ogre,bob,jerry,blub,rock,cage,part" }
-environment = { OPENCLARE_THREADS = "1", RAYON_NUM_THREADS = "1" }
+prepare = "cargo build --release && make addon && python3 -c 'import sys; sys.path.insert(0, \"bench\"); import run; [run.source_path(model) for model in sys.argv[1:]]' creature blob suzanne spot pig ogre bob jerry blub rock cage part"
+command = "target/release/openclare remesh bench/out/{model}/source.obj {out}/mesh.obj --preset {preset} --quads {budget} && target/release/openclare measure bench/out/{model}/source.obj {out}/mesh.obj --target {budget} --json > {out}/measure.json"
+parameters = { preset = "organic" }
+environment = { HIGHS_THREADS = "1" }
+threads = 1
 memory_limit_gb = 32
 timing_matters = false
-outputs = ["scratch/budgets/*.json"]
+
+[batch.axes]
+model = ["creature", "blob", "suzanne", "spot", "pig", "ogre", "bob", "jerry", "blub", "rock",
+         { value = "cage", preset = "hard-surface" }, { value = "part", preset = "hard-surface" }]
+budget = [2970, 3000, 3030]
+ref = ["main"]
 
 [[job]]
 name = "pole-pairs-115"
@@ -671,6 +679,26 @@ model = ["creature", "blob", "suzanne", "spot", "pig", "ogre", "bob", "jerry", "
          { value = "cage", preset = "hard-surface" }, { value = "part", preset = "hard-surface" }]
 budget = [2970, 3000, 3030]
 ref = ["main", "12a6675"]
+
+[[batch]]
+name = "pole-pairs-115-tmesh"
+description = "Ticket #115, the T-mesh (bench/pole_pairs.py, part tmesh): `openclare tmesh --json` of the twelve models at 1000, 3000 and 8000 quads, the pole pairs joined and with --no-pairs (which only 12a6675, the head of claude/pole-pairs-115, has), one job each at one engine thread: patches, thin patches, short arcs, T-junctions in {out}/tmesh.json."
+category = "quick-bench"
+prepare = "cargo build --release && make addon && python3 -c 'import sys; sys.path.insert(0, \"bench\"); import run; [run.source_path(model) for model in sys.argv[1:]]' creature blob suzanne spot pig ogre bob jerry blub rock cage part"
+command = "target/release/openclare tmesh bench/out/{model}/source.obj --quads {budget} --simplify 2 --json {crease} {pairs_flag} > {out}/tmesh.json"
+checkout = "12a6675"
+parameters = { crease = "", pairs_flag = "" }
+environment = { HIGHS_THREADS = "1" }
+threads = 1
+memory_limit_gb = 32
+timeout = "30m"
+timing_matters = true
+
+[batch.axes]
+model = ["creature", "blob", "suzanne", "spot", "pig", "ogre", "bob", "jerry", "blub", "rock",
+         { value = "cage", crease = "--crease-angle 30" }, { value = "part", crease = "--crease-angle 30" }]
+budget = [1000, 3000, 8000]
+pairs = [{ value = "joined", pairs_flag = "" }, { value = "no-pairs", pairs_flag = "--no-pairs" }]
 
 # ---------------------------------------------------------------- sequences
 

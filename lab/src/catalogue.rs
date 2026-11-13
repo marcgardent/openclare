@@ -332,6 +332,12 @@ impl Catalogue {
         self.jobs.iter().find(|job| job.name == name)
     }
 
+    /// The jobs and the batches' templates, the jobs first: what the State
+    /// screen and the repository's summaries go over.
+    pub fn every_job(&self) -> impl Iterator<Item = &Job> {
+        self.jobs.iter().chain(self.batches.iter().map(|batch| &batch.job))
+    }
+
     pub fn batch(&self, name: &str) -> Option<&Batch> {
         self.batches.iter().find(|batch| batch.job.name == name)
     }
@@ -902,6 +908,23 @@ mod tests {
             render(&job.command, &values).unwrap();
             job.environment_for(&values).unwrap();
         }
+        // Every cell of every batch renders, its prepare too.
+        for batch in &catalogue.batches {
+            for cell in batch.expand(&[]).unwrap() {
+                let reference = cell.reference.clone().unwrap_or_else(|| batch.job.checkout.initial());
+                let mut values = batch.job.values(6, "12a6675", &reference, None, &cell.parameters);
+                values.insert(OUT.to_string(), "{out}".to_string());
+                render(&batch.job.command, &values).unwrap();
+                batch.job.environment_for(&values).unwrap();
+            }
+            if let Some(prepare) = &batch.job.prepare {
+                render(prepare, &batch.job.values(6, "12a6675", "main", None, &batch.job.parameters)).unwrap();
+            }
+        }
+        let tmesh = catalogue.batch("pole-pairs-115-tmesh").unwrap().expand(&[]).unwrap();
+        assert_eq!(tmesh.len(), 72);
+        assert_eq!(tmesh[1].parameters["pairs_flag"], "--no-pairs");
+        assert_eq!(catalogue.batch("lean-oracle-seed-1").unwrap().expand(&[]).unwrap().len(), 50);
         // The witness of R1 (SPEC.md, §15): ticket #115, 72 jobs.
         let batch = catalogue.batch("pole-pairs-115-remesh").unwrap();
         let cells = batch.expand(&[]).unwrap();

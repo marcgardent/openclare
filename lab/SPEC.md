@@ -370,6 +370,11 @@ ref = ["main", "12a6675"]
   `lean-oracle-doubles`) are split later, one at a time. A computation whose steps depend on each
   other stays one job. `lean-oracle-doubles` is the first split (2026-11-13): the generation, one
   random stream for all the instances, is its prepare; one job checks one instance, axis `index`.
+  Then `lean-oracle-seed-1` the same way, `three-budgets` (model × budget × ref, the references
+  given with `--axis ref=…`) and `pole-pairs-115-tmesh` (model × budget × pairs, the T-mesh part of
+  `pole-pairs-115`). `certify` waits for R3: it is in the sequence `paper-B-data`, whose next
+  job reads its certificates, and the window cannot queue a batch before R3. The State screen lists
+  the batches, without the box that queues a job.
 
 ### The run of a batch
 

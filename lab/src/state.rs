@@ -70,7 +70,7 @@ pub fn repository_runs(mirror: &Mirror, catalogue: &Catalogue) -> (Vec<Run>, Vec
     if !mirror.exists() {
         return (runs, problems);
     }
-    for job in &catalogue.jobs {
+    for job in catalogue.every_job() {
         let Some(summary) = &job.summary else { continue };
         match repository_run(mirror, job, summary) {
             Ok(Some(run)) => runs.push(run),

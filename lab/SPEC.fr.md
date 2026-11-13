@@ -254,7 +254,11 @@ moteur, `timeout = "30m"`.
   `lean-oracle-doubles`) seront découpés plus tard, un à la fois. Un calcul dont les étapes dépendent
   les unes des autres reste un seul job. `lean-oracle-doubles` est le premier découpé (2026-11-13) :
   la génération, un seul flux aléatoire pour toutes les instances, est sa préparation ; un job vérifie
-  une instance, axe `index`.
+  une instance, axe `index`. Puis `lean-oracle-seed-1` de la même façon, `three-budgets` (modèle ×
+  budget × ref, les références données par `--axis ref=…`) et `pole-pairs-115-tmesh` (modèle ×
+  budget × pairs, la partie T-mesh de `pole-pairs-115`). `certify` attend R3 : il est dans la séquence
+  `paper-B-data`, dont le job suivant lit ses certificats, et la fenêtre ne met pas de batch en file
+  avant R3. L'écran État liste les batches, sans la case qui met un job en file.
 
 ### L'exécution d'un batch
 
