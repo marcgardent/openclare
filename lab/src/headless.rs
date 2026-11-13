@@ -448,7 +448,7 @@ fn run_batch(
     }
     let threads = arguments.threads.unwrap_or(settings.threads);
     let job_threads = batch.job.effective_threads(threads);
-    let width = crate::batch::pool_width(threads, job_threads);
+    let width = crate::batch::batch_width(&batch.job, threads);
     if width * job_threads > settings.comfort_threads {
         eprintln!(
             "lab: {width} jobs of {job_threads} threads: {} threads, above the comfort limit of {}",

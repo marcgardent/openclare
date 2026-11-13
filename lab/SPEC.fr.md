@@ -381,7 +381,9 @@ command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {bu
    côte à côte (de jour, le réglage 6 et un thread moteur : six jobs), dans l'ordre de la grille,
    chacun lancé comme au §8.1 : son groupe de processus, son plafond mémoire, son journal
    `<lab>/logs/<id>.log`. La limite de confort (§7.1) se vérifie sur la largeur du pool fois
-   `threads`.
+   `threads`. Un batch dont **le temps compte tourne un job à la fois** (Marc, 2026-11-13) : six jobs
+   côte à côte sur 4 cœurs et 8 threads se ralentissent, et le moniteur les compte comme à nous, si
+   bien que leurs temps passeraient pour calmes.
 5. **Une fiche par job, écrite à sa fin** : `job` est le nom du batch, `parameters` les marques de la
    case, `checkout` sa référence, `cell` le lancement, les valeurs des axes et la largeur du pool.
    L'id est l'heure du début, le nom du batch et les valeurs de la case
@@ -396,8 +398,15 @@ command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {bu
    jobs du pool sont les nôtres) ; load1 n'est pas regardé pendant le batch, comme après une de nos
    exécutions. Un batch dont le temps compte lance son pool quand le moniteur a une fenêtre pleine
    (60 s), sinon ses premiers jobs n'auraient pas de verdict. Le temps d'un job dans un pool de six est
-   un temps dans un pool de six : `cell.pool` le dit, et les deux côtés d'une comparaison tournent
-   entrelacés dans le même pool (Q21).
+   un temps dans un pool de six : `cell.pool` le dit. Un batch dont le temps compte a un pool de un,
+   les deux côtés d'une comparaison toujours entrelacés (Q21).
+
+**Les temps dans les papiers** (Marc, 2026-11-13). Un papier cite le temps de chaque unité (une voie,
+une famille, un modèle à un budget), d'un job lancé seul (`cell.pool` 1) sur une machine calme
+(`timing_valid`), avec le matériel ; et pour une étape, la somme de ces temps, « 2 h 38 d'un cœur en
+tout », qui ne dépend pas du nombre de jobs lancés à la fois. Jamais le temps mural d'un pool
+parallèle. Les résumés fusionnés donnent les deux : les `seconds` propres des unités, et
+`cells_seconds_sum` à côté de `wall_seconds` (le plus long job).
 8. **La fin** : une ligne par statut (`72 jobs: 71 ok, 1 timed out`), les cases en échec nommées avec
    leur journal ; code de sortie 0 quand tous les jobs sont `Ok`, 1 sinon. Stop (Ctrl-C sans fenêtre)
    arrête les jobs en cours, notés `Stopped` ; les jobs pas encore lancés n'ont pas de fiche.
@@ -906,7 +915,8 @@ comme proposé :
     4 h) que 30 minutes tueraient.
 21. **Pool et temps** : six jobs à un thread sur 4 cœurs et 8 threads se ralentissent l'un l'autre ;
     le pool remplit le réglage, `cell.pool` est noté, et une comparaison reste juste parce que ses deux
-    côtés tournent entrelacés dans le même pool.
+    côtés tournent entrelacés dans le même pool. Revu par Marc plus tard le 2026-11-13 : un job à la
+    fois pour un batch dont le temps compte ; les autres remplissent le pool.
 22. **Version de Lean** : la chaîne nommée par `lean-toolchain`, rien n'est lancé.
 
 Nouvelle avec R2 :

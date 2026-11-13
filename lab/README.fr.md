@@ -122,7 +122,8 @@ lab run pole-pairs-115-remesh
 lab run pole-pairs-115-remesh --axis model=ogre --axis budget=3000 --timeout 1h
 ```
 
-lance chaque case de la grille, `réglage / threads` jobs à la fois, chacun avec son journal, son dossier
+lance chaque case de la grille, `réglage / threads` jobs à la fois (un à la fois quand son temps
+compte, ⏱ : un temps pour un papier est celui d'un job seul), chacun avec son journal, son dossier
 (`{out}`), son délai (30 minutes sauf si le batch en donne un) et son verdict de calme, chacun noté à
 sa fin ; un job en échec ou en dépassement est une case en échec et le batch continue. Il écrit une
 ligne par job qui commence et qui finit, puis les comptes, et sort avec 0 quand tous les jobs sont ok.

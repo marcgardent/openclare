@@ -498,7 +498,9 @@ command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {bu
 4. **The pool.** `threads` is what one job uses. The pool runs `max(1, setting / threads)` jobs side
    by side (by day, the setting 6 and one engine thread: six jobs), in the grid's order, each started
    as §8.1 starts a run: its own process group, memory cap and log `<lab>/logs/<run id>.log`. The
-   comfort limit (§7.1) is checked on the pool's width times `threads`.
+   comfort limit (§7.1) is checked on the pool's width times `threads`. A batch whose **timing
+   matters runs one job at a time** (Marc, 2026-11-13): six jobs side by side on 4 cores and 8 threads
+   slow each other, and the monitor counts them as ours, so their times would pass for calm.
 5. **One record per job, written when it ends**: `job` is the batch's name, `parameters` the cell's
    placeholders, `checkout` its reference, `cell` the launch, the axis values and the pool's width.
    The run id is the start time, the batch's name and the cell's values (`20261113-221403-pole-pairs-
@@ -512,8 +514,14 @@ command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {bu
    the pool are ours); load1 is not checked while the batch runs, as after one of our runs. A batch
    whose timing matters starts its pool once the monitor has a full window (60 s), else its first
    jobs would have no calm verdict. The time
-   of a job run in a pool of six is a time in a pool of six: `cell.pool` says so, and two sides of a
-   comparison run interleaved in the same pool (Q21).
+   of a job run in a pool of six is a time in a pool of six: `cell.pool` says so. A batch whose timing
+   matters has a pool of one, its sides of a comparison still interleaved (Q21).
+
+**Times in the papers** (Marc, 2026-11-13). A paper cites the time of each unit (a way, a family, a
+model at a budget), from a job run alone (`cell.pool` 1) on a calm machine (`timing_valid`), with the
+hardware; and for a stage, the sum of those times, "2 h 38 of one core in all", which does not depend
+on how many jobs ran at once. Never the wall time of a parallel pool. The merged summaries give both:
+the units' own `seconds`, and `cells_seconds_sum` beside `wall_seconds` (the longest job).
 8. **The end**: a line per status (`72 jobs: 71 ok, 1 timed out`), the failed cells named with their
    logs; exit code 0 when every job is `Ok`, else 1. Stop (Ctrl-C without a window) ends the jobs
    under way, recorded `Stopped`; the jobs not started get no record.
@@ -986,7 +994,8 @@ Decided on 2026-11-13 (the reform's proposal): remesh and measure are one job; a
 session and a branch of its own. New:
 
 Q20 to Q22 answered on 2026-11-13: as proposed (no timeout for a `[[job]]` by default, the pool
-filling the thread setting, Lean's version from `lean-toolchain`).
+filling the thread setting, Lean's version from `lean-toolchain`); Q21 revised the same day: a batch
+whose timing matters runs one job at a time.
 
 20. **Timeout of a `[[job]]`**: none by default (proposed), since many of today's jobs are whole
     batches in a script (`lean-oracle-doubles`, about 18 h; `forced-whole-lower`, 1 to 4 h) and 30
@@ -994,7 +1003,8 @@ filling the thread setting, Lean's version from `lean-toolchain`).
 21. **Pool and timing**: six one-thread jobs side by side on 4 cores and 8 threads slow each other
     down. Proposed: the pool fills the thread setting, `cell.pool` recorded, and a comparison is fair
     because its sides run interleaved in the same pool. Or a batch whose timing matters runs one job
-    at a time, slower but each time alone?
+    at a time, slower but each time alone? Answered again by Marc later on 2026-11-13: one job at a
+    time for a batch whose timing matters; the others fill the pool.
 22. **Lean's version**: the toolchain named by `lean-toolchain` (proposed, nothing run); or
     `lean --version` through elan, at the risk of a download?
 

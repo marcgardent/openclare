@@ -198,6 +198,13 @@ pub fn run_id(started: &DateTime<FixedOffset>, batch: &str, values: &[(String, S
 }
 
 /// The jobs of a pool: as many as the setting holds of the job's threads, at least one.
+/// The jobs a batch runs side by side: one when its timing matters, each
+/// then measured alone (decision of 2026-11-13, a time for a paper is that
+/// of a machine with nothing else to do); else the pool fills the setting.
+pub fn batch_width(job: &CatalogueJob, setting: u32) -> u32 {
+    if job.timing_matters { 1 } else { pool_width(setting, job.effective_threads(setting)) }
+}
+
 pub fn pool_width(setting: u32, job_threads: u32) -> u32 {
     (setting / job_threads.max(1)).max(1)
 }
@@ -256,7 +263,7 @@ pub fn run(context: &mut Context, catalogue: &Catalogue, batch: &Batch, options:
         cells.iter().map(|cell| cell.reference.clone().unwrap_or_else(|| fallback.clone())).collect();
     let timeout = options.timeout.or(job.timeout).map_or(crate::catalogue::BATCH_TIMEOUT_SECONDS, |t| t.seconds);
     let threads = job.effective_threads(options.threads);
-    let width = pool_width(options.threads, threads);
+    let width = batch_width(job, options.threads);
     let begun = Local::now().fixed_offset();
     let launch = format!("{}-{}", begun.format("%Y%m%d-%H%M%S"), job.name);
     let mut summary = Summary { launch: launch.clone(), jobs: cells.len(), ..Summary::default() };
@@ -1372,5 +1379,10 @@ mod tests {
         assert_eq!(pool_width(6, 1), 6);
         assert_eq!(pool_width(6, 4), 1);
         assert_eq!(pool_width(2, 8), 1, "at least one");
+        let mut job: CatalogueJob =
+            toml::from_str("name = \"x\"\ncategory = \"build\"\ncommand = \"true\"\nthreads = 1").unwrap();
+        assert_eq!(batch_width(&job, 6), 6);
+        job.timing_matters = true;
+        assert_eq!(batch_width(&job, 6), 1, "a time that matters is measured alone");
     }
 }
