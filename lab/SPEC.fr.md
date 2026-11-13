@@ -184,7 +184,9 @@ donne une par une, avec la durée **écrite** dans les documents (pas mesurée p
 - constructions : `build-release`, `addon` ;
 - suites de tests : `test-release` (plafond 40 Go, ~15 min selon Marc), `addon-test` ;
 - bancs : `quick-bench` (préparation `cargo build --release && make addon`), `bench` (budget et
-  outils en paramètres ; c'est aussi la comparaison aux autres remailleurs), `remeasure`, `scores` ;
+  outils en paramètres ; c'est aussi la comparaison aux autres remailleurs), `remeasure`, `scores`,
+  `three-budgets` (les douze modèles à 2970, 3000 et 3030 quads, métriques et valences ; `{engine}`
+  un commit à construire, ou vide pour le moteur construit ici ; checkout demandé) ;
 - Lean : `lean-build`, `lean-oracle-seed-1`, `lean-oracle-doubles` (branche `worktree-borders`,
   PR #271, `--borders`, ~18 h d'un cœur au total), `lean-check-export` ;
 - papier B : `export-male-body` (8 threads fixes, plafond 24 Go), les sept scripts rapides de

@@ -122,7 +122,9 @@ impl FaceFrames {
     /// `imposed` by its index, in quarter turns: a singularity there.
     ///
     /// Round a vertex a smooth field turns as the surface does, by its angle
-    /// defect, plus the drift summed over the half-edges out of it. The
+    /// defect, less the drift summed over the half-edges out of it (which
+    /// cross from face to face clockwise): that is its index, as
+    /// [`super::vertex_index`] counts it from the jumps the field gets. The
     /// drift added is the one the sizing would add for a factor `e^φ`, `φ`
     /// solving `L φ = c`: `c` takes the defect of each imposed vertex down
     /// to its index, and gives what it took back over the other vertices in
@@ -133,14 +135,11 @@ impl FaceFrames {
     /// Schröder, 2010, for the imposed vertices only).
     pub fn impose(&mut self, mesh: &TriMesh, imposed: &[(u32, i8)]) -> Result<()> {
         let vertices = mesh.positions.len();
-        let mut defect = vec![std::f64::consts::TAU; vertices];
+        let (defect, _) = super::angle_defects(mesh, self);
         let mut area = vec![0.0; vertices];
         for (f, tri) in mesh.triangles.iter().enumerate() {
-            for k in 0..3 {
-                let [p, next, previous] = [k, (k + 1) % 3, (k + 2) % 3].map(|c| mesh.positions[tri[c] as usize]);
-                let (to_next, to_previous) = ((next - p).normalize_or_zero(), (previous - p).normalize_or_zero());
-                defect[tri[k] as usize] -= to_next.dot(to_previous).clamp(-1.0, 1.0).acos();
-                area[tri[k] as usize] += self.area[f] / 3.0;
+            for &v in tri {
+                area[v as usize] += self.area[f] / 3.0;
             }
         }
         let mut wanted = vec![0.0; vertices];

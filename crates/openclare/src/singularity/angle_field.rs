@@ -8,7 +8,9 @@
 
 use std::f64::consts::{FRAC_PI_2, TAU};
 
-use crate::crossfield::{CrossField, FaceFrames, build_field, constraints, split_quarter_turns};
+use crate::crossfield::{
+    CrossField, FaceFrames, angle_defects, build_field, constraints, split_quarter_turns, vertex_index,
+};
 use crate::math::INVALID;
 use crate::mesh::Topology;
 use crate::preprocess::WorkMesh;
@@ -80,19 +82,7 @@ impl<'a> AngleField<'a> {
         let (strength, target_complex) = constraints(work, frames, alignment);
         let target_cross = target_complex.iter().map(|z| z.arg() / 4.0).collect();
 
-        let mut defect = vec![TAU; mesh.positions.len()];
-        let mut on_border = vec![false; mesh.positions.len()];
-        for h in 0..half_edges {
-            let tri = mesh.triangles[h / 3];
-            let k = h % 3;
-            let [p, next, previous] = [k, (k + 1) % 3, (k + 2) % 3].map(|c| mesh.positions[tri[c] as usize]);
-            let (to_next, to_previous) = ((next - p).normalize_or_zero(), (previous - p).normalize_or_zero());
-            defect[tri[k] as usize] -= to_next.dot(to_previous).clamp(-1.0, 1.0).acos();
-            if twin[h] == INVALID {
-                on_border[tri[k] as usize] = true;
-                on_border[tri[(k + 1) % 3] as usize] = true;
-            }
-        }
+        let (defect, on_border) = angle_defects(mesh, frames);
 
         let mut this = Self {
             work,
@@ -263,11 +253,12 @@ impl<'a> AngleField<'a> {
         }
     }
 
-    /// Index of the field at interior vertex `v`, in quarter turns. It only
-    /// depends on the jumps, not on the angles.
+    /// Index of the field at interior vertex `v`, in quarter turns: the one
+    /// [`build_field`] gives, which the map and the T-mesh realize. It only
+    /// depends on the jumps, not on the angles, and not on the drift that
+    /// `expected` holds (see [`vertex_index`]).
     pub fn index(&self, v: usize, outgoing: &[u32]) -> i32 {
-        let turning: f64 = outgoing.iter().map(|&h| self.expected[h as usize]).sum();
-        (4.0 * (self.defect[v] + turning) / TAU).round() as i32
+        vertex_index(self.defect[v], self.frames, outgoing.iter().map(|&h| (h as usize, self.jumps[h as usize])))
     }
 
     /// Moves one quarter turn of index from the origin of half-edge `h` to
@@ -293,5 +284,153 @@ impl<'a> AngleField<'a> {
 
     pub fn into_field(self) -> CrossField {
         build_field(&self.work.mesh, self.frames, self.angles, Some(self.jumps))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::crossfield::{self, prepare_sized};
+    use crate::mesh::primitives;
+    use crate::parametrization;
+    use crate::preprocess;
+
+    /// The half-edges out of each vertex.
+    fn outgoing(work: &WorkMesh) -> Vec<Vec<u32>> {
+        let mut outgoing = vec![Vec::new(); work.mesh.positions.len()];
+        for (f, tri) in work.mesh.triangles.iter().enumerate() {
+            for k in 0..3 {
+                outgoing[tri[k] as usize].push((3 * f + k) as u32);
+            }
+        }
+        outgoing
+    }
+
+    /// The index at `v` as the optimizer counted it before ticket #279, the
+    /// drift of the sizing taken in.
+    fn index_with_the_drift(angles: &AngleField, v: usize, outgoing: &[u32]) -> i32 {
+        let turning: f64 = outgoing.iter().map(|&h| angles.expected[h as usize]).sum();
+        (4.0 * (angles.defect[v] + turning) / TAU).round() as i32
+    }
+
+    /// The index the seamless map realizes at `v`: a full turn less the
+    /// angles of its triangles there in the map, in quarter turns.
+    fn index_of_the_map(work: &WorkMesh, map: &parametrization::Parametrization, v: u32) -> i32 {
+        let mut angles = 0.0;
+        for (f, tri) in work.mesh.triangles.iter().enumerate() {
+            for k in (0..3).filter(|&k| tri[k] == v) {
+                let [p, next, previous] = [k, (k + 1) % 3, (k + 2) % 3].map(|c| map.uv[3 * f + c]);
+                let (a, b) = ([next[0] - p[0], next[1] - p[1]], [previous[0] - p[0], previous[1] - p[1]]);
+                angles += (a[0] * b[1] - a[1] * b[0]).atan2(a[0] * b[0] + a[1] * b[1]);
+            }
+        }
+        (4.0 * (TAU - angles) / TAU).round() as i32
+    }
+
+    #[test]
+    fn the_optimizer_counts_the_index_the_map_realizes_where_the_sizing_turns_the_field() {
+        // A flat grid whose quads are to be much smaller at its centre than
+        // around: the drift summed round the centre is -2.67 rad, more than
+        // an eighth of a turn, as at jerry's spike (ticket #279).
+        let segments = 12;
+        let mesh = primitives::plane(segments);
+        let centre = (segments / 2) * (segments + 2);
+        let mut work =
+            preprocess::create(preprocess::Kind::Passthrough).preprocess(&mesh, &Default::default()).unwrap();
+        work.sizing[centre as usize] = (-0.8f64).exp();
+        let field = crossfield::create(crossfield::Kind::Power)
+            .solve(&work, &crossfield::Request { alignment: 0.0, ..Default::default() })
+            .unwrap();
+        let (topology, frames) = prepare_sized(&work).unwrap();
+        let angles = AngleField::new(&work, &topology, &frames, &field, 0.0);
+
+        let outgoing = outgoing(&work);
+        let drift: f64 = outgoing[centre as usize].iter().map(|&h| frames.drift[h as usize]).sum();
+        assert!(drift < -2.6, "drift round the centre {drift}");
+        for v in (0..mesh.positions.len()).filter(|&v| !angles.on_border[v]) {
+            assert_eq!(angles.index(v, &outgoing[v]), field.indices[v] as i32, "vertex {v}");
+        }
+        // The count the optimizer made before: the drift taken in.
+        let old = index_with_the_drift(&angles, centre as usize, &outgoing[centre as usize]);
+        let index = field.indices[centre as usize] as i32;
+        assert_ne!(old, index, "the configuration tells the two counts apart");
+        // Nor is it the sum of the jumps modulo 4, which glue the map's charts.
+        let jumps: i32 = outgoing[centre as usize].iter().map(|&h| field.period_jumps[h as usize]).sum();
+        assert_eq!((index - jumps).rem_euclid(4), 0);
+        assert_ne!((old - jumps).rem_euclid(4), 0);
+
+        let request = parametrization::Request { edge_length: 0.25, stiffening_rounds: 40 };
+        let map =
+            parametrization::create(parametrization::Kind::Seamless).parametrize(&work, &field, &request).unwrap();
+        println!("centre: index {index}, with the drift {old}, drift {drift:.3}");
+        assert_eq!(index_of_the_map(&work, &map, centre), index);
+    }
+
+    /// The faces round jerry's spike as the optimizer received them at 3000
+    /// quads, the sizing and the field's angles with them, and the spike.
+    fn jerry_spike() -> (WorkMesh, Vec<f64>, usize) {
+        let text = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/data/jerry_spike.obj")).unwrap();
+        let mesh = crate::mesh::obj::parse_obj(text.as_bytes()).unwrap();
+        let mut work =
+            preprocess::create(preprocess::Kind::Passthrough).preprocess(&mesh, &Default::default()).unwrap();
+        let values = |prefix: &str| -> Vec<f64> {
+            text.lines()
+                .filter_map(|line| line.strip_prefix(prefix))
+                .map(|value| value.trim().parse().unwrap())
+                .collect()
+        };
+        work.sizing = values("# sizing ");
+        let angles = values("# angle ");
+        assert_eq!((work.sizing.len(), angles.len()), (work.mesh.positions.len(), work.mesh.triangles.len()));
+        (work, angles, values("# centre ")[0] as usize - 1)
+    }
+
+    #[test]
+    fn at_jerrys_spike_the_optimizer_sees_the_index_the_map_has_and_splits_it() {
+        let (work, angles, spike) = jerry_spike();
+        let (topology, frames) = prepare_sized(&work).unwrap();
+        let field = build_field(&work.mesh, &frames, angles, None);
+        let outgoing = outgoing(&work);
+        let drift: f64 = outgoing[spike].iter().map(|&h| frames.drift[h as usize]).sum();
+        // A doublet for the map: the T-mesh would give it 2 arcs, the quad
+        // mesh a vertex of valence 2.
+        assert_eq!(field.indices[spike], 2, "drift round the spike {drift}");
+        let optimizer = AngleField::new(&work, &topology, &frames, &field, 0.05);
+        assert_eq!(index_with_the_drift(&optimizer, spike, &outgoing[spike]), 1, "what the optimizer used to see");
+        for v in (0..work.mesh.positions.len()).filter(|&v| !optimizer.on_border[v]) {
+            assert_eq!(optimizer.index(v, &outgoing[v]), field.indices[v] as i32, "vertex {v}");
+        }
+
+        let request = crate::singularity::Request { alignment: 0.05, tolerance: 1.0, reach: None };
+        let (optimized, report) = crate::singularity::create(crate::singularity::Kind::PairCancellation)
+            .optimize(&work, &field, &request)
+            .unwrap();
+        assert!(report.split >= 1, "{report:?}");
+        assert!(optimized.indices.iter().all(|index| index.abs() < 2), "{:?}", optimized.singularities());
+    }
+
+    #[test]
+    fn the_optimizer_sees_the_poles_the_user_placed() {
+        // Imposed poles are made by the drift alone: the count with the
+        // drift taken in did not see them.
+        let mesh = primitives::icosphere(3);
+        let mut work =
+            preprocess::create(preprocess::Kind::Passthrough).preprocess(&mesh, &Default::default()).unwrap();
+        work.imposed = vec![(0, 1), (100, -1)];
+        let field = crossfield::create(crossfield::Kind::Power)
+            .solve(&work, &crossfield::Request { alignment: 0.0, ..Default::default() })
+            .unwrap();
+        let (topology, frames) = prepare_sized(&work).unwrap();
+        let angles = AngleField::new(&work, &topology, &frames, &field, 0.0);
+        let outgoing = outgoing(&work);
+        for &(pole, index) in &work.imposed {
+            let pole = pole as usize;
+            assert_eq!(field.indices[pole], index);
+            assert_eq!(angles.index(pole, &outgoing[pole]), index as i32);
+            assert_eq!(index_with_the_drift(&angles, pole, &outgoing[pole]), 0);
+        }
+        for v in 0..mesh.positions.len() {
+            assert_eq!(angles.index(v, &outgoing[v]), field.indices[v] as i32, "vertex {v}");
+        }
     }
 }
