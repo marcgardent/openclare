@@ -183,7 +183,8 @@ axes = { index = [0, 1, 2, 3, 4, 5, 6, 7] }
 
 # ---------------------------------------------------------------- paper B, the turns of a T-mesh
 # docs/research/turns-of-a-t-mesh/experiments/NIGHT.md, in its order. HiGHS on
-# one thread in every script, as there.
+# the thread setting (HIGHS_THREADS, which lab sets as the others), one job at a
+# time when its timing matters.
 
 [[job]]
 name = "export-male-body"
@@ -194,7 +195,6 @@ command = "python3 docs/research/turns-of-a-t-mesh/experiments/export.py --openc
 prepare = "git diff --quiet {frozen} HEAD -- crates Cargo.toml Cargo.lock && cargo build --release"
 checkout = "ask"
 parameters = { frozen = "e13fadb", variant = "as-is" }
-environment = { HIGHS_THREADS = "1" }
 memory_limit_gb = 24
 timing_matters = true
 outputs = ["scratch/data-package/turns-of-a-t-mesh/male-body/record.json"]
@@ -208,8 +208,6 @@ description = "Stage 3 of NIGHT.md: counts of the export."
 category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/census.py {export}"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
-environment = { HIGHS_THREADS = "1" }
-threads = 1
 memory_limit_gb = 16
 timing_matters = true
 outputs = ["docs/research/turns-of-a-t-mesh/experiments/results/census.json"]
@@ -224,8 +222,6 @@ category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/lattice.py {export} --ways {way} --seconds 600 --out {out} --summary {out}/lattice.json"
 report = "python3 docs/research/turns-of-a-t-mesh/experiments/merge.py {records} --file lattice.json --mode concat --out {out}"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
-environment = { HIGHS_THREADS = "1" }
-threads = 1
 memory_limit_gb = 16
 timeout = "1h"
 timing_matters = true
@@ -241,8 +237,6 @@ description = "Stage 3 of NIGHT.md: Table tab:iis (about 3 minutes)."
 category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/conflicts.py {export}"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
-environment = { HIGHS_THREADS = "1" }
-threads = 1
 memory_limit_gb = 16
 timing_matters = true
 outputs = ["docs/research/turns-of-a-t-mesh/experiments/results/conflicts.json"]
@@ -256,8 +250,6 @@ description = "Stage 3 of NIGHT.md: Table tab:pairs (after conflicts)."
 category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/pairs.py {export}"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
-environment = { HIGHS_THREADS = "1" }
-threads = 1
 memory_limit_gb = 16
 timing_matters = true
 outputs = ["docs/research/turns-of-a-t-mesh/experiments/results/pairs.json"]
@@ -271,8 +263,6 @@ description = "Stage 3 of NIGHT.md: Lemma Combs on the male body (after conflict
 category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/combs.py {export}"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
-environment = { HIGHS_THREADS = "1" }
-threads = 1
 memory_limit_gb = 16
 timing_matters = true
 outputs = ["docs/research/turns-of-a-t-mesh/experiments/results/combs.json"]
@@ -286,8 +276,6 @@ description = "Stage 3 of NIGHT.md: the Fox-Burgers formula on every turn (about
 category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/fox.py {export} --relations 2"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
-environment = { HIGHS_THREADS = "1" }
-threads = 1
 memory_limit_gb = 16
 timing_matters = true
 outputs = ["docs/research/turns-of-a-t-mesh/experiments/results/fox.json"]
@@ -302,8 +290,6 @@ category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/forced.py {export} --ways {way} --families {families} --steps bounds --out {out} --summary {out}/forced-bounds.json"
 report = "python3 docs/research/turns-of-a-t-mesh/experiments/merge.py {records} --file forced-bounds.json --mode concat --out {out}"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body", way = "0", families = "held" }
-environment = { HIGHS_THREADS = "1" }
-threads = 1
 memory_limit_gb = 16
 timeout = "2h"
 timing_matters = true
@@ -323,8 +309,6 @@ category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/forced.py {export} --ways {way} --families {families} --whole-lower --seconds 900 --budget 1800 --out {out} --summary {out}/forced.json"
 report = "python3 docs/research/turns-of-a-t-mesh/experiments/merge.py {records} --file forced.json --mode concat --out {out}"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body", way = "0", families = "held" }
-environment = { HIGHS_THREADS = "1" }
-threads = 1
 memory_limit_gb = 16
 timeout = "4h"
 timing_matters = true
@@ -343,8 +327,6 @@ description = "Stage 4 of NIGHT.md: the optimum for way 2 keeping open every arc
 category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/forced.py {export} --ways 2 --families held --sound --seconds 900 --summary docs/research/turns-of-a-t-mesh/experiments/results/forced-sound.json --out scratch/data-package/turns-of-a-t-mesh/forced-sound"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
-environment = { HIGHS_THREADS = "1" }
-threads = 1
 memory_limit_gb = 16
 timing_matters = true
 outputs = ["docs/research/turns-of-a-t-mesh/experiments/results/forced-sound.json"]
@@ -359,8 +341,6 @@ category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/forced.py {export} --ways {way} --families {families} --steps bounds --valid --out scratch/data-package/turns-of-a-t-mesh/forced-valid --summary {out}/forced-valid-bounds.json"
 report = "python3 docs/research/turns-of-a-t-mesh/experiments/merge.py {records} --file forced-valid-bounds.json --mode concat --out {out}"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body", way = "0", families = "held" }
-environment = { HIGHS_THREADS = "1" }
-threads = 1
 memory_limit_gb = 16
 timeout = "4h"
 timing_matters = false
@@ -380,8 +360,6 @@ category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/forced.py {export} --ways {way} --families {families} --valid --whole-lower --seconds 900 --budget 1800 --out scratch/data-package/turns-of-a-t-mesh/forced-valid --summary {out}/forced-valid.json"
 report = "python3 docs/research/turns-of-a-t-mesh/experiments/merge.py {records} --file forced-valid.json --mode concat --out {out}"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body", way = "0", families = "held" }
-environment = { HIGHS_THREADS = "1" }
-threads = 1
 memory_limit_gb = 16
 timeout = "4h"
 timing_matters = false
@@ -404,7 +382,6 @@ command = "D=scratch/data-package/turns-of-a-t-mesh; L=$D/forced-valid/lengths/$
 report = "python3 docs/research/closing-loops/experiments/collect.py {records} --into scratch/data-package/closing-loops/remesh-valid && python3 docs/research/closing-loops/experiments/exact/remesh.py --openclare target/release/openclare --commit {frozen} --engine as-is --source scratch/torso/source.obj --variants whole --most-closable scratch/data-package/turns-of-a-t-mesh/forced-valid/lengths --out scratch/data-package/closing-loops/remesh-valid --summary {out}/remesh-valid.json"
 checkout = "ask"
 parameters = { frozen = "e13fadb" }
-environment = { HIGHS_THREADS = "1" }
 memory_limit_gb = 24
 timeout = "1h"
 timing_matters = false
@@ -424,8 +401,6 @@ category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/holonomy.py {export} --ways {way} --jobs 1 --out {out} --summary {out}/holonomy.json"
 report = "python3 docs/research/turns-of-a-t-mesh/experiments/merge.py {records} --file holonomy.json --mode holonomy --out {out}"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
-environment = { HIGHS_THREADS = "1" }
-threads = 1
 memory_limit_gb = 16
 timeout = "1h"
 timing_matters = true
@@ -442,8 +417,6 @@ category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/strict.py {export} --rows {row} --out {out} --summary {out}/strict.json"
 report = "python3 docs/research/turns-of-a-t-mesh/experiments/merge.py {records} --file strict.json --mode concat --out {out}"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
-environment = { HIGHS_THREADS = "1" }
-threads = 1
 memory_limit_gb = 16
 timeout = "30m"
 timing_matters = true
@@ -461,8 +434,6 @@ prepare = "rm -rf {export}/export/certificates"
 command = "mkdir -p {export}/export/certificates/way-{way} && python3 docs/research/turns-of-a-t-mesh/lean/Check/certify.py {export}/export/call-*/way-{way}.json --claims scratch/data-package/turns-of-a-t-mesh/conflicts/claims.json --out {export}/export/certificates/way-{way}/certificates.json && cp {export}/export/certificates/way-{way}/certificates.json {out}/"
 report = "python3 docs/research/turns-of-a-t-mesh/experiments/merge.py {records} --file certificates.json --mode certify --out {out}"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
-environment = { HIGHS_THREADS = "1" }
-threads = 1
 memory_limit_gb = 16
 timeout = "2h"
 timing_matters = true
@@ -479,8 +450,6 @@ category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/conjugacy.py {export} --ways {way} --out {out} --summary {out}/conjugacy.json"
 report = "python3 docs/research/turns-of-a-t-mesh/experiments/merge.py {records} --file conjugacy.json --mode conjugacy --out {out}"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
-environment = { HIGHS_THREADS = "1" }
-threads = 1
 memory_limit_gb = 16
 timeout = "1h"
 timing_matters = true
@@ -495,8 +464,6 @@ description = "Proposition Feet modulo 2 on the male body."
 category = "experiment"
 command = "python3 -I docs/research/turns-of-a-t-mesh/experiments/parity.py {export}"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
-environment = { HIGHS_THREADS = "1" }
-threads = 1
 memory_limit_gb = 16
 timing_matters = true
 outputs = ["docs/research/turns-of-a-t-mesh/experiments/results/parity.json"]
@@ -508,8 +475,6 @@ summary = "docs/research/turns-of-a-t-mesh/experiments/results/gadget.json"
 description = "Section Choosing the turns (#216): the reduction on small graphs and 60 random spheres; 352 s under load (experiments/README.md). Reads no export."
 category = "experiment"
 command = "python3 -I docs/research/turns-of-a-t-mesh/experiments/gadget.py --count 60 --seed 1 --families box:2:2:6:2,box:3:3:8:3,box:3:3:10:6,box:4:4:10:8,box:3:3:12:10,cube:6,hull:12,dual:12"
-environment = { HIGHS_THREADS = "1" }
-threads = 1
 memory_limit_gb = 16
 timing_matters = true
 outputs = ["docs/research/turns-of-a-t-mesh/experiments/results/gadget.json"]
@@ -614,8 +579,6 @@ description = "Stage 1 of exact/NIGHT.md: seconds."
 category = "experiment"
 command = "python3 docs/research/closing-loops/experiments/exact/relaxation.py {export}"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
-environment = { HIGHS_THREADS = "1" }
-threads = 1
 memory_limit_gb = 16
 timing_matters = true
 paper = "A"
@@ -629,8 +592,6 @@ category = "experiment"
 command = "python3 docs/research/closing-loops/experiments/exact/most_closable.py {export} --ways {way} --whole 600 --whole-most 900 --jobs 1 --out {out} --summary {out}/summary.json"
 report = "python3 docs/research/closing-loops/experiments/collect.py {records} --into scratch/data-package/closing-loops/most_closable && python3 docs/research/closing-loops/experiments/exact/most_closable.py {export} --whole 600 --whole-most 900 --jobs 1 --summary {out}/most_closable.json"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
-environment = { HIGHS_THREADS = "1" }
-threads = 1
 memory_limit_gb = 16
 timeout = "1h"
 timing_matters = true
@@ -646,8 +607,6 @@ description = "Stage 2 of exact/NIGHT.md, the lane of way 2: the rings, then the
 category = "experiment"
 command = "python3 docs/research/closing-loops/experiments/exact/rings.py {export} --subset-seconds 600 --without-zeros 1800 && python3 docs/research/closing-loops/experiments/exact/lattice_rounding.py {export} --seconds 1200"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
-environment = { HIGHS_THREADS = "1" }
-threads = 1
 memory_limit_gb = 16
 timing_matters = true
 paper = "A"
@@ -660,8 +619,6 @@ description = "Stage 2 of exact/NIGHT.md, the lane of way 2: the local search, s
 category = "experiment"
 command = "python3 docs/research/closing-loops/experiments/exact/local_search.py {export} --seconds 1200"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
-environment = { HIGHS_THREADS = "1" }
-threads = 1
 memory_limit_gb = 16
 timing_matters = true
 paper = "A"
@@ -677,7 +634,6 @@ command = "python3 docs/research/closing-loops/experiments/exact/remesh.py --ope
 report = "python3 docs/research/closing-loops/experiments/collect.py {records} --into scratch/data-package/closing-loops/remesh && python3 docs/research/closing-loops/experiments/exact/remesh.py --openclare target/release/openclare --commit {frozen} --engine as-is --source scratch/torso/source.obj --summary {out}/remesh.json"
 checkout = "ask"
 parameters = { frozen = "e13fadb" }
-environment = { HIGHS_THREADS = "1" }
 memory_limit_gb = 24
 timeout = "1h"
 timing_matters = true
@@ -800,7 +756,6 @@ needs = ["engine", "source"]
 command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {budget} && {engine} measure {source} {out}/mesh.obj --target {budget} --json > {out}/measure.json"
 report = "python3 bench/before_after.py {records} --side ref --by budget --out {out}"
 parameters = { preset = "organic" }
-environment = { HIGHS_THREADS = "1" }
 memory_limit_gb = 32
 timing_matters = false
 
@@ -817,7 +772,6 @@ category = "quick-bench"
 needs = ["engine", "source"]
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/export.py --openclare {engine} --commit {commit} --source {source} --out {out}/male-body && python3 docs/research/turns-of-a-t-mesh/experiments/conflicts.py {out}/male-body --out {out}/conflicts --summary {out}/conflicts.json"
 parameters = { model = "human_male" }
-environment = { HIGHS_THREADS = "1" }
 memory_limit_gb = 32
 timeout = "1h"
 timing_matters = false
@@ -832,7 +786,6 @@ needs = ["engine", "source"]
 command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {budget} && {engine} measure {source} {out}/mesh.obj --target {budget} --json > {out}/measure.json"
 report = "python3 bench/before_after.py {records} --side ref --by budget --out {out}"
 parameters = { preset = "organic" }
-environment = { HIGHS_THREADS = "1" }
 memory_limit_gb = 32
 timeout = "30m"
 timing_matters = true
@@ -852,7 +805,6 @@ command = "{engine} tmesh {source} --quads {budget} --simplify 2 --json {crease}
 report = "python3 bench/before_after.py {records} --side pairs --by budget --file tmesh.json --keys patches,thin_patches,short_arcs,t_junctions,arcs,pole_pairs_joined,valid --sum --out {out}"
 checkout = "12a6675"
 parameters = { crease = "", pairs_flag = "" }
-environment = { HIGHS_THREADS = "1" }
 memory_limit_gb = 32
 timeout = "30m"
 timing_matters = true

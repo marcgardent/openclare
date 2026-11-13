@@ -404,7 +404,10 @@ peut utiliser et son code s'en sert : lab pose `OPENCLARE_THREADS`, `RAYON_NUM_T
 `RUST_TEST_THREADS` et `CARGO_BUILD_JOBS` à ce nombre (§7.1), et tout batch qui lance le moteur prend
 le réglage de threads (`threads` absent), un job à la fois quand son temps compte. Les scripts qui
 appellent le moteur transmettent `OPENCLARE_THREADS` (ils le retiraient jusque-là, si bien que le
-moteur prenait toute la machine) ; `end_to_end.py --cpus` le borne aux processeurs donnés.
+moteur prenait toute la machine) ; `end_to_end.py --cpus` le borne aux processeurs donnés. HiGHS
+suit le même réglage (`HIGHS_THREADS`, plus forcé à 1 dans le catalogue) : les batches Python des
+papiers prennent eux aussi le réglage de threads. Seules les vérifications Lean, une instance par
+processus, restent sur un thread.
 
 **Les temps dans les papiers** (Marc, 2026-11-13). Un papier cite le temps de chaque unité (une voie,
 une famille, un modèle à un budget), d'un job lancé seul (`cell.pool` 1) sur une machine calme
@@ -493,8 +496,9 @@ met en file (ci-dessous).
   comme l'export qui prend toute la machine). Le nombre **effectif** est celui que les règles
   contrôlent.
 - Pour chaque tâche, l'application pose `OPENCLARE_THREADS`, `RAYON_NUM_THREADS`,
-  `RUST_TEST_THREADS` et `CARGO_BUILD_JOBS` au nombre effectif, et remplit `{threads}` (pour `-P`,
-  `--jobs`, `JOBS=`). L'environnement propre d'une tâche les remplace (comme `HIGHS_THREADS = "1"`).
+  `RUST_TEST_THREADS`, `CARGO_BUILD_JOBS` et `HIGHS_THREADS` (depuis le 2026-11-13 : les scripts des
+  papiers le donnent à HiGHS) au nombre effectif, et remplit `{threads}` (pour `-P`, `--jobs`,
+  `JOBS=`). L'environnement propre d'une tâche les remplace.
 - **Limite de confort.** Au-delà de 6 threads (réglable, §12), l'élément de file affiche une alerte
   ambre : la machine rame pendant ce temps. Elle ne bloque jamais : Marc décide quand il lance.
   L'application ne voit pas les threads des autres sessions de la machine : la charge étrangère du

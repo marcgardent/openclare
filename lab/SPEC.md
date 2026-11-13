@@ -292,7 +292,6 @@ category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/forced.py {export} --whole-lower --seconds 900 --budget 1800 --jobs {threads}"
 checkout = "ask"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
-environment = { HIGHS_THREADS = "1" }
 threads = "setting"
 memory_limit_gb = 16
 timing_matters = true
@@ -520,7 +519,9 @@ and its code uses them: lab sets `OPENCLARE_THREADS`, `RAYON_NUM_THREADS`, `RUST
 `CARGO_BUILD_JOBS` to them (§7.1), and every batch that runs the engine takes the thread setting
 (`threads` left out), one job at a time when its timing matters. The scripts that call the engine pass
 `OPENCLARE_THREADS` on (they dropped it until then, so the engine took the whole machine);
-`end_to_end.py --cpus` caps it to the processors given.
+`end_to_end.py --cpus` caps it to the processors given. HiGHS follows the same setting
+(`HIGHS_THREADS`, no longer forced to 1 in the catalogue): the papers' Python batches take the thread
+setting too. Only the Lean checks, one instance a process, stay on one thread.
 
 **Times in the papers** (Marc, 2026-11-13). A paper cites the time of each unit (a way, a family, a
 model at a budget), from a job run alone (`cell.pool` 1) on a calm machine (`timing_valid`), with the
@@ -600,9 +601,10 @@ window lists the batches in the catalogue and their records in the history; R3 q
 - One global **thread setting**, shown in the top bar. Each job declares how it uses threads:
   `setting` (it gets the setting) or `Fixed(n)` (it uses n whatever the setting, as the
   export, which takes the whole machine). The **effective** count is what the rules check.
-- The app sets, for every job, `OPENCLARE_THREADS`, `RAYON_NUM_THREADS`, `RUST_TEST_THREADS`
-  and `CARGO_BUILD_JOBS` to the effective count, and fills `{threads}` (for `-P`, `--jobs`,
-  `JOBS=`). A job's own `environment` overrides them (as `HIGHS_THREADS = "1"`).
+- The app sets, for every job, `OPENCLARE_THREADS`, `RAYON_NUM_THREADS`, `RUST_TEST_THREADS`,
+  `CARGO_BUILD_JOBS` and `HIGHS_THREADS` (since 2026-11-13: the papers' scripts give it to HiGHS) to
+  the effective count, and fills `{threads}` (for `-P`, `--jobs`, `JOBS=`). A job's own
+  `environment` overrides them.
 - **Comfort limit.** Above 6 threads (tunable, §12) the queue item shows an amber warning: the
   machine is slow to use meanwhile. It never blocks: Marc decides when he launches. The app
   cannot see the threads of other sessions on the machine: the monitor's foreign load (§9)

@@ -38,8 +38,8 @@ pub const BATCH_TIMEOUT_SECONDS: f64 = 1800.0;
 
 /// The variables set to the effective thread count for every job, before
 /// the job's own environment (SPEC.md, section 7.1).
-pub const THREAD_VARIABLES: [&str; 4] =
-    ["OPENCLARE_THREADS", "RAYON_NUM_THREADS", "RUST_TEST_THREADS", "CARGO_BUILD_JOBS"];
+pub const THREAD_VARIABLES: [&str; 5] =
+    ["OPENCLARE_THREADS", "RAYON_NUM_THREADS", "RUST_TEST_THREADS", "CARGO_BUILD_JOBS", "HIGHS_THREADS"];
 
 #[derive(Clone, Debug, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields)]

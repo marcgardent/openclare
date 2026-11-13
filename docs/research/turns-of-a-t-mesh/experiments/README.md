@@ -24,7 +24,8 @@ files read, the export's `record.json` (engine commit and build, options, source
 and its load, and the versions of SciPy and HiGHS with the number of HiGHS threads.
 
 **Threads.** HiGHS runs through SciPy (`scipy.optimize.milp` and `linprog`), with its option
-`threads` set to 1 (`HIGHS_THREADS=<n>` for another number; SciPy passes the option on as it is),
+`threads` set to 1 (`HIGHS_THREADS=<n>` for another number, as lab sets it to the thread setting;
+SciPy passes the option on as it is),
 and NumPy's linear algebra on one thread. `--jobs N` (where a script has it) runs N ways or
 families at a time, each in a process of its own. A time limit stops a solve at the same point
 only on the same machine under the same load: the long runs are for an idle machine (DT-090).
