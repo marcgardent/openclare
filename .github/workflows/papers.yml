@@ -10,7 +10,9 @@ name: papers
 # the progress of both papers, written by evidence.py), named after its folder.
 # On a pull request GitHub's `paths` filter looks at the whole diff against
 # the base, so the job `changes` looks at the files of the push itself and
-# skips the build when none of them is a paper.
+# skips the build when none of them is what a PDF reads: the LaTeX sources,
+# the bibliography, the figures, evidence.py, this workflow. The scripts, the
+# results and the notes of experiments/ are named by the papers, not read.
 on:
   pull_request:
     paths:
@@ -43,7 +45,7 @@ jobs:
           BASE: ${{ github.base_ref }}
         run: |
           concerned() {
-            grep -vE '^docs/research/turns-of-a-t-mesh/lean/' | grep -qE '^(docs/research/|\.github/workflows/papers\.yml$)'
+            grep -qE '^(docs/research/(closing-loops|turns-of-a-t-mesh)/(paper[^/]*\.tex|refs\.bib|figures/|evidence\.py)|\.github/workflows/papers\.yml$)'
           }
           if [ "$EVENT" != "pull_request" ]; then
             echo "papers=true" >> "$GITHUB_OUTPUT"
