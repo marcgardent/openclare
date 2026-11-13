@@ -295,6 +295,52 @@ paper = "B"
 tags = ["paper-B-data", "stage-4"]
 
 [[job]]
+name = "forced-valid-bounds"
+summary = "docs/research/turns-of-a-t-mesh/experiments/results/forced-valid-bounds.json"
+description = "Table tab:forced, column chains of P_valid (#211): every chain between singular vertices of length one or more in place of the engine's bounds; over an hour for each of ways 5 and 7 on one thread."
+category = "experiment"
+command = "python3 docs/research/turns-of-a-t-mesh/experiments/forced.py {export} --steps bounds --valid --out scratch/data-package/turns-of-a-t-mesh/forced-valid --summary docs/research/turns-of-a-t-mesh/experiments/results/forced-valid-bounds.json"
+parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
+environment = { HIGHS_THREADS = "1" }
+threads = 1
+memory_limit_gb = 16
+timing_matters = false
+outputs = ["docs/research/turns-of-a-t-mesh/experiments/results/forced-valid-bounds.json"]
+paper = "B"
+tags = ["paper-B-data", "stage-4"]
+
+[[job]]
+name = "forced-valid"
+summary = "docs/research/turns-of-a-t-mesh/experiments/results/forced-valid.json"
+description = "Table tab:forced, P_valid with the cap, the window and whole lengths (#211), every family (ways 5 and 7 missing from the table); hours, {threads} families at a time. Writes the whole lengths found for forced-valid-remesh."
+category = "experiment"
+command = "python3 docs/research/turns-of-a-t-mesh/experiments/forced.py {export} --valid --whole-lower --seconds 900 --budget 1800 --jobs {threads} --out scratch/data-package/turns-of-a-t-mesh/forced-valid --summary docs/research/turns-of-a-t-mesh/experiments/results/forced-valid.json"
+parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
+environment = { HIGHS_THREADS = "1" }
+memory_limit_gb = 16
+timing_matters = false
+outputs = ["docs/research/turns-of-a-t-mesh/experiments/results/forced-valid.json", "scratch/data-package/turns-of-a-t-mesh/forced-valid/*.txt"]
+paper = "B"
+tags = ["paper-B-data", "stage-4"]
+
+[[job]]
+name = "forced-valid-remesh"
+summary = "docs/research/closing-loops/experiments/exact/results/remesh-valid.json"
+description = "After forced-valid (#211): the engine meshes the male body way by way with the whole lengths P_valid found within the cap and the window (remesh.py, variant whole); valid says whether they are a sound quad mesh, which P_valid only bounds. The whole machine, a few minutes a way. The prepare refuses a checkout whose engine is not that of {frozen}."
+category = "experiment"
+prepare = "git diff --quiet {frozen} HEAD -- crates Cargo.toml Cargo.lock && cargo build --release"
+command = "D=scratch/data-package/turns-of-a-t-mesh; L=$D/forced-valid/lengths/$(basename $(ls -d $D/male-body/export/call-*/ | head -1)); mkdir -p $L && for f in $D/forced-valid/way-*-held-size.txt; do k=$(basename $f | cut -d- -f2); tail -n +2 $f | tr '\\n' ' ' > $L/way-$k-integer.txt; done && python3 docs/research/closing-loops/experiments/exact/remesh.py --openclare target/release/openclare --commit {frozen} --engine as-is --source scratch/torso/source.obj --variants whole --most-closable $D/forced-valid/lengths --out scratch/data-package/closing-loops/remesh-valid --summary docs/research/closing-loops/experiments/exact/results/remesh-valid.json"
+checkout = "ask"
+parameters = { frozen = "e13fadb" }
+environment = { HIGHS_THREADS = "1" }
+threads = 8
+memory_limit_gb = 24
+timing_matters = false
+outputs = ["docs/research/closing-loops/experiments/exact/results/remesh-valid.json"]
+paper = "B"
+tags = ["paper-B-data", "stage-4"]
+
+[[job]]
 name = "holonomy"
 summary = "docs/research/turns-of-a-t-mesh/experiments/results/holonomy.json"
 description = "Stage 4 of NIGHT.md: the crossing maps, discs and annuli of every turn; about an hour with 4 jobs."
@@ -583,7 +629,7 @@ outputs = ["scratch/budgets/*.json"]
 [[sequence]]
 name = "paper-B-data"
 description = "docs/research/turns-of-a-t-mesh/experiments/NIGHT.md, stages 1 to 4 in order (the aside of stage 5 left out)."
-jobs = ["export-male-body", "lean-check-export", "census", "lattice", "conflicts", "pairs", "combs", "fox", "forced-bounds", "forced-whole-lower", "forced-sound", "holonomy", "strict", "certify", "lean-check-export"]
+jobs = ["export-male-body", "lean-check-export", "census", "lattice", "conflicts", "pairs", "combs", "fox", "forced-bounds", "forced-whole-lower", "forced-sound", "forced-valid-bounds", "forced-valid", "holonomy", "strict", "certify", "lean-check-export"]
 
 [[sequence]]
 name = "paper-A-exact"
