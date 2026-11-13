@@ -116,9 +116,10 @@ single arcs, write all but one of the $68$ certificates of conflicts found on a
 human body.
 The
 conflicts bound from below the number of turns that every quantization within
-given bounds leaves shifted: on that body, within the bounds of separation of
-a remeshing engine, exactly one to 37 of the turns it holds, where it leaves
-19 to 170 shifted. Choosing the turns to close is NP-hard for bidirected
+given bounds leaves shifted: on that body, every quantization that keeps the
+singular vertices apart leaves shifted none to 33 of the turns a remeshing
+engine holds, where the engine leaves 19 to 170 shifted (one to 37 within its
+own bounds of separation). Choosing the turns to close is NP-hard for bidirected
 balances with $0$--$1$ bounds, the algebraic form of quantization; whether
 actual T-meshes give hard instances is open. The algebraic cores
 of the proofs are checked in Lean; the topology of the surface, that the walks
@@ -142,7 +143,9 @@ vertices apart. This paper asks why, and what follows.
 Sections~\ref{sec:setting} to~\ref{sec:beyond} go from the holonomy of one
 turn to conflicts between turns, any combination of turns, and borders and
 handles; Sections~\ref{sec:forced} and~\ref{sec:choosing} bound the turns
-every quantization leaves shifted and show that choosing them is NP-hard;
+every quantization leaves shifted (on a human body, none to 33 of the turns an
+engine holds, whichever arcs carry the separation of its singular vertices)
+and show that choosing them is NP-hard;
 Sections~\ref{sec:lean} and~\ref{sec:open} say what is machine-checked and
 what is open. The ingredients are classical (holonomy and spaces of flat
 cone metrics~\cite{veech1993flat}, their local
@@ -341,8 +344,15 @@ ways find $1{,}708$ turns and hold $1{,}020$ (summed over the ways). The integer
 search holds $36$ to $197$ arcs at length at least one, the \emph{bounds of
 separation}; $P_{\mathrm{eng}}$, the
 balanced lengths meeting them, is neither a subset nor a superset of the valid
-quantizations, which only ask a chain between two singular vertices to keep a
-positive length. Identities are checked in floating point unless said exact;
+quantizations. We call $P_{\mathrm{valid}}$ the non-negative balanced lengths
+giving a length of at least one to every \emph{chain}: a path of arcs between
+two singular vertices through T-junctions and corners, or one of the $8$
+separatrices that stop on another separatrix of their vertex, closed back
+along it. A chain of length zero merges two singular vertices or pinches the
+surface at one~\cite[\S4.1]{lyon2021constrained}, so $P_{\mathrm{valid}}$
+contains every valid quantization, whichever arc of a chain carries the
+separation, and a count forced in it transfers to all of them; the engine's
+lengths lie in it in every way. Identities are checked in floating point unless said exact;
 programs were solved with HiGHS 1.8.0~\cite{huangfu2018highs} on one thread
 through SciPy 1.16.3~\cite{virtanen2020scipy}, on an Intel Core i7-7700K
 (4 cores, 2017, 62\,GB) shared with other jobs (load $0.4$ to $2.2$ at the
@@ -1809,38 +1819,43 @@ not a parity~\cite[\S7]{gardent2026loops}. % UNSOURCED: the gap (0.399, 0.536 on
 
 In Table~\ref{tab:forced}, $H$ is the held turns of a way, or the $149$
 strips of the mesh at the engine's lengths for way~2 leaning less than
-$0.12$, and $P$ is $P_{\mathrm{eng}}$, then also the engine's cap on the mean
+$0.12$, and $P$ is $P_{\mathrm{eng}}$ or $P_{\mathrm{valid}}$, then also the engine's cap on the mean
 deviation, $D = 0.5219$ as the export gives it, then also whole lengths and
 its window of $10{,}379$ to $10{,}801$ quads. With the bounds alone the
-loop of Parker and Ryan is exact, in $1{,}166$ and $1{,}208$ seconds for
-ways 5 and 7 and in at most $22$ seconds for the other families; with the cap
-and the window, bounds come from closable subsets, disjoint cores, solver
-bounds and whole points checked exactly.
+loop of Parker and Ryan is exact, in $P_{\mathrm{eng}}$ in $1{,}166$ and
+$1{,}208$ seconds for ways 5 and 7 and in at most $22$ seconds for the other
+families; in $P_{\mathrm{valid}}$ the paths, too many to list, enter each
+program as its lengths break them (shortest paths), until none is broken.
+With the cap and the window, bounds come from closable subsets, disjoint
+cores, solver bounds and whole points checked exactly.
 
 \begin{table}[t]
-\begin{evidence}[unbreakable]{data}{the column ``bounds'' in ways 0 to 4 and 6, exact on the export these numbers come from (\texttt{make lean-check}); in ways 5 and 7 Lean certifies only $20 \le \tau \le 30$ and $28 \le \tau \le 37$, and the row of the strips is not checked by Lean; the columns with the cap and the window are measured, not checked}
+\begin{evidence}[unbreakable]{data}{the column ``bounds'' of $P_{\mathrm{eng}}$ in ways 0 to 4 and 6, exact on the export these numbers come from (\texttt{make lean-check}); in ways 5 and 7 Lean certifies only $20 \le \tau \le 30$ and $28 \le \tau \le 37$, and the row of the strips is not checked by Lean; the columns of $P_{\mathrm{valid}}$ and those with the cap and the window are measured, not checked}
 \centering
 \small
-\begin{tabular}{lrrrrr}
+\begin{tabular}{lrrrrrrrr}
 \toprule
-way & turns & bounds & bounds, cap & cap, size, whole & left shifted by the engine \\
+& & \multicolumn{3}{c}{$P_{\mathrm{eng}}$} & \multicolumn{3}{c}{$P_{\mathrm{valid}}$} & \\
+\cmidrule(lr){3-5}\cmidrule(lr){6-8}
+way & turns & bounds & \shortstack[r]{bounds,\\ cap} & \shortstack[r]{cap, size,\\ whole} & chains & \shortstack[r]{chains,\\ cap} & \shortstack[r]{cap, size,\\ whole} & \shortstack[r]{left shifted\\ by the engine} \\
 \midrule
-0 & 58 & 1 & 1 & 1 & 19 \\
-1 & 92 & 5 & 6 & 6--16 & 40 \\
-2 & 64 & 3 & 3 & 3 & 23 \\
-3 & 102 & 12 & 12 & 13--22 & 52 \\
-4 & 125 & 5 & 6 & 7--47 & 61 \\
-5 & 219 & 30 & 30--219 & 30--171 & 154 \\
-6 & 131 & 8 & 8--131 & 10--50 & 72 \\
-7 & 229 & 37 & 37--229 & 37--229 & 170 \\
+0 & 58 & 1 & 1 & 1 & 0 & 0 & 0 & 19 \\
+1 & 92 & 5 & 6 & 6--16 & 3 & 3 & 3 & 40 \\
+2 & 64 & 3 & 3 & 3 & 1 & 1 & 1 & 23 \\
+3 & 102 & 12 & 12 & 13--22 & 11 & 11 & 11--18 & 52 \\
+4 & 125 & 5 & 6 & 7--47 & 5 & 5 & 6--47 & 61 \\
+5 & 219 & 30 & 30--219 & 30--171 & 26 & -- & -- & 154 \\
+6 & 131 & 8 & 8--131 & 10--50 & 7 & 7 & 8--54 & 72 \\
+7 & 229 & 37 & 37--229 & 37--229 & 33 & -- & -- & 170 \\
 \midrule
-2, strips of the mesh & 149 & 10 & 10--149 & 12--72 & 114 \\
+2, strips & 149 & 10 & 10--149 & 12--72 & 17 & 17--149 & 17--82 & 114 \\
 \bottomrule
 \end{tabular}
 \caption{Male body: turns of each family that every quantization in $P$ leaves
 shifted (Theorems~\ref{thm:forced} and~\ref{thm:transversal}; measured), with
-$P = P_{\mathrm{eng}}$, then also the engine's cap (real lengths), then also
-whole lengths and the engine's window of sizes. A single number is exact; a
+$P = P_{\mathrm{eng}}$ (its bounds of separation) or $P_{\mathrm{valid}}$ (every
+chain of length at least one), then also the engine's cap (real lengths),
+then also whole lengths and the engine's window of sizes. A single number is exact; a
 range is certified, below by the solver's proven bound or disjoint cores,
 above by a closable subset found within the time limit ($900$ seconds a
 program, $1{,}800$ a loop), the whole family when none was found. Last column:
@@ -1871,6 +1886,23 @@ found; the engine's own mean deviation there, $1.123$ and $1.195$, is above
 the cap. Optima that bring other arcs to zero can break the
 mesh; keeping open every arc the engine keeps open, the optimum for way~2 is
 $3$, at $10{,}735$ quads and mean deviation $0.471$ (measured).
+
+In $P_{\mathrm{valid}}$ the chains alone force exactly $0$, $3$, $1$, $11$, $5$,
+$26$, $7$ and $33$ turns. Every turn that cannot be closed alone within the
+bounds ($54$ of way~0, $87$ of way~1, $46$ and $59$ of way~2, $70$, $211$,
+$91$, $152$ and $220$ of ways 3, 5, 6 and 7) closes alone in
+$P_{\mathrm{valid}}$: its certificate needs the arc the engine held, and
+another arc of the chain can carry the separation. What every valid
+quantization leaves shifted comes from conflicts between turns; in way~2 it is
+one turn of the pair of row 4 of Table~\ref{tab:iis}. With the cap and the
+window, at whole lengths, the value is exactly $0$ in way~0, $3$ in way~1 and
+$1$ in way~2: whole lengths in $P_{\mathrm{valid}}$ leaving only those shifted
+exist at $10{,}643$, $10{,}701$ and $10{,}715$ quads, at mean deviations
+$0.394$, $0.509$ and $0.386$, checked exactly against the balances, the
+chains, the cap and the window, not against the engine's lattice. For the
+strips the chains force more than the bounds, $17$ against $10$:
+$P_{\mathrm{eng}}$ admits lengths that bring to zero chains the engine did not
+hold. The columns with the cap were not run in ways 5 and 7 (measured).
 
 \section{Choosing the turns}\label{sec:choosing}
 
@@ -2179,9 +2211,10 @@ unrecorded engine version; identities were checked in
 floating point unless exact arithmetic is stated, and the homotopies of
 Propositions~\ref{prop:swap} and~\ref{prop:winding} were checked only on the
 conflicts of the body, the first for paths $\kappa$ inside one chart. Forced
-counts are relative to the engine's bounds of separation and to its cap, as
-the export gives them, and the intervals depend on solver time limits on a
-shared machine. The measured statements on the body are made again by the
+counts in $P_{\mathrm{valid}}$ hold for every quantization that keeps the
+singular vertices apart, those in $P_{\mathrm{eng}}$ only within the engine's
+bounds of separation; both are relative to its cap as the export gives it, and
+the intervals depend on solver time limits on a shared machine. The measured statements on the body are made again by the
 scripts of \texttt{experiments}, beside this note, from the export of
 openclare~0.7.0; their summaries are in \texttt{experiments/results}. The Lean proofs
 replay with \texttt{make proofs NOTE=turns-of-a-t-mesh}. The property tests of the

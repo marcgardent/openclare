@@ -47,6 +47,7 @@ only on the same machine under the same load: the long runs are for an idle mach
 | Section "Whole lengths and size": dimension 534, one row of greatest common divisor 2; lattices of dimension 334 to 480 with the held turns, Euclid's steps in ways 1, 3, 4, 5, 6 and 7 | `python3 $B/lattice.py <export> --seconds 600` | `results/lattice.json` |
 | Table `tab:forced`, columns "bounds", "bounds, cap", "cap, size, whole"; "exactly 1, 5, 3, 12, 5, 30, 8 and 37"; in way 3 twelve turns with ten of 21 cores disjoint; 1,166 and 1,208 s for ways 5 and 7; exactly 1 in way 0 and 3 in way 2 with the cap and the window, and the whole lengths that show it (10,730 and 10,435 quads); ways 3 and 4: 12 and 6 in real lengths, at least 13 and 7 in whole; the optimum 3 for way 2 keeping open every arc the engine keeps open | `python3 $B/forced.py <export> --whole-lower --jobs 4`; `python3 $B/forced.py <export> --ways 2 --families held --sound --summary $B/results/forced-sound.json` | `results/forced.json`, `results/forced-sound.json`, whole lengths under `<out>` |
 | Section "Choosing the turns" (#216): Proposition "What dislocations between parallel turns encode", (ii) on K4, the prism, the cube and the pentagonal prism (orientations, implication classes, one chain), the reduction's instance checked exactly on them, and the graphs of conflicts of turns on 60 random spheres (no T-mesh of the male body read) | `python3 -I $B/gadget.py --count 60 --seed 1 --families box:2:2:6:2,box:3:3:8:3,box:3:3:10:6,box:4:4:10:8,box:3:3:12:10,cube:6,hull:12,dual:12` | `results/gadget.json` |
+| Table `tab:forced`, the columns of P_valid ("chains", "chains, cap", "cap, size, whole"); the abstract's and the introduction's "none to 33"; Paper A, "exactly 0, 3, 1, 11, 5, 26, 7 and 33"; the engine's lengths in P_valid in every way | `python3 $B/forced.py <export> --steps bounds --valid --summary $B/results/forced-valid-bounds.json`; `python3 $B/forced.py <export> --valid --whole-lower --summary $B/results/forced-valid.json` | `results/forced-valid-bounds.json`, `results/forced-valid.json` (table below) |
 | Paper A, Section "An exact look", and the rounding gap 0.399 / 0.536 quoted in "Whole lengths and size" | `../../closing-loops/experiments/exact/README.md` | |
 
 ## What each script does
@@ -147,7 +148,29 @@ only on the same machine under the same load: the long runs are for an idle mach
   an interval after `--budget`), and with the cap, the window and whole lengths (an interval: the
   lower bound of the cap, raised with `--whole-lower` by hitting sets of no-goods in whole lengths
   within the cap; the upper bound by whole lengths closing the complement of the cap's least set,
-  else by the program over a binary per turn, every solution checked exactly).
+  else by the program over a binary per turn, every solution checked exactly). With `--valid`, in
+  P_valid: no bound on any one arc, but every chain of length one or more, a path of arcs between two
+  singular vertices through T-junctions and corners (none runs along a single trace on the male body:
+  its traces end on T-junctions), or a separatrix loop (8 on the body); the paths enter each program
+  as its lengths break them, by Dijkstra from every singular vertex. "Patch sides positive" is not
+  asked: 288 of the 806 patches of way 0 have a side of length zero at the engine's own lengths.
+
+  The output of `--valid` on the export of v0.7.0 (`results/forced-valid-bounds.json`,
+  `results/forced-valid.json`; P_eng beside it from `results/forced.json`):
+
+| way | family | turns | P_eng: bounds | bounds, cap | cap, size, whole | P_valid: chains | chains, cap | cap, size, whole | chains met | left shifted by the engine |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 0 | held | 58 | 1 | 1 | 1 | 0 | 0 | 0 | 432 | 19 |
+| 1 | held | 92 | 5 | 6 | 6–16 | 3 | 3 | 3 | 536 | 40 |
+| 2 | held | 64 | 3 | 3 | 3 | 1 | 1 | 1 | 480 | 23 |
+| 3 | held | 102 | 12 | 12 | 13–22 | 11 | 11 | 11–18 | 540 | 52 |
+| 4 | held | 125 | 5 | 6 | 7–47 | 5 | 5 | 6–47 | 537 | 61 |
+| 5 | held | 219 | 30 | 30–219 | 30–171 | 26 | not run | not run | 731 | 154 |
+| 6 | held | 131 | 8 | 8–131 | 10–50 | 7 | 7 | 8–54 | 564 | 72 |
+| 7 | held | 229 | 37 | 37–229 | 37–229 | 33 | not run | not run | 713 | 170 |
+| 2 | strips | 149 | 10 | 10–149 | 12–72 | 17 | 17–149 | 17–82 | 627 | 114 |
+
+  Ways 5 and 7 of P_valid with the cap: not run (their bounds alone take over an hour each on one thread).
 
 ## What the scripts cannot make again, and why
 

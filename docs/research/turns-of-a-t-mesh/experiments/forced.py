@@ -34,8 +34,23 @@ sizes are read from the export's call file (`most_deviation`, `wanted`,
 `allowed`) when it has one, else (the drafts' old export, which has none)
 those of its engine (0.474, 10,590, 211): --cap, --wanted, --allowed set them.
 
+With --valid, P_valid in place of P_eng: no bound on any one arc (ℓ ≥ 0),
+but every chain of length one or more: a path of arcs between two singular
+vertices through junctions and corners only, or a separatrix loop (a
+separatrix of a vertex that stops on another separatrix of it, back along
+that one to the vertex). A chain of length zero merges two singular
+vertices into one vertex of the quad mesh, or pinches the surface at one,
+which the engine never accepts; so every valid quantization is in P_valid,
+and a turn forced there is forced on all of them, whichever arc of a chain
+carries the separation. (The T-mesh of the male body has no chain along a
+single trace: its traces end on T-junctions.) The paths are too many to
+list; each program is solved again with the paths its lengths break,
+shortest paths by Dijkstra from every singular vertex, until none is
+broken.
+
     python3 docs/research/turns-of-a-t-mesh/experiments/forced.py [<export>] \\
-        [--steps bounds,cap,size] [--strips-ways 2] [--seconds 900] [--budget 1800] [--whole-lower] [--jobs 4]
+        [--steps bounds,cap,size] [--strips-ways 2] [--seconds 900] [--budget 1800] [--whole-lower] [--jobs 4] \\
+        [--valid]
 
 Seconds a family for `bounds` (45 at most on the drafts' old export); up to
 --budget for `cap` and several times --seconds for `size`; --jobs runs that
@@ -53,6 +68,7 @@ import tmesh  # first: it sets the threads of the linear algebra
 import numpy as np
 from scipy.optimize import Bounds, LinearConstraint
 from scipy.sparse import coo_matrix, csr_matrix, diags, hstack, identity, vstack
+from scipy.sparse.csgraph import dijkstra
 
 # The engine of the drafts' old export (male6, written before the export had
 # call files, so without these numbers): the plain search's deviation 0.316
@@ -65,10 +81,114 @@ def say(text):
     print(text, flush=True)
 
 
+class Chains:
+    """The chains of P_valid met so far, each held at length one or more:
+    paths of arcs between two singular vertices whose other nodes are not
+    singular, and from the start the separatrix loops (a separatrix that
+    stops on another separatrix of its own vertex, back along that one)."""
+
+    def __init__(self, way):
+        nodes = way.data["nodes"]
+        self.n = way.n
+        self.nodes = len(nodes)
+        self.singular = np.array([k for k, node in enumerate(nodes) if node["kind"] == "singularity"])
+        self.is_singular = np.zeros(self.nodes, dtype=bool)
+        self.is_singular[self.singular] = True
+        self.ends = [tuple(arc["nodes"]) for arc in way.data["arcs"]]
+        self.rows, self.seen = [], set()
+        self._matrix = None
+        self.loops = 0
+        for row in separatrix_loops(way):
+            key = frozenset(row)
+            if key not in self.seen:
+                self.seen.add(key)
+                self.rows.append(sorted(key))
+                self.loops += 1
+
+    def matrix(self):
+        if self._matrix is None:
+            self._matrix = tmesh.matrix([{a: 1 for a in row} for row in self.rows], self.n)
+        return self._matrix
+
+    def broken(self, x, tolerance=1e-7):
+        """The chains shorter than one at lengths `x`: from each singular
+        vertex, a shortest path to the nearest other one."""
+        weight = np.maximum(np.asarray(x, float), 0) + 1e-12
+        # The lightest arc between each two nodes stands for them all.
+        lightest = {}
+        for a, (u, v) in enumerate(self.ends):
+            if u != v:
+                pair = (min(u, v), max(u, v))
+                if pair not in lightest or weight[a] < weight[lightest[pair]]:
+                    lightest[pair] = a
+        pairs = np.array(list(lightest), dtype=np.int64).reshape(-1, 2)
+        arcs = np.array(list(lightest.values()), dtype=np.int64)
+        graph = csr_matrix((weight[arcs], (pairs[:, 0], pairs[:, 1])), shape=(self.nodes, self.nodes))
+        distance, previous = dijkstra(graph, directed=False, indices=self.singular, return_predecessors=True)
+        found = []
+        for i, start in enumerate(self.singular):
+            row = distance[i, self.singular].copy()
+            row[i] = np.inf
+            if row.min() >= 1 - tolerance:
+                continue
+            node, walk = int(self.singular[int(np.argmin(row))]), []
+            while node != start:
+                walk.append(node)
+                node = int(previous[i, node])
+            walk.append(int(start))
+            walk.reverse()
+            # Up to the first singular vertex after the start.
+            end = next(k for k in range(1, len(walk)) if self.is_singular[walk[k]])
+            found.append([lightest[(min(p, q), max(p, q))] for p, q in zip(walk[:end], walk[1:end + 1])])
+        return found
+
+    def add(self, x):
+        """The chains `x` breaks, added; how many were new."""
+        new = 0
+        for row in self.broken(x):
+            key = frozenset(row)
+            if key not in self.seen:
+                self.seen.add(key)
+                self.rows.append(sorted(key))
+                new += 1
+        if new:
+            self._matrix = None
+        return new
+
+
+def separatrix_loops(way):
+    """The arcs of each separatrix loop: a trace from a singular vertex v
+    that stops on a trace from v, with the arcs of that one from v to where
+    the first stops. Zero, the loop would pinch the surface at v or bring
+    the singular vertices on one side into v."""
+    nodes, arcs = way.data["nodes"], way.data["arcs"]
+    traces = {}
+    for a, arc in enumerate(arcs):
+        traces.setdefault(arc["trace"], []).append(a)
+    walks = {}
+    for trace, members in traces.items():
+        members.sort(key=lambda a: arcs[a]["span"][0])
+        walks[trace] = (members, [arcs[members[0]]["nodes"][0]] + [arcs[a]["nodes"][1] for a in members])
+    meeting = {}
+    for a, arc in enumerate(arcs):
+        for node in arc["nodes"]:
+            meeting.setdefault(node, set()).add(arc["trace"])
+    loops = []
+    for trace, (members, walk) in walks.items():
+        start, stop = walk[0], walk[-1]
+        if nodes[start]["kind"] != "singularity" or stop == start:
+            continue
+        for other in meeting[stop] - {trace}:
+            back, along = walks[other]
+            if along[0] == start and stop in along:
+                loops.append(members + back[:along.index(stop)])
+    return loops
+
+
 class Family:
     """The turns of one family, each once up to sign, and the set P."""
 
-    def __init__(self, way, name, forms, cap, wanted, allowed, sound=False):
+    def __init__(self, way, name, forms, cap, wanted, allowed, sound=False, valid=False):
         self.way, self.name = way, name
         seen, unique = set(), []
         for shift in forms:
@@ -83,6 +203,10 @@ class Family:
         self.lower = way.lower.copy()
         if sound:
             self.lower = np.maximum(self.lower, np.minimum(1, way.lengths).astype(float))
+        # P_valid: no bound on any one arc, the chains instead.
+        self.chains = Chains(way) if valid else None
+        if valid:
+            self.lower = np.zeros(way.n)
         self.cap, self.wanted, self.allowed = cap, wanted, allowed
 
     def engine_shifted(self):
@@ -108,6 +232,9 @@ class Family:
         if len(Y):
             S = self.S[list(Y)]
             constraints.append(LinearConstraint(row(S, zeros(S.shape[0], ne + nz)), 0, 0))
+        if self.chains is not None and self.chains.rows:
+            C = self.chains.matrix()
+            constraints.append(LinearConstraint(row(C, zeros(C.shape[0], ne + nz)), 1, np.inf))
         if cap:
             eye = identity(n)
             t = way.target
@@ -136,10 +263,23 @@ class Family:
         ub = np.concatenate([upper, np.full(ne, np.inf), np.ones(nz)])
         return constraints, lb, ub, width
 
+    def solved(self, program):
+        """`program()` (a result and the seconds it took), solved again while
+        its lengths break a chain of P_valid."""
+        took = 0.0
+        while True:
+            result, seconds = program()
+            took += seconds
+            if self.chains is None or result.x is None or not self.chains.add(result.x[:self.n]):
+                return result, took
+
     def lp(self, cost, Y=()):
-        constraints, lb, ub, width = self.blocks(Y)
-        c = np.concatenate([cost, np.zeros(width - self.n)])
-        result, _ = tmesh.run_milp(c, constraints, Bounds(lb, ub), np.zeros(width))
+        def program():
+            constraints, lb, ub, width = self.blocks(Y)
+            c = np.concatenate([cost, np.zeros(width - self.n)])
+            return tmesh.run_milp(c, constraints, Bounds(lb, ub), np.zeros(width))
+
+        result, _ = self.solved(program)
         return None if result.x is None else result.fun
 
     def ranges(self):
@@ -157,28 +297,33 @@ class Family:
     def least_shifted(self, ranges, integer, window=None, seconds=None):
         """The program over x and a binary per turn: the fewest turns left
         shifted. Sign-definite turns (a range not containing 0) are fixed."""
-        constraints, lb, ub, width = self.blocks(window=window, binaries=True, ranges=ranges)
-        low, high = ranges
-        first = 2 * self.n
-        for k in range(self.m):
-            if low[k] > 1e-9 or high[k] < -1e-9:
-                lb[first + k] = 1
-        cost = np.concatenate([np.zeros(first), np.ones(self.m)])
-        integrality = np.concatenate([np.full(self.n, 1 if integer else 0), np.zeros(self.n), np.ones(self.m)])
-        result, took = tmesh.run_milp(cost, constraints, Bounds(lb, ub), integrality, seconds, mip_rel_gap=0)
-        return result, took
+        def program():
+            constraints, lb, ub, width = self.blocks(window=window, binaries=True, ranges=ranges)
+            low, high = ranges
+            first = 2 * self.n
+            for k in range(self.m):
+                if low[k] > 1e-9 or high[k] < -1e-9:
+                    lb[first + k] = 1
+            cost = np.concatenate([np.zeros(first), np.ones(self.m)])
+            integrality = np.concatenate([np.full(self.n, 1 if integer else 0), np.zeros(self.n), np.ones(self.m)])
+            return tmesh.run_milp(cost, constraints, Bounds(lb, ub), integrality, seconds, mip_rel_gap=0)
+
+        return self.solved(program)
 
     def whole(self, Y, cap=True, window=None, seconds=None):
         """Whole lengths in P closing Y, the least deviation as a guide,
         stopped at the first solution."""
-        constraints, lb, ub, width = self.blocks(Y, cap=cap, window=window)
-        if cap:
-            cost = np.concatenate([np.zeros(self.n), np.ones(self.n)])
-            more = {"mip_rel_gap": 1.0}
-        else:
-            cost, more = np.zeros(width), {}
-        integrality = np.concatenate([np.ones(self.n), np.zeros(width - self.n)])
-        result, took = tmesh.run_milp(cost, constraints, Bounds(lb, ub), integrality, seconds, **more)
+        def program():
+            constraints, lb, ub, width = self.blocks(Y, cap=cap, window=window)
+            if cap:
+                cost = np.concatenate([np.zeros(self.n), np.ones(self.n)])
+                more = {"mip_rel_gap": 1.0}
+            else:
+                cost, more = np.zeros(width), {}
+            integrality = np.concatenate([np.ones(self.n), np.zeros(width - self.n)])
+            return tmesh.run_milp(cost, constraints, Bounds(lb, ub), integrality, seconds, **more)
+
+        result, took = self.solved(program)
         x = None if result.x is None else np.round(result.x[:self.n]).astype(np.int64)
         return x, result, took
 
@@ -189,7 +334,8 @@ class Family:
         deviation = way.deviation(x)
         quads = way.quads(x)
         out = {"balanced": all(sum(c * int(x[a]) for a, c in row.items()) == 0 for row in way.rows),
-               "bounds": bool((x >= self.lower).all()),
+               "bounds": bool((x >= self.lower).all())
+               and (self.chains is None or not self.chains.broken(x)),
                "deviation": deviation, "cap": deviation <= self.cap + 1e-12,
                "quads": quads, "window": abs(quads - self.wanted) <= self.allowed,
                "shifted": [k for k in range(self.m) if sum(c * int(x[a]) for a, c in self.forms[k].items()) != 0]}
@@ -199,7 +345,16 @@ class Family:
     # --- implicit hitting sets ------------------------------------------------------------
 
     def elastic(self, Y, cap):
-        """min Σ |shift_k(x)| over k in Y, x in P: (value, duals of the shift rows)."""
+        """min Σ |shift_k(x)| over k in Y, x in P: (value, duals of the shift
+        rows). In P_valid, solved again with the chains its lengths break
+        while the value is zero (with only some of the chains a positive
+        value is already that of P_valid or more)."""
+        while True:
+            value, duals, x = self.elastic_once(Y, cap)
+            if value > 1e-7 or self.chains is None or not self.chains.add(x):
+                return value, duals
+
+    def elastic_once(self, Y, cap):
         way, n, k = self.way, self.n, len(Y)
         S = self.S[list(Y)] if k else csr_matrix((0, n))
         ne = n if cap else 0
@@ -214,10 +369,18 @@ class Family:
                            csr_matrix(np.concatenate([np.zeros(n), np.ones(n)])[None, :])]).tocsr()
             arguments = {"A_ub": hstack([A_ub, coo_matrix((A_ub.shape[0], 2 * k))]).tocsr(),
                          "b_ub": np.concatenate([way.target, -way.target, [self.cap * n]])}
+        if self.chains is not None and self.chains.rows:
+            # Chains of length one or more: -C x ≤ -1.
+            C = hstack([-self.chains.matrix(), coo_matrix((len(self.chains.rows), ne + 2 * k))]).tocsr()
+            if arguments:
+                arguments["A_ub"] = vstack([arguments["A_ub"], C]).tocsr()
+                arguments["b_ub"] = np.concatenate([arguments["b_ub"], -np.ones(C.shape[0])])
+            else:
+                arguments = {"A_ub": C, "b_ub": -np.ones(C.shape[0])}
         r = tmesh.run_linprog(cost, A_eq=A_eq, b_eq=np.zeros(A_eq.shape[0]), bounds=bounds, **arguments)
         if r.status != 0:
             raise RuntimeError(f"elastic program: {r.message}")
-        return r.fun, r.eqlin.marginals[way.B.shape[0]:]
+        return r.fun, r.eqlin.marginals[way.B.shape[0]:], r.x[:n]
 
     def closable(self, Y, cap):
         return self.elastic(Y, cap)[0] <= 1e-7
@@ -431,6 +594,9 @@ def run_family(family, steps, arguments, log=say):
         size["seconds"] = round(time.monotonic() - tick, 1)
         out["size"] = size
         log(f"   cap, size, whole: {size['lower']}–{size['upper']} ({size['seconds']} s)")
+    if family.chains is not None:
+        out["chains"] = len(family.chains.rows)
+        out["separatrix_loops"] = family.chains.loops
     out["seconds"] = round(time.monotonic() - clock, 1)
     return out
 
@@ -440,7 +606,7 @@ def family_job(job):
     path, name, cap, wanted, allowed, steps, arguments = job
     way = tmesh.Way(path)
     forms = tmesh.held_forms(way) if name == "held" else [s["shift"] for s in way.strips(0.12)]
-    family = Family(way, name, forms, cap, wanted, allowed, arguments.sound)
+    family = Family(way, name, forms, cap, wanted, allowed, arguments.sound, arguments.valid)
     return {"way": way.number, **run_family(family, steps, arguments)}
 
 
@@ -459,7 +625,12 @@ def main():
     parser.add_argument("--margin", type=float, default=60.0, help="quads kept off each end of the window")
     parser.add_argument("--whole-lower", action="store_true", help="lower bound in whole lengths within the cap")
     parser.add_argument("--sound", action="store_true", help="keep open every arc the engine keeps open")
+    parser.add_argument("--valid", action="store_true",
+                        help="P_valid: every chain between two singular vertices of length one or more, "
+                             "in place of the engine's bounds")
     arguments = parser.parse_args()
+    if arguments.valid and arguments.sound:
+        parser.error("--sound adds to the engine's bounds, which --valid drops")
     started, clock = tmesh.common.machine(), time.monotonic()
     folder, ways = tmesh.load(arguments)
     call = folder.parent / f"{folder.name}.json"
@@ -469,7 +640,8 @@ def main():
     allowed = arguments.allowed or engine.get("allowed") or OLD_EXPORT["allowed"]
     steps = set(arguments.steps.split(","))
     families = arguments.families.split(",")
-    say(f"P: cap {cap}, window {wanted} ± {allowed}{', sound' if arguments.sound else ''}; steps {sorted(steps)}")
+    say(f"P{'_valid' if arguments.valid else '_eng'}: cap {cap}, window {wanted} ± {allowed}"
+        f"{', sound' if arguments.sound else ''}; steps {sorted(steps)}")
     jobs = []
     for way in ways:
         if "held" in families:
@@ -482,13 +654,15 @@ def main():
             "experiment": "turns every quantization in P leaves shifted (Table tab:forced)",
             "complete": complete,
             **tmesh.record(arguments, folder, ways, started, clock, cap=cap, wanted=wanted, allowed=allowed,
-                           sound=arguments.sound, steps=sorted(steps), seconds_per_program=arguments.seconds,
+                           sound=arguments.sound, polytope="P_valid" if arguments.valid else "P_eng",
+                           steps=sorted(steps), seconds_per_program=arguments.seconds,
                            budget_per_loop=arguments.budget, margin=arguments.margin),
             "table": [{"way": row["way"], "family": row["family"], "turns": row["turns"],
                        "bounds": row.get("bounds", {}).get("tau"),
                        "bounds_cap": [row["cap"]["lower"], row["cap"]["upper"]] if "cap" in row else None,
                        "cap_size_whole": [row["size"]["lower"], row["size"]["upper"]] if "size" in row else None,
-                       "engine_left_shifted": row["engine_left_shifted"]} for row in rows],
+                       "engine_left_shifted": row["engine_left_shifted"],
+                       **({"chains": row["chains"]} if "chains" in row else {})} for row in rows],
             "per_family": rows,
         }
 
