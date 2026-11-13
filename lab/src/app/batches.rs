@@ -80,7 +80,9 @@ impl App {
                 ui.label(RichText::new("Choose a batch on the left: its grid shows here.").color(MUTED));
                 return;
             };
-            self.grid(ui, &catalogue, &batch);
+            egui::ScrollArea::vertical().id_salt("batch page").auto_shrink([false; 2]).show(ui, |ui| {
+                self.grid(ui, &catalogue, &batch);
+            });
         });
     }
 
@@ -287,8 +289,7 @@ impl App {
         // Rows: the first axis; columns: the others, in the grid's order.
         let rows = batch.axes.first().map_or(1, |axis| axis.values.len()).max(1);
         let columns = (cells.len() / rows).max(1);
-        let height = (ui.available_height() - 260.0).max(160.0);
-        egui::ScrollArea::both().max_height(height).auto_shrink([false, true]).show(ui, |ui| {
+        egui::ScrollArea::horizontal().id_salt("cells").auto_shrink([false, true]).show(ui, |ui| {
             egui::Grid::new("cells").striped(true).spacing([6.0, 4.0]).show(ui, |ui| {
                 ui.label("");
                 for cell in cells.iter().take(columns) {
@@ -348,7 +349,7 @@ impl App {
         });
         if let Some(log) = &run.log {
             let lines = files::tail(&self.places.data.join(&log.path), LOG_LINES);
-            egui::ScrollArea::vertical().id_salt("cell log").stick_to_bottom(true).show(ui, |ui| {
+            egui::ScrollArea::vertical().id_salt("cell log").max_height(320.0).stick_to_bottom(true).show(ui, |ui| {
                 for line in lines {
                     ui.label(RichText::new(line).monospace().size(11.5));
                 }
@@ -388,7 +389,7 @@ impl App {
         .id_salt(("dependencies", &batch.job.name))
         .default_open(true)
         .show(ui, |ui| {
-            egui::ScrollArea::vertical().id_salt("dependencies").max_height(180.0).show(ui, |ui| {
+            egui::ScrollArea::horizontal().id_salt("dependencies").show(ui, |ui| {
                 egui::Grid::new("dependencies").striped(true).spacing([6.0, 2.0]).show(ui, |ui| {
                     ui.label("");
                     for reference in &references {
