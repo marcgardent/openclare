@@ -110,7 +110,7 @@ impl App {
             }
         });
         ui.label(RichText::new(&batch.job.description).color(MUTED));
-        self.dependency_table(ui, catalogue, batch, &cells, &runs);
+        self.dependency_table(ui, catalogue, batch, &cells, &runs, live.as_ref());
         if let Some(grid) = &live {
             let remaining: Vec<Option<f64>> = grid
                 .cells
@@ -150,24 +150,6 @@ impl App {
                     ui.label(RichText::new(format!("now: {}", grid.phase)).strong());
                 }
                 ui.ctx().request_repaint_after(std::time::Duration::from_millis(500));
-            }
-            // The dependencies of the launch, made or found in the cache, before its jobs (R2).
-            if !grid.dependencies.is_empty() {
-                ui.horizontal_wrapped(|ui| {
-                    ui.label(RichText::new("DEPENDENCIES").small().strong().color(MUTED));
-                    for (text, state) in &grid.dependencies {
-                        let (said, colour) = match state {
-                            LiveState::Skipped => ("cached".to_string(), GREEN),
-                            LiveState::Running(since) => {
-                                (format!("… {}", duration_text(since.elapsed().as_secs_f64())), BLUE)
-                            }
-                            LiveState::Ended { status: Status::Ok } => ("made".to_string(), GREEN),
-                            LiveState::Ended { status } => (status.text(), RED),
-                            LiveState::Waiting => ("waiting".to_string(), MUTED),
-                        };
-                        ui.label(RichText::new(format!("{text}: {said}")).monospace().color(colour));
-                    }
-                });
             }
         }
         ui.add_space(4.0);
@@ -294,6 +276,7 @@ impl App {
                     ui.label(RichText::new(&axis.name).small().strong().color(MUTED));
                 }
                 ui.label(RichText::new("state").small().strong().color(MUTED));
+                ui.label(RichText::new("mean (runs ok)").small().strong().color(MUTED));
                 ui.label(RichText::new("last run").small().strong().color(MUTED));
                 ui.end_row();
                 for (index, (cell, shown)) in cells.iter().zip(&shown).enumerate() {
@@ -306,6 +289,14 @@ impl App {
                     }
                     let text = RichText::new(&shown.text).monospace().color(shown.colour);
                     clicked |= ui.selectable_label(selected, text).on_hover_text(&shown.hover).clicked();
+                    let seconds: Vec<f64> = runs
+                        .iter()
+                        .filter(|run| same_cell(run, batch, &cell.values) && run.status == Status::Ok)
+                        .filter_map(|run| run.seconds)
+                        .collect();
+                    clicked |= ui
+                        .selectable_label(selected, RichText::new(mean_text(&seconds)).monospace().color(MUTED))
+                        .clicked();
                     let last = last_run(batch, &cell.values, &runs).map_or(String::new(), |run| run.id.clone());
                     clicked |=
                         ui.selectable_label(selected, RichText::new(last).monospace().small().color(MUTED)).clicked();
@@ -359,9 +350,10 @@ impl App {
         }
     }
 
-    /// The jobs the batch needs before its own (R2), one row per dependency
-    /// and value it wants, one column per reference: each one's last record
-    /// and whether its result is in the cache.
+    /// The jobs the batch needs before its own (R2), one line each (a
+    /// dependency, the values it wants, a reference): its state (under way
+    /// in the launch, else its last record and whether its result is in the
+    /// cache), its mean time, its last run.
     fn dependency_table(
         &mut self,
         ui: &mut egui::Ui,
@@ -369,54 +361,102 @@ impl App {
         batch: &Batch,
         cells: &[CellPlan],
         runs: &[Run],
+        live: Option<&LiveGrid>,
     ) {
         let rows = dependency_rows(catalogue, batch, cells);
         if rows.is_empty() {
             return;
         }
-        let references: Vec<String> =
-            rows.iter().flat_map(|row| row.references.iter().cloned()).fold(Vec::new(), |mut kept, reference| {
-                if !kept.contains(&reference) {
-                    kept.push(reference);
-                }
-                kept
-            });
-        let jobs: usize = rows.iter().map(|row| row.references.len()).sum();
         egui::CollapsingHeader::new(
-            RichText::new(format!("DEPENDENCIES: {jobs} jobs, made before the grid, once per key"))
-                .small()
-                .strong()
-                .color(MUTED),
+            RichText::new("DEPENDENCIES: made before the batch's jobs, once per key").small().strong().color(MUTED),
         )
         .id_salt(("dependencies", &batch.job.name))
         .default_open(true)
         .show(ui, |ui| {
             egui::ScrollArea::horizontal().id_salt("dependencies").show(ui, |ui| {
-                egui::Grid::new("dependencies").striped(true).spacing([6.0, 2.0]).show(ui, |ui| {
-                    ui.label("");
-                    for reference in &references {
-                        ui.label(RichText::new(reference).small().strong().color(MUTED));
+                egui::Grid::new("dependencies").striped(true).spacing([14.0, 3.0]).show(ui, |ui| {
+                    for title in ["#", "dependency", "ref", "state", "mean (runs ok)", "last run"] {
+                        ui.label(RichText::new(title).small().strong().color(MUTED));
                     }
                     ui.end_row();
+                    // One line per key: the key a job of the batch recorded for it (one source
+                    // shared by both references), else one per reference.
+                    let mut lines: Vec<(&DependencyRow, Option<String>, Vec<&String>)> = Vec::new();
                     for row in &rows {
-                        ui.label(RichText::new(&row.text).strong());
-                        for reference in &references {
-                            if !row.references.contains(reference) {
-                                ui.label("");
-                                continue;
-                            }
-                            let last = runs
+                        for reference in &row.references {
+                            let key = runs
                                 .iter()
                                 .filter(|run| {
-                                    run.job == row.name
+                                    run.job == batch.job.name
                                         && &run.checkout == reference
                                         && row
                                             .wanted
                                             .iter()
                                             .all(|(name, value)| run.parameters.get(name) == Some(value))
                                 })
-                                .max_by_key(|run| run.started);
-                            let (text, colour, hover) = self.dependency_shown(&row.name, last);
+                                .max_by_key(|run| run.started)
+                                .and_then(|run| run.dependencies.get(&row.name).cloned());
+                            match lines.iter_mut().find(|(known, known_key, _)| {
+                                known.name == row.name
+                                    && known.wanted == row.wanted
+                                    && key.is_some()
+                                    && *known_key == key
+                            }) {
+                                Some((_, _, references)) => references.push(reference),
+                                None => lines.push((row, key, vec![reference])),
+                            }
+                        }
+                    }
+                    for (number, (row, key, references)) in lines.iter().enumerate() {
+                        let number = number + 1;
+                        let reference = references[0];
+                        {
+                            let matching: Vec<&Run> =
+                                runs.iter()
+                                    .filter(|run| {
+                                        run.job == row.name
+                                            && match key {
+                                                Some(key) => run.cache.as_ref() == Some(key),
+                                                None => {
+                                                    &run.checkout == reference
+                                                        && row.wanted.iter().all(|(name, value)| {
+                                                            run.parameters.get(name) == Some(value)
+                                                        })
+                                                }
+                                            }
+                                    })
+                                    .collect();
+                            let last = matching.iter().copied().max_by_key(|run| run.started);
+                            let seconds: Vec<f64> = matching
+                                .iter()
+                                .filter(|run| run.status == Status::Ok)
+                                .filter_map(|run| run.seconds)
+                                .collect();
+                            // Under way in the launch: its text is "<name> <key> <wanted=value>… on <ref>".
+                            let now = live.and_then(|grid| {
+                                grid.dependencies.iter().find(|(text, _)| {
+                                    text.split_whitespace().next() == Some(row.name.as_str())
+                                        && references
+                                            .iter()
+                                            .any(|reference| text.ends_with(&format!(" on {reference}")))
+                                        && row
+                                            .wanted
+                                            .iter()
+                                            .all(|(name, value)| text.contains(&format!(" {name}={value}")))
+                                })
+                            });
+                            let (text, colour, hover) = match now.map(|(_, state)| state) {
+                                Some(LiveState::Running(since)) => (
+                                    format!("… {}", duration_text(since.elapsed().as_secs_f64())),
+                                    BLUE,
+                                    "being made for the launch".to_string(),
+                                ),
+                                _ => self.dependency_shown(&row.name, last),
+                            };
+                            ui.label(RichText::new(format!("d{number}")).monospace().color(MUTED));
+                            ui.label(RichText::new(&row.text).strong());
+                            let shared: Vec<&str> = references.iter().map(|reference| reference.as_str()).collect();
+                            ui.label(RichText::new(shared.join(" · ")).strong());
                             let response = ui.selectable_label(false, RichText::new(text).monospace().color(colour));
                             if response.on_hover_text(hover).clicked()
                                 && let Some(run) = last
@@ -424,8 +464,15 @@ impl App {
                                 self.run = Some(run.id.clone());
                                 self.tab = Tab::History;
                             }
+                            ui.label(RichText::new(mean_text(&seconds)).monospace().color(MUTED));
+                            ui.label(
+                                RichText::new(last.map_or(String::new(), |run| run.id.clone()))
+                                    .monospace()
+                                    .small()
+                                    .color(MUTED),
+                            );
+                            ui.end_row();
                         }
-                        ui.end_row();
                     }
                 });
             });
@@ -544,6 +591,14 @@ fn dependency_rows(catalogue: &crate::catalogue::Catalogue, batch: &Batch, cells
         }
     }
     rows
+}
+
+/// The mean of the times of the runs ok and how many: "38 s (3)"; empty when none.
+fn mean_text(seconds: &[f64]) -> String {
+    if seconds.is_empty() {
+        return String::new();
+    }
+    format!("{} ({})", duration_text(seconds.iter().sum::<f64>() / seconds.len() as f64), seconds.len())
 }
 
 /// A cell as its last record says.

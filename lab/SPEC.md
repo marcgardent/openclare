@@ -545,7 +545,7 @@ window lists the batches in the catalogue and their records in the history; R3 q
   way (`Stopped`), as Ctrl-C does without a window; the jobs not started get no record. The lines of
   the launch, those `lab run` prints, go to `logs/<launch>.log`: the log the Queue screen shows for it.
 - **The Batches screen**, a sixth tab: the batches on the left; for the one chosen, its grid. One line
-  per job, numbered in the grid's order: each axis's value, its state, its last run (a cross table
+  per job, numbered in the grid's order: each axis's value, its state, the mean time of its runs ok and how many, its last run (a cross table
   read as one job per row). A cell shows
   its state: running (elapsed and estimate), waiting in the queue (its estimate), its last record
   (`ok 41 s`, `failed`, `timed out`, the time muted when it does not count, §7.2), or `—`, never run.
@@ -554,9 +554,10 @@ window lists the batches in the catalogue and their records in the history; R3 q
   above it, what the launch does now (the checkouts, making a dependency, a prepare, the wait for the
   monitor, the jobs) and each dependency, cached, under way or made. The Queue screen's log follows
   the job that runs, a dependency or a prepare included, not the launch's lines. Above the grid, at
-  rest as during a launch, the table of the jobs the batch needs (R2): one row per dependency and value
-  it wants (`source creature`), one column per reference, each its last record and whether its result
-  is in the cache; a click opens the record in History. While a dependency is made, the Queue
+  rest as during a launch, the table of the jobs the batch needs (R2): one line per key (`source creature` on
+  `main · 12a6675` when both references share it, read in the jobs' records; else one per reference),
+  its state (under way, cached, or its last record), the mean time of its runs ok and how many, its
+  last run; a click opens the record in History. While a dependency is made, the Queue
   screen's run panel names it, with its time and the median of those made before, then the jobs' count, one line per job of the launch (under way, then ended, the last first: its
   status and time), and what is left from the cells' estimates.
   A job whose log stays quiet 30 s (a compilation under cmake, a solver) gets a line from lab every 30 s:
