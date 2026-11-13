@@ -17,9 +17,10 @@ archive` as bench/budgets.py does. Three parts:
   conflicts.py on each: the infeasible sets of held turns, of which the left
   wrist's was one arc 0.08 quad edges long (research note, section 7).
 
-The sources are read from `--sources`, by default bench/out of the main
-checkout, which lab's checkouts do not have: run it on a local checkout of
-the main clone, or give the folder. Everything goes to
+The sources are bench/out of the main clone when it has them all, else
+exported here from the scenes by Blender (bench/run.py, `source_path`), as
+in lab's checkouts. The male body is not in git (bench/corpus-large): with
+no source for it, that part is left out and says so. Everything goes to
 scratch/pole-pairs/<commit>/, the summary to scratch/pole-pairs/<commit>.json.
 """
 
@@ -32,6 +33,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import budgets
+import run
 
 ROOT = budgets.ROOT
 EXPERIMENTS = ROOT / "docs" / "research" / "turns-of-a-t-mesh" / "experiments"
@@ -105,6 +107,19 @@ def male_body(engine, commit, source, out, threads):
     return json.loads(summary.read_text())
 
 
+def sources_of(models, given):
+    """The folder of the models' source.obj: `given`, else bench/out of the
+    main clone if it has them all, else this checkout's, exported by Blender."""
+    if given:
+        return Path(given)
+    home = budgets.home_checkout() / "bench" / "out"
+    if all((home / model / "source.obj").exists() for model in models):
+        return home
+    for model in models:
+        run.source_path(model)
+    return run.OUTPUT
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--before", default="", help="the commit to compare with; default origin/main, else main")
@@ -116,12 +131,11 @@ def main():
     parser.add_argument("--sources", default="", help="default: bench/out of the main checkout")
     options = parser.parse_args()
     parts, models = options.parts.split(","), options.models.split(",")
-    sources = Path(options.sources) if options.sources else budgets.home_checkout() / "bench" / "out"
-    wanted = models + (["human_male"] if "male-body" in parts else [])
-    missing = [model for model in wanted if not (sources / model / "source.obj").exists()]
-    if missing:
-        sys.exit(f"pole_pairs: no source.obj under {sources} for {', '.join(missing)}: "
-                 "run on a local checkout of the main clone, or give --sources")
+    sources = sources_of(models, options.sources)
+    if "male-body" in parts and not (sources / "human_male" / "source.obj").exists():
+        print(f"pole_pairs: no male body under {sources.relative_to(ROOT) if sources.is_relative_to(ROOT) else sources}, "
+              "the male-body part is left out", flush=True)
+        parts.remove("male-body")
 
     after = ROOT / "target" / "release" / "openclare"
     commit = budgets.git("rev-parse", "--short", "HEAD")

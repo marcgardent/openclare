@@ -580,12 +580,12 @@ outputs = ["scratch/budgets/*.json"]
 
 [[job]]
 name = "pole-pairs-115"
-description = "Ticket #115 before and after (bench/pole_pairs.py): the T-mesh of the twelve models with and without --no-pairs at {tmesh_budgets} quads; their final meshes at {budgets} on {before} (empty: main) and on this checkout; the male body's export and conflicts.py on both, the left wrist's conflict the question. The sources are bench/out of the main clone: run it on a local checkout of the main clone (the worktree of the branch), or give {sources}. One engine thread per run, {threads} runs at a time; the seconds are compared, so it waits for a calm machine."
+description = "Ticket #115 before and after (bench/pole_pairs.py): the T-mesh of the twelve models with and without --no-pairs at {tmesh_budgets} quads; their final meshes at {budgets} on {before} (empty: main) and on the commit of the branch; the male body's export and conflicts.py on both when its source is there (it is not in git, so not in lab's checkouts). The sources are exported from the scenes by Blender at the first run of a checkout. One engine thread per run, {threads} runs at a time; the seconds are compared, so it waits for a calm machine."
 category = "quick-bench"
-command = "python3 bench/pole_pairs.py --before '{before}' --tmesh-budgets {tmesh_budgets} --budgets {budgets} --sources '{sources}' --jobs {threads}"
-prepare = "cargo build --release"
+command = "python3 bench/pole_pairs.py --before '{before}' --tmesh-budgets {tmesh_budgets} --budgets {budgets} --jobs {threads}"
+prepare = "cargo build --release && make addon"
 checkout = "ask"
-parameters = { before = "", tmesh_budgets = "1000,3000,8000", budgets = "2970,3000,3030", sources = "" }
+parameters = { before = "", tmesh_budgets = "1000,3000,8000", budgets = "2970,3000,3030" }
 environment = { OPENCLARE_THREADS = "1", RAYON_NUM_THREADS = "1", HIGHS_THREADS = "1" }
 memory_limit_gb = 32
 timing_matters = true
