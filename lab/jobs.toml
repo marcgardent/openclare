@@ -128,17 +128,21 @@ timing_matters = true
 outputs = ["scratch/data-package/property/seed-*/summary.json"]
 paper = "B"
 
-[[job]]
+[[batch]]
 name = "lean-oracle-doubles"
-description = "The doubles of the surfaces with borders through the Lean oracle (PR #271, merged into main); about 18 hours of one core in all (memory note)."
+description = "The doubles of the surfaces with borders through the Lean oracle (PR #271, merged into main); about 18 hours of one core in all (memory note), the instances from 2 to 184 patches. The prepare builds the proofs and generates the instances once per checkout (14 s for 50); one job checks one instance (check_exports.py --index), the axis index running from 0 to count - 1: change both together. The timeout of 4 h is a guess, to tune on the times of the first run."
 category = "lean-oracle"
-command = "export PATH=\"$HOME/.elan/bin:$PATH\"; python3 docs/research/turns-of-a-t-mesh/experiments/property/generate.py --count {count} --seed {seed} --borders && python3 docs/research/turns-of-a-t-mesh/lean/Check/check_exports.py scratch/data-package/property/double-seed-{seed} scratch/data-package/property/double-seed-{seed}/lean-check --jobs {threads}"
-prepare = "make proofs NOTE=turns-of-a-t-mesh"
+prepare = "make proofs NOTE=turns-of-a-t-mesh && rm -rf scratch/data-package/property/double-seed-{seed} && python3 docs/research/turns-of-a-t-mesh/experiments/property/generate.py --count {count} --seed {seed} --borders"
+command = "export PATH=\"$HOME/.elan/bin:$PATH\"; python3 docs/research/turns-of-a-t-mesh/lean/Check/check_exports.py scratch/data-package/property/double-seed-{seed} {out}/lean-check --index {index} --jobs 1"
 parameters = { count = "50", seed = "1" }
+threads = 1
 memory_limit_gb = 32
+timeout = "4h"
 timing_matters = true
-outputs = ["scratch/data-package/property/double-seed-*/summary.json"]
 paper = "B"
+
+[batch.axes]
+index = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49]
 
 [[job]]
 name = "lean-check-export"

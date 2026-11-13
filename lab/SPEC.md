@@ -367,7 +367,9 @@ ref = ["main", "12a6675"]
 - An existing **`[[job]]` is a batch without axes**: one cell, run as today, its record without a
   `cell`. The jobs, sequences and records of today do not change; the jobs that are batches in a
   script (`twelve-models`, `three-budgets`, `quick-bench`, `ablation`, `pole-pairs-115`,
-  `lean-oracle-doubles`) are split later, one at a time.
+  `lean-oracle-doubles`) are split later, one at a time. A computation whose steps depend on each
+  other stays one job. `lean-oracle-doubles` is the first split (2026-11-13): the generation, one
+  random stream for all the instances, is its prepare; one job checks one instance, axis `index`.
 
 ### The run of a batch
 

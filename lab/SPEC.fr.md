@@ -251,7 +251,10 @@ moteur, `timeout = "30m"`.
 - Un **`[[job]]` existant est un batch sans axe** : une case, lancée comme aujourd'hui, sa fiche sans
   `cell`. Les jobs, séquences et fiches d'aujourd'hui ne changent pas ; les jobs qui sont des batches
   dans un script (`twelve-models`, `three-budgets`, `quick-bench`, `ablation`, `pole-pairs-115`,
-  `lean-oracle-doubles`) seront découpés plus tard, un à la fois.
+  `lean-oracle-doubles`) seront découpés plus tard, un à la fois. Un calcul dont les étapes dépendent
+  les unes des autres reste un seul job. `lean-oracle-doubles` est le premier découpé (2026-11-13) :
+  la génération, un seul flux aléatoire pour toutes les instances, est sa préparation ; un job vérifie
+  une instance, axe `index`.
 
 ### L'exécution d'un batch
 

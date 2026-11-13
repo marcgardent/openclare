@@ -1,6 +1,6 @@
 """Checks the Lean T-mesh against every way of closing an engine export holds.
 
-    python3 check_exports.py <export directory> <work directory> [--jobs N]
+    python3 check_exports.py <export directory> <work directory> [--jobs N] [--index I]
 
 Finds every `way-<n>.json` under the export directory (written by the engine
 with `OPENCLARE_EXPORT_TURNS`), converts each with `convert.py` into the work
@@ -16,6 +16,10 @@ The certificates of Theorem "Forced shifts" (written by `certify.py`) are read
 from `Check/certificates/*.json` (but the `*.claims.json` they were made from)
 and from any `certificates.json` under the export directory; each applies to
 the way file whose SHA-256 it names.
+
+`--index I` checks only the I-th export, counting from 0 in the sorted order
+in which they are found: one job of lab's batch `lean-oracle-doubles` per
+instance (lab/SPEC.md, section 6b).
 """
 
 import argparse
@@ -53,10 +57,16 @@ def main():
     parser.add_argument("export")
     parser.add_argument("work")
     parser.add_argument("--jobs", type=int, default=2)
+    parser.add_argument("--index", type=int, default=None, help="only the I-th export, from 0")
     args = parser.parse_args()
     found = list(exports(args.export, args.work))
     if not found:
         sys.exit(f"no way-<n>.json under {args.export}")
+    if args.index is not None:
+        if not 0 <= args.index < len(found):
+            sys.exit(f"--index {args.index}: {len(found)} exports under {args.export}, 0 to {len(found) - 1}")
+        print(f"export {args.index} of {len(found)}: {os.path.relpath(found[args.index], args.export)}", flush=True)
+        found = [found[args.index]]
     kept = os.path.join(HERE, "certificates")
     certificates = sorted(os.path.join(kept, f) for f in os.listdir(kept)
                           if f.endswith(".json") and not f.endswith(".claims.json"))
