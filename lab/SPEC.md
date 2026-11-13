@@ -292,7 +292,6 @@ category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/forced.py {export} --whole-lower --seconds 900 --budget 1800 --jobs {threads}"
 checkout = "ask"
 parameters = { export = "scratch/data-package/turns-of-a-t-mesh/male-body" }
-environment = { HIGHS_THREADS = "1" }
 threads = "setting"
 memory_limit_gb = 16
 timing_matters = true
@@ -414,9 +413,7 @@ ref = ["main", "12a6675"]
   table groups the ways), `pairs`, `combs`, `fox` (its relations pool every way), `forced-sound` (one
   family), `parity`, `gadget` (one random stream), `scores`, `figures`, `structure`,
   `against-remeshers`, `compare`, `exact-relaxation`. The batches of the papers read the export of
-  the male body in `scratch/`, outside their key: `skip_done = false`. The scripts of closing-loops
-  drop the `OPENCLARE_*` variables they inherit, `OPENCLARE_THREADS` included: the engine takes the
-  whole machine, so their batches run one job at a time (threads the setting, or 8).
+  the male body in `scratch/`, outside their key: `skip_done = false`.
 
 ### Dependencies (amendment R2)
 
@@ -498,7 +495,9 @@ command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {bu
 4. **The pool.** `threads` is what one job uses. The pool runs `max(1, setting / threads)` jobs side
    by side (by day, the setting 6 and one engine thread: six jobs), in the grid's order, each started
    as §8.1 starts a run: its own process group, memory cap and log `<lab>/logs/<run id>.log`. The
-   comfort limit (§7.1) is checked on the pool's width times `threads`.
+   comfort limit (§7.1) is checked on the pool's width times `threads`. A batch whose **timing
+   matters runs one job at a time** (Marc, 2026-11-13): six jobs side by side on 4 cores and 8 threads
+   slow each other, and the monitor counts them as ours, so their times would pass for calm.
 5. **One record per job, written when it ends**: `job` is the batch's name, `parameters` the cell's
    placeholders, `checkout` its reference, `cell` the launch, the axis values and the pool's width.
    The run id is the start time, the batch's name and the cell's values (`20261113-221403-pole-pairs-
@@ -512,8 +511,23 @@ command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {bu
    the pool are ours); load1 is not checked while the batch runs, as after one of our runs. A batch
    whose timing matters starts its pool once the monitor has a full window (60 s), else its first
    jobs would have no calm verdict. The time
-   of a job run in a pool of six is a time in a pool of six: `cell.pool` says so, and two sides of a
-   comparison run interleaved in the same pool (Q21).
+   of a job run in a pool of six is a time in a pool of six: `cell.pool` says so. A batch whose timing
+   matters has a pool of one, its sides of a comparison still interleaved (Q21).
+
+**Threads in the code, not in the pool** (Marc, 2026-11-13). A job is given the threads it may use
+and its code uses them: lab sets `OPENCLARE_THREADS`, `RAYON_NUM_THREADS`, `RUST_TEST_THREADS` and
+`CARGO_BUILD_JOBS` to them (§7.1), and every batch that runs the engine takes the thread setting
+(`threads` left out), one job at a time when its timing matters. The scripts that call the engine pass
+`OPENCLARE_THREADS` on (they dropped it until then, so the engine took the whole machine);
+`end_to_end.py --cpus` caps it to the processors given. HiGHS follows the same setting
+(`HIGHS_THREADS`, no longer forced to 1 in the catalogue): the papers' Python batches take the thread
+setting too. Only the Lean checks, one instance a process, stay on one thread.
+
+**Times in the papers** (Marc, 2026-11-13). A paper cites the time of each unit (a way, a family, a
+model at a budget), from a job run alone (`cell.pool` 1) on a calm machine (`timing_valid`), with the
+hardware and its threads (`threads.effective`); and for a stage, the sum of those times, which does not
+depend on how many jobs ran at once. Never the wall time of a parallel pool. The merged summaries give both:
+the units' own `seconds`, and `cells_seconds_sum` beside `wall_seconds` (the longest job).
 8. **The end**: a line per status (`72 jobs: 71 ok, 1 timed out`), the failed cells named with their
    logs; exit code 0 when every job is `Ok`, else 1. Stop (Ctrl-C without a window) ends the jobs
    under way, recorded `Stopped`; the jobs not started get no record.
@@ -587,9 +601,10 @@ window lists the batches in the catalogue and their records in the history; R3 q
 - One global **thread setting**, shown in the top bar. Each job declares how it uses threads:
   `setting` (it gets the setting) or `Fixed(n)` (it uses n whatever the setting, as the
   export, which takes the whole machine). The **effective** count is what the rules check.
-- The app sets, for every job, `OPENCLARE_THREADS`, `RAYON_NUM_THREADS`, `RUST_TEST_THREADS`
-  and `CARGO_BUILD_JOBS` to the effective count, and fills `{threads}` (for `-P`, `--jobs`,
-  `JOBS=`). A job's own `environment` overrides them (as `HIGHS_THREADS = "1"`).
+- The app sets, for every job, `OPENCLARE_THREADS`, `RAYON_NUM_THREADS`, `RUST_TEST_THREADS`,
+  `CARGO_BUILD_JOBS` and `HIGHS_THREADS` (since 2026-11-13: the papers' scripts give it to HiGHS) to
+  the effective count, and fills `{threads}` (for `-P`, `--jobs`, `JOBS=`). A job's own
+  `environment` overrides them.
 - **Comfort limit.** Above 6 threads (tunable, §12) the queue item shows an amber warning: the
   machine is slow to use meanwhile. It never blocks: Marc decides when he launches. The app
   cannot see the threads of other sessions on the machine: the monitor's foreign load (§9)
@@ -986,7 +1001,8 @@ Decided on 2026-11-13 (the reform's proposal): remesh and measure are one job; a
 session and a branch of its own. New:
 
 Q20 to Q22 answered on 2026-11-13: as proposed (no timeout for a `[[job]]` by default, the pool
-filling the thread setting, Lean's version from `lean-toolchain`).
+filling the thread setting, Lean's version from `lean-toolchain`); Q21 revised the same day: a batch
+whose timing matters runs one job at a time.
 
 20. **Timeout of a `[[job]]`**: none by default (proposed), since many of today's jobs are whole
     batches in a script (`lean-oracle-doubles`, about 18 h; `forced-whole-lower`, 1 to 4 h) and 30
@@ -994,7 +1010,8 @@ filling the thread setting, Lean's version from `lean-toolchain`).
 21. **Pool and timing**: six one-thread jobs side by side on 4 cores and 8 threads slow each other
     down. Proposed: the pool fills the thread setting, `cell.pool` recorded, and a comparison is fair
     because its sides run interleaved in the same pool. Or a batch whose timing matters runs one job
-    at a time, slower but each time alone?
+    at a time, slower but each time alone? Answered again by Marc later on 2026-11-13: one job at a
+    time for a batch whose timing matters; the others fill the pool.
 22. **Lean's version**: the toolchain named by `lean-toolchain` (proposed, nothing run); or
     `lean --version` through elan, at the risk of a download?
 

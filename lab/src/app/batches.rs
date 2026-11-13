@@ -432,7 +432,7 @@ pub(super) fn batch_estimate(batch: &Batch, choice: &BatchChoice, runs: &[Run], 
             choice.cells.iter().any(|kept| cell.values.iter().all(|(axis, value)| kept.get(axis) == Some(value)))
         });
     }
-    let width = crate::batch::pool_width(setting, batch.job.effective_threads(setting));
+    let width = crate::batch::batch_width(&batch.job, setting);
     let known: Vec<f64> = cells.iter().filter_map(|cell| cell_estimate(batch, &cell.values, runs)).collect();
     let unknown = cells.len() - known.len();
     if known.is_empty() {

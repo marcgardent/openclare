@@ -19,7 +19,7 @@ B=docs/research/turns-of-a-t-mesh/experiments
 D=scratch/data-package/turns-of-a-t-mesh
 SOURCE=scratch/torso/source.obj        # the male body; MD5 f1fe33002b731d1d41846daed6c59f5e,
                                        # the same file as bench/out/human_male/source.obj
-export HIGHS_THREADS=1                 # every HiGHS solve of the scripts on one thread (recorded)
+export HIGHS_THREADS=1                 # HiGHS's threads (recorded); lab sets it to the thread setting
 ```
 
 ## 1. The export (about 2 minutes, the whole machine)

@@ -134,7 +134,8 @@ def no_closing_run(models, target, directory, places):
     """openclare as the bench runs it (the add-on, on the scene), with no way
     of closing tried; measured as the bench measures it."""
     runs = {}
-    environment = {key: value for key, value in os.environ.items() if not key.startswith("OPENCLARE_")}
+    environment = {key: value for key, value in os.environ.items()
+                   if not key.startswith("OPENCLARE_") or key == "OPENCLARE_THREADS"}
     environment["OPENCLARE_CLOSE_WAYS"] = ""
     for model in models:
         record = directory / f"{model}.json"

@@ -114,7 +114,8 @@ lab run pole-pairs-115-remesh
 lab run pole-pairs-115-remesh --axis model=ogre --axis budget=3000 --timeout 1h
 ```
 
-runs every cell of the grid, `setting / threads` jobs at a time, each with its own log, folder
+runs every cell of the grid, `setting / threads` jobs at a time (one at a time when its timing matters,
+⏱: a time for a paper is that of a job alone), each with its own log, folder
 (`{out}`), timeout (30 minutes unless the batch sets one) and calm verdict, each recorded as it ends; a
 failed or timed-out job is a failed cell and the batch goes on. It prints one line per job that starts
 and ends, then the counts, and exits 0 when every job is ok. `--axis` keeps some values of an axis (any

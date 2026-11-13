@@ -16,8 +16,8 @@ The conventions are those of `../README.md` and of the turns paper's scripts: ru
 a clone; the export as first argument (default `scratch/data-package/turns-of-a-t-mesh/male-body`);
 `--out` for the raw output (default `scratch/data-package/closing-loops/<group>/`), `--summary`
 for the summary (default `results/<group>.json`); the engine, where a script runs it, as
-`--openclare <binary>` and `--commit`. HiGHS (through SciPy) runs on one thread (`HIGHS_THREADS`),
-and each summary records it with the versions, the machine and its load.
+`--openclare <binary>` and `--commit`. HiGHS (through SciPy) runs on `HIGHS_THREADS` threads (1 by
+hand unless set; lab sets it to the thread setting), and each summary records it with the versions, the machine and its load.
 
 ## The paragraphs and their commands
 

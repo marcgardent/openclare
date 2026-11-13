@@ -294,9 +294,7 @@ moteur, `timeout = "30m"`.
   (ses relations mettent toutes les voies ensemble), `forced-sound` (une famille), `parity`, `gadget`
   (un seul flux aléatoire), `scores`, `figures`, `structure`, `against-remeshers`, `compare`,
   `exact-relaxation`. Les batches des papiers lisent l'export du corps masculin dans `scratch/`, hors
-  de leur clé : `skip_done = false`. Les scripts de closing-loops retirent les variables `OPENCLARE_*`
-  dont ils héritent, `OPENCLARE_THREADS` compris : le moteur prend toute la machine, si bien que leurs
-  batches font un job à la fois (threads le réglage, ou 8).
+  de leur clé : `skip_done = false`.
 
 ### Dépendances (amendement R2)
 
@@ -381,7 +379,9 @@ command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {bu
    côte à côte (de jour, le réglage 6 et un thread moteur : six jobs), dans l'ordre de la grille,
    chacun lancé comme au §8.1 : son groupe de processus, son plafond mémoire, son journal
    `<lab>/logs/<id>.log`. La limite de confort (§7.1) se vérifie sur la largeur du pool fois
-   `threads`.
+   `threads`. Un batch dont **le temps compte tourne un job à la fois** (Marc, 2026-11-13) : six jobs
+   côte à côte sur 4 cœurs et 8 threads se ralentissent, et le moniteur les compte comme à nous, si
+   bien que leurs temps passeraient pour calmes.
 5. **Une fiche par job, écrite à sa fin** : `job` est le nom du batch, `parameters` les marques de la
    case, `checkout` sa référence, `cell` le lancement, les valeurs des axes et la largeur du pool.
    L'id est l'heure du début, le nom du batch et les valeurs de la case
@@ -396,8 +396,25 @@ command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {bu
    jobs du pool sont les nôtres) ; load1 n'est pas regardé pendant le batch, comme après une de nos
    exécutions. Un batch dont le temps compte lance son pool quand le moniteur a une fenêtre pleine
    (60 s), sinon ses premiers jobs n'auraient pas de verdict. Le temps d'un job dans un pool de six est
-   un temps dans un pool de six : `cell.pool` le dit, et les deux côtés d'une comparaison tournent
-   entrelacés dans le même pool (Q21).
+   un temps dans un pool de six : `cell.pool` le dit. Un batch dont le temps compte a un pool de un,
+   les deux côtés d'une comparaison toujours entrelacés (Q21).
+
+**Les threads dans le code, pas dans le pool** (Marc, 2026-11-13). Un job reçoit les threads qu'il
+peut utiliser et son code s'en sert : lab pose `OPENCLARE_THREADS`, `RAYON_NUM_THREADS`,
+`RUST_TEST_THREADS` et `CARGO_BUILD_JOBS` à ce nombre (§7.1), et tout batch qui lance le moteur prend
+le réglage de threads (`threads` absent), un job à la fois quand son temps compte. Les scripts qui
+appellent le moteur transmettent `OPENCLARE_THREADS` (ils le retiraient jusque-là, si bien que le
+moteur prenait toute la machine) ; `end_to_end.py --cpus` le borne aux processeurs donnés. HiGHS
+suit le même réglage (`HIGHS_THREADS`, plus forcé à 1 dans le catalogue) : les batches Python des
+papiers prennent eux aussi le réglage de threads. Seules les vérifications Lean, une instance par
+processus, restent sur un thread.
+
+**Les temps dans les papiers** (Marc, 2026-11-13). Un papier cite le temps de chaque unité (une voie,
+une famille, un modèle à un budget), d'un job lancé seul (`cell.pool` 1) sur une machine calme
+(`timing_valid`), avec le matériel et ses threads (`threads.effective`) ; et pour une étape, la somme
+de ces temps, qui ne dépend pas du nombre de jobs lancés à la fois. Jamais le temps mural d'un pool
+parallèle. Les résumés fusionnés donnent les deux : les `seconds` propres des unités, et
+`cells_seconds_sum` à côté de `wall_seconds` (le plus long job).
 8. **La fin** : une ligne par statut (`72 jobs: 71 ok, 1 timed out`), les cases en échec nommées avec
    leur journal ; code de sortie 0 quand tous les jobs sont `Ok`, 1 sinon. Stop (Ctrl-C sans fenêtre)
    arrête les jobs en cours, notés `Stopped` ; les jobs pas encore lancés n'ont pas de fiche.
@@ -479,8 +496,9 @@ met en file (ci-dessous).
   comme l'export qui prend toute la machine). Le nombre **effectif** est celui que les règles
   contrôlent.
 - Pour chaque tâche, l'application pose `OPENCLARE_THREADS`, `RAYON_NUM_THREADS`,
-  `RUST_TEST_THREADS` et `CARGO_BUILD_JOBS` au nombre effectif, et remplit `{threads}` (pour `-P`,
-  `--jobs`, `JOBS=`). L'environnement propre d'une tâche les remplace (comme `HIGHS_THREADS = "1"`).
+  `RUST_TEST_THREADS`, `CARGO_BUILD_JOBS` et `HIGHS_THREADS` (depuis le 2026-11-13 : les scripts des
+  papiers le donnent à HiGHS) au nombre effectif, et remplit `{threads}` (pour `-P`, `--jobs`,
+  `JOBS=`). L'environnement propre d'une tâche les remplace.
 - **Limite de confort.** Au-delà de 6 threads (réglable, §12), l'élément de file affiche une alerte
   ambre : la machine rame pendant ce temps. Elle ne bloque jamais : Marc décide quand il lance.
   L'application ne voit pas les threads des autres sessions de la machine : la charge étrangère du
@@ -906,7 +924,8 @@ comme proposé :
     4 h) que 30 minutes tueraient.
 21. **Pool et temps** : six jobs à un thread sur 4 cœurs et 8 threads se ralentissent l'un l'autre ;
     le pool remplit le réglage, `cell.pool` est noté, et une comparaison reste juste parce que ses deux
-    côtés tournent entrelacés dans le même pool.
+    côtés tournent entrelacés dans le même pool. Revu par Marc plus tard le 2026-11-13 : un job à la
+    fois pour un batch dont le temps compte ; les autres remplissent le pool.
 22. **Version de Lean** : la chaîne nommée par `lean-toolchain`, rien n'est lancé.
 
 Nouvelle avec R2 :

@@ -14,7 +14,7 @@ B=docs/research/turns-of-a-t-mesh/experiments
 A=docs/research/closing-loops/experiments/exact
 E=scratch/data-package/turns-of-a-t-mesh/male-body   # the papers' export (the published engine)
 SOURCE=scratch/torso/source.obj
-export HIGHS_THREADS=1
+export HIGHS_THREADS=1   # HiGHS's threads (recorded); lab sets it to the thread setting
 ```
 
 ## 1. Quick (a few minutes, one thread)
