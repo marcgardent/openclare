@@ -215,20 +215,17 @@ pub fn batch_width(job: &CatalogueJob, setting: u32, cpus: &[usize]) -> u32 {
     job_slots(job, setting, cpus).len() as u32
 }
 
-/// The slots of a pool (SPEC.md, §7.5): without pinning, as many empty ones
-/// as the width (one for a time that matters); pinned, whole cores, as many
-/// as the job's threads, so that no job shares a core with another.
+/// The slots of a pool (SPEC.md, §7.5): one core of the job processors per
+/// job, as many as the setting allows; without job processors (a machine of
+/// one core), as many empty ones as the setting, one for a time that matters.
 pub fn job_slots(job: &CatalogueJob, setting: u32, cpus: &[usize]) -> Vec<Vec<usize>> {
     if cpus.is_empty() {
         let width = if job.timing_matters { 1 } else { pool_width(setting, job.effective_threads(setting)) };
         return vec![Vec::new(); width as usize];
     }
-    crate::cpus::slots(&crate::cpus::cores(cpus), job.effective_threads(capped(setting, cpus)))
-}
-
-/// The thread setting no larger than the job processors' cores when pinned.
-pub fn capped(setting: u32, cpus: &[usize]) -> u32 {
-    if cpus.is_empty() { setting } else { setting.min(crate::cpus::cores(cpus).len().max(1) as u32) }
+    let mut slots = crate::cpus::slots(&crate::cpus::cores(cpus), job.effective_threads(setting));
+    slots.truncate(setting.max(1) as usize);
+    slots
 }
 
 pub fn pool_width(setting: u32, job_threads: u32) -> u32 {
@@ -288,9 +285,6 @@ pub fn run(context: &mut Context, catalogue: &Catalogue, batch: &Batch, options:
     let targets: Vec<String> =
         cells.iter().map(|cell| cell.reference.clone().unwrap_or_else(|| fallback.clone())).collect();
     let timeout = options.timeout.or(job.timeout).map_or(crate::catalogue::BATCH_TIMEOUT_SECONDS, |t| t.seconds);
-    // Pinned, the setting is no larger than the cores the jobs run on.
-    let pinned = Options { threads: capped(options.threads, &options.cpus), ..options.clone() };
-    let options = &pinned;
     let threads = job.effective_threads(options.threads);
     let slots = job_slots(job, options.threads, &options.cpus);
     let width = slots.len() as u32;
@@ -902,14 +896,13 @@ fn run_prepare(
 ) -> Result<Prepare, String> {
     let job = &batch.job;
     let scrub = Scrub::new(&place.root);
-    let mut executed = batch.job.values(
+    let executed = batch.job.values(
         options.threads,
         &place.git.short,
         &place.reference,
         Some(&place.root.to_string_lossy()),
         &job.parameters,
     );
-    executed.insert("threads".to_string(), options.threads.to_string());
     let mut recorded_values = executed.clone();
     recorded_values.insert("repo".to_string(), "{repo}".to_string());
     let line = render(prepare, &executed)?;
@@ -929,7 +922,9 @@ fn run_prepare(
     (context.progress)(Progress::Follow(path.clone()));
     let environment = job.environment_for(&executed)?;
     let directory = place.root.join(render(&job.directory, &executed)?);
-    let mut child = spawn_shell(&line, &directory, &environment, job.memory_limit_gb, &options.cpus, &log)?;
+    // A prepare is a job of one CPU too: the first core of the job processors.
+    let first = crate::cpus::cores(&options.cpus).into_iter().next().unwrap_or_default();
+    let mut child = spawn_shell(&line, &directory, &environment, job.memory_limit_gb, &first, &log)?;
     let group = child.id() as i32;
     if let Some((watch, _)) = &context.monitor {
         monitor::lock(watch).groups = vec![group];
@@ -1265,7 +1260,6 @@ mod tests {
         prepare = "echo prepared with {threads}"
         command = "echo {model} {budget} $OPENCLARE_THREADS > {out}/said.txt; test {model} != bad && sleep {pause}"
         parameters = { pause = "0" }
-        threads = 2
         timeout = "2s"
         [batch.axes]
         model = ["good", "bad", { value = "slow", pause = "30" }]
@@ -1291,18 +1285,18 @@ mod tests {
         assert_eq!(good.checkout, "local");
         assert!(good.id.ends_with("-grid-good-2"), "{}", good.id);
         assert_eq!(good.command, "echo good 2 $OPENCLARE_THREADS > {out}/said.txt; test good != bad && sleep 0");
-        assert_eq!(good.environment["OPENCLARE_THREADS"], "2", "the job's threads");
+        assert_eq!(good.environment["OPENCLARE_THREADS"], "1", "one CPU a job");
         assert_eq!(good.timeout_seconds, Some(2.0));
         let cell = good.cell.as_ref().unwrap();
-        assert_eq!(cell.pool, 3, "6 threads of setting, 2 a job");
+        assert_eq!(cell.pool, 6, "6 of setting, one CPU a job");
         assert_eq!(cell.values["model"], "good");
         assert_eq!(cell.values["budget"], "2");
         assert!(good.tools.contains_key("rustc"), "{:?}", good.tools);
         let said = good.outputs.iter().find(|output| output.path.ends_with("said.txt")).unwrap();
         assert_eq!(said.path, format!("out/{}/said.txt", good.id));
-        assert_eq!(std::fs::read_to_string(places.data.join(&said.path)).unwrap(), "good 2 2\n");
+        assert_eq!(std::fs::read_to_string(places.data.join(&said.path)).unwrap(), "good 2 1\n");
         let prepare = good.prepare.as_ref().unwrap();
-        assert_eq!(prepare.command, "echo prepared with 6", "the prepare has the whole setting");
+        assert_eq!(prepare.command, "echo prepared with 1", "a prepare is one CPU too");
         assert_eq!(prepare.status, Status::Ok);
         let slow = runs.iter().find(|run| run.parameters["model"] == "slow").unwrap();
         assert_eq!(slow.status, Status::TimedOut);
@@ -1480,11 +1474,10 @@ mod tests {
         assert_eq!(batch_width(&job, 6, &[]), 1, "a time that matters is measured alone");
         let cpus = crate::cpus::online();
         let cores = crate::cpus::cores(&cpus).len() as u32;
-        assert_eq!(batch_width(&job, 6, &cpus), cores, "pinned, one job per core, a time that matters too");
+        assert_eq!(batch_width(&job, 64, &cpus), cores, "pinned, one job per core, a time that matters too");
+        assert_eq!(batch_width(&job, 1, &cpus), 1, "no more side by side than the setting");
         job.threads = crate::catalogue::ThreadUse::Setting;
-        assert_eq!(batch_width(&job, 64, &cpus), 1, "a job of every core: one at a time");
-        assert_eq!(capped(64, &cpus), cores, "the setting no larger than the cores");
-        assert_eq!(capped(64, &[]), 64);
+        assert_eq!(batch_width(&job, 64, &cpus), cores, "every job is one CPU, whatever it says");
     }
 
     #[test]

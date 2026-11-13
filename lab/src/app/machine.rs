@@ -152,30 +152,32 @@ impl App {
                 ui.label("Job processors");
                 ui.add(egui::TextEdit::singleline(&mut calm.job_cpus).hint_text("all").desired_width(110.0))
                     .on_hover_text(
-                        "the processors the jobs are pinned to, as 1-3,5-7; one job per slot of whole cores; \
-                         the calm judged on them alone. Empty: every processor, no pinning",
+                        "the processors the jobs are pinned to, as 1-3,5-7: one job of one CPU per core; \
+                         the calm judged on them alone. Empty: every core but the first, kept for the desktop",
                     );
                 ui.end_row();
             });
-            match crate::cpus::checked(&calm.job_cpus) {
+            match crate::cpus::job_cpus(&calm.job_cpus) {
                 Err(error) => {
                     ui.colored_label(RED, format!("{error}: the jobs are not pinned"));
                 }
                 Ok(cpus) if !cpus.is_empty() => {
                     let cores = crate::cpus::cores(&cpus);
-                    let threads = crate::batch::capped(self.settings.threads, &cpus);
+                    let side = cores.len().min(self.settings.threads.max(1) as usize);
                     ui.label(
                         RichText::new(format!(
-                            "{} cores for the jobs: a job of {threads} thread{} at a time, or {} one-thread jobs \
-                             side by side, each alone on its core",
+                            "job processors {}: {} cores, one job of one CPU on each; {side} side by side with \
+                             the Threads setting of {}",
+                            crate::cpus::text(&cpus),
                             cores.len(),
-                            if threads == 1 { "" } else { "s" },
-                            cores.len()
+                            self.settings.threads
                         ))
                         .color(MUTED),
                     );
                 }
-                Ok(_) => {}
+                Ok(_) => {
+                    ui.label(RichText::new("one core only: the jobs are not pinned, one at a time").color(MUTED));
+                }
             }
             ui.label(RichText::new(format!("This machine: {}", crate::cpus::layout())).small().color(MUTED));
             if calm != self.settings.calm || comfort != self.settings.comfort_threads {

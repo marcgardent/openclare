@@ -448,7 +448,7 @@ fn run_batch(
     }
     let threads = arguments.threads.unwrap_or(settings.threads);
     let job_threads = batch.job.effective_threads(threads);
-    let cpus = match crate::cpus::checked(&settings.calm.job_cpus) {
+    let cpus = match crate::cpus::job_cpus(&settings.calm.job_cpus) {
         Ok(cpus) => cpus,
         Err(error) => {
             eprintln!("lab: {error}");

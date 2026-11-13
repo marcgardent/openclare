@@ -103,11 +103,14 @@ impl Watch {
             return Verdict { calmness: Calmness::Measuring, text: "measuring".to_string() };
         }
         // Pinned, the calm is judged on the job processors alone; the rest is the desktop's.
-        let pinned = !calm.job_cpus.trim().is_empty();
+        // The sampler measured the job processors when there are some.
+        let job_cpus = crate::cpus::job_cpus(&calm.job_cpus).unwrap_or_default();
+        let pinned = !job_cpus.is_empty() && points.iter().any(|point| point.foreign_jobs.is_some());
         let foreign = |point: &&Point| if pinned { point.foreign_jobs.unwrap_or(point.foreign) } else { point.foreign };
         let mean = points.iter().map(foreign).sum::<f64>() / points.len() as f64;
         let peak = points.iter().map(foreign).fold(0.0, f64::max);
-        let place = if pinned { format!(" on the job processors {}", calm.job_cpus.trim()) } else { String::new() };
+        let place =
+            if pinned { format!(" on the job processors {}", crate::cpus::text(&job_cpus)) } else { String::new() };
         let foreign_names = || {
             let names: Vec<String> = self
                 .heaviest
@@ -283,7 +286,7 @@ pub fn spawn(
                 // The job processors: their busy time less ours (pinned to them), per processor.
                 let job_cpus = {
                     let calm = calm.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
-                    crate::cpus::checked(&calm.job_cpus).unwrap_or_default()
+                    crate::cpus::job_cpus(&calm.job_cpus).unwrap_or_default()
                 };
                 let foreign_jobs = (!job_cpus.is_empty()).then(|| {
                     let busy: f64 = job_cpus.iter().filter_map(|cpu| per_thread.get(*cpu)).sum();

@@ -36,6 +36,9 @@ pub const REFERENCE_AXIS: &str = "ref";
 /// The timeout of a job of a batch that sets none (decision of 2026-11-13).
 pub const BATCH_TIMEOUT_SECONDS: f64 = 1800.0;
 
+/// The threads of every job (SPEC.md, §7.1): one CPU each, the parallelism across jobs.
+pub const JOB_THREADS: u32 = 1;
+
 /// The variables set to the effective thread count for every job, before
 /// the job's own environment (SPEC.md, section 7.1).
 pub const THREAD_VARIABLES: [&str; 5] =
@@ -449,6 +452,11 @@ impl Job {
         if !is_name(&self.name) {
             problems.push("a name is lower-case letters, digits and '-'".to_string());
         }
+        if let ThreadUse::Fixed(count) = self.threads
+            && count != JOB_THREADS
+        {
+            problems.push(format!("threads = {count}: every job runs on one CPU (SPEC.md, §7.1)"));
+        }
         for parameter in self.parameters.keys() {
             if BUILT_IN.contains(&parameter.as_str()) {
                 problems.push(format!("parameter {parameter} hides the built-in placeholder"));
@@ -499,12 +507,10 @@ impl Job {
         problems
     }
 
-    /// The threads the job uses with this setting.
-    pub fn effective_threads(&self, setting: u32) -> u32 {
-        match self.threads {
-            ThreadUse::Setting => setting,
-            ThreadUse::Fixed(count) => count,
-        }
+    /// The threads the job uses: one, whatever the setting (SPEC.md, §7.1);
+    /// the parallelism is across jobs, one per core (§7.5).
+    pub fn effective_threads(&self, _setting: u32) -> u32 {
+        JOB_THREADS
     }
 
     /// The values of the placeholders: the built-in ones, the parameters'

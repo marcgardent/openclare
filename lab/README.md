@@ -44,9 +44,9 @@ wherever it ran. It runs on Linux (it reads /proc); `nvidia-smi`, if present, gi
   once like the others, and its time does not count when the machine was not calm; with `wait = true`
   under `[calm]` in the settings it waits for a calm machine, and "Start anyway" starts it. A reference
   the mirror does not know runs on `main`, with a warning: lab warns, it never holds a Run back.
-  With `job_cpus = "1-3,5-7"` under `[calm]` (or "Job processors" on the Machine screen), the jobs are
-  pinned to those processors, one per slot of whole cores, and the calm is judged on them alone;
-  `lab/pin-desktop.sh 0,4` keeps the desktop on core 0 (SPEC.md §7.5).
+  Every job runs on one CPU, pinned to a core of its own: every core but the first by default, kept for
+  the desktop (`job_cpus` under `[calm]`, "Job processors" on the Machine screen); the calm is judged on
+  those processors alone, and `lab/pin-desktop.sh 0,4` keeps the desktop on core 0 (SPEC.md §7.5).
 - **Batches**: the jobs of a batch, one line each, numbered (its axes' values, its state, its last run);
   each its state under way or its last record (`ok 41 s`, `failed`, `timed out`, `—`
   never run), its estimate on hover, its record and the end of its log once clicked. Cells are selected
@@ -117,8 +117,9 @@ lab run pole-pairs-115-remesh
 lab run pole-pairs-115-remesh --axis model=ogre --axis budget=3000 --timeout 1h
 ```
 
-runs every cell of the grid, `setting / threads` jobs at a time (one at a time when its timing matters,
-⏱: a time for a paper is that of a job alone), each with its own log, folder
+runs every cell of the grid, each job on one CPU, as many side by side as the thread setting says,
+each pinned to a core of its own (⏱ or not: a time for a paper is that of a job alone on its core;
+SPEC.md §7.5), each with its own log, folder
 (`{out}`), timeout (30 minutes unless the batch sets one) and calm verdict, each recorded as it ends; a
 failed or timed-out job is a failed cell and the batch goes on. It prints one line per job that starts
 and ends, then the counts, and exits 0 when every job is ok. `--axis` keeps some values of an axis (any

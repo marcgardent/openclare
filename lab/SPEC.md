@@ -489,15 +489,15 @@ command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {bu
    found is left out of the map. Every record gets the map of its checkout, a `[[job]]`'s as well:
    until now nothing recorded that Blender is 5.3.0.
 3. **Dependencies** (R2, above), then the **prepares**, one checkout after the other, before any job: the prepare of §7.3, once per checkout
-   (`.lab-prepared`), with the whole thread setting (not the job's `threads`). Its time and status go
+   (`.lab-prepared`), on one CPU (§7.5). Its time and status go
    into the `prepare` of every job of that checkout. A failed prepare fails the jobs of its checkout
    without running them, one record each; the other checkouts go on.
-4. **The pool.** `threads` is what one job uses. The pool runs `max(1, setting / threads)` jobs side
-   by side (by day, the setting 6 and one engine thread: six jobs), in the grid's order, each started
-   as §8.1 starts a run: its own process group, memory cap and log `<lab>/logs/<run id>.log`. The
-   comfort limit (§7.1) is checked on the pool's width times `threads`. A batch whose **timing
-   matters runs one job at a time** (Marc, 2026-11-13): six jobs side by side on 4 cores and 8 threads
-   slow each other, and the monitor counts them as ours, so their times would pass for calm.
+4. **The pool.** Every job runs on one CPU (§7.1). The pool runs one job per core of the job
+   processors, as many side by side as the thread setting says (§7.5: three on cores 1 to 3), in the
+   grid's order, each pinned to its core and started as §8.1 starts a run: its own process group,
+   memory cap and log `<lab>/logs/<run id>.log`. A batch whose **timing matters runs the same way**,
+   each job alone on its core (Marc, 2026-11-13, replacing one job at a time: six unpinned jobs on 4
+   cores and 8 threads slowed each other).
 5. **One record per job, written when it ends**: `job` is the batch's name, `parameters` the cell's
    placeholders, `checkout` its reference, `cell` the launch, the axis values and the pool's width.
    The run id is the start time, the batch's name and the cell's values (`20261113-221403-pole-pairs-
@@ -510,22 +510,20 @@ command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {bu
 7. **Calm**, per job, by §9, the foreign CPU being the processes outside the batch (the other jobs of
    the pool are ours); load1 is not checked while the batch runs, as after one of our runs. A batch
    whose timing matters starts its pool once the monitor has a full window (60 s), else its first
-   jobs would have no calm verdict. The time
-   of a job run in a pool of six is a time in a pool of six: `cell.pool` says so. A batch whose timing
-   matters has a pool of one, its sides of a comparison still interleaved (Q21).
+   jobs would have no calm verdict. The foreign CPU is that of the job processors (§7.5). A job's
+   time is that of a job alone on its core, its neighbours in `cell.pool`, its core in
+   `threads.cpus`; the sides of a comparison stay interleaved (Q21).
 
-**Threads in the code, not in the pool** (Marc, 2026-11-13). A job is given the threads it may use
-and its code uses them: lab sets `OPENCLARE_THREADS`, `RAYON_NUM_THREADS`, `RUST_TEST_THREADS` and
-`CARGO_BUILD_JOBS` to them (§7.1), and every batch that runs the engine takes the thread setting
-(`threads` left out), one job at a time when its timing matters. The scripts that call the engine pass
-`OPENCLARE_THREADS` on (they dropped it until then, so the engine took the whole machine);
-`end_to_end.py --cpus` caps it to the processors given. HiGHS follows the same setting
-(`HIGHS_THREADS`, no longer forced to 1 in the catalogue): the papers' Python batches take the thread
-setting too. Only the Lean checks, one instance a process, stay on one thread.
+**One CPU per job, the jobs side by side** (Marc, 2026-11-13, replacing "threads in the code, not
+in the pool" of the same day). Every job runs on one CPU: lab sets `OPENCLARE_THREADS`,
+`RAYON_NUM_THREADS`, `RUST_TEST_THREADS`, `CARGO_BUILD_JOBS` and `HIGHS_THREADS` to 1 (§7.1), whatever
+the setting, and a catalogue's `threads` other than 1 is a problem. The parallelism is across jobs,
+each pinned to a core of its own (§7.5), which is reproducible to the second. The scripts that call
+the engine pass `OPENCLARE_THREADS` on.
 
 **Times in the papers** (Marc, 2026-11-13). A paper cites the time of each unit (a way, a family, a
-model at a budget), from a job run alone (`cell.pool` 1) on a calm machine (`timing_valid`), with the
-hardware and its threads (`threads.effective`); and for a stage, the sum of those times, which does not
+model at a budget), from a job alone on its core (`threads.cpus`, one CPU) on calm job processors
+(`timing_valid`), with the hardware; and for a stage, the sum of those times, which does not
 depend on how many jobs ran at once. Never the wall time of a parallel pool. The merged summaries give both:
 the units' own `seconds`, and `cells_seconds_sum` beside `wall_seconds` (the longest job).
 8. **The end**: a line per status (`72 jobs: 71 ok, 1 timed out`), the failed cells named with their
@@ -610,13 +608,12 @@ window lists the batches in the catalogue and their records in the history; R3 q
 
 ### 7.1 Threads
 
-- One global **thread setting**, shown in the top bar. Each job declares how it uses threads:
-  `setting` (it gets the setting) or `Fixed(n)` (it uses n whatever the setting, as the
-  export, which takes the whole machine). The **effective** count is what the rules check.
-- The app sets, for every job, `OPENCLARE_THREADS`, `RAYON_NUM_THREADS`, `RUST_TEST_THREADS`,
-  `CARGO_BUILD_JOBS` and `HIGHS_THREADS` (since 2026-11-13: the papers' scripts give it to HiGHS) to
-  the effective count, and fills `{threads}` (for `-P`, `--jobs`, `JOBS=`). A job's own
-  `environment` overrides them.
+- **Every job runs on one CPU** (Marc, 2026-11-13): the app sets, for every job, prepare and
+  dependency, `OPENCLARE_THREADS`, `RAYON_NUM_THREADS`, `RUST_TEST_THREADS`, `CARGO_BUILD_JOBS` and
+  `HIGHS_THREADS` to 1, and fills `{threads}` (for `-P`, `--jobs`, `JOBS=`) with 1. A catalogue's
+  `threads` other than 1 is a problem. A job's own `environment` overrides them.
+- One global **thread setting**, shown in the top bar: how many jobs of a batch run side by side,
+  each on a core of its own, at most the cores of the job processors (§7.5).
 - **Comfort limit.** Above 6 threads (tunable, §12) the queue item shows an amber warning: the
   machine is slow to use meanwhile. It never blocks: Marc decides when he launches. The app
   cannot see the threads of other sessions on the machine: the monitor's foreign load (§9)
@@ -649,7 +646,7 @@ day as well as by night. Proposal (Q2):
 
 ### 7.3 Prepare before the job
 
-- The prepare command runs before the job, in the same checkout, with the same thread setting;
+- The prepare command runs before the job, in the same checkout, on one CPU (§7.5);
   its time and status are kept in `prepare`, apart from the job's `seconds`.
 - The same prepare on the same checkout runs once for all queues: it writes its command in
   `.lab-prepared` at the root of the checkout, and is skipped while that file names it
@@ -665,31 +662,32 @@ day as well as by night. Proposal (Q2):
 does. Seeded values follow the project's rules: 32 GB for the engine, Blender and Lean, 40 GB for
 `cargo test`, the values of NIGHT.md where it gives one.
 
-### 7.5 Job processors
+### 7.5 One CPU per job, the jobs side by side
 
 A desktop in use is never calm by §7.2: a browser, the window manager, a system monitor each take a
-few percent of the machine. Rather than close them, the jobs get processors of their own.
+few percent of the machine. Rather than close them, the jobs get cores of their own (Marc,
+2026-11-13).
 
-- **The setting.** `[calm] job_cpus = "1-3,5-7"` in `settings.toml`, or "Job processors" on the
-  Machine screen, which shows the machine's cores ("core 0: 0,4 · core 1: 1,5 …"). Empty, the
-  default: every processor, nothing pinned, as before.
-- **Slots of whole cores.** The processors are grouped by physical core (`thread_siblings_list` in
-  /sys); a job of `t` threads takes `t` whole cores, twins included, so that no job shares a core
-  with another. The pool runs one job per slot: on `1-3,5-7`, three one-thread jobs side by side
-  (`1,5`, `2,6`, `3,7`), or one job of three threads. A batch whose time matters (⏱) runs that way
-  too: each job alone on its cores, which is reproducible; its neighbours share only the last-level
-  cache, the memory and the turbo. The thread setting is no larger than the cores of the job
-  processors (four on three cores runs as three).
-- **Pinning.** lab sets the affinity of each job, prepare and dependency before `exec`
-  (`sched_setaffinity`); its children inherit it. The record says where it ran:
-  `threads.cpus = "2,6"`.
+- **One CPU per job.** Every job, prepare and dependency runs on one CPU (§7.1). The parallelism is
+  across jobs, never inside one.
+- **The job processors.** Every core but the first by default (on 4 cores and 8 threads: `1-3,5-7`),
+  the first kept for the desktop; or `[calm] job_cpus = "…"` in `settings.toml`, "Job processors" on
+  the Machine screen, which shows the machine's cores ("core 0: 0,4 · core 1: 1,5 …").
+- **One job per core.** The processors are grouped by physical core (`thread_siblings_list` in /sys);
+  each job is pinned to one core, its twin included, so that no job shares a core with another. The
+  pool runs as many jobs side by side as the thread setting says, at most one per core: three on
+  `1-3,5-7`. A batch whose time matters (⏱) runs the same way, each job alone on its core, which is
+  reproducible to the second; its neighbours share only the last-level cache, the memory and the
+  turbo. A `[[job]]` of the queue, a prepare, a dependency take the first core of the job processors.
+- **Pinning.** lab sets the affinity before `exec` (`sched_setaffinity`); the children inherit it.
+  The record says where the job ran: `threads.cpus = "2,6"`.
 - **The calm on them alone.** The foreign CPU is measured on the job processors only: their busy
   time less the jobs' own, in percent of them; load1, which counts the whole machine, is not looked
   at. The verdict says so: "foreign CPU on the job processors 1-3,5-7 mean …".
 - **The desktop elsewhere.** `lab/pin-desktop.sh 0,4` pins every process of the user still allowed
   on every processor to `0,4`; what starts later inherits it, lab's window included, while the jobs
-  lab pins keep theirs. `--undo 0,4` puts them back, `--dry-run` lists them. Nothing permanent; run
-  it when no launch of an older lab, whose jobs are not pinned, is under way.
+  lab pins keep their core. `--undo 0,4` puts them back, `--dry-run` lists them. Nothing permanent;
+  run it when no launch of an older lab, whose jobs are not pinned, is under way.
 
 ## 8. The runner
 
@@ -1049,7 +1047,8 @@ whose timing matters runs one job at a time.
     down. Proposed: the pool fills the thread setting, `cell.pool` recorded, and a comparison is fair
     because its sides run interleaved in the same pool. Or a batch whose timing matters runs one job
     at a time, slower but each time alone? Answered again by Marc later on 2026-11-13: one job at a
-    time for a batch whose timing matters; the others fill the pool.
+    time for a batch whose timing matters; the others fill the pool. Revised a third time the same
+    day: every job on one CPU, one job per core side by side, pinned (§7.5).
 22. **Lean's version**: the toolchain named by `lean-toolchain` (proposed, nothing run); or
     `lean --version` through elan, at the risk of a download?
 

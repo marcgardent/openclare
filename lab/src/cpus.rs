@@ -90,6 +90,18 @@ pub fn slots(cores: &[Vec<usize>], threads: u32) -> Vec<Vec<usize>> {
         .collect()
 }
 
+/// The job processors of the settings (SPEC.md, §7.5): those given, or,
+/// empty, every core but the first, kept for the desktop.
+pub fn job_cpus(text: &str) -> Result<Vec<usize>, String> {
+    if !text.trim().is_empty() {
+        return checked(text);
+    }
+    let cores = cores(&online());
+    let mut cpus: Vec<usize> = cores.iter().skip(1).flatten().copied().collect();
+    cpus.sort_unstable();
+    Ok(cpus)
+}
+
 /// The settings' text checked against this machine: its processors, or why not.
 pub fn checked(text: &str) -> Result<Vec<usize>, String> {
     let cpus = parse(text)?;

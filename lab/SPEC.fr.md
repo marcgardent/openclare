@@ -371,17 +371,16 @@ command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {bu
    absente). Un outil introuvable est omis. Chaque fiche reçoit la table de son checkout, celle d'un
    `[[job]]` aussi : rien ne notait jusqu'ici que Blender est en 5.3.0.
 3. **Dépendances** (R2, ci-dessus), puis **préparations**, un checkout après l'autre, avant tout job : celle du §7.3, une fois par
-   checkout (`.lab-prepared`), avec tout le réglage de threads (pas les `threads` du job). Son temps
+   checkout (`.lab-prepared`), sur un CPU (§7.5). Son temps
    et son statut vont dans le `prepare` de chaque job de ce checkout. Une préparation en échec fait
    échouer les jobs de son checkout sans les lancer, une fiche chacun ; les autres checkouts
    continuent.
-4. **Le pool.** `threads` est ce qu'un job utilise. Le pool lance `max(1, réglage / threads)` jobs
-   côte à côte (de jour, le réglage 6 et un thread moteur : six jobs), dans l'ordre de la grille,
-   chacun lancé comme au §8.1 : son groupe de processus, son plafond mémoire, son journal
-   `<lab>/logs/<id>.log`. La limite de confort (§7.1) se vérifie sur la largeur du pool fois
-   `threads`. Un batch dont **le temps compte tourne un job à la fois** (Marc, 2026-11-13) : six jobs
-   côte à côte sur 4 cœurs et 8 threads se ralentissent, et le moniteur les compte comme à nous, si
-   bien que leurs temps passeraient pour calmes.
+4. **Le pool.** Chaque job tourne sur un CPU (§7.1). Le pool lance un job par cœur des
+   processeurs des jobs, autant côte à côte que le dit le réglage de threads (§7.5 : trois sur les
+   cœurs 1 à 3), dans l'ordre de la grille, chacun épinglé sur son cœur et lancé comme au §8.1 : son
+   groupe de processus, son plafond mémoire, son journal `<lab>/logs/<id>.log`. Un batch dont **le
+   temps compte tourne de même**, chaque job seul sur son cœur (Marc, 2026-11-13, à la place d'un job
+   à la fois : six jobs non épinglés sur 4 cœurs et 8 threads se ralentissaient).
 5. **Une fiche par job, écrite à sa fin** : `job` est le nom du batch, `parameters` les marques de la
    case, `checkout` sa référence, `cell` le lancement, les valeurs des axes et la largeur du pool.
    L'id est l'heure du début, le nom du batch et les valeurs de la case
@@ -395,23 +394,21 @@ command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {bu
 7. **Calme**, par job, selon le §9, le CPU étranger étant celui des processus hors du batch (les autres
    jobs du pool sont les nôtres) ; load1 n'est pas regardé pendant le batch, comme après une de nos
    exécutions. Un batch dont le temps compte lance son pool quand le moniteur a une fenêtre pleine
-   (60 s), sinon ses premiers jobs n'auraient pas de verdict. Le temps d'un job dans un pool de six est
-   un temps dans un pool de six : `cell.pool` le dit. Un batch dont le temps compte a un pool de un,
-   les deux côtés d'une comparaison toujours entrelacés (Q21).
+   (60 s), sinon ses premiers jobs n'auraient pas de verdict. Le CPU étranger est celui des
+   processeurs des jobs (§7.5). Le temps d'un job est celui d'un job seul sur son cœur, ses voisins
+   dans `cell.pool`, son cœur dans `threads.cpus` ; les deux côtés d'une comparaison restent
+   entrelacés (Q21).
 
-**Les threads dans le code, pas dans le pool** (Marc, 2026-11-13). Un job reçoit les threads qu'il
-peut utiliser et son code s'en sert : lab pose `OPENCLARE_THREADS`, `RAYON_NUM_THREADS`,
-`RUST_TEST_THREADS` et `CARGO_BUILD_JOBS` à ce nombre (§7.1), et tout batch qui lance le moteur prend
-le réglage de threads (`threads` absent), un job à la fois quand son temps compte. Les scripts qui
-appellent le moteur transmettent `OPENCLARE_THREADS` (ils le retiraient jusque-là, si bien que le
-moteur prenait toute la machine) ; `end_to_end.py --cpus` le borne aux processeurs donnés. HiGHS
-suit le même réglage (`HIGHS_THREADS`, plus forcé à 1 dans le catalogue) : les batches Python des
-papiers prennent eux aussi le réglage de threads. Seules les vérifications Lean, une instance par
-processus, restent sur un thread.
+**Un CPU par job, les jobs côte à côte** (Marc, 2026-11-13, à la place de « les threads dans le
+code, pas dans le pool » du même jour). Chaque job tourne sur un CPU : lab pose `OPENCLARE_THREADS`,
+`RAYON_NUM_THREADS`, `RUST_TEST_THREADS`, `CARGO_BUILD_JOBS` et `HIGHS_THREADS` à 1 (§7.1), quel que
+soit le réglage, et un `threads` autre que 1 dans le catalogue est un problème. Le parallélisme est
+entre les jobs, chacun épinglé sur un cœur à lui (§7.5), ce qui est reproductible à la seconde. Les
+scripts qui appellent le moteur transmettent `OPENCLARE_THREADS`.
 
 **Les temps dans les papiers** (Marc, 2026-11-13). Un papier cite le temps de chaque unité (une voie,
-une famille, un modèle à un budget), d'un job lancé seul (`cell.pool` 1) sur une machine calme
-(`timing_valid`), avec le matériel et ses threads (`threads.effective`) ; et pour une étape, la somme
+une famille, un modèle à un budget), d'un job seul sur son cœur (`threads.cpus`, un CPU) sur des
+processeurs des jobs calmes (`timing_valid`), avec le matériel ; et pour une étape, la somme
 de ces temps, qui ne dépend pas du nombre de jobs lancés à la fois. Jamais le temps mural d'un pool
 parallèle. Les résumés fusionnés donnent les deux : les `seconds` propres des unités, et
 `cells_seconds_sum` à côté de `wall_seconds` (le plus long job).
@@ -505,14 +502,13 @@ met en file (ci-dessous).
 
 ### 7.1 Threads
 
-- Un **réglage de threads** global, dans la barre du haut. Chaque tâche déclare son usage :
-  `setting` (elle reçoit le réglage) ou `Fixed(n)` (elle en utilise n quel que soit le réglage,
-  comme l'export qui prend toute la machine). Le nombre **effectif** est celui que les règles
-  contrôlent.
-- Pour chaque tâche, l'application pose `OPENCLARE_THREADS`, `RAYON_NUM_THREADS`,
-  `RUST_TEST_THREADS`, `CARGO_BUILD_JOBS` et `HIGHS_THREADS` (depuis le 2026-11-13 : les scripts des
-  papiers le donnent à HiGHS) au nombre effectif, et remplit `{threads}` (pour `-P`, `--jobs`,
-  `JOBS=`). L'environnement propre d'une tâche les remplace.
+- **Chaque tâche tourne sur un CPU** (Marc, 2026-11-13) : pour chaque tâche, préparation et
+  dépendance, l'application pose `OPENCLARE_THREADS`, `RAYON_NUM_THREADS`, `RUST_TEST_THREADS`,
+  `CARGO_BUILD_JOBS` et `HIGHS_THREADS` à 1, et remplit `{threads}` (pour `-P`, `--jobs`, `JOBS=`)
+  avec 1. Un `threads` autre que 1 dans le catalogue est un problème. L'environnement propre d'une
+  tâche les remplace.
+- Un **réglage de threads** global, dans la barre du haut : combien de jobs d'un batch tournent côte à
+  côte, chacun sur un cœur à lui, au plus les cœurs des processeurs des jobs (§7.5).
 - **Limite de confort.** Au-delà de 6 threads (réglable, §12), l'élément de file affiche une alerte
   ambre : la machine rame pendant ce temps. Elle ne bloque jamais : Marc décide quand il lance.
   L'application ne voit pas les threads des autres sessions de la machine : la charge étrangère du
@@ -547,7 +543,7 @@ pas, de jour comme de nuit. Proposition (Q2) :
 
 ### 7.3 Préparation avant la tâche
 
-- La préparation tourne avant la tâche, dans le même checkout, avec le même réglage ; sa durée et son
+- La préparation tourne avant la tâche, dans le même checkout, sur un CPU (§7.5) ; sa durée et son
   statut sont gardés dans `prepare`, à part de la durée de la tâche.
 - La même préparation sur le même checkout tourne une fois pour toutes les files : elle écrit sa commande
   dans `.lab-prepared` à la racine du checkout, et est sautée tant que ce fichier la nomme
@@ -563,32 +559,35 @@ pas, de jour comme de nuit. Proposition (Q2) :
 valeurs amorcées suivent les règles du projet : 32 Go pour le moteur, Blender et Lean, 40 Go pour
 `cargo test`, les valeurs de NIGHT.md quand il en donne.
 
-### 7.5 Processeurs des jobs
+### 7.5 Un CPU par job, les jobs côte à côte
 
 Un bureau en service n'est jamais calme au sens du §7.2 : un navigateur, le gestionnaire de fenêtres,
 un moniteur système prennent chacun quelques pour cent de la machine. Plutôt que de les fermer, on
-donne aux jobs des processeurs à eux.
+donne aux jobs des cœurs à eux (Marc, 2026-11-13).
 
-- **Le réglage.** `[calm] job_cpus = "1-3,5-7"` dans `settings.toml`, ou « Job processors » dans
-  l'écran Machine, qui montre les cœurs de la machine (« core 0: 0,4 · core 1: 1,5 … »). Vide, par
-  défaut : tous les processeurs, rien d'épinglé, comme avant.
-- **Des emplacements de cœurs entiers.** Les processeurs sont groupés par cœur physique
-  (`thread_siblings_list` dans /sys) ; un job de `t` threads prend `t` cœurs entiers, jumeaux compris,
-  pour qu'aucun job ne partage un cœur avec un autre. Le pool lance un job par emplacement : sur
-  `1-3,5-7`, trois jobs d'un thread côte à côte (`1,5`, `2,6`, `3,7`), ou un job de trois threads. Un
-  batch dont le temps compte (⏱) tourne ainsi aussi : chaque job seul sur ses cœurs, ce qui est
-  reproductible ; ses voisins ne partagent que le dernier cache, la mémoire et le turbo. Le réglage de
-  threads ne dépasse pas les cœurs des processeurs des jobs (quatre sur trois cœurs tourne à trois).
-- **L'épinglage.** lab fixe l'affinité de chaque job, préparation et dépendance avant `exec`
-  (`sched_setaffinity`) ; ses enfants en héritent. La fiche dit où il a tourné : `threads.cpus = "2,6"`.
+- **Un CPU par job.** Chaque job, préparation et dépendance tourne sur un CPU (§7.1). Le parallélisme
+  est entre les jobs, jamais dans un job.
+- **Les processeurs des jobs.** Tous les cœurs sauf le premier par défaut (sur 4 cœurs et 8 threads :
+  `1-3,5-7`), le premier gardé pour le bureau ; ou `[calm] job_cpus = "…"` dans `settings.toml`,
+  « Job processors » dans l'écran Machine, qui montre les cœurs de la machine (« core 0: 0,4 · core 1:
+  1,5 … »).
+- **Un job par cœur.** Les processeurs sont groupés par cœur physique (`thread_siblings_list` dans
+  /sys) ; chaque job est épinglé sur un cœur, son jumeau compris, pour qu'aucun job ne partage un cœur
+  avec un autre. Le pool lance autant de jobs côte à côte que le dit le réglage de threads, au plus un
+  par cœur : trois sur `1-3,5-7`. Un batch dont le temps compte (⏱) tourne de même, chaque job seul
+  sur son cœur, ce qui est reproductible à la seconde ; ses voisins ne partagent que le dernier cache,
+  la mémoire et le turbo. Un `[[job]]` de la file, une préparation, une dépendance prennent le premier
+  cœur des processeurs des jobs.
+- **L'épinglage.** lab fixe l'affinité avant `exec` (`sched_setaffinity`) ; les enfants en héritent.
+  La fiche dit où le job a tourné : `threads.cpus = "2,6"`.
 - **Le calme sur eux seuls.** Le CPU étranger se mesure sur les processeurs des jobs seulement : leur
   temps occupé moins celui des jobs, en pour cent d'eux ; load1, qui compte toute la machine, n'est
   pas regardé. Le verdict le dit : « foreign CPU on the job processors 1-3,5-7 mean … ».
 - **Le bureau ailleurs.** `lab/pin-desktop.sh 0,4` épingle sur `0,4` tout processus de l'utilisateur
   encore permis sur tous les processeurs ; ce qui démarre ensuite en hérite, la fenêtre de lab
-  comprise, tandis que les jobs épinglés par lab gardent les leurs. `--undo 0,4` les remet, `--dry-run`
-  les liste. Rien de permanent ; à lancer quand aucun lancement d'un lab plus ancien, dont les jobs ne
-  sont pas épinglés, n'est en cours.
+  comprise, tandis que les jobs épinglés par lab gardent leur cœur. `--undo 0,4` les remet,
+  `--dry-run` les liste. Rien de permanent ; à lancer quand aucun lancement d'un lab plus ancien, dont
+  les jobs ne sont pas épinglés, n'est en cours.
 
 ## 8. Le lanceur
 
@@ -966,7 +965,8 @@ comme proposé :
 21. **Pool et temps** : six jobs à un thread sur 4 cœurs et 8 threads se ralentissent l'un l'autre ;
     le pool remplit le réglage, `cell.pool` est noté, et une comparaison reste juste parce que ses deux
     côtés tournent entrelacés dans le même pool. Revu par Marc plus tard le 2026-11-13 : un job à la
-    fois pour un batch dont le temps compte ; les autres remplissent le pool.
+    fois pour un batch dont le temps compte ; les autres remplissent le pool. Revu une troisième fois
+    le même jour : chaque job sur un CPU, un job par cœur côte à côte, épinglés (§7.5).
 22. **Version de Lean** : la chaîne nommée par `lean-toolchain`, rien n'est lancé.
 
 Nouvelle avec R2 :

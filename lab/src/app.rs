@@ -15,7 +15,7 @@ use std::time::{Duration, Instant, SystemTime};
 use eframe::egui::{self, Color32, RichText};
 use egui_extras::{Column, TableBuilder};
 
-use crate::catalogue::{Catalogue, Category, Job, ThreadUse, render};
+use crate::catalogue::{Catalogue, Category, Job, render};
 use crate::home::{GitState, Places};
 use crate::mirror::{MAIN, Mirror, Target};
 use crate::model::{Paper, Run, Source, duration_text};
@@ -869,10 +869,7 @@ impl App {
                 });
                 ui.label(&job.description);
                 ui.add_space(8.0);
-                let threads = match job.threads {
-                    ThreadUse::Setting => format!("the setting ({})", self.settings.threads),
-                    ThreadUse::Fixed(count) => format!("{count}, fixed"),
-                };
+                let threads = "1: one CPU per job, the jobs side by side (SPEC.md, §7.5)".to_string();
                 let mut rows = vec![
                     ("Category", category_word(job.category).to_string()),
                     ("Checkout", job.checkout.text()),

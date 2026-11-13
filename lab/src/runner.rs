@@ -583,7 +583,7 @@ impl Runner {
     fn job_cpus(&self) -> Vec<usize> {
         let Some((_, calm)) = self.monitor.as_ref() else { return Vec::new() };
         let text = calm.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).job_cpus.clone();
-        crate::cpus::checked(&text).unwrap_or_default()
+        crate::cpus::job_cpus(&text).unwrap_or_default()
     }
 
     fn verdict(&self) -> Option<Verdict> {
@@ -1006,9 +1006,9 @@ impl Runner {
         }
         let started = Local::now().fixed_offset();
         let id = self.unique_id(&started, &job.name);
-        // Pinned, the job runs on the job processors, its setting no larger than their cores.
-        let cpus = self.job_cpus();
-        let setting = crate::batch::capped(queue.threads, &cpus);
+        // One CPU, the first core of the job processors (SPEC.md, §7.5).
+        let cpus = crate::cpus::cores(&self.job_cpus()).into_iter().next().unwrap_or_default();
+        let setting = queue.threads;
         let threads = job.effective_threads(setting);
         let reference = target.recorded();
         let recorded = job.values(setting, &git.short, &reference, None, &item.parameters);
@@ -1985,15 +1985,15 @@ mod tests {
         assert_eq!(statuses, ["ok", "ok", "failed (3)", "failed (1)"]);
         // {repo} kept in the record, filled in the command executed.
         let fine = &runs[0];
-        assert_eq!(fine.command, "echo threads $RAYON_NUM_THREADS 3 in {repo}; ulimit -v");
+        assert_eq!(fine.command, "echo threads $RAYON_NUM_THREADS 1 in {repo}; ulimit -v");
         assert_eq!(fine.checkout, "local");
         assert!(!fine.git.as_ref().unwrap().pushed, "no mirror to say so");
-        assert_eq!(fine.environment["RAYON_NUM_THREADS"], "3");
+        assert_eq!(fine.environment["RAYON_NUM_THREADS"], "1", "one CPU a job");
         assert_eq!(fine.comment, "a test");
         assert!(fine.seconds.is_some() && fine.git.is_some() && fine.machine.is_some());
         let log = std::fs::read_to_string(places.data.join(&fine.log.as_ref().unwrap().path)).unwrap();
         assert!(log.contains("prepared"), "{log}");
-        assert!(log.contains(&format!("threads 3 3 in {}", home(&places))), "{log}");
+        assert!(log.contains(&format!("threads 1 1 in {}", home(&places))), "{log}");
         assert!(log.contains("2000000"), "the memory cap is ulimit -v 2000000: {log}");
         // The same prepare on the same commit runs once per queue in a local folder, if it is clean.
         let also = runs[1].prepare.as_ref().unwrap();
