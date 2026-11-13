@@ -419,6 +419,7 @@ struct Running {
     environment: BTreeMap<String, String>,
     memory_limit_gb: Option<u32>,
     log: File,
+    heartbeat: Heartbeat,
     outputs: Vec<String>,
     since: SystemTime,
     stop_sent: Option<Instant>,
@@ -1073,6 +1074,7 @@ impl Runner {
             environment,
             memory_limit_gb: job.memory_limit_gb,
             log,
+            heartbeat: Heartbeat::new(),
             outputs: job.outputs.clone(),
             since: SystemTime::now(),
             stop_sent: None,
@@ -1162,6 +1164,7 @@ impl Runner {
         running.child = Some(child);
         running.phase = phase;
         running.phase_started = Instant::now();
+        running.heartbeat = Heartbeat::new();
         Ok(())
     }
 
@@ -1228,7 +1231,10 @@ impl Runner {
         }
         let status = match child.try_wait() {
             Ok(Some(status)) => status,
-            Ok(None) => return,
+            Ok(None) => {
+                running.heartbeat.tick(&mut running.log, group, running.phase_started);
+                return;
+            }
             Err(error) => {
                 log_line(&mut running.log, &format!("waiting for the shell failed: {error}"));
                 return;
@@ -1557,6 +1563,82 @@ pub fn spawn_shell(
     command.spawn().map_err(|error| format!("bash: {error}"))
 }
 
+/// How long a job's log may stay quiet before lab writes what runs.
+pub const QUIET: Duration = Duration::from_secs(30);
+
+/// While a job's log stays quiet (a compilation under cmake, a solver), a
+/// line every `QUIET`: how long the job has run, how long its log has been
+/// quiet, and the processes of its group under way.
+pub struct Heartbeat {
+    size: u64,
+    changed: Instant,
+    said: Instant,
+}
+
+impl Default for Heartbeat {
+    fn default() -> Heartbeat {
+        Heartbeat::new()
+    }
+}
+
+impl Heartbeat {
+    pub fn new() -> Heartbeat {
+        let now = Instant::now();
+        Heartbeat { size: 0, changed: now, said: now }
+    }
+
+    /// Called at each look at the job; `started` is when its command began.
+    pub fn tick(&mut self, log: &mut File, group: i32, started: Instant) {
+        let size = log.metadata().map_or(0, |metadata| metadata.len());
+        if size != self.size {
+            self.size = size;
+            self.changed = Instant::now();
+            return;
+        }
+        if self.changed.elapsed() < QUIET || self.said.elapsed() < QUIET {
+            return;
+        }
+        self.said = Instant::now();
+        log_line(
+            log,
+            &format!(
+                "running for {}, nothing written for {}; under way: {}",
+                crate::model::duration_text(started.elapsed().as_secs_f64()),
+                crate::model::duration_text(self.changed.elapsed().as_secs_f64()),
+                group_processes(group)
+            ),
+        );
+        // Lab's own line is not the job's: the quiet goes on.
+        self.size = log.metadata().map_or(0, |metadata| metadata.len());
+    }
+}
+
+/// The processes of a group, by name, the most numerous first: "cc1plus ×4, cmake, make".
+fn group_processes(group: i32) -> String {
+    let mut names: BTreeMap<String, usize> = BTreeMap::new();
+    let Ok(entries) = std::fs::read_dir("/proc") else { return "unknown".to_string() };
+    for entry in entries.flatten() {
+        let Ok(stat) = std::fs::read_to_string(entry.path().join("stat")) else { continue };
+        // pid (comm) state ppid pgrp …: comm may hold spaces, the last ')' ends it.
+        let (Some(open), Some(close)) = (stat.find('('), stat.rfind(')')) else { continue };
+        let pgrp = stat[close + 1..].split_whitespace().nth(2).and_then(|field| field.parse::<i32>().ok());
+        if pgrp == Some(group) {
+            *names.entry(stat[open + 1..close].to_string()).or_default() += 1;
+        }
+    }
+    if names.is_empty() {
+        return "no process".to_string();
+    }
+    let mut counted: Vec<(String, usize)> = names.into_iter().collect();
+    counted.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+    counted
+        .iter()
+        .take(8)
+        .map(|(name, count)| if *count == 1 { name.clone() } else { format!("{name} ×{count}") })
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
 pub fn log_line(log: &mut File, text: &str) {
     let _ = writeln!(log, "== lab {}: {text}", Local::now().format("%H:%M:%S"));
 }
@@ -1629,6 +1711,20 @@ mod tests {
     /// A mirror that is not there: the tests on local folders never touch it.
     fn no_mirror(places: &Places) -> Mirror {
         Mirror::new(&places.data, "nowhere/none")
+    }
+
+    #[test]
+    fn the_processes_of_a_group_are_named() {
+        let places = places("group-processes");
+        let log = File::create(places.data.join("log")).unwrap();
+        let mut child = spawn_shell("sleep 5 & sleep 5 & wait", &places.data, &BTreeMap::new(), None, &log).unwrap();
+        std::thread::sleep(Duration::from_millis(300));
+        let group = child.id() as i32;
+        let said = group_processes(group);
+        kill_group(group, Duration::from_secs(2));
+        let _ = child.wait();
+        assert!(said.contains("sleep ×2"), "{said}");
+        assert!(said.contains("bash"), "{said}");
     }
 
     fn new_runner(shared: &Arc<Mutex<Shared>>, places: &Places) -> Runner {

@@ -434,7 +434,7 @@ met en file (ci-dessous).
   fenêtre ; les jobs non commencés n'ont pas de fiche. Les lignes du lancement, celles qu'écrit
   `lab run`, vont dans `logs/<lancement>.log` : le journal que l'écran File montre pour lui.
 - **L'écran Batches**, un sixième onglet : les batches à gauche ; pour celui choisi, sa grille. Une
-  ligne par job, numérotée dans l'ordre de la grille : la valeur de chaque axe, son état, sa dernière
+  ligne par job, numérotée dans l'ordre de la grille : la valeur de chaque axe, son état, le temps moyen de ses exécutions ok et leur nombre, sa dernière
   exécution (une grille en tableau croisé se lisait comme un job par ligne). Une case
   montre son état : en cours (écoulé et estimation), en attente dans la file (son estimation), sa
   dernière fiche (`ok 41 s`, `failed`, `timed out`, le temps grisé quand il ne compte pas, §7.2), ou
@@ -444,9 +444,15 @@ met en file (ci-dessous).
   checkouts, une dépendance en cours, une préparation, l'attente du moniteur, les jobs) et chaque
   dépendance, en cache, en cours ou faite. Le journal de l'écran File suit le job qui tourne, une
   dépendance ou une préparation comprise, pas les lignes du lancement. Au-dessus de la grille, au repos
-  comme pendant un lancement, la table des jobs dont le batch a besoin (R2) : une ligne par dépendance
-  et valeur voulue (`source creature`), une colonne par référence, chacune sa dernière fiche et si son
-  résultat est en cache ; un clic ouvre la fiche dans l'Historique.
+  comme pendant un lancement, la table des jobs dont le batch a besoin (R2) : une ligne par clé
+  (`source creature` sur `main · 12a6675` quand les deux références la partagent, lue dans les fiches des
+  jobs ; sinon une par référence), son état (en cours, en cache, ou sa dernière fiche), le temps moyen de
+  ses exécutions ok et leur nombre, sa dernière exécution ; un clic ouvre la fiche dans l'Historique. Pendant qu'une dépendance se fait,
+  le panneau de l'écran File la nomme, avec son temps et la médiane de celles faites avant, puis le
+  compte des jobs, une ligne par job du lancement (en cours, puis finis, le dernier d'abord : son état
+  et son temps), et ce qui reste d'après les estimations des cases. Un job dont le journal reste muet 30 s (une compilation sous cmake, un solveur) reçoit
+  de lab une ligne toutes les 30 s : depuis quand il tourne, depuis quand son journal se tait, les
+  processus de son groupe (`cc1plus ×4, cmake`).
 - **Choisir et relancer.** On choisit les cases une à une, ou « en échec », « jamais lancées »,
   « toutes », « aucune » ; un délai pour ce lancement (celui du batch par défaut) ; « Mettre la
   sélection en file » met le batch en file réduit à ces cases. Sans fenêtre, `--axis` réduit la grille

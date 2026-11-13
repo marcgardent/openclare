@@ -176,6 +176,7 @@ struct Job {
     since: SystemTime,
     run: Run,
     log: File,
+    heartbeat: crate::runner::Heartbeat,
     out: String,
     /// The checkout and the batch's `outputs` globs in it.
     root: PathBuf,
@@ -827,7 +828,7 @@ fn pool(
                     };
                     ended.push((position, recorded, seconds, group));
                 }
-                Ok(None) => {}
+                Ok(None) => job.heartbeat.tick(&mut job.log, group, job.started),
                 Err(error) => log_line(&mut job.log, &format!("waiting for the shell failed: {error}")),
             }
         }
@@ -894,6 +895,7 @@ fn run_prepare(
         monitor::lock(watch).groups = vec![group];
     }
     let begun = Instant::now();
+    let mut heartbeat = crate::runner::Heartbeat::new();
     let mut stop_sent: Option<Instant> = None;
     let status = loop {
         if (context.stopped)() && stop_sent.is_none() {
@@ -908,7 +910,10 @@ fn run_prepare(
         }
         match child.try_wait() {
             Ok(Some(status)) => break status,
-            Ok(None) => std::thread::sleep(TICK),
+            Ok(None) => {
+                heartbeat.tick(&mut log, group, begun);
+                std::thread::sleep(TICK);
+            }
             Err(error) => return Err(format!("waiting for the prepare: {error}")),
         }
     };
@@ -1042,6 +1047,7 @@ fn begin(
         since: SystemTime::now(),
         run,
         log,
+        heartbeat: crate::runner::Heartbeat::new(),
         out: out_relative,
         root: place.root.clone(),
         globs: job.outputs.clone(),
