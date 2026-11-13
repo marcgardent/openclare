@@ -44,8 +44,8 @@ wherever it ran. It runs on Linux (it reads /proc); `nvidia-smi`, if present, gi
   once like the others, and its time does not count when the machine was not calm; with `wait = true`
   under `[calm]` in the settings it waits for a calm machine, and "Start anyway" starts it. A reference
   the mirror does not know runs on `main`, with a warning: lab warns, it never holds a Run back.
-- **Batches**: the grid of a batch, one row per value of its first axis, one column per combination of
-  the others; each cell its state under way or its last record (`ok 41 s`, `failed`, `timed out`, `—`
+- **Batches**: the jobs of a batch, one line each, numbered (its axes' values, its state, its last run);
+  each its state under way or its last record (`ok 41 s`, `failed`, `timed out`, `—`
   never run), its estimate on hover, its record and the end of its log once clicked. Cells are selected
   (one by one, or the failed ones, those never run, all) and the batch is queued restricted to them,
   with a timeout for that launch.

@@ -47,8 +47,8 @@ montrent toutes les exécutions, où qu'elles aient tourné. Il tourne sous Linu
   avec `wait = true` sous `[calm]` dans les réglages elle attend une machine calme, et « Start anyway »
   la lance. Une référence que le miroir ne connaît pas tourne sur `main`, avec un avertissement : lab
   avertit, il n'empêche jamais un Run.
-- **Batches** : la grille d'un batch, une ligne par valeur de son premier axe, une colonne par
-  combinaison des autres ; chaque case son état en cours ou sa dernière fiche (`ok 41 s`, `failed`,
+- **Batches** : les jobs d'un batch, une ligne chacun, numérotés (les valeurs de ses axes, son état,
+  sa dernière exécution) ; chacun son état en cours ou sa dernière fiche (`ok 41 s`, `failed`,
   `timed out`, `—` jamais lancée), son estimation au survol, sa fiche et la fin de son journal une fois
   cliquée. On choisit des cases (une à une, ou celles en échec, jamais lancées, toutes) et on met le
   batch en file réduit à elles, avec un délai pour ce lancement.

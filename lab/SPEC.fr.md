@@ -434,7 +434,8 @@ met en file (ci-dessous).
   fenêtre ; les jobs non commencés n'ont pas de fiche. Les lignes du lancement, celles qu'écrit
   `lab run`, vont dans `logs/<lancement>.log` : le journal que l'écran File montre pour lui.
 - **L'écran Batches**, un sixième onglet : les batches à gauche ; pour celui choisi, sa grille. Une
-  ligne par valeur du premier axe, une colonne par combinaison des autres (`3000 · main`). Une case
+  ligne par job, numérotée dans l'ordre de la grille : la valeur de chaque axe, son état, sa dernière
+  exécution (une grille en tableau croisé se lisait comme un job par ligne). Une case
   montre son état : en cours (écoulé et estimation), en attente dans la file (son estimation), sa
   dernière fiche (`ok 41 s`, `failed`, `timed out`, le temps grisé quand il ne compte pas, §7.2), ou
   `—`, jamais lancée. Le survol donne son exécution, son commit, son calme et son estimation ; un clic la

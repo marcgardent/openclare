@@ -1,6 +1,6 @@
 //! The Batches screen (SPEC.md, §6b, amendment R3): the batches of the
-//! catalogue, and for the one chosen its grid, one row per value of its
-//! first axis, one column per combination of the others. A cell shows the
+//! catalogue, and for the one chosen its grid, one line per job (a cell:
+//! one value of each axis), numbered in the grid's order. A cell shows the
 //! batch under way's state, else its last record; cells are selected and
 //! the batch is queued restricted to them.
 
@@ -286,34 +286,36 @@ impl App {
         }
         ui.separator();
 
-        // Rows: the first axis; columns: the others, in the grid's order.
-        let rows = batch.axes.first().map_or(1, |axis| axis.values.len()).max(1);
-        let columns = (cells.len() / rows).max(1);
+        // One line per job, in the grid's order: its number, its axes' values, its state.
         egui::ScrollArea::horizontal().id_salt("cells").auto_shrink([false, true]).show(ui, |ui| {
-            egui::Grid::new("cells").striped(true).spacing([6.0, 4.0]).show(ui, |ui| {
-                ui.label("");
-                for cell in cells.iter().take(columns) {
-                    let label: Vec<&str> = cell.values.iter().skip(1).map(|(_, value)| value.as_str()).collect();
-                    ui.label(RichText::new(label.join(" · ")).small().strong().color(MUTED));
+            egui::Grid::new("cells").striped(true).spacing([14.0, 3.0]).show(ui, |ui| {
+                ui.label(RichText::new("#").small().strong().color(MUTED));
+                for axis in &batch.axes {
+                    ui.label(RichText::new(&axis.name).small().strong().color(MUTED));
                 }
+                ui.label(RichText::new("state").small().strong().color(MUTED));
+                ui.label(RichText::new("last run").small().strong().color(MUTED));
                 ui.end_row();
-                for row in 0..rows {
-                    let first = cells[row * columns].values.first().map(|(_, value)| value.clone()).unwrap_or_default();
-                    ui.label(RichText::new(first).strong());
-                    for column in 0..columns {
-                        let index = row * columns + column;
-                        let (cell, shown) = (&cells[index], &shown[index]);
-                        let selected = self.batches.selected.contains(&cell.values);
-                        let text = RichText::new(&shown.text).monospace().color(shown.colour);
-                        let response = ui.selectable_label(selected, text).on_hover_text(&shown.hover);
-                        if response.clicked() {
-                            if selected {
-                                self.batches.selected.remove(&cell.values);
-                            } else {
-                                self.batches.selected.insert(cell.values.clone());
-                            }
-                            self.batches.clicked = Some(cell.values.clone());
+                for (index, (cell, shown)) in cells.iter().zip(&shown).enumerate() {
+                    let selected = self.batches.selected.contains(&cell.values);
+                    let mut clicked = ui
+                        .selectable_label(selected, RichText::new(format!("{}", index + 1)).monospace().color(MUTED))
+                        .clicked();
+                    for (_, value) in &cell.values {
+                        clicked |= ui.selectable_label(selected, RichText::new(value).strong()).clicked();
+                    }
+                    let text = RichText::new(&shown.text).monospace().color(shown.colour);
+                    clicked |= ui.selectable_label(selected, text).on_hover_text(&shown.hover).clicked();
+                    let last = last_run(batch, &cell.values, &runs).map_or(String::new(), |run| run.id.clone());
+                    clicked |=
+                        ui.selectable_label(selected, RichText::new(last).monospace().small().color(MUTED)).clicked();
+                    if clicked {
+                        if selected {
+                            self.batches.selected.remove(&cell.values);
+                        } else {
+                            self.batches.selected.insert(cell.values.clone());
                         }
+                        self.batches.clicked = Some(cell.values.clone());
                     }
                     ui.end_row();
                 }

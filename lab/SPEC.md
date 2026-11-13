@@ -544,8 +544,9 @@ window lists the batches in the catalogue and their records in the history; R3 q
   the policies of §8.4 apply after it when one of its jobs did not end `Ok`. Stop ends the jobs under
   way (`Stopped`), as Ctrl-C does without a window; the jobs not started get no record. The lines of
   the launch, those `lab run` prints, go to `logs/<launch>.log`: the log the Queue screen shows for it.
-- **The Batches screen**, a sixth tab: the batches on the left; for the one chosen, its grid. One row
-  per value of the first axis, one column per combination of the others (`3000 · main`). A cell shows
+- **The Batches screen**, a sixth tab: the batches on the left; for the one chosen, its grid. One line
+  per job, numbered in the grid's order: each axis's value, its state, its last run (a cross table
+  read as one job per row). A cell shows
   its state: running (elapsed and estimate), waiting in the queue (its estimate), its last record
   (`ok 41 s`, `failed`, `timed out`, the time muted when it does not count, §7.2), or `—`, never run.
   Hovering it gives its run, commit, calm and estimate; a click selects it, and the cell clicked last
