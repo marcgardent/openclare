@@ -448,7 +448,8 @@ met en file (ci-dessous).
   et valeur voulue (`source creature`), une colonne par référence, chacune sa dernière fiche et si son
   résultat est en cache ; un clic ouvre la fiche dans l'Historique. Pendant qu'une dépendance se fait,
   le panneau de l'écran File la nomme, avec son temps et la médiane de celles faites avant, puis le
-  compte des jobs. Un job dont le journal reste muet 30 s (une compilation sous cmake, un solveur) reçoit
+  compte des jobs, une ligne par job du lancement (en cours, puis finis, le dernier d'abord : son état
+  et son temps), et ce qui reste d'après les estimations des cases. Un job dont le journal reste muet 30 s (une compilation sous cmake, un solveur) reçoit
   de lab une ligne toutes les 30 s : depuis quand il tourne, depuis quand son journal se tait, les
   processus de son groupe (`cc1plus ×4, cmake`).
 - **Choisir et relancer.** On choisit les cases une à une, ou « en échec », « jamais lancées »,

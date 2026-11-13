@@ -11,7 +11,7 @@ use crate::catalogue::{Category, CheckoutChoice, Job, ThreadUse};
 use crate::files;
 use crate::mirror::Target;
 use crate::model::{Paper, PaperRef, Status, duration_text};
-use crate::runner::{BatchChoice, ItemState, LiveState, Mode, OrphanDecision, Phase, QueueSettings, Shared};
+use crate::runner::{BatchChoice, ItemState, LiveGrid, LiveState, Mode, OrphanDecision, Phase, QueueSettings, Shared};
 use crate::settings::Policy;
 use crate::state::{Estimate, estimate};
 
@@ -605,6 +605,7 @@ impl App {
                                 .text(format!("{ended}/{}", grid.cells.len())),
                         );
                     }
+                    launch_jobs(ui, grid, &self.all_runs());
                 }
                 let phase = match (current.stopping, current.phase) {
                     (true, _) => "stopping".to_string(),
@@ -613,6 +614,12 @@ impl App {
                     (false, Phase::Command) => "its command".to_string(),
                 };
                 let elapsed = current.started.elapsed().as_secs_f64();
+                // A batch's item has no estimate of its own: what is left comes from its cells'.
+                let estimate = if grid.is_some() { None } else { estimate };
+                let phase = match &grid {
+                    Some(grid) => format!("{phase} · {}", time_left(grid)),
+                    None => phase,
+                };
                 ui.horizontal(|ui| {
                     ui.label(RichText::new(duration_text(elapsed)).strong().size(16.0));
                     match &estimate {
@@ -627,7 +634,12 @@ impl App {
                             );
                         }
                         None => {
-                            ui.label(RichText::new(format!("elapsed · no estimate · {phase}")).color(MUTED));
+                            let said = if grid.is_some() {
+                                format!("elapsed · {phase}")
+                            } else {
+                                format!("elapsed · no estimate · {phase}")
+                            };
+                            ui.label(RichText::new(said).color(MUTED));
                         }
                     }
                 });
@@ -847,4 +859,81 @@ fn banner(ui: &mut egui::Ui, colour: egui::Color32, add: impl FnOnce(&mut egui::
             add(ui);
         });
     ui.add_space(6.0);
+}
+
+/// What is left of a launch, from the estimates of its cells not ended, over its pool's width.
+fn time_left(grid: &LiveGrid) -> String {
+    let remaining: Vec<Option<f64>> = grid
+        .cells
+        .iter()
+        .filter_map(|cell| match cell.state {
+            LiveState::Waiting => Some(cell.estimate),
+            LiveState::Running(since) => {
+                Some(cell.estimate.map(|seconds| (seconds - since.elapsed().as_secs_f64()).max(0.0)))
+            }
+            _ => None,
+        })
+        .collect();
+    let known: Vec<f64> = remaining.iter().flatten().copied().collect();
+    let left = known.iter().sum::<f64>() / f64::from(grid.width.max(1));
+    match (known.len(), remaining.len() - known.len()) {
+        (0, 0) => "nothing left".to_string(),
+        (0, _) => "no estimate of what is left".to_string(),
+        (_, 0) => format!("about {} left", duration_text(left)),
+        (_, unknown) => format!("at least {} left, plus {unknown} jobs without an estimate", duration_text(left)),
+    }
+}
+
+/// One line per job of the launch: those under way, then those ended, the last first.
+fn launch_jobs(ui: &mut egui::Ui, grid: &LiveGrid, runs: &[crate::model::Run]) {
+    let text =
+        |values: &[(String, String)]| values.iter().map(|(_, value)| value.as_str()).collect::<Vec<_>>().join(" · ");
+    let mut ended: Vec<&crate::model::Run> = runs
+        .iter()
+        .filter(|run| run.job == grid.batch && run.cell.as_ref().is_some_and(|cell| cell.launch == grid.launch))
+        .collect();
+    ended.sort_by_key(|run| std::cmp::Reverse(run.started));
+    egui::ScrollArea::vertical().id_salt("launch jobs").max_height(240.0).show(ui, |ui| {
+        egui::Grid::new("launch jobs").striped(true).spacing([10.0, 2.0]).show(ui, |ui| {
+            for (index, cell) in grid.cells.iter().enumerate() {
+                let LiveState::Running(since) = cell.state else { continue };
+                ui.label(RichText::new(format!("{}", index + 1)).monospace().color(MUTED));
+                ui.label(text(&cell.values));
+                ui.label(RichText::new(format!("… {}", duration_text(since.elapsed().as_secs_f64()))).color(BLUE));
+                ui.label(
+                    RichText::new(
+                        cell.estimate.map_or(String::new(), |seconds| format!("≈ {}", duration_text(seconds))),
+                    )
+                    .color(MUTED),
+                );
+                ui.end_row();
+            }
+            for run in ended {
+                let Some(cell) = &run.cell else { continue };
+                let index = grid
+                    .cells
+                    .iter()
+                    .position(|live| live.values.iter().all(|(axis, value)| cell.values.get(axis) == Some(value)));
+                ui.label(
+                    RichText::new(index.map_or("?".to_string(), |index| format!("{}", index + 1)))
+                        .monospace()
+                        .color(MUTED),
+                );
+                let values: Vec<(String, String)> = index
+                    .map(|index| grid.cells[index].values.clone())
+                    .unwrap_or_else(|| cell.values.clone().into_iter().collect());
+                ui.label(text(&values));
+                let colour = if run.status == Status::Ok { GREEN } else { RED };
+                ui.label(RichText::new(run.status.text()).color(colour));
+                let time = run.seconds.map(duration_text).unwrap_or_default();
+                if run.calm.timing_valid {
+                    ui.label(time);
+                } else {
+                    ui.label(RichText::new(format!("{time} (not calm)")).color(MUTED))
+                        .on_hover_text(format!("the time does not count: {}", run.calm.reason));
+                }
+                ui.end_row();
+            }
+        });
+    });
 }
