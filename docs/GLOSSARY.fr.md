@@ -455,7 +455,8 @@ de quad, comme une sculpture lisse, il n'y a pas de valeur.
 **Écart au budget** (*budget error*). L'écart entre le nombre de quads produits et le nombre demandé.
 
 **Validité** (*validity*). Fermé là où la source est fermée, variété (manifold), sans face retournée
-ni dégénérée.
+ni dégénérée, et sans sommet intérieur de valence 2 (deux quads qui partagent deux arêtes) ni de
+valence supérieure à 6.
 
 **QuadSphere** (*QuadSphere*). La réponse académique pour une sphère : le découpage d'un cube, avec
 huit pôles de valence 3, six patchs et toutes les boucles fermées.

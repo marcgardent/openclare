@@ -152,7 +152,8 @@ one thread, no code shared with the engine:
 - **Singularities**: inner vertices of valence other than four, by valence in the JSON.
 
 Each (quad, direction) of a strip and each edge of a separatrix is counted once, so the double
-count of #262 (an edge on two of the engine's loops on degenerate meshes) cannot occur here.
+count of #262 cannot occur here (an edge on two of the engine's loops where two fans of two quads
+pinch at one vertex, in some Instant Meshes outputs; the engine's loops stop there since).
 
 **Checks.** The hand-made cases (`--check`, run before every measure): a 20 x 10 torus grid
 without shift (no helix, one patch), shifted by 1 (one helix of pitch 1, turn 10, 20 windings),

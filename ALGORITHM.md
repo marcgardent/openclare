@@ -45,7 +45,7 @@ floor that can be measured.
 
 | | Metric | Definition | Role |
 |---|---|---|---|
-| V | Validity | 100 % quads, manifold, closed if the input is, no inverted face | **blocking** |
+| V | Validity | 100 % quads, manifold, closed if the input is, no inverted face, no interior vertex of valence 2 (`valence_2_vertices`) or over 6 (`valence_over_6_vertices`) | **blocking** |
 | S | Irregular vertices | number of interior vertices of valence ≠ 4, and excess over the topological minimum (4·\|χ\| for a closed surface) | quality |
 | C | Complexity of the base complex | number of patches obtained by extending the edges from each irregular vertex; a spiral makes it explode | quality |
 | A | Alignment | mean angle between edges and principal curvature directions, weighted by the anisotropy \|k₁−k₂\| | quality |
@@ -495,8 +495,10 @@ Tried and not kept:
   elsewhere, which tip over at a half again.
 
 Left open: with the removal, jerry has one vertex of valence 2 at 2970 and 3000 quads, where the
-singularity stage and the field the map is made of count an index differently (#279), which
-the checks of validity do not see (#280).
+singularity stage and the field the map is made of count an index differently (#279). The checks
+of validity see it since #280: the lattice holds each singularity to the valence of its index,
+not to its number of arcs, so the quantization reports such lengths as not separated (and the
+chain falls back), and `measure` counts the vertex in `valence_2_vertices`.
 
 ### M1 bis — Sizing field
 

@@ -136,7 +136,12 @@ pub(super) fn call(directory: &Path, tmesh: &TMesh, real: &[f64], exact: &[f64],
     let folds: Vec<String> = folds.iter().map(|&(arc, share, sharp)| format!("[{arc},{share},{sharp}]")).collect();
     write!(out, "\"folds\":[{}],", folds.join(",")).unwrap();
     let defects = lattice::build(tmesh, x).defects(tmesh, request.merge_singularities);
-    write!(out, "\"reopen\":{:?},\"unexplained\":{},", defects.reopen, defects.unexplained).unwrap();
+    write!(
+        out,
+        "\"reopen\":{:?},\"unexplained\":{},\"wrong_singularities\":{},",
+        defects.reopen, defects.unexplained, defects.wrong_singularities
+    )
+    .unwrap();
     tmesh_fields(&mut out, tmesh);
     // Every strip of quads the lengths make, each with the conditions on the
     // lengths under which it stays the same walk.
@@ -211,7 +216,7 @@ fn tmesh_fields(out: &mut String, tmesh: &TMesh) {
         .zip(&angle)
         .map(|(node, angle)| {
             let (kind, vertex) = match node.kind {
-                NodeKind::Singularity { vertex } => ("singularity", vertex as i64),
+                NodeKind::Singularity { vertex, .. } => ("singularity", vertex as i64),
                 NodeKind::Corner => ("corner", -1),
                 NodeKind::Junction => ("junction", -1),
             };

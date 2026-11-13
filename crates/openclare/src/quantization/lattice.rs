@@ -200,6 +200,15 @@ pub(super) fn build(tmesh: &TMesh, x: &[i64]) -> Built {
     Built { lattice, vertex_of, merges, clashes }
 }
 
+/// Largest valence a vertex inside the surface may have. The singularity
+/// stage spreads every index beyond a quarter turn over free neighbours, so
+/// the field asks for valences 3 and 5; an index of -2 (valence 6) is left
+/// only where no free neighbour is found (the ogre has such vertices before
+/// the split, ALGORITHM.md, M2), and merged singularities make 3 to 5.
+/// Beyond 6 the field never asks, so a vertex there is a fault. Below 3 is
+/// one as well: two quads that share two edges.
+pub(super) const MOST_VALENCE: usize = 6;
+
 /// What is wrong with a lattice.
 #[derive(Default)]
 pub(super) struct Defects {
@@ -208,9 +217,18 @@ pub(super) struct Defects {
     pub reopen: Vec<usize>,
     /// Defects no merge explains: the T-mesh itself must be at fault.
     pub unexplained: usize,
+    /// Singularities inside the surface with the valence their T-mesh node
+    /// gives them, where that is not `4 - index` or not within 3 to
+    /// [`MOST_VALENCE`]: the map sent out another number of arcs than the
+    /// field's index asks for (#279), or the field asks for a valence no
+    /// quad mesh should have. No length mends that, so [`Defects::is_empty`]
+    /// leaves them out: it judges lengths, and any lengths of this T-mesh
+    /// would fail. The quantization reports them as not separated.
+    pub wrong_singularities: usize,
 }
 
 impl Defects {
+    /// Nothing that other lengths could mend.
     pub fn is_empty(&self) -> bool {
         self.reopen.is_empty() && self.unexplained == 0
     }
@@ -218,15 +236,16 @@ impl Defects {
 
 impl Built {
     /// Checks that the lattice is a manifold quad mesh whose irregular
-    /// vertices are the singularities of the T-mesh, each with its valence
-    /// unless it came to lie on a border. With `merging`, singularities may
-    /// share a vertex whose valence their indices add up to, if that is 3,
-    /// 4 or 5 and the Euler characteristic is kept (ALGORITHM.md, M6,
-    /// "Merging singularities").
+    /// vertices are the singularities of the T-mesh, each with the valence
+    /// its index asks for unless it came to lie on a border, and no vertex
+    /// inside the surface of valence under 3 or over [`MOST_VALENCE`]. With
+    /// `merging`, singularities may share a vertex whose valence their
+    /// indices add up to, if that is 3, 4 or 5 and the Euler characteristic
+    /// is kept (ALGORITHM.md, M6, "Merging singularities").
     pub fn defects(&self, tmesh: &TMesh, merging: bool) -> Defects {
         let lattice = &self.lattice;
         let vertices = lattice.sources.len();
-        let mut defects = Defects { reopen: self.clashes.clone(), unexplained: 0 };
+        let mut defects = Defects { reopen: self.clashes.clone(), unexplained: 0, wrong_singularities: 0 };
         // Whether a defect was already charged to each vertex.
         let mut blamed = vec![false; vertices];
         // Charges a defect at `vertex` to the arc `culprit` finds, once.
@@ -243,7 +262,14 @@ impl Built {
         // the border need not: two of them a hair apart are a step in the
         // border too small to keep, and the border is as well without it.)
         let mut singularity: Vec<Option<u32>> = vec![None; vertices];
-        let mut expected_valence: Vec<Option<usize>> = vec![None; vertices];
+        let mut expected_valence: Vec<Option<i64>> = vec![None; vertices];
+        // The valence the node of a lone singularity gives its vertex: one
+        // edge per arc.
+        let mut node_valence: Vec<Option<usize>> = vec![None; vertices];
+        let index_of = |node: usize| match tmesh.nodes[node].kind {
+            NodeKind::Singularity { index, .. } => index as i64,
+            _ => 0,
+        };
         // With `merging`: the singularities come into each vertex, and the
         // valence their indices add up to.
         let mut merged: BTreeMap<u32, (Vec<u32>, i64)> = BTreeMap::new();
@@ -254,11 +280,11 @@ impl Built {
             let vertex = lattice.node_vertex[node] as usize;
             if let Some(other) = singularity[vertex] {
                 if merging {
-                    let (nodes, valence) = merged
-                        .entry(vertex as u32)
-                        .or_insert_with(|| (vec![other], tmesh.nodes[other as usize].arcs.len() as i64));
+                    let (nodes, valence) =
+                        merged.entry(vertex as u32).or_insert_with(|| (vec![other], 4 - index_of(other as usize)));
                     nodes.push(node as u32);
-                    *valence += data.arcs.len() as i64 - 4;
+                    *valence -= index_of(node);
+                    node_valence[vertex] = None;
                     continue;
                 }
                 // Two of them in one vertex: reopen something between them.
@@ -268,11 +294,12 @@ impl Built {
                 continue;
             }
             singularity[vertex] = Some(node as u32);
-            expected_valence[vertex] = Some(data.arcs.len());
+            expected_valence[vertex] = Some(4 - index_of(node));
+            node_valence[vertex] = Some(data.arcs.len());
         }
         for (&vertex, (nodes, valence)) in &merged {
             if (3..=5).contains(valence) {
-                expected_valence[vertex as usize] = Some(*valence as usize);
+                expected_valence[vertex as usize] = Some(*valence);
             } else {
                 charge(&mut defects, vertex, &|| {
                     self.largest_merge_between(nodes[0], |point| nodes[1..].contains(&point))
@@ -334,12 +361,16 @@ impl Built {
                 }
             }
             let valence = around.len() + border as usize;
-            let sound = fan == around.len()
-                && unmatched <= 1
-                // On a border any valence will do: a singularity that the
-                // lengths bring onto it simply becomes a corner of the border.
-                && (border || valence == expected_valence[vertex as usize].unwrap_or(4));
-            if !sound {
+            let fanned = fan == around.len() && unmatched <= 1;
+            // On a border any valence will do: a singularity that the
+            // lengths bring onto it simply becomes a corner of the border.
+            let valued = border
+                || (valence as i64 == expected_valence[vertex as usize].unwrap_or(4)
+                    && (3..=MOST_VALENCE).contains(&valence));
+            if fanned && !valued && node_valence[vertex as usize] == Some(valence) {
+                // The lengths gave it all its node has: the T-mesh is wrong.
+                defects.wrong_singularities += 1;
+            } else if !(fanned && valued) {
                 charge(&mut defects, vertex, &|| self.largest_merge_at(vertex));
             }
         }
@@ -454,7 +485,7 @@ pub(super) mod tests {
 
     /// A T-mesh with no T-junction: each of `quads` (counter-clockwise) a
     /// rectangle, each edge an arc of real length `length` gives it, the
-    /// nodes `singular` singularities.
+    /// nodes `singular` singularities of the index their arcs stand for.
     pub fn of_quads(quads: &[[u32; 4]], singular: &[u32], length: impl Fn(u32, u32) -> f64) -> TMesh {
         let nodes = quads.iter().flatten().max().map_or(0, |&n| n + 1);
         let mut arcs: Vec<Arc> = Vec::new();
@@ -485,19 +516,16 @@ pub(super) mod tests {
             patches.push(Patch { boundary, angles: vec![1; 4], sides: Some([sides[0], sides[1], sides[2], sides[3]]) });
         }
         let mut node_list: Vec<Node> = (0..nodes)
-            .map(|node| Node {
-                position: Vec3::new(0.0, 0.0, 0.0),
-                kind: if singular.contains(&node) {
-                    NodeKind::Singularity { vertex: node }
-                } else {
-                    NodeKind::Junction
-                },
-                arcs: Vec::new(),
-            })
+            .map(|_| Node { position: Vec3::new(0.0, 0.0, 0.0), kind: NodeKind::Junction, arcs: Vec::new() })
             .collect();
         for (arc, data) in arcs.iter().enumerate() {
             node_list[data.nodes[0] as usize].arcs.push(2 * arc as u32);
             node_list[data.nodes[1] as usize].arcs.push(2 * arc as u32 + 1);
+        }
+        // The index of each singularity is the one its arcs stand for.
+        for &node in singular {
+            let data = &mut node_list[node as usize];
+            data.kind = NodeKind::Singularity { vertex: node, index: 4 - data.arcs.len() as i8 };
         }
         let euler = nodes as i64 - arcs.len() as i64 + quads.len() as i64;
         let report = Report { euler, surface_euler: euler, ..Default::default() };
@@ -582,5 +610,47 @@ pub(super) mod tests {
             let defects = closed.defects(&tmesh, merging);
             assert!(!defects.reopen.is_empty() && defects.unexplained == 0, "merging {merging}");
         }
+    }
+
+    /// A disc of `n` quads round the singularity 0, of the index `index`
+    /// says, or that of its arcs.
+    fn fan(n: u32, index: Option<i8>) -> TMesh {
+        let rim = |i: u32| 1 + i % (2 * n);
+        let quads: Vec<[u32; 4]> = (0..n).map(|k| [0, rim(2 * k), rim(2 * k + 1), rim(2 * k + 2)]).collect();
+        let mut tmesh = of_quads(&quads, &[0], |_, _| 1.0);
+        if let (Some(index), NodeKind::Singularity { vertex, .. }) = (index, tmesh.nodes[0].kind) {
+            tmesh.nodes[0].kind = NodeKind::Singularity { vertex, index };
+        }
+        tmesh
+    }
+
+    #[test]
+    fn a_singularity_inside_has_a_valence_of_3_to_6() {
+        for n in 2..=8 {
+            let tmesh = fan(n, None);
+            let defects = build(&tmesh, &lengths(&tmesh, &[])).defects(&tmesh, false);
+            // Every length 1: no length could do better, and none is blamed.
+            assert!(defects.is_empty(), "{n} quads");
+            assert_eq!(defects.wrong_singularities, !(3..=MOST_VALENCE as u32).contains(&n) as usize, "{n} quads");
+        }
+    }
+
+    #[test]
+    fn the_valence_of_a_singularity_is_that_of_its_index_not_its_arcs() {
+        // The field says a valence of 3 where the map sent out 2 arcs, or 4:
+        // either way the vertex is wrong (#279, #280).
+        for (n, wrong) in [(2, 1), (3, 0), (4, 1)] {
+            let tmesh = fan(n, Some(1));
+            let defects = build(&tmesh, &lengths(&tmesh, &[])).defects(&tmesh, false);
+            assert!(defects.is_empty() && defects.wrong_singularities == wrong, "{n} quads");
+        }
+    }
+
+    #[test]
+    fn a_plain_vertex_of_valence_2_inside_is_blamed() {
+        // Two quads sharing two edges round a vertex no singularity is on.
+        let tmesh = of_quads(&[[0, 1, 2, 3], [0, 3, 4, 1]], &[], |_, _| 1.0);
+        let defects = build(&tmesh, &lengths(&tmesh, &[])).defects(&tmesh, false);
+        assert_eq!((defects.unexplained, defects.wrong_singularities), (1, 0));
     }
 }
