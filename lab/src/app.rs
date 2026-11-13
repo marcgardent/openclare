@@ -15,7 +15,7 @@ use std::time::{Duration, Instant, SystemTime};
 use eframe::egui::{self, Color32, RichText};
 use egui_extras::{Column, TableBuilder};
 
-use crate::catalogue::{Catalogue, Category, Job, ThreadUse, render};
+use crate::catalogue::{Catalogue, Category, Job, render};
 use crate::home::{GitState, Places};
 use crate::mirror::{MAIN, Mirror, Target};
 use crate::model::{Paper, Run, Source, duration_text};
@@ -558,6 +558,37 @@ impl eframe::App for App {
 impl App {
     /// Closing the window during a run asks first (SPEC.md, section 8.5):
     /// the record needs the app open.
+    /// What lab did to the desktop's processors (SPEC.md, §7.5): pinned off
+    /// the job processors while something runs, every processor given back after.
+    fn desktop_pill(&self, ui: &mut egui::Ui) {
+        let desktop = self.lock().desktop.clone();
+        let Some(desktop) = desktop else { return };
+        let (text, colour, hover) = match &desktop {
+            crate::desktop::Desktop::Pinned { cpus, processes, since } => (
+                format!("Desktop on {cpus} · {processes} processes"),
+                AMBER,
+                format!(
+                    "since {}: your processes are kept on the processors {cpus}, off the job processors; \
+                     lab gives them every processor back once nothing runs",
+                    since.format("%H:%M:%S")
+                ),
+            ),
+            crate::desktop::Desktop::Freed { processes, at, why } => (
+                format!("Desktop free · {processes} restored {}", at.format("%H:%M")),
+                GREEN,
+                format!("{processes} processes given every processor back at {} ({why})", at.format("%H:%M:%S")),
+            ),
+        };
+        egui::Frame::new()
+            .fill(colour.gamma_multiply(0.18))
+            .stroke(egui::Stroke::new(1.0, colour.gamma_multiply(0.6)))
+            .corner_radius(12)
+            .inner_margin(egui::Margin::symmetric(10, 3))
+            .show(ui, |ui| ui.label(RichText::new(text).color(colour).strong()))
+            .response
+            .on_hover_text(hover);
+    }
+
     fn closing_window(&mut self, context: &egui::Context) {
         let running = self.lock().running();
         if self.quit_after_stop && !running {
@@ -565,6 +596,13 @@ impl App {
             return;
         }
         let closing = context.input(|input| input.viewport().close_requested());
+        if closing && !running {
+            // The window closes: the desktop gets every processor back (SPEC.md, §7.5).
+            let job_cpus = crate::cpus::job_cpus(&self.settings.calm.job_cpus).unwrap_or_default();
+            if !job_cpus.is_empty() {
+                crate::desktop::free(&crate::desktop::cpus(&job_cpus));
+            }
+        }
         if closing && running && !self.quit_after_stop && self.screenshot.is_none() {
             context.send_viewport_cmd(egui::ViewportCommand::CancelClose);
             self.closing = true;
@@ -732,6 +770,7 @@ impl App {
                 })
                 .response;
             response.on_hover_text(&verdict.text);
+            self.desktop_pill(ui);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if ui.button("About").clicked() {
                     self.about = true;
@@ -869,10 +908,7 @@ impl App {
                 });
                 ui.label(&job.description);
                 ui.add_space(8.0);
-                let threads = match job.threads {
-                    ThreadUse::Setting => format!("the setting ({})", self.settings.threads),
-                    ThreadUse::Fixed(count) => format!("{count}, fixed"),
-                };
+                let threads = "1: one CPU per job, the jobs side by side (SPEC.md, §7.5)".to_string();
                 let mut rows = vec![
                     ("Category", category_word(job.category).to_string()),
                     ("Checkout", job.checkout.text()),
@@ -1093,7 +1129,9 @@ impl App {
                             ui.colored_label(colour, RichText::new(place).monospace()).on_hover_text(hint);
                         });
                         row.col(|ui| {
-                            ui.monospace(run.threads.map_or("?".to_string(), |threads| threads.effective.to_string()));
+                            ui.monospace(
+                                run.threads.as_ref().map_or("?".to_string(), |threads| threads.effective.to_string()),
+                            );
                         });
                         row.col(|ui| {
                             let (mark, colour) = calm_mark(run);
@@ -1223,8 +1261,9 @@ fn run_detail(ui: &mut egui::Ui, run: &Run, data: &Path, timing_matters: bool, o
             format!("{} {} {branch} · {pushed}", git.commit, if git.dirty { "modified" } else { "clean" }),
         ));
     }
-    if let Some(threads) = run.threads {
-        rows.push(("Threads", format!("{} (setting {})", threads.effective, threads.setting)));
+    if let Some(threads) = &run.threads {
+        let pinned = threads.cpus.as_ref().map_or(String::new(), |cpus| format!(", pinned to the processors {cpus}"));
+        rows.push(("Threads", format!("{} (setting {}){pinned}", threads.effective, threads.setting)));
     }
     if let Some(machine) = &run.machine {
         let gpu = machine

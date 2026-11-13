@@ -189,6 +189,8 @@ pub struct Shared {
     pub pushed: Option<(DateTime<Local>, String)>,
     /// The batch under way, or the last one (R3).
     pub grid: Option<LiveGrid>,
+    /// What lab last did to the desktop's processors (SPEC.md, §7.5).
+    pub desktop: Option<crate::desktop::Desktop>,
     next_key: u64,
 }
 
@@ -420,6 +422,8 @@ struct Running {
     memory_limit_gb: Option<u32>,
     log: File,
     heartbeat: Heartbeat,
+    /// The processors it is pinned to; empty: any.
+    cpus: Vec<usize>,
     outputs: Vec<String>,
     since: SystemTime,
     stop_sent: Option<Instant>,
@@ -447,7 +451,8 @@ impl During {
     pub fn take(&mut self, watch: &Watch) {
         if let Some(point) = watch.latest().filter(|point| self.last.is_none_or(|last| point.at > last)) {
             self.last = Some(point.at);
-            self.foreign.push(point.foreign);
+            // Pinned, the foreign CPU on the job processors (SPEC.md, §7.5).
+            self.foreign.push(point.foreign_jobs.unwrap_or(point.foreign));
             self.load1_max = self.load1_max.max(point.load[0]);
             self.memory_peak = self.memory_peak.max(point.memory_used);
             if let Some((used, _)) = point.vram {
@@ -473,7 +478,11 @@ impl During {
             }
             run.calm.during = mean < calm.foreign_cpu_mean_max && peak < calm.foreign_cpu_peak_max;
             if !run.calm.during {
-                let reason = format!("foreign CPU mean {mean:.1} %, peak {peak:.1} % during the run");
+                let place = match calm.job_cpus.trim() {
+                    "" => String::new(),
+                    cpus => format!(" on the job processors {cpus}"),
+                };
+                let reason = format!("foreign CPU{place} mean {mean:.1} %, peak {peak:.1} % during the run");
                 run.calm.reason =
                     if run.calm.reason.is_empty() { reason } else { format!("{}; {reason}", run.calm.reason) };
             }
@@ -511,6 +520,10 @@ pub struct Runner {
     /// machine's name (SPEC.md, §4b): never, until `with_push` says.
     push: Push,
     machine_name: String,
+    /// The desktop's processors while lab keeps it pinned to them (SPEC.md, §7.5).
+    desktop_pinned: Option<Vec<usize>>,
+    /// Whether the desktop was looked at once: what an earlier session left pinned is freed then.
+    desktop_looked: bool,
 }
 
 impl Runner {
@@ -539,6 +552,8 @@ impl Runner {
             waiting_since: None,
             push: Push::Never,
             machine_name: crate::machine::hostname(),
+            desktop_pinned: None,
+            desktop_looked: false,
         }
     }
 
@@ -570,6 +585,13 @@ impl Runner {
             sample.gpu_percent = point.gpu;
         }
         sample
+    }
+
+    /// The job processors of the settings (SPEC.md, §7.5); empty: no pinning.
+    fn job_cpus(&self) -> Vec<usize> {
+        let Some((_, calm)) = self.monitor.as_ref() else { return Vec::new() };
+        let text = calm.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).job_cpus.clone();
+        crate::cpus::job_cpus(&text).unwrap_or_default()
     }
 
     fn verdict(&self) -> Option<Verdict> {
@@ -615,7 +637,61 @@ impl Runner {
     /// One look: the run under way, else the orphan, else the next item.
     pub fn step(&mut self) {
         self.look();
+        let busy = self.running.is_some() || {
+            let shared = self.lock();
+            shared.mode == Mode::Running && shared.items.iter().any(|item| item.state == ItemState::Waiting)
+        };
+        self.desktop_follow(busy);
         self.save_state();
+    }
+
+    /// The desktop off the job processors while something runs, every
+    /// processor back once nothing does (SPEC.md, §7.5); at the first look,
+    /// what a session that ended without freeing it left pinned is freed.
+    fn desktop_follow(&mut self, busy: bool) {
+        let Some((_, calm)) = self.monitor.as_ref() else { return };
+        let calm = calm.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone();
+        let job_cpus = crate::cpus::job_cpus(&calm.job_cpus).unwrap_or_default();
+        if job_cpus.is_empty() {
+            return;
+        }
+        let desktop = crate::desktop::cpus(&job_cpus);
+        let first_look = !self.desktop_looked;
+        self.desktop_looked = true;
+        match (&self.desktop_pinned, busy && calm.pin_desktop) {
+            (None, true) => {
+                let processes = crate::desktop::pin(&desktop);
+                self.lock().desktop = Some(crate::desktop::Desktop::Pinned {
+                    cpus: crate::cpus::text(&desktop),
+                    processes,
+                    since: Local::now(),
+                });
+                self.desktop_pinned = Some(desktop);
+                (self.repaint)();
+            }
+            (Some(pinned), false) => {
+                let processes = crate::desktop::free(pinned);
+                self.lock().desktop = Some(crate::desktop::Desktop::Freed {
+                    processes,
+                    at: Local::now(),
+                    why: "nothing runs".to_string(),
+                });
+                self.desktop_pinned = None;
+                (self.repaint)();
+            }
+            (None, false) if first_look => {
+                let processes = crate::desktop::free(&desktop);
+                if processes > 0 {
+                    self.lock().desktop = Some(crate::desktop::Desktop::Freed {
+                        processes,
+                        at: Local::now(),
+                        why: "left pinned by an earlier session".to_string(),
+                    });
+                    (self.repaint)();
+                }
+            }
+            _ => {}
+        }
     }
 
     fn look(&mut self) {
@@ -753,6 +829,8 @@ impl Runner {
         }
         (self.repaint)();
         let has_ref_axis = batch.axis(crate::catalogue::REFERENCE_AXIS).is_some();
+        // The batch runs here to its end: the desktop goes off the job processors first.
+        self.desktop_follow(true);
         let options = crate::batch::Options {
             only: Vec::new(),
             reference: (!has_ref_axis).then(|| item.target.clone()),
@@ -764,6 +842,7 @@ impl Runner {
             papers: queue.papers.clone(),
             cells: choice.cells.clone(),
             again: choice.again,
+            cpus: self.job_cpus(),
         };
         let shared = self.shared.clone();
         let stopped = || locked(&shared).stop.is_some();
@@ -991,11 +1070,13 @@ impl Runner {
         }
         let started = Local::now().fixed_offset();
         let id = self.unique_id(&started, &job.name);
-        let threads = job.effective_threads(queue.threads);
+        // One CPU, the first core of the job processors (SPEC.md, §7.5).
+        let cpus = crate::cpus::cores(&self.job_cpus()).into_iter().next().unwrap_or_default();
+        let setting = queue.threads;
+        let threads = job.effective_threads(setting);
         let reference = target.recorded();
-        let recorded = job.values(queue.threads, &git.short, &reference, None, &item.parameters);
-        let executed =
-            job.values(queue.threads, &git.short, &reference, Some(&checkout.to_string_lossy()), &item.parameters);
+        let recorded = job.values(setting, &git.short, &reference, None, &item.parameters);
+        let executed = job.values(setting, &git.short, &reference, Some(&checkout.to_string_lossy()), &item.parameters);
         let command = render(&job.command, &executed)?;
         let environment = job.environment_for(&executed)?;
         let directory = checkout.join(render(&job.directory, &executed)?);
@@ -1030,7 +1111,11 @@ impl Runner {
             checkout: reference.clone(),
             directory: job.directory.clone(),
             git: Some(Git { commit: git.commit.clone(), dirty: git.dirty, branch: git.branch.clone(), pushed }),
-            threads: Some(Threads { setting: queue.threads, effective: threads }),
+            threads: Some(Threads {
+                setting,
+                effective: threads,
+                cpus: (!cpus.is_empty()).then(|| crate::cpus::text(&cpus)),
+            }),
             memory_limit_gb: job.memory_limit_gb,
             machine: Some(self.machine.clone()),
             load: Some(crate::model::Load { at_start: self.sample(), at_end: None, during: None }),
@@ -1075,6 +1160,7 @@ impl Runner {
             memory_limit_gb: job.memory_limit_gb,
             log,
             heartbeat: Heartbeat::new(),
+            cpus: cpus.clone(),
             outputs: job.outputs.clone(),
             since: SystemTime::now(),
             stop_sent: None,
@@ -1084,12 +1170,24 @@ impl Runner {
             timeout: job.timeout.map(|timeout| Duration::from_secs_f64(timeout.seconds)),
             timed_out: false,
         };
+        // A prepare is a build: every core of the job processors (SPEC.md, §7.5).
+        let build_cpus = self.job_cpus();
         let prepare = match &job.prepare {
-            Some(prepare) => Some((render(prepare, &executed)?, scrub.text(&render(prepare, &recorded)?))),
+            Some(prepare) => {
+                let threads = crate::batch::build_threads(&build_cpus).to_string();
+                let (mut built, mut built_recorded) = (executed.clone(), recorded.clone());
+                built.insert("threads".to_string(), threads.clone());
+                built_recorded.insert("threads".to_string(), threads);
+                Some((
+                    render(prepare, &built)?,
+                    scrub.text(&render(prepare, &built_recorded)?),
+                    job.environment_for(&built)?,
+                ))
+            }
             None => None,
         };
         match prepare {
-            Some((executed, recorded)) => {
+            Some((executed, recorded, built_environment)) => {
                 // Once per checkout of the mirror, `.lab-prepared` remembering it; once per
                 // queue in a local folder, which may change between two queues (SPEC.md, §7.3).
                 let (key, done) = match &target {
@@ -1123,8 +1221,12 @@ impl Runner {
                             skipped_because: None,
                         });
                         let command = std::mem::replace(&mut running.command, executed);
+                        let environment = std::mem::replace(&mut running.environment, built_environment);
+                        let cpus = std::mem::replace(&mut running.cpus, build_cpus);
                         self.launch(&mut running, Phase::Prepare)?;
                         running.command = command;
+                        running.environment = environment;
+                        running.cpus = cpus;
                     }
                 }
             }
@@ -1156,6 +1258,7 @@ impl Runner {
             &running.directory,
             &running.environment,
             running.memory_limit_gb,
+            &running.cpus,
             &running.log,
         )?;
         if let Some((watch, _)) = &self.monitor {
@@ -1538,6 +1641,7 @@ pub fn spawn_shell(
     directory: &Path,
     environment: &BTreeMap<String, String>,
     memory_limit_gb: Option<u32>,
+    cpus: &[usize],
     log: &File,
 ) -> Result<Child, String> {
     let output = log.try_clone().map_err(|error| error.to_string())?;
@@ -1558,6 +1662,19 @@ pub fn spawn_shell(
         // Safety: only setrlimit, async-signal-safe, between fork and exec.
         unsafe {
             command.pre_exec(move || setrlimit(Resource::RLIMIT_AS, bytes, bytes).map_err(std::io::Error::from));
+        }
+    }
+    if !cpus.is_empty() {
+        // The job's processors (SPEC.md, §7.5): its children inherit them.
+        let mut set = nix::sched::CpuSet::new();
+        for &cpu in cpus {
+            set.set(cpu).map_err(|error| format!("processor {cpu}: {error}"))?;
+        }
+        // Safety: only sched_setaffinity, a system call, between fork and exec.
+        unsafe {
+            command.pre_exec(move || {
+                nix::sched::sched_setaffinity(nix::unistd::Pid::from_raw(0), &set).map_err(std::io::Error::from)
+            });
         }
     }
     command.spawn().map_err(|error| format!("bash: {error}"))
@@ -1717,7 +1834,8 @@ mod tests {
     fn the_processes_of_a_group_are_named() {
         let places = places("group-processes");
         let log = File::create(places.data.join("log")).unwrap();
-        let mut child = spawn_shell("sleep 5 & sleep 5 & wait", &places.data, &BTreeMap::new(), None, &log).unwrap();
+        let mut child =
+            spawn_shell("sleep 5 & sleep 5 & wait", &places.data, &BTreeMap::new(), None, &[], &log).unwrap();
         std::thread::sleep(Duration::from_millis(300));
         let group = child.id() as i32;
         let said = group_processes(group);
@@ -1947,15 +2065,15 @@ mod tests {
         assert_eq!(statuses, ["ok", "ok", "failed (3)", "failed (1)"]);
         // {repo} kept in the record, filled in the command executed.
         let fine = &runs[0];
-        assert_eq!(fine.command, "echo threads $RAYON_NUM_THREADS 3 in {repo}; ulimit -v");
+        assert_eq!(fine.command, "echo threads $RAYON_NUM_THREADS 1 in {repo}; ulimit -v");
         assert_eq!(fine.checkout, "local");
         assert!(!fine.git.as_ref().unwrap().pushed, "no mirror to say so");
-        assert_eq!(fine.environment["RAYON_NUM_THREADS"], "3");
+        assert_eq!(fine.environment["RAYON_NUM_THREADS"], "1", "one CPU a job");
         assert_eq!(fine.comment, "a test");
         assert!(fine.seconds.is_some() && fine.git.is_some() && fine.machine.is_some());
         let log = std::fs::read_to_string(places.data.join(&fine.log.as_ref().unwrap().path)).unwrap();
         assert!(log.contains("prepared"), "{log}");
-        assert!(log.contains(&format!("threads 3 3 in {}", home(&places))), "{log}");
+        assert!(log.contains(&format!("threads 1 1 in {}", home(&places))), "{log}");
         assert!(log.contains("2000000"), "the memory cap is ulimit -v 2000000: {log}");
         // The same prepare on the same commit runs once per queue in a local folder, if it is clean.
         let also = runs[1].prepare.as_ref().unwrap();
@@ -2048,6 +2166,7 @@ mod tests {
             per_thread: Vec::new(),
             ours: 0.0,
             foreign,
+            foreign_jobs: None,
             load: [0.2, 0.2, 0.2],
             memory_used: 1,
             memory_total: 2,

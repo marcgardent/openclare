@@ -448,7 +448,14 @@ fn run_batch(
     }
     let threads = arguments.threads.unwrap_or(settings.threads);
     let job_threads = batch.job.effective_threads(threads);
-    let width = crate::batch::batch_width(&batch.job, threads);
+    let cpus = match crate::cpus::job_cpus(&settings.calm.job_cpus) {
+        Ok(cpus) => cpus,
+        Err(error) => {
+            eprintln!("lab: {error}");
+            return ExitCode::FAILURE;
+        }
+    };
+    let width = crate::batch::batch_width(&batch.job, threads, &cpus);
     if width * job_threads > settings.comfort_threads {
         eprintln!(
             "lab: {width} jobs of {job_threads} threads: {} threads, above the comfort limit of {}",
@@ -477,6 +484,7 @@ fn run_batch(
         papers: Vec::new(),
         cells: Vec::new(),
         again: arguments.again,
+        cpus,
     };
     let stopped = || INTERRUPTED.load(Ordering::SeqCst);
     let mut say = |line: String| eprintln!("lab: {line}");
@@ -489,7 +497,21 @@ fn run_batch(
         say: &mut say,
         progress: &mut |_| {},
     };
-    let summary = match crate::batch::run(&mut context, catalogue, batch, &options) {
+    // The desktop off the job processors for the launch, every processor back after (SPEC.md, §7.5).
+    let desktop = if settings.calm.pin_desktop && !options.cpus.is_empty() {
+        let desktop = crate::desktop::cpus(&options.cpus);
+        let processes = crate::desktop::pin(&desktop);
+        eprintln!("lab: desktop on the processors {}: {processes} processes", crate::cpus::text(&desktop));
+        Some(desktop)
+    } else {
+        None
+    };
+    let result = crate::batch::run(&mut context, catalogue, batch, &options);
+    if let Some(desktop) = &desktop {
+        let processes = crate::desktop::free(desktop);
+        eprintln!("lab: desktop free: {processes} processes given every processor back");
+    }
+    let summary = match result {
         Ok(summary) => summary,
         Err(error) => {
             eprintln!("lab: {error}");

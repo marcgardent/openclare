@@ -28,6 +28,9 @@ pub struct Point {
     /// The run's processes, and the others, in percent of the whole machine.
     pub ours: f64,
     pub foreign: f64,
+    /// With job processors set (SPEC.md, §7.5): the foreign CPU on them, in
+    /// percent of them; what the calm is judged on.
+    pub foreign_jobs: Option<f64>,
     pub load: [f64; 3],
     pub memory_used: u64,
     pub memory_total: u64,
@@ -99,8 +102,15 @@ impl Watch {
         if points.is_empty() {
             return Verdict { calmness: Calmness::Measuring, text: "measuring".to_string() };
         }
-        let mean = points.iter().map(|point| point.foreign).sum::<f64>() / points.len() as f64;
-        let peak = points.iter().map(|point| point.foreign).fold(0.0, f64::max);
+        // Pinned, the calm is judged on the job processors alone; the rest is the desktop's.
+        // The sampler measured the job processors when there are some.
+        let job_cpus = crate::cpus::job_cpus(&calm.job_cpus).unwrap_or_default();
+        let pinned = !job_cpus.is_empty() && points.iter().any(|point| point.foreign_jobs.is_some());
+        let foreign = |point: &&Point| if pinned { point.foreign_jobs.unwrap_or(point.foreign) } else { point.foreign };
+        let mean = points.iter().map(foreign).sum::<f64>() / points.len() as f64;
+        let peak = points.iter().map(foreign).fold(0.0, f64::max);
+        let place =
+            if pinned { format!(" on the job processors {}", crate::cpus::text(&job_cpus)) } else { String::new() };
         let foreign_names = || {
             let names: Vec<String> = self
                 .heaviest
@@ -114,7 +124,7 @@ impl Watch {
         if mean >= calm.foreign_cpu_mean_max || peak >= calm.foreign_cpu_peak_max {
             return Verdict {
                 calmness: Calmness::Busy,
-                text: format!("foreign CPU mean {mean:.1} %, peak {peak:.1} %{}", foreign_names()),
+                text: format!("foreign CPU{place} mean {mean:.1} %, peak {peak:.1} %{}", foreign_names()),
             };
         }
         let ours = !self.groups.is_empty();
@@ -122,11 +132,15 @@ impl Watch {
         let after_ours = self.our_last_end.is_some_and(|end| {
             now.duration_since(end) < Duration::from_secs(60 * u64::from(calm.load1_ignored_minutes))
         });
-        if !ours && !after_ours && load1 >= calm.load1_max {
+        // load1 counts the whole machine: pinned, the desktop's share of it does not matter.
+        if !pinned && !ours && !after_ours && load1 >= calm.load1_max {
             return Verdict { calmness: Calmness::Busy, text: format!("load1 {load1:.2}{}", foreign_names()) };
         }
         if ours {
-            return Verdict { calmness: Calmness::Ours, text: format!("busy with our run · foreign CPU {mean:.1} %") };
+            return Verdict {
+                calmness: Calmness::Ours,
+                text: format!("busy with our run · foreign CPU{place} {mean:.1} %"),
+            };
         }
         let since = self.last_busy.map_or(now.duration_since(started), |busy| now.duration_since(busy));
         Verdict {
@@ -269,6 +283,16 @@ pub fn spawn(
                     (heaviest.iter().filter(|process| process.ours).map(|process| process.cpu).sum::<f64>() / threads)
                         .max(0.0);
                 let foreign = (total - ours_percent).max(0.0);
+                // The job processors: their busy time less ours (pinned to them), per processor.
+                let job_cpus = {
+                    let calm = calm.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+                    crate::cpus::job_cpus(&calm.job_cpus).unwrap_or_default()
+                };
+                let foreign_jobs = (!job_cpus.is_empty()).then(|| {
+                    let busy: f64 = job_cpus.iter().filter_map(|cpu| per_thread.get(*cpu)).sum();
+                    let ours: f64 = heaviest.iter().filter(|process| process.ours).map(|process| process.cpu).sum();
+                    ((busy - ours) / job_cpus.len() as f64).max(0.0)
+                });
                 heaviest.truncate(12);
                 if count % 2 == 0 {
                     gpu_reading = gpu();
@@ -280,6 +304,7 @@ pub fn spawn(
                     per_thread,
                     ours: ours_percent,
                     foreign,
+                    foreign_jobs,
                     load: load(),
                     memory_used,
                     memory_total,
@@ -322,6 +347,7 @@ mod tests {
             per_thread: Vec::new(),
             ours: 0.0,
             foreign,
+            foreign_jobs: None,
             load: [load1, 0.0, 0.0],
             memory_used: 0,
             memory_total: 1,

@@ -46,7 +46,11 @@ montrent toutes les exécutions, où qu'elles aient tourné. Il tourne sous Linu
   (⏱) part tout de suite comme les autres, et son temps ne compte pas si la machine n'était pas calme ;
   avec `wait = true` sous `[calm]` dans les réglages elle attend une machine calme, et « Start anyway »
   la lance. Une référence que le miroir ne connaît pas tourne sur `main`, avec un avertissement : lab
-  avertit, il n'empêche jamais un Run.
+  avertit, il n'empêche jamais un Run. Chaque job tourne sur un CPU, épinglé
+  sur un cœur à lui : tous les cœurs sauf le premier par défaut, gardé pour le bureau (`job_cpus` sous
+  `[calm]`, « Job processors » dans l'écran Machine) ; le calme se juge sur ces processeurs seuls, et
+  pendant que quelque chose tourne, lab garde le bureau sur le cœur 0 et lui rend tous les processeurs
+  après ; la barre du haut dit lequel (SPEC.fr.md §7.5).
 - **Batches** : les jobs d'un batch, une ligne chacun, numérotés (les valeurs de ses axes, son état,
   sa dernière exécution) ; chacun son état en cours ou sa dernière fiche (`ok 41 s`, `failed`,
   `timed out`, `—` jamais lancée), son estimation au survol, sa fiche et la fin de son journal une fois
@@ -122,8 +126,9 @@ lab run pole-pairs-115-remesh
 lab run pole-pairs-115-remesh --axis model=ogre --axis budget=3000 --timeout 1h
 ```
 
-lance chaque case de la grille, `réglage / threads` jobs à la fois (un à la fois quand son temps
-compte, ⏱ : un temps pour un papier est celui d'un job seul), chacun avec son journal, son dossier
+lance chaque case de la grille, chaque job sur un CPU, autant côte à côte que le dit le réglage de
+threads, chacun épinglé sur un cœur à lui (⏱ ou non : un temps pour un papier est celui d'un job seul
+sur son cœur ; SPEC.fr.md §7.5), chacun avec son journal, son dossier
 (`{out}`), son délai (30 minutes sauf si le batch en donne un) et son verdict de calme, chacun noté à
 sa fin ; un job en échec ou en dépassement est une case en échec et le batch continue. Il écrit une
 ligne par job qui commence et qui finit, puis les comptes, et sort avec 0 quand tous les jobs sont ok.

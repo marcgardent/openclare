@@ -7,7 +7,7 @@ use eframe::egui::{self, RichText};
 
 use super::{AMBER, App, BLUE, GREEN, MUTED, RED, STOPWATCH, command_lines, place_style, stopwatch};
 use crate::catalogue::render;
-use crate::catalogue::{Category, CheckoutChoice, Job, ThreadUse};
+use crate::catalogue::{Category, CheckoutChoice, Job};
 use crate::files;
 use crate::mirror::Target;
 use crate::model::{Paper, PaperRef, Status, duration_text};
@@ -337,10 +337,9 @@ impl App {
                             ui.label(RichText::new(format!("on {}", item.target)).monospace().color(MUTED));
                         }
                         let effective = item.job.effective_threads(threads);
-                        let fixed = if matches!(item.job.threads, ThreadUse::Fixed(_)) { " fixed" } else { "" };
                         let plural = if effective == 1 { "thread" } else { "threads" };
                         let colour = if effective > self.settings.comfort_threads { AMBER } else { MUTED };
-                        ui.colored_label(colour, format!("{effective} {plural}{fixed}"));
+                        ui.colored_label(colour, format!("{effective} {plural}"));
                         match resolutions.get(index).cloned().flatten() {
                             Some(Ok(resolution)) => {
                                 let place = match (&resolution.tag, resolution.pushed) {
@@ -783,6 +782,7 @@ impl App {
     /// now (SPEC.md, section 10); None for an item done.
     fn timings(&mut self, shared: &Shared, threads: u32) -> Vec<Option<Timing>> {
         let runs = self.all_runs();
+        let job_cpus = crate::cpus::job_cpus(&self.settings.calm.job_cpus).unwrap_or_default();
         let elapsed = shared.current.as_ref().map(|current| (current.key, current.started.elapsed().as_secs_f64()));
         let mut total = 0.0;
         let mut unknown = 0;
@@ -797,7 +797,7 @@ impl App {
                     let found = choice
                         .catalogue
                         .batch(&item.job.name)
-                        .map(|batch| super::batches::batch_estimate(batch, choice, &runs, threads));
+                        .map(|batch| super::batches::batch_estimate(batch, choice, &runs, threads, &job_cpus));
                     let (seconds, without) = found.unwrap_or((None, 0));
                     let estimate = seconds.map(|seconds| Estimate { seconds, runs: 1, load: None });
                     match &estimate {

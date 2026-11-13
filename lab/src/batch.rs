@@ -55,6 +55,8 @@ pub struct Options {
     pub cells: Vec<BTreeMap<String, String>>,
     /// Run again the jobs already done (R3).
     pub again: bool,
+    /// The processors the jobs are pinned to (SPEC.md, §7.5); empty: any, no pinning.
+    pub cpus: Vec<usize>,
 }
 
 /// A cell as planned: its axes' values and its estimate.
@@ -170,6 +172,8 @@ impl Place {
 /// A job of the pool under way.
 struct Job {
     index: usize,
+    /// The slot of the pool it holds.
+    slot: usize,
     text: String,
     child: Option<Child>,
     started: Instant,
@@ -207,8 +211,28 @@ pub fn run_id(started: &DateTime<FixedOffset>, batch: &str, values: &[(String, S
 /// The jobs a batch runs side by side: one when its timing matters, each
 /// then measured alone (decision of 2026-11-13, a time for a paper is that
 /// of a machine with nothing else to do); else the pool fills the setting.
-pub fn batch_width(job: &CatalogueJob, setting: u32) -> u32 {
-    if job.timing_matters { 1 } else { pool_width(setting, job.effective_threads(setting)) }
+pub fn batch_width(job: &CatalogueJob, setting: u32, cpus: &[usize]) -> u32 {
+    job_slots(job, setting, cpus).len() as u32
+}
+
+/// The threads of a build, a prepare or a dependency (SPEC.md, §7.5): every
+/// core of the job processors, pinned to them all, before the jobs run; one
+/// without job processors.
+pub fn build_threads(cpus: &[usize]) -> u32 {
+    crate::cpus::cores(cpus).len().max(1) as u32
+}
+
+/// The slots of a pool (SPEC.md, §7.5): one core of the job processors per
+/// job, as many as the setting allows; without job processors (a machine of
+/// one core), as many empty ones as the setting, one for a time that matters.
+pub fn job_slots(job: &CatalogueJob, setting: u32, cpus: &[usize]) -> Vec<Vec<usize>> {
+    if cpus.is_empty() {
+        let width = if job.timing_matters { 1 } else { pool_width(setting, job.effective_threads(setting)) };
+        return vec![Vec::new(); width as usize];
+    }
+    let mut slots = crate::cpus::slots(&crate::cpus::cores(cpus), job.effective_threads(setting));
+    slots.truncate(setting.max(1) as usize);
+    slots
 }
 
 pub fn pool_width(setting: u32, job_threads: u32) -> u32 {
@@ -217,6 +241,8 @@ pub fn pool_width(setting: u32, job_threads: u32) -> u32 {
 
 /// A job the pool runs: a cell of the batch, or a dependency to make (R2).
 struct Planned<'a> {
+    /// A dependency: the threads of a build (§7.5), else the job's one CPU.
+    build: Option<u32>,
     job: &'a CatalogueJob,
     /// "model=ogre budget=3000 ref=main", "engine 3f2a1b2c on main".
     text: String,
@@ -269,7 +295,8 @@ pub fn run(context: &mut Context, catalogue: &Catalogue, batch: &Batch, options:
         cells.iter().map(|cell| cell.reference.clone().unwrap_or_else(|| fallback.clone())).collect();
     let timeout = options.timeout.or(job.timeout).map_or(crate::catalogue::BATCH_TIMEOUT_SECONDS, |t| t.seconds);
     let threads = job.effective_threads(options.threads);
-    let width = batch_width(job, options.threads);
+    let slots = job_slots(job, options.threads, &options.cpus);
+    let width = slots.len() as u32;
     let begun = Local::now().fixed_offset();
     let launch = format!("{}-{}", begun.format("%Y%m%d-%H%M%S"), job.name);
     let mut summary = Summary { launch: launch.clone(), jobs: cells.len(), ..Summary::default() };
@@ -287,6 +314,14 @@ pub fn run(context: &mut Context, catalogue: &Catalogue, batch: &Batch, options:
         if threads == 1 { "" } else { "s" },
         crate::model::duration_text(timeout)
     ));
+    if !options.cpus.is_empty() {
+        let texts: Vec<String> = slots.iter().map(|slot| crate::cpus::text(slot)).collect();
+        (context.say)(format!(
+            "pinned to the job processors {}: one job per slot, {}",
+            crate::cpus::text(&options.cpus),
+            texts.join(" · ")
+        ));
+    }
 
     // The mirror is fetched once, when a cell runs on a reference.
     if targets.iter().any(|target| matches!(Target::parse(target), Target::Reference(_))) {
@@ -373,6 +408,7 @@ pub fn run(context: &mut Context, catalogue: &Catalogue, batch: &Batch, options:
                         (context.progress)(Progress::Dependency { text, state: DependencyState::Cached });
                     } else {
                         plans.push(Planned {
+                            build: Some(build_threads(&options.cpus)),
                             job: &dependency.job,
                             text,
                             values: wanted,
@@ -393,8 +429,13 @@ pub fn run(context: &mut Context, catalogue: &Catalogue, batch: &Batch, options:
             cell_keys[index].insert(name.clone(), key);
         }
         if !plans.is_empty() {
-            let dependency_threads = dependency.job.effective_threads(options.threads);
-            let dependency_width = pool_width(options.threads, dependency_threads);
+            // A build: one at a time, on every job processor (§7.5).
+            let dependency_slots = if options.cpus.is_empty() {
+                job_slots(&dependency.job, options.threads, &options.cpus)
+            } else {
+                vec![options.cpus.clone()]
+            };
+            let dependency_width = dependency_slots.len();
             (context.say)(format!("{name}: {} to make, {dependency_width} at a time", plans.len()));
             (context.progress)(Progress::Phase(format!("making {name}: {} to make", plans.len())));
             let mut not_run = Vec::new();
@@ -407,7 +448,7 @@ pub fn run(context: &mut Context, catalogue: &Catalogue, batch: &Batch, options:
                 &places,
                 options,
                 &launch,
-                dependency_width,
+                dependency_slots,
                 &mut ids,
                 &mut not_run,
                 stopped,
@@ -487,6 +528,7 @@ pub fn run(context: &mut Context, catalogue: &Catalogue, batch: &Batch, options:
             }
         }
         let mut plan = Planned {
+            build: None,
             job,
             text: cell.text(),
             values: cell.values.clone(),
@@ -558,7 +600,7 @@ pub fn run(context: &mut Context, catalogue: &Catalogue, batch: &Batch, options:
         &places,
         options,
         &launch,
-        width,
+        slots,
         &mut ids,
         &mut summary.not_run,
         stopped,
@@ -588,6 +630,9 @@ fn recorded_texts(plan: &Planned, place: &Place, setting: u32) -> Result<(String
     let job = plan.job;
     let mut recorded = job.values(setting, &place.git.short, &place.reference, None, &plan.parameters);
     recorded.insert(OUT.to_string(), format!("{{{OUT}}}"));
+    if let Some(threads) = plan.build {
+        recorded.insert("threads".to_string(), threads.to_string());
+    }
     for (name, (_, kept)) in &plan.given {
         recorded.insert(name.clone(), kept.clone());
     }
@@ -657,7 +702,8 @@ fn git(root: &Path, arguments: &[&str]) -> Result<String, String> {
     Ok(String::from_utf8_lossy(&output.stdout).into_owned())
 }
 
-/// Runs the planned jobs `width` at a time, in their order, to their ends;
+/// Runs the planned jobs one per slot (`slots.len()` at a time; a slot's
+/// processors pin its job, none when empty), in their order, to their ends;
 /// returns their records (text, status, run id). `stopped` ends those under
 /// way and starts no more.
 #[allow(clippy::too_many_arguments)]
@@ -667,7 +713,7 @@ fn pool(
     places: &BTreeMap<String, Result<Place, String>>,
     options: &Options,
     launch: &str,
-    width: u32,
+    slots: Vec<Vec<usize>>,
     ids: &mut BTreeSet<String>,
     not_run: &mut Vec<String>,
     stopped: &dyn Fn() -> bool,
@@ -676,6 +722,8 @@ fn pool(
     let mut records = Vec::new();
     let mut next = 0;
     let mut running: Vec<Job> = Vec::new();
+    let width = slots.len().max(1) as u32;
+    let mut free: Vec<bool> = vec![true; slots.len().max(1)];
     let count = plans.len();
     let digits = count.to_string().len();
     loop {
@@ -714,9 +762,12 @@ fn pool(
                 id = format!("{base}-{suffix}");
             }
             ids.insert(id.clone());
-            match begin(context, plan, place, options, launch, id, started, width) {
+            let slot = free.iter().position(|free| *free).unwrap_or(0);
+            let cpus: &[usize] = slots.get(slot).map_or(&[], Vec::as_slice);
+            match begin(context, plan, place, options, launch, id, started, width, cpus) {
                 Ok(mut started_job) => {
                     started_job.index = index;
+                    started_job.slot = slot;
                     if started_job.child.is_none() {
                         // Its prepare or a dependency failed: recorded at once, without running.
                         let status = Status::Failed { code: None, signal: None };
@@ -750,6 +801,7 @@ fn pool(
                             (context.progress)(Progress::Follow(log.clone()));
                             (context.progress)(Progress::Dependency { text, state: DependencyState::Started });
                         }
+                        free[slot] = false;
                         running.push(started_job);
                     }
                 }
@@ -834,6 +886,7 @@ fn pool(
         }
         for (position, status, seconds, group) in ended.into_iter().rev() {
             let job = running.remove(position);
+            free[job.slot] = true;
             if let Some((watch, _)) = &context.monitor {
                 monitor::lock(watch).groups.retain(|known| *known != group);
             }
@@ -869,7 +922,8 @@ fn run_prepare(
         Some(&place.root.to_string_lossy()),
         &job.parameters,
     );
-    executed.insert("threads".to_string(), options.threads.to_string());
+    // A build: every core of the job processors, before the jobs (§7.5).
+    executed.insert("threads".to_string(), build_threads(&options.cpus).to_string());
     let mut recorded_values = executed.clone();
     recorded_values.insert("repo".to_string(), "{repo}".to_string());
     let line = render(prepare, &executed)?;
@@ -889,7 +943,7 @@ fn run_prepare(
     (context.progress)(Progress::Follow(path.clone()));
     let environment = job.environment_for(&executed)?;
     let directory = place.root.join(render(&job.directory, &executed)?);
-    let mut child = spawn_shell(&line, &directory, &environment, job.memory_limit_gb, &log)?;
+    let mut child = spawn_shell(&line, &directory, &environment, job.memory_limit_gb, &options.cpus, &log)?;
     let group = child.id() as i32;
     if let Some((watch, _)) = &context.monitor {
         monitor::lock(watch).groups = vec![group];
@@ -956,6 +1010,7 @@ fn begin(
     id: String,
     started: DateTime<FixedOffset>,
     width: u32,
+    cpus: &[usize],
 ) -> Result<Job, String> {
     let job = plan.job;
     let out_relative = format!("{OUT}/{id}");
@@ -965,6 +1020,9 @@ fn begin(
     let root = place.root.to_string_lossy().into_owned();
     let mut executed = job.values(options.threads, &place.git.short, &place.reference, Some(&root), &plan.parameters);
     executed.insert(OUT.to_string(), out.to_string_lossy().into_owned());
+    if let Some(threads) = plan.build {
+        executed.insert("threads".to_string(), threads.to_string());
+    }
     for (name, (now, _)) in &plan.given {
         executed.insert(name.clone(), now.clone());
     }
@@ -1009,7 +1067,11 @@ fn begin(
             branch: place.git.branch.clone(),
             pushed: place.pushed,
         }),
-        threads: Some(Threads { setting: options.threads, effective: job.effective_threads(options.threads) }),
+        threads: Some(Threads {
+            setting: options.threads,
+            effective: plan.build.unwrap_or_else(|| job.effective_threads(options.threads)),
+            cpus: (!cpus.is_empty()).then(|| crate::cpus::text(cpus)),
+        }),
         memory_limit_gb: job.memory_limit_gb,
         machine: Some(context.machine.clone()),
         load: Some(crate::model::Load { at_start: crate::machine::sample(), at_end: None, during: None }),
@@ -1041,6 +1103,7 @@ fn begin(
     };
     let mut started_job = Job {
         index: 0,
+        slot: 0,
         text: plan.text.clone(),
         child: None,
         started: Instant::now(),
@@ -1063,7 +1126,10 @@ fn begin(
         return Ok(started_job);
     }
     log_line(&mut started_job.log, &format!("command: {command}"));
-    let child = spawn_shell(&command, &directory, &environment, job.memory_limit_gb, &started_job.log)?;
+    if !cpus.is_empty() {
+        log_line(&mut started_job.log, &format!("pinned to the processors {}", crate::cpus::text(cpus)));
+    }
+    let child = spawn_shell(&command, &directory, &environment, job.memory_limit_gb, cpus, &started_job.log)?;
     if let Some((watch, _)) = &context.monitor {
         monitor::lock(watch).groups.push(child.id() as i32);
     }
@@ -1216,7 +1282,6 @@ mod tests {
         prepare = "echo prepared with {threads}"
         command = "echo {model} {budget} $OPENCLARE_THREADS > {out}/said.txt; test {model} != bad && sleep {pause}"
         parameters = { pause = "0" }
-        threads = 2
         timeout = "2s"
         [batch.axes]
         model = ["good", "bad", { value = "slow", pause = "30" }]
@@ -1242,18 +1307,18 @@ mod tests {
         assert_eq!(good.checkout, "local");
         assert!(good.id.ends_with("-grid-good-2"), "{}", good.id);
         assert_eq!(good.command, "echo good 2 $OPENCLARE_THREADS > {out}/said.txt; test good != bad && sleep 0");
-        assert_eq!(good.environment["OPENCLARE_THREADS"], "2", "the job's threads");
+        assert_eq!(good.environment["OPENCLARE_THREADS"], "1", "one CPU a job");
         assert_eq!(good.timeout_seconds, Some(2.0));
         let cell = good.cell.as_ref().unwrap();
-        assert_eq!(cell.pool, 3, "6 threads of setting, 2 a job");
+        assert_eq!(cell.pool, 6, "6 of setting, one CPU a job");
         assert_eq!(cell.values["model"], "good");
         assert_eq!(cell.values["budget"], "2");
         assert!(good.tools.contains_key("rustc"), "{:?}", good.tools);
         let said = good.outputs.iter().find(|output| output.path.ends_with("said.txt")).unwrap();
         assert_eq!(said.path, format!("out/{}/said.txt", good.id));
-        assert_eq!(std::fs::read_to_string(places.data.join(&said.path)).unwrap(), "good 2 2\n");
+        assert_eq!(std::fs::read_to_string(places.data.join(&said.path)).unwrap(), "good 2 1\n");
         let prepare = good.prepare.as_ref().unwrap();
-        assert_eq!(prepare.command, "echo prepared with 6", "the prepare has the whole setting");
+        assert_eq!(prepare.command, "echo prepared with 1", "a build of no job processors: one");
         assert_eq!(prepare.status, Status::Ok);
         let slow = runs.iter().find(|run| run.parameters["model"] == "slow").unwrap();
         assert_eq!(slow.status, Status::TimedOut);
@@ -1426,8 +1491,63 @@ mod tests {
         assert_eq!(pool_width(2, 8), 1, "at least one");
         let mut job: CatalogueJob =
             toml::from_str("name = \"x\"\ncategory = \"build\"\ncommand = \"true\"\nthreads = 1").unwrap();
-        assert_eq!(batch_width(&job, 6), 6);
+        assert_eq!(batch_width(&job, 6, &[]), 6);
         job.timing_matters = true;
-        assert_eq!(batch_width(&job, 6), 1, "a time that matters is measured alone");
+        assert_eq!(batch_width(&job, 6, &[]), 1, "a time that matters is measured alone");
+        let cpus = crate::cpus::online();
+        let cores = crate::cpus::cores(&cpus).len() as u32;
+        assert_eq!(batch_width(&job, 64, &cpus), cores, "pinned, one job per core, a time that matters too");
+        assert_eq!(batch_width(&job, 1, &cpus), 1, "no more side by side than the setting");
+        job.threads = crate::catalogue::ThreadUse::Setting;
+        assert_eq!(batch_width(&job, 64, &cpus), cores, "every job is one CPU, whatever it says");
+    }
+
+    #[test]
+    fn pinned_jobs_run_each_on_its_slot() {
+        let places = places("pinned");
+        let cpus = crate::cpus::online();
+        let slots: Vec<String> =
+            crate::cpus::slots(&crate::cpus::cores(&cpus), 1).iter().map(|slot| crate::cpus::text(slot)).collect();
+        let cores = crate::cpus::cores(&cpus).len();
+        let text = r#"
+            [[dependency]]
+            name = "built"
+            category = "build"
+            command = "echo $CARGO_BUILD_JOBS > {out}/jobs.txt; grep Cpus_allowed_list /proc/self/status | cut -f2 >> {out}/jobs.txt"
+            key = ["lab/Cargo.toml"]
+            provides = "jobs.txt"
+
+            [[batch]]
+            name = "where"
+            category = "build"
+            needs = ["built"]
+            prepare = "echo built with {threads} $CARGO_BUILD_JOBS"
+            command = "grep Cpus_allowed_list /proc/self/status | cut -f2 > {out}/cpus.txt; cat {built} > /dev/null; sleep 0.3"
+            threads = 1
+            timing_matters = true
+            [batch.axes]
+            model = ["a", "b", "c", "d"]
+            "#;
+        let (summary, _) = launch(&places, text, Options { cpus: cpus.clone(), ..Options::default() });
+        assert_eq!(summary.counts(), "4 jobs: 4 ok");
+        let runs = History::read(&places.runs()).unwrap().runs;
+        // The builds before the jobs: every core of the job processors, pinned to them all.
+        let built = runs.iter().find(|run| run.job == "built").expect("the dependency");
+        let threads = built.threads.as_ref().unwrap();
+        assert_eq!((threads.effective as usize, threads.cpus.clone()), (cores, Some(crate::cpus::text(&cpus))));
+        let said =
+            std::fs::read_to_string(cache_folder(&places, "built", built.cache.as_ref().unwrap()).join("jobs.txt"))
+                .unwrap();
+        assert_eq!(said, format!("{cores}\n{}\n", crate::cpus::text(&cpus)), "CARGO_BUILD_JOBS and where it ran");
+        let prepare = runs.iter().find(|run| run.job == "where").unwrap().prepare.clone().unwrap();
+        assert_eq!(prepare.command, format!("echo built with {cores} $CARGO_BUILD_JOBS"));
+        for run in runs.iter().filter(|run| run.job == "where") {
+            assert_eq!(run.environment["CARGO_BUILD_JOBS"], "1", "a job: one CPU");
+            let recorded = run.threads.as_ref().and_then(|threads| threads.cpus.clone()).expect("pinned");
+            assert!(slots.contains(&recorded), "{recorded} is one of {slots:?}");
+            let seen = std::fs::read_to_string(places.data.join("out").join(&run.id).join("cpus.txt")).unwrap();
+            assert_eq!(seen.trim(), recorded, "the job ran where its record says");
+            assert_eq!(run.cell.as_ref().unwrap().pool, slots.len() as u32, "one job per core side by side");
+        }
     }
 }
