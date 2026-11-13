@@ -434,7 +434,8 @@ met en file (ci-dessous).
   fenêtre ; les jobs non commencés n'ont pas de fiche. Les lignes du lancement, celles qu'écrit
   `lab run`, vont dans `logs/<lancement>.log` : le journal que l'écran File montre pour lui.
 - **L'écran Batches**, un sixième onglet : les batches à gauche ; pour celui choisi, sa grille. Une
-  ligne par valeur du premier axe, une colonne par combinaison des autres (`3000 · main`). Une case
+  ligne par job, numérotée dans l'ordre de la grille : la valeur de chaque axe, son état, sa dernière
+  exécution (une grille en tableau croisé se lisait comme un job par ligne). Une case
   montre son état : en cours (écoulé et estimation), en attente dans la file (son estimation), sa
   dernière fiche (`ok 41 s`, `failed`, `timed out`, le temps grisé quand il ne compte pas, §7.2), ou
   `—`, jamais lancée. Le survol donne son exécution, son commit, son calme et son estimation ; un clic la
@@ -442,7 +443,10 @@ met en file (ci-dessous).
   grille d'un lancement s'affiche dès son début ; au-dessus, ce que le lancement fait maintenant (les
   checkouts, une dépendance en cours, une préparation, l'attente du moniteur, les jobs) et chaque
   dépendance, en cache, en cours ou faite. Le journal de l'écran File suit le job qui tourne, une
-  dépendance ou une préparation comprise, pas les lignes du lancement.
+  dépendance ou une préparation comprise, pas les lignes du lancement. Au-dessus de la grille, au repos
+  comme pendant un lancement, la table des jobs dont le batch a besoin (R2) : une ligne par dépendance
+  et valeur voulue (`source creature`), une colonne par référence, chacune sa dernière fiche et si son
+  résultat est en cache ; un clic ouvre la fiche dans l'Historique.
 - **Choisir et relancer.** On choisit les cases une à une, ou « en échec », « jamais lancées »,
   « toutes », « aucune » ; un délai pour ce lancement (celui du batch par défaut) ; « Mettre la
   sélection en file » met le batch en file réduit à ces cases. Sans fenêtre, `--axis` réduit la grille
