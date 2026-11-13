@@ -820,7 +820,7 @@ ref = ["main"]
 
 [[batch]]
 name = "pole-pairs-115-male-body"
-description = "Ticket #115, the male body: the export on the engine of each side, then conflicts.py on it (one job a side: conflicts reads the export), on main and on 12a6675. Its source is the dependency source of bench/scenes/human_male.blend (the file of research/NIGHT.md, MD5 f1fe33002b731d1d41846daed6c59f5e). The whole thread setting for each, one side after the other."
+description = "Ticket #115, the male body: the export on the engine of each side, then conflicts.py on it (one job a side: conflicts reads the export), on main and on b42bcd6 (12a6675 rebased on main, the same engine sources, with the scene, which 12a6675 has not). Its source is the dependency source of bench/scenes/human_male.blend (the file of research/NIGHT.md, MD5 f1fe33002b731d1d41846daed6c59f5e). The whole thread setting for each, one side after the other."
 category = "quick-bench"
 needs = ["engine", "source"]
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/export.py --openclare {engine} --commit {commit} --source {source} --out {out}/male-body && python3 docs/research/turns-of-a-t-mesh/experiments/conflicts.py {out}/male-body --out {out}/conflicts --summary {out}/conflicts.json"
@@ -830,7 +830,7 @@ memory_limit_gb = 32
 timeout = "1h"
 timing_matters = false
 skip_done = false
-axes = { ref = ["main", "12a6675"] }
+axes = { ref = ["main", "b42bcd6"] }
 
 [[batch]]
 name = "pole-pairs-115-remesh"
