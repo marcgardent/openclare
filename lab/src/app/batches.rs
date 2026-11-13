@@ -143,7 +143,28 @@ impl App {
             };
             ui.colored_label(if grid.ended { MUTED } else { AMBER }, text);
             if !grid.ended {
+                if !grid.phase.is_empty() {
+                    ui.label(RichText::new(format!("now: {}", grid.phase)).strong());
+                }
                 ui.ctx().request_repaint_after(std::time::Duration::from_millis(500));
+            }
+            // The dependencies of the launch, made or found in the cache, before its jobs (R2).
+            if !grid.dependencies.is_empty() {
+                ui.horizontal_wrapped(|ui| {
+                    ui.label(RichText::new("DEPENDENCIES").small().strong().color(MUTED));
+                    for (text, state) in &grid.dependencies {
+                        let (said, colour) = match state {
+                            LiveState::Skipped => ("cached".to_string(), GREEN),
+                            LiveState::Running(since) => {
+                                (format!("… {}", duration_text(since.elapsed().as_secs_f64())), BLUE)
+                            }
+                            LiveState::Ended { status: Status::Ok } => ("made".to_string(), GREEN),
+                            LiveState::Ended { status } => (status.text(), RED),
+                            LiveState::Waiting => ("waiting".to_string(), MUTED),
+                        };
+                        ui.label(RichText::new(format!("{text}: {said}")).monospace().color(colour));
+                    }
+                });
             }
         }
         ui.add_space(4.0);

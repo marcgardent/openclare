@@ -549,7 +549,10 @@ window lists the batches in the catalogue and their records in the history; R3 q
   its state: running (elapsed and estimate), waiting in the queue (its estimate), its last record
   (`ok 41 s`, `failed`, `timed out`, the time muted when it does not count, §7.2), or `—`, never run.
   Hovering it gives its run, commit, calm and estimate; a click selects it, and the cell clicked last
-  shows its record and the end of its log under the grid.
+  shows its record and the end of its log under the grid. The grid of a launch shows from its start;
+  above it, what the launch does now (the checkouts, making a dependency, a prepare, the wait for the
+  monitor, the jobs) and each dependency, cached, under way or made. The Queue screen's log follows
+  the job that runs, a dependency or a prepare included, not the launch's lines.
 - **Selecting and running again.** Cells are selected one by one, or "failed", "never run", "all",
   "none"; a timeout for this launch (the batch's by default); "Queue the selection" puts the batch in
   the queue restricted to those cells. Without a window, `--axis` restricts the grid as in R1.
