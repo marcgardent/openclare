@@ -489,7 +489,7 @@ command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {bu
    found is left out of the map. Every record gets the map of its checkout, a `[[job]]`'s as well:
    until now nothing recorded that Blender is 5.3.0.
 3. **Dependencies** (R2, above), then the **prepares**, one checkout after the other, before any job: the prepare of §7.3, once per checkout
-   (`.lab-prepared`), on one CPU (§7.5). Its time and status go
+   (`.lab-prepared`), on every core of the job processors (§7.5). Its time and status go
    into the `prepare` of every job of that checkout. A failed prepare fails the jobs of its checkout
    without running them, one record each; the other checkouts go on.
 4. **The pool.** Every job runs on one CPU (§7.1). The pool runs one job per core of the job
@@ -608,9 +608,10 @@ window lists the batches in the catalogue and their records in the history; R3 q
 
 ### 7.1 Threads
 
-- **Every job runs on one CPU** (Marc, 2026-11-13): the app sets, for every job, prepare and
-  dependency, `OPENCLARE_THREADS`, `RAYON_NUM_THREADS`, `RUST_TEST_THREADS`, `CARGO_BUILD_JOBS` and
-  `HIGHS_THREADS` to 1, and fills `{threads}` (for `-P`, `--jobs`, `JOBS=`) with 1. A catalogue's
+- **Every job runs on one CPU** (Marc, 2026-11-13): the app sets, for every job,
+  `OPENCLARE_THREADS`, `RAYON_NUM_THREADS`, `RUST_TEST_THREADS`, `CARGO_BUILD_JOBS` and
+  `HIGHS_THREADS` to 1, and fills `{threads}` (for `-P`, `--jobs`, `JOBS=`) with 1; a build (a
+  prepare, a dependency) gets the cores of the job processors instead (§7.5). A catalogue's
   `threads` other than 1 is a problem. A job's own `environment` overrides them.
 - One global **thread setting**, shown in the top bar: how many jobs of a batch run side by side,
   each on a core of its own, at most the cores of the job processors (§7.5).
@@ -646,7 +647,8 @@ day as well as by night. Proposal (Q2):
 
 ### 7.3 Prepare before the job
 
-- The prepare command runs before the job, in the same checkout, on one CPU (§7.5);
+- The prepare command runs before the job, in the same checkout, on every core of the job
+  processors (§7.5);
   its time and status are kept in `prepare`, apart from the job's `seconds`.
 - The same prepare on the same checkout runs once for all queues: it writes its command in
   `.lab-prepared` at the root of the checkout, and is skipped while that file names it
@@ -668,8 +670,11 @@ A desktop in use is never calm by §7.2: a browser, the window manager, a system
 few percent of the machine. Rather than close them, the jobs get cores of their own (Marc,
 2026-11-13).
 
-- **One CPU per job.** Every job, prepare and dependency runs on one CPU (§7.1). The parallelism is
-  across jobs, never inside one.
+- **One CPU per job.** Every job runs on one CPU (§7.1). The parallelism is across jobs, never inside
+  one.
+- **The builds on every job core.** A prepare or a dependency (a build: `cargo build`, an export) is
+  not measured: it takes every core of the job processors, pinned to them all, with as many threads
+  (`CARGO_BUILD_JOBS=3` on `1-3,5-7`), one at a time, before the jobs.
 - **The job processors.** Every core but the first by default (on 4 cores and 8 threads: `1-3,5-7`),
   the first kept for the desktop; or `[calm] job_cpus = "…"` in `settings.toml`, "Job processors" on
   the Machine screen, which shows the machine's cores ("core 0: 0,4 · core 1: 1,5 …").
@@ -678,7 +683,7 @@ few percent of the machine. Rather than close them, the jobs get cores of their 
   pool runs as many jobs side by side as the thread setting says, at most one per core: three on
   `1-3,5-7`. A batch whose time matters (⏱) runs the same way, each job alone on its core, which is
   reproducible to the second; its neighbours share only the last-level cache, the memory and the
-  turbo. A `[[job]]` of the queue, a prepare, a dependency take the first core of the job processors.
+  turbo. A `[[job]]` of the queue takes the first core of the job processors.
 - **Pinning.** lab sets the affinity before `exec` (`sched_setaffinity`); the children inherit it.
   The record says where the job ran: `threads.cpus = "2,6"`.
 - **The calm on them alone.** The foreign CPU is measured on the job processors only: their busy

@@ -371,7 +371,7 @@ command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {bu
    absente). Un outil introuvable est omis. Chaque fiche reçoit la table de son checkout, celle d'un
    `[[job]]` aussi : rien ne notait jusqu'ici que Blender est en 5.3.0.
 3. **Dépendances** (R2, ci-dessus), puis **préparations**, un checkout après l'autre, avant tout job : celle du §7.3, une fois par
-   checkout (`.lab-prepared`), sur un CPU (§7.5). Son temps
+   checkout (`.lab-prepared`), sur tous les cœurs des processeurs des jobs (§7.5). Son temps
    et son statut vont dans le `prepare` de chaque job de ce checkout. Une préparation en échec fait
    échouer les jobs de son checkout sans les lancer, une fiche chacun ; les autres checkouts
    continuent.
@@ -502,10 +502,10 @@ met en file (ci-dessous).
 
 ### 7.1 Threads
 
-- **Chaque tâche tourne sur un CPU** (Marc, 2026-11-13) : pour chaque tâche, préparation et
-  dépendance, l'application pose `OPENCLARE_THREADS`, `RAYON_NUM_THREADS`, `RUST_TEST_THREADS`,
-  `CARGO_BUILD_JOBS` et `HIGHS_THREADS` à 1, et remplit `{threads}` (pour `-P`, `--jobs`, `JOBS=`)
-  avec 1. Un `threads` autre que 1 dans le catalogue est un problème. L'environnement propre d'une
+- **Chaque tâche tourne sur un CPU** (Marc, 2026-11-13) : pour chaque tâche, l'application pose
+  `OPENCLARE_THREADS`, `RAYON_NUM_THREADS`, `RUST_TEST_THREADS`, `CARGO_BUILD_JOBS` et
+  `HIGHS_THREADS` à 1, et remplit `{threads}` (pour `-P`, `--jobs`, `JOBS=`) avec 1 ; une compilation
+  (une préparation, une dépendance) reçoit à la place les cœurs des processeurs des jobs (§7.5). Un `threads` autre que 1 dans le catalogue est un problème. L'environnement propre d'une
   tâche les remplace.
 - Un **réglage de threads** global, dans la barre du haut : combien de jobs d'un batch tournent côte à
   côte, chacun sur un cœur à lui, au plus les cœurs des processeurs des jobs (§7.5).
@@ -543,7 +543,8 @@ pas, de jour comme de nuit. Proposition (Q2) :
 
 ### 7.3 Préparation avant la tâche
 
-- La préparation tourne avant la tâche, dans le même checkout, sur un CPU (§7.5) ; sa durée et son
+- La préparation tourne avant la tâche, dans le même checkout, sur tous les cœurs des processeurs
+  des jobs (§7.5) ; sa durée et son
   statut sont gardés dans `prepare`, à part de la durée de la tâche.
 - La même préparation sur le même checkout tourne une fois pour toutes les files : elle écrit sa commande
   dans `.lab-prepared` à la racine du checkout, et est sautée tant que ce fichier la nomme
@@ -565,8 +566,12 @@ Un bureau en service n'est jamais calme au sens du §7.2 : un navigateur, le ges
 un moniteur système prennent chacun quelques pour cent de la machine. Plutôt que de les fermer, on
 donne aux jobs des cœurs à eux (Marc, 2026-11-13).
 
-- **Un CPU par job.** Chaque job, préparation et dépendance tourne sur un CPU (§7.1). Le parallélisme
-  est entre les jobs, jamais dans un job.
+- **Un CPU par job.** Chaque job tourne sur un CPU (§7.1). Le parallélisme est entre les jobs,
+  jamais dans un job.
+- **Les compilations sur tous les cœurs des jobs.** Une préparation ou une dépendance (une
+  compilation : `cargo build`, un export) n'est pas mesurée : elle prend tous les cœurs des
+  processeurs des jobs, épinglée sur eux tous, avec autant de threads (`CARGO_BUILD_JOBS=3` sur
+  `1-3,5-7`), une à la fois, avant les jobs.
 - **Les processeurs des jobs.** Tous les cœurs sauf le premier par défaut (sur 4 cœurs et 8 threads :
   `1-3,5-7`), le premier gardé pour le bureau ; ou `[calm] job_cpus = "…"` dans `settings.toml`,
   « Job processors » dans l'écran Machine, qui montre les cœurs de la machine (« core 0: 0,4 · core 1:
@@ -576,8 +581,7 @@ donne aux jobs des cœurs à eux (Marc, 2026-11-13).
   avec un autre. Le pool lance autant de jobs côte à côte que le dit le réglage de threads, au plus un
   par cœur : trois sur `1-3,5-7`. Un batch dont le temps compte (⏱) tourne de même, chaque job seul
   sur son cœur, ce qui est reproductible à la seconde ; ses voisins ne partagent que le dernier cache,
-  la mémoire et le turbo. Un `[[job]]` de la file, une préparation, une dépendance prennent le premier
-  cœur des processeurs des jobs.
+  la mémoire et le turbo. Un `[[job]]` de la file prend le premier cœur des processeurs des jobs.
 - **L'épinglage.** lab fixe l'affinité avant `exec` (`sched_setaffinity`) ; les enfants en héritent.
   La fiche dit où le job a tourné : `threads.cpus = "2,6"`.
 - **Le calme sur eux seuls.** Le CPU étranger se mesure sur les processeurs des jobs seulement : leur

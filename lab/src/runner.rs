@@ -40,7 +40,7 @@ const TICK: Duration = Duration::from_millis(200);
 pub const NOT_MEASURED: &str = "not measured: lab ran without its monitor";
 
 /// The file at the root of a checkout of the mirror that lists the prepares
-/// done in it (SPEC.md, §7.5): one per line, "<when>\t<job>\t<command>".
+/// done in it (SPEC.md, §7.3): one per line, "<when>\t<job>\t<command>".
 pub const PREPARED: &str = ".lab-prepared";
 
 #[derive(Clone, Debug)]
@@ -1106,14 +1106,26 @@ impl Runner {
             timeout: job.timeout.map(|timeout| Duration::from_secs_f64(timeout.seconds)),
             timed_out: false,
         };
+        // A prepare is a build: every core of the job processors (SPEC.md, §7.5).
+        let build_cpus = self.job_cpus();
         let prepare = match &job.prepare {
-            Some(prepare) => Some((render(prepare, &executed)?, scrub.text(&render(prepare, &recorded)?))),
+            Some(prepare) => {
+                let threads = crate::batch::build_threads(&build_cpus).to_string();
+                let (mut built, mut built_recorded) = (executed.clone(), recorded.clone());
+                built.insert("threads".to_string(), threads.clone());
+                built_recorded.insert("threads".to_string(), threads);
+                Some((
+                    render(prepare, &built)?,
+                    scrub.text(&render(prepare, &built_recorded)?),
+                    job.environment_for(&built)?,
+                ))
+            }
             None => None,
         };
         match prepare {
-            Some((executed, recorded)) => {
+            Some((executed, recorded, built_environment)) => {
                 // Once per checkout of the mirror, `.lab-prepared` remembering it; once per
-                // queue in a local folder, which may change between two queues (SPEC.md, §7.5).
+                // queue in a local folder, which may change between two queues (SPEC.md, §7.3).
                 let (key, done) = match &target {
                     Target::Reference(_) => {
                         let key = format!("{}\n{executed}", checkout.display());
@@ -1145,8 +1157,12 @@ impl Runner {
                             skipped_because: None,
                         });
                         let command = std::mem::replace(&mut running.command, executed);
+                        let environment = std::mem::replace(&mut running.environment, built_environment);
+                        let cpus = std::mem::replace(&mut running.cpus, build_cpus);
                         self.launch(&mut running, Phase::Prepare)?;
                         running.command = command;
+                        running.environment = environment;
+                        running.cpus = cpus;
                     }
                 }
             }
@@ -1538,7 +1554,7 @@ pub fn resolve_checkout(
 }
 
 /// Why the prepare of `command` need not run again in this checkout, if
-/// `.lab-prepared` says it ran (SPEC.md, §7.5).
+/// `.lab-prepared` says it ran (SPEC.md, §7.3).
 pub fn prepared_in(checkout: &Path, command: &str) -> Option<String> {
     let text = std::fs::read_to_string(checkout.join(PREPARED)).ok()?;
     text.lines().filter_map(|line| line.split_once('\t')).find_map(|(when, rest)| {
