@@ -446,7 +446,11 @@ met en file (ci-dessous).
   dépendance ou une préparation comprise, pas les lignes du lancement. Au-dessus de la grille, au repos
   comme pendant un lancement, la table des jobs dont le batch a besoin (R2) : une ligne par dépendance
   et valeur voulue (`source creature`), une colonne par référence, chacune sa dernière fiche et si son
-  résultat est en cache ; un clic ouvre la fiche dans l'Historique.
+  résultat est en cache ; un clic ouvre la fiche dans l'Historique. Pendant qu'une dépendance se fait,
+  le panneau de l'écran File la nomme, avec son temps et la médiane de celles faites avant, puis le
+  compte des jobs. Un job dont le journal reste muet 30 s (une compilation sous cmake, un solveur) reçoit
+  de lab une ligne toutes les 30 s : depuis quand il tourne, depuis quand son journal se tait, les
+  processus de son groupe (`cc1plus ×4, cmake`).
 - **Choisir et relancer.** On choisit les cases une à une, ou « en échec », « jamais lancées »,
   « toutes », « aucune » ; un délai pour ce lancement (celui du batch par défaut) ; « Mettre la
   sélection en file » met le batch en file réduit à ces cases. Sans fenêtre, `--axis` réduit la grille

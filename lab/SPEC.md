@@ -556,7 +556,10 @@ window lists the batches in the catalogue and their records in the history; R3 q
   the job that runs, a dependency or a prepare included, not the launch's lines. Above the grid, at
   rest as during a launch, the table of the jobs the batch needs (R2): one row per dependency and value
   it wants (`source creature`), one column per reference, each its last record and whether its result
-  is in the cache; a click opens the record in History.
+  is in the cache; a click opens the record in History. While a dependency is made, the Queue
+  screen's run panel names it, with its time and the median of those made before, then the jobs' count.
+  A job whose log stays quiet 30 s (a compilation under cmake, a solver) gets a line from lab every 30 s:
+  how long it has run, how long its log has been quiet, the processes of its group (`cc1plus ×4, cmake`).
 - **Selecting and running again.** Cells are selected one by one, or "failed", "never run", "all",
   "none"; a timeout for this launch (the batch's by default); "Queue the selection" puts the batch in
   the queue restricted to those cells. Without a window, `--axis` restricts the grid as in R1.

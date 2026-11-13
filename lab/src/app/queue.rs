@@ -541,27 +541,75 @@ impl App {
                     stopwatch(ui, timed_current);
                 });
                 let grid = self.lock().grid.clone().filter(|grid| grid.batch == current.job && !grid.ended);
-                if let Some(grid) = grid {
+                if let Some(grid) = &grid {
                     let count =
                         |wanted: fn(&LiveState) -> bool| grid.cells.iter().filter(|cell| wanted(&cell.state)).count();
                     let ended = count(|state| matches!(state, LiveState::Ended { .. } | LiveState::Skipped));
                     let running = count(|state| matches!(state, LiveState::Running(_)));
                     let failed =
                         count(|state| matches!(state, LiveState::Ended { status, .. } if *status != Status::Ok));
+                    // The dependencies being made: what runs before the jobs, each with its time.
+                    let making: Vec<(&String, f64)> = grid
+                        .dependencies
+                        .iter()
+                        .filter_map(|(text, state)| match state {
+                            LiveState::Running(since) => Some((text, since.elapsed().as_secs_f64())),
+                            _ => None,
+                        })
+                        .collect();
+                    if making.is_empty() {
+                        if !grid.phase.is_empty() {
+                            ui.label(RichText::new(format!("now: {}", grid.phase)).strong());
+                        }
+                    } else {
+                        let runs = self.all_runs();
+                        for (text, seconds) in &making {
+                            ui.label(RichText::new(format!("now: making {text}, before the jobs")).strong());
+                            let name = text.split_whitespace().next().unwrap_or_default();
+                            let mut made: Vec<f64> = runs
+                                .iter()
+                                .filter(|run| run.job == name && run.status == Status::Ok)
+                                .filter_map(|run| run.seconds)
+                                .collect();
+                            made.sort_by(f64::total_cmp);
+                            let estimate = made.get(made.len() / 2).copied();
+                            ui.horizontal(|ui| {
+                                ui.label(RichText::new(duration_text(*seconds)).strong().size(16.0));
+                                let said = match estimate {
+                                    Some(estimate) => format!(
+                                        "/ ≈ {} (median of {} {name} made before)",
+                                        duration_text(estimate),
+                                        made.len()
+                                    ),
+                                    None => format!("no {name} made before: no estimate"),
+                                };
+                                ui.label(RichText::new(said).color(MUTED));
+                            });
+                            if let Some(estimate) = estimate {
+                                ui.add(
+                                    egui::ProgressBar::new((seconds / estimate.max(1.0)).min(1.0) as f32).fill(AMBER),
+                                );
+                            }
+                        }
+                        ui.label(RichText::new("its log below; the dependencies in the Batches screen").color(MUTED));
+                        ui.add_space(4.0);
+                    }
                     ui.label(format!(
-                        "batch: {ended}/{} jobs, {running} running, {failed} not ok; its grid in the Batches screen",
+                        "jobs: {ended}/{} done, {running} running, {failed} not ok; the list in the Batches screen",
                         grid.cells.len()
                     ));
-                    if !grid.phase.is_empty() {
-                        ui.label(RichText::new(format!("now: {}", grid.phase)).strong());
-                    }
                     if !grid.cells.is_empty() {
-                        ui.add(egui::ProgressBar::new(ended as f32 / grid.cells.len() as f32).fill(BLUE));
+                        ui.add(
+                            egui::ProgressBar::new(ended as f32 / grid.cells.len() as f32)
+                                .fill(BLUE)
+                                .text(format!("{ended}/{}", grid.cells.len())),
+                        );
                     }
                 }
                 let phase = match (current.stopping, current.phase) {
                     (true, _) => "stopping".to_string(),
                     (false, Phase::Prepare) => "its prepare".to_string(),
+                    (false, Phase::Command) if grid.is_some() => "the whole launch".to_string(),
                     (false, Phase::Command) => "its command".to_string(),
                 };
                 let elapsed = current.started.elapsed().as_secs_f64();
