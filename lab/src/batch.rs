@@ -57,6 +57,9 @@ pub struct Options {
     pub again: bool,
 }
 
+/// A cell as planned: its axes' values and its estimate.
+pub type PlannedCell = (Vec<(String, String)>, Option<f64>);
+
 /// What the pool tells the window of the cells of a launch (R3).
 #[derive(Clone, Debug)]
 pub enum Progress {
@@ -64,7 +67,7 @@ pub enum Progress {
     Planned {
         launch: String,
         width: u32,
-        cells: Vec<(Vec<(String, String)>, Option<f64>)>,
+        cells: Vec<PlannedCell>,
     },
     Started(usize),
     /// Its record written.

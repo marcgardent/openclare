@@ -24,6 +24,10 @@ Amendement R3 du 2026-11-13, demandé le même jour : la fenêtre met un batch e
 des cases à remettre en file ; un job déjà fait est sauté sauf si on le redemande ; une estimation par
 job (§6 bis, §11, §14, §15).
 
+Amendement R4 du 2026-11-13, demandé le même jour : le `report` d'un batch, un court script qui lit les
+sorties de ses jobs et fait le tableau, relancé en quelques secondes sans rien recalculer (§6 bis,
+§14, §15).
+
 ## 1. Objet
 
 Tout calcul long du projet (bancs, suites de tests, constructions et oracle Lean, expériences des
@@ -418,6 +422,32 @@ met en file (ci-dessous).
   Vec<BTreeMap<String, String>> /* vide : toutes */, timeout: Option<Timeout>, again: bool }` ; il
   exécute le batch du catalogue que montre la fenêtre.
 
+### Rapports (amendement R4)
+
+- Un batch peut avoir un **`report`** : une commande, lancée dans un checkout comme un job, qui lit
+  les fiches de ses cases et leurs fichiers, et écrit un tableau. Elle ne recalcule rien : relancée,
+  elle donne le même tableau en quelques secondes. Marques : les intégrées, les paramètres du batch,
+  `{records}` et `{out}` ; pas les axes.
+
+  ```toml
+  report = "python3 bench/before_after.py {records} --side ref --out {out}"
+  ```
+
+- **`lab report <batch>`** prend, pour chaque case de la grille, sa dernière fiche (`--launch <id>` :
+  de ce lancement seulement), et les écrit dans `<lab>/reports/<batch>/<heure>/records.json` : le
+  batch, ses axes, et par case ses valeurs, l'identifiant de sa fiche, son statut, ses secondes, si le
+  temps compte, son commit, sa référence, et les chemins absolus de son dossier `{out}` et de ses
+  fichiers (`null` pour une case jamais lancée). Puis il lance le rapport dans le checkout de ce
+  dossier : le `checkout` du batch, ou `--ref <référence ou dossier>` ; son `{out}` est ce même dossier,
+  sa sortie dans `report.log`, que `lab report` affiche. Un rapport qui dure plus de 10 minutes est
+  arrêté. Pas de fiche : un rapport se refait à volonté à partir des fiches.
+- L'écran Batches a un bouton **Report** à côté de la grille d'un batch qui en a un ; le tableau
+  s'affiche sous la grille quand il est fait.
+- Un seul script sert aux comparaisons, `bench/before_after.py` : l'axe comparé (`--side`, `ref` par
+  défaut), le fichier que chaque job a écrit (`--file`, `measure.json` par défaut), les clés
+  comparées, leur moyenne ou leur somme sur les autres axes sauf un (`--by`, `budget` par défaut) ; le
+  temps est celui de lab, avec combien de ces temps comptent.
+
 ## 7. Règles que l'application fait respecter
 
 ### 7.1 Threads
@@ -782,7 +812,10 @@ second n'a rien compilé ni exporté. R3 codé (`src/app/batches.rs`, l'élémen
 saut et les estimations dans `src/batch.rs`) ; un test unitaire passe un élément batch de la file sur des
 cases choisies, puis à nouveau (sautées) ; l'écran Batches regardé sur les fiches du témoin et sur un
 batch inventé en cours. Le témoin de R3, ogre relancé seul avec un délai plus long depuis la grille, est
-laissé à Marc.
+laissé à Marc. R4 codé (`src/report.rs`, `lab report`, le bouton Report, `bench/before_after.py`) ; un
+test unitaire fait deux fois le rapport d'un batch inventé, même tableau et pas de fiche ; le rapport du
+témoin fait à partir des fiches des essais de R1 et R2 (blob et ogre à 3000 quads). Le tableau complet
+de #115 attend le lancement des 72 jobs par Marc.
 
 ## 16. Ce qui ne peut pas être vérifié ici
 

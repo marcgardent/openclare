@@ -27,6 +27,9 @@ pub const BUILT_IN: [&str; 4] = ["threads", "repo", "commit", "ref"];
 /// The placeholder of a batch's job for its own folder of files (SPEC.md, §6b).
 pub const OUT: &str = "out";
 
+/// The placeholder of a report for the file of its records (SPEC.md, §6b, R4).
+pub const RECORDS: &str = "records";
+
 /// The axis that names the reference each cell runs on (SPEC.md, §6b).
 pub const REFERENCE_AXIS: &str = "ref";
 
@@ -124,6 +127,8 @@ pub struct Batch {
     pub axes: Vec<Axis>,
     /// The dependencies its cells use, in the order they are made (R2).
     pub needs: Vec<String>,
+    /// The command that makes its table from its records (R4).
+    pub report: Option<String>,
 }
 
 /// A computation made once per key and shared, a `[[dependency]]` table
@@ -547,10 +552,15 @@ impl Batch {
             Some(_) => return Err(wrong("axes is a table, an axis and its values".to_string())),
         };
         let needs = strings(&mut table, "needs").map_err(wrong)?.unwrap_or_default();
+        let report = match table.remove("report") {
+            None => None,
+            Some(toml::Value::String(command)) => Some(command),
+            Some(_) => return Err(wrong("report: a command, a string".to_string())),
+        };
         let mut job: Job =
             toml::Value::Table(table).try_into().map_err(|error: toml::de::Error| wrong(error.to_string()))?;
         job.timeout.get_or_insert(Timeout { seconds: BATCH_TIMEOUT_SECONDS });
-        Ok(Batch { job, axes, needs })
+        Ok(Batch { job, axes, needs, report })
     }
 
     /// Every placeholder a cell of the batch has: the built-in ones, `{out}`,
@@ -612,6 +622,21 @@ impl Batch {
             command_only.insert(need.clone());
         }
         problems.extend(self.job.check_with(&command_only, &BTreeSet::new()));
+        if let Some(report) = &self.report {
+            for name in placeholders(report) {
+                let known = BUILT_IN.contains(&name.as_str())
+                    || self.job.parameters.contains_key(&name)
+                    || name == OUT
+                    || name == RECORDS;
+                if !known {
+                    problems
+                        .push(format!("report: unknown placeholder {{{name}}} (a report reads every cell: no axis)"));
+                }
+            }
+            if let Some(path) = local_path(report) {
+                problems.push(format!("report: a local path ({path}): write it relative to the checkout"));
+            }
+        }
         problems
     }
 

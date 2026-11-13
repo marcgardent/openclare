@@ -33,6 +33,9 @@
 # in the batch's command is the file it `provides` there. The key: its command,
 # the git objects under the paths of `key` (placeholders of the cell allowed),
 # the versions of its `tools`. No prepare: its command does it all.
+# report (R4): the command that makes a batch's table from its records, `lab
+# report <batch>`: {records} the file of each cell's last record, {out} its
+# folder; it computes nothing again.
 # summary: the JSON that records a run of the job in the repository (`#key` for a
 # record nested in it); lab reads it at every opening (SPEC.md, section 13).
 #
@@ -665,6 +668,7 @@ description = "The twelve models at 2970, 3000 and 3030 quads, one job each: the
 category = "quick-bench"
 needs = ["engine", "source"]
 command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {budget} && {engine} measure {source} {out}/mesh.obj --target {budget} --json > {out}/measure.json"
+report = "python3 bench/before_after.py {records} --side ref --by budget --out {out}"
 parameters = { preset = "organic" }
 environment = { HIGHS_THREADS = "1" }
 threads = 1
@@ -696,6 +700,7 @@ description = "Ticket #115 before and after: the twelve models of bench/budgets.
 category = "quick-bench"
 needs = ["engine", "source"]
 command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {budget} && {engine} measure {source} {out}/mesh.obj --target {budget} --json > {out}/measure.json"
+report = "python3 bench/before_after.py {records} --side ref --by budget --out {out}"
 parameters = { preset = "organic" }
 environment = { HIGHS_THREADS = "1" }
 threads = 1
@@ -715,6 +720,7 @@ description = "Ticket #115, the T-mesh (bench/pole_pairs.py, part tmesh): `openc
 category = "quick-bench"
 needs = ["engine", "source"]
 command = "{engine} tmesh {source} --quads {budget} --simplify 2 --json {crease} {pairs_flag} > {out}/tmesh.json"
+report = "python3 bench/before_after.py {records} --side pairs --by budget --file tmesh.json --keys patches,thin_patches,short_arcs,t_junctions,arcs,pole_pairs_joined,valid --sum --out {out}"
 checkout = "12a6675"
 parameters = { crease = "", pairs_flag = "" }
 environment = { HIGHS_THREADS = "1" }

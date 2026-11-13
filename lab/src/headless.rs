@@ -71,6 +71,35 @@ fn settings(places: &Places) -> Settings {
     })
 }
 
+/// `lab report <batch>` (SPEC.md, §6b, R4): its records written, its report
+/// run, its table printed; nothing computed again.
+pub fn report(places: &Places, batch: &str, launch: Option<&str>, reference: Option<&str>) -> ExitCode {
+    let settings = settings(places);
+    let mirror = Mirror::new(&places.data, &settings.remote);
+    let catalogue = match catalogue(places, &mirror) {
+        Ok(catalogue) => catalogue,
+        Err(error) => {
+            eprintln!("lab: {error}");
+            return ExitCode::from(2);
+        }
+    };
+    let Some(batch) = catalogue.batch(batch) else {
+        eprintln!("lab: no batch named {batch} in the catalogue");
+        return ExitCode::from(2);
+    };
+    match crate::report::make(places, &mirror, batch, launch, reference, settings.threads) {
+        Ok(made) => {
+            println!("{}", crate::report::table(&made));
+            eprintln!("lab: the report and its records in {}", made.folder.display());
+            if made.ok { ExitCode::SUCCESS } else { ExitCode::from(1) }
+        }
+        Err(error) => {
+            eprintln!("lab: {error}");
+            ExitCode::from(2)
+        }
+    }
+}
+
 /// `lab fetch`: the mirror created if need be, then fetched, and the other
 /// machines' memories read into `<lab>/machines/` (SPEC.md, §4b).
 pub fn fetch(places: &Places) -> ExitCode {

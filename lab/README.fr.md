@@ -142,6 +142,16 @@ médiane des temps passés de sa case. Dans la fenêtre, un batch est un éléme
 peut nommer des batches), ses lignes dans `logs/<lancement>.log`, ses cases dans l'écran Batches à
 mesure qu'elles commencent et finissent.
 
+```sh
+lab report pole-pairs-115-remesh
+```
+
+écrit la dernière fiche de chaque case du batch dans `~/.openclare-lab/reports/<batch>/<heure>/records.json`
+et lance le `report` du batch dessus, qui lit les fichiers laissés par les jobs et affiche le tableau :
+refait en quelques secondes, rien n'est relancé. `bench/before_after.py` est le rapport des comparaisons
+(#115 : main contre 12a6675, moyennes sur les cases ok des deux côtés). L'écran Batches a un bouton
+Report.
+
 ## Tests
 
 ```sh

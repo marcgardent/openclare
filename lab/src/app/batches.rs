@@ -5,7 +5,7 @@
 //! the batch is queued restricted to them.
 
 use std::collections::{BTreeMap, BTreeSet};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use eframe::egui::{self, RichText};
 
@@ -28,7 +28,12 @@ pub(super) struct BatchView {
     clicked: Option<Vec<(String, String)>>,
     timeout: String,
     again: bool,
+    /// The report asked (R4): its table when made, or what went wrong.
+    report: Option<ReportSlot>,
 }
+
+/// Where the thread that makes a report puts its table, or what went wrong.
+type ReportSlot = Arc<Mutex<Option<Result<String, String>>>>;
 
 /// What a cell of the grid shows.
 struct Shown {
@@ -204,7 +209,57 @@ impl App {
                 self.batches.selected.clear();
                 self.tab = Tab::Queue;
             }
+            if batch.report.is_some() {
+                ui.separator();
+                let making = self
+                    .batches
+                    .report
+                    .as_ref()
+                    .is_some_and(|report| report.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).is_none());
+                let button = ui
+                    .add_enabled(!making, egui::Button::new(if making { "Report…" } else { "Report" }))
+                    .on_hover_text(format!(
+                        "the table from the last record of each cell, nothing computed again: {}",
+                        batch.report.as_deref().unwrap_or_default()
+                    ));
+                if button.clicked() {
+                    let slot = Arc::new(Mutex::new(None));
+                    self.batches.report = Some(slot.clone());
+                    let (places, mirror, batch) = (self.places.clone(), self.mirror.clone(), batch.clone());
+                    let (threads, context) = (self.settings.threads, ui.ctx().clone());
+                    std::thread::spawn(move || {
+                        let made = crate::report::make(&places, &mirror, &batch, None, None, threads)
+                            .map(|made| crate::report::table(&made));
+                        *slot.lock().unwrap_or_else(|poisoned| poisoned.into_inner()) = Some(made);
+                        context.request_repaint();
+                    });
+                }
+            }
         });
+        let report = self
+            .batches
+            .report
+            .as_ref()
+            .and_then(|report| report.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone());
+        if let Some(report) = report {
+            ui.separator();
+            ui.horizontal(|ui| {
+                ui.label(RichText::new("REPORT").small().strong().color(MUTED));
+                if ui.small_button("close").clicked() {
+                    self.batches.report = None;
+                }
+            });
+            match report {
+                Ok(table) => {
+                    egui::ScrollArea::both().id_salt("report").max_height(220.0).show(ui, |ui| {
+                        ui.label(RichText::new(table).monospace().size(11.5));
+                    });
+                }
+                Err(error) => {
+                    ui.colored_label(RED, error);
+                }
+            }
+        }
         ui.separator();
 
         // Rows: the first axis; columns: the others, in the grid's order.
@@ -214,9 +269,8 @@ impl App {
         egui::ScrollArea::both().max_height(height).auto_shrink([false, true]).show(ui, |ui| {
             egui::Grid::new("cells").striped(true).spacing([6.0, 4.0]).show(ui, |ui| {
                 ui.label("");
-                for column in 0..columns {
-                    let label: Vec<&str> =
-                        cells[column].values.iter().skip(1).map(|(_, value)| value.as_str()).collect();
+                for cell in cells.iter().take(columns) {
+                    let label: Vec<&str> = cell.values.iter().skip(1).map(|(_, value)| value.as_str()).collect();
                     ui.label(RichText::new(label.join(" · ")).small().strong().color(MUTED));
                 }
                 ui.end_row();

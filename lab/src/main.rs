@@ -3,6 +3,7 @@
 //!     lab [options]                      the window
 //!     lab [options] run <job> [--ref <reference>] [--force] [--threads <n>] [--push]
 //!     lab [options] run <batch> [--axis <name>=<value>,…]… [--timeout <duration>] [--again] [--ref <reference>] [--force] [--threads <n>] [--push]
+//!     lab [options] report <batch> [--launch <id>] [--ref <reference>]
 //!     lab [options] fetch
 //!     lab [options] push
 //!     lab [options] status
@@ -31,6 +32,8 @@
 //! for `ref`), `--timeout 20s` replaces the timeout of each of its jobs, and
 //! a job done before (same command, commit, tools and dependencies, ended ok)
 //! is skipped unless `--again`; it exits 0 when every job is ok.
+//! `report` writes the last record of each cell of a batch to records.json and
+//! runs the batch's `report` on it (§6b, R4), printing its table.
 //! `fetch` fetches the mirror, creating it if need be. `push` fetches, then
 //! pushes the live memory. `status` says where things stand.
 
@@ -45,6 +48,7 @@ mod machines;
 mod mirror;
 mod model;
 mod monitor;
+mod report;
 mod runner;
 mod settings;
 mod state;
@@ -56,6 +60,7 @@ use std::process::ExitCode;
 
 const USAGE: &str = "usage: lab [--data <folder>] [--catalogue <file>] [--tab <name>] [--queue <job>]... [--start] [--run <id>] [--batch <name>] [--screenshot <file.ppm> [--after <seconds>]]
        lab [--data <folder>] [--catalogue <file>] run <job or batch> [--ref <reference>] [--force] [--threads <n>] [--push] [--timeout <90s|30m|2h>] [--again] [--axis <name>=<value>,...]...
+       lab [--data <folder>] [--catalogue <file>] report <batch> [--launch <id>] [--ref <reference or folder>]
        lab [--data <folder>] fetch
        lab [--data <folder>] push
        lab [--data <folder>] status";
@@ -63,6 +68,7 @@ const USAGE: &str = "usage: lab [--data <folder>] [--catalogue <file>] [--tab <n
 enum Command {
     Window,
     Run(headless::RunArguments),
+    Report { batch: String, launch: Option<String>, reference: Option<String> },
     Fetch,
     Push,
     Status,
@@ -95,6 +101,10 @@ fn main() -> ExitCode {
                 }
                 None => return usage(),
             },
+            ("report", None) => match arguments.next() {
+                Some(batch) => command = Some(Command::Report { batch, launch: None, reference: None }),
+                None => return usage(),
+            },
             ("fetch", None) => command = Some(Command::Fetch),
             ("push", None) => command = Some(Command::Push),
             ("status", None) => command = Some(Command::Status),
@@ -102,6 +112,8 @@ fn main() -> ExitCode {
                 ("--data", Some(folder), _) => data = Some(PathBuf::from(folder)),
                 ("--catalogue", Some(file), _) => catalogue = Some(PathBuf::from(file)),
                 ("--ref", Some(reference), Some(Command::Run(run))) => run.reference = Some(reference),
+                ("--ref", Some(given), Some(Command::Report { reference, .. })) => *reference = Some(given),
+                ("--launch", Some(given), Some(Command::Report { launch, .. })) => *launch = Some(given),
                 ("--threads", Some(count), Some(Command::Run(run))) if count.parse::<u32>().is_ok_and(|n| n > 0) => {
                     run.threads = count.parse().ok()
                 }
@@ -161,6 +173,9 @@ fn main() -> ExitCode {
     }
     match command.unwrap_or(Command::Window) {
         Command::Run(arguments) => headless::run(&places, arguments),
+        Command::Report { batch, launch, reference } => {
+            headless::report(&places, &batch, launch.as_deref(), reference.as_deref())
+        }
         Command::Fetch => headless::fetch(&places),
         Command::Push => headless::push(&places),
         Command::Status => headless::status(&places),

@@ -22,6 +22,10 @@ Amendment R3 of 2026-11-13, asked the same day: the window queues a batch as one
 may name batches; a Batches screen shows the grid, its cells selected and queued again; a job already
 done is skipped unless asked again; an estimate per job (§6b, §11, §14, §15).
 
+Amendment R4 of 2026-11-13, asked the same day: a batch's `report`, a short script that reads the
+outputs of its jobs and makes the table, run again in seconds without computing anything (§6b, §14,
+§15).
+
 ## 1. Purpose
 
 Every long computation of the project (benches, test suites, Lean builds and oracle runs,
@@ -532,6 +536,31 @@ window lists the batches in the catalogue and their records in the history; R3 q
   String>> /* empty: all */, timeout: Option<Timeout>, again: bool }`; it runs the batch from the
   catalogue the window shows.
 
+### Reports (amendment R4)
+
+- A batch may have a **`report`**: a command, run in a checkout like a job, that reads the records
+  of its cells and their files, and writes a table. It computes nothing again: run again, it gives
+  the same table in seconds. Placeholders: the built-in ones, the batch's parameters, `{records}` and
+  `{out}`; not the axes.
+
+  ```toml
+  report = "python3 bench/before_after.py {records} --side ref --out {out}"
+  ```
+
+- **`lab report <batch>`** takes, for each cell of the grid, its last record (`--launch <id>`: of that
+  launch only), and writes them to `<lab>/reports/<batch>/<time>/records.json`: the batch, its axes,
+  and per cell its values, run id, status, seconds, whether the time counts, commit, reference, and the
+  absolute paths of its `{out}` folder and of its outputs (`null` for a cell never run). Then it runs
+  the report in that folder's checkout: the batch's `checkout`, or `--ref <reference or folder>`; its
+  `{out}` is the same folder, its output in `report.log` there, and `lab report` prints it. A report
+  that runs more than 10 minutes is ended. No record: a report is made again from the records at will.
+- The Batches screen has a **Report** button beside the grid of a batch that has one; the table
+  shows under the grid when it is done.
+- One script serves the comparisons, `bench/before_after.py`: the axis compared (`--side`, `ref` by
+  default), the file each job wrote (`--file`, `measure.json` by default), the keys compared, their
+  mean or their sum over the other axes but one (`--by`, `budget` by default); the time is lab's, with
+  how many of the times count.
+
 ## 7. Rules the app enforces
 
 ### 7.1 Threads
@@ -876,7 +905,10 @@ engines and exported one source (the scene is the same on both commits), the sec
 nothing. R3 coded (`src/app/batches.rs`, the batch item of `src/runner.rs`, the skip and the estimates in
 `src/batch.rs`); a unit test runs a batch item of the queue on chosen cells, then again (skipped); the
 Batches screen looked at on the witness's records and on a made-up batch under way. The witness of R3,
-ogre run again alone with a longer timeout from the grid, is left to Marc.
+ogre run again alone with a longer timeout from the grid, is left to Marc. R4 coded (`src/report.rs`,
+`lab report`, the Report button, `bench/before_after.py`); a unit test makes a report twice from a
+made-up batch, the same table and no record; the witness's report made from the records of the R1 and
+R2 checks (blob and ogre at 3000 quads). The full table of #115 waits for Marc's run of the 72 jobs.
 
 ## 16. What cannot be verified here
 

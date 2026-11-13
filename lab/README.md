@@ -132,6 +132,15 @@ before`; `--again` runs it anyway. The line of a job that starts gives its estim
 cell's past times. In the window, a batch is one item of the queue (a sequence may name batches), its
 lines in `logs/<launch>.log`, its cells in the Batches screen as they start and end.
 
+```sh
+lab report pole-pairs-115-remesh
+```
+
+writes the last record of each cell of the batch to `~/.openclare-lab/reports/<batch>/<time>/records.json`
+and runs the batch's `report` on it, which reads the files the jobs left and prints the table: computed
+again in seconds, nothing run again. `bench/before_after.py` is the report of the comparisons (#115:
+main against 12a6675, means over the cells ok on both sides). The Batches screen has a Report button.
+
 ## Tests
 
 ```sh
