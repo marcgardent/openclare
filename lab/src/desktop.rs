@@ -229,6 +229,9 @@ mod tests {
         let pid = child.id() as i32;
         let only = move |candidate: i32| candidate == pid;
         let all: BTreeSet<usize> = online.iter().copied().collect();
+        // Allowed everywhere, as a process of the desktop, wherever the tests were started from (a
+        // shell of a desktop that lab pinned is on its processors).
+        assert_eq!(moved(&allowed(child.id()).into_iter().collect(), &online, &only), 1);
         assert_eq!(of_user_on(&all, &only), vec![(pid, "sleep".to_string())]);
         assert_eq!(moved(&all, &desktop, &only), 1);
         assert_eq!(allowed(child.id()), desktop, "pinned to the desktop");
