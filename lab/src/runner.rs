@@ -660,30 +660,27 @@ impl Runner {
         self.desktop_looked = true;
         match (&self.desktop_pinned, busy && calm.pin_desktop) {
             (None, true) => {
-                let processes = crate::desktop::pin(&desktop);
+                let moved = crate::desktop::pin(&desktop);
                 self.lock().desktop = Some(crate::desktop::Desktop::Pinned {
                     cpus: crate::cpus::text(&desktop),
-                    processes,
+                    moved,
                     since: Local::now(),
                 });
                 self.desktop_pinned = Some(desktop);
                 (self.repaint)();
             }
             (Some(pinned), false) => {
-                let processes = crate::desktop::free(pinned);
-                self.lock().desktop = Some(crate::desktop::Desktop::Freed {
-                    processes,
-                    at: Local::now(),
-                    why: "nothing runs".to_string(),
-                });
+                let moved = crate::desktop::free(pinned);
+                self.lock().desktop =
+                    Some(crate::desktop::Desktop::Freed { moved, at: Local::now(), why: "nothing runs".to_string() });
                 self.desktop_pinned = None;
                 (self.repaint)();
             }
             (None, false) if first_look => {
-                let processes = crate::desktop::free(&desktop);
-                if processes > 0 {
+                let moved = crate::desktop::free(&desktop);
+                if moved.any() {
                     self.lock().desktop = Some(crate::desktop::Desktop::Freed {
-                        processes,
+                        moved,
                         at: Local::now(),
                         why: "left pinned by an earlier session".to_string(),
                     });

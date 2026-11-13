@@ -50,7 +50,8 @@ montrent toutes les exécutions, où qu'elles aient tourné. Il tourne sous Linu
   sur un cœur à lui : tous les cœurs sauf le premier par défaut, gardé pour le bureau (`job_cpus` sous
   `[calm]`, « Job processors » dans l'écran Machine) ; le calme se juge sur ces processeurs seuls, et
   pendant que quelque chose tourne, lab garde le bureau sur le cœur 0 et lui rend tous les processeurs
-  après ; la barre du haut dit lequel (SPEC.fr.md §7.5).
+  après ; la barre du haut dit lequel (SPEC.fr.md §7.5). kwin et les services du système, il les
+  déplace par `sudo -n`, avec une liste blanche de quatre commandes dans sudoers (§7.5).
 - **Batches** : les jobs d'un batch, une ligne chacun, numérotés (les valeurs de ses axes, son état,
   sa dernière exécution) ; chacun son état en cours ou sa dernière fiche (`ok 41 s`, `failed`,
   `timed out`, `—` jamais lancée), son estimation au survol, sa fiche et la fin de son journal une fois

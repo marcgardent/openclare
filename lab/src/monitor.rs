@@ -3,8 +3,9 @@
 //! A thread samples /proc every few seconds: CPU in all and per thread, the
 //! CPU of each process, load averages and memory; and `nvidia-smi` for the
 //! GPU. The processes of the run under way are its process group and their
-//! descendants; the rest of the CPU is foreign. The calm verdict is drawn
-//! from the last window of samples.
+//! descendants; the rest of the CPU is foreign. Their CPU is counted whole,
+//! that of the processes born and ended between two samples included (see
+//! `our_ticks`). The calm verdict is drawn from the last window of samples.
 
 use std::collections::{BTreeMap, VecDeque};
 use std::process::Command;
@@ -18,6 +19,10 @@ const KEPT: Duration = Duration::from_secs(600);
 
 /// Clock ticks per second of /proc/<pid>/stat (USER_HZ, 100 on Linux).
 const TICKS: f64 = 100.0;
+
+/// The processes of the machine, by pid: name, parent, process group, CPU
+/// ticks of their own, CPU ticks of their children reaped.
+type Processes = BTreeMap<i32, (String, i32, i32, u64, u64)>;
 
 #[derive(Clone, Debug)]
 pub struct Point {
@@ -165,7 +170,7 @@ fn cpu_ticks() -> Vec<(u64, u64)> {
 }
 
 /// Each process: (pid, (name, parent, group, ticks used)).
-fn processes() -> BTreeMap<i32, (String, i32, i32, u64)> {
+fn processes() -> Processes {
     let mut found = BTreeMap::new();
     let Ok(entries) = std::fs::read_dir("/proc") else { return found };
     for entry in entries.flatten() {
@@ -176,8 +181,9 @@ fn processes() -> BTreeMap<i32, (String, i32, i32, u64)> {
         let name = text[open + 1..close].to_string();
         let fields: Vec<&str> = text[close + 1..].split_whitespace().collect();
         let number = |index: usize| fields.get(index).and_then(|value| value.parse::<i64>().ok()).unwrap_or(0);
-        // After the name: state 0, ppid 1, pgrp 2, ... utime 11, stime 12.
-        found.insert(pid, (name, number(1) as i32, number(2) as i32, (number(11) + number(12)) as u64));
+        // After the name: state 0, ppid 1, pgrp 2, ... utime 11, stime 12, cutime 13, cstime 14.
+        let own = (number(11) + number(12)) as u64;
+        found.insert(pid, (name, number(1) as i32, number(2) as i32, own, (number(13) + number(14)) as u64));
     }
     found
 }
@@ -215,16 +221,16 @@ fn load() -> [f64; 3] {
 }
 
 /// The processes of the groups and their descendants.
-fn ours(groups: &[i32], all: &BTreeMap<i32, (String, i32, i32, u64)>) -> Vec<i32> {
+fn ours(groups: &[i32], all: &Processes) -> Vec<i32> {
     if groups.is_empty() {
         return Vec::new();
     }
     let mut found: Vec<i32> =
-        all.iter().filter(|(_, (_, _, pgrp, _))| groups.contains(pgrp)).map(|(pid, _)| *pid).collect();
+        all.iter().filter(|(_, (_, _, pgrp, _, _))| groups.contains(pgrp)).map(|(pid, _)| *pid).collect();
     let mut grew = true;
     while grew {
         grew = false;
-        for (pid, (_, parent, _, _)) in all {
+        for (pid, (_, parent, _, _, _)) in all {
             if !found.contains(pid) && found.contains(parent) {
                 found.push(*pid);
                 grew = true;
@@ -232,6 +238,33 @@ fn ours(groups: &[i32], all: &BTreeMap<i32, (String, i32, i32, u64)>) -> Vec<i32
         }
     }
     found
+}
+
+/// The CPU ticks of the children this process reaped (its cutime and cstime).
+fn reaped_ticks() -> u64 {
+    let text = std::fs::read_to_string("/proc/self/stat").unwrap_or_default();
+    let fields: Vec<&str> = text.rfind(')').map_or(Vec::new(), |close| text[close + 1..].split_whitespace().collect());
+    let number = |index: usize| fields.get(index).and_then(|value| value.parse::<u64>().ok()).unwrap_or(0);
+    number(13) + number(14)
+}
+
+/// Our runs' CPU between two samples, in ticks. Each process of ours alive
+/// counts its time and that of its children reaped, against the sample
+/// before: a process born between the two counts whole, one that ended hands
+/// its time to its parent, which reaped it. A run's first process ends
+/// reaped by lab itself: `reaped`, lab's reaped ticks over the same span,
+/// counts only when one did, lab's other children (git) taking a few ticks.
+/// Before, only the processes alive at both samples counted, and what ours
+/// did at their start and end went to the foreign CPU.
+fn our_ticks(before: &Processes, before_ours: &[i32], now: &Processes, ours: &[i32], reaped: u64) -> u64 {
+    let whole = |all: &Processes, pids: &[i32]| -> u64 {
+        pids.iter().filter_map(|pid| all.get(pid)).map(|(_, _, _, own, children)| own + children).sum()
+    };
+    let me = std::process::id() as i32;
+    let run_ended = before_ours
+        .iter()
+        .any(|pid| before.get(pid).is_some_and(|(_, parent, ..)| *parent == me) && !now.contains_key(pid));
+    (whole(now, ours) + if run_ended { reaped } else { 0 }).saturating_sub(whole(before, before_ours))
 }
 
 /// The sampler's thread, for as long as the app lives.
@@ -247,8 +280,13 @@ pub fn spawn(
             let threads = cpu_ticks().len().saturating_sub(1).max(1) as f64;
             let mut before_cpu = cpu_ticks();
             let mut before_processes = processes();
+            let mut before_ours = ours(&lock(&watch).groups.clone(), &before_processes);
             let mut before_at = Instant::now();
+            // nvidia-smi is a child of lab too: its ticks are not a run's.
+            let mut gpu_ticks = reaped_ticks();
             let mut gpu_reading = gpu();
+            gpu_ticks = reaped_ticks() - gpu_ticks;
+            let mut before_reaped = reaped_ticks() - gpu_ticks;
             let mut count: u64 = 0;
             lock(&watch).started = Some(Instant::now());
             loop {
@@ -272,16 +310,25 @@ pub fn spawn(
                 let ours_pids = ours(&groups, &processes);
                 let mut heaviest: Vec<Process> = processes
                     .iter()
-                    .filter_map(|(pid, (name, _, _, ticks))| {
-                        let (_, _, _, ticks0) = before_processes.get(pid)?;
-                        let used = 100.0 * ticks.saturating_sub(*ticks0) as f64 / TICKS / seconds;
+                    .filter_map(|(pid, (name, _, _, ticks, _))| {
+                        // Born since the sample before: all its time is of this span.
+                        let ticks0 = before_processes.get(pid).map_or(0, |(_, _, _, ticks0, _)| *ticks0);
+                        let used = 100.0 * ticks.saturating_sub(ticks0) as f64 / TICKS / seconds;
                         (used > 0.0).then(|| Process { name: name.clone(), cpu: used, ours: ours_pids.contains(pid) })
                     })
                     .collect();
                 heaviest.sort_by(|a, b| b.cpu.total_cmp(&a.cpu));
-                let ours_percent =
-                    (heaviest.iter().filter(|process| process.ours).map(|process| process.cpu).sum::<f64>() / threads)
-                        .max(0.0);
+                let reaped = reaped_ticks() - gpu_ticks;
+                let ours_ticks = our_ticks(
+                    &before_processes,
+                    &before_ours,
+                    &processes,
+                    &ours_pids,
+                    reaped.saturating_sub(before_reaped),
+                );
+                // Percent of one thread.
+                let ours_cpu = 100.0 * ours_ticks as f64 / TICKS / seconds;
+                let ours_percent = (ours_cpu / threads).max(0.0);
                 let foreign = (total - ours_percent).max(0.0);
                 // The job processors: their busy time less ours (pinned to them), per processor.
                 let job_cpus = {
@@ -290,12 +337,13 @@ pub fn spawn(
                 };
                 let foreign_jobs = (!job_cpus.is_empty()).then(|| {
                     let busy: f64 = job_cpus.iter().filter_map(|cpu| per_thread.get(*cpu)).sum();
-                    let ours: f64 = heaviest.iter().filter(|process| process.ours).map(|process| process.cpu).sum();
-                    ((busy - ours) / job_cpus.len() as f64).max(0.0)
+                    ((busy - ours_cpu) / job_cpus.len() as f64).max(0.0)
                 });
                 heaviest.truncate(12);
                 if count % 2 == 0 {
+                    let start = reaped_ticks();
                     gpu_reading = gpu();
+                    gpu_ticks += reaped_ticks().saturating_sub(start);
                 }
                 let (memory_used, memory_total) = memory();
                 let point = Point {
@@ -325,6 +373,8 @@ pub fn spawn(
                 }
                 before_cpu = cpu;
                 before_processes = processes;
+                before_ours = ours_pids;
+                before_reaped = reaped;
                 before_at = now;
                 repaint();
             }
@@ -388,5 +438,46 @@ mod tests {
         let group = all[&me].2;
         assert!(ours(&[group], &all).contains(&me));
         assert!(memory().1 > 0);
+    }
+
+    #[test]
+    fn short_processes_of_ours_are_counted_whole() {
+        use std::os::unix::process::CommandExt;
+        // A run of short busy processes, each born and ended between two samples.
+        let folder = std::env::temp_dir().join(format!("lab-our-ticks-{}", std::process::id()));
+        std::fs::create_dir_all(&folder).unwrap();
+        let end = folder.join("end");
+        let script = format!(
+            "for n in $(seq 25); do sh -c 'i=0; while [ $i -lt 20000 ]; do i=$((i+1)); done'; done; cat /proc/$$/stat > {}",
+            end.display()
+        );
+        let before_reaped = reaped_ticks();
+        let mut before = processes();
+        let mut child = std::process::Command::new("sh").arg("-c").arg(&script).process_group(0).spawn().unwrap();
+        let group = child.id() as i32;
+        let mut before_ours = ours(&[group], &before);
+        let mut last_reaped = before_reaped;
+        let mut counted = 0;
+        loop {
+            std::thread::sleep(Duration::from_millis(150));
+            let done = child.try_wait().unwrap().is_some();
+            let now = processes();
+            let ours_now = ours(&[group], &now);
+            let reaped = reaped_ticks();
+            counted += our_ticks(&before, &before_ours, &now, &ours_now, reaped - last_reaped);
+            (before, before_ours, last_reaped) = (now, ours_now, reaped);
+            if done {
+                break;
+            }
+        }
+        // The run's own word: the shell's ticks and its children's, read as it ended.
+        let text = std::fs::read_to_string(&end).unwrap();
+        let fields: Vec<u64> =
+            text[text.rfind(')').unwrap() + 1..].split_whitespace().map(|value| value.parse().unwrap_or(0)).collect();
+        let truth = fields[11] + fields[12] + fields[13] + fields[14];
+        std::fs::remove_dir_all(&folder).unwrap();
+        assert!(truth >= 20, "the run took {truth} ticks: too short to tell");
+        assert!(counted * 10 >= truth * 9, "counted {counted} ticks of {truth}");
+        assert!(counted <= last_reaped - before_reaped + 5, "counted {counted} ticks, more than this process reaped");
     }
 }
