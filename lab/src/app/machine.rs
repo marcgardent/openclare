@@ -54,7 +54,12 @@ impl App {
             let ui = &mut columns[0];
             ui.label(RichText::new("CPU").small().strong().color(MUTED));
             ui.label(RichText::new(format!("{:.0} %", last.cpu)).size(26.0).strong());
-            ui.label(RichText::new(format!("ours {:.0} % · foreign {:.0} %", last.ours, last.foreign)).color(MUTED));
+            let on_jobs = last.foreign_jobs.map_or(String::new(), |foreign| {
+                format!(" · on the job processors {foreign:.0} % (the calm is judged on it)")
+            });
+            ui.label(
+                RichText::new(format!("ours {:.0} % · foreign {:.0} %{on_jobs}", last.ours, last.foreign)).color(MUTED),
+            );
             let foreign: Vec<f64> = points.iter().map(|point| point.foreign).collect();
             sparkline(ui, &foreign, 100.0, RED, Some(self.settings.calm.foreign_cpu_mean_max));
             ui.label(
@@ -144,7 +149,35 @@ impl App {
                 ui.label("Comfort limit, threads");
                 ui.add(egui::DragValue::new(&mut comfort).range(1..=64));
                 ui.end_row();
+                ui.label("Job processors");
+                ui.add(egui::TextEdit::singleline(&mut calm.job_cpus).hint_text("all").desired_width(110.0))
+                    .on_hover_text(
+                        "the processors the jobs are pinned to, as 1-3,5-7; one job per slot of whole cores; \
+                         the calm judged on them alone. Empty: every processor, no pinning",
+                    );
+                ui.end_row();
             });
+            match crate::cpus::checked(&calm.job_cpus) {
+                Err(error) => {
+                    ui.colored_label(RED, format!("{error}: the jobs are not pinned"));
+                }
+                Ok(cpus) if !cpus.is_empty() => {
+                    let cores = crate::cpus::cores(&cpus);
+                    let threads = crate::batch::capped(self.settings.threads, &cpus);
+                    ui.label(
+                        RichText::new(format!(
+                            "{} cores for the jobs: a job of {threads} thread{} at a time, or {} one-thread jobs \
+                             side by side, each alone on its core",
+                            cores.len(),
+                            if threads == 1 { "" } else { "s" },
+                            cores.len()
+                        ))
+                        .color(MUTED),
+                    );
+                }
+                Ok(_) => {}
+            }
+            ui.label(RichText::new(format!("This machine: {}", crate::cpus::layout())).small().color(MUTED));
             if calm != self.settings.calm || comfort != self.settings.comfort_threads {
                 self.settings.calm = calm.clone();
                 self.settings.comfort_threads = comfort;

@@ -40,6 +40,9 @@ pub struct CalmSettings {
     pub load1_max: f64,
     /// After a run of ours ends, load1 is not looked at for this long.
     pub load1_ignored_minutes: u32,
+    /// The processors the jobs run on, pinned, as `1-3,5-7` (SPEC.md, §7.5):
+    /// the calm is then judged on them alone. Empty: every processor, no pinning.
+    pub job_cpus: String,
     /// Whether a job whose timing matters waits at the head of the queue for a
     /// calm machine. Off by default: it starts at once, and its time does not
     /// count when the machine was not calm (SPEC.md, §7.2).
@@ -92,6 +95,7 @@ impl Default for CalmSettings {
             foreign_cpu_peak_max: 25.0,
             load1_max: 1.0,
             load1_ignored_minutes: 5,
+            job_cpus: String::new(),
             wait: false,
         }
     }

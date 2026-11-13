@@ -665,6 +665,32 @@ day as well as by night. Proposal (Q2):
 does. Seeded values follow the project's rules: 32 GB for the engine, Blender and Lean, 40 GB for
 `cargo test`, the values of NIGHT.md where it gives one.
 
+### 7.5 Job processors
+
+A desktop in use is never calm by §7.2: a browser, the window manager, a system monitor each take a
+few percent of the machine. Rather than close them, the jobs get processors of their own.
+
+- **The setting.** `[calm] job_cpus = "1-3,5-7"` in `settings.toml`, or "Job processors" on the
+  Machine screen, which shows the machine's cores ("core 0: 0,4 · core 1: 1,5 …"). Empty, the
+  default: every processor, nothing pinned, as before.
+- **Slots of whole cores.** The processors are grouped by physical core (`thread_siblings_list` in
+  /sys); a job of `t` threads takes `t` whole cores, twins included, so that no job shares a core
+  with another. The pool runs one job per slot: on `1-3,5-7`, three one-thread jobs side by side
+  (`1,5`, `2,6`, `3,7`), or one job of three threads. A batch whose time matters (⏱) runs that way
+  too: each job alone on its cores, which is reproducible; its neighbours share only the last-level
+  cache, the memory and the turbo. The thread setting is no larger than the cores of the job
+  processors (four on three cores runs as three).
+- **Pinning.** lab sets the affinity of each job, prepare and dependency before `exec`
+  (`sched_setaffinity`); its children inherit it. The record says where it ran:
+  `threads.cpus = "2,6"`.
+- **The calm on them alone.** The foreign CPU is measured on the job processors only: their busy
+  time less the jobs' own, in percent of them; load1, which counts the whole machine, is not looked
+  at. The verdict says so: "foreign CPU on the job processors 1-3,5-7 mean …".
+- **The desktop elsewhere.** `lab/pin-desktop.sh 0,4` pins every process of the user still allowed
+  on every processor to `0,4`; what starts later inherits it, lab's window included, while the jobs
+  lab pins keep theirs. `--undo 0,4` puts them back, `--dry-run` lists them. Nothing permanent; run
+  it when no launch of an older lab, whose jobs are not pinned, is under way.
+
 ## 8. The runner
 
 ### 8.1 Starting a run

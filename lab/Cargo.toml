@@ -27,6 +27,6 @@ toml = { version = "0.9", features = ["preserve_order"] }
 chrono = { version = "0.4", features = ["serde"] }
 dirs = "6"
 # Process groups, signals and the memory cap of a job. MIT.
-nix = { version = "0.31", features = ["process", "signal", "resource"] }
+nix = { version = "0.31", features = ["process", "signal", "resource", "sched"] }
 # The hashes of the files a run produces. MIT or Apache-2.0.
 sha2 = "0.10"

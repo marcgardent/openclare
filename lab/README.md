@@ -44,6 +44,9 @@ wherever it ran. It runs on Linux (it reads /proc); `nvidia-smi`, if present, gi
   once like the others, and its time does not count when the machine was not calm; with `wait = true`
   under `[calm]` in the settings it waits for a calm machine, and "Start anyway" starts it. A reference
   the mirror does not know runs on `main`, with a warning: lab warns, it never holds a Run back.
+  With `job_cpus = "1-3,5-7"` under `[calm]` (or "Job processors" on the Machine screen), the jobs are
+  pinned to those processors, one per slot of whole cores, and the calm is judged on them alone;
+  `lab/pin-desktop.sh 0,4` keeps the desktop on core 0 (SPEC.md §7.5).
 - **Batches**: the jobs of a batch, one line each, numbered (its axes' values, its state, its last run);
   each its state under way or its last record (`ok 41 s`, `failed`, `timed out`, `—`
   never run), its estimate on hover, its record and the end of its log once clicked. Cells are selected

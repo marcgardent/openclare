@@ -156,11 +156,14 @@ pub struct Git {
     pub pushed: bool,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Threads {
     pub setting: u32,
     /// What the job uses (SPEC.md, section 7.1).
     pub effective: u32,
+    /// The processors it was pinned to, as `2,6` (SPEC.md, §7.5); none: any.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cpus: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

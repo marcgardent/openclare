@@ -448,7 +448,14 @@ fn run_batch(
     }
     let threads = arguments.threads.unwrap_or(settings.threads);
     let job_threads = batch.job.effective_threads(threads);
-    let width = crate::batch::batch_width(&batch.job, threads);
+    let cpus = match crate::cpus::checked(&settings.calm.job_cpus) {
+        Ok(cpus) => cpus,
+        Err(error) => {
+            eprintln!("lab: {error}");
+            return ExitCode::FAILURE;
+        }
+    };
+    let width = crate::batch::batch_width(&batch.job, threads, &cpus);
     if width * job_threads > settings.comfort_threads {
         eprintln!(
             "lab: {width} jobs of {job_threads} threads: {} threads, above the comfort limit of {}",
@@ -477,6 +484,7 @@ fn run_batch(
         papers: Vec::new(),
         cells: Vec::new(),
         again: arguments.again,
+        cpus,
     };
     let stopped = || INTERRUPTED.load(Ordering::SeqCst);
     let mut say = |line: String| eprintln!("lab: {line}");

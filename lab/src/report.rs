@@ -104,7 +104,7 @@ pub fn make(
     let line = render(report, &values)?;
     let log_path = folder.join("report.log");
     let mut log = File::create(&log_path).map_err(|error| format!("{}: {error}", log_path.display()))?;
-    let mut child = spawn_shell(&line, &root, &batch.job.environment_for(&values)?, None, &log)?;
+    let mut child = spawn_shell(&line, &root, &batch.job.environment_for(&values)?, None, &[], &log)?;
     let group = child.id() as i32;
     let begun = Instant::now();
     let status = loop {

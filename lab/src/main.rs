@@ -40,6 +40,7 @@
 mod app;
 mod batch;
 mod catalogue;
+mod cpus;
 mod files;
 mod headless;
 mod home;

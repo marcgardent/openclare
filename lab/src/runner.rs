@@ -40,7 +40,7 @@ const TICK: Duration = Duration::from_millis(200);
 pub const NOT_MEASURED: &str = "not measured: lab ran without its monitor";
 
 /// The file at the root of a checkout of the mirror that lists the prepares
-/// done in it (SPEC.md, §7.3): one per line, "<when>\t<job>\t<command>".
+/// done in it (SPEC.md, §7.5): one per line, "<when>\t<job>\t<command>".
 pub const PREPARED: &str = ".lab-prepared";
 
 #[derive(Clone, Debug)]
@@ -420,6 +420,8 @@ struct Running {
     memory_limit_gb: Option<u32>,
     log: File,
     heartbeat: Heartbeat,
+    /// The processors it is pinned to; empty: any.
+    cpus: Vec<usize>,
     outputs: Vec<String>,
     since: SystemTime,
     stop_sent: Option<Instant>,
@@ -447,7 +449,8 @@ impl During {
     pub fn take(&mut self, watch: &Watch) {
         if let Some(point) = watch.latest().filter(|point| self.last.is_none_or(|last| point.at > last)) {
             self.last = Some(point.at);
-            self.foreign.push(point.foreign);
+            // Pinned, the foreign CPU on the job processors (SPEC.md, §7.5).
+            self.foreign.push(point.foreign_jobs.unwrap_or(point.foreign));
             self.load1_max = self.load1_max.max(point.load[0]);
             self.memory_peak = self.memory_peak.max(point.memory_used);
             if let Some((used, _)) = point.vram {
@@ -473,7 +476,11 @@ impl During {
             }
             run.calm.during = mean < calm.foreign_cpu_mean_max && peak < calm.foreign_cpu_peak_max;
             if !run.calm.during {
-                let reason = format!("foreign CPU mean {mean:.1} %, peak {peak:.1} % during the run");
+                let place = match calm.job_cpus.trim() {
+                    "" => String::new(),
+                    cpus => format!(" on the job processors {cpus}"),
+                };
+                let reason = format!("foreign CPU{place} mean {mean:.1} %, peak {peak:.1} % during the run");
                 run.calm.reason =
                     if run.calm.reason.is_empty() { reason } else { format!("{}; {reason}", run.calm.reason) };
             }
@@ -570,6 +577,13 @@ impl Runner {
             sample.gpu_percent = point.gpu;
         }
         sample
+    }
+
+    /// The job processors of the settings (SPEC.md, §7.5); empty: no pinning.
+    fn job_cpus(&self) -> Vec<usize> {
+        let Some((_, calm)) = self.monitor.as_ref() else { return Vec::new() };
+        let text = calm.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).job_cpus.clone();
+        crate::cpus::checked(&text).unwrap_or_default()
     }
 
     fn verdict(&self) -> Option<Verdict> {
@@ -764,6 +778,7 @@ impl Runner {
             papers: queue.papers.clone(),
             cells: choice.cells.clone(),
             again: choice.again,
+            cpus: self.job_cpus(),
         };
         let shared = self.shared.clone();
         let stopped = || locked(&shared).stop.is_some();
@@ -991,11 +1006,13 @@ impl Runner {
         }
         let started = Local::now().fixed_offset();
         let id = self.unique_id(&started, &job.name);
-        let threads = job.effective_threads(queue.threads);
+        // Pinned, the job runs on the job processors, its setting no larger than their cores.
+        let cpus = self.job_cpus();
+        let setting = crate::batch::capped(queue.threads, &cpus);
+        let threads = job.effective_threads(setting);
         let reference = target.recorded();
-        let recorded = job.values(queue.threads, &git.short, &reference, None, &item.parameters);
-        let executed =
-            job.values(queue.threads, &git.short, &reference, Some(&checkout.to_string_lossy()), &item.parameters);
+        let recorded = job.values(setting, &git.short, &reference, None, &item.parameters);
+        let executed = job.values(setting, &git.short, &reference, Some(&checkout.to_string_lossy()), &item.parameters);
         let command = render(&job.command, &executed)?;
         let environment = job.environment_for(&executed)?;
         let directory = checkout.join(render(&job.directory, &executed)?);
@@ -1030,7 +1047,11 @@ impl Runner {
             checkout: reference.clone(),
             directory: job.directory.clone(),
             git: Some(Git { commit: git.commit.clone(), dirty: git.dirty, branch: git.branch.clone(), pushed }),
-            threads: Some(Threads { setting: queue.threads, effective: threads }),
+            threads: Some(Threads {
+                setting,
+                effective: threads,
+                cpus: (!cpus.is_empty()).then(|| crate::cpus::text(&cpus)),
+            }),
             memory_limit_gb: job.memory_limit_gb,
             machine: Some(self.machine.clone()),
             load: Some(crate::model::Load { at_start: self.sample(), at_end: None, during: None }),
@@ -1075,6 +1096,7 @@ impl Runner {
             memory_limit_gb: job.memory_limit_gb,
             log,
             heartbeat: Heartbeat::new(),
+            cpus: cpus.clone(),
             outputs: job.outputs.clone(),
             since: SystemTime::now(),
             stop_sent: None,
@@ -1091,7 +1113,7 @@ impl Runner {
         match prepare {
             Some((executed, recorded)) => {
                 // Once per checkout of the mirror, `.lab-prepared` remembering it; once per
-                // queue in a local folder, which may change between two queues (SPEC.md, §7.3).
+                // queue in a local folder, which may change between two queues (SPEC.md, §7.5).
                 let (key, done) = match &target {
                     Target::Reference(_) => {
                         let key = format!("{}\n{executed}", checkout.display());
@@ -1156,6 +1178,7 @@ impl Runner {
             &running.directory,
             &running.environment,
             running.memory_limit_gb,
+            &running.cpus,
             &running.log,
         )?;
         if let Some((watch, _)) = &self.monitor {
@@ -1515,7 +1538,7 @@ pub fn resolve_checkout(
 }
 
 /// Why the prepare of `command` need not run again in this checkout, if
-/// `.lab-prepared` says it ran (SPEC.md, §7.3).
+/// `.lab-prepared` says it ran (SPEC.md, §7.5).
 pub fn prepared_in(checkout: &Path, command: &str) -> Option<String> {
     let text = std::fs::read_to_string(checkout.join(PREPARED)).ok()?;
     text.lines().filter_map(|line| line.split_once('\t')).find_map(|(when, rest)| {
@@ -1538,6 +1561,7 @@ pub fn spawn_shell(
     directory: &Path,
     environment: &BTreeMap<String, String>,
     memory_limit_gb: Option<u32>,
+    cpus: &[usize],
     log: &File,
 ) -> Result<Child, String> {
     let output = log.try_clone().map_err(|error| error.to_string())?;
@@ -1558,6 +1582,19 @@ pub fn spawn_shell(
         // Safety: only setrlimit, async-signal-safe, between fork and exec.
         unsafe {
             command.pre_exec(move || setrlimit(Resource::RLIMIT_AS, bytes, bytes).map_err(std::io::Error::from));
+        }
+    }
+    if !cpus.is_empty() {
+        // The job's processors (SPEC.md, §7.5): its children inherit them.
+        let mut set = nix::sched::CpuSet::new();
+        for &cpu in cpus {
+            set.set(cpu).map_err(|error| format!("processor {cpu}: {error}"))?;
+        }
+        // Safety: only sched_setaffinity, a system call, between fork and exec.
+        unsafe {
+            command.pre_exec(move || {
+                nix::sched::sched_setaffinity(nix::unistd::Pid::from_raw(0), &set).map_err(std::io::Error::from)
+            });
         }
     }
     command.spawn().map_err(|error| format!("bash: {error}"))
@@ -1717,7 +1754,8 @@ mod tests {
     fn the_processes_of_a_group_are_named() {
         let places = places("group-processes");
         let log = File::create(places.data.join("log")).unwrap();
-        let mut child = spawn_shell("sleep 5 & sleep 5 & wait", &places.data, &BTreeMap::new(), None, &log).unwrap();
+        let mut child =
+            spawn_shell("sleep 5 & sleep 5 & wait", &places.data, &BTreeMap::new(), None, &[], &log).unwrap();
         std::thread::sleep(Duration::from_millis(300));
         let group = child.id() as i32;
         let said = group_processes(group);
@@ -2048,6 +2086,7 @@ mod tests {
             per_thread: Vec::new(),
             ours: 0.0,
             foreign,
+            foreign_jobs: None,
             load: [0.2, 0.2, 0.2],
             memory_used: 1,
             memory_total: 2,

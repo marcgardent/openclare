@@ -46,7 +46,10 @@ montrent toutes les exécutions, où qu'elles aient tourné. Il tourne sous Linu
   (⏱) part tout de suite comme les autres, et son temps ne compte pas si la machine n'était pas calme ;
   avec `wait = true` sous `[calm]` dans les réglages elle attend une machine calme, et « Start anyway »
   la lance. Une référence que le miroir ne connaît pas tourne sur `main`, avec un avertissement : lab
-  avertit, il n'empêche jamais un Run.
+  avertit, il n'empêche jamais un Run. Avec `job_cpus = "1-3,5-7"` sous `[calm]` (ou « Job
+  processors » dans l'écran Machine), les jobs sont épinglés sur ces processeurs, un par emplacement de
+  cœurs entiers, et le calme se juge sur eux seuls ; `lab/pin-desktop.sh 0,4` garde le bureau sur le
+  cœur 0 (SPEC.fr.md §7.5).
 - **Batches** : les jobs d'un batch, une ligne chacun, numérotés (les valeurs de ses axes, son état,
   sa dernière exécution) ; chacun son état en cours ou sa dernière fiche (`ok 41 s`, `failed`,
   `timed out`, `—` jamais lancée), son estimation au survol, sa fiche et la fin de son journal une fois

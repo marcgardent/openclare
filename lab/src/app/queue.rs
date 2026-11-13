@@ -783,6 +783,7 @@ impl App {
     /// now (SPEC.md, section 10); None for an item done.
     fn timings(&mut self, shared: &Shared, threads: u32) -> Vec<Option<Timing>> {
         let runs = self.all_runs();
+        let job_cpus = crate::cpus::checked(&self.settings.calm.job_cpus).unwrap_or_default();
         let elapsed = shared.current.as_ref().map(|current| (current.key, current.started.elapsed().as_secs_f64()));
         let mut total = 0.0;
         let mut unknown = 0;
@@ -797,7 +798,7 @@ impl App {
                     let found = choice
                         .catalogue
                         .batch(&item.job.name)
-                        .map(|batch| super::batches::batch_estimate(batch, choice, &runs, threads));
+                        .map(|batch| super::batches::batch_estimate(batch, choice, &runs, threads, &job_cpus));
                     let (seconds, without) = found.unwrap_or((None, 0));
                     let estimate = seconds.map(|seconds| Estimate { seconds, runs: 1, load: None });
                     match &estimate {

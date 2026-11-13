@@ -649,14 +649,20 @@ fn cell_estimate(batch: &Batch, values: &[(String, String)], runs: &[Run]) -> Op
 
 /// The estimate of a batch in the queue: the cells' known medians over the
 /// pool's width, and how many cells have none.
-pub(super) fn batch_estimate(batch: &Batch, choice: &BatchChoice, runs: &[Run], setting: u32) -> (Option<f64>, usize) {
+pub(super) fn batch_estimate(
+    batch: &Batch,
+    choice: &BatchChoice,
+    runs: &[Run],
+    setting: u32,
+    cpus: &[usize],
+) -> (Option<f64>, usize) {
     let Ok(mut cells) = batch.expand(&[]) else { return (None, 0) };
     if !choice.cells.is_empty() {
         cells.retain(|cell| {
             choice.cells.iter().any(|kept| cell.values.iter().all(|(axis, value)| kept.get(axis) == Some(value)))
         });
     }
-    let width = crate::batch::batch_width(&batch.job, setting);
+    let width = crate::batch::batch_width(&batch.job, setting, cpus);
     let known: Vec<f64> = cells.iter().filter_map(|cell| cell_estimate(batch, &cell.values, runs)).collect();
     let unknown = cells.len() - known.len();
     if known.is_empty() {

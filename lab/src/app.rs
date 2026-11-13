@@ -1093,7 +1093,9 @@ impl App {
                             ui.colored_label(colour, RichText::new(place).monospace()).on_hover_text(hint);
                         });
                         row.col(|ui| {
-                            ui.monospace(run.threads.map_or("?".to_string(), |threads| threads.effective.to_string()));
+                            ui.monospace(
+                                run.threads.as_ref().map_or("?".to_string(), |threads| threads.effective.to_string()),
+                            );
                         });
                         row.col(|ui| {
                             let (mark, colour) = calm_mark(run);
@@ -1223,8 +1225,9 @@ fn run_detail(ui: &mut egui::Ui, run: &Run, data: &Path, timing_matters: bool, o
             format!("{} {} {branch} · {pushed}", git.commit, if git.dirty { "modified" } else { "clean" }),
         ));
     }
-    if let Some(threads) = run.threads {
-        rows.push(("Threads", format!("{} (setting {})", threads.effective, threads.setting)));
+    if let Some(threads) = &run.threads {
+        let pinned = threads.cpus.as_ref().map_or(String::new(), |cpus| format!(", pinned to the processors {cpus}"));
+        rows.push(("Threads", format!("{} (setting {}){pinned}", threads.effective, threads.setting)));
     }
     if let Some(machine) = &run.machine {
         let gpu = machine

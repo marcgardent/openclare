@@ -563,6 +563,33 @@ pas, de jour comme de nuit. Proposition (Q2) :
 valeurs amorcées suivent les règles du projet : 32 Go pour le moteur, Blender et Lean, 40 Go pour
 `cargo test`, les valeurs de NIGHT.md quand il en donne.
 
+### 7.5 Processeurs des jobs
+
+Un bureau en service n'est jamais calme au sens du §7.2 : un navigateur, le gestionnaire de fenêtres,
+un moniteur système prennent chacun quelques pour cent de la machine. Plutôt que de les fermer, on
+donne aux jobs des processeurs à eux.
+
+- **Le réglage.** `[calm] job_cpus = "1-3,5-7"` dans `settings.toml`, ou « Job processors » dans
+  l'écran Machine, qui montre les cœurs de la machine (« core 0: 0,4 · core 1: 1,5 … »). Vide, par
+  défaut : tous les processeurs, rien d'épinglé, comme avant.
+- **Des emplacements de cœurs entiers.** Les processeurs sont groupés par cœur physique
+  (`thread_siblings_list` dans /sys) ; un job de `t` threads prend `t` cœurs entiers, jumeaux compris,
+  pour qu'aucun job ne partage un cœur avec un autre. Le pool lance un job par emplacement : sur
+  `1-3,5-7`, trois jobs d'un thread côte à côte (`1,5`, `2,6`, `3,7`), ou un job de trois threads. Un
+  batch dont le temps compte (⏱) tourne ainsi aussi : chaque job seul sur ses cœurs, ce qui est
+  reproductible ; ses voisins ne partagent que le dernier cache, la mémoire et le turbo. Le réglage de
+  threads ne dépasse pas les cœurs des processeurs des jobs (quatre sur trois cœurs tourne à trois).
+- **L'épinglage.** lab fixe l'affinité de chaque job, préparation et dépendance avant `exec`
+  (`sched_setaffinity`) ; ses enfants en héritent. La fiche dit où il a tourné : `threads.cpus = "2,6"`.
+- **Le calme sur eux seuls.** Le CPU étranger se mesure sur les processeurs des jobs seulement : leur
+  temps occupé moins celui des jobs, en pour cent d'eux ; load1, qui compte toute la machine, n'est
+  pas regardé. Le verdict le dit : « foreign CPU on the job processors 1-3,5-7 mean … ».
+- **Le bureau ailleurs.** `lab/pin-desktop.sh 0,4` épingle sur `0,4` tout processus de l'utilisateur
+  encore permis sur tous les processeurs ; ce qui démarre ensuite en hérite, la fenêtre de lab
+  comprise, tandis que les jobs épinglés par lab gardent les leurs. `--undo 0,4` les remet, `--dry-run`
+  les liste. Rien de permanent ; à lancer quand aucun lancement d'un lab plus ancien, dont les jobs ne
+  sont pas épinglés, n'est en cours.
+
 ## 8. Le lanceur
 
 ### 8.1 Lancement
