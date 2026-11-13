@@ -442,7 +442,10 @@ met en file (ci-dessous).
   grille d'un lancement s'affiche dès son début ; au-dessus, ce que le lancement fait maintenant (les
   checkouts, une dépendance en cours, une préparation, l'attente du moniteur, les jobs) et chaque
   dépendance, en cache, en cours ou faite. Le journal de l'écran File suit le job qui tourne, une
-  dépendance ou une préparation comprise, pas les lignes du lancement.
+  dépendance ou une préparation comprise, pas les lignes du lancement. Au-dessus de la grille, au repos
+  comme pendant un lancement, la table des jobs dont le batch a besoin (R2) : une ligne par dépendance
+  et valeur voulue (`source creature`), une colonne par référence, chacune sa dernière fiche et si son
+  résultat est en cache ; un clic ouvre la fiche dans l'Historique.
 - **Choisir et relancer.** On choisit les cases une à une, ou « en échec », « jamais lancées »,
   « toutes », « aucune » ; un délai pour ce lancement (celui du batch par défaut) ; « Mettre la
   sélection en file » met le batch en file réduit à ces cases. Sans fenêtre, `--axis` réduit la grille

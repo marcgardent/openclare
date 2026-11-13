@@ -108,6 +108,7 @@ impl App {
             }
         });
         ui.label(RichText::new(&batch.job.description).color(MUTED));
+        self.dependency_table(ui, catalogue, batch, &cells, &runs);
         if let Some(grid) = &live {
             let remaining: Vec<Option<f64>> = grid
                 .cells
@@ -355,6 +356,109 @@ impl App {
         }
     }
 
+    /// The jobs the batch needs before its own (R2), one row per dependency
+    /// and value it wants, one column per reference: each one's last record
+    /// and whether its result is in the cache.
+    fn dependency_table(
+        &mut self,
+        ui: &mut egui::Ui,
+        catalogue: &crate::catalogue::Catalogue,
+        batch: &Batch,
+        cells: &[CellPlan],
+        runs: &[Run],
+    ) {
+        let rows = dependency_rows(catalogue, batch, cells);
+        if rows.is_empty() {
+            return;
+        }
+        let references: Vec<String> =
+            rows.iter().flat_map(|row| row.references.iter().cloned()).fold(Vec::new(), |mut kept, reference| {
+                if !kept.contains(&reference) {
+                    kept.push(reference);
+                }
+                kept
+            });
+        let jobs: usize = rows.iter().map(|row| row.references.len()).sum();
+        egui::CollapsingHeader::new(
+            RichText::new(format!("DEPENDENCIES: {jobs} jobs, made before the grid, once per key"))
+                .small()
+                .strong()
+                .color(MUTED),
+        )
+        .id_salt(("dependencies", &batch.job.name))
+        .default_open(true)
+        .show(ui, |ui| {
+            egui::ScrollArea::vertical().id_salt("dependencies").max_height(180.0).show(ui, |ui| {
+                egui::Grid::new("dependencies").striped(true).spacing([6.0, 2.0]).show(ui, |ui| {
+                    ui.label("");
+                    for reference in &references {
+                        ui.label(RichText::new(reference).small().strong().color(MUTED));
+                    }
+                    ui.end_row();
+                    for row in &rows {
+                        ui.label(RichText::new(&row.text).strong());
+                        for reference in &references {
+                            if !row.references.contains(reference) {
+                                ui.label("");
+                                continue;
+                            }
+                            let last = runs
+                                .iter()
+                                .filter(|run| {
+                                    run.job == row.name
+                                        && &run.checkout == reference
+                                        && row
+                                            .wanted
+                                            .iter()
+                                            .all(|(name, value)| run.parameters.get(name) == Some(value))
+                                })
+                                .max_by_key(|run| run.started);
+                            let (text, colour, hover) = self.dependency_shown(&row.name, last);
+                            let response = ui.selectable_label(false, RichText::new(text).monospace().color(colour));
+                            if response.on_hover_text(hover).clicked()
+                                && let Some(run) = last
+                            {
+                                self.run = Some(run.id.clone());
+                                self.tab = Tab::History;
+                            }
+                        }
+                        ui.end_row();
+                    }
+                });
+            });
+        });
+    }
+
+    /// A dependency's cell: its last record, and whether its result is in the cache.
+    fn dependency_shown(&self, name: &str, last: Option<&Run>) -> (String, egui::Color32, String) {
+        let Some(run) = last else {
+            return ("—".to_string(), MUTED, "never made: made at the launch".to_string());
+        };
+        let time = run.seconds.map(duration_text).unwrap_or_default();
+        let commit = run.git.as_ref().map_or(String::new(), |git| git.commit[..7.min(git.commit.len())].to_string());
+        let cached = run.status == Status::Ok
+            && run.cache.as_ref().is_some_and(|key| crate::batch::cache_folder(&self.places, name, key).is_dir());
+        let hover = format!(
+            "last run {} · {} · {time} · commit {commit}\nkey {}\n{}\nclick: open in History",
+            run.id,
+            run.status.text(),
+            run.cache.as_deref().unwrap_or("none"),
+            if cached {
+                "in the cache: not made again while the key is the same (same files at the commit, same tools)"
+            } else {
+                "not in the cache: made at the launch"
+            }
+        );
+        let (text, colour) = match &run.status {
+            Status::Ok if cached => (format!("cached {time}"), GREEN),
+            Status::Ok => (format!("ok {time}, not cached"), AMBER),
+            Status::TimedOut => ("timed out".to_string(), RED),
+            Status::Failed { .. } => ("failed".to_string(), RED),
+            other => (other.text(), AMBER),
+        };
+        (text, colour, hover)
+    }
+
     /// The state of one cell: the batch under way's, else its last record's.
     fn shown(&self, batch: &Batch, cell: &CellPlan, runs: &[Run], live: Option<&LiveGrid>) -> Shown {
         let estimate = cell_estimate(batch, &cell.values, runs);
@@ -396,6 +500,47 @@ impl App {
         }
         record_shown(last, hover, failed, never)
     }
+}
+
+/// One row of the dependencies' table: a dependency and the values it wants
+/// (the model of a source), and the references of the cells that need it.
+struct DependencyRow {
+    name: String,
+    wanted: Vec<(String, String)>,
+    text: String,
+    references: Vec<String>,
+}
+
+/// The dependencies' rows of a batch, in the order of `needs` then of the grid.
+fn dependency_rows(catalogue: &crate::catalogue::Catalogue, batch: &Batch, cells: &[CellPlan]) -> Vec<DependencyRow> {
+    let fallback = batch.job.checkout.initial();
+    let mut rows: Vec<DependencyRow> = Vec::new();
+    for name in &batch.needs {
+        let Some(dependency) = catalogue.dependency(name) else { continue };
+        let wanted_names = dependency.wanted();
+        for cell in cells {
+            let wanted: Vec<(String, String)> = wanted_names
+                .iter()
+                .filter_map(|wanted| cell.parameters.get(wanted).map(|value| (wanted.clone(), value.clone())))
+                .collect();
+            let reference = cell.reference.clone().unwrap_or_else(|| fallback.clone());
+            match rows.iter_mut().find(|row| &row.name == name && row.wanted == wanted) {
+                Some(row) => {
+                    if !row.references.contains(&reference) {
+                        row.references.push(reference);
+                    }
+                }
+                None => {
+                    let mut text = name.clone();
+                    for (_, value) in &wanted {
+                        text.push_str(&format!(" {value}"));
+                    }
+                    rows.push(DependencyRow { name: name.clone(), wanted, text, references: vec![reference] });
+                }
+            }
+        }
+    }
+    rows
 }
 
 /// A cell as its last record says.

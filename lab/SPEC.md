@@ -552,7 +552,10 @@ window lists the batches in the catalogue and their records in the history; R3 q
   shows its record and the end of its log under the grid. The grid of a launch shows from its start;
   above it, what the launch does now (the checkouts, making a dependency, a prepare, the wait for the
   monitor, the jobs) and each dependency, cached, under way or made. The Queue screen's log follows
-  the job that runs, a dependency or a prepare included, not the launch's lines.
+  the job that runs, a dependency or a prepare included, not the launch's lines. Above the grid, at
+  rest as during a launch, the table of the jobs the batch needs (R2): one row per dependency and value
+  it wants (`source creature`), one column per reference, each its last record and whether its result
+  is in the cache; a click opens the record in History.
 - **Selecting and running again.** Cells are selected one by one, or "failed", "never run", "all",
   "none"; a timeout for this launch (the batch's by default); "Queue the selection" puts the batch in
   the queue restricted to those cells. Without a window, `--axis` restricts the grid as in R1.
