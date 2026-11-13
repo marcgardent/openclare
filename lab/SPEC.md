@@ -697,6 +697,22 @@ few percent of the machine. Rather than close them, the jobs get cores of their 
   bar says it: "Desktop on 0,4 · 283 processes" (amber) while pinned, then "Desktop free · 283
   restored 21:05" (green). `[calm] pin_desktop = false` leaves the desktop alone.
   `lab/pin-desktop.sh` does the same by hand (`--undo`, `--dry-run`), for a launch of an older lab.
+- **What lab may not move, by sudo.** kwin (and Xwayland, powerdevil, the user's systemd) hold a
+  capability the kernel will not let a plain process change the processors of; the system's
+  services (snapd, multipassd and their VMs) are root's. lab asks `sudo -n` for them, never a
+  password: `taskset -apc <desktop> <pid>` for each process of the user it could not move, then
+  `systemctl set-property --runtime system.slice AllowedCPUs=<desktop>`; once nothing runs,
+  `taskset -apc <every processor> <pid>` and `AllowedCPUs=`. These four commands, and only them, go
+  in a whitelist of sudoers, written by hand once (`sudo visudo -f /etc/sudoers.d/openclare-lab`):
+
+  ```
+  <user> ALL=(root) NOPASSWD: /usr/bin/taskset -apc 0\,4 *, /usr/bin/taskset -apc 0-7 *, /usr/bin/systemctl set-property --runtime system.slice AllowedCPUs\=0\,4, /usr/bin/systemctl set-property --runtime system.slice AllowedCPUs\=
+  ```
+
+  for desktop processors `0,4` on a machine of 8; `taskset -p` takes a process and nothing else, it
+  never runs a command. Without the whitelist the commands fail at once and the top bar says what was
+  left ("· 1 left", kwin_wayland on hover): it stays on the job processors and weighs on the calm.
+  Nothing is permanent: a restart gives everything back.
 
 ## 8. The runner
 
@@ -758,7 +774,13 @@ averages 1/5/15 and RAM from /proc (Linux only; `sysinfo` would add nothing here
 `nvidia-smi --query-gpu=memory.used,memory.total,utilization.gpu --format=csv,noheader,nounits`
 (every 4 seconds; "n/a" when the command is missing or fails); and the CPU of each process. The
 processes of the run are those of its process group and their descendants (by parent pid, which
-also catches children that left the group); the **foreign CPU** is the rest. The last 10 minutes
+also catches children that left the group); the **foreign CPU** is the rest. Their CPU is counted
+whole: each process of ours counts its own time and that of its children reaped (`cutime`), against
+the sample before, a process born between two samples counting all its time; a run's first process,
+reaped by lab, hands its last time to lab's own `cutime`, counted in the sample where it ended. Before,
+only what was alive at both samples counted: what a job did as it started and ended (a
+`measure` after a `remesh`, a job ending) went to the foreign CPU, and with jobs side by side that was
+enough to make every start "not calm" (6 to 12 % in mean, peaks at 42 %, 2026-11-13). The last 10 minutes
 are kept in memory for the sparklines and the window of the indicator.
 
 The indicator, always visible in the top bar:

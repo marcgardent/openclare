@@ -47,7 +47,8 @@ wherever it ran. It runs on Linux (it reads /proc); `nvidia-smi`, if present, gi
   Every job runs on one CPU, pinned to a core of its own: every core but the first by default, kept for
   the desktop (`job_cpus` under `[calm]`, "Job processors" on the Machine screen); the calm is judged on
   those processors alone, and while something runs lab keeps the desktop on core 0, giving it every
-  processor back after; the top bar says which (SPEC.md §7.5).
+  processor back after; the top bar says which (SPEC.md §7.5). kwin and the system's services it
+  moves by `sudo -n`, given a whitelist of four commands in sudoers (§7.5).
 - **Batches**: the jobs of a batch, one line each, numbered (its axes' values, its state, its last run);
   each its state under way or its last record (`ok 41 s`, `failed`, `timed out`, `—`
   never run), its estimate on hover, its record and the end of its log once clicked. Cells are selected

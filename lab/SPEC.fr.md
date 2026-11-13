@@ -596,6 +596,23 @@ donne aux jobs des cœurs à eux (Marc, 2026-11-13).
   processes » (ambre) tant qu'il est épinglé, puis « Desktop free · 283 restored 21:05 » (vert).
   `[calm] pin_desktop = false` laisse le bureau tranquille. `lab/pin-desktop.sh` fait la même chose
   à la main (`--undo`, `--dry-run`), pour un lancement d'un lab plus ancien.
+- **Ce que lab ne peut pas déplacer, par sudo.** kwin (et Xwayland, powerdevil, le systemd de
+  l'utilisateur) tiennent une capacité qui interdit à un processus ordinaire de changer leurs
+  processeurs ; les services du système (snapd, multipassd et leurs VM) sont à root. lab les demande
+  à `sudo -n`, jamais un mot de passe : `taskset -apc <bureau> <pid>` pour chaque processus de
+  l'utilisateur qu'il n'a pas pu déplacer, puis `systemctl set-property --runtime system.slice
+  AllowedCPUs=<bureau>` ; quand plus rien ne tourne, `taskset -apc <tous les processeurs> <pid>` et
+  `AllowedCPUs=`. Ces quatre commandes, et elles seules, vont dans une liste blanche de sudoers,
+  écrite une fois à la main (`sudo visudo -f /etc/sudoers.d/openclare-lab`) :
+
+  ```
+  <utilisateur> ALL=(root) NOPASSWD: /usr/bin/taskset -apc 0\,4 *, /usr/bin/taskset -apc 0-7 *, /usr/bin/systemctl set-property --runtime system.slice AllowedCPUs\=0\,4, /usr/bin/systemctl set-property --runtime system.slice AllowedCPUs\=
+  ```
+
+  pour les processeurs du bureau `0,4` sur une machine de 8 ; `taskset -p` prend un processus et rien
+  d'autre, il ne lance jamais de commande. Sans la liste blanche, les commandes échouent aussitôt et
+  la barre du haut dit ce qui reste (« · 1 left », kwin_wayland au survol) : il reste sur les
+  processeurs des jobs et pèse sur le calme. Rien de permanent : un redémarrage rend tout.
 
 ## 8. Le lanceur
 
@@ -657,7 +674,14 @@ moyennes de charge 1/5/15 et mémoire dans /proc (Linux seulement ; `sysinfo` n'
 `nvidia-smi --query-gpu=memory.used,memory.total,utilization.gpu --format=csv,noheader,nounits` (toutes
 les 4 secondes ; « n/a » si la commande manque ou échoue) ; et le CPU de chaque processus. Les processus
 de l'exécution sont ceux de son groupe et leurs descendants (par pid parent, ce qui attrape aussi les
-enfants sortis du groupe) ; le **CPU étranger** est le reste. Les 10 dernières minutes restent en
+enfants sortis du groupe) ; le **CPU étranger** est le reste. Leur CPU se compte en entier : chaque
+processus à nous compte son temps et celui de ses enfants récoltés (`cutime`), contre la mesure
+d'avant, un processus né entre deux mesures comptant tout son temps ; le premier processus d'une
+exécution, récolté par lab, passe son dernier temps au `cutime` de lab, compté dans la mesure où il
+s'est fini. Avant, seul ce qui vivait aux deux mesures comptait : ce qu'un job faisait en commençant et
+en finissant (un `measure` après un `remesh`, un job qui se termine) partait au CPU étranger, et avec
+des jobs côte à côte cela suffisait à rendre chaque début « pas calme » (6 à 12 % en moyenne, des
+pointes à 42 %, le 2026-11-13). Les 10 dernières minutes restent en
 mémoire pour les courbes et la fenêtre de l'indicateur.
 
 L'indicateur, toujours visible dans la barre du haut :

@@ -500,16 +500,16 @@ fn run_batch(
     // The desktop off the job processors for the launch, every processor back after (SPEC.md, §7.5).
     let desktop = if settings.calm.pin_desktop && !options.cpus.is_empty() {
         let desktop = crate::desktop::cpus(&options.cpus);
-        let processes = crate::desktop::pin(&desktop);
-        eprintln!("lab: desktop on the processors {}: {processes} processes", crate::cpus::text(&desktop));
+        let moved = crate::desktop::pin(&desktop);
+        eprintln!("lab: desktop on the processors {}: {}", crate::cpus::text(&desktop), moved.text());
         Some(desktop)
     } else {
         None
     };
     let result = crate::batch::run(&mut context, catalogue, batch, &options);
     if let Some(desktop) = &desktop {
-        let processes = crate::desktop::free(desktop);
-        eprintln!("lab: desktop free: {processes} processes given every processor back");
+        let moved = crate::desktop::free(desktop);
+        eprintln!("lab: desktop free: every processor given back to {}", moved.text());
     }
     let summary = match result {
         Ok(summary) => summary,

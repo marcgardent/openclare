@@ -564,19 +564,27 @@ impl App {
         let desktop = self.lock().desktop.clone();
         let Some(desktop) = desktop else { return };
         let (text, colour, hover) = match &desktop {
-            crate::desktop::Desktop::Pinned { cpus, processes, since } => (
-                format!("Desktop on {cpus} · {processes} processes"),
+            crate::desktop::Desktop::Pinned { cpus, moved, since } => (
+                format!(
+                    "Desktop on {cpus} · {} processes{}{}",
+                    moved.processes + moved.by_sudo,
+                    if moved.services { " + services" } else { "" },
+                    if moved.left.is_empty() { String::new() } else { format!(" · {} left", moved.left.len()) }
+                ),
                 AMBER,
                 format!(
-                    "since {}: your processes are kept on the processors {cpus}, off the job processors; \
-                     lab gives them every processor back once nothing runs",
-                    since.format("%H:%M:%S")
+                    "since {}: {}. Your processes are kept on the processors {cpus}, off the job processors; \
+                     lab gives them every processor back once nothing runs. What lab may not move itself \
+                     (kwin, the system's services) it moves by sudo when the whitelist of SPEC.md §7.5 lets it; \
+                     what is left stays on the job processors and weighs on the calm.",
+                    since.format("%H:%M:%S"),
+                    moved.text()
                 ),
             ),
-            crate::desktop::Desktop::Freed { processes, at, why } => (
-                format!("Desktop free · {processes} restored {}", at.format("%H:%M")),
-                GREEN,
-                format!("{processes} processes given every processor back at {} ({why})", at.format("%H:%M:%S")),
+            crate::desktop::Desktop::Freed { moved, at, why } => (
+                format!("Desktop free · {} restored {}", moved.processes + moved.by_sudo, at.format("%H:%M")),
+                if moved.left.is_empty() { GREEN } else { AMBER },
+                format!("every processor given back at {} ({why}): {}", at.format("%H:%M:%S"), moved.text()),
             ),
         };
         egui::Frame::new()
