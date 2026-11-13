@@ -135,6 +135,9 @@ def main():
             low, _, high = part.partition("-")
             cpus.update(range(int(low), int(high or low) + 1))
         os.sched_setaffinity(0, cpus)
+        # The engine's threads no more than those processors (lab may allow more).
+        allowed = int(os.environ.get("OPENCLARE_THREADS", len(cpus)))
+        os.environ["OPENCLARE_THREADS"] = str(min(allowed, len(cpus)))
     started, clock = common.machine(), time.monotonic()
     started["processors_allowed"] = sorted(os.sched_getaffinity(0))
     out = {}

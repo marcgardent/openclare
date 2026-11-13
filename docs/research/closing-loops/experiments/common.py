@@ -199,7 +199,11 @@ def remesh(source_path, out, preset, quads, flags=(), environment=None, memory=M
     Returns (seconds, failure or None)."""
     command = [str(OPENCLARE), "remesh", str(source_path), str(out), "--preset", preset, "--quads", str(quads),
                *flags]
-    env = {key: value for key, value in os.environ.items() if not key.startswith("OPENCLARE_")}
+    # The experiment's own switches only: those inherited are dropped, but for
+    # OPENCLARE_THREADS, the threads lab allows the job (the engine takes the
+    # whole machine without it).
+    env = {key: value for key, value in os.environ.items()
+           if not key.startswith("OPENCLARE_") or key == "OPENCLARE_THREADS"}
     env.update(environment or {})
     clock = time.monotonic()
     try:

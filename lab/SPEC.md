@@ -414,9 +414,7 @@ ref = ["main", "12a6675"]
   table groups the ways), `pairs`, `combs`, `fox` (its relations pool every way), `forced-sound` (one
   family), `parity`, `gadget` (one random stream), `scores`, `figures`, `structure`,
   `against-remeshers`, `compare`, `exact-relaxation`. The batches of the papers read the export of
-  the male body in `scratch/`, outside their key: `skip_done = false`. The scripts of closing-loops
-  drop the `OPENCLARE_*` variables they inherit, `OPENCLARE_THREADS` included: the engine takes the
-  whole machine, so their batches run one job at a time (threads the setting, or 8).
+  the male body in `scratch/`, outside their key: `skip_done = false`.
 
 ### Dependencies (amendment R2)
 
@@ -517,10 +515,17 @@ command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {bu
    of a job run in a pool of six is a time in a pool of six: `cell.pool` says so. A batch whose timing
    matters has a pool of one, its sides of a comparison still interleaved (Q21).
 
+**Threads in the code, not in the pool** (Marc, 2026-11-13). A job is given the threads it may use
+and its code uses them: lab sets `OPENCLARE_THREADS`, `RAYON_NUM_THREADS`, `RUST_TEST_THREADS` and
+`CARGO_BUILD_JOBS` to them (§7.1), and every batch that runs the engine takes the thread setting
+(`threads` left out), one job at a time when its timing matters. The scripts that call the engine pass
+`OPENCLARE_THREADS` on (they dropped it until then, so the engine took the whole machine);
+`end_to_end.py --cpus` caps it to the processors given.
+
 **Times in the papers** (Marc, 2026-11-13). A paper cites the time of each unit (a way, a family, a
 model at a budget), from a job run alone (`cell.pool` 1) on a calm machine (`timing_valid`), with the
-hardware; and for a stage, the sum of those times, "2 h 38 of one core in all", which does not depend
-on how many jobs ran at once. Never the wall time of a parallel pool. The merged summaries give both:
+hardware and its threads (`threads.effective`); and for a stage, the sum of those times, which does not
+depend on how many jobs ran at once. Never the wall time of a parallel pool. The merged summaries give both:
 the units' own `seconds`, and `cells_seconds_sum` beside `wall_seconds` (the longest job).
 8. **The end**: a line per status (`72 jobs: 71 ok, 1 timed out`), the failed cells named with their
    logs; exit code 0 when every job is `Ok`, else 1. Stop (Ctrl-C without a window) ends the jobs

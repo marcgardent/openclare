@@ -48,7 +48,9 @@ def run(binary, source, quads, preset, options, out, memory=tmesh.common.MEMORY_
     exported to out/export), then `openclare measure`: (seconds, measure),
     the log in out/run.log."""
     out.mkdir(parents=True, exist_ok=True)
-    environment = {key: value for key, value in os.environ.items() if not key.startswith("OPENCLARE_")}
+    # The inherited switches dropped, but for OPENCLARE_THREADS: the threads lab allows the job.
+    environment = {key: value for key, value in os.environ.items()
+                   if not key.startswith("OPENCLARE_") or key == "OPENCLARE_THREADS"}
     environment.update({"OPENCLARE_EXPORT_TURNS": str((out / "export").resolve()), **options})
     command = [str(Path(binary).resolve()), "remesh", str(Path(source).resolve()), str(out / "mesh.obj"),
                "--preset", preset, "--quads", str(quads), *flags]

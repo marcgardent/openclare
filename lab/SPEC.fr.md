@@ -294,9 +294,7 @@ moteur, `timeout = "30m"`.
   (ses relations mettent toutes les voies ensemble), `forced-sound` (une famille), `parity`, `gadget`
   (un seul flux aléatoire), `scores`, `figures`, `structure`, `against-remeshers`, `compare`,
   `exact-relaxation`. Les batches des papiers lisent l'export du corps masculin dans `scratch/`, hors
-  de leur clé : `skip_done = false`. Les scripts de closing-loops retirent les variables `OPENCLARE_*`
-  dont ils héritent, `OPENCLARE_THREADS` compris : le moteur prend toute la machine, si bien que leurs
-  batches font un job à la fois (threads le réglage, ou 8).
+  de leur clé : `skip_done = false`.
 
 ### Dépendances (amendement R2)
 
@@ -401,10 +399,17 @@ command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {bu
    un temps dans un pool de six : `cell.pool` le dit. Un batch dont le temps compte a un pool de un,
    les deux côtés d'une comparaison toujours entrelacés (Q21).
 
+**Les threads dans le code, pas dans le pool** (Marc, 2026-11-13). Un job reçoit les threads qu'il
+peut utiliser et son code s'en sert : lab pose `OPENCLARE_THREADS`, `RAYON_NUM_THREADS`,
+`RUST_TEST_THREADS` et `CARGO_BUILD_JOBS` à ce nombre (§7.1), et tout batch qui lance le moteur prend
+le réglage de threads (`threads` absent), un job à la fois quand son temps compte. Les scripts qui
+appellent le moteur transmettent `OPENCLARE_THREADS` (ils le retiraient jusque-là, si bien que le
+moteur prenait toute la machine) ; `end_to_end.py --cpus` le borne aux processeurs donnés.
+
 **Les temps dans les papiers** (Marc, 2026-11-13). Un papier cite le temps de chaque unité (une voie,
 une famille, un modèle à un budget), d'un job lancé seul (`cell.pool` 1) sur une machine calme
-(`timing_valid`), avec le matériel ; et pour une étape, la somme de ces temps, « 2 h 38 d'un cœur en
-tout », qui ne dépend pas du nombre de jobs lancés à la fois. Jamais le temps mural d'un pool
+(`timing_valid`), avec le matériel et ses threads (`threads.effective`) ; et pour une étape, la somme
+de ces temps, qui ne dépend pas du nombre de jobs lancés à la fois. Jamais le temps mural d'un pool
 parallèle. Les résumés fusionnés donnent les deux : les `seconds` propres des unités, et
 `cells_seconds_sum` à côté de `wall_seconds` (le plus long job).
 8. **La fin** : une ligne par statut (`72 jobs: 71 ok, 1 timed out`), les cases en échec nommées avec

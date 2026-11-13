@@ -77,13 +77,11 @@ memory_limit_gb = 32
 
 [[batch]]
 name = "quick-bench"
-description = "One run of the add-on per model next to what the bench stored (bench/quick.py), one job per model at one engine thread; its comparison in the job's log. The prepare builds the engine and the add-on and exports the sources."
+description = "One run of the add-on per model next to what the bench stored (bench/quick.py), one job per model, the engine on the thread setting; its comparison in the job's log. The prepare builds the engine and the add-on and exports the sources."
 category = "quick-bench"
 prepare = "cargo build --release && make addon && python3 bench/run.py --prepare --models creature,blob,suzanne,spot"
 command = "python3 bench/quick.py --models {model} --target {target} --jobs 1 --out {out}"
 parameters = { target = "3000" }
-environment = { OPENCLARE_THREADS = "1", RAYON_NUM_THREADS = "1" }
-threads = 1
 memory_limit_gb = 32
 axes = { model = ["creature", "blob", "suzanne", "spot"] }
 
@@ -190,14 +188,13 @@ axes = { index = [0, 1, 2, 3, 4, 5, 6, 7] }
 [[job]]
 name = "export-male-body"
 summary = "docs/research/turns-of-a-t-mesh/experiments/results/census.json#export_record"
-description = "Stage 1 of NIGHT.md: the export both papers read, the male body on the engine of v0.7.0 (about 2 minutes, the whole machine). The prepare refuses a checkout whose engine is not that of {frozen}: run it on v0.7.0."
+description = "Stage 1 of NIGHT.md: the export both papers read, the male body on the engine of v0.7.0 (about 2 minutes, the engine on the thread setting). The prepare refuses a checkout whose engine is not that of {frozen}: run it on v0.7.0."
 category = "experiment"
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/export.py --openclare target/release/openclare --commit {frozen} --engine {variant} --source scratch/torso/source.obj"
 prepare = "git diff --quiet {frozen} HEAD -- crates Cargo.toml Cargo.lock && cargo build --release"
 checkout = "ask"
 parameters = { frozen = "e13fadb", variant = "as-is" }
 environment = { HIGHS_THREADS = "1" }
-threads = 8
 memory_limit_gb = 24
 timing_matters = true
 outputs = ["scratch/data-package/turns-of-a-t-mesh/male-body/record.json"]
@@ -400,7 +397,7 @@ family = [{ value = "0-held", way = 0 }, { value = "1-held", way = 1 }, { value 
 [[batch]]
 name = "forced-valid-remesh"
 summary = "docs/research/closing-loops/experiments/exact/results/remesh-valid.json"
-description = "After forced-valid (#211): the engine meshes the male body way by way with the whole lengths P_valid found within the cap and the window (remesh.py), one job per way and variant (engine, whole); valid says whether they are a sound quad mesh, which P_valid only bounds. The whole machine, a few minutes a job. Each job first writes the lengths forced-valid left. The prepare refuses a checkout whose engine is not that of {frozen}."
+description = "After forced-valid (#211): the engine meshes the male body way by way with the whole lengths P_valid found within the cap and the window (remesh.py), one job per way and variant (engine, whole); valid says whether they are a sound quad mesh, which P_valid only bounds. The engine on the thread setting, a few minutes a job. Each job first writes the lengths forced-valid left. The prepare refuses a checkout whose engine is not that of {frozen}."
 category = "experiment"
 prepare = "git diff --quiet {frozen} HEAD -- crates Cargo.toml Cargo.lock && cargo build --release"
 command = "D=scratch/data-package/turns-of-a-t-mesh; L=$D/forced-valid/lengths/$(basename $(ls -d $D/male-body/export/call-*/ | head -1)); mkdir -p $L && for f in $D/forced-valid/way-*-held-size.txt; do k=$(basename $f | cut -d- -f2); tail -n +2 $f | tr '\\n' ' ' > $L/way-$k-integer.txt; done && python3 docs/research/closing-loops/experiments/exact/remesh.py --openclare target/release/openclare --commit {frozen} --engine as-is --source scratch/torso/source.obj --variants {variant}-{way} --most-closable $D/forced-valid/lengths --out {out} --summary {out}/summary.json"
@@ -408,7 +405,6 @@ report = "python3 docs/research/closing-loops/experiments/collect.py {records} -
 checkout = "ask"
 parameters = { frozen = "e13fadb" }
 environment = { HIGHS_THREADS = "1" }
-threads = 8
 memory_limit_gb = 24
 timeout = "1h"
 timing_matters = false
@@ -525,7 +521,7 @@ paper = "B"
 [[batch]]
 name = "twelve-models"
 summary = "docs/research/closing-loops/experiments/results/twelve_models.json"
-description = "Twelve models at the 21 budgets of common.BUDGETS (2900 to 3100 by 10), one job per run (sec:experiments); the engine on the whole machine (the scripts drop OPENCLARE_THREADS), so one job at a time. The report copies the runs back and lets twelve_models.py read them into its summary, nothing remeshed."
+description = "Twelve models at the 21 budgets of common.BUDGETS (2900 to 3100 by 10), one job per run (sec:experiments); the engine on the engine on the thread setting, one job at a time. The report copies the runs back and lets twelve_models.py read them into its summary, nothing remeshed."
 category = "experiment"
 prepare = "cargo build --release && make addon && python3 bench/run.py --prepare --models creature,blob,suzanne,spot,pig,ogre,bob,jerry,blub,rock,cage,part"
 command = "python3 docs/research/closing-loops/experiments/twelve_models.py --openclare target/release/openclare --commit {commit} --models {model} --budgets {budget} --jobs 1 --out {out} --summary {out}/summary.json"
@@ -541,7 +537,7 @@ budget = [2900, 2910, 2920, 2930, 2940, 2950, 2960, 2970, 2980, 2990, 3000, 3010
 [[batch]]
 name = "ablation"
 summary = "docs/research/closing-loops/experiments/results/ablation.json"
-description = "Table tab:dev as an ablation, 11 lines × 12 models × 21 budgets, one job per run (3 to 5 s each); one at a time, the engine on the whole machine. The report copies the runs back, then ablation.py reads them, compares each line with the one before and checks the engine line against twelve-models' meshes (run twelve-models first)."
+description = "Table tab:dev as an ablation, 11 lines × 12 models × 21 budgets, one job per run (3 to 5 s each); one at a time, the engine on the thread setting. The report copies the runs back, then ablation.py reads them, compares each line with the one before and checks the engine line against twelve-models' meshes (run twelve-models first)."
 category = "experiment"
 prepare = "cargo build --release && make addon && python3 bench/run.py --prepare --models creature,blob,suzanne,spot,pig,ogre,bob,jerry,blub,rock,cage,part"
 command = "python3 docs/research/closing-loops/experiments/ablation.py --openclare target/release/openclare --commit {commit} --lines {line} --models {model} --budgets {budget} --jobs 1 --out {out} --summary {out}/summary.json"
@@ -558,7 +554,7 @@ budget = [2900, 2910, 2920, 2930, 2940, 2950, 2960, 2970, 2980, 2990, 3000, 3010
 [[batch]]
 name = "male-body"
 summary = "docs/research/closing-loops/experiments/results/male_body.json"
-description = "The male body at 10,590 quads, one job per run: with closing, without it, and with the lean bound 0.05 alone; the whole machine each. The report copies them back, measures the hand-made mesh and writes the summary."
+description = "The male body at 10,590 quads, one job per run: with closing, without it, and with the lean bound 0.05 alone; the engine on the thread setting. The report copies them back, measures the hand-made mesh and writes the summary."
 category = "experiment"
 prepare = "cargo build --release"
 command = "python3 docs/research/closing-loops/experiments/male_body.py --openclare target/release/openclare --commit {commit} --runs {run} --out {out} --summary {out}/summary.json"
@@ -674,7 +670,7 @@ tags = ["paper-A-exact"]
 [[batch]]
 name = "exact-remesh"
 summary = "docs/research/closing-loops/experiments/exact/results/remesh.json"
-description = "Stage 3 of exact/NIGHT.md: Table tab:rounding, the engine's meshes, one job per variant (59 to 215 s each, the whole machine, one at a time); whole-<k> ends at once when most-closable found no whole lengths for way k. The prepare refuses a checkout whose engine is not that of {frozen}. The report copies the runs back and writes the summary."
+description = "Stage 3 of exact/NIGHT.md: Table tab:rounding, the engine's meshes, one job per variant (59 to 215 s each, the engine on the thread setting, one at a time); whole-<k> ends at once when most-closable found no whole lengths for way k. The prepare refuses a checkout whose engine is not that of {frozen}. The report copies the runs back and writes the summary."
 category = "experiment"
 prepare = "git diff --quiet {frozen} HEAD -- crates Cargo.toml Cargo.lock && cargo build --release"
 command = "python3 docs/research/closing-loops/experiments/exact/remesh.py --openclare target/release/openclare --commit {frozen} --engine as-is --source scratch/torso/source.obj --variants {variant} --out {out} --summary {out}/summary.json"
@@ -682,7 +678,6 @@ report = "python3 docs/research/closing-loops/experiments/collect.py {records} -
 checkout = "ask"
 parameters = { frozen = "e13fadb" }
 environment = { HIGHS_THREADS = "1" }
-threads = 8
 memory_limit_gb = 24
 timeout = "1h"
 timing_matters = true
@@ -698,14 +693,13 @@ variant = ["engine", "projection-clamped", "active-set-floor-0", "active-set-flo
 [[batch]]
 name = "end-to-end"
 summary = "docs/research/closing-loops/experiments/exact/results/end_to_end.json"
-description = "Stage 4 of exact/NIGHT.md: the slow quality mode, deterministic variants, one job per variant, model and budget (6 to 36 s each); the whole machine, one at a time. The male body is end-to-end-male-body, whose report writes the summary of all: run this one first, its report copies its runs back."
+description = "Stage 4 of exact/NIGHT.md: the slow quality mode, deterministic variants, one job per variant, model and budget (6 to 36 s each); the engine on the thread setting, one at a time. The male body is end-to-end-male-body, whose report writes the summary of all: run this one first, its report copies its runs back."
 category = "experiment"
 prepare = "git diff --quiet {frozen} HEAD -- crates Cargo.toml Cargo.lock && cargo build --release && make addon && python3 bench/run.py --prepare --models creature,blob,suzanne,spot,pig,ogre,bob,jerry,blub,rock,cage,part"
 command = "python3 docs/research/closing-loops/experiments/exact/end_to_end.py --openclare target/release/openclare --commit {frozen} --variants {variant} --models {model} --budgets {budget} --jobs 1 --out {out} --summary {out}/summary.json"
 report = "python3 docs/research/closing-loops/experiments/collect.py {records} --into scratch/data-package/closing-loops/end_to_end"
 checkout = "ask"
 parameters = { frozen = "e13fadb" }
-threads = 8
 memory_limit_gb = 24
 timing_matters = true
 paper = "A"
@@ -719,14 +713,14 @@ budget = [2900, 2910, 2920, 2930, 2940, 2950, 2960, 2970, 2980, 2990, 3000, 3010
 [[batch]]
 name = "end-to-end-time-5"
 summary = "docs/research/closing-loops/experiments/exact/results/end_to_end-time-5.json"
-description = "Stage 4 of exact/NIGHT.md: the variant limited to 5 s, on processors 0 to 3, one job per model and budget, one at a time (threads 8 keeps the pool at one job: two would share the four processors). Its male body is in end-to-end-male-body. The report copies its runs back."
+description = "Stage 4 of exact/NIGHT.md: the variant limited to 5 s, on processors 0 to 3, one job per model and budget, one at a time, the engine on those four. Its male body is in end-to-end-male-body. The report copies its runs back."
 category = "experiment"
 prepare = "git diff --quiet {frozen} HEAD -- crates Cargo.toml Cargo.lock && cargo build --release && make addon && python3 bench/run.py --prepare --models creature,blob,suzanne,spot,pig,ogre,bob,jerry,blub,rock,cage,part"
 command = "python3 docs/research/closing-loops/experiments/exact/end_to_end.py --openclare target/release/openclare --commit {frozen} --variants slow-time-5 --models {model} --budgets {budget} --jobs 1 --cpus 0-3 --out {out} --summary {out}/summary.json"
 report = "python3 docs/research/closing-loops/experiments/collect.py {records} --into scratch/data-package/closing-loops/end_to_end"
 checkout = "ask"
 parameters = { frozen = "e13fadb" }
-threads = 8
+threads = 4
 memory_limit_gb = 24
 timing_matters = true
 paper = "A"
@@ -746,7 +740,7 @@ command = "python3 docs/research/closing-loops/experiments/exact/end_to_end.py -
 report = "python3 docs/research/closing-loops/experiments/collect.py {records} --into scratch/data-package/closing-loops/end_to_end && python3 docs/research/closing-loops/experiments/exact/end_to_end.py --openclare target/release/openclare --commit {frozen} --variants slow-time-300 --jobs 1 --cpus 0-3 --summary {out}/end_to_end-time-300.json"
 checkout = "ask"
 parameters = { frozen = "e13fadb" }
-threads = 8
+threads = 4
 memory_limit_gb = 24
 timeout = "1h"
 timing_matters = true
@@ -766,7 +760,6 @@ command = "python3 docs/research/closing-loops/experiments/exact/end_to_end.py -
 report = "python3 docs/research/closing-loops/experiments/collect.py {records} --into scratch/data-package/closing-loops/end_to_end && python3 docs/research/closing-loops/experiments/exact/end_to_end.py --openclare target/release/openclare --commit {frozen} --variants draws-0,draws-3,engine,slow-draws-0 --male-body --jobs 1 --summary {out}/end_to_end.json && python3 docs/research/closing-loops/experiments/exact/end_to_end.py --openclare target/release/openclare --commit {frozen} --variants slow-time-5 --male-body --jobs 1 --cpus 0-3 --summary {out}/end_to_end-time-5.json"
 checkout = "ask"
 parameters = { frozen = "e13fadb", cpus = "" }
-threads = 8
 memory_limit_gb = 24
 timeout = "2h"
 timing_matters = true
@@ -801,14 +794,13 @@ timeout = "10m"
 
 [[batch]]
 name = "three-budgets"
-description = "The twelve models at 2970, 3000 and 3030 quads, one job each: the remesh and its measure (measure's metrics in {out}/measure.json, the mesh beside it for the valences), at one engine thread. The references to compare are the axis ref: `lab run three-budgets --axis ref=main,<branch>`, run side by side. The engine of each commit and the sources are dependencies, made once and shared."
+description = "The twelve models at 2970, 3000 and 3030 quads, one job each: the remesh and its measure (measure's metrics in {out}/measure.json, the mesh beside it for the valences), the engine on the thread setting. The references to compare are the axis ref: `lab run three-budgets --axis ref=main,<branch>`, run side by side. The engine of each commit and the sources are dependencies, made once and shared."
 category = "quick-bench"
 needs = ["engine", "source"]
 command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {budget} && {engine} measure {source} {out}/mesh.obj --target {budget} --json > {out}/measure.json"
 report = "python3 bench/before_after.py {records} --side ref --by budget --out {out}"
 parameters = { preset = "organic" }
 environment = { HIGHS_THREADS = "1" }
-threads = 1
 memory_limit_gb = 32
 timing_matters = false
 
@@ -834,14 +826,13 @@ axes = { ref = ["main", "b42bcd6"] }
 
 [[batch]]
 name = "pole-pairs-115-remesh"
-description = "Ticket #115 before and after: the twelve models of bench/budgets.py at 2970, 3000 and 3030 quads, on main and on 12a6675 (the head of claude/pole-pairs-115), interleaved; one job is the remesh and its measure, at one engine thread. The engine of each commit and the sources are dependencies, made once and shared."
+description = "Ticket #115 before and after: the twelve models of bench/budgets.py at 2970, 3000 and 3030 quads, on main and on 12a6675 (the head of claude/pole-pairs-115), interleaved; one job is the remesh and its measure, the engine on the thread setting. The engine of each commit and the sources are dependencies, made once and shared."
 category = "quick-bench"
 needs = ["engine", "source"]
 command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {budget} && {engine} measure {source} {out}/mesh.obj --target {budget} --json > {out}/measure.json"
 report = "python3 bench/before_after.py {records} --side ref --by budget --out {out}"
 parameters = { preset = "organic" }
 environment = { HIGHS_THREADS = "1" }
-threads = 1
 memory_limit_gb = 32
 timeout = "30m"
 timing_matters = true
@@ -854,7 +845,7 @@ ref = ["main", "12a6675"]
 
 [[batch]]
 name = "pole-pairs-115-tmesh"
-description = "Ticket #115, the T-mesh (bench/pole_pairs.py, part tmesh): `openclare tmesh --json` of the twelve models at 1000, 3000 and 8000 quads, the pole pairs joined and with --no-pairs (which only 12a6675, the head of claude/pole-pairs-115, has), one job each at one engine thread: patches, thin patches, short arcs, T-junctions in {out}/tmesh.json."
+description = "Ticket #115, the T-mesh (bench/pole_pairs.py, part tmesh): `openclare tmesh --json` of the twelve models at 1000, 3000 and 8000 quads, the pole pairs joined and with --no-pairs (which only 12a6675, the head of claude/pole-pairs-115, has), one job each the engine on the thread setting: patches, thin patches, short arcs, T-junctions in {out}/tmesh.json."
 category = "quick-bench"
 needs = ["engine", "source"]
 command = "{engine} tmesh {source} --quads {budget} --simplify 2 --json {crease} {pairs_flag} > {out}/tmesh.json"
@@ -862,7 +853,6 @@ report = "python3 bench/before_after.py {records} --side pairs --by budget --fil
 checkout = "12a6675"
 parameters = { crease = "", pairs_flag = "" }
 environment = { HIGHS_THREADS = "1" }
-threads = 1
 memory_limit_gb = 32
 timeout = "30m"
 timing_matters = true
