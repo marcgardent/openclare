@@ -412,7 +412,9 @@ met en file (ci-dessous).
   le même commit, les mêmes versions d'outils et les mêmes clés de dépendances ne retourne pas : pas
   de nouvelle fiche, la ligne dit `done before` avec l'identifiant de cette fiche, et la grille
   continue de la montrer. Une fiche dont le temps ne compte pas est faite tout de même : son résultat
-  est là. « Again » (`--again` sans fenêtre) les relance quand même.
+  est là. « Again » (`--again` sans fenêtre) les relance quand même. Un batch dont les jobs lisent des
+  fichiers que leur commande, leur commit et leurs dépendances ne nomment pas (l'export du corps
+  masculin dans `scratch/`) dit `skip_done = false` : ses jobs tournent toujours.
 - **Une estimation par job** : la médiane des temps des fiches `Ok` du même batch à la même clé de
   commande et au même commit, sinon à la même clé de commande, sinon aux mêmes valeurs des axes.
   `lab run` la donne sur la ligne d'un job qui commence (`≈ 41 s`), et au début le total du lancement
@@ -440,7 +442,9 @@ met en file (ci-dessous).
   fichiers (`null` pour une case jamais lancée). Puis il lance le rapport dans le checkout de ce
   dossier : le `checkout` du batch, ou `--ref <référence ou dossier>` ; son `{out}` est ce même dossier,
   sa sortie dans `report.log`, que `lab report` affiche. Un rapport qui dure plus de 10 minutes est
-  arrêté. Pas de fiche : un rapport se refait à volonté à partir des fiches.
+  arrêté. Pas de fiche : un rapport se refait à volonté à partir des fiches. Un lancement d'un batch
+  qui a un rapport finit par lui, sans fenêtre comme dans la fenêtre (son tableau dans le journal du
+  lancement) : une nuit de séquence laisse ses tableaux et ses résumés fusionnés prêts.
 - L'écran Batches a un bouton **Report** à côté de la grille d'un batch qui en a un ; le tableau
   s'affiche sous la grille quand il est fait.
 - Un seul script sert aux comparaisons, `bench/before_after.py` : l'axe comparé (`--side`, `ref` par

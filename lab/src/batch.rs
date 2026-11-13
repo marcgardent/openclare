@@ -481,9 +481,11 @@ pub fn run(context: &mut Context, catalogue: &Catalogue, batch: &Batch, options:
                     && run.directory == job.directory
             };
             let same_commit = |run: &&Run| run.git.as_ref().is_some_and(|git| git.commit == place.git.commit);
-            plan.done = history
-                .iter()
-                .rev()
+            plan.done = batch
+                .skip_done
+                .then(|| history.iter().rev())
+                .into_iter()
+                .flatten()
                 .filter(same_key)
                 .filter(same_commit)
                 .find(|run| {
@@ -1328,6 +1330,27 @@ mod tests {
 
     fn places_named(name: &str) -> Places {
         places(name)
+    }
+
+    /// A batch that says `skip_done = false` runs its jobs done again.
+    #[test]
+    fn a_batch_without_skip_runs_its_jobs_again() {
+        let places = places("no-skip");
+        let text = r#"
+            [[batch]]
+            name = "reads-scratch"
+            category = "build"
+            command = "echo {model} > {out}/said.txt"
+            skip_done = false
+            threads = 1
+            [batch.axes]
+            model = ["a", "b"]
+            "#;
+        let (first, _) = launch(&places, text, Options::default());
+        assert_eq!(first.counts(), "2 jobs: 2 ok");
+        let (second, _) = launch(&places, text, Options::default());
+        assert_eq!(second.counts(), "2 jobs: 2 ok", "run again, not skipped");
+        assert_eq!(History::read(&places.runs()).unwrap().runs.len(), 4);
     }
 
     #[test]

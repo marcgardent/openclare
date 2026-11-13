@@ -825,6 +825,18 @@ impl Runner {
                 (Status::Failed { code: None, signal: None }, format!("{name}: {error}"))
             }
         };
+        // A launch ends with its batch's report, its table in the launch's log (R4).
+        if batch.report.is_some() && stop.is_none() {
+            match crate::report::make(&self.places, &self.mirror, &batch, None, None, queue.threads) {
+                Ok(made) => {
+                    log_line(&mut log, &format!("report in {}:", made.folder.display()));
+                    for line in crate::report::table(&made).lines() {
+                        log_line(&mut log, line);
+                    }
+                }
+                Err(error) => log_line(&mut log, &format!("report: {error}")),
+            }
+        }
         let launch = result.as_ref().map(|summary| summary.launch.clone()).unwrap_or_default();
         if let Some(grid) = locked(&shared).grid.as_mut() {
             grid.ended = true;

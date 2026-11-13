@@ -508,6 +508,16 @@ fn run_batch(
     for cell in &summary.not_run {
         eprintln!("lab:   not run {cell}");
     }
+    // A launch ends with its batch's report, on the last record of every cell (R4).
+    if batch.report.is_some() && !INTERRUPTED.load(Ordering::SeqCst) {
+        match crate::report::make(places, &mirror, batch, None, None, threads) {
+            Ok(made) => {
+                println!("{}", crate::report::table(&made));
+                eprintln!("lab: the report in {}", made.folder.display());
+            }
+            Err(error) => eprintln!("lab: report: {error}"),
+        }
+    }
     if arguments.push || settings.push == Push::Auto {
         match crate::machines::push(places, &mirror, &settings.machine) {
             Ok(said) => eprintln!("lab: {said}"),

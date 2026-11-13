@@ -129,6 +129,9 @@ pub struct Batch {
     pub needs: Vec<String>,
     /// The command that makes its table from its records (R4).
     pub report: Option<String>,
+    /// A job already done is skipped (R3); false for a batch whose jobs read
+    /// files that their command, commit and dependencies do not name.
+    pub skip_done: bool,
 }
 
 /// A computation made once per key and shared, a `[[dependency]]` table
@@ -552,6 +555,11 @@ impl Batch {
             Some(_) => return Err(wrong("axes is a table, an axis and its values".to_string())),
         };
         let needs = strings(&mut table, "needs").map_err(wrong)?.unwrap_or_default();
+        let skip_done = match table.remove("skip_done") {
+            None => true,
+            Some(toml::Value::Boolean(skip)) => skip,
+            Some(_) => return Err(wrong("skip_done: true or false".to_string())),
+        };
         let report = match table.remove("report") {
             None => None,
             Some(toml::Value::String(command)) => Some(command),
@@ -560,7 +568,7 @@ impl Batch {
         let mut job: Job =
             toml::Value::Table(table).try_into().map_err(|error: toml::de::Error| wrong(error.to_string()))?;
         job.timeout.get_or_insert(Timeout { seconds: BATCH_TIMEOUT_SECONDS });
-        Ok(Batch { job, axes, needs, report })
+        Ok(Batch { job, axes, needs, report, skip_done })
     }
 
     /// Every placeholder a cell of the batch has: the built-in ones, `{out}`,

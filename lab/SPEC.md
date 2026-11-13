@@ -527,7 +527,8 @@ window lists the batches in the catalogue and their records in the history; R3 q
   commit, tools' versions and dependencies' keys is not run again: no new record, the line says
   `done before` with that record's id, and the grid keeps showing it. A record whose time does not
   count is done all the same: its result is there. "Again" (`--again` without a window) runs them
-  anyway.
+  anyway. A batch whose jobs read files that their command, commit and dependencies do not name (the
+  export of the male body in `scratch/`) says `skip_done = false`: its jobs always run.
 - **An estimate per job**: the median time of the `Ok` records of the same batch with the same
   command key and commit, else the same command key, else the same values of the axes. `lab run`
   gives it on the line of a job that starts (`≈ 41 s`), and at the start the launch's total divided by
@@ -554,6 +555,8 @@ window lists the batches in the catalogue and their records in the history; R3 q
   the report in that folder's checkout: the batch's `checkout`, or `--ref <reference or folder>`; its
   `{out}` is the same folder, its output in `report.log` there, and `lab report` prints it. A report
   that runs more than 10 minutes is ended. No record: a report is made again from the records at will.
+  A launch of a batch that has a report ends with it, without a window as in the window (its table in
+  the launch's log): a night of a sequence leaves its tables and its merged summaries ready.
 - The Batches screen has a **Report** button beside the grid of a batch that has one; the table
   shows under the grid when it is done.
 - One script serves the comparisons, `bench/before_after.py`: the axis compared (`--side`, `ref` by
