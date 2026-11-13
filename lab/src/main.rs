@@ -2,6 +2,7 @@
 //!
 //!     lab [options]                      the window
 //!     lab [options] run <job> [--ref <reference>] [--force] [--threads <n>] [--push]
+//!     lab [options] run <batch> [--axis <name>=<value>,…]… [--timeout <duration>] [--ref <reference>] [--force] [--threads <n>] [--push]
 //!     lab [options] fetch
 //!     lab [options] push
 //!     lab [options] status
@@ -25,10 +26,15 @@
 //! the machine is not calm when the `wait` calm setting makes it wait, its
 //! time then not counting; `--push` pushes the
 //! live memory to this machine's branch after the run, whatever the setting.
+//! `run` on a batch (§6b) runs its grid, one line per job that starts and
+//! ends; `--axis model=ogre,pig` keeps those values of an axis (any reference
+//! for `ref`), `--timeout 20s` replaces the timeout of each of its jobs; it
+//! exits 0 when every job is ok.
 //! `fetch` fetches the mirror, creating it if need be. `push` fetches, then
 //! pushes the live memory. `status` says where things stand.
 
 mod app;
+mod batch;
 mod catalogue;
 mod files;
 mod headless;
@@ -42,12 +48,13 @@ mod runner;
 mod settings;
 mod state;
 mod store;
+mod tools;
 
 use std::path::PathBuf;
 use std::process::ExitCode;
 
 const USAGE: &str = "usage: lab [--data <folder>] [--catalogue <file>] [--tab <name>] [--queue <job>]... [--start] [--run <id>] [--screenshot <file.ppm> [--after <seconds>]]
-       lab [--data <folder>] [--catalogue <file>] run <job> [--ref <reference>] [--force] [--threads <n>] [--push]
+       lab [--data <folder>] [--catalogue <file>] run <job or batch> [--ref <reference>] [--force] [--threads <n>] [--push] [--timeout <90s|30m|2h>] [--axis <name>=<value>,...]...
        lab [--data <folder>] fetch
        lab [--data <folder>] push
        lab [--data <folder>] status";
@@ -79,6 +86,8 @@ fn main() -> ExitCode {
                         force: false,
                         threads: None,
                         push: false,
+                        only: Vec::new(),
+                        timeout: None,
                     }))
                 }
                 None => return usage(),
@@ -93,6 +102,19 @@ fn main() -> ExitCode {
                 ("--threads", Some(count), Some(Command::Run(run))) if count.parse::<u32>().is_ok_and(|n| n > 0) => {
                     run.threads = count.parse().ok()
                 }
+                ("--timeout", Some(text), Some(Command::Run(run))) => match catalogue::Timeout::parse(&text) {
+                    Ok(timeout) => run.timeout = Some(timeout),
+                    Err(error) => {
+                        eprintln!("lab: {error}");
+                        return usage();
+                    }
+                },
+                ("--axis", Some(text), Some(Command::Run(run))) => match text.split_once('=') {
+                    Some((name, values)) if !values.is_empty() => {
+                        run.only.push((name.to_string(), values.split(',').map(str::to_string).collect()))
+                    }
+                    _ => return usage(),
+                },
                 ("--tab", Some(name), None) if app::Tab::named(&name).is_some() => opening.tab = app::Tab::named(&name),
                 ("--queue", Some(name), None) => opening.queue.push(name),
                 ("--run", Some(id), None) => opening.run = Some(id),

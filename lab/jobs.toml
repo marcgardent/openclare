@@ -15,6 +15,18 @@
 # prepare of a job runs once per checkout (SPEC.md, section 7.3).
 # memory_limit_gb: the cap of `ulimit -v`, per process.
 # timing_matters: the job waits for a calm machine; its time may go into a paper.
+# timeout: the job is ended past it ("90s", "30m", "2h"); none for a [[job]]
+# unless it sets one.
+#
+# [[batch]] (SPEC.md, section 6b): a grid of jobs, one computation each, timed
+# and recorded by lab one by one. Every field of a [[job]], plus [batch.axes]:
+# each axis a placeholder with its values, the last axis varying fastest; a
+# value may be a table, { value = "cage", preset = "hard-surface" }, whose
+# other keys override the batch's parameters for that cell. The axis `ref` is
+# the reference each cell runs on. {out} is the job's own empty folder, every
+# file in it recorded. The prepare runs once per checkout, before any job,
+# with the whole thread setting. The jobs run `setting / threads` at a time;
+# timeout 30 minutes when the batch sets none. Run with `lab run <batch>`.
 # summary: the JSON that records a run of the job in the repository (`#key` for a
 # record nested in it); lab reads it at every opening (SPEC.md, section 13).
 #
@@ -636,6 +648,25 @@ environment = { OPENCLARE_THREADS = "1", RAYON_NUM_THREADS = "1", HIGHS_THREADS 
 memory_limit_gb = 32
 timing_matters = true
 outputs = ["scratch/pole-pairs/*.json"]
+
+[[batch]]
+name = "pole-pairs-115-remesh"
+description = "Ticket #115 before and after: the twelve models of bench/budgets.py at 2970, 3000 and 3030 quads, on main and on 12a6675 (the head of claude/pole-pairs-115), interleaved; one job is the remesh and its measure, at one engine thread. The prepare builds the engine and the add-on, and exports the sources from the scenes by Blender the first time."
+category = "quick-bench"
+prepare = "cargo build --release && make addon && python3 -c 'import sys; sys.path.insert(0, \"bench\"); import run; [run.source_path(model) for model in sys.argv[1:]]' creature blob suzanne spot pig ogre bob jerry blub rock cage part"
+command = "target/release/openclare remesh bench/out/{model}/source.obj {out}/mesh.obj --preset {preset} --quads {budget} && target/release/openclare measure bench/out/{model}/source.obj {out}/mesh.obj --target {budget} --json > {out}/measure.json"
+parameters = { preset = "organic" }
+environment = { HIGHS_THREADS = "1" }
+threads = 1
+memory_limit_gb = 32
+timeout = "30m"
+timing_matters = true
+
+[batch.axes]
+model = ["creature", "blob", "suzanne", "spot", "pig", "ogre", "bob", "jerry", "blub", "rock",
+         { value = "cage", preset = "hard-surface" }, { value = "part", preset = "hard-surface" }]
+budget = [2970, 3000, 3030]
+ref = ["main", "12a6675"]
 
 # ---------------------------------------------------------------- sequences
 

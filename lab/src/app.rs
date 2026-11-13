@@ -443,7 +443,13 @@ impl App {
         self.catalogue
             .as_ref()
             .map(|catalogue| {
-                catalogue.jobs.iter().filter(|job| job.timing_matters).map(|job| job.name.clone()).collect()
+                catalogue
+                    .jobs
+                    .iter()
+                    .chain(catalogue.batches.iter().map(|batch| &batch.job))
+                    .filter(|job| job.timing_matters)
+                    .map(|job| job.name.clone())
+                    .collect()
             })
             .unwrap_or_default()
     }
@@ -792,6 +798,24 @@ impl App {
                                 self.job = Some(job.name.clone());
                             }
                             stopwatch(ui, job.timing_matters);
+                        });
+                    }
+                }
+                if !catalogue.batches.is_empty() {
+                    ui.add_space(8.0);
+                    ui.label(RichText::new("BATCHES").small().strong().color(MUTED));
+                    for batch in &catalogue.batches {
+                        let axes: Vec<String> =
+                            batch.axes.iter().map(|axis| format!("{} ({})", axis.name, axis.values.len())).collect();
+                        let jobs: usize = batch.axes.iter().map(|axis| axis.values.len()).product();
+                        ui.horizontal(|ui| {
+                            ui.label(&batch.job.name).on_hover_text(format!(
+                                "{}\n\n{jobs} jobs: {}.\nRun it with `lab run {}`; the window does not queue a batch yet (R3).",
+                                batch.job.description,
+                                axes.join(" × "),
+                                batch.job.name
+                            ));
+                            stopwatch(ui, batch.job.timing_matters);
                         });
                     }
                 }

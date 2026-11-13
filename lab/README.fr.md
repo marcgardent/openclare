@@ -108,6 +108,23 @@ que soit le réglage. Ctrl-C arrête l'exécution et la note arrêtée. `lab fet
 et lit les mémoires des autres machines ; `lab push` récupère puis pousse la mémoire de cette machine ;
 `lab status` dit où en sont le miroir, les checkouts, les machines, la file et l'historique.
 
+## Batches
+
+Un `[[batch]]` de `jobs.toml` est une grille de jobs, un calcul chacun (SPEC.md, §6b) :
+
+```sh
+lab run pole-pairs-115-remesh
+lab run pole-pairs-115-remesh --axis model=ogre --axis budget=3000 --timeout 1h
+```
+
+lance chaque case de la grille, `réglage / threads` jobs à la fois, chacun avec son journal, son dossier
+(`{out}`), son délai (30 minutes sauf si le batch en donne un) et son verdict de calme, chacun noté à
+sa fin ; un job en échec ou en dépassement est une case en échec et le batch continue. Il écrit une
+ligne par job qui commence et qui finit, puis les comptes, et sort avec 0 quand tous les jobs sont ok.
+`--axis` garde certaines valeurs d'un axe (toute référence pour `ref`), `--timeout` remplace le délai
+de chaque job pour ce lancement. La fenêtre liste les batches dans son catalogue mais ne les met pas
+encore en file.
+
 ## Tests
 
 ```sh

@@ -32,6 +32,10 @@ pub struct RunArguments {
     pub threads: Option<u32>,
     /// Push the live memory to this machine's branch after the run, whatever the setting.
     pub push: bool,
+    /// Of a batch: the axes kept to some of their values (SPEC.md, §6b).
+    pub only: Vec<(String, Vec<String>)>,
+    /// The timeout of each job, replaced for this launch.
+    pub timeout: Option<crate::catalogue::Timeout>,
 }
 
 /// Set by the SIGINT handler: the run is stopped and recorded, then lab exits.
@@ -214,10 +218,21 @@ pub fn run(places: &Places, arguments: RunArguments) -> ExitCode {
             return ExitCode::from(2);
         }
     };
+    if let Some(batch) = catalogue.batch(&arguments.job).cloned() {
+        return run_batch(places, &settings, mirror, &catalogue, &batch, arguments);
+    }
     let Some(job) = catalogue.job(&arguments.job).cloned() else {
-        eprintln!("lab: no job named {} in the catalogue", arguments.job);
+        eprintln!("lab: no job nor batch named {} in the catalogue", arguments.job);
         return ExitCode::from(2);
     };
+    if !arguments.only.is_empty() {
+        eprintln!("lab: {} is a job, without axes: --axis is for a batch", job.name);
+        return ExitCode::from(2);
+    }
+    if arguments.timeout.is_some() {
+        eprintln!("lab: {} is a job: --timeout is for a batch; a job's own is `timeout` in jobs.toml", job.name);
+        return ExitCode::from(2);
+    }
     let target = match (&arguments.reference, &job.checkout) {
         (Some(reference), _) => reference.clone(),
         (None, crate::catalogue::CheckoutChoice::Ask) => {
@@ -359,6 +374,106 @@ pub fn run(places: &Places, arguments: RunArguments) -> ExitCode {
             ExitCode::FAILURE
         }
     }
+}
+
+/// `lab run <batch>`: its grid in a pool, one line per job that starts and
+/// ends, the counts at the end; 0 when every job is ok (SPEC.md, §6b).
+fn run_batch(
+    places: &Places,
+    settings: &Settings,
+    mirror: Mirror,
+    catalogue: &Catalogue,
+    batch: &crate::catalogue::Batch,
+    arguments: RunArguments,
+) -> ExitCode {
+    let problems: Vec<&String> = catalogue
+        .problems
+        .iter()
+        .filter(|problem| problem.starts_with(&format!("batch {}:", batch.job.name)))
+        .collect();
+    if !problems.is_empty() {
+        for problem in problems {
+            eprintln!("lab: {problem}");
+        }
+        return ExitCode::from(2);
+    }
+    let mut shared = Shared::default();
+    crate::runner::recover(places, Some(catalogue), &mut shared);
+    for message in shared.messages.drain(..) {
+        eprintln!("lab: {message}");
+    }
+    if shared.orphan.is_some() {
+        eprintln!(
+            "lab: a run of an earlier session still has processes alive: open the window to decide what to do with it"
+        );
+        return ExitCode::FAILURE;
+    }
+    let threads = arguments.threads.unwrap_or(settings.threads);
+    let job_threads = batch.job.effective_threads(threads);
+    let width = crate::batch::pool_width(threads, job_threads);
+    if width * job_threads > settings.comfort_threads {
+        eprintln!(
+            "lab: {width} jobs of {job_threads} threads: {} threads, above the comfort limit of {}",
+            width * job_threads,
+            settings.comfort_threads
+        );
+    }
+    let watch = Arc::new(Mutex::new(Watch::default()));
+    let calm = Arc::new(Mutex::new(settings.calm.clone()));
+    let period = Duration::from_secs(u64::from(settings.sample_seconds.clamp(1, 5)));
+    crate::monitor::spawn(watch.clone(), calm.clone(), period, Box::new(|| {}));
+    // Safety: the handler only stores a flag.
+    unsafe {
+        let _ = signal(Signal::SIGINT, SigHandler::Handler(on_interrupt));
+        let _ = signal(Signal::SIGTERM, SigHandler::Handler(on_interrupt));
+    }
+    let options = crate::batch::Options {
+        only: arguments.only,
+        reference: arguments.reference,
+        timeout: arguments.timeout,
+        threads,
+        grace: Duration::from_secs(u64::from(settings.stop_grace_seconds.max(1))),
+        forced: arguments.force,
+        comment: String::new(),
+        papers: Vec::new(),
+    };
+    let stopped = || INTERRUPTED.load(Ordering::SeqCst);
+    let mut say = |line: String| eprintln!("lab: {line}");
+    let mut context = crate::batch::Context {
+        places,
+        mirror: &mirror,
+        machine: crate::machine::machine(&settings.machine_label),
+        monitor: Some((watch, calm)),
+        stopped: &stopped,
+        say: &mut say,
+    };
+    let summary = match crate::batch::run(&mut context, batch, &options) {
+        Ok(summary) => summary,
+        Err(error) => {
+            eprintln!("lab: {error}");
+            return ExitCode::from(2);
+        }
+    };
+    eprintln!("lab: {} · launch {}", summary.counts(), summary.launch);
+    for (cell, status, id) in &summary.records {
+        if *status != Status::Ok {
+            eprintln!(
+                "lab:   {} {cell} · log {}",
+                status.text(),
+                places.data.join("logs").join(format!("{id}.log")).display()
+            );
+        }
+    }
+    for cell in &summary.not_run {
+        eprintln!("lab:   not run {cell}");
+    }
+    if arguments.push || settings.push == Push::Auto {
+        match crate::machines::push(places, &mirror, &settings.machine) {
+            Ok(said) => eprintln!("lab: {said}"),
+            Err(error) => eprintln!("lab: push: {error}"),
+        }
+    }
+    if summary.all_ok() { ExitCode::SUCCESS } else { ExitCode::FAILURE }
 }
 
 fn runner_idle(runner: &Runner) -> bool {

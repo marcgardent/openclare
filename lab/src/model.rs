@@ -68,6 +68,29 @@ pub struct Run {
     /// The last change of the comment or the papers.
     #[serde(default)]
     pub edited: Option<DateTime<FixedOffset>>,
+    /// The batch and the cell this job is (SPEC.md, §6b); None for a `[[job]]`.
+    /// The three fields below are left out of the line when empty, so that the
+    /// records written before them read and write back unchanged.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cell: Option<Cell>,
+    /// The limit the job ran under; None: no limit.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub timeout_seconds: Option<f64>,
+    /// The versions of the tools in its checkout: "blender" -> "5.3.0",
+    /// "rustc", "python", "lean"; a tool not found is left out.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub tools: BTreeMap<String, String>,
+}
+
+/// One cell of one launch of a batch (SPEC.md, §6b).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Cell {
+    /// "20261113-221403-pole-pairs-115-remesh": the launch, shared by its jobs.
+    pub launch: String,
+    /// Axis -> value: {"budget": "3000", "model": "ogre", "ref": "12a6675"}.
+    pub values: BTreeMap<String, String>,
+    /// The jobs of the batch that ran side by side.
+    pub pool: u32,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -96,6 +119,8 @@ pub enum Status {
     Stopped,
     /// The app ended during the run.
     Interrupted,
+    /// Killed by lab at its timeout (SPEC.md, §6b); `seconds` is the time until the kill.
+    TimedOut,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -264,6 +289,7 @@ impl Status {
             Status::Failed { .. } => "failed".to_string(),
             Status::Stopped => "stopped".to_string(),
             Status::Interrupted => "interrupted".to_string(),
+            Status::TimedOut => "timed out".to_string(),
         }
     }
 }

@@ -164,6 +164,9 @@ fn repository_run(mirror: &Mirror, job: &Job, summary: &str) -> Result<Option<Ru
         log: None,
         outputs: Vec::new(),
         edited: None,
+        cell: None,
+        timeout_seconds: None,
+        tools: BTreeMap::new(),
     }))
 }
 

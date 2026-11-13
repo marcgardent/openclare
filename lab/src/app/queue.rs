@@ -673,7 +673,7 @@ fn state_text(state: &ItemState) -> (String, egui::Color32) {
             let colour = match status {
                 Status::Ok => GREEN,
                 Status::Stopped | Status::Interrupted => AMBER,
-                Status::Failed { .. } => RED,
+                Status::Failed { .. } | Status::TimedOut => RED,
             };
             (format!("{}{time}", status.text()), colour)
         }
