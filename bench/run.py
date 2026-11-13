@@ -82,11 +82,10 @@ BLENDERKIT = {
     "camera": "3ef12fa4-29a0-463f-b338-7ad3f81b654b",
     "wolf": "c63283ec-7419-4bff-8f6f-13cf70bd1b14",
 }
-# The human bodies of Blender's Essentials library (CC0): a sculpt and the
-# mesh modelled by hand on it, `make essentials` (bench/fetch_essentials.py)
-# takes them from Blender's cache. Their sculpts are large: local too.
-ESSENTIALS = {"human_male", "human_female"}
-LOCAL_MODELS = set(BLENDERKIT) | ESSENTIALS
+# The human bodies of Blender's Essentials library (CC0), a sculpt and the
+# mesh modelled by hand on it, are in the repository: their scenes under
+# bench/scenes, made by `make essentials` (bench/fetch_essentials.py).
+LOCAL_MODELS = set(BLENDERKIT)
 # Scenes made by hand with bench/make_scene.py from files of the author of
 # the project: an object with its modifiers and materials, curves drawn on
 # it, a painted density. No OBJ makes them again.

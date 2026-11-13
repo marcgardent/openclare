@@ -1,7 +1,6 @@
 # human_male
 
 An organic model; 1 354 880 triangles in the source.
-Its licence does not allow passing it on: the model is not in the repository (`make blenderkit`).
 Author, source and licence: [CREDITS.md](../../CREDITS.md).
 
 ## At 3000 quads asked for

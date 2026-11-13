@@ -93,8 +93,7 @@ where the mesh without closing had closed ones; the whole body still goes from 2
 ## Making them again
 
 ```sh
-make essentials        # the male body's scene, from Blender's cache (see bench/fetch_essentials.py)
-blender -b --factory-startup bench/corpus-large/scenes/human_male.blend --python-exit-code 1 \
+blender -b --factory-startup bench/scenes/human_male.blend --python-exit-code 1 \
     --python bench/blender_run.py -- --out bench/out/human_male --no-remesh
                        # bench/out/human_male/source.obj, as the bench gives it to every remesher
 docs/research/closing-loops/figures/make_figures.sh
