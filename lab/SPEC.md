@@ -565,8 +565,10 @@ window lists the batches in the catalogue and their records in the history; R3 q
   the queue restricted to those cells. Without a window, `--axis` restricts the grid as in R1.
 - **A job already done is skipped.** A cell whose last `Ok` record has the same command key (§10),
   commit, tools' versions and dependencies' keys is not run again: no new record, the line says
-  `done before` with that record's id, and the grid keeps showing it. A record whose time does not
-  count is done all the same: its result is there. "Again" (`--again` without a window) runs them
+  `done before` with that record's id, and the grid keeps showing it. In a batch whose timing
+  matters (⏱), the record's time must count too: one that does not ("not calm at the start") is run
+  again, else the comparison would mix times that count with times that do not; elsewhere a record
+  whose time does not count is done all the same, its result is there. "Again" (`--again` without a window) runs them
   anyway. A batch whose jobs read files that their command, commit and dependencies do not name (the
   export of the male body in `scratch/`) says `skip_done = false`: its jobs always run.
 - **An estimate per job**: the median time of the `Ok` records of the same batch with the same

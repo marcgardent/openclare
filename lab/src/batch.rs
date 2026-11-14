@@ -559,8 +559,12 @@ pub fn run(context: &mut Context, catalogue: &Catalogue, batch: &Batch, options:
                 .flatten()
                 .filter(same_key)
                 .filter(same_commit)
+                // A time that matters is done once it counts: a record whose time does not is run again.
                 .find(|run| {
-                    run.status == Status::Ok && run.tools == place.tools && run.dependencies == plan.dependencies
+                    run.status == Status::Ok
+                        && run.tools == place.tools
+                        && run.dependencies == plan.dependencies
+                        && (!job.timing_matters || run.calm.timing_valid)
                 })
                 .map(|run| run.id.clone());
             let ok: Vec<&Run> = history
@@ -1549,5 +1553,17 @@ mod tests {
             assert_eq!(seen.trim(), recorded, "the job ran where its record says");
             assert_eq!(run.cell.as_ref().unwrap().pool, slots.len() as u32, "one job per core side by side");
         }
+        // No monitor, no time that counts: a batch whose timing matters runs them again.
+        let (summary, _) = launch(&places, text, Options { cpus: cpus.clone(), ..Options::default() });
+        assert_eq!(summary.counts(), "4 jobs: 4 ok", "a time that does not count is not done");
+        let mut runs = History::read(&places.runs()).unwrap().runs;
+        for run in runs.iter_mut().filter(|run| run.job == "where") {
+            run.calm.timing_valid = true;
+        }
+        let lines: Vec<String> =
+            runs.iter().map(|run| serde_json::to_string(run).unwrap()).map(|line| line + "\n").collect();
+        std::fs::write(places.runs(), lines.concat()).unwrap();
+        let (summary, _) = launch(&places, text, Options { cpus, ..Options::default() });
+        assert_eq!(summary.counts(), "4 jobs: 4 done before", "a time that counts is done");
     }
 }

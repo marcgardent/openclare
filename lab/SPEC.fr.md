@@ -457,8 +457,10 @@ met en file (ci-dessous).
 - **Un job déjà fait est sauté.** Une case dont la dernière fiche `Ok` a la même clé de commande (§10),
   le même commit, les mêmes versions d'outils et les mêmes clés de dépendances ne retourne pas : pas
   de nouvelle fiche, la ligne dit `done before` avec l'identifiant de cette fiche, et la grille
-  continue de la montrer. Une fiche dont le temps ne compte pas est faite tout de même : son résultat
-  est là. « Again » (`--again` sans fenêtre) les relance quand même. Un batch dont les jobs lisent des
+  continue de la montrer. Dans un batch dont le temps compte (⏱), le temps de la fiche doit compter
+  aussi : une fiche dont le temps ne compte pas (« not calm at the start ») est relancée, sinon la
+  comparaison mêlerait des temps qui comptent et d'autres non ; ailleurs, une fiche dont le temps ne
+  compte pas est faite tout de même, son résultat est là. « Again » (`--again` sans fenêtre) les relance quand même. Un batch dont les jobs lisent des
   fichiers que leur commande, leur commit et leurs dépendances ne nomment pas (l'export du corps
   masculin dans `scratch/`) dit `skip_done = false` : ses jobs tournent toujours.
 - **Une estimation par job** : la médiane des temps des fiches `Ok` du même batch à la même clé de
