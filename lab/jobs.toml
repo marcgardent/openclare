@@ -756,7 +756,7 @@ ref = ["main"]
 
 [[batch]]
 name = "pole-pairs-115-male-body"
-description = "Ticket #115, the male body: the export on the engine of each side, then conflicts.py on it (one job a side: conflicts reads the export), on main and on b42bcd6 (12a6675 rebased on main, the same engine sources, with the scene, which 12a6675 has not). Its source is the dependency source of bench/scenes/human_male.blend (the file of research/NIGHT.md, MD5 f1fe33002b731d1d41846daed6c59f5e). The whole thread setting for each, one side after the other."
+description = "Ticket #115, the male body: the export on the engine of each side, then conflicts.py on it (one job a side: conflicts reads the export), on main and on 5e73f2f (the head of claude/pole-pairs-115-on-main: 12a6675 rebased on main, with the scene, which 12a6675 has not, and the layout chosen without the other draws). Its source is the dependency source of bench/scenes/human_male.blend (the file of research/NIGHT.md, MD5 f1fe33002b731d1d41846daed6c59f5e). The whole thread setting for each, one side after the other."
 category = "quick-bench"
 needs = ["engine", "source"]
 command = "python3 docs/research/turns-of-a-t-mesh/experiments/export.py --openclare {engine} --commit {commit} --source {source} --out {out}/male-body && python3 docs/research/turns-of-a-t-mesh/experiments/conflicts.py {out}/male-body --out {out}/conflicts --summary {out}/conflicts.json"
@@ -765,11 +765,11 @@ memory_limit_gb = 32
 timeout = "1h"
 timing_matters = false
 skip_done = false
-axes = { ref = ["main", "b42bcd6"] }
+axes = { ref = ["main", "5e73f2f"] }
 
 [[batch]]
 name = "pole-pairs-115-remesh"
-description = "Ticket #115 before and after: the twelve models of bench/budgets.py at 2970, 3000 and 3030 quads, on main and on 12a6675 (the head of claude/pole-pairs-115), interleaved; one job is the remesh and its measure, the engine on the thread setting. The engine of each commit and the sources are dependencies, made once and shared."
+description = "Ticket #115 before and after: the twelve models of bench/budgets.py at 2970, 3000 and 3030 quads, on main and on 5e73f2f (the head of claude/pole-pairs-115-on-main, where the layout is chosen without the other draws, drawn once on the one kept), interleaved; one job is the remesh and its measure, the engine on the thread setting. The engine of each commit and the sources are dependencies, made once and shared."
 category = "quick-bench"
 needs = ["engine", "source"]
 command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {budget} && {engine} measure {source} {out}/mesh.obj --target {budget} --json > {out}/measure.json"
@@ -783,7 +783,7 @@ timing_matters = true
 model = ["creature", "blob", "suzanne", "spot", "pig", "ogre", "bob", "jerry", "blub", "rock",
          { value = "cage", preset = "hard-surface" }, { value = "part", preset = "hard-surface" }]
 budget = [2970, 3000, 3030]
-ref = ["main", "12a6675"]
+ref = ["main", "5e73f2f"]
 
 [[batch]]
 name = "pole-pairs-115-tmesh"
