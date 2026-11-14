@@ -1562,7 +1562,16 @@ impl QuadLayout {
             experiment: quantization::Experiment::from_env()?,
         };
         let quantizer = quantization::create(quantization::Kind::WalkCancelling);
-        let mut quantized = quantizer.quantize(&layout.tmesh, &request)?;
+        // Which layout is kept, the plain one or the one with pairs joined,
+        // is told by lengths closed without the other draws of the per-arc
+        // preference; the draws, most of the time on a large layout (twelve
+        // more quantizations of the ogre's 2,668 arcs at 3,000 quads), are
+        // made once, on the layout kept (DT-115).
+        let quick = quantization::Request {
+            experiment: quantization::Experiment { extra_draws: Some(0), ..request.experiment.clone() },
+            ..request.clone()
+        };
+        let mut quantized = quantizer.quantize(&layout.tmesh, &quick)?;
         clock.lap(&mut report, "quantization");
         if !quantized.report.is_valid() || quantized.report.quads == 0 {
             recorder::show_map(recorder, &work, &layout.map);
@@ -1585,7 +1594,7 @@ impl QuadLayout {
             let pairs = tmesh::Request { edge_length, pairs: tmesh::Pairs::Only(joined) };
             if let Ok(cut) = builder.build(&work, &field, &pairs)
                 && unfit(&cut, quads).0.is_none()
-                && let Ok(again) = quantizer.quantize(&cut.tmesh, &request)
+                && let Ok(again) = quantizer.quantize(&cut.tmesh, &quick)
             {
                 let spirals = |q: &quantization::Quantization| q.report.spirals.unwrap_or(0.0);
                 let fewer =
@@ -1643,6 +1652,16 @@ impl QuadLayout {
                 (layout, quantized) = (cut, again);
             }
             clock.lap(&mut report, "pole pairs meshed");
+        }
+        // The other draws, on the layout kept: where its lengths still wind
+        // loops into spirals, and the request draws at all.
+        let draws = request.experiment.extra_draws != Some(0) && request.close_turns;
+        if draws && quantized.report.spirals.is_some_and(|spirals| spirals > 0.0) {
+            let drawn = quantizer.quantize(&layout.tmesh, &request)?;
+            if drawn.report.is_valid() && drawn.report.quads > 0 {
+                quantized = drawn;
+            }
+            clock.lap(&mut report, "quantization draws");
         }
         recorder::show_map(recorder, &work, &layout.map);
         recorder::show_layout(recorder, &work, &layout.tmesh);
