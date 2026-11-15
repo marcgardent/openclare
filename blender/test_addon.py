@@ -1188,6 +1188,9 @@ class Drawn:
     def prop(self, owner, name, **options):
         self.log.append(("prop", name, options.get("icon")))
 
+    def prop_enum(self, owner, name, value, **options):
+        self.log.append(("prop_enum", f"{name}:{value}", options.get("icon")))
+
     def prop_search(self, owner, name, *_, **options):
         self.log.append(("prop_search", name, options.get("icon")))
 
@@ -1221,7 +1224,7 @@ settings.hard_edge_angle = math.radians(30.0)
 # experimental features shown or hidden.
 owner = openclare.object_to_remesh(bpy.context)
 kept = settings.output, settings.target
-for output, target, shown in itertools.product(("QUADS", "TRIANGLES"), ("COUNT", "SIZE"), (True, False)):
+for output, target, shown in itertools.product(("QUADS", "TRIANGLES", "NGONS"), ("COUNT", "SIZE"), (True, False)):
     settings.output, settings.target = output, target
     openclare.experimental.assumed = shown
     for block in blocks[:3]:
@@ -1483,6 +1486,35 @@ assert int(told["crossing_faces"]) == 0 and openclare.report_lines(told)[0][0].s
 assert bpy.ops.object.openclare_remesh_again() == {"FINISHED"}
 assert all(len(polygon.vertices) == 3 for polygon in result.data.polygons)
 print("TRIANGLES", made, "triangles for 2000, none crossing; again in place")
+
+# N-gons: a cube comes out as its six faces on its eight corners, every edge
+# creased whatever Carry says, and said as such; hidden with the experimental
+# features, the same settings give quads.
+before = settings.output, settings.quads, settings.export_creases
+bpy.ops.mesh.primitive_cube_add()
+box = bpy.context.active_object
+alone(box)
+settings.output, settings.quads, settings.export_creases = "NGONS", 300, False
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+result = bpy.context.active_object
+assert result.name.endswith(".ngons"), result.name
+assert (len(result.data.vertices), len(result.data.edges), len(result.data.polygons)) == (8, 12, 6)
+creases = result.data.attributes["crease_edge"]
+assert all(value.value == 1.0 for value in creases.data)
+told = result[openclare.REPORT]
+assert openclare.report_lines(told)[0][0].startswith("6 faces, 6 on flat parts in "), openclare.report_lines(told)
+assert not openclare.falls_short({key: told[key] for key in told.keys()})
+openclare.experimental.assumed = False
+alone(box)
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+result = bpy.context.active_object
+assert result.name.endswith(".quads") and all(len(polygon.vertices) == 4 for polygon in result.data.polygons)
+assert len(result.data.polygons) > 100
+openclare.experimental.assumed = True
+alone(ball)
+settings.output, settings.quads, settings.export_creases = before
+bpy.data.objects.remove(box)
+print("NGONS a cube as its six faces, creased; quads while hidden")
 # For the shape: Blender's Decimate (Collapse) makes them, as many as asked,
 # its painted density kept denser, said as such; Remesh Again does it again.
 group = ball.vertex_groups.new(name="top")

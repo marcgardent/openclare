@@ -32,13 +32,14 @@ The panel *openclare* of the Properties editor, on the tab of the mesh.
 | *Output: Quads* | stable | |
 | *Output: Triangles*, for *Simulation* | experimental | a few triangles cut through another one on 3 models of 12 ([TRIANGLES.md](TRIANGLES.md), #226) |
 | *Output: Triangles*, for *Shape* (Blender's *Decimate*) | stable | follows no hard edge, curve or material, as the panel says |
+| *Output: N-gons* | experimental | flat parts as faces of many sides, creased all round; measured on six mechanical shapes and a half cylinder, three levels of subdivision; not with curves, poles or a symmetry for the parts that take no quads |
 | *Ask For: Number* | stable | |
 | *Ask For: Sizes* (*Largest*, *Smallest*) | experimental | sizes proposed from a hidden constant, fingers dropped on a body (#253) |
 | *Analyse* | experimental | the same (#253) |
 | *Show Sizes* | experimental | shows those sizes (#253) |
 | *Density from Shape* | experimental | reads the shape with those sizes (#253) |
 | *Adaptive Size* | stable | |
-| *Quads per Turn* | experimental | with *Ask For: Sizes* only; a cylinder with flat caps gets about two thirds of the quads asked round it (all of them with `--faces ngons`, on the command line) |
+| *Quads per Turn* | experimental | with *Ask For: Sizes* only; a cylinder with flat caps gets about two thirds of the quads asked round it (all of them with *Output: N-gons*) |
 | *Quads Around Thin Parts* | experimental | the bound on size has known limits (#38); parts thinner than a quad at low budgets (#18) |
 | *Hard Edges*, *Angle* | stable | |
 | *Marked Sharp* | stable | |
@@ -96,7 +97,7 @@ The tools of the 3D viewport, in Object Mode.
 | `--groups`: a line of edges between two | experimental | as *Materials* (#47) |
 | `--curves` | experimental | as *Draw Curve* (#195, #196, #44) |
 | `--poles`, `--poles-out` | experimental | as the poles of the add-on (#249) |
-| `--faces ngons`, `--creases-out` | experimental | flat parts as convex n-gons, on the command line only; measured on six mechanical shapes, two levels of subdivision |
+| `--faces ngons`, `--creases-out` | experimental | as *Output: N-gons* |
 | `--edge-angle` | experimental | sharp edges of the work mesh, off by default, not yet the add-on's |
 | `--method triangles` | experimental | as *Output: Triangles* (#226) |
 | `--method integer-grid`, `--method instant-meshes` | experimental | other chains, kept for comparison (#9) |

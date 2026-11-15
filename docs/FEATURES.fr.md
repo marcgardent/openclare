@@ -34,13 +34,14 @@ Le panneau *openclare* de l'éditeur Properties, dans l'onglet du maillage.
 | *Output: Quads* | stable | |
 | *Output: Triangles*, pour *Simulation* | expérimental | quelques triangles en traversent un autre sur 3 modèles sur 12 ([TRIANGLES.fr.md](TRIANGLES.fr.md), #226) |
 | *Output: Triangles*, pour *Shape* (le *Decimate* de Blender) | stable | ne suit ni arête vive, ni courbe, ni matériau, comme le panneau le dit |
+| *Output: N-gons* | expérimental | les parties plates en faces à nombreux côtés, pliées sur tout leur bord ; mesuré sur six formes mécaniques et un demi-cylindre, à trois niveaux de subdivision ; sans courbes, pôles ni symétrie pour les parties qui ne prennent aucun quad |
 | *Ask For: Number* | stable | |
 | *Ask For: Sizes* (*Largest*, *Smallest*) | expérimental | tailles proposées à partir d'une constante cachée, doigts perdus sur un corps (#253) |
 | *Analyse* | expérimental | la même chose (#253) |
 | *Show Sizes* | expérimental | montre ces tailles (#253) |
 | *Density from Shape* | expérimental | lit la forme avec ces tailles (#253) |
 | *Adaptive Size* | stable | |
-| *Quads per Turn* | expérimental | avec *Ask For: Sizes* seulement ; un cylindre à couvercles plats reçoit environ les deux tiers des quads demandés autour (tous avec `--faces ngons`, en ligne de commande) |
+| *Quads per Turn* | expérimental | avec *Ask For: Sizes* seulement ; un cylindre à couvercles plats reçoit environ les deux tiers des quads demandés autour (tous avec *Output: N-gons*) |
 | *Quads Around Thin Parts* | expérimental | la borne sur la taille a des limites connues (#38) ; parties plus fines qu'un quad aux petits budgets (#18) |
 | *Hard Edges*, *Angle* | stable | |
 | *Marked Sharp* | stable | |
@@ -98,7 +99,7 @@ Les outils de la vue 3D, en Object Mode.
 | `--groups` : une ligne d'arêtes entre deux | expérimental | comme *Materials* (#47) |
 | `--curves` | expérimental | comme *Draw Curve* (#195, #196, #44) |
 | `--poles`, `--poles-out` | expérimental | comme les pôles du greffon (#249) |
-| `--faces ngons`, `--creases-out` | expérimental | les parties plates en n-gones convexes, en ligne de commande seulement ; mesuré sur six formes mécaniques, à deux niveaux de subdivision |
+| `--faces ngons`, `--creases-out` | expérimental | comme *Output: N-gons* |
 | `--edge-angle` | expérimental | arêtes vives du maillage de travail, désactivé par défaut, pas encore dans le greffon |
 | `--method triangles` | expérimental | comme *Output: Triangles* (#226) |
 | `--method integer-grid`, `--method instant-meshes` | expérimental | autres chaînes, gardées pour comparer (#9) |

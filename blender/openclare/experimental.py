@@ -24,6 +24,9 @@ SETTINGS = {
     "fewer_irregular": None,
     "volume_fit": None,
 }
+# The values of a setting that are experimental where its others are not,
+# each with the value the engine is given in its place while they are hidden.
+VALUES = {"output": {"NGONS": "QUADS"}}
 # Whether they are shown where the preferences cannot be read: the add-on
 # registered by a script rather than enabled (the tests).
 assumed = True
@@ -42,7 +45,12 @@ def value(settings, name):
     """The value the engine is given for the setting `name` of `settings`:
     its own, or while experimental features are hidden and it is one of
     them, the one of `SETTINGS`."""
-    if name not in SETTINGS or shown():
+    if shown():
+        return getattr(settings, name)
+    if name in VALUES:
+        own = getattr(settings, name)
+        return VALUES[name].get(own, own)
+    if name not in SETTINGS:
         return getattr(settings, name)
     hidden = SETTINGS[name]
     return settings.bl_rna.properties[name].default if hidden is None else hidden

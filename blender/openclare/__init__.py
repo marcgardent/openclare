@@ -415,12 +415,23 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         name="Output",
         description="What the object is remeshed into",
         items=[
-            ("QUADS", "Quads", "Quads, with edge loops that follow the shape: to model, sculpt on, animate"),
+            ("QUADS", "Quads", "Quads, with edge loops that follow the shape: to model, sculpt on, animate", "NONE", 0),
             (
                 "TRIANGLES",
                 "Triangles",
                 "Triangles of one size or as the shape asks, close to equilateral: for simulation, 3D printing, "
                 "collision",
+                "NONE",
+                1,
+            ),
+            (
+                "NGONS",
+                "N-gons",
+                "Experimental. Quads, and each flat part as a few faces of many sides, creased all round: fewer "
+                "faces, which a Subdivision Surface subdivides as it does the quads. A flat part one face can "
+                "stand for takes no quads at all",
+                experimental.ICON,
+                2,
             ),
         ],
         default="QUADS",
@@ -899,6 +910,8 @@ def engine_settings_of(original, evaluated, source, write=True):
         engine_settings["symmetry"] = settings.symmetry.lower()
     if settings.output == "TRIANGLES":
         engine_settings["method"] = "triangles"
+    if settings.output == "NGONS":
+        engine_settings["faces"] = "ngons"
     density = None
     if settings.density_group:
         density = weights_of(evaluated, source, settings.density_group)
@@ -1513,7 +1526,8 @@ class Remeshing:
             given = engine_input(
                 source, BASE_PRESET, engine_settings, density, settings.export_materials, copy,
                 sharp=settings.use_marked_sharp, stretch=stretch_of(original), curves=self.curves, curve_marks=marks,
-                sharp_edges=settings.export_sharp_edges, creases=settings.export_creases,
+                # Faces of many sides are rounded off without their creases.
+                sharp_edges=settings.export_sharp_edges, creases=settings.export_creases or of_ngons(settings),
                 asked=extend.asked(original),
                 poles=poles.placed(original.data, stretch_of(original)) if experimental.shown() else [],
             )
@@ -1572,7 +1586,7 @@ class Remeshing:
         self.made_from, self.engine_made = original, made
         settings = original.openclare
         shade(mesh, settings.shading, settings.hard_edge_angle)
-        kind = ".tris" if settings.output == "TRIANGLES" else ".quads"
+        kind = ".tris" if settings.output == "TRIANGLES" else ".ngons" if of_ngons(settings) else ".quads"
         mesh.name = f"{original.data.name}{kind}"
         remeshed = bpy.data.objects.new(f"{original.name}{kind}", mesh)
         remeshed.matrix_world = original.matrix_world
@@ -2092,21 +2106,32 @@ class OPENCLARE_PT_panel(DataPanel, bpy.types.Panel):
 SHORT_OF = 0.75
 
 
+def of_ngons(settings):
+    """Whether these settings ask for flat parts as faces of many sides: an
+    experimental output, quads while those are hidden."""
+    return experimental.value(settings, "output") == "NGONS"
+
+
 def of_triangles(told):
     """Whether what the engine said is of a result of triangles."""
-    return int(told.get("quads", 0)) == 0 and int(told.get("faces", 0)) > 0
+    return int(told.get("quads", 0)) == 0 and int(told.get("faces", 0)) > 0 and "merged_faces" not in told
 
 
 def made_of(told):
     """How many faces a result has, and of what: "1200 quads"."""
     if of_triangles(told):
         return f"{told.get('faces', '?')} triangles"
+    if "merged_faces" in told:
+        return f"{told.get('faces', '?')} faces, {told.get('merged_faces')} on flat parts"
     return f"{told.get('quads', '?')} quads"
 
 
 def falls_short(told):
     """What to say of a result with far fewer faces than were asked for, or
     nothing."""
+    if "merged_faces" in told:
+        # The flat parts take few faces or none: fewer than asked is the aim.
+        return ""
     kind = "triangles" if of_triangles(told) else "quads"
     asked, made = int(told.get("quads_asked", 0)), int(told.get("faces" if kind == "triangles" else "quads", 0))
     if asked and made < SHORT_OF * asked:
@@ -2286,7 +2311,7 @@ class OPENCLARE_PT_engine(SourcePanel, bpy.types.Panel):
         shaped.prop(settings, "quads_around", icon=experimental.ICON)
         # What only the quads have: the triangles follow no direction.
         quads_only = shaped.column()
-        quads_only.active = settings.output == "QUADS"
+        quads_only.active = settings.output != "TRIANGLES"
         quads_only.prop(settings, "follow_curvature", icon=experimental.ICON)
         quads_only.prop(settings, "fewer_irregular", icon=experimental.ICON)
         quads_only.prop(settings, "volume_fit", slider=True, icon=experimental.ICON)
@@ -2317,7 +2342,7 @@ def draw_sizes(context, layout, owner, settings):
             column = layout.column(align=True)
             # Triangles of the edge of a quad: four of them over the
             # square root of three in its area.
-            made = f"{quads:,.0f} quads" if settings.output == "QUADS" else f"{quads / 0.4330127:,.0f} triangles"
+            made = f"{quads:,.0f} quads" if settings.output != "TRIANGLES" else f"{quads / 0.4330127:,.0f} triangles"
             column.label(text=f"About {made}".replace(",", " "), icon="MESH_GRID")
             if below >= 0.005:
                 column.label(text=f"{100.0 * below:.0f} % coarser than its shape asks", icon="ERROR")
@@ -2334,7 +2359,12 @@ class OPENCLARE_PT_output(SourcePanel, bpy.types.Panel):
 
     def draw_settings(self, context, layout, owner, settings):
         shown = experimental.shown()
-        layout.prop(settings, "output", expand=True)
+        if shown:
+            layout.prop(settings, "output", expand=True)
+        else:
+            outputs = layout.row(align=True)
+            outputs.prop_enum(settings, "output", "QUADS")
+            outputs.prop_enum(settings, "output", "TRIANGLES")
         decimate = decimating(settings)
         if settings.output == "TRIANGLES":
             if shown:
@@ -2356,7 +2386,10 @@ class OPENCLARE_PT_output(SourcePanel, bpy.types.Panel):
         carried = followed.column(heading="Carry", align=True)
         carried.prop(settings, "export_materials")
         carried.prop(settings, "export_sharp_edges", text="Sharp")
-        carried.prop(settings, "export_creases", text="Creases")
+        if of_ngons(settings):
+            carried.label(text="Creases: always, for N-gons", icon="CHECKMARK")
+        else:
+            carried.prop(settings, "export_creases", text="Creases")
         followed.prop(settings, "shading", expand=True)
 
 

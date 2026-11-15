@@ -2139,7 +2139,11 @@ subdivision does not forgive.
 A flat part that is not convex, an L or a face with a hole, is still meshed, then merged, and
 the quads on the rim of a round hole stay. The plane of a
 symmetry is a line no face is merged across. Not checked: more than three levels of subdivision,
-how large n-gons shade, organic models, the add-on.
+how large n-gons shade, organic models.
+
+**In the add-on** (0.21.0): *Output: N-gons*, experimental. The creases are set on the result
+whatever *Carry* says, the result is named `.ngons` and says how many of its faces are on flat
+parts; with the experimental features hidden the same settings give quads.
 
 ### Guide curves
 
