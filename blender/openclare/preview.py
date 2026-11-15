@@ -63,7 +63,7 @@ OFFSET = 1.0
 # The settings of an object the edges found depend on: those that set the
 # size of the quads, and the angle.
 WATCHED = (
-    "target", "quads", "largest_quad", "smallest_quad", "adaptive_size", "quads_around",
+    "target", "quads", "largest_quad", "smallest_quad", "adaptive_size", "quads_per_turn", "quads_around",
     "use_hard_edges", "hard_edge_angle", "use_marked_sharp", "density_group", "density_factor",
 )
 

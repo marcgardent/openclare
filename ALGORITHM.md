@@ -544,6 +544,18 @@ chain falls back), and `measure` counts the vertex in `valence_2_vertices`.
     its layout lets it. On a spindle, with its eight irregular vertices at the tips and as many
     quads round its waist as round its ends, the edges of the waist are a quarter longer than
     asked. The number of quads, for its part, is within 1 % of what the analysis counts.
+- **So many quads round a cylinder** (15 November 2026). When sizes are asked for, a bend
+  gets the whole of what it calls for and not half of it: on a circle of radius r, an edge of
+  2πr / N, between the largest and the smallest quad. N is `quads_a_turn` (12 by default; 0
+  not to look at the bends, which is what the hard-surface preset has; *Quads per Turn* in
+  the add-on). Adaptivity is not read
+  there any more: it is a setting of the number asked for, where the number sets the scale, N
+  cancels out and nothing changes. Checked on shapes whose answer is known, at N = 8, 12 and
+  16: the sizes are within 3 % on balls of three radii and 5 % on a torus, and a tube, short
+  or long, is meshed with exactly N quads round it (24 too). A cylinder with its flat caps has
+  about two thirds of them (8 for 12, 10 for 16, 16 for 24): the caps get large quads, as many
+  quads go round as a cap has edges on its rim, and the number of quads is made up by more
+  rows.
 - **How it acts on the chain**: in two places, and both are needed.
   - *The map* (M4) advances faster where quads must be smaller: the unit of the map is the
     local edge length. Everything downstream (T-mesh, quantization, placement) lives in the map

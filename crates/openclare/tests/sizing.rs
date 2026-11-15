@@ -52,7 +52,14 @@ fn mean_edge(mesh: &PolyMesh, keep: impl Fn(Vec3) -> bool) -> f64 {
 fn without_adaptivity_or_paint_every_quad_is_the_size_asked_for() {
     let work = work_mesh(&spindle());
     assert!(work.sizing.iter().all(|&s| s == 1.0));
-    let request = Request { edge_length: 0.15, adaptivity: 0.0, painted: None, quads_around: 0.0, bounds: None };
+    let request = Request {
+        edge_length: 0.15,
+        adaptivity: 0.0,
+        painted: None,
+        quads_around: 0.0,
+        quads_a_turn: 12.0,
+        bounds: None,
+    };
     let scale = sizing::create(Kind::Curvature).size(&work, &request).unwrap();
     assert!(scale.iter().all(|&s| s == 1.0));
 }
@@ -62,8 +69,19 @@ fn quads_get_smaller_where_the_surface_bends_more() {
     let work = work_mesh(&spindle());
     let sizer = sizing::create(Kind::Curvature);
     let at = |adaptivity: f64| {
-        let scale =
-            sizer.size(&work, &Request { edge_length: 0.15, adaptivity, painted: None, quads_around: 0.0, bounds: None }).unwrap();
+        let scale = sizer
+            .size(
+                &work,
+                &Request {
+                    edge_length: 0.15,
+                    adaptivity,
+                    painted: None,
+                    quads_around: 0.0,
+                    quads_a_turn: 12.0,
+                    bounds: None,
+                },
+            )
+            .unwrap();
         // The number of quads is unchanged: on average, 1 / s² is 1.
         let density: Vec<f64> = scale.iter().map(|s| 1.0 / (s * s)).collect();
         assert!((mean_where(&work, &density, |_| true) - 1.0).abs() < 1e-9);
@@ -83,7 +101,17 @@ fn painted_density_sets_the_size_and_blends_across_its_border() {
     let work = work_mesh(&source);
     let sizer = sizing::create(Kind::Curvature);
     let sized = |painted: Painted| {
-        sizer.size(&work, &Request { edge_length: 0.1, adaptivity: 0.0, painted: Some(painted), quads_around: 0.0, bounds: None })
+        sizer.size(
+            &work,
+            &Request {
+                edge_length: 0.1,
+                adaptivity: 0.0,
+                painted: Some(painted),
+                quads_around: 0.0,
+                quads_a_turn: 12.0,
+                bounds: None,
+            },
+        )
     };
     // The northern half painted at 1, the southern left at 0, sixteen times
     // the quads per area between the two: edges four times shorter.
@@ -107,7 +135,19 @@ fn painted_density_sets_the_size_and_blends_across_its_border() {
     assert!(sized(Painted { source: &source, weights: &vec![1.5; weights.len()], contrast: 16.0 }).is_err());
     assert!(sized(Painted { source: &source, weights: &weights, contrast: 0.5 }).is_err());
     assert!(
-        sizer.size(&work, &Request { edge_length: 0.1, adaptivity: 2.0, painted: None, quads_around: 0.0, bounds: None }).is_err()
+        sizer
+            .size(
+                &work,
+                &Request {
+                    edge_length: 0.1,
+                    adaptivity: 2.0,
+                    painted: None,
+                    quads_around: 0.0,
+                    quads_a_turn: 12.0,
+                    bounds: None
+                }
+            )
+            .is_err()
     );
 }
 
@@ -160,14 +200,11 @@ fn the_mesh_is_finer_at_the_tips_of_a_spindle_when_adaptive() {
 use openclare::sizing::{Curvature, Demand, Reading, Sizer};
 
 #[test]
-fn a_ball_calls_for_the_same_number_of_quads_whatever_its_size() {
-    // The largest quad as long as the radius. Twelve of them would go round
-    // a ball of radius 1.9: this one bends more, and for an even error gets
-    // an edge half way, as a logarithm, between the largest and a twelfth of
-    // its great circle (of a circle a twentieth tighter: what is added to
-    // every curvature for the flat not to be flatter than quads can feel).
-    // That is 0.71 of its radius, and 25 quads over it, be it a pea or a
-    // planet.
+fn a_ball_is_as_many_quads_round_as_asked_whatever_its_size() {
+    // So many quads to a turn: an edge of that part of a great circle, and
+    // N² / π quads over the ball, be it a pea or a planet. The largest quad
+    // is as long as the radius, which is a great circle in 2π: asked for
+    // fewer quads to a turn than that, the ball is flat and gets the largest.
     for radius in [0.5, 1.0, 4.0] {
         let mut ball = primitives::icosphere(4);
         for p in &mut ball.positions {
@@ -175,49 +212,117 @@ fn a_ball_calls_for_the_same_number_of_quads_whatever_its_size() {
         }
         let work = work_mesh(&ball);
         let (largest, smallest) = (radius, 0.001 * radius);
-        let request = Request {
+        let reading = Reading::between(largest, smallest);
+        let request = |quads_a_turn: f64| Request {
             edge_length: 0.1 * radius,
             bounds: Some((largest, smallest)),
-            adaptivity: 1.0,
+            adaptivity: 0.0,
             painted: None,
             quads_around: 0.0,
+            quads_a_turn,
         };
         let tuning = Curvature::default();
-        assert_eq!(tuning.quads_a_turn, 12.0);
-        let demand = Demand::measure(&tuning, &work, &request).unwrap();
-        let wanted = radius * (std::f64::consts::TAU / 12.0 / (1.0 + tuning.felt)).sqrt();
-        for size in demand.sizes(&Reading::between(largest, smallest)) {
-            assert!((size / wanted - 1.0).abs() < 0.03, "radius {radius}: an edge of {size} for {wanted}");
+        for turn in [8.0, 12.0, 16.0] {
+            let demand = Demand::measure(&tuning, &work, &request(turn)).unwrap();
+            let wanted = radius * std::f64::consts::TAU / turn;
+            for size in demand.sizes(&reading) {
+                assert!((size / wanted - 1.0).abs() < 0.03, "radius {radius}: an edge of {size} for {wanted}");
+            }
+            let (quads, expected) = (demand.quads(&reading), turn * turn / std::f64::consts::PI);
+            assert!((quads / expected - 1.0).abs() < 0.05, "radius {radius}: {quads} quads for {expected}");
+            // Nothing of it asks for less than the smallest; all of it asks
+            // for less than a smallest set above that edge.
+            assert_eq!(demand.below(&reading), 0.0);
+            assert_eq!(demand.below(&Reading::between(largest, 1.1 * wanted)), 1.0);
         }
-        let quads = demand.quads(&Reading::between(largest, smallest));
-        let expected = 24.0 * (1.0 + tuning.felt);
-        assert!((quads / expected - 1.0).abs() < 0.05, "radius {radius}: {quads} quads for {expected}");
-        // Nothing of it asks for less than the smallest; all of it asks for
-        // less than a smallest set above that edge.
-        assert_eq!(demand.below(&Reading::between(largest, smallest)), 0.0);
-        assert_eq!(demand.below(&Reading::between(largest, 1.1 * wanted)), 1.0);
-        // Without adaptivity it does not ask: the largest quad everywhere.
-        let deaf = Demand::measure(&tuning, &work, &Request { adaptivity: 0.0, ..request }).unwrap();
-        assert!(deaf.sizes(&Reading::between(largest, smallest)).iter().all(|&size| size == largest));
+        let flat = Demand::measure(&tuning, &work, &request(4.0)).unwrap();
+        assert!(flat.sizes(&reading).iter().all(|&size| size == largest));
+        // Asked for none, the bends are not looked at.
+        let deaf = Demand::measure(&tuning, &work, &request(0.0)).unwrap();
+        assert!(deaf.sizes(&reading).iter().all(|&size| size == largest));
+    }
+}
+
+#[test]
+fn a_torus_is_as_many_quads_round_its_tube_as_asked() {
+    // Everywhere on a torus the tightest bend is that of the tube: an edge
+    // of that part of its circle all over, which makes N² R / r quads.
+    let (major, minor) = (2.0, 0.5);
+    let work = work_mesh(&primitives::torus(major, minor, 96, 48));
+    let reading = Reading::between(4.0, 0.001);
+    for turn in [8.0, 12.0, 16.0] {
+        let request = Request {
+            edge_length: 0.1,
+            bounds: Some((4.0, 0.001)),
+            adaptivity: 0.0,
+            painted: None,
+            quads_around: 0.0,
+            quads_a_turn: turn,
+        };
+        let demand = Demand::measure(&Curvature::default(), &work, &request).unwrap();
+        let wanted = minor * std::f64::consts::TAU / turn;
+        for size in demand.sizes(&reading) {
+            assert!((size / wanted - 1.0).abs() < 0.05, "{turn} to a turn: an edge of {size} for {wanted}");
+        }
+        let (quads, expected) = (demand.quads(&reading), turn * turn * major / minor);
+        assert!((quads / expected - 1.0).abs() < 0.05, "{turn} to a turn: {quads} quads for {expected}");
+    }
+}
+
+#[test]
+fn a_tube_is_meshed_with_as_many_quads_round_it_as_asked() {
+    // A cylinder of radius 1 without its caps, short and long. The quads
+    // that a plane across it cuts are those that go round it. (With its
+    // caps a cylinder has fewer: flat, they get large quads, and as many
+    // quads go round as a cap has edges on its rim.)
+    for (turn, stretch) in [(8.0, 1.0), (12.0, 1.0), (16.0, 1.0), (12.0, 4.0), (24.0, 4.0)] {
+        let mut source = primitives::cylinder(24);
+        let side = |t: &[u32; 3]| !t.iter().all(|&v| source.positions[v as usize].z.abs() > 0.999);
+        source.triangles = source.triangles.iter().copied().filter(side).collect();
+        for p in &mut source.positions {
+            p.z *= stretch;
+        }
+        let config = RemeshConfig {
+            quads_a_turn: turn,
+            quads_around: 0.0,
+            ..RemeshConfig::for_organic(Target::SizeRange { largest: 2.0, smallest: 0.05 })
+        };
+        let (mesh, _) = config.remesh(&source).unwrap();
+        assert!(measure(&source, &mesh, None).is_valid());
+        let round = mesh
+            .faces
+            .iter()
+            .filter(|face| {
+                let heights = face.iter().map(|&v| mesh.positions[v as usize].z - 0.13);
+                heights.clone().any(|z| z < 0.0) && heights.clone().any(|z| z >= 0.0)
+            })
+            .count() as f64;
+        assert_eq!(round, turn, "quads round a tube {stretch} times as long");
     }
 }
 
 #[test]
 fn the_bounds_are_kept_and_tighter_ones_make_more_quads() {
     let work = work_mesh(&spindle());
-    let request =
-        Request { edge_length: 0.15, bounds: Some((0.4, 0.05)), adaptivity: 1.0, painted: None, quads_around: 0.0 };
+    let request = Request {
+        edge_length: 0.15,
+        bounds: Some((0.4, 0.05)),
+        adaptivity: 1.0,
+        painted: None,
+        quads_around: 0.0,
+        quads_a_turn: 12.0,
+    };
     let demand = Demand::measure(&Curvature::default(), &work, &request).unwrap();
-    // The very tips bend along a circle of radius a third, which the
-    // largest quad would go round in five: an edge of 0.26 there for an
-    // even error, and more a little way off, where it bends less already.
-    // The waist bends along a circle of radius 1, which the largest goes
-    // round in more than twelve: flat.
+    // The very tips bend along a circle of radius a third: an edge of a
+    // twelfth of it there, 0.17, and more a little way off, where it bends
+    // less already. The waist bends along a circle of radius 1, a twelfth
+    // of which is more than the largest quad: flat.
     let sizes = demand.sizes(&Reading::between(0.4, 0.05));
     assert!(sizes.iter().all(|&size| (0.05..=0.4).contains(&size)));
-    let (tips, waist) = (mean_where(&work, &sizes, |p| p.z.abs() > 2.9), mean_where(&work, &sizes, |p| p.z.abs() < 0.3));
+    let (tips, waist) =
+        (mean_where(&work, &sizes, |p| p.z.abs() > 2.9), mean_where(&work, &sizes, |p| p.z.abs() < 0.3));
     let least = sizes.iter().copied().fold(f64::INFINITY, f64::min);
-    assert!(least > 0.26 && least <= tips && tips < 0.36, "an edge of {least} at the very tips, {tips} round them");
+    assert!(least > 0.17 && least <= tips && tips < 0.26, "an edge of {least} at the very tips, {tips} round them");
     assert!((waist - 0.4).abs() < 1e-9, "an edge of {waist} at the waist");
     // A smallest quad above what the tips ask is what they get.
     let floored = demand.sizes(&Reading::between(0.4, 0.35));
@@ -242,6 +347,7 @@ fn asked_for_sizes_the_mesh_has_them_and_the_report_says_how_many_quads_that_mad
     let config = RemeshConfig {
         adaptivity: 1.0,
         quads_around: 0.0,
+        quads_a_turn: 12.0,
         ..RemeshConfig::for_organic(Target::SizeRange { largest: 0.3, smallest: 0.1 })
     };
     let (mesh, report) = config.remesh(&source).unwrap();
@@ -272,9 +378,9 @@ fn asked_for_sizes_the_mesh_has_them_and_the_report_says_how_many_quads_that_mad
     let capped = RemeshConfig { most_quads: 150, ..config.clone() };
     let (mesh, report) = capped.remesh(&source).unwrap();
     assert!(report.quads_wanted > 300.0, "{} quads called for", report.quads_wanted);
-    // (So few quads come in steps of whole rows: up to 15% fewer.)
+    // (So few quads come in steps of whole rows: up to 15% either way.)
     let ratio = mesh.faces.len() as f64 / 150.0;
-    assert!(ratio > 0.85 && ratio < 1.1, "{} quads", mesh.faces.len());
+    assert!(ratio > 0.85 && ratio < 1.15, "{} quads", mesh.faces.len());
     let larger = (report.quads_wanted / 150.0).sqrt();
     assert!((report.largest_edge - 0.3 * larger).abs() < 1e-9 && (report.smallest_edge - 0.1 * larger).abs() < 1e-9);
 
@@ -347,7 +453,10 @@ fn a_shape_is_analysed_once_and_any_bounds_are_then_counted() {
     let analysis = Analysis::of(&both, &Guides::default(), &config).unwrap();
     let (largest, smallest) = analysis.proposal();
     let wire = std::f64::consts::TAU * 0.02 / 6.0;
-    assert!(smallest <= 1.1 * wire && wire < 0.5 * largest, "quads from {smallest} to {largest} for a wire asking {wire}");
+    assert!(
+        smallest <= 1.1 * wire && wire < 0.5 * largest,
+        "quads from {smallest} to {largest} for a wire asking {wire}"
+    );
 
     // What cannot be analysed.
     assert!(Analysis::of(&TriMesh::default(), &Guides::default(), &config).is_err());
@@ -356,7 +465,14 @@ fn a_shape_is_analysed_once_and_any_bounds_are_then_counted() {
 #[test]
 fn what_the_sizer_cannot_size_is_refused() {
     let work = work_mesh(&spindle());
-    let fine = Request { edge_length: 0.15, bounds: Some((0.3, 0.1)), adaptivity: 0.5, painted: None, quads_around: 6.0 };
+    let fine = Request {
+        edge_length: 0.15,
+        bounds: Some((0.3, 0.1)),
+        adaptivity: 0.5,
+        painted: None,
+        quads_around: 6.0,
+        quads_a_turn: 12.0,
+    };
     let tuning = Curvature::default();
     assert!(Demand::measure(&tuning, &work, &fine).is_ok() && tuning.size(&work, &fine).is_ok());
     for quads_around in [f64::NAN, -1.0, f64::INFINITY] {
@@ -383,8 +499,14 @@ fn painted_with_sizes_asked_for_the_paint_is_read_where_each_point_is() {
     let work = work_mesh(&source);
     let weights: Vec<f64> = source.positions.iter().map(|p| 0.5 * (p.z + 1.0)).collect();
     let painted = Painted { source: &source, weights: &weights, contrast: 16.0 };
-    let request =
-        Request { edge_length: 0.1, bounds: Some((0.4, 0.01)), adaptivity: 0.0, painted: Some(painted), quads_around: 0.0 };
+    let request = Request {
+        edge_length: 0.1,
+        bounds: Some((0.4, 0.01)),
+        adaptivity: 0.0,
+        painted: Some(painted),
+        quads_around: 0.0,
+        quads_a_turn: 0.0,
+    };
     let demand = Demand::measure(&Curvature::default(), &work, &request).unwrap();
     let sizes = demand.sizes(&Reading::between(0.4, 0.01));
     let mut worst = 0.0f64;
@@ -410,7 +532,14 @@ fn asked_for_a_number_a_bend_takes_a_quad_no_farther_than_the_range_from_the_lev
     // squared.
     let work = work_mesh(&primitives::cylinder(12));
     let tuning = Curvature { shape_range: 1.5, ..Default::default() };
-    let request = Request { edge_length: 0.15, bounds: None, adaptivity: 1.0, painted: None, quads_around: 0.0 };
+    let request = Request {
+        edge_length: 0.15,
+        bounds: None,
+        adaptivity: 1.0,
+        painted: None,
+        quads_around: 0.0,
+        quads_a_turn: 12.0,
+    };
     let span = |tuning: &Curvature| {
         let scale = tuning.size(&work, &request).unwrap();
         let (least, most) = scale.iter().fold((f64::INFINITY, 0.0f64), |(least, most), &s| (least.min(s), most.max(s)));

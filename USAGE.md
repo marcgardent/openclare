@@ -81,6 +81,16 @@ per unit of area.
 ./target/release/openclare remesh input.obj output.obj --quads 3000 --adaptivity 0.7 --density weights.txt --density-contrast 8
 ```
 
+With sizes asked for (`--largest`), `--quads-a-turn` takes the place of `--adaptivity`: it is the
+number of quads that go round a cylinder, whatever its radius (12 by default). Where the surface
+bends, the quads are as small as it takes for that many to go round the circle it bends along, no
+larger than the largest and no smaller than the smallest. 0 does not look at how the surface
+bends. With `--quads` the number sets the scale and this setting is not read.
+
+```bash
+./target/release/openclare remesh input.obj output.obj --largest 0.2 --smallest 0.02 --quads-a-turn 16
+```
+
 Thin parts keep their volume: where the shape is too thin for the quads (a finger, the tip of an
 ear), they are made small enough for a given number of them to go round it. That number is set
 with `--quads-around`: 6 in the `organic` and `animation` presets, 0 (thickness is not looked at)

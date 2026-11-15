@@ -2,6 +2,7 @@ import bpy
 settings = bpy.context.object.openclare
 
 settings.adaptive_size = 50.0
+settings.quads_per_turn = 12
 settings.quads_around = 6
 settings.use_hard_edges = True
 settings.hard_edge_angle = 0.5235987755982988

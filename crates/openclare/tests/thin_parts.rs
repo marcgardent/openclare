@@ -97,7 +97,8 @@ fn a_thin_part_gets_quads_small_enough_to_go_round_it() {
     let sizer = sizing::create(Kind::Curvature);
     let edge_length = 0.2;
     let at = |quads_around: f64| {
-        let request = Request { edge_length, adaptivity: 0.0, painted: None, quads_around, bounds: None };
+        let request =
+            Request { edge_length, adaptivity: 0.0, painted: None, quads_around, quads_a_turn: 12.0, bounds: None };
         let scale = sizer.size(&work, &request).unwrap();
         // The number of quads is unchanged: on average, 1 / s² is 1.
         let density: Vec<f64> = scale.iter().map(|s| 1.0 / (s * s)).collect();
@@ -118,7 +119,14 @@ fn a_thin_part_gets_quads_small_enough_to_go_round_it() {
 #[test]
 fn a_shape_with_nothing_thin_is_left_alone() {
     let work = work_mesh(&openclare::mesh::primitives::icosphere(4));
-    let request = Request { edge_length: 0.15, adaptivity: 0.0, painted: None, quads_around: 6.0, bounds: None };
+    let request = Request {
+        edge_length: 0.15,
+        adaptivity: 0.0,
+        painted: None,
+        quads_around: 6.0,
+        quads_a_turn: 12.0,
+        bounds: None,
+    };
     let scale = sizing::create(Kind::Curvature).size(&work, &request).unwrap();
     assert!(scale.iter().all(|&s| (s - 1.0).abs() < 1e-9));
 }
@@ -145,7 +153,14 @@ fn a_finger_keeps_its_volume() {
 #[test]
 fn asked_for_sizes_the_finger_gets_its_quads_and_the_ball_comes_down_to_them_gently() {
     let work = work_mesh(&ball_with_a_finger());
-    let request = Request { edge_length: 0.2, bounds: Some((0.3, 0.02)), adaptivity: 0.0, painted: None, quads_around: 6.0 };
+    let request = Request {
+        edge_length: 0.2,
+        bounds: Some((0.3, 0.02)),
+        adaptivity: 0.0,
+        painted: None,
+        quads_around: 6.0,
+        quads_a_turn: 0.0,
+    };
     let tuning = sizing::Curvature::default();
     let demand = sizing::Demand::measure(&tuning, &work, &request).unwrap();
     let sizes = demand.sizes(&sizing::Reading::between(0.3, 0.02));

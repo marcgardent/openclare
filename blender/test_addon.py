@@ -182,10 +182,12 @@ for name in openclare.SHAPE_NAMES:
 # What the engine is given: the hard edges at 30 degrees, or none.
 shape(settings, "organic")
 assert openclare.shape_of(settings)["edge_angle"] == 30.0 and openclare.shape_of(settings)["alignment"] == 0.05
+assert openclare.shape_of(settings)["quads_a_turn"] == 12
 settings.use_hard_edges = False
 assert openclare.shape_of(settings)["edge_angle"] == "none"
 shape(settings, "hard-surface")
 assert openclare.shape_of(settings)["edge_angle"] == 30.0 and openclare.shape_of(settings)["quads_around"] == 0
+assert openclare.shape_of(settings)["quads_a_turn"] == 0
 # Saved, removed; those of the add-on cannot be.
 with tempfile.TemporaryDirectory() as folder:
     saved = os.path.join(folder, "presets", openclare.SHAPE_PRESETS)
@@ -829,6 +831,7 @@ assert bpy.ops.object.openclare_density_from_shape() == {"FINISHED"}
 assert "openclare density" in ellipsoid.vertex_groups
 assert settings.density_group == "openclare density" and settings.adaptive_size == 0.0
 assert settings.shape_adaptive_size == 100.0 and settings.quads_around == 6
+assert settings.quads_per_turn == 0 and settings.shape_quads_per_turn == 12
 weights = numpy.zeros(len(ellipsoid.data.vertices))
 for vertex in ellipsoid.data.vertices:
     assert len(vertex.groups) == 1, "a vertex left out of the group"
