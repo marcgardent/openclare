@@ -864,7 +864,7 @@ fn pool(
                 signal(group, Signal::SIGKILL);
                 job.killed = true;
             }
-            match child.try_wait() {
+            match monitor::reap(child) {
                 Ok(Some(status)) => {
                     let seconds = job.started.elapsed().as_secs_f64();
                     if group_alive(group) {
@@ -966,7 +966,7 @@ fn run_prepare(
         {
             signal(group, Signal::SIGKILL);
         }
-        match child.try_wait() {
+        match monitor::reap(&mut child) {
             Ok(Some(status)) => break status,
             Ok(None) => {
                 heartbeat.tick(&mut log, group, begun);

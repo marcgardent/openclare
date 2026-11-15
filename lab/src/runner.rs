@@ -1329,7 +1329,7 @@ impl Runner {
                 Some(_) => {}
             }
         }
-        let status = match child.try_wait() {
+        let status = match monitor::reap(child) {
             Ok(Some(status)) => status,
             Ok(None) => {
                 running.heartbeat.tick(&mut running.log, group, running.phase_started);

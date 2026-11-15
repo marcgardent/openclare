@@ -777,12 +777,19 @@ averages 1/5/15 and RAM from /proc (Linux only; `sysinfo` would add nothing here
 (every 4 seconds; "n/a" when the command is missing or fails); and the CPU of each process. The
 processes of the run are those of its process group and their descendants (by parent pid, which
 also catches children that left the group); the **foreign CPU** is the rest. Their CPU is counted
-whole: each process of ours counts its own time and that of its children reaped (`cutime`), against
-the sample before, a process born between two samples counting all its time; a run's first process,
-reaped by lab, hands its last time to lab's own `cutime`, counted in the sample where it ended. Before,
-only what was alive at both samples counted: what a job did as it started and ended (a
-`measure` after a `remesh`, a job ending) went to the foreign CPU, and with jobs side by side that was
-enough to make every start "not calm" (6 to 12 % in mean, peaks at 42 %, 2026-11-13). The last 10 minutes
+whole, whatever the life of each process: each process of ours counts its own time and that of its
+children reaped (`cutime`), against the sample before, so that the short processes a parent of ours
+runs and waits for (rustc under cargo, the recipes of make, a solver per instance under a Python
+script) count in that parent; a process born between two samples counts all its time; a run's first
+process, reaped by lab, counts what its reaping added to lab's own `cutime`, measured at that reaping
+and not lab's other children (git, `nvidia-smi`, sudo), even when the whole run fell between two
+samples. A reading lists the processes and that count at once, under one lock, so a first process is
+never counted both alive and reaped. Not counted: a process of ours whose parent ended first,
+reparented to init and reaped by it. Before, only what was alive at both samples counted: what a job
+did as it started and ended (a `measure` after a `remesh`, a job ending) went to the foreign CPU, and
+with jobs side by side that was enough to make every start "not calm" (6 to 12 % in mean, peaks at
+42 %, 2026-11-13); a job of short processes was mostly foreign (`cargo build --release`, foreign CPU
+81.7 % in mean, 2026-11-08, #304). The last 10 minutes
 are kept in memory for the sparklines and the window of the indicator.
 
 The indicator, always visible in the top bar:

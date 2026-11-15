@@ -676,14 +676,21 @@ moyennes de charge 1/5/15 et mémoire dans /proc (Linux seulement ; `sysinfo` n'
 `nvidia-smi --query-gpu=memory.used,memory.total,utilization.gpu --format=csv,noheader,nounits` (toutes
 les 4 secondes ; « n/a » si la commande manque ou échoue) ; et le CPU de chaque processus. Les processus
 de l'exécution sont ceux de son groupe et leurs descendants (par pid parent, ce qui attrape aussi les
-enfants sortis du groupe) ; le **CPU étranger** est le reste. Leur CPU se compte en entier : chaque
-processus à nous compte son temps et celui de ses enfants récoltés (`cutime`), contre la mesure
-d'avant, un processus né entre deux mesures comptant tout son temps ; le premier processus d'une
-exécution, récolté par lab, passe son dernier temps au `cutime` de lab, compté dans la mesure où il
-s'est fini. Avant, seul ce qui vivait aux deux mesures comptait : ce qu'un job faisait en commençant et
-en finissant (un `measure` après un `remesh`, un job qui se termine) partait au CPU étranger, et avec
-des jobs côte à côte cela suffisait à rendre chaque début « pas calme » (6 à 12 % en moyenne, des
-pointes à 42 %, le 2026-11-13). Les 10 dernières minutes restent en
+enfants sortis du groupe) ; le **CPU étranger** est le reste. Leur CPU se compte en entier, quelle que
+soit la vie de chaque processus : chaque processus à nous compte son temps et celui de ses enfants
+récoltés (`cutime`), contre la mesure d'avant, si bien que les processus courts qu'un parent à nous
+lance et attend (rustc sous cargo, les recettes de make, un solveur par instance sous un script Python)
+comptent dans ce parent ; un processus né entre deux mesures compte tout son temps ; le premier
+processus d'une exécution, récolté par lab, compte ce que sa récolte a ajouté au `cutime` de lab, mesuré
+à cette récolte, sans les autres enfants de lab (git, `nvidia-smi`, sudo), même quand toute l'exécution
+tient entre deux mesures. Une mesure lit les processus et ce compte d'un coup, sous un même verrou :
+un premier processus n'est jamais compté vivant et récolté à la fois. Pas compté : un processus à nous
+dont le parent a fini avant lui, rattaché à init et récolté par lui. Avant, seul ce qui vivait aux deux
+mesures comptait : ce qu'un job faisait en commençant et en finissant (un `measure` après un `remesh`,
+un job qui se termine) partait au CPU étranger, et avec des jobs côte à côte cela suffisait à rendre
+chaque début « pas calme » (6 à 12 % en moyenne, des pointes à 42 %, le 2026-11-13) ; un job de
+processus courts était surtout étranger (`cargo build --release`, CPU étranger 81,7 % en moyenne, le
+2026-11-08, #304). Les 10 dernières minutes restent en
 mémoire pour les courbes et la fenêtre de l'indicateur.
 
 L'indicateur, toujours visible dans la barre du haut :
