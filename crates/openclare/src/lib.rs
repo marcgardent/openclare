@@ -38,6 +38,7 @@ pub mod pipeline;
 pub mod preprocess;
 pub mod quantization;
 pub mod recorder;
+pub mod reflection;
 pub mod relax;
 pub mod remesher;
 pub mod singularity;
