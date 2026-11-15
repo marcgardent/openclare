@@ -151,7 +151,7 @@ With `--symmetry`, only the poles on the positive side count: that half is mirro
 ## Flat parts as n-gons
 
 `--faces ngons` (experimental) merges the quads of each flat part into convex faces of many
-sides: the cap of a cylinder is one face, a cube is six, an L is two rectangles. The result has
+sides: the cap of a cylinder is one face, a cube is six, the part round a hole a few sectors. The result has
 fewer faces and subdivides as the quads do, provided the creases are set on it: `--creases-out
 <file>` writes them, one edge per line as its two vertices, numbered as in the output, and a
 weight from 0 to 1. A flat part is only merged where full creases cut it off from the rest.

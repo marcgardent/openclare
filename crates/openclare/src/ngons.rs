@@ -2,19 +2,22 @@
 //! fewer faces that subdivides the same.
 //!
 //! A face of many sides subdivides as the quads it stands for when it is
-//! flat, convex, and cut off from the rest of the surface by sharp edges:
-//! the subdivision then makes nothing but points of its plane, inside its
-//! outline. So the quads of a flat part of the mesh are merged where all
+//! flat, cut off from the rest of the surface by sharp edges, and seen
+//! whole from the middle of its corners, where the subdivision puts its
+//! point, with room to spare: the subdivision then makes nothing but
+//! points of its plane, inside its outline. A convex face always is. So the quads of a flat part of the mesh are merged where all
 //! three hold:
 //!
 //! - the part is everything a walk across the edges reaches without
 //!   crossing a full crease or leaving the mesh, and all of it lies in one
 //!   plane. A flat that runs into a curve without a fold between them is
 //!   left as quads, the whole part;
-//! - if its outline is convex, the part becomes one face. Otherwise its
-//!   quads are merged two faces at a time as long as what they make is
-//!   convex: an L comes out as rectangles, the part round a hole as
-//!   sectors;
+//! - if one face can stand for the part, it becomes that face: the face
+//!   of a cube, an L. Otherwise its quads are merged two faces at a time
+//!   as long as a face can stand for the two: the part round a hole comes
+//!   out as sectors. A face can when it is convex or, if it is not, when
+//!   its subdivision, made here in its plane, does not fold (see
+//!   [`subdivides`]);
 //! - nothing is merged across an edge the report has something to say of
 //!   (a guide curve, a border between two groups).
 //!
@@ -50,20 +53,16 @@ pub struct FlatNgons {
     /// How far from its plane a vertex of a flat part may lie, as a share
     /// of the diagonal of the mesh.
     pub flatness: f64,
-    /// How far a corner of a face may turn inwards and the face still be
-    /// taken as convex, in degrees: the lines of a grid are not quite
-    /// straight.
-    pub slack: f64,
     /// Least crease weight that cuts a flat part off from its neighbours.
     pub sharp: f64,
     /// Least turn of a crease at a vertex, in degrees, for it to bend
-    /// there.
+    /// there; and of an outline for it not to be convex.
     pub bend: f64,
 }
 
 impl Default for FlatNgons {
     fn default() -> Self {
-        Self { flatness: 1e-4, slack: 3.0, sharp: 0.999, bend: 0.1 }
+        Self { flatness: 1e-4, sharp: 0.999, bend: 0.1 }
     }
 }
 
@@ -126,6 +125,13 @@ impl Plane {
         Self { origin, normal, across: tangent_frame(normal) }
     }
 
+    /// Whether the outline, a face with a full crease all round it, would
+    /// subdivide without folding (see [`subdivides`]), three levels deep.
+    fn subdivides(&self, positions: &[Vec3], outline: &[u32], corner: &[bool]) -> bool {
+        let points: Vec<(f64, f64)> = outline.iter().map(|&v| self.flat(positions[v as usize])).collect();
+        subdivides(&points, corner, 3)
+    }
+
     fn off(&self, p: Vec3) -> f64 {
         (p - self.origin).dot(self.normal).abs()
     }
@@ -159,6 +165,164 @@ impl Plane {
         let least = 0.05 * seen.iter().sum::<f64>() / n as f64;
         inwards <= 2.0 * slack && (turned - std::f64::consts::TAU).abs() < 0.5 && seen.iter().all(|&area| area > least)
     }
+}
+
+/// Whether a flat face with a full crease all round it subdivides without
+/// folding: its Catmull-Clark subdivision is made, `levels` times over, in
+/// its plane, and no quad of it may turn the other way. `points` are its
+/// corners, turning counter-clockwise, and `corner` says which of them do
+/// not move: those three creases or more meet at, and those with no other
+/// edge than the two of the outline, which Blender's subdivision holds
+/// where they are (found by comparing with it). The others slide along
+/// the outline. A face cut off by creases is subdivided on its own,
+/// whatever lies round it, so this is the whole of what happens to it.
+fn subdivides(points: &[(f64, f64)], corner: &[bool], levels: usize) -> bool {
+    type Point = (f64, f64);
+    let mean = |points: &mut dyn Iterator<Item = Point>| {
+        let (mut sum, mut count) = ((0.0, 0.0), 0.0);
+        for p in points {
+            sum = (sum.0 + p.0, sum.1 + p.1);
+            count += 1.0;
+        }
+        (sum.0 / count, sum.1 / count)
+    };
+    let area = |points: &[Point], face: &[usize]| -> f64 {
+        (0..face.len())
+            .map(|k| {
+                let (p, q) = (points[face[k]], points[face[(k + 1) % face.len()]]);
+                0.5 * (p.0 * q.1 - p.1 * q.0)
+            })
+            .sum()
+    };
+    let n = points.len();
+    let mut points = points.to_vec();
+    let mut corner = corner.to_vec();
+    let mut faces: Vec<Vec<usize>> = vec![(0..n).collect()];
+    let mut sharp: HashSet<(usize, usize)> = (0..n).map(|k| (k.min((k + 1) % n), k.max((k + 1) % n))).collect();
+    let whole = area(&points, &faces[0]);
+    if whole <= 0.0 {
+        return false;
+    }
+    for _ in 0..levels {
+        let vertices = points.len();
+        let middles: Vec<Point> = faces.iter().map(|face| mean(&mut face.iter().map(|&v| points[v]))).collect();
+        // The edges, in the order the faces meet them, and the faces of
+        // each.
+        let mut index: HashMap<(usize, usize), usize> = HashMap::new();
+        let mut edges: Vec<((usize, usize), Vec<usize>)> = Vec::new();
+        let mut at: Vec<Vec<usize>> = vec![Vec::new(); vertices];
+        let mut round: Vec<Vec<usize>> = vec![Vec::new(); vertices];
+        for (f, face) in faces.iter().enumerate() {
+            for k in 0..face.len() {
+                let (a, b) = (face[k], face[(k + 1) % face.len()]);
+                let edge = (a.min(b), a.max(b));
+                let e = *index.entry(edge).or_insert_with(|| {
+                    edges.push((edge, Vec::new()));
+                    at[a].push(edges.len() - 1);
+                    at[b].push(edges.len() - 1);
+                    edges.len() - 1
+                });
+                edges[e].1.push(f);
+                round[a].push(f);
+            }
+        }
+        let mut next: Vec<Point> = Vec::with_capacity(vertices + faces.len() + edges.len());
+        for v in 0..vertices {
+            let p = points[v];
+            let far = |e: usize| if edges[e].0.0 == v { edges[e].0.1 } else { edges[e].0.0 };
+            let creases: Vec<usize> = at[v].iter().copied().filter(|&e| sharp.contains(&edges[e].0)).collect();
+            next.push(if corner[v] || creases.len() > 2 {
+                p
+            } else if let &[a, b] = creases.as_slice() {
+                let (a, b) = (points[far(a)], points[far(b)]);
+                ((a.0 + 6.0 * p.0 + b.0) / 8.0, (a.1 + 6.0 * p.1 + b.1) / 8.0)
+            } else {
+                let valence = at[v].len() as f64;
+                let f = mean(&mut round[v].iter().map(|&f| middles[f]));
+                let r = mean(&mut at[v].iter().map(|&e| {
+                    let q = points[far(e)];
+                    (0.5 * (p.0 + q.0), 0.5 * (p.1 + q.1))
+                }));
+                (
+                    (f.0 + 2.0 * r.0 + (valence - 3.0) * p.0) / valence,
+                    (f.1 + 2.0 * r.1 + (valence - 3.0) * p.1) / valence,
+                )
+            });
+        }
+        next.extend(&middles);
+        for ((a, b), beside) in &edges {
+            let (p, q) = (points[*a], points[*b]);
+            next.push(match beside.as_slice() {
+                &[f, g] if !sharp.contains(&(*a, *b)) => {
+                    let (f, g) = (middles[f], middles[g]);
+                    ((p.0 + q.0 + f.0 + g.0) / 4.0, (p.1 + q.1 + f.1 + g.1) / 4.0)
+                }
+                _ => (0.5 * (p.0 + q.0), 0.5 * (p.1 + q.1)),
+            });
+        }
+        let on = |a: usize, b: usize| vertices + faces.len() + index[&(a.min(b), a.max(b))];
+        let mut quads = Vec::with_capacity(4 * faces.len());
+        for (f, face) in faces.iter().enumerate() {
+            for k in 0..face.len() {
+                let (before, v, after) = (face[(k + face.len() - 1) % face.len()], face[k], face[(k + 1) % face.len()]);
+                quads.push(vec![v, on(v, after), vertices + f, on(before, v)]);
+            }
+        }
+        sharp = sharp
+            .iter()
+            .flat_map(|&(a, b)| {
+                let e = on(a, b);
+                [(a, e), (b, e)]
+            })
+            .collect();
+        corner.resize(next.len(), false);
+        points = next;
+        faces = quads;
+        // Where the vertices end up if the subdivision went on for ever:
+        // what Blender shows by default (Use Limit Surface). The faces are
+        // all quads now; a vertex inside them goes to the mask of Halstead,
+        // Kass and DeRose, one on the outline to the cubic B-spline of the
+        // outline, and a corner stays.
+        let mut ends: Vec<Vec<usize>> = vec![Vec::new(); points.len()];
+        for &(a, b) in &sharp {
+            ends[a].push(b);
+            ends[b].push(a);
+        }
+        let mut beside = vec![((0.0, 0.0), (0.0, 0.0), 0.0); points.len()];
+        for face in &faces {
+            for k in 0..4 {
+                let (edge, facing, count) = &mut beside[face[k]];
+                for neighbour in [face[(k + 1) % 4], face[(k + 3) % 4]] {
+                    *edge = (edge.0 + 0.5 * points[neighbour].0, edge.1 + 0.5 * points[neighbour].1);
+                }
+                *facing = (facing.0 + points[face[(k + 2) % 4]].0, facing.1 + points[face[(k + 2) % 4]].1);
+                *count += 1.0;
+            }
+        }
+        let limit: Vec<Point> = (0..points.len())
+            .map(|v| {
+                let p = points[v];
+                match *ends[v].as_slice() {
+                    _ if corner[v] => p,
+                    [a, b] => {
+                        let (a, b) = (points[a], points[b]);
+                        ((a.0 + 4.0 * p.0 + b.0) / 6.0, (a.1 + 4.0 * p.1 + b.1) / 6.0)
+                    }
+                    [] => {
+                        let (edge, facing, n) = beside[v];
+                        let all = n * (n + 5.0);
+                        ((n * n * p.0 + 4.0 * edge.0 + facing.0) / all, (n * n * p.1 + 4.0 * edge.1 + facing.1) / all)
+                    }
+                    _ => p,
+                }
+            })
+            .collect();
+        let least = 1e-12 * whole;
+        if faces.iter().any(|face| area(&points, face) <= least || area(&limit, face) <= least) {
+            return false;
+        }
+    }
+    true
 }
 
 impl FlatNgons {
@@ -242,28 +406,75 @@ impl FlatNgons {
         };
         let on_a_bend: Vec<bool> = faces.iter().map(|face| face.iter().any(|&v| bends(v))).collect();
 
+        // The edges at each vertex, by their other end, and those of them
+        // that are sharp whatever is merged: the full creases, and the
+        // edges with one face only.
+        let mut edges_at: HashMap<u32, Vec<u32>> = HashMap::new();
+        let mut sharp_at: HashMap<u32, Vec<u32>> = HashMap::new();
+        for (&(a, b), _) in owner.iter().filter(|&(&(a, b), _)| a < b || !owner.contains_key(&(b, a))) {
+            let one_face = across(&owner, (a, b)).is_none() || !owner.contains_key(&(b, a));
+            for (v, w) in [(a, b), (b, a)] {
+                edges_at.entry(v).or_default().push(w);
+                if one_face || cut.contains(&key(a, b)) {
+                    sharp_at.entry(v).or_default().push(w);
+                }
+            }
+        }
+        // Whether a face may be made with this outline: convex, or found to
+        // subdivide without folding. Which of its vertices are corners,
+        // where a third crease ends, depends on the faces made round it,
+        // not all known yet: it must hold with the fewest there can be,
+        // those the creases of the mesh make, and with the most, every
+        // vertex another edge is left at. `gone` are the edges merged
+        // away, `inner` those this face would merge away.
+        let bend = self.bend.to_radians();
+        let may_be = |plane: &Plane, outline: &[u32], gone: &HashSet<Edge>, inner: &HashSet<Edge>| -> bool {
+            if plane.convex(positions, outline, bend) {
+                return true;
+            }
+            let n = outline.len();
+            let third = |k: usize, among: &HashMap<u32, Vec<u32>>| {
+                let (before, v, after) = (outline[(k + n - 1) % n], outline[k], outline[(k + 1) % n]);
+                among.get(&v).is_some_and(|ends| {
+                    ends.iter().any(|&w| {
+                        w != before && w != after && !gone.contains(&key(v, w)) && !inner.contains(&key(v, w))
+                    })
+                })
+            };
+            // A vertex slides along the outline only if another edge ends
+            // there and none that does is a crease.
+            let fewest: Vec<bool> = (0..n).map(|k| third(k, &sharp_at) || !third(k, &edges_at)).collect();
+            plane.subdivides(positions, outline, &fewest) && plane.subdivides(positions, outline, &vec![true; n])
+        };
+
         let mut alive = vec![true; faces.len()];
         let mut made = vec![false; faces.len()];
+        let mut planes: Vec<Option<Plane>> = vec![None; parts.len()];
+        let mut gone: HashSet<Edge> = HashSet::new();
         for members in &parts {
             if members.len() < 2 {
                 continue;
             }
             let Some(plane) = self.plane_of(positions, &faces, members, tolerance) else { continue };
-            let slack = self.slack.to_radians();
+            planes[part[members[0]]] = Some(plane.clone());
 
             // All of it in one face, if its outline is convex.
             let inside = |f: usize| part[f] == part[members[0]];
             let mut outline = Vec::new();
+            let mut inner: HashSet<Edge> = HashSet::new();
             let mut whole = true;
             for &f in members {
                 for (a, b) in steps(&faces[f]) {
                     match across(&owner, (a, b)).filter(|&g| inside(g)) {
-                        Some(_) => whole &= !kept.contains(&key(a, b)),
+                        Some(_) => {
+                            whole &= !kept.contains(&key(a, b));
+                            inner.insert(key(a, b));
+                        }
                         None => outline.push((a, b)),
                     }
                 }
             }
-            if whole && let Some(outline) = single_loop(&outline).filter(|o| plane.convex(positions, o, slack)) {
+            if whole && let Some(outline) = single_loop(&outline).filter(|o| may_be(&plane, o, &gone, &inner)) {
                 for &f in &members[1..] {
                     alive[f] = false;
                 }
@@ -273,7 +484,7 @@ impl FlatNgons {
             }
 
             // Otherwise two faces at a time, as long as the two make a
-            // convex one.
+            // face that may be.
             let mut changed = true;
             while changed {
                 changed = false;
@@ -293,17 +504,20 @@ impl FlatNgons {
                                 .chain(steps(&faces[g]).filter(|&(a, b)| !ours.contains(&(b, a))))
                                 .collect();
                             let outline = single_loop(&around)?;
-                            plane.convex(positions, &outline, slack).then_some((g, outline))
+                            let inner: HashSet<Edge> =
+                                steps(&faces[f]).filter(shared).map(|(a, b)| key(a, b)).collect();
+                            may_be(&plane, &outline, &gone, &inner).then_some((g, outline))
                         });
                         let Some((g, outline)) = joined else { break };
                         for edge in steps(&faces[g]) {
                             owner.insert(edge, f);
                         }
-                        let gone: Vec<Edge> =
+                        let merged: Vec<Edge> =
                             steps(&faces[f]).filter(|&(a, b)| owner.get(&(b, a)) == Some(&f)).collect();
-                        for (a, b) in gone {
+                        for (a, b) in merged {
                             owner.remove(&(a, b));
                             owner.remove(&(b, a));
+                            gone.insert(key(a, b));
                         }
                         alive[g] = false;
                         faces[f] = outline;
@@ -332,11 +546,57 @@ impl FlatNgons {
                     members.iter().copied().filter(|&f| alive[f] && faces[f].contains(&v)).collect();
                 let without: Vec<Vec<u32>> =
                     users.iter().map(|&f| faces[f].iter().copied().filter(|&corner| corner != v).collect()).collect();
-                if without.iter().all(|outline| outline.len() >= 3 && plane.convex(positions, outline, slack)) {
+                let none = HashSet::new();
+                if without.iter().all(|outline| outline.len() >= 3 && may_be(&plane, outline, &gone, &none)) {
                     for (f, outline) in users.into_iter().zip(without) {
                         faces[f] = outline;
                     }
                 }
+            }
+        }
+
+        // The faces made are now all known, and so are the corners of
+        // each: every edge of a face made is a crease. A face found to fold
+        // after all sends its whole part back to its quads, and the others
+        // are looked at again, their corners being fewer for it.
+        loop {
+            let mut creases_at: HashMap<u32, HashSet<u32>> = HashMap::new();
+            let mut ends_at: HashMap<u32, HashSet<u32>> = HashMap::new();
+            for (&v, ends) in &sharp_at {
+                creases_at.entry(v).or_default().extend(ends);
+            }
+            for f in (0..faces.len()).filter(|&f| alive[f]) {
+                for (a, b) in steps(&faces[f]) {
+                    ends_at.entry(a).or_default().insert(b);
+                    ends_at.entry(b).or_default().insert(a);
+                    if made[f] {
+                        creases_at.entry(a).or_default().insert(b);
+                        creases_at.entry(b).or_default().insert(a);
+                    }
+                }
+            }
+            let folds = |f: usize| {
+                let (outline, plane) = (&faces[f], planes[part[f]].as_ref().unwrap());
+                let n = outline.len();
+                let corner: Vec<bool> = (0..n)
+                    .map(|k| {
+                        let (before, after) = (outline[(k + n - 1) % n], outline[(k + 1) % n]);
+                        let third = |among: &HashMap<u32, HashSet<u32>>| {
+                            among[&outline[k]].iter().any(|&w| w != before && w != after)
+                        };
+                        third(&creases_at) || !third(&ends_at)
+                    })
+                    .collect();
+                !plane.convex(positions, outline, bend) && !plane.subdivides(positions, outline, &corner)
+            };
+            let back: HashSet<usize> =
+                (0..faces.len()).filter(|&f| alive[f] && made[f] && folds(f)).map(|f| part[f]).collect();
+            if back.is_empty() {
+                break;
+            }
+            for &f in back.iter().flat_map(|&p| &parts[p]) {
+                faces[f] = mesh.faces[f].clone();
+                (alive[f], made[f]) = (true, false);
             }
         }
 
@@ -411,7 +671,7 @@ pub struct Opened {
     pub triangles: Vec<u32>,
     lids: Vec<Lid>,
     tolerance: f64,
-    slack: f64,
+    bend: f64,
 }
 
 impl FlatNgons {
@@ -510,7 +770,7 @@ impl FlatNgons {
             triangles: Vec::new(),
             lids: lids.into_iter().flatten().collect(),
             tolerance,
-            slack: self.slack.to_radians(),
+            bend: self.bend.to_radians(),
         };
         for lid in &mut opened.lids {
             for other in &mut lid.beside {
@@ -659,7 +919,13 @@ impl Opened {
                 face
             };
             let once: HashSet<u32> = face.iter().copied().collect();
-            if face.len() < 3 || once.len() != face.len() || !lid.plane.convex(&mesh.positions, &face, self.slack) {
+            // Convex, or found to subdivide without folding, whether the
+            // vertices the chain made on it slide along the outline or not.
+            let stops: Vec<bool> = face.iter().map(|v| is_end.contains(v)).collect();
+            let sound = lid.plane.convex(&mesh.positions, &face, self.bend)
+                || (lid.plane.subdivides(&mesh.positions, &face, &stops)
+                    && lid.plane.subdivides(&mesh.positions, &face, &vec![true; face.len()]));
+            if face.len() < 3 || once.len() != face.len() || !sound {
                 return None;
             }
             for (a, b) in steps(&face) {
@@ -787,17 +1053,41 @@ mod tests {
     }
 
     #[test]
-    fn an_l_is_cut_into_rectangles() {
+    fn an_l_is_one_face_where_that_subdivides_and_two_rectangles_where_not() {
+        // Three cubes in an L: the middle of the corners of an L-shaped
+        // face is too close to its inward corner, and it is cut in two.
         let block = blocks_quads(&[[0, 0, 0], [1, 0, 0], [0, 1, 0]], 3);
         let done = FlatNgons::default().merge(&block, &folds(&block), &[], &[]);
-        // Six rectangles round the L, and its two L-shaped faces in two
-        // rectangles each.
         assert_eq!(done.mesh.faces.len(), 6 + 2 * 2);
         assert_eq!(done.mesh.stats().euler_characteristic(), 2);
         assert_eq!(done.mesh.stats().non_manifold_edges, 0);
-        // No vertex is left with two faces only, away from the creases.
+        // No vertex is left away from the creases.
         let creased: HashSet<u32> = folds(&done.mesh).iter().flat_map(|(edge, _)| *edge).collect();
         assert_eq!(done.mesh.positions.len(), creased.len());
+    }
+
+    #[test]
+    fn the_subdivision_of_a_face_is_followed_in_its_plane() {
+        let free = |points: &[(f64, f64)]| subdivides(points, &vec![false; points.len()], 3);
+        let held = |points: &[(f64, f64)]| subdivides(points, &vec![true; points.len()], 3);
+        // A square, and an L wide enough for the middle of its corners to be
+        // well inside it.
+        let square = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)];
+        let l = [(0.0, 0.0), (3.0, 0.0), (3.0, 2.0), (2.0, 2.0), (2.0, 3.0), (0.0, 3.0)];
+        assert_eq!([free(&square), held(&square), free(&l)], [true; 3]);
+        // With so few corners, and the inward one held where it is, the
+        // same L folds.
+        assert!(!held(&l));
+        // The L of three squares: that middle is its inward corner itself.
+        let thin = [(0.0, 0.0), (2.0, 0.0), (2.0, 1.0), (1.0, 1.0), (1.0, 2.0), (0.0, 2.0)];
+        assert_eq!([free(&thin), held(&thin)], [false; 2]);
+        // A U: the middle of its corners is in the gap between its arms.
+        let u = [(0.0, 0.0), (3.0, 0.0), (3.0, 3.0), (2.0, 3.0), (2.0, 1.0), (1.0, 1.0), (1.0, 3.0), (0.0, 3.0)];
+        assert!(!free(&u) && !held(&u));
+        // Turning the other way is no face at all.
+        let mut back = square;
+        back.reverse();
+        assert!(!free(&back));
     }
 
     #[test]

@@ -85,10 +85,10 @@ fn a_cylinder_with_caps_is_as_many_quads_round_as_asked() {
 }
 
 #[test]
-fn an_l_block_comes_out_as_convex_faces_creased_all_round() {
+fn an_l_block_comes_out_as_its_eight_faces_creased_all_round() {
     let (mesh, report) = remesh(&primitives::l_block(8), 1000, Faces::Ngons);
-    // Six rectangles round it, and its two L-shaped faces in two each.
-    assert_eq!(mesh.faces.len(), 10);
+    // Six rectangles round it, and its two L-shaped faces.
+    assert_eq!(mesh.faces.len(), 8);
     let creases = creases(&mesh, &report);
     assert_eq!(creases.len(), mesh.stats().edges);
     assert!(creases.values().all(|&weight| weight == 1.0));
