@@ -85,7 +85,7 @@ With sizes asked for (`--largest`), `--quads-a-turn` takes the place of `--adapt
 number of quads that go round a cylinder, whatever its radius (12 by default). Where the surface
 bends, the quads are as small as it takes for that many to go round the circle it bends along, no
 larger than the largest and no smaller than the smallest. 0 does not look at how the surface
-bends. With `--quads` the number sets the scale and this setting changes nothing.
+bends. With `--quads` the number sets the scale and this setting is not read.
 
 ```bash
 ./target/release/openclare remesh input.obj output.obj --largest 0.2 --smallest 0.02 --quads-a-turn 16

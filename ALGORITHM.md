@@ -547,7 +547,8 @@ chain falls back), and `measure` counts the vertex in `valence_2_vertices`.
 - **So many quads round a cylinder** (15 November 2026). When sizes are asked for, a bend
   gets the whole of what it calls for and not half of it: on a circle of radius r, an edge of
   2πr / N, between the largest and the smallest quad. N is `quads_a_turn` (12 by default; 0
-  not to look at the bends, which is what the hard-surface preset has). Adaptivity is not read
+  not to look at the bends, which is what the hard-surface preset has; *Quads per Turn* in
+  the add-on). Adaptivity is not read
   there any more: it is a setting of the number asked for, where the number sets the scale, N
   cancels out and nothing changes. Checked on shapes whose answer is known, at N = 8, 12 and
   16: the sizes are within 3 % on balls of three radii and 5 % on a torus, and a tube, short

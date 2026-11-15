@@ -66,8 +66,9 @@ pub struct Request<'a> {
     pub adaptivity: f64,
     /// Quads that go round the circle the surface bends along: with
     /// `bounds`, a cylinder is that many quads round, as far as the largest
-    /// and the smallest quad allow. 0 not to look at how the surface bends,
-    /// whatever the adaptivity.
+    /// and the smallest quad allow, and 0 does not look at how the surface
+    /// bends. Without `bounds` the number of quads sets the scale and this
+    /// is not read.
     pub quads_a_turn: f64,
     pub painted: Option<Painted<'a>>,
     /// Fewest quads that should go round a thin part; 0 not to care.
@@ -216,8 +217,8 @@ pub struct Demand {
     paint: Vec<f64>,
     /// How far a bend takes the size from that of what is flat towards that
     /// of so many quads to a turn, as a logarithm: all the way (1) when
-    /// sizes are asked for, half way at most for a number, none (0) when
-    /// the bends are not looked at.
+    /// sizes are asked for, half way at most for a number (the adaptivity),
+    /// none (0) when the bends are not looked at.
     follow: f64,
     /// How many times the size is smoothed over the neighbours.
     passes: usize,
@@ -254,12 +255,12 @@ impl Demand {
         // n smoothing passes reach about sqrt(n) edges.
         let passes_over = |length: f64| ((length / work_edge).powi(2).round() as usize).clamp(1, 400);
 
-        let follow = if request.quads_a_turn == 0.0 {
-            0.0
-        } else if request.bounds.is_some() {
-            1.0
-        } else {
-            0.5 * request.adaptivity
+        // For a number the quads to a turn cancel out, the bends being
+        // measured against the typical one: any number does.
+        let (follow, quads_a_turn) = match request.bounds {
+            Some(_) if request.quads_a_turn == 0.0 => (0.0, 1.0),
+            Some(_) => (1.0, request.quads_a_turn),
+            None => (0.5 * request.adaptivity, 12.0),
         };
         let mut bend = vec![f64::INFINITY; vertices];
         if follow > 0.0 {
@@ -278,7 +279,7 @@ impl Demand {
             for v in 0..vertices {
                 let strongest = bending.k1[v].abs().max(bending.k2[v].abs()) + floor;
                 // A circle of radius 1 / k, in so many quads.
-                bend[v] = std::f64::consts::TAU / (strongest * request.quads_a_turn);
+                bend[v] = std::f64::consts::TAU / (strongest * quads_a_turn);
             }
         }
 

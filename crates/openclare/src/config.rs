@@ -50,9 +50,8 @@ pub struct RemeshConfig {
     /// asked for ([`Target::SizeRange`]), where the surface bends the quads
     /// are as small as it takes for that many to go round the circle it
     /// bends along, no larger than the largest and no smaller than the
-    /// smallest. A number of quads asked for sets the scale itself, and
-    /// this one then changes nothing. 0 does not look at how the surface
-    /// bends, in either case.
+    /// smallest; 0 does not look at how the surface bends. A number of
+    /// quads asked for sets the scale itself, and this is then not read.
     pub quads_a_turn: f64,
     /// Fewest quads that go round a thin part of the shape, a finger or
     /// the tip of an ear: where the quads asked for are too large for that,

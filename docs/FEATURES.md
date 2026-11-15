@@ -38,6 +38,7 @@ The panel *openclare* of the Properties editor, on the tab of the mesh.
 | *Show Sizes* | experimental | shows those sizes (#253) |
 | *Density from Shape* | experimental | reads the shape with those sizes (#253) |
 | *Adaptive Size* | stable | |
+| *Quads per Turn* | experimental | with *Ask For: Sizes* only; a cylinder with flat caps gets about two thirds of the quads asked round it |
 | *Quads Around Thin Parts* | experimental | the bound on size has known limits (#38); parts thinner than a quad at low budgets (#18) |
 | *Hard Edges*, *Angle* | stable | |
 | *Marked Sharp* | stable | |
@@ -83,7 +84,7 @@ The tools of the 3D viewport, in Object Mode.
 | `--preset`, `--config`, `--save-config` | stable | |
 | The presets shipped, `organic`, `animation`, `hard-surface` (`presets`) | experimental | their values are not tuned on the corpus (#13) |
 | `--adaptivity`, `--crease-angle`, `--density`, `--density-contrast`, `--symmetry` | stable | |
-| `--quads-a-turn` | experimental | with `--largest` only; the add-on has no setting for it yet; a cylinder with flat caps gets about two thirds of the quads asked round it |
+| `--quads-a-turn` | experimental | as *Quads per Turn* |
 | `--alignment` | experimental | as *Follow Curvature* (#13, #21, #33) |
 | `--singularity-reach`, `--singularity-tolerance` | experimental | as *Fewer Irregular Vertices* (#72) |
 | `--volume-fit` | experimental | as *Volume Fit* (#39) |

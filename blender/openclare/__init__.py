@@ -32,11 +32,11 @@ PRESETS = [
 # followed by default they hardly differ from the defaults. Files of 0.1,
 # which named one of these, are still given its values.
 SHAPES = {
-    "organic": dict(adaptive_size=50.0, quads_around=6, use_hard_edges=True, hard_edge_angle=math.radians(30.0),
+    "organic": dict(adaptive_size=50.0, quads_per_turn=12, quads_around=6, use_hard_edges=True, hard_edge_angle=math.radians(30.0),
                     follow_curvature=0.05, fewer_irregular=2.0, volume_fit=1.0),
-    "animation": dict(adaptive_size=50.0, quads_around=6, use_hard_edges=True, hard_edge_angle=math.radians(30.0),
+    "animation": dict(adaptive_size=50.0, quads_per_turn=12, quads_around=6, use_hard_edges=True, hard_edge_angle=math.radians(30.0),
                       follow_curvature=0.05, fewer_irregular=3.0, volume_fit=1.0),
-    "hard-surface": dict(adaptive_size=0.0, quads_around=0, use_hard_edges=True, hard_edge_angle=math.radians(30.0),
+    "hard-surface": dict(adaptive_size=0.0, quads_per_turn=0, quads_around=0, use_hard_edges=True, hard_edge_angle=math.radians(30.0),
                          follow_curvature=0.02, fewer_irregular=2.0, volume_fit=1.0),
 }
 # The settings a preset of the shape holds, from the three blocks of the panel.
@@ -179,6 +179,7 @@ def shape_of(settings):
     settings = experimental.effective(settings)
     return {
         "adaptivity": round(settings.adaptive_size / 100.0, 6),
+        "quads_a_turn": settings.quads_per_turn,
         "quads_around": settings.quads_around,
         "edge_angle": round(math.degrees(settings.hard_edge_angle), 4) if settings.use_hard_edges else "none",
         "alignment": round(settings.follow_curvature, 6),
@@ -524,14 +525,26 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         options=set(),
         name="Adaptive Size",
         description=(
-            "How much the size of the quads follows the curvature: at 0 % they are all the same size; "
-            "towards 100 % they get smaller where the shape bends and larger where it is flat, "
-            "for the same number in total"
+            "With a number asked for, how much the size of the quads follows the curvature: at 0 % they are all "
+            "the same size; towards 100 % they get smaller where the shape bends and larger where it is flat, "
+            "for the same number in total. With sizes asked for, Quads per Turn says it"
         ),
         subtype="PERCENTAGE",
         default=50.0,
         min=0.0,
         max=100.0,
+    )
+    quads_per_turn: bpy.props.IntProperty(
+        options=set(),
+        name="Quads per Turn",
+        description=(
+            "With sizes asked for, the quads that go round a cylinder, whatever its radius: where the shape bends, "
+            "the quads are as small as it takes for that many to go round, no larger than the largest and no "
+            "smaller than the smallest. 0 does not look at how the shape bends"
+        ),
+        default=12,
+        min=0,
+        soft_max=32,
     )
     quads_around: bpy.props.IntProperty(
         options=set(),
@@ -647,6 +660,16 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         min=1.0,
         soft_max=16.0,
         max=100.0,
+    )
+    shape_quads_per_turn: bpy.props.IntProperty(
+        options={"HIDDEN"},
+        name="Quads per Turn Written",
+        description=(
+            "The Quads per Turn Density from Shape read the shape with before it switched it off: what it reads "
+            "the shape with again while Quads per Turn stays off and its group is the Density"
+        ),
+        default=0,
+        min=0,
     )
     shape_adaptive_size: bpy.props.FloatProperty(
         options={"HIDDEN"},
@@ -1307,12 +1330,13 @@ class OPENCLARE_OT_density_from_shape(bpy.types.Operator):
         largest being the weight 0, or for the number asked for (Number), the
         largest found being the weight 0. They are written as weights
         (`weights_from_sizes`) into the vertex group `SHAPE_DENSITY`, which
-        becomes the Density, and Adaptive Size is switched off. Quads Around
+        becomes the Density, and Adaptive Size and Quads per Turn, either of
+        which would count the bends again, are switched off. Quads Around
         Thin Parts stays as it is: a thin part is a bound on the size, which
         counts once however many times it is given, and keeps what is thinner
         than the Factor can paint. Read again while the group is the Density
-        and Adaptive Size is off, the shape is read with the Adaptive Size
-        that was switched off."""
+        and they are off, the shape is read with the Adaptive Size and the
+        Quads per Turn that were switched off."""
         import numpy
 
         owner = object_to_remesh(context)
@@ -1330,6 +1354,10 @@ class OPENCLARE_OT_density_from_shape(bpy.types.Operator):
             # with what it was.
             adaptive = settings.shape_adaptive_size
             shape["adaptivity"] = round(adaptive / 100.0, 6)
+        turn = settings.quads_per_turn
+        if turn == 0 and settings.density_group == SHAPE_DENSITY and settings.shape_quads_per_turn > 0:
+            turn = settings.shape_quads_per_turn
+            shape["quads_a_turn"] = turn
         evaluated = owner.evaluated_get(context.evaluated_depsgraph_get())
         mesh = evaluated.to_mesh()
         try:
@@ -1363,11 +1391,17 @@ class OPENCLARE_OT_density_from_shape(bpy.types.Operator):
         write_weights(owner, SHAPE_DENSITY, weights)
         if settings.density_group != SHAPE_DENSITY or settings.adaptive_size > 0.0:
             settings.shape_adaptive_size = adaptive
+        if settings.density_group != SHAPE_DENSITY or settings.quads_per_turn > 0:
+            settings.shape_quads_per_turn = turn
+        sized = settings.target == "SIZE" and settings.largest_quad > 0.0
+        read_with = f"Quads per Turn {turn}" if sized else f"Adaptive Size {adaptive:.0f} %"
         settings.density_group = SHAPE_DENSITY
         settings.adaptive_size = 0.0
+        settings.quads_per_turn = 0
         message = (
-            f"openclare: '{SHAPE_DENSITY}' written from the shape (Adaptive Size {adaptive:.0f} %), "
-            f"weights {weights.min():.2f} to {weights.max():.2f}; it is the Density now, and Adaptive Size is off"
+            f"openclare: '{SHAPE_DENSITY}' written from the shape ({read_with}), "
+            f"weights {weights.min():.2f} to {weights.max():.2f}; it is the Density now, and Adaptive Size "
+            "and Quads per Turn are off"
         )
         if beyond >= 0.005:
             message += f"; {100.0 * beyond:.0f} % of it asks for smaller quads than the Factor gives"
@@ -2242,7 +2276,11 @@ class OPENCLARE_PT_engine(SourcePanel, bpy.types.Panel):
         # Decimate reads none of the shape.
         shaped = layout.column()
         shaped.active = not decimating(settings)
-        shaped.prop(settings, "adaptive_size", slider=True)
+        # Sizes asked for, the quads per turn say how the size follows the
+        # shape; they are with the sizes.
+        adaptive = shaped.column()
+        adaptive.active = experimental.effective(settings).target != "SIZE"
+        adaptive.prop(settings, "adaptive_size", slider=True)
         if not experimental.shown():
             return
         shaped.prop(settings, "quads_around", icon=experimental.ICON)
@@ -2261,6 +2299,7 @@ def draw_sizes(context, layout, owner, settings):
     sizes = layout.column(align=True)
     sizes.prop(settings, "largest_quad")
     sizes.prop(settings, "smallest_quad")
+    layout.prop(settings, "quads_per_turn")
     held = analysis_of(context, settings, owner)
     if held is None:
         note = "Analyse to see how many quads these sizes make"
