@@ -159,6 +159,9 @@ pub struct Report {
     /// with how sharp, from 0 to 1 (see [`crate::creases`]). The hard edges
     /// are among them, at 1.
     pub creases: Vec<crate::creases::Crease>,
+    /// Faces made by merging the quads of a flat part, when n-gons were
+    /// asked for (see [`crate::ngons`]); 0 otherwise.
+    pub merged_faces: usize,
     /// For each face of the output, the group of the input it lies in, when
     /// the input came with groups (see [`crate::Guides::groups`]); empty
     /// otherwise.

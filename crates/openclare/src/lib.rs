@@ -32,6 +32,7 @@ pub mod math;
 pub mod mesh;
 pub mod meshing;
 pub mod metrics;
+pub mod ngons;
 pub mod parametrization;
 pub mod pipeline;
 pub mod preprocess;

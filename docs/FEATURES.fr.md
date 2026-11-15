@@ -98,6 +98,7 @@ Les outils de la vue 3D, en Object Mode.
 | `--groups` : une ligne d'arêtes entre deux | expérimental | comme *Materials* (#47) |
 | `--curves` | expérimental | comme *Draw Curve* (#195, #196, #44) |
 | `--poles`, `--poles-out` | expérimental | comme les pôles du greffon (#249) |
+| `--faces ngons`, `--creases-out` | expérimental | les parties plates en n-gones convexes, en ligne de commande seulement ; mesuré sur six formes mécaniques, à deux niveaux de subdivision |
 | `--edge-angle` | expérimental | arêtes vives du maillage de travail, désactivé par défaut, pas encore dans le greffon |
 | `--method triangles` | expérimental | comme *Output: Triangles* (#226) |
 | `--method integer-grid`, `--method instant-meshes` | expérimental | autres chaînes, gardées pour comparer (#9) |
