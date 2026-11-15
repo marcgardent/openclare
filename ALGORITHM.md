@@ -2082,11 +2082,36 @@ diagonal; no subdivided face is folded in any of the twelve.
 | part | 1008 → 628, 1.2 | 2945 → 1321, 36 |
 | cage | 982 → 982 | 2955 → 2955 |
 
+**Flat parts the chain does not mesh at all** (15 November 2026, second step). A flat part
+that one face can stand for is taken out of the input before the chain: the field, the map,
+the T-mesh and the quantization never see it, and the chain meshes a surface that is open
+there. The border it leaves is then closed by one face. Such a part lies in one plane, has for
+its outline one convex loop of edges folded by more than the hard-edge angle, triangles of one
+group, and no neighbour that is such a part itself (the edge between two would have no face of
+the chain to give it its vertices: a cube is left whole, and merged as above). It is not done
+with guide curves, poles or a symmetry; and if a border does not come back flat and convex, the
+run is made again with the input whole.
+
+What it gives, on the cylinder with flat caps:
+
+| Asked for | Caps meshed, then merged | Caps taken out |
+|---|---|---|
+| 1000 quads | 40 round it, 600 on the side | 56 round it, 1008 on the side |
+| 3000 quads | 70 round it | 96 round it |
+| sizes, 12 quads a turn | 8 round it | 12 |
+| sizes, 16 quads a turn | 12 | 16 |
+| sizes, 24 quads a turn | 16 | 23 |
+
+Subdivided twice, the cylinder of 1000 quads is 0.74 per mille of its diagonal from the source
+at most, 1.35 with its caps meshed, and no face is folded. The five other models have no such
+part, and come out as in the table above.
+
 **What is not done.** The cage has no flat part cut off by full creases, and stays as it is.
 A cube keeps the vertices of its edges, 52 sides a face at 1000 quads, where 4 would do. The
-plane of a symmetry is a line no face is merged across. The quads round a flat part are still
-counted as if it were meshed: taking the part out of the quantization is the next step. Not
-checked: more than two levels of subdivision, how large n-gons shade, the add-on.
+plane of a symmetry is a line no face is merged across. Only the parts with a convex outline
+and no flat neighbour leave the chain: the faces of a cube, an L or a face with a hole are
+still meshed, then merged. Not checked: more than two levels of subdivision, how large n-gons
+shade, the add-on.
 
 ### Guide curves
 

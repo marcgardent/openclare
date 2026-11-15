@@ -342,6 +342,29 @@ impl RemeshConfig {
             // The quads first, mirrored if they are to be, then their flat
             // parts merged.
             let quads = Self { faces: Faces::Quads, ..self.clone() };
+            // The flat parts one face can stand for are not meshed at all,
+            // where nothing drawn on the input could lie on one.
+            let flat = crate::ngons::FlatNgons::default();
+            let angle = self.crease_angle.into_iter().chain(self.edge_angle).fold(f64::INFINITY, f64::min);
+            let free = guides.curves.is_empty() && guides.lines.is_empty() && guides.poles.is_empty();
+            if free
+                && self.symmetry.is_none()
+                && angle.is_finite()
+                && let Some(opened) = flat.open(input, angle, guides.groups)
+            {
+                let density: Option<Vec<f64>> =
+                    guides.density.map(|density| opened.vertices.iter().map(|&v| density[v as usize]).collect());
+                let groups: Option<Vec<u32>> =
+                    guides.groups.map(|groups| opened.triangles.iter().map(|&t| groups[t as usize]).collect());
+                let left = Guides { density: density.as_deref(), groups: groups.as_deref(), ..*guides };
+                if let Ok((mesh, mut report)) = quads.remesh_recorded(&opened.mesh, &left, recorder)
+                    && let Some(mesh) = opened.close(mesh, &mut report)
+                {
+                    let mesh = crate::ngons::flat_parts(&mesh, &mut report);
+                    recorder.record("result/ngons", Shape::Polygons(&mesh));
+                    return Ok((mesh, report));
+                }
+            }
             let (mesh, mut report) = quads.remesh_recorded(input, guides, recorder)?;
             let mesh = crate::ngons::flat_parts(&mesh, &mut report);
             recorder.record("result/ngons", Shape::Polygons(&mesh));

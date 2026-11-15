@@ -40,7 +40,7 @@ Le panneau *openclare* de l'éditeur Properties, dans l'onglet du maillage.
 | *Show Sizes* | expérimental | montre ces tailles (#253) |
 | *Density from Shape* | expérimental | lit la forme avec ces tailles (#253) |
 | *Adaptive Size* | stable | |
-| *Quads per Turn* | expérimental | avec *Ask For: Sizes* seulement ; un cylindre à couvercles plats reçoit environ les deux tiers des quads demandés autour |
+| *Quads per Turn* | expérimental | avec *Ask For: Sizes* seulement ; un cylindre à couvercles plats reçoit environ les deux tiers des quads demandés autour (tous avec `--faces ngons`, en ligne de commande) |
 | *Quads Around Thin Parts* | expérimental | la borne sur la taille a des limites connues (#38) ; parties plus fines qu'un quad aux petits budgets (#18) |
 | *Hard Edges*, *Angle* | stable | |
 | *Marked Sharp* | stable | |

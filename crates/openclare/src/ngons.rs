@@ -18,6 +18,11 @@
 //! - nothing is merged across an edge the report has something to say of
 //!   (a guide curve, a border between two groups).
 //!
+//! Before that, the flat parts one face can stand for, the cap of a
+//! cylinder say, are taken out of the input, so that the chain does not
+//! mesh them at all, and the border it leaves there is closed by one face
+//! (see [`FlatNgons::open`]).
+//!
 //! The vertices of the outline are all kept, those on a straight side too:
 //! the faces across the crease use them. The vertices left between two
 //! merged faces, with nothing but these two faces round them, are removed.
@@ -38,7 +43,7 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 
 use crate::creases::Crease;
 use crate::math::{Vec3, tangent_frame};
-use crate::mesh::PolyMesh;
+use crate::mesh::{PolyMesh, TriMesh};
 
 #[derive(Clone, Debug)]
 pub struct FlatNgons {
@@ -109,12 +114,22 @@ fn single_loop(edges: &[Edge]) -> Option<Vec<u32>> {
 
 /// A flat part: its plane, as a point, and two directions that turn the
 /// way its faces do.
+#[derive(Clone, Debug)]
 struct Plane {
     origin: Vec3,
+    normal: Vec3,
     across: (Vec3, Vec3),
 }
 
 impl Plane {
+    fn new(origin: Vec3, normal: Vec3) -> Self {
+        Self { origin, normal, across: tangent_frame(normal) }
+    }
+
+    fn off(&self, p: Vec3) -> f64 {
+        (p - self.origin).dot(self.normal).abs()
+    }
+
     fn flat(&self, p: Vec3) -> (f64, f64) {
         ((p - self.origin).dot(self.across.0), (p - self.origin).dot(self.across.1))
     }
@@ -357,7 +372,205 @@ impl FlatNgons {
         let origin = corners().sum::<Vec3>() / corners().count() as f64;
         let flat = corners().all(|p| (p - origin).dot(normal).abs() <= tolerance)
             && members.iter().all(|&f| facing(f).dot(normal) > 0.0);
-        flat.then(|| Plane { origin, across: tangent_frame(normal) })
+        flat.then(|| Plane::new(origin, normal))
+    }
+}
+
+/// A flat part of the input taken out of it before the chain: its plane,
+/// its outline as the input has it, and the group of its triangles.
+#[derive(Clone, Debug)]
+struct Lid {
+    plane: Plane,
+    outline: Vec<Vec3>,
+    group: u32,
+}
+
+/// An input with flat parts taken out (see [`FlatNgons::open`]).
+#[derive(Clone, Debug)]
+pub struct Opened {
+    /// What is left of the input, open where the parts were.
+    pub mesh: TriMesh,
+    /// The vertex and the triangle of the input each of those of `mesh`
+    /// was.
+    pub vertices: Vec<u32>,
+    pub triangles: Vec<u32>,
+    lids: Vec<Lid>,
+    tolerance: f64,
+    slack: f64,
+}
+
+impl FlatNgons {
+    /// `input` without those of its flat parts that one face can stand
+    /// for, so that the chain does not mesh them at all: the quads round a
+    /// cylinder are then those its side calls for, not those its caps can
+    /// take. Such a part lies in one plane, has for its outline one convex
+    /// loop of edges folded by more than `angle` degrees, and no neighbour
+    /// that is such a part itself: a cube is left whole. `None` if there
+    /// is none.
+    pub fn open(&self, input: &TriMesh, angle: f64, groups: Option<&[u32]>) -> Option<Opened> {
+        let positions = &input.positions;
+        let (low, high) =
+            positions.iter().fold((Vec3::INFINITY, Vec3::NEG_INFINITY), |(lo, hi), &p| (lo.min(p), hi.max(p)));
+        let tolerance = self.flatness * (high - low).length();
+        let facing: Vec<Vec3> = (0..input.triangles.len()).map(|t| input.area_vector(t).normalize_or_zero()).collect();
+        let mut owner: HashMap<Edge, usize> = HashMap::new();
+        let mut broken: HashSet<Edge> = HashSet::new();
+        for (t, triangle) in input.triangles.iter().enumerate() {
+            for (a, b) in steps(triangle) {
+                if owner.insert((a, b), t).is_some() {
+                    broken.insert(key(a, b));
+                }
+            }
+        }
+        // The triangle across an edge, and whether the surface folds there.
+        let across = |(a, b): Edge| owner.get(&(b, a)).copied().filter(|_| !broken.contains(&key(a, b)));
+        let folded = |t: usize, u: usize| facing[t].dot(facing[u]) < angle.to_radians().cos();
+
+        let mut part = vec![usize::MAX; input.triangles.len()];
+        let mut lids: Vec<Option<Lid>> = Vec::new();
+        for seed in 0..input.triangles.len() {
+            if part[seed] != usize::MAX {
+                continue;
+            }
+            part[seed] = lids.len();
+            let mut members = vec![seed];
+            let mut outline = Vec::new();
+            let mut closed = true;
+            let mut head = 0;
+            while head < members.len() {
+                let t = members[head];
+                head += 1;
+                for edge in steps(&input.triangles[t]) {
+                    match across(edge) {
+                        None => closed = false,
+                        Some(u) if folded(t, u) => outline.push(edge),
+                        Some(u) if part[u] == usize::MAX => {
+                            part[u] = lids.len();
+                            members.push(u);
+                        }
+                        Some(_) => {}
+                    }
+                }
+            }
+            let lid = || -> Option<Lid> {
+                let normal = members.iter().map(|&t| input.area_vector(t)).sum::<Vec3>().try_normalize()?;
+                let corners = || members.iter().flat_map(|&t| input.corners(t));
+                let plane = Plane::new(corners().sum::<Vec3>() / (3 * members.len()) as f64, normal);
+                let flat = corners().all(|p| plane.off(p) <= tolerance)
+                    && members.iter().all(|&t| facing[t].dot(normal) > 0.0);
+                let group = groups.map_or(0, |groups| groups[members[0]]);
+                let one_group = groups.is_none_or(|groups| members.iter().all(|&t| groups[t] == group));
+                let outline = single_loop(&outline)?;
+                (closed && flat && one_group && plane.convex(positions, &outline, self.bend.to_radians()))
+                    .then(|| Lid { plane, outline: outline.iter().map(|&v| positions[v as usize]).collect(), group })
+            };
+            lids.push(lid());
+        }
+        // Two such parts side by side are both left in: the edge between
+        // them would have no face of the chain to give it its vertices.
+        let mut alone: Vec<bool> = lids.iter().map(Option::is_some).collect();
+        for (&edge, &t) in &owner {
+            if across(edge).is_some_and(|u| part[u] != part[t] && lids[part[u]].is_some()) {
+                alone[part[t]] = false;
+            }
+        }
+        if !alone.contains(&true) || alone.iter().all(|&out| out) {
+            return None;
+        }
+
+        let mut opened = Opened {
+            mesh: TriMesh::default(),
+            vertices: Vec::new(),
+            triangles: Vec::new(),
+            lids: lids.into_iter().zip(&alone).filter_map(|(lid, &out)| lid.filter(|_| out)).collect(),
+            tolerance,
+            slack: self.slack.to_radians(),
+        };
+        let mut became = vec![u32::MAX; positions.len()];
+        for (t, triangle) in input.triangles.iter().enumerate().filter(|&(t, _)| !alone[part[t]]) {
+            opened.mesh.triangles.push(triangle.map(|v| {
+                if became[v as usize] == u32::MAX {
+                    became[v as usize] = opened.mesh.positions.len() as u32;
+                    opened.mesh.positions.push(positions[v as usize]);
+                    opened.vertices.push(v);
+                }
+                became[v as usize]
+            }));
+            opened.triangles.push(t as u32);
+        }
+        Some(opened)
+    }
+}
+
+impl Opened {
+    /// `mesh`, made by the chain from what was left of the input, with one
+    /// face on each of the parts taken out: the border the chain left
+    /// there, walked the other way. What `report` says of the mesh is said
+    /// of the result. `None` if a part has no border of its own that is
+    /// flat and convex: the mesh is then not to be used.
+    pub(crate) fn close(&self, mut mesh: PolyMesh, report: &mut crate::pipeline::Report) -> Option<PolyMesh> {
+        let walked: HashSet<Edge> = mesh.faces.iter().flat_map(|face| steps(face)).collect();
+        let mut after: HashMap<u32, u32> = HashMap::new();
+        for &(a, b) in walked.iter().filter(|&&(a, b)| !walked.contains(&(b, a))) {
+            // Walked the other way, the border turns as the lid faces.
+            if after.insert(b, a).is_some() {
+                return None;
+            }
+        }
+        let mut borders: Vec<Vec<u32>> = Vec::new();
+        let mut starts: Vec<u32> = after.keys().copied().collect();
+        starts.sort_unstable();
+        let mut seen: HashSet<u32> = HashSet::new();
+        for start in starts {
+            if !seen.insert(start) {
+                continue;
+            }
+            let mut border = vec![start];
+            let mut at = after[&start];
+            while at != start {
+                if !seen.insert(at) {
+                    return None;
+                }
+                border.push(at);
+                at = *after.get(&at)?;
+            }
+            borders.push(border);
+        }
+
+        let mut taken = vec![false; borders.len()];
+        for lid in &self.lids {
+            // The border in the plane of the lid whose middle is inside
+            // its outline.
+            let n = lid.outline.len();
+            let inside = |p: Vec3| {
+                let p = lid.plane.flat(p);
+                (0..n).all(|k| {
+                    let (a, b) = (lid.plane.flat(lid.outline[k]), lid.plane.flat(lid.outline[(k + 1) % n]));
+                    (b.0 - a.0) * (p.1 - a.1) - (b.1 - a.1) * (p.0 - a.0) >= 0.0
+                })
+            };
+            let fits = |border: &Vec<u32>| {
+                let at = |&v: &u32| mesh.positions[v as usize];
+                border.iter().all(|v| lid.plane.off(at(v)) <= self.tolerance)
+                    && inside(border.iter().map(at).sum::<Vec3>() / border.len() as f64)
+            };
+            let mut fitting = (0..borders.len()).filter(|&b| fits(&borders[b]));
+            let (b, None) = (fitting.next()?, fitting.next()) else { return None };
+            if std::mem::replace(&mut taken[b], true) || !lid.plane.convex(&mesh.positions, &borders[b], self.slack) {
+                return None;
+            }
+            for (a, b) in steps(&borders[b]) {
+                report.creases.push(([a, b], 1.0));
+                report.hard_edges.push([a, b]);
+            }
+            if !report.face_groups.is_empty() {
+                report.face_groups.push(lid.group);
+            }
+            mesh.faces.push(borders[b].clone());
+        }
+        report.merged_faces += self.lids.len();
+        report.stats = mesh.stats();
+        Some(mesh)
     }
 }
 
@@ -401,7 +614,7 @@ pub(crate) fn flat_parts(mesh: &PolyMesh, report: &mut crate::pipeline::Report) 
     if !report.face_groups.is_empty() {
         report.face_groups = done.faces.iter().map(|&f| report.face_groups[f as usize]).collect();
     }
-    report.merged_faces = done.made.iter().filter(|made| **made).count();
+    report.merged_faces += done.made.iter().filter(|made| **made).count();
     report.stats = done.mesh.stats();
     done.mesh
 }
@@ -489,6 +702,23 @@ mod tests {
         let done = FlatNgons::default().merge(&sheet, &[], &[], &groups);
         assert_eq!(done.mesh.faces.len(), 2);
         assert_ne!(groups[done.faces[0] as usize], groups[done.faces[1] as usize]);
+    }
+
+    #[test]
+    fn the_caps_of_a_cylinder_are_taken_out_and_a_cube_is_left_whole() {
+        let cylinder = crate::mesh::primitives::cylinder(12);
+        let opened = FlatNgons::default().open(&cylinder, 30.0, None).unwrap();
+        assert_eq!(opened.lids.len(), 2);
+        // Left: the side, open at both ends, every vertex of it kept.
+        assert!(opened.mesh.positions.len() < cylinder.positions.len());
+        assert!(
+            opened.triangles.iter().all(|&t| { cylinder.corners(t as usize).iter().any(|p| p.z.abs() < 1.0 - 1e-9) })
+        );
+        assert_eq!(opened.vertices.len(), opened.mesh.positions.len());
+        assert!(FlatNgons::default().open(&cube_quads(4).triangulated(), 30.0, None).is_none());
+        // Two groups on a cap: it is left in.
+        let groups: Vec<u32> = (0..cylinder.triangles.len() as u32).map(|t| t % 2).collect();
+        assert!(FlatNgons::default().open(&cylinder, 30.0, Some(&groups)).is_none());
     }
 
     #[test]

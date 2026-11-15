@@ -38,7 +38,7 @@ The panel *openclare* of the Properties editor, on the tab of the mesh.
 | *Show Sizes* | experimental | shows those sizes (#253) |
 | *Density from Shape* | experimental | reads the shape with those sizes (#253) |
 | *Adaptive Size* | stable | |
-| *Quads per Turn* | experimental | with *Ask For: Sizes* only; a cylinder with flat caps gets about two thirds of the quads asked round it |
+| *Quads per Turn* | experimental | with *Ask For: Sizes* only; a cylinder with flat caps gets about two thirds of the quads asked round it (all of them with `--faces ngons`, on the command line) |
 | *Quads Around Thin Parts* | experimental | the bound on size has known limits (#38); parts thinner than a quad at low budgets (#18) |
 | *Hard Edges*, *Angle* | stable | |
 | *Marked Sharp* | stable | |
