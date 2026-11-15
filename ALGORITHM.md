@@ -2046,19 +2046,32 @@ Done on 15 November 2026, at the author's request: an output apart from the quad
 the same. The quads stay the default, and the chain that makes them is not touched: the quads
 of the flat parts are merged at the very end.
 
-**The rule.** A face of many sides subdivides as the quads it stands for when it is flat,
-convex, and has a full crease all round it. A trial on six models (Blender's Limited Dissolve
-and Decimate Planar against these three conditions) found no exception to it, and found that
-a face that is not convex folds every time.
+**The rule.** A face of many sides subdivides as the quads it stands for when it is flat, has
+a full crease all round it, and is seen whole from the middle of its corners, where the
+subdivision puts its point, with room to spare. A convex face always is. A trial on six models
+(Blender's Limited Dissolve and Decimate Planar against these conditions) found no exception,
+and found that a face not seen whole from that middle folds every time.
+
+Convex is more than is needed, and "seen from the middle" less: a face can pass at the first
+level and fold at the second, at an inward corner. So for a face that is not convex the
+subdivision itself is made (`subdivides`), in the plane of the face, three levels deep, and
+with the positions on the limit surface that Blender shows by default; the face is taken if no
+quad turns over. A face cut off by full creases subdivides on its own, whatever lies round it,
+so this is the whole of what happens to it. Two things were learnt by comparing with Blender:
+a vertex with no other edge than the two of an outline does not slide along it, it stays
+where it is; and the limit positions fold faces that the refined mesh does not.
 
 **What is done.**
 
 - A flat part is what a walk across the edges reaches without crossing a full crease (weight
   1), when all of it lies in one plane, to within 0.1 per mille of the diagonal. A flat that
   runs into a curve without a fold between them stays quads.
-- A part whose outline is convex becomes one face: the cap of a cylinder, a face of a cube.
-- Another is merged two faces at a time, as long as the two make a convex face (3 degrees of
-  slack at a corner, the lines of a grid not being quite straight): an L gives two rectangles.
+- A part one face can stand for becomes that face: the cap of a cylinder, a face of a cube, an
+  L wide enough.
+- Another is merged two faces at a time, as long as a face can stand for the two: round a hole
+  that gives the ring of quads on its rim and a few sectors.
+- Once all the faces are made, each is looked at again with the corners it really has; one
+  that folds after all sends its part back to quads.
 - The edges between two faces made this way get a full crease. In a plane it changes nothing
   of the shape, and without it the subdivision pulls the line between two large faces
   sideways, out of the part where the part is not convex.
@@ -2082,11 +2095,55 @@ diagonal; no subdivided face is folded in any of the twelve.
 | part | 1008 → 628, 1.2 | 2945 → 1321, 36 |
 | cage | 982 → 982 | 2955 → 2955 |
 
+**Flat parts the chain does not mesh at all** (15 November 2026, second step). A flat part
+that one face can stand for is taken out of the input before the chain: the field, the map,
+the T-mesh and the quantization never see it, and the chain meshes a surface that is open
+there. The border it leaves is then closed by one face. Such a part lies in one plane, has for
+its outline one convex loop of edges folded by more than the hard-edge angle, and triangles of
+one group. Along what is left of the input, the face takes the vertices of the border the
+chain made there. Between two such parts the edge is straight and has no vertex but its two
+ends: a cube leaves the chain nothing, and comes out as 6 quads on its 8 corners. It is not
+done with guide curves, poles or a symmetry; and if a face cannot be closed flat and convex,
+the run is made again with the input whole.
+
+What it gives, on the cylinder with flat caps:
+
+| Asked for | Caps meshed, then merged | Caps taken out |
+|---|---|---|
+| 1000 quads | 40 round it, 600 on the side | 56 round it, 1008 on the side |
+| 3000 quads | 70 round it | 96 round it |
+| sizes, 12 quads a turn | 8 round it | 12 |
+| sizes, 16 quads a turn | 12 | 16 |
+| sizes, 24 quads a turn | 16 | 23 |
+
+The quads asked for go to what is left, so the result is closer to the source once subdivided.
+Faces of the result, and the greatest distance to the source in per mille of the diagonal once
+subdivided twice, quads → n-gons. No subdivided face is turned over, at two levels or at
+three, on these and on a half cylinder:
+
+| Model | 1000 quads | 3000 quads |
+|---|---|---|
+| cube | 6 faces, 0.0 → 0.0 | 6 faces, 0.0 → 0.0 |
+| lblock | 8 faces, 0.0 → 0.0 | 8 faces, 0.0 → 0.0 |
+| cylinder | 1010 faces, 1.35 → 0.74 | 2978 faces, 0.73 → 0.55 |
+| cube with a round hole | 583 faces, 12.3 → 1.5 | 1733 faces, 0.90 → 0.51 |
+| part | 697 faces, 11.0 → 6.3 | 1087 faces, 6.7 → 0.92 |
+| cage | as it was | as it was |
+
+With convex faces only (3 degrees of slack at a corner, the first rule tried), the lblock had
+10 faces, the cube with a hole 663 and 1911, the part 750 and 1290, and one face of the cube
+with a hole at 3000 quads turned over at the third level: the slack let through what the
+subdivision does not forgive.
+
 **What is not done.** The cage has no flat part cut off by full creases, and stays as it is.
-A cube keeps the vertices of its edges, 52 sides a face at 1000 quads, where 4 would do. The
-plane of a symmetry is a line no face is merged across. The quads round a flat part are still
-counted as if it were meshed: taking the part out of the quantization is the next step. Not
-checked: more than two levels of subdivision, how large n-gons shade, the add-on.
+A flat part that is not convex, an L or a face with a hole, is still meshed, then merged, and
+the quads on the rim of a round hole stay. The plane of a
+symmetry is a line no face is merged across. Not checked: more than three levels of subdivision,
+how large n-gons shade, organic models.
+
+**In the add-on** (0.21.0): *Output: N-gons*, experimental. The creases are set on the result
+whatever *Carry* says, the result is named `.ngons` and says how many of its faces are on flat
+parts; with the experimental features hidden the same settings give quads.
 
 ### Guide curves
 

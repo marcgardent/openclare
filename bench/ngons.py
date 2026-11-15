@@ -1,13 +1,14 @@
 # Subdivides (Catmull-Clark, level 2, with the creases the engine wrote) the quad output and the n-gon
 # output of the same run, and compares them: folded faces, distance to the source, distance to each other.
 # Each output has its creases next to it, as --creases-out writes them: <output>.creases for <output>.obj.
-# Usage: blender -b --factory-startup --python bench/ngons.py -- <name> <source.obj> <quads.obj> <ngons.obj>
+# Usage: blender -b --factory-startup --python bench/ngons.py -- <name> <source.obj> <quads.obj> <ngons.obj> [levels]
 import sys
 import bpy, bmesh
 import numpy as np
 from mathutils.bvhtree import BVHTree
 
-name, source_path, quad_path, ngon_path = sys.argv[sys.argv.index("--") + 1:]
+name, source_path, quad_path, ngon_path, *more = sys.argv[sys.argv.index("--") + 1:]
+LEVELS = int(more[0]) if more else 2
 bpy.ops.wm.read_factory_settings(use_empty=True)
 
 
@@ -45,7 +46,7 @@ def subdivided(path):
     bm.to_mesh(mesh)
     bm.free()
     m = obj.modifiers.new("s", "SUBSURF")
-    m.levels = 2
+    m.levels = LEVELS
     m.use_creases = True
     evaluated = obj.evaluated_get(bpy.context.evaluated_depsgraph_get())
     out = evaluated.to_mesh()
@@ -68,7 +69,9 @@ def against_source(co, normals, centres):
     folded = 0
     for c, n in zip(centres, normals):
         hit = source.find_nearest(c)
-        folded += float(np.dot(n, hit[1])) < 0.0
+        # Turned over, not merely at a right angle to the source: beside a hard edge the nearest
+        # triangle of the source may be the one round the corner.
+        folded += float(np.dot(n, hit[1])) < -0.5
     return far, folded
 
 
@@ -80,5 +83,5 @@ tree_q = BVHTree.FromPolygons([tuple(p) for p in quads[0]], quads[1])
 tree_n = BVHTree.FromPolygons([tuple(p) for p in ngons[0]], ngons[1])
 apart = max(max(tree_q.find_nearest(p)[3] for p in ngons[0]), max(tree_n.find_nearest(p)[3] for p in quads[0])) / diagonal
 many = [s for s in ngons[4] if s != 4]
-print(f"RESULT {name} | faces {len(quads[4])} -> {len(ngons[4])} | merged-like faces {len(many)}, most sides {max(many, default=0)}"
+print(f"RESULT {name} L{LEVELS} | faces {len(quads[4])} -> {len(ngons[4])} | merged-like faces {len(many)}, most sides {max(many, default=0)}"
       f" | folded quads {folded_q} ngons {folded_n} | to source quads {far_q:.2e} ngons {far_n:.2e} | apart {apart:.2e}")

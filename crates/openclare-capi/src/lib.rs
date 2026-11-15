@@ -325,6 +325,11 @@ unsafe fn remesh(
         done.poles.len(),
         done.poles_imposed,
     );
+    // Said only of a result whose flat parts were asked for as n-gons.
+    let report = match config.faces {
+        openclare::config::Faces::Ngons => format!("{report}merged_faces = {}\n", done.merged_faces),
+        openclare::config::Faces::Quads => report,
+    };
     Ok(OpenclareResult {
         mesh,
         hard_edges: done.hard_edges,
